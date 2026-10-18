@@ -4,8 +4,8 @@ Ritprogram i webbläsaren för små arkitektkontor. *Bacchus* är motorns intern
 namn; produktnamnet (just nu låtsasbrandingen **cad-apa**) ligger i `src/brand/`
 och kan bytas utan att röra resten av koden.
 
-Arkitektur och byggordning beskrivs i dokumentet *Ritprogram för små kontor –
-arkitektur och demoplan*. Koden motsvarar **steg 5 av 12: dörrar, fönster och anteckningar**.
+Arkitektur och byggordning beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md)
+(*Ritprogram för små kontor – arkitektur och demoplan*). Koden motsvarar **steg 5 av 12: dörrar, fönster och anteckningar**.
 
 ## Vad som fungerar
 
@@ -272,7 +272,7 @@ src/
   styles/     CSS med ljust och mörkt tema
   fonts/      Archivo och IBM Plex Mono (SIL Open Font License)
 tests/        tester för kärnan, planen och filformatet
-docs/         utvecklarguide
+docs/         arkitektur och byggordning, utvecklarguide
 .github/      bygget som lägger en zip för webbhotellet på varje release
 ```
 

@@ -2,8 +2,9 @@
 
 Webbaserat ritprogram för små svenska arkitektkontor. Motorn heter Bacchus,
 cad-apa är ett tillfälligt varumärke. Öppen källkod (GPL-3.0 eller senare).
-Läs `README.md` (vad som finns, version för version) och `docs/UTVECKLING.md`
-(arkitektur, filformat, hur man lägger till objekttyper) innan du ändrar något.
+Läs `README.md` (vad som finns, version för version), `docs/ARKITEKTUR.md`
+(idé, principer och byggordning) och `docs/UTVECKLING.md` (filformat, hur man
+lägger till objekttyper) innan du ändrar något.
 
 ## Arbetssätt med Carl August
 
