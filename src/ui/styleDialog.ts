@@ -4,10 +4,10 @@ import type { DocStore } from '../core/store';
 import { escapeHtml } from './labels';
 
 const ROWS: { key: ActionKey; label: string; hint: string }[] = [
-  { key: 'plain', label: 'Utan jämförelse', hint: 'Nybyggnad, eller när jämförelsen är avslagen' },
-  { key: 'existing', label: 'Befintligt', hint: 'Finns kvar oförändrat' },
+  { key: 'plain', label: 'Nybyggnad', hint: 'Utan jämförelse: nybyggnad, eller när jämförelsen är avslagen' },
+  { key: 'existing', label: 'Befintligt', hint: 'Finns kvar oförändrat. Dörrar som finns i Befintligt öppnas så här i alla vyer' },
   { key: 'demolished', label: 'Rivs', hint: 'Finns i jämförelsen men inte i förslaget' },
-  { key: 'new', label: 'Nytt', hint: 'Finns i förslaget men inte i jämförelsen' },
+  { key: 'new', label: 'Planerat', hint: 'Finns i förslaget men inte i jämförelsen. Övriga dörrar öppnas så här i alla vyer' },
 ];
 
 /**
@@ -75,7 +75,7 @@ export class StyleDialog {
           <option value="none"${outline === 'none' ? ' selected' : ''}>Ingen</option>
         </select></label>
         <label><span>Konturfärg</span><input type="color" data-key="${key}" data-field="lineColor" value="${toHex(a.cutOutline?.color ?? a.lines.color)}"></label>
-        <label><span>Dörrar öppna</span><span class="input-unit"><input type="number" min="0" max="90" step="15" data-key="${key}" data-field="door" value="${a.doorAngle}"><i>°</i></span></label>
+        ${key === 'existing' || key === 'new' ? `<label><span>Dörrar öppna</span><span class="input-unit"><input type="number" min="0" max="90" step="15" data-key="${key}" data-field="door" value="${a.doorAngle}"><i>°</i></span></label>` : '<span class="style-door-na" aria-hidden="true"></span>'}
       </div>`;
     }).join('');
 
@@ -98,7 +98,7 @@ export class StyleDialog {
   private labelSection(style: StyleSheet): string {
     const l = style.labels;
     const h = (k: keyof StyleSheet['labels']['heights'], label: string) =>
-      `<label><span>${label}</span><span class="input-unit"><input type="number" min="1" max="10" step="0.1" data-lab="h:${k}" value="${l.heights[k]}"><i>mm</i></span></label>`;
+      `<label><span>${label}</span><span class="input-unit"><input type="number" min="0.5" max="10" step="0.05" inputmode="decimal" data-lab="h:${k}" value="${Number(l.heights[k]).toFixed(2)}"><i>mm</i></span></label>`;
     const names: Record<string, string> = { Wall: 'Väggar', Door: 'Dörrar', Window: 'Fönster' };
     const tpl = (Object.keys(l.templates) as (keyof StyleSheet['labels']['templates'])[])
       .map(

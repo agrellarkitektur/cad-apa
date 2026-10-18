@@ -121,8 +121,9 @@ export const doorType: ElementType<DoorParams> = {
       prims.push(frame(s1, s1 + fw), frame(s2, s2 - fw));
     }
 
-    // Stilmallen bestämmer hur långt dörren ritas öppen (befintliga ofta 30°).
-    const a = (ctx.styleOf(el).doorAngle * Math.PI) / 180;
+    // Dörrar som finns i Befintligt ritas som befintliga (ofta 30°), andra
+    // som planerade (90°), oavsett vad vyn jämförs med.
+    const a = (ctx.doorAngleOf(el) * Math.PI) / 180;
     const closed = scale(f.u, p.hinge === 'start' ? 1 : -1);
     const out = scale(f.n, p.swing);
     const leafDir = add(scale(closed, Math.cos(a)), scale(out, Math.sin(a)));

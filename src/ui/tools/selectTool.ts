@@ -45,6 +45,8 @@ export class SelectTool implements ViewTool {
   private move: Move | null = null;
   /** Elementet under muspekaren. */
   hoverId: string | null = null;
+  /** Förra klicket, för att känna igen dubbelklick. */
+  private lastClick: { id: string | null; t: number; at: Vec2 } | null = null;
 
   constructor(host: ToolHost) {
     this.host = host;
@@ -226,6 +228,17 @@ export class SelectTool implements ViewTool {
   private click(p: ViewPointer): void {
     const id = pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, p.pointerType === 'touch' ? 14 : 6));
     const sel = this.host.selection;
+    // Dubbelklick (eller dubbeltryck) på en text redigerar den i ritningen.
+    const now = performance.now();
+    const last = this.lastClick;
+    this.lastClick = { id, t: now, at: p.screen };
+    if (id && last && last.id === id && now - last.t < 450 && dist(p.screen, last.at) < (p.pointerType === 'touch' ? 24 : 8)) {
+      this.lastClick = null;
+      if (this.host.editText?.(id, p.model)) {
+        sel.set([id]);
+        return;
+      }
+    }
     // På pekskärm lägger ett tryck till eller tar bort ur markeringen, och ett
     // tryck i tomma delar av planen avmarkerar allt.
     if (p.shift || p.mod || p.pointerType === 'touch') {

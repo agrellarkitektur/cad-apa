@@ -65,12 +65,32 @@ export interface UiSettings {
   /** Färg på referenslinjer och grepp; null = temats. */
   refColor: string | null;
   quick: Record<string, QuickId[]>;
+  /** Bredderna på navigatorn och egenskaperna på datorn, px. */
+  navWidth: number;
+  panelWidth: number;
+  /**
+   * Skärmens diagonal i tum. Används för att visa skärmskalan exakt; null =
+   * räkna med webbens standard, 96 pixlar per tum.
+   */
+  screenInches: number | null;
 }
+
+export const PANE_WIDTH = { nav: 300, panel: 340, min: 220, max: 640 } as const;
 
 const KEY = 'bacchus-ui';
 
 export function defaultUiSettings(): UiSettings {
-  return { grid: true, petPalette: true, autoDims: true, selColor: null, refColor: null, quick: structuredClone(QUICK_DEFAULTS) };
+  return {
+    grid: true,
+    petPalette: true,
+    autoDims: true,
+    selColor: null,
+    refColor: null,
+    quick: structuredClone(QUICK_DEFAULTS),
+    navWidth: PANE_WIDTH.nav,
+    panelWidth: PANE_WIDTH.panel,
+    screenInches: null,
+  };
 }
 
 export function loadUiSettings(): UiSettings {
@@ -87,10 +107,37 @@ export function loadUiSettings(): UiSettings {
       selColor: typeof raw.selColor === 'string' ? raw.selColor : null,
       refColor: typeof raw.refColor === 'string' ? raw.refColor : null,
       quick,
+      navWidth: width(raw.navWidth, d.navWidth),
+      panelWidth: width(raw.panelWidth, d.panelWidth),
+      screenInches: Number(raw.screenInches) >= 3 && Number(raw.screenInches) <= 120 ? Number(raw.screenInches) : null,
     };
   } catch {
     return d;
   }
+}
+
+function width(v: unknown, fallback: number): number {
+  const n = Number(v);
+  return Number.isFinite(n) && n >= PANE_WIDTH.min && n <= PANE_WIDTH.max ? Math.round(n) : fallback;
+}
+
+/**
+ * Hur många mm på skärmen en CSS-pixel är. Med skärmens diagonal i tum
+ * räknas det ut ur skärmens storlek i pixlar; annars webbens standard
+ * (96 px per tum). Gäller när webbläsaren visar sidan i 100 %.
+ */
+export function mmPerCssPx(inches: number | null, screenW = globalThis.screen?.width ?? 0, screenH = globalThis.screen?.height ?? 0): number {
+  const diag = Math.hypot(screenW, screenH);
+  if (!inches || !(diag > 0)) return 25.4 / 96;
+  return (inches * 25.4) / diag;
+}
+
+/** "100", "1:100", "1/100" eller "1 : 100" → 100. Null om det inte är en skala. */
+export function parseScale(text: string): number | null {
+  const t = text.replace(/\s/g, '').replace(',', '.');
+  const m = /^(?:1[:/])?(\d+(?:\.\d+)?)$/.exec(t);
+  const n = m ? Number(m[1]) : NaN;
+  return n > 0 && n <= 1_000_000 ? n : null;
 }
 
 export function saveUiSettings(s: UiSettings): void {
@@ -132,6 +179,7 @@ export const SHORTCUTS: [string, string][] = [
   ['S', 'Snäppning av eller på'],
   ['P', 'Visa eller dölj egenskaperna'],
   ['N', 'Visa eller dölj navigatorn'],
+  ['Dubbelklick', 'Redigera en text eller ett rumsnamn direkt i ritningen'],
   ['2 / 3 / 4', 'Plan, 3D eller båda'],
   ['Mellanslag + dra', 'Panorera med musen'],
 ];

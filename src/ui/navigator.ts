@@ -24,8 +24,8 @@ export interface NavigatorHost {
  * sektioner, fasader och arbetsblad), Vyer är sparade visningar av modellen
  * och Ritningar är bladen som plottas.
  *
- * På datorn ligger den överst i högerspalten ovanför egenskaperna, och de kan
- * fällas ihop var för sig. På telefonen fyller den skärmen.
+ * På datorn ligger den bredvid egenskaperna, var och en med sin knapp (☰ och
+ * P) och ett dragstreck för bredden. På telefonen fyller den skärmen.
  */
 export class Navigator {
   readonly el: HTMLElement;
@@ -43,7 +43,6 @@ export class Navigator {
         <div class="tabs nav-tabs" role="tablist">
           ${TABS.map(([id, label]) => `<button role="tab" data-nav-tab="${id}" aria-selected="${id === this.tab}">${label}</button>`).join('')}
         </div>
-        <button class="icon-btn pane-min" data-action="toggle-nav" aria-label="Fäll ihop navigatorn" title="Fäll ihop (N)">${icons.chevron}</button>
         <button class="icon-btn nav-close" data-action="toggle-nav" aria-label="Stäng navigatorn">${icons.close}</button>
       </div>
       <div class="panel-body nav-body"></div>`;

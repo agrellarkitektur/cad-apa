@@ -1,6 +1,6 @@
 import type { ActionKey, StyleSheet } from '../core/graphics';
 import type { Element, Id, ProjectDoc } from '../core/model';
-import { actionOf, type Action, type ViewStates } from '../core/states';
+import { actionOf, existingState, type Action, type ViewStates } from '../core/states';
 import { resolveParams, typeOf, type ElementType, type PlanContext, type PlanItem } from '../elements/registry';
 
 /**
@@ -38,6 +38,7 @@ export function createContext(
   const viewingExisting = !view.compareTo && doc.states.find((s) => s.id === view.state)?.kind === 'existing';
   const styleKeyOf = (a: Action): ActionKey => (a === 'plain' && viewingExisting ? 'existing' : actionKey(a));
 
+  const existingId = existingState(doc)?.id;
   const memo = new Map<string, unknown>();
   const presentInView = (el: Element) => el.states.includes(view.state);
   const ctx: PlanContext = {
@@ -48,6 +49,7 @@ export function createContext(
     actionOf: actionFor,
     styleOf: (el) => style.actions[styleKeyOf(actionFor(el))],
     styleKeyOf,
+    doorAngleOf: (el) => style.actions[existingId && el.states.includes(existingId) ? 'existing' : 'new'].doorAngle,
     openingsIn: (hostId) => onStorey.filter((e) => e.host === hostId && presentInView(e)),
     visible: (type) => visible.filter((v) => !type || v.el.type === type).map((v) => v.el),
     memo: <T>(key: string, fn: () => T): T => {

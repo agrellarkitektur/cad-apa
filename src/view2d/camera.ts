@@ -64,11 +64,17 @@ export class Camera {
   }
 
   /**
-   * Skärmskalan uttryckt som ritningsskala, räknat på CSS-pixeln
-   * (1/96 tum = 0,2646 mm). Ger t.ex. 100 för "1:100".
+   * Skärmskalan uttryckt som ritningsskala. Ger t.ex. 100 för "1:100".
+   * `mmPerPx` är hur stor en CSS-pixel är på skärmen; standard är
+   * 1/96 tum = 0,2646 mm.
    */
-  screenScaleDenominator(): number {
-    return 1 / this.scale / (25.4 / 96);
+  screenScaleDenominator(mmPerPx = 25.4 / 96): number {
+    return 1 / this.scale / mmPerPx;
+  }
+
+  /** Zoomfaktorn (pixlar per mm) som ger skärmskalan 1:`denominator`. */
+  static scaleFor(denominator: number, mmPerPx = 25.4 / 96): number {
+    return 1 / (denominator * mmPerPx);
   }
 }
 

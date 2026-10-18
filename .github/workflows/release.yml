@@ -1,0 +1,74 @@
+# Bygger programmet och lägger en färdig zip för webbhotellet på varje release.
+#
+# Så används den: gå till Releases på GitHub, välj "Draft a new release",
+# skriv en tagg som v0.6.2 och publicera. Efter någon minut ligger
+# cad-apa-v0.6.2.zip under Assets på releasen. Den kan också köras för hand
+# under Actions → "Bygg för webbhotellet" → "Run workflow"; då hamnar zip-filen
+# under körningens Artifacts i stället.
+
+name: Bygg för webbhotellet
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installera
+        run: npm ci
+
+      - name: Typer och tester
+        run: npx tsc --noEmit && npx vitest run
+
+      - name: Bygg dist
+        run: npm run build
+
+      - name: Packa zip
+        id: zip
+        run: |
+          NAME="cad-apa-${GITHUB_REF_NAME:-manuell}"
+          NAME="${NAME//\//-}"
+          # Zip-filen innehåller en mapp som heter cad-apa, färdig att lägga
+          # på webbhotellet så att adressen blir …/cad-apa/.
+          mkdir -p package
+          cp -r dist package/cad-apa
+          cat > package/cad-apa/LASMIG.txt <<TXT
+          cad-apa ${GITHUB_REF_NAME}
+
+          Ladda upp mappen cad-apa till webbhotellet, till exempel bredvid
+          index.html för din webbplats. Programmet finns sedan på
+          https://din-domän.se/cad-apa/
+
+          Vill du behålla en äldre version: döp om den gamla mappen på servern
+          först (till exempel cad-apa-0.6.1) innan du laddar upp den nya.
+
+          Steg för steg: https://github.com/${GITHUB_REPOSITORY}#publicera-på-webbhotellet
+          TXT
+          (cd package && zip -r -9 "../$NAME.zip" cad-apa)
+          echo "file=$NAME.zip" >> "$GITHUB_OUTPUT"
+
+      - name: Lägg zip-filen på releasen
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "$GITHUB_REF_NAME" "${{ steps.zip.outputs.file }}" --clobber
+
+      - name: Spara zip-filen på körningen
+        if: github.event_name != 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: cad-apa-webbhotell
+          path: ${{ steps.zip.outputs.file }}

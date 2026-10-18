@@ -135,6 +135,29 @@ Version 0.6.1 (liten uppdatering, samma filformat):
 - Tillfälliga mått: värdet används med Enter, ✓ eller när man trycker
   någon annanstans. På telefonen skrivs det i en rad överst i ritytan
 
+Version 0.6.2 (liten uppdatering, samma filformat):
+- En äldre version skriver aldrig över ett projekt som en nyare version har
+  autosparat. Statusraden visar då *Autospar låst*; spara som fil i stället.
+  Ett autospar som inte går att läsa alls läggs undan i stället för att
+  försvinna
+- Dörrar som finns i Befintligt ritas 30° öppna, alla andra 90°, oavsett vad
+  vyn jämförs med. I stilmallen heter raderna nu Nybyggnad, Befintligt, Rivs
+  och Planerat
+- Vägglittera har ett rakt streck från texten in till väggens mitt
+- Areatexten i rummen är svart
+- Ingen kontur mellan skrafferingen och den befintliga väggen vid ny
+  håltagning
+- På datorn ligger navigatorn och egenskaperna bredvid varandra, med var sin
+  knapp (☰ och P). Dra i strecket i vänsterkanten för att ändra bredden,
+  klicka på det för att fälla ihop. Bredderna sparas i webbläsaren
+- Klicka på skärmskalan i statusraden och skriv en skala, t.ex. 1:50. Med
+  skärmens storlek i tum under Gränssnitt blir skalan exakt
+- Dubbelklicka (eller dubbeltryck) på en text eller ett rumsnamn för att
+  redigera det direkt i ritningen. Etiketter går att träffa var som helst på
+  texten
+- Texthöjder för annotering visas med två decimaler (2,50 mm)
+- Färdig zip för webbhotellet på varje release, och steg-för-steg-hjälp nedan
+
 ## Versioner och gamla projekt
 
 Projektfilerna har ett formatnummer. När formatet ändras uppgraderas äldre
@@ -156,17 +179,75 @@ Hur programmet byggs ut steg för steg står i [docs/UTVECKLING.md](docs/UTVECKL
 
 ## Publicera på webbhotellet
 
-```sh
-npm run build
-```
+Du behöver inga byggverktyg. Varje version finns färdigbyggd som en zip-fil.
+Det enda som krävs är inloggningen till webbhotellet.
 
-Ladda sedan upp **innehållet** i mappen `dist/` till en mapp på servern, till
-exempel `agrellarkitektur.se/cad-apa/`. Appen använder relativa sökvägar och
-fungerar i vilken mapp som helst. Uppdatera genom att bygga igen och ersätta
-filerna; den som har appen öppen får den nya versionen vid nästa omladdning.
+### Första gången
 
-Servern behöver skicka `.webmanifest` som `application/manifest+json`. De flesta
-webbhotell gör det redan.
+1. **Hämta zip-filen.** Gå till
+   [Releases](https://github.com/agrellarkitektur/cad-apa/releases) (länken
+   finns också i högerspalten på projektets GitHub-sida). Öppna den översta
+   versionen och klicka på `cad-apa-v0.6.2.zip` under *Assets*. Numret är
+   versionen; ta den senaste.
+2. **Packa upp den på datorn.** I Windows: högerklicka på filen, välj
+   *Extrahera alla…* och sedan *Extrahera*. På Mac: dubbelklicka. Du får en
+   mapp som heter `cad-apa`. I den ligger bland annat `index.html` och en mapp
+   som heter `assets`.
+3. **Logga in på webbhotellet.** Öppna webbhotellets kontrollpanel och leta
+   upp *Filhanteraren* (heter ibland *File Manager* eller *Filer*). Det går
+   lika bra med ett FTP-program som FileZilla, med de FTP-uppgifter
+   webbhotellet har gett dig.
+4. **Gå till webbplatsens rotmapp.** Det är mappen där webbplatsens egna filer
+   ligger, ofta kallad `public_html`, `httpdocs`, `www` eller domännamnet. Är
+   webbplatsen gjord i WordPress är det mappen där `wp-config.php` och
+   `wp-content` ligger.
+5. **Ladda upp mappen `cad-apa`.** Hela mappen, så att den hamnar bredvid de
+   andra filerna. Kan filhanteraren inte ladda upp mappar: ladda upp zip-filen
+   i stället, markera den och välj *Packa upp* eller *Extract*, och ta sedan
+   bort zip-filen.
+6. **Prova.** Öppna `https://din-domän.se/cad-apa/` i webbläsaren. Programmet
+   startar med exempelprojektet. I Chrome kan det installeras som app med
+   ikonen i adressfältet, och det fungerar sedan även utan nät.
+
+Kontrollera att det blev `cad-apa/index.html` på servern och inte
+`cad-apa/cad-apa/index.html`. Har mappen hamnat ett steg för djupt: flytta
+innehållet upp ett steg, eller ändra adressen därefter.
+
+### Uppdatera till en ny version
+
+1. Spara ditt projekt som fil (*Arkiv → Spara som fil…*). Programmet sparar
+   också automatiskt i webbläsaren, men en fil är säkrast.
+2. Vill du kunna gå tillbaka: döp om den gamla mappen på servern, till exempel
+   till `cad-apa-0.6.1`. Den versionen finns då kvar på
+   `https://din-domän.se/cad-apa-0.6.1/`. Annars: ta bort den gamla mappen
+   `cad-apa`.
+3. Hämta och ladda upp den nya zip-filen som i steg 1–5 ovan.
+4. Den som har programmet öppet får en rad längst ned: *En ny version finns.*
+   Tryck *Ladda om*.
+
+Äldre versioner kan öppna sina egna projekt, men inte projekt som har sparats
+i ett nyare format. Sedan 0.6.2 skriver en äldre version aldrig över ett
+projekt som en nyare version har autosparat; statusraden visar då *Autospar
+låst*, och det man gör i den äldre versionen sparas som fil.
+
+### Om något inte fungerar
+
+- **Tom sida:** mappen ligger fel, se ovan. Ladda om med Ctrl+F5.
+- **Går inte att installera som app:** webbplatsen måste ha `https://`.
+  Webbhotellet skickar dessutom oftast `.webmanifest`-filer rätt, men gör det
+  inte det kan en fil som heter `.htaccess` med raden
+  `AddType application/manifest+json .webmanifest` läggas i mappen `cad-apa`.
+
+### Göra en ny version (för den som utvecklar)
+
+Höj versionen i `package.json` och `src/core/engine.ts`, skriv vad som är nytt
+här i README och skicka upp ändringarna. Gå sedan till *Releases → Draft a new
+release*, skriv en ny tagg som `v0.6.3`, och tryck *Publish release*. Efter
+några minuter har GitHub byggt programmet, kört testerna och lagt
+`cad-apa-v0.6.3.zip` på releasen (se `.github/workflows/release.yml`).
+
+Vill man bygga själv: `npm install` och `npm run build`. Innehållet i `dist/`
+är då detsamma som i zip-filens mapp `cad-apa`.
 
 ## Byta varumärke
 
@@ -192,6 +273,7 @@ src/
   fonts/      Archivo och IBM Plex Mono (SIL Open Font License)
 tests/        tester för kärnan, planen och filformatet
 docs/         utvecklarguide
+.github/      bygget som lägger en zip för webbhotellet på varje release
 ```
 
 ## Licens

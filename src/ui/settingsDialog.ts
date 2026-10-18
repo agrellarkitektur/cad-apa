@@ -2,8 +2,9 @@ import { escapeHtml } from './labels';
 import { applyUiColors, defaultUiSettings, QUICK_ACTIONS, QUICK_TYPES, saveUiSettings, SHORTCUTS, type QuickId, type UiSettings } from './uiSettings';
 
 /**
- * Gränssnitt: rutnät, färger på markeringar och referenslinjer, vilka
- * snabbknappar som visas för varje sorts objekt, och kortkommandona.
+ * Gränssnitt: rutnät, skärmens storlek, färger på markeringar och
+ * referenslinjer, vilka snabbknappar som visas för varje sorts objekt, och
+ * kortkommandona.
  */
 export class SettingsDialog {
   readonly el: HTMLElement;
@@ -63,6 +64,13 @@ export class SettingsDialog {
       case 'autodims':
         s.autoDims = t.checked;
         break;
+      case 'inches': {
+        const v = Number(t.value.replace(',', '.'));
+        s.screenInches = t.value.trim() === '' ? null : v >= 3 && v <= 120 ? v : s.screenInches;
+        if (s.screenInches !== null && String(s.screenInches) !== t.value.replace(',', '.')) t.value = String(s.screenInches);
+        if (s.screenInches === null) t.value = '';
+        break;
+      }
       case 'sel-theme':
         s.selColor = t.checked ? null : themeColor('--sel');
         break;
@@ -131,6 +139,11 @@ export class SettingsDialog {
           <label class="check"><input type="checkbox" data-setting="autodims"${s.autoDims ? ' checked' : ''}> Måttsätt nya väggar och öppningar automatiskt när man jämför med befintligt</label>
         </section>
         <section>
+          <h3>Skärmen</h3>
+          <label class="field inline-field"><span>Skärmens storlek (diagonal)</span><span class="input-unit"><input type="number" min="3" max="120" step="0.1" inputmode="decimal" data-setting="inches" value="${s.screenInches ?? ''}" placeholder="Okänd"><i>tum</i></span></label>
+          <p class="note">Med skärmens storlek visar statusraden skärmskalan exakt, så att 1:100 på skärmen är 1:100 med linjal. Gäller när webbläsaren visar sidan i 100 %. Den här skärmen är ${screenSize()}. Lämna tomt för en ungefärlig skala.</p>
+        </section>
+        <section>
           <h3>Färger</h3>
           ${color('sel', 'Markering', s.selColor)}
           ${color('ref', 'Referenslinjer och grepp', s.refColor)}
@@ -150,6 +163,13 @@ export class SettingsDialog {
         <button class="btn btn-primary" data-action="close-settings">Klar</button></footer>
     </div>`;
   }
+}
+
+/** Skärmens storlek i CSS-pixlar, för att hjälpa till att känna igen den. */
+function screenSize(): string {
+  const w = globalThis.screen?.width ?? 0;
+  const h = globalThis.screen?.height ?? 0;
+  return w && h ? `${w} × ${h} punkter` : 'okänd';
 }
 
 /** Temats färg för en variabel, som hex för färgväljaren. */

@@ -62,6 +62,14 @@ Gamla projekt öppnas då alltid. Element av typer som programmet inte känner
 till ligger kvar orörda i filen, så att en fil från en nyare version inte
 förstörs om den öppnas i en äldre.
 
+Autosparet (`src/storage/localStore.ts`) sparar formatnumret bredvid texten.
+Sedan 0.6.2 vägrar en version att skriva över ett autospar i ett nyare format
+än det den kan läsa; kontrollen görs i samma transaktion som skrivningen.
+Versioner till och med 0.6.1 saknar skyddet. När `FORMAT_VERSION` höjs till 4
+bör den nya versionen därför också lägga en kopia av sitt autospar under en
+egen nyckel (t.ex. `format-4`) och läsa den om `current` har skrivits över av
+en gammal version.
+
 ## Lägga till ett kommando
 
 Alla ändringar av projektet görs i `src/core/commands.ts` med

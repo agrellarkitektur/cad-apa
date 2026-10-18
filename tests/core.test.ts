@@ -612,3 +612,63 @@ describe('version 0.6', () => {
     expect(auto(true)).toBeGreaterThan(0);
   });
 });
+
+describe('version 0.6.2', () => {
+  it('en äldre version skriver inte över ett autospar från en nyare', async () => {
+    const { mayOverwrite, recordFormatVersion } = await import('../src/storage/localStore');
+    const nu = serialize(sampleProject());
+    expect(recordFormatVersion({ text: nu })).toBe(3);
+    expect(mayOverwrite({ text: nu }, 3)).toBe(true);
+    // Autospar från före 0.6.2 har inget formatfält; versionen läses ur texten.
+    expect(mayOverwrite({ text: nu.replace('"formatVersion": 3', '"formatVersion": 4') }, 3)).toBe(false);
+    expect(mayOverwrite({ text: '{"format":"bacchus-project","formatVersion":5}' }, 3)).toBe(false);
+    // Fältet går före texten.
+    expect(mayOverwrite({ text: nu, formatVersion: 4 }, 3)).toBe(false);
+    expect(mayOverwrite({ text: nu, formatVersion: 2 }, 3)).toBe(true);
+    // Format 1 saknade versionsfältet.
+    expect(recordFormatVersion({ text: '{"format":"bacchus-project","project":{}}' })).toBe(1);
+    // Inget sparat, eller något som inte är ett projekt: får skrivas (det oläsbara läggs undan först).
+    expect(mayOverwrite(null, 3)).toBe(true);
+    expect(recordFormatVersion({ text: 'trasigt' })).toBeNull();
+  });
+
+  it('dörrens vinkel beror på om den finns i Befintligt, inte på jämförelsen', async () => {
+    const { createContext } = await import('../src/repr/context');
+    const doc = sampleProject();
+    const angle = (state: string, compareTo: string | undefined, id: string) =>
+      createContext(doc, 'pl-1', { state, compareTo }, doc.graphics, () => true).ctx.doorAngleOf(doc.elements[id]);
+    for (const compareTo of ['st-bef', undefined]) {
+      // d04 finns i Befintligt: 30° även i förslaget och utan jämförelse.
+      expect(angle('st-a', compareTo, 'd04')).toBe(30);
+      // d05 finns bara i förslag B: 90°.
+      expect(angle('st-b', compareTo, 'd05')).toBe(90);
+    }
+    expect(angle('st-bef', undefined, 'd01')).toBe(30);
+  });
+
+  it('nya öppningar i befintlig vägg får ingen kontur mot väggen', () => {
+    const prims = buildPlan(sampleProject(), 'pl-1', { state: 'st-b', compareTo: 'st-bef' }).prims;
+    const marks = prims.filter((p) => p.origin?.part === 'markering');
+    expect(marks.length).toBeGreaterThan(0);
+    expect(marks.every((p) => p.kind === 'region')).toBe(true);
+  });
+
+  it('vägglittera har ett enda streck in till väggens mitt', () => {
+    const doc = sampleProject();
+    const prims = buildPlan(doc, 'pl-1', { state: 'st-bef' }).prims.filter((p) => p.origin?.part === 'littera' && p.origin?.objectType === 'Wall');
+    const lines = prims.filter((p) => p.kind === 'line');
+    const texts = prims.filter((p) => p.kind === 'text');
+    expect(texts.length).toBeGreaterThan(0);
+    expect(lines.length).toBe(new Set(texts.map((t) => t.origin?.objectId)).size);
+    for (const l of lines) {
+      if (l.kind !== 'line') continue;
+      const w = resolveParams<WallParams>(doc, doc.elements[l.origin!.objectId!]);
+      // Startpunkten ligger på väggens mittlinje.
+      const dx = w.end[0] - w.start[0], dy = w.end[1] - w.start[1];
+      const len = Math.hypot(dx, dy);
+      const shift = w.justification === 'left' ? w.thickness / 2 : w.justification === 'right' ? -w.thickness / 2 : 0;
+      const cross = ((l.a[0] - w.start[0]) * -dy + (l.a[1] - w.start[1]) * dx) / len;
+      expect(Math.abs(cross - shift)).toBeLessThan(0.01);
+    }
+  });
+});

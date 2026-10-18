@@ -98,7 +98,7 @@ export function openingMarks(
     const out: Primitive[] = [];
     if (s1 - a1 > 1) out.push({ kind: 'region', role: 'cut', rings: [rect(a1, s1)], fill: { kind: 'none' }, outline: null, styleAs: 'new', noOutline: true, origin });
     if (b2 - s2 > 1) out.push({ kind: 'region', role: 'cut', rings: [rect(s2, b2)], fill: { kind: 'none' }, outline: null, styleAs: 'new', noOutline: true, origin });
-    for (const s of [a1, b2]) if (s > 1 && s < f.length - 1) out.push({ kind: 'line', a: f.at(s, -f.half), b: f.at(s, f.half), pen: { weight: 0.18 }, origin });
+    // Ingen tvärgående kontur: skrafferingen går rakt över i den befintliga väggen.
     return out;
   }
   return [];

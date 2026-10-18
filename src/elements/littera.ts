@@ -79,8 +79,8 @@ export function litteraLines(ctx: PlanContext, el: Element<any>): string[] {
 /**
  * Littera intill en vägg, dörr eller ett fönster, längs väggen på angiven
  * sida. Texten vänds så att den läses nedifrån eller från höger, och raderna
- * justeras enligt stilmallen. Väggar får ett streck under texten som pekar
- * på väggen.
+ * justeras enligt stilmallen. Väggar får ett rakt streck från texten in
+ * till väggens mitt.
  */
 export function litteraTag(ctx: PlanContext, el: Element<any>, f: WallFrame, s: number, side: 1 | -1, opts: { leader?: boolean } = {}): Primitive[] {
   const lines = litteraLines(ctx, el);
@@ -119,13 +119,9 @@ export function litteraTag(ctx: PlanContext, el: Element<any>, f: WallFrame, s: 
     };
   });
   if (opts.leader) {
-    // Ett streck längs texten på väggens sida och ett kort streck in till väggen.
+    // Ett rakt streck från texten in till väggens mitt, utan streck längs texten.
     const d = onUpSide ? gap - paper(0.9) : gap - paper(0.3);
-    const pen = { weight: 0.18 };
-    out.push(
-      { kind: 'line', a: at(d, -width / 2), b: at(d, width / 2), pen, origin },
-      { kind: 'line', a: at(0, 0), b: at(d, 0), pen, origin },
-    );
+    out.push({ kind: 'line', a: at(-f.half, 0), b: at(d, 0), pen: { weight: 0.18 }, origin });
   }
   return out;
 }

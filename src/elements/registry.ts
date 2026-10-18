@@ -19,6 +19,12 @@ export interface PlanContext {
   styleOf(el: Element<any>): ActionStyle;
   /** Vilken del av stilmallen en åtgärd ritas med i den här vyn. */
   styleKeyOf(action: Action): ActionKey;
+  /**
+   * Hur långt en dörr ritas öppen, i grader. Finns dörren i Befintligt
+   * gäller Befintligts vinkel (30° i svensk standard), annars Planerats
+   * (90°). Det beror inte på vad vyn jämförs med.
+   */
+  doorAngleOf(el: Element<any>): number;
   /** Element som sitter i `hostId` och finns i det visade tillståndet. */
   openingsIn(hostId: string): Element[];
   /** Alla element i vyn som syns, oavsett åtgärd. */

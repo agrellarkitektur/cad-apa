@@ -1,5 +1,5 @@
 import type { Brand } from '../brand';
-import { createProposal, deleteElements, moveElements, moveWallEnd } from '../core/commands';
+import { createProposal, deleteElements, moveElements, moveWallEnd, renameElement, updateParams } from '../core/commands';
 import { resolveParams } from '../elements/registry';
 import { snap } from './tools/snap';
 import { ENGINE } from '../core/engine';
@@ -13,13 +13,13 @@ import type { WallFace } from '../elements/wallSides';
 import { buildModel3d } from '../repr/model3d';
 import { buildPlan, type PlanResult } from '../repr/plan';
 import type { Edit3DHost, Handle3D, View3D } from '../view3d/view3d';
-import type { Vec2 } from '../repr/primitives';
+import type { Primitive, Vec2 } from '../repr/primitives';
 import { sampleProject } from '../sample/sampleProject';
 import { startAutosave, type SaveStatus } from '../storage/autosave';
 import { parse } from '../storage/format';
-import { loadLocal } from '../storage/localStore';
+import { keepUnreadable, loadLocal, mayOverwrite, recordFormatVersion } from '../storage/localStore';
+import { FORMAT_VERSION } from '../core/model';
 import { openProjectFile, saveProjectFile, saveTextFile } from '../storage/projectFile';
-import type { Camera } from '../view2d/camera';
 import { minorStepFor } from '../view2d/grid';
 import { PlanView, type ViewTool } from '../view2d/planView';
 import { renderHighlight } from './highlight';
@@ -35,7 +35,10 @@ import { SettingsDialog } from './settingsDialog';
 import { StyleDialog } from './styleDialog';
 import { TempDims } from './tempDims';
 import { Navigator, type NavTab } from './navigator';
-import { applyUiColors, loadUiSettings, saveUiSettings } from './uiSettings';
+import { applyUiColors, loadUiSettings, mmPerCssPx, PANE_WIDTH, parseScale, saveUiSettings } from './uiSettings';
+import { clampWidth, setupPaneResize } from './paneResize';
+import { InlineTextEditor } from './textEditor';
+import { Camera } from '../view2d/camera';
 import { applyTheme, createThemeSwitcher, currentTheme, onThemeChange, THEMES, type ThemeId } from './theme';
 import type { ToolHost } from './tools/host';
 import { SelectTool } from './tools/selectTool';
@@ -85,12 +88,17 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const saved = await loadLocal();
   let initial: ProjectDoc = sampleProject();
   let migrated = false;
+  /** Autosparet är från en nyare version: det får inte skrivas över. */
+  let autosaveBlocked = false;
   if (saved) {
+    const savedFormat = recordFormatVersion(saved);
     try {
-      migrated = !saved.text.includes('"formatVersion": 2');
       initial = parse(saved.text);
+      migrated = savedFormat !== null && savedFormat < FORMAT_VERSION;
     } catch {
-      /* Trasigt autospar: börja med exemplet. */
+      if (!mayOverwrite(saved, FORMAT_VERSION)) autosaveBlocked = true;
+      // Trasigt autospar: lägg det åt sidan och börja med exemplet.
+      else await keepUnreadable(saved);
     }
   }
   const store = new DocStore(initial);
@@ -187,7 +195,13 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       <footer class="status">
         <span class="cursor-pos"><span class="label">X</span><span class="value coord" data-out="x">—</span></span>
         <span class="cursor-pos"><span class="label">Y</span><span class="value coord" data-out="y">—</span></span>
-        <span><span class="label">Skärm</span><span class="value" data-out="scale">—</span></span>
+        <span class="scale-wrap"><button class="status-btn scale-btn" data-action="scale-pop" title="Skärmskala: klicka för att ange skala" aria-haspopup="dialog" aria-expanded="false"><span class="label">Skärm</span><span class="value" data-out="scale">—</span></button>
+          <form class="scale-pop" hidden>
+            <label><span>Skala 1:</span><input name="scale" type="text" inputmode="numeric" enterkeyhint="done" autocomplete="off" list="scale-list" aria-label="Skala, nämnaren"></label>
+            <datalist id="scale-list"><option value="20"><option value="50"><option value="100"><option value="200"><option value="400"><option value="500"><option value="1000"></datalist>
+            <button class="btn btn-primary" type="submit" aria-label="Använd">✓</button>
+            <p class="scale-note" data-out="scale-note"></p>
+          </form></span>
         <span class="hide-narrow"><span class="label">Rutnät</span><span class="value" data-out="grid">—</span></span>
         <button class="status-btn" data-action="snap" aria-pressed="true" title="Snäppning av eller på (S)">Snäpp</button>
         <span data-out="save" class="save-status"></span>
@@ -254,6 +268,15 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   pane3d.className = 'pane-3d';
   canvas.prepend(pane2d, pane3d);
 
+  // Gränssnittet: rutnät, färger, snabbknappar, panelbredder och skärmstorlek.
+  // Hör till användaren, inte projektet.
+  const uiSettings = loadUiSettings();
+  applyUiColors(uiSettings);
+  /** Hur stor en CSS-pixel är på skärmen, mm. */
+  const screenMm = () => mmPerCssPx(uiSettings.screenInches);
+  /** Skapas efter planvyn, men vyn kan rapportera zoom redan när den startar. */
+  let textEditor: InlineTextEditor | undefined;
+
   const view = new PlanView(pane2d, {
     onCursor: (p: Vec2 | null) => {
       out('x').textContent = p ? nf.format(p[0]) : '—';
@@ -261,13 +284,78 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     },
     onViewChange: (cam: Camera) => {
       if (ui.mode !== '3d') measureBox.update((p) => cam.toScreen(p));
-      out('scale').textContent = `≈ 1:${formatScale(cam.screenScaleDenominator())}`;
+      out('scale').textContent = `${uiSettings.screenInches ? '' : '≈ '}1:${formatScale(cam.screenScaleDenominator(screenMm()))}`;
+      textEditor?.position(cam);
       const step = minorStepFor(cam.scale);
       out('grid').textContent = step >= 1000 ? `${nf.format(step / 1000)} m` : `${nf.format(step)} mm`;
     },
   });
 
   let plan: PlanResult = { prims: [], pickables: [] };
+
+  // Text som redigeras direkt i ritningen (dubbelklick).
+  textEditor = new InlineTextEditor(pane2d);
+
+  /** Starta redigering av en text eller ett rumsnamn där man dubbelklickade. */
+  function editTextAt(id: Id, at: Vec2): boolean {
+    const el = store.doc.elements[id];
+    if (!el || !textEditor) return false;
+    const DRAWING_SCALE = 100;
+    if (el.type === 'Text') {
+      const p = resolveParams<{ pos: Vec2; text: string; height: number; angle: number }>(store.doc, el);
+      palette.hide();
+      textEditor.open(
+        {
+          at: p.pos,
+          angle: ((p.angle ?? 0) * Math.PI) / 180,
+          height: p.height,
+          drawingScale: DRAWING_SCALE,
+          value: String(p.text),
+          multiline: true,
+          label: 'Text',
+          commit: (v) => {
+            if (v.trim() === '') hint('En tom text tas bort med Delete.');
+            else updateParams(store, [id], { text: v }, 'Ändra text');
+          },
+        },
+        view.camera,
+      );
+      return true;
+    }
+    if (el.type === 'Space') {
+      // Bara när man pekar på rumsetiketten, inte var som helst i rummet.
+      const texts = (plan.pickables.find((pk) => pk.id === id)?.prims ?? []).filter(
+        (q): q is Extract<Primitive, { kind: 'text' }> => q.kind === 'text',
+      );
+      const tol = 4 / view.camera.scale;
+      const hit = texts.some((t) => {
+        const w = t.text.length * t.height * 0.62 * DRAWING_SCALE;
+        const h = t.height * DRAWING_SCALE;
+        const x0 = t.align === 'middle' ? t.at[0] - w / 2 : t.at[0];
+        return at[0] >= x0 - tol && at[0] <= x0 + w + tol && at[1] >= t.at[1] - h * 0.3 - tol && at[1] <= t.at[1] + h + tol;
+      });
+      const nameRow = texts[0];
+      if (!hit || !nameRow) return false;
+      const w = nameRow.text.length * nameRow.height * 0.62 * DRAWING_SCALE;
+      palette.hide();
+      textEditor.open(
+        {
+          at: [nameRow.align === 'middle' ? nameRow.at[0] - w / 2 : nameRow.at[0], nameRow.at[1]],
+          angle: 0,
+          height: nameRow.height,
+          drawingScale: DRAWING_SCALE,
+          value: el.name ?? 'Rum',
+          multiline: false,
+          bold: true,
+          label: 'Rumsnamn',
+          commit: (v) => renameElement(store, id, v.trim() || 'Rum'),
+        },
+        view.camera,
+      );
+      return true;
+    }
+    return false;
+  }
 
   /** Stilmallen för vyn: en förinställd mall med projektets texter, eller projektets egen. */
   function styleFor(name: string | null): StyleSheet {
@@ -367,6 +455,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       measureBox.showMove(ids, applied, anchor);
       positionMeasureBox();
     },
+    editText: (id, at) => editTextAt(id, at),
     snapSegments: (): SnapSegment[] => {
       const vs = viewStates();
       const doc = store.doc;
@@ -554,7 +643,6 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     set: (open, sheet) => setPanel(open, sheet),
   });
   panel.el.querySelector('.panel-close')!.innerHTML = icons.close;
-  panel.el.querySelector('.pane-min')!.innerHTML = icons.chevron;
 
   // Navigatorn och egenskaperna delar högerspalten på datorn.
   const navigator = new Navigator({
@@ -568,6 +656,50 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   dock.className = 'dock';
   dock.append(navigator.el, panel.el);
   appEl.appendChild(dock);
+
+  // På datorn ligger navigatorn och egenskaperna bredvid varandra. Strecket i
+  // vänsterkanten ändrar bredden; ett klick på det fäller ihop panelen.
+  /** Ritytan ska alltid få minst så här mycket plats (px). */
+  const MIN_CANVAS = 360;
+  const maxPaneWidth = (other: number) =>
+    Math.min(PANE_WIDTH.max, window.innerWidth - (toolsEl.offsetWidth || 0) - MIN_CANVAS - other);
+  function applyPaneWidths(): void {
+    appEl.style.setProperty('--nav-w', `${uiSettings.navWidth}px`);
+    appEl.style.setProperty('--prop-w', `${uiSettings.panelWidth}px`);
+  }
+  applyPaneWidths();
+  setupPaneResize(navigator.el, {
+    label: 'Navigatorn',
+    width: () => navigator.el.offsetWidth || uiSettings.navWidth,
+    setWidth: (w) => {
+      uiSettings.navWidth = w;
+      applyPaneWidths();
+    },
+    commit: () => saveUiSettings(uiSettings),
+    collapse: () => setNav(false),
+    min: PANE_WIDTH.min,
+    max: () => maxPaneWidth(ui.panelOpen ? panel.el.offsetWidth : 0),
+  });
+  setupPaneResize(panel.el, {
+    label: 'Egenskaperna',
+    width: () => panel.el.offsetWidth || uiSettings.panelWidth,
+    setWidth: (w) => {
+      uiSettings.panelWidth = w;
+      applyPaneWidths();
+    },
+    commit: () => saveUiSettings(uiSettings),
+    collapse: () => setPanel(false),
+    min: PANE_WIDTH.min,
+    max: () => maxPaneWidth(ui.navOpen ? navigator.el.offsetWidth : 0),
+  });
+  // Blir fönstret smalare krymper panelerna så att ritytan får plats.
+  window.addEventListener('resize', () => {
+    if (isNarrow()) return;
+    const nav = clampWidth(uiSettings.navWidth, PANE_WIDTH.min, maxPaneWidth(ui.panelOpen ? uiSettings.panelWidth : 0));
+    const prop = clampWidth(uiSettings.panelWidth, PANE_WIDTH.min, maxPaneWidth(ui.navOpen ? nav : 0));
+    appEl.style.setProperty('--nav-w', `${nav}px`);
+    appEl.style.setProperty('--prop-w', `${prop}px`);
+  });
   if (ui.navOpen) navigator.render();
 
   const styleDialog = new StyleDialog(
@@ -584,9 +716,6 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   );
   root.appendChild(styleDialog.el);
 
-  // Gränssnittet: rutnät, färger och snabbknappar. Hör till användaren, inte projektet.
-  const uiSettings = loadUiSettings();
-  applyUiColors(uiSettings);
   view.showGrid = uiSettings.grid;
   panel.quickFor = (type) => uiSettings.quick[type] ?? [];
   panel.onCopied = (ids, center) => {
@@ -596,6 +725,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   };
   const settingsDialog = new SettingsDialog(uiSettings, (s) => {
     Object.assign(uiSettings, s);
+    applyPaneWidths();
+    view.zoomBy(1); // skriv om skärmskalan med den nya skärmstorleken
     view.showGrid = s.grid;
     renderAll();
     view.requestRender();
@@ -625,7 +756,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       if (!click || e.pointerType !== 'mouse' || !uiSettings.petPalette || isNarrow() || ui.tool !== 'select') return;
       // Efter att verktyget eller 3D-vyn hunnit ändra markeringen.
       setTimeout(() => {
-        if (selection.size > 0) palette.show(e.clientX, e.clientY);
+        if (selection.size > 0 && !textEditor?.isOpen) palette.show(e.clientX, e.clientY);
       }, 0);
     },
     { capture: true },
@@ -850,12 +981,27 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     view3d?.setSelection(selection.list());
   });
 
-  startAutosave(store, (s: SaveStatus) => {
+  let blockedHintShown = false;
+  const showSaveStatus = (s: SaveStatus) => {
     const el = out('save');
     el.dataset.kind = s.kind;
-    el.textContent = s.kind === 'saved' ? `Sparat ${tf.format(s.at)}` : s.kind === 'pending' ? 'Sparar…' : 'Sparas inte i den här webbläsaren';
-  });
-  if (saved) out('save').textContent = `Sparat ${tf.format(new Date(saved.savedAt))}`;
+    el.textContent =
+      s.kind === 'saved'
+        ? `Sparat ${tf.format(s.at)}`
+        : s.kind === 'pending'
+          ? 'Sparar…'
+          : s.kind === 'blocked'
+            ? 'Autospar låst'
+            : 'Sparas inte i den här webbläsaren';
+    el.title = s.kind === 'blocked' ? 'Det autosparade projektet är från en nyare version och skrivs inte över. Spara som fil för att behålla det du gör här.' : '';
+    if (s.kind === 'blocked' && !blockedHintShown) {
+      blockedHintShown = true;
+      hint('En nyare version av programmet har autosparat ett projekt här. Det skrivs inte över; spara som fil för att behålla det du gör nu.', 7000);
+    }
+  };
+  startAutosave(store, showSaveStatus, { blocked: autosaveBlocked });
+  if (autosaveBlocked) showSaveStatus({ kind: 'blocked' });
+  else if (saved) out('save').textContent = `Sparat ${tf.format(new Date(saved.savedAt))}`;
 
   // För felsökning i webbläsarens konsol.
   (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, get view3d() { return view3d; } };
@@ -1082,6 +1228,14 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       case 'cancel-command':
         cancelCommand();
         break;
+      case 'scale-pop':
+        if (scalePop.hidden) openScalePop();
+        else closeScalePop();
+        break;
+      case 'scale-settings':
+        closeScalePop();
+        settingsDialog.open();
+        break;
       case 'snap': {
         const on = !isSnapEnabled();
         setSnapEnabled(on);
@@ -1150,6 +1304,44 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         break;
       }
     }
+  });
+
+  // ---------- Skärmskalan ----------
+  // Klick på skalan i statusraden: skriv in en skala, t.ex. 100 eller 1:50.
+  const scalePop = $<HTMLFormElement>('.scale-pop');
+  const scaleBtn = $<HTMLButtonElement>('.scale-btn');
+  function openScalePop(): void {
+    const input = scalePop.elements.namedItem('scale') as HTMLInputElement;
+    input.value = formatScale(view.camera.screenScaleDenominator(screenMm())).replace(/\s/g, '');
+    out('scale-note').innerHTML = uiSettings.screenInches
+      ? `Räknat på en skärm på ${nf.format(uiSettings.screenInches)}″ och 100 % zoom i webbläsaren. <button type="button" class="link" data-action="scale-settings">Ändra</button>`
+      : 'Ungefärlig: räknat på en vanlig skärm. <button type="button" class="link" data-action="scale-settings">Ange skärmens storlek</button> under Gränssnitt för exakt skala.';
+    scalePop.hidden = false;
+    scaleBtn.setAttribute('aria-expanded', 'true');
+    input.focus();
+    input.select();
+  }
+  function closeScalePop(): void {
+    scalePop.hidden = true;
+    scaleBtn.setAttribute('aria-expanded', 'false');
+  }
+  scalePop.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const n = parseScale((scalePop.elements.namedItem('scale') as HTMLInputElement).value);
+    if (!n) {
+      hint('Skriv skalans nämnare, t.ex. 100 eller 1:50.');
+      return;
+    }
+    if (ui.mode === '3d') void setMode('2d');
+    view.zoomBy(Camera.scaleFor(n, screenMm()) / view.camera.scale);
+    closeScalePop();
+  });
+  scalePop.addEventListener('keydown', (e) => {
+    e.stopPropagation();
+    if (e.key === 'Escape') closeScalePop();
+  });
+  document.addEventListener('pointerdown', (e) => {
+    if (!scalePop.hidden && !(e.target as Element).closest('.scale-wrap')) closeScalePop();
   });
 
   // Stilmall och spårning i Visa-menyn.

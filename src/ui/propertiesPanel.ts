@@ -42,7 +42,7 @@ const ACTION_LABEL: Record<Action, string> = {
   plain: 'Visas',
   existing: 'Befintligt',
   demolished: 'Rivs',
-  new: 'Nytt',
+  new: 'Planerat',
   absent: 'Finns inte',
 };
 
@@ -77,7 +77,6 @@ export class PropertiesPanel {
           <button role="tab" data-tab="selection" aria-selected="true">Markerat</button>
           <button role="tab" data-tab="types" aria-selected="false">Typer</button>
         </div>
-        <button class="icon-btn pane-min" data-action="toggle-panel" aria-label="Fäll ihop egenskaperna" title="Fäll ihop (P)"></button>
         <button class="icon-btn panel-close" data-action="toggle-panel" aria-label="Stäng panelen"></button>
       </div>
       <div class="quick-bar" hidden></div>
@@ -396,7 +395,7 @@ export class PropertiesPanel {
       case 'Text': {
         const p = resolveParams<{ text: string; height: number; angle: number }>(doc, el);
         return `<label class="field" for="f-text-text"><span>Text</span><textarea id="f-text-text" data-key="text:text" rows="2">${escapeHtml(p.text)}</textarea></label>
-          <div class="fields">${numberField('param:height', 'Texthöjd på papper', p.height, 'mm')}${numberField('param:angle', 'Vridning', p.angle, '°')}</div>`;
+          <div class="fields">${numberField('param:height', 'Texthöjd på papper', p.height, 'mm', 2)}${numberField('param:angle', 'Vridning', p.angle, '°')}</div>`;
       }
       default:
         return '';
@@ -742,9 +741,15 @@ export class PropertiesPanel {
   }
 }
 
-function numberField(key: string, label: string, value: number, unit: string): string {
+/**
+ * Sifferfält. Mått i modellen visas i hela mm; mått på papper för
+ * annotering (texthöjder) med två decimaler, `decimals = 2`.
+ */
+function numberField(key: string, label: string, value: number, unit: string, decimals = 0): string {
   const id = `f-${key.replace(':', '-')}`;
-  return `<label class="field" for="${id}"><span>${label}</span><span class="input-unit"><input type="number" inputmode="numeric" id="${id}" data-key="${key}" value="${Math.round(value)}"><i>${unit}</i></span></label>`;
+  const shown = decimals > 0 ? Number(value).toFixed(decimals) : String(Math.round(value));
+  const extra = decimals > 0 ? ` inputmode="decimal" step="${(1 / 10 ** decimals).toFixed(decimals)}" min="0"` : ' inputmode="numeric"';
+  return `<label class="field" for="${id}"><span>${label}</span><span class="input-unit"><input type="number"${extra} id="${id}" data-key="${key}" value="${shown}"><i>${unit}</i></span></label>`;
 }
 
 function textField(key: string, label: string, value: string): string {

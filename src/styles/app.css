@@ -2503,50 +2503,88 @@ svg.plan .underlay {
   font-style: italic;
 }
 
-.pane-min svg {
-  transition: transform 0.15s;
-}
-
 .nav-btn {
   margin-left: -6px;
 }
 
 @media (min-width: 961px) {
-  /* Båda öppna: navigatorn överst, egenskaperna under. Den som fällts ihop
-     visar bara sitt huvud och sitter kvar mot den andra. */
-  .dock .panel {
-    display: flex;
-    flex: 1 1 0;
-    min-height: 0;
+  /* Navigatorn och egenskaperna bredvid varandra, var och en med sin knapp
+     (☰ och P) och sin bredd. Strecket i vänsterkanten ändrar bredden och
+     fäller ihop panelen vid klick. */
+  .app,
+  .app.panel-open,
+  .app.nav-open {
+    grid-template-columns: var(--rail-w) minmax(0, 1fr) auto;
+  }
+  .dock {
+    flex-direction: row;
     border-left: 0;
   }
-  .dock .navigator {
-    flex: 0 1 42%;
-  }
-  .app:not(.panel-open) .dock .navigator {
-    flex: 1 1 0;
-  }
-  .navigator + .panel {
-    border-top: 1px solid var(--rule);
-  }
-  .app:not(.nav-open) .dock .navigator {
-    flex: none;
-  }
-  .app:not(.nav-open) .nav-body,
-  .app:not(.panel-open) .dock .panel .panel-body,
-  .app:not(.panel-open) .dock .panel .quick-bar {
+  .dock > .navigator,
+  .dock > .panel {
+    position: relative;
     display: none;
-  }
-  .app:not(.panel-open) .dock .panel {
     flex: none;
+    min-height: 0;
+    border-left: 1px solid var(--rule);
   }
-  .app:not(.nav-open) .navigator .pane-min svg,
-  .app:not(.panel-open) .panel .pane-min svg {
-    transform: rotate(-90deg);
+  .dock > .navigator {
+    width: var(--nav-w, 300px);
+  }
+  .dock > .panel {
+    width: var(--prop-w, 340px);
+  }
+  .app.nav-open .dock > .navigator,
+  .app.panel-open .dock > .panel {
+    display: flex;
   }
   .nav-close {
     display: none;
   }
+}
+
+.pane-resize {
+  display: none;
+}
+
+@media (min-width: 961px) {
+  .pane-resize {
+    display: block;
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: -5px;
+    width: 9px;
+    z-index: 5;
+    cursor: col-resize;
+    touch-action: none;
+  }
+  .pane-resize::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 4px;
+    width: 1px;
+    background: transparent;
+    transition: background 0.12s, width 0.12s, left 0.12s;
+  }
+  .pane-resize:hover::after,
+  .pane-resize:focus-visible::after,
+  .pane-resize.active::after {
+    left: 3px;
+    width: 3px;
+    background: var(--accent);
+  }
+  .pane-resize:focus-visible {
+    outline: none;
+  }
+}
+
+body.resizing-pane,
+body.resizing-pane * {
+  cursor: col-resize !important;
+  user-select: none;
 }
 
 @media (max-width: 960px) {
@@ -2556,9 +2594,6 @@ svg.plan .underlay {
   .app.panel-open .dock,
   .app.nav-open .dock {
     display: contents;
-  }
-  .pane-min {
-    display: none;
   }
   .navigator {
     position: fixed;
@@ -2589,4 +2624,112 @@ svg.plan .underlay {
     width: 40px;
     height: 40px;
   }
+}
+
+/* ---------- Skärmskalan ---------- */
+
+.scale-btn {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0;
+  padding: 2px 7px;
+  text-transform: none;
+  letter-spacing: 0;
+  font: 400 12px var(--font-data);
+  border-color: transparent;
+}
+
+.scale-btn:hover,
+.scale-btn[aria-expanded='true'] {
+  border-color: var(--rule);
+}
+
+.scale-pop {
+  position: fixed;
+  left: max(12px, env(safe-area-inset-left, 0px));
+  bottom: calc(var(--status-h) + 8px);
+  z-index: 30;
+  display: grid;
+  grid-template-columns: auto auto;
+  justify-content: start;
+  align-items: center;
+  gap: 8px;
+  max-width: min(320px, calc(100vw - 24px));
+  padding: 10px 10px 10px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--chrome);
+  color: var(--ink);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.16);
+  font: 400 13px var(--font-ui);
+  white-space: normal;
+}
+
+.scale-pop label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.scale-pop label span {
+  font-family: var(--font-data);
+}
+
+.scale-pop .btn {
+  justify-self: start;
+  min-width: 40px;
+}
+
+.scale-pop input {
+  width: 92px;
+  font: 500 16px var(--font-data);
+  padding: 4px 8px;
+}
+
+.scale-note {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+button.link {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.inline-field {
+  max-width: 260px;
+}
+
+/* ---------- Text som redigeras i ritningen ---------- */
+
+.inline-text {
+  position: absolute;
+  z-index: 6;
+  transform-origin: 0 0;
+  margin: 0;
+  padding: 0 2px;
+  min-width: 4ch;
+  border: 1px solid var(--sel);
+  border-radius: 3px;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  resize: none;
+  overflow: hidden;
+  white-space: pre;
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--sel) 25%, transparent);
+}
+
+.inline-text.bold {
+  font-weight: 650;
 }

@@ -23,6 +23,11 @@ export interface ToolHost {
   wallEndMoved?(wallId: Id, end: 'start' | 'end', originalLength: number, companions: Id[]): void;
   /** Objekt har flyttats; visa rutan där avstånd och vinkel kan skrivas in. */
   elementsMoved?(ids: Id[], applied: Vec2, anchor: Vec2): void;
+  /**
+   * Dubbelklick på ett objekt: redigera dess text direkt i ritningen om det
+   * har en. Svarar true om redigeringen startade.
+   */
+  editText?(id: Id, at: Vec2): boolean;
 }
 
 /** Skärmpixlar till mm vid nuvarande zoom. */

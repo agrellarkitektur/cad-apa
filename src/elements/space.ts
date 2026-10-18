@@ -32,7 +32,7 @@ export const spaceType: ElementType<SpaceParams> = {
     const rows: { text: string; height: number; bold?: boolean; muted?: boolean }[] = [
       { text: (el.name ?? 'Rum').toLocaleUpperCase('sv-SE'), height: heights.roomName, bold: true },
       { text: roomNumbersFor(ctx).get(el.id) ?? '', height: heights.roomInfo },
-      { text: formatArea(areaOf(pts)), height: heights.roomInfo, muted: true },
+      { text: formatArea(areaOf(pts)), height: heights.roomInfo },
     ];
     if (p.ceilingHeight) rows.push({ text: `TH ${p.ceilingHeight.toLocaleString('sv-SE')}`, height: heights.roomInfo, muted: true });
     const shown = rows.filter((r) => r.text);

@@ -76,7 +76,28 @@ function distToPrim(p: Vec2, prim: Primitive): number {
       return d;
     }
     case 'text':
-      // Ungefär: texten räknas som en punkt med en viss radie.
-      return Math.max(0, dist(p, prim.at) - 300);
+      return distToText(p, prim);
   }
+}
+
+/** Ritningsskalan som texthöjderna räknas i (som i planen). */
+const DRAWING_SCALE = 100;
+
+/**
+ * Avstånd till en ungefärlig ruta runt texten (0 inuti), så att man träffar
+ * en etikett var man än pekar på den, även långa vänsterjusterade rader.
+ */
+function distToText(p: Vec2, t: Extract<Primitive, { kind: 'text' }>): number {
+  const h = t.height * DRAWING_SCALE;
+  const w = Math.max(1, t.text.length) * h * 0.62;
+  const a = t.angle ?? 0;
+  const dx = p[0] - t.at[0];
+  const dy = p[1] - t.at[1];
+  // Punkten i textens eget system: x längs raden, y uppåt från baslinjen.
+  const x = dx * Math.cos(a) + dy * Math.sin(a);
+  const y = -dx * Math.sin(a) + dy * Math.cos(a);
+  const x0 = t.align === 'middle' ? -w / 2 : t.align === 'end' ? -w : 0;
+  const ox = Math.max(x0 - x, 0, x - (x0 + w));
+  const oy = Math.max(-h * 0.3 - y, 0, y - h);
+  return Math.hypot(ox, oy);
 }
