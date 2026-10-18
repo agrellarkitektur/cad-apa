@@ -1,0 +1,614 @@
+import { beforeAll, describe, expect, it } from 'vitest';
+import {
+  createDefinition,
+  createProposal,
+  deleteElements,
+  deleteState,
+  moveElements,
+  moveWallEnd,
+  setDefinition,
+  setElementInState,
+  setInState,
+  updateDefinition,
+} from '../src/core/commands';
+import { actionOf } from '../src/core/states';
+import { DocStore } from '../src/core/store';
+import { registerBuiltInTypes } from '../src/elements';
+import { resolveParams } from '../src/elements/registry';
+import { areaOf } from '../src/elements/space';
+import { computeWallShapes, type WallParams } from '../src/elements/wall';
+import { union } from '../src/geometry/boolean';
+import { buildPlan } from '../src/repr/plan';
+import type { Solid } from '../src/repr/solids';
+import { sampleProject } from '../src/sample/sampleProject';
+import { parse, serialize, ProjectFormatError } from '../src/storage/format';
+import { snap } from '../src/ui/tools/snap';
+
+beforeAll(() => registerBuiltInTypes());
+
+describe('åtgärd räknas ut från tillstånd', () => {
+  const view = { state: 'a', compareTo: 'bef' };
+  it('finns i båda: befintligt', () => expect(actionOf({ states: ['bef', 'a'] }, view)).toBe('existing'));
+  it('finns bara i jämförelsen: rivs', () => expect(actionOf({ states: ['bef'] }, view)).toBe('demolished'));
+  it('finns bara i förslaget: nytt', () => expect(actionOf({ states: ['a'] }, view)).toBe('new'));
+  it('finns i inget av dem: syns inte', () => expect(actionOf({ states: ['b'] }, view)).toBe('absent'));
+  it('utan jämförelse: vanlig', () => expect(actionOf({ states: ['a'] }, { state: 'a' })).toBe('plain'));
+  it('samma vägg kan rivas i A och stå kvar i B', () => {
+    const el = { states: ['bef', 'b'] };
+    expect(actionOf(el, { state: 'a', compareTo: 'bef' })).toBe('demolished');
+    expect(actionOf(el, { state: 'b', compareTo: 'bef' })).toBe('existing');
+  });
+});
+
+describe('ångra och gör om', () => {
+  it('återställer exakt', () => {
+    const store = new DocStore(sampleProject());
+    const before = serialize(store.doc);
+    setElementInState(store, 'yv-s', 'st-a', false);
+    expect(store.doc.elements['yv-s'].states).not.toContain('st-a');
+    store.undo();
+    expect(serialize(store.doc)).toBe(before);
+    store.redo();
+    expect(store.doc.elements['yv-s'].states).not.toContain('st-a');
+  });
+
+  it('en ny ändring tömmer gör om-listan', () => {
+    const store = new DocStore(sampleProject());
+    setElementInState(store, 'iv-1', 'st-b', false);
+    store.undo();
+    expect(store.canRedo).toBe(true);
+    setElementInState(store, 'iv-2', 'st-b', false);
+    expect(store.canRedo).toBe(false);
+  });
+});
+
+describe('tillstånd för markerade objekt', () => {
+  it('kryssas en vägg ur följer dess dörrar och fönster med', () => {
+    const store = new DocStore(sampleProject());
+    setInState(store, ['yv-s'], 'st-a', false);
+    for (const id of ['d01', 'f01', 'f02']) expect(store.doc.elements[id].states).not.toContain('st-a');
+    store.undo();
+    expect(store.doc.elements['d01'].states).toContain('st-a');
+  });
+
+  it('kryssas en dörr i följer dess vägg med', () => {
+    const store = new DocStore(sampleProject());
+    setInState(store, ['d06'], 'st-a', true);
+    expect(store.doc.elements['iv-3'].states).toContain('st-a');
+  });
+
+  it('flera objekt ändras i ett steg', () => {
+    const store = new DocStore(sampleProject());
+    setInState(store, ['iv-1', 'iv-2'], 'st-b', false);
+    expect(store.doc.elements['iv-1'].states).not.toContain('st-b');
+    expect(store.doc.elements['iv-2'].states).not.toContain('st-b');
+    store.undo();
+    expect(store.doc.elements['iv-1'].states).toContain('st-b');
+    expect(store.doc.elements['iv-2'].states).toContain('st-b');
+  });
+});
+
+describe('kommandon', () => {
+  it('ta bort en vägg tar bort det som sitter i den', () => {
+    const store = new DocStore(sampleProject());
+    deleteElements(store, ['iv-1']);
+    expect(store.doc.elements['d02']).toBeUndefined();
+    expect(store.doc.elements['d03']).toBeUndefined();
+  });
+
+  it('nytt förslag kopierar ett annat', () => {
+    const store = new DocStore(sampleProject());
+    const c = createProposal(store, 'Förslag C', 'st-a');
+    const inA = Object.values(store.doc.elements).filter((e) => e.states.includes('st-a')).length;
+    const inC = Object.values(store.doc.elements).filter((e) => e.states.includes(c.id)).length;
+    expect(inC).toBe(inA);
+  });
+
+  it('tas ett tillstånd bort försvinner det som bara fanns där', () => {
+    const store = new DocStore(sampleProject());
+    deleteState(store, 'st-a');
+    expect(store.doc.elements['iv-4']).toBeUndefined();
+    expect(store.doc.elements['iv-1']).toBeDefined();
+  });
+
+  it('väggände som dras flyttar bara den egna väggen', () => {
+    const store = new DocStore(sampleProject());
+    moveWallEnd(store, 'yv-s', 'start', [12800, 200]);
+    expect((store.doc.elements['yv-s'].params as unknown as WallParams).start).toEqual([12800, 200]);
+    expect((store.doc.elements['yv-o'].params as unknown as WallParams).end).toEqual([11800, 200]);
+  });
+
+  it('anslutna väggar kan följa med när det begärs', () => {
+    const store = new DocStore(sampleProject());
+    moveWallEnd(store, 'yv-s', 'start', [12800, 200], { connected: true });
+    expect((store.doc.elements['yv-s'].params as unknown as WallParams).start).toEqual([12800, 200]);
+    expect((store.doc.elements['yv-o'].params as unknown as WallParams).end).toEqual([12800, 200]);
+    expect((store.doc.elements['yv-o'].params as unknown as WallParams).start).toEqual([11800, 7800]);
+  });
+
+  it('dörrar och fönster står still när väggen förlängs åt endera hållet', () => {
+    const store = new DocStore(sampleProject());
+    const at = store.doc.elements['d01'].params.at as number;
+    moveWallEnd(store, 'yv-s', 'start', [12800, 200]);
+    expect(store.doc.elements['d01'].params.at).toBe(at + 1000);
+    moveWallEnd(store, 'yv-s', 'end', [-800, 200]);
+    expect(store.doc.elements['d01'].params.at).toBe(at + 1000);
+  });
+
+  it('bara de markerade väggarna följer med, även om de blir sneda', () => {
+    const store = new DocStore(sampleProject());
+    moveWallEnd(store, 'yv-s', 'start', [12500, -300], { connected: ['yv-o'] });
+    expect((store.doc.elements['yv-o'].params as unknown as WallParams).end).toEqual([12500, -300]);
+    expect((store.doc.elements['yv-o'].params as unknown as WallParams).start).toEqual([11800, 7800]);
+    expect((store.doc.elements['yv-n'].params as unknown as WallParams).end).toEqual([11800, 7800]);
+  });
+
+  it('flytt av en vägg tar med dess dörrar och fönster', () => {
+    const store = new DocStore(sampleProject());
+    const before = store.doc.elements['d02'].params.at;
+    moveElements(store, ['iv-1', 'm01'], [300, 0]);
+    expect((store.doc.elements['iv-1'].params as unknown as WallParams).start).toEqual([5300, 400]);
+    expect(store.doc.elements['d02'].params.at).toBe(before);
+    expect(store.doc.elements['m01'].params.origin).toEqual([700, 7000]);
+    store.undo();
+    expect(store.doc.elements['m01'].params.origin).toEqual([400, 7000]);
+  });
+
+  it('en dörr som flyttas glider längs sin vägg', () => {
+    const store = new DocStore(sampleProject());
+    const before = store.doc.elements['d01'].params.at as number;
+    moveElements(store, ['d01'], [500, 300]);
+    // Ytterväggen i söder är ritad västerut, så läget längs den minskar.
+    expect(store.doc.elements['d01'].params.at).toBe(before - 500);
+  });
+});
+
+describe('typer och littera', () => {
+  it('tjockleken kommer från typen', () => {
+    const doc = sampleProject();
+    expect(resolveParams<WallParams>(doc, doc.elements['iv-1']).thickness).toBe(120);
+    expect(resolveParams<WallParams>(doc, doc.elements['yv-s']).thickness).toBe(400);
+  });
+
+  it('ändras typen ändras alla väggar av den', () => {
+    const store = new DocStore(sampleProject());
+    updateDefinition(store, 't-iv01', { params: { thickness: 145 } });
+    for (const id of ['iv-1', 'iv-2', 'iv-3', 'iv-4']) {
+      expect(resolveParams<WallParams>(store.doc, store.doc.elements[id]).thickness).toBe(145);
+    }
+  });
+
+  it('ny typ kan ges till markerade väggar', () => {
+    const store = new DocStore(sampleProject());
+    const def = createDefinition(store, 'Wall', 'IV02', { thickness: 70 }, ['iv-3']);
+    expect(resolveParams<WallParams>(store.doc, store.doc.elements['iv-3']).thickness).toBe(70);
+    setDefinition(store, ['iv-3'], 't-iv01');
+    expect(resolveParams<WallParams>(store.doc, store.doc.elements['iv-3']).thickness).toBe(120);
+    expect(store.doc.definitions[def.id].name).toBe('IV02');
+  });
+});
+
+describe('väggskarvar', () => {
+  const w = (id: string, start: [number, number], end: [number, number], thickness = 200): { id: string; p: WallParams } => ({
+    id,
+    p: { start, end, thickness, height: 2700, justification: 'center' },
+  });
+
+  it('L-hörn geras så att ytterhörnet blir skarpt', () => {
+    const shapes = computeWallShapes([w('a', [0, 0], [3000, 0]), w('b', [3000, 0], [3000, 2000])], () => []);
+    const merged = union([...shapes.get('a')!, ...shapes.get('b')!]);
+    expect(merged).toHaveLength(1);
+    const pts = merged[0][0];
+    // Ytterhörnet ligger i (3100, -100).
+    expect(pts.some(([x, y]) => Math.abs(x - 3100) < 0.01 && Math.abs(y + 100) < 0.01)).toBe(true);
+    // Innerhörnet i (2900, 100).
+    expect(pts.some(([x, y]) => Math.abs(x - 2900) < 0.01 && Math.abs(y - 100) < 0.01)).toBe(true);
+  });
+
+  it('T-skarv blir en sammanhängande yta', () => {
+    const shapes = computeWallShapes([w('a', [0, 0], [4000, 0]), w('b', [2000, 0], [2000, 3000], 120)], () => []);
+    expect(union([...shapes.get('a')!, ...shapes.get('b')!])).toHaveLength(1);
+  });
+
+  it('öppningar skärs ut ur sin vägg', () => {
+    const shapes = computeWallShapes([w('a', [0, 0], [4000, 0])], () => [{ at: 2000, width: 1000 }]);
+    expect(shapes.get('a')).toHaveLength(2);
+  });
+});
+
+describe('planen', () => {
+  it('rivs, befintligt och nytt får stilmallens grafik', () => {
+    const { prims } = buildPlan(sampleProject(), 'pl-1', { state: 'st-a', compareTo: 'st-bef' });
+    const regions = prims.filter((p) => p.kind === 'region');
+    // Svensk standard: befintligt vitt, nytt skrafferat, rivet utan fyllning och streckat.
+    expect(regions.some((r) => r.kind === 'region' && r.fill.kind === 'solid' && r.fill.color === 'paper')).toBe(true);
+    expect(regions.some((r) => r.kind === 'region' && r.fill.kind === 'hatch')).toBe(true);
+    expect(regions.some((r) => r.kind === 'region' && r.fill.kind === 'none' && !!r.outline?.dash)).toBe(true);
+  });
+
+  it('befintliga dörrar ritas 30° öppna och nya 90°', () => {
+    const { prims } = buildPlan(sampleProject(), 'pl-1', { state: 'st-b', compareTo: 'st-bef' });
+    const arc = (id: string) => prims.find((p) => p.kind === 'arc' && p.origin?.objectId === id);
+    const span = (id: string) => {
+      const a = arc(id);
+      if (!a || a.kind !== 'arc') return NaN;
+      const t = Math.PI * 2;
+      return ((((a.end - a.start) % t) + t) % t) * (180 / Math.PI);
+    };
+    expect(span('d02')).toBeCloseTo(30); // befintlig
+    expect(span('d05')).toBeCloseTo(90); // ny i B
+    expect(span('d04')).toBeCloseTo(30); // rivs i B
+  });
+
+  it('Befintligt utan jämförelse ritas som befintligt, med 30°-dörrar', () => {
+    const { prims } = buildPlan(sampleProject(), 'pl-1', { state: 'st-bef' });
+    const a = prims.find((p) => p.kind === 'arc' && p.origin?.objectId === 'd02');
+    expect(a && a.kind === 'arc' ? ((a.end - a.start + Math.PI * 4) % (Math.PI * 2)) * (180 / Math.PI) : NaN).toBeCloseTo(30);
+  });
+
+  it('rum visas bara i sina egna tillstånd', () => {
+    const { pickables } = buildPlan(sampleProject(), 'pl-1', { state: 'st-a', compareTo: 'st-bef' });
+    const ids = new Set(pickables.map((p) => p.id));
+    expect(ids.has('r05')).toBe(true);
+    expect(ids.has('r03')).toBe(false);
+  });
+
+  it('räknar rumsarea i m²', () => {
+    expect(areaOf([[0, 0], [4000, 0], [4000, 3000], [0, 3000]])).toBeCloseTo(12);
+  });
+});
+
+describe('snäpp', () => {
+  const segs = [{ id: 'a', a: [0, 0] as [number, number], b: [4000, 0] as [number, number] }];
+  it('ändpunkt går före allt annat', () => {
+    const r = snap({ cursor: [30, 20], segments: segs, tol: 50 });
+    expect(r.kind).toBe('endpoint');
+    expect(r.point).toEqual([0, 0]);
+  });
+  it('mittpunkt', () => {
+    expect(snap({ cursor: [2010, 15], segments: segs, tol: 50 }).kind).toBe('midpoint');
+  });
+  it('vinkellås drar till jämna 15°', () => {
+    const r = snap({ cursor: [3000, 80], from: [0, 2000], segments: [], tol: 50 });
+    expect(r.kind).toBe('angle');
+  });
+  it('vinkelrätt mot en vägg', () => {
+    const r = snap({ cursor: [1205, 20], from: [1200, 3000], segments: segs, tol: 50 });
+    expect(r.kind).toBe('perpendicular');
+    expect(r.point[0]).toBeCloseTo(1200);
+  });
+});
+
+describe('filformat', () => {
+  it('sparar och läser utan förlust', () => {
+    const doc = sampleProject();
+    expect(parse(serialize(doc))).toEqual(doc);
+  });
+
+  it('uppgraderar ett projekt från format 1', () => {
+    const v1 = { ...sampleProject(), formatVersion: 1 } as any;
+    delete v1.graphics;
+    const doc = parse(JSON.stringify(v1));
+    expect(doc.formatVersion).toBe(3);
+    expect(doc.graphics.name).toBe('Svensk standard');
+  });
+
+  it('behåller element av okända typer', () => {
+    const doc = sampleProject();
+    (doc.elements as any)['x1'] = { id: 'x1', type: 'Trappa', storey: 'pl-1', states: ['st-bef'], tags: [], params: { steg: 14 }, props: {} };
+    const back = parse(serialize(doc));
+    expect(back.elements['x1'].params).toEqual({ steg: 14 });
+    expect(() => buildPlan(back, 'pl-1', { state: 'st-bef' })).not.toThrow();
+  });
+
+  it('säger tydligt ifrån om filen är fel', () => {
+    expect(() => parse('{"hej":1}')).toThrow(ProjectFormatError);
+    expect(() => parse('inte json')).toThrow(/JSON/);
+    expect(() => parse('{"format":"bacchus-project","formatVersion":99}')).toThrow(/nyare version/);
+  });
+});
+
+describe('3D', () => {
+  it('väggar, dörrar och fönster blir 3D-former, rivet syns inte', async () => {
+    const { buildModel3d } = await import('../src/repr/model3d');
+    const doc = sampleProject();
+    const solids = buildModel3d(doc, 'pl-1', { state: 'st-a', compareTo: 'st-bef' });
+    const ids = new Set(solids.map((s) => s.id));
+    expect(ids.has('iv-4')).toBe(true); // ny vägg i A
+    expect(ids.has('iv-3')).toBe(false); // rivs i A
+    expect(ids.has('f01')).toBe(true);
+    expect(solids.some((s) => s.id === 'iv-4' && s.material === 'wall-new')).toBe(true);
+  });
+
+  it('väggen är en hel kropp med öppningarna som urtag', async () => {
+    const { buildModel3d } = await import('../src/repr/model3d');
+    const shapes = buildModel3d(sampleProject(), 'pl-1', { state: 'st-bef' });
+    const south = shapes.filter((s) => s.id === 'yv-s' && s.kind !== 'edges');
+    expect(south).toHaveLength(1);
+    const cuts = (south[0] as Solid).cuts ?? [];
+    // Fönster från bröstningen 900 till 2100, dörren från golvet.
+    expect(cuts.some((c) => c.z0 === 900 && c.z1 === 2110)).toBe(true); // hålet är 10 mm större än modulmåttet
+    expect(cuts.some((c) => c.z0 === 0)).toBe(true);
+  });
+
+  it('ytorna runt ett urtag blir hela, utan dubbla eller saknade ytor', async () => {
+    const { solidTriangles } = await import('../src/repr/mesh');
+    // Vägg 1000 lång, 100 tjock, 1000 hög, med ett fönster 200 brett från 200 till 800.
+    const tris = solidTriangles({
+      id: 'w',
+      rings: [[[0, 0], [1000, 0], [1000, 100], [0, 100]]],
+      z0: 0,
+      z1: 1000,
+      material: 'wall',
+      cuts: [{ rings: [[[400, -1], [600, -1], [600, 101], [400, 101]]], z0: 200, z1: 800 }],
+    });
+    const area = triArea(tris);
+    const faces = 2 * (1000 * 1000 - 200 * 600);
+    const ends = 2 * 100 * 1000;
+    const caps = 2 * 1000 * 100;
+    const reveals = 2 * 100 * 600 + 2 * 200 * 100;
+    expect(area).toBeCloseTo(faces + ends + caps + reveals, 0);
+
+    // En dörr från golvet: hål i undersidan i stället för bröstning.
+    const door = solidTriangles({
+      id: 'w',
+      rings: [[[0, 0], [1000, 0], [1000, 100], [0, 100]]],
+      z0: 0,
+      z1: 1000,
+      material: 'wall',
+      cuts: [{ rings: [[[400, -1], [600, -1], [600, 101], [400, 101]]], z0: 0, z1: 800 }],
+    });
+    expect(triArea(door)).toBeCloseTo(2 * (1000 * 1000 - 200 * 800) + ends + 1000 * 100 + 800 * 100 + 2 * 100 * 800 + 200 * 100, 0);
+  });
+});
+
+function triArea(t: number[]): number {
+  let sum = 0;
+  for (let i = 0; i < t.length; i += 9) {
+    const u = [t[i + 3] - t[i], t[i + 4] - t[i + 1], t[i + 5] - t[i + 2]];
+    const v = [t[i + 6] - t[i], t[i + 7] - t[i + 1], t[i + 8] - t[i + 2]];
+    sum += Math.hypot(u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]) / 2;
+  }
+  return sum;
+}
+
+describe('markeringar för öppningar', () => {
+  it('igensatt dörr och nya öppningar i befintlig vägg ritas som nytt', () => {
+    const { prims } = buildPlan(sampleProject(), 'pl-1', { state: 'st-b', compareTo: 'st-bef' });
+    const marks = prims.filter((p) => p.origin?.part === 'markering' && p.kind === 'region');
+    expect(marks.some((p) => p.origin?.objectId === 'd04')).toBe(true); // igensatt
+    expect(marks.filter((p) => p.origin?.objectId === 'd05').length).toBe(2); // två zoner
+    expect(marks.every((p) => p.kind === 'region' && p.fill.kind === 'hatch')).toBe(true);
+  });
+});
+
+describe('nytt projekt', () => {
+  it('nybyggnad har bara ett förslag, ombyggnad även befintligt', async () => {
+    const { emptyProject } = await import('../src/core/model');
+    expect(emptyProject('Hus', 'nybyggnad').states.map((s) => s.kind)).toEqual(['proposal']);
+    expect(emptyProject('Hus', 'ombyggnad').states.map((s) => s.kind)).toEqual(['existing', 'proposal']);
+  });
+});
+
+describe('ut- och insida, karmar och kant i kant', () => {
+  it('ytterväggar vet vilken sida som är ute', async () => {
+    const { outsideSide, faceOf, justificationFor } = await import('../src/elements/wallSides');
+    const doc = sampleProject();
+    // yv-s går västerut med insidan (norr) till höger, så vänster sida är ute.
+    expect(outsideSide(doc, doc.elements['yv-s'])).toBe(1);
+    expect(outsideSide(doc, doc.elements['iv-1'])).toBeNull();
+    expect(faceOf(doc, doc.elements['yv-s']).label).toBe('Center');
+    const j = justificationFor(doc, doc.elements['yv-s'], 'outside');
+    const store = new DocStore(doc);
+    store.transact('test', (tx) => tx.putElement({ ...doc.elements['yv-s'], params: { ...doc.elements['yv-s'].params, justification: j } }));
+    expect(faceOf(store.doc, store.doc.elements['yv-s']).face).toBe('outside');
+  });
+
+  it('karmen sitter 50 mm in från utsidan i yttervägg och i liv på öppningssidan i innervägg', async () => {
+    const { createContext } = await import('../src/repr/context');
+    const { openingZone } = await import('../src/elements/opening');
+    const doc = sampleProject();
+    const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef' }, doc.graphics, () => true);
+    // Yttervägg 400 tjock med utsidan till vänster (o = 200): karmen 100 djup från o = 150 till 50.
+    const ext = openingZone(ctx, doc.elements['yv-s'], ctx.params(doc.elements['f01']));
+    expect([ext.lo, ext.hi]).toEqual([50, 150]);
+    // Innervägg 120 tjock, dörren slår åt höger (-1): karmen i liv med o = -60.
+    const int = openingZone(ctx, doc.elements['iv-1'], ctx.params(doc.elements['d02']));
+    expect([int.lo, int.hi]).toEqual([-60, 40]);
+  });
+
+  it('skiss ritar inga karmar, normal gör det', () => {
+    const karmar = (detail: 'sketch' | 'normal') =>
+      buildPlan(sampleProject(), 'pl-1', { state: 'st-bef', detail }).prims.filter((p) => p.origin?.part === 'karm').length;
+    expect(karmar('sketch')).toBe(0);
+    expect(karmar('normal')).toBeGreaterThan(10);
+  });
+
+  it('en glasad dörr får en glasningslinje', () => {
+    const { prims } = buildPlan(sampleProject(), 'pl-1', { state: 'st-b' });
+    expect(prims.some((p) => p.origin?.objectId === 'd05' && p.origin.part === 'glasning')).toBe(true);
+    expect(prims.some((p) => p.origin?.objectId === 'd02' && p.origin.part === 'glasning')).toBe(false);
+  });
+
+  it('kant i kant: en möbel nära en vägg läggs an mot den', async () => {
+    const { flushSnap } = await import('../src/ui/tools/snap');
+    const box: [number, number][] = [
+      [0, 0],
+      [1000, 0],
+      [1000, 500],
+      [0, 500],
+    ];
+    const wall = { id: 'w', a: [-2000, 560] as [number, number], b: [3000, 560] as [number, number] };
+    const side = { id: 'v', a: [-40, -2000] as [number, number], b: [-40, 3000] as [number, number] };
+    const r = flushSnap([box], [wall, side], [0, 0], 100);
+    expect(r?.d[0]).toBeCloseTo(-40);
+    expect(r?.d[1]).toBeCloseTo(60);
+    expect(flushSnap([box], [wall], [0, -300], 100)).toBeNull();
+  });
+});
+
+describe('rum och anteckningar', () => {
+  it('rummen numreras i vänstervarv från entrén', async () => {
+    const { createContext } = await import('../src/repr/context');
+    const { roomNumbersFor } = await import('../src/elements/rooms');
+    const doc = sampleProject();
+    const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef' }, doc.graphics, () => true);
+    const n = roomNumbersFor(ctx);
+    expect(n.get('r01')).toBe('1101'); // allrummet innanför entrén
+    expect(new Set(n.values()).size).toBe(n.size);
+    for (const v of n.values()) expect(v).toMatch(/^11\d\d$/);
+  });
+
+  it('ett rum med punkt följer väggarna', async () => {
+    const { createContext } = await import('../src/repr/context');
+    const { spaceOutline } = await import('../src/elements/rooms');
+    const store = new DocStore(sampleProject());
+    moveElements(store, ['iv-1'], [500, 0]);
+    const { ctx } = createContext(store.doc, 'pl-1', { state: 'st-bef' }, store.doc.graphics, () => true);
+    const xs = spaceOutline(ctx, store.doc.elements['r01'] as never).map((q) => q[0]);
+    expect(Math.max(...xs)).toBe(5440); // innerväggens vänstra liv har flyttat 500 mm
+  });
+
+  it('en måttkedja ger ett mått per sträcka', async () => {
+    const { dimensionPrims } = await import('../src/elements/annotation');
+    const prims = dimensionPrims({ points: [[0, 0], [1200, 0], [3000, 0]], angle: 0, offset: 500 }, 100);
+    const texts = prims.filter((p) => p.kind === 'text').map((p) => (p.kind === 'text' ? p.text : ''));
+    expect(texts).toEqual(['1200', '1800']);
+  });
+
+  it('littera ritas för väggar, dörrar och fönster och kan döljas', () => {
+    const tags = (hide?: string[]) =>
+      buildPlan(sampleProject(), 'pl-1', { state: 'st-bef', hide }).prims.filter((p) => p.origin?.part === 'littera').length;
+    expect(tags()).toBeGreaterThan(10);
+    expect(tags(['littera'])).toBe(0);
+  });
+
+  it('rivet kan döljas men igensatta dörrhål syns ändå', () => {
+    const prims = buildPlan(sampleProject(), 'pl-1', { state: 'st-b', compareTo: 'st-bef', hideDemolished: true }).prims;
+    // d04 rivs i B: bara igensättningen finns kvar.
+    const d04 = prims.filter((p) => p.origin?.objectId === 'd04');
+    expect(d04.length).toBeGreaterThan(0);
+    expect(d04.every((p) => p.kind === 'region')).toBe(true);
+    // Rivna väggar ritas inte.
+    expect(prims.some((p) => p.kind === 'region' && p.styleAs === undefined && !!p.outline?.dash)).toBe(false);
+  });
+});
+
+describe('version 0.6', () => {
+  it('ett projekt i format 2 får ytterväggarna vända utan att något flyttas', async () => {
+    const { wallsFacingOut } = await import('../src/elements/wallSides');
+    const doc = sampleProject();
+    // Vänd tillbaka yv-s som den var ritad före format 3 (österut).
+    const { reversedWall } = await import('../src/core/commands');
+    const old = { ...structuredClone(doc), formatVersion: 2 } as any;
+    for (const e of reversedWall(old, old.elements['yv-s'], true)) old.elements[e.id] = e;
+    expect(wallsFacingOut(old).map((e) => e.id)).toEqual(['yv-s']);
+    const before = buildPlan(old, 'pl-1', { state: 'st-bef' }).prims.filter((p) => p.kind === 'region').length;
+    const back = parse(JSON.stringify(old));
+    expect(wallsFacingOut(back)).toEqual([]);
+    expect(back.elements['d01'].params.at).toBe(doc.elements['d01'].params.at);
+    expect(buildPlan(back, 'pl-1', { state: 'st-bef' }).prims.filter((p) => p.kind === 'region').length).toBe(before);
+  });
+
+  it('vänd väggen byter insida men flyttar inte väggen', async () => {
+    const { flipWalls } = await import('../src/core/commands');
+    const store = new DocStore(sampleProject());
+    const p0 = store.doc.elements['iv-1'].params as unknown as WallParams;
+    const d = store.doc.elements['d02'].params;
+    flipWalls(store, ['iv-1']);
+    const p1 = store.doc.elements['iv-1'].params as unknown as WallParams;
+    expect(p1.start).toEqual(p0.end);
+    expect(store.doc.elements['d02'].params.at).toBe(7200 - (d.at as number));
+    expect(store.doc.elements['d02'].params.swing).toBe(-(d.swing as number));
+  });
+
+  it('kopiera, vrida och spegla', async () => {
+    const { copyElements, rotateElements, mirrorElements } = await import('../src/core/commands');
+    const store = new DocStore(sampleProject());
+    const [copy] = copyElements(store, ['iv-1']);
+    expect(store.doc.elements[copy].type).toBe('Wall');
+    // Dörrarna i väggen följde med.
+    expect(Object.values(store.doc.elements).filter((e) => e.host === copy).length).toBe(2);
+    rotateElements(store, [copy], [5000, 4000]);
+    const r = store.doc.elements[copy].params as unknown as WallParams;
+    expect(r.start).toEqual([8600, 4000]);
+    mirrorElements(store, ['m03'], [3000, 5200]);
+    expect(store.doc.elements['m03'].params.origin).toEqual([2880, 4400]);
+    expect(store.doc.elements['m03'].params.rotation).toBe(0);
+  });
+
+  it('modulmått: hålet är 10 mm större och karmen 10 mm mindre', async () => {
+    const { featuresOf } = await import('../src/elements/features');
+    const doc = sampleProject();
+    const [h1, h2] = featuresOf(doc, doc.elements['d02']);
+    expect(Math.abs(h2.a[1] - h1.a[1])).toBe(910);
+  });
+
+  it('dörrar får individuella nummer i vänstervarvet och litteramallen styr texten', async () => {
+    const { createContext } = await import('../src/repr/context');
+    const { doorNumbersFor } = await import('../src/elements/rooms');
+    const { litteraLines } = await import('../src/elements/littera');
+    const doc = sampleProject();
+    const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef', detail: 'detail' }, doc.graphics, () => true);
+    expect(doorNumbersFor(ctx).get('d01')).toBe('D1101');
+    expect(litteraLines(ctx, doc.elements['d02'])).toEqual([doorNumbersFor(ctx).get('d02'), '910×2110']);
+    const normal = createContext(doc, 'pl-1', { state: 'st-bef' }, doc.graphics, () => true).ctx;
+    expect(litteraLines(normal, doc.elements['d02'])).toEqual(['D1']);
+    const sketch = createContext(doc, 'pl-1', { state: 'st-bef', detail: 'sketch' }, doc.graphics, () => true).ctx;
+    expect(buildPlan(doc, 'pl-1', { state: 'st-bef', detail: 'sketch' }).prims.some((p) => p.origin?.part === 'littera')).toBe(false);
+    void sketch;
+  });
+
+  it('egna egenskaper kan visas i littera', async () => {
+    const { createContext } = await import('../src/repr/context');
+    const { litteraLines } = await import('../src/elements/littera');
+    const doc = sampleProject();
+    doc.elements['d02'].props = { Egenskaper: { Brandklass: 'EI30' } };
+    const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef', detail: 'detail' }, doc.graphics, () => true);
+    expect(litteraLines(ctx, doc.elements['d02'])).toContain('EI30');
+  });
+
+  it('ett mått knutet till väggar följer med och döljs när väggen inte syns', () => {
+    const store = new DocStore(sampleProject());
+    store.transact('mått', (tx) =>
+      tx.putElement({
+        id: 'dm',
+        type: 'Dimension',
+        storey: 'pl-1',
+        states: ['st-bef', 'st-a', 'st-b'],
+        tags: [],
+        props: {},
+        params: {
+          points: [
+            { at: [400, 2000], refs: [{ id: 'yv-v', kind: 'r' }] },
+            { at: [8440, 2000], refs: [{ id: 'iv-3', kind: 'l' }] },
+          ],
+          angle: 0,
+          offset: -500,
+        },
+      }),
+    );
+    const texts = (state: string) =>
+      buildPlan(store.doc, 'pl-1', { state }).prims.filter((p) => p.origin?.objectId === 'dm' && p.kind === 'text').map((p) => (p.kind === 'text' ? p.text : ''));
+    expect(texts('st-bef')).toEqual(['8040']);
+    moveElements(store, ['iv-3'], [200, 0]);
+    expect(texts('st-bef')).toEqual(['8240']);
+    // iv-3 finns inte i förslag A.
+    expect(texts('st-a')).toEqual([]);
+  });
+
+  it('tillfälliga mått mäter till närmaste parallella vägglivs', async () => {
+    const { computeTempDims } = await import('../src/elements/autoDims');
+    const doc = sampleProject();
+    const walls = Object.values(doc.elements).filter((e) => e.type === 'Wall' && e.id !== 'iv-3' && e.states.includes('st-bef'));
+    const dims = computeTempDims(doc.elements['iv-3'], walls, (e) => resolveParams<WallParams>(doc, e));
+    expect(dims.map((d) => Math.round(d.value)).sort((a, b) => a - b)).toEqual([3040, 3380]);
+  });
+
+  it('nytt i ett förslag måttsätts automatiskt när det är påslaget', () => {
+    const auto = (on: boolean) =>
+      buildPlan(sampleProject(), 'pl-1', { state: 'st-a', compareTo: 'st-bef', autoDims: on }).prims.filter((p) => p.origin?.part === 'auto').length;
+    expect(auto(false)).toBe(0);
+    expect(auto(true)).toBeGreaterThan(0);
+  });
+});

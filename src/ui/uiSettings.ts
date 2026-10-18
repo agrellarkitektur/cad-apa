@@ -1,0 +1,137 @@
+/**
+ * Inställningar för gränssnittet: sådant som hör till användaren och
+ * webbläsaren, inte till projektet. Sparas i webbläsaren.
+ */
+
+export type QuickId =
+  | 'flip-swing'
+  | 'flip-hinge'
+  | 'toggle-glazed'
+  | 'rotate-90'
+  | 'cycle-ref'
+  | 'flip-wall'
+  | 'copy'
+  | 'mirror'
+  | 'demolish'
+  | 'zoom-selection'
+  | 'delete';
+
+/** Snabbknappar som kan väljas, och för vilka sorters objekt de finns. */
+export const QUICK_ACTIONS: { id: QuickId; label: string; types: string[] | 'all' }[] = [
+  { id: 'flip-swing', label: 'Vänd slag', types: ['Door'] },
+  { id: 'flip-hinge', label: 'Byt hängning', types: ['Door'] },
+  { id: 'toggle-glazed', label: 'Glasad', types: ['Door'] },
+  { id: 'cycle-ref', label: 'Referenslinje', types: ['Wall'] },
+  { id: 'flip-wall', label: 'Vänd väggen', types: ['Wall'] },
+  { id: 'rotate-90', label: 'Vrid 90°', types: ['Wall', 'Furniture', 'Text', 'mixed'] },
+  { id: 'mirror', label: 'Spegla', types: ['Wall', 'Furniture', 'mixed'] },
+  { id: 'copy', label: 'Kopiera', types: ['Wall', 'Furniture', 'Space', 'Dimension', 'Text', 'mixed'] },
+  { id: 'demolish', label: 'Riv / behåll', types: ['Wall', 'Door', 'Window', 'Furniture', 'mixed'] },
+  { id: 'zoom-selection', label: 'Zooma till', types: 'all' },
+  { id: 'delete', label: 'Ta bort', types: 'all' },
+];
+
+/** Objektsorterna i inställningarna. "mixed" är när olika sorter är markerade. */
+export const QUICK_TYPES: { type: string; label: string }[] = [
+  { type: 'Wall', label: 'Vägg' },
+  { type: 'Door', label: 'Dörr' },
+  { type: 'Window', label: 'Fönster' },
+  { type: 'Furniture', label: 'Möbel' },
+  { type: 'Space', label: 'Rum' },
+  { type: 'Dimension', label: 'Mått' },
+  { type: 'Text', label: 'Text' },
+  { type: 'mixed', label: 'Blandat' },
+];
+
+const QUICK_DEFAULTS: Record<string, QuickId[]> = {
+  Wall: ['cycle-ref', 'flip-wall', 'copy', 'demolish', 'delete'],
+  Door: ['flip-swing', 'flip-hinge', 'toggle-glazed', 'demolish', 'delete'],
+  Window: ['demolish', 'delete'],
+  Furniture: ['rotate-90', 'mirror', 'copy', 'demolish', 'delete'],
+  Space: ['zoom-selection', 'delete'],
+  Dimension: ['copy', 'delete'],
+  Text: ['rotate-90', 'copy', 'delete'],
+  mixed: ['copy', 'rotate-90', 'mirror', 'demolish', 'delete'],
+};
+
+export interface UiSettings {
+  grid: boolean;
+  /** Snabbmeny vid markören när något markeras med musen. */
+  petPalette: boolean;
+  /** Måttsätt nya väggar och öppningar automatiskt när man jämför. */
+  autoDims: boolean;
+  /** Färg på markeringar; null = temats accentfärg. */
+  selColor: string | null;
+  /** Färg på referenslinjer och grepp; null = temats. */
+  refColor: string | null;
+  quick: Record<string, QuickId[]>;
+}
+
+const KEY = 'bacchus-ui';
+
+export function defaultUiSettings(): UiSettings {
+  return { grid: true, petPalette: true, autoDims: true, selColor: null, refColor: null, quick: structuredClone(QUICK_DEFAULTS) };
+}
+
+export function loadUiSettings(): UiSettings {
+  const d = defaultUiSettings();
+  try {
+    const raw = JSON.parse(localStorage.getItem(KEY) ?? 'null') as Partial<UiSettings> | null;
+    if (!raw) return d;
+    // Snabbknapparna fick nya val i version 2; äldre sparade listor ersätts.
+    const quick = (raw as { v?: number }).v === 2 ? { ...d.quick, ...(raw.quick ?? {}) } : d.quick;
+    return {
+      grid: typeof raw.grid === 'boolean' ? raw.grid : d.grid,
+      petPalette: typeof raw.petPalette === 'boolean' ? raw.petPalette : d.petPalette,
+      autoDims: typeof raw.autoDims === 'boolean' ? raw.autoDims : d.autoDims,
+      selColor: typeof raw.selColor === 'string' ? raw.selColor : null,
+      refColor: typeof raw.refColor === 'string' ? raw.refColor : null,
+      quick,
+    };
+  } catch {
+    return d;
+  }
+}
+
+export function saveUiSettings(s: UiSettings): void {
+  try {
+    localStorage.setItem(KEY, JSON.stringify({ ...s, v: 2 }));
+  } catch {
+    // Privat läge eller blockerad lagring: inställningen gäller bara nu.
+  }
+}
+
+/** Lägg egna färger över temats. */
+export function applyUiColors(s: UiSettings): void {
+  const root = document.documentElement.style;
+  if (s.selColor) root.setProperty('--sel', s.selColor);
+  else root.removeProperty('--sel');
+  if (s.refColor) root.setProperty('--ref', s.refColor);
+  else root.removeProperty('--ref');
+}
+
+/** Kortkommandon, för listan i inställningarna. */
+export const SHORTCUTS: [string, string][] = [
+  ['V', 'Markera'],
+  ['H', 'Panorera'],
+  ['W', 'Rita vägg'],
+  ['D / O', 'Sätt in dörr / fönster'],
+  ['R', 'Rum: klicka i ett utrymme'],
+  ['M', 'Mått: klicka punkter, dubbelklicka, placera linjen'],
+  ['T', 'Text'],
+  ['Esc', 'Avbryt kommandot, sedan verktyget; i Markera avmarkerar den'],
+  ['Enter', 'Avsluta väggen, eller bekräfta ett inskrivet mått'],
+  ['Siffror', 'Skriv en längd medan du ritar en vägg'],
+  ['Shift', 'Lås vinkeln till 45° när du ritar eller drar; lägg till i markeringen'],
+  ['Delete', 'Ta bort det markerade'],
+  ['Ctrl+Z', 'Ångra'],
+  ['Ctrl+Shift+Z, Ctrl+Y', 'Gör om'],
+  ['F', 'Zooma till allt'],
+  ['+ / −', 'Zooma in och ut'],
+  ['G', 'Visa eller dölj rutnätet'],
+  ['S', 'Snäppning av eller på'],
+  ['P', 'Visa eller dölj egenskaperna'],
+  ['N', 'Visa eller dölj navigatorn'],
+  ['2 / 3 / 4', 'Plan, 3D eller båda'],
+  ['Mellanslag + dra', 'Panorera med musen'],
+];

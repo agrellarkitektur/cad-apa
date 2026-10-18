@@ -1,0 +1,44 @@
+/** Ikoner i en 24×24-ruta, ritade med currentColor och 1,6 i linjebredd. */
+const svg = (body: string) =>
+  `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
+
+export const icons = {
+  pan: svg(
+    '<path d="M8 13V6.5a1.5 1.5 0 0 1 3 0V12M11 11.5V5a1.5 1.5 0 0 1 3 0v6.5M14 11.5V6.5a1.5 1.5 0 0 1 3 0V14c0 3.9-2.6 6.5-6 6.5-2.4 0-3.9-1.1-5.1-3L4.3 14.7a1.5 1.5 0 0 1 2.4-1.8L8 14.5"/>',
+  ),
+  select: svg('<path d="M5 4l13 7-5.6 1.5L10 18z"/>'),
+  wall: svg('<path d="M3 15h18M3 9h18"/><path d="M3 9v6M21 9v6" stroke-width="1.2"/>'),
+  door: svg('<path d="M4 20h4M16 20h4"/><path d="M8 20V8"/><path d="M8 8a12 12 0 0 1 8 12" stroke-dasharray="2 2"/>'),
+  window: svg('<path d="M3 9h4M17 9h4M3 15h4M17 15h4M7 9v6M17 9v6M7 11.3h10M7 12.7h10"/>'),
+  furniture: svg('<rect x="4" y="7" width="16" height="11" rx="1.5"/><path d="M4 11h16M8 7v4M16 7v4"/>'),
+  room: svg('<path d="M4 4h16v16H4z"/><path d="M8.5 13h7M10 10h4"/>'),
+  dimension: svg('<path d="M4 15h16M4 12v6M20 12v6M4 15l2.5-1.6M4 15l2.5 1.6M20 15l-2.5-1.6M20 15l-2.5 1.6M9 9h6"/>'),
+  text: svg('<path d="M6 6h12M12 6v13M9.5 19h5"/>'),
+  zoomIn: svg('<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5M8 10.5h5M10.5 8v5"/>'),
+  zoomOut: svg('<circle cx="10.5" cy="10.5" r="6"/><path d="M15 15l5 5M8 10.5h5"/>'),
+  fit: svg('<path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5"/><rect x="8.5" y="8.5" width="7" height="7"/>'),
+  undo: svg('<path d="M9 7L5 11l4 4"/><path d="M5 11h9a5 5 0 0 1 0 10h-3"/>'),
+  redo: svg('<path d="M15 7l4 4-4 4"/><path d="M19 11h-9a5 5 0 0 0 0 10h3"/>'),
+  states: svg('<path d="M4 7l1.6 1.6L8.5 5.7M4 13l1.6 1.6 2.9-2.9M4 19l1.6 1.6 2.9-2.9M12 7.2h8M12 13.2h8M12 19.2h8"/>'),
+  properties: svg('<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>'),
+  multi: svg('<rect x="4" y="4" width="9" height="9" rx="1"/><rect x="11" y="11" width="9" height="9" rx="1"/>'),
+  more: svg('<circle cx="6" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="18" cy="12" r="1.2" fill="currentColor"/>'),
+  plus: svg('<path d="M12 5v14M5 12h14"/>'),
+  chevron: svg('<path d="M7 10l5 5 5-5"/>'),
+  navigator: svg('<path d="M4 7h16M4 12h16M4 17h16"/>'),
+  close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
+  trash: svg('<path d="M4.5 7h15M10 4h4M6.5 7l1 13h9l1-13M10 10.5v6M14 10.5v6"/>'),
+  demolish: svg('<path d="M4 20h16M6 20V9h5v11M13 20v-6h5v6"/><path d="M14 4l5 5M19 4l-5 5"/>'),
+  restore: svg('<path d="M5 12a7 7 0 1 0 2.1-5"/><path d="M5 4v4h4"/>'),
+  rotate: svg('<path d="M19 12a7 7 0 1 1-2.1-5"/><path d="M19 4v4h-4"/>'),
+  flipSwing: svg('<path d="M12 4v16"/><path d="M8 8l-4 4 4 4M16 8l4 4-4 4"/>'),
+  flipHinge: svg('<path d="M4 18h16"/><path d="M6 18V8a10 10 0 0 1 10 10" stroke-dasharray="2 2"/><path d="M6 8v10"/>'),
+  glazed: svg('<path d="M4 9h3M17 9h3M4 15h3M17 15h3M7 9v6M17 9v6"/><path d="M9.5 12h5" stroke-width="2.2"/>'),
+  refLine: svg('<path d="M3 9h18M3 15h18" stroke-width="1"/><path d="M3 15h18" stroke-width="2.4"/><circle cx="4" cy="15" r="1.8"/><circle cx="20" cy="15" r="1.8"/>'),
+  mirror: svg('<path d="M12 3v18" stroke-dasharray="2 2"/><path d="M9 7L4 17h5zM15 7l5 10h-5z"/>'),
+  copy: svg('<rect x="8" y="8" width="11" height="11" rx="1.5"/><path d="M5 15V6a1 1 0 0 1 1-1h9"/>'),
+  flipWall: svg('<path d="M3 10h18M3 14h18"/><path d="M8 6l-3 4M16 18l3-4"/>'),
+  grid: svg('<path d="M4 4h16v16H4zM4 9.3h16M4 14.6h16M9.3 4v16M14.6 4v16"/>'),
+} as const;
+
+export type IconName = keyof typeof icons;

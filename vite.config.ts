@@ -1,0 +1,61 @@
+import { defineConfig, loadEnv, type Plugin } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
+import { viteSingleFile } from 'vite-plugin-singlefile';
+import { resolveBrand } from './src/brand/index.ts';
+
+/**
+ * Två byggen:
+ *  - `npm run build`    → dist/ för webbhotellet (PWA, kan installeras, fungerar offline)
+ *  - `npm run preview:artifact` → en enda HTML-fil för snabb förhandsvisning
+ *
+ * `base: './'` gör att appen fungerar i vilken mapp som helst på servern,
+ * t.ex. agrellarkitektur.se/cad-apa/.
+ */
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), 'VITE_');
+  const brand = resolveBrand(env.VITE_BRAND);
+  const artifact = mode === 'artifact';
+
+  const brandHtml: Plugin = {
+    name: 'brand-html',
+    transformIndexHtml: (html) =>
+      html
+        .replace('%BRAND_TITLE%', brand.badge ? `${brand.name} · ${brand.badge}` : brand.name)
+        .replace('%BRAND_DESCRIPTION%', brand.description),
+  };
+
+  return {
+    base: './',
+    plugins: [
+      brandHtml,
+      artifact
+        ? viteSingleFile()
+        : VitePWA({
+            registerType: 'prompt',
+            injectRegister: false,
+            includeAssets: ['icon.svg'],
+            manifest: {
+              name: brand.name,
+              short_name: brand.shortName,
+              description: brand.description,
+              lang: 'sv',
+              theme_color: brand.themeColor,
+              background_color: brand.themeColor,
+              display: 'standalone',
+              start_url: './',
+              scope: './',
+              icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
+            },
+            workbox: {
+              globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+            },
+          }),
+    ],
+    build: {
+      outDir: artifact ? 'dist-artifact' : 'dist',
+      assetsInlineLimit: artifact ? 100_000_000 : 4096,
+      // three.js laddas separat när 3D-vyn öppnas.
+      chunkSizeWarningLimit: 700,
+    },
+  };
+});
