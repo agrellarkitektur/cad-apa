@@ -123,10 +123,30 @@ export class PlanView {
     this.requestRender();
   }
 
-  /** En annan vy som visas tonad under ritningen, att rita mot (spårning). */
+  /** En annan vy som visas tonad under ritningen, att rita mot (kalkering). */
   setUnderlay(prims: readonly Primitive[]): void {
     this.underlayPrims = prims;
     this.requestRender();
+  }
+
+  /**
+   * Hur den kalkerade vyn ritas: under eller över ritningen, i ritningens
+   * färger (tonade) eller i en egen färg, och med vilken opacitet.
+   */
+  setUnderlayLook(look: { above: boolean; color: string | null; opacity: number }): void {
+    const g = this.underlay;
+    if (look.above) this.svg.insertBefore(g, this.highlight);
+    else this.svg.insertBefore(g, this.content);
+    g.classList.toggle('above', look.above);
+    g.classList.toggle('tinted', !!look.color);
+    g.style.opacity = String(look.opacity);
+    for (const v of ['--ink', '--muted', '--poche', '--poche-existing', '--new', '--new-fill', '--demolished']) {
+      if (look.color) g.style.setProperty(v, look.color);
+      else g.style.removeProperty(v);
+    }
+    // Ovanpå ritningen får kalkeringen inga vita fyllningar som döljer den.
+    if (look.above) g.style.setProperty('--paper', 'transparent');
+    else g.style.removeProperty('--paper');
   }
 
   setTool(tool: ViewTool | null): void {

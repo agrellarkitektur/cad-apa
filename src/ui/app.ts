@@ -1,5 +1,5 @@
 import type { Brand } from '../brand';
-import { createProposal, deleteElements, moveElements, moveWallEnd, renameElement, updateParams } from '../core/commands';
+import { createProposal, deleteElements, moveElements, moveWallEnd, renameElement, setInState, updateParams } from '../core/commands';
 import { resolveParams } from '../elements/registry';
 import { snap } from './tools/snap';
 import { ENGINE } from '../core/engine';
@@ -19,7 +19,11 @@ import { startAutosave, type SaveStatus } from '../storage/autosave';
 import { parse } from '../storage/format';
 import { keepUnreadable, loadLocal, mayOverwrite, recordFormatVersion } from '../storage/localStore';
 import { FORMAT_VERSION } from '../core/model';
-import { openProjectFile, saveProjectFile, saveTextFile } from '../storage/projectFile';
+import { forgetProjectFile, openProjectFile, saveProject, saveProjectFile, saveTextFile } from '../storage/projectFile';
+import { askConfirm, askText } from './ask';
+import { ContextMenu, onLongPress, type MenuItem } from './contextMenu';
+import { pickAt } from '../view2d/pick';
+import { releasedHint } from './tools/selectTool';
 import { minorStepFor } from '../view2d/grid';
 import { PlanView, type ViewTool } from '../view2d/planView';
 import { renderHighlight } from './highlight';
@@ -35,7 +39,7 @@ import { SettingsDialog } from './settingsDialog';
 import { StyleDialog } from './styleDialog';
 import { TempDims } from './tempDims';
 import { Navigator, type NavTab } from './navigator';
-import { applyUiColors, loadUiSettings, mmPerCssPx, PANE_WIDTH, parseScale, saveUiSettings } from './uiSettings';
+import { applyUiColors, loadUiSettings, mmPerCssPx, PANE_WIDTH, parseScale, saveUiSettings, type PaneMode } from './uiSettings';
 import { clampWidth, setupPaneResize } from './paneResize';
 import { InlineTextEditor } from './textEditor';
 import { Camera } from '../view2d/camera';
@@ -60,8 +64,9 @@ interface ToolDef {
   icon: IconName;
   key?: string;
   /** Milstolpen där verktyget byggs. Saknas för verktyg som redan fungerar. */
-  milestone?: number;
-  group: 'navigera' | 'rita' | 'notera';
+  /** Versionen där verktyget byggs (se docs/PLAN.md). Saknas för verktyg som redan fungerar. */
+  comesIn?: string;
+  group: 'navigera' | 'rita' | 'annotera';
 }
 
 const TOOLS: ToolDef[] = [
@@ -70,13 +75,13 @@ const TOOLS: ToolDef[] = [
   { id: 'wall', label: 'Vägg', icon: 'wall', key: 'W', group: 'rita' },
   { id: 'door', label: 'Dörr', icon: 'door', key: 'D', group: 'rita' },
   { id: 'window', label: 'Fönster', icon: 'window', key: 'O', group: 'rita' },
-  { id: 'furniture', label: 'Möbel', icon: 'furniture', milestone: 7, group: 'rita' },
-  { id: 'room', label: 'Rum', icon: 'room', key: 'R', group: 'notera' },
-  { id: 'dimension', label: 'Mått', icon: 'dimension', key: 'M', group: 'notera' },
-  { id: 'text', label: 'Text', icon: 'text', key: 'T', group: 'notera' },
+  { id: 'furniture', label: 'Möbel', icon: 'furniture', comesIn: '0.11', group: 'rita' },
+  { id: 'room', label: 'Rum', icon: 'room', key: 'R', group: 'annotera' },
+  { id: 'dimension', label: 'Mått', icon: 'dimension', key: 'M', group: 'annotera' },
+  { id: 'text', label: 'Text', icon: 'text', key: 'T', group: 'annotera' },
 ];
 
-const GROUP_LABEL: Record<ToolDef['group'], string> = { navigera: 'Visa', rita: 'Rita', notera: 'Notera' };
+const GROUP_LABEL: Record<ToolDef['group'], string> = { navigera: 'Visa', rita: 'Rita', annotera: 'Annotera' };
 
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 const tf = new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2-digit' });
@@ -106,14 +111,20 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   // Deklareras tidigt: hint() kan anropas redan medan appen startar.
   let hintTimer = 0;
 
+  // Gränssnittet: rutnät, färger, snabbknappar, panelbredder och skärmstorlek.
+  // Hör till användaren, inte projektet.
+  const uiSettings = loadUiSettings();
+  applyUiColors(uiSettings);
+  const desktop = window.innerWidth > 960;
+
   /** Vad som visas just nu. Hör till vyn, inte till projektet. */
   const ui = {
     storey: initial.storeys[0].id,
     state: defaultState(initial),
     compare: true,
-    panelOpen: window.innerWidth > 960,
-    /** Navigatorn: utfälld på datorn, stängd på telefonen. */
-    navOpen: window.innerWidth > 960,
+    panelOpen: desktop && uiSettings.panelMode === 'open',
+    /** Projektträdet: som det lämnades på datorn, stängt på telefonen. */
+    navOpen: desktop && uiSettings.navMode === 'open',
     /** På mobilen: bladet nere med bara snabbraden, eller uppdraget. */
     sheet: 'peek' as 'peek' | 'full',
     tool: 'select' as ToolId,
@@ -122,72 +133,86 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     /** Det som döljs i vyn (elementtyper och "littera"), och om rivet visas. */
     hide: [] as string[],
     hideDemolished: false,
-    /** Vyn man utgick från, och vyns stilmall och spårade vy. */
+    /** Vyn man utgick från, och vyns stilmall och kalkerade vy. */
     activeView: null as Id | null,
     styleName: null as string | null,
     trace: null as Id | null,
   };
 
   root.innerHTML = `
-    <div class="app${ui.panelOpen ? ' panel-open' : ''}${ui.navOpen ? ' nav-open' : ''}">
+    <div class="app">
       <header class="topbar">
-        <button class="icon-btn nav-btn" data-action="toggle-nav" title="Navigator: underlag, modell, vyer och ritningar (N)" aria-label="Navigator" aria-pressed="${ui.navOpen}">${icons.navigator}</button>
-        <div class="brand">
-          <svg viewBox="0 0 24 24" aria-hidden="true">${brand.logoSvg}</svg>
-          <span>${brand.name}</span>
-          ${brand.badge ? `<span class="badge">${brand.badge}</span>` : ''}
-        </div>
-        <div class="project"><strong data-out="project"></strong><span data-out="storey"></span></div>
-        <div class="spacer"></div>
-        <div class="view-controls">
-          <button class="icon-btn" data-action="undo" aria-label="Ångra" disabled>${icons.undo}</button>
-          <button class="icon-btn" data-action="redo" aria-label="Gör om" disabled>${icons.redo}</button>
-          <span class="sep hide-narrow"></span>
-          <button class="icon-btn hide-narrow" data-action="zoom-out" title="Zooma ut (−)" aria-label="Zooma ut">${icons.zoomOut}</button>
-          <button class="icon-btn hide-narrow" data-action="zoom-in" title="Zooma in (+)" aria-label="Zooma in">${icons.zoomIn}</button>
-          <button class="icon-btn" data-action="fit" title="Zooma till allt (F)" aria-label="Zooma till allt">${icons.fit}</button>
-          <button class="icon-btn" data-action="toggle-panel" title="Egenskaper (P)" aria-label="Visa egenskaper" aria-pressed="${ui.panelOpen}">${icons.properties}</button>
-          <div class="segmented view-modes" role="group" aria-label="Vy">
-            <button data-mode="2d" aria-pressed="true" title="Plan (2)">2D</button>
-            <button data-mode="3d" aria-pressed="false" title="3D (3)">3D</button>
-            <button data-mode="split" aria-pressed="false" class="hide-narrow" title="Plan och 3D sida vid sida (4)">Båda</button>
-          </div>
-          <div class="menu-wrap">
-            <button class="icon-btn" data-action="menu" aria-label="Arkiv" aria-haspopup="menu" aria-expanded="false">${icons.more}</button>
-            <div class="menu" role="menu" hidden>
-              <button role="menuitem" data-action="new-project">Nytt projekt…</button>
-              <button role="menuitem" data-action="save-file">Spara som fil…</button>
-              <button role="menuitem" data-action="open-file">Öppna fil…</button>
-              <hr>
-              <button role="menuitem" data-action="new-proposal">Nytt förslag</button>
-              <button role="menuitem" data-action="show-types">Typer och littera</button>
-              <button role="menuitem" data-action="style">Stilmall…</button>
-              <button role="menuitem" data-action="settings">Gränssnitt…</button>
+        <div class="menu-wrap main-menu-wrap">
+          <button class="brand-btn" data-action="menu" aria-haspopup="menu" aria-expanded="false" title="Meny: spara, öppna, inställningar">
+            <svg class="brand-logo" viewBox="0 0 24 24" aria-hidden="true">${brand.logoSvg}</svg>
+            <span class="brand-name">${brand.name}</span>
+            <span class="brand-chev" aria-hidden="true">${icons.expand}</span>
+          </button>
+          <div class="menu main-menu" role="menu" hidden>
+            <button role="menuitem" data-action="new-project">${icons.newFile}<span>Nytt projekt…</span><kbd>Ctrl+Alt+N</kbd></button>
+            <button role="menuitem" data-action="open-file">${icons.openFile}<span>Öppna fil…</span><kbd>Ctrl+O</kbd></button>
+            <button role="menuitem" data-action="save">${icons.save}<span>Spara</span><kbd>Ctrl+S</kbd></button>
+            <button role="menuitem" data-action="save-as">${icons.save}<span>Spara som…</span><kbd>Ctrl+Shift+S</kbd></button>
+            <hr>
+            <button role="menuitem" aria-disabled="true" title="Kommer i 0.8">${icons.newFile}<span>Skriv ut och exportera PDF</span><small>0.8</small></button>
+            <button role="menuitem" aria-disabled="true" title="Kommer i 0.8">${icons.openFile}<span>Importera underlag</span><small>0.8</small></button>
+            <hr>
+            <button role="menuitem" data-action="new-proposal">${icons.states}<span>Nytt förslag</span></button>
+            <button role="menuitem" data-action="show-types">${icons.wall}<span>Typer och littera</span></button>
+            <button role="menuitem" data-action="style">${icons.dimension}<span>Stilmall…</span></button>
+            <button role="menuitem" data-action="settings">${icons.properties}<span>Gränssnitt…</span></button>
+            <div class="narrow-only menu-themes">
               <hr>
               <div class="menu-label">Tema</div>
-              ${THEMES.map((t) => `<button role="menuitemradio" data-theme-id="${t.id}" aria-checked="false">${t.name}</button>`).join('')}
-              <hr>
-              <button role="menuitem" data-action="reset-sample">Börja om med exemplet</button>
+              ${THEMES.map((t) => `<button role="menuitemradio" data-theme-id="${t.id}" aria-checked="false"><span>${t.name}</span></button>`).join('')}
             </div>
+            <hr>
+            <button role="menuitem" data-action="reset-sample">${icons.restore}<span>Börja om med exemplet</span></button>
+            <button role="menuitem" data-action="about">${icons.select}<span>Om ${brand.name}</span><small>${ENGINE.name} ${ENGINE.version}</small></button>
           </div>
         </div>
+        <span class="sep hide-narrow"></span>
+        <div class="file-btns hide-narrow">
+          <button class="icon-btn" data-action="new-project" title="Nytt projekt (Ctrl+Alt+N)" aria-label="Nytt projekt">${icons.newFile}</button>
+          <button class="icon-btn" data-action="open-file" title="Öppna fil (Ctrl+O)" aria-label="Öppna fil">${icons.openFile}</button>
+          <button class="icon-btn" data-action="save" title="Spara (Ctrl+S)" aria-label="Spara">${icons.save}</button>
+        </div>
+        <span class="sep hide-narrow"></span>
+        <button class="icon-btn" data-action="undo" aria-label="Ångra" disabled>${icons.undo}</button>
+        <button class="icon-btn" data-action="redo" aria-label="Gör om" disabled>${icons.redo}</button>
+        <span class="sep hide-narrow"></span>
+        <div class="project"><strong data-out="project"></strong><span data-out="storey"></span></div>
+        <div class="spacer"></div>
+        <div class="segmented view-modes" role="group" aria-label="Vy">
+          <button data-mode="2d" aria-pressed="true" title="Plan (2)">2D</button>
+          <button data-mode="3d" aria-pressed="false" title="3D (3)">3D</button>
+          <button data-mode="split" aria-pressed="false" class="hide-narrow" title="Plan och 3D sida vid sida (4)">Båda</button>
+        </div>
+        <span class="sep hide-narrow"></span>
+        <button class="icon-btn pane-btn" data-action="toggle-nav" title="Projektträd: underlag, modell, vyer och ritningar (N)" aria-label="Projektträd" aria-pressed="false">${icons.navigator}</button>
+        <button class="icon-btn pane-btn" data-action="toggle-panel" title="Egenskaper (P)" aria-label="Egenskaper" aria-pressed="false">${icons.properties}</button>
+        <div class="theme-slot"></div>
+        ${brand.badge ? `<span class="badge">${brand.badge}</span>` : ''}
       </header>
       <nav class="tools" aria-label="Verktyg"></nav>
       <main class="canvas">
-        <div class="viewbar">
-          <div class="chips" role="tablist" aria-label="Tillstånd att visa"></div>
-          <label class="compare"><input type="checkbox" id="compare-toggle" checked><span data-out="compare-label"></span></label>
-          <div class="segmented detail-switch" role="group" aria-label="Detaljnivå">
-            <button data-detail="sketch" aria-pressed="false" title="Tidig skiss: öppningar utan karmar">Skiss</button>
-            <button data-detail="normal" aria-pressed="true" title="Karmar, glasningslinjer och indrag (bygglov)">Normal</button>
-            <button data-detail="detail" aria-pressed="false" title="Dörrblad, falsar och fönsterbågar (bygghandling)">Detalj</button>
+        <section class="viewbar" aria-label="Tillfälliga vyinställningar">
+          <div class="vb-head"><span title="Ändringar här gäller tills du byter vy. Spara dem i vyn för att behålla dem.">Tillfälliga vyinställningar</span><button class="vb-save" data-action="view-save" hidden>Spara i vyn</button></div>
+          <div class="vb-row">
+            <button class="vb-ctl view-btn" data-action="views" title="Klick: förra vyn. Håll in eller högerklicka: de senaste vyerna" aria-haspopup="menu"><span class="vb-lbl">Vy</span><span data-out="view-name">Vyer</span></button>
+            <div class="vb-ctl chips" role="tablist" aria-label="Tillstånd att visa"></div>
+            <label class="vb-ctl compare" id="compare-wrap"><input type="checkbox" id="compare-toggle" checked><span data-out="compare-label"></span></label>
+            <div class="vb-ctl segmented detail-switch" role="group" aria-label="Detaljnivå">
+              <button data-detail="sketch" aria-pressed="false" title="Tidig skiss: öppningar utan karmar">Skiss</button>
+              <button data-detail="normal" aria-pressed="true" title="Karmar, glasningslinjer och indrag (bygglov)">Normal</button>
+              <button data-detail="detail" aria-pressed="false" title="Dörrblad, falsar och fönsterbågar (bygghandling)">Detalj</button>
+            </div>
+            <div class="show-wrap">
+              <button class="vb-ctl show-btn" data-action="show-menu" aria-haspopup="true" aria-expanded="false">Visa ▾</button>
+              <div class="show-menu" hidden></div>
+            </div>
           </div>
-          <div class="show-wrap">
-            <button class="compare show-btn" data-action="show-menu" aria-haspopup="true" aria-expanded="false">Visa ▾</button>
-            <div class="show-menu" hidden></div>
-          </div>
-          <button class="compare view-btn" data-action="open-views" title="Vyer i navigatorn"><span data-out="view-name">Vy</span></button>
-        </div>
+        </section>
         <div class="cmd-bar" hidden><button class="btn cmd-cancel" data-action="cancel-command">✕ Avbryt</button></div>
         <div class="tool-options" data-out="tool-options"></div>
         <div class="hint" role="status" hidden></div>
@@ -202,10 +227,15 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
             <button class="btn btn-primary" type="submit" aria-label="Använd">✓</button>
             <p class="scale-note" data-out="scale-note"></p>
           </form></span>
+        <span class="zoom-btns">
+          <button class="status-icon hide-narrow" data-action="zoom-out" title="Zooma ut (−)" aria-label="Zooma ut">${icons.zoomOut}</button>
+          <button class="status-icon hide-narrow" data-action="zoom-in" title="Zooma in (+)" aria-label="Zooma in">${icons.zoomIn}</button>
+          <button class="status-icon" data-action="fit" title="Zooma till allt (F)" aria-label="Zooma till allt">${icons.fit}</button>
+        </span>
         <span class="hide-narrow"><span class="label">Rutnät</span><span class="value" data-out="grid">—</span></span>
         <button class="status-btn" data-action="snap" aria-pressed="true" title="Snäppning av eller på (S)">Snäpp</button>
         <span data-out="save" class="save-status"></span>
-        <span class="engine hide-narrow">${ENGINE.name} ${ENGINE.version} · steg ${ENGINE.milestone} av ${ENGINE.milestones}</span>
+        <span class="engine hide-narrow">${ENGINE.name} ${ENGINE.version}</span>
       </footer>
     </div>`;
 
@@ -216,10 +246,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const hintEl = $<HTMLElement>('.hint');
   const chips = $<HTMLElement>('.chips');
   const compareToggle = $<HTMLInputElement>('#compare-toggle');
-  const compareLabel = $<HTMLElement>('.compare');
+  const compareLabel = $<HTMLElement>('#compare-wrap');
   const toolOptions = out('tool-options');
   const menu = $<HTMLElement>('.menu');
-  $<HTMLElement>('.project').insertAdjacentElement('afterend', createThemeSwitcher());
+  $<HTMLElement>('.theme-slot').replaceWith(createThemeSwitcher());
   const syncThemeMenu = () =>
     menu.querySelectorAll<HTMLElement>('[data-theme-id]').forEach((b) => b.setAttribute('aria-checked', String(b.dataset.themeId === currentTheme())));
   syncThemeMenu();
@@ -246,10 +276,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     b.className = 'tool';
     b.dataset.tool = t.id;
     b.innerHTML = `${icons[t.icon]}<span>${t.label}</span>`;
-    b.title = t.milestone ? `${t.label} – kommer i steg ${t.milestone}` : `${t.label}${t.key ? ` (${t.key})` : ''}`;
-    if (t.milestone) {
+    b.title = t.comesIn ? `${t.label} – kommer i ${t.comesIn}` : `${t.label}${t.key ? ` (${t.key})` : ''}`;
+    if (t.comesIn) {
       b.setAttribute('aria-disabled', 'true');
-      b.addEventListener('click', () => hint(`${t.label} byggs i steg ${t.milestone}.`));
+      b.addEventListener('click', () => hint(`${t.label} kommer i ${t.comesIn}, med familjerna.`));
     } else {
       b.addEventListener('click', () => setTool(t.id as ToolId));
     }
@@ -270,8 +300,6 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
 
   // Gränssnittet: rutnät, färger, snabbknappar, panelbredder och skärmstorlek.
   // Hör till användaren, inte projektet.
-  const uiSettings = loadUiSettings();
-  applyUiColors(uiSettings);
   /** Hur stor en CSS-pixel är på skärmen, mm. */
   const screenMm = () => mmPerCssPx(uiSettings.screenInches);
   /** Skapas efter planvyn, men vyn kan rapportera zoom redan när den startar. */
@@ -416,6 +444,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     ui.hideDemolished = v.hideDemolished;
     ui.styleName = v.style ?? null;
     ui.trace = v.trace ?? null;
+    visit({ kind: 'view', id: v.id });
     syncDetailSwitch();
     renderAll();
   }
@@ -428,7 +457,14 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
 
   function renderViewButton(): void {
     const v = ui.activeView ? store.doc.views.find((x) => x.id === ui.activeView) : undefined;
-    out('view-name').textContent = v ? `${v.name}${viewModified(v) ? ' *' : ''}` : 'Vyer';
+    const modified = !!v && viewModified(v);
+    const storeyName = store.doc.storeys.find((s) => s.id === ui.storey)?.name ?? '';
+    out('view-name').textContent = v ? `${v.name}${modified ? ' *' : ''}` : `${storeyName} · modell`;
+    // Ändringar i vyinställningarna är tillfälliga tills de sparas i vyn.
+    const save = $<HTMLButtonElement>('.vb-save');
+    save.hidden = !!v && !modified;
+    save.textContent = v ? 'Spara i vyn' : 'Spara som vy…';
+    $<HTMLElement>('.viewbar').classList.toggle('modified', modified);
   }
 
   function viewStates() {
@@ -542,8 +578,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
           <button data-just="center" aria-pressed="${face === 'center'}" title="Linjen mitt i väggen">Mitt</button>
           <button data-just="inside" aria-pressed="${face === 'inside'}" title="Linjen i väggens insida">Inne</button>
         </div></div>
-        <label class="opt"><span>Längd</span><span class="input-unit"><input id="wall-length" type="number" inputmode="numeric" placeholder="Längd" ${wallTool.drawing ? '' : 'disabled'}><i>mm</i></span></label>
-        <label class="opt"><span>Vinkel</span><span class="input-unit"><input id="wall-angle" type="number" inputmode="decimal" placeholder="Vinkel" value="${wallTool.lockAngle ?? ''}" ${wallTool.drawing ? '' : 'disabled'}><i>°</i></span></label>
+        <label class="opt"><span>Längd</span><span class="input-unit"><input id="wall-length" type="text" data-expr inputmode="decimal" autocomplete="off" placeholder="Längd" ${wallTool.drawing ? '' : 'disabled'}><i>mm</i></span></label>
+        <label class="opt"><span>Vinkel</span><span class="input-unit"><input id="wall-angle" type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" placeholder="Vinkel" value="${wallTool.lockAngle ?? ''}" ${wallTool.drawing ? '' : 'disabled'}><i>°</i></span></label>
         <button class="btn btn-primary" data-action="wall-done" ${wallTool.drawing ? '' : 'disabled'}>Klar</button>
         <span class="opt-hint">${wallTool.drawing ? 'Klicka nästa punkt, eller skriv en längd och tryck Enter.' : 'Klicka eller tryck där väggen ska börja.'}</span>`;
       toolOptions.hidden = false;
@@ -649,15 +685,33 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     doc: () => store.doc,
     storey: () => ui.storey,
     activeView: () => ui.activeView,
+    trace: () => ui.trace,
     viewModified: (v) => viewModified(v),
     describeView,
   });
   const dock = document.createElement('div');
   dock.className = 'dock';
-  dock.append(navigator.el, panel.el);
+  // Minimerade paneler blir stående band vid högerkanten.
+  const band = (action: string, label: string, icon: string, title: string) => {
+    const b = document.createElement('button');
+    b.className = 'pane-band';
+    b.dataset.action = action;
+    b.title = title;
+    b.setAttribute('aria-label', `Visa ${label.toLowerCase()}`);
+    b.innerHTML = `${icon}<span>${label}</span>`;
+    return b;
+  };
+  dock.append(
+    band('open-nav', 'Projektträd', icons.navigator, 'Projektträd (N)'),
+    navigator.el,
+    band('open-panel-band', 'Egenskaper', icons.properties, 'Egenskaper (P)'),
+    panel.el,
+  );
   appEl.appendChild(dock);
+  panel.el.querySelector('.pane-min')!.innerHTML = icons.minimize;
+  panel.el.querySelector('.pane-x')!.innerHTML = icons.close;
 
-  // På datorn ligger navigatorn och egenskaperna bredvid varandra. Strecket i
+  // På datorn ligger projektträdet och egenskaperna bredvid varandra. Strecket i
   // vänsterkanten ändrar bredden; ett klick på det fäller ihop panelen.
   /** Ritytan ska alltid få minst så här mycket plats (px). */
   const MIN_CANVAS = 360;
@@ -669,14 +723,14 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   }
   applyPaneWidths();
   setupPaneResize(navigator.el, {
-    label: 'Navigatorn',
+    label: 'Projektträdet',
     width: () => navigator.el.offsetWidth || uiSettings.navWidth,
     setWidth: (w) => {
       uiSettings.navWidth = w;
       applyPaneWidths();
     },
     commit: () => saveUiSettings(uiSettings),
-    collapse: () => setNav(false),
+    collapse: () => setPaneMode('nav', 'min'),
     min: PANE_WIDTH.min,
     max: () => maxPaneWidth(ui.panelOpen ? panel.el.offsetWidth : 0),
   });
@@ -688,7 +742,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       applyPaneWidths();
     },
     commit: () => saveUiSettings(uiSettings),
-    collapse: () => setPanel(false),
+    collapse: () => setPaneMode('panel', 'min'),
     min: PANE_WIDTH.min,
     max: () => maxPaneWidth(ui.navOpen ? navigator.el.offsetWidth : 0),
   });
@@ -753,7 +807,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       pointerAt = null;
       if (!down || palette.el.contains(e.target as Node)) return;
       const click = Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5;
-      if (!click || e.pointerType !== 'mouse' || !uiSettings.petPalette || isNarrow() || ui.tool !== 'select') return;
+      if (!click || e.pointerType !== 'mouse' || e.button !== 0 || !uiSettings.petPalette || isNarrow() || ui.tool !== 'select') return;
       // Efter att verktyget eller 3D-vyn hunnit ändra markeringen.
       setTimeout(() => {
         if (selection.size > 0 && !textEditor?.isOpen) palette.show(e.clientX, e.clientY);
@@ -763,6 +817,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   );
 
   const newProjectDialog = new NewProjectDialog((doc) => {
+    forgetProjectFile();
     ui.state = defaultState(doc);
     store.load(doc);
     hint(`${doc.project.name} är skapat. Rita väggar med W eller verktyget Vägg.`, 4000);
@@ -772,6 +827,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   // Tillfälliga mått när en vägg är markerad.
   const tempDims = new TempDims(canvas, store);
   tempDims.requestRender = () => view.requestRender();
+  tempDims.onReleased = (n) => hint(releasedHint(n), 4000);
   view.setHighlighter(
     (cam) =>
       renderHighlight(cam, store.doc, plan.pickables, new Set(selection.list()), ui.tool === 'select' ? selectTool.hoverId : null) +
@@ -799,7 +855,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     compareToggle.checked = ui.compare;
 
     plan = buildPlan(doc, ui.storey, vs, styleFor(ui.styleName));
-    // Spårad vy: en annan vy tonad under, t.ex. möbleringen under en undertaksplan.
+    // Kalkerad vy: en annan vy tonad under, t.ex. möbleringen under en undertaksplan.
     const traced = ui.trace ? doc.views.find((v) => v.id === ui.trace) : undefined;
     view.setUnderlay(traced ? buildPlan(doc, traced.storey, viewStatesOf(traced), styleFor(traced.style ?? null)).prims : []);
     renderViewButton();
@@ -906,7 +962,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     },
     commitMove: (ids, d, anchor) => {
       if (Math.hypot(d[0], d[1]) < 1) return;
-      moveElements(store, ids, [d[0], d[1]]);
+      const r = moveElements(store, ids, [d[0], d[1]]);
+      if (r.released) hint(releasedHint(r.released), 4000);
       host.elementsMoved?.(ids, d, anchor);
     },
   };
@@ -960,8 +1017,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       ui.activeView = null;
       ui.trace = null;
       ui.styleName = null;
+      viewHistory.splice(0, viewHistory.length, { kind: 'storey', id: ui.storey });
       selection.clear();
       view.zoomToFit();
+      renderViewButton();
     }
   });
 
@@ -1008,6 +1067,9 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
 
   appEl.dataset.mode = ui.mode;
   appEl.dataset.sheet = ui.sheet;
+  applyPaneClasses();
+  applyTraceLook();
+  window.addEventListener('resize', () => applyPaneClasses());
   renderAll();
   setTool('select');
   view.zoomToFit();
@@ -1035,18 +1097,55 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   };
 
   function setPanel(open: boolean, sheet: 'peek' | 'full' = ui.sheet): void {
-    ui.panelOpen = open;
     ui.sheet = sheet;
     appEl.dataset.sheet = sheet;
-    appEl.classList.toggle('panel-open', open);
-    $<HTMLElement>('.topbar [data-action="toggle-panel"]').setAttribute('aria-pressed', String(open));
+    if (isNarrow()) {
+      ui.panelOpen = open;
+      appEl.classList.toggle('panel-open', open);
+      syncPaneButtons();
+    } else setPaneMode('panel', open ? 'open' : 'closed');
   }
 
   function setNav(open: boolean): void {
-    ui.navOpen = open;
-    appEl.classList.toggle('nav-open', open);
-    $<HTMLElement>('.topbar [data-action="toggle-nav"]').setAttribute('aria-pressed', String(open));
-    if (open) navigator.render();
+    if (isNarrow()) {
+      ui.navOpen = open;
+      appEl.classList.toggle('nav-open', open);
+      syncPaneButtons();
+      if (open) navigator.render();
+    } else setPaneMode('nav', open ? 'open' : 'closed');
+  }
+
+  /**
+   * Projektträdet och egenskaperna på datorn: öppna, minimerade till ett
+   * stående band vid högerkanten, eller stängda. Läget sparas i webbläsaren.
+   */
+  function setPaneMode(which: 'nav' | 'panel', mode: PaneMode): void {
+    if (which === 'nav') {
+      uiSettings.navMode = mode;
+      ui.navOpen = mode === 'open';
+      if (ui.navOpen) navigator.render();
+    } else {
+      uiSettings.panelMode = mode;
+      ui.panelOpen = mode === 'open';
+    }
+    saveUiSettings(uiSettings);
+    applyPaneClasses();
+  }
+
+  function applyPaneClasses(): void {
+    const narrow = isNarrow();
+    appEl.classList.toggle('nav-open', ui.navOpen);
+    appEl.classList.toggle('panel-open', ui.panelOpen);
+    appEl.classList.toggle('nav-min', !narrow && uiSettings.navMode === 'min');
+    appEl.classList.toggle('panel-min', !narrow && uiSettings.panelMode === 'min');
+    syncPaneButtons();
+  }
+
+  function syncPaneButtons(): void {
+    const narrow = isNarrow();
+    const state = (open: boolean, mode: PaneMode) => (open ? 'true' : !narrow && mode === 'min' ? 'mixed' : 'false');
+    $<HTMLElement>('.topbar [data-action="toggle-panel"]').setAttribute('aria-pressed', state(ui.panelOpen, uiSettings.panelMode));
+    $<HTMLElement>('.topbar [data-action="toggle-nav"]').setAttribute('aria-pressed', state(ui.navOpen, uiSettings.navMode));
   }
 
   const closeShowMenu = () => {
@@ -1082,6 +1181,14 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       return;
     }
     if (!target.closest('.show-wrap')) closeShowMenu();
+    const traceAbove = target.closest<HTMLElement>('[data-trace-above]');
+    if (traceAbove) {
+      uiSettings.trace.above = traceAbove.dataset.traceAbove === '1';
+      saveUiSettings(uiSettings);
+      applyTraceLook();
+      refreshShowMenu();
+      return;
+    }
     const styleSel = target.closest<HTMLSelectElement>('[data-show-style], [data-show-trace]');
     if (styleSel) return;
     const detailBtn = target.closest<HTMLElement>('[data-detail]');
@@ -1104,9 +1211,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     }
     const storeyPick = target.closest<HTMLElement>('[data-storey-pick]');
     if (storeyPick) {
-      ui.storey = storeyPick.dataset.storeyPick!;
       if (isNarrow()) setNav(false);
-      renderAll();
+      goTo({ kind: 'storey', id: storeyPick.dataset.storeyPick! });
       return;
     }
     const viewPick = target.closest<HTMLElement>('[data-view-apply]');
@@ -1117,19 +1223,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       if (v) applyView(v);
       return;
     }
-    const viewEdit = target.closest<HTMLElement>('[data-view-rename], [data-view-delete]');
-    if (viewEdit) {
-      const id = viewEdit.dataset.viewRename ?? viewEdit.dataset.viewDelete!;
-      const v = store.doc.views.find((x) => x.id === id);
-      closeShowMenu();
-      if (!v) return;
-      if (viewEdit.dataset.viewRename) {
-        const name = window.prompt('Nytt namn på vyn', v.name)?.trim();
-        if (name) store.transact(`Byt namn på vyn till ${name}`, (tx) => tx.setViews(tx.doc.views.map((x) => (x.id === id ? { ...x, name } : x))));
-      } else if (window.confirm(`Ta bort vyn ${v.name}?`)) {
-        if (ui.activeView === id) ui.activeView = null;
-        store.transact(`Ta bort vyn ${v.name}`, (tx) => tx.setViews(tx.doc.views.filter((x) => x.id !== id)));
-      }
+    const viewMore = target.closest<HTMLElement>('[data-view-menu]');
+    if (viewMore) {
+      const r = viewMore.getBoundingClientRect();
+      openViewMenu(viewMore.dataset.viewMenu!, r.left, r.bottom + 4);
       return;
     }
     const action = target.closest('[data-action]')?.getAttribute('data-action');
@@ -1154,16 +1251,46 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         toggleGrid();
         break;
       case 'toggle-panel':
-        // På mobilen: nere → uppe → nere (om något är markerat) eller stängd.
-        if (isNarrow() && ui.panelOpen) {
-          if (ui.sheet === 'peek') setPanel(true, 'full');
-          else if (selection.size > 0) setPanel(true, 'peek');
-          else setPanel(false);
-        } else setPanel(!ui.panelOpen, 'full');
+        togglePanel();
+        break;
+      case 'open-panel-band':
+        setPaneMode('panel', 'open');
+        break;
+      case 'min-panel':
+        setPaneMode('panel', 'min');
+        break;
+      case 'close-panel':
+        setPanel(false);
+        break;
+      case 'open-nav':
+        setPaneMode('nav', 'open');
+        break;
+      case 'min-nav':
+        setPaneMode('nav', 'min');
+        break;
+      case 'close-nav':
+        setNav(false);
         break;
       case 'menu':
         menu.hidden = !menu.hidden;
         menuBtn.setAttribute('aria-expanded', String(!menu.hidden));
+        break;
+      case 'about':
+        closeMenu();
+        hint(`${brand.name} · ${ENGINE.name} ${ENGINE.version}. Öppen källkod (GPL). Vad som är nytt står i README på GitHub.`, 5000);
+        break;
+      case 'views':
+        // Klick: tillbaka till förra vyn. Håll in eller högerklicka: de senaste.
+        if (viewBtnLongPressed()) break;
+        if (viewHistory.length > 1) goTo(viewHistory[1]);
+        else {
+          navigator.showTab('vyer');
+          setNav(true);
+        }
+        break;
+      case 'view-save':
+        if (ui.activeView) void updateActiveView();
+        else void saveViewAsNew();
         break;
       case 'show-types':
         closeMenu();
@@ -1191,40 +1318,25 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
             item('Dimension', 'Mått', !ui.hide.includes('Dimension')) +
             item('Text', 'Text', !ui.hide.includes('Text')) +
             `<label class="field"><span>Stilmall i vyn</span><select data-show-style><option value="">Projektets (${escapeHtml(store.doc.graphics.name)})</option>${PRESETS.map((p) => `<option value="${escapeHtml(p.name)}"${ui.styleName === p.name ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}</select></label>` +
-            `<label class="field"><span>Spåra en annan vy under</span><select data-show-trace><option value="">Ingen</option>${store.doc.views
+            `<label class="field"><span>Kalkera en annan vy</span><select data-show-trace><option value="">Ingen</option>${store.doc.views
               .filter((v) => v.id !== ui.activeView)
               .map((v) => `<option value="${v.id}"${ui.trace === v.id ? ' selected' : ''}>${escapeHtml(v.name)}</option>`)
-              .join('')}</select></label>`;
+              .join('')}</select></label>` +
+            traceLookMarkup();
           m.hidden = false;
           $<HTMLElement>('.show-btn').setAttribute('aria-expanded', 'true');
         }
         break;
       }
       case 'toggle-nav':
-        setNav(!ui.navOpen);
+        toggleNav();
         break;
-      case 'open-views':
-        navigator.showTab('vyer');
-        setNav(true);
+      case 'view-save-new':
+        void saveViewAsNew();
         break;
-      case 'view-save-new': {
-        closeShowMenu();
-        const st = store.doc.states.find((x) => x.id === ui.state)?.name ?? '';
-        const storeyName = store.doc.storeys.find((x) => x.id === ui.storey)?.name ?? '';
-        const name = window.prompt('Namn på vyn', `${storeyName} – ${st}`)?.trim();
-        if (!name) break;
-        const v = currentViewDef(newId('vy'), name);
-        store.transact(`Ny vy: ${name}`, (tx) => tx.setViews([...tx.doc.views, v]));
-        ui.activeView = v.id;
-        renderViewButton();
+      case 'view-update':
+        void updateActiveView();
         break;
-      }
-      case 'view-update': {
-        closeShowMenu();
-        const v = store.doc.views.find((x) => x.id === ui.activeView);
-        if (v) store.transact(`Spara vyn ${v.name}`, (tx) => tx.setViews(tx.doc.views.map((x) => (x.id === v.id ? currentViewDef(v.id, v.name) : x))));
-        break;
-      }
       case 'cancel-command':
         cancelCommand();
         break;
@@ -1248,6 +1360,12 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         setPanel(true, 'full');
         panel.showTab('selection');
         break;
+      case 'save':
+      case 'save-as': {
+        closeMenu();
+        await saveNow(action === 'save-as');
+        break;
+      }
       case 'settings':
         closeMenu();
         settingsDialog.open();
@@ -1270,34 +1388,14 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         hint(`${s.name} skapades som kopia av ${copyFrom ? current!.name : (existingState(doc)?.name ?? 'inget')}.`);
         break;
       }
-      case 'save-file': {
+      case 'open-file':
         closeMenu();
-        if (import.meta.env.MODE === 'artifact') {
-          hint('Förhandsvisningen kan inte spara filer. Det fungerar i versionen på webbhotellet.', 4000);
-          break;
-        }
-        const r = await saveProjectFile(store.doc, brand.fileExtension);
-        if (r === 'saved') hint('Projektet sparades.');
-        if (r === 'downloaded') hint('Projektfilen laddades ner.');
+        await openFile();
         break;
-      }
-      case 'open-file': {
-        closeMenu();
-        try {
-          const doc = await openProjectFile(brand.fileExtension);
-          if (doc) {
-            ui.state = defaultState(doc);
-            store.load(doc);
-            hint(`Öppnade ${doc.project.name}.`);
-          }
-        } catch (err) {
-          hint((err as Error).message, 5000);
-        }
-        break;
-      }
       case 'reset-sample': {
         closeMenu();
         const doc = sampleProject();
+        forgetProjectFile();
         ui.state = defaultState(doc);
         store.load(doc);
         hint('Exemplet är återställt.');
@@ -1305,6 +1403,191 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       }
     }
   });
+
+  // ---------- Paneler ----------
+
+  function togglePanel(): void {
+    if (isNarrow()) {
+      // På mobilen: nere → uppe → nere (om något är markerat) eller stängd.
+      if (ui.panelOpen) {
+        if (ui.sheet === 'peek') setPanel(true, 'full');
+        else if (selection.size > 0) setPanel(true, 'peek');
+        else setPanel(false);
+      } else setPanel(true, 'full');
+      return;
+    }
+    // På datorn: öppen → stängd; minimerad eller stängd → öppen.
+    setPaneMode('panel', uiSettings.panelMode === 'open' ? 'closed' : 'open');
+  }
+
+  function toggleNav(): void {
+    if (isNarrow()) setNav(!ui.navOpen);
+    else setPaneMode('nav', uiSettings.navMode === 'open' ? 'closed' : 'open');
+  }
+
+  // ---------- Spara och öppna ----------
+
+  async function saveNow(as: boolean): Promise<void> {
+    if (import.meta.env.MODE === 'artifact') {
+      hint('Förhandsvisningen kan inte spara filer. Det fungerar i versionen på webbhotellet.', 4000);
+      return;
+    }
+    const r = as ? await saveProjectFile(store.doc, brand.fileExtension) : await saveProject(store.doc, brand.fileExtension);
+    if (r === 'saved') hint('Projektet sparades.');
+    if (r === 'downloaded') hint('Projektfilen laddades ner.');
+  }
+
+  async function openFile(): Promise<void> {
+    try {
+      const doc = await openProjectFile(brand.fileExtension);
+      if (doc) {
+        ui.state = defaultState(doc);
+        store.load(doc);
+        hint(`Öppnade ${doc.project.name}.`);
+      }
+    } catch (err) {
+      hint((err as Error).message, 5000);
+    }
+  }
+
+  // ---------- Vyer: historik, högerklick och kalkering ----------
+
+  /** Ett ställe man varit på: en sparad vy eller ett våningsplan i modellen. */
+  type Place = { kind: 'view'; id: Id } | { kind: 'storey'; id: Id };
+  /** Senaste först. Det första är där man är nu. */
+  const viewHistory: Place[] = [{ kind: 'storey', id: ui.storey }];
+  const samePlace = (a: Place, b: Place) => a.kind === b.kind && a.id === b.id;
+
+  function visit(p: Place): void {
+    const i = viewHistory.findIndex((q) => samePlace(q, p));
+    if (i >= 0) viewHistory.splice(i, 1);
+    viewHistory.unshift(p);
+    viewHistory.length = Math.min(viewHistory.length, 6);
+  }
+
+  function placeLabel(p: Place): { name: string; sub: string } | null {
+    if (p.kind === 'view') {
+      const v = store.doc.views.find((x) => x.id === p.id);
+      return v ? { name: v.name, sub: `Vy · ${describeView(v)}` } : null;
+    }
+    const s = store.doc.storeys.find((x) => x.id === p.id);
+    return s ? { name: s.name, sub: 'Modell' } : null;
+  }
+
+  function goTo(p: Place): void {
+    if (p.kind === 'view') {
+      const v = store.doc.views.find((x) => x.id === p.id);
+      if (v) applyView(v);
+    } else if (store.doc.storeys.some((s) => s.id === p.id)) {
+      ui.storey = p.id;
+      ui.activeView = null;
+      visit(p);
+      renderAll();
+    }
+  }
+
+  /** De senaste vyerna, vid vyknappen. */
+  function openHistoryMenu(x: number, y: number): void {
+    const items: MenuItem[] = [{ kind: 'header', label: 'Senaste vyerna' }];
+    viewHistory
+      .map((p) => ({ p, l: placeLabel(p) }))
+      .filter((r) => r.l)
+      .slice(0, 5)
+      .forEach(({ p, l }, i) =>
+        items.push({ label: l!.name, sub: l!.sub, hint: i === 0 ? 'nu' : i === 1 ? 'klick' : undefined, disabled: i === 0, run: () => goTo(p) }),
+      );
+    items.push({ kind: 'sep' }, { label: 'Alla vyer i projektträdet', run: () => (navigator.showTab('vyer'), setNav(true)) });
+    if (!ui.activeView) items.push({ label: 'Spara det som visas som vy…', run: () => void saveViewAsNew() });
+    ctxMenu.open(x, y, items, 'Senaste vyerna');
+  }
+
+  /** Högerklick eller ⋯ på en vy i projektträdet. */
+  function openViewMenu(id: Id, x: number, y: number): void {
+    const v = store.doc.views.find((q) => q.id === id);
+    if (!v) return;
+    const traced = ui.trace === id;
+    ctxMenu.open(
+      x,
+      y,
+      [
+        { kind: 'header', label: v.name, sub: describeView(v) },
+        { label: 'Visa vyn', run: () => applyView(v), disabled: ui.activeView === id && !viewModified(v) },
+        { label: traced ? 'Sluta kalkera vyn' : 'Kalkera den här vyn', checked: traced, disabled: ui.activeView === id, run: () => setTrace(traced ? null : id) },
+        ...(ui.activeView === id ? [{ label: 'Spara nuvarande inställningar i vyn', disabled: !viewModified(v), run: () => void updateActiveView() }] : []),
+        { label: 'Byt namn…', run: () => void renameView(id) },
+        { label: 'Duplicera', run: () => duplicateView(id) },
+        { kind: 'sep' },
+        { label: 'Ta bort…', danger: true, run: () => void deleteView(id) },
+      ],
+      v.name,
+    );
+  }
+
+  async function saveViewAsNew(): Promise<void> {
+    closeShowMenu();
+    const st = store.doc.states.find((x) => x.id === ui.state)?.name ?? '';
+    const storeyName = store.doc.storeys.find((x) => x.id === ui.storey)?.name ?? '';
+    const name = await askText('Spara som vy', `${storeyName} – ${st}`);
+    if (!name) return;
+    const v = currentViewDef(newId('vy'), name);
+    store.transact(`Ny vy: ${name}`, (tx) => tx.setViews([...tx.doc.views, v]));
+    ui.activeView = v.id;
+    visit({ kind: 'view', id: v.id });
+    renderAll();
+  }
+
+  async function updateActiveView(): Promise<void> {
+    closeShowMenu();
+    const v = store.doc.views.find((x) => x.id === ui.activeView);
+    if (v) store.transact(`Spara vyn ${v.name}`, (tx) => tx.setViews(tx.doc.views.map((x) => (x.id === v.id ? currentViewDef(v.id, v.name) : x))));
+  }
+
+  async function renameView(id: Id): Promise<void> {
+    const v = store.doc.views.find((x) => x.id === id);
+    if (!v) return;
+    const name = await askText('Byt namn på vyn', v.name);
+    if (name && name !== v.name) store.transact(`Byt namn på vyn till ${name}`, (tx) => tx.setViews(tx.doc.views.map((x) => (x.id === id ? { ...x, name } : x))));
+  }
+
+  function duplicateView(id: Id): void {
+    const v = store.doc.views.find((x) => x.id === id);
+    if (!v) return;
+    const copy = { ...structuredClone(v), id: newId('vy'), name: `${v.name} (kopia)` };
+    store.transact(`Duplicera vyn ${v.name}`, (tx) => tx.setViews([...tx.doc.views, copy]));
+  }
+
+  async function deleteView(id: Id): Promise<void> {
+    const v = store.doc.views.find((x) => x.id === id);
+    if (!v || !(await askConfirm('Ta bort vyn?', `${v.name} tas bort. Det går att ångra.`))) return;
+    if (ui.activeView === id) ui.activeView = null;
+    if (ui.trace === id) ui.trace = null;
+    store.transact(`Ta bort vyn ${v.name}`, (tx) => tx.setViews(tx.doc.views.filter((x) => x.id !== id)));
+  }
+
+  function setTrace(id: Id | null): void {
+    ui.trace = id;
+    renderAll();
+    if (id) hint('Vyn kalkeras. Utseendet ställs in under Visa.');
+  }
+
+  /** Hur den kalkerade vyn ritas, under Visa. Gäller för användaren, i alla projekt. */
+  function traceLookMarkup(): string {
+    if (!ui.trace) return '';
+    const t = uiSettings.trace;
+    return `<div class="trace-look">
+      <div class="segmented wide" role="group" aria-label="Kalkeringens läge">
+        <button data-trace-above="0" aria-pressed="${!t.above}">Under</button>
+        <button data-trace-above="1" aria-pressed="${t.above}">Över</button>
+      </div>
+      <label class="check"><input type="checkbox" data-trace-own${t.color ? '' : ' checked'}> Ritningens färger</label>
+      <label class="field inline"><span>Färg</span><input type="color" data-trace-color value="${t.color ?? '#c2372c'}"${t.color ? '' : ' disabled'}></label>
+      <label class="field"><span>Opacitet <b data-out="trace-opacity">${Math.round(t.opacity * 100)} %</b></span><input type="range" min="5" max="100" step="5" data-trace-opacity value="${Math.round(t.opacity * 100)}"></label>
+    </div>`;
+  }
+
+  function applyTraceLook(): void {
+    view.setUnderlayLook(uiSettings.trace);
+  }
 
   // ---------- Skärmskalan ----------
   // Klick på skalan i statusraden: skriv in en skala, t.ex. 100 eller 1:50.
@@ -1344,7 +1627,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (!scalePop.hidden && !(e.target as Element).closest('.scale-wrap')) closeScalePop();
   });
 
-  // Stilmall och spårning i Visa-menyn.
+  // Stilmall och kalkering i Visa-menyn.
   root.addEventListener('change', (e) => {
     const t = e.target as HTMLSelectElement;
     if (t.matches('[data-show-style]')) {
@@ -1353,13 +1636,187 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     } else if (t.matches('[data-show-trace]')) {
       ui.trace = t.value || null;
       renderAll();
+      refreshShowMenu();
+    } else if (t.matches('[data-trace-own]')) {
+      uiSettings.trace.color = (t as unknown as HTMLInputElement).checked ? null : $<HTMLInputElement>('[data-trace-color]').value;
+      saveUiSettings(uiSettings);
+      applyTraceLook();
+      refreshShowMenu();
     }
+  });
+  // Kalkeringens färg och opacitet ändras medan man drar.
+  root.addEventListener('input', (e) => {
+    const t = e.target as HTMLInputElement;
+    if (t.matches('[data-trace-color]')) uiSettings.trace.color = t.value;
+    else if (t.matches('[data-trace-opacity]')) {
+      uiSettings.trace.opacity = Number(t.value) / 100;
+      out('trace-opacity').textContent = `${t.value} %`;
+    } else return;
+    saveUiSettings(uiSettings);
+    applyTraceLook();
+  });
+
+  /** Rita om Visa-menyn om den är öppen, t.ex. när kalkeringen slås på. */
+  function refreshShowMenu(): void {
+    const m = $<HTMLElement>('.show-menu');
+    if (m.hidden) return;
+    closeShowMenu();
+    $<HTMLElement>('.show-btn').click();
+  }
+
+  // ---------- Högerklick och långt tryck ----------
+  const ctxMenu = new ContextMenu();
+  const viewBtn = $<HTMLElement>('.view-btn');
+  const viewBtnLongPressed = onLongPress(viewBtn, (x, y) => openHistoryMenu(x, y), 450, true);
+  viewBtn.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    openHistoryMenu(e.clientX, e.clientY);
+  });
+  navigator.el.addEventListener('contextmenu', (e) => {
+    const row = (e.target as HTMLElement).closest<HTMLElement>('[data-view-apply]');
+    if (!row) return;
+    e.preventDefault();
+    openViewMenu(row.dataset.viewApply!, e.clientX, e.clientY);
+  });
+  const viewRowLongPress = onLongPress(navigator.el, (x, y, target) => {
+    const row = (target as HTMLElement | null)?.closest<HTMLElement>('[data-view-apply]');
+    if (row) openViewMenu(row.dataset.viewApply!, x, y);
+  });
+  // Ett långt tryck på en vy ska inte också öppna vyn.
+  navigator.el.addEventListener(
+    'click',
+    (e) => {
+      if (viewRowLongPress()) e.stopPropagation();
+    },
+    true,
+  );
+
+  /** Menyn för det som är markerat, eller för planen om inget är markerat. */
+  function openObjectMenu(x: number, y: number): void {
+    const els = selection.list().map((id) => store.doc.elements[id]).filter(Boolean);
+    if (!els.length) {
+      ctxMenu.open(
+        x,
+        y,
+        [
+          { label: 'Zooma till allt', hint: 'F', run: () => (ui.mode !== '3d' ? view.zoomToFit() : view3d?.frameAll()) },
+          { kind: 'sep' },
+          { label: 'Rita vägg', hint: 'W', run: () => setTool('wall') },
+          { label: 'Sätt in dörr', hint: 'D', run: () => setTool('door') },
+          { label: 'Sätt in fönster', hint: 'O', run: () => setTool('window') },
+          { label: 'Rum', hint: 'R', run: () => setTool('room') },
+          { label: 'Mått', hint: 'M', run: () => setTool('dimension') },
+          { label: 'Text', hint: 'T', run: () => setTool('text') },
+          { kind: 'sep' },
+          { label: 'Visa…', run: () => $<HTMLElement>('.show-btn').click() },
+          { label: 'Snäppning', checked: isSnapEnabled(), run: () => $<HTMLElement>('[data-action="snap"]').click() },
+          { label: 'Rutnät', hint: 'G', checked: uiSettings.grid, run: () => toggleGrid() },
+        ],
+        'Planen',
+      );
+      return;
+    }
+    const first = els[0];
+    const sameType = els.every((e) => e.type === first.type);
+    const quick = panel.quickMarkup(false);
+    const items: MenuItem[] = [];
+    if (quick) items.push({ kind: 'html', html: `<div class="quick-bar ctx-quick">${quick}</div>`, onClick: (e) => panel.handleClick(e) });
+    items.push(
+      { kind: 'sep' },
+      {
+        label: 'Alla inställningar här',
+        hint: 'Mer',
+        // På telefonen finns ingen snabbmeny; där fälls bladet upp i stället.
+        run: () => (isNarrow() ? (setPanel(true, 'full'), panel.showTab('selection')) : palette.show(x, y, true)),
+      },
+      { label: 'Visa i egenskaper', hint: 'P', run: () => (setPanel(true, 'full'), panel.showTab('selection')) },
+      { label: 'Zooma till', run: () => zoomToSelection() },
+    );
+    if (els.length === 1 && first.definition) {
+      const def = store.doc.definitions[first.definition];
+      items.push({
+        label: `Markera alla ${def?.name ?? 'av typen'}`,
+        run: () => selection.set(Object.values(store.doc.elements).filter((e) => e.definition === first.definition && e.storey === ui.storey).map((e) => e.id)),
+      });
+    }
+    if (sameType) {
+      const t = first.type;
+      const label = { Wall: 'väggar', Door: 'dörrar', Window: 'fönster', Furniture: 'möbler', Space: 'rum', Dimension: 'mått', Text: 'texter' }[t] ?? 'av samma sort';
+      items.push({ label: `Markera alla ${label}`, run: () => selectAllOfType(t) });
+    }
+    items.push({ kind: 'sep' }, { kind: 'header', label: 'Finns i' });
+    for (const s of store.doc.states) {
+      const all = els.every((e) => e.states.includes(s.id));
+      items.push({ label: s.name, checked: all, run: () => setInState(store, els.map((e) => e.id), s.id, !all) });
+    }
+    ctxMenu.open(x, y, items, 'Det markerade');
+  }
+
+  function selectAllOfType(type: string): void {
+    const vs = viewStates();
+    selection.set(
+      Object.values(store.doc.elements)
+        .filter((e) => e.type === type && e.storey === ui.storey && actionOf(e, vs) !== 'absent')
+        .map((e) => e.id),
+    );
+  }
+
+  /** Högerklick i planen: markera det man pekar på och öppna menyn. */
+  function planContext(clientX: number, clientY: number): void {
+    const r = pane2d.getBoundingClientRect();
+    const p = view.camera.toModel([clientX - r.left, clientY - r.top]);
+    const id = pickAt(plan.pickables, p, 6 / view.camera.scale);
+    if (id && !selection.has(id)) selection.set([id]);
+    if (!id && ui.tool === 'select') selection.clear();
+    palette.hide();
+    openObjectMenu(clientX, clientY);
+  }
+  pane2d.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    planContext(e.clientX, e.clientY);
+  });
+  // Långt tryck på telefonen. Trycket ska då inte också markera.
+  onLongPress(pane2d, (x, y) => {
+    selectTool.suppressNextClick();
+    planContext(x, y);
+  });
+
+  // 3D: högerklick utan drag öppnar menyn; högerdrag panorerar som förut.
+  let rightDown: { x: number; y: number } | null = null;
+  pane3d.addEventListener('pointerdown', (e) => {
+    if (e.button === 2) rightDown = { x: e.clientX, y: e.clientY };
+  }, { capture: true });
+  pane3d.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    const d = rightDown;
+    rightDown = null;
+    if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 5) return;
+    const id = view3d?.idAt(e.clientX, e.clientY) ?? null;
+    if (id && !selection.has(id)) selection.set([id]);
+    openObjectMenu(e.clientX, e.clientY);
   });
 
   window.addEventListener('keydown', (e) => {
     const t = e.target as HTMLElement;
     const typing = (t instanceof HTMLInputElement && t.type !== 'checkbox') || t instanceof HTMLSelectElement || t instanceof HTMLTextAreaElement;
     const mod = e.metaKey || e.ctrlKey;
+    // Spara, öppna och nytt projekt fungerar även när man skriver i ett fält.
+    if (mod && !e.altKey && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      void saveNow(e.shiftKey);
+      return;
+    }
+    if (mod && !e.altKey && e.key.toLowerCase() === 'o') {
+      e.preventDefault();
+      void openFile();
+      return;
+    }
+    if (mod && e.altKey && e.key.toLowerCase() === 'n') {
+      e.preventDefault();
+      newProjectDialog.open();
+      return;
+    }
+    if (ctxMenu.isOpen) return;
     if (mod && e.key.toLowerCase() === 'z' && !typing) {
       e.preventDefault();
       if (e.shiftKey) store.redo();
@@ -1471,11 +1928,11 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         break;
       case 'p':
       case 'P':
-        setPanel(!ui.panelOpen);
+        togglePanel();
         break;
       case 'n':
       case 'N':
-        setNav(!ui.navOpen);
+        toggleNav();
         break;
       case '+':
       case '=':

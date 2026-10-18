@@ -29,6 +29,8 @@ export class TempDims {
   private closed = false;
   /** Ritar om när en redigering avbrutits. */
   requestRender?: () => void;
+  /** Anslutningar som inte kunde följa med när väggen flyttades. */
+  onReleased?: (n: number) => void;
 
   constructor(container: HTMLElement, store: DocStore) {
     this.store = store;
@@ -79,7 +81,7 @@ export class TempDims {
     this.closed = false;
     const value = Math.round(this.dims[this.editing].value);
     this.el.querySelectorAll('button[data-dim]').forEach((x) => x.classList.toggle('editing', x === b));
-    const input = `<input class="temp-dim-input" type="number" inputmode="numeric" enterkeyhint="done" value="${value}" aria-label="Nytt avstånd i mm">`;
+    const input = `<input class="temp-dim-input" type="text" data-expr inputmode="decimal" autocomplete="off" enterkeyhint="done" value="${value}" aria-label="Nytt avstånd i mm">`;
     if (isNarrow()) {
       this.el.querySelector('.temp-dim-bar')?.remove();
       this.el.insertAdjacentHTML(
@@ -118,7 +120,8 @@ export class TempDims {
     if (!d || !this.wallId || !(value >= 0)) return false;
     const delta = value - d.value;
     if (Math.abs(delta) < 0.5) return false;
-    moveElements(this.store, [this.wallId], [Math.round(d.grow[0] * delta), Math.round(d.grow[1] * delta)], 'Flytta vägg');
+    const r = moveElements(this.store, [this.wallId], [Math.round(d.grow[0] * delta), Math.round(d.grow[1] * delta)], 'Flytta vägg');
+    if (r.released) this.onReleased?.(r.released);
     return true;
   }
 

@@ -2,8 +2,12 @@ import './styles/app.css';
 import { resolveBrand } from './brand';
 import { registerBuiltInTypes } from './elements';
 import { mountApp } from './ui/app';
+import { installExpressionFields } from './ui/expr';
 
 registerBuiltInTypes();
+// Formler i sifferfält. Kopplas före appen, så att uträkningen hinner före
+// programmets egna lyssnare.
+installExpressionFields();
 
 const brand = resolveBrand(import.meta.env.VITE_BRAND);
 void mountApp(document.getElementById('app')!, brand);

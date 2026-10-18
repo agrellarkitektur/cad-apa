@@ -6,12 +6,50 @@ import { parse, serialize } from './format';
  * (Chrome, Edge) används en riktig spara-dialog; annars laddas filen ner.
  */
 
+/**
+ * Filen projektet senast sparades till eller öppnades från, där webbläsaren
+ * har filsystems-API:t (Chrome och Edge). Då sparar Spara tillbaka till samma
+ * fil; annars frågar Spara efter en plats, eller laddar ner filen.
+ */
+let currentHandle: any = null;
+
+/** Glöm den öppna filen, t.ex. vid nytt projekt. */
+export function forgetProjectFile(): void {
+  currentHandle = null;
+}
+
+export function hasProjectFile(): boolean {
+  return currentHandle !== null;
+}
+
 export function saveProjectFile(doc: ProjectDoc, extension: string): Promise<'saved' | 'downloaded' | 'cancelled'> {
-  return saveTextFile(serialize(doc), safeName(doc.project.name), extension, 'Projekt');
+  return saveTextFile(serialize(doc), safeName(doc.project.name), extension, 'Projekt', true);
+}
+
+/** Spara till filen som redan är öppen; finns ingen frågar den som Spara som. */
+export async function saveProject(doc: ProjectDoc, extension: string): Promise<'saved' | 'downloaded' | 'cancelled'> {
+  if (currentHandle) {
+    try {
+      const w = await currentHandle.createWritable();
+      await w.write(serialize(doc));
+      await w.close();
+      return 'saved';
+    } catch {
+      // Filen gick inte att skriva till (flyttad, nekad): fråga efter en plats.
+      currentHandle = null;
+    }
+  }
+  return saveProjectFile(doc, extension);
 }
 
 /** Spara text som fil, med spara-dialog där webbläsaren har en. */
-export async function saveTextFile(text: string, baseName: string, extension: string, description: string): Promise<'saved' | 'downloaded' | 'cancelled'> {
+export async function saveTextFile(
+  text: string,
+  baseName: string,
+  extension: string,
+  description: string,
+  remember = false,
+): Promise<'saved' | 'downloaded' | 'cancelled'> {
   const name = `${safeName(baseName)}.${extension}`;
   const picker = (window as any).showSaveFilePicker;
   if (typeof picker === 'function') {
@@ -23,6 +61,7 @@ export async function saveTextFile(text: string, baseName: string, extension: st
       const w = await handle.createWritable();
       await w.write(text);
       await w.close();
+      if (remember) currentHandle = handle;
       return 'saved';
     } catch (e) {
       if ((e as DOMException)?.name === 'AbortError') return 'cancelled';
@@ -41,7 +80,25 @@ export async function saveTextFile(text: string, baseName: string, extension: st
 }
 
 /** Låt användaren välja en fil och läs den som projekt. */
-export function openProjectFile(extension: string): Promise<ProjectDoc | null> {
+export async function openProjectFile(extension: string): Promise<ProjectDoc | null> {
+  const picker = (window as any).showOpenFilePicker;
+  if (typeof picker === 'function') {
+    let handle: any;
+    try {
+      [handle] = await picker({
+        multiple: false,
+        types: [{ description: 'Projekt', accept: { 'application/json': [`.${extension}`, '.json'] } }],
+      });
+    } catch (e) {
+      if ((e as DOMException)?.name === 'AbortError') return null;
+      handle = null;
+    }
+    if (handle) {
+      const doc = parse(await (await handle.getFile()).text());
+      currentHandle = handle;
+      return doc;
+    }
+  }
   return new Promise((resolve, reject) => {
     const input = document.createElement('input');
     input.type = 'file';
@@ -50,7 +107,9 @@ export function openProjectFile(extension: string): Promise<ProjectDoc | null> {
       const file = input.files?.[0];
       if (!file) return resolve(null);
       try {
-        resolve(parse(await file.text()));
+        const doc = parse(await file.text());
+        currentHandle = null;
+        resolve(doc);
       } catch (e) {
         reject(e);
       }

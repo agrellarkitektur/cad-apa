@@ -2,9 +2,9 @@
 
 2026-10-17 · Carl August Agrell
 
-> Dokumentet skrevs innan steg 1 påbörjades och återges här som det skrevs.
-> Byggordningen har ändrats sedan dess. Hur den ser ut nu står i
-> [Byggordningen nu](#byggordningen-nu) längst ned.
+> Dokumentet skrevs innan arbetet påbörjades och återges här som det skrevs.
+> Byggordningen nedan gäller inte längre: planen finns i [PLAN.md](PLAN.md),
+> där varje del är en version.
 
 ## Idé och avgränsning
 
@@ -288,29 +288,4 @@ Beslut:
 
 ---
 
-## Byggordningen nu
-
-*Uppdaterad 2026-10-18.* Ordningen ovan har ändrats under arbetet. Steg 5 i
-dokumentet blev en del av steg 4, och dörrar, fönster, rum, mått och text
-byggdes tillsammans som steg 5. Vad varje version innehåller står i
-[README](../README.md).
-
-1. **Skelett.** Klart.
-2. **Kärnan.** Klart.
-3. **Väggverktyget**, med markering, egenskapspanel, typer med littera och stilmallar. Klart.
-4. **3D-vyn**, med markering och redigering i 3D. Klart.
-5. **Dörrar, fönster och anteckningar**: dörrar och fönster med typer och littera, rum med numrering, mått och text. Klart, och utbyggt i 0.6–0.6.2 med vyer, detaljnivåer, navigator och tillfälliga mått. Dörrar och fönster är ännu inte biblioteksobjekt i egna filer.
-6. **Ritningsblad och PDF.** Blad med ritningshuvud och vyer i skala, utskrift till PDF. Hit hör också:
-   - underlag att rita över: DXF, PDF och bilder
-   - arbetsblad: fria 2D-ritningar som inte hör till en våning
-   - autotext
-   - typsnitt och textformatering
-   - littera som går att flytta
-   - annoteringsskala per vy
-7. **Förteckningar.** Rumslista med summering och dörr- och fönsterförteckning med förhandsbild. Hit hör också ytskikt som styrs av rumsobjektet.
-
-Kvar från dokumentets ordning, med nummer och ordning ännu inte bestämda:
-
-- **Möbler, biblioteksobjekt och komponenter**, inklusive dörrar och fönster i biblioteksformatet
-- **DXF-export** med lager enligt lagerreglerna
-- **IFC-export**
+Den aktuella planen, version för version, står i [PLAN.md](PLAN.md).

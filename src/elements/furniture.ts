@@ -3,7 +3,7 @@ import type { Solid } from '../repr/solids';
 import type { ElementType } from './registry';
 
 /**
- * Enkla möbler och inredning tills biblioteksobjekten finns (steg 7). Varje
+ * Enkla möbler och inredning tills familjerna finns (0.11). Varje
  * symbol ritas i en lokal ruta (0,0)–(bredd,djup) som sedan placeras och vrids.
  */
 export type FurnitureSymbol = 'bed' | 'sofa' | 'table' | 'counter' | 'sink' | 'shower';

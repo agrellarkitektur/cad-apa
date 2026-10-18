@@ -672,3 +672,93 @@ describe('version 0.6.2', () => {
     }
   });
 });
+
+describe('formler i sifferfält (0.6.3)', () => {
+  it('räknar uttryck, relativa värden och enheter', async () => {
+    const { evaluate } = await import('../src/ui/expr');
+    expect(evaluate('2700')).toBe(2700);
+    expect(evaluate('+300', 2700)).toBe(3000);
+    expect(evaluate('-50', 2700)).toBe(2650);
+    expect(evaluate('*2', 450)).toBe(900);
+    expect(evaluate('/2', 900)).toBe(450);
+    expect(evaluate('+450', 2100)).toBe(2550);
+    expect(evaluate('2400+2*120')).toBe(2640);
+    expect(evaluate('(2400+120)/2')).toBe(1260);
+    expect(evaluate('2,4m')).toBe(2400);
+    expect(evaluate('2m+300')).toBe(2300);
+    expect(evaluate('60cm')).toBe(600);
+    expect(evaluate('3 620')).toBe(3620);
+    expect(evaluate('2,5', null, '')).toBe(2.5);
+    expect(evaluate('45+15', null, 'deg')).toBe(60);
+    expect(evaluate('90°', null, 'deg')).toBe(90);
+    expect(evaluate('3×4')).toBe(12);
+    expect(evaluate('12÷4')).toBe(3);
+  });
+  it('säger ifrån om det inte går', async () => {
+    const { evaluate } = await import('../src/ui/expr');
+    expect(evaluate('hej')).toBeNull();
+    expect(evaluate('2+')).toBeNull();
+    expect(evaluate('(2+3')).toBeNull();
+    expect(evaluate('5/0')).toBeNull();
+    expect(evaluate('2m', null, 'deg')).toBeNull();
+    // Ett relativt uttryck utan värde att räkna från blir ett vanligt tal.
+    expect(evaluate('+300')).toBe(300);
+  });
+});
+
+describe('anslutna väggar följer med (0.6.3)', () => {
+  const box = () => {
+    const doc = sampleProject();
+    doc.elements = {};
+    const w = (id: string, start: [number, number], end: [number, number]) =>
+      (doc.elements[id] = { id, type: 'Wall', storey: 'pl-1', states: ['st-bef'], tags: [], params: { start, end, thickness: 200, height: 2700, justification: 'center' }, props: {} } as any);
+    w('s', [0, 0], [6000, 0]);
+    w('o', [6000, 0], [6000, 4000]);
+    w('n', [6000, 4000], [0, 4000]);
+    w('v', [0, 4000], [0, 0]);
+    w('t', [3000, 0], [3000, 4000]); // innervägg i T mot syd och norr
+    return new DocStore(doc);
+  };
+  const ends = (store: DocStore, id: string) => {
+    const p = store.doc.elements[id].params as any;
+    return [p.start, p.end];
+  };
+
+  it('hörn och T-anslutningar följer när ytterväggen flyttas utåt', () => {
+    const store = box();
+    moveElements(store, ['s'], [0, -500]);
+    expect(ends(store, 's')).toEqual([[0, -500], [6000, -500]]);
+    expect(ends(store, 'o')).toEqual([[6000, -500], [6000, 4000]]);
+    expect(ends(store, 'v')).toEqual([[0, 4000], [0, -500]]);
+    expect(ends(store, 't')).toEqual([[3000, -500], [3000, 4000]]);
+    store.undo();
+    expect(ends(store, 'o')).toEqual([[6000, 0], [6000, 4000]]);
+  });
+
+  it('en innervägg som flyttas i sidled tar inte med sig ytterväggarna', () => {
+    const store = box();
+    moveElements(store, ['t'], [400, 0]);
+    expect(ends(store, 't')).toEqual([[3400, 0], [3400, 4000]]);
+    expect(ends(store, 's')).toEqual([[0, 0], [6000, 0]]);
+  });
+
+  it('snett: änden glider längs sin egen vägg och vinkeln står kvar', async () => {
+    const { followPoint } = await import('../src/core/commands');
+    // Vägg från (0,0) till (1000,1000) mot en vågrät vägg y=1000 som flyttas upp 500.
+    expect(followPoint([1000, 1000], [0, 0], { start: [500, 1000], end: [3000, 1000] }, [0, 500])).toEqual([1500, 1500]);
+  });
+
+  it('väggar i rak förlängning släpper vid flytt i sidled, och Alt lossar', () => {
+    const store = box();
+    const doc = store.doc;
+    store.transact('x', (tx) =>
+      tx.putElement({ ...doc.elements['s'], id: 'f', params: { ...doc.elements['s'].params, start: [6000, 0], end: [8000, 0] } }),
+    );
+    const r = moveElements(store, ['s'], [0, -500]);
+    expect(r.released).toBe(1);
+    expect(ends(store, 'f')).toEqual([[6000, 0], [8000, 0]]);
+    const store2 = box();
+    moveElements(store2, ['s'], [0, -500], 'Flytta', { keepJoins: false });
+    expect(ends(store2, 'o')).toEqual([[6000, 0], [6000, 4000]]);
+  });
+});

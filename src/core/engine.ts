@@ -4,9 +4,6 @@
  */
 export const ENGINE = {
   name: 'Bacchus',
-  version: '0.6.2',
-  /** Vilken milstolpe i byggordningen koden motsvarar. */
-  milestone: 5,
-  /** Antal milstolpar i byggordningen. */
-  milestones: 12,
+  /** Versionen. Vad varje version innehåller står i README och docs/PLAN.md. */
+  version: '0.6.3',
 } as const;

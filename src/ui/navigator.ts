@@ -15,6 +15,8 @@ export interface NavigatorHost {
   storey(): Id;
   activeView(): Id | null;
   viewModified(v: ViewDef): boolean;
+  /** Vyn som kalkeras under ritningen, om någon. */
+  trace(): Id | null;
   describeView(v: ViewDef): string;
 }
 
@@ -24,8 +26,9 @@ export interface NavigatorHost {
  * sektioner, fasader och arbetsblad), Vyer är sparade visningar av modellen
  * och Ritningar är bladen som plottas.
  *
- * På datorn ligger den bredvid egenskaperna, var och en med sin knapp (☰ och
- * P) och ett dragstreck för bredden. På telefonen fyller den skärmen.
+ * Projektträdet. På datorn ligger det bredvid egenskaperna, var och en med
+ * sin knapp (☰ och P), ett dragstreck för bredden och ett stående band när
+ * det är minimerat. På telefonen fyller det skärmen.
  */
 export class Navigator {
   readonly el: HTMLElement;
@@ -37,13 +40,17 @@ export class Navigator {
     this.host = host;
     this.el = document.createElement('aside');
     this.el.className = 'navigator';
-    this.el.setAttribute('aria-label', 'Navigator');
+    this.el.setAttribute('aria-label', 'Projektträd');
     this.el.innerHTML = `
+      <div class="pane-title"><h2>Projektträd</h2>
+        <button class="icon-mini pane-min" data-action="min-nav" aria-label="Minimera projektträdet" title="Minimera">${icons.minimize}</button>
+        <button class="icon-mini pane-x" data-action="close-nav" aria-label="Stäng projektträdet" title="Stäng (N)">${icons.close}</button>
+      </div>
       <div class="panel-head nav-head">
         <div class="tabs nav-tabs" role="tablist">
           ${TABS.map(([id, label]) => `<button role="tab" data-nav-tab="${id}" aria-selected="${id === this.tab}">${label}</button>`).join('')}
         </div>
-        <button class="icon-btn nav-close" data-action="toggle-nav" aria-label="Stäng navigatorn">${icons.close}</button>
+        <button class="icon-btn nav-close" data-action="close-nav" aria-label="Stäng projektträdet">${icons.close}</button>
       </div>
       <div class="panel-body nav-body"></div>`;
     this.body = this.el.querySelector('.nav-body')!;
@@ -65,7 +72,7 @@ export class Navigator {
     return `<section>
       <h2>Underlag</h2>
       <p class="note">Här hamnar det man ritar över: DXF- och PDF-filer, bilder och kartor. Underlagen placeras i skala och kan visas i vyer och på ritningar.</p>
-      <p class="note soon">Kommer i steg 6, tillsammans med ritningar och utskrift.</p>
+      <p class="note soon">Kommer i 0.8, tillsammans med ritningar och utskrift.</p>
     </section>`;
   }
 
@@ -84,12 +91,12 @@ export class Navigator {
     </section>
     <section>
       <h2>Sektioner och fasader</h2>
-      <p class="note soon">Kommer i ett senare steg.</p>
+      <p class="note soon">Kommer i 0.7.</p>
     </section>
     <section>
       <h2>Arbetsblad</h2>
       <p class="note">Fria 2D-ritningar som inte hör till en våning, till exempel detaljer, i samma projekt som modellen.</p>
-      <p class="note soon">Kommer i steg 6.</p>
+      <p class="note soon">Kommer i 0.8.</p>
     </section>`;
   }
 
@@ -103,7 +110,8 @@ export class Navigator {
           .map((v) => {
             const mod = v.id === activeId && this.host.viewModified(v) ? ' *' : '';
             const info = [doc.storeys.length > 1 ? storeyName(v.storey) : '', this.host.describeView(v)].filter(Boolean).join(' · ');
-            return `<div class="view-row${v.id === activeId ? ' active' : ''}"><button class="view-apply" data-view-apply="${v.id}">${esc(v.name)}${mod}<small>${esc(info)}</small></button><button class="icon-mini" data-view-rename="${v.id}" aria-label="Byt namn" title="Byt namn">✎</button><button class="icon-mini" data-view-delete="${v.id}" aria-label="Ta bort" title="Ta bort">×</button></div>`;
+            const traced = this.host.trace() === v.id ? '<span class="trace-tag">kalkeras</span> ' : '';
+            return `<div class="view-row${v.id === activeId ? ' active' : ''}"><button class="view-apply" data-view-apply="${v.id}" title="Högerklicka (håll in på telefonen) för fler val">${esc(v.name)}${mod}<small>${traced}${esc(info)}</small></button><button class="icon-mini view-more" data-view-menu="${v.id}" aria-label="Fler val för ${esc(v.name)}" title="Fler val">${icons.more}</button></div>`;
           })
           .join('')
       : '<p class="note">Inga sparade vyer än.</p>';
@@ -113,8 +121,8 @@ export class Navigator {
         ${active && this.host.viewModified(active) ? `<button class="btn" data-action="view-update">Spara ändringarna i ${esc(active.name)}</button>` : ''}
         <button class="btn" data-action="view-save-new">Spara som ny vy…</button>
       </div>
-      <p class="note">En vy sparar tillstånd, jämförelse, detaljnivå, vad som visas, stilmall och spårning. Jämförelsen kan slås av och på medan man arbetar utan att vyn ändras.</p>
-      <p class="note soon">Export av modellen (IFC, 3D) från en vy kommer i ett senare steg.</p>
+      <p class="note">En vy sparar tillstånd, jämförelse, detaljnivå, vad som visas, stilmall och kalkering. Högerklicka på en vy för att byta namn, kalkera den eller ta bort den.</p>
+      <p class="note soon">Export av modellen (IFC) från en vy kommer i 0.14.</p>
     </section>`;
   }
 
@@ -122,7 +130,7 @@ export class Navigator {
     return `<section>
       <h2>Ritningar</h2>
       <p class="note">Ritningsblad med ritningshuvud och vyer placerade i skala. Härifrån skrivs bladen ut som PDF, ett eller flera på en gång.</p>
-      <p class="note soon">Kommer i steg 6.</p>
+      <p class="note soon">Kommer i 0.8.</p>
     </section>`;
   }
 }

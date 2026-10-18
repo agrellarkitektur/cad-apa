@@ -67,15 +67,15 @@ export class StyleDialog {
           <option value="hatch"${fill.kind === 'hatch' ? ' selected' : ''}>Skraffering</option>
         </select></label>
         <label><span>${fill.kind === 'hatch' ? 'Linjefärg' : 'Färg'}</span><input type="color" data-key="${key}" data-field="color" value="${toHex(fillColor)}"${fill.kind === 'none' ? ' disabled' : ''}></label>
-        <label><span>Opacitet</span><span class="input-unit"><input type="number" min="0" max="100" step="10" data-key="${key}" data-field="opacity" value="${Math.round((fill.kind === 'none' ? 1 : fill.opacity ?? 1) * 100)}"${fill.kind === 'none' ? ' disabled' : ''}><i>%</i></span></label>
-        <label><span>Bakgrund</span><span class="bg-pick"><input type="checkbox" data-key="${key}" data-field="bgOn"${fill.kind === 'hatch' && fill.background ? ' checked' : ''}${fill.kind === 'hatch' ? '' : ' disabled'} aria-label="Bakgrund"><input type="color" data-key="${key}" data-field="bg" value="${toHex(fill.kind === 'hatch' && fill.background ? fill.background : 'paper')}"${fill.kind === 'hatch' && fill.background ? '' : ' disabled'}><input type="number" min="0" max="100" step="10" data-key="${key}" data-field="bgOpacity" value="${Math.round((fill.kind === 'hatch' ? fill.backgroundOpacity ?? 1 : 1) * 100)}"${fill.kind === 'hatch' && fill.background ? '' : ' disabled'} aria-label="Bakgrundens opacitet" title="Bakgrundens opacitet, %"></span></label>
+        <label><span>Opacitet</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="10" inputmode="decimal" autocomplete="off" data-key="${key}" data-field="opacity" value="${Math.round((fill.kind === 'none' ? 1 : fill.opacity ?? 1) * 100)}"${fill.kind === 'none' ? ' disabled' : ''}><i>%</i></span></label>
+        <label><span>Bakgrund</span><span class="bg-pick"><input type="checkbox" data-key="${key}" data-field="bgOn"${fill.kind === 'hatch' && fill.background ? ' checked' : ''}${fill.kind === 'hatch' ? '' : ' disabled'} aria-label="Bakgrund"><input type="color" data-key="${key}" data-field="bg" value="${toHex(fill.kind === 'hatch' && fill.background ? fill.background : 'paper')}"${fill.kind === 'hatch' && fill.background ? '' : ' disabled'}><input type="text" data-expr data-unit="" data-step="10" inputmode="decimal" autocomplete="off" data-key="${key}" data-field="bgOpacity" value="${Math.round((fill.kind === 'hatch' ? fill.backgroundOpacity ?? 1 : 1) * 100)}"${fill.kind === 'hatch' && fill.background ? '' : ' disabled'} aria-label="Bakgrundens opacitet" title="Bakgrundens opacitet, %"></span></label>
         <label><span>Kontur</span><select data-key="${key}" data-field="outline">
           <option value="solid"${outline === 'solid' ? ' selected' : ''}>Heldragen</option>
           <option value="dashed"${outline === 'dashed' ? ' selected' : ''}>Streckad</option>
           <option value="none"${outline === 'none' ? ' selected' : ''}>Ingen</option>
         </select></label>
         <label><span>Konturfärg</span><input type="color" data-key="${key}" data-field="lineColor" value="${toHex(a.cutOutline?.color ?? a.lines.color)}"></label>
-        ${key === 'existing' || key === 'new' ? `<label><span>Dörrar öppna</span><span class="input-unit"><input type="number" min="0" max="90" step="15" data-key="${key}" data-field="door" value="${a.doorAngle}"><i>°</i></span></label>` : '<span class="style-door-na" aria-hidden="true"></span>'}
+        ${key === 'existing' || key === 'new' ? `<label><span>Dörrar öppna</span><span class="input-unit"><input type="text" data-expr data-unit="deg" data-step="15" inputmode="decimal" autocomplete="off" data-key="${key}" data-field="door" value="${a.doorAngle}"><i>°</i></span></label>` : '<span class="style-door-na" aria-hidden="true"></span>'}
       </div>`;
     }).join('');
 
@@ -98,7 +98,7 @@ export class StyleDialog {
   private labelSection(style: StyleSheet): string {
     const l = style.labels;
     const h = (k: keyof StyleSheet['labels']['heights'], label: string) =>
-      `<label><span>${label}</span><span class="input-unit"><input type="number" min="0.5" max="10" step="0.05" inputmode="decimal" data-lab="h:${k}" value="${Number(l.heights[k]).toFixed(2)}"><i>mm</i></span></label>`;
+      `<label><span>${label}</span><span class="input-unit"><input type="text" data-expr data-step="0.05" inputmode="decimal" autocomplete="off" data-lab="h:${k}" value="${Number(l.heights[k]).toFixed(2)}"><i>mm</i></span></label>`;
     const names: Record<string, string> = { Wall: 'Väggar', Door: 'Dörrar', Window: 'Fönster' };
     const tpl = (Object.keys(l.templates) as (keyof StyleSheet['labels']['templates'])[])
       .map(

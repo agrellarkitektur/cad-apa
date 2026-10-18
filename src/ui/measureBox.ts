@@ -112,7 +112,7 @@ export class MeasureBox {
     }
     this.el.dataset.kind = t.kind;
     const field = (name: string, label: string, value: number, unit: string) =>
-      `<label><span>${label}</span><span class="input-unit"><input type="number" inputmode="decimal" id="mb-${name}" data-field="${name}" value="${value}"><i>${unit}</i></span></label>`;
+      `<label><span>${label}</span><span class="input-unit"><input type="text" data-expr data-unit="${unit === '°' ? 'deg' : 'mm'}" inputmode="decimal" autocomplete="off" id="mb-${name}" data-field="${name}" value="${value}"><i>${unit}</i></span></label>`;
     const close = `<button class="icon-mini" data-action="close-measure" aria-label="Stäng">×</button>`;
 
     if (t.kind === 'wall-end') {

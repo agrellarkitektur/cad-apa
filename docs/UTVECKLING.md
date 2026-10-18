@@ -88,8 +88,8 @@ ritar hjälpgrafik i `overlay()`. Panorering och zoom sköter planvyn själv, s�
 inget verktyg behöver bry sig om det. Snäpp finns i `src/ui/tools/snap.ts`.
 
 Paneler läser `store.doc`, lyssnar med `store.subscribe` och ändrar via
-kommandon. Verktyg som inte är byggda än står i verktygsfältet med det steg de
-kommer i.
+kommandon. Verktyg som inte är byggda än står i verktygsfältet med den
+version de kommer i (se [PLAN.md](PLAN.md)).
 
 ## Tester
 
@@ -110,7 +110,7 @@ tillstånden som andra element. Littera ritas av väggar, dörrar och fönster
 själva via `src/elements/littera.ts` och kan döljas per vy (`hide`).
 
 Vyinställningar som detaljnivå, dolda kategorier och om rivet visas ligger i
-`ViewStates` (`src/core/states.ts`). När bladen kommer i steg 6 får varje vy
+`ViewStates` (`src/core/states.ts`). När bladen kommer i 0.8 får varje vy
 på bladet sina egna.
 
 ## Vyer, mått och littera (0.6)
@@ -124,3 +124,25 @@ på bladet sina egna.
   `src/elements/littera.ts`. Dörrnummer räknas i `src/elements/rooms.ts`.
 - Väggens insida är höger sida i ritriktningen. `orientExteriorWalls` vänder
   ytterväggar som pekar fel (används vid migrering till format 3).
+
+## Sifferfält, flytt och menyer (0.6.3)
+
+- Sifferfält är `<input type="text" data-expr inputmode="decimal">`, aldrig
+  `type="number"`. `installExpressionFields()` i `src/ui/expr.ts` räknar ut
+  formler och enheter innan fältets egna lyssnare får `change` och Enter, så
+  panelerna ser bara ett färdigt tal i mm. `data-unit="deg"` för vinklar,
+  `data-unit=""` för tal utan enhet, `data-step` för piltangenterna.
+  `evaluate(text, base, unit)` går att använda direkt och har tester.
+- `moveElements(store, ids, d, label, { keepJoins })` flyttar och låter
+  anslutna väggar följa med (`followJoins` i `src/core/commands.ts`): hörn
+  inom 1 mm av en flyttad ände och T-skarvar mot väggens liv. En ansluten
+  vägg får sin ände i skärningen med den flyttade väggens nya linje.
+  `keepJoins: false` (Alt) flyttar fritt. Öppningar i väggar vars start
+  flyttas kompenseras så att de står still.
+- Högerklicksmenyer byggs med `ContextMenu` i `src/ui/contextMenu.ts` av en
+  lista `MenuItem`. `onLongPress()` ger samma sak på pekskärm.
+- Använd `askText` och `askConfirm` i `src/ui/ask.ts` i stället för
+  `prompt()` och `confirm()`, som inte fungerar i alla miljöer.
+- Inställningar som gäller användaren och inte projektet (panelernas lägen,
+  kalkeringens utseende) ligger i `src/ui/uiSettings.ts` och sparas i
+  webbläsaren. Då behöver filformatet inte ändras.

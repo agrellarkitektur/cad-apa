@@ -140,7 +140,7 @@ export class SettingsDialog {
         </section>
         <section>
           <h3>Skärmen</h3>
-          <label class="field inline-field"><span>Skärmens storlek (diagonal)</span><span class="input-unit"><input type="number" min="3" max="120" step="0.1" inputmode="decimal" data-setting="inches" value="${s.screenInches ?? ''}" placeholder="Okänd"><i>tum</i></span></label>
+          <label class="field inline-field"><span>Skärmens storlek (diagonal)</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="0.1" inputmode="decimal" autocomplete="off" data-setting="inches" value="${s.screenInches ?? ''}" placeholder="Okänd"><i>tum</i></span></label>
           <p class="note">Med skärmens storlek visar statusraden skärmskalan exakt, så att 1:100 på skärmen är 1:100 med linjal. Gäller när webbläsaren visar sidan i 100 %. Den här skärmen är ${screenSize()}. Lämna tomt för en ungefärlig skala.</p>
         </section>
         <section>

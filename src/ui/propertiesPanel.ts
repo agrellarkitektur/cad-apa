@@ -72,6 +72,10 @@ export class PropertiesPanel {
     this.el.setAttribute('aria-label', 'Egenskaper');
     this.el.innerHTML = `
       <div class="sheet-grip" role="button" tabindex="0" aria-label="Dra upp för alla egenskaper, ned för att stänga"><span></span></div>
+      <div class="pane-title"><h2>Egenskaper</h2>
+        <button class="icon-mini pane-min" data-action="min-panel" aria-label="Minimera egenskaperna" title="Minimera"></button>
+        <button class="icon-mini pane-x" data-action="close-panel" aria-label="Stäng egenskaperna" title="Stäng (P)"></button>
+      </div>
       <div class="panel-head">
         <div class="tabs" role="tablist">
           <button role="tab" data-tab="selection" aria-selected="true">Markerat</button>
@@ -126,7 +130,7 @@ export class PropertiesPanel {
    * Används både i panelen och i snabbmenyn vid markören. Med `more` får
    * raden en knapp som öppnar hela panelen.
    */
-  quickMarkup(more = false): string | null {
+  quickMarkup(more: boolean | 'less' = false): string | null {
     const doc = this.store.doc;
     const els = this.selection
       .list()
@@ -193,7 +197,8 @@ export class PropertiesPanel {
           break;
       }
     }
-    if (more) buttons.push(btn('open-panel', icons.more, 'Mer'));
+    if (more === true) buttons.push(btn('palette-more', icons.more, 'Mer'));
+    if (more === 'less') buttons.push(btn('palette-less', icons.collapse, 'Mindre'));
     buttons.push(btn('deselect', icons.close, 'Avmarkera'));
 
     const title = els.length === 0 ? 'Inget markerat' : els.length === 1 ? labelOf(doc, els[0]) : `${els.length} objekt`;
@@ -382,7 +387,7 @@ export class PropertiesPanel {
           ? `<label class="field" for="f-param-number"><span>Rumsnummer</span><input id="f-param-number" data-key="text:number" value="${escapeHtml(p.number ?? number)}"></label>`
           : `<label class="field"><span>Rumsnummer</span><input value="${escapeHtml(number)}" readonly title="Räknas automatiskt. Lås numreringen för att ändra själv."></label>`;
         return `<div class="fields">${textField('name', 'Namn', el.name ?? '')}${numberField}
-            <label class="field" for="f-param-ceilingHeight"><span>Takhöjd (TH)</span><span class="input-unit"><input type="number" inputmode="numeric" id="f-param-ceilingHeight" data-key="param:ceilingHeight" value="${p.ceilingHeight ?? ''}" placeholder="Visas inte"><i>mm</i></span></label></div>
+            <label class="field" for="f-param-ceilingHeight"><span>Takhöjd (TH)</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" id="f-param-ceilingHeight" data-key="param:ceilingHeight" value="${p.ceilingHeight ?? ''}" placeholder="Visas inte"><i>mm</i></span></label></div>
 `;
       }
       case 'Dimension': {
@@ -411,7 +416,7 @@ export class PropertiesPanel {
     const auto = exterior ? EXTERIOR_INSET : 0;
     const inset =
       exterior || isDoor
-        ? `<label class="field" for="f-param-inset"><span>Indrag ${from}</span><span class="input-unit"><input type="number" inputmode="numeric" id="f-param-inset" data-key="param:inset" value="${p.inset ?? ''}" placeholder="Auto ${auto}"><i>mm</i></span></label>`
+        ? `<label class="field" for="f-param-inset"><span>Indrag ${from}</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" id="f-param-inset" data-key="param:inset" value="${p.inset ?? ''}" placeholder="Auto ${auto}"><i>mm</i></span></label>`
         : '';
     return `<div class="fields">${numberField('param:frameWidth', 'Karmbredd', p.frameWidth ?? FRAME_DEFAULTS.frameWidth, 'mm')}${numberField('param:frameDepth', 'Karmdjup', p.frameDepth ?? FRAME_DEFAULTS.frameDepth, 'mm')}${inset}</div>`;
   }
@@ -430,7 +435,7 @@ export class PropertiesPanel {
             const users = Object.values(doc.elements).filter((e) => e.definition === d.id).length;
             const params = t.typeParams!.map(
               (k) =>
-                `<td><input type="number" inputmode="numeric" id="tp-${d.id}-${k}" data-def="${d.id}" data-param="${k}" value="${Number(d.params[k] ?? 0)}" aria-label="${PARAM_LABELS[k] ?? k} för ${escapeHtml(d.name)}"></td>`,
+                `<td><input type="text" data-expr inputmode="decimal" autocomplete="off" id="tp-${d.id}-${k}" data-def="${d.id}" data-param="${k}" value="${Number(d.params[k] ?? 0)}" aria-label="${PARAM_LABELS[k] ?? k} för ${escapeHtml(d.name)}"></td>`,
             );
             return `<tr>
               <td><input class="littera" id="tl-${d.id}" data-def="${d.id}" data-field="name" value="${escapeHtml(d.name)}" aria-label="Littera"></td>
@@ -457,6 +462,20 @@ export class PropertiesPanel {
   /** Knapparna i snabbraden, var den än visas. */
   handleClick(e: Event): void {
     this.onClick(e);
+  }
+
+  /** Fälten i den utfällda snabbmenyn. */
+  handleChange(e: Event): void {
+    this.onChange(e);
+  }
+
+  /**
+   * Alla inställningar för det markerade, utan rubriken, för den utfällda
+   * snabbmenyn. Null när inget är markerat.
+   */
+  selectionMarkup(): string | null {
+    if (this.selection.size === 0) return null;
+    return this.renderSelection(this.store.doc).replace(/<header class="sel-head">[\s\S]*?<\/header>/, '');
   }
 
   private onClick(e: Event): void {
@@ -544,7 +563,10 @@ export class PropertiesPanel {
         break;
       case 'add-prop':
       case 'add-defprop': {
-        const input = this.body.querySelector<HTMLInputElement>(b.dataset.action === 'add-prop' ? '#new-prop' : '#new-defprop');
+        // Fältet bredvid knappen, i panelen eller i den utfällda snabbmenyn.
+        const input =
+          b.parentElement?.querySelector<HTMLInputElement>('input') ??
+          this.body.querySelector<HTMLInputElement>(b.dataset.action === 'add-prop' ? '#new-prop' : '#new-defprop');
         const name = input?.value.trim();
         if (!name) break;
         const el = doc.elements[ids[0]];
@@ -748,8 +770,9 @@ export class PropertiesPanel {
 function numberField(key: string, label: string, value: number, unit: string, decimals = 0): string {
   const id = `f-${key.replace(':', '-')}`;
   const shown = decimals > 0 ? Number(value).toFixed(decimals) : String(Math.round(value));
-  const extra = decimals > 0 ? ` inputmode="decimal" step="${(1 / 10 ** decimals).toFixed(decimals)}" min="0"` : ' inputmode="numeric"';
-  return `<label class="field" for="${id}"><span>${label}</span><span class="input-unit"><input type="number"${extra} id="${id}" data-key="${key}" value="${shown}"><i>${unit}</i></span></label>`;
+  const exprUnit = unit === '°' ? 'deg' : unit === 'mm' ? 'mm' : '';
+  const step = decimals > 0 ? (1 / 10 ** decimals).toFixed(decimals) : '1';
+  return `<label class="field" for="${id}"><span>${label}</span><span class="input-unit"><input type="text" data-expr data-unit="${exprUnit}" data-step="${step}" inputmode="decimal" autocomplete="off" id="${id}" data-key="${key}" value="${shown}"><i>${unit}</i></span></label>`;
 }
 
 function textField(key: string, label: string, value: string): string {

@@ -4,19 +4,20 @@ Ritprogram i webbläsaren för små arkitektkontor. *Bacchus* är motorns intern
 namn; produktnamnet (just nu låtsasbrandingen **cad-apa**) ligger i `src/brand/`
 och kan bytas utan att röra resten av koden.
 
-Arkitektur och byggordning beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md)
-(*Ritprogram för små kontor – arkitektur och demoplan*). Koden motsvarar **steg 5 av 12: dörrar, fönster och anteckningar**.
+Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
+som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
+**0.6.3**; nästa är **0.7, fasader och sektioner**.
 
 ## Vad som fungerar
 
-Steg 1, skelett:
+Version 0.1, skelett:
 - Planvy i mm med rutnät som anpassar sig efter zoomen (1 · 5 · 10 · 50 … mm)
 - Panorera och zooma med mus, styrplatta och pekskärm (nyp med två fingrar)
 - Zooma till allt med knappen, tangenten **F** eller dubbelklick med mittenknappen
 - Skalstock, koordinater och ungefärlig skärmskala i statusraden
 - Kan installeras som app (PWA) och fungerar offline
 
-Steg 2, kärnan:
+Version 0.2, kärnan:
 - Datamodell med våningsplan, tillstånd, element, definitioner och egenskaper
 - Tillstånd (Befintligt, förslag, etapper): varje objekt kryssas i där det
   finns, och befintligt, rivs och nytt räknas ut när två tillstånd jämförs
@@ -27,7 +28,7 @@ Steg 2, kärnan:
 - Väggar, dörrar, fönster, möbler och rum som elementtyper med egna planregler
 - Exempelprojekt: ombyggnad av en villa med två förslag
 
-Steg 3, väggverktyget:
+Version 0.3, väggverktyget:
 - Rita väggar punkt för punkt (**W**), med mus eller finger
 - Snäpp till ändpunkter, mittpunkter, vinkelrätt, skärningar, på vägg och 15°-vinklar
   (**Shift** låser till 45°)
@@ -42,7 +43,7 @@ Steg 3, väggverktyget:
   egna färger och fyllningar, spara och öppna som fil
 - Filformat 2 med automatisk uppgradering av äldre projekt
 
-Steg 4, 3D-vyn:
+Version 0.4, 3D-vyn:
 - 3D, plan eller båda sida vid sida (**2**, **3**, **4**)
 - Väggar med fönster och dörrar i rätt höjd, möbler och golv; varje vägg är
   en hel kropp med öppningarna som urtag, så att inga skarvar syns
@@ -79,7 +80,7 @@ Steg 4, 3D-vyn:
   rätt tillstånd skapas. Befintligt ritas med 30°-dörrar även utan jämförelse
 - Teman som på höjdkurvor.se: Blueprint, Ljust och Mörkt
 
-Steg 5, dörrar, fönster och anteckningar:
+Version 0.5, dörrar, fönster och anteckningar:
 - Dörr (**D**) och fönster (**O**): peka på en vägg och klicka. För dörrar blir
   sidan man pekar på öppningssidan och gångjärnen hamnar närmast markören.
   Avståndet till väggens ändar visas, läget snäpper mot väggens mitt, och
@@ -128,10 +129,10 @@ Version 0.6 (filformat 3):
 - Det som påverkar fler objekt (typens mått, numrering) samlas längst ned i panelen
 
 Version 0.6.1 (liten uppdatering, samma filformat):
-- Navigatorn (☰ eller N) med flikarna Underlag, Modell, Vyer och Ritningar.
-  På datorn ligger den ovanför egenskaperna i högerspalten och de fälls ihop
-  var för sig; på telefonen fyller den skärmen. Underlag, arbetsblad och
-  ritningar fylls i steg 6
+- Navigatorn, numera Projektträdet (☰ eller N), med flikarna Underlag,
+  Modell, Vyer och Ritningar. På datorn ligger den ovanför egenskaperna i
+  högerspalten och de fälls ihop var för sig; på telefonen fyller den
+  skärmen. Underlag, arbetsblad och ritningar fylls i 0.8
 - Tillfälliga mått: värdet används med Enter, ✓ eller när man trycker
   någon annanstans. På telefonen skrivs det i en rad överst i ritytan
 
@@ -147,7 +148,7 @@ Version 0.6.2 (liten uppdatering, samma filformat):
 - Areatexten i rummen är svart
 - Ingen kontur mellan skrafferingen och den befintliga väggen vid ny
   håltagning
-- På datorn ligger navigatorn och egenskaperna bredvid varandra, med var sin
+- På datorn ligger projektträdet och egenskaperna bredvid varandra, med var sin
   knapp (☰ och P). Dra i strecket i vänsterkanten för att ändra bredden,
   klicka på det för att fälla ihop. Bredderna sparas i webbläsaren
 - Klicka på skärmskalan i statusraden och skriv en skala, t.ex. 1:50. Med
@@ -157,6 +158,40 @@ Version 0.6.2 (liten uppdatering, samma filformat):
   texten
 - Texthöjder för annotering visas med två decimaler (2,50 mm)
 - Färdig zip för webbhotellet på varje release, och steg-för-steg-hjälp nedan
+
+Version 0.6.3 (liten uppdatering, samma filformat):
+- Formler i alla sifferfält: `2400+300`, `+300` (läggs till det som står),
+  `*2`, `(3600-2*95)/2`. Enheter går att skriva ut: `30cm`, `2,4m`, `1 m + 5 cm`;
+  vinklar i grader eller gon. Resultatet visas medan man skriver och används
+  med Enter. På telefonen kommer en rad med + − × ÷ ( ) ovanför knappsatsen.
+  Pil upp och ned stegar värdet. Gäller även tillfälliga mått och rutan efter
+  ett drag
+- Anslutna väggar följer med när en vägg flyttas: hörn och T-skarvar sitter
+  kvar och de anslutande väggarna förlängs eller kortas. Håll **Alt** för att
+  flytta väggen fri
+- Högerklick (långtryck på telefonen) på objekt, i tom ritning, på vyknappen
+  och i projektträdet. För objekt: snabbknapparna, alla inställningar,
+  zooma till, markera alla av samma typ eller sort, och i vilka tillstånd det
+  finns
+- Ny topprad: logotypen öppnar huvudmenyn, Nytt, Öppna och Spara bredvid,
+  ångra och gör om till vänster, ☰ och P uppe till höger, Tema och Demo
+  längst till höger. Zoomknapparna har flyttat ned till skärmskalan
+- Spara skriver tillbaka till samma fil (Chrome på datorn); Spara som…
+  väljer en ny. **Ctrl+S**, **Ctrl+Shift+S**, **Ctrl+O**, **Ctrl+Alt+N**
+- Projektträdet och Egenskaper har rubriker med _ (minimera till ett smalt
+  band med texten på högkant) och × (stäng). Ett klick på dragstrecket
+  minimerar
+- Snabbmenyn vid markören går att flytta i greppet (dubbelklick för att
+  släppa den igen). Mer fäller ut alla inställningar i snabbmenyn
+- Notera heter Annotera
+- Vyknappen: klick går till förra vyn, håll in eller högerklicka för de fem
+  senaste (vyer och modellen). Byt namn, duplicera, uppdatera, ta bort och
+  Kalkera den här vyn ligger i högerklicksmenyn på vyerna i projektträdet
+- Spårning heter Kalkera. Under Visa ställs in om kalkeringen ligger under
+  eller över, i vilken färg och med vilken opacitet. Det sparas per användare
+  i webbläsaren, inte i projektet
+- Vyns tillfälliga inställningar (tillstånd, jämförelse, detaljnivå, visa,
+  kalkera) är samlade i en panel med samma utseende på alla knappar
 
 ## Versioner och gamla projekt
 
@@ -175,7 +210,7 @@ npm run dev        # startar en utvecklingsserver, öppna adressen som visas
 npm test           # kör testerna
 ```
 
-Hur programmet byggs ut steg för steg står i [docs/UTVECKLING.md](docs/UTVECKLING.md).
+Hur man bygger vidare på programmet står i [docs/UTVECKLING.md](docs/UTVECKLING.md).
 
 ## Publicera på webbhotellet
 

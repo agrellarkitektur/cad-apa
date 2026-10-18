@@ -456,6 +456,14 @@ export class View3D {
     cam.updateProjectionMatrix();
   }
 
+  /** Det objekt som syns under en punkt i fönstret, för högerklick. */
+  idAt(clientX: number, clientY: number): string | null {
+    const hit = this.ray({ clientX, clientY } as PointerEvent)
+      .intersectObjects(this.meshes, false)
+      .find((h) => (h.object.userData as { material: Material3D }).material !== 'floor');
+    return hit ? (hit.object.userData as { id: string }).id : null;
+  }
+
   private pick(e: PointerEvent): void {
     const hit = this.ray(e)
       .intersectObjects(this.meshes, false)

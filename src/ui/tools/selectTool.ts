@@ -47,6 +47,12 @@ export class SelectTool implements ViewTool {
   hoverId: string | null = null;
   /** Förra klicket, för att känna igen dubbelklick. */
   private lastClick: { id: string | null; t: number; at: Vec2 } | null = null;
+  /** Nästa klick hoppas över, t.ex. efter ett långt tryck som öppnat en meny. */
+  private skipClick = false;
+
+  suppressNextClick(): void {
+    this.skipClick = true;
+  }
 
   constructor(host: ToolHost) {
     this.host = host;
@@ -135,7 +141,9 @@ export class SelectTool implements ViewTool {
       this.move = null;
       if (moved && m.target) {
         const d = sub(roundMm(m.target.point), roundMm(m.base));
-        moveElements(this.host.store, m.ids, [d[0], d[1]]);
+        // Alt lossar väggen från sina anslutningar; annars följer de med.
+        const r = moveElements(this.host.store, m.ids, [d[0], d[1]], 'Flytta', { keepJoins: !p.alt });
+        if (r.released) this.host.hint(releasedHint(r.released), 4000);
         this.host.elementsMoved?.(m.ids, d, m.target.point);
       } else {
         this.click(p);
@@ -226,6 +234,10 @@ export class SelectTool implements ViewTool {
   }
 
   private click(p: ViewPointer): void {
+    if (this.skipClick) {
+      this.skipClick = false;
+      return;
+    }
     const id = pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, p.pointerType === 'touch' ? 14 : 6));
     const sel = this.host.selection;
     // Dubbelklick (eller dubbeltryck) på en text redigerar den i ritningen.
@@ -300,6 +312,12 @@ export class SelectTool implements ViewTool {
     const p = el.params as unknown as WallParams;
     return this.grip.end === 'start' ? p.end : p.start;
   }
+}
+
+export function releasedHint(n: number): string {
+  return n === 1
+    ? 'En anslutning släppte: väggen i rak förlängning kan inte följa med i sidled, eller skulle bli för kort.'
+    : `${n} anslutningar släppte: väggar i rak förlängning kan inte följa med i sidled, eller skulle bli för korta.`;
 }
 
 function fmtAngle(a: number): string {

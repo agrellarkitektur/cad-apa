@@ -132,10 +132,23 @@ function assign(tx: TxBuilder, id: Id, defId: Id): void {
  * Flytta element. Varje elementtyp avgör själv vad en förflyttning betyder
  * (väggar flyttar båda ändarna, dörrar glider längs sin vägg). Det som sitter
  * i en vägg som också flyttas följer med väggen och flyttas inte en gång till.
+ *
+ * Väggar som är anslutna till en flyttad vägg följer med (0.6.3): deras ände
+ * glider längs deras egen riktning till den flyttade väggens nya läge, så att
+ * hörn och T-anslutningar håller och vinklarna står kvar. `keepJoins: false`
+ * lossar i stället. Svarar med hur många anslutningar som fick släppa.
  */
-export function moveElements(store: DocStore, ids: Id[], d: [number, number], label = 'Flytta'): void {
-  if (Math.hypot(d[0], d[1]) < 0.01) return;
+export function moveElements(
+  store: DocStore,
+  ids: Id[],
+  d: [number, number],
+  label = 'Flytta',
+  opts: { keepJoins?: boolean } = {},
+): { released: number } {
+  const result = { released: 0 };
+  if (Math.hypot(d[0], d[1]) < 0.01) return result;
   const set = new Set(ids);
+  const before = store.doc;
   store.transact(label, (tx) => {
     for (const id of ids) {
       const el = tx.doc.elements[id];
@@ -143,7 +156,114 @@ export function moveElements(store: DocStore, ids: Id[], d: [number, number], la
       const patch = movePatch(tx.doc, el, d);
       if (patch) tx.putElement({ ...el, params: { ...el.params, ...patch } });
     }
+    if (opts.keepJoins !== false) result.released = followJoins(tx, before, set, d);
   });
+  return result;
+}
+
+type P2 = [number, number];
+type WallEnds = { start: P2; end: P2 };
+
+function wallThickness(doc: ProjectDoc, el: Element): number {
+  const own = Number((el.params as Record<string, unknown>).thickness);
+  const def = el.definition ? Number(doc.definitions[el.definition]?.params.thickness) : NaN;
+  return Number.isFinite(def) && def > 0 ? def : Number.isFinite(own) && own > 0 ? own : 120;
+}
+
+/**
+ * Var ska en ansluten väggs ände hamna när väggen den sitter mot flyttas med
+ * `d`? Änden glider längs sin egen vägg tills den når samma läge mot den
+ * flyttade väggen som förut. Null om den inte kan följa med (parallella
+ * väggar som flyttas i sidled, eller om väggen skulle krympa bort).
+ */
+export function followPoint(e: P2, other: P2, moved: WallEnds, d: P2): P2 | null {
+  const len = Math.hypot(e[0] - other[0], e[1] - other[1]);
+  if (len < 1) return null;
+  const u: P2 = [(e[0] - other[0]) / len, (e[1] - other[1]) / len];
+  const ml = Math.hypot(moved.end[0] - moved.start[0], moved.end[1] - moved.start[1]) || 1;
+  const m: P2 = [(moved.end[0] - moved.start[0]) / ml, (moved.end[1] - moved.start[1]) / ml];
+  const cross = u[0] * m[1] - u[1] * m[0];
+  let next: P2;
+  if (Math.abs(cross) < Math.sin((2 * Math.PI) / 180)) {
+    // Väggar i rak förlängning: följer bara med om flytten går längs dem.
+    const along = d[0] * u[0] + d[1] * u[1];
+    const side = Math.abs(d[0] * u[1] - d[1] * u[0]);
+    if (side > 0.5) return null;
+    next = [e[0] + u[0] * along, e[1] + u[1] * along];
+  } else {
+    // Skärningen mellan väggens egen linje och den flyttade väggens linje
+    // genom ändens förflyttade läge.
+    const q: P2 = [e[0] + d[0] - other[0], e[1] + d[1] - other[1]];
+    const t = (q[0] * m[1] - q[1] * m[0]) / cross;
+    next = [other[0] + u[0] * t, other[1] + u[1] * t];
+  }
+  const newLen = (next[0] - other[0]) * u[0] + (next[1] - other[1]) * u[1];
+  if (newLen < 10) return null;
+  return [Math.round(next[0]), Math.round(next[1])];
+}
+
+/** Ändarna på väggar som sitter mot de flyttade väggarna följer med. */
+function followJoins(tx: TxBuilder, before: ProjectDoc, moved: Set<Id>, d: P2): number {
+  const movedWalls = [...moved]
+    .map((id) => before.elements[id])
+    .filter((el): el is Element => !!el && el.type === 'Wall');
+  if (!movedWalls.length) return 0;
+  let released = 0;
+  for (const w of Object.values(before.elements)) {
+    if (w.type !== 'Wall' || moved.has(w.id)) continue;
+    const p = w.params as unknown as WallEnds;
+    const next: WallEnds = { start: p.start, end: p.end };
+    let changed = false;
+    for (const end of ['start', 'end'] as const) {
+      const e = p[end];
+      const other = end === 'start' ? p.end : p.start;
+      for (const mw of movedWalls) {
+        if (mw.storey !== w.storey) continue;
+        const mp = mw.params as unknown as WallEnds;
+        const ml = Math.hypot(mp.end[0] - mp.start[0], mp.end[1] - mp.start[1]);
+        if (ml < 1) continue;
+        const corner = Math.hypot(e[0] - mp.start[0], e[1] - mp.start[1]) <= 1 || Math.hypot(e[0] - mp.end[0], e[1] - mp.end[1]) <= 1;
+        const t = ((e[0] - mp.start[0]) * (mp.end[0] - mp.start[0]) + (e[1] - mp.start[1]) * (mp.end[1] - mp.start[1])) / ml;
+        const off = Math.abs(((e[0] - mp.start[0]) * (mp.end[1] - mp.start[1]) - (e[1] - mp.start[1]) * (mp.end[0] - mp.start[0])) / ml);
+        const tee = t > 1 && t < ml - 1 && off <= wallThickness(before, mw) + 1;
+        if (!corner && !tee) continue;
+        const to = followPoint(e, other, mp, d);
+        if (to) {
+          next[end] = to;
+          changed = true;
+        } else released++;
+        break;
+      }
+    }
+    if (changed) {
+      const cur = tx.doc.elements[w.id];
+      if (cur) putWallEnds(tx, cur, next.start, next.end);
+    }
+  }
+  return released;
+}
+
+/**
+ * Ge en vägg nya ändpunkter. Dörrar och fönster står still i världen när
+ * väggen förlängs eller kortas: deras läge mäts från startpunkten, så det
+ * räknas om när startpunkten flyttas.
+ */
+function putWallEnds(tx: TxBuilder, el: Element, ns: P2, ne: P2): void {
+  const p = el.params as unknown as WallEnds;
+  tx.putElement({ ...el, params: { ...el.params, start: ns, end: ne } });
+  const startMoved = ns[0] !== p.start[0] || ns[1] !== p.start[1];
+  const len0 = Math.hypot(p.end[0] - p.start[0], p.end[1] - p.start[1]);
+  const len1 = Math.hypot(ne[0] - ns[0], ne[1] - ns[1]);
+  if (!startMoved || len0 < 1 || len1 < 1) return;
+  const d0 = [(p.end[0] - p.start[0]) / len0, (p.end[1] - p.start[1]) / len0];
+  const d1 = [(ne[0] - ns[0]) / len1, (ne[1] - ns[1]) / len1];
+  for (const h of Object.values(tx.doc.elements)) {
+    if (h.host !== el.id || typeof h.params.at !== 'number') continue;
+    const at = h.params.at as number;
+    const world = [p.start[0] + d0[0] * at, p.start[1] + d0[1] * at];
+    const nat = Math.round((world[0] - ns[0]) * d1[0] + (world[1] - ns[1]) * d1[1]);
+    if (nat !== at) tx.putElement({ ...h, params: { ...h.params, at: nat } });
+  }
 }
 
 /** Parametrarna efter en förflyttning: väggar, möbler och rum flyttas, öppningar glider längs väggen. */
@@ -203,24 +323,7 @@ export function moveWallEnd(
         if (el.id !== wallId || end === 'end') patch.end = to;
       }
       if (!Object.keys(patch).length) continue;
-      tx.putElement({ ...el, params: { ...el.params, ...patch } });
-      // Dörrar och fönster står still i världen när väggen förlängs eller
-      // kortas: deras läge mäts från startpunkten, så det räknas om.
-      const ns = (patch.start as [number, number] | undefined) ?? p.start;
-      const ne = (patch.end as [number, number] | undefined) ?? p.end;
-      const len0 = Math.hypot(p.end[0] - p.start[0], p.end[1] - p.start[1]);
-      const len1 = Math.hypot(ne[0] - ns[0], ne[1] - ns[1]);
-      // Flyttas bara slutänden behåller öppningarna sitt mått från starten.
-      if (!patch.start || len0 < 1 || len1 < 1) continue;
-      const d0 = [(p.end[0] - p.start[0]) / len0, (p.end[1] - p.start[1]) / len0];
-      const d1 = [(ne[0] - ns[0]) / len1, (ne[1] - ns[1]) / len1];
-      for (const h of Object.values(tx.doc.elements)) {
-        if (h.host !== el.id || typeof h.params.at !== 'number') continue;
-        const at = h.params.at as number;
-        const world = [p.start[0] + d0[0] * at, p.start[1] + d0[1] * at];
-        const nat = Math.round((world[0] - ns[0]) * d1[0] + (world[1] - ns[1]) * d1[1]);
-        if (nat !== at) tx.putElement({ ...h, params: { ...h.params, at: nat } });
-      }
+      putWallEnds(tx, el, (patch.start as P2 | undefined) ?? p.start, (patch.end as P2 | undefined) ?? p.end);
     }
   });
 }

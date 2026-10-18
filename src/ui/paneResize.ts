@@ -1,5 +1,5 @@
 /**
- * Dragstrecket i vänsterkanten på navigatorn och egenskaperna på datorn.
+ * Dragstrecket i vänsterkanten på projektträdet och egenskaperna på datorn.
  * Dra för att ändra bredden, klicka för att fälla ihop. Med tangentbordet:
  * pil vänster och höger ändrar bredden, Enter fäller ihop.
  */

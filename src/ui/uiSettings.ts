@@ -65,7 +65,7 @@ export interface UiSettings {
   /** Färg på referenslinjer och grepp; null = temats. */
   refColor: string | null;
   quick: Record<string, QuickId[]>;
-  /** Bredderna på navigatorn och egenskaperna på datorn, px. */
+  /** Bredderna på projektträdet och egenskaperna på datorn, px. */
   navWidth: number;
   panelWidth: number;
   /**
@@ -73,7 +73,22 @@ export interface UiSettings {
    * räkna med webbens standard, 96 pixlar per tum.
    */
   screenInches: number | null;
+  /** Projektträdet och egenskaperna på datorn: öppna, minimerade till ett band, eller stängda. */
+  navMode: PaneMode;
+  panelMode: PaneMode;
+  /** Hur en kalkerad vy ritas: ovanpå eller under, färg (null = tonad som ritningen) och opacitet. */
+  trace: TraceLook;
 }
+
+export type PaneMode = 'open' | 'min' | 'closed';
+
+export interface TraceLook {
+  above: boolean;
+  color: string | null;
+  opacity: number;
+}
+
+export const DEFAULT_TRACE: TraceLook = { above: false, color: null, opacity: 0.3 };
 
 export const PANE_WIDTH = { nav: 300, panel: 340, min: 220, max: 640 } as const;
 
@@ -90,6 +105,9 @@ export function defaultUiSettings(): UiSettings {
     navWidth: PANE_WIDTH.nav,
     panelWidth: PANE_WIDTH.panel,
     screenInches: null,
+    navMode: 'open',
+    panelMode: 'open',
+    trace: { ...DEFAULT_TRACE },
   };
 }
 
@@ -110,10 +128,26 @@ export function loadUiSettings(): UiSettings {
       navWidth: width(raw.navWidth, d.navWidth),
       panelWidth: width(raw.panelWidth, d.panelWidth),
       screenInches: Number(raw.screenInches) >= 3 && Number(raw.screenInches) <= 120 ? Number(raw.screenInches) : null,
+      navMode: paneMode(raw.navMode),
+      panelMode: paneMode(raw.panelMode),
+      trace: traceLook(raw.trace),
     };
   } catch {
     return d;
   }
+}
+
+function paneMode(v: unknown): PaneMode {
+  return v === 'min' || v === 'closed' ? v : 'open';
+}
+
+function traceLook(v: any): TraceLook {
+  const o = Number(v?.opacity);
+  return {
+    above: v?.above === true,
+    color: typeof v?.color === 'string' && /^#[0-9a-f]{6}$/i.test(v.color) ? v.color : null,
+    opacity: Number.isFinite(o) && o >= 0.05 && o <= 1 ? o : DEFAULT_TRACE.opacity,
+  };
 }
 
 function width(v: unknown, fallback: number): number {
@@ -178,8 +212,14 @@ export const SHORTCUTS: [string, string][] = [
   ['G', 'Visa eller dölj rutnätet'],
   ['S', 'Snäppning av eller på'],
   ['P', 'Visa eller dölj egenskaperna'],
-  ['N', 'Visa eller dölj navigatorn'],
+  ['Vyknappen', 'Klick: förra vyn. Håll in: de senaste vyerna'],
+  ['N', 'Visa eller dölj projektträdet'],
   ['Dubbelklick', 'Redigera en text eller ett rumsnamn direkt i ritningen'],
+  ['Högerklick', 'Meny för det du pekar på (långt tryck på telefonen)'],
+  ['Alt + dra', 'Flytta en vägg utan att anslutna väggar följer med'],
+  ['+300, *2, 2,4m', 'Formler och enheter i alla sifferfält'],
+  ['Ctrl+S / Ctrl+O', 'Spara / öppna'],
+  ['Ctrl+Alt+N', 'Nytt projekt'],
   ['2 / 3 / 4', 'Plan, 3D eller båda'],
   ['Mellanslag + dra', 'Panorera med musen'],
 ];
