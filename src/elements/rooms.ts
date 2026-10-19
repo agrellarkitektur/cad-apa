@@ -1,5 +1,5 @@
 import type { Element, Id, ProjectDoc, RoomNumbering } from '../core/model';
-import { union } from '../geometry/boolean';
+import { boxOf, union, type Box } from '../geometry/boolean';
 import { pointInRings } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import type { PlanContext } from './registry';
@@ -21,15 +21,33 @@ export function roomHoles(walls: { id: string; p: WallParams }[]): Vec2[][] {
 export function holeAt(holes: readonly Vec2[][], pt: Vec2): Vec2[] | null {
   let best: Vec2[] | null = null;
   let bestArea = Infinity;
-  for (const h of holes) {
-    if (!pointInRings(pt, [h])) continue;
-    const a = Math.abs(signedArea(h));
+  for (const { ring: h, box, area: a } of ringsOf(holes)) {
+    if (outsideBox(pt, box) || !pointInRings(pt, [h])) continue;
     if (a < bestArea) {
       best = h;
       bestArea = a;
     }
   }
   return best;
+}
+
+/** Konturer med omslutande rektangel och area, räknade en gång per lista (0.8.1). */
+type RingInfo = { ring: Vec2[]; box: Box; area: number };
+const ringInfo = new WeakMap<readonly Vec2[][], RingInfo[]>();
+
+function ringsOf(rings: readonly Vec2[][]): RingInfo[] {
+  let info = ringInfo.get(rings);
+  if (!info) ringInfo.set(rings, (info = rings.map((ring) => ({ ring, box: boxOf([ring]), area: Math.abs(signedArea(ring)) }))));
+  return info;
+}
+
+/**
+ * Säkert utanför konturen: utanför rektangeln i höjdled, eller mer än 1 mm
+ * utanför den i sidled. `pointInRings` ger då alltid false, så provet kan
+ * hoppas över utan att svaret ändras.
+ */
+function outsideBox(p: Vec2, b: Box): boolean {
+  return p[1] < b[1] || p[1] > b[3] || p[0] < b[0] - 1 || p[0] > b[2] + 1;
 }
 
 /** Hålen för väggarna som syns i en vy. */
@@ -142,10 +160,13 @@ function computeOrder(ctx: PlanContext, spaces: Element[]): { rooms: Id[]; doors
       return { id: el.id, ring, perimeter: perimeterOf(ring) };
     })
     .filter((r) => r.ring.length >= 3);
+  const info = ringsOf(rooms.map((r) => r.ring));
   const roomAt = (pt: Vec2): Id | null => {
-    let best: Room | null = null;
-    for (const r of rooms) if (pointInRings(pt, [r.ring]) && (!best || Math.abs(signedArea(r.ring)) < Math.abs(signedArea(best.ring)))) best = r;
-    return best?.id ?? null;
+    let best = -1;
+    rooms.forEach((_, i) => {
+      if (!outsideBox(pt, info[i].box) && pointInRings(pt, [rooms[i].ring]) && (best < 0 || info[i].area < info[best].area)) best = i;
+    });
+    return best < 0 ? null : rooms[best].id;
   };
 
   // Dörrarna och vilka rum de förbinder (null = ute).
@@ -174,6 +195,15 @@ function computeOrder(ctx: PlanContext, spaces: Element[]): { rooms: Id[]; doors
   };
   const seen = new Set<Id>();
   const byId = new Map(rooms.map((r) => [r.id, r]));
+  // Dörrarna i varje rum, i dörrarnas ordning.
+  const doorsIn = new Map<Id, Door[]>();
+  for (const d of doors)
+    for (const r of new Set(d.rooms)) {
+      if (!r) continue;
+      const list = doorsIn.get(r);
+      if (list) list.push(d);
+      else doorsIn.set(r, [d]);
+    }
 
   const visit = (roomId: Id, entry: Vec2, via: Id | null) => {
     if (seen.has(roomId)) return;
@@ -181,8 +211,8 @@ function computeOrder(ctx: PlanContext, spaces: Element[]): { rooms: Id[]; doors
     order.push(roomId);
     const room = byId.get(roomId)!;
     const s0 = paramOn(room.ring, entry);
-    const exits = doors
-      .filter((d) => d.id !== via && d.rooms.includes(roomId))
+    const exits = (doorsIn.get(roomId) ?? [])
+      .filter((d) => d.id !== via)
       .map((d) => ({ d, s: (paramOn(room.ring, d.point) - s0 + room.perimeter) % room.perimeter }))
       .sort((a, b) => a.s - b.s);
     for (const { d } of exits) {

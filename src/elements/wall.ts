@@ -1,5 +1,6 @@
 import type { Element } from '../core/model';
 import { boxesTouch, boxOf, difference, union, type Box, type Rings } from '../geometry/boolean';
+import { BoxIndex } from '../geometry/boxIndex';
 import { wallFrame, type WallFrame } from '../geometry/wallFrame';
 import { add, cross, dist, dot, intersectLines, scale, sub } from '../geometry/vec';
 import type { Primitive, Vec2 } from '../repr/primitives';
@@ -129,7 +130,23 @@ export function computeWallShapes(
     const f = frames.get(w.id)!;
     ends.push({ id: w.id, end: 'start', point: f.a, ref: w.p.start }, { id: w.id, end: 'end', point: f.b, ref: w.p.end });
   }
-  const others = (e: End) => ends.filter((o) => o.id !== e.id && dist(o.ref, e.ref) <= JOIN_TOLERANCE);
+  // Ändar och väggar i ett rutnät, så att varje ände bara prövas mot det som
+  // ligger nära (0.8.1). Ordningen är densamma som i listorna.
+  const reach = JOIN_TOLERANCE + 1;
+  const endIndex = new BoxIndex(2000);
+  ends.forEach((e, i) => endIndex.add(i, [e.ref[0] - reach, e.ref[1] - reach, e.ref[0] + reach, e.ref[1] + reach]));
+  const wallIndex = new BoxIndex(2000);
+  walls.forEach((w, i) => {
+    const g = frames.get(w.id)!;
+    const pad = g.half + reach;
+    // En båge kan bukta ut utanför ändarnas rektangel; den prövas alltid.
+    wallIndex.add(i, g.arc ? null : [Math.min(g.a[0], g.b[0]) - pad, Math.min(g.a[1], g.b[1]) - pad, Math.max(g.a[0], g.b[0]) + pad, Math.max(g.a[1], g.b[1]) + pad]);
+  });
+  const others = (e: End) =>
+    endIndex
+      .at(e.ref)
+      .map((i) => ends[i])
+      .filter((o) => o.id !== e.id && dist(o.ref, e.ref) <= JOIN_TOLERANCE);
 
   // Riktning bort från skarven, och väggens sidor sett i den riktningen.
   const away = (e: End): { dir: Vec2; leftN: Vec2; rightN: Vec2; half: number } => {
@@ -149,7 +166,8 @@ export function computeWallShapes(
   const teeFace = (e: End): { p: Vec2; d: Vec2 } | null => {
     const A = away(e);
     let best: { p: Vec2; d: Vec2; depth: number } | null = null;
-    for (const w of walls) {
+    for (const i of wallIndex.at(e.ref)) {
+      const w = walls[i];
       if (w.id === e.id) continue;
       const g = frames.get(w.id)!;
       const [s, o] = g.project(e.ref);

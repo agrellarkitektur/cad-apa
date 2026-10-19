@@ -139,10 +139,21 @@ export class DocStore {
 /**
  * Samlar ändringar inom en transaktion. Läsningar ser de ändringar som
  * redan registrerats, så att flera steg kan bygga på varandra.
+ *
+ * Samlingarna (`elements`, `definitions`, `assets`) kopieras en gång per
+ * transaktion och ändras sedan på plats (0.8.1); tidigare kopierades alla
+ * objekt vid varje ändring, så att flytta många objekt växte med kvadraten.
+ * Därför byter `tx.doc.elements` inte identitet mellan ändringarna inom en
+ * transaktion: cachar som minns ett resultat per `doc.elements` (t.ex.
+ * `outsideSide`) får inte användas mitt i en. Dokumentet som sparas när
+ * transaktionen är klar byggs om med `applyChanges` och delar inga samlingar
+ * med transaktionens arbetskopia.
  */
 export class TxBuilder {
   readonly changes: Change[] = [];
   private working: ProjectDoc;
+  /** Samlingar som redan kopierats i den här transaktionen och får ändras på plats. */
+  private owned = new Set<keyof Collections>();
 
   constructor(doc: ProjectDoc) {
     this.working = doc;
@@ -206,7 +217,18 @@ export class TxBuilder {
 
   private record(change: Change): void {
     this.changes.push(change);
-    this.working = applyChanges(this.working, [change], 'forward');
+    if (change.kind !== 'record') {
+      this.working = applyChanges(this.working, [change], 'forward');
+      return;
+    }
+    const key = change.collection;
+    if (!this.owned.has(key)) {
+      this.working = { ...this.working, [key]: { ...this.working[key] } };
+      this.owned.add(key);
+    }
+    const records = this.working[key] as Record<Id, unknown>;
+    if (change.after) records[change.id] = change.after;
+    else delete records[change.id];
   }
 }
 

@@ -139,6 +139,10 @@ export function visibleSegments<K>(segs: readonly Seg<K>[], triangles: readonly 
     }
   }
   if (!segs.length) return [];
+  // Närmast betraktaren först (0.8.1). Då ligger varje rutas trianglar i
+  // djupordning: när en triangel ligger bakom kanten gör resten av rutan det
+  // också, och den som döljer kanten helt hittas tidigt.
+  occ.sort((p, q) => p.dmin - q.dmin);
 
   // Rutnät över bilden.
   let minX = Infinity;
@@ -189,22 +193,26 @@ export function visibleSegments<K>(segs: readonly Seg<K>[], triangles: readonly 
           if (x1 > x0 && y1 > y0) {
             const rx0 = minX + gx * cw;
             const ry0 = minY + gy * ch;
-            const corners = [
-              (rx0 - a[0]) * dy - (ry0 - a[1]) * dx,
-              (rx0 + cw - a[0]) * dy - (ry0 - a[1]) * dx,
-              (rx0 - a[0]) * dy - (ry0 + ch - a[1]) * dx,
-              (rx0 + cw - a[0]) * dy - (ry0 + ch - a[1]) * dx,
-            ];
-            if (corners.every((v) => v > 0) || corners.every((v) => v < 0)) continue;
+            const c0 = (rx0 - a[0]) * dy - (ry0 - a[1]) * dx;
+            const c1 = (rx0 + cw - a[0]) * dy - (ry0 - a[1]) * dx;
+            const c2 = (rx0 - a[0]) * dy - (ry0 + ch - a[1]) * dx;
+            const c3 = (rx0 + cw - a[0]) * dy - (ry0 + ch - a[1]) * dx;
+            if ((c0 > 0 && c1 > 0 && c2 > 0 && c3 > 0) || (c0 < 0 && c1 < 0 && c2 < 0 && c3 < 0)) continue;
           }
           for (const oi of cells[gy * N + gx]) {
             if (stamp[oi] === si) continue;
             stamp[oi] = si;
             const o = occ[oi];
-            if (o.dmin >= sMaxD - DEPTH_EPS) continue;
+            // Resten av rutan ligger lika långt bort eller längre (djupordning).
+            if (o.dmin >= sMaxD - DEPTH_EPS) break;
             if (o.maxX < sMinX || o.minX > sMaxX || o.maxY < sMinY || o.minY > sMaxY) continue;
             const iv = occludedBy(o, a, b);
-            if (iv) hidden.push(iv);
+            if (!iv) continue;
+            hidden.push(iv);
+            // Helt dold: inget mer att pröva, och inget att rita. Provas när
+            // biten når en ände och när antalet bitar fördubblats.
+            const n = hidden.length;
+            if ((iv[0] <= 0 || iv[1] >= 1 || (n & (n - 1)) === 0) && fullyHidden(hidden)) return;
           }
         }
       }
@@ -261,6 +269,18 @@ function occludedBy(o: Occluder, a: V3, b: V3): [number, number] | null {
   if (g0 > 0 && g1 > 0) return [t0, t1];
   const tr = t0 + ((t1 - t0) * g0) / (g0 - g1);
   return g0 > 0 ? [t0, tr] : [tr, t1];
+}
+
+/** Om de skymda intervallen täcker hela [0, 1], med samma regler som `visibleParts`. */
+function fullyHidden(hidden: [number, number][]): boolean {
+  hidden.sort((p, q) => p[0] - q[0]);
+  let at = 0;
+  for (const [s, e] of hidden) {
+    if (s > at) return false;
+    at = Math.max(at, e);
+    if (at >= 1) return true;
+  }
+  return at >= 1;
 }
 
 /** Det som blir kvar av [0, 1] när de skymda intervallen tagits bort. */

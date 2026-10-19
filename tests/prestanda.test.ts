@@ -1,6 +1,11 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ProjectDoc } from '../src/core/model';
 import { registerBuiltInTypes } from '../src/elements';
+import { copyElements, deleteElements, moveElements } from '../src/core/commands';
+import { DocStore } from '../src/core/store';
+import { doorNumbersFor, roomNumbersFor } from '../src/elements/rooms';
+import { createContext } from '../src/repr/context';
+import { buildModel3d } from '../src/repr/model3d';
 import { buildPlan } from '../src/repr/plan';
 import { buildSection } from '../src/repr/section';
 import { sampleProject } from '../src/sample/sampleProject';
@@ -35,7 +40,93 @@ function wallGrid(n: number): { doc: ProjectDoc; walls: number } {
   return { doc, walls: k };
 }
 
+/**
+ * Ett rutnät av rum (0.8.1): ytterväggar med fönster, innerväggar med dörrar,
+ * ett rum i varje ruta och en huvudentré. 12 × 12 rum ger 312 väggar och 642
+ * element.
+ */
+function roomGrid(n: number): ProjectDoc {
+  const doc = sampleProject();
+  const storey = doc.storeys[0].id;
+  const keep = ['North', 'Elevation', 'Section'];
+  for (const [id, el] of Object.entries(doc.elements)) if (!keep.includes(el.type)) delete doc.elements[id];
+  const states = doc.states.map((s) => s.id);
+  const C = 4000;
+  let k = 0;
+  const add = (el: Record<string, unknown>) => {
+    doc.elements[el.id as string] = { storey, states, tags: [], props: {}, ...el } as any;
+  };
+  const wall = (start: [number, number], end: [number, number], outer: boolean) => {
+    const id = `rv-${k++}`;
+    add({ id, type: 'Wall', definition: outer ? 't-yv01' : 't-iv01', params: { start, end, height: 2700, justification: 'center' } });
+    return id;
+  };
+  for (let i = 0; i <= n; i++) {
+    const outer = i === 0 || i === n;
+    for (let j = 0; j < n; j++) {
+      const h = wall([j * C, i * C], [(j + 1) * C, i * C], outer);
+      const v = wall([i * C, j * C], [i * C, (j + 1) * C], outer);
+      if (outer) {
+        add({ id: `f-${h}`, type: 'Window', definition: 't-f1', host: h, params: { at: 2000, sill: 900 } });
+        add({ id: `f-${v}`, type: 'Window', definition: 't-f1', host: v, params: { at: 2000, sill: 900 } });
+      } else add({ id: `d-${h}`, type: 'Door', definition: 't-d1', host: h, params: { at: 1500, swing: 1, hinge: 'start' } });
+    }
+  }
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) add({ id: `r-${i}-${j}`, type: 'Space', name: 'Rum', params: { outline: [], seed: [j * C + C / 2, i * C + C / 2] } });
+  delete doc.elements['f-rv-0'];
+  add({ id: 'entre', type: 'Door', definition: 't-d2', host: 'rv-0', params: { at: 1500, swing: 1, hinge: 'start', mainEntrance: true } });
+  return doc;
+}
+
+const ms = (f: () => unknown): number => {
+  const t = performance.now();
+  f();
+  return performance.now() - t;
+};
+
 describe('prestanda', () => {
+  it('312 väggar med dörrar, fönster och rum: plan, 3D, rumsnummer och fasad', () => {
+    // Före 0.8.1 tog fasaden 2,5 s och planen 0,15 s; nu 0,6 s och 0,08 s.
+    const doc = roomGrid(12);
+    const storey = doc.storeys[0].id;
+    const view = { state: doc.states[1].id, compareTo: doc.states[0].id };
+    let plan: ReturnType<typeof buildPlan> | undefined;
+    const planMs = ms(() => (plan = buildPlan(doc, storey, view)));
+    const model3dMs = ms(() => buildModel3d(doc, storey, view));
+    let numbers = new Map<string, string>();
+    const numbersMs = ms(() => {
+      const { ctx } = createContext(doc, storey, view, doc.graphics, () => true);
+      numbers = roomNumbersFor(ctx);
+      doorNumbersFor(ctx);
+    });
+    let fasad: ReturnType<typeof buildSection> = null;
+    const fasadMs = ms(() => (fasad = buildSection(doc, 'fasad-1', view)));
+    expect(plan!.prims.length).toBeGreaterThan(312);
+    expect(numbers.size).toBe(144);
+    expect(fasad!.prims.length).toBeGreaterThan(0);
+    expect(planMs).toBeLessThan(1000);
+    expect(model3dMs).toBeLessThan(1000);
+    expect(numbersMs).toBeLessThan(500);
+    expect(fasadMs).toBeLessThan(1600);
+  }, 60000);
+
+  it('684 väggar: flytta, kopiera och ta bort alla i ett steg', () => {
+    // Före 0.8.1 kopierade varje ändring i en transaktion alla objekt:
+    // kopiera och ta bort tog 1,3 s, nu ca 0,03 s.
+    const store = new DocStore(roomGrid(18));
+    const walls = Object.values(store.doc.elements)
+      .filter((e) => e.type === 'Wall')
+      .map((e) => e.id);
+    expect(walls.length).toBe(684);
+    const before = Object.keys(store.doc.elements).length;
+    const t = ms(() => {
+      moveElements(store, walls, [100, 0]);
+      deleteElements(store, copyElements(store, walls));
+    });
+    expect(Object.keys(store.doc.elements).length).toBe(before);
+    expect(t).toBeLessThan(400);
+  }, 60000);
+
   it('544 väggar: planen under 2 s och en fasad under 3 s', () => {
     const { doc, walls } = wallGrid(16);
     expect(walls).toBe(544);
