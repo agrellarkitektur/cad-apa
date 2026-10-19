@@ -1,5 +1,5 @@
 import { PRESETS } from '../core/graphics';
-import type { Folder, Id, ProjectDoc, TreeTab } from '../core/model';
+import type { Id, ProjectDoc, TreeTab } from '../core/model';
 import type { DocStore } from '../core/store';
 import { deleteFolder, deleteWorksheet, descendantsOf, saveFolder, saveMarker, saveStorey, saveView, saveWorksheet, worksheetContents } from '../core/treeCommands';
 import { askConfirm } from './ask';
@@ -242,9 +242,4 @@ export function bindTreeForm(root: HTMLElement, store: DocStore, onSaved: (item:
     }
     onSaved({ kind, id });
   });
-}
-
-/** Mapparna, för att visa en mapps namn. */
-export function folderName(folders: readonly Folder[], id: Id): string {
-  return folders.find((f) => f.id === id)?.name ?? '';
 }

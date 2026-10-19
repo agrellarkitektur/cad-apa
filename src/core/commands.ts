@@ -449,12 +449,6 @@ export function createProposal(store: DocStore, name: string, copyFrom?: Id): St
   return state;
 }
 
-export function renameState(store: DocStore, id: Id, name: string): void {
-  store.transact(`Byt namn till ${name}`, (tx) => {
-    tx.setStates(tx.doc.states.map((s) => (s.id === id ? { ...s, name } : s)));
-  });
-}
-
 /** Ta bort ett tillstånd. Element som bara fanns där tas bort helt. */
 export function deleteState(store: DocStore, id: Id): void {
   const state = store.doc.states.find((s) => s.id === id);

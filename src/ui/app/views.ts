@@ -1,6 +1,6 @@
 import { deleteElements, renameElement, updateParams } from '../../core/commands';
 import { newId } from '../../core/ids';
-import type { Id } from '../../core/model';
+import type { Id, ViewDef } from '../../core/model';
 import { markerFrame, markerName } from '../../elements/markers';
 import type { Vec2 } from '../../repr/primitives';
 import { askConfirm, askText } from '../ask';
@@ -12,7 +12,7 @@ import { SPACE_TOOLS } from './shell';
 /** Ett ställe man varit på: en sparad vy, ett våningsplan i modellen, eller en fasad eller sektion. */
 export type Place = { kind: 'view'; id: Id } | { kind: 'storey'; id: Id } | { kind: 'marker'; id: Id } | { kind: 'worksheet'; id: Id } | { kind: 'sheet'; id: Id };
 
-/** Vyhistorik, Gå till (vy, våningsplan, fasad eller sektion), sparade vyer och menyerna för vyer och markörer. */
+/** Vyhistorik, Gå till (vy, våningsplan, fasad eller sektion), sparade vyer med deras inställningar, och menyerna för vyer och markörer. */
 export function installViews(app: AppContext) {
   /** Senaste först. Det första är där man är nu. */
   const viewHistory: Place[] = [{ kind: 'storey', id: app.ui.storey }];
@@ -46,10 +46,85 @@ export function installViews(app: AppContext) {
     return s ? { name: s.name, sub: 'Modell' } : null;
   }
 
+  /** Vyns inställningar som de är just nu. */
+  function currentViewDef(id: Id, name: string): ViewDef {
+    return {
+      id,
+      name,
+      storey: app.ui.storey,
+      state: app.ui.state,
+      compare: app.ui.compare,
+      detail: app.ui.detail,
+      hide: [...app.ui.hide],
+      hideDemolished: app.ui.hideDemolished,
+      ...(app.ui.styleName ? { style: app.ui.styleName } : {}),
+      trace: app.ui.trace,
+      ...(app.ui.marker ? { marker: app.ui.marker } : {}),
+      ...(app.ui.worksheet ? { worksheet: app.ui.worksheet } : {}),
+      ...(app.ui.scale !== 100 ? { scale: app.ui.scale } : {}),
+    };
+  }
+
+  function viewModified(v: ViewDef): boolean {
+    const c = currentViewDef(v.id, v.name);
+    return (
+      c.storey !== v.storey ||
+      c.state !== v.state ||
+      c.compare !== v.compare ||
+      c.detail !== v.detail ||
+      c.hideDemolished !== v.hideDemolished ||
+      [...c.hide].sort().join() !== [...v.hide].sort().join() ||
+      (c.style ?? null) !== (v.style ?? null) ||
+      (c.trace ?? null) !== (v.trace ?? null) ||
+      (c.marker ?? null) !== (v.marker ?? null) ||
+      (c.worksheet ?? null) !== (v.worksheet ?? null) ||
+      (c.scale ?? 100) !== (v.scale ?? 100)
+    );
+  }
+
+  function applyView(v: ViewDef): void {
+    app.ui.activeView = v.id;
+    app.ui.storey = v.storey;
+    app.ui.state = v.state;
+    app.ui.compare = v.compare;
+    app.ui.detail = v.detail;
+    app.ui.hide = [...v.hide];
+    app.ui.hideDemolished = v.hideDemolished;
+    app.ui.styleName = v.style ?? null;
+    app.ui.trace = v.trace ?? null;
+    app.ui.marker = v.marker && app.store.doc.elements[v.marker] ? v.marker : null;
+    app.ui.worksheet = v.worksheet && app.store.doc.worksheets.some((w) => w.id === v.worksheet) ? v.worksheet : null;
+    app.ui.layout = null;
+    app.ui.scale = v.scale ?? 100;
+    visit({ kind: 'view', id: v.id });
+    syncDetailSwitch();
+    app.renderAll();
+  }
+
+  function renderViewButton(): void {
+    const v = app.ui.activeView ? app.store.doc.views.find((x) => x.id === app.ui.activeView) : undefined;
+    const modified = !!v && viewModified(v);
+    const storeyName = app.store.doc.storeys.find((s) => s.id === app.ui.storey)?.name ?? '';
+    const markerEl = app.ui.marker ? app.store.doc.elements[app.ui.marker] : undefined;
+    const sheet = app.ui.worksheet ? app.store.doc.worksheets.find((w) => w.id === app.ui.worksheet) : undefined;
+    const layout = app.ui.layout ? app.store.doc.sheets.find((s) => s.id === app.ui.layout) : undefined;
+    app.out('view-name').textContent = v ? `${v.name}${modified ? ' *' : ''}` : markerEl ? markerName(app.store.doc, markerEl) : sheet ? sheet.name : layout ? `${layout.number} ${layout.name}` : `${storeyName} · modell`;
+    // Ändringar i vyinställningarna är tillfälliga tills de sparas i vyn.
+    const save = app.$<HTMLButtonElement>('.vb-save');
+    save.hidden = (!!v && !modified) || !!layout;
+    save.textContent = v ? 'Spara i vyn' : 'Spara som vy…';
+    app.$<HTMLElement>('.viewbar').classList.toggle('modified', modified);
+  }
+
+  /** Detaljnivåns knappar (i vyraden och i Visa-menyn) visar vyns detaljnivå. */
+  function syncDetailSwitch(): void {
+    document.querySelectorAll<HTMLElement>('.detail-switch [data-detail]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.detail === app.ui.detail)));
+  }
+
   function goTo(p: Place): void {
     if (p.kind === 'view') {
       const v = app.store.doc.views.find((x) => x.id === p.id);
-      if (v) app.applyView(v);
+      if (v) applyView(v);
     } else if (p.kind === 'marker') {
       const el = app.store.doc.elements[p.id];
       if (!el) return;
@@ -204,9 +279,9 @@ export function installViews(app: AppContext) {
       y,
       [
         { kind: 'header', label: v.name, sub: describeView(v) },
-        { label: 'Visa vyn', run: () => app.applyView(v), disabled: app.ui.activeView === id && !app.viewModified(v) },
+        { label: 'Visa vyn', run: () => applyView(v), disabled: app.ui.activeView === id && !viewModified(v) },
         { label: traced ? 'Sluta kalkera vyn' : 'Kalkera den här vyn', checked: traced, disabled: app.ui.activeView === id, run: () => setTrace(traced ? null : id) },
-        ...(app.ui.activeView === id ? [{ label: 'Spara nuvarande inställningar i vyn', disabled: !app.viewModified(v), run: () => void updateActiveView() }] : []),
+        ...(app.ui.activeView === id ? [{ label: 'Spara nuvarande inställningar i vyn', disabled: !viewModified(v), run: () => void updateActiveView() }] : []),
         { label: 'Byt namn…', run: () => void renameView(id) },
         { label: 'Duplicera', run: () => duplicateView(id) },
         { kind: 'sep' },
@@ -225,7 +300,7 @@ export function installViews(app: AppContext) {
     const shown = m ? markerName(app.store.doc, m) : ws ? ws.name : (app.store.doc.storeys.find((x) => x.id === app.ui.storey)?.name ?? '');
     const name = await askText('Spara som vy', st ? `${shown} – ${st}` : shown);
     if (!name) return;
-    const v = app.currentViewDef(newId('vy'), name);
+    const v = currentViewDef(newId('vy'), name);
     app.store.transact(`Ny vy: ${name}`, (tx) => tx.setViews([...tx.doc.views, v]));
     app.ui.activeView = v.id;
     visit({ kind: 'view', id: v.id });
@@ -235,7 +310,7 @@ export function installViews(app: AppContext) {
   async function updateActiveView(): Promise<void> {
     app.closeShowMenu();
     const v = app.store.doc.views.find((x) => x.id === app.ui.activeView);
-    if (v) app.store.transact(`Spara vyn ${v.name}`, (tx) => tx.setViews(tx.doc.views.map((x) => (x.id === v.id ? app.currentViewDef(v.id, v.name) : x))));
+    if (v) app.store.transact(`Spara vyn ${v.name}`, (tx) => tx.setViews(tx.doc.views.map((x) => (x.id === v.id ? currentViewDef(v.id, v.name) : x))));
   }
 
   async function renameView(id: Id): Promise<void> {
@@ -265,5 +340,5 @@ export function installViews(app: AppContext) {
     app.renderAll();
     if (id) app.hint('Vyn kalkeras. Utseendet ställs in under Visa.');
   }
-  return { goTo, openHistoryMenu, openMarkerMenu, openViewMenu, saveViewAsNew, updateActiveView, viewHistory, visit };
+  return { applyView, currentViewDef, goTo, openHistoryMenu, openMarkerMenu, openViewMenu, renderViewButton, saveViewAsNew, syncDetailSwitch, updateActiveView, viewHistory, viewModified, visit };
 }

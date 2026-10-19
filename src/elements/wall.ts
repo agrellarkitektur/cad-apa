@@ -517,5 +517,3 @@ function onRing(ring: readonly Vec2[], q: Vec2): boolean {
   }
   return false;
 }
-
-export type WallElement = Element<WallParams>;

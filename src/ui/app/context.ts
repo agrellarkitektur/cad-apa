@@ -2,6 +2,7 @@ import type { ViewDef } from '../../core/model';
 import type { ViewStates } from '../../core/states';
 import type { DocStore } from '../../core/store';
 import type { PlanResult } from '../../repr/plan';
+import type { SectionResult } from '../../repr/section';
 import type { PlanView } from '../../view2d/planView';
 import type { View3D } from '../../view3d/view3d';
 import type { ContextMenu } from '../contextMenu';
@@ -50,6 +51,8 @@ export interface AppContext {
   readonly view: PlanView;
   /** Det som ritas just nu, med det som går att klicka på. */
   readonly plan: PlanResult;
+  /** Den öppna fasaden eller sektionen, senast den räknades. */
+  readonly section: SectionResult | null;
   readonly view3d: View3D | null;
   /** Det verktygen får av appen (snäpp, ytan, markeringen …). */
   readonly host: ToolHost;
@@ -98,6 +101,8 @@ export interface AppContext {
   endZoomBox(): void;
   previousZoom(): void;
   zoomToSelection(): void;
+  /** Flytta måttrutan till sin punkt i planen eller i 3D. */
+  positionMeasureBox(): void;
   roofOverHouse(): void;
   screenMm(): number;
   saveNow(as: boolean): Promise<void>;
@@ -120,4 +125,14 @@ export interface AppContext {
 
   copySelection(data: DataTransfer | null): boolean;
   pasteFromMenu(): Promise<void>;
+}
+
+/**
+ * Bygg ett objekt där varje fält läses genom sin funktion när det används
+ * (0.8.1). Det ersätter en lång rad getters i `mountApp`.
+ */
+export function lazyContext<T extends object>(fields: { [K in keyof T]: () => T[K] }): T {
+  const o = {} as T;
+  for (const k of Object.keys(fields) as (keyof T)[]) Object.defineProperty(o, k, { get: fields[k], enumerable: true });
+  return o;
 }

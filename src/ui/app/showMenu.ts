@@ -1,9 +1,11 @@
+import { PRESETS } from '../../core/graphics';
 import { parseScale, saveUiSettings } from '../uiSettings';
 import { Camera } from '../../view2d/camera';
+import { escapeHtml } from '../labels';
 import type { AppContext } from './context';
-import { formatScale, nf } from './helpers';
+import { ANNOTATION_SCALES, formatScale, nf } from './helpers';
 
-/** Visa-menyns kalkering och skärmskalan i statusraden. */
+/** Visa-menyn med kalkeringen, och skärmskalan i statusraden. */
 export function installShowMenu(app: AppContext) {
   /** Hur den kalkerade vyn ritas, under Visa. Gäller för användaren, i alla projekt. */
   function traceLookMarkup(): string {
@@ -99,8 +101,55 @@ export function installShowMenu(app: AppContext) {
   function refreshShowMenu(): void {
     const m = app.$<HTMLElement>('.show-menu');
     if (m.hidden) return;
-    app.closeShowMenu();
+    closeShowMenu();
     app.$<HTMLElement>('.show-btn').click();
   }
-  return { applyTraceLook, closeScalePop, openScalePop, refreshShowMenu, scalePop, traceLookMarkup };
+
+  function closeShowMenu(): void {
+    document.querySelectorAll<HTMLElement>('.show-menu').forEach((m) => (m.hidden = true));
+    app.$<HTMLElement>('.show-btn').setAttribute('aria-expanded', 'false');
+  }
+
+  /** Visa-menyn: detaljnivå, vad som visas, skala, stilmall och kalkering. */
+  function toggleShowMenu(): void {
+    const m = app.$<HTMLElement>('.show-menu');
+    if (!m.hidden) {
+      closeShowMenu();
+      return;
+    }
+    const { ui, store } = app;
+    const item = (key: string, label: string, on: boolean) => `<label class="check"><input type="checkbox" data-show="${key}"${on ? ' checked' : ''}> ${label}</label>`;
+    m.innerHTML =
+      `<div class="segmented detail-switch in-menu" role="group" aria-label="Detaljnivå">${(['sketch', 'normal', 'detail'] as const)
+        .map((d) => `<button data-detail="${d}" aria-pressed="${ui.detail === d}">${{ sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' }[d]}</button>`)
+        .join('')}</div>` +
+      item('demolished', 'Det som rivs', !ui.hideDemolished) +
+      item('littera', 'Littera', !ui.hide.includes('littera')) +
+      item('Space', 'Rum', !ui.hide.includes('Space')) +
+      item('Furniture', 'Möbler och inredning', !ui.hide.includes('Furniture')) +
+      item('Dimension', 'Mått', !ui.hide.includes('Dimension')) +
+      item('Text', 'Text', !ui.hide.includes('Text')) +
+      item('Roof', 'Tak', !ui.hide.includes('Roof')) +
+      item('swing', 'Öppningssätt (dörrar)', !ui.hide.includes('swing')) +
+      item('roofSlope', 'Taklutning i fasad och sektion', !ui.hide.includes('roofSlope')) +
+      item('Line2D', '2D-linjer', !ui.hide.includes('Line2D')) +
+      item('Fill2D', 'Fyllningar', !ui.hide.includes('Fill2D')) +
+      item('showHidden', 'Visa dolda 2D-element (tonade)', ui.showHidden) +
+      '<div class="menu-label">Markörer i planen</div>' +
+      item('Elevation', 'Fasader', !ui.hide.includes('Elevation')) +
+      item('Section', 'Sektioner', !ui.hide.includes('Section')) +
+      item('North', 'Norrpil', !ui.hide.includes('North')) +
+      `<label class="field"><span>Skala för texter och mått</span><select data-show-scale>${ANNOTATION_SCALES.map((n) => `<option value="${n}"${n === ui.scale ? ' selected' : ''}>1:${n}</option>`).join('')}${ANNOTATION_SCALES.includes(ui.scale) ? '' : `<option value="${ui.scale}" selected>1:${ui.scale}</option>`}</select></label>` +
+      `<label class="field"><span>Stilmall i vyn</span><select data-show-style><option value="">Projektets (${escapeHtml(store.doc.graphics.name)})</option>${PRESETS.map((p) => `<option value="${escapeHtml(p.name)}"${ui.styleName === p.name ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}</select></label>` +
+      `<label class="field"><span>Kalkera en annan vy</span><select data-show-trace><option value="">Ingen</option>${store.doc.views
+        .filter((v) => v.id !== ui.activeView)
+        .map((v) => `<option value="${v.id}"${ui.trace === v.id ? ' selected' : ''}>${escapeHtml(v.name)}</option>`)
+        .join('')}</select></label>` +
+      traceLookMarkup() +
+      `<button class="btn show-style-link" data-action="style">Stilmall och ritningsgrafik…</button>`;
+    m.hidden = false;
+    app.$<HTMLElement>('.show-btn').setAttribute('aria-expanded', 'true');
+  }
+
+  return { applyTraceLook, closeScalePop, closeShowMenu, openScalePop, refreshShowMenu, scalePop, toggleShowMenu };
 }

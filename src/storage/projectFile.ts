@@ -18,10 +18,6 @@ export function forgetProjectFile(): void {
   currentHandle = null;
 }
 
-export function hasProjectFile(): boolean {
-  return currentHandle !== null;
-}
-
 export function saveProjectFile(doc: ProjectDoc, extension: string): Promise<'saved' | 'downloaded' | 'cancelled'> {
   return saveTextFile(serialize(doc), safeName(doc.project.name), extension, 'Projekt', true);
 }
