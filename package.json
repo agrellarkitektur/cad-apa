@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "earcut": "^3.0.1",
+    "pdfjs-dist": "^6.4.299",
     "polygon-clipping": "^0.15.7",
     "three": "^0.170.0"
   },

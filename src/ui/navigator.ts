@@ -1,5 +1,6 @@
 import type { Folder, Id, ProjectDoc, TreeTab, ViewDef } from '../core/model';
 import { markerName } from '../elements/markers';
+import { UNDERLAY_KIND_LABEL, type UnderlayParams } from '../elements/underlay';
 import { icons } from './icons';
 
 export type NavTab = TreeTab;
@@ -17,6 +18,10 @@ export interface NavigatorHost {
   activeView(): Id | null;
   /** Fasaden eller sektionen som visas, om någon. */
   marker(): Id | null;
+  /** Arbetsbladet som visas, om något (0.8 del 2). */
+  worksheet(): Id | null;
+  /** Det som är markerat i ritningen. */
+  selected(): ReadonlySet<Id>;
   viewModified(v: ViewDef): boolean;
   /** Vyn som kalkeras under ritningen, om någon. */
   trace(): Id | null;
@@ -123,18 +128,41 @@ export class Navigator {
   }
 
   private underlag(): string {
-    return `${this.folders('underlag', new Map())}<section>
-      <h2>Underlag</h2>
-      <p class="note">Här hamnar det man ritar över: DXF- och PDF-filer, bilder och kartor. Underlagen placeras i skala och kan visas i vyer och på ritningar.</p>
-      <p class="note soon">Kommer i nästa del av 0.8.</p>
-      <div class="nav-actions">${this.newFolderButton('underlag')}</div>
+    const doc = this.host.doc();
+    const selected = this.host.selected();
+    const where = (space: Id | undefined, storey: Id): string => {
+      if (space && doc.elements[space]) return markerName(doc, doc.elements[space]);
+      const w = space ? doc.worksheets.find((x) => x.id === space) : undefined;
+      if (w) return w.name;
+      return doc.storeys.find((s) => s.id === storey)?.name ?? '';
+    };
+    const list = Object.values(doc.elements)
+      .filter((e) => e.type === 'Underlay')
+      .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'sv', { numeric: true }));
+    const rows = new Map<Id, string>();
+    for (const e of list) {
+      const p = e.params as unknown as UnderlayParams;
+      const file = doc.assets[p.asset];
+      rows.set(
+        e.id,
+        `<div class="view-row${selected.has(e.id) ? ' active' : ''}"><button class="view-apply" data-underlay-pick="${e.id}" title="Visa underlaget och dess inställningar. Högerklicka (håll in på telefonen) för fler val">${esc(e.name ?? file?.name ?? 'Underlag')}${e.locked ? `<span class="row-lock" title="Låst">${icons.lock}</span>` : ''}<small>${UNDERLAY_KIND_LABEL[p.kind]} · ${esc(where(e.space, e.storey))}${file ? '' : ' · filen saknas'}</small></button><button class="icon-mini view-more" data-underlay-menu="${e.id}" aria-label="Fler val för ${esc(e.name ?? 'underlaget')}" title="Fler val">${icons.more}</button></div>`,
+      );
+    }
+    const unfiled = this.unfiled(rows, list.map((e) => e.id));
+    return `${this.folders('underlag', rows)}<section>
+      ${list.length ? (unfiled ? `<div class="nav-list">${unfiled}</div>` : '') : '<p class="note">Inga underlag än. Lägg in en PDF, en bild eller en DXF att rita över, eller dra filen till ritytan.</p>'}
+      <div class="nav-actions">
+        <button class="btn" data-action="add-underlay">${icons.plus}<span>Lägg in underlag…</span></button>
+        ${this.newFolderButton('underlag')}
+      </div>
+      <p class="note">Underlaget hamnar där du är: på våningen, på arbetsbladet eller i fasaden eller sektionen som är öppen. Kalibrera skalan och rikta det i egenskaperna; lås det när det ligger rätt.</p>
     </section>`;
   }
 
   private modell(): string {
     const doc = this.host.doc();
     const marker = this.host.marker();
-    const current = marker ? null : this.host.storey();
+    const current = marker || this.host.worksheet() ? null : this.host.storey();
     const storeys = [...doc.storeys].sort((a, b) => b.elevation - a.elevation);
     const markers = (type: string) =>
       Object.values(doc.elements)
@@ -150,6 +178,13 @@ export class Navigator {
     const elevations = markers('Elevation');
     const sections = markers('Section');
     for (const { e, name } of [...elevations, ...sections]) rowsById.set(e.id, markerRow(e.id, name, !!e.locked));
+    // Arbetsblad (0.8 del 2).
+    const sheet = this.host.worksheet();
+    for (const w of doc.worksheets)
+      rowsById.set(
+        w.id,
+        `<div class="view-row${w.id === sheet ? ' active' : ''}${w.id === picked ? ' picked' : ''}"><button class="view-apply" data-worksheet-pick="${w.id}" title="Öppna, och visa inställningarna i egenskaperna">${esc(w.name)}</button></div>`,
+      );
     const list = (ids: Id[], empty: string) => {
       const html = this.unfiled(rowsById, ids);
       return html ? `<div class="nav-list">${html}</div>` : ids.length ? '' : `<p class="note">${empty}</p>`;
@@ -169,9 +204,11 @@ export class Navigator {
     </section>
     <section>
       <h2>Arbetsblad</h2>
-      <p class="note">Fria 2D-ritningar som inte hör till en våning, till exempel detaljer, i samma projekt som modellen.</p>
-      <p class="note soon">Kommer i nästa del av 0.8.</p>
-      <div class="nav-actions">${this.newFolderButton('modell')}</div>
+      ${list(doc.worksheets.map((w) => w.id), 'Fria 2D-ritningar som inte hör till en våning, till exempel detaljer och skisser.')}
+      <div class="nav-actions">
+        <button class="btn" data-action="new-worksheet">${icons.plus}<span>Nytt arbetsblad</span></button>
+        ${this.newFolderButton('modell')}
+      </div>
     </section>`;
   }
 

@@ -98,6 +98,8 @@ export class PropertiesPanel {
   angleWarn: () => number = () => 5;
   /** Rikta en sektions- eller fasadlinje efter något man klickar på i planen. */
   onAlignMarker?: (id: string) => void;
+  /** Kalibrera eller rikta ett underlag (0.8 del 2). */
+  onUnderlayTool?: (id: string, mode: 'calibrate' | 'align') => void;
   /**
    * Det man valt i projektträdet (0.8). Dess inställningar visas när inget
    * i ritningen är markerat, med en Spara-knapp.
@@ -485,6 +487,7 @@ export class PropertiesPanel {
       case 'Line2D':
       case 'Fill2D':
       case 'RoofSlope':
+      case 'Underlay':
         return drawingFields(doc, el);
       case 'Door': {
         const p = resolveParams<{ at: number; glazed?: boolean; mainEntrance?: boolean }>(doc, el);
@@ -620,6 +623,10 @@ export class PropertiesPanel {
     const ids = this.selection.list();
     if (drawingClick(this.store, ids, b, this.el)) return;
     switch (b.dataset.action) {
+      case 'ul-calibrate':
+      case 'ul-align':
+        if (ids[0]) this.onUnderlayTool?.(ids[0], b.dataset.action === 'ul-calibrate' ? 'calibrate' : 'align');
+        return;
       case 'open-marker':
         if (ids[0]) this.onOpenMarker?.(ids[0]);
         return;

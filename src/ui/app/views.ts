@@ -7,9 +7,10 @@ import { askConfirm, askText } from '../ask';
 import { type MenuItem } from '../contextMenu';
 import type { AppContext } from './context';
 import { describeView } from './helpers';
+import { SPACE_TOOLS } from './shell';
 
 /** Ett ställe man varit på: en sparad vy, ett våningsplan i modellen, eller en fasad eller sektion. */
-export type Place = { kind: 'view'; id: Id } | { kind: 'storey'; id: Id } | { kind: 'marker'; id: Id };
+export type Place = { kind: 'view'; id: Id } | { kind: 'storey'; id: Id } | { kind: 'marker'; id: Id } | { kind: 'worksheet'; id: Id };
 
 /** Vyhistorik, Gå till (vy, våningsplan, fasad eller sektion), sparade vyer och menyerna för vyer och markörer. */
 export function installViews(app: AppContext) {
@@ -33,6 +34,10 @@ export function installViews(app: AppContext) {
       const el = app.store.doc.elements[p.id];
       return el ? { name: markerName(app.store.doc, el), sub: el.type === 'Section' ? 'Sektion' : 'Fasad' } : null;
     }
+    if (p.kind === 'worksheet') {
+      const w = app.store.doc.worksheets.find((x) => x.id === p.id);
+      return w ? { name: w.name, sub: 'Arbetsblad' } : null;
+    }
     const s = app.store.doc.storeys.find((x) => x.id === p.id);
     return s ? { name: s.name, sub: 'Modell' } : null;
   }
@@ -46,6 +51,7 @@ export function installViews(app: AppContext) {
       if (!el) return;
       const was = app.ui.marker;
       app.ui.marker = p.id;
+      app.ui.worksheet = null;
       app.ui.storey = el.storey;
       app.ui.activeView = null;
       if (app.ui.tool !== 'select' && app.ui.tool !== 'pan') app.setTool('select');
@@ -56,10 +62,26 @@ export function installViews(app: AppContext) {
       if (app.ui.mode === '3d') void app.setMode('2d');
       app.renderAll();
       if (was !== p.id) app.view.zoomToFit();
+    } else if (p.kind === 'worksheet') {
+      // Ett arbetsblad (0.8 del 2): en egen yta som inte hör till någon våning.
+      if (!app.store.doc.worksheets.some((w) => w.id === p.id)) return;
+      const was = app.ui.worksheet;
+      app.ui.worksheet = p.id;
+      app.ui.marker = null;
+      app.ui.activeView = null;
+      if (app.ui.tool !== 'select' && app.ui.tool !== 'pan' && !SPACE_TOOLS.includes(app.ui.tool)) app.setTool('select');
+      app.measureBox.close();
+      app.palette.hide();
+      app.selection.clear();
+      visit(p);
+      if (app.ui.mode === '3d') void app.setMode('2d');
+      app.renderAll();
+      if (was !== p.id) app.view.zoomToFit();
     } else if (app.store.doc.storeys.some((s) => s.id === p.id)) {
-      const was = app.ui.marker;
+      const was = app.ui.marker ?? app.ui.worksheet;
       app.ui.storey = p.id;
       app.ui.marker = null;
+      app.ui.worksheet = null;
       app.ui.activeView = null;
       visit(p);
       app.renderAll();
@@ -176,7 +198,8 @@ export function installViews(app: AppContext) {
     const st = app.store.doc.states.find((x) => x.id === app.ui.state)?.name ?? '';
     // Namnet på det som visas: fasaden eller sektionen om en är öppen, annars våningen.
     const m = app.ui.marker ? app.store.doc.elements[app.ui.marker] : undefined;
-    const shown = m ? markerName(app.store.doc, m) : (app.store.doc.storeys.find((x) => x.id === app.ui.storey)?.name ?? '');
+    const ws = app.ui.worksheet ? app.store.doc.worksheets.find((x) => x.id === app.ui.worksheet) : undefined;
+    const shown = m ? markerName(app.store.doc, m) : ws ? ws.name : (app.store.doc.storeys.find((x) => x.id === app.ui.storey)?.name ?? '');
     const name = await askText('Spara som vy', st ? `${shown} – ${st}` : shown);
     if (!name) return;
     const v = app.currentViewDef(newId('vy'), name);

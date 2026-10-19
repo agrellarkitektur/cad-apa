@@ -1,5 +1,6 @@
 import { setInState } from '../../core/commands';
 import { actionOf } from '../../core/states';
+import { typeOf } from '../../elements/registry';
 import { onLongPress, type MenuItem } from '../contextMenu';
 import { pickAt } from '../../view2d/pick';
 import { isNarrow } from '../sheet';
@@ -15,6 +16,12 @@ export function installMenus(app: AppContext) {
     app.openHistoryMenu(e.clientX, e.clientY);
   });
   app.navigator.el.addEventListener('contextmenu', (e) => {
+    const urow = (e.target as HTMLElement).closest<HTMLElement>('[data-underlay-pick]');
+    if (urow) {
+      e.preventDefault();
+      app.openUnderlayMenu(urow.dataset.underlayPick!, e.clientX, e.clientY);
+      return;
+    }
     const mrow = (e.target as HTMLElement).closest<HTMLElement>('[data-marker-pick]');
     if (mrow) {
       e.preventDefault();
@@ -27,6 +34,11 @@ export function installMenus(app: AppContext) {
     app.openViewMenu(row.dataset.viewApply!, e.clientX, e.clientY);
   });
   const viewRowLongPress = onLongPress(app.navigator.el, (x, y, target) => {
+    const urow = (target as HTMLElement | null)?.closest<HTMLElement>('[data-underlay-pick]');
+    if (urow) {
+      app.openUnderlayMenu(urow.dataset.underlayPick!, x, y);
+      return;
+    }
     const mrow = (target as HTMLElement | null)?.closest<HTMLElement>('[data-marker-pick]');
     if (mrow) {
       app.openMarkerMenu(mrow.dataset.markerPick!, x, y);
@@ -54,6 +66,7 @@ export function installMenus(app: AppContext) {
         [
           { label: 'Zooma till allt', hint: 'F', run: () => (app.ui.mode !== '3d' ? app.view.zoomToFit() : app.view3d?.frameAll()) },
           { label: 'Klistra in', hint: 'Ctrl+V', run: () => void app.pasteFromMenu() },
+          { label: 'Lägg in underlag…', run: () => app.chooseUnderlayFiles() },
           { kind: 'sep' },
           { label: 'Rita vägg', hint: 'W', run: () => app.setTool('wall') },
           { label: 'Sätt in dörr', hint: 'D', run: () => app.setTool('door') },
@@ -99,6 +112,19 @@ export function installMenus(app: AppContext) {
       const t = first.type;
       const label = { Wall: 'väggar', Door: 'dörrar', Window: 'fönster', Furniture: 'möbler', Space: 'rum', Dimension: 'mått', Text: 'texter' }[t] ?? 'av samma sort';
       items.push({ label: `Markera alla ${label}`, run: () => selectAllOfType(t) });
+    }
+    if (els.length === 1 && first.type === 'Underlay') {
+      // Underlag (0.8 del 2).
+      items.push(
+        { kind: 'sep' },
+        { label: 'Kalibrera skalan…', run: () => app.startUnderlayTool(first.id, 'calibrate') },
+        { label: 'Rikta…', run: () => app.startUnderlayTool(first.id, 'align') },
+      );
+    }
+    // Underlag, fasader och annat som hör till ritningen finns i alla tillstånd.
+    if (els.every((e) => typeOf(e.type)?.global)) {
+      app.ctxMenu.open(x, y, items, 'Det markerade');
+      return;
     }
     items.push({ kind: 'sep' }, { kind: 'header', label: 'Finns i' });
     for (const s of app.store.doc.states) {

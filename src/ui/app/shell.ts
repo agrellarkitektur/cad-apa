@@ -66,6 +66,8 @@ export function createUiState(initial: ProjectDoc, uiSettings: UiSettings, deskt
     trace: null as Id | null,
     /** En fasad eller sektion som visas i stället för planen (0.7). */
     marker: null as Id | null,
+    /** Ett arbetsblad som visas i stället för planen (0.8 del 2). */
+    worksheet: null as Id | null,
     /** Visa 2D-element som inte syns i vyn, tonade (0.8). */
     showHidden: false,
   };

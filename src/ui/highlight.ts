@@ -2,7 +2,7 @@ import type { ProjectDoc } from '../core/model';
 import type { WallParams } from '../elements/wall';
 import { refFrame } from '../core/wallEdit';
 import type { Pickable } from '../repr/plan';
-import type { Primitive, Vec2 } from '../repr/primitives';
+import { imageCorners, type Primitive, type Vec2 } from '../repr/primitives';
 import type { Camera } from '../view2d/camera';
 
 /**
@@ -110,6 +110,8 @@ function primPath(cam: Camera, p: Primitive, cls: string): string {
       const r = p.radius * cam.scale;
       return `<path d="M${a[0]} ${a[1]}A${r} ${r} 0 ${sweep > Math.PI ? 1 : 0} 0 ${b[0]} ${b[1]}" class="${cls}-line"/>`;
     }
+    case 'image':
+      return `<path d="${path(cam, imageCorners(p), true)}" class="${cls}-line"/>`;
     case 'text': {
       const s = cam.toScreen(p.at);
       return `<circle cx="${s[0]}" cy="${s[1]}" r="4" class="${cls}-line"/>`;

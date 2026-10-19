@@ -1,7 +1,7 @@
 import type { StyleSheet } from './graphics';
 import { wallFrame, type WallGeometry } from '../geometry/wallFrame';
 import { newId } from './ids';
-import type { Definition, Element, Id, ProjectDoc, ShowIn, State, Value } from './model';
+import type { Asset, Definition, Element, Id, ProjectDoc, ShowIn, State, Value } from './model';
 import { statesForNewElement } from './states';
 import type { DocStore, TxBuilder } from './store';
 
@@ -31,13 +31,36 @@ export function deleteElements(store: DocStore, ids: Id[]): void {
   const open = ids.filter((id) => !store.doc.elements[id]?.locked);
   if (!open.length) return;
   store.transact(open.length === 1 ? 'Ta bort objekt' : `Ta bort ${open.length} objekt`, (tx) => {
+    const files = new Set<Id>();
     for (const id of withHosted(tx, open)) {
       const el = tx.doc.elements[id];
       // En taklutning som tas bort döljs, så att den automatiska inte kommer tillbaka.
       if (el?.type === 'RoofSlope') tx.putElement({ ...el, params: { ...el.params, hidden: true } });
-      else tx.removeElement(id);
+      else {
+        if (typeof el?.params.asset === 'string') files.add(el.params.asset);
+        tx.removeElement(id);
+      }
     }
+    // Ett underlags fil tas bort med den sista placeringen av den (0.8 del 2); ångra tar tillbaka båda.
+    pruneAssets(tx, files);
   });
+}
+
+/** Ta bort filer som inget element längre använder (bland `candidates`). */
+export function pruneAssets(tx: TxBuilder, candidates: Iterable<Id>): void {
+  const used = new Set(Object.values(tx.doc.elements).map((e) => e.params.asset));
+  for (const a of candidates) if (!used.has(a)) tx.removeAsset(a);
+}
+
+/** Lägg till ett underlag (0.8 del 2): filen och elementet i ett steg. */
+export function addWithAsset(store: DocStore, asset: Asset | null, el: NewElement, activeState: Id, label: string): Element {
+  const states = statesForNewElement(store.doc, activeState);
+  const full = { ...el, id: el.id ?? newId('ul'), states: el.states ?? states } as Element;
+  store.transact(label, (tx) => {
+    if (asset && !tx.doc.assets[asset.id]) tx.putAsset(asset);
+    tx.putElement(full);
+  });
+  return full;
 }
 
 /** Lås eller lås upp objekt (format 5). */

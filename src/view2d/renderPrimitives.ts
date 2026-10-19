@@ -1,12 +1,17 @@
 import type { FillDef } from '../core/graphics';
 import type { Camera } from './camera';
-import type { Pen, PenColor, Primitive } from '../repr/primitives';
+import { imageCorners, type Pen, type PenColor, type Primitive } from '../repr/primitives';
 
 export interface RenderOptions {
   /** Ritningsskalans nämnare (100 för 1:100). Styr texthöjd, streck och skraffering. */
   drawingScale: number;
   /** Prefix för mönstrens id, när flera ritningar ligger i samma SVG. */
   idPrefix?: string;
+  /**
+   * Adressen till en bild (0.8), t.ex. en blob-URL. Null om den inte är klar
+   * än; då ritas en ram, och den som ger adressen ritar om när bilden finns.
+   */
+  imageHref?: (source: { asset: string; page?: number }) => string | null;
 }
 
 /** Texter mindre än så här på skärmen ritas inte alls. */
@@ -78,6 +83,23 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
         );
         break;
       }
+      case 'image': {
+        const href = opt.imageHref?.(p.source) ?? null;
+        const [bl, , , tl] = imageCorners(p);
+        if (!href) {
+          // Bilden laddas: en tunn ram där den kommer.
+          out.push(`<path d="${ring(imageCorners(p), cam, true)}" style="stroke:var(--muted)" stroke-width="1" stroke-dasharray="4 3" fill="none"/>`);
+          break;
+        }
+        // Bildens (0,0) är övre vänstra hörnet; x längs u, y nedåt längs −v.
+        const o = cam.toScreen(tl);
+        const x = cam.toScreen([tl[0] + p.u[0], tl[1] + p.u[1]]);
+        const y = cam.toScreen(bl);
+        const m = [x[0] - o[0], x[1] - o[1], y[0] - o[0], y[1] - o[1], o[0], o[1]].map(f).join(' ');
+        const filter = p.gray ? ' filter="url(#underlay-gray)"' : '';
+        out.push(`<image href="${escapeXml(href)}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" transform="matrix(${m})" opacity="${f(p.opacity)}"${filter}/>`);
+        break;
+      }
       case 'text': {
         const px = p.height * paperToPx;
         if (px < MIN_TEXT_PX) break;
@@ -86,12 +108,14 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
         const rot = p.angle ? ` transform="rotate(${f((-p.angle * 180) / Math.PI)} ${f(s[0])} ${f(s[1])})"` : '';
         const weight = p.bold ? ' font-weight="650"' : '';
         out.push(
-          `<text x="${f(s[0])}" y="${f(s[1])}" font-size="${f(px)}" text-anchor="${p.align ?? 'start'}"${weight}${rot} style="fill:${color(p.pen.color ?? 'ink')}">${escapeXml(p.text)}</text>`,
+          `<text x="${f(s[0])}" y="${f(s[1])}" font-size="${f(px)}" text-anchor="${p.align ?? 'start'}"${weight}${rot} style="fill:${color(p.pen.color ?? 'ink')}${p.pen.opacity !== undefined && p.pen.opacity < 1 ? `;fill-opacity:${f(p.pen.opacity)}` : ''}">${escapeXml(p.text)}</text>`,
         );
         break;
       }
     }
   }
+  // Gråskala för underlag.
+  if (prims.some((p) => p.kind === 'image' && p.gray)) patterns.set('underlay-gray', '<filter id="underlay-gray"><feColorMatrix type="saturate" values="0"/></filter>');
   const defs = patterns.size ? `<defs>${[...patterns.values()].join('')}</defs>` : '';
   return defs + out.join('');
 }
@@ -129,7 +153,8 @@ export function color(c: PenColor): string {
  */
 function stroke(pen: Pen, paperToPx: number): string {
   const w = Math.max(0.75, pen.weight * 4);
-  let s = `style="stroke:${color(pen.color ?? 'ink')}" stroke-width="${f(w)}" stroke-linecap="round" stroke-linejoin="round"`;
+  const op = pen.opacity !== undefined && pen.opacity < 1 ? `;stroke-opacity:${f(pen.opacity)}` : '';
+  let s = `style="stroke:${color(pen.color ?? 'ink')}${op}" stroke-width="${f(w)}" stroke-linecap="round" stroke-linejoin="round"`;
   if (pen.dash?.length) {
     const dash = pen.dash.map((d) => f(Math.max(2, d * paperToPx))).join(' ');
     s += ` stroke-dasharray="${dash}"`;
@@ -149,7 +174,8 @@ function dashed(points: readonly (readonly [number, number])[], closed: boolean,
   const period = pattern.reduce((a, b) => a + b, 0);
   const first = pattern[0];
   const w = Math.max(0.75, pen.weight * 4);
-  const style = `style="stroke:${color(pen.color ?? 'ink')}" stroke-width="${f(w)}" stroke-linecap="round" fill="none"`;
+  const op = pen.opacity !== undefined && pen.opacity < 1 ? `;stroke-opacity:${f(pen.opacity)}` : '';
+  const style = `style="stroke:${color(pen.color ?? 'ink')}${op}" stroke-width="${f(w)}" stroke-linecap="round" fill="none"`;
   const pts = points.map((q) => cam.toScreen(q));
   if (closed && pts.length > 2) pts.push(pts[0]);
   const parts: string[] = [];

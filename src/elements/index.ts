@@ -8,6 +8,7 @@ import { elevationType, markerFrame, northType, sectionType } from './markers';
 import { roofType } from './roof';
 import { roofSlopeType } from './roofSlope';
 import { spaceType } from './space';
+import { underlayType } from './underlay';
 import { wallType } from './wall';
 import { windowType } from './window';
 
@@ -27,6 +28,7 @@ export function registerBuiltInTypes(): void {
   registerType(line2dType);
   registerType(fill2dType);
   registerType(roofSlopeType);
+  registerType(underlayType);
   // Fasader och sektioner som följer byggnaden placeras där de ligger när de flyttas.
   placement.auto = (doc, el) => {
     const f = markerFrame(doc, el);

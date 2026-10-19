@@ -1,3 +1,4 @@
+import { pruneAssets } from './commands';
 import { newId } from './ids';
 import type { Element, Folder, Id, Storey, TreeTab, ViewDef } from './model';
 import type { DocStore, TxBuilder } from './store';
@@ -114,5 +115,53 @@ export function saveStorey(store: DocStore, id: Id, patch: Partial<Omit<Storey, 
   store.transact(`Spara ${patch.name ?? s.name}`, (tx) => {
     tx.setStoreys(tx.doc.storeys.map((x) => (x.id === id ? { ...x, ...patch } : x)));
     placeIn(tx, id, folder);
+  });
+}
+
+/** Skapa ett arbetsblad (0.8 del 2), eventuellt i en mapp. Svarar med dess id. */
+export function createWorksheet(store: DocStore, name: string, folder: Id | null = null): Id {
+  const id = newId('ab');
+  store.transact(`Nytt arbetsblad ${name}`, (tx) => {
+    tx.setField('worksheets', [...tx.doc.worksheets, { id, name }]);
+    placeIn(tx, id, folder);
+  });
+  return id;
+}
+
+/** Spara ett arbetsblads namn och mapp i ett steg. */
+export function saveWorksheet(store: DocStore, id: Id, patch: { name?: string }, folder?: Id | null): void {
+  const w = store.doc.worksheets.find((x) => x.id === id);
+  if (!w) return;
+  store.transact(`Spara ${patch.name?.trim() || w.name}`, (tx) => {
+    tx.setField('worksheets', tx.doc.worksheets.map((x) => (x.id === id ? { ...x, name: patch.name?.trim() || x.name } : x)));
+    placeIn(tx, id, folder);
+  });
+}
+
+/** Det som är ritat på ett arbetsblad. */
+export function worksheetContents(doc: { elements: Record<Id, Element> }, id: Id): Element[] {
+  return Object.values(doc.elements).filter((e) => e.space === id);
+}
+
+/**
+ * Ta bort ett arbetsblad med allt som är ritat på det och vyerna av det.
+ * Underlagens filer tas bort om inget annat använder dem. Går att ångra.
+ */
+export function deleteWorksheet(store: DocStore, id: Id): void {
+  const w = store.doc.worksheets.find((x) => x.id === id);
+  if (!w) return;
+  store.transact(`Ta bort arbetsbladet ${w.name}`, (tx) => {
+    const files = new Set<Id>();
+    for (const el of worksheetContents(tx.doc, id)) {
+      if (typeof el.params.asset === 'string') files.add(el.params.asset);
+      tx.removeElement(el.id);
+    }
+    pruneAssets(tx, files);
+    const views = tx.doc.views.filter((v) => v.worksheet === id);
+    if (views.length) tx.setViews(tx.doc.views.filter((v) => v.worksheet !== id));
+    tx.setField('worksheets', tx.doc.worksheets.filter((x) => x.id !== id));
+    const tree = { ...tx.doc.tree };
+    for (const k of [id, ...views.map((v) => v.id)]) delete tree[k];
+    tx.setField('tree', tree);
   });
 }

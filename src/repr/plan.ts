@@ -70,12 +70,13 @@ function ghost(p: Primitive): Primitive {
   const pen: Pen = { weight: 0.13, color: 'muted', dash: [1, 1] };
   if (p.kind === 'region') return { ...p, fill: { kind: 'none' }, outline: pen, ownFill: true };
   if (p.kind === 'text') return { ...p, pen: { ...p.pen, color: 'muted' } };
+  if (p.kind === 'image') return { ...p, opacity: Math.min(p.opacity, 0.25) };
   return { ...p, pen } as Primitive;
 }
 
 /** Lägg på stilmallens färger, fyllningar och streckning för åtgärden. */
 export function applyStyle(p: Primitive, s: ActionStyle, action: Action, sheet: StyleSheet): Primitive {
-  if (p.kind === 'text') return p;
+  if (p.kind === 'text' || p.kind === 'image') return p;
   if (p.kind === 'region') {
     if (p.ownFill) return p;
     const rs = p.styleAs ? sheet.actions[p.styleAs] : s;

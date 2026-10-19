@@ -2,6 +2,9 @@ import { deleteElements } from '../../core/commands';
 import { copyPayload, originalsHere, parsePayload, pasteClip, type ClipPayload } from '../../core/clipboard';
 import type { AppContext } from './context';
 
+/** Det som går att ha på ett arbetsblad (0.8 del 2). */
+export const DRAWING_TYPES = new Set(['Line2D', 'Fill2D', 'Text', 'Dimension', 'Underlay']);
+
 /** Kopiera, klipp ut och klistra in (0.7.1), även mellan projekt. */
 export function installClipboard(app: AppContext) {
   // ---------- Kopiera och klistra in (0.7.1) ----------
@@ -12,6 +15,7 @@ export function installClipboard(app: AppContext) {
 
   function copySelection(data: DataTransfer | null): boolean {
     if (app.ui.marker || !app.selection.size) return false;
+    // På ett arbetsblad (0.8 del 2) går 2D, text, mått och underlag att kopiera.
     const payload = copyPayload(app.store.doc, app.selection.list(), app.ui.storey);
     if (!payload) return false;
     clip = payload;
@@ -29,9 +33,12 @@ export function installClipboard(app: AppContext) {
       return;
     }
     if (app.ui.marker) app.goTo({ kind: 'storey', id: app.ui.storey });
+    // På ett arbetsblad går bara det som är ritning att klistra in, inte väggar och dörrar.
+    const ws = app.ui.worksheet ?? undefined;
+    const usable = ws ? { ...payload, elements: payload.elements.filter((e) => DRAWING_TYPES.has(e.type)) } : payload;
     // Ligger originalen kvar på samma ställe hamnar kopian en bit bort.
-    const offset: [number, number] = originalsHere(app.store.doc, payload, app.ui.state, app.ui.storey) ? [1000, -1000] : [0, 0];
-    const ids = pasteClip(app.store, payload, app.ui.state, app.ui.storey, offset);
+    const offset: [number, number] = originalsHere(app.store.doc, usable, app.ui.state, app.ui.storey) ? [1000, -1000] : [0, 0];
+    const ids = pasteClip(app.store, usable, app.ui.state, app.ui.storey, offset, ws);
     if (!ids.length) {
       app.hint('Inget att klistra in här.');
       return;

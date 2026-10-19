@@ -1,6 +1,6 @@
 import { movePatch } from './commands';
 import { newId } from './ids';
-import { FORMAT_VERSION, type Definition, type Element, type Id, type ProjectDoc } from './model';
+import { FORMAT_VERSION, type Asset, type Definition, type Element, type Id, type ProjectDoc } from './model';
 import type { DocStore } from './store';
 
 /**
@@ -18,6 +18,8 @@ export interface ClipPayload {
   storey: Id;
   elements: Element[];
   definitions: Definition[];
+  /** Underlagens filer (0.8 del 2), så att de följer med till ett annat projekt. */
+  assets?: Asset[];
 }
 
 /** Elementtyper som bara finns en gång i ett projekt. */
@@ -31,7 +33,9 @@ export function copyPayload(doc: ProjectDoc, ids: readonly Id[], storey: Id): Cl
   const elements = [...pick].map((id) => structuredClone(doc.elements[id]));
   const defIds = new Set(elements.map((e) => e.definition).filter((d): d is Id => !!d));
   const definitions = [...defIds].map((id) => doc.definitions[id]).filter(Boolean).map((d) => structuredClone(d));
-  return { kind: 'bacchus-clip', format: FORMAT_VERSION, project: doc.project.name, storey, elements, definitions };
+  const assetIds = new Set(elements.map((e) => e.params.asset).filter((a): a is Id => typeof a === 'string' && !!doc.assets[a]));
+  const assets = [...assetIds].map((id) => structuredClone(doc.assets[id]));
+  return { kind: 'bacchus-clip', format: FORMAT_VERSION, project: doc.project.name, storey, elements, definitions, ...(assets.length ? { assets } : {}) };
 }
 
 export function parsePayload(text: string): ClipPayload | null {
@@ -57,7 +61,7 @@ export function originalsHere(doc: ProjectDoc, clip: ClipPayload, state: Id, sto
  * namnet är upptaget av en annan sorts typ). Måttpunkter som hänger på
  * något som inte följer med blir fria punkter.
  */
-export function pasteClip(store: DocStore, clip: ClipPayload, state: Id, storey: Id, offset: readonly [number, number]): Id[] {
+export function pasteClip(store: DocStore, clip: ClipPayload, state: Id, storey: Id, offset: readonly [number, number], space?: Id): Id[] {
   const doc = store.doc;
   const elements = clip.elements.filter((e) => !(SINGLE.has(e.type) && Object.values(doc.elements).some((x) => x.type === e.type)));
   if (!elements.length) return [];
@@ -79,6 +83,8 @@ export function pasteClip(store: DocStore, clip: ClipPayload, state: Id, storey:
   const made: Id[] = [];
   store.transact(elements.length === 1 ? 'Klistra in' : `Klistra in ${elements.length} objekt`, (tx) => {
     for (const d of newDefs) tx.putDefinition(d);
+    // Underlagens filer som inte finns här än (0.8 del 2).
+    for (const a of clip.assets ?? []) if (!tx.doc.assets[a.id]) tx.putAsset(structuredClone(a));
     for (const e of elements) {
       const params = remapRefs(structuredClone(e.params) as Record<string, unknown>, idMap);
       delete params.number;
@@ -93,6 +99,9 @@ export function pasteClip(store: DocStore, clip: ClipPayload, state: Id, storey:
       };
       if (!copy.host) delete copy.host;
       if (!copy.definition) delete copy.definition;
+      // Det klistras in på ytan som visas: ett arbetsblad (0.8 del 2) eller planen.
+      if (space) copy.space = space;
+      else delete copy.space;
       // Dörrar och fönster följer sin vägg; allt annat flyttas.
       const patch = copy.host || (!offset[0] && !offset[1]) ? null : movePatch(tx.doc, copy, [offset[0], offset[1]]);
       tx.putElement(patch ? { ...copy, params: { ...copy.params, ...patch } } : copy);

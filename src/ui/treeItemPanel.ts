@@ -1,7 +1,8 @@
 import { PRESETS } from '../core/graphics';
 import type { Folder, Id, ProjectDoc, TreeTab } from '../core/model';
 import type { DocStore } from '../core/store';
-import { deleteFolder, descendantsOf, saveFolder, saveMarker, saveStorey, saveView } from '../core/treeCommands';
+import { deleteFolder, deleteWorksheet, descendantsOf, saveFolder, saveMarker, saveStorey, saveView, saveWorksheet, worksheetContents } from '../core/treeCommands';
+import { askConfirm } from './ask';
 import { markerName, type MarkerParams } from '../elements/markers';
 import { resolveParams } from '../elements/registry';
 import { icons } from './icons';
@@ -12,7 +13,7 @@ import { escapeHtml } from './labels';
  * eller sektion, en våning eller en mapp. De visas i egenskapspanelen med en
  * Spara-knapp sist; inget ändras förrän man sparar.
  */
-export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder'; id: Id };
+export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder' | 'worksheet'; id: Id };
 
 const esc = escapeHtml;
 
@@ -27,6 +28,8 @@ export function treeItemExists(doc: ProjectDoc, item: TreeItem): boolean {
       return doc.storeys.some((s) => s.id === item.id);
     case 'folder':
       return doc.folders.some((f) => f.id === item.id);
+    case 'worksheet':
+      return doc.worksheets.some((w) => w.id === item.id);
   }
 }
 
@@ -53,7 +56,8 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
   if (item.kind === 'view') {
     const v = doc.views.find((x) => x.id === item.id);
     if (!v) return '';
-    const shows = v.marker && doc.elements[v.marker] ? markerName(doc, doc.elements[v.marker]) : (doc.storeys.find((s) => s.id === v.storey)?.name ?? '');
+    const sheet = v.worksheet ? doc.worksheets.find((w) => w.id === v.worksheet) : undefined;
+    const shows = v.marker && doc.elements[v.marker] ? markerName(doc, doc.elements[v.marker]) : sheet ? sheet.name : (doc.storeys.find((s) => s.id === v.storey)?.name ?? '');
     const tags = [...new Set([...doc.viewTags, ...(v.tags ?? [])])];
     return `<form class="tree-form" data-tree-kind="view" data-tree-id="${v.id}">
       <header class="sel-head"><h2>${esc(v.name)}</h2><p>Vy · visar ${esc(shows)}</p></header>
@@ -96,6 +100,22 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
         <label class="check lock-check" title="En låst linje kan inte flyttas eller tas bort av misstag"><input type="checkbox" name="locked"${el.locked ? ' checked' : ''}><span class="lock-icon">${el.locked ? icons.lock : icons.unlock}</span> Lås</label>
       </section>
       ${actions()}
+    </form>`;
+  }
+  if (item.kind === 'worksheet') {
+    const w = doc.worksheets.find((x) => x.id === item.id);
+    if (!w) return '';
+    const n = worksheetContents(doc, w.id).length;
+    return `<form class="tree-form" data-tree-kind="worksheet" data-tree-id="${w.id}">
+      <header class="sel-head"><h2>${esc(w.name)}</h2><p>Arbetsblad · ${n} ${n === 1 ? 'objekt' : 'objekt'}</p></header>
+      <section>
+        <div class="fields">
+          ${field('Namn', `<input name="name" value="${esc(w.name)}">`)}
+          ${field('Mapp', `<select name="folder">${folderOptions(doc, 'modell', folder)}</select>`)}
+        </div>
+        <p class="note">En fri 2D-ritning som inte hör till någon våning: detaljer, skisser och underlag. Linjer, fyllningar, text, mått och underlag går att rita här.</p>
+      </section>
+      ${actions(`<button type="button" class="btn btn-danger" data-tree="delete-worksheet">Ta bort…</button>`)}
     </form>`;
   }
   if (item.kind === 'storey') {
@@ -165,6 +185,16 @@ export function bindTreeForm(root: HTMLElement, store: DocStore, onSaved: (item:
       deleteFolder(store, id);
       closeItem();
     }
+    if (b.dataset.tree === 'delete-worksheet') {
+      const w = store.doc.worksheets.find((x) => x.id === id);
+      const n = worksheetContents(store.doc, id).length;
+      if (!w) return;
+      void askConfirm('Ta bort arbetsbladet?', `${w.name}${n ? ` och de ${n} objekten på det` : ''} tas bort. Det går att ångra.`).then((ok) => {
+        if (!ok) return;
+        deleteWorksheet(store, id);
+        closeItem();
+      });
+    }
   });
   form.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -203,6 +233,8 @@ export function bindTreeForm(root: HTMLElement, store: DocStore, onSaved: (item:
       saveStorey(store, id, patch, folder);
     } else if (kind === 'folder') {
       saveFolder(store, id, { name: str('name'), parent: folder });
+    } else if (kind === 'worksheet') {
+      saveWorksheet(store, id, { name: str('name') }, folder);
     }
     onSaved({ kind, id });
   });

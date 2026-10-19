@@ -1,7 +1,7 @@
 import { closestOnSegment, dist, distToSegment, pointInRings } from '../geometry/vec';
 import type { Pickable } from '../repr/plan';
 import type { Bounds, Primitive, Vec2 } from '../repr/primitives';
-import { boundsOf } from '../repr/primitives';
+import { boundsOf, imageCorners } from '../repr/primitives';
 
 /**
  * Vilket element ligger under en punkt? I tur och ordning:
@@ -20,7 +20,8 @@ export function pickAt(pickables: readonly Pickable[], p: Vec2, tol: number): st
     let score = -Infinity;
     if (item.regions.some((rings) => pointInRings(p, rings))) score = 3000 + item.priority;
     else if (d <= tol) score = 2000 + item.priority - d / tol;
-    else if (item.prims.some((prim) => prim.kind === 'polyline' && prim.closed && pointInRings(p, [prim.points]))) score = 1000 + item.priority;
+    else if (item.prims.some((prim) => (prim.kind === 'polyline' && prim.closed && pointInRings(p, [prim.points])) || (prim.kind === 'image' && pointInRings(p, [imageCorners(prim)]))))
+      score = 1000 + item.priority;
     if (score > -Infinity && (!best || score > best.score)) best = { id: item.id, score };
   }
   return best?.id ?? null;
@@ -77,6 +78,12 @@ function distToPrim(p: Vec2, prim: Primitive): number {
     }
     case 'text':
       return distToText(p, prim);
+    case 'image': {
+      const c = imageCorners(prim);
+      let d = Infinity;
+      for (let i = 0; i < 4; i++) d = Math.min(d, distToSegment(p, c[i], c[(i + 1) % 4]));
+      return d;
+    }
   }
 }
 

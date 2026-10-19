@@ -22,6 +22,7 @@ import type { OpeningTool } from '../tools/openingTool';
 import type { RoomTool } from '../tools/roomTool';
 import type { SelectTool } from '../tools/selectTool';
 import type { WallTool } from '../tools/wallTool';
+import type { ToolHost } from '../tools/host';
 import type { UiSettings } from '../uiSettings';
 import type { ToolId, UiState, ViewMode } from './shell';
 import type { Place } from './views';
@@ -50,6 +51,8 @@ export interface AppContext {
   /** Det som ritas just nu, med det som går att klicka på. */
   readonly plan: PlanResult;
   readonly view3d: View3D | null;
+  /** Det verktygen får av appen (snäpp, ytan, markeringen …). */
+  readonly host: ToolHost;
 
   readonly selectTool: SelectTool;
   readonly wallTool: WallTool;
@@ -107,6 +110,13 @@ export interface AppContext {
   openHistoryMenu(x: number, y: number): void;
   openMarkerMenu(id: string, x: number, y: number): void;
   openViewMenu(id: string, x: number, y: number): void;
+
+  /** Underlag (0.8 del 2): välj filer, kalibrera eller rikta, menyn i projektträdet. */
+  chooseUnderlayFiles(): void;
+  startUnderlayTool(id: string, mode: 'calibrate' | 'align'): void;
+  openUnderlayMenu(id: string, x: number, y: number): void;
+  /** Visa ett underlag: gå dit det ligger, markera och zooma till det. */
+  showUnderlay(id: string): void;
 
   copySelection(data: DataTransfer | null): boolean;
   pasteFromMenu(): Promise<void>;

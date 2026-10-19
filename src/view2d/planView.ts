@@ -83,6 +83,9 @@ export class PlanView {
   /** Ritningsskalans nämnare. Styr texthöjder (1:100 tills layouten finns). */
   drawingScale = 100;
 
+  /** Adressen till bilderna i underlagen (0.8), se `RenderOptions.imageHref`. */
+  imageHref?: (source: { asset: string; page?: number }) => string | null;
+
   constructor(host: HTMLElement, events: PlanViewEvents = {}) {
     this.host = host;
     this.events = events;
@@ -272,8 +275,8 @@ export class PlanView {
       this.gridMajor.setAttribute('d', grid.major);
       this.gridAxes.setAttribute('d', grid.axes);
     }
-    this.underlay.innerHTML = this.underlayPrims.length ? renderPrimitives(this.underlayPrims, cam, { drawingScale: this.drawingScale, idPrefix: 'u' }) : '';
-    this.content.innerHTML = renderPrimitives(this.prims, cam, { drawingScale: this.drawingScale });
+    this.underlay.innerHTML = this.underlayPrims.length ? renderPrimitives(this.underlayPrims, cam, { drawingScale: this.drawingScale, idPrefix: 'u', imageHref: this.imageHref }) : '';
+    this.content.innerHTML = renderPrimitives(this.prims, cam, { drawingScale: this.drawingScale, imageHref: this.imageHref });
     this.highlight.innerHTML = this.highlighter?.(cam) ?? '';
     this.overlay.innerHTML = this.tool?.overlay?.(cam) ?? '';
     this.chrome.innerHTML = renderScaleBar(cam, 20, cam.height - 22);

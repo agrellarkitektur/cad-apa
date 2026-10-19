@@ -48,14 +48,16 @@ export default defineConfig(({ mode }) => {
             },
             workbox: {
               globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+              // pdf.js med sin arbetare är större än förvalet på 2 MB (0.8 del 2).
+              maximumFileSizeToCacheInBytes: 6_000_000,
             },
           }),
     ],
     build: {
       outDir: artifact ? 'dist-artifact' : 'dist',
       assetsInlineLimit: artifact ? 100_000_000 : 4096,
-      // three.js laddas separat när 3D-vyn öppnas.
-      chunkSizeWarningLimit: 700,
+      // three.js och pdf.js laddas separat när de behövs (3D-vyn, PDF-underlag).
+      chunkSizeWarningLimit: 1300,
     },
   };
 });

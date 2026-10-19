@@ -22,6 +22,8 @@ export interface Pen {
   color?: PenColor;
   /** Streckmönster på papper i mm, t.ex. [2, 1] för streckad linje. */
   dash?: readonly number[];
+  /** Täckning 0–1, för tonade underlag (0.8). Utelämnad = hel. */
+  opacity?: number;
 }
 
 /** Varifrån en primitiv kommer. Lagerreglerna läser detta vid export. */
@@ -96,7 +98,32 @@ export interface TextPrim extends Base {
   pen: Pen;
 }
 
-export type Primitive = LinePrim | PolylinePrim | RegionPrim | ArcPrim | TextPrim;
+/**
+ * En bild (0.8): ett underlag som en PDF-sida eller ett foto. Bilden fyller
+ * parallellogrammen från `corner` (nedre vänstra hörnet) längs `u` (bredden)
+ * och `v` (höjden). Själva bilden hämtas med `source` när den ritas, så att
+ * primitiverna förblir små.
+ */
+export interface ImagePrim extends Base {
+  kind: 'image';
+  corner: Vec2;
+  u: Vec2;
+  v: Vec2;
+  /** Vilken fil och (för PDF) vilken sida. */
+  source: { asset: string; page?: number };
+  /** Täckning 0–1. */
+  opacity: number;
+  /** I gråskala. */
+  gray?: boolean;
+}
+
+export type Primitive = LinePrim | PolylinePrim | RegionPrim | ArcPrim | TextPrim | ImagePrim;
+
+/** Bildens fyra hörn: nedre vänstra, nedre högra, övre högra, övre vänstra. */
+export function imageCorners(p: Pick<ImagePrim, 'corner' | 'u' | 'v'>): Vec2[] {
+  const c = p.corner;
+  return [c, [c[0] + p.u[0], c[1] + p.u[1]], [c[0] + p.u[0] + p.v[0], c[1] + p.u[1] + p.v[1]], [c[0] + p.v[0], c[1] + p.v[1]]];
+}
 
 export interface Bounds {
   minX: number;
@@ -135,6 +162,9 @@ export function boundsOf(prims: readonly Primitive[]): Bounds | null {
         break;
       case 'text':
         add(p.at);
+        break;
+      case 'image':
+        imageCorners(p).forEach(add);
         break;
     }
   }

@@ -6,6 +6,8 @@ import { LINE_TYPES, PATTERN_LABELS, PEN_WEIGHTS, SHAPE_LABELS, type Fill2DParam
 import { markerName } from '../elements/markers';
 import { resolveParams } from '../elements/registry';
 import { SLOPE_STYLES, type RoofSlopeParams } from '../elements/roofSlope';
+import { moveToFolder } from '../core/treeCommands';
+import { dxfOf, UNDERLAY_KIND_LABEL, type UnderlayParams } from '../elements/underlay';
 import { icons } from './icons';
 import { escapeHtml } from './labels';
 
@@ -15,9 +17,20 @@ import { escapeHtml } from './labels';
  */
 
 /** Typer som har Visas i: det som är ritningsinformation och kan visas i vissa vyer. */
-export const SHOWABLE = new Set(['Line2D', 'Fill2D', 'Text', 'Dimension']);
+export const SHOWABLE = new Set(['Line2D', 'Fill2D', 'Text', 'Dimension', 'Underlay']);
 /** Typer som kan låsas. */
-export const LOCKABLE = new Set(['Line2D', 'Fill2D', 'Text', 'Dimension', 'RoofSlope', 'Section', 'Elevation', 'North']);
+export const LOCKABLE = new Set(['Line2D', 'Fill2D', 'Text', 'Dimension', 'RoofSlope', 'Section', 'Elevation', 'North', 'Underlay']);
+
+/** PDF: millimeter i modellen per PDF-punkt i skala 1:1. */
+const MM_PER_PT = 25.4 / 72;
+/** Enheter att välja för DXF-underlag. */
+const DXF_UNITS: [number, string][] = [
+  [1, 'mm'],
+  [10, 'cm'],
+  [1000, 'm'],
+  [25.4, 'tum'],
+  [304.8, 'fot'],
+];
 
 const comma = (n: number) => n.toLocaleString('sv-SE');
 
@@ -44,6 +57,7 @@ export function drawingFields(doc: ProjectDoc, el: Element): string {
       </div>
       <label class="check"><input type="checkbox" data-key="d2:outline"${p.outline ? ' checked' : ''}> Kontur</label>`;
   }
+  if (el.type === 'Underlay') return underlayFields(doc, el);
   if (el.type === 'RoofSlope') {
     const p = resolveParams<RoofSlopeParams>(doc, el);
     const roof = doc.elements[p.roof];
@@ -56,6 +70,47 @@ export function drawingFields(doc: ProjectDoc, el: Element): string {
       <div class="row"><button class="btn" data-action="select-roof" data-roof="${escapeHtml(p.roof)}">Markera taket</button></div>`;
   }
   return '';
+}
+
+/** Underlagets fält (0.8 del 2): fil, storlek eller skala, vridning, tonat, lager och mapp. */
+function underlayFields(doc: ProjectDoc, el: Element): string {
+  const p = resolveParams<UnderlayParams>(doc, el);
+  const file = doc.assets[p.asset];
+  const w = Math.round(p.size[0] * p.scale);
+  const h = Math.round(p.size[1] * p.scale);
+  const num = (key: string, label: string, v: number | string, unit: string, extra = '') =>
+    `<label class="field"><span>${label}</span><span class="input-unit"><input type="text" data-expr ${unit === '°' ? 'data-unit="deg"' : unit === '' ? 'data-unit=""' : ''} inputmode="decimal" autocomplete="off" data-key="${key}" value="${v}"${extra}><i>${unit}</i></span></label>`;
+  const scale =
+    p.kind === 'pdf'
+      ? `<label class="field"><span>Skala (sidan i 1:1)</span><span class="input-unit scale-unit"><i>1:</i><input type="text" data-expr data-unit="" inputmode="decimal" autocomplete="off" data-key="ul:ratio" value="${Math.round((p.scale / MM_PER_PT) * 100) / 100}"></span></label>`
+      : p.kind === 'dxf'
+        ? `<label class="field"><span>Enhet i filen</span><select data-key="ul:unit">${DXF_UNITS.some(([f]) => Math.abs(f - p.scale) < 1e-9) ? '' : `<option selected>${comma(Math.round(p.scale * 1000) / 1000)} mm per enhet</option>`}${DXF_UNITS.map(([f, l]) => `<option value="${f}"${Math.abs(f - p.scale) < 1e-9 ? ' selected' : ''}>${l}</option>`).join('')}</select></label>`
+        : '';
+  const layers = p.kind === 'dxf' ? (dxfOf(doc, p.asset)?.layers ?? []) : [];
+  const off = new Set(p.layersOff ?? []);
+  const folders = doc.folders.filter((f) => f.tab === 'underlag');
+  const folder = doc.tree[el.id] ?? '';
+  return `<div class="fields">
+      <label class="field"><span>Namn</span><input data-key="name:" value="${escapeHtml(el.name ?? '')}" placeholder="${escapeHtml(file?.name ?? '')}"></label>
+      <label class="field"><span>Fil</span><input value="${escapeHtml(`${UNDERLAY_KIND_LABEL[p.kind]} · ${file?.name ?? 'saknas'}`)}" readonly></label>
+      ${p.kind === 'pdf' ? num('ul:page', 'Sida', p.page ?? 1, '') : ''}
+      ${scale}
+      ${num('ul:width', 'Bredd i modellen', w, 'mm')}
+      <label class="field"><span>Höjd i modellen</span><span class="input-unit"><input value="${h}" readonly><i>mm</i></span></label>
+      ${num('ul:angle', 'Vridning', Math.round(p.angle * 100) / 100, '°')}
+      ${folders.length ? `<label class="field"><span>Mapp</span><select data-key="ul:folder"><option value="">Ingen mapp</option>${folders.map((f) => `<option value="${f.id}"${f.id === folder ? ' selected' : ''}>${escapeHtml(f.name)}</option>`).join('')}</select></label>` : ''}
+    </div>
+    <label class="field range-field"><span>Synlighet <b>${p.opacity} %</b></span><input type="range" min="5" max="100" step="5" data-key="ul:opacity" value="${p.opacity}" aria-label="Synlighet"></label>
+    ${p.kind !== 'dxf' ? `<label class="check"><input type="checkbox" data-key="ul:gray"${p.gray ? ' checked' : ''}> Gråskala</label>` : ''}
+    <div class="row"><button class="btn" data-action="ul-calibrate"${el.locked ? ' disabled' : ''} title="Klicka två punkter med känt avstånd och skriv avståndet">Kalibrera skalan…</button><button class="btn" data-action="ul-align"${el.locked ? ' disabled' : ''} title="Klicka två punkter längs en linje som ska bli rak">Rikta…</button></div>
+    ${
+      layers.length
+        ? `<div class="field-label">Lager i DXF-filen</div><div class="view-checks layer-checks" role="group" aria-label="Lager">${layers
+            .map((l) => `<label class="check"><input type="checkbox" data-key="ul:layer" value="${escapeHtml(l)}"${off.has(l) ? '' : ' checked'}> ${escapeHtml(l)}</label>`)
+            .join('')}</div>`
+        : ''
+    }
+    <p class="note">${el.locked ? 'Låst: underlaget kan inte flyttas eller ändras av misstag.' : 'Lås underlaget när det ligger rätt, så att det inte flyttas av misstag.'}</p>`;
 }
 
 /** Lås, med hänglås. Delvis ifyllt när markeringen är blandad. */
@@ -148,6 +203,39 @@ export function drawingChange(store: DocStore, ids: Id[], key: string, input: HT
     else if (name === 'outline') updateParams(store, ids, { outline: (input as HTMLInputElement).checked }, 'Kontur');
     else if (name === 'angle' && Number.isFinite(num)) updateParams(store, ids, { angle: num }, 'Ändra vinkel');
     else if (name === 'spacing' && num > 0) updateParams(store, ids, { spacing: num }, 'Ändra avstånd');
+    return true;
+  }
+  if (scope === 'ul') {
+    const el = els[0];
+    if (!el) return true;
+    const p = resolveParams<UnderlayParams>(doc, el);
+    const num = Number(input.value.replace(',', '.').replace(/\s/g, ''));
+    // Ny skala kring mitten, så att underlaget ligger kvar där det är.
+    const rescale = (scale: number, label: string) => {
+      if (!(scale > 0)) return;
+      const f = scale / p.scale;
+      const r = (p.angle * Math.PI) / 180;
+      const cx = (p.size[0] * p.scale) / 2;
+      const cy = (p.size[1] * p.scale) / 2;
+      const mid = [p.pos[0] + Math.cos(r) * cx - Math.sin(r) * cy, p.pos[1] + Math.sin(r) * cx + Math.cos(r) * cy];
+      updateParams(store, [el.id], { scale, pos: [Math.round(mid[0] + (p.pos[0] - mid[0]) * f), Math.round(mid[1] + (p.pos[1] - mid[1]) * f)] }, label);
+    };
+    if (name === 'ratio' && num > 0) rescale(num * MM_PER_PT, 'Ändra skala');
+    else if (name === 'unit' && num > 0) rescale(num, 'Ändra enhet');
+    else if (name === 'width' && num > 0) rescale(num / p.size[0], 'Ändra storlek');
+    else if (name === 'angle' && Number.isFinite(num)) {
+      // Vrid kring nedre vänstra hörnet.
+      updateParams(store, [el.id], { angle: ((num % 360) + 360) % 360 }, 'Vrid underlaget');
+    } else if (name === 'page' && num >= 1) updateParams(store, [el.id], { page: Math.round(num) }, 'Byt sida');
+    else if (name === 'opacity' && num > 0) updateParams(store, ids, { opacity: Math.max(5, Math.min(100, Math.round(num))) }, 'Ändra synlighet');
+    else if (name === 'gray') updateParams(store, ids, { gray: (input as HTMLInputElement).checked }, 'Gråskala');
+    else if (name === 'folder') moveToFolder(store, el.id, input.value || null);
+    else if (name === 'layer') {
+      const set = new Set(p.layersOff ?? []);
+      if ((input as HTMLInputElement).checked) set.delete(input.value);
+      else set.add(input.value);
+      updateParams(store, [el.id], { layersOff: [...set] }, (input as HTMLInputElement).checked ? `Tänd ${input.value}` : `Släck ${input.value}`);
+    }
     return true;
   }
   if (scope === 'slope') {

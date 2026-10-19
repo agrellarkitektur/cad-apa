@@ -44,7 +44,7 @@ import { StyleDialog } from './styleDialog';
 import { TempDims } from './tempDims';
 import { Navigator, type NavTab } from './navigator';
 import type { TreeItem } from './treeItemPanel';
-import { createFolder } from '../core/treeCommands';
+import { createFolder, createWorksheet } from '../core/treeCommands';
 import { applyUiColors, loadUiSettings, mmPerCssPx, PANE_WIDTH, saveUiSettings, type PaneMode } from './uiSettings';
 import { clampWidth, setupPaneResize } from './paneResize';
 import { InlineTextEditor } from './textEditor';
@@ -67,6 +67,7 @@ import { createUiState, GROUP_LABEL, PLAN_TOOLS, shellMarkup, SPACE_TOOLS, TOOLS
 import { installShowMenu } from './app/showMenu';
 import { installToolOptions } from './app/toolOptions';
 import { installViews } from './app/views';
+import { installUnderlays } from './app/underlays';
 
 
 
@@ -215,11 +216,6 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     return out;
   }
 
-  /** Linjerna i DXF-underlag på ytan som visas (0.8 del 2). */
-  function underlaySnap(): SnapSegment[] {
-    return [];
-  }
-
   /** Linjerna i den öppna fasaden eller sektionen, att snäppa mot. */
   function sectionSnapSegments(): SnapSegment[] {
     const out: SnapSegment[] = [];
@@ -266,7 +262,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       goTo({ kind: 'marker', id });
       return true;
     }
-    if (!el || !textEditor || (ui.marker && el.space !== ui.marker)) return false;
+    const sp = ui.marker ?? ui.worksheet;
+    if (!el || !textEditor || (sp && el.space !== sp)) return false;
     const DRAWING_SCALE = 100;
     if (el.type === 'Text') {
       const p = resolveParams<{ pos: Vec2; text: string; height: number; angle: number }>(store.doc, el);
@@ -359,6 +356,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       ...(ui.styleName ? { style: ui.styleName } : {}),
       trace: ui.trace,
       ...(ui.marker ? { marker: ui.marker } : {}),
+      ...(ui.worksheet ? { worksheet: ui.worksheet } : {}),
     };
   }
 
@@ -373,7 +371,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       [...c.hide].sort().join() !== [...v.hide].sort().join() ||
       (c.style ?? null) !== (v.style ?? null) ||
       (c.trace ?? null) !== (v.trace ?? null) ||
-      (c.marker ?? null) !== (v.marker ?? null)
+      (c.marker ?? null) !== (v.marker ?? null) ||
+      (c.worksheet ?? null) !== (v.worksheet ?? null)
     );
   }
 
@@ -388,6 +387,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     ui.styleName = v.style ?? null;
     ui.trace = v.trace ?? null;
     ui.marker = v.marker && store.doc.elements[v.marker] ? v.marker : null;
+    ui.worksheet = v.worksheet && store.doc.worksheets.some((w) => w.id === v.worksheet) ? v.worksheet : null;
     visit({ kind: 'view', id: v.id });
     syncDetailSwitch();
     renderAll();
@@ -404,7 +404,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     const modified = !!v && viewModified(v);
     const storeyName = store.doc.storeys.find((s) => s.id === ui.storey)?.name ?? '';
     const markerEl = ui.marker ? store.doc.elements[ui.marker] : undefined;
-    out('view-name').textContent = v ? `${v.name}${modified ? ' *' : ''}` : markerEl ? markerName(store.doc, markerEl) : `${storeyName} · modell`;
+    const sheet = ui.worksheet ? store.doc.worksheets.find((w) => w.id === ui.worksheet) : undefined;
+    out('view-name').textContent = v ? `${v.name}${modified ? ' *' : ''}` : markerEl ? markerName(store.doc, markerEl) : sheet ? sheet.name : `${storeyName} · modell`;
     // Ändringar i vyinställningarna är tillfälliga tills de sparas i vyn.
     const save = $<HTMLButtonElement>('.vb-save');
     save.hidden = !!v && !modified;
@@ -418,7 +419,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     const compareTo = ui.compare && ex && ex.id !== ui.state ? ex.id : undefined;
     // Vilken vy det är, för 2D-element med Visas i (0.8).
     const v = ui.activeView ? doc.views.find((x) => x.id === ui.activeView) : undefined;
-    const viewId = v ? v.id : modelViewId(ui.marker ?? ui.storey);
+    const viewId = v ? v.id : modelViewId(ui.marker ?? ui.worksheet ?? ui.storey);
     return {
       state: ui.state,
       compareTo,
@@ -440,7 +441,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     plan: () => plan,
     readOnly: () => !!ui.marker,
     canEdit: (id) => !!ui.marker && (store.doc.elements[id]?.space === ui.marker || id.startsWith('slope:')),
-    space: () => ui.marker ?? undefined,
+    space: () => ui.marker ?? ui.worksheet ?? undefined,
     activeState: () => ui.state,
     storey: () => ui.storey,
     hint,
@@ -465,8 +466,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       return true;
     },
     snapSegments: (): SnapSegment[] => {
-      // I fasader och sektioner snäpper man mot linjerna i ritningen.
-      if (ui.marker) return sectionSnapSegments();
+      // I fasader, sektioner och på arbetsblad snäpper man mot linjerna i ritningen.
+      if (ui.marker || ui.worksheet) return sectionSnapSegments();
       const vs = viewStates();
       const doc = store.doc;
       // Väggarnas referenslinjer först, sedan väggarnas liv och möblernas kanter.
@@ -483,8 +484,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       const edges: SnapSegment[] = [];
       for (const pk of plan.pickables) {
         const type = doc.elements[pk.id]?.type;
-        if (type === 'Line2D' || type === 'Fill2D') {
-          // 2D-element (0.8 del 2): linjerna och ytornas kanter.
+        if (type === 'Line2D' || type === 'Fill2D' || type === 'Underlay') {
+          // 2D-element och DXF-underlag (0.8 del 2): linjerna och ytornas kanter.
           edges.push(...primSegments(pk.id, pk.prims));
           continue;
         }
@@ -492,7 +493,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         for (const rings of pk.regions)
           for (const ring of rings) for (let i = 0; i < ring.length; i++) edges.push({ id: pk.id, a: ring[i], b: ring[(i + 1) % ring.length] });
       }
-      return [...refs, ...edges, ...underlaySnap()];
+      return [...refs, ...edges];
     },
   };
 
@@ -568,7 +569,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     measureBox.close();
     // Ritverktygen ritar i planen: från en fasad eller sektion går man tillbaka dit.
     // Mått, text och 2D ritas i fasaden eller sektionen (0.8).
-    if (PLAN_TOOLS.includes(id) && !SPACE_TOOLS.includes(id) && ui.marker) goTo({ kind: 'storey', id: ui.storey });
+    if (PLAN_TOOLS.includes(id) && !SPACE_TOOLS.includes(id) && (ui.marker || ui.worksheet)) goTo({ kind: 'storey', id: ui.storey });
     if (PLAN_TOOLS.includes(id) && ui.mode === '3d') void setMode('2d');
     if (ui.tool === 'wall' && id !== 'wall') wallTool.finish();
     if (ui.tool === 'dimension' && id !== 'dimension') dimensionTool.reset();
@@ -615,7 +616,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
 
   /** Avbryt: först det pågående kommandot, sedan verktyget. */
   function cancelCommand(): void {
-    if (modifyPalette.open) modifyPalette.close();
+    if (underlays.busy()) {
+      underlays.cancel();
+      setTool('select');
+    } else if (modifyPalette.open) modifyPalette.close();
     else if (ui.tool === 'wall' && wallTool.drawing) wallTool.finish();
     else if (ui.tool === 'dimension' && dimensionTool.count > 0) dimensionTool.reset();
     else if (ui.tool === 'draw2d' && draw2dTool.count > 0) draw2dTool.reset();
@@ -631,6 +635,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   // ---------- Panel och dialog ----------
   const panel = new PropertiesPanel(store, selection, viewStates);
   panel.onOpenMarker = (id) => goTo({ kind: 'marker', id });
+  panel.onUnderlayTool = (id, mode) => underlays.startUnderlayTool(id, mode);
   panel.angleWarn = () => uiSettings.angleWarn;
   // Rikta efter objekt: ett klick i planen, sedan tillbaka till verktyget.
   const alignTool = new AlignTool(host);
@@ -666,6 +671,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     storey: () => ui.storey,
     activeView: () => ui.activeView,
     marker: () => ui.marker,
+    worksheet: () => ui.worksheet,
+    selected: () => new Set(selection.list()),
     trace: () => ui.trace,
     viewModified: (v) => viewModified(v),
     describeView,
@@ -822,7 +829,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       pointerAt = null;
       if (!down || palette.el.contains(e.target as Node) || modifyPalette.el.contains(e.target as Node)) return;
       const click = Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5;
-      if (!click || e.pointerType !== 'mouse' || e.button !== 0 || !uiSettings.petPalette || isNarrow() || ui.tool !== 'select') return;
+      if (!click || e.pointerType !== 'mouse' || e.button !== 0 || !uiSettings.petPalette || isNarrow() || ui.tool !== 'select' || underlays.busy()) return;
       // Efter att verktyget eller 3D-vyn hunnit ändra markeringen.
       setTimeout(() => {
         if (selection.size > 0 && !textEditor?.isOpen && !modifyPalette.open) palette.show(e.clientX, e.clientY);
@@ -847,14 +854,14 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   tempDims.onReleased = (n) => hint(releasedHint(n), 4000);
   view.setHighlighter(
     (cam) =>
-      renderHighlight(cam, store.doc, plan.pickables, new Set(selection.list()), ui.tool === 'select' ? selectTool.hoverId : null, !ui.marker) +
-      tempDims.render(cam, selection.list(), viewStates(), ui.tool === 'select' && ui.mode !== '3d' && !ui.marker && !modifyPalette.running) +
+      renderHighlight(cam, store.doc, plan.pickables, new Set(selection.list()), ui.tool === 'select' ? selectTool.hoverId : null, !ui.marker && !ui.worksheet) +
+      tempDims.render(cam, selection.list(), viewStates(), ui.tool === 'select' && ui.mode !== '3d' && !ui.marker && !ui.worksheet && !modifyPalette.running) +
       skewMarks(cam),
   );
 
   /** Utropstecken vid det som ligger nästan men inte exakt rakt (bara i planen, inte på papper). */
   function skewMarks(cam: Camera): string {
-    if (ui.marker) return '';
+    if (ui.marker || ui.worksheet) return '';
     return skewWarnings(store.doc, ui.storey, ui.state, uiSettings.angleWarn)
       .map((w) => {
         const [x, y] = cam.toScreen(w.at);
@@ -872,9 +879,11 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
 
     out('project').textContent = doc.project.name;
     if (ui.marker && !doc.elements[ui.marker]) ui.marker = null;
+    if (ui.worksheet && !doc.worksheets.some((w) => w.id === ui.worksheet)) ui.worksheet = null;
     const markerEl = ui.marker ? doc.elements[ui.marker] : undefined;
-    out('storey').textContent = markerEl ? markerName(doc, markerEl) : (doc.storeys.find((s) => s.id === ui.storey)?.name ?? '');
-    appEl.dataset.place = markerEl ? 'section' : 'plan';
+    const sheet = ui.worksheet ? doc.worksheets.find((w) => w.id === ui.worksheet) : undefined;
+    out('storey').textContent = markerEl ? markerName(doc, markerEl) : sheet ? sheet.name : (doc.storeys.find((s) => s.id === ui.storey)?.name ?? '');
+    appEl.dataset.place = markerEl ? 'section' : sheet ? 'worksheet' : 'plan';
 
     chips.innerHTML =
       doc.states
@@ -893,9 +902,12 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (section && markerEl) {
       const drawn = buildPlan(doc, markerEl.storey, { ...vs, place: markerEl.id }, styleFor(ui.styleName));
       plan = { prims: [...section.prims, ...drawn.prims], pickables: [...section.pickables, ...drawn.pickables] };
+    } else if (sheet) {
+      // Ett arbetsblad (0.8 del 2): bara det som är ritat på det.
+      plan = buildPlan(doc, ui.storey, { ...vs, place: sheet.id }, styleFor(ui.styleName));
     } else plan = buildPlan(doc, ui.storey, vs, styleFor(ui.styleName));
     // Kalkerad vy: en annan vy tonad under, t.ex. möbleringen under en undertaksplan.
-    const traced = ui.trace && !section ? doc.views.find((v) => v.id === ui.trace) : undefined;
+    const traced = ui.trace && !section && !sheet ? doc.views.find((v) => v.id === ui.trace) : undefined;
     view.setUnderlay(traced ? buildPlan(doc, traced.storey, viewStatesOf(traced), styleFor(traced.style ?? null)).prims : []);
     renderViewButton();
     if (ui.navOpen) navigator.render();
@@ -1066,6 +1078,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (ev.cause === 'load') {
       ui.activeView = null;
       ui.marker = null;
+      ui.worksheet = null;
       ui.trace = null;
       ui.styleName = null;
       viewHistory.splice(0, viewHistory.length, { kind: 'storey', id: ui.storey });
@@ -1076,6 +1089,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   });
 
   selection.subscribe(() => {
+    // Underlagen i projektträdet visar vilket som är markerat.
+    if (ui.navOpen && navigator.tab === 'underlag') navigator.render();
     const t = measureBox.open ? selection.list() : [];
     if (measureBox.open && t.length !== 1) measureBox.close();
     // Markeras något i ritningen visas dess egenskaper i stället för det valda i trädet.
@@ -1167,6 +1182,9 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     },
     get view3d() {
       return view3d;
+    },
+    get host() {
+      return host;
     },
     get selectTool() {
       return selectTool;
@@ -1327,6 +1345,18 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     get copySelection() {
       return copySelection;
     },
+    get chooseUnderlayFiles() {
+      return underlays.chooseFiles;
+    },
+    get startUnderlayTool() {
+      return underlays.startUnderlayTool;
+    },
+    get openUnderlayMenu() {
+      return underlays.openUnderlayMenu;
+    },
+    get showUnderlay() {
+      return underlays.showUnderlay;
+    },
     get pasteFromMenu() {
       return pasteFromMenu;
     },
@@ -1337,6 +1367,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const { viewBtnLongPressed } = installMenus(app);
   installKeyboard(app);
   const { copySelection, pasteFromMenu } = installClipboard(app);
+  const underlays = installUnderlays(app);
 
   // För felsökning i webbläsarens konsol.
   (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifyPalette, setTool, goTo, setMode, get plan() { return plan; }, get view3d() { return view3d; } };
@@ -1509,6 +1540,25 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       } else if (!ui.panelOpen) setPanel(true);
       return;
     }
+    const underlayPick = target.closest<HTMLElement>('[data-underlay-pick]');
+    if (underlayPick) {
+      if (isNarrow()) setNav(false);
+      underlays.showUnderlay(underlayPick.dataset.underlayPick!);
+      return;
+    }
+    const underlayMore = target.closest<HTMLElement>('[data-underlay-menu]');
+    if (underlayMore) {
+      const r = underlayMore.getBoundingClientRect();
+      underlays.openUnderlayMenu(underlayMore.dataset.underlayMenu!, r.left, r.bottom + 4);
+      return;
+    }
+    const worksheetPick = target.closest<HTMLElement>('[data-worksheet-pick]');
+    if (worksheetPick) {
+      if (isNarrow()) setNav(false);
+      goTo({ kind: 'worksheet', id: worksheetPick.dataset.worksheetPick! });
+      pickTreeItem({ kind: 'worksheet', id: worksheetPick.dataset.worksheetPick! });
+      return;
+    }
     const markerMore = target.closest<HTMLElement>('[data-marker-menu]');
     if (markerMore) {
       const r = markerMore.getBoundingClientRect();
@@ -1678,6 +1728,20 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       case 'view-save-new':
         void saveViewAsNew();
         break;
+      case 'add-underlay':
+        closeMenu();
+        underlays.chooseFiles();
+        break;
+      case 'new-worksheet': {
+        const n = store.doc.worksheets.length + 1;
+        const id = createWorksheet(store, `Arbetsblad ${n}`);
+        if (isNarrow()) setNav(false);
+        goTo({ kind: 'worksheet', id });
+        pickTreeItem({ kind: 'worksheet', id });
+        if (!isNarrow() && !ui.panelOpen) setPanel(true);
+        hint('Ett tomt arbetsblad. Rita med 2D, Text och Mått, eller lägg in ett underlag.', 4000);
+        break;
+      }
       case 'view-update':
         void updateActiveView();
         break;
