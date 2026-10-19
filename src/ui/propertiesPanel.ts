@@ -1,45 +1,34 @@
 import {
-  moveElements,
   copyElements,
-  flipWalls,
-  mirrorElements,
-  rotateElements,
   createDefinition,
   deleteDefinition,
   deleteElements,
-  moveWallEnd,
-  renameElement,
+  flipWalls,
+  mirrorElements,
+  rotateElements,
   setDefinition,
   setInState,
   updateDefinition,
   updateParams,
 } from '../core/commands';
-import type { Element, ProjectDoc } from '../core/model';
+import type { ProjectDoc } from '../core/model';
 import type { Action, ViewStates } from '../core/states';
-import { actionOf } from '../core/states';
+import { actionOf, existingState } from '../core/states';
 import type { DocStore } from '../core/store';
-import { allTypes, resolveParams, typeOf } from '../elements/registry';
-import type { WallParams } from '../elements/wall';
-import { add, dist, norm, scale, sub } from '../geometry/vec';
-import { existingState } from '../core/states';
-import { isFixed, rotateFurniture, type FurnitureParams } from '../elements/furniture';
-import { dimensionSegments, type DimensionParams } from '../elements/annotation';
-import { EXTERIOR_INSET, FRAME_DEFAULTS } from '../elements/opening';
-import { doorNumbersFor, numberingOf, roomNumbersFor, type SpaceParams } from '../elements/rooms';
-import { createContext } from '../repr/context';
-import { faceChoices, faceOf, justificationFor, outsideSide, type WallFace } from '../elements/wallSides';
+import { resolveParams, typeOf } from '../elements/registry';
+import { rotateFurniture, type FurnitureParams } from '../elements/furniture';
+import { faceChoices, faceOf, justificationFor, type WallFace } from '../elements/wallSides';
 import { QUICK_ACTIONS, type QuickId } from './uiSettings';
 import { icons } from './icons';
-import { escapeHtml, labelOf, nextLittera, PARAM_LABELS } from './labels';
+import { escapeHtml, labelOf, nextLittera } from './labels';
 import type { Selection } from './selection';
-import { markerFrame, markerName, type MarkerParams, type NorthParams } from '../elements/markers';
-import type { RoofParams } from '../elements/roof';
+import { markerFrame } from '../elements/markers';
 import { skewOf, skewText } from '../elements/angleCheck';
-import { reshapeWall } from '../core/wallEdit';
-import { bulgeForRadius, radiusOf } from '../geometry/arc';
 import { bindTreeForm, treeItemExists, treeItemMarkup, type TreeItem } from './treeItemPanel';
 import { bindSheetForm, sheetFormMarkup, type SheetFormHost } from './sheetForms';
-import { drawingChange, drawingClick, drawingFields, hereOf, lockField, resetShowList, showSection } from './drawingPanel';
+import { drawingChange, drawingClick, hereOf, lockField, resetShowList, showSection } from './drawingPanel';
+import { instanceFields, propsSection, PROPS, sharedSection, summarizeTypes, typesMarkup } from './selectionFields';
+import { applyField, patchEach, pick, selectionCenter, straighten } from './selectionEdits';
 
 type Tab = 'selection' | 'types';
 
@@ -63,9 +52,6 @@ const QUICK_TITLES: Record<string, string> = {
   deselect: 'Avmarkera (Esc)',
 };
 
-/** Egenskapsgruppen där egna egenskaper sparas. */
-const PROPS = 'Egenskaper';
-
 const ACTION_LABEL: Record<Action, string> = {
   plain: 'Visas',
   existing: 'Befintligt',
@@ -77,6 +63,11 @@ const ACTION_LABEL: Record<Action, string> = {
 /**
  * Sidopanelen: egenskaper för det som är markerat, och typerna (littera) med
  * deras gemensamma mått. På mobilen ligger den som ett blad nederst.
+ *
+ * Fältens HTML ligger i selectionFields.ts och det fälten och knapparna
+ * ändrar i selectionEdits.ts; 2D, taklutning, Visas i och Lås i
+ * drawingPanel.ts, och det som väljs i projektträdet i treeItemPanel.ts och
+ * sheetForms.ts.
  */
 export class PropertiesPanel {
   readonly el: HTMLElement;
@@ -196,7 +187,7 @@ export class PropertiesPanel {
       this.renderQuick();
       return;
     }
-    this.body.innerHTML = this.tab === 'types' ? this.renderTypes(doc) : this.renderSelection(doc);
+    this.body.innerHTML = this.tab === 'types' ? typesMarkup(doc) : this.renderSelection(doc);
     this.body.scrollTop = scroll;
     this.renderQuick();
   }
@@ -365,7 +356,7 @@ export class PropertiesPanel {
 
     // Egna mått för ett enskilt element.
     if (els.length === 1) {
-      const instance = this.instanceFields(doc, els[0]);
+      const instance = instanceFields(doc, els[0], view);
       if (instance) sections.push(`<section><h3>${escapeHtml(t?.label ?? '')}</h3>${instance}${lockField(els)}</section>`);
       else if (lockField(els)) sections.push(`<section>${lockField(els)}</section>`);
     } else if (lockField(els)) sections.push(`<section>${lockField(els)}</section>`);
@@ -381,215 +372,15 @@ export class PropertiesPanel {
 
     // Egna egenskaper, t.ex. brandklass och ljudklass, för littera och förteckningar.
     if (els.length === 1 && ['Door', 'Window', 'Wall', 'Space', 'Furniture'].includes(els[0].type)) {
-      sections.push(this.propsSection(doc, els[0]));
+      sections.push(propsSection(doc, els[0]));
     }
 
     // Sådant som påverkar fler objekt än de markerade samlas längst ned.
-    const shared = this.sharedSection(doc, els);
+    const shared = sharedSection(doc, els);
     if (shared) sections.push(shared);
 
     // Ta bort, riv, vänd m.m. ligger i snabbraden överst.
     return sections.join('');
-  }
-
-  /** Egna egenskaper: objektets egna värden, med typens värden som förslag. */
-  private propsSection(doc: ProjectDoc, el: Element): string {
-    const def = el.definition ? doc.definitions[el.definition] : undefined;
-    const own = el.props[PROPS] ?? {};
-    const shared = def?.props[PROPS] ?? {};
-    const names = [...new Set([...Object.keys(shared), ...Object.keys(own)])];
-    const rows = names
-      .map(
-        (n) => `<label class="field"><span>${escapeHtml(n)}</span><input data-key="prop:${escapeHtml(n)}" value="${escapeHtml(String(own[n] ?? ''))}" placeholder="${escapeHtml(String(shared[n] ?? ''))}"></label>`,
-      )
-      .join('');
-    return `<section>
-      <h3>Egenskaper</h3>
-      ${rows ? `<div class="fields">${rows}</div>` : '<p class="note">Inga egna egenskaper än. Lägg till t.ex. brandklass eller ljudklass; de kan visas i litterat och i förteckningarna.</p>'}
-      <div class="row"><input id="new-prop" placeholder="Ny egenskap, t.ex. Brandklass" aria-label="Ny egenskap"><button class="btn" data-action="add-prop">Lägg till</button></div>
-      ${def ? '<p class="note">Ett tomt fält visar typens värde.</p>' : ''}
-    </section>`;
-  }
-
-  /** Inställningar som gäller hela typen eller hela projektet. */
-  private sharedSection(doc: ProjectDoc, els: Element[]): string | null {
-    const parts: string[] = [];
-    const t = typeOf(els[0].type);
-    const sameDef = els.every((e) => e.definition && e.definition === els[0].definition) ? els[0].definition : undefined;
-    if (sameDef && t?.typeParams?.length) {
-      const def = doc.definitions[sameDef];
-      const users = Object.values(doc.elements).filter((e) => e.definition === sameDef).length;
-      const props = def.props[PROPS] ?? {};
-      const propRows = Object.keys(props)
-        .map((n) => `<label class="field"><span>${escapeHtml(n)}</span><input data-key="defprop:${escapeHtml(n)}" value="${escapeHtml(String(props[n] ?? ''))}"></label>`)
-        .join('');
-      parts.push(`<div class="shared-block">
-        <div class="shared-head">Typen ${escapeHtml(def.name)} <span>gäller alla ${users} ${users === 1 ? t.label.toLowerCase() : t.labelPlural.toLowerCase()}</span></div>
-        <div class="fields">${t.typeParams.map((k) => numberField(`def:${k}`, PARAM_LABELS[k] ?? k, Number(def.params[k] ?? 0), 'mm')).join('')}${propRows}</div>
-        <div class="row"><input id="new-defprop" placeholder="Ny egenskap för typen" aria-label="Ny egenskap för typen"><button class="btn" data-action="add-defprop">Lägg till</button></div>
-      </div>`);
-    }
-    if (els.length === 1 && els[0].type === 'Space') {
-      const numbering = numberingOf(doc);
-      parts.push(`<div class="shared-block">
-        <div class="shared-head">Rumsnumrering <span>gäller hela projektet</span></div>
-        <div class="row wrap">
-          <label class="check"><input type="checkbox" data-key="numbering:locked"${numbering.locked ? ' checked' : ''}> Lås numreringen</label>
-          <label class="check">Siffror <select data-key="numbering:digits"><option value="4"${numbering.digits === 4 ? ' selected' : ''}>4 (1101)</option><option value="3"${numbering.digits === 3 ? ' selected' : ''}>3 (101)</option></select></label>
-          ${numbering.digits === 4 ? `<label class="check">Byggnad <input data-key="numbering:building" value="${escapeHtml(numbering.building)}" style="width:44px"></label>` : ''}
-        </div>
-        <p class="note">${numbering.locked ? 'Numren ligger fast. Nya rum får nästa lediga nummer.' : 'Numren räknas i vänstervarv från entrén, som när man följer vänster vägg, och ändras när rum tillkommer.'}</p>
-      </div>`);
-    }
-    if (els.length === 1 && els[0].type === 'Door') {
-      const locked = !!doc.project.doorNumbering?.locked;
-      parts.push(`<div class="shared-block">
-        <div class="shared-head">Dörrnumrering <span>gäller hela projektet</span></div>
-        <label class="check"><input type="checkbox" data-key="doornumbering:locked"${locked ? ' checked' : ''}> Lås dörrnumren</label>
-        <p class="note">Dörrarna får nummer som rummen, D + byggnad + plan + löpnummer (D1203), i den ordning man passerar dem i vänstervarvet. Ett eget nummer i fältet Nummer går före.</p>
-      </div>`);
-    }
-    if (!parts.length) return null;
-    return `<section class="shared"><h3>Påverkar fler objekt</h3>${parts.join('')}</section>`;
-  }
-
-  private instanceFields(doc: ProjectDoc, el: Element): string {
-    switch (el.type) {
-      case 'Wall': {
-        const p = resolveParams<WallParams>(doc, el);
-        const length = Math.round(dist(p.start, p.end));
-        const current = faceOf(doc, el).face;
-        const just = faceChoices(doc, el)
-          .map((c) => `<button data-action="justify" data-value="${c.face}" aria-pressed="${c.face === current}">${c.label}</button>`)
-          .join('');
-        const arc = p.bulge && Math.abs(p.bulge) >= 0.5 ? radiusOf(p.start, p.end, p.bulge) : 0;
-        return `<div class="fields">${numberField('wall:length', arc ? 'Korda' : 'Längd', length, 'mm')}${numberField('param:height', 'Höjd', p.height, 'mm')}${arc ? numberField('wall:radius', 'Radie', arc, 'mm') : ''}</div>
-          <label class="check"><input type="checkbox" data-key="param:toRoof"${p.toRoof ? ' checked' : ''}> Upp till taket (gavlar)</label>
-          <div class="field-label">Referenslinje</div><div class="segmented wide" role="group">${just}</div>`;
-      }
-      case 'Roof': {
-        const p = resolveParams<RoofParams>(doc, el);
-        return `<label class="field"><span>Taktyp</span><select data-key="roof:kind"><option value="gable"${p.kind === 'gable' ? ' selected' : ''}>Sadeltak</option><option value="shed"${p.kind === 'shed' ? ' selected' : ''}>Pulpettak</option></select></label>
-          <div class="fields">${numberField('param:slope', 'Lutning', p.slope, '°')}${numberField('param:eave', 'Takfot', p.eave, 'mm')}${numberField('param:thickness', 'Tjocklek', p.thickness, 'mm')}${numberField('param:ridge', p.kind === 'shed' ? 'Takfotens riktning' : 'Nockriktning', p.ridge, '°')}</div>
-          <p class="note">Takfoten är undersidans höjd vid takets kant. Väggar under taket kapas av det; kryssa i Upp till taket på gavlarna.</p>`;
-      }
-      case 'North': {
-        const p = resolveParams<NorthParams>(doc, el);
-        return `<div class="fields">${numberField('param:angle', 'Norr', p.angle, '°')}</div>
-          <p class="note">Riktningen mot norr, moturs från planens x-axel: 90° är rakt upp. Fasaderna namnges efter närmaste väderstreck.</p>`;
-      }
-      case 'Section':
-      case 'Elevation': {
-        const p = resolveParams<MarkerParams>(doc, el);
-        const label = el.type === 'Section' ? textField('text:label', 'Beteckning', p.label ?? 'A') : '';
-        // En linje som följer byggnaden visar var den ligger just nu; ändras den placeras den för hand (0.8).
-        const f = markerFrame(doc, el);
-        const shown: MarkerParams = p.auto ? { ...p, start: [f.start[0], f.start[1]], end: [f.end[0], f.end[1]], side: 1 } : p;
-        const canFollow = !p.auto && el.type === 'Elevation' && typeof p.facing === 'number';
-        return `<label class="field"><span>Namn</span><input data-key="name:" value="${escapeHtml(el.name ?? '')}" placeholder="${escapeHtml(markerName(doc, { ...el, name: undefined }))}"></label>
-          <div class="fields">${label}<label class="field"><span>Djup</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="marker:depth" value="${p.depth ?? ''}" placeholder="Allt"><i>mm</i></span></label></div>
-          ${this.markerLineFields(shown)}
-          <div class="row"><button class="btn btn-primary" data-action="open-marker">Öppna ${el.type === 'Section' ? 'sektionen' : 'fasaden'}</button><button class="btn" data-action="flip-side">Vänd blickriktningen</button>${canFollow ? '<button class="btn" data-action="follow-building" title="Lägg fasaden runt byggnaden igen, så att den följer med när byggnaden ändras">Följ byggnaden igen</button>' : ''}</div>`;
-      }
-      case 'Line2D':
-      case 'Fill2D':
-      case 'RoofSlope':
-      case 'Underlay':
-        return drawingFields(doc, el);
-      case 'Door': {
-        const p = resolveParams<{ at: number; glazed?: boolean; mainEntrance?: boolean }>(doc, el);
-        return `<div class="fields">${numberField('param:at', 'Läge längs vägg', p.at, 'mm')}${textField('name', 'Nummer', el.name ?? '')}</div>
-          ${this.frameFields(doc, el, true)}
-          <label class="check"><input type="checkbox" data-key="param:glazed"${p.glazed ? ' checked' : ''}> Glasad dörr</label>
-          <label class="check"><input type="checkbox" data-key="param:mainEntrance"${p.mainEntrance ? ' checked' : ''}> Huvudentré (rum och dörrar numreras härifrån)</label>`;
-      }
-      case 'Window': {
-        const p = resolveParams<{ at: number; sill: number }>(doc, el);
-        return `<div class="fields">${numberField('param:at', 'Läge längs vägg', p.at, 'mm')}${numberField('param:sill', 'Bröstning', p.sill, 'mm')}${textField('name', 'Nummer', el.name ?? '')}</div>
-          ${this.frameFields(doc, el, false)}`;
-      }
-      case 'Furniture': {
-        const p = resolveParams<FurnitureParams>(doc, el);
-        return `<div class="fields">${textField('name', 'Namn', el.name ?? '')}</div>
-          <label class="check"><input type="checkbox" data-key="param:fixed"${isFixed(p) ? ' checked' : ''}> Fast inredning (svart linje, annars utgråad)</label>`;
-      }
-      case 'Space': {
-        const p = resolveParams<SpaceParams>(doc, el);
-        const numbering = numberingOf(doc);
-        const { ctx } = createContext(doc, el.storey, this.getView(), doc.graphics, () => true);
-        const number = roomNumbersFor(ctx).get(el.id) ?? '';
-        const numberField = numbering.locked
-          ? `<label class="field" for="f-param-number"><span>Rumsnummer</span><input id="f-param-number" data-key="text:number" value="${escapeHtml(p.number ?? number)}"></label>`
-          : `<label class="field"><span>Rumsnummer</span><input value="${escapeHtml(number)}" readonly title="Räknas automatiskt. Lås numreringen för att ändra själv."></label>`;
-        return `<div class="fields">${textField('name', 'Namn', el.name ?? '')}${numberField}
-            <label class="field" for="f-param-ceilingHeight"><span>Takhöjd (TH)</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" id="f-param-ceilingHeight" data-key="param:ceilingHeight" value="${p.ceilingHeight ?? ''}" placeholder="Visas inte"><i>mm</i></span></label></div>
-`;
-      }
-      case 'Dimension': {
-        const p = resolveParams<DimensionParams>(doc, el);
-        const segs = dimensionSegments(doc, p);
-        const linked = p.points.some((q) => !Array.isArray(q));
-        return `<div class="fields">${segs.map((sg, k) => numberField(`dimseg:${k}`, segs.length > 1 ? `Mått ${k + 1}` : 'Mått', sg.value, 'mm')).join('')}</div>
-          <p class="note">${linked ? 'Måttet följer väggar och öppningar. Skriv ett nytt värde så flyttas det som måttet pekar på.' : 'Fritt mått. Skriv ett nytt värde så flyttas måttpunkten.'}</p>`;
-      }
-      case 'Text': {
-        const p = resolveParams<{ text: string; height: number; angle: number }>(doc, el);
-        return `<label class="field" for="f-text-text"><span>Text</span><textarea id="f-text-text" data-key="text:text" rows="2">${escapeHtml(p.text)}</textarea></label>
-          <div class="fields">${numberField('param:height', 'Texthöjd på papper', p.height, 'mm', 2)}${numberField('param:angle', 'Vridning', p.angle, '°')}</div>`;
-      }
-      default:
-        return '';
-    }
-  }
-
-  /** Karmens mått och indraget. Tomt indrag betyder automatiskt. */
-  private frameFields(doc: ProjectDoc, el: Element, isDoor: boolean): string {
-    const p = resolveParams<{ frameWidth: number; frameDepth: number; inset: number | null }>(doc, el);
-    const host = el.host ? doc.elements[el.host] : undefined;
-    const exterior = host ? outsideSide(doc, host) !== null : false;
-    const from = exterior ? 'från utsida' : isDoor ? 'från öppningssida' : '';
-    const auto = exterior ? EXTERIOR_INSET : 0;
-    const inset =
-      exterior || isDoor
-        ? `<label class="field" for="f-param-inset"><span>Indrag ${from}</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" id="f-param-inset" data-key="param:inset" value="${p.inset ?? ''}" placeholder="Auto ${auto}"><i>mm</i></span></label>`
-        : '';
-    return `<div class="fields">${numberField('param:frameWidth', 'Karmbredd', p.frameWidth ?? FRAME_DEFAULTS.frameWidth, 'mm')}${numberField('param:frameDepth', 'Karmdjup', p.frameDepth ?? FRAME_DEFAULTS.frameDepth, 'mm')}${inset}</div>`;
-  }
-
-  // ---------- Typer ----------
-
-  private renderTypes(doc: ProjectDoc): string {
-    const groups = allTypes().filter((t) => t.typeParams?.length);
-    return groups
-      .map((t) => {
-        const defs = Object.values(doc.definitions)
-          .filter((d) => d.elementType === t.type)
-          .sort((a, b) => a.name.localeCompare(b.name, 'sv', { numeric: true }));
-        const rows = defs
-          .map((d) => {
-            const users = Object.values(doc.elements).filter((e) => e.definition === d.id).length;
-            const params = t.typeParams!.map(
-              (k) =>
-                `<td><input type="text" data-expr inputmode="decimal" autocomplete="off" id="tp-${d.id}-${k}" data-def="${d.id}" data-param="${k}" value="${Number(d.params[k] ?? 0)}" aria-label="${PARAM_LABELS[k] ?? k} för ${escapeHtml(d.name)}"></td>`,
-            );
-            return `<tr>
-              <td><input class="littera" id="tl-${d.id}" data-def="${d.id}" data-field="name" value="${escapeHtml(d.name)}" aria-label="Littera"></td>
-              ${params.join('')}
-              <td class="count">${users}</td>
-              <td>${users === 0 ? `<button class="icon-mini" data-action="delete-def" data-def="${d.id}" aria-label="Ta bort ${escapeHtml(d.name)}">×</button>` : ''}</td>
-            </tr>
-            <tr class="desc-row"><td colspan="${t.typeParams!.length + 3}"><input id="td-${d.id}" data-def="${d.id}" data-field="description" value="${escapeHtml(d.description ?? '')}" placeholder="Beskrivning, t.ex. uppbyggnad" aria-label="Beskrivning för ${escapeHtml(d.name)}"></td></tr>`;
-          })
-          .join('');
-        const head = t.typeParams!.map((k) => `<th>${PARAM_LABELS[k] ?? k}</th>`).join('');
-        return `<section>
-          <h3>${t.label}typer</h3>
-          <table class="type-table"><thead><tr><th>Littera</th>${head}<th>Antal</th><th></th></tr></thead><tbody>${rows}</tbody></table>
-          <button class="btn" data-action="add-def" data-type="${t.type}">Ny ${t.label.toLowerCase()}typ</button>
-        </section>`;
-      })
-      .join('')
-      .concat('<p class="note pad">Mått i mm. Ändras ett mått ändras alla objekt av typen.</p>');
   }
 
   // ---------- Händelser ----------
@@ -611,16 +402,6 @@ export class PropertiesPanel {
   selectionMarkup(): string | null {
     if (this.selection.size === 0) return null;
     return this.renderSelection(this.store.doc).replace(/<header class="sel-head">[\s\S]*?<\/header>/, '');
-  }
-
-  /** Längd och vinkel för en linje som placerats för hand, och knappen för att rikta den efter något. */
-  private markerLineFields(p: MarkerParams): string {
-    const d = [p.end[0] - p.start[0], p.end[1] - p.start[1]];
-    const len = Math.round(Math.hypot(d[0], d[1]));
-    const a = (((Math.atan2(d[1], d[0]) * 180) / Math.PI) % 360 + 360) % 360;
-    const deg = Math.round(a * 100) / 100;
-    return `<div class="fields">${numberField('marker:length', 'Längd', len, 'mm')}${numberField('marker:angle', 'Vinkel', deg, '°', 2)}</div>
-      <div class="row"><button class="btn" data-action="align-marker" title="Klicka sedan på en vägg eller linje i planen. Linjen blir parallell med den. Håll Shift för vinkelrät.">Rikta efter objekt</button></div>`;
   }
 
   private onClick(e: Event): void {
@@ -690,12 +471,12 @@ export class PropertiesPanel {
         break;
       case 'justify': {
         const face = b.dataset.value as WallFace;
-        this.patchEach(ids, 'Byt referenslinje', (_p, el) => ({ justification: justificationFor(doc, el, face) }));
+        patchEach(this.store, ids, 'Byt referenslinje', (_p, el) => ({ justification: justificationFor(doc, el, face) }));
         break;
       }
       case 'cycle-ref': {
         // Utsida → Center → Insida → Utsida (innerväggar: vänster → center → höger).
-        this.patchEach(ids, 'Byt referenslinje', (_p, el) => {
+        patchEach(this.store, ids, 'Byt referenslinje', (_p, el) => {
           const choices = faceChoices(doc, el);
           const i = choices.findIndex((c) => c.face === faceOf(doc, el).face);
           return { justification: justificationFor(doc, el, choices[(i + 1) % choices.length].face) };
@@ -704,18 +485,18 @@ export class PropertiesPanel {
       }
       case 'toggle-glazed': {
         const on = ids.every((id) => resolveParams<{ glazed?: boolean }>(doc, doc.elements[id]).glazed);
-        this.patchEach(ids, on ? 'Ej glasad' : 'Glasad', () => ({ glazed: !on }));
+        patchEach(this.store, ids, on ? 'Ej glasad' : 'Glasad', () => ({ glazed: !on }));
         break;
       }
       case 'flip-swing':
-        this.patchEach(ids, 'Vänd slag', (p) => ({ swing: -((p.swing as number | undefined) ?? 1) }));
+        patchEach(this.store, ids, 'Vänd slag', (p) => ({ swing: -((p.swing as number | undefined) ?? 1) }));
         break;
       case 'flip-hinge':
-        this.patchEach(ids, 'Byt hängning', (p) => ({ hinge: p.hinge === 'end' ? 'start' : 'end' }));
+        patchEach(this.store, ids, 'Byt hängning', (p) => ({ hinge: p.hinge === 'end' ? 'start' : 'end' }));
         break;
       case 'rotate-90':
         if (ids.length === 1 && doc.elements[ids[0]]?.type === 'Furniture') {
-          this.patchEach(ids, 'Vrid 90°', (_p, el) => rotateFurniture(resolveParams<FurnitureParams>(doc, el), 90));
+          patchEach(this.store, ids, 'Vrid 90°', (_p, el) => rotateFurniture(resolveParams<FurnitureParams>(doc, el), 90));
         } else rotateElements(this.store, ids, selectionCenter(doc, ids));
         break;
       case 'mirror':
@@ -761,92 +542,6 @@ export class PropertiesPanel {
     }
   }
 
-  /**
-   * Nytt värde för en sträcka i en måttkedja: det måttet pekar på i sträckans
-   * bortre ände flyttas (en vägg vinkelrätt, en dörr längs sin vägg). Är den
-   * änden fri flyttas punkten själv.
-   */
-  private setDimension(id: string, k: number, value: number): void {
-    const doc = this.store.doc;
-    const el = doc.elements[id];
-    if (!el || !(value > 0)) return;
-    const p = resolveParams<DimensionParams>(doc, el);
-    const seg = dimensionSegments(doc, p)[k];
-    if (!seg) return;
-    const delta = value - seg.value;
-    if (Math.abs(delta) < 0.5) return;
-    const r = (p.angle * Math.PI) / 180;
-    const dir: [number, number] = [Math.cos(r), Math.sin(r)];
-    const pick = (i: number) => {
-      const q = p.points[i];
-      return !Array.isArray(q) ? q.refs.find((ref) => doc.elements[ref.id]) : undefined;
-    };
-    const toRef = pick(seg.to);
-    const fromRef = pick(seg.from);
-    if (toRef) moveElements(this.store, [toRef.id], [Math.round(dir[0] * delta), Math.round(dir[1] * delta)], 'Ändra mått');
-    else if (fromRef) moveElements(this.store, [fromRef.id], [Math.round(-dir[0] * delta), Math.round(-dir[1] * delta)], 'Ändra mått');
-    else {
-      const points = p.points.map((q, i) => (i === seg.to && Array.isArray(q) ? ([Math.round(q[0] + dir[0] * delta), Math.round(q[1] + dir[1] * delta)] as [number, number]) : q));
-      updateParams(this.store, [id], { points }, 'Ändra mått');
-    }
-  }
-
-  /** Lås dörrnumren: numren som de är nu sparas i dörrarna. */
-  private lockDoorNumbers(locked: boolean): void {
-    const doc = this.store.doc;
-    this.store.transact(locked ? 'Lås dörrnumren' : 'Lås upp dörrnumren', (tx) => {
-      if (locked) {
-        for (const storey of doc.storeys) {
-          const { ctx } = createContext(doc, storey.id, this.getView(), doc.graphics, () => true);
-          for (const [id, number] of doorNumbersFor(ctx)) {
-            const el = tx.doc.elements[id];
-            if (el) tx.putElement({ ...el, params: { ...el.params, number } });
-          }
-        }
-      }
-      tx.setProject({ ...tx.doc.project, doorNumbering: { locked } });
-    });
-  }
-
-  /**
-   * Ändra rumsnumreringen. Låses den sparas de nummer rummen har just nu, så
-   * att de ligger kvar när rum läggs till eller flyttas.
-   */
-  private setNumbering(name: string, input: HTMLInputElement | HTMLSelectElement): void {
-    const doc = this.store.doc;
-    const current = numberingOf(doc);
-    const next = { ...current };
-    if (name === 'locked') next.locked = (input as HTMLInputElement).checked;
-    if (name === 'digits') next.digits = input.value === '3' ? 3 : 4;
-    if (name === 'building') next.building = input.value.trim() || '1';
-    this.store.transact(next.locked && !current.locked ? 'Lås rumsnumrering' : 'Ändra rumsnumrering', (tx) => {
-      if (next.locked && !current.locked) {
-        // Spara numren som de ser ut nu, plan för plan.
-        for (const storey of doc.storeys) {
-          const { ctx } = createContext(doc, storey.id, this.getView(), doc.graphics, () => true);
-          for (const [id, number] of roomNumbersFor(ctx)) {
-            const el = tx.doc.elements[id];
-            if (el) tx.putElement({ ...el, params: { ...el.params, number } });
-          }
-        }
-      }
-      tx.setProject({ ...tx.doc.project, roomNumbering: next });
-    });
-  }
-
-  /** Ändra varje markerat element utifrån dess egna värden, i en ångra-bar ändring. */
-  private patchEach(ids: string[], label: string, patch: (p: Record<string, unknown>, el: Element) => Record<string, unknown>): void {
-    // Värdena räknas ut före ändringen, så att alla utgår från samma läge.
-    const doc = this.store.doc;
-    const patches = ids.filter((id) => doc.elements[id]).map((id) => [id, patch(doc.elements[id].params, doc.elements[id])] as const);
-    this.store.transact(label, (tx) => {
-      for (const [id, p] of patches) {
-        const el = tx.doc.elements[id];
-        if (el) tx.putElement({ ...el, params: { ...el.params, ...p } });
-      }
-    });
-  }
-
   private onChange(e: Event): void {
     const input = e.target as HTMLInputElement | HTMLSelectElement;
     const doc = this.store.doc;
@@ -871,195 +566,6 @@ export class PropertiesPanel {
     const key = input.dataset.key;
     if (!key) return;
     if (drawingChange(this.store, ids, key, input, hereOf(this.getView(), doc.elements[ids[0]]?.storey ?? ''))) return;
-    const [scope, name] = key.split(':');
-    if (scope === 'name') {
-      renameElement(this.store, ids[0], input.value);
-      return;
-    }
-    if (scope === 'roof') {
-      updateParams(this.store, ids, { kind: input.value }, 'Ändra taktyp');
-      return;
-    }
-    if (scope === 'marker') {
-      const el = doc.elements[ids[0]];
-      if (!el) return;
-      if (name === 'length' || name === 'angle') {
-        const raw = el.params as unknown as MarkerParams;
-        const fr = markerFrame(doc, el);
-        // En linje som följer byggnaden placeras för hand där den ligger.
-        const p: MarkerParams = raw.auto ? { ...raw, start: [Math.round(fr.start[0]), Math.round(fr.start[1])], end: [Math.round(fr.end[0]), Math.round(fr.end[1])], side: 1 } : raw;
-        const v = Number(input.value.replace(',', '.'));
-        const d = [p.end[0] - p.start[0], p.end[1] - p.start[1]];
-        const len = name === 'length' ? v : Math.hypot(d[0], d[1]);
-        const ang = name === 'angle' ? (v * Math.PI) / 180 : Math.atan2(d[1], d[0]);
-        if (!Number.isFinite(v) || len < 300) return this.render();
-        // Början ligger still; slutet flyttas.
-        const end: [number, number] = [Math.round(p.start[0] + Math.cos(ang) * len), Math.round(p.start[1] + Math.sin(ang) * len)];
-        updateParams(this.store, [el.id], raw.auto ? { auto: false, start: p.start, side: 1, end } : { end }, name === 'length' ? 'Ändra längd' : 'Ändra vinkel');
-      } else if (name === 'depth') {
-        const v = Number(input.value);
-        updateParams(this.store, [el.id], { depth: input.value === '' || !(v > 0) ? null : Math.round(v) }, 'Ändra djup');
-      } else if (name === 'auto') {
-        const on = (input as HTMLInputElement).checked;
-        if (on) updateParams(this.store, [el.id], { auto: true }, 'Placera automatiskt');
-        else {
-          const f = markerFrame(doc, el);
-          updateParams(this.store, [el.id], { auto: false, start: [Math.round(f.start[0]), Math.round(f.start[1])], end: [Math.round(f.end[0]), Math.round(f.end[1])], side: 1 }, 'Placera själv');
-        }
-      }
-      return;
-    }
-    if (scope === 'wall' && name === 'radius') {
-      const el = doc.elements[ids[0]];
-      const p = el?.params as unknown as WallParams;
-      const v = Number(input.value);
-      if (!el || !(v > 0)) return this.render();
-      reshapeWall(this.store, el.id, p.start, p.end, bulgeForRadius(p.start, p.end, v, (p.bulge ?? 1) >= 0 ? 1 : -1), 'Ändra radie');
-      return;
-    }
-    if (scope === 'text') {
-      updateParams(this.store, ids, { [name]: input.value }, name === 'number' ? 'Ändra rumsnummer' : 'Ändra text');
-      return;
-    }
-    if (scope === 'prop' || scope === 'defprop') {
-      const prop = key.slice(scope.length + 1);
-      if (scope === 'prop') {
-        const el = doc.elements[ids[0]];
-        const set = { ...(el.props[PROPS] ?? {}) };
-        if (input.value === '') delete set[prop];
-        else set[prop] = input.value;
-        this.store.transact(`Ändra ${prop.toLowerCase()}`, (tx) => tx.putElement({ ...el, props: { ...el.props, [PROPS]: set } }));
-      } else {
-        const def = doc.definitions[doc.elements[ids[0]].definition!];
-        this.store.transact(`Ändra ${prop.toLowerCase()} för ${def.name}`, (tx) =>
-          tx.putDefinition({ ...def, props: { ...def.props, [PROPS]: { ...(def.props[PROPS] ?? {}), [prop]: input.value } } }),
-        );
-      }
-      return;
-    }
-    if (scope === 'dimseg') {
-      this.setDimension(ids[0], Number(name), Number(input.value));
-      return;
-    }
-    if (scope === 'doornumbering') {
-      this.lockDoorNumbers((input as HTMLInputElement).checked);
-      return;
-    }
-    if (scope === 'numbering') {
-      this.setNumbering(name, input);
-      return;
-    }
-    if (scope === 'param' && name === 'ceilingHeight' && input.value === '') {
-      updateParams(this.store, ids, { ceilingHeight: undefined }, 'Ta bort takhöjd');
-      return;
-    }
-    if (scope === 'param' && (input as HTMLInputElement).type === 'checkbox') {
-      const on = (input as HTMLInputElement).checked;
-      const label =
-        name === 'glazed' ? (on ? 'Glasad' : 'Ej glasad') : name === 'fixed' ? (on ? 'Fast inredning' : 'Lös möblering') : name === 'toRoof' ? (on ? 'Upp till taket' : 'Egen höjd') : 'Ändra';
-      updateParams(this.store, ids, { [name]: on }, label);
-      return;
-    }
-    if (scope === 'param' && name === 'inset' && input.value === '') {
-      updateParams(this.store, ids, { inset: null }, 'Automatiskt indrag');
-      return;
-    }
-    const v = Number(input.value);
-    if (!(v >= 0)) {
-      this.render();
-      return;
-    }
-    if (scope === 'def') {
-      const el = doc.elements[ids[0]];
-      if (el?.definition && v > 0) updateDefinition(this.store, el.definition, { params: { [name]: v } });
-    } else if (scope === 'param') {
-      updateParams(this.store, ids, { [name]: v }, `Ändra ${(PARAM_LABELS[name] ?? name).toLowerCase()}`);
-    } else if (scope === 'wall' && name === 'length' && v > 0) {
-      // Ny längd: slutpunkten flyttas längs väggen och anslutna väggar följer med.
-      const el = doc.elements[ids[0]];
-      const p = el.params as unknown as WallParams;
-      const end = add(p.start, scale(norm(sub(p.end, p.start)), v));
-      moveWallEnd(this.store, el.id, 'end', [Math.round(end[0]), Math.round(end[1])], { label: 'Ändra längd' });
-    }
+    if (!applyField(this.store, ids, key, input, this.getView())) this.render();
   }
 }
-
-/**
- * Sifferfält. Mått i modellen visas i hela mm; mått på papper för
- * annotering (texthöjder) med två decimaler, `decimals = 2`.
- */
-/** Räta upp ett element till en rak vinkel. Början (eller mitten för tak och inredning) ligger still. */
-function straighten(store: DocStore, el: Element, nearest: number): void {
-  const doc = store.doc;
-  const p = el.params as Record<string, any>;
-  const snapAngle = (a: number) => {
-    // Den av nearest och nearest + 180 som ligger närmast a.
-    const options = [nearest, nearest + 180, nearest - 180, nearest + 360];
-    return options.reduce((b, o) => (Math.abs(o - a) < Math.abs(b - a) ? o : b));
-  };
-  if (el.type === 'Wall' || el.type === 'Section' || el.type === 'Elevation') {
-    const d = sub(p.end, p.start);
-    const len = Math.hypot(d[0], d[1]);
-    const a = (snapAngle((Math.atan2(d[1], d[0]) * 180) / Math.PI) * Math.PI) / 180;
-    const end: [number, number] = [Math.round(p.start[0] + Math.cos(a) * len), Math.round(p.start[1] + Math.sin(a) * len)];
-    if (el.type === 'Wall') moveWallEnd(store, el.id, 'end', end, { label: 'Räta upp', connected: true });
-    else updateParams(store, [el.id], { end }, 'Räta upp');
-  } else if (el.type === 'Furniture') {
-    const fp = resolveParams<FurnitureParams>(doc, el);
-    const target = snapAngle(((fp.rotation % 180) + 180) % 180) + (fp.rotation - (((fp.rotation % 180) + 180) % 180));
-    updateParams(store, [el.id], rotateFurniture(fp, target - fp.rotation), 'Räta upp');
-  } else if (el.type === 'Roof') {
-    const rp = resolveParams<RoofParams>(doc, el);
-    updateParams(store, [el.id], { ridge: Math.round(rp.ridge / 45) * 45 }, 'Räta upp');
-  }
-}
-
-function numberField(key: string, label: string, value: number, unit: string, decimals = 0): string {
-  const id = `f-${key.replace(':', '-')}`;
-  const shown = decimals > 0 ? Number(value).toFixed(decimals) : String(Math.round(value));
-  const exprUnit = unit === '°' ? 'deg' : unit === 'mm' ? 'mm' : '';
-  const step = decimals > 0 ? (1 / 10 ** decimals).toFixed(decimals) : '1';
-  return `<label class="field" for="${id}"><span>${label}</span><span class="input-unit"><input type="text" data-expr data-unit="${exprUnit}" data-step="${step}" inputmode="decimal" autocomplete="off" id="${id}" data-key="${key}" value="${shown}"><i>${unit}</i></span></label>`;
-}
-
-function textField(key: string, label: string, value: string): string {
-  return `<label class="field" for="f-${key}"><span>${label}</span><input id="f-${key}" data-key="${key}" value="${escapeHtml(value)}"></label>`;
-}
-
-/** Mittpunkten för det markerade, för att vrida och spegla kring. */
-export function selectionCenter(doc: ProjectDoc, ids: string[]): [number, number] {
-  const pts: [number, number][] = [];
-  for (const id of ids) {
-    const p = doc.elements[id]?.params as Record<string, any> | undefined;
-    if (!p) continue;
-    if (p.start && p.end) pts.push(p.start, p.end);
-    if (p.origin && typeof p.width === 'number') {
-      const r = ((p.rotation ?? 0) * Math.PI) / 180;
-      const c = (x: number, y: number): [number, number] => [p.origin[0] + x * Math.cos(r) - y * Math.sin(r), p.origin[1] + x * Math.sin(r) + y * Math.cos(r)];
-      pts.push(c(0, 0), c(p.width, p.depth));
-    }
-    if (Array.isArray(p.outline)) pts.push(...p.outline);
-    if (Array.isArray(p.points)) pts.push(...p.points.map((q: any) => (Array.isArray(q) ? q : q.at)));
-    if (p.pos) pts.push(p.pos);
-  }
-  if (!pts.length) return [0, 0];
-  const xs = pts.map((q) => q[0]);
-  const ys = pts.map((q) => q[1]);
-  return [Math.round((Math.min(...xs) + Math.max(...xs)) / 2), Math.round((Math.min(...ys) + Math.max(...ys)) / 2)];
-}
-
-function summarizeTypes(els: Element[]): string {
-  const counts = new Map<string, number>();
-  for (const e of els) counts.set(e.type, (counts.get(e.type) ?? 0) + 1);
-  return [...counts.entries()]
-    .map(([type, n]) => {
-      const t = typeOf(type);
-      return `${n} ${(n === 1 ? t?.label : t?.labelPlural)?.toLowerCase() ?? type}`;
-    })
-    .join(', ');
-}
-
-function pick(o: Record<string, number>, keys: string[]): Record<string, number> {
-  return Object.fromEntries(keys.map((k) => [k, o[k]]));
-}
-
