@@ -1,6 +1,7 @@
 import type { ActionKey, StyleSheet } from '../core/graphics';
-import type { Element, Id, ProjectDoc } from '../core/model';
+import { modelViewId, type Element, type Id, type ProjectDoc } from '../core/model';
 import { actionOf, existingState, type Action, type ViewStates } from '../core/states';
+import { homeOf, shownIn, type ViewIdentity } from '../core/visibility';
 import { resolveParams, typeOf, type ElementType, type PlanContext, type PlanItem } from '../elements/registry';
 
 /**
@@ -14,7 +15,12 @@ export function createContext(
   style: StyleSheet,
   include: (t: ElementType, action: Action) => boolean,
 ): { ctx: PlanContext; visible: PlanItem[] } {
-  const onStorey = Object.values(doc.elements).filter((e) => e.storey === storey);
+  // Det som hör hemma på ytan som ritas (planen, en fasad, sektion eller ett
+  // arbetsblad), och 2D-element från andra ytor som valts att synas i just den här vyn.
+  const place = view.place ?? storey;
+  const identity: ViewIdentity = { id: view.viewId ?? modelViewId(place), place, tags: view.viewTags ?? [] };
+  const onStorey = Object.values(doc.elements).filter((e) => homeOf(e) === place || (e.show?.kind === 'views' && e.show.views.includes(identity.id)));
+  const hiddenHere = new Set<Id>();
 
   const actionFor = (el: Element): Action => {
     const t = typeOf(el.type);
@@ -30,6 +36,11 @@ export function createContext(
     const action = actionFor(el);
     if (action === 'absent' || !include(t, action)) continue;
     if (view.hide?.includes(el.type)) continue;
+    // Visas i (format 5): 2D-element, text och mått kan vara valda för vissa vyer.
+    if (el.show && !shownIn(el, identity)) {
+      if (!view.showHidden || homeOf(el) !== place) continue;
+      hiddenHere.add(el.id);
+    }
     // Rivna dörrar behålls även när rivet döljs: igensättningen ska synas.
     if (action === 'demolished' && view.hideDemolished && !t.hosted) continue;
     visible.push({ el, action });
@@ -58,6 +69,7 @@ export function createContext(
       return memo.get(key) as T;
     },
     params: <P>(el: Element<any>) => resolveParams<P>(doc, el),
+    hiddenInView: (el) => hiddenHere.has(el.id),
   };
   return { ctx, visible };
 }

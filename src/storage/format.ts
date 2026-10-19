@@ -1,5 +1,5 @@
 import { SWEDISH_STANDARD, normalizeStyle } from '../core/graphics';
-import { drawingMarkers, FORMAT, FORMAT_VERSION, type ProjectDoc } from '../core/model';
+import { DEFAULT_VIEW_TAGS, drawingMarkers, emptyTree, FORMAT, FORMAT_VERSION, type ProjectDoc } from '../core/model';
 import { orientExteriorWalls } from '../elements/orient';
 
 /**
@@ -22,6 +22,10 @@ const migrations: Record<number, (doc: any) => any> = {
     for (const [id, el] of Object.entries(markers)) if (!elements[id]) elements[id] = el;
     return { ...doc, elements };
   },
+  // 4 → 5: mappar i projektträdet, vy-taggar, 2D-element med Visas i, lås,
+  // arbetsblad, ritningsblad och underlag. Inget i en äldre fil ändras; de
+  // nya fälten börjar tomma (vy-taggarna med förslagen).
+  5: (doc) => ({ ...emptyTree(), ...doc }),
 };
 
 /** En plats för norrpilen strax utanför väggarnas övre högra hörn. */
@@ -98,6 +102,7 @@ function normalize(d: any): ProjectDoc {
       fields: d.project?.fields ?? {},
       ...(d.project?.roomNumbering ? { roomNumbering: d.project.roomNumbering } : {}),
       ...(d.project?.doorNumbering ? { doorNumbering: d.project.doorNumbering } : {}),
+      ...(Array.isArray(d.project?.angles) ? { angles: d.project.angles.map(Number).filter(Number.isFinite) } : {}),
     },
     views: Array.isArray(d.views) ? d.views : [],
     states: Array.isArray(d.states) && d.states.length ? d.states : [{ id: 'st-ny', name: 'Förslag', kind: 'proposal' }],
@@ -105,6 +110,12 @@ function normalize(d: any): ProjectDoc {
     definitions: d.definitions ?? {},
     elements: {},
     graphics: safeStyle(d.graphics),
+    folders: Array.isArray(d.folders) ? d.folders : [],
+    tree: d.tree && typeof d.tree === 'object' ? d.tree : {},
+    viewTags: Array.isArray(d.viewTags) ? d.viewTags.map(String) : [...DEFAULT_VIEW_TAGS],
+    worksheets: Array.isArray(d.worksheets) ? d.worksheets : [],
+    sheets: Array.isArray(d.sheets) ? d.sheets : [],
+    assets: d.assets && typeof d.assets === 'object' ? d.assets : {},
   };
   for (const [id, el] of Object.entries<any>(d.elements ?? {})) {
     doc.elements[id] = { ...el, id, states: el.states ?? [], tags: el.tags ?? [], params: el.params ?? {}, props: el.props ?? {} };

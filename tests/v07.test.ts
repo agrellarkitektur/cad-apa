@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { FORMAT_VERSION } from '../src/core/model';
 import { registerBuiltInTypes } from '../src/elements';
 import { computeWallShapes, type WallParams } from '../src/elements/wall';
 import { arcFromBulge, bulgeTangent, bulgeThrough } from '../src/geometry/arc';
@@ -97,7 +98,7 @@ describe('format 4 (0.7)', () => {
     for (const id of Object.keys(old.elements)) if (['North', 'Elevation', 'Section', 'Roof'].includes(old.elements[id].type)) delete old.elements[id];
     for (const el of Object.values<any>(old.elements)) delete el.params.toRoof;
     const back = parse(JSON.stringify(old));
-    expect(back.formatVersion).toBe(4);
+    expect(back.formatVersion).toBe(FORMAT_VERSION);
     const types = Object.values(back.elements).map((e) => e.type);
     expect(types.filter((t) => t === 'North')).toHaveLength(1);
     expect(types.filter((t) => t === 'Elevation')).toHaveLength(4);

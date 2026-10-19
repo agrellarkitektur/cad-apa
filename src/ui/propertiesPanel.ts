@@ -37,6 +37,7 @@ import type { RoofParams } from '../elements/roof';
 import { skewOf, skewText } from '../elements/angleCheck';
 import { reshapeWall } from '../core/wallEdit';
 import { bulgeForRadius, radiusOf } from '../geometry/arc';
+import { drawingChange, drawingClick, drawingFields, hereOf, lockField, resetShowList, showSection } from './drawingPanel';
 
 type Tab = 'selection' | 'types';
 
@@ -82,6 +83,8 @@ export class PropertiesPanel {
   private store: DocStore;
   private selection: Selection;
   private getView: () => ViewStates;
+  /** Markeringen förra gången panelen ritades. */
+  private lastSelKey = '';
   private quick: HTMLElement;
   /** Vilka snabbknappar som visas för en sorts objekt ("mixed" när de är olika). */
   quickFor: (type: string) => QuickId[] = () => ['demolish', 'delete'];
@@ -311,8 +314,18 @@ export class PropertiesPanel {
     // Egna mått för ett enskilt element.
     if (els.length === 1) {
       const instance = this.instanceFields(doc, els[0]);
-      if (instance) sections.push(`<section><h3>${escapeHtml(t?.label ?? '')}</h3>${instance}</section>`);
+      if (instance) sections.push(`<section><h3>${escapeHtml(t?.label ?? '')}</h3>${instance}${lockField(els)}</section>`);
+      else if (lockField(els)) sections.push(`<section>${lockField(els)}</section>`);
+    } else if (lockField(els)) sections.push(`<section>${lockField(els)}</section>`);
+
+    // Visas i (0.8): 2D-element, text och mått kan visas i vissa vyer.
+    const selKey = els.map((e) => e.id).join();
+    if (selKey !== this.lastSelKey) {
+      this.lastSelKey = selKey;
+      resetShowList();
     }
+    const show = showSection(doc, els, hereOf(view, els[0].storey));
+    if (show) sections.push(show);
 
     // Egna egenskaper, t.ex. brandklass och ljudklass, för littera och förteckningar.
     if (els.length === 1 && ['Door', 'Window', 'Wall', 'Space', 'Furniture'].includes(els[0].type)) {
@@ -417,12 +430,19 @@ export class PropertiesPanel {
       case 'Elevation': {
         const p = resolveParams<MarkerParams>(doc, el);
         const label = el.type === 'Section' ? textField('text:label', 'Beteckning', p.label ?? 'A') : '';
+        // En linje som följer byggnaden visar var den ligger just nu; ändras den placeras den för hand (0.8).
+        const f = markerFrame(doc, el);
+        const shown: MarkerParams = p.auto ? { ...p, start: [f.start[0], f.start[1]], end: [f.end[0], f.end[1]], side: 1 } : p;
+        const canFollow = !p.auto && el.type === 'Elevation' && typeof p.facing === 'number';
         return `<label class="field"><span>Namn</span><input data-key="name:" value="${escapeHtml(el.name ?? '')}" placeholder="${escapeHtml(markerName(doc, { ...el, name: undefined }))}"></label>
           <div class="fields">${label}<label class="field"><span>Djup</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="marker:depth" value="${p.depth ?? ''}" placeholder="Allt"><i>mm</i></span></label></div>
-          <label class="check"><input type="checkbox" data-key="marker:auto"${p.auto ? ' checked' : ''}> Placeras automatiskt</label>
-          ${p.auto ? '' : this.markerLineFields(p)}
-          <div class="row"><button class="btn btn-primary" data-action="open-marker">Öppna ${el.type === 'Section' ? 'sektionen' : 'fasaden'}</button><button class="btn" data-action="flip-side"${p.auto ? ' disabled' : ''}>Vänd blickriktningen</button></div>`;
+          ${this.markerLineFields(shown)}
+          <div class="row"><button class="btn btn-primary" data-action="open-marker">Öppna ${el.type === 'Section' ? 'sektionen' : 'fasaden'}</button><button class="btn" data-action="flip-side">Vänd blickriktningen</button>${canFollow ? '<button class="btn" data-action="follow-building" title="Lägg fasaden runt byggnaden igen, så att den följer med när byggnaden ändras">Följ byggnaden igen</button>' : ''}</div>`;
       }
+      case 'Line2D':
+      case 'Fill2D':
+      case 'RoofSlope':
+        return drawingFields(doc, el);
       case 'Door': {
         const p = resolveParams<{ at: number; glazed?: boolean; mainEntrance?: boolean }>(doc, el);
         return `<div class="fields">${numberField('param:at', 'Läge längs vägg', p.at, 'mm')}${textField('name', 'Nummer', el.name ?? '')}</div>
@@ -555,6 +575,7 @@ export class PropertiesPanel {
     if (!b) return;
     const doc = this.store.doc;
     const ids = this.selection.list();
+    if (drawingClick(this.store, ids, b, this.el)) return;
     switch (b.dataset.action) {
       case 'open-marker':
         if (ids[0]) this.onOpenMarker?.(ids[0]);
@@ -570,9 +591,20 @@ export class PropertiesPanel {
         return;
       case 'flip-side': {
         const el = doc.elements[ids[0]];
-        if (el) updateParams(this.store, [el.id], { side: -Number(el.params.side ?? 1) }, 'Vänd blickriktningen');
+        if (!el) return;
+        if (el.params.auto) {
+          // Följer linjen byggnaden placeras den först där den ligger.
+          const f = markerFrame(doc, el);
+          updateParams(this.store, [el.id], { auto: false, start: [Math.round(f.start[0]), Math.round(f.start[1])], end: [Math.round(f.end[0]), Math.round(f.end[1])], side: -1 }, 'Vänd blickriktningen');
+        } else updateParams(this.store, [el.id], { side: -Number(el.params.side ?? 1) }, 'Vänd blickriktningen');
         return;
       }
+      case 'follow-building':
+        updateParams(this.store, ids, { auto: true }, 'Följ byggnaden');
+        return;
+      case 'select-roof':
+        if (b.dataset.roof && doc.elements[b.dataset.roof]) this.selection.set([b.dataset.roof]);
+        return;
       case 'toggle-state': {
         const s = b.dataset.state!;
         const allIn = ids.every((id) => doc.elements[id]?.states.includes(s));
@@ -781,6 +813,7 @@ export class PropertiesPanel {
 
     const key = input.dataset.key;
     if (!key) return;
+    if (drawingChange(this.store, ids, key, input, hereOf(this.getView(), doc.elements[ids[0]]?.storey ?? ''))) return;
     const [scope, name] = key.split(':');
     if (scope === 'name') {
       renameElement(this.store, ids[0], input.value);
@@ -794,7 +827,10 @@ export class PropertiesPanel {
       const el = doc.elements[ids[0]];
       if (!el) return;
       if (name === 'length' || name === 'angle') {
-        const p = el.params as unknown as MarkerParams;
+        const raw = el.params as unknown as MarkerParams;
+        const fr = markerFrame(doc, el);
+        // En linje som följer byggnaden placeras för hand där den ligger.
+        const p: MarkerParams = raw.auto ? { ...raw, start: [Math.round(fr.start[0]), Math.round(fr.start[1])], end: [Math.round(fr.end[0]), Math.round(fr.end[1])], side: 1 } : raw;
         const v = Number(input.value.replace(',', '.'));
         const d = [p.end[0] - p.start[0], p.end[1] - p.start[1]];
         const len = name === 'length' ? v : Math.hypot(d[0], d[1]);
@@ -802,7 +838,7 @@ export class PropertiesPanel {
         if (!Number.isFinite(v) || len < 300) return this.render();
         // Början ligger still; slutet flyttas.
         const end: [number, number] = [Math.round(p.start[0] + Math.cos(ang) * len), Math.round(p.start[1] + Math.sin(ang) * len)];
-        updateParams(this.store, [el.id], { end }, name === 'length' ? 'Ändra längd' : 'Ändra vinkel');
+        updateParams(this.store, [el.id], raw.auto ? { auto: false, start: p.start, side: 1, end } : { end }, name === 'length' ? 'Ändra längd' : 'Ändra vinkel');
       } else if (name === 'depth') {
         const v = Number(input.value);
         updateParams(this.store, [el.id], { depth: input.value === '' || !(v > 0) ? null : Math.round(v) }, 'Ändra djup');

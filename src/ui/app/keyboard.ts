@@ -83,6 +83,7 @@ export function installKeyboard(app: AppContext) {
         if (app.ui.tool === 'measure') app.measureTool.reset();
         if (app.ui.tool === 'wall') app.wallTool.finish();
         if (app.ui.tool === 'dimension') app.dimensionTool.donePoints();
+        if (app.ui.tool === 'draw2d') app.draw2dTool.finish(false);
         break;
       case 'Delete':
       case 'Backspace':
@@ -135,6 +136,10 @@ export function installKeyboard(app: AppContext) {
       case 't':
       case 'T':
         app.setTool('text');
+        break;
+      case 'i':
+      case 'I':
+        app.setTool('draw2d');
         break;
       case 'f':
       case 'F':

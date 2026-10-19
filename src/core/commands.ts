@@ -1,7 +1,7 @@
 import type { StyleSheet } from './graphics';
 import { wallFrame, type WallGeometry } from '../geometry/wallFrame';
 import { newId } from './ids';
-import type { Definition, Element, Id, ProjectDoc, State, Value } from './model';
+import type { Definition, Element, Id, ProjectDoc, ShowIn, State, Value } from './model';
 import { statesForNewElement } from './states';
 import type { DocStore, TxBuilder } from './store';
 
@@ -27,8 +27,30 @@ export function addElements(store: DocStore, els: NewElement[], activeState: Id,
 
 /** Ta bort element helt ur modellen, tillsammans med det som sitter i dem. */
 export function deleteElements(store: DocStore, ids: Id[]): void {
-  store.transact(ids.length === 1 ? 'Ta bort objekt' : `Ta bort ${ids.length} objekt`, (tx) => {
-    for (const id of withHosted(tx, ids)) tx.removeElement(id);
+  // Låsta objekt tas inte bort (format 5).
+  const open = ids.filter((id) => !store.doc.elements[id]?.locked);
+  if (!open.length) return;
+  store.transact(open.length === 1 ? 'Ta bort objekt' : `Ta bort ${open.length} objekt`, (tx) => {
+    for (const id of withHosted(tx, open)) {
+      const el = tx.doc.elements[id];
+      // En taklutning som tas bort döljs, så att den automatiska inte kommer tillbaka.
+      if (el?.type === 'RoofSlope') tx.putElement({ ...el, params: { ...el.params, hidden: true } });
+      else tx.removeElement(id);
+    }
+  });
+}
+
+/** Lås eller lås upp objekt (format 5). */
+export function setLocked(store: DocStore, ids: Id[], locked: boolean): void {
+  store.transact(locked ? 'Lås' : 'Lås upp', (tx) => {
+    for (const id of ids) {
+      const el = tx.doc.elements[id];
+      if (!el || !!el.locked === locked) continue;
+      const next = { ...el };
+      if (locked) next.locked = true;
+      else delete next.locked;
+      tx.putElement(next);
+    }
   });
 }
 
@@ -64,6 +86,28 @@ export function updateParams(store: DocStore, ids: Id[], patch: Record<string, u
       if (el) tx.putElement({ ...el, params: { ...el.params, ...patch } });
     }
   });
+}
+
+/** Var 2D-element, text och mått syns (format 5). Null = i alla vyer av ytan de är ritade på. */
+export function setShowIn(store: DocStore, ids: Id[], show: ShowIn | null): void {
+  store.transact('Ändra Visas i', (tx) => {
+    for (const id of ids) {
+      const el = tx.doc.elements[id];
+      if (!el) continue;
+      const next = { ...el };
+      if (show) next.show = show;
+      else delete next.show;
+      tx.putElement(next);
+    }
+  });
+}
+
+/** Lägg till en vy-tagg i projektet (format 5), om den inte redan finns. */
+export function addViewTag(store: DocStore, tag: string): string | null {
+  const t = tag.trim();
+  if (!t) return null;
+  if (!store.doc.viewTags.includes(t)) store.transact(`Ny vy-tagg ${t}`, (tx) => tx.setField('viewTags', [...tx.doc.viewTags, t]));
+  return t;
 }
 
 /** Byt namn eller eget id på ett element. */
@@ -286,12 +330,24 @@ export function isArc(el: Element): boolean {
   return typeof b === 'number' && Math.abs(b) >= 0.5;
 }
 
+/**
+ * Var en fasad eller sektion som placeras automatiskt ligger just nu. Sätts
+ * av elementlagret (`markerFrame`), eftersom kärnan inte vet hur det räknas.
+ */
+export const placement: { auto: ((doc: ProjectDoc, el: Element) => { start: [number, number]; end: [number, number] }) | null } = { auto: null };
+
 /** Parametrarna efter en förflyttning: väggar, möbler och rum flyttas, öppningar glider längs väggen. */
 export function movePatch(doc: ProjectDoc, el: Element, d: [number, number]): Record<string, unknown> | null {
   const p = el.params as Record<string, any>;
   const add = (q: [number, number]): [number, number] => [Math.round(q[0] + d[0]), Math.round(q[1] + d[1])];
-  // Fasader och sektioner som placeras automatiskt flyttas inte.
-  if (p.auto === true) return null;
+  // Låsta objekt flyttas inte (format 5).
+  if (el.locked) return null;
+  // En fasad eller sektion som följer byggnaden placeras för hand när den
+  // flyttas: där den låg, plus förflyttningen.
+  if (p.auto === true) {
+    const f = placement.auto?.(doc, el);
+    return f ? { auto: false, start: add(f.start), end: add(f.end), side: 1 } : null;
+  }
   if (p.start && p.end) return { start: add(p.start), end: add(p.end) };
   if (p.origin) return { origin: add(p.origin) };
   if (Array.isArray(p.outline)) return p.seed ? { outline: p.outline.map(add), seed: add(p.seed) } : { outline: p.outline.map(add) };

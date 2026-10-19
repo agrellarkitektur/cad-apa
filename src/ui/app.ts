@@ -1,16 +1,16 @@
 import type { Brand } from '../brand';
-import { createProposal, moveElements, moveWallEnd, renameElement, updateParams } from '../core/commands';
+import { addElements, createProposal, moveElements, moveWallEnd, renameElement, updateParams } from '../core/commands';
 import { resolveParams } from '../elements/registry';
 import { snap } from './tools/snap';
 import { ENGINE } from '../core/engine';
-import type { Id, ProjectDoc, ViewDef } from '../core/model';
+import { modelViewId, type Id, type ProjectDoc, type ViewDef } from '../core/model';
 import { PRESETS, type StyleSheet } from '../core/graphics';
 import { actionOf, existingState } from '../core/states';
 import { DocStore } from '../core/store';
 import type { WallParams } from '../elements/wall';
 import { buildModel3d } from '../repr/model3d';
 import { buildPlan, type PlanResult } from '../repr/plan';
-import { buildSection } from '../repr/section';
+import { buildSection, type SectionResult } from '../repr/section';
 import { markerFrame, markerName, modelBounds } from '../elements/markers';
 import { AlignTool, MarkerTool, RoofTool } from './tools/markerTools';
 import { MeasureTool, ZoomBoxTool } from './tools/measureTool';
@@ -52,6 +52,7 @@ import type { ToolHost } from './tools/host';
 import { SelectTool } from './tools/selectTool';
 import { isSnapEnabled, setSnapEnabled, type SnapSegment } from './tools/snap';
 import { DimensionTool, TextTool } from './tools/annotationTools';
+import { Draw2DTool } from './tools/draw2dTool';
 import { OpeningTool } from './tools/openingTool';
 import { RoomTool } from './tools/roomTool';
 import { WallTool } from './tools/wallTool';
@@ -60,7 +61,7 @@ import { installClipboard } from './app/clipboard';
 import { defaultState, defaultWallType, describeView, firstDefinition, formatScale, nextProposalName, nf, tf } from './app/helpers';
 import { installKeyboard } from './app/keyboard';
 import { installMenus } from './app/menus';
-import { createUiState, GROUP_LABEL, PLAN_TOOLS, shellMarkup, TOOLS, type ToolId, type ViewMode } from './app/shell';
+import { createUiState, GROUP_LABEL, PLAN_TOOLS, shellMarkup, SPACE_TOOLS, TOOLS, type ToolId, type ViewMode } from './app/shell';
 import { installShowMenu } from './app/showMenu';
 import { installToolOptions } from './app/toolOptions';
 import { installViews } from './app/views';
@@ -184,6 +185,43 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   });
 
   let plan: PlanResult = { prims: [], pickables: [] };
+  /** Den öppna fasaden eller sektionen, senast den räknades. */
+  let lastSection: SectionResult | null = null;
+
+  /** Linjerna i den öppna fasaden eller sektionen, att snäppa mot. */
+  function sectionSnapSegments(): SnapSegment[] {
+    const out: SnapSegment[] = [];
+    for (const pk of plan.pickables)
+      for (const p of pk.prims) {
+        if (p.kind === 'line') out.push({ id: pk.id, a: p.a, b: p.b });
+        else if (p.kind === 'polyline') for (let i = 0; i + 1 < p.points.length; i++) out.push({ id: pk.id, a: p.points[i], b: p.points[i + 1] });
+      }
+    for (const p of plan.prims) {
+      if (p.kind === 'line' && !p.origin?.objectId) out.push({ id: 'vy', a: p.a, b: p.b });
+      if (p.kind === 'region') for (const ring of p.rings) for (let i = 0; i < ring.length; i++) out.push({ id: p.origin?.objectId ?? 'snitt', a: ring[i], b: ring[(i + 1) % ring.length] });
+    }
+    return out;
+  }
+
+  /**
+   * En automatisk taklutning som markeras blir ett eget objekt (0.8), så att
+   * den går att flytta och ge en egen stil.
+   */
+  function materializeSlopes(): void {
+    const ids = selection.list().filter((id) => id.startsWith('slope:'));
+    if (!ids.length || !ui.marker || !lastSection) return;
+    const marker = store.doc.elements[ui.marker];
+    if (!marker) return;
+    const made = addElements(
+      store,
+      ids
+        .filter((id) => lastSection!.slopes[id])
+        .map((id) => ({ type: 'RoofSlope', storey: marker.storey, space: marker.id, states: [], tags: [], params: { ...lastSection!.slopes[id] }, props: {} })),
+      ui.state,
+      'Taklutningen blir ett eget objekt',
+    );
+    selection.set([...selection.list().filter((id) => !id.startsWith('slope:')), ...made.map((e) => e.id)]);
+  }
 
   // Text som redigeras direkt i ritningen (dubbelklick).
   textEditor = new InlineTextEditor(pane2d);
@@ -196,7 +234,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       goTo({ kind: 'marker', id });
       return true;
     }
-    if (!el || !textEditor || ui.marker) return false;
+    if (!el || !textEditor || (ui.marker && el.space !== ui.marker)) return false;
     const DRAWING_SCALE = 100;
     if (el.type === 'Text') {
       const p = resolveParams<{ pos: Vec2; text: string; height: number; angle: number }>(store.doc, el);
@@ -270,6 +308,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       hide: v.hide,
       hideDemolished: v.hideDemolished,
       autoDims: uiSettings.autoDims,
+      viewId: v.id,
+      viewTags: v.tags ?? [],
     };
   }
 
@@ -344,7 +384,20 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     const doc = store.doc;
     const ex = existingState(doc);
     const compareTo = ui.compare && ex && ex.id !== ui.state ? ex.id : undefined;
-    return { state: ui.state, compareTo, detail: ui.detail, hide: ui.hide, hideDemolished: ui.hideDemolished, autoDims: uiSettings.autoDims };
+    // Vilken vy det är, för 2D-element med Visas i (0.8).
+    const v = ui.activeView ? doc.views.find((x) => x.id === ui.activeView) : undefined;
+    const viewId = v ? v.id : modelViewId(ui.marker ?? ui.storey);
+    return {
+      state: ui.state,
+      compareTo,
+      detail: ui.detail,
+      hide: ui.hide,
+      hideDemolished: ui.hideDemolished,
+      autoDims: uiSettings.autoDims,
+      viewId,
+      viewTags: v?.tags ?? [],
+      showHidden: ui.showHidden,
+    };
   }
 
   // ---------- Verktyg ----------
@@ -354,6 +407,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     view,
     plan: () => plan,
     readOnly: () => !!ui.marker,
+    canEdit: (id) => !!ui.marker && (store.doc.elements[id]?.space === ui.marker || id.startsWith('slope:')),
+    space: () => ui.marker ?? undefined,
     activeState: () => ui.state,
     storey: () => ui.storey,
     hint,
@@ -376,6 +431,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       return true;
     },
     snapSegments: (): SnapSegment[] => {
+      // I fasader och sektioner snäpper man mot linjerna i ritningen.
+      if (ui.marker) return sectionSnapSegments();
       const vs = viewStates();
       const doc = store.doc;
       // Väggarnas referenslinjer först, sedan väggarnas liv och möblernas kanter.
@@ -410,6 +467,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const dimensionTool = new DimensionTool(host);
   dimensionTool.onChange = () => renderToolOptions();
   const textTool = new TextTool(host);
+  const draw2dTool = new Draw2DTool(host);
+  draw2dTool.onChange = () => renderToolOptions();
   const measureTool = new MeasureTool(host);
   // Zooma till område: ett tillfälligt verktyg, sedan tillbaka.
   const zoomBoxTool = new ZoomBoxTool(host);
@@ -459,6 +518,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     room: roomTool,
     dimension: dimensionTool,
     text: textTool,
+    draw2d: draw2dTool,
     roof: roofTool,
     section: sectionTool,
     elevation: elevationTool,
@@ -467,16 +527,13 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
 
   function setTool(id: ToolId): void {
     measureBox.close();
-    // Mått och text i fasader och sektioner kommer med vy-elementen i 0.8.
-    if (ui.marker && (id === 'dimension' || id === 'text')) {
-      hint(`${id === 'dimension' ? 'Mått' : 'Text'} i fasader och sektioner kommer i 0.8. Gå till planen för att ${id === 'dimension' ? 'måttsätta' : 'skriva'} där.`, 4500);
-      return;
-    }
     // Ritverktygen ritar i planen: från en fasad eller sektion går man tillbaka dit.
-    if (PLAN_TOOLS.includes(id) && ui.marker) goTo({ kind: 'storey', id: ui.storey });
+    // Mått, text och 2D ritas i fasaden eller sektionen (0.8).
+    if (PLAN_TOOLS.includes(id) && !SPACE_TOOLS.includes(id) && ui.marker) goTo({ kind: 'storey', id: ui.storey });
     if (PLAN_TOOLS.includes(id) && ui.mode === '3d') void setMode('2d');
     if (ui.tool === 'wall' && id !== 'wall') wallTool.finish();
     if (ui.tool === 'dimension' && id !== 'dimension') dimensionTool.reset();
+    if (ui.tool === 'draw2d' && id !== 'draw2d') draw2dTool.finish(false);
     if (ui.tool === 'roof' && id !== 'roof') roofTool.reset();
     if (ui.tool === 'section' && id !== 'section') sectionTool.reset();
     if (ui.tool === 'elevation' && id !== 'elevation') elevationTool.reset();
@@ -522,6 +579,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (modifyPalette.open) modifyPalette.close();
     else if (ui.tool === 'wall' && wallTool.drawing) wallTool.finish();
     else if (ui.tool === 'dimension' && dimensionTool.count > 0) dimensionTool.reset();
+    else if (ui.tool === 'draw2d' && draw2dTool.count > 0) draw2dTool.reset();
     else if (ui.tool === 'roof' && roofTool.started) roofTool.reset();
     else if (ui.tool === 'section' && sectionTool.step > 0) sectionTool.reset();
     else if (ui.tool === 'elevation' && elevationTool.step > 0) elevationTool.reset();
@@ -687,6 +745,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const modifyPalette = new ModifyPalette(canvas, modifyHost);
   selection.subscribe(() => {
     if (modifyPalette.open) modifyPalette.close();
+    // En markerad automatisk taklutning blir ett eget objekt.
+    if (selection.list().some((id) => id.startsWith('slope:'))) queueMicrotask(materializeSlopes);
   });
   let pointerAt: { x: number; y: number; t: string } | null = null;
   canvas.addEventListener(
@@ -768,9 +828,14 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (ex) out('compare-label').textContent = `Jämför med ${ex.name}`;
     compareToggle.checked = ui.compare;
 
-    // Fasad eller sektion: räknas fram ur modellen i stället för planen.
+    // Fasad eller sektion: räknas fram ur modellen i stället för planen. Det
+    // som är ritat i den (mått, text, 2D, taklutningar) läggs ovanpå (0.8).
     const section = markerEl ? buildSection(doc, markerEl.id, vs, styleFor(ui.styleName)) : null;
-    plan = section ? { prims: section.prims, pickables: section.pickables } : buildPlan(doc, ui.storey, vs, styleFor(ui.styleName));
+    lastSection = section;
+    if (section && markerEl) {
+      const drawn = buildPlan(doc, markerEl.storey, { ...vs, place: markerEl.id }, styleFor(ui.styleName));
+      plan = { prims: [...section.prims, ...drawn.prims], pickables: [...section.pickables, ...drawn.pickables] };
+    } else plan = buildPlan(doc, ui.storey, vs, styleFor(ui.styleName));
     // Kalkerad vy: en annan vy tonad under, t.ex. möbleringen under en undertaksplan.
     const traced = ui.trace && !section ? doc.views.find((v) => v.id === ui.trace) : undefined;
     view.setUnderlay(traced ? buildPlan(doc, traced.storey, viewStatesOf(traced), styleFor(traced.style ?? null)).prims : []);
@@ -1056,6 +1121,9 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     get textTool() {
       return textTool;
     },
+    get draw2dTool() {
+      return draw2dTool;
+    },
     get measureTool() {
       return measureTool;
     },
@@ -1203,7 +1271,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const { copySelection, pasteFromMenu } = installClipboard(app);
 
   // För felsökning i webbläsarens konsol.
-  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifyPalette, get view3d() { return view3d; } };
+  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifyPalette, setTool, goTo, setMode, get plan() { return plan; }, get view3d() { return view3d; } };
 
   appEl.dataset.mode = ui.mode;
   appEl.dataset.sheet = ui.sheet;

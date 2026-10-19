@@ -63,6 +63,21 @@ export interface StyleSheet {
   openingMark: number;
   /** Texter i planen: justering, höjder och littera. */
   labels: LabelStyle;
+  /**
+   * Penntabellen (0.8): linjetjocklek i mm och färg per sorts linje i fasader
+   * och sektioner (hål, karm, båge, glas, marklinje …). Det som saknas har
+   * programmets förval.
+   */
+  pens?: Record<string, PenDef>;
+  /** Typsnittet för hela projektet (0.8). Utelämnat = programmets tekniska typsnitt. */
+  font?: string;
+}
+
+/** En rad i penntabellen. */
+export interface PenDef {
+  weight: number;
+  /** "ink", "muted" eller en färg som #rrggbb. */
+  color?: string;
 }
 
 /** Litteramallar för en objekttyp. Rader skiljs med radbrytning. */
@@ -184,7 +199,20 @@ export function normalizeStyle(data: any): StyleSheet {
     actions,
     openingMark: Number.isFinite(mark) && mark >= 0 ? mark : SWEDISH_STANDARD.openingMark,
     labels: normalizeLabels(data.labels),
+    ...(normalizePens(data.pens) ? { pens: normalizePens(data.pens)! } : {}),
+    ...(typeof data.font === 'string' && data.font.trim() ? { font: data.font.trim() } : {}),
   };
+}
+
+function normalizePens(p: any): Record<string, PenDef> | null {
+  if (!p || typeof p !== 'object') return null;
+  const out: Record<string, PenDef> = {};
+  for (const [k, v] of Object.entries<any>(p)) {
+    const w = Number(v?.weight);
+    if (!(w > 0)) continue;
+    out[k] = { weight: w, ...(typeof v.color === 'string' ? { color: v.color } : {}) };
+  }
+  return Object.keys(out).length ? out : null;
 }
 
 function normalizeLabels(l: any): LabelStyle {

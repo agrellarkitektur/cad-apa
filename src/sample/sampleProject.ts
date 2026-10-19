@@ -1,5 +1,5 @@
 import { SWEDISH_STANDARD } from '../core/graphics';
-import { drawingMarkers, FORMAT, FORMAT_VERSION, type ViewDef, type Definition, type Element, type Id, type ProjectDoc } from '../core/model';
+import { drawingMarkers, emptyTree, FORMAT, FORMAT_VERSION, type ViewDef, type Definition, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { DoorParams } from '../elements/door';
 import type { FurnitureParams } from '../elements/furniture';
 import type { RoofParams } from '../elements/roof';
@@ -172,5 +172,12 @@ export function sampleProject(): ProjectDoc {
     elements,
     graphics: SWEDISH_STANDARD,
     views,
+    ...emptyTree(),
+    // Vyerna i mappar, som exempel på projektträdets mappar (0.8).
+    folders: [
+      { id: 'mapp-forslag', name: 'Förslag', tab: 'vyer', parent: null },
+      { id: 'mapp-handlingar', name: 'Handlingar', tab: 'vyer', parent: 'mapp-forslag' },
+    ],
+    tree: { 'vy-a-bl': 'mapp-handlingar', 'vy-b-bh': 'mapp-handlingar', 'vy-a': 'mapp-forslag', 'vy-skiss': 'mapp-forslag' },
   }));
 }

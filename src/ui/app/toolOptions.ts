@@ -1,4 +1,6 @@
 import type { WallFace } from '../../elements/wallSides';
+import { LINE_TYPES, PATTERN_LABELS, PEN_WEIGHTS, SHAPE_LABELS, type FillPattern, type LineType } from '../../elements/drawing2d';
+import type { Draw2DKind } from '../tools/draw2dTool';
 import { icons } from '../icons';
 import { escapeHtml } from '../labels';
 import type { AppContext } from './context';
@@ -81,6 +83,22 @@ export function installToolOptions(app: AppContext) {
         <span class="opt-hint">Klicka punkter att mäta mellan. Dubbelklick eller Enter börjar om.</span>`;
       app.toolOptions.hidden = false;
       updateMeasureOptions();
+    } else if (app.ui.tool === 'draw2d') {
+      const t = app.draw2dTool;
+      const o = t.options;
+      const kinds: [Draw2DKind, string][] = [...(Object.entries(SHAPE_LABELS) as [Draw2DKind, string][]), ['fill', 'Fyllning']];
+      const comma = (n: number) => n.toLocaleString('sv-SE');
+      app.toolOptions.innerHTML = `
+        <label class="opt"><span>Form</span><select id="d2-kind" aria-label="Form">${kinds.map(([k, l]) => `<option value="${k}"${k === o.kind ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+        ${
+          o.kind === 'fill'
+            ? `<label class="opt"><span>Mönster</span><select id="d2-pattern" aria-label="Mönster">${(Object.entries(PATTERN_LABELS) as [FillPattern, string][]).map(([k, l]) => `<option value="${k}"${k === o.pattern ? ' selected' : ''}>${l}</option>`).join('')}</select></label>`
+            : `<label class="opt"><span>Penna</span><select id="d2-weight" aria-label="Linjetjocklek">${PEN_WEIGHTS.map((w) => `<option value="${w}"${w === o.weight ? ' selected' : ''}>${comma(w)}</option>`).join('')}</select></label>
+        <label class="opt"><span>Linje</span><select id="d2-linetype" aria-label="Linjetyp">${(Object.entries(LINE_TYPES) as [LineType, { label: string }][]).map(([k, v]) => `<option value="${k}"${k === o.linetype ? ' selected' : ''}>${v.label}</option>`).join('')}</select></label>`
+        }
+        ${t.open ? `<button class="btn btn-primary" data-action="d2-done" ${t.count >= (o.kind === 'fill' ? 3 : 2) ? '' : 'disabled'}>Klar</button>` : ''}
+        <span class="opt-hint">${t.hintText()}</span>`;
+      app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'text') {
       app.toolOptions.innerHTML = `
         <label class="opt"><span>Text</span><input id="text-value" value="${escapeHtml(app.textTool.text)}" aria-label="Text" style="width:180px"></label>
@@ -98,8 +116,11 @@ export function installToolOptions(app: AppContext) {
   }
 
   function placeCmdBar(): void {
+    // Avbryt ligger ovanför verktygsraden, eller ovanför 2D/3D-växlaren när raden är tom.
     const bar = app.$<HTMLElement>('.cmd-bar');
-    bar.style.bottom = `${(app.toolOptions.hidden ? 0 : app.toolOptions.offsetHeight + 8) + 14}px`;
+    const canvas = app.toolOptions.parentElement!;
+    const above = app.toolOptions.hidden ? app.$<HTMLElement>('.view-modes') : app.toolOptions;
+    bar.style.bottom = `${Math.max(0, canvas.clientHeight - above.offsetTop) + 8}px`;
   }
 
   /** Måttbandets värden i verktygsraden, utan att bygga om den. */
@@ -129,6 +150,10 @@ export function installToolOptions(app: AppContext) {
     if (t.id === 'roof-eave' && Number.isFinite(num)) app.roofTool.options.eave = Math.round(num);
     if (t.id === 'wall-def') app.wallTool.options.definition = t.value;
     if (t.id === 'opening-def') (app.ui.tool === 'door' ? app.doorTool : app.windowTool).options.definition = t.value;
+    if (t.id === 'd2-kind') app.draw2dTool.setKind(t.value as Draw2DKind);
+    if (t.id === 'd2-weight' && num > 0) app.draw2dTool.options.weight = num;
+    if (t.id === 'd2-linetype') app.draw2dTool.options.linetype = t.value as LineType;
+    if (t.id === 'd2-pattern') app.draw2dTool.options.pattern = t.value as FillPattern;
   });
   app.toolOptions.addEventListener('input', (e) => {
     const t = e.target as HTMLInputElement;
@@ -182,6 +207,7 @@ export function installToolOptions(app: AppContext) {
     }
     if (b.dataset.action === 'roof-house') app.roofOverHouse();
     if (b.dataset.action === 'dim-done') app.dimensionTool.donePoints();
+    if (b.dataset.action === 'd2-done') app.draw2dTool.finish(false);
   });
   return { renderToolOptions, updateMeasureOptions };
 }

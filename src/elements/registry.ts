@@ -33,6 +33,8 @@ export interface PlanContext {
   memo<T>(key: string, fn: () => T): T;
   /** Elementets parametrar med typens värden ifyllda. */
   params<P>(el: Element<any>): P;
+  /** Elementet syns inte i vyn men visas tonat (Visa dolda 2D-element). */
+  hiddenInView(el: Element<any>): boolean;
 }
 
 /** Ett element med den åtgärd det visas med. */

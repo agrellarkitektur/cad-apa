@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import { FORMAT_VERSION } from '../src/core/model';
 import {
   createDefinition,
   createProposal,
@@ -289,7 +290,7 @@ describe('filformat', () => {
     const v1 = { ...sampleProject(), formatVersion: 1 } as any;
     delete v1.graphics;
     const doc = parse(JSON.stringify(v1));
-    expect(doc.formatVersion).toBe(4);
+    expect(doc.formatVersion).toBe(FORMAT_VERSION);
     expect(doc.graphics.name).toBe('Svensk standard');
   });
 
@@ -618,10 +619,11 @@ describe('version 0.6.2', () => {
   it('en äldre version skriver inte över ett autospar från en nyare', async () => {
     const { mayOverwrite, recordFormatVersion } = await import('../src/storage/localStore');
     const nu = serialize(sampleProject());
-    expect(recordFormatVersion({ text: nu })).toBe(4);
-    expect(mayOverwrite({ text: nu }, 4)).toBe(true);
+    expect(recordFormatVersion({ text: nu })).toBe(FORMAT_VERSION);
+    expect(mayOverwrite({ text: nu }, FORMAT_VERSION)).toBe(true);
+    expect(mayOverwrite({ text: nu }, 4)).toBe(false);
     // Autospar från före 0.6.2 har inget formatfält; versionen läses ur texten.
-    expect(mayOverwrite({ text: nu.replace('"formatVersion": 4', '"formatVersion": 5') }, 4)).toBe(false);
+    expect(mayOverwrite({ text: nu.replace(`"formatVersion": ${FORMAT_VERSION}`, '"formatVersion": 9') }, FORMAT_VERSION)).toBe(false);
     expect(mayOverwrite({ text: '{"format":"bacchus-project","formatVersion":5}' }, 3)).toBe(false);
     // Fältet går före texten.
     expect(mayOverwrite({ text: nu, formatVersion: 5 }, 4)).toBe(false);

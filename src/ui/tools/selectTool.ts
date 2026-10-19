@@ -67,21 +67,19 @@ export class SelectTool implements ViewTool {
   }
 
   down(p: ViewPointer): 'capture' | 'pan' | 'ignore' {
-    // I fasader och sektioner går det bara att markera.
-    if (this.host.readOnly?.()) {
-      if (p.pointerType === 'touch') return 'pan';
-      this.box = { a: p.model, b: p.model };
-      return 'capture';
-    }
-    const g = this.gripAt(p.model);
+    // I fasader och sektioner går modellen bara att markera; det som är
+    // ritat i dem (mått, text, 2D, taklutningar) går att flytta (0.8).
+    const ro = !!this.host.readOnly?.();
+    const g = ro ? null : this.gripAt(p.model);
     if (g) {
       this.grip = { ...g, companions: this.companionsAt(g.wallId, g.from), snap: null };
       return 'capture';
     }
     // Trycker man på något som redan är markerat flyttas markeringen.
     const hit = pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, p.pointerType === 'touch' ? 14 : 6));
+    const movable = hit && (!ro || this.host.canEdit?.(hit));
     // Med Ctrl (Cmd på Mac) blir det en kopia som dras.
-    if (hit && this.host.selection.has(hit) && !p.shift) {
+    if (hit && movable && this.host.selection.has(hit) && !p.shift) {
       // Trycker man nära ett hörn på det markerade blir hörnet baspunkt, så
       // att det kan läggas exakt mot ett annat hörn.
       const base = snap({ cursor: p.model, segments: this.host.snapSegments(), tol: pxToMm(this.host, p.pointerType === 'touch' ? 20 : 10) });
@@ -170,10 +168,16 @@ export class SelectTool implements ViewTool {
           this.host.selection.set(ids);
           return;
         }
+        const ids = this.host.readOnly?.() ? m.ids.filter((id) => this.host.canEdit?.(id)) : m.ids;
+        const doc = this.host.store.doc;
+        if (ids.length && ids.every((id) => doc.elements[id]?.locked)) {
+          this.host.hint('Låst. Lås upp i egenskaperna för att flytta.', 3000);
+          return;
+        }
         // Alt lossar väggen från sina anslutningar; annars följer de med.
-        const r = moveElements(this.host.store, m.ids, [d[0], d[1]], 'Flytta', { keepJoins: !p.alt });
+        const r = moveElements(this.host.store, ids, [d[0], d[1]], 'Flytta', { keepJoins: !p.alt });
         if (r.released) this.host.hint(releasedHint(r.released), 4000);
-        this.host.elementsMoved?.(m.ids, d, m.target.point);
+        this.host.elementsMoved?.(ids, d, m.target.point);
       } else {
         // Klick på det markerade: Modifiera-paletten, utom vid dubbelklick.
         const now = performance.now();
@@ -217,7 +221,7 @@ export class SelectTool implements ViewTool {
 
   hover(p: ViewPointer | null): void {
     this.hoverId = p ? pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, 6)) : null;
-    if (this.host.readOnly?.()) {
+    if (this.host.readOnly?.() && !(this.hoverId && this.host.canEdit?.(this.hoverId))) {
       this.host.view.svg.style.cursor = this.cursor = 'default';
       return;
     }
@@ -359,7 +363,7 @@ export class SelectTool implements ViewTool {
 
 /** En sektions- eller fasadlinje som placerats för hand och har grepp i ändarna. */
 export function isManualMarker(el: Element | undefined): el is Element {
-  return !!el && (el.type === 'Section' || el.type === 'Elevation') && !el.params.auto;
+  return !!el && (el.type === 'Section' || el.type === 'Elevation') && !el.params.auto && !el.locked;
 }
 
 export function releasedHint(n: number): string {

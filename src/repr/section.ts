@@ -6,6 +6,7 @@ import { typeOf, type PlanItem } from '../elements/registry';
 import { difference, union, type Rings } from '../geometry/boolean';
 import { clipDepth, clipPlane, clipSegAxis, clipSegDepth, featureEdges, visibleSegments, type Seg, type V3 } from '../geometry/hiddenLine';
 import { roofPlanes, type RoofParams } from '../elements/roof';
+import { slopeSymbol, type RoofSlopeParams } from '../elements/roofSlope';
 import type { PlanContext } from '../elements/registry';
 import { createContext } from './context';
 import { solidTriangles } from './mesh';
@@ -26,6 +27,18 @@ export interface SectionResult {
   pickables: Pickable[];
   /** Hur lång tid uträkningen tog, ms. */
   ms: number;
+  /**
+   * Automatiska taklutningar (0.8), med id `slope:<tak>:<takfall>`. Markeras
+   * en blir den ett eget objekt med de här värdena (`RoofSlope`).
+   */
+  slopes: Record<string, RoofSlopeParams>;
+  /** Snittytorna (0.8), i linjens koordinater (x längs linjen, y höjd), för att fylla snittet i 3D. */
+  cutFaces: { material: string; rings: Rings }[];
+}
+
+/** Id för en automatisk taklutning, innan den blivit ett eget objekt. */
+export function autoSlopeId(roof: Id, face: number): string {
+  return `slope:${roof}:${face}`;
 }
 
 interface EdgeKey {
@@ -77,7 +90,8 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
 
   // Formerna, med åtgärd. Det som rivs byggs för sig, så att det inte
   // påverkar skarvarna i det som står kvar.
-  const { ctx, visible } = createContext(doc, marker.storey, view, style, (t) => !!(t.model3d || t.model3dBatch));
+  // Modellen på våningen; 2D-elementen i fasaden eller sektionen ritas för sig (se buildPlan med `place`).
+  const { ctx, visible } = createContext(doc, marker.storey, { ...view, place: undefined, viewId: undefined }, style, (t) => !!(t.model3d || t.model3dBatch));
   const groups = new Map<string, PlanItem[]>();
   for (const item of visible) {
     const key = `${item.el.type}|${item.action === 'demolished' ? 'd' : 'k'}`;
@@ -157,11 +171,13 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
 
   // Snittytor där linjen skär formerna.
   const cuts = new Map<string, { action: Action; poche: boolean; ids: Set<string>; rings: Rings[] }>();
+  const cutFaces: { material: string; rings: Rings }[] = [];
   if (isSection) {
     for (const { s, demolished } of shapes) {
       if (s.kind === 'edges' || demolished) continue;
       const polys = cutSolid(s, O, r, v, z0, uMax);
       if (!polys.length) continue;
+      for (const rings of polys) cutFaces.push({ material: s.material, rings });
       const action = actionOfId(s.id);
       const poche = POCHE.has(s.material);
       const k = `${action}|${poche ? 'p' : 'o'}|${poche ? '' : s.id}`;
@@ -181,8 +197,9 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   };
   let minU = Infinity;
   let maxU = -Infinity;
+  const slopes: Record<string, RoofSlopeParams> = {};
   for (const l of visibleLines) {
-    const pen: Pen = l.key.part ? { ...PART_PEN[l.key.part], ...(l.key.dash ? { dash: l.key.dash } : {}) } : { weight: 0.18 };
+    const pen: Pen = l.key.part ? { ...PART_PEN[l.key.part], ...(style.pens?.[l.key.part] as Pen | undefined), ...(l.key.dash ? { dash: l.key.dash } : {}) } : { weight: 0.18 };
     const raw: Primitive = { kind: 'line', a: l.a, b: l.b, pen, origin: { objectId: l.key.id, objectType: doc.elements[l.key.id]?.type, part: l.key.part ?? 'vy' } };
     const p = applyStyle(raw, style.actions[ctx.styleKeyOf(l.key.action)], l.key.action, style);
     prims.push(p);
@@ -211,11 +228,24 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     // Marklinje under byggnaden, och nivåer för golv och högsta punkt.
     const ground = Math.min(minZ, z0);
     prims.push({ kind: 'line', a: [minU - 1500, ground], b: [maxU + 1500, ground], pen: { weight: 0.7 }, origin: { part: 'mark' } });
-    // Taklutningen, där takfallet syns i sin rätta vinkel.
+    // Taklutningen, där takfallet syns i sin rätta vinkel. Takfall som har
+    // en taklutning som eget objekt i den här vyn hoppas över; objektet ritar sig själv.
     if (!view.hide?.includes('roofSlope')) {
-      for (const p of roofSlopes(ctx, toView, view.detail ?? 'normal', style.labels.heights.dimension)) {
-        prims.push(p);
-        if (p.origin?.objectId) own(p.origin.objectId, p);
+      const taken = new Set(
+        Object.values(doc.elements)
+          .filter((e) => e.type === 'RoofSlope' && e.space === markerId)
+          .map((e) => autoSlopeId((e.params as unknown as RoofSlopeParams).roof, (e.params as unknown as RoofSlopeParams).face)),
+      );
+      for (const pl of roofSlopes(ctx, toView)) {
+        const id = autoSlopeId(pl.roof, pl.face);
+        if (taken.has(id)) continue;
+        slopes[id] = pl;
+        const sty = view.detail === 'sketch' ? 'text' : 'arc';
+        const slope = ctx.params<RoofParams>(doc.elements[pl.roof]).slope;
+        for (const p of slopeSymbol(pl.at, pl.toward, slope, pl.len, sty, style.labels.heights.dimension, { objectId: id, objectType: 'RoofSlope', part: 'taklutning' })) {
+          prims.push(p);
+          own(id, p);
+        }
       }
     }
     const levels = [...new Set([z0, Math.round(maxZ)])];
@@ -228,58 +258,43 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     regions: list.flatMap((p) => (p.kind === 'region' ? [p.rings as Vec2[][]] : [])),
     prims: list.filter((p) => p.kind !== 'region'),
   }));
-  return { name: markerName(doc, marker), prims, pickables, ms: performance.now() - t0 };
+  return { name: markerName(doc, marker), prims, pickables, ms: performance.now() - t0, slopes, cutFaces };
 }
 
 /**
- * Taklutningen i en fasad eller sektion. Bara takfall som syns i sin rätta
- * lutning får den (man ser dem från gaveln). Skiss: gradtalet vid takfallet.
- * Normal och Detalj: en vågrät linje, en båge och gradtalet.
+ * Var taklutningen sätts ut i en fasad eller sektion. Bara takfall som syns
+ * i sin rätta lutning får den (man ser dem från gaveln), med symbolen en bit
+ * upp på takfallets kant närmast betraktaren.
  */
-function roofSlopes(ctx: PlanContext, toView: (x: number, y: number, z: number) => V3, level: string, height: number): Primitive[] {
-  const out: Primitive[] = [];
-  const k = 100; // ritningsskalan, för storleken på papper
+function roofSlopes(ctx: PlanContext, toView: (x: number, y: number, z: number) => V3): RoofSlopeParams[] {
+  const out: RoofSlopeParams[] = [];
   for (const el of ctx.visible('Roof')) {
     if (ctx.actionOf(el) === 'demolished') continue;
     const p = ctx.params<RoofParams>(el);
-    const origin = { objectId: el.id, objectType: 'Roof', part: 'taklutning' };
-    for (const rp of roofPlanes(p)) {
+    roofPlanes(p).forEach((rp, face) => {
       const pts = rp.rings[0].map((q) => toView(q[0], q[1], zOn(rp.top, q[0], q[1])));
-      if (pts.length < 3) continue;
+      if (pts.length < 3) return;
       // Takfallets kant närmast betraktaren, från takfot till nock.
       const dmin = Math.min(...pts.map((q) => q[2]));
       const near = pts.filter((q) => q[2] < dmin + 1);
-      if (near.length < 2) continue;
+      if (near.length < 2) return;
       const low = near.reduce((a, q) => (q[1] < a[1] ? q : a));
       const high = near.reduce((a, q) => (q[1] > a[1] ? q : a));
       const du = high[0] - low[0];
       const dz = high[1] - low[1];
-      if (Math.abs(du) < 100 || dz < 10) continue;
+      if (Math.abs(du) < 100 || dz < 10) return;
       const apparent = (Math.atan2(dz, Math.abs(du)) * 180) / Math.PI;
-      if (Math.abs(apparent - p.slope) > 0.5) continue;
-      const text = `${p.slope.toLocaleString('sv-SE', { maximumFractionDigits: 1 })}°`;
+      if (Math.abs(apparent - p.slope) > 0.5) return;
       const t = 0.55;
-      const B: Vec2 = [low[0] + du * t, low[1] + dz * t];
-      const toward = Math.sign(low[0] - high[0]);
-      if (level === 'sketch') {
-        // Gradtalet ovanför takfallet.
-        const nx = -dz;
-        const nz = Math.abs(du);
-        const l = Math.hypot(nx, nz);
-        out.push({ kind: 'text', at: [B[0] + (nx / l) * 3 * k * -toward, B[1] + (nz / l) * 3 * k], text, height, align: 'middle', pen: { weight: 0.18 }, origin });
-        continue;
-      }
-      const L = Math.max(600, Math.abs(du) * 0.35);
-      const R = L * 0.75;
-      out.push({ kind: 'line', a: B, b: [B[0] + toward * L, B[1]], pen: { weight: 0.18 }, origin });
-      const aH = toward > 0 ? 0 : Math.PI;
-      const aRoof = Math.atan2(low[1] - B[1], low[0] - B[0]);
-      const sweep = (((aRoof - aH) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-      const [start, end] = sweep < Math.PI ? [aH, aRoof] : [aRoof, aH];
-      out.push({ kind: 'arc', center: B, radius: R, start, end, pen: { weight: 0.18 }, origin });
-      const am = (aH + aRoof) / 2 + (Math.abs(aRoof - aH) > Math.PI ? Math.PI : 0);
-      out.push({ kind: 'text', at: [B[0] + Math.cos(am) * (R + 2.5 * k), B[1] + Math.sin(am) * (R + 2.5 * k) - 1 * k], text, height, align: 'middle', pen: { weight: 0.18 }, origin });
-    }
+      out.push({
+        roof: el.id,
+        face,
+        at: [Math.round(low[0] + du * t), Math.round(low[1] + dz * t)],
+        toward: low[0] > high[0] ? 1 : -1,
+        len: Math.round(Math.max(600, Math.abs(du) * 0.35)),
+        style: 'auto',
+      });
+    });
   }
   return out;
 }

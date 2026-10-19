@@ -27,6 +27,11 @@ export interface ProjectInfo {
   roomNumbering?: RoomNumbering;
   /** Om dörrarnas individuella nummer (D1203) är låsta. */
   doorNumbering?: { locked: boolean };
+  /**
+   * Projektvinklar (format 5) i grader, utöver 0°, 45° och 90° som alltid
+   * gäller, t.ex. 103,5 för en sned tillbyggnad. Vinkelräta räknas med.
+   */
+  angles?: number[];
 }
 
 /**
@@ -51,7 +56,86 @@ export interface ViewDef {
   trace?: Id | null;
   /** Vyn visar en fasad eller sektion (elementets id) i stället för planen. (Format 4.) */
   marker?: Id | null;
+  /** Vyn visar ett arbetsblad (format 5). */
+  worksheet?: Id | null;
+  /** Vy-taggar (format 5), t.ex. "undertak" eller "1:50". 2D-element kan visas i vyer med vissa taggar. */
+  tags?: string[];
+  /** Skalan vyn ritas i på ett blad, nämnaren (format 5). Texthöjder räknas efter den. */
+  scale?: number;
 }
+
+/**
+ * Var ett 2D-element, en text eller ett mått syns (format 5). Utelämnad:
+ * i alla vyer av våningen (eller av fasaden, sektionen eller arbetsbladet
+ * det är ritat i).
+ * - views: bara i de uppräknade vyerna. Ett id är en sparad vy eller
+ *   modellvyn av en våning, fasad, sektion eller ett arbetsblad
+ *   (`modelViewId`). "Bara den här vyn" är en lista med en vy. Vyer av andra
+ *   våningar får vara med.
+ * - tags: i vyer med alla (`all`) eller någon (`any`) av taggarna.
+ */
+export type ShowIn = { kind: 'views'; views: Id[] } | { kind: 'tags'; tags: string[]; match: 'all' | 'any' };
+
+/** Id för modellvyn av en våning, fasad, sektion eller ett arbetsblad: det man ser utan en sparad vy. */
+export function modelViewId(place: Id): Id {
+  return `modell:${place}`;
+}
+
+/** En mapp i projektträdet (format 5). Mappar kan ligga i mappar. */
+export interface Folder {
+  id: Id;
+  name: string;
+  /** Fliken i projektträdet mappen hör till. */
+  tab: TreeTab;
+  parent: Id | null;
+}
+
+export type TreeTab = 'underlag' | 'modell' | 'vyer' | 'ritningar';
+
+/** Ett arbetsblad (format 5): en fri 2D-ritning som inte hör till ett våningsplan. */
+export interface Worksheet {
+  id: Id;
+  name: string;
+}
+
+export type PaperSize = 'A4' | 'A3' | 'A2' | 'A1' | 'A0';
+
+/** En vy placerad på ett ritningsblad (format 5). Läget är i mm på papperet. */
+export interface Viewport {
+  id: Id;
+  view: Id;
+  at: [number, number];
+  /** Skalans nämnare, t.ex. 100 för 1:100. */
+  scale: number;
+  /** Vyrubrik; utelämnad = vyns namn. */
+  title?: string;
+}
+
+/** Ett ritningsblad (format 5). */
+export interface Sheet {
+  id: Id;
+  /** Ritningsnummer, t.ex. "A-40.1-101". Ger också filnamnet vid export. */
+  number: string;
+  name: string;
+  size: PaperSize;
+  orientation: 'landscape' | 'portrait';
+  titleBlock: 'bh90' | 'beast';
+  /** Fält i ritningshuvudet utöver projektets (datum, ändring, skede …). */
+  fields: Record<string, string>;
+  viewports: Viewport[];
+}
+
+/** En fil som hör till projektet (format 5): en bild, en PDF eller en DXF som underlag. */
+export interface Asset {
+  id: Id;
+  name: string;
+  mime: string;
+  /** Innehållet som base64. */
+  data: string;
+}
+
+/** Vy-taggar som nya projekt börjar med. */
+export const DEFAULT_VIEW_TAGS = ['golvplan', 'undertak', 'möblering', 'bygglov', 'bygghandling', '1:50', '1:100'];
 
 /**
  * Rumsnumrering: byggnad + plan + löpnummer (1101) eller plan + löpnummer
@@ -126,12 +210,22 @@ export interface Element<P extends object = Record<string, unknown>> {
   host?: Id;
   /** Definitionen elementet är en instans av. */
   definition?: Id;
+  /**
+   * Var elementet är ritat (format 5): en fasad, en sektion (markörens id)
+   * eller ett arbetsblad. Utelämnad = våningens plan. Koordinaterna gäller
+   * i den ytan; i en fasad eller sektion är x längs linjen och y höjden.
+   */
+  space?: Id;
+  /** Var elementet syns (format 5), se `ShowIn`. Gäller 2D-element, text och mått. */
+  show?: ShowIn;
+  /** Låst (format 5): kan inte flyttas eller ändras av misstag. */
+  locked?: boolean;
   params: P;
   props: PropertySets;
 }
 
 export const FORMAT = 'bacchus-project';
-export const FORMAT_VERSION = 4;
+export const FORMAT_VERSION = 5;
 
 export interface ProjectDoc {
   format: typeof FORMAT;
@@ -145,6 +239,18 @@ export interface ProjectDoc {
   graphics: StyleSheet;
   /** Sparade vyer. */
   views: ViewDef[];
+  /** Mappar i projektträdet (format 5). */
+  folders: Folder[];
+  /** Vilken mapp något ligger i (format 5): vyns, markörens, våningens, bladets … id → mappens id. */
+  tree: Record<Id, Id>;
+  /** Projektets vy-taggar (format 5). */
+  viewTags: string[];
+  /** Arbetsblad (format 5). */
+  worksheets: Worksheet[];
+  /** Ritningsblad (format 5). */
+  sheets: Sheet[];
+  /** Filer som underlag (format 5). */
+  assets: Record<Id, Asset>;
 }
 
 /**
@@ -175,7 +281,13 @@ export function emptyProject(name: string, kind: ProjectKind, fields: Record<str
     elements: drawingMarkers('pl-1'),
     graphics: structuredClone(SWEDISH_STANDARD),
     views: [],
+    ...emptyTree(),
   };
+}
+
+/** Fälten som kom i format 5, tomma. */
+export function emptyTree(): Pick<ProjectDoc, 'folders' | 'tree' | 'viewTags' | 'worksheets' | 'sheets' | 'assets'> {
+  return { folders: [], tree: {}, viewTags: [...DEFAULT_VIEW_TAGS], worksheets: [], sheets: [], assets: {} };
 }
 
 /**

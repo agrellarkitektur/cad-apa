@@ -1,4 +1,4 @@
-import type { Definition, Element, Id, ProjectDoc, State, Storey, ViewDef } from './model';
+import type { Asset, Definition, Element, Id, ProjectDoc, State, Storey, ViewDef } from './model';
 
 /**
  * Alla ändringar i ett projekt går genom DocStore som transaktioner. En
@@ -12,6 +12,8 @@ import type { Definition, Element, Id, ProjectDoc, State, Storey, ViewDef } from
 type Collections = {
   elements: Element;
   definitions: Definition;
+  /** Underlagens filer (format 5). Egen samling, så att ångra inte kopierar alla filer vid varje ändring. */
+  assets: Asset;
 };
 
 type ListCollections = {
@@ -26,7 +28,7 @@ export type Change =
   | { [K in FieldKey]: { kind: 'field'; key: K; before: ProjectDoc[K]; after: ProjectDoc[K] } }[FieldKey];
 
 /** Fält på projektnivå som byts ut i sin helhet. */
-type FieldKey = 'project' | 'graphics';
+export type FieldKey = 'project' | 'graphics' | 'folders' | 'tree' | 'viewTags' | 'worksheets' | 'sheets';
 
 export interface Transaction {
   /** Visas i gränssnittet, t.ex. "Ångra: Riv vägg". */
@@ -188,6 +190,20 @@ export class TxBuilder {
     this.record({ kind: 'field', key: 'graphics', before: this.working.graphics, after: clone(graphics) });
   }
 
+  /** Byt ut ett fält på projektnivå: mappar, trädet, vy-taggar, arbetsblad eller blad (format 5). */
+  setField<K extends FieldKey>(key: K, value: ProjectDoc[K]): void {
+    this.record({ kind: 'field', key, before: this.working[key], after: clone(value) } as Change);
+  }
+
+  putAsset(asset: Asset): void {
+    this.record({ kind: 'record', collection: 'assets', id: asset.id, before: this.working.assets[asset.id], after: clone(asset) });
+  }
+
+  removeAsset(id: Id): void {
+    const before = this.working.assets[id];
+    if (before) this.record({ kind: 'record', collection: 'assets', id, before, after: undefined });
+  }
+
   private record(change: Change): void {
     this.changes.push(change);
     this.working = applyChanges(this.working, [change], 'forward');
@@ -203,6 +219,7 @@ export function applyChanges(doc: ProjectDoc, changes: readonly Change[], direct
   let next: ProjectDoc = { ...doc };
   let elementsCopied = false;
   let definitionsCopied = false;
+  let assetsCopied = false;
 
   for (const c of list) {
     const value = direction === 'forward' ? afterOf(c) : beforeOf(c);
@@ -215,6 +232,13 @@ export function applyChanges(doc: ProjectDoc, changes: readonly Change[], direct
           }
           if (value) next.elements[c.id] = value as Element;
           else delete next.elements[c.id];
+        } else if (c.collection === 'assets') {
+          if (!assetsCopied) {
+            next.assets = { ...next.assets };
+            assetsCopied = true;
+          }
+          if (value) next.assets[c.id] = value as Asset;
+          else delete next.assets[c.id];
         } else {
           if (!definitionsCopied) {
             next.definitions = { ...next.definitions };

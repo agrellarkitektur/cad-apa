@@ -81,6 +81,8 @@ export class DimensionTool implements ViewTool {
 
   /** Element som måttet kan knytas till: det som finns i tillståndet man ritar i. */
   private candidates(): Element[] {
+    // I fasader och sektioner knyts måtten inte till planens väggar.
+    if (this.host.space?.()) return [];
     const state = this.host.activeState();
     return Object.values(this.host.store.doc.elements).filter(
       (e) => e.storey === this.host.storey() && e.states.includes(state) && ['Wall', 'Door', 'Window', 'Furniture'].includes(e.type),
@@ -167,7 +169,8 @@ export class DimensionTool implements ViewTool {
     // Spara punkterna med sina kopplingar till modellen.
     const d = preview ? { ...preview, points: this.points } : null;
     if (d && d.points.length >= 2) {
-      addElements(this.host.store, [{ type: 'Dimension', storey: this.host.storey(), tags: [], params: { ...d }, props: {} }], this.host.activeState(), 'Måttsätt');
+      const space = this.host.space?.();
+      addElements(this.host.store, [{ type: 'Dimension', storey: this.host.storey(), ...(space ? { space } : {}), tags: [], params: { ...d }, props: {} }], this.host.activeState(), 'Måttsätt');
     }
     this.reset();
   }
@@ -225,7 +228,7 @@ export class TextTool implements ViewTool {
     }
     const [el] = addElements(
       this.host.store,
-      [{ type: 'Text', storey: this.host.storey(), tags: [], params: { pos: roundMm(at), text: this.text, height: this.height, angle: 0 }, props: {} }],
+      [{ type: 'Text', storey: this.host.storey(), ...(this.host.space?.() ? { space: this.host.space!() } : {}), tags: [], params: { pos: roundMm(at), text: this.text, height: this.height, angle: 0 }, props: {} }],
       this.host.activeState(),
       'Skriv text',
     );

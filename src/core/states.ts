@@ -26,6 +26,17 @@ export interface ViewStates {
   hide?: readonly string[];
   /** Måttsätt det som är nytt automatiskt (när man jämför). */
   autoDims?: boolean;
+  /**
+   * Vilken vy det är (format 5), för 2D-element med Visas i: en sparad vys id
+   * eller modellvyns (`modelViewId`). Utelämnad = våningens modellvy.
+   */
+  viewId?: Id;
+  /** Ytan som ritas (format 5): en fasad, sektion eller ett arbetsblad. Utelämnad = våningens plan. */
+  place?: Id;
+  /** Vyns vy-taggar (format 5). */
+  viewTags?: readonly string[];
+  /** Visa 2D-element som inte syns i vyn, tonade, för att hitta dem. */
+  showHidden?: boolean;
 }
 
 export function actionOf(el: Pick<Element, 'states'>, view: ViewStates): Action {

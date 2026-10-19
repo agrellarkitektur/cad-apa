@@ -1,9 +1,12 @@
 import { dimensionType, textType } from './annotation';
 import { doorType } from './door';
+import { fill2dType, line2dType } from './drawing2d';
 import { furnitureType } from './furniture';
 import { registerType } from './registry';
-import { elevationType, northType, sectionType } from './markers';
+import { placement } from '../core/commands';
+import { elevationType, markerFrame, northType, sectionType } from './markers';
 import { roofType } from './roof';
+import { roofSlopeType } from './roofSlope';
 import { spaceType } from './space';
 import { wallType } from './wall';
 import { windowType } from './window';
@@ -21,6 +24,14 @@ export function registerBuiltInTypes(): void {
   registerType(northType);
   registerType(elevationType);
   registerType(sectionType);
+  registerType(line2dType);
+  registerType(fill2dType);
+  registerType(roofSlopeType);
+  // Fasader och sektioner som följer byggnaden placeras där de ligger när de flyttas.
+  placement.auto = (doc, el) => {
+    const f = markerFrame(doc, el);
+    return { start: [Math.round(f.start[0]), Math.round(f.start[1])], end: [Math.round(f.end[0]), Math.round(f.end[1])] };
+  };
 }
 
 export { typeOf, allTypes } from './registry';

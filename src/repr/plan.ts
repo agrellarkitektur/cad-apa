@@ -34,7 +34,7 @@ export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: 
   // Rita i typernas ordning; rivet sist så att de streckade linjerna syns.
   const groups = new Map<string, PlanItem[]>();
   for (const item of visible) {
-    const key = `${typeOf(item.el.type)!.drawOrder + (item.action === 'demolished' ? 1000 : 0)}|${item.el.type}|${item.action}`;
+    const key = `${typeOf(item.el.type)!.drawOrder + (item.action === 'demolished' ? 1000 : 0)}|${item.el.type}|${item.action}|${ctx.hiddenInView(item.el) ? 'dold' : ''}`;
     const list = groups.get(key) ?? [];
     list.push(item);
     groups.set(key, list);
@@ -48,7 +48,8 @@ export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: 
     const t = typeOf(items[0].el.type)!;
     const s = style.actions[ctx.styleKeyOf(items[0].action)];
     const drawn = t.planBatch ? t.planBatch(items, ctx) : items.flatMap(({ el }) => t.plan!(el, ctx));
-    for (const p of drawn) prims.push(applyStyle(p, s, items[0].action, style));
+    const hidden = ctx.hiddenInView(items[0].el);
+    for (const p of drawn) prims.push(hidden ? ghost(applyStyle(p, s, items[0].action, style)) : applyStyle(p, s, items[0].action, style));
 
     for (const { el } of items) {
       const own = t.plan ? t.plan(el, ctx) : [];
@@ -60,8 +61,16 @@ export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: 
       });
     }
   }
-  if (view.autoDims && view.compareTo && !view.hide?.includes('Dimension')) prims.push(...autoDimensions(ctx));
+  if (view.autoDims && view.compareTo && !view.place && !view.hide?.includes('Dimension')) prims.push(...autoDimensions(ctx));
   return { prims, pickables };
+}
+
+/** Ett 2D-element som inte syns i vyn men visas för att hittas: tunt, grått och streckat. */
+function ghost(p: Primitive): Primitive {
+  const pen: Pen = { weight: 0.13, color: 'muted', dash: [1, 1] };
+  if (p.kind === 'region') return { ...p, fill: { kind: 'none' }, outline: pen, ownFill: true };
+  if (p.kind === 'text') return { ...p, pen: { ...p.pen, color: 'muted' } };
+  return { ...p, pen } as Primitive;
 }
 
 /** Lägg på stilmallens färger, fyllningar och streckning för åtgärden. */

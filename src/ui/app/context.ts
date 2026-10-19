@@ -14,6 +14,7 @@ import type { PropertiesPanel } from '../propertiesPanel';
 import type { Selection } from '../selection';
 import type { SettingsDialog } from '../settingsDialog';
 import type { StyleDialog } from '../styleDialog';
+import type { Draw2DTool } from '../tools/draw2dTool';
 import type { DimensionTool, TextTool } from '../tools/annotationTools';
 import type { MarkerTool, RoofTool } from '../tools/markerTools';
 import type { MeasureTool } from '../tools/measureTool';
@@ -57,6 +58,7 @@ export interface AppContext {
   readonly roomTool: RoomTool;
   readonly dimensionTool: DimensionTool;
   readonly textTool: TextTool;
+  readonly draw2dTool: Draw2DTool;
   readonly measureTool: MeasureTool;
   readonly roofTool: RoofTool;
   readonly sectionTool: MarkerTool;

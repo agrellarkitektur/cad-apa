@@ -18,6 +18,14 @@ export interface ToolHost {
    * där koordinaterna inte är planens.
    */
   readOnly?(): boolean;
+  /** Om ett objekt går att ändra i en vy som annars bara går att markera (det som är ritat i fasaden eller sektionen). */
+  canEdit?(id: Id): boolean;
+  /**
+   * Ytan som ritas på (0.8): fasaden, sektionen eller arbetsbladet som är
+   * öppet, eller undefined för våningens plan. Nya mått, texter och
+   * 2D-element hamnar där.
+   */
+  space?(): Id | undefined;
   /** Tillståndet som visas och ritas i. */
   activeState(): Id;
   storey(): Id;
