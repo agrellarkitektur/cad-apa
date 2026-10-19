@@ -9,7 +9,12 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   och del 2 är byggda** och ligger på `main`; versionen heter
   `0.8.0-del.2` och demon visar den
   (https://claude.ai/artifact/2m7gq5gkkgSP2wFZ7fLGNJ). Filformatet är
-  fortfarande **5**. Ingen tagg eller release förrän 0.8.0 är klar.
+  fortfarande **5**.
+- **Nytt arbetssätt (19 oktober):** Carl August testar varje version på
+  webbhotellet via en release på GitHub, som han gör själv. Ingen demo och
+  ingen zip om han inte ber om det, och svaren behöver inte sluta med
+  demolänken. Säg alltid hur stora föreslagna ändringar är och om de
+  riskerar att behöva mer än en session (CLAUDE.md).
 - Del 2 innehåller det som blev kvar från del 1 (grepp för nock och takfot
   i fasader och sektioner, grepp och Modifiera för 2D-elementens punkter),
   underlag (PDF, bilder, DXF) och arbetsblad. Vad det är står i README
@@ -28,8 +33,10 @@ zip, avbryt), penntabell, typsnitt, öppningssätt för fönster, markörstilar
 och projektvinklar. Formatet finns redan (`sheets` med `viewports`,
 `ViewDef.scale`, `graphics.pens`, `graphics.font`, `project.angles`).
 
-Del 3 är stor. Föreslå Carl August en ordning och fråga om något kan
-vänta till en 0.8.1, innan något byggs (CLAUDE.md). Underlag på blad hör
+Del 3 är för stor för en session. Föreslå Carl August en uppdelning (t.ex.
+blad och vyer på blad i en session, Plot/export i nästa, grafik, markörer
+och projektvinklar i en tredje eller i 0.8.1) och fråga innan något byggs
+(CLAUDE.md). Underlag på blad hör
 till del 3: ett blad visar vyer, och vyerna visar underlagen som redan
 finns i dem.
 
@@ -50,7 +57,7 @@ finns i dem.
 - DXF: skraffering (HATCH), bilder och externa referenser läses inte.
   Mycket stora DXF-filer är inte provade; allt ritas om vid varje
   panorering. Vektorsnäpp mot PDF avvaktar (PLAN.md).
-- pdf.js gör demon större (2,8 MB mot 1,1 MB). Arbetaren byggs in i filen.
+- pdf.js laddas först när ett PDF-underlag visas (1,6 MB med arbetaren).
 - **Visas i** räknar vyer utan att bry sig om tillstånd.
 - Modellvyerna har inga vy-taggar, så ett element med taggar syns inte där;
   *Visa dolda 2D-element* under Visa visar dem tonade.
@@ -68,10 +75,11 @@ finns i dem.
   Commit avslutas med raderna som sessionen anger (Co-Authored-By och
   Claude-Session), sedan `git fetch origin main` och
   `git push origin HEAD:main`. Releaser på GitHub gör Carl August själv.
-- Demon: `npm run preview:artifact`, publicera `artifact/cad-apa.html` till
-  artefakten ovan (samma URL).
-- Titta på resultatet: servera `dist-artifact/` med
-  `python3 -m http.server 8765` och styr med Playwright (Python).
+- Titta på resultatet: `npm run build`, servera `dist/` med
+  `python3 -m http.server 8765` och styr med Playwright (Python). Det är
+  samma bygge som hamnar på webbhotellet.
+- Demon bara på begäran: `npm run preview:artifact`, läs artefakten ovan
+  (Artifact `read`) och publicera `artifact/cad-apa.html` till samma URL.
   `window.bacchus` har `store`, `view`, `selection`, `ui`, `modifyPalette`,
   `view3d`, `plan`, `setTool`, `setMode` och `goTo` (t.ex.
   `goTo({kind:'marker', id:'sektion-a'})` eller

@@ -17,8 +17,13 @@ byggs i vilken version), `docs/ARKITEKTUR.md` (idé och principer) och
   justeringar. Formatändringar samlas till nästa stora uppdatering.
 - Bakåtkompatibilitet är mycket viktig: varje formatändring får en migrering i
   `src/storage/format.ts` och ett test som öppnar en fil i det gamla formatet.
-- Avsluta varje svar med länken till demon:
-  https://claude.ai/artifact/2m7gq5gkkgSP2wFZ7fLGNJ
+- Han testar varje version på webbhotellet, via en release på GitHub som han
+  gör själv. Ingen demo och ingen zip behövs. Demon byggs och publiceras
+  bara när han ber om det (https://claude.ai/artifact/2m7gq5gkkgSP2wFZ7fLGNJ),
+  och svaren behöver inte sluta med länken.
+- När ändringar föreslås: säg hur stora de är och om de riskerar att behöva
+  mer än en session. Föreslå hellre en mindre version, eller dela upp den,
+  än att krama in för mycket.
 - Han testar på iPhone 13 Pro med Chrome och Windows 11 med Chrome.
 - En session per version. Småversioner (0.7.2 …) har 3–6 punkter. Säg till
   när chatten blir lång, och skriv då en överlämning i `docs/OVERLAMNING.md`.
@@ -33,9 +38,11 @@ byggs i vilken version), `docs/ARKITEKTUR.md` (idé och principer) och
 npm install
 npx tsc --noEmit && npx vitest run   # typer och tester
 npm run build                         # dist/ till webbhotellet
-npm run preview:artifact              # artifact/cad-apa.html, en enda fil
+npm run preview:artifact              # demon: artifact/cad-apa.html, bara på begäran
 ```
 
-Demon publiceras från `artifact/cad-apa.html` till artefakten ovan. Höj
-versionen i `src/core/engine.ts` och `package.json` och skriv vad som är nytt
-i README vid varje uppdatering.
+Testa mot `dist/` (det som hamnar på webbhotellet), se
+`docs/OVERLAMNING.md`. Demon (`npm run preview:artifact`, publiceras från
+`artifact/cad-apa.html` till artefakten ovan) bara på begäran. Höj versionen
+i `src/core/engine.ts` och `package.json` och skriv vad som är nytt i README
+vid varje uppdatering.
