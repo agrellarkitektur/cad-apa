@@ -3,9 +3,12 @@ import { DEFAULT_VIEW_TAGS, drawingMarkers, emptyTree, FORMAT, FORMAT_VERSION, t
 import { orientExteriorWalls } from '../elements/orient';
 
 /**
- * Projektfilens format. Varje gång formatet ändras höjs FORMAT_VERSION och
- * en migrering läggs till här, så att gamla projekt alltid går att öppna.
- * Nyckeln är versionen migreringen leder till.
+ * Projektfilens format. Varje gång formatet ändras höjs FORMAT_VERSION.
+ * Före formatfrysen (pilotprojektet, 0.13) läggs inga nya migreringar till:
+ * en fil i ett äldre format får ett tydligt meddelande i stället. Migreringarna
+ * nedan, till och med format 5, ligger kvar. Efter formatfrysen får varje
+ * formatändring en migrering här igen. Nyckeln är versionen migreringen leder
+ * till.
  */
 const migrations: Record<number, (doc: any) => any> = {
   // 1 → 2: stilmall för ritningsgrafiken. Äldre projekt får svensk standard.
@@ -72,7 +75,11 @@ export function parse(text: string): ProjectDoc {
   }
   while (version < FORMAT_VERSION) {
     const step = migrations[version + 1];
-    if (!step) throw new ProjectFormatError(`Det saknas en migrering från format ${version}.`);
+    if (!step) {
+      throw new ProjectFormatError(
+        `Projektet är sparat med en äldre betaversion av programmet (format ${version}). Före version 1.0 uppgraderas inte äldre projekt; öppna det i den version det gjordes med.`,
+      );
+    }
     data = step(data);
     version += 1;
     data.formatVersion = version;

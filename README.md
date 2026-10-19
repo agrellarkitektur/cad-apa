@@ -362,11 +362,24 @@ Version 0.8, del 2 av 3 (samma filformat, 5):
   kan sparas som vyer och tas bort med allt som är ritat på dem (går att
   ångra)
 
+Version 0.8, del 2.1 (samma filformat, 5):
+- **Snabbare fasader, sektioner och 3D** i stora projekt. Väggarnas skarvar
+  räknas nu bara mot väggarna intill, inte mot alla väggar. En fasad av 544
+  väggar tar ungefär en halv sekund i stället för 6–10 sekunder; ritningen
+  blir densamma
+- Ett projekt från en äldre betaversion som inte längre kan uppgraderas
+  får ett tydligt meddelande om det
+- Planen är omgjord efter ett proof of concept: blad och plot, flera
+  våningsplan och bjälklag, tak, trappor och IFC-export först, sedan ett
+  pilotprojekt (se `docs/PLAN.md`)
+
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer. När formatet ändras uppgraderas äldre
-projekt automatiskt när de öppnas; nyare projekt än programmet kan inte
-öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp
+Projektfilerna har ett formatnummer. Projekt till och med format 5
+uppgraderas automatiskt när de öppnas. Fram till pilotprojektet (0.13)
+uppgraderas inte projekt från äldre betaversioner när formatet ändras, så
+ett projekt öppnas i den version det gjordes med; därefter uppgraderas äldre
+projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp
 på webbhotellet (t.ex. `cad-apa/0.5/`, `cad-apa/0.6/`) bredvid den senaste.
 
 ## Kom igång

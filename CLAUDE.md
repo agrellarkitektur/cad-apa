@@ -13,10 +13,17 @@ byggs i vilken version), `docs/ARKITEKTUR.md` (idé och principer) och
 - Svara på svenska.
 - Kör inga uppdateringar, inte ens små, förrän han säger till. Diskutera först,
   sammanställ ändringarna, kör sedan.
-- Håll isär stora uppdateringar (ändrar filformatet, `FORMAT_VERSION`) och små
-  justeringar. Formatändringar samlas till nästa stora uppdatering.
-- Bakåtkompatibilitet är mycket viktig: varje formatändring får en migrering i
-  `src/storage/format.ts` och ett test som öppnar en fil i det gamla formatet.
+- Inriktningen står överst i `docs/PLAN.md`: små svenska projekt, och närmast
+  ett proof of concept fram till pilotprojektet (0.13). Föreslå inget som
+  inte behövs för en bygglovshandling före piloten, utan lägg det under
+  *Efter pilotprojektet*.
+- Bakåtkompatibilitet: före formatfrysen (0.13) skrivs inga migreringar.
+  Höj `FORMAT_VERSION` när formatet ändras och skriv den kortaste, bästa
+  koden; äldre filer får ett meddelande om att de kommer från en äldre
+  betaversion. Formatändringar behöver inte samlas till stora uppdateringar.
+  Efter formatfrysen får varje formatändring en migrering i
+  `src/storage/format.ts` och ett test som öppnar en fil i det gamla
+  formatet.
 - Han testar varje version på webbhotellet, via en release på GitHub som han
   gör själv. Ingen demo och ingen zip behövs. Demon byggs och publiceras
   bara när han ber om det (https://claude.ai/artifact/2m7gq5gkkgSP2wFZ7fLGNJ),
@@ -24,10 +31,16 @@ byggs i vilken version), `docs/ARKITEKTUR.md` (idé och principer) och
 - När ändringar föreslås: säg hur stora de är och om de riskerar att behöva
   mer än en session. Föreslå hellre en mindre version, eller dela upp den,
   än att krama in för mycket.
-- Han testar på iPhone 13 Pro med Chrome och Windows 11 med Chrome.
+- Han testar på Windows 11 med Chrome. Telefonen är inget mål: det som finns
+  för telefon får ligga kvar men testas inte och styr inga beslut.
+- Prestanda: `tests/prestanda.test.ts` ska gå igenom. Undvik algoritmer som
+  prövar varje objekt mot alla andra; pröva bara grannar (omskrivande
+  rektanglar, se `boxOf` och `boxesTouch` i `src/geometry/boolean.ts`).
+- Ungefär var tredje version föreslås en granskningssession utan nya
+  funktioner: städa, dela upp stora filer och leta efter långsam kod.
 - En session per version. Småversioner (0.7.2 …) har 3–6 punkter. Säg till
   när chatten blir lång, och skriv då en överlämning i `docs/OVERLAMNING.md`.
-- Snabbläge för småfixar: typer, tester och demon räcker; skärmbilder bara
+- Snabbläge för småfixar: typer och tester räcker; skärmbilder bara
   när ändringen syns. README och versionsnummer uppdateras ändå.
 - Nya delar av gränssnittet läggs som egna filer i `src/ui/app/`, inte i
   `src/ui/app.ts` (se UTVECKLING.md).

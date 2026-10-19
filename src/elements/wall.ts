@@ -1,5 +1,5 @@
 import type { Element } from '../core/model';
-import { difference, union, type Rings } from '../geometry/boolean';
+import { boxesTouch, boxOf, difference, union, type Box, type Rings } from '../geometry/boolean';
 import { wallFrame, type WallFrame } from '../geometry/wallFrame';
 import { add, cross, dist, dot, intersectLines, scale, sub } from '../geometry/vec';
 import type { Primitive, Vec2 } from '../repr/primitives';
@@ -304,15 +304,21 @@ export const wallType: ElementType<WallParams> = {
       () => [],
     );
     // Där väggar går in i varandra (T-skarvar) får den längre väggen ytan,
-    // så att inga ytor ligger dubbelt och flimrar.
+    // så att inga ytor ligger dubbelt och flimrar. Bara väggar vars
+    // omskrivande rektanglar möts prövas (0.8 del 2.1): förut slogs varje
+    // vägg ihop med alla tidigare, vilket växte med kvadraten på antalet.
     const order = [...walls].sort((a, b) => wallFrame(b.p).length - wallFrame(a.p).length);
-    const taken: Rings[] = [];
+    const taken: { rings: Rings; box: Box }[] = [];
     const own = new Map<string, Rings[]>();
     for (const w of order) {
       const body = bodies.get(w.el.id) ?? [];
-      const mine = taken.length ? body.flatMap((r) => difference(r, union(taken))) : body;
+      const mine = body.flatMap((r) => {
+        const box = boxOf(r);
+        const near = taken.filter((t) => boxesTouch(t.box, box)).map((t) => t.rings);
+        return near.length ? difference(r, union(near)) : [r];
+      });
       own.set(w.el.id, mine);
-      taken.push(...body);
+      for (const r of body) taken.push({ rings: r, box: boxOf(r) });
     }
 
     // Taken på våningen kapar väggarna, eller drar upp dem (Upp till taket).

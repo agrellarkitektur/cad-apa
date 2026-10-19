@@ -3,7 +3,7 @@ import type { Solid } from '../repr/solids';
 import type { ElementType } from './registry';
 
 /**
- * Enkla möbler och inredning tills smartobjekten finns (0.12). Varje
+ * Enkla möbler och inredning tills smartobjekten finns (efter pilotprojektet). Varje
  * symbol ritas i en lokal ruta (0,0)–(bredd,djup) som sedan placeras och vrids.
  */
 export type FurnitureSymbol = 'bed' | 'sofa' | 'table' | 'counter' | 'sink' | 'shower';

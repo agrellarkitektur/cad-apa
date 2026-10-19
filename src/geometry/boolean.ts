@@ -16,6 +16,27 @@ export function union(polys: Rings[]): Rings[] {
   return fromMulti(polygonClipping.union(first, ...rest));
 }
 
+/** Omskrivande rektangel för en polygon: [minX, minY, maxX, maxY]. */
+export type Box = [number, number, number, number];
+
+export function boxOf(poly: Rings): Box {
+  const b: Box = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const ring of poly) {
+    for (const [x, y] of ring) {
+      if (x < b[0]) b[0] = x;
+      if (y < b[1]) b[1] = y;
+      if (x > b[2]) b[2] = x;
+      if (y > b[3]) b[3] = y;
+    }
+  }
+  return b;
+}
+
+/** Om två rektanglar överlappar eller ligger närmare än `tol` (mm). */
+export function boxesTouch(a: Box, b: Box, tol = 1): boolean {
+  return a[0] <= b[2] + tol && b[0] <= a[2] + tol && a[1] <= b[3] + tol && b[1] <= a[3] + tol;
+}
+
 export function difference(subject: Rings, cutters: Rings[]): Rings[] {
   const valid = cutters.filter((p) => p.length && p[0].length >= 3);
   if (valid.length === 0) return [subject];

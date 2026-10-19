@@ -53,6 +53,14 @@ visas helt enkelt inte i den vyn.
 
 ## Ändra filformatet
 
+Före formatfrysen (pilotprojektet, 0.13, se PLAN.md) räcker det att höja
+`FORMAT_VERSION` i `src/core/model.ts`. Inga nya migreringar skrivs: en fil
+i ett äldre format ger meddelandet att den kommer från en äldre betaversion
+(`parse` i `src/storage/format.ts`), och ett autospar som inte går att läsa
+läggs åt sidan, inte bort. Migreringarna till och med format 5 ligger kvar.
+
+Efter formatfrysen gäller detta igen:
+
 1. Höj `FORMAT_VERSION` i `src/core/model.ts`.
 2. Lägg till en migrering i `src/storage/format.ts` som gör om en fil från
    förra versionen till den nya.
