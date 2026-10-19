@@ -37,6 +37,7 @@ import type { RoofParams } from '../elements/roof';
 import { skewOf, skewText } from '../elements/angleCheck';
 import { reshapeWall } from '../core/wallEdit';
 import { bulgeForRadius, radiusOf } from '../geometry/arc';
+import { bindTreeForm, treeItemExists, treeItemMarkup, type TreeItem } from './treeItemPanel';
 import { drawingChange, drawingClick, drawingFields, hereOf, lockField, resetShowList, showSection } from './drawingPanel';
 
 type Tab = 'selection' | 'types';
@@ -97,6 +98,21 @@ export class PropertiesPanel {
   angleWarn: () => number = () => 5;
   /** Rikta en sektions- eller fasadlinje efter något man klickar på i planen. */
   onAlignMarker?: (id: string) => void;
+  /**
+   * Det man valt i projektträdet (0.8). Dess inställningar visas när inget
+   * i ritningen är markerat, med en Spara-knapp.
+   */
+  treeItem: TreeItem | null = null;
+  /** Anropas när inställningarna för något i trädet har sparats. */
+  onTreeSaved?: (item: TreeItem) => void;
+  /** Anropas när det valda i trädet släpps (t.ex. en borttagen mapp). */
+  onTreeClosed?: () => void;
+
+  /** Visa inställningarna för något i projektträdet. */
+  showTreeItem(item: TreeItem | null): void {
+    this.treeItem = item;
+    this.showTab('selection');
+  }
 
   constructor(store: DocStore, selection: Selection, getView: () => ViewStates) {
     this.store = store;
@@ -144,7 +160,34 @@ export class PropertiesPanel {
 
   render(): void {
     const scroll = this.body.scrollTop;
-    this.body.innerHTML = this.tab === 'types' ? this.renderTypes(this.store.doc) : this.renderSelection(this.store.doc);
+    const doc = this.store.doc;
+    if (this.treeItem && !treeItemExists(doc, this.treeItem)) this.treeItem = null;
+    const item = this.tab === 'selection' && this.selection.size === 0 ? this.treeItem : null;
+    if (item) {
+      // Ändringar som inte sparats än ligger kvar när något annat ritas om.
+      const open = this.body.querySelector<HTMLFormElement>('.tree-form');
+      const dirty = open && open.dataset.treeId === item.id && !open.querySelector<HTMLButtonElement>('[data-tree="save"]')?.disabled;
+      if (!dirty) {
+        this.body.innerHTML = treeItemMarkup(doc, item);
+        bindTreeForm(
+          this.body,
+          this.store,
+          (saved) => this.onTreeSaved?.(saved),
+          () => {
+            this.body.innerHTML = '';
+            this.render();
+          },
+          () => {
+            this.treeItem = null;
+            this.onTreeClosed?.();
+            this.render();
+          },
+        );
+      }
+      this.renderQuick();
+      return;
+    }
+    this.body.innerHTML = this.tab === 'types' ? this.renderTypes(doc) : this.renderSelection(doc);
     this.body.scrollTop = scroll;
     this.renderQuick();
   }

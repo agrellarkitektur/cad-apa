@@ -93,6 +93,8 @@ export interface UiSettings {
   /** Piltangenterna flyttar det markerade så här långt, och med Shift det större steget, mm. */
   nudge: number;
   nudgeLarge: number;
+  /** 3D-vyn klipps längs en öppen sektion och visar snittytorna (0.8). */
+  followSection: boolean;
 }
 
 export type PaneMode = 'open' | 'min' | 'closed';
@@ -126,6 +128,7 @@ export function defaultUiSettings(): UiSettings {
     angleWarn: 5,
     nudge: 10,
     nudgeLarge: 100,
+    followSection: true,
   };
 }
 
@@ -152,6 +155,7 @@ export function loadUiSettings(): UiSettings {
       angleWarn: num(raw.angleWarn, 0, 20, d.angleWarn),
       nudge: num(raw.nudge, 1, 10000, d.nudge),
       nudgeLarge: num(raw.nudgeLarge, 1, 100000, d.nudgeLarge),
+      followSection: typeof raw.followSection === 'boolean' ? raw.followSection : d.followSection,
     };
   } catch {
     return d;

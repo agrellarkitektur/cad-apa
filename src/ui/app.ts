@@ -43,6 +43,8 @@ import { SettingsDialog } from './settingsDialog';
 import { StyleDialog } from './styleDialog';
 import { TempDims } from './tempDims';
 import { Navigator, type NavTab } from './navigator';
+import type { TreeItem } from './treeItemPanel';
+import { createFolder } from '../core/treeCommands';
 import { applyUiColors, loadUiSettings, mmPerCssPx, PANE_WIDTH, saveUiSettings, type PaneMode } from './uiSettings';
 import { clampWidth, setupPaneResize } from './paneResize';
 import { InlineTextEditor } from './textEditor';
@@ -161,6 +163,18 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   pane2d.className = 'pane-2d';
   const pane3d = document.createElement('div');
   pane3d.className = 'pane-3d';
+  // Följ sektionen (0.8): 3D-vyn klipps längs en öppen sektion, eller visar hela modellen.
+  const followBtn = document.createElement('button');
+  followBtn.className = 'follow-section';
+  followBtn.hidden = true;
+  followBtn.title = 'Klipp 3D-modellen längs sektionen som är öppen';
+  followBtn.innerHTML = `${icons.section}<span>Följ sektionen</span>`;
+  followBtn.addEventListener('click', () => {
+    uiSettings.followSection = !uiSettings.followSection;
+    saveUiSettings(uiSettings);
+    update3d();
+  });
+  pane3d.appendChild(followBtn);
   canvas.prepend(pane2d, pane3d);
 
   // Gränssnittet: rutnät, färger, snabbknappar, panelbredder och skärmstorlek.
@@ -630,7 +644,26 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     trace: () => ui.trace,
     viewModified: (v) => viewModified(v),
     describeView,
+    treeItem: () => panel.treeItem?.id ?? null,
   });
+  // Det man sparar för något i trädet: en öppen vy läses in igen (0.8).
+  panel.onTreeSaved = (item) => {
+    if (item.kind === 'view' && ui.activeView === item.id) {
+      const v = store.doc.views.find((x) => x.id === item.id);
+      if (v) applyView(v);
+    }
+    hint('Sparat.');
+    if (ui.navOpen) navigator.render();
+  };
+  panel.onTreeClosed = () => {
+    if (ui.navOpen) navigator.render();
+  };
+  /** Visa inställningarna för det man valt i trädet i egenskapspanelen. */
+  function pickTreeItem(item: TreeItem): void {
+    selection.clear();
+    panel.showTreeItem(item);
+    if (ui.navOpen) navigator.render();
+  }
   const dock = document.createElement('div');
   dock.className = 'dock';
   // Minimerade paneler blir stående band vid högerkanten.
@@ -953,11 +986,16 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (!view3d || ui.mode === '2d') return;
     view3d.setSolids(buildModel3d(store.doc, ui.storey, viewStates()));
     view3d.setSelection(selection.list());
-    // Med en sektion öppen klipps modellen längs den.
+    // Med en sektion öppen klipps modellen längs den, och snittet fylls (0.8).
+    // Följ sektionen i 3D-vyn slår av och på det.
     const m = ui.marker ? store.doc.elements[ui.marker] : undefined;
-    if (m?.type === 'Section') {
+    followBtn.hidden = m?.type !== 'Section';
+    followBtn.setAttribute('aria-pressed', String(uiSettings.followSection));
+    if (m?.type === 'Section' && uiSettings.followSection) {
       const f = markerFrame(store.doc, m);
-      view3d.setClip({ start: f.start, right: f.right, view: f.view, length: Math.hypot(f.end[0] - f.start[0], f.end[1] - f.start[1]), depth: f.depth });
+      const z0 = store.doc.storeys.find((x) => x.id === m.storey)?.elevation ?? 0;
+      const caps = (lastSection?.cutFaces ?? []).map((c) => ({ poche: ['wall', 'wall-new', 'roof', 'floor'].includes(c.material), rings: c.rings }));
+      view3d.setClip({ start: f.start, right: f.right, view: f.view, length: Math.hypot(f.end[0] - f.start[0], f.end[1] - f.start[1]), depth: f.depth }, caps, z0);
     } else view3d.setClip(null);
   }
 
@@ -1015,6 +1053,11 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   selection.subscribe(() => {
     const t = measureBox.open ? selection.list() : [];
     if (measureBox.open && t.length !== 1) measureBox.close();
+    // Markeras något i ritningen visas dess egenskaper i stället för det valda i trädet.
+    if (selection.size && panel.treeItem) {
+      panel.treeItem = null;
+      if (ui.navOpen) navigator.render();
+    }
     panel.showTab('selection');
     if (selection.size === 0) palette.hide();
     else palette.refresh();
@@ -1421,6 +1464,18 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (markerPick) {
       if (isNarrow()) setNav(false);
       goTo({ kind: 'marker', id: markerPick.dataset.markerPick! });
+      pickTreeItem({ kind: 'marker', id: markerPick.dataset.markerPick! });
+      return;
+    }
+    const folderToggle = target.closest<HTMLElement>('[data-folder-toggle]');
+    if (folderToggle) {
+      navigator.toggleFolder(folderToggle.dataset.folderToggle!);
+      return;
+    }
+    const folderPick = target.closest<HTMLElement>('[data-folder-pick]');
+    if (folderPick) {
+      pickTreeItem({ kind: 'folder', id: folderPick.dataset.folderPick! });
+      if (isNarrow()) setPanel(true, 'full');
       return;
     }
     const markerMore = target.closest<HTMLElement>('[data-marker-menu]');
@@ -1433,6 +1488,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (storeyPick) {
       if (isNarrow()) setNav(false);
       goTo({ kind: 'storey', id: storeyPick.dataset.storeyPick! });
+      pickTreeItem({ kind: 'storey', id: storeyPick.dataset.storeyPick! });
       return;
     }
     const viewPick = target.closest<HTMLElement>('[data-view-apply]');
@@ -1440,7 +1496,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       const v = store.doc.views.find((x) => x.id === viewPick.dataset.viewApply);
       closeShowMenu();
       if (isNarrow()) setNav(false);
-      if (v) applyView(v);
+      if (v) {
+        applyView(v);
+        pickTreeItem({ kind: 'view', id: v.id });
+      }
       return;
     }
     const viewMore = target.closest<HTMLElement>('[data-view-menu]');
@@ -1570,6 +1629,15 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       case 'toggle-nav':
         toggleNav();
         break;
+      case 'new-folder': {
+        const tab = (target.closest<HTMLElement>('[data-tab]')?.dataset.tab ?? navigator.tab) as NavTab;
+        const id = createFolder(store, tab, 'Ny mapp');
+        pickTreeItem({ kind: 'folder', id });
+        if (isNarrow()) setPanel(true, 'full');
+        else if (!ui.panelOpen) setPanel(true);
+        requestAnimationFrame(() => panel.el.querySelector<HTMLInputElement>('.tree-form input[name="name"]')?.select());
+        break;
+      }
       case 'view-save-new':
         void saveViewAsNew();
         break;

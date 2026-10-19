@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import earcut from 'earcut';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Vec2 } from '../repr/primitives';
 import { solidTriangles } from '../repr/mesh';
@@ -62,6 +63,9 @@ export class View3D {
   private root = new THREE.Group();
   private handlesGroup = new THREE.Group();
   private previewGroup = new THREE.Group();
+  /** Snittytorna där en sektion skär modellen (0.8). */
+  private capsGroup = new THREE.Group();
+  private capMaterials: { poche: THREE.MeshBasicMaterial; other: THREE.MeshBasicMaterial; edge: THREE.LineBasicMaterial };
   private sun: THREE.DirectionalLight;
   private materials = new Map<string, THREE.Material>();
   private clipPlanes: THREE.Plane[] = [];
@@ -122,7 +126,12 @@ export class View3D {
     });
 
     // Modellen ligger i mm med z uppåt; vrid och skala till meter med y uppåt.
-    for (const g of [this.root, this.handlesGroup, this.previewGroup]) {
+    this.capMaterials = {
+      poche: new THREE.MeshBasicMaterial({ color: 0x3b4146, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
+      other: new THREE.MeshBasicMaterial({ color: 0x9aa1a7, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
+      edge: new THREE.LineBasicMaterial({ color: 0x1d2328 }),
+    };
+    for (const g of [this.root, this.handlesGroup, this.previewGroup, this.capsGroup]) {
       g.rotation.x = -Math.PI / 2;
       g.scale.setScalar(0.001);
       this.scene.add(g);
@@ -442,7 +451,12 @@ export class View3D {
    * betraktaren, utanför linjens ändar eller bortom djupet syns inte. Null
    * tar bort klippningen.
    */
-  setClip(c: { start: readonly [number, number]; right: readonly [number, number]; view: readonly [number, number]; length: number; depth: number | null } | null): void {
+  setClip(
+    c: { start: readonly [number, number]; right: readonly [number, number]; view: readonly [number, number]; length: number; depth: number | null } | null,
+    caps: { poche: boolean; rings: (readonly (readonly [number, number])[])[] }[] = [],
+    z0 = 0,
+  ): void {
+    this.setCaps(c, caps, z0);
     const planes: THREE.Plane[] = [];
     if (c) {
       // Modellens (x, y, z) i mm blir (x, z, −y) i meter.
@@ -461,6 +475,51 @@ export class View3D {
       m.needsUpdate = true;
     }
     this.requestRender();
+  }
+
+  /**
+   * Fyll snittet: ytorna ligger i sektionens plan, i linjens koordinater
+   * (x längs linjen, y höjd över nollnivån). Väggar, bjälklag och tak blir
+   * mörka som i ritningen, annat grått.
+   */
+  private setCaps(
+    c: { start: readonly [number, number]; right: readonly [number, number]; view: readonly [number, number] } | null,
+    caps: { poche: boolean; rings: (readonly (readonly [number, number])[])[] }[],
+    z0: number,
+  ): void {
+    for (const child of this.capsGroup.children) {
+      if (child instanceof THREE.Mesh || child instanceof THREE.LineSegments) child.geometry.dispose();
+    }
+    this.capsGroup.clear();
+    if (!c) return;
+    const at = (u: number, z: number): [number, number, number] => [c.start[0] + c.right[0] * u + c.view[0] * 0.5, c.start[1] + c.right[1] * u + c.view[1] * 0.5, z - z0];
+    for (const cap of caps) {
+      const rings = cap.rings.filter((r) => r.length >= 3);
+      if (!rings.length) continue;
+      const flat: number[] = [];
+      const holes: number[] = [];
+      for (const [k, r] of rings.entries()) {
+        if (k > 0) holes.push(flat.length / 2);
+        for (const q of r) flat.push(q[0], q[1]);
+      }
+      const tri = earcut(flat, holes);
+      const pos: number[] = [];
+      for (let i = 0; i < flat.length; i += 2) pos.push(...at(flat[i], flat[i + 1]));
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      geom.setIndex(tri);
+      this.capsGroup.add(new THREE.Mesh(geom, cap.poche ? this.capMaterials.poche : this.capMaterials.other));
+      const edges: number[] = [];
+      for (const r of rings)
+        for (let i = 0; i < r.length; i++) {
+          const a = r[i];
+          const b = r[(i + 1) % r.length];
+          edges.push(...at(a[0], a[1]), ...at(b[0], b[1]));
+        }
+      const eg = new THREE.BufferGeometry();
+      eg.setAttribute('position', new THREE.Float32BufferAttribute(edges, 3));
+      this.capsGroup.add(new THREE.LineSegments(eg, this.capMaterials.edge));
+    }
   }
 
   private resize(): void {
