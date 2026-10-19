@@ -1,4 +1,4 @@
-import { moveElements, moveWallEnd, rotateElements } from '../core/commands';
+import { moveElements, moveWallEnd, rotateElements, updateParams } from '../core/commands';
 import type { Id } from '../core/model';
 import {
   continuingTangent,
@@ -17,6 +17,7 @@ import {
   splitWall,
   tangentArc,
 } from '../core/wallEdit';
+import { insertShapeNode, isShape, moveShapeNode, offsetShapeEdge, previewShape, removeShapeNode, shapeCan, shapeEdgeAt, shapeNodes } from '../elements/shapeEdit';
 import { insertNode, moveNode, offsetEdge, orientation, removeNode, setOutline } from '../core/roofEdit';
 import { arcFromBulge, bulgeForRadius, bulgeTangent, bulgeThrough } from '../geometry/arc';
 import { angleDeg, dist, left, sub } from '../geometry/vec';
@@ -54,6 +55,8 @@ export interface ModifyContext {
   wallId?: Id;
   /** Taket man klickade på, med konturens hörn eller kant (0.7.1). */
   roofId?: Id;
+  /** 2D-elementet man klickade på, med punktens eller kantens nummer (0.8 del 2). */
+  shapeId?: Id;
   index?: number;
   end?: 'start' | 'end';
   /** Punkten man klickade (på referenslinjen för kanter), mm. */
@@ -83,7 +86,11 @@ export type OpId =
   | 'roofInsert'
   | 'roofMove'
   | 'roofRemove'
-  | 'roofOffset';
+  | 'roofOffset'
+  | 'shapeInsert'
+  | 'shapeMove'
+  | 'shapeRemove'
+  | 'shapeOffset';
 
 interface OpDef {
   label: string;
@@ -118,6 +125,10 @@ const OPS: Record<OpId, OpDef> = {
   roofMove: { label: 'Flytta punkt', short: 'Flytta', icon: 'move', hint: 'Klicka var hörnet ska hamna.' },
   roofRemove: { label: 'Ta bort punkt', short: 'Ta bort', icon: 'merge', instant: true, hint: 'Hörnet tas bort; grannarna binds ihop med en rak kant.' },
   roofOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 300 }, hint: 'Kanten flyttas vinkelrätt, utåt med plus; grannkanterna följer med.' },
+  shapeInsert: { label: 'Lägg till punkt', short: 'Ny punkt', icon: 'insertNode', hint: 'Klicka där den nya punkten ska ligga.' },
+  shapeMove: { label: 'Flytta punkt', short: 'Flytta', icon: 'move', hint: 'Klicka var punkten ska hamna. (Det går också att dra i den.)' },
+  shapeRemove: { label: 'Ta bort punkt', short: 'Ta bort', icon: 'merge', instant: true, hint: 'Punkten tas bort; grannarna binds ihop.' },
+  shapeOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'Kanten flyttas vinkelrätt dit du klickar, eller skriv avståndet; grannkanterna följer med.' },
 };
 
 const COMMON: OpId[] = ['move', 'rotate', 'mirror', 'multiply'];
@@ -127,6 +138,15 @@ export function opsFor(host: ToolHost, ctx: ModifyContext): OpId[][] {
   const doc = host.store.doc;
   const wall = ctx.wallId ? doc.elements[ctx.wallId] : undefined;
   const walls = ctx.ids.filter((id) => doc.elements[id]?.type === 'Wall');
+  if (ctx.shapeId) {
+    const el = doc.elements[ctx.shapeId];
+    const can = el ? shapeCan(el) : { insert: false, remove: false, offset: false };
+    const own: OpId[] =
+      ctx.kind === 'edge'
+        ? [...(can.insert ? (['shapeInsert'] as OpId[]) : []), ...(can.offset ? (['shapeOffset'] as OpId[]) : [])]
+        : ['shapeMove', ...(can.remove ? (['shapeRemove'] as OpId[]) : [])];
+    return own.length ? [own, COMMON] : [COMMON];
+  }
   if (ctx.roofId) {
     if (ctx.kind === 'edge') return [['roofInsert', 'roofOffset'], COMMON];
     if (ctx.kind === 'point') return [['roofMove', 'roofRemove'], COMMON];
@@ -260,8 +280,8 @@ export class ModifyPalette {
     const value = def?.value
       ? `<label class="mp-value"><span>${def.value.label}</span><input type="text" data-expr ${def.value.unit === '°' ? 'data-unit="deg"' : def.value.unit === 'st' ? 'data-unit=""' : ''} inputmode="decimal" autocomplete="off" value="${this.remembered.get(this.active!) ?? (this.active === 'stretch' ? Math.round(this.tool?.currentLength() ?? 0) : def.value.initial)}"><i>${def.value.unit === 'st' ? 'st' : def.value.unit}</i></label>`
       : '';
-    const where = ctx.roofId ? (ctx.kind === 'edge' ? 'Kanten' : 'Hörnet') : { edge: 'Referenslinjen', point: 'Änden', corner: 'Hörnet', body: 'Det markerade' }[ctx.kind];
-    const what = ctx.roofId ? labelOf(this.host.store.doc, this.host.store.doc.elements[ctx.roofId]) : ctx.wallId ? labelOf(this.host.store.doc, this.host.store.doc.elements[ctx.wallId]) : ctx.ids.length === 1 ? labelOf(this.host.store.doc, this.host.store.doc.elements[ctx.ids[0]]) : `${ctx.ids.length} objekt`;
+    const where = ctx.shapeId ? (ctx.kind === 'edge' ? 'Kanten' : 'Punkten') : ctx.roofId ? (ctx.kind === 'edge' ? 'Kanten' : 'Hörnet') : { edge: 'Referenslinjen', point: 'Änden', corner: 'Hörnet', body: 'Det markerade' }[ctx.kind];
+    const what = ctx.shapeId ? labelOf(this.host.store.doc, this.host.store.doc.elements[ctx.shapeId]) : ctx.roofId ? labelOf(this.host.store.doc, this.host.store.doc.elements[ctx.roofId]) : ctx.wallId ? labelOf(this.host.store.doc, this.host.store.doc.elements[ctx.wallId]) : ctx.ids.length === 1 ? labelOf(this.host.store.doc, this.host.store.doc.elements[ctx.ids[0]]) : `${ctx.ids.length} objekt`;
     this.el.innerHTML = `<div class="mp-row quick-bar"><div class="qb-title"><b>Modifiera</b><small>${escapeHtml(where)} · ${escapeHtml(what)}</small></div><div class="qb-actions">${groups
       .map((g) => g.map(btn).join(''))
       .join('<span class="mp-sep"></span>')}<button type="button" class="qb-btn mp-close" data-action="modify-close" aria-label="Stäng" title="Stäng (Esc)">${icons.close}</button></div></div>${
@@ -287,6 +307,13 @@ export class ModifyPalette {
 
 function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
   const doc = host.store.doc;
+  if (op === 'shapeRemove') {
+    const el = ctx.shapeId ? doc.elements[ctx.shapeId] : undefined;
+    const patch = el && removeShapeNode(el, ctx.index!);
+    if (el && patch) updateParams(host.store, [el.id], patch, 'Ta bort punkt');
+    else host.hint('Formen har för få punkter för att ta bort en.');
+    return;
+  }
   if (op === 'roofRemove') {
     const roof = ctx.roofId ? doc.elements[ctx.roofId] : undefined;
     const next = roof && removeNode(roof.params.outline as [number, number][], ctx.index!);
@@ -351,6 +378,23 @@ export class ModifyTool implements ViewTool {
     const o = this.roofOutline();
     if (!o) return null;
     return offsetEdge(o, this.ctx.index!, -orientation(o) * out);
+  }
+
+  /** 2D-elementet som ändras, om det är ett. */
+  private shape() {
+    return this.ctx.shapeId ? this.host.store.doc.elements[this.ctx.shapeId] : undefined;
+  }
+
+  /** Avståndet till vänster om kanten (sett längs den) till en punkt. */
+  private shapeSide(at: Vec2): number {
+    const el = this.shape();
+    if (!el) return 0;
+    const pts = shapeNodes(el);
+    const a = pts[this.ctx.index!];
+    const b = pts[(this.ctx.index! + 1) % pts.length];
+    const l = dist(a, b) || 1;
+    const n: Vec2 = [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
+    return (at[0] - a[0]) * n[0] + (at[1] - a[1]) * n[1];
   }
 
   /** Väggens längd nu (för Sträck). */
@@ -471,6 +515,33 @@ export class ModifyTool implements ViewTool {
     const p = el?.params as { start: [number, number]; end: [number, number] } | undefined;
     const base = ctx.at;
     switch (this.op) {
+      case 'shapeInsert':
+      case 'shapeMove': {
+        const s = this.shape();
+        const to = at ?? base;
+        if (!s) break;
+        if (s.locked) {
+          this.host.hint('Låst. Lås upp i egenskaperna för att ändra.', 3000);
+          break;
+        }
+        const patch = this.op === 'shapeInsert' ? insertShapeNode(s, ctx.index!, to) : dist(to, base) >= 1 ? moveShapeNode(s, ctx.index!, to) : null;
+        if (patch) updateParams(store, [s.id], patch, this.op === 'shapeInsert' ? 'Lägg till punkt' : 'Flytta punkt');
+        break;
+      }
+      case 'shapeOffset': {
+        const s = this.shape();
+        if (!s) break;
+        const side = at ? this.shapeSide(at) : 1;
+        const d = typed !== null ? Math.abs(typed) * (side >= 0 ? 1 : -1) : Math.round(side);
+        if (Math.abs(d) < 1) return;
+        const patch = offsetShapeEdge(s, ctx.index!, d);
+        if (!patch) {
+          this.host.hint('Kanten kan inte förskjutas så långt.');
+          return;
+        }
+        updateParams(store, [s.id], patch, 'Förskjut kant');
+        break;
+      }
       case 'roofInsert':
       case 'roofMove': {
         const o = this.roofOutline();
@@ -617,7 +688,26 @@ export class ModifyTool implements ViewTool {
     };
     const base = this.ctx.at;
     const roof = this.roofOutline();
+    const shp = this.shape();
+    const shapeGhost = (patch: Record<string, unknown> | null) => {
+      if (!shp || !patch) return;
+      const pv = previewShape(shp, patch);
+      out.push(line(pv.closed ? [...pv.points, pv.points[0]] : pv.points));
+    };
     switch (this.op) {
+      case 'shapeInsert':
+        if (shp && at) shapeGhost(insertShapeNode(shp, this.ctx.index!, at));
+        break;
+      case 'shapeMove':
+        if (shp && at) shapeGhost(moveShapeNode(shp, this.ctx.index!, at));
+        break;
+      case 'shapeOffset':
+        if (shp && at) {
+          const d = Math.round(this.shapeSide(at));
+          shapeGhost(offsetShapeEdge(shp, this.ctx.index!, d));
+          out.push(lengthLabel(cam, base, at, `${Math.abs(d).toLocaleString('sv-SE')} mm`));
+        }
+        break;
       case 'roofInsert':
         if (roof && at) out.push(line([roof[this.ctx.index!], at, roof[(this.ctx.index! + 1) % roof.length]]));
         break;
@@ -796,6 +886,20 @@ export function modifyContextAt(host: ToolHost, p: ViewPointer, clientX: number,
         return { kind, ids, wallId: id, end, at: q[end], clientX, clientY };
       }
     }
+  }
+  // Punkter och kanter i markerade 2D-element (0.8 del 2).
+  const shown = new Set(host.plan().pickables.map((pk) => pk.id));
+  for (const id of ids) {
+    const el = doc.elements[id];
+    if (!isShape(el) || !shown.has(id)) continue;
+    const pts = shapeNodes(el);
+    for (let i = 0; i < pts.length; i++) if (dist(pts[i], p.model) <= tol) return { kind: 'point', ids, shapeId: id, index: i, at: pts[i], clientX, clientY };
+  }
+  for (const id of ids) {
+    const el = doc.elements[id];
+    if (!isShape(el) || !shown.has(id)) continue;
+    const e = shapeEdgeAt(el, p.model, tol);
+    if (e) return { kind: 'edge', ids, shapeId: id, index: e.index, at: e.at, clientX, clientY };
   }
   // Hörn och kanter i markerade taks kontur.
   for (const id of ids) {

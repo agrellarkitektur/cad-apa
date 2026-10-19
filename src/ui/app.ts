@@ -202,6 +202,24 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   /** Den öppna fasaden eller sektionen, senast den räknades. */
   let lastSection: SectionResult | null = null;
 
+  /** Linjer och polylinjer som sträckor att snäppa mot. */
+  function primSegments(id: string, prims: readonly Primitive[]): SnapSegment[] {
+    const out: SnapSegment[] = [];
+    for (const p of prims) {
+      if (p.kind === 'line') out.push({ id, a: p.a, b: p.b });
+      else if (p.kind === 'polyline') {
+        const n = p.points.length;
+        for (let i = 0; i + 1 < n + (p.closed ? 1 : 0); i++) out.push({ id, a: p.points[i], b: p.points[(i + 1) % n] });
+      }
+    }
+    return out;
+  }
+
+  /** Linjerna i DXF-underlag på ytan som visas (0.8 del 2). */
+  function underlaySnap(): SnapSegment[] {
+    return [];
+  }
+
   /** Linjerna i den öppna fasaden eller sektionen, att snäppa mot. */
   function sectionSnapSegments(): SnapSegment[] {
     const out: SnapSegment[] = [];
@@ -436,7 +454,9 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     },
     editText: (id, at) => editTextAt(id, at),
     modify: (p, hitId) => {
-      if (ui.marker || ui.tool !== 'select') return false;
+      if (ui.tool !== 'select') return false;
+      // I fasader och sektioner bara för det som är ritat där (0.8 del 2).
+      if (ui.marker && !selection.list().every((id) => host.canEdit?.(id))) return false;
       const r = view.svg.getBoundingClientRect();
       const ctx = modifyContextAt(host, p, r.left + p.screen[0], r.top + p.screen[1], hitId);
       if (!ctx) return false;
@@ -463,11 +483,16 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       const edges: SnapSegment[] = [];
       for (const pk of plan.pickables) {
         const type = doc.elements[pk.id]?.type;
+        if (type === 'Line2D' || type === 'Fill2D') {
+          // 2D-element (0.8 del 2): linjerna och ytornas kanter.
+          edges.push(...primSegments(pk.id, pk.prims));
+          continue;
+        }
         if (type !== 'Wall' && type !== 'Furniture') continue;
         for (const rings of pk.regions)
           for (const ring of rings) for (let i = 0; i < ring.length; i++) edges.push({ id: pk.id, a: ring[i], b: ring[(i + 1) % ring.length] });
       }
-      return [...refs, ...edges];
+      return [...refs, ...edges, ...underlaySnap()];
     },
   };
 

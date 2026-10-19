@@ -39,6 +39,16 @@ export function renderHighlight(
     if (item) draw(item, 'hl-sel');
   }
 
+  // Punkterna i markerade 2D-element (0.8 del 2), även i fasader, sektioner och på arbetsblad.
+  for (const id of selected) {
+    const el = doc.elements[id];
+    if ((el?.type !== 'Line2D' && el?.type !== 'Fill2D') || !byId.has(id)) continue;
+    for (const pt of (el.params.points as Vec2[] | undefined) ?? []) {
+      const s = cam.toScreen(pt);
+      out.push(`<rect x="${s[0] - 4.5}" y="${s[1] - 4.5}" width="9" height="9" class="grip"/>`);
+    }
+  }
+
   if (!planGrips) return out.join('');
 
   // Hörnpunkter på markerade möbler: tryck nära ett hörn och dra för att
