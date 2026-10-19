@@ -235,9 +235,9 @@ function rect(a: Vec2, b: Vec2): [number, number][] {
 
 /**
  * Rikta efter objekt (0.7.1): klicka på en vägg eller linje, så vrids en
- * sektions- eller fasadlinje runt sin mitt. Fasader blir parallella med det
- * man klickar på och sektioner vinkelräta; med Shift tvärtom. Blickriktningen
- * behålls så långt det går.
+ * sektions- eller fasadlinje runt sin mitt och blir parallell med den
+ * (sedan 0.8 även sektioner); med Shift vinkelrät. Blickriktningen behålls
+ * så långt det går.
  */
 export class AlignTool implements ViewTool {
   cursor = 'pointer';
@@ -271,7 +271,7 @@ export class AlignTool implements ViewTool {
       return;
     }
     const mp = el.params as unknown as MarkerParams;
-    const parallel = (el.type === 'Elevation') !== p.shift;
+    const parallel = !p.shift;
     let dir = norm(sub(seg.b, seg.a));
     if (!parallel) dir = left(dir);
     // Välj den av de två riktningarna som ligger närmast den nuvarande.

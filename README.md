@@ -360,17 +360,26 @@ följer med i mappen `cad-apa`. Vart det skickas står inte i koden (den är
 1. Skapa en textfil som heter `feedback-config.php` med innehållet
 
    ```php
-   <?php return ['to' => 'ca@agrellarkitektur.se', 'from' => 'noreply@agrellarkitektur.se'];
+   <?php return ['to' => 'ca@agrellarkitektur.se', 'from' => 'kontakt@agrellarkitektur.se'];
    ```
 
-   `to` är den som får synpunkterna. `from` ska vara en adress på samma
-   domän som webbplatsen, annars hamnar mejlen lätt i skräpposten.
+   `to` är den som får synpunkterna. `from` ska vara en adress som finns, på
+   samma domän som webbplatsen; annars vägrar många webbhotell att skicka,
+   eller så hamnar mejlen i skräpposten.
 2. Ladda upp den **bredvid** mappen `cad-apa` (i samma mapp som `cad-apa`
    ligger i, t.ex. `public_html`). Där ligger den kvar när `cad-apa` byts ut
    vid en uppdatering. Det går också att lägga den i `cad-apa`, men då måste
    den flyttas med vid varje uppdatering.
 3. Prova: öppna programmet, tryck *Beta – Skicka synpunkter*, skriv något och
-   skicka. Titta i skräpposten om inget kommer fram.
+   skicka. Titta i skräpposten om inget kommer fram. Går det inte att skicka
+   visar formuläret (sedan 0.8) vad servern svarade:
+   - *Synpunkter är inte uppsatta på den här servern*: `feedback-config.php`
+     hittas inte. Den ska heta exakt så och ligga i mappen som `cad-apa`
+     ligger i, eller i `cad-apa`.
+   - *Servern kunde inte skicka e-post*: webbhotellet stoppar `mail()`,
+     oftast för att `from` inte är en adress som finns på domänen.
+   - *fel 500* utan förklaring: ett fel i PHP, ofta ett stavfel i
+     `feedback-config.php`, eller en för gammal PHP (minst 7.4 behövs).
 
 Skriptet använder webbhotellets vanliga `mail()`. Kräver webbhotellet SMTP
 med inloggning för att skicka får skriptet byggas ut. Flyttar programmet

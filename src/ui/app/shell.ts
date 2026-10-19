@@ -115,12 +115,6 @@ export function shellMarkup(brand: Brand): string {
         <span class="sep hide-narrow"></span>
         <div class="project"><strong data-out="project"></strong><span data-out="storey"></span></div>
         <div class="spacer"></div>
-        <div class="segmented view-modes" role="group" aria-label="Vy">
-          <button data-mode="2d" aria-pressed="true" title="Plan (2)">2D</button>
-          <button data-mode="3d" aria-pressed="false" title="3D (3)">3D</button>
-          <button data-mode="split" aria-pressed="false" class="hide-narrow" title="Plan och 3D sida vid sida (4)">Båda</button>
-        </div>
-        <span class="sep hide-narrow"></span>
         <button class="icon-btn pane-btn" data-action="toggle-nav" title="Projektträd: underlag, modell, vyer och ritningar (N)" aria-label="Projektträd" aria-pressed="false">${icons.navigator}</button>
         <button class="icon-btn pane-btn" data-action="toggle-panel" title="Egenskaper (P)" aria-label="Egenskaper" aria-pressed="false">${icons.properties}</button>
         <div class="theme-slot"></div>
@@ -145,6 +139,11 @@ export function shellMarkup(brand: Brand): string {
             </div>
           </div>
         </section>
+        <div class="segmented view-modes" role="group" aria-label="Vy">
+          <button data-mode="2d" aria-pressed="true" title="Plan (2)">2D</button>
+          <button data-mode="3d" aria-pressed="false" title="3D (3)">3D</button>
+          <button data-mode="split" aria-pressed="false" class="hide-narrow" title="Plan och 3D sida vid sida (4)">Båda</button>
+        </div>
         <div class="cmd-bar" hidden><button class="btn cmd-cancel" data-action="cancel-command">✕ Avbryt</button></div>
         <div class="tool-options" data-out="tool-options"></div>
         <div class="hint" role="status" hidden></div>

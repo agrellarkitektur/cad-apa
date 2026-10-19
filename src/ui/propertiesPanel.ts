@@ -547,7 +547,7 @@ export class PropertiesPanel {
     const a = (((Math.atan2(d[1], d[0]) * 180) / Math.PI) % 360 + 360) % 360;
     const deg = Math.round(a * 100) / 100;
     return `<div class="fields">${numberField('marker:length', 'Längd', len, 'mm')}${numberField('marker:angle', 'Vinkel', deg, '°', 2)}</div>
-      <div class="row"><button class="btn" data-action="align-marker" title="Klicka sedan på en vägg eller linje i planen. Fasader blir parallella med den, sektioner vinkelräta. Håll Shift för det omvända.">Rikta efter objekt</button></div>`;
+      <div class="row"><button class="btn" data-action="align-marker" title="Klicka sedan på en vägg eller linje i planen. Linjen blir parallell med den. Håll Shift för vinkelrät.">Rikta efter objekt</button></div>`;
   }
 
   private onClick(e: Event): void {

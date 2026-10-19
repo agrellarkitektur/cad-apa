@@ -6,7 +6,8 @@ import { escapeHtml } from './labels';
  * som appen, som mejlar det vidare. Inga personuppgifter krävs; e-post fylls
  * i bara om man vill ha svar. Ett dolt fält och en tidsspärr håller robotar
  * borta. Går det inte att nå skriptet (förhandsvisningen, eller om det inte
- * är uppsatt) öppnas ett mejl med texten ifylld i stället.
+ * är uppsatt) öppnas ett mejl med texten ifylld i stället. Svarar skriptet
+ * med ett fel (0.8) visas felet, så att det går att rätta på servern.
  */
 export class FeedbackDialog {
   readonly el: HTMLElement;
@@ -78,27 +79,39 @@ export class FeedbackDialog {
       version: `${ENGINE.name} ${ENGINE.version}`,
       screen: `${window.innerWidth}×${window.innerHeight}`,
     };
+    let res: Response | null = null;
+    let answer: { ok?: boolean; error?: string } | null = null;
     try {
-      const res = await fetch('./feedback.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-      const answer = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
-      if (res.ok && answer?.ok) {
-        status.textContent = 'Tack! Synpunkten är skickad.';
-        setTimeout(() => this.close(), 1600);
-        return;
-      }
-      if (res.status === 429 || res.status === 400) {
-        status.textContent = answer?.error ?? 'Det gick inte att skicka just nu. Försök igen om en stund.';
-        button.disabled = false;
-        return;
-      }
-      throw new Error('saknas');
+      res = await fetch('./feedback.php', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      answer = (await res.json().catch(() => null)) as { ok?: boolean; error?: string } | null;
     } catch {
-      // Inget skript att skicka till: öppna ett mejl med texten i stället.
+      res = null;
+    }
+    if (res?.ok && answer?.ok) {
+      status.textContent = 'Tack! Synpunkten är skickad.';
+      setTimeout(() => this.close(), 1600);
+      return;
+    }
+    const mailto = () => {
       const subject = encodeURIComponent(`Synpunkt på ${this.product} (${body.version})`);
       const text = encodeURIComponent(`${message}\n\n— ${body.version}, skärm ${body.screen}`);
       window.location.href = `mailto:${this.fallbackMail}?subject=${subject}&body=${text}`;
-      status.textContent = 'Formuläret kunde inte skickas härifrån, så ett mejl med texten öppnas i stället.';
-      button.disabled = false;
+    };
+    button.disabled = false;
+    if (res && answer?.error) {
+      // Skriptet svarade men kunde inte skicka: säg varför, så att det går att rätta på servern.
+      status.innerHTML = `${escapeHtml(answer.error)} <small>(svar ${res.status})</small> <button type="button" class="btn btn-link" data-action="feedback-mail">Skicka med e-post i stället</button>`;
+      status.querySelector('[data-action="feedback-mail"]')?.addEventListener('click', mailto);
+      return;
     }
+    if (res && res.status !== 404 && res.status !== 405) {
+      // Något annat än ett saknat skript, t.ex. ett fel i PHP på servern.
+      status.innerHTML = `Servern svarade med fel ${res.status} och kunde inte ta emot synpunkten. <button type="button" class="btn btn-link" data-action="feedback-mail">Skicka med e-post i stället</button>`;
+      status.querySelector('[data-action="feedback-mail"]')?.addEventListener('click', mailto);
+      return;
+    }
+    // Inget skript att skicka till (förhandsvisningen och demon): öppna ett mejl med texten.
+    mailto();
+    status.textContent = 'Formuläret kan inte skickas härifrån, så ett mejl med texten öppnas i stället.';
   }
 }

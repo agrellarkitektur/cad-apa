@@ -174,8 +174,10 @@ export function installViews(app: AppContext) {
   async function saveViewAsNew(): Promise<void> {
     app.closeShowMenu();
     const st = app.store.doc.states.find((x) => x.id === app.ui.state)?.name ?? '';
-    const storeyName = app.store.doc.storeys.find((x) => x.id === app.ui.storey)?.name ?? '';
-    const name = await askText('Spara som vy', `${storeyName} – ${st}`);
+    // Namnet på det som visas: fasaden eller sektionen om en är öppen, annars våningen.
+    const m = app.ui.marker ? app.store.doc.elements[app.ui.marker] : undefined;
+    const shown = m ? markerName(app.store.doc, m) : (app.store.doc.storeys.find((x) => x.id === app.ui.storey)?.name ?? '');
+    const name = await askText('Spara som vy', st ? `${shown} – ${st}` : shown);
     if (!name) return;
     const v = app.currentViewDef(newId('vy'), name);
     app.store.transact(`Ny vy: ${name}`, (tx) => tx.setViews([...tx.doc.views, v]));

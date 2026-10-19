@@ -28,7 +28,8 @@ export const icons = {
   more: svg('<circle cx="6" cy="12" r="1.2" fill="currentColor"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/><circle cx="18" cy="12" r="1.2" fill="currentColor"/>'),
   plus: svg('<path d="M12 5v14M5 12h14"/>'),
   chevron: svg('<path d="M7 10l5 5 5-5"/>'),
-  navigator: svg('<path d="M4 7h16M4 12h16M4 17h16"/>'),
+  // Projektträdet (0.8): ett stående träd, som en mappstruktur rest på högkant.
+  navigator: svg('<path d="M12 3.5v16.5M8.5 20.5h7M12 12.5l-5.5-.6V5.2M12 16.6l5.6-3.2.3-6.8"/>'),
   close: svg('<path d="M6 6l12 12M18 6L6 18"/>'),
   minimize: svg('<path d="M6 17h12"/>'),
   newFile: svg('<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M12 11v6M9 14h6"/>'),

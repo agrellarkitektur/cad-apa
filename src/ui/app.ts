@@ -554,7 +554,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     alignTool.target = id;
     aligning = true;
     view.setTool(alignTool);
-    hint(`Klicka på en vägg eller linje. ${store.doc.elements[id]?.type === 'Section' ? 'Sektionen blir vinkelrät mot den' : 'Fasaden blir parallell med den'}; håll Shift för det omvända.`, 5000);
+    hint(`Klicka på en vägg eller linje. ${store.doc.elements[id]?.type === 'Section' ? 'Sektionen' : 'Fasaden'} blir parallell med den; håll Shift för vinkelrät.`, 5000);
   };
   setupSheetDrag(panel.el, {
     narrow: isNarrow,

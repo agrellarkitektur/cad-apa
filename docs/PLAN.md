@@ -42,8 +42,17 @@ egna ikoner, egna ord och egna arbetsflöden. Ingen text, inga ikoner och
 inga dialoger tas från andra program. Kommentarer i koden beskriver vad
 koden gör, inte vilket program den liknar. Ord vi valt: *Modifiera*,
 *snabbmeny*, *smartobjekt* (parametriska objekt), *smarttext* (text som
-fylls i av sig själv), *projektvinklar*, *vy-taggar*, *spårlinjer*,
-*måttband*.
+fylls i av sig själv), *smartgrupper* (grupper där en ändring slår igenom i
+alla), *dumbs* (snabba fria volymer), *projektvinklar*, *vy-taggar*,
+*spårlinjer*, *måttband*.
+
+### Regler per land
+
+cad-apa riktar sig till svenska kontor och är på svenska. Allt som räknas
+efter svenska regler (areor enligt SS 21054, byggnadshöjd och medelmarknivå
+enligt PBF, rums- och dörrnumrering, hålmått) samlas i ett utbytbart
+regelverk och inte utspritt i koden. Då kan ett annat land få egna regler
+och egna ord längre fram utan att något skrivs om (se *Avvaktar*).
 
 ### Efter 0.7
 
@@ -57,16 +66,26 @@ byggs vidare i takt med resten:
 
 ### 0.8 Ritningar, underlag och utskrift · *nytt format*
 
-Underlag och blad:
+0.8 byggs i tre delar och släpps som 0.8.0 när alla är klara. Formatet höjs
+en gång, i del 1, till format 5 för allt som 0.8 behöver. Demon visar del för
+del.
 
-- Underlag: PDF (som bild), bilder och DXF. Skalan kalibreras genom att klicka två punkter och skriva avståndet. Underlaget kan flyttas, låsas och tonas, och visas i modellvyn och på arbetsblad. Snäpp mot linjerna i DXF-underlag
-- Arbetsblad: fria 2D-ritningar som inte hör till ett våningsplan
-- Ritningsblad A4–A0 med ritningshuvud enligt BH90 eller BEAst, egen logga och smarttext
-- Flera vyer per blad, var och en i sin skala och med vyrubrik
-- Annoteringsskala per vy, så att texthöjder på papper stämmer i alla skalor
-- PDF-export av ett blad eller hela serien, med filnamn efter ritningsnummer
-- Enkel DXF-export av en vy
-- En andra 2D-ruta: planen bredvid en öppen sektion eller fasad, där det man markerar i den ena markeras i den andra
+Från granskningen av 0.7.1:
+
+- 3D-vyn kan snurras under marken, för att se undersidor
+- Rikta efter objekt gör både fasader och sektioner parallella med det man klickar på; Shift ger vinkelrätt
+- Spara som vy föreslår namnet på det som visas (t.ex. "Fasad mot söder – Nytt")
+- Synpunktsformuläret visar serverns felmeddelande i stället för att tyst öppna e-posten; e-post öppnas bara när skriptet saknas (som i demon)
+- Projektträdet får en egen ikon: ett stående träd
+- Växlaren 2D/3D/Båda svävar nere i mitten av vyn
+
+#### Del 1: format 5, projektträdet, 2D-element och synlighet
+
+- Format 5 med migrering 4 → 5 och test, för allt i 0.8 på en gång
+- Mappar med undermappar i projektträdet, i alla flikar. Mapparna används också av Plot/export i del 3
+- Det man markerar i projektträdet (vy, fasad, sektion, senare blad) visar sina inställningar i egenskapspanelen, med en Spara-knapp sist; ändringarna slår igenom först när man sparar
+- Fasader och sektioner skapas med nya filer utan förklarande text. Fasaderna följer byggnaden tills man själv flyttar dem. *Lås* (med hänglås) är ett eget val som hindrar att en linje flyttas av misstag
+- Snittytor i 3D: det som skärs av en öppen sektion får en fylld yta i snittet. *Följ sektionen* i 3D-vyn slår av och på klippningen
 
 2D-element och synlighet:
 
@@ -82,8 +101,28 @@ Underlag och blad:
 Mått och text i fasader och sektioner:
 
 - Mått- och textverktygen fungerar i fasader och sektioner (i dag visas ett tips om att gå till planen)
+- Taklutningen blir ett eget objekt: knuten till takfallet så att värdet stämmer, men fri att flytta, och med egen stil (markörstilarna i del 3)
 - Automatiska höjdkoter för nock och takfot
 - Grepp i sektioner: dra i nocken för att ändra taklutningen, och i takfoten
+
+#### Del 2: underlag och arbetsblad
+
+- Underlag: PDF (som bild), bilder och DXF. Skalan kalibreras genom att klicka två punkter och skriva avståndet. Underlaget kan flyttas, låsas och tonas, och visas i modellvyn och på arbetsblad. Snäpp mot linjerna i DXF-underlag
+- Arbetsblad: fria 2D-ritningar som inte hör till ett våningsplan
+
+#### Del 3: ritningsblad, export och grafik
+
+- Ritningsblad A4–A0 med ritningshuvud enligt BH90 eller BEAst, egen logga och smarttext
+- Flera vyer per blad, var och en i sin skala och med vyrubrik
+- Annoteringsskala per vy, så att texthöjder på papper stämmer i alla skalor
+- En andra 2D-ruta: planen bredvid en öppen sektion eller fasad, där det man markerar i den ena markeras i den andra
+
+Plot/export (ett ställe för all export, i stället för att plotta från Ritningar och exportera från Vyer):
+
+- Nås från cad-apa-menyn och från knappen *Plot/export…* under rubriken Projektträd, ovanför flikarna
+- Kryssrutor grupperade efter mapparna i projektträdet: hela mappar eller enstaka vyer, fasader, sektioner och blad, från alla flikar
+- Format per sak: PDF och DXF, även för layoutade blad. PDF-filerna får namn efter ritningsnumret
+- Allt kommer som en zipfil att spara; exporten visar hur långt den kommit och kan avbrytas
 
 Grafik:
 
@@ -94,7 +133,7 @@ Grafik:
 
 Markörer:
 
-- Stilar för fasad-, sektions- och norrpilsmarkörer som smartobjekt med smarttext, t.ex. `{sektion}` och `{ritningsnummer}`
+- Stilar för fasad-, sektions-, norrpils- och taklutningsmarkörer som smartobjekt med smarttext, t.ex. `{sektion}` och `{ritningsnummer}`
 - Sektionsmarkörens bokstav och pilar kan flyttas längs linjen
 - Markörer per tillstånd (i dag finns de i alla)
 - Sektion begränsad till linjen eller oändlig åt sidorna
@@ -114,10 +153,12 @@ Ett riktigt tak i stället för testtaket:
 - Enfallstak som delar som kan sättas ihop
 - Snabbval för sadeltak, pulpettak och valmat tak
 - Ändra takets form i planen med Modifiera (finns för konturen sedan 0.7.1)
-- Byggnadshöjd enligt PBF (medelmarknivå och 45°-planet) när terrängen finns i 0.15
+- Medelmarknivå utan terräng: markhöjder anges runt huset och medelmarknivån räknas ut enligt PBF
+- Byggnadshöjd enligt PBF (medelmarknivå och 45°-planet); ur terrängen när den finns i 0.15
 
-### 0.10 Text och ritningsredovisning
+### 0.10 Text, ritningsredovisning och dumbs · *nytt format*
 
+- Dumbs: snabba fria volymer för skisskedet. Rita en yta, dra upp den till en volym, tryck och dra i sidorna. Dumbs syns i plan, fasad, sektion och 3D som andra former men har inga egenskaper utöver mått och material. Friare formning (följ en bana, böjda ytor) kommer senare
 - Textformatering
 - Littera som går att flytta
 - Handlingsförteckning ur bladen och ritningsnumrering
@@ -125,7 +166,7 @@ Ett riktigt tak i stället för testtaket:
 
 ### 0.11 Förteckningar och rumsdata
 
-- Rumslista med areor enligt SS 21054
+- Rumslista med areor enligt SS 21054 (BOA, BRA, BTA m.m.), med standardens mätregler: väggar inom en enhet, smala nischer och ytor under låg takhöjd. Carl August laddar upp standarden när versionen påbörjas, så att reglerna följer texten
 - Dörrförteckning enligt SS 817340 och fönsterförteckning, med förhandsbild
 - Ytskikt som styrs av rumsobjektet (innerväggars sidor, ytterväggars insidor, sockel och taklist)
 - Rumsbeskrivning
@@ -138,9 +179,9 @@ Ett riktigt tak i stället för testtaket:
 - Egna smartobjekt kan laddas in i projektet
 - Byggaren för smartobjekt: en egen liten app med samma motor
 
-### 0.13 Komponenter · *nytt format*
+### 0.13 Smartgrupper · *nytt format*
 
-- Komponenter: ändrar man en instans ändras alla. För hotellrum och möbleringsgrupper
+- Smartgrupper: ändrar man en instans ändras alla. För hotellrum och möbleringsgrupper
 - Grupper, spegling och "gör unik"
 
 ### 0.14 Flera våningsplan, bjälklag och trappor · *nytt format*
@@ -151,7 +192,7 @@ Ett riktigt tak i stället för testtaket:
 ### 0.15 Situationsplan, terräng och export
 
 - Situationsplan med terräng och höjdkurvor från höjdkurvor.se
-- Byggnadshöjd och nockhöjd ur markmodellen
+- Medelmarknivå, byggnadshöjd och nockhöjd ur markmodellen
 - IFC-export
 
 ### 1.0 Bygglovshandling
@@ -164,3 +205,6 @@ En villa från nytt projekt till färdig bygglovshandling.
   gränssnittet har satt sig, och behövs kanske inte alls: ett nytt program
   lärs lika gärna med den arbetsyta som tagits fram för det.
 - Vektorsnäpp mot PDF-underlag (0.8 visar PDF som bild).
+- Andra språk och andra länders regler. Allt är på svenska och följer svenska
+  regler; regelverket hålls utbytbart (se *Regler per land*) så att det går
+  att lägga till senare.

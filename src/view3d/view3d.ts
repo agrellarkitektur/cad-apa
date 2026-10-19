@@ -112,7 +112,9 @@ export class View3D {
     this.controls = new OrbitControls(this.camera, canvas);
     this.controls.enableDamping = false;
     this.controls.screenSpacePanning = true;
-    this.controls.maxPolarAngle = Math.PI * 0.495;
+    // Kameran får gå under marken, så att man ser undersidor. Strax före
+    // rakt nedifrån stannar den, annars vänder sig bilden.
+    this.controls.maxPolarAngle = Math.PI * 0.98;
     this.controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
     this.controls.addEventListener('change', () => {
       this.requestRender();
