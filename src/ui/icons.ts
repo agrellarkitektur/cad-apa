@@ -73,6 +73,10 @@ export const icons = {
   merge: svg('<path d="M3 18l9-9 9 9" stroke-dasharray="2 2"/><path d="M3 18h18"/>'),
   extend: svg('<path d="M20 4v16"/><path d="M3 12h12" /><path d="M15 12h5" stroke-dasharray="1.5 1.5"/><path d="M14 9l3 3-3 3"/>'),
   grid: svg('<path d="M4 4h16v16H4zM4 9.3h16M4 14.6h16M9.3 4v16M14.6 4v16"/>'),
+  // Ett ritningsblad med ritningshuvud i nedre högra hörnet (0.8 del 3).
+  sheet: svg('<path d="M3 5.5h18v13H3z"/><path d="M13 18.5v-4h8"/><path d="M6 8.5h5v5H6z"/>'),
+  // Plot: ett blad som kommer ut ur en skrivare.
+  plot: svg('<path d="M7 9V3.5h10V9"/><path d="M5 17H3.5V9.5h17V17H19"/><path d="M7 14h10v6.5H7z"/><path d="M17.5 12h.01"/>'),
 } as const;
 
 export type IconName = keyof typeof icons;

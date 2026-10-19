@@ -46,10 +46,10 @@ export class Camera {
     this.center = [this.center[0] + before[0] - after[0], this.center[1] + before[1] - after[1]];
   }
 
-  /** Visa hela rektangeln med marginal. */
-  fit(b: Bounds, marginPx = 48): void {
-    const w = Math.max(b.maxX - b.minX, 1000);
-    const h = Math.max(b.maxY - b.minY, 1000);
+  /** Visa hela rektangeln med marginal, men aldrig mindre än `minSize` mm åt något håll. */
+  fit(b: Bounds, marginPx = 48, minSize = 1000): void {
+    const w = Math.max(b.maxX - b.minX, minSize);
+    const h = Math.max(b.maxY - b.minY, minSize);
     const sx = (this.width - marginPx * 2) / w;
     const sy = (this.height - marginPx * 2) / h;
     this.scale = clamp(Math.min(sx, sy), Camera.MIN_SCALE, Camera.MAX_SCALE);

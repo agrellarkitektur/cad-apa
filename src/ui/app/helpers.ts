@@ -3,16 +3,16 @@ import type { Id, ProjectDoc, ViewDef } from '../../core/model';
 export const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 export const tf = new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2-digit' });
 
+/** Vanliga skalor för vyer och annotering (0.8 del 3). */
+export const ANNOTATION_SCALES = [1, 2, 5, 10, 20, 50, 100, 200, 400, 500, 1000, 2000];
+
 /** Kort beskrivning av en vy i vylistan. */
 export function describeView(v: ViewDef): string {
   const detail = { sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' }[v.detail];
-  return [detail, v.compare ? 'jämför' : '', v.hideDemolished ? 'utan rivet' : '', v.style ?? ''].filter(Boolean).join(' · ');
+  return [`1:${v.scale ?? 100}`, detail, v.compare ? 'jämför' : '', v.hideDemolished ? 'utan rivet' : '', v.style ?? ''].filter(Boolean).join(' · ');
 }
 
-/** Ett förslag visas först om det finns, annars det första tillståndet. */
-export function defaultState(doc: ProjectDoc): Id {
-  return (doc.states.find((s) => s.kind === 'proposal') ?? doc.states[0]).id;
-}
+export { defaultState } from '../../core/states';
 
 /** Första typen (i littera-ordning) för en elementtyp. */
 export function firstDefinition(doc: ProjectDoc, type: string): Id | null {

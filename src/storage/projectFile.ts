@@ -79,6 +79,34 @@ export async function saveTextFile(
   return 'downloaded';
 }
 
+/**
+ * Spara en fil (0.8 del 3), t.ex. en zipfil från Plot/export, med
+ * spara-dialog där webbläsaren har en och annars som nedladdning.
+ */
+export async function saveBlobFile(blob: Blob, name: string, description: string, accept: Record<string, string[]>): Promise<'saved' | 'downloaded' | 'cancelled'> {
+  const picker = (window as any).showSaveFilePicker;
+  if (typeof picker === 'function') {
+    try {
+      const handle = await picker({ suggestedName: name, types: [{ description, accept }] });
+      const w = await handle.createWritable();
+      await w.write(blob);
+      await w.close();
+      return 'saved';
+    } catch (e) {
+      if ((e as DOMException)?.name === 'AbortError') return 'cancelled';
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  return 'downloaded';
+}
+
 /** Låt användaren välja en fil och läs den som projekt. */
 export async function openProjectFile(extension: string): Promise<ProjectDoc | null> {
   const picker = (window as any).showOpenFilePicker;

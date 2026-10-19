@@ -80,8 +80,11 @@ export class PlanView {
   private lastMiddleDown = 0;
   private spaceDown = false;
 
-  /** Ritningsskalans nämnare. Styr texthöjder (1:100 tills layouten finns). */
+  /** Ritningsskalans nämnare. Styr texthöjder; 1 på ritningsblad, där allt är mm på papperet. */
   drawingScale = 100;
+
+  /** Skalstocken i nedre vänstra hörnet (inte på ritningsblad). */
+  showScaleBar = true;
 
   /** Adressen till bilderna i underlagen (0.8), se `RenderOptions.imageHref`. */
   imageHref?: (source: { asset: string; page?: number }) => string | null;
@@ -152,6 +155,11 @@ export class PlanView {
     else g.style.removeProperty('--paper');
   }
 
+  /** Verktyget som tar emot pekarhändelserna just nu. */
+  get currentTool(): ViewTool | null {
+    return this.tool;
+  }
+
   setTool(tool: ViewTool | null): void {
     this.tool?.cancel?.();
     this.tool?.hover?.(null);
@@ -168,7 +176,7 @@ export class PlanView {
 
   zoomToFit(): void {
     const b = boundsOf(this.prims);
-    if (b) this.camera.fit(b, Math.min(64, this.camera.width * 0.08));
+    if (b) this.camera.fit(b, Math.min(64, this.camera.width * 0.08), this.drawingScale * 10);
     else this.camera.fit({ minX: -5000, minY: -5000, maxX: 5000, maxY: 5000 });
     this.changed();
   }
@@ -279,7 +287,7 @@ export class PlanView {
     this.content.innerHTML = renderPrimitives(this.prims, cam, { drawingScale: this.drawingScale, imageHref: this.imageHref });
     this.highlight.innerHTML = this.highlighter?.(cam) ?? '';
     this.overlay.innerHTML = this.tool?.overlay?.(cam) ?? '';
-    this.chrome.innerHTML = renderScaleBar(cam, 20, cam.height - 22);
+    this.chrome.innerHTML = this.showScaleBar ? renderScaleBar(cam, 20, cam.height - 22) : '';
   }
 
   private updateCursor(): void {

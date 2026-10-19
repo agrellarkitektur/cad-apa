@@ -106,10 +106,10 @@ export function dxfOf(doc: ProjectDoc, asset: Id): DxfDrawing | null {
 /** De senast ritade DXF-underlagen, så att samma ritning inte räknas om vid varje ändring. */
 const primCache = new Map<string, Primitive[]>();
 
-function dxfPrims(doc: ProjectDoc, id: Id, p: UnderlayParams): Primitive[] {
+function dxfPrims(doc: ProjectDoc, id: Id, p: UnderlayParams, drawingScale: number): Primitive[] {
   const d = dxfOf(doc, p.asset);
   if (!d) return [];
-  const key = JSON.stringify([id, doc.assets[p.asset]?.data.length, p.pos, p.angle, p.scale, p.ref, p.opacity, p.layersOff ?? []]);
+  const key = JSON.stringify([id, doc.assets[p.asset]?.data.length, p.pos, p.angle, p.scale, p.ref, p.opacity, p.layersOff ?? [], drawingScale]);
   const hit = primCache.get(key);
   if (hit) return hit;
   const t = underlayTransform(p);
@@ -127,7 +127,7 @@ function dxfPrims(doc: ProjectDoc, id: Id, p: UnderlayParams): Primitive[] {
         at: t(it.at),
         text: it.text,
         // Texthöjden på papper: mm i modellen genom ritningsskalan.
-        height: (it.height * p.scale) / 100,
+        height: (it.height * p.scale) / drawingScale,
         angle: ((it.angle + p.angle) * Math.PI) / 180,
         pen,
         origin,
@@ -150,7 +150,7 @@ export const underlayType: ElementType<UnderlayParams> = {
   defaults: () => ({ asset: '', kind: 'image', pos: [0, 0], angle: 0, scale: 1, size: [1, 1], opacity: 60 }),
   plan(el, ctx) {
     const p = ctx.params<UnderlayParams>(el);
-    if (p.kind === 'dxf') return dxfPrims(ctx.doc, el.id, p);
+    if (p.kind === 'dxf') return dxfPrims(ctx.doc, el.id, p, ctx.scale);
     const [bl, br, , tl] = underlayCorners(p);
     return [
       {

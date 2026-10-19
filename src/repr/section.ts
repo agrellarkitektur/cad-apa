@@ -242,7 +242,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
         slopes[id] = pl;
         const sty = view.detail === 'sketch' ? 'text' : 'arc';
         const slope = ctx.params<RoofParams>(doc.elements[pl.roof]).slope;
-        for (const p of slopeSymbol(pl.at, pl.toward, slope, pl.len, sty, style.labels.heights.dimension, { objectId: id, objectType: 'RoofSlope', part: 'taklutning' })) {
+        for (const p of slopeSymbol(pl.at, pl.toward, slope, pl.len, sty, style.labels.heights.dimension, { objectId: id, objectType: 'RoofSlope', part: 'taklutning' }, ctx.scale)) {
           prims.push(p);
           own(id, p);
         }
@@ -257,7 +257,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     }
     const top = Math.round(maxZ);
     if (!levels.has(top)) levels.set(top, ctx.visible('Roof').length ? 'nock' : '');
-    for (const [z, label] of levels) prims.push(...levelMark(maxU + 1200, z, style.labels.heights.dimension, label));
+    for (const [z, label] of levels) prims.push(...levelMark(maxU + 12 * ctx.scale, z, style.labels.heights.dimension, label, ctx.scale));
   }
 
   const pickables: Pickable[] = [...byId.entries()].map(([id, list]) => ({
@@ -347,8 +347,8 @@ function wallSilhouettes(shapes: { s: Shape3D; demolished: boolean }[], v: Vec2)
 }
 
 /** En nivåkota: ett streck, en triangel som pekar ned på det och höjden i meter. */
-function levelMark(x: number, z: number, height: number, label = ''): Primitive[] {
-  const s = 100; // ritningsskala, för storleken på papper
+function levelMark(x: number, z: number, height: number, label: string, s: number): Primitive[] {
+  // s: ritningsskalan, för storleken på papper.
   const tri = 1.8 * s;
   const origin = { part: 'nivå' };
   const m = z / 1000;

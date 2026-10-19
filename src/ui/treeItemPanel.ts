@@ -13,7 +13,7 @@ import { escapeHtml } from './labels';
  * eller sektion, en våning eller en mapp. De visas i egenskapspanelen med en
  * Spara-knapp sist; inget ändras förrän man sparar.
  */
-export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder' | 'worksheet'; id: Id };
+export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder' | 'worksheet' | 'sheet' | 'viewport'; id: Id };
 
 const esc = escapeHtml;
 
@@ -30,6 +30,10 @@ export function treeItemExists(doc: ProjectDoc, item: TreeItem): boolean {
       return doc.folders.some((f) => f.id === item.id);
     case 'worksheet':
       return doc.worksheets.some((w) => w.id === item.id);
+    case 'sheet':
+      return doc.sheets.some((s) => s.id === item.id);
+    case 'viewport':
+      return doc.sheets.some((s) => s.viewports.some((v) => v.id === item.id));
   }
 }
 
@@ -69,7 +73,7 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('Detaljnivå', `<select name="detail">${(['sketch', 'normal', 'detail'] as const).map((d) => `<option value="${d}"${d === v.detail ? ' selected' : ''}>${{ sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' }[d]}</option>`).join('')}</select>`)}
           ${field('Stilmall', `<select name="style"><option value="">Projektets</option>${PRESETS.map((p) => `<option${p.name === v.style ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`)}
           ${field('Kalkera', `<select name="trace"><option value="">Ingen</option>${doc.views.filter((x) => x.id !== v.id).map((x) => `<option value="${x.id}"${x.id === v.trace ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`)}
-          ${field('Skala på blad', `<span class="input-unit scale-unit"><i>1:</i><input name="scale" type="text" inputmode="numeric" value="${v.scale ?? ''}" placeholder="100"></span>`)}
+          ${field('Skala', `<span class="input-unit scale-unit"><i>1:</i><input name="scale" type="text" inputmode="numeric" value="${v.scale ?? ''}" placeholder="100"></span>`)}
         </div>
         <label class="check"><input type="checkbox" name="compare"${v.compare ? ' checked' : ''}> Jämför med befintligt</label>
         <label class="check"><input type="checkbox" name="hideDemolished"${v.hideDemolished ? ' checked' : ''}> Dölj det som rivs</label>

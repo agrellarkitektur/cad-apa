@@ -366,3 +366,61 @@ på bladet sina egna.
   i `src/core/treeCommands.ts`; att ta bort ett arbetsblad tar bort det som
   är ritat på det och vyerna av det. På ett arbetsblad går bara
   `DRAWING_TYPES` (2D, text, mått och underlag) att klistra in.
+
+## Ritningsblad, annoteringsskala och Plot/export (0.8 del 3, format 5)
+
+- **Annoteringsskala.** `ViewStates.scale` (nämnaren, förval 100) blir
+  `ctx.scale` i `createContext`, och allt som ritas i papperets storlek
+  räknar med den: mått, rumsetiketter, littera, markörer, nivåkoter
+  (`levelMark` i `section.ts`), taklutningar (`slopeSymbol(…, K)`) och
+  texter i DXF-underlag. Texthöjder i primitiverna är alltid mm på papper.
+  Skärmen ritar med `PlanView.drawingScale`, som appen sätter till vyns
+  skala (`ui.scale`, sparas i `ViewDef.scale`) och till 1 på ett blad;
+  `pickAt` och förhandsvisningarna i verktygen tar samma skala. Ritar en
+  ny elementtyp något i papperets storlek ska den använda `ctx.scale`, aldrig
+  ett fast 100.
+- **Bladen i kärnan**: `src/core/sheets.ts` har pappersformaten (`PAPER`,
+  `paperSize`), ramens marginaler, fälten i ritningshuvudet
+  (`SHEET_FIELDS`, `PROJECT_FIELDS`) och kommandona: `createSheet`,
+  `saveSheet`, `deleteSheet`, `duplicateSheet`, `addViewport`,
+  `updateViewport`, `removeViewport`, `saveProjectFields` och `setLogo`.
+  Loggan är en fil i `doc.assets` med id i `project.fields.logo` och
+  proportionerna i `logoRatio`; `pruneAssets` tar aldrig bort den.
+- **En vy på ett blad** (`Viewport`) pekar på en sparad vy eller på
+  modellvyn av en våning, fasad, sektion eller ett arbetsblad
+  (`modelViewId`). `viewSource` i `src/repr/sheet.ts` ger inställningarna
+  (modellvyn: förslaget, jämfört med befintligt om det finns). `at` är var
+  vyns nollpunkt hamnar på papperet: papper = `at` + modell / skala
+  (`toPaper`). Ramen är det som är ritat (utan underlag, `contentBounds`)
+  plus `VIEWPORT_PAD`; underlagen klipps mot ramen med `clipPrims` i
+  `src/geometry/clipRect.ts`. En bild som sticker ut får `ImagePrim.clip`,
+  som skärmen och PDF:en ritar som klippram. `cachedViewPrims` sparar
+  vyernas primitiver per projektversion, så att fasader inte räknas om när
+  bladet ritas om.
+- **Bladet** byggs av `buildSheet`: papperet (`part: 'papper'`, ritas bara på
+  skärmen), vyerna med rubrik, ramen och ritningshuvudet
+  (`titleBlockPrims` i `src/repr/titleBlock.ts`). Allt är mm på papperet
+  med y uppåt. Smarttext: `expandSmartText(text, smartVars(doc, sheet,
+  idag))`; nya namn läggs till i `smartVars` och `SMART_TEXT`.
+- **I appen**: `ui.layout` är bladet som visas och `Place` har
+  `kind: 'sheet'`. `src/ui/app/sheets.ts` ritar bladet (`drawing()`), har
+  verktyget som markerar och flyttar vyerna (`SheetTool`, fäster mot de
+  andra vyernas kanter och mitt), lägger nya vyer på första lediga plats
+  (`freeSpot`) och har högerklicksmenyn. På ett blad går bara Markera och
+  Panorera; andra verktyg går tillbaka till planen. Formulären för blad och
+  vyer på blad ligger i `src/ui/sheetForms.ts` (`TreeItem` har `sheet` och
+  `viewport`).
+- **PDF** skrivs av `writePdf` i `src/formats/pdf.ts` utan bibliotek: en sida
+  per `PdfPage`, mm i primitiverna (en `cm` per sida), Helvetica med
+  WinAnsi (`src/formats/helvetica.ts` har bredderna, som också används för
+  att korta texter i huvudet), streckning sträcka för sträcka som på
+  skärmen, skraffering som klippta linjer, bågar som Bézierkurvor och bilder
+  som JPEG (`imageKey`). Bilderna tas fram av appen (`exportImage` i
+  `src/ui/app/underlays.ts`). `browserDeflate()` packar innehållet.
+- **Zip**: `writeZip` i `src/formats/zip.ts`, opackat med UTF-8-namn;
+  `uniqueNames` gör filnamnen giltiga och unika.
+- **Plot/export**: `src/ui/app/plot.ts`. Kryssrutorna följer mapparna i
+  flikarna Ritningar och Vyer. Varje blad ger `<ritningsnummer>.pdf`, varje
+  vy `<namn>.pdf` (`buildViewPage`: ett papper precis så stort som vyn).
+  Exporten väntar en bildruta mellan filerna så att förloppet syns och
+  Avbryt hinner fram; zipfilen sparas med `saveBlobFile`.

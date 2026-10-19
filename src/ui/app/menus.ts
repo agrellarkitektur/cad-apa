@@ -147,7 +147,7 @@ export function installMenus(app: AppContext) {
   function planContext(clientX: number, clientY: number): void {
     const r = app.pane2d.getBoundingClientRect();
     const p = app.view.camera.toModel([clientX - r.left, clientY - r.top]);
-    const id = pickAt(app.plan.pickables, p, 6 / app.view.camera.scale);
+    const id = pickAt(app.plan.pickables, p, 6 / app.view.camera.scale, app.view.drawingScale);
     if (id && !app.selection.has(id)) app.selection.set([id]);
     if (!id && app.ui.tool === 'select') app.selection.clear();
     app.palette.hide();

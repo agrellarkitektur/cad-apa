@@ -6,7 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.7.1** (beta); nästa är **0.8, ritningar, underlag och utskrift**.
+**0.8.0** (beta, ritningar, underlag och utskrift); nästa är **0.8.1,
+snabbare ritning och referensritningar**.
 
 ## Vad som fungerar
 
@@ -372,6 +373,43 @@ Version 0.8, del 2.1 (samma filformat, 5):
 - Planen är omgjord efter ett proof of concept: blad och plot, flera
   våningsplan och bjälklag, tak, trappor och IFC-export först, sedan ett
   pilotprojekt (se `docs/PLAN.md`)
+
+Version 0.8, del 3 av 3, släpps som **0.8.0** (samma filformat, 5):
+- **Ritningsblad** A4–A0, liggande eller stående, under fliken Ritningar i
+  projektträdet (*Nytt ritningsblad*). Bladet har ritningsram (20 mm
+  inbindningsmarginal till vänster, 10 mm i övrigt) och ritningshuvud enligt
+  BH90, 180 mm brett: uppdragsnummer, ritningsnummer och ändring, skala,
+  datum, ritat och granskat av, ritningens innehåll, skede, projektet med
+  adress och fastighetsbeteckning, beställare, arkitekt med logga och
+  ansvarig. Ritningsnumret blir nästa lediga efter det senaste bladet
+  (A-101, A-102 … eller A-40.1-09, A-40.1-10 …)
+- **Smarttext** i ritningshuvudets fält: `{projekt}`, `{adress}`,
+  `{fastighet}`, `{beställare}`, `{uppdragsnummer}`, `{arkitekt}`,
+  `{ansvarig}`, `{ritningsnummer}`, `{innehåll}`, `{skala}`, `{format}`,
+  `{datum}`, `{skede}`, `{ändring}` och `{idag}`. Skalan fylls i av sig själv
+  efter vyerna på bladet (1:100, eller 1:100, 1:50). Projektets fält gäller
+  alla blad; loggan väljs i bladets inställningar
+- **Vyer på bladet**: sparade vyer och modellvyerna av våningar, fasader,
+  sektioner och arbetsblad, var och en i sin skala och med vyrubrik (namnet
+  och SKALA 1:100 under vyn). En ny vy hamnar på första lediga plats. Dra
+  en vy för att flytta den; den fäster mot de andra vyernas kanter och
+  mittlinjer (Shift: bara vågrätt eller lodrätt). Klicka på en vy för att
+  byta skala, rubrik eller vy (mitten står kvar), dubbelklicka för att
+  öppna den, högerklicka för en meny, Delete tar bort den från bladet.
+  Underlagen syns genom vyerna och klipps mot vyns ram, så att en stor
+  grundkarta inte täcker bladet
+- **Annoteringsskala**: texter, mått, rumsetiketter, littera, nivåkoter och
+  taklutningar ritas för vyns skala, så att de får rätt höjd på papperet i
+  alla skalor. Skalan väljs under Visa (*Skala för texter och mått*) och
+  sparas i vyn
+- **Plot/export…** i cad-apa-menyn och överst i projektträdet: kryssa i blad
+  och vyer, grupperade efter mapparna i projektträdet (hela mappar eller
+  enstaka). Varje blad blir en PDF i vektorform i rätt pappersformat med
+  filnamn efter ritningsnumret; en vy blir en PDF precis så stor som vyn i
+  sin skala. Allt sparas i en zipfil. Exporten visar hur långt den kommit
+  och kan avbrytas. Bilder och PDF-underlag läggs in som bilder i PDF:en;
+  texten skrivs med Helvetica. Ritningshuvudets texter kortas med … om de
+  inte ryms
 
 ## Versioner och gamla projekt
 

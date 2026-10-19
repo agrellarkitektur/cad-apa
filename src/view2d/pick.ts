@@ -10,13 +10,13 @@ import { boundsOf, imageCorners } from '../repr/primitives';
  * 3. en sluten form som punkten ligger i (möbel).
  * Inom varje nivå vinner det som ritas överst.
  */
-export function pickAt(pickables: readonly Pickable[], p: Vec2, tol: number): string | null {
+export function pickAt(pickables: readonly Pickable[], p: Vec2, tol: number, drawingScale = 100): string | null {
   let best: { id: string; score: number } | null = null;
   for (const item of pickables) {
     let d = Infinity;
-    for (const prim of item.prims) d = Math.min(d, distToPrim(p, prim));
+    for (const prim of item.prims) d = Math.min(d, distToPrim(p, prim, drawingScale));
     // Kanten på en yta räknas som en linje, så att tunna väggar går att träffa.
-    for (const rings of item.regions) d = Math.min(d, distToPrim(p, { kind: 'region', rings, role: 'cut', fill: { kind: 'none' }, outline: null }));
+    for (const rings of item.regions) d = Math.min(d, distToPrim(p, { kind: 'region', rings, role: 'cut', fill: { kind: 'none' }, outline: null }, drawingScale));
     let score = -Infinity;
     if (item.regions.some((rings) => pointInRings(p, rings))) score = 3000 + item.priority;
     else if (d <= tol) score = 2000 + item.priority - d / tol;
@@ -50,7 +50,7 @@ function boundsOfPickable(item: Pickable): Bounds | null {
   return boundsOf(prims);
 }
 
-function distToPrim(p: Vec2, prim: Primitive): number {
+function distToPrim(p: Vec2, prim: Primitive, drawingScale: number): number {
   switch (prim.kind) {
     case 'line':
       return distToSegment(p, prim.a, prim.b);
@@ -77,7 +77,7 @@ function distToPrim(p: Vec2, prim: Primitive): number {
       return d;
     }
     case 'text':
-      return distToText(p, prim);
+      return distToText(p, prim, drawingScale);
     case 'image': {
       const c = imageCorners(prim);
       let d = Infinity;
@@ -87,15 +87,13 @@ function distToPrim(p: Vec2, prim: Primitive): number {
   }
 }
 
-/** Ritningsskalan som texthöjderna räknas i (som i planen). */
-const DRAWING_SCALE = 100;
-
 /**
  * Avstånd till en ungefärlig ruta runt texten (0 inuti), så att man träffar
  * en etikett var man än pekar på den, även långa vänsterjusterade rader.
  */
-function distToText(p: Vec2, t: Extract<Primitive, { kind: 'text' }>): number {
-  const h = t.height * DRAWING_SCALE;
+function distToText(p: Vec2, t: Extract<Primitive, { kind: 'text' }>, drawingScale: number): number {
+  // Texthöjden på papper genom ritningsskalan, som i planen.
+  const h = t.height * drawingScale;
   const w = Math.max(1, t.text.length) * h * 0.62;
   const a = t.angle ?? 0;
   const dx = p[0] - t.at[0];

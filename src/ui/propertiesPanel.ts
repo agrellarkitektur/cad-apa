@@ -38,6 +38,7 @@ import { skewOf, skewText } from '../elements/angleCheck';
 import { reshapeWall } from '../core/wallEdit';
 import { bulgeForRadius, radiusOf } from '../geometry/arc';
 import { bindTreeForm, treeItemExists, treeItemMarkup, type TreeItem } from './treeItemPanel';
+import { bindSheetForm, sheetFormMarkup, type SheetFormHost } from './sheetForms';
 import { drawingChange, drawingClick, drawingFields, hereOf, lockField, resetShowList, showSection } from './drawingPanel';
 
 type Tab = 'selection' | 'types';
@@ -109,6 +110,8 @@ export class PropertiesPanel {
   onTreeSaved?: (item: TreeItem) => void;
   /** Anropas när det valda i trädet släpps (t.ex. en borttagen mapp). */
   onTreeClosed?: () => void;
+  /** Det formulären för ritningsblad behöver av appen (0.8 del 3). */
+  sheetHost?: SheetFormHost;
 
   /** Visa inställningarna för något i projektträdet. */
   showTreeItem(item: TreeItem | null): void {
@@ -169,7 +172,11 @@ export class PropertiesPanel {
       // Ändringar som inte sparats än ligger kvar när något annat ritas om.
       const open = this.body.querySelector<HTMLFormElement>('.tree-form');
       const dirty = open && open.dataset.treeId === item.id && !open.querySelector<HTMLButtonElement>('[data-tree="save"]')?.disabled;
-      if (!dirty) {
+      if (!dirty && (item.kind === 'sheet' || item.kind === 'viewport')) {
+        // Ritningsblad och vyer på blad (0.8 del 3).
+        this.body.innerHTML = sheetFormMarkup(doc, { kind: item.kind, id: item.id });
+        if (this.sheetHost) bindSheetForm(this.body, this.store, this.sheetHost);
+      } else if (!dirty) {
         this.body.innerHTML = treeItemMarkup(doc, item);
         bindTreeForm(
           this.body,

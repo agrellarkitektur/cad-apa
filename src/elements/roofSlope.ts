@@ -38,9 +38,6 @@ export const SLOPE_STYLES: Record<SlopeStyle, string> = {
   triangle: 'Lutningstriangel',
 };
 
-/** Ritningsskalan, för symbolens storlek på papper. */
-const K = 100;
-
 /**
  * Symbolen för en taklutning. `B` är punkten på takfallet, `toward` sidan
  * där takfoten ligger och `slope` lutningen i grader.
@@ -53,6 +50,8 @@ export function slopeSymbol(
   style: Exclude<SlopeStyle, 'auto'>,
   height: number,
   origin: Primitive['origin'],
+  /** Ritningsskalan (annoteringsskalan), för symbolens storlek på papper. */
+  K = 100,
 ): Primitive[] {
   const text = `${slope.toLocaleString('sv-SE', { maximumFractionDigits: 1 })}°`;
   const pen = { weight: 0.18 };
@@ -102,6 +101,6 @@ export const roofSlopeType: ElementType<RoofSlopeParams> = {
     if (!roof) return [];
     const slope = ctx.params<RoofParams>(roof).slope;
     const style = p.style === 'auto' ? (ctx.view.detail === 'sketch' ? 'text' : 'arc') : p.style;
-    return slopeSymbol(p.at as Vec2, p.toward, slope, p.len, style, ctx.style.labels.heights.dimension, { objectId: el.id, objectType: 'RoofSlope', part: 'taklutning' });
+    return slopeSymbol(p.at as Vec2, p.toward, slope, p.len, style, ctx.style.labels.heights.dimension, { objectId: el.id, objectType: 'RoofSlope', part: 'taklutning' }, ctx.scale);
   },
 };

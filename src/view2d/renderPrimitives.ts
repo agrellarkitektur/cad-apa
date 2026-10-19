@@ -97,7 +97,14 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
         const y = cam.toScreen(bl);
         const m = [x[0] - o[0], x[1] - o[1], y[0] - o[0], y[1] - o[1], o[0], o[1]].map(f).join(' ');
         const filter = p.gray ? ' filter="url(#underlay-gray)"' : '';
-        out.push(`<image href="${escapeXml(href)}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" transform="matrix(${m})" opacity="${f(p.opacity)}"${filter}/>`);
+        const img = `<image href="${escapeXml(href)}" x="0" y="0" width="1" height="1" preserveAspectRatio="none" transform="matrix(${m})" opacity="${f(p.opacity)}"${filter}/>`;
+        if (p.clip) {
+          // Klippt mot en ram (0.8 del 3), t.ex. vyns på ett ritningsblad.
+          const id = `${opt.idPrefix ?? 'h'}c${patterns.size}`;
+          const c = p.clip;
+          patterns.set(id, `<clipPath id="${id}"><path d="${ring([[c.minX, c.minY], [c.maxX, c.minY], [c.maxX, c.maxY], [c.minX, c.maxY]], cam, true)}"/></clipPath>`);
+          out.push(`<g clip-path="url(#${id})">${img}</g>`);
+        } else out.push(img);
         break;
       }
       case 'text': {

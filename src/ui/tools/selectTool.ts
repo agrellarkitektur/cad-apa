@@ -92,7 +92,7 @@ export class SelectTool implements ViewTool {
       return 'capture';
     }
     // Trycker man på något som redan är markerat flyttas markeringen.
-    const hit = pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, p.pointerType === 'touch' ? 14 : 6));
+    const hit = pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, p.pointerType === 'touch' ? 14 : 6), this.host.view.drawingScale);
     const movable = hit && (!ro || this.host.canEdit?.(hit));
     // Med Ctrl (Cmd på Mac) blir det en kopia som dras.
     if (hit && movable && this.host.selection.has(hit) && !p.shift) {
@@ -290,7 +290,7 @@ export class SelectTool implements ViewTool {
   }
 
   hover(p: ViewPointer | null): void {
-    this.hoverId = p ? pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, 6)) : null;
+    this.hoverId = p ? pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, 6), this.host.view.drawingScale) : null;
     if (p && this.nodeAt(p.model, p.pointerType === 'touch')) {
       this.host.view.svg.style.cursor = this.cursor = 'crosshair';
       return;
@@ -388,7 +388,7 @@ export class SelectTool implements ViewTool {
       this.skipClick = false;
       return;
     }
-    const id = pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, p.pointerType === 'touch' ? 14 : 6));
+    const id = pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, p.pointerType === 'touch' ? 14 : 6), this.host.view.drawingScale);
     const sel = this.host.selection;
     // Dubbelklick (eller dubbeltryck) på en text redigerar den i ritningen.
     const now = performance.now();

@@ -61,6 +61,7 @@ uppdateringar (0.8.1 …) med 3–6 punkter.
 | 0.6.2 | Skyddat autospar, sidopaneler med egen bredd, skärmskala, textredigering i ritningen, zip för webbhotellet |
 | 0.6.3 | Formler och enheter i sifferfält, anslutna väggar följer med, ny topprad, minimerade paneler, högerklick, utfällbar snabbmeny, vyhistorik, kalkering med eget utseende, tillfälliga vyinställningar |
 | 0.7 | Format 4: fasader och sektioner med dolda linjer, norrpil och fasader efter väderstreck, testtak med gavlar, bågväggar, Modifiera-paletten (lägg till punkt, böj, tangent, förskjut, avrunda, fasa, sträck, kopiera i rad m.m.) |
+| 0.8.0 | Format 5: projektträdet med mappar, 2D-element med Visas i och vy-taggar, mått och text i fasader och sektioner, underlag (PDF, bild, DXF) och arbetsblad, snabbare väggskarvar, ritningsblad med BH90-huvud och smarttext, vyer i skala på bladen, annoteringsskala och Plot/export till PDF i en zipfil |
 | 0.7.1 | Betaversion med synpunktsformulär, detaljnivåer och linjetjocklekar i fasad och sektion, glasmarkering och öppningssätt, automatisk taklutning, sektioner begränsade till linjen och klippta i 3D, nya markörer i planen med grepp, längd, vinkel och Rikta efter objekt, streckning från hörnen, varning för nästan raka vinklar, takets kontur i Modifiera, måttband, spårlinjer, kopiera och klistra in mellan projekt, Ctrl + dra, piltangenter, zooma till område och förra zoomen |
 
 ## Framåt
@@ -161,6 +162,12 @@ prövas bara väggar som ligger intill. En fasad av 544 väggar gick från
 `tests/prestanda.test.ts` fångar om det blir långsamt igen.
 
 #### Del 3: ritningsblad och plot
+
+*Byggd (20 oktober), allt nedan, och 0.8.0 är därmed klar. Formatet är
+fortfarande 5: loggan ligger i `project.fields` och vyernas läge på bladet i
+`Viewport.at`. En vy på ett blad visar det som är ritat i den med 4 mm luft;
+underlag klipps mot den ramen. Att beskära en vy för hand ligger under
+Efter pilotprojektet.*
 
 Bantad 20 oktober för att rymmas i en session. Det som stod här om grafik,
 markörer, projektvinklar och en andra 2D-ruta ligger nu under *Efter
@@ -263,6 +270,9 @@ efter pilotprojektet. Det som piloten visar behövs tidigt går först.
 
 ### Grafik och markörer (från 0.8 del 3)
 
+- Beskära en vy på ett blad för hand (i dag visar vyn allt som är ritat i den, och underlagen klipps mot det)
+- Fria texter, linjer och bilder direkt på ett blad, och flera blad i en PDF
+- Typsnittet inbäddat i PDF:en (i dag Helvetica, som alla PDF-läsare har)
 - En andra 2D-ruta: planen bredvid en öppen sektion eller fasad, där det man markerar i den ena markeras i den andra
 - Ritningshuvud enligt BEAst
 

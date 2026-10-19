@@ -446,7 +446,7 @@ export class ModifyTool implements ViewTool {
       return;
     }
     if (this.op === 'extend') {
-      const target = pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, 8));
+      const target = pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, 8), this.host.view.drawingScale);
       if (!target || target === this.ctx.wallId || this.host.store.doc.elements[target]?.type !== 'Wall') {
         this.host.hint('Klicka på en vägg.');
         return;

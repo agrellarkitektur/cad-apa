@@ -115,6 +115,8 @@ export interface ImagePrim extends Base {
   opacity: number;
   /** I gråskala. */
   gray?: boolean;
+  /** Bara det som ligger inom rektangeln ritas, t.ex. vyns ram på ett blad (0.8 del 3). */
+  clip?: Bounds;
 }
 
 export type Primitive = LinePrim | PolylinePrim | RegionPrim | ArcPrim | TextPrim | ImagePrim;

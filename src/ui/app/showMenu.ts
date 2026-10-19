@@ -65,7 +65,11 @@ export function installShowMenu(app: AppContext) {
   // Stilmall och kalkering i Visa-menyn.
   app.root.addEventListener('change', (e) => {
     const t = e.target as HTMLSelectElement;
-    if (t.matches('[data-show-style]')) {
+    if (t.matches('[data-show-scale]')) {
+      // Annoteringsskalan (0.8 del 3): texter och mått får rätt höjd på papper i den skalan.
+      app.ui.scale = Number(t.value) || 100;
+      app.renderAll();
+    } else if (t.matches('[data-show-style]')) {
       app.ui.styleName = t.value || null;
       app.renderAll();
     } else if (t.matches('[data-show-trace]')) {

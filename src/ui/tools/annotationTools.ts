@@ -178,7 +178,7 @@ export class DimensionTool implements ViewTool {
   overlay(cam: Camera): string {
     const out: string[] = [];
     const d = this.preview();
-    if (d) out.push(`<g class="dim-preview">${renderPrimitives(dimensionPrims(d, 100), cam, { drawingScale: 100 })}</g>`);
+    if (d) out.push(`<g class="dim-preview">${renderPrimitives(dimensionPrims(d, this.host.view.drawingScale), cam, { drawingScale: this.host.view.drawingScale })}</g>`);
     for (const q of this.points) {
       const s = cam.toScreen(pointAt(q));
       out.push(`<circle cx="${s[0]}" cy="${s[1]}" r="3.5" class="chain-pt"/>`);
@@ -238,7 +238,7 @@ export class TextTool implements ViewTool {
   overlay(cam: Camera): string {
     if (!this.at) return '';
     const s = cam.toScreen(this.at);
-    const px = this.height * 100 * cam.scale;
+    const px = this.height * this.host.view.drawingScale * cam.scale;
     return `<text x="${s[0]}" y="${s[1]}" font-size="${Math.max(6, px)}" class="text-preview">${escape(this.text.split('\n')[0])}</text>`;
   }
 }

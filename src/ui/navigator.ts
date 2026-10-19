@@ -28,6 +28,8 @@ export interface NavigatorHost {
   describeView(v: ViewDef): string;
   /** Det i trädet vars inställningar visas i egenskapspanelen (0.8). */
   treeItem(): Id | null;
+  /** Ritningsbladet som visas, om något (0.8 del 3). */
+  layout(): Id | null;
 }
 
 /**
@@ -57,6 +59,7 @@ export class Navigator {
         <button class="icon-mini pane-min" data-action="min-nav" aria-label="Minimera projektträdet" title="Minimera">${icons.minimize}</button>
         <button class="icon-mini pane-x" data-action="close-nav" aria-label="Stäng projektträdet" title="Stäng (N)">${icons.close}</button>
       </div>
+      <div class="nav-plot"><button class="btn btn-ghost" data-action="plot" title="Exportera blad och vyer som PDF">${icons.plot}<span>Plot/export…</span></button></div>
       <div class="panel-head nav-head">
         <div class="tabs nav-tabs" role="tablist">
           ${TABS.map(([id, label]) => `<button role="tab" data-nav-tab="${id}" aria-selected="${id === this.tab}">${label}</button>`).join('')}
@@ -244,11 +247,26 @@ export class Navigator {
   }
 
   private ritningar(): string {
-    return `${this.folders('ritningar', new Map())}<section>
-      <h2>Ritningar</h2>
-      <p class="note">Ritningsblad med ritningshuvud och vyer placerade i skala. De skrivs ut och exporteras med Plot/export.</p>
-      <p class="note soon">Kommer i sista delen av 0.8.</p>
-      <div class="nav-actions">${this.newFolderButton('ritningar')}</div>
+    const doc = this.host.doc();
+    const current = this.host.layout();
+    const picked = this.host.treeItem();
+    const sheets = [...doc.sheets].sort((a, b) => a.number.localeCompare(b.number, 'sv', { numeric: true }));
+    const rows = new Map<Id, string>();
+    for (const s of sheets) {
+      const n = s.viewports.length;
+      rows.set(
+        s.id,
+        `<div class="view-row${s.id === current ? ' active' : ''}${s.id === picked ? ' picked' : ''}"><button class="view-apply" data-sheet-pick="${s.id}" title="Visa bladet och dess inställningar">${icons.sheet}<span class="sheet-row-name"><b>${esc(s.number)}</b> ${esc(s.name)}</span><small>${s.size} · ${n} ${n === 1 ? 'vy' : 'vyer'}</small></button></div>`,
+      );
+    }
+    const unfiled = this.unfiled(rows, sheets.map((s) => s.id));
+    return `${this.folders('ritningar', rows)}<section>
+      ${sheets.length ? (unfiled ? `<div class="nav-list">${unfiled}</div>` : '') : '<p class="note">Inga ritningsblad än.</p>'}
+      <div class="nav-actions">
+        <button class="btn" data-action="new-sheet">${icons.plus}<span>Nytt ritningsblad</span></button>
+        ${this.newFolderButton('ritningar')}
+      </div>
+      <p class="note">Ett blad har ritningshuvud och vyer i sin skala. Klicka på en vy på bladet för att ändra skala och rubrik, och dra den för att flytta den. Plot/export gör PDF:er av bladen.</p>
     </section>`;
   }
 }

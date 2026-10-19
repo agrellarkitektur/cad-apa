@@ -37,6 +37,11 @@ export interface ViewStates {
   viewTags?: readonly string[];
   /** Visa 2D-element som inte syns i vyn, tonade, för att hitta dem. */
   showHidden?: boolean;
+  /**
+   * Annoteringsskalan (0.8 del 3): skalan som texter, mått och symboler ritas
+   * för, så att de får rätt höjd på papper. Utelämnad = 1:100.
+   */
+  scale?: number;
 }
 
 export function actionOf(el: Pick<Element, 'states'>, view: ViewStates): Action {
@@ -63,4 +68,9 @@ export function statesForNewElement(doc: ProjectDoc, active: Id): Id[] {
 /** Det tillstånd som förslag normalt jämförs med, om projektet har ett. */
 export function existingState(doc: ProjectDoc): State | undefined {
   return doc.states.find((s) => s.kind === 'existing');
+}
+
+/** Ett förslag visas först om det finns, annars det första tillståndet. */
+export function defaultState(doc: Pick<ProjectDoc, 'states'>): Id {
+  return (doc.states.find((s) => s.kind === 'proposal') ?? doc.states[0]).id;
 }

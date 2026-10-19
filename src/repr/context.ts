@@ -57,7 +57,7 @@ export function createContext(
     doc,
     view,
     style,
-    scale: 100,
+    scale: view.scale ?? 100,
     actionOf: actionFor,
     styleOf: (el) => style.actions[styleKeyOf(actionFor(el))],
     styleKeyOf,

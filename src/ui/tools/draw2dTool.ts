@@ -182,7 +182,7 @@ export class Draw2DTool implements ViewTool {
   overlay(cam: Camera): string {
     const out: string[] = [];
     const prev = this.preview();
-    if (prev.length) out.push(`<g class="dim-preview">${renderPrimitives(prev, cam, { drawingScale: 100 })}</g>`);
+    if (prev.length) out.push(`<g class="dim-preview">${renderPrimitives(prev, cam, { drawingScale: this.host.view.drawingScale })}</g>`);
     for (const q of this.points) {
       const s = cam.toScreen(q);
       out.push(`<circle cx="${s[0]}" cy="${s[1]}" r="3.5" class="chain-pt"/>`);

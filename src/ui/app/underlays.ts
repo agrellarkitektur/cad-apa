@@ -7,6 +7,7 @@ import { askConfirm, askText } from '../ask';
 import { isNarrow } from '../sheet';
 import { UnderlayTool } from '../tools/underlayTools';
 import type { AppContext } from './context';
+import type { PdfImage } from '../../formats/pdf';
 
 /**
  * Underlag i appen (0.8 del 2): lägga in filer (knappen i projektträdet
@@ -88,6 +89,46 @@ export function installUnderlays(app: AppContext) {
     return url;
   }
   app.view.imageHref = imageHref;
+
+  /**
+   * En bild som JPEG för PDF-exporten (0.8 del 3): ett foto, en PDF-sida
+   * eller loggan, med vit bakgrund under det genomskinliga och i gråskala om
+   * underlaget är grått. Längsta sidan högst 4096 bildpunkter.
+   */
+  async function exportImage(src: { asset: string; page?: number }, gray: boolean): Promise<PdfImage | null> {
+    const a = app.store.doc.assets[src.asset];
+    if (!a) return null;
+    try {
+      const blob =
+        a.mime === 'application/pdf'
+          ? await import('../pdf').then(({ renderPdfPage }) => renderPdfPage(bytesOf(a.data), src.page ?? 1, 4096))
+          : new Blob([bytesOf(a.data) as Uint8Array<ArrayBuffer>], { type: a.mime });
+      const url = URL.createObjectURL(blob);
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = () => reject(new Error('Bilden kunde inte läsas.'));
+        i.src = url;
+      }).finally(() => setTimeout(() => URL.revokeObjectURL(url), 1000));
+      const k = Math.min(1, 4096 / Math.max(img.naturalWidth || 1, img.naturalHeight || 1));
+      const w = Math.max(1, Math.round((img.naturalWidth || 300) * k));
+      const h = Math.max(1, Math.round((img.naturalHeight || 150) * k));
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d')!;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0, 0, w, h);
+      if (gray) ctx.filter = 'grayscale(1)';
+      ctx.drawImage(img, 0, 0, w, h);
+      const jpeg = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.88));
+      if (!jpeg) return null;
+      return { width: w, height: h, jpeg: new Uint8Array(await jpeg.arrayBuffer()) };
+    } catch (err) {
+      console.warn('Bild till PDF', err);
+      return null;
+    }
+  }
 
   /** Ytan som visas: fasaden, sektionen eller arbetsbladet, annars våningens plan. */
   const space = (): Id | undefined => app.ui.marker ?? app.ui.worksheet ?? undefined;
@@ -290,5 +331,5 @@ export function installUnderlays(app: AppContext) {
     active = null;
   };
 
-  return { importFiles, chooseFiles, startUnderlayTool, imageHref, showUnderlay, openUnderlayMenu, busy, cancel };
+  return { importFiles, chooseFiles, startUnderlayTool, imageHref, exportImage, showUnderlay, openUnderlayMenu, busy, cancel };
 }

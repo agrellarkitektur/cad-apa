@@ -70,6 +70,10 @@ export function createUiState(initial: ProjectDoc, uiSettings: UiSettings, deskt
     worksheet: null as Id | null,
     /** Visa 2D-element som inte syns i vyn, tonade (0.8). */
     showHidden: false,
+    /** Ett ritningsblad som visas i stället för planen (0.8 del 3). */
+    layout: null as Id | null,
+    /** Annoteringsskalan (0.8 del 3): texter, mått och symboler ritas för den här skalan. */
+    scale: 100,
   };
 }
 
@@ -92,8 +96,8 @@ export function shellMarkup(brand: Brand): string {
             <button role="menuitem" data-action="save">${icons.save}<span>Spara</span><kbd>Ctrl+S</kbd></button>
             <button role="menuitem" data-action="save-as">${icons.save}<span>Spara som…</span><kbd>Ctrl+Shift+S</kbd></button>
             <hr>
-            <button role="menuitem" aria-disabled="true" title="Kommer i 0.8">${icons.newFile}<span>Skriv ut och exportera PDF</span><small>0.8</small></button>
-            <button role="menuitem" aria-disabled="true" title="Kommer i 0.8">${icons.openFile}<span>Importera underlag</span><small>0.8</small></button>
+            <button role="menuitem" data-action="plot">${icons.plot}<span>Plot/export…</span></button>
+            <button role="menuitem" data-action="add-underlay">${icons.openFile}<span>Lägg in underlag…</span></button>
             <hr>
             <button role="menuitem" data-action="new-proposal">${icons.states}<span>Nytt förslag</span></button>
             <button role="menuitem" data-action="show-types">${icons.wall}<span>Typer och littera</span></button>

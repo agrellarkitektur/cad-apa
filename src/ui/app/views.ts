@@ -10,7 +10,7 @@ import { describeView } from './helpers';
 import { SPACE_TOOLS } from './shell';
 
 /** Ett ställe man varit på: en sparad vy, ett våningsplan i modellen, eller en fasad eller sektion. */
-export type Place = { kind: 'view'; id: Id } | { kind: 'storey'; id: Id } | { kind: 'marker'; id: Id } | { kind: 'worksheet'; id: Id };
+export type Place = { kind: 'view'; id: Id } | { kind: 'storey'; id: Id } | { kind: 'marker'; id: Id } | { kind: 'worksheet'; id: Id } | { kind: 'sheet'; id: Id };
 
 /** Vyhistorik, Gå till (vy, våningsplan, fasad eller sektion), sparade vyer och menyerna för vyer och markörer. */
 export function installViews(app: AppContext) {
@@ -38,6 +38,10 @@ export function installViews(app: AppContext) {
       const w = app.store.doc.worksheets.find((x) => x.id === p.id);
       return w ? { name: w.name, sub: 'Arbetsblad' } : null;
     }
+    if (p.kind === 'sheet') {
+      const s = app.store.doc.sheets.find((x) => x.id === p.id);
+      return s ? { name: `${s.number} ${s.name}`, sub: 'Ritningsblad' } : null;
+    }
     const s = app.store.doc.storeys.find((x) => x.id === p.id);
     return s ? { name: s.name, sub: 'Modell' } : null;
   }
@@ -52,6 +56,7 @@ export function installViews(app: AppContext) {
       const was = app.ui.marker;
       app.ui.marker = p.id;
       app.ui.worksheet = null;
+      app.ui.layout = null;
       app.ui.storey = el.storey;
       app.ui.activeView = null;
       if (app.ui.tool !== 'select' && app.ui.tool !== 'pan') app.setTool('select');
@@ -68,6 +73,7 @@ export function installViews(app: AppContext) {
       const was = app.ui.worksheet;
       app.ui.worksheet = p.id;
       app.ui.marker = null;
+      app.ui.layout = null;
       app.ui.activeView = null;
       if (app.ui.tool !== 'select' && app.ui.tool !== 'pan' && !SPACE_TOOLS.includes(app.ui.tool)) app.setTool('select');
       app.measureBox.close();
@@ -77,11 +83,28 @@ export function installViews(app: AppContext) {
       if (app.ui.mode === '3d') void app.setMode('2d');
       app.renderAll();
       if (was !== p.id) app.view.zoomToFit();
+    } else if (p.kind === 'sheet') {
+      // Ett ritningsblad (0.8 del 3): papperet med vyerna i sin skala.
+      if (!app.store.doc.sheets.some((s) => s.id === p.id)) return;
+      const was = app.ui.layout;
+      app.ui.layout = p.id;
+      app.ui.marker = null;
+      app.ui.worksheet = null;
+      app.ui.activeView = null;
+      if (app.ui.tool !== 'select' && app.ui.tool !== 'pan') app.setTool('select');
+      app.measureBox.close();
+      app.palette.hide();
+      app.selection.clear();
+      visit(p);
+      if (app.ui.mode !== '2d') void app.setMode('2d');
+      app.renderAll();
+      if (was !== p.id) app.view.zoomToFit();
     } else if (app.store.doc.storeys.some((s) => s.id === p.id)) {
-      const was = app.ui.marker ?? app.ui.worksheet;
+      const was = app.ui.marker ?? app.ui.worksheet ?? app.ui.layout;
       app.ui.storey = p.id;
       app.ui.marker = null;
       app.ui.worksheet = null;
+      app.ui.layout = null;
       app.ui.activeView = null;
       visit(p);
       app.renderAll();
