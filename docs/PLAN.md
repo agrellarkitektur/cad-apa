@@ -81,9 +81,8 @@ Från granskningen av 0.7.1:
 
 #### Del 1: format 5, projektträdet, 2D-element och synlighet
 
-*Byggd (demon visar den), utom två punkter som flyttas till nästa session:
-grepp i sektioner för nock och takfot, och grepp och Modifiera för
-2D-elementens punkter.*
+*Byggd. De två punkter som blev kvar (grepp i sektioner för nock och
+takfot, och grepp och Modifiera för 2D-elementens punkter) byggdes i del 2.*
 
 - Format 5 med migrering 4 → 5 och test, för allt i 0.8 på en gång
 - Mappar med undermappar i projektträdet, i alla flikar. Mapparna används också av Plot/export i del 3
@@ -111,7 +110,12 @@ Mått och text i fasader och sektioner:
 
 #### Del 2: underlag och arbetsblad
 
-- Underlag: PDF (som bild), bilder och DXF. Skalan kalibreras genom att klicka två punkter och skriva avståndet. Underlaget kan flyttas, låsas och tonas, och visas i modellvyn och på arbetsblad. Snäpp mot linjerna i DXF-underlag
+*Byggd (demon visar den), tillsammans med det som blev kvar från del 1.
+Bestämt 19 oktober: takfoten som dras uppåt tar med sig nocken (Shift
+håller nocken still), PDF-filen sparas som den är i projektet, och
+underlag går att lägga även i fasader och sektioner.*
+
+- Underlag: PDF (som bild), bilder och DXF. Skalan kalibreras genom att klicka två punkter och skriva avståndet. Underlaget kan flyttas, riktas, låsas och tonas, och visas i modellvyn, på arbetsblad och i fasader och sektioner. Snäpp mot linjerna i DXF-underlag, med lager som kan släckas
 - Arbetsblad: fria 2D-ritningar som inte hör till ett våningsplan
 
 #### Del 3: ritningsblad, export och grafik

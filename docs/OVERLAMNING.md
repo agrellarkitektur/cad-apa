@@ -1,80 +1,86 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 19 oktober 2026, efter 0.8 del 1.
+överlämning; historiken finns i git. Senast: 19 oktober 2026, efter 0.8 del 2.
 
 ## Läget
 
-- **0.8 byggs i tre delar** och släpps som 0.8.0 när alla är klara (Carl
-  August ville ha granskningen av 0.7.1 i 0.8.0 i stället för en 0.7.2).
-  **Del 1 är byggd** och ligger på `main`; versionen heter `0.8.0-del.1`
-  och demon visar den (https://claude.ai/artifact/2m7gq5gkkgSP2wFZ7fLGNJ).
-  Filformatet är **5**. Ingen tagg eller release förrän 0.8.0 är klar.
-- Vad del 1 innehåller står i README (*Version 0.8, del 1 av 3*), hur det
-  är byggt i UTVECKLING.md (*Ritningsinformation, synlighet och
-  projektträdet*), och allt som är bestämt framåt i `docs/PLAN.md`.
-- Besluten från granskningen (19 oktober) står i PLAN.md: småpunkterna
-  under 0.8, Plot/export i del 3, dumbs i 0.10, smartgrupper i 0.13,
-  medelmarknivå i 0.9 och 0.15, areor enligt SS 21054 i 0.11 (han laddar
-  upp standarden då), lokalisering under *Avvaktar* och principen *Regler
-  per land*.
+- **0.8 byggs i tre delar** och släpps som 0.8.0 när alla är klara. **Del 1
+  och del 2 är byggda** och ligger på `main`; versionen heter
+  `0.8.0-del.2` och demon visar den
+  (https://claude.ai/artifact/2m7gq5gkkgSP2wFZ7fLGNJ). Filformatet är
+  fortfarande **5**. Ingen tagg eller release förrän 0.8.0 är klar.
+- Del 2 innehåller det som blev kvar från del 1 (grepp för nock och takfot
+  i fasader och sektioner, grepp och Modifiera för 2D-elementens punkter),
+  underlag (PDF, bilder, DXF) och arbetsblad. Vad det är står i README
+  (*Version 0.8, del 2 av 3*), hur det är byggt i UTVECKLING.md (*Grepp,
+  underlag och arbetsblad*), och vad som återstår i `docs/PLAN.md`.
+- Beslut 19 oktober (i PLAN.md): takfoten som dras uppåt tar med sig
+  nocken, Shift håller nocken still; PDF-filen sparas som den är; underlag
+  går att lägga även i fasader och sektioner.
 
-## Nästa session: 0.8 del 2
+## Nästa session: 0.8 del 3
 
-Börja med det som blev kvar från del 1:
+Enligt PLAN.md: ritningsblad (A4–A0, BH90 eller BEAst, logga, smarttext),
+flera vyer per blad i egen skala, annoteringsskala, en andra 2D-ruta,
+Plot/export (ett ställe, kryssrutor efter trädets mappar, PDF och DXF,
+zip, avbryt), penntabell, typsnitt, öppningssätt för fönster, markörstilar
+och projektvinklar. Formatet finns redan (`sheets` med `viewports`,
+`ViewDef.scale`, `graphics.pens`, `graphics.font`, `project.angles`).
 
-1. Grepp i sektioner: dra i nocken för att ändra taklutningen, och i
-   takfoten (PLAN.md, del 1).
-2. Grepp och Modifiera för 2D-elementens punkter (i dag kan de flyttas
-   hela, och ändras i egenskaperna, men punkterna går inte att dra).
-
-Sedan del 2 enligt PLAN.md: underlag (PDF som bild, bilder, DXF) med
-kalibrering, flytta, låsa och tona, och arbetsblad. Formatet finns redan:
-`assets` för filerna, underlag som element med `locked`, `worksheets`
-och `space` för det som ritas på ett arbetsblad. Underlag och arbetsblad
-ska ligga i flikarna Underlag och Modell i projektträdet, i mappar som
-allt annat.
-
-Fråga Carl August innan något byggs (CLAUDE.md), men del 2 är redan
-godkänd i sak.
+Del 3 är stor. Föreslå Carl August en ordning och fråga om något kan
+vänta till en 0.8.1, innan något byggs (CLAUDE.md). Underlag på blad hör
+till del 3: ett blad visar vyer, och vyerna visar underlagen som redan
+finns i dem.
 
 ## Öppna frågor och kända begränsningar
 
-- **Synpunkter på webbhotellet:** han har laddat upp `feedback-config.php`
-  i mappen ovanför `cad-apa`, men formuläret öppnade e-posten. Sedan del 1
-  visar formuläret vad servern svarar (README, *Synpunkter*). Fråga vad
-  det säger. Troligast är `from` en adress som inte finns (använd
+- **Synpunkter på webbhotellet:** fortfarande obesvarat. Han har laddat upp
+  `feedback-config.php` i mappen ovanför `cad-apa`, men formuläret öppnade
+  e-posten. Sedan del 1 visar formuläret vad servern svarar. Fråga vad det
+  säger. Troligast är `from` en adress som inte finns (använd
   `kontakt@agrellarkitektur.se`), eller att webbhotellet stoppar `mail()`
-  och kräver SMTP; då får `feedback.php` byggas ut. Skriptet kunde inte
-  provas härifrån (nätet släpper inte fram till agrellarkitektur.se).
-- **Visas i** räknar vyer utan att bry sig om tillstånd: ett 2D-element som
-  bara finns i Förslag A räknas ändå i en vy av Befintligt.
-- Vy-taggar ges i vyns inställningar i projektträdet. Modellvyerna (Plan 1
-  · modell) har inga taggar, så ett element med taggar syns inte där;
+  och kräver SMTP; då får `feedback.php` byggas ut.
+- **2D på arbetsblad följer tillstånden** som 2D i planen: det som ritas i
+  Förslag A syns inte när Befintligt visas. Tillståndsknapparna syns också
+  på arbetsbladet. Fråga om arbetsblad ska vara oberoende av tillstånd.
+- Taksprånget ändras lika på båda sidor av ett sadeltak (testtaket har en
+  takfot för hela taket). Riktiga tak med takfot per kant kommer i 0.9.
+- Spegla vänder inte bilden i ett underlag, bara läget.
+- DXF: skraffering (HATCH), bilder och externa referenser läses inte.
+  Mycket stora DXF-filer är inte provade; allt ritas om vid varje
+  panorering. Vektorsnäpp mot PDF avvaktar (PLAN.md).
+- pdf.js gör demon större (2,8 MB mot 1,1 MB). Arbetaren byggs in i filen.
+- **Visas i** räknar vyer utan att bry sig om tillstånd.
+- Modellvyerna har inga vy-taggar, så ett element med taggar syns inte där;
   *Visa dolda 2D-element* under Visa visar dem tonade.
-- En borttagen taklutning är dold för gott i den fasaden. Det finns inget
-  sätt att få tillbaka den automatiska utom ångra.
+- En borttagen taklutning är dold för gott i den fasaden; bara ångra tar
+  tillbaka den automatiska.
 - Den första fasaden eller sektionen tar 100–200 ms; testet som mäter
   tiden kan fela när alla tester körs samtidigt på en belastad maskin.
-- Fönster saknar öppningssätt (del 3). Spårlinjerna kan kännas för
-  klistriga (`TRACK_REACH` i `src/ui/tools/snap.ts`).
-- Varningen för nästan raka vinklar gäller bara raka väggar.
+- Spårlinjerna kan kännas för klistriga (`TRACK_REACH` i
+  `src/ui/tools/snap.ts`). Varningen för nästan raka vinklar gäller bara
+  raka väggar.
 
 ## Arbeta i miljön
 
-- Bygga och testa: se CLAUDE.md. Commit avslutas med raderna som
-  sessionen anger (Co-Authored-By och Claude-Session), sedan
-  `git fetch origin main` och `git push origin HEAD:main`. Releaser på
-  GitHub gör Carl August själv.
+- Repot är `agrellarkitektur/cad-apa`. Bygga och testa: se CLAUDE.md.
+  Commit avslutas med raderna som sessionen anger (Co-Authored-By och
+  Claude-Session), sedan `git fetch origin main` och
+  `git push origin HEAD:main`. Releaser på GitHub gör Carl August själv.
 - Demon: `npm run preview:artifact`, publicera `artifact/cad-apa.html` till
   artefakten ovan (samma URL).
-- Titta på resultatet: `npm run preview:artifact`, servera `dist-artifact/`
-  med `python3 -m http.server 8765` och styr med Playwright (Python).
+- Titta på resultatet: servera `dist-artifact/` med
+  `python3 -m http.server 8765` och styr med Playwright (Python).
   `window.bacchus` har `store`, `view`, `selection`, `ui`, `modifyPalette`,
   `view3d`, `plan`, `setTool`, `setMode` och `goTo` (t.ex.
-  `goTo({kind:'marker', id:'sektion-a'})`). Stoppa servern med
-  `pgrep -af "http.server 8765"` och `kill`, inte `pkill -f` (det stänger
-  skalet).
+  `goTo({kind:'marker', id:'sektion-a'})` eller
+  `goTo({kind:'worksheet', id})`). Filer läggs in med
+  `page.expect_file_chooser()` runt ett klick på *Lägg in underlag…*.
+  Stoppa servern med `pgrep -af "http.server 8765"` och `kill`, inte
+  `pkill -f` (det stänger skalet).
+- Testfiler att lägga in går snabbt att göra med reportlab (PDF), PIL
+  (bild) och några rader text (DXF).
 - Fasader och sektioner utan webbläsare: ett skript eller test med
   `buildSection` från `src/repr/section.ts`.
 - Telefon: viewport 390 × 844, `is_mobile`, `has_touch`.

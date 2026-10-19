@@ -303,3 +303,58 @@ på bladet sina egna.
   projektet.
 - Egenskaperna för 2D, taklutning, Visas i och Lås ligger i
   `src/ui/drawingPanel.ts`.
+
+## Grepp, underlag och arbetsblad (0.8 del 2, format 5)
+
+- **Takets grepp i fasader och sektioner**: `roofGripsInView` och
+  `dragRoofGrip` i `src/elements/roofGrips.ts`, rena funktioner med tester.
+  Greppen ligger i vyns koordinater (x längs linjen, y höjd). Nocken ändrar
+  `slope` (lutningen räknas tillbaka ur nockens höjd med `slopeForRidge`),
+  takfoten ändrar `eave` och, åt sidan, konturen med `offsetEdge` från
+  `src/core/roofEdit.ts`. Sadeltak får samma taksprång på båda sidor så att
+  nocken ligger kvar; riktiga tak med takfot per kant kommer i 0.9. Markera
+  ritar greppen i `overlay()` och anropar `updateParams` när de släpps.
+- **2D-elementens punkter**: `src/elements/shapeEdit.ts` (`shapeNodes`,
+  `moveShapeNode`, `rectWithCorner`, `shapeEdgeAt`, `insertShapeNode`,
+  `removeShapeNode`, `offsetShapeEdge`). Greppen i Markera (`nodeAt`) och
+  valen i Modifiera (`shapeInsert`, `shapeMove`, `shapeRemove`,
+  `shapeOffset`, med `ModifyContext.shapeId`) använder samma funktioner.
+  Modifiera fungerar i fasader och sektioner när allt markerat går att
+  ändra där (`canEdit`).
+- **Bilder som primitiver**: `ImagePrim` (`kind: 'image'`) i
+  `src/repr/primitives.ts` har hörn, två vektorer och `source` (fil och
+  sida), aldrig själva bilden. `renderPrimitives` frågar
+  `RenderOptions.imageHref` efter en adress; appen ger blob-adresser
+  (`src/ui/app/underlays.ts`) så att det som ritas om vid varje panorering
+  är kort. Saknas adressen än ritas en streckad ram, och appen ritar om när
+  bilden är klar. `Pen.opacity` tonar linjer och text.
+- **Underlag**: elementtypen `Underlay` i `src/elements/underlay.ts`
+  (`global`, ritas underst). Filen ligger i `doc.assets` och elementet har
+  `asset`, `kind` (`image`, `pdf`, `dxf`), `pos`, `angle`, `scale` (mm per
+  enhet i filen), `size`, `ref` (DXF: filens punkt i `pos`), `opacity`
+  (0–100), `gray` och `layersOff`. `underlayTransform` och
+  `underlayInverse` räknar mellan filen och modellen. `addWithAsset` i
+  `src/core/commands.ts` lägger in fil och element i ett steg, och
+  `deleteElements` tar bort en fil med den sista placeringen
+  (`pruneAssets`). Urklippet tar med filerna (`ClipPayload.assets`).
+- **PDF** ritas med pdf.js (`src/ui/pdf.ts`), som laddas först när det
+  behövs. Vi använder **legacy-bygget** (`pdfjs-dist/legacy/build`): det
+  vanliga bygget kräver `Map.getOrInsertComputed`, som Safari på iPhone
+  saknar. Arbetaren byggs in i filen (`?worker&inline`) och delas av alla
+  PDF:er (`PDFWorker.create`); den får inte stängas när ett dokument
+  stängs. Sidan ritas som PNG med längsta sidan 4096 bildpunkter (2560 på
+  telefon).
+- **DXF** läses av `parseDxf` i `src/formats/dxf.ts`, som inte beror på
+  något annat i programmet. Den ger polylinjer och texter i filens enheter,
+  med lager, och packar upp block. Läsningen sparas per fil (`dxfOf`), och
+  de färdiga primitiverna per läge och lager.
+- **Kalibrera och rikta**: `UnderlayTool` i `src/ui/tools/underlayTools.ts`,
+  ett tillfälligt verktyg som startas från egenskaperna, menyerna eller
+  trädet (`startUnderlayTool`).
+- **Arbetsblad**: `ui.worksheet` är arbetsbladet som visas (bredvid
+  `ui.marker`), och `Place` har `kind: 'worksheet'`. Det som ritas på
+  arbetsbladet har `space` satt till dess id och ritas med `buildPlan` med
+  `place`. `createWorksheet`, `saveWorksheet` och `deleteWorksheet` ligger
+  i `src/core/treeCommands.ts`; att ta bort ett arbetsblad tar bort det som
+  är ritat på det och vyerna av det. På ett arbetsblad går bara
+  `DRAWING_TYPES` (2D, text, mått och underlag) att klistra in.

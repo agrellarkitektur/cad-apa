@@ -901,7 +901,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     lastSection = section;
     if (section && markerEl) {
       const drawn = buildPlan(doc, markerEl.storey, { ...vs, place: markerEl.id }, styleFor(ui.styleName));
-      plan = { prims: [...section.prims, ...drawn.prims], pickables: [...section.pickables, ...drawn.pickables] };
+      // Underlagen ligger under fasaden eller sektionen; det andra som ritats i den ovanpå.
+      const under = drawn.prims.filter((q) => q.origin?.objectType === 'Underlay');
+      const over = drawn.prims.filter((q) => q.origin?.objectType !== 'Underlay');
+      plan = { prims: [...under, ...section.prims, ...over], pickables: [...section.pickables, ...drawn.pickables] };
     } else if (sheet) {
       // Ett arbetsblad (0.8 del 2): bara det som är ritat på det.
       plan = buildPlan(doc, ui.storey, { ...vs, place: sheet.id }, styleFor(ui.styleName));

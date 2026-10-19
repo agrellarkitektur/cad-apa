@@ -318,6 +318,50 @@ Version 0.8, del 1 av 3 (filformat 5; släpps som 0.8.0 när alla delar är klar
 - Synpunktsformuläret visar vad servern svarar när det inte går att skicka,
   i stället för att tyst öppna e-posten
 
+Version 0.8, del 2 av 3 (samma filformat, 5):
+- **Grepp för taket i fasader och sektioner.** Markera taket så får nocken
+  och takfötterna grepp. Dra nocken upp eller ned för att ändra lutningen
+  (hela grader, Alt för fritt); takfoten ligger kvar. Dra takfoten upp
+  eller ned för att höja eller sänka hela taket med samma lutning, eller
+  med Shift för att låta nocken stå still och ändra lutningen. Dra den åt
+  sidan, sett från gaveln, för att ändra taksprånget (lika på båda sidor
+  av ett sadeltak); takfoten följer då takfallet nedåt
+- **Grepp för 2D-elementens punkter.** Markerade linjer, polylinjer,
+  splines, bågar, cirklar, rektanglar och fyllningar har grepp i varje
+  punkt som kan dras, med snäpp och vinkellås (Shift). En rektangel förblir
+  rät när ett hörn dras och det motstående hörnet står still. Cirkelns
+  centrum flyttar hela cirkeln. Klick på en punkt eller kant ger Modifiera
+  med Flytta punkt, Ta bort punkt, Lägg till punkt och Förskjut kant.
+  Fungerar i planen, i fasader och sektioner och på arbetsblad. 2D-linjer
+  går nu också att snäppa mot i planen
+- **Underlag**: PDF (en vald sida), bilder (PNG, JPG) och DXF att rita
+  över. Lägg in med *Lägg in underlag…* under fliken Underlag i
+  projektträdet, med högerklick i ritningen, eller dra filen till ritytan.
+  Underlaget hamnar där man är: på våningen, på ett arbetsblad eller i en
+  fasad eller sektion, och ligger underst. Filen sparas i projektet
+  (PDF:en som den är, och sidan ritas när den visas)
+  - **Kalibrera skalan**: klicka två punkter med känt avstånd och skriv
+    avståndet (formler och enheter går, t.ex. "12 m"). **Rikta**: klicka två
+    punkter längs en linje som ska bli rak, så vrids underlaget till
+    närmaste projektvinkel
+  - Skala som 1:100 för PDF, enhet för DXF (läses ur filen), bredd i
+    modellen och vridning i egenskaperna. **Synlighet** (tona) med ett
+    reglage, gråskala för bilder och PDF
+  - DXF: linjer, polylinjer med bågar, cirklar, bågar, ellipser, splines,
+    text och block. Lagren går att tända och släcka, och man snäpper mot
+    linjerna, ändpunkterna och skärningarna
+  - Flytta, vrid och lås som andra objekt; Visas i som för 2D-element.
+    Underlagen listas i fliken Underlag (i mappar), med Visa, Kalibrera,
+    Rikta, Lås, Byt namn och Ta bort. Filen tas bort med den sista
+    placeringen av den, och följer med när underlaget kopieras till ett
+    annat projekt
+- **Arbetsblad**: fria 2D-ritningar som inte hör till någon våning, till
+  exempel detaljer och skisser. *Nytt arbetsblad* under fliken Modell. På
+  ett arbetsblad finns 2D, text, mått och underlag; det man klistrar in
+  hamnar på arbetsbladet. Arbetsblad har namn och mapp i egenskaperna,
+  kan sparas som vyer och tas bort med allt som är ritat på dem (går att
+  ångra)
+
 ## Versioner och gamla projekt
 
 Projektfilerna har ett formatnummer. När formatet ändras uppgraderas äldre
@@ -461,6 +505,7 @@ src/
   view2d/     planvyn: kamera, rutnät, skalstock, ritning av primitiver
   view3d/     3D-vyn med three.js (laddas först när den öppnas)
   storage/    filformat med versioner, autospar, spara och öppna
+  formats/    läsare för andras filformat (DXF), utan beroenden
   sample/     exempelprojektet
   ui/         verktyg, egenskapspanel, stilmall, meny, statusrad, ikoner
   geometry/   vektorer, polygoner och booleska operationer

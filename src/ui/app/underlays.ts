@@ -170,6 +170,8 @@ export function installUnderlays(app: AppContext) {
       `Lägg in ${name}`,
     );
     app.setTool('select');
+    // På telefonen täcker projektträdet ritytan: stäng det så att underlaget syns.
+    if (isNarrow()) app.setNav(false);
     app.selection.set([el.id]);
     app.hint(
       kind === 'dxf' && !note
