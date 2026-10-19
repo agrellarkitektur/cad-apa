@@ -34,8 +34,10 @@ byggs i vilken version), `docs/ARKITEKTUR.md` (idé och principer) och
 - Han testar på Windows 11 med Chrome. Telefonen är inget mål: det som finns
   för telefon får ligga kvar men testas inte och styr inga beslut.
 - Prestanda: `tests/prestanda.test.ts` ska gå igenom. Undvik algoritmer som
-  prövar varje objekt mot alla andra; pröva bara grannar (omskrivande
-  rektanglar, se `boxOf` och `boxesTouch` i `src/geometry/boolean.ts`).
+  prövar varje objekt mot alla andra; pröva bara grannar (`BoxIndex` i
+  `src/geometry/boxIndex.ts`, eller `boxOf` och `boxesTouch` i
+  `src/geometry/boolean.ts`). Ändringar i flera objekt görs i en
+  transaktion, inte en per objekt.
 - Ungefär var tredje version föreslås en granskningssession utan nya
   funktioner: städa, dela upp stora filer och leta efter långsam kod.
 - En session per version. Småversioner (0.7.2 …) har 3–6 punkter. Säg till

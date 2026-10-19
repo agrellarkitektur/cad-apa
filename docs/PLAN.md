@@ -41,7 +41,7 @@ något att bygga vidare på; ordningen efter den bestäms då.
   att den kommer från en äldre betaversion. Från formatfrysen gäller
   migreringar igen.
 - **Kvalitet:** prestandatestet (`tests/prestanda.test.ts`, sedan 0.8 del
-  2.1) ska gå igenom i varje version. Referensritningar läggs till i 0.8.1.
+  2.1) ska gå igenom i varje version. Referensritningar läggs till i 0.8.2.
   Var tredje version eller så görs en granskningssession utan nya
   funktioner: städa, dela upp stora filer (`app.ts`, `propertiesPanel.ts`)
   och leta efter algoritmer som växer med kvadraten på antalet objekt.
@@ -49,7 +49,7 @@ något att bygga vidare på; ordningen efter den bestäms då.
 Versioner som ändrar filformatet (`FORMAT_VERSION`) markeras med *nytt
 format* nedan. Före formatfrysen behöver formatändringar inte samlas: en
 version ändrar formatet när den behöver det. Däremellan kommer små
-uppdateringar (0.8.1 …) med 3–6 punkter.
+uppdateringar (0.8.2 …) med 3–6 punkter.
 
 ## Klart
 
@@ -62,6 +62,7 @@ uppdateringar (0.8.1 …) med 3–6 punkter.
 | 0.6.3 | Formler och enheter i sifferfält, anslutna väggar följer med, ny topprad, minimerade paneler, högerklick, utfällbar snabbmeny, vyhistorik, kalkering med eget utseende, tillfälliga vyinställningar |
 | 0.7 | Format 4: fasader och sektioner med dolda linjer, norrpil och fasader efter väderstreck, testtak med gavlar, bågväggar, Modifiera-paletten (lägg till punkt, böj, tangent, förskjut, avrunda, fasa, sträck, kopiera i rad m.m.) |
 | 0.8.0 | Format 5: projektträdet med mappar, 2D-element med Visas i och vy-taggar, mått och text i fasader och sektioner, underlag (PDF, bild, DXF) och arbetsblad, snabbare väggskarvar, ritningsblad med BH90-huvud och smarttext, vyer i skala på bladen, annoteringsskala och Plot/export till PDF i en zipfil |
+| 0.8.1 | Granskning utan nya funktioner: transaktioner, väggskarvar, dolda linjer och rum utan algoritmer som växer med kvadraten; `app.ts` och `propertiesPanel.ts` uppdelade |
 | 0.7.1 | Betaversion med synpunktsformulär, detaljnivåer och linjetjocklekar i fasad och sektion, glasmarkering och öppningssätt, automatisk taklutning, sektioner begränsade till linjen och klippta i 3D, nya markörer i planen med grepp, längd, vinkel och Rikta efter objekt, streckning från hörnen, varning för nästan raka vinklar, takets kontur i Modifiera, måttband, spårlinjer, kopiera och klistra in mellan projekt, Ctrl + dra, piltangenter, zooma till område och förra zoomen |
 
 ## Framåt
@@ -193,7 +194,30 @@ Ritningar och exportera från Vyer):
 - Allt kommer som en zipfil att spara; exporten visar hur långt den kommit
   och kan avbrytas
 
-### 0.8.1 Snabbare ritning och referensritningar
+### 0.8.1 Granskning
+
+*Byggd (20 oktober). Inga nya funktioner och samma filformat (5). Allt
+nedan ger exakt samma ritningar och projekt som förut; det kontrollerades
+med fingeravtryck av planer, fasader, 3D, rumsnummer och kommandon, och
+med samma klick i webbläsaren före och efter.*
+
+- Transaktioner kopierar samlingarna en gång i stället för vid varje
+  ändring (`TxBuilder` i `src/core/store.ts`): flytta, kopiera och ta bort
+  många objekt växte med kvadraten
+- Väggskarvar och T-skarvar prövar bara väggar i närheten (`BoxIndex` i
+  `src/geometry/boxIndex.ts`); rum och dörrar i rumsnumreringen likaså
+- Dolda linjer: trianglarna i djupordning, och en kant som är helt dold
+  slutar prövas (`src/geometry/hiddenLine.ts`)
+- `src/ui/app.ts` (1 922 → 836 rader) och `src/ui/propertiesPanel.ts`
+  (1 065 → 571) uppdelade i mindre filer
+- Prestandatestet utökat med dörrar, fönster och rum, och med flytt, kopia
+  och borttagning av alla väggar
+
+Mätt men lämnat: snäppningen går igenom alla sträckor vid varje
+musrörelse (linjärt, men tungt med stora DXF-underlag), och planen ritas om
+helt vid panorering (15 ms för 684 väggar). Båda hör till 0.8.2.
+
+### 0.8.2 Snabbare ritning och referensritningar
 
 - Fasader och sektioner räknas i en bakgrundstråd (Web Worker), så att
   gränssnittet aldrig fryser

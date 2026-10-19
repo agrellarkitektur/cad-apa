@@ -14,8 +14,9 @@ core/      datamodell, tillstånd, ångra  → vet ingenting om ritning eller gr
 storage/   filformat, autospar           → läser och skriver core-dokumentet
 ```
 
-Pilen går bara nedåt. `core/` importerar aldrig från något annat lager. Då går
-kärnan att testa ensam och att återanvända, till exempel i en objektredigerare.
+Pilen går bara nedåt. `core/` importerar aldrig från något annat lager, utom
+ren matematik i `geometry/` (väggens ram och bågar). Då går kärnan att testa
+ensam och att återanvända, till exempel i en objektredigerare.
 
 ## Lägga till en ny objekttyp
 
@@ -88,6 +89,13 @@ flera. Allt blir ett enda ångra-steg.
 Gränssnittet anropar aldrig `tx` direkt och ändrar aldrig dokumentet på annat
 sätt.
 
+Sedan 0.8.1 kopierar en transaktion `elements`, `definitions` och `assets`
+en gång och ändrar dem sedan på plats, så att stora ändringar inte växer med
+kvadraten. `tx.doc.elements` är därför samma objekt genom hela
+transaktionen: använd inte cachar som minns ett resultat per
+`doc.elements` (som `outsideSide` i `src/elements/wallSides.ts`) inne i en
+transaktion. Dokumentet som sparas byggs om när transaktionen är klar.
+
 ## Lägga till ett verktyg eller en panel
 
 Verktyg ligger i `src/ui/tools/` och implementerar `ViewTool` från
@@ -102,28 +110,38 @@ version de kommer i (se [PLAN.md](PLAN.md)).
 ### Appen: `src/ui/app.ts` och `src/ui/app/`
 
 `mountApp` i `src/ui/app.ts` bygger appen: skapar planvyn, verktygen,
-panelerna och 3D-vyn, och har det som binder ihop dem (`setTool`,
-`setMode`, `renderAll`, panelerna, huvudklicket). Resten ligger i
+panelerna och dialogerna, och har det som binder ihop dem (`setTool`,
+`renderAll`, vad som visas just nu, markeringen). Resten ligger i
 `src/ui/app/`, en fil per del:
 
 | Fil | Innehåll |
 | --- | --- |
 | `shell.ts` | Stommen (HTML för topprad, verktygsrad, rityta och statusrad), verktygslistan `TOOLS`, `ToolId`, `ViewMode` och `createUiState` (det som visas just nu) |
 | `helpers.ts` | Små hjälpare: talformat, förvalda typer och tillstånd, vybeskrivning, skala |
-| `context.ts` | `AppContext`: det delarna behöver av varandra |
+| `context.ts` | `AppContext`: det delarna behöver av varandra, och `lazyContext` som bygger det |
+| `actions.ts` | Knapparna: klick på `data-action` och val i projektträdet, Visa-menyn och huvudmenyn; tillståndsflikarna och Jämför med |
+| `panes.ts` | Dockan med projektträdet och egenskaperna: bredd, öppen, minimerad till band eller stängd (och bladet på telefonen) |
+| `pane3d.ts` | 3D-vyn: läget (`setMode`), redigering i 3D, Följ sektionen |
+| `files.ts` | Autospar och dess status, Spara, Öppna, Nytt projekt, Börja om med exemplet |
+| `textEdit.ts` | Dubbelklick i ritningen: text, rumsnamn, öppna en fasad eller sektion |
+| `snapping.ts` | Det verktygen snäpper mot, i planen och i fasader, sektioner och arbetsblad |
 | `toolOptions.ts` | Verktygsraden under ritytan och måttbandets värden |
-| `views.ts` | Vyhistorik, `goTo`, sparade vyer och menyerna för vyer och markörer |
-| `showMenu.ts` | Kalkeringens utseende under Visa, och skärmskalan |
+| `views.ts` | Vyhistorik, `goTo`, sparade vyer med deras inställningar (`applyView`, `viewModified`) och menyerna för vyer och markörer |
+| `showMenu.ts` | Visa-menyn med kalkeringens utseende, och skärmskalan |
 | `menus.ts` | Högerklick och långt tryck i plan, 3D och projektträdet |
 | `keyboard.ts` | Kortkommandona |
 | `clipboard.ts` | Kopiera, klipp ut och klistra in |
+| `underlays.ts`, `sheets.ts`, `plot.ts` | Underlag, ritningsblad och Plot/export (0.8) |
 
 Varje del är en funktion `installX(app)` som anropas en gång i `mountApp`
-och lämnar tillbaka det som andra delar använder. `app` är ett objekt med
-getters, så delarna läser alltid det som gäller just då (planen och
-3D-vyn byts ut). Hämta därför med `app.x` där det används, inte en gång i
-början av `installX`. Behöver en del något nytt: lägg till det i
-`AppContext` och som getter i `app` i `mountApp`.
+och lämnar tillbaka det som andra delar använder. `app` byggs med
+`lazyContext`, en rad per fält, och varje fält läses när det används, så
+delarna ser alltid det som gäller just då (planen och 3D-vyn byts ut).
+Hämta därför med `app.x` där det används, inte en gång i början av
+`installX` (det som aldrig byts ut, som `app.ui` och `app.panel`, går bra).
+Behöver en del något nytt: lägg till det i `AppContext` och i
+`lazyContext`-raden i `mountApp`. En del som behöver en annan del direkt
+får den som argument (`installActions(app, { views, sheets, … })`).
 
 En ny del av gränssnittet läggs som en egen fil här i stället för i
 `app.ts`, så att filerna hålls små.
@@ -310,7 +328,11 @@ på bladet sina egna.
   en användarinställning (`followSection` i `uiSettings`), inte en del av
   projektet.
 - Egenskaperna för 2D, taklutning, Visas i och Lås ligger i
-  `src/ui/drawingPanel.ts`.
+  `src/ui/drawingPanel.ts`. Sedan 0.8.1 ligger resten av egenskapspanelens
+  fält i `src/ui/selectionFields.ts` (HTML) och det de ändrar i
+  `src/ui/selectionEdits.ts` (`applyField` för fält med `data-key`
+  "omfång:namn"); `propertiesPanel.ts` har bara panelen, snabbraden och
+  knapparna.
 
 ## Grepp, underlag och arbetsblad (0.8 del 2, format 5)
 
@@ -424,3 +446,26 @@ på bladet sina egna.
   vy `<namn>.pdf` (`buildViewPage`: ett papper precis så stort som vyn).
   Exporten väntar en bildruta mellan filerna så att förloppet syns och
   Avbryt hinner fram; zipfilen sparas med `saveBlobFile`.
+
+## Granskning (0.8.1)
+
+- **Grannar i stället för alla mot alla.** `BoxIndex` i
+  `src/geometry/boxIndex.ts` är ett rutnät över rektanglar: `add(i, box)`,
+  sedan `at(punkt)` eller `near(box)`, som ger numren i stigande ordning så
+  att den första träffen blir densamma som om alla prövats i tur och
+  ordning. Rutnätet sållar bara; det exakta provet görs efteråt. Det
+  används för väggskarvar (`computeWallShapes`); för par av former räcker
+  ofta `boxOf` och `boxesTouch` i `src/geometry/boolean.ts`.
+- **Dolda linjer** (`visibleSegments`): trianglarna sorteras efter
+  närmaste djup innan rutnätet byggs, så en ruta kan sluta prövas när en
+  triangel ligger bakom kanten, och en kant som blivit helt dold
+  (`fullyHidden`, samma regler som `visibleParts`) slutar prövas.
+- **Rum**: `holeAt` och rumsnumreringen prövar först rektangeln runt varje
+  kontur (`ringsOf`, en gång per lista) och sedan punkt i kontur.
+- **Kontrollera att en omskrivning ger samma resultat**: räkna fram planer,
+  fasader, 3D, rumsnummer och projektet efter en rad kommandon med den gamla
+  och den nya koden och jämför (byt `crypto.getRandomValues` mot en fast
+  följd, så att nya id blir desamma; fasadens `ms` är en tid och skiljer
+  alltid). Gränssnittet jämförs på samma sätt: samma klick i Playwright mot
+  det gamla och det nya bygget, och läget (`bacchus.ui`, projektet,
+  panelernas text) efter varje steg.

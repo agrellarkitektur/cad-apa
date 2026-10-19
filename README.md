@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.0** (beta, ritningar, underlag och utskrift); nästa är **0.8.1,
+**0.8.1** (beta, granskning utan nya funktioner); nästa är **0.8.2,
 snabbare ritning och referensritningar**.
 
 ## Vad som fungerar
@@ -410,6 +410,19 @@ Version 0.8, del 3 av 3, släpps som **0.8.0** (samma filformat, 5):
   och kan avbrytas. Bilder och PDF-underlag läggs in som bilder i PDF:en;
   texten skrivs med Helvetica. Ritningshuvudets texter kortas med … om de
   inte ryms
+
+Version 0.8.1, granskning (samma filformat, 5):
+- Inga nya funktioner. Programmet är städat och snabbare i stora projekt;
+  ritningarna blir exakt desamma som förut
+- **Flytta, kopiera, vrida, spegla och ta bort många objekt på en gång** går
+  fort: kopiera och ta bort 684 väggar tar 0,03 s i stället för 1,3 s
+- **Fasader** i stora projekt med många dörrar och fönster är 3–5 gånger
+  snabbare: en fasad av 312 väggar tar ungefär 0,6 s i stället för 2,5 s.
+  Kanter som ligger helt bakom en fasadvägg prövas inte längre mot allt annat
+- **Planen och 3D-vyn** är ungefär dubbelt så snabba i stora projekt, och
+  rums- och dörrnumreringen fyra gånger, eftersom väggskarvar, rum och dörrar
+  bara prövas mot det som ligger intill
+- Koden för appen och egenskapspanelen är uppdelad i mindre filer
 
 ## Versioner och gamla projekt
 
