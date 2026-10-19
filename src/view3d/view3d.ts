@@ -14,6 +14,7 @@ const MATERIAL_COLORS: Record<Material3D, string> = {
   furniture: '#c9cdd1',
   fixture: '#e8eef2',
   floor: '#d8d2c6',
+  roof: '#b9a597',
 };
 
 /** Ett grepp i en väggände som kan dras i 3D. */
@@ -503,7 +504,7 @@ function disposeTree(obj: THREE.Object3D): void {
 
 /** En plan form med hål, extruderad från z0 till z1 (mm). */
 function extrude(s: Solid): THREE.BufferGeometry | null {
-  if (s.cuts) {
+  if (s.cuts || s.top || s.bottom) {
     const tris = solidTriangles(s);
     if (!tris.length) return null;
     const geom = new THREE.BufferGeometry();

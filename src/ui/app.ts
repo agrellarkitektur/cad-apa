@@ -12,6 +12,11 @@ import type { WallParams } from '../elements/wall';
 import type { WallFace } from '../elements/wallSides';
 import { buildModel3d } from '../repr/model3d';
 import { buildPlan, type PlanResult } from '../repr/plan';
+import { buildSection } from '../repr/section';
+import { markerFrame, markerName, modelBounds } from '../elements/markers';
+import { MarkerTool, RoofTool } from './tools/markerTools';
+import { modifyContextAt, ModifyPalette, type ModifyHost } from './modify';
+import { refFrame } from '../core/wallEdit';
 import type { Edit3DHost, Handle3D, View3D } from '../view3d/view3d';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { sampleProject } from '../sample/sampleProject';
@@ -52,10 +57,10 @@ import { OpeningTool } from './tools/openingTool';
 import { RoomTool } from './tools/roomTool';
 import { WallTool } from './tools/wallTool';
 
-type ToolId = 'pan' | 'select' | 'wall' | 'door' | 'window' | 'room' | 'dimension' | 'text';
+type ToolId = 'pan' | 'select' | 'wall' | 'door' | 'window' | 'roof' | 'room' | 'dimension' | 'text' | 'section' | 'elevation';
 
 /** Verktyg som ritar i planen och därför byter till planvyn. */
-const PLAN_TOOLS: ToolId[] = ['wall', 'door', 'window', 'room', 'dimension', 'text'];
+const PLAN_TOOLS: ToolId[] = ['wall', 'door', 'window', 'roof', 'room', 'dimension', 'text', 'section', 'elevation'];
 type ViewMode = '2d' | '3d' | 'split';
 
 interface ToolDef {
@@ -63,7 +68,6 @@ interface ToolDef {
   label: string;
   icon: IconName;
   key?: string;
-  /** Milstolpen där verktyget byggs. Saknas för verktyg som redan fungerar. */
   /** Versionen där verktyget byggs (se docs/PLAN.md). Saknas för verktyg som redan fungerar. */
   comesIn?: string;
   group: 'navigera' | 'rita' | 'annotera';
@@ -75,10 +79,13 @@ const TOOLS: ToolDef[] = [
   { id: 'wall', label: 'Vägg', icon: 'wall', key: 'W', group: 'rita' },
   { id: 'door', label: 'Dörr', icon: 'door', key: 'D', group: 'rita' },
   { id: 'window', label: 'Fönster', icon: 'window', key: 'O', group: 'rita' },
+  { id: 'roof', label: 'Tak', icon: 'roof', group: 'rita' },
   { id: 'furniture', label: 'Möbel', icon: 'furniture', comesIn: '0.11', group: 'rita' },
   { id: 'room', label: 'Rum', icon: 'room', key: 'R', group: 'annotera' },
   { id: 'dimension', label: 'Mått', icon: 'dimension', key: 'M', group: 'annotera' },
   { id: 'text', label: 'Text', icon: 'text', key: 'T', group: 'annotera' },
+  { id: 'section', label: 'Sektion', icon: 'section', group: 'annotera' },
+  { id: 'elevation', label: 'Fasad', icon: 'elevation', group: 'annotera' },
 ];
 
 const GROUP_LABEL: Record<ToolDef['group'], string> = { navigera: 'Visa', rita: 'Rita', annotera: 'Annotera' };
@@ -137,6 +144,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     activeView: null as Id | null,
     styleName: null as string | null,
     trace: null as Id | null,
+    /** En fasad eller sektion som visas i stället för planen (0.7). */
+    marker: null as Id | null,
   };
 
   root.innerHTML = `
@@ -327,7 +336,12 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   /** Starta redigering av en text eller ett rumsnamn där man dubbelklickade. */
   function editTextAt(id: Id, at: Vec2): boolean {
     const el = store.doc.elements[id];
-    if (!el || !textEditor) return false;
+    // Dubbelklick på en fasad- eller sektionslinje öppnar vyn.
+    if (el && (el.type === 'Section' || el.type === 'Elevation') && !ui.marker) {
+      goTo({ kind: 'marker', id });
+      return true;
+    }
+    if (!el || !textEditor || ui.marker) return false;
     const DRAWING_SCALE = 100;
     if (el.type === 'Text') {
       const p = resolveParams<{ pos: Vec2; text: string; height: number; angle: number }>(store.doc, el);
@@ -417,6 +431,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       hideDemolished: ui.hideDemolished,
       ...(ui.styleName ? { style: ui.styleName } : {}),
       trace: ui.trace,
+      ...(ui.marker ? { marker: ui.marker } : {}),
     };
   }
 
@@ -430,7 +445,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       c.hideDemolished !== v.hideDemolished ||
       [...c.hide].sort().join() !== [...v.hide].sort().join() ||
       (c.style ?? null) !== (v.style ?? null) ||
-      (c.trace ?? null) !== (v.trace ?? null)
+      (c.trace ?? null) !== (v.trace ?? null) ||
+      (c.marker ?? null) !== (v.marker ?? null)
     );
   }
 
@@ -444,6 +460,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     ui.hideDemolished = v.hideDemolished;
     ui.styleName = v.style ?? null;
     ui.trace = v.trace ?? null;
+    ui.marker = v.marker && store.doc.elements[v.marker] ? v.marker : null;
     visit({ kind: 'view', id: v.id });
     syncDetailSwitch();
     renderAll();
@@ -459,7 +476,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     const v = ui.activeView ? store.doc.views.find((x) => x.id === ui.activeView) : undefined;
     const modified = !!v && viewModified(v);
     const storeyName = store.doc.storeys.find((s) => s.id === ui.storey)?.name ?? '';
-    out('view-name').textContent = v ? `${v.name}${modified ? ' *' : ''}` : `${storeyName} · modell`;
+    const markerEl = ui.marker ? store.doc.elements[ui.marker] : undefined;
+    out('view-name').textContent = v ? `${v.name}${modified ? ' *' : ''}` : markerEl ? markerName(store.doc, markerEl) : `${storeyName} · modell`;
     // Ändringar i vyinställningarna är tillfälliga tills de sparas i vyn.
     const save = $<HTMLButtonElement>('.vb-save');
     save.hidden = !!v && !modified;
@@ -480,6 +498,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     selection,
     view,
     plan: () => plan,
+    readOnly: () => !!ui.marker,
     activeState: () => ui.state,
     storey: () => ui.storey,
     hint,
@@ -492,15 +511,28 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       positionMeasureBox();
     },
     editText: (id, at) => editTextAt(id, at),
+    modify: (p, hitId) => {
+      if (ui.marker || ui.tool !== 'select') return false;
+      const r = view.svg.getBoundingClientRect();
+      const ctx = modifyContextAt(host, p, r.left + p.screen[0], r.top + p.screen[1], hitId);
+      if (!ctx) return false;
+      palette.hide();
+      modifyPalette.show(ctx);
+      return true;
+    },
     snapSegments: (): SnapSegment[] => {
       const vs = viewStates();
       const doc = store.doc;
       // Väggarnas referenslinjer först, sedan väggarnas liv och möblernas kanter.
       const refs = Object.values(doc.elements)
         .filter((e) => e.type === 'Wall' && e.storey === ui.storey && actionOf(e, vs) !== 'absent')
-        .map((e) => {
+        .flatMap((e) => {
           const p = e.params as unknown as WallParams;
-          return { id: e.id, a: p.start, b: p.end };
+          if (!p.bulge) return [{ id: e.id, a: p.start, b: p.end }];
+          // Bågväggar: bågen som korta raka bitar.
+          const f = refFrame(doc, e);
+          const pts = f.trace(0, f.length, 0);
+          return pts.slice(1).map((q, i) => ({ id: e.id, a: pts[i], b: q }));
         });
       const edges: SnapSegment[] = [];
       for (const pk of plan.pickables) {
@@ -523,6 +555,23 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const dimensionTool = new DimensionTool(host);
   dimensionTool.onChange = () => renderToolOptions();
   const textTool = new TextTool(host);
+  const roofTool = new RoofTool(host);
+  const sectionTool = new MarkerTool(host, 'Section');
+  const elevationTool = new MarkerTool(host, 'Elevation');
+  const created = (id: Id) => {
+    setTool('select');
+    selection.set([id]);
+    const el = store.doc.elements[id];
+    if (el && (el.type === 'Section' || el.type === 'Elevation')) {
+      hint(`${markerName(store.doc, el)} finns nu i projektträdet under Modell. Dubbelklicka på linjen för att öppna den.`, 5000);
+    }
+  };
+  roofTool.onCreated = created;
+  sectionTool.onCreated = created;
+  elevationTool.onCreated = created;
+  roofTool.onChange = () => renderToolOptions();
+  sectionTool.onChange = () => renderToolOptions();
+  elevationTool.onChange = () => renderToolOptions();
   const tools: Record<ToolId, ViewTool> = {
     select: selectTool,
     wall: wallTool,
@@ -532,14 +581,23 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     room: roomTool,
     dimension: dimensionTool,
     text: textTool,
+    roof: roofTool,
+    section: sectionTool,
+    elevation: elevationTool,
   };
 
   function setTool(id: ToolId): void {
     measureBox.close();
+    // Ritverktygen ritar i planen: från en fasad eller sektion går man tillbaka dit.
+    if (PLAN_TOOLS.includes(id) && ui.marker) goTo({ kind: 'storey', id: ui.storey });
     if (PLAN_TOOLS.includes(id) && ui.mode === '3d') void setMode('2d');
     if (ui.tool === 'wall' && id !== 'wall') wallTool.finish();
     if (ui.tool === 'dimension' && id !== 'dimension') dimensionTool.reset();
+    if (ui.tool === 'roof' && id !== 'roof') roofTool.reset();
+    if (ui.tool === 'section' && id !== 'section') sectionTool.reset();
+    if (ui.tool === 'elevation' && id !== 'elevation') elevationTool.reset();
     palette.hide();
+    modifyPalette.close();
     ui.tool = id;
     view.setTool(tools[id]);
     toolsEl.querySelectorAll<HTMLElement>('[data-tool]').forEach((b) => {
@@ -552,10 +610,37 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     renderToolOptions();
   }
 
+  /**
+   * Ett tak över alla väggar på våningen, med 500 mm utsprång och takfoten
+   * så att undersidan möter de högsta väggarnas överkant vid ytterlivet.
+   */
+  function roofOverHouse(): void {
+    const b = modelBounds(store.doc, ui.storey);
+    if (!b) {
+      hint('Rita väggar först, så läggs taket över dem.');
+      return;
+    }
+    const over = 500;
+    const walls = Object.values(store.doc.elements).filter((e) => e.type === 'Wall' && e.storey === ui.storey);
+    const top = Math.max(...walls.map((w) => resolveParams<WallParams>(store.doc, w).height));
+    const k = Math.tan((roofTool.options.slope * Math.PI) / 180);
+    roofTool.options.eave = Math.round(top - k * over);
+    roofTool.create([
+      [Math.round(b.minX - over), Math.round(b.minY - over)],
+      [Math.round(b.maxX + over), Math.round(b.minY - over)],
+      [Math.round(b.maxX + over), Math.round(b.maxY + over)],
+      [Math.round(b.minX - over), Math.round(b.maxY + over)],
+    ]);
+  }
+
   /** Avbryt: först det pågående kommandot, sedan verktyget. */
   function cancelCommand(): void {
-    if (ui.tool === 'wall' && wallTool.drawing) wallTool.finish();
+    if (modifyPalette.open) modifyPalette.close();
+    else if (ui.tool === 'wall' && wallTool.drawing) wallTool.finish();
     else if (ui.tool === 'dimension' && dimensionTool.count > 0) dimensionTool.reset();
+    else if (ui.tool === 'roof' && roofTool.started) roofTool.reset();
+    else if (ui.tool === 'section' && sectionTool.step > 0) sectionTool.reset();
+    else if (ui.tool === 'elevation' && elevationTool.step > 0) elevationTool.reset();
     else setTool('select');
     view.requestRender();
   }
@@ -608,6 +693,25 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         <button class="btn btn-primary" data-action="dim-done" ${n >= 2 && !dimensionTool.isPlacing ? '' : 'disabled'}>Klar med punkterna</button>
         <span class="opt-hint">${dimensionTool.isPlacing ? 'Klicka där måttlinjen ska ligga.' : n === 0 ? 'Klicka på första punkten som ska måttsättas.' : 'Klicka nästa punkt. Dubbelklicka eller tryck Klar när kedjan är färdig.'}</span>`;
       toolOptions.hidden = false;
+    } else if (ui.tool === 'roof') {
+      const o = roofTool.options;
+      toolOptions.innerHTML = `
+        <div class="opt"><span>Typ</span><div class="segmented" role="group" aria-label="Taktyp">
+          <button data-roof-kind="gable" aria-pressed="${o.kind === 'gable'}">Sadeltak</button>
+          <button data-roof-kind="shed" aria-pressed="${o.kind === 'shed'}">Pulpettak</button>
+        </div></div>
+        <label class="opt"><span>Lutning</span><span class="input-unit"><input id="roof-slope" type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" value="${o.slope}"><i>°</i></span></label>
+        <label class="opt"><span>Takfot</span><span class="input-unit"><input id="roof-eave" type="text" data-expr inputmode="decimal" autocomplete="off" value="${o.eave}" title="Takets undersida vid takfoten, över golvet"><i>mm</i></span></label>
+        <button class="btn" data-action="roof-house" title="Ett tak över alla väggar med 500 mm utsprång, som möter väggarnas överkant">Över hela huset</button>
+        <span class="opt-hint">${roofTool.started ? 'Klicka det motsatta hörnet.' : 'Klicka ett hörn av taket, med utsprånget.'}</span>`;
+      toolOptions.hidden = false;
+    } else if (ui.tool === 'section' || ui.tool === 'elevation') {
+      const t = ui.tool === 'section' ? sectionTool : elevationTool;
+      const what = ui.tool === 'section' ? 'sektionslinjen' : 'fasadlinjen';
+      toolOptions.innerHTML = `<span class="opt-hint">${
+        t.step === 0 ? `Klicka där ${what} börjar.` : t.step === 1 ? `Klicka där ${what} slutar.` : 'Klicka på den sida som ska synas.'
+      }</span>`;
+      toolOptions.hidden = false;
     } else if (ui.tool === 'text') {
       toolOptions.innerHTML = `
         <label class="opt"><span>Text</span><input id="text-value" value="${escapeHtml(textTool.text)}" aria-label="Text" style="width:180px"></label>
@@ -628,6 +732,9 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
 
   toolOptions.addEventListener('change', (e) => {
     const t = e.target as HTMLSelectElement;
+    const num = Number(t.value);
+    if (t.id === 'roof-slope' && Number.isFinite(num)) roofTool.options.slope = Math.max(0, Math.min(75, num));
+    if (t.id === 'roof-eave' && Number.isFinite(num)) roofTool.options.eave = Math.round(num);
     if (t.id === 'wall-def') wallTool.options.definition = t.value;
     if (t.id === 'opening-def') (ui.tool === 'door' ? doorTool : windowTool).options.definition = t.value;
   });
@@ -668,11 +775,17 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       renderToolOptions();
     }
     if (b.dataset.action === 'wall-done') wallTool.finish();
+    if (b.dataset.roofKind) {
+      roofTool.options.kind = b.dataset.roofKind as 'gable' | 'shed';
+      renderToolOptions();
+    }
+    if (b.dataset.action === 'roof-house') roofOverHouse();
     if (b.dataset.action === 'dim-done') dimensionTool.donePoints();
   });
 
   // ---------- Panel och dialog ----------
   const panel = new PropertiesPanel(store, selection, viewStates);
+  panel.onOpenMarker = (id) => goTo({ kind: 'marker', id });
   setupSheetDrag(panel.el, {
     narrow: isNarrow,
     state: () => ui.sheet,
@@ -685,6 +798,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     doc: () => store.doc,
     storey: () => ui.storey,
     activeView: () => ui.activeView,
+    marker: () => ui.marker,
     trace: () => ui.trace,
     viewModified: (v) => viewModified(v),
     describeView,
@@ -791,6 +905,19 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
 
   // Snabbmenyn vid markören, på dator.
   const palette = new PetPalette(canvas, panel);
+  // Modifiera: klick på det markerade (0.7).
+  const modifyHost: ModifyHost = {
+    ...host,
+    startModify: (tool) => view.setTool(tool),
+    endModify: () => {
+      if (ui.tool === 'select') view.setTool(selectTool);
+      view.requestRender();
+    },
+  };
+  const modifyPalette = new ModifyPalette(canvas, modifyHost);
+  selection.subscribe(() => {
+    if (modifyPalette.open) modifyPalette.close();
+  });
   let pointerAt: { x: number; y: number; t: string } | null = null;
   canvas.addEventListener(
     'pointerdown',
@@ -805,12 +932,12 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     (e) => {
       const down = pointerAt;
       pointerAt = null;
-      if (!down || palette.el.contains(e.target as Node)) return;
+      if (!down || palette.el.contains(e.target as Node) || modifyPalette.el.contains(e.target as Node)) return;
       const click = Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5;
       if (!click || e.pointerType !== 'mouse' || e.button !== 0 || !uiSettings.petPalette || isNarrow() || ui.tool !== 'select') return;
       // Efter att verktyget eller 3D-vyn hunnit ändra markeringen.
       setTimeout(() => {
-        if (selection.size > 0 && !textEditor?.isOpen) palette.show(e.clientX, e.clientY);
+        if (selection.size > 0 && !textEditor?.isOpen && !modifyPalette.open) palette.show(e.clientX, e.clientY);
       }, 0);
     },
     { capture: true },
@@ -830,8 +957,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   tempDims.onReleased = (n) => hint(releasedHint(n), 4000);
   view.setHighlighter(
     (cam) =>
-      renderHighlight(cam, store.doc, plan.pickables, new Set(selection.list()), ui.tool === 'select' ? selectTool.hoverId : null) +
-      tempDims.render(cam, selection.list(), viewStates(), ui.tool === 'select' && ui.mode !== '3d'),
+      renderHighlight(cam, store.doc, plan.pickables, new Set(selection.list()), ui.tool === 'select' ? selectTool.hoverId : null, !ui.marker) +
+      tempDims.render(cam, selection.list(), viewStates(), ui.tool === 'select' && ui.mode !== '3d' && !ui.marker && !modifyPalette.running),
   );
 
   // ---------- Rendering ----------
@@ -842,7 +969,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     const vs = viewStates();
 
     out('project').textContent = doc.project.name;
-    out('storey').textContent = doc.storeys.find((s) => s.id === ui.storey)?.name ?? '';
+    if (ui.marker && !doc.elements[ui.marker]) ui.marker = null;
+    const markerEl = ui.marker ? doc.elements[ui.marker] : undefined;
+    out('storey').textContent = markerEl ? markerName(doc, markerEl) : (doc.storeys.find((s) => s.id === ui.storey)?.name ?? '');
+    appEl.dataset.place = markerEl ? 'section' : 'plan';
 
     chips.innerHTML =
       doc.states
@@ -854,9 +984,11 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (ex) out('compare-label').textContent = `Jämför med ${ex.name}`;
     compareToggle.checked = ui.compare;
 
-    plan = buildPlan(doc, ui.storey, vs, styleFor(ui.styleName));
+    // Fasad eller sektion: räknas fram ur modellen i stället för planen.
+    const section = markerEl ? buildSection(doc, markerEl.id, vs, styleFor(ui.styleName)) : null;
+    plan = section ? { prims: section.prims, pickables: section.pickables } : buildPlan(doc, ui.storey, vs, styleFor(ui.styleName));
     // Kalkerad vy: en annan vy tonad under, t.ex. möbleringen under en undertaksplan.
-    const traced = ui.trace ? doc.views.find((v) => v.id === ui.trace) : undefined;
+    const traced = ui.trace && !section ? doc.views.find((v) => v.id === ui.trace) : undefined;
     view.setUnderlay(traced ? buildPlan(doc, traced.storey, viewStatesOf(traced), styleFor(traced.style ?? null)).prims : []);
     renderViewButton();
     if (ui.navOpen) navigator.render();
@@ -1015,6 +1147,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (ev.cause === 'redo' && ev.transaction) hint(`Gjorde om: ${ev.transaction.label}`);
     if (ev.cause === 'load') {
       ui.activeView = null;
+      ui.marker = null;
       ui.trace = null;
       ui.styleName = null;
       viewHistory.splice(0, viewHistory.length, { kind: 'storey', id: ui.storey });
@@ -1063,7 +1196,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   else if (saved) out('save').textContent = `Sparat ${tf.format(new Date(saved.savedAt))}`;
 
   // För felsökning i webbläsarens konsol.
-  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, get view3d() { return view3d; } };
+  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifyPalette, get view3d() { return view3d; } };
 
   appEl.dataset.mode = ui.mode;
   appEl.dataset.sheet = ui.sheet;
@@ -1207,6 +1340,18 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     // En flik i en hopfälld egenskapspanel fäller ut den.
     if (target.closest('.panel [data-tab]') && !ui.panelOpen && !isNarrow()) {
       setPanel(true, 'full');
+      return;
+    }
+    const markerPick = target.closest<HTMLElement>('[data-marker-pick]');
+    if (markerPick) {
+      if (isNarrow()) setNav(false);
+      goTo({ kind: 'marker', id: markerPick.dataset.markerPick! });
+      return;
+    }
+    const markerMore = target.closest<HTMLElement>('[data-marker-menu]');
+    if (markerMore) {
+      const r = markerMore.getBoundingClientRect();
+      openMarkerMenu(markerMore.dataset.markerMenu!, r.left, r.bottom + 4);
       return;
     }
     const storeyPick = target.closest<HTMLElement>('[data-storey-pick]');
@@ -1453,7 +1598,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   // ---------- Vyer: historik, högerklick och kalkering ----------
 
   /** Ett ställe man varit på: en sparad vy eller ett våningsplan i modellen. */
-  type Place = { kind: 'view'; id: Id } | { kind: 'storey'; id: Id };
+  type Place = { kind: 'view'; id: Id } | { kind: 'storey'; id: Id } | { kind: 'marker'; id: Id };
   /** Senaste först. Det första är där man är nu. */
   const viewHistory: Place[] = [{ kind: 'storey', id: ui.storey }];
   const samePlace = (a: Place, b: Place) => a.kind === b.kind && a.id === b.id;
@@ -1470,6 +1615,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       const v = store.doc.views.find((x) => x.id === p.id);
       return v ? { name: v.name, sub: `Vy · ${describeView(v)}` } : null;
     }
+    if (p.kind === 'marker') {
+      const el = store.doc.elements[p.id];
+      return el ? { name: markerName(store.doc, el), sub: el.type === 'Section' ? 'Sektion' : 'Fasad' } : null;
+    }
     const s = store.doc.storeys.find((x) => x.id === p.id);
     return s ? { name: s.name, sub: 'Modell' } : null;
   }
@@ -1478,12 +1627,97 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (p.kind === 'view') {
       const v = store.doc.views.find((x) => x.id === p.id);
       if (v) applyView(v);
+    } else if (p.kind === 'marker') {
+      const el = store.doc.elements[p.id];
+      if (!el) return;
+      const was = ui.marker;
+      ui.marker = p.id;
+      ui.storey = el.storey;
+      ui.activeView = null;
+      if (ui.tool !== 'select' && ui.tool !== 'pan') setTool('select');
+      measureBox.close();
+      palette.hide();
+      selection.clear();
+      visit(p);
+      if (ui.mode === '3d') void setMode('2d');
+      renderAll();
+      if (was !== p.id) view.zoomToFit();
     } else if (store.doc.storeys.some((s) => s.id === p.id)) {
+      const was = ui.marker;
       ui.storey = p.id;
+      ui.marker = null;
       ui.activeView = null;
       visit(p);
       renderAll();
+      if (was) {
+        selection.clear();
+        view.zoomToFit();
+      }
     }
+  }
+
+  /** Högerklick eller ⋯ på en fasad eller sektion. */
+  function openMarkerMenu(id: Id, x: number, y: number): void {
+    const el = store.doc.elements[id];
+    if (!el) return;
+    const p = el.params as { auto?: boolean; side?: number };
+    const name = markerName(store.doc, el);
+    ctxMenu.open(
+      x,
+      y,
+      [
+        { kind: 'header', label: name, sub: el.type === 'Section' ? 'Sektion' : 'Fasad' },
+        { label: 'Visa', disabled: ui.marker === id, run: () => goTo({ kind: 'marker', id }) },
+        {
+          label: 'Visa linjen i planen',
+          run: () => {
+            goTo({ kind: 'storey', id: el.storey });
+            selection.set([id]);
+          },
+        },
+        { label: 'Byt namn…', run: () => void renameMarker(id) },
+        {
+          label: 'Placeras automatiskt',
+          checked: !!p.auto,
+          sub: el.type === 'Section' ? 'Genom mitten av huset' : 'Utanför huset, följer det',
+          run: () => setMarkerAuto(id, !p.auto),
+        },
+        { label: 'Vänd blickriktningen', disabled: !!p.auto, run: () => updateParams(store, [id], { side: -(p.side ?? 1) }, 'Vänd blickriktningen') },
+        { kind: 'sep' },
+        { label: 'Ta bort…', danger: true, run: () => void deleteMarker(id) },
+      ],
+      name,
+    );
+  }
+
+  async function renameMarker(id: Id): Promise<void> {
+    const el = store.doc.elements[id];
+    if (!el) return;
+    const name = await askText('Byt namn', markerName(store.doc, el));
+    if (name === null) return;
+    renameElement(store, id, name);
+  }
+
+  /** Slå på eller av automatisk placering. Av: linjen stannar där den är nu. */
+  function setMarkerAuto(id: Id, auto: boolean): void {
+    const el = store.doc.elements[id];
+    if (!el) return;
+    if (auto) {
+      updateParams(store, [id], { auto: true }, 'Placera automatiskt');
+      return;
+    }
+    const f = markerFrame(store.doc, el);
+    const r2 = (q: Vec2): [number, number] => [Math.round(q[0]), Math.round(q[1])];
+    updateParams(store, [id], { auto: false, start: r2(f.start), end: r2(f.end), side: 1 }, 'Placera själv');
+  }
+
+  async function deleteMarker(id: Id): Promise<void> {
+    const el = store.doc.elements[id];
+    if (!el) return;
+    const name = markerName(store.doc, el);
+    if (!(await askConfirm(`Ta bort ${name}?`, 'Linjen tas bort ur planen och vyn ur projektträdet. Det går att ångra.'))) return;
+    if (ui.marker === id) goTo({ kind: 'storey', id: el.storey });
+    deleteElements(store, [id]);
   }
 
   /** De senaste vyerna, vid vyknappen. */
@@ -1673,12 +1907,23 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     openHistoryMenu(e.clientX, e.clientY);
   });
   navigator.el.addEventListener('contextmenu', (e) => {
+    const mrow = (e.target as HTMLElement).closest<HTMLElement>('[data-marker-pick]');
+    if (mrow) {
+      e.preventDefault();
+      openMarkerMenu(mrow.dataset.markerPick!, e.clientX, e.clientY);
+      return;
+    }
     const row = (e.target as HTMLElement).closest<HTMLElement>('[data-view-apply]');
     if (!row) return;
     e.preventDefault();
     openViewMenu(row.dataset.viewApply!, e.clientX, e.clientY);
   });
   const viewRowLongPress = onLongPress(navigator.el, (x, y, target) => {
+    const mrow = (target as HTMLElement | null)?.closest<HTMLElement>('[data-marker-pick]');
+    if (mrow) {
+      openMarkerMenu(mrow.dataset.markerPick!, x, y);
+      return;
+    }
     const row = (target as HTMLElement | null)?.closest<HTMLElement>('[data-view-apply]');
     if (row) openViewMenu(row.dataset.viewApply!, x, y);
   });
@@ -1856,7 +2101,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
           setNav(false);
           break;
         }
-        if (ui.tool !== 'select') cancelCommand();
+        if (modifyPalette.open) modifyPalette.close();
+        else if (ui.tool !== 'select') cancelCommand();
         else selection.clear();
         palette.hide();
         closeMenu();

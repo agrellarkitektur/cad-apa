@@ -25,27 +25,21 @@ de markeras med *nytt format* nedan. Däremellan kommer små uppdateringar
 | 0.6.1 | Projektträdet (då kallat navigatorn), tillfälliga mått |
 | 0.6.2 | Skyddat autospar, sidopaneler med egen bredd, skärmskala, textredigering i ritningen, zip för webbhotellet |
 | 0.6.3 | Formler och enheter i sifferfält, anslutna väggar följer med, ny topprad, minimerade paneler, högerklick, utfällbar snabbmeny, vyhistorik, kalkering med eget utseende, tillfälliga vyinställningar |
+| 0.7 | Format 4: fasader och sektioner med dolda linjer, norrpil och fasader efter väderstreck, testtak med gavlar, bågväggar, Modifiera-paletten (lägg till punkt, böj, tangent, förskjut, avrunda, fasa, sträck, kopiera i rad m.m.) |
 
 ## Framåt
 
-### 0.7 Fasader och sektioner (proof of concept) · *nytt format*
+### Efter 0.7
 
-Fasader och sektioner med dolda linjer är den största tekniska tröskeln. De
-tas tidigt för att se att vägen håller, innan mycket annat byggs på den.
+0.7 visade att vägen håller: fasader och sektioner räknas exakt ur
+3D-formerna (inga pixlar), utan glipor eller triangelkanter, på några
+hundradels sekunder för exempelvillan, och taket skär rätt mot väggarna.
+Det som återstår av fasader och sektioner byggs vidare i takt med resten:
 
-- Sektionslinje och fasadmarkering i planen; varje blir en vy i projektträdet
-- Vyn räknas fram ur 3D-modellen och uppdateras när modellen ändras
-- Snittytor fylls enligt stilmallen; det som syns bortom snittet ritas som linjer, dolda linjer tas bort
-- Befintligt, rivs och nytt syns som i planen
-- Dörrar, fönster och möbler i vyn, som enkla former till att börja med
-- En enkel takdel (sadel- eller pulpettak) för att testa sneda former
-- Nivåkoter i sektion, om det hinns med
-- Samma ritningsprimitiver som planen, så att vyerna sedan kan läggas på blad
-
-Godkänt när exempelvillan ger rätt fasader och sektion utan glipor eller
-synliga triangelkanter, omräkningen tar under en tiondels sekund, och taket
-skär rätt mot väggarna. Annars prövas ett bibliotek för kantprojektion i
-three.js, med resten oförändrat.
+- Begränsad sektionslinje (bara ett avsnitt), brutna sektionslinjer
+- Fler nivåkoter, höjdmått och marklinje mot terräng (0.14)
+- Fönster- och dörrsymboler i fasad efter typ (med familjerna i 0.11)
+- Skuggor och djup i fasader
 
 ### 0.8 Ritningar, underlag och utskrift · *nytt format*
 

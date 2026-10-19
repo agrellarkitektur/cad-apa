@@ -289,7 +289,7 @@ describe('filformat', () => {
     const v1 = { ...sampleProject(), formatVersion: 1 } as any;
     delete v1.graphics;
     const doc = parse(JSON.stringify(v1));
-    expect(doc.formatVersion).toBe(3);
+    expect(doc.formatVersion).toBe(4);
     expect(doc.graphics.name).toBe('Svensk standard');
   });
 
@@ -503,11 +503,12 @@ describe('version 0.6', () => {
     const old = { ...structuredClone(doc), formatVersion: 2 } as any;
     for (const e of reversedWall(old, old.elements['yv-s'], true)) old.elements[e.id] = e;
     expect(wallsFacingOut(old).map((e) => e.id)).toEqual(['yv-s']);
-    const before = buildPlan(old, 'pl-1', { state: 'st-bef' }).prims.filter((p) => p.kind === 'region').length;
+    const walls = (d: any) => buildPlan(d, 'pl-1', { state: 'st-bef' }).prims.filter((p) => p.kind === 'region' && p.origin?.objectType === 'Wall').length;
+    const before = walls(old);
     const back = parse(JSON.stringify(old));
     expect(wallsFacingOut(back)).toEqual([]);
     expect(back.elements['d01'].params.at).toBe(doc.elements['d01'].params.at);
-    expect(buildPlan(back, 'pl-1', { state: 'st-bef' }).prims.filter((p) => p.kind === 'region').length).toBe(before);
+    expect(walls(back)).toBe(before);
   });
 
   it('vänd väggen byter insida men flyttar inte väggen', async () => {
@@ -617,13 +618,13 @@ describe('version 0.6.2', () => {
   it('en äldre version skriver inte över ett autospar från en nyare', async () => {
     const { mayOverwrite, recordFormatVersion } = await import('../src/storage/localStore');
     const nu = serialize(sampleProject());
-    expect(recordFormatVersion({ text: nu })).toBe(3);
-    expect(mayOverwrite({ text: nu }, 3)).toBe(true);
+    expect(recordFormatVersion({ text: nu })).toBe(4);
+    expect(mayOverwrite({ text: nu }, 4)).toBe(true);
     // Autospar från före 0.6.2 har inget formatfält; versionen läses ur texten.
-    expect(mayOverwrite({ text: nu.replace('"formatVersion": 3', '"formatVersion": 4') }, 3)).toBe(false);
+    expect(mayOverwrite({ text: nu.replace('"formatVersion": 4', '"formatVersion": 5') }, 4)).toBe(false);
     expect(mayOverwrite({ text: '{"format":"bacchus-project","formatVersion":5}' }, 3)).toBe(false);
     // Fältet går före texten.
-    expect(mayOverwrite({ text: nu, formatVersion: 4 }, 3)).toBe(false);
+    expect(mayOverwrite({ text: nu, formatVersion: 5 }, 4)).toBe(false);
     expect(mayOverwrite({ text: nu, formatVersion: 2 }, 3)).toBe(true);
     // Format 1 saknade versionsfältet.
     expect(recordFormatVersion({ text: '{"format":"bacchus-project","project":{}}' })).toBe(1);

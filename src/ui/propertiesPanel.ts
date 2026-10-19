@@ -32,6 +32,10 @@ import { QUICK_ACTIONS, type QuickId } from './uiSettings';
 import { icons } from './icons';
 import { escapeHtml, labelOf, nextLittera, PARAM_LABELS } from './labels';
 import type { Selection } from './selection';
+import { markerFrame, markerName, type MarkerParams, type NorthParams } from '../elements/markers';
+import type { RoofParams } from '../elements/roof';
+import { reshapeWall } from '../core/wallEdit';
+import { bulgeForRadius, radiusOf } from '../geometry/arc';
 
 type Tab = 'selection' | 'types';
 
@@ -62,6 +66,9 @@ export class PropertiesPanel {
   quickFor: (type: string) => QuickId[] = () => ['demolish', 'delete'];
   /** Anropas när något kopierats, så att kopian kan flyttas. */
   onCopied?: (ids: string[], center: [number, number]) => void;
+
+  /** Öppna en fasad eller sektion (knappen i panelen). */
+  onOpenMarker?: (id: string) => void;
 
   constructor(store: DocStore, selection: Selection, getView: () => ViewStates) {
     this.store = store;
@@ -192,6 +199,9 @@ export class PropertiesPanel {
         case 'zoom-selection':
           buttons.push(btn('zoom-selection', icons.zoomIn, 'Zooma till'));
           break;
+        case 'open-marker':
+          if (els.length === 1 && allowed(id, kind)) buttons.push(btn('open-marker', icons.elevation, 'Öppna'));
+          break;
         case 'delete':
           buttons.push(btn('delete', icons.trash, 'Ta bort', ' danger'));
           break;
@@ -248,7 +258,8 @@ export class PropertiesPanel {
     const result = [...counts.entries()]
       .map(([a, n]) => `<span class="tag tag-${a}">${els.length > 1 ? `${n} ` : ''}${ACTION_LABEL[a].toLowerCase()}</span>`)
       .join(' ');
-    sections.push(`<section>
+    // Norrpil, fasader och sektioner finns i alla tillstånd.
+    if (!els.every((e) => typeOf(e.type)?.global)) sections.push(`<section>
       <h3>Finns i</h3>
       <div class="state-chips">${chips}</div>
       <p class="note">I ${escapeHtml(viewed)}${compared ? ` jämfört med ${escapeHtml(compared)}` : ''}: ${result}</p>
@@ -358,8 +369,30 @@ export class PropertiesPanel {
         const just = faceChoices(doc, el)
           .map((c) => `<button data-action="justify" data-value="${c.face}" aria-pressed="${c.face === current}">${c.label}</button>`)
           .join('');
-        return `<div class="fields">${numberField('wall:length', 'Längd', length, 'mm')}${numberField('param:height', 'Höjd', p.height, 'mm')}</div>
+        const arc = p.bulge && Math.abs(p.bulge) >= 0.5 ? radiusOf(p.start, p.end, p.bulge) : 0;
+        return `<div class="fields">${numberField('wall:length', arc ? 'Korda' : 'Längd', length, 'mm')}${numberField('param:height', 'Höjd', p.height, 'mm')}${arc ? numberField('wall:radius', 'Radie', arc, 'mm') : ''}</div>
+          <label class="check"><input type="checkbox" data-key="param:toRoof"${p.toRoof ? ' checked' : ''}> Upp till taket (gavlar)</label>
           <div class="field-label">Referenslinje</div><div class="segmented wide" role="group">${just}</div>`;
+      }
+      case 'Roof': {
+        const p = resolveParams<RoofParams>(doc, el);
+        return `<label class="field"><span>Taktyp</span><select data-key="roof:kind"><option value="gable"${p.kind === 'gable' ? ' selected' : ''}>Sadeltak</option><option value="shed"${p.kind === 'shed' ? ' selected' : ''}>Pulpettak</option></select></label>
+          <div class="fields">${numberField('param:slope', 'Lutning', p.slope, '°')}${numberField('param:eave', 'Takfot', p.eave, 'mm')}${numberField('param:thickness', 'Tjocklek', p.thickness, 'mm')}${numberField('param:ridge', p.kind === 'shed' ? 'Takfotens riktning' : 'Nockriktning', p.ridge, '°')}</div>
+          <p class="note">Takfoten är undersidans höjd vid takets kant. Väggar under taket kapas av det; kryssa i Upp till taket på gavlarna.</p>`;
+      }
+      case 'North': {
+        const p = resolveParams<NorthParams>(doc, el);
+        return `<div class="fields">${numberField('param:angle', 'Norr', p.angle, '°')}</div>
+          <p class="note">Riktningen mot norr, moturs från planens x-axel: 90° är rakt upp. Fasaderna namnges efter närmaste väderstreck.</p>`;
+      }
+      case 'Section':
+      case 'Elevation': {
+        const p = resolveParams<MarkerParams>(doc, el);
+        const label = el.type === 'Section' ? textField('text:label', 'Beteckning', p.label ?? 'A') : '';
+        return `<label class="field"><span>Namn</span><input data-key="name:" value="${escapeHtml(el.name ?? '')}" placeholder="${escapeHtml(markerName(doc, { ...el, name: undefined }))}"></label>
+          <div class="fields">${label}<label class="field"><span>Djup</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="marker:depth" value="${p.depth ?? ''}" placeholder="Allt"><i>mm</i></span></label></div>
+          <label class="check"><input type="checkbox" data-key="marker:auto"${p.auto ? ' checked' : ''}> Placeras automatiskt</label>
+          <div class="row"><button class="btn btn-primary" data-action="open-marker">Öppna ${el.type === 'Section' ? 'sektionen' : 'fasaden'}</button><button class="btn" data-action="flip-side"${p.auto ? ' disabled' : ''}>Vänd blickriktningen</button></div>`;
       }
       case 'Door': {
         const p = resolveParams<{ at: number; glazed?: boolean; mainEntrance?: boolean }>(doc, el);
@@ -484,6 +517,14 @@ export class PropertiesPanel {
     const doc = this.store.doc;
     const ids = this.selection.list();
     switch (b.dataset.action) {
+      case 'open-marker':
+        if (ids[0]) this.onOpenMarker?.(ids[0]);
+        return;
+      case 'flip-side': {
+        const el = doc.elements[ids[0]];
+        if (el) updateParams(this.store, [el.id], { side: -Number(el.params.side ?? 1) }, 'Vänd blickriktningen');
+        return;
+      }
       case 'toggle-state': {
         const s = b.dataset.state!;
         const allIn = ids.every((id) => doc.elements[id]?.states.includes(s));
@@ -697,6 +738,34 @@ export class PropertiesPanel {
       renameElement(this.store, ids[0], input.value);
       return;
     }
+    if (scope === 'roof') {
+      updateParams(this.store, ids, { kind: input.value }, 'Ändra taktyp');
+      return;
+    }
+    if (scope === 'marker') {
+      const el = doc.elements[ids[0]];
+      if (!el) return;
+      if (name === 'depth') {
+        const v = Number(input.value);
+        updateParams(this.store, [el.id], { depth: input.value === '' || !(v > 0) ? null : Math.round(v) }, 'Ändra djup');
+      } else if (name === 'auto') {
+        const on = (input as HTMLInputElement).checked;
+        if (on) updateParams(this.store, [el.id], { auto: true }, 'Placera automatiskt');
+        else {
+          const f = markerFrame(doc, el);
+          updateParams(this.store, [el.id], { auto: false, start: [Math.round(f.start[0]), Math.round(f.start[1])], end: [Math.round(f.end[0]), Math.round(f.end[1])], side: 1 }, 'Placera själv');
+        }
+      }
+      return;
+    }
+    if (scope === 'wall' && name === 'radius') {
+      const el = doc.elements[ids[0]];
+      const p = el?.params as unknown as WallParams;
+      const v = Number(input.value);
+      if (!el || !(v > 0)) return this.render();
+      reshapeWall(this.store, el.id, p.start, p.end, bulgeForRadius(p.start, p.end, v, (p.bulge ?? 1) >= 0 ? 1 : -1), 'Ändra radie');
+      return;
+    }
     if (scope === 'text') {
       updateParams(this.store, ids, { [name]: input.value }, name === 'number' ? 'Ändra rumsnummer' : 'Ändra text');
       return;
@@ -735,7 +804,8 @@ export class PropertiesPanel {
     }
     if (scope === 'param' && (input as HTMLInputElement).type === 'checkbox') {
       const on = (input as HTMLInputElement).checked;
-      const label = name === 'glazed' ? (on ? 'Glasad' : 'Ej glasad') : name === 'fixed' ? (on ? 'Fast inredning' : 'Lös möblering') : 'Ändra';
+      const label =
+        name === 'glazed' ? (on ? 'Glasad' : 'Ej glasad') : name === 'fixed' ? (on ? 'Fast inredning' : 'Lös möblering') : name === 'toRoof' ? (on ? 'Upp till taket' : 'Egen höjd') : 'Ändra';
       updateParams(this.store, ids, { [name]: on }, label);
       return;
     }

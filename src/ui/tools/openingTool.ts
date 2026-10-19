@@ -113,9 +113,7 @@ export class OpeningTool implements ViewTool {
     for (const el of Object.values(doc.elements)) {
       if (el.type !== 'Wall' || el.storey !== this.host.storey() || actionOf(el, view) === 'absent') continue;
       const f = wallFrame(resolveParams<WallParams>(doc, el));
-      const rel: Vec2 = [p.model[0] - f.a[0], p.model[1] - f.a[1]];
-      const s = rel[0] * f.u[0] + rel[1] * f.u[1];
-      const o = rel[0] * f.n[0] + rel[1] * f.n[1];
+      const [s, o] = f.project(p.model);
       if (s < 0 || s > f.length) continue;
       const d = Math.abs(o) - f.half;
       if (d > extra) continue;
@@ -146,7 +144,8 @@ export class OpeningTool implements ViewTool {
     const right = f.length - (at + width / 2);
     this.place = {
       wall: el,
-      f,
+      // I bågväggar sitter öppningen rak, längs tangenten.
+      f: f.local(at),
       at,
       width,
       side: best.o >= 0 ? 1 : -1,

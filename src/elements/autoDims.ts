@@ -16,8 +16,11 @@ export interface TempDim {
 export function computeTempDims(wall: Element, others: Element[], params: (e: Element) => WallParams): TempDim[] {
   const f = wallFrame(params(wall));
   const best: Record<'pos' | 'neg', TempDim | null> = { pos: null, neg: null };
+  // Bågväggar mäts inte: det finns inget rakt avstånd att ändra.
+  if (f.arc) return [];
   for (const o of others) {
     const g = wallFrame(params(o));
+    if (g.arc) continue;
     if (Math.abs(f.u[0] * g.u[1] - f.u[1] * g.u[0]) > 0.02) continue;
     // Hur långt de överlappar längs väggen.
     const sa = (g.a[0] - f.a[0]) * f.u[0] + (g.a[1] - f.a[1]) * f.u[1];
@@ -55,6 +58,7 @@ export function autoDimensions(ctx: PlanContext): Primitive[] {
 
   for (const w of walls.filter((x) => ctx.actionOf(x) === 'new')) {
     const f = wallFrame(params(w));
+    if (f.arc) continue;
     const existing = walls.filter((x) => x.id !== w.id && ctx.actionOf(x) === 'existing');
     const near = computeTempDims(w, existing, params).sort((a, b) => a.value - b.value)[0];
     let points: [number, number][];
@@ -79,6 +83,7 @@ export function autoDimensions(ctx: PlanContext): Primitive[] {
     const host = ctx.doc.elements[o.host];
     if (!host) continue;
     const f = wallFrame(params(host));
+    if (f.arc) continue;
     const op = ctx.params<OpeningParams>(o);
     const h1 = op.at - holeWidth(op) / 2;
     const h2 = op.at + holeWidth(op) / 2;
@@ -86,7 +91,7 @@ export function autoDimensions(ctx: PlanContext): Primitive[] {
     for (const x of walls) {
       if (x.id === host.id) continue;
       const g = wallFrame(params(x));
-      if (Math.abs(f.u[0] * g.u[0] + f.u[1] * g.u[1]) > 0.02) continue;
+      if (g.arc || Math.abs(f.u[0] * g.u[0] + f.u[1] * g.u[1]) > 0.02) continue;
       // Den måste nå fram till den här väggen.
       const oa = (g.a[0] - f.a[0]) * f.n[0] + (g.a[1] - f.a[1]) * f.n[1];
       const ob = (g.b[0] - f.a[0]) * f.n[0] + (g.b[1] - f.a[1]) * f.n[1];

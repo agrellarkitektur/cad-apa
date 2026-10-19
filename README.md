@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.6.3**; nästa är **0.7, fasader och sektioner**.
+**0.7**; nästa är **0.8, ritningar, underlag och utskrift**.
 
 ## Vad som fungerar
 
@@ -192,6 +192,31 @@ Version 0.6.3 (liten uppdatering, samma filformat):
   i webbläsaren, inte i projektet
 - Vyns tillfälliga inställningar (tillstånd, jämförelse, detaljnivå, visa,
   kalkera) är samlade i en panel med samma utseende på alla knappar
+
+Version 0.7, fasader och sektioner (filformat 4):
+- Fasader och sektioner räknas fram ur modellen med dolda linjer borttagna,
+  i det tillstånd och den jämförelse som är vald. Sektionen fyller det som
+  skärs enligt stilmallen. Marklinje och nivåkoter för golv och högsta punkt
+- Varje projekt har en norrpil, fyra fasader som placeras runt huset av sig
+  själva och en sektion. Fasaderna heter efter närmaste väderstreck: Fasad
+  mot norr, nordost, ost … Automatiskt läge kan slås av; då ligger linjen
+  kvar och kan flyttas och vändas
+- Verktygen Sektion och Fasad: klicka linjens början och slut och sedan den
+  sida som ska synas. Fasader och sektioner listas under Modell i
+  projektträdet; dubbelklicka på linjen i planen för att öppna vyn. En sparad
+  vy kan visa en fasad eller sektion
+- Tak: sadeltak eller pulpettak över en rektangel, eller Över hela huset.
+  Väggar kapas av taket, och Upp till taket gör gavlar. Taket syns streckat i
+  planen
+- Modifiera: klicka på en markerad vägg (utan att dra). På referenslinjen:
+  Lägg till punkt, Böj, Båge med tangent, Räta ut, Förskjut, Parallell kopia
+  och, för flera väggar, Förskjut alla kanter. På en ände: Sträck och Förläng
+  till. I ett hörn: Avrunda, Fasa och Ta bort punkt. Överallt: Flytta, Vrid,
+  Spegla och Kopiera i rad. Värden skrivs in i paletten, med formler
+- Bågväggar, med dörrar och fönster raka i bågen, i plan, 3D, fasad och
+  sektion
+- Sneda väggar som slutar mot en annan väggs liv kapas längs livet
+- Fält, listor, kryssrutor och rullningslister har temats färger
 
 ## Versioner och gamla projekt
 

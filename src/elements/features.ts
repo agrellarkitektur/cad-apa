@@ -26,6 +26,12 @@ export function featuresOf(doc: ProjectDoc, el: Element): LineFeature[] {
       const p = resolveParams<WallParams>(doc, el);
       const f = wallFrame(p);
       const h = f.half;
+      if (f.arc) {
+        return [
+          { id: el.id, kind: 'e0', a: f.at(0, -h), b: f.at(0, h) },
+          { id: el.id, kind: 'e1', a: f.at(f.length, -h), b: f.at(f.length, h) },
+        ];
+      }
       return [
         { id: el.id, kind: 'l', a: f.at(0, h), b: f.at(f.length, h) },
         { id: el.id, kind: 'r', a: f.at(0, -h), b: f.at(f.length, -h) },
@@ -38,8 +44,8 @@ export function featuresOf(doc: ProjectDoc, el: Element): LineFeature[] {
     case 'Window': {
       const host = el.host ? doc.elements[el.host] : undefined;
       if (!host) return [];
-      const f = wallFrame(resolveParams<WallParams>(doc, host));
       const o = resolveParams<OpeningParams>(doc, el);
+      const f = wallFrame(resolveParams<WallParams>(doc, host)).local(o.at);
       const w = holeWidth(o) / 2;
       return [
         { id: el.id, kind: 'h1', a: f.at(o.at - w, -f.half), b: f.at(o.at - w, f.half) },

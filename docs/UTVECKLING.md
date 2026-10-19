@@ -146,3 +146,36 @@ på bladet sina egna.
 - Inställningar som gäller användaren och inte projektet (panelernas lägen,
   kalkeringens utseende) ligger i `src/ui/uiSettings.ts` och sparas i
   webbläsaren. Då behöver filformatet inte ändras.
+
+## Fasader, sektioner, tak och Modifiera (0.7, format 4)
+
+- **Format 4.** Väggar kan ha `bulge` (pilhöjd, båge) och `toRoof`. Nya
+  elementtyper: `Roof`, `North`, `Elevation` och `Section`. Migreringen 3 → 4
+  lägger till norrpil, fyra fasader och en sektion (`drawingMarkers` i
+  `src/core/model.ts`). En `ViewDef` kan ha `marker` och visar då en fasad
+  eller sektion.
+- **Globala typer.** `ElementType.global` betyder att elementet finns i
+  alla tillstånd oavsett `states` (norrpil, fasad- och sektionslinjer).
+  Panelen visar inte Finns i för dem.
+- **Väggens ram** ligger i `src/geometry/wallFrame.ts`: `at(s, o)`,
+  `tangent(s)`, `normal(s)`, `project(p)`, `trace(s1, s2, o)` och `local(s)`.
+  För bågväggar är `u` och `n` kordans riktning; använd `tangent`/`normal`
+  eller `local(s)` (en rak ram som sammanfaller med väggen vid s). Dörrar och
+  fönster i bågväggar är raka och sitter längs tangenten. Bågmatematiken
+  (pilhöjd, båge genom punkt, med tangent) ligger i `src/geometry/arc.ts`.
+- **Sneda ovansidor.** `Solid` kan ha `top` och `bottom`, plan `z = a·x + b·y + c`.
+  Taket (`src/elements/roof.ts`) delas i takfall med `roofPlanes`, och
+  `trimToRoofs` delar väggarna efter taken ovanför.
+- **Fasader och sektioner** byggs av `buildSection` i `src/repr/section.ts`
+  ur samma former som 3D-vyn. Algoritmen för dolda linjer ligger i
+  `src/geometry/hiddenLine.ts`: exakt för plana ytor, i bråkdelar av
+  kanterna, med ett rutnät som snabbar upp. Kanter kommer från formernas egna
+  `Edges3D` (väggar och tak ritar sina egna, utan skarvar mellan bitarna) och
+  från `featureEdges` för andra former; böjda väggar får konturlinjer där
+  väggmassan vänder sig bort. Resultatet är vanliga primitiver (x längs
+  linjen, y = höjd) och visas i planvyn, som bara går att markera i.
+- **Modifiera.** Kommandona ligger i `src/core/wallEdit.ts` (`splitWall`,
+  `reshapeWall`, `tangentArc`, `roundCorner`, `mergeAtCorner`, `extendTo`,
+  `offsetWalls`, `multiplyElements`, `mirrorAbout`). Paletten och verktyget
+  som förhandsvisar och utför ligger i `src/ui/modify.ts`; Markera anropar
+  `host.modify` vid klick (utan drag) på något som redan är markerat.

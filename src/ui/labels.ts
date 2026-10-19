@@ -1,8 +1,10 @@
+import { markerName } from '../elements/markers';
 import type { Element, ProjectDoc } from '../core/model';
 import { typeOf } from '../elements/registry';
 
 /** Hur ett element benämns i gränssnittet: "Vägg IV01", "Dörr D1", "Rum Allrum". */
 export function labelOf(doc: ProjectDoc, el: Element): string {
+  if (el.type === 'Section' || el.type === 'Elevation') return markerName(doc, el);
   const t = typeOf(el.type);
   const typeName = t?.label ?? el.type;
   const littera = el.definition ? doc.definitions[el.definition]?.name : undefined;
@@ -17,6 +19,10 @@ export const PARAM_LABELS: Record<string, string> = {
   height: 'Höjd',
   sill: 'Bröstning',
   at: 'Läge längs vägg',
+  slope: 'Lutning',
+  eave: 'Takfot',
+  ridge: 'Nockriktning',
+  angle: 'Riktning',
 };
 
 export function escapeHtml(s: string): string {

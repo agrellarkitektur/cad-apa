@@ -1,4 +1,5 @@
 import type { StyleSheet } from './graphics';
+import { wallFrame, type WallGeometry } from '../geometry/wallFrame';
 import { newId } from './ids';
 import type { Definition, Element, Id, ProjectDoc, State, Value } from './model';
 import { statesForNewElement } from './states';
@@ -211,6 +212,8 @@ function followJoins(tx: TxBuilder, before: ProjectDoc, moved: Set<Id>, d: P2): 
   let released = 0;
   for (const w of Object.values(before.elements)) {
     if (w.type !== 'Wall' || moved.has(w.id)) continue;
+    // Bågväggar följer inte med: deras ände kan inte glida längs en rak linje.
+    if (isArc(w)) continue;
     const p = w.params as unknown as WallEnds;
     const next: WallEnds = { start: p.start, end: p.end };
     let changed = false;
@@ -218,7 +221,7 @@ function followJoins(tx: TxBuilder, before: ProjectDoc, moved: Set<Id>, d: P2): 
       const e = p[end];
       const other = end === 'start' ? p.end : p.start;
       for (const mw of movedWalls) {
-        if (mw.storey !== w.storey) continue;
+        if (mw.storey !== w.storey || isArc(mw)) continue;
         const mp = mw.params as unknown as WallEnds;
         const ml = Math.hypot(mp.end[0] - mp.start[0], mp.end[1] - mp.start[1]);
         if (ml < 1) continue;
@@ -248,28 +251,47 @@ function followJoins(tx: TxBuilder, before: ProjectDoc, moved: Set<Id>, d: P2): 
  * väggen förlängs eller kortas: deras läge mäts från startpunkten, så det
  * räknas om när startpunkten flyttas.
  */
-function putWallEnds(tx: TxBuilder, el: Element, ns: P2, ne: P2): void {
-  const p = el.params as unknown as WallEnds;
-  tx.putElement({ ...el, params: { ...el.params, start: ns, end: ne } });
-  const startMoved = ns[0] !== p.start[0] || ns[1] !== p.start[1];
-  const len0 = Math.hypot(p.end[0] - p.start[0], p.end[1] - p.start[1]);
-  const len1 = Math.hypot(ne[0] - ns[0], ne[1] - ns[1]);
-  if (!startMoved || len0 < 1 || len1 < 1) return;
-  const d0 = [(p.end[0] - p.start[0]) / len0, (p.end[1] - p.start[1]) / len0];
-  const d1 = [(ne[0] - ns[0]) / len1, (ne[1] - ns[1]) / len1];
+export function putWallEnds(tx: TxBuilder, el: Element, ns: P2, ne: P2, patch: Record<string, unknown> = {}): void {
+  const before = geometryOf(tx.doc, el);
+  const next = { ...el, params: { ...el.params, start: ns, end: ne, ...patch } };
+  tx.putElement(next);
+  const startMoved = ns[0] !== before.start[0] || ns[1] !== before.start[1];
+  if (!startMoved && !isArc(el) && !isArc(next)) return;
+  const f0 = wallFrame(before);
+  const f1 = wallFrame(geometryOf(tx.doc, next));
+  if (f0.length < 1 || f1.length < 1) return;
   for (const h of Object.values(tx.doc.elements)) {
     if (h.host !== el.id || typeof h.params.at !== 'number') continue;
     const at = h.params.at as number;
-    const world = [p.start[0] + d0[0] * at, p.start[1] + d0[1] * at];
-    const nat = Math.round((world[0] - ns[0]) * d1[0] + (world[1] - ns[1]) * d1[1]);
+    const nat = Math.round(f1.project(f0.at(at, 0))[0]);
     if (nat !== at) tx.putElement({ ...h, params: { ...h.params, at: nat } });
   }
 }
 
+/** Väggens läge med typens tjocklek. */
+export function geometryOf(doc: ProjectDoc, el: Element): WallGeometry {
+  const p = el.params as Record<string, any>;
+  return {
+    start: p.start,
+    end: p.end,
+    thickness: wallThickness(doc, el),
+    justification: p.justification ?? 'center',
+    bulge: typeof p.bulge === 'number' ? p.bulge : 0,
+  };
+}
+
+/** Om väggen är en båge. */
+export function isArc(el: Element): boolean {
+  const b = (el.params as Record<string, unknown>).bulge;
+  return typeof b === 'number' && Math.abs(b) >= 0.5;
+}
+
 /** Parametrarna efter en förflyttning: väggar, möbler och rum flyttas, öppningar glider längs väggen. */
-function movePatch(doc: ProjectDoc, el: Element, d: [number, number]): Record<string, unknown> | null {
+export function movePatch(doc: ProjectDoc, el: Element, d: [number, number]): Record<string, unknown> | null {
   const p = el.params as Record<string, any>;
   const add = (q: [number, number]): [number, number] => [Math.round(q[0] + d[0]), Math.round(q[1] + d[1])];
+  // Fasader och sektioner som placeras automatiskt flyttas inte.
+  if (p.auto === true) return null;
   if (p.start && p.end) return { start: add(p.start), end: add(p.end) };
   if (p.origin) return { origin: add(p.origin) };
   if (Array.isArray(p.outline)) return p.seed ? { outline: p.outline.map(add), seed: add(p.seed) } : { outline: p.outline.map(add) };
@@ -283,12 +305,11 @@ function movePatch(doc: ProjectDoc, el: Element, d: [number, number]): Record<st
   }
   if (p.pos) return { pos: add(p.pos) };
   if (el.host && typeof p.at === 'number') {
-    const host = doc.elements[el.host]?.params as { start: [number, number]; end: [number, number] } | undefined;
-    if (!host) return null;
-    const ux = host.end[0] - host.start[0];
-    const uy = host.end[1] - host.start[1];
-    const len = Math.hypot(ux, uy) || 1;
-    return { at: Math.round(p.at + (d[0] * ux + d[1] * uy) / len) };
+    const hostEl = doc.elements[el.host];
+    if (!hostEl) return null;
+    const f = wallFrame(geometryOf(doc, hostEl));
+    const q = f.at(p.at, 0);
+    return { at: Math.round(f.project([q[0] + d[0], q[1] + d[1]])[0]) };
   }
   return null;
 }
@@ -415,13 +436,19 @@ export function reversedWall(doc: ProjectDoc, wall: Element, keepBody: boolean):
   const p = wall.params as { start: [number, number]; end: [number, number]; justification?: string };
   const j = p.justification ?? 'center';
   const swapped = j === 'left' ? 'right' : j === 'right' ? 'left' : j;
-  const out: Element[] = [{ ...wall, params: { ...wall.params, start: p.end, end: p.start, justification: keepBody ? swapped : j } }];
-  const len = Math.hypot(p.end[0] - p.start[0], p.end[1] - p.start[1]);
+  const bulge = (wall.params as { bulge?: number }).bulge;
+  const reversed: Element = {
+    ...wall,
+    params: { ...wall.params, start: p.end, end: p.start, justification: keepBody ? swapped : j, ...(bulge ? { bulge: -bulge } : {}) },
+  };
+  const out: Element[] = [reversed];
+  const f0 = wallFrame(geometryOf(doc, wall));
+  const f1 = wallFrame(geometryOf(doc, reversed));
   for (const h of Object.values(doc.elements)) {
     if (h.host !== wall.id) continue;
     const hp = h.params as { at?: number; hinge?: string; swing?: number };
     const patch: Record<string, unknown> = {};
-    if (typeof hp.at === 'number') patch.at = Math.round(len - hp.at);
+    if (typeof hp.at === 'number') patch.at = Math.round(f1.project(f0.at(hp.at, 0))[0]);
     if (hp.hinge) patch.hinge = hp.hinge === 'start' ? 'end' : 'start';
     // Slaget följer rummet: vänster och höger byter plats när riktningen vänds.
     if (typeof hp.swing === 'number') patch.swing = -hp.swing;
@@ -445,7 +472,7 @@ export function flipWalls(store: DocStore, ids: Id[]): void {
 type Pt = [number, number];
 
 /** En avbildning av planen: vridning kring en punkt, eller spegling i en lodrät linje. */
-interface PlanTransform {
+export interface PlanTransform {
   map(p: Pt): Pt;
   /** Ny vinkel (grader) för något som pekar åt `deg`. */
   angle(deg: number): number;
@@ -472,7 +499,7 @@ function mirrorX(center: Pt): PlanTransform {
 }
 
 /** Elementets nya parametrar efter avbildningen, och följdändringar i det som sitter i det. */
-function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, moving: Set<Id>): Element[] {
+export function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, moving: Set<Id>): Element[] {
   const p = el.params as Record<string, any>;
   const out: Element[] = [];
   if (p.start && p.end) {
@@ -480,8 +507,9 @@ function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, moving: Set
     let end = t.map(p.end);
     if (t.mirror) {
       // Speglingen vänder sidorna; byt riktning så att insidan blir kvar inne.
+      // Pilhöjden behåller sitt tecken: speglingen och bytet tar ut varandra.
       [start, end] = [end, start];
-      const len = Math.hypot(p.end[0] - p.start[0], p.end[1] - p.start[1]);
+      const len = wallFrame(geometryOf(doc, el)).length;
       for (const h of Object.values(doc.elements)) {
         if (h.host !== el.id || moving.has(h.id) === false) continue;
         const hp = h.params as Record<string, any>;
@@ -504,7 +532,9 @@ function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, moving: Set
     return [{ ...el, params: { ...el.params, origin: t.map(p.origin), rotation: t.angle(p.rotation ?? 0) } }];
   }
   if (Array.isArray(p.outline)) {
-    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}) } }];
+    // Tak har en nockriktning som vrids med.
+    const ridge = typeof p.ridge === 'number' ? { ridge: t.angle(p.ridge) } : {};
+    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}), ...ridge } }];
   }
   if (Array.isArray(p.points)) {
     const points = p.points.map((q: any) => (Array.isArray(q) ? t.map(q as Pt) : { ...q, at: t.map(q.at) }));

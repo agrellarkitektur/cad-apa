@@ -1,4 +1,5 @@
 import type { Id, ProjectDoc, ViewDef } from '../core/model';
+import { markerName } from '../elements/markers';
 import { icons } from './icons';
 
 export type NavTab = 'underlag' | 'modell' | 'vyer' | 'ritningar';
@@ -14,6 +15,8 @@ export interface NavigatorHost {
   doc(): ProjectDoc;
   storey(): Id;
   activeView(): Id | null;
+  /** Fasaden eller sektionen som visas, om någon. */
+  marker(): Id | null;
   viewModified(v: ViewDef): boolean;
   /** Vyn som kalkeras under ritningen, om någon. */
   trace(): Id | null;
@@ -78,8 +81,24 @@ export class Navigator {
 
   private modell(): string {
     const doc = this.host.doc();
-    const current = this.host.storey();
+    const marker = this.host.marker();
+    const current = marker ? null : this.host.storey();
     const storeys = [...doc.storeys].sort((a, b) => b.elevation - a.elevation);
+    const markers = (type: string) =>
+      Object.values(doc.elements)
+        .filter((e) => e.type === type)
+        .map((e) => ({ e, name: markerName(doc, e) }))
+        .sort((a, b) => a.name.localeCompare(b.name, 'sv', { numeric: true }));
+    const rows = (type: string, empty: string) => {
+      const list = markers(type);
+      if (!list.length) return `<p class="note">${empty}</p>`;
+      return `<div class="nav-list">${list
+        .map(({ e, name }) => {
+          const auto = (e.params as { auto?: boolean }).auto ? 'placeras automatiskt' : '';
+          return `<div class="view-row${e.id === marker ? ' active' : ''}"><button class="view-apply" data-marker-pick="${e.id}" title="Högerklicka (håll in på telefonen) för fler val">${esc(name)}<small>${auto}</small></button><button class="icon-mini view-more" data-marker-menu="${e.id}" aria-label="Fler val för ${esc(name)}" title="Fler val">${icons.more}</button></div>`;
+        })
+        .join('')}</div>`;
+    };
     return `<section>
       <h2>Våningar</h2>
       <div class="nav-list">${storeys
@@ -90,8 +109,13 @@ export class Navigator {
         .join('')}</div>
     </section>
     <section>
-      <h2>Sektioner och fasader</h2>
-      <p class="note soon">Kommer i 0.7.</p>
+      <h2>Fasader</h2>
+      ${rows('Elevation', 'Inga fasader. Rita en med verktyget Fasad.')}
+    </section>
+    <section>
+      <h2>Sektioner</h2>
+      ${rows('Section', 'Inga sektioner. Rita en med verktyget Sektion.')}
+      <p class="note">Fasader och sektioner räknas fram ur modellen och visar det tillstånd och den jämförelse som är vald.</p>
     </section>
     <section>
       <h2>Arbetsblad</h2>

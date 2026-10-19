@@ -1,5 +1,5 @@
 import { SWEDISH_STANDARD, normalizeStyle } from '../core/graphics';
-import { FORMAT, FORMAT_VERSION, type ProjectDoc } from '../core/model';
+import { drawingMarkers, FORMAT, FORMAT_VERSION, type ProjectDoc } from '../core/model';
 import { orientExteriorWalls } from '../elements/orient';
 
 /**
@@ -13,7 +13,29 @@ const migrations: Record<number, (doc: any) => any> = {
   // 2 → 3: väggar har en insida (höger i ritriktningen), vyer, mått som pekar
   // på objekt och egna egenskaper. Ytterväggarna vänds efter läsningen, se nedan.
   3: (doc) => doc,
+  // 3 → 4: bågväggar (pilhöjd), väggar upp till taket, tak, norrpil, fasader
+  // och sektioner. Äldre projekt får norrpil, fyra fasader och en sektion.
+  4: (doc) => {
+    const storey = doc.storeys?.[0]?.id ?? 'pl-1';
+    const markers = drawingMarkers(storey, northBeside(doc));
+    const elements = { ...(doc.elements ?? {}) };
+    for (const [id, el] of Object.entries(markers)) if (!elements[id]) elements[id] = el;
+    return { ...doc, elements };
+  },
 };
+
+/** En plats för norrpilen strax utanför väggarnas övre högra hörn. */
+function northBeside(doc: any): [number, number] {
+  const xs: number[] = [];
+  const ys: number[] = [];
+  for (const el of Object.values<any>(doc.elements ?? {})) {
+    if (el?.type !== 'Wall' || !el.params?.start || !el.params?.end) continue;
+    xs.push(el.params.start[0], el.params.end[0]);
+    ys.push(el.params.start[1], el.params.end[1]);
+  }
+  if (!xs.length) return [6000, 4000];
+  return [Math.round(Math.max(...xs) + 3000), Math.round(Math.max(...ys))];
+}
 
 export class ProjectFormatError extends Error {}
 

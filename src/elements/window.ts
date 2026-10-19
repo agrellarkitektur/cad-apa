@@ -41,8 +41,8 @@ export const windowType: ElementType<WindowParams> = {
     const box = (a: number, b: number, o0: number, o1: number): Vec2[][] => [[f.at(a, o0), f.at(b, o0), f.at(b, o1), f.at(a, o1)]];
     return [
       { id: el.id, rings: box(s1 + fw, s2 - fw, mid - 6, mid + 6), z0: z0 + fw, z1: z1 - fw, material: 'glass' },
-      { id: el.id, rings: box(s1, s1 + fw, lo, hi), z0, z1, material: 'frame' },
-      { id: el.id, rings: box(s2 - fw, s2, lo, hi), z0, z1, material: 'frame' },
+      { id: el.id, rings: box(s1, s1 + fw, lo, hi), z0: z0 + fw, z1: z1 - fw, material: 'frame' },
+      { id: el.id, rings: box(s2 - fw, s2, lo, hi), z0: z0 + fw, z1: z1 - fw, material: 'frame' },
       { id: el.id, rings: box(s1, s2, lo, hi), z0, z1: z0 + fw, material: 'frame' },
       { id: el.id, rings: box(s1, s2, lo, hi), z0: z1 - fw, z1, material: 'frame' },
     ];

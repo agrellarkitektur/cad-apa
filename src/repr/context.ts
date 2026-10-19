@@ -19,6 +19,7 @@ export function createContext(
   const actionFor = (el: Element): Action => {
     const t = typeOf(el.type);
     if (!t) return 'absent';
+    if (t.global) return 'plain';
     return t.compares ? actionOf(el, view) : el.states.includes(view.state) ? 'plain' : 'absent';
   };
 

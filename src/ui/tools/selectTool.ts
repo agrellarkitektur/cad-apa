@@ -25,6 +25,8 @@ interface Grip {
 
 interface Move {
   ids: string[];
+  /** Det man tryckte på. */
+  hit: string;
   base: Vec2;
   target: SnapResult | null;
   /** Kanterna som det flyttade ligger an mot. */
@@ -59,6 +61,12 @@ export class SelectTool implements ViewTool {
   }
 
   down(p: ViewPointer): 'capture' | 'pan' | 'ignore' {
+    // I fasader och sektioner går det bara att markera.
+    if (this.host.readOnly?.()) {
+      if (p.pointerType === 'touch') return 'pan';
+      this.box = { a: p.model, b: p.model };
+      return 'capture';
+    }
     const g = this.gripAt(p.model);
     if (g) {
       this.grip = { ...g, companions: this.companionsAt(g.wallId, g.from), snap: null };
@@ -70,7 +78,7 @@ export class SelectTool implements ViewTool {
       // Trycker man nära ett hörn på det markerade blir hörnet baspunkt, så
       // att det kan läggas exakt mot ett annat hörn.
       const base = snap({ cursor: p.model, segments: this.host.snapSegments(), tol: pxToMm(this.host, p.pointerType === 'touch' ? 20 : 10) });
-      this.move = { ids: this.host.selection.list(), base: base.kind === 'free' ? p.model : base.point, target: null };
+      this.move = { ids: this.host.selection.list(), hit, base: base.kind === 'free' ? p.model : base.point, target: null };
       return 'capture';
     }
     if (p.pointerType === 'touch') return 'pan';
@@ -133,6 +141,9 @@ export class SelectTool implements ViewTool {
         const ids = g.companions.map((c) => c.id);
         moveWallEnd(this.host.store, g.wallId, g.end, roundMm(g.snap.point), { label: 'Dra väggände', connected: ids });
         this.host.wallEndMoved?.(g.wallId, g.end, dist(fixed, g.from), ids);
+      } else if (!moved) {
+        // Klick på en ände: Modifiera med Sträck, och för hörn Avrunda och Fasa.
+        this.host.modify?.(p, null);
       }
       return;
     }
@@ -146,6 +157,14 @@ export class SelectTool implements ViewTool {
         if (r.released) this.host.hint(releasedHint(r.released), 4000);
         this.host.elementsMoved?.(m.ids, d, m.target.point);
       } else {
+        // Klick på det markerade: Modifiera-paletten, utom vid dubbelklick.
+        const now = performance.now();
+        const last = this.lastClick;
+        const double = last && last.id === m.hit && now - last.t < 450 && dist(p.screen, last.at) < (p.pointerType === 'touch' ? 24 : 8);
+        if (!double && !p.shift && !p.mod && this.host.modify?.(p, m.hit)) {
+          this.lastClick = { id: m.hit, t: now, at: p.screen };
+          return;
+        }
         this.click(p);
       }
       return;
@@ -180,6 +199,10 @@ export class SelectTool implements ViewTool {
 
   hover(p: ViewPointer | null): void {
     this.hoverId = p ? pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, 6)) : null;
+    if (this.host.readOnly?.()) {
+      this.host.view.svg.style.cursor = this.cursor = 'default';
+      return;
+    }
     this.cursor = p && this.gripAt(p.model) ? 'crosshair' : this.hoverId && this.host.selection.has(this.hoverId) ? 'move' : 'default';
     this.host.view.svg.style.cursor = this.cursor;
   }

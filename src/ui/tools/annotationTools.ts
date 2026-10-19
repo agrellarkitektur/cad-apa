@@ -100,10 +100,10 @@ export class DimensionTool implements ViewTool {
     for (const el of this.candidates()) {
       if (el.type !== 'Wall') continue;
       const f = wallFrame(resolveParams<WallParams>(doc, el));
-      const rel: Vec2 = [pt[0] - f.a[0], pt[1] - f.a[1]];
-      const s = rel[0] * f.u[0] + rel[1] * f.u[1];
-      const o = rel[0] * f.n[0] + rel[1] * f.n[1];
+      const [s, o] = f.project(pt);
       if (s <= 0 || s >= f.length || Math.abs(o) > f.half - Math.min(tol, f.half / 3)) continue;
+      // Bågväggarnas liv är inga raka linjer att knyta mått till.
+      if (f.arc) return [roundMm(f.at(s, f.half)), roundMm(f.at(s, -f.half))];
       const near: DimPoint = { at: roundMm(f.at(s, f.half)), refs: [{ id: el.id, kind: 'l' }] };
       const far: DimPoint = { at: roundMm(f.at(s, -f.half)), refs: [{ id: el.id, kind: 'r' }] };
       const last = this.points.at(-1);

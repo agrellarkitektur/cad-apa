@@ -60,6 +60,11 @@ export interface ElementType<P extends object = Record<string, unknown>> {
    * det inte: de visas bara i de tillstånd de finns i.
    */
   compares: boolean;
+  /**
+   * Hör till ritningen och finns i alla tillstånd, oavsett vilka elementet
+   * är markerat för: norrpil, fasad- och sektionslinjer.
+   */
+  global?: boolean;
   /** Om elementet måste sitta i ett annat (dörrar och fönster i väggar). */
   hosted?: boolean;
   /**

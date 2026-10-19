@@ -1,7 +1,8 @@
 import { SWEDISH_STANDARD } from '../core/graphics';
-import { FORMAT, FORMAT_VERSION, type ViewDef, type Definition, type Element, type Id, type ProjectDoc } from '../core/model';
+import { drawingMarkers, FORMAT, FORMAT_VERSION, type ViewDef, type Definition, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { DoorParams } from '../elements/door';
 import type { FurnitureParams } from '../elements/furniture';
+import type { RoofParams } from '../elements/roof';
 import type { SpaceParams } from '../elements/space';
 import type { WallParams } from '../elements/wall';
 import type { WindowParams } from '../elements/window';
@@ -81,6 +82,8 @@ wall('yv-s', 't-yv01', [200, 200], [11800, 200]);
 wall('yv-o', 't-yv01', [11800, 200], [11800, 7800]);
 wall('yv-n', 't-yv01', [11800, 7800], [200, 7800]);
 wall('yv-v', 't-yv01', [200, 7800], [200, 200]);
+// Gavlarna går upp till taket.
+for (const id of ['yv-o', 'yv-v']) elements[id].params.toRoof = true;
 
 // Innerväggar som slutar mot ytterväggarnas insida (T-skarvar).
 wall('iv-1', 't-iv01', [5000, 400], [5000, 7600]);
@@ -121,6 +124,29 @@ room('r03', 'Sovrum 2', 5060, 400, 8440, 3940, [BEF, B]);
 room('r04', 'Bad', 8560, 400, 11600, 3940, [BEF, B]);
 room('r05', 'Sovrum 2', 5060, 400, 7240, 3940, [A]);
 room('r06', 'Bad', 7360, 400, 11600, 3940, [A]);
+
+// Sadeltak med nock i öst–västlig riktning och 500 mm utsprång. Undersidan
+// når väggarnas överkant (2700) vid ytterlivet.
+add<RoofParams>('tak', 'Roof', {
+  outline: [
+    [-500, -500],
+    [12500, -500],
+    [12500, 8500],
+    [-500, 8500],
+  ],
+  kind: 'gable',
+  slope: 27,
+  eave: 2450,
+  thickness: 300,
+  ridge: 0,
+});
+
+// Norrpil, fyra fasader runt huset och en sektion tvärs nocken, mot väster.
+Object.assign(elements, drawingMarkers(STOREY, [14800, 7400]));
+elements['sektion-a'] = {
+  ...elements['sektion-a'],
+  params: { start: [6500, -1800], end: [6500, 9800], side: 1, depth: null, auto: false, label: 'A' },
+};
 
 const views: ViewDef[] = [
   { id: 'vy-bef', name: 'Plan 1 – Befintligt', storey: STOREY, state: BEF, compare: false, detail: 'normal', hide: [], hideDemolished: false },

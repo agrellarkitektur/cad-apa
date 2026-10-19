@@ -1,7 +1,7 @@
 import type { Id } from '../../core/model';
 import type { DocStore } from '../../core/store';
 import type { PlanResult } from '../../repr/plan';
-import type { PlanView } from '../../view2d/planView';
+import type { PlanView, ViewPointer } from '../../view2d/planView';
 import type { Vec2 } from '../../repr/primitives';
 import type { Selection } from '../selection';
 import type { SnapSegment } from './snap';
@@ -13,6 +13,11 @@ export interface ToolHost {
   view: PlanView;
   /** Senast ritade plan, med det som går att klicka på. */
   plan(): PlanResult;
+  /**
+   * Det som visas går bara att markera, inte ändra: fasader och sektioner,
+   * där koordinaterna inte är planens.
+   */
+  readOnly?(): boolean;
   /** Tillståndet som visas och ritas i. */
   activeState(): Id;
   storey(): Id;
@@ -28,6 +33,11 @@ export interface ToolHost {
    * har en. Svarar true om redigeringen startade.
    */
   editText?(id: Id, at: Vec2): boolean;
+  /**
+   * Klick på något som redan är markerat (utan att dra): visa Modifiera.
+   * Svarar true om paletten visades.
+   */
+  modify?(p: ViewPointer, hitId: Id | null): boolean;
 }
 
 /** Skärmpixlar till mm vid nuvarande zoom. */

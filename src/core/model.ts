@@ -49,6 +49,8 @@ export interface ViewDef {
   style?: string;
   /** En annan vy som visas tonad under, att rita mot. */
   trace?: Id | null;
+  /** Vyn visar en fasad eller sektion (elementets id) i stället för planen. (Format 4.) */
+  marker?: Id | null;
 }
 
 /**
@@ -129,7 +131,7 @@ export interface Element<P extends object = Record<string, unknown>> {
 }
 
 export const FORMAT = 'bacchus-project';
-export const FORMAT_VERSION = 3;
+export const FORMAT_VERSION = 4;
 
 export interface ProjectDoc {
   format: typeof FORMAT;
@@ -170,8 +172,29 @@ export function emptyProject(name: string, kind: ProjectKind, fields: Record<str
       't-d1': { id: 't-d1', origin: 'component', name: 'D1', elementType: 'Door', params: { width: 900, height: 2100 }, props: {}, description: 'Innerdörr M9×21' },
       't-f1': { id: 't-f1', origin: 'component', name: 'F1', elementType: 'Window', params: { width: 1200, height: 1200 }, props: {} },
     },
-    elements: {},
+    elements: drawingMarkers('pl-1'),
     graphics: structuredClone(SWEDISH_STANDARD),
     views: [],
   };
+}
+
+/**
+ * Det som varje projekt börjar med på ritningen (format 4): en norrpil,
+ * fyra fasader som placeras runt byggnaden av sig själva, och en sektion
+ * genom mitten. Fasaderna får namn efter väderstrecket de vetter mot.
+ */
+export function drawingMarkers(storey: Id, northAt: [number, number] = [6000, 4000]): Record<Id, Element> {
+  const base = { storey, states: [] as Id[], tags: [] as string[], props: {} };
+  const els: Element[] = [
+    { ...base, id: 'north', type: 'North', params: { pos: northAt, angle: 90 } },
+    // Fasaderna i ordning: söder, öster, norr, väster (vetter ned, höger, upp, vänster i planen).
+    ...[270, 0, 90, 180].map((facing, i): Element => ({
+      ...base,
+      id: `fasad-${i + 1}`,
+      type: 'Elevation',
+      params: { start: [0, 0], end: [1, 0], side: 1, depth: null, auto: true, facing },
+    })),
+    { ...base, id: 'sektion-a', type: 'Section', params: { start: [0, 0], end: [1, 0], side: 1, depth: null, auto: true, label: 'A' } },
+  ];
+  return Object.fromEntries(els.map((e) => [e.id, e]));
 }

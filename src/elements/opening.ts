@@ -49,7 +49,8 @@ export function openingZone(
   host: Element,
   p: OpeningParams & Partial<FrameParams> & { swing?: 1 | -1 },
 ): OpeningZone {
-  const f = wallFrame(ctx.params<WallParams>(host));
+  // I bågväggar sitter dörrar och fönster raka, längs tangenten.
+  const f = wallFrame(ctx.params<WallParams>(host)).local(p.at);
   const depth = Math.min(p.frameDepth ?? FRAME_DEFAULTS.frameDepth, f.half * 2);
   const out = ctx.memo(`outside:${host.id}`, () => outsideSide(ctx.doc, host));
   let face: 1 | -1 | 0;

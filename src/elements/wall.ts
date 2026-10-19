@@ -1,8 +1,10 @@
 import type { Element } from '../core/model';
 import { difference, union, type Rings } from '../geometry/boolean';
-import { add, cross, dist, intersectLines, left, norm, scale, sub } from '../geometry/vec';
+import { wallFrame, type WallFrame } from '../geometry/wallFrame';
+import { add, cross, dist, dot, intersectLines, scale, sub } from '../geometry/vec';
 import type { Primitive, Vec2 } from '../repr/primitives';
-import type { Edges3D, Shape3D } from '../repr/solids';
+import { zOn, type Edges3D, type Plane, type Shape3D } from '../repr/solids';
+import { planeRange, roofPlanes, trimToRoofs, type RoofParams } from './roof';
 import { litteraTag, showLittera } from './littera';
 import type { ElementType, PlanContext } from './registry';
 import { INSIDE } from './wallSides';
@@ -14,33 +16,16 @@ export interface WallParams {
   height: number;
   /** Var väggen ligger i förhållande till den ritade linjen (referenslinjen). */
   justification: 'center' | 'left' | 'right';
+  /**
+   * Bågväggar: referenslinjens pilhöjd i mm, positiv åt vänster sett från
+   * start mot slut. Saknas eller 0 = rak vägg. (Format 4.)
+   */
+  bulge?: number;
+  /** Väggen går upp till taket ovanför (och kapas av det). (Format 4.) */
+  toRoof?: boolean;
 }
 
-/** En väggs lokala koordinatsystem: s längs väggen, o åt vänster om mittlinjen. */
-export interface WallFrame {
-  length: number;
-  half: number;
-  u: Vec2;
-  n: Vec2;
-  /** Mittlinjens ändpunkter. */
-  a: Vec2;
-  b: Vec2;
-  /** Punkt på avståndet s längs väggens mittlinje och o åt vänster om den. */
-  at(s: number, o: number): Vec2;
-}
-
-export function wallFrame(p: WallParams): WallFrame {
-  const d = sub(p.end, p.start);
-  const length = Math.hypot(d[0], d[1]) || 1;
-  const u = norm(d);
-  const n = left(u);
-  const half = p.thickness / 2;
-  // Mittlinjens förskjutning från referenslinjen.
-  const shift = p.justification === 'left' ? half : p.justification === 'right' ? -half : 0;
-  const a = add(p.start, scale(n, shift));
-  const b = add(p.end, scale(n, shift));
-  return { length, half, u, n, a, b, at: (s, o) => add(add(a, scale(u, s)), scale(n, o)) };
-}
+export { isArcWall, wallFrame, type WallFrame } from '../geometry/wallFrame';
 
 /**
  * Öppningar i en vägg anger sitt läge längs väggen och sin bredd i
@@ -52,6 +37,17 @@ export interface OpeningParams {
   width: number;
 }
 
+/**
+ * Hur mycket en bågvägg buktar över en sträcka av väggen: så mycket längre
+ * ut än väggens tjocklek ett rakt hål måste gå för att gå igenom.
+ */
+export function sagittaOver(f: WallFrame, width: number): number {
+  if (!f.arc) return 0;
+  const r = f.arc.radius + f.half;
+  const h = Math.min(width / 2, r);
+  return r - Math.sqrt(r * r - h * h) + 1;
+}
+
 /** Hålet är 10 mm större än modulmåttet, karmen 10 mm mindre. */
 export const HOLE_EXTRA = 10;
 export const FRAME_LESS = 10;
@@ -61,10 +57,12 @@ export function holeWidth(o: OpeningParams): number {
 }
 
 /** Öppningens rektangel genom väggen, för markering. */
-export function openingRings(f: WallFrame, o: OpeningParams): Vec2[][][] {
+export function openingRings(frame: WallFrame, o: OpeningParams, grow = 0): Vec2[][][] {
+  const f = frame.local(o.at);
   const s1 = o.at - holeWidth(o) / 2;
   const s2 = o.at + holeWidth(o) / 2;
-  return [[[f.at(s1, -f.half), f.at(s2, -f.half), f.at(s2, f.half), f.at(s1, f.half)]]];
+  const h = f.half + sagittaOver(frame, s2 - s1) + grow;
+  return [[[f.at(s1, -h), f.at(s2, -h), f.at(s2, h), f.at(s1, h)]]];
 }
 
 /**
@@ -85,11 +83,11 @@ export function openingMarks(
   const f = wallFrame(ctx.params<WallParams>(host));
   const s1 = p.at - holeWidth(p) / 2;
   const s2 = p.at + holeWidth(p) / 2;
-  const rect = (a: number, b: number): Vec2[] => [f.at(a, -f.half), f.at(b, -f.half), f.at(b, f.half), f.at(a, f.half)];
+  const rect = (a: number, b: number): Vec2[] => [...f.trace(a, b, -f.half), ...f.trace(b, a, f.half)];
   const origin = { objectId: el.id, objectType: el.type, part: 'markering' };
 
   if (action === 'demolished' && opts.infillWhenRemoved) {
-    return [{ kind: 'region', role: 'cut', rings: [rect(s1, s2)], fill: { kind: 'none' }, outline: null, styleAs: 'new', origin }];
+    return [{ kind: 'region', role: 'cut', rings: openingRings(f, p)[0], fill: { kind: 'none' }, outline: null, styleAs: 'new', origin }];
   }
   const mark = ctx.style.openingMark;
   if (action === 'new' && mark > 0) {
@@ -112,8 +110,9 @@ export const JOIN_TOLERANCE = 1;
  *
  * - Två väggar som möts i en ändpunkt geras (L-hörn i valfri vinkel).
  * - Tre eller fler i samma punkt förlängs så att de täcker varandra.
- * - En vägg som slutar mot en annan väggs liv (T-skarv) behöver inget särskilt:
- *   ytorna slås ihop när de ritas.
+ * - En vägg som slutar mot en annan väggs liv (T-skarv) kapas längs livet
+ *   den möter, även när den står snett. Ytorna slås sedan ihop när de ritas.
+ * - Bågväggar följer sin båge; i skarvarna räknas med tangenten.
  * - Öppningar skärs ut ur sin egen vägg.
  */
 export function computeWallShapes(
@@ -135,21 +134,59 @@ export function computeWallShapes(
   // Riktning bort från skarven, och väggens sidor sett i den riktningen.
   const away = (e: End): { dir: Vec2; leftN: Vec2; rightN: Vec2; half: number } => {
     const f = frames.get(e.id)!;
+    const s = e.end === 'start' ? 0 : f.length;
+    const t = f.tangent(s);
+    const n = f.normal(s);
     return e.end === 'start'
-      ? { dir: f.u, leftN: f.n, rightN: scale(f.n, -1), half: f.half }
-      : { dir: scale(f.u, -1), leftN: scale(f.n, -1), rightN: f.n, half: f.half };
+      ? { dir: t, leftN: n, rightN: scale(n, -1), half: f.half }
+      : { dir: scale(t, -1), leftN: scale(n, -1), rightN: n, half: f.half };
+  };
+
+  /**
+   * T-skarv: väggänden ligger på eller i en annan vägg (inte vid dess ändar).
+   * Ger livet den möter, som linje (punkt och riktning).
+   */
+  const teeFace = (e: End): { p: Vec2; d: Vec2 } | null => {
+    const A = away(e);
+    let best: { p: Vec2; d: Vec2; depth: number } | null = null;
+    for (const w of walls) {
+      if (w.id === e.id) continue;
+      const g = frames.get(w.id)!;
+      const [s, o] = g.project(e.ref);
+      if (s < 1 || s > g.length - 1 || Math.abs(o) > g.half + JOIN_TOLERANCE) continue;
+      const loc = g.local(s);
+      // Det liv väggen kommer ifrån: den sida dit väggen pekar bort från skarven.
+      const side = dot(A.dir, loc.n) >= 0 ? 1 : -1;
+      if (Math.abs(dot(A.dir, loc.u)) > 0.999) continue; // parallella
+      const depth = Math.abs(o - side * g.half);
+      if (!best || depth < best.depth) best = { p: loc.at(s, side * g.half), d: loc.u, depth };
+    }
+    return best;
   };
 
   /** Hörnpunkterna vid en väggände: [punkt på +n-sidan, punkt på −n-sidan]. */
   const endCorners = (e: End): [Vec2, Vec2] => {
     const f = frames.get(e.id)!;
     const A = away(e);
+    const sEnd = e.end === 'start' ? 0 : f.length;
+    const n = f.normal(sEnd);
     const square = (extend: number): [Vec2, Vec2] => {
       const base = sub(e.point, scale(A.dir, extend));
-      return [add(base, scale(f.n, f.half)), sub(base, scale(f.n, f.half))];
+      return [add(base, scale(n, f.half)), sub(base, scale(n, f.half))];
     };
     const os = others(e);
-    if (os.length === 0) return square(0);
+    if (os.length === 0) {
+      const tee = teeFace(e);
+      if (tee) {
+        const pL = intersectLines(add(e.point, scale(A.leftN, A.half)), A.dir, tee.p, tee.d);
+        const pR = intersectLines(add(e.point, scale(A.rightN, A.half)), A.dir, tee.p, tee.d);
+        const limit = 6 * A.half + 200;
+        if (pL && pR && dist(pL, e.point) < limit && dist(pR, e.point) < limit) {
+          return e.end === 'start' ? [pL, pR] : [pR, pL];
+        }
+      }
+      return square(0);
+    }
     if (os.length >= 2) return square(Math.max(...os.map((o) => frames.get(o.id)!.half)));
 
     const o = os[0];
@@ -168,16 +205,19 @@ export function computeWallShapes(
   const out = new Map<string, Rings[]>();
   for (const w of walls) {
     const f = frames.get(w.id)!;
-    if (dist(f.a, f.b) < 1) continue;
+    if (dist(f.a, f.b) < 1 && !f.arc) continue;
     const [sPos, sNeg] = endCorners({ id: w.id, end: 'start', point: f.a, ref: w.p.start });
     const [ePos, eNeg] = endCorners({ id: w.id, end: 'end', point: f.b, ref: w.p.end });
-    const body: Rings = [[sNeg, eNeg, ePos, sPos]];
-    const cutters: Rings[] = openingsOf(w.id).map((o) => {
-      const s1 = o.at - holeWidth(o) / 2;
-      const s2 = o.at + holeWidth(o) / 2;
-      const h = f.half + 1;
-      return [[f.at(s1, -h), f.at(s2, -h), f.at(s2, h), f.at(s1, h)]];
-    });
+    let body: Rings;
+    if (f.arc) {
+      // Bågens punkter mellan ändarna; ändarna själva kommer från skarvarna.
+      const neg = f.trace(0, f.length, -f.half).slice(1, -1);
+      const pos = f.trace(f.length, 0, f.half).slice(1, -1);
+      body = [[sNeg, ...neg, eNeg, ePos, ...pos, sPos]];
+    } else {
+      body = [[sNeg, eNeg, ePos, sPos]];
+    }
+    const cutters: Rings[] = openingsOf(w.id).map((o) => openingRings(f, o, 1)[0] as unknown as Rings);
     out.set(w.id, difference(body, cutters));
   }
   return out;
@@ -205,7 +245,7 @@ function wallTag(ctx: PlanContext, el: Element): Primitive[] {
   const free = (s: number) => openings.every((o) => Math.abs(o.at - s) > o.width / 2 + room / 2);
   const s = [0.5, 0.35, 0.65, 0.2, 0.8].map((t) => t * f.length).find(free);
   if (s === undefined) return [];
-  return litteraTag(ctx, el, f, s, INSIDE, { leader: true });
+  return litteraTag(ctx, el, f.local(s), s, INSIDE, { leader: true });
 }
 
 export const wallType: ElementType<WallParams> = {
@@ -257,7 +297,7 @@ export const wallType: ElementType<WallParams> = {
   },
 
   model3dBatch(items, ctx) {
-    const walls = items.map(({ el }) => ({ el, p: ctx.params<WallParams>(el) }));
+    const walls = items.map(({ el, action }) => ({ el, action, p: ctx.params<WallParams>(el) }));
     // Väggkropparna utan öppningar, med gering i hörnen.
     const bodies = computeWallShapes(
       walls.map((w) => ({ id: w.el.id, p: w.p })),
@@ -265,7 +305,7 @@ export const wallType: ElementType<WallParams> = {
     );
     // Där väggar går in i varandra (T-skarvar) får den längre väggen ytan,
     // så att inga ytor ligger dubbelt och flimrar.
-    const order = [...walls].sort((a, b) => dist(b.p.start, b.p.end) - dist(a.p.start, a.p.end));
+    const order = [...walls].sort((a, b) => wallFrame(b.p).length - wallFrame(a.p).length);
     const taken: Rings[] = [];
     const own = new Map<string, Rings[]>();
     for (const w of order) {
@@ -275,33 +315,25 @@ export const wallType: ElementType<WallParams> = {
       taken.push(...body);
     }
 
-    const solids: Shape3D[] = [];
-    // Kantlinjer: väggarnas sammanslagna kontur upptill och nedtill, lodräta
-    // hörn och öppningarnas omfattningar. Bitarna själva ritas utan kanter.
-    const byHeight = new Map<number, Rings[]>();
-    for (const { el, p } of walls) byHeight.set(p.height, [...(byHeight.get(p.height) ?? []), ...(own.get(el.id) ?? [])]);
-    const outline: Edges3D = { kind: 'edges', id: 'walls', segments: [] };
-    for (const [height, list] of byHeight) {
-      for (const poly of union(list)) {
-        for (const ring of poly) {
-          for (let i = 0; i < ring.length; i++) {
-            const a = ring[i];
-            const b = ring[(i + 1) % ring.length];
-            const prev = ring[(i - 1 + ring.length) % ring.length];
-            outline.segments.push([a[0], a[1], 0, b[0], b[1], 0], [a[0], a[1], height, b[0], b[1], height]);
-            // Lodrät kant bara där konturen faktiskt viker.
-            if (Math.abs(cross(sub(a, prev), sub(b, a))) > 1e-3 * dist(prev, a) * dist(a, b)) {
-              outline.segments.push([a[0], a[1], 0, a[0], a[1], height]);
-            }
-          }
+    // Taken på våningen kapar väggarna, eller drar upp dem (Upp till taket).
+    const roofs = ctx.memo('roof-planes', () =>
+      ctx
+        .visible('Roof')
+        .filter((r) => ctx.actionOf(r) !== 'demolished')
+        .flatMap((r) => roofPlanes(ctx.params<RoofParams>(r))),
+    );
+    const pieces: WallPiece[] = [];
+    for (const { el, action, p } of walls) {
+      for (const piece of own.get(el.id) ?? []) {
+        for (const t of trimToRoofs(piece, p.height, !!p.toRoof, roofs)) {
+          pieces.push({ id: el.id, action, rings: t.rings, top: t.top ?? null, height: p.height });
         }
       }
     }
-    solids.push(outline);
 
-    for (const { el, p } of walls) {
+    const solids: Shape3D[] = [...wallEdges(pieces)];
+    for (const { el, action, p } of walls) {
       const f = wallFrame(p);
-      const action = ctx.actionOf(el);
       const material = action === 'new' ? 'wall-new' : 'wall';
       // Öppningarna i höjdled: dörrar från golvet, fönster från bröstningen.
       const openings = ctx.openingsIn(el.id).map((o) => {
@@ -315,19 +347,43 @@ export const wallType: ElementType<WallParams> = {
       const rect = (o: { at: number; width: number }, grow: number): Rings => {
         const s1 = o.at - o.width / 2;
         const s2 = o.at + o.width / 2;
-        return [[f.at(s1, -h - grow), f.at(s2, -h - grow), f.at(s2, h + grow), f.at(s1, h + grow)]];
+        const lf = f.local(o.at);
+        const hh = h + grow + sagittaOver(f, o.width);
+        return [[lf.at(s1, -hh), lf.at(s2, -hh), lf.at(s2, hh), lf.at(s1, hh)]];
       };
       const cuts = openings.map((o) => ({ rings: rect(o, 1), z0: o.z0, z1: o.z1 }));
-      for (const piece of own.get(el.id) ?? []) {
-        solids.push({ id: el.id, rings: piece, z0: 0, z1: p.height, material, noEdges: true, cuts });
+      for (const piece of pieces) {
+        if (piece.id !== el.id) continue;
+        const z1 = piece.top ? planeRange(piece.top, piece.rings)[1] : p.height;
+        solids.push({ id: el.id, rings: piece.rings, z0: 0, z1, ...(piece.top ? { top: piece.top } : {}), material, noEdges: true, cuts });
       }
       for (const o of openings) {
         // Öppningens omfattning på båda sidor och djupet i smygen.
         const s1 = o.at - o.width / 2;
         const s2 = o.at + o.width / 2;
         const seg: Edges3D = { kind: 'edges', id: el.id, segments: [] };
+        // I bågväggar är hålet rakt; omfattningen ligger där hålet möter livet.
+        const lf = f.local(o.at);
         const pt = (s: number, off: number, z: number): [number, number, number] => {
-          const q = f.at(s, off);
+          let q = lf.at(s, off);
+          if (f.arc) {
+            // Punkten där den raka smygen skär bågens liv.
+            const ray = lf.at(s, 0);
+            const dir = lf.n;
+            const c = f.arc.center;
+            const rr = f.arc.radius + f.arc.sigma * off;
+            const ox = ray[0] - c[0];
+            const oy = ray[1] - c[1];
+            const bq = ox * dir[0] + oy * dir[1];
+            const cq = ox * ox + oy * oy - rr * rr;
+            const disc = bq * bq - cq;
+            if (disc >= 0) {
+              const t1 = -bq + Math.sqrt(disc);
+              const t2 = -bq - Math.sqrt(disc);
+              const t = Math.abs(t1 - off) < Math.abs(t2 - off) ? t1 : t2;
+              q = [ray[0] + dir[0] * t, ray[1] + dir[1] * t];
+            }
+          }
           return [q[0], q[1], z];
         };
         for (const side of [-h, h]) {
@@ -345,5 +401,97 @@ export const wallType: ElementType<WallParams> = {
     return solids;
   },
 };
+
+/** En bit av en vägg med sin ovansida, för kantlinjerna. */
+interface WallPiece {
+  id: string;
+  action: string;
+  rings: Rings;
+  top: Plane | null;
+  height: number;
+}
+
+const BEND = Math.sin((9 * Math.PI) / 180);
+
+/**
+ * Väggarnas kantlinjer i 3D. Bitar med samma åtgärd och ovansida slås ihop,
+ * så att skarvarna mellan väggar inte syns. Lodräta kanter ritas där
+ * väggmassan viker, och där en lägre del möter en högre bara ovanför den
+ * lägre. Bågar delas i raka bitar som inte får egna lodräta kanter.
+ */
+function wallEdges(pieces: WallPiece[]): Edges3D[] {
+  const topKey = (pc: WallPiece) => (pc.top ? pc.top.map((v) => v.toFixed(6)).join(',') : `h${pc.height}`);
+  const groups = new Map<string, { id: string; zTop: (q: Vec2) => number; rings: Rings[] }>();
+  for (const pc of pieces) {
+    const key = `${pc.action}|${topKey(pc)}`;
+    let g = groups.get(key);
+    if (!g) {
+      const top = pc.top;
+      const h = pc.height;
+      g = { id: pc.id, zTop: top ? (q) => zOn(top, q[0], q[1]) : () => h, rings: [] };
+      groups.set(key, g);
+    }
+    g.rings.push(pc.rings);
+  }
+  const merged = [...groups.values()].map((g) => ({ ...g, polys: union(g.rings) }));
+
+  // Hörnen i hela väggmassan: där är lodräta kanter riktiga hörn.
+  const all = union(pieces.map((p) => p.rings));
+  const corners: Vec2[] = [];
+  for (const poly of all) for (const ring of poly) ring.forEach((q, i) => bends(ring, i) && corners.push(q));
+  const isCorner = (q: Vec2) => corners.some((c) => Math.abs(c[0] - q[0]) < 0.6 && Math.abs(c[1] - q[1]) < 0.6);
+  /** Den högsta andra gruppen som har punkten på sin kontur. */
+  const otherTop = (self: (typeof merged)[number], q: Vec2): number => {
+    let best = -Infinity;
+    for (const g of merged) {
+      if (g === self) continue;
+      if (g.polys.some((poly) => poly.some((ring) => onRing(ring, q)))) best = Math.max(best, g.zTop(q));
+    }
+    return best;
+  };
+
+  const out: Edges3D[] = [];
+  for (const g of merged) {
+    const e: Edges3D = { kind: 'edges', id: g.id, segments: [] };
+    for (const poly of g.polys) {
+      for (const ring of poly) {
+        for (let i = 0; i < ring.length; i++) {
+          const a = ring[i];
+          const b = ring[(i + 1) % ring.length];
+          e.segments.push([a[0], a[1], 0, b[0], b[1], 0], [a[0], a[1], g.zTop(a), b[0], b[1], g.zTop(b)]);
+          if (!bends(ring, i)) continue;
+          const top = g.zTop(a);
+          if (isCorner(a)) e.segments.push([a[0], a[1], 0, a[0], a[1], top]);
+          else {
+            const from = Math.max(0, otherTop(g, a));
+            if (top - from > 1) e.segments.push([a[0], a[1], from, a[0], a[1], top]);
+          }
+        }
+      }
+    }
+    out.push(e);
+  }
+  return out;
+}
+
+function bends(ring: readonly Vec2[], i: number): boolean {
+  const n = ring.length;
+  const prev = ring[(i - 1 + n) % n];
+  const a = ring[i];
+  const b = ring[(i + 1) % n];
+  return Math.abs(cross(sub(a, prev), sub(b, a))) > BEND * dist(prev, a) * dist(a, b);
+}
+
+function onRing(ring: readonly Vec2[], q: Vec2): boolean {
+  for (let i = 0; i < ring.length; i++) {
+    const a = ring[i];
+    const b = ring[(i + 1) % ring.length];
+    const ab = sub(b, a);
+    const l2 = dot(ab, ab);
+    const t = l2 ? Math.max(0, Math.min(1, dot(sub(q, a), ab) / l2)) : 0;
+    if (dist(q, [a[0] + ab[0] * t, a[1] + ab[1] * t]) < 0.6) return true;
+  }
+  return false;
+}
 
 export type WallElement = Element<WallParams>;

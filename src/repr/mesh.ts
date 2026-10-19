@@ -1,7 +1,7 @@
 import earcut from 'earcut';
 import { difference, intersection, type Rings } from '../geometry/boolean';
 import type { Vec2 } from './primitives';
-import type { Solid } from './solids';
+import { zOn, type Solid } from './solids';
 
 /**
  * Trianglar för en extruderad form med genomgående urtag (öppningar i en
@@ -14,6 +14,8 @@ export function solidTriangles(s: Solid): number[] {
   const { z0, z1 } = s;
   const footprint: Rings = s.rings;
   const EPS = 0.5;
+  const zTop = (p: Vec2) => (s.top ? zOn(s.top, p[0], p[1]) : z1);
+  const zBot = (p: Vec2) => (s.bottom ? zOn(s.bottom, p[0], p[1]) : z0);
 
   // Urtagens faktiska form inom formen, och deras höjder.
   const cuts = (s.cuts ?? [])
@@ -21,13 +23,13 @@ export function solidTriangles(s: Solid): number[] {
     .filter((c) => c.polys.length && c.z1 - c.z0 > EPS);
 
   // Ovansida och undersida, med hål där urtagen går ända upp eller ned.
-  const capAt = (z: number, through: (c: (typeof cuts)[number]) => boolean) => {
+  const capAt = (z: (p: Vec2) => number, through: (c: (typeof cuts)[number]) => boolean) => {
     const holes = cuts.filter(through).flatMap((c) => c.polys);
     const polys = holes.length ? difference(footprint, holes) : [footprint];
-    for (const poly of polys) pushPolygon(out, poly, (p) => [p[0], p[1], z]);
+    for (const poly of polys) pushPolygon(out, poly, (p) => [p[0], p[1], z(p)]);
   };
-  capAt(z1, (c) => c.z1 >= z1 - EPS);
-  capAt(z0, (c) => c.z0 <= z0 + EPS);
+  capAt(zTop, (c) => c.z1 >= z1 - EPS);
+  capAt(zBot, (c) => c.z0 <= z0 + EPS);
 
   // Sidorna: varje kant av konturen blir en rektangel (längs kanten × höjd)
   // med urtagen som hål.
@@ -47,7 +49,7 @@ export function solidTriangles(s: Solid): number[] {
           }
         }
       }
-      const face: Rings = [[[0, z0], [len, z0], [len, z1], [0, z1]]];
+      const face: Rings = [[[0, zBot(a)], [len, zBot(b)], [len, zTop(b)], [0, zTop(a)]]];
       const polys = holes.length ? difference(face, holes) : [face];
       for (const poly of polys) pushPolygon(out, poly, (p) => [a[0] + dir[0] * p[0], a[1] + dir[1] * p[0], p[1]]);
     }

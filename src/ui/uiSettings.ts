@@ -14,6 +14,7 @@ export type QuickId =
   | 'mirror'
   | 'demolish'
   | 'zoom-selection'
+  | 'open-marker'
   | 'delete';
 
 /** Snabbknappar som kan väljas, och för vilka sorters objekt de finns. */
@@ -23,10 +24,11 @@ export const QUICK_ACTIONS: { id: QuickId; label: string; types: string[] | 'all
   { id: 'toggle-glazed', label: 'Glasad', types: ['Door'] },
   { id: 'cycle-ref', label: 'Referenslinje', types: ['Wall'] },
   { id: 'flip-wall', label: 'Vänd väggen', types: ['Wall'] },
-  { id: 'rotate-90', label: 'Vrid 90°', types: ['Wall', 'Furniture', 'Text', 'mixed'] },
-  { id: 'mirror', label: 'Spegla', types: ['Wall', 'Furniture', 'mixed'] },
-  { id: 'copy', label: 'Kopiera', types: ['Wall', 'Furniture', 'Space', 'Dimension', 'Text', 'mixed'] },
-  { id: 'demolish', label: 'Riv / behåll', types: ['Wall', 'Door', 'Window', 'Furniture', 'mixed'] },
+  { id: 'rotate-90', label: 'Vrid 90°', types: ['Wall', 'Furniture', 'Text', 'Roof', 'North', 'Section', 'mixed'] },
+  { id: 'mirror', label: 'Spegla', types: ['Wall', 'Furniture', 'Roof', 'mixed'] },
+  { id: 'copy', label: 'Kopiera', types: ['Wall', 'Furniture', 'Space', 'Dimension', 'Text', 'Roof', 'Section', 'Elevation', 'mixed'] },
+  { id: 'demolish', label: 'Riv / behåll', types: ['Wall', 'Door', 'Window', 'Furniture', 'Roof', 'mixed'] },
+  { id: 'open-marker', label: 'Öppna vyn', types: ['Section', 'Elevation'] },
   { id: 'zoom-selection', label: 'Zooma till', types: 'all' },
   { id: 'delete', label: 'Ta bort', types: 'all' },
 ];
@@ -40,6 +42,10 @@ export const QUICK_TYPES: { type: string; label: string }[] = [
   { type: 'Space', label: 'Rum' },
   { type: 'Dimension', label: 'Mått' },
   { type: 'Text', label: 'Text' },
+  { type: 'Roof', label: 'Tak' },
+  { type: 'Section', label: 'Sektion' },
+  { type: 'Elevation', label: 'Fasad' },
+  { type: 'North', label: 'Norrpil' },
   { type: 'mixed', label: 'Blandat' },
 ];
 
@@ -51,6 +57,10 @@ const QUICK_DEFAULTS: Record<string, QuickId[]> = {
   Space: ['zoom-selection', 'delete'],
   Dimension: ['copy', 'delete'],
   Text: ['rotate-90', 'copy', 'delete'],
+  Roof: ['demolish', 'delete'],
+  Section: ['open-marker', 'copy', 'delete'],
+  Elevation: ['open-marker', 'delete'],
+  North: ['rotate-90'],
   mixed: ['copy', 'rotate-90', 'mirror', 'demolish', 'delete'],
 };
 
@@ -214,7 +224,8 @@ export const SHORTCUTS: [string, string][] = [
   ['P', 'Visa eller dölj egenskaperna'],
   ['Vyknappen', 'Klick: förra vyn. Håll in: de senaste vyerna'],
   ['N', 'Visa eller dölj projektträdet'],
-  ['Dubbelklick', 'Redigera en text eller ett rumsnamn direkt i ritningen'],
+  ['Dubbelklick', 'Redigera en text eller ett rumsnamn direkt i ritningen; öppna en fasad eller sektion'],
+  ['Klick på det markerade', 'Modifiera: på referenslinjen, en ände, ett hörn eller kroppen'],
   ['Högerklick', 'Meny för det du pekar på (långt tryck på telefonen)'],
   ['Alt + dra', 'Flytta en vägg utan att anslutna väggar följer med'],
   ['+300, *2, 2,4m', 'Formler och enheter i alla sifferfält'],

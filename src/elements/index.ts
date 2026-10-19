@@ -2,6 +2,8 @@ import { dimensionType, textType } from './annotation';
 import { doorType } from './door';
 import { furnitureType } from './furniture';
 import { registerType } from './registry';
+import { elevationType, northType, sectionType } from './markers';
+import { roofType } from './roof';
 import { spaceType } from './space';
 import { wallType } from './wall';
 import { windowType } from './window';
@@ -15,6 +17,10 @@ export function registerBuiltInTypes(): void {
   registerType(spaceType);
   registerType(dimensionType);
   registerType(textType);
+  registerType(roofType);
+  registerType(northType);
+  registerType(elevationType);
+  registerType(sectionType);
 }
 
 export { typeOf, allTypes } from './registry';

@@ -68,6 +68,8 @@ export interface RegionPrim extends Base {
   styleAs?: ActionKey;
   /** Ytan ritas utan kontur, bara med fyllning. */
   noOutline?: boolean;
+  /** Ytan behåller sin egen fyllning och kontur (symboler som pilar), oavsett stilmall. */
+  ownFill?: boolean;
 }
 
 export interface ArcPrim extends Base {

@@ -49,8 +49,9 @@ export const doorType: ElementType<DoorParams> = {
     const leafFace = p.swing === 1 ? hi : lo;
     const leaf = box(s1 + fw, s2 - fw, leafFace, leafFace - p.swing * LEAF);
     const out: Solid[] = [
-      { id: el.id, rings: box(s1, s1 + fw, lo, hi), z0: 0, z1: p.height, material: 'frame' },
-      { id: el.id, rings: box(s2 - fw, s2, lo, hi), z0: 0, z1: p.height, material: 'frame' },
+      // Karmsidorna slutar under överstycket, så att bitarna inte går in i varandra.
+      { id: el.id, rings: box(s1, s1 + fw, lo, hi), z0: 0, z1: p.height - fw, material: 'frame' },
+      { id: el.id, rings: box(s2 - fw, s2, lo, hi), z0: 0, z1: p.height - fw, material: 'frame' },
       { id: el.id, rings: box(s1, s2, lo, hi), z0: p.height - fw, z1: p.height, material: 'frame' },
     ];
     if (p.glazed) {

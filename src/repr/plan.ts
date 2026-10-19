@@ -65,9 +65,10 @@ export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: 
 }
 
 /** Lägg på stilmallens färger, fyllningar och streckning för åtgärden. */
-function applyStyle(p: Primitive, s: ActionStyle, action: Action, sheet: StyleSheet): Primitive {
+export function applyStyle(p: Primitive, s: ActionStyle, action: Action, sheet: StyleSheet): Primitive {
   if (p.kind === 'text') return p;
   if (p.kind === 'region') {
+    if (p.ownFill) return p;
     const rs = p.styleAs ? sheet.actions[p.styleAs] : s;
     const o = p.noOutline ? null : rs.cutOutline;
     return { ...p, fill: rs.cutFill, outline: o ? { weight: o.weight, color: o.color, dash: o.dash } : null };

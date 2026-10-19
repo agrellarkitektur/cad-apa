@@ -1,5 +1,6 @@
 import type { ProjectDoc } from '../core/model';
 import type { WallParams } from '../elements/wall';
+import { refFrame } from '../core/wallEdit';
 import type { Pickable } from '../repr/plan';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import type { Camera } from '../view2d/camera';
@@ -15,6 +16,8 @@ export function renderHighlight(
   pickables: readonly Pickable[],
   selected: ReadonlySet<string>,
   hover: string | null,
+  /** Grepp och referenslinjer i planens koordinater (inte i fasader och sektioner). */
+  planGrips = true,
 ): string {
   const out: string[] = [];
   const byId = new Map(pickables.map((p) => [p.id, p]));
@@ -36,6 +39,8 @@ export function renderHighlight(
     if (item) draw(item, 'hl-sel');
   }
 
+  if (!planGrips) return out.join('');
+
   // Hörnpunkter på markerade möbler: tryck nära ett hörn och dra för att
   // lägga just det hörnet mot ett annat.
   for (const id of selected) {
@@ -51,8 +56,8 @@ export function renderHighlight(
   for (const id of selected) {
     const el = doc.elements[id];
     if (el?.type !== 'Wall') continue;
-    const p = el.params as unknown as WallParams;
-    out.push(`<path d="${path(cam, [p.start, p.end], false)}" class="ref-line"/>`);
+    const f = refFrame(doc, el);
+    out.push(`<path d="${path(cam, f.trace(0, f.length, 0), false)}" class="ref-line"/>`);
   }
   for (const id of selected) {
     const el = doc.elements[id];
