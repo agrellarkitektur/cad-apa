@@ -1,10 +1,10 @@
 import { add, scale, sub } from '../geometry/vec';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
-import type { Solid } from '../repr/solids';
 import { FRAME_DEFAULTS, openingZone, type FrameParams } from './opening';
 import { litteraTag, showLittera } from './littera';
 import type { ElementType } from './registry';
-import { FRAME_LESS, openingMarks, openingRings, wallFrame, type OpeningParams, type WallParams } from './wall';
+import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, wallFrame, type OpeningParams, type WallParams } from './wall';
+import { doorModel } from './openingModel';
 
 export interface DoorParams extends OpeningParams, FrameParams {
   height: number;
@@ -38,42 +38,30 @@ export const doorType: ElementType<DoorParams> = {
   model3d(el, ctx) {
     const host = el.host ? ctx.doc.elements[el.host] : undefined;
     if (!host) return [];
-    const p0 = ctx.params<DoorParams>(el);
-    // Karmens höjd är modulmåttet minus 10 mm (21 M ger 2090).
-    const p = { ...p0, height: p0.height - FRAME_LESS };
-    const z = openingZone(ctx, host, p0);
-    const { f, s1, s2, lo, hi } = z;
-    const fw = p.frameWidth;
-    const box = (a: number, b: number, o0: number, o1: number): Vec2[][] => [[f.at(a, o0), f.at(b, o0), f.at(b, o1), f.at(a, o1)]];
-    // Stängt dörrblad i karmens liv på öppningssidan.
-    const leafFace = p.swing === 1 ? hi : lo;
-    const leaf = box(s1 + fw, s2 - fw, leafFace, leafFace - p.swing * LEAF);
-    const out: Solid[] = [
-      // Karmsidorna slutar under överstycket, så att bitarna inte går in i varandra.
-      { id: el.id, rings: box(s1, s1 + fw, lo, hi), z0: 0, z1: p.height - fw, material: 'frame' },
-      { id: el.id, rings: box(s2 - fw, s2, lo, hi), z0: 0, z1: p.height - fw, material: 'frame' },
-      { id: el.id, rings: box(s1, s2, lo, hi), z0: p.height - fw, z1: p.height, material: 'frame' },
-    ];
-    if (p.glazed) {
-      // Glasad dörr: bladet runt en glasruta.
-      const g = (p.width - 2 * fw) * 0.2;
-      out.push(
-        { id: el.id, rings: [leaf[0]], z0: 0, z1: 400, material: 'door' },
-        { id: el.id, rings: [leaf[0]], z0: p.height - fw - 250, z1: p.height - fw, material: 'door' },
-        { id: el.id, rings: box(s1 + fw, s1 + fw + g, leafFace, leafFace - p.swing * LEAF), z0: 400, z1: p.height - fw - 250, material: 'door' },
-        { id: el.id, rings: box(s2 - fw - g, s2 - fw, leafFace, leafFace - p.swing * LEAF), z0: 400, z1: p.height - fw - 250, material: 'door' },
-        {
-          id: el.id,
-          rings: box(s1 + fw + g, s2 - fw - g, leafFace - p.swing * (LEAF / 2 - 4), leafFace - p.swing * (LEAF / 2 + 4)),
-          z0: 400,
-          z1: p.height - fw - 250,
-          material: 'glass',
-        },
-      );
-    } else {
-      out.push({ id: el.id, rings: leaf, z0: 0, z1: p.height - fw, material: 'door' });
-    }
-    return out;
+    const p = ctx.params<DoorParams>(el);
+    const z = openingZone(ctx, host, p);
+    return doorModel(
+      el.id,
+      {
+        f: z.f,
+        s1: z.s1,
+        s2: z.s2,
+        h1: z.h1,
+        h2: z.h2,
+        lo: z.lo,
+        hi: z.hi,
+        // Karmens höjd är modulmåttet minus 10 mm (21 M ger 2090), hålet plus 10.
+        height: p.height - FRAME_LESS,
+        holeTop: p.height + HOLE_EXTRA,
+        frameWidth: p.frameWidth,
+        swing: p.swing,
+        hinge: p.hinge,
+        glazed: !!p.glazed,
+        leaf: LEAF,
+        showSwing: !ctx.view.hide?.includes('swing'),
+      },
+      ctx.view.detail ?? 'normal',
+    );
   },
   plan(el, ctx) {
     const host = el.host ? ctx.doc.elements[el.host] : undefined;

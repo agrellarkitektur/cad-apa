@@ -47,8 +47,8 @@ function buildingOutlines(doc: ProjectDoc, storey: Id): Rings {
 export type WallFace = 'outside' | 'center' | 'inside';
 
 /**
- * Varje vägg har en insida: höger sida sett i ritriktningen (som i ArchiCAD
- * när man ritar medurs). För ytterväggar ser väggverktyget till att insidan
+ * Varje vägg har en insida: höger sida sett i ritriktningen (den sida som
+ * vetter in när man ritar medurs). För ytterväggar ser väggverktyget till att insidan
  * vetter in i huset; för innerväggar är det den sida man ritat den åt, och
  * den kan bytas med Vänd väggen. Insidan styr var littera står och senare
  * skiktordningen i väggtypen.

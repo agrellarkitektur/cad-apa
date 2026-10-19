@@ -1,6 +1,7 @@
-import type { Pen, Primitive, Vec2 } from '../repr/primitives';
+import type { Pen, Primitive } from '../repr/primitives';
 import { FRAME_DEFAULTS, openingZone, type FrameParams } from './opening';
 import { litteraTag, showLittera } from './littera';
+import { windowModel } from './openingModel';
 import type { ElementType } from './registry';
 import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, wallFrame, type OpeningParams, type WallParams } from './wall';
 
@@ -32,20 +33,27 @@ export const windowType: ElementType<WindowParams> = {
     const host = el.host ? ctx.doc.elements[el.host] : undefined;
     if (!host) return [];
     const p = ctx.params<WindowParams>(el);
-    const { f, s1, s2, lo, hi } = openingZone(ctx, host, p);
+    const z = openingZone(ctx, host, p);
     // Hålet går från bröstningen och är 10 mm högre än modulmåttet; karmen sitter mitt i.
-    const z0 = p.sill + (HOLE_EXTRA + FRAME_LESS) / 2;
-    const z1 = p.sill + p.height + (HOLE_EXTRA - FRAME_LESS) / 2;
-    const fw = p.frameWidth;
-    const mid = (lo + hi) / 2;
-    const box = (a: number, b: number, o0: number, o1: number): Vec2[][] => [[f.at(a, o0), f.at(b, o0), f.at(b, o1), f.at(a, o1)]];
-    return [
-      { id: el.id, rings: box(s1 + fw, s2 - fw, mid - 6, mid + 6), z0: z0 + fw, z1: z1 - fw, material: 'glass' },
-      { id: el.id, rings: box(s1, s1 + fw, lo, hi), z0: z0 + fw, z1: z1 - fw, material: 'frame' },
-      { id: el.id, rings: box(s2 - fw, s2, lo, hi), z0: z0 + fw, z1: z1 - fw, material: 'frame' },
-      { id: el.id, rings: box(s1, s2, lo, hi), z0, z1: z0 + fw, material: 'frame' },
-      { id: el.id, rings: box(s1, s2, lo, hi), z0: z1 - fw, z1, material: 'frame' },
-    ];
+    return windowModel(
+      el.id,
+      {
+        f: z.f,
+        s1: z.s1,
+        s2: z.s2,
+        h1: z.h1,
+        h2: z.h2,
+        lo: z.lo,
+        hi: z.hi,
+        z0: p.sill + (HOLE_EXTRA + FRAME_LESS) / 2,
+        z1: p.sill + p.height + (HOLE_EXTRA - FRAME_LESS) / 2,
+        holeBottom: p.sill,
+        holeTop: p.sill + p.height + HOLE_EXTRA,
+        frameWidth: p.frameWidth,
+        outside: z.insetFrom === 'utsidan' ? (z.face as 1 | -1) : 0,
+      },
+      ctx.view.detail ?? 'normal',
+    );
   },
   plan(el, ctx) {
     const host = el.host ? ctx.doc.elements[el.host] : undefined;

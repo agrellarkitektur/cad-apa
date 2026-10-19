@@ -24,8 +24,7 @@ export interface NavigatorHost {
 }
 
 /**
- * Navigatorn: projektets innehåll ordnat i flikar, ungefär som ArchiCADs
- * organisatör. Underlag är det man länkar in, Modell är våningar (och senare
+ * Projektets innehåll ordnat i flikar. Underlag är det man länkar in, Modell är våningar (och senare
  * sektioner, fasader och arbetsblad), Vyer är sparade visningar av modellen
  * och Ritningar är bladen som plottas.
  *
@@ -146,7 +145,7 @@ export class Navigator {
         <button class="btn" data-action="view-save-new">Spara som ny vy…</button>
       </div>
       <p class="note">En vy sparar tillstånd, jämförelse, detaljnivå, vad som visas, stilmall och kalkering. Högerklicka på en vy för att byta namn, kalkera den eller ta bort den.</p>
-      <p class="note soon">Export av modellen (IFC) från en vy kommer i 0.14.</p>
+      <p class="note soon">Export av modellen (IFC) från en vy kommer i 0.15.</p>
     </section>`;
   }
 

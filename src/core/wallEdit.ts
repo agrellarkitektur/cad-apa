@@ -142,6 +142,41 @@ export function continuingTangent(doc: ProjectDoc, wallId: Id, end: 'start' | 'e
  * tangentpunkterna och en ny vägg (en båge eller en rak fasvägg) läggs in.
  * `size` är radien (avrundning) eller avståndet från hörnet (fasning).
  */
+/**
+ * Dörrar och fönster i väggen som ligger närmare hörnet än `t` (längs
+ * väggen), och alltså skulle hamna utanför den om hörnet avrundas eller
+ * fasas så att väggen slutar där.
+ */
+export function openingsInCorner(doc: ProjectDoc, wallId: Id, end: 'start' | 'end', t: number): Id[] {
+  const w = doc.elements[wallId];
+  if (!w) return [];
+  const len = refFrame(doc, w).length;
+  const out: Id[] = [];
+  for (const h of Object.values(doc.elements)) {
+    if (h.host !== wallId || typeof h.params.at !== 'number') continue;
+    const at = h.params.at as number;
+    const own = Number(h.params.width);
+    const width = Number.isFinite(own) && own > 0 ? own : Number(h.definition ? doc.definitions[h.definition]?.params.width : 0) || 0;
+    const fromCorner = end === 'start' ? at - width / 2 : len - (at + width / 2);
+    if (fromCorner < t) out.push(h.id);
+  }
+  return out;
+}
+
+/** Hur långt från hörnet väggarna kortas vid en avrundning eller fasning; null om hörnet inte går. */
+export function cornerCut(doc: ProjectDoc, wallId: Id, end: 'start' | 'end', size: number, kind: 'fillet' | 'chamfer'): { t: number; partner: { id: Id; end: 'start' | 'end' } } | null {
+  const partner = cornerPartner(doc, wallId, end);
+  const w1 = doc.elements[wallId];
+  if (!partner || !w1 || size <= 0) return null;
+  const w2 = doc.elements[partner.id];
+  if (isArc(w1) || isArc(w2)) return null;
+  const d1 = awayFrom(doc, w1, end);
+  const d2 = awayFrom(doc, w2, partner.end);
+  const theta = Math.acos(Math.max(-1, Math.min(1, d1[0] * d2[0] + d1[1] * d2[1])));
+  if (theta < 0.02 || theta > Math.PI - 0.02) return null;
+  return { t: kind === 'fillet' ? size / Math.tan(theta / 2) : size, partner };
+}
+
 export function roundCorner(store: DocStore, wallId: Id, end: 'start' | 'end', size: number, kind: 'fillet' | 'chamfer'): Id | null {
   const doc = store.doc;
   const partner = cornerPartner(doc, wallId, end);
@@ -159,6 +194,8 @@ export function roundCorner(store: DocStore, wallId: Id, end: 'start' | 'end', s
   const len1 = refFrame(doc, w1).length;
   const len2 = refFrame(doc, w2).length;
   if (t >= len1 - 10 || t >= len2 - 10) return null;
+  // Dörrar och fönster får inte hamna utanför de kortare väggarna.
+  if (openingsInCorner(doc, wallId, end, t).length || openingsInCorner(doc, partner.id, partner.end, t).length) return null;
   const T1 = round([C[0] + d1[0] * t, C[1] + d1[1] * t]);
   const T2 = round([C[0] + d2[0] * t, C[1] + d2[1] * t]);
   const bulge = kind === 'fillet' ? bulgeTangent(T1, T2, [-d1[0], -d1[1]]) : 0;

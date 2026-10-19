@@ -2,7 +2,7 @@ import { icons } from './icons';
 import type { PropertiesPanel } from './propertiesPanel';
 
 /**
- * Snabbmenyn vid markören (som "pet palette" i ArchiCAD): när något
+ * Snabbmenyn vid markören: när något
  * markeras med musen visas de vanligaste åtgärderna intill, så att man inte
  * behöver föra musen bort till panelen.
  *

@@ -1,11 +1,13 @@
 import type { Brand } from './types.ts';
 
-/** Låtsasbranding för den publika demon. Byts mot den riktiga när namnet är bestämt. */
+/** Låtsasbranding för den publika betan. Byts mot den riktiga när namnet är bestämt. */
 export const cadApa: Brand = {
   name: 'cad-apa',
   shortName: 'cad-apa',
-  description: 'Ritprogram i webbläsaren för små arkitektkontor. Demoversion.',
-  badge: 'Demo',
+  description: 'Ritprogram i webbläsaren för små arkitektkontor. Betaversion.',
+  badge: 'Beta',
+  // Delad i bitar så att den inte plockas upp av adressinsamlare.
+  feedbackFallback: ['ca', 'agrellarkitektur.se'].join('@'),
   themeColor: '#f3f5f6',
   fileExtension: 'cadapa',
   // En enkel apa i linjer: huvud, öron och ansiktsfält.

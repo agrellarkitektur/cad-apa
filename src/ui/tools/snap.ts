@@ -8,7 +8,7 @@ export interface SnapSegment {
   b: Vec2;
 }
 
-export type SnapKind = 'endpoint' | 'midpoint' | 'start' | 'perpendicular' | 'intersection' | 'on-wall' | 'angle' | 'free';
+export type SnapKind = 'endpoint' | 'midpoint' | 'start' | 'perpendicular' | 'intersection' | 'on-wall' | 'track' | 'angle' | 'free';
 
 export interface SnapResult {
   point: Vec2;
@@ -17,6 +17,8 @@ export interface SnapResult {
   label: string;
   /** Hjälplinje som visar vinkeln eller väggen man snäpper mot. */
   guide?: [Vec2, Vec2];
+  /** Fler hjälplinjer, t.ex. två spårlinjer som korsas. */
+  guides?: [Vec2, Vec2][];
 }
 
 export interface SnapInput {
@@ -92,6 +94,10 @@ export function snap(input: SnapInput): SnapResult {
     }
   }
 
+  // Spårlinjer: förlängningar av väggar och linjer i x- och y-led genom hörn nära markören.
+  const tracks = trackLines(cursor, segs, tol, from);
+  const near = tracks.map((t) => ({ t, foot: add(t.p, scale(t.dir, dot(sub(cursor, t.p), t.dir))) })).filter((x) => dist(x.foot, cursor) <= tol);
+
   // 3. Vinkellås från föregående punkt, och var låset skär en vägg.
   let angled: Vec2 | null = null;
   let angleLabel = '';
@@ -112,7 +118,31 @@ export function snap(input: SnapInput): SnapResult {
           return { point: hit, kind: 'intersection', label: `Skärning ${angleLabel}`, guide: [from, hit] };
         }
       }
+      // Där vinkellåset möter en spårlinje: rakt ut till samma liv som ett hörn.
+      for (const t of tracks) {
+        const hit = intersectLines(from, dir, t.p, t.dir);
+        if (hit && dist(hit, cursor) <= tol && dot(sub(hit, from), dir) > 0) {
+          return { point: hit, kind: 'track', label: `${angleLabel}, ${t.label}`, guide: [from, hit], guides: [[t.p, hit]] };
+        }
+      }
     }
+  }
+
+  // Två spårlinjer som korsas nära markören.
+  if (!input.ortho && near.length >= 2) {
+    let best: { p: Vec2; a: TrackLine; b: TrackLine; d: number } | null = null;
+    for (let i = 0; i < near.length; i++) {
+      for (let j = i + 1; j < near.length; j++) {
+        const a = near[i].t;
+        const b = near[j].t;
+        if (Math.abs(a.dir[0] * b.dir[1] - a.dir[1] * b.dir[0]) < 0.1) continue;
+        const hit = intersectLines(a.p, a.dir, b.p, b.dir);
+        if (!hit) continue;
+        const d = dist(hit, cursor);
+        if (d <= tol * 1.4 && (!best || d < best.d)) best = { p: hit, a, b, d };
+      }
+    }
+    if (best) return { point: best.p, kind: 'track', label: 'I linje', guides: [[best.a.p, best.p], [best.b.p, best.p]] };
   }
 
   // 4. På en vägg.
@@ -123,6 +153,11 @@ export function snap(input: SnapInput): SnapResult {
     if (d <= tol && (!bestOn || d < bestOn.d)) bestOn = { p: c, s, d };
   }
   if (bestOn && !angled) return { point: bestOn.p, kind: 'on-wall', label: 'På vägg', guide: [bestOn.s.a, bestOn.s.b] };
+  // En spårlinje.
+  if (!angled && !input.ortho && near.length) {
+    const n = near.reduce((a, b) => (dist(a.foot, cursor) <= dist(b.foot, cursor) ? a : b));
+    return { point: n.foot, kind: 'track', label: n.t.label, guides: [[n.t.p, n.foot]] };
+  }
 
   if (angled && from) {
     const far = add(from, scale(norm(sub(angled, from)), Math.max(dist(from, angled) * 3, tol * 40)));
@@ -130,6 +165,46 @@ export function snap(input: SnapInput): SnapResult {
   }
   if (bestOn) return { point: bestOn.p, kind: 'on-wall', label: 'På vägg', guide: [bestOn.s.a, bestOn.s.b] };
   return { point: cursor, kind: 'free', label: '' };
+}
+
+interface TrackLine {
+  p: Vec2;
+  dir: Vec2;
+  label: string;
+}
+
+/** Hur långt från markören hörn och ändar ger spårlinjer, i toleranser. */
+const TRACK_REACH = 30;
+
+/**
+ * Spårlinjer nära markören: väggars och linjers förlängningar bortom
+ * ändarna, och linjer i x- och y-led genom ändpunkter. De hjälper till att
+ * lägga något i liv med något annat utan hjälplinjer.
+ */
+function trackLines(cursor: Vec2, segs: readonly SnapSegment[], tol: number, from?: Vec2): TrackLine[] {
+  const reach = tol * TRACK_REACH;
+  const out: TrackLine[] = [];
+  const seen = new Set<string>();
+  for (const s of segs) {
+    const l = dist(s.a, s.b);
+    if (l < 1) continue;
+    const u = scale(sub(s.b, s.a), 1 / l);
+    // Förlängningen bortom den ände markören är närmast.
+    const t = dot(sub(cursor, s.a), u);
+    if (t < 0 || t > l) {
+      const end = t < 0 ? s.a : s.b;
+      if (dist(end, cursor) <= reach) out.push({ p: end, dir: u, label: 'Förlängning' });
+    }
+    for (const q of [s.a, s.b]) {
+      if (from && dist(q, from) < 1) continue;
+      if (dist(q, cursor) > reach / 2) continue;
+      const key = `${Math.round(q[0])},${Math.round(q[1])}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ p: q, dir: [1, 0], label: 'I liv' }, { p: q, dir: [0, 1], label: 'I liv' });
+    }
+  }
+  return out;
 }
 
 function rank(k: SnapKind): number {

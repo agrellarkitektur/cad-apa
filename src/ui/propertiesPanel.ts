@@ -34,10 +34,31 @@ import { escapeHtml, labelOf, nextLittera, PARAM_LABELS } from './labels';
 import type { Selection } from './selection';
 import { markerFrame, markerName, type MarkerParams, type NorthParams } from '../elements/markers';
 import type { RoofParams } from '../elements/roof';
+import { skewOf, skewText } from '../elements/angleCheck';
 import { reshapeWall } from '../core/wallEdit';
 import { bulgeForRadius, radiusOf } from '../geometry/arc';
 
 type Tab = 'selection' | 'types';
+
+/** Längre förklaringar till snabbknapparna, som visas vid hovring. */
+const QUICK_TITLES: Record<string, string> = {
+  'flip-swing': 'Vänd slag: dörren öppnas åt andra sidan väggen',
+  'flip-hinge': 'Byt hängning: gångjärnen flyttas till andra sidan dörren',
+  'toggle-glazed': 'Glasad dörr av eller på',
+  'cycle-ref': 'Referenslinje: byt mellan utsida, center och insida',
+  'flip-wall': 'Vänd väggen: insidan byter sida, väggen ligger kvar',
+  'rotate-90': 'Vrid 90° moturs kring mitten',
+  mirror: 'Spegla i en lodrät linje genom mitten',
+  copy: 'Kopiera på samma ställe; flytta sedan kopian',
+  demolish: 'Riv i det här förslaget (finns kvar i Befintligt)',
+  restore: 'Behåll: ångra rivningen i det här förslaget',
+  'zoom-selection': 'Zooma till det markerade',
+  'open-marker': 'Öppna fasaden eller sektionen',
+  delete: 'Ta bort helt, ur alla tillstånd (Delete)',
+  'palette-more': 'Visa alla inställningar här i menyn',
+  'palette-less': 'Visa bara snabbknapparna',
+  deselect: 'Avmarkera (Esc)',
+};
 
 /** Egenskapsgruppen där egna egenskaper sparas. */
 const PROPS = 'Egenskaper';
@@ -69,6 +90,10 @@ export class PropertiesPanel {
 
   /** Öppna en fasad eller sektion (knappen i panelen). */
   onOpenMarker?: (id: string) => void;
+  /** Gränsen för varningen om nästan raka vinklar, grader (0 = av). */
+  angleWarn: () => number = () => 5;
+  /** Rikta en sektions- eller fasadlinje efter något man klickar på i planen. */
+  onAlignMarker?: (id: string) => void;
 
   constructor(store: DocStore, selection: Selection, getView: () => ViewStates) {
     this.store = store;
@@ -146,7 +171,7 @@ export class PropertiesPanel {
     if (els.length === 0) return null;
 
     const btn = (action: string, icon: string, label: string, extra = '') =>
-      `<button class="qb-btn${extra}" data-action="${action}" title="${escapeHtml(label)}">${icon}<span>${escapeHtml(label)}</span></button>`;
+      `<button class="qb-btn${extra}" data-action="${action}" title="${escapeHtml(QUICK_TITLES[action] ?? label)}">${icon}<span>${escapeHtml(label)}</span></button>`;
     const sameType = els.every((e) => e.type === els[0].type);
     const kind = sameType ? els[0].type : 'mixed';
     const allowed = (id: QuickId, k: string) => {
@@ -239,6 +264,9 @@ export class PropertiesPanel {
 
     const sections: string[] = [];
     sections.push(`<header class="sel-head"><h2>${escapeHtml(title)}</h2>${sub ? `<p>${escapeHtml(sub)}</p>` : ''}</header>`);
+    // Nästan rak vinkel: en rad med en knapp som rätar upp.
+    const skew = els.length === 1 ? skewOf(doc, els[0], this.angleWarn()) : null;
+    if (skew) sections.push(`<p class="skew-note" role="note"><b>!</b> ${escapeHtml(skewText(skew))} <button class="btn" data-action="straighten-angle">Räta upp till ${skew.nearest}°</button></p>`);
 
     // Finns i: en ruta per tillstånd. Delvis ifylld när markeringen är blandad.
     const chips = doc.states
@@ -392,6 +420,7 @@ export class PropertiesPanel {
         return `<label class="field"><span>Namn</span><input data-key="name:" value="${escapeHtml(el.name ?? '')}" placeholder="${escapeHtml(markerName(doc, { ...el, name: undefined }))}"></label>
           <div class="fields">${label}<label class="field"><span>Djup</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="marker:depth" value="${p.depth ?? ''}" placeholder="Allt"><i>mm</i></span></label></div>
           <label class="check"><input type="checkbox" data-key="marker:auto"${p.auto ? ' checked' : ''}> Placeras automatiskt</label>
+          ${p.auto ? '' : this.markerLineFields(p)}
           <div class="row"><button class="btn btn-primary" data-action="open-marker">Öppna ${el.type === 'Section' ? 'sektionen' : 'fasaden'}</button><button class="btn" data-action="flip-side"${p.auto ? ' disabled' : ''}>Vänd blickriktningen</button></div>`;
       }
       case 'Door': {
@@ -511,6 +540,16 @@ export class PropertiesPanel {
     return this.renderSelection(this.store.doc).replace(/<header class="sel-head">[\s\S]*?<\/header>/, '');
   }
 
+  /** Längd och vinkel för en linje som placerats för hand, och knappen för att rikta den efter något. */
+  private markerLineFields(p: MarkerParams): string {
+    const d = [p.end[0] - p.start[0], p.end[1] - p.start[1]];
+    const len = Math.round(Math.hypot(d[0], d[1]));
+    const a = (((Math.atan2(d[1], d[0]) * 180) / Math.PI) % 360 + 360) % 360;
+    const deg = Math.round(a * 100) / 100;
+    return `<div class="fields">${numberField('marker:length', 'Längd', len, 'mm')}${numberField('marker:angle', 'Vinkel', deg, '°', 2)}</div>
+      <div class="row"><button class="btn" data-action="align-marker" title="Klicka sedan på en vägg eller linje i planen. Fasader blir parallella med den, sektioner vinkelräta. Håll Shift för det omvända.">Rikta efter objekt</button></div>`;
+  }
+
   private onClick(e: Event): void {
     const b = (e.target as HTMLElement).closest<HTMLElement>('[data-action]');
     if (!b) return;
@@ -519,6 +558,15 @@ export class PropertiesPanel {
     switch (b.dataset.action) {
       case 'open-marker':
         if (ids[0]) this.onOpenMarker?.(ids[0]);
+        return;
+      case 'straighten-angle': {
+        const el = doc.elements[ids[0]];
+        const w = el && skewOf(doc, el, this.angleWarn());
+        if (el && w) straighten(this.store, el, w.nearest);
+        return;
+      }
+      case 'align-marker':
+        if (ids[0]) this.onAlignMarker?.(ids[0]);
         return;
       case 'flip-side': {
         const el = doc.elements[ids[0]];
@@ -745,7 +793,17 @@ export class PropertiesPanel {
     if (scope === 'marker') {
       const el = doc.elements[ids[0]];
       if (!el) return;
-      if (name === 'depth') {
+      if (name === 'length' || name === 'angle') {
+        const p = el.params as unknown as MarkerParams;
+        const v = Number(input.value.replace(',', '.'));
+        const d = [p.end[0] - p.start[0], p.end[1] - p.start[1]];
+        const len = name === 'length' ? v : Math.hypot(d[0], d[1]);
+        const ang = name === 'angle' ? (v * Math.PI) / 180 : Math.atan2(d[1], d[0]);
+        if (!Number.isFinite(v) || len < 300) return this.render();
+        // Början ligger still; slutet flyttas.
+        const end: [number, number] = [Math.round(p.start[0] + Math.cos(ang) * len), Math.round(p.start[1] + Math.sin(ang) * len)];
+        updateParams(this.store, [el.id], { end }, name === 'length' ? 'Ändra längd' : 'Ändra vinkel');
+      } else if (name === 'depth') {
         const v = Number(input.value);
         updateParams(this.store, [el.id], { depth: input.value === '' || !(v > 0) ? null : Math.round(v) }, 'Ändra djup');
       } else if (name === 'auto') {
@@ -837,6 +895,32 @@ export class PropertiesPanel {
  * Sifferfält. Mått i modellen visas i hela mm; mått på papper för
  * annotering (texthöjder) med två decimaler, `decimals = 2`.
  */
+/** Räta upp ett element till en rak vinkel. Början (eller mitten för tak och inredning) ligger still. */
+function straighten(store: DocStore, el: Element, nearest: number): void {
+  const doc = store.doc;
+  const p = el.params as Record<string, any>;
+  const snapAngle = (a: number) => {
+    // Den av nearest och nearest + 180 som ligger närmast a.
+    const options = [nearest, nearest + 180, nearest - 180, nearest + 360];
+    return options.reduce((b, o) => (Math.abs(o - a) < Math.abs(b - a) ? o : b));
+  };
+  if (el.type === 'Wall' || el.type === 'Section' || el.type === 'Elevation') {
+    const d = sub(p.end, p.start);
+    const len = Math.hypot(d[0], d[1]);
+    const a = (snapAngle((Math.atan2(d[1], d[0]) * 180) / Math.PI) * Math.PI) / 180;
+    const end: [number, number] = [Math.round(p.start[0] + Math.cos(a) * len), Math.round(p.start[1] + Math.sin(a) * len)];
+    if (el.type === 'Wall') moveWallEnd(store, el.id, 'end', end, { label: 'Räta upp', connected: true });
+    else updateParams(store, [el.id], { end }, 'Räta upp');
+  } else if (el.type === 'Furniture') {
+    const fp = resolveParams<FurnitureParams>(doc, el);
+    const target = snapAngle(((fp.rotation % 180) + 180) % 180) + (fp.rotation - (((fp.rotation % 180) + 180) % 180));
+    updateParams(store, [el.id], rotateFurniture(fp, target - fp.rotation), 'Räta upp');
+  } else if (el.type === 'Roof') {
+    const rp = resolveParams<RoofParams>(doc, el);
+    updateParams(store, [el.id], { ridge: Math.round(rp.ridge / 45) * 45 }, 'Räta upp');
+  }
+}
+
 function numberField(key: string, label: string, value: number, unit: string, decimals = 0): string {
   const id = `f-${key.replace(':', '-')}`;
   const shown = decimals > 0 ? Number(value).toFixed(decimals) : String(Math.round(value));

@@ -57,7 +57,8 @@ export function clipDepth(poly: V3[], d0: number, d1: number | null): V3[] {
   return pts;
 }
 
-function clipPlane(poly: V3[], f: (p: V3) => number): V3[] {
+/** Klipp en polygon mot halvrummet f(p) ≥ 0, där f är linjär. */
+export function clipPlane(poly: V3[], f: (p: V3) => number): V3[] {
   const out: V3[] = [];
   for (let i = 0; i < poly.length; i++) {
     const a = poly[i];
@@ -75,6 +76,11 @@ function clipPlane(poly: V3[], f: (p: V3) => number): V3[] {
 
 /** Klipp en sträcka mot djupintervallet; null om inget blir kvar. */
 export function clipSegDepth(a: V3, b: V3, d0: number, d1: number | null): [V3, V3] | null {
+  return clipSegAxis(a, b, 2, d0, d1);
+}
+
+/** Klipp en sträcka mot ett intervall längs en axel (0 = x, 1 = y, 2 = djup). */
+export function clipSegAxis(a: V3, b: V3, axis: 0 | 1 | 2, d0: number, d1: number | null): [V3, V3] | null {
   let t0 = 0;
   let t1 = 1;
   const lim = (fa: number, fb: number) => {
@@ -86,8 +92,8 @@ export function clipSegDepth(a: V3, b: V3, d0: number, d1: number | null): [V3, 
     else t1 = Math.min(t1, t);
     return true;
   };
-  if (!lim(a[2] - d0, b[2] - d0)) return null;
-  if (d1 !== null && !lim(d1 - a[2], d1 - b[2])) return null;
+  if (!lim(a[axis] - d0, b[axis] - d0)) return null;
+  if (d1 !== null && !lim(d1 - a[axis], d1 - b[axis])) return null;
   if (t1 - t0 < 1e-9) return null;
   const at = (t: number): V3 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
   return [at(t0), at(t1)];
@@ -145,7 +151,7 @@ export function visibleSegments<K>(segs: readonly Seg<K>[], triangles: readonly 
     maxX = Math.max(maxX, o.maxX);
     maxY = Math.max(maxY, o.maxY);
   }
-  const N = 64;
+  const N = Math.max(64, Math.min(256, Math.round(Math.sqrt(occ.length) * 2)));
   const w = Math.max(1, maxX - minX);
   const h = Math.max(1, maxY - minY);
   const cw = w / N;

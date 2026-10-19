@@ -2,7 +2,9 @@ import { moveElements, moveWallEnd, rotateElements } from '../core/commands';
 import type { Id } from '../core/model';
 import {
   continuingTangent,
+  cornerCut,
   cornerPartner,
+  openingsInCorner,
   extendTo,
   mergeAtCorner,
   mirrorAbout,
@@ -15,6 +17,7 @@ import {
   splitWall,
   tangentArc,
 } from '../core/wallEdit';
+import { insertNode, moveNode, offsetEdge, orientation, removeNode, setOutline } from '../core/roofEdit';
 import { arcFromBulge, bulgeForRadius, bulgeTangent, bulgeThrough } from '../geometry/arc';
 import { angleDeg, dist, left, sub } from '../geometry/vec';
 import type { Pickable } from '../repr/plan';
@@ -23,13 +26,14 @@ import type { Camera } from '../view2d/camera';
 import { pickAt } from '../view2d/pick';
 import type { ViewPointer, ViewTool } from '../view2d/planView';
 import { icons, type IconName } from './icons';
+import { escapeHtml, labelOf } from './labels';
 import { pxToMm, type ToolHost } from './tools/host';
 import { lengthLabel, snapMarker } from './tools/overlay';
 import { roundMm, snap, type SnapResult } from './tools/snap';
 
 /**
- * Modifiera (0.7), som ArchiCADs palett när man klickar på ett markerat
- * objekt. Vad som erbjuds beror på var man klickar:
+ * Modifiera (0.7): paletten som visas när man klickar på något som redan är
+ * markerat. Vad som erbjuds beror på var man klickar:
  *
  * - på referenslinjen: lägg till punkt, böj, båge med tangent, förskjut …
  * - på en ände: sträck, förläng till
@@ -48,6 +52,9 @@ export interface ModifyContext {
   ids: Id[];
   /** Väggen man klickade på, för kant, ände och hörn. */
   wallId?: Id;
+  /** Taket man klickade på, med konturens hörn eller kant (0.7.1). */
+  roofId?: Id;
+  index?: number;
   end?: 'start' | 'end';
   /** Punkten man klickade (på referenslinjen för kanter), mm. */
   at: Vec2;
@@ -72,10 +79,16 @@ export type OpId =
   | 'move'
   | 'rotate'
   | 'mirror'
-  | 'multiply';
+  | 'multiply'
+  | 'roofInsert'
+  | 'roofMove'
+  | 'roofRemove'
+  | 'roofOffset';
 
 interface OpDef {
   label: string;
+  /** Kort text under ikonen. Hela namnet och förklaringen visas vid hovring. */
+  short: string;
   icon: IconName;
   /** Ett värde som kan skrivas in, med enhet och förval. */
   value?: { label: string; unit: 'mm' | '°' | 'st'; initial: number };
@@ -85,22 +98,26 @@ interface OpDef {
 }
 
 const OPS: Record<OpId, OpDef> = {
-  insert: { label: 'Lägg till punkt', icon: 'insertNode', hint: 'Klicka där den nya punkten ska ligga. Väggen delas i två.' },
-  curve: { label: 'Böj', icon: 'curveEdge', value: { label: 'Radie', unit: 'mm', initial: 3000 }, hint: 'Klicka en punkt som bågen ska gå igenom, eller skriv radien.' },
-  tangent: { label: 'Båge med tangent', icon: 'tangentArc', hint: 'Bågen fortsätter i grannväggens riktning. Klicka var änden ska hamna.' },
-  straighten: { label: 'Räta ut', icon: 'straighten', instant: true, hint: '' },
-  offset: { label: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'Väggen flyttas vinkelrätt; anslutna väggar följer med.' },
-  parallel: { label: 'Parallell kopia', icon: 'parallelCopy', value: { label: 'Avstånd', unit: 'mm', initial: 1000 }, hint: 'En kopia på avståndet, åt det håll du pekar.' },
-  offsetAll: { label: 'Förskjut alla kanter', icon: 'offsetAll', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'De markerade väggarna flyttas ut (eller in med minus); hörnen räknas om.' },
-  stretch: { label: 'Sträck', icon: 'stretch', value: { label: 'Längd', unit: 'mm', initial: 0 }, hint: 'Klicka var änden ska hamna, eller skriv en ny längd.' },
-  extend: { label: 'Förläng till', icon: 'extend', hint: 'Klicka på väggen som änden ska gå fram till.' },
-  fillet: { label: 'Avrunda hörn', icon: 'fillet', value: { label: 'Radie', unit: 'mm', initial: 1000 }, hint: 'Skriv radien och tryck Enter, eller klicka för att använda den.' },
-  chamfer: { label: 'Fasa hörn', icon: 'chamfer', value: { label: 'Avstånd', unit: 'mm', initial: 600 }, hint: 'Skriv avståndet från hörnet och tryck Enter, eller klicka.' },
-  merge: { label: 'Ta bort punkt', icon: 'merge', instant: true, hint: '' },
-  move: { label: 'Flytta', icon: 'move', hint: 'Klicka var det ska hamna. (Det går också att dra direkt.)' },
-  rotate: { label: 'Vrid', icon: 'rotate', value: { label: 'Vinkel', unit: '°', initial: 90 }, hint: 'Klicka en riktning att vrida från och sedan dit, eller skriv vinkeln.' },
-  mirror: { label: 'Spegla', icon: 'mirror', hint: 'Speglingslinjen går genom punkten du klickade; klicka linjens riktning.' },
-  multiply: { label: 'Kopiera i rad', icon: 'multiply', value: { label: 'Antal', unit: 'st', initial: 3 }, hint: 'Klicka avståndet mellan kopiorna.' },
+  insert: { label: 'Lägg till punkt', short: 'Ny punkt', icon: 'insertNode', hint: 'Klicka där den nya punkten ska ligga. Väggen delas i två.' },
+  curve: { label: 'Böj', short: 'Böj', icon: 'curveEdge', value: { label: 'Radie', unit: 'mm', initial: 3000 }, hint: 'Klicka en punkt som bågen ska gå igenom, eller skriv radien.' },
+  tangent: { label: 'Båge med tangent', short: 'Tangent', icon: 'tangentArc', hint: 'Bågen fortsätter i grannväggens riktning. Klicka var änden ska hamna.' },
+  straighten: { label: 'Räta ut', short: 'Räta ut', icon: 'straighten', instant: true, hint: 'Bågen blir rak igen.' },
+  offset: { label: 'Förskjut', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'Väggen flyttas vinkelrätt; anslutna väggar följer med.' },
+  parallel: { label: 'Parallell kopia', short: 'Parallell', icon: 'parallelCopy', value: { label: 'Avstånd', unit: 'mm', initial: 1000 }, hint: 'En kopia på avståndet, åt det håll du pekar.' },
+  offsetAll: { label: 'Förskjut alla kanter', short: 'Alla kanter', icon: 'offsetAll', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'De markerade väggarna flyttas ut (eller in med minus); hörnen räknas om.' },
+  stretch: { label: 'Sträck', short: 'Sträck', icon: 'stretch', value: { label: 'Längd', unit: 'mm', initial: 0 }, hint: 'Klicka var änden ska hamna, eller skriv en ny längd.' },
+  extend: { label: 'Förläng till', short: 'Förläng', icon: 'extend', hint: 'Klicka på väggen som änden ska gå fram till.' },
+  fillet: { label: 'Avrunda hörn', short: 'Avrunda', icon: 'fillet', value: { label: 'Radie', unit: 'mm', initial: 1000 }, hint: 'Skriv radien och tryck Enter, eller klicka för att använda den.' },
+  chamfer: { label: 'Fasa hörn', short: 'Fasa', icon: 'chamfer', value: { label: 'Avstånd', unit: 'mm', initial: 600 }, hint: 'Skriv avståndet från hörnet och tryck Enter, eller klicka.' },
+  merge: { label: 'Ta bort punkt', short: 'Ta bort', icon: 'merge', instant: true, hint: 'Två väggar som möts i hörnet blir en.' },
+  move: { label: 'Flytta', short: 'Flytta', icon: 'move', hint: 'Klicka var det ska hamna. (Det går också att dra direkt.)' },
+  rotate: { label: 'Vrid', short: 'Vrid', icon: 'rotate', value: { label: 'Vinkel', unit: '°', initial: 90 }, hint: 'Klicka en riktning att vrida från och sedan dit, eller skriv vinkeln.' },
+  mirror: { label: 'Spegla', short: 'Spegla', icon: 'mirror', hint: 'Speglingslinjen går genom punkten du klickade; klicka linjens riktning.' },
+  multiply: { label: 'Kopiera i rad', short: 'I rad', icon: 'multiply', value: { label: 'Antal', unit: 'st', initial: 3 }, hint: 'Klicka avståndet mellan kopiorna.' },
+  roofInsert: { label: 'Lägg till punkt', short: 'Ny punkt', icon: 'insertNode', hint: 'Klicka där den nya punkten i takets kontur ska ligga.' },
+  roofMove: { label: 'Flytta punkt', short: 'Flytta', icon: 'move', hint: 'Klicka var hörnet ska hamna.' },
+  roofRemove: { label: 'Ta bort punkt', short: 'Ta bort', icon: 'merge', instant: true, hint: 'Hörnet tas bort; grannarna binds ihop med en rak kant.' },
+  roofOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 300 }, hint: 'Kanten flyttas vinkelrätt, utåt med plus; grannkanterna följer med.' },
 };
 
 const COMMON: OpId[] = ['move', 'rotate', 'mirror', 'multiply'];
@@ -110,6 +127,10 @@ export function opsFor(host: ToolHost, ctx: ModifyContext): OpId[][] {
   const doc = host.store.doc;
   const wall = ctx.wallId ? doc.elements[ctx.wallId] : undefined;
   const walls = ctx.ids.filter((id) => doc.elements[id]?.type === 'Wall');
+  if (ctx.roofId) {
+    if (ctx.kind === 'edge') return [['roofInsert', 'roofOffset'], COMMON];
+    if (ctx.kind === 'point') return [['roofMove', 'roofRemove'], COMMON];
+  }
   switch (ctx.kind) {
     case 'edge': {
       const arc = wall && Math.abs(Number(wall.params.bulge ?? 0)) >= 0.5;
@@ -151,7 +172,7 @@ export class ModifyPalette {
     this.container = container;
     this.host = host;
     this.el = document.createElement('div');
-    this.el.className = 'modify-palette';
+    this.el.className = 'pet-palette modify-palette';
     this.el.hidden = true;
     this.el.setAttribute('role', 'toolbar');
     this.el.setAttribute('aria-label', 'Modifiera');
@@ -234,12 +255,16 @@ export class ModifyPalette {
     if (!ctx) return;
     const groups = opsFor(this.host, ctx);
     const btn = (op: OpId) =>
-      `<button type="button" class="mp-btn" data-op="${op}" aria-pressed="${this.active === op}" title="${OPS[op].label}" aria-label="${OPS[op].label}">${icons[OPS[op].icon]}</button>`;
+      `<button type="button" class="qb-btn mp-op" data-op="${op}" aria-pressed="${this.active === op}" title="${escapeHtml(`${OPS[op].label}. ${OPS[op].hint}`)}" aria-label="${escapeHtml(OPS[op].label)}">${icons[OPS[op].icon]}<span>${OPS[op].short}</span></button>`;
     const def = this.active ? OPS[this.active] : null;
     const value = def?.value
       ? `<label class="mp-value"><span>${def.value.label}</span><input type="text" data-expr ${def.value.unit === '°' ? 'data-unit="deg"' : def.value.unit === 'st' ? 'data-unit=""' : ''} inputmode="decimal" autocomplete="off" value="${this.remembered.get(this.active!) ?? (this.active === 'stretch' ? Math.round(this.tool?.currentLength() ?? 0) : def.value.initial)}"><i>${def.value.unit === 'st' ? 'st' : def.value.unit}</i></label>`
       : '';
-    this.el.innerHTML = `<div class="mp-row">${groups.map((g) => g.map(btn).join('')).join('<span class="mp-sep"></span>')}<button type="button" class="mp-btn mp-close" data-action="modify-close" aria-label="Stäng" title="Stäng (Esc)">${icons.close}</button></div>${
+    const where = ctx.roofId ? (ctx.kind === 'edge' ? 'Kanten' : 'Hörnet') : { edge: 'Referenslinjen', point: 'Änden', corner: 'Hörnet', body: 'Det markerade' }[ctx.kind];
+    const what = ctx.roofId ? labelOf(this.host.store.doc, this.host.store.doc.elements[ctx.roofId]) : ctx.wallId ? labelOf(this.host.store.doc, this.host.store.doc.elements[ctx.wallId]) : ctx.ids.length === 1 ? labelOf(this.host.store.doc, this.host.store.doc.elements[ctx.ids[0]]) : `${ctx.ids.length} objekt`;
+    this.el.innerHTML = `<div class="mp-row quick-bar"><div class="qb-title"><b>Modifiera</b><small>${escapeHtml(where)} · ${escapeHtml(what)}</small></div><div class="qb-actions">${groups
+      .map((g) => g.map(btn).join(''))
+      .join('<span class="mp-sep"></span>')}<button type="button" class="qb-btn mp-close" data-action="modify-close" aria-label="Stäng" title="Stäng (Esc)">${icons.close}</button></div></div>${
       def ? `<div class="mp-detail"><b>${def.label}</b>${value}<span class="mp-hint">${def.hint}</span></div>` : ''
     }`;
     this.el.hidden = false;
@@ -262,6 +287,13 @@ export class ModifyPalette {
 
 function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
   const doc = host.store.doc;
+  if (op === 'roofRemove') {
+    const roof = ctx.roofId ? doc.elements[ctx.roofId] : undefined;
+    const next = roof && removeNode(roof.params.outline as [number, number][], ctx.index!);
+    if (next) setOutline(host.store, roof.id, next, 'Ta bort punkt');
+    else host.hint('Taket måste ha minst tre hörn.');
+    return;
+  }
   const el = ctx.wallId ? doc.elements[ctx.wallId] : undefined;
   if (!el) return;
   const p = el.params as { start: [number, number]; end: [number, number] };
@@ -295,6 +327,30 @@ export class ModifyTool implements ViewTool {
   setValue(v: number): void {
     this.value = v;
     this.host.view.requestRender();
+  }
+
+  /** Takets kontur och det som ändras i den. */
+  private roofOutline(): [number, number][] | null {
+    const el = this.ctx.roofId ? this.host.store.doc.elements[this.ctx.roofId] : undefined;
+    return (el?.params.outline as [number, number][] | undefined) ?? null;
+  }
+
+  /** Avståndet utåt från takets kant till en punkt (negativt inåt). */
+  private roofOut(at: Vec2): number {
+    const o = this.roofOutline()!;
+    const i = this.ctx.index!;
+    const a = o[i];
+    const b = o[(i + 1) % o.length];
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    const n: Vec2 = [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
+    return -orientation(o) * ((at[0] - a[0]) * n[0] + (at[1] - a[1]) * n[1]);
+  }
+
+  /** Konturen efter förskjutningen, eller null. */
+  private roofOffsetPreview(out: number): [number, number][] | null {
+    const o = this.roofOutline();
+    if (!o) return null;
+    return offsetEdge(o, this.ctx.index!, -orientation(o) * out);
   }
 
   /** Väggens längd nu (för Sträck). */
@@ -415,6 +471,26 @@ export class ModifyTool implements ViewTool {
     const p = el?.params as { start: [number, number]; end: [number, number] } | undefined;
     const base = ctx.at;
     switch (this.op) {
+      case 'roofInsert':
+      case 'roofMove': {
+        const o = this.roofOutline();
+        const to = at ?? base;
+        if (!o || !ctx.roofId) break;
+        if (this.op === 'roofInsert') setOutline(store, ctx.roofId, insertNode(o, ctx.index!, to), 'Lägg till punkt');
+        else if (dist(to, base) >= 1) setOutline(store, ctx.roofId, moveNode(o, ctx.index!, to), 'Flytta punkt');
+        break;
+      }
+      case 'roofOffset': {
+        const d = typed !== null ? typed : at ? Math.round(this.roofOut(at)) : 0;
+        if (Math.abs(d) < 1 || !ctx.roofId) return;
+        const next = this.roofOffsetPreview(d);
+        if (!next) {
+          this.host.hint('Kanten kan inte förskjutas så långt.');
+          return;
+        }
+        setOutline(store, ctx.roofId, next, 'Förskjut kant');
+        break;
+      }
       case 'insert':
         if (el) splitWall(store, el.id, base, at && dist(at, base) > 5 ? at : undefined);
         break;
@@ -477,6 +553,13 @@ export class ModifyTool implements ViewTool {
       case 'chamfer': {
         if (!el || !ctx.end) break;
         const v = typed ?? this.value;
+        const cut = cornerCut(doc, el.id, ctx.end, Math.abs(v), this.op);
+        const blocked = cut ? [...openingsInCorner(doc, el.id, ctx.end, cut.t), ...openingsInCorner(doc, cut.partner.id, cut.partner.end, cut.t)] : [];
+        if (blocked.length) {
+          const names = blocked.map((id) => labelOf(doc, doc.elements[id])).join(', ');
+          this.host.hint(`${names} skulle hamna utanför väggen. Flytta ${blocked.length > 1 ? 'dem' : 'den'} först, eller välj ${this.op === 'fillet' ? 'en mindre radie' : 'ett mindre avstånd'}.`, 5000);
+          return;
+        }
         if (!roundCorner(store, el.id, ctx.end, Math.abs(v), this.op)) {
           this.host.hint(this.op === 'fillet' ? 'Det går inte att avrunda hörnet med den radien.' : 'Det går inte att fasa hörnet så mycket.');
           return;
@@ -533,7 +616,25 @@ export class ModifyTool implements ViewTool {
       return pts;
     };
     const base = this.ctx.at;
+    const roof = this.roofOutline();
     switch (this.op) {
+      case 'roofInsert':
+        if (roof && at) out.push(line([roof[this.ctx.index!], at, roof[(this.ctx.index! + 1) % roof.length]]));
+        break;
+      case 'roofMove':
+        if (roof && at) {
+          const i = this.ctx.index!;
+          out.push(line([roof[(i - 1 + roof.length) % roof.length], at, roof[(i + 1) % roof.length]]));
+        }
+        break;
+      case 'roofOffset':
+        if (roof && at) {
+          const d = Math.round(this.roofOut(at));
+          const next = this.roofOffsetPreview(d);
+          if (next) out.push(line([...next, next[0]]));
+          out.push(lengthLabel(cam, base, at, `${d.toLocaleString('sv-SE')} mm`));
+        }
+        break;
       case 'insert':
         if (p && at) out.push(line([p.start, at, p.end]));
         break;
@@ -694,6 +795,23 @@ export function modifyContextAt(host: ToolHost, p: ViewPointer, clientX: number,
         const kind: ModifyKind = cornerPartner(doc, id, end) ? 'corner' : 'point';
         return { kind, ids, wallId: id, end, at: q[end], clientX, clientY };
       }
+    }
+  }
+  // Hörn och kanter i markerade taks kontur.
+  for (const id of ids) {
+    const el = doc.elements[id];
+    if (el?.type !== 'Roof') continue;
+    const o = el.params.outline as Vec2[];
+    for (let i = 0; i < o.length; i++) if (dist(o[i], p.model) <= tol) return { kind: 'point', ids, roofId: id, index: i, at: o[i], clientX, clientY };
+    for (let i = 0; i < o.length; i++) {
+      const a = o[i];
+      const b = o[(i + 1) % o.length];
+      const u = sub(b, a);
+      const l2 = u[0] * u[0] + u[1] * u[1];
+      const t = l2 ? ((p.model[0] - a[0]) * u[0] + (p.model[1] - a[1]) * u[1]) / l2 : -1;
+      if (t <= 0 || t >= 1) continue;
+      const q: Vec2 = [a[0] + u[0] * t, a[1] + u[1] * t];
+      if (dist(q, p.model) <= tol) return { kind: 'edge', ids, roofId: id, index: i, at: roundMm(q), clientX, clientY };
     }
   }
   if (!hitId || !host.selection.has(hitId)) return null;

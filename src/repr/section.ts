@@ -4,12 +4,14 @@ import type { Action, ViewStates } from '../core/states';
 import { markerFrame, markerName } from '../elements/markers';
 import { typeOf, type PlanItem } from '../elements/registry';
 import { difference, union, type Rings } from '../geometry/boolean';
-import { clipDepth, clipSegDepth, featureEdges, visibleSegments, type Seg, type V3 } from '../geometry/hiddenLine';
+import { clipDepth, clipPlane, clipSegAxis, clipSegDepth, featureEdges, visibleSegments, type Seg, type V3 } from '../geometry/hiddenLine';
+import { roofPlanes, type RoofParams } from '../elements/roof';
+import type { PlanContext } from '../elements/registry';
 import { createContext } from './context';
 import { solidTriangles } from './mesh';
 import { applyStyle, type Pickable } from './plan';
-import type { Primitive, Vec2 } from './primitives';
-import { zOn, type Shape3D, type Solid } from './solids';
+import type { Pen, Primitive, Vec2 } from './primitives';
+import { zOn, type EdgePart, type Shape3D, type Solid } from './solids';
 
 /**
  * Fasader och sektioner (0.7). Vyn räknas fram ur samma 3D-former som
@@ -29,7 +31,30 @@ export interface SectionResult {
 interface EdgeKey {
   id: string;
   action: Action;
+  part?: EdgePart;
+  dash?: readonly number[];
 }
+
+/**
+ * Linjetjocklekar i fasader och sektioner (mm på papper), efter vad linjen
+ * är. Hålens omfattning tjockast, karm och båge tunnare, foder och handtag
+ * tunna, sammanfogningar och glasmarkering tunnast och grå. Ställs in i
+ * penntabellen i 0.8; tills dess gäller de här.
+ */
+const PART_PEN: Record<EdgePart, Pen> = {
+  hole: { weight: 0.35 },
+  wall: { weight: 0.25 },
+  roof: { weight: 0.25 },
+  frame: { weight: 0.25 },
+  sash: { weight: 0.25 },
+  leaf: { weight: 0.25 },
+  sill: { weight: 0.25 },
+  lining: { weight: 0.18 },
+  handle: { weight: 0.18 },
+  joint: { weight: 0.13, color: 'muted' },
+  glass: { weight: 0.13, color: 'muted' },
+  swing: { weight: 0.13, dash: [3, 1.5] },
+};
 
 /** Material som fylls i snitt som väggar; resten ritas med kontur. */
 const POCHE = new Set(['wall', 'wall-new', 'roof', 'floor']);
@@ -47,6 +72,8 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   const v = fr.view;
   const toView = (x: number, y: number, z: number): V3 => [(x - O[0]) * r[0] + (y - O[1]) * r[1], z + z0, (x - O[0]) * v[0] + (y - O[1]) * v[1]];
   const depthMax = fr.depth;
+  // Sektionen ritas bara så långt som linjen går.
+  const uMax = Math.hypot(fr.end[0] - fr.start[0], fr.end[1] - fr.start[1]);
 
   // Formerna, med åtgärd. Det som rivs byggs för sig, så att det inte
   // påverkar skarvarna i det som står kvar.
@@ -73,13 +100,14 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   const segs: Seg<EdgeKey>[] = [];
   const pushSeg = (a: V3, b: V3, key: EdgeKey) => {
     const c = clipSegDepth(a, b, 0, depthMax);
-    if (c) segs.push({ a: c[0], b: c[1], key });
+    const u = c && clipSegAxis(c[0], c[1], 0, 0, uMax);
+    if (u) segs.push({ a: u[0], b: u[1], key });
   };
   let minZ = Infinity;
   let maxZ = -Infinity;
 
   for (const { s, demolished } of shapes) {
-    const key: EdgeKey = { id: s.id, action: actionOfId(s.id) };
+    const key: EdgeKey = { id: s.id, action: actionOfId(s.id), ...(s.kind === 'edges' ? { part: s.part, dash: s.dash } : {}) };
     if (s.kind === 'edges') {
       for (const q of s.segments) pushSeg(toView(q[0], q[1], q[2]), toView(q[3], q[4], q[5]), key);
       continue;
@@ -100,14 +128,20 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     if (demolished) continue;
     const clipped: number[] = [];
     for (let i = 0; i + 8 < tris.length; i += 9) {
-      const poly = clipDepth(
-        [
-          [tris[i], tris[i + 1], tris[i + 2]],
-          [tris[i + 3], tris[i + 4], tris[i + 5]],
-          [tris[i + 6], tris[i + 7], tris[i + 8]],
-        ],
-        0,
-        depthMax,
+      const poly = clipPlane(
+        clipPlane(
+          clipDepth(
+            [
+              [tris[i], tris[i + 1], tris[i + 2]],
+              [tris[i + 3], tris[i + 4], tris[i + 5]],
+              [tris[i + 6], tris[i + 7], tris[i + 8]],
+            ],
+            0,
+            depthMax,
+          ),
+          (p) => p[0],
+        ),
+        (p) => uMax - p[0],
       );
       for (let k = 1; k + 1 < poly.length; k++) clipped.push(...poly[0], ...poly[k], ...poly[k + 1]);
     }
@@ -126,7 +160,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   if (isSection) {
     for (const { s, demolished } of shapes) {
       if (s.kind === 'edges' || demolished) continue;
-      const polys = cutSolid(s, O, r, v, z0);
+      const polys = cutSolid(s, O, r, v, z0, uMax);
       if (!polys.length) continue;
       const action = actionOfId(s.id);
       const poche = POCHE.has(s.material);
@@ -148,7 +182,8 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   let minU = Infinity;
   let maxU = -Infinity;
   for (const l of visibleLines) {
-    const raw: Primitive = { kind: 'line', a: l.a, b: l.b, pen: { weight: 0.18 }, origin: { objectId: l.key.id, objectType: doc.elements[l.key.id]?.type, part: 'vy' } };
+    const pen: Pen = l.key.part ? { ...PART_PEN[l.key.part], ...(l.key.dash ? { dash: l.key.dash } : {}) } : { weight: 0.18 };
+    const raw: Primitive = { kind: 'line', a: l.a, b: l.b, pen, origin: { objectId: l.key.id, objectType: doc.elements[l.key.id]?.type, part: l.key.part ?? 'vy' } };
     const p = applyStyle(raw, style.actions[ctx.styleKeyOf(l.key.action)], l.key.action, style);
     prims.push(p);
     own(l.key.id, p);
@@ -175,7 +210,14 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   if (Number.isFinite(minU) && Number.isFinite(minZ)) {
     // Marklinje under byggnaden, och nivåer för golv och högsta punkt.
     const ground = Math.min(minZ, z0);
-    prims.push({ kind: 'line', a: [minU - 1500, ground], b: [maxU + 1500, ground], pen: { weight: 0.5 }, origin: { part: 'mark' } });
+    prims.push({ kind: 'line', a: [minU - 1500, ground], b: [maxU + 1500, ground], pen: { weight: 0.7 }, origin: { part: 'mark' } });
+    // Taklutningen, där takfallet syns i sin rätta vinkel.
+    if (!view.hide?.includes('roofSlope')) {
+      for (const p of roofSlopes(ctx, toView, view.detail ?? 'normal', style.labels.heights.dimension)) {
+        prims.push(p);
+        if (p.origin?.objectId) own(p.origin.objectId, p);
+      }
+    }
     const levels = [...new Set([z0, Math.round(maxZ)])];
     for (const z of levels) prims.push(...levelMark(maxU + 1200, z, style.labels.heights.dimension));
   }
@@ -187,6 +229,59 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     prims: list.filter((p) => p.kind !== 'region'),
   }));
   return { name: markerName(doc, marker), prims, pickables, ms: performance.now() - t0 };
+}
+
+/**
+ * Taklutningen i en fasad eller sektion. Bara takfall som syns i sin rätta
+ * lutning får den (man ser dem från gaveln). Skiss: gradtalet vid takfallet.
+ * Normal och Detalj: en vågrät linje, en båge och gradtalet.
+ */
+function roofSlopes(ctx: PlanContext, toView: (x: number, y: number, z: number) => V3, level: string, height: number): Primitive[] {
+  const out: Primitive[] = [];
+  const k = 100; // ritningsskalan, för storleken på papper
+  for (const el of ctx.visible('Roof')) {
+    if (ctx.actionOf(el) === 'demolished') continue;
+    const p = ctx.params<RoofParams>(el);
+    const origin = { objectId: el.id, objectType: 'Roof', part: 'taklutning' };
+    for (const rp of roofPlanes(p)) {
+      const pts = rp.rings[0].map((q) => toView(q[0], q[1], zOn(rp.top, q[0], q[1])));
+      if (pts.length < 3) continue;
+      // Takfallets kant närmast betraktaren, från takfot till nock.
+      const dmin = Math.min(...pts.map((q) => q[2]));
+      const near = pts.filter((q) => q[2] < dmin + 1);
+      if (near.length < 2) continue;
+      const low = near.reduce((a, q) => (q[1] < a[1] ? q : a));
+      const high = near.reduce((a, q) => (q[1] > a[1] ? q : a));
+      const du = high[0] - low[0];
+      const dz = high[1] - low[1];
+      if (Math.abs(du) < 100 || dz < 10) continue;
+      const apparent = (Math.atan2(dz, Math.abs(du)) * 180) / Math.PI;
+      if (Math.abs(apparent - p.slope) > 0.5) continue;
+      const text = `${p.slope.toLocaleString('sv-SE', { maximumFractionDigits: 1 })}°`;
+      const t = 0.55;
+      const B: Vec2 = [low[0] + du * t, low[1] + dz * t];
+      const toward = Math.sign(low[0] - high[0]);
+      if (level === 'sketch') {
+        // Gradtalet ovanför takfallet.
+        const nx = -dz;
+        const nz = Math.abs(du);
+        const l = Math.hypot(nx, nz);
+        out.push({ kind: 'text', at: [B[0] + (nx / l) * 3 * k * -toward, B[1] + (nz / l) * 3 * k], text, height, align: 'middle', pen: { weight: 0.18 }, origin });
+        continue;
+      }
+      const L = Math.max(600, Math.abs(du) * 0.35);
+      const R = L * 0.75;
+      out.push({ kind: 'line', a: B, b: [B[0] + toward * L, B[1]], pen: { weight: 0.18 }, origin });
+      const aH = toward > 0 ? 0 : Math.PI;
+      const aRoof = Math.atan2(low[1] - B[1], low[0] - B[0]);
+      const sweep = (((aRoof - aH) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      const [start, end] = sweep < Math.PI ? [aH, aRoof] : [aRoof, aH];
+      out.push({ kind: 'arc', center: B, radius: R, start, end, pen: { weight: 0.18 }, origin });
+      const am = (aH + aRoof) / 2 + (Math.abs(aRoof - aH) > Math.PI ? Math.PI : 0);
+      out.push({ kind: 'text', at: [B[0] + Math.cos(am) * (R + 2.5 * k), B[1] + Math.sin(am) * (R + 2.5 * k) - 1 * k], text, height, align: 'middle', pen: { weight: 0.18 }, origin });
+    }
+  }
+  return out;
 }
 
 /** Lodräta konturlinjer för väggmassan sedd i riktningen v. */
@@ -262,8 +357,10 @@ function levelMark(x: number, z: number, height: number): Primitive[] {
  * är för varje bit av linjen inne i formen en fyrhörning mellan under- och
  * ovansidan, minus de urtag (öppningar) som linjen går igenom.
  */
-export function cutSolid(s: Solid, O: Vec2, r: Vec2, v: Vec2, z0 = 0): Rings[] {
-  const inside = intervalsOnLine(s.rings, O, r, v);
+export function cutSolid(s: Solid, O: Vec2, r: Vec2, v: Vec2, z0 = 0, uMax = Infinity): Rings[] {
+  const inside = intervalsOnLine(s.rings, O, r, v)
+    .map(([a, b]): [number, number] => [Math.max(0, a), Math.min(uMax, b)])
+    .filter(([a, b]) => b > a);
   if (!inside.length) return [];
   const at = (u: number): Vec2 => [O[0] + r[0] * u, O[1] + r[1] * u];
   const zb = (u: number) => (s.bottom ? zOn(s.bottom, ...at(u)) : s.z0) + z0;

@@ -64,6 +64,7 @@ export class View3D {
   private previewGroup = new THREE.Group();
   private sun: THREE.DirectionalLight;
   private materials = new Map<string, THREE.Material>();
+  private clipPlanes: THREE.Plane[] = [];
   private edgeMaterial: THREE.LineBasicMaterial;
   private accentLine: THREE.LineBasicMaterial;
   private handleMaterial: THREE.MeshBasicMaterial;
@@ -87,6 +88,7 @@ export class View3D {
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
+    this.renderer.localClippingEnabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.domElement.className = 'view3d-canvas';
     host.appendChild(this.renderer.domElement);
@@ -160,6 +162,8 @@ export class View3D {
 
     for (const s of shapes) {
       if (s.kind === 'edges') {
+        // Glasmarkering och öppningssätt hör till ritningarna, inte till 3D.
+        if (s.drawingOnly) continue;
         const pos = new Float32Array(s.segments.flat());
         const geom = new THREE.BufferGeometry();
         geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -424,9 +428,37 @@ export class View3D {
         kind === 'glass'
           ? new THREE.MeshPhysicalMaterial({ color: MATERIAL_COLORS.glass, roughness: 0.05, transparent: true, opacity: 0.35 })
           : new THREE.MeshStandardMaterial({ color: MATERIAL_COLORS[kind], roughness: 0.92, side: THREE.DoubleSide });
+      m.clippingPlanes = this.clipPlanes;
+      m.clipShadows = true;
       this.materials.set(kind, m);
     }
     return m;
+  }
+
+  /**
+   * Klipp modellen längs en sektion (0.7.1): det som ligger bakom
+   * betraktaren, utanför linjens ändar eller bortom djupet syns inte. Null
+   * tar bort klippningen.
+   */
+  setClip(c: { start: readonly [number, number]; right: readonly [number, number]; view: readonly [number, number]; length: number; depth: number | null } | null): void {
+    const planes: THREE.Plane[] = [];
+    if (c) {
+      // Modellens (x, y, z) i mm blir (x, z, −y) i meter.
+      const plane = (n: readonly [number, number], p: readonly [number, number]) => new THREE.Plane(new THREE.Vector3(n[0], 0, -n[1]), -(n[0] * p[0] + n[1] * p[1]) * 0.001);
+      const at = (u: number, d: number): [number, number] => [c.start[0] + c.right[0] * u + c.view[0] * d, c.start[1] + c.right[1] * u + c.view[1] * d];
+      planes.push(plane(c.view, c.start));
+      planes.push(plane(c.right, c.start));
+      planes.push(plane([-c.right[0], -c.right[1]], at(c.length, 0)));
+      if (c.depth !== null) planes.push(plane([-c.view[0], -c.view[1]], at(0, c.depth)));
+    }
+    this.clipPlanes.length = 0;
+    this.clipPlanes.push(...planes);
+    for (const m of [...this.materials.values(), this.edgeMaterial, this.highlightMaterial]) {
+      m.clippingPlanes = this.clipPlanes;
+      m.clipShadows = true;
+      m.needsUpdate = true;
+    }
+    this.requestRender();
   }
 
   private resize(): void {

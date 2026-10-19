@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.7**; nästa är **0.8, ritningar, underlag och utskrift**.
+**0.7.1** (beta); nästa är **0.8, ritningar, underlag och utskrift**.
 
 ## Vad som fungerar
 
@@ -218,6 +218,67 @@ Version 0.7, fasader och sektioner (filformat 4):
 - Sneda väggar som slutar mot en annan väggs liv kapas längs livet
 - Fält, listor, kryssrutor och rullningslister har temats färger
 
+Version 0.7.1, beta (samma filformat):
+- Demo heter Beta. Knappen *Beta – Skicka synpunkter* i topraden, och
+  *Skicka synpunkter* i huvudmenyn vid Om, öppnar ett formulär. Inga
+  personuppgifter krävs; e-post bara om man vill ha svar. Skyddat mot spam
+  med ett dolt fält, en tidsspärr och högst fem meddelanden i timmen. Där
+  formuläret inte kan skickas (förhandsvisningen) öppnas ett mejl i stället.
+  Se *Synpunkter* under Publicera nedan
+- Snabbmenyn och Modifiera har samma utseende: ikon med kort text, och hela
+  namnet med förklaring när man håller muspekaren över
+- Visa-menyn: länk till Stilmall och ritningsgrafik, Öppningssätt, Taklutning
+  i fasad och sektion, Tak, och Fasader, Sektioner och Norrpil var för sig
+  (sparas per vy)
+- Detaljnivå i fasader och sektioner: Skiss visar hålen, Normal karm, båge,
+  dörrblad, handtag och foder, Detalj dessutom sammanfogningar, falsar och
+  fönsterbänk. Sammanfogningarna är tunna och grå
+- Linjetjocklek efter vad linjen är: hålens omfattning 0,35, karm, båge och
+  dörrblad 0,25, foder och handtag 0,18, sammanfogningar och glas 0,13 i grått,
+  marklinjen 0,7 (penntabellen kommer i 0.8)
+- Glasmarkering med tre tunna, grå snedstreck mitt i glaset
+- Öppningssätt för dörrar: streckade linjer med spetsen mot handtagssidan,
+  över hela hålet i Skiss och över dörrbladet i Normal och Detalj. Slås av
+  och på under Visa
+- Taklutningen sätts ut av sig själv där takfallet syns i sin lutning:
+  gradtalet i Skiss, vågrät linje, båge och gradtal i Normal och Detalj
+- Sektioner ritas bara så långt som linjen går, och med sektionen öppen och
+  3D bredvid (Båda) klipps 3D-modellen längs sektionen
+- Fasadmarkören i planen: heldragen linje, liten fylld triangel i mitten och
+  namnet (FASAD MOT SYD) litet och högerställt ovanför linjen, vridet efter
+  den. Sektionsmarkören: öppna pilar, ingen streckprickad linje, skaft lika
+  tjocka som ändarna och bokstaven ute vid linjens ände, vriden efter linjen
+  men aldrig upp och ned
+- Fasad- och sektionslinjer som placerats för hand har grepp i ändarna (med
+  förlängning, längd och vinkel som vid väggar), Längd och Vinkel i
+  egenskaperna och knappen Rikta efter objekt: klicka på en vägg eller linje,
+  så blir fasaden parallell och sektionen vinkelrät mot den (Shift för det
+  omvända)
+- Streckade linjer (t.ex. väggar som rivs) börjar och slutar med ett helt
+  streck i varje hörn, så att väggens två sidor ser likadana ut
+- Varning för nästan raka vinklar: väggar, sektions- och fasadlinjer, fast
+  inredning och taknockar som ligger inom 5° från 0°, 45° eller 90° utan att
+  vara exakta (mer än en halv millimeter fel i änden) får ett utropstecken i
+  planen och en rad i egenskaperna med knappen Räta upp. Gränsen ställs in
+  under Gränssnitt; 0 stänger av
+- Modifiera på takets kontur: lägg till, flytta och ta bort hörn, och
+  förskjut en kant
+- Avrunda och fasa stannar med ett besked om en dörr eller ett fönster
+  skulle hamna utanför väggen
+- Måttband (**L**): klicka punkter och se sträcka, total längd, vinkel och
+  yta i verktygsraden, med knappar för att kopiera värdena. Fungerar även i
+  fasader och sektioner
+- Spårlinjer: snäpp mot väggars förlängningar och mot linjer i x- och y-led
+  genom hörn nära markören, och där vinkellåset möter dem
+- Kopiera och klistra in (**Ctrl+C**, **Ctrl+V**, **Ctrl+X**), även mellan
+  projekt och flikar; typerna följer med. Inklistrat hamnar bredvid
+  originalet om det finns kvar, annars på samma ställe. Ctrl + dra drar en
+  kopia
+- Piltangenterna knuffar det markerade 10 mm, med Shift 100 mm (ändras
+  under Gränssnitt)
+- Zooma till område (**Z**, dra upp en ruta) och förra zoomen (**Shift+Z**),
+  också som knappar i statusraden
+
 ## Versioner och gamla projekt
 
 Projektfilerna har ett formatnummer. När formatet ändras uppgraderas äldre
@@ -289,6 +350,32 @@ innehållet upp ett steg, eller ändra adressen därefter.
 i ett nyare format. Sedan 0.6.2 skriver en äldre version aldrig över ett
 projekt som en nyare version har autosparat; statusraden visar då *Autospar
 låst*, och det man gör i den äldre versionen sparas som fil.
+
+### Synpunkter
+
+Formuläret *Skicka synpunkter* skickar till skriptet `feedback.php` som
+följer med i mappen `cad-apa`. Vart det skickas står inte i koden (den är
+öppen), utan i en egen fil som bara finns på servern:
+
+1. Skapa en textfil som heter `feedback-config.php` med innehållet
+
+   ```php
+   <?php return ['to' => 'ca@agrellarkitektur.se', 'from' => 'noreply@agrellarkitektur.se'];
+   ```
+
+   `to` är den som får synpunkterna. `from` ska vara en adress på samma
+   domän som webbplatsen, annars hamnar mejlen lätt i skräpposten.
+2. Ladda upp den **bredvid** mappen `cad-apa` (i samma mapp som `cad-apa`
+   ligger i, t.ex. `public_html`). Där ligger den kvar när `cad-apa` byts ut
+   vid en uppdatering. Det går också att lägga den i `cad-apa`, men då måste
+   den flyttas med vid varje uppdatering.
+3. Prova: öppna programmet, tryck *Beta – Skicka synpunkter*, skriv något och
+   skicka. Titta i skräpposten om inget kommer fram.
+
+Skriptet använder webbhotellets vanliga `mail()`. Kräver webbhotellet SMTP
+med inloggning för att skicka får skriptet byggas ut. Flyttar programmet
+till en annan domän: flytta `feedback-config.php` med och byt `from` till en
+adress på den nya domänen.
 
 ### Om något inte fungerar
 

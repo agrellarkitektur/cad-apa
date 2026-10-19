@@ -29,7 +29,7 @@ export function pickAt(pickables: readonly Pickable[], p: Vec2, tol: number): st
 /**
  * Element inom en rektangel. "window" kräver att elementet ligger helt
  * innanför (dra åt höger); "crossing" räcker att det berörs (dra åt vänster),
- * som i AutoCAD och ArchiCAD.
+ * som är vanligt i ritprogram.
  */
 export function pickInRect(pickables: readonly Pickable[], r: Bounds, mode: 'window' | 'crossing'): string[] {
   const ids: string[] = [];

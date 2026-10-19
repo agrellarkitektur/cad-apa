@@ -198,7 +198,7 @@ export const roofType: ElementType<RoofParams> = {
     const p = ctx.params<RoofParams>(el);
     const out: Shape3D[] = [];
     // Egna kantlinjer: takfallen möts i nocken utan synlig skarv i gaveln.
-    const edges: Edges3D = { kind: 'edges', id: el.id, segments: [] };
+    const edges: Edges3D = { kind: 'edges', id: el.id, segments: [], part: 'roof' };
     const corner = (q: Vec2) => p.outline.some((o) => Math.abs(o[0] - q[0]) < 0.6 && Math.abs(o[1] - q[1]) < 0.6);
     for (const rp of roofPlanes(p)) {
       const [z0] = planeRange(rp.under, rp.rings);

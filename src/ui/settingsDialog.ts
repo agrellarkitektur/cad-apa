@@ -71,6 +71,20 @@ export class SettingsDialog {
         if (s.screenInches === null) t.value = '';
         break;
       }
+      case 'anglewarn': {
+        const v = Number(t.value.replace(',', '.'));
+        if (Number.isFinite(v) && v >= 0 && v <= 20) s.angleWarn = v;
+        t.value = String(s.angleWarn);
+        break;
+      }
+      case 'nudge':
+      case 'nudgelarge': {
+        const v = Number(t.value.replace(',', '.'));
+        const key = t.dataset.setting === 'nudge' ? 'nudge' : 'nudgeLarge';
+        if (Number.isFinite(v) && v >= 1 && v <= 100000) s[key] = Math.round(v);
+        t.value = String(s[key]);
+        break;
+      }
       case 'sel-theme':
         s.selColor = t.checked ? null : themeColor('--sel');
         break;
@@ -137,6 +151,10 @@ export class SettingsDialog {
           <label class="check"><input type="checkbox" data-setting="grid"${s.grid ? ' checked' : ''}> Visa rutnät <span class="muted">(G)</span></label>
           <label class="check"><input type="checkbox" data-setting="pet"${s.petPalette ? ' checked' : ''}> Snabbmeny vid markören när något markeras med musen</label>
           <label class="check"><input type="checkbox" data-setting="autodims"${s.autoDims ? ' checked' : ''}> Måttsätt nya väggar och öppningar automatiskt när man jämför med befintligt</label>
+          <label class="field inline-field"><span>Varna för nästan raka vinklar, inom</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="0.5" inputmode="decimal" autocomplete="off" data-setting="anglewarn" value="${s.angleWarn}"><i>°</i></span></label>
+          <p class="note">Väggar, sektions- och fasadlinjer, fast inredning och taknockar som ligger nära 0°, 45° eller 90° utan att vara exakta markeras med ett utropstecken. 0 stänger av varningen.</p>
+          <label class="field inline-field"><span>Piltangenterna flyttar</span><span class="input-unit"><input type="text" data-expr data-step="1" inputmode="decimal" autocomplete="off" data-setting="nudge" value="${s.nudge}"><i>mm</i></span></label>
+          <label class="field inline-field"><span>Med Shift</span><span class="input-unit"><input type="text" data-expr data-step="10" inputmode="decimal" autocomplete="off" data-setting="nudgelarge" value="${s.nudgeLarge}"><i>mm</i></span></label>
         </section>
         <section>
           <h3>Skärmen</h3>

@@ -179,3 +179,46 @@ på bladet sina egna.
   `offsetWalls`, `multiplyElements`, `mirrorAbout`). Paletten och verktyget
   som förhandsvisar och utför ligger i `src/ui/modify.ts`; Markera anropar
   `host.modify` vid klick (utan drag) på något som redan är markerat.
+
+## Linjer, markörer och verktyg (0.7.1, samma format)
+
+- **Kanternas sort.** `Edges3D` har `part` (`wall`, `hole`, `roof`, `frame`,
+  `sash`, `leaf`, `lining`, `handle`, `sill`, `joint`, `glass`, `swing`),
+  `dash` och `drawingOnly` (bara på ritningen, inte i 3D). `buildSection`
+  ger linjen pennan ur `PART_PEN` i `src/repr/section.ts`; den tabellen blir
+  penntabellen i stilmallen i 0.8. Nya delar av dörrar och fönster får en
+  egen `part`.
+- **Dörrar och fönster i fasad och sektion** byggs av `doorModel` och
+  `windowModel` i `src/elements/openingModel.ts`, efter detaljnivå. Skiss
+  har en osynlig skiva i hålet så att man inte ser in i huset.
+- **Sektionens längd.** Allt klipps till u ∈ [0, linjens längd]
+  (`clipSegAxis`, `clipPlane` i `hiddenLine.ts`, `cutSolid(…, uMax)`).
+  `View3D.setClip` klipper 3D-vyn med samma ramar.
+- **Taklutning** (`roofSlopes` i `section.ts`) sätts bara ut där takfallets
+  kant närmast betraktaren har sin rätta lutning, och döljs med
+  `view.hide: ['roofSlope']`. Öppningssätt döljs med `'swing'`.
+- **Text längs linjer** vrids med `readableAngle` i `src/elements/markers.ts`
+  så att den aldrig hamnar upp och ned.
+- **Streckning** (`dashed` i `src/view2d/renderPrimitives.ts`) ritas sträcka
+  för sträcka med mönstret töjt så att varje sträcka börjar och slutar med
+  ett helt streck.
+- **Nästan raka vinklar**: `skewOf`/`skewWarnings` i
+  `src/elements/angleCheck.ts`. Exakt = högst `EXACT_MM` (0,5 mm) fel i
+  änden. Gränsen i grader är en inställning i Gränssnitt (`angleWarn`).
+- **Takets kontur**: `insertNode`, `moveNode`, `removeNode` och `offsetEdge`
+  i `src/core/roofEdit.ts`; Modifiera känner igen hörn och kanter på
+  markerade tak (`ModifyContext.roofId`, `index`).
+- **Avrunda och fasa** stoppas av `openingsInCorner` i `src/core/wallEdit.ts`.
+- **Urklipp**: `copyPayload`, `parsePayload` och `pasteClip` i
+  `src/core/clipboard.ts`. Urklippet är JSON med `kind: 'bacchus-clip'` och
+  formatnumret, och tar med typerna. Typer med samma littera och elementtyp
+  återanvänds. Ett urklipp från ett nyare format tas inte emot; ändras
+  formatet ska `pasteClip` migrera äldre urklipp som filerna.
+- **Snäpp**: spårlinjer (`trackLines` i `src/ui/tools/snap.ts`) ger
+  `kind: 'track'` med `guides`. Måttbandet och Zooma till område ligger i
+  `src/ui/tools/measureTool.ts`, Rikta efter objekt i
+  `src/ui/tools/markerTools.ts` (`AlignTool`). Förra zoomen sparas i
+  `PlanView` (`previousZoom`).
+- **Synpunkter**: `src/ui/feedbackDialog.ts` skickar till
+  `public/feedback.php`, som läser mottagaren ur `feedback-config.php` i
+  samma mapp eller mappen ovanför (aldrig i koden).

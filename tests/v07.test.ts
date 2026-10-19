@@ -129,9 +129,10 @@ describe('fasader och sektioner (0.7)', () => {
     const { buildSection } = await import('../src/repr/section');
     const doc = sampleProject();
     const view = { state: 'st-a', compareTo: 'st-bef' };
+    const ids = ['fasad-1', 'fasad-2', 'fasad-3', 'fasad-4', 'sektion-a'];
     // Första gången kompileras koden; mät sedan.
-    buildSection(doc, 'sektion-a', view);
-    for (const id of ['fasad-1', 'fasad-2', 'fasad-3', 'fasad-4', 'sektion-a']) {
+    for (const id of ids) buildSection(doc, id, view);
+    for (const id of ids) {
       const r = buildSection(doc, id, view)!;
       expect(r.prims.length).toBeGreaterThan(20);
       expect(r.ms).toBeLessThan(100);

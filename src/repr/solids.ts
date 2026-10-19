@@ -47,11 +47,23 @@ export interface Cut3D {
   z1: number;
 }
 
+/**
+ * Vad en kantlinje är, för linjetjockleken i fasader och sektioner (0.7.1):
+ * hålets omfattning ritas tjockast, karm och båge tunnare, sammanfogningar
+ * och glasmarkering tunnast och grå.
+ */
+export type EdgePart = 'wall' | 'hole' | 'roof' | 'frame' | 'sash' | 'leaf' | 'lining' | 'handle' | 'sill' | 'joint' | 'glass' | 'swing';
+
 /** Kantlinjer i 3D: par av punkter (mm, z uppåt). */
 export interface Edges3D {
   kind: 'edges';
   id: string;
   segments: [x1: number, y1: number, z1: number, x2: number, y2: number, z2: number][];
+  part?: EdgePart;
+  /** Streckning på papper (mm), t.ex. öppningssätt. */
+  dash?: readonly number[];
+  /** Bara i ritningar (fasad, sektion), inte i 3D-vyn: glasmarkering, öppningssätt. */
+  drawingOnly?: boolean;
 }
 
 export type Shape3D = Solid | Edges3D;

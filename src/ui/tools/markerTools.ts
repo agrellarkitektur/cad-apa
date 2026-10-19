@@ -1,4 +1,4 @@
-import { addElement } from '../../core/commands';
+import { addElement, updateParams } from '../../core/commands';
 import type { MarkerParams } from '../../elements/markers';
 import type { RoofParams } from '../../elements/roof';
 import { dist, left, norm, sub } from '../../geometry/vec';
@@ -7,13 +7,13 @@ import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { pxToMm, type ToolHost } from './host';
 import { lengthLabel, snapMarker } from './overlay';
-import { roundMm, snap, type SnapResult } from './snap';
+import { roundMm, snap, type SnapResult, type SnapSegment } from './snap';
 
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 
 /**
  * Sektion och fasad (0.7): klicka linjens början och slut, och sedan på den
- * sida som ska synas, som ögat i ArchiCAD. Sektioner får nästa lediga
+ * sida som ska synas. Sektioner får nästa lediga
  * bokstav; fasader namnges efter väderstrecket de vetter mot.
  */
 export class MarkerTool implements ViewTool {
@@ -231,4 +231,86 @@ function rect(a: Vec2, b: Vec2): [number, number][] {
     [x1, y1],
     [x0, y1],
   ];
+}
+
+/**
+ * Rikta efter objekt (0.7.1): klicka på en vägg eller linje, så vrids en
+ * sektions- eller fasadlinje runt sin mitt. Fasader blir parallella med det
+ * man klickar på och sektioner vinkelräta; med Shift tvärtom. Blickriktningen
+ * behålls så långt det går.
+ */
+export class AlignTool implements ViewTool {
+  cursor = 'pointer';
+  private host: ToolHost;
+  private hoverSeg: SnapSegment | null = null;
+  /** Linjen som ska riktas. */
+  target: string | null = null;
+  onDone?: (aligned: boolean) => void;
+
+  constructor(host: ToolHost) {
+    this.host = host;
+  }
+
+  down(): 'capture' {
+    return 'capture';
+  }
+
+  hover(p: ViewPointer | null): void {
+    this.hoverSeg = p ? this.segAt(p) : null;
+  }
+
+  drag(p: ViewPointer): void {
+    this.hoverSeg = this.segAt(p);
+  }
+
+  up(p: ViewPointer): void {
+    const seg = this.segAt(p);
+    const el = this.target ? this.host.store.doc.elements[this.target] : undefined;
+    if (!seg || !el) {
+      this.onDone?.(false);
+      return;
+    }
+    const mp = el.params as unknown as MarkerParams;
+    const parallel = (el.type === 'Elevation') !== p.shift;
+    let dir = norm(sub(seg.b, seg.a));
+    if (!parallel) dir = left(dir);
+    // Välj den av de två riktningarna som ligger närmast den nuvarande.
+    const cur = norm(sub(mp.end, mp.start));
+    if (dir[0] * cur[0] + dir[1] * cur[1] < 0) dir = [-dir[0], -dir[1]];
+    const half = dist(mp.start, mp.end) / 2;
+    const m: Vec2 = [(mp.start[0] + mp.end[0]) / 2, (mp.start[1] + mp.end[1]) / 2];
+    const start = roundMm([m[0] - dir[0] * half, m[1] - dir[1] * half]);
+    const end = roundMm([m[0] + dir[0] * half, m[1] + dir[1] * half]);
+    updateParams(this.host.store, [el.id], { start: [start[0], start[1]], end: [end[0], end[1]] }, 'Rikta efter objekt');
+    this.onDone?.(true);
+  }
+
+  cancel(): void {
+    this.hoverSeg = null;
+  }
+
+  private segAt(p: ViewPointer): SnapSegment | null {
+    const tol = pxToMm(this.host, p.pointerType === 'touch' ? 18 : 10);
+    let best: { s: SnapSegment; d: number } | null = null;
+    for (const s of this.host.snapSegments()) {
+      if (s.id === this.target) continue;
+      const d = distToSeg(p.model, s.a, s.b);
+      if (d <= tol && (!best || d < best.d)) best = { s, d };
+    }
+    return best?.s ?? null;
+  }
+
+  overlay(cam: Camera): string {
+    if (!this.hoverSeg) return '';
+    const a = cam.toScreen(this.hoverSeg.a);
+    const b = cam.toScreen(this.hoverSeg.b);
+    return `<path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}" class="snap-guide align-pick"/>`;
+  }
+}
+
+function distToSeg(p: Vec2, a: Vec2, b: Vec2): number {
+  const d = sub(b, a);
+  const l2 = d[0] * d[0] + d[1] * d[1];
+  const t = l2 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * d[0] + (p[1] - a[1]) * d[1]) / l2)) : 0;
+  return dist(p, [a[0] + d[0] * t, a[1] + d[1] * t]);
 }

@@ -1,4 +1,6 @@
-import { moveElements, moveWallEnd } from '../../core/commands';
+import { moveElements, moveWallEnd, updateParams } from '../../core/commands';
+import { multiplyElements } from '../../core/wallEdit';
+import type { Element } from '../../core/model';
 import { add, angleDeg, dist, dot, norm, scale, sub } from '../../geometry/vec';
 import type { WallParams } from '../../elements/wall';
 import type { Pickable } from '../../repr/plan';
@@ -15,7 +17,9 @@ const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 const GRIP_PX = 14;
 
 interface Grip {
+  /** Väggen eller sektions- eller fasadlinjen vars ände dras. */
   wallId: string;
+  kind: 'wall' | 'marker';
   end: 'start' | 'end';
   from: Vec2;
   /** Andra markerade väggar vars ände ligger i samma punkt; de följer med. */
@@ -45,6 +49,8 @@ export class SelectTool implements ViewTool {
   private box: { a: Vec2; b: Vec2 } | null = null;
   private grip: Grip | null = null;
   private move: Move | null = null;
+  /** Ctrl hålls ned medan något dras: det blir en kopia. */
+  private copying = false;
   /** Elementet under muspekaren. */
   hoverId: string | null = null;
   /** Förra klicket, för att känna igen dubbelklick. */
@@ -74,7 +80,8 @@ export class SelectTool implements ViewTool {
     }
     // Trycker man på något som redan är markerat flyttas markeringen.
     const hit = pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, p.pointerType === 'touch' ? 14 : 6));
-    if (hit && this.host.selection.has(hit) && !p.shift && !p.mod) {
+    // Med Ctrl (Cmd på Mac) blir det en kopia som dras.
+    if (hit && this.host.selection.has(hit) && !p.shift) {
       // Trycker man nära ett hörn på det markerade blir hörnet baspunkt, så
       // att det kan läggas exakt mot ett annat hörn.
       const base = snap({ cursor: p.model, segments: this.host.snapSegments(), tol: pxToMm(this.host, p.pointerType === 'touch' ? 20 : 10) });
@@ -87,6 +94,7 @@ export class SelectTool implements ViewTool {
   }
 
   drag(p: ViewPointer): void {
+    this.copying = p.mod;
     const tol = pxToMm(this.host, p.pointerType === 'touch' ? 18 : 12);
     if (this.grip) {
       const exclude = new Set([this.grip.wallId, ...this.grip.companions.map((c) => c.id)]);
@@ -139,9 +147,14 @@ export class SelectTool implements ViewTool {
       this.grip = null;
       if (moved && g.snap && fixed) {
         const ids = g.companions.map((c) => c.id);
-        moveWallEnd(this.host.store, g.wallId, g.end, roundMm(g.snap.point), { label: 'Dra väggände', connected: ids });
-        this.host.wallEndMoved?.(g.wallId, g.end, dist(fixed, g.from), ids);
-      } else if (!moved) {
+        if (g.kind === 'marker') {
+          const pt = roundMm(g.snap.point);
+          updateParams(this.host.store, [g.wallId], { [g.end]: [pt[0], pt[1]] }, 'Dra linjens ände');
+        } else {
+          moveWallEnd(this.host.store, g.wallId, g.end, roundMm(g.snap.point), { label: 'Dra väggände', connected: ids });
+          this.host.wallEndMoved?.(g.wallId, g.end, dist(fixed, g.from), ids);
+        }
+      } else if (!moved && g.kind === 'wall') {
         // Klick på en ände: Modifiera med Sträck, och för hörn Avrunda och Fasa.
         this.host.modify?.(p, null);
       }
@@ -152,6 +165,11 @@ export class SelectTool implements ViewTool {
       this.move = null;
       if (moved && m.target) {
         const d = sub(roundMm(m.target.point), roundMm(m.base));
+        if (p.mod) {
+          const ids = multiplyElements(this.host.store, m.ids, [d[0], d[1]], 1, 'Kopiera');
+          this.host.selection.set(ids);
+          return;
+        }
         // Alt lossar väggen från sina anslutningar; annars följer de med.
         const r = moveElements(this.host.store, m.ids, [d[0], d[1]], 'Flytta', { keepJoins: !p.alt });
         if (r.released) this.host.hint(releasedHint(r.released), 4000);
@@ -251,7 +269,7 @@ export class SelectTool implements ViewTool {
         out.push(`<path d="M${sa[0]} ${sa[1]}L${sb[0]} ${sb[1]}" class="snap-guide flush"/>`);
       }
       out.push(snapMarker(cam, this.move.target));
-      out.push(lengthLabel(cam, this.move.base, this.move.target.point, `${nf.format(Math.round(Math.hypot(d[0], d[1])))} mm  ${fmtAngle(angleDeg(d))}`));
+      out.push(lengthLabel(cam, this.move.base, this.move.target.point, `${this.copying ? 'Kopia  ' : ''}${nf.format(Math.round(Math.hypot(d[0], d[1])))} mm  ${fmtAngle(angleDeg(d))}`));
     }
     return out.join('');
   }
@@ -295,18 +313,19 @@ export class SelectTool implements ViewTool {
       .flatMap((p) => p.regions.map((rings) => rings[0]).filter(Boolean));
   }
 
-  /** Grepp i ändarna på markerade väggar. */
-  private gripAt(pt: Vec2): { wallId: string; end: 'start' | 'end'; from: Vec2 } | null {
+  /** Grepp i ändarna på markerade väggar och på sektions- och fasadlinjer som placerats för hand. */
+  private gripAt(pt: Vec2): { wallId: string; kind: 'wall' | 'marker'; end: 'start' | 'end'; from: Vec2 } | null {
     const tol = pxToMm(this.host, GRIP_PX);
     const doc = this.host.store.doc;
-    let best: { wallId: string; end: 'start' | 'end'; from: Vec2; d: number } | null = null;
+    let best: { wallId: string; kind: 'wall' | 'marker'; end: 'start' | 'end'; from: Vec2; d: number } | null = null;
     for (const id of this.host.selection.list()) {
       const el = doc.elements[id];
-      if (el?.type !== 'Wall') continue;
+      const kind = el?.type === 'Wall' ? 'wall' : isManualMarker(el) ? 'marker' : null;
+      if (!kind) continue;
       const p = el.params as unknown as WallParams;
       for (const end of ['start', 'end'] as const) {
         const d = dist(p[end], pt);
-        if (d <= tol && (!best || d < best.d)) best = { wallId: id, end, from: p[end], d };
+        if (d <= tol && (!best || d < best.d)) best = { wallId: id, kind, end, from: p[end], d };
       }
     }
     return best;
@@ -316,6 +335,7 @@ export class SelectTool implements ViewTool {
   private companionsAt(wallId: string, at: Vec2): Grip['companions'] {
     const doc = this.host.store.doc;
     const out: Grip['companions'] = [];
+    if (doc.elements[wallId]?.type !== 'Wall') return out;
     for (const id of this.host.selection.list()) {
       if (id === wallId) continue;
       const el = doc.elements[id];
@@ -335,6 +355,11 @@ export class SelectTool implements ViewTool {
     const p = el.params as unknown as WallParams;
     return this.grip.end === 'start' ? p.end : p.start;
   }
+}
+
+/** En sektions- eller fasadlinje som placerats för hand och har grepp i ändarna. */
+export function isManualMarker(el: Element | undefined): el is Element {
+  return !!el && (el.type === 'Section' || el.type === 'Elevation') && !el.params.auto;
 }
 
 export function releasedHint(n: number): string {

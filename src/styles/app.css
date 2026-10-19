@@ -3726,3 +3726,228 @@ input[type='range'] {
 .app[data-place='section'] .plan .grid {
   display: none;
 }
+
+/* ---------- Beta och synpunkter (0.7.1) ---------- */
+
+.topbar .beta-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 3px 8px 3px;
+  line-height: 1.05;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+
+.topbar .beta-btn b {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.topbar .beta-btn small {
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  opacity: 0.85;
+}
+
+.topbar .beta-btn:hover {
+  background: var(--accent-soft);
+}
+
+.dialog.feedback {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.dialog.feedback textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: 400 14px var(--font-ui);
+  padding: 8px;
+  resize: vertical;
+}
+
+.dialog.feedback input[type='email'] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fb-trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.fb-status {
+  min-height: 1.2em;
+  margin: 0;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+/* Modifiera har samma utseende som snabbmenyn (0.7.1). */
+.pet-palette.modify-palette {
+  z-index: 45;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  max-width: min(640px, calc(100% - 16px));
+}
+
+.modify-palette .mp-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.modify-palette .qb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.modify-palette .qb-btn svg {
+  width: 19px;
+  height: 19px;
+}
+
+.modify-palette .mp-op[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.modify-palette .mp-close {
+  min-width: 30px;
+  border-color: transparent;
+  background: transparent;
+}
+
+.modify-palette .mp-sep {
+  align-self: stretch;
+  height: auto;
+}
+
+@media (max-width: 720px) {
+  .modify-palette .mp-row {
+    flex-wrap: wrap;
+  }
+  .modify-palette .qb-title {
+    display: none;
+  }
+}
+
+/* Nästan raka vinklar (0.7.1). */
+.skew-mark path {
+  fill: #f2b233;
+  stroke: #6b4a00;
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+.skew-mark text {
+  font: 700 10px/1 var(--font-ui, system-ui, sans-serif);
+  fill: #2b1d00;
+}
+.skew-note {
+  margin: 0 16px 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, #f2b233 18%, var(--panel-bg));
+  border: 1px solid color-mix(in srgb, #f2b233 55%, transparent);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.skew-note b {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #f2b233;
+  color: #2b1d00;
+}
+.skew-note .btn {
+  margin-top: 6px;
+}
+.snap-guide.align-pick {
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-dasharray: none;
+  opacity: 0.8;
+}
+
+/* Måttband (0.7.1). */
+.measure-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-dasharray: 6 3;
+}
+.measure-area {
+  fill: color-mix(in srgb, var(--accent) 12%, transparent);
+  stroke: none;
+}
+.measure-grid {
+  display: inline-grid;
+  grid-template-columns: repeat(5, auto);
+  gap: 4px 14px;
+}
+.measure-val {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  column-gap: 2px;
+}
+.app .measure-val > span:first-child {
+  display: block;
+  grid-column: 1 / -1;
+}
+.measure-val b {
+  font-family: var(--font-data, ui-monospace, monospace);
+  font-weight: 600;
+  min-width: 6.5em;
+  white-space: nowrap;
+}
+@media (max-width: 720px) {
+  .measure-grid {
+    grid-template-columns: repeat(3, auto);
+    gap: 2px 8px;
+  }
+  .measure-val b {
+    min-width: 0;
+    font-size: 12px;
+  }
+  .app .measure-val > span:first-child {
+    font-size: 9px;
+  }
+  .measure-val .icon-btn {
+    width: 22px;
+    height: 22px;
+  }
+}
+.measure-val .icon-btn {
+  width: 26px;
+  height: 26px;
+}
+.measure-val .icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+.zoom-box {
+  fill: color-mix(in srgb, var(--accent) 8%, transparent);
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.snap-guide.track {
+  stroke-dasharray: 2 4;
+  opacity: 0.85;
+}

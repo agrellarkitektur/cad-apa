@@ -44,19 +44,25 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
   for (const p of prims) {
     switch (p.kind) {
       case 'line': {
+        if (p.pen.dash?.length) {
+          out.push(dashed([p.a, p.b], false, p.pen, cam, paperToPx));
+          break;
+        }
         const a = cam.toScreen(p.a);
         const b = cam.toScreen(p.b);
         out.push(`<path d="M${f(a[0])} ${f(a[1])}L${f(b[0])} ${f(b[1])}" ${stroke(p.pen, paperToPx)} fill="none"/>`);
         break;
       }
       case 'polyline': {
-        out.push(`<path d="${ring(p.points, cam, p.closed)}" ${stroke(p.pen, paperToPx)} fill="none"/>`);
+        if (p.pen.dash?.length) out.push(dashed(p.points, p.closed, p.pen, cam, paperToPx));
+        else out.push(`<path d="${ring(p.points, cam, p.closed)}" ${stroke(p.pen, paperToPx)} fill="none"/>`);
         break;
       }
       case 'region': {
         const d = p.rings.map((r) => ring(r, cam, true)).join('');
         if (p.fill.kind !== 'none') out.push(`<path d="${d}" fill-rule="evenodd" ${fillAttr(p.fill)}/>`);
-        if (p.outline) out.push(`<path d="${d}" fill="none" ${stroke(p.outline, paperToPx)}/>`);
+        if (p.outline?.dash?.length) for (const r of p.rings) out.push(dashed(r, true, p.outline, cam, paperToPx));
+        else if (p.outline) out.push(`<path d="${d}" fill="none" ${stroke(p.outline, paperToPx)}/>`);
         break;
       }
       case 'arc': {
@@ -129,6 +135,40 @@ function stroke(pen: Pen, paperToPx: number): string {
     s += ` stroke-dasharray="${dash}"`;
   }
   return s;
+}
+
+/**
+ * Streckad linje genom punkter, sträcka för sträcka. Mönstret töjs lite på
+ * varje sträcka så att den börjar och slutar med ett helt streck: då möts
+ * strecken i hörnen och de två sidorna av en riven vägg blir lika.
+ */
+function dashed(points: readonly (readonly [number, number])[], closed: boolean, pen: Pen, cam: Camera, paperToPx: number): string {
+  const base = pen.dash!.map((d) => Math.max(2, d * paperToPx));
+  // Ett udda antal värden upprepas i SVG två gånger; gör det jämnt.
+  const pattern = base.length % 2 ? [...base, ...base] : base;
+  const period = pattern.reduce((a, b) => a + b, 0);
+  const first = pattern[0];
+  const w = Math.max(0.75, pen.weight * 4);
+  const style = `style="stroke:${color(pen.color ?? 'ink')}" stroke-width="${f(w)}" stroke-linecap="round" fill="none"`;
+  const pts = points.map((q) => cam.toScreen(q));
+  if (closed && pts.length > 2) pts.push(pts[0]);
+  const parts: string[] = [];
+  for (let i = 0; i + 1 < pts.length; i++) {
+    const a = pts[i];
+    const b = pts[i + 1];
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (len < 0.5) continue;
+    const d = `M${f(a[0])} ${f(a[1])}L${f(b[0])} ${f(b[1])}`;
+    const n = Math.round((len - first) / period);
+    if (n < 1) {
+      // För kort för ett mönster: ett streck i varje ände och ett mellanrum.
+      parts.push(len > first * 1.6 ? `<path d="${d}" ${style} stroke-dasharray="${f(len * 0.38)} ${f(len * 0.24)}"/>` : `<path d="${d}" ${style}/>`);
+      continue;
+    }
+    const k = len / (n * period + first);
+    parts.push(`<path d="${d}" ${style} stroke-dasharray="${pattern.map((x) => f(x * k)).join(' ')}"/>`);
+  }
+  return parts.join('');
 }
 
 function normalizeAngle(a: number): number {

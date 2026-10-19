@@ -88,6 +88,11 @@ export interface UiSettings {
   panelMode: PaneMode;
   /** Hur en kalkerad vy ritas: ovanpå eller under, färg (null = tonad som ritningen) och opacitet. */
   trace: TraceLook;
+  /** Varna för vinklar som ligger så här många grader från 0°, 45° eller 90° utan att vara exakta; 0 = av. */
+  angleWarn: number;
+  /** Piltangenterna flyttar det markerade så här långt, och med Shift det större steget, mm. */
+  nudge: number;
+  nudgeLarge: number;
 }
 
 export type PaneMode = 'open' | 'min' | 'closed';
@@ -118,6 +123,9 @@ export function defaultUiSettings(): UiSettings {
     navMode: 'open',
     panelMode: 'open',
     trace: { ...DEFAULT_TRACE },
+    angleWarn: 5,
+    nudge: 10,
+    nudgeLarge: 100,
   };
 }
 
@@ -141,10 +149,18 @@ export function loadUiSettings(): UiSettings {
       navMode: paneMode(raw.navMode),
       panelMode: paneMode(raw.panelMode),
       trace: traceLook(raw.trace),
+      angleWarn: num(raw.angleWarn, 0, 20, d.angleWarn),
+      nudge: num(raw.nudge, 1, 10000, d.nudge),
+      nudgeLarge: num(raw.nudgeLarge, 1, 100000, d.nudgeLarge),
     };
   } catch {
     return d;
   }
+}
+
+function num(v: unknown, min: number, max: number, fallback: number): number {
+  const n = Number(v);
+  return v !== undefined && v !== null && Number.isFinite(n) && n >= min && n <= max ? n : fallback;
 }
 
 function paneMode(v: unknown): PaneMode {
@@ -210,15 +226,20 @@ export const SHORTCUTS: [string, string][] = [
   ['R', 'Rum: klicka i ett utrymme'],
   ['M', 'Mått: klicka punkter, dubbelklicka, placera linjen'],
   ['T', 'Text'],
+  ['L', 'Måttband: mät avstånd, vinklar och ytor utan att rita'],
   ['Esc', 'Avbryt kommandot, sedan verktyget; i Markera avmarkerar den'],
   ['Enter', 'Avsluta väggen, eller bekräfta ett inskrivet mått'],
   ['Siffror', 'Skriv en längd medan du ritar en vägg'],
   ['Shift', 'Lås vinkeln till 45° när du ritar eller drar; lägg till i markeringen'],
   ['Delete', 'Ta bort det markerade'],
+  ['Ctrl+C / Ctrl+V', 'Kopiera och klistra in, även mellan projekt (typerna följer med)'],
+  ['Ctrl + dra', 'Dra en kopia av det markerade'],
+  ['Piltangenterna', 'Knuffa det markerade 10 mm, med Shift 100 mm (ändras under Gränssnitt)'],
   ['Ctrl+Z', 'Ångra'],
   ['Ctrl+Shift+Z, Ctrl+Y', 'Gör om'],
   ['F', 'Zooma till allt'],
   ['+ / −', 'Zooma in och ut'],
+  ['Z / Shift+Z', 'Zooma till ett område du drar upp / tillbaka till förra zoomen'],
   ['G', 'Visa eller dölj rutnätet'],
   ['S', 'Snäppning av eller på'],
   ['P', 'Visa eller dölj egenskaperna'],

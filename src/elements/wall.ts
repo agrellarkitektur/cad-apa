@@ -361,7 +361,7 @@ export const wallType: ElementType<WallParams> = {
         // Öppningens omfattning på båda sidor och djupet i smygen.
         const s1 = o.at - o.width / 2;
         const s2 = o.at + o.width / 2;
-        const seg: Edges3D = { kind: 'edges', id: el.id, segments: [] };
+        const seg: Edges3D = { kind: 'edges', id: el.id, segments: [], part: 'hole' };
         // I bågväggar är hålet rakt; omfattningen ligger där hålet möter livet.
         const lf = f.local(o.at);
         const pt = (s: number, off: number, z: number): [number, number, number] => {
@@ -452,7 +452,7 @@ function wallEdges(pieces: WallPiece[]): Edges3D[] {
 
   const out: Edges3D[] = [];
   for (const g of merged) {
-    const e: Edges3D = { kind: 'edges', id: g.id, segments: [] };
+    const e: Edges3D = { kind: 'edges', id: g.id, segments: [], part: 'wall' };
     for (const poly of g.polys) {
       for (const ring of poly) {
         for (let i = 0; i < ring.length; i++) {

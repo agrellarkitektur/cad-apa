@@ -211,7 +211,56 @@ export class PlanView {
 
   private changed(): void {
     this.requestRender();
+    this.noteZoom();
     this.events.onViewChange?.(this.camera);
+  }
+
+  // Förra zoomen (0.7.1): kameran sparas när den legat still en stund, och
+  // läget innan en ändring läggs på en stapel.
+  private zoomStack: { center: Vec2; scale: number }[] = [];
+  private settled: { center: Vec2; scale: number } | null = null;
+  private settleTimer = 0;
+  private restoring = false;
+
+  private noteZoom(): void {
+    const now = { center: [this.camera.center[0], this.camera.center[1]] as Vec2, scale: this.camera.scale };
+    if (!this.settled) {
+      this.settled = now;
+      return;
+    }
+    const s = this.settled;
+    const same = Math.abs(s.scale - now.scale) < 1e-9 && Math.abs(s.center[0] - now.center[0]) < 1e-6 && Math.abs(s.center[1] - now.center[1]) < 1e-6;
+    if (same) return;
+    if (!this.settleTimer && !this.restoring) {
+      this.zoomStack.push(s);
+      if (this.zoomStack.length > 30) this.zoomStack.shift();
+    }
+    clearTimeout(this.settleTimer);
+    this.settleTimer = window.setTimeout(() => {
+      this.settleTimer = 0;
+      this.settled = { center: [this.camera.center[0], this.camera.center[1]], scale: this.camera.scale };
+    }, 450);
+  }
+
+  /** Tillbaka till läget före den senaste zoomningen eller panoreringen. Falskt om det inte finns något. */
+  previousZoom(): boolean {
+    clearTimeout(this.settleTimer);
+    this.settleTimer = 0;
+    const prev = this.zoomStack.pop();
+    if (!prev) return false;
+    this.camera.center = [prev.center[0], prev.center[1]];
+    this.camera.scale = prev.scale;
+    this.settled = prev;
+    this.restoring = true;
+    this.changed();
+    this.restoring = false;
+    return true;
+  }
+
+  /** Visa precis ett område (mm), t.ex. en ruta man dragit upp. */
+  zoomToArea(b: { minX: number; minY: number; maxX: number; maxY: number }): void {
+    this.camera.fit(b, 8);
+    this.changed();
   }
 
   private render(): void {
@@ -380,7 +429,7 @@ export class PlanView {
       }
     });
 
-    // Hjulet zoomar kring pekaren, som i ArchiCAD och AutoCAD.
+    // Hjulet zoomar kring pekaren.
     // Nypning på styrplattan kommer som hjul med ctrlKey och får högre känslighet.
     svg.addEventListener(
       'wheel',

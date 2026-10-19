@@ -61,11 +61,20 @@ export function renderHighlight(
   }
   for (const id of selected) {
     const el = doc.elements[id];
-    if (el?.type !== 'Wall') continue;
+    if (el?.type !== 'Wall' && !((el?.type === 'Section' || el?.type === 'Elevation') && !el.params.auto)) continue;
     const p = el.params as unknown as WallParams;
     for (const pt of [p.start, p.end]) {
       const s = cam.toScreen(pt);
       out.push(`<circle cx="${s[0]}" cy="${s[1]}" r="6" class="grip"/>`);
+    }
+  }
+  // Hörnen i markerade taks kontur.
+  for (const id of selected) {
+    const el = doc.elements[id];
+    if (el?.type !== 'Roof') continue;
+    for (const pt of el.params.outline as Vec2[]) {
+      const s = cam.toScreen(pt);
+      out.push(`<rect x="${s[0] - 4.5}" y="${s[1] - 4.5}" width="9" height="9" class="grip"/>`);
     }
   }
   return out.join('');

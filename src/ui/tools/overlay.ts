@@ -12,6 +12,11 @@ export function snapMarker(cam: Camera, s: SnapResult): string {
     const b = cam.toScreen(s.guide[1]);
     out.push(`<path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}" class="snap-guide"/>`);
   }
+  for (const g of s.guides ?? []) {
+    const a = cam.toScreen(g[0]);
+    const b = cam.toScreen(g[1]);
+    out.push(`<path d="M${a[0]} ${a[1]}L${b[0]} ${b[1]}" class="snap-guide track"/><circle cx="${a[0]}" cy="${a[1]}" r="3" class="snap-dot"/>`);
+  }
   switch (s.kind) {
     case 'endpoint':
     case 'start':
@@ -25,6 +30,9 @@ export function snapMarker(cam: Camera, s: SnapResult): string {
       break;
     case 'intersection':
       out.push(`<path d="M${x - 6} ${y - 6}L${x + 6} ${y + 6}M${x + 6} ${y - 6}L${x - 6} ${y + 6}" class="snap-mark"/>`);
+      break;
+    case 'track':
+      out.push(`<path d="M${x - 6} ${y}H${x + 6}M${x} ${y - 6}V${y + 6}" class="snap-mark"/>`);
       break;
     case 'on-wall':
       out.push(`<circle cx="${x}" cy="${y}" r="5" class="snap-mark"/>`);

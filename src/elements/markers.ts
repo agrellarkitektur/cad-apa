@@ -1,6 +1,6 @@
 import type { Element, ProjectDoc } from '../core/model';
 import { left, norm, sub } from '../geometry/vec';
-import type { Primitive, Vec2 } from '../repr/primitives';
+import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
 import type { RoofParams } from './roof';
 
@@ -143,21 +143,29 @@ export function markerTag(doc: ProjectDoc, el: Element<any>): string {
   return compassOf(doc, [-f.view[0], -f.view[1]]).short;
 }
 
-/** En fylld triangel med spetsen i `tip`, pekande åt `dir`, storlek på papper. */
-function arrowHead(tip: Vec2, dir: Vec2, size: number, origin: Primitive['origin']): Primitive {
-  const n = left(dir);
-  const base: Vec2 = [tip[0] - dir[0] * size, tip[1] - dir[1] * size];
-  return {
-    kind: 'region',
-    role: 'cut',
-    rings: [[tip, [base[0] + n[0] * size * 0.45, base[1] + n[1] * size * 0.45], [base[0] - n[0] * size * 0.45, base[1] - n[1] * size * 0.45]]],
-    fill: { kind: 'solid', color: 'ink' },
-    outline: { weight: 0.18 },
-    ownFill: true,
-    origin,
-  };
+/**
+ * Vinkeln för text längs en riktning, vänd så att den läses från vänster
+ * eller nedifrån: aldrig upp och ned.
+ */
+export function readableAngle(dir: Vec2): number {
+  let a = Math.atan2(dir[1], dir[0]);
+  if (a > Math.PI / 2 + 1e-9) a -= Math.PI;
+  else if (a <= -Math.PI / 2 + 1e-9) a += Math.PI;
+  return a;
 }
 
+/** En öppen pilspets: två streck bakåt från `tip`, mot `dir`. */
+function openArrow(tip: Vec2, dir: Vec2, size: number, pen: Pen, origin: Primitive['origin']): Primitive[] {
+  const n = left(dir);
+  const base: Vec2 = [tip[0] - dir[0] * size, tip[1] - dir[1] * size];
+  return [1, -1].map((s) => ({ kind: 'line', a: tip, b: [base[0] + n[0] * size * 0.5 * s, base[1] + n[1] * size * 0.5 * s], pen, origin }) as Primitive);
+}
+
+/**
+ * Sektionslinjen i planen (0.7.1): tjocka streck vid ändarna, ett lika
+ * tjockt skaft mot blickriktningen med en öppen pil, och bokstaven ute vid
+ * linjens ände, vriden efter linjen. Linjen emellan ritas inte.
+ */
 function sectionPlan(el: Element<any>, ctx: PlanContext): Primitive[] {
   const f = markerFrame(ctx.doc, el);
   const k = ctx.scale;
@@ -167,43 +175,52 @@ function sectionPlan(el: Element<any>, ctx: PlanContext): Primitive[] {
   const endLen = Math.min(len / 3, 8 * k);
   const at = (t: number): Vec2 => [f.start[0] + u[0] * t, f.start[1] + u[1] * t];
   const tag = markerTag(ctx.doc, el);
+  const thick = { weight: 0.5 };
   const out: Primitive[] = [
-    { kind: 'line', a: f.start, b: at(endLen), pen: { weight: 0.5 }, origin },
-    { kind: 'line', a: at(len - endLen), b: f.end, pen: { weight: 0.5 }, origin },
-    { kind: 'line', a: at(endLen), b: at(len - endLen), pen: { weight: 0.18, dash: [8, 1.5, 1, 1.5] }, origin },
+    { kind: 'line', a: f.start, b: at(endLen), pen: thick, origin },
+    { kind: 'line', a: at(len - endLen), b: f.end, pen: thick, origin },
   ];
+  const angle = readableAngle(u);
+  const h = 3.5;
+  // Texten centreras på linjen: flytta baslinjen ned en dryg halv texthöjd.
+  const down: Vec2 = [Math.sin(angle), -Math.cos(angle)];
   for (const t of [0, len]) {
     const base = at(t);
     const tip: Vec2 = [base[0] + f.view[0] * 6 * k, base[1] + f.view[1] * 6 * k];
-    out.push({ kind: 'line', a: base, b: tip, pen: { weight: 0.25 }, origin });
-    out.push(arrowHead(tip, f.view, 2.5 * k, origin));
+    out.push({ kind: 'line', a: base, b: tip, pen: thick, origin });
+    out.push(...openArrow(tip, f.view, 2.5 * k, { weight: 0.35 }, origin));
     const side = t === 0 ? -1 : 1;
-    const txt: Vec2 = [tip[0] + u[0] * side * 3 * k, tip[1] + u[1] * side * 3 * k - 1.5 * k];
-    out.push({ kind: 'text', at: txt, text: tag, height: 3.5, bold: true, align: 'middle', pen: { weight: 0.35 }, origin });
+    const c: Vec2 = [base[0] + u[0] * side * 3.2 * k, base[1] + u[1] * side * 3.2 * k];
+    out.push({ kind: 'text', at: [c[0] + down[0] * h * 0.36 * k, c[1] + down[1] * h * 0.36 * k], text: tag, height: h, bold: true, align: 'middle', angle, pen: { weight: 0.35 }, origin });
   }
   return out;
 }
 
+/**
+ * Fasadlinjen i planen (0.7.1): heldragen, med en liten fylld triangel i
+ * mitten som pekar mot huset och namnet i liten text högerställt ovanför
+ * linjen, vriden efter den.
+ */
 function elevationPlan(el: Element<any>, ctx: PlanContext): Primitive[] {
   const f = markerFrame(ctx.doc, el);
   const k = ctx.scale;
   const origin = { objectId: el.id, objectType: 'Elevation' };
   const m: Vec2 = [(f.start[0] + f.end[0]) / 2, (f.start[1] + f.end[1]) / 2];
-  const r = 4 * k;
-  const pts: Vec2[] = [];
-  for (let i = 0; i <= 32; i++) {
-    const t = (i / 32) * Math.PI * 2;
-    pts.push([m[0] + Math.cos(t) * r, m[1] + Math.sin(t) * r]);
-  }
-  const tip: Vec2 = [m[0] + f.view[0] * r * 1.9, m[1] + f.view[1] * r * 1.9];
-  const n = left(f.view);
+  const u = norm(sub(f.end, f.start));
+  const s = 2.6 * k;
+  const tip: Vec2 = [m[0] + f.view[0] * s, m[1] + f.view[1] * s];
+  const angle = readableAngle(u);
+  const along: Vec2 = [Math.cos(angle), Math.sin(angle)];
+  const up: Vec2 = [-along[1], along[0]];
+  // Linjens högra ände sett i läsriktningen.
+  const right = (f.end[0] - f.start[0]) * along[0] + (f.end[1] - f.start[1]) * along[1] > 0 ? f.end : f.start;
+  const text = markerName(ctx.doc, el).toLocaleUpperCase('sv-SE');
   return [
-    { kind: 'line', a: f.start, b: f.end, pen: { weight: 0.13, dash: [1.5, 1.5] }, origin },
-    { kind: 'polyline', points: pts, closed: true, pen: { weight: 0.25 }, origin },
+    { kind: 'line', a: f.start, b: f.end, pen: { weight: 0.18 }, origin },
     {
       kind: 'region',
       role: 'cut',
-      rings: [[tip, [m[0] + n[0] * r * 0.72, m[1] + n[1] * r * 0.72], [m[0] - n[0] * r * 0.72, m[1] - n[1] * r * 0.72]]],
+      rings: [[tip, [m[0] + u[0] * s * 0.6, m[1] + u[1] * s * 0.6], [m[0] - u[0] * s * 0.6, m[1] - u[1] * s * 0.6]]],
       fill: { kind: 'solid', color: 'ink' },
       outline: { weight: 0.18 },
       ownFill: true,
@@ -211,12 +228,12 @@ function elevationPlan(el: Element<any>, ctx: PlanContext): Primitive[] {
     },
     {
       kind: 'text',
-      at: [m[0] - f.view[0] * r * 0.15, m[1] - f.view[1] * r * 0.15 - 1.2 * k],
-      text: markerTag(ctx.doc, el),
-      height: 2.5,
-      bold: true,
-      align: 'middle',
-      pen: { weight: 0.25 },
+      at: [right[0] - along[0] * 1.5 * k + up[0] * 1.2 * k, right[1] - along[1] * 1.5 * k + up[1] * 1.2 * k],
+      text,
+      height: 2,
+      align: 'end',
+      angle,
+      pen: { weight: 0.18 },
       origin,
     },
   ];

@@ -14,7 +14,10 @@ import { buildModel3d } from '../repr/model3d';
 import { buildPlan, type PlanResult } from '../repr/plan';
 import { buildSection } from '../repr/section';
 import { markerFrame, markerName, modelBounds } from '../elements/markers';
-import { MarkerTool, RoofTool } from './tools/markerTools';
+import { AlignTool, MarkerTool, RoofTool } from './tools/markerTools';
+import { MeasureTool, ZoomBoxTool } from './tools/measureTool';
+import { copyPayload, originalsHere, parsePayload, pasteClip, type ClipPayload } from '../core/clipboard';
+import { skewText, skewWarnings } from '../elements/angleCheck';
 import { modifyContextAt, ModifyPalette, type ModifyHost } from './modify';
 import { refFrame } from '../core/wallEdit';
 import type { Edit3DHost, Handle3D, View3D } from '../view3d/view3d';
@@ -36,6 +39,7 @@ import { icons, type IconName } from './icons';
 import { escapeHtml } from './labels';
 import { MeasureBox } from './measureBox';
 import { NewProjectDialog } from './newProjectDialog';
+import { FeedbackDialog } from './feedbackDialog';
 import { PropertiesPanel } from './propertiesPanel';
 import { Selection } from './selection';
 import { isNarrow, setupSheetDrag } from './sheet';
@@ -57,7 +61,7 @@ import { OpeningTool } from './tools/openingTool';
 import { RoomTool } from './tools/roomTool';
 import { WallTool } from './tools/wallTool';
 
-type ToolId = 'pan' | 'select' | 'wall' | 'door' | 'window' | 'roof' | 'room' | 'dimension' | 'text' | 'section' | 'elevation';
+type ToolId = 'pan' | 'select' | 'measure' | 'wall' | 'door' | 'window' | 'roof' | 'room' | 'dimension' | 'text' | 'section' | 'elevation';
 
 /** Verktyg som ritar i planen och därför byter till planvyn. */
 const PLAN_TOOLS: ToolId[] = ['wall', 'door', 'window', 'roof', 'room', 'dimension', 'text', 'section', 'elevation'];
@@ -76,11 +80,12 @@ interface ToolDef {
 const TOOLS: ToolDef[] = [
   { id: 'select', label: 'Markera', icon: 'select', key: 'V', group: 'navigera' },
   { id: 'pan', label: 'Panorera', icon: 'pan', key: 'H', group: 'navigera' },
+  { id: 'measure', label: 'Måttband', icon: 'measure', key: 'L', group: 'navigera' },
   { id: 'wall', label: 'Vägg', icon: 'wall', key: 'W', group: 'rita' },
   { id: 'door', label: 'Dörr', icon: 'door', key: 'D', group: 'rita' },
   { id: 'window', label: 'Fönster', icon: 'window', key: 'O', group: 'rita' },
   { id: 'roof', label: 'Tak', icon: 'roof', group: 'rita' },
-  { id: 'furniture', label: 'Möbel', icon: 'furniture', comesIn: '0.11', group: 'rita' },
+  { id: 'furniture', label: 'Möbel', icon: 'furniture', comesIn: '0.12', group: 'rita' },
   { id: 'room', label: 'Rum', icon: 'room', key: 'R', group: 'annotera' },
   { id: 'dimension', label: 'Mått', icon: 'dimension', key: 'M', group: 'annotera' },
   { id: 'text', label: 'Text', icon: 'text', key: 'T', group: 'annotera' },
@@ -177,6 +182,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
             </div>
             <hr>
             <button role="menuitem" data-action="reset-sample">${icons.restore}<span>Börja om med exemplet</span></button>
+            <button role="menuitem" data-action="feedback">${icons.text}<span>Skicka synpunkter…</span></button>
             <button role="menuitem" data-action="about">${icons.select}<span>Om ${brand.name}</span><small>${ENGINE.name} ${ENGINE.version}</small></button>
           </div>
         </div>
@@ -201,7 +207,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         <button class="icon-btn pane-btn" data-action="toggle-nav" title="Projektträd: underlag, modell, vyer och ritningar (N)" aria-label="Projektträd" aria-pressed="false">${icons.navigator}</button>
         <button class="icon-btn pane-btn" data-action="toggle-panel" title="Egenskaper (P)" aria-label="Egenskaper" aria-pressed="false">${icons.properties}</button>
         <div class="theme-slot"></div>
-        ${brand.badge ? `<span class="badge">${brand.badge}</span>` : ''}
+        ${brand.badge ? `<button class="badge beta-btn" data-action="feedback" title="Skicka synpunkter på ${brand.name}"><b>${brand.badge}</b><small>Skicka synpunkter</small></button>` : ''}
       </header>
       <nav class="tools" aria-label="Verktyg"></nav>
       <main class="canvas">
@@ -239,6 +245,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         <span class="zoom-btns">
           <button class="status-icon hide-narrow" data-action="zoom-out" title="Zooma ut (−)" aria-label="Zooma ut">${icons.zoomOut}</button>
           <button class="status-icon hide-narrow" data-action="zoom-in" title="Zooma in (+)" aria-label="Zooma in">${icons.zoomIn}</button>
+          <button class="status-icon hide-narrow" data-action="zoom-box" title="Zooma till område (Z)" aria-label="Zooma till område">${icons.zoomBox}</button>
+          <button class="status-icon hide-narrow" data-action="zoom-prev" title="Förra zoomen (Shift+Z)" aria-label="Förra zoomen">${icons.zoomPrev}</button>
           <button class="status-icon" data-action="fit" title="Zooma till allt (F)" aria-label="Zooma till allt">${icons.fit}</button>
         </span>
         <span class="hide-narrow"><span class="label">Rutnät</span><span class="value" data-out="grid">—</span></span>
@@ -288,7 +296,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     b.title = t.comesIn ? `${t.label} – kommer i ${t.comesIn}` : `${t.label}${t.key ? ` (${t.key})` : ''}`;
     if (t.comesIn) {
       b.setAttribute('aria-disabled', 'true');
-      b.addEventListener('click', () => hint(`${t.label} kommer i ${t.comesIn}, med familjerna.`));
+      b.addEventListener('click', () => hint(`${t.label} kommer i ${t.comesIn}, med smartobjekten.`));
     } else {
       b.addEventListener('click', () => setTool(t.id as ToolId));
     }
@@ -555,6 +563,29 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const dimensionTool = new DimensionTool(host);
   dimensionTool.onChange = () => renderToolOptions();
   const textTool = new TextTool(host);
+  const measureTool = new MeasureTool(host);
+  // Zooma till område: ett tillfälligt verktyg, sedan tillbaka.
+  const zoomBoxTool = new ZoomBoxTool(host);
+  let zoomingBox = false;
+  const endZoomBox = (): void => {
+    zoomingBox = false;
+    view.setTool(tools[ui.tool]);
+    view.requestRender();
+  };
+  zoomBoxTool.onDone = endZoomBox;
+  function startZoomBox(): void {
+    if (ui.mode === '3d') return;
+    zoomingBox = true;
+    view.setTool(zoomBoxTool);
+    hint('Dra upp en ruta att zooma till, eller klicka för att zooma in. Shift+Z: förra zoomen.', 3500);
+  }
+  function previousZoom(): void {
+    if (!view.previousZoom()) hint('Ingen tidigare zoom.');
+  }
+  measureTool.onChange = () => {
+    updateMeasureOptions();
+    view.requestRender();
+  };
   const roofTool = new RoofTool(host);
   const sectionTool = new MarkerTool(host, 'Section');
   const elevationTool = new MarkerTool(host, 'Elevation');
@@ -584,10 +615,16 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     roof: roofTool,
     section: sectionTool,
     elevation: elevationTool,
+    measure: measureTool,
   };
 
   function setTool(id: ToolId): void {
     measureBox.close();
+    // Mått och text i fasader och sektioner kommer med vy-elementen i 0.8.
+    if (ui.marker && (id === 'dimension' || id === 'text')) {
+      hint(`${id === 'dimension' ? 'Mått' : 'Text'} i fasader och sektioner kommer i 0.8. Gå till planen för att ${id === 'dimension' ? 'måttsätta' : 'skriva'} där.`, 4500);
+      return;
+    }
     // Ritverktygen ritar i planen: från en fasad eller sektion går man tillbaka dit.
     if (PLAN_TOOLS.includes(id) && ui.marker) goTo({ kind: 'storey', id: ui.storey });
     if (PLAN_TOOLS.includes(id) && ui.mode === '3d') void setMode('2d');
@@ -641,6 +678,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     else if (ui.tool === 'roof' && roofTool.started) roofTool.reset();
     else if (ui.tool === 'section' && sectionTool.step > 0) sectionTool.reset();
     else if (ui.tool === 'elevation' && elevationTool.step > 0) elevationTool.reset();
+    else if (ui.tool === 'measure' && measureTool.measurement().points > 0) measureTool.reset();
     else setTool('select');
     view.requestRender();
   }
@@ -712,6 +750,14 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         t.step === 0 ? `Klicka där ${what} börjar.` : t.step === 1 ? `Klicka där ${what} slutar.` : 'Klicka på den sida som ska synas.'
       }</span>`;
       toolOptions.hidden = false;
+    } else if (ui.tool === 'measure') {
+      const cell = (key: string, label: string) =>
+        `<span class="opt measure-val"><span>${label}</span><b data-measure="${key}">–</b><button class="icon-btn" data-copy="${key}" title="Kopiera ${label.toLowerCase()}" aria-label="Kopiera ${label.toLowerCase()}">${icons.copy}</button></span>`;
+      toolOptions.innerHTML = `<span class="measure-grid">${cell('last', 'Sträcka')}${cell('total', 'Totalt')}${cell('angle', 'Riktning')}${cell('turn', 'Mellan')}${cell('area', 'Yta')}</span>
+        <button class="btn" data-action="measure-reset">Börja om</button>
+        <span class="opt-hint">Klicka punkter att mäta mellan. Dubbelklick eller Enter börjar om.</span>`;
+      toolOptions.hidden = false;
+      updateMeasureOptions();
     } else if (ui.tool === 'text') {
       toolOptions.innerHTML = `
         <label class="opt"><span>Text</span><input id="text-value" value="${escapeHtml(textTool.text)}" aria-label="Text" style="width:180px"></label>
@@ -725,9 +771,32 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     // Avbryt ligger ovanför verktygsraden när ett ritverktyg är aktivt.
     const bar = $<HTMLElement>('.cmd-bar');
     bar.hidden = ui.tool === 'select' || ui.tool === 'pan';
-    requestAnimationFrame(() => {
-      bar.style.bottom = `${(toolOptions.hidden ? 0 : toolOptions.offsetHeight + 8) + 14}px`;
-    });
+    requestAnimationFrame(placeCmdBar);
+  }
+
+  function placeCmdBar(): void {
+    const bar = $<HTMLElement>('.cmd-bar');
+    bar.style.bottom = `${(toolOptions.hidden ? 0 : toolOptions.offsetHeight + 8) + 14}px`;
+  }
+
+  /** Måttbandets värden i verktygsraden, utan att bygga om den. */
+  function measureValues(): Record<string, string> {
+    const m = measureTool.measurement();
+    const n1 = (v: number, d = 0) => v.toLocaleString('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d });
+    return {
+      last: m.points >= 2 ? `${n1(m.last)} mm` : '–',
+      total: m.points >= 3 ? `${n1(m.total)} mm` : m.points >= 2 ? `${n1(m.total)} mm` : '–',
+      angle: m.points >= 2 ? `${n1(m.angle, 2)}°` : '–',
+      turn: m.turn !== null ? `${n1(m.turn, 2)}°` : '–',
+      area: m.area !== null ? `${n1(m.area, 2)} m²` : '–',
+    };
+  }
+  function updateMeasureOptions(): void {
+    if (ui.tool !== 'measure') return;
+    const v = measureValues();
+    const h = toolOptions.offsetHeight;
+    toolOptions.querySelectorAll<HTMLElement>('[data-measure]').forEach((el) => (el.textContent = v[el.dataset.measure!]));
+    if (toolOptions.offsetHeight !== h) placeCmdBar();
   }
 
   toolOptions.addEventListener('change', (e) => {
@@ -775,6 +844,15 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       renderToolOptions();
     }
     if (b.dataset.action === 'wall-done') wallTool.finish();
+    if (b.dataset.action === 'measure-reset') measureTool.reset();
+    if (b.dataset.copy) {
+      // Bara talet, med decimalkomma, så att det går att klistra in i ett kalkylark.
+      const text = measureValues()[b.dataset.copy].replace(/\s*\(.*\)$/, '').replace(/[^\d,−-]/g, '');
+      void window.navigator.clipboard?.writeText(text).then(
+        () => hint(`Kopierade ${text}`),
+        () => hint('Det gick inte att kopiera här.'),
+      );
+    }
     if (b.dataset.roofKind) {
       roofTool.options.kind = b.dataset.roofKind as 'gable' | 'shed';
       renderToolOptions();
@@ -786,6 +864,28 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   // ---------- Panel och dialog ----------
   const panel = new PropertiesPanel(store, selection, viewStates);
   panel.onOpenMarker = (id) => goTo({ kind: 'marker', id });
+  panel.angleWarn = () => uiSettings.angleWarn;
+  // Rikta efter objekt: ett klick i planen, sedan tillbaka till verktyget.
+  const alignTool = new AlignTool(host);
+  let aligning = false;
+  const endAlign = (): void => {
+    aligning = false;
+    alignTool.target = null;
+    view.setTool(tools[ui.tool]);
+    view.requestRender();
+  };
+  alignTool.onDone = (ok) => {
+    endAlign();
+    if (!ok) hint('Ingen vägg eller linje där. Tryck på Rikta efter objekt och försök igen.');
+  };
+  panel.onAlignMarker = (id) => {
+    if (ui.marker) goTo({ kind: 'storey', id: ui.storey });
+    if (ui.tool !== 'select') setTool('select');
+    alignTool.target = id;
+    aligning = true;
+    view.setTool(alignTool);
+    hint(`Klicka på en vägg eller linje. ${store.doc.elements[id]?.type === 'Section' ? 'Sektionen blir vinkelrät mot den' : 'Fasaden blir parallell med den'}; håll Shift för det omvända.`, 5000);
+  };
   setupSheetDrag(panel.el, {
     narrow: isNarrow,
     state: () => ui.sheet,
@@ -950,6 +1050,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     hint(`${doc.project.name} är skapat. Rita väggar med W eller verktyget Vägg.`, 4000);
   });
   root.appendChild(newProjectDialog.el);
+  const feedbackDialog = new FeedbackDialog(brand.name, brand.feedbackFallback ?? '');
+  root.appendChild(feedbackDialog.el);
 
   // Tillfälliga mått när en vägg är markerad.
   const tempDims = new TempDims(canvas, store);
@@ -958,8 +1060,20 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   view.setHighlighter(
     (cam) =>
       renderHighlight(cam, store.doc, plan.pickables, new Set(selection.list()), ui.tool === 'select' ? selectTool.hoverId : null, !ui.marker) +
-      tempDims.render(cam, selection.list(), viewStates(), ui.tool === 'select' && ui.mode !== '3d' && !ui.marker && !modifyPalette.running),
+      tempDims.render(cam, selection.list(), viewStates(), ui.tool === 'select' && ui.mode !== '3d' && !ui.marker && !modifyPalette.running) +
+      skewMarks(cam),
   );
+
+  /** Utropstecken vid det som ligger nästan men inte exakt rakt (bara i planen, inte på papper). */
+  function skewMarks(cam: Camera): string {
+    if (ui.marker) return '';
+    return skewWarnings(store.doc, ui.storey, ui.state, uiSettings.angleWarn)
+      .map((w) => {
+        const [x, y] = cam.toScreen(w.at);
+        return `<g class="skew-mark" transform="translate(${x.toFixed(1)} ${(y - 14).toFixed(1)})"><title>${escapeHtml(skewText(w))}</title><path d="M0 -8L8 6H-8Z"/><text y="4.5" text-anchor="middle">!</text></g>`;
+      })
+      .join('');
+  }
 
   // ---------- Rendering ----------
   function renderAll(): void {
@@ -1104,6 +1218,12 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (!view3d || ui.mode === '2d') return;
     view3d.setSolids(buildModel3d(store.doc, ui.storey, viewStates()));
     view3d.setSelection(selection.list());
+    // Med en sektion öppen klipps modellen längs den.
+    const m = ui.marker ? store.doc.elements[ui.marker] : undefined;
+    if (m?.type === 'Section') {
+      const f = markerFrame(store.doc, m);
+      view3d.setClip({ start: f.start, right: f.right, view: f.view, length: Math.hypot(f.end[0] - f.start[0], f.end[1] - f.start[1]), depth: f.depth });
+    } else view3d.setClip(null);
   }
 
   async function setMode(mode: ViewMode): Promise<void> {
@@ -1388,6 +1508,12 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       case 'zoom-out':
         view.zoomBy(1 / 1.4);
         break;
+      case 'zoom-box':
+        startZoomBox();
+        break;
+      case 'zoom-prev':
+        previousZoom();
+        break;
       case 'fit':
         if (ui.mode !== '3d') view.zoomToFit();
         if (ui.mode !== '2d') view3d?.frameAll();
@@ -1420,6 +1546,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         menu.hidden = !menu.hidden;
         menuBtn.setAttribute('aria-expanded', String(!menu.hidden));
         break;
+      case 'feedback':
+        closeMenu();
+        feedbackDialog.open();
+        break;
       case 'about':
         closeMenu();
         hint(`${brand.name} · ${ENGINE.name} ${ENGINE.version}. Öppen källkod (GPL). Vad som är nytt står i README på GitHub.`, 5000);
@@ -1444,6 +1574,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         break;
       case 'style':
         closeMenu();
+        closeShowMenu();
         styleDialog.open();
         break;
       case 'show-menu': {
@@ -1462,12 +1593,20 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
             item('Furniture', 'Möbler och inredning', !ui.hide.includes('Furniture')) +
             item('Dimension', 'Mått', !ui.hide.includes('Dimension')) +
             item('Text', 'Text', !ui.hide.includes('Text')) +
+            item('Roof', 'Tak', !ui.hide.includes('Roof')) +
+            item('swing', 'Öppningssätt (dörrar)', !ui.hide.includes('swing')) +
+            item('roofSlope', 'Taklutning i fasad och sektion', !ui.hide.includes('roofSlope')) +
+            '<div class="menu-label">Markörer i planen</div>' +
+            item('Elevation', 'Fasader', !ui.hide.includes('Elevation')) +
+            item('Section', 'Sektioner', !ui.hide.includes('Section')) +
+            item('North', 'Norrpil', !ui.hide.includes('North')) +
             `<label class="field"><span>Stilmall i vyn</span><select data-show-style><option value="">Projektets (${escapeHtml(store.doc.graphics.name)})</option>${PRESETS.map((p) => `<option value="${escapeHtml(p.name)}"${ui.styleName === p.name ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}</select></label>` +
             `<label class="field"><span>Kalkera en annan vy</span><select data-show-trace><option value="">Ingen</option>${store.doc.views
               .filter((v) => v.id !== ui.activeView)
               .map((v) => `<option value="${v.id}"${ui.trace === v.id ? ' selected' : ''}>${escapeHtml(v.name)}</option>`)
               .join('')}</select></label>` +
-            traceLookMarkup();
+            traceLookMarkup() +
+            `<button class="btn show-style-link" data-action="style">Stilmall och ritningsgrafik…</button>`;
           m.hidden = false;
           $<HTMLElement>('.show-btn').setAttribute('aria-expanded', 'true');
         }
@@ -1945,6 +2084,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         y,
         [
           { label: 'Zooma till allt', hint: 'F', run: () => (ui.mode !== '3d' ? view.zoomToFit() : view3d?.frameAll()) },
+          { label: 'Klistra in', hint: 'Ctrl+V', run: () => void pasteFromMenu() },
           { kind: 'sep' },
           { label: 'Rita vägg', hint: 'W', run: () => setTool('wall') },
           { label: 'Sätt in dörr', hint: 'D', run: () => setTool('door') },
@@ -1976,6 +2116,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       },
       { label: 'Visa i egenskaper', hint: 'P', run: () => (setPanel(true, 'full'), panel.showTab('selection')) },
       { label: 'Zooma till', run: () => zoomToSelection() },
+      { label: 'Kopiera', hint: 'Ctrl+C', run: () => void copySelection(null) },
+      { label: 'Klistra in', hint: 'Ctrl+V', run: () => void pasteFromMenu() },
     );
     if (els.length === 1 && first.definition) {
       const def = store.doc.definitions[first.definition];
@@ -2097,6 +2239,14 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
 
     switch (e.key) {
       case 'Escape':
+        if (aligning) {
+          endAlign();
+          break;
+        }
+        if (zoomingBox) {
+          endZoomBox();
+          break;
+        }
         if (ui.navOpen && isNarrow()) {
           setNav(false);
           break;
@@ -2108,6 +2258,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         closeMenu();
         break;
       case 'Enter':
+        if (ui.tool === 'measure') measureTool.reset();
         if (ui.tool === 'wall') wallTool.finish();
         if (ui.tool === 'dimension') dimensionTool.donePoints();
         break;
@@ -2155,6 +2306,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       case 'M':
         setTool('dimension');
         break;
+      case 'l':
+      case 'L':
+        setTool('measure');
+        break;
       case 't':
       case 'T':
         setTool('text');
@@ -2184,6 +2339,23 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       case '=':
         view.zoomBy(1.4);
         break;
+      case 'z':
+      case 'Z':
+        if (e.shiftKey) previousZoom();
+        else startZoomBox();
+        break;
+      case 'ArrowLeft':
+      case 'ArrowRight':
+      case 'ArrowUp':
+      case 'ArrowDown': {
+        // Knuffa det markerade; med Shift ett större steg.
+        if (!selection.size || ui.marker || ui.mode === '3d') return;
+        const step = e.shiftKey ? uiSettings.nudgeLarge : uiSettings.nudge;
+        const d: [number, number] = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] }[e.key] as [number, number];
+        const r = moveElements(store, selection.list(), d, 'Knuffa');
+        if (r.released) hint(releasedHint(r.released), 4000);
+        break;
+      }
       case '-':
         view.zoomBy(1 / 1.4);
         break;
@@ -2192,6 +2364,74 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     }
     e.preventDefault();
   });
+
+  // ---------- Kopiera och klistra in (0.7.1) ----------
+  /** Det senast kopierade, om datorns urklipp inte går att läsa. */
+  let clip: ClipPayload | null = null;
+  const isTyping = (t: EventTarget | null) =>
+    (t instanceof HTMLInputElement && t.type !== 'checkbox') || t instanceof HTMLTextAreaElement || (t instanceof HTMLElement && t.isContentEditable);
+
+  function copySelection(data: DataTransfer | null): boolean {
+    if (ui.marker || !selection.size) return false;
+    const payload = copyPayload(store.doc, selection.list(), ui.storey);
+    if (!payload) return false;
+    clip = payload;
+    const text = JSON.stringify(payload);
+    if (data) data.setData('text/plain', text);
+    else void window.navigator.clipboard?.writeText(text).catch(() => {});
+    const n = payload.elements.filter((e) => !e.host).length;
+    hint(n === 1 ? 'Kopierat. Klistra in med Ctrl+V, även i ett annat projekt.' : `${n} objekt kopierade. Klistra in med Ctrl+V, även i ett annat projekt.`);
+    return true;
+  }
+
+  function pasteClipboard(payload: ClipPayload | null): void {
+    if (!payload) {
+      hint('Inget att klistra in.');
+      return;
+    }
+    if (ui.marker) goTo({ kind: 'storey', id: ui.storey });
+    // Ligger originalen kvar på samma ställe hamnar kopian en bit bort.
+    const offset: [number, number] = originalsHere(store.doc, payload, ui.state, ui.storey) ? [1000, -1000] : [0, 0];
+    const ids = pasteClip(store, payload, ui.state, ui.storey, offset);
+    if (!ids.length) {
+      hint('Inget att klistra in här.');
+      return;
+    }
+    if (ui.tool !== 'select') setTool('select');
+    selection.set(ids);
+    hint(offset[0] ? 'Inklistrat bredvid originalet. Dra för att flytta.' : 'Inklistrat på samma ställe som det kopierades från.');
+  }
+
+  document.addEventListener('copy', (e) => {
+    if (isTyping(e.target) || ctxMenu.isOpen) return;
+    if (copySelection(e.clipboardData)) e.preventDefault();
+  });
+  document.addEventListener('cut', (e) => {
+    if (isTyping(e.target) || ctxMenu.isOpen) return;
+    if (copySelection(e.clipboardData)) {
+      e.preventDefault();
+      deleteElements(store, selection.list());
+      selection.clear();
+    }
+  });
+  document.addEventListener('paste', (e) => {
+    if (isTyping(e.target)) return;
+    const text = e.clipboardData?.getData('text/plain') ?? '';
+    const payload = parsePayload(text) ?? clip;
+    if (!payload && text) return;
+    e.preventDefault();
+    pasteClipboard(payload);
+  });
+
+  async function pasteFromMenu(): Promise<void> {
+    let payload: ClipPayload | null = null;
+    try {
+      payload = parsePayload((await window.navigator.clipboard?.readText()) ?? '');
+    } catch {
+      // Webbläsaren lät oss inte läsa urklippet; använd det vi själva kopierade.
+    }
+    pasteClipboard(payload ?? clip);
+  }
 
   function hint(text: string, ms = 2400): void {
     hintEl.textContent = text;
