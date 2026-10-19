@@ -279,6 +279,45 @@ Version 0.7.1, beta (samma filformat):
 - Zooma till område (**Z**, dra upp en ruta) och förra zoomen (**Shift+Z**),
   också som knappar i statusraden
 
+Version 0.8, del 1 av 3 (filformat 5; släpps som 0.8.0 när alla delar är klara):
+- Filformat 5 för allt i 0.8. Projekt i format 4 öppnas och uppgraderas
+  utan att något ändras
+- 3D-vyn kan snurras under marken, för att se undersidor
+- 2D/3D/Båda svävar nere i mitten av ritytan
+- Projektträdet har en egen ikon, ett stående träd, och mappar med
+  undermappar i alla flikar. Klicka på en vy, fasad, sektion, våning eller
+  mapp i trädet så visas dess inställningar i egenskaperna, med Spara och
+  Återställ sist; inget ändras förrän man sparar. Där väljs också mappen
+- Vy-taggar på vyerna (golvplan, undertak, möblering, bygglov,
+  bygghandling, 1:50, 1:100 och egna), och vyns skala på blad
+- 2D (**I**): linje, polylinje, rektangel, båge (start, slut, punkt på
+  bågen), cirkel, spline och fyllning (hel, skraffering, korsskraffering).
+  Penna, linjetyp och färg; Klar, Enter, dubbelklick eller klick på första
+  punkten avslutar
+- Visas i för 2D-element, text och mått: alla vyer av ytan, bara den här
+  vyn, utvalda vyer (även andra våningars) eller vyer med taggar (någon av
+  eller alla), med "Syns nu i N vyer" och en varning vid 0. Visa dolda
+  2D-element ritar det som inte syns tonat
+- Mått, text och 2D ritas i fasader och sektioner, och snäpper mot linjerna
+  där. Det som ritats i en fasad eller sektion går att flytta där
+- Taklutningen är ett eget objekt: markera den i en fasad eller sektion så
+  går den att flytta och ge en stil (båge och gradtal, bara gradtal eller
+  lutningstriangel). Lutningen följer taket. Tas den bort kommer den inte
+  tillbaka
+- Nivåkoter för takfot och nock i fasader och sektioner
+- Fasaderna följer byggnaden tills man flyttar dem; texten "placeras
+  automatiskt" är borta. Följ byggnaden igen lägger tillbaka en fasad.
+  **Lås** (med hänglås) på fasader, sektioner, norrpilen, 2D, text, mått och
+  taklutningar hindrar att de flyttas eller tas bort av misstag
+- Rikta efter objekt gör både fasader och sektioner parallella (Shift:
+  vinkelrätt)
+- Spara som vy föreslår namnet på det som visas, t.ex. Fasad mot syd
+- Med en sektion öppen och 3D bredvid fylls snittet i 3D (väggar, bjälklag
+  och tak mörka, annat grått). **Följ sektionen** nere till höger i 3D-vyn
+  slår av och på klippningen
+- Synpunktsformuläret visar vad servern svarar när det inte går att skicka,
+  i stället för att tyst öppna e-posten
+
 ## Versioner och gamla projekt
 
 Projektfilerna har ett formatnummer. När formatet ändras uppgraderas äldre

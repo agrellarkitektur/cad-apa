@@ -1,66 +1,64 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 19 oktober 2026, efter 0.7.1.
+överlämning; historiken finns i git. Senast: 19 oktober 2026, efter 0.8 del 1.
 
 ## Läget
 
-- **0.7.1 är klar och släppt.** Commit `c4efed2` på `main`, taggen `v0.7.1`
-  finns, och demon är version 17 av artefakten
-  (https://claude.ai/artifact/2m7gq5gkkgSP2wFZ7fLGNJ). Filformatet är 4.
-- **Efter 0.7.1:** `src/ui/app.ts` är uppdelad i delar under `src/ui/app/`
-  (se UTVECKLING.md, *Appen*), utan att något ändrats i hur appen fungerar,
-  och arbetssättet i CLAUDE.md har fått regler för sessioner och
-  småversioner. Det ingår i nästa version; ingen egen release behövs.
-- Vad 0.7.1 innehåller står i README (*Version 0.7.1*). Allt som är planerat
-  framåt står i `docs/PLAN.md`, version för version.
+- **0.8 byggs i tre delar** och släpps som 0.8.0 när alla är klara (Carl
+  August ville ha granskningen av 0.7.1 i 0.8.0 i stället för en 0.7.2).
+  **Del 1 är byggd** och ligger på `main`; versionen heter `0.8.0-del.1`
+  och demon visar den (https://claude.ai/artifact/2m7gq5gkkgSP2wFZ7fLGNJ).
+  Filformatet är **5**. Ingen tagg eller release förrän 0.8.0 är klar.
+- Vad del 1 innehåller står i README (*Version 0.8, del 1 av 3*), hur det
+  är byggt i UTVECKLING.md (*Ritningsinformation, synlighet och
+  projektträdet*), och allt som är bestämt framåt i `docs/PLAN.md`.
+- Besluten från granskningen (19 oktober) står i PLAN.md: småpunkterna
+  under 0.8, Plot/export i del 3, dumbs i 0.10, smartgrupper i 0.13,
+  medelmarknivå i 0.9 och 0.15, areor enligt SS 21054 i 0.11 (han laddar
+  upp standarden då), lokalisering under *Avvaktar* och principen *Regler
+  per land*.
 
-## Nästa session: granskning av 0.7.1 → 0.7.2
+## Nästa session: 0.8 del 2
 
-Carl August skickar sina synpunkter på 0.7.1, gärna samlade och märkta *fel*
-eller *önskemål*. Arbetsgång:
+Börja med det som blev kvar från del 1:
 
-1. Läs synpunkterna och sortera: fel och små justeringar blir 0.7.2 (samma
-   format, 3–6 punkter); större önskemål förs in i PLAN.md under rätt version.
-2. Sammanställ och fråga innan något byggs (CLAUDE.md: inga uppdateringar
-   förrän han säger till).
-3. Bygg i snabbläge om ändringarna inte syns; annars med skärmbilder.
+1. Grepp i sektioner: dra i nocken för att ändra taklutningen, och i
+   takfoten (PLAN.md, del 1).
+2. Grepp och Modifiera för 2D-elementens punkter (i dag kan de flyttas
+   hela, och ändras i egenskaperna, men punkterna går inte att dra).
 
-## Sedan: 0.8 i delar
+Sedan del 2 enligt PLAN.md: underlag (PDF som bild, bilder, DXF) med
+kalibrering, flytta, låsa och tona, och arbetsblad. Formatet finns redan:
+`assets` för filerna, underlag som element med `locked`, `worksheets`
+och `space` för det som ritas på ett arbetsblad. Underlag och arbetsblad
+ska ligga i flikarna Underlag och Modell i projektträdet, i mappar som
+allt annat.
 
-0.8 ändrar filformatet (format 5) och är stor. Förslag att diskutera med
-Carl August innan den börjar:
-
-- **Del 1, i en egen session:** bestäm format 5 för allt 0.8 behöver på en
-  gång (2D-element med *Visas i* och vy-taggar, penntabell och typsnitt i
-  stilmallen, projektvinklar, markörstilar, underlag, arbetsblad och
-  ritningsblad), med migrering 4 → 5 och test. Sedan 2D-elementen och
-  synligheten, och mått och text i fasader och sektioner.
-- **Del 2:** underlag (PDF som bild, bilder, DXF) med kalibrering, och
-  arbetsblad.
-- **Del 3:** ritningsblad, ritningshuvud, PDF-export, penntabellen,
-  typsnitt, markörstilar, projektvinklar och den andra 2D-rutan (planen
-  följer markeringen i en öppen sektion).
-
-Formatet höjs bara en gång, i del 1, och släpps som 0.8 när alla delar är
-klara. Däremellan kan demon visa del för del.
+Fråga Carl August innan något byggs (CLAUDE.md), men del 2 är redan
+godkänd i sak.
 
 ## Öppna frågor och kända begränsningar
 
-- **Synpunktsformuläret** behöver `feedback-config.php` på webbhotellet
-  (README, *Synpunkter*). Det finns ingen noreply-adress; använd en adress
-  som finns, `'from' => 'kontakt@agrellarkitektur.se'`. Har han inte
-  bekräftat att det fungerar: fråga.
-- Fönster saknar öppningssätt (kommer i 0.8). Dörrarnas öppningssätt har
-  spetsen mot handtagssidan.
-- Spårlinjerna kan kännas för klistriga; det är det första att justera om
-  han tycker det (`TRACK_REACH` i `src/ui/tools/snap.ts`).
-- Klistra in från menyn läser datorns urklipp; nekar webbläsaren det används
-  det som kopierats i samma flik. Ctrl+V fungerar alltid.
-- Varningen för nästan raka vinklar gäller bara raka väggar; bågväggar
-  räknas inte.
-- Den första fasaden eller sektionen tar 100–200 ms (koden kompileras);
-  sedan 30–60 ms. Testet mäter efter en uppvärmning.
+- **Synpunkter på webbhotellet:** han har laddat upp `feedback-config.php`
+  i mappen ovanför `cad-apa`, men formuläret öppnade e-posten. Sedan del 1
+  visar formuläret vad servern svarar (README, *Synpunkter*). Fråga vad
+  det säger. Troligast är `from` en adress som inte finns (använd
+  `kontakt@agrellarkitektur.se`), eller att webbhotellet stoppar `mail()`
+  och kräver SMTP; då får `feedback.php` byggas ut. Skriptet kunde inte
+  provas härifrån (nätet släpper inte fram till agrellarkitektur.se).
+- **Visas i** räknar vyer utan att bry sig om tillstånd: ett 2D-element som
+  bara finns i Förslag A räknas ändå i en vy av Befintligt.
+- Vy-taggar ges i vyns inställningar i projektträdet. Modellvyerna (Plan 1
+  · modell) har inga taggar, så ett element med taggar syns inte där;
+  *Visa dolda 2D-element* under Visa visar dem tonade.
+- En borttagen taklutning är dold för gott i den fasaden. Det finns inget
+  sätt att få tillbaka den automatiska utom ångra.
+- Den första fasaden eller sektionen tar 100–200 ms; testet som mäter
+  tiden kan fela när alla tester körs samtidigt på en belastad maskin.
+- Fönster saknar öppningssätt (del 3). Spårlinjerna kan kännas för
+  klistriga (`TRACK_REACH` i `src/ui/tools/snap.ts`).
+- Varningen för nästan raka vinklar gäller bara raka väggar.
 
 ## Arbeta i miljön
 
@@ -72,10 +70,11 @@ klara. Däremellan kan demon visa del för del.
   artefakten ovan (samma URL).
 - Titta på resultatet: `npm run preview:artifact`, servera `dist-artifact/`
   med `python3 -m http.server 8765` och styr med Playwright (Python).
-  `window.bacchus` har `store`, `view`, `selection`, `ui`, `modifyPalette`
-  och `view3d`. Stoppa servern med `pgrep -af "http.server 8765"` och
-  `kill`, inte `pkill -f` (det stänger skalet).
-- Fasader och sektioner utan webbläsare: ett skript med `buildSection` från
-  `src/repr/section.ts` som körs med `npx vite-node`, och primitiverna
-  skrivna som SVG.
+  `window.bacchus` har `store`, `view`, `selection`, `ui`, `modifyPalette`,
+  `view3d`, `plan`, `setTool`, `setMode` och `goTo` (t.ex.
+  `goTo({kind:'marker', id:'sektion-a'})`). Stoppa servern med
+  `pgrep -af "http.server 8765"` och `kill`, inte `pkill -f` (det stänger
+  skalet).
+- Fasader och sektioner utan webbläsare: ett skript eller test med
+  `buildSection` från `src/repr/section.ts`.
 - Telefon: viewport 390 × 844, `is_mobile`, `has_touch`.

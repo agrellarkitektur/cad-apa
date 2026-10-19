@@ -251,3 +251,55 @@ på bladet sina egna.
 - **Synpunkter**: `src/ui/feedbackDialog.ts` skickar till
   `public/feedback.php`, som läser mottagaren ur `feedback-config.php` i
   samma mapp eller mappen ovanför (aldrig i koden).
+
+## Ritningsinformation, synlighet och projektträdet (0.8, format 5)
+
+- **Format 5** (`src/core/model.ts`) har allt som 0.8 behöver, även det som
+  byggs i senare delar: `folders` och `tree` (mappar i projektträdet; `tree`
+  pekar från en vys, markörs, vånings eller blads id till mappen),
+  `viewTags`, `worksheets`, `sheets` (blad med `viewports`) och `assets`
+  (underlagens filer, en egen samling i `DocStore` så att ångra inte
+  kopierar filerna). En `ViewDef` har `tags`, `scale` och `worksheet`.
+  `project.angles` är projektvinklarna. Stilmallen har `pens`
+  (penntabellen, läses av `buildSection`) och `font`. Migreringen 4 → 5
+  lägger bara till tomma fält (`emptyTree()`).
+- **Ytor.** `Element.space` säger var ett element är ritat: en fasad eller
+  sektion (markörens id) eller ett arbetsblad. Utan `space` hör det till
+  våningens plan. Koordinaterna gäller ytan; i fasader och sektioner är x
+  längs linjen och y höjden, som i `buildSection`. `homeOf(el)` ger ytan.
+- **Visas i.** `Element.show` (`ShowIn`): uppräknade vyer eller vy-taggar
+  (`all`/`any`). Reglerna står i `src/core/visibility.ts` (`shownIn`,
+  `allViews`, `countViews`) och har tester. Modellvyn av en yta har id
+  `modelViewId(yta)`. `ViewStates` har `viewId`, `place`, `viewTags` och
+  `showHidden`; `createContext` tar med det som hör hemma på `place` (eller
+  våningen) och det som valts att synas i just den vyn, och
+  `ctx.hiddenInView` säger vad som bara visas tonat.
+- **En fasad eller sektion** ritas av `buildSection` (modellen) och
+  `buildPlan` med `place: markörens id` (det som ritats i den), lagt
+  ovanpå varandra i `renderAll`. `ToolHost.space()` ger ytan nya mått,
+  texter och 2D-element hamnar på, och `canEdit(id)` vad som går att flytta
+  i en vy som annars bara går att markera.
+- **2D-element**: `Line2D` (`shape`: line, polyline, rect, arc, circle,
+  spline) och `Fill2D` i `src/elements/drawing2d.ts`, verktyget i
+  `src/ui/tools/draw2dTool.ts`. Bågar sparas start, punkt på bågen, slut.
+- **Taklutningen** (`src/elements/roofSlope.ts`): `buildSection` ger
+  automatiska taklutningar med id `slope:<tak>:<takfall>` och deras värden
+  i `slopes`. Markeras en skapar appen ett `RoofSlope`-element med de
+  värdena (`materializeSlopes` i `app.ts`), och fasaden hoppar sedan över
+  den automatiska. `deleteElements` döljer en taklutning (`hidden`) i
+  stället för att ta bort den.
+- **Lås**: `Element.locked`. `movePatch` och `deleteElements` rör inte
+  låsta objekt; `setLocked` slår av och på.
+- **Fasader som följer byggnaden** (`auto`) placeras för hand där de ligger
+  när de flyttas: `placement.auto` i `src/core/commands.ts` sätts av
+  elementlagret (`markerFrame`), eftersom kärnan inte vet hur läget räknas.
+- **Projektträdet**: mappar och sparande i `src/core/treeCommands.ts`,
+  formuläret i `src/ui/treeItemPanel.ts`. Egenskapspanelen visar det valda
+  i trädet (`panel.treeItem`) när inget är markerat i ritningen; osparade
+  ändringar ligger kvar när panelen ritas om.
+- **Snittytor i 3D**: `buildSection` ger `cutFaces` (i linjens
+  koordinater); `View3D.setClip(c, caps, z0)` fyller dem. Följ sektionen är
+  en användarinställning (`followSection` i `uiSettings`), inte en del av
+  projektet.
+- Egenskaperna för 2D, taklutning, Visas i och Lås ligger i
+  `src/ui/drawingPanel.ts`.

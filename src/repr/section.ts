@@ -248,8 +248,16 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
         }
       }
     }
-    const levels = [...new Set([z0, Math.round(maxZ)])];
-    for (const z of levels) prims.push(...levelMark(maxU + 1200, z, style.labels.heights.dimension));
+    // Nivåkoter: golv, takfot och nock (0.8). Takfoten är takets undersida vid kanten.
+    const levels = new Map<number, string>([[z0, '']]);
+    for (const el of ctx.visible('Roof')) {
+      if (ctx.actionOf(el) === 'demolished') continue;
+      const eave = Math.round(z0 + ctx.params<RoofParams>(el).eave);
+      if (eave > z0 && !levels.has(eave)) levels.set(eave, 'takfot');
+    }
+    const top = Math.round(maxZ);
+    if (!levels.has(top)) levels.set(top, ctx.visible('Roof').length ? 'nock' : '');
+    for (const [z, label] of levels) prims.push(...levelMark(maxU + 1200, z, style.labels.heights.dimension, label));
   }
 
   const pickables: Pickable[] = [...byId.entries()].map(([id, list]) => ({
@@ -339,7 +347,7 @@ function wallSilhouettes(shapes: { s: Shape3D; demolished: boolean }[], v: Vec2)
 }
 
 /** En nivåkota: ett streck, en triangel som pekar ned på det och höjden i meter. */
-function levelMark(x: number, z: number, height: number): Primitive[] {
+function levelMark(x: number, z: number, height: number, label = ''): Primitive[] {
   const s = 100; // ritningsskala, för storleken på papper
   const tri = 1.8 * s;
   const origin = { part: 'nivå' };
@@ -362,7 +370,7 @@ function levelMark(x: number, z: number, height: number): Primitive[] {
       ownFill: true,
       origin,
     },
-    { kind: 'text', at: [x + tri, z + tri * 0.35], text, height, pen: { weight: 0.18 }, origin },
+    { kind: 'text', at: [x + tri, z + tri * 0.35], text: label ? `${text} ${label}` : text, height, pen: { weight: 0.18 }, origin },
   ];
 }
 

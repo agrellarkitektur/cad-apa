@@ -81,6 +81,10 @@ Från granskningen av 0.7.1:
 
 #### Del 1: format 5, projektträdet, 2D-element och synlighet
 
+*Byggd (demon visar den), utom två punkter som flyttas till nästa session:
+grepp i sektioner för nock och takfot, och grepp och Modifiera för
+2D-elementens punkter.*
+
 - Format 5 med migrering 4 → 5 och test, för allt i 0.8 på en gång
 - Mappar med undermappar i projektträdet, i alla flikar. Mapparna används också av Plot/export i del 3
 - Det man markerar i projektträdet (vy, fasad, sektion, senare blad) visar sina inställningar i egenskapspanelen, med en Spara-knapp sist; ändringarna slår igenom först när man sparar

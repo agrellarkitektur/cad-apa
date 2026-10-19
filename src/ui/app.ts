@@ -1427,6 +1427,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (showItem) {
       const key = showItem.dataset.show!;
       if (key === 'demolished') ui.hideDemolished = !showItem.checked;
+      // Visa dolda 2D-element (0.8) är en tillfällig hjälp, inte en del av vyn.
+      else if (key === 'showHidden') ui.showHidden = showItem.checked;
       else ui.hide = showItem.checked ? ui.hide.filter((h) => h !== key) : [...ui.hide, key];
       renderAll();
       return;
@@ -1475,7 +1477,11 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     const folderPick = target.closest<HTMLElement>('[data-folder-pick]');
     if (folderPick) {
       pickTreeItem({ kind: 'folder', id: folderPick.dataset.folderPick! });
-      if (isNarrow()) setPanel(true, 'full');
+      // På telefonen täcker trädet allt: stäng det och visa mappens inställningar.
+      if (isNarrow()) {
+        setNav(false);
+        setPanel(true, 'full');
+      } else if (!ui.panelOpen) setPanel(true);
       return;
     }
     const markerMore = target.closest<HTMLElement>('[data-marker-menu]');
@@ -1610,6 +1616,9 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
             item('Roof', 'Tak', !ui.hide.includes('Roof')) +
             item('swing', 'Öppningssätt (dörrar)', !ui.hide.includes('swing')) +
             item('roofSlope', 'Taklutning i fasad och sektion', !ui.hide.includes('roofSlope')) +
+            item('Line2D', '2D-linjer', !ui.hide.includes('Line2D')) +
+            item('Fill2D', 'Fyllningar', !ui.hide.includes('Fill2D')) +
+            item('showHidden', 'Visa dolda 2D-element (tonade)', ui.showHidden) +
             '<div class="menu-label">Markörer i planen</div>' +
             item('Elevation', 'Fasader', !ui.hide.includes('Elevation')) +
             item('Section', 'Sektioner', !ui.hide.includes('Section')) +
@@ -1633,7 +1642,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         const tab = (target.closest<HTMLElement>('[data-tab]')?.dataset.tab ?? navigator.tab) as NavTab;
         const id = createFolder(store, tab, 'Ny mapp');
         pickTreeItem({ kind: 'folder', id });
-        if (isNarrow()) setPanel(true, 'full');
+        if (isNarrow()) {
+          setNav(false);
+          setPanel(true, 'full');
+        }
         else if (!ui.panelOpen) setPanel(true);
         requestAnimationFrame(() => panel.el.querySelector<HTMLInputElement>('.tree-form input[name="name"]')?.select());
         break;

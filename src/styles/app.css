@@ -4196,3 +4196,8 @@ input[type='range'] {
   color: var(--accent);
 }
 
+
+.folder-toggle svg {
+  width: 15px;
+  height: 15px;
+}
