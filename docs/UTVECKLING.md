@@ -91,6 +91,35 @@ Paneler läser `store.doc`, lyssnar med `store.subscribe` och ändrar via
 kommandon. Verktyg som inte är byggda än står i verktygsfältet med den
 version de kommer i (se [PLAN.md](PLAN.md)).
 
+### Appen: `src/ui/app.ts` och `src/ui/app/`
+
+`mountApp` i `src/ui/app.ts` bygger appen: skapar planvyn, verktygen,
+panelerna och 3D-vyn, och har det som binder ihop dem (`setTool`,
+`setMode`, `renderAll`, panelerna, huvudklicket). Resten ligger i
+`src/ui/app/`, en fil per del:
+
+| Fil | Innehåll |
+| --- | --- |
+| `shell.ts` | Stommen (HTML för topprad, verktygsrad, rityta och statusrad), verktygslistan `TOOLS`, `ToolId`, `ViewMode` och `createUiState` (det som visas just nu) |
+| `helpers.ts` | Små hjälpare: talformat, förvalda typer och tillstånd, vybeskrivning, skala |
+| `context.ts` | `AppContext`: det delarna behöver av varandra |
+| `toolOptions.ts` | Verktygsraden under ritytan och måttbandets värden |
+| `views.ts` | Vyhistorik, `goTo`, sparade vyer och menyerna för vyer och markörer |
+| `showMenu.ts` | Kalkeringens utseende under Visa, och skärmskalan |
+| `menus.ts` | Högerklick och långt tryck i plan, 3D och projektträdet |
+| `keyboard.ts` | Kortkommandona |
+| `clipboard.ts` | Kopiera, klipp ut och klistra in |
+
+Varje del är en funktion `installX(app)` som anropas en gång i `mountApp`
+och lämnar tillbaka det som andra delar använder. `app` är ett objekt med
+getters, så delarna läser alltid det som gäller just då (planen och
+3D-vyn byts ut). Hämta därför med `app.x` där det används, inte en gång i
+början av `installX`. Behöver en del något nytt: lägg till det i
+`AppContext` och som getter i `app` i `mountApp`.
+
+En ny del av gränssnittet läggs som en egen fil här i stället för i
+`app.ts`, så att filerna hålls små.
+
 ## Tester
 
 `npm test` kör testerna i `tests/`. Varje regel som rör data ska ha ett test:

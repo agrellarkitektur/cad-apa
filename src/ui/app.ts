@@ -1,22 +1,19 @@
 import type { Brand } from '../brand';
-import { createProposal, deleteElements, moveElements, moveWallEnd, renameElement, setInState, updateParams } from '../core/commands';
+import { createProposal, moveElements, moveWallEnd, renameElement, updateParams } from '../core/commands';
 import { resolveParams } from '../elements/registry';
 import { snap } from './tools/snap';
 import { ENGINE } from '../core/engine';
-import { newId } from '../core/ids';
 import type { Id, ProjectDoc, ViewDef } from '../core/model';
 import { PRESETS, type StyleSheet } from '../core/graphics';
 import { actionOf, existingState } from '../core/states';
 import { DocStore } from '../core/store';
 import type { WallParams } from '../elements/wall';
-import type { WallFace } from '../elements/wallSides';
 import { buildModel3d } from '../repr/model3d';
 import { buildPlan, type PlanResult } from '../repr/plan';
 import { buildSection } from '../repr/section';
 import { markerFrame, markerName, modelBounds } from '../elements/markers';
 import { AlignTool, MarkerTool, RoofTool } from './tools/markerTools';
 import { MeasureTool, ZoomBoxTool } from './tools/measureTool';
-import { copyPayload, originalsHere, parsePayload, pasteClip, type ClipPayload } from '../core/clipboard';
 import { skewText, skewWarnings } from '../elements/angleCheck';
 import { modifyContextAt, ModifyPalette, type ModifyHost } from './modify';
 import { refFrame } from '../core/wallEdit';
@@ -28,14 +25,12 @@ import { parse } from '../storage/format';
 import { keepUnreadable, loadLocal, mayOverwrite, recordFormatVersion } from '../storage/localStore';
 import { FORMAT_VERSION } from '../core/model';
 import { forgetProjectFile, openProjectFile, saveProject, saveProjectFile, saveTextFile } from '../storage/projectFile';
-import { askConfirm, askText } from './ask';
-import { ContextMenu, onLongPress, type MenuItem } from './contextMenu';
-import { pickAt } from '../view2d/pick';
+import { ContextMenu } from './contextMenu';
 import { releasedHint } from './tools/selectTool';
 import { minorStepFor } from '../view2d/grid';
 import { PlanView, type ViewTool } from '../view2d/planView';
 import { renderHighlight } from './highlight';
-import { icons, type IconName } from './icons';
+import { icons } from './icons';
 import { escapeHtml } from './labels';
 import { MeasureBox } from './measureBox';
 import { NewProjectDialog } from './newProjectDialog';
@@ -48,11 +43,11 @@ import { SettingsDialog } from './settingsDialog';
 import { StyleDialog } from './styleDialog';
 import { TempDims } from './tempDims';
 import { Navigator, type NavTab } from './navigator';
-import { applyUiColors, loadUiSettings, mmPerCssPx, PANE_WIDTH, parseScale, saveUiSettings, type PaneMode } from './uiSettings';
+import { applyUiColors, loadUiSettings, mmPerCssPx, PANE_WIDTH, saveUiSettings, type PaneMode } from './uiSettings';
 import { clampWidth, setupPaneResize } from './paneResize';
 import { InlineTextEditor } from './textEditor';
 import { Camera } from '../view2d/camera';
-import { applyTheme, createThemeSwitcher, currentTheme, onThemeChange, THEMES, type ThemeId } from './theme';
+import { applyTheme, createThemeSwitcher, currentTheme, onThemeChange, type ThemeId } from './theme';
 import type { ToolHost } from './tools/host';
 import { SelectTool } from './tools/selectTool';
 import { isSnapEnabled, setSnapEnabled, type SnapSegment } from './tools/snap';
@@ -60,43 +55,17 @@ import { DimensionTool, TextTool } from './tools/annotationTools';
 import { OpeningTool } from './tools/openingTool';
 import { RoomTool } from './tools/roomTool';
 import { WallTool } from './tools/wallTool';
+import type { AppContext } from './app/context';
+import { installClipboard } from './app/clipboard';
+import { defaultState, defaultWallType, describeView, firstDefinition, formatScale, nextProposalName, nf, tf } from './app/helpers';
+import { installKeyboard } from './app/keyboard';
+import { installMenus } from './app/menus';
+import { createUiState, GROUP_LABEL, PLAN_TOOLS, shellMarkup, TOOLS, type ToolId, type ViewMode } from './app/shell';
+import { installShowMenu } from './app/showMenu';
+import { installToolOptions } from './app/toolOptions';
+import { installViews } from './app/views';
 
-type ToolId = 'pan' | 'select' | 'measure' | 'wall' | 'door' | 'window' | 'roof' | 'room' | 'dimension' | 'text' | 'section' | 'elevation';
 
-/** Verktyg som ritar i planen och därför byter till planvyn. */
-const PLAN_TOOLS: ToolId[] = ['wall', 'door', 'window', 'roof', 'room', 'dimension', 'text', 'section', 'elevation'];
-type ViewMode = '2d' | '3d' | 'split';
-
-interface ToolDef {
-  id: string;
-  label: string;
-  icon: IconName;
-  key?: string;
-  /** Versionen där verktyget byggs (se docs/PLAN.md). Saknas för verktyg som redan fungerar. */
-  comesIn?: string;
-  group: 'navigera' | 'rita' | 'annotera';
-}
-
-const TOOLS: ToolDef[] = [
-  { id: 'select', label: 'Markera', icon: 'select', key: 'V', group: 'navigera' },
-  { id: 'pan', label: 'Panorera', icon: 'pan', key: 'H', group: 'navigera' },
-  { id: 'measure', label: 'Måttband', icon: 'measure', key: 'L', group: 'navigera' },
-  { id: 'wall', label: 'Vägg', icon: 'wall', key: 'W', group: 'rita' },
-  { id: 'door', label: 'Dörr', icon: 'door', key: 'D', group: 'rita' },
-  { id: 'window', label: 'Fönster', icon: 'window', key: 'O', group: 'rita' },
-  { id: 'roof', label: 'Tak', icon: 'roof', group: 'rita' },
-  { id: 'furniture', label: 'Möbel', icon: 'furniture', comesIn: '0.12', group: 'rita' },
-  { id: 'room', label: 'Rum', icon: 'room', key: 'R', group: 'annotera' },
-  { id: 'dimension', label: 'Mått', icon: 'dimension', key: 'M', group: 'annotera' },
-  { id: 'text', label: 'Text', icon: 'text', key: 'T', group: 'annotera' },
-  { id: 'section', label: 'Sektion', icon: 'section', group: 'annotera' },
-  { id: 'elevation', label: 'Fasad', icon: 'elevation', group: 'annotera' },
-];
-
-const GROUP_LABEL: Record<ToolDef['group'], string> = { navigera: 'Visa', rita: 'Rita', annotera: 'Annotera' };
-
-const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
-const tf = new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2-digit' });
 
 export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   document.title = brand.badge ? `${brand.name} · ${brand.badge}` : brand.name;
@@ -130,131 +99,9 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const desktop = window.innerWidth > 960;
 
   /** Vad som visas just nu. Hör till vyn, inte till projektet. */
-  const ui = {
-    storey: initial.storeys[0].id,
-    state: defaultState(initial),
-    compare: true,
-    panelOpen: desktop && uiSettings.panelMode === 'open',
-    /** Projektträdet: som det lämnades på datorn, stängt på telefonen. */
-    navOpen: desktop && uiSettings.navMode === 'open',
-    /** På mobilen: bladet nere med bara snabbraden, eller uppdraget. */
-    sheet: 'peek' as 'peek' | 'full',
-    tool: 'select' as ToolId,
-    mode: '2d' as ViewMode,
-    detail: 'normal' as 'sketch' | 'normal' | 'detail',
-    /** Det som döljs i vyn (elementtyper och "littera"), och om rivet visas. */
-    hide: [] as string[],
-    hideDemolished: false,
-    /** Vyn man utgick från, och vyns stilmall och kalkerade vy. */
-    activeView: null as Id | null,
-    styleName: null as string | null,
-    trace: null as Id | null,
-    /** En fasad eller sektion som visas i stället för planen (0.7). */
-    marker: null as Id | null,
-  };
+  const ui = createUiState(initial, uiSettings, desktop);
 
-  root.innerHTML = `
-    <div class="app">
-      <header class="topbar">
-        <div class="menu-wrap main-menu-wrap">
-          <button class="brand-btn" data-action="menu" aria-haspopup="menu" aria-expanded="false" title="Meny: spara, öppna, inställningar">
-            <svg class="brand-logo" viewBox="0 0 24 24" aria-hidden="true">${brand.logoSvg}</svg>
-            <span class="brand-name">${brand.name}</span>
-            <span class="brand-chev" aria-hidden="true">${icons.expand}</span>
-          </button>
-          <div class="menu main-menu" role="menu" hidden>
-            <button role="menuitem" data-action="new-project">${icons.newFile}<span>Nytt projekt…</span><kbd>Ctrl+Alt+N</kbd></button>
-            <button role="menuitem" data-action="open-file">${icons.openFile}<span>Öppna fil…</span><kbd>Ctrl+O</kbd></button>
-            <button role="menuitem" data-action="save">${icons.save}<span>Spara</span><kbd>Ctrl+S</kbd></button>
-            <button role="menuitem" data-action="save-as">${icons.save}<span>Spara som…</span><kbd>Ctrl+Shift+S</kbd></button>
-            <hr>
-            <button role="menuitem" aria-disabled="true" title="Kommer i 0.8">${icons.newFile}<span>Skriv ut och exportera PDF</span><small>0.8</small></button>
-            <button role="menuitem" aria-disabled="true" title="Kommer i 0.8">${icons.openFile}<span>Importera underlag</span><small>0.8</small></button>
-            <hr>
-            <button role="menuitem" data-action="new-proposal">${icons.states}<span>Nytt förslag</span></button>
-            <button role="menuitem" data-action="show-types">${icons.wall}<span>Typer och littera</span></button>
-            <button role="menuitem" data-action="style">${icons.dimension}<span>Stilmall…</span></button>
-            <button role="menuitem" data-action="settings">${icons.properties}<span>Gränssnitt…</span></button>
-            <div class="narrow-only menu-themes">
-              <hr>
-              <div class="menu-label">Tema</div>
-              ${THEMES.map((t) => `<button role="menuitemradio" data-theme-id="${t.id}" aria-checked="false"><span>${t.name}</span></button>`).join('')}
-            </div>
-            <hr>
-            <button role="menuitem" data-action="reset-sample">${icons.restore}<span>Börja om med exemplet</span></button>
-            <button role="menuitem" data-action="feedback">${icons.text}<span>Skicka synpunkter…</span></button>
-            <button role="menuitem" data-action="about">${icons.select}<span>Om ${brand.name}</span><small>${ENGINE.name} ${ENGINE.version}</small></button>
-          </div>
-        </div>
-        <span class="sep hide-narrow"></span>
-        <div class="file-btns hide-narrow">
-          <button class="icon-btn" data-action="new-project" title="Nytt projekt (Ctrl+Alt+N)" aria-label="Nytt projekt">${icons.newFile}</button>
-          <button class="icon-btn" data-action="open-file" title="Öppna fil (Ctrl+O)" aria-label="Öppna fil">${icons.openFile}</button>
-          <button class="icon-btn" data-action="save" title="Spara (Ctrl+S)" aria-label="Spara">${icons.save}</button>
-        </div>
-        <span class="sep hide-narrow"></span>
-        <button class="icon-btn" data-action="undo" aria-label="Ångra" disabled>${icons.undo}</button>
-        <button class="icon-btn" data-action="redo" aria-label="Gör om" disabled>${icons.redo}</button>
-        <span class="sep hide-narrow"></span>
-        <div class="project"><strong data-out="project"></strong><span data-out="storey"></span></div>
-        <div class="spacer"></div>
-        <div class="segmented view-modes" role="group" aria-label="Vy">
-          <button data-mode="2d" aria-pressed="true" title="Plan (2)">2D</button>
-          <button data-mode="3d" aria-pressed="false" title="3D (3)">3D</button>
-          <button data-mode="split" aria-pressed="false" class="hide-narrow" title="Plan och 3D sida vid sida (4)">Båda</button>
-        </div>
-        <span class="sep hide-narrow"></span>
-        <button class="icon-btn pane-btn" data-action="toggle-nav" title="Projektträd: underlag, modell, vyer och ritningar (N)" aria-label="Projektträd" aria-pressed="false">${icons.navigator}</button>
-        <button class="icon-btn pane-btn" data-action="toggle-panel" title="Egenskaper (P)" aria-label="Egenskaper" aria-pressed="false">${icons.properties}</button>
-        <div class="theme-slot"></div>
-        ${brand.badge ? `<button class="badge beta-btn" data-action="feedback" title="Skicka synpunkter på ${brand.name}"><b>${brand.badge}</b><small>Skicka synpunkter</small></button>` : ''}
-      </header>
-      <nav class="tools" aria-label="Verktyg"></nav>
-      <main class="canvas">
-        <section class="viewbar" aria-label="Tillfälliga vyinställningar">
-          <div class="vb-head"><span title="Ändringar här gäller tills du byter vy. Spara dem i vyn för att behålla dem.">Tillfälliga vyinställningar</span><button class="vb-save" data-action="view-save" hidden>Spara i vyn</button></div>
-          <div class="vb-row">
-            <button class="vb-ctl view-btn" data-action="views" title="Klick: förra vyn. Håll in eller högerklicka: de senaste vyerna" aria-haspopup="menu"><span class="vb-lbl">Vy</span><span data-out="view-name">Vyer</span></button>
-            <div class="vb-ctl chips" role="tablist" aria-label="Tillstånd att visa"></div>
-            <label class="vb-ctl compare" id="compare-wrap"><input type="checkbox" id="compare-toggle" checked><span data-out="compare-label"></span></label>
-            <div class="vb-ctl segmented detail-switch" role="group" aria-label="Detaljnivå">
-              <button data-detail="sketch" aria-pressed="false" title="Tidig skiss: öppningar utan karmar">Skiss</button>
-              <button data-detail="normal" aria-pressed="true" title="Karmar, glasningslinjer och indrag (bygglov)">Normal</button>
-              <button data-detail="detail" aria-pressed="false" title="Dörrblad, falsar och fönsterbågar (bygghandling)">Detalj</button>
-            </div>
-            <div class="show-wrap">
-              <button class="vb-ctl show-btn" data-action="show-menu" aria-haspopup="true" aria-expanded="false">Visa ▾</button>
-              <div class="show-menu" hidden></div>
-            </div>
-          </div>
-        </section>
-        <div class="cmd-bar" hidden><button class="btn cmd-cancel" data-action="cancel-command">✕ Avbryt</button></div>
-        <div class="tool-options" data-out="tool-options"></div>
-        <div class="hint" role="status" hidden></div>
-      </main>
-      <footer class="status">
-        <span class="cursor-pos"><span class="label">X</span><span class="value coord" data-out="x">—</span></span>
-        <span class="cursor-pos"><span class="label">Y</span><span class="value coord" data-out="y">—</span></span>
-        <span class="scale-wrap"><button class="status-btn scale-btn" data-action="scale-pop" title="Skärmskala: klicka för att ange skala" aria-haspopup="dialog" aria-expanded="false"><span class="label">Skärm</span><span class="value" data-out="scale">—</span></button>
-          <form class="scale-pop" hidden>
-            <label><span>Skala 1:</span><input name="scale" type="text" inputmode="numeric" enterkeyhint="done" autocomplete="off" list="scale-list" aria-label="Skala, nämnaren"></label>
-            <datalist id="scale-list"><option value="20"><option value="50"><option value="100"><option value="200"><option value="400"><option value="500"><option value="1000"></datalist>
-            <button class="btn btn-primary" type="submit" aria-label="Använd">✓</button>
-            <p class="scale-note" data-out="scale-note"></p>
-          </form></span>
-        <span class="zoom-btns">
-          <button class="status-icon hide-narrow" data-action="zoom-out" title="Zooma ut (−)" aria-label="Zooma ut">${icons.zoomOut}</button>
-          <button class="status-icon hide-narrow" data-action="zoom-in" title="Zooma in (+)" aria-label="Zooma in">${icons.zoomIn}</button>
-          <button class="status-icon hide-narrow" data-action="zoom-box" title="Zooma till område (Z)" aria-label="Zooma till område">${icons.zoomBox}</button>
-          <button class="status-icon hide-narrow" data-action="zoom-prev" title="Förra zoomen (Shift+Z)" aria-label="Förra zoomen">${icons.zoomPrev}</button>
-          <button class="status-icon" data-action="fit" title="Zooma till allt (F)" aria-label="Zooma till allt">${icons.fit}</button>
-        </span>
-        <span class="hide-narrow"><span class="label">Rutnät</span><span class="value" data-out="grid">—</span></span>
-        <button class="status-btn" data-action="snap" aria-pressed="true" title="Snäppning av eller på (S)">Snäpp</button>
-        <span data-out="save" class="save-status"></span>
-        <span class="engine hide-narrow">${ENGINE.name} ${ENGINE.version}</span>
-      </footer>
-    </div>`;
+  root.innerHTML = shellMarkup(brand);
 
   const $ = <T extends Element>(sel: string) => root.querySelector(sel) as T;
   const out = (name: string) => $<HTMLElement>(`[data-out="${name}"]`);
@@ -683,183 +530,6 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     view.requestRender();
   }
 
-  function renderToolOptions(): void {
-    if (ui.tool === 'wall') {
-      const doc = store.doc;
-      if (wallTool.options.definition && !doc.definitions[wallTool.options.definition]) wallTool.options.definition = defaultWallType(doc);
-      const defs = Object.values(doc.definitions)
-        .filter((d) => d.elementType === 'Wall')
-        .sort((a, b) => a.name.localeCompare(b.name, 'sv', { numeric: true }));
-      const opts = defs
-        .map((d) => `<option value="${d.id}"${d.id === wallTool.options.definition ? ' selected' : ''}>${escapeHtml(d.name)} · ${nf.format(Number(d.params.thickness))}</option>`)
-        .join('');
-      const face = wallTool.options.face;
-      toolOptions.innerHTML = `
-        <label class="opt"><span>Typ</span><select id="wall-def" aria-label="Väggtyp">${opts}</select></label>
-        <div class="opt"><span>Referens</span><div class="segmented" role="group" aria-label="Referenslinje">
-          <button data-just="outside" aria-pressed="${face === 'outside'}" title="Linjen i väggens utsida">Ute</button>
-          <button data-just="center" aria-pressed="${face === 'center'}" title="Linjen mitt i väggen">Mitt</button>
-          <button data-just="inside" aria-pressed="${face === 'inside'}" title="Linjen i väggens insida">Inne</button>
-        </div></div>
-        <label class="opt"><span>Längd</span><span class="input-unit"><input id="wall-length" type="text" data-expr inputmode="decimal" autocomplete="off" placeholder="Längd" ${wallTool.drawing ? '' : 'disabled'}><i>mm</i></span></label>
-        <label class="opt"><span>Vinkel</span><span class="input-unit"><input id="wall-angle" type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" placeholder="Vinkel" value="${wallTool.lockAngle ?? ''}" ${wallTool.drawing ? '' : 'disabled'}><i>°</i></span></label>
-        <button class="btn btn-primary" data-action="wall-done" ${wallTool.drawing ? '' : 'disabled'}>Klar</button>
-        <span class="opt-hint">${wallTool.drawing ? 'Klicka nästa punkt, eller skriv en längd och tryck Enter.' : 'Klicka eller tryck där väggen ska börja.'}</span>`;
-      toolOptions.hidden = false;
-    } else if (ui.tool === 'door' || ui.tool === 'window') {
-      const t = ui.tool === 'door' ? doorTool : windowTool;
-      const type = ui.tool === 'door' ? 'Door' : 'Window';
-      const defs = Object.values(store.doc.definitions)
-        .filter((d) => d.elementType === type)
-        .sort((a, b) => a.name.localeCompare(b.name, 'sv', { numeric: true }));
-      if (t.options.definition && !store.doc.definitions[t.options.definition]) t.options.definition = defs[0]?.id ?? null;
-      const opts = defs
-        .map((d) => `<option value="${d.id}"${d.id === t.options.definition ? ' selected' : ''}>${escapeHtml(d.name)} · ${nf.format(Number(d.params.width))}×${nf.format(Number(d.params.height))}</option>`)
-        .join('');
-      toolOptions.innerHTML = `
-        <label class="opt"><span>Typ</span><select id="opening-def" aria-label="Typ">${opts}</select></label>
-        <span class="opt-hint">${ui.tool === 'door' ? 'Peka på en vägg och klicka. Sidan du pekar på blir öppningssidan, gångjärnen hamnar närmast markören.' : 'Peka på en vägg och klicka där fönstret ska sitta.'}</span>`;
-      toolOptions.hidden = false;
-    } else if (ui.tool === 'room') {
-      toolOptions.innerHTML = `
-        <label class="opt"><span>Namn</span><input id="room-name" value="${escapeHtml(roomTool.name)}" aria-label="Rumsnamn" style="width:140px"></label>
-        <span class="opt-hint">Klicka i ett utrymme som väggarna omsluter. Rummet följer väggarna och numreras automatiskt.</span>`;
-      toolOptions.hidden = false;
-    } else if (ui.tool === 'dimension') {
-      const n = dimensionTool.count;
-      toolOptions.innerHTML = `
-        <button class="btn btn-primary" data-action="dim-done" ${n >= 2 && !dimensionTool.isPlacing ? '' : 'disabled'}>Klar med punkterna</button>
-        <span class="opt-hint">${dimensionTool.isPlacing ? 'Klicka där måttlinjen ska ligga.' : n === 0 ? 'Klicka på första punkten som ska måttsättas.' : 'Klicka nästa punkt. Dubbelklicka eller tryck Klar när kedjan är färdig.'}</span>`;
-      toolOptions.hidden = false;
-    } else if (ui.tool === 'roof') {
-      const o = roofTool.options;
-      toolOptions.innerHTML = `
-        <div class="opt"><span>Typ</span><div class="segmented" role="group" aria-label="Taktyp">
-          <button data-roof-kind="gable" aria-pressed="${o.kind === 'gable'}">Sadeltak</button>
-          <button data-roof-kind="shed" aria-pressed="${o.kind === 'shed'}">Pulpettak</button>
-        </div></div>
-        <label class="opt"><span>Lutning</span><span class="input-unit"><input id="roof-slope" type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" value="${o.slope}"><i>°</i></span></label>
-        <label class="opt"><span>Takfot</span><span class="input-unit"><input id="roof-eave" type="text" data-expr inputmode="decimal" autocomplete="off" value="${o.eave}" title="Takets undersida vid takfoten, över golvet"><i>mm</i></span></label>
-        <button class="btn" data-action="roof-house" title="Ett tak över alla väggar med 500 mm utsprång, som möter väggarnas överkant">Över hela huset</button>
-        <span class="opt-hint">${roofTool.started ? 'Klicka det motsatta hörnet.' : 'Klicka ett hörn av taket, med utsprånget.'}</span>`;
-      toolOptions.hidden = false;
-    } else if (ui.tool === 'section' || ui.tool === 'elevation') {
-      const t = ui.tool === 'section' ? sectionTool : elevationTool;
-      const what = ui.tool === 'section' ? 'sektionslinjen' : 'fasadlinjen';
-      toolOptions.innerHTML = `<span class="opt-hint">${
-        t.step === 0 ? `Klicka där ${what} börjar.` : t.step === 1 ? `Klicka där ${what} slutar.` : 'Klicka på den sida som ska synas.'
-      }</span>`;
-      toolOptions.hidden = false;
-    } else if (ui.tool === 'measure') {
-      const cell = (key: string, label: string) =>
-        `<span class="opt measure-val"><span>${label}</span><b data-measure="${key}">–</b><button class="icon-btn" data-copy="${key}" title="Kopiera ${label.toLowerCase()}" aria-label="Kopiera ${label.toLowerCase()}">${icons.copy}</button></span>`;
-      toolOptions.innerHTML = `<span class="measure-grid">${cell('last', 'Sträcka')}${cell('total', 'Totalt')}${cell('angle', 'Riktning')}${cell('turn', 'Mellan')}${cell('area', 'Yta')}</span>
-        <button class="btn" data-action="measure-reset">Börja om</button>
-        <span class="opt-hint">Klicka punkter att mäta mellan. Dubbelklick eller Enter börjar om.</span>`;
-      toolOptions.hidden = false;
-      updateMeasureOptions();
-    } else if (ui.tool === 'text') {
-      toolOptions.innerHTML = `
-        <label class="opt"><span>Text</span><input id="text-value" value="${escapeHtml(textTool.text)}" aria-label="Text" style="width:180px"></label>
-        <span class="opt-hint">Klicka där texten ska stå.</span>`;
-      toolOptions.hidden = false;
-    } else {
-      toolOptions.innerHTML = '';
-      toolOptions.hidden = true;
-    }
-    appEl.dataset.tool = ui.tool;
-    // Avbryt ligger ovanför verktygsraden när ett ritverktyg är aktivt.
-    const bar = $<HTMLElement>('.cmd-bar');
-    bar.hidden = ui.tool === 'select' || ui.tool === 'pan';
-    requestAnimationFrame(placeCmdBar);
-  }
-
-  function placeCmdBar(): void {
-    const bar = $<HTMLElement>('.cmd-bar');
-    bar.style.bottom = `${(toolOptions.hidden ? 0 : toolOptions.offsetHeight + 8) + 14}px`;
-  }
-
-  /** Måttbandets värden i verktygsraden, utan att bygga om den. */
-  function measureValues(): Record<string, string> {
-    const m = measureTool.measurement();
-    const n1 = (v: number, d = 0) => v.toLocaleString('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d });
-    return {
-      last: m.points >= 2 ? `${n1(m.last)} mm` : '–',
-      total: m.points >= 3 ? `${n1(m.total)} mm` : m.points >= 2 ? `${n1(m.total)} mm` : '–',
-      angle: m.points >= 2 ? `${n1(m.angle, 2)}°` : '–',
-      turn: m.turn !== null ? `${n1(m.turn, 2)}°` : '–',
-      area: m.area !== null ? `${n1(m.area, 2)} m²` : '–',
-    };
-  }
-  function updateMeasureOptions(): void {
-    if (ui.tool !== 'measure') return;
-    const v = measureValues();
-    const h = toolOptions.offsetHeight;
-    toolOptions.querySelectorAll<HTMLElement>('[data-measure]').forEach((el) => (el.textContent = v[el.dataset.measure!]));
-    if (toolOptions.offsetHeight !== h) placeCmdBar();
-  }
-
-  toolOptions.addEventListener('change', (e) => {
-    const t = e.target as HTMLSelectElement;
-    const num = Number(t.value);
-    if (t.id === 'roof-slope' && Number.isFinite(num)) roofTool.options.slope = Math.max(0, Math.min(75, num));
-    if (t.id === 'roof-eave' && Number.isFinite(num)) roofTool.options.eave = Math.round(num);
-    if (t.id === 'wall-def') wallTool.options.definition = t.value;
-    if (t.id === 'opening-def') (ui.tool === 'door' ? doorTool : windowTool).options.definition = t.value;
-  });
-  toolOptions.addEventListener('input', (e) => {
-    const t = e.target as HTMLInputElement;
-    if (t.id === 'room-name') roomTool.name = t.value || 'Rum';
-    if (t.id === 'text-value') textTool.text = t.value;
-    if (t.id === 'wall-angle') {
-      const v = parseFloat(t.value.replace(',', '.'));
-      wallTool.lockAngle = Number.isFinite(v) ? v : null;
-      view.requestRender();
-    }
-  });
-  toolOptions.addEventListener('keydown', (e) => {
-    const t = e.target as HTMLInputElement;
-    if (t.id === 'wall-angle' && e.key === 'Enter') {
-      e.preventDefault();
-      ($<HTMLInputElement>('#wall-length') as HTMLInputElement | null)?.focus();
-      return;
-    }
-    if (t.id === 'wall-length' && e.key === 'Enter') {
-      e.preventDefault();
-      if (t.value === '') wallTool.finish();
-      else if (!wallTool.placeLength(Number(t.value))) hint('Peka först åt det håll väggen ska gå.');
-      t.value = '';
-      view.requestRender();
-    }
-    if (e.key === 'Escape') {
-      wallTool.finish();
-      t.blur();
-    }
-  });
-  toolOptions.addEventListener('click', (e) => {
-    const b = (e.target as HTMLElement).closest<HTMLElement>('button');
-    if (!b) return;
-    if (b.dataset.just) {
-      wallTool.options.face = b.dataset.just as WallFace;
-      renderToolOptions();
-    }
-    if (b.dataset.action === 'wall-done') wallTool.finish();
-    if (b.dataset.action === 'measure-reset') measureTool.reset();
-    if (b.dataset.copy) {
-      // Bara talet, med decimalkomma, så att det går att klistra in i ett kalkylark.
-      const text = measureValues()[b.dataset.copy].replace(/\s*\(.*\)$/, '').replace(/[^\d,−-]/g, '');
-      void window.navigator.clipboard?.writeText(text).then(
-        () => hint(`Kopierade ${text}`),
-        () => hint('Det gick inte att kopiera här.'),
-      );
-    }
-    if (b.dataset.roofKind) {
-      roofTool.options.kind = b.dataset.roofKind as 'gable' | 'shed';
-      renderToolOptions();
-    }
-    if (b.dataset.action === 'roof-house') roofOverHouse();
-    if (b.dataset.action === 'dim-done') dimensionTool.donePoints();
-  });
 
   // ---------- Panel och dialog ----------
   const panel = new PropertiesPanel(store, selection, viewStates);
@@ -1315,6 +985,223 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   if (autosaveBlocked) showSaveStatus({ kind: 'blocked' });
   else if (saved) out('save').textContent = `Sparat ${tf.format(new Date(saved.savedAt))}`;
 
+  // ---------- Appens delar (src/ui/app/) ----------
+  // Varje del får appen som ett objekt med getters, så att den alltid ser det
+  // som gäller just nu. Se src/ui/app/context.ts.
+  const ctxMenu = new ContextMenu();
+  const app: AppContext = {
+    get root() {
+      return root;
+    },
+    get $() {
+      return $;
+    },
+    get out() {
+      return out;
+    },
+    get appEl() {
+      return appEl;
+    },
+    get menu() {
+      return menu;
+    },
+    get toolOptions() {
+      return toolOptions;
+    },
+    get pane2d() {
+      return pane2d;
+    },
+    get pane3d() {
+      return pane3d;
+    },
+    get store() {
+      return store;
+    },
+    get selection() {
+      return selection;
+    },
+    get ui() {
+      return ui;
+    },
+    get uiSettings() {
+      return uiSettings;
+    },
+    get view() {
+      return view;
+    },
+    get plan() {
+      return plan;
+    },
+    get view3d() {
+      return view3d;
+    },
+    get selectTool() {
+      return selectTool;
+    },
+    get wallTool() {
+      return wallTool;
+    },
+    get doorTool() {
+      return doorTool;
+    },
+    get windowTool() {
+      return windowTool;
+    },
+    get roomTool() {
+      return roomTool;
+    },
+    get dimensionTool() {
+      return dimensionTool;
+    },
+    get textTool() {
+      return textTool;
+    },
+    get measureTool() {
+      return measureTool;
+    },
+    get roofTool() {
+      return roofTool;
+    },
+    get sectionTool() {
+      return sectionTool;
+    },
+    get elevationTool() {
+      return elevationTool;
+    },
+    get aligning() {
+      return aligning;
+    },
+    get zoomingBox() {
+      return zoomingBox;
+    },
+    get panel() {
+      return panel;
+    },
+    get palette() {
+      return palette;
+    },
+    get modifyPalette() {
+      return modifyPalette;
+    },
+    get navigator() {
+      return navigator;
+    },
+    get measureBox() {
+      return measureBox;
+    },
+    get newProjectDialog() {
+      return newProjectDialog;
+    },
+    get settingsDialog() {
+      return settingsDialog;
+    },
+    get styleDialog() {
+      return styleDialog;
+    },
+    get ctxMenu() {
+      return ctxMenu;
+    },
+    get hint() {
+      return hint;
+    },
+    get renderAll() {
+      return renderAll;
+    },
+    get viewStates() {
+      return viewStates;
+    },
+    get setTool() {
+      return setTool;
+    },
+    get setMode() {
+      return setMode;
+    },
+    get setPanel() {
+      return setPanel;
+    },
+    get setNav() {
+      return setNav;
+    },
+    get togglePanel() {
+      return togglePanel;
+    },
+    get toggleNav() {
+      return toggleNav;
+    },
+    get toggleGrid() {
+      return toggleGrid;
+    },
+    get closeMenu() {
+      return closeMenu;
+    },
+    get closeShowMenu() {
+      return closeShowMenu;
+    },
+    get cancelCommand() {
+      return cancelCommand;
+    },
+    get endAlign() {
+      return endAlign;
+    },
+    get startZoomBox() {
+      return startZoomBox;
+    },
+    get endZoomBox() {
+      return endZoomBox;
+    },
+    get previousZoom() {
+      return previousZoom;
+    },
+    get zoomToSelection() {
+      return zoomToSelection;
+    },
+    get roofOverHouse() {
+      return roofOverHouse;
+    },
+    get screenMm() {
+      return screenMm;
+    },
+    get saveNow() {
+      return saveNow;
+    },
+    get openFile() {
+      return openFile;
+    },
+    get applyView() {
+      return applyView;
+    },
+    get currentViewDef() {
+      return currentViewDef;
+    },
+    get viewModified() {
+      return viewModified;
+    },
+    get goTo() {
+      return goTo;
+    },
+    get openHistoryMenu() {
+      return openHistoryMenu;
+    },
+    get openMarkerMenu() {
+      return openMarkerMenu;
+    },
+    get openViewMenu() {
+      return openViewMenu;
+    },
+    get copySelection() {
+      return copySelection;
+    },
+    get pasteFromMenu() {
+      return pasteFromMenu;
+    },
+  };
+  const { renderToolOptions, updateMeasureOptions } = installToolOptions(app);
+  const { goTo, openHistoryMenu, openMarkerMenu, openViewMenu, saveViewAsNew, updateActiveView, viewHistory, visit } = installViews(app);
+  const { applyTraceLook, closeScalePop, openScalePop, refreshShowMenu, scalePop, traceLookMarkup } = installShowMenu(app);
+  const { viewBtnLongPressed } = installMenus(app);
+  installKeyboard(app);
+  const { copySelection, pasteFromMenu } = installClipboard(app);
+
   // För felsökning i webbläsarens konsol.
   (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifyPalette, get view3d() { return view3d; } };
 
@@ -1734,704 +1621,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     }
   }
 
-  // ---------- Vyer: historik, högerklick och kalkering ----------
 
-  /** Ett ställe man varit på: en sparad vy eller ett våningsplan i modellen. */
-  type Place = { kind: 'view'; id: Id } | { kind: 'storey'; id: Id } | { kind: 'marker'; id: Id };
-  /** Senaste först. Det första är där man är nu. */
-  const viewHistory: Place[] = [{ kind: 'storey', id: ui.storey }];
-  const samePlace = (a: Place, b: Place) => a.kind === b.kind && a.id === b.id;
 
-  function visit(p: Place): void {
-    const i = viewHistory.findIndex((q) => samePlace(q, p));
-    if (i >= 0) viewHistory.splice(i, 1);
-    viewHistory.unshift(p);
-    viewHistory.length = Math.min(viewHistory.length, 6);
-  }
 
-  function placeLabel(p: Place): { name: string; sub: string } | null {
-    if (p.kind === 'view') {
-      const v = store.doc.views.find((x) => x.id === p.id);
-      return v ? { name: v.name, sub: `Vy · ${describeView(v)}` } : null;
-    }
-    if (p.kind === 'marker') {
-      const el = store.doc.elements[p.id];
-      return el ? { name: markerName(store.doc, el), sub: el.type === 'Section' ? 'Sektion' : 'Fasad' } : null;
-    }
-    const s = store.doc.storeys.find((x) => x.id === p.id);
-    return s ? { name: s.name, sub: 'Modell' } : null;
-  }
 
-  function goTo(p: Place): void {
-    if (p.kind === 'view') {
-      const v = store.doc.views.find((x) => x.id === p.id);
-      if (v) applyView(v);
-    } else if (p.kind === 'marker') {
-      const el = store.doc.elements[p.id];
-      if (!el) return;
-      const was = ui.marker;
-      ui.marker = p.id;
-      ui.storey = el.storey;
-      ui.activeView = null;
-      if (ui.tool !== 'select' && ui.tool !== 'pan') setTool('select');
-      measureBox.close();
-      palette.hide();
-      selection.clear();
-      visit(p);
-      if (ui.mode === '3d') void setMode('2d');
-      renderAll();
-      if (was !== p.id) view.zoomToFit();
-    } else if (store.doc.storeys.some((s) => s.id === p.id)) {
-      const was = ui.marker;
-      ui.storey = p.id;
-      ui.marker = null;
-      ui.activeView = null;
-      visit(p);
-      renderAll();
-      if (was) {
-        selection.clear();
-        view.zoomToFit();
-      }
-    }
-  }
-
-  /** Högerklick eller ⋯ på en fasad eller sektion. */
-  function openMarkerMenu(id: Id, x: number, y: number): void {
-    const el = store.doc.elements[id];
-    if (!el) return;
-    const p = el.params as { auto?: boolean; side?: number };
-    const name = markerName(store.doc, el);
-    ctxMenu.open(
-      x,
-      y,
-      [
-        { kind: 'header', label: name, sub: el.type === 'Section' ? 'Sektion' : 'Fasad' },
-        { label: 'Visa', disabled: ui.marker === id, run: () => goTo({ kind: 'marker', id }) },
-        {
-          label: 'Visa linjen i planen',
-          run: () => {
-            goTo({ kind: 'storey', id: el.storey });
-            selection.set([id]);
-          },
-        },
-        { label: 'Byt namn…', run: () => void renameMarker(id) },
-        {
-          label: 'Placeras automatiskt',
-          checked: !!p.auto,
-          sub: el.type === 'Section' ? 'Genom mitten av huset' : 'Utanför huset, följer det',
-          run: () => setMarkerAuto(id, !p.auto),
-        },
-        { label: 'Vänd blickriktningen', disabled: !!p.auto, run: () => updateParams(store, [id], { side: -(p.side ?? 1) }, 'Vänd blickriktningen') },
-        { kind: 'sep' },
-        { label: 'Ta bort…', danger: true, run: () => void deleteMarker(id) },
-      ],
-      name,
-    );
-  }
-
-  async function renameMarker(id: Id): Promise<void> {
-    const el = store.doc.elements[id];
-    if (!el) return;
-    const name = await askText('Byt namn', markerName(store.doc, el));
-    if (name === null) return;
-    renameElement(store, id, name);
-  }
-
-  /** Slå på eller av automatisk placering. Av: linjen stannar där den är nu. */
-  function setMarkerAuto(id: Id, auto: boolean): void {
-    const el = store.doc.elements[id];
-    if (!el) return;
-    if (auto) {
-      updateParams(store, [id], { auto: true }, 'Placera automatiskt');
-      return;
-    }
-    const f = markerFrame(store.doc, el);
-    const r2 = (q: Vec2): [number, number] => [Math.round(q[0]), Math.round(q[1])];
-    updateParams(store, [id], { auto: false, start: r2(f.start), end: r2(f.end), side: 1 }, 'Placera själv');
-  }
-
-  async function deleteMarker(id: Id): Promise<void> {
-    const el = store.doc.elements[id];
-    if (!el) return;
-    const name = markerName(store.doc, el);
-    if (!(await askConfirm(`Ta bort ${name}?`, 'Linjen tas bort ur planen och vyn ur projektträdet. Det går att ångra.'))) return;
-    if (ui.marker === id) goTo({ kind: 'storey', id: el.storey });
-    deleteElements(store, [id]);
-  }
-
-  /** De senaste vyerna, vid vyknappen. */
-  function openHistoryMenu(x: number, y: number): void {
-    const items: MenuItem[] = [{ kind: 'header', label: 'Senaste vyerna' }];
-    viewHistory
-      .map((p) => ({ p, l: placeLabel(p) }))
-      .filter((r) => r.l)
-      .slice(0, 5)
-      .forEach(({ p, l }, i) =>
-        items.push({ label: l!.name, sub: l!.sub, hint: i === 0 ? 'nu' : i === 1 ? 'klick' : undefined, disabled: i === 0, run: () => goTo(p) }),
-      );
-    items.push({ kind: 'sep' }, { label: 'Alla vyer i projektträdet', run: () => (navigator.showTab('vyer'), setNav(true)) });
-    if (!ui.activeView) items.push({ label: 'Spara det som visas som vy…', run: () => void saveViewAsNew() });
-    ctxMenu.open(x, y, items, 'Senaste vyerna');
-  }
-
-  /** Högerklick eller ⋯ på en vy i projektträdet. */
-  function openViewMenu(id: Id, x: number, y: number): void {
-    const v = store.doc.views.find((q) => q.id === id);
-    if (!v) return;
-    const traced = ui.trace === id;
-    ctxMenu.open(
-      x,
-      y,
-      [
-        { kind: 'header', label: v.name, sub: describeView(v) },
-        { label: 'Visa vyn', run: () => applyView(v), disabled: ui.activeView === id && !viewModified(v) },
-        { label: traced ? 'Sluta kalkera vyn' : 'Kalkera den här vyn', checked: traced, disabled: ui.activeView === id, run: () => setTrace(traced ? null : id) },
-        ...(ui.activeView === id ? [{ label: 'Spara nuvarande inställningar i vyn', disabled: !viewModified(v), run: () => void updateActiveView() }] : []),
-        { label: 'Byt namn…', run: () => void renameView(id) },
-        { label: 'Duplicera', run: () => duplicateView(id) },
-        { kind: 'sep' },
-        { label: 'Ta bort…', danger: true, run: () => void deleteView(id) },
-      ],
-      v.name,
-    );
-  }
-
-  async function saveViewAsNew(): Promise<void> {
-    closeShowMenu();
-    const st = store.doc.states.find((x) => x.id === ui.state)?.name ?? '';
-    const storeyName = store.doc.storeys.find((x) => x.id === ui.storey)?.name ?? '';
-    const name = await askText('Spara som vy', `${storeyName} – ${st}`);
-    if (!name) return;
-    const v = currentViewDef(newId('vy'), name);
-    store.transact(`Ny vy: ${name}`, (tx) => tx.setViews([...tx.doc.views, v]));
-    ui.activeView = v.id;
-    visit({ kind: 'view', id: v.id });
-    renderAll();
-  }
-
-  async function updateActiveView(): Promise<void> {
-    closeShowMenu();
-    const v = store.doc.views.find((x) => x.id === ui.activeView);
-    if (v) store.transact(`Spara vyn ${v.name}`, (tx) => tx.setViews(tx.doc.views.map((x) => (x.id === v.id ? currentViewDef(v.id, v.name) : x))));
-  }
-
-  async function renameView(id: Id): Promise<void> {
-    const v = store.doc.views.find((x) => x.id === id);
-    if (!v) return;
-    const name = await askText('Byt namn på vyn', v.name);
-    if (name && name !== v.name) store.transact(`Byt namn på vyn till ${name}`, (tx) => tx.setViews(tx.doc.views.map((x) => (x.id === id ? { ...x, name } : x))));
-  }
-
-  function duplicateView(id: Id): void {
-    const v = store.doc.views.find((x) => x.id === id);
-    if (!v) return;
-    const copy = { ...structuredClone(v), id: newId('vy'), name: `${v.name} (kopia)` };
-    store.transact(`Duplicera vyn ${v.name}`, (tx) => tx.setViews([...tx.doc.views, copy]));
-  }
-
-  async function deleteView(id: Id): Promise<void> {
-    const v = store.doc.views.find((x) => x.id === id);
-    if (!v || !(await askConfirm('Ta bort vyn?', `${v.name} tas bort. Det går att ångra.`))) return;
-    if (ui.activeView === id) ui.activeView = null;
-    if (ui.trace === id) ui.trace = null;
-    store.transact(`Ta bort vyn ${v.name}`, (tx) => tx.setViews(tx.doc.views.filter((x) => x.id !== id)));
-  }
-
-  function setTrace(id: Id | null): void {
-    ui.trace = id;
-    renderAll();
-    if (id) hint('Vyn kalkeras. Utseendet ställs in under Visa.');
-  }
-
-  /** Hur den kalkerade vyn ritas, under Visa. Gäller för användaren, i alla projekt. */
-  function traceLookMarkup(): string {
-    if (!ui.trace) return '';
-    const t = uiSettings.trace;
-    return `<div class="trace-look">
-      <div class="segmented wide" role="group" aria-label="Kalkeringens läge">
-        <button data-trace-above="0" aria-pressed="${!t.above}">Under</button>
-        <button data-trace-above="1" aria-pressed="${t.above}">Över</button>
-      </div>
-      <label class="check"><input type="checkbox" data-trace-own${t.color ? '' : ' checked'}> Ritningens färger</label>
-      <label class="field inline"><span>Färg</span><input type="color" data-trace-color value="${t.color ?? '#c2372c'}"${t.color ? '' : ' disabled'}></label>
-      <label class="field"><span>Opacitet <b data-out="trace-opacity">${Math.round(t.opacity * 100)} %</b></span><input type="range" min="5" max="100" step="5" data-trace-opacity value="${Math.round(t.opacity * 100)}"></label>
-    </div>`;
-  }
-
-  function applyTraceLook(): void {
-    view.setUnderlayLook(uiSettings.trace);
-  }
-
-  // ---------- Skärmskalan ----------
-  // Klick på skalan i statusraden: skriv in en skala, t.ex. 100 eller 1:50.
-  const scalePop = $<HTMLFormElement>('.scale-pop');
-  const scaleBtn = $<HTMLButtonElement>('.scale-btn');
-  function openScalePop(): void {
-    const input = scalePop.elements.namedItem('scale') as HTMLInputElement;
-    input.value = formatScale(view.camera.screenScaleDenominator(screenMm())).replace(/\s/g, '');
-    out('scale-note').innerHTML = uiSettings.screenInches
-      ? `Räknat på en skärm på ${nf.format(uiSettings.screenInches)}″ och 100 % zoom i webbläsaren. <button type="button" class="link" data-action="scale-settings">Ändra</button>`
-      : 'Ungefärlig: räknat på en vanlig skärm. <button type="button" class="link" data-action="scale-settings">Ange skärmens storlek</button> under Gränssnitt för exakt skala.';
-    scalePop.hidden = false;
-    scaleBtn.setAttribute('aria-expanded', 'true');
-    input.focus();
-    input.select();
-  }
-  function closeScalePop(): void {
-    scalePop.hidden = true;
-    scaleBtn.setAttribute('aria-expanded', 'false');
-  }
-  scalePop.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const n = parseScale((scalePop.elements.namedItem('scale') as HTMLInputElement).value);
-    if (!n) {
-      hint('Skriv skalans nämnare, t.ex. 100 eller 1:50.');
-      return;
-    }
-    if (ui.mode === '3d') void setMode('2d');
-    view.zoomBy(Camera.scaleFor(n, screenMm()) / view.camera.scale);
-    closeScalePop();
-  });
-  scalePop.addEventListener('keydown', (e) => {
-    e.stopPropagation();
-    if (e.key === 'Escape') closeScalePop();
-  });
-  document.addEventListener('pointerdown', (e) => {
-    if (!scalePop.hidden && !(e.target as Element).closest('.scale-wrap')) closeScalePop();
-  });
-
-  // Stilmall och kalkering i Visa-menyn.
-  root.addEventListener('change', (e) => {
-    const t = e.target as HTMLSelectElement;
-    if (t.matches('[data-show-style]')) {
-      ui.styleName = t.value || null;
-      renderAll();
-    } else if (t.matches('[data-show-trace]')) {
-      ui.trace = t.value || null;
-      renderAll();
-      refreshShowMenu();
-    } else if (t.matches('[data-trace-own]')) {
-      uiSettings.trace.color = (t as unknown as HTMLInputElement).checked ? null : $<HTMLInputElement>('[data-trace-color]').value;
-      saveUiSettings(uiSettings);
-      applyTraceLook();
-      refreshShowMenu();
-    }
-  });
-  // Kalkeringens färg och opacitet ändras medan man drar.
-  root.addEventListener('input', (e) => {
-    const t = e.target as HTMLInputElement;
-    if (t.matches('[data-trace-color]')) uiSettings.trace.color = t.value;
-    else if (t.matches('[data-trace-opacity]')) {
-      uiSettings.trace.opacity = Number(t.value) / 100;
-      out('trace-opacity').textContent = `${t.value} %`;
-    } else return;
-    saveUiSettings(uiSettings);
-    applyTraceLook();
-  });
-
-  /** Rita om Visa-menyn om den är öppen, t.ex. när kalkeringen slås på. */
-  function refreshShowMenu(): void {
-    const m = $<HTMLElement>('.show-menu');
-    if (m.hidden) return;
-    closeShowMenu();
-    $<HTMLElement>('.show-btn').click();
-  }
-
-  // ---------- Högerklick och långt tryck ----------
-  const ctxMenu = new ContextMenu();
-  const viewBtn = $<HTMLElement>('.view-btn');
-  const viewBtnLongPressed = onLongPress(viewBtn, (x, y) => openHistoryMenu(x, y), 450, true);
-  viewBtn.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    openHistoryMenu(e.clientX, e.clientY);
-  });
-  navigator.el.addEventListener('contextmenu', (e) => {
-    const mrow = (e.target as HTMLElement).closest<HTMLElement>('[data-marker-pick]');
-    if (mrow) {
-      e.preventDefault();
-      openMarkerMenu(mrow.dataset.markerPick!, e.clientX, e.clientY);
-      return;
-    }
-    const row = (e.target as HTMLElement).closest<HTMLElement>('[data-view-apply]');
-    if (!row) return;
-    e.preventDefault();
-    openViewMenu(row.dataset.viewApply!, e.clientX, e.clientY);
-  });
-  const viewRowLongPress = onLongPress(navigator.el, (x, y, target) => {
-    const mrow = (target as HTMLElement | null)?.closest<HTMLElement>('[data-marker-pick]');
-    if (mrow) {
-      openMarkerMenu(mrow.dataset.markerPick!, x, y);
-      return;
-    }
-    const row = (target as HTMLElement | null)?.closest<HTMLElement>('[data-view-apply]');
-    if (row) openViewMenu(row.dataset.viewApply!, x, y);
-  });
-  // Ett långt tryck på en vy ska inte också öppna vyn.
-  navigator.el.addEventListener(
-    'click',
-    (e) => {
-      if (viewRowLongPress()) e.stopPropagation();
-    },
-    true,
-  );
-
-  /** Menyn för det som är markerat, eller för planen om inget är markerat. */
-  function openObjectMenu(x: number, y: number): void {
-    const els = selection.list().map((id) => store.doc.elements[id]).filter(Boolean);
-    if (!els.length) {
-      ctxMenu.open(
-        x,
-        y,
-        [
-          { label: 'Zooma till allt', hint: 'F', run: () => (ui.mode !== '3d' ? view.zoomToFit() : view3d?.frameAll()) },
-          { label: 'Klistra in', hint: 'Ctrl+V', run: () => void pasteFromMenu() },
-          { kind: 'sep' },
-          { label: 'Rita vägg', hint: 'W', run: () => setTool('wall') },
-          { label: 'Sätt in dörr', hint: 'D', run: () => setTool('door') },
-          { label: 'Sätt in fönster', hint: 'O', run: () => setTool('window') },
-          { label: 'Rum', hint: 'R', run: () => setTool('room') },
-          { label: 'Mått', hint: 'M', run: () => setTool('dimension') },
-          { label: 'Text', hint: 'T', run: () => setTool('text') },
-          { kind: 'sep' },
-          { label: 'Visa…', run: () => $<HTMLElement>('.show-btn').click() },
-          { label: 'Snäppning', checked: isSnapEnabled(), run: () => $<HTMLElement>('[data-action="snap"]').click() },
-          { label: 'Rutnät', hint: 'G', checked: uiSettings.grid, run: () => toggleGrid() },
-        ],
-        'Planen',
-      );
-      return;
-    }
-    const first = els[0];
-    const sameType = els.every((e) => e.type === first.type);
-    const quick = panel.quickMarkup(false);
-    const items: MenuItem[] = [];
-    if (quick) items.push({ kind: 'html', html: `<div class="quick-bar ctx-quick">${quick}</div>`, onClick: (e) => panel.handleClick(e) });
-    items.push(
-      { kind: 'sep' },
-      {
-        label: 'Alla inställningar här',
-        hint: 'Mer',
-        // På telefonen finns ingen snabbmeny; där fälls bladet upp i stället.
-        run: () => (isNarrow() ? (setPanel(true, 'full'), panel.showTab('selection')) : palette.show(x, y, true)),
-      },
-      { label: 'Visa i egenskaper', hint: 'P', run: () => (setPanel(true, 'full'), panel.showTab('selection')) },
-      { label: 'Zooma till', run: () => zoomToSelection() },
-      { label: 'Kopiera', hint: 'Ctrl+C', run: () => void copySelection(null) },
-      { label: 'Klistra in', hint: 'Ctrl+V', run: () => void pasteFromMenu() },
-    );
-    if (els.length === 1 && first.definition) {
-      const def = store.doc.definitions[first.definition];
-      items.push({
-        label: `Markera alla ${def?.name ?? 'av typen'}`,
-        run: () => selection.set(Object.values(store.doc.elements).filter((e) => e.definition === first.definition && e.storey === ui.storey).map((e) => e.id)),
-      });
-    }
-    if (sameType) {
-      const t = first.type;
-      const label = { Wall: 'väggar', Door: 'dörrar', Window: 'fönster', Furniture: 'möbler', Space: 'rum', Dimension: 'mått', Text: 'texter' }[t] ?? 'av samma sort';
-      items.push({ label: `Markera alla ${label}`, run: () => selectAllOfType(t) });
-    }
-    items.push({ kind: 'sep' }, { kind: 'header', label: 'Finns i' });
-    for (const s of store.doc.states) {
-      const all = els.every((e) => e.states.includes(s.id));
-      items.push({ label: s.name, checked: all, run: () => setInState(store, els.map((e) => e.id), s.id, !all) });
-    }
-    ctxMenu.open(x, y, items, 'Det markerade');
-  }
-
-  function selectAllOfType(type: string): void {
-    const vs = viewStates();
-    selection.set(
-      Object.values(store.doc.elements)
-        .filter((e) => e.type === type && e.storey === ui.storey && actionOf(e, vs) !== 'absent')
-        .map((e) => e.id),
-    );
-  }
-
-  /** Högerklick i planen: markera det man pekar på och öppna menyn. */
-  function planContext(clientX: number, clientY: number): void {
-    const r = pane2d.getBoundingClientRect();
-    const p = view.camera.toModel([clientX - r.left, clientY - r.top]);
-    const id = pickAt(plan.pickables, p, 6 / view.camera.scale);
-    if (id && !selection.has(id)) selection.set([id]);
-    if (!id && ui.tool === 'select') selection.clear();
-    palette.hide();
-    openObjectMenu(clientX, clientY);
-  }
-  pane2d.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    planContext(e.clientX, e.clientY);
-  });
-  // Långt tryck på telefonen. Trycket ska då inte också markera.
-  onLongPress(pane2d, (x, y) => {
-    selectTool.suppressNextClick();
-    planContext(x, y);
-  });
-
-  // 3D: högerklick utan drag öppnar menyn; högerdrag panorerar som förut.
-  let rightDown: { x: number; y: number } | null = null;
-  pane3d.addEventListener('pointerdown', (e) => {
-    if (e.button === 2) rightDown = { x: e.clientX, y: e.clientY };
-  }, { capture: true });
-  pane3d.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    const d = rightDown;
-    rightDown = null;
-    if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 5) return;
-    const id = view3d?.idAt(e.clientX, e.clientY) ?? null;
-    if (id && !selection.has(id)) selection.set([id]);
-    openObjectMenu(e.clientX, e.clientY);
-  });
-
-  window.addEventListener('keydown', (e) => {
-    const t = e.target as HTMLElement;
-    const typing = (t instanceof HTMLInputElement && t.type !== 'checkbox') || t instanceof HTMLSelectElement || t instanceof HTMLTextAreaElement;
-    const mod = e.metaKey || e.ctrlKey;
-    // Spara, öppna och nytt projekt fungerar även när man skriver i ett fält.
-    if (mod && !e.altKey && e.key.toLowerCase() === 's') {
-      e.preventDefault();
-      void saveNow(e.shiftKey);
-      return;
-    }
-    if (mod && !e.altKey && e.key.toLowerCase() === 'o') {
-      e.preventDefault();
-      void openFile();
-      return;
-    }
-    if (mod && e.altKey && e.key.toLowerCase() === 'n') {
-      e.preventDefault();
-      newProjectDialog.open();
-      return;
-    }
-    if (ctxMenu.isOpen) return;
-    if (mod && e.key.toLowerCase() === 'z' && !typing) {
-      e.preventDefault();
-      if (e.shiftKey) store.redo();
-      else store.undo();
-      return;
-    }
-    if (mod && e.key.toLowerCase() === 'y' && !typing) {
-      e.preventDefault();
-      store.redo();
-      return;
-    }
-    if (typing || mod || e.altKey) return;
-    if (newProjectDialog.isOpen) return;
-    if (styleDialog.isOpen) {
-      if (e.key === 'Escape') styleDialog.close();
-      return;
-    }
-    if (settingsDialog.isOpen) {
-      if (e.key === 'Escape') settingsDialog.close();
-      return;
-    }
-
-    // Siffror medan man ritar väggar går till längdfältet.
-    if (ui.tool === 'wall' && wallTool.drawing && /^[0-9]$/.test(e.key)) {
-      const input = $<HTMLInputElement>('#wall-length');
-      if (input) {
-        input.focus();
-        input.value = e.key;
-        e.preventDefault();
-      }
-      return;
-    }
-
-    switch (e.key) {
-      case 'Escape':
-        if (aligning) {
-          endAlign();
-          break;
-        }
-        if (zoomingBox) {
-          endZoomBox();
-          break;
-        }
-        if (ui.navOpen && isNarrow()) {
-          setNav(false);
-          break;
-        }
-        if (modifyPalette.open) modifyPalette.close();
-        else if (ui.tool !== 'select') cancelCommand();
-        else selection.clear();
-        palette.hide();
-        closeMenu();
-        break;
-      case 'Enter':
-        if (ui.tool === 'measure') measureTool.reset();
-        if (ui.tool === 'wall') wallTool.finish();
-        if (ui.tool === 'dimension') dimensionTool.donePoints();
-        break;
-      case 'Delete':
-      case 'Backspace':
-        if (selection.size) {
-          deleteElements(store, selection.list());
-          selection.clear();
-        }
-        break;
-      case '2':
-        void setMode('2d');
-        break;
-      case '3':
-        void setMode('3d');
-        break;
-      case '4':
-        void setMode('split');
-        break;
-      case 'v':
-      case 'V':
-        setTool('select');
-        break;
-      case 'h':
-      case 'H':
-        setTool('pan');
-        break;
-      case 'w':
-      case 'W':
-        setTool('wall');
-        break;
-      case 'd':
-      case 'D':
-        setTool('door');
-        break;
-      case 'o':
-      case 'O':
-        setTool('window');
-        break;
-      case 'r':
-      case 'R':
-        setTool('room');
-        break;
-      case 'm':
-      case 'M':
-        setTool('dimension');
-        break;
-      case 'l':
-      case 'L':
-        setTool('measure');
-        break;
-      case 't':
-      case 'T':
-        setTool('text');
-        break;
-      case 'f':
-      case 'F':
-      case 'Home':
-        view.zoomToFit();
-        break;
-      case 'g':
-      case 'G':
-        toggleGrid();
-        break;
-      case 's':
-      case 'S':
-        $<HTMLElement>('[data-action="snap"]').click();
-        break;
-      case 'p':
-      case 'P':
-        togglePanel();
-        break;
-      case 'n':
-      case 'N':
-        toggleNav();
-        break;
-      case '+':
-      case '=':
-        view.zoomBy(1.4);
-        break;
-      case 'z':
-      case 'Z':
-        if (e.shiftKey) previousZoom();
-        else startZoomBox();
-        break;
-      case 'ArrowLeft':
-      case 'ArrowRight':
-      case 'ArrowUp':
-      case 'ArrowDown': {
-        // Knuffa det markerade; med Shift ett större steg.
-        if (!selection.size || ui.marker || ui.mode === '3d') return;
-        const step = e.shiftKey ? uiSettings.nudgeLarge : uiSettings.nudge;
-        const d: [number, number] = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] }[e.key] as [number, number];
-        const r = moveElements(store, selection.list(), d, 'Knuffa');
-        if (r.released) hint(releasedHint(r.released), 4000);
-        break;
-      }
-      case '-':
-        view.zoomBy(1 / 1.4);
-        break;
-      default:
-        return;
-    }
-    e.preventDefault();
-  });
-
-  // ---------- Kopiera och klistra in (0.7.1) ----------
-  /** Det senast kopierade, om datorns urklipp inte går att läsa. */
-  let clip: ClipPayload | null = null;
-  const isTyping = (t: EventTarget | null) =>
-    (t instanceof HTMLInputElement && t.type !== 'checkbox') || t instanceof HTMLTextAreaElement || (t instanceof HTMLElement && t.isContentEditable);
-
-  function copySelection(data: DataTransfer | null): boolean {
-    if (ui.marker || !selection.size) return false;
-    const payload = copyPayload(store.doc, selection.list(), ui.storey);
-    if (!payload) return false;
-    clip = payload;
-    const text = JSON.stringify(payload);
-    if (data) data.setData('text/plain', text);
-    else void window.navigator.clipboard?.writeText(text).catch(() => {});
-    const n = payload.elements.filter((e) => !e.host).length;
-    hint(n === 1 ? 'Kopierat. Klistra in med Ctrl+V, även i ett annat projekt.' : `${n} objekt kopierade. Klistra in med Ctrl+V, även i ett annat projekt.`);
-    return true;
-  }
-
-  function pasteClipboard(payload: ClipPayload | null): void {
-    if (!payload) {
-      hint('Inget att klistra in.');
-      return;
-    }
-    if (ui.marker) goTo({ kind: 'storey', id: ui.storey });
-    // Ligger originalen kvar på samma ställe hamnar kopian en bit bort.
-    const offset: [number, number] = originalsHere(store.doc, payload, ui.state, ui.storey) ? [1000, -1000] : [0, 0];
-    const ids = pasteClip(store, payload, ui.state, ui.storey, offset);
-    if (!ids.length) {
-      hint('Inget att klistra in här.');
-      return;
-    }
-    if (ui.tool !== 'select') setTool('select');
-    selection.set(ids);
-    hint(offset[0] ? 'Inklistrat bredvid originalet. Dra för att flytta.' : 'Inklistrat på samma ställe som det kopierades från.');
-  }
-
-  document.addEventListener('copy', (e) => {
-    if (isTyping(e.target) || ctxMenu.isOpen) return;
-    if (copySelection(e.clipboardData)) e.preventDefault();
-  });
-  document.addEventListener('cut', (e) => {
-    if (isTyping(e.target) || ctxMenu.isOpen) return;
-    if (copySelection(e.clipboardData)) {
-      e.preventDefault();
-      deleteElements(store, selection.list());
-      selection.clear();
-    }
-  });
-  document.addEventListener('paste', (e) => {
-    if (isTyping(e.target)) return;
-    const text = e.clipboardData?.getData('text/plain') ?? '';
-    const payload = parsePayload(text) ?? clip;
-    if (!payload && text) return;
-    e.preventDefault();
-    pasteClipboard(payload);
-  });
-
-  async function pasteFromMenu(): Promise<void> {
-    let payload: ClipPayload | null = null;
-    try {
-      payload = parsePayload((await window.navigator.clipboard?.readText()) ?? '');
-    } catch {
-      // Webbläsaren lät oss inte läsa urklippet; använd det vi själva kopierade.
-    }
-    pasteClipboard(payload ?? clip);
-  }
 
   function hint(text: string, ms = 2400): void {
     hintEl.textContent = text;
@@ -2443,45 +1636,4 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       hintTimer = window.setTimeout(() => (hintEl.hidden = true), 250);
     }, ms);
   }
-}
-
-/** Ett förslag visas först om det finns, annars det första tillståndet. */
-/** Kort beskrivning av en vy i vylistan. */
-function describeView(v: ViewDef): string {
-  const detail = { sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' }[v.detail];
-  return [detail, v.compare ? 'jämför' : '', v.hideDemolished ? 'utan rivet' : '', v.style ?? ''].filter(Boolean).join(' · ');
-}
-
-function defaultState(doc: ProjectDoc): Id {
-  return (doc.states.find((s) => s.kind === 'proposal') ?? doc.states[0]).id;
-}
-
-/** Förvald väggtyp i verktyget: en innervägg om det finns, annars den första typen. */
-/** Första typen (i littera-ordning) för en elementtyp. */
-function firstDefinition(doc: ProjectDoc, type: string): Id | null {
-  const defs = Object.values(doc.definitions)
-    .filter((d) => d.elementType === type)
-    .sort((a, b) => a.name.localeCompare(b.name, 'sv', { numeric: true }));
-  return defs[0]?.id ?? null;
-}
-
-function defaultWallType(doc: ProjectDoc): Id | null {
-  const defs = Object.values(doc.definitions).filter((d) => d.elementType === 'Wall');
-  return (defs.find((d) => d.name.startsWith('IV')) ?? defs[0])?.id ?? null;
-}
-
-function nextProposalName(doc: ProjectDoc): string {
-  const used = new Set(doc.states.map((s) => s.name));
-  for (let i = 0; i < 26; i++) {
-    const name = `Förslag ${String.fromCharCode(65 + i)}`;
-    if (!used.has(name)) return name;
-  }
-  return `Förslag ${doc.states.length + 1}`;
-}
-
-/** Avrunda skalan till två värdesiffror: 1:87, 1:120, 1:4 300. */
-function formatScale(n: number): string {
-  if (n < 1) return (Math.round(n * 10) / 10).toLocaleString('sv-SE');
-  const p = Math.pow(10, Math.max(0, Math.floor(Math.log10(n)) - 1));
-  return nf.format(Math.round(n / p) * p);
 }
