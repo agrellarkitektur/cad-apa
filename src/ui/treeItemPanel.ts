@@ -1,6 +1,7 @@
 import { PRESETS } from '../core/graphics';
 import type { Id, ProjectDoc, TreeTab } from '../core/model';
 import type { DocStore } from '../core/store';
+import { PAPER_SIZES, saveMaster, setDefaultMaster } from '../core/sheets';
 import { deleteFolder, deleteWorksheet, descendantsOf, saveFolder, saveMarker, saveStorey, saveView, saveWorksheet, worksheetContents } from '../core/treeCommands';
 import { askConfirm } from './ask';
 import { markerName, type MarkerParams } from '../elements/markers';
@@ -10,10 +11,10 @@ import { escapeHtml } from './labels';
 
 /**
  * Inställningarna för det man valt i projektträdet (0.8): en vy, en fasad
- * eller sektion, en våning eller en mapp. De visas i egenskapspanelen med en
+ * eller sektion, en våning, ett arbetsblad, ett mallblad (0.8.8) eller en mapp. De visas i egenskapspanelen med en
  * Spara-knapp sist; inget ändras förrän man sparar.
  */
-export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder' | 'worksheet' | 'sheet' | 'viewport' | 'titleBlock' | 'sheetText'; id: Id };
+export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder' | 'worksheet' | 'sheet' | 'viewport' | 'sheetText'; id: Id };
 
 const esc = escapeHtml;
 
@@ -34,7 +35,6 @@ export function treeItemExists(doc: ProjectDoc, item: TreeItem): boolean {
       return doc.sheets.some((s) => s.id === item.id);
     case 'viewport':
       return doc.sheets.some((s) => s.viewports.some((v) => v.id === item.id));
-    case 'titleBlock':
     case 'sheetText':
       return doc.sheets.some((s) => s.items.some((v) => v.id === item.id));
   }
@@ -113,6 +113,27 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
     const w = doc.worksheets.find((x) => x.id === item.id);
     if (!w) return '';
     const n = worksheetContents(doc, w.id).length;
+    if (w.paper) {
+      // Ett mallblad (0.8.8).
+      const users = doc.sheets.filter((s) => s.master === w.id);
+      const other = users.filter((s) => s.size !== w.paper!.size || s.orientation !== w.paper!.orientation);
+      const orient = { landscape: 'Liggande', portrait: 'Stående' } as const;
+      return `<form class="tree-form" data-tree-kind="worksheet" data-tree-id="${w.id}">
+      <header class="sel-head"><h2>${esc(w.name)}</h2><p>Mallblad · ${w.paper.size} ${orient[w.paper.orientation].toLowerCase()} · ${n} objekt</p></header>
+      <section>
+        <div class="fields">
+          ${field('Namn', `<input name="name" value="${esc(w.name)}">`)}
+          ${field('Format', `<select name="size">${PAPER_SIZES.map((p) => `<option${p === w.paper!.size ? ' selected' : ''}>${p}</option>`).join('')}</select>`)}
+          ${field('Orientering', `<select name="orientation">${(['landscape', 'portrait'] as const).map((o) => `<option value="${o}"${o === w.paper!.orientation ? ' selected' : ''}>${orient[o]}</option>`).join('')}</select>`)}
+          ${field('Mapp', `<select name="folder">${folderOptions(doc, 'ritningar', folder)}</select>`)}
+        </div>
+        <label class="check"><input type="checkbox" name="default"${doc.project.master === w.id ? ' checked' : ''}> Nya blad får det här mallbladet</label>
+        <p class="note">Rita ramen, huvudet och annat som ska finnas på bladen med de vanliga verktygen, i mm på papperet. Texter kan ha smarttext, t.ex. {ritningsnummer} och {datum}, som fylls i från varje blad. En logga läggs in som underlag.</p>
+        <p class="note">${users.length ? `Används av ${users.length} ${users.length === 1 ? 'blad' : 'blad'}: ${users.map((s) => esc(s.number)).join(', ')}.` : 'Inget blad använder mallbladet än.'}${other.length ? ` ${other.map((s) => esc(s.number)).join(', ')} har ett annat format.` : ''}</p>
+      </section>
+      ${actions(`<button type="button" class="btn btn-danger" data-tree="delete-worksheet">Ta bort…</button>`)}
+    </form>`;
+    }
     return `<form class="tree-form" data-tree-kind="worksheet" data-tree-id="${w.id}">
       <header class="sel-head"><h2>${esc(w.name)}</h2><p>Arbetsblad · ${n} ${n === 1 ? 'objekt' : 'objekt'}</p></header>
       <section>
@@ -196,7 +217,9 @@ export function bindTreeForm(root: HTMLElement, store: DocStore, onSaved: (item:
       const w = store.doc.worksheets.find((x) => x.id === id);
       const n = worksheetContents(store.doc, id).length;
       if (!w) return;
-      void askConfirm('Ta bort arbetsbladet?', `${w.name}${n ? ` och de ${n} objekten på det` : ''} tas bort. Det går att ångra.`).then((ok) => {
+      const users = store.doc.sheets.filter((s) => s.master === id).length;
+      const what = w.paper ? 'mallbladet' : 'arbetsbladet';
+      void askConfirm(`Ta bort ${what}?`, `${w.name}${n ? ` och de ${n} objekten på det` : ''} tas bort.${users ? ` ${users} blad blir utan mall.` : ''} Det går att ångra.`).then((ok) => {
         if (!ok) return;
         deleteWorksheet(store, id);
         closeItem();
@@ -241,7 +264,11 @@ export function bindTreeForm(root: HTMLElement, store: DocStore, onSaved: (item:
     } else if (kind === 'folder') {
       saveFolder(store, id, { name: str('name'), parent: folder });
     } else if (kind === 'worksheet') {
-      saveWorksheet(store, id, { name: str('name') }, folder);
+      if (store.doc.worksheets.find((w) => w.id === id)?.paper) {
+        saveMaster(store, id, { name: str('name'), size: str('size') as never, orientation: str('orientation') as never }, folder);
+        const isDefault = store.doc.project.master === id;
+        if (d.has('default') !== isDefault) setDefaultMaster(store, d.has('default') ? id : null);
+      } else saveWorksheet(store, id, { name: str('name') }, folder);
     }
     onSaved({ kind, id });
   });

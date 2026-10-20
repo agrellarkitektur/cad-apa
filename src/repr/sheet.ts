@@ -1,6 +1,6 @@
 import { PRESETS, type StyleSheet } from '../core/graphics';
-import { modelViewId, type Id, type ProjectDoc, type Sheet, type SheetItem, type SheetTextItem, type ViewDef, type Viewport } from '../core/model';
-import { FRAME_MARGIN, itemCorner, paperSize } from '../core/sheets';
+import { isMaster, modelViewId, type Id, type ProjectDoc, type Sheet, type SheetItem, type SheetTextItem, type ViewDef, type Viewport, type Worksheet } from '../core/model';
+import { FRAME_MARGIN, masterOf, paperSize } from '../core/sheets';
 import { defaultState, existingState, type ViewStates } from '../core/states';
 import { markerName } from '../elements/markers';
 import { textWidth } from '../formats/helvetica';
@@ -8,13 +8,13 @@ import { clipPrims } from '../geometry/clipRect';
 import { buildPlan } from './plan';
 import { boundsOf, type Bounds, type Primitive, type Vec2 } from './primitives';
 import { buildSection } from './section';
-import { expandSmartText, smartVars, TITLE_BLOCK_HEIGHT, TITLE_BLOCK_WIDTH, titleBlockPrims } from './titleBlock';
+import { expandSmartText, smartVars } from './smartText';
 
 /**
- * Ritningsblad (0.8 del 3): vyerna ritade i sin skala på papperet, med ram
- * och ritningshuvuden (som egna saker på bladet sedan 0.8.6). Allt anges i mm på papperet med nollpunkten i nedre
- * vänstra hörnet och y uppåt, så att skärmen och PDF-exporten ritar samma
- * primitiver.
+ * Ritningsblad (0.8 del 3): mallbladets grafik (0.8.8), vyerna ritade i sin
+ * skala på papperet och texterna på bladet. Allt anges i mm på papperet med
+ * nollpunkten i nedre vänstra hörnet och y uppåt, så att skärmen och
+ * PDF-exporten ritar samma primitiver.
  *
  * En vy på ett blad (`Viewport`) har `at`: var vyns nollpunkt (modellens
  * 0,0, eller fasadens och sektionens början) hamnar på papperet. Vyn visar
@@ -39,7 +39,7 @@ export function viewSource(doc: ProjectDoc, ref: Id): ViewSource | null {
   const saved = doc.views.find((v) => v.id === ref);
   if (saved) {
     if (saved.marker && !doc.elements[saved.marker]) return null;
-    if (saved.worksheet && !doc.worksheets.some((w) => w.id === saved.worksheet)) return null;
+    if (saved.worksheet && !doc.worksheets.some((w) => w.id === saved.worksheet && !isMaster(w))) return null;
     return { id: ref, name: saved.name, def: saved };
   }
   if (!ref.startsWith('modell:')) return null;
@@ -61,7 +61,7 @@ export function viewSource(doc: ProjectDoc, ref: Id): ViewSource | null {
     return { id: ref, name, def: { ...base, name, storey: el.storey, marker: el.id } };
   }
   const ws = doc.worksheets.find((w) => w.id === place);
-  if (ws) return { id: ref, name: ws.name, def: { ...base, name: ws.name, storey: doc.storeys[0].id, worksheet: ws.id } };
+  if (ws && !isMaster(ws)) return { id: ref, name: ws.name, def: { ...base, name: ws.name, storey: doc.storeys[0].id, worksheet: ws.id } };
   return null;
 }
 
@@ -77,7 +77,7 @@ export function placeableViews(doc: ProjectDoc): ViewSource[] {
     ...Object.values(doc.elements)
       .filter((e) => e.type === 'Elevation' || e.type === 'Section')
       .map((e) => e.id),
-    ...doc.worksheets.map((w) => w.id),
+    ...doc.worksheets.filter((w) => !isMaster(w)).map((w) => w.id),
   ];
   for (const p of places) {
     const s = viewSource(doc, modelViewId(p));
@@ -288,7 +288,7 @@ export function centeredAt(doc: ProjectDoc, view: Id, scale: number, center: Vec
   return [Math.round(center[0] - mid[0]), Math.round(center[1] - mid[1])];
 }
 
-/** En sak på bladet utöver vyerna (ett ritningshuvud eller en text), färdig att rita. */
+/** En sak på bladet utöver vyerna (en text), färdig att rita. */
 export interface PlacedItem {
   id: Id;
   kind: SheetItem['kind'];
@@ -319,20 +319,54 @@ function textPrims(item: SheetTextItem, lines: string[]): Primitive[] {
   return lines.map((text, i): Primitive => ({ kind: 'text', at: [item.at[0], item.at[1] - i * item.height * LINE_STEP], text, height: item.height, ...(item.bold ? { bold: true } : {}), pen, origin }));
 }
 
-/** Ytan en sak på bladet tar på papperet: ett ritningshuvud eller en text (med smarttexten ifylld). */
+/** Ytan en text på bladet tar på papperet, med smarttexten ifylld. */
 export function itemBounds(doc: Pick<ProjectDoc, 'project'>, sheet: Sheet, item: SheetItem, todayText: string): Bounds {
-  if (item.kind === 'text') return textBounds(item, textLines(item, smartVars(doc, sheet, todayText)));
-  const [x, y] = itemCorner(sheet, item);
-  return { minX: x - TITLE_BLOCK_WIDTH, minY: y, maxX: x, maxY: y + TITLE_BLOCK_HEIGHT };
+  return textBounds(item, textLines(item, smartVars(doc, sheet, todayText)));
 }
 
 function placeItem(doc: ProjectDoc, sheet: Sheet, item: SheetItem, todayText: string): PlacedItem {
-  if (item.kind === 'text') {
-    const lines = textLines(item, smartVars(doc, sheet, todayText));
-    return { id: item.id, kind: item.kind, frame: textBounds(item, lines), prims: textPrims(item, lines) };
+  const lines = textLines(item, smartVars(doc, sheet, todayText));
+  return { id: item.id, kind: item.kind, frame: textBounds(item, lines), prims: textPrims(item, lines) };
+}
+
+/** Papperet: vitt med en tunn kant, bara på skärmen (`part: 'papper'`). */
+export function paperPrim(w: number, h: number): Primitive {
+  return {
+    kind: 'region',
+    role: 'cut',
+    rings: [
+      [
+        [0, 0],
+        [w, 0],
+        [w, h],
+        [0, h],
+      ],
+    ],
+    fill: { kind: 'solid', color: 'paper' },
+    outline: { weight: 0.13, color: 'muted' },
+    ownFill: true,
+    origin: { objectType: 'Sheet', part: 'papper' },
+  };
+}
+
+/** Inställningarna ett mallblad ritas med (0.8.8): skala 1:1, utan tillstånd och jämförelse. */
+export function masterViewStates(doc: ProjectDoc, master: Worksheet): ViewStates {
+  return { state: defaultState(doc), viewId: modelViewId(master.id), place: master.id, scale: 1 };
+}
+
+/** Det som är ritat på ett mallblad (mm på papperet), med smarttexten ifylld från bladet. */
+export function masterPrims(doc: ProjectDoc, master: Worksheet, sheet: Sheet, todayText: string): Primitive[] {
+  const vars = smartVars(doc, sheet, todayText);
+  const out: Primitive[] = [];
+  for (const p of buildPlan(doc, doc.storeys[0].id, masterViewStates(doc, master)).prims) {
+    if (p.kind !== 'text' || !p.text.includes('{')) out.push(p);
+    else {
+      // Ett tomt fält ger ingen text.
+      const text = expandSmartText(p.text, vars);
+      if (text.trim()) out.push({ ...p, text });
+    }
   }
-  const corner = itemCorner(sheet, item);
-  return { id: item.id, kind: item.kind, frame: itemBounds(doc, sheet, item, todayText), prims: titleBlockPrims(doc, sheet, corner, todayText) };
+  return out;
 }
 
 export interface SheetDrawing {
@@ -342,37 +376,18 @@ export interface SheetDrawing {
   prims: Primitive[];
   views: PlacedView[];
   items: PlacedItem[];
-  /** Ritningsramen (också när den inte ritas). */
+  /** Den vanliga ritningsramen (`FRAME_MARGIN`), som flyttade saker fäster mot. */
   frame: Bounds;
 }
 
-/** Ett helt ritningsblad: papper, vyerna, ramen om den visas och ritningshuvudena. */
+/** Ett helt ritningsblad: papper, mallbladets grafik, vyerna och texterna. */
 export function buildSheet(doc: ProjectDoc, sheet: Sheet, opt: { autoDims?: boolean; today: string }): SheetDrawing {
   const [w, h] = paperSize(sheet);
   const frame: Bounds = { minX: FRAME_MARGIN.left, minY: FRAME_MARGIN.bottom, maxX: w - FRAME_MARGIN.right, maxY: h - FRAME_MARGIN.top };
-  const corners = (b: Bounds): Vec2[] => [
-    [b.minX, b.minY],
-    [b.maxX, b.minY],
-    [b.maxX, b.maxY],
-    [b.minX, b.maxY],
-  ];
-  const paper: Primitive = {
-    kind: 'region',
-    role: 'cut',
-    rings: [corners({ minX: 0, minY: 0, maxX: w, maxY: h })],
-    fill: { kind: 'solid', color: 'paper' },
-    outline: { weight: 0.13, color: 'muted' },
-    ownFill: true,
-    origin: { objectType: 'Sheet', part: 'papper' },
-  };
+  const master = masterOf(doc, sheet);
   const views = sheet.viewports.map((vp) => placeView(doc, vp, opt));
   const items: PlacedItem[] = sheet.items.map((it) => placeItem(doc, sheet, it, opt.today));
-  const prims: Primitive[] = [
-    paper,
-    ...views.flatMap((v) => v.prims),
-    ...(sheet.frame ? [{ kind: 'polyline', points: corners(frame), closed: true, pen: { weight: 0.5 }, origin: { objectType: 'Sheet', part: 'ram' } } as Primitive] : []),
-    ...items.flatMap((i) => i.prims),
-  ];
+  const prims: Primitive[] = [paperPrim(w, h), ...(master ? masterPrims(doc, master, sheet, opt.today) : []), ...views.flatMap((v) => v.prims), ...items.flatMap((i) => i.prims)];
   return { size: [w, h], prims, views, items, frame };
 }
 

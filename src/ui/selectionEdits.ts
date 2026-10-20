@@ -252,7 +252,7 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
   if (scope === 'param' && (input as HTMLInputElement).type === 'checkbox') {
     const on = (input as HTMLInputElement).checked;
     const label =
-      name === 'glazed' ? (on ? 'Glasad' : 'Ej glasad') : name === 'fixed' ? (on ? 'Fast inredning' : 'Lös möblering') : name === 'toRoof' ? (on ? 'Upp till taket' : 'Egen höjd') : 'Ändra';
+      name === 'glazed' ? (on ? 'Glasad' : 'Ej glasad') : name === 'fixed' ? (on ? 'Fast inredning' : 'Lös möblering') : name === 'toRoof' ? (on ? 'Upp till taket' : 'Egen höjd') : name === 'bold' ? (on ? 'Fet stil' : 'Normal stil') : 'Ändra';
     updateParams(store, ids, { [name]: on }, label);
     return true;
   }

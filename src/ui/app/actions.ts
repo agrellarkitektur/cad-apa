@@ -346,6 +346,9 @@ export function installActions(app: AppContext, parts: ActionParts) {
       case 'view-update':
         void views.updateActiveView();
         break;
+      case 'new-master':
+        sheets.newMaster();
+        break;
       case 'new-sheet':
         sheets.newSheet();
         break;

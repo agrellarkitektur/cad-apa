@@ -117,6 +117,10 @@ export interface TextParams {
   height: number;
   /** Vridning i grader moturs. */
   angle: number;
+  /** Fet stil (0.8.8, format 8). */
+  bold?: boolean;
+  /** Var `pos` ligger på raden (0.8.8): vänster (förval), mitten eller höger. */
+  align?: 'start' | 'middle' | 'end';
 }
 
 export const textType: ElementType<TextParams> = {
@@ -143,6 +147,8 @@ export const textType: ElementType<TextParams> = {
         text,
         height: p.height,
         angle: r || undefined,
+        ...(p.bold ? { bold: true } : {}),
+        ...(p.align && p.align !== 'start' ? { align: p.align } : {}),
         pen: { weight: 0.25 },
         origin,
       }));
@@ -157,8 +163,9 @@ function textBox(p: TextParams, drawingScale: number): Vec2[] {
   const w = Math.max(1, ...lines.map((l) => l.length)) * p.height * drawingScale * 0.62;
   const top = p.height * drawingScale;
   const bottom = -step * (lines.length - 1) - p.height * drawingScale * 0.3;
+  const x0 = p.align === 'middle' ? -w / 2 : p.align === 'end' ? -w : 0;
   const c = (x: number, y: number): Vec2 => [p.pos[0] + x * Math.cos(r) - y * Math.sin(r), p.pos[1] + x * Math.sin(r) + y * Math.cos(r)];
-  return [c(0, bottom), c(w, bottom), c(w, top), c(0, top)];
+  return [c(x0, bottom), c(x0 + w, bottom), c(x0 + w, top), c(x0, top)];
 }
 
 /**

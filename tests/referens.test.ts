@@ -105,9 +105,9 @@ referenceSet('exempel', sampleProject());
 referenceSet('rumsrutnat', roomGrid(3));
 
 describe('blad', () => {
-  it('A3 med plan i 1:100 och fasad i 1:50, med BH90-huvud', async () => {
+  it('A3 med plan i 1:100 och fasad i 1:50, med exempelmallbladet', async () => {
     const store = new DocStore(sampleProject());
-    const id = createSheet(store, { number: 'A-40.1-101', name: 'Plan och fasad', titleBlock: true });
+    const id = createSheet(store, { number: 'A-40.1-101', name: 'Plan och fasad' });
     addViewport(store, id, { view: 'vy-a-bl', scale: 100, at: centeredAt(store.doc, 'vy-a-bl', 100, [150, 160]) });
     addViewport(store, id, { view: modelViewId('fasad-1'), scale: 50, at: centeredAt(store.doc, modelViewId('fasad-1'), 50, [300, 200]) });
     const d = buildSheet(store.doc, store.doc.sheets.find((s) => s.id === id)!, { today: '2026-10-20' });

@@ -60,7 +60,7 @@ describe('Visas i (0.8)', () => {
     doc.views = doc.views.map((v) => (v.id === 'vy-a-bl' ? { ...v, tags: ['bygglov'] } : v));
     doc.elements.l1 = line('l1', { show: { kind: 'tags', tags: ['bygglov'], match: 'any' } });
     expect(countViews(doc, doc.elements.l1)).toBe(1);
-    expect(allViews(doc).length).toBe(doc.storeys.length + 5 + doc.views.length);
+    expect(allViews(doc).length).toBe(doc.storeys.length + 5 + doc.worksheets.length + doc.views.length);
     const has = (vs: object) => buildPlan(doc, 'pl-1', { ...view, ...vs }).pickables.some((p) => p.id === 'l1');
     expect(has({})).toBe(false);
     expect(has({ viewId: 'vy-a-bl', viewTags: ['bygglov'] })).toBe(true);

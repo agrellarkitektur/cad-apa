@@ -1,4 +1,5 @@
 import { SWEDISH_STANDARD } from '../core/graphics';
+import { exampleMaster } from '../core/exampleMaster';
 import { drawingMarkers, emptyTree, FORMAT, FORMAT_VERSION, type ViewDef, type Definition, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { DoorParams } from '../elements/door';
 import type { FurnitureParams } from '../elements/furniture';
@@ -157,11 +158,12 @@ const views: ViewDef[] = [
 ];
 
 export function sampleProject(): ProjectDoc {
+  const master = exampleMaster(STOREY, [BEF, A, B]);
   // Ytterväggarna är ritade moturs ovan; de vänds så att insidan vetter in.
   return orientExteriorWalls(structuredClone({
     format: FORMAT,
     formatVersion: FORMAT_VERSION,
-    project: { name: 'Exempelvilla', kind: 'ombyggnad', fields: { adress: 'Exempelgatan 1' } },
+    project: { name: 'Exempelvilla', kind: 'ombyggnad', fields: { adress: 'Exempelgatan 1' }, master: master.worksheet.id },
     states: [
       { id: BEF, name: 'Befintligt', kind: 'existing' },
       { id: A, name: 'Förslag A', kind: 'proposal' },
@@ -169,10 +171,11 @@ export function sampleProject(): ProjectDoc {
     ],
     storeys: [{ id: STOREY, name: 'Plan 1', elevation: 0, height: 2700 }],
     definitions,
-    elements,
+    elements: { ...elements, ...master.elements },
     graphics: SWEDISH_STANDARD,
     views,
     ...emptyTree(),
+    worksheets: [master.worksheet],
     // Vyerna i mappar, som exempel på projektträdets mappar (0.8).
     folders: [
       { id: 'mapp-forslag', name: 'Förslag', tab: 'vyer', parent: null },

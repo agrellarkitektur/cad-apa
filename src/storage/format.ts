@@ -67,6 +67,7 @@ function normalize(d: any): ProjectDoc {
       ...(d.project?.roomNumbering ? { roomNumbering: d.project.roomNumbering } : {}),
       ...(d.project?.doorNumbering ? { doorNumbering: d.project.doorNumbering } : {}),
       ...(Array.isArray(d.project?.angles) ? { angles: d.project.angles.map(Number).filter(Number.isFinite) } : {}),
+      ...(typeof d.project?.master === 'string' ? { master: d.project.master } : {}),
     },
     views: Array.isArray(d.views) ? d.views : [],
     states: Array.isArray(d.states) && d.states.length ? d.states : [{ id: 'st-ny', name: 'Förslag', kind: 'proposal' }],
@@ -79,7 +80,7 @@ function normalize(d: any): ProjectDoc {
     viewTags: Array.isArray(d.viewTags) ? d.viewTags.map(String) : [...DEFAULT_VIEW_TAGS],
     worksheets: Array.isArray(d.worksheets) ? d.worksheets : [],
     sheets: Array.isArray(d.sheets)
-      ? d.sheets.map((s: any) => ({ ...s, frame: s.frame !== false, fields: s.fields ?? {}, viewports: Array.isArray(s.viewports) ? s.viewports : [], items: Array.isArray(s.items) ? s.items : [] }))
+      ? d.sheets.map((s: any) => ({ ...s, fields: s.fields ?? {}, viewports: Array.isArray(s.viewports) ? s.viewports : [], items: Array.isArray(s.items) ? s.items : [] }))
       : [],
     assets: d.assets && typeof d.assets === 'object' ? d.assets : {},
   };

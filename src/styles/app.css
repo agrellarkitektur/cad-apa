@@ -4290,8 +4290,16 @@ input[type='range'] {
   display: none;
 }
 
+/* Ett mallblad (0.8.8) följer inte tillstånden och har ingen detaljnivå. */
+.app[data-place='master'] .viewbar .chips,
+.app[data-place='master'] .viewbar .compare,
+.app[data-place='master'] .viewbar .detail-switch {
+  display: none;
+}
+
 /* Bordet runt papperet, så att bladets kant syns i båda temana. */
-.app[data-place='sheet'] .pane-2d {
+.app[data-place='sheet'] .pane-2d,
+.app[data-place='master'] .pane-2d {
   background: color-mix(in srgb, var(--ink) 9%, var(--paper));
 }
 

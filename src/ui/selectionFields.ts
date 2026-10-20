@@ -167,9 +167,13 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         <p class="note">${linked ? 'Måttet följer väggar och öppningar. Skriv ett nytt värde så flyttas det som måttet pekar på.' : 'Fritt mått. Skriv ett nytt värde så flyttas måttpunkten.'}</p>`;
     }
     case 'Text': {
-      const p = resolveParams<{ text: string; height: number; angle: number }>(doc, el);
+      const p = resolveParams<{ text: string; height: number; angle: number; bold?: boolean; align?: string }>(doc, el);
+      const align = p.align ?? 'start';
+      const opt = (v: string, label: string) => `<option value="${v}"${v === align ? ' selected' : ''}>${label}</option>`;
       return `<label class="field" for="f-text-text"><span>Text</span><textarea id="f-text-text" data-key="text:text" rows="2">${escapeHtml(p.text)}</textarea></label>
-        <div class="fields">${numberField('param:height', 'Texthöjd på papper', p.height, 'mm', 2)}${numberField('param:angle', 'Vridning', p.angle, '°')}</div>`;
+        <div class="fields">${numberField('param:height', 'Texthöjd på papper', p.height, 'mm', 2)}${numberField('param:angle', 'Vridning', p.angle, '°')}
+        <label class="field"><span>Justering</span><select data-key="text:align">${opt('start', 'Vänster')}${opt('middle', 'Mitten')}${opt('end', 'Höger')}</select></label></div>
+        <label class="check"><input type="checkbox" data-key="param:bold"${p.bold ? ' checked' : ''}> Fet stil</label>`;
     }
     default:
       return '';

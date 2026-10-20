@@ -1,3 +1,4 @@
+import { exampleMaster } from './exampleMaster';
 import { SWEDISH_STANDARD, type StyleSheet } from './graphics';
 
 /**
@@ -32,6 +33,8 @@ export interface ProjectInfo {
    * gäller, t.ex. 103,5 för en sned tillbyggnad. Vinkelräta räknas med.
    */
   angles?: number[];
+  /** Mallbladet som nya blad får (0.8.8, format 8). */
+  master?: Id;
 }
 
 /**
@@ -92,13 +95,25 @@ export interface Folder {
 
 export type TreeTab = 'underlag' | 'modell' | 'vyer' | 'ritningar';
 
-/** Ett arbetsblad (format 5): en fri 2D-ritning som inte hör till ett våningsplan. */
+export type PaperSize = 'A4' | 'A3' | 'A2' | 'A1' | 'A0';
+
+/**
+ * Ett arbetsblad (format 5): en fri 2D-ritning som inte hör till ett
+ * våningsplan. Med `paper` är det ett **mallblad** (0.8.8, format 8): ritat i
+ * mm på papperet, i skala 1:1, med nollpunkten i papperets nedre vänstra
+ * hörn. Blad som använder mallen ritar det som är ritat på den under vyerna,
+ * med smarttexten ifylld från bladet.
+ */
 export interface Worksheet {
   id: Id;
   name: string;
+  paper?: { size: PaperSize; orientation: 'landscape' | 'portrait' };
 }
 
-export type PaperSize = 'A4' | 'A3' | 'A2' | 'A1' | 'A0';
+/** Om ett arbetsblad är ett mallblad (0.8.8). */
+export function isMaster(w: Worksheet | undefined): w is Worksheet & { paper: NonNullable<Worksheet['paper']> } {
+  return !!w?.paper;
+}
 
 /** En vy placerad på ett ritningsblad (format 5). Läget är i mm på papperet. */
 export interface Viewport {
@@ -120,20 +135,6 @@ export interface Viewport {
 }
 
 /**
- * Ett ritningshuvud på ett blad (0.8.6, format 6). Huvudet lagrar bara läge
- * och mall; fälten ligger i bladets `fields` och projektets `fields`, så att
- * inget försvinner om huvudet tas bort. `at` är huvudets nedre högra hörn,
- * i mm från papperets nedre högra hörn (x negativt), så att huvudet följer
- * med till hörnet när formatet byts.
- */
-export interface TitleBlockItem {
-  kind: 'titleBlock';
-  id: Id;
-  template: 'bh90';
-  at: [number, number];
-}
-
-/**
  * En fri text på ett blad (0.8.7, format 7). `at` är första radens
  * baslinje till vänster, i mm från papperets nedre vänstra hörn. Höjden är
  * i mm på papperet. Texten kan innehålla smarttext, t.ex. `{datum}`.
@@ -148,12 +149,12 @@ export interface SheetTextItem {
 }
 
 /**
- * Det som ligger på ett blad utöver vyerna (0.8.6): ritningshuvuden och
- * texter (0.8.7). Senare skalstock, orienteringsfigur och smartgrupper.
+ * Det som ligger på ett blad utöver vyerna (0.8.6): texter (0.8.7). Senare
+ * skalstock och stämplar (0.8.12).
  */
-export type SheetItem = TitleBlockItem | SheetTextItem;
+export type SheetItem = SheetTextItem;
 
-/** Ett ritningsblad (format 6). */
+/** Ett ritningsblad (format 8). */
 export interface Sheet {
   id: Id;
   /** Ritningsnummer, t.ex. "A-40.1-101". Ger också filnamnet vid export. */
@@ -161,12 +162,12 @@ export interface Sheet {
   name: string;
   size: PaperSize;
   orientation: 'landscape' | 'portrait';
-  /** Ritningsramen 20/10 mm från papperets kant (0.8.6). */
-  frame: boolean;
-  /** Fält i ritningshuvudet utöver projektets (nummer, innehåll, datum, ändring, skede …). */
+  /** Mallbladet bladet använder (0.8.8, format 8): dess grafik ritas under vyerna. */
+  master?: Id;
+  /** Bladets fält utöver projektets (datum, ändring, skede …), för smarttexten. */
   fields: Record<string, string>;
   viewports: Viewport[];
-  /** Ritningshuvuden och annat på bladet, nedifrån och upp (0.8.6). */
+  /** Det som ligger på bladet utöver vyerna, nedifrån och upp (0.8.6). */
   items: SheetItem[];
 }
 
@@ -275,7 +276,7 @@ export interface Element<P extends object = Record<string, unknown>> {
 }
 
 export const FORMAT = 'bacchus-project';
-export const FORMAT_VERSION = 7;
+export const FORMAT_VERSION = 8;
 
 export interface ProjectDoc {
   format: typeof FORMAT;
@@ -316,10 +317,11 @@ export function emptyProject(name: string, kind: ProjectKind, fields: Record<str
           { id: 'st-bef', name: 'Befintligt', kind: 'existing' },
           { id: 'st-a', name: 'Förslag A', kind: 'proposal' },
         ];
+  const master = exampleMaster('pl-1', states.map((s) => s.id));
   return {
     format: FORMAT,
     formatVersion: FORMAT_VERSION,
-    project: { name, kind, fields },
+    project: { name, kind, fields, master: master.worksheet.id },
     states,
     storeys: [{ id: 'pl-1', name: 'Plan 1', elevation: 0, height: 2700 }],
     definitions: {
@@ -328,10 +330,11 @@ export function emptyProject(name: string, kind: ProjectKind, fields: Record<str
       't-d1': { id: 't-d1', origin: 'component', name: 'D1', elementType: 'Door', params: { width: 900, height: 2100 }, props: {}, description: 'Innerdörr M9×21' },
       't-f1': { id: 't-f1', origin: 'component', name: 'F1', elementType: 'Window', params: { width: 1200, height: 1200 }, props: {} },
     },
-    elements: drawingMarkers('pl-1'),
+    elements: { ...drawingMarkers('pl-1'), ...master.elements },
     graphics: structuredClone(SWEDISH_STANDARD),
     views: [],
     ...emptyTree(),
+    worksheets: [master.worksheet],
   };
 }
 

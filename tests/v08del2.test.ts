@@ -281,13 +281,13 @@ describe('arbetsblad (0.8 del 2)', () => {
     expect(store.doc.elements[copy].space).toBe(ws);
     addWithAsset(store, dxfAsset, underlay(dxfParams(), { space: ws }), 'st-a', 'Lägg in');
     deleteWorksheet(store, ws);
-    expect(store.doc.worksheets).toHaveLength(0);
+    expect(store.doc.worksheets.some((w) => w.id === ws)).toBe(false);
     expect(store.doc.elements[copy]).toBeUndefined();
     expect(store.doc.elements.l1).toBeDefined();
     expect(store.doc.views.some((v) => v.id === 'vy-ab')).toBe(false);
     expect(store.doc.assets['fil-1']).toBeUndefined();
     store.undo();
-    expect(store.doc.worksheets).toHaveLength(1);
+    expect(store.doc.worksheets.some((w) => w.id === ws)).toBe(true);
     expect(store.doc.elements[copy].space).toBe(ws);
     expect(store.doc.assets['fil-1']).toBeDefined();
   });

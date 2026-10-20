@@ -448,10 +448,10 @@ på bladet sina egna.
   vyernas primitiver per projektversion, så att fasader inte räknas om när
   bladet ritas om.
 - **Bladet** byggs av `buildSheet`: papperet (`part: 'papper'`, ritas bara på
-  skärmen), vyerna med rubrik, ramen och ritningshuvudet
-  (`titleBlockPrims` i `src/repr/titleBlock.ts`). Allt är mm på papperet
-  med y uppåt. Smarttext: `expandSmartText(text, smartVars(doc, sheet,
-  idag))`; nya namn läggs till i `smartVars` och `SMART_TEXT`.
+  skärmen), mallbladet (0.8.8), vyerna med rubrik och texterna. Allt är mm
+  på papperet med y uppåt. Smarttext: `expandSmartText(text, smartVars(doc,
+  sheet, idag))` i `src/repr/smartText.ts`; nya namn läggs till i
+  `smartVars` och `SMART_TEXT`.
 - **I appen**: `ui.layout` är bladet som visas och `Place` har
   `kind: 'sheet'`. `src/ui/app/sheets.ts` ritar bladet (`drawing()`), har
   verktyget som markerar och flyttar vyerna (`SheetTool`, fäster mot de
@@ -639,6 +639,9 @@ på bladet sina egna.
 
 ## Ritningshuvudet som eget objekt (0.8.6, format 6)
 
+*Huvudet, ramen och loggan togs bort i 0.8.8 (mallblad, se nedan); det
+övriga i avsnittet gäller.*
+
 - **Modellen**: `Sheet.items` är det som ligger på bladet utöver vyerna,
   nedifrån och upp (`SheetItem` i `src/core/model.ts`). I dag bara
   `TitleBlockItem` (`kind: 'titleBlock'`, `template: 'bh90'`, `at`). `at`
@@ -708,3 +711,50 @@ på bladet sina egna.
   *Återställ ramen till innehållet* finns i smartmenyn (bara när ramen är
   ändrad) och i vyns formulär. Byts vyn i formuläret följer ramen
   innehållet igen; byts skalan står ramens mitt kvar på papperet.
+
+## Mallblad (0.8.8, format 8)
+
+- **Modellen**: ett mallblad är ett `Worksheet` med `paper` (`size`,
+  `orientation`); `isMaster(w)` i `src/core/model.ts`. Det som ritas på det
+  har `space` satt till dess id, som på ett arbetsblad, och koordinaterna är
+  mm på papperet från nedre vänstra hörnet. `Sheet.master` är mallbladet
+  bladet använder och `project.master` det förvalda. `Sheet.frame` och
+  `TitleBlockItem` finns inte längre; `SheetItem` är bara texter.
+- **Kommandon** i `src/core/sheets.ts`: `createMaster`, `saveMaster`,
+  `setDefaultMaster`, `masterOf` och `mastersOf`. `createSheet` tar
+  projektets förval och mallens format om inget annat anges (`master:
+  undefined` ger ett blad utan mall); `saveSheet` tar bort `master` när det
+  är tomt. `deleteWorksheet` tar bort mallbladet ur bladen och förvalet.
+- **Exempelmallbladet** byggs av `exampleMaster` i
+  `src/core/exampleMaster.ts` (fasta id `mall-a3-1` …) och läggs in av
+  `emptyProject` och `sampleProject`.
+- **Tillstånd**: `createContext` ger allt på ett mallblad åtgärden `plain`,
+  så att det syns oavsett tillstånd och jämförelse.
+- **Ritningen** (`src/repr/sheet.ts`): `masterPrims` ritar mallbladet med
+  `buildPlan` och `masterViewStates` (skala 1) och byter smarttexten i
+  textprimitiverna mot bladets värden (`smartVars`); tomma texter hoppas
+  över. `buildSheet` lägger papperet (`paperPrim`), mallen, vyerna och
+  texterna i den ordningen. `SheetDrawing.frame` är den vanliga ramens
+  marginaler (`FRAME_MARGIN`), som flyttade saker fäster mot och nya vyer
+  läggs innanför. Mallbladen går inte att lägga på ett blad som vy
+  (`viewSource`, `placeableViews`).
+- **Smarttexten** ligger i `src/repr/smartText.ts` (förut `titleBlock.ts`):
+  `SMART_TEXT`, `expandSmartText`, `sheetScales` och `smartVars`. Fältet
+  *Skala* på bladet skriver över `{skala}`.
+- **I appen**: ett mallblad öppnas som ett arbetsblad (`goTo({ kind:
+  'worksheet', id })`, `ui.worksheet`). `shownMaster()` i `app.ts` ger
+  annoteringsskalan 1 i `viewStates`, och `renderAll` sätter
+  `drawingScale = 1`, döljer rutnätet och skalstocken och lägger papperet
+  underst. `.app[data-place='master']` döljer tillstånden och detaljnivån.
+  Nya underlag (PDF, bild) får sin storlek på papper. Projektträdet listar
+  mallbladen under Ritningar (inte under Modell); formuläret ligger i
+  `src/ui/treeItemPanel.ts`, bladets val av mallblad och fälten i
+  `src/ui/sheetForms.ts`. `sheets.newMaster()` gör ett nytt.
+- **Text** har `bold` och `align` (`start`, `middle`, `end`), i
+  egenskaperna och verktygsraden.
+- **DXF till mallblad** (utvecklingsverktyg): `scripts/mallblad-fran-dxf.py`
+  läser en ram med ezdxf och skriver linjer och texter som JSON (bredd efter
+  färg, justering från TEXT och MTEXT, kända platshållare till smarttext);
+  `scripts/mallblad-projekt.mts` bygger ett projekt med dem som förvalt
+  mallblad. Att göra om DXF i appen ligger efter pilotprojektet.
+

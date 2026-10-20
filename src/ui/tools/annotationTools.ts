@@ -195,7 +195,7 @@ export class TextTool implements ViewTool {
   private at: Vec2 | null = null;
   text = 'TEXT';
   height = 2.5;
-  /** Fet stil, bara för text på ett blad (0.8.7). */
+  /** Fet stil (på blad sedan 0.8.7, överallt sedan 0.8.8). */
   bold = false;
 
   constructor(host: ToolHost) {
@@ -230,7 +230,7 @@ export class TextTool implements ViewTool {
     }
     const [el] = addElements(
       this.host.store,
-      [{ type: 'Text', storey: this.host.storey(), ...(this.host.space?.() ? { space: this.host.space!() } : {}), tags: [], params: { pos: roundMm(at), text: this.text, height: this.height, angle: 0 }, props: {} }],
+      [{ type: 'Text', storey: this.host.storey(), ...(this.host.space?.() ? { space: this.host.space!() } : {}), tags: [], params: { pos: roundMm(at), text: this.text, height: this.height, angle: 0, ...(this.bold ? { bold: true } : {}) }, props: {} }],
       this.host.activeState(),
       'Skriv text',
     );

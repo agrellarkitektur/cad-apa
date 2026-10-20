@@ -183,7 +183,8 @@ export class Navigator {
     for (const { e, name } of [...elevations, ...sections]) rowsById.set(e.id, markerRow(e.id, name, !!e.locked));
     // Arbetsblad (0.8 del 2).
     const sheet = this.host.worksheet();
-    for (const w of doc.worksheets)
+    const worksheets = doc.worksheets.filter((w) => !w.paper);
+    for (const w of worksheets)
       rowsById.set(
         w.id,
         `<div class="view-row${w.id === sheet ? ' active' : ''}${w.id === picked ? ' picked' : ''}"><button class="view-apply" data-worksheet-pick="${w.id}" title="Öppna, och visa inställningarna i egenskaperna">${esc(w.name)}</button></div>`,
@@ -207,7 +208,7 @@ export class Navigator {
     </section>
     <section>
       <h2>Arbetsblad</h2>
-      ${list(doc.worksheets.map((w) => w.id), 'Fria 2D-ritningar som inte hör till en våning, till exempel detaljer och skisser.')}
+      ${list(worksheets.map((w) => w.id), 'Fria 2D-ritningar som inte hör till en våning, till exempel detaljer och skisser.')}
       <div class="nav-actions">
         <button class="btn" data-action="new-worksheet">${icons.plus}<span>Nytt arbetsblad</span></button>
         ${this.newFolderButton('modell')}
@@ -259,14 +260,33 @@ export class Navigator {
         `<div class="view-row${s.id === current ? ' active' : ''}${s.id === picked ? ' picked' : ''}"><button class="view-apply" data-sheet-pick="${s.id}" title="Visa bladet och dess inställningar">${icons.sheet}<span class="sheet-row-name"><b>${esc(s.number)}</b> ${esc(s.name)}</span><small>${s.size} · ${n} ${n === 1 ? 'vy' : 'vyer'}</small></button></div>`,
       );
     }
+    // Mallbladen (0.8.8): arbetsblad med papper.
+    const sheet = this.host.worksheet();
+    const masters = doc.worksheets.filter((w) => w.paper);
+    for (const w of masters) {
+      const used = doc.sheets.filter((s) => s.master === w.id).length;
+      rows.set(
+        w.id,
+        `<div class="view-row${w.id === sheet ? ' active' : ''}${w.id === picked ? ' picked' : ''}"><button class="view-apply" data-worksheet-pick="${w.id}" title="Öppna mallbladet för att rita på det, och visa dess inställningar">${icons.sheet}<span class="sheet-row-name">${esc(w.name)}</span><small>${w.paper!.size}${doc.project.master === w.id ? ' · förval' : ''} · ${used} blad</small></button></div>`,
+      );
+    }
     const unfiled = this.unfiled(rows, sheets.map((s) => s.id));
+    const unfiledMasters = this.unfiled(rows, masters.map((w) => w.id));
     return `${this.folders('ritningar', rows)}<section>
       ${sheets.length ? (unfiled ? `<div class="nav-list">${unfiled}</div>` : '') : '<p class="note">Inga ritningsblad än.</p>'}
       <div class="nav-actions">
         <button class="btn" data-action="new-sheet">${icons.plus}<span>Nytt ritningsblad</span></button>
         ${this.newFolderButton('ritningar')}
       </div>
-      <p class="note">Ett blad har ritningshuvud och vyer i sin skala. Klicka på en vy på bladet för att ändra skala och rubrik, och dra den för att flytta den. Plot/export gör PDF:er av bladen.</p>
+      <p class="note">Ett blad har vyer i sin skala, och ram och huvud från sitt mallblad. Klicka på en vy på bladet för att ändra skala och rubrik, och dra den för att flytta den. Plot/export gör PDF:er av bladen.</p>
+    </section>
+    <section>
+      <h2>Mallblad</h2>
+      ${unfiledMasters ? `<div class="nav-list">${unfiledMasters}</div>` : masters.length ? '' : '<p class="note">Inga mallblad.</p>'}
+      <div class="nav-actions">
+        <button class="btn" data-action="new-master">${icons.plus}<span>Nytt mallblad</span></button>
+      </div>
+      <p class="note">Ett mallblad är ramen, huvudet och annat som ska finnas på bladen, ritat med de vanliga verktygen. Texter med smarttext fylls i från varje blad.</p>
     </section>`;
   }
 }

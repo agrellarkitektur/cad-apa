@@ -49,8 +49,6 @@ export function deleteElements(store: DocStore, ids: Id[]): void {
 /** Ta bort filer som inget element längre använder (bland `candidates`). */
 export function pruneAssets(tx: TxBuilder, candidates: Iterable<Id>): void {
   const used = new Set<unknown>(Object.values(tx.doc.elements).map((e) => e.params.asset));
-  // Loggan i ritningshuvudet (0.8 del 3).
-  used.add(tx.doc.project.fields.logo);
   for (const a of candidates) if (!used.has(a)) tx.removeAsset(a);
 }
 

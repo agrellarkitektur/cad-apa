@@ -136,8 +136,8 @@ export function createSectionQueue(onReady: () => void, opt: SectionQueueOptions
       const have = done.get(markerId);
       if (have?.key === key) return have.result;
       // En vy som inte räknats än gissas ta lika lång tid som den längsta
-      // hittills, eller (första gången) ungefär en halv ms per objekt.
-      const guess = took.get(markerId) ?? (took.size ? Math.max(...took.values()) : Object.keys(doc.elements).length * 0.5);
+      // hittills, eller (första gången) ungefär en halv ms per objekt i modellen (inte på arbetsblad och mallblad).
+      const guess = took.get(markerId) ?? (took.size ? Math.max(...took.values()) : modelCount(doc) * 0.5);
       if (broken || guess < syncBelowMs) return computeNow(doc, markerId, view, style, key);
       docs.set(version, doc);
       const job: SectionJob = { key, docVersion: version, markerId, view, style };
@@ -169,4 +169,12 @@ export async function spawnSectionWorker(): Promise<WorkerLike> {
       ? await import('../../repr/sectionWorker?worker&inline')
       : await import('../../repr/sectionWorker?worker');
   return new mod.default() as unknown as WorkerLike;
+}
+
+/** Antalet objekt i modellen, utan det som är ritat på arbetsblad och mallblad. */
+function modelCount(doc: ProjectDoc): number {
+  const sheets = new Set(doc.worksheets.map((w) => w.id));
+  let n = 0;
+  for (const el of Object.values(doc.elements)) if (!el.space || !sheets.has(el.space)) n++;
+  return n;
 }

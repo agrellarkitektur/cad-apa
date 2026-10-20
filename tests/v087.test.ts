@@ -13,9 +13,9 @@ const today = '2026-10-20';
 const texts = (d: ReturnType<typeof buildSheet>) => d.prims.filter((p) => p.kind === 'text' && p.origin?.objectType === 'SheetText');
 const titleTexts = (d: ReturnType<typeof buildSheet>) => d.prims.filter((p) => p.kind === 'text' && p.origin?.objectType === 'ViewTitle').map((p) => (p.kind === 'text' ? p.text : ''));
 
-describe('text på bladet och vyernas ram (0.8.7, format 7)', () => {
-  it('format 7', () => {
-    expect(FORMAT_VERSION).toBe(7);
+describe('text på bladet och vyernas ram (0.8.7)', () => {
+  it('format 8 (0.8.8)', () => {
+    expect(FORMAT_VERSION).toBe(8);
   });
 
   it('en text på bladet ritas rad för rad, med smarttext, och tar en yta att markera', () => {
@@ -106,7 +106,7 @@ describe('text på bladet och vyernas ram (0.8.7, format 7)', () => {
     expect(buildSheet(store.doc, store.doc.sheets[0], { today }).views[0].cropped).toBeFalsy();
   });
 
-  it('text, dold skala och ram sparas och läses i format 7', () => {
+  it('text, dold skala och ram sparas och läses', () => {
     const store = new DocStore(sampleProject());
     const id = createSheet(store);
     addSheetText(store, id, { at: [40, 100], text: 'Hej', height: 2.5 });
@@ -114,10 +114,10 @@ describe('text på bladet och vyernas ram (0.8.7, format 7)', () => {
     updateViewport(store, id, vp, { hideScale: true });
     setViewportCrop(store, id, vp, { minX: 0, minY: 0, maxX: 5000, maxY: 4000 });
     const back = parse(serialize(store.doc));
-    expect(back.formatVersion).toBe(7);
+    expect(back.formatVersion).toBe(8);
     expect(back.sheets[0].items[0]).toMatchObject({ kind: 'text', text: 'Hej' });
     expect(back.sheets[0].viewports[0]).toMatchObject({ hideScale: true, crop: { minX: 0, minY: 0, maxX: 5000, maxY: 4000 } });
-    // Ett projekt i format 6 får meddelandet om en äldre betaversion.
-    expect(() => parse(serialize({ ...store.doc, formatVersion: 6 }))).toThrow(/äldre betaversion/);
+    // Ett projekt i format 7 får meddelandet om en äldre betaversion.
+    expect(() => parse(serialize({ ...store.doc, formatVersion: 7 }))).toThrow(/äldre betaversion/);
   });
 });

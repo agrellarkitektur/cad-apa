@@ -136,7 +136,8 @@ function placeWord(doc: ProjectDoc, el: Element): string {
   const home = doc.elements[homeOf(el)];
   if (home?.type === 'Section') return 'sektionen';
   if (home?.type === 'Elevation') return 'fasaden';
-  if (doc.worksheets.some((w) => w.id === homeOf(el))) return 'arbetsbladet';
+  const ws = doc.worksheets.find((w) => w.id === homeOf(el));
+  if (ws) return ws.paper ? 'mallbladet' : 'arbetsbladet';
   return 'våningen';
 }
 

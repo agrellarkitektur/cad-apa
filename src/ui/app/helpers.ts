@@ -4,7 +4,7 @@ export const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 export const tf = new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2-digit' });
 
 /** Vanliga skalor för vyer och annotering (0.8 del 3). */
-export const ANNOTATION_SCALES = [1, 2, 5, 10, 20, 50, 100, 200, 400, 500, 1000, 2000];
+export const ANNOTATION_SCALES = [1, 2, 5, 10, 20, 25, 50, 100, 200, 400, 500, 1000, 2000, 2500, 4000, 5000];
 
 /** Kort beskrivning av en vy i vylistan. */
 export function describeView(v: ViewDef): string {

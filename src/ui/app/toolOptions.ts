@@ -112,13 +112,13 @@ export function installToolOptions(app: AppContext) {
         <span class="opt-hint">${t.hintText()}</span>`;
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'text') {
-      // Höjden på papperet (0.8.7); fet stil bara för text på ett blad.
+      // Höjden på papperet (0.8.7) och fet stil (0.8.8).
       const t = app.textTool;
       const heights = SHEET_TEXT_HEIGHTS.includes(t.height) ? SHEET_TEXT_HEIGHTS : [...SHEET_TEXT_HEIGHTS, t.height].sort((a, b) => a - b);
       app.toolOptions.innerHTML = `
         <label class="opt"><span>Text</span><input id="text-value" value="${escapeHtml(t.text)}" aria-label="Text" style="width:180px"></label>
-        <label class="opt"><span>Höjd</span><select id="text-height" aria-label="Texthöjd på papperet">${heights.map((h) => `<option value="${h}"${h === t.height ? ' selected' : ''}>${nf.format(h)} mm</option>`).join('')}</select></label>
-        ${app.ui.layout ? `<label class="opt opt-check"><input type="checkbox" id="text-bold"${t.bold ? ' checked' : ''}><span>Fet</span></label>` : ''}
+        <label class="opt"><span>Höjd</span><select id="text-height" aria-label="Texthöjd på papperet">${heights.map((h) => `<option value="${h}"${h === t.height ? ' selected' : ''}>${String(h).replace('.', ',')} mm</option>`).join('')}</select></label>
+        <label class="opt opt-check"><input type="checkbox" id="text-bold"${t.bold ? ' checked' : ''}><span>Fet</span></label>
         <span class="opt-hint">${app.ui.layout ? 'Klicka på bladet där texten ska stå.' : 'Klicka där texten ska stå.'}</span>`;
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'select' && !app.uiSettings.smartMenu && app.modifier.busy) {

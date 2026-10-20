@@ -1,30 +1,36 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 20 oktober 2026, efter 0.8.7.
+överlämning; historiken finns i git. Senast: 20 oktober 2026, efter 0.8.8.
 
 ## Läget
 
-- **0.8.7 är klar** på `main`, filformatet är **7**. Det som gjordes står i
-  PLAN.md under *0.8.7*, i README och i UTVECKLING.md under *Text på bladet
-  och vyernas ram (0.8.7, format 7)*:
-  - Text på bladet (`SheetTextItem`, `kind: 'text'`) med textverktyget (T),
-    höjd 1,8–10 mm och fet stil i verktygsraden, flera rader och
-    smarttext. Markeras, flyttas och tas bort som huvudet; dubbelklick
-    eller Redigera i smartmenyn skriver på plats.
-  - Vyns ram (`Viewport.crop`, modellens koordinater) med åtta grepp på den
-    valda vyn; allt klipps mot ramen. *Återställ ramen till innehållet* i
-    smartmenyn och vyns egenskaper.
-  - Skalan i vyns rubrik går att dölja (`Viewport.hideScale`, kryssrutan
-    *Skalan i rubriken*). Det var Carl Augusts önskemål i samma session.
-  - Kontrollerat i Chrome med Playwright mot `dist/`; inga nya kända fel.
-    `tests/prestanda.test.ts` gick igenom den här gången.
-- **Planen** (ändrad 20 oktober kväll, se *Bladen om* i PLAN.md): 0.8.8
-  mallblad, 0.8.9 grafik och textrutor på bladen, 0.8.10 smarta fält,
+- **0.8.8 är klar** på `main`, filformatet är **8**. Det som gjordes står i
+  PLAN.md under *0.8.8*, i README och i UTVECKLING.md under *Mallblad
+  (0.8.8, format 8)*:
+  - Mallblad = `Worksheet` med `paper`, ritat i mm på papperet i 1:1 och
+    utan tillstånd. Listas under Ritningar i projektträdet, eget formulär
+    (namn, format, orientering, mapp, *Nya blad får det här mallbladet*).
+  - `Sheet.master` och `project.master`. Mallen ritas under vyerna i
+    `buildSheet` med smarttexten ifylld från bladet (`masterPrims`).
+  - Ramen, BH90-huvudet, loggan i projektet och kryssrutan för nya blad är
+    borta. Bladets formulär har mallbladet och fälten för smarttexten.
+  - Exempelmallbladet *A3 med ritningshuvud* (`src/core/exampleMaster.ts`)
+    i nya projekt och exemplet.
+  - Text har fet stil och justering; skalorna 1:25, 1:2500, 1:4000 och
+    1:5000 är nya (de fanns i Carl Augusts ram).
+  - Carl Augusts DWG-ram (A1, BH90 enligt SIS) blev ett mallblad med
+    `scripts/mallblad-fran-dxf.py` och `scripts/mallblad-projekt.mts`, i
+    projektfilen *Ritningsmall A1.cadapa* som han fick i chatten. DXF:en
+    ligger inte i repot (den har hans telefonnummer). Hans DXF räckte, så
+    LibreDWG behövdes inte.
+  - Kontrollerat i Chrome med Playwright mot `dist/` (nytt blad med mallen,
+    rita text på mallbladet, mallbladets formulär, byta mall på bladet,
+    Plot/export) och PDF:en av ett A1-blad med hans mall. Inga nya kända fel.
+- **Planen**: 0.8.9 grafik och textrutor på bladen, 0.8.10 smarta fält,
   0.8.11 granskning, 0.8.12 skalstock och stämplar, 0.8.13 fler
-  Modifiera-verktyg, sedan 0.9 flera våningsplan (med felet om golvnivån i 3D),
-  0.10 tak (med tak ovanför snittet punktstreckade), 0.11 trappor, 0.12
-  export och 0.13 piloten med formatfrys.
+  Modifiera-verktyg, sedan 0.9 flera våningsplan (med felet om golvnivån i
+  3D), 0.10 tak, 0.11 trappor, 0.12 export och 0.13 piloten med formatfrys.
 - **Ord:** *palett* och *snabbmeny* betyder samma sak för honom. Säg bara
   **smartmeny**.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen (0.13). Höj
@@ -43,51 +49,56 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   hanterade punkter när de görs; behåll Avfärdat med anledning. Han kan
   också klistra in synpunkter i chatten; för in dem i filen när sorteringen
   är godkänd. Han hittar inte hur man öppnar filen i kunskapsbasen och kan
-  lägga in synpunkter via en annan, billigare chatt. Punkterna under 0.8.6
-  och 0.8.7 togs bort ur filen när 0.8.7 var klar.
+  lägga in synpunkter via en annan, billigare chatt. Punkterna under 0.8.8
+  togs bort ur filen när 0.8.8 var klar.
+- **Inkorgen (20 oktober) är inte sorterad än.** Claudes förslag i 0.8.8:
+  egen skala 1:___ och kortare *Återställ ram* i smartmenyn → 0.8.9;
+  Visa-menyn i kategorier → 0.8.11; tabell för linjetjocklekar
+  (gammal-cad-färger) och dra och släpp till mappar → 0.8.13 eller egen
+  småversion; lokal nollpunkt, SWEREF, norrpil mot true north, export i
+  SWEREF och sol och skugga per vy → en egen version efter 0.12 (stor).
+  Fråga om han godkänner, och för in det i filen.
 
-## Nästa session: 0.8.8 Mallblad
+## Nästa session: 0.8.9 Grafik och textrutor på bladen
 
-Börja med att läsa `cad-apa-synpunkter.md` och sortera Inkorgen. Läs sedan
-*Bladen om* och *0.8.8* i PLAN.md: Carl August tycker att ramen och det
-inbyggda BH90-huvudet är för låsta och vill rita egna utseenden, som
-Archicads master layouts.
+Läs synpunktsfilen och sortera Inkorgen först (se ovan). Läs sedan *0.8.9*
+i PLAN.md.
 
-- **Mallblad** i Ritningar-fliken, med pappersformat. Bygg dem som
-  arbetsblad (`Worksheet`, `space` på elementen, se UTVECKLING.md under
-  format 5) ritade i skala 1:1 med papperet som yta, så att Text, 2D,
-  underlag, markering och Modifiera fungerar som de är. Det som skiljer:
-  `view.drawingScale = 1`, papperet ritas under (som `buildSheet`), och
-  texter i mallen fyller i smarttext från bladet som använder den
-  (`expandSmartText`, `smartVars` i `src/repr/titleBlock.ts`). Text i
-  vyerna har ingen smarttext i dag, så den måste in i `annotation.ts` via
-  ett värde i ritkontexten.
-- **Bladen**: `Sheet.master?: Id`, projektets förvalda mall, och mallens
-  primitiver ritade under vyerna i `buildSheet` (och därmed i PDF:en).
-- **Ta bort** `Sheet.frame`, `TitleBlockItem`, `addTitleBlock`,
-  kryssrutan *Nya blad får ritningshuvud* (`uiSettings.newSheetTitleBlock`)
-  och huvudets formulär. Bladets fält (`SHEET_FIELDS`) flyttas till bladets
-  formulär; projektets fält (`PROJECT_FIELDS`) får ett eget ställe tills
-  0.8.10 gör tabellen. `titleBlockPrims` kan användas en gång för att bygga
-  exempelmallen av vanliga linjer och texter, och sedan tas bort.
-  Texten på bladet (0.8.7) ligger kvar tills 0.8.9.
-- **DWG-ramen**: Carl August bifogar sin tomma ram med huvud. Gör om DWG
-  till DXF med LibreDWG (`dwg2dxf`; installera med pip eller bygg om det
-  behövs, eller be om DXF) och linjerna och texterna till 2D-objekt i ett
-  mallblad, med ezdxf. Den blir testfallet.
-- Nytt format (8). Storlek: stor. Blir det trångt väntar exempelmallen
-  eller DWG-ramen.
+- Linjer, ytor, text och bilder direkt på vanliga blad, med samma verktyg
+  som på mallbladet. Enklast är troligen att bladet får en egen yta som
+  mallbladet (elementen har `space` satt till bladets id och ritas i mm),
+  så att ritverktygen, markeringen och Modifiera fungerar; det svåra är att
+  vyerna och texterna på bladet (`SheetTool`) och de ritade objekten
+  (`SelectTool`) ska gå att markera och flytta tillsammans.
+- `SheetTextItem` blir vanlig text (`Text` med `space` på bladet).
+- Textrutor för text överallt: största bredd och höjd, justering (finns nu,
+  `align`) och förankring i över-/mitt-/underkant. Radbrytning med
+  Helveticas bredder (`textWidth` i `src/formats/helvetica.ts`), röd
+  markering på skärmen när texten inte ryms.
+- Mellanstor. Nytt format (9).
 
 ## Att fråga Carl August om
 
+- **Mallbladen efter provning** (0.8.8, Claudes val): att mallen ritas från
+  papperets nedre vänstra hörn på blad i andra format (med ett tips), att
+  ett valt mallblad föreslår sitt format, att fälten ligger i bladets
+  formulär tills 0.8.10, att loggan nu är ett underlag på mallbladet och att
+  mallbladet inte följer tillstånden.
+- **Hans ram**: platshållarna som blev smarttext är Claudes gissning
+  (#PROJEKTNAMN, #DATUM, #RITNINGSNR, #RAD 3, #FÖRHANDSKOPIA,
+  #FASTIGHETSBETECKNING, #PROJEKTNR, #REV, #ARKITEKTKONTOR, #INITIALER MV,
+  #SIGN ANSVARIG, #SKALA A1). Övriga (#KOMMUN, #MAPPNAMN, #RAD 1, 2 och 4,
+  #INITIALER HL, #SKALA A3) står kvar som text tills 0.8.10 gör egna fält.
+  *Skala A3* vill nog ha en smarttext för halva skalan (1:50 → 1:100 på
+  A3); föreslå den i 0.8.10.
+- **Skalstocken** (0.8.12) måste gå att flytta när som helst (Carl August,
+  20 oktober). Hans standardläge på A1: innanför ramen nere till vänster om
+  huvudet, x 611–711 mm, y 27–46 mm; hans skalstockar för 1:1–1:5000 finns
+  i DXF:en (be om den igen i 0.8.12, den ligger inte i repot).
 - **Text på bladet och vyns ram efter provning** (0.8.7, Claudes val):
   höjderna 1,8–10 mm och fet stil, att texten skrivs i verktygsraden och
-  redigeras med dubbelklick, att läget räknas från papperets nedre vänstra
-  hörn (texten står kvar när formatet byts, huvudet följer höger hörn), och
-  att ramen följer med när skalan byts. Vill han kunna dölja hela
-  vyrubriken, inte bara skalan? Texten blir vanlig text i 0.8.9.
-- **Skalstocken** (0.8.12) måste gå att flytta när som helst (Carl August,
-  20 oktober).
+  redigeras med dubbelklick, och att ramen följer med när skalan byts. Vill
+  han kunna dölja hela vyrubriken, inte bara skalan?
 - **Synpunktsformuläret**: kommer breven fram till Gmail nu, efter `-f`?
   Annars: prova att sätta Gmail-adressen direkt som `to` i
   `feedback-config.php`. Kommer de fram då är det vidarebefordran från
@@ -117,9 +128,11 @@ Archicads master layouts.
   0.8.6 sätter kuvertavsändaren; se *Att fråga Carl August om*.
 - **Följ sektionen** klipper 3D, men caps (snittytorna) saknas medan en stor
   sektion räknas i tråden.
-- **2D på arbetsblad följer tillstånden** som 2D i planen. Fråga om
-  arbetsblad ska vara oberoende av tillstånd.
-- På ett blad visar statusraden fortfarande Skärm och Rutnät, fast
+- **2D på arbetsblad följer tillstånden** som 2D i planen (mallblad gör det
+  inte, sedan 0.8.8). Fråga om arbetsblad ska vara oberoende av tillstånd.
+- På ett mallblad finns Visa-menyns skala för texter och mått kvar, fast
+  allt ritas i 1:1; den gör ingenting där.
+- På ett blad och ett mallblad visar statusraden fortfarande Skärm och Rutnät, fast
   rutnätet är dolt. Mappars kryssrutor i Plot/export visar inte läget
   "delvis ikryssat" tydligt med appens kryssrutestil.
 - Taksprånget ändras lika på båda sidor av ett sadeltak; riktiga tak med
@@ -155,12 +168,13 @@ Archicads master layouts.
   `plot`, `setTool`, `setMode` och `goTo` (t.ex.
   `goTo({kind:'marker', id:'sektion-a'})`, `goTo({kind:'sheet', id})`).
   `bacchus.sheets.pick({kind:'viewport', id})` eller
-  `pick({kind:'titleBlock' | 'sheetText', id})` väljer en vy, ett huvud
-  eller en text på bladet; `bacchus.sheets.drawing()` har `views` och
+  `pick({kind:'sheetText', id})` väljer en vy eller en text på bladet; `bacchus.sheets.drawing()` har `views` och
   `items` med ytorna på papperet, `pickedThing()`, `startMove()`,
-  `newSheet()`, `editText(id)` och `resetCrop(id)` finns också. Ramens
+  `newSheet()`, `newMaster()`, `editText(id)` och `resetCrop(id)` finns
+  också. Ett mallblad öppnas med `goTo({kind:'worksheet', id:'mall-a3'})`. Ramens
   grepp dras med musen på den valda vyns kanter (`views[i].frame`). Filer läggs in med `page.expect_file_chooser()` runt ett
-  klick på *Lägg in underlag…* eller *Välj logga…*. Ritningen ligger i
+  klick på *Lägg in underlag…*; ett projekt öppnas med
+  `[data-action="open-file"]:visible` och `showOpenFilePicker = undefined`. Ritningen ligger i
   `.plan-drawing .content` (0.8.3), markeringen i `svg.plan .highlight`.
   `bacchus.view.redraw()` ritar om ritningen. Egenskapspanelen är
   `aside.panel[aria-label="Egenskaper"]` (projektträdet har också en

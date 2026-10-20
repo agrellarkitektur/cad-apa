@@ -1,24 +1,21 @@
-import { newId } from '../../core/ids';
 import type { Id, Sheet } from '../../core/model';
-import { addTitleBlock, addViewport, createSheet, FRAME_MARGIN, moveOnSheet, paperSize, removeFromSheet, setLogo, setViewportCrop, today } from '../../core/sheets';
+import { addViewport, createMaster, createSheet, FRAME_MARGIN, mastersOf, moveOnSheet, paperSize, removeFromSheet, setViewportCrop, today } from '../../core/sheets';
 import { buildSheet, cachedViewPrims, contentBounds, paperToModel, VIEWPORT_PAD, viewSource, type PlacedItem, type SheetDrawing } from '../../repr/sheet';
 import type { Bounds, Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { isNarrow } from '../sheet';
-import { saveUiSettings } from '../uiSettings';
 import type { SheetFormHost } from '../sheetForms';
 import type { SmartMenuCustom } from '../smartMenu';
 import type { AppContext } from './context';
 import { screenBox } from './selectionPlace';
 import { installSheetText } from './sheetText';
 import type { InlineTextEditor } from '../textEditor';
-import { base64Of } from './underlays';
 
-/** Det som går att markera och flytta på ett blad: en vy, ett ritningshuvud (0.8.6) eller en text (0.8.7). */
-export type SheetThing = { kind: 'viewport' | 'titleBlock' | 'sheetText'; id: Id };
+/** Det som går att markera och flytta på ett blad: en vy eller en text (0.8.7). */
+export type SheetThing = { kind: 'viewport' | 'sheetText'; id: Id };
 
-const thingOf = (it: PlacedItem): SheetThing => ({ kind: it.kind === 'text' ? 'sheetText' : 'titleBlock', id: it.id });
+const thingOf = (it: PlacedItem): SheetThing => ({ kind: 'sheetText', id: it.id });
 
 /** Ett grepp i en vys ram: vilka kanter det flyttar (0.8.7). */
 type Grip = { x: -1 | 0 | 1; y: -1 | 0 | 1 };
@@ -47,8 +44,8 @@ function resized(b: Bounds, g: Grip, d: Vec2): Bounds {
 
 /**
  * Ritningsbladen i appen (0.8 del 3): bladet som visas, verktyget som
- * markerar och flyttar vyerna och ritningshuvudena (0.8.6) på det, att lägga
- * en vy på ett blad och formulären i egenskapspanelen. Det markerade på ett
+ * markerar och flyttar vyerna och texterna på det, att lägga en vy på ett
+ * blad, nya blad och mallblad (0.8.8) och formulären i egenskapspanelen. Det markerade på ett
  * blad är det som är valt i egenskapspanelen, inte objekt i `selection`.
  *
  * På ett blad är koordinaterna mm på papperet och ritningsskalan 1:1, så
@@ -69,10 +66,10 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
     return d;
   }
 
-  /** Det på bladet som är valt i egenskapspanelen: en vy, ett ritningshuvud eller en text. */
+  /** Det på bladet som är valt i egenskapspanelen: en vy eller en text. */
   function pickedThing(): SheetThing | null {
     const t = app.panel.treeItem;
-    if (!app.ui.layout || !t || (t.kind !== 'viewport' && t.kind !== 'titleBlock' && t.kind !== 'sheetText')) return null;
+    if (!app.ui.layout || !t || (t.kind !== 'viewport' && t.kind !== 'sheetText')) return null;
     return frameOf(t.id) ? { kind: t.kind, id: t.id } : null;
   }
   const picked = (): Id | null => pickedThing()?.id ?? null;
@@ -94,21 +91,19 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
 
   const textEdit = installSheetText(app, textEditor, pick);
 
-  /** Ytan på papperet för en vy, ett ritningshuvud eller en text på bladet som visas. */
+  /** Ytan på papperet för en vy eller en text på bladet som visas. */
   function frameOf(id: Id): Bounds | null {
     const d = drawing();
     return d?.items.find((i) => i.id === id)?.frame ?? d?.views.find((v) => v.id === id)?.frame ?? null;
   }
 
-  /** Det översta på bladet under en punkt: ritningshuvudena och texterna ligger över vyerna. */
+  /** Det översta på bladet under en punkt: texterna ligger över vyerna. */
   function hit(p: Vec2): SheetThing | null {
     const d = drawing();
     if (!d) return null;
     const pad = 2 / app.view.camera.scale;
     const inside = (f: Bounds, below = 0, m = 0) => p[0] >= f.minX - m && p[0] <= f.maxX + m && p[1] >= f.minY - below - m && p[1] <= f.maxY + m;
-    // Texterna först, så att en text i ett ritningshuvud går att träffa.
-    for (let i = d.items.length - 1; i >= 0; i--) if (d.items[i].kind === 'text' && inside(d.items[i].frame, 0, pad)) return thingOf(d.items[i]);
-    for (let i = d.items.length - 1; i >= 0; i--) if (inside(d.items[i].frame)) return thingOf(d.items[i]);
+    for (let i = d.items.length - 1; i >= 0; i--) if (inside(d.items[i].frame, 0, pad)) return thingOf(d.items[i]);
     for (let i = d.views.length - 1; i >= 0; i--) if (inside(d.views[i].frame, 8)) return { kind: 'viewport', id: d.views[i].id };
     return null;
   }
@@ -156,7 +151,7 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
     return { d, guides };
   }
 
-  const moveLabel = (t: SheetThing) => (t.kind === 'titleBlock' ? 'Flytta ritningshuvudet' : t.kind === 'sheetText' ? 'Flytta texten' : 'Flytta vyn på bladet');
+  const moveLabel = (t: SheetThing) => (t.kind === 'sheetText' ? 'Flytta texten' : 'Flytta vyn på bladet');
 
   /** Ett grepp i den valda vyns ram under en punkt på skärmen (0.8.7). */
   function gripHit(p: ViewPointer): { vp: Id; frame: Bounds; grip: Grip } | null {
@@ -226,7 +221,7 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
     return true;
   }
 
-  /** Smartmenyn för en vy eller ett ritningshuvud på bladet. */
+  /** Smartmenyn för en vy eller en text på bladet. */
   function menuFor(thing: SheetThing): SmartMenuCustom | null {
     const sheet = app.store.doc.sheets.find((s) => s.id === app.ui.layout);
     if (!sheet) return null;
@@ -243,16 +238,6 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
         title: 'Text',
         sub: first.length > 28 ? `${first.slice(0, 27)}…` : first,
         buttons: [move, { id: 'edit', label: 'Redigera', icon: 'text' }, { id: 'props', label: 'Egenskaper', icon: 'properties' }, { id: 'remove', label: 'Ta bort', icon: 'trash', danger: true }],
-        anchor,
-        alive,
-        run: (id) => menuAction(thing, id),
-      };
-    }
-    if (thing.kind === 'titleBlock') {
-      return {
-        title: 'Ritningshuvud',
-        sub: `BH90 på ${sheet.number}`,
-        buttons: [move, { id: 'props', label: 'Egenskaper', icon: 'properties' }, { id: 'remove', label: 'Ta bort', icon: 'trash', danger: true }],
         anchor,
         alive,
         run: (id) => menuAction(thing, id),
@@ -326,7 +311,7 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
   }
 
   /**
-   * Markera och flytta vyerna och ritningshuvudena på bladet. Dubbelklick på
+   * Markera och flytta vyerna och texterna på bladet. Dubbelklick på
    * en vy öppnar den. Ett klick visar smartmenyn bredvid det valda.
    */
   class SheetTool implements ViewTool {
@@ -530,7 +515,7 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
 
   /**
    * Var en ny vy får plats på bladet: uppifrån till vänster, utan att lägga
-   * sig på de andra vyerna eller ritningshuvudena. Svarar med mitten.
+   * sig på de andra vyerna eller texterna. Svarar med mitten.
    */
   function freeSpot(sheet: Sheet, size: [number, number]): Vec2 {
     const [W, H] = paperSize(sheet);
@@ -565,9 +550,9 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
     if (id) pick({ kind: 'viewport', id });
   }
 
-  /** Ett nytt blad, blankt eller med ritningshuvud efter det senaste valet (0.8.6). */
+  /** Ett nytt blad med projektets förvalda mallblad (0.8.8). */
   function newSheet(): void {
-    const id = createSheet(app.store, { name: 'Nytt blad', titleBlock: app.uiSettings.newSheetTitleBlock });
+    const id = createSheet(app.store, { name: 'Nytt blad' });
     app.goTo({ kind: 'sheet', id });
     pick({ kind: 'sheet', id });
     if (isNarrow()) {
@@ -575,58 +560,30 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
       app.setPanel(true, 'full');
     }
     requestAnimationFrame(() => app.panel.el.querySelector<HTMLInputElement>('.sheet-form input[name="name"]')?.select());
-    app.hint(app.uiSettings.newSheetTitleBlock ? 'Ett nytt blad med ritningshuvud. Lägg vyer på det i egenskaperna.' : 'Ett blankt blad. Lägg vyer och ritningshuvud på det i egenskaperna.', 4000);
+    const master = app.store.doc.sheets.find((s) => s.id === id)?.master;
+    app.hint(master ? 'Ett nytt blad med projektets mallblad. Lägg vyer på det i egenskaperna.' : 'Ett blankt blad. Välj mallblad och lägg vyer på det i egenskaperna.', 4000);
   }
 
-  /** Lägg ett ritningshuvud på ett blad och visa det. */
-  function placeTitleBlock(sheetId: Id): void {
-    if (app.ui.layout !== sheetId) app.goTo({ kind: 'sheet', id: sheetId });
-    const id = addTitleBlock(app.store, sheetId);
-    if (id) pick({ kind: 'titleBlock', id });
-  }
-
-  /** Välj en bild som logga i ritningshuvudet. */
-  function chooseLogo(): void {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/png,image/jpeg,image/webp,image/svg+xml';
-    input.addEventListener('change', async () => {
-      const file = input.files?.[0];
-      if (!file) return;
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      const url = URL.createObjectURL(file);
-      try {
-        const ratio = await new Promise<number>((resolve, reject) => {
-          const img = new Image();
-          img.onload = () => resolve(img.naturalWidth / Math.max(1, img.naturalHeight));
-          img.onerror = () => reject(new Error('Bilden kunde inte läsas.'));
-          img.src = url;
-        });
-        setLogo(app.store, { id: newId('logga'), name: file.name, mime: file.type || 'image/png', data: base64Of(bytes), ratio: ratio || 3 });
-        app.hint('Loggan syns i ritningshuvudet på alla blad.');
-      } catch (err) {
-        app.hint((err as Error).message, 4000);
-      } finally {
-        URL.revokeObjectURL(url);
-      }
-    });
-    input.click();
+  /** Ett nytt mallblad (0.8.8), A3 liggande, öppnat för att rita på. */
+  function newMaster(): void {
+    const n = mastersOf(app.store.doc).length + 1;
+    const id = createMaster(app.store, { name: `Mallblad ${n}` });
+    app.goTo({ kind: 'worksheet', id });
+    pick(null);
+    app.panel.showTreeItem({ kind: 'worksheet', id });
+    if (!isNarrow() && !app.ui.panelOpen) app.setPanel(true);
+    if (app.ui.navOpen) app.navigator.render();
+    app.hint('Ett tomt mallblad. Rita ram, huvud och texter med smarttext i mm på papperet; blad som använder mallen visar dem.', 5000);
   }
 
   const host: SheetFormHost = {
     pick,
     place,
-    placeTitleBlock,
     openView,
-    chooseLogo,
+    openMaster: (id) => app.goTo({ kind: 'worksheet', id }),
     startText: () => {
       app.setTool('text');
       requestAnimationFrame(() => app.toolOptions.querySelector<HTMLInputElement>('#text-value')?.select());
-    },
-    newSheetTitleBlock: () => app.uiSettings.newSheetTitleBlock,
-    setNewSheetTitleBlock: (on) => {
-      app.uiSettings.newSheetTitleBlock = on;
-      saveUiSettings(app.uiSettings);
     },
     saved: () => {
       app.hint('Sparat.');
@@ -646,7 +603,7 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
   };
   app.panel.sheetHost = host;
 
-  // Högerklick på ett blad: smartmenyn för en vy eller ett ritningshuvud, annars bladets meny.
+  // Högerklick på ett blad: smartmenyn för en vy eller en text, annars bladets meny.
   app.pane2d.addEventListener(
     'contextmenu',
     (e) => {
@@ -670,7 +627,7 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
         [
           { kind: 'header', label: `${sheet.number} ${sheet.name}`, sub: 'Ritningsblad' },
           { label: 'Bladets inställningar och vyer', run: () => pick({ kind: 'sheet', id: sheet.id }) },
-          { label: 'Lägg på ritningshuvud (BH90)', run: () => placeTitleBlock(sheet.id) },
+          ...(sheet.master ? [{ label: 'Öppna mallbladet', run: () => app.goTo({ kind: 'worksheet', id: sheet.master! }) }] : []),
           { label: 'Skriv text på bladet', hint: 'T', run: () => host.startText() },
           { label: 'Plot/export…', run: () => app.root.querySelector<HTMLElement>('.nav-plot [data-action="plot"], .main-menu [data-action="plot"]')?.click() },
         ],
@@ -690,8 +647,8 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
     picked,
     pickedThing,
     place,
-    placeTitleBlock,
     newSheet,
+    newMaster,
     openView,
     startMove,
     cancelMove,

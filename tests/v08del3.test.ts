@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
-import { addElements, addWithAsset, deleteElements } from '../src/core/commands';
+import { addElements, addWithAsset } from '../src/core/commands';
 import { modelViewId } from '../src/core/model';
-import { addViewport, createSheet, deleteSheet, duplicateSheet, nextSheetNumber, paperSize, removeViewport, saveProjectFields, saveSheet, setLogo, sheetOfViewport, updateViewport } from '../src/core/sheets';
+import { addViewport, createSheet, deleteSheet, duplicateSheet, nextSheetNumber, paperSize, removeViewport, saveProjectFields, saveSheet, sheetOfViewport, updateViewport } from '../src/core/sheets';
 import { DocStore } from '../src/core/store';
 import { clipPolyline, clipRing, clipSegment } from '../src/geometry/clipRect';
 import { textWidth, writePdf } from '../src/formats/pdf';
@@ -10,7 +10,7 @@ import { crc32, uniqueNames, writeZip } from '../src/formats/zip';
 import { buildPlan } from '../src/repr/plan';
 import { buildSection } from '../src/repr/section';
 import { buildSheet, buildViewPage, centeredAt, placeableViews, toPaper, viewSource } from '../src/repr/sheet';
-import { expandSmartText, sheetScales, titleBlockPrims, TITLE_BLOCK_WIDTH } from '../src/repr/titleBlock';
+import { expandSmartText, sheetScales } from '../src/repr/smartText';
 import type { Primitive } from '../src/repr/primitives';
 import { sampleProject } from '../src/sample/sampleProject';
 import { parse, serialize } from '../src/storage/format';
@@ -89,35 +89,14 @@ describe('smarttext och ritningshuvud (0.8 del 3)', () => {
     expect(sheetScales({ viewports: [{ id: 'a', view: 'v', at: [0, 0], scale: 50 }, { id: 'b', view: 'v', at: [0, 0], scale: 100 }, { id: 'c', view: 'v', at: [0, 0], scale: 50 }] })).toBe('1:100, 1:50');
   });
 
-  it('huvudet är 180 mm brett i ramens hörn och visar projektet, numret och skalan', () => {
+  it('mallbladet fyller i projektet, numret och skalan i huvudet', () => {
     const store = new DocStore(sampleProject());
     saveProjectFields(store, { arkitekt: 'Agrell Arkitektur', uppdragsnummer: '2026-014' });
     const id = createSheet(store, { name: 'Plan 1', fields: { datum: '2026-10-20' } });
     addViewport(store, id, { view: 'vy-a-bl', scale: 100, at: [0, 0] });
-    const sheet = store.doc.sheets[0];
-    const prims = titleBlockPrims(store.doc, sheet, [410, 10], '2026-10-20');
-    const t = texts(prims).map((x) => x.text);
+    const d = buildSheet(store.doc, store.doc.sheets[0], { today: '2026-10-20' });
+    const t = texts(d.prims).map((x) => x.text);
     expect(t).toEqual(expect.arrayContaining(['Exempelvilla', 'A-101', 'Plan 1', '1:100', '2026-10-20', 'Agrell Arkitektur', '2026-014', 'BYGGLOVSHANDLING']));
-    const xs = prims.flatMap((p) => (p.kind === 'polyline' ? p.points.map((q) => q[0]) : []));
-    expect(Math.min(...xs)).toBeCloseTo(410 - TITLE_BLOCK_WIDTH);
-    expect(Math.max(...xs)).toBeCloseTo(410);
-    // För långa värden kortas så att de ryms i rutan.
-    saveProjectFields(store, { bestallare: 'En mycket lång beställare med ett namn som aldrig tar slut AB' });
-    const long = texts(titleBlockPrims(store.doc, store.doc.sheets[0], [410, 10], '')).find((x) => x.text.startsWith('En mycket'))!;
-    expect(long.text.endsWith('…')).toBe(true);
-    expect(textWidth(long.text, long.height)).toBeLessThanOrEqual(57);
-  });
-
-  it('loggan ligger i projektet och tas inte bort med underlagen', () => {
-    const store = new DocStore(sampleProject());
-    setLogo(store, { id: 'logga-1', name: 'logga.png', mime: 'image/png', data: 'AAAA', ratio: 2.5 });
-    expect(store.doc.project.fields).toMatchObject({ logo: 'logga-1', logoRatio: '2.5' });
-    const el = addWithAsset(store, null, { type: 'Underlay', storey: 'pl-1', tags: [], props: {}, params: { asset: 'logga-1', kind: 'image', pos: [0, 0], angle: 0, scale: 1, size: [10, 10], opacity: 100 } }, 'st-a', 'Lägg in');
-    deleteElements(store, [el.id]);
-    expect(store.doc.assets['logga-1']).toBeDefined();
-    setLogo(store, null);
-    expect(store.doc.assets['logga-1']).toBeUndefined();
-    expect(store.doc.project.fields.logo).toBeUndefined();
   });
 });
 
@@ -155,9 +134,9 @@ describe('vyer på bladet och annoteringsskalan (0.8 del 3)', () => {
     expect(p[2]).toMatchObject({ at: [55, 45], height: 2.5 });
   });
 
-  it('ett blad med vyer: ram, vyerna i sin skala och huvudet; centrerad där man vill', () => {
+  it('ett blad med vyer: mallen, vyerna i sin skala; centrerad där man vill', () => {
     const store = new DocStore(sampleProject());
-    const id = createSheet(store, { titleBlock: true });
+    const id = createSheet(store);
     const at = centeredAt(store.doc, 'vy-a-bl', 100, [150, 160]);
     addViewport(store, id, { view: 'vy-a-bl', scale: 100, at });
     addViewport(store, id, { view: modelViewId('fasad-1'), scale: 50, at: centeredAt(store.doc, modelViewId('fasad-1'), 50, [300, 200]) });

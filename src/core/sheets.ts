@@ -1,11 +1,11 @@
 import { newId } from './ids';
-import type { Id, PaperSize, ProjectDoc, Sheet, SheetTextItem, TitleBlockItem, Viewport } from './model';
+import { isMaster, type Id, type PaperSize, type ProjectDoc, type Sheet, type SheetTextItem, type Viewport, type Worksheet } from './model';
 import type { DocStore, TxBuilder } from './store';
 
 /**
- * Ritningsblad (0.8 del 3, format 6): kommandon för blad, vyerna och
- * ritningshuvudena på bladen (0.8.6) och projektets fält i ritningshuvudet.
- * Måtten på bladen är i mm på papperet.
+ * Ritningsblad (0.8 del 3, format 8): kommandon för blad, vyerna och
+ * texterna på bladen, mallbladen (0.8.8) och projektets fält för
+ * smarttexten. Måtten på bladen är i mm på papperet.
  */
 
 /** Pappersformaten liggande, bredd × höjd i mm. */
@@ -19,28 +19,20 @@ export const PAPER: Record<PaperSize, readonly [number, number]> = {
 
 export const PAPER_SIZES = Object.keys(PAPER) as PaperSize[];
 
-/** Bladets storlek i mm, efter format och orientering. */
+/** Bladets (eller mallbladets) storlek i mm, efter format och orientering. */
 export function paperSize(s: Pick<Sheet, 'size' | 'orientation'>): [number, number] {
   const [w, h] = PAPER[s.size] ?? PAPER.A3;
   return s.orientation === 'portrait' ? [h, w] : [w, h];
 }
 
-/** Marginalerna till ritningsramen: 20 mm till vänster för inbindning, 10 mm i övrigt. */
+/**
+ * Den vanliga ritningsramens marginaler: 20 mm till vänster för inbindning,
+ * 10 mm i övrigt. Ramen ritas i mallbladet (0.8.8); marginalerna avgör var
+ * nya vyer läggs och vad flyttade saker fäster mot.
+ */
 export const FRAME_MARGIN = { left: 20, right: 10, top: 10, bottom: 10 } as const;
 
-/** Var ett nytt ritningshuvud hamnar: i ritningsramens nedre högra hörn. */
-export const TITLE_BLOCK_AT: [number, number] = [-FRAME_MARGIN.right, FRAME_MARGIN.bottom];
-
-/** Mallarna för ritningshuvuden att lägga på ett blad. */
-export const TITLE_BLOCK_TEMPLATES: { id: 'bh90'; name: string; note: string }[] = [{ id: 'bh90', name: 'BH90', note: '180 mm brett, så att ett vikt blad blir A4' }];
-
-/** Ett ritningshuvuds nedre högra hörn på papperet, mm från papperets nedre vänstra hörn. */
-export function itemCorner(sheet: Pick<Sheet, 'size' | 'orientation'>, item: Pick<TitleBlockItem, 'at'>): [number, number] {
-  const [w] = paperSize(sheet);
-  return [w + item.at[0], item.at[1]];
-}
-
-/** Fält i ritningshuvudet som hör till bladet, med förval. */
+/** Fält som hör till bladet, för smarttexten i mallen, med förval. */
 export const SHEET_FIELDS: { key: string; label: string; placeholder?: string }[] = [
   { key: 'skede', label: 'Skede', placeholder: 'BYGGLOVSHANDLING' },
   { key: 'datum', label: 'Datum' },
@@ -50,7 +42,7 @@ export const SHEET_FIELDS: { key: string; label: string; placeholder?: string }[
   { key: 'skala', label: 'Skala', placeholder: '{skala}' },
 ];
 
-/** Fält i ritningshuvudet som gäller alla blad i projektet (`project.fields`). */
+/** Fält som gäller alla blad i projektet (`project.fields`), för smarttexten i mallen. */
 export const PROJECT_FIELDS: { key: string; label: string }[] = [
   { key: 'adress', label: 'Adress' },
   { key: 'fastighet', label: 'Fastighetsbeteckning' },
@@ -88,32 +80,76 @@ function placeIn(tx: TxBuilder, item: Id, folder: Id | null | undefined): void {
   tx.setField('tree', tree);
 }
 
+/** Mallbladet ett blad använder, om det finns. */
+export function masterOf(doc: Pick<ProjectDoc, 'worksheets'>, sheet: Pick<Sheet, 'master'>): (Worksheet & { paper: NonNullable<Worksheet['paper']> }) | undefined {
+  const w = sheet.master ? doc.worksheets.find((x) => x.id === sheet.master) : undefined;
+  return isMaster(w) ? w : undefined;
+}
+
+/** Projektets mallblad, i den ordning de skapades. */
+export function mastersOf(doc: Pick<ProjectDoc, 'worksheets'>): (Worksheet & { paper: NonNullable<Worksheet['paper']> })[] {
+  return doc.worksheets.filter(isMaster);
+}
+
 /**
- * Skapa ett ritningsblad, blankt med ritningsram (0.8.6). `titleBlock` lägger
- * ett BH90-huvud i ramens hörn. Svarar med bladets id.
+ * Skapa ett ritningsblad (0.8.8): det får projektets förvalda mallblad och
+ * mallens format, om inget annat anges. Svarar med bladets id.
  */
-export function createSheet(
-  store: DocStore,
-  init: Partial<Omit<Sheet, 'id' | 'viewports' | 'items'>> & { titleBlock?: boolean } = {},
-  folder: Id | null = null,
-): Id {
+export function createSheet(store: DocStore, init: Partial<Omit<Sheet, 'id' | 'viewports' | 'items'>> = {}, folder: Id | null = null): Id {
   const id = newId('blad');
+  const doc = store.doc;
+  const master = masterOf(doc, { master: 'master' in init ? init.master : doc.project.master });
   const sheet: Sheet = {
     id,
-    number: init.number ?? nextSheetNumber(store.doc),
+    number: init.number ?? nextSheetNumber(doc),
     name: init.name ?? 'Nytt blad',
-    size: init.size ?? 'A3',
-    orientation: init.orientation ?? 'landscape',
-    frame: init.frame ?? true,
+    size: init.size ?? master?.paper.size ?? 'A3',
+    orientation: init.orientation ?? master?.paper.orientation ?? 'landscape',
+    ...(master ? { master: master.id } : {}),
     fields: { datum: today(), ...(init.fields ?? {}) },
     viewports: [],
-    items: init.titleBlock ? [{ kind: 'titleBlock', id: newId('huvud'), template: 'bh90', at: [...TITLE_BLOCK_AT] }] : [],
+    items: [],
   };
   store.transact(`Nytt blad ${sheet.number}`, (tx) => {
     tx.setField('sheets', [...tx.doc.sheets, sheet]);
     if (folder) placeIn(tx, id, folder);
   });
   return id;
+}
+
+/** Skapa ett mallblad (0.8.8), eventuellt i en mapp i Ritningar. Svarar med dess id. */
+export function createMaster(store: DocStore, init: { name: string; size?: PaperSize; orientation?: 'landscape' | 'portrait' }, folder: Id | null = null): Id {
+  const id = newId('mall');
+  const w: Worksheet = { id, name: init.name, paper: { size: init.size ?? 'A3', orientation: init.orientation ?? 'landscape' } };
+  store.transact(`Nytt mallblad ${init.name}`, (tx) => {
+    tx.setField('worksheets', [...tx.doc.worksheets, w]);
+    placeIn(tx, id, folder);
+  });
+  return id;
+}
+
+/** Spara ett mallblads namn, format, orientering och mapp i ett steg. */
+export function saveMaster(store: DocStore, id: Id, patch: { name?: string; size?: PaperSize; orientation?: 'landscape' | 'portrait' }, folder?: Id | null): void {
+  const w = store.doc.worksheets.find((x) => x.id === id);
+  if (!isMaster(w)) return;
+  store.transact(`Spara mallbladet ${patch.name?.trim() || w.name}`, (tx) => {
+    tx.setField(
+      'worksheets',
+      tx.doc.worksheets.map((x) => (x.id === id && x.paper ? { ...x, name: patch.name?.trim() || x.name, paper: { size: patch.size ?? x.paper.size, orientation: patch.orientation ?? x.paper.orientation } } : x)),
+    );
+    placeIn(tx, id, folder);
+  });
+}
+
+/** Välj mallbladet som nya blad får, eller inget (null). */
+export function setDefaultMaster(store: DocStore, id: Id | null): void {
+  if (id && !isMaster(store.doc.worksheets.find((w) => w.id === id))) return;
+  store.transact(id ? 'Förvalt mallblad' : 'Inget förvalt mallblad', (tx) => {
+    const p = { ...tx.doc.project };
+    if (id) p.master = id;
+    else delete p.master;
+    tx.setProject(p);
+  });
 }
 
 function updateSheet(tx: TxBuilder, id: Id, fn: (s: Sheet) => Sheet): void {
@@ -123,13 +159,14 @@ function updateSheet(tx: TxBuilder, id: Id, fn: (s: Sheet) => Sheet): void {
   );
 }
 
-/** Spara bladets nummer, namn, format, fält och mapp i ett steg. Tomma fält tas bort. */
+/** Spara bladets nummer, namn, format, mallblad, fält och mapp i ett steg. Tomma fält tas bort; `master: undefined` tar bort mallen. */
 export function saveSheet(store: DocStore, id: Id, patch: Partial<Omit<Sheet, 'id' | 'viewports' | 'items'>>, folder?: Id | null): void {
   const s = store.doc.sheets.find((x) => x.id === id);
   if (!s) return;
   store.transact(`Spara bladet ${patch.number?.trim() || s.number}`, (tx) => {
     updateSheet(tx, id, (x) => {
       const next: Sheet = { ...x, ...patch };
+      if (!next.master) delete next.master;
       next.number = (patch.number ?? x.number).trim() || x.number;
       next.name = (patch.name ?? x.name).trim() || x.name;
       if (patch.fields) next.fields = Object.fromEntries(Object.entries(patch.fields).filter(([, v]) => v.trim() !== ''));
@@ -162,7 +199,7 @@ export function duplicateSheet(store: DocStore, id: Id): Id | null {
     id: newId('blad'),
     number: nextSheetNumber(store.doc),
     viewports: s.viewports.map((v) => ({ ...v, id: newId('vp') })),
-    items: s.items.map((x) => ({ ...structuredClone(x), id: newId(x.kind === 'text' ? 'text' : 'huvud') })),
+    items: s.items.map((x) => ({ ...structuredClone(x), id: newId('text') })),
   };
   store.transact(`Duplicera bladet ${s.number}`, (tx) => {
     tx.setField('sheets', [...tx.doc.sheets, copy]);
@@ -217,16 +254,6 @@ export function removeViewport(store: DocStore, sheetId: Id, vpId: Id): void {
   store.transact('Ta bort vyn från bladet', (tx) => updateSheet(tx, sheetId, (s) => ({ ...s, viewports: s.viewports.filter((v) => v.id !== vpId) })));
 }
 
-/** Lägg ett ritningshuvud på ett blad, i ramens hörn om inget läge anges. Svarar med dess id. */
-export function addTitleBlock(store: DocStore, sheetId: Id, at: [number, number] = TITLE_BLOCK_AT): Id | null {
-  if (!store.doc.sheets.some((x) => x.id === sheetId)) return null;
-  const id = newId('huvud');
-  store.transact('Lägg på ritningshuvud', (tx) =>
-    updateSheet(tx, sheetId, (s) => ({ ...s, items: [...s.items, { kind: 'titleBlock', id, template: 'bh90', at: [at[0], at[1]] }] })),
-  );
-  return id;
-}
-
 /** Texthöjderna att välja för text på ett blad, mm på papperet (som SS-EN ISO 3098). */
 export const SHEET_TEXT_HEIGHTS = [1.8, 2.5, 3.5, 5, 7, 10];
 
@@ -261,7 +288,7 @@ export function updateSheetText(store: DocStore, itemId: Id, patch: Partial<Pick
   );
 }
 
-/** Flytta saker på ett blad: ritningshuvuden och vyer, i ett steg. `d` är förflyttningen i mm. */
+/** Flytta saker på ett blad: vyer och texter, i ett steg. `d` är förflyttningen i mm. */
 export function moveOnSheet(store: DocStore, sheetId: Id, ids: readonly Id[], d: readonly [number, number], label = 'Flytta på bladet'): void {
   const s = store.doc.sheets.find((x) => x.id === sheetId);
   if (!s || !ids.length || (d[0] === 0 && d[1] === 0)) return;
@@ -277,19 +304,19 @@ export function moveOnSheet(store: DocStore, sheetId: Id, ids: readonly Id[], d:
   );
 }
 
-/** Ta bort saker från ett blad: ritningshuvuden och vyer (vyerna finns kvar i projektet). */
+/** Ta bort saker från ett blad: vyer och texter (vyerna finns kvar i projektet). */
 export function removeFromSheet(store: DocStore, sheetId: Id, ids: readonly Id[]): void {
   const set = new Set(ids);
   const s = store.doc.sheets.find((x) => x.id === sheetId);
   if (!s) return;
   const hit = s.items.filter((i) => set.has(i.id));
-  const label = hit.length === ids.length && hit.every((i) => i.kind === 'titleBlock') ? 'Ta bort ritningshuvudet' : hit.length === ids.length && hit.every((i) => i.kind === 'text') ? 'Ta bort texten' : 'Ta bort från bladet';
+  const label = hit.length && hit.length === ids.length ? 'Ta bort texten' : 'Ta bort från bladet';
   store.transact(label, (tx) =>
     updateSheet(tx, sheetId, (x) => ({ ...x, viewports: x.viewports.filter((v) => !set.has(v.id)), items: x.items.filter((i) => !set.has(i.id)) })),
   );
 }
 
-/** Det blad en sak på ett blad (ett ritningshuvud eller en text) ligger på. */
+/** Det blad en text på ett blad ligger på. */
 export function sheetOfItem(doc: Pick<ProjectDoc, 'sheets'>, itemId: Id): Sheet | undefined {
   return doc.sheets.find((s) => s.items.some((i) => i.id === itemId));
 }
@@ -299,13 +326,9 @@ export function sheetOfViewport(doc: Pick<ProjectDoc, 'sheets'>, vpId: Id): Shee
   return doc.sheets.find((s) => s.viewports.some((v) => v.id === vpId));
 }
 
-/**
- * Spara projektets fält i ritningshuvudet (gäller alla blad), och
- * projektnamnet. Tomma fält tas bort; loggan och dess proportioner lämnas
- * orörda om de inte ingår.
- */
+/** Spara projektets fält (gäller alla blad) och projektnamnet. Tomma fält tas bort. */
 export function saveProjectFields(store: DocStore, fields: Record<string, string>, name?: string): void {
-  store.transact('Spara ritningshuvudet', (tx) => {
+  store.transact('Spara projektets fält', (tx) => {
     const p = tx.doc.project;
     const next = { ...p.fields };
     for (const [k, v] of Object.entries(fields)) {
@@ -313,25 +336,5 @@ export function saveProjectFields(store: DocStore, fields: Record<string, string
       else delete next[k];
     }
     tx.setProject({ ...p, ...(name?.trim() ? { name: name.trim() } : {}), fields: next });
-  });
-}
-
-/** Byt eller ta bort loggan i ritningshuvudet. `ratio` är bredd genom höjd. */
-export function setLogo(store: DocStore, logo: { id: Id; name: string; mime: string; data: string; ratio: number } | null): void {
-  store.transact(logo ? 'Byt logga' : 'Ta bort loggan', (tx) => {
-    const p = tx.doc.project;
-    const old = p.fields.logo;
-    const fields = { ...p.fields };
-    if (logo) {
-      tx.putAsset({ id: logo.id, name: logo.name, mime: logo.mime, data: logo.data });
-      fields.logo = logo.id;
-      fields.logoRatio = String(Math.round(logo.ratio * 1000) / 1000);
-    } else {
-      delete fields.logo;
-      delete fields.logoRatio;
-    }
-    tx.setProject({ ...p, fields });
-    // Den gamla filen tas bort om inget underlag använder den.
-    if (old && old !== logo?.id && !Object.values(tx.doc.elements).some((e) => e.params.asset === old)) tx.removeAsset(old);
   });
 }

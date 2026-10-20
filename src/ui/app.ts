@@ -7,6 +7,8 @@ import { existingState } from '../core/states';
 import { DocStore } from '../core/store';
 import type { WallParams } from '../elements/wall';
 import { buildPlan, type PlanResult } from '../repr/plan';
+import { paperPrim } from '../repr/sheet';
+import { paperSize } from '../core/sheets';
 import type { SectionResult } from '../repr/section';
 import { createSectionQueue, spawnSectionWorker } from './app/sectionQueue';
 import { markerName, modelBounds } from '../elements/markers';
@@ -257,6 +259,12 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     };
   }
 
+  /** Mallbladet som visas (0.8.8), ritat i mm på papperet i skala 1:1. */
+  function shownMaster() {
+    const w = ui.worksheet ? store.doc.worksheets.find((x) => x.id === ui.worksheet) : undefined;
+    return w?.paper ? w : undefined;
+  }
+
   function viewStates() {
     const doc = store.doc;
     const ex = existingState(doc);
@@ -274,7 +282,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       viewId,
       viewTags: v?.tags ?? [],
       showHidden: ui.showHidden,
-      scale: ui.scale,
+      scale: shownMaster() ? 1 : ui.scale,
     };
   }
 
@@ -540,6 +548,9 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       if (v) views.applyView(v);
     }
     hint('Sparat.');
+    // Formuläret ritas om med det sparade, så att rubriken stämmer och Spara blir grå igen.
+    panel.el.querySelector('.panel-body')!.innerHTML = '';
+    panel.render();
     if (ui.navOpen) navigator.render();
   };
   panel.onTreeClosed = () => {
@@ -713,11 +724,12 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     const sheet = ui.worksheet ? doc.worksheets.find((w) => w.id === ui.worksheet) : undefined;
     const layout = ui.layout ? doc.sheets.find((s) => s.id === ui.layout) : undefined;
     out('storey').textContent = markerEl ? markerName(doc, markerEl) : sheet ? sheet.name : layout ? `${layout.number} ${layout.name}` : (doc.storeys.find((s) => s.id === ui.storey)?.name ?? '');
-    appEl.dataset.place = markerEl ? 'section' : sheet ? 'worksheet' : layout ? 'sheet' : 'plan';
-    // Ett ritningsblad ritas i mm på papperet, 1:1; annars i vyns annoteringsskala (0.8 del 3).
-    view.drawingScale = layout ? 1 : ui.scale;
-    view.showGrid = layout ? false : uiSettings.grid;
-    view.showScaleBar = !layout;
+    appEl.dataset.place = markerEl ? 'section' : sheet ? (sheet.paper ? 'master' : 'worksheet') : layout ? 'sheet' : 'plan';
+    // Ett ritningsblad och ett mallblad ritas i mm på papperet, 1:1; annars i vyns annoteringsskala (0.8 del 3).
+    const master = sheet?.paper ? sheet : undefined;
+    view.drawingScale = layout || master ? 1 : ui.scale;
+    view.showGrid = layout || master ? false : uiSettings.grid;
+    view.showScaleBar = !layout && !master;
     if (layout && !zoomingBox && !aligning && view.currentTool !== sheetTool()) view.setTool(sheetTool());
     else if (!layout && (view.currentTool === sheets.tool || view.currentTool === sheets.textTool)) view.setTool(tools[ui.tool]);
 
@@ -749,8 +761,12 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       const over = drawn.prims.filter((q) => q.origin?.objectType !== 'Underlay');
       plan = { prims: [...under, ...(section?.prims ?? []), ...over], pickables: [...(section?.pickables ?? []), ...drawn.pickables] };
     } else if (sheet) {
-      // Ett arbetsblad (0.8 del 2): bara det som är ritat på det.
+      // Ett arbetsblad (0.8 del 2): bara det som är ritat på det. Ett mallblad (0.8.8) med papperet under.
       plan = buildPlan(doc, ui.storey, { ...vs, place: sheet.id }, styleFor(ui.styleName));
+      if (sheet.paper) {
+        const [w, h] = paperSize(sheet.paper);
+        plan = { prims: [paperPrim(w, h), ...plan.prims], pickables: plan.pickables };
+      }
     } else plan = buildPlan(doc, ui.storey, vs, styleFor(ui.styleName));
     // Kalkerad vy: en annan vy tonad under, t.ex. möbleringen under en undertaksplan.
     const traced = ui.trace && !section && !sheet && !layout ? doc.views.find((v) => v.id === ui.trace) : undefined;

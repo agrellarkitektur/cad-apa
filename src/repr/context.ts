@@ -21,11 +21,13 @@ export function createContext(
   const identity: ViewIdentity = { id: view.viewId ?? modelViewId(place), place, tags: view.viewTags ?? [] };
   const onStorey = Object.values(doc.elements).filter((e) => homeOf(e) === place || (e.show?.kind === 'views' && e.show.views.includes(identity.id)));
   const hiddenHere = new Set<Id>();
+  // Ett mallblad (0.8.8) följer inte tillstånden: allt på det syns alltid.
+  const onMaster = !!view.place && doc.worksheets.some((w) => w.id === view.place && w.paper);
 
   const actionFor = (el: Element): Action => {
     const t = typeOf(el.type);
     if (!t) return 'absent';
-    if (t.global) return 'plain';
+    if (t.global || onMaster) return 'plain';
     return t.compares ? actionOf(el, view) : el.states.includes(view.state) ? 'plain' : 'absent';
   };
 

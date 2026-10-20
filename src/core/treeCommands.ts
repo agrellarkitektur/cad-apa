@@ -144,13 +144,14 @@ export function worksheetContents(doc: { elements: Record<Id, Element> }, id: Id
 }
 
 /**
- * Ta bort ett arbetsblad med allt som är ritat på det och vyerna av det.
- * Underlagens filer tas bort om inget annat använder dem. Går att ångra.
+ * Ta bort ett arbetsblad eller mallblad med allt som är ritat på det och
+ * vyerna av det. Underlagens filer tas bort om inget annat använder dem;
+ * blad som använde mallbladet blir utan mall. Går att ångra.
  */
 export function deleteWorksheet(store: DocStore, id: Id): void {
   const w = store.doc.worksheets.find((x) => x.id === id);
   if (!w) return;
-  store.transact(`Ta bort arbetsbladet ${w.name}`, (tx) => {
+  store.transact(`Ta bort ${w.paper ? 'mallbladet' : 'arbetsbladet'} ${w.name}`, (tx) => {
     const files = new Set<Id>();
     for (const el of worksheetContents(tx.doc, id)) {
       if (typeof el.params.asset === 'string') files.add(el.params.asset);
@@ -160,6 +161,12 @@ export function deleteWorksheet(store: DocStore, id: Id): void {
     const views = tx.doc.views.filter((v) => v.worksheet === id);
     if (views.length) tx.setViews(tx.doc.views.filter((v) => v.worksheet !== id));
     tx.setField('worksheets', tx.doc.worksheets.filter((x) => x.id !== id));
+    // Ett mallblad (0.8.8): bladen som använde det blir utan mall.
+    if (tx.doc.sheets.some((s) => s.master === id)) tx.setField('sheets', tx.doc.sheets.map((s) => (s.master === id ? (({ master: _, ...rest }) => rest)(s) : s)));
+    if (tx.doc.project.master === id) {
+      const { master: _, ...project } = tx.doc.project;
+      tx.setProject(project);
+    }
     const tree = { ...tx.doc.tree };
     for (const k of [id, ...views.map((v) => v.id)]) delete tree[k];
     tx.setField('tree', tree);

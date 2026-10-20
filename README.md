@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.7** (beta, text på bladet och vyernas ram); nästa är
-**0.8.8, mallblad** (egna ritningsramar och huvuden i stället för det inbyggda BH90).
+**0.8.8** (beta, mallblad); nästa är
+**0.8.9, grafik och textrutor på bladen**.
 
 ## Vad som fungerar
 
@@ -555,9 +555,42 @@ Version 0.8.7, text på bladet och vyernas ram (filformat 7):
   egenskaper)
 - Projekt i format 6 och äldre öppnas inte (betaversion); öppna dem i 0.8.6
 
+Version 0.8.8, mallblad (filformat 8):
+- **Mallblad** i Ritningar-fliken: en egen sorts blad med pappersformat och
+  orientering, där man ritar ramen, huvudet och annat som ska finnas på
+  bladen med de vanliga verktygen (linjer, rektanglar, ytor, text, mått och
+  underlag som PDF, bild eller DXF, t.ex. en logga). Allt ritas i mm på
+  papperet, i skala 1:1, med papperet under. Mallbladet följer inte
+  tillstånden: det som ritas på det syns alltid
+- **Smarttext i mallen**: en text som `{ritningsnummer}`, `{innehåll}`,
+  `{datum}`, `{skala}` eller `{projekt}` fylls i från varje blad som
+  använder mallen. Nya namn: `{ritat}` och `{granskat}`. Ett tomt fält ger
+  ingen text
+- **Varje blad väljer ett mallblad** i sina egenskaper (eller inget), och
+  mallens grafik ritas under vyerna, på skärmen och i PDF:en. Väljs ett
+  mallblad föreslås dess format. Har bladet ett annat format än mallen visas
+  ett tips. *Öppna mallbladet* finns i bladets egenskaper och i
+  högerklicksmenyn
+- **Förvalt mallblad**: kryssrutan *Nya blad får det här mallbladet* i
+  mallbladets egenskaper. Nya blad får mallen och dess format
+- **Exempelmallbladet** *A3 med ritningshuvud* följer med nya projekt och
+  exemplet: ram och ett huvud i BH90-stil av vanliga linjer och texter, som
+  går att ändra, kopiera eller ta bort
+- **Bladets egenskaper** har fälten som smarttexten fylls i med: *Den här
+  ritningen* (skede, datum, ändring, ritat och granskat av, skala) och
+  *Alla ritningar i projektet* (projekt, adress, fastighet, beställare,
+  uppdragsnummer, arkitekt, ansvarig)
+- **Borttaget**: ritningsramen som kryssruta, det inbyggda BH90-huvudet med
+  sina formulär, kryssrutan *Nya blad får ritningshuvud* och loggan i
+  projektet (en logga läggs nu in som underlag på mallbladet)
+- Text i vyerna och på mallblad kan vara **fet** och **vänster-,
+  mitt- eller högerställd** (egenskaperna och verktygsraden)
+- Skalorna **1:25, 1:2500, 1:4000 och 1:5000** finns att välja
+- Projekt i format 7 och äldre öppnas inte (betaversion); öppna dem i 0.8.7
+
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer, i dag 7 (sedan 0.8.7). Fram till
+Projektfilerna har ett formatnummer, i dag 8 (sedan 0.8.8). Fram till
 pilotprojektet (0.13) uppgraderas inte projekt från äldre betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp

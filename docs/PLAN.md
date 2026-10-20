@@ -67,6 +67,9 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.3 | Snabbare plan: panorering utan ommålning, cache per objekt, snäpp mot grannar, skraffering i DXF |
 | 0.8.4 | Arbetsflöde: skarven mellan 2D och 3D, dubbelklick i trädet, ny vägg från en väggs ände, varningen för sneda vinklar av per objekt, Tab mellan objekt på varandra, flytta med måttbandet |
 | 0.8.5 | Smartmenyn (snabbmenyn och Modifiera-paletten i en meny bredvid det markerade) och Modifiera-raden innanför ritverktygen; `modify.ts` uppdelad i `src/ui/modify/` |
+| 0.8.6 | Format 6: nya blad blanka, BH90-huvudet som eget objekt på bladet, flytta och ta bort på bladet med smartmenyn |
+| 0.8.7 | Format 7: text på bladet, vyernas ram med grepp, dold skala i vyrubriken |
+| 0.8.8 | Format 8: mallblad med smarttext i stället för ram och BH90-huvud, förvalt mallblad, exempelmallblad, fet och justerad text, fler skalor |
 | 0.7.1 | Betaversion med synpunktsformulär, detaljnivåer och linjetjocklekar i fasad och sektion, glasmarkering och öppningssätt, automatisk taklutning, sektioner begränsade till linjen och klippta i 3D, nya markörer i planen med grepp, längd, vinkel och Rikta efter objekt, streckning från hörnen, varning för nästan raka vinklar, takets kontur i Modifiera, måttband, spårlinjer, kopiera och klistra in mellan projekt, Ctrl + dra, piltangenter, zooma till område och förra zoomen |
 
 ## Framåt
@@ -411,6 +414,22 @@ delvis; ritningen av huvudet, smarttexten, vyernas ram och den dolda skalan
   att ramen blir testfallet och texterna kan bytas mot smarta fält
 
 Stor, en session. Blir det trångt väntar exempelmallen eller DWG-ramen.
+
+*Byggd (20 oktober), format 8. Ett mallblad är ett arbetsblad med `paper`
+(format och orientering); allt på det ritas i mm på papperet, i 1:1, och
+följer inte tillstånden. Claudes val, att stämma av: smarttexten fylls i när
+bladet ritas (texterna i mallen byts ut), inte i textobjektet; mallen ritas
+från papperets nedre vänstra hörn på blad i andra format (med ett tips);
+väljs ett mallblad i bladets formulär föreslås dess format; fälten för
+smarttexten ligger i bladets formulär tills 0.8.10; loggan i projektet togs
+bort (en logga läggs in som underlag på mallbladet). Text fick fet stil och
+justering, eftersom mallar behöver det. Skalorna 1:25, 1:2500, 1:4000 och
+1:5000 lades till (Carl Augusts ram). Ramen från DWG:n blev ett mallblad med
+`scripts/mallblad-fran-dxf.py` och `scripts/mallblad-projekt.mts`, i en egen
+projektfil till Carl August; DXF:en ligger inte i repot (den har ett
+telefonnummer). Skalstocken innanför ramen (1:200, x 610–711, y 25–47 mm på
+A1) visar var skalstocken står som standard och togs inte med i mallen;
+skalstockarna utanför ramen (1:1 till 1:5000) är facit för 0.8.12.*
 
 ### 0.8.9 Grafik och textrutor på bladen · *nytt format*
 

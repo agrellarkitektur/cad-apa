@@ -36,7 +36,7 @@ export function installViews(app: AppContext) {
     }
     if (p.kind === 'worksheet') {
       const w = app.store.doc.worksheets.find((x) => x.id === p.id);
-      return w ? { name: w.name, sub: 'Arbetsblad' } : null;
+      return w ? { name: w.name, sub: w.paper ? 'Mallblad' : 'Arbetsblad' } : null;
     }
     if (p.kind === 'sheet') {
       const s = app.store.doc.sheets.find((x) => x.id === p.id);
@@ -111,7 +111,8 @@ export function installViews(app: AppContext) {
     app.out('view-name').textContent = v ? `${v.name}${modified ? ' *' : ''}` : markerEl ? markerName(app.store.doc, markerEl) : sheet ? sheet.name : layout ? `${layout.number} ${layout.name}` : `${storeyName} · modell`;
     // Ändringar i vyinställningarna är tillfälliga tills de sparas i vyn.
     const save = app.$<HTMLButtonElement>('.vb-save');
-    save.hidden = (!!v && !modified) || !!layout;
+    // Ett mallblad (0.8.8) blir ingen vy: det ritas på bladen som använder det.
+    save.hidden = (!!v && !modified) || !!layout || !!sheet?.paper;
     save.textContent = v ? 'Spara i vyn' : 'Spara som vy…';
     app.$<HTMLElement>('.viewbar').classList.toggle('modified', modified);
   }

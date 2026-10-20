@@ -185,6 +185,8 @@ export function installUnderlays(app: AppContext) {
         }
         scale = IMAGE_MM_PER_PX;
       }
+      // På ett mallblad (0.8.8) ritas allt i mm på papperet: en PDF eller bild i sin storlek på papper.
+      if (kind !== 'dxf' && app.store.doc.worksheets.some((w) => w.id === app.ui.worksheet && w.paper)) scale /= 100;
     } catch (err) {
       app.hint(`${file.name}: ${(err as Error).message || 'filen kunde inte läsas.'}`, 5000);
       return;

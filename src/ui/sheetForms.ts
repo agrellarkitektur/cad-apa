@@ -1,46 +1,41 @@
 import type { Id, ProjectDoc, Sheet } from '../core/model';
-import { deleteSheet, duplicateSheet, PAPER_SIZES, PROJECT_FIELDS, removeFromSheet, removeViewport, saveProjectFields, saveSheet, setLogo, setViewportCrop, SHEET_FIELDS, SHEET_TEXT_HEIGHTS, sheetOfItem, sheetOfViewport, TITLE_BLOCK_TEMPLATES, updateSheetText, updateViewport } from '../core/sheets';
+import { deleteSheet, duplicateSheet, masterOf, mastersOf, PAPER_SIZES, PROJECT_FIELDS, removeFromSheet, removeViewport, saveProjectFields, saveSheet, setViewportCrop, SHEET_FIELDS, SHEET_TEXT_HEIGHTS, sheetOfItem, sheetOfViewport, updateSheetText, updateViewport } from '../core/sheets';
 import type { DocStore } from '../core/store';
 import { centeredAt, placeableViews, viewCenter, viewSource } from '../repr/sheet';
-import { SMART_TEXT } from '../repr/titleBlock';
+import { SMART_TEXT } from '../repr/smartText';
 import { ANNOTATION_SCALES } from './app/helpers';
 import { askConfirm } from './ask';
 import { icons } from './icons';
 import { escapeHtml } from './labels';
 
 /**
- * Inställningarna för ett ritningsblad, en vy på ett blad (0.8 del 3) och ett
- * ritningshuvud (0.8.6) och en text på bladet (0.8.7), i egenskapspanelen som det andra i projektträdet:
- * inget ändras förrän man sparar. Att lägga en vy eller ett huvud på bladet,
- * ta bort det och byta logga görs direkt.
+ * Inställningarna för ett ritningsblad, en vy på ett blad (0.8 del 3) och en
+ * text på bladet (0.8.7), i egenskapspanelen som det andra i projektträdet:
+ * inget ändras förrän man sparar. Att lägga en vy på bladet och ta bort
+ * något görs direkt.
  *
- * Huvudets fält visas i huvudets egenskaper: det som hör till ritningen
- * (nummer, innehåll, datum, skala …) sparas på bladet och det som gäller alla
- * ritningar i projektet.
+ * Bladets formulär har mallbladet (0.8.8) och fälten som smarttexten i
+ * mallen fylls i med: det som hör till ritningen (datum, skede, ändring …)
+ * sparas på bladet, det som gäller alla ritningar i projektet.
  */
 
 const esc = escapeHtml;
 const field = (label: string, input: string) => `<label class="field"><span>${label}</span>${input}</label>`;
 
 /** Det som har ett formulär här: bladet och sakerna på det. */
-export type SheetFormKind = 'sheet' | 'viewport' | 'titleBlock' | 'sheetText';
+export type SheetFormKind = 'sheet' | 'viewport' | 'sheetText';
 
 export interface SheetFormHost {
-  /** Visa något annat i panelen: bladet, en vy, ett ritningshuvud eller en text på det. */
+  /** Visa något annat i panelen: bladet, en vy eller en text på det. */
   pick(item: { kind: SheetFormKind; id: Id }): void;
   /** Börja skriva text på bladet (textverktyget). */
   startText(): void;
   /** Lägg en vy på bladet, mitt på den lediga ytan. */
   place(sheetId: Id, view: Id, scale: number): void;
-  /** Lägg ett ritningshuvud på bladet, i ramens hörn. */
-  placeTitleBlock(sheetId: Id): void;
-  /** Om nya blad får ett ritningshuvud (minns det senaste valet). */
-  newSheetTitleBlock(): boolean;
-  setNewSheetTitleBlock(on: boolean): void;
+  /** Öppna ett mallblad för att rita på det. */
+  openMaster(id: Id): void;
   /** Öppna vyn som en vy på bladet visar. */
   openView(view: Id): void;
-  /** Välj en bild som logga i ritningshuvudet. */
-  chooseLogo(): void;
   /** Efter Spara. */
   saved(): void;
   /** Bladet togs bort. */
@@ -75,15 +70,13 @@ export function describeSheet(s: Sheet): string {
   return `${s.size} ${ORIENTATION[s.orientation].toLowerCase()} · ${n} ${n === 1 ? 'vy' : 'vyer'}`;
 }
 
-/** Huvudets fält: ritningens och projektets, med loggan och smarttexten. */
-function titleBlockFields(doc: ProjectDoc, s: Sheet): string {
+/** Fälten som smarttexten fylls i med: ritningens och projektets. */
+function smartFields(doc: ProjectDoc, s: Sheet): string {
   const f = doc.project.fields;
   const smart = SMART_TEXT.map(([k, d]) => `<code title="${esc(d)}">{${esc(k)}}</code>`).join(' ');
   return `<section>
       <h3>Den här ritningen</h3>
       <div class="fields">
-        ${field('Ritningsnummer', `<input name="number" value="${esc(s.number)}" autocomplete="off">`)}
-        ${field('Innehåll', `<input name="name" value="${esc(s.name)}" autocomplete="off">`)}
         ${SHEET_FIELDS.map((x) => field(x.label, `<input name="f:${x.key}" value="${esc(s.fields[x.key] ?? '')}" placeholder="${esc(x.placeholder ?? '')}" autocomplete="off">`)).join('')}
       </div>
       <p class="note">Skalan fylls i med vyernas skalor om fältet är tomt. Skriv något annat för just den här ritningen.</p>
@@ -94,12 +87,7 @@ function titleBlockFields(doc: ProjectDoc, s: Sheet): string {
         ${field('Projekt', `<input name="projectName" value="${esc(doc.project.name)}" autocomplete="off">`)}
         ${PROJECT_FIELDS.map((x) => field(x.label, `<input name="p:${x.key}" value="${esc(f[x.key] ?? '')}" autocomplete="off">`)).join('')}
       </div>
-      <div class="row logo-row">
-        <span class="note">${f.logo && doc.assets[f.logo] ? `Logga: ${esc(doc.assets[f.logo].name)}` : 'Ingen logga'}</span>
-        <button type="button" class="btn" data-sheet="logo">${f.logo ? 'Byt logga…' : 'Välj logga…'}</button>
-        ${f.logo ? '<button type="button" class="btn" data-sheet="logo-remove">Ta bort</button>' : ''}
-      </div>
-      <p class="note smart-note">Fälten kan innehålla smarttext som fylls i av sig själv: ${smart}</p>
+      <p class="note smart-note">Texterna i mallbladet och på bladet fylls i med fälten genom smarttext: ${smart}</p>
     </section>`;
 }
 
@@ -109,7 +97,7 @@ function heightOptions(current: number): string {
   return list.map((h) => `<option value="${h}"${h === current ? ' selected' : ''}>${String(h).replace('.', ',')} mm</option>`).join('');
 }
 
-export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id: Id }, prefs: { newSheetTitleBlock: boolean } = { newSheetTitleBlock: false }): string {
+export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id: Id }): string {
   const actions = (extra = '') =>
     `<div class="tree-save">${extra}<button type="button" class="btn" data-tree="reset" disabled>Återställ</button><button type="submit" class="btn btn-primary" data-tree="save" disabled>Spara</button></div>`;
   if (item.kind === 'sheetText') {
@@ -130,19 +118,6 @@ export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id
         <div class="row"><button type="button" class="btn" data-sheet="back" data-id="${sheet.id}">${icons.sheet}<span>Bladet</span></button></div>
       </section>
       ${actions(`<button type="button" class="btn btn-danger" data-sheet="remove-item">Ta bort texten</button>`)}
-    </form>`;
-  }
-  if (item.kind === 'titleBlock') {
-    const sheet = sheetOfItem(doc, item.id);
-    if (!sheet) return '';
-    return `<form class="tree-form sheet-form" data-tree-kind="titleBlock" data-tree-id="${item.id}">
-      <header class="sel-head"><h2>Ritningshuvud</h2><p>BH90 på ${esc(sheet.number)} · ${esc(sheet.name)}</p></header>
-      ${titleBlockFields(doc, sheet)}
-      <section>
-        <p class="note">Dra huvudet på bladet för att flytta det; det fäster mot ramen och vyernas kanter. Huvudet följer med till hörnet om formatet byts.</p>
-        <div class="row"><button type="button" class="btn" data-sheet="back" data-id="${sheet.id}">${icons.sheet}<span>Bladet</span></button></div>
-      </section>
-      ${actions(`<button type="button" class="btn btn-danger" data-sheet="remove-item">Ta bort huvudet</button>`)}
     </form>`;
   }
   if (item.kind === 'viewport') {
@@ -183,7 +158,9 @@ export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id
     })
     .join('');
   const placeable = placeableViews(doc);
-  const texts = s.items.filter((it) => it.kind === 'text');
+  const texts = s.items;
+  const master = masterOf(doc, s);
+  const masters = mastersOf(doc);
   return `<form class="tree-form sheet-form" data-tree-kind="sheet" data-tree-id="${s.id}">
     <header class="sel-head"><h2>${esc(s.number)} · ${esc(s.name)}</h2><p>Ritningsblad · ${esc(describeSheet(s))}</p></header>
     <section>
@@ -193,9 +170,12 @@ export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id
         ${field('Format', `<select name="size">${PAPER_SIZES.map((p) => `<option${p === s.size ? ' selected' : ''}>${p}</option>`).join('')}</select>`)}
         ${field('Orientering', `<select name="orientation">${(['landscape', 'portrait'] as const).map((o) => `<option value="${o}"${o === s.orientation ? ' selected' : ''}>${ORIENTATION[o]}</option>`).join('')}</select>`)}
         ${field('Mapp', `<select name="folder">${folderOptions(doc, doc.tree[s.id] ?? null)}</select>`)}
+        ${field('Mallblad', `<select name="master"><option value=""${master ? '' : ' selected'}>Inget</option>${masters.map((m) => `<option value="${m.id}" data-size="${m.paper.size}" data-orientation="${m.paper.orientation}"${m.id === master?.id ? ' selected' : ''}>${esc(m.name)}</option>`).join('')}</select>`)}
       </div>
-      <label class="check"><input type="checkbox" name="frame"${s.frame ? ' checked' : ''}> Ritningsram</label>
+      ${master && (master.paper.size !== s.size || master.paper.orientation !== s.orientation) ? `<p class="note warn">Mallbladet är ritat för ${master.paper.size} ${ORIENTATION[master.paper.orientation].toLowerCase()}, bladet är ${s.size} ${ORIENTATION[s.orientation].toLowerCase()}. Mallen ritas från papperets nedre vänstra hörn och kan hamna utanför.</p>` : ''}
+      ${master ? `<div class="row"><button type="button" class="btn" data-sheet="open-master" data-id="${master.id}">Öppna mallbladet</button></div>` : masters.length ? '' : '<p class="note">Projektet har inget mallblad. Skapa ett under Ritningar i projektträdet, och rita ramen och huvudet på det.</p>'}
     </section>
+    ${smartFields(doc, s)}
     <section>
       <h3>Vyer på bladet</h3>
       ${views ? `<div class="nav-list">${views}</div>` : '<p class="note">Inga vyer än. Välj en vy och lägg den på bladet.</p>'}
@@ -204,25 +184,6 @@ export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id
         ${field('Skala', `<select data-sheet-scale>${scaleOptions(placeable[0]?.def.scale ?? 100)}</select>`)}
       </div>
       <div class="row"><button type="button" class="btn" data-sheet="place">${icons.plus}<span>Lägg på bladet</span></button></div>
-    </section>
-    <section>
-      <h3>Ritningshuvud</h3>
-      ${
-        s.items.some((it) => it.kind === 'titleBlock')
-          ? `<div class="nav-list">${s.items
-              .filter((it) => it.kind === 'titleBlock')
-              .map(
-                (it) =>
-                  `<div class="view-row"><button type="button" class="view-apply" data-sheet="pick-item" data-id="${it.id}">BH90<small>${esc(s.number)} · ${esc(s.name)}</small></button><button type="button" class="icon-mini view-more" data-sheet="remove-item-row" data-id="${it.id}" aria-label="Ta bort huvudet" title="Ta bort huvudet">${icons.close}</button></div>`,
-              )
-              .join('')}</div><p class="note">Ritningens nummer, innehåll, datum och de andra fälten ändras i huvudets egenskaper.</p>`
-          : '<p class="note">Bladet är blankt. Lägg på ett ritningshuvud från listan.</p>'
-      }
-      <div class="fields">
-        ${field('Mall', `<select data-sheet-template>${TITLE_BLOCK_TEMPLATES.map((t) => `<option value="${t.id}" title="${esc(t.note)}">${esc(t.name)}</option>`).join('')}</select>`)}
-      </div>
-      <div class="row"><button type="button" class="btn" data-sheet="place-title">${icons.plus}<span>Lägg på ritningshuvud</span></button></div>
-      <label class="check"><input type="checkbox" data-sheet-pref="new-title"${prefs.newSheetTitleBlock ? ' checked' : ''}> Nya blad får ritningshuvud</label>
     </section>
     <section>
       <h3>Texter</h3>
@@ -254,7 +215,7 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
   const kind = form.dataset.treeKind as SheetFormKind;
   const id = form.dataset.treeId!;
   const dirty = () => form.querySelectorAll<HTMLButtonElement>('[data-tree="save"], [data-tree="reset"]').forEach((b) => (b.disabled = false));
-  const own = '[data-sheet-view], [data-sheet-scale], [data-sheet-template], [data-sheet-pref]';
+  const own = '[data-sheet-view], [data-sheet-scale]';
   form.addEventListener('input', (e) => {
     if (!(e.target as HTMLElement).matches(own)) dirty();
   });
@@ -267,9 +228,15 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
       sel.innerHTML = scaleOptions(n);
       return;
     }
-    if (t.matches('[data-sheet-pref="new-title"]')) {
-      host.setNewSheetTitleBlock((t as unknown as HTMLInputElement).checked);
-      return;
+    // Ett annat mallblad föreslår mallens format.
+    if (t.matches('select[name="master"]')) {
+      const o = t.selectedOptions[0];
+      const size = form.querySelector<HTMLSelectElement>('select[name="size"]');
+      const orientation = form.querySelector<HTMLSelectElement>('select[name="orientation"]');
+      if (o?.dataset.size && size && orientation) {
+        size.value = o.dataset.size;
+        orientation.value = o.dataset.orientation ?? orientation.value;
+      }
     }
     if (!t.matches(own)) dirty();
   });
@@ -295,8 +262,8 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
       case 'pick-viewport':
         host.pick({ kind: 'viewport', id: b.dataset.id! });
         break;
-      case 'pick-item':
-        host.pick({ kind: 'titleBlock', id: b.dataset.id! });
+      case 'open-master':
+        host.openMaster(b.dataset.id!);
         break;
       case 'pick-text':
         host.pick({ kind: 'sheetText', id: b.dataset.id! });
@@ -307,9 +274,6 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
       case 'reset-crop':
         setViewportCrop(store, sheet.id, id, null);
         host.rerender();
-        break;
-      case 'place-title':
-        host.placeTitleBlock(sheet.id);
         break;
       case 'remove-item-row':
         removeFromSheet(store, sheet.id, [b.dataset.id!]);
@@ -333,12 +297,6 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
         if (vp) host.openView(vp.view);
         break;
       }
-      case 'logo':
-        host.chooseLogo();
-        break;
-      case 'logo-remove':
-        setLogo(store, null);
-        break;
       case 'duplicate': {
         const copy = duplicateSheet(store, sheet.id);
         if (copy) host.pick({ kind: 'sheet', id: copy });
@@ -382,6 +340,11 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
         'Spara vyn på bladet',
       );
     } else if (kind === 'sheet') {
+      // Bladet med ritningens fält, och projektets fält för alla blad.
+      const sheet = store.doc.sheets.find((x) => x.id === id);
+      if (!sheet) return;
+      const fields: Record<string, string> = { ...sheet.fields };
+      for (const x of SHEET_FIELDS) fields[x.key] = str(`f:${x.key}`);
       saveSheet(
         store,
         id,
@@ -390,28 +353,22 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
           name: str('name'),
           size: str('size') as Sheet['size'],
           orientation: str('orientation') as Sheet['orientation'],
-          frame: d.get('frame') !== null,
+          master: str('master') || undefined,
+          fields,
         },
         str('folder') || null,
       );
+      const project: Record<string, string> = {};
+      for (const x of PROJECT_FIELDS) project[x.key] = str(`p:${x.key}`);
+      const p = store.doc.project;
+      const changed = PROJECT_FIELDS.some((x) => (p.fields[x.key] ?? '') !== project[x.key].trim()) || (str('projectName').trim() && str('projectName').trim() !== p.name);
+      if (changed) saveProjectFields(store, project, str('projectName'));
     } else if (kind === 'sheetText') {
       updateSheetText(store, id, { text: str('text').replace(/\r/g, ''), height: Number(str('height')) || 2.5, bold: d.get('bold') !== null }, 'Spara texten på bladet');
       if (!sheetOfItem(store.doc, id)) {
         host.closed();
         return;
       }
-    } else {
-      // Ritningshuvudet: ritningens fält sparas på bladet, projektets för alla blad.
-      const sheet = sheetOfItem(store.doc, id);
-      if (!sheet) return;
-      const fields: Record<string, string> = { ...sheet.fields };
-      for (const x of SHEET_FIELDS) fields[x.key] = str(`f:${x.key}`);
-      saveSheet(store, sheet.id, { number: str('number'), name: str('name'), fields });
-      const project: Record<string, string> = {};
-      for (const x of PROJECT_FIELDS) project[x.key] = str(`p:${x.key}`);
-      const p = store.doc.project;
-      const changed = PROJECT_FIELDS.some((x) => (p.fields[x.key] ?? '') !== project[x.key].trim()) || (str('projectName').trim() && str('projectName').trim() !== p.name);
-      if (changed) saveProjectFields(store, project, str('projectName'));
     }
     host.saved();
   });
