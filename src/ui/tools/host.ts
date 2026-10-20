@@ -43,7 +43,7 @@ export interface ToolHost {
   editText?(id: Id, at: Vec2): boolean;
   /**
    * Klick på något som redan är markerat (utan att dra): visa Modifiera.
-   * Svarar true om paletten visades.
+   * Svarar true om Modifiera tog hand om klicket (smartmenyn, 0.8.5).
    */
   modify?(p: ViewPointer, hitId: Id | null): boolean;
 }

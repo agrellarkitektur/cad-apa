@@ -13,7 +13,8 @@ import { markerName, modelBounds } from '../elements/markers';
 import { AlignTool, MarkerTool, RoofTool } from './tools/markerTools';
 import { MeasureTool, ZoomBoxTool } from './tools/measureTool';
 import { skewText, skewWarnings } from '../elements/angleCheck';
-import { modifyContextAt, ModifyPalette, type ModifyHost } from './modify';
+import { Modifier } from './modify/controller';
+import { modifyContextAt, type ModifyHost } from './modify/ops';
 import type { Vec2 } from '../repr/primitives';
 import { sampleProject } from '../sample/sampleProject';
 import { parse } from '../storage/format';
@@ -32,7 +33,7 @@ import { FeedbackDialog } from './feedbackDialog';
 import { PropertiesPanel } from './propertiesPanel';
 import { Selection } from './selection';
 import { isNarrow } from './sheet';
-import { PetPalette } from './petPalette';
+import { SmartMenu, type ScreenBox } from './smartMenu';
 import { SettingsDialog } from './settingsDialog';
 import { StyleDialog } from './styleDialog';
 import { TempDims } from './tempDims';
@@ -62,6 +63,8 @@ import { installShowMenu } from './app/showMenu';
 import { snapSegments } from './app/snapping';
 import { installTextEdit } from './app/textEdit';
 import { installToolOptions } from './app/toolOptions';
+import { installModifyRail } from './app/modifyRail';
+import { bodyContext as bodyContextAt, screenBox, selectionBounds } from './app/selectionPlace';
 import { installViews } from './app/views';
 import { installUnderlays } from './app/underlays';
 import { installSheets } from './app/sheets';
@@ -177,6 +180,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const screenMm = () => mmPerCssPx(uiSettings.screenInches);
   /** Skapas efter planvyn, men vyn kan rapportera zoom redan när den startar. */
   let textEditor: InlineTextEditor | undefined;
+  /** Lägger smartmenyn igen när planen panoreras eller zoomas (sätts när menyn finns). */
+  let repositionMenu = (): void => {};
 
   const view = new PlanView(pane2d, {
     onCursor: (p: Vec2 | null) => {
@@ -187,6 +192,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       if (ui.mode !== '3d') measureBox.update((p) => cam.toScreen(p));
       out('scale').textContent = `${uiSettings.screenInches ? '' : '≈ '}1:${formatScale(cam.screenScaleDenominator(screenMm()))}`;
       textEditor?.position(cam);
+      repositionMenu();
       const step = minorStepFor(cam.scale);
       out('grid').textContent = step >= 1000 ? `${nf.format(step / 1000)} m` : `${nf.format(step)} mm`;
     },
@@ -300,11 +306,11 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       const r = view.svg.getBoundingClientRect();
       const ctx = modifyContextAt(host, p, r.left + p.screen[0], r.top + p.screen[1], hitId);
       if (!ctx) return false;
-      palette.hide();
-      // Klick på en väggs ände börjar en ny vägg därifrån (0.8.4); paletten
+      // Klick på en väggs ände börjar en ny vägg därifrån (0.8.4); smartmenyn
       // visar de andra valen, så att man kan byta utan att avbryta först.
       const wallEnd = !!ctx.wallId && !!ctx.end && (ctx.kind === 'point' || ctx.kind === 'corner') && !store.doc.elements[ctx.wallId]?.locked;
-      modifyPalette.show(ctx, wallEnd ? 'wallOn' : undefined);
+      modifier.setPart(ctx, wallEnd ? 'wallOn' : undefined);
+      if (menuWanted()) smartMenu.show(ctx.clientX, ctx.clientY);
       return true;
     },
     // I fasader, sektioner och på arbetsblad snäpper man mot linjerna i ritningen.
@@ -314,11 +320,14 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const selectTool = new SelectTool(host);
   const wallTool = new WallTool(host, { definition: defaultWallType(store.doc), face: 'center', height: 2700 });
   wallTool.onChange = () => {
-    // Ny vägg härifrån: paletten försvinner när första väggen är ritad, och
+    // Ny vägg härifrån: smartmenyn försvinner när första väggen är ritad, och
     // när kedjan är klar går det tillbaka till Markera.
-    if (wallFrom && modifyPalette.drawingWall && wallTool.placed > 0) modifyPalette.release();
+    if (wallFrom && modifier.drawingWall && wallTool.placed > 0) {
+      modifier.release();
+      smartMenu.hide();
+    }
     if (wallFrom && !wallTool.drawing) {
-      modifyPalette.release();
+      if (modifier.drawingWall) modifier.release();
       endWallFrom();
     }
     toolOpts.renderToolOptions();
@@ -397,7 +406,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     measure: measureTool,
   };
 
-  /** `keep`: Modifiera-paletten och markeringen ligger kvar (Ny vägg härifrån, 0.8.4). */
+  /** `keep`: smartmenyn och markeringen ligger kvar (Ny vägg härifrån, 0.8.4). */
   function setTool(id: ToolId, keep = false): void {
     settingTool = true;
     try {
@@ -426,8 +435,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (ui.tool === 'roof' && id !== 'roof') roofTool.reset();
     if (ui.tool === 'section' && id !== 'section') sectionTool.reset();
     if (ui.tool === 'elevation' && id !== 'elevation') elevationTool.reset();
-    palette.hide();
-    if (!keep) modifyPalette.close();
+    if (!keep) {
+      smartMenu.hide();
+      modifier.cancel();
+    }
     ui.tool = id;
     view.setTool(ui.layout ? sheets.tool : tools[id]);
     toolsEl.querySelectorAll<HTMLElement>('[data-tool]').forEach((b) => {
@@ -468,7 +479,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (underlays.busy()) {
       underlays.cancel();
       setTool('select');
-    } else if (modifyPalette.open) modifyPalette.close();
+    } else if (modifier.busy) modifier.cancel();
     else if (ui.tool === 'wall' && wallTool.drawing) wallTool.finish();
     else if (ui.tool === 'dimension' && dimensionTool.count > 0) dimensionTool.reset();
     else if (ui.tool === 'draw2d' && draw2dTool.count > 0) draw2dTool.reset();
@@ -559,6 +570,9 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     panes.applyPaneWidths();
     view.zoomBy(1); // skriv om skärmskalan med den nya skärmstorleken
     view.showGrid = s.grid;
+    if (!s.smartMenu) smartMenu.hide();
+    modifyRail.render();
+    toolOpts.renderToolOptions();
     renderAll();
     view.requestRender();
     pane3d.view3d?.refreshColors();
@@ -566,9 +580,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   });
   root.appendChild(settingsDialog.el);
 
-  // Snabbmenyn vid markören, på dator.
-  const palette = new PetPalette(canvas, panel);
-  // Modifiera: klick på det markerade (0.7).
+  // Modifiera (0.7) och smartmenyn (0.8.5): klick på det markerade.
   const modifyHost: ModifyHost = {
     ...host,
     startModify: (tool) => view.setTool(tool),
@@ -592,7 +604,25 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       view.requestRender();
     },
   };
-  const modifyPalette = new ModifyPalette(canvas, modifyHost);
+  const modifier = new Modifier(modifyHost);
+  // Smartmenyn intill det markerade, på dator.
+  const smartMenu = new SmartMenu(canvas, panel, modifier, () => selectionBox());
+  repositionMenu = () => smartMenu.reposition();
+  smartMenu.planShown = () => ui.mode !== '3d';
+  const menuWanted = () => uiSettings.smartMenu && !isNarrow();
+  // Ett verktyg från Modifiera-raden med det som markerats i projektträdet:
+  // smartmenyn kommer fram, så att värdet och tipset syns.
+  modifier.subscribe(() => {
+    const c = modifier.ctx;
+    if (c && modifier.busy && !modifier.drawingWall && !smartMenu.visible && menuWanted() && ui.tool === 'select') smartMenu.show(c.clientX, c.clientY);
+  });
+  /** Det markerade på skärmen; null när bara 3D visas eller det inte syns. */
+  function selectionBox(): ScreenBox | null {
+    const b = ui.mode === '3d' ? null : selectionBounds(plan, selection.list());
+    return b ? screenBox(view, canvas, b) : null;
+  }
+  /** Det markerade som helhet; markerat med ett klick utgår valen från klicket. */
+  const bodyContext = () => bodyContextAt(view, plan, store.doc.elements, selection.list(), press && !press.drag && ui.mode !== '3d' ? press : null);
   /** Väggverktygets val innan Ny vägg härifrån tog över, eller null. */
   let wallFrom: WallToolOptions | null = null;
   function endWallFrom(): void {
@@ -603,16 +633,18 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (ui.tool === 'wall' && !settingTool) setTool('select', true);
   }
   selection.subscribe(() => {
-    if (modifyPalette.open) modifyPalette.close();
+    modifier.setSelection(bodyContext());
     // En markerad automatisk taklutning blir ett eget objekt.
     if (selection.list().some((id) => id.startsWith('slope:'))) queueMicrotask(materializeSlopes);
   });
-  let pointerAt: { x: number; y: number; t: string } | null = null;
+  let pointerAt: { x: number; y: number; t: string; sel: string } | null = null;
+  /** Trycket som pågår, för var valen i smartmenyn utgår från (se bodyContext). */
+  let press: { x: number; y: number; drag: boolean } | null = null;
   canvas.addEventListener(
     'pointerdown',
     (e) => {
-      pointerAt = { x: e.clientX, y: e.clientY, t: e.pointerType };
-      if (!palette.el.contains(e.target as Node)) palette.hide();
+      pointerAt = { x: e.clientX, y: e.clientY, t: e.pointerType, sel: selection.list().join() };
+      press = smartMenu.el.contains(e.target as Node) ? null : { x: e.clientX, y: e.clientY, drag: false };
     },
     { capture: true },
   );
@@ -621,12 +653,19 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     (e) => {
       const down = pointerAt;
       pointerAt = null;
-      if (!down || palette.el.contains(e.target as Node) || modifyPalette.el.contains(e.target as Node)) return;
+      if (press) {
+        press.drag = Math.hypot(e.clientX - press.x, e.clientY - press.y) >= 5;
+        setTimeout(() => (press = null), 0);
+      }
+      if (!down || smartMenu.el.contains(e.target as Node)) return;
       const click = Math.hypot(e.clientX - down.x, e.clientY - down.y) < 5;
-      if (!click || e.pointerType !== 'mouse' || e.button !== 0 || !uiSettings.petPalette || isNarrow() || ui.tool !== 'select' || underlays.busy()) return;
-      // Efter att verktyget eller 3D-vyn hunnit ändra markeringen.
+      if (e.pointerType !== 'mouse' || e.button !== 0 || !menuWanted() || ui.tool !== 'select' || underlays.busy()) return;
+      // Efter att verktyget eller 3D-vyn hunnit ändra markeringen. Smartmenyn
+      // kommer vid ett klick och när något markerats med en ruta, men inte
+      // när det markerade dragits.
       setTimeout(() => {
-        if (selection.size > 0 && !textEditor?.isOpen && !modifyPalette.open) palette.show(e.clientX, e.clientY);
+        if (!click && selection.list().join() === down.sel) return;
+        if (selection.size > 0 && !textEditor?.isOpen) smartMenu.show(e.clientX, e.clientY);
       }, 0);
     },
     { capture: true },
@@ -642,7 +681,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   view.setHighlighter(
     (cam) =>
       renderHighlight(cam, store.doc, plan.pickables, new Set(selection.list()), ui.tool === 'select' ? selectTool.hoverId : null, !ui.marker && !ui.worksheet) +
-      tempDims.render(cam, selection.list(), viewStates(), ui.tool === 'select' && ui.mode !== '3d' && !ui.marker && !ui.worksheet && !ui.layout && !modifyPalette.running) +
+      tempDims.render(cam, selection.list(), viewStates(), ui.tool === 'select' && ui.mode !== '3d' && !ui.marker && !ui.worksheet && !ui.layout && !modifier.running) +
       skewMarks(cam),
   );
 
@@ -721,7 +760,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     view.setPrimitives(plan.prims);
     pane3d.update3d();
     panel.render();
-    palette.refresh();
+    smartMenu.refresh();
     if (ui.tool === 'wall') toolOpts.renderToolOptions();
 
     const undo = $<HTMLButtonElement>('[data-action="undo"]');
@@ -734,13 +773,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
 
   /** Zooma planen till det markerade. */
   function zoomToSelection(): void {
-    const ids = new Set(selection.list());
-    const pts = plan.pickables.filter((p) => ids.has(p.id)).flatMap((p) => p.regions.flat(2) as Vec2[]);
-    if (!pts.length) return;
-    const xs = pts.map((p) => p[0]);
-    const ys = pts.map((p) => p[1]);
+    const b = selectionBounds(plan, selection.list());
+    if (!b) return;
     if (ui.mode === '3d') void pane3d.setMode('2d');
-    view.zoomToBounds({ minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) });
+    view.zoomToBounds(b);
   }
 
   /** Måttrutan sitter vid sin punkt i planen, eller i 3D när bara 3D visas. */
@@ -781,8 +817,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       if (ui.navOpen) navigator.render();
     }
     panel.showTab('selection');
-    if (selection.size === 0) palette.hide();
-    else palette.refresh();
+    if (selection.size === 0) smartMenu.hide();
+    else smartMenu.refresh(true);
     // På mobilen kommer bladet upp nedfällt när något markeras, så att planen
     // syns och man kan fortsätta markera. Det försvinner när inget är markerat.
     if (isNarrow()) {
@@ -830,8 +866,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     aligning: () => aligning,
     zoomingBox: () => zoomingBox,
     panel: () => panel,
-    palette: () => palette,
-    modifyPalette: () => modifyPalette,
+    smartMenu: () => smartMenu,
+    modifier: () => modifier,
     navigator: () => navigator,
     measureBox: () => measureBox,
     newProjectDialog: () => files.newProjectDialog,
@@ -880,6 +916,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const textEdit = installTextEdit(app, textEditor!);
   const files = installFiles(app, brand, { saved, autosaveBlocked });
   const toolOpts = installToolOptions(app);
+  const modifyRail = installModifyRail(app);
   const views = installViews(app);
   const showMenu = installShowMenu(app);
   const menus = installMenus(app);
@@ -891,7 +928,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const actions = installActions(app, { brand, feedbackDialog, files, menus, panes, plot, sheets, showMenu, views });
 
   // För felsökning i webbläsarens konsol.
-  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifyPalette, setTool, goTo: views.goTo, setMode: pane3d.setMode, get sheets() { return sheets; }, sections: sectionQueue, get plot() { return plot; }, get plan() { return plan; }, get view3d() { return pane3d.view3d; } };
+  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifier, smartMenu, setTool, goTo: views.goTo, setMode: pane3d.setMode, get sheets() { return sheets; }, sections: sectionQueue, get plot() { return plot; }, get plan() { return plan; }, get view3d() { return pane3d.view3d; } };
 
   appEl.dataset.mode = ui.mode;
   appEl.dataset.sheet = ui.sheet;

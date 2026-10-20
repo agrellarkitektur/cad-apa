@@ -7,13 +7,13 @@ import type { PlanView } from '../../view2d/planView';
 import type { View3D } from '../../view3d/view3d';
 import type { ContextMenu } from '../contextMenu';
 import type { MeasureBox } from '../measureBox';
-import type { ModifyPalette } from '../modify';
+import type { Modifier } from '../modify/controller';
 import type { Navigator } from '../navigator';
 import type { NewProjectDialog } from '../newProjectDialog';
-import type { PetPalette } from '../petPalette';
 import type { PropertiesPanel } from '../propertiesPanel';
 import type { Selection } from '../selection';
 import type { SettingsDialog } from '../settingsDialog';
+import type { SmartMenu } from '../smartMenu';
 import type { StyleDialog } from '../styleDialog';
 import type { Draw2DTool } from '../tools/draw2dTool';
 import type { DimensionTool, TextTool } from '../tools/annotationTools';
@@ -74,8 +74,9 @@ export interface AppContext {
   readonly zoomingBox: boolean;
 
   readonly panel: PropertiesPanel;
-  readonly palette: PetPalette;
-  readonly modifyPalette: ModifyPalette;
+  readonly smartMenu: SmartMenu;
+  /** Modifiera: vad valen gäller och vad som pågår (smartmenyn och Modifiera-raden). */
+  readonly modifier: Modifier;
   readonly navigator: Navigator;
   readonly measureBox: MeasureBox;
   readonly newProjectDialog: NewProjectDialog;
@@ -86,7 +87,8 @@ export interface AppContext {
   hint(text: string, ms?: number): void;
   renderAll(): void;
   viewStates(): ViewStates;
-  setTool(id: ToolId): void;
+  /** `keep`: markeringen och smartmenyn ligger kvar. */
+  setTool(id: ToolId, keep?: boolean): void;
   setMode(mode: ViewMode): Promise<void>;
   setPanel(open: boolean, sheet?: 'peek' | 'full'): void;
   setNav(open: boolean): void;

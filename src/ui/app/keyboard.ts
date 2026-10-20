@@ -62,10 +62,22 @@ export function installKeyboard(app: AppContext) {
       return;
     }
 
+    // Modifiera: siffror går till värdefältet, som för väggens längd (0.8.5).
+    if (app.modifier.running && /^[0-9]$/.test(e.key)) {
+      const input = app.root.querySelector<HTMLInputElement>('input[data-modify-value]');
+      if (input) {
+        input.focus();
+        input.value = e.key;
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+        e.preventDefault();
+      }
+      return;
+    }
+
     switch (e.key) {
       case 'Tab':
         // Tab växlar mellan objekt som ligger på varandra under markören (0.8.4).
-        if (app.ui.tool === 'select' && !app.ui.layout && !app.modifyPalette.open && app.selectTool.cycle(e.shiftKey)) e.preventDefault();
+        if (app.ui.tool === 'select' && !app.ui.layout && !app.modifier.busy && app.selectTool.cycle(e.shiftKey)) e.preventDefault();
         // Måttbandet: Tab går till objektet vid sista punkten, för att flytta det.
         if (app.ui.tool === 'measure') {
           e.preventDefault();
@@ -86,10 +98,9 @@ export function installKeyboard(app: AppContext) {
           app.setNav(false);
           break;
         }
-        if (app.modifyPalette.open) app.modifyPalette.close();
+        if (app.modifier.busy) app.modifier.cancel();
         else if (app.ui.tool !== 'select') app.cancelCommand();
         else app.selection.clear();
-        app.palette.hide();
         app.closeMenu();
         break;
       case 'Enter':

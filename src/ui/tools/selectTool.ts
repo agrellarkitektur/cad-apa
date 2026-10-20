@@ -253,7 +253,7 @@ export class SelectTool implements ViewTool {
         if (r.released) this.host.hint(releasedHint(r.released), 4000);
         this.host.elementsMoved?.(ids, d, m.target.point);
       } else {
-        // Klick på det markerade: Modifiera-paletten, utom vid dubbelklick.
+        // Klick på det markerade: Modifiera i smartmenyn, utom vid dubbelklick.
         const now = performance.now();
         const last = this.lastClick;
         const double = last && last.id === m.hit && now - last.t < 450 && dist(p.screen, last.at) < (p.pointerType === 'touch' ? 24 : 8);

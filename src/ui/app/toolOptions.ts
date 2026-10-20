@@ -10,6 +10,7 @@ import { defaultWallType, nf } from './helpers';
 /** Verktygsraden under ritytan: inställningar för det verktyg som är valt, och måttbandets värden. */
 export function installToolOptions(app: AppContext) {
   function renderToolOptions(): void {
+    app.toolOptions.classList.remove('modify-detail');
     if (app.ui.tool === 'wall') {
       const doc = app.store.doc;
       if (app.wallTool.options.definition && !doc.definitions[app.wallTool.options.definition]) app.wallTool.options.definition = defaultWallType(doc);
@@ -114,6 +115,12 @@ export function installToolOptions(app: AppContext) {
         <label class="opt"><span>Text</span><input id="text-value" value="${escapeHtml(app.textTool.text)}" aria-label="Text" style="width:180px"></label>
         <span class="opt-hint">Klicka där texten ska stå.</span>`;
       app.toolOptions.hidden = false;
+    } else if (app.ui.tool === 'select' && !app.uiSettings.smartMenu && app.modifier.busy) {
+      // Utan smartmeny visas Modifiera-valets värde och tips här (0.8.5).
+      app.toolOptions.innerHTML = app.modifier.detailMarkup();
+      app.toolOptions.classList.add('modify-detail');
+      app.toolOptions.hidden = false;
+      app.modifier.focusValue(app.toolOptions);
     } else {
       app.toolOptions.innerHTML = '';
       app.toolOptions.hidden = true;
@@ -237,5 +244,10 @@ export function installToolOptions(app: AppContext) {
     if (b.dataset.action === 'dim-done') app.dimensionTool.donePoints();
     if (b.dataset.action === 'd2-done') app.draw2dTool.finish(false);
   });
+  app.modifier.bindValue(app.toolOptions);
+  app.modifier.subscribe(() => {
+    if (app.ui.tool === 'select') renderToolOptions();
+  });
+
   return { renderToolOptions, updateMeasureOptions };
 }

@@ -324,7 +324,7 @@ export function installUnderlays(app: AppContext) {
     );
   }
 
-  /** Om kalibrering eller riktning pågår (då visas ingen snabbmeny vid klick). */
+  /** Om kalibrering eller riktning pågår (då visas ingen smartmeny vid klick). */
   const busy = () => !!active;
   /** Avbryt det som pågår (Esc). */
   const cancel = () => {

@@ -6,7 +6,7 @@ import type { Element, Id, ProjectDoc } from './model';
 import type { DocStore, TxBuilder } from './store';
 
 /**
- * Formändringar av väggar (0.7): det som Modifiera-paletten gör. Allt går
+ * Formändringar av väggar (0.7): det som Modifiera gör (smartmenyn och Modifiera-raden). Allt går
  * genom vanliga transaktioner och ångras i ett steg.
  */
 

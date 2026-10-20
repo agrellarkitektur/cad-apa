@@ -1,27 +1,27 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 20 oktober 2026, efter 0.8.4.
+överlämning; historiken finns i git. Senast: 20 oktober 2026, efter 0.8.5.
 
 ## Läget
 
-- **0.8.4 är klar** på `main`, filformatet är fortfarande **5**. Det som
-  gjordes står i PLAN.md under *0.8.4*, i README och i UTVECKLING.md under
-  *Arbetsflöde (0.8.4)*:
-  - Skarven mellan 2D och 3D går att dra (`uiSettings.split`).
-  - Två klick på samma rad i trädet när bara 3D visas går till 2D (trädet
-    ritas om vid klick, så det räknas för hand).
-  - Klick på en markerad väggs ände börjar *Ny vägg* (ett val i
-    Modifiera-paletten som kör väggverktyget); paletten visar resten.
-  - `Element.skewOk` stänger av varningen för sneda vinklar (frivilligt
-    fält, därför samma format).
-  - Tab växlar mellan objekt under markören (`pickAllAt`).
-  - Måttbandet: Tab och ett avstånd flyttar objektet vid sista punkten.
+- **0.8.5 är klar** på `main`, filformatet är fortfarande **5**. Det som
+  gjordes står i PLAN.md under *0.8.5*, i README och i UTVECKLING.md under
+  *Smartmenyn och Modifiera-raden (0.8.5)*:
+  - Snabbmenyn och Modifiera-paletten är en meny, **smartmenyn**
+    (`src/ui/smartMenu.ts`), bredvid det markerade, med Modifiera-valen
+    överst, värde och tips, snabbknapparna och *Mer*.
+  - **Modifiera-raden** (`src/ui/app/modifyRail.ts`) innanför ritverktygen;
+    kan döljas (`uiSettings.modifyRail`).
+  - `modify.ts` är uppdelad i `src/ui/modify/` (`ops.ts`, `tool.ts`,
+    `controller.ts` med `Modifier`, läget som menyn, raden och
+    verktygsraden delar).
+  - Inställningen heter `smartMenu` (läser gamla `petPalette`).
   - Kontrollerat i Chrome med Playwright mot `dist/`; inga nya kända fel.
-- **Planen** (20 oktober, ändrad samma dag): 0.8.5 smartmenyn och
-  Modifiera-raden, 0.8.6 ritningshuvudet som eget objekt och blanka blad
-  (*nytt format*), 0.8.7 text direkt på bladet, 0.8.8 fler
-  Modifiera-verktyg, 0.8.9 granskning, sedan 0.9 flera våningsplan (med
+- **Planen** (20 oktober): 0.8.6 ritningshuvudet som eget objekt och blanka
+  blad (*nytt format*), 0.8.7 text direkt på bladet, 0.8.8 fler
+  Modifiera-verktyg med kortkommandona och Avrunda/Fasa för hela
+  markeringen (flyttade från 0.8.5), 0.8.9 granskning, sedan 0.9 flera våningsplan (med
   felet om golvnivån i 3D), 0.10 tak, 0.11 trappor, 0.12 export och 0.13
   piloten med formatfrys. Carl August tidigarelade smartmenyn; han vill
   fortfarande ha blanka blad och text på bladen snart efter.
@@ -45,53 +45,41 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   är godkänd. Han hittar inte hur man öppnar filen i kunskapsbasen och kan
   lägga in synpunkter via en annan, billigare chatt.
 
-## Nästa session: 0.8.5 Smartmeny och Modifiera-raden
+## Nästa session: 0.8.6 Ritningshuvud
 
 Börja med att läsa `cad-apa-synpunkter.md` och sortera Inkorgen.
 
-Allt står i PLAN.md under *0.8.5* (samma format). Kort:
+PLAN.md under *0.8.6* (*nytt format*: höj `FORMAT_VERSION` till 6). I dag
+har varje blad `titleBlock: 'bh90'` (`src/core/sheets.ts`), huvudet ritas i
+`src/repr/titleBlock.ts` och fälten ligger i `sheet.fields` och
+`project.fields`. Bladets vyer (`viewports`) är det enda som går att markera
+och flytta på bladet (`src/ui/app/sheets.ts`), så huvudet behöver bli en
+sorts sak på bladet med markering (smartmenyn), flytt, egenskaper och plot,
+och modellen bör rymma texterna i 0.8.7. Nya blad blanka; huvudet läggs på
+från en lista. Föreslå modellen för Carl August innan något byggs.
 
-- Snabbmenyn (`src/ui/petPalette.ts`, `PetPalette`) och Modifiera-paletten
-  (`ModifyPalette` i `src/ui/modify.ts`) blir en meny, smartmenyn, som visas
-  när något markerats: Modifiera-valen överst (alla som `opsFor` ger för
-  sammanhanget, inte bara de Carl August räknade upp), sedan tipsraden med
-  värdefält, sedan snabbknapparna, och *Mer* fäller ut nedåt. Greppet med
-  sex prickar flyttar den. Den läggs bredvid det markerade, inte över det.
-- Klick på ände, hörn, kant eller referenslinje byter valen i samma meny;
-  *Ny vägg* som förval vid en ände (0.8.4, `startWallFrom`/`stopWall` i
-  `app.ts`, `wallOn` i `modify.ts`) ligger kvar.
-- Med smartmenyn avstängd ploppar inget upp. Verktygen nås då i
-  **Modifiera-raden**, en lodrät rad innanför ritverktygen i vänsterkanten
-  med alla verktyg, där de som passar det markerade tänds svagt, och med
-  **kortkommandon** (förslag Shift + bokstav, se PLAN.md). Tipsraden
-  hamnar då i verktygsraden under ritytan.
-- Namnet *smartmeny* överallt: gränssnitt, inställningen *Snabbmeny vid
-  markören*, SHORTCUTS, README och docs. Dela `modify.ts` (970 rader)
-  samtidigt.
-
-Stor för en session. Föreslå uppdelningen för Carl August innan något
-byggs: smartmenyn och Modifiera-raden först, kortkommandona som 0.8.6 om
-det blir för mycket (då flyttas övriga versioner ett steg). Stäm av
-kortkommandona och om Modifiera-raden ska kunna döljas.
-
-Därefter, 0.8.6 ritningshuvud: i dag har varje blad `titleBlock: 'bh90'`
-(`src/core/sheets.ts`), huvudet ritas i `src/repr/titleBlock.ts` och fälten
-ligger i `sheet.fields` och `project.fields`. Bladets vyer (`viewports`) är
-det enda som går att markera och flytta på bladet (`src/ui/app/sheets.ts`),
-så huvudet behöver bli en sorts sak på bladet med markering (smartmenyn),
-flytt, egenskaper och plot, och modellen bör rymma texterna i 0.8.7.
+Smartmenyn på bladet: i dag finns ingen markering i `plan.pickables` på ett
+blad (`sheets.tool` sköter vyerna), så `selectionBox` i `app.ts` ger null
+och menyn hamnar vid klicket. Modifiera-raden är släckt på blad (`lit` i
+`modifyRail.ts`); Flytta för huvud och vyer kan tändas där i 0.8.6.
 
 ## Att fråga Carl August om
 
-- **Synpunktsformuläret**: `feedback-config.php` på webbhotellet innehöll
-  texten `php return ['to' = …];` utan `<?php` och med `=` i stället för
-  `=>`, så den gav ingen lista och servern svarade 503. Han har fått rätt
-  innehåll; fråga om formuläret går att skicka nu. Om `mail()` misslyckas
-  med giltig `from` behövs SMTP i `feedback.php`.
+- **Synpunktsformuläret** går att skicka (20 oktober): breven kommer fram
+  till webbposten hos Loopia men vidarebefordras inte därifrån till Gmail,
+  som andra brev gör. `feedback.php` sätter `From` (från configen) och
+  `Reply-To`, men inte kuvertavsändaren, så `mail()` skickar med serverns
+  egen adress som Return-Path; vid vidarebefordran faller då SPF/DMARC och
+  Gmail kan slänga brevet. Förslag (liten ändring, fråga först): femte
+  argumentet `'-f' . $from` till `mail()`. Be honom också titta i Gmails
+  skräppost, och prova att sätta Gmail-adressen direkt som `to`.
 - **Fler Modifiera-verktyg (0.8.8)**: förslagen i PLAN.md (Trimma,
   Hörnskarv, Dela, Justera och Fördela, Hämta och överför inställningar,
   Skala) är Claudes egna, efter motsvarande program. Stäm av vilka han vill
-  ha innan 0.8.8 börjar.
+  ha, och listan med kortkommandon, innan 0.8.8 börjar.
+- **Smartmenyn efter provning**: placeringen (höger, vänster, under, över
+  det markerade), att den syns vid markering med ruta, och om rubriken
+  *Ändra* i Modifiera-raden ska heta något annat.
 - **Granskningen** ligger som 0.8.9. Förra var 0.8.1, så den kan läggas
   efter 0.8.6 om han vill.
 
@@ -152,7 +140,7 @@ flytt, egenskaper och plot, och modellen bör rymma texterna i 0.8.7.
 - Titta på resultatet: `npm run build`, servera `dist/` med
   `python3 -m http.server 8765` och styr med Playwright (Python). Det är
   samma bygge som hamnar på webbhotellet. `window.bacchus` har `store`,
-  `view`, `selection`, `ui`, `modifyPalette`, `view3d`, `plan`, `sheets`,
+  `view`, `selection`, `ui`, `modifier`, `smartMenu`, `view3d`, `plan`, `sheets`,
   `plot`, `setTool`, `setMode` och `goTo` (t.ex.
   `goTo({kind:'marker', id:'sektion-a'})`, `goTo({kind:'sheet', id})`).
   `bacchus.sheets.pick({kind:'viewport', id})` visar en vy på bladet i

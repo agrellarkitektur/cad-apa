@@ -93,8 +93,8 @@ export function installMenus(app: AppContext) {
       {
         label: 'Alla inställningar här',
         hint: 'Mer',
-        // På telefonen finns ingen snabbmeny; där fälls bladet upp i stället.
-        run: () => (isNarrow() ? (app.setPanel(true, 'full'), app.panel.showTab('selection')) : app.palette.show(x, y, true)),
+        // På telefonen finns ingen smartmeny; där fälls bladet upp i stället.
+        run: () => (isNarrow() ? (app.setPanel(true, 'full'), app.panel.showTab('selection')) : app.smartMenu.show(x, y, true)),
       },
       { label: 'Visa i egenskaper', hint: 'P', run: () => (app.setPanel(true, 'full'), app.panel.showTab('selection')) },
       { label: 'Zooma till', run: () => app.zoomToSelection() },
@@ -150,7 +150,7 @@ export function installMenus(app: AppContext) {
     const id = pickAt(app.plan.pickables, p, 6 / app.view.camera.scale, app.view.drawingScale);
     if (id && !app.selection.has(id)) app.selection.set([id]);
     if (!id && app.ui.tool === 'select') app.selection.clear();
-    app.palette.hide();
+    app.smartMenu.hide();
     openObjectMenu(clientX, clientY);
   }
   app.pane2d.addEventListener('contextmenu', (e) => {

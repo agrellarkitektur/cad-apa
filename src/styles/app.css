@@ -190,12 +190,17 @@ body::before {
 .app {
   height: 100%;
   display: grid;
-  grid-template-columns: var(--rail-w) minmax(0, 1fr) var(--panel-w, 0px);
+  grid-template-columns: var(--rail-w) var(--modify-w, 0px) minmax(0, 1fr) var(--panel-w, 0px);
   grid-template-rows: var(--bar-h) minmax(0, 1fr) var(--status-h);
   grid-template-areas:
-    'top top top'
-    'tools canvas panel'
-    'status status status';
+    'top top top top'
+    'tools modify canvas panel'
+    'status status status status';
+}
+
+/* Modifiera-raden innanför ritverktygen (0.8.5). */
+.app.modify-rail-on {
+  --modify-w: 46px;
 }
 
 .app.panel-open,
@@ -558,6 +563,9 @@ button:focus-visible {
     grid-template-rows: var(--bar-h) minmax(0, 1fr) auto var(--status-h);
     grid-template-areas: 'top' 'canvas' 'tools' 'status';
   }
+  .modify-rail {
+    display: none;
+  }
   .project,
   .hide-narrow,
   .brand .badge {
@@ -702,7 +710,8 @@ button:focus-visible {
   font-size: 12.5px;
 }
 
-.app[data-tool='select'] .tool-options {
+/* Med Markera syns raden bara för Modifiera utan smartmeny (0.8.5). */
+.app[data-tool='select'] .tool-options:not(.modify-detail) {
   display: none;
 }
 
@@ -2068,52 +2077,300 @@ table.keys td:first-child {
   padding-right: 16px;
 }
 
-/* ---------- Snabbmeny vid markören ---------- */
+/* ---------- Smartmenyn (0.8.5) ---------- */
 
-.pet-palette {
+/* Intill det markerade: Modifiera-valen överst, värde och tips, sedan
+   snabbknapparna; Mer fäller ut inställningarna nedåt. */
+.smart-menu {
   position: absolute;
-  z-index: 5;
+  z-index: 45;
   display: flex;
-  align-items: center;
-  gap: 10px;
-  max-width: min(560px, calc(100% - 16px));
-  padding: 8px 8px 8px 12px;
+  flex-direction: column;
+  align-items: stretch;
+  max-width: min(600px, calc(100% - 16px));
   border: 1px solid var(--rule);
   border-radius: 10px;
   background: var(--chrome);
+  color: var(--ink);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.16);
 }
 
-.pet-palette[hidden] {
+.smart-menu[hidden] {
   display: none;
 }
 
-.pet-palette .qb-title {
-  max-width: 150px;
+.sm-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 0 2px;
 }
 
-.pet-palette .qb-title b {
+.sm-head .qb-title {
+  max-width: none;
+}
+
+.sm-head .qb-title b {
   font-size: 13px;
 }
 
-.pet-palette .qb-title small {
+.sm-head .qb-title small {
   font-size: 11px;
 }
 
-.pet-palette .qb-actions {
-  flex-wrap: nowrap;
+.sm-grip {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  opacity: 0.6;
+  cursor: grab;
+  touch-action: none;
+}
+
+.sm-grip svg {
+  width: 8px;
+  height: 20px;
+}
+
+.smart-menu.pinned .sm-grip {
+  color: var(--accent);
+  opacity: 1;
+}
+
+.smart-menu.dragging {
+  opacity: 0.94;
+}
+
+.smart-menu.dragging .sm-grip {
+  cursor: grabbing;
+}
+
+.smart-menu .qb-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 4px;
 }
 
-.pet-palette .qb-btn {
+.smart-menu .qb-btn {
   min-width: 46px;
   padding: 5px 5px 4px;
 }
 
-.pet-palette .qb-btn[data-action='deselect'] {
+.smart-menu .qb-btn svg {
+  width: 19px;
+  height: 19px;
+}
+
+.sm-ops {
+  padding: 6px 8px 6px 18px;
+}
+
+.sm-op[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.sm-sep {
+  align-self: stretch;
+  width: 1px;
+  margin: 2px 3px;
+  background: var(--rule);
+}
+
+.sm-quick {
+  padding: 6px 8px 7px 18px;
+  border-top: 1px solid var(--rule);
+}
+
+.smart-menu .qb-btn[data-action='deselect'] {
   min-width: 30px;
   border-color: transparent;
   background: transparent;
+}
+
+/* Valets namn, värde och tips: i smartmenyn och i verktygsraden under ritytan. */
+.sm-detail {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: 12px;
+}
+
+.smart-menu .sm-detail {
+  padding: 6px 12px 7px 18px;
+  border-top: 1px solid var(--rule);
+  background: var(--accent-soft);
+}
+
+.sm-detail b {
+  font-weight: 650;
+}
+
+.sm-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--muted);
+}
+
+.sm-value input {
+  width: 82px;
+  padding: 4px 6px;
+  font: 500 13px var(--font-data);
+}
+
+.sm-value i {
+  font-style: normal;
+}
+
+.sm-hint {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.smart-menu .sm-hint {
+  flex-basis: 100%;
+}
+
+.smart-menu.expanded {
+  width: min(440px, calc(100% - 16px));
+}
+
+.sm-body {
+  max-height: min(56vh, 520px);
+  overflow: auto;
+  border-top: 1px solid var(--rule);
+  font-size: 12.5px;
+}
+
+.sm-body.compact section {
+  display: grid;
+  gap: 6px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.sm-body.compact h3 {
+  margin: 0;
+  font: 700 9.5px var(--font-ui);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.sm-body.compact .fields {
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 6px 8px;
+}
+
+.sm-body.compact .field > span:first-child {
+  font-size: 10.5px;
+}
+
+.sm-body.compact input,
+.sm-body.compact select {
+  padding: 3px 6px;
+  font-size: 12px;
+}
+
+.sm-body.compact .note {
+  font-size: 11px;
+  margin: 0;
+}
+
+.sm-body.compact .state-chip {
+  padding: 3px 8px;
+  font-size: 11.5px;
+}
+
+.sm-body.compact .btn {
+  padding: 4px 9px;
+  font-size: 12px;
+}
+
+.sm-foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 8px 12px;
+}
+
+/* ---------- Modifiera-raden (0.8.5) ---------- */
+
+.modify-rail {
+  grid-area: modify;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 8px 4px;
+  border-right: 1px solid var(--rule);
+  background: var(--chrome);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.modify-rail[hidden] {
+  display: none;
+}
+
+.modify-rail .tool-group-label {
+  margin-top: 0;
+}
+
+.mr-btn {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 32px;
+  flex: none;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  opacity: 0.62;
+  cursor: pointer;
+}
+
+.mr-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.mr-btn:hover {
+  background: var(--paper);
+  opacity: 1;
+}
+
+.mr-btn[aria-disabled='true'] {
+  opacity: 0.2;
+}
+
+.mr-btn[aria-disabled='true']:hover {
+  background: transparent;
+}
+
+.mr-btn[aria-pressed='true'] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  opacity: 1;
+}
+
+.mr-sep {
+  flex: none;
+  width: 22px;
+  height: 1px;
+  margin: 4px 0;
+  background: var(--rule);
 }
 
 /* ---------- Visa-menyn i vyraden ---------- */
@@ -2594,7 +2851,7 @@ table.keys td:first-child {
   .app,
   .app.panel-open,
   .app.nav-open {
-    grid-template-columns: var(--rail-w) minmax(0, 1fr) auto;
+    grid-template-columns: var(--rail-w) var(--modify-w, 0px) minmax(0, 1fr) auto;
   }
   .dock {
     flex-direction: row;
@@ -3410,125 +3667,6 @@ button.link {
   display: none;
 }
 
-/* ---------- Snabbmenyn: flyttbar och utfällbar ---------- */
-
-.pet-palette {
-  flex-direction: column;
-  align-items: stretch;
-  gap: 0;
-  padding: 0;
-}
-
-.pet-palette .pp-top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 8px 6px 2px;
-  border-bottom: 0;
-}
-
-.pp-grip {
-  display: grid;
-  place-items: center;
-  width: 16px;
-  height: 36px;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--muted);
-  opacity: 0.6;
-  cursor: grab;
-  touch-action: none;
-}
-
-.pp-grip svg {
-  width: 8px;
-  height: 20px;
-}
-
-.pet-palette.pinned .pp-grip {
-  color: var(--accent);
-  opacity: 1;
-}
-
-.pet-palette.dragging {
-  opacity: 0.94;
-}
-
-.pet-palette.dragging .pp-grip {
-  cursor: grabbing;
-}
-
-.pet-palette.expanded {
-  width: min(420px, calc(100% - 16px));
-}
-
-.pet-palette.expanded .pp-top {
-  flex-wrap: wrap;
-  border-bottom: 1px solid var(--rule);
-}
-
-.pet-palette.expanded .qb-actions {
-  flex-wrap: wrap;
-}
-
-.pp-body {
-  max-height: min(62vh, 560px);
-  overflow: auto;
-  font-size: 12.5px;
-}
-
-.pp-body.compact section {
-  display: grid;
-  gap: 6px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--rule);
-}
-
-.pp-body.compact h3 {
-  margin: 0;
-  font: 700 9.5px var(--font-ui);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.pp-body.compact .fields {
-  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
-  gap: 6px 8px;
-}
-
-.pp-body.compact .field > span:first-child {
-  font-size: 10.5px;
-}
-
-.pp-body.compact input,
-.pp-body.compact select {
-  padding: 3px 6px;
-  font-size: 12px;
-}
-
-.pp-body.compact .note {
-  font-size: 11px;
-  margin: 0;
-}
-
-.pp-body.compact .state-chip {
-  padding: 3px 8px;
-  font-size: 11.5px;
-}
-
-.pp-body.compact .btn {
-  padding: 4px 9px;
-  font-size: 12px;
-}
-
-.pp-foot {
-  display: flex;
-  justify-content: flex-end;
-  padding: 8px 12px;
-}
-
 /* ---------- Små frågor (byt namn, ta bort) ---------- */
 
 .ask-dialog {
@@ -3690,117 +3828,6 @@ input[type='range'] {
   accent-color: var(--accent);
 }
 
-/* ---------- Modifiera (0.7) ---------- */
-
-.modify-palette {
-  position: absolute;
-  z-index: 45;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 5px;
-  max-width: min(560px, calc(100% - 16px));
-  border: 1px solid var(--rule);
-  border-radius: 10px;
-  background: var(--chrome);
-  color: var(--ink);
-  box-shadow: 0 6px 22px rgb(0 0 0 / 0.16);
-}
-
-.modify-palette[hidden] {
-  display: none;
-}
-
-.mp-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 3px;
-}
-
-.mp-btn {
-  display: inline-grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--ink);
-  cursor: pointer;
-}
-
-.mp-btn svg {
-  width: 21px;
-  height: 21px;
-}
-
-.mp-btn:hover {
-  background: var(--paper);
-  border-color: var(--rule);
-}
-
-.mp-btn[aria-pressed='true'] {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-}
-
-.mp-sep {
-  width: 1px;
-  height: 24px;
-  margin: 0 4px;
-  background: var(--rule);
-}
-
-.mp-close {
-  margin-left: auto;
-}
-
-.mp-detail {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 10px;
-  padding: 4px 6px 3px;
-  border-top: 1px solid var(--rule);
-  font-size: 12px;
-}
-
-.mp-detail b {
-  font-weight: 650;
-}
-
-.mp-value {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--muted);
-}
-
-.mp-value input {
-  width: 82px;
-  padding: 4px 6px;
-  font: 500 13px var(--font-data);
-}
-
-.mp-value i {
-  font-style: normal;
-}
-
-.mp-hint {
-  flex-basis: 100%;
-  color: var(--muted);
-  font-size: 11.5px;
-}
-
-@media (pointer: coarse) {
-  .mp-btn {
-    width: 42px;
-    height: 42px;
-  }
-}
-
 /* Fasader och sektioner ritas utan planens rutnät. */
 .app[data-place='section'] .plan-grid .grid {
   display: none;
@@ -3879,59 +3906,6 @@ input[type='range'] {
   font: inherit;
   text-decoration: underline;
   cursor: pointer;
-}
-
-/* Modifiera har samma utseende som snabbmenyn (0.7.1). */
-.pet-palette.modify-palette {
-  z-index: 45;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-  max-width: min(640px, calc(100% - 16px));
-}
-
-.modify-palette .mp-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: nowrap;
-}
-
-.modify-palette .qb-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px;
-}
-
-.modify-palette .qb-btn svg {
-  width: 19px;
-  height: 19px;
-}
-
-.modify-palette .mp-op[aria-pressed='true'] {
-  background: var(--accent-soft);
-  border-color: var(--accent);
-}
-
-.modify-palette .mp-close {
-  min-width: 30px;
-  border-color: transparent;
-  background: transparent;
-}
-
-.modify-palette .mp-sep {
-  align-self: stretch;
-  height: auto;
-}
-
-@media (max-width: 720px) {
-  .modify-palette .mp-row {
-    flex-wrap: wrap;
-  }
-  .modify-palette .qb-title {
-    display: none;
-  }
 }
 
 /* Nästan raka vinklar (0.7.1). */

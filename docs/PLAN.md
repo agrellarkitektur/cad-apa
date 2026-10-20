@@ -66,6 +66,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.2 | Fasader och sektioner i en bakgrundstråd, referensritningar i testerna, synpunktsformulärets fel, markering i 3D med Följ sektionen och i sektion, textverktyget på blad, mappräknaren |
 | 0.8.3 | Snabbare plan: panorering utan ommålning, cache per objekt, snäpp mot grannar, skraffering i DXF |
 | 0.8.4 | Arbetsflöde: skarven mellan 2D och 3D, dubbelklick i trädet, ny vägg från en väggs ände, varningen för sneda vinklar av per objekt, Tab mellan objekt på varandra, flytta med måttbandet |
+| 0.8.5 | Smartmenyn (snabbmenyn och Modifiera-paletten i en meny bredvid det markerade) och Modifiera-raden innanför ritverktygen; `modify.ts` uppdelad i `src/ui/modify/` |
 | 0.7.1 | Betaversion med synpunktsformulär, detaljnivåer och linjetjocklekar i fasad och sektion, glasmarkering och öppningssätt, automatisk taklutning, sektioner begränsade till linjen och klippta i 3D, nya markörer i planen med grepp, längd, vinkel och Rikta efter objekt, streckning från hörnen, varning för nästan raka vinklar, takets kontur i Modifiera, måttband, spårlinjer, kopiera och klistra in mellan projekt, Ctrl + dra, piltangenter, zooma till område och förra zoomen |
 
 ## Framåt
@@ -287,6 +288,12 @@ menyer som ploppar upp. Tidigarelagd av Carl August, före bladversionerna.
 Samma filformat (5). Stor för en session: blir det för mycket flyttas
 kortkommandona till 0.8.6 som en småversion.
 
+*Byggd (20 oktober), med samma filformat (5). Kortkommandona och Avrunda
+och Fasa för hela markeringen flyttades till 0.8.8 (Carl August, 20
+oktober), där verktygslistan bestäms. Modifiera-raden går att dölja i
+inställningarna. Ett verktyg i raden som behöver en ände, ett hörn eller en
+kant använder den man redan klickat på, annars ber raden om ett klick.*
+
 Smartmenyn:
 
 - Visas så fort något markerats, som snabbmenyn i dag, med Modifiera-valen
@@ -318,19 +325,11 @@ Utan smartmeny (avstängd i inställningarna):
 - **Modifiera-raden**: en lodrät verktygsrad på insidan av ritverktygen i
   vänsterkanten med alla Modifiera-verktyg. Med något markerat tänds de som
   går att använda svagt; de andra är släckta. Klick startar verktyget för
-  det markerade (för ände, hörn och kant: det som ligger närmast markören
-  eller det man klickat senast). Raden syns också med smartmenyn påslagen,
-  så att verktygen alltid finns på samma ställe; fråga om den ska gå att
-  dölja
+  det markerade (för ände, hörn och kant: den man redan klickat på, annars
+  ber raden om ett klick). Raden syns också med smartmenyn påslagen, så att
+  verktygen alltid finns på samma ställe, och kan döljas i inställningarna
 - Tipsraden och värdefältet visas då i verktygsraden under ritytan, som för
   ritverktygen
-- **Kortkommandon för alla Modifiera-verktyg**. De flesta enkla bokstäver är
-  tagna (V, H, W, D, O, R, M, L, T, I, F, G, S, P, N, Z), så förslaget är
-  Shift + bokstav, t.ex. Shift+M Flytta, Shift+R Vrid, Shift+S Spegla,
-  Shift+U I rad, Shift+E Sträck, Shift+X Förläng, Shift+F Avrunda, Shift+C
-  Fasa, Shift+O Förskjut, Shift+P Parallell kopia, Shift+W Ny vägg härifrån.
-  Visas i tipsen och i listan över kortkommandon. Bestäm listan med Carl
-  August innan det byggs (Ctrl-kombinationer krockar med webbläsaren)
 
 ### 0.8.6 Ritningshuvud · *nytt format*
 
@@ -351,7 +350,8 @@ och texterna i 0.8.7, och kunna markeras med smartmenyn.
 
 Carl August bad om egna förslag på verktyg som finns i motsvarande program
 (Archicad, Revit, AutoCAD). Varje verktyg får en plats i smartmenyn och
-Modifiera-raden och ett kortkommando. Förslag, att stämma av först:
+Modifiera-raden (`RAIL` i `src/ui/modify/ops.ts`) och ett kortkommando.
+Förslag, att stämma av först:
 
 - **Trimma**: kapa en vägg eller linje mot en annan (motsatsen till Förläng)
 - **Hörnskarv**: två väggar som inte möts förlängs eller kapas till ett
@@ -366,6 +366,20 @@ Modifiera-raden och ett kortkommando. Förslag, att stämma av först:
   punkter
 - **Förläng till** och **Trimma** för flera markerade samtidigt mot en
   gräns
+- **Avrunda** och **Fasa** för hela markeringen: alla hörn mellan de
+  markerade väggarna på en gång (flyttat från 0.8.5)
+- **Kortkommandon för alla Modifiera-verktyg**. De flesta enkla bokstäver är
+  tagna (V, H, W, D, O, R, M, L, T, I, F, G, S, P, N, Z), så förslaget är
+  Shift + bokstav, t.ex. Shift+M Flytta, Shift+R Vrid, Shift+S Spegla,
+  Shift+U I rad, Shift+E Sträck, Shift+X Förläng, Shift+F Avrunda, Shift+C
+  Fasa, Shift+O Förskjut, Shift+P Parallell kopia, Shift+W Ny vägg härifrån.
+  Visas i tipsen och i listan över kortkommandon. Bestäm listan med Carl
+  August innan det byggs (Ctrl-kombinationer krockar med webbläsaren)
+  (flyttat från 0.8.5). Shift+Z (förra zoomen) och Shift + piltangenterna
+  (knuffa) är redan tagna
+
+Stor med kortkommandona: blir det för mycket görs kortkommandona och
+Avrunda/Fasa för hela markeringen först, och resten i en egen småversion.
 
 ### 0.8.9 Granskning
 

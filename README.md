@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.4** (beta, arbetsflöde); nästa är **0.8.5, smartmenyn och
-Modifiera-raden**.
+**0.8.5** (beta, smartmenyn och Modifiera-raden); nästa är **0.8.6,
+ritningshuvudet som eget objekt och blanka blad**.
 
 ## Vad som fungerar
 
@@ -489,6 +489,30 @@ Version 0.8.4, arbetsflöde (samma filformat, 5):
   inte också ligger vid första punkten; Tab igen byter). Skriv avståndet och
   tryck Enter, så flyttas objektet längs sträckan. Anslutna väggar följer med,
   och det ångras i ett steg
+
+Version 0.8.5, smartmenyn och Modifiera-raden (samma filformat, 5):
+- **Smartmenyn** ersätter snabbmenyn vid markören och Modifiera-paletten.
+  Den visas när något markeras med ett klick eller en ruta och läggs bredvid
+  det markerade, på den sida där det finns plats. Överst står
+  Modifiera-valen för det markerade (Flytta, Vrid, Spegla, I rad; för flera
+  väggar också Förskjut alla kanter), så att en vägg går att flytta direkt.
+  Klick på en ände, ett hörn, en kant eller referenslinjen byter valen till
+  det som gäller där, i samma meny; *Ny vägg* är fortfarande förval vid en
+  ände. Under valen står valets namn, värdefältet och tipset, sedan
+  snabbknapparna, och *Mer* fäller ut alla inställningar nedåt. Greppet
+  flyttar menyn; dubbelklick på greppet låter den följa markeringen igen
+- **Modifiera-raden**: alla Modifiera-verktyg i en lodrät rad innanför
+  ritverktygen. De som går att använda för det markerade är tända.
+  Behöver verktyget en ände, ett hörn eller en kant används den man redan
+  klickat på, annars ber raden om ett klick (Esc avbryter). Samma knapp igen
+  avbryter. Verktyg med samma verb för väggar, tak och 2D är en knapp
+  (Lägg till punkt, Flytta punkt, Ta bort punkt, Förskjut)
+- **Utan smartmeny** (Gränssnitt: *Smartmeny intill det markerade*) ploppar
+  inget upp i ritytan; värdet och tipset står i verktygsraden under ritytan.
+  Modifiera-raden kan döljas på samma ställe
+- Siffror som skrivs medan ett Modifiera-val pågår går till värdefältet
+- När bara 3D visas har smartmenyn bara snabbknapparna; ett verktyg i
+  Modifiera-raden går över till 2D
 
 ## Versioner och gamla projekt
 

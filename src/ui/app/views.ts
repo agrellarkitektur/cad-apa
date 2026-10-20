@@ -136,7 +136,8 @@ export function installViews(app: AppContext) {
       app.ui.activeView = null;
       if (app.ui.tool !== 'select' && app.ui.tool !== 'pan') app.setTool('select');
       app.measureBox.close();
-      app.palette.hide();
+      app.smartMenu.hide();
+      app.modifier.cancel();
       app.selection.clear();
       visit(p);
       if (app.ui.mode === '3d') void app.setMode('2d');
@@ -152,7 +153,8 @@ export function installViews(app: AppContext) {
       app.ui.activeView = null;
       if (app.ui.tool !== 'select' && app.ui.tool !== 'pan' && !SPACE_TOOLS.includes(app.ui.tool)) app.setTool('select');
       app.measureBox.close();
-      app.palette.hide();
+      app.smartMenu.hide();
+      app.modifier.cancel();
       app.selection.clear();
       visit(p);
       if (app.ui.mode === '3d') void app.setMode('2d');
@@ -168,7 +170,8 @@ export function installViews(app: AppContext) {
       app.ui.activeView = null;
       if (app.ui.tool !== 'select' && app.ui.tool !== 'pan') app.setTool('select');
       app.measureBox.close();
-      app.palette.hide();
+      app.smartMenu.hide();
+      app.modifier.cancel();
       app.selection.clear();
       visit(p);
       if (app.ui.mode !== '2d') void app.setMode('2d');

@@ -48,8 +48,8 @@ const QUICK_TITLES: Record<string, string> = {
   'zoom-selection': 'Zooma till det markerade',
   'open-marker': 'Öppna fasaden eller sektionen',
   delete: 'Ta bort helt, ur alla tillstånd (Delete)',
-  'palette-more': 'Visa alla inställningar här i menyn',
-  'palette-less': 'Visa bara snabbknapparna',
+  'smart-more': 'Visa alla inställningar här i smartmenyn',
+  'smart-less': 'Visa bara snabbknapparna',
   deselect: 'Avmarkera (Esc)',
 };
 
@@ -206,10 +206,10 @@ export class PropertiesPanel {
 
   /**
    * Snabbradens innehåll för det som är markerat, eller null om inget är det.
-   * Används både i panelen och i snabbmenyn vid markören. Med `more` får
+   * Används både i panelen och i smartmenyn. Med `more` får
    * raden en knapp som öppnar hela panelen.
    */
-  quickMarkup(more: boolean | 'less' = false): string | null {
+  quickMarkup(more: boolean | 'less' = false, withTitle = true): string | null {
     const doc = this.store.doc;
     const els = this.selection
       .list()
@@ -279,13 +279,24 @@ export class PropertiesPanel {
           break;
       }
     }
-    if (more === true) buttons.push(btn('palette-more', icons.more, 'Mer'));
-    if (more === 'less') buttons.push(btn('palette-less', icons.collapse, 'Mindre'));
+    if (more === true) buttons.push(btn('smart-more', icons.more, 'Mer'));
+    if (more === 'less') buttons.push(btn('smart-less', icons.collapse, 'Mindre'));
     buttons.push(btn('deselect', icons.close, 'Avmarkera'));
 
+    const head = withTitle ? this.quickTitle() : '';
+    return `${head}<div class="qb-actions">${buttons.join('')}</div>`;
+  }
+
+  /** Vad som är markerat, som rubrik i snabbraden och smartmenyn. `where` ersätter undertiteln. */
+  quickTitle(where?: string): string {
+    const doc = this.store.doc;
+    const els = this.selection
+      .list()
+      .map((id) => doc.elements[id])
+      .filter(Boolean);
     const title = els.length === 0 ? 'Inget markerat' : els.length === 1 ? labelOf(doc, els[0]) : `${els.length} objekt`;
-    const sub = els.length === 0 ? 'Tryck på det som ska markeras' : els.length === 1 ? typeOf(els[0].type)?.label ?? '' : summarizeTypes(els);
-    return `<div class="qb-title"><b>${escapeHtml(title)}</b><small>${escapeHtml(sub)}</small></div><div class="qb-actions">${buttons.join('')}</div>`;
+    const sub = where ?? (els.length === 0 ? 'Tryck på det som ska markeras' : els.length === 1 ? (typeOf(els[0].type)?.label ?? '') : summarizeTypes(els));
+    return `<div class="qb-title"><b>${escapeHtml(title)}</b><small>${escapeHtml(sub)}</small></div>`;
   }
 
   // ---------- Markerat ----------
@@ -396,14 +407,14 @@ export class PropertiesPanel {
     this.onClick(e);
   }
 
-  /** Fälten i den utfällda snabbmenyn. */
+  /** Fälten i den utfällda smartmenyn. */
   handleChange(e: Event): void {
     this.onChange(e);
   }
 
   /**
    * Alla inställningar för det markerade, utan rubriken, för den utfällda
-   * snabbmenyn. Null när inget är markerat.
+   * smartmenyn. Null när inget är markerat.
    */
   selectionMarkup(): string | null {
     if (this.selection.size === 0) return null;
@@ -534,7 +545,7 @@ export class PropertiesPanel {
         break;
       case 'add-prop':
       case 'add-defprop': {
-        // Fältet bredvid knappen, i panelen eller i den utfällda snabbmenyn.
+        // Fältet bredvid knappen, i panelen eller i den utfällda smartmenyn.
         const input =
           b.parentElement?.querySelector<HTMLInputElement>('input') ??
           this.body.querySelector<HTMLInputElement>(b.dataset.action === 'add-prop' ? '#new-prop' : '#new-defprop');

@@ -58,8 +58,11 @@ export class SettingsDialog {
       case 'grid':
         s.grid = t.checked;
         break;
-      case 'pet':
-        s.petPalette = t.checked;
+      case 'smart':
+        s.smartMenu = t.checked;
+        break;
+      case 'rail':
+        s.modifyRail = t.checked;
         break;
       case 'autodims':
         s.autoDims = t.checked;
@@ -149,7 +152,8 @@ export class SettingsDialog {
         <section>
           <h3>Planen</h3>
           <label class="check"><input type="checkbox" data-setting="grid"${s.grid ? ' checked' : ''}> Visa rutnät <span class="muted">(G)</span></label>
-          <label class="check"><input type="checkbox" data-setting="pet"${s.petPalette ? ' checked' : ''}> Snabbmeny vid markören när något markeras med musen</label>
+          <label class="check"><input type="checkbox" data-setting="smart"${s.smartMenu ? ' checked' : ''}> Smartmeny intill det markerade, med Modifiera-valen och snabbknapparna</label>
+          <label class="check"><input type="checkbox" data-setting="rail"${s.modifyRail ? ' checked' : ''}> Modifiera-raden innanför ritverktygen</label>
           <label class="check"><input type="checkbox" data-setting="autodims"${s.autoDims ? ' checked' : ''}> Måttsätt nya väggar och öppningar automatiskt när man jämför med befintligt</label>
           <label class="field inline-field"><span>Varna för nästan raka vinklar, inom</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="0.5" inputmode="decimal" autocomplete="off" data-setting="anglewarn" value="${s.angleWarn}"><i>°</i></span></label>
           <p class="note">Väggar, sektions- och fasadlinjer, fast inredning och taknockar som ligger nära 0°, 45° eller 90° utan att vara exakta markeras med ett utropstecken. 0 stänger av varningen.</p>
@@ -168,7 +172,7 @@ export class SettingsDialog {
         </section>
         <section>
           <h3>Snabbknappar</h3>
-          <p class="note">Knapparna i snabbmenyn vid markören och överst i panelen. Avmarkera finns alltid.</p>
+          <p class="note">Snabbknapparna i smartmenyn och överst i panelen. Avmarkera finns alltid.</p>
           ${quickRows}
         </section>
         <section>

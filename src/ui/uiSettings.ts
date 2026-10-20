@@ -66,8 +66,10 @@ const QUICK_DEFAULTS: Record<string, QuickId[]> = {
 
 export interface UiSettings {
   grid: boolean;
-  /** Snabbmeny vid markören när något markeras med musen. */
-  petPalette: boolean;
+  /** Smartmenyn intill det markerade (0.8.5; tidigare snabbmenyn vid markören). */
+  smartMenu: boolean;
+  /** Modifiera-raden innanför ritverktygen (0.8.5). */
+  modifyRail: boolean;
   /** Måttsätt nya väggar och öppningar automatiskt när man jämför. */
   autoDims: boolean;
   /** Färg på markeringar; null = temats accentfärg. */
@@ -119,7 +121,8 @@ const KEY = 'bacchus-ui';
 export function defaultUiSettings(): UiSettings {
   return {
     grid: true,
-    petPalette: true,
+    smartMenu: true,
+    modifyRail: true,
     autoDims: true,
     selColor: null,
     refColor: null,
@@ -147,7 +150,9 @@ export function loadUiSettings(): UiSettings {
     const quick = (raw as { v?: number }).v === 2 ? { ...d.quick, ...(raw.quick ?? {}) } : d.quick;
     return {
       grid: typeof raw.grid === 'boolean' ? raw.grid : d.grid,
-      petPalette: typeof raw.petPalette === 'boolean' ? raw.petPalette : d.petPalette,
+      // Inställningen hette petPalette före 0.8.5.
+      smartMenu: typeof raw.smartMenu === 'boolean' ? raw.smartMenu : ((raw as { petPalette?: boolean }).petPalette ?? d.smartMenu),
+      modifyRail: typeof raw.modifyRail === 'boolean' ? raw.modifyRail : d.modifyRail,
       autoDims: typeof raw.autoDims === 'boolean' ? raw.autoDims : d.autoDims,
       selColor: typeof raw.selColor === 'string' ? raw.selColor : null,
       refColor: typeof raw.refColor === 'string' ? raw.refColor : null,
@@ -257,7 +262,8 @@ export const SHORTCUTS: [string, string][] = [
   ['Vyknappen', 'Klick: förra vyn. Håll in: de senaste vyerna'],
   ['N', 'Visa eller dölj projektträdet'],
   ['Dubbelklick', 'Redigera en text eller ett rumsnamn direkt i ritningen; öppna en fasad eller sektion'],
-  ['Klick på det markerade', 'Modifiera: på referenslinjen, en ände, ett hörn eller kroppen'],
+  ['Klick på det markerade', 'Smartmenyn byter Modifiera-valen till det du klickat på: referenslinjen, en ände, ett hörn eller kroppen'],
+  ['Modifiera-raden', 'Alla Modifiera-verktyg innanför ritverktygen; de som går att använda för det markerade är tända'],
   ['Högerklick', 'Meny för det du pekar på (långt tryck på telefonen)'],
   ['Alt + dra', 'Flytta en vägg utan att anslutna väggar följer med'],
   ['+300, *2, 2,4m', 'Formler och enheter i alla sifferfält'],

@@ -372,7 +372,7 @@ export function installActions(app: AppContext, parts: ActionParts) {
         break;
       }
       case 'open-panel':
-        app.palette.hide();
+        app.smartMenu.hide();
         app.setPanel(true, 'full');
         panel.showTab('selection');
         break;

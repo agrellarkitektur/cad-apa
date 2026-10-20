@@ -256,9 +256,10 @@ på bladet sina egna.
   linjen, y = höjd) och visas i planvyn, som bara går att markera i.
 - **Modifiera.** Kommandona ligger i `src/core/wallEdit.ts` (`splitWall`,
   `reshapeWall`, `tangentArc`, `roundCorner`, `mergeAtCorner`, `extendTo`,
-  `offsetWalls`, `multiplyElements`, `mirrorAbout`). Paletten och verktyget
-  som förhandsvisar och utför ligger i `src/ui/modify.ts`; Markera anropar
-  `host.modify` vid klick (utan drag) på något som redan är markerat.
+  `offsetWalls`, `multiplyElements`, `mirrorAbout`). Valen och verktyget
+  som förhandsvisar och utför ligger i `src/ui/modify/` (se *Smartmenyn och
+  Modifiera-raden* nedan); Markera anropar `host.modify` vid klick (utan
+  drag) på något som redan är markerat.
 
 ## Linjer, markörer och verktyg (0.7.1, samma format)
 
@@ -570,14 +571,14 @@ på bladet sina egna.
 - **Dubbelklick i trädet**: trädet ritas om vid varje klick, så webbläsaren
   skickar inget `dblclick`. `treeDoubleClick` i `actions.ts` räknar två klick
   på samma rad inom 450 ms och går till 2D om bara 3D visas.
-- **Ny vägg härifrån**: ett val i Modifiera-paletten (`wallOn` i
-  `src/ui/modify.ts`) som inte kör ett `ModifyTool` utan väggverktyget.
+- **Ny vägg härifrån**: ett Modifiera-val (`wallOn` i
+  `src/ui/modify/ops.ts`) som inte kör ett `ModifyTool` utan väggverktyget.
   `ModifyHost.startWallFrom` (i `app.ts`) sparar väggverktygets val i
   `wallFrom`, tar den klickade väggens typ, höjd och liv, och byter till
-  väggverktyget med `setTool('wall', true)` (`true`: paletten och
+  väggverktyget med `setTool('wall', true)` (`true`: smartmenyn och
   markeringen ligger kvar). `WallTool.startAt` börjar kedjan i änden. Väljs
-  något annat i paletten, eller stängs den, anropas `stopWall`; när första
-  väggen är ritad göms paletten med `release()`. När kedjan är klar
+  något annat, eller avbryts valet, anropas `stopWall`; när första
+  väggen är ritad släpps valet med `Modifier.release()` och smartmenyn göms. När kedjan är klar
   (`wallTool.onChange` utan `drawing`) kommer valen tillbaka och det går
   till Markera. `settingTool` hindrar att `setTool` anropas inifrån
   `setTool` när väggverktyget avslutas för att man valt ett annat verktyg.
@@ -595,3 +596,41 @@ på bladet sina egna.
   förflyttningen längs sträckan. Fältet `#measure-move` i verktygsraden
   (`toolOptions.ts`) har fokus medan man skriver: Enter flyttar, Tab byter
   objekt, Esc avbryter.
+
+## Smartmenyn och Modifiera-raden (0.8.5, format 5)
+
+- **`src/ui/modify/`** är Modifiera, uppdelat: `ops.ts` har valen (`OPS`,
+  `opsFor`), vad ett klick träffade (`modifyContextAt`), `ModifyHost` och
+  Modifiera-radens knappar (`RAIL`, `railFor`); `tool.ts` har `ModifyTool`
+  (förhandsvisning och utförande) och `runInstant`; `controller.ts` har
+  `Modifier`, läget som smartmenyn, raden och verktygsraden delar.
+- **`Modifier`**: `ctx` är vad valen gäller. `setSelection` sätts vid varje
+  ny markering med det markerade som helhet (`bodyContext` i
+  `src/ui/app/selectionPlace.ts`: klickpunkten om det markerades med ett
+  klick, annars mitten; den är baspunkt för Flytta och Vrid). `setPart` är ett klick på det markerade
+  (ände, hörn, kant), med `start` som förval (Ny vägg). `choose` kör ett
+  val, `chooseRail` en knapp i raden: finns valet där man klickat, eller för
+  hela markeringen, börjar det; annars sätts `picking` och nästa `setPart`
+  med ett passande val startar det. `cancel` avbryter men behåller
+  markeringen; efter ett utfört val går `ctx` tillbaka till helheten.
+  Lyssnare (`subscribe`) ritar om menyn, raden och verktygsraden.
+  `detailMarkup` och `bindValue` är raden med valets värde och tips, i
+  smartmenyn eller i `.tool-options` (klassen `modify-detail` visar den
+  med Markera).
+- **`SmartMenu`** (`src/ui/smartMenu.ts`) ersätter `PetPalette` och
+  `ModifyPalette`. Innehållet: rubriken (`PropertiesPanel.quickTitle`),
+  valen, `detailMarkup`, snabbknapparna (`quickMarkup(…, false)`, utan
+  rubrik) och vid *Mer* `selectionMarkup`. Placeringen utgår från det
+  markerades ruta på skärmen (`selectionBounds` och `screenBox` i
+  `selectionPlace.ts`): höger, vänster, under, över, och får den inte plats
+  där den täcker minst. Den läggs om vid
+  panorering (`onViewChange`). När bara 3D visas finns inget att lägga den
+  bredvid, så den hamnar vid klicket, utan valen (`planShown`).
+- **Modifiera-raden** (`src/ui/app/modifyRail.ts`) är en egen kolumn i
+  appens grid (`modify`, bredd `--modify-w`, klassen `modify-rail-on`).
+  Tänds efter `railFor` för det markerade; i fasader och sektioner bara
+  när allt markerat går att ändra där, på blad aldrig.
+- **Inställningarna** `smartMenu` (hette `petPalette`, läses som fallback)
+  och `modifyRail` i `uiSettings`.
+- Nya val i `OPS` hamnar i smartmenyn av sig själva via `opsFor`; i raden
+  behöver de en plats i `RAIL` (testet i `tests/v085.test.ts` säger till).

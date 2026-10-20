@@ -24,7 +24,7 @@ export function installTextEdit(app: AppContext, textEditor: InlineTextEditor) {
     const DRAWING_SCALE = view.drawingScale;
     if (el.type === 'Text') {
       const p = resolveParams<{ pos: Vec2; text: string; height: number; angle: number }>(store.doc, el);
-      app.palette.hide();
+      app.smartMenu.hide();
       textEditor.open(
         {
           at: p.pos,
@@ -58,7 +58,7 @@ export function installTextEdit(app: AppContext, textEditor: InlineTextEditor) {
       const nameRow = texts[0];
       if (!hit || !nameRow) return false;
       const w = nameRow.text.length * nameRow.height * 0.62 * DRAWING_SCALE;
-      app.palette.hide();
+      app.smartMenu.hide();
       textEditor.open(
         {
           at: [nameRow.align === 'middle' ? nameRow.at[0] - w / 2 : nameRow.at[0], nameRow.at[1]],

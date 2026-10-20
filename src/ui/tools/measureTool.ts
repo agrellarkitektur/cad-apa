@@ -2,7 +2,7 @@ import { moveElements } from '../../core/commands';
 import { add, angleDeg, dist, norm, scale, sub } from '../../geometry/vec';
 import { pickAllAt } from '../../view2d/pick';
 import { labelOf } from '../labels';
-import { ghostPath } from '../modify';
+import { ghostPath } from '../modify/tool';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';

@@ -59,6 +59,7 @@ export const icons = {
   roof: svg('<path d="M3 13l9-7 9 7"/><path d="M5 11.5V19h14v-7.5"/><path d="M3 13l1.5 1.2M21 13l-1.5 1.2"/>'),
   north: svg('<circle cx="12" cy="12" r="8"/><path d="M12 5l3 9-3-2-3 2z" fill="currentColor"/>'),
   insertNode: svg('<path d="M3 17l9-10 9 10"/><circle cx="12" cy="7" r="2.2" fill="currentColor"/><path d="M12 13v6M9 16h6"/>'),
+  movePoint: svg('<path d="M3 18l7-8 11 6"/><circle cx="10" cy="10" r="2.2" fill="currentColor"/><path d="M15 3h5v5M20 3l-6 6"/>'),
   curveEdge: svg('<path d="M3 18Q12 2 21 18"/><circle cx="3" cy="18" r="1.6" fill="currentColor"/><circle cx="21" cy="18" r="1.6" fill="currentColor"/><path d="M12 6v-3M10.5 4.5L12 3l1.5 1.5"/>'),
   tangentArc: svg('<path d="M2 18h8"/><path d="M10 18c5 0 9-4 10-10" /><circle cx="10" cy="18" r="1.6" fill="currentColor"/><path d="M16 18h4" stroke-dasharray="1.5 1.5"/>'),
   straighten: svg('<path d="M3 16Q12 6 21 16" stroke-dasharray="2 2"/><path d="M3 18h18"/><circle cx="3" cy="18" r="1.6" fill="currentColor"/><circle cx="21" cy="18" r="1.6" fill="currentColor"/>'),
