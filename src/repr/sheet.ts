@@ -1,5 +1,5 @@
 import { PRESETS, type StyleSheet } from '../core/graphics';
-import { modelViewId, type Id, type ProjectDoc, type Sheet, type SheetItem, type ViewDef, type Viewport } from '../core/model';
+import { modelViewId, type Id, type ProjectDoc, type Sheet, type SheetItem, type SheetTextItem, type ViewDef, type Viewport } from '../core/model';
 import { FRAME_MARGIN, itemCorner, paperSize } from '../core/sheets';
 import { defaultState, existingState, type ViewStates } from '../core/states';
 import { markerName } from '../elements/markers';
@@ -8,7 +8,7 @@ import { clipPrims } from '../geometry/clipRect';
 import { buildPlan } from './plan';
 import { boundsOf, type Bounds, type Primitive, type Vec2 } from './primitives';
 import { buildSection } from './section';
-import { TITLE_BLOCK_HEIGHT, TITLE_BLOCK_WIDTH, titleBlockPrims } from './titleBlock';
+import { expandSmartText, smartVars, TITLE_BLOCK_HEIGHT, TITLE_BLOCK_WIDTH, titleBlockPrims } from './titleBlock';
 
 /**
  * Ritningsblad (0.8 del 3): vyerna ritade i sin skala på papperet, med ram
@@ -19,7 +19,8 @@ import { TITLE_BLOCK_HEIGHT, TITLE_BLOCK_WIDTH, titleBlockPrims } from './titleB
  * En vy på ett blad (`Viewport`) har `at`: var vyns nollpunkt (modellens
  * 0,0, eller fasadens och sektionens början) hamnar på papperet. Vyn visar
  * det som är ritat i den med lite luft runt; underlag som är större klipps
- * mot den ramen.
+ * mot den ramen. En vy kan också ha en egen ram (`crop`, 0.8.7) i modellens
+ * koordinater; då klipps allt mot den.
  */
 
 /** Det en vy på ett blad kan visa: en sparad vy eller modellvyn av en våning, fasad, sektion eller ett arbetsblad. */
@@ -177,9 +178,24 @@ export interface PlacedView {
   name: string;
   /** Ramen på papperet. */
   frame: Bounds;
+  /** Vyns läge och skala, för att räkna mellan papperet och modellen. */
+  at: Vec2;
+  scale: number;
+  /** Ramen är ändrad för hand (`crop`). */
+  cropped?: boolean;
   prims: Primitive[];
   /** Vyn eller det den visar finns inte längre. */
   missing?: boolean;
+}
+
+/** En ram på papperet i vyns modellkoordinater (för `crop`). */
+export function paperToModel(b: Bounds, at: Vec2, scale: number): Bounds {
+  return { minX: (b.minX - at[0]) * scale, minY: (b.minY - at[1]) * scale, maxX: (b.maxX - at[0]) * scale, maxY: (b.maxY - at[1]) * scale };
+}
+
+/** En ram i vyns modellkoordinater på papperet. */
+export function modelToPaper(b: Bounds, at: Vec2, scale: number): Bounds {
+  return { minX: at[0] + b.minX / scale, minY: at[1] + b.minY / scale, maxX: at[0] + b.maxX / scale, maxY: at[1] + b.maxY / scale };
 }
 
 /** Ramen på papperet för en vy med ett visst läge, eller null om vyn är tom. */
@@ -193,8 +209,8 @@ export function viewportFrame(modelBounds: Bounds | null, at: Vec2, scale: numbe
   };
 }
 
-/** Rubrik under vyn: namnet i fet stil och skalan efter, som i ritningar. */
-function viewTitle(frame: Bounds, title: string, scale: number): Primitive[] {
+/** Rubrik under vyn: namnet i fet stil och skalan efter (om den inte är dold), som i ritningar. */
+function viewTitle(frame: Bounds, title: string, scale: number, showScale = true): Primitive[] {
   const origin = { objectType: 'ViewTitle', part: 'vyrubrik' };
   const y = frame.minY - 6;
   const x = frame.minX + VIEWPORT_PAD;
@@ -202,7 +218,7 @@ function viewTitle(frame: Bounds, title: string, scale: number): Primitive[] {
   return [
     { kind: 'text', at: [x, y], text: title, height: 3.5, bold: true, pen: { weight: 0.25 }, origin },
     { kind: 'line', a: [x, y - 1.2], b: [x + width, y - 1.2], pen: { weight: 0.25 }, origin },
-    { kind: 'text', at: [x + width + 2.5, y], text: `SKALA 1:${scale}`, height: 2.5, pen: { weight: 0.18 }, origin },
+    ...(showScale ? [{ kind: 'text', at: [x + width + 2.5, y], text: `SKALA 1:${scale}`, height: 2.5, pen: { weight: 0.18 }, origin } as Primitive] : []),
   ];
 }
 
@@ -218,6 +234,8 @@ export function placeView(doc: ProjectDoc, vp: Viewport, opt: { autoDims?: boole
       view: vp.view,
       name,
       missing: true,
+      at: vp.at,
+      scale: vp.scale,
       frame,
       prims: [
         { kind: 'polyline', points: [[frame.minX, frame.minY], [frame.maxX, frame.minY], [frame.maxX, frame.maxY], [frame.minX, frame.maxY]], closed: true, pen },
@@ -226,15 +244,31 @@ export function placeView(doc: ProjectDoc, vp: Viewport, opt: { autoDims?: boole
     };
   }
   const model = cachedViewPrims(doc, src.def, { scale: vp.scale, autoDims: opt.autoDims });
-  const frame = viewportFrame(contentBounds(model), vp.at, vp.scale) ?? { minX: vp.at[0] - 20, minY: vp.at[1] - 15, maxX: vp.at[0] + 20, maxY: vp.at[1] + 15 };
+  const base = { id: vp.id, view: vp.view, name, at: vp.at, scale: vp.scale };
+  const title = (f: Bounds) => viewTitle(f, name, vp.scale, !vp.hideScale);
   const paper = toPaper(model, vp.at, vp.scale);
+  if (vp.crop) {
+    // En egen ram (0.8.7): allt klipps mot den.
+    const frame = modelToPaper(vp.crop, vp.at, vp.scale);
+    return { ...base, frame, cropped: true, prims: [...clipPrims(paper, frame), ...title(frame)] };
+  }
+  const frame = viewportFrame(contentBounds(model), vp.at, vp.scale) ?? { minX: vp.at[0] - 20, minY: vp.at[1] - 15, maxX: vp.at[0] + 20, maxY: vp.at[1] + 15 };
   // Underlagen klipps mot ramen; det som är ritat ligger redan inom den.
   const under = clipPrims(
     paper.filter((p) => p.origin?.objectType === 'Underlay'),
     frame,
   );
   const rest = paper.filter((p) => p.origin?.objectType !== 'Underlay');
-  return { id: vp.id, view: vp.view, name, frame, prims: [...under, ...rest, ...viewTitle(frame, name, vp.scale)] };
+  return { ...base, frame, prims: [...under, ...rest, ...title(frame)] };
+}
+
+/** Vyns ram när den följer innehållet, i modellens koordinater (som `crop`), eller null om vyn är tom. */
+export function contentCrop(doc: ProjectDoc, vp: Viewport, opt: { autoDims?: boolean } = {}): Bounds | null {
+  const src = viewSource(doc, vp.view);
+  const b = src ? contentBounds(cachedViewPrims(doc, src.def, { scale: vp.scale, autoDims: opt.autoDims })) : null;
+  if (!b) return null;
+  const pad = VIEWPORT_PAD * vp.scale;
+  return { minX: b.minX - pad, minY: b.minY - pad, maxX: b.maxX + pad, maxY: b.maxY + pad };
 }
 
 /** Mitten av en vy på papperet, med ett visst läge och en viss skala. */
@@ -254,7 +288,7 @@ export function centeredAt(doc: ProjectDoc, view: Id, scale: number, center: Vec
   return [Math.round(center[0] - mid[0]), Math.round(center[1] - mid[1])];
 }
 
-/** En sak på bladet utöver vyerna (ett ritningshuvud), färdig att rita. */
+/** En sak på bladet utöver vyerna (ett ritningshuvud eller en text), färdig att rita. */
 export interface PlacedItem {
   id: Id;
   kind: SheetItem['kind'];
@@ -263,10 +297,42 @@ export interface PlacedItem {
   prims: Primitive[];
 }
 
-/** Ytan ett ritningshuvud tar på papperet. */
-export function itemBounds(sheet: Pick<Sheet, 'size' | 'orientation'>, item: SheetItem): Bounds {
+/** Radavståndet i en text på bladet, som för fri text i vyerna. */
+const LINE_STEP = 1.5;
+
+/** En texts rader med smarttexten ifylld. */
+function textLines(item: SheetTextItem, vars: Record<string, string>): string[] {
+  return expandSmartText(item.text, vars).split('\n');
+}
+
+/** Ytan en text tar på papperet. */
+function textBounds(item: SheetTextItem, lines: string[]): Bounds {
+  const h = item.height;
+  const w = Math.max(h, ...lines.map((l) => textWidth(l, h, item.bold)));
+  return { minX: item.at[0], minY: item.at[1] - h * LINE_STEP * (lines.length - 1) - h * 0.3, maxX: item.at[0] + w, maxY: item.at[1] + h };
+}
+
+/** En text på bladet ritad, rad för rad. */
+function textPrims(item: SheetTextItem, lines: string[]): Primitive[] {
+  const origin = { objectType: 'SheetText', objectId: item.id };
+  const pen = { weight: item.height >= 5 ? 0.35 : item.height >= 3.5 ? 0.25 : 0.18 };
+  return lines.map((text, i): Primitive => ({ kind: 'text', at: [item.at[0], item.at[1] - i * item.height * LINE_STEP], text, height: item.height, ...(item.bold ? { bold: true } : {}), pen, origin }));
+}
+
+/** Ytan en sak på bladet tar på papperet: ett ritningshuvud eller en text (med smarttexten ifylld). */
+export function itemBounds(doc: Pick<ProjectDoc, 'project'>, sheet: Sheet, item: SheetItem, todayText: string): Bounds {
+  if (item.kind === 'text') return textBounds(item, textLines(item, smartVars(doc, sheet, todayText)));
   const [x, y] = itemCorner(sheet, item);
   return { minX: x - TITLE_BLOCK_WIDTH, minY: y, maxX: x, maxY: y + TITLE_BLOCK_HEIGHT };
+}
+
+function placeItem(doc: ProjectDoc, sheet: Sheet, item: SheetItem, todayText: string): PlacedItem {
+  if (item.kind === 'text') {
+    const lines = textLines(item, smartVars(doc, sheet, todayText));
+    return { id: item.id, kind: item.kind, frame: textBounds(item, lines), prims: textPrims(item, lines) };
+  }
+  const corner = itemCorner(sheet, item);
+  return { id: item.id, kind: item.kind, frame: itemBounds(doc, sheet, item, todayText), prims: titleBlockPrims(doc, sheet, corner, todayText) };
 }
 
 export interface SheetDrawing {
@@ -300,7 +366,7 @@ export function buildSheet(doc: ProjectDoc, sheet: Sheet, opt: { autoDims?: bool
     origin: { objectType: 'Sheet', part: 'papper' },
   };
   const views = sheet.viewports.map((vp) => placeView(doc, vp, opt));
-  const items: PlacedItem[] = sheet.items.map((it) => ({ id: it.id, kind: it.kind, frame: itemBounds(sheet, it), prims: titleBlockPrims(doc, sheet, itemCorner(sheet, it), opt.today) }));
+  const items: PlacedItem[] = sheet.items.map((it) => placeItem(doc, sheet, it, opt.today));
   const prims: Primitive[] = [
     paper,
     ...views.flatMap((v) => v.prims),

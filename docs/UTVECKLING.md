@@ -671,3 +671,40 @@ på bladet sina egna.
   (`uiSettings.newSheetTitleBlock`, sparas direkt, inte med Spara).
   Huvudet har ritningens fält (sparas med `saveSheet`) och projektets
   (`saveProjectFields`).
+
+## Text på bladet och vyernas ram (0.8.7, format 7)
+
+- **Modellen**: `SheetTextItem` (`kind: 'text'`, `at`, `text`, `height`,
+  `bold?`) i `SheetItem`. `at` är första radens baslinje till vänster, i mm
+  från papperets nedre vänstra hörn (inte från höger som huvudet), och
+  höjden är i mm på papperet. `Viewport` har fått `hideScale?` och
+  `crop?: Bounds`. Ramen ligger i vyns modellkoordinater (eller fasadens och
+  sektionens), så att den visar samma del när skalan byts.
+- **Kommandon** i `src/core/sheets.ts`: `addSheetText`, `updateSheetText`
+  (en tom text tas bort), `setViewportCrop` (null återställer ramen till
+  innehållet) och `SHEET_TEXT_HEIGHTS`. `updateViewport` tar bort tomma
+  `hideScale` och `crop`. Flytt och borttagning går som förut genom
+  `moveOnSheet` och `removeFromSheet`.
+- **Ritningen** (`src/repr/sheet.ts`): `itemBounds(doc, sheet, item, today)`
+  räknar textens yta med smarttexten ifylld (`expandSmartText`,
+  `smartVars`). Raderna har 1,5 × höjden emellan, som fri text i vyerna.
+  En vy med `crop` får ramen därifrån och allt klipps mot den
+  (`clipPrims`); utan `crop` klipps bara underlagen som förut.
+  `PlacedView` har `at`, `scale` och `cropped`; `paperToModel`,
+  `modelToPaper` och `contentCrop` räknar mellan papperet och modellen.
+  `viewTitle` hoppar över *SKALA 1:n* när `hideScale` är satt.
+- **I appen**: textverktyget är tillåtet på blad. `changeTool` och
+  `renderAll` i `app.ts` väljer `sheets.textTool` när verktyget är Text
+  och annars `sheets.tool` (`sheetTool`). Verktyget och redigeringen på
+  plats (`InlineTextEditor` med ritningsskala 1) ligger i
+  `src/ui/app/sheetText.ts`. Texten tar sin text, höjd och fetstil från
+  `TextTool` (`text`, `height`, `bold`), som verktygsraden ställer in.
+  `SheetThing` har fått `sheetText`, och `TreeItem` likaså. Texterna
+  träffas före huvudena, så att en text som ligger på ett huvud går att ta.
+- **Ramens grepp** (`src/ui/app/sheets.ts`): den valda vyn visar åtta grepp
+  (`GRIPS`, `gripHit`); att dra ett ändrar kanterna (`resized`, minst 5 mm)
+  och fäster dem mot ritningsramen och de andra sakernas kanter
+  (`snapEdge`). Släpps greppet sparas ramen med `setViewportCrop`.
+  *Återställ ramen till innehållet* finns i smartmenyn (bara när ramen är
+  ändrad) och i vyns formulär. Byts vyn i formuläret följer ramen
+  innehållet igen; byts skalan står ramens mitt kvar på papperet.

@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.6** (beta, ritningshuvudet som eget objekt och blanka blad); nästa är
-**0.8.7, text på bladet och vyernas ram**.
+**0.8.7** (beta, text på bladet och vyernas ram); nästa är
+**0.8.8, fler Modifiera-verktyg**.
 
 ## Vad som fungerar
 
@@ -536,9 +536,28 @@ Version 0.8.6, ritningshuvudet som eget objekt (nytt filformat, 6):
   stoppas av SPF/DMARC
 - Projekt i format 5 och äldre öppnas inte (betaversion); öppna dem i 0.8.5
 
+Version 0.8.7, text på bladet och vyernas ram (filformat 7):
+- Text direkt på ett ritningsblad med textverktyget (**T**): skriv texten i
+  verktygsraden, välj höjd på papperet (1,8–10 mm) och fet stil, och klicka
+  där den ska stå. Texten kan ha flera rader och smarttext, t.ex.
+  `{ritningsnummer}` eller `{datum}`
+- Texten markeras, flyttas (dra, eller Flytta med två klick) och tas bort
+  som ritningshuvudet. Dubbelklick eller Redigera i smartmenyn skriver
+  direkt i den; text, höjd och fet stil finns också i egenskaperna, och
+  bladets egenskaper listar texterna
+- Höjden går att välja i verktygsraden för text i vyerna också
+- Vyns ram på bladet går att ändra med greppen i kanterna och hörnen, som i
+  Archicad och InDesign: det som ligger utanför klipps. Kanterna fäster mot
+  ritningsramen och de andra sakerna på bladet. Ramen ligger i modellens
+  mått, så den visar samma del när skalan byts
+- *Återställ ramen till innehållet* i smartmenyn och vyns egenskaper
+- Skalan i vyns rubrik går att dölja (kryssrutan *Skalan i rubriken* i vyns
+  egenskaper)
+- Projekt i format 6 och äldre öppnas inte (betaversion); öppna dem i 0.8.6
+
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer, i dag 6 (sedan 0.8.6). Fram till
+Projektfilerna har ett formatnummer, i dag 7 (sedan 0.8.7). Fram till
 pilotprojektet (0.13) uppgraderas inte projekt från äldre betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp

@@ -721,6 +721,14 @@ button:focus-visible {
   gap: 6px;
 }
 
+.opt-check input {
+  width: auto;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
 .opt > span:first-child {
   color: var(--muted);
   font-size: 10.5px;
@@ -4307,6 +4315,23 @@ input[type='range'] {
 .vp-frame.moving {
   fill: color-mix(in srgb, var(--sel) 10%, transparent);
   stroke-dasharray: 6 4;
+}
+
+.field:has(.sheet-text-value) {
+  grid-column: 1 / -1;
+}
+
+.sheet-text-value {
+  width: 100%;
+  resize: vertical;
+  font: inherit;
+}
+
+.vp-grip {
+  fill: var(--paper);
+  stroke: var(--sel);
+  stroke-width: 1.5;
+  pointer-events: none;
 }
 
 .vp-guide {

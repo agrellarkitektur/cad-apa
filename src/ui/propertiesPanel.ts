@@ -164,7 +164,7 @@ export class PropertiesPanel {
       // Ändringar som inte sparats än ligger kvar när något annat ritas om.
       const open = this.body.querySelector<HTMLFormElement>('.tree-form');
       const dirty = open && open.dataset.treeId === item.id && !open.querySelector<HTMLButtonElement>('[data-tree="save"]')?.disabled;
-      if (!dirty && (item.kind === 'sheet' || item.kind === 'viewport' || item.kind === 'titleBlock')) {
+      if (!dirty && (item.kind === 'sheet' || item.kind === 'viewport' || item.kind === 'titleBlock' || item.kind === 'sheetText')) {
         // Ritningsblad och vyer på blad (0.8 del 3).
         this.body.innerHTML = sheetFormMarkup(doc, { kind: item.kind, id: item.id }, { newSheetTitleBlock: this.sheetHost?.newSheetTitleBlock() ?? false });
         if (this.sheetHost) bindSheetForm(this.body, this.store, this.sheetHost);

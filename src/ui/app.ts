@@ -416,18 +416,20 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     }
   }
   let settingTool = false;
+  /** Verktyget på ett ritningsblad: textverktyget eller det som markerar och flyttar (0.8.7). */
+  const sheetTool = (): ViewTool => (ui.tool === 'text' ? sheets.textTool : sheets.tool);
   function changeTool(id: ToolId, keep: boolean): void {
     measureBox.close();
     // Ritverktygen ritar i planen: från en fasad eller sektion går man tillbaka dit.
     // Mått, text och 2D ritas i fasaden eller sektionen (0.8).
     if (PLAN_TOOLS.includes(id) && !SPACE_TOOLS.includes(id) && (ui.marker || ui.worksheet)) views.goTo({ kind: 'storey', id: ui.storey });
-    // På ett ritningsblad går bara att markera och panorera. Text, mått och 2D
-    // stannar på bladet med ett tips (0.8.2); övriga ritverktyg går till planen.
-    if (ui.layout && SPACE_TOOLS.includes(id)) {
-      hint('Text, mått och linjer direkt på ett blad kommer efter pilotprojektet. Rita dem i vyn, så syns de på bladet.', 4500);
+    // På ett ritningsblad går att markera, panorera och skriva text (0.8.7).
+    // Mått och 2D stannar på bladet med ett tips (0.8.2); övriga ritverktyg går till planen.
+    if (ui.layout && SPACE_TOOLS.includes(id) && id !== 'text') {
+      hint('Mått och linjer direkt på ett blad kommer efter pilotprojektet. Rita dem i vyn, så syns de på bladet.', 4500);
       return;
     }
-    if (ui.layout && id !== 'select' && id !== 'pan') views.goTo({ kind: 'storey', id: ui.storey });
+    if (ui.layout && id !== 'select' && id !== 'pan' && id !== 'text') views.goTo({ kind: 'storey', id: ui.storey });
     if (PLAN_TOOLS.includes(id) && ui.mode === '3d') void pane3d.setMode('2d');
     if (ui.tool === 'wall' && id !== 'wall') wallTool.finish();
     if (ui.tool === 'dimension' && id !== 'dimension') dimensionTool.reset();
@@ -440,7 +442,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       modifier.cancel();
     }
     ui.tool = id;
-    view.setTool(ui.layout ? sheets.tool : tools[id]);
+    view.setTool(ui.layout ? sheetTool() : tools[id]);
     toolsEl.querySelectorAll<HTMLElement>('[data-tool]').forEach((b) => {
       if (!b.hasAttribute('aria-disabled')) b.setAttribute('aria-pressed', String(b.dataset.tool === id));
     });
@@ -716,8 +718,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     view.drawingScale = layout ? 1 : ui.scale;
     view.showGrid = layout ? false : uiSettings.grid;
     view.showScaleBar = !layout;
-    if (layout && !zoomingBox && !aligning && view.currentTool !== sheets.tool) view.setTool(sheets.tool);
-    else if (!layout && view.currentTool === sheets.tool) view.setTool(tools[ui.tool]);
+    if (layout && !zoomingBox && !aligning && view.currentTool !== sheetTool()) view.setTool(sheetTool());
+    else if (!layout && (view.currentTool === sheets.tool || view.currentTool === sheets.textTool)) view.setTool(tools[ui.tool]);
 
     chips.innerHTML =
       doc.states
@@ -924,7 +926,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   installKeyboard(app);
   const clipboard = installClipboard(app);
   const underlays = installUnderlays(app);
-  const sheets = installSheets(app);
+  const sheets = installSheets(app, textEditor);
   sheets.subscribe(() => modifyRail.render());
   const plot = installPlot(app, underlays.exportImage);
   const actions = installActions(app, { brand, feedbackDialog, files, menus, panes, plot, sheets, showMenu, views });

@@ -365,8 +365,16 @@ genom dem.*
   *Återställ ramen till innehållet*, som i Archicad och InDesign (synpunkt
   20 oktober; tidigare planerad efter pilotprojektet). Vyn får en egen ram
   (`crop`); underlagen klipps redan mot ramen, så klippningen finns
+- Skalan i vyns rubrik går att dölja (önskemål 20 oktober)
 
 Mellanstor.
+
+*Byggd (20 oktober), format 7. Claudes val, att stämma av: texten har
+höjderna 1,8–10 mm och fet stil, skrivs i verktygsraden som i vyerna och
+redigeras på plats med dubbelklick, och kan ha smarttext. Läget räknas från
+papperets nedre vänstra hörn, så att texten står kvar när formatet byts.
+Vyns ram ligger i modellens koordinater och följer med när skalan byts;
+kanterna fäster mot ritningsramen och de andra sakerna på bladet.*
 
 ### 0.8.8 Fler Modifiera-verktyg
 

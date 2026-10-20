@@ -109,6 +109,14 @@ export interface Viewport {
   scale: number;
   /** Vyrubrik; utelämnad = vyns namn. */
   title?: string;
+  /** Rubriken visar inte skalan (0.8.7, format 7). */
+  hideScale?: boolean;
+  /**
+   * Vyns ram (0.8.7, format 7) i modellens koordinater (eller fasadens och
+   * sektionens), så att ramen visar samma del av ritningen när skalan byts.
+   * Det som ligger utanför klipps. Utelämnad = ramen följer innehållet.
+   */
+  crop?: { minX: number; minY: number; maxX: number; maxY: number };
 }
 
 /**
@@ -126,10 +134,24 @@ export interface TitleBlockItem {
 }
 
 /**
- * Det som ligger på ett blad utöver vyerna (0.8.6). Fler slag kommer: texter
- * (0.8.7), och senare skalstock, orienteringsfigur och smartgrupper.
+ * En fri text på ett blad (0.8.7, format 7). `at` är första radens
+ * baslinje till vänster, i mm från papperets nedre vänstra hörn. Höjden är
+ * i mm på papperet. Texten kan innehålla smarttext, t.ex. `{datum}`.
  */
-export type SheetItem = TitleBlockItem;
+export interface SheetTextItem {
+  kind: 'text';
+  id: Id;
+  at: [number, number];
+  text: string;
+  height: number;
+  bold?: boolean;
+}
+
+/**
+ * Det som ligger på ett blad utöver vyerna (0.8.6): ritningshuvuden och
+ * texter (0.8.7). Senare skalstock, orienteringsfigur och smartgrupper.
+ */
+export type SheetItem = TitleBlockItem | SheetTextItem;
 
 /** Ett ritningsblad (format 6). */
 export interface Sheet {
@@ -253,7 +275,7 @@ export interface Element<P extends object = Record<string, unknown>> {
 }
 
 export const FORMAT = 'bacchus-project';
-export const FORMAT_VERSION = 6;
+export const FORMAT_VERSION = 7;
 
 export interface ProjectDoc {
   format: typeof FORMAT;

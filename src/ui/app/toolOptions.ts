@@ -6,6 +6,7 @@ import { escapeHtml, labelOf } from '../labels';
 import { evaluate } from '../expr';
 import type { AppContext } from './context';
 import { defaultWallType, nf } from './helpers';
+import { SHEET_TEXT_HEIGHTS } from '../../core/sheets';
 
 /** Verktygsraden under ritytan: inställningar för det verktyg som är valt, och måttbandets värden. */
 export function installToolOptions(app: AppContext) {
@@ -111,9 +112,14 @@ export function installToolOptions(app: AppContext) {
         <span class="opt-hint">${t.hintText()}</span>`;
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'text') {
+      // Höjden på papperet (0.8.7); fet stil bara för text på ett blad.
+      const t = app.textTool;
+      const heights = SHEET_TEXT_HEIGHTS.includes(t.height) ? SHEET_TEXT_HEIGHTS : [...SHEET_TEXT_HEIGHTS, t.height].sort((a, b) => a - b);
       app.toolOptions.innerHTML = `
-        <label class="opt"><span>Text</span><input id="text-value" value="${escapeHtml(app.textTool.text)}" aria-label="Text" style="width:180px"></label>
-        <span class="opt-hint">Klicka där texten ska stå.</span>`;
+        <label class="opt"><span>Text</span><input id="text-value" value="${escapeHtml(t.text)}" aria-label="Text" style="width:180px"></label>
+        <label class="opt"><span>Höjd</span><select id="text-height" aria-label="Texthöjd på papperet">${heights.map((h) => `<option value="${h}"${h === t.height ? ' selected' : ''}>${nf.format(h)} mm</option>`).join('')}</select></label>
+        ${app.ui.layout ? `<label class="opt opt-check"><input type="checkbox" id="text-bold"${t.bold ? ' checked' : ''}><span>Fet</span></label>` : ''}
+        <span class="opt-hint">${app.ui.layout ? 'Klicka på bladet där texten ska stå.' : 'Klicka där texten ska stå.'}</span>`;
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'select' && !app.uiSettings.smartMenu && app.modifier.busy) {
       // Utan smartmeny visas Modifiera-valets värde och tips här (0.8.5).
@@ -171,6 +177,8 @@ export function installToolOptions(app: AppContext) {
     if (t.id === 'd2-weight' && num > 0) app.draw2dTool.options.weight = num;
     if (t.id === 'd2-linetype') app.draw2dTool.options.linetype = t.value as LineType;
     if (t.id === 'd2-pattern') app.draw2dTool.options.pattern = t.value as FillPattern;
+    if (t.id === 'text-height' && num > 0) app.textTool.height = num;
+    if (t.id === 'text-bold') app.textTool.bold = (t as unknown as HTMLInputElement).checked;
   });
   app.toolOptions.addEventListener('input', (e) => {
     const t = e.target as HTMLInputElement;

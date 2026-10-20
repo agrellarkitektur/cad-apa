@@ -1,7 +1,7 @@
 import { newId } from '../../core/ids';
 import type { Id, Sheet } from '../../core/model';
-import { addTitleBlock, addViewport, createSheet, FRAME_MARGIN, moveOnSheet, paperSize, removeFromSheet, setLogo, today } from '../../core/sheets';
-import { buildSheet, cachedViewPrims, contentBounds, VIEWPORT_PAD, viewSource, type SheetDrawing } from '../../repr/sheet';
+import { addTitleBlock, addViewport, createSheet, FRAME_MARGIN, moveOnSheet, paperSize, removeFromSheet, setLogo, setViewportCrop, today } from '../../core/sheets';
+import { buildSheet, cachedViewPrims, contentBounds, paperToModel, VIEWPORT_PAD, viewSource, type PlacedItem, type SheetDrawing } from '../../repr/sheet';
 import type { Bounds, Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
@@ -11,10 +11,39 @@ import type { SheetFormHost } from '../sheetForms';
 import type { SmartMenuCustom } from '../smartMenu';
 import type { AppContext } from './context';
 import { screenBox } from './selectionPlace';
+import { installSheetText } from './sheetText';
+import type { InlineTextEditor } from '../textEditor';
 import { base64Of } from './underlays';
 
-/** Det som går att markera och flytta på ett blad: en vy eller ett ritningshuvud (0.8.6). */
-export type SheetThing = { kind: 'viewport' | 'titleBlock'; id: Id };
+/** Det som går att markera och flytta på ett blad: en vy, ett ritningshuvud (0.8.6) eller en text (0.8.7). */
+export type SheetThing = { kind: 'viewport' | 'titleBlock' | 'sheetText'; id: Id };
+
+const thingOf = (it: PlacedItem): SheetThing => ({ kind: it.kind === 'text' ? 'sheetText' : 'titleBlock', id: it.id });
+
+/** Ett grepp i en vys ram: vilka kanter det flyttar (0.8.7). */
+type Grip = { x: -1 | 0 | 1; y: -1 | 0 | 1 };
+const GRIPS: Grip[] = [
+  { x: -1, y: -1 },
+  { x: 0, y: -1 },
+  { x: 1, y: -1 },
+  { x: 1, y: 0 },
+  { x: 1, y: 1 },
+  { x: 0, y: 1 },
+  { x: -1, y: 1 },
+  { x: -1, y: 0 },
+];
+const gripCursor = (g: Grip) => (g.x === 0 ? 'ns-resize' : g.y === 0 ? 'ew-resize' : g.x === g.y ? 'nesw-resize' : 'nwse-resize');
+const gripAt = (b: Bounds, g: Grip): Vec2 => [g.x < 0 ? b.minX : g.x > 0 ? b.maxX : (b.minX + b.maxX) / 2, g.y < 0 ? b.minY : g.y > 0 ? b.maxY : (b.minY + b.maxY) / 2];
+/** Ramen med greppets kanter flyttade, aldrig mindre än 5 mm. */
+function resized(b: Bounds, g: Grip, d: Vec2): Bounds {
+  const r = { ...b };
+  const min = 5;
+  if (g.x < 0) r.minX = Math.min(b.minX + d[0], b.maxX - min);
+  if (g.x > 0) r.maxX = Math.max(b.maxX + d[0], b.minX + min);
+  if (g.y < 0) r.minY = Math.min(b.minY + d[1], b.maxY - min);
+  if (g.y > 0) r.maxY = Math.max(b.maxY + d[1], b.minY + min);
+  return r;
+}
 
 /**
  * Ritningsbladen i appen (0.8 del 3): bladet som visas, verktyget som
@@ -25,7 +54,7 @@ export type SheetThing = { kind: 'viewport' | 'titleBlock'; id: Id };
  * På ett blad är koordinaterna mm på papperet och ritningsskalan 1:1, så
  * att texter och linjer får sin storlek på papper.
  */
-export function installSheets(app: AppContext) {
+export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
   let last: { doc: unknown; sheet: Sheet; autoDims: boolean; drawing: SheetDrawing } | null = null;
 
   /** Bladet som visas, ritat. Sparas tills projektet eller bladet ändras. */
@@ -40,10 +69,10 @@ export function installSheets(app: AppContext) {
     return d;
   }
 
-  /** Det på bladet som är valt i egenskapspanelen: en vy eller ett ritningshuvud. */
+  /** Det på bladet som är valt i egenskapspanelen: en vy, ett ritningshuvud eller en text. */
   function pickedThing(): SheetThing | null {
     const t = app.panel.treeItem;
-    if (!app.ui.layout || !t || (t.kind !== 'viewport' && t.kind !== 'titleBlock')) return null;
+    if (!app.ui.layout || !t || (t.kind !== 'viewport' && t.kind !== 'titleBlock' && t.kind !== 'sheetText')) return null;
     return frameOf(t.id) ? { kind: t.kind, id: t.id } : null;
   }
   const picked = (): Id | null => pickedThing()?.id ?? null;
@@ -52,7 +81,7 @@ export function installSheets(app: AppContext) {
   const listeners: (() => void)[] = [];
   const changed = () => listeners.forEach((f) => f());
 
-  function pick(item: { kind: 'sheet' | 'viewport' | 'titleBlock'; id: Id } | null): void {
+  function pick(item: { kind: 'sheet' | SheetThing['kind']; id: Id } | null): void {
     app.selection.clear();
     if (moving && moving.thing.id !== item?.id) cancelMove();
     app.panel.showTreeItem(item);
@@ -63,18 +92,23 @@ export function installSheets(app: AppContext) {
     changed();
   }
 
-  /** Ytan på papperet för en vy eller ett ritningshuvud på bladet som visas. */
+  const textEdit = installSheetText(app, textEditor, pick);
+
+  /** Ytan på papperet för en vy, ett ritningshuvud eller en text på bladet som visas. */
   function frameOf(id: Id): Bounds | null {
     const d = drawing();
     return d?.items.find((i) => i.id === id)?.frame ?? d?.views.find((v) => v.id === id)?.frame ?? null;
   }
 
-  /** Det översta på bladet under en punkt: ritningshuvudena ligger över vyerna. */
+  /** Det översta på bladet under en punkt: ritningshuvudena och texterna ligger över vyerna. */
   function hit(p: Vec2): SheetThing | null {
     const d = drawing();
     if (!d) return null;
-    const inside = (f: Bounds, below = 0) => p[0] >= f.minX && p[0] <= f.maxX && p[1] >= f.minY - below && p[1] <= f.maxY;
-    for (let i = d.items.length - 1; i >= 0; i--) if (inside(d.items[i].frame)) return { kind: 'titleBlock', id: d.items[i].id };
+    const pad = 2 / app.view.camera.scale;
+    const inside = (f: Bounds, below = 0, m = 0) => p[0] >= f.minX - m && p[0] <= f.maxX + m && p[1] >= f.minY - below - m && p[1] <= f.maxY + m;
+    // Texterna först, så att en text i ett ritningshuvud går att träffa.
+    for (let i = d.items.length - 1; i >= 0; i--) if (d.items[i].kind === 'text' && inside(d.items[i].frame, 0, pad)) return thingOf(d.items[i]);
+    for (let i = d.items.length - 1; i >= 0; i--) if (inside(d.items[i].frame)) return thingOf(d.items[i]);
     for (let i = d.views.length - 1; i >= 0; i--) if (inside(d.views[i].frame, 8)) return { kind: 'viewport', id: d.views[i].id };
     return null;
   }
@@ -122,6 +156,41 @@ export function installSheets(app: AppContext) {
     return { d, guides };
   }
 
+  const moveLabel = (t: SheetThing) => (t.kind === 'titleBlock' ? 'Flytta ritningshuvudet' : t.kind === 'sheetText' ? 'Flytta texten' : 'Flytta vyn på bladet');
+
+  /** Ett grepp i den valda vyns ram under en punkt på skärmen (0.8.7). */
+  function gripHit(p: ViewPointer): { vp: Id; frame: Bounds; grip: Grip } | null {
+    const t = pickedThing();
+    if (t?.kind !== 'viewport' || !p.screen) return null;
+    const v = drawing()?.views.find((x) => x.id === t.id);
+    if (!v || v.missing) return null;
+    const cam = app.view.camera;
+    for (const g of GRIPS) {
+      const s = cam.toScreen(gripAt(v.frame, g));
+      if (Math.abs(s[0] - p.screen[0]) <= 7 && Math.abs(s[1] - p.screen[1]) <= 7) return { vp: v.id, frame: v.frame, grip: g };
+    }
+    return null;
+  }
+
+  /** Fäst en dragen kant i vyns ram mot de andra sakernas kanter och ritningsramen. */
+  function snapEdge(id: Id, value: number, axis: 0 | 1): { at: number; guide: [Vec2, Vec2] | null } {
+    const dr = drawing();
+    if (!dr) return { at: value, guide: null };
+    const tol = 8 / app.view.camera.scale;
+    const others = [...dr.views, ...dr.items].filter((v) => v.id !== id).map((v) => v.frame);
+    const lines = axis === 0 ? [dr.frame.minX, dr.frame.maxX, ...others.flatMap((b) => [b.minX, b.maxX])] : [dr.frame.minY, dr.frame.maxY, ...others.flatMap((b) => [b.minY, b.maxY])];
+    let best: number | null = null;
+    for (const l of lines) if (Math.abs(l - value) < tol && (best === null || Math.abs(l - value) < Math.abs(best - value))) best = l;
+    if (best === null) return { at: value, guide: null };
+    return { at: best, guide: axis === 0 ? [[best, -1e4], [best, 1e4]] : [[-1e4, best], [1e4, best]] };
+  }
+
+  /** Återställ vyns ram till innehållet. */
+  function resetCrop(vpId: Id): void {
+    if (app.ui.layout) setViewportCrop(app.store, app.ui.layout, vpId, null);
+    app.smartMenu.refresh(true);
+  }
+
   /** Flytta med två klick (Flytta i smartmenyn eller Modifiera-raden): baspunkt, sedan dit. */
   let moving: { thing: SheetThing; frame: Bounds; base: Vec2 | null; d: Vec2; guides: [Vec2, Vec2][] } | null = null;
 
@@ -167,6 +236,18 @@ export function installSheets(app: AppContext) {
       return f ? screenBox(app.view, app.pane2d, thing.kind === 'viewport' ? { ...f, minY: f.minY - 8 } : f) : null;
     };
     const move = { id: 'move', label: 'Flytta', icon: 'move' as const, pressed: moving?.thing.id === thing.id };
+    if (thing.kind === 'sheetText') {
+      const it = sheet.items.find((i) => i.id === thing.id);
+      const first = it?.kind === 'text' ? it.text.split('\n')[0] : '';
+      return {
+        title: 'Text',
+        sub: first.length > 28 ? `${first.slice(0, 27)}…` : first,
+        buttons: [move, { id: 'edit', label: 'Redigera', icon: 'text' }, { id: 'props', label: 'Egenskaper', icon: 'properties' }, { id: 'remove', label: 'Ta bort', icon: 'trash', danger: true }],
+        anchor,
+        alive,
+        run: (id) => menuAction(thing, id),
+      };
+    }
     if (thing.kind === 'titleBlock') {
       return {
         title: 'Ritningshuvud',
@@ -182,7 +263,13 @@ export function installSheets(app: AppContext) {
     return {
       title: vp.title || viewSource(app.store.doc, vp.view)?.name || 'Vy',
       sub: `1:${vp.scale} på ${sheet.number}`,
-      buttons: [move, { id: 'open', label: 'Öppna vyn', icon: 'navigator' }, { id: 'props', label: 'Egenskaper', icon: 'properties' }, { id: 'remove', label: 'Ta bort', icon: 'trash', danger: true }],
+      buttons: [
+        move,
+        { id: 'open', label: 'Öppna vyn', icon: 'navigator' },
+        ...(vp.crop ? [{ id: 'reset-crop', label: 'Återställ ramen till innehållet', icon: 'fit' as const }] : []),
+        { id: 'props', label: 'Egenskaper', icon: 'properties' },
+        { id: 'remove', label: 'Ta bort', icon: 'trash', danger: true },
+      ],
       anchor,
       alive,
       run: (id) => menuAction(thing, id),
@@ -198,6 +285,12 @@ export function installSheets(app: AppContext) {
       case 'props':
         pick(thing);
         if (!app.ui.panelOpen) app.setPanel(true);
+        break;
+      case 'edit':
+        textEdit.edit(thing.id);
+        break;
+      case 'reset-crop':
+        resetCrop(thing.id);
         break;
       case 'open': {
         const vp = app.store.doc.sheets.find((s) => s.id === app.ui.layout)?.viewports.find((v) => v.id === thing.id);
@@ -239,11 +332,19 @@ export function installSheets(app: AppContext) {
   class SheetTool implements ViewTool {
     cursor = 'default';
     private dragging: { thing: SheetThing; start: Vec2; frame: Bounds; d: Vec2; guides: [Vec2, Vec2][] } | null = null;
+    /** Ett grepp i vyns ram som dras (0.8.7). */
+    private cropping: { vp: Id; start: Vec2; frame: Bounds; grip: Grip; now: Bounds; guides: [Vec2, Vec2][] } | null = null;
+    private hoveredGrip: Grip | null = null;
     private hovered: Id | null = null;
     private lastUp = { id: '' as Id | null, t: 0 };
 
     down(p: ViewPointer): 'capture' | 'pan' | 'ignore' {
       if (moving) return 'capture';
+      const g = gripHit(p);
+      if (g) {
+        this.cropping = { vp: g.vp, start: p.model, frame: g.frame, grip: g.grip, now: g.frame, guides: [] };
+        return 'capture';
+      }
       const t = hit(p.model);
       const frame = t && frameOf(t.id);
       if (!t || !frame) return 'pan';
@@ -255,6 +356,25 @@ export function installSheets(app: AppContext) {
     drag(p: ViewPointer): void {
       if (moving) {
         this.follow(p);
+        return;
+      }
+      const c = this.cropping;
+      if (c) {
+        const d: Vec2 = [p.model[0] - c.start[0], p.model[1] - c.start[1]];
+        const raw = resized(c.frame, c.grip, d);
+        const guides: [Vec2, Vec2][] = [];
+        const edge = (key: keyof Bounds, axis: 0 | 1) => {
+          const r = snapEdge(c.vp, raw[key], axis);
+          raw[key] = r.at;
+          if (r.guide) guides.push(r.guide);
+        };
+        if (c.grip.x < 0) edge('minX', 0);
+        if (c.grip.x > 0) edge('maxX', 0);
+        if (c.grip.y < 0) edge('minY', 1);
+        if (c.grip.y > 0) edge('maxY', 1);
+        c.now = resized(raw, { x: 0, y: 0 }, [0, 0]);
+        c.guides = guides;
+        app.view.requestRender();
         return;
       }
       const g = this.dragging;
@@ -284,10 +404,20 @@ export function installSheets(app: AppContext) {
           this.follow(p);
           const m = moving;
           moving = null;
-          if (sheetId) moveOnSheet(app.store, sheetId, [m.thing.id], m.d, m.thing.kind === 'titleBlock' ? 'Flytta ritningshuvudet' : 'Flytta vyn på bladet');
+          if (sheetId) moveOnSheet(app.store, sheetId, [m.thing.id], m.d, moveLabel(m.thing));
           app.smartMenu.refresh(true);
           changed();
         }
+        app.view.requestRender();
+        return;
+      }
+      const c = this.cropping;
+      this.cropping = null;
+      if (c) {
+        const vp = drawing()?.views.find((v) => v.id === c.vp);
+        const same = (['minX', 'minY', 'maxX', 'maxY'] as const).every((k) => Math.abs(c.now[k] - c.frame[k]) < 0.05);
+        if (moved && sheetId && vp && !same) setViewportCrop(app.store, sheetId, c.vp, paperToModel(c.now, vp.at, vp.scale));
+        app.smartMenu.refresh(true);
         app.view.requestRender();
         return;
       }
@@ -295,9 +425,15 @@ export function installSheets(app: AppContext) {
       this.dragging = null;
       if (!g) return;
       if (moved && sheetId && Math.hypot(g.d[0], g.d[1]) > 0.05) {
-        moveOnSheet(app.store, sheetId, [g.thing.id], g.d, g.thing.kind === 'titleBlock' ? 'Flytta ritningshuvudet' : 'Flytta vyn på bladet');
+        moveOnSheet(app.store, sheetId, [g.thing.id], g.d, moveLabel(g.thing));
       } else if (!moved) {
         const now = performance.now();
+        // Dubbelklick på en text: redigera den där den står.
+        if (g.thing.kind === 'sheetText' && this.lastUp.id === g.thing.id && now - this.lastUp.t < 400) {
+          this.lastUp = { id: null, t: 0 };
+          textEdit.edit(g.thing.id);
+          return;
+        }
         // Dubbelklick på en vy: öppna den.
         if (g.thing.kind === 'viewport' && this.lastUp.id === g.thing.id && now - this.lastUp.t < 400) {
           const vp = app.store.doc.sheets.find((s) => s.id === sheetId)?.viewports.find((v) => v.id === g.thing.id);
@@ -324,6 +460,7 @@ export function installSheets(app: AppContext) {
 
     cancel(): void {
       this.dragging = null;
+      this.cropping = null;
       app.view.requestRender();
     }
 
@@ -332,10 +469,12 @@ export function installSheets(app: AppContext) {
         if (p) this.follow(p);
         return;
       }
-      const h = p ? (hit(p.model)?.id ?? null) : null;
-      if (h !== this.hovered) {
+      const grip = p ? (gripHit(p)?.grip ?? null) : null;
+      const h = grip ? null : p ? (hit(p.model)?.id ?? null) : null;
+      if (h !== this.hovered || grip !== this.hoveredGrip) {
         this.hovered = h;
-        this.cursor = h ? 'move' : 'default';
+        this.hoveredGrip = grip;
+        this.cursor = grip ? gripCursor(grip) : h ? 'move' : 'default';
         app.view.svg.style.cursor = this.cursor;
         app.view.requestRender();
       }
@@ -353,11 +492,27 @@ export function installSheets(app: AppContext) {
       const out: string[] = [];
       const sel = picked();
       const g = this.dragging && Math.hypot(this.dragging.d[0], this.dragging.d[1]) > 0 ? this.dragging : moving?.base ? moving : null;
-      const busy = g?.thing.id;
+      const c = this.cropping;
+      const busy = g?.thing.id ?? c?.vp;
       for (const v of [...d.views, ...d.items]) {
         if (v.id === busy) continue;
         if (v.id === sel) out.push(rect(v.frame, 'vp-frame picked'));
         else if (v.id === this.hovered) out.push(rect(v.frame, 'vp-frame hover'));
+      }
+      // Greppen i den valda vyns ram (0.8.7).
+      const pickedView = !g && pickedThing()?.kind === 'viewport' ? d.views.find((v) => v.id === sel && !v.missing) : undefined;
+      if (pickedView) {
+        const b = c ? c.now : pickedView.frame;
+        if (c) out.push(rect(b, 'vp-frame moving'));
+        for (const gr of GRIPS) {
+          const s = cam.toScreen(gripAt(b, gr));
+          out.push(`<rect class="vp-grip" x="${(s[0] - 4).toFixed(1)}" y="${(s[1] - 4).toFixed(1)}" width="8" height="8"/>`);
+        }
+        for (const [a, e] of c?.guides ?? []) {
+          const s1 = cam.toScreen(a);
+          const s2 = cam.toScreen(e);
+          out.push(`<line class="vp-guide" x1="${s1[0].toFixed(1)}" y1="${s1[1].toFixed(1)}" x2="${s2[0].toFixed(1)}" y2="${s2[1].toFixed(1)}"/>`);
+        }
       }
       if (g) {
         out.push(rect(by(g.frame, g.d), 'vp-frame moving'));
@@ -464,6 +619,10 @@ export function installSheets(app: AppContext) {
     placeTitleBlock,
     openView,
     chooseLogo,
+    startText: () => {
+      app.setTool('text');
+      requestAnimationFrame(() => app.toolOptions.querySelector<HTMLInputElement>('#text-value')?.select());
+    },
     newSheetTitleBlock: () => app.uiSettings.newSheetTitleBlock,
     setNewSheetTitleBlock: (on) => {
       app.uiSettings.newSheetTitleBlock = on;
@@ -512,6 +671,7 @@ export function installSheets(app: AppContext) {
           { kind: 'header', label: `${sheet.number} ${sheet.name}`, sub: 'Ritningsblad' },
           { label: 'Bladets inställningar och vyer', run: () => pick({ kind: 'sheet', id: sheet.id }) },
           { label: 'Lägg på ritningshuvud (BH90)', run: () => placeTitleBlock(sheet.id) },
+          { label: 'Skriv text på bladet', hint: 'T', run: () => host.startText() },
           { label: 'Plot/export…', run: () => app.root.querySelector<HTMLElement>('.nav-plot [data-action="plot"], .main-menu [data-action="plot"]')?.click() },
         ],
         sheet.number,
@@ -520,5 +680,23 @@ export function installSheets(app: AppContext) {
     { capture: true },
   );
 
-  return { drawing, tool, pick, picked, pickedThing, place, placeTitleBlock, newSheet, openView, startMove, cancelMove, removePicked, moving: () => !!moving, subscribe: (f: () => void) => listeners.push(f) };
+  return {
+    drawing,
+    tool,
+    textTool: textEdit.tool,
+    editText: textEdit.edit,
+    resetCrop,
+    pick,
+    picked,
+    pickedThing,
+    place,
+    placeTitleBlock,
+    newSheet,
+    openView,
+    startMove,
+    cancelMove,
+    removePicked,
+    moving: () => !!moving,
+    subscribe: (f: () => void) => listeners.push(f),
+  };
 }

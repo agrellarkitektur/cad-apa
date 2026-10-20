@@ -1,5 +1,5 @@
 import { newId } from './ids';
-import type { Id, PaperSize, ProjectDoc, Sheet, SheetItem, Viewport } from './model';
+import type { Id, PaperSize, ProjectDoc, Sheet, SheetTextItem, TitleBlockItem, Viewport } from './model';
 import type { DocStore, TxBuilder } from './store';
 
 /**
@@ -35,7 +35,7 @@ export const TITLE_BLOCK_AT: [number, number] = [-FRAME_MARGIN.right, FRAME_MARG
 export const TITLE_BLOCK_TEMPLATES: { id: 'bh90'; name: string; note: string }[] = [{ id: 'bh90', name: 'BH90', note: '180 mm brett, så att ett vikt blad blir A4' }];
 
 /** Ett ritningshuvuds nedre högra hörn på papperet, mm från papperets nedre vänstra hörn. */
-export function itemCorner(sheet: Pick<Sheet, 'size' | 'orientation'>, item: Pick<SheetItem, 'at'>): [number, number] {
+export function itemCorner(sheet: Pick<Sheet, 'size' | 'orientation'>, item: Pick<TitleBlockItem, 'at'>): [number, number] {
   const [w] = paperSize(sheet);
   return [w + item.at[0], item.at[1]];
 }
@@ -162,7 +162,7 @@ export function duplicateSheet(store: DocStore, id: Id): Id | null {
     id: newId('blad'),
     number: nextSheetNumber(store.doc),
     viewports: s.viewports.map((v) => ({ ...v, id: newId('vp') })),
-    items: s.items.map((x) => ({ ...structuredClone(x), id: newId('huvud') })),
+    items: s.items.map((x) => ({ ...structuredClone(x), id: newId(x.kind === 'text' ? 'text' : 'huvud') })),
   };
   store.transact(`Duplicera bladet ${s.number}`, (tx) => {
     tx.setField('sheets', [...tx.doc.sheets, copy]);
@@ -183,7 +183,10 @@ export function addViewport(store: DocStore, sheetId: Id, vp: Omit<Viewport, 'id
   return id;
 }
 
-/** Ändra en vy på ett blad: läge, skala eller rubrik. En tom rubrik betyder vyns namn. */
+/**
+ * Ändra en vy på ett blad: läge, skala, rubrik eller ram. En tom rubrik
+ * betyder vyns namn; `crop: undefined` låter ramen följa innehållet.
+ */
 export function updateViewport(store: DocStore, sheetId: Id, vpId: Id, patch: Partial<Omit<Viewport, 'id'>>, label = 'Ändra vyn på bladet'): void {
   const s = store.doc.sheets.find((x) => x.id === sheetId);
   if (!s?.viewports.some((v) => v.id === vpId)) return;
@@ -194,10 +197,19 @@ export function updateViewport(store: DocStore, sheetId: Id, vpId: Id, patch: Pa
         if (v.id !== vpId) return v;
         const next: Viewport = { ...v, ...patch };
         if (!next.title?.trim()) delete next.title;
+        if (!next.hideScale) delete next.hideScale;
+        if (!next.crop) delete next.crop;
         return next;
       }),
     })),
   );
+}
+
+/** Byt vyns ram (i modellens koordinater), eller återställ den till innehållet med null (0.8.7). */
+export function setViewportCrop(store: DocStore, sheetId: Id, vpId: Id, crop: Viewport['crop'] | null): void {
+  const r = (x: number) => Math.round(x);
+  const c = crop ? { minX: r(Math.min(crop.minX, crop.maxX)), minY: r(Math.min(crop.minY, crop.maxY)), maxX: r(Math.max(crop.minX, crop.maxX)), maxY: r(Math.max(crop.minY, crop.maxY)) } : undefined;
+  updateViewport(store, sheetId, vpId, { crop: c }, c ? 'Ändra vyns ram' : 'Återställ vyns ram till innehållet');
 }
 
 /** Ta bort en vy från ett blad (vyn finns kvar i projektet). */
@@ -213,6 +225,40 @@ export function addTitleBlock(store: DocStore, sheetId: Id, at: [number, number]
     updateSheet(tx, sheetId, (s) => ({ ...s, items: [...s.items, { kind: 'titleBlock', id, template: 'bh90', at: [at[0], at[1]] }] })),
   );
   return id;
+}
+
+/** Texthöjderna att välja för text på ett blad, mm på papperet (som SS-EN ISO 3098). */
+export const SHEET_TEXT_HEIGHTS = [1.8, 2.5, 3.5, 5, 7, 10];
+
+/** Lägg en text på ett blad (0.8.7). `at` är första radens baslinje till vänster, mm på papperet. Svarar med dess id. */
+export function addSheetText(store: DocStore, sheetId: Id, init: Omit<SheetTextItem, 'kind' | 'id'>): Id | null {
+  if (!store.doc.sheets.some((x) => x.id === sheetId) || !init.text.trim()) return null;
+  const id = newId('text');
+  const r = (x: number) => Math.round(x * 10) / 10;
+  const item: SheetTextItem = { kind: 'text', id, at: [r(init.at[0]), r(init.at[1])], text: init.text, height: init.height, ...(init.bold ? { bold: true } : {}) };
+  store.transact('Skriv text på bladet', (tx) => updateSheet(tx, sheetId, (s) => ({ ...s, items: [...s.items, item] })));
+  return id;
+}
+
+/** Ändra en text på ett blad: text, höjd eller fet stil. En tom text tar bort den. */
+export function updateSheetText(store: DocStore, itemId: Id, patch: Partial<Pick<SheetTextItem, 'text' | 'height' | 'bold'>>, label = 'Ändra texten på bladet'): void {
+  const s = sheetOfItem(store.doc, itemId);
+  if (!s) return;
+  if (patch.text !== undefined && !patch.text.trim()) {
+    removeFromSheet(store, s.id, [itemId]);
+    return;
+  }
+  store.transact(label, (tx) =>
+    updateSheet(tx, s.id, (x) => ({
+      ...x,
+      items: x.items.map((i) => {
+        if (i.id !== itemId || i.kind !== 'text') return i;
+        const next: SheetTextItem = { ...i, ...patch };
+        if (!next.bold) delete next.bold;
+        return next;
+      }),
+    })),
+  );
 }
 
 /** Flytta saker på ett blad: ritningshuvuden och vyer, i ett steg. `d` är förflyttningen i mm. */
@@ -236,14 +282,14 @@ export function removeFromSheet(store: DocStore, sheetId: Id, ids: readonly Id[]
   const set = new Set(ids);
   const s = store.doc.sheets.find((x) => x.id === sheetId);
   if (!s) return;
-  const n = s.items.filter((i) => set.has(i.id)).length;
-  const label = n && n === ids.length ? 'Ta bort ritningshuvudet' : 'Ta bort från bladet';
+  const hit = s.items.filter((i) => set.has(i.id));
+  const label = hit.length === ids.length && hit.every((i) => i.kind === 'titleBlock') ? 'Ta bort ritningshuvudet' : hit.length === ids.length && hit.every((i) => i.kind === 'text') ? 'Ta bort texten' : 'Ta bort från bladet';
   store.transact(label, (tx) =>
     updateSheet(tx, sheetId, (x) => ({ ...x, viewports: x.viewports.filter((v) => !set.has(v.id)), items: x.items.filter((i) => !set.has(i.id)) })),
   );
 }
 
-/** Det blad en sak på ett blad (ett ritningshuvud) ligger på. */
+/** Det blad en sak på ett blad (ett ritningshuvud eller en text) ligger på. */
 export function sheetOfItem(doc: Pick<ProjectDoc, 'sheets'>, itemId: Id): Sheet | undefined {
   return doc.sheets.find((s) => s.items.some((i) => i.id === itemId));
 }

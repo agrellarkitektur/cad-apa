@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { FORMAT_VERSION, modelViewId } from '../src/core/model';
+import { modelViewId } from '../src/core/model';
 import { addTitleBlock, addViewport, createSheet, duplicateSheet, itemCorner, moveOnSheet, removeFromSheet, saveSheet, sheetOfItem, TITLE_BLOCK_AT } from '../src/core/sheets';
 import { DocStore } from '../src/core/store';
 import { registerBuiltInTypes } from '../src/elements';
@@ -13,10 +13,6 @@ beforeAll(() => registerBuiltInTypes());
 const part = (d: ReturnType<typeof buildSheet>, p: string) => d.prims.filter((x) => x.origin?.part === p);
 
 describe('ritningshuvudet som eget objekt (0.8.6, format 6)', () => {
-  it('format 6', () => {
-    expect(FORMAT_VERSION).toBe(6);
-  });
-
   it('ett nytt blad är blankt med ram; med titleBlock får det ett BH90-huvud i ramens hörn', () => {
     const store = new DocStore(sampleProject());
     const blank = createSheet(store);

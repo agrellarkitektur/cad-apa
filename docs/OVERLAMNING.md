@@ -1,30 +1,25 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 20 oktober 2026, efter 0.8.6.
+överlämning; historiken finns i git. Senast: 20 oktober 2026, efter 0.8.7.
 
 ## Läget
 
-- **0.8.6 är klar** på `main`, filformatet är **6**. Det som gjordes står i
-  PLAN.md under *0.8.6*, i README och i UTVECKLING.md under
-  *Ritningshuvudet som eget objekt (0.8.6, format 6)*:
-  - Nya blad är blanka med ram (`Sheet.frame`, kryssruta). Huvudet är en sak
-    på bladet (`Sheet.items`, `TitleBlockItem`), läggs på från en lista,
-    markeras, flyttas (dra, eller Flytta med två klick från smartmenyn och
-    Modifiera-raden), tas bort med Delete. Flera huvuden per blad.
-  - Huvudets egenskaper har fälten; ritningens sparas på bladet, projektets
-    för alla blad. Kryssrutan *Nya blad får ritningshuvud*
-    (`uiSettings.newSheetTitleBlock`).
-  - Smartmenyn kan visa egna knappar (`SmartMenu.showCustom`), som bladets
-    vyer och huvuden använder.
-  - `feedback.php` sätter kuvertavsändaren (`-f`).
-  - Migreringarna till format 5 är borttagna (döda med format 6).
+- **0.8.7 är klar** på `main`, filformatet är **7**. Det som gjordes står i
+  PLAN.md under *0.8.7*, i README och i UTVECKLING.md under *Text på bladet
+  och vyernas ram (0.8.7, format 7)*:
+  - Text på bladet (`SheetTextItem`, `kind: 'text'`) med textverktyget (T),
+    höjd 1,8–10 mm och fet stil i verktygsraden, flera rader och
+    smarttext. Markeras, flyttas och tas bort som huvudet; dubbelklick
+    eller Redigera i smartmenyn skriver på plats.
+  - Vyns ram (`Viewport.crop`, modellens koordinater) med åtta grepp på den
+    valda vyn; allt klipps mot ramen. *Återställ ramen till innehållet* i
+    smartmenyn och vyns egenskaper.
+  - Skalan i vyns rubrik går att dölja (`Viewport.hideScale`, kryssrutan
+    *Skalan i rubriken*). Det var Carl Augusts önskemål i samma session.
   - Kontrollerat i Chrome med Playwright mot `dist/`; inga nya kända fel.
-    `tests/prestanda.test.ts` fallerar i sandlådan (312 väggar, ca 1,7–1,9 s
-    mot gränsen 1,6 s), men lika mycket på 0.8.5: maskinen har två kärnor.
-    Kör det på en snabbare dator om det behövs.
-- **Planen** (20 oktober): 0.8.7 text på bladet och vyernas ram (beskärning
-  och återställ till innehållet, *nytt format*), 0.8.8 fler Modifiera-verktyg
+    `tests/prestanda.test.ts` gick igenom den här gången.
+- **Planen** (20 oktober): 0.8.8 fler Modifiera-verktyg
   med kortkommandona och Avrunda/Fasa för hela markeringen, 0.8.9
   granskning, sedan 0.9 flera våningsplan (med felet om golvnivån i 3D),
   0.10 tak (med tak ovanför snittet punktstreckade), 0.11 trappor, 0.12
@@ -47,35 +42,29 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   hanterade punkter när de görs; behåll Avfärdat med anledning. Han kan
   också klistra in synpunkter i chatten; för in dem i filen när sorteringen
   är godkänd. Han hittar inte hur man öppnar filen i kunskapsbasen och kan
-  lägga in synpunkter via en annan, billigare chatt. Punkterna under 0.8.6 i
-  filen är gjorda och tas bort vid nästa sortering.
+  lägga in synpunkter via en annan, billigare chatt. Punkterna under 0.8.6
+  och 0.8.7 togs bort ur filen när 0.8.7 var klar.
 
-## Nästa session: 0.8.7 Text på bladet och vyernas ram
+## Nästa session: 0.8.8 Fler Modifiera-verktyg
 
 Börja med att läsa `cad-apa-synpunkter.md` och sortera Inkorgen.
 
-PLAN.md under *0.8.7* (*nytt format*: höj `FORMAT_VERSION` till 7).
-
-- **Text på bladet**: ett nytt slag i `SheetItem` (`kind: 'text'`), med läge
-  i mm på papperet. Flytt, borttagning och smartmenyn finns redan för saker
-  på bladet (`moveOnSheet`, `removeFromSheet`, `menuFor` i
-  `src/ui/app/sheets.ts`; `itemBounds` i `src/repr/sheet.ts` behöver räkna
-  textens yta). Textverktyget (`TextTool`) arbetar i modellen och
-  `ui.layout` stänger av andra verktyg än Markera och Panorera på blad
-  (`setTool` i `app.ts`), så det måste tillåtas på blad och skriva till
-  bladet. Smarttext (`expandSmartText`) bör fungera i texterna.
-  Bestäm med Carl August: textstilar/höjder och om texten ska kunna
-  redigeras direkt på bladet som i planen (`textEdit`).
-- **Vyernas ram**: `Viewport.crop?: Bounds` (mm på papperet eller i
-  modellen; i modellen följer ramen med när skalan byts, föreslå det).
-  Grepp i ramens kanter och hörn i `SheetTool`, klippning med `clipPrims`
-  (görs redan för underlag mot ramen i `placeView`), och *Återställ ramen
-  till innehållet* i smartmenyn och vyns egenskaper.
-- Storlek: mellanstor till stor. Texten först; blir det trångt flyttas ramen
-  till en egen småversion.
+PLAN.md under *0.8.8*. Stäm först av med Carl August vilka av Claudes
+förslag (Trimma, Hörnskarv, Dela, Justera och Fördela, Hämta och överför
+inställningar, Skala, Förläng till/Trimma för flera) han vill ha, och
+listan med kortkommandon (förslaget är Shift + bokstav). Avrunda och Fasa
+för hela markeringen hör också hit. Storleken beror på hur många verktyg
+som väljs; föreslå att dela upp i två småversioner om listan blir lång.
+Granskningen (0.8.9) kan läggas före om han vill: förra var 0.8.1.
 
 ## Att fråga Carl August om
 
+- **Text på bladet och vyns ram efter provning** (0.8.7, Claudes val):
+  höjderna 1,8–10 mm och fet stil, att texten skrivs i verktygsraden och
+  redigeras med dubbelklick, att läget räknas från papperets nedre vänstra
+  hörn (texten står kvar när formatet byts, huvudet följer höger hörn), och
+  att ramen följer med när skalan byts. Vill han kunna dölja hela
+  vyrubriken, inte bara skalan? Vridna texter och textstilar efter piloten?
 - **Synpunktsformuläret**: kommer breven fram till Gmail nu, efter `-f`?
   Annars: prova att sätta Gmail-adressen direkt som `to` i
   `feedback-config.php`. Kommer de fram då är det vidarebefordran från
@@ -92,7 +81,7 @@ PLAN.md under *0.8.7* (*nytt format*: höj `FORMAT_VERSION` till 7).
   det markerade), att den syns vid markering med ruta, och om rubriken
   *Ändra* i Modifiera-raden ska heta något annat.
 - **Granskningen** ligger som 0.8.9. Förra var 0.8.1, så den kan läggas
-  efter 0.8.7 om han vill.
+  före 0.8.8 om han vill.
 
 ### Från 0.8.0
 
@@ -151,9 +140,11 @@ PLAN.md under *0.8.7* (*nytt format*: höj `FORMAT_VERSION` till 7).
   `plot`, `setTool`, `setMode` och `goTo` (t.ex.
   `goTo({kind:'marker', id:'sektion-a'})`, `goTo({kind:'sheet', id})`).
   `bacchus.sheets.pick({kind:'viewport', id})` eller
-  `pick({kind:'titleBlock', id})` väljer en vy eller ett huvud på bladet;
-  `bacchus.sheets.drawing()` har `views` och `items` med ytorna på
-  papperet, `pickedThing()`, `startMove()` och `newSheet()` finns också. Filer läggs in med `page.expect_file_chooser()` runt ett
+  `pick({kind:'titleBlock' | 'sheetText', id})` väljer en vy, ett huvud
+  eller en text på bladet; `bacchus.sheets.drawing()` har `views` och
+  `items` med ytorna på papperet, `pickedThing()`, `startMove()`,
+  `newSheet()`, `editText(id)` och `resetCrop(id)` finns också. Ramens
+  grepp dras med musen på den valda vyns kanter (`views[i].frame`). Filer läggs in med `page.expect_file_chooser()` runt ett
   klick på *Lägg in underlag…* eller *Välj logga…*. Ritningen ligger i
   `.plan-drawing .content` (0.8.3), markeringen i `svg.plan .highlight`.
   `bacchus.view.redraw()` ritar om ritningen. Egenskapspanelen är

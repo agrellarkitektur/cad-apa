@@ -195,6 +195,8 @@ export class TextTool implements ViewTool {
   private at: Vec2 | null = null;
   text = 'TEXT';
   height = 2.5;
+  /** Fet stil, bara för text på ett blad (0.8.7). */
+  bold = false;
 
   constructor(host: ToolHost) {
     this.host = host;

@@ -13,7 +13,7 @@ import { escapeHtml } from './labels';
  * eller sektion, en våning eller en mapp. De visas i egenskapspanelen med en
  * Spara-knapp sist; inget ändras förrän man sparar.
  */
-export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder' | 'worksheet' | 'sheet' | 'viewport' | 'titleBlock'; id: Id };
+export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder' | 'worksheet' | 'sheet' | 'viewport' | 'titleBlock' | 'sheetText'; id: Id };
 
 const esc = escapeHtml;
 
@@ -35,6 +35,7 @@ export function treeItemExists(doc: ProjectDoc, item: TreeItem): boolean {
     case 'viewport':
       return doc.sheets.some((s) => s.viewports.some((v) => v.id === item.id));
     case 'titleBlock':
+    case 'sheetText':
       return doc.sheets.some((s) => s.items.some((v) => v.id === item.id));
   }
 }
