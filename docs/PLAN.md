@@ -294,11 +294,39 @@ möjligt (Carl August, 20 oktober).
 
 Bygger på att bladet har egna objekt (0.8.5).
 
-### 0.8.7 Granskning
+### 0.8.7 Smartmeny
+
+Synpunkt (20 oktober): *paletten* (Modifiera) och *snabbmenyn* (vid markören)
+blir en och samma, **smartmenyn**, i samma tema som smarttext, smartobjekt
+och smartgrupper. Hör tematiskt till arbetsflödet i 0.8.4 men kom efter
+den; samma filformat (5). Mellanstor, en session.
+
+- Smartmenyn visas så fort något markerats, som snabbmenyn i dag, med
+  Modifiera-valen överst för det markerade: för en vägg Flytta, Vrid,
+  Spegla, I rad, för flera sammansatta väggar eller linjer också Förskjut
+  alla kanter, Avrunda och Fasa där det går. Man ska kunna flytta en vägg
+  direkt, utan att först klicka på referenslinjen eller änden
+- Klick på en ände, ett hörn eller referenslinjen byter Modifiera-valen
+  till det som gäller där (Ny vägg, Sträck, Förläng; Lägg till punkt, Böj,
+  Förskjut …), i samma meny. Ny vägg härifrån som förval vid en ände (0.8.4)
+  ligger kvar
+- Raden med valets namn, värdefält och tips (från paletten) ligger under
+  Modifiera-valen och ovanför snabbknapparna (Center, Vänd väggen, Riv …);
+  *Mer* fäller fortfarande ut inställningarna nedåt
+- Greppet med de sex prickarna till vänster, som på snabbmenyn, så att
+  menyn kan flyttas om den skymmer; dubbelklick på greppet låter den följa
+  markeringen igen
+- Placeringen utgår från det markerade: menyn läggs bredvid det, på den
+  sida där det finns plats, och inte över det
+- Namnbyte i gränssnittet, inställningarna och dokumentationen: snabbmeny
+  och palett blir smartmeny (`PetPalette` och `ModifyPalette` slås ihop)
+
+### 0.8.8 Granskning
 
 Tredje versionen efter förra granskningen (0.8.1) var 0.8.4. Granskningen
-föreslås efter bladversionerna: städa, dela upp stora filer och leta efter
-långsam kod.
+föreslås efter bladversionerna och smartmenyn: städa, dela upp stora filer
+och leta efter långsam kod (`modify.ts` är 970 rader och delas när
+smartmenyn byggs).
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 

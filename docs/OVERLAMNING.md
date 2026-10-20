@@ -20,7 +20,8 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   - Kontrollerat i Chrome med Playwright mot `dist/`; inga nya kända fel.
 - **Planen** (20 oktober): 0.8.5 ritningshuvudet som eget objekt och blanka
   blad (*nytt format*), 0.8.6 text direkt på bladet (flyttad från *Efter
-  pilotprojektet*), 0.8.7 granskning, sedan 0.9 flera våningsplan (med felet
+  pilotprojektet*), 0.8.7 smartmenyn (paletten och snabbmenyn blir en meny,
+  se PLAN.md), 0.8.8 granskning, sedan 0.9 flera våningsplan (med felet
   om golvnivån i 3D), 0.10 tak, 0.11 trappor, 0.12 export och 0.13 piloten
   med formatfrys. Carl August vill ha blanka blad så snart som möjligt och
   text på bladen så snart det är lämpligt.
@@ -64,11 +65,13 @@ för Carl August innan något byggs; mellanstor version.
   `=>`, så den gav ingen lista och servern svarade 503. Han har fått rätt
   innehåll; fråga om formuläret går att skicka nu. Om `mail()` misslyckas
   med giltig `from` behövs SMTP i `feedback.php`.
-- **Ny vägg härifrån**: paletten ligger där den alltid ligger (under och
-  till höger om klicket) och kan skymma där man ritar. Fråga om den ska
-  ligga någon annanstans när en vägg ritas.
-- **Granskningen** ligger som 0.8.7, efter bladversionerna. Vill han ha den
-  före 0.8.5 i stället?
+- **Smartmenyn (0.8.7)**: ordet *palett* och *snabbmeny* har betytt samma
+  sak för honom; använd bara **smartmeny** från och med nu. Ordningen är
+  ritningshuvud, text på bladet, smartmeny, granskning. Vill han ha
+  smartmenyn före bladversionerna byts 0.8.5–0.8.7 om. Fråga när 0.8.7
+  börjar: ska klick på en ände eller referenslinje visa Modifiera-valen
+  även när smartmenyn är avstängd i inställningarna (*Snabbmeny vid
+  markören* i dag)?
 
 ### Från 0.8.0
 
