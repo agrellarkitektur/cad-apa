@@ -70,6 +70,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.6 | Format 6: nya blad blanka, BH90-huvudet som eget objekt på bladet, flytta och ta bort på bladet med smartmenyn |
 | 0.8.7 | Format 7: text på bladet, vyernas ram med grepp, dold skala i vyrubriken |
 | 0.8.8 | Format 8: mallblad med smarttext i stället för ram och BH90-huvud, förvalt mallblad, exempelmallblad, fet och justerad text, fler skalor |
+| 0.8.9 | Format 9: linjer, ytor, text och bilder direkt på bladen, vyer och ritat markeras och flyttas tillsammans, textrutor med radbrytning och förankring, egen skala för vyer |
 | 0.7.1 | Betaversion med synpunktsformulär, detaljnivåer och linjetjocklekar i fasad och sektion, glasmarkering och öppningssätt, automatisk taklutning, sektioner begränsade till linjen och klippta i 3D, nya markörer i planen med grepp, längd, vinkel och Rikta efter objekt, streckning från hörnen, varning för nästan raka vinklar, takets kontur i Modifiera, måttband, spårlinjer, kopiera och klistra in mellan projekt, Ctrl + dra, piltangenter, zooma till område och förra zoomen |
 
 ## Framåt
@@ -446,8 +447,29 @@ skalstockarna utanför ramen (1:1 till 1:5000) är facit för 0.8.12.*
 
 Mellanstor.
 
+Från synpunkterna (20 oktober): **Egen skala** för vyer på bladet (1:___),
+och *Återställ ram* kortare i smartmenyn.
+
+*Byggd (20 oktober), format 9. Det som är ritat på ett blad är element med
+`space` satt till bladets id, ritade som på ett mallblad (mm på papperet,
+1:1, utan tillstånd); bilder ligger under vyerna, resten över. Vyerna på
+bladet ligger i den vanliga markeringen (`selection`), så att
+markeringsverktyget, Modifiera Flytta, Delete och piltangenterna tar dem
+med det ritade; vyerna går bara att flytta (inte vrida, spegla eller
+kopiera). Mått på bladet är avstängt med ett tips (mått ritas i vyerna).
+Claudes val, att stämma av: textrutans förankring är punkten i rutans
+över-, mitt- eller underkant och justeringen dess vänster-, mitt- eller
+högerkant; utan förankring står första radens baslinje på punkten som
+förut. Rutans mått ställs in i egenskaperna (0 = ingen gräns), inte genom
+att dra en ruta med textverktyget. Skärmen visar texten med appens
+typsnitt, så en rad kan se något längre eller kortare ut än i rutan;
+radbrytningen följer ändå PDF:en.*
+
 ### 0.8.10 Smarta fält
 
+- **Mappnamn** (Carl August, 20 oktober): namnet på mappen i projektträdet
+  som bladet ligger i, t.ex. BYGGLOV eller SKISS, så att det står på
+  ritningen av sig själv. Hans ram har platshållaren #MAPPNAMN
 - Obegränsat med smarta fält: allt inom klamrar som inte är ett inbyggt
   namn, t.ex. `{Konstruktör}`, blir ett fält, oavsett om det står i
   mallen, i en stämpel eller direkt på bladet. Namnen jämförs utan hänsyn
@@ -468,8 +490,10 @@ Mellanstor.
 
 Förra granskningen var 0.8.1, och bladen har byggts om flera gånger:
 städa, dela upp stora filer (`src/ui/app/sheets.ts`, `src/ui/app.ts`) och
-leta efter långsam kod. Att slå ihop bladets `viewports` och `items` till
-en lista tas här. Vill Carl August komma fram till 0.9 snabbare kan
+leta efter långsam kod. (`Sheet.items` försvann i 0.8.9, när texten på
+bladet blev en vanlig text.) **Visa-menyn i kategorier** (Carl August, 20
+oktober): en kryssruta per kategori, så att t.ex. alla littera eller alla
+markörer tänds och släcks på en gång. Vill Carl August komma fram till 0.9 snabbare kan
 granskningen och Modifiera-verktygen (0.8.13) byta plats.
 
 ### 0.8.12 Skalstock och stämplar · *nytt format*
@@ -520,8 +544,16 @@ Förslag, att stämma av först:
   (flyttat från 0.8.5). Shift+Z (förra zoomen) och Shift + piltangenterna
   (knuffa) är redan tagna
 
+- **Linjetjocklekar som i "gammel-cad"** (Carl August, 20 oktober): när
+  man väljer tjocklek visas en översättningstabell med färgfält, och ett
+  klick på en rad använder tjockleken: grå 0,13; cyan 0,18; röd 0,25; grön
+  0,35; svart 0,5; magenta 0,7; blå 1,0; gul 1,4
+- **Dra och släpp till mappar** (Carl August, 20 oktober): vyer, ritningar
+  m.m. dras till mappar i projektträdet
+
 Stor med kortkommandona: blir det för mycket görs kortkommandona och
-Avrunda/Fasa för hela markeringen först, och resten i en egen småversion.
+Avrunda/Fasa för hela markeringen först, och resten (med tjocklekstabellen
+och dra och släpp) i en egen småversion.
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
@@ -570,6 +602,22 @@ Enfallstak som delar som sätts ihop väntar till efter pilotprojektet.
   i en gratis IFC-visare
 - DXF av vyer och blad, med lager per objekttyp
 - Areor för bygglov (BTA, BYA, OPA) ur modellen, så långt piloten behöver
+
+### Koordinater, SWEREF och sol (egen version efter 0.12, stor)
+
+Carl Augusts synpunkter 20 oktober; före eller efter piloten bestäms när
+0.12 är klar.
+
+- Startar man ett projekt från Höjdkurvor får projektets origo en lokal
+  nollsymbol med koordinater inklusive Z = 0, vilket SWEREF som gäller och
+  en norrpil mot sann nord. Det ska följa med vid export av modellfiler.
+  Fråga: behövs en funktion för att ändra Z, eller går det att rita på
+  t.ex. Z = 1000 i motorn?
+- Lokal nollpunkt och SWEREF kan också anges för hand
+- Har projektet SWEREF kan planmodellen och IFC exporteras i SWEREF, utöver
+  lokal nolla (som är förval)
+- Sol och skugga hämtas ur SWEREF-koordinaterna; datum och tid anges per vy
+  (plan, sektion, fasad och 3D)
 
 ### 0.13 Pilotprojektet (proof of concept) och formatfrys
 

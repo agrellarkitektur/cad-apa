@@ -31,14 +31,9 @@ export function installModifyRail(app: AppContext) {
     if (!b) return;
     const id = b.dataset.rail as RailId;
     const label = RAIL_ITEMS.find((r) => r.id === id)?.label ?? '';
-    // På ett blad flyttas det valda, en vy eller ett ritningshuvud (0.8.6).
-    if (app.ui.layout && id === 'move' && app.sheets.pickedThing()) {
-      app.sheets.startMove();
-      return;
-    }
     if (b.getAttribute('aria-disabled') === 'true') {
       app.hint(
-        app.ui.layout ? `På ett blad går bara Flytta att använda, för en vy eller ett ritningshuvud.` : app.selection.size ? `${label} går inte att använda för det markerade.` : `Markera det som ska ändras först, sedan ${label.toLowerCase()}.`,
+        app.selection.size ? `${label} går inte att använda för det markerade.` : `Markera det som ska ändras först, sedan ${label.toLowerCase()}.`,
         3000,
       );
       return;
@@ -53,7 +48,6 @@ export function installModifyRail(app: AppContext) {
   /** Vilka som går att använda: det markerade måste gå att ändra här. */
   function lit(): Set<RailId> {
     const ids = app.selection.list();
-    if (app.ui.layout) return app.sheets.pickedThing() ? new Set<RailId>(['move']) : new Set();
     if (!ids.length) return new Set();
     if (app.ui.marker && !ids.every((id) => app.host.canEdit?.(id))) return new Set();
     return railFor(app.host, ids);
@@ -65,7 +59,7 @@ export function installModifyRail(app: AppContext) {
     app.appEl.classList.toggle('modify-rail-on', show);
     if (!show) return;
     const on = lit();
-    const active = app.ui.layout ? (app.sheets.moving() ? 'move' : null) : app.modifier.railActive;
+    const active = app.modifier.railActive;
     el.querySelectorAll<HTMLElement>('[data-rail]').forEach((b) => {
       const id = b.dataset.rail as RailId;
       b.setAttribute('aria-disabled', String(!on.has(id)));

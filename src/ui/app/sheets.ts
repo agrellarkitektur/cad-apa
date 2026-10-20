@@ -1,21 +1,17 @@
+import { deleteElements } from '../../core/commands';
 import type { Id, Sheet } from '../../core/model';
-import { addViewport, createMaster, createSheet, FRAME_MARGIN, mastersOf, moveOnSheet, paperSize, removeFromSheet, setViewportCrop, today } from '../../core/sheets';
-import { buildSheet, cachedViewPrims, contentBounds, paperToModel, VIEWPORT_PAD, viewSource, type PlacedItem, type SheetDrawing } from '../../repr/sheet';
-import type { Bounds, Vec2 } from '../../repr/primitives';
+import { addViewport, createMaster, createSheet, FRAME_MARGIN, mastersOf, moveOnSheet, paperSize, setViewportCrop, today } from '../../core/sheets';
+import { buildSheet, cachedViewPrims, contentBounds, paperToModel, VIEWPORT_PAD, viewSource, type PlacedView, type SheetDrawing } from '../../repr/sheet';
+import { boundsOf, type Bounds, type Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
+import { pickAt } from '../../view2d/pick';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { isNarrow } from '../sheet';
 import type { SheetFormHost } from '../sheetForms';
 import type { SmartMenuCustom } from '../smartMenu';
+import { pxToMm } from '../tools/host';
 import type { AppContext } from './context';
 import { screenBox } from './selectionPlace';
-import { installSheetText } from './sheetText';
-import type { InlineTextEditor } from '../textEditor';
-
-/** Det som går att markera och flytta på ett blad: en vy eller en text (0.8.7). */
-export type SheetThing = { kind: 'viewport' | 'sheetText'; id: Id };
-
-const thingOf = (it: PlacedItem): SheetThing => ({ kind: 'sheetText', id: it.id });
 
 /** Ett grepp i en vys ram: vilka kanter det flyttar (0.8.7). */
 type Grip = { x: -1 | 0 | 1; y: -1 | 0 | 1 };
@@ -44,15 +40,20 @@ function resized(b: Bounds, g: Grip, d: Vec2): Bounds {
 
 /**
  * Ritningsbladen i appen (0.8 del 3): bladet som visas, verktyget som
- * markerar och flyttar vyerna och texterna på det, att lägga en vy på ett
- * blad, nya blad och mallblad (0.8.8) och formulären i egenskapspanelen. Det markerade på ett
- * blad är det som är valt i egenskapspanelen, inte objekt i `selection`.
+ * markerar och flyttar på det, att lägga en vy på ett blad, nya blad och
+ * mallblad (0.8.8) och formulären i egenskapspanelen.
+ *
+ * Sedan 0.8.9 är bladet en yta som ett mallblad: linjer, ytor, text och
+ * bilder ritas på det med de vanliga verktygen (elementen har `space` satt
+ * till bladets id). Vyerna på bladet markeras som de: deras id ligger i
+ * `selection`, så att vyer och ritade objekt markeras, flyttas och tas bort
+ * tillsammans (`moveElements` och `deleteElements` känner igen vyerna).
  *
  * På ett blad är koordinaterna mm på papperet och ritningsskalan 1:1, så
  * att texter och linjer får sin storlek på papper.
  */
-export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
-  let last: { doc: unknown; sheet: Sheet; autoDims: boolean; drawing: SheetDrawing } | null = null;
+export function installSheets(app: AppContext) {
+  let last: { doc: unknown; sheet: Sheet; autoDims: boolean; day: string; drawing: SheetDrawing } | null = null;
 
   /** Bladet som visas, ritat. Sparas tills projektet eller bladet ändras. */
   function drawing(): SheetDrawing | null {
@@ -60,52 +61,66 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
     if (!sheet) return null;
     const doc = app.store.doc;
     const autoDims = app.uiSettings.autoDims;
-    if (last && last.doc === doc && last.sheet === sheet && last.autoDims === autoDims) return last.drawing;
-    const d = buildSheet(doc, sheet, { autoDims, today: today() });
-    last = { doc, sheet, autoDims, drawing: d };
+    const day = today();
+    if (last && last.doc === doc && last.sheet === sheet && last.autoDims === autoDims && last.day === day) return last.drawing;
+    const d = buildSheet(doc, sheet, { autoDims, today: day });
+    last = { doc, sheet, autoDims, day, drawing: d };
     return d;
   }
 
-  /** Det på bladet som är valt i egenskapspanelen: en vy eller en text. */
-  function pickedThing(): SheetThing | null {
-    const t = app.panel.treeItem;
-    if (!app.ui.layout || !t || (t.kind !== 'viewport' && t.kind !== 'sheetText')) return null;
-    return frameOf(t.id) ? { kind: t.kind, id: t.id } : null;
+  const viewOf = (id: Id): PlacedView | undefined => drawing()?.views.find((v) => v.id === id);
+
+  /** Den vy på bladet som är markerad ensam, annars null. */
+  function pickedViewport(): Id | null {
+    if (!app.ui.layout || app.selection.size !== 1) return null;
+    const id = app.selection.list()[0];
+    return viewOf(id) ? id : null;
   }
-  const picked = (): Id | null => pickedThing()?.id ?? null;
 
-  /** Anropas när det valda på bladet eller Flytta ändras, t.ex. för Modifiera-raden. */
-  const listeners: (() => void)[] = [];
-  const changed = () => listeners.forEach((f) => f());
-
-  function pick(item: { kind: 'sheet' | SheetThing['kind']; id: Id } | null): void {
-    app.selection.clear();
-    if (moving && moving.thing.id !== item?.id) cancelMove();
-    app.panel.showTreeItem(item);
+  /** Visa bladet i egenskapspanelen, eller markera en vy på det. */
+  function pick(item: { kind: 'sheet' | 'viewport'; id: Id } | null): void {
+    if (item?.kind === 'viewport') {
+      app.panel.showTreeItem(null);
+      app.selection.set([item.id]);
+    } else {
+      app.selection.clear();
+      app.panel.showTreeItem(item);
+    }
     if (item && !isNarrow() && !app.ui.panelOpen) app.setPanel(true);
     if (app.ui.navOpen) app.navigator.render();
-    if (app.smartMenu.custom && (!item || item.kind === 'sheet')) app.smartMenu.hide();
+    if (app.smartMenu.custom && item?.kind !== 'viewport') app.smartMenu.hide();
     app.view.requestRender();
-    changed();
   }
 
-  const textEdit = installSheetText(app, textEditor, pick);
+  // Inget markerat på ett blad: panelen visar bladet. En ensam markerad vy visar vyns formulär.
+  app.selection.subscribe(() => {
+    if (!app.ui.layout) return;
+    if (app.selection.size === 0 && app.panel.treeItem?.id !== app.ui.layout) app.panel.showTreeItem({ kind: 'sheet', id: app.ui.layout });
+  });
+  app.panel.selectionItem = () => {
+    const id = pickedViewport();
+    return id ? { kind: 'viewport', id } : null;
+  };
 
-  /** Ytan på papperet för en vy eller en text på bladet som visas. */
-  function frameOf(id: Id): Bounds | null {
-    const d = drawing();
-    return d?.items.find((i) => i.id === id)?.frame ?? d?.views.find((v) => v.id === id)?.frame ?? null;
-  }
-
-  /** Det översta på bladet under en punkt: texterna ligger över vyerna. */
-  function hit(p: Vec2): SheetThing | null {
+  /** Det översta på bladet under en punkt: det ritade ligger över vyerna. */
+  function hitAt(p: ViewPointer): Id | null {
     const d = drawing();
     if (!d) return null;
-    const pad = 2 / app.view.camera.scale;
-    const inside = (f: Bounds, below = 0, m = 0) => p[0] >= f.minX - m && p[0] <= f.maxX + m && p[1] >= f.minY - below - m && p[1] <= f.maxY + m;
-    for (let i = d.items.length - 1; i >= 0; i--) if (inside(d.items[i].frame, 0, pad)) return thingOf(d.items[i]);
-    for (let i = d.views.length - 1; i >= 0; i--) if (inside(d.views[i].frame, 8)) return { kind: 'viewport', id: d.views[i].id };
-    return null;
+    return pickAt(d.pickables, p.model, pxToMm(app.host, p.pointerType === 'touch' ? 14 : 6), 1);
+  }
+
+  /** Ytorna på bladet som en flyttad vy fäster mot: de andra vyerna och det ritade. */
+  function framesBut(id: Id): Bounds[] {
+    const d = drawing();
+    if (!d) return [];
+    const sel = new Set(app.selection.list());
+    const out: Bounds[] = d.views.filter((v) => v.id !== id).map((v) => v.frame);
+    for (const pk of d.pickables) {
+      if (pk.id === id || sel.has(pk.id) || viewOf(pk.id)) continue;
+      const b = boundsOf(pk.prims);
+      if (b) out.push(b);
+    }
+    return out;
   }
 
   /**
@@ -116,7 +131,7 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
     if (shift) d = Math.abs(d[0]) > Math.abs(d[1]) ? [d[0], 0] : [0, d[1]];
     const dr = drawing();
     const tol = 8 / app.view.camera.scale;
-    const others = [...(dr?.views ?? []), ...(dr?.items ?? [])].filter((v) => v.id !== id).map((v) => v.frame);
+    const others = framesBut(id);
     const xs = (b: Bounds) => [b.minX, (b.minX + b.maxX) / 2, b.maxX];
     const ys = (b: Bounds) => [b.minY, (b.minY + b.maxY) / 2, b.maxY];
     const fx = dr ? [dr.frame.minX, dr.frame.maxX] : [];
@@ -151,14 +166,11 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
     return { d, guides };
   }
 
-  const moveLabel = (t: SheetThing) => (t.kind === 'sheetText' ? 'Flytta texten' : 'Flytta vyn på bladet');
-
   /** Ett grepp i den valda vyns ram under en punkt på skärmen (0.8.7). */
   function gripHit(p: ViewPointer): { vp: Id; frame: Bounds; grip: Grip } | null {
-    const t = pickedThing();
-    if (t?.kind !== 'viewport' || !p.screen) return null;
-    const v = drawing()?.views.find((x) => x.id === t.id);
-    if (!v || v.missing) return null;
+    const id = pickedViewport();
+    const v = id ? viewOf(id) : undefined;
+    if (!v || v.missing || !p.screen) return null;
     const cam = app.view.camera;
     for (const g of GRIPS) {
       const s = cam.toScreen(gripAt(v.frame, g));
@@ -172,7 +184,7 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
     const dr = drawing();
     if (!dr) return { at: value, guide: null };
     const tol = 8 / app.view.camera.scale;
-    const others = [...dr.views, ...dr.items].filter((v) => v.id !== id).map((v) => v.frame);
+    const others = framesBut(id);
     const lines = axis === 0 ? [dr.frame.minX, dr.frame.maxX, ...others.flatMap((b) => [b.minX, b.maxX])] : [dr.frame.minY, dr.frame.maxY, ...others.flatMap((b) => [b.minY, b.maxY])];
     let best: number | null = null;
     for (const l of lines) if (Math.abs(l - value) < tol && (best === null || Math.abs(l - value) < Math.abs(best - value))) best = l;
@@ -186,114 +198,65 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
     app.smartMenu.refresh(true);
   }
 
-  /** Flytta med två klick (Flytta i smartmenyn eller Modifiera-raden): baspunkt, sedan dit. */
-  let moving: { thing: SheetThing; frame: Bounds; base: Vec2 | null; d: Vec2; guides: [Vec2, Vec2][] } | null = null;
-
-  function startMove(thing = pickedThing()): void {
-    const frame = thing && frameOf(thing.id);
-    if (!thing || !frame) return;
-    if (pickedThing()?.id !== thing.id) pick(thing);
-    moving = { thing, frame, base: null, d: [0, 0], guides: [] };
-    app.smartMenu.refresh(true);
-    app.hint('Klicka på en baspunkt, sedan dit den ska. Esc avbryter.', 4000);
-    app.view.requestRender();
-    changed();
-  }
-
-  /** Avbryt Flytta. Svarar med om något pågick. */
-  function cancelMove(): boolean {
-    if (!moving) return false;
-    moving = null;
-    app.smartMenu.refresh(true);
-    app.view.requestRender();
-    changed();
-    return true;
-  }
-
-  /** Ta bort det valda på bladet. Svarar med om något togs bort. */
-  function removePicked(): boolean {
-    const t = pickedThing();
-    if (!t || !app.ui.layout) return false;
-    const sheetId = app.ui.layout;
-    cancelMove();
-    removeFromSheet(app.store, sheetId, [t.id]);
-    pick({ kind: 'sheet', id: sheetId });
-    return true;
-  }
-
-  /** Smartmenyn för en vy eller en text på bladet. */
-  function menuFor(thing: SheetThing): SmartMenuCustom | null {
+  /**
+   * Smartmenyn för en ensam markerad vy på bladet. Flytta går genom
+   * Modifiera som för andra objekt.
+   */
+  function menuFor(vpId: Id): SmartMenuCustom | null {
     const sheet = app.store.doc.sheets.find((s) => s.id === app.ui.layout);
-    if (!sheet) return null;
-    const alive = () => !!frameOf(thing.id) && pickedThing()?.id === thing.id;
+    const vp = sheet?.viewports.find((v) => v.id === vpId);
+    if (!sheet || !vp) return null;
+    const alive = () => pickedViewport() === vpId;
     const anchor = () => {
-      const f = frameOf(thing.id);
-      return f ? screenBox(app.view, app.pane2d, thing.kind === 'viewport' ? { ...f, minY: f.minY - 8 } : f) : null;
+      const f = viewOf(vpId)?.frame;
+      return f ? screenBox(app.view, app.pane2d, { ...f, minY: f.minY - 8 }) : null;
     };
-    const move = { id: 'move', label: 'Flytta', icon: 'move' as const, pressed: moving?.thing.id === thing.id };
-    if (thing.kind === 'sheetText') {
-      const it = sheet.items.find((i) => i.id === thing.id);
-      const first = it?.kind === 'text' ? it.text.split('\n')[0] : '';
-      return {
-        title: 'Text',
-        sub: first.length > 28 ? `${first.slice(0, 27)}…` : first,
-        buttons: [move, { id: 'edit', label: 'Redigera', icon: 'text' }, { id: 'props', label: 'Egenskaper', icon: 'properties' }, { id: 'remove', label: 'Ta bort', icon: 'trash', danger: true }],
-        anchor,
-        alive,
-        run: (id) => menuAction(thing, id),
-      };
-    }
-    const vp = sheet.viewports.find((v) => v.id === thing.id);
-    if (!vp) return null;
     return {
       title: vp.title || viewSource(app.store.doc, vp.view)?.name || 'Vy',
       sub: `1:${vp.scale} på ${sheet.number}`,
       buttons: [
-        move,
+        { id: 'move', label: 'Flytta', icon: 'move', pressed: app.modifier.active === 'move' },
         { id: 'open', label: 'Öppna vyn', icon: 'navigator' },
-        ...(vp.crop ? [{ id: 'reset-crop', label: 'Återställ ramen till innehållet', icon: 'fit' as const }] : []),
+        // Kort i menyn; formuläret säger "Återställ ramen till innehållet" (0.8.9).
+        ...(vp.crop ? [{ id: 'reset-crop', label: 'Återställ ram', icon: 'fit' as const }] : []),
         { id: 'props', label: 'Egenskaper', icon: 'properties' },
         { id: 'remove', label: 'Ta bort', icon: 'trash', danger: true },
       ],
       anchor,
       alive,
-      run: (id) => menuAction(thing, id),
+      run: (id) => menuAction(vpId, id),
     };
   }
 
-  function menuAction(thing: SheetThing, id: string): void {
+  function menuAction(vpId: Id, id: string): void {
     switch (id) {
       case 'move':
-        if (moving) cancelMove();
-        else startMove(thing);
+        app.modifier.chooseRail('move');
         break;
       case 'props':
-        pick(thing);
         if (!app.ui.panelOpen) app.setPanel(true);
         break;
-      case 'edit':
-        textEdit.edit(thing.id);
-        break;
       case 'reset-crop':
-        resetCrop(thing.id);
+        resetCrop(vpId);
         break;
       case 'open': {
-        const vp = app.store.doc.sheets.find((s) => s.id === app.ui.layout)?.viewports.find((v) => v.id === thing.id);
+        const vp = app.store.doc.sheets.find((s) => s.id === app.ui.layout)?.viewports.find((v) => v.id === vpId);
         if (vp) openView(vp.view);
         break;
       }
       case 'remove':
-        removePicked();
         app.smartMenu.hide();
+        app.selection.clear();
+        deleteElements(app.store, [vpId]);
         break;
     }
   }
 
-  /** Visa smartmenyn för det valda på bladet. */
-  function showMenu(thing: SheetThing, clientX: number, clientY: number): void {
-    const m = menuFor(thing);
-    if (m) app.smartMenu.showCustom(m, clientX, clientY);
-  }
+  // Smartmenyn för en ensam vy kommer härifrån; för det ritade och för flera markerade som vanligt.
+  app.smartMenu.customFor = () => {
+    const id = pickedViewport();
+    return id && !app.modifier.busy ? menuFor(id) : null;
+  };
 
   /** Öppna det en vy på bladet visar. */
   function openView(ref: Id): void {
@@ -311,38 +274,45 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
   }
 
   /**
-   * Markera och flytta vyerna och texterna på bladet. Dubbelklick på
-   * en vy öppnar den. Ett klick visar smartmenyn bredvid det valda.
+   * Markera på ett blad (0.8.9): som Markera i planen, med det som hör till
+   * vyerna. En vy som dras ensam fäster mot de andra sakernas kanter och
+   * mittlinjer och mot ritningsramen; den markerade vyn har grepp i ramen.
+   * Dubbelklick på en vy öppnar den. Flera markerade (en ruta, Shift) flyttas
+   * och tas bort tillsammans av markeringsverktyget.
    */
   class SheetTool implements ViewTool {
     cursor = 'default';
-    private dragging: { thing: SheetThing; start: Vec2; frame: Bounds; d: Vec2; guides: [Vec2, Vec2][] } | null = null;
+    private dragging: { vp: Id; start: Vec2; frame: Bounds; d: Vec2; guides: [Vec2, Vec2][] } | null = null;
     /** Ett grepp i vyns ram som dras (0.8.7). */
     private cropping: { vp: Id; start: Vec2; frame: Bounds; grip: Grip; now: Bounds; guides: [Vec2, Vec2][] } | null = null;
-    private hoveredGrip: Grip | null = null;
-    private hovered: Id | null = null;
+    /** Markeringsverktyget sköter det som pågår. */
+    private delegated = false;
     private lastUp = { id: '' as Id | null, t: 0 };
 
+    private get select() {
+      return app.selectTool;
+    }
+
     down(p: ViewPointer): 'capture' | 'pan' | 'ignore' {
-      if (moving) return 'capture';
+      this.delegated = false;
       const g = gripHit(p);
       if (g) {
         this.cropping = { vp: g.vp, start: p.model, frame: g.frame, grip: g.grip, now: g.frame, guides: [] };
         return 'capture';
       }
-      const t = hit(p.model);
-      const frame = t && frameOf(t.id);
-      if (!t || !frame) return 'pan';
-      if (picked() !== t.id) pick(t);
-      this.dragging = { thing: t, start: p.model, frame, d: [0, 0], guides: [] };
-      return 'capture';
+      const hit = hitAt(p);
+      const v = hit ? viewOf(hit) : undefined;
+      // En vy ensam: egen flytt med fästning. Ingår den i en större markering flyttas allt tillsammans.
+      if (v && !p.shift && !p.mod && !(app.selection.has(v.id) && app.selection.size > 1)) {
+        if (pickedViewport() !== v.id) app.selection.set([v.id]);
+        this.dragging = { vp: v.id, start: p.model, frame: v.frame, d: [0, 0], guides: [] };
+        return 'capture';
+      }
+      this.delegated = true;
+      return this.select.down(p);
     }
 
     drag(p: ViewPointer): void {
-      if (moving) {
-        this.follow(p);
-        return;
-      }
       const c = this.cropping;
       if (c) {
         const d: Vec2 = [p.model[0] - c.start[0], p.model[1] - c.start[1]];
@@ -363,43 +333,22 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
         return;
       }
       const g = this.dragging;
-      if (!g) return;
-      const r = snapMove(g.thing.id, g.frame, [p.model[0] - g.start[0], p.model[1] - g.start[1]], p.shift);
-      g.d = r.d;
-      g.guides = r.guides;
-      app.view.requestRender();
-    }
-
-    /** Flytta med två klick: skuggan följer markören efter baspunkten. */
-    private follow(p: ViewPointer): void {
-      if (!moving?.base) return;
-      const r = snapMove(moving.thing.id, moving.frame, [p.model[0] - moving.base[0], p.model[1] - moving.base[1]], p.shift);
-      moving.d = r.d;
-      moving.guides = r.guides;
-      app.view.requestRender();
+      if (g) {
+        const r = snapMove(g.vp, g.frame, [p.model[0] - g.start[0], p.model[1] - g.start[1]], p.shift);
+        g.d = r.d;
+        g.guides = r.guides;
+        app.view.requestRender();
+        return;
+      }
+      if (this.delegated) this.select.drag(p);
     }
 
     up(p: ViewPointer, moved: boolean): void {
       const sheetId = app.ui.layout;
-      if (moving) {
-        if (!moving.base) {
-          moving.base = p.model;
-          app.hint('Klicka dit den ska. Shift: bara vågrätt eller lodrätt.', 4000);
-        } else {
-          this.follow(p);
-          const m = moving;
-          moving = null;
-          if (sheetId) moveOnSheet(app.store, sheetId, [m.thing.id], m.d, moveLabel(m.thing));
-          app.smartMenu.refresh(true);
-          changed();
-        }
-        app.view.requestRender();
-        return;
-      }
       const c = this.cropping;
       this.cropping = null;
       if (c) {
-        const vp = drawing()?.views.find((v) => v.id === c.vp);
+        const vp = viewOf(c.vp);
         const same = (['minX', 'minY', 'maxX', 'maxY'] as const).every((k) => Math.abs(c.now[k] - c.frame[k]) < 0.05);
         if (moved && sheetId && vp && !same) setViewportCrop(app.store, sheetId, c.vp, paperToModel(c.now, vp.at, vp.scale));
         app.smartMenu.refresh(true);
@@ -408,104 +357,82 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
       }
       const g = this.dragging;
       this.dragging = null;
-      if (!g) return;
-      if (moved && sheetId && Math.hypot(g.d[0], g.d[1]) > 0.05) {
-        moveOnSheet(app.store, sheetId, [g.thing.id], g.d, moveLabel(g.thing));
-      } else if (!moved) {
-        const now = performance.now();
-        // Dubbelklick på en text: redigera den där den står.
-        if (g.thing.kind === 'sheetText' && this.lastUp.id === g.thing.id && now - this.lastUp.t < 400) {
-          this.lastUp = { id: null, t: 0 };
-          textEdit.edit(g.thing.id);
-          return;
+      if (g) {
+        if (moved && Math.hypot(g.d[0], g.d[1]) > 0.05) moveOnSheet(app.store, [g.vp], g.d);
+        else if (!moved) {
+          // Dubbelklick på en vy: öppna den.
+          const now = performance.now();
+          if (this.lastUp.id === g.vp && now - this.lastUp.t < 400) {
+            const vp = app.store.doc.sheets.find((s) => s.id === sheetId)?.viewports.find((v) => v.id === g.vp);
+            app.smartMenu.hide();
+            this.lastUp = { id: null, t: 0 };
+            if (vp) openView(vp.view);
+            return;
+          }
+          this.lastUp = { id: g.vp, t: now };
         }
-        // Dubbelklick på en vy: öppna den.
-        if (g.thing.kind === 'viewport' && this.lastUp.id === g.thing.id && now - this.lastUp.t < 400) {
-          const vp = app.store.doc.sheets.find((s) => s.id === sheetId)?.viewports.find((v) => v.id === g.thing.id);
-          app.smartMenu.hide();
-          if (vp) openView(vp.view);
-          this.lastUp = { id: null, t: 0 };
-          return;
-        }
-        this.lastUp = { id: g.thing.id, t: now };
-        if (app.uiSettings.smartMenu && !isNarrow() && p.screen) {
-          const r = app.view.svg.getBoundingClientRect();
-          showMenu(g.thing, r.left + p.screen[0], r.top + p.screen[1]);
-        }
+        app.view.requestRender();
+        return;
       }
-      app.view.requestRender();
+      if (this.delegated) this.select.up(p, moved);
+      this.delegated = false;
     }
 
-    tap(): void {
-      // Ett klick bredvid det som ligger på bladet visar bladets inställningar.
-      if (moving) return;
-      app.smartMenu.hide();
-      if (app.ui.layout) pick({ kind: 'sheet', id: app.ui.layout });
+    tap(p: ViewPointer): void {
+      this.select.tap(p);
+    }
+
+    cycle(back = false): boolean {
+      return this.select.cycle(back);
     }
 
     cancel(): void {
       this.dragging = null;
       this.cropping = null;
+      this.select.cancel();
       app.view.requestRender();
     }
 
     hover(p: ViewPointer | null): void {
-      if (moving) {
-        if (p) this.follow(p);
-        return;
-      }
       const grip = p ? (gripHit(p)?.grip ?? null) : null;
-      const h = grip ? null : p ? (hit(p.model)?.id ?? null) : null;
-      if (h !== this.hovered || grip !== this.hoveredGrip) {
-        this.hovered = h;
-        this.hoveredGrip = grip;
-        this.cursor = grip ? gripCursor(grip) : h ? 'move' : 'default';
-        app.view.svg.style.cursor = this.cursor;
-        app.view.requestRender();
-      }
+      this.select.hover(grip ? null : p);
+      const h = this.select.hoverId;
+      this.cursor = grip ? gripCursor(grip) : h && viewOf(h) ? 'move' : this.select.cursor;
+      app.view.svg.style.cursor = this.cursor;
+      app.view.requestRender();
     }
 
     overlay(cam: Camera): string {
-      const d = drawing();
-      if (!d) return '';
       const rect = (b: Bounds, cls: string) => {
         const a = cam.toScreen([b.minX, b.maxY]);
         const c = cam.toScreen([b.maxX, b.minY]);
         return `<rect class="${cls}" x="${a[0].toFixed(1)}" y="${a[1].toFixed(1)}" width="${(c[0] - a[0]).toFixed(1)}" height="${(c[1] - a[1]).toFixed(1)}"/>`;
       };
-      const by = (b: Bounds, v: Vec2): Bounds => ({ minX: b.minX + v[0], maxX: b.maxX + v[0], minY: b.minY + v[1], maxY: b.maxY + v[1] });
-      const out: string[] = [];
-      const sel = picked();
-      const g = this.dragging && Math.hypot(this.dragging.d[0], this.dragging.d[1]) > 0 ? this.dragging : moving?.base ? moving : null;
-      const c = this.cropping;
-      const busy = g?.thing.id ?? c?.vp;
-      for (const v of [...d.views, ...d.items]) {
-        if (v.id === busy) continue;
-        if (v.id === sel) out.push(rect(v.frame, 'vp-frame picked'));
-        else if (v.id === this.hovered) out.push(rect(v.frame, 'vp-frame hover'));
+      const line = ([a, e]: [Vec2, Vec2]) => {
+        const s1 = cam.toScreen(a);
+        const s2 = cam.toScreen(e);
+        return `<line class="vp-guide" x1="${s1[0].toFixed(1)}" y1="${s1[1].toFixed(1)}" x2="${s2[0].toFixed(1)}" y2="${s2[1].toFixed(1)}"/>`;
+      };
+      const out: string[] = [this.select.overlay(cam)];
+      const g = this.dragging && Math.hypot(this.dragging.d[0], this.dragging.d[1]) > 0 ? this.dragging : null;
+      if (g) {
+        const f = g.frame;
+        out.push(rect({ minX: f.minX + g.d[0], maxX: f.maxX + g.d[0], minY: f.minY + g.d[1], maxY: f.maxY + g.d[1] }, 'vp-frame moving'));
+        out.push(...g.guides.map(line));
+        return out.join('');
       }
-      // Greppen i den valda vyns ram (0.8.7).
-      const pickedView = !g && pickedThing()?.kind === 'viewport' ? d.views.find((v) => v.id === sel && !v.missing) : undefined;
-      if (pickedView) {
-        const b = c ? c.now : pickedView.frame;
+      // Greppen i den markerade vyns ram (0.8.7).
+      const id = pickedViewport();
+      const v = id && !app.modifier.busy ? viewOf(id) : undefined;
+      if (v && !v.missing) {
+        const c = this.cropping;
+        const b = c ? c.now : v.frame;
         if (c) out.push(rect(b, 'vp-frame moving'));
         for (const gr of GRIPS) {
           const s = cam.toScreen(gripAt(b, gr));
           out.push(`<rect class="vp-grip" x="${(s[0] - 4).toFixed(1)}" y="${(s[1] - 4).toFixed(1)}" width="8" height="8"/>`);
         }
-        for (const [a, e] of c?.guides ?? []) {
-          const s1 = cam.toScreen(a);
-          const s2 = cam.toScreen(e);
-          out.push(`<line class="vp-guide" x1="${s1[0].toFixed(1)}" y1="${s1[1].toFixed(1)}" x2="${s2[0].toFixed(1)}" y2="${s2[1].toFixed(1)}"/>`);
-        }
-      }
-      if (g) {
-        out.push(rect(by(g.frame, g.d), 'vp-frame moving'));
-        for (const [a, b] of g.guides) {
-          const s = cam.toScreen(a);
-          const e = cam.toScreen(b);
-          out.push(`<line class="vp-guide" x1="${s[0].toFixed(1)}" y1="${s[1].toFixed(1)}" x2="${e[0].toFixed(1)}" y2="${e[1].toFixed(1)}"/>`);
-        }
+        out.push(...(c?.guides ?? []).map(line));
       }
       return out.join('');
     }
@@ -515,13 +442,16 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
 
   /**
    * Var en ny vy får plats på bladet: uppifrån till vänster, utan att lägga
-   * sig på de andra vyerna eller texterna. Svarar med mitten.
+   * sig på de andra vyerna eller det som är ritat. Svarar med mitten.
    */
   function freeSpot(sheet: Sheet, size: [number, number]): Vec2 {
     const [W, H] = paperSize(sheet);
     const area: Bounds = { minX: FRAME_MARGIN.left + 6, minY: FRAME_MARGIN.bottom + 6, maxX: W - FRAME_MARGIN.right - 6, maxY: H - FRAME_MARGIN.top - 6 };
     const taken: Bounds[] = (drawing()?.views ?? []).map((v) => ({ ...v.frame, minY: v.frame.minY - 12 }));
-    taken.push(...(drawing()?.items ?? []).map((i) => i.frame));
+    for (const pk of drawing()?.pickables ?? []) {
+      const b = viewOf(pk.id) ? null : boundsOf(pk.prims);
+      if (b) taken.push(b);
+    }
     const [w, h] = [size[0], size[1] + 12];
     const gap = 6;
     const free = (b: Bounds) => taken.every((t) => b.maxX + gap <= t.minX || b.minX >= t.maxX + gap || b.maxY + gap <= t.minY || b.minY >= t.maxY + gap);
@@ -585,6 +515,7 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
       app.setTool('text');
       requestAnimationFrame(() => app.toolOptions.querySelector<HTMLInputElement>('#text-value')?.select());
     },
+    startDraw: () => app.setTool('draw2d'),
     saved: () => {
       app.hint('Sparat.');
       // Formuläret ritas om med det sparade, så att Spara blir grå igen.
@@ -603,20 +534,22 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
   };
   app.panel.sheetHost = host;
 
-  // Högerklick på ett blad: smartmenyn för en vy eller en text, annars bladets meny.
+  // Högerklick på ett blad: smartmenyn för en vy, den vanliga menyn för det ritade, annars bladets meny.
   app.pane2d.addEventListener(
     'contextmenu',
     (e) => {
       const sheet = app.ui.layout ? app.store.doc.sheets.find((s) => s.id === app.ui.layout) : undefined;
       if (!sheet) return;
+      const r = app.view.svg.getBoundingClientRect();
+      const screen: Vec2 = [e.clientX - r.left, e.clientY - r.top];
+      const hit = hitAt({ model: app.view.camera.toModel(screen), screen, pointerType: 'mouse', shift: false, mod: false, alt: false } as ViewPointer);
+      if (hit && !viewOf(hit)) return;
       e.preventDefault();
       e.stopImmediatePropagation();
-      cancelMove();
-      const r = app.pane2d.getBoundingClientRect();
-      const t = hit(app.view.camera.toModel([e.clientX - r.left, e.clientY - r.top]));
-      if (t) {
-        pick(t);
-        showMenu(t, e.clientX, e.clientY);
+      if (hit) {
+        app.selection.set([hit]);
+        const m = menuFor(hit);
+        if (m) app.smartMenu.showCustom(m, e.clientX, e.clientY);
         return;
       }
       app.smartMenu.hide();
@@ -629,6 +562,7 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
           { label: 'Bladets inställningar och vyer', run: () => pick({ kind: 'sheet', id: sheet.id }) },
           ...(sheet.master ? [{ label: 'Öppna mallbladet', run: () => app.goTo({ kind: 'worksheet', id: sheet.master! }) }] : []),
           { label: 'Skriv text på bladet', hint: 'T', run: () => host.startText() },
+          { label: 'Rita linjer och ytor på bladet', run: () => host.startDraw() },
           { label: 'Plot/export…', run: () => app.root.querySelector<HTMLElement>('.nav-plot [data-action="plot"], .main-menu [data-action="plot"]')?.click() },
         ],
         sheet.number,
@@ -640,20 +574,12 @@ export function installSheets(app: AppContext, textEditor: InlineTextEditor) {
   return {
     drawing,
     tool,
-    textTool: textEdit.tool,
-    editText: textEdit.edit,
     resetCrop,
     pick,
-    picked,
-    pickedThing,
+    pickedViewport,
     place,
     newSheet,
     newMaster,
     openView,
-    startMove,
-    cancelMove,
-    removePicked,
-    moving: () => !!moving,
-    subscribe: (f: () => void) => listeners.push(f),
   };
 }

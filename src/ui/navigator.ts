@@ -137,6 +137,8 @@ export class Navigator {
       if (space && doc.elements[space]) return markerName(doc, doc.elements[space]);
       const w = space ? doc.worksheets.find((x) => x.id === space) : undefined;
       if (w) return w.name;
+      const sh = space ? doc.sheets.find((x) => x.id === space) : undefined;
+      if (sh) return `${sh.number} ${sh.name}`;
       return doc.storeys.find((s) => s.id === storey)?.name ?? '';
     };
     const list = Object.values(doc.elements)

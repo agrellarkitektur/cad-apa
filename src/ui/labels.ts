@@ -23,6 +23,8 @@ export const PARAM_LABELS: Record<string, string> = {
   eave: 'Takfot',
   ridge: 'Nockriktning',
   angle: 'Riktning',
+  maxWidth: 'Textrutans bredd',
+  maxHeight: 'Textrutans höjd',
 };
 
 export function escapeHtml(s: string): string {

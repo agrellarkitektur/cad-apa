@@ -12,6 +12,8 @@ export type ToolId = 'pan' | 'select' | 'measure' | 'wall' | 'door' | 'window' |
 export const PLAN_TOOLS: ToolId[] = ['wall', 'door', 'window', 'roof', 'room', 'dimension', 'text', 'draw2d', 'section', 'elevation'];
 /** Verktyg som också ritar i fasader och sektioner (0.8). */
 export const SPACE_TOOLS: ToolId[] = ['dimension', 'text', 'draw2d'];
+/** Ritverktygen som ritar på ett ritningsblad (0.8.9), i mm på papperet. */
+export const SHEET_TOOLS: ToolId[] = ['text', 'draw2d'];
 export type ViewMode = '2d' | '3d' | 'split';
 
 export interface ToolDef {

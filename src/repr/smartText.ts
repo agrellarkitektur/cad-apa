@@ -27,13 +27,7 @@ export const SMART_TEXT: [string, string][] = [
   ['idag', 'Dagens datum'],
 ];
 
-/** Byt ut `{namn}` mot värdet. Okända namn står kvar som de är. */
-export function expandSmartText(text: string, vars: Record<string, string>): string {
-  return text.replace(/\{([^{}]+)\}/g, (m, name: string) => {
-    const k = name.trim().toLowerCase();
-    return k in vars ? vars[k] : m;
-  });
-}
+export { expandSmartText } from '../elements/textLayout';
 
 /** Skalorna på bladet: "1:100" eller "1:100, 1:50", störst först. */
 export function sheetScales(sheet: Pick<Sheet, 'viewports'>): string {

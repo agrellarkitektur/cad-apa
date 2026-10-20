@@ -57,6 +57,8 @@ export class SmartMenu {
   expanded = false;
   /** Det menyn visas för när det inte är markerade objekt (0.8.6). */
   custom: SmartMenuCustom | null = null;
+  /** En egen meny för det markerade, t.ex. en ensam vy på ett blad (0.8.9); annars null. */
+  customFor: () => SmartMenuCustom | null = () => null;
 
   constructor(container: HTMLElement, panel: PropertiesPanel, modifier: Modifier, anchor: () => ScreenBox | null) {
     this.container = container;
@@ -138,6 +140,11 @@ export class SmartMenu {
 
   /** Visa för det markerade. `clientX/Y` är klicket, om det markerade inte syns i planen. */
   show(clientX: number, clientY: number, expanded = false): void {
+    const own = this.customFor();
+    if (own) {
+      this.showCustom(own, clientX, clientY);
+      return;
+    }
     this.custom = null;
     this.at = { x: clientX, y: clientY };
     if (expanded) this.expanded = true;
@@ -169,12 +176,18 @@ export class SmartMenu {
   refresh(force = false): void {
     if (this.el.hidden) return;
     if (this.custom) {
+      // En egen meny för det markerade byggs om, så att knapparna följer läget (0.8.9).
+      this.custom = this.customFor() ?? this.custom;
       this.renderCustom(this.custom);
       return;
     }
     const quick = this.panel.quickMarkup(this.expanded ? 'less' : true, false);
     if (!quick) {
-      this.hide();
+      const own = this.customFor();
+      if (own) {
+        this.custom = own;
+        this.renderCustom(own);
+      } else this.hide();
       return;
     }
     const focused = document.activeElement as HTMLElement | null;

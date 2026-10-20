@@ -85,7 +85,6 @@ export function installKeyboard(app: AppContext) {
         }
         break;
       case 'Escape':
-        if (app.sheets.cancelMove()) break;
         if (app.aligning) {
           app.endAlign();
           break;
@@ -111,11 +110,6 @@ export function installKeyboard(app: AppContext) {
         break;
       case 'Delete':
       case 'Backspace':
-        // En vy eller ett ritningshuvud på ett blad tas bort från bladet (0.8.6).
-        if (app.sheets.removePicked()) {
-          app.smartMenu.hide();
-          break;
-        }
         if (app.selection.size) {
           deleteElements(app.store, app.selection.list());
           app.selection.clear();

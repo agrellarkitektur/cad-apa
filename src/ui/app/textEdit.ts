@@ -1,6 +1,8 @@
 import { renameElement, updateParams } from '../../core/commands';
 import type { Id } from '../../core/model';
+import type { TextParams } from '../../elements/annotation';
 import { resolveParams } from '../../elements/registry';
+import { layoutText, textPoint } from '../../elements/textLayout';
 import type { Primitive, Vec2 } from '../../repr/primitives';
 import type { InlineTextEditor } from '../textEditor';
 import type { AppContext } from './context';
@@ -19,15 +21,17 @@ export function installTextEdit(app: AppContext, textEditor: InlineTextEditor) {
       app.goTo({ kind: 'marker', id });
       return true;
     }
-    const sp = ui.marker ?? ui.worksheet;
+    const sp = ui.marker ?? ui.worksheet ?? ui.layout;
     if (!el || (sp && el.space !== sp)) return false;
     const DRAWING_SCALE = view.drawingScale;
     if (el.type === 'Text') {
-      const p = resolveParams<{ pos: Vec2; text: string; height: number; angle: number }>(store.doc, el);
+      const p = resolveParams<TextParams>(store.doc, el);
+      // Redigeringen börjar på första raden, också i en textruta med förankring (0.8.9).
+      const lay = layoutText(p);
       app.smartMenu.hide();
       textEditor.open(
         {
-          at: p.pos,
+          at: textPoint(p.pos, ((p.angle ?? 0) * Math.PI) / 180, DRAWING_SCALE, 0, lay.baselines[0]),
           angle: ((p.angle ?? 0) * Math.PI) / 180,
           height: p.height,
           drawingScale: DRAWING_SCALE,

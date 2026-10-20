@@ -4516,3 +4516,33 @@ input[type='range'] {
     transform: rotate(360deg);
   }
 }
+
+/* ---------- Egen skala (0.8.9) ---------- */
+
+.scale-pick {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.scale-pick select {
+  flex: 1 1 auto;
+}
+
+.scale-own {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font: 500 13px var(--font-data);
+  color: var(--muted);
+}
+
+.scale-own[hidden] {
+  display: none;
+}
+
+.scale-own input {
+  width: 72px;
+  font-family: var(--font-data);
+}

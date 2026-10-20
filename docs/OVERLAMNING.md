@@ -1,36 +1,41 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 20 oktober 2026, efter 0.8.8.
+överlämning; historiken finns i git. Senast: 20 oktober 2026, efter 0.8.9.
 
 ## Läget
 
-- **0.8.8 är klar** på `main`, filformatet är **8**. Det som gjordes står i
-  PLAN.md under *0.8.8*, i README och i UTVECKLING.md under *Mallblad
-  (0.8.8, format 8)*:
-  - Mallblad = `Worksheet` med `paper`, ritat i mm på papperet i 1:1 och
-    utan tillstånd. Listas under Ritningar i projektträdet, eget formulär
-    (namn, format, orientering, mapp, *Nya blad får det här mallbladet*).
-  - `Sheet.master` och `project.master`. Mallen ritas under vyerna i
-    `buildSheet` med smarttexten ifylld från bladet (`masterPrims`).
-  - Ramen, BH90-huvudet, loggan i projektet och kryssrutan för nya blad är
-    borta. Bladets formulär har mallbladet och fälten för smarttexten.
-  - Exempelmallbladet *A3 med ritningshuvud* (`src/core/exampleMaster.ts`)
-    i nya projekt och exemplet.
-  - Text har fet stil och justering; skalorna 1:25, 1:2500, 1:4000 och
-    1:5000 är nya (de fanns i Carl Augusts ram).
-  - Carl Augusts DWG-ram (A1, BH90 enligt SIS) blev ett mallblad med
-    `scripts/mallblad-fran-dxf.py` och `scripts/mallblad-projekt.mts`, i
-    projektfilen *Ritningsmall A1.cadapa* som han fick i chatten. DXF:en
-    ligger inte i repot (den har hans telefonnummer). Hans DXF räckte, så
-    LibreDWG behövdes inte.
-  - Kontrollerat i Chrome med Playwright mot `dist/` (nytt blad med mallen,
-    rita text på mallbladet, mallbladets formulär, byta mall på bladet,
-    Plot/export) och PDF:en av ett A1-blad med hans mall. Inga nya kända fel.
-- **Planen**: 0.8.9 grafik och textrutor på bladen, 0.8.10 smarta fält,
-  0.8.11 granskning, 0.8.12 skalstock och stämplar, 0.8.13 fler
-  Modifiera-verktyg, sedan 0.9 flera våningsplan (med felet om golvnivån i
-  3D), 0.10 tak, 0.11 trappor, 0.12 export och 0.13 piloten med formatfrys.
+- **0.8.9 är klar** på `main`, filformatet är **9**. Det som gjordes står i
+  PLAN.md under *0.8.9*, i README och i UTVECKLING.md under *Grafik och
+  textrutor på bladen (0.8.9, format 9)*:
+  - Linjer, ytor, text och bilder ritas direkt på ritningsbladen (element
+    med `space` = bladets id, mm på papperet, utan tillstånd). Bilder under
+    vyerna, resten över. Mått på bladet ger ett tips (mått ritas i vyerna).
+  - Vyerna på bladet ligger i `selection`: markeras, flyttas (dra,
+    Modifiera, piltangenter) och tas bort med det ritade.
+    `moveElements`/`deleteElements` känner igen vyernas id. En vy ensam har
+    som förut fästning, grepp i ramen, formulär och smartmeny.
+  - `SheetTextItem` och `Sheet.items` är borta; text på bladet är vanlig
+    text. Texten fylls i med bladets smarttext (`ViewStates.smart`).
+  - Textrutor för all fri text: `maxWidth`, `maxHeight`, `anchor`, radbrytning
+    med Helveticas bredder (`src/elements/textLayout.ts`), röd ram på
+    skärmen (`part: 'skärm'`) som PDF:en hoppar över.
+  - Egen skala 1:___ för vyer på bladet, *Återställ ram* kortare i
+    smartmenyn.
+  - Kontrollerat i Chrome med Playwright mot `dist/` (rita text och linje på
+    bladet, markera vy och ritat med ruta, flytta och ta bort tillsammans,
+    ångra, dra en vy ensam, greppen, Modifiera Flytta, egen skala,
+    dubbelklick som öppnar vyn, bild på bladet, högerklick) och PDF:en av ett
+    blad med textrutor (`qpdf`, `pdftoppm`, `pdftotext`). Inga nya kända fel.
+- **Synpunkterna** är sorterade (Carl August godkände förslaget 20 oktober)
+  och införda i `cad-apa-synpunkter.md` och i PLAN.md: mappnamn → 0.8.10,
+  Visa-menyn i kategorier → 0.8.11, tjocklekstabell och dra och släpp →
+  0.8.13 (eller egen småversion), SWEREF, nollpunkt och sol → egen version
+  efter 0.12. Inkorgen är tom.
+- **Planen**: 0.8.10 smarta fält, 0.8.11 granskning, 0.8.12 skalstock och
+  stämplar, 0.8.13 fler Modifiera-verktyg, sedan 0.9 flera våningsplan (med
+  felet om golvnivån i 3D), 0.10 tak, 0.11 trappor, 0.12 export, SWEREF-
+  versionen (före eller efter piloten) och 0.13 piloten med formatfrys.
 - **Ord:** *palett* och *snabbmeny* betyder samma sak för honom. Säg bara
   **smartmeny**.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen (0.13). Höj
@@ -48,37 +53,41 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   för varje punkt och säg om något är för stort för en session. Ta bort
   hanterade punkter när de görs; behåll Avfärdat med anledning. Han kan
   också klistra in synpunkter i chatten; för in dem i filen när sorteringen
-  är godkänd. Han hittar inte hur man öppnar filen i kunskapsbasen och kan
-  lägga in synpunkter via en annan, billigare chatt. Punkterna under 0.8.8
-  togs bort ur filen när 0.8.8 var klar.
-- **Inkorgen (20 oktober) är inte sorterad än.** Claudes förslag i 0.8.8:
-  egen skala 1:___ och kortare *Återställ ram* i smartmenyn → 0.8.9;
-  Visa-menyn i kategorier → 0.8.11; tabell för linjetjocklekar
-  (gammal-cad-färger) och dra och släpp till mappar → 0.8.13 eller egen
-  småversion; lokal nollpunkt, SWEREF, norrpil mot true north, export i
-  SWEREF och sol och skugga per vy → en egen version efter 0.12 (stor).
-  Fråga om han godkänner, och för in det i filen.
+  är godkänd. Punkterna under 0.8.9 togs bort ur filen när 0.8.9 var klar.
 
-## Nästa session: 0.8.9 Grafik och textrutor på bladen
+## Nästa session: 0.8.10 Smarta fält
 
-Läs synpunktsfilen och sortera Inkorgen först (se ovan). Läs sedan *0.8.9*
+Läs synpunktsfilen och sortera Inkorgen först (se ovan). Läs sedan *0.8.10*
 i PLAN.md.
 
-- Linjer, ytor, text och bilder direkt på vanliga blad, med samma verktyg
-  som på mallbladet. Enklast är troligen att bladet får en egen yta som
-  mallbladet (elementen har `space` satt till bladets id och ritas i mm),
-  så att ritverktygen, markeringen och Modifiera fungerar; det svåra är att
-  vyerna och texterna på bladet (`SheetTool`) och de ritade objekten
-  (`SelectTool`) ska gå att markera och flytta tillsammans.
-- `SheetTextItem` blir vanlig text (`Text` med `space` på bladet).
-- Textrutor för text överallt: största bredd och höjd, justering (finns nu,
-  `align`) och förankring i över-/mitt-/underkant. Radbrytning med
-  Helveticas bredder (`textWidth` i `src/formats/helvetica.ts`), röd
-  markering på skärmen när texten inte ryms.
-- Mellanstor. Nytt format (9).
+- Allt inom klamrar som inte är ett inbyggt namn blir ett fält, i mallen,
+  på bladet och (0.8.12) i stämplar; namnen utan hänsyn till stora och små
+  bokstäver. Smarttexten fylls redan i genom `ViewStates.smart`
+  (`smartVars` i `src/repr/smartText.ts`), så fälten blir fler nycklar där.
+- Bladets egenskaper får en tabell med alla fält bladet använder (leta i
+  mallens och bladets texter efter `{…}`). Fält som gäller hela projektet.
+  Flera blad markerade i projektträdet: *(olika)*, och bara ändrade fält
+  skrivs.
+- **Mappnamn**: en inbyggd smarttext för mappen bladet ligger i
+  (`doc.tree[sheet.id]` → mappens namn), t.ex. `{mapp}`. Hans ram har
+  #MAPPNAMN; byt den mot smarttexten i hans mallbladsfil, eller säg hur.
+- *Skala A3* (halva skalan, 1:50 → 1:100 på A3): föreslå en smarttext.
+- Mellanstor. Formatet ändras troligen (fält på projektet och bladet).
 
 ## Att fråga Carl August om
 
+- **Bladen efter provning** (0.8.9, Claudes val): att bilder på bladet
+  ligger under vyerna och linjer och text över; att mått inte går att rita
+  på bladet; att en vy i en större markering bara går att flytta (inte
+  vrida, spegla eller kopiera); att bladet inte följer tillstånden.
+- **Textrutorna**: förankringen är punkten i rutans över-, mitt- eller
+  underkant och justeringen rutans vänster-, mitt- eller högerkant; utan
+  förankring står första radens baslinje på punkten som förut. Rutan ställs
+  in i egenskaperna (0 = ingen gräns). Vill han kunna dra upp rutan med
+  textverktyget, och se rutans kant när texten är markerad? Skärmen visar
+  texten med appens typsnitt (Archivo), så raderna kan se något längre
+  eller kortare ut än rutan; vill han att ritningens text visas i Arial på
+  skärmen (samma bredder som Helvetica i PDF:en)?
 - **Mallbladen efter provning** (0.8.8, Claudes val): att mallen ritas från
   papperets nedre vänstra hörn på blad i andra format (med ett tips), att
   ett valt mallblad föreslår sitt format, att fälten ligger i bladets
@@ -89,16 +98,13 @@ i PLAN.md.
   #FASTIGHETSBETECKNING, #PROJEKTNR, #REV, #ARKITEKTKONTOR, #INITIALER MV,
   #SIGN ANSVARIG, #SKALA A1). Övriga (#KOMMUN, #MAPPNAMN, #RAD 1, 2 och 4,
   #INITIALER HL, #SKALA A3) står kvar som text tills 0.8.10 gör egna fält.
-  *Skala A3* vill nog ha en smarttext för halva skalan (1:50 → 1:100 på
-  A3); föreslå den i 0.8.10.
+  #MAPPNAMN är mappen bladet ligger i (Carl August, 20 oktober).
 - **Skalstocken** (0.8.12) måste gå att flytta när som helst (Carl August,
   20 oktober). Hans standardläge på A1: innanför ramen nere till vänster om
   huvudet, x 611–711 mm, y 27–46 mm; hans skalstockar för 1:1–1:5000 finns
   i DXF:en (be om den igen i 0.8.12, den ligger inte i repot).
-- **Text på bladet och vyns ram efter provning** (0.8.7, Claudes val):
-  höjderna 1,8–10 mm och fet stil, att texten skrivs i verktygsraden och
-  redigeras med dubbelklick, och att ramen följer med när skalan byts. Vill
-  han kunna dölja hela vyrubriken, inte bara skalan?
+- **Vyns ram efter provning** (0.8.7, Claudes val): att ramen följer med
+  när skalan byts. Vill han kunna dölja hela vyrubriken, inte bara skalan?
 - **Synpunktsformuläret**: kommer breven fram till Gmail nu, efter `-f`?
   Annars: prova att sätta Gmail-adressen direkt som `to` i
   `feedback-config.php`. Kommer de fram då är det vidarebefordran från
@@ -133,7 +139,11 @@ i PLAN.md.
 - På ett mallblad finns Visa-menyns skala för texter och mått kvar, fast
   allt ritas i 1:1; den gör ingenting där.
 - På ett blad och ett mallblad visar statusraden fortfarande Skärm och Rutnät, fast
-  rutnätet är dolt. Mappars kryssrutor i Plot/export visar inte läget
+  rutnätet är dolt. Underlagens formulär säger *Bredd i modellen* också på
+  papper, och tipset om att kalibrera skalan kommer också där.
+- Markeringen på ett blad markerar inte mallens grafik (bara bladets egen),
+  som väntat; men det ritade på bladet och mallen ligger på samma papper,
+  så det kan vara svårt att se vad som är vad. Mappars kryssrutor i Plot/export visar inte läget
   "delvis ikryssat" tydligt med appens kryssrutestil.
 - Taksprånget ändras lika på båda sidor av ett sadeltak; riktiga tak med
   takfot per kant kommer i 0.10.
@@ -167,11 +177,12 @@ i PLAN.md.
   `view`, `selection`, `ui`, `modifier`, `smartMenu`, `view3d`, `plan`, `sheets`,
   `plot`, `setTool`, `setMode` och `goTo` (t.ex.
   `goTo({kind:'marker', id:'sektion-a'})`, `goTo({kind:'sheet', id})`).
-  `bacchus.sheets.pick({kind:'viewport', id})` eller
-  `pick({kind:'sheetText', id})` väljer en vy eller en text på bladet; `bacchus.sheets.drawing()` har `views` och
-  `items` med ytorna på papperet, `pickedThing()`, `startMove()`,
-  `newSheet()`, `newMaster()`, `editText(id)` och `resetCrop(id)` finns
-  också. Ett mallblad öppnas med `goTo({kind:'worksheet', id:'mall-a3'})`. Ramens
+  `bacchus.sheets.pick({kind:'viewport', id})` markerar en vy på bladet
+  (`selection`), `pick({kind:'sheet', id})` visar bladet i panelen;
+  `bacchus.sheets.drawing()` har `views` med ytorna på papperet och
+  `pickables`; `pickedViewport()`, `place(bladId, vy, skala)`,
+  `newSheet()`, `newMaster()` och `resetCrop(id)` finns också. Det ritade
+  på bladet är vanliga element med `space` = bladets id. Ett mallblad öppnas med `goTo({kind:'worksheet', id:'mall-a3'})`. Ramens
   grepp dras med musen på den valda vyns kanter (`views[i].frame`). Filer läggs in med `page.expect_file_chooser()` runt ett
   klick på *Lägg in underlag…*; ett projekt öppnas med
   `[data-action="open-file"]:visible` och `showOpenFilePicker = undefined`. Ritningen ligger i
@@ -209,3 +220,8 @@ i PLAN.md.
   eller `buildSheet` och `writePdf`. Stora projekt att mäta på: `wallGrid`
   och `roomGrid` i `tests/prestanda.test.ts`. Profilera med
   `node --cpu-prof skript.mjs`.
+- Playwright: dra med flera `mouse.move` i steg (två steg räcker inte för
+  att vyn ska räkna det som en dragning). Modifiera Flytta utgår från
+  punkten där man klickade på det markerade, så ett klick efter valet är
+  målet. Filvalet för underlag öppnas pålitligast med ett riktigt klick på
+  menyn (inte `element.click()` i JavaScript).

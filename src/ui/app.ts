@@ -60,7 +60,7 @@ import { installKeyboard } from './app/keyboard';
 import { installMenus } from './app/menus';
 import { installPane3d } from './app/pane3d';
 import { installPanes } from './app/panes';
-import { createUiState, GROUP_LABEL, PLAN_TOOLS, shellMarkup, SPACE_TOOLS, TOOLS, type ToolId } from './app/shell';
+import { createUiState, GROUP_LABEL, PLAN_TOOLS, SHEET_TOOLS, shellMarkup, SPACE_TOOLS, TOOLS, type ToolId } from './app/shell';
 import { installShowMenu } from './app/showMenu';
 import { snapSegments } from './app/snapping';
 import { installTextEdit } from './app/textEdit';
@@ -292,9 +292,9 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     selection,
     view,
     plan: () => plan,
-    readOnly: () => !!ui.marker || !!ui.layout,
+    readOnly: () => !!ui.marker,
     canEdit: (id) => !!ui.marker && (store.doc.elements[id]?.space === ui.marker || id.startsWith('slope:')),
-    space: () => ui.marker ?? ui.worksheet ?? undefined,
+    space: () => ui.marker ?? ui.worksheet ?? ui.layout ?? undefined,
     activeState: () => ui.state,
     storey: () => ui.storey,
     hint,
@@ -424,20 +424,20 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     }
   }
   let settingTool = false;
-  /** Verktyget på ett ritningsblad: textverktyget eller det som markerar och flyttar (0.8.7). */
-  const sheetTool = (): ViewTool => (ui.tool === 'text' ? sheets.textTool : sheets.tool);
+  /** Verktyget för ett verktygsval: på ett ritningsblad markerar Markera också vyerna (0.8.9). */
+  const toolFor = (id: ToolId): ViewTool => (ui.layout && id === 'select' ? sheets.tool : tools[id]);
   function changeTool(id: ToolId, keep: boolean): void {
     measureBox.close();
     // Ritverktygen ritar i planen: från en fasad eller sektion går man tillbaka dit.
     // Mått, text och 2D ritas i fasaden eller sektionen (0.8).
     if (PLAN_TOOLS.includes(id) && !SPACE_TOOLS.includes(id) && (ui.marker || ui.worksheet)) views.goTo({ kind: 'storey', id: ui.storey });
-    // På ett ritningsblad går att markera, panorera och skriva text (0.8.7).
-    // Mått och 2D stannar på bladet med ett tips (0.8.2); övriga ritverktyg går till planen.
-    if (ui.layout && SPACE_TOOLS.includes(id) && id !== 'text') {
-      hint('Mått och linjer direkt på ett blad kommer efter pilotprojektet. Rita dem i vyn, så syns de på bladet.', 4500);
+    // På ett ritningsblad ritas text, linjer och ytor i mm på papperet (0.8.9).
+    // Mått stannar på bladet med ett tips; övriga ritverktyg går till planen.
+    if (ui.layout && id === 'dimension') {
+      hint('Mått ritas i vyerna, så får de vyns skala. Lägg vyn på bladet.', 4500);
       return;
     }
-    if (ui.layout && id !== 'select' && id !== 'pan' && id !== 'text') views.goTo({ kind: 'storey', id: ui.storey });
+    if (ui.layout && id !== 'select' && id !== 'pan' && !SHEET_TOOLS.includes(id)) views.goTo({ kind: 'storey', id: ui.storey });
     if (PLAN_TOOLS.includes(id) && ui.mode === '3d') void pane3d.setMode('2d');
     if (ui.tool === 'wall' && id !== 'wall') wallTool.finish();
     if (ui.tool === 'dimension' && id !== 'dimension') dimensionTool.reset();
@@ -450,7 +450,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       modifier.cancel();
     }
     ui.tool = id;
-    view.setTool(ui.layout ? sheetTool() : tools[id]);
+    view.setTool(toolFor(id));
     toolsEl.querySelectorAll<HTMLElement>('[data-tool]').forEach((b) => {
       if (!b.hasAttribute('aria-disabled')) b.setAttribute('aria-pressed', String(b.dataset.tool === id));
     });
@@ -613,7 +613,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     },
     stopWall: () => endWallFrom(),
     endModify: () => {
-      if (ui.tool === 'select') view.setTool(selectTool);
+      if (ui.tool === 'select') view.setTool(toolFor('select'));
       view.requestRender();
     },
   };
@@ -693,7 +693,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   tempDims.onReleased = (n) => hint(releasedHint(n), 4000);
   view.setHighlighter(
     (cam) =>
-      renderHighlight(cam, store.doc, plan.pickables, new Set(selection.list()), ui.tool === 'select' ? selectTool.hoverId : null, !ui.marker && !ui.worksheet) +
+      renderHighlight(cam, store.doc, plan.pickables, new Set(selection.list()), ui.tool === 'select' ? selectTool.hoverId : null, !ui.marker && !ui.worksheet && !ui.layout) +
       tempDims.render(cam, selection.list(), viewStates(), ui.tool === 'select' && ui.mode !== '3d' && !ui.marker && !ui.worksheet && !ui.layout && !modifier.running) +
       skewMarks(cam),
   );
@@ -730,8 +730,9 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     view.drawingScale = layout || master ? 1 : ui.scale;
     view.showGrid = layout || master ? false : uiSettings.grid;
     view.showScaleBar = !layout && !master;
-    if (layout && !zoomingBox && !aligning && view.currentTool !== sheetTool()) view.setTool(sheetTool());
-    else if (!layout && (view.currentTool === sheets.tool || view.currentTool === sheets.textTool)) view.setTool(tools[ui.tool]);
+    // Markera på ett blad tar också vyerna (0.8.9); tillbaka i planen det vanliga.
+    if (layout && view.currentTool === selectTool) view.setTool(sheets.tool);
+    else if (!layout && view.currentTool === sheets.tool) view.setTool(tools[ui.tool]);
 
     chips.innerHTML =
       doc.states
@@ -752,7 +753,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     computing.hidden = !(markerEl && sectionQueue.pending);
     const paper = layout ? sheets.drawing() : null;
     if (paper) {
-      plan = { prims: paper.prims, pickables: [] };
+      plan = { prims: paper.prims, pickables: paper.pickables };
     } else if (markerEl) {
       const drawn = buildPlan(doc, markerEl.storey, { ...vs, place: markerEl.id }, styleFor(ui.styleName));
       // Underlagen ligger under fasaden eller sektionen; det andra som ritats i den ovanpå.
@@ -774,7 +775,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     views.renderViewButton();
     if (ui.navOpen) navigator.render();
     positionMeasureBox();
-    selection.prune((id) => !!doc.elements[id]);
+    selection.prune((id) => !!doc.elements[id] || !!layout?.viewports.some((v) => v.id === id));
     view.setPrimitives(plan.prims);
     pane3d.update3d();
     panel.render();
@@ -942,8 +943,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   installKeyboard(app);
   const clipboard = installClipboard(app);
   const underlays = installUnderlays(app);
-  const sheets = installSheets(app, textEditor);
-  sheets.subscribe(() => modifyRail.render());
+  const sheets = installSheets(app);
   const plot = installPlot(app, underlays.exportImage);
   const actions = installActions(app, { brand, feedbackDialog, files, menus, panes, plot, sheets, showMenu, views });
 

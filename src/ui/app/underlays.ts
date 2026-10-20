@@ -131,7 +131,7 @@ export function installUnderlays(app: AppContext) {
   }
 
   /** Ytan som visas: fasaden, sektionen eller arbetsbladet, annars våningens plan. */
-  const space = (): Id | undefined => app.ui.marker ?? app.ui.worksheet ?? undefined;
+  const space = (): Id | undefined => app.ui.marker ?? app.ui.worksheet ?? app.ui.layout ?? undefined;
 
   /** Mitten av det som syns på ritytan, mm. */
   function viewCenter(): [number, number] {
@@ -185,8 +185,8 @@ export function installUnderlays(app: AppContext) {
         }
         scale = IMAGE_MM_PER_PX;
       }
-      // På ett mallblad (0.8.8) ritas allt i mm på papperet: en PDF eller bild i sin storlek på papper.
-      if (kind !== 'dxf' && app.store.doc.worksheets.some((w) => w.id === app.ui.worksheet && w.paper)) scale /= 100;
+      // På ett mallblad (0.8.8) och ett ritningsblad (0.8.9) ritas allt i mm på papperet: en PDF eller bild i sin storlek på papper.
+      if (kind !== 'dxf' && (app.ui.layout || app.store.doc.worksheets.some((w) => w.id === app.ui.worksheet && w.paper))) scale /= 100;
     } catch (err) {
       app.hint(`${file.name}: ${(err as Error).message || 'filen kunde inte läsas.'}`, 5000);
       return;
@@ -280,9 +280,10 @@ export function installUnderlays(app: AppContext) {
   function showUnderlay(id: Id): void {
     const el = app.store.doc.elements[id];
     if (!el) return;
-    const here = (app.ui.marker ?? app.ui.worksheet ?? app.ui.storey) === (el.space ?? el.storey);
+    const here = (app.ui.marker ?? app.ui.worksheet ?? app.ui.layout ?? app.ui.storey) === (el.space ?? el.storey);
     if (!here) {
       if (el.space && app.store.doc.elements[el.space]) app.goTo({ kind: 'marker', id: el.space });
+      else if (el.space && app.store.doc.sheets.some((s) => s.id === el.space)) app.goTo({ kind: 'sheet', id: el.space });
       else if (el.space && app.store.doc.worksheets.some((w) => w.id === el.space)) app.goTo({ kind: 'worksheet', id: el.space });
       else app.goTo({ kind: 'storey', id: el.storey });
     }

@@ -99,7 +99,7 @@ describe('mallblad (0.8.8, format 8)', () => {
     const store = new DocStore(doc);
     // Ritat i Förslag B syns ändå på bladen, som visar förslaget som är förval.
     const [el] = addElements(store, [{ type: 'Text', storey: 'pl-1', space: EXAMPLE_MASTER_ID, tags: [], props: {}, params: { pos: [30, 280], text: 'ARKITEKT', height: 3.5, angle: 0 } }], 'st-b', 'Text');
-    const d = buildSheet(store.doc, { ...store.doc.sheets[0], ...{ id: 'x', number: '1', name: 'x', size: 'A3', orientation: 'landscape', master: EXAMPLE_MASTER_ID, fields: {}, viewports: [], items: [] } }, { today });
+    const d = buildSheet(store.doc, { ...store.doc.sheets[0], ...{ id: 'x', number: '1', name: 'x', size: 'A3', orientation: 'landscape', master: EXAMPLE_MASTER_ID, fields: {}, viewports: [] } }, { today });
     expect(d.prims.some((p) => p.origin?.objectId === el.id)).toBe(true);
   });
 
@@ -115,8 +115,7 @@ describe('mallblad (0.8.8, format 8)', () => {
     expect(textType.plan!(left as never, ctx)[0]).not.toHaveProperty('bold');
   });
 
-  it('sparas och läses i format 8; format 7 får meddelandet om en äldre betaversion', () => {
-    expect(FORMAT_VERSION).toBe(8);
+  it('sparas och läses; format 7 får meddelandet om en äldre betaversion', () => {
     const store = new DocStore(sampleProject());
     createSheet(store);
     const back = parse(serialize(store.doc));

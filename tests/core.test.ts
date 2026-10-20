@@ -607,7 +607,7 @@ describe('version 0.6.2', () => {
     expect(mayOverwrite({ text: nu }, FORMAT_VERSION)).toBe(true);
     expect(mayOverwrite({ text: nu }, 4)).toBe(false);
     // Autospar från före 0.6.2 har inget formatfält; versionen läses ur texten.
-    expect(mayOverwrite({ text: nu.replace(`"formatVersion": ${FORMAT_VERSION}`, '"formatVersion": 9') }, FORMAT_VERSION)).toBe(false);
+    expect(mayOverwrite({ text: nu.replace(`"formatVersion": ${FORMAT_VERSION}`, `"formatVersion": ${FORMAT_VERSION + 1}`) }, FORMAT_VERSION)).toBe(false);
     expect(mayOverwrite({ text: '{"format":"bacchus-project","formatVersion":5}' }, 3)).toBe(false);
     // Fältet går före texten.
     expect(mayOverwrite({ text: nu, formatVersion: 5 }, 4)).toBe(false);

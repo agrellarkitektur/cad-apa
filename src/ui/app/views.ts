@@ -7,7 +7,7 @@ import { askConfirm, askText } from '../ask';
 import { type MenuItem } from '../contextMenu';
 import type { AppContext } from './context';
 import { describeView } from './helpers';
-import { SPACE_TOOLS } from './shell';
+import { SHEET_TOOLS, SPACE_TOOLS } from './shell';
 
 /** Ett ställe man varit på: en sparad vy, ett våningsplan i modellen, eller en fasad eller sektion. */
 export type Place = { kind: 'view'; id: Id } | { kind: 'storey'; id: Id } | { kind: 'marker'; id: Id } | { kind: 'worksheet'; id: Id } | { kind: 'sheet'; id: Id };
@@ -135,7 +135,7 @@ export function installViews(app: AppContext) {
       app.ui.layout = null;
       app.ui.storey = el.storey;
       app.ui.activeView = null;
-      if (app.ui.tool !== 'select' && app.ui.tool !== 'pan') app.setTool('select');
+      if (app.ui.tool !== 'select' && app.ui.tool !== 'pan' && !SHEET_TOOLS.includes(app.ui.tool)) app.setTool('select');
       app.measureBox.close();
       app.smartMenu.hide();
       app.modifier.cancel();
@@ -169,7 +169,7 @@ export function installViews(app: AppContext) {
       app.ui.marker = null;
       app.ui.worksheet = null;
       app.ui.activeView = null;
-      if (app.ui.tool !== 'select' && app.ui.tool !== 'pan') app.setTool('select');
+      if (app.ui.tool !== 'select' && app.ui.tool !== 'pan' && !SHEET_TOOLS.includes(app.ui.tool)) app.setTool('select');
       app.measureBox.close();
       app.smartMenu.hide();
       app.modifier.cancel();

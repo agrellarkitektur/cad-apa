@@ -171,9 +171,9 @@ export async function spawnSectionWorker(): Promise<WorkerLike> {
   return new mod.default() as unknown as WorkerLike;
 }
 
-/** Antalet objekt i modellen, utan det som är ritat på arbetsblad och mallblad. */
+/** Antalet objekt i modellen, utan det som är ritat på arbetsblad, mallblad och ritningsblad. */
 function modelCount(doc: ProjectDoc): number {
-  const sheets = new Set(doc.worksheets.map((w) => w.id));
+  const sheets = new Set([...doc.worksheets.map((w) => w.id), ...doc.sheets.map((s) => s.id)]);
   let n = 0;
   for (const el of Object.values(doc.elements)) if (!el.space || !sheets.has(el.space)) n++;
   return n;

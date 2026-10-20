@@ -2,6 +2,7 @@ import { add, left, norm, scale, sub } from '../geometry/vec';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import type { ProjectDoc } from '../core/model';
 import { resolvePoint, type FeatureRef } from './features';
+import { expandSmartText, layoutText, textPoint, type TextAlign, type TextAnchor, type TextLayout } from './textLayout';
 import type { ElementType } from './registry';
 
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0, useGrouping: false });
@@ -120,7 +121,25 @@ export interface TextParams {
   /** Fet stil (0.8.8, format 8). */
   bold?: boolean;
   /** Var `pos` ligger på raden (0.8.8): vänster (förval), mitten eller höger. */
-  align?: 'start' | 'middle' | 'end';
+  align?: TextAlign;
+  /**
+   * Var `pos` ligger i höjdled (0.8.9, format 9): i rutans överkant, mitt
+   * eller underkant. Utelämnad = på första radens baslinje.
+   */
+  anchor?: TextAnchor;
+  /** Textrutans största bredd på papper, mm (0.8.9). Raderna bryts vid ord. */
+  maxWidth?: number;
+  /** Textrutans största höjd på papper, mm (0.8.9). Ryms texten inte visas en röd markering på skärmen. */
+  maxHeight?: number;
+}
+
+/** Röd på skärmen för en text som inte ryms i sin ruta (skrivs inte ut). */
+const OVERFLOW_PEN: Pen = { weight: 0.25, color: '#d9480f', dash: [1.5, 1] };
+
+/** Textens innehåll med smarttexten ifylld, om vyn har värden för den (ritningsblad, 0.8.9). */
+function shownText(p: TextParams, ctx: { view: { smart?: Readonly<Record<string, string>> } }): string {
+  const t = String(p.text);
+  return ctx.view?.smart && t.includes('{') ? expandSmartText(t, ctx.view.smart!) : t;
 }
 
 export const textType: ElementType<TextParams> = {
@@ -132,40 +151,46 @@ export const textType: ElementType<TextParams> = {
   compares: false,
   defaults: () => ({ pos: [0, 0], text: 'TEXT', height: 2.5, angle: 0 }),
   pickShape(el, ctx) {
-    return [[textBox(ctx.params<TextParams>(el), ctx.scale)]];
+    const p = ctx.params<TextParams>(el);
+    return [[textBox(p, layoutText({ ...p, text: shownText(p, ctx) }), ctx.scale)]];
   },
   plan(el, ctx) {
     const p = ctx.params<TextParams>(el);
+    const text = shownText(p, ctx);
+    // Ett tomt smart fält ger ingen text.
+    if (text !== p.text && !text.trim()) return [];
     const origin = { objectId: el.id, objectType: 'Text' };
     const r = (p.angle * Math.PI) / 180;
-    const step = p.height * ctx.scale * 1.5;
-    return String(p.text)
-      .split('\n')
-      .map((text, i): Primitive => ({
+    const lay = layoutText({ ...p, text });
+    const out: Primitive[] = lay.lines.map(
+      (line, i): Primitive => ({
         kind: 'text',
-        at: [p.pos[0] + i * step * Math.sin(r), p.pos[1] - i * step * Math.cos(r)],
-        text,
+        at: textPoint(p.pos, r, ctx.scale, 0, lay.baselines[i]),
+        text: line,
         height: p.height,
         angle: r || undefined,
         ...(p.bold ? { bold: true } : {}),
         ...(p.align && p.align !== 'start' ? { align: p.align } : {}),
         pen: { weight: 0.25 },
         origin,
-      }));
+      }),
+    );
+    if (lay.overflow && lay.box) {
+      const [x0, y0, x1, y1] = lay.box;
+      const c = (x: number, y: number) => textPoint(p.pos, r, ctx.scale, x, y);
+      out.push({ kind: 'polyline', points: [c(x0, y0), c(x1, y0), c(x1, y1), c(x0, y1)], closed: true, pen: OVERFLOW_PEN, origin: { ...origin, part: 'skärm' } });
+    }
+    return out;
   },
 };
 
-/** Ungefärlig ruta runt en text, för att kunna peka på den. */
-function textBox(p: TextParams, drawingScale: number): Vec2[] {
-  const lines = String(p.text).split('\n');
+/** Rutan runt en text, för att kunna peka på den: textens yta, och textrutan om den har en. */
+function textBox(p: TextParams, lay: TextLayout, scale: number): Vec2[] {
+  const [ex0, ey0, ex1, ey1] = lay.extent;
+  const [x0, y0, x1, y1] = lay.box ? [Math.min(ex0, lay.box[0]), Math.min(ey0, lay.box[1]), Math.max(ex1, lay.box[2]), Math.max(ey1, lay.box[3])] : [ex0, ey0, ex1, ey1];
   const r = (p.angle * Math.PI) / 180;
-  const step = p.height * drawingScale * 1.5;
-  const w = Math.max(1, ...lines.map((l) => l.length)) * p.height * drawingScale * 0.62;
-  const top = p.height * drawingScale;
-  const bottom = -step * (lines.length - 1) - p.height * drawingScale * 0.3;
-  const x0 = p.align === 'middle' ? -w / 2 : p.align === 'end' ? -w : 0;
-  const c = (x: number, y: number): Vec2 => [p.pos[0] + x * Math.cos(r) - y * Math.sin(r), p.pos[1] + x * Math.sin(r) + y * Math.cos(r)];
-  return [c(x0, bottom), c(x0 + w, bottom), c(x0 + w, top), c(x0, top)];
+  const c = (x: number, y: number) => textPoint(p.pos, r, scale, x, y);
+  return [c(x0, y0), c(x1, y0), c(x1, y1), c(x0, y1)];
 }
 
 /**

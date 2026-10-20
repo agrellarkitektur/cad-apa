@@ -308,8 +308,8 @@ export async function writePdf(pages: readonly PdfPage[], opt: PdfOptions = {}):
     // Allt anges i mm: skala om från punkter en gång för hela sidan.
     w.ops.push(`${n(PT)} 0 0 ${n(PT)} 0 0 cm 1 J 1 j`);
     for (const p of page.prims) {
-      // Papperet självt ritas inte; det är bara en bakgrund på skärmen.
-      if (p.origin?.part === 'papper') continue;
+      // Papperet självt ritas inte; det är bara en bakgrund på skärmen. Inte heller markeringar för skärmen (0.8.9).
+      if (p.origin?.part === 'papper' || p.origin?.part === 'skärm') continue;
       w.draw(p);
     }
     const raw = enc.encode(w.ops.join('\n'));

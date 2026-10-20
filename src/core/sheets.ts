@@ -1,11 +1,13 @@
+import { pruneAssets } from './commands';
 import { newId } from './ids';
-import { isMaster, type Id, type PaperSize, type ProjectDoc, type Sheet, type SheetTextItem, type Viewport, type Worksheet } from './model';
+import { isMaster, type Element, type Id, type PaperSize, type ProjectDoc, type Sheet, type Viewport, type Worksheet } from './model';
 import type { DocStore, TxBuilder } from './store';
 
 /**
- * Ritningsblad (0.8 del 3, format 8): kommandon för blad, vyerna och
- * texterna på bladen, mallbladen (0.8.8) och projektets fält för
- * smarttexten. Måtten på bladen är i mm på papperet.
+ * Ritningsblad (0.8 del 3, format 9): kommandon för blad, vyerna på
+ * bladen, mallbladen (0.8.8) och projektets fält för smarttexten. Måtten på
+ * bladen är i mm på papperet. Det som är ritat på ett blad (0.8.9) är
+ * vanliga element med `space` satt till bladets id.
  */
 
 /** Pappersformaten liggande, bredd × höjd i mm. */
@@ -95,7 +97,7 @@ export function mastersOf(doc: Pick<ProjectDoc, 'worksheets'>): (Worksheet & { p
  * Skapa ett ritningsblad (0.8.8): det får projektets förvalda mallblad och
  * mallens format, om inget annat anges. Svarar med bladets id.
  */
-export function createSheet(store: DocStore, init: Partial<Omit<Sheet, 'id' | 'viewports' | 'items'>> = {}, folder: Id | null = null): Id {
+export function createSheet(store: DocStore, init: Partial<Omit<Sheet, 'id' | 'viewports'>> = {}, folder: Id | null = null): Id {
   const id = newId('blad');
   const doc = store.doc;
   const master = masterOf(doc, { master: 'master' in init ? init.master : doc.project.master });
@@ -108,7 +110,6 @@ export function createSheet(store: DocStore, init: Partial<Omit<Sheet, 'id' | 'v
     ...(master ? { master: master.id } : {}),
     fields: { datum: today(), ...(init.fields ?? {}) },
     viewports: [],
-    items: [],
   };
   store.transact(`Nytt blad ${sheet.number}`, (tx) => {
     tx.setField('sheets', [...tx.doc.sheets, sheet]);
@@ -160,7 +161,7 @@ function updateSheet(tx: TxBuilder, id: Id, fn: (s: Sheet) => Sheet): void {
 }
 
 /** Spara bladets nummer, namn, format, mallblad, fält och mapp i ett steg. Tomma fält tas bort; `master: undefined` tar bort mallen. */
-export function saveSheet(store: DocStore, id: Id, patch: Partial<Omit<Sheet, 'id' | 'viewports' | 'items'>>, folder?: Id | null): void {
+export function saveSheet(store: DocStore, id: Id, patch: Partial<Omit<Sheet, 'id' | 'viewports'>>, folder?: Id | null): void {
   const s = store.doc.sheets.find((x) => x.id === id);
   if (!s) return;
   store.transact(`Spara bladet ${patch.number?.trim() || s.number}`, (tx) => {
@@ -176,11 +177,22 @@ export function saveSheet(store: DocStore, id: Id, patch: Partial<Omit<Sheet, 'i
   });
 }
 
-/** Ta bort ett blad. Vyerna på det finns kvar i projektet. Går att ångra. */
+/** Det som är ritat direkt på ett blad (0.8.9). */
+export function sheetContents(doc: Pick<ProjectDoc, 'elements'>, id: Id): Element[] {
+  return Object.values(doc.elements).filter((e) => e.space === id);
+}
+
+/** Ta bort ett blad med det som är ritat på det. Vyerna på det finns kvar i projektet. Går att ångra. */
 export function deleteSheet(store: DocStore, id: Id): void {
   const s = store.doc.sheets.find((x) => x.id === id);
   if (!s) return;
   store.transact(`Ta bort bladet ${s.number}`, (tx) => {
+    const files = new Set<Id>();
+    for (const el of sheetContents(tx.doc, id)) {
+      if (typeof el.params.asset === 'string') files.add(el.params.asset);
+      tx.removeElement(el.id);
+    }
+    pruneAssets(tx, files);
     tx.setField('sheets', tx.doc.sheets.filter((x) => x.id !== id));
     if (tx.doc.tree[id]) {
       const tree = { ...tx.doc.tree };
@@ -190,7 +202,7 @@ export function deleteSheet(store: DocStore, id: Id): void {
   });
 }
 
-/** Duplicera ett blad med vyerna på det. Svarar med kopians id. */
+/** Duplicera ett blad med vyerna och det som är ritat på det. Svarar med kopians id. */
 export function duplicateSheet(store: DocStore, id: Id): Id | null {
   const s = store.doc.sheets.find((x) => x.id === id);
   if (!s) return null;
@@ -199,10 +211,10 @@ export function duplicateSheet(store: DocStore, id: Id): Id | null {
     id: newId('blad'),
     number: nextSheetNumber(store.doc),
     viewports: s.viewports.map((v) => ({ ...v, id: newId('vp') })),
-    items: s.items.map((x) => ({ ...structuredClone(x), id: newId('text') })),
   };
   store.transact(`Duplicera bladet ${s.number}`, (tx) => {
     tx.setField('sheets', [...tx.doc.sheets, copy]);
+    for (const el of sheetContents(tx.doc, id)) tx.putElement({ ...structuredClone(el), id: newId('el'), space: copy.id });
     if (tx.doc.tree[id]) placeIn(tx, copy.id, tx.doc.tree[id]);
   });
   return copy.id;
@@ -257,68 +269,38 @@ export function removeViewport(store: DocStore, sheetId: Id, vpId: Id): void {
 /** Texthöjderna att välja för text på ett blad, mm på papperet (som SS-EN ISO 3098). */
 export const SHEET_TEXT_HEIGHTS = [1.8, 2.5, 3.5, 5, 7, 10];
 
-/** Lägg en text på ett blad (0.8.7). `at` är första radens baslinje till vänster, mm på papperet. Svarar med dess id. */
-export function addSheetText(store: DocStore, sheetId: Id, init: Omit<SheetTextItem, 'kind' | 'id'>): Id | null {
-  if (!store.doc.sheets.some((x) => x.id === sheetId) || !init.text.trim()) return null;
-  const id = newId('text');
+/**
+ * Flytta vyer på bladen i en pågående transaktion (0.8.9): de vyer bland
+ * `ids` som finns, `d` i mm, avrundat till 0,1 mm. Används av
+ * `moveElements`, så att vyer och ritade objekt flyttas i ett steg.
+ */
+export function moveViewportsTx(tx: TxBuilder, ids: ReadonlySet<Id>, d: readonly [number, number]): void {
+  if (!tx.doc.sheets.some((s) => s.viewports.some((v) => ids.has(v.id)))) return;
   const r = (x: number) => Math.round(x * 10) / 10;
-  const item: SheetTextItem = { kind: 'text', id, at: [r(init.at[0]), r(init.at[1])], text: init.text, height: init.height, ...(init.bold ? { bold: true } : {}) };
-  store.transact('Skriv text på bladet', (tx) => updateSheet(tx, sheetId, (s) => ({ ...s, items: [...s.items, item] })));
-  return id;
-}
-
-/** Ändra en text på ett blad: text, höjd eller fet stil. En tom text tar bort den. */
-export function updateSheetText(store: DocStore, itemId: Id, patch: Partial<Pick<SheetTextItem, 'text' | 'height' | 'bold'>>, label = 'Ändra texten på bladet'): void {
-  const s = sheetOfItem(store.doc, itemId);
-  if (!s) return;
-  if (patch.text !== undefined && !patch.text.trim()) {
-    removeFromSheet(store, s.id, [itemId]);
-    return;
-  }
-  store.transact(label, (tx) =>
-    updateSheet(tx, s.id, (x) => ({
-      ...x,
-      items: x.items.map((i) => {
-        if (i.id !== itemId || i.kind !== 'text') return i;
-        const next: SheetTextItem = { ...i, ...patch };
-        if (!next.bold) delete next.bold;
-        return next;
-      }),
-    })),
+  tx.setField(
+    'sheets',
+    tx.doc.sheets.map((s) => (s.viewports.some((v) => ids.has(v.id)) ? { ...s, viewports: s.viewports.map((v) => (ids.has(v.id) ? { ...v, at: [r(v.at[0] + d[0]), r(v.at[1] + d[1])] as [number, number] } : v)) } : s)),
   );
 }
 
-/** Flytta saker på ett blad: vyer och texter, i ett steg. `d` är förflyttningen i mm. */
-export function moveOnSheet(store: DocStore, sheetId: Id, ids: readonly Id[], d: readonly [number, number], label = 'Flytta på bladet'): void {
-  const s = store.doc.sheets.find((x) => x.id === sheetId);
-  if (!s || !ids.length || (d[0] === 0 && d[1] === 0)) return;
-  const set = new Set(ids);
-  const r = (x: number) => Math.round(x * 10) / 10;
-  const by = (p: [number, number]): [number, number] => [r(p[0] + d[0]), r(p[1] + d[1])];
-  store.transact(label, (tx) =>
-    updateSheet(tx, sheetId, (x) => ({
-      ...x,
-      viewports: x.viewports.map((v) => (set.has(v.id) ? { ...v, at: by(v.at) } : v)),
-      items: x.items.map((i) => (set.has(i.id) ? { ...i, at: by(i.at) } : i)),
-    })),
+/** Flytta vyer på ett blad i ett steg. `d` är förflyttningen i mm. */
+export function moveOnSheet(store: DocStore, ids: readonly Id[], d: readonly [number, number], label = 'Flytta vyn på bladet'): void {
+  if (!ids.length || (d[0] === 0 && d[1] === 0)) return;
+  store.transact(label, (tx) => moveViewportsTx(tx, new Set(ids), d));
+}
+
+/** Ta bort vyer från bladen i en pågående transaktion (vyerna finns kvar i projektet). */
+export function removeViewportsTx(tx: TxBuilder, ids: ReadonlySet<Id>): void {
+  if (!tx.doc.sheets.some((s) => s.viewports.some((v) => ids.has(v.id)))) return;
+  tx.setField(
+    'sheets',
+    tx.doc.sheets.map((s) => (s.viewports.some((v) => ids.has(v.id)) ? { ...s, viewports: s.viewports.filter((v) => !ids.has(v.id)) } : s)),
   );
 }
 
-/** Ta bort saker från ett blad: vyer och texter (vyerna finns kvar i projektet). */
-export function removeFromSheet(store: DocStore, sheetId: Id, ids: readonly Id[]): void {
-  const set = new Set(ids);
-  const s = store.doc.sheets.find((x) => x.id === sheetId);
-  if (!s) return;
-  const hit = s.items.filter((i) => set.has(i.id));
-  const label = hit.length && hit.length === ids.length ? 'Ta bort texten' : 'Ta bort från bladet';
-  store.transact(label, (tx) =>
-    updateSheet(tx, sheetId, (x) => ({ ...x, viewports: x.viewports.filter((v) => !set.has(v.id)), items: x.items.filter((i) => !set.has(i.id)) })),
-  );
-}
-
-/** Det blad en text på ett blad ligger på. */
-export function sheetOfItem(doc: Pick<ProjectDoc, 'sheets'>, itemId: Id): Sheet | undefined {
-  return doc.sheets.find((s) => s.items.some((i) => i.id === itemId));
+/** Om ett id är en vy på något blad. */
+export function isViewportId(doc: Pick<ProjectDoc, 'sheets'>, id: Id): boolean {
+  return doc.sheets.some((s) => s.viewports.some((v) => v.id === id));
 }
 
 /** Det blad en vy på ett blad ligger på. */

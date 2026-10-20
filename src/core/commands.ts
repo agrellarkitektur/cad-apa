@@ -2,6 +2,7 @@ import type { StyleSheet } from './graphics';
 import { wallFrame, type WallGeometry } from '../geometry/wallFrame';
 import { newId } from './ids';
 import type { Asset, Definition, Element, Id, ProjectDoc, ShowIn, State, Value } from './model';
+import { isViewportId, moveViewportsTx, removeViewportsTx } from './sheets';
 import { statesForNewElement } from './states';
 import type { DocStore, TxBuilder } from './store';
 
@@ -30,7 +31,11 @@ export function deleteElements(store: DocStore, ids: Id[]): void {
   // Låsta objekt tas inte bort (format 5).
   const open = ids.filter((id) => !store.doc.elements[id]?.locked);
   if (!open.length) return;
-  store.transact(open.length === 1 ? 'Ta bort objekt' : `Ta bort ${open.length} objekt`, (tx) => {
+  const viewports = open.filter((id) => !store.doc.elements[id] && isViewportId(store.doc, id));
+  const label = viewports.length === open.length ? (open.length === 1 ? 'Ta bort vyn från bladet' : 'Ta bort vyerna från bladet') : open.length === 1 ? 'Ta bort objekt' : `Ta bort ${open.length} objekt`;
+  store.transact(label, (tx) => {
+    // Vyer på ett blad (0.8.9) tas bort från bladet; vyerna finns kvar i projektet.
+    removeViewportsTx(tx, new Set(viewports));
     const files = new Set<Id>();
     for (const id of withHosted(tx, open)) {
       const el = tx.doc.elements[id];
@@ -238,6 +243,8 @@ export function moveElements(
       const patch = movePatch(tx.doc, el, d);
       if (patch) tx.putElement({ ...el, params: { ...el.params, ...patch } });
     }
+    // Vyer på ett blad följer med det ritade på bladet (0.8.9).
+    moveViewportsTx(tx, set, d);
     if (opts.keepJoins !== false) result.released = followJoins(tx, before, set, d);
   });
   return result;

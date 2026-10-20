@@ -10,6 +10,7 @@ import { EXTERIOR_INSET, FRAME_DEFAULTS } from '../elements/opening';
 import { numberingOf, roomNumbersFor, type SpaceParams } from '../elements/rooms';
 import { faceChoices, faceOf, outsideSide } from '../elements/wallSides';
 import { escapeHtml, PARAM_LABELS } from './labels';
+import type { TextParams } from '../elements/annotation';
 import { markerFrame, markerName, type MarkerParams, type NorthParams } from '../elements/markers';
 import type { RoofParams } from '../elements/roof';
 import { radiusOf } from '../geometry/arc';
@@ -167,13 +168,18 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         <p class="note">${linked ? 'Måttet följer väggar och öppningar. Skriv ett nytt värde så flyttas det som måttet pekar på.' : 'Fritt mått. Skriv ett nytt värde så flyttas måttpunkten.'}</p>`;
     }
     case 'Text': {
-      const p = resolveParams<{ text: string; height: number; angle: number; bold?: boolean; align?: string }>(doc, el);
+      const p = resolveParams<TextParams>(doc, el);
+      const opt = (cur: string, v: string, label: string) => `<option value="${v}"${v === cur ? ' selected' : ''}>${label}</option>`;
       const align = p.align ?? 'start';
-      const opt = (v: string, label: string) => `<option value="${v}"${v === align ? ' selected' : ''}>${label}</option>`;
+      const anchor = p.anchor ?? '';
       return `<label class="field" for="f-text-text"><span>Text</span><textarea id="f-text-text" data-key="text:text" rows="2">${escapeHtml(p.text)}</textarea></label>
         <div class="fields">${numberField('param:height', 'Texthöjd på papper', p.height, 'mm', 2)}${numberField('param:angle', 'Vridning', p.angle, '°')}
-        <label class="field"><span>Justering</span><select data-key="text:align">${opt('start', 'Vänster')}${opt('middle', 'Mitten')}${opt('end', 'Höger')}</select></label></div>
-        <label class="check"><input type="checkbox" data-key="param:bold"${p.bold ? ' checked' : ''}> Fet stil</label>`;
+        <label class="field"><span>Justering</span><select data-key="text:align">${opt(align, 'start', 'Vänster')}${opt(align, 'middle', 'Mitten')}${opt(align, 'end', 'Höger')}</select></label>
+        <label class="field"><span>Förankring</span><select data-key="text:anchor">${opt(anchor, '', 'Första radens baslinje')}${opt(anchor, 'top', 'Överkant')}${opt(anchor, 'middle', 'Mitt')}${opt(anchor, 'bottom', 'Underkant')}</select></label></div>
+        <label class="check"><input type="checkbox" data-key="param:bold"${p.bold ? ' checked' : ''}> Fet stil</label>
+        <h3>Textruta</h3>
+        <div class="fields">${numberField('param:maxWidth', 'Största bredd', p.maxWidth ?? 0, 'mm', 1)}${numberField('param:maxHeight', 'Största höjd', p.maxHeight ?? 0, 'mm', 1)}</div>
+        <p class="note">Mått på papperet; 0 är ingen gräns. Raderna bryts vid ord. Ryms texten inte i höjden visas en röd ram på skärmen, som inte skrivs ut.</p>`;
     }
     default:
       return '';

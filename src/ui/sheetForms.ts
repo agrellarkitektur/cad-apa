@@ -1,5 +1,5 @@
 import type { Id, ProjectDoc, Sheet } from '../core/model';
-import { deleteSheet, duplicateSheet, masterOf, mastersOf, PAPER_SIZES, PROJECT_FIELDS, removeFromSheet, removeViewport, saveProjectFields, saveSheet, setViewportCrop, SHEET_FIELDS, SHEET_TEXT_HEIGHTS, sheetOfItem, sheetOfViewport, updateSheetText, updateViewport } from '../core/sheets';
+import { deleteSheet, duplicateSheet, masterOf, mastersOf, PAPER_SIZES, PROJECT_FIELDS, removeViewport, saveProjectFields, saveSheet, setViewportCrop, SHEET_FIELDS, sheetOfViewport, updateViewport } from '../core/sheets';
 import type { DocStore } from '../core/store';
 import { centeredAt, placeableViews, viewCenter, viewSource } from '../repr/sheet';
 import { SMART_TEXT } from '../repr/smartText';
@@ -9,8 +9,8 @@ import { icons } from './icons';
 import { escapeHtml } from './labels';
 
 /**
- * Inställningarna för ett ritningsblad, en vy på ett blad (0.8 del 3) och en
- * text på bladet (0.8.7), i egenskapspanelen som det andra i projektträdet:
+ * Inställningarna för ett ritningsblad och en vy på ett blad (0.8 del 3),
+ * i egenskapspanelen som det andra i projektträdet:
  * inget ändras förrän man sparar. Att lägga en vy på bladet och ta bort
  * något görs direkt.
  *
@@ -22,14 +22,16 @@ import { escapeHtml } from './labels';
 const esc = escapeHtml;
 const field = (label: string, input: string) => `<label class="field"><span>${label}</span>${input}</label>`;
 
-/** Det som har ett formulär här: bladet och sakerna på det. */
-export type SheetFormKind = 'sheet' | 'viewport' | 'sheetText';
+/** Det som har ett formulär här: bladet och vyerna på det. Det som är ritat på bladet är vanliga objekt (0.8.9). */
+export type SheetFormKind = 'sheet' | 'viewport';
 
 export interface SheetFormHost {
-  /** Visa något annat i panelen: bladet, en vy eller en text på det. */
+  /** Visa något annat i panelen: bladet eller en vy på det. */
   pick(item: { kind: SheetFormKind; id: Id }): void;
   /** Börja skriva text på bladet (textverktyget). */
   startText(): void;
+  /** Börja rita linjer och ytor på bladet (2D-verktyget, 0.8.9). */
+  startDraw(): void;
   /** Lägg en vy på bladet, mitt på den lediga ytan. */
   place(sheetId: Id, view: Id, scale: number): void;
   /** Öppna ett mallblad för att rita på det. */
@@ -58,8 +60,28 @@ function folderOptions(doc: ProjectDoc, current: Id | null): string {
 }
 
 function scaleOptions(current: number): string {
-  const list = ANNOTATION_SCALES.includes(current) ? ANNOTATION_SCALES : [...ANNOTATION_SCALES, current].sort((a, b) => a - b);
-  return list.map((n) => `<option value="${n}"${n === current ? ' selected' : ''}>1:${n}</option>`).join('');
+  const own = !ANNOTATION_SCALES.includes(current);
+  return (
+    ANNOTATION_SCALES.map((n) => `<option value="${n}"${n === current ? ' selected' : ''}>1:${n}</option>`).join('') + `<option value="egen"${own ? ' selected' : ''}>Egen skala…</option>`
+  );
+}
+
+/**
+ * Skalan för en vy: de vanliga skalorna och *Egen skala* (0.8.9), där man
+ * skriver nämnaren i fältet bredvid, 1:___.
+ */
+function scaleField(name: string, current: number, attr = ''): string {
+  const own = !ANNOTATION_SCALES.includes(current);
+  return `<span class="scale-pick"><select name="${name}"${attr}>${scaleOptions(current)}</select><span class="scale-own"${own ? '' : ' hidden'}>1:<input name="${name}-own" type="number" min="1" max="100000" step="1" value="${current}" inputmode="numeric" aria-label="Egen skala, 1:"></span></span>`;
+}
+
+/** Skalan som valts i ett `scaleField`: nämnaren, eller null om den egna inte är ett tal. */
+function readScale(form: HTMLFormElement, name: string): number | null {
+  const sel = form.querySelector<HTMLSelectElement>(`select[name="${name}"]`);
+  if (!sel) return null;
+  const v = sel.value === 'egen' ? form.querySelector<HTMLInputElement>(`input[name="${name}-own"]`)?.value : sel.value;
+  const n = Math.round(Number(v));
+  return Number.isFinite(n) && n >= 1 ? n : null;
 }
 
 const ORIENTATION = { landscape: 'Liggande', portrait: 'Stående' } as const;
@@ -91,35 +113,9 @@ function smartFields(doc: ProjectDoc, s: Sheet): string {
     </section>`;
 }
 
-/** Texthöjderna att välja, med den nuvarande om den inte finns i listan. */
-function heightOptions(current: number): string {
-  const list = SHEET_TEXT_HEIGHTS.includes(current) ? SHEET_TEXT_HEIGHTS : [...SHEET_TEXT_HEIGHTS, current].sort((a, b) => a - b);
-  return list.map((h) => `<option value="${h}"${h === current ? ' selected' : ''}>${String(h).replace('.', ',')} mm</option>`).join('');
-}
-
 export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id: Id }): string {
   const actions = (extra = '') =>
     `<div class="tree-save">${extra}<button type="button" class="btn" data-tree="reset" disabled>Återställ</button><button type="submit" class="btn btn-primary" data-tree="save" disabled>Spara</button></div>`;
-  if (item.kind === 'sheetText') {
-    const sheet = sheetOfItem(doc, item.id);
-    const it = sheet?.items.find((i) => i.id === item.id);
-    if (!sheet || it?.kind !== 'text') return '';
-    const smart = SMART_TEXT.map(([k, d]) => `<code title="${esc(d)}">{${esc(k)}}</code>`).join(' ');
-    return `<form class="tree-form sheet-form" data-tree-kind="sheetText" data-tree-id="${it.id}">
-      <header class="sel-head"><h2>Text</h2><p>Text på bladet ${esc(sheet.number)} · ${esc(sheet.name)}</p></header>
-      <section>
-        <div class="fields">
-          ${field('Text', `<textarea class="sheet-text-value" name="text" rows="${Math.min(8, Math.max(2, it.text.split('\n').length))}">${esc(it.text)}</textarea>`)}
-          ${field('Höjd', `<select name="height">${heightOptions(it.height)}</select>`)}
-        </div>
-        <label class="check"><input type="checkbox" name="bold"${it.bold ? ' checked' : ''}> Fet stil</label>
-        <p class="note">Dubbelklicka på texten på bladet för att skriva direkt i den, och dra den för att flytta den. Höjden är på papperet.</p>
-        <p class="note smart-note">Texten kan innehålla smarttext som fylls i av sig själv: ${smart}</p>
-        <div class="row"><button type="button" class="btn" data-sheet="back" data-id="${sheet.id}">${icons.sheet}<span>Bladet</span></button></div>
-      </section>
-      ${actions(`<button type="button" class="btn btn-danger" data-sheet="remove-item">Ta bort texten</button>`)}
-    </form>`;
-  }
   if (item.kind === 'viewport') {
     const sheet = sheetOfViewport(doc, item.id);
     const vp = sheet?.viewports.find((v) => v.id === item.id);
@@ -132,11 +128,11 @@ export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id
       <section>
         <div class="fields">
           ${field('Vy', `<select name="view">${options.map((o) => `<option value="${esc(o.id)}"${o.id === vp.view ? ' selected' : ''}>${esc(o.name)}${o.id.startsWith('modell:') ? ' (modell)' : ''}</option>`).join('')}</select>`)}
-          ${field('Skala', `<select name="scale">${scaleOptions(vp.scale)}</select>`)}
+          ${field('Skala', scaleField('scale', vp.scale))}
           ${field('Rubrik', `<input name="title" value="${esc(vp.title ?? '')}" placeholder="${esc(src?.name ?? '')}">`)}
         </div>
         <label class="check"><input type="checkbox" name="showScale"${vp.hideScale ? '' : ' checked'}> Skalan i rubriken</label>
-        <p class="note">Texter, mått och symboler ritas för vyns skala, så att de får rätt höjd på papperet. Dra vyn på bladet för att flytta den; den fäster mot de andra vyernas kanter och mittlinjer.</p>
+        <p class="note">Texter, mått och symboler ritas för vyns skala, så att de får rätt höjd på papperet. Dra vyn på bladet för att flytta den; den fäster mot de andra vyernas kanter och mittlinjer. Markera flera saker på bladet (med en ruta eller Shift) för att flytta dem tillsammans.</p>
         <p class="note">${vp.crop ? 'Ramen är ändrad: det som ligger utanför den syns inte på bladet.' : 'Ramen följer det som är ritat i vyn.'} Dra i greppen i ramens kanter och hörn för att ändra den.</p>
         <div class="row">
           <button type="button" class="btn" data-sheet="reset-crop"${vp.crop ? '' : ' disabled'}>Återställ ramen till innehållet</button>
@@ -158,7 +154,6 @@ export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id
     })
     .join('');
   const placeable = placeableViews(doc);
-  const texts = s.items;
   const master = masterOf(doc, s);
   const masters = mastersOf(doc);
   return `<form class="tree-form sheet-form" data-tree-kind="sheet" data-tree-id="${s.id}">
@@ -181,23 +176,14 @@ export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id
       ${views ? `<div class="nav-list">${views}</div>` : '<p class="note">Inga vyer än. Välj en vy och lägg den på bladet.</p>'}
       <div class="fields">
         ${field('Vy', `<select data-sheet-view>${placeable.map((o) => `<option value="${esc(o.id)}" data-scale="${o.def.scale ?? 100}">${esc(o.name)}${o.id.startsWith('modell:') ? ' (modell)' : ''}</option>`).join('')}</select>`)}
-        ${field('Skala', `<select data-sheet-scale>${scaleOptions(placeable[0]?.def.scale ?? 100)}</select>`)}
+        ${field('Skala', scaleField('placeScale', placeable[0]?.def.scale ?? 100, ' data-sheet-scale'))}
       </div>
       <div class="row"><button type="button" class="btn" data-sheet="place">${icons.plus}<span>Lägg på bladet</span></button></div>
     </section>
     <section>
-      <h3>Texter</h3>
-      ${
-        texts.length
-          ? `<div class="nav-list">${texts
-              .map(
-                (it) =>
-                  `<div class="view-row"><button type="button" class="view-apply" data-sheet="pick-text" data-id="${it.id}">${esc(it.text.split('\n')[0])}<small>${String(it.height).replace('.', ',')} mm</small></button><button type="button" class="icon-mini view-more" data-sheet="remove-item-row" data-id="${it.id}" aria-label="Ta bort texten" title="Ta bort texten">${icons.close}</button></div>`,
-              )
-              .join('')}</div>`
-          : '<p class="note">Inga texter på bladet än.</p>'
-      }
-      <div class="row"><button type="button" class="btn" data-sheet="start-text">${icons.text}<span>Skriv text på bladet</span></button></div>
+      <h3>Rita på bladet</h3>
+      <p class="note">Linjer, ytor, text och bilder ritas direkt på bladet i mm på papperet, med samma verktyg som i planen. Bilder läggs in med <i>Lägg in underlag…</i>. Texter kan ha smarttext och en textruta.</p>
+      <div class="row"><button type="button" class="btn" data-sheet="start-text">${icons.text}<span>Skriv text</span></button><button type="button" class="btn" data-sheet="start-draw">${icons.draw2d}<span>Linjer och ytor</span></button></div>
     </section>
     <section>
       <div class="row">
@@ -215,17 +201,26 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
   const kind = form.dataset.treeKind as SheetFormKind;
   const id = form.dataset.treeId!;
   const dirty = () => form.querySelectorAll<HTMLButtonElement>('[data-tree="save"], [data-tree="reset"]').forEach((b) => (b.disabled = false));
-  const own = '[data-sheet-view], [data-sheet-scale]';
+  const own = '[data-sheet-view], [data-sheet-scale], [name="placeScale-own"]';
   form.addEventListener('input', (e) => {
     if (!(e.target as HTMLElement).matches(own)) dirty();
   });
   form.addEventListener('change', (e) => {
     const t = e.target as HTMLSelectElement;
+    // Egen skala: fältet för 1:___ visas (0.8.9).
+    if (t.matches('.scale-pick select')) {
+      const own = t.parentElement!.querySelector<HTMLElement>('.scale-own')!;
+      own.hidden = t.value !== 'egen';
+      if (!own.hidden) own.querySelector('input')?.select();
+    }
     // Vyn att lägga på bladet föreslår sin egen skala.
     if (t.matches('[data-sheet-view]')) {
       const n = Number(t.selectedOptions[0]?.dataset.scale) || 100;
       const sel = form.querySelector<HTMLSelectElement>('[data-sheet-scale]')!;
       sel.innerHTML = scaleOptions(n);
+      const own = sel.parentElement!.querySelector<HTMLElement>('.scale-own')!;
+      own.hidden = sel.value !== 'egen';
+      own.querySelector('input')!.value = String(n);
       return;
     }
     // Ett annat mallblad föreslår mallens format.
@@ -250,13 +245,13 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
       host.rerender();
       return;
     }
-    const sheet = kind === 'sheet' ? store.doc.sheets.find((x) => x.id === id) : kind === 'viewport' ? sheetOfViewport(store.doc, id) : sheetOfItem(store.doc, id);
+    const sheet = kind === 'sheet' ? store.doc.sheets.find((x) => x.id === id) : sheetOfViewport(store.doc, id);
     if (!sheet) return;
     switch (b.dataset.sheet) {
       case 'place': {
         const view = form.querySelector<HTMLSelectElement>('[data-sheet-view]')?.value;
-        const scale = Number(form.querySelector<HTMLSelectElement>('[data-sheet-scale]')?.value) || 100;
-        if (view) host.place(sheet.id, view, scale);
+        const scale = readScale(form, 'placeScale');
+        if (view && scale) host.place(sheet.id, view, scale);
         break;
       }
       case 'pick-viewport':
@@ -265,22 +260,15 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
       case 'open-master':
         host.openMaster(b.dataset.id!);
         break;
-      case 'pick-text':
-        host.pick({ kind: 'sheetText', id: b.dataset.id! });
-        break;
       case 'start-text':
         host.startText();
+        break;
+      case 'start-draw':
+        host.startDraw();
         break;
       case 'reset-crop':
         setViewportCrop(store, sheet.id, id, null);
         host.rerender();
-        break;
-      case 'remove-item-row':
-        removeFromSheet(store, sheet.id, [b.dataset.id!]);
-        break;
-      case 'remove-item':
-        removeFromSheet(store, sheet.id, [id]);
-        host.pick({ kind: 'sheet', id: sheet.id });
         break;
       case 'remove-row':
         removeViewport(store, sheet.id, b.dataset.id!);
@@ -303,7 +291,7 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
         break;
       }
       case 'delete':
-        void askConfirm('Ta bort bladet?', `${sheet.number} ${sheet.name} tas bort. Vyerna finns kvar i projektet. Det går att ångra.`).then((ok) => {
+        void askConfirm('Ta bort bladet?', `${sheet.number} ${sheet.name} tas bort med det som är ritat på det. Vyerna finns kvar i projektet. Det går att ångra.`).then((ok) => {
           if (!ok) return;
           deleteSheet(store, sheet.id);
           host.closed();
@@ -318,7 +306,7 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
     if (kind === 'viewport') {
       const sheet = sheetOfViewport(store.doc, id);
       if (!sheet) return;
-      const scale = Math.round(Number(str('scale'))) || 100;
+      const scale = readScale(form, 'scale') ?? 100;
       const view = str('view') || undefined;
       const vp = sheet.viewports.find((v) => v.id === id)!;
       // Byts skalan eller vyn står mitten kvar där den var på bladet. En
@@ -363,12 +351,6 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
       const p = store.doc.project;
       const changed = PROJECT_FIELDS.some((x) => (p.fields[x.key] ?? '') !== project[x.key].trim()) || (str('projectName').trim() && str('projectName').trim() !== p.name);
       if (changed) saveProjectFields(store, project, str('projectName'));
-    } else if (kind === 'sheetText') {
-      updateSheetText(store, id, { text: str('text').replace(/\r/g, ''), height: Number(str('height')) || 2.5, bold: d.get('bold') !== null }, 'Spara texten på bladet');
-      if (!sheetOfItem(store.doc, id)) {
-        host.closed();
-        return;
-      }
     }
     host.saved();
   });

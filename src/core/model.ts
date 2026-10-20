@@ -135,26 +135,10 @@ export interface Viewport {
 }
 
 /**
- * En fri text på ett blad (0.8.7, format 7). `at` är första radens
- * baslinje till vänster, i mm från papperets nedre vänstra hörn. Höjden är
- * i mm på papperet. Texten kan innehålla smarttext, t.ex. `{datum}`.
+ * Ett ritningsblad (format 9). Det som är ritat direkt på bladet (linjer,
+ * ytor, text och bilder, 0.8.9) är element med `space` satt till bladets id,
+ * i mm på papperet från nedre vänstra hörnet, som på ett mallblad.
  */
-export interface SheetTextItem {
-  kind: 'text';
-  id: Id;
-  at: [number, number];
-  text: string;
-  height: number;
-  bold?: boolean;
-}
-
-/**
- * Det som ligger på ett blad utöver vyerna (0.8.6): texter (0.8.7). Senare
- * skalstock och stämplar (0.8.12).
- */
-export type SheetItem = SheetTextItem;
-
-/** Ett ritningsblad (format 8). */
 export interface Sheet {
   id: Id;
   /** Ritningsnummer, t.ex. "A-40.1-101". Ger också filnamnet vid export. */
@@ -167,8 +151,6 @@ export interface Sheet {
   /** Bladets fält utöver projektets (datum, ändring, skede …), för smarttexten. */
   fields: Record<string, string>;
   viewports: Viewport[];
-  /** Det som ligger på bladet utöver vyerna, nedifrån och upp (0.8.6). */
-  items: SheetItem[];
 }
 
 /** En fil som hör till projektet (format 5): en bild, en PDF eller en DXF som underlag. */
@@ -257,8 +239,8 @@ export interface Element<P extends object = Record<string, unknown>> {
   /** Definitionen elementet är en instans av. */
   definition?: Id;
   /**
-   * Var elementet är ritat (format 5): en fasad, en sektion (markörens id)
-   * eller ett arbetsblad. Utelämnad = våningens plan. Koordinaterna gäller
+   * Var elementet är ritat (format 5): en fasad, en sektion (markörens id),
+   * ett arbetsblad eller ett ritningsblad (0.8.9, mm på papperet). Utelämnad = våningens plan. Koordinaterna gäller
    * i den ytan; i en fasad eller sektion är x längs linjen och y höjden.
    */
   space?: Id;
@@ -276,7 +258,7 @@ export interface Element<P extends object = Record<string, unknown>> {
 }
 
 export const FORMAT = 'bacchus-project';
-export const FORMAT_VERSION = 8;
+export const FORMAT_VERSION = 9;
 
 export interface ProjectDoc {
   format: typeof FORMAT;

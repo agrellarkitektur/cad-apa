@@ -677,6 +677,10 @@ på bladet sina egna.
 
 ## Text på bladet och vyernas ram (0.8.7, format 7)
 
+*`SheetTextItem`, `Sheet.items` och textverktyget på bladet
+(`sheetText.ts`) togs bort i 0.8.9: text på bladet är en vanlig text (se
+nedan). Ramen och greppen gäller.*
+
 - **Modellen**: `SheetTextItem` (`kind: 'text'`, `at`, `text`, `height`,
   `bold?`) i `SheetItem`. `at` är första radens baslinje till vänster, i mm
   från papperets nedre vänstra hörn (inte från höger som huvudet), och
@@ -757,4 +761,47 @@ på bladet sina egna.
   färg, justering från TEXT och MTEXT, kända platshållare till smarttext);
   `scripts/mallblad-projekt.mts` bygger ett projekt med dem som förvalt
   mallblad. Att göra om DXF i appen ligger efter pilotprojektet.
+
+## Grafik och textrutor på bladen (0.8.9, format 9)
+
+- **Modellen**: det som är ritat på ett blad är element med `space` satt till
+  bladets id, i mm på papperet från nedre vänstra hörnet, som på ett
+  mallblad. `Sheet.items` finns inte längre (`parse` hoppar över det).
+  `sheetContents(doc, id)` i `src/core/sheets.ts` ger elementen;
+  `deleteSheet` tar bort dem (och underlagens filer) och `duplicateSheet`
+  kopierar dem.
+- **Vyerna i markeringen**: en vys id ligger i `selection` som ett objekts.
+  `moveElements` flyttar vyer bland id:na (`moveViewportsTx`) och
+  `deleteElements` tar bort dem från bladet (`removeViewportsTx`), i samma
+  transaktion som elementen. `isViewportId` känner igen dem. `opsFor` och
+  `railFor` ger bara Flytta när en vy är med; snabbraden tar bort Vrid,
+  Spegla, Kopiera och Riv. `moveOnSheet(store, ids, d)` flyttar vyer ensamma.
+- **Ritningen**: `buildSheet` ritar bladets element med `buildPlan` och
+  `sheetViewStates` (skala 1, bladets smarttext i `smart`), underlagen under
+  vyerna och resten över. `SheetDrawing.pickables` har vyerna (en sluten
+  ram med rubriken, prioritet −100, så att det ritade på vyn träffas först)
+  och elementens. `createContext` ger allt på ett blad åtgärden `plain`.
+- **Smarttext i planen**: `ViewStates.smart` är smarttextens värden; texten
+  fylls i i `textType.plan` före radbrytningen, och ett tomt fält ger ingen
+  text. `masterPrims` använder samma väg. `expandSmartText` ligger i
+  `src/elements/textLayout.ts` (och exporteras från `smartText.ts`).
+- **Textrutor**: `TextParams` har `anchor` (`top`, `middle`, `bottom`;
+  utelämnad = första radens baslinje), `maxWidth` och `maxHeight` i mm på
+  papperet. `layoutText` i `src/elements/textLayout.ts` bryter raderna
+  (`wrapLine`, Helveticas `textWidth`) och ger baslinjerna, ytan och rutan i
+  textens eget system; `textPoint` lägger dem i modellen med vridning och
+  skala. Ryms texten inte i höjden ritas en röd ram med `part: 'skärm'`,
+  som PDF:en hoppar över (som `papper`). Redigeringen på plats börjar på
+  första raden.
+- **I appen** (`src/ui/app/sheets.ts`): `SheetTool` lägger sig utanpå
+  `SelectTool`. Den sköter greppen i en ensam markerad vys ram och dragning
+  av en vy ensam (med fästning mot de andra vyernas och det ritades kanter);
+  allt annat går till markeringsverktyget. `toolFor('select')` i `app.ts`
+  ger `SheetTool` på blad. Textverktyget och 2D (`SHEET_TOOLS` i `shell.ts`)
+  ritar på bladet (`host.space()` ger bladets id); Mått ger ett tips.
+  `PropertiesPanel.selectionItem` visar vyns formulär när en vy är ensam
+  markerad, och `SmartMenu.customFor` ger dess smartmeny (byggs om vid
+  `refresh`). Inget markerat på bladet visar bladets formulär.
+- **Egen skala**: `scaleField` och `readScale` i `src/ui/sheetForms.ts`
+  (*Egen skala…* med ett fält för nämnaren).
 

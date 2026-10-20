@@ -1,18 +1,18 @@
 import { PRESETS, type StyleSheet } from '../core/graphics';
-import { isMaster, modelViewId, type Id, type ProjectDoc, type Sheet, type SheetItem, type SheetTextItem, type ViewDef, type Viewport, type Worksheet } from '../core/model';
+import { isMaster, modelViewId, type Id, type ProjectDoc, type Sheet, type ViewDef, type Viewport, type Worksheet } from '../core/model';
 import { FRAME_MARGIN, masterOf, paperSize } from '../core/sheets';
 import { defaultState, existingState, type ViewStates } from '../core/states';
 import { markerName } from '../elements/markers';
 import { textWidth } from '../formats/helvetica';
 import { clipPrims } from '../geometry/clipRect';
-import { buildPlan } from './plan';
+import { buildPlan, type Pickable } from './plan';
 import { boundsOf, type Bounds, type Primitive, type Vec2 } from './primitives';
 import { buildSection } from './section';
-import { expandSmartText, smartVars } from './smartText';
+import { smartVars } from './smartText';
 
 /**
  * Ritningsblad (0.8 del 3): mallbladets grafik (0.8.8), vyerna ritade i sin
- * skala på papperet och texterna på bladet. Allt anges i mm på papperet med
+ * skala på papperet och det som är ritat direkt på bladet (0.8.9). Allt anges i mm på papperet med
  * nollpunkten i nedre vänstra hörnet och y uppåt, så att skärmen och
  * PDF-exporten ritar samma primitiver.
  *
@@ -288,47 +288,6 @@ export function centeredAt(doc: ProjectDoc, view: Id, scale: number, center: Vec
   return [Math.round(center[0] - mid[0]), Math.round(center[1] - mid[1])];
 }
 
-/** En sak på bladet utöver vyerna (en text), färdig att rita. */
-export interface PlacedItem {
-  id: Id;
-  kind: SheetItem['kind'];
-  /** Ytan på papperet, för att markera och flytta. */
-  frame: Bounds;
-  prims: Primitive[];
-}
-
-/** Radavståndet i en text på bladet, som för fri text i vyerna. */
-const LINE_STEP = 1.5;
-
-/** En texts rader med smarttexten ifylld. */
-function textLines(item: SheetTextItem, vars: Record<string, string>): string[] {
-  return expandSmartText(item.text, vars).split('\n');
-}
-
-/** Ytan en text tar på papperet. */
-function textBounds(item: SheetTextItem, lines: string[]): Bounds {
-  const h = item.height;
-  const w = Math.max(h, ...lines.map((l) => textWidth(l, h, item.bold)));
-  return { minX: item.at[0], minY: item.at[1] - h * LINE_STEP * (lines.length - 1) - h * 0.3, maxX: item.at[0] + w, maxY: item.at[1] + h };
-}
-
-/** En text på bladet ritad, rad för rad. */
-function textPrims(item: SheetTextItem, lines: string[]): Primitive[] {
-  const origin = { objectType: 'SheetText', objectId: item.id };
-  const pen = { weight: item.height >= 5 ? 0.35 : item.height >= 3.5 ? 0.25 : 0.18 };
-  return lines.map((text, i): Primitive => ({ kind: 'text', at: [item.at[0], item.at[1] - i * item.height * LINE_STEP], text, height: item.height, ...(item.bold ? { bold: true } : {}), pen, origin }));
-}
-
-/** Ytan en text på bladet tar på papperet, med smarttexten ifylld. */
-export function itemBounds(doc: Pick<ProjectDoc, 'project'>, sheet: Sheet, item: SheetItem, todayText: string): Bounds {
-  return textBounds(item, textLines(item, smartVars(doc, sheet, todayText)));
-}
-
-function placeItem(doc: ProjectDoc, sheet: Sheet, item: SheetItem, todayText: string): PlacedItem {
-  const lines = textLines(item, smartVars(doc, sheet, todayText));
-  return { id: item.id, kind: item.kind, frame: textBounds(item, lines), prims: textPrims(item, lines) };
-}
-
 /** Papperet: vitt med en tunn kant, bara på skärmen (`part: 'papper'`). */
 export function paperPrim(w: number, h: number): Primitive {
   return {
@@ -349,24 +308,30 @@ export function paperPrim(w: number, h: number): Primitive {
   };
 }
 
-/** Inställningarna ett mallblad ritas med (0.8.8): skala 1:1, utan tillstånd och jämförelse. */
-export function masterViewStates(doc: ProjectDoc, master: Worksheet): ViewStates {
-  return { state: defaultState(doc), viewId: modelViewId(master.id), place: master.id, scale: 1 };
+/** Inställningarna ett mallblad ritas med (0.8.8): skala 1:1, utan tillstånd och jämförelse. Med `smart` fylls smarttexten i. */
+export function masterViewStates(doc: ProjectDoc, master: Worksheet, smart?: Record<string, string>): ViewStates {
+  return { state: defaultState(doc), viewId: modelViewId(master.id), place: master.id, scale: 1, ...(smart ? { smart } : {}) };
 }
 
 /** Det som är ritat på ett mallblad (mm på papperet), med smarttexten ifylld från bladet. */
 export function masterPrims(doc: ProjectDoc, master: Worksheet, sheet: Sheet, todayText: string): Primitive[] {
-  const vars = smartVars(doc, sheet, todayText);
-  const out: Primitive[] = [];
-  for (const p of buildPlan(doc, doc.storeys[0].id, masterViewStates(doc, master)).prims) {
-    if (p.kind !== 'text' || !p.text.includes('{')) out.push(p);
-    else {
-      // Ett tomt fält ger ingen text.
-      const text = expandSmartText(p.text, vars);
-      if (text.trim()) out.push({ ...p, text });
-    }
-  }
-  return out;
+  return buildPlan(doc, doc.storeys[0].id, masterViewStates(doc, master, smartVars(doc, sheet, todayText))).prims;
+}
+
+/** Inställningarna det som är ritat på ett blad ritas med (0.8.9): som ett mallblad, med bladets smarttext. */
+export function sheetViewStates(doc: ProjectDoc, sheet: Sheet, todayText: string): ViewStates {
+  return { state: defaultState(doc), viewId: modelViewId(sheet.id), place: sheet.id, scale: 1, smart: smartVars(doc, sheet, todayText) };
+}
+
+/** Det klickbara för en vy på bladet: ramen och rubriken under, lägre än det som är ritat på bladet. */
+function viewportPickable(v: PlacedView): Pickable {
+  const f = { ...v.frame, minY: v.frame.minY - 8 };
+  return {
+    id: v.id,
+    priority: -100,
+    regions: [],
+    prims: [{ kind: 'polyline', points: [[f.minX, f.minY], [f.maxX, f.minY], [f.maxX, f.maxY], [f.minX, f.maxY]], closed: true, pen: { weight: 0.25 } }],
+  };
 }
 
 export interface SheetDrawing {
@@ -375,20 +340,26 @@ export interface SheetDrawing {
   /** Allt på bladet, mm på papperet. Papperet självt ligger först (`part: 'papper'`). */
   prims: Primitive[];
   views: PlacedView[];
-  items: PlacedItem[];
+  /** Det som går att markera (0.8.9): det som är ritat på bladet och vyerna, med vyns id. */
+  pickables: Pickable[];
   /** Den vanliga ritningsramen (`FRAME_MARGIN`), som flyttade saker fäster mot. */
   frame: Bounds;
 }
 
-/** Ett helt ritningsblad: papper, mallbladets grafik, vyerna och texterna. */
+/**
+ * Ett helt ritningsblad: papper, mallbladets grafik, underlagen på bladet,
+ * vyerna och sedan det andra som är ritat på bladet (0.8.9).
+ */
 export function buildSheet(doc: ProjectDoc, sheet: Sheet, opt: { autoDims?: boolean; today: string }): SheetDrawing {
   const [w, h] = paperSize(sheet);
   const frame: Bounds = { minX: FRAME_MARGIN.left, minY: FRAME_MARGIN.bottom, maxX: w - FRAME_MARGIN.right, maxY: h - FRAME_MARGIN.top };
   const master = masterOf(doc, sheet);
   const views = sheet.viewports.map((vp) => placeView(doc, vp, opt));
-  const items: PlacedItem[] = sheet.items.map((it) => placeItem(doc, sheet, it, opt.today));
-  const prims: Primitive[] = [paperPrim(w, h), ...(master ? masterPrims(doc, master, sheet, opt.today) : []), ...views.flatMap((v) => v.prims), ...items.flatMap((i) => i.prims)];
-  return { size: [w, h], prims, views, items, frame };
+  const drawn = buildPlan(doc, doc.storeys[0].id, sheetViewStates(doc, sheet, opt.today));
+  const under = drawn.prims.filter((q) => q.origin?.objectType === 'Underlay');
+  const over = drawn.prims.filter((q) => q.origin?.objectType !== 'Underlay');
+  const prims: Primitive[] = [paperPrim(w, h), ...(master ? masterPrims(doc, master, sheet, opt.today) : []), ...under, ...views.flatMap((v) => v.prims), ...over];
+  return { size: [w, h], prims, views, pickables: [...views.map(viewportPickable), ...drawn.pickables], frame };
 }
 
 /** En vy ensam på ett papper som är precis så stort som den, för export av vyer. */

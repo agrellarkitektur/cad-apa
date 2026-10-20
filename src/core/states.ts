@@ -31,8 +31,13 @@ export interface ViewStates {
    * eller modellvyns (`modelViewId`). Utelämnad = våningens modellvy.
    */
   viewId?: Id;
-  /** Ytan som ritas (format 5): en fasad, sektion eller ett arbetsblad. Utelämnad = våningens plan. */
+  /** Ytan som ritas (format 5): en fasad, sektion, ett arbetsblad eller ritningsblad (0.8.9). Utelämnad = våningens plan. */
   place?: Id;
+  /**
+   * Smarttextens värden (0.8.9): texter ritas med `{namn}` ifyllt, före
+   * radbrytningen. Satt på ritningsblad och för mallblad på ett blad.
+   */
+  smart?: Readonly<Record<string, string>>;
   /** Vyns vy-taggar (format 5). */
   viewTags?: readonly string[];
   /** Visa 2D-element som inte syns i vyn, tonade, för att hitta dem. */

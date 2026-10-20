@@ -121,8 +121,10 @@ export function installMenus(app: AppContext) {
         { label: 'Rikta…', run: () => app.startUnderlayTool(first.id, 'align') },
       );
     }
-    // Underlag, fasader och annat som hör till ritningen finns i alla tillstånd.
-    if (els.every((e) => typeOf(e.type)?.global)) {
+    // Underlag, fasader och annat som hör till ritningen finns i alla tillstånd, liksom det som är ritat på ett blad eller mallblad (0.8.9).
+    const doc = app.store.doc;
+    const onPaper = (e: (typeof els)[number]) => doc.sheets.some((s) => s.id === e.space) || doc.worksheets.some((w) => w.id === e.space && w.paper);
+    if (els.every((e) => typeOf(e.type)?.global || onPaper(e))) {
       app.ctxMenu.open(x, y, items, 'Det markerade');
       return;
     }

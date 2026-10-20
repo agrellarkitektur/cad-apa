@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.8** (beta, mallblad); nästa är
-**0.8.9, grafik och textrutor på bladen**.
+**0.8.9** (beta, grafik och textrutor på bladen); nästa är
+**0.8.10, smarta fält**.
 
 ## Vad som fungerar
 
@@ -588,9 +588,34 @@ Version 0.8.8, mallblad (filformat 8):
 - Skalorna **1:25, 1:2500, 1:4000 och 1:5000** finns att välja
 - Projekt i format 7 och äldre öppnas inte (betaversion); öppna dem i 0.8.7
 
+Version 0.8.9, grafik och textrutor på bladen (filformat 9):
+- **Rita direkt på ritningsbladen**: linjer, rektanglar, ytor, text och
+  bilder (*Lägg in underlag…*), med samma verktyg som på mallbladet, i mm
+  på papperet. Det ritade ligger över vyerna; bilder ligger under dem.
+  Bladet följer inte tillstånden. Text på bladet kan ha smarttext, som
+  fylls i från bladet. Mått ritas i vyerna, inte på bladet
+- **Vyer och ritat markeras tillsammans**: klicka, Shift-klicka eller dra en
+  ruta över både vyer och det som är ritat, och flytta (dra, Modifiera,
+  Shift + piltangenterna) eller ta bort allt på en gång. En vy som dras
+  ensam fäster som förut mot de andras kanter och mittlinjer, och en ensam
+  markerad vy har grepp i ramen, sitt formulär och sin smartmeny
+- Texten på bladet från 0.8.7 är nu en **vanlig text**, som i vyerna
+- **Textrutor** för all fri text, i vyerna också: största bredd och höjd
+  (mm på papperet), vänster-, mitt- eller högerställd, och förankring i
+  rutans överkant, mitt eller underkant. Raderna bryts vid ord med
+  Helveticas bredder, så att skärmen och PDF:en bryter på samma ställen.
+  Ryms texten inte i höjden visas en röd ram på skärmen, som inte skrivs ut
+- **Egen skala** för en vy på ett blad: välj *Egen skala…* och skriv
+  nämnaren, 1:___
+- Smartmenyn för en vy säger *Återställ ram*; egenskaperna har kvar
+  *Återställ ramen till innehållet*
+- Ett borttaget blad tar med sig det som är ritat på det, och ett
+  duplicerat blad får kopior
+- Projekt i format 8 och äldre öppnas inte (betaversion); öppna dem i 0.8.8
+
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer, i dag 8 (sedan 0.8.8). Fram till
+Projektfilerna har ett formatnummer, i dag 9 (sedan 0.8.9). Fram till
 pilotprojektet (0.13) uppgraderas inte projekt från äldre betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp

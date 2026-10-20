@@ -33,11 +33,13 @@ export function installClipboard(app: AppContext) {
       return;
     }
     if (app.ui.marker) app.goTo({ kind: 'storey', id: app.ui.storey });
-    // På ett arbetsblad går bara det som är ritning att klistra in, inte väggar och dörrar.
-    const ws = app.ui.worksheet ?? undefined;
+    // På ett arbetsblad och ett ritningsblad (0.8.9) går bara det som är ritning att klistra in, inte väggar och dörrar.
+    const ws = app.ui.worksheet ?? app.ui.layout ?? undefined;
     const usable = ws ? { ...payload, elements: payload.elements.filter((e) => DRAWING_TYPES.has(e.type)) } : payload;
-    // Ligger originalen kvar på samma ställe hamnar kopian en bit bort.
-    const offset: [number, number] = originalsHere(app.store.doc, usable, app.ui.state, app.ui.storey) ? [1000, -1000] : [0, 0];
+    // Ligger originalen kvar på samma ställe hamnar kopian en bit bort (på papper 10 mm, annars 1 m).
+    const paper = !!app.ui.layout || app.store.doc.worksheets.some((w) => w.id === ws && w.paper);
+    const step = paper ? 10 : 1000;
+    const offset: [number, number] = originalsHere(app.store.doc, usable, app.ui.state, app.ui.storey) ? [step, -step] : [0, 0];
     const ids = pasteClip(app.store, usable, app.ui.state, app.ui.storey, offset, ws);
     if (!ids.length) {
       app.hint('Inget att klistra in här.');

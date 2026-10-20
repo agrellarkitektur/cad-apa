@@ -12,7 +12,8 @@ import {
   updateDefinition,
   updateParams,
 } from '../core/commands';
-import type { ProjectDoc } from '../core/model';
+import type { Element, ProjectDoc } from '../core/model';
+import { isViewportId } from '../core/sheets';
 import type { Action, ViewStates } from '../core/states';
 import { actionOf, existingState } from '../core/states';
 import type { DocStore } from '../core/store';
@@ -104,6 +105,8 @@ export class PropertiesPanel {
   onTreeClosed?: () => void;
   /** Det formulären för ritningsblad behöver av appen (0.8 del 3). */
   sheetHost?: SheetFormHost;
+  /** Något i markeringen som visas med ett eget formulär, t.ex. en ensam vy på ett blad (0.8.9). */
+  selectionItem?: () => TreeItem | null;
 
   /** Visa inställningarna för något i projektträdet. */
   showTreeItem(item: TreeItem | null): void {
@@ -159,12 +162,12 @@ export class PropertiesPanel {
     const scroll = this.body.scrollTop;
     const doc = this.store.doc;
     if (this.treeItem && !treeItemExists(doc, this.treeItem)) this.treeItem = null;
-    const item = this.tab === 'selection' && this.selection.size === 0 ? this.treeItem : null;
+    const item = this.tab !== 'selection' ? null : this.selection.size === 0 ? this.treeItem : (this.selectionItem?.() ?? null);
     if (item) {
       // Ändringar som inte sparats än ligger kvar när något annat ritas om.
       const open = this.body.querySelector<HTMLFormElement>('.tree-form');
       const dirty = open && open.dataset.treeId === item.id && !open.querySelector<HTMLButtonElement>('[data-tree="save"]')?.disabled;
-      if (!dirty && (item.kind === 'sheet' || item.kind === 'viewport' || item.kind === 'sheetText')) {
+      if (!dirty && (item.kind === 'sheet' || item.kind === 'viewport')) {
         // Ritningsblad och vyer på blad (0.8 del 3).
         this.body.innerHTML = sheetFormMarkup(doc, { kind: item.kind, id: item.id });
         if (this.sheetHost) bindSheetForm(this.body, this.store, this.sheetHost);
@@ -215,15 +218,17 @@ export class PropertiesPanel {
       .list()
       .map((id) => doc.elements[id])
       .filter(Boolean);
-    if (els.length === 0) return null;
+    const vps = this.viewportsSelected(doc);
+    if (els.length === 0 && vps === 0) return null;
 
     const btn = (action: string, icon: string, label: string, extra = '') =>
       `<button class="qb-btn${extra}" data-action="${action}" title="${escapeHtml(QUICK_TITLES[action] ?? label)}">${icon}<span>${escapeHtml(label)}</span></button>`;
-    const sameType = els.every((e) => e.type === els[0].type);
-    const kind = sameType ? els[0].type : 'mixed';
+    const sameType = els.length > 0 && els.every((e) => e.type === els[0].type);
+    const kind = sameType && !vps ? els[0].type : 'mixed';
+    // Vyer på ett blad (0.8.9) går att flytta och ta bort, inte vrida, spegla eller kopiera.
     const allowed = (id: QuickId, k: string) => {
       const a = QUICK_ACTIONS.find((q) => q.id === id);
-      return !!a && (a.types === 'all' || a.types.includes(k));
+      return !vps && !!a && (a.types === 'all' || a.types.includes(k));
     };
     const buttons: string[] = [];
     for (const id of this.quickFor(kind)) {
@@ -262,7 +267,7 @@ export class PropertiesPanel {
           // Riva eller behålla: bara för sådant som finns i Befintligt, när man tittar på ett förslag.
           const view = this.getView();
           const ex = existingState(doc);
-          if (ex && ex.id !== view.state && els.every((e) => e.states.includes(ex.id) && typeOf(e.type)?.compares)) {
+          if (!vps && ex && ex.id !== view.state && els.every((e) => e.states.includes(ex.id) && typeOf(e.type)?.compares)) {
             if (els.every((e) => e.states.includes(view.state))) buttons.push(btn('demolish', icons.demolish, 'Riv'));
             else if (els.every((e) => !e.states.includes(view.state))) buttons.push(btn('restore', icons.restore, 'Behåll'));
           }
@@ -287,6 +292,21 @@ export class PropertiesPanel {
     return `${head}<div class="qb-actions">${buttons.join('')}</div>`;
   }
 
+  /** Hur många vyer på ett blad som är markerade (0.8.9). */
+  private viewportsSelected(doc: ProjectDoc): number {
+    return this.selection.list().filter((id) => !doc.elements[id] && isViewportId(doc, id)).length;
+  }
+
+  /** Rubriken och undertiteln för det markerade, med vyerna på ett blad räknade (0.8.9). */
+  private titleOf(doc: ProjectDoc, els: Element[]): { title: string; sub: string } {
+    const vps = this.viewportsSelected(doc);
+    const n = els.length + vps;
+    const vpText = vps ? `${vps} ${vps === 1 ? 'vy' : 'vyer'} på bladet` : '';
+    if (n === 0) return { title: 'Inget markerat', sub: 'Tryck på det som ska markeras' };
+    if (n === 1 && els.length === 1) return { title: labelOf(doc, els[0]), sub: typeOf(els[0].type)?.label ?? '' };
+    return { title: `${n} objekt`, sub: [els.length ? summarizeTypes(els) : '', vpText].filter(Boolean).join(', ') };
+  }
+
   /** Vad som är markerat, som rubrik i snabbraden och smartmenyn. `where` ersätter undertiteln. */
   quickTitle(where?: string): string {
     const doc = this.store.doc;
@@ -294,8 +314,9 @@ export class PropertiesPanel {
       .list()
       .map((id) => doc.elements[id])
       .filter(Boolean);
-    const title = els.length === 0 ? 'Inget markerat' : els.length === 1 ? labelOf(doc, els[0]) : `${els.length} objekt`;
-    const sub = where ?? (els.length === 0 ? 'Tryck på det som ska markeras' : els.length === 1 ? (typeOf(els[0].type)?.label ?? '') : summarizeTypes(els));
+    const t = this.titleOf(doc, els);
+    const title = t.title;
+    const sub = where ?? t.sub;
     return `<div class="qb-title"><b>${escapeHtml(title)}</b><small>${escapeHtml(sub)}</small></div>`;
   }
 
@@ -306,6 +327,10 @@ export class PropertiesPanel {
       .list()
       .map((id) => doc.elements[id])
       .filter(Boolean);
+    if (els.length === 0 && this.viewportsSelected(doc)) {
+      const t = this.titleOf(doc, els);
+      return `<header class="sel-head"><h2>${escapeHtml(t.title)}</h2><p>${escapeHtml(t.sub)}</p></header><p class="note">Vyerna flyttas och tas bort tillsammans. Markera en vy ensam för att ändra den.</p>`;
+    }
     if (els.length === 0) {
       return `<div class="empty">
         <p><b>Inget är markerat.</b></p>
@@ -317,8 +342,9 @@ export class PropertiesPanel {
     const view = this.getView();
     const sameType = els.every((e) => e.type === els[0].type);
     const t = typeOf(els[0].type);
-    const title = els.length === 1 ? labelOf(doc, els[0]) : `${els.length} objekt`;
-    const sub = els.length === 1 ? '' : summarizeTypes(els);
+    const named = this.titleOf(doc, els);
+    const title = named.title;
+    const sub = els.length === 1 && named.title === labelOf(doc, els[0]) ? '' : named.sub;
 
     const sections: string[] = [];
     sections.push(`<header class="sel-head"><h2>${escapeHtml(title)}</h2>${sub ? `<p>${escapeHtml(sub)}</p>` : ''}</header>`);
@@ -349,8 +375,9 @@ export class PropertiesPanel {
     const result = [...counts.entries()]
       .map(([a, n]) => `<span class="tag tag-${a}">${els.length > 1 ? `${n} ` : ''}${ACTION_LABEL[a].toLowerCase()}</span>`)
       .join(' ');
-    // Norrpil, fasader och sektioner finns i alla tillstånd.
-    if (!els.every((e) => typeOf(e.type)?.global)) sections.push(`<section>
+    // Norrpil, fasader och sektioner finns i alla tillstånd, och det som är ritat på ett blad eller mallblad följer dem inte (0.8.9).
+    const onPaper = (e: Element) => doc.sheets.some((x) => x.id === e.space) || doc.worksheets.some((w) => w.id === e.space && w.paper);
+    if (!els.every((e) => typeOf(e.type)?.global || onPaper(e))) sections.push(`<section>
       <h3>Finns i</h3>
       <div class="state-chips">${chips}</div>
       <p class="note">I ${escapeHtml(viewed)}${compared ? ` jämfört med ${escapeHtml(compared)}` : ''}: ${result}</p>

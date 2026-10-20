@@ -80,7 +80,7 @@ function normalize(d: any): ProjectDoc {
     viewTags: Array.isArray(d.viewTags) ? d.viewTags.map(String) : [...DEFAULT_VIEW_TAGS],
     worksheets: Array.isArray(d.worksheets) ? d.worksheets : [],
     sheets: Array.isArray(d.sheets)
-      ? d.sheets.map((s: any) => ({ ...s, fields: s.fields ?? {}, viewports: Array.isArray(s.viewports) ? s.viewports : [], items: Array.isArray(s.items) ? s.items : [] }))
+      ? d.sheets.map(({ items: _, ...s }: any) => ({ ...s, fields: s.fields ?? {}, viewports: Array.isArray(s.viewports) ? s.viewports : [] }))
       : [],
     assets: d.assets && typeof d.assets === 'object' ? d.assets : {},
   };

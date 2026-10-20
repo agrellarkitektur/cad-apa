@@ -213,6 +213,10 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
     reshapeWall(store, el.id, p.start, p.end, bulgeForRadius(p.start, p.end, v, (p.bulge ?? 1) >= 0 ? 1 : -1), 'Ändra radie');
     return true;
   }
+  if (scope === 'text' && name === 'anchor') {
+    updateParams(store, ids, { anchor: input.value || undefined }, 'Ändra förankring');
+    return true;
+  }
   if (scope === 'text') {
     updateParams(store, ids, { [name]: input.value }, name === 'number' ? 'Ändra rumsnummer' : 'Ändra text');
     return true;

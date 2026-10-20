@@ -138,6 +138,7 @@ function placeWord(doc: ProjectDoc, el: Element): string {
   if (home?.type === 'Elevation') return 'fasaden';
   const ws = doc.worksheets.find((w) => w.id === homeOf(el));
   if (ws) return ws.paper ? 'mallbladet' : 'arbetsbladet';
+  if (doc.sheets.some((s) => s.id === homeOf(el))) return 'bladet';
   return 'våningen';
 }
 
@@ -147,6 +148,9 @@ function placeWord(doc: ProjectDoc, el: Element): string {
  */
 export function showSection(doc: ProjectDoc, els: Element[], here: Id): string {
   if (!els.length || !els.every((e) => SHOWABLE.has(e.type))) return '';
+  // På ett mallblad och ett ritningsblad finns bara en vy: själva bladet (0.8.9).
+  const onPaper = (e: Element) => doc.sheets.some((s) => s.id === e.space) || doc.worksheets.some((w) => w.id === e.space && w.paper);
+  if (els.some(onPaper)) return '';
   const el = els[0];
   const same = els.every((e) => JSON.stringify(e.show ?? null) === JSON.stringify(el.show ?? null));
   const show = same ? el.show : undefined;
