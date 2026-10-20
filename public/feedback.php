@@ -108,7 +108,10 @@ $headers = [
 ];
 if ($email !== '') $headers[] = 'Reply-To: ' . $email;
 
-if (!function_exists('mail') || !@mail($to, $subject, $body, implode("\r\n", $headers))) {
+// Kuvertavsändaren (Return-Path) sätts till samma adress som From (0.8.6).
+// Annars skickar servern med sin egen adress, och när brevet vidarebefordras
+// (t.ex. från webbposten till Gmail) faller SPF/DMARC och brevet slängs.
+if (!function_exists('mail') || !@mail($to, $subject, $body, implode("\r\n", $headers), '-f' . $from)) {
   answer(500, ['ok' => false, 'error' => 'Servern kunde inte skicka e-post. Webbhotellet kan kräva att avsändaren (from) är en adress på den egna domänen, eller SMTP.']);
 }
 answer(200, ['ok' => true]);

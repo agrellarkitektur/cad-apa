@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { addElements, deleteElements, moveElements, setLocked, setShowIn } from '../src/core/commands';
-import { FORMAT_VERSION, modelViewId, type Element } from '../src/core/model';
+import { modelViewId, type Element } from '../src/core/model';
 import { DocStore } from '../src/core/store';
 import { allViews, countViews, shownIn } from '../src/core/visibility';
 import { registerBuiltInTypes } from '../src/elements';
@@ -20,20 +20,6 @@ function line(id: string, extra: Partial<Element> = {}): Element {
 }
 
 describe('format 5 (0.8)', () => {
-  it('ett projekt i format 4 öppnas och får mappar, vy-taggar, blad och underlag', () => {
-    const old: any = JSON.parse(serialize(sampleProject()));
-    old.formatVersion = 4;
-    for (const k of ['folders', 'tree', 'viewTags', 'worksheets', 'sheets', 'assets']) delete old[k];
-    const doc = parse(JSON.stringify(old));
-    expect(doc.formatVersion).toBe(FORMAT_VERSION);
-    expect(doc.folders).toEqual([]);
-    expect(doc.tree).toEqual({});
-    expect(doc.viewTags).toContain('undertak');
-    expect(doc.sheets).toEqual([]);
-    expect(doc.assets).toEqual({});
-    // Inget annat ändras.
-    expect(Object.keys(doc.elements).sort()).toEqual(Object.keys(old.elements).sort());
-  });
   it('sparas och läses utan förlust, med 2D-element, Visas i och lås', () => {
     const doc = sampleProject();
     doc.elements.l1 = line('l1', { show: { kind: 'tags', tags: ['undertak'], match: 'any' }, locked: true });

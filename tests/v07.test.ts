@@ -1,5 +1,4 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { FORMAT_VERSION } from '../src/core/model';
 import { registerBuiltInTypes } from '../src/elements';
 import { computeWallShapes, type WallParams } from '../src/elements/wall';
 import { arcFromBulge, bulgeTangent, bulgeThrough } from '../src/geometry/arc';
@@ -89,28 +88,6 @@ describe('bågar (0.7)', () => {
 });
 
 describe('format 4 (0.7)', () => {
-  it('ett projekt i format 3 får norrpil, fyra fasader och en sektion', async () => {
-    const { sampleProject } = await import('../src/sample/sampleProject');
-    const { parse } = await import('../src/storage/format');
-    const { markerName } = await import('../src/elements/markers');
-    const doc = sampleProject();
-    const old: any = { ...structuredClone(doc), formatVersion: 3 };
-    for (const id of Object.keys(old.elements)) if (['North', 'Elevation', 'Section', 'Roof'].includes(old.elements[id].type)) delete old.elements[id];
-    for (const el of Object.values<any>(old.elements)) delete el.params.toRoof;
-    const back = parse(JSON.stringify(old));
-    expect(back.formatVersion).toBe(FORMAT_VERSION);
-    const types = Object.values(back.elements).map((e) => e.type);
-    expect(types.filter((t) => t === 'North')).toHaveLength(1);
-    expect(types.filter((t) => t === 'Elevation')).toHaveLength(4);
-    expect(types.filter((t) => t === 'Section')).toHaveLength(1);
-    const names = Object.values(back.elements)
-      .filter((e) => e.type === 'Elevation')
-      .map((e) => markerName(back, e))
-      .sort();
-    expect(names).toEqual(['Fasad mot norr', 'Fasad mot ost', 'Fasad mot syd', 'Fasad mot väst']);
-    // Väggarna är orörda.
-    expect(back.elements['yv-s'].params).toEqual(old.elements['yv-s'].params);
-  });
   it('fasaderna får namn efter närmaste väderstreck', async () => {
     const { sampleProject } = await import('../src/sample/sampleProject');
     const { markerName } = await import('../src/elements/markers');

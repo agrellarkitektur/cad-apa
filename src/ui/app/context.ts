@@ -14,6 +14,7 @@ import type { PropertiesPanel } from '../propertiesPanel';
 import type { Selection } from '../selection';
 import type { SettingsDialog } from '../settingsDialog';
 import type { SmartMenu } from '../smartMenu';
+import type { installSheets } from './sheets';
 import type { StyleDialog } from '../styleDialog';
 import type { Draw2DTool } from '../tools/draw2dTool';
 import type { DimensionTool, TextTool } from '../tools/annotationTools';
@@ -83,6 +84,8 @@ export interface AppContext {
   readonly settingsDialog: SettingsDialog;
   readonly styleDialog: StyleDialog;
   readonly ctxMenu: ContextMenu;
+  /** Ritningsbladen: det valda på bladet, Flytta och Ta bort (0.8.6). */
+  readonly sheets: ReturnType<typeof installSheets>;
 
   hint(text: string, ms?: number): void;
   renderAll(): void;

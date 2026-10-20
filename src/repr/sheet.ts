@@ -1,6 +1,6 @@
 import { PRESETS, type StyleSheet } from '../core/graphics';
-import { modelViewId, type Id, type ProjectDoc, type Sheet, type ViewDef, type Viewport } from '../core/model';
-import { FRAME_MARGIN, paperSize } from '../core/sheets';
+import { modelViewId, type Id, type ProjectDoc, type Sheet, type SheetItem, type ViewDef, type Viewport } from '../core/model';
+import { FRAME_MARGIN, itemCorner, paperSize } from '../core/sheets';
 import { defaultState, existingState, type ViewStates } from '../core/states';
 import { markerName } from '../elements/markers';
 import { textWidth } from '../formats/helvetica';
@@ -8,11 +8,11 @@ import { clipPrims } from '../geometry/clipRect';
 import { buildPlan } from './plan';
 import { boundsOf, type Bounds, type Primitive, type Vec2 } from './primitives';
 import { buildSection } from './section';
-import { titleBlockPrims } from './titleBlock';
+import { TITLE_BLOCK_HEIGHT, TITLE_BLOCK_WIDTH, titleBlockPrims } from './titleBlock';
 
 /**
  * Ritningsblad (0.8 del 3): vyerna ritade i sin skala på papperet, med ram
- * och ritningshuvud. Allt anges i mm på papperet med nollpunkten i nedre
+ * och ritningshuvuden (som egna saker på bladet sedan 0.8.6). Allt anges i mm på papperet med nollpunkten i nedre
  * vänstra hörnet och y uppåt, så att skärmen och PDF-exporten ritar samma
  * primitiver.
  *
@@ -254,17 +254,33 @@ export function centeredAt(doc: ProjectDoc, view: Id, scale: number, center: Vec
   return [Math.round(center[0] - mid[0]), Math.round(center[1] - mid[1])];
 }
 
+/** En sak på bladet utöver vyerna (ett ritningshuvud), färdig att rita. */
+export interface PlacedItem {
+  id: Id;
+  kind: SheetItem['kind'];
+  /** Ytan på papperet, för att markera och flytta. */
+  frame: Bounds;
+  prims: Primitive[];
+}
+
+/** Ytan ett ritningshuvud tar på papperet. */
+export function itemBounds(sheet: Pick<Sheet, 'size' | 'orientation'>, item: SheetItem): Bounds {
+  const [x, y] = itemCorner(sheet, item);
+  return { minX: x - TITLE_BLOCK_WIDTH, minY: y, maxX: x, maxY: y + TITLE_BLOCK_HEIGHT };
+}
+
 export interface SheetDrawing {
   /** Papperets bredd och höjd, mm. */
   size: [number, number];
   /** Allt på bladet, mm på papperet. Papperet självt ligger först (`part: 'papper'`). */
   prims: Primitive[];
   views: PlacedView[];
-  /** Ritningsramen. */
+  items: PlacedItem[];
+  /** Ritningsramen (också när den inte ritas). */
   frame: Bounds;
 }
 
-/** Ett helt ritningsblad: papper, ram, vyerna och ritningshuvudet. */
+/** Ett helt ritningsblad: papper, vyerna, ramen om den visas och ritningshuvudena. */
 export function buildSheet(doc: ProjectDoc, sheet: Sheet, opt: { autoDims?: boolean; today: string }): SheetDrawing {
   const [w, h] = paperSize(sheet);
   const frame: Bounds = { minX: FRAME_MARGIN.left, minY: FRAME_MARGIN.bottom, maxX: w - FRAME_MARGIN.right, maxY: h - FRAME_MARGIN.top };
@@ -284,13 +300,14 @@ export function buildSheet(doc: ProjectDoc, sheet: Sheet, opt: { autoDims?: bool
     origin: { objectType: 'Sheet', part: 'papper' },
   };
   const views = sheet.viewports.map((vp) => placeView(doc, vp, opt));
+  const items: PlacedItem[] = sheet.items.map((it) => ({ id: it.id, kind: it.kind, frame: itemBounds(sheet, it), prims: titleBlockPrims(doc, sheet, itemCorner(sheet, it), opt.today) }));
   const prims: Primitive[] = [
     paper,
     ...views.flatMap((v) => v.prims),
-    { kind: 'polyline', points: corners(frame), closed: true, pen: { weight: 0.5 }, origin: { objectType: 'Sheet', part: 'ram' } },
-    ...titleBlockPrims(doc, sheet, [frame.maxX, frame.minY], opt.today),
+    ...(sheet.frame ? [{ kind: 'polyline', points: corners(frame), closed: true, pen: { weight: 0.5 }, origin: { objectType: 'Sheet', part: 'ram' } } as Primitive] : []),
+    ...items.flatMap((i) => i.prims),
   ];
-  return { size: [w, h], prims, views, frame };
+  return { size: [w, h], prims, views, items, frame };
 }
 
 /** En vy ensam på ett papper som är precis så stort som den, för export av vyer. */

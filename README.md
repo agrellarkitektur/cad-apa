@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.5** (beta, smartmenyn och Modifiera-raden); nästa är **0.8.6,
-ritningshuvudet som eget objekt och blanka blad**.
+**0.8.6** (beta, ritningshuvudet som eget objekt och blanka blad); nästa är
+**0.8.7, text på bladet och vyernas ram**.
 
 ## Vad som fungerar
 
@@ -514,13 +514,34 @@ Version 0.8.5, smartmenyn och Modifiera-raden (samma filformat, 5):
 - När bara 3D visas har smartmenyn bara snabbknapparna; ett verktyg i
   Modifiera-raden går över till 2D
 
+Version 0.8.6, ritningshuvudet som eget objekt (nytt filformat, 6):
+- **Nya blad är blanka**, med ritningsram. Ramen kan stängas av med
+  kryssrutan *Ritningsram* i bladets egenskaper
+- **Ritningshuvudet läggs på** från en lista (i dag BH90) i bladets
+  egenskaper, eller med högerklick på bladet. Det hamnar i ramens nedre
+  högra hörn och följer med till hörnet när formatet byts. Ett blad kan ha
+  flera huvuden. Med kryssrutan *Nya blad får ritningshuvud* får nya blad
+  ett huvud direkt; valet sparas
+- **Huvudet markeras, flyttas och tas bort** som vyerna: klick visar
+  smartmenyn bredvid (Flytta, Egenskaper, Ta bort), dra flyttar och fäster
+  mot ramen och vyernas kanter, **Delete** tar bort. Flytta i smartmenyn
+  och i Modifiera-raden flyttar med två klick, baspunkt och dit (Esc
+  avbryter). Detsamma gäller vyerna på bladet, som nu också har smartmenyn
+- **Huvudets egenskaper** har fälten: *Den här ritningen* (nummer,
+  innehåll, skede, datum, ändring, ritat och granskat av, skala) sparas på
+  bladet, *Alla ritningar i projektet* (projekt, adress, beställare, logga
+  …) gäller alla blad. Fälten finns kvar om huvudet tas bort
+- **Synpunktsformuläret** skickar med kuvertavsändaren satt till
+  `from`-adressen, så att brev som vidarebefordras från webbposten inte
+  stoppas av SPF/DMARC
+- Projekt i format 5 och äldre öppnas inte (betaversion); öppna dem i 0.8.5
+
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer. Projekt till och med format 5
-uppgraderas automatiskt när de öppnas. Fram till pilotprojektet (0.13)
-uppgraderas inte projekt från äldre betaversioner när formatet ändras, så
-ett projekt öppnas i den version det gjordes med; därefter uppgraderas äldre
-projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp
+Projektfilerna har ett formatnummer, i dag 6 (sedan 0.8.6). Fram till
+pilotprojektet (0.13) uppgraderas inte projekt från äldre betaversioner när
+formatet ändras, så ett projekt öppnas i den version det gjordes med;
+därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp
 på webbhotellet (t.ex. `cad-apa/0.5/`, `cad-apa/0.6/`) bredvid den senaste.
 
 ## Kom igång

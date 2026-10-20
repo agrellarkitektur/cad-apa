@@ -157,7 +157,7 @@ describe('vyer på bladet och annoteringsskalan (0.8 del 3)', () => {
 
   it('ett blad med vyer: ram, vyerna i sin skala och huvudet; centrerad där man vill', () => {
     const store = new DocStore(sampleProject());
-    const id = createSheet(store);
+    const id = createSheet(store, { titleBlock: true });
     const at = centeredAt(store.doc, 'vy-a-bl', 100, [150, 160]);
     addViewport(store, id, { view: 'vy-a-bl', scale: 100, at });
     addViewport(store, id, { view: modelViewId('fasad-1'), scale: 50, at: centeredAt(store.doc, modelViewId('fasad-1'), 50, [300, 200]) });

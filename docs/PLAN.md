@@ -337,14 +337,36 @@ Utan smartmeny (avstängd i inställningarna):
   blir ett eget objekt som läggs på och flyttas. Egna grupper med linjer och
   text kommer med *Smartgrupper* efter pilotprojektet
 
+- Synpunktsbreven kommer inte fram till Gmail: kuvertavsändaren sätts med
+  `-f` i `feedback.php`
+
 Mellanstor; en egen småversion så att nya blad blir blanka så snart som
 möjligt (Carl August, 20 oktober). Bladets objekt bör rymma både huvudet
 och texterna i 0.8.7, och kunna markeras med smartmenyn.
 
-### 0.8.7 Text på bladet
+*Byggd (20 oktober), format 6. Carl August valde (20 oktober): ramen är en
+kryssruta på bladet; nya blad är blanka, med en kryssruta som ger nya blad
+huvud; flera huvuden per blad (bladet kan få annat än huvuden, som
+skalstock och orienteringsfigur); fälten ändras i huvudets egenskaper och
+ritningens fält sparas per blad. Huvudet lagrar bara läge och mall, med
+läget räknat från papperets nedre högra hörn. Vyerna har en egen lista
+(`viewports`) bredvid `items`; att slå ihop dem kan tas i en granskning.
+Flytta på bladet görs med två klick från smartmenyn eller Modifiera-raden.
+Migreringarna till format 5 togs bort, eftersom inget längre når format 6
+genom dem.*
+
+### 0.8.7 Text på bladet och vyernas ram · *nytt format*
 
 - Fria texter direkt på ett ritningsblad, med samma textverktyg som i vyerna
-  (flyttad från *Efter pilotprojektet*; viktig för handlingarna)
+  (flyttad från *Efter pilotprojektet*; viktig för handlingarna). En text
+  blir ett nytt slag i `SheetItem` (0.8.6) och markeras, flyttas och tas
+  bort som huvudet
+- Ändra vyns ram på bladet (beskärning) med grepp i kanterna, och
+  *Återställ ramen till innehållet*, som i Archicad och InDesign (synpunkt
+  20 oktober; tidigare planerad efter pilotprojektet). Vyn får en egen ram
+  (`crop`); underlagen klipps redan mot ramen, så klippningen finns
+
+Mellanstor.
 
 ### 0.8.8 Fler Modifiera-verktyg
 
@@ -386,7 +408,8 @@ Avrunda/Fasa för hela markeringen först, och resten i en egen småversion.
 Förra granskningen var 0.8.1. Granskningen föreslås efter
 Modifiera-versionerna och bladversionerna: städa, dela upp stora filer och
 leta efter långsam kod. Vill Carl August ha den tidigare kan den läggas
-efter 0.8.6.
+efter 0.8.7. Att slå ihop bladets `viewports` och `items` till en lista kan
+tas här.
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
@@ -404,6 +427,10 @@ efter 0.8.6.
 ### 0.10 Tak · *nytt format*
 
 Ett riktigt tak i stället för testtaket:
+
+- Tak och andra volymer ovanför planets snitt ritas punktstreckade i planen
+  (synpunkt 20 oktober). Grunden för "ovanför snittet" kan behövas redan i
+  0.9 med flera våningsplan
 
 - Referenslinje som polygon; varje kant är takfot eller gavel
 - Lutning per takfall, taksprång vid takfot och gavelsprång vid gavel
@@ -453,11 +480,10 @@ efter pilotprojektet. Det som piloten visar behövs tidigt går först.
 
 ### Grafik och markörer (från 0.8 del 3)
 
-- Beskära en vy på ett blad för hand (i dag visar vyn allt som är ritat i den, och underlagen klipps mot det)
-- Fria linjer och bilder direkt på ett blad (texter kommer i 0.8.6), och flera blad i en PDF
+- Fria linjer och bilder direkt på ett blad (texter kommer i 0.8.7), och flera blad i en PDF
 - Typsnittet inbäddat i PDF:en (i dag Helvetica, som alla PDF-läsare har)
 - En andra 2D-ruta: planen bredvid en öppen sektion eller fasad, där det man markerar i den ena markeras i den andra
-- Ritningshuvud enligt BEAst
+- Ritningshuvud enligt BEAst (en mall till i `TITLE_BLOCK_TEMPLATES`, 0.8.6)
 
 Grafik:
 

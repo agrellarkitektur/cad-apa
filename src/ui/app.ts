@@ -910,6 +910,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     openUnderlayMenu: () => underlays.openUnderlayMenu,
     showUnderlay: () => underlays.showUnderlay,
     pasteFromMenu: () => clipboard.pasteFromMenu,
+    sheets: () => sheets,
   });
   const panes = installPanes(app);
   const pane3d = installPane3d(app);
@@ -924,6 +925,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const clipboard = installClipboard(app);
   const underlays = installUnderlays(app);
   const sheets = installSheets(app);
+  sheets.subscribe(() => modifyRail.render());
   const plot = installPlot(app, underlays.exportImage);
   const actions = installActions(app, { brand, feedbackDialog, files, menus, panes, plot, sheets, showMenu, views });
 

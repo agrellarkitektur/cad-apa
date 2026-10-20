@@ -286,12 +286,12 @@ describe('filformat', () => {
     expect(parse(serialize(doc))).toEqual(doc);
   });
 
-  it('uppgraderar ett projekt från format 1', () => {
-    const v1 = { ...sampleProject(), formatVersion: 1 } as any;
-    delete v1.graphics;
-    const doc = parse(JSON.stringify(v1));
-    expect(doc.formatVersion).toBe(FORMAT_VERSION);
-    expect(doc.graphics.name).toBe('Svensk standard');
+  it('ett projekt i ett äldre format får ett meddelande om betaversionen (inga migreringar före formatfrysen)', () => {
+    for (const v of [1, 5, FORMAT_VERSION - 1]) {
+      const old = { ...sampleProject(), formatVersion: v } as any;
+      expect(() => parse(JSON.stringify(old))).toThrow(new RegExp(`äldre betaversion.*format ${v}`));
+    }
+    expect(parse(serialize(sampleProject())).formatVersion).toBe(FORMAT_VERSION);
   });
 
   it('behåller element av okända typer', () => {
@@ -496,22 +496,6 @@ describe('rum och anteckningar', () => {
 });
 
 describe('version 0.6', () => {
-  it('ett projekt i format 2 får ytterväggarna vända utan att något flyttas', async () => {
-    const { wallsFacingOut } = await import('../src/elements/wallSides');
-    const doc = sampleProject();
-    // Vänd tillbaka yv-s som den var ritad före format 3 (österut).
-    const { reversedWall } = await import('../src/core/commands');
-    const old = { ...structuredClone(doc), formatVersion: 2 } as any;
-    for (const e of reversedWall(old, old.elements['yv-s'], true)) old.elements[e.id] = e;
-    expect(wallsFacingOut(old).map((e) => e.id)).toEqual(['yv-s']);
-    const walls = (d: any) => buildPlan(d, 'pl-1', { state: 'st-bef' }).prims.filter((p) => p.kind === 'region' && p.origin?.objectType === 'Wall').length;
-    const before = walls(old);
-    const back = parse(JSON.stringify(old));
-    expect(wallsFacingOut(back)).toEqual([]);
-    expect(back.elements['d01'].params.at).toBe(doc.elements['d01'].params.at);
-    expect(walls(back)).toBe(before);
-  });
-
   it('vänd väggen byter insida men flyttar inte väggen', async () => {
     const { flipWalls } = await import('../src/core/commands');
     const store = new DocStore(sampleProject());

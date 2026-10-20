@@ -66,7 +66,9 @@ Före formatfrysen (pilotprojektet, 0.13, se PLAN.md) räcker det att höja
 `FORMAT_VERSION` i `src/core/model.ts`. Inga nya migreringar skrivs: en fil
 i ett äldre format ger meddelandet att den kommer från en äldre betaversion
 (`parse` i `src/storage/format.ts`), och ett autospar som inte går att läsa
-läggs åt sidan, inte bort. Migreringarna till och med format 5 ligger kvar.
+läggs åt sidan, inte bort. Migreringarna till och med format 5 togs bort med
+format 6 (0.8.6), eftersom ingen fil når nuvarande format genom dem; de finns
+i git.
 
 Efter formatfrysen gäller detta igen:
 
@@ -634,3 +636,38 @@ på bladet sina egna.
   och `modifyRail` i `uiSettings`.
 - Nya val i `OPS` hamnar i smartmenyn av sig själva via `opsFor`; i raden
   behöver de en plats i `RAIL` (testet i `tests/v085.test.ts` säger till).
+
+## Ritningshuvudet som eget objekt (0.8.6, format 6)
+
+- **Modellen**: `Sheet.items` är det som ligger på bladet utöver vyerna,
+  nedifrån och upp (`SheetItem` i `src/core/model.ts`). I dag bara
+  `TitleBlockItem` (`kind: 'titleBlock'`, `template: 'bh90'`, `at`). `at`
+  är huvudets nedre högra hörn i mm från papperets nedre högra hörn, så att
+  huvudet följer hörnet när formatet byts (`itemCorner` i
+  `src/core/sheets.ts`). Huvudet lagrar inga fält: de ligger kvar i
+  `sheet.fields` och `project.fields`. `Sheet.frame` slår av och på
+  ritningsramen; `titleBlock` på `Sheet` finns inte längre. Nya slag
+  (texter i 0.8.7, skalstock, orienteringsfigur) läggs till i `SheetItem`
+  med ett eget `kind`; flytt och borttagning går genom samma kommandon.
+- **Kommandon**: `createSheet(store, { titleBlock })` (blankt utan),
+  `addTitleBlock`, `moveOnSheet` (vyer och saker i ett steg, avrundat till
+  0,1 mm) och `removeFromSheet`. `duplicateSheet` ger sakerna nya id.
+  `TITLE_BLOCK_TEMPLATES` är listan att välja i.
+- **Ritningen**: `buildSheet` ger `items: PlacedItem[]` med ytan
+  (`itemBounds`) och primitiverna, ritade efter vyerna och ramen.
+- **I appen** (`src/ui/app/sheets.ts`): det valda på ett blad är det som
+  visas i egenskapspanelen (`TreeItem` med `viewport` eller `titleBlock`),
+  inte `selection`. `pickedThing`, `hit` (huvudena över vyerna), `snapMove`
+  (fäster mot de andras kanter och mitt och mot ramen), Flytta med två
+  klick (`startMove`, `cancelMove`, Esc i `keyboard.ts`) och
+  `removePicked` (Delete). `subscribe` säger till Modifiera-raden, som på
+  ett blad bara tänder Flytta.
+- **Smartmenyn** kan visa annat än markerade objekt:
+  `SmartMenu.showCustom` tar en `SmartMenuCustom` med rubrik, knappar,
+  `anchor` (ytan på skärmen), `run` och `alive`; menyn stängs vid nästa
+  omritning när `alive` säger nej. `show` och `hide` nollställer `custom`.
+- **Formulären** i `src/ui/sheetForms.ts`: bladet har ram, vyerna och
+  huvudena med *Lägg på ritningshuvud* och kryssrutan för nya blad
+  (`uiSettings.newSheetTitleBlock`, sparas direkt, inte med Spara).
+  Huvudet har ritningens fält (sparas med `saveSheet`) och projektets
+  (`saveProjectFields`).

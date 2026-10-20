@@ -1,4 +1,4 @@
-import { icons } from './icons';
+import { icons, type IconName } from './icons';
 import { escapeHtml } from './labels';
 import type { Modifier } from './modify/controller';
 import { OPS, type OpId } from './modify/ops';
@@ -10,6 +10,21 @@ export interface ScreenBox {
   top: number;
   right: number;
   bottom: number;
+}
+
+/**
+ * Smartmenyn för något annat än markerade objekt (0.8.6): ett ritningshuvud
+ * eller en vy på ett blad. Rubriken, knapparna och vad de gör kommer
+ * utifrån; menyn läggs bredvid `anchor` som för det markerade.
+ */
+export interface SmartMenuCustom {
+  title: string;
+  sub: string;
+  buttons: { id: string; label: string; icon: IconName; danger?: boolean; pressed?: boolean }[];
+  anchor: () => ScreenBox | null;
+  run: (id: string) => void;
+  /** Om det menyn gäller finns kvar; annars stängs menyn vid nästa omritning. */
+  alive: () => boolean;
 }
 
 /**
@@ -40,6 +55,8 @@ export class SmartMenu {
   private pinned: { x: number; y: number } | null = null;
   private drag: { id: number; dx: number; dy: number } | null = null;
   expanded = false;
+  /** Det menyn visas för när det inte är markerade objekt (0.8.6). */
+  custom: SmartMenuCustom | null = null;
 
   constructor(container: HTMLElement, panel: PropertiesPanel, modifier: Modifier, anchor: () => ScreenBox | null) {
     this.container = container;
@@ -84,6 +101,11 @@ export class SmartMenu {
     });
     this.el.addEventListener('click', (e) => {
       const t = e.target as HTMLElement;
+      const own = t.closest<HTMLElement>('[data-sm-custom]')?.dataset.smCustom;
+      if (own && this.custom) {
+        this.custom.run(own);
+        return;
+      }
       const op = t.closest<HTMLElement>('[data-op]')?.dataset.op as OpId | undefined;
       if (op) {
         if (this.modifier.active === op) this.modifier.cancel();
@@ -116,13 +138,24 @@ export class SmartMenu {
 
   /** Visa för det markerade. `clientX/Y` är klicket, om det markerade inte syns i planen. */
   show(clientX: number, clientY: number, expanded = false): void {
+    this.custom = null;
     this.at = { x: clientX, y: clientY };
     if (expanded) this.expanded = true;
     this.el.hidden = false;
     this.refresh(true);
   }
 
+  /** Visa för något annat än markerade objekt, t.ex. ett ritningshuvud. */
+  showCustom(c: SmartMenuCustom, clientX: number, clientY: number): void {
+    this.custom = c;
+    this.at = { x: clientX, y: clientY };
+    this.expanded = false;
+    this.el.hidden = false;
+    this.refresh(true);
+  }
+
   hide(): void {
+    this.custom = null;
     this.at = null;
     this.expanded = false;
     this.el.hidden = true;
@@ -135,6 +168,10 @@ export class SmartMenu {
    */
   refresh(force = false): void {
     if (this.el.hidden) return;
+    if (this.custom) {
+      this.renderCustom(this.custom);
+      return;
+    }
     const quick = this.panel.quickMarkup(this.expanded ? 'less' : true, false);
     if (!quick) {
       this.hide();
@@ -166,6 +203,26 @@ export class SmartMenu {
     this.place();
   }
 
+  private renderCustom(c: SmartMenuCustom): void {
+    if (!c.alive()) {
+      this.hide();
+      return;
+    }
+    const grip = `<button type="button" class="sm-grip" aria-label="Flytta smartmenyn" title="Dra för att flytta">${icons.grip}</button>`;
+    const btns = c.buttons
+      .map(
+        (b) =>
+          `<button type="button" class="qb-btn${b.danger ? ' danger' : ''}" data-sm-custom="${escapeHtml(b.id)}"${b.pressed !== undefined ? ` aria-pressed="${b.pressed}"` : ''} title="${escapeHtml(b.label)}">${icons[b.icon]}<span>${escapeHtml(b.label)}</span></button>`,
+      )
+      .join('');
+    this.el.classList.remove('expanded');
+    this.el.classList.toggle('pinned', !!this.pinned);
+    this.el.innerHTML =
+      `<div class="sm-head">${grip}<div class="qb-title"><b>${escapeHtml(c.title)}</b><small>${escapeHtml(c.sub)}</small></div></div>` +
+      `<div class="sm-quick quick-bar"><div class="qb-actions">${btns}</div></div>`;
+    this.place();
+  }
+
   /** Lägg menyn igen, t.ex. efter panorering. */
   reposition(): void {
     if (!this.el.hidden) this.place();
@@ -183,7 +240,7 @@ export class SmartMenu {
     let pos: { x: number; y: number } | null = null;
     if (this.pinned) pos = this.pinned;
     else {
-      const b = this.anchor();
+      const b = this.custom ? this.custom.anchor() : this.anchor();
       if (b && b.right > 0 && b.bottom > 0 && b.left < r.width && b.top < r.height) {
         // Höger, vänster, under, över: den första sidan där menyn får plats.
         // Får den inte plats någonstans, den sida där den täcker minst av det markerade.

@@ -99,6 +99,8 @@ export interface UiSettings {
   followSection: boolean;
   /** Läget Båda: planens andel av ritytans bredd, 0,15–0,85 (0.8.4). */
   split: number;
+  /** Nya ritningsblad får ett ritningshuvud; annars är de blanka (0.8.6). */
+  newSheetTitleBlock: boolean;
 }
 
 export type PaneMode = 'open' | 'min' | 'closed';
@@ -123,6 +125,7 @@ export function defaultUiSettings(): UiSettings {
     grid: true,
     smartMenu: true,
     modifyRail: true,
+    newSheetTitleBlock: false,
     autoDims: true,
     selColor: null,
     refColor: null,
@@ -153,6 +156,7 @@ export function loadUiSettings(): UiSettings {
       // Inställningen hette petPalette före 0.8.5.
       smartMenu: typeof raw.smartMenu === 'boolean' ? raw.smartMenu : ((raw as { petPalette?: boolean }).petPalette ?? d.smartMenu),
       modifyRail: typeof raw.modifyRail === 'boolean' ? raw.modifyRail : d.modifyRail,
+      newSheetTitleBlock: typeof raw.newSheetTitleBlock === 'boolean' ? raw.newSheetTitleBlock : d.newSheetTitleBlock,
       autoDims: typeof raw.autoDims === 'boolean' ? raw.autoDims : d.autoDims,
       selColor: typeof raw.selColor === 'string' ? raw.selColor : null,
       refColor: typeof raw.refColor === 'string' ? raw.refColor : null,

@@ -1,5 +1,4 @@
 import { deleteElements, moveElements } from '../../core/commands';
-import { removeViewport, sheetOfViewport } from '../../core/sheets';
 import { releasedHint } from '../tools/selectTool';
 import { isNarrow } from '../sheet';
 import type { AppContext } from './context';
@@ -86,6 +85,7 @@ export function installKeyboard(app: AppContext) {
         }
         break;
       case 'Escape':
+        if (app.sheets.cancelMove()) break;
         if (app.aligning) {
           app.endAlign();
           break;
@@ -111,14 +111,9 @@ export function installKeyboard(app: AppContext) {
         break;
       case 'Delete':
       case 'Backspace':
-        // En vy på ett ritningsblad (0.8 del 3) tas bort från bladet.
-        if (app.ui.layout && app.panel.treeItem?.kind === 'viewport') {
-          const vp = app.panel.treeItem.id;
-          const sheet = sheetOfViewport(app.store.doc, vp);
-          if (sheet) {
-            removeViewport(app.store, sheet.id, vp);
-            app.panel.showTreeItem({ kind: 'sheet', id: sheet.id });
-          }
+        // En vy eller ett ritningshuvud på ett blad tas bort från bladet (0.8.6).
+        if (app.sheets.removePicked()) {
+          app.smartMenu.hide();
           break;
         }
         if (app.selection.size) {
