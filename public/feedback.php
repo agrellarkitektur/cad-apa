@@ -1,10 +1,11 @@
 <?php
 /*
- * Tar emot synpunkter från appen och mejlar dem vidare (cad-apa 0.7.1).
+ * Tar emot synpunkter från appen och mejlar dem vidare (cad-apa 0.7.1, 0.8.2).
  *
  * Mottagaren står inte här, eftersom koden är öppen. Lägg en fil
  * feedback-config.php bredvid mappen cad-apa (så att den ligger kvar när
- * mappen byts ut vid en uppdatering), eller i själva mappen:
+ * mappen byts ut vid en uppdatering), eller i själva mappen. Öppna
+ * feedback.php i webbläsaren för att se om den hittas:
  *
  *   <?php
  *   return [
@@ -27,17 +28,50 @@ function answer(int $code, array $body): void {
   exit;
 }
 
+/*
+ * Var konfigurationen kan ligga: i mappen ovanför cad-apa (ligger kvar när
+ * mappen byts ut) eller i själva mappen. Många webbhotell har open_basedir,
+ * och då får skriptet inte läsa mappen ovanför; lägg den då i cad-apa och
+ * ladda inte upp över den vid en uppdatering (0.8.2).
+ */
+function findConfig(): array {
+  $places = ['cad-apa' => __DIR__ . '/feedback-config.php', 'mappen ovanför' => dirname(__DIR__) . '/feedback-config.php'];
+  $blocked = [];
+  foreach ($places as $name => $file) {
+    if (@is_file($file)) return ['file' => $file, 'where' => $name];
+    if (!@is_readable(dirname($file))) $blocked[] = $name;
+  }
+  return ['file' => null, 'blocked' => $blocked];
+}
+
+/** Konfigurationen, eller ett felmeddelande som säger vad som är fel. */
+function loadConfig(): array {
+  $found = findConfig();
+  if (!$found['file']) {
+    $msg = 'Hittar inte feedback-config.php, varken i mappen cad-apa eller i mappen ovanför.';
+    if (ini_get('open_basedir')) $msg .= ' Webbhotellet begränsar vilka mappar skriptet får läsa (open_basedir); lägg filen i mappen cad-apa.';
+    return ['error' => $msg];
+  }
+  $config = @include $found['file'];
+  if (!is_array($config)) return ['error' => 'feedback-config.php hittades (' . $found['where'] . ') men ger ingen lista. Den ska sluta med return [ ... ];'];
+  foreach (['to', 'from'] as $k) {
+    if (!filter_var($config[$k] ?? '', FILTER_VALIDATE_EMAIL)) return ['error' => "feedback-config.php hittades ({$found['where']}) men '$k' är ingen giltig e-postadress."];
+  }
+  return ['config' => $config, 'where' => $found['where']];
+}
+
+// Kontroll: öppna feedback.php i webbläsaren för att se om allt är uppsatt.
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+  $c = loadConfig();
+  if (isset($c['error'])) answer(503, ['ok' => false, 'error' => $c['error']]);
+  answer(200, ['ok' => true, 'config' => $c['where'], 'mail' => function_exists('mail') ? 'finns' : 'saknas']);
+}
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') answer(405, ['ok' => false, 'error' => 'Fel metod.']);
 
-$configFile = __DIR__ . '/feedback-config.php';
-if (!is_file($configFile)) $configFile = dirname(__DIR__) . '/feedback-config.php';
-if (!is_file($configFile)) answer(503, ['ok' => false, 'error' => 'Synpunkter är inte uppsatta på den här servern.']);
-$config = require $configFile;
-$to = $config['to'] ?? '';
-$from = $config['from'] ?? '';
-if (!filter_var($to, FILTER_VALIDATE_EMAIL) || !filter_var($from, FILTER_VALIDATE_EMAIL)) {
-  answer(503, ['ok' => false, 'error' => 'Synpunkter är inte rätt uppsatta på den här servern.']);
-}
+$loaded = loadConfig();
+if (isset($loaded['error'])) answer(503, ['ok' => false, 'error' => $loaded['error']]);
+$to = $loaded['config']['to'];
+$from = $loaded['config']['from'];
 
 $raw = file_get_contents('php://input', false, null, 0, 20000);
 $data = json_decode($raw ?: '', true);
@@ -74,7 +108,7 @@ $headers = [
 ];
 if ($email !== '') $headers[] = 'Reply-To: ' . $email;
 
-if (!mail($to, $subject, $body, implode("\r\n", $headers))) {
-  answer(500, ['ok' => false, 'error' => 'Servern kunde inte skicka e-post.']);
+if (!function_exists('mail') || !@mail($to, $subject, $body, implode("\r\n", $headers))) {
+  answer(500, ['ok' => false, 'error' => 'Servern kunde inte skicka e-post. Webbhotellet kan kräva att avsändaren (from) är en adress på den egna domänen, eller SMTP.']);
 }
 answer(200, ['ok' => true]);

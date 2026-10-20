@@ -316,7 +316,6 @@ export class View3D {
   private onDown(e: PointerEvent): void {
     this.down = { x: e.clientX, y: e.clientY };
     if (!this.editor || (e.pointerType === 'mouse' && e.button !== 0)) return;
-    const ray = this.ray(e);
     // Greppen träffas på avstånd i skärmen, så att de är lätta att ta med fingret.
     const rect = this.el.getBoundingClientRect();
     const at: Vec2 = [e.clientX - rect.left + this.el.offsetLeft, e.clientY - rect.top + this.el.offsetTop];
@@ -335,7 +334,7 @@ export class View3D {
     if (handle) {
       this.drag = { kind: 'grip', handle, plane: horizontalPlane(handle.z), point: handle.point, label: '' };
     } else {
-      const hit = ray.intersectObjects(this.meshes, false).find((h) => (h.object.userData as { material: Material3D }).material !== 'floor');
+      const hit = this.hitAt(e);
       const id = hit ? (hit.object.userData as { id: string }).id : null;
       if (!hit || !id || !this.editor.isSelected(id)) return;
       const z = hit.point.y * 1000;
@@ -552,16 +551,24 @@ export class View3D {
 
   /** Det objekt som syns under en punkt i fönstret, för högerklick. */
   idAt(clientX: number, clientY: number): string | null {
-    const hit = this.ray({ clientX, clientY } as PointerEvent)
-      .intersectObjects(this.meshes, false)
-      .find((h) => (h.object.userData as { material: Material3D }).material !== 'floor');
+    const hit = this.hitAt({ clientX, clientY } as PointerEvent);
     return hit ? (hit.object.userData as { id: string }).id : null;
   }
 
-  private pick(e: PointerEvent): void {
-    const hit = this.ray(e)
+  /**
+   * Det första som syns under markören: inte marken, och inte det som en
+   * sektion klipper bort (*Följ sektionen*). Klippningen görs bara när
+   * bilden ritas, så träffar på den bortklippta sidan sorteras bort här.
+   */
+  private hitAt(e: Pick<PointerEvent, 'clientX' | 'clientY'>): THREE.Intersection | undefined {
+    const shown = (p: THREE.Vector3) => this.clipPlanes.every((pl) => pl.distanceToPoint(p) >= -1e-6);
+    return this.ray(e as PointerEvent)
       .intersectObjects(this.meshes, false)
-      .find((h) => (h.object.userData as { material: Material3D }).material !== 'floor');
+      .find((h) => (h.object.userData as { material: Material3D }).material !== 'floor' && shown(h.point));
+  }
+
+  private pick(e: PointerEvent): void {
+    const hit = this.hitAt(e);
     this.onPick?.(hit ? (hit.object.userData as { id: string }).id : null, e.shiftKey || e.ctrlKey || e.metaKey || e.pointerType === 'touch');
   }
 }

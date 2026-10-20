@@ -7,7 +7,8 @@ import { existingState } from '../core/states';
 import { DocStore } from '../core/store';
 import type { WallParams } from '../elements/wall';
 import { buildPlan, type PlanResult } from '../repr/plan';
-import { buildSection, type SectionResult } from '../repr/section';
+import type { SectionResult } from '../repr/section';
+import { createSectionQueue, spawnSectionWorker } from './app/sectionQueue';
 import { markerName, modelBounds } from '../elements/markers';
 import { AlignTool, MarkerTool, RoofTool } from './tools/markerTools';
 import { MeasureTool, ZoomBoxTool } from './tools/measureTool';
@@ -163,6 +164,13 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   pane2d.className = 'pane-2d';
   const pane3dEl = document.createElement('div');
   pane3dEl.className = 'pane-3d';
+  // Visas medan en fasad eller sektion räknas i bakgrundstråden (0.8.2).
+  const computing = document.createElement('div');
+  computing.className = 'computing';
+  computing.setAttribute('role', 'status');
+  computing.textContent = 'Räknar…';
+  computing.hidden = true;
+  pane2d.append(computing);
   canvas.prepend(pane2d, pane3dEl);
 
   /** Hur stor en CSS-pixel är på skärmen, mm. */
@@ -187,6 +195,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   let plan: PlanResult = { prims: [], pickables: [] };
   /** Den öppna fasaden eller sektionen, senast den räknades. */
   let lastSection: SectionResult | null = null;
+  const sectionQueue = createSectionQueue(() => renderAll(), { spawn: typeof Worker === 'undefined' ? undefined : spawnSectionWorker });
 
   /**
    * En automatisk taklutning som markeras blir ett eget objekt (0.8), så att
@@ -365,7 +374,12 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     // Ritverktygen ritar i planen: från en fasad eller sektion går man tillbaka dit.
     // Mått, text och 2D ritas i fasaden eller sektionen (0.8).
     if (PLAN_TOOLS.includes(id) && !SPACE_TOOLS.includes(id) && (ui.marker || ui.worksheet)) views.goTo({ kind: 'storey', id: ui.storey });
-    // På ett ritningsblad går bara att markera och panorera; ritverktygen går tillbaka till planen (0.8 del 3).
+    // På ett ritningsblad går bara att markera och panorera. Text, mått och 2D
+    // stannar på bladet med ett tips (0.8.2); övriga ritverktyg går till planen.
+    if (ui.layout && SPACE_TOOLS.includes(id)) {
+      hint('Text, mått och linjer direkt på ett blad kommer efter pilotprojektet. Rita dem i vyn, så syns de på bladet.', 4500);
+      return;
+    }
     if (ui.layout && id !== 'select' && id !== 'pan') views.goTo({ kind: 'storey', id: ui.storey });
     if (PLAN_TOOLS.includes(id) && ui.mode === '3d') void pane3d.setMode('2d');
     if (ui.tool === 'wall' && id !== 'wall') wallTool.finish();
@@ -616,17 +630,21 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
 
     // Fasad eller sektion: räknas fram ur modellen i stället för planen. Det
     // som är ritat i den (mått, text, 2D, taklutningar) läggs ovanpå (0.8).
-    const section = markerEl ? buildSection(doc, markerEl.id, vs, styleFor(ui.styleName)) : null;
+    // Stora fasader och sektioner räknas i en bakgrundstråd (0.8.2): medan
+    // den räknar visas den förra versionen, och renderAll körs igen när den är klar.
+    const section = markerEl ? sectionQueue.get(doc, markerEl.id, vs, styleFor(ui.styleName), ui.styleName ?? '') : null;
     lastSection = section;
+    computing.hidden = !(markerEl && sectionQueue.pending);
     const paper = layout ? sheets.drawing() : null;
     if (paper) {
       plan = { prims: paper.prims, pickables: [] };
-    } else if (section && markerEl) {
+    } else if (markerEl) {
       const drawn = buildPlan(doc, markerEl.storey, { ...vs, place: markerEl.id }, styleFor(ui.styleName));
       // Underlagen ligger under fasaden eller sektionen; det andra som ritats i den ovanpå.
+      // Första gången en stor vy räknas finns ingen fasad än, bara det ritade.
       const under = drawn.prims.filter((q) => q.origin?.objectType === 'Underlay');
       const over = drawn.prims.filter((q) => q.origin?.objectType !== 'Underlay');
-      plan = { prims: [...under, ...section.prims, ...over], pickables: [...section.pickables, ...drawn.pickables] };
+      plan = { prims: [...under, ...(section?.prims ?? []), ...over], pickables: [...(section?.pickables ?? []), ...drawn.pickables] };
     } else if (sheet) {
       // Ett arbetsblad (0.8 del 2): bara det som är ritat på det.
       plan = buildPlan(doc, ui.storey, { ...vs, place: sheet.id }, styleFor(ui.styleName));
@@ -811,7 +829,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const actions = installActions(app, { brand, feedbackDialog, files, menus, panes, plot, sheets, showMenu, views });
 
   // För felsökning i webbläsarens konsol.
-  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifyPalette, setTool, goTo: views.goTo, setMode: pane3d.setMode, get sheets() { return sheets; }, get plot() { return plot; }, get plan() { return plan; }, get view3d() { return pane3d.view3d; } };
+  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifyPalette, setTool, goTo: views.goTo, setMode: pane3d.setMode, get sheets() { return sheets; }, sections: sectionQueue, get plot() { return plot; }, get plan() { return plan; }, get view3d() { return pane3d.view3d; } };
 
   appEl.dataset.mode = ui.mode;
   appEl.dataset.sheet = ui.sheet;

@@ -63,6 +63,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.7 | Format 4: fasader och sektioner med dolda linjer, norrpil och fasader efter väderstreck, testtak med gavlar, bågväggar, Modifiera-paletten (lägg till punkt, böj, tangent, förskjut, avrunda, fasa, sträck, kopiera i rad m.m.) |
 | 0.8.0 | Format 5: projektträdet med mappar, 2D-element med Visas i och vy-taggar, mått och text i fasader och sektioner, underlag (PDF, bild, DXF) och arbetsblad, snabbare väggskarvar, ritningsblad med BH90-huvud och smarttext, vyer i skala på bladen, annoteringsskala och Plot/export till PDF i en zipfil |
 | 0.8.1 | Granskning utan nya funktioner: transaktioner, väggskarvar, dolda linjer och rum utan algoritmer som växer med kvadraten; `app.ts` och `propertiesPanel.ts` uppdelade |
+| 0.8.2 | Fasader och sektioner i en bakgrundstråd, referensritningar i testerna, synpunktsformulärets fel, markering i 3D med Följ sektionen och i sektion, textverktyget på blad, mappräknaren |
 | 0.7.1 | Betaversion med synpunktsformulär, detaljnivåer och linjetjocklekar i fasad och sektion, glasmarkering och öppningssätt, automatisk taklutning, sektioner begränsade till linjen och klippta i 3D, nya markörer i planen med grepp, längd, vinkel och Rikta efter objekt, streckning från hörnen, varning för nästan raka vinklar, takets kontur i Modifiera, måttband, spårlinjer, kopiera och klistra in mellan projekt, Ctrl + dra, piltangenter, zooma till område och förra zoomen |
 
 ## Framåt
@@ -215,21 +216,61 @@ med samma klick i webbläsaren före och efter.*
 
 Mätt men lämnat: snäppningen går igenom alla sträckor vid varje
 musrörelse (linjärt, men tungt med stora DXF-underlag), och planen ritas om
-helt vid panorering (15 ms för 684 väggar). Båda hör till 0.8.2.
+helt vid panorering (15 ms för 684 väggar). Båda hör till 0.8.3.
 
-### 0.8.2 Snabbare ritning och referensritningar
+### 0.8.2 Bakgrundstråd, referensritningar och småfel
+
+*Byggd (20 oktober), allt nedan, med samma filformat (5). Delad samma dag:
+panoreringen och cachen per objekt flyttade till 0.8.3. Bladen och
+Plot/export räknar fortfarande fasader direkt. Textverktyget på ett blad
+stannar på bladet med ett tips; text direkt på bladet ligger kvar under
+Efter pilotprojektet.*
 
 - Fasader och sektioner räknas i en bakgrundstråd (Web Worker), så att
   gränssnittet aldrig fryser
+- Referensritningar: några testprojekt ritas i testerna och jämförs mot
+  facit, så att ändrade ritningar syns
+- Synpunktsformuläret: servern svarar 503, alltså hittas eller godtas inte
+  `feedback-config.php`. Konfigurationen kan ligga i själva `cad-apa`-mappen
+  och de två felen får olika texter
+
+Synpunkter (20 oktober):
+
+- I 3D med *Följ sektionen* går det att markera det som syns, inte bara det
+  bortklippta (oftast taket)
+- I 2D-sektion markeras väggen man klickar på, inte taket och alla väggar
+  som ansluter till det
+- Textverktyget på ett ritningsblad hoppar inte tillbaka till en vy
+- Mappens räknare i projektträdet står på samma rad som namnet,
+  högerjusterad
+
+### 0.8.3 Snabbare plan
+
 - Panorering och zoom flyttar bilden i stället för att bygga om hela
   SVG-bilden för varje bildruta (`planView.ts`), så att stora DXF-underlag
   inte hackar
 - Planen byggs om bara för de objekt som ändrats (cache per objekt)
-- Referensritningar: några testprojekt plottas i testerna och jämförs mot
-  facit, så att ändrade ritningar syns
+- Snäppningen prövar bara sträckor nära markören (`BoxIndex`)
 - DXF-underlag: skraffering (HATCH) läses
-- Synpunktsformuläret, när Carl August har svarat på vad servern säger (se
-  OVERLAMNING.md)
+
+### 0.8.4 Arbetsflöde och ritningshuvud · *nytt format*
+
+Synpunkter (20 oktober):
+
+- Dra i skarven mellan 2D och 3D för att ändra fördelningen
+- Dubbelklick i projektträdet när bara 3D visas går över till 2D och visar
+  vyn (eller det man klickat på)
+- Klick på en väggs ändpunkt fortsätter väggen som förval
+- Varningen för sneda väggar kan stängas av per vägg i väggens inställningar
+- Tab växlar mellan objekt som ligger på varandra, innan man markerar
+- Måttbandet: Tab och ett värde flyttar målobjektet (mäter man från en vägg
+  till ett bord och skriver in avståndet, flyttas bordet)
+- Ritningshuvudet hårdkodas inte i bladen: nya blad är blanka och BH90-huvudet
+  blir ett eget objekt som läggs på och flyttas. Egna grupper med linjer och
+  text kommer med *Smartgrupper* efter pilotprojektet
+
+Två av punkterna (Tab och måttbandet) är mellanstora, liksom ritningshuvudet.
+Blir det för mycket flyttas ritningshuvudet till en egen småversion.
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
@@ -241,6 +282,8 @@ helt vid panorering (15 ms för 684 väggar). Båda hör till 0.8.2.
 - Bjälklag: kontur (ritad eller ur ytterväggarna), tjocklek, håltagning
 - Fasader, sektioner och 3D visar alla våningar; mått för fri höjd och
   bjälklag i sektioner
+- Fel (synpunkt 20 oktober): ändras golvnivån flyttas konturerna och
+  karmarna i 3D, men inte ytorna och fönsterhålen
 
 ### 0.10 Tak · *nytt format*
 

@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.1** (beta, granskning utan nya funktioner); nästa är **0.8.2,
-snabbare ritning och referensritningar**.
+**0.8.2** (beta, bakgrundstråd, referensritningar och småfel); nästa är
+**0.8.3, snabbare plan**.
 
 ## Vad som fungerar
 
@@ -423,6 +423,26 @@ Version 0.8.1, granskning (samma filformat, 5):
   rums- och dörrnumreringen fyra gånger, eftersom väggskarvar, rum och dörrar
   bara prövas mot det som ligger intill
 - Koden för appen och egenskapspanelen är uppdelad i mindre filer
+
+Version 0.8.2, bakgrundstråd och småfel (samma filformat, 5):
+- **Stora fasader och sektioner räknas i bakgrunden**, så att appen inte
+  fryser medan de räknas. Under tiden visas den förra versionen och en liten
+  *Räknar…* överst. Små vyer, som i exemplet, räknas direkt som förut
+- **Markera i 3D med *Följ sektionen***: det som syns går att markera, även
+  inne i huset. Förut träffade klicket det som klippts bort (oftast taket)
+- **Markera i en sektion**: ett klick i en väggs snitt markerar väggen, inte
+  taket och alla väggar som möter det
+- **Textverktyget på ett ritningsblad** stannar på bladet och säger att text
+  direkt på bladet kommer senare, i stället för att hoppa till en vy
+- **Mappar i projektträdet** har räknaren till höger på samma rad som namnet,
+  så att raderna blir lägre
+- **Synpunktsformuläret** säger vad som är fel: om `feedback-config.php` inte
+  hittas, inte går att läsa eller har en ogiltig adress. Filen kan nu ligga i
+  själva `cad-apa`-mappen, vilket behövs på webbhotell som inte låter
+  skriptet läsa mappen ovanför. Öppna `feedback.php` i webbläsaren för att
+  se om den hittas
+- **Referensritningar** i testerna: exemplet, ett rutnät av rum och ett blad
+  ritas och jämförs mot facit, så att oavsiktligt ändrade ritningar syns
 
 ## Versioner och gamla projekt
 

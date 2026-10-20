@@ -1,0 +1,84 @@
+linje 2000.1,0 5724.9,0 [w0.25 ink] @rv-0/wall
+linje 2000.1,2700 5740,2700 [w0.25 ink] @rv-0/wall
+linje 5740,2187.3 5740,2700 [w0.25 ink] @rv-0/wall
+linje 5875.1,0 9724.9,0 [w0.25 ink] @rv-0/wall
+linje 5860,2700 9740,2700 [w0.25 ink] @rv-0/wall
+linje 5860,2187.3 5860,2700 [w0.25 ink] @rv-0/wall
+linje 9740,2187.3 9740,2700 [w0.25 ink] @rv-0/wall
+linje 9875.1,0 11600,0 [w0.25 ink] @rv-0/wall
+linje 9860,2700 11600,2700 [w0.25 ink] @rv-0/wall
+linje 9860,2187.3 9860,2700 [w0.25 ink] @rv-0/wall
+linje 1600,900 1600,2110 [w0.35 ink] @rv-2/hole
+linje 2000,900 2000,2110 [w0.35 ink] @rv-2/hole
+linje 1600,2110 2000,2110 [w0.35 ink] @rv-2/hole
+linje 1600,900 2000,900 [w0.35 ink] @rv-2/hole
+linje 5740.1,2110 5860,2110 [w0.35 ink] @rv-8/hole
+linje 9740.1,2110 9860,2110 [w0.35 ink] @rv-14/hole
+linje 1650,2100 1650,2050.1 [w0.25 ink] @f-rv-2/frame
+linje 1650,959.5 1650,910 [w0.25 ink] @f-rv-2/frame
+linje 1650,2050 1650,960 [w0.25 ink] @f-rv-2/frame
+linje 1750,2100 1750,2050.5 [w0.25 ink] @f-rv-2/frame
+linje 1750,960 1750,910 [w0.25 ink] @f-rv-2/frame
+linje 1750,2050 1750,960 [w0.25 ink] @f-rv-2/frame
+linje 1650,910 1750,910 [w0.25 ink] @f-rv-2/frame
+linje 1650,2100 1750,2100 [w0.25 ink] @f-rv-2/frame
+linje 1670,2050 1670,2005.8 [w0.25 ink] @f-rv-2/sash
+linje 1670,1004.2 1670,960 [w0.25 ink] @f-rv-2/sash
+linje 1670,1005 1670,2005 [w0.25 ink] @f-rv-2/sash
+linje 1730,2050 1730,2005.8 [w0.25 ink] @f-rv-2/sash
+linje 1730,1004.2 1730,960 [w0.25 ink] @f-rv-2/sash
+linje 1730,1005 1730,2005 [w0.25 ink] @f-rv-2/sash
+linje 1670,960 1730,960 [w0.25 ink] @f-rv-2/sash
+linje 1670,2050 1730,2050 [w0.25 ink] @f-rv-2/sash
+linje 2015,2110 2015,900 [w0.18 ink] @f-rv-2/lining
+linje 1585,2110 1585,900 [w0.18 ink] @f-rv-2/lining
+linje 5915,1000 5915,1020 [w0.18 ink] @d-rv-8/handle
+linje 5875,2180 5875,0 [w0.18 ink] @d-rv-8/lining
+linje 5860,2180 5875,2180 [w0.18 ink] @d-rv-8/lining
+linje 5860,0 5875,0 [w0.18 ink] @d-rv-8/lining
+linje 5725,2180 5725,0 [w0.18 ink] @d-rv-8/lining
+linje 5740,2180 5725,2180 [w0.18 ink] @d-rv-8/lining
+linje 5740,0 5725,0 [w0.18 ink] @d-rv-8/lining
+linje 9915,1000 9915,1020 [w0.18 ink] @d-rv-14/handle
+linje 9875,2180 9875,0 [w0.18 ink] @d-rv-14/lining
+linje 9860,2180 9875,2180 [w0.18 ink] @d-rv-14/lining
+linje 9860,0 9875,0 [w0.18 ink] @d-rv-14/lining
+linje 9725,2180 9725,0 [w0.18 ink] @d-rv-14/lining
+linje 9740,2180 9725,2180 [w0.18 ink] @d-rv-14/lining
+linje 9740,0 9725,0 [w0.18 ink] @d-rv-14/lining
+linje 1585,825.5 1585,0 [w0.18 ink] @entre/lining
+linje 1599.9,0 1585,0 [w0.18 ink] @entre/lining
+linje 5724.9,0 2000.1,0 [w0.18 ink] @r-0-1/vy
+linje 5740,-30 2000,-30 [w0.18 ink] @r-0-1/vy
+linje 2000,-0.3 2000,-30 [w0.18 ink] @r-0-1/vy
+linje 5740,-7.3 5740,-30 [w0.18 ink] @r-0-1/vy
+linje 9724.9,0 5875.1,0 [w0.18 ink] @r-1-1/vy
+linje 9740,-30 5860,-30 [w0.18 ink] @r-1-1/vy
+linje 5860,-7.3 5860,-30 [w0.18 ink] @r-1-1/vy
+linje 9740,-7.3 9740,-30 [w0.18 ink] @r-1-1/vy
+linje 11600,0 9875.1,0 [w0.18 ink] @r-2-1/vy
+linje 11600,-30 9860,-30 [w0.18 ink] @r-2-1/vy
+linje 9860,-7.3 9860,-30 [w0.18 ink] @r-2-1/vy
+yta fylld paper [w0.35 ink] 1600,0 2000,0 2000,900 1600,900 @rv-2/snitt
+yta fylld paper [w0.35 ink] 1600,2110 2000,2110 2000,2700 1600,2700 @rv-2/snitt
+yta fylld paper [w0.35 ink] 5740,0 5860,0 5860,2700 5740,2700 @rv-2/snitt
+yta fylld paper [w0.35 ink] 9740,0 9860,0 9860,2700 9740,2700 @rv-2/snitt
+yta none [w0.25] 1650,910 1750,910 1750,960 1650,960 @f-rv-2/snitt
+yta none [w0.25] 1650,2050 1750,2050 1750,2100 1650,2100 @f-rv-2/snitt
+yta none [w0.25] 1670,960 1730,960 1730,1005 1670,1005 @f-rv-2/snitt
+yta none [w0.25] 1670,2005 1730,2005 1730,2050 1670,2050 @f-rv-2/snitt
+yta none [w0.25] 1694,1005 1706,1005 1706,2005 1694,2005 @f-rv-2/snitt
+yta none [w0.25] 2000,2110 2015,2110 2015,2180 2000,2180 @f-rv-2/snitt
+yta none [w0.25] 2000,830 2015,830 2015,900 2000,900 @f-rv-2/snitt
+yta none [w0.25] 1585,2110 1600,2110 1600,2180 1585,2180 @f-rv-2/snitt
+yta none [w0.25] 1585,830 1600,830 1600,900 1585,900 @f-rv-2/snitt
+yta fylld paper [w0.35 ink] 2000,-30 5740,-30 5740,0 2000,0 @r-0-1/snitt
+yta fylld paper [w0.35 ink] 5860,-30 9740,-30 9740,0 5860,0 @r-0-1/snitt
+yta fylld paper [w0.35 ink] 9860,-30 11600,-30 11600,0 9860,0 @r-0-1/snitt
+linje 85,-30 13100,-30 [w0.7] @/mark
+linje 12200,0 13800,0 [w0.18] @/nivå
+yta none [w0.18] 12800,0 12692,180 12908,180 @/nivå
+text "±0,000" 12980,63 h2.2 [w0.18] @/nivå
+linje 12200,2700 13800,2700 [w0.18] @/nivå
+yta none [w0.18] 12800,2700 12692,2880 12908,2880 @/nivå
+text "+2,700" 12980,2763 h2.2 [w0.18] @/nivå

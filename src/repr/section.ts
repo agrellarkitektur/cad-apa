@@ -172,12 +172,19 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   // Snittytor där linjen skär formerna.
   const cuts = new Map<string, { action: Action; poche: boolean; ids: Set<string>; rings: Rings[] }>();
   const cutFaces: { material: string; rings: Rings }[] = [];
+  // Varje objekts egen snittyta, för markering. Snitten ritas sammanslagna
+  // (väggar och tak i ett), men den sammanslagna ytan får inte göra att ett
+  // klick på en vägg markerar taket och alla väggar som möter det (0.8.2).
+  const ownCuts = new Map<string, Rings[]>();
   if (isSection) {
     for (const { s, demolished } of shapes) {
       if (s.kind === 'edges' || demolished) continue;
       const polys = cutSolid(s, O, r, v, z0, uMax);
       if (!polys.length) continue;
       for (const rings of polys) cutFaces.push({ material: s.material, rings });
+      const mine = ownCuts.get(s.id) ?? [];
+      mine.push(...polys);
+      ownCuts.set(s.id, mine);
       const action = actionOfId(s.id);
       const poche = POCHE.has(s.material);
       const k = `${action}|${poche ? 'p' : 'o'}|${poche ? '' : s.id}`;
@@ -216,7 +223,6 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
         : { kind: 'region', role: 'cut', rings, fill: { kind: 'none' }, outline: { weight: 0.25 }, ownFill: true, origin: { objectId: first, part: 'snitt' } };
       const p = applyStyle(raw, style.actions[ctx.styleKeyOf(g.action)], g.action, style);
       prims.push(p);
-      for (const id of g.ids) own(id, p);
       for (const ring of rings) for (const q of ring) {
         minU = Math.min(minU, q[0]);
         maxU = Math.max(maxU, q[0]);
@@ -260,12 +266,15 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     for (const [z, label] of levels) prims.push(...levelMark(maxU + 12 * ctx.scale, z, style.labels.heights.dimension, label, ctx.scale));
   }
 
-  const pickables: Pickable[] = [...byId.entries()].map(([id, list]) => ({
-    id,
-    priority: typeOf(doc.elements[id]?.type ?? '')?.drawOrder ?? 0,
-    regions: list.flatMap((p) => (p.kind === 'region' ? [p.rings as Vec2[][]] : [])),
-    prims: list.filter((p) => p.kind !== 'region'),
-  }));
+  const pickables: Pickable[] = [...new Set([...byId.keys(), ...ownCuts.keys()])].map((id) => {
+    const list = byId.get(id) ?? [];
+    return {
+      id,
+      priority: typeOf(doc.elements[id]?.type ?? '')?.drawOrder ?? 0,
+      regions: [...list.flatMap((p) => (p.kind === 'region' ? [p.rings as Vec2[][]] : [])), ...((ownCuts.get(id) ?? []) as Vec2[][][])],
+      prims: list.filter((p) => p.kind !== 'region'),
+    };
+  });
   return { name: markerName(doc, marker), prims, pickables, ms: performance.now() - t0, slopes, cutFaces };
 }
 

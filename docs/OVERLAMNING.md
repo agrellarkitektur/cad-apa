@@ -1,31 +1,33 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 20 oktober 2026, efter 0.8.1
-(granskning).
+överlämning; historiken finns i git. Senast: 20 oktober 2026, efter 0.8.2.
 
 ## Läget
 
-- **0.8.1 är klar**: en granskningssession utan nya funktioner, på `main`.
-  Filformatet är fortfarande **5**. Det som gjordes står i PLAN.md under
-  *0.8.1 Granskning* och i UTVECKLING.md under *Granskning (0.8.1)*:
-  - Transaktioner, väggskarvar, dolda linjer och rum växer inte längre med
-    kvadraten på antalet objekt. Kopiera och ta bort 684 väggar 1,3 s →
-    0,03 s; en fasad av 312 väggar med dörrar och fönster 2,5 s → 0,65 s;
-    planen och 3D ungefär dubbelt så snabba, rumsnumreringen fyra gånger.
-  - `src/ui/app.ts` 1 922 → 836 rader (nya delar i `src/ui/app/`:
-    `actions`, `panes`, `pane3d`, `files`, `textEdit`, `snapping`), och
-    `src/ui/propertiesPanel.ts` 1 065 → 571 (`selectionFields.ts`,
-    `selectionEdits.ts`).
-  - Prestandatestet har två nya fall (rum med dörrar och fönster; flytta,
-    kopiera och ta bort alla väggar) som felar med den gamla koden.
-  - Resultaten är exakt desamma som förut: kontrollerat med fingeravtryck
-    av planer, fasader, 3D, rumsnummer och kommandon, och med drygt 140
-    steg i webbläsaren mot det gamla och det nya bygget.
-- **Planen**: den version som hette 0.8.1 (snabbare ritning,
-  referensritningar) heter nu **0.8.2**. Sedan 0.9 flera våningsplan och
-  bjälklag, 0.10 tak, 0.11 trappor, 0.12 IFC- och DXF-export och 0.13
-  pilotprojektet med formatfrys.
+- **0.8.2 är klar** på `main`, filformatet är fortfarande **5**. Det som
+  gjordes står i PLAN.md under *0.8.2* och i UTVECKLING.md under
+  *Bakgrundstråd och markering (0.8.2)* och *Tester*:
+  - Fasader och sektioner räknas i en bakgrundstråd
+    (`src/ui/app/sectionQueue.ts`, `src/repr/sectionWorker.ts`). Små vyer
+    (under 30 ms) räknas direkt som förut. En fasad av 544 väggar: appen
+    blockeras högst ca 55 ms första gången, sedan ca 25 ms, mot ca 400 ms
+    förut. Bladen och Plot/export räknar fortfarande direkt.
+  - Referensritningar: `tests/referens.test.ts` med facit i
+    `tests/referens/` (exemplet, `roomGrid(3)` och ett A3-blad). Facit gav
+    exakt samma resultat med 0.8.1-koden. Nytt facit: `-u`.
+  - Småfel: markering i 3D med *Följ sektionen* (`hitAt` i `view3d.ts`),
+    markering i sektion (`ownCuts` i `buildSection`), textverktyget på blad
+    (stannar med ett tips), mappräknaren på samma rad.
+  - `feedback.php`: letar efter `feedback-config.php` i `cad-apa` och i
+    mappen ovanför, säger vilket fel det är, och visar läget om man öppnar
+    `feedback.php` i webbläsaren (GET).
+- **Planen** (sorterad 20 oktober tillsammans med Carl August): 0.8.3
+  snabbare plan (panorering, cache per objekt, snäppning med `BoxIndex`,
+  HATCH), 0.8.4 arbetsflöde och ritningshuvud (*nytt format*, sju punkter
+  varav tre mellanstora; ritningshuvudet kan bli en egen småversion), sedan
+  0.9 flera våningsplan (med felet om golvnivån i 3D), 0.10 tak, 0.11
+  trappor, 0.12 export och 0.13 piloten med formatfrys.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen (0.13). Höj
   `FORMAT_VERSION` när formatet ändras; äldre filer får ett meddelande om
   att de kommer från en äldre betaversion (`parse` i `src/storage/format.ts`).
@@ -34,35 +36,45 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   release på GitHub, som han gör själv. Ingen demo och ingen zip om han inte
   ber om det. Säg alltid hur stora föreslagna ändringar är och om de
   riskerar att behöva mer än en session (CLAUDE.md).
+- **Synpunkter:** Carl August samlar dem i `cad-apa-synpunkter.md`
+  (projektets kunskapsbas), med rubrikerna Inkorg, Planerat per version,
+  Parkerat och Avfärdat. Läs den vid sessionsstart (med Projects-verktyget,
+  `project_read`). Sortera Inkorgen tillsammans med honom: föreslå version
+  för varje punkt och säg om något är för stort för en session. Ta bort
+  hanterade punkter när de görs; behåll Avfärdat med anledning. Han kan
+  också klistra in synpunkter i chatten; för in dem i filen när sorteringen
+  är godkänd. Han hittar inte hur man öppnar filen i kunskapsbasen och kan
+  lägga in synpunkter via en annan, billigare chatt.
 
-## Nästa session: 0.8.2
+## Nästa session: 0.8.3 Snabbare plan
 
-Står i PLAN.md under *0.8.2 Snabbare ritning och referensritningar*:
-fasader och sektioner i en bakgrundstråd, panorering som flyttar bilden i
-stället för att bygga om SVG:n, planen ombyggd bara för det som ändrats,
-referensritningar i testerna, HATCH i DXF-underlag och synpunktsformuläret.
-Sex punkter, varav de tre första är stora; föreslå att dela upp den (t.ex.
-0.8.2 bakgrundstråd och referensritningar, 0.8.3 panorering och cache per
-objekt).
+Börja med att läsa `cad-apa-synpunkter.md` och sortera Inkorgen.
 
-Underlag från granskningen:
+Står i PLAN.md under *0.8.3*:
 
-- En fasad tar nu ungefär 0,1 s i exemplet och 0,65 s för 312 väggar. Det
-  som återstår är jämnt fördelat: 3D-formerna (`model3dBatch`,
-  polygon-clipping), trianguleringen och de dolda linjerna. Med en
-  bakgrundstråd märks det inte.
-- Panorering ritar om hela planen: 15 ms för 684 väggar, mer med stora
-  DXF-underlag.
+- Panorering och zoom flyttar bilden (transform på SVG:n eller en grupp) i
+  stället för att bygga om hela SVG-bilden. Mätt: 15 ms per bildruta för
+  684 väggar, mer med stora DXF-underlag.
+- Planen byggs om bara för objekt som ändrats (cache per objekt i
+  `buildPlan`); väggskarvar gör att grannar också måste räknas om.
 - Snäppningen (`snap` i `src/ui/tools/snap.ts`, sträckorna från
-  `src/ui/app/snapping.ts`) går igenom alla sträckor vid varje musrörelse.
-  Det är linjärt men tungt med stora DXF-underlag; `BoxIndex` passar för att
-  bara ta sträckor nära markören.
-- Referensritningarna kan plottas med `buildSheet` och `writePdf`, eller
-  jämföras som primitiver, vilket är enklare att läsa i ett test. Samma
-  teknik som granskningen använde (fingeravtryck av `buildPlan`,
-  `buildSection` och `buildModel3d`) kan bli testet.
+  `src/ui/app/snapping.ts`) prövar bara sträckor nära markören (`BoxIndex`).
+- HATCH i DXF-underlag.
 
-## Att fråga Carl August om (från 0.8.0)
+Kontrollera med referensritningarna att planerna inte ändras, och mät före
+och efter med `roomGrid(18)` / stora DXF-underlag.
+
+## Att fråga Carl August om
+
+- **Synpunktsformuläret** efter 0.8.2: vad säger `feedback.php` när han
+  öppnar den i webbläsaren, och går det att skicka? Om `mail()` misslyckas
+  med giltig `from` (på den egna domänen, `kontakt@agrellarkitektur.se`)
+  behövs SMTP i `feedback.php`.
+- **Text direkt på bladet**: punkten ligger under *Efter pilotprojektet*,
+  men blir naturlig att göra tillsammans med ritningshuvudet som eget objekt
+  i 0.8.4. Fråga om den ska flyttas dit.
+
+### Från 0.8.0
 
 - **Hur bladet och huvudet ser ut** när han provat: fältens ordning och
   storlek i BH90-huvudet är gjorda efter hur huvudet brukar se ut, inte
@@ -80,12 +92,11 @@ Underlag från granskningen:
 
 ## Öppna frågor och kända begränsningar
 
-- **Synpunkter på webbhotellet:** fortfarande obesvarat. Han har laddat upp
-  `feedback-config.php` i mappen ovanför `cad-apa`, men formuläret öppnade
-  e-posten. Sedan 0.8 del 1 visar formuläret vad servern svarar. Fråga vad
-  det säger. Troligast är `from` en adress som inte finns (använd
-  `kontakt@agrellarkitektur.se`), eller att webbhotellet stoppar `mail()`
-  och kräver SMTP; då får `feedback.php` byggas ut (planerat i 0.8.2).
+- **Synpunkter på webbhotellet:** servern svarade 503 före 0.8.2, alltså
+  hittades eller godtogs inte `feedback-config.php` (troligen open_basedir).
+  Se *Att fråga Carl August om*.
+- **Följ sektionen** klipper 3D, men caps (snittytorna) saknas medan en stor
+  sektion räknas i tråden.
 - **2D på arbetsblad följer tillstånden** som 2D i planen. Fråga om
   arbetsblad ska vara oberoende av tillstånd.
 - På ett blad visar statusraden fortfarande Skärm och Rutnät, fast
@@ -94,7 +105,7 @@ Underlag från granskningen:
 - Taksprånget ändras lika på båda sidor av ett sadeltak; riktiga tak med
   takfot per kant kommer i 0.10.
 - Spegla vänder inte bilden i ett underlag, bara läget.
-- DXF: skraffering (HATCH) läses i 0.8.2; bilder och externa referenser
+- DXF: skraffering (HATCH) läses i 0.8.3; bilder och externa referenser
   efter pilotprojektet. Vektorsnäpp mot PDF avvaktar.
 - **Visas i** räknar vyer utan att bry sig om tillstånd.
 - Modellvyerna har inga vy-taggar, så ett element med taggar syns inte där

@@ -150,7 +150,16 @@ En ny del av gränssnittet läggs som en egen fil här i stället för i
 
 `npm test` kör testerna i `tests/`. Varje regel som rör data ska ha ett test:
 hur åtgärder räknas ut, att ångra återställer exakt, att filer läses utan
-förlust. Ritregler kontrolleras genom att titta på dem.
+förlust. Ritregler kontrolleras genom att titta på dem, och med
+referensritningarna (0.8.2).
+
+**Referensritningar** (`tests/referens.test.ts`): planer, fasader,
+sektioner, 3D och ett blad för exemplet och ett rutnät av rum skrivs som
+text, en rad per primitiv (koordinater avrundade till 0,1 mm), och jämförs
+mot facit i `tests/referens/`. Ändras en ritning med avsikt skrivs nytt
+facit med `npx vitest run tests/referens.test.ts -u`; titta på skillnaden i
+git innan den läggs in. Testprojekten (`wallGrid`, `roomGrid`) ligger i
+`tests/projekt.ts`.
 
 ## Rum och anteckningar
 
@@ -469,3 +478,26 @@ på bladet sina egna.
   alltid). Gränssnittet jämförs på samma sätt: samma klick i Playwright mot
   det gamla och det nya bygget, och läget (`bacchus.ui`, projektet,
   panelernas text) efter varje steg.
+
+## Bakgrundstråd och markering (0.8.2)
+
+- **Fasader och sektioner i en tråd.** `src/ui/app/sectionQueue.ts` ger
+  `get(doc, markör, vyläge, stilmall, stilnyckel)`, som svarar direkt med
+  den färdiga vyn om den finns för just det projektet, annars med den förra
+  versionen av samma vy (eller null) medan den nya räknas i tråden
+  (`src/repr/sectionWorker.ts`, som kör `handleSectionJob` i
+  `src/repr/sectionJob.ts`). När svaret kommer körs `renderAll` igen. Vyer
+  som senast tog under 30 ms räknas direkt (första gången gissas en halv ms
+  per objekt), så små projekt beter sig som förut. Projektet skickas till
+  tråden bara när det ändrats (projektets identitet avgör), utan
+  underlagens filer. Medan tråden räknar ersätts köade jobb av det senaste.
+  Går tråden inte att starta räknas allt direkt. I demon (en enda fil)
+  ligger tråden i filen (`?worker&inline`).
+- Bladen (`buildSheet`) och Plot/export räknar fortfarande fasader direkt.
+- **3D-markering och klippning**: klippningen i 3D görs när bilden ritas,
+  så träffar från `Raycaster` på den bortklippta sidan sorteras bort i
+  `hitAt` (`view3d.ts`), som används för klick, högerklick och drag.
+- **Markering i sektion**: snitten ritas sammanslagna (väggar och tak i en
+  yta), men varje objekt markeras med sin egen snittyta (`ownCuts` i
+  `buildSection`).
+
