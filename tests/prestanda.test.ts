@@ -7,6 +7,7 @@ import { createContext } from '../src/repr/context';
 import { buildModel3d } from '../src/repr/model3d';
 import { buildPlan } from '../src/repr/plan';
 import { buildSection } from '../src/repr/section';
+import { sampleProject } from '../src/sample/sampleProject';
 import { roomGrid, wallGrid } from './projekt';
 
 /**
@@ -15,6 +16,10 @@ import { roomGrid, wallGrid } from './projekt';
  * flerbostadshus på ett plan gånger fyra. Gränserna är generösa så att
  * testet inte felar på en belastad maskin, men en algoritm som växer med
  * kvadraten på antalet väggar (fasaden tog 6–10 s före 0.8 del 2.1) fångas.
+ *
+ * Alla test som mäter tid ligger här. Filen körs ensam efter de andra
+ * (`sequence.groupOrder` i vite.config.ts), så att mätningen inte delar
+ * processorn med andra testfiler; på GitHub körs flera filer samtidigt.
  */
 beforeAll(() => registerBuiltInTypes());
 
@@ -82,4 +87,22 @@ describe('prestanda', () => {
     expect(planMs).toBeLessThan(2000);
     expect(fasadMs).toBeLessThan(3000);
   }, 60000);
+
+  it('exemplets fasader och sektion på under en tiondels sekund var (0.7)', () => {
+    const doc = sampleProject();
+    const view = { state: 'st-a', compareTo: 'st-bef' };
+    const ids = ['fasad-1', 'fasad-2', 'fasad-3', 'fasad-4', 'sektion-a'];
+    // Första gången kompileras koden; mät sedan och ta den bästa av tre
+    // gånger, så att en enstaka skräpsamling inte fäller testet.
+    for (const id of ids) buildSection(doc, id, view);
+    for (const id of ids) {
+      let best = Infinity;
+      for (let k = 0; k < 3; k++) {
+        const r = buildSection(doc, id, view)!;
+        expect(r.prims.length).toBeGreaterThan(20);
+        best = Math.min(best, r.ms);
+      }
+      expect(best).toBeLessThan(100);
+    }
+  });
 });

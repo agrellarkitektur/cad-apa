@@ -161,6 +161,14 @@ hur åtgärder räknas ut, att ångra återställer exakt, att filer läses utan
 förlust. Ritregler kontrolleras genom att titta på dem, och med
 referensritningarna (0.8.2).
 
+**Test som mäter tid** ligger i `tests/prestanda.test.ts`. Den filen körs
+ensam efter alla andra (två projekt i `test.projects` i `vite.config.ts`,
+med `sequence.groupOrder`), eftersom GitHub kör flera testfiler samtidigt
+och en klocka som delar processorn med dem mäter fel; så föll releaserna
+v0.8.2 och v0.8.3. Test som tar mer än någon sekund får en egen tidsgräns
+(vitests förval är 5 s). Prova under trängsel med
+`npx vitest run --maxWorkers=4`.
+
 **Referensritningar** (`tests/referens.test.ts`): planer, fasader,
 sektioner, 3D och ett blad för exemplet och ett rutnät av rum skrivs som
 text, en rad per primitiv (koordinater avrundade till 0,1 mm), och jämförs

@@ -132,7 +132,8 @@ describe('snäppning nära markören (0.8.3)', () => {
     }
     snapIndex.from = 200;
     expect(hits).toBeGreaterThan(20);
-  });
+    // 3 s på en lugn maskin; jämförelsen med alla sträckor är långsam med avsikt.
+  }, 30000);
 });
 
 describe('skraffering i DXF-underlag (0.8.3)', () => {

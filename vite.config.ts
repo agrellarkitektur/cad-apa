@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { viteSingleFile } from 'vite-plugin-singlefile';
@@ -58,6 +59,14 @@ export default defineConfig(({ mode }) => {
       assetsInlineLimit: artifact ? 100_000_000 : 4096,
       // three.js och pdf.js laddas separat när de behövs (3D-vyn, PDF-underlag).
       chunkSizeWarningLimit: 1300,
+    },
+    test: {
+      // Testen som mäter tid körs ensamma efter de andra, så att de inte
+      // delar processorn med andra testfiler (på GitHub körs flera samtidigt).
+      projects: [
+        { extends: true, test: { name: 'tester', include: ['tests/**/*.test.ts'], exclude: ['tests/prestanda.test.ts'], sequence: { groupOrder: 0 } } },
+        { extends: true, test: { name: 'prestanda', include: ['tests/prestanda.test.ts'], sequence: { groupOrder: 1 } } },
+      ],
     },
   };
 });

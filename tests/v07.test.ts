@@ -125,20 +125,7 @@ describe('format 4 (0.7)', () => {
 });
 
 describe('fasader och sektioner (0.7)', () => {
-  it('räknas fram ur exemplet på under en tiondels sekund', async () => {
-    const { sampleProject } = await import('../src/sample/sampleProject');
-    const { buildSection } = await import('../src/repr/section');
-    const doc = sampleProject();
-    const view = { state: 'st-a', compareTo: 'st-bef' };
-    const ids = ['fasad-1', 'fasad-2', 'fasad-3', 'fasad-4', 'sektion-a'];
-    // Första gången kompileras koden; mät sedan.
-    for (const id of ids) buildSection(doc, id, view);
-    for (const id of ids) {
-      const r = buildSection(doc, id, view)!;
-      expect(r.prims.length).toBeGreaterThan(20);
-      expect(r.ms).toBeLessThan(100);
-    }
-  });
+  // Tiden för exemplets fasader mäts i prestanda.test.ts, som körs ensam.
   it('en låda: bara de synliga kanterna, ingen triangeldiagonal', async () => {
     const { visibleSegments, featureEdges } = await import('../src/geometry/hiddenLine');
     const { solidTriangles } = await import('../src/repr/mesh');
