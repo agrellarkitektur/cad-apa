@@ -621,7 +621,7 @@ Version 0.8.10, smarta fält (filformat 10):
   värdet och en kryssruta **Projekt**: ett sådant fält fylls i på ett
   ställe och gäller alla blad, också nya. Adress, fastighet, beställare,
   uppdragsnummer, arkitekt och ansvarig gäller hela projektet från början.
-  Ett felstavat namn ger ett nytt, tomt fält i tabellen; ett fält med värde
+  Fälten står i huvudets ordning. Ett felstavat namn ger ett nytt, tomt fält i tabellen; ett fält med värde
   som inte används längre visas med *används inte*
 - **Flera blad**: Ctrl- eller Shift-klicka blad under Ritningar i
   projektträdet. Tabellen visar *(olika)* där värdena skiljer sig, och bara

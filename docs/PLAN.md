@@ -496,7 +496,9 @@ uppdragsnummer, arkitekt och ansvarig gäller hela projektet från början.
 `{skala a3}` är skalan när bladet skrivs ut på A3 (nämnaren gånger
 papperets långsida / 420, alltså 2 för A1). Flera blad markeras med Ctrl-
 eller Shift-klick i Ritningar. Ett fält med olika värden som töms skrivs
-inte (det går att tömma på ett blad i taget).*
+inte (det går att tömma på ett blad i taget). Fälttabellen visar fälten
+i huvudets ordning. Carl Augusts A1-ram gjordes om till ett mallblad i
+format 10 (egen projektfil, inte i repot).*
 
 ### 0.8.11 Granskning
 
@@ -507,6 +509,24 @@ bladet blev en vanlig text.) **Visa-menyn i kategorier** (Carl August, 20
 oktober): en kryssruta per kategori, så att t.ex. alla littera eller alla
 markörer tänds och släcks på en gång. Vill Carl August komma fram till 0.9 snabbare kan
 granskningen och Modifiera-verktygen (0.8.13) byta plats.
+
+Småsaker från synpunkterna (21 oktober), som hör till städningen:
+
+- **Fel: text i DXF-underlag.** MTEXT får ett udda prefix (`\pxql`, en
+  formateringskod som ska tolkas bort), och TEXT och MTEXT läggs alltid
+  från insättningspunkten nere till vänster oavsett justering, så många
+  texter hamnar fel
+- Förhandsvisning av fyllningsmönstret bredvid namnet i listan där man
+  väljer mönster
+- En sluten polylinje markeras bara vid kanten, inte med ett klick i
+  mitten; en linje bakom en fyllning går före fyllningen när man klickar
+  nära linjen
+- Statusraden: *Rutnät x mm* och skärmskalan får en ram och ser ut som
+  knappar; ett klick på *Rutnät* slår av och på rutnätet. *Snäpp* får
+  samma text och utseende som de andra knapparna
+- Avstängda växlar: synlighetsväxlar får ett snett streck i ikonens egen
+  färg (inte rött) när de är avslagna, och påslagna knappar en tydligare
+  färg
 
 ### 0.8.12 Skalstock och stämplar · *nytt format*
 
@@ -563,9 +583,44 @@ Förslag, att stämma av först:
 - **Dra och släpp till mappar** (Carl August, 20 oktober): vyer, ritningar
   m.m. dras till mappar i projektträdet
 
+- **Flytta och Vrid från en snäppunkt** (Carl August, 21 oktober): ett
+  slumpmässigt klick på objektet är ingen baspunkt. Klickar man på en
+  ändpunkt, ett väggliv eller en referenslinje snäpper baspunkten dit;
+  annars ber verktyget om en punkt eller linje. Gäller också att vrida en
+  bild, så att den kan riktas exakt mot snäppunkter
+- **Dela en mätning i segment** (Carl August, 21 oktober): efter en mätning
+  (utan Tab) skriver man ett tal, och Enter tonar mätlinjen och lägger
+  tillfälliga snäppunkter i skarvarna, tills man väljer *Rensa
+  segmentpunkter*. Blir 0.8.13 för stor tas detta i en egen småversion
+
 Stor med kortkommandona: blir det för mycket görs kortkommandona och
 Avrunda/Fasa för hela markeringen först, och resten (med tjocklekstabellen
 och dra och släpp) i en egen småversion.
+
+### 0.8.14 Underlag
+
+Carl Augusts synpunkter 21 oktober. Mellanstor, kan bli stor; i så fall
+delas den.
+
+- **Snäpp i DXF-underlag**: ändpunkt, mittpunkt, längs linjer och de andra
+  vanliga
+- **X och Y** för att placera ett underlag, som kan ändras senare i
+  egenskaperna och smartmenyn
+- **Papperskorg** i egenskaperna och smartmenyn för ett markerat underlag
+- **Underlagen i trädet** grupperas per filtyp, med en symbol för typen
+  framför rubriken, och ett underlag som ligger på flera ställen visas som
+  en grupp som fälls ut med en rad per instans
+- **Bildens grepp**: en markerad bild får grepp i hörnen (som också är
+  snäppunkter) och på sidorna. Hörnen skalar proportionellt, sidorna
+  sträcker åt det hållet. Bredd och höjd kan skrivas in i smartmenyn och
+  egenskaperna, med *Återställ proportioner* bredvid
+
+### 0.8.15 Rumsstämpeln
+
+Småversion (Carl August, 21 oktober); fler småsaker kan läggas till.
+
+- Rumsstämpeln kan dras till en annan plats i rummet. Dras den utanför
+  rummet visas en pil från stämpeln in i rummet
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 

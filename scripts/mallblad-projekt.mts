@@ -4,7 +4,9 @@
  * bort. Ett verktyg för utvecklingen, inte en del av appen.
  *
  *   npx rolldown scripts/mallblad-projekt.mts --file /tmp/mp.mjs --format esm --platform node
- *   node /tmp/mp.mjs mall.json "Ritningsmall A1" A1 landscape > Ritningsmall.cadapa
+ *   node /tmp/mp.mjs mall.json "Ritningsmall A1" A1 landscape [kommun,handläggare] > Ritningsmall.cadapa
+ *
+ * Sista argumentet (0.8.10) är fält som ska gälla hela projektet, utöver de vanliga.
  */
 import { readFileSync } from 'node:fs';
 import { EXAMPLE_MASTER_ID } from '../src/core/exampleMaster';
@@ -14,9 +16,9 @@ import { DocStore } from '../src/core/store';
 import { deleteWorksheet } from '../src/core/treeCommands';
 import { serialize } from '../src/storage/format';
 
-const [file, name, size, orientation] = process.argv.slice(2);
+const [file, name, size, orientation, shared = ''] = process.argv.slice(2);
 const items = JSON.parse(readFileSync(file, 'utf8')) as { type: string; params: Record<string, unknown> }[];
-const store = new DocStore(emptyProject(name, 'nybyggnad'));
+const store = new DocStore(emptyProject(name, 'nybyggnad', Object.fromEntries(shared.split(',').filter(Boolean).map((k) => [k.trim().toLowerCase(), '']))));
 deleteWorksheet(store, EXAMPLE_MASTER_ID);
 const id = createMaster(store, { name, size: size as PaperSize, orientation: orientation as 'landscape' | 'portrait' });
 setDefaultMaster(store, id);

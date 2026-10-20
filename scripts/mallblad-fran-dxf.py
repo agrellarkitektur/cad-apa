@@ -47,15 +47,16 @@ SMART = {
     '#SKALA A1 (A1)': '{skala} (A1)',
     '#SKALA A3 (A3)': '{skala a3} (A3)',
     '#MAPPNAMN': '{mapp}',
+    '#INITIALER HL': '{Handläggare}',
 }
 
 
 def smart(text):
-    """Kända platshållare blir smarttext; andra (#KOMMUN, #RAD 1: …) blir fält med samma namn (0.8.10)."""
+    """Kända platshållare blir smarttext; andra blir fält: #KOMMUN → {Kommun}, #RAD 2: BYGGNAD → {Byggnad} (0.8.10)."""
     if text in SMART:
         return SMART[text]
-    m = re.fullmatch(r'#([^:#{}]+?)(?::.*)?', text.strip())
-    return '{' + m.group(1).strip().capitalize() + '}' if m else text
+    m = re.fullmatch(r'#([^:#{}]+?)(?::([^#{}]+))?', text.strip())
+    return '{' + (m.group(2) or m.group(1)).strip().capitalize() + '}' if m else text
 
 
 def color_of(doc, e):

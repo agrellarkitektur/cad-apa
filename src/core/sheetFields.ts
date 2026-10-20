@@ -54,15 +54,19 @@ export interface FieldInfo {
   used: boolean;
 }
 
-/** Texterna på papperet som ett blad visar: mallens och bladets egna. */
+/**
+ * Texterna på papperet som ett blad visar, mallens först och sedan bladets,
+ * uppifrån och ned och från vänster, så att fälten kommer i huvudets ordning.
+ */
 function sheetTexts(doc: Pick<ProjectDoc, 'elements' | 'worksheets'>, sheet: Pick<Sheet, 'id' | 'master'>): string[] {
   const master = sheet.master ? doc.worksheets.find((w) => w.id === sheet.master) : undefined;
-  const spaces = new Set<Id>([sheet.id, ...(isMaster(master) ? [master.id] : [])]);
-  const out: string[] = [];
-  for (const el of Object.values(doc.elements)) {
-    if (el.space && spaces.has(el.space) && typeof el.params.text === 'string' && el.params.text.includes('{')) out.push(el.params.text);
-  }
-  return out;
+  const order = (space: Id) =>
+    Object.values(doc.elements)
+      .filter((el) => el.space === space && typeof el.params.text === 'string' && el.params.text.includes('{'))
+      .map((el) => ({ text: el.params.text as string, at: (el.params.pos as readonly [number, number] | undefined) ?? [0, 0] }))
+      .sort((a, b) => b.at[1] - a.at[1] || a.at[0] - b.at[0])
+      .map((t) => t.text);
+  return [...(isMaster(master) ? order(master.id) : []), ...order(sheet.id)];
 }
 
 /** Namnet med stor första bokstav, som rubrik i tabellen. */

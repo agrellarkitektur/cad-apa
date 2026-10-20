@@ -20,25 +20,20 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
     nytt fält `{Konstruktör}` på bladet med *Projekt*, flera blad med
     Ctrl-klick och *(olika)*, ångra). Inga nya kända fel. Referensbilden
     för bladet hade dagens datum; testet sätter nu datumet.
-- **Inkorgen (21 oktober) är inte sorterad.** Claudes förslag, skickat i
-  chatten och inte godkänt än: DXF-text (MText `\pxql`, insättningspunkt),
-  mönsterförhandsvisning, markering av sluten polylinje och linje bakom
-  fyllning, statusradens fält som knappar, Snäpp-knappen och avstängda
-  växlar → 0.8.11; ny **0.8.14 Underlag** (snäpp i DXF, X/Y, papperskorg,
-  grupper per filtyp och instans, bildens grepp och mått); Flytta/Rotera
-  från snäppunkt och mätning i segment → 0.8.13 (mätningen egen
-  småversion om 0.8.13 blir stor); rumsstämpeln → egen småversion efter
-  0.8.14 eller 0.9; *explodera vektorunderlag* står under Parkerat, fråga
-  om den ska flyttas fram. Avstängda växlar: Claude föreslog snett streck i
-  ikonens färg (inte rött) på synlighetsväxlar och tydligare påslaget läge.
-  Sortera klart med honom och för in i `cad-apa-synpunkter.md`.
-- **A1-ramen**: Inkorgen säger att ramen inte hittas. Den finns bara i
-  projektfilen *Ritningsmall A1.cadapa* (format 8, öppnas inte längre).
-  Be om DXF:en och kör skripten igen (format 10); se *Arbeta i miljön*.
-- **Planen**: 0.8.11 granskning, 0.8.12 skalstock och stämplar, 0.8.13
-  fler Modifiera-verktyg, sedan 0.9 flera våningsplan (med felet om
-  golvnivån i 3D), 0.10 tak, 0.11 trappor, 0.12 export, SWEREF-versionen
-  (före eller efter piloten) och 0.13 piloten med formatfrys.
+  - Carl Augusts A1-ram blev mallblad igen, i format 10: projektfilen
+    *Ritningsmall A1.cadapa* (fick han i chatten 21 oktober; DXF:en ligger
+    inte i repot, den har hans telefonnummer). #RAD 1, 2 och 4 blev
+    `{Projektbeskrivning}`, `{Byggnad}` och `{Ritningstyp}`, #INITIALER HL
+    `{Handläggare}`; kommun, projektbeskrivning och handläggare gäller hela
+    projektet. Kontrollerat i Chrome och som PDF.
+  - Fälttabellen visar fälten i huvudets ordning (mallens texter uppifrån
+    och ned, sedan bladets).
+- **Inkorgen är sorterad** (Carl August godkände 21 oktober) och införd i
+  `cad-apa-synpunkter.md` och PLAN.md: småsaker → 0.8.11, Flytta/Vrid från
+  snäppunkt och mätning i segment → 0.8.13, nya 0.8.14 Underlag och 0.8.15
+  Rumsstämpeln. Explodera DXF väntar (Parkerat).
+- **Färdplanen** står nedan. Håll den aktuell vid varje överlämning
+  (CLAUDE.md).
 - **Ord:** *palett* och *snabbmeny* betyder samma sak för honom. Säg bara
   **smartmeny**.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen (0.13). Höj
@@ -58,14 +53,41 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   också klistra in synpunkter i chatten; för in dem i filen när sorteringen
   är godkänd. Punkterna under 0.8.10 togs bort ur filen när 0.8.10 var klar.
 
+## Färdplan
+
+Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
+
+- ~~0.8.8 Mallblad~~, ~~0.8.9 Grafik och textrutor på bladen~~,
+  ~~0.8.10 Smarta fält~~ (klara)
+- **0.8.11 Granskning**: städa, dela stora filer, långsam kod; Visa-menyn i
+  kategorier; DXF-text (fel), mönsterförhandsvisning, markering av
+  polylinje och linje bakom fyllning, statusraden och Snäpp, avstängda växlar
+- **0.8.12 Skalstock och stämplar** (nytt format)
+- **0.8.13 Fler Modifiera-verktyg**: Trimma, Hörnskarv, Dela, Justera och
+  Fördela, Hämta/överför, Skala, Avrunda/Fasa för markeringen,
+  kortkommandon, Flytta/Vrid från snäppunkt; ev. egen småversion för
+  tjocklekstabell, dra och släpp till mappar och mätning i segment
+- **0.8.14 Underlag**: snäpp i DXF, X/Y, papperskorg, grupper i trädet,
+  bildens grepp och mått
+- **0.8.15 Rumsstämpeln** flyttbar, med pil utanför rummet
+- **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
+  i 3D)
+- **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade)
+- **0.11 Trappor** (nytt format)
+- **0.12 Export**: IFC4, DXF, areor för bygglov
+- **Koordinater, SWEREF och sol** (stor; före eller efter piloten, bestäms
+  efter 0.12)
+- **0.13 Pilotprojektet och formatfrys**
+- Efter piloten: se *Efter pilotprojektet* i PLAN.md (bl.a. explodera
+  DXF-underlag, mallblad mellan projekt). **1.0** bygglovshandling.
+
 ## Nästa session: 0.8.11 Granskning
 
-Sortera Inkorgen först (se ovan), läs sedan *0.8.11* i PLAN.md.
+Läs synpunktsfilen (Inkorgen är tom 21 oktober) och *0.8.11* i PLAN.md.
 
 - Städa, dela upp stora filer (`src/ui/app/sheets.ts`, `src/ui/app.ts`) och
-  leta efter långsam kod. Visa-menyn i kategorier. Plus de småsaker ur
-  Inkorgen som Carl August godkänner för 0.8.11.
-- Gör om A1-mallen om han laddat upp DXF:en.
+  leta efter långsam kod. Visa-menyn i kategorier, och småsakerna från 21
+  oktober (står i PLAN.md). Felet med DXF-texten: `src/formats/` (DXF-läsaren).
 
 ## Att fråga Carl August om
 
@@ -91,12 +113,13 @@ Sortera Inkorgen först (se ovan), läs sedan *0.8.11* i PLAN.md.
   papperets nedre vänstra hörn på blad i andra format (med ett tips), att
   ett valt mallblad föreslår sitt format, att loggan nu är ett underlag på
   mallbladet och att mallbladet inte följer tillstånden.
-- **Hans ram**: platshållarna som blev smarttext är Claudes gissning
+- **Hans ram** (gjord om i format 10, 21 oktober): platshållarna som blev smarttext är Claudes gissning
   (#PROJEKTNAMN, #DATUM, #RITNINGSNR, #RAD 3, #FÖRHANDSKOPIA,
   #FASTIGHETSBETECKNING, #PROJEKTNR, #REV, #ARKITEKTKONTOR, #INITIALER MV,
   #SIGN ANSVARIG, #SKALA A1). Övriga (#KOMMUN, #MAPPNAMN, #RAD 1, 2 och 4,
-  #INITIALER HL, #SKALA A3) blir fält, `{mapp}` och `{skala a3}` när
-  skriptet körs igen (0.8.10); hans fil i format 8 öppnas inte längre.
+  #INITIALER HL, #SKALA A3) blev fält, `{mapp}` och `{skala a3}`. Skriptet
+  kördes med `--utan 605,22,716,50 --behall HÖJD --behall SWEREF` (utan
+  skalstocken) och projektet med fälten `kommun,projektbeskrivning,handläggare`.
 - **Skalstocken** (0.8.12) måste gå att flytta när som helst (Carl August,
   20 oktober). Hans standardläge på A1: innanför ramen nere till vänster om
   huvudet, x 611–711 mm, y 27–46 mm; hans skalstockar för 1:1–1:5000 finns

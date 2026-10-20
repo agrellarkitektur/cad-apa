@@ -42,6 +42,10 @@ byggs i vilken version), `docs/ARKITEKTUR.md` (idé och principer) och
   funktioner: städa, dela upp stora filer och leta efter långsam kod.
 - En session per version. Småversioner (0.7.2 …) har 3–6 punkter. Säg till
   när chatten blir lång, och skriv då en överlämning i `docs/OVERLAMNING.md`.
+- `docs/OVERLAMNING.md` har alltid en kort **färdplan** (en rad per
+  version). Uppdatera den när en version blir klar eller planen ändras, och
+  lägg en kopia av överlämningen i projektets kunskapsbas
+  (`claude/cad-apa-overlamning.md`).
 - Snabbläge för småfixar: typer och tester räcker; skärmbilder bara
   när ändringen syns. README och versionsnummer uppdateras ändå.
 - Nya delar av gränssnittet läggs som egna filer i `src/ui/app/`, inte i
