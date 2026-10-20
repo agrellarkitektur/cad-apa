@@ -19,9 +19,10 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
     *Skalan i rubriken*). Det var Carl Augusts önskemål i samma session.
   - Kontrollerat i Chrome med Playwright mot `dist/`; inga nya kända fel.
     `tests/prestanda.test.ts` gick igenom den här gången.
-- **Planen** (20 oktober): 0.8.8 fler Modifiera-verktyg
-  med kortkommandona och Avrunda/Fasa för hela markeringen, 0.8.9
-  granskning, sedan 0.9 flera våningsplan (med felet om golvnivån i 3D),
+- **Planen** (ändrad 20 oktober kväll, se *Bladen om* i PLAN.md): 0.8.8
+  mallblad, 0.8.9 grafik och textrutor på bladen, 0.8.10 smarta fält,
+  0.8.11 granskning, 0.8.12 skalstock och stämplar, 0.8.13 fler
+  Modifiera-verktyg, sedan 0.9 flera våningsplan (med felet om golvnivån i 3D),
   0.10 tak (med tak ovanför snittet punktstreckade), 0.11 trappor, 0.12
   export och 0.13 piloten med formatfrys.
 - **Ord:** *palett* och *snabbmeny* betyder samma sak för honom. Säg bara
@@ -45,17 +46,37 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   lägga in synpunkter via en annan, billigare chatt. Punkterna under 0.8.6
   och 0.8.7 togs bort ur filen när 0.8.7 var klar.
 
-## Nästa session: 0.8.8 Fler Modifiera-verktyg
+## Nästa session: 0.8.8 Mallblad
 
-Börja med att läsa `cad-apa-synpunkter.md` och sortera Inkorgen.
+Börja med att läsa `cad-apa-synpunkter.md` och sortera Inkorgen. Läs sedan
+*Bladen om* och *0.8.8* i PLAN.md: Carl August tycker att ramen och det
+inbyggda BH90-huvudet är för låsta och vill rita egna utseenden, som
+Archicads master layouts.
 
-PLAN.md under *0.8.8*. Stäm först av med Carl August vilka av Claudes
-förslag (Trimma, Hörnskarv, Dela, Justera och Fördela, Hämta och överför
-inställningar, Skala, Förläng till/Trimma för flera) han vill ha, och
-listan med kortkommandon (förslaget är Shift + bokstav). Avrunda och Fasa
-för hela markeringen hör också hit. Storleken beror på hur många verktyg
-som väljs; föreslå att dela upp i två småversioner om listan blir lång.
-Granskningen (0.8.9) kan läggas före om han vill: förra var 0.8.1.
+- **Mallblad** i Ritningar-fliken, med pappersformat. Bygg dem som
+  arbetsblad (`Worksheet`, `space` på elementen, se UTVECKLING.md under
+  format 5) ritade i skala 1:1 med papperet som yta, så att Text, 2D,
+  underlag, markering och Modifiera fungerar som de är. Det som skiljer:
+  `view.drawingScale = 1`, papperet ritas under (som `buildSheet`), och
+  texter i mallen fyller i smarttext från bladet som använder den
+  (`expandSmartText`, `smartVars` i `src/repr/titleBlock.ts`). Text i
+  vyerna har ingen smarttext i dag, så den måste in i `annotation.ts` via
+  ett värde i ritkontexten.
+- **Bladen**: `Sheet.master?: Id`, projektets förvalda mall, och mallens
+  primitiver ritade under vyerna i `buildSheet` (och därmed i PDF:en).
+- **Ta bort** `Sheet.frame`, `TitleBlockItem`, `addTitleBlock`,
+  kryssrutan *Nya blad får ritningshuvud* (`uiSettings.newSheetTitleBlock`)
+  och huvudets formulär. Bladets fält (`SHEET_FIELDS`) flyttas till bladets
+  formulär; projektets fält (`PROJECT_FIELDS`) får ett eget ställe tills
+  0.8.10 gör tabellen. `titleBlockPrims` kan användas en gång för att bygga
+  exempelmallen av vanliga linjer och texter, och sedan tas bort.
+  Texten på bladet (0.8.7) ligger kvar tills 0.8.9.
+- **DWG-ramen**: Carl August bifogar sin tomma ram med huvud. Gör om DWG
+  till DXF med LibreDWG (`dwg2dxf`; installera med pip eller bygg om det
+  behövs, eller be om DXF) och linjerna och texterna till 2D-objekt i ett
+  mallblad, med ezdxf. Den blir testfallet.
+- Nytt format (8). Storlek: stor. Blir det trångt väntar exempelmallen
+  eller DWG-ramen.
 
 ## Att fråga Carl August om
 
@@ -64,31 +85,25 @@ Granskningen (0.8.9) kan läggas före om han vill: förra var 0.8.1.
   redigeras med dubbelklick, att läget räknas från papperets nedre vänstra
   hörn (texten står kvar när formatet byts, huvudet följer höger hörn), och
   att ramen följer med när skalan byts. Vill han kunna dölja hela
-  vyrubriken, inte bara skalan? Vridna texter och textstilar efter piloten?
+  vyrubriken, inte bara skalan? Texten blir vanlig text i 0.8.9.
+- **Skalstocken** (0.8.12) måste gå att flytta när som helst (Carl August,
+  20 oktober).
 - **Synpunktsformuläret**: kommer breven fram till Gmail nu, efter `-f`?
   Annars: prova att sätta Gmail-adressen direkt som `to` i
   `feedback-config.php`. Kommer de fram då är det vidarebefordran från
   Loopia som stoppar dem.
-- **Ritningshuvudet efter provning**: att det fäster mot ramen och vyerna,
-  Flytta med två klick, och om fälten känns rätt fördelade mellan *Den här
-  ritningen* och *Alla ritningar i projektet*. BH90 är den enda mallen;
-  BEAst ligger efter piloten.
-- **Fler Modifiera-verktyg (0.8.8)**: förslagen i PLAN.md (Trimma,
+- **Fler Modifiera-verktyg (nu 0.8.13)**: förslagen i PLAN.md (Trimma,
   Hörnskarv, Dela, Justera och Fördela, Hämta och överför inställningar,
   Skala) är Claudes egna, efter motsvarande program. Stäm av vilka han vill
-  ha, och listan med kortkommandon, innan 0.8.8 börjar.
+  ha, och listan med kortkommandon, innan den versionen börjar.
 - **Smartmenyn efter provning**: placeringen (höger, vänster, under, över
   det markerade), att den syns vid markering med ruta, och om rubriken
   *Ändra* i Modifiera-raden ska heta något annat.
-- **Granskningen** ligger som 0.8.9. Förra var 0.8.1, så den kan läggas
-  före 0.8.8 om han vill.
+- **Granskningen** ligger som 0.8.11. Han kan byta plats på den och
+  Modifiera-verktygen om han vill komma fram till 0.9 snabbare.
 
 ### Från 0.8.0
 
-- **Hur bladet och huvudet ser ut** när han provat: fältens ordning och
-  storlek i BH90-huvudet är gjorda efter hur huvudet brukar se ut, inte
-  efter standardtexten. Vill han ha något annat i huvudet (t.ex. ritad av
-  och granskad som initialer, eller fler rader för ändringar)?
 - **Typsnittet i PDF:en** är Helvetica, medan skärmen visar appens typsnitt.
   Bredderna skiljer något. Att bädda in ett eget typsnitt ligger efter
   piloten.

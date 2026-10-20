@@ -289,7 +289,7 @@ Samma filformat (5). Stor för en session: blir det för mycket flyttas
 kortkommandona till 0.8.6 som en småversion.
 
 *Byggd (20 oktober), med samma filformat (5). Kortkommandona och Avrunda
-och Fasa för hela markeringen flyttades till 0.8.8 (Carl August, 20
+och Fasa för hela markeringen flyttades till 0.8.8, numera 0.8.13 (Carl August, 20
 oktober), där verktygslistan bestäms. Modifiera-raden går att dölja i
 inställningarna. Ett verktyg i raden som behöver en ände, ett hörn eller en
 kant använder den man redan klickat på, annars ber raden om ett klick.*
@@ -376,7 +376,100 @@ papperets nedre vänstra hörn, så att texten står kvar när formatet byts.
 Vyns ram ligger i modellens koordinater och följer med när skalan byts;
 kanterna fäster mot ritningsramen och de andra sakerna på bladet.*
 
-### 0.8.8 Fler Modifiera-verktyg
+### Bladen om (0.8.8–0.8.12, bestämt 20 oktober)
+
+Carl August tycker att ritningsramen och det inbyggda BH90-huvudet (0.8.6)
+är för fördefinierade och låsta. I stället ritar man sina egna utseenden
+med de vanliga verktygen, som Archicads *master layouts*: **mallblad** som
+andra blad använder, **stämplar** att lägga på blad, **textrutor** och
+**smarta fält** utan begränsning. Det som gjorts i 0.8.6 och 0.8.7 ersätts
+delvis; ritningen av huvudet, smarttexten, vyernas ram och den dolda skalan
+återanvänds. Granskningen och Modifiera-verktygen flyttas efter.
+
+### 0.8.8 Mallblad · *nytt format*
+
+- **Mallblad**: en egen sorts layout med pappersformat och orientering, i
+  Ritningar-fliken. Man ritar på den med de vanliga verktygen: linjer,
+  rektanglar, ytor, text med smarttext, och bilder, logga och DXF som
+  underlag. Byggs som ett arbetsblad (format 5) i skala 1:1 med papperet
+  som yta, så att ritverktygen, markeringen, smartmenyn och
+  Modifiera-verktygen fungerar utan att skrivas om. Smarttexten fylls i från
+  bladet som använder mallen
+- Varje blad väljer ett mallblad, och mallens grafik ritas under bladets
+  vyer. Projektet har ett förvalt mallblad som nya blad får. Mallen följer
+  bladets format; ett blad i ett annat format än mallen får ett tips
+- Ritningsramen (`Sheet.frame`) och det inbyggda huvudet (`TitleBlockItem`,
+  BH90) tas bort som funktioner. Bladets fält (skede, datum, ändring,
+  ritat av, granskat av …) ligger kvar i bladets egenskaper och hamnar i
+  mallen genom smarttext, t.ex. `{skede}` och `{datum}`
+- Ett **exempelmallblad** följer med nya projekt och exempelprojektet: ram
+  och ett huvud i BH90-stil ritat av vanliga linjer och texter, som man kan
+  ändra, kopiera eller ta bort
+- Carl August har en tom ritningsram med huvud som DWG. Han bifogar den
+  (helst också som DXF) när sessionen börjar: Claude gör om den till DXF
+  (LibreDWG) och linjerna och texterna till 2D-objekt i ett mallblad, så
+  att ramen blir testfallet och texterna kan bytas mot smarta fält
+
+Stor, en session. Blir det trångt väntar exempelmallen eller DWG-ramen.
+
+### 0.8.9 Grafik och textrutor på bladen · *nytt format*
+
+- Linjer, ytor, text och bilder direkt på vanliga blad, med samma verktyg
+  som på mallbladet. Det svåra är att vyerna på bladet och de ritade
+  objekten ska gå att markera, flytta och ta bort tillsammans
+- Texten på bladet från 0.8.7 (`SheetTextItem`) blir vanlig text, så att
+  det finns ett sätt att skriva på papper
+- **Textrutor**, för text i vyerna också: största bredd och höjd, vänster-,
+  centrerad eller högerjustering, och förankring i rutans överkant, mitt
+  eller underkant. Raderna bryts vid ord med typsnittets bredder, så att
+  skärmen och PDF:en bryter likadant. Ryms texten inte i höjden visas en
+  röd markering på skärmen som inte skrivs ut; texten krymps inte
+
+Mellanstor.
+
+### 0.8.10 Smarta fält
+
+- Obegränsat med smarta fält: allt inom klamrar som inte är ett inbyggt
+  namn, t.ex. `{Konstruktör}`, blir ett fält, oavsett om det står i
+  mallen, i en stämpel eller direkt på bladet. Namnen jämförs utan hänsyn
+  till stora och små bokstäver
+- Bladets egenskaper visar en tabell med alla fält bladet använder, där
+  värdena fylls i. Ett felstavat namn ger ett nytt, tomt fält som syns i
+  tabellen
+- Ett fält kan markeras som **gäller hela projektet** (konstruktör,
+  beställare, uppdragsnummer): det fylls i på ett ställe och gäller alla
+  blad, också nya
+- **Flera blad samtidigt**: markera flera blad i projektträdet. Fält med
+  olika värden visar *(olika)*, och bara de fält man ändrar skrivs till de
+  markerade bladen (t.ex. konstruktör på alla men inte publiceringsdatum)
+
+Mellanstor.
+
+### 0.8.11 Granskning
+
+Förra granskningen var 0.8.1, och bladen har byggts om flera gånger:
+städa, dela upp stora filer (`src/ui/app/sheets.ts`, `src/ui/app.ts`) och
+leta efter långsam kod. Att slå ihop bladets `viewports` och `items` till
+en lista tas här. Vill Carl August komma fram till 0.9 snabbare kan
+granskningen och Modifiera-verktygen (0.8.13) byta plats.
+
+### 0.8.12 Skalstock och stämplar · *nytt format*
+
+- **Skalstock** som ett inbyggt objekt på bladet, inte i mallen (samma ram
+  kan behöva olika skalstockar): skalan hämtas från en vy man väljer eller
+  anges själv, med längd och indelning. Den läggs där man vill och går att
+  flytta när som helst, som de andra sakerna på bladet
+- **Stämplar**: egna ritade grupper att lägga på ett blad, t.ex. logga,
+  "BYGGLOVSHANDLING", orienteringspil eller ett tilläggshuvud. En stämpel
+  ritas med samma verktyg som ett mallblad, fast utan papper, och kan ha
+  smarttext och smarta fält. Den läggs på, flyttas och tas bort som
+  huvudet i 0.8.6, och ändras på ett ställe för alla blad den ligger på
+
+Mellanstor; stämplarna återanvänder mallbladen.
+
+### 0.8.13 Fler Modifiera-verktyg
+
+*Var 0.8.8; flyttad efter bladversionerna (20 oktober).*
 
 Carl August bad om egna förslag på verktyg som finns i motsvarande program
 (Archicad, Revit, AutoCAD). Varje verktyg får en plats i smartmenyn och
@@ -410,14 +503,6 @@ Förslag, att stämma av först:
 
 Stor med kortkommandona: blir det för mycket görs kortkommandona och
 Avrunda/Fasa för hela markeringen först, och resten i en egen småversion.
-
-### 0.8.9 Granskning
-
-Förra granskningen var 0.8.1. Granskningen föreslås efter
-Modifiera-versionerna och bladversionerna: städa, dela upp stora filer och
-leta efter långsam kod. Vill Carl August ha den tidigare kan den läggas
-efter 0.8.7. Att slå ihop bladets `viewports` och `items` till en lista kan
-tas här.
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
@@ -488,10 +573,12 @@ efter pilotprojektet. Det som piloten visar behövs tidigt går först.
 
 ### Grafik och markörer (från 0.8 del 3)
 
-- Fria linjer och bilder direkt på ett blad (texter kommer i 0.8.7), och flera blad i en PDF
+- Flera blad i en PDF
+- Gör om ett DXF-underlag till 2D-objekt (linjer och texter), i appen
+- Mallblad och stämplar mellan projekt: spara som fil och lägg in i ett annat projekt
 - Typsnittet inbäddat i PDF:en (i dag Helvetica, som alla PDF-läsare har)
 - En andra 2D-ruta: planen bredvid en öppen sektion eller fasad, där det man markerar i den ena markeras i den andra
-- Ritningshuvud enligt BEAst (en mall till i `TITLE_BLOCK_TEMPLATES`, 0.8.6)
+- Ritningshuvud enligt BEAst, som ett färdigt mallblad
 
 Grafik:
 

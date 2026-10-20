@@ -7,7 +7,7 @@ och kan bytas utan att röra resten av koden.
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
 **0.8.7** (beta, text på bladet och vyernas ram); nästa är
-**0.8.8, fler Modifiera-verktyg**.
+**0.8.8, mallblad** (egna ritningsramar och huvuden i stället för det inbyggda BH90).
 
 ## Vad som fungerar
 
