@@ -78,6 +78,18 @@ export function installActions(app: AppContext, parts: ActionParts) {
     app.renderAll();
   });
 
+  // Dubbelklick i projektträdet när bara 3D visas (0.8.4): klicket går till
+  // våningen eller vyn, dubbelklicket visar den i 2D. Trädet ritas om vid
+  // klicket, så webbläsaren ser inget dubbelklick; det räknas här. Fasader,
+  // sektioner, arbetsblad och blad går över till 2D redan vid klick.
+  let lastPick = { key: '', t: 0 };
+  function treeDoubleClick(key: string): void {
+    const now = performance.now();
+    const double = lastPick.key === key && now - lastPick.t < 450;
+    lastPick = double ? { key: '', t: 0 } : { key, t: now };
+    if (double && ui.mode === '3d') void app.setMode('2d');
+  }
+
   root.addEventListener('click', async (e) => {
     const target = e.target as Element;
     const { store, view, navigator, panel } = app;
@@ -156,6 +168,7 @@ export function installActions(app: AppContext, parts: ActionParts) {
     }
     const underlayPick = target.closest<HTMLElement>('[data-underlay-pick]');
     if (underlayPick) {
+      treeDoubleClick(`underlay:${underlayPick.dataset.underlayPick}`);
       if (isNarrow()) app.setNav(false);
       app.showUnderlay(underlayPick.dataset.underlayPick!);
       return;
@@ -189,6 +202,7 @@ export function installActions(app: AppContext, parts: ActionParts) {
     }
     const storeyPick = target.closest<HTMLElement>('[data-storey-pick]');
     if (storeyPick) {
+      treeDoubleClick(`storey:${storeyPick.dataset.storeyPick}`);
       if (isNarrow()) app.setNav(false);
       app.goTo({ kind: 'storey', id: storeyPick.dataset.storeyPick! });
       pickTreeItem({ kind: 'storey', id: storeyPick.dataset.storeyPick! });
@@ -196,6 +210,7 @@ export function installActions(app: AppContext, parts: ActionParts) {
     }
     const viewPick = target.closest<HTMLElement>('[data-view-apply]');
     if (viewPick) {
+      treeDoubleClick(`view:${viewPick.dataset.viewApply}`);
       const v = store.doc.views.find((x) => x.id === viewPick.dataset.viewApply);
       showMenu.closeShowMenu();
       if (isNarrow()) app.setNav(false);

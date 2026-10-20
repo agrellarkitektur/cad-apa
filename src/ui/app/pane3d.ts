@@ -9,7 +9,7 @@ import type { Edit3DHost, Handle3D, View3D } from '../../view3d/view3d';
 import { icons } from '../icons';
 import { releasedHint } from '../tools/selectTool';
 import { snap } from '../tools/snap';
-import { saveUiSettings } from '../uiSettings';
+import { saveUiSettings, SPLIT } from '../uiSettings';
 import type { AppContext } from './context';
 import type { ViewMode } from './shell';
 
@@ -34,6 +34,8 @@ export function installPane3d(app: AppContext) {
     update3d();
   });
   app.pane3d.appendChild(followBtn);
+
+  installSplitGrip(app);
 
   /** Andra markerade väggar som har en ände i punkten; de följer med när änden dras. */
   function companionWalls(wallId: Id, at: Vec2): Id[] {
@@ -163,4 +165,64 @@ export function installPane3d(app: AppContext) {
     setMode,
     update3d,
   };
+}
+
+/**
+ * Skarven mellan planen och 3D i läget Båda (0.8.4). Dra för att ändra
+ * fördelningen; pil vänster och höger flyttar den med tangentbordet och
+ * dubbelklick delar lika. Fördelningen sparas med de andra inställningarna.
+ */
+function installSplitGrip(app: AppContext): void {
+  const { appEl, uiSettings } = app;
+  const canvas = app.pane3d.parentElement!;
+  const grip = document.createElement('div');
+  grip.className = 'split-grip';
+  grip.setAttribute('role', 'separator');
+  grip.setAttribute('aria-orientation', 'vertical');
+  grip.tabIndex = 0;
+  grip.title = 'Dra för att ändra fördelningen mellan planen och 3D, dubbelklicka för att dela lika';
+  grip.setAttribute('aria-label', 'Skarven mellan planen och 3D');
+  canvas.appendChild(grip);
+
+  const apply = (f: number) => {
+    uiSettings.split = Math.max(SPLIT.min, Math.min(SPLIT.max, f));
+    appEl.style.setProperty('--split', `${(uiSettings.split * 100).toFixed(2)}%`);
+    grip.setAttribute('aria-valuenow', String(Math.round(uiSettings.split * 100)));
+  };
+  apply(uiSettings.split);
+
+  let drag: { id: number; left: number; width: number } | null = null;
+  grip.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const r = canvas.getBoundingClientRect();
+    drag = { id: e.pointerId, left: r.left, width: r.width };
+    grip.setPointerCapture(e.pointerId);
+    grip.classList.add('active');
+    document.body.classList.add('resizing-pane');
+  });
+  grip.addEventListener('pointermove', (e) => {
+    if (!drag || e.pointerId !== drag.id || drag.width <= 0) return;
+    apply((e.clientX - drag.left) / drag.width);
+  });
+  const end = (e: PointerEvent) => {
+    if (!drag || e.pointerId !== drag.id) return;
+    drag = null;
+    grip.classList.remove('active');
+    document.body.classList.remove('resizing-pane');
+    saveUiSettings(uiSettings);
+  };
+  grip.addEventListener('pointerup', end);
+  grip.addEventListener('pointercancel', end);
+  grip.addEventListener('dblclick', () => {
+    apply(0.5);
+    saveUiSettings(uiSettings);
+  });
+  grip.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    const step = e.shiftKey ? 0.1 : 0.02;
+    apply(uiSettings.split + (e.key === 'ArrowLeft' ? -step : step));
+    saveUiSettings(uiSettings);
+  });
 }

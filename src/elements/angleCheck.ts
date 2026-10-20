@@ -69,9 +69,13 @@ function lineOf(doc: ProjectDoc, el: Element): { a: Vec2; b: Vec2 } | null {
   }
 }
 
-/** Hur ett element ligger i förhållande till närmaste raka vinkel, eller null om det är rakt eller långt ifrån. */
-export function skewOf(doc: ProjectDoc, el: Element, thresholdDeg: number): SkewWarning | null {
-  if (!(thresholdDeg > 0)) return null;
+/**
+ * Hur ett element ligger i förhållande till närmaste raka vinkel, eller null
+ * om det är rakt, långt ifrån eller markerat som avsiktligt (`skewOk`, 0.8.4;
+ * `evenIgnored` räknar ändå, för raden i egenskaperna).
+ */
+export function skewOf(doc: ProjectDoc, el: Element, thresholdDeg: number, evenIgnored = false): SkewWarning | null {
+  if (!(thresholdDeg > 0) || (el.skewOk && !evenIgnored)) return null;
   const l = lineOf(doc, el);
   if (!l) return null;
   const dx = l.b[0] - l.a[0];

@@ -1,4 +1,8 @@
-import { angleDeg, dist, sub } from '../../geometry/vec';
+import { moveElements } from '../../core/commands';
+import { add, angleDeg, dist, norm, scale, sub } from '../../geometry/vec';
+import { pickAllAt } from '../../view2d/pick';
+import { labelOf } from '../labels';
+import { ghostPath } from '../modify';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
@@ -22,9 +26,25 @@ export interface Measurement {
 }
 
 /**
+ * Hur långt det som ligger vid `b` ska flyttas, längs linjen från `a`, för
+ * att avståndet ska bli `value` (0.8.4). Avrundat till en hundradels mm.
+ */
+export function moveAlong(a: Vec2, b: Vec2, value: number): [number, number] {
+  const len = dist(a, b);
+  if (len < 1e-9) return [0, 0];
+  const d = scale(norm(sub(b, a)), value - len);
+  const r = (v: number) => Math.round(v * 100) / 100 || 0; // || 0 gör −0 till 0
+  return [r(d[0]), r(d[1])];
+}
+
+/**
  * Måttband (0.7.1): klicka punkter för att mäta avstånd, vinklar och ytor
  * utan att något ritas. Värdena står i verktygsraden och kan kopieras.
  * Dubbelklick eller Enter börjar om. Fungerar även i fasader och sektioner.
+ *
+ * Flytta med måttbandet (0.8.4): efter en sträcka från A till B går Tab till
+ * objektet vid B (helst ett som inte också ligger vid A). Skriv avståndet och
+ * tryck Enter, så flyttas det längs sträckan. Tab igen byter objekt.
  */
 export class MeasureTool implements ViewTool {
   cursor = 'crosshair';
@@ -33,6 +53,12 @@ export class MeasureTool implements ViewTool {
   private current: SnapResult | null = null;
   private lastUp = 0;
   onChange?: () => void;
+  /** Objektet att flytta (0.8.4): kandidaterna vid B och vilken som är vald. */
+  private target: { ids: string[]; index: number } | null = null;
+  /** Avståndet som skrivs, för förhandsvisningen. */
+  private preview: number | null = null;
+  /** Flytta med måttbandet började, bytte objekt eller slutade. */
+  onTarget?: () => void;
 
   constructor(host: ToolHost) {
     this.host = host;
@@ -63,6 +89,7 @@ export class MeasureTool implements ViewTool {
   }
 
   up(p: ViewPointer): void {
+    if (this.target) this.endMove();
     this.track(p);
     const pt = this.current?.point ?? p.model;
     const now = performance.now();
@@ -83,20 +110,97 @@ export class MeasureTool implements ViewTool {
 
   reset(): void {
     this.pts = [];
+    if (this.target) this.endMove();
     this.onChange?.();
+  }
+
+  /** Objektet som flyttas med måttbandet, eller null. */
+  get moving(): string | null {
+    return this.target ? this.target.ids[this.target.index] : null;
+  }
+
+  /** Sträckan som ändras: de två senast klickade punkterna. */
+  get span(): [Vec2, Vec2] | null {
+    const n = this.pts.length;
+    return n >= 2 ? [this.pts[n - 2], this.pts[n - 1]] : null;
+  }
+
+  /**
+   * Tab: gå till objektet vid sista punkten, eller nästa om det redan finns
+   * ett (Shift+Tab bakåt). Svarar med vad som hände, som en text att visa
+   * när det inte gick.
+   */
+  beginMove(back = false): string | null {
+    if (this.target) {
+      const n = this.target.ids.length;
+      this.target.index = (this.target.index + (back ? n - 1 : 1)) % n;
+      this.onTarget?.();
+      this.host.view.requestRender();
+      return null;
+    }
+    const sp = this.span;
+    if (!sp) return 'Mät från en punkt till en punkt på det som ska flyttas, tryck sedan Tab.';
+    const pick = (q: Vec2) =>
+      pickAllAt(this.host.plan().pickables, q, pxToMm(this.host, 6), this.host.view.drawingScale).filter((id) => {
+        const el = this.host.store.doc.elements[id];
+        return !!el && (!this.host.readOnly?.() || !!this.host.canEdit?.(id));
+      });
+    const atA = new Set(pick(sp[0]));
+    const atB = pick(sp[1]);
+    const ids = [...atB.filter((id) => !atA.has(id)), ...atB.filter((id) => atA.has(id))];
+    if (!ids.length) return 'Det finns inget att flytta vid sista punkten.';
+    this.target = { ids, index: 0 };
+    this.preview = null;
+    this.onTarget?.();
+    this.host.view.requestRender();
+    return null;
+  }
+
+  /** Avbryt flytten. */
+  endMove(): void {
+    this.target = null;
+    this.preview = null;
+    this.onTarget?.();
+    this.host.view.requestRender();
+  }
+
+  /** Avståndet som skrivs just nu, för förhandsvisningen. */
+  setPreview(v: number | null): void {
+    this.preview = v !== null && Number.isFinite(v) && v >= 0 ? v : null;
+    this.host.view.requestRender();
+  }
+
+  /** Flytta objektet så att sträckan blir `value` mm. Svarar med en text att visa. */
+  applyMove(value: number): string {
+    const id = this.moving;
+    const sp = this.span;
+    if (!id || !sp || !(value >= 0)) return 'Skriv ett avstånd i mm.';
+    const doc = this.host.store.doc;
+    const el = doc.elements[id];
+    if (!el) return '';
+    if (el.locked) return 'Låst. Lås upp i egenskaperna för att flytta.';
+    const d = moveAlong(sp[0], sp[1], value);
+    const name = labelOf(doc, el);
+    this.endMove();
+    if (Math.hypot(d[0], d[1]) < 0.01) return `${name} ligger redan där.`;
+    moveElements(this.host.store, [id], d, 'Flytta med måttbandet', { keepJoins: true });
+    // Sträckan följer med, så att man kan ändra igen.
+    this.pts[this.pts.length - 1] = add(sp[1], d);
+    this.onChange?.();
+    return `Flyttade ${name}: avståndet är ${Math.round(value).toLocaleString('sv-SE')} mm.`;
   }
 
   /** Mätningen med markören som nästa punkt. */
   measurement(): Measurement {
     const pts = [...this.pts];
-    if (this.current && pts.length) pts.push(this.current.point);
+    if (this.current && pts.length && !this.target) pts.push(this.current.point);
     return measure(pts);
   }
 
   overlay(cam: Camera): string {
     const out: string[] = [];
     const pts = [...this.pts];
-    if (this.current && pts.length) pts.push(this.current.point);
+    if (this.current && pts.length && !this.target) pts.push(this.current.point);
     if (pts.length >= 3) {
       const d = pts.map((q, i) => `${i ? 'L' : 'M'}${cam.toScreen(q).join(' ')}`).join('') + 'Z';
       out.push(`<path d="${d}" class="measure-area"/>`);
@@ -111,7 +215,20 @@ export class MeasureTool implements ViewTool {
       const s = cam.toScreen(q);
       out.push(`<circle cx="${s[0]}" cy="${s[1]}" r="3.5" class="snap-dot"/>`);
     }
-    if (this.current) out.push(snapMarker(cam, this.current));
+    if (this.current && !this.target) out.push(snapMarker(cam, this.current));
+    // Objektet som flyttas med måttbandet, och var det hamnar med avståndet som skrivs.
+    const id = this.moving;
+    const sp = this.span;
+    if (id && sp) {
+      for (const item of this.host.plan().pickables) {
+        if (item.id !== id) continue;
+        out.push(ghostPath(cam, item, (q) => q).replace('class="ghost"', 'class="measure-target"'));
+        if (this.preview !== null) {
+          const d = moveAlong(sp[0], sp[1], this.preview);
+          out.push(ghostPath(cam, item, (q) => [q[0] + d[0], q[1] + d[1]]));
+        }
+      }
+    }
     return out.join('');
   }
 }

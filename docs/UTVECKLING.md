@@ -560,3 +560,38 @@ på bladet sina egna.
   en ton (35 % av underlagets opacitet) och varje familj en yta med
   skraffering. Likadana mönster delas i SVG:n. `tests/filer/skraffering.dxf`
   är skriven av ezdxf.
+
+## Arbetsflöde (0.8.4, format 5)
+
+- **Skarven i läget Båda** (`installSplitGrip` i `src/ui/app/pane3d.ts`):
+  planens andel av ritytan ligger i `uiSettings.split` (0,15–0,85) och i
+  CSS-variabeln `--split` på `.app`. Rutorna har redan `ResizeObserver`, så
+  planen och 3D följer med.
+- **Dubbelklick i trädet**: trädet ritas om vid varje klick, så webbläsaren
+  skickar inget `dblclick`. `treeDoubleClick` i `actions.ts` räknar två klick
+  på samma rad inom 450 ms och går till 2D om bara 3D visas.
+- **Ny vägg härifrån**: ett val i Modifiera-paletten (`wallOn` i
+  `src/ui/modify.ts`) som inte kör ett `ModifyTool` utan väggverktyget.
+  `ModifyHost.startWallFrom` (i `app.ts`) sparar väggverktygets val i
+  `wallFrom`, tar den klickade väggens typ, höjd och liv, och byter till
+  väggverktyget med `setTool('wall', true)` (`true`: paletten och
+  markeringen ligger kvar). `WallTool.startAt` börjar kedjan i änden. Väljs
+  något annat i paletten, eller stängs den, anropas `stopWall`; när första
+  väggen är ritad göms paletten med `release()`. När kedjan är klar
+  (`wallTool.onChange` utan `drawing`) kommer valen tillbaka och det går
+  till Markera. `settingTool` hindrar att `setTool` anropas inifrån
+  `setTool` när väggverktyget avslutas för att man valt ett annat verktyg.
+- **Varningen för sneda vinklar** stängs av med `Element.skewOk` (frivilligt,
+  därför samma format) och kommandot `setSkewOk`. `skewOf(…, evenIgnored)`
+  räknar ändå, för kryssrutan i egenskaperna.
+- **Tab mellan objekt**: `pickAllAt` i `src/view2d/pick.ts` ger allt under
+  en punkt i den ordning `pickAt` väljer (`pickAt` är dess första).
+  `SelectTool` minns listan vid hover och vilket Tab valt (`stack`); valet
+  ligger kvar så länge markören är över objektet, och klicket och draget
+  använder det (`pick`).
+- **Flytta med måttbandet** (`MeasureTool.beginMove`, `applyMove`): de två
+  senast klickade punkterna är sträckan. Kandidaterna är det som ligger vid
+  sista punkten, först det som inte också ligger vid första. `moveAlong` ger
+  förflyttningen längs sträckan. Fältet `#measure-move` i verktygsraden
+  (`toolOptions.ts`) har fokus medan man skriver: Enter flyttar, Tab byter
+  objekt, Esc avbryter.

@@ -54,6 +54,21 @@ export class WallTool implements ViewTool {
     return this.chain.length > 0;
   }
 
+  /** Väggar ritade i kedjan som pågår. */
+  get placed(): number {
+    return this.created.length;
+  }
+
+  /** Börja kedjan i en given punkt, t.ex. en väggs ände (0.8.4). */
+  startAt(pt: [number, number]): void {
+    this.chain = [pt];
+    this.created = [];
+    this.lockAngle = null;
+    this.current = null;
+    this.onChange?.();
+    this.host.view.requestRender();
+  }
+
   down(): 'capture' {
     return 'capture';
   }

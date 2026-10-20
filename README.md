@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.3** (beta, snabbare plan); nästa är **0.8.4, arbetsflöde och
-ritningshuvud**.
+**0.8.4** (beta, arbetsflöde); nästa är **0.8.5, ritningshuvudet som eget
+objekt**.
 
 ## Vad som fungerar
 
@@ -466,6 +466,29 @@ Version 0.8.3, snabbare plan (samma filformat, 5):
   mönster blir skraffering med mönstrets vinkel och täthet. Konturer med
   bågar, ellipser och splines läses, också i block. Streckade mönsterlinjer
   (t.ex. tegel) ritas heldragna
+
+Version 0.8.4, arbetsflöde (samma filformat, 5):
+- **Dra i skarven** mellan planen och 3D i läget Båda för att ändra
+  fördelningen. Dubbelklick på skarven delar lika; piltangenterna flyttar den
+  när den har fokus. Fördelningen sparas
+- **Dubbelklick i projektträdet när bara 3D visas** går över till 2D och
+  visar våningen, vyn eller underlaget
+- **Klick på en markerad väggs ände börjar en ny vägg därifrån**, med samma
+  typ, höjd och referenslinje. Modifiera-paletten visas samtidigt med
+  *Ny vägg* vald, så att Sträck, Förläng, Avrunda med flera går att välja
+  direkt utan att avbryta först. Paletten försvinner när första väggen är
+  ritad; Esc eller dubbelklick avslutar och går tillbaka till Markera.
+  Att dra i änden flyttar den som förut
+- **Varningen för sneda vinklar kan stängas av per objekt**: *Ignorera* i
+  varningen i egenskaperna. En kryssruta står kvar för att slå på den igen
+- **Tab växlar mellan objekt som ligger på varandra** under markören, innan
+  man markerar (Shift+Tab bakåt). Ett tips visar vilket av hur många som är
+  valt, och klicket markerar det
+- **Flytta med måttbandet**: mät från en punkt till en punkt på det som ska
+  flyttas och tryck Tab. Objektet vid sista punkten framhävs (helst ett som
+  inte också ligger vid första punkten; Tab igen byter). Skriv avståndet och
+  tryck Enter, så flyttas objektet längs sträckan. Anslutna väggar följer med,
+  och det ångras i ett steg
 
 ## Versioner och gamla projekt
 

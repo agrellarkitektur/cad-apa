@@ -95,6 +95,8 @@ export interface UiSettings {
   nudgeLarge: number;
   /** 3D-vyn klipps längs en öppen sektion och visar snittytorna (0.8). */
   followSection: boolean;
+  /** Läget Båda: planens andel av ritytans bredd, 0,15–0,85 (0.8.4). */
+  split: number;
 }
 
 export type PaneMode = 'open' | 'min' | 'closed';
@@ -106,6 +108,9 @@ export interface TraceLook {
 }
 
 export const DEFAULT_TRACE: TraceLook = { above: false, color: null, opacity: 0.3 };
+
+/** Läget Båda: planens andel av ritytan får ligga mellan de här. */
+export const SPLIT = { min: 0.15, max: 0.85 } as const;
 
 export const PANE_WIDTH = { nav: 300, panel: 340, min: 220, max: 640 } as const;
 
@@ -129,6 +134,7 @@ export function defaultUiSettings(): UiSettings {
     nudge: 10,
     nudgeLarge: 100,
     followSection: true,
+    split: 0.5,
   };
 }
 
@@ -156,6 +162,7 @@ export function loadUiSettings(): UiSettings {
       nudge: num(raw.nudge, 1, 10000, d.nudge),
       nudgeLarge: num(raw.nudgeLarge, 1, 100000, d.nudgeLarge),
       followSection: typeof raw.followSection === 'boolean' ? raw.followSection : d.followSection,
+      split: num(raw.split, SPLIT.min, SPLIT.max, d.split),
     };
   } catch {
     return d;

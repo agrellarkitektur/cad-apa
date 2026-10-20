@@ -220,6 +220,11 @@ export interface Element<P extends object = Record<string, unknown>> {
   show?: ShowIn;
   /** Låst (format 5): kan inte flyttas eller ändras av misstag. */
   locked?: boolean;
+  /**
+   * Avsiktligt nästan rak (0.8.4): varningen för sneda vinklar visas inte.
+   * Ett frivilligt fält som äldre versioner hoppar över, så formatet är 5.
+   */
+  skewOk?: boolean;
   params: P;
   props: PropertySets;
 }

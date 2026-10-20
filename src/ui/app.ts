@@ -47,7 +47,7 @@ import { DimensionTool, TextTool } from './tools/annotationTools';
 import { Draw2DTool } from './tools/draw2dTool';
 import { OpeningTool } from './tools/openingTool';
 import { RoomTool } from './tools/roomTool';
-import { WallTool } from './tools/wallTool';
+import { WallTool, type WallToolOptions } from './tools/wallTool';
 import { lazyContext, type AppContext } from './app/context';
 import { installActions } from './app/actions';
 import { installClipboard } from './app/clipboard';
@@ -301,7 +301,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       const ctx = modifyContextAt(host, p, r.left + p.screen[0], r.top + p.screen[1], hitId);
       if (!ctx) return false;
       palette.hide();
-      modifyPalette.show(ctx);
+      // Klick på en väggs ände börjar en ny vägg därifrån (0.8.4); paletten
+      // visar de andra valen, så att man kan byta utan att avbryta först.
+      const wallEnd = !!ctx.wallId && !!ctx.end && (ctx.kind === 'point' || ctx.kind === 'corner') && !store.doc.elements[ctx.wallId]?.locked;
+      modifyPalette.show(ctx, wallEnd ? 'wallOn' : undefined);
       return true;
     },
     // I fasader, sektioner och på arbetsblad snäpper man mot linjerna i ritningen.
@@ -310,7 +313,16 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
 
   const selectTool = new SelectTool(host);
   const wallTool = new WallTool(host, { definition: defaultWallType(store.doc), face: 'center', height: 2700 });
-  wallTool.onChange = () => toolOpts.renderToolOptions();
+  wallTool.onChange = () => {
+    // Ny vägg härifrån: paletten försvinner när första väggen är ritad, och
+    // när kedjan är klar går det tillbaka till Markera.
+    if (wallFrom && modifyPalette.drawingWall && wallTool.placed > 0) modifyPalette.release();
+    if (wallFrom && !wallTool.drawing) {
+      modifyPalette.release();
+      endWallFrom();
+    }
+    toolOpts.renderToolOptions();
+  };
   const panTool: ViewTool = { cursor: 'grab', down: () => 'pan', tap: (p) => selectTool.tap(p) };
   const doorTool = new OpeningTool(host, 'Door', { definition: firstDefinition(store.doc, 'Door') });
   const windowTool = new OpeningTool(host, 'Window', { definition: firstDefinition(store.doc, 'Window') });
@@ -342,6 +354,15 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   measureTool.onChange = () => {
     toolOpts.updateMeasureOptions();
     view.requestRender();
+  };
+  // Flytta med måttbandet (0.8.4): fältet för avståndet får fokus direkt.
+  measureTool.onTarget = () => {
+    toolOpts.renderToolOptions();
+    const input = toolOptions.querySelector<HTMLInputElement>('#measure-move');
+    if (input) {
+      input.focus();
+      input.select();
+    }
   };
   const roofTool = new RoofTool(host);
   const sectionTool = new MarkerTool(host, 'Section');
@@ -376,7 +397,17 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     measure: measureTool,
   };
 
-  function setTool(id: ToolId): void {
+  /** `keep`: Modifiera-paletten och markeringen ligger kvar (Ny vägg härifrån, 0.8.4). */
+  function setTool(id: ToolId, keep = false): void {
+    settingTool = true;
+    try {
+      changeTool(id, keep);
+    } finally {
+      settingTool = false;
+    }
+  }
+  let settingTool = false;
+  function changeTool(id: ToolId, keep: boolean): void {
     measureBox.close();
     // Ritverktygen ritar i planen: från en fasad eller sektion går man tillbaka dit.
     // Mått, text och 2D ritas i fasaden eller sektionen (0.8).
@@ -396,13 +427,13 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (ui.tool === 'section' && id !== 'section') sectionTool.reset();
     if (ui.tool === 'elevation' && id !== 'elevation') elevationTool.reset();
     palette.hide();
-    modifyPalette.close();
+    if (!keep) modifyPalette.close();
     ui.tool = id;
     view.setTool(ui.layout ? sheets.tool : tools[id]);
     toolsEl.querySelectorAll<HTMLElement>('[data-tool]').forEach((b) => {
       if (!b.hasAttribute('aria-disabled')) b.setAttribute('aria-pressed', String(b.dataset.tool === id));
     });
-    if (PLAN_TOOLS.includes(id) && id !== 'room' && id !== 'text') {
+    if (PLAN_TOOLS.includes(id) && id !== 'room' && id !== 'text' && !keep) {
       selection.clear();
       if (window.innerWidth <= 960) panes.setPanel(false);
     }
@@ -541,12 +572,36 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const modifyHost: ModifyHost = {
     ...host,
     startModify: (tool) => view.setTool(tool),
+    // Ny vägg härifrån (0.8.4): väggverktyget med den klickade väggens typ,
+    // höjd och liv, som börjar i änden. Verktygets egna val kommer tillbaka efteråt.
+    startWallFrom: (ctx) => {
+      const el = ctx.wallId ? store.doc.elements[ctx.wallId] : undefined;
+      if (!el || el.type !== 'Wall' || !ctx.end) return false;
+      const p = resolveParams<WallParams>(store.doc, el);
+      wallFrom ??= { ...wallTool.options };
+      wallTool.options.definition = el.definition ?? null;
+      wallTool.options.height = p.height;
+      wallTool.options.face = p.justification === 'right' ? 'outside' : p.justification === 'left' ? 'inside' : 'center';
+      setTool('wall', true);
+      wallTool.startAt([p[ctx.end][0], p[ctx.end][1]]);
+      return true;
+    },
+    stopWall: () => endWallFrom(),
     endModify: () => {
       if (ui.tool === 'select') view.setTool(selectTool);
       view.requestRender();
     },
   };
   const modifyPalette = new ModifyPalette(canvas, modifyHost);
+  /** Väggverktygets val innan Ny vägg härifrån tog över, eller null. */
+  let wallFrom: WallToolOptions | null = null;
+  function endWallFrom(): void {
+    if (!wallFrom) return;
+    Object.assign(wallTool.options, wallFrom);
+    wallFrom = null;
+    // Byts verktyget just nu (en knapp i verktygsraden) går det dit i stället.
+    if (ui.tool === 'wall' && !settingTool) setTool('select', true);
+  }
   selection.subscribe(() => {
     if (modifyPalette.open) modifyPalette.close();
     // En markerad automatisk taklutning blir ett eget objekt.

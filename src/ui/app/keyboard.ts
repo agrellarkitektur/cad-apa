@@ -39,6 +39,8 @@ export function installKeyboard(app: AppContext) {
       return;
     }
     if (typing || mod || e.altKey) return;
+    // Piltangenterna på en skarv eller panelkant flyttar den, inte det markerade.
+    if (t.getAttribute?.('role') === 'separator') return;
     if (app.newProjectDialog.isOpen) return;
     if (app.styleDialog.isOpen) {
       if (e.key === 'Escape') app.styleDialog.close();
@@ -61,6 +63,16 @@ export function installKeyboard(app: AppContext) {
     }
 
     switch (e.key) {
+      case 'Tab':
+        // Tab växlar mellan objekt som ligger på varandra under markören (0.8.4).
+        if (app.ui.tool === 'select' && !app.ui.layout && !app.modifyPalette.open && app.selectTool.cycle(e.shiftKey)) e.preventDefault();
+        // Måttbandet: Tab går till objektet vid sista punkten, för att flytta det.
+        if (app.ui.tool === 'measure') {
+          e.preventDefault();
+          const msg = app.measureTool.beginMove(e.shiftKey);
+          if (msg) app.hint(msg, 3500);
+        }
+        break;
       case 'Escape':
         if (app.aligning) {
           app.endAlign();

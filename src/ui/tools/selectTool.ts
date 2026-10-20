@@ -8,7 +8,8 @@ import { dragRoofGrip, roofGripsInView, type RoofDrag, type RoofGrip } from '../
 import type { Pickable } from '../../repr/plan';
 import type { Primitive, Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
-import { pickAt, pickInRect } from '../../view2d/pick';
+import { pickAllAt, pickAt, pickInRect } from '../../view2d/pick';
+import { labelOf } from '../labels';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { pxToMm, type ToolHost } from './host';
 import { flushSnap, roundMm, snap, type SnapResult } from './snap';
@@ -55,6 +56,11 @@ export class SelectTool implements ViewTool {
   private copying = false;
   /** Elementet under muspekaren. */
   hoverId: string | null = null;
+  /**
+   * Allt under muspekaren i den ordning ett klick väljer, och vilket av dem
+   * Tab har gått till (0.8.4). Klicket markerar det som Tab valt.
+   */
+  private stack: { ids: string[]; index: number } | null = null;
   /** Förra klicket, för att känna igen dubbelklick. */
   private lastClick: { id: string | null; t: number; at: Vec2 } | null = null;
   /** Nästa klick hoppas över, t.ex. efter ett långt tryck som öppnat en meny. */
@@ -92,7 +98,7 @@ export class SelectTool implements ViewTool {
       return 'capture';
     }
     // Trycker man på något som redan är markerat flyttas markeringen.
-    const hit = pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, p.pointerType === 'touch' ? 14 : 6), this.host.view.drawingScale);
+    const hit = this.pick(p);
     const movable = hit && (!ro || this.host.canEdit?.(hit));
     // Med Ctrl (Cmd på Mac) blir det en kopia som dras.
     if (hit && movable && this.host.selection.has(hit) && !p.shift) {
@@ -281,7 +287,37 @@ export class SelectTool implements ViewTool {
     this.click(p);
   }
 
+  /**
+   * Tab (Shift+Tab bakåt) går till nästa objekt under markören, när flera
+   * ligger på varandra (0.8.4). Svarar false när det inte finns något att
+   * växla mellan, så att Tab gör det vanliga.
+   */
+  cycle(back = false): boolean {
+    const st = this.stack;
+    if (!st || st.ids.length < 2 || this.box || this.move || this.grip) return false;
+    const n = st.ids.length;
+    st.index = (st.index + (back ? n - 1 : 1)) % n;
+    this.hoverId = st.ids[st.index];
+    const doc = this.host.store.doc;
+    const el = doc.elements[this.hoverId];
+    this.host.hint(`${st.index + 1} av ${n}: ${el ? labelOf(doc, el) : 'objekt'}. Klicka för att markera, Tab för nästa.`, 3000);
+    this.host.view.requestRender();
+    return true;
+  }
+
+  /** Det ett klick i punkten träffar: det Tab valt om det ligger där, annars det översta. */
+  private pick(p: ViewPointer): string | null {
+    const tol = pxToMm(this.host, p.pointerType === 'touch' ? 14 : 6);
+    const st = this.stack;
+    if (st && st.index > 0) {
+      const chosen = st.ids[st.index];
+      if (pickAllAt(this.host.plan().pickables, p.model, tol, this.host.view.drawingScale).includes(chosen)) return chosen;
+    }
+    return pickAt(this.host.plan().pickables, p.model, tol, this.host.view.drawingScale);
+  }
+
   cancel(): void {
+    this.stack = null;
     this.roof = null;
     this.node = null;
     this.box = null;
@@ -290,7 +326,12 @@ export class SelectTool implements ViewTool {
   }
 
   hover(p: ViewPointer | null): void {
-    this.hoverId = p ? pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, 6), this.host.view.drawingScale) : null;
+    const ids = p ? pickAllAt(this.host.plan().pickables, p.model, pxToMm(this.host, 6), this.host.view.drawingScale) : [];
+    // Det Tab valt ligger kvar så länge markören är kvar över det.
+    const chosen = this.stack && this.stack.index > 0 ? this.stack.ids[this.stack.index] : null;
+    const keep = chosen ? ids.indexOf(chosen) : -1;
+    this.stack = ids.length ? { ids, index: Math.max(0, keep) } : null;
+    this.hoverId = this.stack ? this.stack.ids[this.stack.index] : null;
     if (p && this.nodeAt(p.model, p.pointerType === 'touch')) {
       this.host.view.svg.style.cursor = this.cursor = 'crosshair';
       return;
@@ -388,7 +429,7 @@ export class SelectTool implements ViewTool {
       this.skipClick = false;
       return;
     }
-    const id = pickAt(this.host.plan().pickables, p.model, pxToMm(this.host, p.pointerType === 'touch' ? 14 : 6), this.host.view.drawingScale);
+    const id = this.pick(p);
     const sel = this.host.selection;
     // Dubbelklick (eller dubbeltryck) på en text redigerar den i ritningen.
     const now = performance.now();

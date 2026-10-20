@@ -1809,17 +1809,52 @@ button:focus-visible {
 }
 
 .app[data-mode='split'] .pane-2d {
-  right: 50%;
+  right: calc(100% - var(--split, 50%));
 }
 
 .app[data-mode='split'] .pane-3d {
   display: block;
-  left: 50%;
+  left: var(--split, 50%);
   border-left: 1px solid var(--rule);
 }
 
 .app[data-mode='split'] .tool-options {
-  right: 50%;
+  right: calc(100% - var(--split, 50%));
+}
+
+/* Skarven mellan planen och 3D i läget Båda (0.8.4): dra för att ändra fördelningen. */
+.split-grip {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--split, 50%) - 5px);
+  width: 9px;
+  z-index: 5;
+  cursor: col-resize;
+  touch-action: none;
+}
+.app[data-mode='split'] .split-grip {
+  display: block;
+}
+.split-grip::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 1px;
+  transition: background 0.12s, width 0.12s, left 0.12s;
+}
+.split-grip:hover::after,
+.split-grip:focus-visible::after,
+.split-grip.active::after {
+  left: 3px;
+  width: 3px;
+  background: var(--accent);
+}
+.split-grip:focus-visible {
+  outline: none;
 }
 
 /* 2D, 3D och Båda svävar nere i mitten av ritytan (0.8), nära handen. */
@@ -3919,6 +3954,11 @@ input[type='range'] {
   font-size: 13px;
   line-height: 1.4;
 }
+.skew-ignored {
+  margin: 0 16px 12px;
+  font-size: 13px;
+  color: var(--muted, inherit);
+}
 .skew-note b {
   display: inline-grid;
   place-items: center;
@@ -3945,6 +3985,14 @@ input[type='range'] {
   stroke: var(--accent);
   stroke-width: 1.6;
   stroke-dasharray: 6 3;
+}
+.measure-target {
+  fill: color-mix(in srgb, var(--accent) 18%, transparent);
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+.measure-move input {
+  width: 90px;
 }
 .measure-area {
   fill: color-mix(in srgb, var(--accent) 12%, transparent);

@@ -67,6 +67,7 @@ export interface ModifyContext {
 }
 
 export type OpId =
+  | 'wallOn'
   | 'insert'
   | 'curve'
   | 'tangent'
@@ -105,6 +106,7 @@ interface OpDef {
 }
 
 const OPS: Record<OpId, OpDef> = {
+  wallOn: { label: 'Ny vägg härifrån', short: 'Ny vägg', icon: 'wall', hint: 'Klicka punkt för punkt, eller skriv en längd och tryck Enter. Samma typ och höjd som väggen. Esc avslutar.' },
   insert: { label: 'Lägg till punkt', short: 'Ny punkt', icon: 'insertNode', hint: 'Klicka där den nya punkten ska ligga. Väggen delas i två.' },
   curve: { label: 'Böj', short: 'Böj', icon: 'curveEdge', value: { label: 'Radie', unit: 'mm', initial: 3000 }, hint: 'Klicka en punkt som bågen ska gå igenom, eller skriv radien.' },
   tangent: { label: 'Båge med tangent', short: 'Tangent', icon: 'tangentArc', hint: 'Bågen fortsätter i grannväggens riktning. Klicka var änden ska hamna.' },
@@ -134,7 +136,7 @@ const OPS: Record<OpId, OpDef> = {
 const COMMON: OpId[] = ['move', 'rotate', 'mirror', 'multiply'];
 
 /** Valen för ett klick, i den ordning de visas, med ett streck före de allmänna. */
-export function opsFor(host: ToolHost, ctx: ModifyContext): OpId[][] {
+export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'>>, ctx: ModifyContext): OpId[][] {
   const doc = host.store.doc;
   const wall = ctx.wallId ? doc.elements[ctx.wallId] : undefined;
   const walls = ctx.ids.filter((id) => doc.elements[id]?.type === 'Wall');
@@ -161,9 +163,9 @@ export function opsFor(host: ToolHost, ctx: ModifyContext): OpId[][] {
       return [own, COMMON];
     }
     case 'point':
-      return [['stretch', 'extend'], COMMON];
+      return [[...(wall && host.startWallFrom ? (['wallOn'] as OpId[]) : []), 'stretch', 'extend'], COMMON];
     case 'corner':
-      return [['stretch', 'fillet', 'chamfer', 'merge', ...(walls.length >= 2 ? (['offsetAll'] as OpId[]) : [])], COMMON];
+      return [[...(wall && host.startWallFrom ? (['wallOn'] as OpId[]) : []), 'stretch', 'fillet', 'chamfer', 'merge', ...(walls.length >= 2 ? (['offsetAll'] as OpId[]) : [])], COMMON];
     default:
       return [COMMON];
   }
@@ -175,6 +177,13 @@ export interface ModifyHost extends ToolHost {
   startModify(tool: ModifyTool): void;
   /** Valet är klart eller avbrutet: tillbaka till Markera. */
   endModify(): void;
+  /**
+   * Ny vägg härifrån (0.8.4): väggverktyget börjar i väggens ände, med samma
+   * typ. Svarar false om det inte går.
+   */
+  startWallFrom?(ctx: ModifyContext): boolean;
+  /** Avbryt väggen som började i änden, när ett annat val görs eller paletten stängs. */
+  stopWall?(): void;
 }
 
 /** Paletten som visas vid klicket. */
@@ -233,26 +242,55 @@ export class ModifyPalette {
     return !!this.tool;
   }
 
-  show(ctx: ModifyContext): void {
+  /** Visa paletten vid klicket, med ett val som börjar direkt (t.ex. Ny vägg vid en ände, 0.8.4). */
+  show(ctx: ModifyContext, start?: OpId): void {
     this.ctx = ctx;
     this.active = null;
     this.tool = null;
-    this.render();
+    if (start && opsFor(this.host, ctx).flat().includes(start)) this.choose(start);
+    else this.render();
   }
 
   /** Stäng paletten och avbryt det som pågår. */
   close(): void {
     const was = !!this.tool;
+    const wall = this.active === 'wallOn';
     this.ctx = null;
     this.active = null;
     this.tool = null;
     this.el.hidden = true;
     if (was) this.host.endModify();
+    if (wall) this.host.stopWall?.();
+  }
+
+  /** Göm paletten men låt väggen som började i änden fortsätta (när första väggen är ritad). */
+  release(): void {
+    this.ctx = null;
+    this.active = null;
+    this.tool = null;
+    this.el.hidden = true;
+  }
+
+  /** Ny vägg härifrån pågår. */
+  get drawingWall(): boolean {
+    return this.active === 'wallOn';
   }
 
   private choose(op: OpId): void {
     const ctx = this.ctx;
     if (!ctx) return;
+    if (this.active === 'wallOn' && op !== 'wallOn') {
+      // Ett annat val: väggen som började i änden avbryts först.
+      this.active = null;
+      this.host.stopWall?.();
+    }
+    if (op === 'wallOn') {
+      if (this.tool) this.host.endModify();
+      this.tool = null;
+      this.active = this.host.startWallFrom?.(ctx) ? 'wallOn' : null;
+      this.render();
+      return;
+    }
     const def = OPS[op];
     if (def.instant) {
       runInstant(this.host, op, ctx);

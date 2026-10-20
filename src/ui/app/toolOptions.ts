@@ -2,7 +2,8 @@ import type { WallFace } from '../../elements/wallSides';
 import { LINE_TYPES, PATTERN_LABELS, PEN_WEIGHTS, SHAPE_LABELS, type FillPattern, type LineType } from '../../elements/drawing2d';
 import type { Draw2DKind } from '../tools/draw2dTool';
 import { icons } from '../icons';
-import { escapeHtml } from '../labels';
+import { escapeHtml, labelOf } from '../labels';
+import { evaluate } from '../expr';
 import type { AppContext } from './context';
 import { defaultWallType, nf } from './helpers';
 
@@ -78,9 +79,18 @@ export function installToolOptions(app: AppContext) {
     } else if (app.ui.tool === 'measure') {
       const cell = (key: string, label: string) =>
         `<span class="opt measure-val"><span>${label}</span><b data-measure="${key}">–</b><button class="icon-btn" data-copy="${key}" title="Kopiera ${label.toLowerCase()}" aria-label="Kopiera ${label.toLowerCase()}">${icons.copy}</button></span>`;
+      // Flytta med måttbandet (0.8.4): fältet för avståndet ersätter tipset.
+      const moving = app.measureTool.moving;
+      const sp = app.measureTool.span;
+      const el = moving ? app.store.doc.elements[moving] : undefined;
+      const move =
+        el && sp
+          ? `<label class="opt measure-move"><span>Flytta ${escapeHtml(labelOf(app.store.doc, el))} till</span><span class="input-unit"><input id="measure-move" type="text" data-expr inputmode="decimal" autocomplete="off" value="${Math.round(Math.hypot(sp[1][0] - sp[0][0], sp[1][1] - sp[0][1]))}" aria-label="Avstånd"><i>mm</i></span></label>
+        <span class="opt-hint">Enter flyttar, Tab byter objekt, Esc avbryter.</span>`
+          : `<span class="opt-hint">Klicka punkter att mäta mellan. Tab och ett avstånd flyttar objektet vid sista punkten. Dubbelklick eller Enter börjar om.</span>`;
       app.toolOptions.innerHTML = `<span class="measure-grid">${cell('last', 'Sträcka')}${cell('total', 'Totalt')}${cell('angle', 'Riktning')}${cell('turn', 'Mellan')}${cell('area', 'Yta')}</span>
         <button class="btn" data-action="measure-reset">Börja om</button>
-        <span class="opt-hint">Klicka punkter att mäta mellan. Dubbelklick eller Enter börjar om.</span>`;
+        ${move}`;
       app.toolOptions.hidden = false;
       updateMeasureOptions();
     } else if (app.ui.tool === 'draw2d') {
@@ -159,6 +169,7 @@ export function installToolOptions(app: AppContext) {
     const t = e.target as HTMLInputElement;
     if (t.id === 'room-name') app.roomTool.name = t.value || 'Rum';
     if (t.id === 'text-value') app.textTool.text = t.value;
+    if (t.id === 'measure-move') app.measureTool.setPreview(evaluate(t.value, null, 'mm'));
     if (t.id === 'wall-angle') {
       const v = parseFloat(t.value.replace(',', '.'));
       app.wallTool.lockAngle = Number.isFinite(v) ? v : null;
@@ -167,6 +178,23 @@ export function installToolOptions(app: AppContext) {
   });
   app.toolOptions.addEventListener('keydown', (e) => {
     const t = e.target as HTMLInputElement;
+    if (t.id === 'measure-move') {
+      // Enter flyttar, Tab byter objekt, Esc avbryter (0.8.4).
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const v = Number(t.value);
+        const msg = Number.isFinite(v) && t.value.trim() !== '' ? app.measureTool.applyMove(v) : 'Skriv ett avstånd i mm.';
+        if (msg) app.hint(msg, 3500);
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        app.measureTool.beginMove(e.shiftKey);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        app.measureTool.endMove();
+      }
+      return;
+    }
     if (t.id === 'wall-angle' && e.key === 'Enter') {
       e.preventDefault();
       (app.$<HTMLInputElement>('#wall-length') as HTMLInputElement | null)?.focus();

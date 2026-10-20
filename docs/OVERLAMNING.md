@@ -1,33 +1,29 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 20 oktober 2026, efter 0.8.3.
+överlämning; historiken finns i git. Senast: 20 oktober 2026, efter 0.8.4.
 
 ## Läget
 
-- **0.8.3 är klar** på `main`, filformatet är fortfarande **5**. Det som
-  gjordes står i PLAN.md under *0.8.3*, i README och i UTVECKLING.md under
-  *Snabbare plan (0.8.3)*:
-  - Planvyn har tre lager (rutnät, ritning, markering överst). Panorering
-    flyttar ritningens lager med CSS utan att måla om, zoom skalar och ritar
-    om efter 140 ms, och hover ritar bara om det översta lagret när något
-    ändrats. Stora element (fler än 300 primitiver) markeras med sin ram.
-  - `buildPlan` sparar ritningen per grupp och typ (`planReads` på
-    elementtyperna) och ger samma svar när inget ändrats. Väggytor sparas
-    per vägg med grannar, rummens hål så länge väggarna är desamma.
-    `resolveParams` ger samma objekt för samma element och definition.
-  - Snäppningen söker i ett rutnät (`nearSegments`), och sträcklistan
-    sparas så länge planen är densamma.
-  - HATCH i DXF-underlag: solid som ton, mönster som skraffering.
-  - Mätt: 684 väggar, ny möbel 0,01 s (förut 0,3 s), flyttad vägg 0,2 s
-    (0,3 s). DXF med 20 000 linjer i Chrome: panorering, hover och
-    väggverktyget ungefär en bildruta (förut 0,3–0,6 s).
-- **Planen** (sorterad 20 oktober tillsammans med Carl August): 0.8.4
-  arbetsflöde och ritningshuvud (*nytt format*, sju punkter varav tre
-  mellanstora; ritningshuvudet kan bli en egen småversion), sedan 0.9 flera
-  våningsplan (med felet om golvnivån i 3D), 0.10 tak, 0.11 trappor, 0.12
-  export och 0.13 piloten med formatfrys. 0.8.4 är tredje versionen efter
-  granskningen (0.8.1); föreslå en granskning efter den.
+- **0.8.4 är klar** på `main`, filformatet är fortfarande **5**. Det som
+  gjordes står i PLAN.md under *0.8.4*, i README och i UTVECKLING.md under
+  *Arbetsflöde (0.8.4)*:
+  - Skarven mellan 2D och 3D går att dra (`uiSettings.split`).
+  - Två klick på samma rad i trädet när bara 3D visas går till 2D (trädet
+    ritas om vid klick, så det räknas för hand).
+  - Klick på en markerad väggs ände börjar *Ny vägg* (ett val i
+    Modifiera-paletten som kör väggverktyget); paletten visar resten.
+  - `Element.skewOk` stänger av varningen för sneda vinklar (frivilligt
+    fält, därför samma format).
+  - Tab växlar mellan objekt under markören (`pickAllAt`).
+  - Måttbandet: Tab och ett avstånd flyttar objektet vid sista punkten.
+  - Kontrollerat i Chrome med Playwright mot `dist/`; inga nya kända fel.
+- **Planen** (20 oktober): 0.8.5 ritningshuvudet som eget objekt och blanka
+  blad (*nytt format*), 0.8.6 text direkt på bladet (flyttad från *Efter
+  pilotprojektet*), 0.8.7 granskning, sedan 0.9 flera våningsplan (med felet
+  om golvnivån i 3D), 0.10 tak, 0.11 trappor, 0.12 export och 0.13 piloten
+  med formatfrys. Carl August vill ha blanka blad så snart som möjligt och
+  text på bladen så snart det är lämpligt.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen (0.13). Höj
   `FORMAT_VERSION` när formatet ändras; äldre filer får ett meddelande om
   att de kommer från en äldre betaversion (`parse` i `src/storage/format.ts`).
@@ -46,27 +42,33 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   är godkänd. Han hittar inte hur man öppnar filen i kunskapsbasen och kan
   lägga in synpunkter via en annan, billigare chatt.
 
-## Nästa session: 0.8.4 Arbetsflöde och ritningshuvud
+## Nästa session: 0.8.5 Ritningshuvud
 
 Börja med att läsa `cad-apa-synpunkter.md` och sortera Inkorgen.
 
-Står i PLAN.md under *0.8.4* (nytt format): skarven mellan 2D och 3D,
-dubbelklick i projektträdet när bara 3D visas, klick på en väggs ändpunkt
-fortsätter väggen, varningen för sneda väggar av per vägg, Tab mellan objekt
-på varandra, måttbandet med Tab och värde, och ritningshuvudet som eget
-objekt. Tab, måttbandet och ritningshuvudet är mellanstora; blir det för
-mycket flyttas ritningshuvudet till en egen småversion. Föreslå uppdelningen
-för Carl August innan något byggs.
+Står i PLAN.md under *0.8.5* (nytt format): nya blad är blanka, och
+BH90-huvudet blir ett eget objekt på bladet som läggs på, flyttas och tas
+bort. I dag har varje blad `titleBlock: 'bh90'` (`src/core/sheets.ts`),
+huvudet ritas i `src/repr/titleBlock.ts` och fälten ligger i
+`sheet.fields` och `project.fields`. Bladets vyer (`viewports`) är det enda
+som går att markera och flytta på bladet (`src/ui/app/sheets.ts`), så
+huvudet behöver bli en sorts sak på bladet med samma markering, flytt,
+egenskaper och plot. Tänk på 0.8.6 (fria texter på bladet) när modellen
+görs: bladets objekt bör rymma både huvudet och texter. Föreslå modellen
+för Carl August innan något byggs; mellanstor version.
 
 ## Att fråga Carl August om
 
-- **Synpunktsformuläret** efter 0.8.2: vad säger `feedback.php` när han
-  öppnar den i webbläsaren, och går det att skicka? Om `mail()` misslyckas
-  med giltig `from` (på den egna domänen, `kontakt@agrellarkitektur.se`)
-  behövs SMTP i `feedback.php`.
-- **Text direkt på bladet**: punkten ligger under *Efter pilotprojektet*,
-  men blir naturlig att göra tillsammans med ritningshuvudet som eget objekt
-  i 0.8.4. Fråga om den ska flyttas dit.
+- **Synpunktsformuläret**: `feedback-config.php` på webbhotellet innehöll
+  texten `php return ['to' = …];` utan `<?php` och med `=` i stället för
+  `=>`, så den gav ingen lista och servern svarade 503. Han har fått rätt
+  innehåll; fråga om formuläret går att skicka nu. Om `mail()` misslyckas
+  med giltig `from` behövs SMTP i `feedback.php`.
+- **Ny vägg härifrån**: paletten ligger där den alltid ligger (under och
+  till höger om klicket) och kan skymma där man ritar. Fråga om den ska
+  ligga någon annanstans när en vägg ritas.
+- **Granskningen** ligger som 0.8.7, efter bladversionerna. Vill han ha den
+  före 0.8.5 i stället?
 
 ### Från 0.8.0
 

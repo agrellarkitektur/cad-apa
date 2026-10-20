@@ -11,8 +11,17 @@ import { boundsOf, imageCorners } from '../repr/primitives';
  * Inom varje nivå vinner det som ritas överst.
  */
 export function pickAt(pickables: readonly Pickable[], p: Vec2, tol: number, drawingScale = 100): string | null {
-  let best: { id: string; score: number } | null = null;
-  for (const item of pickables) {
+  return pickAllAt(pickables, p, tol, drawingScale)[0] ?? null;
+}
+
+/**
+ * Alla element under en punkt, det som `pickAt` väljer först och sedan i
+ * samma ordning (0.8.4): Tab växlar mellan dem innan man markerar.
+ */
+export function pickAllAt(pickables: readonly Pickable[], p: Vec2, tol: number, drawingScale = 100): string[] {
+  const best = new Map<string, { score: number; i: number }>();
+  for (let i = 0; i < pickables.length; i++) {
+    const item = pickables[i];
     let d = Infinity;
     for (const prim of item.prims) d = Math.min(d, distToPrim(p, prim, drawingScale));
     // Kanten på en yta räknas som en linje, så att tunna väggar går att träffa.
@@ -22,9 +31,11 @@ export function pickAt(pickables: readonly Pickable[], p: Vec2, tol: number, dra
     else if (d <= tol) score = 2000 + item.priority - d / tol;
     else if (item.prims.some((prim) => (prim.kind === 'polyline' && prim.closed && pointInRings(p, [prim.points])) || (prim.kind === 'image' && pointInRings(p, [imageCorners(prim)]))))
       score = 1000 + item.priority;
-    if (score > -Infinity && (!best || score > best.score)) best = { id: item.id, score };
+    const was = best.get(item.id);
+    if (score > -Infinity && (!was || score > was.score)) best.set(item.id, { score, i });
   }
-  return best?.id ?? null;
+  // Vid lika poäng vinner det som kom först, som förut.
+  return [...best.entries()].sort((a, b) => b[1].score - a[1].score || a[1].i - b[1].i).map(([id]) => id);
 }
 
 /**

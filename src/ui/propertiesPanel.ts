@@ -8,6 +8,7 @@ import {
   rotateElements,
   setDefinition,
   setInState,
+  setSkewOk,
   updateDefinition,
   updateParams,
 } from '../core/commands';
@@ -311,8 +312,13 @@ export class PropertiesPanel {
     const sections: string[] = [];
     sections.push(`<header class="sel-head"><h2>${escapeHtml(title)}</h2>${sub ? `<p>${escapeHtml(sub)}</p>` : ''}</header>`);
     // Nästan rak vinkel: en rad med en knapp som rätar upp.
-    const skew = els.length === 1 ? skewOf(doc, els[0], this.angleWarn()) : null;
-    if (skew) sections.push(`<p class="skew-note" role="note"><b>!</b> ${escapeHtml(skewText(skew))} <button class="btn" data-action="straighten-angle">Räta upp till ${skew.nearest}°</button></p>`);
+    // Varningen kan stängas av för elementet (0.8.4); då står en kryssruta kvar.
+    const skew = els.length === 1 ? skewOf(doc, els[0], this.angleWarn(), true) : null;
+    if (skew && !els[0].skewOk)
+      sections.push(
+        `<p class="skew-note" role="note"><b>!</b> ${escapeHtml(skewText(skew))} <button class="btn" data-action="straighten-angle">Räta upp till ${skew.nearest}°</button> <button class="btn btn-ghost" data-action="skew-ok" title="Vinkeln är avsiktlig: visa ingen varning för det här objektet">Ignorera</button></p>`,
+      );
+    else if (skew) sections.push(`<label class="check skew-ignored"><input type="checkbox" data-action="skew-warn"> Varna för sned vinkel (${escapeHtml(skewText(skew).replace(/\.$/, ''))})</label>`);
 
     // Finns i: en ruta per tillstånd. Delvis ifylld när markeringen är blandad.
     const chips = doc.states
@@ -420,10 +426,16 @@ export class PropertiesPanel {
         return;
       case 'straighten-angle': {
         const el = doc.elements[ids[0]];
-        const w = el && skewOf(doc, el, this.angleWarn());
+        const w = el && skewOf(doc, el, this.angleWarn(), true);
         if (el && w) straighten(this.store, el, w.nearest);
         return;
       }
+      case 'skew-ok':
+        setSkewOk(this.store, ids.slice(0, 1), true);
+        return;
+      case 'skew-warn':
+        setSkewOk(this.store, ids.slice(0, 1), false);
+        return;
       case 'align-marker':
         if (ids[0]) this.onAlignMarker?.(ids[0]);
         return;

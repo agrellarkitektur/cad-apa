@@ -64,6 +64,8 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.0 | Format 5: projektträdet med mappar, 2D-element med Visas i och vy-taggar, mått och text i fasader och sektioner, underlag (PDF, bild, DXF) och arbetsblad, snabbare väggskarvar, ritningsblad med BH90-huvud och smarttext, vyer i skala på bladen, annoteringsskala och Plot/export till PDF i en zipfil |
 | 0.8.1 | Granskning utan nya funktioner: transaktioner, väggskarvar, dolda linjer och rum utan algoritmer som växer med kvadraten; `app.ts` och `propertiesPanel.ts` uppdelade |
 | 0.8.2 | Fasader och sektioner i en bakgrundstråd, referensritningar i testerna, synpunktsformulärets fel, markering i 3D med Följ sektionen och i sektion, textverktyget på blad, mappräknaren |
+| 0.8.3 | Snabbare plan: panorering utan ommålning, cache per objekt, snäpp mot grannar, skraffering i DXF |
+| 0.8.4 | Arbetsflöde: skarven mellan 2D och 3D, dubbelklick i trädet, ny vägg från en väggs ände, varningen för sneda vinklar av per objekt, Tab mellan objekt på varandra, flytta med måttbandet |
 | 0.7.1 | Betaversion med synpunktsformulär, detaljnivåer och linjetjocklekar i fasad och sektion, glasmarkering och öppningssätt, automatisk taklutning, sektioner begränsade till linjen och klippta i 3D, nya markörer i planen med grepp, längd, vinkel och Rikta efter objekt, streckning från hörnen, varning för nästan raka vinklar, takets kontur i Modifiera, måttband, spårlinjer, kopiera och klistra in mellan projekt, Ctrl + dra, piltangenter, zooma till område och förra zoomen |
 
 ## Framåt
@@ -258,24 +260,45 @@ väggytor på våningen (0,2 s för 684 väggar).*
 - Snäppningen prövar bara sträckor nära markören (`BoxIndex`)
 - DXF-underlag: skraffering (HATCH) läses
 
-### 0.8.4 Arbetsflöde och ritningshuvud · *nytt format*
+### 0.8.4 Arbetsflöde
+
+*Byggd (20 oktober), allt nedan, med samma filformat (5): att varningen är
+avstängd sparas i ett frivilligt fält som äldre versioner hoppar över.
+Ritningshuvudet flyttades till 0.8.5.*
 
 Synpunkter (20 oktober):
 
 - Dra i skarven mellan 2D och 3D för att ändra fördelningen
 - Dubbelklick i projektträdet när bara 3D visas går över till 2D och visar
   vyn (eller det man klickat på)
-- Klick på en väggs ändpunkt fortsätter väggen som förval
+- Klick på en väggs ändpunkt fortsätter väggen som förval; Modifiera-paletten
+  visas samtidigt, så att man kan välja något annat utan att avbryta först
 - Varningen för sneda väggar kan stängas av per vägg i väggens inställningar
 - Tab växlar mellan objekt som ligger på varandra, innan man markerar
 - Måttbandet: Tab och ett värde flyttar målobjektet (mäter man från en vägg
   till ett bord och skriver in avståndet, flyttas bordet)
+
+### 0.8.5 Ritningshuvud · *nytt format*
+
 - Ritningshuvudet hårdkodas inte i bladen: nya blad är blanka och BH90-huvudet
   blir ett eget objekt som läggs på och flyttas. Egna grupper med linjer och
   text kommer med *Smartgrupper* efter pilotprojektet
 
-Två av punkterna (Tab och måttbandet) är mellanstora, liksom ritningshuvudet.
-Blir det för mycket flyttas ritningshuvudet till en egen småversion.
+Mellanstor; en egen småversion så att nya blad blir blanka så snart som
+möjligt (Carl August, 20 oktober).
+
+### 0.8.6 Text på bladet
+
+- Fria texter direkt på ett ritningsblad, med samma textverktyg som i vyerna
+  (flyttad från *Efter pilotprojektet*; viktig för handlingarna)
+
+Bygger på att bladet har egna objekt (0.8.5).
+
+### 0.8.7 Granskning
+
+Tredje versionen efter förra granskningen (0.8.1) var 0.8.4. Granskningen
+föreslås efter bladversionerna: städa, dela upp stora filer och leta efter
+långsam kod.
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
@@ -343,7 +366,7 @@ efter pilotprojektet. Det som piloten visar behövs tidigt går först.
 ### Grafik och markörer (från 0.8 del 3)
 
 - Beskära en vy på ett blad för hand (i dag visar vyn allt som är ritat i den, och underlagen klipps mot det)
-- Fria texter, linjer och bilder direkt på ett blad, och flera blad i en PDF
+- Fria linjer och bilder direkt på ett blad (texter kommer i 0.8.6), och flera blad i en PDF
 - Typsnittet inbäddat i PDF:en (i dag Helvetica, som alla PDF-läsare har)
 - En andra 2D-ruta: planen bredvid en öppen sektion eller fasad, där det man markerar i den ena markeras i den andra
 - Ritningshuvud enligt BEAst

@@ -79,6 +79,20 @@ export function setLocked(store: DocStore, ids: Id[], locked: boolean): void {
   });
 }
 
+/** Stäng av eller slå på varningen för sneda vinklar för enstaka element (0.8.4). */
+export function setSkewOk(store: DocStore, ids: Id[], ok: boolean): void {
+  store.transact(ok ? 'Ignorera sned vinkel' : 'Varna för sned vinkel', (tx) => {
+    for (const id of ids) {
+      const el = tx.doc.elements[id];
+      if (!el || !!el.skewOk === ok) continue;
+      const next = { ...el };
+      if (ok) next.skewOk = true;
+      else delete next.skewOk;
+      tx.putElement(next);
+    }
+  });
+}
+
 /**
  * Ange om element finns i ett tillstånd. Kryssas en dörr i följer dess vägg
  * med; kryssas en vägg ur följer dörrarna och fönstren i den med.
