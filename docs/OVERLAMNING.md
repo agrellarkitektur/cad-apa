@@ -1,41 +1,44 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 20 oktober 2026, efter 0.8.9.
+överlämning; historiken finns i git. Senast: 21 oktober 2026, efter 0.8.10.
 
 ## Läget
 
-- **0.8.9 är klar** på `main`, filformatet är **9**. Det som gjordes står i
-  PLAN.md under *0.8.9*, i README och i UTVECKLING.md under *Grafik och
-  textrutor på bladen (0.8.9, format 9)*:
-  - Linjer, ytor, text och bilder ritas direkt på ritningsbladen (element
-    med `space` = bladets id, mm på papperet, utan tillstånd). Bilder under
-    vyerna, resten över. Mått på bladet ger ett tips (mått ritas i vyerna).
-  - Vyerna på bladet ligger i `selection`: markeras, flyttas (dra,
-    Modifiera, piltangenter) och tas bort med det ritade.
-    `moveElements`/`deleteElements` känner igen vyernas id. En vy ensam har
-    som förut fästning, grepp i ramen, formulär och smartmeny.
-  - `SheetTextItem` och `Sheet.items` är borta; text på bladet är vanlig
-    text. Texten fylls i med bladets smarttext (`ViewStates.smart`).
-  - Textrutor för all fri text: `maxWidth`, `maxHeight`, `anchor`, radbrytning
-    med Helveticas bredder (`src/elements/textLayout.ts`), röd ram på
-    skärmen (`part: 'skärm'`) som PDF:en hoppar över.
-  - Egen skala 1:___ för vyer på bladet, *Återställ ram* kortare i
-    smartmenyn.
-  - Kontrollerat i Chrome med Playwright mot `dist/` (rita text och linje på
-    bladet, markera vy och ritat med ruta, flytta och ta bort tillsammans,
-    ångra, dra en vy ensam, greppen, Modifiera Flytta, egen skala,
-    dubbelklick som öppnar vyn, bild på bladet, högerklick) och PDF:en av ett
-    blad med textrutor (`qpdf`, `pdftoppm`, `pdftotext`). Inga nya kända fel.
-- **Synpunkterna** är sorterade (Carl August godkände förslaget 20 oktober)
-  och införda i `cad-apa-synpunkter.md` och i PLAN.md: mappnamn → 0.8.10,
-  Visa-menyn i kategorier → 0.8.11, tjocklekstabell och dra och släpp →
-  0.8.13 (eller egen småversion), SWEREF, nollpunkt och sol → egen version
-  efter 0.12. Inkorgen är tom.
-- **Planen**: 0.8.10 smarta fält, 0.8.11 granskning, 0.8.12 skalstock och
-  stämplar, 0.8.13 fler Modifiera-verktyg, sedan 0.9 flera våningsplan (med
-  felet om golvnivån i 3D), 0.10 tak, 0.11 trappor, 0.12 export, SWEREF-
-  versionen (före eller efter piloten) och 0.13 piloten med formatfrys.
+- **0.8.10 är klar** på `main`, filformatet är **10**. Det som gjordes står i
+  PLAN.md under *0.8.10*, i README och i UTVECKLING.md under *Smarta fält
+  (0.8.10, format 10)*:
+  - Allt inom klamrar som inte är inbyggt är ett fält (`src/core/sheetFields.ts`).
+    Inbyggt: projekt, ritningsnummer, innehåll, `{mapp}`, skala,
+    `{skala a3}`, format, idag. Fält utan värde blir tomma.
+  - Bladets egenskaper har en tabell med fälten och kryssrutan *Projekt*
+    (fältet gäller hela projektet, `project.fields`). Ctrl-/Shift-klick på
+    blad i Ritningar ger formuläret för flera blad med *(olika)*.
+  - `scripts/mallblad-fran-dxf.py` gör #MAPPNAMN till `{mapp}`, #SKALA A3
+    till `{skala a3}` och övriga platshållare till fält.
+  - Kontrollerat i Chrome med Playwright mot `dist/` (tabellen, spara fält,
+    nytt fält `{Konstruktör}` på bladet med *Projekt*, flera blad med
+    Ctrl-klick och *(olika)*, ångra). Inga nya kända fel. Referensbilden
+    för bladet hade dagens datum; testet sätter nu datumet.
+- **Inkorgen (21 oktober) är inte sorterad.** Claudes förslag, skickat i
+  chatten och inte godkänt än: DXF-text (MText `\pxql`, insättningspunkt),
+  mönsterförhandsvisning, markering av sluten polylinje och linje bakom
+  fyllning, statusradens fält som knappar, Snäpp-knappen och avstängda
+  växlar → 0.8.11; ny **0.8.14 Underlag** (snäpp i DXF, X/Y, papperskorg,
+  grupper per filtyp och instans, bildens grepp och mått); Flytta/Rotera
+  från snäppunkt och mätning i segment → 0.8.13 (mätningen egen
+  småversion om 0.8.13 blir stor); rumsstämpeln → egen småversion efter
+  0.8.14 eller 0.9; *explodera vektorunderlag* står under Parkerat, fråga
+  om den ska flyttas fram. Avstängda växlar: Claude föreslog snett streck i
+  ikonens färg (inte rött) på synlighetsväxlar och tydligare påslaget läge.
+  Sortera klart med honom och för in i `cad-apa-synpunkter.md`.
+- **A1-ramen**: Inkorgen säger att ramen inte hittas. Den finns bara i
+  projektfilen *Ritningsmall A1.cadapa* (format 8, öppnas inte längre).
+  Be om DXF:en och kör skripten igen (format 10); se *Arbeta i miljön*.
+- **Planen**: 0.8.11 granskning, 0.8.12 skalstock och stämplar, 0.8.13
+  fler Modifiera-verktyg, sedan 0.9 flera våningsplan (med felet om
+  golvnivån i 3D), 0.10 tak, 0.11 trappor, 0.12 export, SWEREF-versionen
+  (före eller efter piloten) och 0.13 piloten med formatfrys.
 - **Ord:** *palett* och *snabbmeny* betyder samma sak för honom. Säg bara
   **smartmeny**.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen (0.13). Höj
@@ -53,26 +56,16 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   för varje punkt och säg om något är för stort för en session. Ta bort
   hanterade punkter när de görs; behåll Avfärdat med anledning. Han kan
   också klistra in synpunkter i chatten; för in dem i filen när sorteringen
-  är godkänd. Punkterna under 0.8.9 togs bort ur filen när 0.8.9 var klar.
+  är godkänd. Punkterna under 0.8.10 togs bort ur filen när 0.8.10 var klar.
 
-## Nästa session: 0.8.10 Smarta fält
+## Nästa session: 0.8.11 Granskning
 
-Läs synpunktsfilen och sortera Inkorgen först (se ovan). Läs sedan *0.8.10*
-i PLAN.md.
+Sortera Inkorgen först (se ovan), läs sedan *0.8.11* i PLAN.md.
 
-- Allt inom klamrar som inte är ett inbyggt namn blir ett fält, i mallen,
-  på bladet och (0.8.12) i stämplar; namnen utan hänsyn till stora och små
-  bokstäver. Smarttexten fylls redan i genom `ViewStates.smart`
-  (`smartVars` i `src/repr/smartText.ts`), så fälten blir fler nycklar där.
-- Bladets egenskaper får en tabell med alla fält bladet använder (leta i
-  mallens och bladets texter efter `{…}`). Fält som gäller hela projektet.
-  Flera blad markerade i projektträdet: *(olika)*, och bara ändrade fält
-  skrivs.
-- **Mappnamn**: en inbyggd smarttext för mappen bladet ligger i
-  (`doc.tree[sheet.id]` → mappens namn), t.ex. `{mapp}`. Hans ram har
-  #MAPPNAMN; byt den mot smarttexten i hans mallbladsfil, eller säg hur.
-- *Skala A3* (halva skalan, 1:50 → 1:100 på A3): föreslå en smarttext.
-- Mellanstor. Formatet ändras troligen (fält på projektet och bladet).
+- Städa, dela upp stora filer (`src/ui/app/sheets.ts`, `src/ui/app.ts`) och
+  leta efter långsam kod. Visa-menyn i kategorier. Plus de småsaker ur
+  Inkorgen som Carl August godkänner för 0.8.11.
+- Gör om A1-mallen om han laddat upp DXF:en.
 
 ## Att fråga Carl August om
 
@@ -88,17 +81,22 @@ i PLAN.md.
   texten med appens typsnitt (Archivo), så raderna kan se något längre
   eller kortare ut än rutan; vill han att ritningens text visas i Arial på
   skärmen (samma bredder som Helvetica i PDF:en)?
+- **Fälten efter provning** (0.8.10, Claudes val): vad som är inbyggt och
+  vilka fält som gäller hela projektet från början, `{skala a3}` (nämnaren
+  gånger långsidan / 420), att fält utan värde blir tomma på papperet, att
+  ett fält med *(olika)* inte går att tömma på flera blad samtidigt, och
+  att rubrikerna i tabellen är namnet som det först skrivs, med stor
+  bokstav.
 - **Mallbladen efter provning** (0.8.8, Claudes val): att mallen ritas från
   papperets nedre vänstra hörn på blad i andra format (med ett tips), att
-  ett valt mallblad föreslår sitt format, att fälten ligger i bladets
-  formulär tills 0.8.10, att loggan nu är ett underlag på mallbladet och att
-  mallbladet inte följer tillstånden.
+  ett valt mallblad föreslår sitt format, att loggan nu är ett underlag på
+  mallbladet och att mallbladet inte följer tillstånden.
 - **Hans ram**: platshållarna som blev smarttext är Claudes gissning
   (#PROJEKTNAMN, #DATUM, #RITNINGSNR, #RAD 3, #FÖRHANDSKOPIA,
   #FASTIGHETSBETECKNING, #PROJEKTNR, #REV, #ARKITEKTKONTOR, #INITIALER MV,
   #SIGN ANSVARIG, #SKALA A1). Övriga (#KOMMUN, #MAPPNAMN, #RAD 1, 2 och 4,
-  #INITIALER HL, #SKALA A3) står kvar som text tills 0.8.10 gör egna fält.
-  #MAPPNAMN är mappen bladet ligger i (Carl August, 20 oktober).
+  #INITIALER HL, #SKALA A3) blir fält, `{mapp}` och `{skala a3}` när
+  skriptet körs igen (0.8.10); hans fil i format 8 öppnas inte längre.
 - **Skalstocken** (0.8.12) måste gå att flytta när som helst (Carl August,
   20 oktober). Hans standardläge på A1: innanför ramen nere till vänster om
   huvudet, x 611–711 mm, y 27–46 mm; hans skalstockar för 1:1–1:5000 finns

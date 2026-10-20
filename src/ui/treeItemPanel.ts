@@ -14,7 +14,8 @@ import { escapeHtml } from './labels';
  * eller sektion, en våning, ett arbetsblad, ett mallblad (0.8.8) eller en mapp. De visas i egenskapspanelen med en
  * Spara-knapp sist; inget ändras förrän man sparar.
  */
-export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder' | 'worksheet' | 'sheet' | 'viewport'; id: Id };
+/** Det som är valt i projektträdet. Med `also` är flera blad markerade (0.8.10). */
+export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder' | 'worksheet' | 'sheet' | 'viewport'; id: Id; also?: readonly Id[] };
 
 const esc = escapeHtml;
 
@@ -126,7 +127,7 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('Mapp', `<select name="folder">${folderOptions(doc, 'ritningar', folder)}</select>`)}
         </div>
         <label class="check"><input type="checkbox" name="default"${doc.project.master === w.id ? ' checked' : ''}> Nya blad får det här mallbladet</label>
-        <p class="note">Rita ramen, huvudet och annat som ska finnas på bladen med de vanliga verktygen, i mm på papperet. Texter kan ha smarttext, t.ex. {ritningsnummer} och {datum}, som fylls i från varje blad. En logga läggs in som underlag.</p>
+        <p class="note">Rita ramen, huvudet och annat som ska finnas på bladen med de vanliga verktygen, i mm på papperet. Texter kan ha smarttext, t.ex. {ritningsnummer} och {mapp}, och fält, t.ex. {datum} eller {Konstruktör}, som fylls i från varje blad. En logga läggs in som underlag.</p>
         <p class="note">${users.length ? `Används av ${users.length} ${users.length === 1 ? 'blad' : 'blad'}: ${users.map((s) => esc(s.number)).join(', ')}.` : 'Inget blad använder mallbladet än.'}${other.length ? ` ${other.map((s) => esc(s.number)).join(', ')} har ett annat format.` : ''}</p>
       </section>
       ${actions(`<button type="button" class="btn btn-danger" data-tree="delete-worksheet">Ta bort…</button>`)}

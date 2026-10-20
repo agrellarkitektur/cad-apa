@@ -1,6 +1,6 @@
 import { SWEDISH_STANDARD } from '../core/graphics';
 import { exampleMaster } from '../core/exampleMaster';
-import { drawingMarkers, emptyTree, FORMAT, FORMAT_VERSION, type ViewDef, type Definition, type Element, type Id, type ProjectDoc } from '../core/model';
+import { drawingMarkers, emptyTree, FORMAT, FORMAT_VERSION, PROJECT_DEFAULT_FIELDS, type ViewDef, type Definition, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { DoorParams } from '../elements/door';
 import type { FurnitureParams } from '../elements/furniture';
 import type { RoofParams } from '../elements/roof';
@@ -163,7 +163,7 @@ export function sampleProject(): ProjectDoc {
   return orientExteriorWalls(structuredClone({
     format: FORMAT,
     formatVersion: FORMAT_VERSION,
-    project: { name: 'Exempelvilla', kind: 'ombyggnad', fields: { adress: 'Exempelgatan 1' }, master: master.worksheet.id },
+    project: { name: 'Exempelvilla', kind: 'ombyggnad', fields: { ...Object.fromEntries(PROJECT_DEFAULT_FIELDS.map((k) => [k, ''])), adress: 'Exempelgatan 1' }, master: master.worksheet.id },
     states: [
       { id: BEF, name: 'Befintligt', kind: 'existing' },
       { id: A, name: 'Förslag A', kind: 'proposal' },

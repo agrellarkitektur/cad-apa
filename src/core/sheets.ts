@@ -1,11 +1,12 @@
 import { pruneAssets } from './commands';
 import { newId } from './ids';
 import { isMaster, type Element, type Id, type PaperSize, type ProjectDoc, type Sheet, type Viewport, type Worksheet } from './model';
+import { applyFieldChangesTx, type FieldChanges } from './sheetFields';
 import type { DocStore, TxBuilder } from './store';
 
 /**
  * Ritningsblad (0.8 del 3, format 9): kommandon för blad, vyerna på
- * bladen, mallbladen (0.8.8) och projektets fält för smarttexten. Måtten på
+ * bladen, mallbladen (0.8.8). Fälten för smarttexten finns i `sheetFields.ts`. Måtten på
  * bladen är i mm på papperet. Det som är ritat på ett blad (0.8.9) är
  * vanliga element med `space` satt till bladets id.
  */
@@ -33,26 +34,6 @@ export function paperSize(s: Pick<Sheet, 'size' | 'orientation'>): [number, numb
  * nya vyer läggs och vad flyttade saker fäster mot.
  */
 export const FRAME_MARGIN = { left: 20, right: 10, top: 10, bottom: 10 } as const;
-
-/** Fält som hör till bladet, för smarttexten i mallen, med förval. */
-export const SHEET_FIELDS: { key: string; label: string; placeholder?: string }[] = [
-  { key: 'skede', label: 'Skede', placeholder: 'BYGGLOVSHANDLING' },
-  { key: 'datum', label: 'Datum' },
-  { key: 'andring', label: 'Ändring', placeholder: '–' },
-  { key: 'ritat', label: 'Ritat av' },
-  { key: 'granskat', label: 'Granskat av' },
-  { key: 'skala', label: 'Skala', placeholder: '{skala}' },
-];
-
-/** Fält som gäller alla blad i projektet (`project.fields`), för smarttexten i mallen. */
-export const PROJECT_FIELDS: { key: string; label: string }[] = [
-  { key: 'adress', label: 'Adress' },
-  { key: 'fastighet', label: 'Fastighetsbeteckning' },
-  { key: 'bestallare', label: 'Beställare' },
-  { key: 'uppdragsnummer', label: 'Uppdragsnummer' },
-  { key: 'arkitekt', label: 'Arkitekt (företag)' },
-  { key: 'ansvarig', label: 'Ansvarig' },
-];
 
 /** Nästa lediga ritningsnummer efter det senaste bladet: A-101, A-102 … eller A-40.1-09, A-40.1-10 … */
 export function nextSheetNumber(doc: Pick<ProjectDoc, 'sheets'>): string {
@@ -108,7 +89,7 @@ export function createSheet(store: DocStore, init: Partial<Omit<Sheet, 'id' | 'v
     size: init.size ?? master?.paper.size ?? 'A3',
     orientation: init.orientation ?? master?.paper.orientation ?? 'landscape',
     ...(master ? { master: master.id } : {}),
-    fields: { datum: today(), ...(init.fields ?? {}) },
+    fields: { datum: today(), skede: 'BYGGLOVSHANDLING', ...(init.fields ?? {}) },
     viewports: [],
   };
   store.transact(`Nytt blad ${sheet.number}`, (tx) => {
@@ -160,8 +141,12 @@ function updateSheet(tx: TxBuilder, id: Id, fn: (s: Sheet) => Sheet): void {
   );
 }
 
-/** Spara bladets nummer, namn, format, mallblad, fält och mapp i ett steg. Tomma fält tas bort; `master: undefined` tar bort mallen. */
-export function saveSheet(store: DocStore, id: Id, patch: Partial<Omit<Sheet, 'id' | 'viewports'>>, folder?: Id | null): void {
+/**
+ * Spara bladets nummer, namn, format, mallblad, fält och mapp i ett steg.
+ * Tomma fält tas bort; `master: undefined` tar bort mallen. `fieldChanges`
+ * ändrar fälten som i `applyFieldChanges` (0.8.10), i samma steg.
+ */
+export function saveSheet(store: DocStore, id: Id, patch: Partial<Omit<Sheet, 'id' | 'viewports'>>, folder?: Id | null, fieldChanges?: FieldChanges): void {
   const s = store.doc.sheets.find((x) => x.id === id);
   if (!s) return;
   store.transact(`Spara bladet ${patch.number?.trim() || s.number}`, (tx) => {
@@ -174,6 +159,7 @@ export function saveSheet(store: DocStore, id: Id, patch: Partial<Omit<Sheet, 'i
       return next;
     });
     placeIn(tx, id, folder);
+    if (fieldChanges) applyFieldChangesTx(tx, [id], fieldChanges);
   });
 }
 
@@ -308,15 +294,9 @@ export function sheetOfViewport(doc: Pick<ProjectDoc, 'sheets'>, vpId: Id): Shee
   return doc.sheets.find((s) => s.viewports.some((v) => v.id === vpId));
 }
 
-/** Spara projektets fält (gäller alla blad) och projektnamnet. Tomma fält tas bort. */
-export function saveProjectFields(store: DocStore, fields: Record<string, string>, name?: string): void {
-  store.transact('Spara projektets fält', (tx) => {
-    const p = tx.doc.project;
-    const next = { ...p.fields };
-    for (const [k, v] of Object.entries(fields)) {
-      if (v.trim()) next[k] = v.trim();
-      else delete next[k];
-    }
-    tx.setProject({ ...p, ...(name?.trim() ? { name: name.trim() } : {}), fields: next });
-  });
+/** Byt projektets namn (smarttexten {projekt}). */
+export function renameProject(store: DocStore, name: string): void {
+  const n = name.trim();
+  if (!n || n === store.doc.project.name) return;
+  store.transact('Byt projektets namn', (tx) => tx.setProject({ ...tx.doc.project, name: n }));
 }

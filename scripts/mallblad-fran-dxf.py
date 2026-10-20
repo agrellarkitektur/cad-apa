@@ -20,6 +20,7 @@ som börjar med TEXT. Bygg projektet med
 import argparse
 import json
 import math
+import re
 import sys
 
 import ezdxf
@@ -44,7 +45,17 @@ SMART = {
     '#INITIALER MV': '{ritat}',
     '#SIGN ANSVARIG': '{ansvarig}',
     '#SKALA A1 (A1)': '{skala} (A1)',
+    '#SKALA A3 (A3)': '{skala a3} (A3)',
+    '#MAPPNAMN': '{mapp}',
 }
+
+
+def smart(text):
+    """Kända platshållare blir smarttext; andra (#KOMMUN, #RAD 1: …) blir fält med samma namn (0.8.10)."""
+    if text in SMART:
+        return SMART[text]
+    m = re.fullmatch(r'#([^:#{}]+?)(?::.*)?', text.strip())
+    return '{' + m.group(1).strip().capitalize() + '}' if m else text
 
 
 def color_of(doc, e):
@@ -110,7 +121,7 @@ def main():
             if not text or not on_paper(at) or (skipped(at) and not any(text.startswith(k) for k in a.behall)):
                 left_out += 1
                 continue
-            text = SMART.get(text, text)
+            text = smart(text)
             params = {'pos': [r(at.x), r(y)], 'text': text, 'height': r(height), 'angle': r(angle)}
             if align != 'start':
                 params['align'] = align

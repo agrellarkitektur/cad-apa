@@ -7,6 +7,7 @@ import type { FeedbackDialog } from '../feedbackDialog';
 import type { NavTab } from '../navigator';
 import { isNarrow } from '../sheet';
 import { applyTheme, type ThemeId } from '../theme';
+import type { Id } from '../../core/model';
 import { isSnapEnabled, setSnapEnabled } from '../tools/snap';
 import type { TreeItem } from '../treeItemPanel';
 import { saveUiSettings } from '../uiSettings';
@@ -62,6 +63,26 @@ export function installActions(app: AppContext, parts: ActionParts) {
     app.selection.clear();
     app.panel.showTreeItem(item);
     if (ui.navOpen) app.navigator.render();
+  }
+
+  /**
+   * Bladen som är markerade i trädet efter ett Ctrl-klick (lägg till eller
+   * ta bort) eller Shift-klick (alla blad mellan det första markerade och
+   * det klickade, i nummerordning). Det första är bladet som visas, om det
+   * är med.
+   */
+  function pickSheets(id: Id, range: boolean): { kind: 'sheet'; id: Id; also: Id[] } | null {
+    const t = app.panel.treeItem;
+    const now = t?.kind === 'sheet' ? [t.id, ...(t.also ?? [])] : ui.layout ? [ui.layout] : [];
+    let ids: Id[];
+    if (range && now.length) {
+      const order = [...app.store.doc.sheets].sort((a, b) => a.number.localeCompare(b.number, 'sv', { numeric: true })).map((s) => s.id);
+      const [i, j] = [order.indexOf(now[0]), order.indexOf(id)].sort((a, b) => a - b);
+      ids = i < 0 ? [id] : [now[0], ...order.slice(i, j + 1).filter((x) => x !== now[0])];
+    } else ids = now.includes(id) ? now.filter((x) => x !== id) : [...now, id];
+    if (!ids.length) return null;
+    if (ui.layout && ids.includes(ui.layout)) ids = [ui.layout, ...ids.filter((x) => x !== ui.layout)];
+    return { kind: 'sheet', id: ids[0], also: ids.slice(1) };
   }
 
   // Tillstånden i flikarna ovanför ritytan, och Jämför med.
@@ -181,6 +202,12 @@ export function installActions(app: AppContext, parts: ActionParts) {
     }
     const sheetPick = target.closest<HTMLElement>('[data-sheet-pick]');
     if (sheetPick) {
+      const me = e as MouseEvent;
+      // Ctrl- eller Shift-klick (0.8.10): flera blad, för att fylla i fälten tillsammans.
+      if ((me.ctrlKey || me.metaKey || me.shiftKey) && !isNarrow()) {
+        sheets.pick(pickSheets(sheetPick.dataset.sheetPick!, me.shiftKey));
+        return;
+      }
       // Ett ritningsblad (0.8 del 3): visa det och dess inställningar.
       if (isNarrow()) app.setNav(false);
       app.goTo({ kind: 'sheet', id: sheetPick.dataset.sheetPick! });

@@ -539,6 +539,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     viewModified: (v) => views.viewModified(v),
     describeView,
     treeItem: () => panel.treeItem?.id ?? null,
+    treeItems: () => new Set(panel.treeItem ? [panel.treeItem.id, ...(panel.treeItem.also ?? [])] : []),
     layout: () => ui.layout,
   });
   // Det man sparar för något i trädet: en öppen vy läses in igen (0.8).

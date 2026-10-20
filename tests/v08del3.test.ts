@@ -2,8 +2,9 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { addElements, addWithAsset } from '../src/core/commands';
 import { modelViewId } from '../src/core/model';
-import { addViewport, createSheet, deleteSheet, duplicateSheet, nextSheetNumber, paperSize, removeViewport, saveProjectFields, saveSheet, sheetOfViewport, updateViewport } from '../src/core/sheets';
+import { addViewport, createSheet, deleteSheet, duplicateSheet, nextSheetNumber, paperSize, removeViewport, renameProject, saveSheet, sheetOfViewport, updateViewport } from '../src/core/sheets';
 import { DocStore } from '../src/core/store';
+import { applyFieldChanges } from '../src/core/sheetFields';
 import { clipPolyline, clipRing, clipSegment } from '../src/geometry/clipRect';
 import { textWidth, writePdf } from '../src/formats/pdf';
 import { crc32, uniqueNames, writeZip } from '../src/formats/zip';
@@ -62,7 +63,8 @@ describe('ritningsblad (0.8 del 3)', () => {
     const store = new DocStore(sampleProject());
     const id = createSheet(store, { name: 'Planer' });
     addViewport(store, id, { view: modelViewId('fasad-1'), scale: 100, at: [200, 150] });
-    saveProjectFields(store, { arkitekt: 'Agrell Arkitektur', adress: 'Exempelgatan 1' }, 'Villa Test');
+    applyFieldChanges(store, [], { values: { arkitekt: 'Agrell Arkitektur', adress: 'Exempelgatan 1' } });
+    renameProject(store, 'Villa Test');
     const back = parse(serialize(store.doc));
     expect(back.sheets).toEqual(store.doc.sheets);
     expect(back.project.name).toBe('Villa Test');
@@ -81,8 +83,9 @@ describe('ritningsblad (0.8 del 3)', () => {
 });
 
 describe('smarttext och ritningshuvud (0.8 del 3)', () => {
-  it('fyller i kända namn och lämnar okända', () => {
-    expect(expandSmartText('{Projekt}, {skala} {okänd}', { projekt: 'Villa', skala: '1:100' })).toBe('Villa, 1:100 {okänd}');
+  it('fyller i kända namn; fält utan värde blir tomma (0.8.10)', () => {
+    expect(expandSmartText('{Projekt}, {skala} {okänd}', { projekt: 'Villa', skala: '1:100' })).toBe('Villa, 1:100 ');
+    expect(expandSmartText('{constructor}{}', {})).toBe('{}');
   });
 
   it('skalorna på bladet, störst först', () => {
@@ -91,7 +94,7 @@ describe('smarttext och ritningshuvud (0.8 del 3)', () => {
 
   it('mallbladet fyller i projektet, numret och skalan i huvudet', () => {
     const store = new DocStore(sampleProject());
-    saveProjectFields(store, { arkitekt: 'Agrell Arkitektur', uppdragsnummer: '2026-014' });
+    applyFieldChanges(store, [], { values: { arkitekt: 'Agrell Arkitektur', uppdragsnummer: '2026-014' } });
     const id = createSheet(store, { name: 'Plan 1', fields: { datum: '2026-10-20' } });
     addViewport(store, id, { view: 'vy-a-bl', scale: 100, at: [0, 0] });
     const d = buildSheet(store.doc, store.doc.sheets[0], { today: '2026-10-20' });

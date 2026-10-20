@@ -169,7 +169,7 @@ export class PropertiesPanel {
       const dirty = open && open.dataset.treeId === item.id && !open.querySelector<HTMLButtonElement>('[data-tree="save"]')?.disabled;
       if (!dirty && (item.kind === 'sheet' || item.kind === 'viewport')) {
         // Ritningsblad och vyer på blad (0.8 del 3).
-        this.body.innerHTML = sheetFormMarkup(doc, { kind: item.kind, id: item.id });
+        this.body.innerHTML = sheetFormMarkup(doc, { kind: item.kind, id: item.id, also: item.also });
         if (this.sheetHost) bindSheetForm(this.body, this.store, this.sheetHost);
       } else if (!dirty) {
         this.body.innerHTML = treeItemMarkup(doc, item);

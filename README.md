@@ -6,8 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.9** (beta, grafik och textrutor på bladen); nästa är
-**0.8.10, smarta fält**.
+**0.8.10** (beta, smarta fält); nästa är **0.8.11, granskning**.
 
 ## Vad som fungerar
 
@@ -613,9 +612,31 @@ Version 0.8.9, grafik och textrutor på bladen (filformat 9):
   duplicerat blad får kopior
 - Projekt i format 8 och äldre öppnas inte (betaversion); öppna dem i 0.8.8
 
+Version 0.8.10, smarta fält (filformat 10):
+- **Obegränsat med fält**: allt inom klamrar i en text på mallbladet eller
+  bladet som inte är inbyggd smarttext är ett fält, t.ex. `{Konstruktör}`.
+  Namnen jämförs utan hänsyn till stora och små bokstäver. Ett fält utan
+  värde blir tomt på bladet
+- Bladets egenskaper har en **tabell med fälten** bladet använder, med
+  värdet och en kryssruta **Projekt**: ett sådant fält fylls i på ett
+  ställe och gäller alla blad, också nya. Adress, fastighet, beställare,
+  uppdragsnummer, arkitekt och ansvarig gäller hela projektet från början.
+  Ett felstavat namn ger ett nytt, tomt fält i tabellen; ett fält med värde
+  som inte används längre visas med *används inte*
+- **Flera blad**: Ctrl- eller Shift-klicka blad under Ritningar i
+  projektträdet. Tabellen visar *(olika)* där värdena skiljer sig, och bara
+  de fält man ändrar skrivs till bladen, i ett steg som går att ångra
+- Ny inbyggd smarttext: **`{mapp}`**, mappen bladet ligger i (t.ex.
+  BYGGLOV), och **`{skala a3}`**, skalan när bladet skrivs ut på A3 (1:100
+  för ett A1 i 1:50). Inbyggt i övrigt: `{projekt}`, `{ritningsnummer}`,
+  `{innehåll}`, `{skala}`, `{format}` och `{idag}`
+- `scripts/mallblad-fran-dxf.py` gör #MAPPNAMN till `{mapp}`, #SKALA A3
+  till `{skala a3}` och övriga platshållare (#KOMMUN, #RAD 1 …) till fält
+- Projekt i format 9 och äldre öppnas inte (betaversion); öppna dem i 0.8.9
+
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer, i dag 9 (sedan 0.8.9). Fram till
+Projektfilerna har ett formatnummer, i dag 10 (sedan 0.8.10). Fram till
 pilotprojektet (0.13) uppgraderas inte projekt från äldre betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp

@@ -28,6 +28,8 @@ export interface NavigatorHost {
   describeView(v: ViewDef): string;
   /** Det i trädet vars inställningar visas i egenskapspanelen (0.8). */
   treeItem(): Id | null;
+  /** Allt som är valt i trädet, också flera blad (0.8.10). */
+  treeItems(): ReadonlySet<Id>;
   /** Ritningsbladet som visas, om något (0.8 del 3). */
   layout(): Id | null;
 }
@@ -253,13 +255,14 @@ export class Navigator {
     const doc = this.host.doc();
     const current = this.host.layout();
     const picked = this.host.treeItem();
+    const many = this.host.treeItems();
     const sheets = [...doc.sheets].sort((a, b) => a.number.localeCompare(b.number, 'sv', { numeric: true }));
     const rows = new Map<Id, string>();
     for (const s of sheets) {
       const n = s.viewports.length;
       rows.set(
         s.id,
-        `<div class="view-row${s.id === current ? ' active' : ''}${s.id === picked ? ' picked' : ''}"><button class="view-apply" data-sheet-pick="${s.id}" title="Visa bladet och dess inställningar">${icons.sheet}<span class="sheet-row-name"><b>${esc(s.number)}</b> ${esc(s.name)}</span><small>${s.size} · ${n} ${n === 1 ? 'vy' : 'vyer'}</small></button></div>`,
+        `<div class="view-row${s.id === current ? ' active' : ''}${many.has(s.id) ? ' picked' : ''}"><button class="view-apply" data-sheet-pick="${s.id}" title="Visa bladet och dess inställningar. Ctrl- eller Shift-klicka för att markera flera blad och fylla i deras fält tillsammans">${icons.sheet}<span class="sheet-row-name"><b>${esc(s.number)}</b> ${esc(s.name)}</span><small>${s.size} · ${n} ${n === 1 ? 'vy' : 'vyer'}</small></button></div>`,
       );
     }
     // Mallbladen (0.8.8): arbetsblad med papper.

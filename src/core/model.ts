@@ -22,7 +22,11 @@ export type ProjectKind = 'nybyggnad' | 'tillbyggnad' | 'ombyggnad';
 export interface ProjectInfo {
   name: string;
   kind: ProjectKind;
-  /** Fält som fyller ritningshuvudet: beställare, adress, uppdragsnummer … */
+  /**
+   * Fälten som gäller hela projektet (0.8.10, format 10): beställare,
+   * adress, uppdragsnummer … Nyckeln är fältets namn med små bokstäver; ett
+   * fält gäller hela projektet när nyckeln finns här, också med tomt värde.
+   */
   fields: Record<string, string>;
   /** Hur rummen numreras. Utelämnad = fyra siffror, byggnad 1, automatiskt. */
   roomNumbering?: RoomNumbering;
@@ -148,7 +152,7 @@ export interface Sheet {
   orientation: 'landscape' | 'portrait';
   /** Mallbladet bladet använder (0.8.8, format 8): dess grafik ritas under vyerna. */
   master?: Id;
-  /** Bladets fält utöver projektets (datum, ändring, skede …), för smarttexten. */
+  /** Bladets fält (datum, ändring, skede …, 0.8.10), nyckeln med små bokstäver. Projektets fält går före. */
   fields: Record<string, string>;
   viewports: Viewport[];
 }
@@ -258,7 +262,7 @@ export interface Element<P extends object = Record<string, unknown>> {
 }
 
 export const FORMAT = 'bacchus-project';
-export const FORMAT_VERSION = 9;
+export const FORMAT_VERSION = 10;
 
 export interface ProjectDoc {
   format: typeof FORMAT;
@@ -291,6 +295,9 @@ export interface ProjectDoc {
  * bara ett förslag, en till- eller ombyggnad har Befintligt och ett förslag.
  * Några vanliga typer finns med från början så att man kan börja rita direkt.
  */
+/** Fälten som nya projekt börjar med, och som gäller hela projektet (0.8.10). */
+export const PROJECT_DEFAULT_FIELDS = ['adress', 'fastighet', 'beställare', 'uppdragsnummer', 'arkitekt', 'ansvarig'];
+
 export function emptyProject(name: string, kind: ProjectKind, fields: Record<string, string> = {}): ProjectDoc {
   const states: State[] =
     kind === 'nybyggnad'
@@ -303,7 +310,7 @@ export function emptyProject(name: string, kind: ProjectKind, fields: Record<str
   return {
     format: FORMAT,
     formatVersion: FORMAT_VERSION,
-    project: { name, kind, fields, master: master.worksheet.id },
+    project: { name, kind, fields: { ...Object.fromEntries(PROJECT_DEFAULT_FIELDS.map((k) => [k, ''])), ...fields }, master: master.worksheet.id },
     states,
     storeys: [{ id: 'pl-1', name: 'Plan 1', elevation: 0, height: 2700 }],
     definitions: {

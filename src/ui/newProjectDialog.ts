@@ -31,7 +31,7 @@ export class NewProjectDialog {
       const name = String(data.get('name') ?? '').trim() || 'Nytt projekt';
       const kind = (data.get('kind') as ProjectKind) ?? 'nybyggnad';
       const fields: Record<string, string> = {};
-      for (const k of ['adress', 'bestallare']) {
+      for (const k of ['adress', 'beställare']) {
         const v = String(data.get(k) ?? '').trim();
         if (v) fields[k] = v;
       }
@@ -61,7 +61,7 @@ export class NewProjectDialog {
         </fieldset>
         <div class="fields">
           <label class="field" for="np-adress"><span>Adress (valfritt)</span><input id="np-adress" name="adress" autocomplete="off"></label>
-          <label class="field" for="np-bestallare"><span>Beställare (valfritt)</span><input id="np-bestallare" name="bestallare" autocomplete="off"></label>
+          <label class="field" for="np-bestallare"><span>Beställare (valfritt)</span><input id="np-bestallare" name="beställare" autocomplete="off"></label>
         </div>
         <p class="note">Det öppna projektet ersätts. Spara det som fil först om du vill ha kvar det.</p>
       </div>

@@ -123,10 +123,11 @@ export function textPoint(pos: Vec2, angleRad: number, scale: number, x: number,
   return [pos[0] + (x * c - y * s) * scale, pos[1] + (x * s + y * c) * scale];
 }
 
-/** Byt ut `{namn}` mot värdet (smarttext). Okända namn står kvar som de är. */
+/** Byt ut `{namn}` mot värdet (smarttext eller fält). Namn utan värde blir tomma. */
 export function expandSmartText(text: string, vars: Readonly<Record<string, string>>): string {
+  // Allt inom klamrar är smarttext eller ett fält (0.8.10); ett fält utan värde blir tomt.
   return text.replace(/\{([^{}]+)\}/g, (m, name: string) => {
-    const k = name.trim().toLowerCase();
-    return k in vars ? vars[k] : m;
+    const k = name.trim().replace(/\s+/g, ' ').toLowerCase();
+    return k ? (Object.hasOwn(vars, k) ? vars[k] : '') : m;
   });
 }

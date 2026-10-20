@@ -450,8 +450,8 @@ på bladet sina egna.
 - **Bladet** byggs av `buildSheet`: papperet (`part: 'papper'`, ritas bara på
   skärmen), mallbladet (0.8.8), vyerna med rubrik och texterna. Allt är mm
   på papperet med y uppåt. Smarttext: `expandSmartText(text, smartVars(doc,
-  sheet, idag))` i `src/repr/smartText.ts`; nya namn läggs till i
-  `smartVars` och `SMART_TEXT`.
+  sheet, idag))` i `src/repr/smartText.ts`; ny inbyggd smarttext läggs till
+  i `smartVars` och `BUILT_IN` (`src/core/sheetFields.ts`).
 - **I appen**: `ui.layout` är bladet som visas och `Place` har
   `kind: 'sheet'`. `src/ui/app/sheets.ts` ritar bladet (`drawing()`), har
   verktyget som markerar och flyttar vyerna (`SheetTool`, fäster mot de
@@ -743,8 +743,8 @@ nedan). Ramen och greppen gäller.*
   läggs innanför. Mallbladen går inte att lägga på ett blad som vy
   (`viewSource`, `placeableViews`).
 - **Smarttexten** ligger i `src/repr/smartText.ts` (förut `titleBlock.ts`):
-  `SMART_TEXT`, `expandSmartText`, `sheetScales` och `smartVars`. Fältet
-  *Skala* på bladet skriver över `{skala}`.
+  `SMART_TEXT`, `expandSmartText`, `sheetScales` och `smartVars`. Fälten
+  (0.8.10) ligger i `src/core/sheetFields.ts`, se nedan.
 - **I appen**: ett mallblad öppnas som ett arbetsblad (`goTo({ kind:
   'worksheet', id })`, `ui.worksheet`). `shownMaster()` i `app.ts` ger
   annoteringsskalan 1 i `viewStates`, och `renderAll` sätter
@@ -805,3 +805,31 @@ nedan). Ramen och greppen gäller.*
 - **Egen skala**: `scaleField` och `readScale` i `src/ui/sheetForms.ts`
   (*Egen skala…* med ett fält för nämnaren).
 
+## Smarta fält (0.8.10, format 10)
+
+- **Modellen**: `project.fields` är fälten som gäller hela projektet och
+  `Sheet.fields` bladets; nyckeln är fältets namn med små bokstäver
+  (`fieldKey`). Ett fält gäller hela projektet när nyckeln finns i
+  `project.fields`, också med tomt värde, och då går projektets värde före
+  bladets. Nya projekt får `PROJECT_DEFAULT_FIELDS` (`src/core/model.ts`)
+  tomma. Nya blad får `datum` (idag) och `skede` (BYGGLOVSHANDLING).
+- **Inbyggt** (`BUILT_IN` i `src/core/sheetFields.ts`) räknas i `smartVars`:
+  projekt, ritningsnummer, innehåll, mapp (`folderName`), skala, skala a3
+  (nämnaren gånger papperets långsida / 420), format och idag. Skala och
+  skala a3 går att skriva över med ett fält på bladet. Allt annat inom
+  klamrar är fält; `expandSmartText` ger tomt för namn utan värde.
+- **Fälten ett blad använder**: `fieldsOf(doc, sheets)` letar i texterna med
+  `space` = bladets eller mallbladets id (`bracedNames`) och tar med fält
+  som har ett värde på bladen men inte används (`used: false`).
+- **Spara**: `applyFieldChanges(store, ids, { values, shared })` (och
+  `applyFieldChangesTx` i en pågående transaktion) skriver bara de fält som
+  nämns. `shared: true` flyttar värdet från bladen till projektet,
+  `false` tillbaka till alla blad. `saveSheet` tar ändringarna som femte
+  argument, så att bladets formulär sparas i ett steg. `renameProject`
+  byter projektets namn.
+- **I appen**: `fieldTable` och `readFieldChanges` i `src/ui/sheetForms.ts`
+  (inputs med `data-field`/`data-orig` och kryssrutor med `data-shared`).
+  `TreeItem.also` är fler markerade blad; `pickSheets` i
+  `src/ui/app/actions.ts` sköter Ctrl- och Shift-klick, och
+  `NavigatorHost.treeItems()` markerar raderna. Formuläret för flera blad
+  har `data-tree-kind="sheets"` och `data-ids`.

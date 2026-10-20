@@ -78,7 +78,7 @@ export function installSheets(app: AppContext) {
   }
 
   /** Visa bladet i egenskapspanelen, eller markera en vy på det. */
-  function pick(item: { kind: 'sheet' | 'viewport'; id: Id } | null): void {
+  function pick(item: { kind: 'sheet' | 'viewport'; id: Id; also?: readonly Id[] } | null): void {
     if (item?.kind === 'viewport') {
       app.panel.showTreeItem(null);
       app.selection.set([item.id]);

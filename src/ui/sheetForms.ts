@@ -1,8 +1,9 @@
 import type { Id, ProjectDoc, Sheet } from '../core/model';
-import { deleteSheet, duplicateSheet, masterOf, mastersOf, PAPER_SIZES, PROJECT_FIELDS, removeViewport, saveProjectFields, saveSheet, setViewportCrop, SHEET_FIELDS, sheetOfViewport, updateViewport } from '../core/sheets';
+import { applyFieldChanges, fieldsOf, fieldValue, type FieldChanges } from '../core/sheetFields';
+import { deleteSheet, duplicateSheet, masterOf, mastersOf, PAPER_SIZES, removeViewport, renameProject, saveSheet, setViewportCrop, sheetOfViewport, today, updateViewport } from '../core/sheets';
 import type { DocStore } from '../core/store';
 import { centeredAt, placeableViews, viewCenter, viewSource } from '../repr/sheet';
-import { SMART_TEXT } from '../repr/smartText';
+import { SMART_TEXT, smartVars } from '../repr/smartText';
 import { ANNOTATION_SCALES } from './app/helpers';
 import { askConfirm } from './ask';
 import { icons } from './icons';
@@ -14,9 +15,10 @@ import { escapeHtml } from './labels';
  * inget ändras förrän man sparar. Att lägga en vy på bladet och ta bort
  * något görs direkt.
  *
- * Bladets formulär har mallbladet (0.8.8) och fälten som smarttexten i
- * mallen fylls i med: det som hör till ritningen (datum, skede, ändring …)
- * sparas på bladet, det som gäller alla ritningar i projektet.
+ * Bladets formulär har mallbladet (0.8.8) och en tabell med fälten som
+ * smarttexten fylls i med (0.8.10): allt inom klamrar i mallens och bladets
+ * texter. Ett fält gäller bladet eller hela projektet. Flera blad markerade
+ * i projektträdet visar bara tabellen, med *(olika)* där värdena skiljer.
  */
 
 const esc = escapeHtml;
@@ -24,6 +26,13 @@ const field = (label: string, input: string) => `<label class="field"><span>${la
 
 /** Det som har ett formulär här: bladet och vyerna på det. Det som är ritat på bladet är vanliga objekt (0.8.9). */
 export type SheetFormKind = 'sheet' | 'viewport';
+
+/** Det formuläret visar: bladet (med `also`, fler blad markerade i trädet) eller en vy på ett blad. */
+export interface SheetFormItem {
+  kind: SheetFormKind;
+  id: Id;
+  also?: readonly Id[];
+}
 
 export interface SheetFormHost {
   /** Visa något annat i panelen: bladet eller en vy på det. */
@@ -92,28 +101,67 @@ export function describeSheet(s: Sheet): string {
   return `${s.size} ${ORIENTATION[s.orientation].toLowerCase()} · ${n} ${n === 1 ? 'vy' : 'vyer'}`;
 }
 
-/** Fälten som smarttexten fylls i med: ritningens och projektets. */
-function smartFields(doc: ProjectDoc, s: Sheet): string {
-  const f = doc.project.fields;
-  const smart = SMART_TEXT.map(([k, d]) => `<code title="${esc(d)}">{${esc(k)}}</code>`).join(' ');
+/**
+ * Fälten som bladen använder (0.8.10), i en tabell: namn, värde och om det
+ * gäller hela projektet. Med flera blad visar ett fält med olika värden
+ * *(olika)*, och bara de fält man ändrar skrivs till bladen.
+ */
+function fieldTable(doc: ProjectDoc, sheets: readonly Sheet[]): string {
+  const fields = fieldsOf(doc, sheets);
+  const built = SMART_TEXT.map(([k, d]) => `<code title="${esc(d)}">{${esc(k)}}</code>`).join(' ');
+  const auto = sheets.length === 1 ? smartVars(doc, sheets[0], today()) : null;
+  const rows = fields
+    .map((f) => {
+      const values = sheets.map((s) => fieldValue(doc, s, f.key));
+      const mixed = values.some((v) => v !== values[0]);
+      const v = mixed ? '' : values[0];
+      const ph = mixed ? '(olika)' : f.key === 'skala' || f.key === 'skala a3' ? auto?.[f.key] || 'vyernas skala' : '';
+      const name = esc(f.key);
+      return `<tr${f.used ? '' : ' class="unused"'}>
+        <th scope="row" title="{${esc(f.label)}}">${esc(f.label)}${f.used ? '' : '<small>används inte</small>'}</th>
+        <td><input data-field="${name}" data-orig="${esc(v)}" value="${esc(v)}"${ph ? ` placeholder="${esc(ph)}"` : ''} autocomplete="off" aria-label="${esc(f.label)}"></td>
+        <td class="shared"><input type="checkbox" data-shared="${name}"${f.shared ? ' checked data-orig="1"' : ''}${f.key.startsWith('skala') ? ' disabled' : ''} aria-label="${esc(f.label)} gäller hela projektet" title="Gäller hela projektet"></td>
+      </tr>`;
+    })
+    .join('');
   return `<section>
-      <h3>Den här ritningen</h3>
-      <div class="fields">
-        ${SHEET_FIELDS.map((x) => field(x.label, `<input name="f:${x.key}" value="${esc(s.fields[x.key] ?? '')}" placeholder="${esc(x.placeholder ?? '')}" autocomplete="off">`)).join('')}
-      </div>
-      <p class="note">Skalan fylls i med vyernas skalor om fältet är tomt. Skriv något annat för just den här ritningen.</p>
-    </section>
-    <section>
-      <h3>Alla ritningar i projektet</h3>
-      <div class="fields">
-        ${field('Projekt', `<input name="projectName" value="${esc(doc.project.name)}" autocomplete="off">`)}
-        ${PROJECT_FIELDS.map((x) => field(x.label, `<input name="p:${x.key}" value="${esc(f[x.key] ?? '')}" autocomplete="off">`)).join('')}
-      </div>
-      <p class="note smart-note">Texterna i mallbladet och på bladet fylls i med fälten genom smarttext: ${smart}</p>
+      <h3>Fält</h3>
+      ${
+        rows
+          ? `<table class="field-table"><thead><tr><th>Fält</th><th>Värde</th><th title="Gäller hela projektet">Projekt</th></tr></thead><tbody>${rows}</tbody></table>`
+          : '<p class="note">Mallen och bladet har inga fält än.</p>'
+      }
+      <p class="note">Skriv <code>{Namn}</code> i en text i mallbladet eller på bladet för ett nytt fält, t.ex. <code>{Konstruktör}</code>. Ett fält med kryss i <i>Projekt</i> gäller alla blad.${sheets.length > 1 ? ' Bara fälten du ändrar skrivs till de markerade bladen.' : ' Skalan fylls i med vyernas skalor om fältet är tomt.'}</p>
+      <p class="note smart-note">Inbyggt: ${built}</p>
     </section>`;
 }
 
-export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id: Id }): string {
+/** Ändringarna i fälttabellen jämfört med när den ritades. */
+function readFieldChanges(form: HTMLFormElement): FieldChanges {
+  const values: Record<string, string> = {};
+  const shared: Record<string, boolean> = {};
+  form.querySelectorAll<HTMLInputElement>('input[data-field]').forEach((i) => {
+    // Ett fält med olika värden skrivs bara om man skrivit något i det.
+    const mixed = i.placeholder === '(olika)';
+    if (mixed ? i.value.trim() !== '' : i.value.trim() !== (i.dataset.orig ?? '')) values[i.dataset.field!] = i.value;
+  });
+  form.querySelectorAll<HTMLInputElement>('input[data-shared]').forEach((i) => {
+    if (i.checked !== (i.dataset.orig === '1')) shared[i.dataset.shared!] = i.checked;
+  });
+  return { values, shared };
+}
+
+/** Formuläret för flera blad markerade i projektträdet: bara fälten. */
+function multiSheetMarkup(doc: ProjectDoc, sheets: Sheet[], actions: string): string {
+  const list = sheets.map((s) => esc(s.number)).join(', ');
+  return `<form class="tree-form sheet-form" data-tree-kind="sheets" data-tree-id="${sheets[0].id}" data-ids="${sheets.map((s) => s.id).join(' ')}">
+    <header class="sel-head"><h2>${sheets.length} blad</h2><p>${list}</p></header>
+    ${fieldTable(doc, sheets)}
+    ${actions}
+  </form>`;
+}
+
+export function sheetFormMarkup(doc: ProjectDoc, item: SheetFormItem): string {
   const actions = (extra = '') =>
     `<div class="tree-save">${extra}<button type="button" class="btn" data-tree="reset" disabled>Återställ</button><button type="submit" class="btn btn-primary" data-tree="save" disabled>Spara</button></div>`;
   if (item.kind === 'viewport') {
@@ -145,6 +193,8 @@ export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id
       ${actions(`<button type="button" class="btn btn-danger" data-sheet="remove-viewport">Ta bort från bladet</button>`)}
     </form>`;
   }
+  const many = [item.id, ...(item.also ?? [])].map((id) => doc.sheets.find((x) => x.id === id)).filter((x): x is Sheet => !!x);
+  if (many.length > 1) return multiSheetMarkup(doc, many, actions());
   const s = doc.sheets.find((x) => x.id === item.id);
   if (!s) return '';
   const views = s.viewports
@@ -170,7 +220,13 @@ export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id
       ${master && (master.paper.size !== s.size || master.paper.orientation !== s.orientation) ? `<p class="note warn">Mallbladet är ritat för ${master.paper.size} ${ORIENTATION[master.paper.orientation].toLowerCase()}, bladet är ${s.size} ${ORIENTATION[s.orientation].toLowerCase()}. Mallen ritas från papperets nedre vänstra hörn och kan hamna utanför.</p>` : ''}
       ${master ? `<div class="row"><button type="button" class="btn" data-sheet="open-master" data-id="${master.id}">Öppna mallbladet</button></div>` : masters.length ? '' : '<p class="note">Projektet har inget mallblad. Skapa ett under Ritningar i projektträdet, och rita ramen och huvudet på det.</p>'}
     </section>
-    ${smartFields(doc, s)}
+    <section>
+      <div class="fields">
+        ${field('Projekt', `<input name="projectName" value="${esc(doc.project.name)}" autocomplete="off">`)}
+      </div>
+      <p class="note">Projektets namn, <code>{projekt}</code>, gäller alla blad.</p>
+    </section>
+    ${fieldTable(doc, [s])}
     <section>
       <h3>Vyer på bladet</h3>
       ${views ? `<div class="nav-list">${views}</div>` : '<p class="note">Inga vyer än. Välj en vy och lägg den på bladet.</p>'}
@@ -198,7 +254,7 @@ export function sheetFormMarkup(doc: ProjectDoc, item: { kind: SheetFormKind; id
 export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFormHost): void {
   const form = root.querySelector<HTMLFormElement>('.sheet-form');
   if (!form) return;
-  const kind = form.dataset.treeKind as SheetFormKind;
+  const kind = form.dataset.treeKind as SheetFormKind | 'sheets';
   const id = form.dataset.treeId!;
   const dirty = () => form.querySelectorAll<HTMLButtonElement>('[data-tree="save"], [data-tree="reset"]').forEach((b) => (b.disabled = false));
   const own = '[data-sheet-view], [data-sheet-scale], [name="placeScale-own"]';
@@ -245,7 +301,7 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
       host.rerender();
       return;
     }
-    const sheet = kind === 'sheet' ? store.doc.sheets.find((x) => x.id === id) : sheetOfViewport(store.doc, id);
+    const sheet = kind === 'viewport' ? sheetOfViewport(store.doc, id) : store.doc.sheets.find((x) => x.id === id);
     if (!sheet) return;
     switch (b.dataset.sheet) {
       case 'place': {
@@ -328,11 +384,8 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
         'Spara vyn på bladet',
       );
     } else if (kind === 'sheet') {
-      // Bladet med ritningens fält, och projektets fält för alla blad.
-      const sheet = store.doc.sheets.find((x) => x.id === id);
-      if (!sheet) return;
-      const fields: Record<string, string> = { ...sheet.fields };
-      for (const x of SHEET_FIELDS) fields[x.key] = str(`f:${x.key}`);
+      // Bladet med fälten i ett steg, och projektets namn.
+      if (!store.doc.sheets.some((x) => x.id === id)) return;
       saveSheet(
         store,
         id,
@@ -342,15 +395,15 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
           size: str('size') as Sheet['size'],
           orientation: str('orientation') as Sheet['orientation'],
           master: str('master') || undefined,
-          fields,
         },
         str('folder') || null,
+        readFieldChanges(form),
       );
-      const project: Record<string, string> = {};
-      for (const x of PROJECT_FIELDS) project[x.key] = str(`p:${x.key}`);
-      const p = store.doc.project;
-      const changed = PROJECT_FIELDS.some((x) => (p.fields[x.key] ?? '') !== project[x.key].trim()) || (str('projectName').trim() && str('projectName').trim() !== p.name);
-      if (changed) saveProjectFields(store, project, str('projectName'));
+      renameProject(store, str('projectName'));
+    } else {
+      // Flera blad (0.8.10): bara ändrade fält skrivs.
+      const ids = (form.dataset.ids ?? '').split(' ').filter(Boolean);
+      applyFieldChanges(store, ids, readFieldChanges(form), `Spara fälten på ${ids.length} blad`);
     }
     host.saved();
   });

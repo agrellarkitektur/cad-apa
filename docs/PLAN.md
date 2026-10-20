@@ -486,6 +486,18 @@ radbrytningen följer ändå PDF:en.*
 
 Mellanstor.
 
+*Byggd (21 oktober), format 10. Fälten sparas med små bokstäver på bladet
+eller, för fält som gäller hela projektet, i projektet; kryssrutan
+**Projekt** i tabellen flyttar värdet mellan dem. Claudes val, att stämma
+av: inbyggt är bara det som räknas fram (projekt, ritningsnummer,
+innehåll, `{mapp}`, skala, `{skala a3}`, format, idag); adress, datum,
+skede, ritat av m.fl. är vanliga fält, och adress, fastighet, beställare,
+uppdragsnummer, arkitekt och ansvarig gäller hela projektet från början.
+`{skala a3}` är skalan när bladet skrivs ut på A3 (nämnaren gånger
+papperets långsida / 420, alltså 2 för A1). Flera blad markeras med Ctrl-
+eller Shift-klick i Ritningar. Ett fält med olika värden som töms skrivs
+inte (det går att tömma på ett blad i taget).*
+
 ### 0.8.11 Granskning
 
 Förra granskningen var 0.8.1, och bladen har byggts om flera gånger:

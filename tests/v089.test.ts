@@ -39,7 +39,7 @@ function sheetWithDrawing() {
 
 describe('grafik och textrutor på bladen (0.8.9, format 9)', () => {
   it('format 9: bladen har inga texter i sig längre; format 8 får meddelandet om en äldre betaversion', () => {
-    expect(FORMAT_VERSION).toBe(9);
+    expect(FORMAT_VERSION).toBeGreaterThanOrEqual(9);
     const { store } = sheetWithDrawing();
     const raw = JSON.parse(serialize(store.doc));
     raw.sheets[0].items = [{ kind: 'text', id: 'x', at: [0, 0], text: 'gammal', height: 2.5 }];
