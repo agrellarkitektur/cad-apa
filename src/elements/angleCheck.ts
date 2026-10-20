@@ -4,6 +4,7 @@ import { isFixed, type FurnitureParams } from './furniture';
 import type { MarkerParams } from './markers';
 import { resolveParams, typeOf } from './registry';
 import { ridgeLine, type RoofParams } from './roof';
+import { lastResults } from '../repr/reuse';
 
 /**
  * Nästan raka vinklar (0.7.1). En vägg, en sektions- eller fasadlinje, fast
@@ -90,6 +91,12 @@ export function skewOf(doc: ProjectDoc, el: Element, thresholdDeg: number): Skew
 /** Alla nästan raka element på en våning i ett tillstånd. */
 export function skewWarnings(doc: ProjectDoc, storey: Id, state: Id, thresholdDeg: number): SkewWarning[] {
   if (!(thresholdDeg > 0)) return [];
+  // Ritas med markeringen vid varje bildruta; räknas om bara när projektet ändrats (0.8.3).
+  return savedWarnings([doc.elements, doc.definitions, storey, state, thresholdDeg], () => computeWarnings(doc, storey, state, thresholdDeg));
+}
+const savedWarnings = lastResults<SkewWarning[]>(2);
+
+function computeWarnings(doc: ProjectDoc, storey: Id, state: Id, thresholdDeg: number): SkewWarning[] {
   const out: SkewWarning[] = [];
   for (const el of Object.values(doc.elements)) {
     const global = !!typeOf(el.type)?.global;

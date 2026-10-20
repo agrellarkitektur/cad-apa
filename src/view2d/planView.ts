@@ -56,7 +56,15 @@ const CLICK_SLOP = 5;
  */
 export class PlanView {
   readonly camera = new Camera();
+  /** Det översta lagret: markering, verktygens grafik och skalstock. Tar emot pekaren. */
   readonly svg: SVGSVGElement;
+  /** Rutnätet, underst. */
+  private gridSvg: SVGSVGElement;
+  /**
+   * Ritningen och den kalkerade vyn, i ett eget lager (0.8.3) som webbläsaren
+   * kan flytta vid panorering utan att måla om det.
+   */
+  private drawingSvg: SVGSVGElement;
   private gridMinor: SVGPathElement;
   private gridMajor: SVGPathElement;
   private gridAxes: SVGPathElement;
@@ -75,13 +83,30 @@ export class PlanView {
   private tool: ViewTool | null = null;
   private highlighter: ((cam: Camera) => string) | null = null;
 
+  // Ritningen ritas om bara när innehållet ändrats (0.8.3). Panorering flyttar
+  // den färdiga bilden; zoom skalar den tills hjulet stått still en stund och
+  // ritar sedan om, så att streck, text och skraffering blir rätt igen.
+  private contentDirty = true;
+  /** Kameran som ritningen senast ritades med. */
+  private drawnCam: { center: Vec2; scale: number; width: number; height: number } | null = null;
+  private zoomSettle = 0;
+  private scaleOfDrawing = 100;
+
   /** Fingrar och knappar som är nedtryckta just nu. */
   private pointers = new Map<number, { pos: Vec2; start: Vec2; mode: 'capture' | 'pan' | 'pinch'; pinched?: boolean }>();
   private lastMiddleDown = 0;
   private spaceDown = false;
 
   /** Ritningsskalans nämnare. Styr texthöjder; 1 på ritningsblad, där allt är mm på papperet. */
-  drawingScale = 100;
+  get drawingScale(): number {
+    return this.scaleOfDrawing;
+  }
+
+  set drawingScale(v: number) {
+    if (v === this.scaleOfDrawing) return;
+    this.scaleOfDrawing = v;
+    this.redraw();
+  }
 
   /** Skalstocken i nedre vänstra hörnet (inte på ritningsblad). */
   showScaleBar = true;
@@ -92,14 +117,20 @@ export class PlanView {
   constructor(host: HTMLElement, events: PlanViewEvents = {}) {
     this.host = host;
     this.events = events;
-    this.svg = document.createElementNS(SVG_NS, 'svg');
-    this.svg.classList.add('plan');
+    const layer = (cls: string) => {
+      const el = document.createElementNS(SVG_NS, 'svg');
+      el.setAttribute('class', cls);
+      return el;
+    };
+    this.gridSvg = layer('plan-layer plan-grid');
+    this.drawingSvg = layer('plan-layer plan-drawing');
+    this.svg = layer('plan');
     this.svg.setAttribute('role', 'img');
     this.svg.setAttribute('aria-label', 'Planvy');
-    const g = (cls: string) => {
+    const g = (cls: string, parent: SVGSVGElement = this.svg) => {
       const el = document.createElementNS(SVG_NS, 'g');
       el.setAttribute('class', cls);
-      this.svg.appendChild(el);
+      parent.appendChild(el);
       return el;
     };
     const path = (parent: SVGGElement, cls: string) => {
@@ -108,16 +139,16 @@ export class PlanView {
       parent.appendChild(el);
       return el;
     };
-    const grid = g('grid');
+    const grid = g('grid', this.gridSvg);
     this.gridMinor = path(grid, 'grid-minor');
     this.gridMajor = path(grid, 'grid-major');
     this.gridAxes = path(grid, 'grid-axes');
-    this.underlay = g('underlay');
-    this.content = g('content');
+    this.underlay = g('underlay', this.drawingSvg);
+    this.content = g('content', this.drawingSvg);
     this.highlight = g('highlight');
     this.overlay = g('overlay');
     this.chrome = g('chrome');
-    host.appendChild(this.svg);
+    host.append(this.gridSvg, this.drawingSvg, this.svg);
 
     new ResizeObserver(() => this.resize()).observe(host);
     this.resize();
@@ -125,13 +156,24 @@ export class PlanView {
   }
 
   setPrimitives(prims: readonly Primitive[]): void {
+    if (prims === this.prims) return;
     this.prims = prims;
-    this.requestRender();
+    this.redraw();
   }
 
   /** En annan vy som visas tonad under ritningen, att rita mot (kalkering). */
   setUnderlay(prims: readonly Primitive[]): void {
+    if (prims === this.underlayPrims || (!prims.length && !this.underlayPrims.length)) return;
     this.underlayPrims = prims;
+    this.redraw();
+  }
+
+  /**
+   * Rita om själva ritningen, t.ex. när en bild laddats klart eller temat
+   * bytts. `requestRender` ritar bara om markering och verktygets grafik.
+   */
+  redraw(): void {
+    this.contentDirty = true;
     this.requestRender();
   }
 
@@ -141,8 +183,8 @@ export class PlanView {
    */
   setUnderlayLook(look: { above: boolean; color: string | null; opacity: number }): void {
     const g = this.underlay;
-    if (look.above) this.svg.insertBefore(g, this.highlight);
-    else this.svg.insertBefore(g, this.content);
+    if (look.above) this.drawingSvg.appendChild(g);
+    else this.drawingSvg.insertBefore(g, this.content);
     g.classList.toggle('above', look.above);
     g.classList.toggle('tinted', !!look.color);
     g.style.opacity = String(look.opacity);
@@ -200,6 +242,7 @@ export class PlanView {
   set showGrid(v: boolean) {
     this.gridVisible = v;
     this.svg.classList.toggle('no-grid', !v);
+    this.gridSvg.classList.toggle('no-grid', !v);
     this.requestRender();
   }
 
@@ -215,7 +258,7 @@ export class PlanView {
     const r = this.host.getBoundingClientRect();
     const first = this.camera.width <= 1;
     this.camera.resize(r.width, r.height);
-    this.svg.setAttribute('viewBox', `0 0 ${this.camera.width} ${this.camera.height}`);
+    for (const el of [this.gridSvg, this.drawingSvg, this.svg]) el.setAttribute('viewBox', `0 0 ${this.camera.width} ${this.camera.height}`);
     if (first && r.width > 1) this.zoomToFit();
     else this.changed();
   }
@@ -276,6 +319,7 @@ export class PlanView {
 
   private render(): void {
     const cam = this.camera;
+    this.renderDrawing();
     if (this.gridVisible) {
       const grid = buildGrid(cam);
       this.gridMinor.setAttribute('d', grid.minor);
@@ -283,11 +327,55 @@ export class PlanView {
       this.gridMajor.setAttribute('d', grid.major);
       this.gridAxes.setAttribute('d', grid.axes);
     }
+    // Markering och verktygets grafik skrivs bara in när de ändrats, så att
+    // webbläsaren inte målar om dem vid varje musrörelse (0.8.3).
+    setMarkup(this.highlight, this.highlighter?.(cam) ?? '');
+    setMarkup(this.overlay, this.tool?.overlay?.(cam) ?? '');
+    setMarkup(this.chrome, this.showScaleBar ? renderScaleBar(cam, 20, cam.height - 22) : '');
+  }
+
+  /**
+   * Ritningen och den kalkerade vyn. Har bara kameran ändrats flyttas (och
+   * vid zoom skalas) den färdiga bilden: kameran är en förskjutning och en
+   * likformig skalning, så samma transform gäller för allt i den.
+   */
+  private renderDrawing(): void {
+    const cam = this.camera;
+    const d = this.drawnCam;
+    if (!this.contentDirty && d) {
+      const k = cam.scale / d.scale;
+      if (k === 1 && d.center[0] === cam.center[0] && d.center[1] === cam.center[1] && d.width === cam.width && d.height === cam.height) return;
+      // En gammal skärmpunkt s blir (s − mitten förut)·k + förskjutningen + mitten nu.
+      const tx = -(d.width / 2) * k + (d.center[0] - cam.center[0]) * cam.scale + cam.width / 2;
+      const ty = -(d.height / 2) * k - (d.center[1] - cam.center[1]) * cam.scale + cam.height / 2;
+      if (k === 1) {
+        // Panorering: hela lagret flyttas, utan att något målas om.
+        this.drawingSvg.style.transform = `translate(${tx}px, ${ty}px)`;
+        this.setGroupTransform(null);
+        return;
+      }
+      // Zoom: grupperna skalas (strecken behåller sin bredd) och ritas om när hjulet stått still.
+      this.drawingSvg.style.transform = '';
+      this.setGroupTransform(`translate(${tx} ${ty}) scale(${k})`);
+      clearTimeout(this.zoomSettle);
+      this.zoomSettle = window.setTimeout(() => this.redraw(), 140);
+      return;
+    }
+    clearTimeout(this.zoomSettle);
+    this.contentDirty = false;
+    this.drawnCam = { center: [cam.center[0], cam.center[1]], scale: cam.scale, width: cam.width, height: cam.height };
+    this.drawingSvg.style.transform = '';
+    this.setGroupTransform(null);
     this.underlay.innerHTML = this.underlayPrims.length ? renderPrimitives(this.underlayPrims, cam, { drawingScale: this.drawingScale, idPrefix: 'u', imageHref: this.imageHref }) : '';
     this.content.innerHTML = renderPrimitives(this.prims, cam, { drawingScale: this.drawingScale, imageHref: this.imageHref });
-    this.highlight.innerHTML = this.highlighter?.(cam) ?? '';
-    this.overlay.innerHTML = this.tool?.overlay?.(cam) ?? '';
-    this.chrome.innerHTML = this.showScaleBar ? renderScaleBar(cam, 20, cam.height - 22) : '';
+  }
+
+  private setGroupTransform(t: string | null): void {
+    for (const g of [this.content, this.underlay]) {
+      if (t) g.setAttribute('transform', t);
+      else g.removeAttribute('transform');
+    }
+    this.drawingSvg.classList.toggle('zooming', !!t);
   }
 
   private updateCursor(): void {
@@ -457,4 +545,13 @@ export class PlanView {
     svg.addEventListener('auxclick', (e) => e.preventDefault());
     svg.addEventListener('contextmenu', (e) => e.preventDefault());
   }
+}
+
+/** Det som senast skrevs in i en grupp. */
+const written = new WeakMap<Element, string>();
+
+function setMarkup(g: Element, markup: string): void {
+  if (written.get(g) === markup) return;
+  written.set(g, markup);
+  g.innerHTML = markup;
 }

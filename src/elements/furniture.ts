@@ -32,6 +32,7 @@ type Local = [number, number];
 
 export const furnitureType: ElementType<FurnitureParams> = {
   type: 'Furniture',
+  planReads: [],
   label: 'Möbel',
   labelPlural: 'Möbler',
   drawOrder: 30,

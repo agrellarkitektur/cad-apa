@@ -4,6 +4,7 @@ import type { WallParams } from '../../elements/wall';
 import type { Primitive } from '../../repr/primitives';
 import type { SnapSegment } from '../tools/snap';
 import type { AppContext } from './context';
+import { lastResults } from '../../repr/reuse';
 
 /** Linjer och polylinjer som sträckor att snäppa mot. */
 function primSegments(id: string, prims: readonly Primitive[]): SnapSegment[] {
@@ -25,7 +26,17 @@ function primSegments(id: string, prims: readonly Primitive[]): SnapSegment[] {
  */
 export function snapSegments(app: AppContext): SnapSegment[] {
   const { ui, plan } = app;
-  if (ui.marker || ui.worksheet) return sectionSnapSegments(app);
+  // Samma plan och samma vy ger samma lista (0.8.3): verktygen frågar vid
+  // varje musrörelse, och listan bär rutnätet som snäppningen söker i.
+  const vs = app.viewStates();
+  return saved([plan, app.store.doc.elements, ui.storey, ui.marker, ui.worksheet, JSON.stringify(vs)], () =>
+    ui.marker || ui.worksheet ? sectionSnapSegments(app) : planSnapSegments(app),
+  );
+}
+const saved = lastResults<SnapSegment[]>(2);
+
+function planSnapSegments(app: AppContext): SnapSegment[] {
+  const { ui, plan } = app;
   const vs = app.viewStates();
   const doc = app.store.doc;
   // Väggarnas referenslinjer först, sedan väggarnas liv och möblernas kanter.

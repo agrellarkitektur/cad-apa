@@ -124,7 +124,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   syncThemeMenu();
   onThemeChange(() => {
     syncThemeMenu();
-    view.requestRender();
+    view.redraw();
     // Vänta tills de nya färgerna gäller innan 3D-vyn läser dem.
     requestAnimationFrame(() => pane3d.view3d?.refreshColors());
   });
@@ -223,10 +223,17 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   // ---------- Vyn som visas ----------
 
   /** Stilmallen för vyn: en förinställd mall med projektets texter, eller projektets egen. */
+  // Samma förinställda stilmall ger samma objekt, så att planens cache träffar (0.8.3).
+  const presetStyles = new Map<string, { labels: StyleSheet['labels']; sheet: StyleSheet }>();
   function styleFor(name: string | null): StyleSheet {
     const g = store.doc.graphics;
     const preset = name ? PRESETS.find((p) => p.name === name) : undefined;
-    return preset ? { ...preset, labels: g.labels } : g;
+    if (!preset) return g;
+    const hit = presetStyles.get(preset.name);
+    if (hit && hit.labels === g.labels) return hit.sheet;
+    const sheet = { ...preset, labels: g.labels };
+    presetStyles.set(preset.name, { labels: g.labels, sheet });
+    return sheet;
   }
 
   function viewStatesOf(v: ViewDef) {

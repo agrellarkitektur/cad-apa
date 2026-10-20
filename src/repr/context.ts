@@ -53,6 +53,19 @@ export function createContext(
   const existingId = existingState(doc)?.id;
   const memo = new Map<string, unknown>();
   const presentInView = (el: Element) => el.states.includes(view.state);
+  // Öppningarna per vägg, uppslagna en gång i stället för en gång per vägg (0.8.3).
+  let byHost: Map<Id, Element[]> | null = null;
+  const openingsByHost = (): Map<Id, Element[]> => {
+    if (byHost) return byHost;
+    byHost = new Map();
+    for (const e of onStorey) {
+      if (!e.host || !presentInView(e)) continue;
+      const list = byHost.get(e.host);
+      if (list) list.push(e);
+      else byHost.set(e.host, [e]);
+    }
+    return byHost;
+  };
   const ctx: PlanContext = {
     doc,
     view,
@@ -62,7 +75,7 @@ export function createContext(
     styleOf: (el) => style.actions[styleKeyOf(actionFor(el))],
     styleKeyOf,
     doorAngleOf: (el) => style.actions[existingId && el.states.includes(existingId) ? 'existing' : 'new'].doorAngle,
-    openingsIn: (hostId) => onStorey.filter((e) => e.host === hostId && presentInView(e)),
+    openingsIn: (hostId) => openingsByHost().get(hostId) ?? [],
     visible: (type) => visible.filter((v) => !type || v.el.type === type).map((v) => v.el),
     memo: <T>(key: string, fn: () => T): T => {
       if (!memo.has(key)) memo.set(key, fn());

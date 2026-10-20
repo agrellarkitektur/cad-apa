@@ -3,7 +3,8 @@ import { boxOf, union, type Box } from '../geometry/boolean';
 import { pointInRings } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import type { PlanContext } from './registry';
-import { computeWallShapes, wallFrame, type OpeningParams, type WallParams } from './wall';
+import { lastResults } from '../repr/reuse';
+import { bareWallShapes, wallFrame, type OpeningParams, type WallParams } from './wall';
 
 /**
  * Rummens konturer ur väggarna: väggarna slås ihop (utan öppningar), och
@@ -11,11 +12,18 @@ import { computeWallShapes, wallFrame, type OpeningParams, type WallParams } fro
  * hål minns punkten och följer väggarna när de flyttas.
  */
 export function roomHoles(walls: { id: string; p: WallParams }[]): Vec2[][] {
-  const shapes = computeWallShapes(walls, () => []);
-  const holes: Vec2[][] = [];
-  for (const poly of union([...shapes.values()].flat())) holes.push(...poly.slice(1));
-  return holes;
+  // Samma väggar ger samma hål (0.8.3): ett nytt rum eller en flyttad dörr räknar inte om dem.
+  return savedHoles(
+    walls.flatMap((w) => [w.id, w.p]),
+    () => {
+      const shapes = bareWallShapes(walls);
+      const holes: Vec2[][] = [];
+      for (const poly of union([...shapes.values()].flat())) holes.push(...poly.slice(1));
+      return holes;
+    },
+  );
 }
+const savedHoles = lastResults<Vec2[][]>();
 
 /** Det minsta hålet som innehåller punkten. */
 export function holeAt(holes: readonly Vec2[][], pt: Vec2): Vec2[] | null {

@@ -2,7 +2,7 @@ import type { Element, Id, ProjectDoc } from '../core/model';
 import { union, type Rings } from '../geometry/boolean';
 import { pointInRings } from '../geometry/vec';
 import { resolveParams } from './registry';
-import { computeWallShapes, wallFrame, type WallParams } from './wall';
+import { bareWallShapes, wallFrame, type WallParams } from './wall';
 
 /**
  * Vilken sida av en vägg som vetter ut. Väggarna på våningen slås ihop; det
@@ -37,7 +37,7 @@ function buildingOutlines(doc: ProjectDoc, storey: Id): Rings {
     const walls = Object.values(doc.elements)
       .filter((e) => e.type === 'Wall' && e.storey === storey)
       .map((e) => ({ id: e.id, p: resolveParams<WallParams>(doc, e) }));
-    const shapes = computeWallShapes(walls, () => []);
+    const shapes = bareWallShapes(walls);
     rings = union([...shapes.values()].flat()).map((poly) => poly[0]);
     byStorey.set(storey, rings);
   }

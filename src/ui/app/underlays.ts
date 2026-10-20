@@ -75,7 +75,7 @@ export function installUnderlays(app: AppContext) {
         .then(({ renderPdfPage }) => renderPdfPage(bytesOf(a.data), src.page ?? 1, maxPx))
         .then((blob) => {
           entry.url = URL.createObjectURL(blob);
-          app.view.requestRender();
+          app.view.redraw();
         })
         .catch((err: unknown) => {
           console.warn('PDF-underlag', err);

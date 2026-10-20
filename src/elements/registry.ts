@@ -83,6 +83,13 @@ export interface ElementType<P extends object = Record<string, unknown>> {
    * i skarvarna. Anropas en gång per åtgärd. Går före `plan` om den finns.
    */
   planBatch?(items: PlanItem[], ctx: PlanContext): Primitive[];
+  /**
+   * Vilka andra typers element planen läser (0.8.3), t.ex. läser väggarna
+   * andra väggar (skarvar) och sina öppningar ("hosted" betyder alla typer som
+   * sitter i en vägg). En tom lista betyder att elementet bara ritar sig
+   * självt. Saknas den räknas typen om när något element ändrats.
+   */
+  planReads?: readonly string[];
   /** Ytan som gäller vid klick och markering. Saknas den används planens primitiver. */
   pickShape?(el: Element<P>, ctx: PlanContext): Vec2[][][];
   /** Elementet i 3D, som lodräta extruderingar (mm, z uppåt från våningens golv). */
@@ -111,9 +118,17 @@ export function allTypes(): ElementType[] {
  * definitionen när det finns en, så att alla av samma littera blir lika.
  */
 export function resolveParams<P>(doc: ProjectDoc, el: Element<any>): P {
-  const t = types.get(el.type);
   const def = el.definition ? doc.definitions[el.definition] : undefined;
+  // Samma element och samma definition ger samma objekt (0.8.3), så att
+  // cacharna i planen kan jämföra parametrar med ===. Det får inte ändras.
+  const hit = resolved.get(el);
+  if (hit && hit.def === def) return hit.out as P;
+  const t = types.get(el.type);
   const out: Record<string, unknown> = { ...(t?.defaults() ?? {}), ...(def?.params ?? {}), ...el.params };
   if (def && t?.typeParams) for (const k of t.typeParams) if (k in def.params) out[k] = def.params[k];
+  if (import.meta.env?.DEV) Object.freeze(out);
+  resolved.set(el, { def, out });
   return out as P;
 }
+
+const resolved = new WeakMap<Element<any>, { def: unknown; out: Record<string, unknown> }>();

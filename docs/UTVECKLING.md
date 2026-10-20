@@ -34,6 +34,14 @@ använder `planBatch()` i stället för `plan()`. `pickShape()` anger ytan som
 gäller när man klickar. `typeParams` anger vilka mått som hör till typen
 (littera) och delas av alla element av den.
 
+`planReads` (0.8.3) anger vilka andra typers element planen läser: `[]` för
+en typ som bara ritar sig själv (möbler, text, 2D, underlag), en lista som
+`['Wall', 'hosted']` för väggar (skarvar och öppningar). Planen sparar varje
+typs ritning och räknar om den bara när dess egna element eller det den
+läser ändrats. Saknas `planReads` räknas typen om vid varje ändring, vilket
+alltid är rätt men långsammare. Läser `plan()` något annat i projektet än
+elementen (definitioner, filer, tillstånd) behövs inget: då börjar cachen om.
+
 Elementtyperna ritar bara former. Färger, fyllningar, streckning och
 dörrvinklar för befintligt, rivs och nytt kommer från stilmallen
 (`src/core/graphics.ts`) och läggs på i `src/repr/plan.ts`.
@@ -501,3 +509,46 @@ på bladet sina egna.
   yta), men varje objekt markeras med sin egen snittyta (`ownCuts` i
   `buildSection`).
 
+## Snabbare plan (0.8.3)
+
+- **Planvyns lager** (`src/view2d/planView.ts`): tre SVG-element på varandra,
+  rutnätet (`.plan-grid`), ritningen (`.plan-drawing`, med kalkeringen) och
+  överst markering, verktyg och skalstock (`svg.plan`, som tar emot
+  pekaren). Ritningen ritas om bara när innehållet ändrats (`setPrimitives`
+  med en ny lista, `setUnderlay`, `drawingScale` eller `redraw()`, t.ex.
+  när en PDF-sida laddats eller temat bytts). Panorering flyttar lagret med
+  en CSS-transform (`will-change: transform`, så att webbläsaren inte målar
+  om det), och lagret ritar också det som ligger utanför vyn
+  (`overflow: visible`; rutan `.pane-2d` klipper). Zoom skalar grupperna i
+  lagret (strecken med `vector-effect: non-scaling-stroke`) och ritar om
+  140 ms efter sista hjulet. `requestRender()` ritar bara om de översta
+  lagren, och bara det som ändrats skrivs in.
+- **Planens cache** (`buildPlan` i `src/repr/plan.ts`): sparad per våning
+  (eller yta), vyläge och stilmall, och för allt i projektet utom elementen
+  (definitioner, tillstånd, filer …) som samma objekt; de tolv senaste
+  sparas. Gruppen (typ, åtgärd, dold) återanvänds när dess element och det
+  typen läser (`planReads`) är samma objekt. Är elementen oförändrade ges
+  samma svar tillbaka, så att `setPrimitives` inte ritar om. Det fungerar
+  för att dokumentet aldrig ändras på plats och `resolveParams` ger samma
+  parametrar så länge elementet och definitionen är desamma (frysta i
+  utveckling och tester, så att den som skriver i dem märks).
+- **Väggarnas ytor** sparas per vägg (`WallShapeCache` i `wall.ts`): en
+  vägg räknas om när den själv, väggarna som når dess ändar (rutnätet ger
+  dem) eller dess öppningar ändrats. Ytorna utan öppningar (`bareWallShapes`)
+  delas av rummen, 3D och väggarnas sidor. Rummens hål sparas så länge
+  väggarna är desamma. Sammanslagningen av väggytorna (`union`) görs om när
+  en vägg ändrats; den är det dyraste som är kvar.
+- `src/repr/reuse.ts` har hjälpen för cacharna: `sameItems` och
+  `lastResults` (de senaste svaren för samma indata).
+- **Snäppning**: `snapSegments` ger samma lista så länge planen och vyn är
+  desamma, och `snap` söker i ett rutnät över listan (`nearSegments`) inom
+  spårlinjernas räckvidd. `flushSnap` prövar bara sträckor nära det som
+  flyttas. Testet i `tests/v083.test.ts` jämför med att pröva allt.
+- **HATCH** (`readHatch` i `src/formats/dxf.ts`): koderna läses i ordning.
+  Kanter som bågar och ellipser kan läsas på flera sätt (medurs bågar sparas
+  speglade); den läsning väljs vars ändar möter grannkanterna (`chain`).
+  Mönstrets linjefamiljer går genom blockens avbildning och ges som riktning
+  och avstånd; likadana familjer slås ihop. I underlaget blir solid fyllning
+  en ton (35 % av underlagets opacitet) och varje familj en yta med
+  skraffering. Likadana mönster delas i SVG:n. `tests/filer/skraffering.dxf`
+  är skriven av ezdxf.

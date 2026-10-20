@@ -1,3 +1,4 @@
+import type { FillDef } from '../core/graphics';
 import type { Asset, Id, ProjectDoc } from '../core/model';
 import { parseDxf, type DxfDrawing } from '../formats/dxf';
 import type { Primitive, Vec2 } from '../repr/primitives';
@@ -121,7 +122,15 @@ function dxfPrims(doc: ProjectDoc, id: Id, p: UnderlayParams, drawingScale: numb
   for (const it of d.items) {
     if (off.has(it.layer)) continue;
     if (it.kind === 'poly') out.push({ kind: 'polyline', points: it.pts.map(t), closed: it.closed, pen, origin });
-    else
+    else if (it.kind === 'fill') {
+      // Skraffering (0.8.3): solid fyllning som en ton, mönster som en yta per
+      // linjefamilj. Avståndet räknas om till papper, som skrafferingar ritas.
+      const rings = it.rings.map((r) => r.map(t));
+      const fills: FillDef[] = it.solid
+        ? [{ kind: 'solid', color: 'ink', opacity: opacity * 0.35 }]
+        : it.lines.map((l) => ({ kind: 'hatch', color: 'ink', angle: l.angle + p.angle, spacing: (l.spacing * p.scale) / drawingScale, weight: 0.1, opacity }));
+      for (const fill of fills) out.push({ kind: 'region', role: 'cut', rings, fill, outline: null, ownFill: true, noOutline: true, origin });
+    } else
       out.push({
         kind: 'text',
         at: t(it.at),
@@ -140,6 +149,7 @@ function dxfPrims(doc: ProjectDoc, id: Id, p: UnderlayParams, drawingScale: numb
 
 export const underlayType: ElementType<UnderlayParams> = {
   type: 'Underlay',
+  planReads: [],
   label: 'Underlag',
   labelPlural: 'Underlag',
   // Underst, under fyllningar och allt annat.

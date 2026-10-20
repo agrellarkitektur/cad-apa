@@ -11,6 +11,7 @@ export type { SpaceParams } from './rooms';
  */
 export const spaceType: ElementType<SpaceParams> = {
   type: 'Space',
+  planReads: ['Wall', 'Space', 'Door'],
   label: 'Rum',
   labelPlural: 'Rum',
   drawOrder: 40,
@@ -66,6 +67,9 @@ export function areaOf(pts: readonly Vec2[]): number {
   return Math.abs(a) / 2 / 1e6;
 }
 
+// Ett talformat att återanvända: toLocaleString skapar ett nytt för varje anrop.
+const AREA = new Intl.NumberFormat('sv-SE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
 export function formatArea(m2: number): string {
-  return `${m2.toLocaleString('sv-SE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m²`;
+  return `${AREA.format(m2)} m²`;
 }

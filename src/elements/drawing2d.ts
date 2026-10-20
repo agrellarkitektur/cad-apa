@@ -133,6 +133,7 @@ function penOf(p: Line2DParams): Pen {
 
 export const line2dType: ElementType<Line2DParams> = {
   type: 'Line2D',
+  planReads: [],
   label: '2D-linje',
   labelPlural: '2D-linjer',
   drawOrder: 58,
@@ -166,6 +167,7 @@ export function fillPrims(p: Fill2DParams, origin?: Primitive['origin']): Primit
 
 export const fill2dType: ElementType<Fill2DParams> = {
   type: 'Fill2D',
+  planReads: [],
   label: 'Fyllning',
   labelPlural: 'Fyllningar',
   drawOrder: 4,

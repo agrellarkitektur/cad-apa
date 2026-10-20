@@ -1,3 +1,4 @@
+import { sameItems } from '../repr/reuse';
 import type { Element } from '../core/model';
 import { boxesTouch, boxOf, difference, union, type Box, type Rings } from '../geometry/boolean';
 import { BoxIndex } from '../geometry/boxIndex';
@@ -119,6 +120,7 @@ export const JOIN_TOLERANCE = 1;
 export function computeWallShapes(
   walls: { id: string; p: WallParams }[],
   openingsOf: (wallId: string) => OpeningParams[],
+  cache?: WallShapeCache,
 ): Map<string, Rings[]> {
   const frames = new Map(walls.map((w) => [w.id, wallFrame(w.p)]));
 
@@ -224,6 +226,19 @@ export function computeWallShapes(
   for (const w of walls) {
     const f = frames.get(w.id)!;
     if (dist(f.a, f.b) < 1 && !f.arc) continue;
+    // Väggens yta beror på väggen, de väggar som når fram till dess ändar och
+    // öppningarna i den. Är de oförändrade återanvänds ytan (0.8.3).
+    let near: WallParams[] = [];
+    let openings: OpeningParams[] = [];
+    if (cache) {
+      near = [...wallIndex.at(w.p.start), ...wallIndex.at(w.p.end)].map((i) => walls[i].p);
+      openings = openingsOf(w.id);
+      const hit = cache.get(w.p);
+      if (hit && hit.id === w.id && sameItems(hit.near, near) && sameItems(hit.openings, openings)) {
+        out.set(w.id, hit.rings);
+        continue;
+      }
+    }
     const [sPos, sNeg] = endCorners({ id: w.id, end: 'start', point: f.a, ref: w.p.start });
     const [ePos, eNeg] = endCorners({ id: w.id, end: 'end', point: f.b, ref: w.p.end });
     let body: Rings;
@@ -235,10 +250,26 @@ export function computeWallShapes(
     } else {
       body = [[sNeg, eNeg, ePos, sPos]];
     }
-    const cutters: Rings[] = openingsOf(w.id).map((o) => openingRings(f, o, 1)[0] as unknown as Rings);
-    out.set(w.id, difference(body, cutters));
+    const cutters: Rings[] = (cache ? openings : openingsOf(w.id)).map((o) => openingRings(f, o, 1)[0] as unknown as Rings);
+    const rings = difference(body, cutters);
+    out.set(w.id, rings);
+    cache?.set(w.p, { id: w.id, near, openings, rings });
   }
   return out;
+}
+
+/**
+ * Sparade väggytor per vägg (0.8.3), nycklade på väggens parametrar. En för
+ * ytorna med öppningar (planen) och en utan (rummen, 3D och väggarnas sidor).
+ */
+export type WallShapeCache = WeakMap<WallParams, { id: string; near: WallParams[]; openings: OpeningParams[]; rings: Rings[] }>;
+export const wallsWithOpenings: WallShapeCache = new WeakMap();
+export const bareWalls: WallShapeCache = new WeakMap();
+const noOpenings = (): OpeningParams[] => [];
+
+/** Väggarnas ytor utan öppningar, för rummen, 3D och väggarnas sidor. */
+export function bareWallShapes(walls: { id: string; p: WallParams }[]): Map<string, Rings[]> {
+  return computeWallShapes(walls, noOpenings, bareWalls);
 }
 
 /** Väggarnas ytor för hela vyn, beräknade en gång per ritning. */
@@ -247,6 +278,7 @@ export function wallShapesFor(ctx: PlanContext): Map<string, Rings[]> {
     computeWallShapes(
       ctx.visible('Wall').map((el) => ({ id: el.id, p: ctx.params<WallParams>(el) })),
       (id) => ctx.openingsIn(id).map((o) => ctx.params<OpeningParams>(o)),
+      wallsWithOpenings,
     ),
   );
 }
@@ -268,6 +300,7 @@ function wallTag(ctx: PlanContext, el: Element): Primitive[] {
 
 export const wallType: ElementType<WallParams> = {
   type: 'Wall',
+  planReads: ['Wall', 'hosted'],
   label: 'Vägg',
   labelPlural: 'Väggar',
   litteraPrefix: 'IV',
@@ -317,10 +350,7 @@ export const wallType: ElementType<WallParams> = {
   model3dBatch(items, ctx) {
     const walls = items.map(({ el, action }) => ({ el, action, p: ctx.params<WallParams>(el) }));
     // Väggkropparna utan öppningar, med gering i hörnen.
-    const bodies = computeWallShapes(
-      walls.map((w) => ({ id: w.el.id, p: w.p })),
-      () => [],
-    );
+    const bodies = bareWallShapes(walls.map((w) => ({ id: w.el.id, p: w.p })));
     // Där väggar går in i varandra (T-skarvar) får den längre väggen ytan,
     // så att inga ytor ligger dubbelt och flimrar. Bara väggar vars
     // omskrivande rektanglar möts prövas (0.8 del 2.1): förut slogs varje

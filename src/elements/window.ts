@@ -17,6 +17,7 @@ const SASH_DEPTH = 60;
 
 export const windowType: ElementType<WindowParams> = {
   type: 'Window',
+  planReads: ['Wall'],
   label: 'Fönster',
   labelPlural: 'Fönster',
   litteraPrefix: 'F',

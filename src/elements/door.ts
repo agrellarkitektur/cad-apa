@@ -23,6 +23,7 @@ const REBATE = 12;
 
 export const doorType: ElementType<DoorParams> = {
   type: 'Door',
+  planReads: ['Wall', 'Door', 'Space'],
   label: 'Dörr',
   labelPlural: 'Dörrar',
   litteraPrefix: 'D',

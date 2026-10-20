@@ -175,6 +175,7 @@ export function planeRange(pl: Plane, rings: Rings): [number, number] {
 
 export const roofType: ElementType<RoofParams> = {
   type: 'Roof',
+  planReads: [],
   label: 'Tak',
   labelPlural: 'Tak',
   drawOrder: 70,

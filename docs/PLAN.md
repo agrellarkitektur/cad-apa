@@ -246,6 +246,11 @@ Synpunkter (20 oktober):
 
 ### 0.8.3 Snabbare plan
 
+*Byggd (20 oktober), allt nedan, med samma filformat (5). Dessutom: hover
+och markering ritar inte om planen, och ett stort underlag markeras med sin
+ram. En flyttad vägg räknar fortfarande om sammanslagningen av alla
+väggytor på våningen (0,2 s för 684 väggar).*
+
 - Panorering och zoom flyttar bilden i stället för att bygga om hela
   SVG-bilden för varje bildruta (`planView.ts`), så att stora DXF-underlag
   inte hackar

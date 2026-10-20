@@ -2,8 +2,11 @@ import type { ProjectDoc } from '../core/model';
 import type { WallParams } from '../elements/wall';
 import { refFrame } from '../core/wallEdit';
 import type { Pickable } from '../repr/plan';
-import { imageCorners, type Primitive, type Vec2 } from '../repr/primitives';
+import { boundsOf, imageCorners, type Primitive, type Vec2 } from '../repr/primitives';
 import type { Camera } from '../view2d/camera';
+
+/** Fler primitiver än så markeras med en ram. */
+const MANY_PRIMS = 300;
 
 /**
  * Markeringsgrafik: markerade element får accentfärgad kontur och en svag
@@ -23,6 +26,16 @@ export function renderHighlight(
   const byId = new Map(pickables.map((p) => [p.id, p]));
 
   const draw = (item: Pickable, cls: string) => {
+    // Ett element med mycket grafik, t.ex. ett stort DXF-underlag, markeras
+    // med sin omslutande ram i stället för varje linje (0.8.3).
+    if (item.prims.length > MANY_PRIMS) {
+      const b = boundsOf(item.prims);
+      if (b) {
+        const ring: Vec2[] = [[b.minX, b.minY], [b.maxX, b.minY], [b.maxX, b.maxY], [b.minX, b.maxY]];
+        out.push(`<path d="${path(cam, ring, true)}" class="${cls}-fill"/><path d="${path(cam, ring, true)}" fill="none" class="${cls}-line"/>`);
+        return;
+      }
+    }
     for (const rings of item.regions) {
       const d = rings.map((r) => path(cam, r, true)).join('');
       out.push(`<path d="${d}" fill-rule="evenodd" class="${cls}-fill"/>`);

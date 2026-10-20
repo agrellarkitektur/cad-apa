@@ -25,11 +25,16 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
   const paperToPx = opt.drawingScale * cam.scale; // px per pappers-mm
   const out: string[] = [];
   const patterns = new Map<string, string>();
+  // Likadana skrafferingar delar mönster (0.8.3), t.ex. i ett DXF-underlag med många ytor.
+  const shared = new Map<string, string>();
 
   const fillAttr = (fill: FillDef): string => {
     if (fill.kind === 'none') return 'fill="none"';
     if (fill.kind === 'solid') return `style="fill:${color(fill.color)}${fill.opacity !== undefined && fill.opacity < 1 ? `;fill-opacity:${fill.opacity}` : ''}"`;
     // Skraffering: mönstret följer modellen, inte skärmen, så det glider inte vid panorering.
+    const same = JSON.stringify(fill);
+    const known = shared.get(same);
+    if (known) return `fill="url(#${known})"`;
     const spacing = Math.max(3, fill.spacing * paperToPx);
     const w = Math.max(0.6, fill.weight * 4);
     const o = cam.toScreen([0, 0]);
@@ -43,6 +48,7 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
           : ''
       }<path d="M0 ${f(spacing / 2)}H${f(spacing)}" style="stroke:${color(fill.color)};stroke-opacity:${fill.opacity ?? 1}" stroke-width="${f(w)}"/></pattern>`,
     );
+    shared.set(same, id);
     return `fill="url(#${id})"`;
   };
 

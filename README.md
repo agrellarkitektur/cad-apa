@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.2** (beta, bakgrundstråd, referensritningar och småfel); nästa är
-**0.8.3, snabbare plan**.
+**0.8.3** (beta, snabbare plan); nästa är **0.8.4, arbetsflöde och
+ritningshuvud**.
 
 ## Vad som fungerar
 
@@ -443,6 +443,29 @@ Version 0.8.2, bakgrundstråd och småfel (samma filformat, 5):
   se om den hittas
 - **Referensritningar** i testerna: exemplet, ett rutnät av rum och ett blad
   ritas och jämförs mot facit, så att oavsiktligt ändrade ritningar syns
+
+Version 0.8.3, snabbare plan (samma filformat, 5):
+- **Panorering och zoom flyttar bilden** i stället för att rita om den.
+  Ritningen ligger i ett eget lager som webbläsaren flyttar utan att måla om,
+  och vid zoom skalas bilden tills hjulet stått still och ritas sedan om.
+  Med ett DXF-underlag av 20 000 linjer tar en bildruta ungefär en
+  sextiondels sekund i stället för 0,4 s
+- **Musrörelser ritar inte om planen**: markering, verktygens hjälplinjer
+  och varningarna för sneda väggar ritas för sig och bara när de ändrats.
+  Ett stort underlag som pekaren är över markeras med sin ram
+- **Planen räknas om bara för det som ändrats.** En ny möbel, text eller
+  linje räknar inte om väggar, rum och dörrar; ett nytt rumsnamn räknar inte
+  om väggarna; en flyttad vägg räknar bara om sina egna skarvar och sina
+  grannars. Ingen ändring alls (byte av verktyg, markering) räknar inte om
+  något. 684 väggar: 0,01 s för en ny möbel, 0,2 s för en flyttad vägg, mot
+  0,3 s för allt förut
+- **Snäppningen prövar bara det som ligger nära markören**, så att den inte
+  blir trög med stora underlag (20 000 linjer: 0,2 ms per musrörelse i
+  stället för 20 ms)
+- **Skraffering i DXF-underlag** (HATCH): solid fyllning blir en ton och
+  mönster blir skraffering med mönstrets vinkel och täthet. Konturer med
+  bågar, ellipser och splines läses, också i block. Streckade mönsterlinjer
+  (t.ex. tegel) ritas heldragna
 
 ## Versioner och gamla projekt
 

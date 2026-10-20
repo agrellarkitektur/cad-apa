@@ -1,5 +1,6 @@
 import { add, angleDeg, closestOnSegment, dist, dot, fromAngleDeg, intersectLines, lerp, norm, scale, sub } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
+import { BoxIndex } from '../../geometry/boxIndex';
 
 /** En vägg som går att snäppa till: dess referenslinje. */
 export interface SnapSegment {
@@ -66,7 +67,9 @@ export function snap(input: SnapInput): SnapResult {
     return { point: input.cursor, kind: 'free', label: '' };
   }
   const { cursor, from, tol } = input;
-  const segs = input.segments.filter((s) => !input.exclude?.has(s.id));
+  // Allt nedan ligger inom spårlinjernas räckvidd från markören, så bara
+  // sträckorna där prövas (0.8.3). De kommer i samma ordning som i listan.
+  const segs = nearSegments(input.segments, cursor, tol * TRACK_REACH).filter((s) => !input.exclude?.has(s.id));
 
   // 1. Punkter.
   const points: { p: Vec2; kind: SnapKind; label: string }[] = [];
@@ -167,6 +170,22 @@ export function snap(input: SnapInput): SnapResult {
   return { point: cursor, kind: 'free', label: '' };
 }
 
+/** Färre sträckor än så prövas alla, utan rutnät. Ändras bara i testerna. */
+export const snapIndex = { from: 200 };
+const segmentIndexes = new WeakMap<readonly SnapSegment[], BoxIndex>();
+
+/** Sträckorna som kan ligga inom `r` från punkten, i listans ordning. */
+export function nearSegments(segments: readonly SnapSegment[], p: Vec2, r: number): readonly SnapSegment[] {
+  if (segments.length < snapIndex.from) return segments;
+  let index = segmentIndexes.get(segments);
+  if (!index) {
+    index = new BoxIndex(2000);
+    for (const [i, s] of segments.entries()) index.add(i, [Math.min(s.a[0], s.b[0]), Math.min(s.a[1], s.b[1]), Math.max(s.a[0], s.b[0]), Math.max(s.a[1], s.b[1])]);
+    segmentIndexes.set(segments, index);
+  }
+  return index.near([p[0] - r, p[1] - r, p[0] + r, p[1] + r]).map((i) => segments[i]);
+}
+
 interface TrackLine {
   p: Vec2;
   dir: Vec2;
@@ -227,6 +246,17 @@ export function flushSnap(outlines: readonly (readonly Vec2[])[], segments: Snap
   const PARALLEL = Math.sin((3 * Math.PI) / 180);
   const edges: [Vec2, Vec2][] = [];
   for (const ring of outlines) for (let i = 0; i < ring.length; i++) edges.push([ring[i], ring[(i + 1) % ring.length]]);
+  // Bara sträckor nära det som flyttas kan ligga an mot det (0.8.3). Den
+  // andra justeringen flyttar högst `tol` till, därav marginalen.
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const [p] of edges) {
+    x0 = Math.min(x0, p[0] + d[0]);
+    y0 = Math.min(y0, p[1] + d[1]);
+    x1 = Math.max(x1, p[0] + d[0]);
+    y1 = Math.max(y1, p[1] + d[1]);
+  }
+  const m = tol * 2 + 1;
+  if (segments.length >= snapIndex.from) segments = segments.filter((s) => Math.max(s.a[0], s.b[0]) >= x0 - m && Math.min(s.a[0], s.b[0]) <= x1 + m && Math.max(s.a[1], s.b[1]) >= y0 - m && Math.min(s.a[1], s.b[1]) <= y1 + m);
 
   const best = (moved: Vec2, avoid?: Vec2): { c: Vec2; n: Vec2; seg: SnapSegment } | null => {
     let found: { c: Vec2; n: Vec2; seg: SnapSegment; dist: number } | null = null;

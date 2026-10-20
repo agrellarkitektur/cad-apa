@@ -121,6 +121,7 @@ export interface TextParams {
 
 export const textType: ElementType<TextParams> = {
   type: 'Text',
+  planReads: [],
   label: 'Text',
   labelPlural: 'Texter',
   drawOrder: 61,

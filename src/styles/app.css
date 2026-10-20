@@ -413,6 +413,25 @@ body::before {
   cursor: grabbing;
 }
 
+/* Rutnätet och ritningen ligger i egna lager under det översta (0.8.3). Ritningens
+   lager flyttas vid panorering utan att målas om, och det som ligger utanför
+   vyn ritas också, så att det finns där när det dras in. */
+.plan-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.plan-drawing {
+  overflow: visible;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
 .grid-minor {
   stroke: var(--grid-minor);
   stroke-width: 1;
@@ -428,8 +447,13 @@ body::before {
   stroke-width: 1;
   fill: none;
 }
-.plan.no-grid .grid {
+.plan-grid.no-grid .grid {
   display: none;
+}
+
+/* Medan vyn zoomas skalas den färdiga ritningen (0.8.3); strecken behåller sin bredd tills den ritas om. */
+.plan-drawing.zooming :is(.content, .underlay) :is(path, polyline) {
+  vector-effect: non-scaling-stroke;
 }
 
 .content text {
@@ -1758,6 +1782,11 @@ button:focus-visible {
   inset: 0;
 }
 
+/* Ritningens lager ritar också utanför vyn (0.8.3); rutan klipper det. */
+.pane-2d {
+  overflow: hidden;
+}
+
 .pane-3d {
   display: none;
   background: var(--paper);
@@ -2399,13 +2428,13 @@ table.keys td:first-child {
 }
 
 /* Kalkerad vy under (eller över) ritningen. Opacitet och färg sätts i Visa. */
-svg.plan .underlay {
+.plan-drawing .underlay {
   opacity: 0.3;
   filter: saturate(0.4);
   pointer-events: none;
 }
 
-svg.plan .underlay.tinted {
+.plan-drawing .underlay.tinted {
   filter: none;
 }
 
@@ -3738,7 +3767,7 @@ input[type='range'] {
 }
 
 /* Fasader och sektioner ritas utan planens rutnät. */
-.app[data-place='section'] .plan .grid {
+.app[data-place='section'] .plan-grid .grid {
   display: none;
 }
 
@@ -4227,7 +4256,7 @@ input[type='range'] {
 .app[data-place='sheet'] .viewbar .compare,
 .app[data-place='sheet'] .viewbar .detail-switch,
 .app[data-place='sheet'] .viewbar .show-wrap,
-.app[data-place='sheet'] .plan .grid {
+.app[data-place='sheet'] .plan-grid .grid {
   display: none;
 }
 
