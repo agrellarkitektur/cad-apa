@@ -18,13 +18,15 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   - Tab växlar mellan objekt under markören (`pickAllAt`).
   - Måttbandet: Tab och ett avstånd flyttar objektet vid sista punkten.
   - Kontrollerat i Chrome med Playwright mot `dist/`; inga nya kända fel.
-- **Planen** (20 oktober): 0.8.5 ritningshuvudet som eget objekt och blanka
-  blad (*nytt format*), 0.8.6 text direkt på bladet (flyttad från *Efter
-  pilotprojektet*), 0.8.7 smartmenyn (paletten och snabbmenyn blir en meny,
-  se PLAN.md), 0.8.8 granskning, sedan 0.9 flera våningsplan (med felet
-  om golvnivån i 3D), 0.10 tak, 0.11 trappor, 0.12 export och 0.13 piloten
-  med formatfrys. Carl August vill ha blanka blad så snart som möjligt och
-  text på bladen så snart det är lämpligt.
+- **Planen** (20 oktober, ändrad samma dag): 0.8.5 smartmenyn och
+  Modifiera-raden, 0.8.6 ritningshuvudet som eget objekt och blanka blad
+  (*nytt format*), 0.8.7 text direkt på bladet, 0.8.8 fler
+  Modifiera-verktyg, 0.8.9 granskning, sedan 0.9 flera våningsplan (med
+  felet om golvnivån i 3D), 0.10 tak, 0.11 trappor, 0.12 export och 0.13
+  piloten med formatfrys. Carl August tidigarelade smartmenyn; han vill
+  fortfarande ha blanka blad och text på bladen snart efter.
+- **Ord:** *palett* och *snabbmeny* betyder samma sak för honom. Säg bara
+  **smartmeny** från och med nu.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen (0.13). Höj
   `FORMAT_VERSION` när formatet ändras; äldre filer får ett meddelande om
   att de kommer från en äldre betaversion (`parse` i `src/storage/format.ts`).
@@ -43,20 +45,41 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   är godkänd. Han hittar inte hur man öppnar filen i kunskapsbasen och kan
   lägga in synpunkter via en annan, billigare chatt.
 
-## Nästa session: 0.8.5 Ritningshuvud
+## Nästa session: 0.8.5 Smartmeny och Modifiera-raden
 
 Börja med att läsa `cad-apa-synpunkter.md` och sortera Inkorgen.
 
-Står i PLAN.md under *0.8.5* (nytt format): nya blad är blanka, och
-BH90-huvudet blir ett eget objekt på bladet som läggs på, flyttas och tas
-bort. I dag har varje blad `titleBlock: 'bh90'` (`src/core/sheets.ts`),
-huvudet ritas i `src/repr/titleBlock.ts` och fälten ligger i
-`sheet.fields` och `project.fields`. Bladets vyer (`viewports`) är det enda
-som går att markera och flytta på bladet (`src/ui/app/sheets.ts`), så
-huvudet behöver bli en sorts sak på bladet med samma markering, flytt,
-egenskaper och plot. Tänk på 0.8.6 (fria texter på bladet) när modellen
-görs: bladets objekt bör rymma både huvudet och texter. Föreslå modellen
-för Carl August innan något byggs; mellanstor version.
+Allt står i PLAN.md under *0.8.5* (samma format). Kort:
+
+- Snabbmenyn (`src/ui/petPalette.ts`, `PetPalette`) och Modifiera-paletten
+  (`ModifyPalette` i `src/ui/modify.ts`) blir en meny, smartmenyn, som visas
+  när något markerats: Modifiera-valen överst (alla som `opsFor` ger för
+  sammanhanget, inte bara de Carl August räknade upp), sedan tipsraden med
+  värdefält, sedan snabbknapparna, och *Mer* fäller ut nedåt. Greppet med
+  sex prickar flyttar den. Den läggs bredvid det markerade, inte över det.
+- Klick på ände, hörn, kant eller referenslinje byter valen i samma meny;
+  *Ny vägg* som förval vid en ände (0.8.4, `startWallFrom`/`stopWall` i
+  `app.ts`, `wallOn` i `modify.ts`) ligger kvar.
+- Med smartmenyn avstängd ploppar inget upp. Verktygen nås då i
+  **Modifiera-raden**, en lodrät rad innanför ritverktygen i vänsterkanten
+  med alla verktyg, där de som passar det markerade tänds svagt, och med
+  **kortkommandon** (förslag Shift + bokstav, se PLAN.md). Tipsraden
+  hamnar då i verktygsraden under ritytan.
+- Namnet *smartmeny* överallt: gränssnitt, inställningen *Snabbmeny vid
+  markören*, SHORTCUTS, README och docs. Dela `modify.ts` (970 rader)
+  samtidigt.
+
+Stor för en session. Föreslå uppdelningen för Carl August innan något
+byggs: smartmenyn och Modifiera-raden först, kortkommandona som 0.8.6 om
+det blir för mycket (då flyttas övriga versioner ett steg). Stäm av
+kortkommandona och om Modifiera-raden ska kunna döljas.
+
+Därefter, 0.8.6 ritningshuvud: i dag har varje blad `titleBlock: 'bh90'`
+(`src/core/sheets.ts`), huvudet ritas i `src/repr/titleBlock.ts` och fälten
+ligger i `sheet.fields` och `project.fields`. Bladets vyer (`viewports`) är
+det enda som går att markera och flytta på bladet (`src/ui/app/sheets.ts`),
+så huvudet behöver bli en sorts sak på bladet med markering (smartmenyn),
+flytt, egenskaper och plot, och modellen bör rymma texterna i 0.8.7.
 
 ## Att fråga Carl August om
 
@@ -65,13 +88,12 @@ för Carl August innan något byggs; mellanstor version.
   `=>`, så den gav ingen lista och servern svarade 503. Han har fått rätt
   innehåll; fråga om formuläret går att skicka nu. Om `mail()` misslyckas
   med giltig `from` behövs SMTP i `feedback.php`.
-- **Smartmenyn (0.8.7)**: ordet *palett* och *snabbmeny* har betytt samma
-  sak för honom; använd bara **smartmeny** från och med nu. Ordningen är
-  ritningshuvud, text på bladet, smartmeny, granskning. Vill han ha
-  smartmenyn före bladversionerna byts 0.8.5–0.8.7 om. Fråga när 0.8.7
-  börjar: ska klick på en ände eller referenslinje visa Modifiera-valen
-  även när smartmenyn är avstängd i inställningarna (*Snabbmeny vid
-  markören* i dag)?
+- **Fler Modifiera-verktyg (0.8.8)**: förslagen i PLAN.md (Trimma,
+  Hörnskarv, Dela, Justera och Fördela, Hämta och överför inställningar,
+  Skala) är Claudes egna, efter motsvarande program. Stäm av vilka han vill
+  ha innan 0.8.8 börjar.
+- **Granskningen** ligger som 0.8.9. Förra var 0.8.1, så den kan läggas
+  efter 0.8.6 om han vill.
 
 ### Från 0.8.0
 

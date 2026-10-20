@@ -278,55 +278,101 @@ Synpunkter (20 oktober):
 - Måttbandet: Tab och ett värde flyttar målobjektet (mäter man från en vägg
   till ett bord och skriver in avståndet, flyttas bordet)
 
-### 0.8.5 Ritningshuvud · *nytt format*
+### 0.8.5 Smartmeny och Modifiera-raden
+
+Synpunkter (20 oktober): *paletten* (Modifiera) och *snabbmenyn* (vid
+markören) blir en och samma, **smartmenyn**, i samma tema som smarttext,
+smartobjekt och smartgrupper. Modifiera-verktygen ska också gå att nå utan
+menyer som ploppar upp. Tidigarelagd av Carl August, före bladversionerna.
+Samma filformat (5). Stor för en session: blir det för mycket flyttas
+kortkommandona till 0.8.6 som en småversion.
+
+Smartmenyn:
+
+- Visas så fort något markerats, som snabbmenyn i dag, med Modifiera-valen
+  överst för det markerade. För en vägg Flytta, Vrid, Spegla, I rad; för
+  flera sammansatta väggar eller linjer också Förskjut alla kanter, Avrunda
+  och Fasa där det går. Man ska kunna flytta en vägg direkt, utan att först
+  klicka på referenslinjen eller änden. Listorna i synpunkten är exempel:
+  alla val som finns för sammanhanget (`opsFor` i `src/ui/modify.ts`) är med,
+  och nya val hamnar där av sig själva
+- Klick på en ände, ett hörn, en kant eller referenslinjen byter
+  Modifiera-valen till det som gäller där (Ny vägg, Sträck, Förläng; Lägg
+  till punkt, Böj, Förskjut …), i samma meny. *Ny vägg* vid en ände är
+  fortfarande förval (0.8.4)
+- Raden med valets namn, värdefält och tips ligger under Modifiera-valen och
+  ovanför snabbknapparna (Center, Vänd väggen, Riv …); *Mer* fäller
+  fortfarande ut inställningarna nedåt
+- Greppet med de sex prickarna till vänster flyttar menyn; dubbelklick på
+  greppet låter den följa markeringen igen
+- Placeringen utgår från det markerade: menyn läggs bredvid det, på den
+  sida där det finns plats, och inte över det
+- Namnbyte i gränssnittet, inställningarna och dokumentationen: snabbmeny
+  och palett blir smartmeny (`PetPalette` och `ModifyPalette` slås ihop;
+  `modify.ts` delas upp samtidigt)
+
+Utan smartmeny (avstängd i inställningarna):
+
+- Inget ploppar upp i ritytan, inte heller vid klick på en ände eller
+  referenslinjen
+- **Modifiera-raden**: en lodrät verktygsrad på insidan av ritverktygen i
+  vänsterkanten med alla Modifiera-verktyg. Med något markerat tänds de som
+  går att använda svagt; de andra är släckta. Klick startar verktyget för
+  det markerade (för ände, hörn och kant: det som ligger närmast markören
+  eller det man klickat senast). Raden syns också med smartmenyn påslagen,
+  så att verktygen alltid finns på samma ställe; fråga om den ska gå att
+  dölja
+- Tipsraden och värdefältet visas då i verktygsraden under ritytan, som för
+  ritverktygen
+- **Kortkommandon för alla Modifiera-verktyg**. De flesta enkla bokstäver är
+  tagna (V, H, W, D, O, R, M, L, T, I, F, G, S, P, N, Z), så förslaget är
+  Shift + bokstav, t.ex. Shift+M Flytta, Shift+R Vrid, Shift+S Spegla,
+  Shift+U I rad, Shift+E Sträck, Shift+X Förläng, Shift+F Avrunda, Shift+C
+  Fasa, Shift+O Förskjut, Shift+P Parallell kopia, Shift+W Ny vägg härifrån.
+  Visas i tipsen och i listan över kortkommandon. Bestäm listan med Carl
+  August innan det byggs (Ctrl-kombinationer krockar med webbläsaren)
+
+### 0.8.6 Ritningshuvud · *nytt format*
 
 - Ritningshuvudet hårdkodas inte i bladen: nya blad är blanka och BH90-huvudet
   blir ett eget objekt som läggs på och flyttas. Egna grupper med linjer och
   text kommer med *Smartgrupper* efter pilotprojektet
 
 Mellanstor; en egen småversion så att nya blad blir blanka så snart som
-möjligt (Carl August, 20 oktober).
+möjligt (Carl August, 20 oktober). Bladets objekt bör rymma både huvudet
+och texterna i 0.8.7, och kunna markeras med smartmenyn.
 
-### 0.8.6 Text på bladet
+### 0.8.7 Text på bladet
 
 - Fria texter direkt på ett ritningsblad, med samma textverktyg som i vyerna
   (flyttad från *Efter pilotprojektet*; viktig för handlingarna)
 
-Bygger på att bladet har egna objekt (0.8.5).
+### 0.8.8 Fler Modifiera-verktyg
 
-### 0.8.7 Smartmeny
+Carl August bad om egna förslag på verktyg som finns i motsvarande program
+(Archicad, Revit, AutoCAD). Varje verktyg får en plats i smartmenyn och
+Modifiera-raden och ett kortkommando. Förslag, att stämma av först:
 
-Synpunkt (20 oktober): *paletten* (Modifiera) och *snabbmenyn* (vid markören)
-blir en och samma, **smartmenyn**, i samma tema som smarttext, smartobjekt
-och smartgrupper. Hör tematiskt till arbetsflödet i 0.8.4 men kom efter
-den; samma filformat (5). Mellanstor, en session.
+- **Trimma**: kapa en vägg eller linje mot en annan (motsatsen till Förläng)
+- **Hörnskarv**: två väggar som inte möts förlängs eller kapas till ett
+  rent hörn (Archicad *Skär*, Revit *Trim/Extend to Corner*)
+- **Dela**: dela en vägg eller linje i en punkt utan att lägga till ett hörn
+- **Justera**: lägg flera objekt i linje med en kant eller ett objekt, och
+  **Fördela** dem med lika avstånd
+- **Hämta och överför inställningar** (pipetten): ta typ, höjd och liv från
+  ett objekt och ge dem till det markerade (Archicad *Hämta/Överför*,
+  Revit *Matcha egenskaper*)
+- **Skala**: för 2D-element, möbler och underlag, med en faktor eller två
+  punkter
+- **Förläng till** och **Trimma** för flera markerade samtidigt mot en
+  gräns
 
-- Smartmenyn visas så fort något markerats, som snabbmenyn i dag, med
-  Modifiera-valen överst för det markerade: för en vägg Flytta, Vrid,
-  Spegla, I rad, för flera sammansatta väggar eller linjer också Förskjut
-  alla kanter, Avrunda och Fasa där det går. Man ska kunna flytta en vägg
-  direkt, utan att först klicka på referenslinjen eller änden
-- Klick på en ände, ett hörn eller referenslinjen byter Modifiera-valen
-  till det som gäller där (Ny vägg, Sträck, Förläng; Lägg till punkt, Böj,
-  Förskjut …), i samma meny. Ny vägg härifrån som förval vid en ände (0.8.4)
-  ligger kvar
-- Raden med valets namn, värdefält och tips (från paletten) ligger under
-  Modifiera-valen och ovanför snabbknapparna (Center, Vänd väggen, Riv …);
-  *Mer* fäller fortfarande ut inställningarna nedåt
-- Greppet med de sex prickarna till vänster, som på snabbmenyn, så att
-  menyn kan flyttas om den skymmer; dubbelklick på greppet låter den följa
-  markeringen igen
-- Placeringen utgår från det markerade: menyn läggs bredvid det, på den
-  sida där det finns plats, och inte över det
-- Namnbyte i gränssnittet, inställningarna och dokumentationen: snabbmeny
-  och palett blir smartmeny (`PetPalette` och `ModifyPalette` slås ihop)
+### 0.8.9 Granskning
 
-### 0.8.8 Granskning
-
-Tredje versionen efter förra granskningen (0.8.1) var 0.8.4. Granskningen
-föreslås efter bladversionerna och smartmenyn: städa, dela upp stora filer
-och leta efter långsam kod (`modify.ts` är 970 rader och delas när
-smartmenyn byggs).
+Förra granskningen var 0.8.1. Granskningen föreslås efter
+Modifiera-versionerna och bladversionerna: städa, dela upp stora filer och
+leta efter långsam kod. Vill Carl August ha den tidigare kan den läggas
+efter 0.8.6.
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 

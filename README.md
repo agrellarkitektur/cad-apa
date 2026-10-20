@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.4** (beta, arbetsflöde); nästa är **0.8.5, ritningshuvudet som eget
-objekt**.
+**0.8.4** (beta, arbetsflöde); nästa är **0.8.5, smartmenyn och
+Modifiera-raden**.
 
 ## Vad som fungerar
 
