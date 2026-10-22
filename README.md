@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.10** (beta, smarta fält); nästa är **0.8.11, granskning**.
+**0.8.11** (alfa, granskning); nästa är **0.8.12, skalstock och stämplar**.
 
 ## Vad som fungerar
 
@@ -634,10 +634,40 @@ Version 0.8.10, smarta fält (filformat 10):
   till `{skala a3}` och övriga platshållare (#KOMMUN, #RAD 1 …) till fält
 - Projekt i format 9 och äldre öppnas inte (betaversion); öppna dem i 0.8.9
 
+Version 0.8.11, granskning (samma filformat, 10):
+- **Alfa**: programmet heter alfa i stället för beta (knappen *Alfa –
+  Skicka synpunkter*), eftersom det ännu inte går att rita ett helt hus.
+  Färdplanen: först ett eget pilotprojekt, sedan en inbjuden alfa och sist
+  en öppen beta, där formatet fryses (docs/PLAN.md)
+- **Text i DXF-underlag**: MTEXT-koder som `\pxql;` syns inte längre, ett
+  MTEXT med flera stycken blir flera rader, och TEXT och MTEXT följer sin
+  justering (vänster, mitt, höger, överkant, mitten, nederkant). Texthöjden
+  i DXF är versalhöjden, så texterna blir lika stora som i CAD-programmet
+- **Snabbare blad**: att flytta en vy eller skriva på ett blad räknar inte
+  om vyerna på det (2,4 s blev 5 ms för ett blad med en plan och tre
+  fasader med 312 väggar)
+- **Visa-menyn i kategorier**: Modell, Littera, Rum, mått och text, 2D och
+  Markörer, med en kryssruta per kategori som tänder och släcker allt i den.
+  Littera kan släckas för väggar, dörrar och fönster var för sig, och
+  underlag kan släckas
+- **Mönster med förhandsbild** i egenskaperna och i 2D-verktyget
+- **Markering**: en linje nära klicket går före en fyllning den ligger
+  under; inuti fyllningen markeras fyllningen. En polylinje vars ändar möts
+  går att klicka inuti, som en sluten
+- **Statusraden**: *Skärm*, *Rutnät*, *Snäpp* och nya *Linjer* är knappar
+  med ram. Klick på *Rutnät* slår av och på rutnätet (G). Påslagna knappar
+  har accentfärgen, avslagna ett snett streck. På papper är *Rutnät* grå
+- **Linjer**: *Skärm* (pennornas tjocklek, lika vid all zoom, som förut),
+  *Verklig* (som på papperet i ritningens skala, tunnare när man zoomar ut,
+  efter skärmstorleken under Gränssnitt) och *Tunna* (alla linjer tunna)
+- Delvis ikryssade kryssrutor syns (Visa-menyn, mappar i Plot/export)
+- Koden: `src/ui/app.ts` (974 → 528 rader) och `src/ui/app/sheets.ts`
+  (585 → 321) uppdelade, med samma läge efter samma klick som förut
+
 ## Versioner och gamla projekt
 
 Projektfilerna har ett formatnummer, i dag 10 (sedan 0.8.10). Fram till
-pilotprojektet (0.13) uppgraderas inte projekt från äldre betaversioner när
+den öppna betan uppgraderas inte projekt från äldre alfa- och betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp
 på webbhotellet (t.ex. `cad-apa/0.5/`, `cad-apa/0.6/`) bredvid den senaste.
@@ -726,7 +756,7 @@ följer med i mappen `cad-apa`. Vart det skickas står inte i koden (den är
    ligger i, t.ex. `public_html`). Där ligger den kvar när `cad-apa` byts ut
    vid en uppdatering. Det går också att lägga den i `cad-apa`, men då måste
    den flyttas med vid varje uppdatering.
-3. Prova: öppna programmet, tryck *Beta – Skicka synpunkter*, skriv något och
+3. Prova: öppna programmet, tryck *Alfa – Skicka synpunkter*, skriv något och
    skicka. Titta i skräpposten om inget kommer fram. Går det inte att skicka
    visar formuläret (sedan 0.8) vad servern svarade:
    - *Synpunkter är inte uppsatta på den här servern*: `feedback-config.php`

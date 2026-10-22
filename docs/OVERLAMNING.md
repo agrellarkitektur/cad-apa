@@ -1,44 +1,42 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 21 oktober 2026, efter 0.8.10.
+överlämning; historiken finns i git. Senast: 22 oktober 2026, efter 0.8.11.
 
 ## Läget
 
-- **0.8.10 är klar** på `main`, filformatet är **10**. Det som gjordes står i
-  PLAN.md under *0.8.10*, i README och i UTVECKLING.md under *Smarta fält
-  (0.8.10, format 10)*:
-  - Allt inom klamrar som inte är inbyggt är ett fält (`src/core/sheetFields.ts`).
-    Inbyggt: projekt, ritningsnummer, innehåll, `{mapp}`, skala,
-    `{skala a3}`, format, idag. Fält utan värde blir tomma.
-  - Bladets egenskaper har en tabell med fälten och kryssrutan *Projekt*
-    (fältet gäller hela projektet, `project.fields`). Ctrl-/Shift-klick på
-    blad i Ritningar ger formuläret för flera blad med *(olika)*.
-  - `scripts/mallblad-fran-dxf.py` gör #MAPPNAMN till `{mapp}`, #SKALA A3
-    till `{skala a3}` och övriga platshållare till fält.
-  - Kontrollerat i Chrome med Playwright mot `dist/` (tabellen, spara fält,
-    nytt fält `{Konstruktör}` på bladet med *Projekt*, flera blad med
-    Ctrl-klick och *(olika)*, ångra). Inga nya kända fel. Referensbilden
-    för bladet hade dagens datum; testet sätter nu datumet.
-  - Carl Augusts A1-ram blev mallblad igen, i format 10: projektfilen
-    *Ritningsmall A1.cadapa* (fick han i chatten 21 oktober; DXF:en ligger
-    inte i repot, den har hans telefonnummer). #RAD 1, 2 och 4 blev
-    `{Projektbeskrivning}`, `{Byggnad}` och `{Ritningstyp}`, #INITIALER HL
-    `{Handläggare}`; kommun, projektbeskrivning och handläggare gäller hela
-    projektet. Kontrollerat i Chrome och som PDF.
-  - Fälttabellen visar fälten i huvudets ordning (mallens texter uppifrån
-    och ned, sedan bladets).
-- **Inkorgen är sorterad** (Carl August godkände 21 oktober) och införd i
-  `cad-apa-synpunkter.md` och PLAN.md: småsaker → 0.8.11, Flytta/Vrid från
-  snäppunkt och mätning i segment → 0.8.13, nya 0.8.14 Underlag och 0.8.15
-  Rumsstämpeln. Explodera DXF väntar (Parkerat).
+- **0.8.11 är klar** på `main`, filformatet är fortfarande **10**. Det som
+  gjordes står i PLAN.md under *0.8.11*, i README och i UTVECKLING.md under
+  *Granskning (0.8.11, format 10)*:
+  - `src/ui/app.ts` (974 → 528 rader): verktygen i `app/tools.ts`,
+    ritningen i `app/render.ts`. `src/ui/app/sheets.ts` (585 → 321):
+    `app/sheetTool.ts` och `app/sheetGeometry.ts`. Samma 32 klicksteg i
+    bygget före och efter gav samma läge (projekt, markering, ritning,
+    panel, smartmeny).
+  - Vyerna på bladen sparas per *modellprojekt* (`modelDoc` i
+    `src/repr/sheet.ts`): en flyttad vy 2,4 s → 5 ms.
+  - Visa i kategorier (`SHOW_GROUPS` i `showMenu.ts`), littera per typ,
+    underlag i Visa; text i DXF-underlag följer justeringen; mönster med
+    förhandsbild (`src/ui/patternPick.ts`); mjuka ytor vid markering
+    (`pickSoft`); statusradens knappar och *Linjer* (Skärm, Verklig,
+    Tunna); *Alfa* i stället för *Beta*.
+  - Kontrollerat i Chrome med Playwright mot `dist/` (statusraden, Visa,
+    mönster i panelen och verktyget, linjelägena utzoomat, ett DXF-underlag
+    med alla justeringar jämfört med ezdxf:s bild). Inga nya kända fel.
+- **Inkorgen är sorterad** (22 oktober): linjetjocklek → 0.8.11 (gjord),
+  ny färdplan (se nedan) och Alfa (gjord). Inkorgen är tom.
+- **Ny färdplan** (Carl August 22 oktober): 0.13 är hans egen provning
+  (han ritar ett hus), sedan en inbjuden **alfa** för arkitektvänner, sedan
+  en **öppen beta**. **Formatfrysen kommer med den öppna betan**, inte med
+  0.13. Inget av stegen är 1.0.
 - **Färdplanen** står nedan. Håll den aktuell vid varje överlämning
   (CLAUDE.md).
 - **Ord:** *palett* och *snabbmeny* betyder samma sak för honom. Säg bara
   **smartmeny**.
-- **Bakåtkompatibilitet:** inga migreringar före formatfrysen (0.13). Höj
-  `FORMAT_VERSION` när formatet ändras; äldre filer får ett meddelande om
-  att de kommer från en äldre betaversion (`parse` i `src/storage/format.ts`).
+- **Bakåtkompatibilitet:** inga migreringar före formatfrysen (den öppna
+  betan). Höj `FORMAT_VERSION` när formatet ändras; äldre filer får ett
+  meddelande om att de kommer från en äldre alfaversion (`parse` i
+  `src/storage/format.ts`).
 - **Telefonen är inget mål.** Testa på dator (Chrome).
 - Arbetssätt: Carl August testar varje version på webbhotellet via en
   release på GitHub, som han gör själv. Ingen demo och ingen zip om han inte
@@ -51,17 +49,14 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   för varje punkt och säg om något är för stort för en session. Ta bort
   hanterade punkter när de görs; behåll Avfärdat med anledning. Han kan
   också klistra in synpunkter i chatten; för in dem i filen när sorteringen
-  är godkänd. Punkterna under 0.8.10 togs bort ur filen när 0.8.10 var klar.
+  är godkänd. Punkterna under 0.8.11 togs bort ur filen när 0.8.11 var klar.
 
 ## Färdplan
 
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~, ~~0.8.9 Grafik och textrutor på bladen~~,
-  ~~0.8.10 Smarta fält~~ (klara)
-- **0.8.11 Granskning**: städa, dela stora filer, långsam kod; Visa-menyn i
-  kategorier; DXF-text (fel), mönsterförhandsvisning, markering av
-  polylinje och linje bakom fyllning, statusraden och Snäpp, avstängda växlar
+  ~~0.8.10 Smarta fält~~, ~~0.8.11 Granskning~~ (klara)
 - **0.8.12 Skalstock och stämplar** (nytt format)
 - **0.8.13 Fler Modifiera-verktyg**: Trimma, Hörnskarv, Dela, Justera och
   Fördela, Hämta/överför, Skala, Avrunda/Fasa för markeringen,
@@ -77,17 +72,23 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 - **0.12 Export**: IFC4, DXF, areor för bygglov
 - **Koordinater, SWEREF och sol** (stor; före eller efter piloten, bestäms
   efter 0.12)
-- **0.13 Pilotprojektet och formatfrys**
+- **0.13 Pilotprojektet**: Carl August ritar själv ett hus
+- **Inbjuden alfa** för arkitektvänner; deras synpunkter i småversioner
+- **Öppen beta och formatfrys**; etiketten blir *Beta*
 - Efter piloten: se *Efter pilotprojektet* i PLAN.md (bl.a. explodera
   DXF-underlag, mallblad mellan projekt). **1.0** bygglovshandling.
 
-## Nästa session: 0.8.11 Granskning
+## Nästa session: 0.8.12 Skalstock och stämplar
 
-Läs synpunktsfilen (Inkorgen är tom 21 oktober) och *0.8.11* i PLAN.md.
+Läs synpunktsfilen och *0.8.12* i PLAN.md. Nytt format (11).
 
-- Städa, dela upp stora filer (`src/ui/app/sheets.ts`, `src/ui/app.ts`) och
-  leta efter långsam kod. Visa-menyn i kategorier, och småsakerna från 21
-  oktober (står i PLAN.md). Felet med DXF-texten: `src/formats/` (DXF-läsaren).
+- **Skalstock** som eget objekt på bladet, flyttbar när som helst. Be om
+  Carl Augusts DXF med skalstockarna för 1:1–1:5000 igen (den ligger inte i
+  repot). Hans standardläge på A1: x 611–711 mm, y 27–46 mm.
+- **Stämplar**: ritade som ett mallblad men utan papper, med smarttext och
+  fält, och ändras på ett ställe för alla blad (som huvudet i 0.8.6).
+- Tänk på `modelDoc` i `src/repr/sheet.ts`: vyerna på bladen får inte bero
+  på bladen eller det som ligger på dem.
 
 ## Att fråga Carl August om
 
@@ -137,8 +138,16 @@ Läs synpunktsfilen (Inkorgen är tom 21 oktober) och *0.8.11* i PLAN.md.
 - **Smartmenyn efter provning**: placeringen (höger, vänster, under, över
   det markerade), att den syns vid markering med ruta, och om rubriken
   *Ändra* i Modifiera-raden ska heta något annat.
-- **Granskningen** ligger som 0.8.11. Han kan byta plats på den och
-  Modifiera-verktygen om han vill komma fram till 0.9 snabbare.
+- **0.8.11 efter provning** (Claudes val): kategorierna i Visa (Modell,
+  Littera, Rum, mått och text, 2D, Markörer), littera per typ och underlag
+  i Visa; att MTEXT fästs efter sin bredaste rad; namnen Skärm, Verklig och
+  Tunna på *Linjer*; snett streck på avslagna knappar och accentfärg på
+  påslagna (också verktygen och panelknapparna fick en tydligare ram); att
+  en sluten 2D-form inuti ett rum går före rummet men en linje nära klicket
+  går före båda. Synpunkten om polylinjer som bara markeras vid kanten gick
+  inte att återskapa (slutna polylinjer gick att klicka inuti); nu räknas
+  också en polylinje vars ändar möts som sluten. Hände det på ett annat
+  sätt behövs ett exempel.
 
 ### Från 0.8.0
 
@@ -159,13 +168,13 @@ Läs synpunktsfilen (Inkorgen är tom 21 oktober) och *0.8.11* i PLAN.md.
   inte, sedan 0.8.8). Fråga om arbetsblad ska vara oberoende av tillstånd.
 - På ett mallblad finns Visa-menyns skala för texter och mått kvar, fast
   allt ritas i 1:1; den gör ingenting där.
-- På ett blad och ett mallblad visar statusraden fortfarande Skärm och Rutnät, fast
-  rutnätet är dolt. Underlagens formulär säger *Bredd i modellen* också på
-  papper, och tipset om att kalibrera skalan kommer också där.
+- På ett blad och ett mallblad visar statusraden fortfarande skärmskalan
+  (Rutnät är grått sedan 0.8.11). Underlagens formulär säger *Bredd i
+  modellen* också på papper, och tipset om att kalibrera skalan kommer
+  också där.
 - Markeringen på ett blad markerar inte mallens grafik (bara bladets egen),
   som väntat; men det ritade på bladet och mallen ligger på samma papper,
-  så det kan vara svårt att se vad som är vad. Mappars kryssrutor i Plot/export visar inte läget
-  "delvis ikryssat" tydligt med appens kryssrutestil.
+  så det kan vara svårt att se vad som är vad.
 - Taksprånget ändras lika på båda sidor av ett sadeltak; riktiga tak med
   takfot per kant kommer i 0.10.
 - Spegla vänder inte bilden i ett underlag, bara läget.
@@ -173,8 +182,8 @@ Läs synpunktsfilen (Inkorgen är tom 21 oktober) och *0.8.11* i PLAN.md.
   fyllning som en ton (färgerna i DXF läses inte). Bilder och externa
   referenser efter pilotprojektet. Vektorsnäpp mot PDF avvaktar.
 - **En flyttad vägg** räknar fortfarande om sammanslagningen av alla
-  väggytor på våningen (`union` i väggarnas `planBatch` och i rummens hål),
-  0,2 s för 684 väggar. Ett nytt rumsnamn räknar om rum och dörrar (0,08 s).
+  väggytor på våningen (`union` i väggarnas `planBatch` och i rummens hål;
+  `polygon-clipping` står för det mesta), 0,07–0,16 s för 300–700 väggar. Ett nytt rumsnamn räknar om rum och dörrar (0,08 s).
 - Under en zoom med hjulet syns ritningen skalad i 140 ms innan den ritas
   om; texter som var för små att ritas dyker upp först då.
 - **Visas i** räknar vyer utan att bry sig om tillstånd.
@@ -241,6 +250,13 @@ Läs synpunktsfilen (Inkorgen är tom 21 oktober) och *0.8.11* i PLAN.md.
   eller `buildSheet` och `writePdf`. Stora projekt att mäta på: `wallGrid`
   och `roomGrid` i `tests/prestanda.test.ts`. Profilera med
   `node --cpu-prof skript.mjs`.
+- Playwright: verktygsraden (`.tool-options`) ligger över nedre delen av
+  ritytan; klicka högre upp. 2D-verktyget behöver en `mouse.move` före
+  klicket. Verktyget som är aktivt är `bacchus.view.currentTool` (t.ex.
+  dess `points` och `current`).
+- Jämföra före och efter en uppdelning: bygg båda, kör samma klick och
+  spara `store.doc`, markeringen, `.plan-drawing .content`, panelens text
+  och smartmenyn som hashar per steg (så gjordes 0.8.1 och 0.8.11).
 - Playwright: dra med flera `mouse.move` i steg (två steg räcker inte för
   att vyn ska räkna det som en dragning). Modifiera Flytta utgår från
   punkten där man klickade på det markerade, så ett klick efter valet är

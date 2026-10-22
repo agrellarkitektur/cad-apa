@@ -79,6 +79,8 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.7 | Format 7: text på bladet, vyernas ram med grepp, dold skala i vyrubriken |
 | 0.8.8 | Format 8: mallblad med smarttext i stället för ram och BH90-huvud, förvalt mallblad, exempelmallblad, fet och justerad text, fler skalor |
 | 0.8.9 | Format 9: linjer, ytor, text och bilder direkt på bladen, vyer och ritat markeras och flyttas tillsammans, textrutor med radbrytning och förankring, egen skala för vyer |
+| 0.8.10 | Format 10: obegränsat med smarta fält, fält för hela projektet, flera blad samtidigt, `{mapp}` och `{skala a3}` |
+| 0.8.11 | Granskning: `app.ts` och `sheets.ts` uppdelade, vyerna på bladen räknas inte om i onödan, Visa i kategorier, text i DXF-underlag, mönster med förhandsbild, markering av 2D, statusradens knappar, linjetjocklek på skärmen, Alfa |
 | 0.7.1 | Betaversion med synpunktsformulär, detaljnivåer och linjetjocklekar i fasad och sektion, glasmarkering och öppningssätt, automatisk taklutning, sektioner begränsade till linjen och klippta i 3D, nya markörer i planen med grepp, längd, vinkel och Rikta efter objekt, streckning från hörnen, varning för nästan raka vinklar, takets kontur i Modifiera, måttband, spårlinjer, kopiera och klistra in mellan projekt, Ctrl + dra, piltangenter, zooma till område och förra zoomen |
 
 ## Framåt
@@ -544,6 +546,18 @@ Från synpunkterna 21 oktober, sorterade 22 oktober:
   Som Archicads hårlinje och True Line Weight och Revits Thin Lines
 - **Alfa**: etiketten i appen och meddelandet om äldre filer säger alfa i
   stället för beta (se *Vägen ut* överst)
+
+*Byggd (22 oktober), allt ovan, med samma filformat (10). Uppdelningen
+gav samma läge efter samma klick som förut. Dessutom: vyerna på ett blad
+räknas inte om när bara bladen ändrats (en flyttad vy 2,4 s → 5 ms med 312
+väggar och tre fasader), och delvis ikryssade kryssrutor syns. Claudes val,
+att stämma av: kategorierna i Visa (Modell, Littera, Rum, mått och text,
+2D, Markörer), littera per typ och underlag i Visa; att MTEXT fästs efter
+sin bredaste rad; namnen Skärm, Verklig och Tunna; att avslagna knappar får
+ett snett streck och påslagna accentfärgen; att en sluten polylinje inuti
+ett rum går före rummet men en linje nära klicket går före båda. Mätt men
+lämnat: en flyttad vägg räknar om sammanslagningen av väggytorna (0,07–0,16
+s för 300–700 väggar).*
 
 ### 0.8.12 Skalstock och stämplar · *nytt format*
 

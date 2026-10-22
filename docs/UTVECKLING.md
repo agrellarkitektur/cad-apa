@@ -119,14 +119,16 @@ version de kommer i (se [PLAN.md](PLAN.md)).
 
 ### Appen: `src/ui/app.ts` och `src/ui/app/`
 
-`mountApp` i `src/ui/app.ts` bygger appen: skapar planvyn, verktygen,
-panelerna och dialogerna, och har det som binder ihop dem (`setTool`,
-`renderAll`, vad som visas just nu, markeringen). Resten ligger i
-`src/ui/app/`, en fil per del:
+`mountApp` i `src/ui/app.ts` bygger appen: skapar planvyn, panelerna och
+dialogerna, och har det som binder ihop dem (verktygens `host`, Modifiera
+och smartmenyn, markeringen). Resten ligger i `src/ui/app/`, en fil per del
+(sedan 0.8.11 också verktygen och ritningen):
 
 | Fil | Innehåll |
 | --- | --- |
 | `shell.ts` | Stommen (HTML för topprad, verktygsrad, rityta och statusrad), verktygslistan `TOOLS`, `ToolId`, `ViewMode` och `createUiState` (det som visas just nu) |
+| `tools.ts` | Verktygsraden och ett objekt per verktyg, `setTool`, `toolFor`, Avbryt, Zooma till område, Rikta efter objekt och Ny vägg härifrån (0.8.11) |
+| `render.ts` | `renderAll`: planen, fasaden, sektionen, arbetsbladet eller bladet som visas, `viewStates`, stilmallen, utropstecknen vid sneda vinklar och måttrutan (0.8.11) |
 | `helpers.ts` | Små hjälpare: talformat, förvalda typer och tillstånd, vybeskrivning, skala |
 | `context.ts` | `AppContext`: det delarna behöver av varandra, och `lazyContext` som bygger det |
 | `actions.ts` | Knapparna: klick på `data-action` och val i projektträdet, Visa-menyn och huvudmenyn; tillståndsflikarna och Jämför med |
@@ -142,6 +144,7 @@ panelerna och dialogerna, och har det som binder ihop dem (`setTool`,
 | `keyboard.ts` | Kortkommandona |
 | `clipboard.ts` | Kopiera, klipp ut och klistra in |
 | `underlays.ts`, `sheets.ts`, `plot.ts` | Underlag, ritningsblad och Plot/export (0.8) |
+| `sheetTool.ts`, `sheetGeometry.ts` | Markera, flytta och dra i ramen på ett blad; fästning och var en ny vy får plats (0.8.11, ur `sheets.ts`) |
 
 Varje del är en funktion `installX(app)` som anropas en gång i `mountApp`
 och lämnar tillbaka det som andra delar använder. `app` byggs med
@@ -833,3 +836,53 @@ nedan). Ramen och greppen gäller.*
   `src/ui/app/actions.ts` sköter Ctrl- och Shift-klick, och
   `NavigatorHost.treeItems()` markerar raderna. Formuläret för flera blad
   har `data-tree-kind="sheets"` och `data-ids`.
+
+## Granskning (0.8.11, format 10)
+
+Inga nya filformat. Uppdelningen kontrollerades som i 0.8.1: samma klick i
+webbläsaren i bygget före och efter (väggar, markera, flytta, ångra, ruta,
+högerklick, kortkommandon, mått, mätning, 3D, fasad, blad, vy på blad,
+mallblad) gav samma projekt, markering, ritning, panel och smartmeny.
+
+- **Uppdelning**: verktygen ligger i `src/ui/app/tools.ts` och ritningen
+  (`renderAll`, `viewStates`, sektionskön) i `src/ui/app/render.ts`. Båda
+  installeras först efter `app`, så `mountApp` läser `tools.x` och
+  `render.x` när de används (stängningar), aldrig medan appen byggs.
+  `AppContext` fick `toolOpts`, `underlays`, `views`, `toolFor`,
+  `update3d` och `syncStatus`. Bladets markeringsverktyg är en egen klass
+  (`SheetTool`) med ett `SheetToolHost`; fästningen är rena funktioner i
+  `sheetGeometry.ts` (testade i `tests/v0811.test.ts`). Ytorna en dragen vy
+  fäster mot räknas en gång när dragningen börjar
+- **Vyerna på bladen** (`cachedViewPrims` i `src/repr/sheet.ts`) sparas per
+  *modellprojekt*: projektet utan `sheets` och utan element vars `space` är
+  ett blad (`modelDoc`). Det blir samma objekt så länge bara bladen ändrats,
+  så att en flyttad vy eller en text på bladet inte räknar om fasader och
+  sektioner. Ingen vy får därför bero på bladen; gör en vy det (t.ex. en
+  markör som visar ritningsnumret) måste `modelDoc` ta med det
+- **Mätt men lämnat**: en flyttad vägg räknar fortfarande om
+  sammanslagningen av väggytorna (`polygon-clipping` står för det mesta av
+  tiden, 0,07–0,16 s för 300–700 väggar); för en villa några ms
+- **Visa i kategorier**: `SHOW_GROUPS`, `isShown` och `setShown` i
+  `src/ui/app/showMenu.ts`. Nycklarna är desamma som förut i vyns `hide`;
+  littera släcks per typ med `littera:Wall`, `littera:Door` och
+  `littera:Window` (`showLittera(ctx, typ)`), och en äldre vy med `littera`
+  delas upp när en typ tänds. `Underlay` i `hide` släcker underlagen
+- **Text i DXF** (`textPlacement` och `mtextLines` i `src/formats/dxf.ts`):
+  TEXT har justeringen i 72/73 och punkten i 11/21 (3 och 5: mellan 10 och
+  11); MTEXT har fästpunkten 1–9 i 71, radavståndet 5/3 av höjden gånger 44
+  och stycken vid `\P`. Raderna blir en text var med baslinjen räknad från
+  punkten; nederkanten ligger 0,3 av versalhöjden under baslinjen. Har
+  MTEXT en egen styckesjustering (`\pxql;`) fästs blocket efter sin
+  bredaste rad (Helveticas bredder). DXF mäter versalhöjden
+  (`DXF_CAP_HEIGHT` = 0,72 av teckenstorleken)
+- **Markering** (`pickAllAt` i `src/view2d/pick.ts`): en typ med `pickSoft`
+  (2D-linjer och fyllningar) har mjuka ytor: inuti ger 1500 i stället för
+  3000, så att en linje inom toleransen (2000) går före, men inuti går
+  fortfarande före rum (1000)
+- **Linjetjocklek** (`LineWeights` och `penPx` i
+  `src/view2d/renderPrimitives.ts`): `screen` är 4 px per mm (som förut),
+  `true` pappersmåttet gånger `drawingScale · camera.scale`, `thin` högst
+  1 px; alla minst 0,75 px (skraffering 0,6). Läget ligger i
+  `UiSettings.lineWeights` och `PlanView.lineWeights`; knappen i
+  statusraden växlar (`syncStatus` i `actions.ts` visar Rutnät, Snäpp och
+  Linjer)
