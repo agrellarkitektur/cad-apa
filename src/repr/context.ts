@@ -1,5 +1,5 @@
 import type { ActionKey, StyleSheet } from '../core/graphics';
-import { modelViewId, type Element, type Id, type ProjectDoc } from '../core/model';
+import { onPaper, modelViewId, type Element, type Id, type ProjectDoc } from '../core/model';
 import { actionOf, existingState, type Action, type ViewStates } from '../core/states';
 import { homeOf, shownIn, type ViewIdentity } from '../core/visibility';
 import { resolveParams, typeOf, type ElementType, type PlanContext, type PlanItem } from '../elements/registry';
@@ -22,7 +22,7 @@ export function createContext(
   const onStorey = Object.values(doc.elements).filter((e) => homeOf(e) === place || (e.show?.kind === 'views' && e.show.views.includes(identity.id)));
   const hiddenHere = new Set<Id>();
   // Ett mallblad (0.8.8) och ett ritningsblad (0.8.9) följer inte tillstånden: allt på dem syns alltid.
-  const onMaster = !!view.place && (doc.worksheets.some((w) => w.id === view.place && w.paper) || doc.sheets.some((s) => s.id === view.place));
+  const onMaster = !!view.place && (doc.worksheets.some((w) => w.id === view.place && onPaper(w)) || doc.sheets.some((s) => s.id === view.place));
 
   const actionFor = (el: Element): Action => {
     const t = typeOf(el.type);

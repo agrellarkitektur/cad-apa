@@ -1,3 +1,4 @@
+import { onPaper } from '../../core/model';
 import { deleteElements } from '../../core/commands';
 import { copyPayload, originalsHere, parsePayload, pasteClip, type ClipPayload } from '../../core/clipboard';
 import type { AppContext } from './context';
@@ -37,7 +38,7 @@ export function installClipboard(app: AppContext) {
     const ws = app.ui.worksheet ?? app.ui.layout ?? undefined;
     const usable = ws ? { ...payload, elements: payload.elements.filter((e) => DRAWING_TYPES.has(e.type)) } : payload;
     // Ligger originalen kvar på samma ställe hamnar kopian en bit bort (på papper 10 mm, annars 1 m).
-    const paper = !!app.ui.layout || app.store.doc.worksheets.some((w) => w.id === ws && w.paper);
+    const paper = !!app.ui.layout || app.store.doc.worksheets.some((w) => w.id === ws && onPaper(w));
     const step = paper ? 10 : 1000;
     const offset: [number, number] = originalsHere(app.store.doc, usable, app.ui.state, app.ui.storey) ? [step, -step] : [0, 0];
     const ids = pasteClip(app.store, usable, app.ui.state, app.ui.storey, offset, ws);

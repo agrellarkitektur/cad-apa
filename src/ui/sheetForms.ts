@@ -1,6 +1,6 @@
 import type { Id, ProjectDoc, Sheet } from '../core/model';
 import { applyFieldChanges, fieldsOf, fieldValue, type FieldChanges } from '../core/sheetFields';
-import { deleteSheet, duplicateSheet, masterOf, mastersOf, PAPER_SIZES, removeViewport, renameProject, saveSheet, setViewportCrop, sheetOfViewport, today, updateViewport } from '../core/sheets';
+import { deleteSheet, duplicateSheet, masterOf, mastersOf, PAPER_SIZES, removeViewport, renameProject, saveSheet, setViewportCrop, sheetOfViewport, stampsOf, today, updateViewport } from '../core/sheets';
 import type { DocStore } from '../core/store';
 import { centeredAt, placeableViews, viewCenter, viewSource } from '../repr/sheet';
 import { SMART_TEXT, smartVars } from '../repr/smartText';
@@ -43,8 +43,14 @@ export interface SheetFormHost {
   startDraw(): void;
   /** Lägg en vy på bladet, mitt på den lediga ytan. */
   place(sheetId: Id, view: Id, scale: number): void;
-  /** Öppna ett mallblad för att rita på det. */
+  /** Öppna ett mallblad (eller en stämpel) för att rita på det. */
   openMaster(id: Id): void;
+  /** Lägg en skalstock på bladet (0.8.12). */
+  addScaleBar(sheetId: Id): void;
+  /** Lägg en stämpel på bladet (0.8.12). */
+  placeStamp(sheetId: Id, stamp: Id): void;
+  /** Gör en ny stämpel och öppna den (0.8.12). */
+  newStamp(): void;
   /** Öppna vyn som en vy på bladet visar. */
   openView(view: Id): void;
   /** Efter Spara. */
@@ -206,6 +212,7 @@ export function sheetFormMarkup(doc: ProjectDoc, item: SheetFormItem): string {
   const placeable = placeableViews(doc);
   const master = masterOf(doc, s);
   const masters = mastersOf(doc);
+  const stamps = stampsOf(doc);
   return `<form class="tree-form sheet-form" data-tree-kind="sheet" data-tree-id="${s.id}">
     <header class="sel-head"><h2>${esc(s.number)} · ${esc(s.name)}</h2><p>Ritningsblad · ${esc(describeSheet(s))}</p></header>
     <section>
@@ -242,6 +249,17 @@ export function sheetFormMarkup(doc: ProjectDoc, item: SheetFormItem): string {
       <div class="row"><button type="button" class="btn" data-sheet="start-text">${icons.text}<span>Skriv text</span></button><button type="button" class="btn" data-sheet="start-draw">${icons.draw2d}<span>Linjer och ytor</span></button></div>
     </section>
     <section>
+      <h3>Skalstock och stämplar</h3>
+      <p class="note">En skalstock följer en vy på bladet eller en egen skala. En stämpel (logga, BYGGLOVSHANDLING, orienteringspil, tilläggshuvud …) ritas en gång under Ritningar och kan läggas på flera blad. Båda går att flytta när som helst.</p>
+      <div class="row"><button type="button" class="btn" data-sheet="add-scalebar">${icons.plus}<span>Lägg på skalstock</span></button></div>
+      ${
+        stamps.length
+          ? `<div class="fields">${field('Stämpel', `<select data-sheet-stamp>${stamps.map((w) => `<option value="${w.id}">${esc(w.name)}</option>`).join('')}</select>`)}</div>
+      <div class="row"><button type="button" class="btn" data-sheet="place-stamp">${icons.plus}<span>Lägg på stämpeln</span></button></div>`
+          : `<div class="row"><button type="button" class="btn" data-sheet="new-stamp">${icons.plus}<span>Ny stämpel</span></button></div>`
+      }
+    </section>
+    <section>
       <div class="row">
         <button type="button" class="btn" data-sheet="duplicate">Duplicera bladet</button>
       </div>
@@ -257,7 +275,7 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
   const kind = form.dataset.treeKind as SheetFormKind | 'sheets';
   const id = form.dataset.treeId!;
   const dirty = () => form.querySelectorAll<HTMLButtonElement>('[data-tree="save"], [data-tree="reset"]').forEach((b) => (b.disabled = false));
-  const own = '[data-sheet-view], [data-sheet-scale], [name="placeScale-own"]';
+  const own = '[data-sheet-view], [data-sheet-scale], [name="placeScale-own"], [data-sheet-stamp]';
   form.addEventListener('input', (e) => {
     if (!(e.target as HTMLElement).matches(own)) dirty();
   });
@@ -310,6 +328,17 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
         if (view && scale) host.place(sheet.id, view, scale);
         break;
       }
+      case 'add-scalebar':
+        host.addScaleBar(sheet.id);
+        break;
+      case 'place-stamp': {
+        const stamp = form.querySelector<HTMLSelectElement>('[data-sheet-stamp]')?.value;
+        if (stamp) host.placeStamp(sheet.id, stamp);
+        break;
+      }
+      case 'new-stamp':
+        host.newStamp();
+        break;
       case 'pick-viewport':
         host.pick({ kind: 'viewport', id: b.dataset.id! });
         break;

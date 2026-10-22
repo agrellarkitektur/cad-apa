@@ -151,13 +151,15 @@ export function worksheetContents(doc: { elements: Record<Id, Element> }, id: Id
 export function deleteWorksheet(store: DocStore, id: Id): void {
   const w = store.doc.worksheets.find((x) => x.id === id);
   if (!w) return;
-  store.transact(`Ta bort ${w.paper ? 'mallbladet' : 'arbetsbladet'} ${w.name}`, (tx) => {
+  store.transact(`Ta bort ${w.stamp ? 'stämpeln' : w.paper ? 'mallbladet' : 'arbetsbladet'} ${w.name}`, (tx) => {
     const files = new Set<Id>();
     for (const el of worksheetContents(tx.doc, id)) {
       if (typeof el.params.asset === 'string') files.add(el.params.asset);
       tx.removeElement(el.id);
     }
     pruneAssets(tx, files);
+    // En stämpel (0.8.12): den tas bort från bladen den ligger på.
+    if (w.stamp) for (const el of Object.values(tx.doc.elements)) if (el.type === 'Stamp' && el.params.stamp === id) tx.removeElement(el.id);
     const views = tx.doc.views.filter((v) => v.worksheet === id);
     if (views.length) tx.setViews(tx.doc.views.filter((v) => v.worksheet !== id));
     tx.setField('worksheets', tx.doc.worksheets.filter((x) => x.id !== id));

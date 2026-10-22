@@ -1,6 +1,6 @@
 import { deleteElements, renameElement, updateParams } from '../../core/commands';
 import { newId } from '../../core/ids';
-import type { Id, ViewDef } from '../../core/model';
+import { onPaper, type Id, type ViewDef } from '../../core/model';
 import { markerFrame, markerName } from '../../elements/markers';
 import type { Vec2 } from '../../repr/primitives';
 import { askConfirm, askText } from '../ask';
@@ -36,7 +36,7 @@ export function installViews(app: AppContext) {
     }
     if (p.kind === 'worksheet') {
       const w = app.store.doc.worksheets.find((x) => x.id === p.id);
-      return w ? { name: w.name, sub: w.paper ? 'Mallblad' : 'Arbetsblad' } : null;
+      return w ? { name: w.name, sub: w.stamp ? 'Stämpel' : w.paper ? 'Mallblad' : 'Arbetsblad' } : null;
     }
     if (p.kind === 'sheet') {
       const s = app.store.doc.sheets.find((x) => x.id === p.id);
@@ -112,7 +112,7 @@ export function installViews(app: AppContext) {
     // Ändringar i vyinställningarna är tillfälliga tills de sparas i vyn.
     const save = app.$<HTMLButtonElement>('.vb-save');
     // Ett mallblad (0.8.8) blir ingen vy: det ritas på bladen som använder det.
-    save.hidden = (!!v && !modified) || !!layout || !!sheet?.paper;
+    save.hidden = (!!v && !modified) || !!layout || onPaper(sheet);
     save.textContent = v ? 'Spara i vyn' : 'Spara som vy…';
     app.$<HTMLElement>('.viewbar').classList.toggle('modified', modified);
   }

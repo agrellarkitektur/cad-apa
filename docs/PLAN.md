@@ -81,6 +81,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.9 | Format 9: linjer, ytor, text och bilder direkt på bladen, vyer och ritat markeras och flyttas tillsammans, textrutor med radbrytning och förankring, egen skala för vyer |
 | 0.8.10 | Format 10: obegränsat med smarta fält, fält för hela projektet, flera blad samtidigt, `{mapp}` och `{skala a3}` |
 | 0.8.11 | Granskning: `app.ts` och `sheets.ts` uppdelade, vyerna på bladen räknas inte om i onödan, Visa i kategorier, text i DXF-underlag, mönster med förhandsbild, markering av 2D, statusradens knappar, linjetjocklek på skärmen, Alfa |
+| 0.8.12 | Format 11: skalstock på bladet (skalan från en vy eller egen, efter Carl Augusts skalstockar 1:1–1:5000), stämplar som ritas en gång och läggs på flera blad |
 | 0.7.1 | Betaversion med synpunktsformulär, detaljnivåer och linjetjocklekar i fasad och sektion, glasmarkering och öppningssätt, automatisk taklutning, sektioner begränsade till linjen och klippta i 3D, nya markörer i planen med grepp, längd, vinkel och Rikta efter objekt, streckning från hörnen, varning för nästan raka vinklar, takets kontur i Modifiera, måttband, spårlinjer, kopiera och klistra in mellan projekt, Ctrl + dra, piltangenter, zooma till område och förra zoomen |
 
 ## Framåt
@@ -572,6 +573,22 @@ s för 300–700 väggar).*
   huvudet i 0.8.6, och ändras på ett ställe för alla blad den ligger på
 
 Mellanstor; stämplarna återanvänder mallbladen.
+
+*Byggd (23 oktober), format 11, med Carl Augusts DXF *skalstockar till
+cad-apa* som facit. Skalstocken (`ScaleBar`) och stämpeln (`Stamp`) är
+element på bladet, så markera, flytta, ta bort, ångra och kopiera fungerar
+som för det andra på bladet. En stämpel är ett arbetsblad med `stamp`,
+ritat i mm kring nollpunkten. Claudes val, att stämma av: skalstocken är
+alltid 100 mm (längd och indelning går inte att ställa in; hans tolv skalor
+som de är, andra skalor efter den med samma siffror, t.ex. 1:200 som 1:2000,
+annars jämna tal); den hämtar skalan från bladets första vy när den läggs
+på; den läggs med linjen 230 mm från papperets högerkant och 40 mm upp
+(x 611 på A1, som hans ram) på alla format; texthöjd 3 mm och linjer 0,7,
+0,35 och 0,18 som i DXF:en (texten 0,25); skalstockar och stämplar går bara
+att flytta (inte vrida, spegla eller kopiera med smartmenyn); en stämpel
+läggs med nollpunkten nere till vänster innanför ramen eller där man
+högerklickade; stämplar ritas över vyerna; en stämpel i en stämpel ritas
+som en streckad ruta (så att en stämpel inte kan rita sig själv).*
 
 ### 0.8.13 Fler Modifiera-verktyg
 

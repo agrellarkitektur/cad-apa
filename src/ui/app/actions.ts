@@ -7,7 +7,7 @@ import type { FeedbackDialog } from '../feedbackDialog';
 import type { NavTab } from '../navigator';
 import { isNarrow } from '../sheet';
 import { applyTheme, type ThemeId } from '../theme';
-import type { Id } from '../../core/model';
+import { onPaper, type Id } from '../../core/model';
 import { isSnapEnabled, setSnapEnabled } from '../tools/snap';
 import type { TreeItem } from '../treeItemPanel';
 import { saveUiSettings } from '../uiSettings';
@@ -61,7 +61,7 @@ export function installActions(app: AppContext, parts: ActionParts) {
 
   /** Statusradens knappar (0.8.11): Rutnät, Snäpp och Linjer visar sitt läge. */
   function syncStatus(): void {
-    const paper = !!(app.ui.layout || app.store.doc.worksheets.some((w) => w.id === app.ui.worksheet && w.paper));
+    const paper = !!(app.ui.layout || app.store.doc.worksheets.some((w) => w.id === app.ui.worksheet && onPaper(w)));
     const grid = app.$<HTMLButtonElement>('[data-action="grid"]');
     grid.setAttribute('aria-pressed', String(uiSettings.grid && !paper));
     grid.disabled = paper;
@@ -382,6 +382,9 @@ export function installActions(app: AppContext, parts: ActionParts) {
       }
       case 'view-update':
         void views.updateActiveView();
+        break;
+      case 'new-stamp':
+        sheets.newStamp();
         break;
       case 'new-master':
         sheets.newMaster();

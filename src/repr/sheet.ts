@@ -1,5 +1,5 @@
 import { PRESETS, type StyleSheet } from '../core/graphics';
-import { isMaster, modelViewId, type Element, type Id, type ProjectDoc, type Sheet, type ViewDef, type Viewport, type Worksheet } from '../core/model';
+import { onPaper, modelViewId, type Element, type Id, type ProjectDoc, type Sheet, type ViewDef, type Viewport, type Worksheet } from '../core/model';
 import { FRAME_MARGIN, masterOf, paperSize } from '../core/sheets';
 import { defaultState, existingState, type ViewStates } from '../core/states';
 import { markerName } from '../elements/markers';
@@ -39,7 +39,7 @@ export function viewSource(doc: ProjectDoc, ref: Id): ViewSource | null {
   const saved = doc.views.find((v) => v.id === ref);
   if (saved) {
     if (saved.marker && !doc.elements[saved.marker]) return null;
-    if (saved.worksheet && !doc.worksheets.some((w) => w.id === saved.worksheet && !isMaster(w))) return null;
+    if (saved.worksheet && !doc.worksheets.some((w) => w.id === saved.worksheet && !onPaper(w))) return null;
     return { id: ref, name: saved.name, def: saved };
   }
   if (!ref.startsWith('modell:')) return null;
@@ -61,7 +61,7 @@ export function viewSource(doc: ProjectDoc, ref: Id): ViewSource | null {
     return { id: ref, name, def: { ...base, name, storey: el.storey, marker: el.id } };
   }
   const ws = doc.worksheets.find((w) => w.id === place);
-  if (ws && !isMaster(ws)) return { id: ref, name: ws.name, def: { ...base, name: ws.name, storey: doc.storeys[0].id, worksheet: ws.id } };
+  if (ws && !onPaper(ws)) return { id: ref, name: ws.name, def: { ...base, name: ws.name, storey: doc.storeys[0].id, worksheet: ws.id } };
   return null;
 }
 
@@ -77,7 +77,7 @@ export function placeableViews(doc: ProjectDoc): ViewSource[] {
     ...Object.values(doc.elements)
       .filter((e) => e.type === 'Elevation' || e.type === 'Section')
       .map((e) => e.id),
-    ...doc.worksheets.filter((w) => !isMaster(w)).map((w) => w.id),
+    ...doc.worksheets.filter((w) => !onPaper(w)).map((w) => w.id),
   ];
   for (const p of places) {
     const s = viewSource(doc, modelViewId(p));
@@ -333,6 +333,20 @@ export function paperPrim(w: number, h: number): Primitive {
     ownFill: true,
     origin: { objectType: 'Sheet', part: 'papper' },
   };
+}
+
+/**
+ * Stämpelns nollpunkt (0.8.12), bara på skärmen: ett kryss där stämpeln
+ * fästs när den läggs på ett blad.
+ */
+export function stampOrigin(): Primitive[] {
+  const pen = { weight: 0.18, color: 'muted' as const };
+  const origin = { objectType: 'Sheet', part: 'skärm' };
+  return [
+    { kind: 'line', a: [-6, 0], b: [6, 0], pen, origin },
+    { kind: 'line', a: [0, -6], b: [0, 6], pen, origin },
+    { kind: 'text', at: [1.5, 1.5], text: 'Nollpunkt', height: 2, pen, origin },
+  ];
 }
 
 /** Inställningarna ett mallblad ritas med (0.8.8): skala 1:1, utan tillstånd och jämförelse. Med `smart` fylls smarttexten i. */

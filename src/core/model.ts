@@ -112,11 +112,30 @@ export interface Worksheet {
   id: Id;
   name: string;
   paper?: { size: PaperSize; orientation: 'landscape' | 'portrait' };
+  /**
+   * En **stämpel** (0.8.12, format 11): ritad som ett mallblad, i mm i
+   * skala 1:1, men utan papper. Stämpeln läggs på blad som ett element
+   * (`Stamp`) med stämpelns nollpunkt där den ska stå.
+   */
+  stamp?: true;
 }
 
 /** Om ett arbetsblad är ett mallblad (0.8.8). */
 export function isMaster(w: Worksheet | undefined): w is Worksheet & { paper: NonNullable<Worksheet['paper']> } {
-  return !!w?.paper;
+  return !!w?.paper && !w.stamp;
+}
+
+/** Om ett arbetsblad är en stämpel (0.8.12). */
+export function isStamp(w: Worksheet | undefined): w is Worksheet & { stamp: true } {
+  return !!w?.stamp;
+}
+
+/**
+ * Om ett arbetsblad ritas på papper (0.8.12): ett mallblad eller en
+ * stämpel. Det som är ritat där är i mm, 1:1, och följer inte tillstånden.
+ */
+export function onPaper(w: Worksheet | undefined): boolean {
+  return !!w && (!!w.paper || !!w.stamp);
 }
 
 /** En vy placerad på ett ritningsblad (format 5). Läget är i mm på papperet. */
@@ -262,7 +281,7 @@ export interface Element<P extends object = Record<string, unknown>> {
 }
 
 export const FORMAT = 'bacchus-project';
-export const FORMAT_VERSION = 10;
+export const FORMAT_VERSION = 11;
 
 export interface ProjectDoc {
   format: typeof FORMAT;

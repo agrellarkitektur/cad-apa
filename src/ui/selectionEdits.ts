@@ -172,6 +172,24 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
     renameElement(store, ids[0], input.value);
     return true;
   }
+  if (scope === 'scalebar') {
+    // Skalstocken (0.8.12): skalan från en vy på bladet, eller en egen.
+    if (name === 'view') {
+      const el = doc.elements[ids[0]];
+      const vp = doc.sheets.flatMap((s) => s.viewports).find((v) => v.id === input.value);
+      updateParams(store, ids, input.value ? { view: input.value, scale: vp?.scale ?? el?.params.scale } : { view: undefined }, input.value ? 'Skalstocken följer vyn' : 'Egen skala');
+      return true;
+    }
+    const v = Math.round(Number(input.value.replace(',', '.').replace(/^1:/, '')));
+    if (!(v >= 1)) return false;
+    updateParams(store, ids, { scale: v, view: undefined }, 'Ändra skalstockens skala');
+    return true;
+  }
+  if (scope === 'stamp') {
+    if (!input.value) return false;
+    updateParams(store, ids, { stamp: input.value }, 'Byt stämpel');
+    return true;
+  }
   if (scope === 'roof') {
     updateParams(store, ids, { kind: input.value }, 'Ändra taktyp');
     return true;

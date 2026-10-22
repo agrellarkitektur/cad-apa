@@ -1,5 +1,5 @@
 import { addViewTag, setLocked, setShowIn, updateParams } from '../core/commands';
-import { modelViewId, type Element, type Id, type ProjectDoc, type ShowIn } from '../core/model';
+import { onPaper as paperSpace, modelViewId, type Element, type Id, type ProjectDoc, type ShowIn } from '../core/model';
 import type { DocStore } from '../core/store';
 import { allViews, countViews, homeOf } from '../core/visibility';
 import { LINE_TYPES, PEN_WEIGHTS, SHAPE_LABELS, type Fill2DParams, type Line2DParams } from '../elements/drawing2d';
@@ -138,7 +138,7 @@ function placeWord(doc: ProjectDoc, el: Element): string {
   if (home?.type === 'Section') return 'sektionen';
   if (home?.type === 'Elevation') return 'fasaden';
   const ws = doc.worksheets.find((w) => w.id === homeOf(el));
-  if (ws) return ws.paper ? 'mallbladet' : 'arbetsbladet';
+  if (ws) return ws.stamp ? 'stämpeln' : ws.paper ? 'mallbladet' : 'arbetsbladet';
   if (doc.sheets.some((s) => s.id === homeOf(el))) return 'bladet';
   return 'våningen';
 }
@@ -150,7 +150,7 @@ function placeWord(doc: ProjectDoc, el: Element): string {
 export function showSection(doc: ProjectDoc, els: Element[], here: Id): string {
   if (!els.length || !els.every((e) => SHOWABLE.has(e.type))) return '';
   // På ett mallblad och ett ritningsblad finns bara en vy: själva bladet (0.8.9).
-  const onPaper = (e: Element) => doc.sheets.some((s) => s.id === e.space) || doc.worksheets.some((w) => w.id === e.space && w.paper);
+  const onPaper = (e: Element) => doc.sheets.some((s) => s.id === e.space) || doc.worksheets.some((w) => w.id === e.space && paperSpace(w));
   if (els.some(onPaper)) return '';
   const el = els[0];
   const same = els.every((e) => JSON.stringify(e.show ?? null) === JSON.stringify(el.show ?? null));

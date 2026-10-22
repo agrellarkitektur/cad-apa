@@ -1,6 +1,6 @@
 import { pruneAssets } from './commands';
 import { newId } from './ids';
-import { isMaster, type Element, type Id, type PaperSize, type ProjectDoc, type Sheet, type Viewport, type Worksheet } from './model';
+import { isMaster, isStamp, type Element, type Id, type PaperSize, type ProjectDoc, type Sheet, type Viewport, type Worksheet } from './model';
 import { applyFieldChangesTx, type FieldChanges } from './sheetFields';
 import type { DocStore, TxBuilder } from './store';
 
@@ -192,15 +192,22 @@ export function deleteSheet(store: DocStore, id: Id): void {
 export function duplicateSheet(store: DocStore, id: Id): Id | null {
   const s = store.doc.sheets.find((x) => x.id === id);
   if (!s) return null;
+  const ids = new Map(s.viewports.map((v) => [v.id, newId('vp')]));
   const copy: Sheet = {
     ...structuredClone(s),
     id: newId('blad'),
     number: nextSheetNumber(store.doc),
-    viewports: s.viewports.map((v) => ({ ...v, id: newId('vp') })),
+    viewports: s.viewports.map((v) => ({ ...v, id: ids.get(v.id)! })),
   };
   store.transact(`Duplicera bladet ${s.number}`, (tx) => {
     tx.setField('sheets', [...tx.doc.sheets, copy]);
-    for (const el of sheetContents(tx.doc, id)) tx.putElement({ ...structuredClone(el), id: newId('el'), space: copy.id });
+    for (const el of sheetContents(tx.doc, id)) {
+      const c = { ...structuredClone(el), id: newId('el'), space: copy.id };
+      // En skalstock följer kopian av sin vy (0.8.12).
+      const view = c.params.view;
+      if (c.type === 'ScaleBar' && typeof view === 'string' && ids.has(view)) c.params = { ...c.params, view: ids.get(view) };
+      tx.putElement(c);
+    }
     if (tx.doc.tree[id]) placeIn(tx, copy.id, tx.doc.tree[id]);
   });
   return copy.id;
@@ -299,4 +306,84 @@ export function renameProject(store: DocStore, name: string): void {
   const n = name.trim();
   if (!n || n === store.doc.project.name) return;
   store.transact('Byt projektets namn', (tx) => tx.setProject({ ...tx.doc.project, name: n }));
+}
+
+/**
+ * Skalstockens standardläge (0.8.12): linjens vänstra ände 230 mm från
+ * papperets högra kant och 40 mm upp, så att den på A1 står där Carl August
+ * har den (x 611–711, y 27–46 mm), innanför ramen till vänster om huvudet.
+ */
+export function scaleBarHome(sheet: Pick<Sheet, 'size' | 'orientation'>): [number, number] {
+  const [w] = paperSize(sheet);
+  return [Math.max(FRAME_MARGIN.left + 5, w - 230), 40];
+}
+
+/**
+ * Lägg en skalstock på ett blad (0.8.12). Skalan hämtas från bladets första
+ * vy om det har någon, annars 1:100. Svarar med dess id.
+ */
+export function addScaleBar(store: DocStore, sheetId: Id, at?: [number, number]): Id | null {
+  const s = store.doc.sheets.find((x) => x.id === sheetId);
+  if (!s) return null;
+  const id = newId('el');
+  const vp = s.viewports[0];
+  const el: Element = {
+    id,
+    type: 'ScaleBar',
+    storey: store.doc.storeys[0].id,
+    states: [],
+    tags: [],
+    space: sheetId,
+    params: { pos: at ?? scaleBarHome(s), scale: vp?.scale ?? 100, ...(vp ? { view: vp.id } : {}) },
+    props: {},
+  };
+  store.transact('Lägg på skalstock', (tx) => tx.putElement(el));
+  return id;
+}
+
+/** Skapa en stämpel (0.8.12), eventuellt i en mapp i Ritningar. Svarar med dess id. */
+export function createStamp(store: DocStore, name: string, folder: Id | null = null): Id {
+  const id = newId('stampel');
+  const w: Worksheet = { id, name, stamp: true };
+  store.transact(`Ny stämpel ${name}`, (tx) => {
+    tx.setField('worksheets', [...tx.doc.worksheets, w]);
+    placeIn(tx, id, folder);
+  });
+  return id;
+}
+
+/** Projektets stämplar, i den ordning de skapades. */
+export function stampsOf(doc: Pick<ProjectDoc, 'worksheets'>): (Worksheet & { stamp: true })[] {
+  return doc.worksheets.filter(isStamp);
+}
+
+/** Bladen en stämpel ligger på. */
+export function stampUsers(doc: Pick<ProjectDoc, 'elements' | 'sheets'>, stamp: Id): Sheet[] {
+  const on = new Set(Object.values(doc.elements).filter((e) => e.type === 'Stamp' && e.params.stamp === stamp).map((e) => e.space));
+  return doc.sheets.filter((s) => on.has(s.id));
+}
+
+/** Lägg en stämpel på ett blad (0.8.12), med nollpunkten i `at` (mm på papperet). Svarar med id. */
+export function placeStamp(store: DocStore, sheetId: Id, stamp: Id, at: [number, number]): Id | null {
+  const w = store.doc.worksheets.find((x) => x.id === stamp);
+  if (!isStamp(w) || !store.doc.sheets.some((x) => x.id === sheetId)) return null;
+  const id = newId('el');
+  const el: Element = {
+    id,
+    type: 'Stamp',
+    storey: store.doc.storeys[0].id,
+    states: [],
+    tags: [],
+    space: sheetId,
+    params: { pos: [Math.round(at[0]), Math.round(at[1])], stamp },
+    props: {},
+  };
+  store.transact(`Lägg på stämpeln ${w.name}`, (tx) => tx.putElement(el));
+  return id;
+}
+
+/** Saker på bladet som bara går att flytta (0.8.12): vyer, skalstockar och stämplar. */
+export function moveOnly(doc: Pick<ProjectDoc, 'elements' | 'sheets'>, id: Id): boolean {
+  const el = doc.elements[id];
+  return el ? el.type === 'ScaleBar' || el.type === 'Stamp' : isViewportId(doc, id);
 }

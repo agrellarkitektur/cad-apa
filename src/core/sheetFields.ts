@@ -66,7 +66,11 @@ function sheetTexts(doc: Pick<ProjectDoc, 'elements' | 'worksheets'>, sheet: Pic
       .map((el) => ({ text: el.params.text as string, at: (el.params.pos as readonly [number, number] | undefined) ?? [0, 0] }))
       .sort((a, b) => b.at[1] - a.at[1] || a.at[0] - b.at[0])
       .map((t) => t.text);
-  return [...(isMaster(master) ? order(master.id) : []), ...order(sheet.id)];
+  // Stämplarna på bladet (0.8.12), i den ordning de ligger.
+  const stamps = Object.values(doc.elements)
+    .filter((el) => el.space === sheet.id && el.type === 'Stamp' && typeof el.params.stamp === 'string')
+    .map((el) => el.params.stamp as Id);
+  return [...(isMaster(master) ? order(master.id) : []), ...order(sheet.id), ...[...new Set(stamps)].flatMap(order)];
 }
 
 /** Namnet med stor första bokstav, som rubrik i tabellen. */

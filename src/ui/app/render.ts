@@ -1,5 +1,5 @@
 import { addElements } from '../../core/commands';
-import { modelViewId, type ViewDef } from '../../core/model';
+import { modelViewId, onPaper, type ViewDef } from '../../core/model';
 import { PRESETS, type StyleSheet } from '../../core/graphics';
 import { paperSize } from '../../core/sheets';
 import { existingState } from '../../core/states';
@@ -7,7 +7,7 @@ import { skewText, skewWarnings } from '../../elements/angleCheck';
 import { markerName } from '../../elements/markers';
 import { buildPlan, type PlanResult } from '../../repr/plan';
 import type { SectionResult } from '../../repr/section';
-import { paperPrim } from '../../repr/sheet';
+import { paperPrim, stampOrigin } from '../../repr/sheet';
 import type { Camera } from '../../view2d/camera';
 import { icons } from '../icons';
 import { escapeHtml } from '../labels';
@@ -93,7 +93,7 @@ export function installRender(app: AppContext, parts: RenderParts) {
   /** Mallbladet som visas (0.8.8), ritat i mm på papperet i skala 1:1. */
   function shownMaster() {
     const w = app.ui.worksheet ? app.store.doc.worksheets.find((x) => x.id === app.ui.worksheet) : undefined;
-    return w?.paper ? w : undefined;
+    return onPaper(w) ? w : undefined;
   }
 
   function viewStates() {
@@ -143,9 +143,9 @@ export function installRender(app: AppContext, parts: RenderParts) {
     const sheet = app.ui.worksheet ? doc.worksheets.find((w) => w.id === app.ui.worksheet) : undefined;
     const layout = app.ui.layout ? doc.sheets.find((s) => s.id === app.ui.layout) : undefined;
     app.out('storey').textContent = markerEl ? markerName(doc, markerEl) : sheet ? sheet.name : layout ? `${layout.number} ${layout.name}` : (doc.storeys.find((s) => s.id === app.ui.storey)?.name ?? '');
-    app.appEl.dataset.place = markerEl ? 'section' : sheet ? (sheet.paper ? 'master' : 'worksheet') : layout ? 'sheet' : 'plan';
+    app.appEl.dataset.place = markerEl ? 'section' : sheet ? (onPaper(sheet) ? 'master' : 'worksheet') : layout ? 'sheet' : 'plan';
     // Ett ritningsblad och ett mallblad ritas i mm på papperet, 1:1; annars i vyns annoteringsskala (0.8 del 3).
-    const master = sheet?.paper ? sheet : undefined;
+    const master = onPaper(sheet) ? sheet : undefined;
     app.view.drawingScale = layout || master ? 1 : app.ui.scale;
     app.view.showGrid = layout || master ? false : app.uiSettings.grid;
     app.syncStatus();
@@ -187,7 +187,7 @@ export function installRender(app: AppContext, parts: RenderParts) {
       if (sheet.paper) {
         const [w, h] = paperSize(sheet.paper);
         plan = { prims: [paperPrim(w, h), ...plan.prims], pickables: plan.pickables };
-      }
+      } else if (sheet.stamp) plan = { prims: [...stampOrigin(), ...plan.prims], pickables: plan.pickables };
     } else plan = buildPlan(doc, app.ui.storey, vs, styleFor(app.ui.styleName));
     // Kalkerad vy: en annan vy tonad under, t.ex. möbleringen under en undertaksplan.
     const traced = app.ui.trace && !section && !sheet && !layout ? doc.views.find((v) => v.id === app.ui.trace) : undefined;

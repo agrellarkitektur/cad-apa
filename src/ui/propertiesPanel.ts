@@ -12,8 +12,8 @@ import {
   updateDefinition,
   updateParams,
 } from '../core/commands';
-import type { Element, ProjectDoc } from '../core/model';
-import { isViewportId } from '../core/sheets';
+import { onPaper as paperSpace, type Element, type ProjectDoc } from '../core/model';
+import { isViewportId, moveOnly } from '../core/sheets';
 import type { Action, ViewStates } from '../core/states';
 import { actionOf, existingState } from '../core/states';
 import type { DocStore } from '../core/store';
@@ -225,10 +225,11 @@ export class PropertiesPanel {
       `<button class="qb-btn${extra}" data-action="${action}" title="${escapeHtml(QUICK_TITLES[action] ?? label)}">${icon}<span>${escapeHtml(label)}</span></button>`;
     const sameType = els.length > 0 && els.every((e) => e.type === els[0].type);
     const kind = sameType && !vps ? els[0].type : 'mixed';
-    // Vyer på ett blad (0.8.9) går att flytta och ta bort, inte vrida, spegla eller kopiera.
+    // Vyer på ett blad (0.8.9) går att flytta och ta bort, inte vrida, spegla eller kopiera; skalstockar och stämplar likaså (0.8.12).
+    const fixedShape = els.some((e) => moveOnly(doc, e.id));
     const allowed = (id: QuickId, k: string) => {
       const a = QUICK_ACTIONS.find((q) => q.id === id);
-      return !vps && !!a && (a.types === 'all' || a.types.includes(k));
+      return !vps && !fixedShape && !!a && (a.types === 'all' || a.types.includes(k));
     };
     const buttons: string[] = [];
     for (const id of this.quickFor(kind)) {
@@ -376,7 +377,7 @@ export class PropertiesPanel {
       .map(([a, n]) => `<span class="tag tag-${a}">${els.length > 1 ? `${n} ` : ''}${ACTION_LABEL[a].toLowerCase()}</span>`)
       .join(' ');
     // Norrpil, fasader och sektioner finns i alla tillstånd, och det som är ritat på ett blad eller mallblad följer dem inte (0.8.9).
-    const onPaper = (e: Element) => doc.sheets.some((x) => x.id === e.space) || doc.worksheets.some((w) => w.id === e.space && w.paper);
+    const onPaper = (e: Element) => doc.sheets.some((x) => x.id === e.space) || doc.worksheets.some((w) => w.id === e.space && paperSpace(w));
     if (!els.every((e) => typeOf(e.type)?.global || onPaper(e))) sections.push(`<section>
       <h3>Finns i</h3>
       <div class="state-chips">${chips}</div>
@@ -462,6 +463,11 @@ export class PropertiesPanel {
       case 'open-marker':
         if (ids[0]) this.onOpenMarker?.(ids[0]);
         return;
+      case 'open-stamp': {
+        const stamp = doc.elements[ids[0]]?.params.stamp;
+        if (typeof stamp === 'string') this.sheetHost?.openMaster(stamp);
+        return;
+      }
       case 'straighten-angle': {
         const el = doc.elements[ids[0]];
         const w = el && skewOf(doc, el, this.angleWarn(), true);

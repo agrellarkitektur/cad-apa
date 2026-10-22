@@ -886,3 +886,37 @@ mallblad) gav samma projekt, markering, ritning, panel och smartmeny.
   `UiSettings.lineWeights` och `PlanView.lineWeights`; knappen i
   statusraden växlar (`syncStatus` i `actions.ts` visar Rutnät, Snäpp och
   Linjer)
+
+## Skalstock och stämplar (0.8.12, format 11)
+
+- **Skalstocken** är elementtypen `ScaleBar` (`src/elements/scaleBar.ts`)
+  med `space` = bladets id och `params` `{ pos, scale, view? }` (mm på
+  papperet; `pos` är linjens vänstra ände). `scaleBarScale` tar skalan från
+  vyn på bladet med id `view` om den finns, annars `scale`.
+  `scaleBarLayout(skala)` ger strecken och talen: Carl Augusts tolv skalor
+  ligger i `BARS` som de står i hans DXF (streck `läge+slag`, M 5 mm/0,7,
+  m 4/0,35, s 3/0,18, S 4/0,18), en skala med samma siffror som en av dem
+  tar dess indelning (tiopotensen flyttas), övriga får jämna steg och en
+  linje som slutar på ett tal. 1:1 och 1:2 räknas i millimeter.
+  `planReads: []`: ritas om bara när elementet ändras eller bladen
+  (`savedFor`), vilket räcker eftersom den bara läser vyernas skala.
+- **Stämplar** är arbetsblad med `stamp: true` (`isStamp`); `onPaper(w)`
+  (mallblad eller stämpel) ersätter `w.paper` överallt där det betyder
+  "ritas i mm på papper". `isMaster` är nu `paper && !stamp`. Stämplar
+  syns inte bland vyerna att lägga på blad (`placeableViews`), har ett eget
+  avsnitt under Ritningar och ett eget formulär (`treeItemPanel.ts`).
+- **En stämpel på ett blad** är elementtypen `Stamp`
+  (`src/elements/stamp.ts`) med `{ pos, stamp }`. Den ritar stämpelns
+  element med `buildPlan` (place = stämpeln, skala 1, bladets `smart`) och
+  flyttar dem till `pos`. Den har inga `planReads`, så den räknas om när
+  något element ändras (stämpelns innehåll kan ha ändrats). En stämpel som
+  saknas, är tom eller ligger i en stämpel ritas som en streckad ruta.
+  `deleteWorksheet` tar bort stämpelns `Stamp`-element på bladen i samma
+  steg. `sheetTexts` tar med texterna i stämplarna på bladet, så att deras
+  fält syns i bladets fälttabell.
+- `src/core/sheets.ts`: `addScaleBar`, `scaleBarHome`, `createStamp`,
+  `stampsOf`, `stampUsers`, `placeStamp`, `moveOnly` (skalstock, stämpel
+  och vy: bara Flytta i smartmenyn och Modifiera). `duplicateSheet` ger
+  kopians vyer nya id och låter skalstockarna följa dem.
+- Stämpelns nollpunkt ritas som ett kryss på skärmen (`stampOrigin` i
+  `src/repr/sheet.ts`, del `skärm`, kommer inte med i plot).

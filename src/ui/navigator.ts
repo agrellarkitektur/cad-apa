@@ -1,4 +1,4 @@
-import type { Folder, Id, ProjectDoc, TreeTab, ViewDef } from '../core/model';
+import { isMaster, isStamp, onPaper, type Folder, type Id, type ProjectDoc, type TreeTab, type ViewDef } from '../core/model';
 import { markerName } from '../elements/markers';
 import { UNDERLAY_KIND_LABEL, type UnderlayParams } from '../elements/underlay';
 import { icons } from './icons';
@@ -187,7 +187,7 @@ export class Navigator {
     for (const { e, name } of [...elevations, ...sections]) rowsById.set(e.id, markerRow(e.id, name, !!e.locked));
     // Arbetsblad (0.8 del 2).
     const sheet = this.host.worksheet();
-    const worksheets = doc.worksheets.filter((w) => !w.paper);
+    const worksheets = doc.worksheets.filter((w) => !onPaper(w));
     for (const w of worksheets)
       rowsById.set(
         w.id,
@@ -267,7 +267,7 @@ export class Navigator {
     }
     // Mallbladen (0.8.8): arbetsblad med papper.
     const sheet = this.host.worksheet();
-    const masters = doc.worksheets.filter((w) => w.paper);
+    const masters = doc.worksheets.filter(isMaster);
     for (const w of masters) {
       const used = doc.sheets.filter((s) => s.master === w.id).length;
       rows.set(
@@ -275,6 +275,16 @@ export class Navigator {
         `<div class="view-row${w.id === sheet ? ' active' : ''}${w.id === picked ? ' picked' : ''}"><button class="view-apply" data-worksheet-pick="${w.id}" title="Öppna mallbladet för att rita på det, och visa dess inställningar">${icons.sheet}<span class="sheet-row-name">${esc(w.name)}</span><small>${w.paper!.size}${doc.project.master === w.id ? ' · förval' : ''} · ${used} blad</small></button></div>`,
       );
     }
+    // Stämplarna (0.8.12): arbetsblad utan papper som läggs på bladen.
+    const stamps = doc.worksheets.filter(isStamp);
+    for (const w of stamps) {
+      const used = new Set(Object.values(doc.elements).filter((e) => e.type === 'Stamp' && e.params.stamp === w.id).map((e) => e.space)).size;
+      rows.set(
+        w.id,
+        `<div class="view-row${w.id === sheet ? ' active' : ''}${w.id === picked ? ' picked' : ''}"><button class="view-apply" data-worksheet-pick="${w.id}" title="Öppna stämpeln för att rita på den, och visa dess inställningar">${icons.draw2d}<span class="sheet-row-name">${esc(w.name)}</span><small>${used} blad</small></button></div>`,
+      );
+    }
+    const unfiledStamps = this.unfiled(rows, stamps.map((w) => w.id));
     const unfiled = this.unfiled(rows, sheets.map((s) => s.id));
     const unfiledMasters = this.unfiled(rows, masters.map((w) => w.id));
     return `${this.folders('ritningar', rows)}<section>
@@ -292,6 +302,14 @@ export class Navigator {
         <button class="btn" data-action="new-master">${icons.plus}<span>Nytt mallblad</span></button>
       </div>
       <p class="note">Ett mallblad är ramen, huvudet och annat som ska finnas på bladen, ritat med de vanliga verktygen. Texter med smarttext fylls i från varje blad.</p>
+    </section>
+    <section>
+      <h2>Stämplar</h2>
+      ${unfiledStamps ? `<div class="nav-list">${unfiledStamps}</div>` : stamps.length ? '' : '<p class="note">Inga stämplar.</p>'}
+      <div class="nav-actions">
+        <button class="btn" data-action="new-stamp">${icons.plus}<span>Ny stämpel</span></button>
+      </div>
+      <p class="note">En stämpel är en logga, BYGGLOVSHANDLING, en orienteringspil eller ett tilläggshuvud, ritad en gång och lagd på de blad som ska ha den. Den kan ha smarttext.</p>
     </section>`;
   }
 }

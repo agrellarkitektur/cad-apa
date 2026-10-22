@@ -1,30 +1,29 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 22 oktober 2026, efter 0.8.11.
+överlämning; historiken finns i git. Senast: 23 oktober 2026, efter 0.8.12.
 
 ## Läget
 
-- **0.8.11 är klar** på `main`, filformatet är fortfarande **10**. Det som
-  gjordes står i PLAN.md under *0.8.11*, i README och i UTVECKLING.md under
-  *Granskning (0.8.11, format 10)*:
-  - `src/ui/app.ts` (974 → 528 rader): verktygen i `app/tools.ts`,
-    ritningen i `app/render.ts`. `src/ui/app/sheets.ts` (585 → 321):
-    `app/sheetTool.ts` och `app/sheetGeometry.ts`. Samma 32 klicksteg i
-    bygget före och efter gav samma läge (projekt, markering, ritning,
-    panel, smartmeny).
-  - Vyerna på bladen sparas per *modellprojekt* (`modelDoc` i
-    `src/repr/sheet.ts`): en flyttad vy 2,4 s → 5 ms.
-  - Visa i kategorier (`SHOW_GROUPS` i `showMenu.ts`), littera per typ,
-    underlag i Visa; text i DXF-underlag följer justeringen; mönster med
-    förhandsbild (`src/ui/patternPick.ts`); mjuka ytor vid markering
-    (`pickSoft`); statusradens knappar och *Linjer* (Skärm, Verklig,
-    Tunna); *Alfa* i stället för *Beta*.
-  - Kontrollerat i Chrome med Playwright mot `dist/` (statusraden, Visa,
-    mönster i panelen och verktyget, linjelägena utzoomat, ett DXF-underlag
-    med alla justeringar jämfört med ezdxf:s bild). Inga nya kända fel.
-- **Inkorgen är sorterad** (22 oktober): linjetjocklek → 0.8.11 (gjord),
-  ny färdplan (se nedan) och Alfa (gjord). Inkorgen är tom.
+- **0.8.12 är klar** på `main`, filformatet är nu **11**. Det som gjordes
+  står i PLAN.md under *0.8.12* (med Claudes val), i README och i
+  UTVECKLING.md under *Skalstock och stämplar (0.8.12, format 11)*:
+  - **Skalstock** (`ScaleBar`, `src/elements/scaleBar.ts`) efter Carl
+    Augusts DXF *skalstockar till cad-apa* (hans tolv skalor som de är,
+    andra skalor härledda). Skalan från en vy på bladet eller egen.
+  - **Stämplar**: arbetsblad med `stamp`, ritade i mm kring en nollpunkt,
+    lagda på blad som `Stamp`-element med smarttext från bladet.
+  - Kontrollerat i Chrome med Playwright mot `dist/`: lägga på skalstock,
+    ny stämpel, text med `{ritningsnummer}` i stämpeln, lägga stämpeln på
+    bladet. Inga fel i konsolen.
+- **0.8.11 är inte provad än** av Carl August (han hann inte före 0.8.12).
+  Frågorna om 0.8.11 nedan gäller fortfarande.
+- **Inkorgen har elva osorterade punkter** (22 oktober) i
+  synpunktsfilen. Sortera dem med honom först i nästa session. En av dem
+  säger emot 0.8.11: han vill att en sluten 2D-polylinje *bara* markeras
+  på linjen (inte inuti), och att bara fyllningar markeras inuti. 0.8.11
+  gjorde tvärtom (en polylinje vars ändar möts går att klicka inuti). Den
+  hänger ihop med punkten om att göra om 2D-linjen till en *2D-form*.
 - **Ny färdplan** (Carl August 22 oktober): 0.13 är hans egen provning
   (han ritar ett hus), sedan en inbjuden **alfa** för arkitektvänner, sedan
   en **öppen beta**. **Formatfrysen kommer med den öppna betan**, inte med
@@ -56,8 +55,8 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~, ~~0.8.9 Grafik och textrutor på bladen~~,
-  ~~0.8.10 Smarta fält~~, ~~0.8.11 Granskning~~ (klara)
-- **0.8.12 Skalstock och stämplar** (nytt format)
+  ~~0.8.10 Smarta fält~~, ~~0.8.11 Granskning~~, ~~0.8.12 Skalstock och
+  stämplar~~ (klara)
 - **0.8.13 Fler Modifiera-verktyg**: Trimma, Hörnskarv, Dela, Justera och
   Fördela, Hämta/överför, Skala, Avrunda/Fasa för markeringen,
   kortkommandon, Flytta/Vrid från snäppunkt; ev. egen småversion för
@@ -78,17 +77,15 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 - Efter piloten: se *Efter pilotprojektet* i PLAN.md (bl.a. explodera
   DXF-underlag, mallblad mellan projekt). **1.0** bygglovshandling.
 
-## Nästa session: 0.8.12 Skalstock och stämplar
+## Nästa session: 0.8.13 Fler Modifiera-verktyg
 
-Läs synpunktsfilen och *0.8.12* i PLAN.md. Nytt format (11).
-
-- **Skalstock** som eget objekt på bladet, flyttbar när som helst. Be om
-  Carl Augusts DXF med skalstockarna för 1:1–1:5000 igen (den ligger inte i
-  repot). Hans standardläge på A1: x 611–711 mm, y 27–46 mm.
-- **Stämplar**: ritade som ett mallblad men utan papper, med smarttext och
-  fält, och ändras på ett ställe för alla blad (som huvudet i 0.8.6).
-- Tänk på `modelDoc` i `src/repr/sheet.ts`: vyerna på bladen får inte bero
-  på bladen eller det som ligger på dem.
+Läs synpunktsfilen och *0.8.13* i PLAN.md. Först: sortera Inkorgen med
+Carl August (elva punkter, se *Läget*) och fråga hur 0.8.11 och 0.8.12
+fungerade på webbhotellet. Stäm sedan av vilka Modifiera-verktyg och
+kortkommandon han vill ha innan något byggs; 0.8.13 riskerar att bli för
+stor, så föreslå att dela den (tjocklekstabell, dra och släpp, mätning i
+segment i egna småversioner). Nästa granskning (förra var 0.8.11) bör
+föreslås efter 0.8.13 eller 0.8.14.
 
 ## Att fråga Carl August om
 
@@ -121,10 +118,17 @@ Läs synpunktsfilen och *0.8.12* i PLAN.md. Nytt format (11).
   #INITIALER HL, #SKALA A3) blev fält, `{mapp}` och `{skala a3}`. Skriptet
   kördes med `--utan 605,22,716,50 --behall HÖJD --behall SWEREF` (utan
   skalstocken) och projektet med fälten `kommun,projektbeskrivning,handläggare`.
-- **Skalstocken** (0.8.12) måste gå att flytta när som helst (Carl August,
-  20 oktober). Hans standardläge på A1: innanför ramen nere till vänster om
-  huvudet, x 611–711 mm, y 27–46 mm; hans skalstockar för 1:1–1:5000 finns
-  i DXF:en (be om den igen i 0.8.12, den ligger inte i repot).
+- **0.8.12 efter provning** (Claudes val): skalstocken alltid 100 mm (ingen
+  inställning för längd och indelning); andra skalor än hans tolv delas in
+  som den med samma siffror (1:200 som 1:2000) eller efter jämna tal;
+  skalan från bladets första vy när den läggs på; läget 230 mm från
+  papperets högerkant och 40 mm upp på alla format (x 611 på A1); texthöjd
+  3 mm, linjerna 0,7/0,35/0,18 och texten 0,25; skalstockar och stämplar
+  går bara att flytta; en stämpel läggs nere till vänster innanför ramen
+  (eller där man högerklickar) och ritas över vyerna; en stämpel i en
+  stämpel blir en streckad ruta. I 1:50 är strecket vid 10 mm 4 mm långt
+  och tunt, som i DXF:en (de andra skalorna har ett mellanstreck där);
+  avsiktligt?
 - **Vyns ram efter provning** (0.8.7, Claudes val): att ramen följer med
   när skalan byts. Vill han kunna dölja hela vyrubriken, inte bara skalan?
 - **Synpunktsformuläret**: kommer breven fram till Gmail nu, efter `-f`?

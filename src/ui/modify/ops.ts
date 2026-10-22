@@ -1,4 +1,4 @@
-import { isViewportId } from '../../core/sheets';
+import { moveOnly } from '../../core/sheets';
 import type { Id } from '../../core/model';
 import { cornerPartner, refFrame } from '../../core/wallEdit';
 import { isShape, shapeCan, shapeEdgeAt, shapeNodes } from '../../elements/shapeEdit';
@@ -131,8 +131,8 @@ export interface ModifyHost extends ToolHost {
 /** Valen för ett klick, i den ordning de visas, med ett streck före de allmänna. */
 export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'>>, ctx: ModifyContext): OpId[][] {
   const doc = host.store.doc;
-  // Vyer på ett blad (0.8.9) går bara att flytta, också tillsammans med det som är ritat på bladet.
-  if (ctx.ids.some((id) => !doc.elements[id] && isViewportId(doc, id))) return [['move']];
+  // Vyer, skalstockar och stämplar på ett blad (0.8.9, 0.8.12) går bara att flytta, också tillsammans med det som är ritat på bladet.
+  if (ctx.ids.some((id) => moveOnly(doc, id))) return [['move']];
   const wall = ctx.wallId ? doc.elements[ctx.wallId] : undefined;
   const walls = ctx.ids.filter((id) => doc.elements[id]?.type === 'Wall');
   if (ctx.shapeId) {
@@ -312,7 +312,7 @@ export function railOf(op: OpId): RailDef | undefined {
 export function railFor(host: ToolHost, ids: readonly Id[]): Set<RailId> {
   const doc = host.store.doc;
   const on = new Set<RailId>();
-  if (ids.some((id) => !doc.elements[id] && isViewportId(doc, id))) return new Set<RailId>(['move']);
+  if (ids.some((id) => moveOnly(doc, id))) return new Set<RailId>(['move']);
   const els = ids.map((id) => doc.elements[id]).filter(Boolean);
   if (!els.length) return on;
   for (const id of ['move', 'rotate', 'mirror', 'multiply'] as const) on.add(id);

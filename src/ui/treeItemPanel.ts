@@ -1,7 +1,7 @@
 import { PRESETS } from '../core/graphics';
-import type { Id, ProjectDoc, TreeTab } from '../core/model';
+import { isMaster, type Id, type ProjectDoc, type TreeTab } from '../core/model';
 import type { DocStore } from '../core/store';
-import { PAPER_SIZES, saveMaster, setDefaultMaster } from '../core/sheets';
+import { PAPER_SIZES, saveMaster, setDefaultMaster, stampUsers } from '../core/sheets';
 import { deleteFolder, deleteWorksheet, descendantsOf, saveFolder, saveMarker, saveStorey, saveView, saveWorksheet, worksheetContents } from '../core/treeCommands';
 import { askConfirm } from './ask';
 import { markerName, type MarkerParams } from '../elements/markers';
@@ -112,6 +112,22 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
     const w = doc.worksheets.find((x) => x.id === item.id);
     if (!w) return '';
     const n = worksheetContents(doc, w.id).length;
+    if (w.stamp) {
+      // En stämpel (0.8.12).
+      const users = stampUsers(doc, w.id);
+      return `<form class="tree-form" data-tree-kind="worksheet" data-tree-id="${w.id}">
+      <header class="sel-head"><h2>${esc(w.name)}</h2><p>Stämpel · ${n} objekt</p></header>
+      <section>
+        <div class="fields">
+          ${field('Namn', `<input name="name" value="${esc(w.name)}">`)}
+          ${field('Mapp', `<select name="folder">${folderOptions(doc, 'ritningar', folder)}</select>`)}
+        </div>
+        <p class="note">Rita stämpeln med de vanliga verktygen i mm, kring nollpunkten (krysset): den hamnar där stämpeln läggs på bladet. Texter kan ha smarttext och fält, som fylls i från varje blad. En logga läggs in som underlag. Lägg på stämpeln i bladets egenskaper eller med högerklick på bladet.</p>
+        <p class="note">${users.length ? `Ligger på ${users.length} blad: ${users.map((s) => esc(s.number)).join(', ')}. Ändras stämpeln ändras den på alla.` : 'Stämpeln ligger inte på något blad än.'}</p>
+      </section>
+      ${actions(`<button type="button" class="btn btn-danger" data-tree="delete-worksheet">Ta bort…</button>`)}
+    </form>`;
+    }
     if (w.paper) {
       // Ett mallblad (0.8.8).
       const users = doc.sheets.filter((s) => s.master === w.id);
@@ -216,9 +232,10 @@ export function bindTreeForm(root: HTMLElement, store: DocStore, onSaved: (item:
       const w = store.doc.worksheets.find((x) => x.id === id);
       const n = worksheetContents(store.doc, id).length;
       if (!w) return;
-      const users = store.doc.sheets.filter((s) => s.master === id).length;
-      const what = w.paper ? 'mallbladet' : 'arbetsbladet';
-      void askConfirm(`Ta bort ${what}?`, `${w.name}${n ? ` och de ${n} objekten på det` : ''} tas bort.${users ? ` ${users} blad blir utan mall.` : ''} Det går att ångra.`).then((ok) => {
+      const users = w.stamp ? stampUsers(store.doc, id).length : store.doc.sheets.filter((s) => s.master === id).length;
+      const what = w.stamp ? 'stämpeln' : w.paper ? 'mallbladet' : 'arbetsbladet';
+      const after = users ? (w.stamp ? ` Den tas bort från ${users} blad.` : ` ${users} blad blir utan mall.`) : '';
+      void askConfirm(`Ta bort ${what}?`, `${w.name}${n ? ` och de ${n} objekten på ${w.stamp ? 'den' : 'det'}` : ''} tas bort.${after} Det går att ångra.`).then((ok) => {
         if (!ok) return;
         deleteWorksheet(store, id);
         closeItem();
@@ -263,7 +280,7 @@ export function bindTreeForm(root: HTMLElement, store: DocStore, onSaved: (item:
     } else if (kind === 'folder') {
       saveFolder(store, id, { name: str('name'), parent: folder });
     } else if (kind === 'worksheet') {
-      if (store.doc.worksheets.find((w) => w.id === id)?.paper) {
+      if (isMaster(store.doc.worksheets.find((w) => w.id === id))) {
         saveMaster(store, id, { name: str('name'), size: str('size') as never, orientation: str('orientation') as never }, folder);
         const isDefault = store.doc.project.master === id;
         if (d.has('default') !== isDefault) setDefaultMaster(store, d.has('default') ? id : null);

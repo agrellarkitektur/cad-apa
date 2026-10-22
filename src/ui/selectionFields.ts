@@ -15,6 +15,10 @@ import { markerFrame, markerName, type MarkerParams, type NorthParams } from '..
 import type { RoofParams } from '../elements/roof';
 import { radiusOf } from '../geometry/arc';
 import { drawingFields } from './drawingPanel';
+import type { ScaleBarParams } from '../elements/scaleBar';
+import type { StampParams } from '../elements/stamp';
+import { stampsOf } from '../core/sheets';
+import { viewSource } from '../repr/sheet';
 
 /**
  * Fälten i egenskapspanelen (0.8.1, ur propertiesPanel.ts): det markerade
@@ -180,6 +184,25 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         <h3>Textruta</h3>
         <div class="fields">${numberField('param:maxWidth', 'Största bredd', p.maxWidth ?? 0, 'mm', 1)}${numberField('param:maxHeight', 'Största höjd', p.maxHeight ?? 0, 'mm', 1)}</div>
         <p class="note">Mått på papperet; 0 är ingen gräns. Raderna bryts vid ord. Ryms texten inte i höjden visas en röd ram på skärmen, som inte skrivs ut.</p>`;
+    }
+    case 'ScaleBar': {
+      const p = resolveParams<ScaleBarParams>(doc, el);
+      const sheet = doc.sheets.find((s) => s.id === el.space);
+      const vps = sheet?.viewports ?? [];
+      const current = p.view && vps.some((v) => v.id === p.view) ? p.view : '';
+      const opt = (v: string, label: string) => `<option value="${escapeHtml(v)}"${v === current ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+      const vpName = (vp: (typeof vps)[number]) => `${vp.title?.trim() || viewSource(doc, vp.view)?.name || 'Vyn'} · 1:${vp.scale}`;
+      return `<label class="field"><span>Skala från</span><select data-key="scalebar:view">${vps.map((vp) => opt(vp.id, vpName(vp))).join('')}${opt('', 'Egen skala')}</select></label>
+        ${current ? '' : `<div class="fields">${numberField('scalebar:scale', 'Skala 1:', p.scale, '')}</div>`}
+        <p class="note">${current ? 'Skalstocken följer vyns skala, också när den ändras.' : 'Skriv skalans nämnare, t.ex. 100 för 1:100.'} Skalstocken är 100 mm lång och delas in som Agrell Arkitekturs skalstockar. Dra den dit den ska; den går att flytta när som helst.</p>`;
+    }
+    case 'Stamp': {
+      const p = resolveParams<StampParams>(doc, el);
+      const stamps = stampsOf(doc);
+      const known = stamps.some((w) => w.id === p.stamp);
+      return `<label class="field"><span>Stämpel</span><select data-key="stamp:stamp">${known ? '' : '<option selected>Finns inte längre</option>'}${stamps.map((w) => `<option value="${w.id}"${w.id === p.stamp ? ' selected' : ''}>${escapeHtml(w.name)}</option>`).join('')}</select></label>
+        <div class="row"><button class="btn" data-action="open-stamp"${known ? '' : ' disabled'}>Öppna stämpeln</button></div>
+        <p class="note">Stämpeln ritas en gång och ändras på alla blad den ligger på. Dra den dit den ska.</p>`;
     }
     default:
       return '';

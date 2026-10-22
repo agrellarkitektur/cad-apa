@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.11** (alfa, granskning); nästa är **0.8.12, skalstock och stämplar**.
+**0.8.12** (alfa, skalstock och stämplar); nästa är **0.8.13, fler Modifiera-verktyg**.
 
 ## Vad som fungerar
 
@@ -664,9 +664,27 @@ Version 0.8.11, granskning (samma filformat, 10):
 - Koden: `src/ui/app.ts` (974 → 528 rader) och `src/ui/app/sheets.ts`
   (585 → 321) uppdelade, med samma läge efter samma klick som förut
 
+Version 0.8.12, skalstock och stämplar (nytt filformat, 11):
+- **Skalstock** på bladet: *Lägg på skalstock* i bladets egenskaper eller
+  högerklick på bladet. Den hämtar skalan från en vy på bladet (och följer
+  den när skalan ändras) eller får en egen skala. Utseendet följer Agrell
+  Arkitekturs skalstockar (1:1–1:5000): 100 mm, SKALA 1:n ovanför, talen
+  och METER under. Andra skalor delas in som den med samma siffror (1:200
+  som 1:2000) eller efter jämna tal. Den läggs i A1-ramens läge (x 611,
+  y 40 mm från papperets nedre vänstra hörn, 230 mm från högerkanten på
+  andra format) och flyttas när som helst
+- **Stämplar** under Ritningar: ritas med de vanliga verktygen i mm kring
+  en nollpunkt, som ett mallblad fast utan papper, och kan ha smarttext och
+  fält som fylls i från varje blad. *Lägg på stämpeln* i bladets
+  egenskaper eller med högerklick; ändras stämpeln ändras den på alla blad.
+  En borttagen stämpel tas bort från bladen (går att ångra)
+- Skalstockar och stämplar markeras, flyttas och tas bort som det andra på
+  bladet; de går bara att flytta (inte vrida eller spegla)
+- Projekt i format 10 och äldre öppnas inte (alfaversion); öppna dem i 0.8.11
+
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer, i dag 10 (sedan 0.8.10). Fram till
+Projektfilerna har ett formatnummer, i dag 11 (sedan 0.8.12). Fram till
 den öppna betan uppgraderas inte projekt från äldre alfa- och betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp
