@@ -62,9 +62,9 @@ visas helt enkelt inte i den vyn.
 
 ## Ändra filformatet
 
-Före formatfrysen (pilotprojektet, 0.13, se PLAN.md) räcker det att höja
+Före formatfrysen (den öppna betan, se PLAN.md) räcker det att höja
 `FORMAT_VERSION` i `src/core/model.ts`. Inga nya migreringar skrivs: en fil
-i ett äldre format ger meddelandet att den kommer från en äldre betaversion
+i ett äldre format ger meddelandet att den kommer från en äldre alfaversion
 (`parse` i `src/storage/format.ts`), och ett autospar som inte går att läsa
 läggs åt sidan, inte bort. Migreringarna till och med format 5 togs bort med
 format 6 (0.8.6), eftersom ingen fil når nuvarande format genom dem; de finns

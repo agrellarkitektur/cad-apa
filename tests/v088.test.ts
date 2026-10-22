@@ -115,14 +115,14 @@ describe('mallblad (0.8.8, format 8)', () => {
     expect(textType.plan!(left as never, ctx)[0]).not.toHaveProperty('bold');
   });
 
-  it('sparas och läses; format 7 får meddelandet om en äldre betaversion', () => {
+  it('sparas och läses; format 7 får meddelandet om en äldre alfaversion', () => {
     const store = new DocStore(sampleProject());
     createSheet(store);
     const back = parse(serialize(store.doc));
     expect(back.project.master).toBe(EXAMPLE_MASTER_ID);
     expect(back.worksheets).toEqual(store.doc.worksheets);
     expect(back.sheets).toEqual(store.doc.sheets);
-    expect(() => parse(serialize({ ...store.doc, formatVersion: 7 }))).toThrow(/äldre betaversion.*format 7/);
+    expect(() => parse(serialize({ ...store.doc, formatVersion: 7 }))).toThrow(/äldre alfaversion.*format 7/);
   });
 
   it('skalorna i Carl Augusts ram finns att välja', () => {

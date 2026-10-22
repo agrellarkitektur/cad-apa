@@ -3,7 +3,7 @@ import { DEFAULT_VIEW_TAGS, FORMAT, FORMAT_VERSION, type ProjectDoc } from '../c
 
 /**
  * Projektfilens format. Varje gång formatet ändras höjs FORMAT_VERSION.
- * Före formatfrysen (pilotprojektet, 0.13) skrivs inga migreringar: en fil i
+ * Före formatfrysen (den öppna betan, se PLAN.md) skrivs inga migreringar: en fil i
  * ett äldre format får ett tydligt meddelande i stället. Migreringarna till
  * och med format 5 togs bort med format 6 (0.8.6), eftersom ingen fil längre
  * kan nå nuvarande format genom dem; de finns i git. Efter formatfrysen får
@@ -41,7 +41,7 @@ export function parse(text: string): ProjectDoc {
   }
   if (version < FORMAT_VERSION) {
     throw new ProjectFormatError(
-      `Projektet är sparat med en äldre betaversion av programmet (format ${version}). Före version 1.0 uppgraderas inte äldre projekt; öppna det i den version det gjordes med.`,
+      `Projektet är sparat med en äldre alfaversion av programmet (format ${version}). Före den öppna betan uppgraderas inte äldre projekt; öppna det i den version det gjordes med.`,
     );
   }
   return normalize(data);

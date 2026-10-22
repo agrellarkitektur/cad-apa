@@ -38,7 +38,7 @@ function sheetWithDrawing() {
 }
 
 describe('grafik och textrutor på bladen (0.8.9, format 9)', () => {
-  it('format 9: bladen har inga texter i sig längre; format 8 får meddelandet om en äldre betaversion', () => {
+  it('format 9: bladen har inga texter i sig längre; format 8 får meddelandet om en äldre alfaversion', () => {
     expect(FORMAT_VERSION).toBeGreaterThanOrEqual(9);
     const { store } = sheetWithDrawing();
     const raw = JSON.parse(serialize(store.doc));
@@ -46,7 +46,7 @@ describe('grafik och textrutor på bladen (0.8.9, format 9)', () => {
     const back = parse(JSON.stringify(raw));
     expect(back.sheets[0]).not.toHaveProperty('items');
     expect(Object.values(back.elements).filter((e) => e.space === back.sheets[0].id)).toHaveLength(2);
-    expect(() => parse(serialize({ ...store.doc, formatVersion: 8 }))).toThrow(/äldre betaversion/);
+    expect(() => parse(serialize({ ...store.doc, formatVersion: 8 }))).toThrow(/äldre alfaversion/);
   });
 
   it('det som är ritat på bladet ritas över vyerna i mm på papperet, med smarttext, och går att markera med vyerna', () => {

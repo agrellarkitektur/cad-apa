@@ -13,7 +13,12 @@ export type P2 = [number, number];
 
 export type DxfItem =
   | { kind: 'poly'; layer: string; pts: P2[]; closed: boolean }
-  | { kind: 'text'; layer: string; at: P2; height: number; text: string; angle: number }
+  /**
+   * En textrad. `at` är radens baslinje vid `align` (vänster, mitt eller
+   * höger), `height` versalhöjden i filens enheter (så mäts texthöjd i
+   * DXF). MTEXT med flera stycken blir en rad per stycke.
+   */
+  | { kind: 'text'; layer: string; at: P2; height: number; text: string; angle: number; align?: 'start' | 'middle' | 'end' }
   /**
    * Skraffering (HATCH, 0.8.3): konturerna (jämn–udda), och antingen solid
    * fyllning eller mönstrets linjefamiljer med riktning (grader) och avstånd
@@ -347,19 +352,137 @@ function chain(edges: P2[][][]): P2[] {
   return ring;
 }
 
-/** MTEXT:s formateringskoder bort, radbrytningar till mellanslag. */
-function plainText(s: string): string {
+/** Specialtecken som skrivs med %% i både TEXT och MTEXT. */
+function percentCodes(s: string): string {
   return s
-    .replace(/\\P/g, ' ')
-    .replace(/\\[ACFHQTWfhcqtw][^;]*;/g, '')
-    .replace(/\\[LlOoKk]/g, '')
-    .replace(/\\S([^;]*);/g, '$1')
-    .replace(/[{}]/g, '')
     .replace(/%%[cC]/g, 'Ø')
     .replace(/%%[dD]/g, '°')
     .replace(/%%[pP]/g, '±')
-    .replace(/\\\\/g, '\\')
-    .trim();
+    .replace(/%%[uUoOkK]/g, '')
+    .replace(/%%(\d{3})/g, (_, n: string) => String.fromCharCode(Number(n)))
+    .replace(/%%%/g, '%');
+}
+
+/** Tecken skrivna som \U+00E5 (äldre DXF), i både TEXT och MTEXT. */
+function unicodeCodes(s: string): string {
+  return s.replace(/\\U\+([0-9a-fA-F]{4})/g, (_, h: string) => String.fromCharCode(parseInt(h, 16)));
+}
+
+/** TEXT: en rad, bara specialtecknen tolkas. */
+function textLine(s: string): string {
+  return percentCodes(unicodeCodes(s)).trim();
+}
+
+/**
+ * MTEXT: formateringskoderna tolkas bort (typsnitt, höjd, färg, stycken som
+ * \pxql; …), och texten delas i rader vid \P. Staplade bråk (\S1/2;) blir
+ * 1/2, och {} som grupperar formatering försvinner.
+ */
+export function mtextLines(s: string): string[] {
+  let out = '';
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    if (c === '\\' && i + 1 < s.length) {
+      const k = s[i + 1];
+      if (k === 'P' || k === 'X' || k === 'N') {
+        out += '\n';
+        i++;
+      } else if (k === '~') {
+        out += ' ';
+        i++;
+      } else if (k === '\\' || k === '{' || k === '}') {
+        out += k;
+        i++;
+      } else if ('LlOoKk'.includes(k)) i++;
+      else if (k === 'U' && /^\+[0-9a-fA-F]{4}$/.test(s.slice(i + 2, i + 7))) {
+        out += String.fromCharCode(parseInt(s.slice(i + 3, i + 7), 16));
+        i += 6;
+      } else if ('SACFHQTWacfhqtwp'.includes(k) && s.indexOf(';', i) > 0) {
+        const end = s.indexOf(';', i);
+        if (k === 'S') out += s.slice(i + 2, end).replace(/[#^]/g, '/');
+        i = end;
+      }
+      // Okända koder: bara snedstrecket försvinner.
+      continue;
+    }
+    if (c === '{' || c === '}') continue;
+    if (c === '^' && i + 1 < s.length) {
+      const k = s[i + 1];
+      out += k === 'J' || k === 'M' ? '\n' : k === 'I' ? ' ' : '^';
+      i++;
+      continue;
+    }
+    out += c;
+  }
+  return percentCodes(out)
+    .split('\n')
+    .map((l) => l.replace(/\s+/g, ' ').trim());
+}
+
+const H_ALIGN = ['start', 'middle', 'end'] as const;
+
+/**
+ * Var textens rader hamnar: radernas baslinjer i filens koordinater (före
+ * blockets avbildning) och justeringen längs raden. TEXT har justeringen i
+ * 72 (vänster, mitt, höger, mellan två punkter, mitten, anpassad) och 73
+ * (baslinje, nederkant, mitt, överkant) med punkten i 11/21; MTEXT har sin
+ * fästpunkt i 71 (1–9, uppe till vänster till nere till höger).
+ */
+function textPlacement(e: RawEntity): { lines: string[]; points: P2[]; angle: number; height: number; align: 'start' | 'middle' | 'end' } | null {
+  const h = num(e, 40, 2.5);
+  const p10: P2 = [num(e, 10), num(e, 20)];
+  const has11 = e.codes.some((x) => x[0] === 11);
+  let lines: string[];
+  let angle = num(e, 50);
+  let at = p10;
+  let hor = 0;
+  let ver: 'baseline' | 'bottom' | 'middle' | 'top' = 'baseline';
+  let spacing = h * (5 / 3);
+  if (e.type === 'MTEXT') {
+    lines = mtextLines([...e.codes.filter((x) => x[0] === 3).map((x) => x[1]), str(e, 1)].join(''));
+    // MTEXT kan ha riktningen som vektor (11/21) i stället för vinkel.
+    if (has11) angle = (Math.atan2(num(e, 21), num(e, 11)) * 180) / Math.PI;
+    const ap = Math.min(9, Math.max(1, num(e, 71, 1)));
+    hor = (ap - 1) % 3;
+    ver = ap <= 3 ? 'top' : ap <= 6 ? 'middle' : 'bottom';
+    spacing *= num(e, 44, 1) || 1;
+    // Tomma rader i slutet påverkar inte placeringen.
+    while (lines.length && !lines.at(-1)) lines.pop();
+  } else {
+    lines = [textLine(str(e, 1))];
+    const h72 = num(e, 72);
+    const v73 = num(e, 73);
+    if (has11 && (h72 || v73)) {
+      const p11: P2 = [num(e, 11), num(e, 21)];
+      if (h72 === 3 || h72 === 5) {
+        // Mellan två punkter på baslinjen: mitt emellan, i deras riktning.
+        at = [(p10[0] + p11[0]) / 2, (p10[1] + p11[1]) / 2];
+        hor = 1;
+        if (Math.hypot(p11[0] - p10[0], p11[1] - p10[1]) > 1e-9) angle = (Math.atan2(p11[1] - p10[1], p11[0] - p10[0]) * 180) / Math.PI;
+      } else if (h72 === 4) {
+        at = p11;
+        hor = 1;
+        ver = 'middle';
+      } else {
+        at = p11;
+        hor = Math.min(2, h72);
+        ver = (['baseline', 'bottom', 'middle', 'top'] as const)[Math.min(3, v73)];
+      }
+    }
+  }
+  if (!lines.some((l) => l)) return null;
+  // Första radens baslinje räknat uppåt från punkten. Nederkant är under
+  // de nedre staplarna (g, p), ungefär 0,3 av versalhöjden under baslinjen.
+  const n = lines.length;
+  const total = h + (n - 1) * spacing;
+  const first = ver === 'top' ? -h : ver === 'middle' ? total / 2 - h : ver === 'bottom' ? (n - 1) * spacing + 0.3 * h : 0;
+  const a = (angle * Math.PI) / 180;
+  const up: P2 = [-Math.sin(a), Math.cos(a)];
+  const points = lines.map((_, i): P2 => {
+    const k = first - i * spacing;
+    return [at[0] + up[0] * k, at[1] + up[1] * k];
+  });
+  return { lines, points, angle, height: h, align: H_ALIGN[hor] };
 }
 
 export function parseDxf(text: string): DxfDrawing {
@@ -515,19 +638,14 @@ export function parseDxf(text: string): DxfDrawing {
         }
         case 'TEXT':
         case 'MTEXT': {
-          const raw = e.type === 'MTEXT' ? [...e.codes.filter((x) => x[0] === 3).map((x) => x[1]), str(e, 1)].join('') : str(e, 1);
-          const t = plainText(raw);
+          const t = textPlacement(e);
           if (!t) break;
-          // TEXT med justering har sin punkt i 11/21.
-          const aligned = e.type === 'TEXT' && (num(e, 72) || num(e, 73)) && e.codes.some((x) => x[0] === 11);
-          const at = apply(m, aligned ? [num(e, 11), num(e, 21)] : [num(e, 10), num(e, 20)]);
-          // MTEXT kan ha riktningen som vektor (11/21) i stället för vinkel.
-          let angle = num(e, 50);
-          if (e.type === 'MTEXT' && e.codes.some((x) => x[0] === 11)) angle = (Math.atan2(num(e, 21), num(e, 11)) * 180) / Math.PI;
           const sx = Math.hypot(m[0], m[1]);
           const rot = (Math.atan2(m[1], m[0]) * 180) / Math.PI;
           useLayer(layer);
-          items.push({ kind: 'text', layer, at, height: num(e, 40, 2.5) * sx, text: t, angle: angle + rot });
+          t.lines.forEach((line, i) => {
+            if (line) items.push({ kind: 'text', layer, at: apply(m, t.points[i]), height: t.height * sx, text: line, angle: t.angle + rot, align: t.align });
+          });
           break;
         }
         case 'HATCH': {

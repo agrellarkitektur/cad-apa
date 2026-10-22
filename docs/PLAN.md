@@ -11,7 +11,8 @@ komponenter som ändras överallt på en gång.
 Arkitekturen och principerna står i [ARKITEKTUR.md](ARKITEKTUR.md).
 
 **1.0** är när ett litet kontor kan göra en komplett bygglovshandling för en
-villa i programmet.
+villa i programmet. Pilotprojektet, alfan och den öppna betan (se nedan)
+leder dit, men inget av dem är 1.0.
 
 ## Inriktning (bestämt 20 oktober 2026)
 
@@ -21,6 +22,13 @@ för stora projekt byggs inte: samtidigt arbete i samma modell, installationer
 och konstruktion, jättemodeller och andra länders regler. Samma avgränsning
 gäller våra egna idéer: det som inte behövs för en bygglovshandling väntar
 till efter pilotprojektet (0.13).
+
+**Vägen ut** (bestämt 22 oktober 2026): först ritar Carl August själv ett
+hus (pilotprojektet, 0.13). När det han hittar är åtgärdat blir det en
+inbjuden **alfa** för arkitektvänner; den heter alfa och inte beta, eftersom
+man ännu inte kan rita ett helt hus. När deras synpunkter är inarbetade
+blir det en **öppen beta** som får spridas fritt, och då fryses formatet.
+Appen heter *Alfa* redan nu (sedan 0.8.11).
 
 Närmast byggs ett **proof of concept**: allt som krävs för att Carl August
 ska kunna rita ett av sina egna, redan inlämnade bygglov i cad-apa, från
@@ -36,9 +44,9 @@ något att bygga vidare på; ordningen efter den bestäms då.
   från webbläsarkod, så att den kan flyttas till en skrivbordsapp (Electron
   eller Tauri) om det behövs.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen, som kommer
-  med pilotprojektet (0.13). Formatnumret höjs fortfarande vid varje
+  med den öppna betan. Formatnumret höjs fortfarande vid varje
   formatändring, och en fil i ett äldre format ger ett tydligt meddelande om
-  att den kommer från en äldre betaversion. Från formatfrysen gäller
+  att den kommer från en äldre alfaversion. Från formatfrysen gäller
   migreringar igen.
 - **Kvalitet:** prestandatestet (`tests/prestanda.test.ts`, sedan 0.8 del
   2.1) ska gå igenom i varje version. Referensritningar läggs till i 0.8.2.
@@ -528,6 +536,15 @@ Småsaker från synpunkterna (21 oktober), som hör till städningen:
   färg (inte rött) när de är avslagna, och påslagna knappar en tydligare
   färg
 
+Från synpunkterna 21 oktober, sorterade 22 oktober:
+
+- **Linjetjocklek på skärmen**: en knapp i statusraden med tre lägen,
+  *Tunna* (alla linjer 1 px), *Skärm* (konstant i pixlar, som förut) och
+  *Verklig* (pappersmåttet gånger zoomen enligt skärmskalan, minst 1 px).
+  Som Archicads hårlinje och True Line Weight och Revits Thin Lines
+- **Alfa**: etiketten i appen och meddelandet om äldre filer säger alfa i
+  stället för beta (se *Vägen ut* överst)
+
 ### 0.8.12 Skalstock och stämplar · *nytt format*
 
 - **Skalstock** som ett inbyggt objekt på bladet, inte i mallen (samma ram
@@ -686,17 +703,30 @@ Carl Augusts synpunkter 20 oktober; före eller efter piloten bestäms när
 - Sol och skugga hämtas ur SWEREF-koordinaterna; datum och tid anges per vy
   (plan, sektion, fasad och 3D)
 
-### 0.13 Pilotprojektet (proof of concept) och formatfrys
+### 0.13 Pilotprojektet (proof of concept)
 
-- Carl August ritar ett av sina egna inlämnade bygglov (gärna en 1½-plansvilla
-  eller en tillbyggnad) i cad-apa, från underlag till plottade blad.
-  Situationsplanen ritas på kommunens grundkarta som DXF-underlag; terrängen
-  väntar
+- Carl August ritar själv ett hus, helst ett av sina egna inlämnade bygglov
+  (gärna en 1½-plansvilla eller en tillbyggnad), i cad-apa, från underlag
+  till plottade blad. Situationsplanen ritas på kommunens grundkarta som
+  DXF-underlag; terrängen väntar
 - Varje gång något saknas eller måste fuskas skrivs det ner, och tiden
   jämförs med Archicad
 - Det som stoppar piloten åtgärdas i småversioner; resten sorteras in under
   *Efter pilotprojektet*
-- Programmet visas för två eller tre andra ensamföretagande arkitekter
+
+### Inbjuden alfa
+
+- När det piloten visade är åtgärdat bjuds några arkitektvänner (gärna
+  ensamföretagande) in att prova. Den heter alfa, inte beta, eftersom man
+  ännu inte kan rita ett helt hus
+- Deras synpunkter samlas och arbetas in i småversioner. Formatet är inte
+  fruset än: en alfatestares fil kan behöva ritas om efter en uppdatering,
+  och det ska de veta från början
+
+### Öppen beta och formatfrys
+
+- När alfans synpunkter är inarbetade blir det en öppen beta som får
+  spridas fritt. Etiketten i appen blir *Beta*
 - Formatet fryses: från och med nu får varje formatändring en migrering och
   ett test som öppnar en fil i det gamla formatet
 

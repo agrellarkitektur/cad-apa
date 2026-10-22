@@ -17,10 +17,11 @@ byggs i vilken version), `docs/ARKITEKTUR.md` (idé och principer) och
   ett proof of concept fram till pilotprojektet (0.13). Föreslå inget som
   inte behövs för en bygglovshandling före piloten, utan lägg det under
   *Efter pilotprojektet*.
-- Bakåtkompatibilitet: före formatfrysen (0.13) skrivs inga migreringar.
+- Bakåtkompatibilitet: före formatfrysen (den öppna betan, efter piloten
+  och alfan) skrivs inga migreringar.
   Höj `FORMAT_VERSION` när formatet ändras och skriv den kortaste, bästa
   koden; äldre filer får ett meddelande om att de kommer från en äldre
-  betaversion. Formatändringar behöver inte samlas till stora uppdateringar.
+  alfaversion. Formatändringar behöver inte samlas till stora uppdateringar.
   Efter formatfrysen får varje formatändring en migrering i
   `src/storage/format.ts` och ett test som öppnar en fil i det gamla
   formatet.

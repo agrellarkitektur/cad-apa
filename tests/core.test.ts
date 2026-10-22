@@ -286,10 +286,10 @@ describe('filformat', () => {
     expect(parse(serialize(doc))).toEqual(doc);
   });
 
-  it('ett projekt i ett äldre format får ett meddelande om betaversionen (inga migreringar före formatfrysen)', () => {
+  it('ett projekt i ett äldre format får ett meddelande om alfaversionen (inga migreringar före formatfrysen)', () => {
     for (const v of [1, 5, FORMAT_VERSION - 1]) {
       const old = { ...sampleProject(), formatVersion: v } as any;
-      expect(() => parse(JSON.stringify(old))).toThrow(new RegExp(`äldre betaversion.*format ${v}`));
+      expect(() => parse(JSON.stringify(old))).toThrow(new RegExp(`äldre alfaversion.*format ${v}`));
     }
     expect(parse(serialize(sampleProject())).formatVersion).toBe(FORMAT_VERSION);
   });

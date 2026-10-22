@@ -107,6 +107,9 @@ export function dxfOf(doc: ProjectDoc, asset: Id): DxfDrawing | null {
 /** De senast ritade DXF-underlagen, så att samma ritning inte räknas om vid varje ändring. */
 const primCache = new Map<string, Primitive[]>();
 
+/** Versalhöjden som andel av teckenstorleken. */
+const DXF_CAP_HEIGHT = 0.72;
+
 function dxfPrims(doc: ProjectDoc, id: Id, p: UnderlayParams, drawingScale: number): Primitive[] {
   const d = dxfOf(doc, p.asset);
   if (!d) return [];
@@ -135,9 +138,12 @@ function dxfPrims(doc: ProjectDoc, id: Id, p: UnderlayParams, drawingScale: numb
         kind: 'text',
         at: t(it.at),
         text: it.text,
-        // Texthöjden på papper: mm i modellen genom ritningsskalan.
-        height: (it.height * p.scale) / drawingScale,
+        // DXF mäter versalhöjden, appen teckenstorleken (versalerna är
+        // ungefär 0,72 av den i Arial och Helvetica). På papper i mm genom
+        // ritningsskalan.
+        height: (it.height / DXF_CAP_HEIGHT) * (p.scale / drawingScale),
         angle: ((it.angle + p.angle) * Math.PI) / 180,
+        align: it.align,
         pen,
         origin,
       });

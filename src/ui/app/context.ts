@@ -15,6 +15,10 @@ import type { Selection } from '../selection';
 import type { SettingsDialog } from '../settingsDialog';
 import type { SmartMenu } from '../smartMenu';
 import type { installSheets } from './sheets';
+import type { installToolOptions } from './toolOptions';
+import type { installUnderlays } from './underlays';
+import type { installViews } from './views';
+import type { ViewTool } from '../../view2d/planView';
 import type { StyleDialog } from '../styleDialog';
 import type { Draw2DTool } from '../tools/draw2dTool';
 import type { DimensionTool, TextTool } from '../tools/annotationTools';
@@ -86,6 +90,12 @@ export interface AppContext {
   readonly ctxMenu: ContextMenu;
   /** Ritningsbladen: det valda på bladet, Flytta och Ta bort (0.8.6). */
   readonly sheets: ReturnType<typeof installSheets>;
+  /** Raden med verktygets val. */
+  readonly toolOpts: ReturnType<typeof installToolOptions>;
+  /** Underlagen: lägga in, kalibrera och rikta (0.8 del 2). */
+  readonly underlays: ReturnType<typeof installUnderlays>;
+  /** Vyerna: gå till en plats, vyknappen och historiken. */
+  readonly views: ReturnType<typeof installViews>;
 
   hint(text: string, ms?: number): void;
   renderAll(): void;
@@ -93,6 +103,10 @@ export interface AppContext {
   /** `keep`: markeringen och smartmenyn ligger kvar. */
   setTool(id: ToolId, keep?: boolean): void;
   setMode(mode: ViewMode): Promise<void>;
+  /** Verktyget för ett verktygsval: på ett ritningsblad markerar Markera också vyerna (0.8.9). */
+  toolFor(id: ToolId): ViewTool;
+  /** Rita om 3D-vyn efter en ändring. */
+  update3d(): void;
   setPanel(open: boolean, sheet?: 'peek' | 'full'): void;
   setNav(open: boolean): void;
   togglePanel(): void;

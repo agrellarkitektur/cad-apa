@@ -1,20 +1,6 @@
 import type { Brand } from '../brand';
-import { addElements } from '../core/commands';
-import { resolveParams } from '../elements/registry';
-import { modelViewId, type Id, type ProjectDoc, type ViewDef } from '../core/model';
-import { PRESETS, type StyleSheet } from '../core/graphics';
-import { existingState } from '../core/states';
+import type { ProjectDoc } from '../core/model';
 import { DocStore } from '../core/store';
-import type { WallParams } from '../elements/wall';
-import { buildPlan, type PlanResult } from '../repr/plan';
-import { paperPrim } from '../repr/sheet';
-import { paperSize } from '../core/sheets';
-import type { SectionResult } from '../repr/section';
-import { createSectionQueue, spawnSectionWorker } from './app/sectionQueue';
-import { markerName, modelBounds } from '../elements/markers';
-import { AlignTool, MarkerTool, RoofTool } from './tools/markerTools';
-import { MeasureTool, ZoomBoxTool } from './tools/measureTool';
-import { skewText, skewWarnings } from '../elements/angleCheck';
 import { Modifier } from './modify/controller';
 import { modifyContextAt, type ModifyHost } from './modify/ops';
 import type { Vec2 } from '../repr/primitives';
@@ -26,10 +12,8 @@ import { saveTextFile } from '../storage/projectFile';
 import { ContextMenu } from './contextMenu';
 import { releasedHint } from './tools/selectTool';
 import { minorStepFor } from '../view2d/grid';
-import { PlanView, type ViewTool } from '../view2d/planView';
+import { PlanView } from '../view2d/planView';
 import { renderHighlight } from './highlight';
-import { icons } from './icons';
-import { escapeHtml } from './labels';
 import { MeasureBox } from './measureBox';
 import { FeedbackDialog } from './feedbackDialog';
 import { PropertiesPanel } from './propertiesPanel';
@@ -45,22 +29,16 @@ import { InlineTextEditor } from './textEditor';
 import { Camera } from '../view2d/camera';
 import { createThemeSwitcher, currentTheme, onThemeChange } from './theme';
 import type { ToolHost } from './tools/host';
-import { SelectTool } from './tools/selectTool';
-import { DimensionTool, TextTool } from './tools/annotationTools';
-import { Draw2DTool } from './tools/draw2dTool';
-import { OpeningTool } from './tools/openingTool';
-import { RoomTool } from './tools/roomTool';
-import { WallTool, type WallToolOptions } from './tools/wallTool';
 import { lazyContext, type AppContext } from './app/context';
 import { installActions } from './app/actions';
 import { installClipboard } from './app/clipboard';
 import { installFiles } from './app/files';
-import { defaultState, defaultWallType, describeView, firstDefinition, formatScale, nf } from './app/helpers';
+import { describeView, formatScale, nf } from './app/helpers';
 import { installKeyboard } from './app/keyboard';
 import { installMenus } from './app/menus';
 import { installPane3d } from './app/pane3d';
 import { installPanes } from './app/panes';
-import { createUiState, GROUP_LABEL, PLAN_TOOLS, SHEET_TOOLS, shellMarkup, SPACE_TOOLS, TOOLS, type ToolId } from './app/shell';
+import { createUiState, shellMarkup } from './app/shell';
 import { installShowMenu } from './app/showMenu';
 import { snapSegments } from './app/snapping';
 import { installTextEdit } from './app/textEdit';
@@ -71,6 +49,8 @@ import { installViews } from './app/views';
 import { installUnderlays } from './app/underlays';
 import { installSheets } from './app/sheets';
 import { installPlot } from './app/plot';
+import { installRender } from './app/render';
+import { installTools } from './app/tools';
 
 /**
  * Bygger appen: planvyn, verktygen, panelerna och det som binder ihop dem
@@ -134,31 +114,6 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     requestAnimationFrame(() => pane3d.view3d?.refreshColors());
   });
 
-  // ---------- Verktygsraden ----------
-  const toolsEl = $<HTMLElement>('.tools');
-  let lastGroup = '';
-  for (const t of TOOLS) {
-    if (t.group !== lastGroup) {
-      const label = document.createElement('div');
-      label.className = 'tool-group-label';
-      label.textContent = GROUP_LABEL[t.group];
-      toolsEl.appendChild(label);
-      lastGroup = t.group;
-    }
-    const b = document.createElement('button');
-    b.className = 'tool';
-    b.dataset.tool = t.id;
-    b.innerHTML = `${icons[t.icon]}<span>${t.label}</span>`;
-    b.title = t.comesIn ? `${t.label} – kommer i ${t.comesIn}` : `${t.label}${t.key ? ` (${t.key})` : ''}`;
-    if (t.comesIn) {
-      b.setAttribute('aria-disabled', 'true');
-      b.addEventListener('click', () => hint(`${t.label} kommer i ${t.comesIn}, med smartobjekten.`));
-    } else {
-      b.addEventListener('click', () => setTool(t.id as ToolId));
-    }
-    toolsEl.appendChild(b);
-  }
-
   // Rutan för längd och ändring när en väggände dragits.
   const measureBox = new MeasureBox(store);
   canvas.appendChild(measureBox.el);
@@ -200,98 +155,15 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     },
   });
 
-  let plan: PlanResult = { prims: [], pickables: [] };
-  /** Den öppna fasaden eller sektionen, senast den räknades. */
-  let lastSection: SectionResult | null = null;
-  const sectionQueue = createSectionQueue(() => renderAll(), { spawn: typeof Worker === 'undefined' ? undefined : spawnSectionWorker });
-
-  /**
-   * En automatisk taklutning som markeras blir ett eget objekt (0.8), så att
-   * den går att flytta och ge en egen stil.
-   */
-  function materializeSlopes(): void {
-    const ids = selection.list().filter((id) => id.startsWith('slope:'));
-    if (!ids.length || !ui.marker || !lastSection) return;
-    const marker = store.doc.elements[ui.marker];
-    if (!marker) return;
-    const made = addElements(
-      store,
-      ids
-        .filter((id) => lastSection!.slopes[id])
-        .map((id) => ({ type: 'RoofSlope', storey: marker.storey, space: marker.id, states: [], tags: [], params: { ...lastSection!.slopes[id] }, props: {} })),
-      ui.state,
-      'Taklutningen blir ett eget objekt',
-    );
-    selection.set([...selection.list().filter((id) => !id.startsWith('slope:')), ...made.map((e) => e.id)]);
-  }
-
   // Text som redigeras direkt i ritningen (dubbelklick).
   textEditor = new InlineTextEditor(pane2d);
-
-  // ---------- Vyn som visas ----------
-
-  /** Stilmallen för vyn: en förinställd mall med projektets texter, eller projektets egen. */
-  // Samma förinställda stilmall ger samma objekt, så att planens cache träffar (0.8.3).
-  const presetStyles = new Map<string, { labels: StyleSheet['labels']; sheet: StyleSheet }>();
-  function styleFor(name: string | null): StyleSheet {
-    const g = store.doc.graphics;
-    const preset = name ? PRESETS.find((p) => p.name === name) : undefined;
-    if (!preset) return g;
-    const hit = presetStyles.get(preset.name);
-    if (hit && hit.labels === g.labels) return hit.sheet;
-    const sheet = { ...preset, labels: g.labels };
-    presetStyles.set(preset.name, { labels: g.labels, sheet });
-    return sheet;
-  }
-
-  function viewStatesOf(v: ViewDef) {
-    const ex = existingState(store.doc);
-    return {
-      state: v.state,
-      compareTo: v.compare && ex && ex.id !== v.state ? ex.id : undefined,
-      detail: v.detail,
-      hide: v.hide,
-      hideDemolished: v.hideDemolished,
-      autoDims: uiSettings.autoDims,
-      viewId: v.id,
-      viewTags: v.tags ?? [],
-      scale: v.scale ?? 100,
-    };
-  }
-
-  /** Mallbladet som visas (0.8.8), ritat i mm på papperet i skala 1:1. */
-  function shownMaster() {
-    const w = ui.worksheet ? store.doc.worksheets.find((x) => x.id === ui.worksheet) : undefined;
-    return w?.paper ? w : undefined;
-  }
-
-  function viewStates() {
-    const doc = store.doc;
-    const ex = existingState(doc);
-    const compareTo = ui.compare && ex && ex.id !== ui.state ? ex.id : undefined;
-    // Vilken vy det är, för 2D-element med Visas i (0.8).
-    const v = ui.activeView ? doc.views.find((x) => x.id === ui.activeView) : undefined;
-    const viewId = v ? v.id : modelViewId(ui.marker ?? ui.worksheet ?? ui.storey);
-    return {
-      state: ui.state,
-      compareTo,
-      detail: ui.detail,
-      hide: ui.hide,
-      hideDemolished: ui.hideDemolished,
-      autoDims: uiSettings.autoDims,
-      viewId,
-      viewTags: v?.tags ?? [],
-      showHidden: ui.showHidden,
-      scale: shownMaster() ? 1 : ui.scale,
-    };
-  }
 
   // ---------- Verktyg ----------
   const host: ToolHost = {
     store,
     selection,
     view,
-    plan: () => plan,
+    plan: () => render.plan,
     readOnly: () => !!ui.marker,
     canEdit: (id) => !!ui.marker && (store.doc.elements[id]?.space === ui.marker || id.startsWith('slope:')),
     space: () => ui.marker ?? ui.worksheet ?? ui.layout ?? undefined,
@@ -300,11 +172,11 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     hint,
     wallEndMoved: (wallId, end, original, companions) => {
       measureBox.showWallEnd(wallId, end, original, companions);
-      positionMeasureBox();
+      render.positionMeasureBox();
     },
     elementsMoved: (ids, applied, anchor) => {
       measureBox.showMove(ids, applied, anchor);
-      positionMeasureBox();
+      render.positionMeasureBox();
     },
     editText: (id, at) => textEdit.editTextAt(id, at),
     modify: (p, hitId) => {
@@ -325,209 +197,11 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     snapSegments: () => snapSegments(app),
   };
 
-  const selectTool = new SelectTool(host);
-  const wallTool = new WallTool(host, { definition: defaultWallType(store.doc), face: 'center', height: 2700 });
-  wallTool.onChange = () => {
-    // Ny vägg härifrån: smartmenyn försvinner när första väggen är ritad, och
-    // när kedjan är klar går det tillbaka till Markera.
-    if (wallFrom && modifier.drawingWall && wallTool.placed > 0) {
-      modifier.release();
-      smartMenu.hide();
-    }
-    if (wallFrom && !wallTool.drawing) {
-      if (modifier.drawingWall) modifier.release();
-      endWallFrom();
-    }
-    toolOpts.renderToolOptions();
-  };
-  const panTool: ViewTool = { cursor: 'grab', down: () => 'pan', tap: (p) => selectTool.tap(p) };
-  const doorTool = new OpeningTool(host, 'Door', { definition: firstDefinition(store.doc, 'Door') });
-  const windowTool = new OpeningTool(host, 'Window', { definition: firstDefinition(store.doc, 'Window') });
-  const roomTool = new RoomTool(host);
-  const dimensionTool = new DimensionTool(host);
-  dimensionTool.onChange = () => toolOpts.renderToolOptions();
-  const textTool = new TextTool(host);
-  const draw2dTool = new Draw2DTool(host);
-  draw2dTool.onChange = () => toolOpts.renderToolOptions();
-  const measureTool = new MeasureTool(host);
-  // Zooma till område: ett tillfälligt verktyg, sedan tillbaka.
-  const zoomBoxTool = new ZoomBoxTool(host);
-  let zoomingBox = false;
-  const endZoomBox = (): void => {
-    zoomingBox = false;
-    view.setTool(tools[ui.tool]);
-    view.requestRender();
-  };
-  zoomBoxTool.onDone = endZoomBox;
-  function startZoomBox(): void {
-    if (ui.mode === '3d') return;
-    zoomingBox = true;
-    view.setTool(zoomBoxTool);
-    hint('Dra upp en ruta att zooma till, eller klicka för att zooma in. Shift+Z: förra zoomen.', 3500);
-  }
-  function previousZoom(): void {
-    if (!view.previousZoom()) hint('Ingen tidigare zoom.');
-  }
-  measureTool.onChange = () => {
-    toolOpts.updateMeasureOptions();
-    view.requestRender();
-  };
-  // Flytta med måttbandet (0.8.4): fältet för avståndet får fokus direkt.
-  measureTool.onTarget = () => {
-    toolOpts.renderToolOptions();
-    const input = toolOptions.querySelector<HTMLInputElement>('#measure-move');
-    if (input) {
-      input.focus();
-      input.select();
-    }
-  };
-  const roofTool = new RoofTool(host);
-  const sectionTool = new MarkerTool(host, 'Section');
-  const elevationTool = new MarkerTool(host, 'Elevation');
-  const created = (id: Id) => {
-    setTool('select');
-    selection.set([id]);
-    const el = store.doc.elements[id];
-    if (el && (el.type === 'Section' || el.type === 'Elevation')) {
-      hint(`${markerName(store.doc, el)} finns nu i projektträdet under Modell. Dubbelklicka på linjen för att öppna den.`, 5000);
-    }
-  };
-  roofTool.onCreated = created;
-  sectionTool.onCreated = created;
-  elevationTool.onCreated = created;
-  roofTool.onChange = () => toolOpts.renderToolOptions();
-  sectionTool.onChange = () => toolOpts.renderToolOptions();
-  elevationTool.onChange = () => toolOpts.renderToolOptions();
-  const tools: Record<ToolId, ViewTool> = {
-    select: selectTool,
-    wall: wallTool,
-    pan: panTool,
-    door: doorTool,
-    window: windowTool,
-    room: roomTool,
-    dimension: dimensionTool,
-    text: textTool,
-    draw2d: draw2dTool,
-    roof: roofTool,
-    section: sectionTool,
-    elevation: elevationTool,
-    measure: measureTool,
-  };
-
-  /** `keep`: smartmenyn och markeringen ligger kvar (Ny vägg härifrån, 0.8.4). */
-  function setTool(id: ToolId, keep = false): void {
-    settingTool = true;
-    try {
-      changeTool(id, keep);
-    } finally {
-      settingTool = false;
-    }
-  }
-  let settingTool = false;
-  /** Verktyget för ett verktygsval: på ett ritningsblad markerar Markera också vyerna (0.8.9). */
-  const toolFor = (id: ToolId): ViewTool => (ui.layout && id === 'select' ? sheets.tool : tools[id]);
-  function changeTool(id: ToolId, keep: boolean): void {
-    measureBox.close();
-    // Ritverktygen ritar i planen: från en fasad eller sektion går man tillbaka dit.
-    // Mått, text och 2D ritas i fasaden eller sektionen (0.8).
-    if (PLAN_TOOLS.includes(id) && !SPACE_TOOLS.includes(id) && (ui.marker || ui.worksheet)) views.goTo({ kind: 'storey', id: ui.storey });
-    // På ett ritningsblad ritas text, linjer och ytor i mm på papperet (0.8.9).
-    // Mått stannar på bladet med ett tips; övriga ritverktyg går till planen.
-    if (ui.layout && id === 'dimension') {
-      hint('Mått ritas i vyerna, så får de vyns skala. Lägg vyn på bladet.', 4500);
-      return;
-    }
-    if (ui.layout && id !== 'select' && id !== 'pan' && !SHEET_TOOLS.includes(id)) views.goTo({ kind: 'storey', id: ui.storey });
-    if (PLAN_TOOLS.includes(id) && ui.mode === '3d') void pane3d.setMode('2d');
-    if (ui.tool === 'wall' && id !== 'wall') wallTool.finish();
-    if (ui.tool === 'dimension' && id !== 'dimension') dimensionTool.reset();
-    if (ui.tool === 'draw2d' && id !== 'draw2d') draw2dTool.finish(false);
-    if (ui.tool === 'roof' && id !== 'roof') roofTool.reset();
-    if (ui.tool === 'section' && id !== 'section') sectionTool.reset();
-    if (ui.tool === 'elevation' && id !== 'elevation') elevationTool.reset();
-    if (!keep) {
-      smartMenu.hide();
-      modifier.cancel();
-    }
-    ui.tool = id;
-    view.setTool(toolFor(id));
-    toolsEl.querySelectorAll<HTMLElement>('[data-tool]').forEach((b) => {
-      if (!b.hasAttribute('aria-disabled')) b.setAttribute('aria-pressed', String(b.dataset.tool === id));
-    });
-    if (PLAN_TOOLS.includes(id) && id !== 'room' && id !== 'text' && !keep) {
-      selection.clear();
-      if (window.innerWidth <= 960) panes.setPanel(false);
-    }
-    toolOpts.renderToolOptions();
-  }
-
-  /**
-   * Ett tak över alla väggar på våningen, med 500 mm utsprång och takfoten
-   * så att undersidan möter de högsta väggarnas överkant vid ytterlivet.
-   */
-  function roofOverHouse(): void {
-    const b = modelBounds(store.doc, ui.storey);
-    if (!b) {
-      hint('Rita väggar först, så läggs taket över dem.');
-      return;
-    }
-    const over = 500;
-    const walls = Object.values(store.doc.elements).filter((e) => e.type === 'Wall' && e.storey === ui.storey);
-    const top = Math.max(...walls.map((w) => resolveParams<WallParams>(store.doc, w).height));
-    const k = Math.tan((roofTool.options.slope * Math.PI) / 180);
-    roofTool.options.eave = Math.round(top - k * over);
-    roofTool.create([
-      [Math.round(b.minX - over), Math.round(b.minY - over)],
-      [Math.round(b.maxX + over), Math.round(b.minY - over)],
-      [Math.round(b.maxX + over), Math.round(b.maxY + over)],
-      [Math.round(b.minX - over), Math.round(b.maxY + over)],
-    ]);
-  }
-
-  /** Avbryt: först det pågående kommandot, sedan verktyget. */
-  function cancelCommand(): void {
-    if (underlays.busy()) {
-      underlays.cancel();
-      setTool('select');
-    } else if (modifier.busy) modifier.cancel();
-    else if (ui.tool === 'wall' && wallTool.drawing) wallTool.finish();
-    else if (ui.tool === 'dimension' && dimensionTool.count > 0) dimensionTool.reset();
-    else if (ui.tool === 'draw2d' && draw2dTool.count > 0) draw2dTool.reset();
-    else if (ui.tool === 'roof' && roofTool.started) roofTool.reset();
-    else if (ui.tool === 'section' && sectionTool.step > 0) sectionTool.reset();
-    else if (ui.tool === 'elevation' && elevationTool.step > 0) elevationTool.reset();
-    else if (ui.tool === 'measure' && measureTool.measurement().points > 0) measureTool.reset();
-    else setTool('select');
-    view.requestRender();
-  }
-
   // ---------- Panel och dialog ----------
-  const panel = new PropertiesPanel(store, selection, viewStates);
+  const panel = new PropertiesPanel(store, selection, () => render.viewStates());
   panel.onOpenMarker = (id) => views.goTo({ kind: 'marker', id });
   panel.onUnderlayTool = (id, mode) => underlays.startUnderlayTool(id, mode);
   panel.angleWarn = () => uiSettings.angleWarn;
-  // Rikta efter objekt: ett klick i planen, sedan tillbaka till verktyget.
-  const alignTool = new AlignTool(host);
-  let aligning = false;
-  const endAlign = (): void => {
-    aligning = false;
-    alignTool.target = null;
-    view.setTool(tools[ui.tool]);
-    view.requestRender();
-  };
-  alignTool.onDone = (ok) => {
-    endAlign();
-    if (!ok) hint('Ingen vägg eller linje där. Tryck på Rikta efter objekt och försök igen.');
-  };
-  panel.onAlignMarker = (id) => {
-    if (ui.marker) views.goTo({ kind: 'storey', id: ui.storey });
-    if (ui.tool !== 'select') setTool('select');
-    alignTool.target = id;
-    aligning = true;
-    view.setTool(alignTool);
-    hint(`Klicka på en vägg eller linje. ${store.doc.elements[id]?.type === 'Section' ? 'Sektionen' : 'Fasaden'} blir parallell med den; håll Shift för vinkelrät.`, 5000);
-  };
-
   const navigator = new Navigator({
     doc: () => store.doc,
     storey: () => ui.storey,
@@ -576,7 +250,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   panel.quickFor = (type) => uiSettings.quick[type] ?? [];
   panel.onCopied = (ids, center) => {
     measureBox.showMove(ids, [0, 0], center);
-    positionMeasureBox();
+    render.positionMeasureBox();
     hint('Kopian ligger ovanpå originalet. Dra den dit den ska, eller skriv avstånd och vinkel.', 4000);
   };
   const settingsDialog = new SettingsDialog(uiSettings, (s) => {
@@ -587,7 +261,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     if (!s.smartMenu) smartMenu.hide();
     modifyRail.render();
     toolOpts.renderToolOptions();
-    renderAll();
+    render.renderAll();
     view.requestRender();
     pane3d.view3d?.refreshColors();
     panel.render();
@@ -600,21 +274,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     startModify: (tool) => view.setTool(tool),
     // Ny vägg härifrån (0.8.4): väggverktyget med den klickade väggens typ,
     // höjd och liv, som börjar i änden. Verktygets egna val kommer tillbaka efteråt.
-    startWallFrom: (ctx) => {
-      const el = ctx.wallId ? store.doc.elements[ctx.wallId] : undefined;
-      if (!el || el.type !== 'Wall' || !ctx.end) return false;
-      const p = resolveParams<WallParams>(store.doc, el);
-      wallFrom ??= { ...wallTool.options };
-      wallTool.options.definition = el.definition ?? null;
-      wallTool.options.height = p.height;
-      wallTool.options.face = p.justification === 'right' ? 'outside' : p.justification === 'left' ? 'inside' : 'center';
-      setTool('wall', true);
-      wallTool.startAt([p[ctx.end][0], p[ctx.end][1]]);
-      return true;
-    },
-    stopWall: () => endWallFrom(),
+    startWallFrom: (ctx) => tools.startWallFrom(ctx),
+    stopWall: () => tools.endWallFrom(),
     endModify: () => {
-      if (ui.tool === 'select') view.setTool(toolFor('select'));
+      if (ui.tool === 'select') view.setTool(tools.toolFor('select'));
       view.requestRender();
     },
   };
@@ -632,24 +295,15 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   });
   /** Det markerade på skärmen; null när bara 3D visas eller det inte syns. */
   function selectionBox(): ScreenBox | null {
-    const b = ui.mode === '3d' ? null : selectionBounds(plan, selection.list());
+    const b = ui.mode === '3d' ? null : selectionBounds(render.plan, selection.list());
     return b ? screenBox(view, canvas, b) : null;
   }
   /** Det markerade som helhet; markerat med ett klick utgår valen från klicket. */
-  const bodyContext = () => bodyContextAt(view, plan, store.doc.elements, selection.list(), press && !press.drag && ui.mode !== '3d' ? press : null);
-  /** Väggverktygets val innan Ny vägg härifrån tog över, eller null. */
-  let wallFrom: WallToolOptions | null = null;
-  function endWallFrom(): void {
-    if (!wallFrom) return;
-    Object.assign(wallTool.options, wallFrom);
-    wallFrom = null;
-    // Byts verktyget just nu (en knapp i verktygsraden) går det dit i stället.
-    if (ui.tool === 'wall' && !settingTool) setTool('select', true);
-  }
+  const bodyContext = () => bodyContextAt(view, render.plan, store.doc.elements, selection.list(), press && !press.drag && ui.mode !== '3d' ? press : null);
   selection.subscribe(() => {
     modifier.setSelection(bodyContext());
     // En markerad automatisk taklutning blir ett eget objekt.
-    if (selection.list().some((id) => id.startsWith('slope:'))) queueMicrotask(materializeSlopes);
+    if (selection.list().some((id) => id.startsWith('slope:'))) queueMicrotask(render.materializeSlopes);
   });
   let pointerAt: { x: number; y: number; t: string; sel: string } | null = null;
   /** Trycket som pågår, för var valen i smartmenyn utgår från (se bodyContext). */
@@ -694,121 +348,13 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   tempDims.onReleased = (n) => hint(releasedHint(n), 4000);
   view.setHighlighter(
     (cam) =>
-      renderHighlight(cam, store.doc, plan.pickables, new Set(selection.list()), ui.tool === 'select' ? selectTool.hoverId : null, !ui.marker && !ui.worksheet && !ui.layout) +
-      tempDims.render(cam, selection.list(), viewStates(), ui.tool === 'select' && ui.mode !== '3d' && !ui.marker && !ui.worksheet && !ui.layout && !modifier.running) +
-      skewMarks(cam),
+      renderHighlight(cam, store.doc, render.plan.pickables, new Set(selection.list()), ui.tool === 'select' ? tools.selectTool.hoverId : null, !ui.marker && !ui.worksheet && !ui.layout) +
+      tempDims.render(cam, selection.list(), render.viewStates(), ui.tool === 'select' && ui.mode !== '3d' && !ui.marker && !ui.worksheet && !ui.layout && !modifier.running) +
+      render.skewMarks(cam),
   );
 
-  /** Utropstecken vid det som ligger nästan men inte exakt rakt (bara i planen, inte på papper). */
-  function skewMarks(cam: Camera): string {
-    if (ui.marker || ui.worksheet || ui.layout) return '';
-    return skewWarnings(store.doc, ui.storey, ui.state, uiSettings.angleWarn)
-      .map((w) => {
-        const [x, y] = cam.toScreen(w.at);
-        return `<g class="skew-mark" transform="translate(${x.toFixed(1)} ${(y - 14).toFixed(1)})"><title>${escapeHtml(skewText(w))}</title><path d="M0 -8L8 6H-8Z"/><text y="4.5" text-anchor="middle">!</text></g>`;
-      })
-      .join('');
-  }
-
-  // ---------- Rendering ----------
-  function renderAll(): void {
-    const doc = store.doc;
-    if (!doc.states.some((s) => s.id === ui.state)) ui.state = defaultState(doc);
-    if (!doc.storeys.some((s) => s.id === ui.storey)) ui.storey = doc.storeys[0].id;
-    const vs = viewStates();
-
-    out('project').textContent = doc.project.name;
-    if (ui.marker && !doc.elements[ui.marker]) ui.marker = null;
-    if (ui.worksheet && !doc.worksheets.some((w) => w.id === ui.worksheet)) ui.worksheet = null;
-    if (ui.layout && !doc.sheets.some((s) => s.id === ui.layout)) ui.layout = null;
-    const markerEl = ui.marker ? doc.elements[ui.marker] : undefined;
-    const sheet = ui.worksheet ? doc.worksheets.find((w) => w.id === ui.worksheet) : undefined;
-    const layout = ui.layout ? doc.sheets.find((s) => s.id === ui.layout) : undefined;
-    out('storey').textContent = markerEl ? markerName(doc, markerEl) : sheet ? sheet.name : layout ? `${layout.number} ${layout.name}` : (doc.storeys.find((s) => s.id === ui.storey)?.name ?? '');
-    appEl.dataset.place = markerEl ? 'section' : sheet ? (sheet.paper ? 'master' : 'worksheet') : layout ? 'sheet' : 'plan';
-    // Ett ritningsblad och ett mallblad ritas i mm på papperet, 1:1; annars i vyns annoteringsskala (0.8 del 3).
-    const master = sheet?.paper ? sheet : undefined;
-    view.drawingScale = layout || master ? 1 : ui.scale;
-    view.showGrid = layout || master ? false : uiSettings.grid;
-    view.showScaleBar = !layout && !master;
-    // Markera på ett blad tar också vyerna (0.8.9); tillbaka i planen det vanliga.
-    if (layout && view.currentTool === selectTool) view.setTool(sheets.tool);
-    else if (!layout && view.currentTool === sheets.tool) view.setTool(tools[ui.tool]);
-
-    chips.innerHTML =
-      doc.states
-        .map((s) => `<button role="tab" class="chip" data-state="${s.id}" aria-selected="${s.id === ui.state}">${escapeHtml(s.name)}</button>`)
-        .join('') + `<button class="chip chip-add" data-action="new-proposal" aria-label="Nytt förslag" title="Nytt förslag">${icons.plus}</button>`;
-
-    const ex = existingState(doc);
-    compareLabel.hidden = !ex || ex.id === ui.state;
-    if (ex) out('compare-label').textContent = `Jämför med ${ex.name}`;
-    compareToggle.checked = ui.compare;
-
-    // Fasad eller sektion: räknas fram ur modellen i stället för planen. Det
-    // som är ritat i den (mått, text, 2D, taklutningar) läggs ovanpå (0.8).
-    // Stora fasader och sektioner räknas i en bakgrundstråd (0.8.2): medan
-    // den räknar visas den förra versionen, och renderAll körs igen när den är klar.
-    const section = markerEl ? sectionQueue.get(doc, markerEl.id, vs, styleFor(ui.styleName), ui.styleName ?? '') : null;
-    lastSection = section;
-    computing.hidden = !(markerEl && sectionQueue.pending);
-    const paper = layout ? sheets.drawing() : null;
-    if (paper) {
-      plan = { prims: paper.prims, pickables: paper.pickables };
-    } else if (markerEl) {
-      const drawn = buildPlan(doc, markerEl.storey, { ...vs, place: markerEl.id }, styleFor(ui.styleName));
-      // Underlagen ligger under fasaden eller sektionen; det andra som ritats i den ovanpå.
-      // Första gången en stor vy räknas finns ingen fasad än, bara det ritade.
-      const under = drawn.prims.filter((q) => q.origin?.objectType === 'Underlay');
-      const over = drawn.prims.filter((q) => q.origin?.objectType !== 'Underlay');
-      plan = { prims: [...under, ...(section?.prims ?? []), ...over], pickables: [...(section?.pickables ?? []), ...drawn.pickables] };
-    } else if (sheet) {
-      // Ett arbetsblad (0.8 del 2): bara det som är ritat på det. Ett mallblad (0.8.8) med papperet under.
-      plan = buildPlan(doc, ui.storey, { ...vs, place: sheet.id }, styleFor(ui.styleName));
-      if (sheet.paper) {
-        const [w, h] = paperSize(sheet.paper);
-        plan = { prims: [paperPrim(w, h), ...plan.prims], pickables: plan.pickables };
-      }
-    } else plan = buildPlan(doc, ui.storey, vs, styleFor(ui.styleName));
-    // Kalkerad vy: en annan vy tonad under, t.ex. möbleringen under en undertaksplan.
-    const traced = ui.trace && !section && !sheet && !layout ? doc.views.find((v) => v.id === ui.trace) : undefined;
-    view.setUnderlay(traced ? buildPlan(doc, traced.storey, viewStatesOf(traced), styleFor(traced.style ?? null)).prims : []);
-    views.renderViewButton();
-    if (ui.navOpen) navigator.render();
-    positionMeasureBox();
-    selection.prune((id) => !!doc.elements[id] || !!layout?.viewports.some((v) => v.id === id));
-    view.setPrimitives(plan.prims);
-    pane3d.update3d();
-    panel.render();
-    smartMenu.refresh();
-    if (ui.tool === 'wall') toolOpts.renderToolOptions();
-
-    const undo = $<HTMLButtonElement>('[data-action="undo"]');
-    const redo = $<HTMLButtonElement>('[data-action="redo"]');
-    undo.disabled = !store.canUndo;
-    redo.disabled = !store.canRedo;
-    undo.title = store.undoLabel ? `Ångra: ${store.undoLabel} (Ctrl+Z)` : 'Ångra';
-    redo.title = store.redoLabel ? `Gör om: ${store.redoLabel} (Ctrl+Shift+Z)` : 'Gör om';
-  }
-
-  /** Zooma planen till det markerade. */
-  function zoomToSelection(): void {
-    const b = selectionBounds(plan, selection.list());
-    if (!b) return;
-    if (ui.mode === '3d') void pane3d.setMode('2d');
-    view.zoomToBounds(b);
-  }
-
-  /** Måttrutan sitter vid sin punkt i planen, eller i 3D när bara 3D visas. */
-  function positionMeasureBox(): void {
-    if (!measureBox.open) return;
-    const v = pane3d.view3d;
-    if (ui.mode === '3d' && v) measureBox.update((p) => v.project(p));
-    else measureBox.update((p) => view.camera.toScreen(p));
-  }
-
   store.subscribe((_doc, ev) => {
-    renderAll();
+    render.renderAll();
     if (ev.cause === 'undo' && ev.transaction) hint(`Ångrade: ${ev.transaction.label}`);
     if (ev.cause === 'redo' && ev.transaction) hint(`Gjorde om: ${ev.transaction.label}`);
     if (ev.cause === 'load') {
@@ -867,24 +413,24 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     ui: () => ui,
     uiSettings: () => uiSettings,
     view: () => view,
-    plan: () => plan,
-    section: () => lastSection,
+    plan: () => render.plan,
+    section: () => render.section,
     view3d: () => pane3d.view3d,
     host: () => host,
-    selectTool: () => selectTool,
-    wallTool: () => wallTool,
-    doorTool: () => doorTool,
-    windowTool: () => windowTool,
-    roomTool: () => roomTool,
-    dimensionTool: () => dimensionTool,
-    textTool: () => textTool,
-    draw2dTool: () => draw2dTool,
-    measureTool: () => measureTool,
-    roofTool: () => roofTool,
-    sectionTool: () => sectionTool,
-    elevationTool: () => elevationTool,
-    aligning: () => aligning,
-    zoomingBox: () => zoomingBox,
+    selectTool: () => tools.selectTool,
+    wallTool: () => tools.wallTool,
+    doorTool: () => tools.doorTool,
+    windowTool: () => tools.windowTool,
+    roomTool: () => tools.roomTool,
+    dimensionTool: () => tools.dimensionTool,
+    textTool: () => tools.textTool,
+    draw2dTool: () => tools.draw2dTool,
+    measureTool: () => tools.measureTool,
+    roofTool: () => tools.roofTool,
+    sectionTool: () => tools.sectionTool,
+    elevationTool: () => tools.elevationTool,
+    aligning: () => tools.aligning,
+    zoomingBox: () => tools.zoomingBox,
     panel: () => panel,
     smartMenu: () => smartMenu,
     modifier: () => modifier,
@@ -895,10 +441,12 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     styleDialog: () => styleDialog,
     ctxMenu: () => ctxMenu,
     hint: () => hint,
-    renderAll: () => renderAll,
-    viewStates: () => viewStates,
-    setTool: () => setTool,
+    renderAll: () => render.renderAll,
+    viewStates: () => render.viewStates,
+    setTool: () => tools.setTool,
     setMode: () => pane3d.setMode,
+    toolFor: () => tools.toolFor,
+    update3d: () => pane3d.update3d,
     setPanel: () => panes.setPanel,
     setNav: () => panes.setNav,
     togglePanel: () => panes.togglePanel,
@@ -906,14 +454,14 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     toggleGrid: () => actions.toggleGrid,
     closeMenu: () => actions.closeMenu,
     closeShowMenu: () => showMenu.closeShowMenu,
-    cancelCommand: () => cancelCommand,
-    endAlign: () => endAlign,
-    startZoomBox: () => startZoomBox,
-    endZoomBox: () => endZoomBox,
-    previousZoom: () => previousZoom,
-    zoomToSelection: () => zoomToSelection,
-    positionMeasureBox: () => positionMeasureBox,
-    roofOverHouse: () => roofOverHouse,
+    cancelCommand: () => tools.cancelCommand,
+    endAlign: () => tools.endAlign,
+    startZoomBox: () => tools.startZoomBox,
+    endZoomBox: () => tools.endZoomBox,
+    previousZoom: () => tools.previousZoom,
+    zoomToSelection: () => render.zoomToSelection,
+    positionMeasureBox: () => render.positionMeasureBox,
+    roofOverHouse: () => tools.roofOverHouse,
     screenMm: () => screenMm,
     saveNow: () => files.saveNow,
     openFile: () => files.openFile,
@@ -931,7 +479,12 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     showUnderlay: () => underlays.showUnderlay,
     pasteFromMenu: () => clipboard.pasteFromMenu,
     sheets: () => sheets,
+    toolOpts: () => toolOpts,
+    underlays: () => underlays,
+    views: () => views,
   });
+  const render = installRender(app, { chips, compareToggle, compareLabel, computing });
+  const tools = installTools(app, host);
   const panes = installPanes(app);
   const pane3d = installPane3d(app);
   const textEdit = installTextEdit(app, textEditor!);
@@ -949,15 +502,15 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const actions = installActions(app, { brand, feedbackDialog, files, menus, panes, plot, sheets, showMenu, views });
 
   // För felsökning i webbläsarens konsol.
-  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifier, smartMenu, setTool, goTo: views.goTo, setMode: pane3d.setMode, get sheets() { return sheets; }, sections: sectionQueue, get plot() { return plot; }, get plan() { return plan; }, get view3d() { return pane3d.view3d; } };
+  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifier, smartMenu, setTool: tools.setTool, goTo: views.goTo, setMode: pane3d.setMode, get sheets() { return sheets; }, sections: render.sectionQueue, get plot() { return plot; }, get plan() { return render.plan; }, get view3d() { return pane3d.view3d; } };
 
   appEl.dataset.mode = ui.mode;
   appEl.dataset.sheet = ui.sheet;
   panes.applyPaneClasses();
   showMenu.applyTraceLook();
   window.addEventListener('resize', () => panes.applyPaneClasses());
-  renderAll();
-  setTool('select');
+  render.renderAll();
+  tools.setTool('select');
   view.zoomToFit();
   if (migrated) hint('Projektet har uppdaterats till den nya versionen. Exemplet finns under Börja om med exemplet.', 5000);
 

@@ -4,8 +4,8 @@ import type { Brand } from './types.ts';
 export const cadApa: Brand = {
   name: 'cad-apa',
   shortName: 'cad-apa',
-  description: 'Ritprogram i webbläsaren för små arkitektkontor. Betaversion.',
-  badge: 'Beta',
+  description: 'Ritprogram i webbläsaren för små arkitektkontor. Alfaversion.',
+  badge: 'Alfa',
   // Delad i bitar så att den inte plockas upp av adressinsamlare.
   feedbackFallback: ['ca', 'agrellarkitektur.se'].join('@'),
   themeColor: '#f3f5f6',

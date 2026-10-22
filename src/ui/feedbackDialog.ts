@@ -44,7 +44,7 @@ export class FeedbackDialog {
     this.el.innerHTML = `<form class="dialog feedback" role="dialog" aria-modal="true" aria-labelledby="fb-title">
       <header><h2 id="fb-title">Skicka synpunkter</h2><button type="button" class="icon-btn" data-action="cancel-feedback" aria-label="Stäng">×</button></header>
       <div class="dialog-body">
-        <p class="note">${escapeHtml(this.product)} är en betaversion. Berätta vad som fungerar, vad som saknas och vad som blir fel. Allt läses.</p>
+        <p class="note">${escapeHtml(this.product)} är en alfaversion. Berätta vad som fungerar, vad som saknas och vad som blir fel. Allt läses.</p>
         <label class="field" for="fb-text"><span>Synpunkt</span><textarea id="fb-text" name="message" rows="7" required maxlength="5000" placeholder="T.ex. vad du försökte göra och vad som hände"></textarea></label>
         <label class="field" for="fb-mail"><span>E-post <small>(om du vill ha svar)</small></span><input id="fb-mail" name="email" type="email" autocomplete="email" placeholder="namn@exempel.se"></label>
         <label class="fb-trap" aria-hidden="true">Lämna tomt<input name="website" tabindex="-1" autocomplete="off"></label>
