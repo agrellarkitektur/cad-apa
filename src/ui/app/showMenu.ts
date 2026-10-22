@@ -4,6 +4,84 @@ import { Camera } from '../../view2d/camera';
 import { escapeHtml } from '../labels';
 import type { AppContext } from './context';
 import { ANNOTATION_SCALES, formatScale, nf } from './helpers';
+import type { UiState } from './shell';
+
+/**
+ * Det som kan tändas och släckas under Visa, i kategorier (0.8.11). Nyckeln
+ * är en objekttyp eller en del av ritningen i vyns `hide`; `demolished` är
+ * vyns `hideDemolished`. Littera kan släckas per objekttyp (`littera:Wall`);
+ * äldre vyer med `littera` släcker all littera.
+ */
+export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly (readonly [key: string, label: string])[] }[] = [
+  {
+    id: 'model',
+    label: 'Modell',
+    items: [
+      ['demolished', 'Det som rivs'],
+      ['Roof', 'Tak'],
+      ['Furniture', 'Möbler och inredning'],
+      ['swing', 'Öppningssätt (dörrar)'],
+      ['Underlay', 'Underlag'],
+    ],
+  },
+  {
+    id: 'littera',
+    label: 'Littera',
+    items: [
+      ['littera:Wall', 'Väggar'],
+      ['littera:Door', 'Dörrar'],
+      ['littera:Window', 'Fönster'],
+    ],
+  },
+  {
+    id: 'annotation',
+    label: 'Rum, mått och text',
+    items: [
+      ['Space', 'Rum'],
+      ['Dimension', 'Mått'],
+      ['Text', 'Text'],
+    ],
+  },
+  {
+    id: '2d',
+    label: '2D',
+    items: [
+      ['Line2D', 'Linjer'],
+      ['Fill2D', 'Fyllningar'],
+    ],
+  },
+  {
+    id: 'markers',
+    label: 'Markörer',
+    items: [
+      ['Elevation', 'Fasader'],
+      ['Section', 'Sektioner'],
+      ['North', 'Norrpil'],
+      ['roofSlope', 'Taklutning i fasad och sektion'],
+    ],
+  },
+];
+
+/** Om det som nyckeln står för syns i vyn. */
+export function isShown(ui: Pick<UiState, 'hide' | 'hideDemolished'>, key: string): boolean {
+  if (key === 'demolished') return !ui.hideDemolished;
+  if (key.startsWith('littera:') && ui.hide.includes('littera')) return false;
+  return !ui.hide.includes(key);
+}
+
+/** Tänd eller släck det som nyckeln står för. */
+export function setShown(ui: Pick<UiState, 'hide' | 'hideDemolished'>, key: string, on: boolean): void {
+  if (key === 'demolished') {
+    ui.hideDemolished = !on;
+    return;
+  }
+  // Släckte en äldre vy all littera: dela upp den på objekttyperna först.
+  if (key.startsWith('littera:') && ui.hide.includes('littera')) {
+    const all = SHOW_GROUPS.find((g) => g.id === 'littera')!.items.map(([k]) => k);
+    ui.hide = [...ui.hide.filter((h) => h !== 'littera'), ...all.filter((k) => !ui.hide.includes(k))];
+  }
+  ui.hide = on ? ui.hide.filter((h) => h !== key) : ui.hide.includes(key) ? ui.hide : [...ui.hide, key];
+}
 
 /** Visa-menyn med kalkeringen, och skärmskalan i statusraden. */
 export function installShowMenu(app: AppContext) {
@@ -123,22 +201,14 @@ export function installShowMenu(app: AppContext) {
       `<div class="segmented detail-switch in-menu" role="group" aria-label="Detaljnivå">${(['sketch', 'normal', 'detail'] as const)
         .map((d) => `<button data-detail="${d}" aria-pressed="${ui.detail === d}">${{ sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' }[d]}</button>`)
         .join('')}</div>` +
-      item('demolished', 'Det som rivs', !ui.hideDemolished) +
-      item('littera', 'Littera', !ui.hide.includes('littera')) +
-      item('Space', 'Rum', !ui.hide.includes('Space')) +
-      item('Furniture', 'Möbler och inredning', !ui.hide.includes('Furniture')) +
-      item('Dimension', 'Mått', !ui.hide.includes('Dimension')) +
-      item('Text', 'Text', !ui.hide.includes('Text')) +
-      item('Roof', 'Tak', !ui.hide.includes('Roof')) +
-      item('swing', 'Öppningssätt (dörrar)', !ui.hide.includes('swing')) +
-      item('roofSlope', 'Taklutning i fasad och sektion', !ui.hide.includes('roofSlope')) +
-      item('Line2D', '2D-linjer', !ui.hide.includes('Line2D')) +
-      item('Fill2D', 'Fyllningar', !ui.hide.includes('Fill2D')) +
+      SHOW_GROUPS.map((g) => {
+        const shown = g.items.filter(([k]) => isShown(ui, k)).length;
+        return `<div class="show-group" role="group" aria-label="${g.label}">
+          <label class="check show-group-head"><input type="checkbox" data-show-group="${g.id}"${shown === g.items.length ? ' checked' : ''}> ${g.label}</label>
+          ${g.items.map(([k, label]) => item(k, label, isShown(ui, k))).join('')}
+        </div>`;
+      }).join('') +
       item('showHidden', 'Visa dolda 2D-element (tonade)', ui.showHidden) +
-      '<div class="menu-label">Markörer i planen</div>' +
-      item('Elevation', 'Fasader', !ui.hide.includes('Elevation')) +
-      item('Section', 'Sektioner', !ui.hide.includes('Section')) +
-      item('North', 'Norrpil', !ui.hide.includes('North')) +
       `<label class="field"><span>Skala för texter och mått</span><select data-show-scale>${ANNOTATION_SCALES.map((n) => `<option value="${n}"${n === ui.scale ? ' selected' : ''}>1:${n}</option>`).join('')}${ANNOTATION_SCALES.includes(ui.scale) ? '' : `<option value="${ui.scale}" selected>1:${ui.scale}</option>`}</select></label>` +
       `<label class="field"><span>Stilmall i vyn</span><select data-show-style><option value="">Projektets (${escapeHtml(store.doc.graphics.name)})</option>${PRESETS.map((p) => `<option value="${escapeHtml(p.name)}"${ui.styleName === p.name ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}</select></label>` +
       `<label class="field"><span>Kalkera en annan vy</span><select data-show-trace><option value="">Ingen</option>${store.doc.views
@@ -148,8 +218,39 @@ export function installShowMenu(app: AppContext) {
       traceLookMarkup() +
       `<button class="btn show-style-link" data-action="style">Stilmall och ritningsgrafik…</button>`;
     m.hidden = false;
+    syncGroups();
     app.$<HTMLElement>('.show-btn').setAttribute('aria-expanded', 'true');
   }
 
-  return { applyTraceLook, closeScalePop, closeShowMenu, openScalePop, refreshShowMenu, scalePop, toggleShowMenu };
+  /** Kategoriernas kryssrutor: ikryssad när allt syns, halvt när en del syns. */
+  function syncGroups(): void {
+    for (const g of SHOW_GROUPS) {
+      const box = app.$<HTMLElement>('.show-menu').querySelector<HTMLInputElement>(`[data-show-group="${g.id}"]`);
+      if (!box) continue;
+      const shown = g.items.filter(([k]) => isShown(app.ui, k)).length;
+      box.checked = shown === g.items.length;
+      box.indeterminate = shown > 0 && shown < g.items.length;
+    }
+  }
+
+  /** En kryssruta i Visa-menyn: en sak, eller en hel kategori på en gång. */
+  function toggleShowItem(input: HTMLInputElement): void {
+    const ui = app.ui;
+    const group = SHOW_GROUPS.find((g) => g.id === input.dataset.showGroup);
+    const key = input.dataset.show!;
+    if (group) {
+      // Syns allt släcks allt, annars tänds allt.
+      for (const [k] of group.items) setShown(ui, k, input.checked);
+      for (const [k] of group.items) {
+        const box = app.$<HTMLElement>('.show-menu').querySelector<HTMLInputElement>(`[data-show="${k}"]`);
+        if (box) box.checked = input.checked;
+      }
+    } else if (key === 'showHidden') ui.showHidden = input.checked;
+    // Visa dolda 2D-element (0.8) är en tillfällig hjälp, inte en del av vyn.
+    else setShown(ui, key, input.checked);
+    syncGroups();
+    app.renderAll();
+  }
+
+  return { applyTraceLook, closeScalePop, closeShowMenu, openScalePop, refreshShowMenu, scalePop, toggleShowItem, toggleShowMenu };
 }

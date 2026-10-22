@@ -13,6 +13,8 @@ export interface Pickable {
   /** Högre ligger överst och vinner vid klick. */
   priority: number;
   regions: Vec2[][][];
+  /** Ytorna är mjuka (se `pickSoft` i registry.ts). */
+  soft?: boolean;
   prims: Primitive[];
 }
 
@@ -116,6 +118,7 @@ function drawGroup(t: ElementType, items: PlanItem[], ctx: PlanContext, style: S
     id: el.id,
     priority: t.drawOrder,
     regions: t.pickShape ? t.pickShape(el, ctx) : [],
+    ...(t.pickSoft ? { soft: true } : {}),
     prims: own,
   });
 

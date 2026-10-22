@@ -1,5 +1,5 @@
 import { PRESETS, type StyleSheet } from '../core/graphics';
-import { isMaster, modelViewId, type Id, type ProjectDoc, type Sheet, type ViewDef, type Viewport, type Worksheet } from '../core/model';
+import { isMaster, modelViewId, type Element, type Id, type ProjectDoc, type Sheet, type ViewDef, type Viewport, type Worksheet } from '../core/model';
 import { FRAME_MARGIN, masterOf, paperSize } from '../core/sheets';
 import { defaultState, existingState, type ViewStates } from '../core/states';
 import { markerName } from '../elements/markers';
@@ -134,13 +134,40 @@ export function buildViewPrims(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions
 /** Vyerna som senast ritades, så att ett blad inte räknar om fasader och sektioner vid varje panorering. */
 const cache = new WeakMap<ProjectDoc, Map<string, Primitive[]>>();
 
-/** Som `buildViewPrims`, men sparad per projektversion. */
+/**
+ * Projektet som vyerna ritas ur (0.8.11): utan bladen och det som är ritat
+ * på dem, som ingen vy visar. Det blir samma objekt så länge bara bladen
+ * ändrats, så att en flyttad vy eller en text på bladet inte räknar om alla
+ * fasader och sektioner på bladet.
+ */
+const modelDocs = new WeakMap<ProjectDoc, ProjectDoc>();
+let lastModel: ProjectDoc | null = null;
+function modelDoc(doc: ProjectDoc): ProjectDoc {
+  const hit = modelDocs.get(doc);
+  if (hit) return hit;
+  const sheetIds = new Set(doc.sheets.map((s) => s.id));
+  const elements: Record<Id, Element> = {};
+  for (const [id, el] of Object.entries(doc.elements)) if (!el.space || !sheetIds.has(el.space)) elements[id] = el;
+  const prev = lastModel;
+  const same =
+    !!prev &&
+    (Object.keys(doc) as (keyof ProjectDoc)[]).every((k) => k === 'sheets' || k === 'elements' || prev[k] === doc[k]) &&
+    Object.keys(prev.elements).length === Object.keys(elements).length &&
+    Object.entries(elements).every(([id, el]) => prev.elements[id] === el);
+  const m = same ? prev! : { ...doc, elements, sheets: [] };
+  modelDocs.set(doc, m);
+  lastModel = m;
+  return m;
+}
+
+/** Som `buildViewPrims`, men sparad så länge det vyerna visar är detsamma. */
 export function cachedViewPrims(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions): Primitive[] {
-  let m = cache.get(doc);
-  if (!m) cache.set(doc, (m = new Map()));
+  const md = modelDoc(doc);
+  let m = cache.get(md);
+  if (!m) cache.set(md, (m = new Map()));
   const key = JSON.stringify([v, opt.scale, !!opt.autoDims]);
   let hit = m.get(key);
-  if (!hit) m.set(key, (hit = buildViewPrims(doc, v, opt)));
+  if (!hit) m.set(key, (hit = buildViewPrims(md, v, opt)));
   return hit;
 }
 

@@ -77,7 +77,7 @@ export const windowType: ElementType<WindowParams> = {
     // Väggen under fönstret syns nedanför snittet, över hela hålet.
     const below: Primitive[] = [line(h1, -f.half, h2, -f.half, thin), line(h1, f.half, h2, f.half, thin)];
     // Littera på insidan.
-    if (showLittera(ctx)) below.push(...litteraTag(ctx, el, f, p.at, z.face === 0 ? 1 : z.face === 1 ? -1 : 1));
+    if (showLittera(ctx, 'Window')) below.push(...litteraTag(ctx, el, f, p.at, z.face === 0 ? 1 : z.face === 1 ? -1 : 1));
 
     const level = ctx.view.detail ?? 'normal';
     if (level === 'sketch') {

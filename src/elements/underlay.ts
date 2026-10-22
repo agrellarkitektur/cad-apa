@@ -1,6 +1,6 @@
 import type { FillDef } from '../core/graphics';
 import type { Asset, Id, ProjectDoc } from '../core/model';
-import { parseDxf, type DxfDrawing } from '../formats/dxf';
+import { DXF_CAP_HEIGHT, parseDxf, type DxfDrawing } from '../formats/dxf';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import type { ElementType } from './registry';
 
@@ -106,9 +106,6 @@ export function dxfOf(doc: ProjectDoc, asset: Id): DxfDrawing | null {
 
 /** De senast ritade DXF-underlagen, så att samma ritning inte räknas om vid varje ändring. */
 const primCache = new Map<string, Primitive[]>();
-
-/** Versalhöjden som andel av teckenstorleken. */
-const DXF_CAP_HEIGHT = 0.72;
 
 function dxfPrims(doc: ProjectDoc, id: Id, p: UnderlayParams, drawingScale: number): Primitive[] {
   const d = dxfOf(doc, p.asset);

@@ -145,11 +145,14 @@ export const line2dType: ElementType<Line2DParams> = {
     if (points.length < 2) return [];
     return [{ kind: 'polyline', points, closed, pen: penOf(p), origin: { objectId: el.id, objectType: 'Line2D', part: p.shape } }];
   },
+  pickSoft: true,
   pickShape(el, ctx) {
-    // Slutna former går att klicka inuti; öppna bara på linjen.
+    // Slutna former går att klicka inuti; öppna bara på linjen. En
+    // polylinje vars ändar möts räknas som sluten (0.8.11).
     const p = ctx.params<Line2DParams>(el);
     const { points, closed } = shapePoints(p);
-    return closed && points.length > 2 ? [[points]] : [];
+    const meets = p.shape === 'polyline' && points.length > 3 && dist(points[0], points[points.length - 1]) < 0.5;
+    return (closed || meets) && points.length > 2 ? [[points]] : [];
   },
 };
 
@@ -176,6 +179,7 @@ export const fill2dType: ElementType<Fill2DParams> = {
   plan(el, ctx) {
     return fillPrims(ctx.params<Fill2DParams>(el), { objectId: el.id, objectType: 'Fill2D', part: 'fyllning' });
   },
+  pickSoft: true,
   pickShape(el, ctx) {
     const p = ctx.params<Fill2DParams>(el);
     return p.points.length >= 3 ? [[p.points as Vec2[]]] : [];

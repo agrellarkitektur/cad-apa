@@ -2,7 +2,8 @@ import { addViewTag, setLocked, setShowIn, updateParams } from '../core/commands
 import { modelViewId, type Element, type Id, type ProjectDoc, type ShowIn } from '../core/model';
 import type { DocStore } from '../core/store';
 import { allViews, countViews, homeOf } from '../core/visibility';
-import { LINE_TYPES, PATTERN_LABELS, PEN_WEIGHTS, SHAPE_LABELS, type Fill2DParams, type Line2DParams } from '../elements/drawing2d';
+import { LINE_TYPES, PEN_WEIGHTS, SHAPE_LABELS, type Fill2DParams, type Line2DParams } from '../elements/drawing2d';
+import { patternPicker } from './patternPick';
 import { markerName } from '../elements/markers';
 import { resolveParams } from '../elements/registry';
 import { SLOPE_STYLES, type RoofSlopeParams } from '../elements/roofSlope';
@@ -50,7 +51,7 @@ export function drawingFields(doc: ProjectDoc, el: Element): string {
   if (el.type === 'Fill2D') {
     const p = resolveParams<Fill2DParams>(doc, el);
     return `<div class="fields">
-        <label class="field"><span>Mönster</span><select data-key="d2:pattern">${Object.entries(PATTERN_LABELS).map(([k, l]) => `<option value="${k}"${k === p.pattern ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
+        <div class="field"><span>Mönster</span>${patternPicker('d2-pattern-panel', p.pattern, 'data-key="d2:pattern"', { color: p.color ?? '#9aa0a6', angle: p.angle })}</div>
         <label class="field"><span>Färg</span><input type="color" data-key="d2:color" value="${p.color ?? '#9aa0a6'}"></label>
         ${p.pattern !== 'solid' ? `<label class="field"><span>Vinkel</span><span class="input-unit"><input type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" data-key="d2:angle" value="${p.angle}"><i>°</i></span></label>
         <label class="field"><span>Avstånd på papper</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="d2:spacing" value="${comma(p.spacing)}"><i>mm</i></span></label>` : ''}

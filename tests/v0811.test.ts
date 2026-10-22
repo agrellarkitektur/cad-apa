@@ -70,3 +70,69 @@ describe('vyerna på bladet (0.8.11, sheetGeometry)', () => {
     expect(freeSpot(area, [], [200, 20])).toBeNull();
   });
 });
+
+describe('vyerna på bladen räknas inte om i onödan (0.8.11)', () => {
+  it('en flyttad vy eller en text på bladet behåller vyernas ritning; en ändrad vägg ritar om', async () => {
+    const { registerBuiltInTypes } = await import('../src/elements');
+    const { DocStore } = await import('../src/core/store');
+    const { addViewport, createSheet, moveOnSheet } = await import('../src/core/sheets');
+    const { cachedViewPrims, viewSource } = await import('../src/repr/sheet');
+    const { addElement, moveElements } = await import('../src/core/commands');
+    const { modelViewId } = await import('../src/core/model');
+    const { sampleProject } = await import('../src/sample/sampleProject');
+    registerBuiltInTypes();
+    const store = new DocStore(sampleProject());
+    const sid = createSheet(store, { name: 'Test' });
+    const marker = Object.values(store.doc.elements).find((e) => e.type === 'Section')!;
+    const ref = modelViewId(marker.id);
+    const vp = addViewport(store, sid, { view: ref, scale: 100, at: [100, 100] })!;
+    const prims = () => cachedViewPrims(store.doc, viewSource(store.doc, ref)!.def, { scale: 100 });
+    const first = prims();
+    moveOnSheet(store, [vp], [10, 0]);
+    expect(prims()).toBe(first);
+    addElement(store, { type: 'Text', storey: store.doc.storeys[0].id, space: sid, states: [], tags: [], props: {}, params: { at: [50, 50], text: 'Hej', height: 3 } } as never, store.doc.states[0].id);
+    expect(prims()).toBe(first);
+    const wall = Object.values(store.doc.elements).find((e) => e.type === 'Wall')!;
+    moveElements(store, [wall.id], [100, 0]);
+    expect(prims()).not.toBe(first);
+  });
+});
+
+describe('Visa-menyn i kategorier (0.8.11)', () => {
+  it('littera släcks per typ, och en äldre vy med all littera delas upp när en typ tänds', async () => {
+    const { isShown, setShown } = await import('../src/ui/app/showMenu');
+    const ui = { hide: ['littera'], hideDemolished: false };
+    expect(isShown(ui, 'littera:Door')).toBe(false);
+    setShown(ui, 'littera:Door', true);
+    expect(isShown(ui, 'littera:Door')).toBe(true);
+    expect(isShown(ui, 'littera:Wall')).toBe(false);
+    expect(ui.hide.sort()).toEqual(['littera:Wall', 'littera:Window']);
+    setShown(ui, 'demolished', false);
+    expect(ui.hideDemolished).toBe(true);
+  });
+});
+
+describe('markering av 2D (0.8.11)', () => {
+  it('en linje nära klicket går före fyllningen den ligger under; inuti fyllningen går den före rummet', async () => {
+    const { pickAt } = await import('../src/view2d/pick');
+    const sq = (x0: number, y0: number, x1: number, y1: number): [number, number][] => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+    const room = { id: 'rum', priority: 40, regions: [], prims: [{ kind: 'polyline' as const, points: sq(-100, -100, 100, 100), closed: true, pen: { weight: 0.25 } }] };
+    const fill = { id: 'fyllning', priority: 4, soft: true, regions: [[sq(0, 0, 50, 50)]], prims: [] };
+    const line = { id: 'linje', priority: 58, regions: [], prims: [{ kind: 'line' as const, a: [10, 25] as [number, number], b: [40, 25] as [number, number], pen: { weight: 0.25 } }] };
+    const all = [room, fill, line];
+    expect(pickAt(all, [20, 26], 2)).toBe('linje');
+    expect(pickAt(all, [20, 40], 2)).toBe('fyllning');
+    expect(pickAt(all, [80, 80], 2)).toBe('rum');
+  });
+});
+
+describe('MTEXT med styckesjustering (0.8.11)', () => {
+  it('fäst mitt i men vänsterjusterade rader: raderna börjar på samma x, till vänster om punkten', () => {
+    const d = parseDxf(dxf(`0\nMTEXT\n8\nT\n10\n1000\n20\n0\n40\n100\n71\n5\n1\n\\pxql;Förråd\\PRad två längre\n`));
+    const [a, b] = texts(d);
+    expect(a.align).toBe('start');
+    expect(b.align).toBe('start');
+    expect(a.at[0]).toBeCloseTo(b.at[0]);
+    expect(a.at[0]).toBeLessThan(1000);
+  });
+});

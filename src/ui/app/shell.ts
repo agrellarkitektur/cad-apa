@@ -82,6 +82,12 @@ export function createUiState(initial: ProjectDoc, uiSettings: UiSettings, deskt
 export type UiState = ReturnType<typeof createUiState>;
 
 /** Appens stomme: topraden, verktygsraden, ritytan och statusraden. */
+/** Knappen Linjer i statusraden (0.8.11): lägena i den ordning ett klick växlar. */
+export const LINE_WEIGHT_STEPS = ['screen', 'true', 'thin'] as const;
+export const LINE_WEIGHT_LABEL = { screen: 'Skärm', true: 'Verklig', thin: 'Tunna' } as const;
+const LINE_WEIGHT_TITLE =
+  'Linjernas tjocklek på skärmen. Skärm: pennornas tjocklek, lika vid all zoom. Verklig: som på papperet i ritningens skala, så att linjerna blir tunnare när du zoomar ut. Tunna: alla linjer tunna. Klicka för att byta.';
+
 export function shellMarkup(brand: Brand): string {
   return `
     <div class="app">
@@ -178,8 +184,9 @@ export function shellMarkup(brand: Brand): string {
           <button class="status-icon hide-narrow" data-action="zoom-prev" title="Förra zoomen (Shift+Z)" aria-label="Förra zoomen">${icons.zoomPrev}</button>
           <button class="status-icon" data-action="fit" title="Zooma till allt (F)" aria-label="Zooma till allt">${icons.fit}</button>
         </span>
-        <span class="hide-narrow"><span class="label">Rutnät</span><span class="value" data-out="grid">—</span></span>
-        <button class="status-btn" data-action="snap" aria-pressed="true" title="Snäppning av eller på (S)">Snäpp</button>
+        <button class="status-btn status-toggle hide-narrow" data-action="grid" aria-pressed="true" title="Rutnätet av eller på (G)"><span class="label">Rutnät</span><span class="value" data-out="grid">—</span></button>
+        <button class="status-btn status-toggle" data-action="snap" aria-pressed="true" title="Snäppning av eller på (S)"><span class="label">Snäpp</span><span class="value" data-out="snap">På</span></button>
+        <button class="status-btn status-toggle hide-narrow" data-action="line-weights" title="${LINE_WEIGHT_TITLE}"><span class="label">Linjer</span><span class="value" data-out="line-weights">Skärm</span></button>
         <span data-out="save" class="save-status"></span>
         <span class="engine hide-narrow">${ENGINE.name} ${ENGINE.version}</span>
       </footer>

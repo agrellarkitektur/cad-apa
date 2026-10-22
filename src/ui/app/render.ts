@@ -148,6 +148,7 @@ export function installRender(app: AppContext, parts: RenderParts) {
     const master = sheet?.paper ? sheet : undefined;
     app.view.drawingScale = layout || master ? 1 : app.ui.scale;
     app.view.showGrid = layout || master ? false : app.uiSettings.grid;
+    app.syncStatus();
     app.view.showScaleBar = !layout && !master;
     // Markera på ett blad tar också vyerna (0.8.9); tillbaka i planen det vanliga.
     if (layout && app.view.currentTool === app.selectTool) app.view.setTool(app.sheets.tool);

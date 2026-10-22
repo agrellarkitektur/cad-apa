@@ -151,7 +151,7 @@ export const doorType: ElementType<DoorParams> = {
     }
 
     // Littera på motsatt sida mot slaget, där bågen inte är i vägen.
-    if (showLittera(ctx)) prims.push(...litteraTag(ctx, el, f, p.at, p.swing === 1 ? -1 : 1));
+    if (showLittera(ctx, 'Door')) prims.push(...litteraTag(ctx, el, f, p.at, p.swing === 1 ? -1 : 1));
     // Igensatt dörrhål eller ny öppning i befintlig vägg ritas under dörrbladet.
     return [...openingMarks(el, host, p, ctx, { infillWhenRemoved: true }), ...prims];
   },

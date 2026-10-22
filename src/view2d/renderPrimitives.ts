@@ -2,9 +2,18 @@ import type { FillDef } from '../core/graphics';
 import type { Camera } from './camera';
 import { imageCorners, type Pen, type PenColor, type Primitive } from '../repr/primitives';
 
+/**
+ * Linjernas tjocklek på skärmen (0.8.11): `screen` pennans tjocklek, lika
+ * vid all zoom (0,25 mm ≈ 1 px); `true` som på papperet i ritningens skala,
+ * så att linjerna blir tunnare när man zoomar ut; `thin` alla linjer tunna.
+ */
+export type LineWeights = 'thin' | 'screen' | 'true';
+
 export interface RenderOptions {
   /** Ritningsskalans nämnare (100 för 1:100). Styr texthöjd, streck och skraffering. */
   drawingScale: number;
+  /** Linjernas tjocklek på skärmen; förval `screen`. */
+  lineWeights?: LineWeights;
   /** Prefix för mönstrens id, när flera ritningar ligger i samma SVG. */
   idPrefix?: string;
   /**
@@ -23,6 +32,9 @@ const MIN_TEXT_PX = 4;
  */
 export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: RenderOptions): string {
   const paperToPx = opt.drawingScale * cam.scale; // px per pappers-mm
+  const mode = opt.lineWeights ?? 'screen';
+  const stroke = (pen: Pen) => strokeAttrs(pen, paperToPx, mode);
+  const dashed = (points: readonly (readonly [number, number])[], closed: boolean, pen: Pen) => dashedPath(points, closed, pen, cam, paperToPx, mode);
   const out: string[] = [];
   const patterns = new Map<string, string>();
   // Likadana skrafferingar delar mönster (0.8.3), t.ex. i ett DXF-underlag med många ytor.
@@ -36,7 +48,7 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
     const known = shared.get(same);
     if (known) return `fill="url(#${known})"`;
     const spacing = Math.max(3, fill.spacing * paperToPx);
-    const w = Math.max(0.6, fill.weight * 4);
+    const w = penPx(fill.weight, paperToPx, mode, 0.6);
     const o = cam.toScreen([0, 0]);
     const id = `${opt.idPrefix ?? 'h'}${patterns.size}`;
     // Vinkeln mäts moturs i modellen; på skärmen vänds y.
@@ -56,24 +68,24 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
     switch (p.kind) {
       case 'line': {
         if (p.pen.dash?.length) {
-          out.push(dashed([p.a, p.b], false, p.pen, cam, paperToPx));
+          out.push(dashed([p.a, p.b], false, p.pen));
           break;
         }
         const a = cam.toScreen(p.a);
         const b = cam.toScreen(p.b);
-        out.push(`<path d="M${f(a[0])} ${f(a[1])}L${f(b[0])} ${f(b[1])}" ${stroke(p.pen, paperToPx)} fill="none"/>`);
+        out.push(`<path d="M${f(a[0])} ${f(a[1])}L${f(b[0])} ${f(b[1])}" ${stroke(p.pen)} fill="none"/>`);
         break;
       }
       case 'polyline': {
-        if (p.pen.dash?.length) out.push(dashed(p.points, p.closed, p.pen, cam, paperToPx));
-        else out.push(`<path d="${ring(p.points, cam, p.closed)}" ${stroke(p.pen, paperToPx)} fill="none"/>`);
+        if (p.pen.dash?.length) out.push(dashed(p.points, p.closed, p.pen));
+        else out.push(`<path d="${ring(p.points, cam, p.closed)}" ${stroke(p.pen)} fill="none"/>`);
         break;
       }
       case 'region': {
         const d = p.rings.map((r) => ring(r, cam, true)).join('');
         if (p.fill.kind !== 'none') out.push(`<path d="${d}" fill-rule="evenodd" ${fillAttr(p.fill)}/>`);
-        if (p.outline?.dash?.length) for (const r of p.rings) out.push(dashed(r, true, p.outline, cam, paperToPx));
-        else if (p.outline) out.push(`<path d="${d}" fill="none" ${stroke(p.outline, paperToPx)}/>`);
+        if (p.outline?.dash?.length) for (const r of p.rings) out.push(dashed(r, true, p.outline));
+        else if (p.outline) out.push(`<path d="${d}" fill="none" ${stroke(p.outline)}/>`);
         break;
       }
       case 'arc': {
@@ -85,7 +97,7 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
         // Moturs i modellen ser moturs ut även på skärmen. I SVG:s y-nedåt-system
         // betyder det minskande vinkel, alltså sweep-flag 0.
         out.push(
-          `<path d="M${f(a[0])} ${f(a[1])}A${f(r)} ${f(r)} 0 ${sweep > Math.PI ? 1 : 0} 0 ${f(b[0])} ${f(b[1])}" ${stroke(p.pen, paperToPx)} fill="none"/>`,
+          `<path d="M${f(a[0])} ${f(a[1])}A${f(r)} ${f(r)} 0 ${sweep > Math.PI ? 1 : 0} 0 ${f(b[0])} ${f(b[1])}" ${stroke(p.pen)} fill="none"/>`,
         );
         break;
       }
@@ -161,11 +173,19 @@ export function color(c: PenColor): string {
 }
 
 /**
- * Pennan på skärmen: tjockleken följer pappersmåttet ungefär (0,25 mm ≈ 1 px)
- * men hålls konstant vid zoom, som i de flesta CAD-program.
+ * Pennans bredd på skärmen i px, aldrig under `min`. Förval: tjockleken
+ * följer pappersmåttet ungefär (0,25 mm ≈ 1 px) men hålls konstant vid zoom,
+ * som i de flesta CAD-program. Verklig: pappersmåttet genom ritningens skala
+ * och zoomen. Tunna: högst 1 px.
  */
-function stroke(pen: Pen, paperToPx: number): string {
-  const w = Math.max(0.75, pen.weight * 4);
+export function penPx(weight: number, paperToPx: number, mode: LineWeights, min: number): number {
+  if (mode === 'true') return Math.max(min, weight * paperToPx);
+  if (mode === 'thin') return Math.max(min, Math.min(1, weight * 4));
+  return Math.max(min, weight * 4);
+}
+
+function strokeAttrs(pen: Pen, paperToPx: number, mode: LineWeights): string {
+  const w = penPx(pen.weight, paperToPx, mode, 0.75);
   const op = pen.opacity !== undefined && pen.opacity < 1 ? `;stroke-opacity:${f(pen.opacity)}` : '';
   let s = `style="stroke:${color(pen.color ?? 'ink')}${op}" stroke-width="${f(w)}" stroke-linecap="round" stroke-linejoin="round"`;
   if (pen.dash?.length) {
@@ -180,13 +200,13 @@ function stroke(pen: Pen, paperToPx: number): string {
  * varje sträcka så att den börjar och slutar med ett helt streck: då möts
  * strecken i hörnen och de två sidorna av en riven vägg blir lika.
  */
-function dashed(points: readonly (readonly [number, number])[], closed: boolean, pen: Pen, cam: Camera, paperToPx: number): string {
+function dashedPath(points: readonly (readonly [number, number])[], closed: boolean, pen: Pen, cam: Camera, paperToPx: number, mode: LineWeights): string {
   const base = pen.dash!.map((d) => Math.max(2, d * paperToPx));
   // Ett udda antal värden upprepas i SVG två gånger; gör det jämnt.
   const pattern = base.length % 2 ? [...base, ...base] : base;
   const period = pattern.reduce((a, b) => a + b, 0);
   const first = pattern[0];
-  const w = Math.max(0.75, pen.weight * 4);
+  const w = penPx(pen.weight, paperToPx, mode, 0.75);
   const op = pen.opacity !== undefined && pen.opacity < 1 ? `;stroke-opacity:${f(pen.opacity)}` : '';
   const style = `style="stroke:${color(pen.color ?? 'ink')}${op}" stroke-width="${f(w)}" stroke-linecap="round" fill="none"`;
   const pts = points.map((q) => cam.toScreen(q));

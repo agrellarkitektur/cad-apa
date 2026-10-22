@@ -452,6 +452,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     togglePanel: () => panes.togglePanel,
     toggleNav: () => panes.toggleNav,
     toggleGrid: () => actions.toggleGrid,
+    syncStatus: () => actions.syncStatus,
     closeMenu: () => actions.closeMenu,
     closeShowMenu: () => showMenu.closeShowMenu,
     cancelCommand: () => tools.cancelCommand,

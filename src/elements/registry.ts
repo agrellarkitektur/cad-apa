@@ -92,6 +92,11 @@ export interface ElementType<P extends object = Record<string, unknown>> {
   planReads?: readonly string[];
   /** Ytan som gäller vid klick och markering. Saknas den används planens primitiver. */
   pickShape?(el: Element<P>, ctx: PlanContext): Vec2[][][];
+  /**
+   * Ytan från `pickShape` är mjuk (0.8.11): ett klick nära en linje går före
+   * ett klick inuti, men inuti går före rum. För 2D-former och fyllningar.
+   */
+  pickSoft?: boolean;
   /** Elementet i 3D, som lodräta extruderingar (mm, z uppåt från våningens golv). */
   model3d?(el: Element<P>, ctx: PlanContext): Shape3D[];
   /** Flera element i 3D tillsammans, t.ex. väggar som ska skarvas. Går före `model3d`. */

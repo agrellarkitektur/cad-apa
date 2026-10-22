@@ -1,5 +1,6 @@
 import type { WallFace } from '../../elements/wallSides';
-import { LINE_TYPES, PATTERN_LABELS, PEN_WEIGHTS, SHAPE_LABELS, type FillPattern, type LineType } from '../../elements/drawing2d';
+import { LINE_TYPES, PEN_WEIGHTS, SHAPE_LABELS, type FillPattern, type LineType } from '../../elements/drawing2d';
+import { patternPicker } from '../patternPick';
 import type { Draw2DKind } from '../tools/draw2dTool';
 import { icons } from '../icons';
 import { escapeHtml, labelOf } from '../labels';
@@ -104,7 +105,7 @@ export function installToolOptions(app: AppContext) {
         <label class="opt"><span>Form</span><select id="d2-kind" aria-label="Form">${kinds.map(([k, l]) => `<option value="${k}"${k === o.kind ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
         ${
           o.kind === 'fill'
-            ? `<label class="opt"><span>Mönster</span><select id="d2-pattern" aria-label="Mönster">${(Object.entries(PATTERN_LABELS) as [FillPattern, string][]).map(([k, l]) => `<option value="${k}"${k === o.pattern ? ' selected' : ''}>${l}</option>`).join('')}</select></label>`
+            ? `<div class="opt"><span>Mönster</span>${patternPicker('d2-pattern', o.pattern, '')}</div>`
             : `<label class="opt"><span>Penna</span><select id="d2-weight" aria-label="Linjetjocklek">${PEN_WEIGHTS.map((w) => `<option value="${w}"${w === o.weight ? ' selected' : ''}>${comma(w)}</option>`).join('')}</select></label>
         <label class="opt"><span>Linje</span><select id="d2-linetype" aria-label="Linjetyp">${(Object.entries(LINE_TYPES) as [LineType, { label: string }][]).map(([k, v]) => `<option value="${k}"${k === o.linetype ? ' selected' : ''}>${v.label}</option>`).join('')}</select></label>`
         }
@@ -176,7 +177,7 @@ export function installToolOptions(app: AppContext) {
     if (t.id === 'd2-kind') app.draw2dTool.setKind(t.value as Draw2DKind);
     if (t.id === 'd2-weight' && num > 0) app.draw2dTool.options.weight = num;
     if (t.id === 'd2-linetype') app.draw2dTool.options.linetype = t.value as LineType;
-    if (t.id === 'd2-pattern') app.draw2dTool.options.pattern = t.value as FillPattern;
+    if ((t as unknown as HTMLInputElement).name === 'd2-pattern') app.draw2dTool.options.pattern = t.value as FillPattern;
     if (t.id === 'text-height' && num > 0) app.textTool.height = num;
     if (t.id === 'text-bold') app.textTool.bold = (t as unknown as HTMLInputElement).checked;
   });

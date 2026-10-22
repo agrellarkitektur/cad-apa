@@ -1,6 +1,6 @@
 import { Camera } from './camera';
 import { buildGrid } from './grid';
-import { renderPrimitives } from './renderPrimitives';
+import { renderPrimitives, type LineWeights } from './renderPrimitives';
 import { renderScaleBar } from './scaleBar';
 import { boundsOf, type Primitive, type Vec2 } from '../repr/primitives';
 
@@ -110,6 +110,18 @@ export class PlanView {
 
   /** Skalstocken i nedre vänstra hörnet (inte på ritningsblad). */
   showScaleBar = true;
+
+  private weights: LineWeights = 'screen';
+  /** Linjernas tjocklek på skärmen (0.8.11). */
+  get lineWeights(): LineWeights {
+    return this.weights;
+  }
+
+  set lineWeights(v: LineWeights) {
+    if (v === this.weights) return;
+    this.weights = v;
+    this.redraw();
+  }
 
   /** Adressen till bilderna i underlagen (0.8), se `RenderOptions.imageHref`. */
   imageHref?: (source: { asset: string; page?: number }) => string | null;
@@ -366,8 +378,8 @@ export class PlanView {
     this.drawnCam = { center: [cam.center[0], cam.center[1]], scale: cam.scale, width: cam.width, height: cam.height };
     this.drawingSvg.style.transform = '';
     this.setGroupTransform(null);
-    this.underlay.innerHTML = this.underlayPrims.length ? renderPrimitives(this.underlayPrims, cam, { drawingScale: this.drawingScale, idPrefix: 'u', imageHref: this.imageHref }) : '';
-    this.content.innerHTML = renderPrimitives(this.prims, cam, { drawingScale: this.drawingScale, imageHref: this.imageHref });
+    this.underlay.innerHTML = this.underlayPrims.length ? renderPrimitives(this.underlayPrims, cam, { drawingScale: this.drawingScale, idPrefix: 'u', imageHref: this.imageHref, lineWeights: this.weights }) : '';
+    this.content.innerHTML = renderPrimitives(this.prims, cam, { drawingScale: this.drawingScale, imageHref: this.imageHref, lineWeights: this.weights });
   }
 
   private setGroupTransform(t: string | null): void {

@@ -6,8 +6,9 @@ import { boundsOf, imageCorners } from '../repr/primitives';
 /**
  * Vilket element ligger under en punkt? I tur och ordning:
  * 1. en snittyta som punkten ligger i (vägg, öppning),
- * 2. en linje eller båge inom toleransen (dörrblad, möbelkant),
- * 3. en sluten form som punkten ligger i (möbel).
+ * 2. en linje eller båge inom toleransen (dörrblad, möbelkant, 2D-linje),
+ * 3. en mjuk yta som punkten ligger i (sluten 2D-form, fyllning; 0.8.11),
+ * 4. en annan sluten form som punkten ligger i (rum, underlag).
  * Inom varje nivå vinner det som ritas överst.
  */
 export function pickAt(pickables: readonly Pickable[], p: Vec2, tol: number, drawingScale = 100): string | null {
@@ -27,8 +28,10 @@ export function pickAllAt(pickables: readonly Pickable[], p: Vec2, tol: number, 
     // Kanten på en yta räknas som en linje, så att tunna väggar går att träffa.
     for (const rings of item.regions) d = Math.min(d, distToPrim(p, { kind: 'region', rings, role: 'cut', fill: { kind: 'none' }, outline: null }, drawingScale));
     let score = -Infinity;
-    if (item.regions.some((rings) => pointInRings(p, rings))) score = 3000 + item.priority;
+    const inside = item.regions.some((rings) => pointInRings(p, rings));
+    if (inside && !item.soft) score = 3000 + item.priority;
     else if (d <= tol) score = 2000 + item.priority - d / tol;
+    else if (inside) score = 1500 + item.priority;
     else if (item.prims.some((prim) => (prim.kind === 'polyline' && prim.closed && pointInRings(p, [prim.points])) || (prim.kind === 'image' && pointInRings(p, [imageCorners(prim)]))))
       score = 1000 + item.priority;
     const was = best.get(item.id);

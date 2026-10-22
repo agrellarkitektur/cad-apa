@@ -4,9 +4,14 @@ import type { PlanContext } from './registry';
 import { doorNumbersFor } from './rooms';
 import { FRAME_LESS, HOLE_EXTRA, type WallFrame } from './wall';
 
-/** Om littera ska ritas ut i vyn. I Skiss visas ingen littera. */
-export function showLittera(ctx: PlanContext): boolean {
-  return !ctx.view.hide?.includes('littera') && ctx.view.detail !== 'sketch';
+/**
+ * Om littera för en objekttyp ska ritas ut i vyn. I Skiss visas ingen
+ * littera. Visa släcker den per typ (`littera:Door`, 0.8.11) eller all på en
+ * gång (`littera`, som äldre vyer).
+ */
+export function showLittera(ctx: PlanContext, type: string): boolean {
+  const hide = ctx.view.hide;
+  return !hide?.includes('littera') && !hide?.includes(`littera:${type}`) && ctx.view.detail !== 'sketch';
 }
 
 const LETTER: Record<string, string> = { Door: 'D', Window: 'F', Wall: '' };

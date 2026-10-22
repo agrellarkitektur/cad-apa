@@ -337,7 +337,7 @@ export const wallType: ElementType<WallParams> = {
         origin: { objectType: 'Wall', part: 'snitt' },
       }),
     );
-    if (showLittera(ctx) && action !== 'demolished') {
+    if (showLittera(ctx, 'Wall') && action !== 'demolished') {
       for (const { el } of items) out.push(...wallTag(ctx, el));
     }
     return out;

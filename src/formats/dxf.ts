@@ -6,8 +6,10 @@
  * upp. Skraffering (HATCH) blir ytor med fyllning eller mönster (0.8.3).
  * Bilder och 3D-ytor hoppas över.
  *
- * Filen beror inte på något annat i programmet och kan användas överallt.
+ * Filen beror bara på teckenbredderna i helvetica.ts och kan användas överallt.
  */
+
+import { textWidth } from './helvetica';
 
 export type P2 = [number, number];
 
@@ -352,6 +354,15 @@ function chain(edges: P2[][][]): P2[] {
   return ring;
 }
 
+/** Versalhöjden (som DXF mäter texthöjd i) som andel av teckenstorleken i Helvetica och Arial. */
+export const DXF_CAP_HEIGHT = 0.72;
+
+/** Styckets justering i MTEXT (\pxqc; m.fl.), eller null om texten inte anger någon. */
+function paragraphAlign(s: string): 'start' | 'middle' | 'end' | null {
+  const m = /\\p[^;]*?q([lcr])[^;]*;/.exec(s);
+  return m ? ({ l: 'start', c: 'middle', r: 'end' } as const)[m[1] as 'l' | 'c' | 'r'] : null;
+}
+
 /** Specialtecken som skrivs med %% i både TEXT och MTEXT. */
 function percentCodes(s: string): string {
   return s
@@ -429,6 +440,7 @@ const H_ALIGN = ['start', 'middle', 'end'] as const;
  * fästpunkt i 71 (1–9, uppe till vänster till nere till höger).
  */
 function textPlacement(e: RawEntity): { lines: string[]; points: P2[]; angle: number; height: number; align: 'start' | 'middle' | 'end' } | null {
+  let para: 'start' | 'middle' | 'end' | null = null;
   const h = num(e, 40, 2.5);
   const p10: P2 = [num(e, 10), num(e, 20)];
   const has11 = e.codes.some((x) => x[0] === 11);
@@ -439,7 +451,9 @@ function textPlacement(e: RawEntity): { lines: string[]; points: P2[]; angle: nu
   let ver: 'baseline' | 'bottom' | 'middle' | 'top' = 'baseline';
   let spacing = h * (5 / 3);
   if (e.type === 'MTEXT') {
-    lines = mtextLines([...e.codes.filter((x) => x[0] === 3).map((x) => x[1]), str(e, 1)].join(''));
+    const raw = [...e.codes.filter((x) => x[0] === 3).map((x) => x[1]), str(e, 1)].join('');
+    lines = mtextLines(raw);
+    para = paragraphAlign(raw);
     // MTEXT kan ha riktningen som vektor (11/21) i stället för vinkel.
     if (has11) angle = (Math.atan2(num(e, 21), num(e, 11)) * 180) / Math.PI;
     const ap = Math.min(9, Math.max(1, num(e, 71, 1)));
@@ -478,11 +492,23 @@ function textPlacement(e: RawEntity): { lines: string[]; points: P2[]; angle: nu
   const first = ver === 'top' ? -h : ver === 'middle' ? total / 2 - h : ver === 'bottom' ? (n - 1) * spacing + 0.3 * h : 0;
   const a = (angle * Math.PI) / 180;
   const up: P2 = [-Math.sin(a), Math.cos(a)];
+  const along: P2 = [Math.cos(a), Math.sin(a)];
+  // MTEXT med flera rader och ett eget styckesjusterat (\pxql;): blocket
+  // fästs efter sin bredeste rad, och raderna justeras inom blocket.
+  let shift = 0;
+  let align = H_ALIGN[hor];
+  if (para && para !== align && lines.length > 1) {
+    const em = h / DXF_CAP_HEIGHT;
+    const width = Math.max(...lines.map((l) => textWidth(l, em)));
+    const k = { start: 0, middle: 0.5, end: 1 };
+    shift = (k[para] - k[align]) * width;
+    align = para;
+  }
   const points = lines.map((_, i): P2 => {
     const k = first - i * spacing;
-    return [at[0] + up[0] * k, at[1] + up[1] * k];
+    return [at[0] + up[0] * k + along[0] * shift, at[1] + up[1] * k + along[1] * shift];
   });
-  return { lines, points, angle, height: h, align: H_ALIGN[hor] };
+  return { lines, points, angle, height: h, align };
 }
 
 export function parseDxf(text: string): DxfDrawing {

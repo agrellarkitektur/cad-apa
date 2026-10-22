@@ -18,7 +18,7 @@ import type { installMenus } from './menus';
 import type { installPanes } from './panes';
 import type { installPlot } from './plot';
 import type { installSheets } from './sheets';
-import type { ViewMode } from './shell';
+import { LINE_WEIGHT_LABEL, LINE_WEIGHT_STEPS, type ViewMode } from './shell';
 import type { installShowMenu } from './showMenu';
 import type { installViews } from './views';
 
@@ -56,6 +56,21 @@ export function installActions(app: AppContext, parts: ActionParts) {
     saveUiSettings(uiSettings);
     app.settingsDialog.update(uiSettings);
     app.view.showGrid = uiSettings.grid;
+    syncStatus();
+  }
+
+  /** Statusradens knappar (0.8.11): Rutnät, Snäpp och Linjer visar sitt läge. */
+  function syncStatus(): void {
+    const paper = !!(app.ui.layout || app.store.doc.worksheets.some((w) => w.id === app.ui.worksheet && w.paper));
+    const grid = app.$<HTMLButtonElement>('[data-action="grid"]');
+    grid.setAttribute('aria-pressed', String(uiSettings.grid && !paper));
+    grid.disabled = paper;
+    grid.title = paper ? 'Inget rutnät på papper' : 'Rutnätet av eller på (G)';
+    const on = isSnapEnabled();
+    app.$<HTMLElement>('[data-action="snap"]').setAttribute('aria-pressed', String(on));
+    app.out('snap').textContent = on ? 'På' : 'Av';
+    app.out('line-weights').textContent = LINE_WEIGHT_LABEL[uiSettings.lineWeights];
+    app.view.lineWeights = uiSettings.lineWeights;
   }
 
   /** Visa inställningarna för det man valt i trädet i egenskapspanelen. */
@@ -128,12 +143,7 @@ export function installActions(app: AppContext, parts: ActionParts) {
     }
     const showItem = target.closest<HTMLInputElement>('.show-menu input');
     if (showItem) {
-      const key = showItem.dataset.show!;
-      if (key === 'demolished') ui.hideDemolished = !showItem.checked;
-      // Visa dolda 2D-element (0.8) är en tillfällig hjälp, inte en del av vyn.
-      else if (key === 'showHidden') ui.showHidden = showItem.checked;
-      else ui.hide = showItem.checked ? ui.hide.filter((h) => h !== key) : [...ui.hide, key];
-      app.renderAll();
+      showMenu.toggleShowItem(showItem);
       return;
     }
     if (!target.closest('.show-wrap')) showMenu.closeShowMenu();
@@ -397,8 +407,22 @@ export function installActions(app: AppContext, parts: ActionParts) {
       case 'snap': {
         const on = !isSnapEnabled();
         setSnapEnabled(on);
-        app.$<HTMLElement>('[data-action="snap"]').setAttribute('aria-pressed', String(on));
+        syncStatus();
         app.hint(on ? 'Snäppning på' : 'Snäppning av');
+        break;
+      }
+      case 'line-weights': {
+        const steps = LINE_WEIGHT_STEPS;
+        uiSettings.lineWeights = steps[(steps.indexOf(uiSettings.lineWeights) + 1) % steps.length];
+        saveUiSettings(uiSettings);
+        syncStatus();
+        app.hint(
+          uiSettings.lineWeights === 'true'
+            ? 'Linjerna som på papperet: tunnare när du zoomar ut.'
+            : uiSettings.lineWeights === 'thin'
+              ? 'Alla linjer tunna.'
+              : 'Linjerna med pennornas tjocklek, lika vid all zoom.',
+        );
         break;
       }
       case 'open-panel':
@@ -445,5 +469,6 @@ export function installActions(app: AppContext, parts: ActionParts) {
     }
   });
 
-  return { closeMenu, pickTreeItem, toggleGrid };
+  syncStatus();
+  return { closeMenu, pickTreeItem, syncStatus, toggleGrid };
 }

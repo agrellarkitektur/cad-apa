@@ -112,6 +112,8 @@ export interface AppContext {
   togglePanel(): void;
   toggleNav(): void;
   toggleGrid(): void;
+  /** Statusradens knappar visar sitt läge (0.8.11). */
+  syncStatus(): void;
   closeMenu(): void;
   closeShowMenu(): void;
   cancelCommand(): void;

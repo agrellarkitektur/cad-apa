@@ -298,6 +298,7 @@ body::before {
 .icon-btn[aria-pressed='true'] {
   color: var(--accent);
   background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .segmented {
@@ -374,6 +375,7 @@ body::before {
 .tool[aria-pressed='true'] {
   background: var(--accent-soft);
   color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .tool[aria-disabled='true'] {
@@ -2412,6 +2414,20 @@ table.keys td:first-child {
   display: none;
 }
 
+/* Visa-menyns kategorier (0.8.11): kategorins kryssruta tänder och släcker allt i den. */
+.show-group {
+  display: grid;
+  gap: 3px;
+}
+
+.show-group-head {
+  font-weight: 650;
+}
+
+.show-group .check:not(.show-group-head) {
+  padding-left: 22px;
+}
+
 /* ---------- Förhandsvisning i dörr-, fönster-, rums-, mått- och textverktygen ---------- */
 
 .opening-preview {
@@ -2981,12 +2997,61 @@ body.resizing-pane * {
   text-transform: none;
   letter-spacing: 0;
   font: 400 12px var(--font-data);
-  border-color: transparent;
 }
 
 .scale-btn:hover,
 .scale-btn[aria-expanded='true'] {
-  border-color: var(--rule);
+  border-color: var(--muted);
+}
+
+/*
+ * Statusradens växlar (0.8.11): Rutnät, Snäpp och Linjer ser ut som
+ * skärmskalan, en etikett och ett värde i en ram. Påslagen: accentfärg.
+ * Avslagen: ett snett streck i knappens egen färg över den.
+ */
+.status-toggle {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  padding: 2px 7px;
+  text-transform: none;
+  letter-spacing: 0;
+  font: 400 12px var(--font-data);
+}
+
+.status-toggle:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+
+.status-btn.status-toggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+.status-toggle[aria-pressed='true'] .label {
+  color: var(--accent);
+}
+
+.status-toggle[aria-pressed='false'] .value {
+  color: var(--muted);
+}
+
+.status-toggle[aria-pressed='false']::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  top: 50%;
+  height: 1.5px;
+  background: currentColor;
+  transform: rotate(-9deg);
+  pointer-events: none;
+}
+
+.status-toggle:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
 
 .scale-pop {
@@ -3822,6 +3887,21 @@ input[type='checkbox']:checked::before {
   opacity: 1;
 }
 
+/* Delvis ikryssad (0.8.11): Visa-menyns kategorier och mappar i Plot/export. */
+input[type='checkbox']:indeterminate {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+input[type='checkbox']:indeterminate::before {
+  width: 8px;
+  height: 0;
+  margin-top: 0;
+  border-width: 0 0 2px;
+  transform: none;
+  opacity: 1;
+}
+
 input[type='checkbox']:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 1px;
@@ -4600,4 +4680,57 @@ input[type='range'] {
 .scale-own input {
   width: 72px;
   font-family: var(--font-data);
+}
+
+/* ---------- Mönster med förhandsvisning (0.8.11) ---------- */
+
+.pattern-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pattern-pick label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 4px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.pattern-pick input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pattern-pick label:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  font-weight: 650;
+}
+
+.pattern-pick label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.pattern-swatch {
+  flex: none;
+  border-radius: 2px;
+  background: var(--paper);
+}
+
+.pattern-swatch .pattern-edge {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+
+.opt .pattern-pick label {
+  padding: 2px 6px 2px 3px;
 }

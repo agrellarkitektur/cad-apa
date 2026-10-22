@@ -3,6 +3,8 @@
  * webbläsaren, inte till projektet. Sparas i webbläsaren.
  */
 
+import type { LineWeights } from '../view2d/renderPrimitives';
+
 export type QuickId =
   | 'flip-swing'
   | 'flip-hinge'
@@ -66,6 +68,8 @@ const QUICK_DEFAULTS: Record<string, QuickId[]> = {
 
 export interface UiSettings {
   grid: boolean;
+  /** Linjernas tjocklek på skärmen (0.8.11), knappen Linjer i statusraden. */
+  lineWeights: LineWeights;
   /** Smartmenyn intill det markerade (0.8.5; tidigare snabbmenyn vid markören). */
   smartMenu: boolean;
   /** Modifiera-raden innanför ritverktygen (0.8.5). */
@@ -121,6 +125,7 @@ const KEY = 'bacchus-ui';
 export function defaultUiSettings(): UiSettings {
   return {
     grid: true,
+    lineWeights: 'screen',
     smartMenu: true,
     modifyRail: true,
     autoDims: true,
@@ -150,6 +155,7 @@ export function loadUiSettings(): UiSettings {
     const quick = (raw as { v?: number }).v === 2 ? { ...d.quick, ...(raw.quick ?? {}) } : d.quick;
     return {
       grid: typeof raw.grid === 'boolean' ? raw.grid : d.grid,
+      lineWeights: raw.lineWeights === 'thin' || raw.lineWeights === 'true' || raw.lineWeights === 'screen' ? raw.lineWeights : d.lineWeights,
       // Inställningen hette petPalette före 0.8.5.
       smartMenu: typeof raw.smartMenu === 'boolean' ? raw.smartMenu : ((raw as { petPalette?: boolean }).petPalette ?? d.smartMenu),
       modifyRail: typeof raw.modifyRail === 'boolean' ? raw.modifyRail : d.modifyRail,
