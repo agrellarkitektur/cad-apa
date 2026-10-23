@@ -1,4 +1,5 @@
 import { escapeHtml } from './labels';
+import { RAIL_ITEMS } from './modify/ops';
 import { applyUiColors, defaultUiSettings, QUICK_ACTIONS, QUICK_TYPES, saveUiSettings, SHORTCUTS, type QuickId, type UiSettings } from './uiSettings';
 
 /**
@@ -143,7 +144,8 @@ export class SettingsDialog {
       return `<div class="quick-row"><b>${label}</b><div>${boxes}</div></div>`;
     }).join('');
 
-    const keys = SHORTCUTS.map(([k, what]) => `<tr><td><kbd>${escapeHtml(k)}</kbd></td><td>${escapeHtml(what)}</td></tr>`).join('');
+    const modify: [string, string][] = RAIL_ITEMS.map((r) => [`Shift+${r.key}`, r.label]);
+    const keys = [...SHORTCUTS, ...modify].map(([k, what]) => `<tr><td><kbd>${escapeHtml(k)}</kbd></td><td>${escapeHtml(what)}</td></tr>`).join('');
 
     this.el.innerHTML = `<div class="dialog settings" role="dialog" aria-modal="true" aria-labelledby="settings-title">
       <header><h2 id="settings-title">Gränssnitt</h2><div class="spacer"></div>

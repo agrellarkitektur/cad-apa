@@ -73,6 +73,15 @@ export const icons = {
   chamfer: svg('<path d="M4 20V10l6-6h10"/><path d="M4 4h6M4 4v6" stroke-dasharray="1.5 1.5"/>'),
   merge: svg('<path d="M3 18l9-9 9 9" stroke-dasharray="2 2"/><path d="M3 18h18"/>'),
   extend: svg('<path d="M20 4v16"/><path d="M3 12h12" /><path d="M15 12h5" stroke-dasharray="1.5 1.5"/><path d="M14 9l3 3-3 3"/>'),
+  // Trimma: en linje som kapas mot en annan; den borttagna biten streckad (0.8.13).
+  trim: svg('<path d="M14 4v16"/><path d="M3 12h11"/><path d="M14 12h7" stroke-dasharray="1.5 1.5"/><path d="M17.5 9.5l2 5M19.5 9.5l-2 5"/>'),
+  // Hörnskarv: två linjer som förlängs till ett rent hörn.
+  cornerJoin: svg('<path d="M4 20v-9M13 4h7"/><path d="M4 11V4h9" stroke-dasharray="1.5 1.5"/><circle cx="4" cy="4" r="1.6" fill="currentColor"/>'),
+  // Dela: en linje med ett snitt.
+  split: svg('<path d="M3 12h7M14 12h7"/><path d="M10 7v10M14 7v10"/>'),
+  // Avrunda och fasa alla hörn i markeringen.
+  filletAll: svg('<path d="M4 16v-5a5 5 0 0 1 5-5h4"/><path d="M11 20h4a5 5 0 0 0 5-5v-4"/>'),
+  chamferAll: svg('<path d="M4 16v-6l4-4h5"/><path d="M11 20h5l4-4v-5"/>'),
   grid: svg('<path d="M4 4h16v16H4zM4 9.3h16M4 14.6h16M9.3 4v16M14.6 4v16"/>'),
   // Ett ritningsblad med ritningshuvud i nedre högra hörnet (0.8 del 3).
   sheet: svg('<path d="M3 5.5h18v13H3z"/><path d="M13 18.5v-4h8"/><path d="M6 8.5h5v5H6z"/>'),

@@ -920,3 +920,34 @@ mallblad) gav samma projekt, markering, ritning, panel och smartmeny.
   kopians vyer nya id och låter skalstockarna följa dem.
 - Stämpelns nollpunkt ritas som ett kryss på skärmen (`stampOrigin` i
   `src/repr/sheet.ts`, del `skärm`, kommer inte med i plot).
+
+## Fler Modifiera-verktyg (0.8.13, format 11)
+
+- **Trimma, Hörnskarv och Dela** ligger i `src/core/trimEdit.ts`, utan
+  webbläsare (testas i `tests/v0813.test.ts`). `trimPath` gör jobbet för
+  alla öppna linjer: skärningarna med sträckorna i `cutters` längs linjen,
+  och biten mellan de två närmast klicket tas bort. Väggar trimmas mot
+  andra väggars referenslinjer (`wallCutters`), 2D-linjer mot allt som går
+  att snäppa till (`snapSegments`). Bågväggar, slutna polylinjer och andra
+  former går inte än (`canTrim`, `canJoin`). Funktionerna svarar med
+  `EditResult`; dörrar och fönster i vägen kommer som `blocked`
+- **Avrunda alla / Fasa alla** (`roundCorners` i `wallEdit.ts`): alla hörn
+  mellan de markerade väggarna (`cornersAmong`) räknas på väggarna som de
+  är, och ett hörn görs bara om väggen räcker till båda sina hörn, så att
+  ordningen inte spelar roll. `roundCorner` och `roundCorners` delar
+  `cornerPlan` och `applyCorner`
+- **Baspunkten** (`ModifyTool.base` i `src/ui/modify/tool.ts`) för Flytta,
+  Vrid, Spegla och I rad: från ett klick på det markerade bara om
+  `snapBase` hittar en ände, ett liv eller en referenslinje (också det
+  markerades egna konturer, t.ex. en bilds hörn); annars `null`, och första
+  klicket blir baspunkten. `ModifyContext.clicked` säger om `at` kommer från
+  ett klick. `ModifyTool.prompt()` ger tipset medan verktyget väntar, och
+  verktyget säger till kontrollern (`changed`) när det byter läge
+- **Kortkommandon**: varje knapp i `RAIL` har en bokstav (`key`), Shift +
+  bokstaven trycker på knappen (`press` i `src/ui/app/modifyRail.ts`, från
+  `keyboard.ts`, som jämför `e.code` så att det fungerar oavsett
+  tangentbordslayout). Listan i inställningarna och tipsen byggs från `RAIL`
+- **Publicering**: `.github/workflows/publicera.yml` bygger, testar och
+  laddar upp `dist/` med FTPS vid varje push till `main` (inte för ändringar
+  bara i `docs/` eller `.md`). Uppladdningen sparar vad som finns på servern
+  i `.ftp-deploy-sync-state.json` och laddar sedan bara upp det som ändrats

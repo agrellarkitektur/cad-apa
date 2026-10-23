@@ -1,23 +1,25 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 23 oktober 2026, efter 0.8.12.
+överlämning; historiken finns i git. Senast: 23 oktober 2026, efter 0.8.13.
 
 ## Läget
 
-- **0.8.12 är klar** på `main`, filformatet är nu **11**. Det som gjordes
-  står i PLAN.md under *0.8.12* (med Claudes val), i README och i
-  UTVECKLING.md under *Skalstock och stämplar (0.8.12, format 11)*:
-  - **Skalstock** (`ScaleBar`, `src/elements/scaleBar.ts`) efter Carl
-    Augusts DXF *skalstockar till cad-apa* (hans tolv skalor som de är,
-    andra skalor härledda). Skalan från en vy på bladet eller egen.
-  - **Stämplar**: arbetsblad med `stamp`, ritade i mm kring en nollpunkt,
-    lagda på blad som `Stamp`-element med smarttext från bladet.
-  - Kontrollerat i Chrome med Playwright mot `dist/`: lägga på skalstock,
-    ny stämpel, text med `{ritningsnummer}` i stämpeln, lägga stämpeln på
-    bladet. Inga fel i konsolen.
-- **0.8.11 är inte provad än** av Carl August (han hann inte före 0.8.12).
-  Frågorna om 0.8.11 nedan gäller fortfarande.
+- **0.8.13 är klar** på `main` (samma format, 11), och **publicerad på
+  webbhotellet direkt**: sedan 23 oktober laddar
+  `.github/workflows/publicera.yml` upp `dist/` med FTPS vid varje push
+  till `main` (secrets `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`,
+  `FTP_DIR` = `/agrellarkitektur.se/public_html/cad-apa/`). Releaser
+  behövs inte längre för att han ska kunna prova; zip-bygget finns kvar.
+  Se att körningen går igenom med `gh run list` efter en push.
+- 0.8.13 står i PLAN.md (med Claudes val), README och UTVECKLING.md under
+  *Fler Modifiera-verktyg (0.8.13, format 11)*: Trimma, Hörnskarv, Dela
+  (`src/core/trimEdit.ts`), Avrunda/Fasa alla (`roundCorners`), baspunkt
+  från snäppunkt för Flytta/Vrid/Spegla/I rad, och Shift + bokstav för alla
+  Modifiera-verktyg. Kontrollerat i Chrome med Playwright mot `dist/`.
+  Carl August delade versionen: resten är **0.8.14** (se Färdplan).
+- **0.8.11, 0.8.12 och 0.8.13 är inte provade** av Carl August än.
+  Frågorna nedan gäller fortfarande.
 - **Inkorgen har elva osorterade punkter** (22 oktober) i
   synpunktsfilen. Sortera dem med honom först i nästa session. En av dem
   säger emot 0.8.11: han vill att en sluten 2D-polylinje *bara* markeras
@@ -37,8 +39,8 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   meddelande om att de kommer från en äldre alfaversion (`parse` i
   `src/storage/format.ts`).
 - **Telefonen är inget mål.** Testa på dator (Chrome).
-- Arbetssätt: Carl August testar varje version på webbhotellet via en
-  release på GitHub, som han gör själv. Ingen demo och ingen zip om han inte
+- Arbetssätt: Carl August testar varje version på webbhotellet, dit den
+  publiceras av sig själv vid push till `main` (sedan 0.8.13). Ingen demo och ingen zip om han inte
   ber om det. Säg alltid hur stora föreslagna ändringar är och om de
   riskerar att behöva mer än en session (CLAUDE.md).
 - **Synpunkter:** Carl August samlar dem i `cad-apa-synpunkter.md`
@@ -56,14 +58,13 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~, ~~0.8.9 Grafik och textrutor på bladen~~,
   ~~0.8.10 Smarta fält~~, ~~0.8.11 Granskning~~, ~~0.8.12 Skalstock och
-  stämplar~~ (klara)
-- **0.8.13 Fler Modifiera-verktyg**: Trimma, Hörnskarv, Dela, Justera och
-  Fördela, Hämta/överför, Skala, Avrunda/Fasa för markeringen,
-  kortkommandon, Flytta/Vrid från snäppunkt; ev. egen småversion för
-  tjocklekstabell, dra och släpp till mappar och mätning i segment
-- **0.8.14 Underlag**: snäpp i DXF, X/Y, papperskorg, grupper i trädet,
+  stämplar~~, ~~0.8.13 Fler Modifiera-verktyg~~ (klara)
+- **0.8.14 Modifiera-verktyg del 2**: Justera och Fördela, Hämta/överför,
+  Skala, Förläng/Trimma för flera mot en gräns, tjocklekstabellen, dra och
+  släpp till mappar, mätning i segment
+- **0.8.15 Underlag**: snäpp i DXF, X/Y, papperskorg, grupper i trädet,
   bildens grepp och mått
-- **0.8.15 Rumsstämpeln** flyttbar, med pil utanför rummet
+- **0.8.16 Rumsstämpeln** flyttbar, med pil utanför rummet
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade)
@@ -77,17 +78,23 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 - Efter piloten: se *Efter pilotprojektet* i PLAN.md (bl.a. explodera
   DXF-underlag, mallblad mellan projekt). **1.0** bygglovshandling.
 
-## Nästa session: 0.8.13 Fler Modifiera-verktyg
+## Nästa session: 0.8.14 Modifiera-verktyg del 2
 
-Läs synpunktsfilen och *0.8.13* i PLAN.md. Först: sortera Inkorgen med
-Carl August (elva punkter, se *Läget*) och fråga hur 0.8.11 och 0.8.12
-fungerade på webbhotellet. Stäm sedan av vilka Modifiera-verktyg och
-kortkommandon han vill ha innan något byggs; 0.8.13 riskerar att bli för
-stor, så föreslå att dela den (tjocklekstabell, dra och släpp, mätning i
-segment i egna småversioner). Nästa granskning (förra var 0.8.11) bör
-föreslås efter 0.8.13 eller 0.8.14.
+Läs synpunktsfilen och *0.8.14* i PLAN.md. Först: sortera Inkorgen med
+Carl August (elva punkter, se *Läget*) och fråga hur 0.8.11–0.8.13
+fungerade på webbhotellet. Föreslå en granskning (förra var 0.8.11) efter
+0.8.14; `src/ui/modify/tool.ts` har vuxit (drygt 750 rader) och kan delas
+per val.
 
 ## Att fråga Carl August om
+
+- **0.8.13 efter provning** (Claudes val, se PLAN.md): bokstäverna för
+  kortkommandona (Shift+Q Ta bort punkt och Shift+K Flytta punkt är
+  godtyckliga); att Trimma, Hörnskarv och Dela avslutas efter ett klick (i
+  AutoCAD fortsätter Trimma tills Esc); att Dela finns fast Lägg till punkt
+  också delar en vägg; att baspunkten gäller också Spegla och I rad. Ska
+  Avrunda alla och Fasa alla också gälla 2D-polylinjer? Smartmenyn för flera
+  väggar har nu så många val att *I rad* bryts till en andra rad.
 
 - **Bladen efter provning** (0.8.9, Claudes val): att bilder på bladet
   ligger under vyerna och linjer och text över; att mått inte går att rita
@@ -135,10 +142,8 @@ föreslås efter 0.8.13 eller 0.8.14.
   Annars: prova att sätta Gmail-adressen direkt som `to` i
   `feedback-config.php`. Kommer de fram då är det vidarebefordran från
   Loopia som stoppar dem.
-- **Fler Modifiera-verktyg (nu 0.8.13)**: förslagen i PLAN.md (Trimma,
-  Hörnskarv, Dela, Justera och Fördela, Hämta och överför inställningar,
-  Skala) är Claudes egna, efter motsvarande program. Stäm av vilka han vill
-  ha, och listan med kortkommandon, innan den versionen börjar.
+- **Modifiera-verktyg del 2 (0.8.14)**: Justera och Fördela, Hämta och
+  överför och Skala är Claudes förslag; stäm av hur de ska fungera.
 - **Smartmenyn efter provning**: placeringen (höger, vänster, under, över
   det markerade), att den syns vid markering med ruta, och om rubriken
   *Ändra* i Modifiera-raden ska heta något annat.
@@ -204,7 +209,9 @@ föreslås efter 0.8.13 eller 0.8.14.
 - Repot är `agrellarkitektur/cad-apa`. Bygga och testa: se CLAUDE.md.
   Commit avslutas med raderna som sessionen anger (Co-Authored-By och, om
   sessionen har en, Claude-Session), sedan `git fetch origin main` och
-  `git push origin HEAD:main`. Releaser på GitHub gör Carl August själv.
+  `git push origin HEAD:main`. Pushen publicerar på webbhotellet; följ
+  körningen med `gh run list` (loggarna går inte att läsa härifrån, men
+  status syns). Releaser (zip) gör Carl August själv om han vill.
 - Titta på resultatet: `npm run build`, servera `dist/` med
   `python3 -m http.server 8765` och styr med Playwright (Python). Det är
   samma bygge som hamnar på webbhotellet. `window.bacchus` har `store`,

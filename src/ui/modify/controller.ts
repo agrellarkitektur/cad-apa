@@ -107,7 +107,7 @@ export class Modifier {
       return;
     }
     this.active = op;
-    this.tool = new ModifyTool(this.host, op, ctx, this.remembered.get(op) ?? def.value?.initial ?? 0, () => this.finish());
+    this.tool = new ModifyTool(this.host, op, ctx, this.remembered.get(op) ?? def.value?.initial ?? 0, () => this.finish(), () => this.changed());
     this.host.startModify(this.tool);
     this.changed();
   }
@@ -226,7 +226,8 @@ export class Modifier {
     const value = v
       ? `<label class="sm-value"><span>${v.label}</span><input type="text" data-modify-value data-expr ${v.unit === '°' ? 'data-unit="deg"' : v.unit === 'st' ? 'data-unit=""' : ''} inputmode="decimal" autocomplete="off" value="${initial}"><i>${v.unit}</i></label>`
       : '';
-    return `<div class="sm-detail"><b>${escapeHtml(def.label)}</b>${value}<span class="sm-hint">${escapeHtml(def.hint)}</span></div>`;
+    const hint = this.tool?.prompt() ?? def.hint;
+    return `<div class="sm-detail"><b>${escapeHtml(def.label)}</b>${value}<span class="sm-hint">${escapeHtml(hint)}</span></div>`;
   }
 
   /**

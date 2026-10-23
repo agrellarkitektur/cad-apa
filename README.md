@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.12** (alfa, skalstock och stämplar); nästa är **0.8.13, fler Modifiera-verktyg**.
+**0.8.13** (alfa, fler Modifiera-verktyg); nästa är **0.8.14, Modifiera-verktyg del 2**.
 
 ## Vad som fungerar
 
@@ -682,6 +682,30 @@ Version 0.8.12, skalstock och stämplar (nytt filformat, 11):
   bladet; de går bara att flytta (inte vrida eller spegla)
 - Projekt i format 10 och äldre öppnas inte (alfaversion); öppna dem i 0.8.11
 
+Version 0.8.13, fler Modifiera-verktyg (samma filformat, 11):
+- **Trimma** (Shift+T): klicka på biten av en vägg eller 2D-linje som ska
+  bort. Den kapas där andra väggar (för en vägg) eller linjer, väggliv och
+  underlag (för en 2D-linje) korsar; ligger biten mitt i blir det två.
+  Biten som tas bort visas streckad innan man klickar. Dörrar och fönster i
+  biten stoppar trimningen
+- **Hörnskarv** (Shift+J): två raka väggar, eller två raka 2D-linjer,
+  förlängs eller kortas till ett rent hörn där referenslinjerna möts.
+  Klicken visar vilken del av varje som blir kvar
+- **Dela** (Shift+D): en vägg eller 2D-linje delas i två där man klickar,
+  utan något hörn
+- **Avrunda alla** och **Fasa alla**: med flera väggar markerade avrundas
+  eller fasas alla hörn mellan dem i ett steg. Hörn som inte går (för korta
+  väggar, bågar, dörrar i vägen) hoppas över, och det sägs hur många
+- **Baspunkt för Flytta, Vrid, Spegla och I rad**: klickade man på det
+  markerade utgår verktyget från klicket bara om det snäpper till en ände,
+  ett hörn, ett väggliv eller en referenslinje (också en bilds hörn).
+  Annars ber verktyget om en baspunkt först
+- **Kortkommandon** för alla Modifiera-verktyg: Shift + bokstav, t.ex.
+  Shift+M Flytta, Shift+R Vrid, Shift+S Spegla, Shift+F Avrunda. De står i
+  knapparnas tips och i listan under Inställningar
+- Webbhotellet: varje uppdatering på GitHub publiceras direkt med FTP
+  (`.github/workflows/publicera.yml`)
+
 ## Versioner och gamla projekt
 
 Projektfilerna har ett formatnummer, i dag 11 (sedan 0.8.12). Fram till
@@ -801,7 +825,10 @@ adress på den nya domänen.
 ### Göra en ny version (för den som utvecklar)
 
 Höj versionen i `package.json` och `src/core/engine.ts`, skriv vad som är nytt
-här i README och skicka upp ändringarna. Gå sedan till *Releases → Draft a new
+här i README och skicka upp ändringarna. Sedan 0.8.13 laddas varje push till
+`main` upp till webbhotellet med FTP (`.github/workflows/publicera.yml`, med
+uppgifterna i repots secrets `FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD` och
+`FTP_DIR`). En zip för den som vill lägga upp själv: gå till *Releases → Draft a new
 release*, skriv en ny tagg som `v0.6.3`, och tryck *Publish release*. Efter
 några minuter har GitHub byggt programmet, kört testerna och lagt
 `cad-apa-v0.6.3.zip` på releasen (se `.github/workflows/release.yml`).

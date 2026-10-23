@@ -2,9 +2,10 @@ import { deleteElements, moveElements } from '../../core/commands';
 import { releasedHint } from '../tools/selectTool';
 import { isNarrow } from '../sheet';
 import type { AppContext } from './context';
+import { RAIL_ITEMS, type RailId } from '../modify/ops';
 
 /** Kortkommandona. */
-export function installKeyboard(app: AppContext) {
+export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void) {
   window.addEventListener('keydown', (e) => {
     const t = e.target as HTMLElement;
     const typing = (t instanceof HTMLInputElement && t.type !== 'checkbox') || t instanceof HTMLSelectElement || t instanceof HTMLTextAreaElement;
@@ -71,6 +72,17 @@ export function installKeyboard(app: AppContext) {
         e.preventDefault();
       }
       return;
+    }
+
+    // Modifiera-verktygen: Shift + bokstav (0.8.13). Shift+Z (förra zoomen)
+    // och Shift + piltangenterna (knuffa) är inte med.
+    if (e.shiftKey && /^Key[A-Z]$/.test(e.code)) {
+      const rail = RAIL_ITEMS.find((r) => `Key${r.key}` === e.code);
+      if (rail) {
+        e.preventDefault();
+        pressRail(rail.id);
+        return;
+      }
     }
 
     switch (e.key) {

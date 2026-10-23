@@ -1,8 +1,10 @@
-import { moveElements, moveWallEnd, rotateElements, updateParams } from '../../core/commands';
-import type { Id } from '../../core/model';
+import { geometryOf, moveElements, moveWallEnd, rotateElements, updateParams } from '../../core/commands';
+import type { Element, Id } from '../../core/model';
+import { canJoin, canTrim, joinLines, joinWalls, linePoints, splitLine, splitWallAt, trimLine, trimPath, trimWall, wallCutters, type EditResult } from '../../core/trimEdit';
 import {
   continuingTangent,
   cornerCut,
+  cornersAmong,
   cornerPartner,
   openingsInCorner,
   extendTo,
@@ -14,6 +16,7 @@ import {
   refFrame,
   reshapeWall,
   roundCorner,
+  roundCorners,
   splitWall,
   tangentArc,
 } from '../../core/wallEdit';
@@ -29,7 +32,7 @@ import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { labelOf } from '../labels';
 import { pxToMm, type ToolHost } from '../tools/host';
 import { lengthLabel, snapMarker } from '../tools/overlay';
-import { roundMm, snap, type SnapResult } from '../tools/snap';
+import { roundMm, snap, type SnapResult, type SnapSegment } from '../tools/snap';
 import type { ModifyContext, OpId } from './ops';
 
 /** Val som utförs direkt, utan att klicka i ritningen. */
@@ -70,13 +73,68 @@ export class ModifyTool implements ViewTool {
   private cursorAt: SnapResult | null = null;
   /** Vrid: riktningen man vrider från, när den klickats. */
   private ref: Vec2 | null = null;
+  /**
+   * Flytta, Vrid, Spegla och I rad: baspunkten (0.8.13). Ett klick på det
+   * markerade blir baspunkt bara om det snäpper till en ände, ett liv eller
+   * en referenslinje; annars ber verktyget om en punkt först.
+   */
+  private base: Vec2 | null;
+  /** Hörnskarv: den första väggen eller linjen och var man klickade på den. */
+  private first: { id: Id; at: Vec2 } | null = null;
+  private changed: () => void;
 
-  constructor(host: ToolHost, op: OpId, ctx: ModifyContext, value: number, done: () => void) {
+  constructor(host: ToolHost, op: OpId, ctx: ModifyContext, value: number, done: () => void, changed: () => void = () => {}) {
     this.host = host;
     this.op = op;
     this.ctx = ctx;
     this.value = value;
     this.done = done;
+    this.changed = changed;
+    this.base = BASE_OPS.has(op) && ctx.kind === 'body' ? (ctx.clicked ? this.snapBase(ctx.at) : null) : ctx.at;
+    if (op === 'join') this.first = this.firstOfJoin();
+  }
+
+  /** Tipset just nu, när verktyget väntar på något annat än det vanliga. */
+  prompt(): string | null {
+    if (BASE_OPS.has(this.op) && !this.base) return 'Klicka baspunkten: en ände, ett hörn, ett väggliv eller en referenslinje.';
+    if (this.op === 'join' && !this.first) return 'Klicka på den första väggen eller linjen, på den del som ska vara kvar.';
+    return null;
+  }
+
+  /** Klicket som baspunkt, om det snäpper till något i ritningen. */
+  private snapBase(at: Vec2): Vec2 | null {
+    const r = snap({ cursor: at, segments: this.baseSegments(), tol: pxToMm(this.host, 10) });
+    return r.kind === 'free' || r.kind === 'angle' || r.kind === 'track' ? null : roundMm(r.point);
+  }
+
+  /** Det baspunkten snäpper mot: ritningen och det markerades egna konturer (t.ex. en bilds hörn). */
+  private baseSegments(): SnapSegment[] {
+    const own: SnapSegment[] = [];
+    const ids = new Set(this.ctx.ids);
+    for (const pk of this.host.plan().pickables) {
+      if (!ids.has(pk.id)) continue;
+      for (const rings of pk.regions) for (const ring of rings) for (let i = 0; i < ring.length; i++) own.push({ id: pk.id, a: ring[i], b: ring[(i + 1) % ring.length] });
+    }
+    return own.length ? [...this.host.snapSegments(), ...own] : this.host.snapSegments();
+  }
+
+  /** Hörnskarv: den första är den man klickade på, eller den enda som går att skarva. */
+  private firstOfJoin(): { id: Id; at: Vec2 } | null {
+    const ctx = this.ctx;
+    if (ctx.kind !== 'body' || ctx.clicked) {
+      const hit = this.nearestSelected(ctx.at, canJoin, 14);
+      if (hit) return { id: hit, at: ctx.at };
+    }
+    const doc = this.host.store.doc;
+    const can = ctx.ids.filter((id) => canJoin(doc.elements[id]));
+    if (can.length !== 1) return null;
+    const pts = pathOf(doc.elements[can[0]]);
+    return { id: can[0], at: [(pts[0][0] + pts[pts.length - 1][0]) / 2, (pts[0][1] + pts[pts.length - 1][1]) / 2] };
+  }
+
+  /** Det markerade element närmast punkten som `ok` gäller, inom toleransen (väggar: plus halva tjockleken). */
+  private nearestSelected(at: Vec2, ok: (el: Element | undefined) => boolean, px = 10): Id | null {
+    return nearestOf(this.host, this.ctx.ids, at, ok, pxToMm(this.host, px));
   }
 
   setValue(v: number): void {
@@ -145,7 +203,11 @@ export class ModifyTool implements ViewTool {
     this.track(p);
   }
 
+  /** Var markören är, utan snäppning (Trimma och Hörnskarv tittar på vad den pekar på). */
+  private hoverAt: Vec2 | null = null;
+
   hover(p: ViewPointer | null): void {
+    this.hoverAt = p ? p.model : null;
     if (p) this.track(p);
   }
 
@@ -153,9 +215,10 @@ export class ModifyTool implements ViewTool {
 
   private track(p: ViewPointer): void {
     const tol = pxToMm(this.host, p.pointerType === 'touch' ? 18 : 10);
-    const exclude = new Set(this.op === 'move' || this.op === 'multiply' || this.op === 'stretch' ? this.ctx.ids : []);
-    const from = this.op === 'stretch' ? this.fixedEnd() : this.ctx.at;
-    this.cursorAt = snap({ cursor: p.model, from, segments: this.host.snapSegments(), tol, ortho: p.shift, exclude });
+    const picking = BASE_OPS.has(this.op) && !this.base;
+    const exclude = new Set((this.op === 'move' || this.op === 'multiply' || this.op === 'stretch') && !picking ? this.ctx.ids : []);
+    const from = this.op === 'stretch' ? this.fixedEnd() : BASE_OPS.has(this.op) ? (this.base ?? undefined) : this.ctx.at;
+    this.cursorAt = snap({ cursor: p.model, from, segments: picking ? this.baseSegments() : this.host.snapSegments(), tol, ortho: p.shift && !picking, exclude });
   }
 
   private fixedEnd(): Vec2 | undefined {
@@ -168,9 +231,55 @@ export class ModifyTool implements ViewTool {
   up(p: ViewPointer): void {
     this.track(p);
     const at = roundMm(this.cursorAt?.point ?? p.model);
+    if (BASE_OPS.has(this.op) && !this.base) {
+      this.base = at;
+      this.changed();
+      return;
+    }
     if (this.op === 'rotate' && !this.ref) {
-      if (dist(at, this.ctx.at) < 1) return;
+      if (dist(at, this.base!) < 1) return;
       this.ref = at;
+      return;
+    }
+    if (this.op === 'trim' || this.op === 'split') {
+      const target = this.nearestSelected(p.model, canTrim);
+      if (!target) {
+        this.host.hint(this.op === 'trim' ? 'Klicka på biten som ska bort, på det markerade.' : 'Klicka på det markerade, där det ska delas.');
+        return;
+      }
+      const el = this.host.store.doc.elements[target];
+      const r =
+        this.op === 'trim'
+          ? el.type === 'Wall'
+            ? trimWall(this.host.store, target, p.model)
+            : trimLine(this.host.store, target, this.cutters(target), p.model)
+          : el.type === 'Wall'
+            ? splitWallAt(this.host.store, target, at)
+            : splitLine(this.host.store, target, at);
+      if (!this.report(r)) return;
+      this.done();
+      return;
+    }
+    if (this.op === 'join') {
+      if (!this.first) {
+        const hit = this.nearestSelected(p.model, canJoin);
+        if (!hit) {
+          this.host.hint('Klicka på en markerad vägg eller linje.');
+          return;
+        }
+        this.first = { id: hit, at: p.model };
+        this.changed();
+        return;
+      }
+      const target = this.joinTarget(p.model);
+      if (!target) {
+        this.host.hint('Klicka på en annan vägg eller rak linje.');
+        return;
+      }
+      const isWall = this.host.store.doc.elements[this.first.id]?.type === 'Wall';
+      const r = (isWall ? joinWalls : joinLines)(this.host.store, this.first.id, this.first.at, target, p.model);
+      if (!this.report(r)) return;
+      this.done();
       return;
     }
     if (this.op === 'extend') {
@@ -184,6 +293,30 @@ export class ModifyTool implements ViewTool {
       return;
     }
     this.commit(at, null);
+  }
+
+  /** Linjerna en 2D-linje trimmas mot: allt som går att snäppa till, utom linjen själv. */
+  private cutters(id: Id): SnapSegment[] {
+    return this.host.snapSegments().filter((q) => q.id !== id);
+  }
+
+  /** Hörnskarv: den andra väggen eller linjen, av samma slag som den första. */
+  private joinTarget(at: Vec2): Id | null {
+    const doc = this.host.store.doc;
+    const kind = doc.elements[this.first!.id]?.type;
+    const ids = this.host.plan().pickables.map((pk) => pk.id).filter((id) => id !== this.first!.id && doc.elements[id]?.type === kind);
+    return nearestOf(this.host, ids, at, canJoin, pxToMm(this.host, 10));
+  }
+
+  /** Säg varför det inte gick; svarar true om det gick. */
+  private report(r: EditResult): boolean {
+    if (r.ok) return true;
+    if (r.blocked?.length) {
+      const doc = this.host.store.doc;
+      const names = r.blocked.map((id) => labelOf(doc, doc.elements[id])).join(', ');
+      this.host.hint(`${names} ${r.reason === 'trimmas bort' ? 'ligger i biten som skulle tas bort' : 'skulle hamna utanför väggen'}. Flytta ${r.blocked.length > 1 ? 'dem' : 'den'} först.`, 5000);
+    } else this.host.hint(r.reason, 3500);
+    return false;
   }
 
   /** Ett inskrivet värde: utför med det. */
@@ -241,8 +374,21 @@ export class ModifyTool implements ViewTool {
     const ctx = this.ctx;
     const el = this.wall();
     const p = el?.params as { start: [number, number]; end: [number, number] } | undefined;
-    const base = ctx.at;
+    const base = BASE_OPS.has(this.op) ? this.base : ctx.at;
+    if (!base) return;
     switch (this.op) {
+      case 'filletAll':
+      case 'chamferAll': {
+        const v = Math.abs(typed ?? this.value);
+        const kind = this.op === 'filletAll' ? 'fillet' : 'chamfer';
+        const r = roundCorners(store, ctx.ids, v, kind);
+        if (!r.done) {
+          this.host.hint(kind === 'fillet' ? 'Inget av hörnen går att avrunda med den radien.' : 'Inget av hörnen går att fasa så mycket.', 3500);
+          return;
+        }
+        if (r.skipped) this.host.hint(`${r.done} hörn ${kind === 'fillet' ? 'avrundades' : 'fasades'}; ${r.skipped} gick inte (för korta väggar, bågar eller dörrar och fönster i vägen).`, 5000);
+        break;
+      }
       case 'shapeInsert':
       case 'shapeMove': {
         const s = this.shape();
@@ -414,7 +560,11 @@ export class ModifyTool implements ViewTool {
       }
       return pts;
     };
-    const base = this.ctx.at;
+    const base = BASE_OPS.has(this.op) ? this.base : this.ctx.at;
+    if (!base) {
+      if (this.cursorAt) out.push(snapMarker(cam, this.cursorAt));
+      return out.join('');
+    }
     const roof = this.roofOutline();
     const shp = this.shape();
     const shapeGhost = (patch: Record<string, unknown> | null) => {
@@ -492,6 +642,41 @@ export class ModifyTool implements ViewTool {
         }
         break;
       }
+      case 'filletAll':
+      case 'chamferAll': {
+        const kind = this.op === 'filletAll' ? 'fillet' : 'chamfer';
+        for (const c of cornersAmong(doc, this.ctx.ids)) {
+          const pv = previewCorner(this.host, c.wallId, c.end, Math.abs(this.value), kind);
+          if (pv) out.push(line(kind === 'fillet' ? arcPts(pv.a, pv.b, pv.bulge) : [pv.a, pv.b]));
+        }
+        break;
+      }
+      case 'trim':
+      case 'split':
+      case 'join': {
+        const hover = this.hoverAt;
+        if (!hover) break;
+        if (this.op === 'trim') {
+          const id = this.nearestSelected(hover, canTrim);
+          const target = id ? doc.elements[id] : undefined;
+          if (target) {
+            const r = target.type === 'Wall' ? trimPath(pathOf(target), wallCutters(doc, target), hover) : trimPath(linePoints(target), this.cutters(target.id), hover);
+            if (r) out.push(line(r.cut, 'trim-cut'));
+          }
+        } else if (this.op === 'split' && at && this.nearestSelected(hover, canTrim)) {
+          const [x, y] = cam.toScreen(at);
+          out.push(`<path d="M${x - 6} ${y - 6}L${x + 6} ${y + 6}M${x - 6} ${y + 6}L${x + 6} ${y - 6}" class="trim-cut"/>`);
+        } else if (this.op === 'join' && this.first) {
+          const a = pathOf(doc.elements[this.first.id]);
+          const bId = this.joinTarget(hover);
+          if (bId) {
+            const b = pathOf(doc.elements[bId]);
+            const x = meetOf(a[0], a[a.length - 1], b[0], b[b.length - 1]);
+            if (x) out.push(line([a[0], a[a.length - 1]], 'snap-guide'), line([b[0], b[b.length - 1]], 'snap-guide'), line([nearer(a, x), x, nearer(b, x)]));
+          }
+        }
+        break;
+      }
       case 'fillet':
       case 'chamfer':
         if (el && this.ctx.end) {
@@ -543,7 +728,7 @@ export class ModifyTool implements ViewTool {
       default:
         break;
     }
-    if (this.cursorAt && this.op !== 'fillet' && this.op !== 'chamfer') out.push(snapMarker(cam, this.cursorAt));
+    if (this.cursorAt && !NO_MARKER.has(this.op)) out.push(snapMarker(cam, this.cursorAt));
     return out.join('');
   }
 
@@ -555,6 +740,60 @@ export class ModifyTool implements ViewTool {
       .map((item) => ghostPath(cam, item, map))
       .join('');
   }
+}
+
+/** Val som utgår från en baspunkt (0.8.13). */
+const BASE_OPS = new Set<OpId>(['move', 'rotate', 'mirror', 'multiply']);
+/** Val som inte visar snäppmarkören. */
+const NO_MARKER = new Set<OpId>(['fillet', 'chamfer', 'filletAll', 'chamferAll', 'trim', 'join']);
+
+/** Väggens referenslinje eller 2D-linjens punkter. */
+function pathOf(el: Element): [number, number][] {
+  if (el.type === 'Wall') {
+    const q = el.params as { start: [number, number]; end: [number, number] };
+    return [q.start, q.end];
+  }
+  return linePoints(el);
+}
+
+/** Skärningen mellan två oändliga linjer. */
+function meetOf(a: Vec2, b: Vec2, c: Vec2, d: Vec2): Vec2 | null {
+  const r = sub(b, a);
+  const s = sub(d, c);
+  const den = r[0] * s[1] - r[1] * s[0];
+  if (Math.abs(den) < 1e-9) return null;
+  const t = ((c[0] - a[0]) * s[1] - (c[1] - a[1]) * s[0]) / den;
+  return [a[0] + r[0] * t, a[1] + r[1] * t];
+}
+
+/** Den ände av linjen som ligger längst från x (den som blir kvar i förhandsvisningen). */
+function nearer(pts: Vec2[], x: Vec2): Vec2 {
+  const a = pts[0];
+  const b = pts[pts.length - 1];
+  return dist(a, x) > dist(b, x) ? a : b;
+}
+
+/** Elementet bland `ids` närmast punkten (väggar räknas till livet), inom `tol`. */
+function nearestOf(host: ToolHost, ids: readonly Id[], at: Vec2, ok: (el: Element | undefined) => boolean, tol: number): Id | null {
+  const doc = host.store.doc;
+  let best: { id: Id; d: number } | null = null;
+  for (const id of ids) {
+    const el = doc.elements[id];
+    if (!ok(el)) continue;
+    const pts = pathOf(el);
+    let d = Infinity;
+    for (let i = 0; i + 1 < pts.length; i++) d = Math.min(d, distToSeg(at, pts[i], pts[i + 1]));
+    if (el.type === 'Wall') d = Math.max(0, d - Number(geometryOf(doc, el).thickness) / 2);
+    if (d <= tol && (!best || d < best.d)) best = { id, d };
+  }
+  return best?.id ?? null;
+}
+
+function distToSeg(q: Vec2, a: Vec2, b: Vec2): number {
+  const u = sub(b, a);
+  const l2 = u[0] * u[0] + u[1] * u[1];
+  const t = l2 ? Math.max(0, Math.min(1, ((q[0] - a[0]) * u[0] + (q[1] - a[1]) * u[1]) / l2)) : 0;
+  return dist(q, [a[0] + u[0] * t, a[1] + u[1] * t]);
 }
 
 /** Förhandsvisning av avrundning eller fasning: den nya väggens ändar och pilhöjd. */

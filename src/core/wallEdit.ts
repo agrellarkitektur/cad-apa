@@ -20,7 +20,7 @@ export function refFrame(doc: ProjectDoc, el: Element): WallFrame {
 }
 
 /** Flytta dörrar och fönster till den vägg (av flera) de hamnar i, med nytt läge. */
-function rehost(tx: TxBuilder, before: ProjectDoc, from: Element, targets: Element[]): void {
+export function rehost(tx: TxBuilder, before: ProjectDoc, from: Element, targets: Element[]): void {
   const f0 = wallFrame(geometryOf(before, from));
   const frames = targets.map((t) => ({ t, f: wallFrame(geometryOf(tx.doc, t)) }));
   for (const h of Object.values(before.elements)) {
@@ -138,11 +138,6 @@ export function continuingTangent(doc: ProjectDoc, wallId: Id, end: 'start' | 'e
 }
 
 /**
- * Avrunda eller fasa ett hörn mellan två raka väggar. Väggarna kortas till
- * tangentpunkterna och en ny vägg (en båge eller en rak fasvägg) läggs in.
- * `size` är radien (avrundning) eller avståndet från hörnet (fasning).
- */
-/**
  * Dörrar och fönster i väggen som ligger närmare hörnet än `t` (längs
  * väggen), och alltså skulle hamna utanför den om hörnet avrundas eller
  * fasas så att väggen slutar där.
@@ -151,14 +146,20 @@ export function openingsInCorner(doc: ProjectDoc, wallId: Id, end: 'start' | 'en
   const w = doc.elements[wallId];
   if (!w) return [];
   const len = refFrame(doc, w).length;
-  const out: Id[] = [];
+  return openingSpans(doc, wallId)
+    .filter((o) => (end === 'start' ? o.from : len - o.to) < t)
+    .map((o) => o.id);
+}
+
+/** Dörrar och fönster i en vägg, med var de börjar och slutar längs den (mm från början). */
+export function openingSpans(doc: ProjectDoc, wallId: Id): { id: Id; from: number; to: number }[] {
+  const out: { id: Id; from: number; to: number }[] = [];
   for (const h of Object.values(doc.elements)) {
     if (h.host !== wallId || typeof h.params.at !== 'number') continue;
     const at = h.params.at as number;
     const own = Number(h.params.width);
     const width = Number.isFinite(own) && own > 0 ? own : Number(h.definition ? doc.definitions[h.definition]?.params.width : 0) || 0;
-    const fromCorner = end === 'start' ? at - width / 2 : len - (at + width / 2);
-    if (fromCorner < t) out.push(h.id);
+    out.push({ id: h.id, from: at - width / 2, to: at + width / 2 });
   }
   return out;
 }
@@ -177,8 +178,20 @@ export function cornerCut(doc: ProjectDoc, wallId: Id, end: 'start' | 'end', siz
   return { t: kind === 'fillet' ? size / Math.tan(theta / 2) : size, partner };
 }
 
-export function roundCorner(store: DocStore, wallId: Id, end: 'start' | 'end', size: number, kind: 'fillet' | 'chamfer'): Id | null {
-  const doc = store.doc;
+/** Det en avrundning eller fasning gör: tangentpunkterna och den nya väggen. */
+interface CornerPlan {
+  wallId: Id;
+  end: 'start' | 'end';
+  partner: { id: Id; end: 'start' | 'end' };
+  T1: P;
+  T2: P;
+  bulge: number;
+  justification: string;
+  /** Hur långt väggarna kortas från hörnet. */
+  t: number;
+}
+
+function cornerPlan(doc: ProjectDoc, wallId: Id, end: 'start' | 'end', size: number, kind: 'fillet' | 'chamfer'): CornerPlan | null {
   const partner = cornerPartner(doc, wallId, end);
   const w1 = doc.elements[wallId];
   if (!partner || !w1 || size <= 0) return null;
@@ -203,19 +216,77 @@ export function roundCorner(store: DocStore, wallId: Id, end: 'start' | 'end', s
   // Den nya väggen går från w1 mot w2. Gick w1 bort från hörnet byter sidorna plats.
   const j = p1.justification ?? 'center';
   const justification = end === 'end' ? j : j === 'left' ? 'right' : j === 'right' ? 'left' : j;
+  return { wallId, end, partner, T1, T2, bulge, justification, t };
+}
+
+function applyCorner(tx: TxBuilder, c: CornerPlan): Id {
+  const a = tx.doc.elements[c.wallId];
+  const pa = a.params as { start: P; end: P };
+  putWallEnds(tx, a, c.end === 'start' ? c.T1 : pa.start, c.end === 'end' ? c.T1 : pa.end);
+  const b = tx.doc.elements[c.partner.id];
+  const pb = b.params as { start: P; end: P };
+  putWallEnds(tx, b, c.partner.end === 'start' ? c.T2 : pb.start, c.partner.end === 'end' ? c.T2 : pb.end);
+  const params = { ...structuredClone(a.params), start: c.T1, end: c.T2, justification: c.justification, bulge: Math.round(c.bulge * 10) / 10 } as Record<string, unknown>;
+  delete params.toRoof;
   const id = newId('wa');
+  tx.putElement({ ...structuredClone(tx.doc.elements[c.wallId]), id, params });
+  return id;
+}
+
+/**
+ * Avrunda eller fasa ett hörn mellan två raka väggar. Väggarna kortas till
+ * tangentpunkterna och en ny vägg (en båge eller en rak fasvägg) läggs in.
+ * `size` är radien (avrundning) eller avståndet från hörnet (fasning).
+ */
+export function roundCorner(store: DocStore, wallId: Id, end: 'start' | 'end', size: number, kind: 'fillet' | 'chamfer'): Id | null {
+  const plan = cornerPlan(store.doc, wallId, end, size, kind);
+  if (!plan) return null;
+  let id: Id | null = null;
   store.transact(kind === 'fillet' ? 'Avrunda hörn' : 'Fasa hörn', (tx) => {
-    const a = tx.doc.elements[wallId];
-    const pa = a.params as { start: P; end: P };
-    putWallEnds(tx, a, end === 'start' ? T1 : pa.start, end === 'end' ? T1 : pa.end);
-    const b = tx.doc.elements[partner.id];
-    const pb = b.params as { start: P; end: P };
-    putWallEnds(tx, b, partner.end === 'start' ? T2 : pb.start, partner.end === 'end' ? T2 : pb.end);
-    const params = { ...structuredClone(a.params), start: T1, end: T2, justification, bulge: Math.round(bulge * 10) / 10 } as Record<string, unknown>;
-    delete params.toRoof;
-    tx.putElement({ ...structuredClone(a), id, params });
+    id = applyCorner(tx, plan);
   });
   return id;
+}
+
+/** Hörnen där två av de markerade väggarna möts (och bara de två). */
+export function cornersAmong(doc: ProjectDoc, ids: readonly Id[]): { wallId: Id; end: 'start' | 'end' }[] {
+  const set = new Set(ids);
+  const seen = new Set<string>();
+  const out: { wallId: Id; end: 'start' | 'end' }[] = [];
+  for (const id of ids) {
+    if (doc.elements[id]?.type !== 'Wall') continue;
+    for (const end of ['start', 'end'] as const) {
+      const p = cornerPartner(doc, id, end);
+      if (!p || !set.has(p.id)) continue;
+      const key = [`${id}:${end}`, `${p.id}:${p.end}`].sort().join('|');
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ wallId: id, end });
+    }
+  }
+  return out;
+}
+
+/**
+ * Avrunda eller fasa alla hörn mellan de markerade väggarna (0.8.13), i ett
+ * steg. Hörn som inte går (för korta väggar, bågar, dörrar i vägen) hoppas
+ * över. Svarar med hur många som gjordes och hur många som hoppades över.
+ */
+export function roundCorners(store: DocStore, ids: readonly Id[], size: number, kind: 'fillet' | 'chamfer'): { done: number; skipped: number } {
+  const doc = store.doc;
+  const corners = cornersAmong(doc, ids);
+  // Alla hörn räknas på väggarna som de är nu, så att ordningen inte spelar
+  // roll. En vägg måste räcka till båda sina hörn.
+  const plans = corners.map((c) => cornerPlan(doc, c.wallId, c.end, size, kind)).filter((c): c is CornerPlan => !!c);
+  const cut = new Map<Id, number>();
+  for (const c of plans) for (const id of [c.wallId, c.partner.id]) cut.set(id, (cut.get(id) ?? 0) + c.t);
+  const fits = (id: Id) => cut.get(id)! < refFrame(doc, doc.elements[id]).length - 10;
+  const ok = plans.filter((c) => fits(c.wallId) && fits(c.partner.id));
+  if (ok.length)
+    store.transact(kind === 'fillet' ? 'Avrunda hörnen' : 'Fasa hörnen', (tx) => {
+      for (const c of ok) applyCorner(tx, c);
+    });
+  return { done: ok.length, skipped: corners.length - ok.length };
 }
 
 /** Slå ihop två väggar som möts i en punkt till en (Ta bort punkt). */

@@ -58,5 +58,5 @@ export function bodyContext(view: PlanView, plan: PlanResult, elements: Record<I
   }
   const [sx, sy] = view.camera.toScreen(at);
   const wall = ids.find((id) => elements[id]?.type === 'Wall');
-  return { kind: 'body', ids, wallId: wall, at, clientX: r.left + sx, clientY: r.top + sy };
+  return { kind: 'body', ids, wallId: wall, at, clicked: !!click, clientX: r.left + sx, clientY: r.top + sy };
 }

@@ -22,16 +22,19 @@ export function installModifyRail(app: AppContext) {
     `<div class="tool-group-label" title="Modifiera det markerade">Ändra</div>` +
     RAIL.map((g) =>
       g
-        .map((r) => `<button type="button" class="mr-btn" data-rail="${r.id}" aria-label="${escapeHtml(r.label)}" title="${escapeHtml(r.label)}">${icons[r.icon]}</button>`)
+        .map((r) => `<button type="button" class="mr-btn" data-rail="${r.id}" aria-label="${escapeHtml(r.label)}" title="${escapeHtml(`${r.label} (Shift+${r.key})`)}">${icons[r.icon]}</button>`)
         .join(''),
     ).join('<span class="mr-sep"></span>');
 
   el.addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest<HTMLElement>('[data-rail]');
-    if (!b) return;
-    const id = b.dataset.rail as RailId;
+    if (b) press(b.dataset.rail as RailId);
+  });
+
+  /** En knapp i raden, eller dess kortkommando (Shift + bokstav, 0.8.13). */
+  function press(id: RailId): void {
     const label = RAIL_ITEMS.find((r) => r.id === id)?.label ?? '';
-    if (b.getAttribute('aria-disabled') === 'true') {
+    if (!lit().has(id)) {
       app.hint(
         app.selection.size ? `${label} går inte att använda för det markerade.` : `Markera det som ska ändras först, sedan ${label.toLowerCase()}.`,
         3000,
@@ -43,7 +46,7 @@ export function installModifyRail(app: AppContext) {
     // Modifiera görs i planen: när bara 3D visas går det över till 2D.
     if (app.ui.mode === '3d') void app.setMode('2d');
     app.modifier.chooseRail(id);
-  });
+  }
 
   /** Vilka som går att använda: det markerade måste gå att ändra här. */
   function lit(): Set<RailId> {
@@ -72,5 +75,5 @@ export function installModifyRail(app: AppContext) {
   app.store.subscribe(render);
   window.addEventListener('resize', render);
   render();
-  return { render };
+  return { render, press };
 }

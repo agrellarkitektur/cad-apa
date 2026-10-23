@@ -1,6 +1,7 @@
 import { moveOnly } from '../../core/sheets';
 import type { Id } from '../../core/model';
-import { cornerPartner, refFrame } from '../../core/wallEdit';
+import { canJoin, canTrim } from '../../core/trimEdit';
+import { cornerPartner, cornersAmong, refFrame } from '../../core/wallEdit';
 import { isShape, shapeCan, shapeEdgeAt, shapeNodes } from '../../elements/shapeEdit';
 import { dist, sub } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
@@ -39,6 +40,8 @@ export interface ModifyContext {
   end?: 'start' | 'end';
   /** Punkten man klickade (på referenslinjen för kanter), mm. */
   at: Vec2;
+  /** Om `at` är där man klickade (inte mitten av en markering med ruta). */
+  clicked?: boolean;
   /** Var i fönstret man klickade. */
   clientX: number;
   clientY: number;
@@ -69,7 +72,12 @@ export type OpId =
   | 'shapeInsert'
   | 'shapeMove'
   | 'shapeRemove'
-  | 'shapeOffset';
+  | 'shapeOffset'
+  | 'trim'
+  | 'join'
+  | 'split'
+  | 'filletAll'
+  | 'chamferAll';
 
 export interface OpDef {
   label: string;
@@ -108,6 +116,11 @@ export const OPS: Record<OpId, OpDef> = {
   shapeInsert: { label: 'Lägg till punkt', short: 'Ny punkt', icon: 'insertNode', hint: 'Klicka där den nya punkten ska ligga.' },
   shapeMove: { label: 'Flytta punkt', short: 'Flytta', icon: 'move', hint: 'Klicka var punkten ska hamna. (Det går också att dra i den.)' },
   shapeRemove: { label: 'Ta bort punkt', short: 'Ta bort', icon: 'merge', instant: true, hint: 'Punkten tas bort; grannarna binds ihop.' },
+  trim: { label: 'Trimma', short: 'Trimma', icon: 'trim', hint: 'Klicka på biten som ska bort. Den kapas där andra väggar eller linjer korsar.' },
+  join: { label: 'Hörnskarv', short: 'Hörnskarv', icon: 'cornerJoin', hint: 'Klicka på den andra väggen eller linjen, på den del som ska vara kvar. Båda förlängs eller kortas till ett hörn.' },
+  split: { label: 'Dela', short: 'Dela', icon: 'split', hint: 'Klicka där det ska delas. Det blir två, utan något hörn.' },
+  filletAll: { label: 'Avrunda alla hörn', short: 'Avrunda alla', icon: 'filletAll', value: { label: 'Radie', unit: 'mm', initial: 1000 }, hint: 'Alla hörn mellan de markerade väggarna. Skriv radien och tryck Enter, eller klicka.' },
+  chamferAll: { label: 'Fasa alla hörn', short: 'Fasa alla', icon: 'chamferAll', value: { label: 'Avstånd', unit: 'mm', initial: 600 }, hint: 'Alla hörn mellan de markerade väggarna. Skriv avståndet och tryck Enter, eller klicka.' },
   shapeOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'Kanten flyttas vinkelrätt dit du klickar, eller skriv avståndet; grannkanterna följer med.' },
 };
 
@@ -135,6 +148,8 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
   if (ctx.ids.some((id) => moveOnly(doc, id))) return [['move']];
   const wall = ctx.wallId ? doc.elements[ctx.wallId] : undefined;
   const walls = ctx.ids.filter((id) => doc.elements[id]?.type === 'Wall');
+  const cuts = editOps(host, ctx.ids);
+  const withCuts = (groups: OpId[][]): OpId[][] => (cuts.length ? [...groups.slice(0, -1), cuts, groups[groups.length - 1]] : groups);
   if (ctx.shapeId) {
     const el = doc.elements[ctx.shapeId];
     const can = el ? shapeCan(el) : { insert: false, remove: false, offset: false };
@@ -142,7 +157,7 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
       ctx.kind === 'edge'
         ? [...(can.insert ? (['shapeInsert'] as OpId[]) : []), ...(can.offset ? (['shapeOffset'] as OpId[]) : [])]
         : ['shapeMove', ...(can.remove ? (['shapeRemove'] as OpId[]) : [])];
-    return own.length ? [own, COMMON] : [COMMON];
+    return withCuts(own.length ? [own, COMMON] : [COMMON]);
   }
   if (ctx.roofId) {
     if (ctx.kind === 'edge') return [['roofInsert', 'roofOffset'], COMMON];
@@ -155,16 +170,30 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
       if (arc) own.push('straighten');
       own.push('offset', 'parallel');
       if (walls.length >= 2) own.push('offsetAll');
-      return [own, COMMON];
+      return withCuts([own, COMMON]);
     }
     case 'point':
       return [[...(wall && host.startWallFrom ? (['wallOn'] as OpId[]) : []), 'stretch', 'extend'], COMMON];
     case 'corner':
       return [[...(wall && host.startWallFrom ? (['wallOn'] as OpId[]) : []), 'stretch', 'fillet', 'chamfer', 'merge', ...(walls.length >= 2 ? (['offsetAll'] as OpId[]) : [])], COMMON];
-    default:
-      // Flera väggar: förskjut alla kanter direkt från markeringen (0.8.5).
-      return walls.length >= 2 ? [['offsetAll'], COMMON] : [COMMON];
+    default: {
+      // Flera väggar: förskjut alla kanter direkt från markeringen (0.8.5),
+      // och avrunda eller fasa alla hörn mellan dem (0.8.13).
+      const own: OpId[] = walls.length >= 2 ? ['offsetAll'] : [];
+      if (walls.length >= 2 && cornersAmong(doc, walls).length) own.push('filletAll', 'chamferAll');
+      return withCuts(own.length ? [own, COMMON] : [COMMON]);
+    }
   }
+}
+
+/** Trimma, Hörnskarv och Dela för det markerade (0.8.13), när det går. */
+function editOps(host: ToolHost, ids: readonly Id[]): OpId[] {
+  const els = ids.map((id) => host.store.doc.elements[id]);
+  const out: OpId[] = [];
+  if (els.some((e) => canTrim(e))) out.push('trim');
+  if (els.some((e) => canJoin(e))) out.push('join');
+  if (els.some((e) => canTrim(e))) out.push('split');
+  return out;
 }
 
 /**
@@ -229,7 +258,7 @@ export function modifyContextAt(host: ToolHost, p: ViewPointer, clientX: number,
       return { kind: 'edge', ids, wallId: hitId, at: [at[0], at[1]], clientX, clientY };
     }
   }
-  return { kind: 'body', ids, wallId: el?.type === 'Wall' ? hitId : undefined, at: roundMm(p.model), clientX, clientY };
+  return { kind: 'body', ids, wallId: el?.type === 'Wall' ? hitId : undefined, at: roundMm(p.model), clicked: true, clientX, clientY };
 }
 
 // ---------- Modifiera-raden (0.8.5) ----------
@@ -253,7 +282,10 @@ export type RailId =
   | 'tangent'
   | 'straighten'
   | 'fillet'
-  | 'chamfer';
+  | 'chamfer'
+  | 'trim'
+  | 'join'
+  | 'split';
 
 export interface RailDef {
   id: RailId;
@@ -262,39 +294,44 @@ export interface RailDef {
   ops: OpId[];
   /** Vad man ska klicka på när verktyget behöver en ände, ett hörn eller en kant. */
   ask?: string;
+  /** Kortkommandot: Shift och bokstaven (0.8.13). */
+  key: string;
 }
 
 /** Modifiera-radens knappar i grupper, i den ordning de visas. */
 export const RAIL: RailDef[][] = [
   [
-    { id: 'move', label: 'Flytta', icon: 'move', ops: ['move'] },
-    { id: 'rotate', label: 'Vrid', icon: 'rotate', ops: ['rotate'] },
-    { id: 'mirror', label: 'Spegla', icon: 'mirror', ops: ['mirror'] },
-    { id: 'multiply', label: 'Kopiera i rad', icon: 'multiply', ops: ['multiply'] },
+    { id: 'move', label: 'Flytta', icon: 'move', ops: ['move'], key: 'M' },
+    { id: 'rotate', label: 'Vrid', icon: 'rotate', ops: ['rotate'], key: 'R' },
+    { id: 'mirror', label: 'Spegla', icon: 'mirror', ops: ['mirror'], key: 'S' },
+    { id: 'multiply', label: 'Kopiera i rad', icon: 'multiply', ops: ['multiply'], key: 'U' },
   ],
   [
-    { id: 'offset', label: 'Förskjut', icon: 'offset', ops: ['offset', 'roofOffset', 'shapeOffset'], ask: 'Klicka på referenslinjen eller kanten som ska förskjutas.' },
-    { id: 'parallel', label: 'Parallell kopia', icon: 'parallelCopy', ops: ['parallel'], ask: 'Klicka på referenslinjen för väggen som ska kopieras.' },
-    { id: 'offsetAll', label: 'Förskjut alla kanter', icon: 'offsetAll', ops: ['offsetAll'] },
+    { id: 'offset', label: 'Förskjut', icon: 'offset', ops: ['offset', 'roofOffset', 'shapeOffset'], ask: 'Klicka på referenslinjen eller kanten som ska förskjutas.', key: 'O' },
+    { id: 'parallel', label: 'Parallell kopia', icon: 'parallelCopy', ops: ['parallel'], ask: 'Klicka på referenslinjen för väggen som ska kopieras.', key: 'P' },
+    { id: 'offsetAll', label: 'Förskjut alla kanter', icon: 'offsetAll', ops: ['offsetAll'], key: 'A' },
   ],
   [
-    { id: 'wallOn', label: 'Ny vägg härifrån', icon: 'wall', ops: ['wallOn'], ask: 'Klicka på änden där den nya väggen ska börja.' },
-    { id: 'stretch', label: 'Sträck', icon: 'stretch', ops: ['stretch'], ask: 'Klicka på änden som ska sträckas.' },
-    { id: 'extend', label: 'Förläng till', icon: 'extend', ops: ['extend'], ask: 'Klicka på änden som ska förlängas.' },
+    { id: 'wallOn', label: 'Ny vägg härifrån', icon: 'wall', ops: ['wallOn'], ask: 'Klicka på änden där den nya väggen ska börja.', key: 'W' },
+    { id: 'stretch', label: 'Sträck', icon: 'stretch', ops: ['stretch'], ask: 'Klicka på änden som ska sträckas.', key: 'E' },
+    { id: 'extend', label: 'Förläng till', icon: 'extend', ops: ['extend'], ask: 'Klicka på änden som ska förlängas.', key: 'X' },
+    { id: 'trim', label: 'Trimma', icon: 'trim', ops: ['trim'], key: 'T' },
+    { id: 'join', label: 'Hörnskarv', icon: 'cornerJoin', ops: ['join'], key: 'J' },
   ],
   [
-    { id: 'insert', label: 'Lägg till punkt', icon: 'insertNode', ops: ['insert', 'roofInsert', 'shapeInsert'], ask: 'Klicka på referenslinjen eller kanten där punkten ska läggas till.' },
-    { id: 'pointMove', label: 'Flytta punkt', icon: 'movePoint', ops: ['roofMove', 'shapeMove'], ask: 'Klicka på punkten som ska flyttas.' },
-    { id: 'remove', label: 'Ta bort punkt', icon: 'merge', ops: ['merge', 'roofRemove', 'shapeRemove'], ask: 'Klicka på hörnet eller punkten som ska tas bort.' },
+    { id: 'insert', label: 'Lägg till punkt', icon: 'insertNode', ops: ['insert', 'roofInsert', 'shapeInsert'], ask: 'Klicka på referenslinjen eller kanten där punkten ska läggas till.', key: 'I' },
+    { id: 'pointMove', label: 'Flytta punkt', icon: 'movePoint', ops: ['roofMove', 'shapeMove'], ask: 'Klicka på punkten som ska flyttas.', key: 'K' },
+    { id: 'remove', label: 'Ta bort punkt', icon: 'merge', ops: ['merge', 'roofRemove', 'shapeRemove'], ask: 'Klicka på hörnet eller punkten som ska tas bort.', key: 'Q' },
+    { id: 'split', label: 'Dela', icon: 'split', ops: ['split'], key: 'D' },
   ],
   [
-    { id: 'curve', label: 'Böj', icon: 'curveEdge', ops: ['curve'], ask: 'Klicka på referenslinjen för väggen som ska böjas.' },
-    { id: 'tangent', label: 'Båge med tangent', icon: 'tangentArc', ops: ['tangent'], ask: 'Klicka på referenslinjen för väggen som ska bli en båge.' },
-    { id: 'straighten', label: 'Räta ut', icon: 'straighten', ops: ['straighten'], ask: 'Klicka på referenslinjen för bågen som ska rätas ut.' },
+    { id: 'curve', label: 'Böj', icon: 'curveEdge', ops: ['curve'], ask: 'Klicka på referenslinjen för väggen som ska böjas.', key: 'B' },
+    { id: 'tangent', label: 'Båge med tangent', icon: 'tangentArc', ops: ['tangent'], ask: 'Klicka på referenslinjen för väggen som ska bli en båge.', key: 'G' },
+    { id: 'straighten', label: 'Räta ut', icon: 'straighten', ops: ['straighten'], ask: 'Klicka på referenslinjen för bågen som ska rätas ut.', key: 'L' },
   ],
   [
-    { id: 'fillet', label: 'Avrunda hörn', icon: 'fillet', ops: ['fillet'], ask: 'Klicka på hörnet som ska avrundas.' },
-    { id: 'chamfer', label: 'Fasa hörn', icon: 'chamfer', ops: ['chamfer'], ask: 'Klicka på hörnet som ska fasas.' },
+    { id: 'fillet', label: 'Avrunda hörn', icon: 'fillet', ops: ['fillet', 'filletAll'], ask: 'Klicka på hörnet som ska avrundas.', key: 'F' },
+    { id: 'chamfer', label: 'Fasa hörn', icon: 'chamfer', ops: ['chamfer', 'chamferAll'], ask: 'Klicka på hörnet som ska fasas.', key: 'C' },
   ],
 ];
 
@@ -328,6 +365,7 @@ export function railFor(host: ToolHost, ids: readonly Id[]): Set<RailId> {
     }
   }
   if (els.some((e) => e.type === 'Roof')) for (const id of ['insert', 'pointMove', 'remove', 'offset'] as const) on.add(id);
+  for (const op of editOps(host, ids)) on.add(op as RailId);
   for (const el of els) {
     if (!isShape(el)) continue;
     const can = shapeCan(el);

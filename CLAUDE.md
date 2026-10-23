@@ -25,8 +25,9 @@ byggs i vilken version), `docs/ARKITEKTUR.md` (idé och principer) och
   Efter formatfrysen får varje formatändring en migrering i
   `src/storage/format.ts` och ett test som öppnar en fil i det gamla
   formatet.
-- Han testar varje version på webbhotellet, via en release på GitHub som han
-  gör själv. Ingen demo och ingen zip behövs. Demon byggs och publiceras
+- Han testar varje version på webbhotellet. Varje push till `main`
+  publiceras dit med FTP (`.github/workflows/publicera.yml`); se att
+  körningen går igenom (`gh run list`). Ingen demo och ingen zip behövs. Demon byggs och publiceras
   bara när han ber om det (https://claude.ai/artifact/2m7gq5gkkgSP2wFZ7fLGNJ),
   och svaren behöver inte sluta med länken.
 - När ändringar föreslås: säg hur stora de är och om de riskerar att behöva

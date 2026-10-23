@@ -645,7 +645,40 @@ Stor med kortkommandona: blir det för mycket görs kortkommandona och
 Avrunda/Fasa för hela markeringen först, och resten (med tjocklekstabellen
 och dra och släpp) i en egen småversion.
 
-### 0.8.14 Underlag
+*Byggd (23 oktober), samma format (11). Carl August valde (23 oktober) att
+dela versionen: här Trimma, Hörnskarv, Dela, Avrunda och Fasa för hela
+markeringen, Flytta och Vrid från en snäppunkt och kortkommandona; resten i
+0.8.14. Claudes val, att stämma av: kortkommandona (Shift+M Flytta, R Vrid,
+S Spegla, U I rad, O Förskjut, P Parallell kopia, A Förskjut alla kanter,
+W Ny vägg, E Sträck, X Förläng, T Trimma, J Hörnskarv, I Lägg till punkt,
+K Flytta punkt, Q Ta bort punkt, D Dela, B Böj, G Båge med tangent, L Räta
+ut, F Avrunda, C Fasa); att Trimma tar bort biten man klickar på (väggar
+mot andra väggars referenslinjer, 2D-linjer mot allt som går att snäppa
+till) och att ett verktyg avslutas efter ett klick; att Hörnskarv och
+Trimma bara gäller raka väggar, linjer och öppna polylinjer (Hörnskarv bara
+raka linjer); att Dela är ett eget val fast Lägg till punkt också delar; att
+baspunkten också gäller Spegla och I rad, och att den snäpper mot det
+markerades konturer (en bilds hörn); att Avrunda alla hoppar över hörn som
+inte går och säger hur många. Dessutom: publicering på webbhotellet med FTP
+vid varje push till main.*
+
+### 0.8.14 Modifiera-verktyg del 2
+
+Det som blev kvar av 0.8.13 (Carl August, 23 oktober). Mellanstor; blir den
+för stor tas tjocklekstabellen och dra och släpp i en egen småversion.
+
+- **Justera och Fördela** flera objekt mot en kant eller ett objekt, med
+  lika avstånd
+- **Hämta och överför inställningar** (pipetten)
+- **Skala** för 2D-element, möbler och underlag, med en faktor eller två
+  punkter
+- **Förläng till och Trimma för flera markerade** samtidigt mot en gräns
+- **Linjetjocklekar som i "gammel-cad"**: tabellen med färgfält (grå 0,13;
+  cyan 0,18; röd 0,25; grön 0,35; svart 0,5; magenta 0,7; blå 1,0; gul 1,4)
+- **Dra och släpp till mappar** i projektträdet
+- **Dela en mätning i segment** med tillfälliga snäppunkter
+
+### 0.8.15 Underlag
 
 Carl Augusts synpunkter 21 oktober. Mellanstor, kan bli stor; i så fall
 delas den.
@@ -663,7 +696,7 @@ delas den.
   sträcker åt det hållet. Bredd och höjd kan skrivas in i smartmenyn och
   egenskaperna, med *Återställ proportioner* bredvid
 
-### 0.8.15 Rumsstämpeln
+### 0.8.16 Rumsstämpeln
 
 Småversion (Carl August, 21 oktober); fler småsaker kan läggas till.
 

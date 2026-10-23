@@ -239,7 +239,7 @@ export function applyUiColors(s: UiSettings): void {
   else root.removeProperty('--ref');
 }
 
-/** Kortkommandon, för listan i inställningarna. */
+/** Kortkommandon, för listan i inställningarna. Modifiera-verktygen läggs till sist (`RAIL` i src/ui/modify/ops.ts). */
 export const SHORTCUTS: [string, string][] = [
   ['V', 'Markera'],
   ['H', 'Panorera'],
@@ -270,6 +270,7 @@ export const SHORTCUTS: [string, string][] = [
   ['Dubbelklick', 'Redigera en text eller ett rumsnamn direkt i ritningen; öppna en fasad eller sektion'],
   ['Klick på det markerade', 'Smartmenyn byter Modifiera-valen till det du klickat på: referenslinjen, en ände, ett hörn eller kroppen'],
   ['Modifiera-raden', 'Alla Modifiera-verktyg innanför ritverktygen; de som går att använda för det markerade är tända'],
+  ['Shift + bokstav', 'Modifiera-verktygen, se nedan'],
   ['Högerklick', 'Meny för det du pekar på (långt tryck på telefonen)'],
   ['Alt + dra', 'Flytta en vägg utan att anslutna väggar följer med'],
   ['+300, *2, 2,4m', 'Formler och enheter i alla sifferfält'],

@@ -30,8 +30,9 @@ describe('smartmenyn och Modifiera-raden (0.8.5)', () => {
     const store = new DocStore(sampleProject());
     const { host } = fakeHost(store);
     const walls = Object.values(store.doc.elements).filter((e) => e.type === 'Wall').map((e) => e.id);
-    expect(opsFor(host, body([walls[0]], walls[0])).flat()).toEqual(['move', 'rotate', 'mirror', 'multiply']);
-    expect(opsFor(host, body(walls.slice(0, 3), walls[0]))[0]).toEqual(['offsetAll']);
+    // Trimma, Hörnskarv och Dela kom till i 0.8.13.
+    expect(opsFor(host, body([walls[0]], walls[0])).flat()).toEqual(['trim', 'join', 'split', 'move', 'rotate', 'mirror', 'multiply']);
+    expect(opsFor(host, body(walls.slice(0, 3), walls[0]))[0][0]).toBe('offsetAll');
   });
 
   it('raden tänder det som går att använda för det markerade', () => {

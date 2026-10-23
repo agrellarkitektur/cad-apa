@@ -854,6 +854,13 @@ button:focus-visible {
   fill: none;
 }
 
+.trim-cut {
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-dasharray: 6 4;
+  fill: none;
+}
+
 .wall-preview {
   fill: color-mix(in srgb, var(--accent) 18%, transparent);
   stroke: var(--accent);

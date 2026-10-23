@@ -495,7 +495,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const views = installViews(app);
   const showMenu = installShowMenu(app);
   const menus = installMenus(app);
-  installKeyboard(app);
+  installKeyboard(app, modifyRail.press);
   const clipboard = installClipboard(app);
   const underlays = installUnderlays(app);
   const sheets = installSheets(app);
