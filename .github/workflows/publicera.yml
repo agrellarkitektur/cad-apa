@@ -1,0 +1,70 @@
+# Bygger programmet och laddar upp det till webbhotellet med FTP vid varje
+# push till main (ändringar som bara rör dokumentationen hoppas över). Kan
+# också köras för hand under Actions → "Publicera på webbhotellet" → "Run
+# workflow".
+#
+# Uppgifterna ligger som secrets i repot (Settings → Secrets and variables →
+# Actions): FTP_SERVER, FTP_USERNAME, FTP_PASSWORD och FTP_DIR (mappen på
+# servern, t.ex. /agrellarkitektur.se/public_html/cad-apa/, med / på slutet).
+#
+# Första gången laddas allt upp; sedan bara det som ändrats (uppladdningen
+# sparar en lista i .ftp-deploy-sync-state.json på servern). Filer som inte
+# kommer från bygget, t.ex. feedback-config.php, rörs inte.
+
+name: Publicera på webbhotellet
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: publicera
+  cancel-in-progress: false
+
+jobs:
+  publicera:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installera
+        run: npm ci
+
+      - name: Typer och tester
+        run: npx tsc --noEmit && npx vitest run
+
+      - name: Bygg dist
+        run: npm run build
+
+      - name: Mappen på servern
+        id: dir
+        env:
+          DIR: ${{ secrets.FTP_DIR }}
+        # Uppladdningen kräver / i början och på slutet.
+        run: |
+          DIR="/${DIR#/}"; DIR="${DIR%/}/"
+          echo "path=$DIR" >> "$GITHUB_OUTPUT"
+
+      - name: Ladda upp till webbhotellet
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          server-dir: ${{ steps.dir.outputs.path }}
+          local-dir: ./dist/
+          protocol: ftps
+          # Webbhotellets certifikat gäller ofta värdnamnet hos leverantören,
+          # inte det egna domännamnet; anslutningen krypteras ändå.
+          security: loose
+          exclude: |
+            **/feedback-config.php
