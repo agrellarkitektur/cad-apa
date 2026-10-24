@@ -1,10 +1,18 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.16.
+överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.17.
 
 ## Läget
 
+- **0.8.17 Rumsstämpeln är klar** på `main` (samma format, 11): dra i
+  stämpeln på ett markerat rum för att flytta den (parametern `labelAt`),
+  utanför rummet en tunn linje med öppen pil 2 mm in i rummet, *Stämpeln i
+  mitten* i egenskaperna. Står i README, PLAN.md (med Claudes val) och
+  UTVECKLING.md. Provat i bygget med Playwright (dra inom och ut ur
+  rummet) och med `tests/v0817.test.ts`. Alla 279 tester gick igenom,
+  också prestandatestet den här gången. Carl August bad att få versionen
+  körd direkt.
 - **0.8.16 Underlag är klar** på `main` (samma format, 11): snäpp i
   DXF-underlag (centrum, kvadranter, bågmitt, skärningar, inga falska
   punkter i bågarnas skarvar), parallellt/vinkelrätt som i SketchUp, X/Y,
@@ -14,10 +22,8 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   *Underlag (0.8.16)*. Provat i bygget med Playwright (snäpp, parallellt,
   grepp, X/Y, trädet, smartmenyn) och med `tests/v0816.test.ts`. Carl
   August bad att få nästa version körd direkt, utan frågor om synpunkter.
-- **Prestandatestet** (312 väggar, plan, 3D, rum och fasad) går över
-  gränsen 1,6 s i sandlådan (1,9–2,5 s) också utan 0.8.16:s ändringar;
-  sandlådan var långsammare den här gången. Övriga 273 tester går igenom.
-  Kör om det på en snabbare maskin innan gränsen ändras.
+- **Prestandatestet** gick över gränsen 1,6 s i sandlådan i 0.8.16 men
+  igenom i 0.8.17; sandlådans hastighet varierar.
 - **0.8.15** (samma format): en granskning utan nya
   funktioner. Register för väggändar och dörrar/fönster per vägg
   (`src/core/elementIndex.ts`), så att Modifiera inte längre växer med
@@ -35,7 +41,7 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   `/agrellarkitektur.se/public_html/cad-apa/` och fungerar (Carl August såg
   0.8.14 vid alfa-knappen 24 oktober). Se efter med `gh run list` att
   körningen går igenom.
-- **0.8.12–0.8.16 är inte provade** av Carl August. Frågorna nedan gäller.
+- **0.8.12–0.8.17 är inte provade** av Carl August. Frågorna nedan gäller.
 - **Inkorgen är tom** (sorterad 24 oktober). Kommandoraden blev
   **0.8.20 och 0.8.21** (Carl Augusts svar: både engelska och svenska
   förkortningar; nere som i AutoCAD, flyttbar och dockningsbar i del 2;
@@ -74,8 +80,7 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.8.14 Modifiera-verktyg del 2~~,
-  ~~0.8.15 Granskning~~, ~~0.8.16 Underlag~~ (klara)
-- **0.8.17 Rumsstämpeln** flyttbar, med pil utanför rummet
+  ~~0.8.15 Granskning~~, ~~0.8.16 Underlag~~, ~~0.8.17 Rumsstämpeln~~ (klara)
 - **0.8.18 Småsaker**: dra och släpp till mappar, mätning i segment,
   osifont och Om-rutan, autospara, rutnätet
 - **0.8.19 2D-form** (nytt format): linje/rektangel/cirkel som sätt att rita,
@@ -105,12 +110,20 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.16 syns på webbhotellet (numret vid alfa-knappen) och
-hur 0.8.12–0.8.16 fungerar. Läs synpunktsfilen och sortera Inkorgen (om
-Carl August inte ber om att bara köra). Nästa version är **0.8.17
-Rumsstämpeln** (läs *0.8.17* i PLAN.md).
+Fråga först om 0.8.17 syns på webbhotellet (numret vid alfa-knappen) och
+hur 0.8.12–0.8.17 fungerar. Läs synpunktsfilen och sortera Inkorgen (om
+Carl August inte ber om att bara köra). Nästa version är **0.8.18
+Småsaker** (läs *0.8.18* i PLAN.md); den har fem punkter, varav autospara
+och rutnätet kan bli de största.
 
 ## Att fråga Carl August om
+
+- **0.8.17 efter provning** (Claudes val, se PLAN.md): att man drar i
+  stämpeln först när rummet är markerat; att stämpelns läge är en fast
+  punkt i modellen (står kvar när väggarna flyttas, följer med när rummet
+  flyttas); pilens utseende (tunn linje, öppen spets, till närmaste kant
+  och 2 mm in); att stämpeln inte snäpper när den dras. Ska pilen hellre
+  gå mot rummets mitt?
 
 - **0.8.16 efter provning** (Claudes val, se PLAN.md): att X och Y är
   nedre vänstra hörnet också för DXF (inte filens nollpunkt, som kan vara

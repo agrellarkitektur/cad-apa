@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.16** (alfa, underlag); nästa är **0.8.17, Rumsstämpeln**.
+**0.8.17** (alfa, rumsstämpeln); nästa är **0.8.18, Småsaker**.
 
 ## Vad som fungerar
 
@@ -771,6 +771,17 @@ Version 0.8.16, underlag (samma filformat, 11):
   bildens hörn och sidornas mitt är snäppunkter för allt annat. Bredd och
   höjd skrivs in var för sig, och **Återställ proportioner** ger bilden
   dess egna proportioner med samma bredd
+
+Version 0.8.17, rumsstämpeln (samma filformat, 11):
+- **Rumsstämpeln kan flyttas**: markera rummet och dra i stämpeln (namn,
+  nummer, area). Rummet ligger kvar; dras man någon annanstans i rummet
+  flyttas rummet som förut. Stämpeln följer med när rummet flyttas, vrids,
+  speglas eller kopieras
+- **Pil in i rummet**: hamnar stämpeln utanför rummet ritas en tunn linje
+  från stämpeln med en öppen pil som slutar 2 mm (på papperet) innanför
+  rummets närmaste kant
+- **Stämpeln i mitten** i egenskaperna och smartmenyn lägger tillbaka den.
+  Dubbelklick på stämpeln byter namn som förut
 
 ## Versioner och gamla projekt
 

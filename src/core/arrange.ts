@@ -98,7 +98,7 @@ export function scaleElements(store: DocStore, ids: readonly Id[], base: readonl
  */
 const PLACEMENT = new Set([
   'start', 'end', 'bulge', 'points', 'closed', 'shape', 'origin', 'rotation', 'pos', 'size', 'asset', 'page', 'kind', 'layersOff',
-  'text', 'at', 'hinge', 'swing', 'outline', 'seed', 'ridge', 'offset', 'auto', 'side', 'label', 'roof', 'face', 'toward', 'stamp', 'scale', 'facing',
+  'text', 'at', 'hinge', 'swing', 'outline', 'seed', 'labelAt', 'ridge', 'offset', 'auto', 'side', 'label', 'roof', 'face', 'toward', 'stamp', 'scale', 'facing',
 ]);
 
 /** Vridning är läge, utom skrafferingens vinkel. Möblernas mått är form. */

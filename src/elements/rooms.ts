@@ -70,6 +70,11 @@ export interface SpaceParams {
   seed?: [number, number];
   /** Rumsnummer när numreringen är låst. */
   number?: string;
+  /**
+   * Rumsstämpelns mittpunkt när den dragits dit (0.8.17). Saknas den står
+   * stämpeln i rummets mitt. Utanför rummet får den en pil in i rummet.
+   */
+  labelAt?: [number, number];
   /** Takhöjd i mm, visas som TH i rumsetiketten. */
   ceilingHeight?: number;
 }

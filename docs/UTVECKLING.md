@@ -185,6 +185,10 @@ git innan den läggs in. Testprojekten (`wallGrid`, `roomGrid`) ligger i
 ## Rum och anteckningar
 
 Rum som skapats med rumsverktyget sparar punkten man klickade i (`seed`).
+En flyttad rumsstämpel har sin mittpunkt i `labelAt` (0.8.17); den flyttas
+och vrids med rummet i `movePatch` och `transformed` (`src/core/commands.ts`),
+och utanför rummet ritar `space.ts` en pil in i rummet. Stämpelns primitiver
+har `part: 'rumstext'`, som Markera känner igen när stämpeln dras.
 Konturen räknas ut vid varje ritning ur hålen i de sammanslagna väggarna
 (`src/elements/rooms.ts`), så rummen följer väggarna. Rumsnumren räknas i
 samma fil: dörrarna kopplar ihop rummen, och man går i vänstervarv från den

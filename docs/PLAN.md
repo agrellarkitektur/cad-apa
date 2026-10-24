@@ -760,6 +760,15 @@ Småversion (Carl August, 21 oktober); fler småsaker kan läggas till.
 - Rumsstämpeln kan dras till en annan plats i rummet. Dras den utanför
   rummet visas en pil från stämpeln in i rummet
 
+*Byggd (24 oktober), samma format (11): stämpelns läge är den valfria
+parametern `labelAt` i rummet. Claudes val att fråga om: man drar i
+stämpeln på ett markerat rum (omarkerat flyttar ett drag rummet som förut);
+läget är en fast punkt i modellen, inte relativt rummets mitt, så stämpeln
+står kvar när väggarna flyttas men följer med när rummet flyttas; pilen går
+till närmaste punkt på rummets kant och 2 mm in, med öppen pilspets och
+tunn linje (0,18), utan snäpp när stämpeln dras; *Stämpeln i mitten*
+lägger tillbaka den.*
+
 ### 0.8.18 Småsaker
 
 Carl Augusts synpunkter 20–22 oktober (sorterade 24 oktober).

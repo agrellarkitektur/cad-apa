@@ -64,7 +64,7 @@ function boundsOfPickable(item: Pickable): Bounds | null {
   return boundsOf(prims);
 }
 
-function distToPrim(p: Vec2, prim: Primitive, drawingScale: number): number {
+export function distToPrim(p: Vec2, prim: Primitive, drawingScale: number): number {
   switch (prim.kind) {
     case 'line':
       return distToSegment(p, prim.a, prim.b);

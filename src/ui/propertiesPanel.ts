@@ -498,6 +498,9 @@ export class PropertiesPanel {
       case 'align-marker':
         if (ids[0]) this.onAlignMarker?.(ids[0]);
         return;
+      case 'room-label-center':
+        updateParams(this.store, ids.filter((id) => doc.elements[id]?.type === 'Space'), { labelAt: undefined }, 'Rumsstämpeln i mitten');
+        return;
       case 'flip-side': {
         const el = doc.elements[ids[0]];
         if (!el) return;

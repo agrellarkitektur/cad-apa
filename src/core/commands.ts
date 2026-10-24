@@ -420,7 +420,8 @@ export function movePatch(doc: ProjectDoc, el: Element, d: [number, number]): Re
   }
   if (p.start && p.end) return { start: add(p.start), end: add(p.end) };
   if (p.origin) return { origin: add(p.origin) };
-  if (Array.isArray(p.outline)) return p.seed ? { outline: p.outline.map(add), seed: add(p.seed) } : { outline: p.outline.map(add) };
+  // Ett rum flyttar också sin punkt och sin flyttade rumsstämpel (0.8.17).
+  if (Array.isArray(p.outline)) return { outline: p.outline.map(add), ...(p.seed ? { seed: add(p.seed) } : {}), ...(p.labelAt ? { labelAt: add(p.labelAt) } : {}) };
   if (Array.isArray(p.points)) {
     // Ett mått knutet till modellen flyttar bara måttlinjen; ett fritt mått flyttas helt.
     if (!Array.isArray(p.points[0]) && typeof p.angle === 'number') {
@@ -653,7 +654,7 @@ export function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, movi
   if (Array.isArray(p.outline)) {
     // Tak har en nockriktning som vrids med.
     const ridge = typeof p.ridge === 'number' ? { ridge: t.angle(p.ridge) } : {};
-    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}), ...ridge } }];
+    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...ridge } }];
   }
   if (Array.isArray(p.points)) {
     const points = p.points.map((q: any) => (Array.isArray(q) ? t.map(q as Pt) : { ...q, at: t.map(q.at) }));
