@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.13** (alfa, fler Modifiera-verktyg); nästa är **0.8.14, Modifiera-verktyg del 2**.
+**0.8.14** (alfa, Modifiera-verktyg del 2); nästa är **0.8.15, Underlag**.
 
 ## Vad som fungerar
 
@@ -705,6 +705,31 @@ Version 0.8.13, fler Modifiera-verktyg (samma filformat, 11):
   knapparnas tips och i listan under Inställningar
 - Webbhotellet: varje uppdatering på GitHub publiceras direkt med FTP
   (`.github/workflows/publicera.yml`)
+
+Version 0.8.14, Modifiera-verktyg del 2 (samma filformat, 11):
+- **Justera och fördela** (Shift+N): med flera markerade läggs de mot
+  markeringens vänster-, höger-, över- eller underkant eller mitt, eller
+  fördelas med lika avstånd vågrätt eller lodrätt (minst tre; de yttersta
+  ligger still). Klickar man i stället på en linje, ett väggliv eller en
+  kant läggs varje objekt med sin närmaste kant mot den. Klickar man på en
+  vägg används livet som vetter mot objekten. Anslutna väggar följer med
+  som vid Flytta
+- **Hämta och överför** (pipetten, Shift+H): klicka på ett objekt av samma
+  slag, så får det markerade dess typ och inställningar (tjocklek, höjd,
+  liv, penna, linjetyp, färg, mönster …) men behåller sin form och sitt läge
+- **Skala** (Shift+Y): klicka baspunkten och skriv en faktor, eller klicka
+  en punkt som visar nuvarande längd och sedan dit den ska. Gäller
+  2D-linjer, fyllningar, möbler (deras mått), underlag, fria mått och
+  texters läge; väggar, tak och rum skalas inte
+- **Förläng alla till** och **Trimma mot gräns**: med flera väggar eller
+  2D-linjer markerade, klicka på gränsen. Förläng drar varje ände närmast
+  gränsen fram till den; Trimma tar bort biten på den sida av gränsen man
+  klickar. Det som inte når fram eller inte korsar gränsen hoppas över, och
+  det sägs hur många
+- **Linjetjocklek som tabell**: pennan väljs i en tabell med
+  "gammel-cad"-färgerna (grå 0,13; cyan 0,18; röd 0,25; grön 0,35; svart
+  0,5; magenta 0,7; blå 1,0; gul 1,4), både när man ritar och i
+  egenskaperna. 1,0 och 1,4 är nya
 
 ## Versioner och gamla projekt
 

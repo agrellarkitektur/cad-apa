@@ -1,5 +1,6 @@
 import { moveOnly } from '../../core/sheets';
 import type { Id } from '../../core/model';
+import { canScale } from '../../core/arrange';
 import { canJoin, canTrim } from '../../core/trimEdit';
 import { cornerPartner, cornersAmong, refFrame } from '../../core/wallEdit';
 import { isShape, shapeCan, shapeEdgeAt, shapeNodes } from '../../elements/shapeEdit';
@@ -77,7 +78,12 @@ export type OpId =
   | 'join'
   | 'split'
   | 'filletAll'
-  | 'chamferAll';
+  | 'chamferAll'
+  | 'align'
+  | 'pick'
+  | 'scale'
+  | 'extendAll'
+  | 'trimAll';
 
 export interface OpDef {
   label: string;
@@ -85,7 +91,7 @@ export interface OpDef {
   short: string;
   icon: IconName;
   /** Ett värde som kan skrivas in, med enhet och förval. */
-  value?: { label: string; unit: 'mm' | '°' | 'st'; initial: number };
+  value?: { label: string; unit: 'mm' | '°' | 'st' | '×'; initial: number };
   /** Utförs direkt när man väljer det, utan att klicka i ritningen. */
   instant?: boolean;
   hint: string;
@@ -121,6 +127,11 @@ export const OPS: Record<OpId, OpDef> = {
   split: { label: 'Dela', short: 'Dela', icon: 'split', hint: 'Klicka där det ska delas. Det blir två, utan något hörn.' },
   filletAll: { label: 'Avrunda alla hörn', short: 'Avrunda alla', icon: 'filletAll', value: { label: 'Radie', unit: 'mm', initial: 1000 }, hint: 'Alla hörn mellan de markerade väggarna. Skriv radien och tryck Enter, eller klicka.' },
   chamferAll: { label: 'Fasa alla hörn', short: 'Fasa alla', icon: 'chamferAll', value: { label: 'Avstånd', unit: 'mm', initial: 600 }, hint: 'Alla hörn mellan de markerade väggarna. Skriv avståndet och tryck Enter, eller klicka.' },
+  align: { label: 'Justera och fördela', short: 'Justera', icon: 'align', hint: 'Välj hur de ska ligga, eller klicka en linje, vägg eller kant att lägga dem mot.' },
+  pick: { label: 'Hämta och överför', short: 'Pipett', icon: 'eyedropper', hint: 'Klicka på ett objekt av samma slag. Det markerade får dess typ och inställningar, men behåller sin form och sitt läge.' },
+  scale: { label: 'Skala', short: 'Skala', icon: 'scale', value: { label: 'Faktor', unit: '×', initial: 2 }, hint: 'Klicka baspunkten, skriv faktorn eller klicka två punkter.' },
+  extendAll: { label: 'Förläng alla till', short: 'Förläng alla', icon: 'extend', hint: 'Klicka på väggen eller linjen som de markerade ska förlängas fram till.' },
+  trimAll: { label: 'Trimma mot gräns', short: 'Mot gräns', icon: 'trim', hint: 'Klicka på gränsen, sedan på den sida av den som ska bort.' },
   shapeOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'Kanten flyttas vinkelrätt dit du klickar, eller skriv avståndet; grannkanterna följer med.' },
 };
 
@@ -181,9 +192,21 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
       // och avrunda eller fasa alla hörn mellan dem (0.8.13).
       const own: OpId[] = walls.length >= 2 ? ['offsetAll'] : [];
       if (walls.length >= 2 && cornersAmong(doc, walls).length) own.push('filletAll', 'chamferAll');
-      return withCuts(own.length ? [own, COMMON] : [COMMON]);
+      const groups = withCuts(own.length ? [own, COMMON] : [COMMON]);
+      const more = arrangeOps(host, ctx.ids);
+      return more.length ? [...groups, more] : groups;
     }
   }
+}
+
+/** Justera, Pipett, Skala och Förläng/Trimma för flera (0.8.14), för det markerade som helhet. */
+function arrangeOps(host: ToolHost, ids: readonly Id[]): OpId[] {
+  const els = ids.map((id) => host.store.doc.elements[id]).filter(Boolean);
+  const out: OpId[] = [];
+  if (els.some((e) => !e.locked)) out.push('align', 'pick');
+  if (els.some((e) => canScale(e))) out.push('scale');
+  if (els.filter((e) => canTrim(e)).length >= 2) out.push('extendAll', 'trimAll');
+  return out;
 }
 
 /** Trimma, Hörnskarv och Dela för det markerade (0.8.13), när det går. */
@@ -285,7 +308,10 @@ export type RailId =
   | 'chamfer'
   | 'trim'
   | 'join'
-  | 'split';
+  | 'split'
+  | 'align'
+  | 'pick'
+  | 'scale';
 
 export interface RailDef {
   id: RailId;
@@ -314,8 +340,8 @@ export const RAIL: RailDef[][] = [
   [
     { id: 'wallOn', label: 'Ny vägg härifrån', icon: 'wall', ops: ['wallOn'], ask: 'Klicka på änden där den nya väggen ska börja.', key: 'W' },
     { id: 'stretch', label: 'Sträck', icon: 'stretch', ops: ['stretch'], ask: 'Klicka på änden som ska sträckas.', key: 'E' },
-    { id: 'extend', label: 'Förläng till', icon: 'extend', ops: ['extend'], ask: 'Klicka på änden som ska förlängas.', key: 'X' },
-    { id: 'trim', label: 'Trimma', icon: 'trim', ops: ['trim'], key: 'T' },
+    { id: 'extend', label: 'Förläng till', icon: 'extend', ops: ['extend', 'extendAll'], ask: 'Klicka på änden som ska förlängas.', key: 'X' },
+    { id: 'trim', label: 'Trimma', icon: 'trim', ops: ['trim', 'trimAll'], key: 'T' },
     { id: 'join', label: 'Hörnskarv', icon: 'cornerJoin', ops: ['join'], key: 'J' },
   ],
   [
@@ -332,6 +358,11 @@ export const RAIL: RailDef[][] = [
   [
     { id: 'fillet', label: 'Avrunda hörn', icon: 'fillet', ops: ['fillet', 'filletAll'], ask: 'Klicka på hörnet som ska avrundas.', key: 'F' },
     { id: 'chamfer', label: 'Fasa hörn', icon: 'chamfer', ops: ['chamfer', 'chamferAll'], ask: 'Klicka på hörnet som ska fasas.', key: 'C' },
+  ],
+  [
+    { id: 'align', label: 'Justera och fördela', icon: 'align', ops: ['align'], key: 'N' },
+    { id: 'pick', label: 'Hämta och överför', icon: 'eyedropper', ops: ['pick'], key: 'H' },
+    { id: 'scale', label: 'Skala', icon: 'scale', ops: ['scale'], key: 'Y' },
   ],
 ];
 
@@ -366,6 +397,7 @@ export function railFor(host: ToolHost, ids: readonly Id[]): Set<RailId> {
   }
   if (els.some((e) => e.type === 'Roof')) for (const id of ['insert', 'pointMove', 'remove', 'offset'] as const) on.add(id);
   for (const op of editOps(host, ids)) on.add(op as RailId);
+  for (const op of arrangeOps(host, ids)) on.add(op === 'extendAll' ? 'extend' : op === 'trimAll' ? 'trim' : (op as RailId));
   for (const el of els) {
     if (!isShape(el)) continue;
     const can = shapeCan(el);

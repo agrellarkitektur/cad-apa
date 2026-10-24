@@ -664,8 +664,8 @@ vid varje push till main.*
 
 ### 0.8.14 Modifiera-verktyg del 2
 
-Det som blev kvar av 0.8.13 (Carl August, 23 oktober). Mellanstor; blir den
-för stor tas tjocklekstabellen och dra och släpp i en egen småversion.
+Det som blev kvar av 0.8.13 (Carl August, 23 oktober). Dra och släpp till
+mappar och mätning i segment flyttades till 0.8.17 (24 oktober).
 
 - **Justera och Fördela** flera objekt mot en kant eller ett objekt, med
   lika avstånd
@@ -675,8 +675,23 @@ för stor tas tjocklekstabellen och dra och släpp i en egen småversion.
 - **Förläng till och Trimma för flera markerade** samtidigt mot en gräns
 - **Linjetjocklekar som i "gammel-cad"**: tabellen med färgfält (grå 0,13;
   cyan 0,18; röd 0,25; grön 0,35; svart 0,5; magenta 0,7; blå 1,0; gul 1,4)
-- **Dra och släpp till mappar** i projektträdet
-- **Dela en mätning i segment** med tillfälliga snäppunkter
+
+*Byggd (24 oktober), samma format (11). Claudes val, att stämma av:
+Justera visar sex knappar (vänster, mitt, höger, över, mitt, under) mot
+markeringens yttersta kant och två för Fördela (lika mellanrum, de yttersta
+ligger still); ett klick på en linje lägger varje objekt med sin närmaste
+kant mot den, och på en vägg används livet som vetter mot objekten.
+Pipetten tar typen och allt som inte är form eller läge, bara till objekt
+av samma slag (möblernas mått räknas som form). Skala gäller 2D, möbler,
+underlag, fria mått och texters läge, inte väggar, tak och rum, och
+textens höjd ändras inte. Förläng alla och Trimma mot gräns behöver minst
+två väggar eller linjer; Förläng tar änden närmast gränsen och når den
+inte någon bit av gränsen används gränsens förlängning; Trimma hoppar över
+det som har båda ändarna på samma sida. I Modifiera-raden ligger de under
+Förläng och Trimma: Shift+X väljer Förläng alla när flera är markerade,
+Shift+T behåller den gamla Trimma. Kortkommandon: Shift+N Justera, Shift+H
+Hämta och överför, Shift+Y Skala. Tabellen fälls ut från pennvalet både när
+man ritar och i egenskaperna.*
 
 ### 0.8.15 Underlag
 
@@ -685,6 +700,9 @@ delas den.
 
 - **Snäpp i DXF-underlag**: ändpunkt, mittpunkt, längs linjer och de andra
   vanliga
+- **Parallellt och vinkelrätt**: känner man med muspekaren på en linje
+  medan man ritar kan man rita parallellt med eller vinkelrätt mot den, som
+  i SketchUp (Carl August 22 oktober)
 - **X och Y** för att placera ett underlag, som kan ändras senare i
   egenskaperna och smartmenyn
 - **Papperskorg** i egenskaperna och smartmenyn för ett markerat underlag
@@ -702,6 +720,36 @@ Småversion (Carl August, 21 oktober); fler småsaker kan läggas till.
 
 - Rumsstämpeln kan dras till en annan plats i rummet. Dras den utanför
   rummet visas en pil från stämpeln in i rummet
+
+### 0.8.17 Småsaker
+
+Carl Augusts synpunkter 20–22 oktober (sorterade 24 oktober).
+
+- **Dra och släpp till mappar** i projektträdet: vyer, ritningar m.m.
+- **Dela en mätning i segment** med tillfälliga snäppunkter (skriv ett tal
+  efter mätningen; Enter lägger punkterna tills man väljer *Rensa
+  segmentpunkter*)
+- **Högerklick** visar en kort historik över de senaste kommandona; ett
+  klick kör kommandot igen
+- **osifont** som standardtypsnitt (https://github.com/hikikomori82/osifont),
+  krediterat under *Om*, med en länk till projektets GitHub där;
+  versionsnumret vid alfa-knappen
+- **Autospara till fil**
+- **Rutnätet** visar rätt nivåer: 500-strecken syns när de ska, och
+  0,1 m-strecken kommer när de går att läsa
+
+### 0.8.18 2D-form · *nytt format*
+
+Carl August 22 oktober. Mellanstor till stor.
+
+- 2D-linjen görs om till en **2D-form**. Linje, rektangel, cirkel m.fl. blir
+  sätt att rita formen. Formen kan ha linjetjockleken 0 och ändå gå att
+  klicka på längs den osynliga linjen
+- **Fyllningen** anges på formen som på det tidigare fyllningsobjektet, som
+  tas bort; formen behöver inte vara sluten för att få en fyllning (som i
+  Illustrator)
+- Mitten går bara att klicka på om formen har en fyllning. Det ersätter
+  0.8.11:s regel att en sluten polylinje går att klicka inuti
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
@@ -741,6 +789,26 @@ Enfallstak som delar som sätts ihop väntar till efter pilotprojektet.
   stegdjup som räknas ut från våningshöjden
 - Trappan i plan med snittlinje och gångriktning, i sektion och i 3D
 - Håltagning i bjälklaget och enkelt räcke
+
+### 0.11.1 Profilverktyget · *nytt format*
+
+Carl August 22 oktober; före piloten (24 oktober). Stor.
+
+- Man ritar en profil och sedan en referenslinje, och profilen följer
+  linjen. Ett verktyg i stället för Archicads flera (pelare, balkar,
+  räcken): man anger om profilen är generell eller en byggdel (pelare,
+  balk, yttervägg …)
+
+### 0.11.2 Dörrar och fönster
+
+Carl August 22 oktober. Stor; delas om det behövs.
+
+- Redigerbara foder
+- Fler öppningssätt för dörrar: skjutdörr, pardörr, vikdörr,
+  pendel-/svängdörr och pivådörr. För fönster: över-, under- och
+  sidohängda, vertikal och horisontell pivå, skjut- och vikfönster
+- Om det ryms (annars efter piloten): dörr- och fönsterhandtag, flera
+  bågar och luft i höjd och sida, spröjs
 
 ### 0.12 Export: IFC och DXF
 
@@ -798,6 +866,9 @@ Carl Augusts synpunkter 20 oktober; före eller efter piloten bestäms när
 
 Allt här är bestämt och ska byggas, men ordningen och versionsnumren sätts
 efter pilotprojektet. Det som piloten visar behövs tidigt går först.
+
+- **Kulör, yta och material för alla objekt** (Carl August 22 oktober).
+  Behövs fasadkulörer i bygglovet flyttas en enkel kulör per yta upp
 
 ### Grafik och markörer (från 0.8 del 3)
 

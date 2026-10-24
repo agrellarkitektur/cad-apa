@@ -1,6 +1,7 @@
 import type { WallFace } from '../../elements/wallSides';
-import { LINE_TYPES, PEN_WEIGHTS, SHAPE_LABELS, type FillPattern, type LineType } from '../../elements/drawing2d';
+import { LINE_TYPES, SHAPE_LABELS, type FillPattern, type LineType } from '../../elements/drawing2d';
 import { patternPicker } from '../patternPick';
+import { weightPicker } from '../weightPick';
 import type { Draw2DKind } from '../tools/draw2dTool';
 import { icons } from '../icons';
 import { escapeHtml, labelOf } from '../labels';
@@ -100,13 +101,12 @@ export function installToolOptions(app: AppContext) {
       const t = app.draw2dTool;
       const o = t.options;
       const kinds: [Draw2DKind, string][] = [...(Object.entries(SHAPE_LABELS) as [Draw2DKind, string][]), ['fill', 'Fyllning']];
-      const comma = (n: number) => n.toLocaleString('sv-SE');
       app.toolOptions.innerHTML = `
         <label class="opt"><span>Form</span><select id="d2-kind" aria-label="Form">${kinds.map(([k, l]) => `<option value="${k}"${k === o.kind ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
         ${
           o.kind === 'fill'
             ? `<div class="opt"><span>Mönster</span>${patternPicker('d2-pattern', o.pattern, '')}</div>`
-            : `<label class="opt"><span>Penna</span><select id="d2-weight" aria-label="Linjetjocklek">${PEN_WEIGHTS.map((w) => `<option value="${w}"${w === o.weight ? ' selected' : ''}>${comma(w)}</option>`).join('')}</select></label>
+            : `<div class="opt"><span>Penna</span>${weightPicker('d2-weight', o.weight, '')}</div>
         <label class="opt"><span>Linje</span><select id="d2-linetype" aria-label="Linjetyp">${(Object.entries(LINE_TYPES) as [LineType, { label: string }][]).map(([k, v]) => `<option value="${k}"${k === o.linetype ? ' selected' : ''}>${v.label}</option>`).join('')}</select></label>`
         }
         ${t.open ? `<button class="btn btn-primary" data-action="d2-done" ${t.count >= (o.kind === 'fill' ? 3 : 2) ? '' : 'disabled'}>Klar</button>` : ''}
@@ -175,7 +175,11 @@ export function installToolOptions(app: AppContext) {
     if (t.id === 'wall-def') app.wallTool.options.definition = t.value;
     if (t.id === 'opening-def') (app.ui.tool === 'door' ? app.doorTool : app.windowTool).options.definition = t.value;
     if (t.id === 'd2-kind') app.draw2dTool.setKind(t.value as Draw2DKind);
-    if (t.id === 'd2-weight' && num > 0) app.draw2dTool.options.weight = num;
+    if ((t as unknown as HTMLInputElement).name === 'd2-weight' && num > 0) {
+      app.draw2dTool.options.weight = num;
+      // Tabellen fälls ihop och visar det nya valet.
+      renderToolOptions();
+    }
     if (t.id === 'd2-linetype') app.draw2dTool.options.linetype = t.value as LineType;
     if ((t as unknown as HTMLInputElement).name === 'd2-pattern') app.draw2dTool.options.pattern = t.value as FillPattern;
     if (t.id === 'text-height' && num > 0) app.textTool.height = num;

@@ -82,6 +82,18 @@ export const icons = {
   // Avrunda och fasa alla hörn i markeringen.
   filletAll: svg('<path d="M4 16v-5a5 5 0 0 1 5-5h4"/><path d="M11 20h4a5 5 0 0 0 5-5v-4"/>'),
   chamferAll: svg('<path d="M4 16v-6l4-4h5"/><path d="M11 20h5l4-4v-5"/>'),
+  // Justera och fördela, pipetten och skala (0.8.14).
+  align: svg('<path d="M4 3v18"/><rect x="7" y="6" width="12" height="4" rx="0.8"/><rect x="7" y="14" width="7" height="4" rx="0.8"/>'),
+  alignLeft: svg('<path d="M4 3v18"/><rect x="7" y="6" width="12" height="4" rx="0.8"/><rect x="7" y="14" width="7" height="4" rx="0.8"/>'),
+  alignHCenter: svg('<path d="M12 3v18" stroke-dasharray="2 1.5"/><rect x="5" y="6" width="14" height="4" rx="0.8"/><rect x="8" y="14" width="8" height="4" rx="0.8"/>'),
+  alignRight: svg('<path d="M20 3v18"/><rect x="5" y="6" width="12" height="4" rx="0.8"/><rect x="10" y="14" width="7" height="4" rx="0.8"/>'),
+  alignTop: svg('<path d="M3 4h18"/><rect x="6" y="7" width="4" height="12" rx="0.8"/><rect x="14" y="7" width="4" height="7" rx="0.8"/>'),
+  alignVCenter: svg('<path d="M3 12h18" stroke-dasharray="2 1.5"/><rect x="6" y="5" width="4" height="14" rx="0.8"/><rect x="14" y="8" width="4" height="8" rx="0.8"/>'),
+  alignBottom: svg('<path d="M3 20h18"/><rect x="6" y="5" width="4" height="12" rx="0.8"/><rect x="14" y="10" width="4" height="7" rx="0.8"/>'),
+  distH: svg('<path d="M3 4v16M21 4v16"/><rect x="6" y="8" width="3" height="8" rx="0.6"/><rect x="10.5" y="8" width="3" height="8" rx="0.6"/><rect x="15" y="8" width="3" height="8" rx="0.6"/>'),
+  distV: svg('<path d="M4 3h16M4 21h16"/><rect x="8" y="6" width="8" height="3" rx="0.6"/><rect x="8" y="10.5" width="8" height="3" rx="0.6"/><rect x="8" y="15" width="8" height="3" rx="0.6"/>'),
+  eyedropper: svg('<path d="M14.5 4.5a2.1 2.1 0 0 1 3 0l2 2a2.1 2.1 0 0 1 0 3L17 12l-5-5z"/><path d="M13 8l-8 8v3h3l8-8"/>'),
+  scale: svg('<rect x="3" y="11" width="10" height="10" rx="0.8"/><path d="M3 11V3h18v18h-8" stroke-dasharray="2 1.5"/><path d="M11 13l8-8M14 5h5v5"/>'),
   grid: svg('<path d="M4 4h16v16H4zM4 9.3h16M4 14.6h16M9.3 4v16M14.6 4v16"/>'),
   // Ett ritningsblad med ritningshuvud i nedre högra hörnet (0.8 del 3).
   sheet: svg('<path d="M3 5.5h18v13H3z"/><path d="M13 18.5v-4h8"/><path d="M6 8.5h5v5H6z"/>'),

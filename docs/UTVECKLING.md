@@ -951,3 +951,32 @@ mallblad) gav samma projekt, markering, ritning, panel och smartmeny.
   laddar upp `dist/` med FTPS vid varje push till `main` (inte för ändringar
   bara i `docs/` eller `.md`). Uppladdningen sparar vad som finns på servern
   i `.ftp-deploy-sync-state.json` och laddar sedan bara upp det som ändrats
+
+## Modifiera-verktyg del 2 (0.8.14, format 11)
+
+- **Utan webbläsare** i `src/core/arrange.ts` (testas i
+  `tests/v0814.test.ts`): `moveEach` flyttar varje objekt med sin egen
+  förflyttning i en transaktion; anslutna väggar följer med genom
+  `followJoins` (exporterad från `commands.ts`, med en `skip`-mängd för de
+  andra som flyttas, och räknar nu från läget i transaktionen så att flera
+  anrop i rad inte skriver över varandra). `scaleElements` och
+  `scaledParams` (`canScale` säger vilka typer), `transferSettings`
+  (pipetten: allt i `params` utom det som är form eller läge, `PLACEMENT`,
+  plus typen), `extendAllTo` och `trimAllAt` (gränsen är en lista sträckor;
+  trimningen använder `trimPath` från `trimEdit.ts`)
+- **Verktyget** är `ArrangeTool` i `src/ui/modify/arrangeTool.ts`, med
+  samma gränssnitt mot `Modifier` som `ModifyTool` (`prompt`, `setValue`,
+  `applyValue`); kontrollern väljer klass med `ArrangeTool.handles(op)`.
+  Justera räknar varje objekts kanter ur dess ritade form (`outlinePoints`
+  från planens `pickables`), `alignMoves` och `alignToLineMoves` är rena
+  funktioner. Knapparna för Justera ritas i `detailMarkup` och fångas i
+  `bindValue` (`data-align`)
+- **Smartmenyn**: de nya valen kommer som en egen grupp sist för det
+  markerade som helhet (`arrangeOps` i `ops.ts`). I Modifiera-raden ligger
+  Förläng alla och Trimma mot gräns under Förläng och Trimma (`ops` i
+  `RAIL`); med flera markerade väljer Förläng den nya (den gamla behöver ett
+  klick på en ände), medan Trimma behåller den gamla
+- **Tjocklekstabellen** (`weightPicker` i `src/ui/weightPick.ts`) är
+  radioknappar i en `<details>`, så valet går genom samma change-händelse
+  som listan förut (`data-key="d2:weight"` i panelen, `name="d2-weight"`
+  i verktygsraden). Färgerna står i `PEN_COLORS` i `drawing2d.ts`

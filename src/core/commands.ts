@@ -292,18 +292,20 @@ export function followPoint(e: P2, other: P2, moved: WallEnds, d: P2): P2 | null
 }
 
 /** Ändarna på väggar som sitter mot de flyttade väggarna följer med. */
-function followJoins(tx: TxBuilder, before: ProjectDoc, moved: Set<Id>, d: P2): number {
+export function followJoins(tx: TxBuilder, before: ProjectDoc, moved: Set<Id>, d: P2, skip: ReadonlySet<Id> = moved): number {
   const movedWalls = [...moved]
     .map((id) => before.elements[id])
     .filter((el): el is Element => !!el && el.type === 'Wall');
   if (!movedWalls.length) return 0;
   let released = 0;
   for (const w of Object.values(before.elements)) {
-    if (w.type !== 'Wall' || moved.has(w.id)) continue;
+    if (w.type !== 'Wall' || moved.has(w.id) || skip.has(w.id)) continue;
     // Bågväggar följer inte med: deras ände kan inte glida längs en rak linje.
     if (isArc(w)) continue;
     const p = w.params as unknown as WallEnds;
-    const next: WallEnds = { start: p.start, end: p.end };
+    // Utgå från läget nu, så att flera anrop i samma transaktion (Justera, 0.8.14) inte skriver över varandra.
+    const now = (tx.doc.elements[w.id]?.params ?? p) as unknown as WallEnds;
+    const next: WallEnds = { start: now.start, end: now.end };
     let changed = false;
     for (const end of ['start', 'end'] as const) {
       const e = p[end];

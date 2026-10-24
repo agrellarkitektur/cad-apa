@@ -1,5 +1,7 @@
 import { escapeHtml, labelOf } from '../labels';
 import { OPS, opsFor, RAIL_ITEMS, railOf, type ModifyContext, type ModifyHost, type OpId, type RailId } from './ops';
+import { ALIGN_BUTTONS, ArrangeTool, type AlignKind } from './arrangeTool';
+import { icons } from '../icons';
 import { ModifyTool, runInstant } from './tool';
 
 /**
@@ -15,7 +17,7 @@ export class Modifier {
   /** Det markerade som helhet: dit går man tillbaka när ett val är klart. */
   private body: ModifyContext | null = null;
   active: OpId | null = null;
-  private tool: ModifyTool | null = null;
+  private tool: ModifyTool | ArrangeTool | null = null;
   /** Modifiera-raden väntar på ett klick på en ände, ett hörn eller en kant. */
   picking: RailId | null = null;
   /** Senaste värdet per val, så att man slipper skriva samma radie igen. */
@@ -107,7 +109,8 @@ export class Modifier {
       return;
     }
     this.active = op;
-    this.tool = new ModifyTool(this.host, op, ctx, this.remembered.get(op) ?? def.value?.initial ?? 0, () => this.finish(), () => this.changed());
+    const Tool = ArrangeTool.handles(op) ? ArrangeTool : ModifyTool;
+    this.tool = new Tool(this.host, op, ctx, this.remembered.get(op) ?? def.value?.initial ?? 0, () => this.finish(), () => this.changed());
     this.host.startModify(this.tool);
     this.changed();
   }
@@ -224,10 +227,15 @@ export class Modifier {
     const v = def.value;
     const initial = this.remembered.get(op) ?? (op === 'stretch' ? Math.round(this.tool?.currentLength() ?? 0) : (v?.initial ?? 0));
     const value = v
-      ? `<label class="sm-value"><span>${v.label}</span><input type="text" data-modify-value data-expr ${v.unit === '°' ? 'data-unit="deg"' : v.unit === 'st' ? 'data-unit=""' : ''} inputmode="decimal" autocomplete="off" value="${initial}"><i>${v.unit}</i></label>`
+      ? `<label class="sm-value"><span>${v.label}</span><input type="text" data-modify-value data-expr ${v.unit === '°' ? 'data-unit="deg"' : v.unit === 'st' || v.unit === '×' ? 'data-unit=""' : ''} inputmode="decimal" autocomplete="off" value="${initial}"><i>${v.unit}</i></label>`
       : '';
     const hint = this.tool?.prompt() ?? def.hint;
-    return `<div class="sm-detail"><b>${escapeHtml(def.label)}</b>${value}<span class="sm-hint">${escapeHtml(hint)}</span></div>`;
+    // Justera och Fördela (0.8.14): en knapp per sätt, bredvid tipset om att klicka en linje.
+    const align =
+      op === 'align'
+        ? `<span class="sm-align" role="group" aria-label="Justera och fördela">${ALIGN_BUTTONS.map((b) => `<button type="button" class="qb-btn sm-align-btn" data-align="${b.kind}" title="${escapeHtml(b.label)}" aria-label="${escapeHtml(b.label)}">${icons[ALIGN_ICONS[b.kind]]}</button>`).join('')}</span>`
+        : '';
+    return `<div class="sm-detail"><b>${escapeHtml(def.label)}</b>${value}${align}<span class="sm-hint">${escapeHtml(hint)}</span></div>`;
   }
 
   /**
@@ -235,6 +243,13 @@ export class Modifier {
    * Esc avbryter, och förhandsvisningen följer det man skriver.
    */
   bindValue(el: HTMLElement): void {
+    el.addEventListener('click', (e) => {
+      const b = (e.target as HTMLElement).closest<HTMLElement>('[data-align]');
+      if (!b || !(this.tool instanceof ArrangeTool)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      this.tool.alignBy(b.dataset.align as AlignKind);
+    });
     el.addEventListener('keydown', (e) => {
       const input = e.target as HTMLInputElement;
       if (!input.matches('input[data-modify-value]')) return;
@@ -269,3 +284,15 @@ export class Modifier {
     }, 0);
   }
 }
+
+/** Ikonerna för Justera och Fördela. */
+const ALIGN_ICONS = {
+  left: 'alignLeft',
+  hcenter: 'alignHCenter',
+  right: 'alignRight',
+  top: 'alignTop',
+  vcenter: 'alignVCenter',
+  bottom: 'alignBottom',
+  distH: 'distH',
+  distV: 'distV',
+} as const satisfies Record<AlignKind, string>;

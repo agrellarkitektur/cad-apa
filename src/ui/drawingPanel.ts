@@ -2,8 +2,9 @@ import { addViewTag, setLocked, setShowIn, updateParams } from '../core/commands
 import { onPaper as paperSpace, modelViewId, type Element, type Id, type ProjectDoc, type ShowIn } from '../core/model';
 import type { DocStore } from '../core/store';
 import { allViews, countViews, homeOf } from '../core/visibility';
-import { LINE_TYPES, PEN_WEIGHTS, SHAPE_LABELS, type Fill2DParams, type Line2DParams } from '../elements/drawing2d';
+import { LINE_TYPES, SHAPE_LABELS, type Fill2DParams, type Line2DParams } from '../elements/drawing2d';
 import { patternPicker } from './patternPick';
+import { weightPicker } from './weightPick';
 import { markerName } from '../elements/markers';
 import { resolveParams } from '../elements/registry';
 import { SLOPE_STYLES, type RoofSlopeParams } from '../elements/roofSlope';
@@ -42,7 +43,7 @@ export function drawingFields(doc: ProjectDoc, el: Element): string {
     const closable = p.shape === 'polyline' || p.shape === 'spline';
     return `<div class="fields">
         <label class="field"><span>Form</span><input value="${SHAPE_LABELS[p.shape]}" readonly></label>
-        <label class="field"><span>Penna</span><select data-key="d2:weight">${PEN_WEIGHTS.map((w) => `<option value="${w}"${w === p.weight ? ' selected' : ''}>${comma(w)} mm</option>`).join('')}</select></label>
+        <div class="field"><span>Penna</span>${weightPicker('d2-weight-panel', p.weight, 'data-key="d2:weight"', ' mm')}</div>
         <label class="field"><span>Linjetyp</span><select data-key="d2:linetype">${Object.entries(LINE_TYPES).map(([k, v]) => `<option value="${k}"${k === p.linetype ? ' selected' : ''}>${v.label}</option>`).join('')}</select></label>
         <label class="field"><span>Färg</span><input type="color" data-key="d2:color" value="${p.color ?? '#1d2328'}"></label>
       </div>

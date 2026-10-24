@@ -24,7 +24,22 @@ export const LINE_TYPES: Record<LineType, { label: string; dash?: number[] }> = 
 };
 
 /** Linjebredderna som går att välja, mm på papper. */
-export const PEN_WEIGHTS = [0.13, 0.18, 0.25, 0.35, 0.5, 0.7];
+export const PEN_WEIGHTS = [0.13, 0.18, 0.25, 0.35, 0.5, 0.7, 1, 1.4];
+
+/**
+ * Pennfärgerna i "gammel-cad" (0.8.14): färgen som tjockleken hade i äldre
+ * CAD-program, så att den som är van vid dem känner igen valet.
+ */
+export const PEN_COLORS: Record<number, { name: string; color: string }> = {
+  0.13: { name: 'Grå', color: '#8c9196' },
+  0.18: { name: 'Cyan', color: '#00b4c8' },
+  0.25: { name: 'Röd', color: '#e0302a' },
+  0.35: { name: 'Grön', color: '#1fa24a' },
+  0.5: { name: 'Svart', color: '#1d2328' },
+  0.7: { name: 'Magenta', color: '#d42ab8' },
+  1: { name: 'Blå', color: '#2456e0' },
+  1.4: { name: 'Gul', color: '#e8b800' },
+};
 
 export interface Line2DParams {
   shape: Shape2D;

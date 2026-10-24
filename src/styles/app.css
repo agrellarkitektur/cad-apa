@@ -2253,6 +2253,29 @@ table.keys td:first-child {
   font-size: 11.5px;
 }
 
+/* Justera och Fördela (0.8.14): en rad små knappar. */
+.sm-align {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+.sm-align .sm-align-btn {
+  width: 30px;
+  height: 28px;
+  min-width: 0;
+  padding: 3px;
+}
+
+.sm-align .sm-align-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sm-align .sm-align-btn:nth-child(7) {
+  margin-left: 8px;
+}
+
 .smart-menu .sm-hint {
   flex-basis: 100%;
 }
@@ -4740,4 +4763,110 @@ input[type='range'] {
 
 .opt .pattern-pick label {
   padding: 2px 6px 2px 3px;
+}
+
+/* Linjetjocklek som tabell med "gammel-cad"-färger (0.8.14). */
+.weight-pick {
+  position: relative;
+}
+
+.weight-pick > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 78px;
+  padding: 4px 8px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+  font: 500 13px var(--font-data);
+  cursor: pointer;
+  list-style: none;
+}
+
+.weight-pick > summary::-webkit-details-marker {
+  display: none;
+}
+
+.weight-pick > summary::after {
+  content: '';
+  margin-left: auto;
+  border: 4px solid transparent;
+  border-top-color: var(--muted);
+  transform: translateY(2px);
+}
+
+.wp-table {
+  position: absolute;
+  z-index: 40;
+  left: 0;
+  bottom: calc(100% + 4px);
+  display: grid;
+  min-width: 190px;
+  padding: 4px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 0.18);
+}
+
+.panel .wp-table,
+.smart-menu .wp-table {
+  top: calc(100% + 4px);
+  bottom: auto;
+}
+
+.panel .wp-table {
+  left: auto;
+  right: 0;
+}
+
+.wp-row {
+  display: grid;
+  grid-template-columns: 16px 64px 40px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border-radius: 5px;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.wp-row input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.wp-row:hover {
+  background: var(--accent-soft);
+}
+
+.wp-row:has(input:checked) {
+  outline: 1.5px solid var(--accent);
+  background: var(--accent-soft);
+}
+
+.wp-row:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+}
+
+.wp-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid rgb(0 0 0 / 0.25);
+  border-radius: 3px;
+}
+
+.wp-w {
+  font-family: var(--font-data);
+  text-align: right;
+}
+
+.wp-line {
+  display: block;
+  min-width: 28px;
+  background: var(--ink);
+  border-radius: 1px;
 }
