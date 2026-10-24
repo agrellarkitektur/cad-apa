@@ -1116,6 +1116,36 @@ projekt i 1 982 jämförelser.
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
 
+## Kommandoraden (0.8.20)
+
+- **Registret** `src/ui/commandRegistry.ts`: `COMMANDS` med `id`,
+  `label`, svenska (`sv`) och engelska (`en`) namn i gemener, och vad
+  kommandot gör: `tool` (verktyg), `shape` (2D-verktyget med ett sätt att
+  rita), `rail` (en knapp i Modifiera-raden) eller `action`. Ett nytt
+  verktyg eller en ny Modifiera-knapp ska ha ett kommando; testet i
+  `tests/v0820.test.ts` säger till, och att inga namn krockar.
+  `findCommand` (exakt), `complete` (rangordnad lista), `commandFor`
+  och `aliasText` (förkortningarna i knapparnas tipsrutor)
+- **Punkter** `src/ui/pointInput.ts`: `parsePoint` ger `abs`, `rel`,
+  `polar`, `dist` eller `angle`; talen går genom `evaluate` i `expr.ts`.
+  `resolvePoint` räknar från förra punkten och markören. Verktyg som tar
+  emot punkter implementerar `PointTaker` (`lastPoint`, `cursorPoint`,
+  `takePoint`, `lockAngle`, `hintText`): `WallTool`, `Draw2DTool` och
+  `DimensionTool`. Ett nytt ritverktyg läggs till i `taker()` i
+  `commandLine.ts`
+- **Smartshell** `src/ui/app/commandLine.ts` i gridområdet `cmd` (under
+  ritytan, i `shellMarkup` som `.smartshell`). `busy()` säger om ett
+  kommando pågår (då hör Enter och mellanslag till det), `remember` och
+  `toolChosen` håller reda på senaste kommandot (`setTool` och Modifiera-
+  radens `press` anropar dem genom `app.commandLine`, som är valfri i
+  `AppContext` eftersom den installeras efter Modifiera-raden),
+  `refresh` anropas av `renderToolOptions`. Tangenterna i `keyboard.ts`:
+  Enter öppnar, mellanslag upprepar, siffror och `@ # < .` i ett
+  punktverktyg öppnar raden med tecknet. Inställningen `smartshell` i
+  `UiSettings`
+- Playwright: fältet är `#ss-input`, raden under `.ss-hint`, listan
+  `.ss-list`. `bacchus` har inte raden; skriv med `page.keyboard`
+
 ## 2D-form (0.8.19, format 12)
 
 - **`Shape2D`** (`src/elements/drawing2d.ts`) ersätter `Line2D` och

@@ -12,6 +12,7 @@ import { renderPrimitives } from '../../view2d/renderPrimitives';
 import { pxToMm, type ToolHost } from './host';
 import { snapMarker } from './overlay';
 import { roundMm, snap, type SnapResult } from './snap';
+import type { PointTaker } from '../pointInput';
 
 /**
  * Måttverktyget: klicka på punkterna som ska måttsättas (de snäpper mot
@@ -19,7 +20,7 @@ import { roundMm, snap, type SnapResult } from './snap';
  * Klar, och klicka sedan där måttlinjen ska ligga. Riktningen blir vågrät
  * eller lodrät beroende på var man placerar linjen, eller längs punkterna.
  */
-export class DimensionTool implements ViewTool {
+export class DimensionTool implements ViewTool, PointTaker {
   cursor = 'crosshair';
   private host: ToolHost;
   private points: DimPoint[] = [];
@@ -78,6 +79,37 @@ export class DimensionTool implements ViewTool {
   }
 
   cancel(): void {}
+
+  // Skrivna punkter i smartshell (0.8.20). När punkterna är klara anger
+  // punkten var måttlinjen ska ligga.
+  lockAngle: number | null = null;
+
+  lastPoint(): Vec2 | undefined {
+    const q = this.points.at(-1);
+    return q ? pointAt(q) : undefined;
+  }
+
+  cursorPoint(): Vec2 | undefined {
+    return this.current?.point;
+  }
+
+  takePoint(p: Vec2): void {
+    const pt = roundMm(p);
+    if (this.placing) {
+      this.current = { point: pt, kind: 'free', label: '' };
+      this.commit();
+      return;
+    }
+    if (!this.points.some((o) => dist(pointAt(o), pt) < 1)) this.points.push(this.pointWithRefs(pt));
+    this.lockAngle = null;
+    this.onChange?.();
+    this.host.view.requestRender();
+  }
+
+  hintText(): string {
+    if (this.placing) return 'Klicka eller skriv där måttlinjen ska ligga.';
+    return this.points.length < 2 ? 'Klicka eller skriv punkterna som ska måttsättas.' : 'Nästa punkt, eller Enter när punkterna är klara.';
+  }
 
   /** Element som måttet kan knytas till: det som finns i tillståndet man ritar i. */
   private candidates(): Element[] {

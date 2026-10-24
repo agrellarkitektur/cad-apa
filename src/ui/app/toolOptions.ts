@@ -141,6 +141,7 @@ export function installToolOptions(app: AppContext) {
     const bar = app.$<HTMLElement>('.cmd-bar');
     bar.hidden = app.ui.tool === 'select' || app.ui.tool === 'pan';
     requestAnimationFrame(placeCmdBar);
+    app.commandLine?.refresh();
   }
 
   function placeCmdBar(): void {

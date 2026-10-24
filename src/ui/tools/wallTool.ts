@@ -10,6 +10,7 @@ import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { pxToMm, type ToolHost } from './host';
 import { lengthLabel, snapMarker } from './overlay';
 import { roundMm, snap, type SnapResult } from './snap';
+import type { PointTaker } from '../pointInput';
 
 export interface WallToolOptions {
   /** Väggtypens id (littera). */
@@ -31,7 +32,7 @@ const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
  * dubbelklick, Enter utan längd, knappen Klar, eller genom att klicka på
  * startpunkten.
  */
-export class WallTool implements ViewTool {
+export class WallTool implements ViewTool, PointTaker {
   cursor = 'crosshair';
   readonly options: WallToolOptions;
   private host: ToolHost;
@@ -57,6 +58,24 @@ export class WallTool implements ViewTool {
   /** Väggar ritade i kedjan som pågår. */
   get placed(): number {
     return this.created.length;
+  }
+
+  // Skrivna punkter i smartshell (0.8.20).
+  lastPoint(): Vec2 | undefined {
+    return this.chain.at(-1);
+  }
+
+  cursorPoint(): Vec2 | undefined {
+    return this.current?.point;
+  }
+
+  takePoint(p: Vec2): void {
+    this.place(roundMm(p));
+    this.host.view.requestRender();
+  }
+
+  hintText(): string {
+    return this.drawing ? 'Klicka nästa punkt, eller skriv en längd. Enter avslutar.' : 'Klicka där väggen ska börja.';
   }
 
   /** Börja kedjan i en given punkt, t.ex. en väggs ände (0.8.4). */

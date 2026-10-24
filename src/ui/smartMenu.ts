@@ -3,6 +3,13 @@ import { escapeHtml } from './labels';
 import type { Modifier } from './modify/controller';
 import { OPS, railOf, type OpId } from './modify/ops';
 import type { PropertiesPanel } from './propertiesPanel';
+import { aliasText, commandFor } from './commandRegistry';
+
+/** Kommandot i smartshell för valet (0.8.20), efter kortkommandot. */
+function railAlias(op: OpId): string {
+  const c = commandFor({ rail: railOf(op)?.id });
+  return c ? `, skriv ${aliasText(c)}` : '';
+}
 
 /** En rektangel i ritytan (px från dess övre vänstra hörn). */
 export interface ScreenBox {
@@ -198,7 +205,7 @@ export class SmartMenu {
     const title = this.panel.quickTitle(where?.where ? (m.ctx?.ids.length === 1 ? where.where : `${where.where} · ${where.what}`) : undefined);
     const grip = `<button type="button" class="sm-grip" aria-label="Flytta smartmenyn" title="Dra för att flytta${this.pinned ? ', dubbelklicka för att följa markeringen igen' : ''}">${icons.grip}</button>`;
     const btn = (op: OpId) =>
-      `<button type="button" class="qb-btn sm-op" data-op="${op}" aria-pressed="${m.active === op}" title="${escapeHtml(`${OPS[op].label}${railOf(op) ? ` (Shift+${railOf(op)!.key})` : ''}. ${OPS[op].hint}`)}" aria-label="${escapeHtml(OPS[op].label)}">${icons[OPS[op].icon]}<span>${OPS[op].short}</span></button>`;
+      `<button type="button" class="qb-btn sm-op" data-op="${op}" aria-pressed="${m.active === op}" title="${escapeHtml(`${OPS[op].label}${railOf(op) ? ` (Shift+${railOf(op)!.key}${railAlias(op)})` : ''}. ${OPS[op].hint}`)}" aria-label="${escapeHtml(OPS[op].label)}">${icons[OPS[op].icon]}<span>${OPS[op].short}</span></button>`;
     const groups = this.planShown() ? m.groups() : [];
     const ops = groups.length ? `<div class="sm-ops qb-actions">${groups.map((g) => g.map(btn).join('')).join('<span class="sm-sep"></span>')}</div>` : '';
     const body = this.expanded ? this.panel.selectionMarkup() : null;

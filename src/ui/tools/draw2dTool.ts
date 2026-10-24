@@ -1,6 +1,6 @@
 import { addElements } from '../../core/commands';
 import { shapePrims, type FillPattern, type LineType, type Shape2DParams, type ShapeKind } from '../../elements/drawing2d';
-import { dist } from '../../geometry/vec';
+import { add, dist, dot, fromAngleDeg, scale, sub } from '../../geometry/vec';
 import type { Primitive, Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
@@ -8,6 +8,7 @@ import { renderPrimitives } from '../../view2d/renderPrimitives';
 import { pxToMm, type ToolHost } from './host';
 import { snapMarker } from './overlay';
 import { roundMm, snap, type SnapResult } from './snap';
+import type { PointTaker } from '../pointInput';
 
 export interface Draw2DOptions {
   /** Hur formen ritas. */
@@ -30,13 +31,15 @@ const NEEDED: Record<ShapeKind, number | null> = { line: 2, rect: 2, circle: 2, 
  * cirkeln. Polylinjer och splines avslutas med dubbelklick, Enter eller Klar;
  * ett klick på första punkten sluter formen.
  */
-export class Draw2DTool implements ViewTool {
+export class Draw2DTool implements ViewTool, PointTaker {
   cursor = 'crosshair';
   private host: ToolHost;
   private points: Vec2[] = [];
   private current: SnapResult | null = null;
   private lastUp = { t: 0, at: [0, 0] as Vec2 };
   options: Draw2DOptions = { kind: 'line', weight: 0.25, linetype: 'solid' };
+  /** Riktningen låst med <45 i smartshell (0.8.20), till nästa punkt. */
+  lockAngle: number | null = null;
   onChange?: () => void;
 
   constructor(host: ToolHost) {
@@ -81,17 +84,39 @@ export class Draw2DTool implements ViewTool {
       this.finish(true);
       return;
     }
+    this.addPoint(pt);
+  }
+
+  private addPoint(pt: Vec2): void {
     if (this.points.length && dist(pt, this.points[this.points.length - 1]) < 1) return;
+    this.lockAngle = null;
     this.points.push(pt);
     const need = NEEDED[this.options.kind];
     if (need !== null && this.points.length >= need) this.finish(false);
     else this.onChange?.();
   }
 
+  // Skrivna punkter i smartshell (0.8.20).
+  lastPoint(): Vec2 | undefined {
+    return this.points.at(-1);
+  }
+
+  cursorPoint(): Vec2 | undefined {
+    return this.current?.point;
+  }
+
+  takePoint(p: Vec2): void {
+    const pt = roundMm(p);
+    if (this.open && this.points.length >= 3 && dist(pt, this.points[0]) < 1) this.finish(true);
+    else this.addPoint(pt);
+    this.host.view.requestRender();
+  }
+
   cancel(): void {}
 
   reset(): void {
     this.points = [];
+    this.lockAngle = null;
     this.onChange?.();
     this.host.view.requestRender();
   }
@@ -133,6 +158,14 @@ export class Draw2DTool implements ViewTool {
 
   private track(p: ViewPointer): void {
     const last = this.points.at(-1);
+    if (last && this.lockAngle !== null) {
+      // Låst vinkel: punkten följer markören men bara längs vinkelns linje (som väggen).
+      const dir = fromAngleDeg(this.lockAngle);
+      const len = Math.max(0, dot(sub(p.model, last), dir));
+      this.current = { point: add(last, scale(dir, len)), kind: 'angle', label: `${this.lockAngle.toLocaleString('sv-SE')}°`, guide: [last, add(last, scale(dir, len * 3 + 2000))] };
+      this.host.view.requestRender();
+      return;
+    }
     this.current = snap({
       cursor: p.model,
       from: last,

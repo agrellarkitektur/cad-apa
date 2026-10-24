@@ -27,6 +27,23 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
       return;
     }
     if (app.ctxMenu.isOpen) return;
+    // Smartshell (0.8.20): i vägg-, 2D- och måttverktyget går siffror och
+    // @ # < till raden som en punkt. @ skrivs med AltGr, därför före Ctrl/Alt.
+    const shell = app.commandLine;
+    if (
+      !typing &&
+      shell?.shown &&
+      shell.taker() &&
+      /^[0-9@#<.]$/.test(e.key) &&
+      !(e.metaKey || (e.ctrlKey && !e.altKey)) &&
+      !app.newProjectDialog.isOpen &&
+      !app.styleDialog.isOpen &&
+      !app.settingsDialog.isOpen
+    ) {
+      e.preventDefault();
+      shell.open(e.key);
+      return;
+    }
     if (mod && e.key.toLowerCase() === 'z' && !typing) {
       e.preventDefault();
       if (e.shiftKey) app.store.redo();
@@ -96,6 +113,13 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
       }
     }
 
+    function enterInTool(): void {
+      if (app.ui.tool === 'measure') app.measureTool.reset();
+      if (app.ui.tool === 'wall') app.wallTool.finish();
+      if (app.ui.tool === 'dimension') app.dimensionTool.donePoints();
+      if (app.ui.tool === 'draw2d') app.draw2dTool.finish(false);
+    }
+
     switch (e.key) {
       case 'Tab':
         // Tab växlar mellan objekt som ligger på varandra under markören (0.8.4).
@@ -126,10 +150,15 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
         app.closeMenu();
         break;
       case 'Enter':
-        if (app.ui.tool === 'measure') app.measureTool.reset();
-        if (app.ui.tool === 'wall') app.wallTool.finish();
-        if (app.ui.tool === 'dimension') app.dimensionTool.donePoints();
-        if (app.ui.tool === 'draw2d') app.draw2dTool.finish(false);
+        // Enter utan att något kommando är igång öppnar smartshell (0.8.20).
+        if (shell && !shell.busy() && shell.open()) break;
+        enterInTool();
+        break;
+      case ' ':
+        // Mellanslag kör senaste kommandot igen; i ett kommando som pågår är det Enter (0.8.20).
+        if (!shell) return;
+        if (shell.busy()) enterInTool();
+        else if (!shell.repeat()) app.hint('Inget kommando att köra igen än.');
         break;
       case 'Delete':
       case 'Backspace':

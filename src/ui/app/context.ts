@@ -33,6 +33,7 @@ import type { ToolHost } from '../tools/host';
 import type { UiSettings } from '../uiSettings';
 import type { ToolId, UiState, ViewMode } from './shell';
 import type { Place } from './views';
+import type { CommandLine } from './commandLine';
 
 /**
  * Det som delarna av appen (src/ui/app/*.ts) behöver av varandra. Objektet
@@ -97,6 +98,8 @@ export interface AppContext {
   readonly underlays: ReturnType<typeof installUnderlays>;
   /** Måttbandets tillfälliga segmentpunkter (0.8.18). */
   readonly segmentPoints: SegmentPoints;
+  /** Smartshell, kommandoraden (0.8.20). Saknas tills den är installerad. */
+  readonly commandLine?: CommandLine;
   /** Vyerna: gå till en plats, vyknappen och historiken. */
   readonly views: ReturnType<typeof installViews>;
 

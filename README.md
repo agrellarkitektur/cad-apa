@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.19** (alfa, 2D-form); nästa är **0.8.20, kommandoraden del 1**.
+**0.8.20** (alfa, kommandoraden del 1); nästa är **0.8.21, kommandoraden del 2**, sedan en granskning (0.8.22).
 
 ## Vad som fungerar
 
@@ -834,9 +834,32 @@ Version 0.8.19, 2D-form (nytt filformat, 12):
   pennan och fyllningen
 - Projekt från 0.8.18 och äldre öppnas inte (äldre alfaformat, se nedan)
 
+Version 0.8.20, kommandoraden del 1 (samma filformat, 12):
+- **Smartshell**, kommandoraden nere under ritytan, med blixten från
+  Sisyfos. **Enter** utan att något kommando är igång öppnar den; Enter i
+  ett verktyg avslutar som förut. **Mellanslag** kör senaste kommandot
+  igen (i ett kommando som pågår är det Enter, som i AutoCAD)
+- **Kommandon** med AutoCADs engelska förkortningar och svenska namn:
+  `L`/`linje`, `PL`, `REC`/`rek`, `C`/`ci`, `A`/`båge`, `M`/`flytta`,
+  `CO`, `RO`, `MI`, `O`, `TR`, `EX`, `F`, `SC`, `E`/`tabort`, `U`, `Z` …
+  Alla verktyg, sätt att rita en 2D-form och knappar i Modifiera-raden,
+  och ångra, zooma, rutnät, snäpp, spara, öppna, plot och vyläget. Skriv
+  `?` eller tryck *Kommandon* för hela listan
+- **Komplettering**: listan över fältet visar kommandon som passar, pil upp
+  och ned väljer, Tab fyller i, och raden under säger vad Enter gör. Pil
+  upp i ett tomt fält tar fram det man skrev förut
+- **Punkter som skrivs** i vägg-, 2D- och måttverktyget: `2400` (avstånd
+  åt markören), `@1200,600`, `@3000<45`, `x,y` (projektets koordinater) och
+  `<45` (låser riktningen). Talen räknas som i sifferfälten (`2,4m`,
+  `1200+300`); med decimaler skrivs punkt, eller semikolon mellan x och y.
+  En siffra, `@`, `#` eller `<` i de verktygen går direkt till raden
+- Verktygsknapparna, Modifiera-raden och smartmenyn visar kommandot i sin
+  tipsruta (*skriv L, LI, LINE*)
+- Raden kan döljas i *Gränssnitt*
+
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer, i dag 11 (sedan 0.8.12). Fram till
+Projektfilerna har ett formatnummer, i dag 12 (sedan 0.8.19). Fram till
 den öppna betan uppgraderas inte projekt från äldre alfa- och betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp

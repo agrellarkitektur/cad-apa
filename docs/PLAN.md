@@ -90,6 +90,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.17 | Rumsstämpeln: flyttbar, pil in i rummet utanför, Stämpeln i mitten |
 | 0.8.18 | Småsaker: rutnätet med alla nivåer, segmentpunkter med måttbandet, osifont på skärmen och i PDF:en, Om-rutan, autospara till fil, dra och släpp till mappar |
 | 0.8.19 | Format 12: 2D-formen ersätter 2D-linjen och fyllningen; fyllning på vilken form som helst, ingen linje (tjocklek 0), mitten klickbar bara med fyllning |
+| 0.8.20 | Kommandoraden del 1: smartshell under ritytan, register med engelska och svenska förkortningar, komplettering, Enter öppnar, mellanslag upprepar, skrivna punkter (avstånd, @x,y, @d<v, x,y) |
 
 ## Framåt
 
@@ -844,6 +845,23 @@ för linje, rektangel och cirkel ska byggas mot den.
 - **Avstånd och koordinater** i ritverktygen: `2400`, `@1200,600`,
   `@3000<45`, `x,y`
 
+*Byggd (24 oktober), samma format. Carl August bad att raden skulle heta
+smartshell, med samma blixt som i Sisyfos. Claudes val, att stämma av:
+raden ligger under ritytan (inte under projektträdet och egenskaperna) och
+är två rader hög (fältet och raden om vad Enter gör); ramen pulsar bara
+när den har fokus. Kortkommandona med en bokstav (W, D, L …) finns kvar,
+så kommandon skrivs efter Enter; men en siffra, `@`, `#` eller `<` i vägg-,
+2D- och måttverktyget går direkt till raden (där var 2, 3 och 4 förut
+vyläget). Mellanslag är Enter i ett kommando som pågår, som i AutoCAD.
+Enter i ett tomt fält kör senaste kommandot igen. Ett kommando för det
+markerade utan markering ger ett tips (att välja objekt efteråt kommer med
+prompterna i 0.8.21). `x,y` och `d<v` utan @ räknas från projektets
+nollpunkt; ett avstånd tar markörens riktning, eller den låsta vinkeln.
+`2,4m` är ett avstånd med decimalkomma, inte en punkt. *Kopiera* (`CO`)
+är *Kopiera i rad*, och *Hörnskarv* fick `CORNER` och `JN` (AutoCADs
+`JOIN` gör något annat). Kommandona i tak-, sektions- och fasadverktyget
+tar inte emot skrivna punkter än.*
+
 ### 0.8.21 Kommandoraden, del 2
 
 - Varje verktyg frågar efter nästa steg, med alternativen inom
@@ -854,6 +872,14 @@ för linje, rektangel och cirkel ska byggas mot den.
   register)
 - Kommandoraden blir en **flyttbar panel** som kan dockas nere eller uppe
   eller ligga fritt över ritytan
+- Skrivna punkter också i tak-, sektions- och fasadverktyget, och i
+  Modifiera (Flytta `@1200,0`)
+
+### 0.8.22 Granskning
+
+Carl August 24 oktober: granskningen efter kommandoraden. Utan nya
+funktioner: städa, dela upp stora filer (`selectTool.ts`, `app.ts`,
+`actions.ts`) och leta efter långsam kod. Förra granskningen var 0.8.15.
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 

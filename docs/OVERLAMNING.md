@@ -1,10 +1,25 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.19.
+överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.20.
 
 ## Läget
 
+- **0.8.20 Kommandoraden del 1 är klar** på `main` (samma format, 12):
+  *smartshell* under ritytan med blixten från Sisyfos (Carl Augusts namn
+  och ikon), registret `src/ui/commandRegistry.ts` med engelska och
+  svenska förkortningar, komplettering med lista och en rad om vad Enter
+  gör, Enter öppnar, mellanslag upprepar, skrivna punkter (`2400`,
+  `@1200,600`, `@3000<45`, `x,y`, `<45`) i vägg-, 2D- och måttverktyget.
+  Står i README, PLAN.md (med Claudes val) och UTVECKLING.md under
+  *Kommandoraden (0.8.20)*. Provat i bygget med Playwright (rektangel och
+  cirkel med skrivna punkter, vägg med `<90` och avstånd, mått med tre
+  punkter, `M` med en markerad vägg, `3d` i ett ritverktyg, mellanslag,
+  listan med alla kommandon, Tab, historik) och `tests/v0820.test.ts`;
+  alla 305 tester gick igenom, också prestandatestet. Carl August bad att
+  få versionen körd direkt.
+- **Granskningen** görs efter kommandoraden (Carl August 24 oktober): den
+  blir **0.8.22**, efter 0.8.21 Kommandoraden del 2.
 - **0.8.19 2D-form är klar** på `main` (nytt format, 12): `Shape2D`
   ersätter `Line2D` och `Fill2D`; linje, polylinje, rektangel, båge, cirkel
   och spline är sätt att rita formen; fyllning (ingen, hel, skraffering,
@@ -65,7 +80,7 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   `/agrellarkitektur.se/public_html/cad-apa/` och fungerar (Carl August såg
   0.8.14 vid alfa-knappen 24 oktober). Se efter med `gh run list` att
   körningen går igenom.
-- **0.8.12–0.8.19 är inte provade** av Carl August. Frågorna nedan gäller.
+- **0.8.12–0.8.20 är inte provade** av Carl August. Frågorna nedan gäller.
 - **Inkorgen är tom** (sorterad 24 oktober). Kommandoraden blev
   **0.8.20 och 0.8.21** (Carl Augusts svar: både engelska och svenska
   förkortningar; nere som i AutoCAD, flyttbar och dockningsbar i del 2;
@@ -105,14 +120,12 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.8.14 Modifiera-verktyg del 2~~,
   ~~0.8.15 Granskning~~, ~~0.8.16 Underlag~~, ~~0.8.17 Rumsstämpeln~~,
-  ~~0.8.18 Småsaker~~, ~~0.8.19 2D-form~~ (klara)
-- **Nästa granskning** föreslås nu, efter 2D-formen (före eller efter
-  kommandoraden; Carl August bestämmer, se *Nästa session*)
-- **0.8.20 Kommandoraden del 1**: register med engelska och svenska
-  förkortningar, raden nere, Enter öppnar, mellanslag upprepar, avstånd
-  och koordinater
+  ~~0.8.18 Småsaker~~, ~~0.8.19 2D-form~~, ~~0.8.20 Kommandoraden del 1~~
+  (klara)
 - **0.8.21 Kommandoraden del 2**: alternativ i hakparentes, historik (F2)
-  och högerklick, flyttbar och dockningsbar panel
+  och högerklick, flyttbar och dockningsbar panel, skrivna punkter också i
+  tak, sektion, fasad och Modifiera
+- **0.8.22 Granskning** (Carl Augusts beslut: efter kommandoraden)
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade)
@@ -131,15 +144,24 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.19 syns på webbhotellet (numret vid alfa-knappen) och
-hur 0.8.12–0.8.19 fungerar. Läs synpunktsfilen och sortera Inkorgen (om
-Carl August inte ber om att bara köra). Planen föreslog en **granskning**
-efter 2D-formen (förra var 0.8.15). Fråga om den ska göras före
-kommandoraden (då blir den 0.8.20 och kommandoraden 0.8.21–0.8.22) eller
-efter. Annars är nästa version **0.8.20 Kommandoraden del 1** (stor; läs
-*0.8.20* i PLAN.md).
+Fråga först om 0.8.20 syns på webbhotellet (numret vid alfa-knappen) och
+hur 0.8.12–0.8.20 fungerar. Läs synpunktsfilen och sortera Inkorgen (om
+Carl August inte ber om att bara köra). Nästa version är **0.8.21
+Kommandoraden del 2** (stor; läs *0.8.21* i PLAN.md), sedan **0.8.22
+Granskning**.
 
 ## Att fråga Carl August om
+
+- **0.8.20 efter provning** (Claudes val, se PLAN.md): namnet *smartshell*
+  på raden och *Kommando* som prompt; att den ligger under ritytan och inte
+  under panelerna; att bokstäverna (W, D, L …) är kvar som kortkommandon så
+  att kommandon skrivs efter Enter, men siffror, `@`, `#` och `<` i vägg-,
+  2D- och måttverktyget går direkt till raden (2, 3 och 4 byter inte vyläge
+  där); att Enter i ett tomt fält kör senaste kommandot igen; att `CO` är
+  Kopiera i rad; förkortningarna för det som inte finns i AutoCAD (`VG`,
+  `WA`, `NP`, `HS` …). Ska man kunna skriva kommandon direkt utan Enter,
+  som i AutoCAD (då försvinner kortkommandona med en bokstav)? Fungerar
+  `@` med AltGr på hans tangentbord?
 
 - **0.8.19 efter provning** (Claudes val, se PLAN.md): namnen *2D-form*,
   *Rita* och *Ritad som*; att sättet att rita inte går att byta efteråt;

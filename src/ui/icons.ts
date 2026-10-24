@@ -3,6 +3,9 @@ const svg = (body: string) =>
   `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${body}</svg>`;
 
 export const icons = {
+  // Smartshell (0.8.20): samma blixt som i Sisyfos.
+  bolt: svg('<path d="M13 3 5 13.5h6L10 21l8-10.5h-6z"/>'),
+  help: svg('<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.1-2.4 3.7"/><circle cx="12" cy="17" r=".6" fill="currentColor"/>'),
   pan: svg(
     '<path d="M8 13V6.5a1.5 1.5 0 0 1 3 0V12M11 11.5V5a1.5 1.5 0 0 1 3 0v6.5M14 11.5V6.5a1.5 1.5 0 0 1 3 0V14c0 3.9-2.6 6.5-6 6.5-2.4 0-3.9-1.1-5.1-3L4.3 14.7a1.5 1.5 0 0 1 2.4-1.8L8 14.5"/>',
   ),

@@ -76,6 +76,8 @@ export interface UiSettings {
   smartMenu: boolean;
   /** Modifiera-raden innanför ritverktygen (0.8.5). */
   modifyRail: boolean;
+  /** Smartshell, kommandoraden under ritytan (0.8.20). */
+  smartshell: boolean;
   /** Måttsätt nya väggar och öppningar automatiskt när man jämför. */
   autoDims: boolean;
   /** Autospara till projektfilen som är öppen (0.8.18). */
@@ -132,6 +134,7 @@ export function defaultUiSettings(): UiSettings {
     lineWeights: 'screen',
     smartMenu: true,
     modifyRail: true,
+    smartshell: true,
     autoDims: true,
     autosaveFile: true,
     selColor: null,
@@ -164,6 +167,7 @@ export function loadUiSettings(): UiSettings {
       // Inställningen hette petPalette före 0.8.5.
       smartMenu: typeof raw.smartMenu === 'boolean' ? raw.smartMenu : ((raw as { petPalette?: boolean }).petPalette ?? d.smartMenu),
       modifyRail: typeof raw.modifyRail === 'boolean' ? raw.modifyRail : d.modifyRail,
+      smartshell: typeof raw.smartshell === 'boolean' ? raw.smartshell : d.smartshell,
       autoDims: typeof raw.autoDims === 'boolean' ? raw.autoDims : d.autoDims,
       autosaveFile: typeof raw.autosaveFile === 'boolean' ? raw.autosaveFile : d.autosaveFile,
       selColor: typeof raw.selColor === 'string' ? raw.selColor : null,

@@ -16,6 +16,7 @@ import { forgetInferred } from '../tools/snap';
 import { WallTool, type WallToolOptions } from '../tools/wallTool';
 import { icons } from '../icons';
 import type { AppContext } from './context';
+import { aliasText, commandFor } from '../commandRegistry';
 import { defaultWallType, firstDefinition } from './helpers';
 import { GROUP_LABEL, PLAN_TOOLS, SHEET_TOOLS, SPACE_TOOLS, TOOLS, type ToolId } from './shell';
 
@@ -40,7 +41,8 @@ export function installTools(app: AppContext, host: ToolHost) {
     b.className = 'tool';
     b.dataset.tool = t.id;
     b.innerHTML = `${icons[t.icon]}<span>${t.label}</span>`;
-    b.title = t.comesIn ? `${t.label} – kommer i ${t.comesIn}` : `${t.label}${t.key ? ` (${t.key})` : ''}`;
+    const cmd = commandFor({ tool: t.id as ToolId });
+    b.title = t.comesIn ? `${t.label} – kommer i ${t.comesIn}` : `${t.label}${t.key ? ` (${t.key})` : ''}${cmd ? ` · skriv ${aliasText(cmd)}` : ''}`;
     if (t.comesIn) {
       b.setAttribute('aria-disabled', 'true');
       b.addEventListener('click', () => app.hint(`${t.label} kommer i ${t.comesIn}, med smartobjekten.`));
@@ -187,6 +189,7 @@ export function installTools(app: AppContext, host: ToolHost) {
       if (window.innerWidth <= 960) app.setPanel(false);
     }
     app.toolOpts.renderToolOptions();
+    app.commandLine?.toolChosen(id);
   }
 
   /**

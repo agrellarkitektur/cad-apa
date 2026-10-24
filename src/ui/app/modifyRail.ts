@@ -3,6 +3,7 @@ import { escapeHtml } from '../labels';
 import { RAIL, RAIL_ITEMS, railFor, type RailId } from '../modify/ops';
 import { isNarrow } from '../sheet';
 import type { AppContext } from './context';
+import { aliasText, commandFor } from '../commandRegistry';
 
 /**
  * Modifiera-raden (0.8.5): en lodrät rad innanför ritverktygen med alla
@@ -22,7 +23,7 @@ export function installModifyRail(app: AppContext) {
     `<div class="tool-group-label" title="Modifiera det markerade">Ändra</div>` +
     RAIL.map((g) =>
       g
-        .map((r) => `<button type="button" class="mr-btn" data-rail="${r.id}" aria-label="${escapeHtml(r.label)}" title="${escapeHtml(`${r.label} (Shift+${r.key})`)}">${icons[r.icon]}</button>`)
+        .map((r) => `<button type="button" class="mr-btn" data-rail="${r.id}" aria-label="${escapeHtml(r.label)}" title="${escapeHtml(`${r.label} (Shift+${r.key}, skriv ${aliasText(commandFor({ rail: r.id })!)})`)}">${icons[r.icon]}</button>`)
         .join(''),
     ).join('<span class="mr-sep"></span>');
 
@@ -46,6 +47,7 @@ export function installModifyRail(app: AppContext) {
     // Modifiera görs i planen: när bara 3D visas går det över till 2D.
     if (app.ui.mode === '3d') void app.setMode('2d');
     app.modifier.chooseRail(id);
+    app.commandLine?.remember(commandFor({ rail: id }));
   }
 
   /** Vilka som går att använda: det markerade måste gå att ändra här. */

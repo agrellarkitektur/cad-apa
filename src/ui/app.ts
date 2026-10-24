@@ -55,6 +55,7 @@ import { installSheets } from './app/sheets';
 import { installPlot } from './app/plot';
 import { installRender } from './app/render';
 import { installTools } from './app/tools';
+import { installCommandLine, type CommandLine } from './app/commandLine';
 
 /**
  * Bygger appen: planvyn, verktygen, panelerna och det som binder ihop dem
@@ -274,6 +275,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     view.showGrid = s.grid;
     if (!s.smartMenu) smartMenu.hide();
     modifyRail.render();
+    commandLine?.refresh();
     toolOpts.renderToolOptions();
     render.renderAll();
     view.requestRender();
@@ -414,6 +416,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   // Varje del får appen som ett objekt där varje fält läses när det används,
   // så att den alltid ser det som gäller just nu. Se src/ui/app/context.ts.
   const ctxMenu = new ContextMenu();
+  let commandLine: CommandLine | undefined;
   const app: AppContext = lazyContext<AppContext>({
     root: () => root,
     $: () => $,
@@ -499,6 +502,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     underlays: () => underlays,
     segmentPoints: () => segmentPoints,
     views: () => views,
+    commandLine: () => commandLine,
   });
   const segmentPoints = installSegmentPoints(app);
   const render = installRender(app, { chips, compareToggle, compareLabel, computing });
@@ -512,6 +516,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const views = installViews(app);
   const showMenu = installShowMenu(app);
   const menus = installMenus(app);
+  commandLine = installCommandLine(app, modifyRail.press);
   installKeyboard(app, modifyRail.press);
   const clipboard = installClipboard(app);
   const underlays = installUnderlays(app);

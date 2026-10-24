@@ -167,6 +167,7 @@ export function shellMarkup(brand: Brand): string {
         <div class="tool-options" data-out="tool-options"></div>
         <div class="hint" role="status" hidden></div>
       </main>
+      <section class="smartshell" aria-label="Smartshell, kommandoraden" hidden></section>
       <footer class="status">
         <span class="cursor-pos"><span class="label">X</span><span class="value coord" data-out="x">—</span></span>
         <span class="cursor-pos"><span class="label">Y</span><span class="value coord" data-out="y">—</span></span>

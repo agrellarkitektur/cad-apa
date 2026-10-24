@@ -65,6 +65,9 @@ export class SettingsDialog {
       case 'rail':
         s.modifyRail = t.checked;
         break;
+      case 'smartshell':
+        s.smartshell = t.checked;
+        break;
       case 'autodims':
         s.autoDims = t.checked;
         break;
@@ -159,6 +162,7 @@ export class SettingsDialog {
           <label class="check"><input type="checkbox" data-setting="grid"${s.grid ? ' checked' : ''}> Visa rutnät <span class="muted">(G)</span></label>
           <label class="check"><input type="checkbox" data-setting="smart"${s.smartMenu ? ' checked' : ''}> Smartmeny intill det markerade, med Modifiera-valen och snabbknapparna</label>
           <label class="check"><input type="checkbox" data-setting="rail"${s.modifyRail ? ' checked' : ''}> Modifiera-raden innanför ritverktygen</label>
+          <label class="check"><input type="checkbox" data-setting="smartshell"${s.smartshell ? ' checked' : ''}> Smartshell, kommandoraden under ritytan <span class="muted">(Enter)</span></label>
           <label class="check"><input type="checkbox" data-setting="autodims"${s.autoDims ? ' checked' : ''}> Måttsätt nya väggar och öppningar automatiskt när man jämför med befintligt</label>
           <label class="check"><input type="checkbox" data-setting="autosavefile"${s.autosaveFile ? ' checked' : ''}> Autospara till projektfilen (när den sparats eller öppnats här, i Chrome och Edge)</label>
           <label class="field inline-field"><span>Varna för nästan raka vinklar, inom</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="0.5" inputmode="decimal" autocomplete="off" data-setting="anglewarn" value="${s.angleWarn}"><i>°</i></span></label>
