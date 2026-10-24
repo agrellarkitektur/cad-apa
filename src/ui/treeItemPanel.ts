@@ -156,7 +156,7 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('Namn', `<input name="name" value="${esc(w.name)}">`)}
           ${field('Mapp', `<select name="folder">${folderOptions(doc, 'modell', folder)}</select>`)}
         </div>
-        <p class="note">En fri 2D-ritning som inte hör till någon våning: detaljer, skisser och underlag. Linjer, fyllningar, text, mått och underlag går att rita här.</p>
+        <p class="note">En fri 2D-ritning som inte hör till någon våning: detaljer, skisser och underlag. 2D-former, text, mått och underlag går att rita här.</p>
       </section>
       ${actions(`<button type="button" class="btn btn-danger" data-tree="delete-worksheet">Ta bort…</button>`)}
     </form>`;

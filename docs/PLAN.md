@@ -89,6 +89,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.16 | Underlag: snäpp i DXF (centrum, kvadranter, bågmitt, skärningar), parallellt och vinkelrätt som i SketchUp, X/Y, bredd och höjd, papperskorg, underlagen per filtyp i trädet, bildens grepp och Återställ proportioner |
 | 0.8.17 | Rumsstämpeln: flyttbar, pil in i rummet utanför, Stämpeln i mitten |
 | 0.8.18 | Småsaker: rutnätet med alla nivåer, segmentpunkter med måttbandet, osifont på skärmen och i PDF:en, Om-rutan, autospara till fil, dra och släpp till mappar |
+| 0.8.19 | Format 12: 2D-formen ersätter 2D-linjen och fyllningen; fyllning på vilken form som helst, ingen linje (tjocklek 0), mitten klickbar bara med fyllning |
 
 ## Framåt
 
@@ -813,6 +814,18 @@ Carl August 22 oktober. Mellanstor till stor.
   Illustrator)
 - Mitten går bara att klicka på om formen har en fyllning. Det ersätter
   0.8.11:s regel att en sluten polylinje går att klicka inuti
+
+*Byggd (24 oktober), format 12. Claudes val, att stämma av: objektet heter
+*2D-form* och sättet att rita *Rita* i verktyget och *Ritad som* i
+egenskaperna (det går inte att byta i efterhand, utom att en ny punkt gör
+en linje till polylinje som förut). Fyllningen väljs redan i verktyget,
+förvalt *Ingen fyllning*; en rak linje får ingen. Fyllningar ritas under
+väggarna och formens linje över, som de två gamla objekten. *Ingen linje*
+är första raden i tjocklekstabellen; en form utan linje och fyllning syns
+inte alls (bara när den markeras eller med *Visa dolda 2D-element*). Den
+gamla fyllningens *Kontur* ersattes av formens penna. I Visa är 2D en
+kategori, *2D-former*: fyllningar går inte längre att släcka för sig.
+Mönstren i verktygsraden visas utan namn (namnen i en tipsruta).*
 
 ### 0.8.20 Kommandoraden, del 1
 

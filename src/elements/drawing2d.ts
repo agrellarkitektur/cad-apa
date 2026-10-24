@@ -5,14 +5,17 @@ import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import type { ElementType } from './registry';
 
 /**
- * 2D-element (0.8, format 5): linjer, polylinjer, rektanglar, bågar,
- * cirklar, splines och fyllningar. De är ritningsinformation, finns inte i
- * 3D och följer inte med till IFC. De ritas på en yta (planen, en fasad, en
- * sektion eller ett arbetsblad) och kan väljas att synas i vissa vyer
+ * 2D-formen (0.8.19, format 12): en linje, polylinje, rektangel, båge,
+ * cirkel eller spline, med penna och fyllning. Linje, rektangel och de andra
+ * är bara sätt att rita formen; fyllningen kan läggas på vilken form som
+ * helst, också en öppen (den fylls som om den vore sluten, som i
+ * Illustrator). Formen är ritningsinformation, finns inte i 3D och följer
+ * inte med till IFC. Den ritas på en yta (planen, en fasad, en sektion, ett
+ * arbetsblad eller ett blad) och kan väljas att synas i vissa vyer
  * (`Element.show`).
  */
 
-export type Shape2D = 'line' | 'polyline' | 'rect' | 'arc' | 'circle' | 'spline';
+export type ShapeKind = 'line' | 'polyline' | 'rect' | 'arc' | 'circle' | 'spline';
 export type LineType = 'solid' | 'dashed' | 'dotted' | 'dashdot';
 
 /** Linjetypernas streckmönster på papper, mm. */
@@ -23,8 +26,11 @@ export const LINE_TYPES: Record<LineType, { label: string; dash?: number[] }> = 
   dashdot: { label: 'Streckprickad', dash: [5, 1, 0.3, 1] },
 };
 
-/** Linjebredderna som går att välja, mm på papper. */
-export const PEN_WEIGHTS = [0.13, 0.18, 0.25, 0.35, 0.5, 0.7, 1, 1.4];
+/**
+ * Linjebredderna som går att välja, mm på papper. 0 = ingen linje (0.8.19):
+ * formen syns inte men går att klicka på längs linjen.
+ */
+export const PEN_WEIGHTS = [0, 0.13, 0.18, 0.25, 0.35, 0.5, 0.7, 1, 1.4];
 
 /**
  * Pennfärgerna i "gammel-cad" (0.8.14): färgen som tjockleken hade i äldre
@@ -41,8 +47,11 @@ export const PEN_COLORS: Record<number, { name: string; color: string }> = {
   1.4: { name: 'Gul', color: '#e8b800' },
 };
 
-export interface Line2DParams {
-  shape: Shape2D;
+export type FillPattern = 'solid' | 'hatch' | 'cross';
+
+export interface Shape2DParams {
+  /** Hur formen ritades; bestämmer punkternas betydelse och greppen. */
+  shape: ShapeKind;
   /**
    * Punkterna. Linje: två. Polylinje och spline: två eller fler.
    * Rektangel: fyra hörn. Båge: start, en punkt på bågen och slut.
@@ -51,28 +60,21 @@ export interface Line2DParams {
   points: [number, number][];
   /** Polylinje och spline: sluten. */
   closed?: boolean;
+  /** Pennans bredd på papper i mm; 0 = ingen linje. */
   weight: number;
   linetype: LineType;
-  /** Färg som #rrggbb; utelämnad = ritningens svart. */
+  /** Linjens färg som #rrggbb; utelämnad = ritningens svart. */
   color?: string;
-}
-
-export type FillPattern = 'solid' | 'hatch' | 'cross';
-
-export interface Fill2DParams {
-  /** Ytans hörn. */
-  points: [number, number][];
-  pattern: FillPattern;
+  /** Fyllningens mönster; utelämnad = ingen fyllning. */
+  fill?: FillPattern;
   /** Fyllningens färg som #rrggbb; utelämnad = grå. */
-  color?: string;
-  /** Kontur runt ytan. */
-  outline: boolean;
+  fillColor?: string;
   /** Skrafferingens vinkel i grader och avstånd på papper i mm. */
-  angle: number;
-  spacing: number;
+  fillAngle: number;
+  fillSpacing: number;
 }
 
-export const SHAPE_LABELS: Record<Shape2D, string> = {
+export const SHAPE_LABELS: Record<ShapeKind, string> = {
   line: 'Linje',
   polyline: 'Polylinje',
   rect: 'Rektangel',
@@ -88,7 +90,7 @@ export const PATTERN_LABELS: Record<FillPattern, string> = {
 };
 
 /** Punkterna som formen ritas med (bågar och splines som korta raka bitar). */
-export function shapePoints(p: Pick<Line2DParams, 'shape' | 'points' | 'closed'>): { points: Vec2[]; closed: boolean } {
+export function shapePoints(p: Pick<Shape2DParams, 'shape' | 'points' | 'closed'>): { points: Vec2[]; closed: boolean } {
   const pts = p.points as Vec2[];
   switch (p.shape) {
     case 'rect':
@@ -141,62 +143,51 @@ export function catmullRom(pts: Vec2[], closed: boolean): Vec2[] {
   return out;
 }
 
-function penOf(p: Line2DParams): Pen {
+function penOf(p: Shape2DParams): Pen {
   const dash = LINE_TYPES[p.linetype]?.dash;
   return { weight: p.weight, ...(p.color ? { color: p.color as Color } : {}), ...(dash ? { dash } : {}) };
 }
 
-export const line2dType: ElementType<Line2DParams> = {
-  type: 'Line2D',
-  planReads: [],
-  label: '2D-linje',
-  labelPlural: '2D-linjer',
-  drawOrder: 58,
-  compares: false,
-  defaults: () => ({ shape: 'line', points: [], weight: 0.25, linetype: 'solid' }),
-  plan(el, ctx) {
-    const p = ctx.params<Line2DParams>(el);
-    const { points, closed } = shapePoints(p);
-    if (points.length < 2) return [];
-    return [{ kind: 'polyline', points, closed, pen: penOf(p), origin: { objectId: el.id, objectType: 'Line2D', part: p.shape } }];
-  },
-  pickSoft: true,
-  pickShape(el, ctx) {
-    // Slutna former går att klicka inuti; öppna bara på linjen. En
-    // polylinje vars ändar möts räknas som sluten (0.8.11).
-    const p = ctx.params<Line2DParams>(el);
-    const { points, closed } = shapePoints(p);
-    const meets = p.shape === 'polyline' && points.length > 3 && dist(points[0], points[points.length - 1]) < 0.5;
-    return (closed || meets) && points.length > 2 ? [[points]] : [];
-  },
-};
+/** Fyllningens förvalda färg. */
+export const FILL_COLOR = '#9aa0a6';
 
-/** Fyllningens primitiver: ytan och konturen. */
-export function fillPrims(p: Fill2DParams, origin?: Primitive['origin']): Primitive[] {
-  if (p.points.length < 3) return [];
-  const rings = [p.points as Vec2[]];
-  const color = (p.color ?? '#9aa0a6') as Color;
-  const hatch = (angle: number): FillDef => ({ kind: 'hatch', color, angle, spacing: p.spacing, weight: 0.13 });
-  const fills: FillDef[] = p.pattern === 'solid' ? [{ kind: 'solid', color }] : p.pattern === 'cross' ? [hatch(p.angle), hatch(p.angle + 90)] : [hatch(p.angle)];
-  const out: Primitive[] = fills.map((fill) => ({ kind: 'region', role: 'cut', rings, fill, outline: null, noOutline: true, ownFill: true, origin }));
-  if (p.outline) out.push({ kind: 'polyline', points: rings[0], closed: true, pen: { weight: 0.18 }, origin });
+/**
+ * Formens primitiver: fyllningen (under modellen, `under`) och linjen. Linjen
+ * finns också med tjockleken 0; den ritas inte, men går att klicka på och
+ * snäppa mot.
+ */
+export function shapePrims(p: Shape2DParams, origin?: Primitive['origin']): Primitive[] {
+  const { points, closed } = shapePoints(p);
+  if (points.length < 2) return [];
+  const out: Primitive[] = [];
+  if (p.fill && points.length > 2) {
+    const color = (p.fillColor ?? FILL_COLOR) as Color;
+    const hatch = (angle: number): FillDef => ({ kind: 'hatch', color, angle, spacing: p.fillSpacing, weight: 0.13 });
+    const fills: FillDef[] = p.fill === 'solid' ? [{ kind: 'solid', color }] : p.fill === 'cross' ? [hatch(p.fillAngle), hatch(p.fillAngle + 90)] : [hatch(p.fillAngle)];
+    for (const fill of fills) out.push({ kind: 'region', role: 'cut', rings: [points], fill, outline: null, noOutline: true, ownFill: true, under: true, origin: origin && { ...origin, part: 'fyllning' } });
+  }
+  out.push({ kind: 'polyline', points, closed, pen: penOf(p), origin });
   return out;
 }
 
-export const fill2dType: ElementType<Fill2DParams> = {
-  type: 'Fill2D',
+export const shape2dType: ElementType<Shape2DParams> = {
+  type: 'Shape2D',
   planReads: [],
-  label: 'Fyllning',
-  labelPlural: 'Fyllningar',
-  drawOrder: 4,
+  label: '2D-form',
+  labelPlural: '2D-former',
+  drawOrder: 58,
   compares: false,
-  defaults: () => ({ points: [], pattern: 'hatch', outline: true, angle: 45, spacing: 2 }),
+  defaults: () => ({ shape: 'line', points: [], weight: 0.25, linetype: 'solid', fillAngle: 45, fillSpacing: 2 }),
   plan(el, ctx) {
-    return fillPrims(ctx.params<Fill2DParams>(el), { objectId: el.id, objectType: 'Fill2D', part: 'fyllning' });
+    const p = ctx.params<Shape2DParams>(el);
+    return shapePrims(p, { objectId: el.id, objectType: 'Shape2D', part: p.shape });
   },
+  // Mitten går att klicka på bara när formen har en fyllning (0.8.19); annars bara linjen.
   pickSoft: true,
   pickShape(el, ctx) {
-    const p = ctx.params<Fill2DParams>(el);
-    return p.points.length >= 3 ? [[p.points as Vec2[]]] : [];
+    const p = ctx.params<Shape2DParams>(el);
+    if (!p.fill) return [];
+    const { points } = shapePoints(p);
+    return points.length > 2 ? [[points]] : [];
   },
 };

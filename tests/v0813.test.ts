@@ -51,7 +51,7 @@ function project(
   for (const [id, points] of Object.entries(lines))
     doc.elements[id] = {
       id,
-      type: "Line2D",
+      type: "Shape2D",
       storey,
       states,
       tags: [],

@@ -103,7 +103,8 @@ class PageWriter {
 
   /** En linje genom punkterna, streckad sträcka för sträcka som på skärmen. */
   private stroke(points: readonly Vec2[], closed: boolean, pen: Pen): void {
-    if (points.length < 2) return;
+    // Tjockleken 0 ritas inte (2D-former utan linje, 0.8.19).
+    if (points.length < 2 || pen.weight === 0) return;
     const state = this.strokeState(pen);
     if (!pen.dash?.length) {
       this.ops.push(`q ${state} ${this.path(points, closed)} S Q`);
@@ -177,6 +178,7 @@ class PageWriter {
 
   /** En båge moturs från start till slut som kubiska Bézierkurvor. */
   private arc(c: Vec2, r: number, start: number, end: number, pen: Pen): void {
+    if (pen.weight === 0) return;
     let sweep = (((end - start) % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
     if (sweep < 1e-9) sweep = 2 * Math.PI;
     const pieces = Math.ceil(sweep / (Math.PI / 2));

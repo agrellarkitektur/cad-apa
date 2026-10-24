@@ -17,7 +17,10 @@ export type Vec2 = readonly [x: number, y: number];
 export type PenColor = Color | 'muted' | 'accent';
 
 export interface Pen {
-  /** Linjebredd på papper i mm (0,13 · 0,18 · 0,25 · 0,35 · 0,5 · 0,7). */
+  /**
+   * Linjebredd på papper i mm (0,13 · 0,18 · 0,25 · 0,35 · 0,5 · 0,7). 0 =
+   * ritas inte men går att klicka på (2D-former utan linje, 0.8.19).
+   */
   weight: number;
   color?: PenColor;
   /** Streckmönster på papper i mm, t.ex. [2, 1] för streckad linje. */
@@ -36,6 +39,11 @@ export interface Origin {
 
 interface Base {
   origin?: Origin;
+  /**
+   * Ritas under modellen, före väggarna (0.8.19): fyllningen i en 2D-form.
+   * Planen lägger de här primitiverna efter underlagen men före allt annat.
+   */
+  under?: boolean;
 }
 
 export interface LinePrim extends Base {

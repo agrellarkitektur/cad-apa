@@ -130,8 +130,7 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         ${markerLineFields(shown)}
         <div class="row"><button class="btn btn-primary" data-action="open-marker">Öppna ${el.type === 'Section' ? 'sektionen' : 'fasaden'}</button><button class="btn" data-action="flip-side">Vänd blickriktningen</button>${canFollow ? '<button class="btn" data-action="follow-building" title="Lägg fasaden runt byggnaden igen, så att den följer med när byggnaden ändras">Följ byggnaden igen</button>' : ''}</div>`;
     }
-    case 'Line2D':
-    case 'Fill2D':
+    case 'Shape2D':
     case 'RoofSlope':
     case 'Underlay':
       return drawingFields(doc, el);

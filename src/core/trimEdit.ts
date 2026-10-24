@@ -284,7 +284,7 @@ export function splitWallAt(
 
 /** Om 2D-linjen är en linje eller en öppen polylinje, som går att trimma och dela. */
 export function isOpenLine(el: Element | undefined): boolean {
-  if (!el || el.type !== "Line2D") return false;
+  if (!el || el.type !== "Shape2D") return false;
   const shape = (el.params.shape as string) ?? "line";
   return shape === "line" || (shape === "polyline" && !el.params.closed);
 }
@@ -365,7 +365,7 @@ export function joinLines(
   const b = doc.elements[bId];
   const straight = (el: Element | undefined) =>
     !!el &&
-    el.type === "Line2D" &&
+    el.type === "Shape2D" &&
     ((el.params.shape as string) ?? "line") === "line";
   if (!straight(a) || !straight(b) || aId === bId)
     return { ok: false, reason: "Klicka på en annan rak linje." };
@@ -422,7 +422,7 @@ export function canJoin(el: Element | undefined): boolean {
   return (
     !!el &&
     ((el.type === "Wall" && !isArc(el)) ||
-      (el.type === "Line2D" &&
+      (el.type === "Shape2D" &&
         ((el.params.shape as string) ?? "line") === "line"))
   );
 }

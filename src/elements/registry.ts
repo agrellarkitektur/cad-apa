@@ -94,7 +94,8 @@ export interface ElementType<P extends object = Record<string, unknown>> {
   pickShape?(el: Element<P>, ctx: PlanContext): Vec2[][][];
   /**
    * Ytan från `pickShape` är mjuk (0.8.11): ett klick nära en linje går före
-   * ett klick inuti, men inuti går före rum. För 2D-former och fyllningar.
+   * ett klick inuti, men inuti går före rum. För 2D-former (0.8.19): bara
+   * ytan från `pickShape` går att klicka inuti, inte en sluten linje.
    */
   pickSoft?: boolean;
   /** Elementet i 3D, som lodräta extruderingar (mm, z uppåt från våningens golv). */

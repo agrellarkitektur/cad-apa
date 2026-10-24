@@ -3,7 +3,7 @@ import { isArc } from '../../core/commands';
 import type { Element, Id } from '../../core/model';
 import { canTrim } from '../../core/trimEdit';
 import { refFrame } from '../../core/wallEdit';
-import { shapePoints, type Line2DParams } from '../../elements/drawing2d';
+import { shapePoints, type Shape2DParams } from '../../elements/drawing2d';
 import { dist, distToSegment, sub } from '../../geometry/vec';
 import { pickableById, type Pickable } from '../../repr/plan';
 import { imageCorners, type Vec2 } from '../../repr/primitives';
@@ -506,8 +506,8 @@ function segmentsOf(host: ToolHost, el: Element): Seg[] | null {
     const pts = f.trace(0, f.length, 0) as Vec2[];
     return pts.slice(1).map((b, i) => ({ a: pts[i], b }));
   }
-  if (el.type === 'Line2D' || el.type === 'Fill2D') {
-    const sp = el.type === 'Line2D' ? shapePoints(el.params as unknown as Line2DParams) : { points: el.params.points as Vec2[], closed: true };
+  if (el.type === 'Shape2D') {
+    const sp = shapePoints(el.params as unknown as Shape2DParams);
     const pts = sp.closed ? [...sp.points, sp.points[0]] : sp.points;
     return pts.slice(1).map((b, i) => ({ a: pts[i], b }));
   }

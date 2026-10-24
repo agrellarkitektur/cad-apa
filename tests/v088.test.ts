@@ -28,7 +28,7 @@ describe('mallblad (0.8.8, format 8)', () => {
       expect(m).toHaveLength(1);
       expect(m[0].paper).toEqual({ size: 'A3', orientation: 'landscape' });
       const els = Object.values(doc.elements).filter((e) => e.space === EXAMPLE_MASTER_ID);
-      expect(new Set(els.map((e) => e.type))).toEqual(new Set(['Line2D', 'Text']));
+      expect(new Set(els.map((e) => e.type))).toEqual(new Set(['Shape2D', 'Text']));
       // Ramen 20/10 mm från kanten och huvudet 180 mm brett i dess nedre högra hörn.
       expect(els[0].params).toMatchObject({ shape: 'rect', points: [[20, 10], [410, 10], [410, 287], [20, 287]], weight: 0.5 });
       expect(els.some((e) => e.type === 'Text' && e.params.text === '{ritningsnummer}' && e.params.bold)).toBe(true);

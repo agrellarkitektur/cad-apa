@@ -1,5 +1,5 @@
 import { addElements } from '../../core/commands';
-import { fillPrims, shapePoints, type FillPattern, type LineType, type Shape2D } from '../../elements/drawing2d';
+import { shapePrims, type FillPattern, type LineType, type Shape2DParams, type ShapeKind } from '../../elements/drawing2d';
 import { dist } from '../../geometry/vec';
 import type { Primitive, Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
@@ -9,26 +9,26 @@ import { pxToMm, type ToolHost } from './host';
 import { snapMarker } from './overlay';
 import { roundMm, snap, type SnapResult } from './snap';
 
-/** Det 2D-verktyget ritar: en form, eller en fyllning. */
-export type Draw2DKind = Shape2D | 'fill';
-
 export interface Draw2DOptions {
-  kind: Draw2DKind;
+  /** Hur formen ritas. */
+  kind: ShapeKind;
+  /** Pennans bredd; 0 = ingen linje. */
   weight: number;
   linetype: LineType;
-  pattern: FillPattern;
+  /** Fyllningen; utelämnad = ingen. */
+  fill?: FillPattern;
 }
 
 /** Hur många punkter formen behöver; null = så många man vill (avslutas med dubbelklick, Enter eller Klar). */
-const NEEDED: Record<Draw2DKind, number | null> = { line: 2, rect: 2, circle: 2, arc: 3, polyline: null, spline: null, fill: null };
+const NEEDED: Record<ShapeKind, number | null> = { line: 2, rect: 2, circle: 2, arc: 3, polyline: null, spline: null };
 
 /**
- * 2D-verktyget (0.8): linje, polylinje, rektangel, båge, cirkel, spline och
- * fyllning. Punkterna snäpper som allt annat. Rektangeln ritas med två
- * motsatta hörn, bågen med start, slut och en punkt på bågen, cirkeln med
- * centrum och en punkt på cirkeln. Polylinjer, splines och fyllningar
- * avslutas med dubbelklick, Enter eller Klar; ett klick på första punkten
- * sluter formen.
+ * 2D-verktyget (0.8, 0.8.19): ritar en 2D-form som linje, polylinje,
+ * rektangel, båge, cirkel eller spline, med penna och fyllning. Punkterna
+ * snäpper som allt annat. Rektangeln ritas med två motsatta hörn, bågen med
+ * start, slut och en punkt på bågen, cirkeln med centrum och en punkt på
+ * cirkeln. Polylinjer och splines avslutas med dubbelklick, Enter eller Klar;
+ * ett klick på första punkten sluter formen.
  */
 export class Draw2DTool implements ViewTool {
   cursor = 'crosshair';
@@ -36,7 +36,7 @@ export class Draw2DTool implements ViewTool {
   private points: Vec2[] = [];
   private current: SnapResult | null = null;
   private lastUp = { t: 0, at: [0, 0] as Vec2 };
-  options: Draw2DOptions = { kind: 'line', weight: 0.25, linetype: 'solid', pattern: 'hatch' };
+  options: Draw2DOptions = { kind: 'line', weight: 0.25, linetype: 'solid' };
   onChange?: () => void;
 
   constructor(host: ToolHost) {
@@ -76,7 +76,7 @@ export class Draw2DTool implements ViewTool {
       this.finish(false);
       return;
     }
-    // Klick på första punkten sluter en polylinje, spline eller fyllning.
+    // Klick på första punkten sluter en polylinje eller spline.
     if (this.open && this.points.length >= 3 && dist(pt, this.points[0]) <= pxToMm(this.host, 10)) {
       this.finish(true);
       return;
@@ -97,41 +97,36 @@ export class Draw2DTool implements ViewTool {
   }
 
   /** Byt form; punkterna börjar om. */
-  setKind(kind: Draw2DKind): void {
+  setKind(kind: ShapeKind): void {
     this.options.kind = kind;
     this.reset();
   }
 
   /** Avsluta formen med de punkter som finns. */
   finish(closed: boolean): void {
-    const kind = this.options.kind;
-    const pts = this.points;
-    const min = kind === 'fill' ? 3 : 2;
-    if (pts.length >= min) this.create(pts, closed || kind === 'fill');
+    if (this.points.length >= 2) this.create(this.points, closed);
     this.reset();
   }
 
-  private create(pts: Vec2[], closed: boolean): void {
+  /** Parametrarna för formen genom punkterna. */
+  private params(pts: Vec2[], closed: boolean): Record<string, unknown> {
     const o = this.options;
-    const space = this.host.space?.();
     const at = (q: Vec2): [number, number] => [q[0], q[1]];
-    let params: Record<string, unknown>;
-    let type = 'Line2D';
-    if (o.kind === 'fill') {
-      type = 'Fill2D';
-      params = { points: pts.map(at), pattern: o.pattern, outline: true, angle: 45, spacing: 2 };
-    } else {
-      let points = pts.map(at);
-      if (o.kind === 'rect') points = rectCorners(pts[0], pts[1]).map(at);
-      // Bågen ritas start, slut, punkt på bågen; den sparas start, punkt, slut.
-      if (o.kind === 'arc') points = [at(pts[0]), at(pts[2]), at(pts[1])];
-      params = { shape: o.kind, points, ...(closed && (o.kind === 'polyline' || o.kind === 'spline') ? { closed: true } : {}), weight: o.weight, linetype: o.linetype };
-    }
+    let points = pts.map(at);
+    if (o.kind === 'rect') points = rectCorners(pts[0], pts[1]).map(at);
+    // Bågen ritas start, slut, punkt på bågen; den sparas start, punkt, slut.
+    if (o.kind === 'arc') points = (pts.length >= 3 ? [pts[0], pts[2], pts[1]] : pts).map(at);
+    const fill = o.fill && o.kind !== 'line' ? { fill: o.fill } : {};
+    return { shape: o.kind, points, ...(closed && (o.kind === 'polyline' || o.kind === 'spline') ? { closed: true } : {}), weight: o.weight, linetype: o.linetype, ...fill };
+  }
+
+  private create(pts: Vec2[], closed: boolean): void {
+    const space = this.host.space?.();
     const [el] = addElements(
       this.host.store,
-      [{ type, storey: this.host.storey(), ...(space ? { space } : {}), tags: [], params, props: {} }],
+      [{ type: 'Shape2D', storey: this.host.storey(), ...(space ? { space } : {}), tags: [], params: this.params(pts, closed), props: {} }],
       this.host.activeState(),
-      type === 'Fill2D' ? 'Rita fyllning' : 'Rita 2D',
+      'Rita 2D',
     );
     this.host.selection.set([el.id]);
   }
@@ -149,18 +144,13 @@ export class Draw2DTool implements ViewTool {
     this.host.view.requestRender();
   }
 
-  /** Formen som den skulle bli med markören där den är. */
+  /** Formen som den skulle bli med markören där den är. En linje utan tjocklek visas tunn. */
   private preview(): Primitive[] {
     const pts = [...this.points];
     if (this.current) pts.push(this.current.point);
     if (pts.length < 2) return [];
-    const o = this.options;
-    if (o.kind === 'fill') return pts.length >= 3 ? fillPrims({ points: pts as [number, number][], pattern: o.pattern, outline: true, angle: 45, spacing: 2 }) : [{ kind: 'polyline', points: pts, closed: false, pen: { weight: 0.18 } }];
-    let points = pts as [number, number][];
-    if (o.kind === 'rect') points = rectCorners(pts[0], pts[1]) as [number, number][];
-    if (o.kind === 'arc') points = (pts.length >= 3 ? [pts[0], pts[2], pts[1]] : pts) as [number, number][];
-    const sp = shapePoints({ shape: o.kind, points, closed: false });
-    return [{ kind: 'polyline', points: sp.points, closed: sp.closed, pen: { weight: o.weight } }];
+    const p = { fillAngle: 45, fillSpacing: 2, ...this.params(pts, false) } as unknown as Shape2DParams;
+    return shapePrims({ ...p, weight: p.weight || 0.13 });
   }
 
   hintText(): string {

@@ -2,7 +2,7 @@
 
 Ett verktyg för utvecklingen, inte en del av appen (att göra om DXF i appen
 ligger efter pilotprojektet). Läser DXF med ezdxf och skriver JSON med
-elementens typ och parametrar (Line2D och Text) i mm på papperet, med
+elementens typ och parametrar (Shape2D och Text) i mm på papperet, med
 nollpunkten i papperets nedre vänstra hörn. Bara det som ligger på papperet
 tas med. Linjebredden tas från färgen (gammal-cad-tabellen), texternas
 justering från TEXT och MTEXT, och kända platshållare (#DATUM …) blir
@@ -97,7 +97,7 @@ def main():
             if not on_paper(p, q) or skipped(p, q):
                 left_out += 1
                 continue
-            out.append({'type': 'Line2D', 'params': {'shape': 'line', 'points': [[r(p.x), r(p.y)], [r(q.x), r(q.y)]], 'weight': WEIGHT.get(color_of(doc, e), 0.25), 'linetype': 'solid'}})
+            out.append({'type': 'Shape2D', 'params': {'shape': 'line', 'points': [[r(p.x), r(p.y)], [r(q.x), r(q.y)]], 'weight': WEIGHT.get(color_of(doc, e), 0.25), 'linetype': 'solid'}})
         elif t in ('TEXT', 'MTEXT'):
             if t == 'TEXT':
                 text = e.plain_text().strip()

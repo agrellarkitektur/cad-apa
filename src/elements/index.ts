@@ -1,6 +1,6 @@
 import { dimensionType, textType } from './annotation';
 import { doorType } from './door';
-import { fill2dType, line2dType } from './drawing2d';
+import { shape2dType } from './drawing2d';
 import { furnitureType } from './furniture';
 import { registerType } from './registry';
 import { placement } from '../core/commands';
@@ -27,8 +27,7 @@ export function registerBuiltInTypes(): void {
   registerType(northType);
   registerType(elevationType);
   registerType(sectionType);
-  registerType(line2dType);
-  registerType(fill2dType);
+  registerType(shape2dType);
   registerType(roofSlopeType);
   registerType(underlayType);
   registerType(scaleBarType);

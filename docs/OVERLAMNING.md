@@ -1,10 +1,21 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.18.
+överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.19.
 
 ## Läget
 
+- **0.8.19 2D-form är klar** på `main` (nytt format, 12): `Shape2D`
+  ersätter `Line2D` och `Fill2D`; linje, polylinje, rektangel, båge, cirkel
+  och spline är sätt att rita formen; fyllning (ingen, hel, skraffering,
+  kors) på vilken form som helst, också öppna; *Ingen linje* (tjocklek 0)
+  ritas inte men går att klicka och snäppa på; mitten går att klicka på
+  bara med fyllning; fyllningar ritas under väggarna. Står i README,
+  PLAN.md (med Claudes val) och UTVECKLING.md under *2D-form (0.8.19)*.
+  Provat i bygget med Playwright (rita med och utan fyllning, klicka inuti
+  och på linjen, Ingen linje i egenskaperna) och med `tests/v0819.test.ts`;
+  alla 297 tester gick igenom. Carl August bad att få versionen körd
+  direkt. Delades inte; den rymdes i en session.
 - **0.8.18 Småsaker är klar** på `main` (samma format, 11): rutnätet med
   alla nivåer tonade efter avståndet, segmentpunkter med måttbandet (tal +
   Enter, Rensa segmentpunkter), osifont som ritningens typsnitt på skärmen
@@ -54,7 +65,7 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   `/agrellarkitektur.se/public_html/cad-apa/` och fungerar (Carl August såg
   0.8.14 vid alfa-knappen 24 oktober). Se efter med `gh run list` att
   körningen går igenom.
-- **0.8.12–0.8.18 är inte provade** av Carl August. Frågorna nedan gäller.
+- **0.8.12–0.8.19 är inte provade** av Carl August. Frågorna nedan gäller.
 - **Inkorgen är tom** (sorterad 24 oktober). Kommandoraden blev
   **0.8.20 och 0.8.21** (Carl Augusts svar: både engelska och svenska
   förkortningar; nere som i AutoCAD, flyttbar och dockningsbar i del 2;
@@ -94,16 +105,14 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.8.14 Modifiera-verktyg del 2~~,
   ~~0.8.15 Granskning~~, ~~0.8.16 Underlag~~, ~~0.8.17 Rumsstämpeln~~,
-  ~~0.8.18 Småsaker~~ (klara)
-- **0.8.19 2D-form** (nytt format): linje/rektangel/cirkel som sätt att rita,
-  fyllning på formen
+  ~~0.8.18 Småsaker~~, ~~0.8.19 2D-form~~ (klara)
+- **Nästa granskning** föreslås nu, efter 2D-formen (före eller efter
+  kommandoraden; Carl August bestämmer, se *Nästa session*)
 - **0.8.20 Kommandoraden del 1**: register med engelska och svenska
   förkortningar, raden nere, Enter öppnar, mellanslag upprepar, avstånd
   och koordinater
 - **0.8.21 Kommandoraden del 2**: alternativ i hakparentes, historik (F2)
   och högerklick, flyttbar och dockningsbar panel
-- **Nästa granskning** föreslås runt 0.8.19 (efter 2D-formen, som gör om
-  2D-linjerna)
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade)
@@ -122,14 +131,24 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.18 syns på webbhotellet (numret vid alfa-knappen) och
-hur 0.8.12–0.8.18 fungerar. Läs synpunktsfilen och sortera Inkorgen (om
-Carl August inte ber om att bara köra). Nästa version är **0.8.19
-2D-form** (nytt format; läs *0.8.19* i PLAN.md). Den är mellanstor till
-stor; fyllningsobjektet tas bort och 2D-linjen görs om, så räkna med att
-den kan behöva delas. Därefter föreslås en granskning.
+Fråga först om 0.8.19 syns på webbhotellet (numret vid alfa-knappen) och
+hur 0.8.12–0.8.19 fungerar. Läs synpunktsfilen och sortera Inkorgen (om
+Carl August inte ber om att bara köra). Planen föreslog en **granskning**
+efter 2D-formen (förra var 0.8.15). Fråga om den ska göras före
+kommandoraden (då blir den 0.8.20 och kommandoraden 0.8.21–0.8.22) eller
+efter. Annars är nästa version **0.8.20 Kommandoraden del 1** (stor; läs
+*0.8.20* i PLAN.md).
 
 ## Att fråga Carl August om
+
+- **0.8.19 efter provning** (Claudes val, se PLAN.md): namnen *2D-form*,
+  *Rita* och *Ritad som*; att sättet att rita inte går att byta efteråt;
+  att fyllningen väljs redan i verktyget (förval ingen) och att en rak
+  linje inte får någon; att en form utan linje och fyllning inte syns alls
+  utom markerad eller med *Visa dolda 2D-element*; att fyllningar inte
+  längre går att släcka för sig i Visa; mönstren utan namn i
+  verktygsraden. Ska fyllningen kunna ligga över väggarna (ordning per
+  form)? Projekt från 0.8.18 öppnas inte (format 11).
 
 - **0.8.18 efter provning** (Claudes val, se PLAN.md): är rutnätet lagom
   tydligt (nivåerna tonas in mellan 4 och 16 px; finare linjer är svagare)?

@@ -99,7 +99,7 @@ describe('smarta fält (0.8.10, format 10)', () => {
   });
 
   it('nya projekt har projektets vanliga fält; format 9 får meddelandet om en äldre alfaversion', () => {
-    expect(FORMAT_VERSION).toBe(11);
+    expect(FORMAT_VERSION).toBeGreaterThanOrEqual(11);
     const doc = emptyProject('Villa', 'nybyggnad', { beställare: 'Anna' });
     expect(doc.project.fields).toEqual({ adress: '', fastighet: '', beställare: 'Anna', uppdragsnummer: '', arkitekt: '', ansvarig: '' });
     expect(parse(serialize(doc)).project.fields).toEqual(doc.project.fields);

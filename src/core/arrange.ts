@@ -47,7 +47,7 @@ export function moveEach(store: DocStore, moves: ReadonlyMap<Id, readonly [numbe
 export function canScale(el: Element | undefined): boolean {
   if (!el || el.locked) return false;
   if (el.type === 'Dimension') return Array.isArray(el.params.points) && Array.isArray((el.params.points as unknown[])[0]);
-  return el.type === 'Line2D' || el.type === 'Fill2D' || el.type === 'Furniture' || el.type === 'Underlay' || el.type === 'Text';
+  return el.type === 'Shape2D' || el.type === 'Furniture' || el.type === 'Underlay' || el.type === 'Text';
 }
 
 /** De nya parametrarna för ett element som skalas med `f` kring `base`. */
@@ -56,8 +56,7 @@ export function scaledParams(el: Element, base: readonly [number, number], f: nu
   const p = el.params as Record<string, any>;
   const map = (q: readonly number[]): P => round([base[0] + (q[0] - base[0]) * f, base[1] + (q[1] - base[1]) * f]);
   switch (el.type) {
-    case 'Line2D':
-    case 'Fill2D':
+    case 'Shape2D':
       return { points: (p.points as P[]).map(map) };
     case 'Dimension':
       return { points: (p.points as P[]).map(map), offset: Math.round((p.offset ?? 0) * f) };
@@ -101,9 +100,9 @@ const PLACEMENT = new Set([
   'text', 'at', 'hinge', 'swing', 'outline', 'seed', 'labelAt', 'ridge', 'offset', 'auto', 'side', 'label', 'roof', 'face', 'toward', 'stamp', 'scale', 'facing',
 ]);
 
-/** Vridning är läge, utom skrafferingens vinkel. Möblernas mått är form. */
+/** Vridning är läge (skrafferingens vinkel heter `fillAngle` och följer med). Möblernas mått är form. */
 function isPlacement(type: string, key: string): boolean {
-  if (key === 'angle') return type !== 'Fill2D';
+  if (key === 'angle') return true;
   if (type === 'Furniture' && (key === 'width' || key === 'depth')) return true;
   return PLACEMENT.has(key);
 }

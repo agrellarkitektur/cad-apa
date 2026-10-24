@@ -16,7 +16,7 @@ beforeAll(() => registerBuiltInTypes());
 const view = { state: 'st-a', compareTo: 'st-bef', detail: 'normal' as const };
 
 function line(id: string, extra: Partial<Element> = {}): Element {
-  return { id, type: 'Line2D', storey: 'pl-1', states: ['st-bef', 'st-a', 'st-b'], tags: [], params: { shape: 'line', points: [[0, 0], [1000, 0]], weight: 0.25, linetype: 'solid' }, props: {}, ...extra };
+  return { id, type: 'Shape2D', storey: 'pl-1', states: ['st-bef', 'st-a', 'st-b'], tags: [], params: { shape: 'line', points: [[0, 0], [1000, 0]], weight: 0.25, linetype: 'solid' }, props: {}, ...extra };
 }
 
 describe('format 5 (0.8)', () => {
@@ -69,7 +69,7 @@ describe('Visas i (0.8)', () => {
   });
   it('kommandot sätter och tar bort Visas i, och ångras', () => {
     const store = new DocStore(sampleProject());
-    const [el] = addElements(store, [{ type: 'Line2D', storey: 'pl-1', tags: [], params: line('x').params, props: {} }], 'st-a', 'Rita 2D');
+    const [el] = addElements(store, [{ type: 'Shape2D', storey: 'pl-1', tags: [], params: line('x').params, props: {} }], 'st-a', 'Rita 2D');
     setShowIn(store, [el.id], { kind: 'views', views: ['vy-a'] });
     expect(store.doc.elements[el.id].show).toEqual({ kind: 'views', views: ['vy-a'] });
     setShowIn(store, [el.id], null);

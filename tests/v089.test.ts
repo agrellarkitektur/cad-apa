@@ -29,7 +29,7 @@ function sheetWithDrawing() {
     store,
     [
       { ...text({ pos: [40, 100], text: 'Ritning {ritningsnummer}' }), space: id },
-      { type: 'Line2D', storey: 'pl-1', tags: [], props: {}, space: id, params: { shape: 'line', points: [[30, 30], [130, 30]], weight: 0.35 } },
+      { type: 'Shape2D', storey: 'pl-1', tags: [], props: {}, space: id, params: { shape: 'line', points: [[30, 30], [130, 30]], weight: 0.35 } },
     ],
     'st-a',
     'Rita',

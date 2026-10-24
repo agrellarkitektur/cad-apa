@@ -66,6 +66,9 @@ export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: 
   };
 
   const prims: Primitive[] = [];
+  // Fyllningar i 2D-former (0.8.19) ritas under modellen: efter underlagen, före väggarna.
+  const under: Primitive[] = [];
+  let underAt = 0;
   const pickables: Pickable[] = [];
   const groupsNow = new Map<string, SavedGroup>();
   const singlesNow = new Map<Id, SavedSingle>();
@@ -84,16 +87,20 @@ export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: 
       }
     }
     groupsNow.set(key, group);
-    for (const p of group.prims) prims.push(p);
+    for (const p of group.prims) (p.under ? under : prims).push(p);
+    if (parseFloat(key) < UNDER_ORDER) underAt = prims.length;
     for (const p of group.pickables) pickables.push(p);
   }
   if (view.autoDims && view.compareTo && !view.place && !view.hide?.includes('Dimension')) prims.push(...autoDimensions(ctx));
   saved.groups = groupsNow;
   saved.singles = singlesNow;
   saved.elements = doc.elements;
-  saved.result = { prims, pickables };
+  saved.result = { prims: under.length ? [...prims.slice(0, underAt), ...under, ...prims.slice(underAt)] : prims, pickables };
   return saved.result;
 }
+
+/** Typer som ritas före fyllningarna i 2D-formerna (underlagen). */
+const UNDER_ORDER = 4;
 
 /** En ritad grupp: det den ritades av, primitiverna med stil och det som går att klicka på. */
 interface SavedGroup {

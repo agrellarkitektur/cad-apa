@@ -65,6 +65,8 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
   };
 
   for (const p of prims) {
+    // Tjockleken 0 ritas inte (2D-former utan linje, 0.8.19), men finns kvar för att klicka och snäppa.
+    if ((p.kind === 'line' || p.kind === 'polyline' || p.kind === 'arc') && p.pen.weight === 0) continue;
     switch (p.kind) {
       case 'line': {
         if (p.pen.dash?.length) {

@@ -6,7 +6,7 @@ import { escapeHtml } from './labels';
  * "gammel-cad"-färgen, färgens namn och tjockleken. Raden är en
  * radioknapp, så valet går genom samma change-händelse som en lista. Den
  * fälls ut från en knapp som visar det som är valt. `attrs` läggs på varje
- * knapp (t.ex. `data-key="d2:weight"`).
+ * knapp (t.ex. `data-key="d2:weight"`). Tjockleken 0 är *Ingen linje* (0.8.19).
  */
 export function weightPicker(name: string, current: number, attrs: string, unit = ''): string {
   const comma = (n: number) => n.toLocaleString('sv-SE', { minimumFractionDigits: 2 });
@@ -15,8 +15,8 @@ export function weightPicker(name: string, current: number, attrs: string, unit 
   const rows = weights
     .map(
       (w) =>
-        `<label class="wp-row"><input type="radio" name="${escapeHtml(name)}" value="${w}" ${attrs}${w === current ? ' checked' : ''}>${sw(w)}<span class="wp-name">${escapeHtml(PEN_COLORS[w]?.name ?? '')}</span><span class="wp-w">${comma(w)}</span><span class="wp-line" style="height:${Math.max(1, Math.round(w * 4))}px"></span></label>`,
+        `<label class="wp-row"><input type="radio" name="${escapeHtml(name)}" value="${w}" ${attrs}${w === current ? ' checked' : ''}>${sw(w)}<span class="wp-name">${escapeHtml(w ? (PEN_COLORS[w]?.name ?? '') : 'Ingen linje')}</span><span class="wp-w">${w ? comma(w) : ''}</span><span class="wp-line" style="height:${w ? Math.max(1, Math.round(w * 4)) : 0}px"></span></label>`,
     )
     .join('');
-  return `<details class="weight-pick"><summary aria-label="Linjetjocklek">${sw(current)}<span>${comma(current)}${unit}</span></summary><div class="wp-table" role="radiogroup" aria-label="Linjetjocklek">${rows}</div></details>`;
+  return `<details class="weight-pick"><summary aria-label="Linjetjocklek">${sw(current)}<span>${current ? `${comma(current)}${unit}` : 'Ingen linje'}</span></summary><div class="wp-table" role="radiogroup" aria-label="Linjetjocklek">${rows}</div></details>`;
 }

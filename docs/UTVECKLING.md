@@ -340,9 +340,10 @@ på bladet sina egna.
   ovanpå varandra i `renderAll`. `ToolHost.space()` ger ytan nya mått,
   texter och 2D-element hamnar på, och `canEdit(id)` vad som går att flytta
   i en vy som annars bara går att markera.
-- **2D-element**: `Line2D` (`shape`: line, polyline, rect, arc, circle,
-  spline) och `Fill2D` i `src/elements/drawing2d.ts`, verktyget i
+- **2D-element**: `Shape2D` (`shape`: line, polyline, rect, arc, circle,
+  spline; fyllning i `fill`) i `src/elements/drawing2d.ts`, verktyget i
   `src/ui/tools/draw2dTool.ts`. Bågar sparas start, punkt på bågen, slut.
+  Före format 12 fanns `Line2D` och `Fill2D` (se *2D-form (0.8.19)*).
 - **Taklutningen** (`src/elements/roofSlope.ts`): `buildSection` ger
   automatiska taklutningar med id `slope:<tak>:<takfall>` och deras värden
   i `slopes`. Markeras en skapar appen ett `RoofSlope`-element med de
@@ -918,7 +919,7 @@ mallblad) gav samma projekt, markering, ritning, panel och smartmeny.
   bredaste rad (Helveticas bredder). DXF mäter versalhöjden
   (`DXF_CAP_HEIGHT` = 0,72 av teckenstorleken)
 - **Markering** (`pickAllAt` i `src/view2d/pick.ts`): en typ med `pickSoft`
-  (2D-linjer och fyllningar) har mjuka ytor: inuti ger 1500 i stället för
+  (2D-former) har mjuka ytor: inuti ger 1500 i stället för
   3000, så att en linje inom toleransen (2000) går före, men inuti går
   fortfarande före rum (1000)
 - **Linjetjocklek** (`LineWeights` och `penPx` i
@@ -1114,3 +1115,35 @@ projekt i 1 982 jämförelser.
   mappen, annars utanför alla. `moveIntoFolder` i `treeCommands.ts` flyttar
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
+
+## 2D-form (0.8.19, format 12)
+
+- **`Shape2D`** (`src/elements/drawing2d.ts`) ersätter `Line2D` och
+  `Fill2D`. Parametrarna: `shape` (hur formen ritades; bestämmer punkternas
+  betydelse och greppen i `shapeEdit.ts`), `points`, `closed`, `weight`,
+  `linetype`, `color` och fyllningen `fill` (`solid`, `hatch`, `cross`;
+  utelämnad = ingen), `fillColor`, `fillAngle` och `fillSpacing`.
+  Fyllningens fält heter `fill…` så att pipetten (`isPlacement` i
+  `core/arrange.ts`) kan räkna `angle` som läge för alla typer
+- **`shapePrims`** ger fyllningen som `region` med `under: true` (en per
+  skrafferingsriktning) och linjen som `polyline`, alltid, också med
+  `weight: 0`. En öppen form fylls genom sina punkter som om den vore
+  sluten; en form med två punkter får ingen fyllning
+- **Under modellen**: `buildPlan` lägger primitiver med `under` efter
+  grupperna med `drawOrder` under `UNDER_ORDER` (4, underlagen) och före
+  resten, så att fyllningarna ligger under väggarna medan formens linje
+  ritas med typens `drawOrder` (58). Det ersätter `Fill2D`:s `drawOrder: 4`
+- **Tjockleken 0** ritas inte: `renderPrimitives` hoppar över `line`,
+  `polyline` och `arc` med `pen.weight === 0`, och `PageWriter.stroke` och
+  `arc` i `formats/pdf.ts` likaså. Primitiven finns kvar i `Pickable.prims`,
+  så markering, markeringens grafik och snäpp (`primSegments`) fungerar.
+  `ghost` ger den 0,13 när den visas tonad. `PEN_WEIGHTS` börjar med 0;
+  `weightPicker` visar den som *Ingen linje*
+- **Markering**: `pickShape` ger ytan bara när formen har en fyllning. I
+  `pickAllAt` gäller nivå 4 (inuti en sluten `polyline`) inte för typer
+  med `pickSoft`, så att en form utan fyllning bara träffas på linjen
+- **Gränssnittet**: `fillFields` i `drawingPanel.ts` (mönster, färg,
+  vinkel, avstånd); `patternPicker` har ett val `none` (*Ingen fyllning*).
+  I verktygsraden visas mönstren utan namn (CSS `.opt .pattern-pick label
+  span`). `Draw2DOptions` har `kind` (`ShapeKind`), `weight`, `linetype`
+  och `fill`

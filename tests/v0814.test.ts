@@ -31,7 +31,7 @@ function project(
   for (const [id, [start, end]] of Object.entries(walls))
     doc.elements[id] = { id, type: "Wall", ...base, params: { start, end, thickness: 200, height: 2700, justification: "center" } } as never;
   for (const [id, points] of Object.entries(lines))
-    doc.elements[id] = { id, type: "Line2D", ...base, params: { shape: points.length > 2 ? "polyline" : "line", points, weight: 0.25, linetype: "solid" } } as never;
+    doc.elements[id] = { id, type: "Shape2D", ...base, params: { shape: points.length > 2 ? "polyline" : "line", points, weight: 0.25, linetype: "solid" } } as never;
   for (const [id, e] of Object.entries(extra)) doc.elements[id] = { id, type: e.type, ...base, params: e.params } as never;
   return new DocStore(doc);
 }
@@ -142,7 +142,7 @@ describe("Förläng och trimma flera mot en gräns", () => {
 
 describe("Tjocklekstabell och kortkommandon", () => {
   it("har en färg för varje tjocklek", () => {
-    for (const w of PEN_WEIGHTS) expect(PEN_COLORS[w]).toBeTruthy();
+    for (const w of PEN_WEIGHTS.filter((w) => w > 0)) expect(PEN_COLORS[w]).toBeTruthy();
     expect(PEN_COLORS[0.5].name).toBe("Svart");
   });
 

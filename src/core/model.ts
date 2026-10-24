@@ -281,7 +281,7 @@ export interface Element<P extends object = Record<string, unknown>> {
 }
 
 export const FORMAT = 'bacchus-project';
-export const FORMAT_VERSION = 11;
+export const FORMAT_VERSION = 12;
 
 export interface ProjectDoc {
   format: typeof FORMAT;

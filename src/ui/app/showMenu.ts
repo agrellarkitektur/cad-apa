@@ -46,8 +46,7 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
     id: '2d',
     label: '2D',
     items: [
-      ['Line2D', 'Linjer'],
-      ['Fill2D', 'Fyllningar'],
+      ['Shape2D', '2D-former'],
     ],
   },
   {

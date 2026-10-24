@@ -67,8 +67,8 @@ function planSnapSegments(app: AppContext): SnapSegment[] {
       edges.push(...underlaySegments(doc, el));
       continue;
     }
-    if (type === 'Line2D' || type === 'Fill2D') {
-      // 2D-element (0.8 del 2): linjerna och ytornas kanter.
+    if (type === 'Shape2D') {
+      // 2D-former (0.8 del 2, 0.8.19): linjen, också när den inte ritas.
       edges.push(...primSegments(pk.id, pk.prims));
       continue;
     }

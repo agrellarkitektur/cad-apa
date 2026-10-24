@@ -4,7 +4,7 @@ import { copyPayload, originalsHere, parsePayload, pasteClip, type ClipPayload }
 import type { AppContext } from './context';
 
 /** Det som går att ha på ett arbetsblad (0.8 del 2). */
-export const DRAWING_TYPES = new Set(['Line2D', 'Fill2D', 'Text', 'Dimension', 'Underlay']);
+export const DRAWING_TYPES = new Set(['Shape2D', 'Text', 'Dimension', 'Underlay']);
 
 /** Kopiera, klipp ut och klistra in (0.7.1), även mellan projekt. */
 export function installClipboard(app: AppContext) {

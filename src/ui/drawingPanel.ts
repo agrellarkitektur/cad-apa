@@ -2,7 +2,7 @@ import { addViewTag, setLocked, setShowIn, updateParams } from '../core/commands
 import { onPaper as paperSpace, modelViewId, type Element, type Id, type ProjectDoc, type ShowIn } from '../core/model';
 import type { DocStore } from '../core/store';
 import { allViews, countViews, homeOf } from '../core/visibility';
-import { LINE_TYPES, SHAPE_LABELS, type Fill2DParams, type Line2DParams } from '../elements/drawing2d';
+import { FILL_COLOR, LINE_TYPES, SHAPE_LABELS, type Shape2DParams } from '../elements/drawing2d';
 import { patternPicker } from './patternPick';
 import { weightPicker } from './weightPick';
 import { markerName } from '../elements/markers';
@@ -20,9 +20,9 @@ import { escapeHtml } from './labels';
  */
 
 /** Typer som har Visas i: det som är ritningsinformation och kan visas i vissa vyer. */
-export const SHOWABLE = new Set(['Line2D', 'Fill2D', 'Text', 'Dimension', 'Underlay']);
+export const SHOWABLE = new Set(['Shape2D', 'Text', 'Dimension', 'Underlay']);
 /** Typer som kan låsas. */
-export const LOCKABLE = new Set(['Line2D', 'Fill2D', 'Text', 'Dimension', 'RoofSlope', 'Section', 'Elevation', 'North', 'Underlay']);
+export const LOCKABLE = new Set(['Shape2D', 'Text', 'Dimension', 'RoofSlope', 'Section', 'Elevation', 'North', 'Underlay']);
 
 /** PDF: millimeter i modellen per PDF-punkt i skala 1:1. */
 const MM_PER_PT = 25.4 / 72;
@@ -37,28 +37,34 @@ const DXF_UNITS: [number, string][] = [
 
 const comma = (n: number) => n.toLocaleString('sv-SE');
 
-/** Fälten för en 2D-linje, en fyllning eller en taklutning. */
+/**
+ * Fyllningens fält (0.8.19): mönstret (eller ingen), färgen och för en
+ * skraffering vinkel och avstånd. Samma fält i verktyget och i egenskaperna.
+ */
+export function fillFields(name: string, p: Pick<Shape2DParams, 'fill' | 'fillColor' | 'fillAngle' | 'fillSpacing'>, attrs: (key: string) => string): string {
+  const color = p.fillColor ?? FILL_COLOR;
+  const more = p.fill
+    ? `<div class="fields"><label class="field"><span>Färg</span><input type="color" ${attrs('fillColor')} value="${color}"></label>
+    ${p.fill !== 'solid' ? `<label class="field"><span>Vinkel</span><span class="input-unit"><input type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" ${attrs('fillAngle')} value="${p.fillAngle}"><i>°</i></span></label>
+    <label class="field"><span>Avstånd på papper</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" ${attrs('fillSpacing')} value="${comma(p.fillSpacing)}"><i>mm</i></span></label>` : ''}</div>`
+    : '';
+  return `<div class="field-label">Fyllning</div>${patternPicker(name, p.fill ?? 'none', attrs('pattern'), { color, angle: p.fillAngle })}${more}`;
+}
+
+/** Fälten för en 2D-form eller en taklutning. */
 export function drawingFields(doc: ProjectDoc, el: Element): string {
-  if (el.type === 'Line2D') {
-    const p = resolveParams<Line2DParams>(doc, el);
+  if (el.type === 'Shape2D') {
+    const p = resolveParams<Shape2DParams>(doc, el);
     const closable = p.shape === 'polyline' || p.shape === 'spline';
     return `<div class="fields">
-        <label class="field"><span>Form</span><input value="${SHAPE_LABELS[p.shape]}" readonly></label>
+        <label class="field"><span>Ritad som</span><input value="${SHAPE_LABELS[p.shape] ?? ''}" readonly></label>
         <div class="field"><span>Penna</span>${weightPicker('d2-weight-panel', p.weight, 'data-key="d2:weight"', ' mm')}</div>
-        <label class="field"><span>Linjetyp</span><select data-key="d2:linetype">${Object.entries(LINE_TYPES).map(([k, v]) => `<option value="${k}"${k === p.linetype ? ' selected' : ''}>${v.label}</option>`).join('')}</select></label>
-        <label class="field"><span>Färg</span><input type="color" data-key="d2:color" value="${p.color ?? '#1d2328'}"></label>
+        ${p.weight ? `<label class="field"><span>Linjetyp</span><select data-key="d2:linetype">${Object.entries(LINE_TYPES).map(([k, v]) => `<option value="${k}"${k === p.linetype ? ' selected' : ''}>${v.label}</option>`).join('')}</select></label>
+        <label class="field"><span>Linjens färg</span><input type="color" data-key="d2:color" value="${p.color ?? '#1d2328'}"></label>` : ''}
       </div>
-      ${closable ? `<label class="check"><input type="checkbox" data-key="d2:closed"${p.closed ? ' checked' : ''}> Sluten</label>` : ''}`;
-  }
-  if (el.type === 'Fill2D') {
-    const p = resolveParams<Fill2DParams>(doc, el);
-    return `<div class="fields">
-        <div class="field"><span>Mönster</span>${patternPicker('d2-pattern-panel', p.pattern, 'data-key="d2:pattern"', { color: p.color ?? '#9aa0a6', angle: p.angle })}</div>
-        <label class="field"><span>Färg</span><input type="color" data-key="d2:color" value="${p.color ?? '#9aa0a6'}"></label>
-        ${p.pattern !== 'solid' ? `<label class="field"><span>Vinkel</span><span class="input-unit"><input type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" data-key="d2:angle" value="${p.angle}"><i>°</i></span></label>
-        <label class="field"><span>Avstånd på papper</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="d2:spacing" value="${comma(p.spacing)}"><i>mm</i></span></label>` : ''}
-      </div>
-      <label class="check"><input type="checkbox" data-key="d2:outline"${p.outline ? ' checked' : ''}> Kontur</label>`;
+      ${closable ? `<label class="check"><input type="checkbox" data-key="d2:closed"${p.closed ? ' checked' : ''}> Sluten</label>` : ''}
+      ${p.shape === 'line' ? '' : fillFields('d2-pattern-panel', p, (k) => `data-key="d2:${k}"`)}
+      ${p.weight === 0 && !p.fill ? '<p class="note">Formen har varken linje eller fyllning och syns inte, men går att klicka på längs linjen.</p>' : ''}`;
   }
   if (el.type === 'Underlay') return underlayFields(doc, el);
   if (el.type === 'RoofSlope') {
@@ -224,14 +230,14 @@ export function drawingChange(store: DocStore, ids: Id[], key: string, input: HT
   if (scope === 'd2') {
     const v = input.value;
     const num = Number(v.replace(',', '.'));
-    if (name === 'weight' && num > 0) updateParams(store, ids, { weight: num }, 'Ändra penna');
+    if (name === 'weight' && num >= 0) updateParams(store, ids, { weight: num }, num ? 'Ändra penna' : 'Ingen linje');
     else if (name === 'linetype') updateParams(store, ids, { linetype: v }, 'Ändra linjetyp');
     else if (name === 'color') updateParams(store, ids, { color: v }, 'Ändra färg');
     else if (name === 'closed') updateParams(store, ids, { closed: (input as HTMLInputElement).checked }, 'Sluten');
-    else if (name === 'pattern') updateParams(store, ids, { pattern: v }, 'Ändra mönster');
-    else if (name === 'outline') updateParams(store, ids, { outline: (input as HTMLInputElement).checked }, 'Kontur');
-    else if (name === 'angle' && Number.isFinite(num)) updateParams(store, ids, { angle: num }, 'Ändra vinkel');
-    else if (name === 'spacing' && num > 0) updateParams(store, ids, { spacing: num }, 'Ändra avstånd');
+    else if (name === 'pattern') updateParams(store, ids, { fill: v === 'none' ? undefined : v }, v === 'none' ? 'Ingen fyllning' : 'Ändra fyllning');
+    else if (name === 'fillColor') updateParams(store, ids, { fillColor: v }, 'Ändra fyllningens färg');
+    else if (name === 'fillAngle' && Number.isFinite(num)) updateParams(store, ids, { fillAngle: num }, 'Ändra vinkel');
+    else if (name === 'fillSpacing' && num > 0) updateParams(store, ids, { fillSpacing: num }, 'Ändra avstånd');
     return true;
   }
   if (scope === 'ul') {

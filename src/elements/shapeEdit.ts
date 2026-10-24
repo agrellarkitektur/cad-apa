@@ -1,18 +1,17 @@
 import { offsetEdge } from '../core/roofEdit';
 import { dist, distToSegment, left, norm, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
-import { catmullRom, shapePoints, type Line2DParams, type Shape2D } from './drawing2d';
+import { catmullRom, shapePoints, type Shape2DParams, type ShapeKind } from './drawing2d';
 
 /**
- * Punkter och kanter i 2D-element (0.8 del 2): greppen som kan dras och det
- * Modifiera gör med dem. Gäller 2D-linjer (alla former) och fyllningar.
+ * Punkter och kanter i 2D-former (0.8 del 2, 0.8.19): greppen som kan dras
+ * och det Modifiera gör med dem.
  *
  * - Linje, polylinje och spline: varje punkt. Bågen: start, punkten på
  *   bågen och slut.
  * - Rektangel: hörnen. Det motstående hörnet står still och rektangeln
  *   förblir rät.
  * - Cirkel: centrum (flyttar hela cirkeln) och en punkt för radien.
- * - Fyllning: ytans hörn.
  */
 
 type P = [number, number];
@@ -23,12 +22,12 @@ export interface ShapeLike {
   params: Record<string, unknown>;
 }
 
-const shapeOf = (s: ShapeLike): Shape2D | 'fill' => (s.type === 'Fill2D' ? 'fill' : ((s.params.shape as Shape2D) ?? 'line'));
+const shapeOf = (s: ShapeLike): ShapeKind => (s.params.shape as ShapeKind) ?? 'line';
 const pointsOf = (s: ShapeLike): P[] => ((s.params.points as P[] | undefined) ?? []).map((q) => [q[0], q[1]]);
 
 /** Om elementet har punkter som går att dra. */
 export function isShape(s: ShapeLike | undefined): s is ShapeLike {
-  return !!s && (s.type === 'Line2D' || s.type === 'Fill2D');
+  return s?.type === 'Shape2D';
 }
 
 /** Punkterna som får grepp. */
@@ -39,7 +38,7 @@ export function shapeNodes(s: ShapeLike): Vec2[] {
 /** Om formen är sluten (kanten från sista punkten tillbaka till den första finns). */
 function closedOf(s: ShapeLike): boolean {
   const sh = shapeOf(s);
-  return sh === 'fill' || sh === 'rect' || ((sh === 'polyline' || sh === 'spline') && !!s.params.closed);
+  return sh === 'rect' || ((sh === 'polyline' || sh === 'spline') && !!s.params.closed);
 }
 
 /** Parametrarna efter att punkt i flyttats till `to`. */
@@ -123,8 +122,8 @@ export function shapeCan(s: ShapeLike): { insert: boolean; remove: boolean; offs
   const closed = closedOf(s);
   return {
     insert: sh !== 'circle' && sh !== 'arc',
-    remove: (sh === 'polyline' || sh === 'spline' || sh === 'fill' || sh === 'rect') && n > (closed ? 3 : 2),
-    offset: sh === 'line' || sh === 'polyline' || sh === 'rect' || sh === 'fill',
+    remove: (sh === 'polyline' || sh === 'spline' || sh === 'rect') && n > (closed ? 3 : 2),
+    offset: sh === 'line' || sh === 'polyline' || sh === 'rect',
   };
 }
 
@@ -185,7 +184,5 @@ export function offsetShapeEdge(s: ShapeLike, i: number, d: number): Record<stri
 
 /** Formen som punkter, för förhandsvisningen av en ändring. */
 export function previewShape(s: ShapeLike, patch: Record<string, unknown>): { points: Vec2[]; closed: boolean } {
-  const p = { ...s.params, ...patch } as unknown as Line2DParams;
-  if (s.type === 'Fill2D') return { points: p.points as Vec2[], closed: true };
-  return shapePoints(p);
+  return shapePoints({ ...s.params, ...patch } as unknown as Shape2DParams);
 }

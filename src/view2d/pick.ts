@@ -7,8 +7,9 @@ import { boundsOf, imageCorners } from '../repr/primitives';
  * Vilket element ligger under en punkt? I tur och ordning:
  * 1. en snittyta som punkten ligger i (vägg, öppning),
  * 2. en linje eller båge inom toleransen (dörrblad, möbelkant, 2D-linje),
- * 3. en mjuk yta som punkten ligger i (sluten 2D-form, fyllning; 0.8.11),
- * 4. en annan sluten form som punkten ligger i (rum, underlag).
+ * 3. en mjuk yta som punkten ligger i (en 2D-form med fyllning; 0.8.11, 0.8.19),
+ * 4. en annan sluten form som punkten ligger i (rum, underlag). En 2D-form
+ *    utan fyllning går inte att klicka inuti, bara på linjen (0.8.19).
  * Inom varje nivå vinner det som ritas överst.
  */
 export function pickAt(pickables: readonly Pickable[], p: Vec2, tol: number, drawingScale = 100): string | null {
@@ -32,7 +33,7 @@ export function pickAllAt(pickables: readonly Pickable[], p: Vec2, tol: number, 
     if (inside && !item.soft) score = 3000 + item.priority;
     else if (d <= tol) score = 2000 + item.priority - d / tol;
     else if (inside) score = 1500 + item.priority;
-    else if (item.prims.some((prim) => (prim.kind === 'polyline' && prim.closed && pointInRings(p, [prim.points])) || (prim.kind === 'image' && pointInRings(p, [imageCorners(prim)]))))
+    else if (!item.soft && item.prims.some((prim) => (prim.kind === 'polyline' && prim.closed && pointInRings(p, [prim.points])) || (prim.kind === 'image' && pointInRings(p, [imageCorners(prim)]))))
       score = 1000 + item.priority;
     const was = best.get(item.id);
     if (score > -Infinity && (!was || score > was.score)) best.set(item.id, { score, i });

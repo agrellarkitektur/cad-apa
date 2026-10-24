@@ -4791,7 +4791,12 @@ input[type='range'] {
 }
 
 .opt .pattern-pick label {
-  padding: 2px 6px 2px 3px;
+  padding: 2px 3px;
+}
+
+/* I verktygsraden bara bilderna (0.8.19); namnen står i title. */
+.opt .pattern-pick label span {
+  display: none;
 }
 
 /* Linjetjocklek som tabell med "gammel-cad"-färger (0.8.14). */

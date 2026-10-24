@@ -86,7 +86,7 @@ describe('grepp för taket i fasader och sektioner (0.8 del 2)', () => {
   });
 });
 
-const shape = (params: Record<string, unknown>, type = 'Line2D') => ({ type, params: { weight: 0.25, linetype: 'solid', ...params } });
+const shape = (params: Record<string, unknown>, type = 'Shape2D') => ({ type, params: { weight: 0.25, linetype: 'solid', ...params } });
 
 describe('punkter i 2D-element (0.8 del 2)', () => {
   it('en punkt i en polylinje flyttas; de andra ligger kvar', () => {
@@ -119,7 +119,7 @@ describe('punkter i 2D-element (0.8 del 2)', () => {
     expect(removeShapeNode(l, 0)).toBeNull();
     const rect = shape({ shape: 'rect', points: [[0, 0], [1000, 0], [1000, 500], [0, 500]] });
     expect(removeShapeNode(rect, 2)).toEqual({ shape: 'polyline', points: [[0, 0], [1000, 0], [0, 500]], closed: true });
-    const fill = shape({ points: [[0, 0], [1000, 0], [0, 500]], pattern: 'solid' }, 'Fill2D');
+    const fill = shape({ shape: 'polyline', points: [[0, 0], [1000, 0], [0, 500]], closed: true, fill: 'solid' });
     expect(removeShapeNode(fill, 0)).toBeNull();
     // Kanten från sista punkten tillbaka till den första i en sluten form.
     expect(shapeEdgeAt(rect, [0, 250], 20)!.index).toBe(3);
@@ -275,7 +275,7 @@ describe('arbetsblad (0.8 del 2)', () => {
     const store = new DocStore(sampleProject());
     const ws = createWorksheet(store, 'Detaljer');
     store.transact('vy', (tx) => tx.setViews([...tx.doc.views, { id: 'vy-ab', name: 'Detalj 1:20', storey: 'pl-1', state: 'st-a', compare: false, detail: 'detail', hide: [], hideDemolished: false, worksheet: ws }]));
-    const l = { id: 'l1', type: 'Line2D', storey: 'pl-1', states: ['st-a'], tags: [], props: {}, params: { shape: 'line', points: [[0, 0], [1000, 0]], weight: 0.25, linetype: 'solid' } };
+    const l = { id: 'l1', type: 'Shape2D', storey: 'pl-1', states: ['st-a'], tags: [], props: {}, params: { shape: 'line', points: [[0, 0], [1000, 0]], weight: 0.25, linetype: 'solid' } };
     store.transact('linje', (tx) => tx.putElement(l));
     const [copy] = pasteClip(store, copyPayload(store.doc, ['l1'], 'pl-1')!, 'st-a', 'pl-1', [0, 0], ws);
     expect(store.doc.elements[copy].space).toBe(ws);

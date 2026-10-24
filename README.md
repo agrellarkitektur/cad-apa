@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.18** (alfa, småsaker); nästa är **0.8.19, 2D-form**.
+**0.8.19** (alfa, 2D-form); nästa är **0.8.20, kommandoraden del 1**.
 
 ## Vad som fungerar
 
@@ -811,6 +811,28 @@ Version 0.8.18, småsaker (samma filformat, 11):
   till en mapp i samma flik. Släpps det på en rad inuti en mapp hamnar det
   i den, och släpps det utanför alla mappar läggs det utanför. Markerade
   blad och underlag följer med det man drar. Går att ångra
+
+Version 0.8.19, 2D-form (nytt filformat, 12):
+- **2D-formen** ersätter 2D-linjen och fyllningen. Linje, polylinje,
+  rektangel, båge, cirkel och spline är sätt att *rita* formen (*Rita* i
+  verktygsraden, *Ritad som* i egenskaperna); fyllningsobjektet finns inte
+  längre
+- **Fyllning på formen**: ingen, hel fyllning, skraffering eller
+  korsskraffering, med färg och för skrafferingen vinkel och avstånd, som
+  på den gamla fyllningen. Den går att välja redan i verktyget och sätta på
+  vilken form som helst, också en öppen polylinje eller en båge: den fylls
+  som om den vore sluten, som i Illustrator. En rak linje får ingen
+  fyllning. Fyllningarna ritas under väggarna, linjerna över
+- **Ingen linje**: pennan kan vara *Ingen linje* (tjocklek 0). Formen ritas
+  då inte, varken på skärmen eller i PDF:en, men går att klicka på och
+  snäppa mot längs den osynliga linjen. Med *Visa dolda 2D-element* syns
+  den tonad
+- **Klicka inuti** går bara när formen har en fyllning; en form utan
+  fyllning markeras bara med ett klick på linjen. Det gäller också slutna
+  polylinjer och rektanglar (förut gick de att klicka inuti)
+- I *Visa* heter kategorin 2D bara **2D-former**; pipetten tar med
+  pennan och fyllningen
+- Projekt från 0.8.18 och äldre öppnas inte (äldre alfaformat, se nedan)
 
 ## Versioner och gamla projekt
 
