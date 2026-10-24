@@ -74,7 +74,7 @@ export function autoDimensions(ctx: PlanContext): Primitive[] {
       const s = f.length / 2;
       points = [f.at(s, -f.half), f.at(s, f.half)].map((q) => [q[0], q[1]] as [number, number]);
     }
-    out.push(...dimensionPrims({ points, angle: angleOf(dir), offset: paper(6) }, ctx.scale, origin, height));
+    out.push(...dimensionPrims({ points, angle: angleOf(dir), offset: paper(6) }, ctx.scale, origin, height, ctx.style));
   }
 
   // Nya öppningar: från närmaste vinkelräta vägglivs till hålets kanter.
@@ -101,7 +101,7 @@ export function autoDimensions(ctx: PlanContext): Primitive[] {
       for (const face of [centre - g.half, centre + g.half]) if (face <= h1 - 1 && face > ref) ref = face;
     }
     const pts: [number, number][] = [f.at(ref, f.half), f.at(h1, f.half), f.at(h2, f.half)].map((q) => [q[0], q[1]] as [number, number]);
-    out.push(...dimensionPrims({ points: pts, angle: angleOf(f.u), offset: paper(7) }, ctx.scale, origin, height));
+    out.push(...dimensionPrims({ points: pts, angle: angleOf(f.u), offset: paper(7) }, ctx.scale, origin, height, ctx.style));
   }
   return out;
 }

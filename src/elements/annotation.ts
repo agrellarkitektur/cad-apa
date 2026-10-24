@@ -1,4 +1,6 @@
 import { add, left, norm, scale, sub } from '../geometry/vec';
+import type { StyleSheet } from '../core/graphics';
+import { markerPen, withWeight } from '../repr/markerPens';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import type { ProjectDoc } from '../core/model';
 import { resolvePoint, type FeatureRef } from './features';
@@ -52,12 +54,13 @@ export const dimensionType: ElementType<DimensionParams> = {
       const pt = resolvePoint(ctx.doc, q.at, q.refs.filter((ref) => visible(ref.id)), dir);
       return [pt[0], pt[1]];
     });
-    return dimensionPrims({ ...p, points }, ctx.scale, { objectId: el.id, objectType: 'Dimension' }, ctx.style.labels.heights.dimension);
+    return dimensionPrims({ ...p, points }, ctx.scale, { objectId: el.id, objectType: 'Dimension' }, ctx.style.labels.heights.dimension, ctx.style);
   },
 };
 
 /** Primitiver för en måttkedja; används också för förhandsvisningen i verktyget. */
-export function dimensionPrims(p: DimensionParams, drawingScale: number, origin?: Primitive['origin'], textHeight = 2.2): Primitive[] {
+/** `style` ger måttens pennor (0.8.26); utan den gäller förvalen. */
+export function dimensionPrims(p: DimensionParams, drawingScale: number, origin?: Primitive['origin'], textHeight = 2.2, style?: StyleSheet): Primitive[] {
   if (p.points.length < 2) return [];
   const pts = p.points.map(pointAt);
   const paper = (mm: number) => mm * drawingScale;
@@ -68,8 +71,8 @@ export function dimensionPrims(p: DimensionParams, drawingScale: number, origin?
   const ts = [...new Set(pts.map((q) => Math.round((q[0] - base[0]) * u[0] + (q[1] - base[1]) * u[1])))].sort((a, b) => a - b);
   if (ts.length < 2) return [];
   const on = (t: number, o = 0): Vec2 => add(add(base, scale(u, t)), scale(n, p.offset + o));
-  const thin: Pen = { weight: 0.18 };
-  const tick: Pen = { weight: 0.35 };
+  const thin: Pen = markerPen(style, 'dimension');
+  const tick: Pen = markerPen(style, 'dimensionTick');
   const out: Primitive[] = [];
   const ext = paper(2);
   // Måttlinjen, lite förlängd förbi ytterpunkterna.
@@ -103,7 +106,7 @@ export function dimensionPrims(p: DimensionParams, drawingScale: number, origin?
       height: textHeight,
       align: 'middle',
       angle: a,
-      pen: { weight: 0.18 },
+      pen: withWeight(thin, 0.18),
       origin,
     });
   }

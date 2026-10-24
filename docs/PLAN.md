@@ -1015,6 +1015,17 @@ av penntabellen under *Efter pilotprojektet*, framflyttad.
   norrpil, rumsstämpelns pil, taklutning, mått) m.m., bara centralt i
   stilmallen
 
+*Byggd (24 oktober), samma format (13), i en session. Claudes val, att
+stämma av: nio pennor (sektionslinje, fasadlinje, norrpil, rumsstämpelns
+pil, taklutning, mått, måttens snedstreck, nivåkota, litterans streck) i
+en egen del längst ned i stilmallen, med tjocklek ur samma tabell som
+2D-formerna och en färg. Färgen gäller också markörens text (sektionens
+bokstav, fasadens namn, N, måttal, gradtal, nivåns höjd) och de fyllda
+trianglarna; texten behåller sin tjocklek. Svart sparas som *ink* och
+följer skärmens tema. Bara det som ändrats sparas (`pens` i stilmallen,
+samma tabell som fasadernas linjer), och *Förval* tar bort det. Skalstocken,
+stämplarna och rumsstämpelns text har inga pennor. Inga pennor per objekt.*
+
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
 *Framflyttad från 0.14.*

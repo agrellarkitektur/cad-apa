@@ -1,10 +1,22 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.25.
+överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.26.
 
 ## Läget
 
+- **0.8.26 Pennor i stilmallen är klar** på `main` (samma format, 13, i
+  en session): linjetjocklek och färg för nio sorters pilar och markörer
+  (sektionslinje, fasadlinje, norrpil, rumsstämpelns pil, taklutning,
+  mått, måttens snedstreck, nivåkota, litterans streck) i en ny del längst
+  ned i stilmallen (`penSection` i `src/ui/styleDialog.ts`). Sparas i
+  stilmallens `pens` (fanns redan för fasadernas linjer); nycklar och
+  förval i `src/repr/markerPens.ts`. Provat i bygget med Playwright
+  (tjocklek, färg och Förval i stilmallen, röd sektionslinje i planen) och
+  `tests/v0826.test.ts`. Alla 362 tester går igenom utom de två
+  tidsberoende (`prestanda` och klicktestet i `v0823`), som föll lika i
+  0.8.25 i den här sandlådan. Står i README, PLAN.md och UTVECKLING.md
+  under *Pennor i stilmallen (0.8.26)*.
 - **0.8.25 Ritordning och fyllningar är klar** på `main` (samma format,
   13, i en session): Längst bak, Bak, Fram och Främst (`Element.order`,
   `src/core/drawOrder.ts`, gränssnittet i `src/ui/app/drawOrderUi.ts`)
@@ -92,8 +104,9 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.8.21 Kommandoraden del 2~~,
   ~~0.8.22 Småsaker~~, ~~0.8.23 Granskning~~, ~~0.8.24 2D-form del 2~~,
-  ~~0.8.25 Ritordning och fyllningar~~ (klara)
-- **0.8.26 Pennor i stilmallen**: tjocklek och färg för pilar och markörer
+  ~~0.8.25 Ritordning och fyllningar~~, ~~0.8.26 Pennor i stilmallen~~
+  (klara)
+- **0.8.27 Granskning** (förslag; senast 0.8.23), eller direkt till 0.9
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade)
@@ -112,16 +125,25 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.25 syns på webbhotellet (numret vid alfa-knappen) och
-hur 0.8.12–0.8.25 fungerar, särskilt bågarna och ändarna (0.8.24) och
-ritordningen (0.8.25), och om sorteringen av Inkorgen (0.8.26 före 0.9)
-stämmer. Läs synpunktsfilen och sortera ny Inkorg. Nästa version är
-**0.8.26 Pennor i stilmallen**: tjocklek och färg för pilar och markörer,
-bara centralt i stilmallen. Säg hur stor den är (mellanstor) innan den
-byggs. Efter 0.8.26 bör en granskningssession föreslås (ungefär var
-tredje version; senast 0.8.23).
+Fråga först om 0.8.26 syns på webbhotellet (numret vid alfa-knappen) och
+hur 0.8.12–0.8.26 fungerar, särskilt bågarna och ändarna (0.8.24),
+ritordningen (0.8.25) och pennorna (0.8.26), och om sorteringen av
+Inkorgen stämde. Läs synpunktsfilen och sortera ny Inkorg. Föreslå sedan
+**0.8.27 Granskning** (ungefär var tredje version; senast 0.8.23), eller
+gå direkt till **0.9 Flera våningsplan och bjälklag** (nytt format, stor;
+säg hur stor och om den behöver delas) om han hellre vill det. Kandidater
+för granskningen: `src/ui/styleDialog.ts` och `src/styles/app.css` växer,
+och de två tidsberoende testen bör kontrolleras på en snabbare maskin
+eller få längre tid.
 
 ## Att fråga Carl August om
+
+- **0.8.26 efter provning** (Claudes val, se PLAN.md): vilka nio pennor
+  som finns och deras namn; att färgen också gäller markörens text och
+  fyllda trianglar, men tjockleken bara linjerna; att pennorna ligger längst
+  ned i stilmallen (inte i en egen dialog); att det inte går att ge ett
+  enskilt objekt en egen penna. Saknas någon markör (skalstocken,
+  stämplarna, rumsstämpelns text)? Ska streckning också kunna väljas?
 
 - **0.8.25 efter provning** (Claudes val, se PLAN.md): att ritordningen
   bara gäller inom en sort på samma yta (en text går inte att lägga bakom

@@ -1,4 +1,5 @@
 import type { Element } from '../core/model';
+import { markerPen } from '../repr/markerPens';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import type { PlanContext } from './registry';
 import { doorNumbersFor } from './rooms';
@@ -140,7 +141,7 @@ export function litteraTag(ctx: PlanContext, el: Element<any>, f: WallFrame, s: 
   if (opts.leader) {
     // Ett rakt streck från texten in till väggens mitt, utan streck längs texten.
     const d = onUpSide ? gap - paper(0.9) : gap - paper(0.3);
-    out.push({ kind: 'line', a: at(-f.half, 0), b: at(d, 0), pen: { weight: 0.18 }, origin });
+    out.push({ kind: 'line', a: at(-f.half, 0), b: at(d, 0), pen: markerPen(ctx.style, 'litteraLeader'), origin });
   }
   return out;
 }

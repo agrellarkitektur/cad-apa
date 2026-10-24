@@ -1,7 +1,9 @@
 import { setGraphics } from '../core/commands';
 import { normalizeStyle, PRESETS, type ActionKey, type Color, type FillDef, type StyleSheet } from '../core/graphics';
 import type { DocStore } from '../core/store';
+import { defaultMarkerPen, MARKER_PENS, type MarkerPenKey } from '../repr/markerPens';
 import { escapeHtml } from './labels';
+import { weightPicker } from './weightPick';
 
 const ROWS: { key: ActionKey; label: string; hint: string }[] = [
   { key: 'plain', label: 'Nybyggnad', hint: 'Utan jämförelse: nybyggnad, eller när jämförelsen är avslagen' },
@@ -86,6 +88,7 @@ export class StyleDialog {
         <p class="note">Svart visas ljust på mörk skärm och vitt följer bakgrunden. På papper blir de svart och vitt.</p>
         ${rows}
         ${this.labelSection(style)}
+        ${penSection(style)}
       </div>
       <footer>
         <button class="btn" data-action="open-style">Öppna stilmall…</button>
@@ -124,6 +127,16 @@ export class StyleDialog {
   private onClick(e: Event): void {
     const action = (e.target as HTMLElement).closest<HTMLElement>('[data-action]')?.dataset.action;
     if (action === 'close') this.close();
+    if (action === 'pen-reset') {
+      const key = (e.target as HTMLElement).closest<HTMLElement>('[data-pen-key]')?.dataset.penKey;
+      const style: StyleSheet = structuredClone(this.store.doc.graphics);
+      if (key && style.pens?.[key]) {
+        delete style.pens[key];
+        if (!Object.keys(style.pens).length) delete style.pens;
+        style.name = 'Egen stilmall';
+        setGraphics(this.store, style, 'Ändra pennor');
+      }
+    }
     if (action === 'save-style') this.onSaveFile(this.store.doc.graphics);
     if (action === 'open-style') {
       const input = document.createElement('input');
@@ -146,6 +159,25 @@ export class StyleDialog {
     const input = e.target as HTMLInputElement | HTMLSelectElement;
     if (input.id === 'style-preset') {
       setGraphics(this.store, structuredClone(PRESETS[Number(input.value)]));
+      return;
+    }
+    if (input.dataset.pen) {
+      const [key, field] = input.dataset.pen.split(':') as [MarkerPenKey, 'weight' | 'color'];
+      const style: StyleSheet = structuredClone(this.store.doc.graphics);
+      const pens = (style.pens ??= {});
+      const pen = { ...defaultMarkerPen(key), ...pens[key] };
+      if (field === 'weight' && Number(input.value) > 0) pen.weight = Number(input.value);
+      if (field === 'color') {
+        const c = fromHex(input.value);
+        if (c === 'ink' || c === 'paper') delete pen.color;
+        else pen.color = c;
+      }
+      // Förvalet sparas inte, så att en senare ändring av förvalen slår igenom.
+      if (pen.weight === defaultMarkerPen(key).weight && !pen.color) delete pens[key];
+      else pens[key] = pen;
+      if (!Object.keys(pens).length) delete style.pens;
+      style.name = 'Egen stilmall';
+      setGraphics(this.store, style, 'Ändra pennor');
       return;
     }
     if (input.dataset.lab) {
@@ -204,6 +236,32 @@ export class StyleDialog {
     style.name = 'Egen stilmall';
     setGraphics(this.store, style, 'Ändra stilmall');
   }
+}
+
+/**
+ * Pennor för pilar och markörer (0.8.26): linjetjocklek och färg per sorts
+ * markör, för hela projektet. Färgen gäller också markörens text och fyllda
+ * trianglar.
+ */
+function penSection(style: StyleSheet): string {
+  const rows = MARKER_PENS.map(({ key, label, hint }) => {
+    const own = style.pens?.[key];
+    const weight = own?.weight ?? defaultMarkerPen(key).weight;
+    const reset = own
+      ? `<button class="btn" data-action="pen-reset" data-pen-key="${key}" title="Tillbaka till förvalet">Förval</button>`
+      : '<span aria-hidden="true"></span>';
+    return `<div class="pen-row">
+      <div class="style-name"><b>${escapeHtml(label)}</b><span>${escapeHtml(hint)}</span></div>
+      <div class="pen-weight"><span>Tjocklek</span>${weightPicker(`pen-${key}`, weight, `data-pen="${key}:weight"`, ' mm')}</div>
+      <label><span>Färg</span><input type="color" data-pen="${key}:color" value="${toHex(own?.color ?? 'ink')}"></label>
+      ${reset}
+    </div>`;
+  }).join('');
+  return `<section class="style-labels style-pens">
+    <h3>Pennor för pilar och markörer</h3>
+    <p class="note">Gäller hela projektet, i planen, fasaderna, sektionerna och på bladen. Färgen gäller också markörens text. Svart följer skärmens tema.</p>
+    ${rows}
+  </section>`;
 }
 
 function clamp01(v: number): number {

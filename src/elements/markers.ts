@@ -1,5 +1,6 @@
 import type { Element, ProjectDoc } from '../core/model';
 import { left, norm, sub } from '../geometry/vec';
+import { markerPen, penFill, withWeight } from '../repr/markerPens';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
 import type { RoofParams } from './roof';
@@ -175,7 +176,7 @@ function sectionPlan(el: Element<any>, ctx: PlanContext): Primitive[] {
   const endLen = Math.min(len / 3, 8 * k);
   const at = (t: number): Vec2 => [f.start[0] + u[0] * t, f.start[1] + u[1] * t];
   const tag = markerTag(ctx.doc, el);
-  const thick = { weight: 0.5 };
+  const thick = markerPen(ctx.style, 'sectionLine');
   const out: Primitive[] = [
     { kind: 'line', a: f.start, b: at(endLen), pen: thick, origin },
     { kind: 'line', a: at(len - endLen), b: f.end, pen: thick, origin },
@@ -192,7 +193,7 @@ function sectionPlan(el: Element<any>, ctx: PlanContext): Primitive[] {
     out.push(...openArrow(tip, f.view, 2.5 * k, thick, origin));
     const side = t === 0 ? -1 : 1;
     const c: Vec2 = [base[0] + u[0] * side * 3.2 * k, base[1] + u[1] * side * 3.2 * k];
-    out.push({ kind: 'text', at: [c[0] + down[0] * h * 0.36 * k, c[1] + down[1] * h * 0.36 * k], text: tag, height: h, bold: true, align: 'middle', angle, pen: { weight: 0.35 }, origin });
+    out.push({ kind: 'text', at: [c[0] + down[0] * h * 0.36 * k, c[1] + down[1] * h * 0.36 * k], text: tag, height: h, bold: true, align: 'middle', angle, pen: withWeight(thick, 0.35), origin });
   }
   return out;
 }
@@ -216,14 +217,15 @@ function elevationPlan(el: Element<any>, ctx: PlanContext): Primitive[] {
   // Linjens högra ände sett i läsriktningen.
   const right = (f.end[0] - f.start[0]) * along[0] + (f.end[1] - f.start[1]) * along[1] > 0 ? f.end : f.start;
   const text = markerName(ctx.doc, el).toLocaleUpperCase('sv-SE');
+  const pen = markerPen(ctx.style, 'elevationLine');
   return [
-    { kind: 'line', a: f.start, b: f.end, pen: { weight: 0.18 }, origin },
+    { kind: 'line', a: f.start, b: f.end, pen, origin },
     {
       kind: 'region',
       role: 'cut',
       rings: [[tip, [m[0] + u[0] * s * 0.6, m[1] + u[1] * s * 0.6], [m[0] - u[0] * s * 0.6, m[1] - u[1] * s * 0.6]]],
-      fill: { kind: 'solid', color: 'ink' },
-      outline: { weight: 0.18 },
+      fill: penFill(pen),
+      outline: pen,
       ownFill: true,
       origin,
     },
@@ -234,7 +236,7 @@ function elevationPlan(el: Element<any>, ctx: PlanContext): Primitive[] {
       height: 2,
       align: 'end',
       angle,
-      pen: { weight: 0.18 },
+      pen: withWeight(pen, 0.18),
       origin,
     },
   ];
@@ -268,12 +270,13 @@ export const northType: ElementType<NorthParams> = {
     const l: Vec2 = [c[0] - d[0] * R * 0.55 + n[0] * w, c[1] - d[1] * R * 0.55 + n[1] * w];
     const rr: Vec2 = [c[0] - d[0] * R * 0.55 - n[0] * w, c[1] - d[1] * R * 0.55 - n[1] * w];
     const label: Vec2 = [c[0] + d[0] * (R + 4.5 * k), c[1] + d[1] * (R + 4.5 * k) - 1.6 * k];
+    const pen = markerPen(ctx.style, 'north');
     return [
-      { kind: 'polyline', points: circle, closed: true, pen: { weight: 0.18 }, origin },
-      { kind: 'line', a: tail, b: tip, pen: { weight: 0.18 }, origin },
-      { kind: 'region', role: 'cut', rings: [[tip, l, c]], fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.18 }, ownFill: true, origin },
-      { kind: 'polyline', points: [tip, rr, c], closed: true, pen: { weight: 0.18 }, origin },
-      { kind: 'text', at: label, text: 'N', height: 3.5, bold: true, align: 'middle', pen: { weight: 0.35 }, origin },
+      { kind: 'polyline', points: circle, closed: true, pen, origin },
+      { kind: 'line', a: tail, b: tip, pen, origin },
+      { kind: 'region', role: 'cut', rings: [[tip, l, c]], fill: penFill(pen), outline: pen, ownFill: true, origin },
+      { kind: 'polyline', points: [tip, rr, c], closed: true, pen, origin },
+      { kind: 'text', at: label, text: 'N', height: 3.5, bold: true, align: 'middle', pen: withWeight(pen, 0.35), origin },
     ];
   },
 };

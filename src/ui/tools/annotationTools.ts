@@ -218,7 +218,7 @@ export class DimensionTool implements ViewTool, PointTaker {
   overlay(cam: Camera): string {
     const out: string[] = [];
     const d = this.preview();
-    if (d) out.push(`<g class="dim-preview">${renderPrimitives(dimensionPrims(d, this.host.view.drawingScale), cam, { drawingScale: this.host.view.drawingScale })}</g>`);
+    if (d) out.push(`<g class="dim-preview">${renderPrimitives(dimensionPrims(d, this.host.view.drawingScale, undefined, this.host.store.doc.graphics.labels.heights.dimension, this.host.store.doc.graphics), cam, { drawingScale: this.host.view.drawingScale })}</g>`);
     for (const q of this.points) {
       const s = cam.toScreen(pointAt(q));
       out.push(`<circle cx="${s[0]}" cy="${s[1]}" r="3.5" class="chain-pt"/>`);

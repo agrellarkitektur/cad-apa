@@ -2660,6 +2660,52 @@ table.keys td:first-child {
   }
 }
 
+/* Pennor för pilar och markörer (0.8.26). */
+.pen-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.6fr) minmax(110px, 1fr) 72px 76px;
+  gap: 10px;
+  align-items: end;
+  padding: 8px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.pen-row label,
+.pen-weight {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pen-row label > span:first-child,
+.pen-weight > span:first-child {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.pen-row input[type='color'] {
+  width: 100%;
+  height: 31px;
+  padding: 2px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.style-pens .wp-table {
+  top: calc(100% + 4px);
+  bottom: auto;
+}
+
+@media (max-width: 720px) {
+  .pen-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .pen-row .style-name {
+    grid-column: 1 / -1;
+  }
+}
+
 /* ---------- Panelens grupp för det som påverkar fler objekt ---------- */
 
 .panel-body section.shared {

@@ -1,4 +1,5 @@
-import type { Primitive, Vec2 } from '../repr/primitives';
+import { markerPen } from '../repr/markerPens';
+import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import type { ElementType } from './registry';
 import { closestOnSegment, pointInRings } from '../geometry/vec';
 import { centroidOf, roomNumbersFor, spaceOutline, type SpaceParams } from './rooms';
@@ -83,7 +84,7 @@ export const spaceType: ElementType<SpaceParams> = {
         at[0] + widest / 2,
         top + (heights.roomName * ctx.scale) / 2,
       ];
-      out.push(...leader(pts, at, box, ctx.scale, origin));
+      out.push(...leader(pts, at, box, ctx.scale, origin, markerPen(ctx.style, 'roomLeader')));
     }
     return out;
   },
@@ -94,7 +95,7 @@ export const spaceType: ElementType<SpaceParams> = {
  * till närmaste punkt på rummets kontur och 2 mm (på papper) in i rummet,
  * med en öppen pilspets.
  */
-function leader(pts: readonly Vec2[], at: Vec2, box: [number, number, number, number], scale: number, origin: Primitive['origin']): Primitive[] {
+function leader(pts: readonly Vec2[], at: Vec2, box: [number, number, number, number], scale: number, origin: Primitive['origin'], pen: Pen): Primitive[] {
   let edge: Vec2 = pts[0];
   let best = Infinity;
   for (let i = 0; i < pts.length; i++) {
@@ -114,7 +115,6 @@ function leader(pts: readonly Vec2[], at: Vec2, box: [number, number, number, nu
   const total = best + 2 * scale;
   if (t >= total - 2 * scale) return [];
   const start: Vec2 = [at[0] + dir[0] * t, at[1] + dir[1] * t];
-  const pen = { weight: 0.18, color: 'ink' as const };
   const size = 2.5 * scale;
   const n: Vec2 = [-dir[1], dir[0]];
   const base: Vec2 = [tip[0] - dir[0] * size, tip[1] - dir[1] * size];

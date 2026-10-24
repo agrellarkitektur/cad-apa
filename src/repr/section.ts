@@ -9,6 +9,7 @@ import { roofPlanes, type RoofParams } from '../elements/roof';
 import { slopeSymbol, type RoofSlopeParams } from '../elements/roofSlope';
 import type { PlanContext } from '../elements/registry';
 import { createContext } from './context';
+import { markerPen, withWeight } from './markerPens';
 import { solidTriangles } from './mesh';
 import { applyStyle, type Pickable } from './plan';
 import type { Pen, Primitive, Vec2 } from './primitives';
@@ -248,7 +249,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
         slopes[id] = pl;
         const sty = view.detail === 'sketch' ? 'text' : 'arc';
         const slope = ctx.params<RoofParams>(doc.elements[pl.roof]).slope;
-        for (const p of slopeSymbol(pl.at, pl.toward, slope, pl.len, sty, style.labels.heights.dimension, { objectId: id, objectType: 'RoofSlope', part: 'taklutning' }, ctx.scale)) {
+        for (const p of slopeSymbol(pl.at, pl.toward, slope, pl.len, sty, style.labels.heights.dimension, { objectId: id, objectType: 'RoofSlope', part: 'taklutning' }, ctx.scale, markerPen(style, 'roofSlope'))) {
           prims.push(p);
           own(id, p);
         }
@@ -263,7 +264,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     }
     const top = Math.round(maxZ);
     if (!levels.has(top)) levels.set(top, ctx.visible('Roof').length ? 'nock' : '');
-    for (const [z, label] of levels) prims.push(...levelMark(maxU + 12 * ctx.scale, z, style.labels.heights.dimension, label, ctx.scale));
+    for (const [z, label] of levels) prims.push(...levelMark(maxU + 12 * ctx.scale, z, style.labels.heights.dimension, label, ctx.scale, markerPen(style, 'level')));
   }
 
   const pickables: Pickable[] = [...new Set([...byId.keys(), ...ownCuts.keys()])].map((id) => {
@@ -356,14 +357,14 @@ function wallSilhouettes(shapes: { s: Shape3D; demolished: boolean }[], v: Vec2)
 }
 
 /** En nivåkota: ett streck, en triangel som pekar ned på det och höjden i meter. */
-function levelMark(x: number, z: number, height: number, label: string, s: number): Primitive[] {
+function levelMark(x: number, z: number, height: number, label: string, s: number, pen: Pen): Primitive[] {
   // s: ritningsskalan, för storleken på papper.
   const tri = 1.8 * s;
   const origin = { part: 'nivå' };
   const m = z / 1000;
   const text = `${m === 0 ? '±' : m > 0 ? '+' : '−'}${Math.abs(m).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
   return [
-    { kind: 'line', a: [x - 6 * s, z], b: [x + 10 * s, z], pen: { weight: 0.18 }, origin },
+    { kind: 'line', a: [x - 6 * s, z], b: [x + 10 * s, z], pen, origin },
     {
       kind: 'region',
       role: 'cut',
@@ -375,11 +376,11 @@ function levelMark(x: number, z: number, height: number, label: string, s: numbe
         ],
       ],
       fill: { kind: 'none' },
-      outline: { weight: 0.18 },
+      outline: pen,
       ownFill: true,
       origin,
     },
-    { kind: 'text', at: [x + tri, z + tri * 0.35], text: label ? `${text} ${label}` : text, height, pen: { weight: 0.18 }, origin },
+    { kind: 'text', at: [x + tri, z + tri * 0.35], text: label ? `${text} ${label}` : text, height, pen: withWeight(pen, 0.18), origin },
   ];
 }
 

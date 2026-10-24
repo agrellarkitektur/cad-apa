@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.25** (alfa, ritordning och fyllningar); nästa är **0.8.26, pennor i stilmallen**.
+**0.8.26** (alfa, pennor i stilmallen); nästa är **0.9, flera våningsplan och bjälklag**.
 
 ## Vad som fungerar
 
@@ -935,6 +935,14 @@ Version 0.8.25, ritordning och fyllningar (samma filformat, 13):
 - **Fyllning i rum**: hel fyllning, skraffering eller korsskraffering med
   färg, vinkel, avstånd och opacitet, bakom väggarna. Släcks med Visa →
   Fyllningar
+
+Version 0.8.26, pennor i stilmallen (samma filformat, 13):
+- **Pennor för pilar och markörer** i stilmallen: linjetjocklek och färg
+  för sektionslinjen, fasadlinjen, norrpilen, rumsstämpelns pil,
+  taklutningen, måtten, måttens snedstreck, nivåkotorna och litterans
+  streck. Gäller hela projektet, i planen, fasaderna, sektionerna och på
+  bladen. Färgen gäller också markörens text och fyllda trianglar; svart
+  följer skärmens tema. *Förval* tar tillbaka programmets värde
 
 ## Versioner och gamla projekt
 

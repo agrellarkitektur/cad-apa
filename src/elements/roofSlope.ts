@@ -1,5 +1,6 @@
 import type { Id } from '../core/model';
-import type { Primitive, Vec2 } from '../repr/primitives';
+import { markerPen } from '../repr/markerPens';
+import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import type { ElementType } from './registry';
 import type { RoofParams } from './roof';
 
@@ -52,9 +53,10 @@ export function slopeSymbol(
   origin: Primitive['origin'],
   /** Ritningsskalan (annoteringsskalan), för symbolens storlek på papper. */
   K = 100,
+  /** Pennan ur stilmallen (0.8.26). */
+  pen: Pen = { weight: 0.18 },
 ): Primitive[] {
   const text = `${slope.toLocaleString('sv-SE', { maximumFractionDigits: 1 })}°`;
-  const pen = { weight: 0.18 };
   const r = (slope * Math.PI) / 180;
   if (style === 'text') {
     // Gradtalet ovanför takfallet, vinkelrätt ut från ytan.
@@ -101,6 +103,6 @@ export const roofSlopeType: ElementType<RoofSlopeParams> = {
     if (!roof) return [];
     const slope = ctx.params<RoofParams>(roof).slope;
     const style = p.style === 'auto' ? (ctx.view.detail === 'sketch' ? 'text' : 'arc') : p.style;
-    return slopeSymbol(p.at as Vec2, p.toward, slope, p.len, style, ctx.style.labels.heights.dimension, { objectId: el.id, objectType: 'RoofSlope', part: 'taklutning' }, ctx.scale);
+    return slopeSymbol(p.at as Vec2, p.toward, slope, p.len, style, ctx.style.labels.heights.dimension, { objectId: el.id, objectType: 'RoofSlope', part: 'taklutning' }, ctx.scale, markerPen(ctx.style, 'roofSlope'));
   },
 };

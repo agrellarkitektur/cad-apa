@@ -1166,6 +1166,20 @@ projekt i 1 982 jämförelser.
   markerade är öppna och har linje. *Ritad som* är ersatt av *Form*
   (Linje eller Spline, och antalet bågar)
 
+## Pennor i stilmallen (0.8.26, format 13)
+
+Pilar och markörer får sin linjetjocklek och färg från stilmallens `pens`,
+samma tabell som fasadernas och sektionernas linjer (`PART_PEN` i
+`src/repr/section.ts`). Nycklarna och förvalen står i `MARKER_PENS` i
+`src/repr/markerPens.ts`; `markerPen(style, nyckel)` ger pennan,
+`withWeight` samma färg med textens tjocklek och `penFill` en fylld
+triangel i pennans färg. En ny sorts markör läggs till som en rad i
+`MARKER_PENS` och ritas med `markerPen(ctx.style, …)`; raden syns då i
+stilmallen utan mer kod. `dimensionPrims` och `slopeSymbol` tar pennan
+eller stilmallen som sista parameter (utan den gäller förvalen).
+Stilmallens del ritas av `penSection` i `src/ui/styleDialog.ts`; bara det
+som skiljer sig från förvalet sparas.
+
 ## Ritordning och fyllningar (0.8.25, format 13)
 
 Inga nya format: fälten är frivilliga.
