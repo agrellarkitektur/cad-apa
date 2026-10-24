@@ -41,6 +41,11 @@ export class Modifier {
     return !!this.tool;
   }
 
+  /** Verktyget som kör valet just nu (för smartshell, 0.8.21). */
+  get runningTool(): ModifyTool | ArrangeTool | null {
+    return this.tool;
+  }
+
   /** Ett val körs, Ny vägg pågår eller raden väntar på ett klick: Esc avbryter först det. */
   get busy(): boolean {
     return !!this.active || !!this.picking;

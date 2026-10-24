@@ -1116,6 +1116,42 @@ projekt i 1 982 jämförelser.
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
 
+## Kommandoraden del 2 (0.8.21)
+
+- **Frågan** `src/ui/app/prompts.ts`: `currentPrompt` ger `head` (verktyget
+  eller valet), `text` och `options` (`PromptOption` med `key`, `label`,
+  `run` och `on`) för läget just nu: ett kommando som väntar på en
+  markering, Modifiera (`picking`, `runningTool`), Rikta, Zooma och
+  verktygen. Ett nytt verktyg med steg ska ha ett fall där. `matchOption`
+  väljer ett alternativ ur det skrivna (bokstaven eller början av namnet,
+  minst två tecken, entydigt). Alternativen går före kommandon och punkter
+  i `submit`
+- **Verktygen** har fått det frågan behöver: `WallTool.canClose`, `close`
+  och `undoLast` (ångrar väggen med `store.undo`), `Draw2DTool.canClose`
+  och `undoPoint`, `DimensionTool.undoPoint`, `MarkerTool.back` och
+  `hintText`, `RoofTool.hintText`. `MarkerTool`, `RoofTool` och
+  `ModifyTool` är `PointTaker` (`ModifyTool.takesPoints` är falskt för
+  Trimma, Hörnskarv, Dela och Förläng; `repickBase` och `hasBase` för
+  *Baspunkt*). Klicket och den skrivna punkten går genom samma `click`
+- **Smartshell** `src/ui/app/commandLine.ts`: `pending` är ett kommando för
+  det markerade som väntar (`waitForSelection`, `runPending`,
+  `cancelPending`, som Esc i `keyboard.ts` anropar först). `key('enter' |
+  'space')` är Enter och mellanslag utanför fältet. `optionLetter(k)` säger
+  om en bokstav ska gå till raden (medan något pågår och ett alternativ
+  börjar så), `wantsPoint()` om Modifiera väntar på en punkt och inte på
+  värdet. `remember` utifrån räknas inte medan raden själv kör ett kommando
+  (`running`), så att historiken inte får dubbletter. Historiken `log`
+  (`LogLine`, högst 200) visas i `.ss-log` med F2; `recentItems(forSelection)`
+  och `promptItems()` ger rader till högerklicksmenyn (`menus.ts`)
+- **Läget** `UiSettings.shellDock` (`bottom`, `top`, `float`) och `shellAt`
+  (andel av ritytan). `applyDock` sätter klasserna `ss-top` och `ss-float`
+  på `.app` (CSS-griden byter ordning på `cmd` och `canvas`) och `ss-down`
+  på raden när listan och historiken ska öppnas nedåt. `.ss-grip` (blixten)
+  dras; `.ss-dropzone` i `.canvas` visar var den dockas
+- Playwright: alternativen är `.ss-opt` (`data-opt`), historiken `.ss-log`,
+  läget `JSON.parse(localStorage['bacchus-ui']).shellDock`. Frågan står i
+  `.ss-hint`
+
 ## Kommandoraden (0.8.20)
 
 - **Registret** `src/ui/commandRegistry.ts`: `COMMANDS` med `id`,

@@ -114,6 +114,19 @@ export class Draw2DTool implements ViewTool, PointTaker {
 
   cancel(): void {}
 
+  /** Formen kan slutas mot första punkten (Stäng i smartshell, 0.8.21). */
+  get canClose(): boolean {
+    return this.open && this.points.length >= 3;
+  }
+
+  /** Ta bort den senaste punkten (Ångra i smartshell, 0.8.21). */
+  undoPoint(): void {
+    this.points.pop();
+    this.lockAngle = null;
+    this.onChange?.();
+    this.host.view.requestRender();
+  }
+
   reset(): void {
     this.points = [];
     this.lockAngle = null;
@@ -198,7 +211,7 @@ export class Draw2DTool implements ViewTool, PointTaker {
       case 'arc':
         return n === 0 ? 'Klicka där bågen börjar.' : n === 1 ? 'Klicka där bågen slutar.' : 'Klicka en punkt på bågen.';
       default:
-        return n === 0 ? 'Klicka första punkten.' : 'Klicka nästa punkt. Dubbelklicka, tryck Klar eller klicka på första punkten för att sluta.';
+        return n === 0 ? 'Klicka första punkten.' : 'Klicka nästa punkt, eller dubbelklicka för att sluta.';
     }
   }
 

@@ -75,7 +75,30 @@ export class WallTool implements ViewTool, PointTaker {
   }
 
   hintText(): string {
-    return this.drawing ? 'Klicka nästa punkt, eller skriv en längd. Enter avslutar.' : 'Klicka där väggen ska börja.';
+    return this.drawing ? 'Klicka nästa punkt, eller skriv en längd.' : 'Klicka där väggen ska börja.';
+  }
+
+  /** Kedjan kan slutas mot sin första punkt (Stäng i smartshell, 0.8.21). */
+  get canClose(): boolean {
+    return this.chain.length >= 3;
+  }
+
+  /** Stäng: en sista vägg till första punkten, och kedjan är klar. */
+  close(): void {
+    if (this.canClose) this.place(this.chain[0]);
+    this.host.view.requestRender();
+  }
+
+  /** Ångra den senaste väggen i kedjan, eller startpunkten om ingen vägg finns än (0.8.21). */
+  undoLast(): void {
+    if (this.created.length) {
+      this.host.store.undo();
+      this.created.pop();
+      this.chain.pop();
+    } else this.chain = [];
+    this.lockAngle = null;
+    this.onChange?.();
+    this.host.view.requestRender();
   }
 
   /** Börja kedjan i en given punkt, t.ex. en väggs ände (0.8.4). */

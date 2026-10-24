@@ -9,6 +9,7 @@ import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { pxToMm, type ToolHost } from '../tools/host';
 import { snapMarker } from '../tools/overlay';
+import type { PointTaker } from '../pointInput';
 import { roundMm, snap, type SnapResult, type SnapSegment } from '../tools/snap';
 import { CUT_OPS, clickCut, firstOfJoin, overlayCut } from './cutOps';
 import type { ModifyContext, OpId } from './ops';
@@ -53,7 +54,7 @@ const NO_MARKER = new Set<OpId>(['fillet', 'chamfer', 'filletAll', 'chamferAll',
  * Flytta, Vrid, Spegla och I rad i transformOps.ts. Verktyget håller läget
  * (`ModifyState`) och baspunkten.
  */
-export class ModifyTool implements ViewTool, ModifyState {
+export class ModifyTool implements ViewTool, ModifyState, PointTaker {
   cursor = 'crosshair';
   readonly host: ToolHost;
   readonly op: OpId;
@@ -142,7 +143,51 @@ export class ModifyTool implements ViewTool, ModifyState {
 
   up(p: ViewPointer): void {
     this.track(p);
-    const at = roundMm(this.cursorAt?.point ?? p.model);
+    this.click(roundMm(this.cursorAt?.point ?? p.model), p.model);
+  }
+
+  /** Om verktyget tar emot skrivna punkter: inte de som klickar på ett objekt (Trimma, Hörnskarv …). */
+  get takesPoints(): boolean {
+    return !CUT_OPS.has(this.op) && this.op !== 'extend';
+  }
+
+  // Skrivna punkter i smartshell (0.8.21): Flytta @1200,0 räknas från baspunkten.
+  lockAngle: number | null = null;
+
+  lastPoint(): Vec2 | undefined {
+    if (this.op === 'rotate' && this.ref) return this.base ?? undefined;
+    return (BASE_OPS.has(this.op) ? this.base : this.op === 'stretch' ? fixedEnd(this) : this.ctx.at) ?? undefined;
+  }
+
+  cursorPoint(): Vec2 | undefined {
+    return this.cursorAt?.point ?? this.hoverAt ?? undefined;
+  }
+
+  takePoint(pt: Vec2): void {
+    const at = roundMm(pt);
+    this.cursorAt = { point: at, kind: 'free', label: '' };
+    this.click(at, at);
+    this.host.view.requestRender();
+  }
+
+  hintText(): string {
+    return this.prompt() ?? '';
+  }
+
+  /** Välj baspunkten igen (Baspunkt i smartshell). */
+  repickBase(): void {
+    if (!BASE_OPS.has(this.op)) return;
+    this.base = null;
+    this.ref = null;
+    this.changed();
+    this.host.view.requestRender();
+  }
+
+  get hasBase(): boolean {
+    return !!this.base;
+  }
+
+  private click(at: Vec2, model: Vec2): void {
     if (BASE_OPS.has(this.op) && !this.base) {
       this.base = at;
       this.changed();
@@ -154,7 +199,7 @@ export class ModifyTool implements ViewTool, ModifyState {
       return;
     }
     if (CUT_OPS.has(this.op)) {
-      const r = clickCut(this, p.model, at);
+      const r = clickCut(this, model, at);
       if (r.done) this.done();
       else if (r.first) {
         this.first = r.first;

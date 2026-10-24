@@ -108,7 +108,7 @@ export class DimensionTool implements ViewTool, PointTaker {
 
   hintText(): string {
     if (this.placing) return 'Klicka eller skriv där måttlinjen ska ligga.';
-    return this.points.length < 2 ? 'Klicka eller skriv punkterna som ska måttsättas.' : 'Nästa punkt, eller Enter när punkterna är klara.';
+    return this.points.length < 2 ? 'Klicka eller skriv punkterna som ska måttsättas.' : 'Klicka eller skriv nästa punkt.';
   }
 
   /** Element som måttet kan knytas till: det som finns i tillståndet man ritar i. */
@@ -145,6 +145,14 @@ export class DimensionTool implements ViewTool, PointTaker {
       return [near, far];
     }
     return null;
+  }
+
+  /** Ta bort den senaste punkten, eller gå tillbaka från måttlinjen (Ångra i smartshell, 0.8.21). */
+  undoPoint(): void {
+    if (this.placing) this.placing = false;
+    else this.points.pop();
+    this.onChange?.();
+    this.host.view.requestRender();
   }
 
   /** Punkterna är klara: nu placeras måttlinjen. */

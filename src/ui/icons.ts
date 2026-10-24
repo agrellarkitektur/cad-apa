@@ -5,6 +5,8 @@ const svg = (body: string) =>
 export const icons = {
   // Smartshell (0.8.20): samma blixt som i Sisyfos.
   bolt: svg('<path d="M13 3 5 13.5h6L10 21l8-10.5h-6z"/>'),
+  history: svg('<path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4 4.5v3.7h3.7"/><path d="M12 8v4.3l2.8 1.7"/>'),
+  dock: svg('<rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 15h16"/>'),
   help: svg('<circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.4a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.1-2.4 3.7"/><circle cx="12" cy="17" r=".6" fill="currentColor"/>'),
   pan: svg(
     '<path d="M8 13V6.5a1.5 1.5 0 0 1 3 0V12M11 11.5V5a1.5 1.5 0 0 1 3 0v6.5M14 11.5V6.5a1.5 1.5 0 0 1 3 0V14c0 3.9-2.6 6.5-6 6.5-2.4 0-3.9-1.1-5.1-3L4.3 14.7a1.5 1.5 0 0 1 2.4-1.8L8 14.5"/>',

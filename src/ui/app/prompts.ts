@@ -1,0 +1,137 @@
+import { commandFor, type CommandDef } from '../commandRegistry';
+import { ALIGN_BUTTONS, ArrangeTool } from '../modify/arrangeTool';
+import { OPS, RAIL_ITEMS } from '../modify/ops';
+import { ModifyTool } from '../modify/tool';
+import type { AppContext } from './context';
+
+/** Ett alternativ i hakparentesen: skrivs med `key` (eller början av namnet) eller klickas. */
+export interface PromptOption {
+  key: string;
+  label: string;
+  run: () => void;
+  /** Valt nu (t.ex. sadeltak), visas intryckt. */
+  on?: boolean;
+}
+
+/** Vad kommandot som pågår frågar efter, som i AutoCAD: `Vägg: Klicka nästa punkt [Avsluta/Stäng/Ångra]`. */
+export interface Prompt {
+  head: string;
+  text: string;
+  options: PromptOption[];
+}
+
+/**
+ * Frågan i smartshell (0.8.21) för läget just nu: verktyget, Modifiera, eller
+ * ett kommando som väntar på att något markeras (`pending`). Null när inget
+ * pågår och inget verktyg utom Markera är valt.
+ */
+export function currentPrompt(app: AppContext, pending: CommandDef | null, runPending: () => void): Prompt | null {
+  const redraw = () => {
+    app.toolOpts.renderToolOptions();
+    app.view.requestRender();
+  };
+  if (pending)
+    return {
+      head: pending.label,
+      text: pending.action === 'erase' ? 'Markera det som ska tas bort och tryck Enter.' : 'Markera det som ska ändras och tryck Enter.',
+      options: [{ key: 'K', label: 'Klar', run: runPending }],
+    };
+  const m = app.modifier;
+  if (m.picking) {
+    const def = RAIL_ITEMS.find((r) => r.id === m.picking);
+    return { head: def?.label ?? 'Ändra', text: def?.ask ?? 'Klicka i ritningen.', options: [] };
+  }
+  if (m.active && m.active !== 'wallOn') {
+    const def = OPS[m.active];
+    const t = m.runningTool;
+    const options: PromptOption[] = [];
+    if (t instanceof ModifyTool && t.hasBase && t.takesPoints && ['move', 'rotate', 'mirror', 'multiply'].includes(m.active))
+      options.push({ key: 'B', label: 'Baspunkt', run: () => t.repickBase() });
+    if (t instanceof ArrangeTool && m.active === 'align')
+      for (const [i, b] of ALIGN_BUTTONS.entries()) options.push({ key: ALIGN_KEYS[i], label: b.label, run: () => t.alignBy(b.kind) });
+    return { head: def.label, text: t?.prompt() ?? def.hint, options };
+  }
+  if (app.aligning) return { head: 'Rikta', text: 'Klicka på en vägg eller linje att rikta efter. Shift: vinkelrätt.', options: [] };
+  if (app.zoomingBox) return { head: 'Zooma', text: 'Dra en ruta runt det som ska synas.', options: [] };
+  const tool = app.ui.tool;
+  const head = tool === 'draw2d' ? (commandFor({ shape: app.draw2dTool.options.kind })?.label ?? '2D-form') : (commandFor({ tool })?.label ?? '');
+  switch (tool) {
+    case 'wall': {
+      const w = app.wallTool;
+      const options: PromptOption[] = [];
+      if (w.drawing) {
+        options.push({ key: 'A', label: 'Avsluta', run: () => w.finish() });
+        if (w.canClose) options.push({ key: 'S', label: 'Stäng', run: () => w.close() });
+        options.push({ key: 'Å', label: 'Ångra', run: () => w.undoLast() });
+      }
+      return { head, text: w.hintText(), options };
+    }
+    case 'draw2d': {
+      const d = app.draw2dTool;
+      const options: PromptOption[] = [];
+      if (d.open && d.count >= 2) options.push({ key: 'A', label: 'Avsluta', run: () => d.finish(false) });
+      if (d.canClose) options.push({ key: 'S', label: 'Stäng', run: () => d.finish(true) });
+      if (d.count) options.push({ key: 'Å', label: 'Ångra', run: () => d.undoPoint() });
+      return { head, text: d.hintText(), options };
+    }
+    case 'dimension': {
+      const d = app.dimensionTool;
+      const options: PromptOption[] = [];
+      if (d.count >= 2 && !d.isPlacing) options.push({ key: 'K', label: 'Klar', run: () => d.donePoints() });
+      if (d.count) options.push({ key: 'Å', label: 'Ångra', run: () => d.undoPoint() });
+      return { head, text: d.hintText(), options };
+    }
+    case 'roof': {
+      const r = app.roofTool;
+      const kind = (k: 'gable' | 'shed') => () => {
+        r.options.kind = k;
+        redraw();
+      };
+      const options: PromptOption[] = [
+        { key: 'S', label: 'Sadeltak', run: kind('gable'), on: r.options.kind === 'gable' },
+        { key: 'P', label: 'Pulpettak', run: kind('shed'), on: r.options.kind === 'shed' },
+      ];
+      if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.reset() });
+      return { head, text: r.hintText(), options };
+    }
+    case 'section':
+    case 'elevation': {
+      const t = tool === 'section' ? app.sectionTool : app.elevationTool;
+      return { head, text: t.hintText(), options: t.step ? [{ key: 'Å', label: 'Ångra', run: () => t.back() }] : [] };
+    }
+    case 'measure': {
+      const n = app.measureTool.measurement().points;
+      return {
+        head,
+        text: n ? 'Klicka nästa punkt. Tab flyttar objektet vid sista punkten.' : 'Klicka första punkten att mäta från.',
+        options: n ? [{ key: 'N', label: 'Nollställ', run: () => app.measureTool.reset() }] : [],
+      };
+    }
+    case 'door':
+    case 'window':
+      return { head, text: 'Klicka på en vägg där öppningen ska sitta.', options: [] };
+    case 'room':
+      return { head, text: 'Klicka inuti ett rum som är omslutet av väggar.', options: [] };
+    case 'text':
+      return { head, text: 'Klicka där texten ska stå. Texten skrivs i verktygsraden.', options: [] };
+    default:
+      return null;
+  }
+}
+
+/** Kortkommandona för Justera och fördela, i samma ordning som knapparna. */
+const ALIGN_KEYS = ['V', 'ML', 'H', 'Ö', 'MV', 'U', 'FV', 'FL'];
+
+/**
+ * Det skrivna valt som ett alternativ: exakt bokstaven (eller bokstäverna),
+ * eller början av namnet med minst två tecken.
+ */
+export function matchOption(options: PromptOption[], text: string): PromptOption | null {
+  const t = text.trim().toLowerCase();
+  if (!t) return null;
+  const exact = options.find((o) => o.key.toLowerCase() === t);
+  if (exact) return exact;
+  if (t.length < 2) return null;
+  const starts = options.filter((o) => o.label.toLowerCase().startsWith(t));
+  return starts.length === 1 ? starts[0] : null;
+}

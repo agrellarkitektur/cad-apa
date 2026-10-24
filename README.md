@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.20** (alfa, kommandoraden del 1); nästa är **0.8.21, kommandoraden del 2**, sedan en granskning (0.8.22).
+**0.8.21** (alfa, kommandoraden del 2); nästa är **0.8.22, en granskning**, sedan flera våningsplan (0.9).
 
 ## Vad som fungerar
 
@@ -856,6 +856,32 @@ Version 0.8.20, kommandoraden del 1 (samma filformat, 12):
 - Verktygsknapparna, Modifiera-raden och smartmenyn visar kommandot i sin
   tipsruta (*skriv L, LI, LINE*)
 - Raden kan döljas i *Gränssnitt*
+
+Version 0.8.21, kommandoraden del 2 (samma filformat, 12):
+- Det som pågår **frågar efter nästa steg**, med alternativen i hakparentes:
+  *Vägg: Klicka nästa punkt [Avsluta/Stäng/Ångra]*. Skriv den understrukna
+  bokstaven (eller början av ordet) och Enter, eller klicka på alternativet.
+  Medan något ritas går bokstaven direkt till raden. Väggen, 2D-formerna,
+  måttet, taket (*Sadeltak/Pulpettak*), sektionen, fasaden, måttbandet och
+  Modifiera (*Baspunkt*, och sätten att justera) har alternativ
+- Raden heter **SMARTSHELL** vid blixten; vad verktyget frågar efter står
+  på raden under, med verktygets namn först
+- **Kommandon för det markerade utan markering** (`M`, `RO`, `E` …) väntar
+  på att något markeras: markera och tryck Enter, som i AutoCAD
+- **Historik** med **F2** (eller knappen *Historik*): kommandon, punkter och
+  val; klicka på ett kommando för att köra det igen
+- **Högerklick** visar de senaste kommandona överst i menyn (de för det
+  markerade när något är markerat). Medan något pågår visar högerklick i
+  ritningen frågans alternativ och *Avbryt*. Högerklick på raden har också
+  historiken och var raden ska ligga
+- Raden kan **dockas uppe** eller **ligga fritt** över ritytan: dra i
+  blixten (släppt vid ritytans över- eller underkant dockas den),
+  dubbelklicka på blixten för att docka den nere igen, eller välj i
+  knappen längst till höger. Läget sparas i webbläsaren
+- **Skrivna punkter också i tak-, sektions- och fasadverktyget och i
+  Modifiera**: Flytta `@1200,0` från baspunkten, `x,y` som baspunkt, Vrid
+  `90` som vinkel. Ett för litet tak eller en för kort sektionslinje säger
+  nu till i stället för att tyst låta bli
 
 ## Versioner och gamla projekt
 

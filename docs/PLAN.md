@@ -875,6 +875,28 @@ tar inte emot skrivna punkter än.*
 - Skrivna punkter också i tak-, sektions- och fasadverktyget, och i
   Modifiera (Flytta `@1200,0`)
 
+*Byggd (24 oktober), samma format. Carl August bad att den gula texten
+vid blixten skulle heta SMARTSHELL i stället för KOMMANDO; verktygets namn
+står nu först på raden under, framför frågan. Claudes val, att stämma av:
+alternativen skrivs med en understruken bokstav (Å för Ångra, ML och MV
+för mitt lodrätt och vågrätt i Justera) eller början av ordet, och Enter;
+medan något ritas går den bokstaven direkt till raden (S är då Stäng, inte
+snäpp), annars är bokstäverna kortkommandon som förut. Enter i ett
+verktyg avslutar fortfarande direkt, så *Avsluta* är detsamma som Enter.
+Taket visar Sadeltak/Pulpettak också innan första klicket. Ett kommando
+för det markerade utan markering byter till Markera och väntar; Enter,
+mellanslag eller [Klar] kör det. Historiken (F2) är en ruta ovanför raden
+med de senaste 200 raderna, och bara kommandon går att klicka på.
+Högerklick i ritningen visar de sex senaste kommandona; med något
+markerat bara de för det markerade, utan markering de andra. Raden flyttas
+genom att dra i blixten; släppt inom 48 px från ritytans över- eller
+underkant dockas den där, annars ligger den fritt (högst 720 px bred) och
+läget sparas som andel av ritytan. I Modifiera går siffror till värdefältet
+som förut (med förhandsvisning) när valet har ett värde, utom medan
+baspunkten väntar; ett tal på raden är då värdet (Vrid 90), inte ett
+avstånd. Trimma, Hörnskarv, Förläng och Justera tar inte emot skrivna
+punkter (de klickar på objekt), inte heller Skala och måttbandet.*
+
 ### 0.8.22 Granskning
 
 Carl August 24 oktober: granskningen efter kommandoraden. Utan nya

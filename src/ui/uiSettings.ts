@@ -78,6 +78,10 @@ export interface UiSettings {
   modifyRail: boolean;
   /** Smartshell, kommandoraden under ritytan (0.8.20). */
   smartshell: boolean;
+  /** Var smartshell ligger (0.8.21): dockad nere eller uppe, eller fritt över ritytan. */
+  shellDock: ShellDock;
+  /** Läget när den ligger fritt: vänstra övre hörnet som andel av ritytans bredd och höjd. */
+  shellAt: [number, number];
   /** Måttsätt nya väggar och öppningar automatiskt när man jämför. */
   autoDims: boolean;
   /** Autospara till projektfilen som är öppen (0.8.18). */
@@ -113,6 +117,8 @@ export interface UiSettings {
 
 export type PaneMode = 'open' | 'min' | 'closed';
 
+export type ShellDock = 'bottom' | 'top' | 'float';
+
 export interface TraceLook {
   above: boolean;
   color: string | null;
@@ -135,6 +141,8 @@ export function defaultUiSettings(): UiSettings {
     smartMenu: true,
     modifyRail: true,
     smartshell: true,
+    shellDock: 'bottom',
+    shellAt: [0.1, 0.75],
     autoDims: true,
     autosaveFile: true,
     selColor: null,
@@ -168,6 +176,8 @@ export function loadUiSettings(): UiSettings {
       smartMenu: typeof raw.smartMenu === 'boolean' ? raw.smartMenu : ((raw as { petPalette?: boolean }).petPalette ?? d.smartMenu),
       modifyRail: typeof raw.modifyRail === 'boolean' ? raw.modifyRail : d.modifyRail,
       smartshell: typeof raw.smartshell === 'boolean' ? raw.smartshell : d.smartshell,
+      shellDock: raw.shellDock === 'top' || raw.shellDock === 'float' ? raw.shellDock : 'bottom',
+      shellAt: Array.isArray(raw.shellAt) && raw.shellAt.length === 2 && raw.shellAt.every((v) => Number.isFinite(v) && v >= 0 && v <= 1) ? [raw.shellAt[0], raw.shellAt[1]] : d.shellAt,
       autoDims: typeof raw.autoDims === 'boolean' ? raw.autoDims : d.autoDims,
       autosaveFile: typeof raw.autosaveFile === 'boolean' ? raw.autosaveFile : d.autosaveFile,
       selColor: typeof raw.selColor === 'string' ? raw.selColor : null,

@@ -1,10 +1,26 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.20.
+överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.21.
 
 ## Läget
 
+- **0.8.21 Kommandoraden del 2 är klar** på `main` (samma format, 12):
+  frågor med alternativ i hakparentes (`src/ui/app/prompts.ts`), skrivna
+  och klickbara; prompten vid blixten heter **SMARTSHELL** (Carl Augusts
+  önskan, i stället för KOMMANDO) och verktygets namn står först på raden
+  under; kommandon för det markerade väntar på en markering; historik med
+  F2; de senaste kommandona överst vid högerklick och frågans alternativ
+  vid högerklick medan något pågår; raden dockas nere eller uppe eller
+  ligger fritt (dra i blixten); skrivna punkter i tak, sektion, fasad och
+  Modifiera. Står i README, PLAN.md (med Claudes val) och UTVECKLING.md
+  under *Kommandoraden del 2 (0.8.21)*. Provat i bygget med Playwright
+  (vägg med Stäng, Ångra och klickat Avsluta, pulpettak och sektion med
+  skrivna punkter, Flytta och Ta bort utan markering, Vrid med baspunkt
+  och 90, F2, högerklick på raden, i ritningen och medan en polylinje
+  ritas, dra raden upp och ut, sidladdning med fri rad) och
+  `tests/v0821.test.ts`; alla 313 tester gick igenom. Carl August bad att
+  få versionen körd direkt.
 - **0.8.20 Kommandoraden del 1 är klar** på `main` (samma format, 12):
   *smartshell* under ritytan med blixten från Sisyfos (Carl Augusts namn
   och ikon), registret `src/ui/commandRegistry.ts` med engelska och
@@ -80,7 +96,7 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   `/agrellarkitektur.se/public_html/cad-apa/` och fungerar (Carl August såg
   0.8.14 vid alfa-knappen 24 oktober). Se efter med `gh run list` att
   körningen går igenom.
-- **0.8.12–0.8.20 är inte provade** av Carl August. Frågorna nedan gäller.
+- **0.8.12–0.8.21 är inte provade** av Carl August. Frågorna nedan gäller.
 - **Inkorgen är tom** (sorterad 24 oktober). Kommandoraden blev
   **0.8.20 och 0.8.21** (Carl Augusts svar: både engelska och svenska
   förkortningar; nere som i AutoCAD, flyttbar och dockningsbar i del 2;
@@ -120,11 +136,8 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.8.14 Modifiera-verktyg del 2~~,
   ~~0.8.15 Granskning~~, ~~0.8.16 Underlag~~, ~~0.8.17 Rumsstämpeln~~,
-  ~~0.8.18 Småsaker~~, ~~0.8.19 2D-form~~, ~~0.8.20 Kommandoraden del 1~~
-  (klara)
-- **0.8.21 Kommandoraden del 2**: alternativ i hakparentes, historik (F2)
-  och högerklick, flyttbar och dockningsbar panel, skrivna punkter också i
-  tak, sektion, fasad och Modifiera
+  ~~0.8.18 Småsaker~~, ~~0.8.19 2D-form~~, ~~0.8.20 Kommandoraden del 1~~,
+  ~~0.8.21 Kommandoraden del 2~~ (klara)
 - **0.8.22 Granskning** (Carl Augusts beslut: efter kommandoraden)
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
@@ -144,16 +157,27 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.20 syns på webbhotellet (numret vid alfa-knappen) och
-hur 0.8.12–0.8.20 fungerar. Läs synpunktsfilen och sortera Inkorgen (om
-Carl August inte ber om att bara köra). Nästa version är **0.8.21
-Kommandoraden del 2** (stor; läs *0.8.21* i PLAN.md), sedan **0.8.22
-Granskning**.
+Fråga först om 0.8.21 syns på webbhotellet (numret vid alfa-knappen) och
+hur 0.8.12–0.8.21 fungerar. Läs synpunktsfilen och sortera Inkorgen (om
+Carl August inte ber om att bara köra). Nästa version är **0.8.22
+Granskning** (utan nya funktioner; `commandLine.ts` har vuxit och kan
+delas upp, t.ex. dockningen och historiken i egna filer), sedan **0.9
+Flera våningsplan och bjälklag**.
 
 ## Att fråga Carl August om
 
+- **0.8.21 efter provning** (Claudes val, se PLAN.md): bokstäverna för
+  alternativen (Å för Ångra, ML/MV i Justera) och att de går direkt till
+  raden bara medan något ritas (S är då Stäng, inte snäpp); att *Avsluta*
+  är samma som Enter; att taket visar Sadeltak/Pulpettak redan före första
+  klicket; att högerklick i ritningen medan något pågår visar frågans
+  alternativ (inte objektmenyn); att historiken bara låter klicka på
+  kommandon, inte på punkter; 48 px som gräns för att docka och 720 px som
+  största bredd för den fria raden. Ska *Avbryt* också stå bland
+  alternativen? Ska Skala och måttbandet ta emot skrivna punkter?
+
 - **0.8.20 efter provning** (Claudes val, se PLAN.md): namnet *smartshell*
-  på raden och *Kommando* som prompt; att den ligger under ritytan och inte
+  på raden (prompten heter SMARTSHELL sedan 0.8.21); att den ligger under ritytan och inte
   under panelerna; att bokstäverna (W, D, L …) är kvar som kortkommandon så
   att kommandon skrivs efter Enter, men siffror, `@`, `#` och `<` i vägg-,
   2D- och måttverktyget går direkt till raden (2, 3 och 4 byter inte vyläge

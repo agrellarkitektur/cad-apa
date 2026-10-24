@@ -60,11 +60,14 @@ export function installMenus(app: AppContext) {
   /** Menyn för det som är markerat, eller för planen om inget är markerat. */
   function openObjectMenu(x: number, y: number): void {
     const els = app.selection.list().map((id) => app.store.doc.elements[id]).filter(Boolean);
+    // De senaste kommandona överst (0.8.21), som i AutoCAD.
+    const recent = app.commandLine?.recentItems(els.length > 0) ?? [];
     if (!els.length) {
       app.ctxMenu.open(
         x,
         y,
         [
+          ...recent,
           { label: 'Zooma till allt', hint: 'F', run: () => (app.ui.mode !== '3d' ? app.view.zoomToFit() : app.view3d?.frameAll()) },
           { label: 'Klistra in', hint: 'Ctrl+V', run: () => void app.pasteFromMenu() },
           { label: 'Lägg in underlag…', run: () => app.chooseUnderlayFiles() },
@@ -88,7 +91,7 @@ export function installMenus(app: AppContext) {
     const first = els[0];
     const sameType = els.every((e) => e.type === first.type);
     const quick = app.panel.quickMarkup(false);
-    const items: MenuItem[] = [];
+    const items: MenuItem[] = [...recent];
     if (quick) items.push({ kind: 'html', html: `<div class="quick-bar ctx-quick">${quick}</div>`, onClick: (e) => app.panel.handleClick(e) });
     items.push(
       { kind: 'sep' },
@@ -149,6 +152,13 @@ export function installMenus(app: AppContext) {
 
   /** Högerklick i planen: markera det man pekar på och öppna menyn. */
   function planContext(clientX: number, clientY: number): void {
+    // Medan något pågår: frågans alternativ, Enter och Avbryt (0.8.21).
+    const asking = app.commandLine?.promptItems();
+    if (asking) {
+      app.smartMenu.hide();
+      app.ctxMenu.open(clientX, clientY, asking, 'Kommandot');
+      return;
+    }
     const r = app.pane2d.getBoundingClientRect();
     const p = app.view.camera.toModel([clientX - r.left, clientY - r.top]);
     const id = pickAt(app.plan.pickables, p, 6 / app.view.camera.scale, app.view.drawingScale);

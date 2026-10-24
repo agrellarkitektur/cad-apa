@@ -8,6 +8,7 @@ import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { pxToMm, type ToolHost } from './host';
 import { lengthLabel, snapMarker } from './overlay';
 import { roundMm, snap, type SnapResult, type SnapSegment } from './snap';
+import type { PointTaker } from '../pointInput';
 
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 
@@ -16,7 +17,7 @@ const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
  * sida som ska synas. Sektioner får nästa lediga
  * bokstav; fasader namnges efter väderstrecket de vetter mot.
  */
-export class MarkerTool implements ViewTool {
+export class MarkerTool implements ViewTool, PointTaker {
   cursor = 'crosshair';
   private host: ToolHost;
   private kind: 'Section' | 'Elevation';
@@ -54,6 +55,10 @@ export class MarkerTool implements ViewTool {
       this.current = { point: p.model, kind: 'free', label: '' };
       return;
     }
+    if (this.a && this.lockAngle !== null) {
+      this.current = lockedAt(this.a, this.lockAngle, p.model);
+      return;
+    }
     this.current = snap({
       cursor: p.model,
       from: this.a ?? undefined,
@@ -65,19 +70,55 @@ export class MarkerTool implements ViewTool {
 
   up(p: ViewPointer): void {
     this.track(p);
-    const pt = this.current ? roundMm(this.current.point) : roundMm(p.model);
+    this.click(this.current ? roundMm(this.current.point) : roundMm(p.model), p.model);
+  }
+
+  private click(pt: Vec2, side: Vec2): void {
     if (!this.a) {
       this.a = pt;
     } else if (!this.b) {
-      if (dist(this.a, pt) < 300) return;
+      if (dist(this.a, pt) < 300) {
+        this.host.hint('Linjen måste vara minst 300 mm lång.');
+        return;
+      }
       this.b = pt;
+      this.lockAngle = null;
     } else {
-      this.commit(p.model);
+      this.commit(side);
     }
     this.onChange?.();
   }
 
   cancel(): void {}
+
+  // Skrivna punkter i smartshell (0.8.21). Den tredje punkten anger sidan.
+  lockAngle: number | null = null;
+
+  lastPoint(): Vec2 | undefined {
+    return this.b ?? this.a ?? undefined;
+  }
+
+  cursorPoint(): Vec2 | undefined {
+    return this.current?.point;
+  }
+
+  takePoint(p: Vec2): void {
+    this.click(roundMm(p), p);
+    this.host.view.requestRender();
+  }
+
+  hintText(): string {
+    const what = this.kind === 'Section' ? 'sektionslinjen' : 'fasadlinjen';
+    return this.step === 0 ? `Klicka där ${what} börjar.` : this.step === 1 ? `Klicka där ${what} slutar.` : 'Klicka på den sida som ska synas.';
+  }
+
+  /** Ett steg tillbaka (Ångra i smartshell, 0.8.21). */
+  back(): void {
+    if (this.b) this.b = null;
+    else this.a = null;
+    this.onChange?.();
+    this.host.view.requestRender();
+  }
 
   reset(): void {
     this.a = null;
@@ -144,7 +185,7 @@ export function nextLetter(used: string[]): string {
  * Tak (0.7, för att pröva fasader och sektioner): dra upp en rektangel med
  * två klick. Nocken går längs den längre sidan.
  */
-export class RoofTool implements ViewTool {
+export class RoofTool implements ViewTool, PointTaker {
   cursor = 'crosshair';
   private host: ToolHost;
   private a: Vec2 | null = null;
@@ -174,21 +215,52 @@ export class RoofTool implements ViewTool {
   }
 
   private track(p: ViewPointer): void {
+    if (this.a && this.lockAngle !== null) {
+      this.current = lockedAt(this.a, this.lockAngle, p.model);
+      return;
+    }
     this.current = snap({ cursor: p.model, segments: this.host.snapSegments(), tol: pxToMm(this.host, p.pointerType === 'touch' ? 18 : 10) });
   }
 
   up(p: ViewPointer): void {
     this.track(p);
-    const pt = roundMm(this.current?.point ?? p.model);
+    this.click(roundMm(this.current?.point ?? p.model));
+  }
+
+  private click(pt: Vec2): void {
     if (!this.a) {
       this.a = pt;
       this.onChange?.();
       return;
     }
-    if (Math.abs(pt[0] - this.a[0]) < 500 || Math.abs(pt[1] - this.a[1]) < 500) return;
+    if (Math.abs(pt[0] - this.a[0]) < 500 || Math.abs(pt[1] - this.a[1]) < 500) {
+      this.host.hint('Taket måste vara minst 500 mm åt båda hållen.');
+      return;
+    }
     this.create(rect(this.a, pt));
     this.a = null;
+    this.lockAngle = null;
     this.onChange?.();
+  }
+
+  // Skrivna punkter i smartshell (0.8.21): hörnen, t.ex. @9000,6000 från det första.
+  lockAngle: number | null = null;
+
+  lastPoint(): Vec2 | undefined {
+    return this.a ?? undefined;
+  }
+
+  cursorPoint(): Vec2 | undefined {
+    return this.current?.point;
+  }
+
+  takePoint(p: Vec2): void {
+    this.click(roundMm(p));
+    this.host.view.requestRender();
+  }
+
+  hintText(): string {
+    return this.a ? 'Klicka det motsatta hörnet.' : 'Klicka ett hörn av taket, med utsprånget.';
   }
 
   cancel(): void {}
@@ -218,6 +290,15 @@ export class RoofTool implements ViewTool {
     if (this.current) out.push(snapMarker(cam, this.current));
     return out.join('');
   }
+}
+
+/** Markörens punkt längs en låst riktning från `from` (<45 i smartshell). */
+function lockedAt(from: Vec2, deg: number, at: Vec2): SnapResult {
+  const r = (deg * Math.PI) / 180;
+  const dir: Vec2 = [Math.cos(r), Math.sin(r)];
+  const len = Math.max(0, (at[0] - from[0]) * dir[0] + (at[1] - from[1]) * dir[1]);
+  const point: Vec2 = [from[0] + dir[0] * len, from[1] + dir[1] * len];
+  return { point, kind: 'angle', label: `${deg.toLocaleString('sv-SE')}°`, guide: [from, [from[0] + dir[0] * (len * 3 + 2000), from[1] + dir[1] * (len * 3 + 2000)]] };
 }
 
 function rect(a: Vec2, b: Vec2): [number, number][] {

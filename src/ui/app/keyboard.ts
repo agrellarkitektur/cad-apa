@@ -27,19 +27,27 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
       return;
     }
     if (app.ctxMenu.isOpen) return;
-    // Smartshell (0.8.20): i vägg-, 2D- och måttverktyget går siffror och
-    // @ # < till raden som en punkt. @ skrivs med AltGr, därför före Ctrl/Alt.
+    // Smartshell (0.8.20, 0.8.21): i verktyg som ritar med punkter och i
+    // Modifiera går siffror och @ # < till raden som en punkt. @ skrivs med AltGr, därför före Ctrl/Alt.
     const shell = app.commandLine;
     if (
       !typing &&
       shell?.shown &&
       shell.taker() &&
       /^[0-9@#<.]$/.test(e.key) &&
+      // Modifiera med ett värdefält (radie, vinkel …): siffrorna går dit, med förhandsvisning (0.8.21).
+      !(/^[0-9.]$/.test(e.key) && app.root.querySelector('input[data-modify-value]') && !shell.wantsPoint()) &&
       !(e.metaKey || (e.ctrlKey && !e.altKey)) &&
       !app.newProjectDialog.isOpen &&
       !app.styleDialog.isOpen &&
       !app.settingsDialog.isOpen
     ) {
+      e.preventDefault();
+      shell.open(e.key);
+      return;
+    }
+    // Ett alternativ i frågan (S för Stäng …) medan något pågår (0.8.21).
+    if (!typing && !mod && !e.altKey && shell?.optionLetter(e.key) && !app.newProjectDialog.isOpen && !app.styleDialog.isOpen && !app.settingsDialog.isOpen) {
       e.preventDefault();
       shell.open(e.key);
       return;
@@ -80,7 +88,7 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
     }
 
     // Modifiera: siffror går till värdefältet, som för väggens längd (0.8.5).
-    if (app.modifier.running && /^[0-9]$/.test(e.key)) {
+    if (app.modifier.running && /^[0-9]$/.test(e.key) && !shell?.wantsPoint()) {
       const input = app.root.querySelector<HTMLInputElement>('input[data-modify-value]');
       if (input) {
         input.focus();
@@ -144,6 +152,7 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
           app.setNav(false);
           break;
         }
+        if (shell?.cancelPending()) break;
         if (app.modifier.busy) app.modifier.cancel();
         else if (app.ui.tool !== 'select') app.cancelCommand();
         else app.selection.clear();
@@ -151,14 +160,13 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
         break;
       case 'Enter':
         // Enter utan att något kommando är igång öppnar smartshell (0.8.20).
-        if (shell && !shell.busy() && shell.open()) break;
-        enterInTool();
+        if (shell) shell.key('enter');
+        else enterInTool();
         break;
       case ' ':
         // Mellanslag kör senaste kommandot igen; i ett kommando som pågår är det Enter (0.8.20).
         if (!shell) return;
-        if (shell.busy()) enterInTool();
-        else if (!shell.repeat()) app.hint('Inget kommando att köra igen än.');
+        shell.key('space');
         break;
       case 'Delete':
       case 'Backspace':
