@@ -1,31 +1,19 @@
 import { deleteElements } from '../../core/commands';
-import type { Vec2 } from '../../repr/primitives';
 import { COMMANDS, commandFor, complete, findCommand, type CommandDef, type Match } from '../commandRegistry';
 import type { MenuItem } from '../contextMenu';
 import { icons } from '../icons';
 import { escapeHtml } from '../labels';
 import { OPS, type RailId } from '../modify/ops';
-import { ModifyTool } from '../modify/tool';
-import { looksLikePoint, parsePoint, resolvePoint, type PointTaker } from '../pointInput';
+import { looksLikePoint, parsePoint, type PointTaker } from '../pointInput';
 import { isNarrow } from '../sheet';
-import { saveUiSettings, type ShellDock } from '../uiSettings';
 import type { AppContext } from './context';
 import { currentPrompt, matchOption, type Prompt, type PromptOption } from './prompts';
 import type { ToolId } from './shell';
-
-const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 1 });
-const xy = (p: Vec2): string => `${nf.format(p[0])}; ${nf.format(p[1])}`;
-const POINT_HELP = 'Skriv <b>2400</b>, <b>@1200,600</b>, <b>@3000&lt;45</b> eller <b>x,y</b>.';
-/** Hur många rader historiken (F2) sparar, och hur många kommandon högerklicket visar. */
-const LOG_MAX = 200;
-const RECENT_MAX = 6;
-
-interface LogLine {
-  text: string;
-  /** Kommandot på raden, så att ett klick kan köra det igen. */
-  cmd?: CommandDef;
-  kind: 'cmd' | 'point' | 'option' | 'note';
-}
+import { runAction } from './shellActions';
+import { installShellDock } from './shellDock';
+import { nf, POINT_HELP, promptMarkup, xy } from './shellHint';
+import { createShellLog } from './shellLog';
+import { commandBusy, pointFor as pointOf, pointTaker, wantsPoint as modifierWantsPoint } from './shellPoints';
 
 /**
  * Smartshell (0.8.20, 0.8.21): kommandoraden, som i AutoCAD och med samma
@@ -41,6 +29,10 @@ interface LogLine {
  *
  * Enter utan att ett kommando är igång öppnar raden, mellanslag kör det
  * senaste kommandot igen. Kan döljas i Gränssnitt.
+ *
+ * Delarna (0.8.23): läget i shellPoints.ts, historiken i shellLog.ts, var
+ * raden ligger i shellDock.ts, frågans text i shellHint.ts och kommandona
+ * som gör något direkt i shellActions.ts.
  */
 export function installCommandLine(app: AppContext, pressRail: (id: RailId) => void) {
   const el = app.$<HTMLElement>('.smartshell');
@@ -61,7 +53,6 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
   const listEl = el.querySelector<HTMLUListElement>('.ss-list')!;
   const logEl = el.querySelector<HTMLOListElement>('.ss-log')!;
   const grip = el.querySelector<HTMLElement>('.ss-grip')!;
-  const canvas = app.$<HTMLElement>('.canvas');
 
   let last: CommandDef | null = null;
   let matches: Match[] = [];
@@ -72,8 +63,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
   const typed: string[] = [];
   let typedAt = -1;
   /** Allt som hänt, för historiken (F2) och högerklicket. */
-  const log: LogLine[] = [];
-  let logOpen = false;
+  const log = createShellLog(el, logEl, listEl, (c) => run(c));
   /** Medan ett kommando körs från raden ska setTool inte skriva över det som det senaste. */
   let running = false;
   /** Ett kommando för det markerade som väntar på att något markeras (Flytta utan markering). */
@@ -82,95 +72,13 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
   let prompt: Prompt | null = null;
 
   const shown = (): boolean => app.uiSettings.smartshell && !isNarrow();
+  const dock = installShellDock(app, el, grip, input, shown);
 
-  /** Verktyget som tar emot skrivna punkter just nu, eller null. */
-  function taker(): PointTaker | null {
-    if (app.aligning || app.zoomingBox || app.underlays.busy() || pending) return null;
-    if (app.ui.mode === '3d') return null;
-    const m = app.modifier;
-    if (m.busy) {
-      if (m.drawingWall) return app.wallTool;
-      const t = m.runningTool;
-      return t instanceof ModifyTool && t.takesPoints ? t : null;
-    }
-    switch (app.ui.tool) {
-      case 'wall':
-        return app.wallTool;
-      case 'draw2d':
-        return app.draw2dTool;
-      case 'dimension':
-        return app.dimensionTool;
-      case 'roof':
-        return app.roofTool;
-      case 'section':
-        return app.sectionTool;
-      case 'elevation':
-        return app.elevationTool;
-      default:
-        return null;
-    }
-  }
-
-  /** Om ett kommando är igång: något ritas, Modifiera pågår eller ett kommando väntar på en markering. Enter och mellanslag hör då till det. */
-  function busy(): boolean {
-    if (pending || app.modifier.busy || app.aligning || app.zoomingBox || app.underlays.busy()) return true;
-    switch (app.ui.tool) {
-      case 'wall':
-        return app.wallTool.drawing;
-      case 'dimension':
-        return app.dimensionTool.count > 0;
-      case 'draw2d':
-        return app.draw2dTool.count > 0;
-      case 'measure':
-        return app.measureTool.measurement().points > 0;
-      case 'roof':
-        return app.roofTool.started;
-      case 'section':
-        return app.sectionTool.step > 0;
-      case 'elevation':
-        return app.elevationTool.step > 0;
-      default:
-        return false;
-    }
-  }
+  const taker = (): PointTaker | null => pointTaker(app, pending);
+  const busy = (): boolean => commandBusy(app, pending);
+  const addLog = log.add;
 
   // ---------- Historiken ----------
-
-  function addLog(line: LogLine): void {
-    log.push(line);
-    if (log.length > LOG_MAX) log.splice(0, log.length - LOG_MAX);
-    if (logOpen) renderLog();
-  }
-
-  function renderLog(): void {
-    logEl.hidden = !logOpen || !listEl.hidden;
-    el.querySelector('[data-ss="log"]')!.setAttribute('aria-pressed', String(logOpen));
-    if (logEl.hidden) return;
-    logEl.innerHTML = log.length
-      ? log
-          .map(
-            (l, i) =>
-              `<li class="ss-log-${l.kind}"${l.cmd ? ` data-log="${i}" title="Klicka för att köra ${escapeHtml(l.cmd.label.toLowerCase())} igen"` : ''}>${l.kind === 'cmd' ? `<b>${escapeHtml(l.text)}</b>` : escapeHtml(l.text)}</li>`,
-          )
-          .join('')
-      : '<li class="ss-log-note">Inget har hänt än. Kommandon, punkter och val hamnar här.</li>';
-    logEl.scrollTop = logEl.scrollHeight;
-  }
-
-  function toggleLog(open = !logOpen): void {
-    logOpen = open;
-    renderLog();
-  }
-
-  /** De senaste kommandona, nyast först, utan dubbletter. */
-  function recent(filter: (c: CommandDef) => boolean = () => true): CommandDef[] {
-    const out: CommandDef[] = [];
-    for (let i = log.length - 1; i >= 0 && out.length < RECENT_MAX; i--) {
-      const c = log[i].cmd;
-      if (c && filter(c) && !out.includes(c)) out.push(c);
-    }
-    return out;
-  }
 
   function remember(c: CommandDef | undefined): void {
     if (!c || c.action === 'help' || c.tool === 'select') return;
@@ -251,57 +159,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
   }
 
   function action(c: CommandDef): void {
-    switch (c.action) {
-      case 'erase':
-        if (!app.selection.size) waitForSelection(c);
-        else erase();
-        break;
-      case 'undo':
-        app.store.undo();
-        break;
-      case 'redo':
-        app.store.redo();
-        break;
-      case 'zoom-fit':
-        app.view.zoomToFit();
-        break;
-      case 'zoom-box':
-        app.startZoomBox();
-        break;
-      case 'zoom-prev':
-        app.previousZoom();
-        break;
-      case 'grid':
-        app.toggleGrid();
-        break;
-      case 'snap':
-        app.$<HTMLElement>('[data-action="snap"]').click();
-        break;
-      case 'save':
-        void app.saveNow(false);
-        break;
-      case 'save-as':
-        void app.saveNow(true);
-        break;
-      case 'open':
-        void app.openFile();
-        break;
-      case 'plot':
-        app.$<HTMLElement>('.menu [data-action="plot"]').click();
-        break;
-      case 'mode-2d':
-        void app.setMode('2d');
-        break;
-      case 'mode-3d':
-        void app.setMode('3d');
-        break;
-      case 'mode-split':
-        void app.setMode('split');
-        break;
-      case 'help':
-        openAll();
-        break;
-    }
+    runAction(app, c, { waitForSelection, erase, openAll });
   }
 
   /** Mellanslag (eller Enter i ett tomt fält): det senaste kommandot igen. */
@@ -338,23 +196,10 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
 
   // ---------- Punkter ----------
 
-  /** Ett Modifiera-val med ett värde (radie, vinkel …): ett ensamt tal är värdet, inte ett avstånd. */
-  function valueOp(): boolean {
-    const a = app.modifier.active;
-    return !!a && !!OPS[a].value && app.modifier.runningTool instanceof ModifyTool;
-  }
-
   /** Om det skrivna är en punkt till verktyget: det ser ut som en och är inget kommando (3d). */
   const isPoint = (text: string): boolean => !!taker() && looksLikePoint(text) && (parsePoint(text) !== null || !findCommand(text));
 
-  function pointFor(text: string): { p: Vec2 } | { error: string } | { angle: number } | { value: number } | null {
-    const t = taker();
-    const e = parsePoint(text);
-    if (!t || !e) return null;
-    if (e.kind === 'angle') return { angle: e.deg };
-    if (e.kind === 'dist' && valueOp()) return { value: e.len };
-    return resolvePoint(e, t.lastPoint(), t.cursorPoint(), t.lockAngle);
-  }
+  const pointFor = (text: string) => pointOf(app, taker(), text);
 
   function enterPoint(text: string): boolean {
     const t = taker();
@@ -455,7 +300,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     const open = matches.length > 0 && (showAll || !(matches.length === 1 && matches[0].exact)) && document.activeElement === input;
     listEl.hidden = !open;
     input.setAttribute('aria-expanded', String(open));
-    renderLog();
+    log.render();
     if (!open) return;
     let group = '';
     listEl.innerHTML = matches
@@ -468,19 +313,6 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
       })
       .join('');
     listEl.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
-  }
-
-  /** Ett alternativ med sin bokstav understruken: [Avsluta/Stäng/Ångra]. */
-  function optionMarkup(o: PromptOption, i: number): string {
-    const k = o.key.toLowerCase();
-    const label = o.label.toLowerCase().startsWith(k) ? `<u>${escapeHtml(o.label.slice(0, k.length))}</u>${escapeHtml(o.label.slice(k.length))}` : `${escapeHtml(o.label)} <u>${escapeHtml(o.key)}</u>`;
-    return `<button type="button" class="ss-opt" data-opt="${i}"${o.on ? ' aria-pressed="true"' : ''} title="Skriv ${escapeHtml(o.key)} eller klicka">${label}</button>`;
-  }
-
-  function promptMarkup(p: Prompt, withPointHelp: boolean): string {
-    const opts = p.options.length ? ` <span class="ss-opts">[${p.options.map(optionMarkup).join('/')}]</span>` : '';
-    const help = withPointHelp && !p.options.length ? ` ${POINT_HELP}` : '';
-    return `<b class="ss-head">${escapeHtml(p.head)}:</b> ${escapeHtml(p.text)}${opts}${help}`;
   }
 
   function renderHint(): void {
@@ -525,123 +357,19 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     const show = shown();
     el.hidden = !show;
     app.appEl.classList.toggle('smartshell-on', show);
-    applyDock();
+    dock.apply();
     if (!show) return;
     renderHint();
   }
 
-  // ---------- Läget: dockad nere, uppe eller fritt ----------
-
-  function applyDock(): void {
-    const dock = shown() ? app.uiSettings.shellDock : 'bottom';
-    app.appEl.classList.toggle('ss-top', dock === 'top');
-    app.appEl.classList.toggle('ss-float', dock === 'float');
-    el.dataset.dock = dock;
-    if (dock !== 'float') {
-      el.style.left = el.style.top = el.style.width = '';
-      el.classList.toggle('ss-down', dock === 'top');
-      return;
-    }
-    const c = canvas.getBoundingClientRect();
-    const a = app.appEl.getBoundingClientRect();
-    const w = Math.min(720, Math.max(320, c.width - 24));
-    const h = el.offsetHeight || 54;
-    const [fx, fy] = app.uiSettings.shellAt;
-    const x = Math.max(0, Math.min(c.width - w, fx * c.width));
-    const y = Math.max(0, Math.min(c.height - h, fy * c.height));
-    el.style.width = `${w}px`;
-    el.style.left = `${c.left - a.left + x}px`;
-    el.style.top = `${c.top - a.top + y}px`;
-    // Listan och historiken öppnas nedåt när raden ligger i övre halvan.
-    el.classList.toggle('ss-down', y < c.height / 2 - h / 2);
-  }
-
-  function setDock(dock: ShellDock, at?: [number, number]): void {
-    app.uiSettings.shellDock = dock;
-    if (at) app.uiSettings.shellAt = at;
-    saveUiSettings(app.uiSettings);
-    applyDock();
-    // Ritytan ändrar storlek när raden flyttas mellan nere och uppe.
-    window.dispatchEvent(new Event('resize'));
-  }
-
-  /** Dra i blixten: raden följer med; släppt nära ritytans över- eller underkant dockas den där. */
-  function installDrag(): void {
-    let start: { x: number; y: number; dx: number; dy: number } | null = null;
-    let dragging = false;
-    let drop: ShellDock = 'float';
-    const zone = document.createElement('div');
-    zone.className = 'ss-dropzone';
-    zone.hidden = true;
-    canvas.appendChild(zone);
-    const EDGE = 48;
-
-    grip.addEventListener('pointerdown', (e) => {
-      if (e.button !== 0) return;
-      e.preventDefault();
-      const r = el.getBoundingClientRect();
-      start = { x: e.clientX, y: e.clientY, dx: e.clientX - r.left, dy: e.clientY - r.top };
-      dragging = false;
-      grip.setPointerCapture(e.pointerId);
-    });
-    grip.addEventListener('pointermove', (e) => {
-      if (!start) return;
-      if (!dragging && Math.hypot(e.clientX - start.x, e.clientY - start.y) < 5) return;
-      const c = canvas.getBoundingClientRect();
-      if (!dragging) {
-        dragging = true;
-        app.appEl.classList.add('ss-dragging');
-        if (app.uiSettings.shellDock !== 'float') {
-          app.uiSettings.shellDock = 'float';
-          applyDock();
-        }
-      }
-      const w = el.offsetWidth;
-      const h = el.offsetHeight;
-      const x = Math.max(0, Math.min(c.width - w, e.clientX - start.dx - c.left));
-      const y = Math.max(0, Math.min(c.height - h, e.clientY - start.dy - c.top));
-      app.uiSettings.shellAt = [c.width ? x / c.width : 0, c.height ? y / c.height : 0];
-      applyDock();
-      drop = e.clientY > c.bottom - EDGE ? 'bottom' : e.clientY < c.top + EDGE ? 'top' : 'float';
-      zone.hidden = drop === 'float';
-      zone.dataset.edge = drop;
-    });
-    const end = (e: PointerEvent) => {
-      if (!start) return;
-      start = null;
-      if (grip.hasPointerCapture(e.pointerId)) grip.releasePointerCapture(e.pointerId);
-      zone.hidden = true;
-      app.appEl.classList.remove('ss-dragging');
-      if (!dragging) {
-        input.focus();
-        return;
-      }
-      dragging = false;
-      setDock(drop);
-    };
-    grip.addEventListener('pointerup', end);
-    grip.addEventListener('pointercancel', end);
-    grip.addEventListener('dblclick', () => setDock('bottom'));
-  }
-  installDrag();
-
   // ---------- Menyerna ----------
-
-  function dockItems(): MenuItem[] {
-    const d = app.uiSettings.shellDock;
-    return [
-      { label: 'Dockad nere', checked: d === 'bottom', run: () => setDock('bottom') },
-      { label: 'Dockad uppe', checked: d === 'top', run: () => setDock('top') },
-      { label: 'Fritt över ritytan', checked: d === 'float', run: () => setDock('float') },
-    ];
-  }
 
   /**
    * De senaste kommandona för högerklicksmenyn (0.8.21). Med något markerat
    * de som gäller det markerade, annars de andra.
    */
   function recentItems(forSelection: boolean): MenuItem[] {
-    const cmds = recent((c) => (forSelection ? !!c.rail : !c.rail));
+    const cmds = log.recent((c) => (forSelection ? !!c.rail : !c.rail));
     if (!cmds.length) return [];
     return [
       { kind: 'header', label: 'Senaste kommandon' },
@@ -670,10 +398,10 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
       y,
       [
         ...recentItems(app.selection.size > 0),
-        { label: 'Historik', hint: 'F2', checked: logOpen, run: () => toggleLog() },
+        { label: 'Historik', hint: 'F2', checked: log.open, run: () => log.toggle() },
         { label: 'Alla kommandon', run: () => openAll() },
         { kind: 'sep' },
-        ...dockItems(),
+        ...dock.items(),
       ],
       'Smartshell',
     );
@@ -694,7 +422,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
         showAll = false;
         listEl.hidden = true;
         input.setAttribute('aria-expanded', 'false');
-        renderLog();
+        log.render();
         renderHint();
       }
     }, 150);
@@ -770,18 +498,12 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     const o = b && prompt ? prompt.options[Number(b.dataset.opt)] : undefined;
     if (o) runOption(o);
   });
-  logEl.addEventListener('mousedown', (e) => e.preventDefault());
-  logEl.addEventListener('click', (e) => {
-    const li = (e.target as HTMLElement).closest<HTMLElement>('[data-log]');
-    const c = li ? log[Number(li.dataset.log)]?.cmd : undefined;
-    if (c) run(c);
-  });
   for (const b of el.querySelectorAll<HTMLElement>('.ss-btn')) b.addEventListener('mousedown', (e) => e.preventDefault());
   el.querySelector('[data-ss="help"]')!.addEventListener('click', () => (showAll && !listEl.hidden ? clear() : openAll()));
-  el.querySelector('[data-ss="log"]')!.addEventListener('click', () => toggleLog());
+  el.querySelector('[data-ss="log"]')!.addEventListener('click', () => log.toggle());
   el.querySelector('[data-ss="dock"]')!.addEventListener('click', (e) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
-    app.ctxMenu.open(r.left, app.uiSettings.shellDock === 'top' ? r.bottom + 4 : r.top - 4, dockItems(), 'Var smartshell ligger');
+    app.ctxMenu.open(r.left, app.uiSettings.shellDock === 'top' ? r.bottom + 4 : r.top - 4, dock.items(), 'Var smartshell ligger');
   });
   el.addEventListener('contextmenu', (e) => {
     e.preventDefault();
@@ -791,9 +513,9 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
   window.addEventListener('keydown', (e) => {
     if (e.key !== 'F2' || !shown() || e.ctrlKey || e.metaKey || e.altKey) return;
     e.preventDefault();
-    toggleLog();
+    log.toggle();
   });
-  window.addEventListener('resize', () => applyDock());
+  window.addEventListener('resize', () => dock.apply());
   app.selection.subscribe(() => renderHint());
   app.modifier.subscribe(() => refresh());
   app.store.subscribe(() => {
@@ -801,10 +523,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
   });
 
   /** Modifiera väntar på en punkt (baspunkten) och inte på värdet: siffrorna ska då till raden. */
-  function wantsPoint(): boolean {
-    const t = app.modifier.runningTool;
-    return t instanceof ModifyTool && t.takesPoints && t.prompt() !== null;
-  }
+  const wantsPoint = (): boolean => modifierWantsPoint(app);
 
   /**
    * Om en bokstav på tangentbordet är början på ett alternativ i frågan
@@ -838,7 +557,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
       return pending;
     },
     get logOpen() {
-      return logOpen;
+      return log.open;
     },
     busy,
     taker,
@@ -856,8 +575,8 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     cancelPending,
     recentItems,
     promptItems,
-    toggleLog,
-    setDock,
+    toggleLog: log.toggle,
+    setDock: dock.set,
     open,
     get shown() {
       return shown();

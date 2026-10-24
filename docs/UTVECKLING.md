@@ -131,7 +131,8 @@ och smartmenyn, markeringen). Resten ligger i `src/ui/app/`, en fil per del
 | `render.ts` | `renderAll`: planen, fasaden, sektionen, arbetsbladet eller bladet som visas, `viewStates`, stilmallen, utropstecknen vid sneda vinklar och måttrutan (0.8.11) |
 | `helpers.ts` | Små hjälpare: talformat, förvalda typer och tillstånd, vybeskrivning, skala |
 | `context.ts` | `AppContext`: det delarna behöver av varandra, och `lazyContext` som bygger det |
-| `actions.ts` | Knapparna: klick på `data-action` och val i projektträdet, Visa-menyn och huvudmenyn; tillståndsflikarna och Jämför med |
+| `actions.ts` | Knapparna: klick på `data-action`, Visa-menyn och huvudmenyn; tillståndsflikarna och Jämför med |
+| `treeClicks.ts` | Klick i projektträdet: flikarna, våningar, vyer, markörer, arbetsblad, blad (Ctrl- och Shift-klick), underlag och mappar (0.8.23, ur `actions.ts`) |
 | `panes.ts` | Dockan med projektträdet och egenskaperna: bredd, öppen, minimerad till band eller stängd (och bladet på telefonen) |
 | `pane3d.ts` | 3D-vyn: läget (`setMode`), redigering i 3D, Följ sektionen |
 | `files.ts` | Autospar och dess status, Spara, Öppna, Nytt projekt, Börja om med exemplet |
@@ -145,6 +146,9 @@ och smartmenyn, markeringen). Resten ligger i `src/ui/app/`, en fil per del
 | `clipboard.ts` | Kopiera, klipp ut och klistra in |
 | `underlays.ts`, `sheets.ts`, `plot.ts` | Underlag, ritningsblad och Plot/export (0.8) |
 | `sheetTool.ts`, `sheetGeometry.ts` | Markera, flytta och dra i ramen på ett blad; fästning och var en ny vy får plats (0.8.11, ur `sheets.ts`) |
+| `commandLine.ts` | Smartshell: fältet, kommandona, listan och menyerna (0.8.20–0.8.21) |
+| `prompts.ts` | Frågan med alternativ för det som pågår (0.8.21) |
+| `shellPoints.ts`, `shellLog.ts`, `shellDock.ts`, `shellHint.ts`, `shellActions.ts` | Smartshells läge och skrivna punkter, historiken, var raden ligger, frågans text och kommandona som gör något direkt (0.8.23, ur `commandLine.ts`) |
 
 Varje del är en funktion `installX(app)` som anropas en gång i `mountApp`
 och lämnar tillbaka det som andra delar använder. `app` byggs med
@@ -1115,6 +1119,34 @@ projekt i 1 982 jämförelser.
   mappen, annars utanför alla. `moveIntoFolder` i `treeCommands.ts` flyttar
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
+
+## Granskning (0.8.23, format 12)
+
+Utan nya funktioner. Kontrollerat med samma klick i 0.8.22 och 0.8.23
+(Playwright, 97 steg genom smartshell, Markera, projektträdet och
+statusraden): samma projekt, markering, ritning, smartmeny, smartshell och
+träd efter varje steg.
+
+- **Smartshell uppdelad**: `commandLine.ts` har kvar fältet, kommandona och
+  menyerna. `shellPoints.ts` har läget (`pointTaker`, `commandBusy`,
+  `valueOp`, `wantsPoint`, `pointFor`), `shellLog.ts` historiken
+  (`createShellLog`: `add`, `render`, `toggle`, `recent`), `shellDock.ts`
+  var raden ligger (`installShellDock`: `apply`, `set`, `items`, och dragen
+  i blixten), `shellHint.ts` frågans text (`promptMarkup`, `optionMarkup`,
+  `POINT_HELP`) och `shellActions.ts` kommandona som gör något direkt
+  (`runAction`)
+- **Markera uppdelad**: greppen under markören ligger i
+  `src/ui/tools/selectGrips.ts` (`endGripAt`, `companionsAt`,
+  `underlayGripAt`, `shapeNodeAt`, `roofGripAt`, `roomLabelAt`). De gäller
+  bara det markerade, och `shapeNodeAt` och `underlayGripsShown` slår upp i
+  `pickableById` i stället för att gå igenom alla objekt i planen vid varje
+  musrörelse
+- **Projektträdets klick** ligger i `src/ui/app/treeClicks.ts`
+  (`installTreeClicks`: `click`, `pickTreeItem`); `actions.ts` har kvar
+  knapparna
+- `app.ts` delades inte: ordningen mellan prenumerationerna på projektet
+  och markeringen där är den som ger rätt omritning, och en uppdelning
+  skulle flytta den
 
 ## Småsaker (0.8.22, format 12)
 

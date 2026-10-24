@@ -1,0 +1,168 @@
+import type { Element } from '../../core/model';
+import { dist } from '../../geometry/vec';
+import type { WallParams } from '../../elements/wall';
+import { isShape, shapeNodes } from '../../elements/shapeEdit';
+import { roofGripsInView, type RoofGrip } from '../../elements/roofGrips';
+import type { UnderlayParams } from '../../elements/underlay';
+import { hasImageGrips, underlayGrips, type UnderlayGrip } from '../../elements/underlayEdit';
+import { resolveParams } from '../../elements/registry';
+import { pickableById } from '../../repr/plan';
+import type { Primitive, Vec2 } from '../../repr/primitives';
+import { distToPrim } from '../../view2d/pick';
+import type { ViewPointer } from '../../view2d/planView';
+import { pxToMm, type ToolHost } from './host';
+
+/**
+ * Greppen som Markera hittar under markören (ur selectTool.ts i 0.8.23):
+ * ändarna på markerade väggar och för hand placerade sektions- och
+ * fasadlinjer, punkterna i markerade 2D-former, greppen i en markerad bild,
+ * takets nock och takfot i en fasad eller sektion, och rumsstämpeln i ett
+ * markerat rum. Allt gäller bara det markerade, så inget söks i hela
+ * projektet vid varje musrörelse.
+ */
+
+/** Hur nära ett grepp markören ska vara, px. */
+export const GRIP_PX = 14;
+
+/** Rumsstämpelns text och pil. */
+export const isRoomLabel = (q: Primitive): q is Primitive => q.origin?.part === 'rumstext';
+
+/** En sektions- eller fasadlinje som placerats för hand och har grepp i ändarna. */
+export function isManualMarker(el: Element | undefined): el is Element {
+  return !!el && (el.type === 'Section' || el.type === 'Elevation') && !el.params.auto && !el.locked;
+}
+
+export interface EndGrip {
+  /** Väggen eller sektions- eller fasadlinjen vars ände dras. */
+  wallId: string;
+  kind: 'wall' | 'marker';
+  end: 'start' | 'end';
+  from: Vec2;
+}
+
+/** Andra markerade väggar vars ände ligger i samma punkt; de följer med. */
+export type Companions = { id: string; end: 'start' | 'end'; fixed: Vec2 }[];
+
+/** Grepp i ändarna på markerade väggar och på sektions- och fasadlinjer som placerats för hand. */
+export function endGripAt(host: ToolHost, pt: Vec2): EndGrip | null {
+  const tol = pxToMm(host, GRIP_PX);
+  const doc = host.store.doc;
+  let best: (EndGrip & { d: number }) | null = null;
+  for (const id of host.selection.list()) {
+    const el = doc.elements[id];
+    const kind = el?.type === 'Wall' ? 'wall' : isManualMarker(el) ? 'marker' : null;
+    if (!kind) continue;
+    const p = el.params as unknown as WallParams;
+    for (const end of ['start', 'end'] as const) {
+      const d = dist(p[end], pt);
+      if (d <= tol && (!best || d < best.d)) best = { wallId: id, kind, end, from: p[end], d };
+    }
+  }
+  return best;
+}
+
+/** Andra markerade väggar som har en ände i samma punkt. */
+export function companionsAt(host: ToolHost, wallId: string, at: Vec2): Companions {
+  const doc = host.store.doc;
+  const out: Companions = [];
+  if (doc.elements[wallId]?.type !== 'Wall') return out;
+  for (const id of host.selection.list()) {
+    if (id === wallId) continue;
+    const el = doc.elements[id];
+    if (el?.type !== 'Wall') continue;
+    const p = el.params as unknown as WallParams;
+    if (dist(p.start, at) <= 1) out.push({ id, end: 'start', fixed: p.end });
+    else if (dist(p.end, at) <= 1) out.push({ id, end: 'end', fixed: p.start });
+  }
+  return out;
+}
+
+/** Greppen i en ensam markerad bild eller PDF-sida som går att ändra (0.8.16). */
+export function underlayGripsShown(host: ToolHost): ReturnType<typeof underlayGrips> {
+  const ids = host.selection.list();
+  if (ids.length !== 1) return [];
+  const doc = host.store.doc;
+  const el = doc.elements[ids[0]];
+  if (el?.type !== 'Underlay' || el.locked) return [];
+  if (host.readOnly?.() && !host.canEdit?.(el.id)) return [];
+  if (!pickableById(host.plan().pickables).has(el.id)) return [];
+  const p = resolveParams<UnderlayParams>(doc, el);
+  return hasImageGrips(p) ? underlayGrips(p) : [];
+}
+
+export function underlayGripAt(host: ToolHost, pt: Vec2, touch: boolean): { id: string; grip: UnderlayGrip; from: Vec2 } | null {
+  const tol = pxToMm(host, touch ? 18 : GRIP_PX);
+  const id = host.selection.list()[0];
+  let best: { id: string; grip: UnderlayGrip; from: Vec2; d: number } | null = null;
+  for (const g of underlayGripsShown(host)) {
+    // Hörnen före sidorna när de ligger nära varandra (en liten bild).
+    const d = dist(g.at, pt) + (g.kind === 'side' ? tol / 4 : 0);
+    if (d <= tol && (!best || d < best.d)) best = { id, grip: { kind: g.kind, index: g.index }, from: g.at, d };
+  }
+  return best;
+}
+
+/** Punkten i ett markerat 2D-element som ligger närmast, om något går att ändra här. */
+export function shapeNodeAt(host: ToolHost, pt: Vec2, touch: boolean): { id: string; index: number; from: Vec2 } | null {
+  const doc = host.store.doc;
+  const ids = host.selection.list().filter((id) => isShape(doc.elements[id]));
+  if (!ids.length) return null;
+  const tol = pxToMm(host, touch ? 18 : 10);
+  const ro = !!host.readOnly?.();
+  const shown = pickableById(host.plan().pickables);
+  let best: { id: string; index: number; from: Vec2; d: number } | null = null;
+  for (const id of ids) {
+    const el = doc.elements[id];
+    if (!shown.has(id) || (ro && !host.canEdit?.(id))) continue;
+    shapeNodes(el).forEach((q, index) => {
+      const d = dist(q, pt);
+      if (d <= tol && (!best || d < best.d)) best = { id, index, from: q, d };
+    });
+  }
+  return best;
+}
+
+/** Greppen i nock och takfot för de markerade taken, i fasaden eller sektionen som är öppen. */
+export function roofGripsShown(host: ToolHost): RoofGrip[] {
+  const space = host.readOnly?.() ? host.space?.() : undefined;
+  if (!space) return [];
+  const doc = host.store.doc;
+  if (doc.elements[space]?.type !== 'Section' && doc.elements[space]?.type !== 'Elevation') return [];
+  const roofs = host.selection.list().filter((id) => doc.elements[id]?.type === 'Roof');
+  return roofs.length ? roofGripsInView(doc, space, roofs) : [];
+}
+
+export function roofGripAt(host: ToolHost, pt: Vec2, touch: boolean): RoofGrip | null {
+  const tol = pxToMm(host, touch ? 20 : GRIP_PX);
+  let best: { g: RoofGrip; d: number } | null = null;
+  for (const g of roofGripsShown(host)) {
+    const d = dist(g.at, pt);
+    if (d <= tol && (!best || d < best.d)) best = { g, d };
+  }
+  return best?.g ?? null;
+}
+
+/**
+ * Rumsstämpelns mittpunkt om punkten ligger på stämpeln i ett markerat rum
+ * (texten eller pilen), annars null (0.8.17).
+ */
+export function roomLabelAt(host: ToolHost, id: string, p: ViewPointer): Vec2 | null {
+  const el = host.store.doc.elements[id];
+  if (el?.type !== 'Space') return null;
+  const item = pickableById(host.plan().pickables).get(id);
+  const prims = item?.prims.filter(isRoomLabel) ?? [];
+  const tol = pxToMm(host, p.pointerType === 'touch' ? 14 : 6);
+  if (!prims.some((q) => distToPrim(p.model, q, host.view.drawingScale) <= tol)) return null;
+  const own = (el.params as { labelAt?: [number, number] }).labelAt;
+  if (own) return [own[0], own[1]];
+  // Stämpeln står i mitten av texterna.
+  const texts = prims.filter((q) => q.kind === 'text');
+  const ys = texts.map((q) => q.at[1]);
+  const xs = texts.map((q) => q.at[0]);
+  const s = host.view.drawingScale;
+  const left = texts[0]?.align === 'start';
+  const widest = Math.max(...texts.map((q) => q.text.length * q.height * 0.62)) * s;
+  const top = Math.max(...ys) + (texts[0]?.height ?? 0) * s / 3;
+  const bottom = Math.min(...ys) + (texts[texts.length - 1]?.height ?? 0) * s / 3;
+  return [left ? xs[0] + widest / 2 : xs[0], (top + bottom) / 2];
+}
