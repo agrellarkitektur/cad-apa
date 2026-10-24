@@ -138,7 +138,7 @@ export function commandById(id: string): CommandDef | undefined {
 /** Kommandot för ett verktyg, en 2D-form eller en Modifiera-knapp. */
 export function commandFor(what: { tool?: ToolId; shape?: ShapeKind; rail?: RailId }): CommandDef | undefined {
   // Enkellinjen är polylinjen sedan 0.8.22.
-  if (what.shape) return COMMANDS.find((c) => c.shape === (what.shape === 'line' ? 'polyline' : what.shape));
+  if (what.shape) return COMMANDS.find((c) => c.shape === what.shape);
   if (what.rail) return COMMANDS.find((c) => c.rail === what.rail);
   return COMMANDS.find((c) => c.tool === what.tool && !c.shape);
 }

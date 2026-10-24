@@ -1,19 +1,19 @@
 yta fylld paper [w0.13 muted] 0,0 420,0 420,297 0,297 @/papper
-polylinje sluten 20,10 410,10 410,287 20,287 [w0.5 ink] @mall-a3-1/rect
-polylinje sluten 230,10 270,10 270,22 230,22 [w0.18 ink] @mall-a3-2/rect
-polylinje sluten 270,10 375,10 375,22 270,22 [w0.18 ink] @mall-a3-5/rect
-polylinje sluten 375,10 410,10 410,22 375,22 [w0.18 ink] @mall-a3-8/rect
-polylinje sluten 230,22 275,22 275,31 230,31 [w0.18 ink] @mall-a3-11/rect
-polylinje sluten 275,22 320,22 320,31 275,31 [w0.18 ink] @mall-a3-14/rect
-polylinje sluten 320,22 365,22 365,31 320,31 [w0.18 ink] @mall-a3-17/rect
-polylinje sluten 365,22 410,22 410,31 365,31 [w0.18 ink] @mall-a3-20/rect
-polylinje sluten 230,31 410,31 410,45 230,45 [w0.18 ink] @mall-a3-23/rect
-polylinje sluten 230,45 410,45 410,54 230,54 [w0.18 ink] @mall-a3-26/rect
-polylinje sluten 230,54 350,54 350,69 230,69 [w0.18 ink] @mall-a3-29/rect
-polylinje sluten 350,54 410,54 410,69 350,69 [w0.18 ink] @mall-a3-33/rect
-polylinje sluten 230,69 350,69 350,85 230,85 [w0.18 ink] @mall-a3-36/rect
-polylinje sluten 350,69 410,69 410,85 350,85 [w0.18 ink] @mall-a3-39/rect
-polylinje sluten 230,10 410,10 410,85 230,85 [w0.35 ink] @mall-a3-42/rect
+polylinje sluten 20,10 410,10 410,287 20,287 [w0.5 ink] @mall-a3-1/polyline
+polylinje sluten 230,10 270,10 270,22 230,22 [w0.18 ink] @mall-a3-2/polyline
+polylinje sluten 270,10 375,10 375,22 270,22 [w0.18 ink] @mall-a3-5/polyline
+polylinje sluten 375,10 410,10 410,22 375,22 [w0.18 ink] @mall-a3-8/polyline
+polylinje sluten 230,22 275,22 275,31 230,31 [w0.18 ink] @mall-a3-11/polyline
+polylinje sluten 275,22 320,22 320,31 275,31 [w0.18 ink] @mall-a3-14/polyline
+polylinje sluten 320,22 365,22 365,31 320,31 [w0.18 ink] @mall-a3-17/polyline
+polylinje sluten 365,22 410,22 410,31 365,31 [w0.18 ink] @mall-a3-20/polyline
+polylinje sluten 230,31 410,31 410,45 230,45 [w0.18 ink] @mall-a3-23/polyline
+polylinje sluten 230,45 410,45 410,54 230,54 [w0.18 ink] @mall-a3-26/polyline
+polylinje sluten 230,54 350,54 350,69 230,69 [w0.18 ink] @mall-a3-29/polyline
+polylinje sluten 350,54 410,54 410,69 350,69 [w0.18 ink] @mall-a3-33/polyline
+polylinje sluten 230,69 350,69 350,85 230,85 [w0.18 ink] @mall-a3-36/polyline
+polylinje sluten 350,69 410,69 410,85 350,85 [w0.18 ink] @mall-a3-39/polyline
+polylinje sluten 230,10 410,10 410,85 230,85 [w0.35 ink] @mall-a3-42/polyline
 text "UPPDRAGSNUMMER" 231.5,19.4 h1.8 [w0.25] @mall-a3-3
 text "RITNINGSNUMMER" 271.5,19.4 h1.8 [w0.25] @mall-a3-6
 text "A-40.1-101" 271.5,12.4 h5 fet [w0.25] @mall-a3-7

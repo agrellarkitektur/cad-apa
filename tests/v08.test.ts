@@ -94,7 +94,7 @@ describe('2D-element (0.8)', () => {
     const s = catmullRom([[0, 0], [1000, 500], [2000, 0]], false);
     expect(s.some((p) => Math.abs(p[0] - 1000) < 1e-6 && Math.abs(p[1] - 500) < 1e-6)).toBe(true);
     expect(s.at(-1)).toEqual([2000, 0]);
-    const c = shapePoints({ shape: 'circle', points: [[0, 0], [1000, 0]] });
+    const c = shapePoints({ shape: 'polyline', points: [[1000, 0], [-1000, 0]], bulges: [1000, 1000], closed: true });
     expect(c.closed).toBe(true);
     expect(Math.hypot(c.points[5][0], c.points[5][1])).toBeCloseTo(1000, 6);
   });

@@ -2,7 +2,8 @@ import { addViewTag, setLocked, setShowIn, updateParams } from '../core/commands
 import { onPaper as paperSpace, modelViewId, type Element, type Id, type ProjectDoc, type ShowIn } from '../core/model';
 import type { DocStore } from '../core/store';
 import { allViews, countViews, homeOf } from '../core/visibility';
-import { FILL_COLOR, LINE_TYPES, SHAPE_LABELS, type Shape2DParams } from '../elements/drawing2d';
+import { CAP_LABELS, CAP_SIZE, FILL_COLOR, LINE_TYPES, PATH_LABELS, segmentCount, type CapKind, type Shape2DParams } from '../elements/drawing2d';
+import { STRAIGHT } from '../geometry/arc';
 import { patternPicker } from './patternPick';
 import { weightPicker } from './weightPick';
 import { markerName } from '../elements/markers';
@@ -70,6 +71,11 @@ export function shapeSmartFields(doc: ProjectDoc, els: Element[]): string | null
   const attrs = (k: string) => `data-key="d2:${k}"`;
   const parts: string[] = [];
   if (ps.every((q) => q.fill === 'hatch' || q.fill === 'cross')) parts.push(`<div class="fields">${hatchFields({ fillAngle: same('fillAngle'), fillSpacing: same('fillSpacing') }, attrs)}</div>`);
+  // Ändarna (0.8.24), när alla är öppna och har en linje.
+  if (ps.every((q) => !q.closed && q.weight > 0)) {
+    const cap = (k: 'startCap' | 'endCap') => (ps.every((q) => q[k] === ps[0][k]) ? ps[0][k] : null);
+    parts.push(capFields({ startCap: cap('startCap'), endCap: cap('endCap'), capSize: ps.every((q) => (q.capSize ?? CAP_SIZE) === (ps[0].capSize ?? CAP_SIZE)) ? ps[0].capSize : null }, attrs));
+  }
   if (ps.some((q) => q.weight > 0 || q.fill)) {
     const linked = ps.every((q) => q.fillOpacity === undefined) ? undefined : ps.every((q) => q.fillOpacity !== undefined) ? (same('fillOpacity') ?? NaN) : NaN;
     parts.push(opacityFields({ weight: ps.some((q) => q.weight > 0) ? 1 : 0, fill: ps.find((q) => q.fill)?.fill, opacity: same('opacity') ?? (ps.every((q) => q.opacity === undefined) ? undefined : NaN), fillOpacity: linked }, attrs));
@@ -96,6 +102,19 @@ export function opacityFields(p: Pick<Shape2DParams, 'weight' | 'fill' | 'opacit
   return `<div class="fields">${field('opacity', 'Opacitet', line)}</div>`;
 }
 
+/**
+ * Ändarna (0.8.24): ändformen i början och slutet och storleken på papper.
+ * Null i ett värde = olika i markeringen.
+ */
+export function capFields(p: { startCap?: CapKind | null; endCap?: CapKind | null; capSize?: number | null }, attrs: (key: string) => string): string {
+  const select = (key: string, label: string, v: CapKind | null | undefined) =>
+    `<label class="field"><span>${label}</span><select ${attrs(key)}>${v === null ? '<option selected disabled>Olika</option>' : ''}<option value="none"${v === undefined ? ' selected' : ''}>Ingen</option>${(Object.entries(CAP_LABELS) as [CapKind, string][]).map(([k, l]) => `<option value="${k}"${k === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>`;
+  const size = p.capSize === null ? '' : comma(p.capSize ?? CAP_SIZE);
+  const showSize = p.startCap !== undefined || p.endCap !== undefined;
+  return `<div class="field-label">Ändar</div><div class="fields">${select('startCap', 'Början', p.startCap)}${select('endCap', 'Slutet', p.endCap)}
+    ${showSize ? `<label class="field"><span>Storlek på papper</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" ${attrs('capSize')} value="${size}"${p.capSize === null ? ' placeholder="Olika"' : ''}><i>mm</i></span></label>` : ''}</div>`;
+}
+
 /** Procent 0–100, eller null om det inte är ett tal. */
 function percent(v: number): number | null {
   return Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : null;
@@ -105,17 +124,19 @@ function percent(v: number): number | null {
 export function drawingFields(doc: ProjectDoc, el: Element): string {
   if (el.type === 'Shape2D') {
     const p = resolveParams<Shape2DParams>(doc, el);
-    const closable = p.shape === 'polyline' || p.shape === 'spline';
+    const arcs = p.shape === 'spline' ? 0 : (p.bulges ?? []).slice(0, segmentCount(p.points.length, !!p.closed)).filter((b) => Math.abs(b) >= STRAIGHT).length;
     return `<div class="fields">
-        <label class="field"><span>Ritad som</span><input value="${SHAPE_LABELS[p.shape] ?? ''}" readonly></label>
+        <label class="field"><span>Form</span><input value="${PATH_LABELS[p.shape] ?? 'Linje'}${arcs ? ` · ${arcs} ${arcs === 1 ? 'båge' : 'bågar'}` : ''}" readonly></label>
         <div class="field"><span>Penna</span>${weightPicker('d2-weight-panel', p.weight, 'data-key="d2:weight"', ' mm')}</div>
         ${p.weight ? `<label class="field"><span>Linjetyp</span><select data-key="d2:linetype">${Object.entries(LINE_TYPES).map(([k, v]) => `<option value="${k}"${k === p.linetype ? ' selected' : ''}>${v.label}</option>`).join('')}</select></label>
         <label class="field"><span>Linjens färg</span><input type="color" data-key="d2:color" value="${p.color ?? '#1d2328'}"></label>` : ''}
       </div>
-      ${closable ? `<label class="check"><input type="checkbox" data-key="d2:closed"${p.closed ? ' checked' : ''}> Sluten</label>` : ''}
-      ${p.shape === 'line' ? '' : fillFields('d2-pattern-panel', p, (k) => `data-key="d2:${k}"`)}
+      <label class="check"><input type="checkbox" data-key="d2:closed"${p.closed ? ' checked' : ''}> Sluten</label>
+      ${!p.closed && p.weight ? capFields(p, (k) => `data-key="d2:${k}"`) : ''}
+      ${fillFields('d2-pattern-panel', p, (k) => `data-key="d2:${k}"`)}
       ${p.weight || p.fill ? opacityFields(p, (k) => `data-key="d2:${k}"`) : ''}
-      ${p.weight === 0 && !p.fill ? '<p class="note">Formen har varken linje eller fyllning och syns inte, men går att klicka på längs linjen.</p>' : ''}`;
+      ${p.weight === 0 && !p.fill ? '<p class="note">Formen har varken linje eller fyllning och syns inte, men går att klicka på längs linjen.</p>' : ''}
+      ${p.shape === 'polyline' ? '<p class="note">Böj eller räta ut en kant med Modifiera: klicka på kanten när formen är markerad.</p>' : ''}`;
   }
   if (el.type === 'Underlay') return underlayFields(doc, el);
   if (el.type === 'RoofSlope') {
@@ -285,6 +306,8 @@ export function drawingChange(store: DocStore, ids: Id[], key: string, input: HT
     else if (name === 'linetype') updateParams(store, ids, { linetype: v }, 'Ändra linjetyp');
     else if (name === 'color') updateParams(store, ids, { color: v }, 'Ändra färg');
     else if (name === 'closed') updateParams(store, ids, { closed: (input as HTMLInputElement).checked }, 'Sluten');
+    else if (name === 'startCap' || name === 'endCap') updateParams(store, ids, { [name]: v === 'none' ? undefined : v }, v === 'none' ? 'Ingen ändform' : 'Ändra ändform');
+    else if (name === 'capSize' && num > 0) updateParams(store, ids, { capSize: num === CAP_SIZE ? undefined : num }, 'Ändra ändarnas storlek');
     else if (name === 'pattern') updateParams(store, ids, { fill: v === 'none' ? undefined : v }, v === 'none' ? 'Ingen fyllning' : 'Ändra fyllning');
     else if (name === 'fillColor') updateParams(store, ids, { fillColor: v }, 'Ändra fyllningens färg');
     else if (name === 'fillAngle' && Number.isFinite(num)) updateParams(store, ids, { fillAngle: num }, 'Ändra vinkel');

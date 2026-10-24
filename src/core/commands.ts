@@ -658,7 +658,9 @@ export function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, movi
   }
   if (Array.isArray(p.points)) {
     const points = p.points.map((q: any) => (Array.isArray(q) ? t.map(q as Pt) : { ...q, at: t.map(q.at) }));
-    return [{ ...el, params: { ...el.params, points, angle: t.angle(p.angle ?? 0), offset: t.mirror ? -(p.offset ?? 0) : p.offset } }];
+    // Speglade bågar buktar åt andra hållet (2D-formernas pilhöjder, 0.8.24).
+    const bulges = t.mirror && Array.isArray(p.bulges) ? { bulges: (p.bulges as number[]).map((b) => -b) } : {};
+    return [{ ...el, params: { ...el.params, points, angle: t.angle(p.angle ?? 0), offset: t.mirror ? -(p.offset ?? 0) : p.offset, ...bulges } }];
   }
   if (p.pos) {
     return [{ ...el, params: { ...el.params, pos: t.map(p.pos), angle: t.mirror ? p.angle : t.angle(p.angle ?? 0) } }];

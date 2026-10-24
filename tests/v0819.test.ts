@@ -34,7 +34,7 @@ function setup(params: Partial<Shape2DParams>) {
 
 describe('2D-formen (0.8.19)', () => {
   it('är format 12, och linje och fyllning är samma objekt', () => {
-    expect(FORMAT_VERSION).toBe(12);
+    expect(FORMAT_VERSION).toBeGreaterThanOrEqual(12);
     const prims = shapePrims({ shape: 'rect', points: sq, weight: 0.35, linetype: 'solid', fill: 'cross', fillAngle: 30, fillSpacing: 2 });
     expect(prims.map((p) => p.kind)).toEqual(['region', 'region', 'polyline']);
     expect(prims.filter((p) => p.under).length).toBe(2);

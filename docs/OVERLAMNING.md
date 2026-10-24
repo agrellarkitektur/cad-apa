@@ -1,10 +1,23 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.23.
+överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.24.
 
 ## Läget
 
+- **0.8.24 2D-form del 2 är klar** på `main` (**format 13**, i en session):
+  2D-formen är en kedja av raka segment och bågar (`bulges`, pilhöjd per
+  segment som väggarnas) eller en spline. Rektangel, båge och cirkel blir
+  kedjor efter ritandet (`chainFrom` i `draw2dTool.ts`); en cirkel är två
+  halvcirklar. Böj (radie eller klick) och Räta ut för en kant i
+  Modifiera. Ändformer `startCap`/`endCap` (pil, öppen pil, triangel,
+  punkt, cirkel, snedstreck, tvärstreck) och `capSize` på papper, i
+  egenskaperna och smartmenyn. Spegla vänder bågarna, Skala skalar dem;
+  Trimma/Dela/Hörnskarv bara för raka linjer. Provat i bygget med
+  Playwright (ritat cirkel, båge, rektangel; böjt med radie 2000 och rätat
+  ut; alla ändformer visuellt) och `tests/v0824.test.ts`; alla 343 tester
+  gick igenom. Står i README, PLAN.md och UTVECKLING.md under *2D-form
+  del 2 (0.8.24)*. Projekt i format 12 öppnas inte.
 - **0.8.23 Granskning är klar** på `main` (samma format, 12), utan nya
   funktioner: `commandLine.ts` uppdelad (`shellPoints.ts`, `shellLog.ts`,
   `shellDock.ts`, `shellHint.ts`, `shellActions.ts`), greppen i Markera i
@@ -28,7 +41,7 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 - **Inkorgen sorterades 24 oktober** (Claudes förslag, inte avstämt med
   Carl August; se *Att fråga*): 0.8.24 2D-form del 2, 0.8.25 Ritordning
   och fyllningar, 0.8.26 Pennor i stilmallen, alla före 0.9.
-- **0.8.12–0.8.23 är inte provade** av Carl August. Frågorna nedan gäller.
+- **0.8.12–0.8.24 är inte provade** av Carl August. Frågorna nedan gäller.
 - Tidigare versioner (0.8.15–0.8.21) står i PLAN.md med Claudes val.
 - **Publicering:** varje push till `main` laddas upp med
   `.github/workflows/publicera.yml` (FTPS; secrets `FTP_SERVER`,
@@ -66,9 +79,8 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.8.21 Kommandoraden del 2~~,
-  ~~0.8.22 Småsaker~~, ~~0.8.23 Granskning~~ (klara)
-- **0.8.24 2D-form del 2** (nytt format, stor, kan delas): radie per
-  segment, ritsättet inte låst, pilar och andra ändformer
+  ~~0.8.22 Småsaker~~, ~~0.8.23 Granskning~~, ~~0.8.24 2D-form del 2~~
+  (klara)
 - **0.8.25 Ritordning och fyllningar**: Längst bak … Främst, 2D-formens
   linje eller fyllning framför eller bakom väggarna, fyllning i rum
 - **0.8.26 Pennor i stilmallen**: tjocklek och färg för pilar och markörer
@@ -90,16 +102,28 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.23 syns på webbhotellet (numret vid alfa-knappen) och
-hur 0.8.12–0.8.23 fungerar, och om sorteringen av Inkorgen (0.8.24–0.8.26
-före 0.9) stämmer. Läs synpunktsfilen och sortera ny Inkorg. Nästa version
-är **0.8.24 2D-form del 2** (nytt format): formen som en kedja av raka
-segment och bågar (bulge per segment, som väggarna), så att rektangel,
-polylinje och båge blir samma sak efter att de ritats, och ändformer
-(pilar, punkter, cirklar, trianglar) i början och slutet. Säg hur stor den
-är och om den bör delas innan den byggs.
+Fråga först om 0.8.24 syns på webbhotellet (numret vid alfa-knappen) och
+hur 0.8.12–0.8.24 fungerar, särskilt bågarna och ändarna, och om
+sorteringen av Inkorgen (0.8.25–0.8.26 före 0.9) stämmer. Läs
+synpunktsfilen och sortera ny Inkorg. Nästa version är **0.8.25
+Ritordning och fyllningar**: Längst bak … Främst, 2D-formens linje eller
+fyllning framför eller bakom väggarna, och fyllning i rum. Säg hur stor
+den är (mellanstor; kanske nytt format) innan den byggs. En
+granskningssession bör föreslås igen efter 0.8.26 (ungefär var tredje
+version; senast 0.8.23).
 
 ## Att fråga Carl August om
+
+- **0.8.24 efter provning** (Claudes val, se PLAN.md): att en rektangel
+  inte förblir rät när ett hörn dras (som en polylinje i AutoCAD), och att
+  cirkeln saknar centrumgrepp (två punkter på cirkeln; flytta med Flytta);
+  att Böj och Räta ut finns i Modifiera och inte som grepp mitt på kanten;
+  att en böjd kant inte går att förskjuta, trimma eller dela; ändformernas
+  utseende och förvalda storlek (2,5 mm), att de bara väljs i egenskaperna
+  och smartmenyn (inte i verktyget) och bara på öppna linjer. Ska
+  smartmenyn alltid visa *Ändar* för en markerad linje, eller tar det för
+  mycket plats? Ska bågar kunna ritas direkt i Linje (som `A` i AutoCADs
+  PLINE)?
 
 - **Sorteringen av Inkorgen** (24 oktober, Claudes förslag): 0.8.24 2D-form
   del 2 (radie per segment, ritsättet inte låst, pilar och ändformer),

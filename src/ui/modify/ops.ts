@@ -3,7 +3,7 @@ import type { Id } from '../../core/model';
 import { canScale } from '../../core/arrange';
 import { canJoin, canTrim } from '../../core/trimEdit';
 import { cornerPartner, cornersAmong, refFrame } from '../../core/wallEdit';
-import { isShape, shapeCan, shapeEdgeAt, shapeNodes } from '../../elements/shapeEdit';
+import { edgeIsArc, isShape, shapeCan, shapeEdgeAt, shapeNodes } from '../../elements/shapeEdit';
 import { dist, sub } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
@@ -74,6 +74,8 @@ export type OpId =
   | 'shapeMove'
   | 'shapeRemove'
   | 'shapeOffset'
+  | 'shapeBend'
+  | 'shapeStraighten'
   | 'trim'
   | 'join'
   | 'split'
@@ -132,6 +134,8 @@ export const OPS: Record<OpId, OpDef> = {
   scale: { label: 'Skala', short: 'Skala', icon: 'scale', value: { label: 'Faktor', unit: '×', initial: 2 }, hint: 'Klicka baspunkten, skriv faktorn eller klicka två punkter.' },
   extendAll: { label: 'Förläng alla till', short: 'Förläng alla', icon: 'extend', hint: 'Klicka på väggen eller linjen som de markerade ska förlängas fram till.' },
   trimAll: { label: 'Trimma mot gräns', short: 'Mot gräns', icon: 'trim', hint: 'Klicka på gränsen, sedan på den sida av den som ska bort.' },
+  shapeBend: { label: 'Böj', short: 'Böj', icon: 'curveEdge', value: { label: 'Radie', unit: 'mm', initial: 1000 }, hint: 'Klicka en punkt som bågen ska gå igenom, eller skriv radien.' },
+  shapeStraighten: { label: 'Räta ut', short: 'Räta ut', icon: 'straighten', instant: true, hint: 'Bågen blir rak igen.' },
   shapeOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'Kanten flyttas vinkelrätt dit du klickar, eller skriv avståndet; grannkanterna följer med.' },
 };
 
@@ -163,10 +167,16 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
   const withCuts = (groups: OpId[][]): OpId[][] => (cuts.length ? [...groups.slice(0, -1), cuts, groups[groups.length - 1]] : groups);
   if (ctx.shapeId) {
     const el = doc.elements[ctx.shapeId];
-    const can = el ? shapeCan(el) : { insert: false, remove: false, offset: false };
+    const can = el ? shapeCan(el) : { insert: false, remove: false, offset: false, bend: false };
+    const arc = !!el && ctx.kind === 'edge' && edgeIsArc(el, ctx.index!);
     const own: OpId[] =
       ctx.kind === 'edge'
-        ? [...(can.insert ? (['shapeInsert'] as OpId[]) : []), ...(can.offset ? (['shapeOffset'] as OpId[]) : [])]
+        ? [
+            ...(can.insert ? (['shapeInsert'] as OpId[]) : []),
+            ...(can.bend ? (['shapeBend'] as OpId[]) : []),
+            ...(arc ? (['shapeStraighten'] as OpId[]) : []),
+            ...(can.offset && !arc ? (['shapeOffset'] as OpId[]) : []),
+          ]
         : ['shapeMove', ...(can.remove ? (['shapeRemove'] as OpId[]) : [])];
     return withCuts(own.length ? [own, COMMON] : [COMMON]);
   }
@@ -351,9 +361,9 @@ export const RAIL: RailDef[][] = [
     { id: 'split', label: 'Dela', icon: 'split', ops: ['split'], key: 'D' },
   ],
   [
-    { id: 'curve', label: 'Böj', icon: 'curveEdge', ops: ['curve'], ask: 'Klicka på referenslinjen för väggen som ska böjas.', key: 'B' },
+    { id: 'curve', label: 'Böj', icon: 'curveEdge', ops: ['curve', 'shapeBend'], ask: 'Klicka på referenslinjen eller kanten som ska böjas.', key: 'B' },
     { id: 'tangent', label: 'Båge med tangent', icon: 'tangentArc', ops: ['tangent'], ask: 'Klicka på referenslinjen för väggen som ska bli en båge.', key: 'G' },
-    { id: 'straighten', label: 'Räta ut', icon: 'straighten', ops: ['straighten'], ask: 'Klicka på referenslinjen för bågen som ska rätas ut.', key: 'L' },
+    { id: 'straighten', label: 'Räta ut', icon: 'straighten', ops: ['straighten', 'shapeStraighten'], ask: 'Klicka på referenslinjen eller kanten för bågen som ska rätas ut.', key: 'L' },
   ],
   [
     { id: 'fillet', label: 'Avrunda hörn', icon: 'fillet', ops: ['fillet', 'filletAll'], ask: 'Klicka på hörnet som ska avrundas.', key: 'F' },
@@ -405,6 +415,8 @@ export function railFor(host: ToolHost, ids: readonly Id[]): Set<RailId> {
     if (can.insert) on.add('insert');
     if (can.remove) on.add('remove');
     if (can.offset) on.add('offset');
+    if (can.bend) on.add('curve');
+    if (can.bend && ((el.params.bulges as number[] | undefined) ?? []).some((b) => Math.abs(b) >= 0.5)) on.add('straighten');
   }
   return on;
 }

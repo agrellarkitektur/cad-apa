@@ -285,9 +285,13 @@ export function splitWallAt(
 /** Om 2D-linjen är en linje eller en öppen polylinje, som går att trimma och dela. */
 export function isOpenLine(el: Element | undefined): boolean {
   if (!el || el.type !== "Shape2D") return false;
-  const shape = (el.params.shape as string) ?? "line";
-  return shape === "line" || (shape === "polyline" && !el.params.closed);
+  // Bara raka kedjor (0.8.24): bågar trimmas inte än.
+  return el.params.shape !== "spline" && !el.params.closed && !hasArcs(el);
 }
+
+/** Om 2D-formen har något böjt segment (0.8.24). */
+const hasArcs = (el: Element): boolean =>
+  ((el.params.bulges as number[] | undefined) ?? []).some((b) => Math.abs(b) >= 0.5);
 
 export const linePoints = (el: Element): P[] =>
   ((el.params.points as P[]) ?? []).map((q) => [q[0], q[1]]);
@@ -301,26 +305,28 @@ export function pathOf(el: Element): P[] {
   return linePoints(el);
 }
 
-/** Ny 2D-linje med samma utseende och andra punkter. */
+/** Ny 2D-linje med samma utseende och andra punkter: den senare delen, utan början (0.8.24). */
 function lineCopy(el: Element, pts: P[]): Element {
   return {
     ...structuredClone(el),
     id: newId("li"),
     params: {
       ...structuredClone(el.params),
-      shape: pts.length > 2 ? "polyline" : "line",
+      shape: "polyline",
       points: pts,
+      startCap: undefined,
     },
   };
 }
 
-/** Parametrarna för en del av en linje. */
-const piece = (el: Element, pts: P[]) => ({
+/** Parametrarna för en del av en linje. En första del av två behåller inte ändformen i slutet. */
+const piece = (el: Element, pts: P[], first = false) => ({
   ...el,
   params: {
     ...el.params,
-    shape: pts.length > 2 ? "polyline" : "line",
+    shape: "polyline",
     points: pts,
+    ...(first ? { endCap: undefined } : {}),
   },
 });
 
@@ -342,7 +348,7 @@ export function trimLine(
   const ids: Id[] = [id];
   store.transact("Trimma", (tx) => {
     const [first, second] = r.pieces;
-    tx.putElement(piece(tx.doc.elements[id], first));
+    tx.putElement(piece(tx.doc.elements[id], first, !!second));
     if (second) {
       const copy = lineCopy(el, second);
       ids.push(copy.id);
@@ -366,7 +372,8 @@ export function joinLines(
   const straight = (el: Element | undefined) =>
     !!el &&
     el.type === "Shape2D" &&
-    ((el.params.shape as string) ?? "line") === "line";
+    isOpenLine(el) &&
+    linePoints(el).length === 2;
   if (!straight(a) || !straight(b) || aId === bId)
     return { ok: false, reason: "Klicka på en annan rak linje." };
   const [a0, a1] = linePoints(a);
@@ -406,7 +413,7 @@ export function splitLine(
     };
   const copy = lineCopy(el, slice(pts, s, L));
   store.transact("Dela", (tx) => {
-    tx.putElement(piece(tx.doc.elements[id], slice(pts, 0, s)));
+    tx.putElement(piece(tx.doc.elements[id], slice(pts, 0, s), true));
     tx.putElement(copy);
   });
   return { ok: true, ids: [id, copy.id] };
@@ -422,7 +429,6 @@ export function canJoin(el: Element | undefined): boolean {
   return (
     !!el &&
     ((el.type === "Wall" && !isArc(el)) ||
-      (el.type === "Shape2D" &&
-        ((el.params.shape as string) ?? "line") === "line"))
+      (el.type === "Shape2D" && isOpenLine(el) && linePoints(el).length === 2))
   );
 }

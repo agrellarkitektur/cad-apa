@@ -1,6 +1,7 @@
 import { updateParams } from '../../core/commands';
 import { insertNode, moveNode, offsetEdge, orientation, setOutline } from '../../core/roofEdit';
-import { insertShapeNode, moveShapeNode, offsetShapeEdge, previewShape, shapeNodes } from '../../elements/shapeEdit';
+import { bendShapeEdge, insertShapeNode, moveShapeNode, offsetShapeEdge, previewShape, shapeNodes } from '../../elements/shapeEdit';
+import { bulgeForRadius, bulgeThrough } from '../../geometry/arc';
 import { dist } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
@@ -13,7 +14,7 @@ import type { ModifyState } from './state';
  * Punkter och kanter i Modifiera (0.8.15, ur tool.ts): lägg till, flytta och
  * förskjut på 2D-element och på takets kontur.
  */
-export const OUTLINE_OPS = new Set<OpId>(['shapeInsert', 'shapeMove', 'shapeOffset', 'roofInsert', 'roofMove', 'roofOffset']);
+export const OUTLINE_OPS = new Set<OpId>(['shapeInsert', 'shapeMove', 'shapeOffset', 'shapeBend', 'roofInsert', 'roofMove', 'roofOffset']);
 
 /** Takets kontur. */
 function roofOutline(s: ModifyState): [number, number][] | null {
@@ -56,6 +57,24 @@ function shapeSide(s: ModifyState, at: Vec2): number {
   return (at[0] - a[0]) * n[0] + (at[1] - a[1]) * n[1];
 }
 
+/** Böj (0.8.24): pilhöjden genom punkten, eller för radien på den sida markören är (annars den sida bågen redan buktar åt). */
+function bendPatch(s: ModifyState, at: Vec2 | null, typed: number | null): Record<string, unknown> | null {
+  const el = shapeOf(s);
+  if (!el) return null;
+  const pts = shapeNodes(el);
+  const i = s.ctx.index!;
+  const a = pts[i];
+  const b = pts[(i + 1) % pts.length];
+  let bulge: number;
+  if (typed !== null) {
+    const now = Number(((el.params.bulges as number[] | undefined) ?? [])[i] ?? 0);
+    const side = at ? (shapeSide(s, at) >= 0 ? 1 : -1) : now >= 0 ? 1 : -1;
+    bulge = bulgeForRadius(a, b, Math.abs(typed), side);
+  } else if (at) bulge = bulgeThrough(a, b, at);
+  else return null;
+  return bendShapeEdge(el, i, bulge);
+}
+
 /** Utför valet; svarar true när verktyget är klart, false när det väntar kvar. */
 export function commitOutline(s: ModifyState, base: Vec2, at: Vec2 | null, typed: number | null): boolean {
   const store = s.host.store;
@@ -86,6 +105,15 @@ export function commitOutline(s: ModifyState, base: Vec2, at: Vec2 | null, typed
         return false;
       }
       updateParams(store, [el.id], patch, 'Förskjut kant');
+      return true;
+    }
+    case 'shapeBend': {
+      const el = shapeOf(s);
+      if (!el) return true;
+      if (typed !== null && !(Math.abs(typed) > 0)) return false;
+      const patch = bendPatch(s, at, typed);
+      if (!patch) return false;
+      updateParams(store, [el.id], patch, 'Böj');
       return true;
     }
     case 'roofInsert':
@@ -136,6 +164,9 @@ export function overlayOutline(s: ModifyState, cam: Camera, base: Vec2, at: Vec2
         shapeGhost(offsetShapeEdge(shp, s.ctx.index!, d));
         out.push(lengthLabel(cam, base, at, `${Math.abs(d).toLocaleString('sv-SE')} mm`));
       }
+      break;
+    case 'shapeBend':
+      if (shp && at) shapeGhost(bendPatch(s, at, null));
       break;
     case 'roofInsert':
       if (roof && at) out.push(line([roof[s.ctx.index!], at, roof[(s.ctx.index! + 1) % roof.length]]));

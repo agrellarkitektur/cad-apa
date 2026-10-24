@@ -54,7 +54,8 @@ export function exampleMaster(storey: Id, states: Id[]): { worksheet: Worksheet;
   const add = (type: string, params: Record<string, unknown>) => out.push({ id: `${space}-${out.length + 1}`, type, storey, states: [...states], tags: [], space, params, props: {} });
   const rect = (x: number, y: number, w: number, h: number, weight: number) =>
     add('Shape2D', {
-      shape: 'rect',
+      shape: 'polyline',
+      closed: true,
       points: [
         [x, y],
         [x + w, y],

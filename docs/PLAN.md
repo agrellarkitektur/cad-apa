@@ -960,6 +960,25 @@ delas (segmenten först, ändformerna sedan).
 - **Pil i början eller slutet** av en linje, med flera former: pil, öppen
   pil, punkt, cirkel, triangel m.m.
 
+*Byggd (24 oktober), format 13, i en session (inte delad). Formen är en
+kedja av punkter med en pilhöjd per segment (`bulges`, som väggarnas),
+eller en spline. Claudes val, att stämma av: rektangel, båge och cirkel
+finns kvar som sätt att rita men blir kedjor; en rektangel förblir alltså
+inte rät när ett hörn dras (som en polylinje i AutoCAD), och en cirkel är
+två halvcirklar mellan två punkter på cirkeln (centrumgreppet finns inte
+längre; flytta cirkeln med Flytta). När en punkt dras behåller bågarna
+intill sin vinkel, så att en cirkel förblir en cirkel. Böj och Räta ut
+ligger i Modifiera (samma knappar som för väggar), inte som grepp mitt på
+kanten; radien skrivs i Böj. En böjd kant går inte att förskjuta, och
+Trimma, Hörnskarv, Dela och Förläng gäller bara raka linjer. Ändformerna:
+Pil (fylld, smal), Öppen pil, Triangel (ofylld), Punkt, Cirkel,
+Snedstreck och Tvärstreck, alla i linjens penna och färg (heldragna också
+på en streckad linje), storlek på papper 2,5 mm. De väljs i egenskaperna
+och smartmenyn, inte i verktyget, och bara på öppna former med linje.
+Linjen kapas där en pil, triangel eller cirkel täcker den. Delas en linje
+behåller den första delen början och den andra slutet. Pennorna för
+ändformerna kommer i 0.8.26.*
+
 ### 0.8.25 Ritordning och fyllningar
 
 Carl Augusts synpunkter 24 oktober (förslag 24 oktober). Mellanstor;

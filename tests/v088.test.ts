@@ -30,7 +30,7 @@ describe('mallblad (0.8.8, format 8)', () => {
       const els = Object.values(doc.elements).filter((e) => e.space === EXAMPLE_MASTER_ID);
       expect(new Set(els.map((e) => e.type))).toEqual(new Set(['Shape2D', 'Text']));
       // Ramen 20/10 mm från kanten och huvudet 180 mm brett i dess nedre högra hörn.
-      expect(els[0].params).toMatchObject({ shape: 'rect', points: [[20, 10], [410, 10], [410, 287], [20, 287]], weight: 0.5 });
+      expect(els[0].params).toMatchObject({ shape: 'polyline', closed: true, points: [[20, 10], [410, 10], [410, 287], [20, 287]], weight: 0.5 });
       expect(els.some((e) => e.type === 'Text' && e.params.text === '{ritningsnummer}' && e.params.bold)).toBe(true);
     }
   });

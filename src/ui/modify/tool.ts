@@ -2,7 +2,7 @@ import { updateParams } from '../../core/commands';
 import type { Id } from '../../core/model';
 import { removeNode, setOutline } from '../../core/roofEdit';
 import { mergeAtCorner, reshapeWall } from '../../core/wallEdit';
-import { removeShapeNode } from '../../elements/shapeEdit';
+import { bendShapeEdge, removeShapeNode } from '../../elements/shapeEdit';
 import { dist } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
@@ -27,6 +27,12 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
     const patch = el && removeShapeNode(el, ctx.index!);
     if (el && patch) updateParams(host.store, [el.id], patch, 'Ta bort punkt');
     else host.hint('Formen har för få punkter för att ta bort en.');
+    return;
+  }
+  if (op === 'shapeStraighten') {
+    const el = ctx.shapeId ? doc.elements[ctx.shapeId] : undefined;
+    const patch = el && bendShapeEdge(el, ctx.index!, 0);
+    if (el && patch) updateParams(host.store, [el.id], patch, 'Räta ut');
     return;
   }
   if (op === 'roofRemove') {

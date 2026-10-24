@@ -11,7 +11,7 @@ import { createWorksheet, deleteWorksheet } from '../src/core/treeCommands';
 import { underlayCorners, underlayInverse, underlayTransform, type UnderlayParams } from '../src/elements/underlay';
 import { buildPlan } from '../src/repr/plan';
 import { parse, serialize } from '../src/storage/format';
-import { insertShapeNode, moveShapeNode, offsetShapeEdge, rectWithCorner, removeShapeNode, shapeEdgeAt } from '../src/elements/shapeEdit';
+import { insertShapeNode, moveShapeNode, offsetShapeEdge, removeShapeNode, shapeEdgeAt } from '../src/elements/shapeEdit';
 import { sampleProject } from '../src/sample/sampleProject';
 
 beforeAll(() => registerBuiltInTypes());
@@ -93,39 +93,28 @@ describe('punkter i 2D-element (0.8 del 2)', () => {
     const s = shape({ shape: 'polyline', points: [[0, 0], [1000, 0], [1000, 1000]] });
     expect(moveShapeNode(s, 1, [1200, 50]).points).toEqual([[0, 0], [1200, 50], [1000, 1000]]);
   });
-  it('en rektangel förblir rät när ett hörn dras, och det motstående hörnet står still', () => {
-    const r = rectWithCorner([[0, 0], [2000, 0], [2000, 1000], [0, 1000]], 2, [2500, 1500])!;
-    expect(r).toEqual([[0, 0], [2500, 0], [2500, 1500], [0, 1500]]);
-    // Snedställd 45°: sidorna behåller sina riktningar.
-    const c = Math.SQRT1_2;
-    const sq: [number, number][] = [[0, 0], [1000 * c, 1000 * c], [0, 2000 * c], [-1000 * c, 1000 * c]];
-    const t = rectWithCorner(sq, 2, [0, 3000])!;
-    const d = (a: number[], b: number[]) => [b[0] - a[0], b[1] - a[1]];
-    const dot = (a: number[], b: number[]) => a[0] * b[0] + a[1] * b[1];
-    expect(Math.abs(dot(d(t[0], t[1]), d(t[1], t[2])))).toBeLessThan(2000);
-    expect(t[0]).toEqual([0, 0]);
+  it('cirkeln (två halvcirklar, 0.8.24) förblir en cirkel när en punkt dras', () => {
+    const s = shape({ shape: 'polyline', points: [[500, 0], [-500, 0]], bulges: [500, 500], closed: true });
+    const m = moveShapeNode(s, 1, [-1500, 0]);
+    expect(m.points).toEqual([[500, 0], [-1500, 0]]);
+    expect(m.bulges).toEqual([1000, 1000]);
   });
-  it('cirkelns centrum flyttar hela cirkeln; radiepunkten ändrar radien', () => {
-    const s = shape({ shape: 'circle', points: [[0, 0], [500, 0]] });
-    expect(moveShapeNode(s, 0, [100, 100]).points).toEqual([[100, 100], [600, 100]]);
-    expect(moveShapeNode(s, 1, [0, 800]).points).toEqual([[0, 0], [0, 800]]);
-  });
-  it('lägg till och ta bort punkt; en linje blir polylinje, en rektangel sluten polylinje', () => {
-    const l = shape({ shape: 'line', points: [[0, 0], [1000, 0]] });
+  it('lägg till och ta bort punkt; ritsättet spelar ingen roll (0.8.24)', () => {
+    const l = shape({ shape: 'polyline', points: [[0, 0], [1000, 0]] });
     const hit = shapeEdgeAt(l, [400, 20], 50)!;
     expect(hit.index).toBe(0);
     const ins = insertShapeNode(l, hit.index, [400, 300])!;
-    expect(ins).toEqual({ shape: 'polyline', points: [[0, 0], [400, 300], [1000, 0]], closed: false });
+    expect(ins).toEqual({ points: [[0, 0], [400, 300], [1000, 0]], bulges: undefined });
     expect(removeShapeNode(l, 0)).toBeNull();
-    const rect = shape({ shape: 'rect', points: [[0, 0], [1000, 0], [1000, 500], [0, 500]] });
-    expect(removeShapeNode(rect, 2)).toEqual({ shape: 'polyline', points: [[0, 0], [1000, 0], [0, 500]], closed: true });
+    const rect = shape({ shape: 'polyline', points: [[0, 0], [1000, 0], [1000, 500], [0, 500]], closed: true });
+    expect(removeShapeNode(rect, 2)).toEqual({ points: [[0, 0], [1000, 0], [0, 500]], bulges: undefined });
     const fill = shape({ shape: 'polyline', points: [[0, 0], [1000, 0], [0, 500]], closed: true, fill: 'solid' });
     expect(removeShapeNode(fill, 0)).toBeNull();
     // Kanten från sista punkten tillbaka till den första i en sluten form.
     expect(shapeEdgeAt(rect, [0, 250], 20)!.index).toBe(3);
   });
   it('förskjut en kant: i en rektangel följer grannkanterna med, i en öppen polylinje flyttas änden rakt ut', () => {
-    const rect = shape({ shape: 'rect', points: [[0, 0], [1000, 0], [1000, 500], [0, 500]] });
+    const rect = shape({ shape: 'polyline', points: [[0, 0], [1000, 0], [1000, 500], [0, 500]], closed: true });
     // Kant 0 går åt höger; vänster är uppåt, in i rektangeln. Minus: utåt (nedåt).
     expect(offsetShapeEdge(rect, 0, -200)!.points).toEqual([[0, -200], [1000, -200], [1000, 500], [0, 500]]);
     const pl = shape({ shape: 'polyline', points: [[0, 0], [1000, 0], [1000, 1000]] });

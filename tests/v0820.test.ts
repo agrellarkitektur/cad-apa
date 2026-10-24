@@ -56,7 +56,7 @@ describe('Kommandoregistret (0.8.20)', () => {
   });
 
   it('visar korta förkortningar på knapparna', () => {
-    expect(aliasText(commandFor({ shape: 'line' })!)).toBe('L, LI, PL, LINE');
+    expect(aliasText(commandFor({ shape: 'polyline' })!)).toBe('L, LI, PL, LINE');
     expect(aliasText(commandFor({ tool: 'wall' })!)).toBe('WA, VG, WALL, VÄGG');
   });
 });

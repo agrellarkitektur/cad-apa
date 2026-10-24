@@ -1,13 +1,13 @@
-import { arcFromBulge, bulgeThrough } from '../geometry/arc';
+import { arcFromBulge, arcSegments, bulgeThrough, STRAIGHT, type Arc } from '../geometry/arc';
 import { dist } from '../geometry/vec';
 import type { Color, FillDef } from '../core/graphics';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import type { ElementType } from './registry';
 
 /**
- * 2D-formen (0.8.19, format 12): en linje, polylinje, rektangel, båge,
- * cirkel eller spline, med penna och fyllning. Linje, rektangel och de andra
- * är bara sätt att rita formen; fyllningen kan läggas på vilken form som
+ * 2D-formen (0.8.19, 0.8.24, format 13): en kedja av raka segment och
+ * bågar, eller en spline, med penna, fyllning och ändformer. Linje,
+ * rektangel, båge och cirkel är bara sätt att rita kedjan; fyllningen kan läggas på vilken form som
  * helst, också en öppen (den fylls som om den vore sluten, som i
  * Illustrator). Formen är ritningsinformation, finns inte i 3D och följer
  * inte med till IFC. Den ritas på en yta (planen, en fasad, en sektion, ett
@@ -15,7 +15,10 @@ import type { ElementType } from './registry';
  * (`Element.show`).
  */
 
-export type ShapeKind = 'line' | 'polyline' | 'rect' | 'arc' | 'circle' | 'spline';
+/** Sätten att rita (verktyget). Efter ritandet är formen en kedja eller en spline (0.8.24). */
+export type ShapeKind = 'polyline' | 'rect' | 'arc' | 'circle' | 'spline';
+/** Vad formen är: en kedja av raka segment och bågar, eller en spline (0.8.24, format 13). */
+export type ShapePath = 'polyline' | 'spline';
 export type LineType = 'solid' | 'dashed' | 'dotted' | 'dashdot';
 
 /** Linjetypernas streckmönster på papper, mm. */
@@ -50,15 +53,20 @@ export const PEN_COLORS: Record<number, { name: string; color: string }> = {
 export type FillPattern = 'solid' | 'hatch' | 'cross';
 
 export interface Shape2DParams {
-  /** Hur formen ritades; bestämmer punkternas betydelse och greppen. `line` ritas inte längre (0.8.22). */
-  shape: ShapeKind;
   /**
-   * Punkterna. Linje: två. Polylinje och spline: två eller fler.
-   * Rektangel: fyra hörn. Båge: start, en punkt på bågen och slut.
-   * Cirkel: centrum och en punkt på cirkeln.
+   * Kedjan (raka segment och bågar) eller en spline (0.8.24). Rektangel,
+   * båge och cirkel ritas som kedjor och går sedan att ändra som andra.
    */
+  shape: ShapePath;
+  /** Punkterna, två eller fler. */
   points: [number, number][];
-  /** Polylinje och spline: sluten. */
+  /**
+   * Pilhöjden per segment i mm (0.8.24), som väggarnas: segment i går från
+   * punkt i till i + 1 (i en sluten form från sista punkten till den första).
+   * Positiv buktar åt vänster; saknas eller 0 = rakt. Bara kedjor.
+   */
+  bulges?: number[];
+  /** Sluten: segmentet från sista punkten till den första finns. */
   closed?: boolean;
   /** Pennans bredd på papper i mm; 0 = ingen linje. */
   weight: number;
@@ -79,7 +87,28 @@ export interface Shape2DParams {
    * så att en ändring av `opacity` gäller båda tills de skiljs åt.
    */
   fillOpacity?: number;
+  /** Ändformen i början och slutet av en öppen form (0.8.24); utelämnad = ingen. */
+  startCap?: CapKind;
+  endCap?: CapKind;
+  /** Ändformernas storlek på papper i mm; utelämnad = `CAP_SIZE`. */
+  capSize?: number;
 }
+
+/** Ändformerna (0.8.24). */
+export type CapKind = 'arrow' | 'open' | 'triangle' | 'dot' | 'circle' | 'tick' | 'bar';
+
+export const CAP_LABELS: Record<CapKind, string> = {
+  arrow: 'Pil',
+  open: 'Öppen pil',
+  triangle: 'Triangel',
+  dot: 'Punkt',
+  circle: 'Cirkel',
+  tick: 'Snedstreck',
+  bar: 'Tvärstreck',
+};
+
+/** Ändformernas förvalda storlek på papper, mm. */
+export const CAP_SIZE = 2.5;
 
 /** Opaciteten 0–1 för linjen och fyllningen; 1 = helt täckande. */
 export function opacitiesOf(p: Pick<Shape2DParams, 'opacity' | 'fillOpacity'>): { line: number; fill: number } {
@@ -87,13 +116,8 @@ export function opacitiesOf(p: Pick<Shape2DParams, 'opacity' | 'fillOpacity'>): 
   return { line: of(p.opacity), fill: of(p.fillOpacity ?? p.opacity) };
 }
 
-/**
- * Namnen på sätten att rita. Polylinjen heter *Linje* (0.8.22): en linje med
- * två punkter är en polylinje, och den gamla enkellinjen ritas inte längre
- * (former ritade som linje före 0.8.22 finns kvar och heter också Linje).
- */
+/** Namnen på sätten att rita, i verktyget. */
 export const SHAPE_LABELS: Record<ShapeKind, string> = {
-  line: 'Linje',
   polyline: 'Linje',
   rect: 'Rektangel',
   arc: 'Båge',
@@ -101,31 +125,60 @@ export const SHAPE_LABELS: Record<ShapeKind, string> = {
   spline: 'Spline',
 };
 
+/** Vad formen är, i egenskaperna. */
+export const PATH_LABELS: Record<ShapePath, string> = { polyline: 'Linje', spline: 'Spline' };
+
 export const PATTERN_LABELS: Record<FillPattern, string> = {
   solid: 'Hel fyllning',
   hatch: 'Skraffering',
   cross: 'Korsskraffering',
 };
 
+/** Antalet segment: ett mindre än punkterna, eller lika många i en sluten form. */
+export function segmentCount(n: number, closed: boolean): number {
+  return n < 2 ? 0 : closed ? n : n - 1;
+}
+
+/** Om formen är sluten och har något att sluta (två punkter räcker om ett segment är en båge). */
+export function isClosed(p: Pick<Shape2DParams, 'shape' | 'points' | 'closed' | 'bulges'>): boolean {
+  if (!p.closed) return false;
+  const n = p.points.length;
+  return n > 2 || (n === 2 && p.shape !== 'spline' && (p.bulges ?? []).some((b) => Math.abs(b) >= STRAIGHT));
+}
+
+/** Bågen för segment i, eller null om det är rakt. */
+export function segmentArc(p: Pick<Shape2DParams, 'points' | 'bulges'>, i: number): Arc | null {
+  const b = p.bulges?.[i] ?? 0;
+  if (Math.abs(b) < STRAIGHT) return null;
+  const a = p.points[i];
+  const c = p.points[(i + 1) % p.points.length];
+  return a && c ? arcFromBulge(a, c, b) : null;
+}
+
+/** Punkterna längs en båge, utan slutpunkten. */
+function arcSamples(arc: Arc): Vec2[] {
+  const n = arcSegments(arc.sweep, arc.radius);
+  return Array.from({ length: n }, (_, i): Vec2 => {
+    const t = arc.theta0 - (arc.sigma * arc.sweep * i) / n;
+    return [arc.center[0] + arc.radius * Math.cos(t), arc.center[1] + arc.radius * Math.sin(t)];
+  });
+}
+
 /** Punkterna som formen ritas med (bågar och splines som korta raka bitar). */
-export function shapePoints(p: Pick<Shape2DParams, 'shape' | 'points' | 'closed'>): { points: Vec2[]; closed: boolean } {
+export function shapePoints(p: Pick<Shape2DParams, 'shape' | 'points' | 'closed' | 'bulges'>): { points: Vec2[]; closed: boolean } {
   const pts = p.points as Vec2[];
-  switch (p.shape) {
-    case 'rect':
-      return { points: pts, closed: true };
-    case 'circle': {
-      if (pts.length < 2) return { points: [], closed: false };
-      const r = dist(pts[0], pts[1]);
-      const n = Math.max(24, Math.min(160, Math.round(r / 40)));
-      return { points: Array.from({ length: n }, (_, i): Vec2 => [pts[0][0] + r * Math.cos((2 * Math.PI * i) / n), pts[0][1] + r * Math.sin((2 * Math.PI * i) / n)]), closed: true };
-    }
-    case 'arc':
-      return { points: pts.length >= 3 ? arcThrough(pts[0], pts[1], pts[2]) : pts, closed: false };
-    case 'spline':
-      return { points: catmullRom(pts, !!p.closed), closed: !!p.closed };
-    default:
-      return { points: pts, closed: !!p.closed && pts.length > 2 };
+  const closed = isClosed(p);
+  if (p.shape === 'spline') return { points: catmullRom(pts, closed), closed };
+  if (!p.bulges?.some((b) => Math.abs(b) >= STRAIGHT)) return { points: pts, closed };
+  const out: Vec2[] = [];
+  const segs = segmentCount(pts.length, closed);
+  for (let i = 0; i < segs; i++) {
+    const arc = segmentArc(p, i);
+    if (arc) out.push(...arcSamples(arc));
+    else out.push(pts[i]);
   }
+  if (!closed) out.push(pts[pts.length - 1]);
+  return { points: out, closed };
 }
 
 /** Bågen från a genom m till b, som punkter. Ligger punkterna på rad blir det en rak linje. */
@@ -170,11 +223,13 @@ function penOf(p: Shape2DParams, opacity: number): Pen {
 export const FILL_COLOR = '#9aa0a6';
 
 /**
- * Formens primitiver: fyllningen (under modellen, `under`) och linjen. Linjen
- * finns också med tjockleken 0; den ritas inte, men går att klicka på och
- * snäppa mot. Med `noFill` ritas ingen fyllning (Visa → Fyllningar, 0.8.22).
+ * Formens primitiver: fyllningen (under modellen, `under`), linjen och
+ * ändformerna (0.8.24). Linjen finns också med tjockleken 0; den ritas inte,
+ * men går att klicka på och snäppa mot. Med `noFill` ritas ingen fyllning
+ * (Visa → Fyllningar, 0.8.22). `scale` är modellens mm per mm på papper,
+ * för ändformernas storlek.
  */
-export function shapePrims(p: Shape2DParams, origin?: Primitive['origin'], noFill = false): Primitive[] {
+export function shapePrims(p: Shape2DParams, origin?: Primitive['origin'], noFill = false, scale = 1): Primitive[] {
   const { points, closed } = shapePoints(p);
   if (points.length < 2) return [];
   const out: Primitive[] = [];
@@ -186,9 +241,106 @@ export function shapePrims(p: Shape2DParams, origin?: Primitive['origin'], noFil
     const fills: FillDef[] = p.fill === 'solid' ? [{ kind: 'solid', color, ...alpha }] : p.fill === 'cross' ? [hatch(p.fillAngle), hatch(p.fillAngle + 90)] : [hatch(p.fillAngle)];
     for (const fill of fills) out.push({ kind: 'region', role: 'cut', rings: [points], fill, outline: null, noOutline: true, ownFill: true, under: true, origin: origin && { ...origin, part: 'fyllning' } });
   }
+  const caps = !closed && p.weight > 0 && op.line > 0 && (p.startCap || p.endCap);
+  let line = points;
+  if (caps) {
+    const size = (p.capSize ?? CAP_SIZE) * scale;
+    const pen: Pen = { ...penOf(p, op.line), dash: undefined };
+    delete pen.dash;
+    const o = origin && { ...origin, part: 'ände' };
+    let cutA = 0;
+    let cutB = 0;
+    if (p.startCap) {
+      const c = capPrims(p.startCap, points[0], endDir(points, false), size, pen, p.color, o);
+      out.push(...c.prims);
+      cutA = c.cut;
+    }
+    if (p.endCap) {
+      const c = capPrims(p.endCap, points[points.length - 1], endDir(points, true), size, pen, p.color, o);
+      out.push(...c.prims);
+      cutB = c.cut;
+    }
+    line = trimEnds(points, cutA, cutB);
+  }
   // Helt genomskinlig ritas som ingen linje: går att klicka på, syns inte.
-  out.push({ kind: 'polyline', points, closed, pen: op.line > 0 ? penOf(p, op.line) : { ...penOf(p, 1), weight: 0 }, origin });
+  // Den kapade linjen ritas; den hela går att klicka på (tjocklek 0) där ändformen täcker.
+  const pen = op.line > 0 ? penOf(p, op.line) : { ...penOf(p, 1), weight: 0 };
+  if (line !== points) {
+    if (line.length >= 2) out.push({ kind: 'polyline', points: line, closed: false, pen, origin: origin && { ...origin, part: 'linje' } });
+    out.push({ kind: 'polyline', points, closed, pen: { ...pen, weight: 0 }, origin });
+  } else out.push({ kind: 'polyline', points, closed, pen, origin });
   return out;
+}
+
+/** Riktningen utåt i formens början (`atEnd` false) eller slut. */
+function endDir(pts: readonly Vec2[], atEnd: boolean): Vec2 {
+  const n = pts.length;
+  const tip = atEnd ? pts[n - 1] : pts[0];
+  // Första punkten som inte sammanfaller med änden.
+  for (let k = 1; k < n; k++) {
+    const q = atEnd ? pts[n - 1 - k] : pts[k];
+    const d = dist(tip, q);
+    if (d > 1e-6) return [(tip[0] - q[0]) / d, (tip[1] - q[1]) / d];
+  }
+  return [1, 0];
+}
+
+/** Linjen kapad `a` mm från början och `b` mm från slutet, längs linjen. */
+export function trimEnds(pts: readonly Vec2[], a: number, b: number): Vec2[] {
+  const cut = (q: readonly Vec2[], d: number): Vec2[] => {
+    if (d <= 0) return [...q];
+    let left = d;
+    for (let i = 0; i + 1 < q.length; i++) {
+      const l = dist(q[i], q[i + 1]);
+      if (l >= left) {
+        const t = left / (l || 1);
+        return [[q[i][0] + (q[i + 1][0] - q[i][0]) * t, q[i][1] + (q[i + 1][1] - q[i][1]) * t], ...q.slice(i + 1)];
+      }
+      left -= l;
+    }
+    return [];
+  };
+  const s = cut(pts, a);
+  return cut(s.reverse(), b).reverse();
+}
+
+/**
+ * En ändform med spetsen (eller mitten) i `tip`, riktad utåt längs `dir`,
+ * och hur långt in linjen ska kapas för att inte synas genom den.
+ */
+export function capPrims(kind: CapKind, tip: Vec2, dir: Vec2, size: number, pen: Pen, color: string | undefined, origin?: Primitive['origin']): { prims: Primitive[]; cut: number } {
+  const n: Vec2 = [-dir[1], dir[0]];
+  const at = (back: number, side: number): Vec2 => [tip[0] - dir[0] * back + n[0] * side, tip[1] - dir[1] * back + n[1] * side];
+  const ink = (color ?? 'ink') as Color;
+  const filled = (ring: Vec2[]): Primitive => ({
+    kind: 'region',
+    role: 'cut',
+    rings: [ring],
+    fill: { kind: 'solid', color: ink, ...(pen.opacity !== undefined ? { opacity: pen.opacity } : {}) },
+    outline: pen,
+    ownFill: true,
+    origin,
+  });
+  const circle = (r: number): Vec2[] => Array.from({ length: 24 }, (_, i): Vec2 => [tip[0] + r * Math.cos((Math.PI * i) / 12), tip[1] + r * Math.sin((Math.PI * i) / 12)]);
+  switch (kind) {
+    case 'arrow':
+      return { prims: [filled([tip, at(size, size / 6), at(size, -size / 6)])], cut: size * 0.9 };
+    case 'open':
+      return { prims: [{ kind: 'polyline', points: [at(size, size / 3), tip, at(size, -size / 3)], closed: false, pen, origin }], cut: 0 };
+    case 'triangle':
+      return { prims: [{ kind: 'polyline', points: [tip, at(size, size / 3), at(size, -size / 3)], closed: true, pen, origin }], cut: size };
+    case 'dot':
+      return { prims: [filled(circle(size / 5))], cut: 0 };
+    case 'circle':
+      return { prims: [{ kind: 'polyline', points: circle(size / 4), closed: true, pen, origin }], cut: size / 4 };
+    case 'tick': {
+      // Snedstreck som på mått: 45° mot linjen.
+      const h = size / 2 / Math.SQRT2;
+      return { prims: [{ kind: 'line', a: at(h, -h), b: at(-h, h), pen, origin }], cut: 0 };
+    }
+    case 'bar':
+      return { prims: [{ kind: 'line', a: at(0, size / 2), b: at(0, -size / 2), pen, origin }], cut: 0 };
+  }
 }
 
 export const shape2dType: ElementType<Shape2DParams> = {
@@ -201,7 +353,7 @@ export const shape2dType: ElementType<Shape2DParams> = {
   defaults: () => ({ shape: 'polyline', points: [], weight: 0.25, linetype: 'solid', fillAngle: 45, fillSpacing: 2 }),
   plan(el, ctx) {
     const p = ctx.params<Shape2DParams>(el);
-    return shapePrims(p, { objectId: el.id, objectType: 'Shape2D', part: p.shape }, !!ctx.view.hide?.includes('fill'));
+    return shapePrims(p, { objectId: el.id, objectType: 'Shape2D', part: p.shape }, !!ctx.view.hide?.includes('fill'), ctx.scale);
   },
   // Mitten går att klicka på bara när formen har en fyllning (0.8.19); annars bara linjen.
   pickSoft: true,

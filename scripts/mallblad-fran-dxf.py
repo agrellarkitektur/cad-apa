@@ -97,7 +97,7 @@ def main():
             if not on_paper(p, q) or skipped(p, q):
                 left_out += 1
                 continue
-            out.append({'type': 'Shape2D', 'params': {'shape': 'line', 'points': [[r(p.x), r(p.y)], [r(q.x), r(q.y)]], 'weight': WEIGHT.get(color_of(doc, e), 0.25), 'linetype': 'solid'}})
+            out.append({'type': 'Shape2D', 'params': {'shape': 'polyline', 'points': [[r(p.x), r(p.y)], [r(q.x), r(q.y)]], 'weight': WEIGHT.get(color_of(doc, e), 0.25), 'linetype': 'solid'}})
         elif t in ('TEXT', 'MTEXT'):
             if t == 'TEXT':
                 text = e.plain_text().strip()

@@ -344,10 +344,12 @@ på bladet sina egna.
   ovanpå varandra i `renderAll`. `ToolHost.space()` ger ytan nya mått,
   texter och 2D-element hamnar på, och `canEdit(id)` vad som går att flytta
   i en vy som annars bara går att markera.
-- **2D-element**: `Shape2D` (`shape`: line, polyline, rect, arc, circle,
-  spline; fyllning i `fill`) i `src/elements/drawing2d.ts`, verktyget i
-  `src/ui/tools/draw2dTool.ts`. Bågar sparas start, punkt på bågen, slut.
-  Före format 12 fanns `Line2D` och `Fill2D` (se *2D-form (0.8.19)*).
+- **2D-element**: `Shape2D` (`shape`: polyline eller spline; pilhöjder
+  per segment i `bulges`; fyllning i `fill`; ändar i `startCap` och
+  `endCap`) i `src/elements/drawing2d.ts`, verktyget i
+  `src/ui/tools/draw2dTool.ts`. Före format 13 fanns `shape` line, rect,
+  arc och circle (se *2D-form del 2 (0.8.24)*), och före format 12
+  `Line2D` och `Fill2D` (se *2D-form (0.8.19)*).
 - **Taklutningen** (`src/elements/roofSlope.ts`): `buildSection` ger
   automatiska taklutningar med id `slope:<tak>:<takfall>` och deras värden
   i `slopes`. Markeras en skapar appen ett `RoofSlope`-element med de
@@ -1119,6 +1121,50 @@ projekt i 1 982 jämförelser.
   mappen, annars utanför alla. `moveIntoFolder` i `treeCommands.ts` flyttar
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
+
+## 2D-form del 2 (0.8.24, format 13)
+
+- **Kedjan**: `Shape2DParams.shape` är `ShapePath` (`polyline` eller
+  `spline`). `bulges` är pilhöjden per segment i mm, som väggarnas
+  `bulge` (`arcFromBulge` i `geometry/arc.ts`): segment i går från punkt i
+  till i + 1, i en sluten form också från sista punkten till den första.
+  Saknas den, eller är en pilhöjd under `STRAIGHT`, är segmentet rakt.
+  `shapeEdit.ts` sparar den utan raka segment sist (`bulgesParam`), och
+  utelämnar den när allt är rakt. `isClosed` räknar en sluten form med två
+  punkter som sluten när ett segment är en båge (cirkeln)
+- **Sätten att rita** (`ShapeKind`: polyline, rect, arc, circle, spline)
+  finns bara i verktyget: `chainFrom` i `draw2dTool.ts` gör om dem till
+  kedjor. Rektangeln: fyra hörn, sluten. Bågen (start, slut, punkt på
+  bågen): två punkter och `bulgeThrough`. Cirkeln (centrum, punkt): punkten
+  och den motsatta, `bulges: [r, r]`, sluten
+- **`shapePoints`** följer bågarna (`segmentArc`, `arcSegments`) och ger
+  punkterna som ritas, snäpps mot och markeras
+- **Redigering** (`shapeEdit.ts`): `moveShapeNode` ändrar pilhöjden på
+  segmenten intill med kordan, så att bågens vinkel är kvar.
+  `insertShapeNode` lägger en punkt på en båge på bågen och delar den i två
+  (`sigma · korda/2 · tan(vinkel/4)`); `removeShapeNode` gör segmentet
+  mellan grannarna rakt; `bendShapeEdge(s, i, bulge)` böjer eller rätar ut
+  (0). `offsetShapeEdge` vägrar bågar (`edgeIsArc`). `shapeCan` har `bend`
+- **Modifiera**: `shapeBend` (radie, eller klick genom en punkt;
+  `bendPatch` i `outlineOps.ts`) och `shapeStraighten` (direkt, i
+  `runInstant`) ligger på knapparna Böj och Räta ut i raden
+- **Spegla** (`transformed` i `core/commands.ts`) byter tecken på
+  `bulges`; **Skala** (`scaledParams`) skalar dem; pipetten tar inte med
+  dem (`PLACEMENT`). `isOpenLine` i `trimEdit.ts` kräver en kedja utan
+  bågar, så Trimma, Hörnskarv, Dela och Förläng gäller raka linjer
+- **Ändformer**: `startCap`, `endCap` (`CapKind`: arrow, open, triangle,
+  dot, circle, tick, bar) och `capSize` (mm på papper, förval `CAP_SIZE`
+  2,5). `shapePrims(p, origin, noFill, scale)` ritar dem med `capPrims`
+  vid ändarna, riktade längs de yttersta punkterna (`endDir`), i linjens
+  penna utan streck, med `origin.part = 'ände'`. Där ändformen täcker
+  linjen kapas den (`trimEnds`, `part: 'linje'`), och den hela linjen
+  följer med med tjockleken 0 så att markering och snäpp ser hela formen.
+  Bara öppna former med linje får ändar. `splitLine` och `trimLine` ger
+  den första delen början och den andra slutet
+- **Egenskaperna**: `capFields` i `drawingPanel.ts` (Början, Slutet,
+  Storlek på papper), också i smartmenyn (`shapeSmartFields`) när alla
+  markerade är öppna och har linje. *Ritad som* är ersatt av *Form*
+  (Linje eller Spline, och antalet bågar)
 
 ## Granskning (0.8.23, format 12)
 

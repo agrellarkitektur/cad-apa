@@ -57,7 +57,8 @@ export function scaledParams(el: Element, base: readonly [number, number], f: nu
   const map = (q: readonly number[]): P => round([base[0] + (q[0] - base[0]) * f, base[1] + (q[1] - base[1]) * f]);
   switch (el.type) {
     case 'Shape2D':
-      return { points: (p.points as P[]).map(map) };
+      // Pilhöjderna skalas med (0.8.24); ändarnas storlek är på papperet.
+      return { points: (p.points as P[]).map(map), ...(Array.isArray(p.bulges) ? { bulges: (p.bulges as number[]).map((b) => Math.round(b * f * 10) / 10) } : {}) };
     case 'Dimension':
       return { points: (p.points as P[]).map(map), offset: Math.round((p.offset ?? 0) * f) };
     case 'Furniture':
@@ -96,7 +97,7 @@ export function scaleElements(store: DocStore, ids: readonly Id[], base: readonl
  * tjocklek, höjd, liv, penna, linjetyp, färg, mönster …) följer med.
  */
 const PLACEMENT = new Set([
-  'start', 'end', 'bulge', 'points', 'closed', 'shape', 'origin', 'rotation', 'pos', 'size', 'asset', 'page', 'kind', 'layersOff',
+  'start', 'end', 'bulge', 'bulges', 'points', 'closed', 'shape', 'origin', 'rotation', 'pos', 'size', 'asset', 'page', 'kind', 'layersOff',
   'text', 'at', 'hinge', 'swing', 'outline', 'seed', 'labelAt', 'ridge', 'offset', 'auto', 'side', 'label', 'roof', 'face', 'toward', 'stamp', 'scale', 'facing',
 ]);
 
@@ -279,7 +280,7 @@ export function trimAllAt(store: DocStore, ids: readonly Id[], boundaryId: Id, s
     for (const { id, pts } of plan) {
       const el = tx.doc.elements[id];
       if (el.type === 'Wall') putWallEnds(tx, el, round(pts[0]), round(pts[pts.length - 1]));
-      else tx.putElement({ ...el, params: { ...el.params, shape: pts.length > 2 ? 'polyline' : 'line', points: pts.map(round) } });
+      else tx.putElement({ ...el, params: { ...el.params, shape: 'polyline', points: pts.map(round) } });
       res.done++;
     }
   });

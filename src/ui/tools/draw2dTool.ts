@@ -1,5 +1,6 @@
 import { addElements } from '../../core/commands';
 import { shapePrims, type FillPattern, type LineType, type Shape2DParams, type ShapeKind } from '../../elements/drawing2d';
+import { bulgeThrough, STRAIGHT } from '../../geometry/arc';
 import { add, dist, dot, fromAngleDeg, scale, sub } from '../../geometry/vec';
 import type { Primitive, Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
@@ -21,7 +22,7 @@ export interface Draw2DOptions {
 }
 
 /** Hur många punkter formen behöver; null = så många man vill (avslutas med dubbelklick, Enter eller Klar). */
-const NEEDED: Record<ShapeKind, number | null> = { line: 2, rect: 2, circle: 2, arc: 3, polyline: null, spline: null };
+const NEEDED: Record<ShapeKind, number | null> = { rect: 2, circle: 2, arc: 3, polyline: null, spline: null };
 
 /**
  * 2D-verktyget (0.8, 0.8.19): ritar en 2D-form som linje, rektangel, båge,
@@ -135,9 +136,9 @@ export class Draw2DTool implements ViewTool, PointTaker {
     this.host.view.requestRender();
   }
 
-  /** Byt form; punkterna börjar om. Enkellinjen är polylinjen sedan 0.8.22. */
+  /** Byt form; punkterna börjar om. */
   setKind(kind: ShapeKind): void {
-    this.options.kind = kind === 'line' ? 'polyline' : kind;
+    this.options.kind = kind in NEEDED ? kind : 'polyline';
     this.reset();
   }
 
@@ -150,13 +151,8 @@ export class Draw2DTool implements ViewTool, PointTaker {
   /** Parametrarna för formen genom punkterna. */
   private params(pts: Vec2[], closed: boolean): Record<string, unknown> {
     const o = this.options;
-    const at = (q: Vec2): [number, number] => [q[0], q[1]];
-    let points = pts.map(at);
-    if (o.kind === 'rect') points = rectCorners(pts[0], pts[1]).map(at);
-    // Bågen ritas start, slut, punkt på bågen; den sparas start, punkt, slut.
-    if (o.kind === 'arc') points = (pts.length >= 3 ? [pts[0], pts[2], pts[1]] : pts).map(at);
-    const fill = o.fill && o.kind !== 'line' ? { fill: o.fill } : {};
-    return { shape: o.kind, points, ...(closed && (o.kind === 'polyline' || o.kind === 'spline') ? { closed: true } : {}), weight: o.weight, linetype: o.linetype, ...fill };
+    const fill = o.fill ? { fill: o.fill } : {};
+    return { ...chainFrom(o.kind, pts, closed), weight: o.weight, linetype: o.linetype, ...fill };
   }
 
   private create(pts: Vec2[], closed: boolean): void {
@@ -197,7 +193,7 @@ export class Draw2DTool implements ViewTool, PointTaker {
     if (this.current) pts.push(this.current.point);
     if (pts.length < 2) return [];
     const p = { fillAngle: 45, fillSpacing: 2, ...this.params(pts, false) } as unknown as Shape2DParams;
-    return shapePrims({ ...p, weight: p.weight || 0.13 });
+    return shapePrims({ ...p, weight: p.weight || 0.13 }, undefined, false, this.host.view.drawingScale);
   }
 
   hintText(): string {
@@ -226,6 +222,34 @@ export class Draw2DTool implements ViewTool, PointTaker {
     }
     if (this.current) out.push(snapMarker(cam, this.current));
     return out.join('');
+  }
+}
+
+/**
+ * Kedjan (eller splinen) som ett sätt att rita ger (0.8.24): rektangeln är
+ * en sluten kedja med fyra hörn, bågen en kedja med ett böjt segment och
+ * cirkeln en sluten kedja med två halvcirklar. Bågen ritas start, slut och
+ * en punkt på bågen; cirkeln centrum och en punkt på cirkeln.
+ */
+export function chainFrom(kind: ShapeKind, pts: readonly Vec2[], closed: boolean): Pick<Shape2DParams, 'shape' | 'points' | 'bulges' | 'closed'> {
+  const at = (q: Vec2): [number, number] => [Math.round(q[0]), Math.round(q[1])];
+  switch (kind) {
+    case 'rect':
+      return { shape: 'polyline', points: rectCorners(pts[0], pts[1]).map(at), closed: true };
+    case 'arc': {
+      if (pts.length < 3) return { shape: 'polyline', points: pts.map(at) };
+      const [a, b] = [at(pts[0]), at(pts[1])];
+      const bulge = Math.round(bulgeThrough(a, b, pts[2]) * 10) / 10;
+      return { shape: 'polyline', points: [a, b], ...(Math.abs(bulge) >= STRAIGHT ? { bulges: [bulge] } : {}) };
+    }
+    case 'circle': {
+      const c = at(pts[0]);
+      const q = at(pts[1]);
+      const r = Math.round(dist(c, q) * 10) / 10;
+      return { shape: 'polyline', points: [q, at([2 * c[0] - q[0], 2 * c[1] - q[1]])], bulges: [r, r], closed: true };
+    }
+    default:
+      return { shape: kind, points: pts.map(at), ...(closed ? { closed: true } : {}) };
   }
 }
 

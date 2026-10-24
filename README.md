@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.23** (alfa, granskning); nästa är **0.8.24, 2D-form del 2**.
+**0.8.24** (alfa, 2D-form del 2); nästa är **0.8.25, ritordning och fyllningar**.
 
 ## Vad som fungerar
 
@@ -907,9 +907,24 @@ Version 0.8.23, granskning (samma filformat, 12):
 - Mycket stora DXF-underlag går att snäppa mot utan att webbläsaren säger
   ifrån
 
+Version 0.8.24, 2D-form del 2 (nytt filformat, 13):
+- **Bågar i linjer**: varje segment i en 2D-form kan vara rakt eller en
+  båge. Markera formen, välj **Böj** i Modifiera (`B`) och klicka på
+  kanten: klicka en punkt som bågen ska gå igenom, eller skriv radien.
+  **Räta ut** (`L`) gör bågen rak igen
+- **Ritsättet är inte låst**: rektangel, båge och cirkel blir efter
+  ritandet samma slags form som en linje, med punkter och bågar som går
+  att flytta, lägga till, ta bort och böja. En cirkel är två halvcirklar
+  och förblir en cirkel när en punkt dras
+- **Ändar**: en öppen linje kan få pil, öppen pil, triangel, punkt,
+  cirkel, snedstreck eller tvärstreck i början och slutet, med storleken
+  på papper (förval 2,5 mm), i egenskaperna och smartmenyn
+- Spegla vänder bågarna, Skala skalar dem; Trimma, Hörnskarv och Dela
+  gäller raka linjer. Delas en linje följer ändformerna med åt var sitt håll
+
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer, i dag 12 (sedan 0.8.19). Fram till
+Projektfilerna har ett formatnummer, i dag 13 (sedan 0.8.24). Fram till
 den öppna betan uppgraderas inte projekt från äldre alfa- och betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp

@@ -276,7 +276,7 @@ describe("Dela (0.8.13)", () => {
       [2000, 500],
       [2000, 2000],
     ]);
-    expect(copy?.params.shape).toBe("line");
+    expect(copy?.params.shape).toBe("polyline");
   });
 });
 

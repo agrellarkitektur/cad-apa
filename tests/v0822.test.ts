@@ -111,7 +111,7 @@ describe('Visa → Fyllningar (0.8.22)', () => {
 describe('Linje är polylinjen (0.8.22)', () => {
   it('L, LINE, PL och PLINE ger samma verktyg, som heter Linje', () => {
     for (const n of ['l', 'line', 'linje', 'pl', 'pline', 'polyline', 'polylinje']) expect(findCommand(n)?.shape, n).toBe('polyline');
-    expect(commandFor({ shape: 'line' })?.label).toBe('Linje');
+    expect(commandFor({ shape: 'polyline' })?.label).toBe('Linje');
     expect(SHAPE_LABELS.polyline).toBe('Linje');
   });
 });
