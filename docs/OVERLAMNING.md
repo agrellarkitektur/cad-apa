@@ -23,10 +23,11 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   **0.8.28 Rättelser i 2D-formen** (se PLAN.md): fortsätta en öppen linje
   från ändpunkten (också med bågar), fyllningens färg i smartmenyn syns
   först efter ny markering, och en form som skickas fram döljer bara den
-  undres fyllning, inte dess linjer. Inkorgen 25 oktober sorterades (Claudes
-  förslag, inte avstämt): 0.8.29 Linjetyper (med egna linjetyper), 0.8.30
-  Detaljnivåer i stilmallen, egna fyllningstyper parkerade till efter
-  piloten.
+  undres fyllning, inte dess linjer. Inkorgen 25 oktober sorterades och
+  ordningen bekräftades av Carl August: 0.8.29 Linjetyper (med egna
+  linjetyper), 0.8.30 Egna fyllningstyper (tidigarelagd på hans begäran),
+  0.8.31 Detaljnivåer i stilmallen (detaljnivån väljs per vy, som i
+  ArchiCAD).
 - **0.8.22–0.8.26** (småsaker, granskning, 2D-form del 2 med bågar och
   ändar i format 13, ritordning och fyllningar, pennor i stilmallen) står
   i PLAN.md med Claudes val och i UTVECKLING.md med var koden ligger.
@@ -77,8 +78,9 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 - **0.8.28 Rättelser i 2D-formen** (fortsätta en linje, fyllningens färg
   i smartmenyn, det överst döljer det under)
 - **0.8.29 Linjetyper** (också egna; grunden för det punktstreckade i 0.10)
-- **0.8.30 Detaljnivåer i stilmallen** (fråga först: per vy eller efter
-  skala?)
+- **0.8.30 Egna fyllningstyper** (linjefamiljer med streckning; kanske
+  `.pat`-filer)
+- **0.8.31 Detaljnivåer i stilmallen** (per vy, som i ArchiCAD)
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade)
@@ -99,9 +101,8 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 Fråga först om 0.8.27 syns på webbhotellet (numret vid alfa-knappen) och
 om något beter sig annorlunda än i 0.8.26 (det ska det inte; fasaderna ska
-bara komma fortare). Läs synpunktsfilen och sortera ny Inkorg, och fråga om
-sorteringen 25 oktober stämmer (0.8.28 Rättelser, 0.8.29 Linjetyper, 0.8.30
-Detaljnivåer, egna fyllningstyper parkerade). Bygg sedan **0.8.28
+bara komma fortare). Läs synpunktsfilen och sortera ny Inkorg (ordningen 0.8.28–0.8.31 är
+bekräftad). Bygg sedan **0.8.28
 Rättelser i 2D-formen** (liten–mellanstor, en session). Att börja med:
 smartmenyns fält kommer från `shapeSmartFields` i `src/ui/shapeFields.ts`
 och visar inte fyllningens färg alls (bara vinkel och avstånd för
@@ -150,15 +151,13 @@ starta verktyget med formens punkter och bågar.
   mycket plats? Ska bågar kunna ritas direkt i Linje (som `A` i AutoCADs
   PLINE)?
 
-- **Sorteringen av Inkorgen 25 oktober** (Claudes förslag): 0.8.28
-  Rättelser i 2D-formen, 0.8.29 Linjetyper (egna linjetyper med, annars
-  i nästa version), 0.8.30 Detaljnivåer i stilmallen, egna fyllningstyper
-  parkerade till efter piloten (eller efter 0.8.30 om de behövs tidigt).
-  Rätt ordning, och ska linjetyperna gälla väggar och fasadernas linjer
-  också, eller bara 2D-former och pennorna?
-- **Detaljnivåerna (0.8.30)**: väljs detaljnivån per vy (som i ArchiCAD)
-  eller efter skalan? Gäller det bara litteran, eller ska dörrar och fönster
-  också ritas olika (då hör en del hemma i 0.11.2)?
+- **Linjetyperna (0.8.29)**: ska de gälla väggar och fasadernas linjer
+  också, eller bara 2D-former och pennorna i stilmallen? (Fråga senast
+  när 0.8.29 börjar.)
+- **Detaljnivåerna (0.8.31)**: per vy är bestämt. Gäller det bara
+  litteran, eller ska dörrar och fönster också ritas olika (då hör en del
+  hemma i 0.11.2)? Carl Augusts "ja" 25 oktober tolkades som per vy; säg
+  till om det var fel.
 
 - **0.8.22 efter provning** (Claudes val, se PLAN.md): opaciteten är *Samma
   för linje och fyllning* från början, och kryssrutan skiljer dem; den

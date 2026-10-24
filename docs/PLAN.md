@@ -1078,20 +1078,31 @@ en session; egna linjetyper flyttas till nästa version om de inte ryms.
 Grunden för det punktstreckade ovanför snittet i 0.10.
 
 - **Linjetyp** (heldragen, streckad, punktstreckad, prickad m.fl.) för
-  linjer och objekt: 2D-former, väggar, fasadernas linjer och pennorna i
-  stilmallen
+  linjer och objekt: 2D-former och pennorna i stilmallen, kanske också
+  väggar och fasadernas linjer (*att fråga*)
 - **Egna linjetyper**: ett mönster av streck och mellanrum i mm på papper
 - Kanske: DXF-underlagens streckade linjer ritas streckade
 
-### 0.8.30 Detaljnivåer i stilmallen
+### 0.8.30 Egna fyllningstyper
 
-Carl Augusts synpunkt 25 oktober (förslag 25 oktober). Storleken beror på
-svaret på frågan nedan.
+Carl Augusts synpunkt 25 oktober; tidigarelagd från *Efter
+pilotprojektet* samma dag. Stor, troligen en session. Bygger på 0.8.29:
+mönstrens linjer kan vara streckade.
+
+- **Egna fyllningstyper**: ett mönster av en eller flera linjefamiljer
+  (vinkel, avstånd, förskjutning och streckning), som ritas lika på
+  skärmen, i PDF:en och i DXF:en
+- Kanske: läsa in färdiga `.pat`-filer (AutoCAD, ArchiCAD)
+
+### 0.8.31 Detaljnivåer i stilmallen
+
+Carl Augusts synpunkt 25 oktober. Detaljnivån väljs per vy, som i
+ArchiCAD (Carl August 25 oktober); det finns redan (Skiss, Normal, Detalj
+i vyraden), så det nya är vad stilmallen visar på varje nivå.
 
 - **Litteran efter detaljnivå**: stilmallens innehåll för dörrar, fönster,
-  rum m.m. delas upp i skiss, normal och detalj. *Att fråga:* väljs
-  detaljnivån per vy (som i ArchiCAD) eller efter skalan? Ska dörrar och
-  fönster också ritas olika (då hör en del hemma i 0.11.2)?
+  rum m.m. delas upp i skiss, normal och detalj. *Att fråga:* ska dörrar
+  och fönster också ritas olika (då hör en del hemma i 0.11.2)?
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
@@ -1223,7 +1234,6 @@ efter pilotprojektet. Det som piloten visar behövs tidigt går först.
 Grafik:
 
 - Penntabell i stilmallen (pilar och markörer flyttade till 0.8.26): linjetjocklek och färg per sorts linje (hål, karm, båge, foder, sammanfogningar, glas, öppningssätt, marklinje …). I dag gäller fasta värden: 0,13 skraffering, glas och sammanfogningar; 0,18 mått, foder, möbler och detaljer; 0,25 karm, båge, dörrblad och konturer bortom; 0,35 hålens omfattning och fasadkonturer; 0,5 bärande snitt; 0,7 marklinje och sektionslinjens ändar
-- **Egna fyllningstyper** (skrafferingsmönster), kanske genom att läsa in färdiga `.pat`-filer (Carl August 25 oktober; parkerat 25 oktober, eller direkt efter 0.8.30 om de behövs tidigt)
 - Klicka på en glasmarkering för att ge den en egen stil i egenskaperna
 - Typsnitt: ett för hela projektet och eget per objekt
 - Öppningssätt för fönster: fast, sidohängt (vänster/höger), överkantshängt, underkantshängt, vridfönster. I dag har bara dörrar öppningssätt
