@@ -16,6 +16,7 @@ import { PlanView } from '../view2d/planView';
 import { renderHighlight } from './highlight';
 import { MeasureBox } from './measureBox';
 import { FeedbackDialog } from './feedbackDialog';
+import { installAboutDialog } from './app/aboutDialog';
 import { PropertiesPanel } from './propertiesPanel';
 import { Selection } from './selection';
 import { isNarrow } from './sheet';
@@ -41,12 +42,15 @@ import { installPanes } from './app/panes';
 import { createUiState, shellMarkup } from './app/shell';
 import { installShowMenu } from './app/showMenu';
 import { snapSegments } from './app/snapping';
+import type { SnapSegment } from './tools/snap';
 import { installTextEdit } from './app/textEdit';
 import { installToolOptions } from './app/toolOptions';
 import { installModifyRail } from './app/modifyRail';
 import { bodyContext as bodyContextAt, screenBox, selectionBounds } from './app/selectionPlace';
 import { installViews } from './app/views';
 import { installUnderlays } from './app/underlays';
+import { installSegmentPoints } from './app/segmentPoints';
+import { installTreeDrag } from './app/treeDrag';
 import { installSheets } from './app/sheets';
 import { installPlot } from './app/plot';
 import { installRender } from './app/render';
@@ -159,6 +163,15 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   textEditor = new InlineTextEditor(pane2d);
 
   // ---------- Verktyg ----------
+  // Segmentpunkterna (0.8.18) läggs först; samma listor ger samma lista, så
+  // att snäppningens rutnät (som hör till listan) behålls mellan musrörelserna.
+  let joined: { base: unknown; pts: unknown; out: SnapSegment[] } | null = null;
+  const withSegmentPoints = (base: SnapSegment[]): SnapSegment[] => {
+    const pts = app.segmentPoints.points;
+    if (!pts.length) return base;
+    if (joined?.base !== base || joined.pts !== pts) joined = { base, pts, out: [...app.segmentPoints.segments(), ...base] };
+    return joined.out;
+  };
   const host: ToolHost = {
     store,
     selection,
@@ -194,7 +207,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       return true;
     },
     // I fasader, sektioner och på arbetsblad snäpper man mot linjerna i ritningen.
-    snapSegments: () => snapSegments(app),
+    snapSegments: () => withSegmentPoints(snapSegments(app)),
   };
 
   // ---------- Panel och dialog ----------
@@ -342,6 +355,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
 
   const feedbackDialog = new FeedbackDialog(brand.name, brand.feedbackFallback ?? '');
   root.appendChild(feedbackDialog.el);
+  const about = installAboutDialog(root, brand);
 
   // Tillfälliga mått när en vägg är markerad.
   const tempDims = new TempDims(canvas, store);
@@ -483,8 +497,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     sheets: () => sheets,
     toolOpts: () => toolOpts,
     underlays: () => underlays,
+    segmentPoints: () => segmentPoints,
     views: () => views,
   });
+  const segmentPoints = installSegmentPoints(app);
   const render = installRender(app, { chips, compareToggle, compareLabel, computing });
   const tools = installTools(app, host);
   const panes = installPanes(app);
@@ -499,9 +515,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   installKeyboard(app, modifyRail.press);
   const clipboard = installClipboard(app);
   const underlays = installUnderlays(app);
+  installTreeDrag(app);
   const sheets = installSheets(app);
   const plot = installPlot(app, underlays.exportImage);
-  const actions = installActions(app, { brand, feedbackDialog, files, menus, panes, plot, sheets, showMenu, views });
+  const actions = installActions(app, { brand, feedbackDialog, about, files, menus, panes, plot, sheets, showMenu, views });
 
   // För felsökning i webbläsarens konsol.
   (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifier, smartMenu, setTool: tools.setTool, goTo: views.goTo, setMode: pane3d.setMode, get sheets() { return sheets; }, sections: render.sectionQueue, get plot() { return plot; }, get plan() { return render.plan; }, get view3d() { return pane3d.view3d; } };

@@ -68,6 +68,7 @@ export function installMenus(app: AppContext) {
           { label: 'Zooma till allt', hint: 'F', run: () => (app.ui.mode !== '3d' ? app.view.zoomToFit() : app.view3d?.frameAll()) },
           { label: 'Klistra in', hint: 'Ctrl+V', run: () => void app.pasteFromMenu() },
           { label: 'Lägg in underlag…', run: () => app.chooseUnderlayFiles() },
+          ...(app.segmentPoints.count ? [{ label: 'Rensa segmentpunkter', run: () => app.toolOpts.clearSegmentPoints() }] : []),
           { kind: 'sep' },
           { label: 'Rita vägg', hint: 'W', run: () => app.setTool('wall') },
           { label: 'Sätt in dörr', hint: 'D', run: () => app.setTool('door') },

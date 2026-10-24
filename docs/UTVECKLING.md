@@ -505,8 +505,8 @@ på bladet sina egna.
   vyer på blad ligger i `src/ui/sheetForms.ts` (`TreeItem` har `sheet` och
   `viewport`).
 - **PDF** skrivs av `writePdf` i `src/formats/pdf.ts` utan bibliotek: en sida
-  per `PdfPage`, mm i primitiverna (en `cm` per sida), Helvetica med
-  WinAnsi (`src/formats/helvetica.ts` har bredderna, som också används för
+  per `PdfPage`, mm i primitiverna (en `cm` per sida), osifont med
+  WinAnsi sedan 0.8.18 (`src/formats/drawingFont.ts` har bredderna, som också används för
   att korta texter i huvudet), streckning sträcka för sträcka som på
   skärmen, skraffering som klippta linjer, bågar som Bézierkurvor och bilder
   som JPEG (`imageKey`). Bilderna tas fram av appen (`exportImage` i
@@ -833,7 +833,7 @@ nedan). Ramen och greppen gäller.*
 - **Textrutor**: `TextParams` har `anchor` (`top`, `middle`, `bottom`;
   utelämnad = första radens baslinje), `maxWidth` och `maxHeight` i mm på
   papperet. `layoutText` i `src/elements/textLayout.ts` bryter raderna
-  (`wrapLine`, Helveticas `textWidth`) och ger baslinjerna, ytan och rutan i
+  (`wrapLine`, osifonts `textWidth` sedan 0.8.18) och ger baslinjerna, ytan och rutan i
   textens eget system; `textPoint` lägger dem i modellen med vridning och
   skala. Ryms texten inte i höjden ritas en röd ram med `part: 'skärm'`,
   som PDF:en hoppar över (som `papper`). Redigeringen på plats börjar på
@@ -1071,3 +1071,46 @@ projekt i 1 982 jämförelser.
 - **Prestandatestet** har Modifiera med 1 200 väggar (`roomGrid(24)`): före
   registren tog hörnen ensamma 1,4 s, nu tar varje steg några hundradels sekunder
 
+
+## Småsaker (0.8.18, format 11)
+
+- **Rutnätet** (`src/view2d/grid.ts`): `buildGrid` ger en lista med nivåer
+  (`levels`, finast först), var och en med linjerna som inte redan ritas av
+  nästa grövre nivå och en opacitet ur `strength(px)`: nivån tonas in
+  mellan 4 och 16 px mellan linjerna och blir starkare när det ryms finare
+  linjer emellan (avståndet / 4). Planvyn har en `path.grid-level` per
+  nivå. `minorStepFor` (statusraden) är den finaste nivån som är minst
+  halvvägs inne. Färgen är `--grid-major`; `--grid-minor` används inte
+  längre
+- **Segmentpunkter** (`src/ui/app/segmentPoints.ts`): punkterna per vy
+  (`plan:<våning>`, `vy:<markör>`, `blad:<arbetsblad>`), i minnet, inte i
+  projektet. De ritas av `PlanView.decorator` (i `chrome`-lagret) och läggs
+  först i `host.snapSegments()` som sträckor med `point: 'division'`
+  (snäpptypen *Segmentpunkt*). Den sammanslagna listan sparas så länge
+  listorna är desamma, så att snäppningens rutnät (en `WeakMap` på listan)
+  behålls. `dividePath` i `measureTool.ts` räknar punkterna längs hela
+  mätningen. Rensa: `app.toolOpts.clearSegmentPoints()`
+- **osifont**: `scripts/osifont.py` gör delmängden med WinAnsi-tecknen ur
+  osifont.ttf: `src/fonts/osifont.woff2` (skärmen, `--font-drawing`),
+  `src/formats/osifontWidths.ts` (bredder och mått) och
+  `src/formats/osifontData.ts` (TrueType som base64, laddas med `import()`
+  först när en PDF har text). `drawingFont.ts` har `textWidth`,
+  `drawingText` (byter tecken som saknas) och `drawingBytes`. PDF:en bäddar
+  in typsnittet som `/Subtype /TrueType` med `/FontFile2` och
+  `/WinAnsiEncoding`, en gång per fil och bara om någon sida har text. Fet
+  text är `2 Tr` (fyll och streck) med strecket 0,045 × texthöjden.
+  `helvetica.ts` finns kvar för `winAnsi` och för DXF-importen, som mäter
+  texter i filens typsnitt (Arial)
+- **Om-rutan**: `src/ui/app/aboutDialog.ts`
+- **Autospara till fil**: `autosaveProjectFile` i
+  `src/storage/projectFile.ts` skriver till filhandtaget från Spara
+  som/Öppna, bara när texten skiljer sig från den som senast skrevs eller
+  lästes. `files.ts` väntar 2 s efter senaste ändringen (direkt när fliken
+  göms). Inställningen är `autosaveFile` i `UiSettings`. Handtaget sparas
+  inte mellan sidladdningar
+- **Dra och släpp i trädet** (`src/ui/app/treeDrag.ts`): `Navigator.onRender`
+  gör raderna `draggable`; raden ger sitt id ur knappens `data-*-pick` (eller
+  `data-view-apply`). Ett släpp på något inuti en `.folder` går till den
+  mappen, annars utanför alla. `moveIntoFolder` i `treeCommands.ts` flyttar
+  saker och mappar i en transaktion och hoppar över en mapp som skulle
+  hamna i sig själv eller en undermapp

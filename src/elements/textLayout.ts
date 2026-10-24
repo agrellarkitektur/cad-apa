@@ -1,4 +1,4 @@
-import { textWidth } from '../formats/helvetica';
+import { textWidth } from '../formats/drawingFont';
 import type { Vec2 } from '../repr/primitives';
 
 /**

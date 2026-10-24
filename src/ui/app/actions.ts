@@ -1,6 +1,5 @@
 import type { Brand } from '../../brand';
 import { createProposal } from '../../core/commands';
-import { ENGINE } from '../../core/engine';
 import { existingState } from '../../core/states';
 import { createFolder, createWorksheet } from '../../core/treeCommands';
 import type { FeedbackDialog } from '../feedbackDialog';
@@ -26,6 +25,7 @@ import type { installViews } from './views';
 export interface ActionParts {
   brand: Brand;
   feedbackDialog: FeedbackDialog;
+  about: { open(): void };
   files: ReturnType<typeof installFiles>;
   menus: ReturnType<typeof installMenus>;
   panes: ReturnType<typeof installPanes>;
@@ -326,7 +326,7 @@ export function installActions(app: AppContext, parts: ActionParts) {
         break;
       case 'about':
         closeMenu();
-        app.hint(`${parts.brand.name} · ${ENGINE.name} ${ENGINE.version}. Öppen källkod (GPL). Vad som är nytt står i README på GitHub.`, 5000);
+        parts.about.open();
         break;
       case 'views':
         // Klick: tillbaka till förra vyn. Håll in eller högerklicka: de senaste.

@@ -6,7 +6,7 @@ import { DocStore } from '../src/core/store';
 import { registerBuiltInTypes } from '../src/elements';
 import { textType } from '../src/elements/annotation';
 import { layoutText, wrapLine } from '../src/elements/textLayout';
-import { textWidth } from '../src/formats/helvetica';
+import { textWidth } from '../src/formats/drawingFont';
 import { writePdf } from '../src/formats/pdf';
 import type { Primitive } from '../src/repr/primitives';
 import { buildSheet, centeredAt } from '../src/repr/sheet';

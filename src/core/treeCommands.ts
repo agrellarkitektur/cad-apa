@@ -76,6 +76,33 @@ export function moveToFolder(store: DocStore, item: Id, folder: Id | null): void
   store.transact('Flytta till mapp', (tx) => placeIn(tx, item, folder));
 }
 
+/**
+ * Dra och släpp i trädet (0.8.18): lägg flera saker och mappar i en mapp,
+ * eller utanför alla mappar (null), i ett steg. En mapp läggs inte i sig
+ * själv eller i en av sina undermappar. Svarar med hur många som flyttades.
+ */
+export function moveIntoFolder(store: DocStore, items: readonly Id[], folder: Id | null): number {
+  const doc = store.doc;
+  const folderIds = new Set(doc.folders.map((f) => f.id));
+  const blocked = (id: Id) => !!folder && (id === folder || descendantsOf(doc.folders, id).includes(folder));
+  const folders = items.filter((id) => folderIds.has(id) && !blocked(id) && (doc.folders.find((f) => f.id === id)!.parent ?? null) !== folder);
+  const things = items.filter((id) => !folderIds.has(id) && (doc.tree[id] ?? null) !== folder);
+  if (!folders.length && !things.length) return 0;
+  const name = folder ? doc.folders.find((f) => f.id === folder)?.name : null;
+  store.transact(name ? `Flytta till ${name}` : 'Flytta ut ur mappen', (tx) => {
+    if (folders.length) tx.setField('folders', tx.doc.folders.map((f) => (folders.includes(f.id) ? { ...f, parent: folder } : f)));
+    if (things.length) {
+      const tree = { ...tx.doc.tree };
+      for (const id of things) {
+        if (folder) tree[id] = folder;
+        else delete tree[id];
+      }
+      tx.setField('tree', tree);
+    }
+  });
+  return folders.length + things.length;
+}
+
 /** Spara en vys inställningar och mapp i ett steg. */
 export function saveView(store: DocStore, id: Id, patch: Partial<Omit<ViewDef, 'id'>>, folder?: Id | null): void {
   const v = store.doc.views.find((x) => x.id === id);

@@ -40,6 +40,9 @@ export function snapMarker(cam: Camera, s: SnapResult): string {
     case 'center':
       out.push(`<circle cx="${x}" cy="${y}" r="6" class="snap-mark"/><path d="M${x - 3} ${y}H${x + 3}M${x} ${y - 3}V${y + 3}" class="snap-mark"/>`);
       break;
+    case 'division':
+      out.push(`<path d="M${x - 6} ${y - 6}L${x + 6} ${y + 6}M${x + 6} ${y - 6}L${x - 6} ${y + 6}" class="snap-mark"/><circle cx="${x}" cy="${y}" r="6" class="snap-mark"/>`);
+      break;
     case 'quadrant':
       out.push(`<path d="M${x} ${y - 6}L${x + 6} ${y}L${x} ${y + 6}L${x - 6} ${y}Z" class="snap-mark"/>`);
       break;

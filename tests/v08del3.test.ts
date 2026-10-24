@@ -286,9 +286,9 @@ describe('PDF och zip (0.8 del 3)', () => {
     expect(text).toContain('/GS50 gs');
   });
 
-  it('Helveticas bredder', () => {
-    expect(textWidth('A', 10)).toBeCloseTo(6.67, 2);
-    expect(textWidth('A', 10, true)).toBeCloseTo(7.22, 2);
+  it('osifonts bredder (0.8.18), fet lika bred', () => {
+    expect(textWidth('A', 10)).toBeCloseTo(6.14, 2);
+    expect(textWidth('A', 10, true)).toBeCloseTo(6.14, 2);
   });
 
   it('zip: CRC-32, unika filnamn och en katalog i slutet', () => {

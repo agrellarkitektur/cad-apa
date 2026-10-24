@@ -17,12 +17,12 @@ export interface SnapSegment {
    */
   curve?: boolean;
   /** En punkt att snäppa till: bågens ändar och mitt, centrum, kvadrantpunkter. */
-  point?: 'endpoint' | 'midpoint' | 'center' | 'quadrant';
+  point?: 'endpoint' | 'midpoint' | 'center' | 'quadrant' | 'division';
   /** Texten när man ligger på sträckan; annars "På vägg". */
   on?: string;
 }
 
-export type SnapKind = 'endpoint' | 'midpoint' | 'center' | 'quadrant' | 'start' | 'perpendicular' | 'intersection' | 'on-wall' | 'parallel' | 'track' | 'angle' | 'free';
+export type SnapKind = 'division' | 'endpoint' | 'midpoint' | 'center' | 'quadrant' | 'start' | 'perpendicular' | 'intersection' | 'on-wall' | 'parallel' | 'track' | 'angle' | 'free';
 
 export interface SnapResult {
   point: Vec2;
@@ -200,7 +200,7 @@ export function snap(input: SnapInput): SnapResult {
   return { point: cursor, kind: 'free', label: '' };
 }
 
-const POINT_LABEL: Record<NonNullable<SnapSegment['point']>, string> = { endpoint: 'Ändpunkt', midpoint: 'Mittpunkt', center: 'Centrum', quadrant: 'Kvadrant' };
+const POINT_LABEL: Record<NonNullable<SnapSegment['point']>, string> = { endpoint: 'Ändpunkt', midpoint: 'Mittpunkt', center: 'Centrum', quadrant: 'Kvadrant', division: 'Segmentpunkt' };
 
 /** Den raka linje man senast kände på med muspekaren (0.8.16), för parallellt och vinkelrätt. */
 let inferred: { a: Vec2; b: Vec2; u: Vec2 } | null = null;

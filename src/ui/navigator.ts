@@ -55,6 +55,8 @@ export class Navigator {
   tab: NavTab = 'vyer';
   /** Hopfällda mappar. */
   private collapsed = new Set<Id>();
+  /** Efter varje ritning, t.ex. för dra och släpp (0.8.18). */
+  onRender?: (body: HTMLElement) => void;
   /** Utfällda filer som ligger på flera ställen (0.8.16); de är hopfällda från början. */
   private openGroups = new Set<Id>();
 
@@ -89,6 +91,7 @@ export class Navigator {
     const scroll = this.body.scrollTop;
     this.body.innerHTML = this[this.tab]();
     this.body.scrollTop = scroll;
+    this.onRender?.(this.body);
   }
 
   toggleFolder(id: Id): void {

@@ -9,7 +9,7 @@
   --muted: #6a737b;
   --rule: #dce1e4;
   --grid-minor: #e2e7ea;
-  --grid-major: #cdd4d9;
+  --grid-major: #c3cbd1;
   --grid-axes: #b4a37e;
   --accent: #a86b12;
   --accent-soft: #f4e7d1;
@@ -21,6 +21,7 @@
   --panel-bg: #fbfcfc;
 
   --font-ui: 'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-drawing: 'osifont', 'Archivo', sans-serif;
   --font-data: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 
   --bar-h: 48px;
@@ -42,7 +43,7 @@
     --muted: #8e979f;
     --rule: #2c3338;
     --grid-minor: #1f2529;
-    --grid-major: #2b3237;
+    --grid-major: #323a40;
     --grid-axes: #6f6143;
     --accent: #e3a94a;
     --accent-soft: #3a2f1c;
@@ -64,7 +65,7 @@
   --muted: #8e979f;
   --rule: #2c3338;
   --grid-minor: #1f2529;
-  --grid-major: #2b3237;
+  --grid-major: #323a40;
   --grid-axes: #6f6143;
   --accent: #e3a94a;
   --accent-soft: #3a2f1c;
@@ -87,7 +88,7 @@ html:root[data-ui-theme='light'] {
   --muted: #6a737b;
   --rule: #dce1e4;
   --grid-minor: #e2e7ea;
-  --grid-major: #cdd4d9;
+  --grid-major: #c3cbd1;
   --grid-axes: #b4a37e;
   --accent: #a86b12;
   --accent-soft: #f4e7d1;
@@ -104,7 +105,7 @@ html:root[data-ui-theme='dark'] {
   --muted: #8e979f;
   --rule: #2c3338;
   --grid-minor: #1f2529;
-  --grid-major: #2b3237;
+  --grid-major: #323a40;
   --grid-axes: #6f6143;
   --accent: #e3a94a;
   --accent-soft: #3a2f1c;
@@ -131,6 +132,13 @@ html:root[data-ui-theme='blueprint'] {
   color-scheme: dark;
 }
 
+/* Ritningens typsnitt (0.8.18): osifont, ISO 3098, samma som i PDF:en. */
+@font-face {
+  font-family: 'osifont';
+  src: url('../fonts/osifont.woff2') format('woff2');
+  font-weight: 400;
+  font-display: block;
+}
 @font-face {
   font-family: 'Archivo';
   src: url('../fonts/archivo.woff2') format('woff2');
@@ -439,14 +447,14 @@ body::before {
   will-change: transform;
 }
 
-.grid-minor {
-  stroke: var(--grid-minor);
+.grid-level {
+  stroke: var(--grid-major);
   stroke-width: 1;
   fill: none;
 }
-.grid-major {
-  stroke: var(--grid-major);
-  stroke-width: 1;
+.segment-point {
+  stroke: var(--accent, #c2410c);
+  stroke-width: 1.5;
   fill: none;
 }
 .grid-axes {
@@ -463,9 +471,11 @@ body::before {
   vector-effect: non-scaling-stroke;
 }
 
-.content text {
-  font-family: var(--font-ui);
-  font-weight: 500;
+.content text,
+.text-preview {
+  font-family: var(--font-drawing);
+  font-weight: 400;
+  font-kerning: none;
 }
 
 .sb-dark {
@@ -2496,7 +2506,6 @@ table.keys td:first-child {
 .text-preview {
   fill: var(--sel);
   opacity: 0.7;
-  font-family: var(--font-ui);
 }
 
 .panel-body textarea {
@@ -3161,8 +3170,9 @@ button.link {
   border-radius: 3px;
   background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-ui);
-  font-weight: 500;
+  font-family: var(--font-drawing);
+  font-weight: 400;
+  font-kerning: none;
   resize: none;
   overflow: hidden;
   white-space: pre;
@@ -3171,7 +3181,7 @@ button.link {
 }
 
 .inline-text.bold {
-  font-weight: 650;
+  font-weight: 700;
 }
 
 /* ---------- Formler i sifferfält ---------- */
@@ -3989,6 +3999,19 @@ input[type='range'] {
   background: var(--accent-soft);
 }
 
+.dialog.about {
+  width: min(460px, 100%);
+}
+.dialog.about .dialog-body p {
+  margin: 0 0 10px;
+}
+.dialog.about h3 {
+  margin: 14px 0 6px;
+  font-size: 13px;
+}
+.dialog.about a {
+  color: var(--accent);
+}
 .dialog.feedback {
   width: min(520px, calc(100vw - 32px));
 }
@@ -4935,4 +4958,22 @@ input[type='range'] {
 
 .side-grip {
   rx: 1px;
+}
+
+/* ---------- Dra och släpp i projektträdet (0.8.18) ---------- */
+
+.nav-body .view-row[draggable='true'] {
+  cursor: grab;
+}
+.nav-body .view-row.dragging {
+  opacity: 0.45;
+}
+.nav-body .folder-row.drop-target {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+}
+.nav-body.drop-out {
+  box-shadow: inset 0 0 0 2px var(--accent-soft);
 }

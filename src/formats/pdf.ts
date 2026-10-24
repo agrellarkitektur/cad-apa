@@ -1,8 +1,9 @@
 import type { FillDef } from '../core/graphics';
 import type { Bounds, Pen, PenColor, Primitive, Vec2 } from '../repr/primitives';
-import { textWidth, winAnsi } from './helvetica';
+import { drawingBytes, textWidth } from './drawingFont';
+import { OSIFONT_METRICS, OSIFONT_WIDTHS } from './osifontWidths';
 
-export { textWidth } from './helvetica';
+export { textWidth } from './drawingFont';
 
 /**
  * PDF i vektorform (0.8 del 3), utan bibliotek. Ritar samma primitiver som
@@ -10,8 +11,8 @@ export { textWidth } from './helvetica';
  * primitiverna är mm på papperet, med nollpunkten i nedre vänstra hörnet och
  * y uppåt, precis som i PDF.
  *
- * Texten skrivs med Helvetica (en av PDF:ens inbyggda typsnitt) och
- * WinAnsi-kodning, som har å, ä och ö. Bilder (underlag och loggor) läggs in
+ * Texten skrivs med osifont (0.8.18), som bäddas in, och WinAnsi-kodning,
+ * som har å, ä och ö. Fet text får ett tunt streck runt tecknen. Bilder (underlag och loggor) läggs in
  * som JPEG.
  *
  * Läsaren behöver inte känna till något annat i programmet; den används av
@@ -76,7 +77,8 @@ class PageWriter {
   readonly ops: string[] = [];
   readonly alphas = new Set<number>();
   readonly images = new Set<string>();
-  usesFont = [false, false];
+  /** Sidan har text, så att typsnittet behöver bäddas in. */
+  usesFont = false;
 
   private imgs: ReadonlyMap<string, PdfImage>;
 
@@ -206,7 +208,7 @@ class PageWriter {
   private text(p: Extract<Primitive, { kind: 'text' }>): void {
     if (!p.text) return;
     const bold = !!p.bold;
-    this.usesFont[bold ? 1 : 0] = true;
+    this.usesFont = true;
     const a = p.angle ?? 0;
     const w = textWidth(p.text, p.height, bold);
     const shift = p.align === 'middle' ? w / 2 : p.align === 'end' ? w : 0;
@@ -217,13 +219,16 @@ class PageWriter {
     const lines = p.text.split('\n');
     const body = lines
       .map((l, i) => {
-        const s = winAnsi(l)
+        const s = drawingBytes(l)
           .map((b) => (b === 0x28 || b === 0x29 || b === 0x5c ? `\\${String.fromCharCode(b)}` : b < 0x20 || b > 0x7e ? `\\${b.toString(8).padStart(3, '0')}` : String.fromCharCode(b)))
           .join('');
         return `${i ? `0 ${n(-p.height * 1.5)} Td ` : ''}(${s}) Tj`;
       })
       .join(' ');
-    this.ops.push(`q ${this.alpha(p.pen.opacity)}${colorOp(p.pen.color ?? 'ink', false)} BT /F${bold ? 2 : 1} ${n(p.height)} Tf ${n(cos)} ${n(sin)} ${n(-sin)} ${n(cos)} ${n(x)} ${n(y)} Tm ${body} ET Q`);
+    // Fet: samma typsnitt, fyllt och med ett tunt streck i samma färg.
+    const fill = colorOp(p.pen.color ?? 'ink', false);
+    const heavy = bold ? `${colorOp(p.pen.color ?? 'ink', true)} ${n(p.height * 0.045)} w 2 Tr ` : '';
+    this.ops.push(`q ${this.alpha(p.pen.opacity)}${fill} ${heavy}BT /F1 ${n(p.height)} Tf ${n(cos)} ${n(sin)} ${n(-sin)} ${n(cos)} ${n(x)} ${n(y)} Tm ${body} ET Q`);
   }
 
   private image(p: Extract<Primitive, { kind: 'image' }>): void {
@@ -297,10 +302,9 @@ export async function writePdf(pages: readonly PdfPage[], opt: PdfOptions = {}):
   // Objekt 1 och 2: katalogen och sidträdet, som fylls i sist.
   add('');
   add('');
-  const fonts = [
-    add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>'),
-    add('<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>'),
-  ];
+  // Typsnittet (osifont, 0.8.18) fylls i sist, och bäddas bara in om någon sida har text.
+  const font = add('');
+  let anyText = false;
   const imageObj = new Map<string, number>();
   const pageIds: number[] = [];
   for (const page of pages) {
@@ -312,6 +316,7 @@ export async function writePdf(pages: readonly PdfPage[], opt: PdfOptions = {}):
       if (p.origin?.part === 'papper' || p.origin?.part === 'skärm') continue;
       w.draw(p);
     }
+    anyText ||= w.usesFont;
     const raw = enc.encode(w.ops.join('\n'));
     const data = opt.deflate ? await opt.deflate(raw) : raw;
     const content = add(stream(opt.deflate ? '/Filter /FlateDecode' : '', data));
@@ -322,12 +327,21 @@ export async function writePdf(pages: readonly PdfPage[], opt: PdfOptions = {}):
       imageObj.set(key, add(stream(`/Type /XObject /Subtype /Image /Width ${img.width} /Height ${img.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`, img.jpeg)));
     }
     const res = [
-      `/Font << /F1 ${fonts[0]} 0 R /F2 ${fonts[1]} 0 R >>`,
+      w.usesFont ? `/Font << /F1 ${font} 0 R >>` : '',
       w.alphas.size ? `/ExtGState << ${[...w.alphas].map((a) => `/GS${Math.round(a * 100)} << /CA ${n(a)} /ca ${n(a)} >>`).join(' ')} >>` : '',
       w.images.size ? `/XObject << ${[...w.images].map((k) => `/${imageName(k)} ${imageObj.get(k)} 0 R`).join(' ')} >>` : '',
     ].join(' ');
     pageIds.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n(page.size[0] * PT)} ${n(page.size[1] * PT)}] /Resources << ${res} >> /Contents ${content} 0 R >>`));
   }
+  if (anyText) {
+    const { OSIFONT_TTF } = await import('./osifontData');
+    const ttf = Uint8Array.from(atob(OSIFONT_TTF), (c) => c.charCodeAt(0));
+    const packed = opt.deflate ? await opt.deflate(ttf) : ttf;
+    const file = add(stream(`/Length1 ${ttf.length}${opt.deflate ? ' /Filter /FlateDecode' : ''}`, packed));
+    const m = OSIFONT_METRICS;
+    const desc = add(`<< /Type /FontDescriptor /FontName /Osifont /Flags 32 /FontBBox [${m.bbox.join(' ')}] /ItalicAngle 0 /Ascent ${m.ascent} /Descent ${m.descent} /CapHeight ${m.capHeight} /StemV 60 /FontFile2 ${file} 0 R >>`);
+    objects[font - 1] = `<< /Type /Font /Subtype /TrueType /BaseFont /Osifont /FirstChar 32 /LastChar 255 /Widths [${OSIFONT_WIDTHS.join(' ')}] /FontDescriptor ${desc} 0 R /Encoding /WinAnsiEncoding >>`;
+  } else objects[font - 1] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
   objects[0] = '<< /Type /Catalog /Pages 2 0 R >>';
   objects[1] = `<< /Type /Pages /Kids [${pageIds.map((i) => `${i} 0 R`).join(' ')}] /Count ${pageIds.length} >>`;
   const info = add(`<< /Producer (Bacchus) /Title (${(opt.title ?? '').replace(/[()\\]/g, (c) => `\\${c}`).replace(/[^\x20-\x7e]/g, '')}) >>`);

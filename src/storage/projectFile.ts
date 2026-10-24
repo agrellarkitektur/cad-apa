@@ -12,23 +12,56 @@ import { parse, serialize } from './format';
  * fil; annars frågar Spara efter en plats, eller laddar ner filen.
  */
 let currentHandle: any = null;
+/** Texten som senast skrevs till eller lästes från filen (0.8.18). */
+let lastText: string | null = null;
 
 /** Glöm den öppna filen, t.ex. vid nytt projekt. */
 export function forgetProjectFile(): void {
   currentHandle = null;
+  lastText = null;
 }
 
-export function saveProjectFile(doc: ProjectDoc, extension: string): Promise<'saved' | 'downloaded' | 'cancelled'> {
-  return saveTextFile(serialize(doc), safeName(doc.project.name), extension, 'Projekt', true);
+/** Namnet på filen som projektet sparas till, om det finns en. */
+export function projectFileName(): string | null {
+  return currentHandle ? String(currentHandle.name ?? '') : null;
+}
+
+/**
+ * Autospara till filen (0.8.18): skriv projektet till filen som är öppen,
+ * om det har ändrats sedan sist. Ingen dialog; finns ingen fil händer inget.
+ */
+export async function autosaveProjectFile(doc: ProjectDoc): Promise<'saved' | 'unchanged' | 'none' | 'failed'> {
+  if (!currentHandle) return 'none';
+  const text = serialize(doc);
+  if (text === lastText) return 'unchanged';
+  const handle = currentHandle;
+  try {
+    const w = await handle.createWritable();
+    await w.write(text);
+    await w.close();
+    lastText = text;
+    return 'saved';
+  } catch {
+    return 'failed';
+  }
+}
+
+export async function saveProjectFile(doc: ProjectDoc, extension: string): Promise<'saved' | 'downloaded' | 'cancelled'> {
+  const text = serialize(doc);
+  const r = await saveTextFile(text, safeName(doc.project.name), extension, 'Projekt', true);
+  if (r === 'saved') lastText = text;
+  return r;
 }
 
 /** Spara till filen som redan är öppen; finns ingen frågar den som Spara som. */
 export async function saveProject(doc: ProjectDoc, extension: string): Promise<'saved' | 'downloaded' | 'cancelled'> {
   if (currentHandle) {
     try {
+      const text = serialize(doc);
       const w = await currentHandle.createWritable();
-      await w.write(serialize(doc));
+      await w.write(text);
       await w.close();
+      lastText = text;
       return 'saved';
     } catch {
       // Filen gick inte att skriva till (flyttad, nekad): fråga efter en plats.
@@ -120,6 +153,7 @@ export async function openProjectFile(extension: string): Promise<ProjectDoc | n
     if (handle) {
       const doc = parse(await (await handle.getFile()).text());
       currentHandle = handle;
+      lastText = serialize(doc);
       return doc;
     }
   }
@@ -132,7 +166,7 @@ export async function openProjectFile(extension: string): Promise<ProjectDoc | n
       if (!file) return resolve(null);
       try {
         const doc = parse(await file.text());
-        currentHandle = null;
+        forgetProjectFile();
         resolve(doc);
       } catch (e) {
         reject(e);

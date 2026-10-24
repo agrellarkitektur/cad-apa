@@ -68,6 +68,9 @@ export class SettingsDialog {
       case 'autodims':
         s.autoDims = t.checked;
         break;
+      case 'autosavefile':
+        s.autosaveFile = t.checked;
+        break;
       case 'inches': {
         const v = Number(t.value.replace(',', '.'));
         s.screenInches = t.value.trim() === '' ? null : v >= 3 && v <= 120 ? v : s.screenInches;
@@ -157,6 +160,7 @@ export class SettingsDialog {
           <label class="check"><input type="checkbox" data-setting="smart"${s.smartMenu ? ' checked' : ''}> Smartmeny intill det markerade, med Modifiera-valen och snabbknapparna</label>
           <label class="check"><input type="checkbox" data-setting="rail"${s.modifyRail ? ' checked' : ''}> Modifiera-raden innanför ritverktygen</label>
           <label class="check"><input type="checkbox" data-setting="autodims"${s.autoDims ? ' checked' : ''}> Måttsätt nya väggar och öppningar automatiskt när man jämför med befintligt</label>
+          <label class="check"><input type="checkbox" data-setting="autosavefile"${s.autosaveFile ? ' checked' : ''}> Autospara till projektfilen (när den sparats eller öppnats här, i Chrome och Edge)</label>
           <label class="field inline-field"><span>Varna för nästan raka vinklar, inom</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="0.5" inputmode="decimal" autocomplete="off" data-setting="anglewarn" value="${s.angleWarn}"><i>°</i></span></label>
           <p class="note">Väggar, sektions- och fasadlinjer, fast inredning och taknockar som ligger nära 0°, 45° eller 90° utan att vara exakta markeras med ett utropstecken. 0 stänger av varningen.</p>
           <label class="field inline-field"><span>Piltangenterna flyttar</span><span class="input-unit"><input type="text" data-expr data-step="1" inputmode="decimal" autocomplete="off" data-setting="nudge" value="${s.nudge}"><i>mm</i></span></label>

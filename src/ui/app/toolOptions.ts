@@ -1,3 +1,4 @@
+import { dividePath } from '../tools/measureTool';
 import type { WallFace } from '../../elements/wallSides';
 import { LINE_TYPES, SHAPE_LABELS, type FillPattern, type LineType } from '../../elements/drawing2d';
 import { patternPicker } from '../patternPick';
@@ -91,9 +92,15 @@ export function installToolOptions(app: AppContext) {
         el && sp
           ? `<label class="opt measure-move"><span>Flytta ${escapeHtml(labelOf(app.store.doc, el))} till</span><span class="input-unit"><input id="measure-move" type="text" data-expr inputmode="decimal" autocomplete="off" value="${Math.round(Math.hypot(sp[1][0] - sp[0][0], sp[1][1] - sp[0][1]))}" aria-label="Avstånd"><i>mm</i></span></label>
         <span class="opt-hint">Enter flyttar, Tab byter objekt, Esc avbryter.</span>`
-          : `<span class="opt-hint">Klicka punkter att mäta mellan. Tab och ett avstånd flyttar objektet vid sista punkten. Dubbelklick eller Enter börjar om.</span>`;
+          : `<span class="opt-hint">Klicka punkter att mäta mellan. Ett tal och Enter delar mätningen i lika delar. Tab och ett avstånd flyttar objektet vid sista punkten. Dubbelklick eller Enter börjar om.</span>`;
+      // Dela i segment (0.8.18): ett tal och Enter lägger segmentpunkter.
+      const divide = el
+        ? ''
+        : `<label class="opt measure-divide"><span>Dela i</span><input id="measure-divide" type="text" inputmode="numeric" autocomplete="off" placeholder="–" aria-label="Dela mätningen i så många delar" title="Skriv ett tal och tryck Enter: tillfälliga snäppunkter delar mätningen i lika delar" style="width:48px"></label>`;
+      const clear = app.segmentPoints.count ? `<button class="btn" data-action="clear-segment-points">Rensa segmentpunkter</button>` : '';
       app.toolOptions.innerHTML = `<span class="measure-grid">${cell('last', 'Sträcka')}${cell('total', 'Totalt')}${cell('angle', 'Riktning')}${cell('turn', 'Mellan')}${cell('area', 'Yta')}</span>
         <button class="btn" data-action="measure-reset">Börja om</button>
+        ${divide}${clear}
         ${move}`;
       app.toolOptions.hidden = false;
       updateMeasureOptions();
@@ -148,6 +155,25 @@ export function installToolOptions(app: AppContext) {
   }
 
   /** Måttbandets värden i verktygsraden, utan att bygga om den. */
+  /** Dela mätningen i lika delar med segmentpunkter (0.8.18). */
+  function divideMeasurement(text: string): void {
+    const n = Number(text.trim().replace(',', '.'));
+    const pts = app.measureTool.points;
+    if (pts.length < 2) return app.hint('Mät först en sträcka, skriv sedan hur många delar den ska delas i.', 3500);
+    if (!Number.isInteger(n) || n < 2 || n > 1000) return app.hint('Skriv ett heltal från 2 till 1 000.', 3500);
+    const added = dividePath(pts, n);
+    app.segmentPoints.add(added);
+    const each = app.measureTool.measurement().total / n;
+    app.hint(`${added.length} segmentpunkter, ${Math.round(each).toLocaleString('sv-SE')} mm mellan. De finns kvar tills du väljer Rensa segmentpunkter.`, 4000);
+    renderToolOptions();
+  }
+
+  function clearSegmentPoints(): void {
+    app.segmentPoints.clear();
+    app.hint('Segmentpunkterna är borta.');
+    if (app.ui.tool === 'measure') renderToolOptions();
+  }
+
   function measureValues(): Record<string, string> {
     const m = app.measureTool.measurement();
     const n1 = (v: number, d = 0) => v.toLocaleString('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -215,6 +241,18 @@ export function installToolOptions(app: AppContext) {
       }
       return;
     }
+    if (t.id === 'measure-divide') {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        divideMeasurement(t.value);
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        e.stopPropagation();
+        t.value = '';
+        t.blur();
+      }
+      return;
+    }
     if (t.id === 'wall-angle' && e.key === 'Enter') {
       e.preventDefault();
       (app.$<HTMLInputElement>('#wall-length') as HTMLInputElement | null)?.focus();
@@ -241,6 +279,7 @@ export function installToolOptions(app: AppContext) {
     }
     if (b.dataset.action === 'wall-done') app.wallTool.finish();
     if (b.dataset.action === 'measure-reset') app.measureTool.reset();
+    if (b.dataset.action === 'clear-segment-points') clearSegmentPoints();
     if (b.dataset.copy) {
       // Bara talet, med decimalkomma, så att det går att klistra in i ett kalkylark.
       const text = measureValues()[b.dataset.copy].replace(/\s*\(.*\)$/, '').replace(/[^\d,−-]/g, '');
@@ -262,5 +301,5 @@ export function installToolOptions(app: AppContext) {
     if (app.ui.tool === 'select') renderToolOptions();
   });
 
-  return { renderToolOptions, updateMeasureOptions };
+  return { renderToolOptions, updateMeasureOptions, clearSegmentPoints };
 }

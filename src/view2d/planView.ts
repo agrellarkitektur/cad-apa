@@ -65,8 +65,8 @@ export class PlanView {
    * kan flytta vid panorering utan att måla om det.
    */
   private drawingSvg: SVGSVGElement;
-  private gridMinor: SVGPathElement;
-  private gridMajor: SVGPathElement;
+  /** Rutnätets nivåer, en bana per nivå (0.8.18). */
+  private gridLevels: SVGGElement;
   private gridAxes: SVGPathElement;
   private underlay: SVGGElement;
   private content: SVGGElement;
@@ -82,6 +82,8 @@ export class PlanView {
   private gridVisible = true;
   private tool: ViewTool | null = null;
   private highlighter: ((cam: Camera) => string) | null = null;
+  /** Hjälpgrafik som inte hör till verktyget, t.ex. segmentpunkterna (0.8.18). */
+  decorator: ((cam: Camera) => string) | null = null;
 
   // Ritningen ritas om bara när innehållet ändrats (0.8.3). Panorering flyttar
   // den färdiga bilden; zoom skalar den tills hjulet stått still en stund och
@@ -152,8 +154,8 @@ export class PlanView {
       return el;
     };
     const grid = g('grid', this.gridSvg);
-    this.gridMinor = path(grid, 'grid-minor');
-    this.gridMajor = path(grid, 'grid-major');
+    this.gridLevels = document.createElementNS(SVG_NS, 'g');
+    grid.appendChild(this.gridLevels);
     this.gridAxes = path(grid, 'grid-axes');
     this.underlay = g('underlay', this.drawingSvg);
     this.content = g('content', this.drawingSvg);
@@ -334,16 +336,25 @@ export class PlanView {
     this.renderDrawing();
     if (this.gridVisible) {
       const grid = buildGrid(cam);
-      this.gridMinor.setAttribute('d', grid.minor);
-      this.gridMinor.style.opacity = String(grid.minorOpacity);
-      this.gridMajor.setAttribute('d', grid.major);
+      const paths = this.gridLevels.children;
+      while (paths.length > grid.levels.length) paths[paths.length - 1].remove();
+      grid.levels.forEach((level, i) => {
+        let el = paths[i] as SVGPathElement | undefined;
+        if (!el) {
+          el = document.createElementNS(SVG_NS, 'path');
+          el.setAttribute('class', 'grid-level');
+          this.gridLevels.appendChild(el);
+        }
+        el.setAttribute('d', level.d);
+        el.style.opacity = String(level.opacity);
+      });
       this.gridAxes.setAttribute('d', grid.axes);
     }
     // Markering och verktygets grafik skrivs bara in när de ändrats, så att
     // webbläsaren inte målar om dem vid varje musrörelse (0.8.3).
     setMarkup(this.highlight, this.highlighter?.(cam) ?? '');
     setMarkup(this.overlay, this.tool?.overlay?.(cam) ?? '');
-    setMarkup(this.chrome, this.showScaleBar ? renderScaleBar(cam, 20, cam.height - 22) : '');
+    setMarkup(this.chrome, (this.decorator?.(cam) ?? '') + (this.showScaleBar ? renderScaleBar(cam, 20, cam.height - 22) : ''));
   }
 
   /**

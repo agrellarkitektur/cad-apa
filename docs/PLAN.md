@@ -87,6 +87,8 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.14 | Justera och Fördela, Hämta och överför (pipetten), Skala, Förläng och Trimma flera mot en gräns, linjetjocklekar i en tabell med "gammel-cad"-färger |
 | 0.8.15 | Granskning: register för väggändar och dörrar (Modifiera utan kvadratisk tid), `tool.ts` uppdelad |
 | 0.8.16 | Underlag: snäpp i DXF (centrum, kvadranter, bågmitt, skärningar), parallellt och vinkelrätt som i SketchUp, X/Y, bredd och höjd, papperskorg, underlagen per filtyp i trädet, bildens grepp och Återställ proportioner |
+| 0.8.17 | Rumsstämpeln: flyttbar, pil in i rummet utanför, Stämpeln i mitten |
+| 0.8.18 | Småsaker: rutnätet med alla nivåer, segmentpunkter med måttbandet, osifont på skärmen och i PDF:en, Om-rutan, autospara till fil, dra och släpp till mappar |
 
 ## Framåt
 
@@ -784,6 +786,21 @@ Carl Augusts synpunkter 20–22 oktober (sorterade 24 oktober).
 - **Rutnätet** visar rätt nivåer: 500-strecken syns när de ska, och
   0,1 m-strecken kommer när de går att läsa
 
+*Byggd (24 oktober), samma format (11). Claudes val, att stämma av:
+rutnätet ritar alla nivåer samtidigt, tonade efter avståndet på skärmen
+(in mellan 4 och 16 px, starkare med finare linjer emellan), i en färg i
+stället för två. Dela i segment delar hela mätningen (alla klickade
+sträckor) i lika delar; ett tal medan måttbandet är aktivt går till fältet
+*Dela i*. Segmentpunkterna gäller vyn de lades i, sparas inte i projektet
+och rensas för alla vyer på en gång; de ritas som små kryss i accentfärgen.
+osifont gäller all ritningstext (ingen inställning för att välja ett annat
+typsnitt); fet text är osifont med ett tunt streck, eftersom osifont bara
+har en vikt; tecken som saknas (” “ … m.fl.) byts mot " och ... Autospar
+till fil är på från början, skriver 2 s efter senaste ändringen och bara
+till en fil som sparats eller öppnats i den här sidladdningen. Dra och
+släpp: ett släpp på en rad inuti en mapp lägger i mappen, utanför alla
+mappar läggs utanför; markerade blad och underlag följer med.*
+
 ### 0.8.19 2D-form · *nytt format*
 
 Carl August 22 oktober. Mellanstor till stor.
@@ -949,7 +966,6 @@ efter pilotprojektet. Det som piloten visar behövs tidigt går först.
 - Flera blad i en PDF
 - Gör om ett DXF-underlag till 2D-objekt (linjer och texter), i appen
 - Mallblad och stämplar mellan projekt: spara som fil och lägg in i ett annat projekt
-- Typsnittet inbäddat i PDF:en (i dag Helvetica, som alla PDF-läsare har)
 - En andra 2D-ruta: planen bredvid en öppen sektion eller fasad, där det man markerar i den ena markeras i den andra
 - Ritningshuvud enligt BEAst, som ett färdigt mallblad
 

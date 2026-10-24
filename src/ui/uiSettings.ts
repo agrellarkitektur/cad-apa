@@ -78,6 +78,8 @@ export interface UiSettings {
   modifyRail: boolean;
   /** Måttsätt nya väggar och öppningar automatiskt när man jämför. */
   autoDims: boolean;
+  /** Autospara till projektfilen som är öppen (0.8.18). */
+  autosaveFile: boolean;
   /** Färg på markeringar; null = temats accentfärg. */
   selColor: string | null;
   /** Färg på referenslinjer och grepp; null = temats. */
@@ -131,6 +133,7 @@ export function defaultUiSettings(): UiSettings {
     smartMenu: true,
     modifyRail: true,
     autoDims: true,
+    autosaveFile: true,
     selColor: null,
     refColor: null,
     quick: structuredClone(QUICK_DEFAULTS),
@@ -162,6 +165,7 @@ export function loadUiSettings(): UiSettings {
       smartMenu: typeof raw.smartMenu === 'boolean' ? raw.smartMenu : ((raw as { petPalette?: boolean }).petPalette ?? d.smartMenu),
       modifyRail: typeof raw.modifyRail === 'boolean' ? raw.modifyRail : d.modifyRail,
       autoDims: typeof raw.autoDims === 'boolean' ? raw.autoDims : d.autoDims,
+      autosaveFile: typeof raw.autosaveFile === 'boolean' ? raw.autosaveFile : d.autosaveFile,
       selColor: typeof raw.selColor === 'string' ? raw.selColor : null,
       refColor: typeof raw.refColor === 'string' ? raw.refColor : null,
       quick,

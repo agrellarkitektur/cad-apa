@@ -190,6 +190,11 @@ export class MeasureTool implements ViewTool {
     return `Flyttade ${name}: avståndet är ${Math.round(value).toLocaleString('sv-SE')} mm.`;
   }
 
+  /** De klickade punkterna. */
+  get points(): readonly Vec2[] {
+    return this.pts;
+  }
+
   /** Mätningen med markören som nästa punkt. */
   measurement(): Measurement {
     const pts = [...this.pts];
@@ -231,6 +236,34 @@ export class MeasureTool implements ViewTool {
     }
     return out.join('');
   }
+}
+
+/**
+ * Punkterna som delar mätningen i `parts` lika långa delar längs hela
+ * sträckan (0.8.18), utan ändarna. Brytpunkterna räknas inte som skarvar.
+ */
+export function dividePath(pts: readonly Vec2[], parts: number): Vec2[] {
+  const n = Math.floor(parts);
+  if (pts.length < 2 || !(n >= 2) || n > 1000) return [];
+  let total = 0;
+  for (let i = 0; i + 1 < pts.length; i++) total += dist(pts[i], pts[i + 1]);
+  if (total < 1e-9) return [];
+  const out: Vec2[] = [];
+  let seg = 0;
+  let start = 0; // sträckan fram till pts[seg]
+  for (let k = 1; k < n; k++) {
+    const at = (total * k) / n;
+    while (seg + 2 < pts.length && start + dist(pts[seg], pts[seg + 1]) < at) {
+      start += dist(pts[seg], pts[seg + 1]);
+      seg++;
+    }
+    const len = dist(pts[seg], pts[seg + 1]);
+    const t = len > 0 ? (at - start) / len : 0;
+    const a = pts[seg];
+    const b = pts[seg + 1];
+    out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+  }
+  return out;
 }
 
 export function measure(pts: readonly Vec2[]): Measurement {

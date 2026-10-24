@@ -1,10 +1,23 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.17.
+överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.18.
 
 ## Läget
 
+- **0.8.18 Småsaker är klar** på `main` (samma format, 11): rutnätet med
+  alla nivåer tonade efter avståndet, segmentpunkter med måttbandet (tal +
+  Enter, Rensa segmentpunkter), osifont som ritningens typsnitt på skärmen
+  och inbäddat i PDF:en, Om-rutan med GitHub-länk och osifont krediterat,
+  autospara till filen som sparats eller öppnats, dra och släpp till mappar
+  i trädet. Står i README, PLAN.md (med Claudes val) och UTVECKLING.md under
+  *Småsaker (0.8.18)*. Provat i bygget med Playwright (rutnätet på tre
+  skalor, segment och snäpp, Om, dra en vy och en mapp, autospar med en
+  låtsasfil) och en PDF av ett blad (`pdffonts`: Osifont inbäddad,
+  `qpdf --check` utan fel). `tests/v0818.test.ts`; alla tester gick igenom.
+  Facit `tests/referens/blad-a3.txt` skrevs om (vyrubrikens linje är
+  kortare med osifonts bredder). Carl August bad att få versionen körd
+  direkt.
 - **0.8.17 Rumsstämpeln är klar** på `main` (samma format, 11): dra i
   stämpeln på ett markerat rum för att flytta den (parametern `labelAt`),
   utanför rummet en tunn linje med öppen pil 2 mm in i rummet, *Stämpeln i
@@ -41,7 +54,7 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   `/agrellarkitektur.se/public_html/cad-apa/` och fungerar (Carl August såg
   0.8.14 vid alfa-knappen 24 oktober). Se efter med `gh run list` att
   körningen går igenom.
-- **0.8.12–0.8.17 är inte provade** av Carl August. Frågorna nedan gäller.
+- **0.8.12–0.8.18 är inte provade** av Carl August. Frågorna nedan gäller.
 - **Inkorgen är tom** (sorterad 24 oktober). Kommandoraden blev
   **0.8.20 och 0.8.21** (Carl Augusts svar: både engelska och svenska
   förkortningar; nere som i AutoCAD, flyttbar och dockningsbar i del 2;
@@ -80,9 +93,8 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.8.14 Modifiera-verktyg del 2~~,
-  ~~0.8.15 Granskning~~, ~~0.8.16 Underlag~~, ~~0.8.17 Rumsstämpeln~~ (klara)
-- **0.8.18 Småsaker**: dra och släpp till mappar, mätning i segment,
-  osifont och Om-rutan, autospara, rutnätet
+  ~~0.8.15 Granskning~~, ~~0.8.16 Underlag~~, ~~0.8.17 Rumsstämpeln~~,
+  ~~0.8.18 Småsaker~~ (klara)
 - **0.8.19 2D-form** (nytt format): linje/rektangel/cirkel som sätt att rita,
   fyllning på formen
 - **0.8.20 Kommandoraden del 1**: register med engelska och svenska
@@ -110,13 +122,25 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.17 syns på webbhotellet (numret vid alfa-knappen) och
-hur 0.8.12–0.8.17 fungerar. Läs synpunktsfilen och sortera Inkorgen (om
-Carl August inte ber om att bara köra). Nästa version är **0.8.18
-Småsaker** (läs *0.8.18* i PLAN.md); den har fem punkter, varav autospara
-och rutnätet kan bli de största.
+Fråga först om 0.8.18 syns på webbhotellet (numret vid alfa-knappen) och
+hur 0.8.12–0.8.18 fungerar. Läs synpunktsfilen och sortera Inkorgen (om
+Carl August inte ber om att bara köra). Nästa version är **0.8.19
+2D-form** (nytt format; läs *0.8.19* i PLAN.md). Den är mellanstor till
+stor; fyllningsobjektet tas bort och 2D-linjen görs om, så räkna med att
+den kan behöva delas. Därefter föreslås en granskning.
 
 ## Att fråga Carl August om
+
+- **0.8.18 efter provning** (Claudes val, se PLAN.md): är rutnätet lagom
+  tydligt (nivåerna tonas in mellan 4 och 16 px; finare linjer är svagare)?
+  Ska segmentpunkterna gälla bara vyn de lades i (som nu), och ska Rensa
+  rensa alla vyer (som nu)? Delningen gäller hela mätningen, alla klickade
+  sträckor. osifont gäller all ritningstext utan val; vill han kunna välja
+  typsnitt per projekt? Fet text är osifont med ett tunt streck. Tecknen ”
+  och … saknas i osifont och skrivs som " och ... Autospar till fil är på
+  från början och kräver att filen sparats eller öppnats efter att sidan
+  laddats; ska appen komma ihåg filen mellan sidladdningar (kräver att
+  Chrome frågar om lov)?
 
 - **0.8.17 efter provning** (Claudes val, se PLAN.md): att man drar i
   stämpeln först när rummet är markerat; att stämpelns läge är en fast
@@ -163,10 +187,8 @@ och rutnätet kan bli de största.
   underkant och justeringen rutans vänster-, mitt- eller högerkant; utan
   förankring står första radens baslinje på punkten som förut. Rutan ställs
   in i egenskaperna (0 = ingen gräns). Vill han kunna dra upp rutan med
-  textverktyget, och se rutans kant när texten är markerad? Skärmen visar
-  texten med appens typsnitt (Archivo), så raderna kan se något längre
-  eller kortare ut än rutan; vill han att ritningens text visas i Arial på
-  skärmen (samma bredder som Helvetica i PDF:en)?
+  textverktyget, och se rutans kant när texten är markerad? Skärmen och PDF:en
+  har samma typsnitt sedan 0.8.18 (osifont).
 - **Fälten efter provning** (0.8.10, Claudes val): vad som är inbyggt och
   vilka fält som gäller hela projektet från början, `{skala a3}` (nämnaren
   gånger långsidan / 420), att fält utan värde blir tomma på papperet, att
@@ -217,9 +239,7 @@ och rutnätet kan bli de största.
 
 ### Från 0.8.0
 
-- **Typsnittet i PDF:en** är Helvetica, medan skärmen visar appens typsnitt.
-  Bredderna skiljer något. Att bädda in ett eget typsnitt ligger efter
-  piloten.
+- **Typsnittet** är osifont på skärmen och i PDF:en sedan 0.8.18.
 - Modellvyer på blad ritas med förslaget jämfört med befintligt. Sparade
   vyer ritas med sina egna inställningar.
 
@@ -293,8 +313,10 @@ och rutnätet kan bli de största.
 - Plot/export i Playwright: sätt `window.showSaveFilePicker = undefined` med
   `add_init_script`, så sparas zipfilen som en nedladdning
   (`page.expect_download()`). Kontrollera PDF:erna med `qpdf --check` och
-  `pdftoppm -png`. Sandlådans ersättning för Helvetica saknar ² (m² ser ut
-  som m i bilderna), men texten i filen är rätt (`pdftotext`).
+  `pdftoppm -png`; `pdffonts` ska visa Osifont inbäddad (0.8.18). Ett
+  blad blir snabbast PDF i ett tillfälligt vitest-test med `buildSheet` och
+  `writePdf(..., { deflate: browserDeflate() })`.
+- osifont görs om med `scripts/osifont.py` (kräver fonttools och brotli).
 - **Jämföra Modifiera före och efter** (0.8.15): servera det gamla och det
   nya bygget på var sin port, ladda samma projekt i båda med
   `store.load`, och kör förlopp som `selection.set`, klick på ett

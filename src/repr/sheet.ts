@@ -3,7 +3,7 @@ import { onPaper, modelViewId, type Element, type Id, type ProjectDoc, type Shee
 import { FRAME_MARGIN, masterOf, paperSize } from '../core/sheets';
 import { defaultState, existingState, type ViewStates } from '../core/states';
 import { markerName } from '../elements/markers';
-import { textWidth } from '../formats/helvetica';
+import { textWidth } from '../formats/drawingFont';
 import { clipPrims } from '../geometry/clipRect';
 import { buildPlan, type Pickable } from './plan';
 import { boundsOf, type Bounds, type Primitive, type Vec2 } from './primitives';

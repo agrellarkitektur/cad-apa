@@ -74,6 +74,17 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
       return;
     }
 
+    // Måttbandet: ett tal delar mätningen i segment (0.8.18).
+    if (app.ui.tool === 'measure' && !app.measureTool.moving && /^[0-9]$/.test(e.key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const input = app.toolOptions.querySelector<HTMLInputElement>('#measure-divide');
+      if (input) {
+        input.focus();
+        input.value = e.key;
+        e.preventDefault();
+        return;
+      }
+    }
+
     // Modifiera-verktygen: Shift + bokstav (0.8.13). Shift+Z (förra zoomen)
     // och Shift + piltangenterna (knuffa) är inte med.
     if (e.shiftKey && /^Key[A-Z]$/.test(e.code)) {

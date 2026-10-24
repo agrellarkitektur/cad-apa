@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.17** (alfa, rumsstämpeln); nästa är **0.8.18, Småsaker**.
+**0.8.18** (alfa, småsaker); nästa är **0.8.19, 2D-form**.
 
 ## Vad som fungerar
 
@@ -782,6 +782,35 @@ Version 0.8.17, rumsstämpeln (samma filformat, 11):
   rummets närmaste kant
 - **Stämpeln i mitten** i egenskaperna och smartmenyn lägger tillbaka den.
   Dubbelklick på stämpeln byter namn som förut
+
+Version 0.8.18, småsaker (samma filformat, 11):
+- **Rutnätet** ritar alla nivåer samtidigt (1 · 5 · 10 · 50 · 100 · 500 mm …),
+  var och en tonad efter hur tätt den ligger på skärmen. En nivå försvinner
+  inte längre när en finare kommer in: 500-strecken ligger kvar mellan
+  100- och 1 000-strecken, och grövre nivåer är alltid minst lika tydliga
+  som finare. Statusraden visar den finaste nivån som går att läsa
+- **Dela en mätning i segment**: mät med måttbandet, skriv ett tal (eller
+  i fältet *Dela i*) och tryck Enter. Mätningen delas i så många lika långa
+  delar, längs hela sträckan, och skarvarna blir tillfälliga
+  **segmentpunkter** som alla verktyg snäpper till. De sparas inte i
+  projektet och ligger kvar i vyn tills man väljer **Rensa
+  segmentpunkter** (i måttbandets rad eller när man högerklickar i planen)
+- **osifont** (ISO 3098) är ritningens typsnitt, på skärmen och i PDF:en,
+  där det bäddas in. Raderna bryts och mäts med osifonts bredder. Fet text
+  är osifont med ett tunt streck runt tecknen. Tecken som osifont saknar
+  (t.ex. ” och …) skrivs som " och ...
+- **Om** i menyn är en egen ruta med versionen, länken till projektets
+  GitHub och osifont krediterat
+- **Autospara till fil**: har projektet sparats eller öppnats som fil här
+  (Chrome och Edge) sparas ändringarna till filen ett par sekunder efter
+  varje ändring, och statusraden säger *Sparat i filen*. Projektet
+  autosparas i webbläsaren som förut. Går att stänga av i Inställningar.
+  Efter att sidan laddats om behöver filen öppnas eller sparas igen
+- **Dra och släpp i projektträdet**: vyer, våningar, fasader, sektioner,
+  arbetsblad, ritningsblad, mallblad, stämplar, underlag och mappar dras
+  till en mapp i samma flik. Släpps det på en rad inuti en mapp hamnar det
+  i den, och släpps det utanför alla mappar läggs det utanför. Markerade
+  blad och underlag följer med det man drar. Går att ångra
 
 ## Versioner och gamla projekt
 
