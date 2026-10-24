@@ -47,6 +47,8 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
     label: '2D',
     items: [
       ['Shape2D', '2D-former'],
+      // Bara fyllningarna (0.8.22): formerna finns kvar och går att klicka på.
+      ['fill', 'Fyllningar'],
     ],
   },
   {

@@ -163,7 +163,7 @@ function openArrow(tip: Vec2, dir: Vec2, size: number, pen: Pen, origin: Primiti
 
 /**
  * Sektionslinjen i planen (0.7.1): tjocka streck vid ändarna, ett lika
- * tjockt skaft mot blickriktningen med en öppen pil, och bokstaven ute vid
+ * tjockt skaft mot blickriktningen med en lika tjock öppen pil (0.8.22), och bokstaven ute vid
  * linjens ände, vriden efter linjen. Linjen emellan ritas inte.
  */
 function sectionPlan(el: Element<any>, ctx: PlanContext): Primitive[] {
@@ -188,7 +188,8 @@ function sectionPlan(el: Element<any>, ctx: PlanContext): Primitive[] {
     const base = at(t);
     const tip: Vec2 = [base[0] + f.view[0] * 6 * k, base[1] + f.view[1] * 6 * k];
     out.push({ kind: 'line', a: base, b: tip, pen: thick, origin });
-    out.push(...openArrow(tip, f.view, 2.5 * k, { weight: 0.35 }, origin));
+    // Pilens hullingar är lika tjocka som vinkeln (0.8.22).
+    out.push(...openArrow(tip, f.view, 2.5 * k, thick, origin));
     const side = t === 0 ? -1 : 1;
     const c: Vec2 = [base[0] + u[0] * side * 3.2 * k, base[1] + u[1] * side * 3.2 * k];
     out.push({ kind: 'text', at: [c[0] + down[0] * h * 0.36 * k, c[1] + down[1] * h * 0.36 * k], text: tag, height: h, bold: true, align: 'middle', angle, pen: { weight: 0.35 }, origin });

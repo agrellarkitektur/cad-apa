@@ -22,6 +22,40 @@ function modules(mm: unknown): string {
   return Number.isFinite(v) ? String(Math.round(v / 100)) : '';
 }
 
+/**
+ * Raderna ur en mall med fält inom klammer (littera, och rumsstämpeln sedan
+ * 0.8.22). En rad där alla fält blev tomma hoppas över, liksom tomma rader.
+ * `fields` är fältens namn på raden, med gemener.
+ */
+export function fillTemplate(tpl: string, value: (name: string) => string): { text: string; fields: string[] }[] {
+  const out: { text: string; fields: string[] }[] = [];
+  for (const raw of tpl.split('\n')) {
+    const fields: string[] = [];
+    let filled = false;
+    const line = raw.replace(/\{([^}]+)\}/g, (_, name: string) => {
+      fields.push(name.trim().toLowerCase());
+      const v = value(name.trim());
+      if (v) filled = true;
+      return v;
+    });
+    if ((fields.length && !filled) || !line.trim()) continue;
+    out.push({ text: line.trim(), fields });
+  }
+  return out;
+}
+
+/** Ett eget värde med namnet (utan skiftläge) bland egenskaperna, eller tom text. */
+export function ownProp(sets: (Element['props'] | undefined)[], name: string): string {
+  for (const props of sets) {
+    for (const set of Object.values(props ?? {})) {
+      for (const [k, v] of Object.entries(set ?? {})) {
+        if (k.toLowerCase() === name.toLowerCase() && v !== null && v !== undefined && String(v) !== '') return String(v);
+      }
+    }
+  }
+  return '';
+}
+
 /** Värdet för ett fält i en litteramall, eller tom text. */
 function field(ctx: PlanContext, el: Element<any>, name: string): string {
   const def = el.definition ? ctx.doc.definitions[el.definition] : undefined;
@@ -45,14 +79,7 @@ function field(ctx: PlanContext, el: Element<any>, name: string): string {
       return p.thickness !== undefined ? String(p.thickness) : '';
   }
   // Egna egenskaper: först objektets egna, sedan typens. Namnet jämförs utan skiftläge.
-  for (const sets of [el.props, def?.props]) {
-    for (const set of Object.values(sets ?? {})) {
-      for (const [k, v] of Object.entries(set ?? {})) {
-        if (k.toLowerCase() === name.toLowerCase() && v !== null && v !== undefined && String(v) !== '') return String(v);
-      }
-    }
-  }
-  return '';
+  return ownProp([el.props, def?.props], name);
 }
 
 /**
@@ -65,20 +92,7 @@ export function litteraLines(ctx: PlanContext, el: Element<any>): string[] {
   const templates = ctx.style.labels.templates[el.type as 'Wall' | 'Door' | 'Window'];
   if (!templates) return [];
   const tpl = ctx.view.detail === 'detail' ? templates.detail : templates.normal;
-  const out: string[] = [];
-  for (const raw of tpl.split('\n')) {
-    let any = false;
-    let filled = false;
-    const line = raw.replace(/\{([^}]+)\}/g, (_, name: string) => {
-      any = true;
-      const v = field(ctx, el, name.trim());
-      if (v) filled = true;
-      return v;
-    });
-    if ((any && !filled) || !line.trim()) continue;
-    out.push(line.trim());
-  }
-  return out;
+  return fillTemplate(tpl, (name) => field(ctx, el, name)).map((r) => r.text);
 }
 
 /**

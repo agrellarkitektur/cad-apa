@@ -226,10 +226,10 @@ text "FASAD MOT VÄST" -2820,13300 h2 90° end [w0.18] @fasad-4
 linje 6500,-1800 6500,-1000 [w0.5 ink] @sektion-a
 linje 6500,9000 6500,9800 [w0.5 ink] @sektion-a
 linje 6500,-1800 5900,-1800 [w0.5 ink] @sektion-a
-linje 5900,-1800 6150,-1925 [w0.35 ink] @sektion-a
-linje 5900,-1800 6150,-1675 [w0.35 ink] @sektion-a
+linje 5900,-1800 6150,-1925 [w0.5 ink] @sektion-a
+linje 5900,-1800 6150,-1675 [w0.5 ink] @sektion-a
 text "A" 6626,-2120 h3.5 90° middle fet [w0.35] @sektion-a
 linje 6500,9800 5900,9800 [w0.5 ink] @sektion-a
-linje 5900,9800 6150,9675 [w0.35 ink] @sektion-a
-linje 5900,9800 6150,9925 [w0.35 ink] @sektion-a
+linje 5900,9800 6150,9675 [w0.5 ink] @sektion-a
+linje 5900,9800 6150,9925 [w0.5 ink] @sektion-a
 text "A" 6626,10120 h3.5 90° middle fet [w0.35] @sektion-a

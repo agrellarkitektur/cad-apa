@@ -1116,6 +1116,36 @@ projekt i 1 982 jämförelser.
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
 
+## Småsaker (0.8.22, format 12)
+
+- **Opacitet** på 2D-formen: `opacity` (linjen) och `fillOpacity`
+  (fyllningen), procent, båda valfria. Saknas `fillOpacity` följer
+  fyllningen `opacity` (*Samma för linje och fyllning*); kryssrutan
+  `d2:opacityLinked` skiljer dem åt eller tar bort `fillOpacity`.
+  `opacitiesOf` i `drawing2d.ts` ger värdena 0–1. 0 % ritar linjen med
+  tjockleken 0, så att formen går att klicka på. Formatet ändrades inte:
+  parametrarna är valfria
+- **Smartmenyns fält** för 2D-former: `shapeSmartFields` i
+  `drawingPanel.ts` (skrafferingens vinkel och avstånd, `hatchFields`, och
+  opaciteten, `opacityFields`), visade av `PropertiesPanel.smartFields`
+  som underlagens läge. Värden som skiljer sig mellan markerade former står
+  tomma med *Olika*
+- **Visa → Fyllningar**: nyckeln `fill` i vyns `hide` (under 2D i
+  `SHOW_GROUPS`). `shapePrims(p, origin, noFill)` hoppar då över
+  fyllningen; `pickShape` är kvar, så mitten går fortfarande att klicka på
+- **Linje är polylinjen**: `shape: 'line'` ritas inte längre men finns kvar
+  i äldre projekt (och blir en polylinje när en punkt läggs till, som
+  förut). `SHAPE_LABELS.polyline` är *Linje*, `commandFor({ shape: 'line' })`
+  ger polylinjens kommando och `Draw2DTool.setKind('line')` väljer polylinjen
+- **Rumsstämpelns mall** `LabelStyle.room` i stilmallen, med fälten
+  `{namn}`, `{nummer}`, `{area}`, `{takhöjd}` och rummets egna egenskaper.
+  `fillTemplate` och `ownProp` i `littera.ts` används av både littera och
+  rumsstämpeln. Raden med `{namn}` får rumsnamnets höjd och fet stil, en
+  rad med bara `{takhöjd}` grå text. En stilmall utan `room` får förvalet,
+  som ger samma stämpel som före 0.8.22
+- **Sektionspilen**: hullingarna har vinkelns tjocklek, 0,5. Facit i
+  `tests/referens/` skrevs om för det (bara pilarnas linjer)
+
 ## Kommandoraden del 2 (0.8.21)
 
 - **Frågan** `src/ui/app/prompts.ts`: `currentPrompt` ger `head` (verktyget

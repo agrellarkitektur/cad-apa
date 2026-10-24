@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.21** (alfa, kommandoraden del 2); nästa är **0.8.22, en granskning**, sedan flera våningsplan (0.9).
+**0.8.22** (alfa, småsaker); nästa är **0.8.23, en granskning**.
 
 ## Vad som fungerar
 
@@ -882,6 +882,21 @@ Version 0.8.21, kommandoraden del 2 (samma filformat, 12):
   Modifiera**: Flytta `@1200,0` från baspunkten, `x,y` som baspunkt, Vrid
   `90` som vinkel. Ett för litet tak eller en för kort sektionslinje säger
   nu till i stället för att tyst låta bli
+
+Version 0.8.22, småsaker (samma filformat, 12):
+- **Linje** är polylinjen: enkellinjen ritas inte längre, och `L`, `LINE`,
+  `PL` och `PLINE` leder alla till linjen, som tar så många punkter man
+  vill (dubbelklick, Enter eller *Avsluta* när den är klar)
+- **Opacitet** för 2D-formers linje och fyllning, tillsammans eller var för
+  sig (*Samma för linje och fyllning*), i egenskaperna och smartmenyn
+- **Smartmenyn** visar skrafferingens vinkel och avstånd på papper direkt,
+  utan *Mer*
+- **Visa → Fyllningar** släcker alla fyllningar i vyn; formerna finns kvar
+  och går att klicka på
+- **Rumsstämpelns ordning** ställs in i stilmallen med en mall, som
+  litteramallarna: `{nummer}` på första raden ger numret ovanför namnet.
+  Rummets egna egenskaper går också att visa
+- **Sektionspilens** hullingar är lika tjocka som vinkeln
 
 ## Versioner och gamla projekt
 

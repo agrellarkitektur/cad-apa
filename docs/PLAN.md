@@ -91,6 +91,8 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.18 | Småsaker: rutnätet med alla nivåer, segmentpunkter med måttbandet, osifont på skärmen och i PDF:en, Om-rutan, autospara till fil, dra och släpp till mappar |
 | 0.8.19 | Format 12: 2D-formen ersätter 2D-linjen och fyllningen; fyllning på vilken form som helst, ingen linje (tjocklek 0), mitten klickbar bara med fyllning |
 | 0.8.20 | Kommandoraden del 1: smartshell under ritytan, register med engelska och svenska förkortningar, komplettering, Enter öppnar, mellanslag upprepar, skrivna punkter (avstånd, @x,y, @d<v, x,y) |
+| 0.8.21 | Kommandoraden del 2: frågor med alternativ, SMARTSHELL vid blixten, kommandon som väntar på en markering, historik (F2), högerklick, dockningsbar rad, skrivna punkter i tak, sektion, fasad och Modifiera |
+| 0.8.22 | Småsaker: Linje är polylinjen, opacitet för linje och fyllning, skraffering i smartmenyn, Visa → Fyllningar, rumsstämpelns mall, sektionspilens hullingar |
 
 ## Framåt
 
@@ -897,11 +899,70 @@ baspunkten väntar; ett tal på raden är då värdet (Vrid 90), inte ett
 avstånd. Trimma, Hörnskarv, Förläng och Justera tar inte emot skrivna
 punkter (de klickar på objekt), inte heller Skala och måttbandet.*
 
-### 0.8.22 Granskning
+### 0.8.22 Småsaker
 
-Carl August 24 oktober: granskningen efter kommandoraden. Utan nya
-funktioner: städa, dela upp stora filer (`selectTool.ts`, `app.ts`,
-`actions.ts`) och leta efter långsam kod. Förra granskningen var 0.8.15.
+Carl Augusts synpunkter 24 oktober, de enkla (sorterade 24 oktober; han bad
+att de skulle göras före granskningen).
+
+- **Fyllningens vinkel och avstånd i smartmenyn**, och **opacitet** för
+  linjer och fyllningar, tillsammans eller var för sig
+- **Enkellinjen bort**: polylinjen heter *Linje*, och kommandona för linje
+  och polylinje leder till samma verktyg
+- **Rumsstämpelns ordning** kan ändras (ibland ska numret stå ovanför namnet)
+- **Dölj fyllningar** i vyn
+- **Sektionspilens hullingar** lika tjocka som vinkeln
+
+*Byggd (24 oktober), samma format (12): opaciteten är två valfria
+parametrar. Claudes val, att stämma av: opaciteten är *Samma för linje och
+fyllning* från början (ett fält), och kryssrutan skiljer dem åt; den
+finns i egenskaperna och smartmenyn, inte i verktyget. 0 % syns inte men
+går att klicka på. Smartmenyn visar vinkel, avstånd och opacitet direkt
+också för flera markerade former (olika värden står tomma). Rumsstämpelns
+ordning är en mall i stilmallen, som litteramallarna (`{namn}`, `{nummer}`,
+`{area}`, `TH {takhöjd}` och egna egenskaper): den gäller hela projektet,
+inte ett rum i taget, och raden med namnet är den stora och feta.
+*Fyllningar* ligger under Visa (2D) och gäller vyn, som det andra där, så
+en sparad vy med fyllningarna släckta visas utan dem också på bladen.
+Former som ritats som enkellinje finns kvar och heter också *Linje*.
+Pilarna gäller sektionslinjen i planen; rumsstämpelns pil är kvar tunn.*
+
+### 0.8.23 Granskning
+
+Carl August 24 oktober: granskningen efter kommandoraden (efter 0.8.22,
+som han ville ha först). Utan nya funktioner: städa, dela upp stora filer
+(`commandLine.ts`, `selectTool.ts`, `app.ts`, `actions.ts`) och leta efter
+långsam kod. Förra granskningen var 0.8.15.
+
+### 0.8.24 2D-form del 2 · *nytt format*
+
+Carl Augusts synpunkter 24 oktober (förslag 24 oktober). Stor, kan behöva
+delas (segmenten först, ändformerna sedan).
+
+- **Radie per segment**: varje segment i en linje kan vara rakt eller en
+  båge med radie, som väggarna
+- **Ritsättet är inte låst**: formen är en kedja av segment, och det sätt
+  den ritades på (rektangel, båge …) bestämmer bara hur den började
+- **Pil i början eller slutet** av en linje, med flera former: pil, öppen
+  pil, punkt, cirkel, triangel m.m.
+
+### 0.8.25 Ritordning och fyllningar
+
+Carl Augusts synpunkter 24 oktober (förslag 24 oktober). Mellanstor;
+kanske nytt format.
+
+- **Ritordning**: Längst bak, Bak, Fram, Främst
+- **2D-formens linje eller fyllning framför eller bakom väggarna**; som
+  nu är förvalt (fyllningen under, linjen över)
+- **Fyllning i rumszoner**, med samma inställningar som fyllningar i övrigt
+
+### 0.8.26 Pennor i stilmallen
+
+Carl Augusts synpunkt 24 oktober (förslag 24 oktober). Mellanstor. En del
+av penntabellen under *Efter pilotprojektet*, framflyttad.
+
+- **Linjetjocklek och färg för pilar och markörer** (sektion, fasad,
+  norrpil, rumsstämpelns pil, taklutning, mått) m.m., bara centralt i
+  stilmallen
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
@@ -1032,7 +1093,7 @@ efter pilotprojektet. Det som piloten visar behövs tidigt går först.
 
 Grafik:
 
-- Penntabell i stilmallen: linjetjocklek och färg per sorts linje (hål, karm, båge, foder, sammanfogningar, glas, öppningssätt, marklinje …). I dag gäller fasta värden: 0,13 skraffering, glas och sammanfogningar; 0,18 mått, foder, möbler och detaljer; 0,25 karm, båge, dörrblad och konturer bortom; 0,35 hålens omfattning och fasadkonturer; 0,5 bärande snitt; 0,7 marklinje och sektionslinjens ändar
+- Penntabell i stilmallen (pilar och markörer flyttade till 0.8.26): linjetjocklek och färg per sorts linje (hål, karm, båge, foder, sammanfogningar, glas, öppningssätt, marklinje …). I dag gäller fasta värden: 0,13 skraffering, glas och sammanfogningar; 0,18 mått, foder, möbler och detaljer; 0,25 karm, båge, dörrblad och konturer bortom; 0,35 hålens omfattning och fasadkonturer; 0,5 bärande snitt; 0,7 marklinje och sektionslinjens ändar
 - Klicka på en glasmarkering för att ge den en egen stil i egenskaperna
 - Typsnitt: ett för hela projektet och eget per objekt
 - Öppningssätt för fönster: fast, sidohängt (vänster/höger), överkantshängt, underkantshängt, vridfönster. I dag har bara dörrar öppningssätt

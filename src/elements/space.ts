@@ -2,13 +2,16 @@ import type { Primitive, Vec2 } from '../repr/primitives';
 import type { ElementType } from './registry';
 import { closestOnSegment, pointInRings } from '../geometry/vec';
 import { centroidOf, roomNumbersFor, spaceOutline, type SpaceParams } from './rooms';
+import { fillTemplate, ownProp } from './littera';
+import { DEFAULT_LABELS } from '../core/graphics';
 
 export type { SpaceParams } from './rooms';
 
 /**
  * Rum. Ett rum som skapats med rumsverktyget minns punkten man klickade i och
  * följer väggarna; arean räknas alltid ur konturen. Rumsetiketten visar namn,
- * nummer och area, och takhöjd om den är angiven.
+ * nummer och area, och takhöjd om den är angiven, i den ordning stilmallens
+ * mall för rumsstämpeln anger (0.8.22).
  */
 export const spaceType: ElementType<SpaceParams> = {
   type: 'Space',
@@ -31,13 +34,27 @@ export const spaceType: ElementType<SpaceParams> = {
     const origin = { objectId: el.id, objectType: 'Space', part: 'rumstext' };
     const { heights, align } = ctx.style.labels;
     const line = ctx.scale * heights.roomInfo * 1.7; // radavstånd på papper, mm
-    const rows: { text: string; height: number; bold?: boolean; muted?: boolean }[] = [
-      { text: (el.name ?? 'Rum').toLocaleUpperCase('sv-SE'), height: heights.roomName, bold: true },
-      { text: roomNumbersFor(ctx).get(el.id) ?? '', height: heights.roomInfo },
-      { text: formatArea(areaOf(pts)), height: heights.roomInfo },
-    ];
-    if (p.ceilingHeight) rows.push({ text: `TH ${p.ceilingHeight.toLocaleString('sv-SE')}`, height: heights.roomInfo, muted: true });
-    const shown = rows.filter((r) => r.text);
+    // Raderna efter stilmallens mall (0.8.22): namn, nummer, area och takhöjd i vald ordning.
+    const value = (name: string): string => {
+      switch (name.toLowerCase()) {
+        case 'namn':
+          return (el.name ?? 'Rum').toLocaleUpperCase('sv-SE');
+        case 'nummer':
+          return roomNumbersFor(ctx).get(el.id) ?? '';
+        case 'area':
+          return formatArea(areaOf(pts));
+        case 'takhöjd':
+        case 'th':
+          return p.ceilingHeight ? p.ceilingHeight.toLocaleString('sv-SE') : '';
+      }
+      return ownProp([el.props], name);
+    };
+    const shown = fillTemplate(ctx.style.labels.room ?? DEFAULT_LABELS.room, value).map((r) =>
+      r.fields.includes('namn')
+        ? { text: r.text, height: heights.roomName, bold: true }
+        : { text: r.text, height: heights.roomInfo, muted: r.fields.length > 0 && r.fields.every((f) => f === 'takhöjd' || f === 'th') },
+    );
+    if (!shown.length) return [];
     // Stämpeln står i mitten, eller där den dragits (0.8.17).
     const at: Vec2 = p.labelAt ?? c;
     const top = at[1] + ((shown.length - 1) * line) / 2;

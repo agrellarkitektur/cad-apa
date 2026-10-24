@@ -2630,6 +2630,11 @@ table.keys td:first-child {
   gap: 4px;
 }
 
+/* Rumsstämpeln (0.8.22): en mall, över båda kolumnerna. */
+.tpl-row.wide label {
+  grid-column: 2 / -1;
+}
+
 .tpl-row label > span {
   font-size: 11px;
   color: var(--muted);

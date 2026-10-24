@@ -24,7 +24,8 @@ describe('Kommandoregistret (0.8.20)', () => {
   });
 
   it('känner AutoCADs förkortningar och de svenska namnen', () => {
-    expect(findCommand('L')?.id).toBe('line');
+    // L och LINE är polylinjen, som heter Linje, sedan 0.8.22.
+    expect(findCommand('L')?.id).toBe('polyline');
     expect(findCommand('pl')?.id).toBe('polyline');
     expect(findCommand('REC')?.id).toBe('rect');
     expect(findCommand('c')?.id).toBe('circle');
@@ -43,7 +44,7 @@ describe('Kommandoregistret (0.8.20)', () => {
   });
 
   it('kompletterar: exakt först, sedan det som börjar så, kortast först', () => {
-    expect(complete('l')[0].cmd.id).toBe('line');
+    expect(complete('l')[0].cmd.id).toBe('polyline');
     expect(complete('l')[0].exact).toBe(true);
     const r = complete('rek');
     expect(r[0].cmd.id).toBe('rect');
@@ -55,7 +56,7 @@ describe('Kommandoregistret (0.8.20)', () => {
   });
 
   it('visar korta förkortningar på knapparna', () => {
-    expect(aliasText(commandFor({ shape: 'line' })!)).toBe('L, LI, LINE');
+    expect(aliasText(commandFor({ shape: 'line' })!)).toBe('L, LI, PL, LINE');
     expect(aliasText(commandFor({ tool: 'wall' })!)).toBe('WA, VG, WALL, VÄGG');
   });
 });

@@ -66,8 +66,8 @@ export const COMMANDS: CommandDef[] = [
   T('dimension', 'Mått', ['mått', 'må'], ['dim', 'dli', 'dimlinear']),
   T('text', 'Text', ['text', 'tx'], ['mtext', 'mt', 't', 'dtext', 'dt']),
   T('draw2d', '2D-form', ['2d', '2dform'], ['draw'], 'med det sätt att rita som är valt'),
-  S('line', 'Linje', ['linje', 'li'], ['line', 'l']),
-  S('polyline', 'Polylinje', ['polylinje', 'pl'], ['pline', 'polyline']),
+  // Linje och polylinje är samma verktyg (0.8.22).
+  S('polyline', 'Linje', ['linje', 'li', 'polylinje', 'pl'], ['line', 'l', 'pline', 'polyline']),
   S('rect', 'Rektangel', ['rektangel', 'rek'], ['rectang', 'rectangle', 'rec']),
   S('circle', 'Cirkel', ['cirkel', 'ci'], ['circle', 'c']),
   S('arc', 'Båge', ['båge', 'bå'], ['arc', 'a']),
@@ -137,7 +137,8 @@ export function commandById(id: string): CommandDef | undefined {
 
 /** Kommandot för ett verktyg, en 2D-form eller en Modifiera-knapp. */
 export function commandFor(what: { tool?: ToolId; shape?: ShapeKind; rail?: RailId }): CommandDef | undefined {
-  if (what.shape) return COMMANDS.find((c) => c.shape === what.shape);
+  // Enkellinjen är polylinjen sedan 0.8.22.
+  if (what.shape) return COMMANDS.find((c) => c.shape === (what.shape === 'line' ? 'polyline' : what.shape));
   if (what.rail) return COMMANDS.find((c) => c.rail === what.rail);
   return COMMANDS.find((c) => c.tool === what.tool && !c.shape);
 }

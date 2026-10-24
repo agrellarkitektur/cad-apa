@@ -45,10 +45,60 @@ export function fillFields(name: string, p: Pick<Shape2DParams, 'fill' | 'fillCo
   const color = p.fillColor ?? FILL_COLOR;
   const more = p.fill
     ? `<div class="fields"><label class="field"><span>Färg</span><input type="color" ${attrs('fillColor')} value="${color}"></label>
-    ${p.fill !== 'solid' ? `<label class="field"><span>Vinkel</span><span class="input-unit"><input type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" ${attrs('fillAngle')} value="${p.fillAngle}"><i>°</i></span></label>
-    <label class="field"><span>Avstånd på papper</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" ${attrs('fillSpacing')} value="${comma(p.fillSpacing)}"><i>mm</i></span></label>` : ''}</div>`
+    ${p.fill !== 'solid' ? hatchFields(p, attrs) : ''}</div>`
     : '';
   return `<div class="field-label">Fyllning</div>${patternPicker(name, p.fill ?? 'none', attrs('pattern'), { color, angle: p.fillAngle })}${more}`;
+}
+
+/** Skrafferingens vinkel och avstånd; också direkt i smartmenyn (0.8.22). Null = olika i markeringen. */
+export function hatchFields(p: { fillAngle: number | null; fillSpacing: number | null }, attrs: (key: string) => string): string {
+  const v = (n: number | null) => (n === null ? '' : comma(n));
+  const mixed = (n: number | null) => (n === null ? ' placeholder="Olika"' : '');
+  return `<label class="field"><span>Vinkel</span><span class="input-unit"><input type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" ${attrs('fillAngle')} value="${v(p.fillAngle)}"${mixed(p.fillAngle)}><i>°</i></span></label>
+    <label class="field"><span>Avstånd på papper</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" ${attrs('fillSpacing')} value="${v(p.fillSpacing)}"${mixed(p.fillSpacing)}><i>mm</i></span></label>`;
+}
+
+/**
+ * Fälten som smartmenyn visar direkt för markerade 2D-former (0.8.22):
+ * skrafferingens vinkel och avstånd och opaciteten. Värden som skiljer sig
+ * mellan formerna står tomma. Null när det inte finns något att visa.
+ */
+export function shapeSmartFields(doc: ProjectDoc, els: Element[]): string | null {
+  if (!els.length || !els.every((e) => e.type === 'Shape2D')) return null;
+  const ps = els.map((e) => resolveParams<Shape2DParams>(doc, e));
+  const same = <K extends keyof Shape2DParams>(k: K): Shape2DParams[K] | null => (ps.every((q) => q[k] === ps[0][k]) ? ps[0][k] : null);
+  const attrs = (k: string) => `data-key="d2:${k}"`;
+  const parts: string[] = [];
+  if (ps.every((q) => q.fill === 'hatch' || q.fill === 'cross')) parts.push(`<div class="fields">${hatchFields({ fillAngle: same('fillAngle'), fillSpacing: same('fillSpacing') }, attrs)}</div>`);
+  if (ps.some((q) => q.weight > 0 || q.fill)) {
+    const linked = ps.every((q) => q.fillOpacity === undefined) ? undefined : ps.every((q) => q.fillOpacity !== undefined) ? (same('fillOpacity') ?? NaN) : NaN;
+    parts.push(opacityFields({ weight: ps.some((q) => q.weight > 0) ? 1 : 0, fill: ps.find((q) => q.fill)?.fill, opacity: same('opacity') ?? (ps.every((q) => q.opacity === undefined) ? undefined : NaN), fillOpacity: linked }, attrs));
+  }
+  return parts.length ? parts.join('') : null;
+}
+
+/**
+ * Opaciteten (0.8.22): för linjen och fyllningen tillsammans, eller var för
+ * sig. Tillsammans är förvalt; då styr `opacity` båda och `fillOpacity`
+ * saknas. Med bara linje eller bara fyllning visas ett fält.
+ */
+export function opacityFields(p: Pick<Shape2DParams, 'weight' | 'fill' | 'opacity' | 'fillOpacity'>, attrs: (key: string) => string): string {
+  const linked = p.fillOpacity === undefined;
+  const line = p.opacity ?? 100;
+  const fill = p.fillOpacity ?? line;
+  const field = (key: string, label: string, v: number) =>
+    `<label class="field"><span>${label}</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="10" inputmode="decimal" autocomplete="off" ${attrs(key)} value="${Number.isFinite(v) ? Math.round(v) : ''}"${Number.isFinite(v) ? '' : ' placeholder="Olika"'}><i>%</i></span></label>`;
+  if (p.weight > 0 && p.fill) {
+    const fields = linked ? field('opacity', 'Opacitet', line) : `${field('opacity', 'Linjens opacitet', line)}${field('fillOpacity', 'Fyllningens opacitet', fill)}`;
+    return `<div class="fields">${fields}</div><label class="check"><input type="checkbox" ${attrs('opacityLinked')}${linked ? ' checked' : ''}> Samma för linje och fyllning</label>`;
+  }
+  if (p.fill) return `<div class="fields">${field(linked ? 'opacity' : 'fillOpacity', 'Opacitet', fill)}</div>`;
+  return `<div class="fields">${field('opacity', 'Opacitet', line)}</div>`;
+}
+
+/** Procent 0–100, eller null om det inte är ett tal. */
+function percent(v: number): number | null {
+  return Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : null;
 }
 
 /** Fälten för en 2D-form eller en taklutning. */
@@ -64,6 +114,7 @@ export function drawingFields(doc: ProjectDoc, el: Element): string {
       </div>
       ${closable ? `<label class="check"><input type="checkbox" data-key="d2:closed"${p.closed ? ' checked' : ''}> Sluten</label>` : ''}
       ${p.shape === 'line' ? '' : fillFields('d2-pattern-panel', p, (k) => `data-key="d2:${k}"`)}
+      ${p.weight || p.fill ? opacityFields(p, (k) => `data-key="d2:${k}"`) : ''}
       ${p.weight === 0 && !p.fill ? '<p class="note">Formen har varken linje eller fyllning och syns inte, men går att klicka på längs linjen.</p>' : ''}`;
   }
   if (el.type === 'Underlay') return underlayFields(doc, el);
@@ -238,6 +289,15 @@ export function drawingChange(store: DocStore, ids: Id[], key: string, input: HT
     else if (name === 'fillColor') updateParams(store, ids, { fillColor: v }, 'Ändra fyllningens färg');
     else if (name === 'fillAngle' && Number.isFinite(num)) updateParams(store, ids, { fillAngle: num }, 'Ändra vinkel');
     else if (name === 'fillSpacing' && num > 0) updateParams(store, ids, { fillSpacing: num }, 'Ändra avstånd');
+    else if (name === 'opacity' && percent(num) !== null) updateParams(store, ids, { opacity: percent(num) === 100 ? undefined : percent(num) }, 'Ändra opacitet');
+    else if (name === 'fillOpacity' && percent(num) !== null) updateParams(store, ids, { fillOpacity: percent(num) }, 'Ändra fyllningens opacitet');
+    else if (name === 'opacityLinked') {
+      // Var för sig: fyllningen börjar med linjens värde, för varje form.
+      const linked = (input as HTMLInputElement).checked;
+      store.transact(linked ? 'Samma opacitet' : 'Opacitet var för sig', (tx) => {
+        for (const el of els) tx.putElement({ ...el, params: { ...el.params, fillOpacity: linked ? undefined : (el.params.opacity ?? 100) } });
+      });
+    }
     return true;
   }
   if (scope === 'ul') {

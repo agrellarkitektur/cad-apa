@@ -28,7 +28,7 @@ import { markerFrame } from '../elements/markers';
 import { skewOf, skewText } from '../elements/angleCheck';
 import { bindTreeForm, treeItemExists, treeItemMarkup, type TreeItem } from './treeItemPanel';
 import { bindSheetForm, sheetFormMarkup, type SheetFormHost } from './sheetForms';
-import { drawingChange, drawingClick, hereOf, lockField, resetShowList, showSection, underlayPlaceFields } from './drawingPanel';
+import { drawingChange, drawingClick, hereOf, lockField, resetShowList, shapeSmartFields, showSection, underlayPlaceFields } from './drawingPanel';
 import { instanceFields, propsSection, PROPS, sharedSection, summarizeTypes, typesMarkup } from './selectionFields';
 import { applyField, patchEach, pick, selectionCenter, straighten } from './selectionEdits';
 
@@ -443,13 +443,17 @@ export class PropertiesPanel {
   }
 
   /**
-   * Fält som smartmenyn visar direkt, utan *Mer* (0.8.16): läge och storlek
-   * för ett ensamt underlag. Null för allt annat.
+   * Fält som smartmenyn visar direkt, utan *Mer*: läge och storlek för ett
+   * ensamt underlag (0.8.16), skraffering och opacitet för 2D-former
+   * (0.8.22). Null för allt annat.
    */
   smartFields(): string | null {
     const ids = this.selection.list();
-    const el = ids.length === 1 ? this.store.doc.elements[ids[0]] : undefined;
-    return el?.type === 'Underlay' ? underlayPlaceFields(this.store.doc, el) : null;
+    const doc = this.store.doc;
+    const el = ids.length === 1 ? doc.elements[ids[0]] : undefined;
+    if (el?.type === 'Underlay') return underlayPlaceFields(doc, el);
+    // 2D-former (0.8.22): skrafferingens vinkel och avstånd, och opaciteten.
+    return shapeSmartFields(doc, ids.map((id) => doc.elements[id]).filter(Boolean));
   }
 
   /**

@@ -97,6 +97,13 @@ export interface LabelStyle {
   /** Texthöjder på papper, mm. */
   heights: { roomName: number; roomInfo: number; littera: number; dimension: number };
   templates: { Wall: LitteraTemplates; Door: LitteraTemplates; Window: LitteraTemplates };
+  /**
+   * Rumsstämpelns mall (0.8.22), som litteramallarna: en rad per textrad, i
+   * den ordning raderna ska stå. Fält: {namn}, {nummer}, {area}, {takhöjd}
+   * och rummets egna egenskaper. Raden med {namn} får rumsnamnets höjd och
+   * fet stil, en rad med bara {takhöjd} grå text. Tomma rader hoppas över.
+   */
+  room: string;
 }
 
 export const DEFAULT_LABELS: LabelStyle = {
@@ -107,6 +114,7 @@ export const DEFAULT_LABELS: LabelStyle = {
     Door: { normal: '{typ}', detail: '{nummer}\n{hål}\n{brandklass}' },
     Window: { normal: '{typ}', detail: '{typ}\n{hål}' },
   },
+  room: '{namn}\n{nummer}\n{area}\nTH {takhöjd}',
 };
 
 const outline: LineDef = { weight: 0.35, color: 'ink' };
@@ -226,5 +234,6 @@ function normalizeLabels(l: any): LabelStyle {
     align: l?.align === 'center' ? 'center' : 'left',
     heights: { roomName: h('roomName'), roomInfo: h('roomInfo'), littera: h('littera'), dimension: h('dimension') },
     templates: { Wall: t('Wall'), Door: t('Door'), Window: t('Window') },
+    room: typeof l?.room === 'string' ? l.room : d.room,
   };
 }

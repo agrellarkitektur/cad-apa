@@ -107,7 +107,8 @@ export function installToolOptions(app: AppContext) {
       const t = app.draw2dTool;
       const o = t.options;
       // 2D-formen (0.8.19): sättet att rita, pennan (eller ingen linje) och fyllningen.
-      const kinds = Object.entries(SHAPE_LABELS) as [ShapeKind, string][];
+      // Enkellinjen ritas inte längre (0.8.22): Linje är polylinjen.
+      const kinds = (Object.entries(SHAPE_LABELS) as [ShapeKind, string][]).filter(([k]) => k !== 'line');
       app.toolOptions.innerHTML = `
         <label class="opt"><span>Rita</span><select id="d2-kind" aria-label="Rita som">${kinds.map(([k, l]) => `<option value="${k}"${k === o.kind ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
         <div class="opt"><span>Penna</span>${weightPicker('d2-weight', o.weight, '')}</div>

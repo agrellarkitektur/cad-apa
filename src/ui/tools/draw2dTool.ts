@@ -24,11 +24,12 @@ export interface Draw2DOptions {
 const NEEDED: Record<ShapeKind, number | null> = { line: 2, rect: 2, circle: 2, arc: 3, polyline: null, spline: null };
 
 /**
- * 2D-verktyget (0.8, 0.8.19): ritar en 2D-form som linje, polylinje,
- * rektangel, båge, cirkel eller spline, med penna och fyllning. Punkterna
+ * 2D-verktyget (0.8, 0.8.19): ritar en 2D-form som linje, rektangel, båge,
+ * cirkel eller spline, med penna och fyllning. Linjen är en polylinje med
+ * så många punkter man vill (0.8.22; enkellinjen finns inte längre). Punkterna
  * snäpper som allt annat. Rektangeln ritas med två motsatta hörn, bågen med
  * start, slut och en punkt på bågen, cirkeln med centrum och en punkt på
- * cirkeln. Polylinjer och splines avslutas med dubbelklick, Enter eller Klar;
+ * cirkeln. Linjer och splines avslutas med dubbelklick, Enter eller Klar;
  * ett klick på första punkten sluter formen.
  */
 export class Draw2DTool implements ViewTool, PointTaker {
@@ -37,7 +38,7 @@ export class Draw2DTool implements ViewTool, PointTaker {
   private points: Vec2[] = [];
   private current: SnapResult | null = null;
   private lastUp = { t: 0, at: [0, 0] as Vec2 };
-  options: Draw2DOptions = { kind: 'line', weight: 0.25, linetype: 'solid' };
+  options: Draw2DOptions = { kind: 'polyline', weight: 0.25, linetype: 'solid' };
   /** Riktningen låst med <45 i smartshell (0.8.20), till nästa punkt. */
   lockAngle: number | null = null;
   onChange?: () => void;
@@ -134,9 +135,9 @@ export class Draw2DTool implements ViewTool, PointTaker {
     this.host.view.requestRender();
   }
 
-  /** Byt form; punkterna börjar om. */
+  /** Byt form; punkterna börjar om. Enkellinjen är polylinjen sedan 0.8.22. */
   setKind(kind: ShapeKind): void {
-    this.options.kind = kind;
+    this.options.kind = kind === 'line' ? 'polyline' : kind;
     this.reset();
   }
 
@@ -202,14 +203,14 @@ export class Draw2DTool implements ViewTool, PointTaker {
   hintText(): string {
     const n = this.points.length;
     switch (this.options.kind) {
-      case 'line':
-        return n === 0 ? 'Klicka där linjen börjar.' : 'Klicka där linjen slutar.';
       case 'rect':
         return n === 0 ? 'Klicka ett hörn.' : 'Klicka det motsatta hörnet.';
       case 'circle':
         return n === 0 ? 'Klicka i centrum.' : 'Klicka en punkt på cirkeln.';
       case 'arc':
         return n === 0 ? 'Klicka där bågen börjar.' : n === 1 ? 'Klicka där bågen slutar.' : 'Klicka en punkt på bågen.';
+      case 'polyline':
+        return n === 0 ? 'Klicka där linjen börjar.' : 'Klicka nästa punkt, eller dubbelklicka för att sluta.';
       default:
         return n === 0 ? 'Klicka första punkten.' : 'Klicka nästa punkt, eller dubbelklicka för att sluta.';
     }

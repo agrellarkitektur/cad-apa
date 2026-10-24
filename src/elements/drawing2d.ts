@@ -50,7 +50,7 @@ export const PEN_COLORS: Record<number, { name: string; color: string }> = {
 export type FillPattern = 'solid' | 'hatch' | 'cross';
 
 export interface Shape2DParams {
-  /** Hur formen ritades; bestämmer punkternas betydelse och greppen. */
+  /** Hur formen ritades; bestämmer punkternas betydelse och greppen. `line` ritas inte längre (0.8.22). */
   shape: ShapeKind;
   /**
    * Punkterna. Linje: två. Polylinje och spline: två eller fler.
@@ -72,11 +72,29 @@ export interface Shape2DParams {
   /** Skrafferingens vinkel i grader och avstånd på papper i mm. */
   fillAngle: number;
   fillSpacing: number;
+  /** Linjens opacitet i procent (0.8.22); utelämnad = 100. */
+  opacity?: number;
+  /**
+   * Fyllningens opacitet i procent (0.8.22). Utelämnad = samma som linjen,
+   * så att en ändring av `opacity` gäller båda tills de skiljs åt.
+   */
+  fillOpacity?: number;
 }
 
+/** Opaciteten 0–1 för linjen och fyllningen; 1 = helt täckande. */
+export function opacitiesOf(p: Pick<Shape2DParams, 'opacity' | 'fillOpacity'>): { line: number; fill: number } {
+  const of = (v: number | undefined) => (v === undefined || !Number.isFinite(v) ? 1 : Math.max(0, Math.min(100, v)) / 100);
+  return { line: of(p.opacity), fill: of(p.fillOpacity ?? p.opacity) };
+}
+
+/**
+ * Namnen på sätten att rita. Polylinjen heter *Linje* (0.8.22): en linje med
+ * två punkter är en polylinje, och den gamla enkellinjen ritas inte längre
+ * (former ritade som linje före 0.8.22 finns kvar och heter också Linje).
+ */
 export const SHAPE_LABELS: Record<ShapeKind, string> = {
   line: 'Linje',
-  polyline: 'Polylinje',
+  polyline: 'Linje',
   rect: 'Rektangel',
   arc: 'Båge',
   circle: 'Cirkel',
@@ -143,9 +161,9 @@ export function catmullRom(pts: Vec2[], closed: boolean): Vec2[] {
   return out;
 }
 
-function penOf(p: Shape2DParams): Pen {
+function penOf(p: Shape2DParams, opacity: number): Pen {
   const dash = LINE_TYPES[p.linetype]?.dash;
-  return { weight: p.weight, ...(p.color ? { color: p.color as Color } : {}), ...(dash ? { dash } : {}) };
+  return { weight: p.weight, ...(p.color ? { color: p.color as Color } : {}), ...(dash ? { dash } : {}), ...(opacity < 1 ? { opacity } : {}) };
 }
 
 /** Fyllningens förvalda färg. */
@@ -154,19 +172,22 @@ export const FILL_COLOR = '#9aa0a6';
 /**
  * Formens primitiver: fyllningen (under modellen, `under`) och linjen. Linjen
  * finns också med tjockleken 0; den ritas inte, men går att klicka på och
- * snäppa mot.
+ * snäppa mot. Med `noFill` ritas ingen fyllning (Visa → Fyllningar, 0.8.22).
  */
-export function shapePrims(p: Shape2DParams, origin?: Primitive['origin']): Primitive[] {
+export function shapePrims(p: Shape2DParams, origin?: Primitive['origin'], noFill = false): Primitive[] {
   const { points, closed } = shapePoints(p);
   if (points.length < 2) return [];
   const out: Primitive[] = [];
-  if (p.fill && points.length > 2) {
+  const op = opacitiesOf(p);
+  if (p.fill && points.length > 2 && !noFill && op.fill > 0) {
     const color = (p.fillColor ?? FILL_COLOR) as Color;
-    const hatch = (angle: number): FillDef => ({ kind: 'hatch', color, angle, spacing: p.fillSpacing, weight: 0.13 });
-    const fills: FillDef[] = p.fill === 'solid' ? [{ kind: 'solid', color }] : p.fill === 'cross' ? [hatch(p.fillAngle), hatch(p.fillAngle + 90)] : [hatch(p.fillAngle)];
+    const alpha = op.fill < 1 ? { opacity: op.fill } : {};
+    const hatch = (angle: number): FillDef => ({ kind: 'hatch', color, angle, spacing: p.fillSpacing, weight: 0.13, ...alpha });
+    const fills: FillDef[] = p.fill === 'solid' ? [{ kind: 'solid', color, ...alpha }] : p.fill === 'cross' ? [hatch(p.fillAngle), hatch(p.fillAngle + 90)] : [hatch(p.fillAngle)];
     for (const fill of fills) out.push({ kind: 'region', role: 'cut', rings: [points], fill, outline: null, noOutline: true, ownFill: true, under: true, origin: origin && { ...origin, part: 'fyllning' } });
   }
-  out.push({ kind: 'polyline', points, closed, pen: penOf(p), origin });
+  // Helt genomskinlig ritas som ingen linje: går att klicka på, syns inte.
+  out.push({ kind: 'polyline', points, closed, pen: op.line > 0 ? penOf(p, op.line) : { ...penOf(p, 1), weight: 0 }, origin });
   return out;
 }
 
@@ -177,10 +198,10 @@ export const shape2dType: ElementType<Shape2DParams> = {
   labelPlural: '2D-former',
   drawOrder: 58,
   compares: false,
-  defaults: () => ({ shape: 'line', points: [], weight: 0.25, linetype: 'solid', fillAngle: 45, fillSpacing: 2 }),
+  defaults: () => ({ shape: 'polyline', points: [], weight: 0.25, linetype: 'solid', fillAngle: 45, fillSpacing: 2 }),
   plan(el, ctx) {
     const p = ctx.params<Shape2DParams>(el);
-    return shapePrims(p, { objectId: el.id, objectType: 'Shape2D', part: p.shape });
+    return shapePrims(p, { objectId: el.id, objectType: 'Shape2D', part: p.shape }, !!ctx.view.hide?.includes('fill'));
   },
   // Mitten går att klicka på bara när formen har en fyllning (0.8.19); annars bara linjen.
   pickSoft: true,
