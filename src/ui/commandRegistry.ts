@@ -29,7 +29,11 @@ export type CommandAction =
   | 'mode-2d'
   | 'mode-3d'
   | 'mode-split'
-  | 'help';
+  | 'help'
+  | 'order-back'
+  | 'order-backward'
+  | 'order-forward'
+  | 'order-front';
 
 export interface CommandDef {
   /** Unikt id; samma som verktygets, 2D-formens eller Modifiera-knappens när det finns ett. */
@@ -115,6 +119,11 @@ export const COMMANDS: CommandDef[] = [
   A('mode-2d', 'Plan', ['plan'], ['2dview']),
   A('mode-3d', '3D', ['3d'], ['3dview']),
   A('mode-split', 'Plan och 3D', ['båda'], ['split']),
+  // Ritordning (0.8.25).
+  A('order-back', 'Längst bak', ['längstbak', 'lbak'], ['sendtoback', 'drawback'], 'det markerade'),
+  A('order-backward', 'Bak', ['bak'], ['sendbackward'], 'det markerade, ett steg'),
+  A('order-forward', 'Fram', ['fram'], ['bringforward'], 'det markerade, ett steg'),
+  A('order-front', 'Främst', ['främst'], ['bringtofront', 'drawfront'], 'det markerade'),
   A('help', 'Alla kommandon', ['hjälp', '?'], ['help']),
 ];
 

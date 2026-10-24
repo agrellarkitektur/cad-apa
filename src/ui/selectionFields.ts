@@ -14,7 +14,7 @@ import type { TextParams } from '../elements/annotation';
 import { markerFrame, markerName, type MarkerParams, type NorthParams } from '../elements/markers';
 import type { RoofParams } from '../elements/roof';
 import { radiusOf } from '../geometry/arc';
-import { drawingFields } from './drawingPanel';
+import { drawingFields, fillFields, opacityFields } from './drawingPanel';
 import type { ScaleBarParams } from '../elements/scaleBar';
 import type { StampParams } from '../elements/stamp';
 import { stampsOf } from '../core/sheets';
@@ -163,6 +163,8 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
           <label class="field" for="f-param-ceilingHeight"><span>Takhöjd (TH)</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" id="f-param-ceilingHeight" data-key="param:ceilingHeight" value="${p.ceilingHeight ?? ''}" placeholder="Visas inte"><i>mm</i></span></label></div>
         <div class="row"><button class="btn" data-action="room-label-center"${p.labelAt ? '' : ' disabled'} title="Lägg tillbaka rumsstämpeln i rummets mitt">Stämpeln i mitten</button></div>
         <p class="note">Dra i rumsstämpeln för att flytta den. Utanför rummet får den en pil in i rummet.</p>
+        ${fillFields('room-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 }, (k) => `data-key="d2:${k}"`)}
+        ${p.fill ? opacityFields({ weight: 0, fill: p.fill, opacity: p.opacity }, (k) => `data-key="d2:${k}"`) : ''}
 `;
     }
     case 'Dimension': {

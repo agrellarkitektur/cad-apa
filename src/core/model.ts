@@ -276,6 +276,11 @@ export interface Element<P extends object = Record<string, unknown>> {
    * Ett frivilligt fält som äldre versioner hoppar över, så formatet är 5.
    */
   skewOk?: boolean;
+  /**
+   * Ritordningen bland element av samma sort på samma yta (0.8.25): lägre
+   * ritas bakom. Utelämnad = 0; vid lika värden gäller ordningen i listan.
+   */
+  order?: number;
   params: P;
   props: PropertySets;
 }

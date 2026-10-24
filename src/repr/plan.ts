@@ -3,6 +3,7 @@ import type { Element, Id, ProjectDoc } from '../core/model';
 import type { Action, ViewStates } from '../core/states';
 import { allTypes, typeOf, type ElementType, type PlanContext, type PlanItem } from '../elements/registry';
 import { autoDimensions } from '../elements/autoDims';
+import { sortByOrder } from '../core/drawOrder';
 import { createContext } from './context';
 import { sameItems } from './reuse';
 import type { Pen, Primitive, Vec2 } from './primitives';
@@ -51,6 +52,8 @@ export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: 
     groups.set(key, list);
   }
   const keys = [...groups.keys()].sort((a, b) => parseFloat(a) - parseFloat(b));
+  // Ritordningen inom sorten (0.8.25): Längst bak … Främst.
+  for (const [k, list] of groups) groups.set(k, sortByOrder(list));
 
   // Elementen per typ i hela projektet, för att se om det en grupp läser har ändrats.
   const byType = new Map<string, Element[]>();
@@ -66,7 +69,8 @@ export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: 
   };
 
   const prims: Primitive[] = [];
-  // Fyllningar i 2D-former (0.8.19) ritas under modellen: efter underlagen, före väggarna.
+  // Fyllningar i 2D-former (0.8.19) och rum (0.8.25) ritas under modellen:
+  // efter underlagen, före väggarna. En 2D-forms linje kan också läggas där (0.8.25).
   const under: Primitive[] = [];
   let underAt = 0;
   const pickables: Pickable[] = [];
@@ -125,8 +129,8 @@ function drawGroup(t: ElementType, items: PlanItem[], ctx: PlanContext, style: S
     id: el.id,
     priority: t.drawOrder,
     regions: t.pickShape ? t.pickShape(el, ctx) : [],
-    ...(t.pickSoft ? { soft: true } : {}),
-    prims: own,
+    ...((typeof t.pickSoft === 'function' ? t.pickSoft(el, ctx) : t.pickSoft) ? { soft: true } : {}),
+    prims: own.some((p) => p.noPick) ? own.filter((p) => !p.noPick) : own,
   });
 
   // Element som bara ritar sig själva: ett och ett, och oförändrade återanvänds.

@@ -4,6 +4,7 @@ import { closestOnSegment, pointInRings } from '../geometry/vec';
 import { centroidOf, roomNumbersFor, spaceOutline, type SpaceParams } from './rooms';
 import { fillTemplate, ownProp } from './littera';
 import { DEFAULT_LABELS } from '../core/graphics';
+import { fillPrims, type FillParams } from './drawing2d';
 
 export type { SpaceParams } from './rooms';
 
@@ -20,7 +21,7 @@ export const spaceType: ElementType<SpaceParams> = {
   labelPlural: 'Rum',
   drawOrder: 40,
   compares: false,
-  defaults: () => ({ outline: [] }),
+  defaults: () => ({ outline: [], fillAngle: 45, fillSpacing: 2 }),
   model3d(el, ctx) {
     const pts = spaceOutline(ctx, el);
     if (pts.length < 3) return [];
@@ -30,6 +31,8 @@ export const spaceType: ElementType<SpaceParams> = {
     const pts = spaceOutline(ctx, el);
     if (pts.length < 3) return [];
     const p = ctx.params<SpaceParams>(el);
+    // Fyllningen (0.8.25) bakom väggarna; den räknas inte när man klickar.
+    const fill = p.fill && !ctx.view.hide?.includes('fill') ? fillPrims([pts], p as FillParams, { objectId: el.id, objectType: 'Space' }, true).map((q) => ({ ...q, noPick: true })) : [];
     const c = centroidOf(pts);
     const origin = { objectId: el.id, objectType: 'Space', part: 'rumstext' };
     const { heights, align } = ctx.style.labels;
@@ -54,14 +57,14 @@ export const spaceType: ElementType<SpaceParams> = {
         ? { text: r.text, height: heights.roomName, bold: true }
         : { text: r.text, height: heights.roomInfo, muted: r.fields.length > 0 && r.fields.every((f) => f === 'takhöjd' || f === 'th') },
     );
-    if (!shown.length) return [];
+    if (!shown.length) return fill;
     // Stämpeln står i mitten, eller där den dragits (0.8.17).
     const at: Vec2 = p.labelAt ?? c;
     const top = at[1] + ((shown.length - 1) * line) / 2;
     // Vänsterjusterat: raderna börjar i samma punkt, blocket hålls kring mitten.
     const widest = Math.max(...shown.map((r) => r.text.length * r.height * 0.62)) * ctx.scale;
     const x = align === 'left' ? at[0] - widest / 2 : at[0];
-    const out = shown.map(
+    const out = [...fill, ...shown.map(
       (r, i): Primitive => ({
         kind: 'text',
         at: [x, top - i * line - (r.height * ctx.scale) / 3],
@@ -72,7 +75,7 @@ export const spaceType: ElementType<SpaceParams> = {
         pen: { weight: 0.18, color: r.muted ? 'muted' : 'ink' },
         origin,
       }),
-    );
+    )];
     if (p.labelAt && !pointInRings(at, [pts])) {
       const box: [number, number, number, number] = [
         at[0] - widest / 2,

@@ -92,6 +92,29 @@ export interface Shape2DParams {
   endCap?: CapKind;
   /** Ändformernas storlek på papper i mm; utelämnad = `CAP_SIZE`. */
   capSize?: number;
+  /** Fyllningen ritas framför väggarna (0.8.25); utelämnad = bakom, som förut. */
+  fillFront?: boolean;
+  /** Linjen ritas bakom väggarna (0.8.25); utelämnad = framför, som förut. */
+  lineBehind?: boolean;
+}
+
+/** Fyllningens inställningar, samma för 2D-former och rum (0.8.25). */
+export type FillParams = Pick<Shape2DParams, 'fill' | 'fillColor' | 'fillAngle' | 'fillSpacing' | 'opacity' | 'fillOpacity'>;
+
+/**
+ * Fyllningens ytor för konturen `rings` (0.8.25): en hel fyllning eller en
+ * eller två skrafferingar. `under` = bakom väggarna.
+ */
+export function fillPrims(rings: readonly (readonly Vec2[])[], p: FillParams, origin: Primitive['origin'] | undefined, under: boolean): Primitive[] {
+  const op = opacitiesOf(p).fill;
+  if (!p.fill || op <= 0) return [];
+  const color = (p.fillColor ?? FILL_COLOR) as Color;
+  const alpha = op < 1 ? { opacity: op } : {};
+  const angle = Number.isFinite(p.fillAngle) ? p.fillAngle : 45;
+  const spacing = p.fillSpacing > 0 ? p.fillSpacing : 2;
+  const hatch = (a: number): FillDef => ({ kind: 'hatch', color, angle: a, spacing, weight: 0.13, ...alpha });
+  const fills: FillDef[] = p.fill === 'solid' ? [{ kind: 'solid', color, ...alpha }] : p.fill === 'cross' ? [hatch(angle), hatch(angle + 90)] : [hatch(angle)];
+  return fills.map((fill): Primitive => ({ kind: 'region', role: 'cut', rings, fill, outline: null, noOutline: true, ownFill: true, ...(under ? { under: true } : {}), origin: origin && { ...origin, part: 'fyllning' } }));
 }
 
 /** Ändformerna (0.8.24). */
@@ -234,13 +257,6 @@ export function shapePrims(p: Shape2DParams, origin?: Primitive['origin'], noFil
   if (points.length < 2) return [];
   const out: Primitive[] = [];
   const op = opacitiesOf(p);
-  if (p.fill && points.length > 2 && !noFill && op.fill > 0) {
-    const color = (p.fillColor ?? FILL_COLOR) as Color;
-    const alpha = op.fill < 1 ? { opacity: op.fill } : {};
-    const hatch = (angle: number): FillDef => ({ kind: 'hatch', color, angle, spacing: p.fillSpacing, weight: 0.13, ...alpha });
-    const fills: FillDef[] = p.fill === 'solid' ? [{ kind: 'solid', color, ...alpha }] : p.fill === 'cross' ? [hatch(p.fillAngle), hatch(p.fillAngle + 90)] : [hatch(p.fillAngle)];
-    for (const fill of fills) out.push({ kind: 'region', role: 'cut', rings: [points], fill, outline: null, noOutline: true, ownFill: true, under: true, origin: origin && { ...origin, part: 'fyllning' } });
-  }
   const caps = !closed && p.weight > 0 && op.line > 0 && (p.startCap || p.endCap);
   let line = points;
   if (caps) {
@@ -269,7 +285,9 @@ export function shapePrims(p: Shape2DParams, origin?: Primitive['origin'], noFil
     if (line.length >= 2) out.push({ kind: 'polyline', points: line, closed: false, pen, origin: origin && { ...origin, part: 'linje' } });
     out.push({ kind: 'polyline', points, closed, pen: { ...pen, weight: 0 }, origin });
   } else out.push({ kind: 'polyline', points, closed, pen, origin });
-  return out;
+  // Fyllningen först; linjen och ändarna bakom väggarna om så valts (0.8.25).
+  const fill = points.length > 2 && !noFill ? fillPrims([points], p, origin, !p.fillFront) : [];
+  return [...fill, ...(p.lineBehind ? out.map((q) => ({ ...q, under: true })) : out)];
 }
 
 /** Riktningen utåt i formens början (`atEnd` false) eller slut. */
@@ -356,7 +374,8 @@ export const shape2dType: ElementType<Shape2DParams> = {
     return shapePrims(p, { objectId: el.id, objectType: 'Shape2D', part: p.shape }, !!ctx.view.hide?.includes('fill'), ctx.scale);
   },
   // Mitten går att klicka på bara när formen har en fyllning (0.8.19); annars bara linjen.
-  pickSoft: true,
+  // En fyllning framför väggarna (0.8.25) går före dem också när man klickar.
+  pickSoft: (el, ctx) => !ctx.params<Shape2DParams>(el).fillFront,
   pickShape(el, ctx) {
     const p = ctx.params<Shape2DParams>(el);
     if (!p.fill) return [];

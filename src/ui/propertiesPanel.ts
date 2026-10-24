@@ -28,6 +28,7 @@ import { markerFrame } from '../elements/markers';
 import { skewOf, skewText } from '../elements/angleCheck';
 import { bindTreeForm, treeItemExists, treeItemMarkup, type TreeItem } from './treeItemPanel';
 import { bindSheetForm, sheetFormMarkup, type SheetFormHost } from './sheetForms';
+import { orderSection } from './app/drawOrderUi';
 import { drawingChange, drawingClick, hereOf, lockField, resetShowList, shapeSmartFields, showSection, underlayPlaceFields } from './drawingPanel';
 import { instanceFields, propsSection, PROPS, sharedSection, summarizeTypes, typesMarkup } from './selectionFields';
 import { applyField, patchEach, pick, selectionCenter, straighten } from './selectionEdits';
@@ -407,6 +408,10 @@ export class PropertiesPanel {
       if (instance) sections.push(`<section><h3>${escapeHtml(t?.label ?? '')}</h3>${instance}${lockField(els)}</section>`);
       else if (lockField(els)) sections.push(`<section>${lockField(els)}</section>`);
     } else if (lockField(els)) sections.push(`<section>${lockField(els)}</section>`);
+
+    // Ritordning (0.8.25): Längst bak … Främst, och 2D-formens lager mot väggarna.
+    const order = orderSection(doc, els);
+    if (order) sections.push(order);
 
     // Visas i (0.8): 2D-element, text och mått kan visas i vissa vyer.
     const selKey = els.map((e) => e.id).join();

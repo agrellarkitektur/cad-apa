@@ -7,6 +7,7 @@ import { pickAt } from '../../view2d/pick';
 import { isNarrow } from '../sheet';
 import { isSnapEnabled } from '../tools/snap';
 import type { AppContext } from './context';
+import { orderMenuItems } from './drawOrderUi';
 
 /** Högerklick och långt tryck: menyn för det markerade eller för planen, i plan, 3D och projektträdet. */
 export function installMenus(app: AppContext) {
@@ -126,6 +127,9 @@ export function installMenus(app: AppContext) {
         { label: 'Rikta…', run: () => app.startUnderlayTool(first.id, 'align') },
       );
     }
+    // Ritordning (0.8.25).
+    const order = orderMenuItems(app, els);
+    if (order.length) items.push({ kind: 'sep' }, ...order);
     // Underlag, fasader och annat som hör till ritningen finns i alla tillstånd, liksom det som är ritat på ett blad eller mallblad (0.8.9).
     const doc = app.store.doc;
     const onPaper = (e: (typeof els)[number]) => doc.sheets.some((s) => s.id === e.space) || doc.worksheets.some((w) => w.id === e.space && paperSpace(w));

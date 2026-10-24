@@ -314,6 +314,8 @@ export function drawingChange(store: DocStore, ids: Id[], key: string, input: HT
     else if (name === 'fillSpacing' && num > 0) updateParams(store, ids, { fillSpacing: num }, 'Ändra avstånd');
     else if (name === 'opacity' && percent(num) !== null) updateParams(store, ids, { opacity: percent(num) === 100 ? undefined : percent(num) }, 'Ändra opacitet');
     else if (name === 'fillOpacity' && percent(num) !== null) updateParams(store, ids, { fillOpacity: percent(num) }, 'Ändra fyllningens opacitet');
+    else if (name === 'fillLayer') updateParams(store, ids, { fillFront: v === 'front' ? true : undefined }, v === 'front' ? 'Fyllningen framför väggarna' : 'Fyllningen bakom väggarna');
+    else if (name === 'lineLayer') updateParams(store, ids, { lineBehind: v === 'behind' ? true : undefined }, v === 'behind' ? 'Linjen bakom väggarna' : 'Linjen framför väggarna');
     else if (name === 'opacityLinked') {
       // Var för sig: fyllningen börjar med linjens värde, för varje form.
       const linked = (input as HTMLInputElement).checked;

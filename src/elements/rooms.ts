@@ -2,6 +2,7 @@ import type { Element, Id, ProjectDoc, RoomNumbering } from '../core/model';
 import { boxOf, union, type Box } from '../geometry/boolean';
 import { pointInRings } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
+import type { FillPattern } from './drawing2d';
 import type { PlanContext } from './registry';
 import { lastResults } from '../repr/reuse';
 import { bareWallShapes, wallFrame, type OpeningParams, type WallParams } from './wall';
@@ -77,6 +78,15 @@ export interface SpaceParams {
   labelAt?: [number, number];
   /** Takhöjd i mm, visas som TH i rumsetiketten. */
   ceilingHeight?: number;
+  /**
+   * Fyllningen (0.8.25), med samma inställningar som 2D-formernas: mönster,
+   * färg, vinkel, avstånd och opacitet (`opacity`). Bakom väggarna.
+   */
+  fill?: FillPattern;
+  fillColor?: string;
+  fillAngle?: number;
+  fillSpacing?: number;
+  opacity?: number;
 }
 
 /** Rummets kontur i vyn: ur väggarna om det har en punkt, annars den sparade. */

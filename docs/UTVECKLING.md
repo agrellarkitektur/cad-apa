@@ -1166,6 +1166,40 @@ projekt i 1 982 jämförelser.
   markerade är öppna och har linje. *Ritad som* är ersatt av *Form*
   (Linje eller Spline, och antalet bågar)
 
+## Ritordning och fyllningar (0.8.25, format 13)
+
+Inga nya format: fälten är frivilliga.
+
+- **Ritordning** (`src/core/drawOrder.ts`): `Element.order` (utelämnad =
+  0). `buildPlan` sorterar varje grupp (sort och åtgärd) med `sortByOrder`,
+  stabilt, så att lika värden ritas i listans ordning som förut. `arrange`
+  gäller sorterna i `ORDERABLE` och grupperar på sort och yta (`space`
+  eller våningen). Längst bak och Främst sätter bara de markerade (lägsta
+  − n, högsta + 1); Bak och Fram flyttar förbi närmaste omarkerade som
+  överlappar (`boxOf`, i appen rutorna från `selectionBounds`) och numrerar
+  om sorten på ytan 0, 1, 2 … men skriver bara de som ändras. Allt i en
+  transaktion. Gränssnittet i `src/ui/app/drawOrderUi.ts`: avsnittet i
+  egenskaperna (`orderSection`), raderna i objektmenyn och
+  `arrangeSelection`, som knapparna (`data-action="draw-order"`
+  `data-order`, i `actions.ts`) och kommandona `order-*` (i
+  `shellActions.ts`) går till
+- **Klick**: vid lika poäng vinner nu den senare i `pickables`, alltså det
+  som ritas överst (förut den första)
+- **Lager mot väggarna**: `Shape2DParams.fillFront` och `lineBehind`.
+  `shapePrims` sätter `under` på fyllningen utom med `fillFront`, och på
+  linjen och ändarna med `lineBehind`. En fyllning framför väggarna är inte
+  mjuk när man klickar (`pickSoft` kan nu vara en funktion per element).
+  Gäller planen; i fasader och sektioner ligger det ritade ovanpå som
+  förut, och på blad och arbetsblad finns inga väggar (valen visas inte för
+  former med `space`)
+- **Fyllningen** ritas av `fillPrims(rings, p, origin, under)` i
+  `drawing2d.ts`, för 2D-former och rum (`FillParams`). Rummet har `fill`,
+  `fillColor`, `fillAngle`, `fillSpacing` och `opacity`, ritas `under`
+  och med `noPick`, så att fyllningens kant inte går att klicka på och inte
+  markeras (`plan.ts` filtrerar bort `noPick` ur det som klickas).
+  Rummets fält är 2D-formens (`fillFields`, `opacityFields`, nycklarna
+  `d2:`), bara när ett rum är markerat
+
 ## Granskning (0.8.23, format 12)
 
 Utan nya funktioner. Kontrollerat med samma klick i 0.8.22 och 0.8.23

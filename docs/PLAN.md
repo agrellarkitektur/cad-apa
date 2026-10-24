@@ -989,6 +989,23 @@ kanske nytt format.
   nu är förvalt (fyllningen under, linjen över)
 - **Fyllning i rumszoner**, med samma inställningar som fyllningar i övrigt
 
+*Byggd (24 oktober), samma format (13), i en session. Claudes val, att
+stämma av: ritordningen gäller bland objekt av samma sort på samma yta
+(2D-former bland 2D-formerna, underlag bland underlagen); sorterna ritas i
+fasta lager som förut (underlag, rumsfyllningar, 2D-fyllningar, väggar,
+möbler, rum, 2D-linjer, text …), så en text går inte att lägga bakom en
+2D-form. Väggar, dörrar och fönster har ingen ritordning. Bak och Fram
+hoppar förbi det som inte överlappar, så att varje klick syns. Knapparna
+står i egenskaperna (och under Mer i smartmenyn), i högerklicksmenyn och
+som kommandon (`främst`, `fram`, `bak`, `längstbak`); inga kortkommandon.
+Fyllningen och linjen väljs var för sig: *Bakom väggarna* eller *Framför
+väggarna*, bara i planen (i fasader och sektioner ligger det ritade ovanpå
+som förut). En fyllning framför väggarna går före dem också när man
+klickar. Vid lika poäng vinner nu det som ritas överst när man klickar
+(förut det som ritades först). Rummets fyllning ligger alltid bakom
+väggarna och 2D-formerna, ställs in för ett rum i taget och går inte att
+klicka i (rummet markeras som förut).*
+
 ### 0.8.26 Pennor i stilmallen
 
 Carl Augusts synpunkt 24 oktober (förslag 24 oktober). Mellanstor. En del

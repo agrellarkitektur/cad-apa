@@ -1,10 +1,22 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.24.
+överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.25.
 
 ## Läget
 
+- **0.8.25 Ritordning och fyllningar är klar** på `main` (samma format,
+  13, i en session): Längst bak, Bak, Fram och Främst (`Element.order`,
+  `src/core/drawOrder.ts`, gränssnittet i `src/ui/app/drawOrderUi.ts`)
+  för 2D-former, rum, möbler, mått, texter och underlag, inom sorten på
+  samma yta; 2D-formens fyllning och linje framför eller bakom väggarna
+  (`fillFront`, `lineBehind`); fyllning i rum (`fillPrims`, samma fält som
+  2D-formen). Vid lika poäng vinner nu det som ritas överst när man
+  klickar. Provat i bygget med Playwright (knapparna, högerklicksmenyn,
+  `främst` i smartshell, fyllningen framför väggen, korsskraffering i ett
+  rum) och `tests/v0825.test.ts`; alla 354 tester gick igenom. Står i
+  README, PLAN.md och UTVECKLING.md under *Ritordning och fyllningar
+  (0.8.25)*.
 - **0.8.24 2D-form del 2 är klar** på `main` (**format 13**, i en session):
   2D-formen är en kedja av raka segment och bågar (`bulges`, pilhöjd per
   segment som väggarnas) eller en spline. Rektangel, båge och cirkel blir
@@ -41,7 +53,7 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 - **Inkorgen sorterades 24 oktober** (Claudes förslag, inte avstämt med
   Carl August; se *Att fråga*): 0.8.24 2D-form del 2, 0.8.25 Ritordning
   och fyllningar, 0.8.26 Pennor i stilmallen, alla före 0.9.
-- **0.8.12–0.8.24 är inte provade** av Carl August. Frågorna nedan gäller.
+- **0.8.12–0.8.25 är inte provade** av Carl August. Frågorna nedan gäller.
 - Tidigare versioner (0.8.15–0.8.21) står i PLAN.md med Claudes val.
 - **Publicering:** varje push till `main` laddas upp med
   `.github/workflows/publicera.yml` (FTPS; secrets `FTP_SERVER`,
@@ -79,10 +91,8 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.8.21 Kommandoraden del 2~~,
-  ~~0.8.22 Småsaker~~, ~~0.8.23 Granskning~~, ~~0.8.24 2D-form del 2~~
-  (klara)
-- **0.8.25 Ritordning och fyllningar**: Längst bak … Främst, 2D-formens
-  linje eller fyllning framför eller bakom väggarna, fyllning i rum
+  ~~0.8.22 Småsaker~~, ~~0.8.23 Granskning~~, ~~0.8.24 2D-form del 2~~,
+  ~~0.8.25 Ritordning och fyllningar~~ (klara)
 - **0.8.26 Pennor i stilmallen**: tjocklek och färg för pilar och markörer
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
@@ -102,17 +112,31 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.24 syns på webbhotellet (numret vid alfa-knappen) och
-hur 0.8.12–0.8.24 fungerar, särskilt bågarna och ändarna, och om
-sorteringen av Inkorgen (0.8.25–0.8.26 före 0.9) stämmer. Läs
-synpunktsfilen och sortera ny Inkorg. Nästa version är **0.8.25
-Ritordning och fyllningar**: Längst bak … Främst, 2D-formens linje eller
-fyllning framför eller bakom väggarna, och fyllning i rum. Säg hur stor
-den är (mellanstor; kanske nytt format) innan den byggs. En
-granskningssession bör föreslås igen efter 0.8.26 (ungefär var tredje
-version; senast 0.8.23).
+Fråga först om 0.8.25 syns på webbhotellet (numret vid alfa-knappen) och
+hur 0.8.12–0.8.25 fungerar, särskilt bågarna och ändarna (0.8.24) och
+ritordningen (0.8.25), och om sorteringen av Inkorgen (0.8.26 före 0.9)
+stämmer. Läs synpunktsfilen och sortera ny Inkorg. Nästa version är
+**0.8.26 Pennor i stilmallen**: tjocklek och färg för pilar och markörer,
+bara centralt i stilmallen. Säg hur stor den är (mellanstor) innan den
+byggs. Efter 0.8.26 bör en granskningssession föreslås (ungefär var
+tredje version; senast 0.8.23).
 
 ## Att fråga Carl August om
+
+- **0.8.25 efter provning** (Claudes val, se PLAN.md): att ritordningen
+  bara gäller inom en sort på samma yta (en text går inte att lägga bakom
+  en 2D-form; sorterna ligger i fasta lager), och att väggar, dörrar och
+  fönster inte har någon; att Bak och Fram hoppar förbi det som inte
+  överlappar; var knapparna finns (egenskaperna, Mer i smartmenyn,
+  högerklick, `främst`/`fram`/`bak`/`längstbak`) och att det inte finns
+  kortkommandon (Ctrl+] och Ctrl+[ som i Illustrator kräver AltGr på
+  svenskt tangentbord). Bakom eller framför väggarna gäller bara planen;
+  i fasader och sektioner ligger det ritade ovanpå som förut. Ska det
+  gälla där också? Rummets fyllning ligger alltid bakom väggarna och
+  2D-formerna, ställs in för ett rum i taget och går inte att klicka i;
+  ska flera rum kunna fyllas på en gång, och ska fyllningen kunna sättas
+  per rumstyp eller i stilmallen? Vid lika poäng vinner nu det som ritas
+  överst när man klickar; säg till om något annat markeras än förut.
 
 - **0.8.24 efter provning** (Claudes val, se PLAN.md): att en rektangel
   inte förblir rät när ett hörn dras (som en polylinje i AutoCAD), och att

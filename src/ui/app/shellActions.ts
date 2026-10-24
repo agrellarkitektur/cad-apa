@@ -1,5 +1,6 @@
 import type { CommandDef } from '../commandRegistry';
 import type { AppContext } from './context';
+import { arrangeSelection } from './drawOrderUi';
 
 /**
  * Kommandona som gör något direkt (`action` i registret): ångra, zooma,
@@ -56,6 +57,18 @@ export function runAction(app: AppContext, c: CommandDef, line: { waitForSelecti
       break;
     case 'help':
       line.openAll();
+      break;
+    case 'order-back':
+      arrangeSelection(app, 'back');
+      break;
+    case 'order-backward':
+      arrangeSelection(app, 'backward');
+      break;
+    case 'order-forward':
+      arrangeSelection(app, 'forward');
+      break;
+    case 'order-front':
+      arrangeSelection(app, 'front');
       break;
   }
 }

@@ -20,6 +20,8 @@ import { LINE_WEIGHT_LABEL, LINE_WEIGHT_STEPS, type ViewMode } from './shell';
 import type { installShowMenu } from './showMenu';
 import type { installViews } from './views';
 import { installTreeClicks } from './treeClicks';
+import { arrangeSelection } from './drawOrderUi';
+import type { OrderMove } from '../../core/drawOrder';
 
 /** De delar av appen som knapparna når utöver `app`. */
 export interface ActionParts {
@@ -312,6 +314,12 @@ export function installActions(app: AppContext, parts: ActionParts) {
       case 'zoom-selection':
         app.zoomToSelection();
         break;
+      case 'draw-order': {
+        // Ritordning (0.8.25), knapparna i egenskaperna och smartmenyn.
+        const move = target.closest<HTMLElement>('[data-action]')?.dataset.order as OrderMove | undefined;
+        if (move) arrangeSelection(app, move);
+        break;
+      }
       case 'new-project':
         closeMenu();
         files.newProjectDialog.open();

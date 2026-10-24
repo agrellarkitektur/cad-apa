@@ -44,6 +44,8 @@ interface Base {
    * Planen lägger de här primitiverna efter underlagen men före allt annat.
    */
   under?: boolean;
+  /** Ritas men räknas inte när man klickar eller markerar (0.8.25): rummets fyllning. */
+  noPick?: boolean;
 }
 
 export interface LinePrim extends Base {

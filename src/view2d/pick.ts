@@ -12,7 +12,7 @@ import { boundsOf, imageCorners } from '../repr/primitives';
  * 3. en mjuk yta som punkten ligger i (en 2D-form med fyllning; 0.8.11, 0.8.19),
  * 4. en annan sluten form som punkten ligger i (rum, underlag). En 2D-form
  *    utan fyllning går inte att klicka inuti, bara på linjen (0.8.19).
- * Inom varje nivå vinner det som ritas överst.
+ * Inom varje nivå vinner det som ritas överst, också inom en sort (0.8.25).
  */
 export function pickAt(pickables: readonly Pickable[], p: Vec2, tol: number, drawingScale = 100): string | null {
   return pickAllAt(pickables, p, tol, drawingScale)[0] ?? null;
@@ -47,8 +47,9 @@ export function pickAllAt(pickables: readonly Pickable[], p: Vec2, tol: number, 
     const was = best.get(item.id);
     if (score > -Infinity && (!was || score > was.score)) best.set(item.id, { score, i });
   }
-  // Vid lika poäng vinner det som kom först, som förut.
-  return [...best.entries()].sort((a, b) => b[1].score - a[1].score || a[1].i - b[1].i).map(([id]) => id);
+  // Vid lika poäng vinner det som ritas överst, alltså senare i listan (0.8.25,
+  // så att ritordningen gäller också när man klickar; förut det första).
+  return [...best.entries()].sort((a, b) => b[1].score - a[1].score || b[1].i - a[1].i).map(([id]) => id);
 }
 
 /** Från så här många delar får ett objekt ett eget rutnät över delarna. */
