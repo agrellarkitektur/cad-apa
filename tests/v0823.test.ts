@@ -76,7 +76,8 @@ describe('klick i planen (0.8.23)', () => {
         expect(pickAllAt(items, p, tol, scale), `${p} ${tol} 1:${scale}`).toEqual(pickAllAtBefore(items, p, tol, scale));
       }
     }
-  });
+    // Jämförelsen med den gamla, långsamma koden tar nära 5 s på en långsam maskin (0.8.26).
+  }, 30000);
 
   it('prövar bara delarna nära punkten i ett stort underlag', () => {
     const items = scene();
