@@ -292,6 +292,15 @@ export function isOpenLine(el: Element | undefined): boolean {
 export const linePoints = (el: Element): P[] =>
   ((el.params.points as P[]) ?? []).map((q) => [q[0], q[1]]);
 
+/** Väggens referenslinje eller 2D-linjens punkter. */
+export function pathOf(el: Element): P[] {
+  if (el.type === "Wall") {
+    const q = el.params as { start: P; end: P };
+    return [q.start, q.end];
+  }
+  return linePoints(el);
+}
+
 /** Ny 2D-linje med samma utseende och andra punkter. */
 function lineCopy(el: Element, pts: P[]): Element {
   return {

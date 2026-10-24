@@ -5,7 +5,7 @@ import { add, angleDeg, dist, dot, norm, scale, sub } from '../../geometry/vec';
 import type { WallParams } from '../../elements/wall';
 import { isShape, moveShapeNode, previewShape, shapeNodes } from '../../elements/shapeEdit';
 import { dragRoofGrip, roofGripsInView, type RoofDrag, type RoofGrip } from '../../elements/roofGrips';
-import type { Pickable } from '../../repr/plan';
+import { pickableById, type Pickable } from '../../repr/plan';
 import type { Primitive, Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import { pickAllAt, pickAt, pickInRect } from '../../view2d/pick';
@@ -405,7 +405,7 @@ export class SelectTool implements ViewTool {
     if (this.move?.target) {
       const d = sub(this.move.target.point, this.move.base);
       // Spöke av det som flyttas.
-      const byId = new Map(this.host.plan().pickables.map((p) => [p.id, p]));
+      const byId = pickableById(this.host.plan().pickables);
       for (const id of this.move.ids) {
         const item = byId.get(id);
         if (item) out.push(ghost(cam, item, d));

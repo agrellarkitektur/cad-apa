@@ -4,8 +4,8 @@ import type { Element, Id } from '../../core/model';
 import { canTrim } from '../../core/trimEdit';
 import { refFrame } from '../../core/wallEdit';
 import { shapePoints, type Line2DParams } from '../../elements/drawing2d';
-import { dist, sub } from '../../geometry/vec';
-import type { Pickable } from '../../repr/plan';
+import { dist, distToSegment, sub } from '../../geometry/vec';
+import { pickableById, type Pickable } from '../../repr/plan';
 import { imageCorners, type Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import { pickAt } from '../../view2d/pick';
@@ -13,9 +13,9 @@ import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { labelOf } from '../labels';
 import { pxToMm, type ToolHost } from '../tools/host';
 import { lengthLabel, snapMarker } from '../tools/overlay';
-import { roundMm, snap, type SnapResult, type SnapSegment } from '../tools/snap';
+import { nearSegments, roundMm, snap, type SnapResult, type SnapSegment } from '../tools/snap';
 import type { ModifyContext, OpId } from './ops';
-import { ghostPath } from './tool';
+import { ghostPath, svgLine } from './draw';
 
 /**
  * Modifiera-verktyg del 2 (0.8.14): Justera och Fördela, Hämta och överför
@@ -41,11 +41,16 @@ type Seg = { a: Vec2; b: Vec2 };
 /** Alla punkter i ett elements ritade form, för att räkna dess yttre kanter. */
 export function outlinePoints(item: Pickable): Vec2[] {
   const out: Vec2[] = [];
-  for (const rings of item.regions) for (const r of rings) out.push(...r);
+  // Punkterna läggs till en och en: ett stort DXF-underlag kan ha fler än
+  // en spridning (`push(...)`) tål (0.8.15).
+  const all = (pts: readonly Vec2[]) => {
+    for (const q of pts) out.push(q);
+  };
+  for (const rings of item.regions) for (const r of rings) all(r);
   for (const q of item.prims) {
     if (q.kind === 'line') out.push(q.a, q.b);
-    else if (q.kind === 'polyline') out.push(...q.points);
-    else if (q.kind === 'region') for (const r of q.rings) out.push(...r);
+    else if (q.kind === 'polyline') all(q.points);
+    else if (q.kind === 'region') for (const r of q.rings) all(r);
     else if (q.kind === 'text') out.push(q.at);
     else if (q.kind === 'image') out.push(...imageCorners(q));
     else if (q.kind === 'arc') {
@@ -57,6 +62,17 @@ export function outlinePoints(item: Pickable): Vec2[] {
     }
   }
   return out;
+}
+
+/** Minsta och största värdet, utan spridning i Math.min (som har ett tak för antalet). */
+function range(values: Iterable<number>): [number, number] {
+  let lo = Infinity;
+  let hi = -Infinity;
+  for (const v of values) {
+    if (v < lo) lo = v;
+    if (v > hi) hi = v;
+  }
+  return [lo, hi];
 }
 
 interface Box {
@@ -122,9 +138,7 @@ export function alignToLineMoves(items: readonly { id: Id; pts: readonly Vec2[] 
   const n: Vec2 = [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
   for (const it of items) {
     if (!it.pts.length) continue;
-    const ds = it.pts.map((q) => (q[0] - a[0]) * n[0] + (q[1] - a[1]) * n[1]);
-    const lo = Math.min(...ds);
-    const hi = Math.max(...ds);
+    const [lo, hi] = range(it.pts.map((q) => (q[0] - a[0]) * n[0] + (q[1] - a[1]) * n[1]));
     const d = lo >= 0 ? -lo : hi <= 0 ? -hi : lo + hi >= 0 ? -lo : -hi;
     out.set(it.id, [Math.round(n[0] * d) || 0, Math.round(n[1] * d) || 0]);
   }
@@ -221,7 +235,7 @@ export class ArrangeTool implements ViewTool {
   private movable(): { id: Id; pts: Vec2[] }[] {
     const doc = this.host.store.doc;
     const ids = new Set(this.ctx.ids);
-    const byId = new Map(this.host.plan().pickables.map((pk) => [pk.id, pk]));
+    const byId = pickableById(this.host.plan().pickables);
     const out: { id: Id; pts: Vec2[] }[] = [];
     for (const id of this.ctx.ids) {
       const el = doc.elements[id];
@@ -236,13 +250,11 @@ export class ArrangeTool implements ViewTool {
   /** Justera eller fördela med en knapp i smartmenyn. */
   alignBy(kind: AlignKind): void {
     const items = this.movable();
-    const boxes = items.map((it) => ({
-      id: it.id,
-      x0: Math.min(...it.pts.map((q) => q[0])),
-      x1: Math.max(...it.pts.map((q) => q[0])),
-      y0: Math.min(...it.pts.map((q) => q[1])),
-      y1: Math.max(...it.pts.map((q) => q[1])),
-    }));
+    const boxes = items.map((it) => {
+      const [x0, x1] = range(it.pts.map((q) => q[0]));
+      const [y0, y1] = range(it.pts.map((q) => q[1]));
+      return { id: it.id, x0, x1, y0, y1 };
+    });
     const need = kind === 'distH' || kind === 'distV' ? 3 : 2;
     if (boxes.length < need) {
       this.host.hint(need === 3 ? 'Fördela behöver minst tre objekt som kan flyttas.' : 'Justera behöver minst två objekt som kan flyttas; annars klicka en linje.', 3500);
@@ -260,16 +272,16 @@ export class ArrangeTool implements ViewTool {
   private boundaryAt(at: Vec2, own = false): { id: Id; segs: Seg[] } | null {
     const doc = this.host.store.doc;
     const tol = pxToMm(this.host, 9);
-    const pickables = this.host.plan().pickables.filter((pk) => own || !this.ctx.ids.includes(pk.id));
-    const hit = pickAt(pickables, at, tol, this.host.view.drawingScale);
+    const skip = own ? new Set<Id>() : new Set(this.ctx.ids);
+    const all = this.host.plan().pickables;
+    const hit = pickAt(own ? all : all.filter((pk) => !skip.has(pk.id)), at, tol, this.host.view.drawingScale);
     const el = hit ? doc.elements[hit] : undefined;
     const segs = el ? segmentsOf(this.host, el) : null;
     if (el && segs?.length) return { id: el.id, segs };
-    const skip = own ? new Set<Id>() : new Set(this.ctx.ids);
     let best: { d: number; s: SnapSegment } | null = null;
-    for (const s of this.host.snapSegments()) {
+    for (const s of nearSegments(this.host.snapSegments(), at, tol)) {
       if (skip.has(s.id)) continue;
-      const d = distToSeg(at, s.a, s.b);
+      const d = distToSegment(at, s.a, s.b);
       if (d <= tol && (!best || d < best.d)) best = { d, s };
     }
     return best ? { id: best.s.id, segs: [{ a: best.s.a, b: best.s.b }] } : null;
@@ -284,9 +296,9 @@ export class ArrangeTool implements ViewTool {
     const tol = pxToMm(this.host, 9);
     const skip = new Set(this.ctx.ids);
     let best: { d: number; s: SnapSegment } | null = null;
-    for (const s of this.host.snapSegments()) {
+    for (const s of nearSegments(this.host.snapSegments(), at, tol)) {
       if (skip.has(s.id) || dist(s.a, s.b) < 1) continue;
-      const d = distToSeg(at, s.a, s.b);
+      const d = distToSegment(at, s.a, s.b);
       if (d <= tol && (!best || d < best.d)) best = { d, s };
     }
     if (best && this.host.store.doc.elements[best.s.id]?.type === 'Wall') return this.wallFaceToward(best.s);
@@ -432,7 +444,7 @@ export class ArrangeTool implements ViewTool {
   overlay(cam: Camera): string {
     const out: string[] = [];
     const doc = this.host.store.doc;
-    const line = (pts: readonly Vec2[], cls = 'rubber') => `<path d="${pts.map((q, i) => `${i ? 'L' : 'M'}${cam.toScreen(q).join(' ')}`).join('')}" class="${cls}"/>`;
+    const line = (pts: readonly Vec2[], cls?: string) => svgLine(cam, pts, cls);
     const at = this.cursorAt?.point ?? null;
     switch (this.op) {
       case 'align':
@@ -448,7 +460,7 @@ export class ArrangeTool implements ViewTool {
             const l = dist(s.a, s.b) || 1;
             const u: Vec2 = [(s.b[0] - s.a[0]) / l, (s.b[1] - s.a[1]) / l];
             out.push(line([[s.a[0] - u[0] * 20000, s.a[1] - u[1] * 20000], [s.b[0] + u[0] * 20000, s.b[1] + u[1] * 20000]], 'snap-guide'));
-            const byId = new Map(this.host.plan().pickables.map((pk) => [pk.id, pk]));
+            const byId = pickableById(this.host.plan().pickables);
             for (const [id, d] of alignToLineMoves(this.movable(), s.a, s.b)) {
               const pk = byId.get(id);
               if (pk) out.push(ghostPath(cam, pk, (q) => [q[0] + d[0], q[1] + d[1]]));
@@ -467,7 +479,7 @@ export class ArrangeTool implements ViewTool {
         if (this.ref) out.push(line([this.base, this.ref], 'snap-guide'));
         if (f && f > 0) {
           const base = this.base;
-          const byId = new Map(this.host.plan().pickables.map((pk) => [pk.id, pk]));
+          const byId = pickableById(this.host.plan().pickables);
           for (const id of this.ctx.ids) {
             const pk = byId.get(id);
             if (pk && canScale(doc.elements[id]) && scaledParams(doc.elements[id], base, f)) out.push(ghostPath(cam, pk, (q) => [base[0] + (q[0] - base[0]) * f, base[1] + (q[1] - base[1]) * f]));
@@ -506,20 +518,13 @@ function nearestSeg(segs: readonly Seg[], q: Vec2): Seg {
   let best = segs[0];
   let bd = Infinity;
   for (const s of segs) {
-    const d = distToSeg(q, s.a, s.b);
+    const d = distToSegment(q, s.a, s.b);
     if (d < bd) {
       bd = d;
       best = s;
     }
   }
   return best;
-}
-
-function distToSeg(q: Vec2, a: Vec2, b: Vec2): number {
-  const u = sub(b, a);
-  const l2 = u[0] * u[0] + u[1] * u[1];
-  const t = l2 ? Math.max(0, Math.min(1, ((q[0] - a[0]) * u[0] + (q[1] - a[1]) * u[1]) / l2)) : 0;
-  return dist(q, [a[0] + u[0] * t, a[1] + u[1] * t]);
 }
 
 /** Om något av det markerade går att förlänga eller trimma mot en gräns. */

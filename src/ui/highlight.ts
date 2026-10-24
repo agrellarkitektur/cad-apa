@@ -1,7 +1,7 @@
 import type { ProjectDoc } from '../core/model';
 import type { WallParams } from '../elements/wall';
 import { refFrame } from '../core/wallEdit';
-import type { Pickable } from '../repr/plan';
+import { pickableById, type Pickable } from '../repr/plan';
 import { boundsOf, imageCorners, type Primitive, type Vec2 } from '../repr/primitives';
 import type { Camera } from '../view2d/camera';
 
@@ -23,7 +23,7 @@ export function renderHighlight(
   planGrips = true,
 ): string {
   const out: string[] = [];
-  const byId = new Map(pickables.map((p) => [p.id, p]));
+  const byId = pickableById(pickables);
 
   const draw = (item: Pickable, cls: string) => {
     // Ett element med mycket grafik, t.ex. ett stort DXF-underlag, markeras

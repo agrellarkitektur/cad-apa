@@ -1,6 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
-import { copyElements, deleteElements, moveElements } from '../src/core/commands';
+import { moveEach, extendAllTo } from '../src/core/arrange';
+import { copyElements, deleteElements, flipWalls, moveElements } from '../src/core/commands';
+import { cornersAmong, mirrorAbout, offsetWalls, roundCorners } from '../src/core/wallEdit';
 import { DocStore } from '../src/core/store';
 import { doorNumbersFor, roomNumbersFor } from '../src/elements/rooms';
 import { createContext } from '../src/repr/context';
@@ -86,6 +88,36 @@ describe('prestanda', () => {
     expect(fasad?.prims.length ?? 0).toBeGreaterThan(0);
     expect(planMs).toBeLessThan(2000);
     expect(fasadMs).toBeLessThan(3000);
+  }, 60000);
+
+  it('1 200 väggar: Modifiera på alla markerade (0.8.15)', () => {
+    // Före 0.8.15 gick hörn, dörrar och anslutna väggar igenom hela projektet
+    // för varje vägg: med 840 väggar tog hörnen i smartmenyn 0,6 s och
+    // Förskjut alla, Spegla, Vänd, Justera och Förläng 0,13–0,34 s var. Nu
+    // använder de registren i elementIndex.ts, och varje steg nedan tar några
+    // hundradels sekunder.
+    const doc = roomGrid(24);
+    const walls = Object.values(doc.elements)
+      .filter((e) => e.type === 'Wall')
+      .map((e) => e.id);
+    expect(walls.length).toBe(1200);
+    const all = Object.values(doc.elements)
+      .filter((e) => !['North', 'Elevation', 'Section'].includes(e.type))
+      .map((e) => e.id);
+    const time = (f: (store: DocStore) => unknown) => {
+      const store = new DocStore(structuredClone(doc));
+      return ms(() => f(store));
+    };
+    const times = {
+      hörn: ms(() => cornersAmong(doc, walls)),
+      avrunda: time((s) => roundCorners(s, walls, 300, 'fillet')),
+      förskjut: time((s) => offsetWalls(s, walls, 100)),
+      spegla: time((s) => mirrorAbout(s, all, [0, 0], [0, 1000])),
+      vänd: time((s) => flipWalls(s, walls)),
+      justera: time((s) => moveEach(s, new Map(walls.map((id) => [id, [100, 0] as [number, number]])), 'Justera')),
+      förläng: time((s) => extendAllTo(s, walls, 'gräns', [{ a: [2000, -100000], b: [2000, 100000] }])),
+    };
+    for (const t of Object.values(times)) expect(t).toBeLessThan(400);
   }, 60000);
 
   it('exemplets fasader och sektion på under en tiondels sekund var (0.7)', () => {

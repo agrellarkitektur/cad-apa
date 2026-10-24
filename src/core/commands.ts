@@ -1,5 +1,7 @@
 import type { StyleSheet } from './graphics';
+import { BoxIndex } from '../geometry/boxIndex';
 import { wallFrame, type WallGeometry } from '../geometry/wallFrame';
+import { hostedIn, wallEndsIn } from './elementIndex';
 import { newId } from './ids';
 import type { Asset, Definition, Element, Id, ProjectDoc, ShowIn, State, Value } from './model';
 import { isViewportId, moveViewportsTx, removeViewportsTx } from './sheets';
@@ -297,9 +299,31 @@ export function followJoins(tx: TxBuilder, before: ProjectDoc, moved: Set<Id>, d
     .map((id) => before.elements[id])
     .filter((el): el is Element => !!el && el.type === 'Wall');
   if (!movedWalls.length) return 0;
+  // Bara väggar med en ände nära en flyttad vägg kan följa med (0.8.15): de
+  // flyttade väggarnas rektanglar, utökade med tjockleken, läggs i ett
+  // rutnät, och väggändarna inom dem hämtas ur registret. Rutnätet ger de
+  // flyttade väggarna i samma ordning som förut, så att den första som
+  // passar fortfarande gäller.
+  const near = new BoxIndex(2000);
+  const candidates = new Set<Id>();
+  movedWalls.forEach((mw, i) => {
+    if (isArc(mw)) return;
+    const mp = mw.params as unknown as WallEnds;
+    if (Math.hypot(mp.end[0] - mp.start[0], mp.end[1] - mp.start[1]) < 1) return;
+    const r = wallThickness(before, mw) + 1;
+    const box: [number, number, number, number] = [
+      Math.min(mp.start[0], mp.end[0]) - r,
+      Math.min(mp.start[1], mp.end[1]) - r,
+      Math.max(mp.start[0], mp.end[0]) + r,
+      Math.max(mp.start[1], mp.end[1]) + r,
+    ];
+    near.add(i, box);
+    for (const c of wallEndsIn(before, mw.storey, box)) candidates.add(c.id);
+  });
   let released = 0;
-  for (const w of Object.values(before.elements)) {
-    if (w.type !== 'Wall' || moved.has(w.id) || skip.has(w.id)) continue;
+  for (const id of candidates) {
+    const w = before.elements[id];
+    if (!w || w.type !== 'Wall' || moved.has(w.id) || skip.has(w.id)) continue;
     // Bågväggar följer inte med: deras ände kan inte glida längs en rak linje.
     if (isArc(w)) continue;
     const p = w.params as unknown as WallEnds;
@@ -310,11 +334,11 @@ export function followJoins(tx: TxBuilder, before: ProjectDoc, moved: Set<Id>, d
     for (const end of ['start', 'end'] as const) {
       const e = p[end];
       const other = end === 'start' ? p.end : p.start;
-      for (const mw of movedWalls) {
-        if (mw.storey !== w.storey || isArc(mw)) continue;
+      for (const i of near.at(e)) {
+        const mw = movedWalls[i];
+        if (mw.storey !== w.storey) continue;
         const mp = mw.params as unknown as WallEnds;
         const ml = Math.hypot(mp.end[0] - mp.start[0], mp.end[1] - mp.start[1]);
-        if (ml < 1) continue;
         const corner = Math.hypot(e[0] - mp.start[0], e[1] - mp.start[1]) <= 1 || Math.hypot(e[0] - mp.end[0], e[1] - mp.end[1]) <= 1;
         const t = ((e[0] - mp.start[0]) * (mp.end[0] - mp.start[0]) + (e[1] - mp.start[1]) * (mp.end[1] - mp.start[1])) / ml;
         const off = Math.abs(((e[0] - mp.start[0]) * (mp.end[1] - mp.start[1]) - (e[1] - mp.start[1]) * (mp.end[0] - mp.start[0])) / ml);
@@ -350,8 +374,8 @@ export function putWallEnds(tx: TxBuilder, el: Element, ns: P2, ne: P2, patch: R
   const f0 = wallFrame(before);
   const f1 = wallFrame(geometryOf(tx.doc, next));
   if (f0.length < 1 || f1.length < 1) return;
-  for (const h of Object.values(tx.doc.elements)) {
-    if (h.host !== el.id || typeof h.params.at !== 'number') continue;
+  for (const h of hostedIn(tx.doc, el.id)) {
+    if (typeof h.params.at !== 'number') continue;
     const at = h.params.at as number;
     const nat = Math.round(f1.project(f0.at(at, 0))[0]);
     if (nat !== at) tx.putElement({ ...h, params: { ...h.params, at: nat } });
@@ -540,8 +564,7 @@ export function reversedWall(doc: ProjectDoc, wall: Element, keepBody: boolean):
   const out: Element[] = [reversed];
   const f0 = wallFrame(geometryOf(doc, wall));
   const f1 = wallFrame(geometryOf(doc, reversed));
-  for (const h of Object.values(doc.elements)) {
-    if (h.host !== wall.id) continue;
+  for (const h of hostedIn(doc, wall.id)) {
     const hp = h.params as { at?: number; hinge?: string; swing?: number };
     const patch: Record<string, unknown> = {};
     if (typeof hp.at === 'number') patch.at = Math.round(f1.project(f0.at(hp.at, 0))[0]);
@@ -606,8 +629,8 @@ export function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, movi
       // Pilhöjden behåller sitt tecken: speglingen och bytet tar ut varandra.
       [start, end] = [end, start];
       const len = wallFrame(geometryOf(doc, el)).length;
-      for (const h of Object.values(doc.elements)) {
-        if (h.host !== el.id || moving.has(h.id) === false) continue;
+      for (const h of hostedIn(doc, el.id)) {
+        if (!moving.has(h.id)) continue;
         const hp = h.params as Record<string, any>;
         const patch: Record<string, unknown> = {};
         if (typeof hp.at === 'number') patch.at = Math.round(len - hp.at);

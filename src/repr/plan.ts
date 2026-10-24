@@ -199,3 +199,16 @@ export function applyStyle(p: Primitive, s: ActionStyle, action: Action, sheet: 
   if (action === 'demolished' && pen.color === 'muted') pen.color = s.lines.color;
   return { ...p, pen } as Primitive;
 }
+
+const pickableMaps = new WeakMap<readonly Pickable[], ReadonlyMap<Id, Pickable>>();
+
+/**
+ * Det ritade objektet för ett id (0.8.15). Listan ändras inte när planen väl
+ * är byggd, så uppslaget görs en gång per plan i stället för vid varje
+ * musrörelse. Finns samma id två gånger gäller det sista, som förut.
+ */
+export function pickableById(pickables: readonly Pickable[]): ReadonlyMap<Id, Pickable> {
+  let map = pickableMaps.get(pickables);
+  if (!map) pickableMaps.set(pickables, (map = new Map(pickables.map((p) => [p.id, p]))));
+  return map;
+}

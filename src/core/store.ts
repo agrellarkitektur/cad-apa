@@ -1,3 +1,4 @@
+import { noteElementChange } from './elementIndex';
 import type { Asset, Definition, Element, Id, ProjectDoc, State, Storey, ViewDef } from './model';
 
 /**
@@ -227,6 +228,8 @@ export class TxBuilder {
       this.owned.add(key);
     }
     const records = this.working[key] as Record<Id, unknown>;
+    // Registren över väggändar och dörrar (0.8.15) följer med när samlingen ändras på plats.
+    if (key === 'elements') noteElementChange(records as Record<Id, Element>, change.before as Element | undefined, change.after as Element | undefined);
     if (change.after) records[change.id] = change.after;
     else delete records[change.id];
   }

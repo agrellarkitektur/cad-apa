@@ -607,7 +607,8 @@ på bladet sina egna.
 - **`src/ui/modify/`** är Modifiera, uppdelat: `ops.ts` har valen (`OPS`,
   `opsFor`), vad ett klick träffade (`modifyContextAt`), `ModifyHost` och
   Modifiera-radens knappar (`RAIL`, `railFor`); `tool.ts` har `ModifyTool`
-  (förhandsvisning och utförande) och `runInstant`; `controller.ts` har
+  (förhandsvisning och utförande, sedan 0.8.15 med valen i grupper, se
+  *Granskning (0.8.15)*) och `runInstant`; `controller.ts` har
   `Modifier`, läget som smartmenyn, raden och verktygsraden delar.
 - **`Modifier`**: `ctx` är vad valen gäller. `setSelection` sätts vid varje
   ny markering med det markerade som helhet (`bodyContext` i
@@ -980,3 +981,52 @@ mallblad) gav samma projekt, markering, ritning, panel och smartmeny.
   radioknappar i en `<details>`, så valet går genom samma change-händelse
   som listan förut (`data-key="d2:weight"` i panelen, `name="d2-weight"`
   i verktygsraden). Färgerna står i `PEN_COLORS` i `drawing2d.ts`
+
+## Granskning (0.8.15, format 11)
+
+Inga nya filformat. Kontrollerat som i 0.8.11: 45 förlopp med 250 steg
+genom alla val i Modifiera (med Playwright mot det gamla och
+det nya bygget och fasta id) gav samma projekt, markering, ritning,
+förhandsvisning, panel och smartmeny, och kärnans funktioner gav samma
+projekt i 1 982 jämförelser.
+
+- **Registren** (`src/core/elementIndex.ts`): `hostedIn(doc, väggId)` ger
+  dörrarna och fönstren i en vägg, `wallEndsIn(doc, våning, rektangel)`
+  väggändarna i ett rutnät (rutor på 1 m) och `wallsAt(doc, våning, punkt)`
+  väggarna med en ände inom 1 mm. Ett register byggs första gången det
+  behövs för en samling (`doc.elements`) och sparas med den som nyckel i en
+  `WeakMap`. Ett sparat dokument ändras aldrig, men `TxBuilder` ändrar sin
+  egen kopia på plats och säger därför till om varje ändring
+  (`noteElementChange` i `record`), så att registret stämmer mitt i en
+  transaktion. **Regel:** den som ändrar en samling på plats utanför
+  `TxBuilder` får inte ha frågat registren om den förut
+  (`orientExteriorWalls` räknar därför alla vändningar mot det gamla
+  projektet och fyller samlingen sist)
+- Registren används av `cornerPartner` (och därmed `cornersAmong`,
+  smartmenyn och Modifiera-raden), `openingSpans`, `rehost`,
+  `putWallEnds`, `reversedWall`, `transformed` (Spegla), `offsetGeometry`
+  och `offsetWalls`. `followJoins` lägger de flyttade väggarna i ett
+  `BoxIndex` (utökade med tjockleken) och hämtar bara väggändarna inom dem;
+  rutnätet ger de flyttade väggarna i samma ordning som förut, så den
+  första som passar gäller fortfarande. `offsetWalls` flyttar bara ändar på
+  väggar på samma våning (förut alla väggar med en ände i hörnet)
+- **Modifiera uppdelat** (`src/ui/modify/`): `state.ts` har `ModifyState`
+  (det valen läser av verktyget), `wallOf`, `nearestOf` och `reportEdit`;
+  `wallOps.ts` väggarnas form, `outlineOps.ts` punkter och kanter på 2D och
+  tak, `cutOps.ts` Trimma, Dela, Hörnskarv och Förläng, `transformOps.ts`
+  Flytta, Vrid, Spegla och I rad (`BASE_OPS`), och `draw.ts`
+  förhandsvisningens `svgLine`, `arcPoints`, `ghostPath` och `ghostOf`.
+  Varje grupp har en mängd med sina val, en funktion som utför (svarar true
+  när verktyget är klart) och en som ritar förhandsvisningen.
+  `ModifyTool` håller läget, baspunkten och den första väggen i Hörnskarv
+- `pickableById(pickables)` i `src/repr/plan.ts` ger det ritade objektet för
+  ett id, sparat per plan (förut byggdes uppslaget vid varje musrörelse på
+  sex ställen). `pathOf` ligger i `trimEdit.ts`, och avståndet till en
+  sträcka är `distToSegment` i `geometry/vec.ts` överallt
+- `outlinePoints` och Justera räknar största och minsta utan spridning
+  (`Math.min(...)` och `push(...)` har ett tak på ungefär 120 000 värden,
+  som ett stort DXF-underlag kan nå); gränsen och linjen under markören
+  söks med `nearSegments`
+- **Prestandatestet** har Modifiera med 1 200 väggar (`roomGrid(24)`): före
+  registren tog hörnen ensamma 1,4 s, nu tar varje steg några hundradels sekunder
+

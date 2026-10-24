@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.14** (alfa, Modifiera-verktyg del 2); nästa är **0.8.15, Underlag**.
+**0.8.15** (alfa, granskning); nästa är **0.8.16, Underlag**.
 
 ## Vad som fungerar
 
@@ -732,6 +732,17 @@ Version 0.8.14, Modifiera-verktyg del 2 (samma filformat, 11):
   egenskaperna. 1,0 och 1,4 är nya
 - Versionsnumret står vid alfa-knappen uppe till höger, så att det syns
   vilken version webbhotellet har
+
+Version 0.8.15, granskning (samma filformat, 11):
+- Inga nya funktioner. Modifiera-verktygen är snabba också i stora
+  projekt; resultatet blir exakt detsamma som förut
+- Med 840 väggar markerade: att röra musen i **Avrunda alla** tar 0,05 s i
+  stället för 0,5 s, och smartmenyn räknar hörnen på 5 ms i stället för
+  0,6 s. **Förskjut alla kanter**, **Spegla**, **Vänd**, **Justera** och
+  **Förläng alla** tar 0,01–0,03 s i stället för 0,13–0,34 s
+- **Förskjut alla kanter** flyttar bara ändar på väggar på samma våning
+- **Justera mot linje** fungerar också med mycket stora DXF-underlag
+  markerade
 
 ## Versioner och gamla projekt
 

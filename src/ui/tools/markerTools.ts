@@ -1,7 +1,7 @@
 import { addElement, updateParams } from '../../core/commands';
 import type { MarkerParams } from '../../elements/markers';
 import type { RoofParams } from '../../elements/roof';
-import { dist, left, norm, sub } from '../../geometry/vec';
+import { dist, distToSegment, left, norm, sub } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
@@ -294,7 +294,7 @@ export class AlignTool implements ViewTool {
     let best: { s: SnapSegment; d: number } | null = null;
     for (const s of this.host.snapSegments()) {
       if (s.id === this.target) continue;
-      const d = distToSeg(p.model, s.a, s.b);
+      const d = distToSegment(p.model, s.a, s.b);
       if (d <= tol && (!best || d < best.d)) best = { s, d };
     }
     return best?.s ?? null;
@@ -308,9 +308,3 @@ export class AlignTool implements ViewTool {
   }
 }
 
-function distToSeg(p: Vec2, a: Vec2, b: Vec2): number {
-  const d = sub(b, a);
-  const l2 = d[0] * d[0] + d[1] * d[1];
-  const t = l2 ? Math.max(0, Math.min(1, ((p[0] - a[0]) * d[0] + (p[1] - a[1]) * d[1]) / l2)) : 0;
-  return dist(p, [a[0] + d[0] * t, a[1] + d[1] * t]);
-}

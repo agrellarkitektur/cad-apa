@@ -1,35 +1,38 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.14.
+överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.15.
 
 ## Läget
 
-- **0.8.14 är klar** på `main` (samma format, 11): Justera och fördela,
-  Hämta och överför (pipetten), Skala, Förläng alla till, Trimma mot gräns
-  och tjocklekstabellen med "gammel-cad"-färger. Står i PLAN.md (med
-  Claudes val), README och UTVECKLING.md under *Modifiera-verktyg del 2*.
-  Kontrollerat i Chrome med Playwright mot `dist/`.
+- **0.8.15 är klar** på `main` (samma format, 11): en granskning utan nya
+  funktioner. Register för väggändar och dörrar/fönster per vägg
+  (`src/core/elementIndex.ts`), så att Modifiera inte längre växer med
+  kvadraten på antalet väggar, `src/ui/modify/tool.ts` uppdelad per grupp
+  av val, samlad småkod och ett utökat prestandatest. Står i PLAN.md,
+  README och UTVECKLING.md under *Granskning (0.8.15)*. Kontrollerat med
+  samma klick i det gamla och det nya bygget (Playwright, 45 förlopp) och
+  1 982 jämförelser av kärnans funktioner: samma resultat.
+- **Versionerna flyttades ett steg** (Carl Augusts beslut 24 oktober):
+  Underlag är **0.8.16**, Rumsstämpeln 0.8.17, Småsaker 0.8.18, 2D-form
+  0.8.19 och Kommandoraden 0.8.20–0.8.21.
 - **Publicering:** varje push till `main` laddas upp med
   `.github/workflows/publicera.yml` (FTPS; secrets `FTP_SERVER`,
-  `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR`). Carl August såg 24 oktober att
-  webbhotellet fortfarande visade 0.8.11: `FTP_DIR` var fel och är nu
-  `/agrellarkitektur.se/public_html/cad-apa/`. Se efter med `gh run list`
-  att körningen går igenom, och fråga om 0.8.14 syns.
-- **0.8.12, 0.8.13 och 0.8.14 är inte provade** av Carl August (han har bara
-  haft 0.8.11 på webbhotellet). Frågorna nedan gäller.
-- **Versionsnumret står vid alfa-knappen** sedan 24 oktober (fortfarande
-  0.8.14, ingen ny version), så att det syns vad webbhotellet har.
+  `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR`). `FTP_DIR` är
+  `/agrellarkitektur.se/public_html/cad-apa/` och fungerar (Carl August såg
+  0.8.14 vid alfa-knappen 24 oktober). Se efter med `gh run list` att
+  körningen går igenom.
+- **0.8.12–0.8.15 är inte provade** av Carl August. Frågorna nedan gäller.
 - **Inkorgen är tom** (sorterad 24 oktober). Kommandoraden blev
-  **0.8.19 och 0.8.20** (Carl Augusts svar: både engelska och svenska
+  **0.8.20 och 0.8.21** (Carl Augusts svar: både engelska och svenska
   förkortningar; nere som i AutoCAD, flyttbar och dockningsbar i del 2;
   Enter utan aktivt kommando öppnar raden, mellanslag kör senaste
-  kommandot igen). Högerklickshistoriken flyttades dit från 0.8.17. Övriga
-  punkter står i synpunktsfilen och PLAN.md: 0.8.15 fick parallellt/vinkelrätt som i
-  SketchUp, nya **0.8.17 Småsaker** och **0.8.18 2D-form** (nytt format),
-  **0.11.1 Profilverktyget** (före piloten, Carl Augusts beslut) och
-  **0.11.2 Dörrar och fönster**; kulör och material efter piloten.
-  Polylinjen som inte ska markeras inuti löses i 0.8.18.
+  kommandot igen). Högerklickshistoriken flyttades dit från Småsaker.
+  Övriga punkter står i synpunktsfilen och PLAN.md: 0.8.16 fick
+  parallellt/vinkelrätt som i SketchUp, **0.8.18 Småsaker** och **0.8.19
+  2D-form** (nytt format), **0.11.1 Profilverktyget** (före piloten, Carl
+  Augusts beslut) och **0.11.2 Dörrar och fönster**; kulör och material
+  efter piloten. Polylinjen som inte ska markeras inuti löses i 0.8.19.
 - **Färdplan** (Carl August 22 oktober): 0.13 är hans egen provning (han
   ritar ett hus), sedan en inbjuden **alfa** för arkitektvänner, sedan en
   **öppen beta**. **Formatfrysen kommer med den öppna betan.** Inget av
@@ -57,22 +60,22 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
-- ~~0.8.8 Mallblad~~ … ~~0.8.13 Fler Modifiera-verktyg~~,
-  ~~0.8.14 Modifiera-verktyg del 2~~ (klara)
-- **Granskning** (bestämd 24 oktober, före 0.8.15): `src/ui/modify/tool.ts`
-  har drygt 830 rader och kan delas per val; förra granskningen var 0.8.11
-- **0.8.15 Underlag**: snäpp i DXF, parallellt/vinkelrätt som i SketchUp,
+- ~~0.8.8 Mallblad~~ … ~~0.8.14 Modifiera-verktyg del 2~~,
+  ~~0.8.15 Granskning~~ (klara)
+- **0.8.16 Underlag**: snäpp i DXF, parallellt/vinkelrätt som i SketchUp,
   X/Y, papperskorg, grupper i trädet, bildens grepp och mått
-- **0.8.16 Rumsstämpeln** flyttbar, med pil utanför rummet
-- **0.8.17 Småsaker**: dra och släpp till mappar, mätning i segment,
+- **0.8.17 Rumsstämpeln** flyttbar, med pil utanför rummet
+- **0.8.18 Småsaker**: dra och släpp till mappar, mätning i segment,
   osifont och Om-rutan, autospara, rutnätet
-- **0.8.18 2D-form** (nytt format): linje/rektangel/cirkel som sätt att rita,
+- **0.8.19 2D-form** (nytt format): linje/rektangel/cirkel som sätt att rita,
   fyllning på formen
-- **0.8.19 Kommandoraden del 1**: register med engelska och svenska
+- **0.8.20 Kommandoraden del 1**: register med engelska och svenska
   förkortningar, raden nere, Enter öppnar, mellanslag upprepar, avstånd
   och koordinater
-- **0.8.20 Kommandoraden del 2**: alternativ i hakparentes, historik (F2)
+- **0.8.21 Kommandoraden del 2**: alternativ i hakparentes, historik (F2)
   och högerklick, flyttbar och dockningsbar panel
+- **Nästa granskning** föreslås runt 0.8.19 (efter 2D-formen, som gör om
+  2D-linjerna)
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade)
@@ -91,12 +94,15 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.14 syns på webbhotellet (numret vid alfa-knappen) och
-hur 0.8.12–0.8.14 fungerar. Läs synpunktsfilen och sortera Inkorgen. Är
-granskningen inte gjord är den nästa; annars **0.8.15 Underlag** (läs
-*0.8.15* i PLAN.md).
+Fråga först om 0.8.15 syns på webbhotellet (numret vid alfa-knappen) och
+hur 0.8.12–0.8.15 fungerar. Läs synpunktsfilen och sortera Inkorgen. Nästa
+version är **0.8.16 Underlag** (läs *0.8.16* i PLAN.md).
 
 ## Att fråga Carl August om
+
+- **0.8.15 efter provning**: inget nytt att prova; Modifiera ska bete sig
+  exakt som förut, bara snabbare med många markerade väggar. Säg till om
+  något ändå beter sig annorlunda.
 
 - **0.8.14 efter provning** (Claudes val, se PLAN.md): Justeras knappar och
   att ett klick på en vägg lägger objekten mot livet som vetter mot dem;
@@ -206,6 +212,8 @@ granskningen inte gjord är den nästa; annars **0.8.15 Underlag** (läs
 - DXF: skraffering ritar streckade mönsterlinjer heldragna och solid
   fyllning som en ton (färgerna i DXF läses inte). Bilder och externa
   referenser efter pilotprojektet. Vektorsnäpp mot PDF avvaktar.
+- **Att markera många väggar** (840) tar ca 0,15 s, nästan allt i
+  webbläsarens ritning av markeringen (mätt i 0.8.15, lämnat).
 - **En flyttad vägg** räknar fortfarande om sammanslagningen av alla
   väggytor på våningen (`union` i väggarnas `planBatch` och i rummens hål;
   `polygon-clipping` står för det mesta), 0,07–0,16 s för 300–700 väggar. Ett nytt rumsnamn räknar om rum och dörrar (0,08 s).
@@ -252,6 +260,15 @@ granskningen inte gjord är den nästa; annars **0.8.15 Underlag** (läs
   (`page.expect_download()`). Kontrollera PDF:erna med `qpdf --check` och
   `pdftoppm -png`. Sandlådans ersättning för Helvetica saknar ² (m² ser ut
   som m i bilderna), men texten i filen är rätt (`pdftotext`).
+- **Jämföra Modifiera före och efter** (0.8.15): servera det gamla och det
+  nya bygget på var sin port, ladda samma projekt i båda med
+  `store.load`, och kör förlopp som `selection.set`, klick på ett
+  modellläge (`view.camera.toScreen` plus `svg.plan`:s läge),
+  `modifier.choose(op)`, `hover`, klick och `modifier.applyValue(v)`; spara
+  efter varje steg hashar av `store.doc`, markeringen, `svg.plan .overlay`,
+  `.highlight`, `.plan-drawing .content`, panelen och smartmenyns text.
+  Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
+  arbetskopiorna, med fasta id.
 - **Jämföra före och efter** (så gjordes granskningen): bygg den gamla
   versionen i en egen arbetskopia (`git worktree add <mapp> <commit>`, länka
   in `node_modules`, `npx vite build --outDir <mapp>`), kör samma klick i
@@ -263,8 +280,9 @@ granskningen inte gjord är den nästa; annars **0.8.15 Underlag** (läs
 - Demon bara på begäran: `npm run preview:artifact`, läs artefakten
   (https://claude.ai/artifact/2m7gq5gkkgSP2wFZ7fLGNJ, Artifact `read`) och
   publicera `artifact/cad-apa.html` till samma URL.
-- Stoppa servern med `pgrep -af "http.server 8765"` och `kill`, inte
-  `pkill -f` (det stänger skalet).
+- Stoppa servern med `ps -eo pid,args | grep "[p]ython3 -m http.server"`
+  och `kill <pid>`, inte `pkill -f` eller `pgrep -f` i samma kommando (de
+  träffar också skalet, som stängs).
 - Testfiler att lägga in går snabbt att göra med reportlab (PDF), PIL
   (bild) och några rader text (DXF). Riktiga DXF med skraffering, block och
   bågar gör ezdxf (`pip install --break-system-packages ezdxf`), som också

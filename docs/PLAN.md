@@ -69,6 +69,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.6.2 | Skyddat autospar, sidopaneler med egen bredd, skärmskala, textredigering i ritningen, zip för webbhotellet |
 | 0.6.3 | Formler och enheter i sifferfält, anslutna väggar följer med, ny topprad, minimerade paneler, högerklick, utfällbar snabbmeny, vyhistorik, kalkering med eget utseende, tillfälliga vyinställningar |
 | 0.7 | Format 4: fasader och sektioner med dolda linjer, norrpil och fasader efter väderstreck, testtak med gavlar, bågväggar, Modifiera-paletten (lägg till punkt, böj, tangent, förskjut, avrunda, fasa, sträck, kopiera i rad m.m.) |
+| 0.7.1 | Betaversion med synpunktsformulär, detaljnivåer och linjetjocklekar i fasad och sektion, glasmarkering och öppningssätt, automatisk taklutning, sektioner begränsade till linjen och klippta i 3D, nya markörer i planen med grepp, längd, vinkel och Rikta efter objekt, streckning från hörnen, varning för nästan raka vinklar, takets kontur i Modifiera, måttband, spårlinjer, kopiera och klistra in mellan projekt, Ctrl + dra, piltangenter, zooma till område och förra zoomen |
 | 0.8.0 | Format 5: projektträdet med mappar, 2D-element med Visas i och vy-taggar, mått och text i fasader och sektioner, underlag (PDF, bild, DXF) och arbetsblad, snabbare väggskarvar, ritningsblad med BH90-huvud och smarttext, vyer i skala på bladen, annoteringsskala och Plot/export till PDF i en zipfil |
 | 0.8.1 | Granskning utan nya funktioner: transaktioner, väggskarvar, dolda linjer och rum utan algoritmer som växer med kvadraten; `app.ts` och `propertiesPanel.ts` uppdelade |
 | 0.8.2 | Fasader och sektioner i en bakgrundstråd, referensritningar i testerna, synpunktsformulärets fel, markering i 3D med Följ sektionen och i sektion, textverktyget på blad, mappräknaren |
@@ -82,7 +83,9 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.10 | Format 10: obegränsat med smarta fält, fält för hela projektet, flera blad samtidigt, `{mapp}` och `{skala a3}` |
 | 0.8.11 | Granskning: `app.ts` och `sheets.ts` uppdelade, vyerna på bladen räknas inte om i onödan, Visa i kategorier, text i DXF-underlag, mönster med förhandsbild, markering av 2D, statusradens knappar, linjetjocklek på skärmen, Alfa |
 | 0.8.12 | Format 11: skalstock på bladet (skalan från en vy eller egen, efter Carl Augusts skalstockar 1:1–1:5000), stämplar som ritas en gång och läggs på flera blad |
-| 0.7.1 | Betaversion med synpunktsformulär, detaljnivåer och linjetjocklekar i fasad och sektion, glasmarkering och öppningssätt, automatisk taklutning, sektioner begränsade till linjen och klippta i 3D, nya markörer i planen med grepp, längd, vinkel och Rikta efter objekt, streckning från hörnen, varning för nästan raka vinklar, takets kontur i Modifiera, måttband, spårlinjer, kopiera och klistra in mellan projekt, Ctrl + dra, piltangenter, zooma till område och förra zoomen |
+| 0.8.13 | Trimma, Hörnskarv, Dela, Avrunda och Fasa alla, baspunkt från en snäppunkt för Flytta, Vrid, Spegla och I rad, kortkommandon i Modifiera-raden, publicering med FTP |
+| 0.8.14 | Justera och Fördela, Hämta och överför (pipetten), Skala, Förläng och Trimma flera mot en gräns, linjetjocklekar i en tabell med "gammel-cad"-färger |
+| 0.8.15 | Granskning: register för väggändar och dörrar (Modifiera utan kvadratisk tid), `tool.ts` uppdelad |
 
 ## Framåt
 
@@ -665,7 +668,7 @@ vid varje push till main.*
 ### 0.8.14 Modifiera-verktyg del 2
 
 Det som blev kvar av 0.8.13 (Carl August, 23 oktober). Dra och släpp till
-mappar och mätning i segment flyttades till 0.8.17 (24 oktober).
+mappar och mätning i segment flyttades till 0.8.18 (24 oktober).
 
 - **Justera och Fördela** flera objekt mot en kant eller ett objekt, med
   lika avstånd
@@ -693,7 +696,32 @@ Shift+T behåller den gamla Trimma. Kortkommandon: Shift+N Justera, Shift+H
 Hämta och överför, Shift+Y Skala. Tabellen fälls ut från pennvalet både när
 man ritar och i egenskaperna.*
 
-### 0.8.15 Underlag
+### 0.8.15 Granskning
+
+Förra granskningen var 0.8.11, och Modifiera har fått två versioner nya
+verktyg sedan dess (Carl August, 24 oktober). Underlag och versionerna
+efter flyttades ett steg.
+
+- **Register** för väggarnas ändar och för dörrar och fönster per vägg,
+  så att hörn, anslutna väggar och öppningar inte söks i hela projektet för
+  varje vägg
+- **`src/ui/modify/tool.ts` uppdelad** per grupp av val, och den småkod som
+  fanns på flera ställen samlad
+- Justera mot linje klarar mycket stora DXF-underlag
+- Prestandatestet får Modifiera-verktygen med 1 200 väggar
+- Tabellen *Klart* får 0.8.13 och 0.8.14
+
+*Byggd (24 oktober), samma format (11). Uppdelningen gav samma läge efter
+samma klick som förut (45 förlopp med 250 steg genom alla val i Modifiera, i det gamla och
+det nya bygget), och kärnans funktioner gav samma projekt i 1 982
+jämförelser. Med 840 väggar: musen i Avrunda alla 0,5 s → 0,05 s per
+rörelse, hörnen i smartmenyn 0,6 s → 5 ms, Förskjut alla 0,34 s → 0,03 s,
+Spegla och Vänd 0,27 s → 0,02 s, Justera 0,34 s → 0,01 s och Förläng alla
+0,13 s → 0,01 s. Förskjut alla kanter flyttar nu bara ändar på väggar på
+samma våning. Mätt men lämnat: att markera 840 väggar tar 0,15 s, nästan
+allt i webbläsarens ritning av markeringen.*
+
+### 0.8.16 Underlag
 
 Carl Augusts synpunkter 21 oktober. Mellanstor, kan bli stor; i så fall
 delas den.
@@ -714,14 +742,14 @@ delas den.
   sträcker åt det hållet. Bredd och höjd kan skrivas in i smartmenyn och
   egenskaperna, med *Återställ proportioner* bredvid
 
-### 0.8.16 Rumsstämpeln
+### 0.8.17 Rumsstämpeln
 
 Småversion (Carl August, 21 oktober); fler småsaker kan läggas till.
 
 - Rumsstämpeln kan dras till en annan plats i rummet. Dras den utanför
   rummet visas en pil från stämpeln in i rummet
 
-### 0.8.17 Småsaker
+### 0.8.18 Småsaker
 
 Carl Augusts synpunkter 20–22 oktober (sorterade 24 oktober).
 
@@ -736,7 +764,7 @@ Carl Augusts synpunkter 20–22 oktober (sorterade 24 oktober).
 - **Rutnätet** visar rätt nivåer: 500-strecken syns när de ska, och
   0,1 m-strecken kommer när de går att läsa
 
-### 0.8.18 2D-form · *nytt format*
+### 0.8.19 2D-form · *nytt format*
 
 Carl August 22 oktober. Mellanstor till stor.
 
@@ -749,7 +777,7 @@ Carl August 22 oktober. Mellanstor till stor.
 - Mitten går bara att klicka på om formen har en fyllning. Det ersätter
   0.8.11:s regel att en sluten polylinje går att klicka inuti
 
-### 0.8.19 Kommandoraden, del 1
+### 0.8.20 Kommandoraden, del 1
 
 Carl August 24 oktober: skriva kommandon som i AutoCAD (och smartshell i
 Sisyfos). Stor, därför två versioner. Efter 2D-formen, eftersom kommandona
@@ -766,13 +794,13 @@ för linje, rektangel och cirkel ska byggas mot den.
 - **Avstånd och koordinater** i ritverktygen: `2400`, `@1200,600`,
   `@3000<45`, `x,y`
 
-### 0.8.20 Kommandoraden, del 2
+### 0.8.21 Kommandoraden, del 2
 
 - Varje verktyg frågar efter nästa steg, med alternativen inom
   hakparentes (`[Stäng/Ångra]`), och alternativen går att skriva eller
   klicka. Modifiera-verktygen också
 - **Historik** över kommandona (F2), och **högerklick** visar en kort
-  historik där ett klick kör kommandot igen (flyttad från 0.8.17, samma
+  historik där ett klick kör kommandot igen (flyttad från 0.8.18, samma
   register)
 - Kommandoraden blir en **flyttbar panel** som kan dockas nere eller uppe
   eller ligga fritt över ritytan

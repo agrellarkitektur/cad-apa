@@ -1,7 +1,7 @@
 import { followJoins, isArc, movePatch, putWallEnds } from './commands';
 import type { Element, Id } from './model';
 import type { DocStore } from './store';
-import { canTrim, isOpenLine, trimPath } from './trimEdit';
+import { canTrim, isOpenLine, pathOf, trimPath } from './trimEdit';
 import { openingSpans } from './wallEdit';
 
 /**
@@ -149,14 +149,6 @@ export function transferSettings(store: DocStore, sourceId: Id, ids: readonly Id
 // ---------- Förläng och trimma flera mot en gräns ----------
 
 /** Punkterna i en vägg eller öppen 2D-linje, i ordning. */
-function pathOf(el: Element): P[] {
-  if (el.type === 'Wall') {
-    const q = el.params as { start: P; end: P };
-    return [q.start, q.end];
-  }
-  return ((el.params.points as P[]) ?? []).map((q) => [q[0], q[1]]);
-}
-
 /**
  * Var strålen från `from` genom `to` (förbi `to`) först når gränsen, som
  * gånger sträckan from–to (större än 1). Når den inte fram till någon bit av

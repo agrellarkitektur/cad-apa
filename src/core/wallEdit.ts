@@ -1,6 +1,7 @@
 import { bulgeTangent, bulgeThrough } from '../geometry/arc';
 import { wallFrame, type WallFrame } from '../geometry/wallFrame';
 import { geometryOf, isArc, movePatch, putWallEnds, transformed, type PlanTransform } from './commands';
+import { hostedIn, wallsAt } from './elementIndex';
 import { newId } from './ids';
 import type { Element, Id, ProjectDoc } from './model';
 import type { DocStore, TxBuilder } from './store';
@@ -23,8 +24,8 @@ export function refFrame(doc: ProjectDoc, el: Element): WallFrame {
 export function rehost(tx: TxBuilder, before: ProjectDoc, from: Element, targets: Element[]): void {
   const f0 = wallFrame(geometryOf(before, from));
   const frames = targets.map((t) => ({ t, f: wallFrame(geometryOf(tx.doc, t)) }));
-  for (const h of Object.values(before.elements)) {
-    if (h.host !== from.id || typeof h.params.at !== 'number') continue;
+  for (const h of hostedIn(before, from.id)) {
+    if (typeof h.params.at !== 'number') continue;
     const world = f0.at(h.params.at as number, 0);
     let best: { id: Id; at: number; d: number } | null = null;
     for (const { t, f } of frames) {
@@ -122,8 +123,8 @@ export function cornerPartner(doc: ProjectDoc, wallId: Id, end: 'start' | 'end')
   if (!el) return null;
   const pt = (el.params as { start: P; end: P })[end];
   const found: { id: Id; end: 'start' | 'end' }[] = [];
-  for (const w of Object.values(doc.elements)) {
-    if (w.type !== 'Wall' || w.id === wallId || w.storey !== el.storey) continue;
+  for (const id of wallsAt(doc, el.storey, pt, wallId)) {
+    const w = doc.elements[id];
     const q = w.params as { start: P; end: P };
     if (dist(q.start, pt) <= 1) found.push({ id: w.id, end: 'start' });
     else if (dist(q.end, pt) <= 1) found.push({ id: w.id, end: 'end' });
@@ -154,8 +155,8 @@ export function openingsInCorner(doc: ProjectDoc, wallId: Id, end: 'start' | 'en
 /** Dörrar och fönster i en vägg, med var de börjar och slutar längs den (mm från början). */
 export function openingSpans(doc: ProjectDoc, wallId: Id): { id: Id; from: number; to: number }[] {
   const out: { id: Id; from: number; to: number }[] = [];
-  for (const h of Object.values(doc.elements)) {
-    if (h.host !== wallId || typeof h.params.at !== 'number') continue;
+  for (const h of hostedIn(doc, wallId)) {
+    if (typeof h.params.at !== 'number') continue;
     const at = h.params.at as number;
     const own = Number(h.params.width);
     const width = Number.isFinite(own) && own > 0 ? own : Number(h.definition ? doc.definitions[h.definition]?.params.width : 0) || 0;
@@ -356,12 +357,19 @@ export function offsetGeometry(doc: ProjectDoc, ids: readonly Id[], distance: nu
     const o: P = [n[0] * distance, n[1] * distance];
     lines.set(w.id, { a: [p.start[0] + o[0], p.start[1] + o[1]], d, o });
   });
+  // Grannarna i hörnen hämtas ur registret (0.8.15), i markeringens ordning.
+  const order = new Map(walls.map((w, i) => [w.id, i]));
+  const storeys = [...new Set(walls.map((w) => w.storey))];
   for (const w of walls) {
     const p = w.params as { start: P; end: P };
     const L = lines.get(w.id)!;
     const endFor = (pt: P): P => {
-      for (const v of walls) {
-        if (v.id === w.id) continue;
+      const near = storeys
+        .flatMap((st) => wallsAt(doc, st, pt, w.id))
+        .filter((id) => order.has(id))
+        .sort((a, b) => order.get(a)! - order.get(b)!);
+      for (const id of near) {
+        const v = doc.elements[id];
         const q = v.params as { start: P; end: P };
         if (dist(q.start, pt) > 1 && dist(q.end, pt) > 1) continue;
         const M = lines.get(v.id)!;
@@ -383,19 +391,28 @@ export function offsetWalls(store: DocStore, ids: readonly Id[], distance: numbe
   if (!next.size) return;
   store.transact('Förskjut alla kanter', (tx) => {
     // Gamla och nya hörn, för väggar utanför markeringen som sitter i dem.
-    const moved: { from: P; to: P }[] = [];
+    const moved: { from: P; to: P; storey: Id }[] = [];
     for (const [id, g] of next) {
       const el = tx.doc.elements[id];
       const p = el.params as { start: P; end: P };
-      moved.push({ from: p.start, to: g.start }, { from: p.end, to: g.end });
+      moved.push({ from: p.start, to: g.start, storey: el.storey }, { from: p.end, to: g.end, storey: el.storey });
       putWallEnds(tx, el, g.start, g.end);
     }
-    for (const w of Object.values(tx.doc.elements)) {
-      if (w.type !== 'Wall' || next.has(w.id)) continue;
+    // Väggarna med en ände i ett gammalt hörn (registret, 0.8.15); det första hörnet som passar gäller.
+    const hits = new Map<Id, { s?: P; e?: P }>();
+    for (const m of moved)
+      for (const id of wallsAt(tx.doc, m.storey, m.from)) {
+        if (next.has(id)) continue;
+        const q = tx.doc.elements[id].params as { start: P; end: P };
+        const h = hits.get(id) ?? {};
+        if (!h.s && dist(m.from, q.start) <= 1) h.s = m.to;
+        if (!h.e && dist(m.from, q.end) <= 1) h.e = m.to;
+        hits.set(id, h);
+      }
+    for (const [id, h] of hits) {
+      const w = tx.doc.elements[id];
       const q = w.params as { start: P; end: P };
-      const s = moved.find((m) => dist(m.from, q.start) <= 1);
-      const e = moved.find((m) => dist(m.from, q.end) <= 1);
-      if (s || e) putWallEnds(tx, w, s ? s.to : q.start, e ? e.to : q.end);
+      if (h.s || h.e) putWallEnds(tx, w, h.s ?? q.start, h.e ?? q.end);
     }
   });
 }
