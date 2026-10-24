@@ -20,6 +20,8 @@ export class BoxIndex {
   private readonly always: number[] = [];
   /** Alla som lagts in, för frågor som täcker för många rutor. */
   private readonly all: number[] = [];
+  /** Numren har lagts in i stigande ordning, så att `all` inte behöver sorteras (0.8.23). */
+  private ascending = true;
 
   /** Rutornas sida, i samma enhet som rektanglarna (mm). */
   private readonly cell: number;
@@ -30,6 +32,7 @@ export class BoxIndex {
 
   /** Lägg till nummer `i` med sin rektangel; null betyder att den alltid prövas. */
   add(i: number, box: Box | null): void {
+    if (this.all.length && i < this.all[this.all.length - 1]) this.ascending = false;
     this.all.push(i);
     if (!box || !box.every(Number.isFinite)) {
       this.always.push(i);
@@ -58,15 +61,31 @@ export class BoxIndex {
 
   /** Numren vars rektangel kan röra rektangeln, i stigande ordning. */
   near(box: Box): number[] {
+    if (!box.every(Number.isFinite)) return this.everything();
     const [x0, y0, x1, y1] = this.range(box);
-    if (!box.every(Number.isFinite) || (x1 - x0 + 1) * (y1 - y0 + 1) > MAX_CELLS) return [...this.all].sort((a, b) => a - b);
     const found = new Set<number>(this.always);
-    for (let x = x0; x <= x1; x++) {
-      const col = this.cells.get(x);
-      if (!col) continue;
-      for (let y = y0; y <= y1; y++) for (const i of col.get(y) ?? []) found.add(i);
+    if ((x1 - x0 + 1) * (y1 - y0 + 1) > MAX_CELLS) {
+      // En stor fråga (långt utzoomat): gå igenom rutorna som har något i
+      // sig i stället för alla rutor i frågan (0.8.23). Täcker frågan allt
+      // som lagts in blir svaret detsamma som `all`.
+      for (const [x, col] of this.cells) {
+        if (x < x0 || x > x1) continue;
+        for (const [y, list] of col) if (y >= y0 && y <= y1) for (const i of list) found.add(i);
+      }
+      if (found.size === this.all.length) return this.everything();
+    } else {
+      for (let x = x0; x <= x1; x++) {
+        const col = this.cells.get(x);
+        if (!col) continue;
+        for (let y = y0; y <= y1; y++) for (const i of col.get(y) ?? []) found.add(i);
+      }
     }
     return [...found].sort((a, b) => a - b);
+  }
+
+  /** Alla numren i stigande ordning. */
+  private everything(): number[] {
+    return this.ascending ? this.all.slice() : [...this.all].sort((a, b) => a - b);
   }
 
   private range(b: Box): [number, number, number, number] {

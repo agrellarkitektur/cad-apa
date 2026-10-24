@@ -1,3 +1,5 @@
+import { boxesTouch, type Box } from '../geometry/boolean';
+import { BoxIndex } from '../geometry/boxIndex';
 import { closestOnSegment, dist, distToSegment, pointInRings } from '../geometry/vec';
 import type { Pickable } from '../repr/plan';
 import type { Bounds, Primitive, Vec2 } from '../repr/primitives';
@@ -22,10 +24,17 @@ export function pickAt(pickables: readonly Pickable[], p: Vec2, tol: number, dra
  */
 export function pickAllAt(pickables: readonly Pickable[], p: Vec2, tol: number, drawingScale = 100): string[] {
   const best = new Map<string, { score: number; i: number }>();
+  const near: Box = [p[0] - tol, p[1] - tol, p[0] + tol, p[1] + tol];
   for (let i = 0; i < pickables.length; i++) {
     const item = pickables[i];
+    // Det som ligger längre bort än toleransen kan inte träffas (0.8.23):
+    // ingen kant inom toleransen och inget att ligga inuti.
+    const reach = reachOf(item, drawingScale);
+    if (!reach.box || !boxesTouch(reach.box, near)) continue;
+    // Ett objekt med många delar (ett DXF-underlag) prövas bara mot delarna nära punkten.
+    const prims = reach.index ? reach.index.near(near).map((k) => item.prims[k]) : item.prims;
     let d = Infinity;
-    for (const prim of item.prims) d = Math.min(d, distToPrim(p, prim, drawingScale));
+    for (const prim of prims) d = Math.min(d, distToPrim(p, prim, drawingScale));
     // Kanten på en yta räknas som en linje, så att tunna väggar går att träffa.
     for (const rings of item.regions) d = Math.min(d, distToPrim(p, { kind: 'region', rings, role: 'cut', fill: { kind: 'none' }, outline: null }, drawingScale));
     let score = -Infinity;
@@ -33,13 +42,61 @@ export function pickAllAt(pickables: readonly Pickable[], p: Vec2, tol: number, 
     if (inside && !item.soft) score = 3000 + item.priority;
     else if (d <= tol) score = 2000 + item.priority - d / tol;
     else if (inside) score = 1500 + item.priority;
-    else if (!item.soft && item.prims.some((prim) => (prim.kind === 'polyline' && prim.closed && pointInRings(p, [prim.points])) || (prim.kind === 'image' && pointInRings(p, [imageCorners(prim)]))))
+    else if (!item.soft && (reach.index ? reach.index.at(p).map((k) => item.prims[k]) : item.prims).some((prim) => (prim.kind === 'polyline' && prim.closed && pointInRings(p, [prim.points])) || (prim.kind === 'image' && pointInRings(p, [imageCorners(prim)]))))
       score = 1000 + item.priority;
     const was = best.get(item.id);
     if (score > -Infinity && (!was || score > was.score)) best.set(item.id, { score, i });
   }
   // Vid lika poäng vinner det som kom först, som förut.
   return [...best.entries()].sort((a, b) => b[1].score - a[1].score || a[1].i - b[1].i).map(([id]) => id);
+}
+
+/** Från så här många delar får ett objekt ett eget rutnät över delarna. */
+const PRIM_INDEX_FROM = 64;
+
+/**
+ * Hur långt ett objekt når när det klickas på (0.8.23): rektangeln runt
+ * delarna och ytorna, med texternas rutor, och för objekt med många delar
+ * ett rutnät över delarna. Sparas per objekt och ritningsskala; planens
+ * objekt återanvänds när de inte ändrats, och då gör rektanglarna det också.
+ */
+interface Reach {
+  scale: number;
+  box: Box | null;
+  index: BoxIndex | null;
+}
+const reaches = new WeakMap<Pickable, Reach>();
+
+function reachOf(item: Pickable, drawingScale: number): Reach {
+  const saved = reaches.get(item);
+  if (saved && saved.scale === drawingScale) return saved;
+  let box: Box | null = null;
+  const grow = (b: Box | null) => {
+    if (!b) return;
+    box = box ? [Math.min(box[0], b[0]), Math.min(box[1], b[1]), Math.max(box[2], b[2]), Math.max(box[3], b[3])] : [...b];
+  };
+  const boxes = item.prims.map((prim) => primBox(prim, drawingScale));
+  boxes.forEach(grow);
+  for (const rings of item.regions) for (const ring of rings) for (const q of ring) grow([q[0], q[1], q[0], q[1]]);
+  let index: BoxIndex | null = null;
+  if (item.prims.length >= PRIM_INDEX_FROM) {
+    index = new BoxIndex(2000);
+    boxes.forEach((b, k) => index!.add(k, b));
+  }
+  const r: Reach = { scale: drawingScale, box, index };
+  reaches.set(item, r);
+  return r;
+}
+
+/** Rektangeln en del kan träffas inom: för en text en ruta som rymmer texten hur den än vrids. */
+function primBox(prim: Primitive, drawingScale: number): Box | null {
+  if (prim.kind === 'text') {
+    const h = prim.height * drawingScale;
+    const r = Math.hypot(Math.max(1, prim.text.length) * h * 0.62, h);
+    return [prim.at[0] - r, prim.at[1] - r, prim.at[0] + r, prim.at[1] + r];
+  }
+  const b = boundsOf([prim]);
+  return b ? [b.minX, b.minY, b.maxX, b.maxY] : null;
 }
 
 /**

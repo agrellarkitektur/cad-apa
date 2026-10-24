@@ -179,13 +179,17 @@ export class Navigator {
     const sections = KIND_ORDER.map((kind) => {
       const mine = loose.filter((e) => kindOf(e.id) === kind);
       if (!mine.length) return '';
-      const done = new Set<Id>();
+      // Underlagen per fil, i den ordning filerna först kommer (utan att söka i listan för varje rad).
+      const byAsset = new Map<Id, typeof mine>();
+      for (const x of mine) {
+        const a = assetOf(x.id);
+        const l = byAsset.get(a);
+        if (l) l.push(x);
+        else byAsset.set(a, [x]);
+      }
       const html: string[] = [];
-      for (const e of mine) {
-        const asset = assetOf(e.id);
-        if (done.has(asset)) continue;
-        done.add(asset);
-        const same = mine.filter((x) => assetOf(x.id) === asset);
+      for (const [asset, same] of byAsset) {
+        const e = same[0];
         if ((uses.get(asset) ?? 0) < 2) {
           html.push(row(e.id, false, true));
           continue;

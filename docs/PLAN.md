@@ -93,6 +93,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.20 | Kommandoraden del 1: smartshell under ritytan, register med engelska och svenska förkortningar, komplettering, Enter öppnar, mellanslag upprepar, skrivna punkter (avstånd, @x,y, @d<v, x,y) |
 | 0.8.21 | Kommandoraden del 2: frågor med alternativ, SMARTSHELL vid blixten, kommandon som väntar på en markering, historik (F2), högerklick, dockningsbar rad, skrivna punkter i tak, sektion, fasad och Modifiera |
 | 0.8.22 | Småsaker: Linje är polylinjen, opacitet för linje och fyllning, skraffering i smartmenyn, Visa → Fyllningar, rumsstämpelns mall, sektionspilens hullingar |
+| 0.8.23 | Granskning: smartshell, Markera och projektträdets klick uppdelade; klick och hover i planen prövar bara det nära markören; rutnätet ritas inte om vid musrörelser |
 
 ## Framåt
 
@@ -932,6 +933,20 @@ Carl August 24 oktober: granskningen efter kommandoraden (efter 0.8.22,
 som han ville ha först). Utan nya funktioner: städa, dela upp stora filer
 (`commandLine.ts`, `selectTool.ts`, `app.ts`, `actions.ts`) och leta efter
 långsam kod. Förra granskningen var 0.8.15.
+
+*Byggd (24 oktober), samma format (12). `commandLine.ts` 868 → 587
+rader (läget, historiken, dockningen, frågans text och de direkta
+kommandona i egna filer), `selectTool.ts` 699 → 567 (greppen i
+`selectGrips.ts`) och `actions.ts` 482 → 343 (projektträdets klick i
+`treeClicks.ts`). `app.ts` delades inte, eftersom ordningen mellan
+prenumerationerna där styr omritningen. Långsamt som rättades: klick och
+hover prövade varje del av varje objekt i planen vid varje musrörelse
+(med 3 000 delar i ett underlag 0,85 ms → 0,05 ms, och nu oberoende av
+underlagets storlek); rutnätet byggdes om vid varje musrörelse;
+`BoxIndex` gav och sorterade allt vid stora frågor; Rikta efter objekt
+prövade alla sträckor. Samma klick i 0.8.22 och 0.8.23 (106 steg) gav
+samma läge. Mätt men lämnat: snäppningen långt utzoomat över ett stort
+DXF-underlag (räckvidden i mm vore ett nytt val).*
 
 ### 0.8.24 2D-form del 2 · *nytt format*
 

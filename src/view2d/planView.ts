@@ -80,6 +80,8 @@ export class PlanView {
   private underlayPrims: readonly Primitive[] = [];
   private frame = 0;
   private gridVisible = true;
+  /** Kameran som rutnätet senast ritades för; samma kamera ger samma rutnät (0.8.23). */
+  private gridKey = '';
   private tool: ViewTool | null = null;
   private highlighter: ((cam: Camera) => string) | null = null;
   /** Hjälpgrafik som inte hör till verktyget, t.ex. segmentpunkterna (0.8.18). */
@@ -255,6 +257,7 @@ export class PlanView {
 
   set showGrid(v: boolean) {
     this.gridVisible = v;
+    this.gridKey = '';
     this.svg.classList.toggle('no-grid', !v);
     this.gridSvg.classList.toggle('no-grid', !v);
     this.requestRender();
@@ -334,7 +337,10 @@ export class PlanView {
   private render(): void {
     const cam = this.camera;
     this.renderDrawing();
-    if (this.gridVisible) {
+    // Rutnätet byggs bara om när kameran ändrats, inte vid varje musrörelse (0.8.23).
+    const gridKey = `${cam.scale}|${cam.center[0]}|${cam.center[1]}|${cam.width}|${cam.height}`;
+    if (this.gridVisible && gridKey !== this.gridKey) {
+      this.gridKey = gridKey;
       const grid = buildGrid(cam);
       const paths = this.gridLevels.children;
       while (paths.length > grid.levels.length) paths[paths.length - 1].remove();

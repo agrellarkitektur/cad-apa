@@ -64,7 +64,8 @@ function planSnapSegments(app: AppContext): SnapSegment[] {
     const type = el?.type;
     if (type === 'Underlay') {
       // Underlag (0.8.16): DXF:ens punkter och linjer, bildens kanter.
-      edges.push(...underlaySegments(doc, el));
+      // En lång lista läggs till en och en: spridd i ett anrop kan den bli för lång för webbläsaren.
+      for (const s of underlaySegments(doc, el)) edges.push(s);
       continue;
     }
     if (type === 'Shape2D') {
@@ -86,7 +87,7 @@ function sectionSnapSegments(app: AppContext): SnapSegment[] {
   const out: SnapSegment[] = [];
   for (const pk of plan.pickables) {
     const el = doc.elements[pk.id];
-    if (el?.type === 'Underlay') out.push(...underlaySegments(doc, el));
+    if (el?.type === 'Underlay') for (const s of underlaySegments(doc, el)) out.push(s);
     else out.push(...primSegments(pk.id, pk.prims));
   }
   for (const p of plan.prims) {

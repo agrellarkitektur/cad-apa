@@ -1123,9 +1123,10 @@ projekt i 1 982 jämförelser.
 ## Granskning (0.8.23, format 12)
 
 Utan nya funktioner. Kontrollerat med samma klick i 0.8.22 och 0.8.23
-(Playwright, 97 steg genom smartshell, Markera, projektträdet och
-statusraden): samma projekt, markering, ritning, smartmeny, smartshell och
-träd efter varje steg.
+(Playwright, 106 steg genom smartshell, Markera, projektträdet, zoom och
+statusraden): samma projekt, markering, ritning, rutnät, smartmeny,
+smartshell och träd efter varje steg. `tests/v0823.test.ts` jämför
+`pickAllAt` med den gamla versionen på 5 000 punkter.
 
 - **Smartshell uppdelad**: `commandLine.ts` har kvar fältet, kommandona och
   menyerna. `shellPoints.ts` har läget (`pointTaker`, `commandBusy`,
@@ -1141,9 +1142,30 @@ träd efter varje steg.
   bara det markerade, och `shapeNodeAt` och `underlayGripsShown` slår upp i
   `pickableById` i stället för att gå igenom alla objekt i planen vid varje
   musrörelse
+- Mätt men lämnat: snäppningen långt utzoomat över ett stort DXF-underlag
+  prövar alla sträckor inom spårlinjernas räckvidd (`TRACK_REACH` gånger
+  toleransen), som då kan vara hela underlaget. Att begränsa räckvidden i
+  mm skulle ändra vad som snäpps, och hör till en version med nya val
 - **Projektträdets klick** ligger i `src/ui/app/treeClicks.ts`
   (`installTreeClicks`: `click`, `pickTreeItem`); `actions.ts` har kvar
   knapparna
+- **Klick och hover i planen** (`pickAllAt` i `src/view2d/pick.ts`): varje
+  objekt i planen får en rektangel för hur långt det når (texter som en
+  ruta som rymmer dem hur de än vrids), sparad per objekt och
+  ritningsskala i en `WeakMap`. Objekt längre bort än toleransen prövas
+  inte, och ett objekt med 64 delar eller fler (ett DXF-underlag) får ett
+  `BoxIndex` över delarna. Med 3 000 delar: 0,85 ms → 0,05 ms per
+  musrörelse; tiden växer inte längre med underlagets storlek
+- **Rutnätet** (`planView.ts`) byggs bara om när kameran ändrats
+  (`gridKey`), inte vid varje musrörelse
+- **`BoxIndex.near`** med en fråga som täcker för många rutor (långt
+  utzoomat) går igenom rutorna som har något i sig i stället för att ge
+  alla, och sorterar inte `all` när numren lagts in i stigande ordning
+- **Snäpplistan**: underlagens sträckor läggs till en och en i stället för
+  spridda i ett anrop, som kunde bli för långt med mycket stora DXF:er.
+  *Rikta efter objekt* prövar bara sträckorna nära markören
+  (`nearSegments`), och underlagen per fil i projektträdet grupperas i ett
+  varv
 - `app.ts` delades inte: ordningen mellan prenumerationerna på projektet
   och markeringen där är den som ger rätt omritning, och en uppdelning
   skulle flytta den

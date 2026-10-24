@@ -1,112 +1,43 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.21.
+överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.23.
 
 ## Läget
 
-- **0.8.21 Kommandoraden del 2 är klar** på `main` (samma format, 12):
-  frågor med alternativ i hakparentes (`src/ui/app/prompts.ts`), skrivna
-  och klickbara; prompten vid blixten heter **SMARTSHELL** (Carl Augusts
-  önskan, i stället för KOMMANDO) och verktygets namn står först på raden
-  under; kommandon för det markerade väntar på en markering; historik med
-  F2; de senaste kommandona överst vid högerklick och frågans alternativ
-  vid högerklick medan något pågår; raden dockas nere eller uppe eller
-  ligger fritt (dra i blixten); skrivna punkter i tak, sektion, fasad och
-  Modifiera. Står i README, PLAN.md (med Claudes val) och UTVECKLING.md
-  under *Kommandoraden del 2 (0.8.21)*. Provat i bygget med Playwright
-  (vägg med Stäng, Ångra och klickat Avsluta, pulpettak och sektion med
-  skrivna punkter, Flytta och Ta bort utan markering, Vrid med baspunkt
-  och 90, F2, högerklick på raden, i ritningen och medan en polylinje
-  ritas, dra raden upp och ut, sidladdning med fri rad) och
-  `tests/v0821.test.ts`; alla 313 tester gick igenom. Carl August bad att
-  få versionen körd direkt.
-- **0.8.20 Kommandoraden del 1 är klar** på `main` (samma format, 12):
-  *smartshell* under ritytan med blixten från Sisyfos (Carl Augusts namn
-  och ikon), registret `src/ui/commandRegistry.ts` med engelska och
-  svenska förkortningar, komplettering med lista och en rad om vad Enter
-  gör, Enter öppnar, mellanslag upprepar, skrivna punkter (`2400`,
-  `@1200,600`, `@3000<45`, `x,y`, `<45`) i vägg-, 2D- och måttverktyget.
-  Står i README, PLAN.md (med Claudes val) och UTVECKLING.md under
-  *Kommandoraden (0.8.20)*. Provat i bygget med Playwright (rektangel och
-  cirkel med skrivna punkter, vägg med `<90` och avstånd, mått med tre
-  punkter, `M` med en markerad vägg, `3d` i ett ritverktyg, mellanslag,
-  listan med alla kommandon, Tab, historik) och `tests/v0820.test.ts`;
-  alla 305 tester gick igenom, också prestandatestet. Carl August bad att
-  få versionen körd direkt.
-- **Granskningen** görs efter kommandoraden (Carl August 24 oktober): den
-  blir **0.8.22**, efter 0.8.21 Kommandoraden del 2.
-- **0.8.19 2D-form är klar** på `main` (nytt format, 12): `Shape2D`
-  ersätter `Line2D` och `Fill2D`; linje, polylinje, rektangel, båge, cirkel
-  och spline är sätt att rita formen; fyllning (ingen, hel, skraffering,
-  kors) på vilken form som helst, också öppna; *Ingen linje* (tjocklek 0)
-  ritas inte men går att klicka och snäppa på; mitten går att klicka på
-  bara med fyllning; fyllningar ritas under väggarna. Står i README,
-  PLAN.md (med Claudes val) och UTVECKLING.md under *2D-form (0.8.19)*.
-  Provat i bygget med Playwright (rita med och utan fyllning, klicka inuti
-  och på linjen, Ingen linje i egenskaperna) och med `tests/v0819.test.ts`;
-  alla 297 tester gick igenom. Carl August bad att få versionen körd
-  direkt. Delades inte; den rymdes i en session.
-- **0.8.18 Småsaker är klar** på `main` (samma format, 11): rutnätet med
-  alla nivåer tonade efter avståndet, segmentpunkter med måttbandet (tal +
-  Enter, Rensa segmentpunkter), osifont som ritningens typsnitt på skärmen
-  och inbäddat i PDF:en, Om-rutan med GitHub-länk och osifont krediterat,
-  autospara till filen som sparats eller öppnats, dra och släpp till mappar
-  i trädet. Står i README, PLAN.md (med Claudes val) och UTVECKLING.md under
-  *Småsaker (0.8.18)*. Provat i bygget med Playwright (rutnätet på tre
-  skalor, segment och snäpp, Om, dra en vy och en mapp, autospar med en
-  låtsasfil) och en PDF av ett blad (`pdffonts`: Osifont inbäddad,
-  `qpdf --check` utan fel). `tests/v0818.test.ts`; alla tester gick igenom.
-  Facit `tests/referens/blad-a3.txt` skrevs om (vyrubrikens linje är
-  kortare med osifonts bredder). Carl August bad att få versionen körd
-  direkt.
-- **0.8.17 Rumsstämpeln är klar** på `main` (samma format, 11): dra i
-  stämpeln på ett markerat rum för att flytta den (parametern `labelAt`),
-  utanför rummet en tunn linje med öppen pil 2 mm in i rummet, *Stämpeln i
-  mitten* i egenskaperna. Står i README, PLAN.md (med Claudes val) och
-  UTVECKLING.md. Provat i bygget med Playwright (dra inom och ut ur
-  rummet) och med `tests/v0817.test.ts`. Alla 279 tester gick igenom,
-  också prestandatestet den här gången. Carl August bad att få versionen
-  körd direkt.
-- **0.8.16 Underlag är klar** på `main` (samma format, 11): snäpp i
-  DXF-underlag (centrum, kvadranter, bågmitt, skärningar, inga falska
-  punkter i bågarnas skarvar), parallellt/vinkelrätt som i SketchUp, X/Y,
-  bredd och höjd i egenskaperna och smartmenyn, papperskorg, underlagen
-  per filtyp och fil i trädet, bildens grepp och Återställ proportioner.
-  Står i README, PLAN.md (med Claudes val) och UTVECKLING.md under
-  *Underlag (0.8.16)*. Provat i bygget med Playwright (snäpp, parallellt,
-  grepp, X/Y, trädet, smartmenyn) och med `tests/v0816.test.ts`. Carl
-  August bad att få nästa version körd direkt, utan frågor om synpunkter.
-- **Prestandatestet** gick över gränsen 1,6 s i sandlådan i 0.8.16 men
-  igenom i 0.8.17; sandlådans hastighet varierar.
-- **0.8.15** (samma format): en granskning utan nya
-  funktioner. Register för väggändar och dörrar/fönster per vägg
-  (`src/core/elementIndex.ts`), så att Modifiera inte längre växer med
-  kvadraten på antalet väggar, `src/ui/modify/tool.ts` uppdelad per grupp
-  av val, samlad småkod och ett utökat prestandatest. Står i PLAN.md,
-  README och UTVECKLING.md under *Granskning (0.8.15)*. Kontrollerat med
-  samma klick i det gamla och det nya bygget (Playwright, 45 förlopp) och
-  1 982 jämförelser av kärnans funktioner: samma resultat.
-- **Versionerna flyttades ett steg** (Carl Augusts beslut 24 oktober):
-  Underlag är **0.8.16**, Rumsstämpeln 0.8.17, Småsaker 0.8.18, 2D-form
-  0.8.19 och Kommandoraden 0.8.20–0.8.21.
+- **0.8.23 Granskning är klar** på `main` (samma format, 12), utan nya
+  funktioner: `commandLine.ts` uppdelad (`shellPoints.ts`, `shellLog.ts`,
+  `shellDock.ts`, `shellHint.ts`, `shellActions.ts`), greppen i Markera i
+  `src/ui/tools/selectGrips.ts`, projektträdets klick i
+  `src/ui/app/treeClicks.ts`. Klick och hover i planen (`pickAllAt`) prövar
+  bara objekt och delar nära markören (rektangel per objekt och `BoxIndex`
+  över delarna i stora underlag), rutnätet ritas bara om när kameran
+  ändrats, `BoxIndex.near` ger inte längre allt vid stora frågor.
+  Kontrollerat med samma klick i 0.8.22 och 0.8.23 (Playwright, 106 steg,
+  samma läge efter varje) och `tests/v0823.test.ts`; alla 330 tester gick
+  igenom. Står i README, PLAN.md och UTVECKLING.md under *Granskning
+  (0.8.23)*. `app.ts` delades inte (prenumerationernas ordning).
+- **0.8.22 Småsaker är klar** på `main` (samma format, 12), de fem enkla
+  synpunkterna från 24 oktober: Linje är polylinjen (`L`, `LINE`, `PL`,
+  `PLINE`), opacitet för linje och fyllning tillsammans eller var för sig
+  (`opacity`, `fillOpacity`), skrafferingens vinkel och avstånd direkt i
+  smartmenyn, Visa → Fyllningar (`fill` i vyns `hide`), rumsstämpelns mall
+  i stilmallen (`labels.room`) och sektionspilens hullingar 0,5. Provat i
+  bygget med Playwright och `tests/v0822.test.ts`. Carl August bad att
+  först få de enkla synpunkterna åtgärdade och sedan granskningen körd.
+- **Inkorgen sorterades 24 oktober** (Claudes förslag, inte avstämt med
+  Carl August; se *Att fråga*): 0.8.24 2D-form del 2, 0.8.25 Ritordning
+  och fyllningar, 0.8.26 Pennor i stilmallen, alla före 0.9.
+- **0.8.12–0.8.23 är inte provade** av Carl August. Frågorna nedan gäller.
+- Tidigare versioner (0.8.15–0.8.21) står i PLAN.md med Claudes val.
 - **Publicering:** varje push till `main` laddas upp med
   `.github/workflows/publicera.yml` (FTPS; secrets `FTP_SERVER`,
-  `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR`). `FTP_DIR` är
-  `/agrellarkitektur.se/public_html/cad-apa/` och fungerar (Carl August såg
-  0.8.14 vid alfa-knappen 24 oktober). Se efter med `gh run list` att
-  körningen går igenom.
-- **0.8.12–0.8.21 är inte provade** av Carl August. Frågorna nedan gäller.
-- **Inkorgen är tom** (sorterad 24 oktober). Kommandoraden blev
-  **0.8.20 och 0.8.21** (Carl Augusts svar: både engelska och svenska
-  förkortningar; nere som i AutoCAD, flyttbar och dockningsbar i del 2;
-  Enter utan aktivt kommando öppnar raden, mellanslag kör senaste
-  kommandot igen). Högerklickshistoriken flyttades dit från Småsaker.
-  Övriga punkter står i synpunktsfilen och PLAN.md: 0.8.16 fick
-  parallellt/vinkelrätt som i SketchUp, **0.8.18 Småsaker** och **0.8.19
-  2D-form** (nytt format), **0.11.1 Profilverktyget** (före piloten, Carl
-  Augusts beslut) och **0.11.2 Dörrar och fönster**; kulör och material
-  efter piloten. Polylinjen som inte ska markeras inuti löses i 0.8.19.
+  `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR` =
+  `/agrellarkitektur.se/public_html/cad-apa/`). Se efter med `gh run list`.
+  Halvfärdigt arbete kan läggas på en egen gren (som `granskning-0823`
+  denna gång), så att det inte publiceras.
+- **Prestandatestet** varierar med sandlådans hastighet (gick över 1,6 s i
+  0.8.16, igenom sedan dess).
 - **Färdplan** (Carl August 22 oktober): 0.13 är hans egen provning (han
   ritar ett hus), sedan en inbjuden **alfa** för arkitektvänner, sedan en
   **öppen beta**. **Formatfrysen kommer med den öppna betan.** Inget av
@@ -117,7 +48,8 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen (den öppna
   betan). Höj `FORMAT_VERSION` när formatet ändras; äldre filer får ett
   meddelande om att de kommer från en äldre alfaversion (`parse` i
-  `src/storage/format.ts`).
+  `src/storage/format.ts`). Valfria nya parametrar (som `opacity` och
+  `labelAt`) har inte krävt ett nytt format.
 - **Telefonen är inget mål.** Testa på dator (Chrome).
 - Arbetssätt: Carl August testar varje version på webbhotellet. Ingen demo
   och ingen zip om han inte ber om det. Säg alltid hur stora föreslagna
@@ -127,18 +59,19 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   Parkerat och Avfärdat. Läs den vid sessionsstart (Projects-verktyget,
   `project_read`). Sortera Inkorgen tillsammans med honom: föreslå version
   för varje punkt och säg om något är för stort för en session. Ta bort
-  hanterade punkter när de görs; behåll Avfärdat med anledning. Punkterna
-  under 0.8.14 togs bort ur filen när 0.8.14 var klar.
+  hanterade punkter när de görs; behåll Avfärdat med anledning.
 
 ## Färdplan
 
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
-- ~~0.8.8 Mallblad~~ … ~~0.8.14 Modifiera-verktyg del 2~~,
-  ~~0.8.15 Granskning~~, ~~0.8.16 Underlag~~, ~~0.8.17 Rumsstämpeln~~,
-  ~~0.8.18 Småsaker~~, ~~0.8.19 2D-form~~, ~~0.8.20 Kommandoraden del 1~~,
-  ~~0.8.21 Kommandoraden del 2~~ (klara)
-- **0.8.22 Granskning** (Carl Augusts beslut: efter kommandoraden)
+- ~~0.8.8 Mallblad~~ … ~~0.8.21 Kommandoraden del 2~~,
+  ~~0.8.22 Småsaker~~, ~~0.8.23 Granskning~~ (klara)
+- **0.8.24 2D-form del 2** (nytt format, stor, kan delas): radie per
+  segment, ritsättet inte låst, pilar och andra ändformer
+- **0.8.25 Ritordning och fyllningar**: Längst bak … Främst, 2D-formens
+  linje eller fyllning framför eller bakom väggarna, fyllning i rum
+- **0.8.26 Pennor i stilmallen**: tjocklek och färg för pilar och markörer
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade)
@@ -157,14 +90,37 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.21 syns på webbhotellet (numret vid alfa-knappen) och
-hur 0.8.12–0.8.21 fungerar. Läs synpunktsfilen och sortera Inkorgen (om
-Carl August inte ber om att bara köra). Nästa version är **0.8.22
-Granskning** (utan nya funktioner; `commandLine.ts` har vuxit och kan
-delas upp, t.ex. dockningen och historiken i egna filer), sedan **0.9
-Flera våningsplan och bjälklag**.
+Fråga först om 0.8.23 syns på webbhotellet (numret vid alfa-knappen) och
+hur 0.8.12–0.8.23 fungerar, och om sorteringen av Inkorgen (0.8.24–0.8.26
+före 0.9) stämmer. Läs synpunktsfilen och sortera ny Inkorg. Nästa version
+är **0.8.24 2D-form del 2** (nytt format): formen som en kedja av raka
+segment och bågar (bulge per segment, som väggarna), så att rektangel,
+polylinje och båge blir samma sak efter att de ritats, och ändformer
+(pilar, punkter, cirklar, trianglar) i början och slutet. Säg hur stor den
+är och om den bör delas innan den byggs.
 
 ## Att fråga Carl August om
+
+- **Sorteringen av Inkorgen** (24 oktober, Claudes förslag): 0.8.24 2D-form
+  del 2 (radie per segment, ritsättet inte låst, pilar och ändformer),
+  0.8.25 Ritordning och fyllningar (Längst bak … Främst, framför eller
+  bakom väggarna, fyllning i rum), 0.8.26 Pennor i stilmallen; alla före
+  0.9. Rätt ordning? Penntabellen för markörer flyttades fram från *Efter
+  pilotprojektet*.
+
+- **0.8.22 efter provning** (Claudes val, se PLAN.md): opaciteten är *Samma
+  för linje och fyllning* från början, och kryssrutan skiljer dem; den
+  finns i egenskaperna och smartmenyn, inte i verktyget. Rumsstämpelns
+  ordning är en mall i stilmallen (som litteramallarna) och gäller hela
+  projektet, inte ett rum i taget; raden med `{namn}` är den stora och
+  feta. *Fyllningar* under Visa gäller vyn, så en sparad vy med
+  fyllningarna släckta visas utan dem också på bladen. Rumsstämpelns pil är
+  kvar tunn (bara sektionspilen ändrades). Former ritade som enkellinje
+  före 0.8.22 heter också *Linje*.
+
+- **0.8.23 efter provning**: inget nytt att prova; allt ska bete sig som
+  förut, men pekandet i planen ska kännas lika snabbt med ett stort
+  DXF-underlag som utan. Säg till om något beter sig annorlunda.
 
 - **0.8.21 efter provning** (Claudes val, se PLAN.md): bokstäverna för
   alternativen (Å för Ångra, ML/MV i Justera) och att de går direkt till
@@ -356,6 +312,10 @@ Flera våningsplan och bjälklag**.
   `git push origin HEAD:main`. Pushen publicerar på webbhotellet; följ
   körningen med `gh run list` (loggarna går inte att läsa härifrån, men
   status syns). Releaser (zip) gör Carl August själv om han vill.
+- En egen gren i den grunda klonen: `git push -u origin <gren>`, och
+  sedan `git config --add remote.origin.fetch
+  +refs/heads/<gren>:refs/remotes/origin/<gren>` och `git fetch origin
+  <gren>`, så att grenen spåras.
 - Titta på resultatet: `npm run build`, servera `dist/` med
   `python3 -m http.server 8765` och styr med Playwright (Python). Det är
   samma bygge som hamnar på webbhotellet. `window.bacchus` har `store`,

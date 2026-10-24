@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.22** (alfa, småsaker); nästa är **0.8.23, en granskning**.
+**0.8.23** (alfa, granskning); nästa är **0.8.24, 2D-form del 2**.
 
 ## Vad som fungerar
 
@@ -897,6 +897,15 @@ Version 0.8.22, småsaker (samma filformat, 12):
   litteramallarna: `{nummer}` på första raden ger numret ovanför namnet.
   Rummets egna egenskaper går också att visa
 - **Sektionspilens** hullingar är lika tjocka som vinkeln
+
+Version 0.8.23, granskning (samma filformat, 12):
+- Inga nya funktioner; allt beter sig som förut
+- **Att peka och klicka i planen** är lika snabbt med ett stort
+  DXF-underlag som utan: bara det som ligger nära markören prövas
+- Rutnätet ritas inte om när musen rör sig, bara när vyn flyttas eller
+  zoomas
+- Mycket stora DXF-underlag går att snäppa mot utan att webbläsaren säger
+  ifrån
 
 ## Versioner och gamla projekt
 

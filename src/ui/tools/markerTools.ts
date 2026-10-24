@@ -7,7 +7,7 @@ import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { pxToMm, type ToolHost } from './host';
 import { lengthLabel, snapMarker } from './overlay';
-import { roundMm, snap, type SnapResult, type SnapSegment } from './snap';
+import { nearSegments, roundMm, snap, type SnapResult, type SnapSegment } from './snap';
 import type { PointTaker } from '../pointInput';
 
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
@@ -373,7 +373,8 @@ export class AlignTool implements ViewTool {
   private segAt(p: ViewPointer): SnapSegment | null {
     const tol = pxToMm(this.host, p.pointerType === 'touch' ? 18 : 10);
     let best: { s: SnapSegment; d: number } | null = null;
-    for (const s of this.host.snapSegments()) {
+    // Bara sträckorna nära markören (0.8.23), i listans ordning.
+    for (const s of nearSegments(this.host.snapSegments(), p.model, tol)) {
       if (s.id === this.target) continue;
       const d = distToSegment(p.model, s.a, s.b);
       if (d <= tol && (!best || d < best.d)) best = { s, d };
