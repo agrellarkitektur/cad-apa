@@ -18,7 +18,9 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   att körningen går igenom, och fråga om 0.8.14 syns.
 - **0.8.12, 0.8.13 och 0.8.14 är inte provade** av Carl August (han har bara
   haft 0.8.11 på webbhotellet). Frågorna nedan gäller.
-- **Inkorgen är sorterad** (24 oktober) och tom; punkterna står i
+- **Inkorgen är sorterad** (24 oktober), utom en ny punkt samma dag:
+  textinmatning av kommandon, en kommandorad som i AutoCAD (eller
+  smartshell i Sisyfos). Sortera den med honom. Övriga punkter står i
   synpunktsfilen och PLAN.md: 0.8.15 fick parallellt/vinkelrätt som i
   SketchUp, nya **0.8.17 Småsaker** och **0.8.18 2D-form** (nytt format),
   **0.11.1 Profilverktyget** (före piloten, Carl Augusts beslut) och
@@ -81,7 +83,9 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 ## Nästa session
 
 Fråga först om 0.8.14 syns på webbhotellet efter att `FTP_DIR` rättades,
-och hur 0.8.12–0.8.14 fungerar. Läs synpunktsfilen (ny Inkorg?). Fråga sedan
+och hur 0.8.12–0.8.14 fungerar. Läs synpunktsfilen och sortera Inkorgen
+(kommandoraden: förslagsvis en egen version före piloten eller efter;
+stäm av storleken). Fråga sedan
 om nästa är en granskning (se Färdplan) eller **0.8.15 Underlag** (läs
 *0.8.15* i PLAN.md).
 
