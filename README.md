@@ -730,6 +730,8 @@ Version 0.8.14, Modifiera-verktyg del 2 (samma filformat, 11):
   "gammel-cad"-färgerna (grå 0,13; cyan 0,18; röd 0,25; grön 0,35; svart
   0,5; magenta 0,7; blå 1,0; gul 1,4), både när man ritar och i
   egenskaperna. 1,0 och 1,4 är nya
+- Versionsnumret står vid alfa-knappen uppe till höger, så att det syns
+  vilken version webbhotellet har
 
 ## Versioner och gamla projekt
 

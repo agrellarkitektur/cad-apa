@@ -137,7 +137,7 @@ export function shellMarkup(brand: Brand): string {
         <button class="icon-btn pane-btn" data-action="toggle-nav" title="Projektträd: underlag, modell, vyer och ritningar (N)" aria-label="Projektträd" aria-pressed="false">${icons.navigator}</button>
         <button class="icon-btn pane-btn" data-action="toggle-panel" title="Egenskaper (P)" aria-label="Egenskaper" aria-pressed="false">${icons.properties}</button>
         <div class="theme-slot"></div>
-        ${brand.badge ? `<button class="badge beta-btn" data-action="feedback" title="Skicka synpunkter på ${brand.name}"><b>${brand.badge}</b><small>Skicka synpunkter</small></button>` : ''}
+        ${brand.badge ? `<button class="badge beta-btn" data-action="feedback" title="${brand.name} ${ENGINE.version}. Skicka synpunkter"><b>${brand.badge} <span class="version">${ENGINE.version}</span></b><small>Skicka synpunkter</small></button>` : ''}
       </header>
       <nav class="tools" aria-label="Verktyg"></nav>
       <main class="canvas">

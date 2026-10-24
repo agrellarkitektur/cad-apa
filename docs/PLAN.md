@@ -729,11 +729,9 @@ Carl Augusts synpunkter 20–22 oktober (sorterade 24 oktober).
 - **Dela en mätning i segment** med tillfälliga snäppunkter (skriv ett tal
   efter mätningen; Enter lägger punkterna tills man väljer *Rensa
   segmentpunkter*)
-- **Högerklick** visar en kort historik över de senaste kommandona; ett
-  klick kör kommandot igen
 - **osifont** som standardtypsnitt (https://github.com/hikikomori82/osifont),
-  krediterat under *Om*, med en länk till projektets GitHub där;
-  versionsnumret vid alfa-knappen
+  krediterat under *Om*, med en länk till projektets GitHub där
+  (versionsnumret vid alfa-knappen kom redan 24 oktober)
 - **Autospara till fil**
 - **Rutnätet** visar rätt nivåer: 500-strecken syns när de ska, och
   0,1 m-strecken kommer när de går att läsa
@@ -750,6 +748,34 @@ Carl August 22 oktober. Mellanstor till stor.
   Illustrator)
 - Mitten går bara att klicka på om formen har en fyllning. Det ersätter
   0.8.11:s regel att en sluten polylinje går att klicka inuti
+
+### 0.8.19 Kommandoraden, del 1
+
+Carl August 24 oktober: skriva kommandon som i AutoCAD (och smartshell i
+Sisyfos). Stor, därför två versioner. Efter 2D-formen, eftersom kommandona
+för linje, rektangel och cirkel ska byggas mot den.
+
+- Ett **register över kommandon** med namn och förkortningar, både
+  AutoCADs engelska (L, PL, M, CO, TR …) och svenska. Verktygsknapparna och
+  smartmenyn använder samma register
+- **Kommandoraden** nere under ritytan, som i AutoCAD. **Enter** utan att
+  ett kommando är igång öppnar den; Enter i ett verktyg avslutar som förut.
+  **Mellanslag** kör senaste kommandot igen
+- Fältet kompletterar medan man skriver och har en rad under sig som säger
+  vad Enter gör, som i smartshell
+- **Avstånd och koordinater** i ritverktygen: `2400`, `@1200,600`,
+  `@3000<45`, `x,y`
+
+### 0.8.20 Kommandoraden, del 2
+
+- Varje verktyg frågar efter nästa steg, med alternativen inom
+  hakparentes (`[Stäng/Ångra]`), och alternativen går att skriva eller
+  klicka. Modifiera-verktygen också
+- **Historik** över kommandona (F2), och **högerklick** visar en kort
+  historik där ett klick kör kommandot igen (flyttad från 0.8.17, samma
+  register)
+- Kommandoraden blir en **flyttbar panel** som kan dockas nere eller uppe
+  eller ligga fritt över ritytan
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
