@@ -1,4 +1,6 @@
-import { addWithAsset, deleteElements, renameElement, setLocked } from '../../core/commands';
+import { addWithAsset, deleteElements, renameElement, setLocked, updateParams } from '../../core/commands';
+import { resolveParams } from '../../elements/registry';
+import { restoreProportions, stretched } from '../../elements/underlayEdit';
 import { newId } from '../../core/ids';
 import { onPaper, type Asset, type Id } from '../../core/model';
 import { parseDxf } from '../../formats/dxf';
@@ -327,6 +329,47 @@ export function installUnderlays(app: AppContext) {
     );
   }
 
+  /** Filens egen storlek (bildpunkter eller PDF-punkter), för proportionerna (0.8.16). */
+  async function naturalSize(asset: Id, page?: number): Promise<[number, number] | null> {
+    const a = app.store.doc.assets[asset];
+    if (!a) return null;
+    try {
+      if (a.mime === 'application/pdf') {
+        const { pdfInfo } = await import('../pdf');
+        return await (await pdfInfo(bytesOf(a.data))).size(page ?? 1);
+      }
+      const url = URL.createObjectURL(new Blob([bytesOf(a.data) as Uint8Array<ArrayBuffer>], { type: a.mime }));
+      try {
+        return await imageSize(url);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    } catch {
+      return null;
+    }
+  }
+
+  /** Bildens egna proportioner igen, med samma bredd (0.8.16). */
+  async function resetProportions(id: Id): Promise<void> {
+    const el = app.store.doc.elements[id];
+    if (!el || el.type !== 'Underlay') return;
+    if (el.locked) {
+      app.hint('Låst. Lås upp i egenskaperna för att ändra.', 3000);
+      return;
+    }
+    const p = resolveParams<UnderlayParams>(app.store.doc, el);
+    const natural = await naturalSize(p.asset, p.kind === 'pdf' ? p.page : undefined);
+    if (!natural) {
+      app.hint('Filens storlek kunde inte läsas.', 3000);
+      return;
+    }
+    if (!stretched(p, natural)) {
+      app.hint('Bilden har redan sina egna proportioner.', 3000);
+      return;
+    }
+    updateParams(app.store, [id], restoreProportions(p, natural), 'Återställ proportioner');
+  }
+
   /** Om kalibrering eller riktning pågår (då visas ingen smartmeny vid klick). */
   const busy = () => !!active;
   /** Avbryt det som pågår (Esc). */
@@ -334,5 +377,5 @@ export function installUnderlays(app: AppContext) {
     active = null;
   };
 
-  return { importFiles, chooseFiles, startUnderlayTool, imageHref, exportImage, showUnderlay, openUnderlayMenu, busy, cancel };
+  return { importFiles, chooseFiles, startUnderlayTool, imageHref, exportImage, showUnderlay, openUnderlayMenu, busy, cancel, resetProportions };
 }

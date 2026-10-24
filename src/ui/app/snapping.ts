@@ -5,15 +5,23 @@ import type { Primitive } from '../../repr/primitives';
 import type { SnapSegment } from '../tools/snap';
 import type { AppContext } from './context';
 import { lastResults } from '../../repr/reuse';
+import { underlaySnaps, type UnderlayParams } from '../../elements/underlay';
+import { resolveParams } from '../../elements/registry';
+import type { Element, ProjectDoc } from '../../core/model';
+
+/** Underlagets punkter och linjer (0.8.16). */
+function underlaySegments(doc: ProjectDoc, el: Element): SnapSegment[] {
+  return underlaySnaps(doc, el.id, resolveParams<UnderlayParams>(doc, el));
+}
 
 /** Linjer och polylinjer som sträckor att snäppa mot. */
 function primSegments(id: string, prims: readonly Primitive[]): SnapSegment[] {
   const out: SnapSegment[] = [];
   for (const p of prims) {
-    if (p.kind === 'line') out.push({ id, a: p.a, b: p.b });
+    if (p.kind === 'line') out.push({ id, a: p.a, b: p.b, on: 'På linjen' });
     else if (p.kind === 'polyline') {
       const n = p.points.length;
-      for (let i = 0; i + 1 < n + (p.closed ? 1 : 0); i++) out.push({ id, a: p.points[i], b: p.points[(i + 1) % n] });
+      for (let i = 0; i + 1 < n + (p.closed ? 1 : 0); i++) out.push({ id, a: p.points[i], b: p.points[(i + 1) % n], on: 'På linjen' });
     }
   }
   return out;
@@ -21,7 +29,7 @@ function primSegments(id: string, prims: readonly Primitive[]): SnapSegment[] {
 
 /**
  * Det verktygen snäpper mot: i planen väggarnas referenslinjer, väggarnas
- * liv, möblernas kanter och 2D-element och DXF-underlag; i fasader,
+ * liv, möblernas kanter, 2D-element och underlag; i fasader,
  * sektioner och på arbetsblad linjerna i ritningen.
  */
 export function snapSegments(app: AppContext): SnapSegment[] {
@@ -52,9 +60,15 @@ function planSnapSegments(app: AppContext): SnapSegment[] {
     });
   const edges: SnapSegment[] = [];
   for (const pk of plan.pickables) {
-    const type = doc.elements[pk.id]?.type;
-    if (type === 'Line2D' || type === 'Fill2D' || type === 'Underlay') {
-      // 2D-element och DXF-underlag (0.8 del 2): linjerna och ytornas kanter.
+    const el = doc.elements[pk.id];
+    const type = el?.type;
+    if (type === 'Underlay') {
+      // Underlag (0.8.16): DXF:ens punkter och linjer, bildens kanter.
+      edges.push(...underlaySegments(doc, el));
+      continue;
+    }
+    if (type === 'Line2D' || type === 'Fill2D') {
+      // 2D-element (0.8 del 2): linjerna och ytornas kanter.
       edges.push(...primSegments(pk.id, pk.prims));
       continue;
     }
@@ -68,15 +82,16 @@ function planSnapSegments(app: AppContext): SnapSegment[] {
 /** Linjerna i den öppna fasaden, sektionen eller arbetsbladet, att snäppa mot. */
 function sectionSnapSegments(app: AppContext): SnapSegment[] {
   const { plan } = app;
+  const doc = app.store.doc;
   const out: SnapSegment[] = [];
-  for (const pk of plan.pickables)
-    for (const p of pk.prims) {
-      if (p.kind === 'line') out.push({ id: pk.id, a: p.a, b: p.b });
-      else if (p.kind === 'polyline') for (let i = 0; i + 1 < p.points.length; i++) out.push({ id: pk.id, a: p.points[i], b: p.points[i + 1] });
-    }
+  for (const pk of plan.pickables) {
+    const el = doc.elements[pk.id];
+    if (el?.type === 'Underlay') out.push(...underlaySegments(doc, el));
+    else out.push(...primSegments(pk.id, pk.prims));
+  }
   for (const p of plan.prims) {
-    if (p.kind === 'line' && !p.origin?.objectId) out.push({ id: 'vy', a: p.a, b: p.b });
-    if (p.kind === 'region') for (const ring of p.rings) for (let i = 0; i < ring.length; i++) out.push({ id: p.origin?.objectId ?? 'snitt', a: ring[i], b: ring[(i + 1) % ring.length] });
+    if (p.kind === 'line' && !p.origin?.objectId) out.push({ id: 'vy', a: p.a, b: p.b, on: 'På linjen' });
+    if (p.kind === 'region') for (const ring of p.rings) for (let i = 0; i < ring.length; i++) out.push({ id: p.origin?.objectId ?? 'snitt', a: ring[i], b: ring[(i + 1) % ring.length], on: 'På linjen' });
   }
   return out;
 }

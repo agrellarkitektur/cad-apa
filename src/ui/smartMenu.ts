@@ -202,6 +202,7 @@ export class SmartMenu {
     const groups = this.planShown() ? m.groups() : [];
     const ops = groups.length ? `<div class="sm-ops qb-actions">${groups.map((g) => g.map(btn).join('')).join('<span class="sm-sep"></span>')}</div>` : '';
     const body = this.expanded ? this.panel.selectionMarkup() : null;
+    const fields = body ? null : this.panel.smartFields();
     const scroll = this.el.querySelector('.sm-body')?.scrollTop ?? 0;
     this.el.classList.toggle('expanded', this.expanded);
     this.el.classList.toggle('pinned', !!this.pinned);
@@ -209,6 +210,7 @@ export class SmartMenu {
       `<div class="sm-head">${grip}${title}</div>` +
       ops +
       m.detailMarkup() +
+      (fields ? `<div class="sm-fields compact">${fields}</div>` : '') +
       `<div class="sm-quick quick-bar">${quick}</div>` +
       (body ? `<div class="sm-body compact">${body}<div class="sm-foot"><button type="button" class="btn" data-action="open-panel">Visa i egenskapspanelen</button></div></div>` : '');
     const b = this.el.querySelector('.sm-body');

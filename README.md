@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.15** (alfa, granskning); nästa är **0.8.16, Underlag**.
+**0.8.16** (alfa, underlag); nästa är **0.8.17, Rumsstämpeln**.
 
 ## Vad som fungerar
 
@@ -743,6 +743,34 @@ Version 0.8.15, granskning (samma filformat, 11):
 - **Förskjut alla kanter** flyttar bara ändar på väggar på samma våning
 - **Justera mot linje** fungerar också med mycket stora DXF-underlag
   markerade
+
+Version 0.8.16, underlag (samma filformat, 11):
+- **Snäpp i DXF-underlag**: ändpunkter och mittpunkter på linjerna, bågarnas
+  ändar, mitt och **centrum**, cirklarnas centrum och **kvadrantpunkter**,
+  längs linjerna (*På linjen*) och **skärningen** mellan två linjer, också
+  utan att man ritar något. Bågar och cirklar ger inga falska ändpunkter i
+  skarvarna mellan sina korta bitar. Släckta lager snäpps inte till.
+  Skärningar gäller också väggar och 2D-linjer
+- **Parallellt och vinkelrätt** som i SketchUp: känn på en sned linje med
+  muspekaren, så drar riktningen från förra punkten till sig parallellt med
+  eller vinkelrätt mot den (*Parallellt med linjen*, *Vinkelrätt mot
+  linjen*), med linjen utmärkt. Gäller alla ritverktyg och det man drar.
+  Linjen glöms när man byter verktyg; Shift låser till 45° som förut
+- **X och Y** för underlagets nedre vänstra hörn, och bredd och höjd, i
+  egenskaperna och direkt i smartmenyn
+- **Papperskorg**: *Zooma till* och *Ta bort* i smartmenyn och överst i
+  egenskaperna för ett markerat underlag (går att ändra under
+  Inställningar, som för andra objekt). *Zooma till* fungerar nu också för
+  DXF-underlag
+- **Underlagen i trädet** per filtyp (PDF, Bilder, DXF) med en symbol
+  framför rubriken. En fil som ligger på flera ställen (t.ex. kopierad till
+  ett arbetsblad) visas som en grupp som fälls ut, med en rad per ställe
+- **Bildens grepp**: en markerad bild eller PDF-sida får grepp i hörnen och
+  på sidorna. Hörnen skalar proportionellt kring motsatt hörn (**Shift**
+  sträcker fritt), sidorna sträcker åt sitt håll. Greppen snäpper, och
+  bildens hörn och sidornas mitt är snäppunkter för allt annat. Bredd och
+  höjd skrivs in var för sig, och **Återställ proportioner** ger bilden
+  dess egna proportioner med samma bredd
 
 ## Versioner och gamla projekt
 

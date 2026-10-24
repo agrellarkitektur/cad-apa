@@ -86,6 +86,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.13 | Trimma, Hörnskarv, Dela, Avrunda och Fasa alla, baspunkt från en snäppunkt för Flytta, Vrid, Spegla och I rad, kortkommandon i Modifiera-raden, publicering med FTP |
 | 0.8.14 | Justera och Fördela, Hämta och överför (pipetten), Skala, Förläng och Trimma flera mot en gräns, linjetjocklekar i en tabell med "gammel-cad"-färger |
 | 0.8.15 | Granskning: register för väggändar och dörrar (Modifiera utan kvadratisk tid), `tool.ts` uppdelad |
+| 0.8.16 | Underlag: snäpp i DXF (centrum, kvadranter, bågmitt, skärningar), parallellt och vinkelrätt som i SketchUp, X/Y, bredd och höjd, papperskorg, underlagen per filtyp i trädet, bildens grepp och Återställ proportioner |
 
 ## Framåt
 
@@ -741,6 +742,16 @@ delas den.
   snäppunkter) och på sidorna. Hörnen skalar proportionellt, sidorna
   sträcker åt det hållet. Bredd och höjd kan skrivas in i smartmenyn och
   egenskaperna, med *Återställ proportioner* bredvid
+
+*Byggd (24 oktober), samma format (11): bildens sträckning ligger i
+`size`, så ingen ny parameter behövdes. Claudes val att fråga om: X och Y
+är nedre vänstra hörnet (också för DXF, inte filens nollpunkt); bredd och
+höjd i fälten sträcker en bild var för sig (DXF skalas av bredden som
+förut); Shift i ett hörn sträcker fritt; linjen man kände på glöms vid
+byte av verktyg; linjer i 15°-steg ger inget eget parallellt-lås (vinkellåset
+tar dem); skärningar gäller alla linjer, också väggarnas. Gruppen i trädet
+är hopfälld från början, och underlag i mappar ligger kvar i sina mappar
+som förut.*
 
 ### 0.8.17 Rumsstämpeln
 

@@ -48,6 +48,7 @@ export const QUICK_TYPES: { type: string; label: string }[] = [
   { type: 'Section', label: 'Sektion' },
   { type: 'Elevation', label: 'Fasad' },
   { type: 'North', label: 'Norrpil' },
+  { type: 'Underlay', label: 'Underlag' },
   { type: 'mixed', label: 'Blandat' },
 ];
 
@@ -63,6 +64,7 @@ const QUICK_DEFAULTS: Record<string, QuickId[]> = {
   Section: ['open-marker', 'copy', 'delete'],
   Elevation: ['open-marker', 'delete'],
   North: ['rotate-90'],
+  Underlay: ['zoom-selection', 'delete'],
   mixed: ['copy', 'rotate-90', 'mirror', 'demolish', 'delete'],
 };
 

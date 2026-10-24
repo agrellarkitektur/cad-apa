@@ -1,6 +1,6 @@
 import type { Element, Id } from '../../core/model';
 import type { PlanResult } from '../../repr/plan';
-import type { Bounds, Vec2 } from '../../repr/primitives';
+import { boundsOf, type Bounds, type Vec2 } from '../../repr/primitives';
 import type { PlanView } from '../../view2d/planView';
 import type { ModifyContext } from '../modify/ops';
 import type { ScreenBox } from '../smartMenu';
@@ -16,7 +16,9 @@ export function selectionBounds(plan: PlanResult, ids: readonly Id[]): Bounds | 
   let b: Bounds | null = null;
   for (const pk of plan.pickables) {
     if (!want.has(pk.id)) continue;
-    for (const q of pk.regions.flat(2) as Vec2[]) {
+    // Utan ytor, t.ex. ett DXF-underlag eller en linje (0.8.16): det som ritas.
+    const pts = pk.regions.length ? (pk.regions.flat(2) as Vec2[]) : cornersOf(boundsOf(pk.prims));
+    for (const q of pts) {
       if (!b) b = { minX: q[0], minY: q[1], maxX: q[0], maxY: q[1] };
       else {
         b.minX = Math.min(b.minX, q[0]);
@@ -28,6 +30,8 @@ export function selectionBounds(plan: PlanResult, ids: readonly Id[]): Bounds | 
   }
   return b;
 }
+
+const cornersOf = (b: Bounds | null): Vec2[] => (b ? [[b.minX, b.minY], [b.maxX, b.maxY]] : []);
 
 /** En ruta i planen på skärmen, i px från ritytans hörn. */
 export function screenBox(view: PlanView, canvas: HTMLElement, b: Bounds): ScreenBox {

@@ -5,6 +5,11 @@ import { icons } from './icons';
 
 export type NavTab = TreeTab;
 
+/** Underlagen per filtyp i trädet (0.8.16), med typens symbol. */
+const KIND_ORDER: UnderlayParams['kind'][] = ['pdf', 'image', 'dxf'];
+const KIND_HEADING: Record<UnderlayParams['kind'], string> = { pdf: 'PDF', image: 'Bilder', dxf: 'DXF' };
+const KIND_ICON: Record<UnderlayParams['kind'], string> = { pdf: icons.filePdf, image: icons.fileImage, dxf: icons.fileDxf };
+
 const TABS: [NavTab, string][] = [
   ['underlag', 'Underlag'],
   ['modell', 'Modell'],
@@ -50,6 +55,8 @@ export class Navigator {
   tab: NavTab = 'vyer';
   /** Hopfällda mappar. */
   private collapsed = new Set<Id>();
+  /** Utfällda filer som ligger på flera ställen (0.8.16); de är hopfällda från början. */
+  private openGroups = new Set<Id>();
 
   constructor(host: NavigatorHost) {
     this.host = host;
@@ -146,24 +153,69 @@ export class Navigator {
     const list = Object.values(doc.elements)
       .filter((e) => e.type === 'Underlay')
       .sort((a, b) => (a.name ?? '').localeCompare(b.name ?? '', 'sv', { numeric: true }));
-    const rows = new Map<Id, string>();
-    for (const e of list) {
+    const kindOf = (id: Id) => (doc.elements[id].params as unknown as UnderlayParams).kind;
+    const assetOf = (id: Id) => (doc.elements[id].params as unknown as UnderlayParams).asset;
+    // Hur många underlag som visar samma fil (0.8.16).
+    const uses = new Map<Id, number>();
+    for (const e of list) uses.set(assetOf(e.id), (uses.get(assetOf(e.id)) ?? 0) + 1);
+    /** `inGroup`: under filens grupp; `inKind`: under filtypens rubrik. */
+    const row = (id: Id, inGroup: boolean, inKind = inGroup) => {
+      const e = doc.elements[id];
       const p = e.params as unknown as UnderlayParams;
       const file = doc.assets[p.asset];
-      rows.set(
-        e.id,
-        `<div class="view-row${selected.has(e.id) ? ' active' : ''}"><button class="view-apply" data-underlay-pick="${e.id}" title="Visa underlaget och dess inställningar. Högerklicka (håll in på telefonen) för fler val">${esc(e.name ?? file?.name ?? 'Underlag')}${e.locked ? `<span class="row-lock" title="Låst">${icons.lock}</span>` : ''}<small>${UNDERLAY_KIND_LABEL[p.kind]} · ${esc(where(e.space, e.storey))}${file ? '' : ' · filen saknas'}</small></button><button class="icon-mini view-more" data-underlay-menu="${e.id}" aria-label="Fler val för ${esc(e.name ?? 'underlaget')}" title="Fler val">${icons.more}</button></div>`,
-      );
-    }
-    const unfiled = this.unfiled(rows, list.map((e) => e.id));
-    return `${this.folders('underlag', rows)}<section>
-      ${list.length ? (unfiled ? `<div class="nav-list">${unfiled}</div>` : '') : '<p class="note">Inga underlag än. Lägg in en PDF, en bild eller en DXF att rita över, eller dra filen till ritytan.</p>'}
+      // I en grupp är filen given; raden säger var underlaget ligger.
+      const sub = inKind ? where(e.space, e.storey) : `${UNDERLAY_KIND_LABEL[p.kind]} · ${where(e.space, e.storey)}`;
+      return `<div class="view-row${selected.has(e.id) ? ' active' : ''}"><button class="view-apply" data-underlay-pick="${e.id}" title="Visa underlaget och dess inställningar. Högerklicka (håll in på telefonen) för fler val">${inGroup ? '' : KIND_ICON[p.kind]}<span class="ul-name">${esc(e.name ?? file?.name ?? 'Underlag')}</span>${e.locked ? `<span class="row-lock" title="Låst">${icons.lock}</span>` : ''}<small>${esc(sub)}${file ? '' : ' · filen saknas'}</small></button><button class="icon-mini view-more" data-underlay-menu="${e.id}" aria-label="Fler val för ${esc(e.name ?? 'underlaget')}" title="Fler val">${icons.more}</button></div>`;
+    };
+    const rows = new Map<Id, string>();
+    for (const e of list) rows.set(e.id, row(e.id, false));
+    // Det som inte ligger i någon mapp: per filtyp, och en fil som ligger på
+    // flera ställen som en grupp med en rad per underlag (0.8.16).
+    const valid = new Set(doc.folders.map((f) => f.id));
+    const loose = list.filter((e) => !(doc.tree[e.id] && valid.has(doc.tree[e.id])));
+    const sections = KIND_ORDER.map((kind) => {
+      const mine = loose.filter((e) => kindOf(e.id) === kind);
+      if (!mine.length) return '';
+      const done = new Set<Id>();
+      const html: string[] = [];
+      for (const e of mine) {
+        const asset = assetOf(e.id);
+        if (done.has(asset)) continue;
+        done.add(asset);
+        const same = mine.filter((x) => assetOf(x.id) === asset);
+        if ((uses.get(asset) ?? 0) < 2) {
+          html.push(row(e.id, false, true));
+          continue;
+        }
+        // Alla underlag med filen räknas, också de i mappar; de i mappar visas där.
+        const open = this.openGroups.has(asset);
+        const active = same.some((x) => selected.has(x.id));
+        const name = doc.assets[asset]?.name ?? e.name ?? 'Underlag';
+        html.push(`<div class="folder ul-group${open ? ' open' : ''}">
+            <div class="view-row folder-row${active && !open ? ' active' : ''}">
+              <button class="icon-mini folder-toggle" data-ul-group="${esc(asset)}" aria-expanded="${open}" aria-label="${open ? 'Fäll ihop' : 'Fäll ut'} ${esc(name)}">${icons.chevron}</button>
+              <button class="view-apply folder-name" data-ul-group="${esc(asset)}" title="Filen ligger på ${uses.get(asset)} ställen. Fäll ut för att se dem">${KIND_ICON[kind]}<span>${esc(name)}</span><small>${uses.get(asset)}</small></button>
+            </div>
+            ${open ? `<div class="folder-body">${same.map((x) => row(x.id, true)).join('')}</div>` : ''}
+          </div>`);
+      }
+      return `<section class="ul-kind"><h2>${KIND_ICON[kind]}<span>${KIND_HEADING[kind]}</span></h2><div class="nav-list">${html.join('')}</div></section>`;
+    }).join('');
+    return `${this.folders('underlag', rows)}${sections}<section>
+      ${list.length ? '' : '<p class="note">Inga underlag än. Lägg in en PDF, en bild eller en DXF att rita över, eller dra filen till ritytan.</p>'}
       <div class="nav-actions">
         <button class="btn" data-action="add-underlay">${icons.plus}<span>Lägg in underlag…</span></button>
         ${this.newFolderButton('underlag')}
       </div>
       <p class="note">Underlaget hamnar där du är: på våningen, på arbetsbladet eller i fasaden eller sektionen som är öppen. Kalibrera skalan och rikta det i egenskaperna; lås det när det ligger rätt.</p>
     </section>`;
+  }
+
+  /** Fäll ut eller ihop en fil som ligger på flera ställen (0.8.16). */
+  toggleUnderlayGroup(asset: Id): void {
+    if (this.openGroups.has(asset)) this.openGroups.delete(asset);
+    else this.openGroups.add(asset);
+    this.render();
   }
 
   private modell(): string {

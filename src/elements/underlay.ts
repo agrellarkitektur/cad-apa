@@ -150,6 +150,69 @@ function dxfPrims(doc: ProjectDoc, id: Id, p: UnderlayParams, drawingScale: numb
   return out;
 }
 
+/** Det man snäpper mot i ett underlag (0.8.16): sträckor, och punkter som sträckor med `point`. */
+export interface UnderlaySnap {
+  id: Id;
+  a: Vec2;
+  b: Vec2;
+  curve?: boolean;
+  point?: 'endpoint' | 'midpoint' | 'center' | 'quadrant';
+  on?: string;
+}
+
+const snapCache = new Map<string, UnderlaySnap[]>();
+
+/**
+ * Det man snäpper mot i ett underlag (0.8.16). DXF: linjernas ändar och
+ * mittpunkter, bågarnas ändar, mitt och centrum, cirklarnas centrum och
+ * kvadrantpunkter, och linjerna själva (bågarna som korta bitar, utan
+ * punkter i skarvarna). Släckta lager räknas inte. Bild och PDF: kanterna,
+ * så att hörnen och sidornas mitt går att snäppa till.
+ */
+export function underlaySnaps(doc: ProjectDoc, id: Id, p: UnderlayParams): UnderlaySnap[] {
+  if (p.kind !== 'dxf') {
+    const c = underlayCorners(p);
+    return c.map((a, i) => ({ id, a, b: c[(i + 1) % 4], on: 'På kanten' }));
+  }
+  const d = dxfOf(doc, p.asset);
+  if (!d) return [];
+  const key = JSON.stringify([id, doc.assets[p.asset]?.data.length, p.pos, p.angle, p.scale, p.ref, p.layersOff ?? []]);
+  const hit = snapCache.get(key);
+  if (hit) return hit;
+  const t = underlayTransform(p);
+  const off = new Set(p.layersOff ?? []);
+  const out: UnderlaySnap[] = [];
+  const on = 'På linjen';
+  for (const it of d.items) {
+    if (it.kind !== 'poly' || off.has(it.layer)) continue;
+    const pts = it.pts.map(t);
+    const n = pts.length;
+    const corners = it.corners ? new Set(it.corners) : null;
+    for (let i = 0; i + 1 < n + (it.closed ? 1 : 0); i++) {
+      const j = (i + 1) % n;
+      // Rak, om båda punkterna är hörn och inga punkter längs en båge ligger mellan.
+      const straight = !corners || (corners.has(i) && corners.has(j) && (j === i + 1 || (j === 0 && i === n - 1)) && !it.curve);
+      out.push(straight ? { id, a: pts[i], b: pts[j], on } : { id, a: pts[i], b: pts[j], curve: true, on });
+    }
+    if (corners) for (const i of corners) out.push({ id, a: pts[i], b: pts[i], point: 'endpoint' });
+    if (it.curve) {
+      const c = t(it.curve.c);
+      out.push({ id, a: c, b: c, point: 'center' });
+      if (it.curve.mid) {
+        const m = t(it.curve.mid);
+        out.push({ id, a: m, b: m, point: 'midpoint' });
+      }
+      for (const q of it.curve.quadrants ?? []) {
+        const m = t(q);
+        out.push({ id, a: m, b: m, point: 'quadrant' });
+      }
+    }
+  }
+  if (snapCache.size > 20) snapCache.delete(snapCache.keys().next().value!);
+  snapCache.set(key, out);
+  return out;
+}
+
 export const underlayType: ElementType<UnderlayParams> = {
   type: 'Underlay',
   planReads: [],

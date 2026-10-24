@@ -14,7 +14,19 @@ import { textWidth } from './helvetica';
 export type P2 = [number, number];
 
 export type DxfItem =
-  | { kind: 'poly'; layer: string; pts: P2[]; closed: boolean }
+  | {
+      kind: 'poly';
+      layer: string;
+      pts: P2[];
+      closed: boolean;
+      /**
+       * Hörnen bland punkterna (0.8.16), när några punkter bara följer en båge
+       * (bultar, bågar, cirklar). Saknas: alla punkter är hörn.
+       */
+      corners?: number[];
+      /** Bågens eller cirkelns centrum, mittpunkt och kvadrantpunkter, att snäppa till. */
+      curve?: { c: P2; mid?: P2; quadrants?: P2[] };
+    }
   /**
    * En textrad. `at` är radens baslinje vid `align` (vänster, mitt eller
    * höger), `height` versalhöjden i filens enheter (så mäts texthöjd i
@@ -572,10 +584,32 @@ export function parseDxf(text: string): DxfDrawing {
       // Entiteter med negativ z-extrudering är speglade i x (vanligt för speglade bågar).
       const flip = num(e, 230, 1) < 0;
       const ocs = (p: P2): P2 => (flip ? [-p[0], p[1]] : p);
-      const poly = (pts: P2[], closed: boolean) => {
+      const poly = (pts: P2[], closed: boolean, corners?: number[], curve?: { c: P2; mid?: P2; quadrants?: P2[] }) => {
         if (pts.length < 2) return;
         useLayer(layer);
-        items.push({ kind: 'poly', layer, pts: pts.map((q) => apply(m, q)), closed });
+        items.push({
+          kind: 'poly',
+          layer,
+          pts: pts.map((q) => apply(m, q)),
+          closed,
+          ...(corners ? { corners } : {}),
+          ...(curve ? { curve: { c: apply(m, curve.c), ...(curve.mid ? { mid: apply(m, curve.mid) } : {}), ...(curve.quadrants ? { quadrants: curve.quadrants.map((q) => apply(m, q)) } : {}) } } : {}),
+        });
+      };
+      /** Hörnen i en polylinje med bultar: index för varje hörn bland punkterna. */
+      const bulged = (verts: P2[], bul: number[], closed: boolean) => {
+        const pts: P2[] = verts.length ? [verts[0]] : [];
+        const corners = verts.length ? [0] : [];
+        const n = closed ? verts.length : verts.length - 1;
+        for (let i = 0; i < n; i++) {
+          pts.push(...bulgePts(verts[i], verts[(i + 1) % verts.length], bul[i]));
+          corners.push(pts.length - 1);
+        }
+        if (closed && pts.length > 1) {
+          pts.pop();
+          corners.pop();
+        }
+        poly(pts, closed, bul.some((b) => Math.abs(b) > 1e-9) ? corners : undefined);
       };
       switch (e.type) {
         case 'LINE':
@@ -593,11 +627,7 @@ export function parseDxf(text: string): DxfDrawing {
           }
           const closed = (num(e, 70) & 1) === 1;
           const verts: P2[] = xs.map((x, i) => ocs([x, ys[i] ?? 0]));
-          const pts: P2[] = verts.length ? [verts[0]] : [];
-          const n = closed ? verts.length : verts.length - 1;
-          for (let i = 0; i < n; i++) pts.push(...bulgePts(verts[i], verts[(i + 1) % verts.length], flip ? -bulges[i] : bulges[i]));
-          if (closed && pts.length > 1) pts.pop();
-          poly(pts, closed);
+          bulged(verts, bulges.map((b) => (flip ? -b : b)), closed);
           break;
         }
         case 'POLYLINE': {
@@ -607,18 +637,15 @@ export function parseDxf(text: string): DxfDrawing {
           const vs = (e.vertices ?? []).filter((v) => !(num(v, 70) & 16));
           const verts: P2[] = vs.map((v) => ocs([num(v, 10), num(v, 20)]));
           const bul = vs.map((v) => (flip ? -1 : 1) * num(v, 42));
-          const pts: P2[] = verts.length ? [verts[0]] : [];
-          const n = closed ? verts.length : verts.length - 1;
-          for (let i = 0; i < n; i++) pts.push(...bulgePts(verts[i], verts[(i + 1) % verts.length], bul[i]));
-          if (closed && pts.length > 1) pts.pop();
-          poly(pts, closed);
+          bulged(verts, bul, closed);
           break;
         }
         case 'CIRCLE': {
           const c = ocs([num(e, 10), num(e, 20)]);
-          const pts = arcPts(c[0], c[1], num(e, 40), 0, 360);
+          const r = num(e, 40);
+          const pts = arcPts(c[0], c[1], r, 0, 360);
           pts.pop();
-          poly(pts, true);
+          poly(pts, true, [], { c, quadrants: [[c[0] + r, c[1]], [c[0], c[1] + r], [c[0] - r, c[1]], [c[0], c[1] - r]] });
           break;
         }
         case 'ARC': {
@@ -626,7 +653,12 @@ export function parseDxf(text: string): DxfDrawing {
           let a0 = num(e, 50);
           let a1 = num(e, 51);
           if (flip) [a0, a1] = [180 - a1, 180 - a0];
-          poly(arcPts(c[0], c[1], num(e, 40), a0, a1), false);
+          const r = num(e, 40);
+          const pts = arcPts(c[0], c[1], r, a0, a1);
+          let sweep = a1 - a0;
+          while (sweep <= 0) sweep += 360;
+          const am = ((a0 + sweep / 2) * Math.PI) / 180;
+          poly(pts, false, [0, pts.length - 1], { c, mid: [c[0] + r * Math.cos(am), c[1] + r * Math.sin(am)] });
           break;
         }
         case 'ELLIPSE': {
@@ -644,22 +676,26 @@ export function parseDxf(text: string): DxfDrawing {
           });
           const full = Math.abs(t1 - t0 - Math.PI * 2) < 1e-6;
           if (full) pts.pop();
-          poly(pts, full);
+          const axis = (k: number): P2 => ocs([c[0] + maj[0] * Math.cos(k) + min[0] * Math.sin(k), c[1] + maj[1] * Math.cos(k) + min[1] * Math.sin(k)]);
+          poly(pts, full, full ? [] : [0, pts.length - 1], { c: ocs(c), ...(full ? { quadrants: [0, 1, 2, 3].map((k) => axis((k * Math.PI) / 2)) } : {}) });
           break;
         }
         case 'SPLINE': {
           const fx = all(e, 11);
           const fy = all(e, 21);
           const closed = (num(e, 70) & 1) === 1;
+          // En spline är en kurva: bara ändarna är punkter att snäppa till.
+          const ends = (n: number) => (closed ? [] : [0, n - 1]);
           if (fx.length >= 2) {
-            poly(fx.map((x, i): P2 => [x, fy[i] ?? 0]), closed);
+            poly(fx.map((x, i): P2 => [x, fy[i] ?? 0]), closed, ends(fx.length));
             break;
           }
           const cx = all(e, 10);
           const cy = all(e, 20);
           const ctrl = cx.map((x, i): P2 => [x, cy[i] ?? 0]);
           if (ctrl.length < 2) break;
-          poly(bspline(ctrl, num(e, 71, 3), all(e, 40)), closed);
+          const spline = bspline(ctrl, num(e, 71, 3), all(e, 40));
+          poly(spline, closed, ends(spline.length));
           break;
         }
         case 'TEXT':

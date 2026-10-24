@@ -10,6 +10,7 @@ import { resolveParams } from '../elements/registry';
 import { SLOPE_STYLES, type RoofSlopeParams } from '../elements/roofSlope';
 import { moveToFolder } from '../core/treeCommands';
 import { dxfOf, UNDERLAY_KIND_LABEL, type UnderlayParams } from '../elements/underlay';
+import { hasImageGrips, resizeUnderlay } from '../elements/underlayEdit';
 import { icons } from './icons';
 import { escapeHtml } from './labels';
 
@@ -74,14 +75,34 @@ export function drawingFields(doc: ProjectDoc, el: Element): string {
   return '';
 }
 
-/** Underlagets fält (0.8 del 2): fil, storlek eller skala, vridning, tonat, lager och mapp. */
+const ulNum = (key: string, label: string, v: number | string, unit: string, extra = '') =>
+  `<label class="field"><span>${label}</span><span class="input-unit"><input type="text" data-expr ${unit === '°' ? 'data-unit="deg"' : unit === '' ? 'data-unit=""' : ''} inputmode="decimal" autocomplete="off" data-key="${key}" value="${v}"${extra}><i>${unit}</i></span></label>`;
+
+/**
+ * Läge och storlek (0.8.16): X och Y för nedre vänstra hörnet, bredd och
+ * höjd. En bild eller PDF-sida sträcks av bredd och höjd var för sig, med
+ * *Återställ proportioner*; en DXF skalas av bredden.
+ */
+export function underlayPlaceFields(doc: ProjectDoc, el: Element): string {
+  const p = resolveParams<UnderlayParams>(doc, el);
+  const w = Math.round(p.size[0] * p.scale);
+  const h = Math.round(p.size[1] * p.scale);
+  const ro = el.locked ? ' disabled' : '';
+  const image = hasImageGrips(p);
+  return `<div class="fields">
+      ${ulNum('ul:x', 'X', Math.round(p.pos[0]), 'mm', ro)}
+      ${ulNum('ul:y', 'Y', Math.round(p.pos[1]), 'mm', ro)}
+      ${ulNum('ul:width', image ? 'Bredd' : 'Bredd i modellen', w, 'mm', ro)}
+      ${image ? ulNum('ul:height', 'Höjd', h, 'mm', ro) : `<label class="field"><span>Höjd i modellen</span><span class="input-unit"><input value="${h}" readonly><i>mm</i></span></label>`}
+    </div>
+    ${image ? `<div class="row"><button class="btn" data-action="ul-proportions"${ro} title="Höjden efter bildens egna proportioner, med samma bredd">Återställ proportioner</button></div>` : ''}`;
+}
+
+/** Underlagets fält (0.8 del 2): fil, läge och storlek eller skala, vridning, tonat, lager och mapp. */
 function underlayFields(doc: ProjectDoc, el: Element): string {
   const p = resolveParams<UnderlayParams>(doc, el);
   const file = doc.assets[p.asset];
-  const w = Math.round(p.size[0] * p.scale);
-  const h = Math.round(p.size[1] * p.scale);
-  const num = (key: string, label: string, v: number | string, unit: string, extra = '') =>
-    `<label class="field"><span>${label}</span><span class="input-unit"><input type="text" data-expr ${unit === '°' ? 'data-unit="deg"' : unit === '' ? 'data-unit=""' : ''} inputmode="decimal" autocomplete="off" data-key="${key}" value="${v}"${extra}><i>${unit}</i></span></label>`;
+  const num = ulNum;
   const scale =
     p.kind === 'pdf'
       ? `<label class="field"><span>Skala (sidan i 1:1)</span><span class="input-unit scale-unit"><i>1:</i><input type="text" data-expr data-unit="" inputmode="decimal" autocomplete="off" data-key="ul:ratio" value="${Math.round((p.scale / MM_PER_PT) * 100) / 100}"></span></label>`
@@ -97,11 +118,12 @@ function underlayFields(doc: ProjectDoc, el: Element): string {
       <label class="field"><span>Fil</span><input value="${escapeHtml(`${UNDERLAY_KIND_LABEL[p.kind]} · ${file?.name ?? 'saknas'}`)}" readonly></label>
       ${p.kind === 'pdf' ? num('ul:page', 'Sida', p.page ?? 1, '') : ''}
       ${scale}
-      ${num('ul:width', 'Bredd i modellen', w, 'mm')}
-      <label class="field"><span>Höjd i modellen</span><span class="input-unit"><input value="${h}" readonly><i>mm</i></span></label>
       ${num('ul:angle', 'Vridning', Math.round(p.angle * 100) / 100, '°')}
       ${folders.length ? `<label class="field"><span>Mapp</span><select data-key="ul:folder"><option value="">Ingen mapp</option>${folders.map((f) => `<option value="${f.id}"${f.id === folder ? ' selected' : ''}>${escapeHtml(f.name)}</option>`).join('')}</select></label>` : ''}
     </div>
+    <div class="field-label">Läge och storlek</div>
+    ${underlayPlaceFields(doc, el)}
+    <p class="note">X och Y är nedre vänstra hörnet${p.angle ? ', före vridningen' : ''}.${hasImageGrips(p) ? ' Dra i hörnen för att skala (Shift sträcker fritt) och i sidorna för att sträcka.' : ''}</p>
     <label class="field range-field"><span>Synlighet <b>${p.opacity} %</b></span><input type="range" min="5" max="100" step="5" data-key="ul:opacity" value="${p.opacity}" aria-label="Synlighet"></label>
     ${p.kind !== 'dxf' ? `<label class="check"><input type="checkbox" data-key="ul:gray"${p.gray ? ' checked' : ''}> Gråskala</label>` : ''}
     <div class="row"><button class="btn" data-action="ul-calibrate"${el.locked ? ' disabled' : ''} title="Klicka två punkter med känt avstånd och skriv avståndet">Kalibrera skalan…</button><button class="btn" data-action="ul-align"${el.locked ? ' disabled' : ''} title="Klicka två punkter längs en linje som ska bli rak">Rikta…</button></div>
@@ -229,7 +251,12 @@ export function drawingChange(store: DocStore, ids: Id[], key: string, input: HT
     };
     if (name === 'ratio' && num > 0) rescale(num * MM_PER_PT, 'Ändra skala');
     else if (name === 'unit' && num > 0) rescale(num, 'Ändra enhet');
-    else if (name === 'width' && num > 0) rescale(num / p.size[0], 'Ändra storlek');
+    else if (name === 'x' && Number.isFinite(num)) updateParams(store, [el.id], { pos: [num, p.pos[1]] }, 'Flytta underlaget');
+    else if (name === 'y' && Number.isFinite(num)) updateParams(store, [el.id], { pos: [p.pos[0], num] }, 'Flytta underlaget');
+    else if ((name === 'width' || name === 'height') && num > 0 && hasImageGrips(p)) {
+      const r = resizeUnderlay(p, name === 'width' ? num : null, name === 'height' ? num : null);
+      if (r) updateParams(store, [el.id], r, name === 'width' ? 'Ändra bredd' : 'Ändra höjd');
+    } else if (name === 'width' && num > 0) rescale(num / p.size[0], 'Ändra storlek');
     else if (name === 'angle' && Number.isFinite(num)) {
       // Vrid kring nedre vänstra hörnet.
       updateParams(store, [el.id], { angle: ((num % 360) + 360) % 360 }, 'Vrid underlaget');

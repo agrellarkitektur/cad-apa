@@ -98,6 +98,9 @@ export const icons = {
   // Ett ritningsblad med ritningshuvud i nedre högra hörnet (0.8 del 3).
   sheet: svg('<path d="M3 5.5h18v13H3z"/><path d="M13 18.5v-4h8"/><path d="M6 8.5h5v5H6z"/>'),
   // Plot: ett blad som kommer ut ur en skrivare.
+  fileImage: svg('<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4"/><path d="M8.5 18l3-3.5 2 2 1.5-1.5 2.5 3"/><circle cx="10" cy="11" r="1.1"/>'),
+  filePdf: svg('<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4"/><path d="M8.5 11.5h7M8.5 14.5h7M8.5 17.5h4"/>'),
+  fileDxf: svg('<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4"/><path d="M8.5 18v-6.5h7"/><path d="M8.5 18a5.5 5.5 0 0 0 5.5-5.5"/>'),
   plot: svg('<path d="M7 9V3.5h10V9"/><path d="M5 17H3.5V9.5h17V17H19"/><path d="M7 14h10v6.5H7z"/><path d="M17.5 12h.01"/>'),
 } as const;
 

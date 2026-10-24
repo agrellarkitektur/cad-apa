@@ -5,6 +5,9 @@ import { add, angleDeg, dist, dot, norm, scale, sub } from '../../geometry/vec';
 import type { WallParams } from '../../elements/wall';
 import { isShape, moveShapeNode, previewShape, shapeNodes } from '../../elements/shapeEdit';
 import { dragRoofGrip, roofGripsInView, type RoofDrag, type RoofGrip } from '../../elements/roofGrips';
+import { underlayCorners, type UnderlayParams } from '../../elements/underlay';
+import { dragUnderlayGrip, hasImageGrips, underlayGrips, type UnderlayGrip } from '../../elements/underlayEdit';
+import { resolveParams } from '../../elements/registry';
 import { pickableById, type Pickable } from '../../repr/plan';
 import type { Primitive, Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
@@ -69,6 +72,8 @@ export class SelectTool implements ViewTool {
   private roof: { grip: RoofGrip; drag: RoofDrag | null; snap: SnapResult | null } | null = null;
   /** En punkt i ett 2D-element som dras (0.8 del 2). */
   private node: { id: string; index: number; from: Vec2; snap: SnapResult | null } | null = null;
+  /** Ett grepp i en markerad bild eller PDF-sida som dras (0.8.16). */
+  private ulGrip: { id: string; grip: UnderlayGrip; from: Vec2; snap: SnapResult | null; free: boolean } | null = null;
 
   suppressNextClick(): void {
     this.skipClick = true;
@@ -85,6 +90,11 @@ export class SelectTool implements ViewTool {
     const rg = ro ? this.roofGripAt(p.model, p.pointerType === 'touch') : null;
     if (rg) {
       this.roof = { grip: rg, drag: null, snap: null };
+      return 'capture';
+    }
+    const ug = this.underlayGripAt(p.model, p.pointerType === 'touch');
+    if (ug) {
+      this.ulGrip = { ...ug, snap: null, free: false };
       return 'capture';
     }
     const nd = this.nodeAt(p.model, p.pointerType === 'touch');
@@ -116,6 +126,12 @@ export class SelectTool implements ViewTool {
   drag(p: ViewPointer): void {
     this.copying = p.mod;
     const tol = pxToMm(this.host, p.pointerType === 'touch' ? 18 : 12);
+    if (this.ulGrip) {
+      const u = this.ulGrip;
+      u.free = p.shift;
+      u.snap = snap({ cursor: p.model, segments: this.host.snapSegments(), tol, exclude: new Set([u.id]) });
+      return;
+    }
     if (this.node) {
       const n = this.node;
       const el = this.host.store.doc.elements[n.id];
@@ -163,7 +179,7 @@ export class SelectTool implements ViewTool {
       m.flush = null;
       // En exakt punkt (hörn, mittpunkt, skärning) vinner. Annars läggs det
       // som flyttas kant i kant med väggar och möbler när det kommer nära.
-      const exact = r.kind === 'endpoint' || r.kind === 'midpoint' || r.kind === 'intersection' || r.kind === 'perpendicular';
+      const exact = r.kind === 'endpoint' || r.kind === 'midpoint' || r.kind === 'center' || r.kind === 'quadrant' || r.kind === 'intersection' || r.kind === 'perpendicular';
       if (exact || p.shift) {
         m.target = r;
         return;
@@ -184,6 +200,19 @@ export class SelectTool implements ViewTool {
   }
 
   up(p: ViewPointer, moved: boolean): void {
+    if (this.ulGrip) {
+      const u = this.ulGrip;
+      this.ulGrip = null;
+      const el = this.host.store.doc.elements[u.id];
+      if (!el || !moved || !u.snap) return;
+      if (el.locked) {
+        this.host.hint('Låst. Lås upp i egenskaperna för att ändra.', 3000);
+        return;
+      }
+      const next = dragUnderlayGrip(resolveParams<UnderlayParams>(this.host.store.doc, el), u.grip, u.snap.point, u.free);
+      if (next) updateParams(this.host.store, [u.id], next, u.grip.kind === 'side' ? 'Sträck bilden' : u.free ? 'Sträck bilden' : 'Skala bilden');
+      return;
+    }
     if (this.node) {
       const n = this.node;
       this.node = null;
@@ -294,7 +323,7 @@ export class SelectTool implements ViewTool {
    */
   cycle(back = false): boolean {
     const st = this.stack;
-    if (!st || st.ids.length < 2 || this.box || this.move || this.grip) return false;
+    if (!st || st.ids.length < 2 || this.box || this.move || this.grip || this.ulGrip) return false;
     const n = st.ids.length;
     st.index = (st.index + (back ? n - 1 : 1)) % n;
     this.hoverId = st.ids[st.index];
@@ -320,6 +349,7 @@ export class SelectTool implements ViewTool {
     this.stack = null;
     this.roof = null;
     this.node = null;
+    this.ulGrip = null;
     this.box = null;
     this.grip = null;
     this.move = null;
@@ -344,7 +374,7 @@ export class SelectTool implements ViewTool {
       this.host.view.svg.style.cursor = this.cursor = 'default';
       return;
     }
-    this.cursor = p && this.gripAt(p.model) ? 'crosshair' : this.hoverId && this.host.selection.has(this.hoverId) ? 'move' : 'default';
+    this.cursor = p && (this.gripAt(p.model) || this.underlayGripAt(p.model, false)) ? 'crosshair' : this.hoverId && this.host.selection.has(this.hoverId) ? 'move' : 'default';
     this.host.view.svg.style.cursor = this.cursor;
   }
 
@@ -354,6 +384,23 @@ export class SelectTool implements ViewTool {
     for (const g of this.roofGrips()) {
       const s = cam.toScreen(g.at);
       out.push(g.kind === 'ridge' ? `<path d="M${s[0]} ${s[1] - 7}L${s[0] + 7} ${s[1]}L${s[0]} ${s[1] + 7}L${s[0] - 7} ${s[1]}Z" class="grip"/>` : `<rect x="${s[0] - 5}" y="${s[1] - 5}" width="10" height="10" class="grip"/>`);
+    }
+    for (const g of this.underlayGripsShown()) {
+      const q = cam.toScreen(g.at);
+      out.push(g.kind === 'corner' ? `<rect x="${q[0] - 5}" y="${q[1] - 5}" width="10" height="10" class="grip"/>` : `<rect x="${q[0] - 4}" y="${q[1] - 4}" width="8" height="8" class="grip side-grip"/>`);
+    }
+    if (this.ulGrip?.snap) {
+      const u = this.ulGrip;
+      const sn = this.ulGrip.snap;
+      const el = this.host.store.doc.elements[u.id];
+      const p = el ? resolveParams<UnderlayParams>(this.host.store.doc, el) : null;
+      const next = p && dragUnderlayGrip(p, u.grip, sn.point, u.free);
+      if (p && next) {
+        const c = underlayCorners({ ...p, ...next }).map((q) => cam.toScreen(q));
+        out.push(`<path d="M${c.map((q) => q.join(' ')).join('L')}Z" class="ghost"/>`);
+        out.push(lengthLabel(cam, sn.point, sn.point, `${nf.format(Math.round(next.size[0] * next.scale))} × ${nf.format(Math.round(next.size[1] * next.scale))} mm`));
+      }
+      out.push(snapMarker(cam, sn));
     }
     if (this.node?.snap) {
       const n = this.node;
@@ -477,6 +524,32 @@ export class SelectTool implements ViewTool {
         const d = dist(p[end], pt);
         if (d <= tol && (!best || d < best.d)) best = { wallId: id, kind, end, from: p[end], d };
       }
+    }
+    return best;
+  }
+
+  /** Greppen i en ensam markerad bild eller PDF-sida som går att ändra (0.8.16). */
+  private underlayGripsShown(): ReturnType<typeof underlayGrips> {
+    if (this.ulGrip?.snap) return [];
+    const ids = this.host.selection.list();
+    if (ids.length !== 1) return [];
+    const doc = this.host.store.doc;
+    const el = doc.elements[ids[0]];
+    if (el?.type !== 'Underlay' || el.locked) return [];
+    if (this.host.readOnly?.() && !this.host.canEdit?.(el.id)) return [];
+    if (!this.host.plan().pickables.some((pk) => pk.id === el.id)) return [];
+    const p = resolveParams<UnderlayParams>(doc, el);
+    return hasImageGrips(p) ? underlayGrips(p) : [];
+  }
+
+  private underlayGripAt(pt: Vec2, touch: boolean): { id: string; grip: UnderlayGrip; from: Vec2 } | null {
+    const tol = pxToMm(this.host, touch ? 18 : GRIP_PX);
+    const id = this.host.selection.list()[0];
+    let best: { id: string; grip: UnderlayGrip; from: Vec2; d: number } | null = null;
+    for (const g of this.underlayGripsShown()) {
+      // Hörnen före sidorna när de ligger nära varandra (en liten bild).
+      const d = dist(g.at, pt) + (g.kind === 'side' ? tol / 4 : 0);
+      if (d <= tol && (!best || d < best.d)) best = { id, grip: { kind: g.kind, index: g.index }, from: g.at, d };
     }
     return best;
   }

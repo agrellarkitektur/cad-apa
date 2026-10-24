@@ -201,6 +201,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const panel = new PropertiesPanel(store, selection, () => render.viewStates());
   panel.onOpenMarker = (id) => views.goTo({ kind: 'marker', id });
   panel.onUnderlayTool = (id, mode) => underlays.startUnderlayTool(id, mode);
+  panel.onUnderlayProportions = (id) => void underlays.resetProportions(id);
   panel.angleWarn = () => uiSettings.angleWarn;
   const navigator = new Navigator({
     doc: () => store.doc,

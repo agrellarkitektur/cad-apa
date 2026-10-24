@@ -182,6 +182,11 @@ export function installActions(app: AppContext, parts: ActionParts) {
       pickTreeItem({ kind: 'marker', id: markerPick.dataset.markerPick! });
       return;
     }
+    const ulGroup = target.closest<HTMLElement>('[data-ul-group]');
+    if (ulGroup) {
+      navigator.toggleUnderlayGroup(ulGroup.dataset.ulGroup!);
+      return;
+    }
     const folderToggle = target.closest<HTMLElement>('[data-folder-toggle]');
     if (folderToggle) {
       navigator.toggleFolder(folderToggle.dataset.folderToggle!);

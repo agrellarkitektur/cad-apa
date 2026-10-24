@@ -2,14 +2,27 @@ import { add, angleDeg, closestOnSegment, dist, dot, fromAngleDeg, intersectLine
 import type { Vec2 } from '../../repr/primitives';
 import { BoxIndex } from '../../geometry/boxIndex';
 
-/** En vägg som går att snäppa till: dess referenslinje. */
+/**
+ * Något att snäppa mot: en sträcka (väggens referenslinje, ett liv, en
+ * linje), eller en punkt (`a` = `b`) med `point` satt (0.8.16).
+ */
 export interface SnapSegment {
   id: string;
   a: Vec2;
   b: Vec2;
+  /**
+   * En bit av en båge eller cirkel (0.8.16): man snäpper på den och mot dess
+   * skärningar, men bitarnas ändar och mittpunkter är inga punkter att
+   * snäppa till, och de ger inga spårlinjer.
+   */
+  curve?: boolean;
+  /** En punkt att snäppa till: bågens ändar och mitt, centrum, kvadrantpunkter. */
+  point?: 'endpoint' | 'midpoint' | 'center' | 'quadrant';
+  /** Texten när man ligger på sträckan; annars "På vägg". */
+  on?: string;
 }
 
-export type SnapKind = 'endpoint' | 'midpoint' | 'start' | 'perpendicular' | 'intersection' | 'on-wall' | 'track' | 'angle' | 'free';
+export type SnapKind = 'endpoint' | 'midpoint' | 'center' | 'quadrant' | 'start' | 'perpendicular' | 'intersection' | 'on-wall' | 'parallel' | 'track' | 'angle' | 'free';
 
 export interface SnapResult {
   point: Vec2;
@@ -75,9 +88,18 @@ export function snap(input: SnapInput): SnapResult {
   const points: { p: Vec2; kind: SnapKind; label: string }[] = [];
   if (input.chainStart) points.push({ p: input.chainStart, kind: 'start', label: 'Startpunkt' });
   for (const s of segs) {
-    points.push({ p: s.a, kind: 'endpoint', label: 'Ändpunkt' }, { p: s.b, kind: 'endpoint', label: 'Ändpunkt' });
-    points.push({ p: lerp(s.a, s.b, 0.5), kind: 'midpoint', label: 'Mittpunkt' });
+    if (s.point) points.push({ p: s.a, kind: s.point, label: POINT_LABEL[s.point] });
+    else if (!s.curve) {
+      points.push({ p: s.a, kind: 'endpoint', label: 'Ändpunkt' }, { p: s.b, kind: 'endpoint', label: 'Ändpunkt' });
+      points.push({ p: lerp(s.a, s.b, 0.5), kind: 'midpoint', label: 'Mittpunkt' });
+    }
   }
+  // Bara sträckor härifrån; punkterna är prövade.
+  const lines = segs.filter((s) => !s.point);
+  // Parallellt och vinkelrätt (0.8.16): den raka linje man senast kände på
+  // med muspekaren kommer man ihåg, som i SketchUp.
+  const touched = nearestStraight(cursor, lines, tol);
+  if (touched) inferred = touched;
   let bestPoint: { p: Vec2; kind: SnapKind; label: string; d: number } | null = null;
   for (const c of points) {
     const d = dist(c.p, cursor);
@@ -87,9 +109,13 @@ export function snap(input: SnapInput): SnapResult {
   }
   if (bestPoint) return { point: bestPoint.p, kind: bestPoint.kind, label: bestPoint.label };
 
+  // Där två linjer korsar varandra nära markören (0.8.16).
+  const cross = crossingNear(cursor, lines, tol);
+  if (cross) return { point: cross, kind: 'intersection', label: 'Skärning' };
+
   // 2. Vinkelrätt mot en vägg från föregående punkt.
   if (from) {
-    for (const s of segs) {
+    for (const s of lines) {
       const foot = closestOnSegment(from, s.a, s.b);
       if (foot.t > 0 && foot.t < 1 && dist(foot.point, cursor) <= tol && dist(foot.point, from) > 1) {
         return { point: foot.point, kind: 'perpendicular', label: 'Vinkelrätt', guide: [s.a, s.b] };
@@ -98,34 +124,37 @@ export function snap(input: SnapInput): SnapResult {
   }
 
   // Spårlinjer: förlängningar av väggar och linjer i x- och y-led genom hörn nära markören.
-  const tracks = trackLines(cursor, segs, tol, from);
+  const tracks = trackLines(cursor, lines, tol, from);
   const near = tracks.map((t) => ({ t, foot: add(t.p, scale(t.dir, dot(sub(cursor, t.p), t.dir))) })).filter((x) => dist(x.foot, cursor) <= tol);
 
   // 3. Vinkellås från föregående punkt, och var låset skär en vägg.
   let angled: Vec2 | null = null;
   let angleLabel = '';
+  let edgeGuide: [Vec2, Vec2] | null = null;
   if (from && dist(from, cursor) > 1) {
     const raw = angleDeg(sub(cursor, from));
     const step = input.ortho ? 45 : ANGLE_STEP;
     const target = Math.round(raw / step) * step;
-    if (input.ortho || Math.abs(raw - target) <= ANGLE_PULL_DEG) {
-      const dir = fromAngleDeg(target);
+    const edge = input.ortho ? null : edgeLock(raw);
+    if (edge || input.ortho || Math.abs(raw - target) <= ANGLE_PULL_DEG) {
+      const dir = edge ? edge.dir : fromAngleDeg(target);
       const len = dot(sub(cursor, from), dir);
       angled = add(from, scale(dir, Math.max(0, len)));
-      angleLabel = `${((target % 360) + 360) % 360}°`;
-      for (const s of segs) {
+      angleLabel = edge ? edge.label : `${((target % 360) + 360) % 360}°`;
+      edgeGuide = edge ? [inferred!.a, inferred!.b] : null;
+      for (const s of lines) {
         const hit = intersectLines(from, dir, s.a, sub(s.b, s.a));
         if (!hit) continue;
         const onSeg = closestOnSegment(hit, s.a, s.b);
         if (dist(onSeg.point, hit) < 0.5 && dist(hit, cursor) <= tol && dot(sub(hit, from), dir) > 0) {
-          return { point: hit, kind: 'intersection', label: `Skärning ${angleLabel}`, guide: [from, hit] };
+          return { point: hit, kind: 'intersection', label: `Skärning ${angleLabel}`, guide: [from, hit], ...(edgeGuide ? { guides: [edgeGuide] } : {}) };
         }
       }
       // Där vinkellåset möter en spårlinje: rakt ut till samma liv som ett hörn.
       for (const t of tracks) {
         const hit = intersectLines(from, dir, t.p, t.dir);
         if (hit && dist(hit, cursor) <= tol && dot(sub(hit, from), dir) > 0) {
-          return { point: hit, kind: 'track', label: `${angleLabel}, ${t.label}`, guide: [from, hit], guides: [[t.p, hit]] };
+          return { point: hit, kind: 'track', label: `${angleLabel}, ${t.label}`, guide: [from, hit], guides: [[t.p, hit], ...(edgeGuide ? [edgeGuide] : [])] };
         }
       }
     }
@@ -150,12 +179,12 @@ export function snap(input: SnapInput): SnapResult {
 
   // 4. På en vägg.
   let bestOn: { p: Vec2; s: SnapSegment; d: number } | null = null;
-  for (const s of segs) {
+  for (const s of lines) {
     const c = closestOnSegment(cursor, s.a, s.b).point;
     const d = dist(c, cursor);
     if (d <= tol && (!bestOn || d < bestOn.d)) bestOn = { p: c, s, d };
   }
-  if (bestOn && !angled) return { point: bestOn.p, kind: 'on-wall', label: 'På vägg', guide: [bestOn.s.a, bestOn.s.b] };
+  if (bestOn && !angled) return { point: bestOn.p, kind: 'on-wall', label: bestOn.s.on ?? 'På vägg', guide: [bestOn.s.a, bestOn.s.b] };
   // En spårlinje.
   if (!angled && !input.ortho && near.length) {
     const n = near.reduce((a, b) => (dist(a.foot, cursor) <= dist(b.foot, cursor) ? a : b));
@@ -164,10 +193,79 @@ export function snap(input: SnapInput): SnapResult {
 
   if (angled && from) {
     const far = add(from, scale(norm(sub(angled, from)), Math.max(dist(from, angled) * 3, tol * 40)));
+    if (edgeGuide) return { point: angled, kind: 'parallel', label: angleLabel, guide: [from, far], guides: [edgeGuide] };
     return { point: angled, kind: 'angle', label: angleLabel, guide: [from, far] };
   }
-  if (bestOn) return { point: bestOn.p, kind: 'on-wall', label: 'På vägg', guide: [bestOn.s.a, bestOn.s.b] };
+  if (bestOn) return { point: bestOn.p, kind: 'on-wall', label: bestOn.s.on ?? 'På vägg', guide: [bestOn.s.a, bestOn.s.b] };
   return { point: cursor, kind: 'free', label: '' };
+}
+
+const POINT_LABEL: Record<NonNullable<SnapSegment['point']>, string> = { endpoint: 'Ändpunkt', midpoint: 'Mittpunkt', center: 'Centrum', quadrant: 'Kvadrant' };
+
+/** Den raka linje man senast kände på med muspekaren (0.8.16), för parallellt och vinkelrätt. */
+let inferred: { a: Vec2; b: Vec2; u: Vec2 } | null = null;
+
+/** Glöm linjen man kände på, t.ex. när ett nytt verktyg väljs. */
+export function forgetInferred(): void {
+  inferred = null;
+}
+
+/** Den raka linje som ligger närmast markören inom `tol`, om någon. */
+function nearestStraight(cursor: Vec2, lines: readonly SnapSegment[], tol: number): { a: Vec2; b: Vec2; u: Vec2 } | null {
+  let best: { s: SnapSegment; d: number } | null = null;
+  for (const s of lines) {
+    if (s.curve) continue;
+    const l = dist(s.a, s.b);
+    if (l < 1) continue;
+    const d = dist(closestOnSegment(cursor, s.a, s.b).point, cursor);
+    if (d <= tol && (!best || d < best.d)) best = { s, d };
+  }
+  if (!best) return null;
+  const { a, b } = best.s;
+  return { a, b, u: scale(sub(b, a), 1 / dist(a, b)) };
+}
+
+/**
+ * Parallellt med eller vinkelrätt mot linjen man känt på, om riktningen från
+ * `from` ligger nära. Linjer i 15°-steg tar vinkellåset hand om.
+ */
+function edgeLock(raw: number): { dir: Vec2; label: string } | null {
+  if (!inferred) return null;
+  const base = angleDeg(inferred.u);
+  // Linjer i 15°-steg klarar vinkellåset själv.
+  if (Math.abs(base / ANGLE_STEP - Math.round(base / ANGLE_STEP)) * ANGLE_STEP < 0.01) return null;
+  let best: { a: number; label: string; d: number } | null = null;
+  for (const [k, label] of [[0, 'Parallellt'], [90, 'Vinkelrätt'], [180, 'Parallellt'], [270, 'Vinkelrätt']] as const) {
+    const a = base + k;
+    const d = Math.abs(((raw - a + 540) % 360) - 180);
+    if (d <= ANGLE_PULL_DEG && (!best || d < best.d)) best = { a, label, d };
+  }
+  if (!best) return null;
+  return { dir: fromAngleDeg(best.a), label: best.label === 'Parallellt' ? 'Parallellt med linjen' : 'Vinkelrätt mot linjen' };
+}
+
+/** Där två linjer nära markören korsar varandra, inom `tol`. Bitar av samma båge räknas inte. */
+function crossingNear(cursor: Vec2, lines: readonly SnapSegment[], tol: number): Vec2 | null {
+  const near = lines.filter((s) => dist(s.a, s.b) >= 1e-6 && dist(closestOnSegment(cursor, s.a, s.b).point, cursor) <= tol);
+  let best: { p: Vec2; d: number } | null = null;
+  for (let i = 0; i < near.length; i++)
+    for (let j = i + 1; j < near.length; j++) {
+      const s = near[i];
+      const t = near[j];
+      if (s.curve && t.curve && s.id === t.id) continue;
+      const u = sub(s.b, s.a);
+      const v = sub(t.b, t.a);
+      // Nästan parallella linjer ger ingen säker skärning.
+      if (Math.abs(u[0] * v[1] - u[1] * v[0]) < 1e-3 * Math.hypot(u[0], u[1]) * Math.hypot(v[0], v[1])) continue;
+      const hit = intersectLines(s.a, u, t.a, v);
+      if (!hit) continue;
+      if (dist(closestOnSegment(hit, s.a, s.b).point, hit) > 0.01 || dist(closestOnSegment(hit, t.a, t.b).point, hit) > 0.01) continue;
+      // Där två linjer möts i en ände är det en ändpunkt, som redan prövats.
+      if ((dist(hit, s.a) < 0.01 || dist(hit, s.b) < 0.01) && (dist(hit, t.a) < 0.01 || dist(hit, t.b) < 0.01)) continue;
+      const d = dist(hit, cursor);
+      if (d <= tol && (!best || d < best.d)) best = { p: hit, d };
+    }
+  return best?.p ?? null;
 }
 
 /** Färre sträckor än så prövas alla, utan rutnät. Ändras bara i testerna. */
@@ -205,6 +303,7 @@ function trackLines(cursor: Vec2, segs: readonly SnapSegment[], tol: number, fro
   const out: TrackLine[] = [];
   const seen = new Set<string>();
   for (const s of segs) {
+    if (s.curve) continue;
     const l = dist(s.a, s.b);
     if (l < 1) continue;
     const u = scale(sub(s.b, s.a), 1 / l);
@@ -227,7 +326,7 @@ function trackLines(cursor: Vec2, segs: readonly SnapSegment[], tol: number, fro
 }
 
 function rank(k: SnapKind): number {
-  return k === 'start' ? 0 : k === 'endpoint' ? 1 : 2;
+  return k === 'start' ? 0 : k === 'endpoint' ? 1 : k === 'center' ? 3 : 2;
 }
 
 /** Avrunda till hela mm, som ritningar anges i. */

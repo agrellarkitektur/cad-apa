@@ -12,6 +12,7 @@ import { MeasureTool, ZoomBoxTool } from '../tools/measureTool';
 import { OpeningTool } from '../tools/openingTool';
 import { RoomTool } from '../tools/roomTool';
 import { SelectTool } from '../tools/selectTool';
+import { forgetInferred } from '../tools/snap';
 import { WallTool, type WallToolOptions } from '../tools/wallTool';
 import { icons } from '../icons';
 import type { AppContext } from './context';
@@ -174,6 +175,8 @@ export function installTools(app: AppContext, host: ToolHost) {
       app.smartMenu.hide();
       app.modifier.cancel();
     }
+    // Linjen man kände på för parallellt och vinkelrätt gäller bara verktyget (0.8.16).
+    if (app.ui.tool !== id) forgetInferred();
     app.ui.tool = id;
     app.view.setTool(toolFor(id));
     toolsEl.querySelectorAll<HTMLElement>('[data-tool]').forEach((b) => {

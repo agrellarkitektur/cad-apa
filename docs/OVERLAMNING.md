@@ -1,11 +1,24 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.15.
+överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.16.
 
 ## Läget
 
-- **0.8.15 är klar** på `main` (samma format, 11): en granskning utan nya
+- **0.8.16 Underlag är klar** på `main` (samma format, 11): snäpp i
+  DXF-underlag (centrum, kvadranter, bågmitt, skärningar, inga falska
+  punkter i bågarnas skarvar), parallellt/vinkelrätt som i SketchUp, X/Y,
+  bredd och höjd i egenskaperna och smartmenyn, papperskorg, underlagen
+  per filtyp och fil i trädet, bildens grepp och Återställ proportioner.
+  Står i README, PLAN.md (med Claudes val) och UTVECKLING.md under
+  *Underlag (0.8.16)*. Provat i bygget med Playwright (snäpp, parallellt,
+  grepp, X/Y, trädet, smartmenyn) och med `tests/v0816.test.ts`. Carl
+  August bad att få nästa version körd direkt, utan frågor om synpunkter.
+- **Prestandatestet** (312 väggar, plan, 3D, rum och fasad) går över
+  gränsen 1,6 s i sandlådan (1,9–2,5 s) också utan 0.8.16:s ändringar;
+  sandlådan var långsammare den här gången. Övriga 273 tester går igenom.
+  Kör om det på en snabbare maskin innan gränsen ändras.
+- **0.8.15** (samma format): en granskning utan nya
   funktioner. Register för väggändar och dörrar/fönster per vägg
   (`src/core/elementIndex.ts`), så att Modifiera inte längre växer med
   kvadraten på antalet väggar, `src/ui/modify/tool.ts` uppdelad per grupp
@@ -22,7 +35,7 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   `/agrellarkitektur.se/public_html/cad-apa/` och fungerar (Carl August såg
   0.8.14 vid alfa-knappen 24 oktober). Se efter med `gh run list` att
   körningen går igenom.
-- **0.8.12–0.8.15 är inte provade** av Carl August. Frågorna nedan gäller.
+- **0.8.12–0.8.16 är inte provade** av Carl August. Frågorna nedan gäller.
 - **Inkorgen är tom** (sorterad 24 oktober). Kommandoraden blev
   **0.8.20 och 0.8.21** (Carl Augusts svar: både engelska och svenska
   förkortningar; nere som i AutoCAD, flyttbar och dockningsbar i del 2;
@@ -61,9 +74,7 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.8.14 Modifiera-verktyg del 2~~,
-  ~~0.8.15 Granskning~~ (klara)
-- **0.8.16 Underlag**: snäpp i DXF, parallellt/vinkelrätt som i SketchUp,
-  X/Y, papperskorg, grupper i trädet, bildens grepp och mått
+  ~~0.8.15 Granskning~~, ~~0.8.16 Underlag~~ (klara)
 - **0.8.17 Rumsstämpeln** flyttbar, med pil utanför rummet
 - **0.8.18 Småsaker**: dra och släpp till mappar, mätning i segment,
   osifont och Om-rutan, autospara, rutnätet
@@ -94,11 +105,22 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.15 syns på webbhotellet (numret vid alfa-knappen) och
-hur 0.8.12–0.8.15 fungerar. Läs synpunktsfilen och sortera Inkorgen. Nästa
-version är **0.8.16 Underlag** (läs *0.8.16* i PLAN.md).
+Fråga först om 0.8.16 syns på webbhotellet (numret vid alfa-knappen) och
+hur 0.8.12–0.8.16 fungerar. Läs synpunktsfilen och sortera Inkorgen (om
+Carl August inte ber om att bara köra). Nästa version är **0.8.17
+Rumsstämpeln** (läs *0.8.17* i PLAN.md).
 
 ## Att fråga Carl August om
+
+- **0.8.16 efter provning** (Claudes val, se PLAN.md): att X och Y är
+  nedre vänstra hörnet också för DXF (inte filens nollpunkt, som kan vara
+  bra för koordinatsatta DXF); att bredd och höjd i fälten sträcker en bild
+  var för sig; Shift i ett hörn sträcker fritt; att linjen man kände på
+  glöms vid byte av verktyg, och att sneda linjer i jämna 15° inte får eget
+  *Parallellt* (vinkellåset tar dem); att skärningar nu snäpps överallt,
+  också mellan väggliv. Hittade *Zooma till* inte DXF-underlag förut? (Det
+  gjorde den inte; rättat.) Ska gruppen för en fil på flera ställen vara
+  utfälld från början?
 
 - **0.8.15 efter provning**: inget nytt att prova; Modifiera ska bete sig
   exakt som förut, bara snabbare med många markerade väggar. Säg till om
@@ -307,6 +329,12 @@ version är **0.8.16 Underlag** (läs *0.8.16* i PLAN.md).
   punkten där man klickade på det markerade, så ett klick efter valet är
   målet. Filvalet för underlag öppnas pålitligast med ett riktigt klick på
   menyn (inte `element.click()` i JavaScript).
+- Underlag i Playwright (0.8.16): en fil läggs snabbast in genom att
+  skicka `dragover` och `drop` med en `DataTransfer` till `.pane-2d`; det
+  nya underlaget är markerat. Snäppningen i ett ritverktyg syns i
+  `bacchus.view.currentTool.current` (`kind`, `label`, `point`). Exempelprojektet
+  har huset kring origo, så flytta underlaget bort (X i egenskaperna) innan
+  snäpp prövas.
 - Playwright och Modifiera (0.8.14): smartmenyn ligger ofta över det man
   vill klicka på i ritningen; dölj den med en stilregel
   (`.smart-menu{display:none!important}`) eller klicka utanför den.

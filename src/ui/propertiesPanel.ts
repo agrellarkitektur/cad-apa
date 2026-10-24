@@ -28,7 +28,7 @@ import { markerFrame } from '../elements/markers';
 import { skewOf, skewText } from '../elements/angleCheck';
 import { bindTreeForm, treeItemExists, treeItemMarkup, type TreeItem } from './treeItemPanel';
 import { bindSheetForm, sheetFormMarkup, type SheetFormHost } from './sheetForms';
-import { drawingChange, drawingClick, hereOf, lockField, resetShowList, showSection } from './drawingPanel';
+import { drawingChange, drawingClick, hereOf, lockField, resetShowList, showSection, underlayPlaceFields } from './drawingPanel';
 import { instanceFields, propsSection, PROPS, sharedSection, summarizeTypes, typesMarkup } from './selectionFields';
 import { applyField, patchEach, pick, selectionCenter, straighten } from './selectionEdits';
 
@@ -94,6 +94,8 @@ export class PropertiesPanel {
   onAlignMarker?: (id: string) => void;
   /** Kalibrera eller rikta ett underlag (0.8 del 2). */
   onUnderlayTool?: (id: string, mode: 'calibrate' | 'align') => void;
+  /** Bildens egna proportioner igen (0.8.16). */
+  onUnderlayProportions?: (id: string) => void;
   /**
    * Det man valt i projektträdet (0.8). Dess inställningar visas när inget
    * i ritningen är markerat, med en Spara-knapp.
@@ -441,6 +443,16 @@ export class PropertiesPanel {
   }
 
   /**
+   * Fält som smartmenyn visar direkt, utan *Mer* (0.8.16): läge och storlek
+   * för ett ensamt underlag. Null för allt annat.
+   */
+  smartFields(): string | null {
+    const ids = this.selection.list();
+    const el = ids.length === 1 ? this.store.doc.elements[ids[0]] : undefined;
+    return el?.type === 'Underlay' ? underlayPlaceFields(this.store.doc, el) : null;
+  }
+
+  /**
    * Alla inställningar för det markerade, utan rubriken, för den utfällda
    * smartmenyn. Null när inget är markerat.
    */
@@ -459,6 +471,9 @@ export class PropertiesPanel {
       case 'ul-calibrate':
       case 'ul-align':
         if (ids[0]) this.onUnderlayTool?.(ids[0], b.dataset.action === 'ul-calibrate' ? 'calibrate' : 'align');
+        return;
+      case 'ul-proportions':
+        if (ids[0]) this.onUnderlayProportions?.(ids[0]);
         return;
       case 'open-marker':
         if (ids[0]) this.onOpenMarker?.(ids[0]);

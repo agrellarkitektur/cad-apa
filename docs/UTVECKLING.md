@@ -365,6 +365,43 @@ på bladet sina egna.
   "omfång:namn"); `propertiesPanel.ts` har bara panelen, snabbraden och
   knapparna.
 
+## Underlag (0.8.16, format 11)
+
+- **Snäpp** (`src/ui/tools/snap.ts`): `SnapSegment` kan vara en bit av en
+  kurva (`curve`: snäpper på den och i skärningar, men ger inga
+  ändpunkter, mittpunkter eller spårlinjer) eller en punkt (`a` = `b` och
+  `point`: `endpoint`, `midpoint`, `center`, `quadrant`). `on` är texten
+  när man ligger på sträckan (förval *På vägg*). Nya `SnapKind`: `center`,
+  `quadrant` och `parallel`. Skärningen mellan två sträckor nära markören
+  (`crossingNear`) prövas efter punkterna; bitar av samma kurva och möten i
+  en ände räknas inte. **Parallellt/vinkelrätt**: den raka sträcka som
+  senast låg inom toleransen sparas i modulen (`inferred`); har man en
+  föregående punkt och riktningen ligger inom 3° från den eller dess normal
+  låses riktningen dit (`edgeLock`) före 15°-låset, och sträckan visas som
+  hjälplinje. `forgetInferred()` anropas när verktyget byts (`tools.ts`)
+- **DXF** (`src/formats/dxf.ts`): en `poly` kan ha `corners` (index för
+  hörnen när andra punkter bara följer en båge: bultar, bågar, cirklar,
+  ellipser, splines) och `curve` (`c`, `mid`, `quadrants`), transformerade
+  som punkterna. `underlaySnaps(doc, id, params)` i `src/elements/underlay.ts`
+  gör snäppningen av det, i modellens läge, sparad per läge och släckta
+  lager; för en bild och PDF bildens kanter. `snapping.ts` använder den för
+  underlag i planen och på arbetsblad, fasader och sektioner
+- **Bildens grepp** (`src/elements/underlayEdit.ts`): `underlayGrips`,
+  `dragUnderlayGrip` (hörn proportionellt eller fritt, sidor), `resizeUnderlay`,
+  `stretched` och `restoreProportions`. Sträckning ändrar `size` (bilden
+  ritas in i rektangeln), skalning `scale`. Markera ritar greppen för ett
+  ensamt, olåst underlag och anropar `updateParams` när de släpps. Filens
+  egen storlek läses i `underlays.ts` (`resetProportions`)
+- **Fält**: `underlayPlaceFields` i `drawingPanel.ts` (X, Y, bredd, höjd,
+  Återställ proportioner) visas i egenskaperna och, via
+  `PropertiesPanel.smartFields()`, direkt i smartmenyn (`.sm-fields`).
+  Snabbknapparna för underlag är `zoom-selection` och `delete`
+- **Trädet**: `underlag()` i `navigator.ts` grupperar det som inte ligger i
+  mappar per filtyp och fil; `toggleUnderlayGroup` och `data-ul-group`.
+  Ikonerna `filePdf`, `fileImage` och `fileDxf`
+- `selectionBounds` tar det ritades rektangel när ett objekt saknar ytor
+  (DXF-underlag), så att *Zooma till* och smartmenyns läge fungerar
+
 ## Grepp, underlag och arbetsblad (0.8 del 2, format 5)
 
 - **Takets grepp i fasader och sektioner**: `roofGripsInView` och
