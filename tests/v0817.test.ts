@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
-import { moveElements, rotateElements, updateParams } from '../src/core/commands';
+import { moveElements, updateParams } from '../src/core/commands';
+import { rotateElements } from '../src/core/transforms';
 import { DocStore } from '../src/core/store';
 import type { Element, ProjectDoc } from '../src/core/model';
 import { buildPlan } from '../src/repr/plan';

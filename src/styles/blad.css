@@ -1,0 +1,382 @@
+/* Ritningsblad och Plot/export, bakgrundstråden, egen skala och mönstren. En del av app.css (0.8.27); ordningen mellan filerna är kaskadens. */
+
+/* ---------- Ritningsblad och Plot/export (0.8 del 3) ---------- */
+
+/* På ett blad finns inga tillstånd, ingen jämförelse och ingen detaljnivå att välja. */
+.app[data-place='sheet'] .viewbar .chips,
+.app[data-place='sheet'] .viewbar .compare,
+.app[data-place='sheet'] .viewbar .detail-switch,
+.app[data-place='sheet'] .viewbar .show-wrap,
+.app[data-place='sheet'] .plan-grid .grid {
+  display: none;
+}
+
+/* Ett mallblad (0.8.8) följer inte tillstånden och har ingen detaljnivå. */
+.app[data-place='master'] .viewbar .chips,
+.app[data-place='master'] .viewbar .compare,
+.app[data-place='master'] .viewbar .detail-switch {
+  display: none;
+}
+
+/* Bordet runt papperet, så att bladets kant syns i båda temana. */
+.app[data-place='sheet'] .pane-2d,
+.app[data-place='master'] .pane-2d {
+  background: color-mix(in srgb, var(--ink) 9%, var(--paper));
+}
+
+.vp-frame {
+  fill: none;
+  stroke: var(--sel);
+  stroke-width: 1.25;
+  pointer-events: none;
+}
+
+.vp-frame.hover {
+  stroke-dasharray: 5 4;
+  opacity: 0.7;
+}
+
+.vp-frame.picked {
+  fill: color-mix(in srgb, var(--sel) 6%, transparent);
+  stroke-width: 1.75;
+}
+
+.vp-frame.moving {
+  fill: color-mix(in srgb, var(--sel) 10%, transparent);
+  stroke-dasharray: 6 4;
+}
+
+.field:has(.sheet-text-value) {
+  grid-column: 1 / -1;
+}
+
+.sheet-text-value {
+  width: 100%;
+  resize: vertical;
+  font: inherit;
+}
+
+.vp-grip {
+  fill: var(--paper);
+  stroke: var(--sel);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+
+.vp-guide {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+
+.nav-plot {
+  padding: 6px 12px 0;
+}
+
+.nav-plot .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  justify-content: flex-start;
+}
+
+.nav-plot svg,
+.plot-dialog footer svg,
+.view-apply > svg,
+.plot-folder-head svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+}
+
+.view-apply:has(> svg) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.view-apply:has(> svg) small {
+  flex-basis: 100%;
+  padding-left: 25px;
+}
+
+.sheet-row-name b {
+  font-weight: 650;
+}
+
+.logo-row {
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.logo-row .note {
+  flex: 1;
+  margin: 0;
+}
+
+.field-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.field-table th,
+.field-table td {
+  padding: 3px 0;
+  vertical-align: middle;
+}
+
+.field-table thead th {
+  font-size: 11.5px;
+  font-weight: 400;
+  color: var(--muted);
+  text-align: left;
+}
+
+.field-table thead th:last-child,
+.field-table td.shared {
+  width: 52px;
+  text-align: center;
+}
+
+.field-table tbody th {
+  width: 38%;
+  padding-right: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.field-table tbody th small {
+  display: block;
+  font-size: 10.5px;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.field-table tr.unused th {
+  color: var(--muted);
+}
+
+.field-table td input:not([type]) {
+  width: 100%;
+}
+
+.field-table td input::placeholder {
+  font-style: italic;
+}
+
+.smart-note code {
+  font: 500 11px var(--font-mono, monospace);
+  padding: 0 3px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  white-space: nowrap;
+  cursor: help;
+}
+
+.plot-dialog {
+  width: min(560px, 100%);
+}
+
+.plot-group {
+  display: grid;
+  gap: 4px;
+}
+
+.plot-group-head,
+.plot-folder-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.plot-children {
+  display: grid;
+  gap: 2px;
+  padding-left: 22px;
+}
+
+.plot-item span {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  flex-wrap: wrap;
+}
+
+.plot-item small {
+  color: var(--muted);
+}
+
+.plot-progress {
+  display: grid;
+  gap: 6px;
+}
+
+.plot-progress[hidden] {
+  display: none;
+}
+
+.plot-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--rule);
+  overflow: hidden;
+}
+
+.plot-bar span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.15s;
+}
+
+.plot-progress p {
+  margin: 0;
+  font-size: 12.5px;
+}
+
+.plot-count {
+  margin-right: auto;
+}
+
+.plot-dialog footer .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ---------- Fasad eller sektion som räknas i bakgrundstråden (0.8.2) ---------- */
+.computing {
+  position: absolute;
+  z-index: 3;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 10px 4px 26px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--chrome);
+  color: var(--muted);
+  font: 560 12px var(--font-ui);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.08);
+  pointer-events: none;
+}
+
+.computing::before {
+  content: '';
+  position: absolute;
+  left: 9px;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  margin-top: -6px;
+  border: 1.5px solid var(--rule);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: computing-spin 0.8s linear infinite;
+}
+
+.computing[hidden] {
+  display: none;
+}
+
+@keyframes computing-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ---------- Egen skala (0.8.9) ---------- */
+
+.scale-pick {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  min-width: 0;
+}
+
+.scale-pick select {
+  flex: 1 1 auto;
+}
+
+.scale-own {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font: 500 13px var(--font-data);
+  color: var(--muted);
+}
+
+.scale-own[hidden] {
+  display: none;
+}
+
+.scale-own input {
+  width: 72px;
+  font-family: var(--font-data);
+}
+
+/* ---------- Mönster med förhandsvisning (0.8.11) ---------- */
+
+.pattern-pick {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pattern-pick label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 4px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.pattern-pick input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pattern-pick label:has(input:checked) {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  font-weight: 650;
+}
+
+.pattern-pick label:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.pattern-swatch {
+  flex: none;
+  border-radius: 2px;
+  background: var(--paper);
+}
+
+.pattern-swatch .pattern-edge {
+  stroke: var(--rule);
+  stroke-width: 1;
+}
+
+.opt .pattern-pick label {
+  padding: 2px 3px;
+}
+
+/* I verktygsraden bara bilderna (0.8.19); namnen står i title. */
+.opt .pattern-pick label span {
+  display: none;
+}

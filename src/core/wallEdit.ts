@@ -1,6 +1,7 @@
 import { bulgeTangent, bulgeThrough } from '../geometry/arc';
 import { wallFrame, type WallFrame } from '../geometry/wallFrame';
-import { geometryOf, isArc, movePatch, putWallEnds, transformed, type PlanTransform } from './commands';
+import { geometryOf, isArc, movePatch, putWallEnds } from './commands';
+import { transformed, type PlanTransform } from './transforms';
 import { hostedIn, wallsAt } from './elementIndex';
 import { newId } from './ids';
 import type { Element, Id, ProjectDoc } from './model';

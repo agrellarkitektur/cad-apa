@@ -1,0 +1,40 @@
+import type { StyleSheet } from '../../core/graphics';
+import { escapeHtml } from '../labels';
+
+/** Stilmallens texter och littera: justering, texthöjder och mallarna. */
+export function labelSection(style: StyleSheet): string {
+  const l = style.labels;
+  const h = (k: keyof StyleSheet['labels']['heights'], label: string) =>
+    `<label><span>${label}</span><span class="input-unit"><input type="text" data-expr data-step="0.05" inputmode="decimal" autocomplete="off" data-lab="h:${k}" value="${Number(l.heights[k]).toFixed(2)}"><i>mm</i></span></label>`;
+  const names: Record<string, string> = { Wall: 'Väggar', Door: 'Dörrar', Window: 'Fönster' };
+  const tpl = (Object.keys(l.templates) as (keyof StyleSheet['labels']['templates'])[])
+    .map(
+      (k) => `<div class="tpl-row"><b>${names[k]}</b>
+          <label><span>Normal</span><textarea rows="2" data-lab="t:${k}:normal">${escapeHtml(l.templates[k].normal)}</textarea></label>
+          <label><span>Detalj</span><textarea rows="3" data-lab="t:${k}:detail">${escapeHtml(l.templates[k].detail)}</textarea></label></div>`,
+    )
+    .join('');
+  return `<section class="style-labels">
+      <h3>Texter och littera</h3>
+      <div class="style-row labels-row">
+        <label><span>Justering</span><select data-lab="align"><option value="left"${l.align === 'left' ? ' selected' : ''}>Vänster</option><option value="center"${l.align === 'center' ? ' selected' : ''}>Centrerat</option></select></label>
+        ${h('roomName', 'Rumsnamn')}${h('roomInfo', 'Rumsnr, area')}${h('littera', 'Littera')}${h('dimension', 'Mått')}
+      </div>
+      <p class="note">Litteramallar: en rad per textrad. Fält: <code>{typ}</code> (D1), <code>{storlek}</code> (D10×21), <code>{nummer}</code> (D1203), <code>{hål}</code> (1010×2110), <code>{karm}</code> (990×2090) och egna egenskaper med sitt namn, t.ex. <code>{brandklass}</code>. Tomma rader hoppas över. I Skiss visas ingen littera.</p>
+      ${tpl}
+      <div class="tpl-row wide"><b>Rum</b>
+        <label><span>Rumsstämpel</span><textarea rows="4" data-lab="room">${escapeHtml(l.room)}</textarea></label></div>
+      <p class="note">Rumsstämpeln: en rad per textrad, i den ordning de ska stå. Fält: <code>{namn}</code>, <code>{nummer}</code>, <code>{area}</code>, <code>{takhöjd}</code> och rummets egna egenskaper. Raden med namnet blir större och fet.</p>
+    </section>`;
+}
+
+/** Ändra texterna i `style` (en kopia) efter fältet; null om fältet inte hör hit. */
+export function applyLabelField(style: StyleSheet, input: HTMLInputElement | HTMLSelectElement): string | null {
+  if (!input.dataset.lab) return null;
+  const [kind, a, b] = input.dataset.lab.split(':');
+  if (kind === 'align') style.labels.align = input.value === 'center' ? 'center' : 'left';
+  if (kind === 'h' && Number(input.value) > 0) style.labels.heights[a as keyof StyleSheet['labels']['heights']] = Number(input.value);
+  if (kind === 't') style.labels.templates[a as keyof StyleSheet['labels']['templates']][b as 'normal' | 'detail'] = input.value;
+  if (kind === 'room') style.labels.room = input.value;
+  return 'Ändra texter';
+}

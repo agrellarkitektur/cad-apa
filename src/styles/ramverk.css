@@ -1,0 +1,421 @@
+/* Ramverket, verktygen, ritytan, statusraden och mobilen. En del av app.css (0.8.27); ordningen mellan filerna är kaskadens. */
+
+/* ---------- Ramverk ---------- */
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-columns: var(--rail-w) var(--modify-w, 0px) minmax(0, 1fr) var(--panel-w, 0px);
+  grid-template-rows: var(--bar-h) minmax(0, 1fr) auto var(--status-h);
+  grid-template-areas:
+    'top top top top'
+    'tools modify canvas panel'
+    'tools modify cmd panel'
+    'status status status status';
+}
+
+/* Modifiera-raden innanför ritverktygen (0.8.5). */
+.app.modify-rail-on {
+  --modify-w: 46px;
+}
+
+.app.panel-open,
+.app.nav-open {
+  --panel-w: 340px;
+}
+
+.topbar {
+  grid-area: top;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-bottom: 1px solid var(--rule);
+  background: var(--chrome);
+  min-width: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 640;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.brand svg {
+  width: 22px;
+  height: 22px;
+  color: var(--ink);
+}
+
+.badge {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  border: 1px solid currentColor;
+  border-radius: 3px;
+  padding: 1px 5px 0;
+}
+
+.project {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.project strong {
+  color: var(--ink);
+  font-weight: 560;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.view-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.icon-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.icon-btn:hover {
+  background: var(--paper);
+}
+
+.icon-btn[aria-pressed='true'] {
+  color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--rule);
+  border-radius: 7px;
+  padding: 2px;
+  margin-left: 6px;
+}
+
+.segmented button {
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font: 600 12px var(--font-ui);
+  letter-spacing: 0.04em;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--chrome);
+}
+
+.segmented button[aria-disabled='true'] {
+  opacity: 0.55;
+}
+
+.sep {
+  width: 1px;
+  height: 20px;
+  background: var(--rule);
+  margin: 0 4px;
+}
+
+/* ---------- Verktyg ---------- */
+
+.tools {
+  grid-area: tools;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 6px;
+  padding-left: max(6px, env(safe-area-inset-left, 0px));
+  border-right: 1px solid var(--rule);
+  background: var(--chrome);
+  overflow-y: auto;
+}
+
+.tool {
+  display: grid;
+  justify-items: center;
+  gap: 3px;
+  padding: 7px 2px 6px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink);
+  font: 500 11px var(--font-ui);
+  cursor: pointer;
+}
+
+.tool svg {
+  width: 22px;
+  height: 22px;
+}
+
+.tool:hover {
+  background: var(--paper);
+}
+
+.tool[aria-pressed='true'] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+.tool[aria-disabled='true'] {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.tool-group-label {
+  font-size: 9.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  text-align: center;
+  margin: 10px 0 2px;
+}
+
+/* ---------- Ritytan ---------- */
+
+.canvas {
+  grid-area: canvas;
+  position: relative;
+  background: var(--paper);
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.plan {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.plan.panning {
+  cursor: grabbing;
+}
+
+/* Rutnätet och ritningen ligger i egna lager under det översta (0.8.3). Ritningens
+   lager flyttas vid panorering utan att målas om, och det som ligger utanför
+   vyn ritas också, så att det finns där när det dras in. */
+.plan-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.plan-drawing {
+  overflow: visible;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+.grid-level {
+  stroke: var(--grid-major);
+  stroke-width: 1;
+  fill: none;
+}
+.segment-point {
+  stroke: var(--accent, #c2410c);
+  stroke-width: 1.5;
+  fill: none;
+}
+.grid-axes {
+  stroke: var(--grid-axes);
+  stroke-width: 1;
+  fill: none;
+}
+.plan-grid.no-grid .grid {
+  display: none;
+}
+
+/* Medan vyn zoomas skalas den färdiga ritningen (0.8.3); strecken behåller sin bredd tills den ritas om. */
+.plan-drawing.zooming :is(.content, .underlay) :is(path, polyline) {
+  vector-effect: non-scaling-stroke;
+}
+
+.content text,
+.text-preview {
+  font-family: var(--font-drawing);
+  font-weight: 400;
+  font-kerning: none;
+}
+
+.sb-dark {
+  fill: var(--ink);
+}
+.sb-light {
+  fill: var(--paper);
+}
+.sb-frame {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+.sb-label {
+  fill: var(--ink);
+  font: 500 11px var(--font-data);
+}
+
+.hint {
+  position: absolute;
+  z-index: 5;
+  left: 16px;
+  right: 16px;
+  bottom: 112px;
+  margin-inline: auto;
+  width: fit-content;
+  max-width: calc(100% - 32px);
+  padding: 8px 14px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--chrome);
+  font-size: 13px;
+  text-align: center;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+
+.hint.fading {
+  opacity: 0;
+}
+
+/* ---------- Statusrad ---------- */
+
+.status {
+  grid-area: status;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  border-top: 1px solid var(--rule);
+  background: var(--chrome);
+  color: var(--muted);
+  font: 400 12px var(--font-data);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.status .label {
+  font-family: var(--font-ui);
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-right: 6px;
+}
+
+.status .value {
+  color: var(--ink);
+}
+
+.status .coord {
+  display: inline-block;
+  min-width: 9ch;
+  text-align: right;
+}
+
+.status .engine {
+  margin-left: auto;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* ---------- Mobil ---------- */
+
+@media (max-width: 720px) {
+  :root {
+    --bar-h: 46px;
+    --status-h: 28px;
+  }
+  .app {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: var(--bar-h) minmax(0, 1fr) auto var(--status-h);
+    grid-template-areas: 'top' 'canvas' 'tools' 'status';
+  }
+  .modify-rail {
+    display: none;
+  }
+  .project,
+  .hide-narrow,
+  .brand .badge {
+    display: none;
+  }
+  .tools {
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: 0;
+    border-top: 1px solid var(--rule);
+    padding: 4px max(8px, env(safe-area-inset-right, 0px)) 4px max(8px, env(safe-area-inset-left, 0px));
+    scrollbar-width: none;
+  }
+  .tool {
+    min-width: 58px;
+  }
+  .tool-group-label {
+    display: none;
+  }
+  .status {
+    gap: 12px;
+  }
+  .status .cursor-pos {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hint {
+    transition: none;
+  }
+}

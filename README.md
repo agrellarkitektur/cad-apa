@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.26** (alfa, pennor i stilmallen); nästa är **0.9, flera våningsplan och bjälklag**.
+**0.8.27** (alfa, granskning); nästa är **0.8.28, rättelser i 2D-formen**.
 
 ## Vad som fungerar
 
@@ -943,6 +943,14 @@ Version 0.8.26, pennor i stilmallen (samma filformat, 13):
   streck. Gäller hela projektet, i planen, fasaderna, sektionerna och på
   bladen. Färgen gäller också markörens text och fyllda trianglar; svart
   följer skärmens tema. *Förval* tar tillbaka programmets värde
+
+Version 0.8.27, granskning (samma filformat, 13):
+- Inga nya funktioner; allt beter sig som förut
+- **Fasader** av stora hus räknas ungefär dubbelt så fort (312 väggar med
+  dörrar och fönster: 0,38 → 0,20 s); det som syns är detsamma
+- Stilmallen, egenskaperna för 2D-former, underlag och Visas i, och
+  appens stilar ligger i fler och mindre filer, så att linjetyper och
+  detaljnivåer får en egen plats när de kommer
 
 ## Versioner och gamla projekt
 

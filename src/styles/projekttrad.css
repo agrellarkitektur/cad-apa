@@ -1,0 +1,458 @@
+/* Alfa och synpunkter, nästan raka vinklar, måttbandet, 2D-element, projektträdets mappar och Följ sektionen. En del av app.css (0.8.27); ordningen mellan filerna är kaskadens. */
+
+/* ---------- Alfa (tidigare beta) och synpunkter (0.7.1) ---------- */
+
+.topbar .beta-btn {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  padding: 3px 8px 3px;
+  line-height: 1.05;
+  background: transparent;
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+
+.topbar .beta-btn b {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+
+.topbar .beta-btn .version {
+  font-family: var(--font-data);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.topbar .beta-btn small {
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  opacity: 0.85;
+}
+
+.topbar .beta-btn:hover {
+  background: var(--accent-soft);
+}
+
+.dialog.about {
+  width: min(460px, 100%);
+}
+.dialog.about .dialog-body p {
+  margin: 0 0 10px;
+}
+.dialog.about h3 {
+  margin: 14px 0 6px;
+  font-size: 13px;
+}
+.dialog.about a {
+  color: var(--accent);
+}
+.dialog.feedback {
+  width: min(520px, calc(100vw - 32px));
+}
+
+.dialog.feedback textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: 400 14px var(--font-ui);
+  padding: 8px;
+  resize: vertical;
+}
+
+.dialog.feedback input[type='email'] {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.fb-trap {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+.fb-status {
+  min-height: 1.2em;
+  margin: 0;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.fb-status .btn-link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Nästan raka vinklar (0.7.1). */
+.skew-mark path {
+  fill: #f2b233;
+  stroke: #6b4a00;
+  stroke-width: 1;
+  stroke-linejoin: round;
+}
+.skew-mark text {
+  font: 700 10px/1 var(--font-ui, system-ui, sans-serif);
+  fill: #2b1d00;
+}
+.skew-note {
+  margin: 0 16px 12px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, #f2b233 18%, var(--panel-bg));
+  border: 1px solid color-mix(in srgb, #f2b233 55%, transparent);
+  font-size: 13px;
+  line-height: 1.4;
+}
+.skew-ignored {
+  margin: 0 16px 12px;
+  font-size: 13px;
+  color: var(--muted, inherit);
+}
+.skew-note b {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 4px;
+  border-radius: 50%;
+  background: #f2b233;
+  color: #2b1d00;
+}
+.skew-note .btn {
+  margin-top: 6px;
+}
+.snap-guide.align-pick {
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-dasharray: none;
+  opacity: 0.8;
+}
+
+/* Måttband (0.7.1). */
+.measure-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.6;
+  stroke-dasharray: 6 3;
+}
+.measure-target {
+  fill: color-mix(in srgb, var(--accent) 18%, transparent);
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+.measure-move input {
+  width: 90px;
+}
+.measure-area {
+  fill: color-mix(in srgb, var(--accent) 12%, transparent);
+  stroke: none;
+}
+.measure-grid {
+  display: inline-grid;
+  grid-template-columns: repeat(5, auto);
+  gap: 4px 14px;
+}
+.measure-val {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  column-gap: 2px;
+}
+.app .measure-val > span:first-child {
+  display: block;
+  grid-column: 1 / -1;
+}
+.measure-val b {
+  font-family: var(--font-data, ui-monospace, monospace);
+  font-weight: 600;
+  min-width: 6.5em;
+  white-space: nowrap;
+}
+@media (max-width: 720px) {
+  .measure-grid {
+    grid-template-columns: repeat(3, auto);
+    gap: 2px 8px;
+  }
+  .measure-val b {
+    min-width: 0;
+    font-size: 12px;
+  }
+  .app .measure-val > span:first-child {
+    font-size: 9px;
+  }
+  .measure-val .icon-btn {
+    width: 22px;
+    height: 22px;
+  }
+}
+.measure-val .icon-btn {
+  width: 26px;
+  height: 26px;
+}
+.measure-val .icon-btn svg {
+  width: 15px;
+  height: 15px;
+}
+.zoom-box {
+  fill: color-mix(in srgb, var(--accent) 8%, transparent);
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+}
+.snap-guide.track {
+  stroke-dasharray: 2 4;
+  opacity: 0.85;
+}
+
+/* ---------- 2D-element, Visas i och Lås (0.8) ---------- */
+
+.tag-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.tag-chips .state-chip {
+  padding: 5px 9px 5px 7px;
+  font-size: 12px;
+}
+
+.view-checks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow: auto;
+  margin: 8px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 7px;
+  background: var(--paper);
+}
+
+.view-checks small {
+  color: var(--muted);
+}
+
+.note.warn {
+  color: var(--accent);
+}
+
+.lock-check {
+  margin-top: 10px;
+}
+
+.lock-check .lock-icon {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+}
+
+.lock-check .lock-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.field input[type='color'] {
+  width: 100%;
+  min-height: 32px;
+  padding: 2px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+/* ---------- Projektträdets mappar och inställningar (0.8) ---------- */
+
+.nav-list.folders {
+  margin-bottom: 4px;
+}
+
+.folder .folder-body {
+  padding-left: 14px;
+  border-left: 1px solid var(--rule);
+  margin-left: 13px;
+}
+
+.folder-row {
+  align-items: center;
+}
+
+.folder-toggle svg {
+  transition: transform 0.15s;
+  transform: rotate(-90deg);
+}
+
+.folder.open > .folder-row .folder-toggle svg {
+  transform: none;
+}
+
+.folder-name {
+  display: flex !important;
+  align-items: center;
+  gap: 7px;
+}
+
+.folder-name svg {
+  width: 17px;
+  height: 17px;
+  flex: none;
+  color: var(--muted);
+}
+
+/* Räknaren står till höger på samma rad som namnet (regeln nedan för
+   rader med ikon lägger annars undertexten på en egen rad). */
+.view-apply.folder-name {
+  flex-wrap: nowrap;
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+.view-apply.folder-name span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.view-apply.folder-name small {
+  flex-basis: auto;
+  padding-left: 0;
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.folder-empty {
+  padding: 4px 8px 8px;
+}
+
+.view-row.picked {
+  outline: 1.5px solid var(--accent);
+  outline-offset: -1.5px;
+  border-radius: 7px;
+}
+
+.row-lock {
+  display: inline-flex;
+  margin-left: 6px;
+  vertical-align: -2px;
+  color: var(--muted);
+}
+
+.row-lock svg {
+  width: 13px;
+  height: 13px;
+}
+
+.new-folder {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.new-folder svg {
+  width: 17px;
+  height: 17px;
+}
+
+.tree-form .tag-check {
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.tree-form .tag-check input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tree-form .tag-check span {
+  padding: 5px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 7px;
+  background: var(--paper);
+  font: 560 12px var(--font-ui);
+}
+
+.tree-form .tag-check input:checked + span {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--chrome);
+}
+
+.tree-form .tag-check input:focus-visible + span {
+  outline: 2px solid var(--accent);
+}
+
+.tree-save {
+  position: sticky;
+  bottom: 0;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-top: 1px solid var(--rule);
+  background: var(--chrome);
+}
+
+.tree-save .btn-danger {
+  margin-right: auto;
+}
+
+.scale-unit i:first-child {
+  order: -1;
+  padding: 0 4px 0 8px;
+}
+
+/* Följ sektionen i 3D-vyn (0.8). */
+.follow-section {
+  position: absolute;
+  z-index: 3;
+  right: 12px;
+  bottom: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 11px 6px 8px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--chrome);
+  color: var(--muted);
+  font: 560 12.5px var(--font-ui);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.08);
+  cursor: pointer;
+}
+
+.follow-section[hidden] {
+  display: none;
+}
+
+.follow-section svg {
+  width: 17px;
+  height: 17px;
+}
+
+.follow-section[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+
+.folder-toggle svg {
+  width: 15px;
+  height: 15px;
+}

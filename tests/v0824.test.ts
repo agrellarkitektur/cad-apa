@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
-import { mirrorElements } from '../src/core/commands';
+import { mirrorElements } from '../src/core/transforms';
 import { scaleElements, transferSettings } from '../src/core/arrange';
 import { DocStore } from '../src/core/store';
 import { FORMAT_VERSION, type Element } from '../src/core/model';
@@ -11,7 +11,8 @@ import { buildPlan } from '../src/repr/plan';
 import { sampleProject } from '../src/sample/sampleProject';
 import { parse, serialize } from '../src/storage/format';
 import { chainFrom } from '../src/ui/tools/draw2dTool';
-import { capFields, drawingFields, shapeSmartFields } from '../src/ui/drawingPanel';
+import { drawingFields } from '../src/ui/drawingPanel';
+import { capFields, shapeSmartFields } from '../src/ui/shapeFields';
 
 beforeAll(() => registerBuiltInTypes());
 

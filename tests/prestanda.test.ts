@@ -1,7 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { moveEach, extendAllTo } from '../src/core/arrange';
-import { copyElements, deleteElements, flipWalls, moveElements } from '../src/core/commands';
+import { deleteElements, flipWalls, moveElements } from '../src/core/commands';
+import { copyElements } from '../src/core/transforms';
 import { cornersAmong, mirrorAbout, offsetWalls, roundCorners } from '../src/core/wallEdit';
 import { DocStore } from '../src/core/store';
 import { doorNumbersFor, roomNumbersFor } from '../src/elements/rooms';

@@ -1,0 +1,194 @@
+/* Ritbordet: ett lugnt, svalt papper där ritningen är det enda som tar plats.
+   Kanterna (verktyg, status) är tunna och tysta; ockra markerar det aktiva. */
+:root {
+  --sel: var(--accent);
+  --ref: #1f4fa3;
+  --paper: #f3f5f6;
+  --chrome: #fbfcfc;
+  --ink: #1d2328;
+  --muted: #6a737b;
+  --rule: #dce1e4;
+  --grid-minor: #e2e7ea;
+  --grid-major: #c3cbd1;
+  --grid-axes: #b4a37e;
+  --accent: #a86b12;
+  --accent-soft: #f4e7d1;
+  --poche: #2b3238;
+  --poche-existing: #a3abb1;
+  --new: #c2372c;
+  --new-fill: #c2372c;
+  --demolished: #b88400;
+  --panel-bg: #fbfcfc;
+
+  --font-ui: 'Archivo', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-drawing: 'osifont', 'Archivo', sans-serif;
+  --font-data: 'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --bar-h: 48px;
+  --status-h: 30px;
+  --rail-w: 68px;
+
+  height: 100%;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --ref: #7fa8ff;
+    --paper: #161a1d;
+    --chrome: #1d2226;
+    --ink: #e3e7ea;
+    --muted: #8e979f;
+    --rule: #2c3338;
+    --grid-minor: #1f2529;
+    --grid-major: #323a40;
+    --grid-axes: #6f6143;
+    --accent: #e3a94a;
+    --accent-soft: #3a2f1c;
+    --poche: #c9d0d5;
+    --poche-existing: #5c656c;
+    --new: #ff7a6b;
+    --new-fill: #e5574a;
+    --demolished: #f0c13a;
+    --panel-bg: #1d2226;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --ref: #7fa8ff;
+  --paper: #161a1d;
+  --chrome: #1d2226;
+  --ink: #e3e7ea;
+  --muted: #8e979f;
+  --rule: #2c3338;
+  --grid-minor: #1f2529;
+  --grid-major: #323a40;
+  --grid-axes: #6f6143;
+  --accent: #e3a94a;
+  --accent-soft: #3a2f1c;
+  --poche: #c9d0d5;
+  --poche-existing: #5c656c;
+  --new: #ff7a6b;
+  --new-fill: #e5574a;
+  --demolished: #f0c13a;
+  --panel-bg: #1d2226;
+  color-scheme: dark;
+}
+
+/* Tema valt i appen (Blueprint, Ljust, Mörkt) går före både systemets och
+   värdsidans val. Utan valt tema följer appen systemet. */
+html:root[data-ui-theme='light'] {
+  --ref: #1f4fa3;
+  --paper: #f3f5f6;
+  --chrome: #fbfcfc;
+  --ink: #1d2328;
+  --muted: #6a737b;
+  --rule: #dce1e4;
+  --grid-minor: #e2e7ea;
+  --grid-major: #c3cbd1;
+  --grid-axes: #b4a37e;
+  --accent: #a86b12;
+  --accent-soft: #f4e7d1;
+  --new: #c2372c;
+  --panel-bg: #fbfcfc;
+  color-scheme: light;
+}
+
+html:root[data-ui-theme='dark'] {
+  --ref: #7fa8ff;
+  --paper: #161a1d;
+  --chrome: #1d2226;
+  --ink: #e3e7ea;
+  --muted: #8e979f;
+  --rule: #2c3338;
+  --grid-minor: #1f2529;
+  --grid-major: #323a40;
+  --grid-axes: #6f6143;
+  --accent: #e3a94a;
+  --accent-soft: #3a2f1c;
+  --new: #ff7a6b;
+  --panel-bg: #1d2226;
+  color-scheme: dark;
+}
+
+/* Blueprint: vita linjer på blått, orange för det aktiva. */
+html:root[data-ui-theme='blueprint'] {
+  --ref: #ffd84d;
+  --paper: #1c4f8c;
+  --chrome: #163f71;
+  --ink: #f4f8fc;
+  --muted: #a9c3e2;
+  --rule: #2d63a3;
+  --grid-minor: #23589a;
+  --grid-major: #2f68ab;
+  --grid-axes: #f09a4a;
+  --accent: #f39237;
+  --accent-soft: #4b4a4c;
+  --new: #ffb3a6;
+  --panel-bg: #163f71;
+  color-scheme: dark;
+}
+
+/* Ritningens typsnitt (0.8.18): osifont, ISO 3098, samma som i PDF:en. */
+@font-face {
+  font-family: 'osifont';
+  src: url('../fonts/osifont.woff2') format('woff2');
+  font-weight: 400;
+  font-display: block;
+}
+@font-face {
+  font-family: 'Archivo';
+  src: url('../fonts/archivo.woff2') format('woff2');
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../fonts/ibm-plex-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('../fonts/ibm-plex-mono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--chrome);
+  color: var(--ink);
+  font: 14px/1.4 var(--font-ui);
+  overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0 0 auto;
+  height: env(safe-area-inset-top, 0px);
+  z-index: 10;
+  background: var(--chrome);
+}
+
+[hidden] {
+  display: none !important;
+}

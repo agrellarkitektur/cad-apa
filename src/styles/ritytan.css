@@ -1,0 +1,435 @@
+/* Tillståndsväljaren, verktygsalternativen, hjälpgrafiken i planen och arkivmenyn. En del av app.css (0.8.27); ordningen mellan filerna är kaskadens. */
+
+/* ---------- Tillståndsväljare på ritytan ---------- */
+
+.viewbar {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  pointer-events: none;
+}
+
+.chips {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--chrome);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+  pointer-events: auto;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border: 0;
+  border-radius: 6px;
+  padding: 6px 11px;
+  background: transparent;
+  color: var(--muted);
+  font: 560 12.5px var(--font-ui);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.chip:hover {
+  color: var(--ink);
+}
+
+.chip[aria-selected='true'] {
+  background: var(--ink);
+  color: var(--chrome);
+}
+
+.chip-add {
+  padding: 6px 7px;
+}
+
+.chip-add svg {
+  width: 16px;
+  height: 16px;
+}
+
+.compare {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--chrome);
+  color: var(--ink);
+  font-size: 12.5px;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.compare input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.detail-switch {
+  pointer-events: auto;
+  background: var(--chrome);
+}
+
+.detail-switch button {
+  padding: 5px 9px;
+  font-size: 12px;
+}
+
+/* ---------- Verktygsalternativ ---------- */
+
+.tool-options {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 58px;
+  margin-inline: auto;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 12px;
+  max-width: calc(100% - 24px);
+  padding: 6px 8px 6px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--chrome);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.08);
+  font-size: 12.5px;
+}
+
+/* Med Markera syns raden bara för Modifiera utan smartmeny (0.8.5). */
+.app[data-tool='select'] .tool-options:not(.modify-detail) {
+  display: none;
+}
+
+.opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.opt-check input {
+  width: auto;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  accent-color: var(--accent);
+}
+
+.opt > span:first-child {
+  color: var(--muted);
+  font-size: 10.5px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.opt select,
+.opt input,
+.field input,
+.field select,
+.panel select,
+.dialog select,
+.dialog input[data-expr] {
+  font: 500 13px var(--font-ui);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 5px 7px;
+  min-width: 0;
+}
+
+.opt input[data-expr] {
+  width: 76px;
+  font-family: var(--font-data);
+}
+
+.opt-hint {
+  color: var(--muted);
+}
+
+.input-unit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.input-unit i {
+  font-style: normal;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.segmented.wide {
+  display: flex;
+  margin: 0;
+}
+
+.segmented.wide button {
+  flex: 1;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--chrome);
+  color: var(--ink);
+  font: 560 12.5px var(--font-ui);
+  padding: 6px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--paper);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--chrome);
+  border-color: var(--ink);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--ink);
+  opacity: 0.88;
+}
+
+.btn-danger {
+  color: var(--new);
+}
+
+.btn[aria-pressed='true'] {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+
+/* ---------- Hjälpgrafik i planen ---------- */
+
+.sel-box {
+  fill: color-mix(in srgb, var(--accent) 8%, transparent);
+  stroke: var(--accent);
+  stroke-width: 1;
+}
+
+.sel-box.crossing {
+  stroke-dasharray: 5 4;
+}
+
+.rubber {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 4 3;
+  fill: none;
+}
+
+.trim-cut {
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-dasharray: 6 4;
+  fill: none;
+}
+
+.wall-preview {
+  fill: color-mix(in srgb, var(--accent) 18%, transparent);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.chain-pt {
+  fill: var(--chrome);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.snap-guide {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 2 4;
+  opacity: 0.8;
+  fill: none;
+}
+
+.snap-guide.flush {
+  stroke: var(--ref);
+  stroke-width: 2.5;
+  stroke-dasharray: none;
+  opacity: 0.9;
+}
+
+.snap-mark {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.snap-dot {
+  fill: var(--accent);
+}
+
+.snap-cross {
+  stroke: var(--accent);
+  stroke-width: 1;
+}
+
+.snap-label {
+  fill: var(--accent);
+  font: 600 11px var(--font-ui);
+  paint-order: stroke;
+  stroke: var(--paper);
+  stroke-width: 3px;
+}
+
+.len-label rect {
+  fill: var(--ink);
+}
+
+.len-label text {
+  fill: var(--chrome);
+  font: 500 12px var(--font-data);
+}
+
+.hl-sel-fill {
+  fill: color-mix(in srgb, var(--sel) 22%, transparent);
+  stroke: var(--sel);
+  stroke-width: 2;
+}
+
+.hl-sel-line {
+  fill: none;
+  stroke: var(--sel);
+  stroke-width: 2.5;
+}
+
+.hl-hover-fill {
+  fill: color-mix(in srgb, var(--sel) 9%, transparent);
+  stroke: var(--sel);
+  stroke-width: 1;
+  stroke-opacity: 0.6;
+}
+
+.hl-hover-line {
+  fill: none;
+  stroke: var(--sel);
+  stroke-width: 1.5;
+  stroke-opacity: 0.6;
+}
+
+.grip {
+  fill: var(--paper);
+  stroke: var(--ref);
+  stroke-width: 2.5;
+}
+
+/* Referenslinjen på markerade väggar, mellan greppen. */
+.ref-line {
+  fill: none;
+  stroke: var(--ref);
+  stroke-width: 2;
+}
+
+.ref-label {
+  fill: var(--ref);
+  font: 600 10.5px var(--font-ui);
+  paint-order: stroke;
+  stroke: var(--paper);
+  stroke-width: 3px;
+}
+
+/* Hörnpunkter på markerade möbler: dra i dem för att flytta exakt. */
+.hotspot {
+  fill: var(--paper);
+  stroke: var(--ref);
+  stroke-width: 1.6;
+}
+
+/* ---------- Arkivmeny ---------- */
+
+.menu-wrap {
+  position: relative;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 20;
+  min-width: 210px;
+  padding: 5px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--chrome);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.12);
+  display: grid;
+}
+
+.menu button {
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font: 500 13.5px var(--font-ui);
+  padding: 8px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.menu button:hover {
+  background: var(--paper);
+}
+
+.menu-label {
+  padding: 6px 10px 2px;
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.menu button[aria-checked='true'] {
+  color: var(--accent);
+  font-weight: 650;
+}
+
+.menu hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 4px 2px;
+}
+
+.icon-btn:disabled {
+  color: var(--muted);
+  opacity: 0.45;
+  cursor: default;
+  background: transparent;
+}

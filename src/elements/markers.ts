@@ -40,26 +40,36 @@ const MARGIN = 2500;
 
 /** Byggnadens utbredning i plan på en våning: väggar och tak. */
 export function modelBounds(doc: ProjectDoc, storey: string): { minX: number; minY: number; maxX: number; maxY: number } | null {
-  const xs: number[] = [];
-  const ys: number[] = [];
-  for (const el of Object.values(doc.elements)) {
+  // Utan listor över alla punkter (0.8.27): anropas flera gånger för varje
+  // fasad och sektion när planen ritas.
+  let n = 0;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  const add = (x: number, y: number) => {
+    n++;
+    minX = Math.min(minX, x);
+    minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x);
+    maxY = Math.max(maxY, y);
+  };
+  for (const id in doc.elements) {
+    const el = doc.elements[id];
     if (el.storey !== storey) continue;
     if (el.type === 'Wall') {
       const p = resolveParams<{ start: Vec2; end: Vec2; thickness: number }>(doc, el);
       const h = (p.thickness ?? 0) / 2;
       for (const q of [p.start, p.end]) {
-        xs.push(q[0] - h, q[0] + h);
-        ys.push(q[1] - h, q[1] + h);
+        add(q[0] - h, q[1] - h);
+        add(q[0] + h, q[1] + h);
       }
     } else if (el.type === 'Roof') {
-      for (const q of resolveParams<RoofParams>(doc, el).outline) {
-        xs.push(q[0]);
-        ys.push(q[1]);
-      }
+      for (const q of resolveParams<RoofParams>(doc, el).outline) add(q[0], q[1]);
     }
   }
-  if (!xs.length) return null;
-  return { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
+  if (!n) return null;
+  return { minX, minY, maxX, maxY };
 }
 
 /** Linjen och riktningarna för en fasad eller sektion. */
@@ -113,8 +123,11 @@ const COMPASS_SHORT = ['N', 'NO', 'O', 'SO', 'S', 'SV', 'V', 'NV'];
 
 /** Riktningen mot norr i projektet, grader moturs från x-axeln. */
 export function northAngle(doc: ProjectDoc): number {
-  const n = Object.values(doc.elements).find((e) => e.type === 'North');
-  return n ? Number((n.params as Partial<NorthParams>).angle ?? 90) : 90;
+  for (const id in doc.elements) {
+    const n = doc.elements[id];
+    if (n.type === 'North') return Number((n.params as Partial<NorthParams>).angle ?? 90);
+  }
+  return 90;
 }
 
 /** Närmaste av de åtta väderstrecken för en riktning i plan. */

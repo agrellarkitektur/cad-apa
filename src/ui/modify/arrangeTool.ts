@@ -1,7 +1,6 @@
 import { canScale, extendAllTo, moveEach, scaledParams, scaleElements, transferSettings, trimAllAt, type BoundaryResult } from '../../core/arrange';
 import { isArc } from '../../core/commands';
 import type { Element, Id } from '../../core/model';
-import { canTrim } from '../../core/trimEdit';
 import { refFrame } from '../../core/wallEdit';
 import { shapePoints, type Shape2DParams } from '../../elements/drawing2d';
 import { dist, distToSegment, sub } from '../../geometry/vec';
@@ -525,9 +524,4 @@ function nearestSeg(segs: readonly Seg[], q: Vec2): Seg {
     }
   }
   return best;
-}
-
-/** Om något av det markerade går att förlänga eller trimma mot en gräns. */
-export function canBoundaryEdit(els: readonly (Element | undefined)[]): boolean {
-  return els.filter((e) => canTrim(e)).length >= 2;
 }

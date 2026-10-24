@@ -1,0 +1,295 @@
+/* Plan och 3D, Nytt projekt, kryssrutorna och gränssnittsinställningarna. En del av app.css (0.8.27); ordningen mellan filerna är kaskadens. */
+
+/* ---------- Plan och 3D ---------- */
+
+.pane-2d,
+.pane-3d {
+  position: absolute;
+  inset: 0;
+}
+
+/* Ritningens lager ritar också utanför vyn (0.8.3); rutan klipper det. */
+.pane-2d {
+  overflow: hidden;
+}
+
+.pane-3d {
+  display: none;
+  background: var(--paper);
+}
+
+.view3d-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+.app[data-mode='3d'] .pane-2d,
+.app[data-mode='3d'] .tool-options {
+  display: none;
+}
+
+.app[data-mode='3d'] .pane-3d {
+  display: block;
+}
+
+.app[data-mode='split'] .pane-2d {
+  right: calc(100% - var(--split, 50%));
+}
+
+.app[data-mode='split'] .pane-3d {
+  display: block;
+  left: var(--split, 50%);
+  border-left: 1px solid var(--rule);
+}
+
+.app[data-mode='split'] .tool-options {
+  right: calc(100% - var(--split, 50%));
+}
+
+/* Skarven mellan planen och 3D i läget Båda (0.8.4): dra för att ändra fördelningen. */
+.split-grip {
+  display: none;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--split, 50%) - 5px);
+  width: 9px;
+  z-index: 5;
+  cursor: col-resize;
+  touch-action: none;
+}
+.app[data-mode='split'] .split-grip {
+  display: block;
+}
+.split-grip::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 4px;
+  width: 1px;
+  transition: background 0.12s, width 0.12s, left 0.12s;
+}
+.split-grip:hover::after,
+.split-grip:focus-visible::after,
+.split-grip.active::after {
+  left: 3px;
+  width: 3px;
+  background: var(--accent);
+}
+.split-grip:focus-visible {
+  outline: none;
+}
+
+/* 2D, 3D och Båda svävar nere i mitten av ritytan (0.8), nära handen. */
+.view-modes {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  padding: 3px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--chrome);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.1);
+}
+
+.view-modes button {
+  min-width: 44px;
+  min-height: 30px;
+}
+
+@media (max-width: 720px) {
+  .brand > span:not(.badge) {
+    display: none;
+  }
+  .view-controls {
+    gap: 0;
+  }
+}
+
+/* ---------- Nytt projekt ---------- */
+
+.new-project {
+  width: min(560px, 100%);
+}
+
+.kind-pick {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.kind-pick legend {
+  font-size: 11.5px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+
+.kind-card {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 12px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.kind-card:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+.kind-card input {
+  margin-top: 3px;
+  accent-color: var(--accent);
+}
+
+.kind-card span {
+  display: grid;
+  gap: 2px;
+}
+
+.kind-card small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.ghost {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+}
+
+/* Mått vid markören när något dras i 3D. */
+.label3d {
+  position: absolute;
+  z-index: 3;
+  padding: 3px 7px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background: var(--chrome);
+  color: var(--ink);
+  font: 600 12px/1.3 var(--font-data);
+  white-space: pre;
+  pointer-events: none;
+}
+
+/* ---------- Kryssrutor och gränssnittsinställningar ---------- */
+
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.check input {
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.muted {
+  color: var(--muted);
+}
+
+.dialog.settings {
+  width: min(620px, 100%);
+}
+
+.dialog.settings section {
+  display: grid;
+  gap: 10px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.dialog.settings section:last-child {
+  border-bottom: 0;
+}
+
+.dialog.settings h3 {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.set-color {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.set-color > span {
+  min-width: 180px;
+  font-size: 13px;
+}
+
+.set-color input[type='color'] {
+  width: 44px;
+  height: 28px;
+  padding: 2px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.quick-row {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  font-size: 13px;
+}
+
+.quick-row > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+table.keys {
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+table.keys td {
+  padding: 4px 12px 4px 0;
+  vertical-align: top;
+}
+
+kbd {
+  display: inline-block;
+  padding: 1px 6px;
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--paper);
+  font: 500 12px var(--font-data);
+  white-space: nowrap;
+}
+
+@media (max-width: 520px) {
+  .quick-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+table.keys td:first-child {
+  width: 1%;
+  white-space: nowrap;
+  padding-right: 16px;
+}

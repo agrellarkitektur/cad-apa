@@ -190,7 +190,7 @@ git innan den läggs in. Testprojekten (`wallGrid`, `roomGrid`) ligger i
 
 Rum som skapats med rumsverktyget sparar punkten man klickade i (`seed`).
 En flyttad rumsstämpel har sin mittpunkt i `labelAt` (0.8.17); den flyttas
-och vrids med rummet i `movePatch` och `transformed` (`src/core/commands.ts`),
+och vrids med rummet i `movePatch` (`src/core/commands.ts`) och `transformed` (`src/core/transforms.ts`),
 och utanför rummet ritar `space.ts` en pil in i rummet. Stämpelns primitiver
 har `part: 'rumstext'`, som Markera känner igen när stämpeln dras.
 Konturen räknas ut vid varje ritning ur hålen i de sammanslagna väggarna
@@ -370,11 +370,13 @@ på bladet sina egna.
   en användarinställning (`followSection` i `uiSettings`), inte en del av
   projektet.
 - Egenskaperna för 2D, taklutning, Visas i och Lås ligger i
-  `src/ui/drawingPanel.ts`. Sedan 0.8.1 ligger resten av egenskapspanelens
+  `src/ui/drawingPanel.ts`, som sedan 0.8.27 fördelar till
+  `shapeFields.ts` (2D-formen), `underlayFields.ts` (underlag) och
+  `showFields.ts` (Visas i). Sedan 0.8.1 ligger resten av egenskapspanelens
   fält i `src/ui/selectionFields.ts` (HTML) och det de ändrar i
   `src/ui/selectionEdits.ts` (`applyField` för fält med `data-key`
   "omfång:namn"); `propertiesPanel.ts` har bara panelen, snabbraden och
-  knapparna.
+  knapparna (snabbradens knappar ritas i `quickBar.ts` sedan 0.8.27).
 
 ## Underlag (0.8.16, format 11)
 
@@ -403,7 +405,7 @@ på bladet sina egna.
   ritas in i rektangeln), skalning `scale`. Markera ritar greppen för ett
   ensamt, olåst underlag och anropar `updateParams` när de släpps. Filens
   egen storlek läses i `underlays.ts` (`resetProportions`)
-- **Fält**: `underlayPlaceFields` i `drawingPanel.ts` (X, Y, bredd, höjd,
+- **Fält**: `underlayPlaceFields` i `underlayFields.ts` (X, Y, bredd, höjd,
   Återställ proportioner) visas i egenskaperna och, via
   `PropertiesPanel.smartFields()`, direkt i smartmenyn (`.sm-fields`).
   Snabbknapparna för underlag är `zoom-selection` och `delete`
@@ -1122,6 +1124,69 @@ projekt i 1 982 jämförelser.
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
 
+## Granskning (0.8.27, format 13)
+
+Utan nya funktioner. Kontrollerat med samma klick i 0.8.26 och 0.8.27
+(Playwright, 114 steg genom stilmallen, snabbraden, 2D-formens fält,
+ritordningen, Visas i, ett underlag, fasaderna och sektionen): samma
+projekt, markering, ritning, panel, snabbrad, smartmeny och dialog efter
+varje steg. Fasaderna och sektionerna i exempelprojektet, `roomGrid(12)`
+och `wallGrid(16)` ger exakt samma primitiver före och efter.
+`tests/v0827.test.ts` jämför de dolda linjerna med olika rutor och med en
+enda ruta (att pröva allt). Klickjämförelsen ligger i
+`scripts/jamfor-klick.py` och kan köras igen vid nästa granskning.
+
+- **Appens stilar**: `src/styles/app.css` är bara `@import` av tretton
+  filer i samma ordning som när allt låg i en fil (`tema`, `ramverk`,
+  `ritytan`, `paneler`, `vyer`, `smartmeny`, `stilmall`, `navigator`,
+  `menyer`, `projekttrad`, `blad`, `linjer`, `smartshell`). Vite lägger
+  ihop dem till samma CSS som förut, byte för byte. Ordningen är
+  kaskadens: en regel längre ned går före en lika specifik regel längre
+  upp, så en regel flyttas inte mellan filerna utan att man ser efter vad
+  den skriver över. Nya regler läggs i filen där de hör hemma
+- **Stilmallen** (`StyleDialog`) har kvar dialogen och knapparna; delarna
+  ligger i `src/ui/style/`, en fil per del med dess HTML och det dess
+  fält ändrar: `actions.ts` (åtgärderna: `actionRows`,
+  `applyActionField`), `labels.ts` (texter och littera: `labelSection`,
+  `applyLabelField`), `pens.ts` (pennorna: `penSection`, `applyPenField`,
+  `resetPen`) och `colors.ts` (`fromHex`, `toHex`, `clamp01`). Varje
+  `apply…Field` ändrar en kopia av stilmallen och ger ångrarubriken, eller
+  null om fältet inte hör till delen. En ny del (linjetyper, detaljnivåer)
+  blir en ny fil här och en rad i `render` och `onChange`
+- **Egenskaperna för det ritade**: `drawingPanel.ts` har kvar
+  taklutningen, Lås och fördelningen (`drawingFields`, `drawingChange`,
+  `drawingClick`). 2D-formens fält och ändringar ligger i `shapeFields.ts`
+  (`shapeFields`, `shapeChange`, `fillFields`, `hatchFields`,
+  `opacityFields`, `capFields`, `shapeSmartFields`), underlagets i
+  `underlayFields.ts` (`underlayFields`, `underlayPlaceFields`,
+  `underlayChange`) och Visas i i `showFields.ts` (`showSection`,
+  `showChange`, `showClick`, `resetShowList`, `SHOWABLE`)
+- **Snabbraden**: knapparna ritas av `quickButtons` och `quickButton` i
+  `src/ui/quickBar.ts`; vad de gör står kvar i `PropertiesPanel.onClick`
+- **Kopiera, Vrid och Spegla** (`copyElements`, `rotateElements`,
+  `mirrorElements`, `transformed`, `PlanTransform`) ligger i
+  `src/core/transforms.ts`
+- **Dolda linjer** (`visibleSegments` i `src/geometry/hiddenLine.ts`):
+  rutnätets rutor är kvadratiska, högst N × N (N = 64–256 efter antalet
+  trianglar) och inte mindre än halva den vanliga triangelns storlek.
+  Förut delades bredd och höjd i N var, så att en fasad 48 m bred och 3 m
+  hög fick rutor 1 cm höga och varje vägg hamnade i tusentals rutor.
+  `cellSide` ger rutorna en egen storlek (för testerna). Fasaden av 312
+  väggar med dörrar och fönster: 0,38 → 0,20 s
+- **Fasadens trianglar** (`buildSection`): hörnen räknas till
+  vykoordinater utan en lista per hörn, och en triangel som ligger helt
+  innanför djupet och linjens längd läggs till som den är i stället för att
+  klippas tre gånger (klippningen ger då samma hörn)
+- `modelBounds` och `northAngle` (`src/elements/markers.ts`), som anropas
+  flera gånger för varje fasad och sektion när planen ritas, går igenom
+  elementen utan att bygga listor. `modelBounds` sparar inget mellan
+  anropen: den kan anropas mitt i en transaktion (via `placement.auto` i
+  `movePatch`), där `doc.elements` inte byter identitet
+- Borttaget, oanvänt: `commandById`, `canBoundaryEdit` och `isArcWall`
+- Mätt men lämnat: väggarnas sammanslagning i fasaden (`union` i
+  `model3dBatch`, ca 0,06 s med 312 väggar) och trianguleringen
+  (`solidTriangles`, ca 0,05 s)
+
 ## 2D-form del 2 (0.8.24, format 13)
 
 - **Kedjan**: `Shape2DParams.shape` är `ShapePath` (`polyline` eller
@@ -1148,7 +1213,7 @@ projekt i 1 982 jämförelser.
 - **Modifiera**: `shapeBend` (radie, eller klick genom en punkt;
   `bendPatch` i `outlineOps.ts`) och `shapeStraighten` (direkt, i
   `runInstant`) ligger på knapparna Böj och Räta ut i raden
-- **Spegla** (`transformed` i `core/commands.ts`) byter tecken på
+- **Spegla** (`transformed` i `core/transforms.ts`) byter tecken på
   `bulges`; **Skala** (`scaledParams`) skalar dem; pipetten tar inte med
   dem (`PLACEMENT`). `isOpenLine` i `trimEdit.ts` kräver en kedja utan
   bågar, så Trimma, Hörnskarv, Dela och Förläng gäller raka linjer
@@ -1161,7 +1226,7 @@ projekt i 1 982 jämförelser.
   följer med med tjockleken 0 så att markering och snäpp ser hela formen.
   Bara öppna former med linje får ändar. `splitLine` och `trimLine` ger
   den första delen början och den andra slutet
-- **Egenskaperna**: `capFields` i `drawingPanel.ts` (Början, Slutet,
+- **Egenskaperna**: `capFields` i `shapeFields.ts` (Början, Slutet,
   Storlek på papper), också i smartmenyn (`shapeSmartFields`) när alla
   markerade är öppna och har linje. *Ritad som* är ersatt av *Form*
   (Linje eller Spline, och antalet bågar)
@@ -1177,7 +1242,7 @@ triangel i pennans färg. En ny sorts markör läggs till som en rad i
 `MARKER_PENS` och ritas med `markerPen(ctx.style, …)`; raden syns då i
 stilmallen utan mer kod. `dimensionPrims` och `slopeSymbol` tar pennan
 eller stilmallen som sista parameter (utan den gäller förvalen).
-Stilmallens del ritas av `penSection` i `src/ui/styleDialog.ts`; bara det
+Stilmallens del ritas av `penSection` i `src/ui/style/pens.ts`; bara det
 som skiljer sig från förvalet sparas.
 
 ## Ritordning och fyllningar (0.8.25, format 13)
@@ -1274,7 +1339,7 @@ smartshell och träd efter varje steg. `tests/v0823.test.ts` jämför
   tjockleken 0, så att formen går att klicka på. Formatet ändrades inte:
   parametrarna är valfria
 - **Smartmenyns fält** för 2D-former: `shapeSmartFields` i
-  `drawingPanel.ts` (skrafferingens vinkel och avstånd, `hatchFields`, och
+  `shapeFields.ts` (skrafferingens vinkel och avstånd, `hatchFields`, och
   opaciteten, `opacityFields`), visade av `PropertiesPanel.smartFields`
   som underlagens läge. Värden som skiljer sig mellan markerade former står
   tomma med *Olika*
@@ -1386,7 +1451,7 @@ smartshell och träd efter varje steg. `tests/v0823.test.ts` jämför
 - **Markering**: `pickShape` ger ytan bara när formen har en fyllning. I
   `pickAllAt` gäller nivå 4 (inuti en sluten `polyline`) inte för typer
   med `pickSoft`, så att en form utan fyllning bara träffas på linjen
-- **Gränssnittet**: `fillFields` i `drawingPanel.ts` (mönster, färg,
+- **Gränssnittet**: `fillFields` i `shapeFields.ts` (mönster, färg,
   vinkel, avstånd); `patternPicker` har ett val `none` (*Ingen fyllning*).
   I verktygsraden visas mönstren utan namn (CSS `.opt .pattern-pick label
   span`). `Draw2DOptions` har `kind` (`ShapeKind`), `weight`, `linetype`

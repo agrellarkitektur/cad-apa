@@ -1,0 +1,727 @@
+/* Toppraden, huvudmenyn, statusradens zoom, panelernas rubriker, vyinställningarna, högerklicksmenyn, små frågor och formulärkontrollerna. En del av app.css (0.8.27); ordningen mellan filerna är kaskadens. */
+
+/* ======================================================================
+   0.6.3: topprad, paneler, vyinställningar, menyer och snabbmeny
+   ====================================================================== */
+
+/* ---------- Toppraden ---------- */
+
+.topbar {
+  gap: 6px;
+  padding-left: max(8px, env(safe-area-inset-left, 0px));
+  padding-right: max(12px, env(safe-area-inset-right, 0px));
+}
+
+.topbar .sep {
+  margin: 0 3px;
+}
+
+/* Loggan är en knapp, men en stillsam: den öppnar huvudmenyn. */
+.brand-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 7px 0 6px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 680 14.5px var(--font-ui);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.brand-btn:hover,
+.brand-btn[aria-expanded='true'] {
+  border-color: var(--muted);
+}
+
+.brand-btn[aria-expanded='true'] {
+  background: var(--accent-soft);
+}
+
+.brand-logo {
+  width: 22px;
+  height: 22px;
+}
+
+.brand-chev svg {
+  width: 14px;
+  height: 14px;
+  color: var(--muted);
+  display: block;
+  transition: transform 0.15s;
+}
+
+.brand-btn[aria-expanded='true'] .brand-chev svg {
+  transform: rotate(180deg);
+}
+
+.file-btns {
+  display: flex;
+  gap: 2px;
+}
+
+.topbar .project {
+  margin-left: 4px;
+}
+
+.pane-btn[aria-pressed='mixed'] {
+  color: var(--muted);
+  background: var(--paper);
+  box-shadow: inset 0 0 0 1px var(--rule);
+}
+
+.topbar .theme-wrap {
+  margin-left: 4px;
+}
+
+.topbar .badge {
+  margin-left: 6px;
+  padding: 3px 6px 2px;
+  border-width: 1.5px;
+  border-radius: 5px;
+}
+
+/* Huvudmenyn under loggan. */
+.main-menu-wrap .menu {
+  left: 0;
+  right: auto;
+  min-width: 290px;
+  padding: 6px;
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgb(0 0 0 / 0.18);
+}
+
+.main-menu button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.main-menu button svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: var(--muted);
+}
+
+.main-menu button kbd,
+.main-menu button small {
+  margin-left: auto;
+  font: 400 11px var(--font-data);
+  color: var(--muted);
+}
+
+.main-menu button[aria-disabled='true'] {
+  color: var(--muted);
+  opacity: 0.6;
+  cursor: default;
+}
+
+.main-menu button[aria-disabled='true']:hover {
+  background: transparent;
+}
+
+.narrow-only {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .narrow-only {
+    display: grid;
+  }
+  .brand-name,
+  .topbar .badge,
+  .main-menu kbd {
+    display: none;
+  }
+  .topbar {
+    gap: 2px;
+  }
+}
+
+/* ---------- Statusraden: zoom vid skalan ---------- */
+
+.zoom-btns {
+  display: inline-flex;
+  gap: 3px;
+  margin-left: -8px;
+}
+
+.status-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.status-icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.status-icon:hover {
+  border-color: var(--muted);
+}
+
+/* ---------- Projektträd och egenskaper: rubrik, minimera och band ---------- */
+
+.pane-title {
+  display: none;
+}
+
+.pane-band {
+  display: none;
+}
+
+@media (min-width: 961px) {
+  .pane-title {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 9px 8px 7px 14px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .pane-title h2 {
+    flex: 1;
+    margin: 0;
+    font: 700 10.5px var(--font-ui);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .pane-title .icon-mini svg {
+    width: 15px;
+    height: 15px;
+  }
+  .navigator .panel-head .nav-close,
+  .panel .panel-head .panel-close {
+    display: none;
+  }
+  .app.nav-min .dock,
+  .app.panel-min .dock {
+    display: flex;
+  }
+  .app.nav-min .pane-band[data-action='open-nav'],
+  .app.panel-min .pane-band[data-action='open-panel-band'] {
+    display: flex;
+  }
+  .pane-band {
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    width: 30px;
+    padding: 12px 0;
+    border: 0;
+    border-left: 1px solid var(--rule);
+    background: var(--panel-bg);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .pane-band:hover {
+    background: var(--paper);
+  }
+  .pane-band svg {
+    width: 16px;
+    height: 16px;
+    color: var(--muted);
+  }
+  .pane-band span {
+    writing-mode: vertical-rl;
+    font: 700 10.5px var(--font-ui);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+  }
+}
+
+/* ---------- Tillfälliga vyinställningar ---------- */
+
+.viewbar {
+  right: auto;
+  max-width: calc(100% - 24px);
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  padding: 6px 8px 8px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--chrome) 94%, transparent);
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.08);
+  pointer-events: auto;
+}
+
+.vb-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 2px;
+  font: 650 9.5px var(--font-ui);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.vb-save {
+  margin-left: auto;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--accent);
+  font: 650 11.5px var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.vb-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Alla kontroller i raden har samma höjd, ram och typsnitt. */
+.viewbar .vb-ctl {
+  box-sizing: border-box;
+  height: 32px;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font: 560 12.5px var(--font-ui);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.viewbar .vb-ctl:hover {
+  border-color: var(--muted);
+}
+
+.viewbar .vb-ctl.chips,
+.viewbar .vb-ctl.segmented {
+  padding: 2px;
+  gap: 2px;
+  cursor: default;
+}
+
+.viewbar .vb-ctl.chips .chip,
+.viewbar .vb-ctl.segmented button {
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font: 560 12.5px var(--font-ui);
+  letter-spacing: 0;
+}
+
+.viewbar .vb-ctl.chips .chip-add {
+  padding: 0 6px;
+}
+
+.view-btn .vb-lbl {
+  font: 650 9.5px var(--font-ui);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.viewbar.modified .view-btn {
+  border-color: var(--accent);
+}
+
+@media (max-width: 720px) {
+  .viewbar {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+  }
+  .vb-head {
+    display: none;
+  }
+  .vb-row > * {
+    pointer-events: auto;
+  }
+  .vb-row > .detail-switch {
+    display: none;
+  }
+  .viewbar .vb-ctl {
+    background: var(--chrome);
+    height: 34px;
+  }
+}
+
+.trace-look {
+  display: grid;
+  gap: 8px;
+  padding: 8px 0 2px;
+  border-top: 1px solid var(--rule);
+}
+
+.trace-look .field.inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trace-look input[type='color'] {
+  width: 44px;
+  height: 26px;
+  padding: 1px;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  background: var(--paper);
+}
+
+.trace-look input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.trace-tag {
+  margin-left: 6px;
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font: 600 10px var(--font-ui);
+  letter-spacing: 0.04em;
+  vertical-align: 1px;
+}
+
+.view-row .view-more {
+  opacity: 0.5;
+}
+
+.view-row:hover .view-more,
+.view-row .view-more:focus-visible {
+  opacity: 1;
+}
+
+/* ---------- Högerklicksmeny ---------- */
+
+.ctx-menu {
+  position: fixed;
+  z-index: 80;
+  display: grid;
+  min-width: 230px;
+  max-width: min(340px, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  overflow: auto;
+  padding: 5px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--chrome);
+  color: var(--ink);
+  box-shadow: 0 14px 36px rgb(0 0 0 / 0.2);
+  font-family: var(--font-ui);
+}
+
+.ctx-menu[hidden] {
+  display: none;
+}
+
+.ctx-menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 6px;
+  padding: 7px 10px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font: 500 13px var(--font-ui);
+  cursor: pointer;
+}
+
+.ctx-menu button:hover,
+.ctx-menu button:focus-visible {
+  background: var(--paper);
+  outline: none;
+}
+
+.ctx-menu button[aria-disabled='true'] {
+  color: var(--muted);
+  cursor: default;
+}
+
+.ctx-menu button[aria-disabled='true']:hover {
+  background: transparent;
+}
+
+.ctx-menu button.danger {
+  color: var(--new);
+}
+
+.ctx-menu kbd {
+  margin-left: auto;
+  font: 400 11px var(--font-data);
+  color: var(--muted);
+}
+
+.ctx-menu hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: 4px 2px;
+}
+
+.ctx-head {
+  display: grid;
+  padding: 6px 10px 3px;
+}
+
+.ctx-head b {
+  font-size: 13px;
+}
+
+.ctx-head small {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.ctx-check {
+  position: relative;
+  width: 14px;
+  height: 14px;
+  flex: none;
+  border: 1.5px solid var(--muted);
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+.ctx-check.on {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.ctx-check.on::after {
+  content: '';
+  position: absolute;
+  left: 3.5px;
+  top: 0.5px;
+  width: 3px;
+  height: 7px;
+  border: solid var(--chrome);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.ctx-menu .ctx-quick {
+  display: grid;
+  gap: 6px;
+  padding: 6px 6px 4px;
+  border: 0;
+}
+
+.ctx-menu .ctx-quick .qb-actions {
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.ctx-menu .ctx-quick .qb-btn {
+  flex-direction: column;
+  min-width: 48px;
+  padding: 5px 4px 4px;
+  font-size: 10px;
+  background: var(--paper);
+}
+
+.ctx-menu .ctx-quick .qb-btn[data-action='deselect'] {
+  display: none;
+}
+
+/* ---------- Små frågor (byt namn, ta bort) ---------- */
+
+.ask-dialog {
+  width: min(420px, 100%);
+}
+
+.ask-dialog .dialog-body {
+  padding: 14px 16px;
+}
+
+.ask-dialog .ask-input {
+  width: 100%;
+  box-sizing: border-box;
+  font: 500 15px var(--font-ui);
+  padding: 8px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 7px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.ask-dialog p {
+  margin: 0;
+}
+
+.show-menu {
+  left: auto;
+  right: 0;
+  max-height: calc(100vh - 160px);
+  overflow: auto;
+}
+
+.ctx-label {
+  display: grid;
+  min-width: 0;
+}
+
+.ctx-label small {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.trace-tag {
+  margin-left: 0;
+  margin-right: 2px;
+}
+
+@media (max-width: 720px) {
+  .file-btns,
+  .status-icon.hide-narrow,
+  .ctx-menu kbd {
+    display: none;
+  }
+  .viewbar {
+    right: 8px;
+    max-width: none;
+  }
+  .vb-row {
+    gap: 6px;
+  }
+}
+
+/* ---------- Formulärkontroller (0.7) ----------
+   Alla fält, listor, kryssrutor och rullningslister ritas av appen själv, i
+   temats färger, så att de ser ut som knapparna oavsett tema och om datorn
+   står i ljust eller mörkt läge. */
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--rule) transparent;
+}
+
+:where(input:not([type]), input[type='text'], input[type='search'], input[type='number'], textarea, select) {
+  color: var(--ink);
+  background-color: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+}
+
+:where(input, textarea)::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+:where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']), textarea, select):focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: 24px !important;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--muted) 50%),
+    linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 13px) 52%,
+    calc(100% - 8.5px) 52%;
+  background-size: 4.5px 4.5px;
+  background-repeat: no-repeat;
+  text-overflow: ellipsis;
+}
+
+select option {
+  background: var(--chrome);
+  color: var(--ink);
+}
+
+input[type='checkbox'] {
+  appearance: none;
+  -webkit-appearance: none;
+  flex: none;
+  display: inline-grid;
+  place-content: center;
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  border: 1px solid var(--muted);
+  border-radius: 4px;
+  background: var(--paper);
+  cursor: pointer;
+  vertical-align: -3px;
+}
+
+input[type='checkbox']::before {
+  content: '';
+  width: 8px;
+  height: 4px;
+  margin-top: -2px;
+  border: 2px solid var(--ink);
+  border-top: 0;
+  border-right: 0;
+  transform: rotate(-45deg);
+  opacity: 0;
+}
+
+input[type='checkbox']:checked {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+input[type='checkbox']:checked::before {
+  opacity: 1;
+}
+
+/* Delvis ikryssad (0.8.11): Visa-menyns kategorier och mappar i Plot/export. */
+input[type='checkbox']:indeterminate {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+
+input[type='checkbox']:indeterminate::before {
+  width: 8px;
+  height: 0;
+  margin-top: 0;
+  border-width: 0 0 2px;
+  transform: none;
+  opacity: 1;
+}
+
+input[type='checkbox']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+input[type='checkbox']:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+input[type='range'] {
+  accent-color: var(--accent);
+}
+
+/* Fasader och sektioner ritas utan planens rutnät. */
+.app[data-place='section'] .plan-grid .grid {
+  display: none;
+}

@@ -1,5 +1,5 @@
 import type { Vec2 } from '../repr/primitives';
-import { arcFromBulge, arcSegments, STRAIGHT } from './arc';
+import { arcFromBulge, arcSegments } from './arc';
 import { add, left, norm, scale, sub } from './vec';
 
 /** Det som avgör en väggs läge: referenslinjen, tjockleken och justeringen. */
@@ -122,10 +122,5 @@ export function wallFrame(p: WallGeometry): WallFrame {
     },
   };
   return f;
-}
-
-/** Om väggen är en båge. */
-export function isArcWall(p: { bulge?: number }): boolean {
-  return !!p.bulge && Math.abs(p.bulge) >= STRAIGHT;
 }
 

@@ -1,0 +1,134 @@
+import { wallFrame } from '../geometry/wallFrame';
+import { geometryOf } from './commands';
+import { hostedIn } from './elementIndex';
+import { newId } from './ids';
+import type { Element, Id, ProjectDoc } from './model';
+import type { DocStore } from './store';
+
+/**
+ * Kopiera, vrida och spegla (utbrutet ur commands.ts i 0.8.27).
+ */
+
+type Pt = [number, number];
+
+/** En avbildning av planen: vridning kring en punkt, eller spegling i en lodrät linje. */
+export interface PlanTransform {
+  map(p: Pt): Pt;
+  /** Ny vinkel (grader) för något som pekar åt `deg`. */
+  angle(deg: number): number;
+  mirror: boolean;
+}
+
+function rotation(center: Pt, deg: number): PlanTransform {
+  const r = (deg * Math.PI) / 180;
+  const c = Math.cos(r);
+  const s = Math.sin(r);
+  return {
+    map: ([x, y]) => [Math.round(center[0] + (x - center[0]) * c - (y - center[1]) * s), Math.round(center[1] + (x - center[0]) * s + (y - center[1]) * c)],
+    angle: (a) => (((a + deg) % 360) + 360) % 360,
+    mirror: false,
+  };
+}
+
+function mirrorX(center: Pt): PlanTransform {
+  return {
+    map: ([x, y]) => [Math.round(2 * center[0] - x), y],
+    angle: (a) => (((180 - a) % 360) + 360) % 360,
+    mirror: true,
+  };
+}
+
+/** Elementets nya parametrar efter avbildningen, och följdändringar i det som sitter i det. */
+export function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, moving: Set<Id>): Element[] {
+  const p = el.params as Record<string, any>;
+  const out: Element[] = [];
+  if (p.start && p.end) {
+    let start = t.map(p.start);
+    let end = t.map(p.end);
+    if (t.mirror) {
+      // Speglingen vänder sidorna; byt riktning så att insidan blir kvar inne.
+      // Pilhöjden behåller sitt tecken: speglingen och bytet tar ut varandra.
+      [start, end] = [end, start];
+      const len = wallFrame(geometryOf(doc, el)).length;
+      for (const h of hostedIn(doc, el.id)) {
+        if (!moving.has(h.id)) continue;
+        const hp = h.params as Record<string, any>;
+        const patch: Record<string, unknown> = {};
+        if (typeof hp.at === 'number') patch.at = Math.round(len - hp.at);
+        if (hp.hinge) patch.hinge = hp.hinge === 'start' ? 'end' : 'start';
+        out.push({ ...h, params: { ...h.params, ...patch } });
+      }
+    }
+    out.unshift({ ...el, params: { ...el.params, start, end } });
+    return out;
+  }
+  if (p.origin && typeof p.width === 'number') {
+    const r = ((p.rotation ?? 0) * Math.PI) / 180;
+    if (t.mirror) {
+      // Det hörn som efter speglingen blir möbelns nedre vänstra.
+      const far: Pt = [p.origin[0] + p.width * Math.cos(r), p.origin[1] + p.width * Math.sin(r)];
+      return [{ ...el, params: { ...el.params, origin: t.map(far), rotation: (((t.angle(p.rotation ?? 0) + 180) % 360) + 360) % 360 } }];
+    }
+    return [{ ...el, params: { ...el.params, origin: t.map(p.origin), rotation: t.angle(p.rotation ?? 0) } }];
+  }
+  if (Array.isArray(p.outline)) {
+    // Tak har en nockriktning som vrids med.
+    const ridge = typeof p.ridge === 'number' ? { ridge: t.angle(p.ridge) } : {};
+    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...ridge } }];
+  }
+  if (Array.isArray(p.points)) {
+    const points = p.points.map((q: any) => (Array.isArray(q) ? t.map(q as Pt) : { ...q, at: t.map(q.at) }));
+    // Speglade bågar buktar åt andra hållet (2D-formernas pilhöjder, 0.8.24).
+    const bulges = t.mirror && Array.isArray(p.bulges) ? { bulges: (p.bulges as number[]).map((b) => -b) } : {};
+    return [{ ...el, params: { ...el.params, points, angle: t.angle(p.angle ?? 0), offset: t.mirror ? -(p.offset ?? 0) : p.offset, ...bulges } }];
+  }
+  if (p.pos) {
+    return [{ ...el, params: { ...el.params, pos: t.map(p.pos), angle: t.mirror ? p.angle : t.angle(p.angle ?? 0) } }];
+  }
+  return [];
+}
+
+function applyTransform(store: DocStore, ids: Id[], t: PlanTransform, label: string): void {
+  const moving = new Set(ids);
+  // Dörrar och fönster följer sina väggar.
+  for (const e of Object.values(store.doc.elements)) if (e.host && moving.has(e.host)) moving.add(e.id);
+  store.transact(label, (tx) => {
+    for (const id of ids) {
+      const el = tx.doc.elements[id];
+      if (!el || el.host) continue;
+      for (const e of transformed(tx.doc, el, t, moving)) tx.putElement(e);
+    }
+  });
+}
+
+/** Vrid det markerade 90° moturs kring en punkt. */
+export function rotateElements(store: DocStore, ids: Id[], center: Pt, deg = 90): void {
+  applyTransform(store, ids, rotation(center, deg), `Vrid ${deg}°`);
+}
+
+/** Spegla det markerade i en lodrät linje genom en punkt. */
+export function mirrorElements(store: DocStore, ids: Id[], center: Pt): void {
+  applyTransform(store, ids, mirrorX(center), 'Spegla');
+}
+
+/**
+ * Kopiera element på samma plats. Dörrar och fönster följer med om deras
+ * vägg kopieras. Kopiorna finns i samma tillstånd som originalen och får nya
+ * id; numren tas bort så att de numreras om.
+ */
+export function copyElements(store: DocStore, ids: Id[]): Id[] {
+  const doc = store.doc;
+  const map = new Map<Id, Id>();
+  const pick = new Set(ids.filter((id) => doc.elements[id] && !doc.elements[id].host));
+  for (const e of Object.values(doc.elements)) if (e.host && pick.has(e.host)) pick.add(e.id);
+  for (const id of pick) map.set(id, newId(doc.elements[id].type.slice(0, 2).toLowerCase()));
+  store.transact(pick.size === 1 ? 'Kopiera' : `Kopiera ${pick.size} objekt`, (tx) => {
+    for (const id of pick) {
+      const el = doc.elements[id];
+      const params = { ...el.params } as Record<string, unknown>;
+      delete params.number;
+      tx.putElement({ ...structuredClone(el), id: map.get(id)!, host: el.host ? map.get(el.host) : undefined, params: structuredClone(params) });
+    }
+  });
+  return ids.map((id) => map.get(id)).filter((x): x is Id => !!x);
+}

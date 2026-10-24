@@ -128,9 +128,10 @@ function makeOccluder(a: V3, b: V3, c: V3): Occluder | null {
 
 /**
  * De synliga delarna av kanterna. `triangles` är platta listor med nio tal
- * per triangel (x, y, d för tre hörn).
+ * per triangel (x, y, d för tre hörn). `cellSide` ger rutnätets rutor en
+ * egen storlek, för testerna; resultatet är detsamma.
  */
-export function visibleSegments<K>(segs: readonly Seg<K>[], triangles: readonly (readonly number[])[]): Visible<K>[] {
+export function visibleSegments<K>(segs: readonly Seg<K>[], triangles: readonly (readonly number[])[], cellSide?: number): Visible<K>[] {
   const occ: Occluder[] = [];
   for (const tris of triangles) {
     for (let i = 0; i + 8 < tris.length; i += 9) {
@@ -158,13 +159,21 @@ export function visibleSegments<K>(segs: readonly Seg<K>[], triangles: readonly 
   const N = Math.max(64, Math.min(256, Math.round(Math.sqrt(occ.length) * 2)));
   const w = Math.max(1, maxX - minX);
   const h = Math.max(1, maxY - minY);
-  const cw = w / N;
-  const ch = h / N;
-  const cells: number[][] = Array.from({ length: N * N }, () => []);
-  const cx = (x: number) => Math.max(0, Math.min(N - 1, Math.floor((x - minX) / cw)));
-  const cy = (y: number) => Math.max(0, Math.min(N - 1, Math.floor((y - minY) / ch)));
+  // Kvadratiska rutor (0.8.27), högst N × N och inte mindre än halva den
+  // vanliga triangelns storlek. Förut delades både bredd och höjd i N, och
+  // en låg, bred fasad fick rutor några mm höga, så att varje vägg låg i
+  // tusentals rutor. Rutnätet ändrar bara hur fort det går, inte vad som syns.
+  const sizes = occ.map((o) => Math.max(o.maxX - o.minX, o.maxY - o.minY)).sort((p, q) => p - q);
+  const side = cellSide ?? Math.max(Math.sqrt((w * h) / (N * N)), 0.5 * (sizes[sizes.length >> 1] ?? 0));
+  const NX = Math.max(1, Math.min(4 * N, Math.round(w / side)));
+  const NY = Math.max(1, Math.min(4 * N, Math.round(h / side)));
+  const cw = w / NX;
+  const ch = h / NY;
+  const cells: number[][] = Array.from({ length: NX * NY }, () => []);
+  const cx = (x: number) => Math.max(0, Math.min(NX - 1, Math.floor((x - minX) / cw)));
+  const cy = (y: number) => Math.max(0, Math.min(NY - 1, Math.floor((y - minY) / ch)));
   occ.forEach((o, i) => {
-    for (let gx = cx(o.minX); gx <= cx(o.maxX); gx++) for (let gy = cy(o.minY); gy <= cy(o.maxY); gy++) cells[gy * N + gx].push(i);
+    for (let gx = cx(o.minX); gx <= cx(o.maxX); gx++) for (let gy = cy(o.minY); gy <= cy(o.maxY); gy++) cells[gy * NX + gx].push(i);
   });
 
   const stamp = new Int32Array(occ.length).fill(-1);
@@ -199,7 +208,7 @@ export function visibleSegments<K>(segs: readonly Seg<K>[], triangles: readonly 
             const c3 = (rx0 + cw - a[0]) * dy - (ry0 + ch - a[1]) * dx;
             if ((c0 > 0 && c1 > 0 && c2 > 0 && c3 > 0) || (c0 < 0 && c1 < 0 && c2 < 0 && c3 < 0)) continue;
           }
-          for (const oi of cells[gy * N + gx]) {
+          for (const oi of cells[gy * NX + gx]) {
             if (stamp[oi] === si) continue;
             stamp[oi] = si;
             const o = occ[oi];

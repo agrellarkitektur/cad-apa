@@ -140,10 +140,6 @@ export function findCommand(text: string): CommandDef | undefined {
   return BY_NAME.get(norm(text));
 }
 
-export function commandById(id: string): CommandDef | undefined {
-  return COMMANDS.find((c) => c.id === id);
-}
-
 /** Kommandot för ett verktyg, en 2D-form eller en Modifiera-knapp. */
 export function commandFor(what: { tool?: ToolId; shape?: ShapeKind; rail?: RailId }): CommandDef | undefined {
   // Enkellinjen är polylinjen sedan 0.8.22.

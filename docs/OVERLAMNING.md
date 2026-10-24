@@ -1,81 +1,48 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 24 oktober 2026, efter 0.8.26.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.27.
 
 ## Läget
 
-- **0.8.26 Pennor i stilmallen är klar** på `main` (samma format, 13, i
-  en session): linjetjocklek och färg för nio sorters pilar och markörer
-  (sektionslinje, fasadlinje, norrpil, rumsstämpelns pil, taklutning,
-  mått, måttens snedstreck, nivåkota, litterans streck) i en ny del längst
-  ned i stilmallen (`penSection` i `src/ui/styleDialog.ts`). Sparas i
-  stilmallens `pens` (fanns redan för fasadernas linjer); nycklar och
-  förval i `src/repr/markerPens.ts`. Provat i bygget med Playwright
-  (tjocklek, färg och Förval i stilmallen, röd sektionslinje i planen) och
-  `tests/v0826.test.ts`. Alla 362 tester går igenom (prestandatestet
-  varierar med sandlådan). Klicktestet i `v0823` föll på tid vid
-  publiceringen (5 s) och har nu 30 s; det jämför med den gamla koden och
-  rör inte 0.8.26. Står i README, PLAN.md och UTVECKLING.md
-  under *Pennor i stilmallen (0.8.26)*.
-- **0.8.25 Ritordning och fyllningar är klar** på `main` (samma format,
-  13, i en session): Längst bak, Bak, Fram och Främst (`Element.order`,
-  `src/core/drawOrder.ts`, gränssnittet i `src/ui/app/drawOrderUi.ts`)
-  för 2D-former, rum, möbler, mått, texter och underlag, inom sorten på
-  samma yta; 2D-formens fyllning och linje framför eller bakom väggarna
-  (`fillFront`, `lineBehind`); fyllning i rum (`fillPrims`, samma fält som
-  2D-formen). Vid lika poäng vinner nu det som ritas överst när man
-  klickar. Provat i bygget med Playwright (knapparna, högerklicksmenyn,
-  `främst` i smartshell, fyllningen framför väggen, korsskraffering i ett
-  rum) och `tests/v0825.test.ts`; alla 354 tester gick igenom. Står i
-  README, PLAN.md och UTVECKLING.md under *Ritordning och fyllningar
-  (0.8.25)*.
-- **0.8.24 2D-form del 2 är klar** på `main` (**format 13**, i en session):
-  2D-formen är en kedja av raka segment och bågar (`bulges`, pilhöjd per
-  segment som väggarnas) eller en spline. Rektangel, båge och cirkel blir
-  kedjor efter ritandet (`chainFrom` i `draw2dTool.ts`); en cirkel är två
-  halvcirklar. Böj (radie eller klick) och Räta ut för en kant i
-  Modifiera. Ändformer `startCap`/`endCap` (pil, öppen pil, triangel,
-  punkt, cirkel, snedstreck, tvärstreck) och `capSize` på papper, i
-  egenskaperna och smartmenyn. Spegla vänder bågarna, Skala skalar dem;
-  Trimma/Dela/Hörnskarv bara för raka linjer. Provat i bygget med
-  Playwright (ritat cirkel, båge, rektangel; böjt med radie 2000 och rätat
-  ut; alla ändformer visuellt) och `tests/v0824.test.ts`; alla 343 tester
-  gick igenom. Står i README, PLAN.md och UTVECKLING.md under *2D-form
-  del 2 (0.8.24)*. Projekt i format 12 öppnas inte.
-- **0.8.23 Granskning är klar** på `main` (samma format, 12), utan nya
-  funktioner: `commandLine.ts` uppdelad (`shellPoints.ts`, `shellLog.ts`,
-  `shellDock.ts`, `shellHint.ts`, `shellActions.ts`), greppen i Markera i
-  `src/ui/tools/selectGrips.ts`, projektträdets klick i
-  `src/ui/app/treeClicks.ts`. Klick och hover i planen (`pickAllAt`) prövar
-  bara objekt och delar nära markören (rektangel per objekt och `BoxIndex`
-  över delarna i stora underlag), rutnätet ritas bara om när kameran
-  ändrats, `BoxIndex.near` ger inte längre allt vid stora frågor.
-  Kontrollerat med samma klick i 0.8.22 och 0.8.23 (Playwright, 106 steg,
-  samma läge efter varje) och `tests/v0823.test.ts`; alla 330 tester gick
-  igenom. Står i README, PLAN.md och UTVECKLING.md under *Granskning
-  (0.8.23)*. `app.ts` delades inte (prenumerationernas ordning).
-- **0.8.22 Småsaker är klar** på `main` (samma format, 12), de fem enkla
-  synpunkterna från 24 oktober: Linje är polylinjen (`L`, `LINE`, `PL`,
-  `PLINE`), opacitet för linje och fyllning tillsammans eller var för sig
-  (`opacity`, `fillOpacity`), skrafferingens vinkel och avstånd direkt i
-  smartmenyn, Visa → Fyllningar (`fill` i vyns `hide`), rumsstämpelns mall
-  i stilmallen (`labels.room`) och sektionspilens hullingar 0,5. Provat i
-  bygget med Playwright och `tests/v0822.test.ts`. Carl August bad att
-  först få de enkla synpunkterna åtgärdade och sedan granskningen körd.
-- **Inkorgen sorterades 24 oktober** (Claudes förslag, inte avstämt med
-  Carl August; se *Att fråga*): 0.8.24 2D-form del 2, 0.8.25 Ritordning
-  och fyllningar, 0.8.26 Pennor i stilmallen, alla före 0.9.
-- **0.8.12–0.8.25 är inte provade** av Carl August. Frågorna nedan gäller.
+- **0.8.27 Granskning är klar** på `main` (samma format, 13, i en
+  session), utan nya funktioner: `app.css` i tretton filer i samma ordning
+  (samma byggda CSS byte för byte), stilmallen i `src/ui/style/`
+  (`actions.ts`, `labels.ts`, `pens.ts`, `colors.ts`), `drawingPanel.ts`
+  uppdelad (`shapeFields.ts`, `underlayFields.ts`, `showFields.ts`),
+  snabbradens knappar i `quickBar.ts`, Kopiera/Vrid/Spegla i
+  `core/transforms.ts`, tre oanvända funktioner borta. Fasaderna ungefär
+  dubbelt så fort (rutnätet i `hiddenLine.ts` med kvadratiska rutor;
+  312 väggar 0,38 → 0,20 s). Kontrollerat med samma klick i 0.8.26 och
+  0.8.27 (Playwright, 114 steg, samma läge efter varje), samma primitiver
+  för fasader och sektioner i tre projekt, och `tests/v0827.test.ts`; alla
+  368 tester går igenom. Står i README, PLAN.md och UTVECKLING.md under
+  *Granskning (0.8.27)*.
+- **Carl Augusts provning 25 oktober**: 0.8.26 syns på webbhotellet, och
+  sorteringen av Inkorgen 24 oktober stämde. Tre fel i 2D-formen blev
+  **0.8.28 Rättelser i 2D-formen** (se PLAN.md): fortsätta en öppen linje
+  från ändpunkten (också med bågar), fyllningens färg i smartmenyn syns
+  först efter ny markering, och en form som skickas fram döljer bara den
+  undres fyllning, inte dess linjer. Inkorgen 25 oktober sorterades (Claudes
+  förslag, inte avstämt): 0.8.29 Linjetyper (med egna linjetyper), 0.8.30
+  Detaljnivåer i stilmallen, egna fyllningstyper parkerade till efter
+  piloten.
+- **0.8.22–0.8.26** (småsaker, granskning, 2D-form del 2 med bågar och
+  ändar i format 13, ritordning och fyllningar, pennor i stilmallen) står
+  i PLAN.md med Claudes val och i UTVECKLING.md med var koden ligger.
+  Klicktestet i `v0823` har 30 s (det föll på tid vid en publicering).
+- **0.8.12–0.8.26 är inte provade fullt ut** av Carl August (han har
+  provat 2D-formen, se ovan). Frågorna nedan gäller.
 - Tidigare versioner (0.8.15–0.8.21) står i PLAN.md med Claudes val.
 - **Publicering:** varje push till `main` laddas upp med
   `.github/workflows/publicera.yml` (FTPS; secrets `FTP_SERVER`,
   `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR` =
   `/agrellarkitektur.se/public_html/cad-apa/`). Se efter med `gh run list`.
   Halvfärdigt arbete kan läggas på en egen gren (som `granskning-0823`
-  denna gång), så att det inte publiceras.
+  i 0.8.23), så att det inte publiceras.
 - **Prestandatestet** varierar med sandlådans hastighet (gick över 1,6 s i
-  0.8.16, igenom sedan dess).
+  0.8.16 och 0.8.25). Fasaden i testet tar sedan 0.8.27 ca 0,2 s, så
+  marginalen är större.
 - **Färdplan** (Carl August 22 oktober): 0.13 är hans egen provning (han
   ritar ett hus), sedan en inbjuden **alfa** för arkitektvänner, sedan en
   **öppen beta**. **Formatfrysen kommer med den öppna betan.** Inget av
@@ -105,9 +72,13 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.8.21 Kommandoraden del 2~~,
   ~~0.8.22 Småsaker~~, ~~0.8.23 Granskning~~, ~~0.8.24 2D-form del 2~~,
-  ~~0.8.25 Ritordning och fyllningar~~, ~~0.8.26 Pennor i stilmallen~~
-  (klara)
-- **0.8.27 Granskning** (förslag; senast 0.8.23), eller direkt till 0.9
+  ~~0.8.25 Ritordning och fyllningar~~, ~~0.8.26 Pennor i stilmallen~~,
+  ~~0.8.27 Granskning~~ (klara)
+- **0.8.28 Rättelser i 2D-formen** (fortsätta en linje, fyllningens färg
+  i smartmenyn, det överst döljer det under)
+- **0.8.29 Linjetyper** (också egna; grunden för det punktstreckade i 0.10)
+- **0.8.30 Detaljnivåer i stilmallen** (fråga först: per vy eller efter
+  skala?)
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade)
@@ -126,15 +97,23 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.26 syns på webbhotellet (numret vid alfa-knappen) och
-hur 0.8.12–0.8.26 fungerar, särskilt bågarna och ändarna (0.8.24),
-ritordningen (0.8.25) och pennorna (0.8.26), och om sorteringen av
-Inkorgen stämde. Läs synpunktsfilen och sortera ny Inkorg. Föreslå sedan
-**0.8.27 Granskning** (ungefär var tredje version; senast 0.8.23), eller
-gå direkt till **0.9 Flera våningsplan och bjälklag** (nytt format, stor;
-säg hur stor och om den behöver delas) om han hellre vill det. Kandidater
-för granskningen: `src/ui/styleDialog.ts` och `src/styles/app.css` växer,
-och prestandatestet (1,6 s) föll också i 0.8.25 i sandlådan.
+Fråga först om 0.8.27 syns på webbhotellet (numret vid alfa-knappen) och
+om något beter sig annorlunda än i 0.8.26 (det ska det inte; fasaderna ska
+bara komma fortare). Läs synpunktsfilen och sortera ny Inkorg, och fråga om
+sorteringen 25 oktober stämmer (0.8.28 Rättelser, 0.8.29 Linjetyper, 0.8.30
+Detaljnivåer, egna fyllningstyper parkerade). Bygg sedan **0.8.28
+Rättelser i 2D-formen** (liten–mellanstor, en session). Att börja med:
+smartmenyns fält kommer från `shapeSmartFields` i `src/ui/shapeFields.ts`
+och visar inte fyllningens färg alls (bara vinkel och avstånd för
+skraffering); se varför smartmenyn inte ritas om när `d2:pattern` ändras.
+Linjerna bakom en fyllning: 2D-formernas fyllningar och linjer ritas i
+olika lager (fyllningar före väggarna, linjer efter), så en övre forms
+fyllning kan inte dölja en undre forms linje utan att formerna ritas
+fyllning-och-linje i ritordning; det rör `drawGroup` i `src/repr/plan.ts`
+och lagren för `fillFront`/`lineBehind`. Fortsätta en linje: Markera har
+grepp i ändarna (`shapeNodeAt` i `src/ui/tools/selectGrips.ts`); ett klick
+på ändpunkten med 2D-verktyget, eller ett *Fortsätt*-val på greppet, kan
+starta verktyget med formens punkter och bågar.
 
 ## Att fråga Carl August om
 
@@ -171,12 +150,15 @@ och prestandatestet (1,6 s) föll också i 0.8.25 i sandlådan.
   mycket plats? Ska bågar kunna ritas direkt i Linje (som `A` i AutoCADs
   PLINE)?
 
-- **Sorteringen av Inkorgen** (24 oktober, Claudes förslag): 0.8.24 2D-form
-  del 2 (radie per segment, ritsättet inte låst, pilar och ändformer),
-  0.8.25 Ritordning och fyllningar (Längst bak … Främst, framför eller
-  bakom väggarna, fyllning i rum), 0.8.26 Pennor i stilmallen; alla före
-  0.9. Rätt ordning? Penntabellen för markörer flyttades fram från *Efter
-  pilotprojektet*.
+- **Sorteringen av Inkorgen 25 oktober** (Claudes förslag): 0.8.28
+  Rättelser i 2D-formen, 0.8.29 Linjetyper (egna linjetyper med, annars
+  i nästa version), 0.8.30 Detaljnivåer i stilmallen, egna fyllningstyper
+  parkerade till efter piloten (eller efter 0.8.30 om de behövs tidigt).
+  Rätt ordning, och ska linjetyperna gälla väggar och fasadernas linjer
+  också, eller bara 2D-former och pennorna?
+- **Detaljnivåerna (0.8.30)**: väljs detaljnivån per vy (som i ArchiCAD)
+  eller efter skalan? Gäller det bara litteran, eller ska dörrar och fönster
+  också ritas olika (då hör en del hemma i 0.11.2)?
 
 - **0.8.22 efter provning** (Claudes val, se PLAN.md): opaciteten är *Samma
   för linje och fyllning* från början, och kryssrutan skiljer dem; den
@@ -188,9 +170,10 @@ och prestandatestet (1,6 s) föll också i 0.8.25 i sandlådan.
   kvar tunn (bara sektionspilen ändrades). Former ritade som enkellinje
   före 0.8.22 heter också *Linje*.
 
-- **0.8.23 efter provning**: inget nytt att prova; allt ska bete sig som
-  förut, men pekandet i planen ska kännas lika snabbt med ett stort
-  DXF-underlag som utan. Säg till om något beter sig annorlunda.
+- **0.8.27 och 0.8.23 efter provning**: inget nytt att prova; allt ska
+  bete sig som förut. I 0.8.27 ska fasaderna komma fortare, i 0.8.23
+  pekandet i planen kännas lika snabbt med ett stort DXF-underlag som
+  utan. Säg till om något beter sig annorlunda.
 
 - **0.8.21 efter provning** (Claudes val, se PLAN.md): bokstäverna för
   alternativen (Å för Ångra, ML/MV i Justera) och att de går direkt till
@@ -421,6 +404,14 @@ och prestandatestet (1,6 s) föll också i 0.8.25 i sandlådan.
   `.highlight`, `.plan-drawing .content`, panelen och smartmenyns text.
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
+- **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
+  (114 steg: stilmallen, snabbraden, 2D-formens fält, ritordning, Visas i,
+  underlag, fasader och sektion). Kör den mot två byggen på var sin port
+  och sedan med `--jamfor`; lägg till steg för det som granskas. Vänta på
+  `!bacchus.sections.pending` och tryck *Zooma till allt* innan en fasad
+  jämförs (annars beror kameran på hur fort den räknats), och räkna inte
+  `blob:`-adresser. En klick i modellen måste hamna inne i objektet, inte
+  på takets streckade kontur.
 - **Jämföra före och efter** (så gjordes granskningen): bygg den gamla
   versionen i en egen arbetskopia (`git worktree add <mapp> <commit>`, länka
   in `node_modules`, `npx vite build --outDir <mapp>`), kör samma klick i

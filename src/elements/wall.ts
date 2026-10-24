@@ -27,7 +27,7 @@ export interface WallParams {
   toRoof?: boolean;
 }
 
-export { isArcWall, wallFrame, type WallFrame } from '../geometry/wallFrame';
+export { wallFrame, type WallFrame } from '../geometry/wallFrame';
 
 /**
  * Öppningar i en vägg anger sitt läge längs väggen och sin bredd i

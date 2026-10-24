@@ -1,143 +1,30 @@
-import { addViewTag, setLocked, setShowIn, updateParams } from '../core/commands';
-import { onPaper as paperSpace, modelViewId, type Element, type Id, type ProjectDoc, type ShowIn } from '../core/model';
+import { setLocked, updateParams } from '../core/commands';
+import { modelViewId, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
-import { allViews, countViews, homeOf } from '../core/visibility';
-import { CAP_LABELS, CAP_SIZE, FILL_COLOR, LINE_TYPES, PATH_LABELS, segmentCount, type CapKind, type Shape2DParams } from '../elements/drawing2d';
-import { STRAIGHT } from '../geometry/arc';
-import { patternPicker } from './patternPick';
-import { weightPicker } from './weightPick';
-import { markerName } from '../elements/markers';
 import { resolveParams } from '../elements/registry';
 import { SLOPE_STYLES, type RoofSlopeParams } from '../elements/roofSlope';
-import { moveToFolder } from '../core/treeCommands';
-import { dxfOf, UNDERLAY_KIND_LABEL, type UnderlayParams } from '../elements/underlay';
-import { hasImageGrips, resizeUnderlay } from '../elements/underlayEdit';
 import { icons } from './icons';
 import { escapeHtml } from './labels';
+import { shapeChange, shapeFields } from './shapeFields';
+import { showChange, showClick } from './showFields';
+import { underlayChange, underlayFields } from './underlayFields';
 
 /**
  * Egenskaperna för det som ritas på ritningen (0.8): 2D-element,
  * taklutningar, Visas i och Lås. Delar av egenskapspanelen, i en egen fil.
+ * Sedan 0.8.27 ligger 2D-formens fält i shapeFields.ts, underlagets i
+ * underlayFields.ts och Visas i i showFields.ts; här finns taklutningen,
+ * Lås och det som fördelar fälten och knapparna till dem.
  */
 
-/** Typer som har Visas i: det som är ritningsinformation och kan visas i vissa vyer. */
-export const SHOWABLE = new Set(['Shape2D', 'Text', 'Dimension', 'Underlay']);
 /** Typer som kan låsas. */
 export const LOCKABLE = new Set(['Shape2D', 'Text', 'Dimension', 'RoofSlope', 'Section', 'Elevation', 'North', 'Underlay']);
 
-/** PDF: millimeter i modellen per PDF-punkt i skala 1:1. */
-const MM_PER_PT = 25.4 / 72;
-/** Enheter att välja för DXF-underlag. */
-const DXF_UNITS: [number, string][] = [
-  [1, 'mm'],
-  [10, 'cm'],
-  [1000, 'm'],
-  [25.4, 'tum'],
-  [304.8, 'fot'],
-];
-
 const comma = (n: number) => n.toLocaleString('sv-SE');
-
-/**
- * Fyllningens fält (0.8.19): mönstret (eller ingen), färgen och för en
- * skraffering vinkel och avstånd. Samma fält i verktyget och i egenskaperna.
- */
-export function fillFields(name: string, p: Pick<Shape2DParams, 'fill' | 'fillColor' | 'fillAngle' | 'fillSpacing'>, attrs: (key: string) => string): string {
-  const color = p.fillColor ?? FILL_COLOR;
-  const more = p.fill
-    ? `<div class="fields"><label class="field"><span>Färg</span><input type="color" ${attrs('fillColor')} value="${color}"></label>
-    ${p.fill !== 'solid' ? hatchFields(p, attrs) : ''}</div>`
-    : '';
-  return `<div class="field-label">Fyllning</div>${patternPicker(name, p.fill ?? 'none', attrs('pattern'), { color, angle: p.fillAngle })}${more}`;
-}
-
-/** Skrafferingens vinkel och avstånd; också direkt i smartmenyn (0.8.22). Null = olika i markeringen. */
-export function hatchFields(p: { fillAngle: number | null; fillSpacing: number | null }, attrs: (key: string) => string): string {
-  const v = (n: number | null) => (n === null ? '' : comma(n));
-  const mixed = (n: number | null) => (n === null ? ' placeholder="Olika"' : '');
-  return `<label class="field"><span>Vinkel</span><span class="input-unit"><input type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" ${attrs('fillAngle')} value="${v(p.fillAngle)}"${mixed(p.fillAngle)}><i>°</i></span></label>
-    <label class="field"><span>Avstånd på papper</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" ${attrs('fillSpacing')} value="${v(p.fillSpacing)}"${mixed(p.fillSpacing)}><i>mm</i></span></label>`;
-}
-
-/**
- * Fälten som smartmenyn visar direkt för markerade 2D-former (0.8.22):
- * skrafferingens vinkel och avstånd och opaciteten. Värden som skiljer sig
- * mellan formerna står tomma. Null när det inte finns något att visa.
- */
-export function shapeSmartFields(doc: ProjectDoc, els: Element[]): string | null {
-  if (!els.length || !els.every((e) => e.type === 'Shape2D')) return null;
-  const ps = els.map((e) => resolveParams<Shape2DParams>(doc, e));
-  const same = <K extends keyof Shape2DParams>(k: K): Shape2DParams[K] | null => (ps.every((q) => q[k] === ps[0][k]) ? ps[0][k] : null);
-  const attrs = (k: string) => `data-key="d2:${k}"`;
-  const parts: string[] = [];
-  if (ps.every((q) => q.fill === 'hatch' || q.fill === 'cross')) parts.push(`<div class="fields">${hatchFields({ fillAngle: same('fillAngle'), fillSpacing: same('fillSpacing') }, attrs)}</div>`);
-  // Ändarna (0.8.24), när alla är öppna och har en linje.
-  if (ps.every((q) => !q.closed && q.weight > 0)) {
-    const cap = (k: 'startCap' | 'endCap') => (ps.every((q) => q[k] === ps[0][k]) ? ps[0][k] : null);
-    parts.push(capFields({ startCap: cap('startCap'), endCap: cap('endCap'), capSize: ps.every((q) => (q.capSize ?? CAP_SIZE) === (ps[0].capSize ?? CAP_SIZE)) ? ps[0].capSize : null }, attrs));
-  }
-  if (ps.some((q) => q.weight > 0 || q.fill)) {
-    const linked = ps.every((q) => q.fillOpacity === undefined) ? undefined : ps.every((q) => q.fillOpacity !== undefined) ? (same('fillOpacity') ?? NaN) : NaN;
-    parts.push(opacityFields({ weight: ps.some((q) => q.weight > 0) ? 1 : 0, fill: ps.find((q) => q.fill)?.fill, opacity: same('opacity') ?? (ps.every((q) => q.opacity === undefined) ? undefined : NaN), fillOpacity: linked }, attrs));
-  }
-  return parts.length ? parts.join('') : null;
-}
-
-/**
- * Opaciteten (0.8.22): för linjen och fyllningen tillsammans, eller var för
- * sig. Tillsammans är förvalt; då styr `opacity` båda och `fillOpacity`
- * saknas. Med bara linje eller bara fyllning visas ett fält.
- */
-export function opacityFields(p: Pick<Shape2DParams, 'weight' | 'fill' | 'opacity' | 'fillOpacity'>, attrs: (key: string) => string): string {
-  const linked = p.fillOpacity === undefined;
-  const line = p.opacity ?? 100;
-  const fill = p.fillOpacity ?? line;
-  const field = (key: string, label: string, v: number) =>
-    `<label class="field"><span>${label}</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="10" inputmode="decimal" autocomplete="off" ${attrs(key)} value="${Number.isFinite(v) ? Math.round(v) : ''}"${Number.isFinite(v) ? '' : ' placeholder="Olika"'}><i>%</i></span></label>`;
-  if (p.weight > 0 && p.fill) {
-    const fields = linked ? field('opacity', 'Opacitet', line) : `${field('opacity', 'Linjens opacitet', line)}${field('fillOpacity', 'Fyllningens opacitet', fill)}`;
-    return `<div class="fields">${fields}</div><label class="check"><input type="checkbox" ${attrs('opacityLinked')}${linked ? ' checked' : ''}> Samma för linje och fyllning</label>`;
-  }
-  if (p.fill) return `<div class="fields">${field(linked ? 'opacity' : 'fillOpacity', 'Opacitet', fill)}</div>`;
-  return `<div class="fields">${field('opacity', 'Opacitet', line)}</div>`;
-}
-
-/**
- * Ändarna (0.8.24): ändformen i början och slutet och storleken på papper.
- * Null i ett värde = olika i markeringen.
- */
-export function capFields(p: { startCap?: CapKind | null; endCap?: CapKind | null; capSize?: number | null }, attrs: (key: string) => string): string {
-  const select = (key: string, label: string, v: CapKind | null | undefined) =>
-    `<label class="field"><span>${label}</span><select ${attrs(key)}>${v === null ? '<option selected disabled>Olika</option>' : ''}<option value="none"${v === undefined ? ' selected' : ''}>Ingen</option>${(Object.entries(CAP_LABELS) as [CapKind, string][]).map(([k, l]) => `<option value="${k}"${k === v ? ' selected' : ''}>${l}</option>`).join('')}</select></label>`;
-  const size = p.capSize === null ? '' : comma(p.capSize ?? CAP_SIZE);
-  const showSize = p.startCap !== undefined || p.endCap !== undefined;
-  return `<div class="field-label">Ändar</div><div class="fields">${select('startCap', 'Början', p.startCap)}${select('endCap', 'Slutet', p.endCap)}
-    ${showSize ? `<label class="field"><span>Storlek på papper</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" ${attrs('capSize')} value="${size}"${p.capSize === null ? ' placeholder="Olika"' : ''}><i>mm</i></span></label>` : ''}</div>`;
-}
-
-/** Procent 0–100, eller null om det inte är ett tal. */
-function percent(v: number): number | null {
-  return Number.isFinite(v) ? Math.max(0, Math.min(100, Math.round(v))) : null;
-}
 
 /** Fälten för en 2D-form eller en taklutning. */
 export function drawingFields(doc: ProjectDoc, el: Element): string {
-  if (el.type === 'Shape2D') {
-    const p = resolveParams<Shape2DParams>(doc, el);
-    const arcs = p.shape === 'spline' ? 0 : (p.bulges ?? []).slice(0, segmentCount(p.points.length, !!p.closed)).filter((b) => Math.abs(b) >= STRAIGHT).length;
-    return `<div class="fields">
-        <label class="field"><span>Form</span><input value="${PATH_LABELS[p.shape] ?? 'Linje'}${arcs ? ` · ${arcs} ${arcs === 1 ? 'båge' : 'bågar'}` : ''}" readonly></label>
-        <div class="field"><span>Penna</span>${weightPicker('d2-weight-panel', p.weight, 'data-key="d2:weight"', ' mm')}</div>
-        ${p.weight ? `<label class="field"><span>Linjetyp</span><select data-key="d2:linetype">${Object.entries(LINE_TYPES).map(([k, v]) => `<option value="${k}"${k === p.linetype ? ' selected' : ''}>${v.label}</option>`).join('')}</select></label>
-        <label class="field"><span>Linjens färg</span><input type="color" data-key="d2:color" value="${p.color ?? '#1d2328'}"></label>` : ''}
-      </div>
-      <label class="check"><input type="checkbox" data-key="d2:closed"${p.closed ? ' checked' : ''}> Sluten</label>
-      ${!p.closed && p.weight ? capFields(p, (k) => `data-key="d2:${k}"`) : ''}
-      ${fillFields('d2-pattern-panel', p, (k) => `data-key="d2:${k}"`)}
-      ${p.weight || p.fill ? opacityFields(p, (k) => `data-key="d2:${k}"`) : ''}
-      ${p.weight === 0 && !p.fill ? '<p class="note">Formen har varken linje eller fyllning och syns inte, men går att klicka på längs linjen.</p>' : ''}
-      ${p.shape === 'polyline' ? '<p class="note">Böj eller räta ut en kant med Modifiera: klicka på kanten när formen är markerad.</p>' : ''}`;
-  }
+  if (el.type === 'Shape2D') return shapeFields(doc, el);
   if (el.type === 'Underlay') return underlayFields(doc, el);
   if (el.type === 'RoofSlope') {
     const p = resolveParams<RoofSlopeParams>(doc, el);
@@ -153,68 +40,6 @@ export function drawingFields(doc: ProjectDoc, el: Element): string {
   return '';
 }
 
-const ulNum = (key: string, label: string, v: number | string, unit: string, extra = '') =>
-  `<label class="field"><span>${label}</span><span class="input-unit"><input type="text" data-expr ${unit === '°' ? 'data-unit="deg"' : unit === '' ? 'data-unit=""' : ''} inputmode="decimal" autocomplete="off" data-key="${key}" value="${v}"${extra}><i>${unit}</i></span></label>`;
-
-/**
- * Läge och storlek (0.8.16): X och Y för nedre vänstra hörnet, bredd och
- * höjd. En bild eller PDF-sida sträcks av bredd och höjd var för sig, med
- * *Återställ proportioner*; en DXF skalas av bredden.
- */
-export function underlayPlaceFields(doc: ProjectDoc, el: Element): string {
-  const p = resolveParams<UnderlayParams>(doc, el);
-  const w = Math.round(p.size[0] * p.scale);
-  const h = Math.round(p.size[1] * p.scale);
-  const ro = el.locked ? ' disabled' : '';
-  const image = hasImageGrips(p);
-  return `<div class="fields">
-      ${ulNum('ul:x', 'X', Math.round(p.pos[0]), 'mm', ro)}
-      ${ulNum('ul:y', 'Y', Math.round(p.pos[1]), 'mm', ro)}
-      ${ulNum('ul:width', image ? 'Bredd' : 'Bredd i modellen', w, 'mm', ro)}
-      ${image ? ulNum('ul:height', 'Höjd', h, 'mm', ro) : `<label class="field"><span>Höjd i modellen</span><span class="input-unit"><input value="${h}" readonly><i>mm</i></span></label>`}
-    </div>
-    ${image ? `<div class="row"><button class="btn" data-action="ul-proportions"${ro} title="Höjden efter bildens egna proportioner, med samma bredd">Återställ proportioner</button></div>` : ''}`;
-}
-
-/** Underlagets fält (0.8 del 2): fil, läge och storlek eller skala, vridning, tonat, lager och mapp. */
-function underlayFields(doc: ProjectDoc, el: Element): string {
-  const p = resolveParams<UnderlayParams>(doc, el);
-  const file = doc.assets[p.asset];
-  const num = ulNum;
-  const scale =
-    p.kind === 'pdf'
-      ? `<label class="field"><span>Skala (sidan i 1:1)</span><span class="input-unit scale-unit"><i>1:</i><input type="text" data-expr data-unit="" inputmode="decimal" autocomplete="off" data-key="ul:ratio" value="${Math.round((p.scale / MM_PER_PT) * 100) / 100}"></span></label>`
-      : p.kind === 'dxf'
-        ? `<label class="field"><span>Enhet i filen</span><select data-key="ul:unit">${DXF_UNITS.some(([f]) => Math.abs(f - p.scale) < 1e-9) ? '' : `<option selected>${comma(Math.round(p.scale * 1000) / 1000)} mm per enhet</option>`}${DXF_UNITS.map(([f, l]) => `<option value="${f}"${Math.abs(f - p.scale) < 1e-9 ? ' selected' : ''}>${l}</option>`).join('')}</select></label>`
-        : '';
-  const layers = p.kind === 'dxf' ? (dxfOf(doc, p.asset)?.layers ?? []) : [];
-  const off = new Set(p.layersOff ?? []);
-  const folders = doc.folders.filter((f) => f.tab === 'underlag');
-  const folder = doc.tree[el.id] ?? '';
-  return `<div class="fields">
-      <label class="field"><span>Namn</span><input data-key="name:" value="${escapeHtml(el.name ?? '')}" placeholder="${escapeHtml(file?.name ?? '')}"></label>
-      <label class="field"><span>Fil</span><input value="${escapeHtml(`${UNDERLAY_KIND_LABEL[p.kind]} · ${file?.name ?? 'saknas'}`)}" readonly></label>
-      ${p.kind === 'pdf' ? num('ul:page', 'Sida', p.page ?? 1, '') : ''}
-      ${scale}
-      ${num('ul:angle', 'Vridning', Math.round(p.angle * 100) / 100, '°')}
-      ${folders.length ? `<label class="field"><span>Mapp</span><select data-key="ul:folder"><option value="">Ingen mapp</option>${folders.map((f) => `<option value="${f.id}"${f.id === folder ? ' selected' : ''}>${escapeHtml(f.name)}</option>`).join('')}</select></label>` : ''}
-    </div>
-    <div class="field-label">Läge och storlek</div>
-    ${underlayPlaceFields(doc, el)}
-    <p class="note">X och Y är nedre vänstra hörnet${p.angle ? ', före vridningen' : ''}.${hasImageGrips(p) ? ' Dra i hörnen för att skala (Shift sträcker fritt) och i sidorna för att sträcka.' : ''}</p>
-    <label class="field range-field"><span>Synlighet <b>${p.opacity} %</b></span><input type="range" min="5" max="100" step="5" data-key="ul:opacity" value="${p.opacity}" aria-label="Synlighet"></label>
-    ${p.kind !== 'dxf' ? `<label class="check"><input type="checkbox" data-key="ul:gray"${p.gray ? ' checked' : ''}> Gråskala</label>` : ''}
-    <div class="row"><button class="btn" data-action="ul-calibrate"${el.locked ? ' disabled' : ''} title="Klicka två punkter med känt avstånd och skriv avståndet">Kalibrera skalan…</button><button class="btn" data-action="ul-align"${el.locked ? ' disabled' : ''} title="Klicka två punkter längs en linje som ska bli rak">Rikta…</button></div>
-    ${
-      layers.length
-        ? `<div class="field-label">Lager i DXF-filen</div><div class="view-checks layer-checks" role="group" aria-label="Lager">${layers
-            .map((l) => `<label class="check"><input type="checkbox" data-key="ul:layer" value="${escapeHtml(l)}"${off.has(l) ? '' : ' checked'}> ${escapeHtml(l)}</label>`)
-            .join('')}</div>`
-        : ''
-    }
-    <p class="note">${el.locked ? 'Låst: underlaget kan inte flyttas eller ändras av misstag.' : 'Lås underlaget när det ligger rätt, så att det inte flyttas av misstag.'}</p>`;
-}
-
 /** Lås, med hänglås. Delvis ifyllt när markeringen är blandad. */
 export function lockField(els: Element[]): string {
   if (!els.every((e) => LOCKABLE.has(e.type))) return '';
@@ -225,208 +50,27 @@ export function lockField(els: Element[]): string {
     <span class="lock-icon">${n ? icons.lock : icons.unlock}</span> Lås</label>`;
 }
 
-type ShowChoice = 'all' | 'this' | 'views' | 'tags';
-
-function choiceOf(show: ShowIn | undefined, here: Id): ShowChoice {
-  if (!show) return 'all';
-  if (show.kind === 'tags') return 'tags';
-  return show.views.length === 1 && show.views[0] === here ? 'this' : 'views';
-}
-
-/** Ytans namn: "våningen", "fasaden", "sektionen". */
-function placeWord(doc: ProjectDoc, el: Element): string {
-  const home = doc.elements[homeOf(el)];
-  if (home?.type === 'Section') return 'sektionen';
-  if (home?.type === 'Elevation') return 'fasaden';
-  const ws = doc.worksheets.find((w) => w.id === homeOf(el));
-  if (ws) return ws.stamp ? 'stämpeln' : ws.paper ? 'mallbladet' : 'arbetsbladet';
-  if (doc.sheets.some((s) => s.id === homeOf(el))) return 'bladet';
-  return 'våningen';
-}
-
-/**
- * Visas i: alla vyer av ytan, bara den här vyn, utvalda vyer eller vyer med
- * taggar. Under står hur många vyer det syns i, med en varning om det blir noll.
- */
-export function showSection(doc: ProjectDoc, els: Element[], here: Id): string {
-  if (!els.length || !els.every((e) => SHOWABLE.has(e.type))) return '';
-  // På ett mallblad och ett ritningsblad finns bara en vy: själva bladet (0.8.9).
-  const onPaper = (e: Element) => doc.sheets.some((s) => s.id === e.space) || doc.worksheets.some((w) => w.id === e.space && paperSpace(w));
-  if (els.some(onPaper)) return '';
-  const el = els[0];
-  const same = els.every((e) => JSON.stringify(e.show ?? null) === JSON.stringify(el.show ?? null));
-  const show = same ? el.show : undefined;
-  const choice = same ? (listOpen && show?.kind === 'views' ? 'views' : choiceOf(show, here)) : null;
-  const opt = (v: ShowChoice, label: string) => `<option value="${v}"${choice === v ? ' selected' : ''}>${label}</option>`;
-  const parts: string[] = [];
-  parts.push(`<label class="field"><span>Visas i</span><select data-key="show:kind">${choice ? '' : '<option selected disabled>Blandat</option>'}${opt('all', `Alla vyer av ${placeWord(doc, el)}`)}${opt('this', 'Bara den här vyn')}${opt('views', 'Utvalda vyer')}${opt('tags', 'Vyer med taggar')}</select></label>`);
-  if (show?.kind === 'views' && choice === 'views') {
-    const views = allViews(doc);
-    const name = (v: (typeof views)[number]) => {
-      if (!v.model) return v.name;
-      const m = doc.elements[v.place];
-      return m ? `${markerName(doc, m)} · modell` : v.name;
-    };
-    parts.push(`<div class="view-checks" role="group" aria-label="Vyer">${views
-      .map((v) => `<label class="check"><input type="checkbox" data-key="show:view" value="${escapeHtml(v.id)}"${show.views.includes(v.id) ? ' checked' : ''}> ${escapeHtml(name(v))}${v.id === here ? ' <small>(den här)</small>' : ''}</label>`)
-      .join('')}</div>`);
-  }
-  if (show?.kind === 'tags') {
-    parts.push(`<div class="segmented wide" role="group" aria-label="Hur taggarna gäller">
-        <button data-action="show-match" data-match="any" aria-pressed="${show.match === 'any'}">Någon av</button>
-        <button data-action="show-match" data-match="all" aria-pressed="${show.match === 'all'}">Alla</button>
-      </div>
-      <div class="tag-chips">${doc.viewTags
-        .map((t) => `<button class="state-chip ${show.tags.includes(t) ? 'on' : 'off'}" data-action="show-tag" data-tag="${escapeHtml(t)}" aria-pressed="${show.tags.includes(t)}"><span class="box"></span>${escapeHtml(t)}</button>`)
-        .join('')}</div>
-      <div class="row"><input id="new-view-tag" placeholder="Ny vy-tagg" aria-label="Ny vy-tagg"><button class="btn" data-action="add-view-tag">Lägg till</button></div>`);
-  }
-  if (same) {
-    const n = countViews(doc, el);
-    parts.push(n === 0
-      ? `<p class="note warn" role="note"><b>!</b> Syns nu i 0 vyer. ${show?.kind === 'tags' ? 'Ge någon vy taggarna i projektträdet, eller välj andra taggar.' : 'Välj minst en vy.'}</p>`
-      : `<p class="note">Syns nu i ${n} ${n === 1 ? 'vy' : 'vyer'}.</p>`);
-  }
-  return `<section><h3>Visas i</h3>${parts.join('')}</section>`;
-}
-
 /** Ändringar i fälten ovan. Svarar true om ändringen hanterades. */
 export function drawingChange(store: DocStore, ids: Id[], key: string, input: HTMLInputElement | HTMLSelectElement, here: Id): boolean {
   const [scope, name] = key.split(':');
-  const doc = store.doc;
-  const els = ids.map((id) => doc.elements[id]).filter(Boolean);
   if (scope === 'lock') {
     setLocked(store, ids, (input as HTMLInputElement).checked);
     return true;
   }
-  if (scope === 'd2') {
-    const v = input.value;
-    const num = Number(v.replace(',', '.'));
-    if (name === 'weight' && num >= 0) updateParams(store, ids, { weight: num }, num ? 'Ändra penna' : 'Ingen linje');
-    else if (name === 'linetype') updateParams(store, ids, { linetype: v }, 'Ändra linjetyp');
-    else if (name === 'color') updateParams(store, ids, { color: v }, 'Ändra färg');
-    else if (name === 'closed') updateParams(store, ids, { closed: (input as HTMLInputElement).checked }, 'Sluten');
-    else if (name === 'startCap' || name === 'endCap') updateParams(store, ids, { [name]: v === 'none' ? undefined : v }, v === 'none' ? 'Ingen ändform' : 'Ändra ändform');
-    else if (name === 'capSize' && num > 0) updateParams(store, ids, { capSize: num === CAP_SIZE ? undefined : num }, 'Ändra ändarnas storlek');
-    else if (name === 'pattern') updateParams(store, ids, { fill: v === 'none' ? undefined : v }, v === 'none' ? 'Ingen fyllning' : 'Ändra fyllning');
-    else if (name === 'fillColor') updateParams(store, ids, { fillColor: v }, 'Ändra fyllningens färg');
-    else if (name === 'fillAngle' && Number.isFinite(num)) updateParams(store, ids, { fillAngle: num }, 'Ändra vinkel');
-    else if (name === 'fillSpacing' && num > 0) updateParams(store, ids, { fillSpacing: num }, 'Ändra avstånd');
-    else if (name === 'opacity' && percent(num) !== null) updateParams(store, ids, { opacity: percent(num) === 100 ? undefined : percent(num) }, 'Ändra opacitet');
-    else if (name === 'fillOpacity' && percent(num) !== null) updateParams(store, ids, { fillOpacity: percent(num) }, 'Ändra fyllningens opacitet');
-    else if (name === 'fillLayer') updateParams(store, ids, { fillFront: v === 'front' ? true : undefined }, v === 'front' ? 'Fyllningen framför väggarna' : 'Fyllningen bakom väggarna');
-    else if (name === 'lineLayer') updateParams(store, ids, { lineBehind: v === 'behind' ? true : undefined }, v === 'behind' ? 'Linjen bakom väggarna' : 'Linjen framför väggarna');
-    else if (name === 'opacityLinked') {
-      // Var för sig: fyllningen börjar med linjens värde, för varje form.
-      const linked = (input as HTMLInputElement).checked;
-      store.transact(linked ? 'Samma opacitet' : 'Opacitet var för sig', (tx) => {
-        for (const el of els) tx.putElement({ ...el, params: { ...el.params, fillOpacity: linked ? undefined : (el.params.opacity ?? 100) } });
-      });
-    }
-    return true;
-  }
-  if (scope === 'ul') {
-    const el = els[0];
-    if (!el) return true;
-    const p = resolveParams<UnderlayParams>(doc, el);
-    const num = Number(input.value.replace(',', '.').replace(/\s/g, ''));
-    // Ny skala kring mitten, så att underlaget ligger kvar där det är.
-    const rescale = (scale: number, label: string) => {
-      if (!(scale > 0)) return;
-      const f = scale / p.scale;
-      const r = (p.angle * Math.PI) / 180;
-      const cx = (p.size[0] * p.scale) / 2;
-      const cy = (p.size[1] * p.scale) / 2;
-      const mid = [p.pos[0] + Math.cos(r) * cx - Math.sin(r) * cy, p.pos[1] + Math.sin(r) * cx + Math.cos(r) * cy];
-      updateParams(store, [el.id], { scale, pos: [Math.round(mid[0] + (p.pos[0] - mid[0]) * f), Math.round(mid[1] + (p.pos[1] - mid[1]) * f)] }, label);
-    };
-    if (name === 'ratio' && num > 0) rescale(num * MM_PER_PT, 'Ändra skala');
-    else if (name === 'unit' && num > 0) rescale(num, 'Ändra enhet');
-    else if (name === 'x' && Number.isFinite(num)) updateParams(store, [el.id], { pos: [num, p.pos[1]] }, 'Flytta underlaget');
-    else if (name === 'y' && Number.isFinite(num)) updateParams(store, [el.id], { pos: [p.pos[0], num] }, 'Flytta underlaget');
-    else if ((name === 'width' || name === 'height') && num > 0 && hasImageGrips(p)) {
-      const r = resizeUnderlay(p, name === 'width' ? num : null, name === 'height' ? num : null);
-      if (r) updateParams(store, [el.id], r, name === 'width' ? 'Ändra bredd' : 'Ändra höjd');
-    } else if (name === 'width' && num > 0) rescale(num / p.size[0], 'Ändra storlek');
-    else if (name === 'angle' && Number.isFinite(num)) {
-      // Vrid kring nedre vänstra hörnet.
-      updateParams(store, [el.id], { angle: ((num % 360) + 360) % 360 }, 'Vrid underlaget');
-    } else if (name === 'page' && num >= 1) updateParams(store, [el.id], { page: Math.round(num) }, 'Byt sida');
-    else if (name === 'opacity' && num > 0) updateParams(store, ids, { opacity: Math.max(5, Math.min(100, Math.round(num))) }, 'Ändra synlighet');
-    else if (name === 'gray') updateParams(store, ids, { gray: (input as HTMLInputElement).checked }, 'Gråskala');
-    else if (name === 'folder') moveToFolder(store, el.id, input.value || null);
-    else if (name === 'layer') {
-      const set = new Set(p.layersOff ?? []);
-      if ((input as HTMLInputElement).checked) set.delete(input.value);
-      else set.add(input.value);
-      updateParams(store, [el.id], { layersOff: [...set] }, (input as HTMLInputElement).checked ? `Tänd ${input.value}` : `Släck ${input.value}`);
-    }
-    return true;
-  }
+  if (scope === 'd2') return shapeChange(store, ids, name, input);
+  if (scope === 'ul') return underlayChange(store, ids, name, input);
   if (scope === 'slope') {
     if (name === 'style') updateParams(store, ids, { style: input.value }, 'Ändra stil');
     else if (name === 'len' && Number(input.value) >= 100) updateParams(store, ids, { len: Math.round(Number(input.value)) }, 'Ändra längd');
     return true;
   }
-  if (scope === 'show') {
-    if (name === 'kind') {
-      const c = input.value as ShowChoice;
-      const show: ShowIn | null =
-        c === 'all' ? null : c === 'this' ? { kind: 'views', views: [here] } : c === 'views' ? { kind: 'views', views: [here] } : { kind: 'tags', tags: [], match: 'any' };
-      setShowIn(store, ids, show);
-      // "Utvalda vyer" börjar med den här vyn ikryssad men visar listan.
-      listOpen = c === 'views';
-      return true;
-    }
-    if (name === 'view') {
-      const cur = els[0]?.show;
-      if (cur?.kind !== 'views') return true;
-      const on = (input as HTMLInputElement).checked;
-      const views = on ? [...new Set([...cur.views, input.value])] : cur.views.filter((v) => v !== input.value);
-      // Med bara den här vyn kvar visas ändå listan; användaren valde Utvalda vyer.
-      listOpen = true;
-      setShowIn(store, ids, { kind: 'views', views });
-      return true;
-    }
-  }
+  if (scope === 'show') return showChange(store, ids, name, input, here);
   return false;
 }
 
-/**
- * "Utvalda vyer" med bara den här vyn ikryssad sparas likadant som "Bara den
- * här vyn". När användaren valt Utvalda vyer visas listan ändå, tills
- * markeringen byts (`resetShowList`).
- */
-let listOpen = false;
-export function resetShowList(): void {
-  listOpen = false;
-}
-
-/** Klick på knappar i Visas i och taklutningen. Svarar true om klicket hanterades. */
+/** Klick på knappar i Visas i. Svarar true om klicket hanterades. */
 export function drawingClick(store: DocStore, ids: Id[], b: HTMLElement, root: HTMLElement): boolean {
-  const doc = store.doc;
-  const el = doc.elements[ids[0]];
-  switch (b.dataset.action) {
-    case 'show-match': {
-      if (el?.show?.kind !== 'tags') return true;
-      setShowIn(store, ids, { ...el.show, match: b.dataset.match === 'all' ? 'all' : 'any' });
-      return true;
-    }
-    case 'show-tag': {
-      if (el?.show?.kind !== 'tags') return true;
-      const t = b.dataset.tag!;
-      const tags = el.show.tags.includes(t) ? el.show.tags.filter((x) => x !== t) : [...el.show.tags, t];
-      setShowIn(store, ids, { ...el.show, tags });
-      return true;
-    }
-    case 'add-view-tag': {
-      const input = root.querySelector<HTMLInputElement>('#new-view-tag');
-      const t = input ? addViewTag(store, input.value) : null;
-      if (t && el?.show?.kind === 'tags' && !el.show.tags.includes(t)) setShowIn(store, ids, { ...el.show, tags: [...el.show.tags, t] });
-      return true;
-    }
-  }
-  return false;
+  return showClick(store, ids, b, root);
 }
 
 /** Id för vyn som visas, för "Bara den här vyn". */

@@ -1,26 +1,25 @@
 import {
-  copyElements,
   createDefinition,
   deleteDefinition,
   deleteElements,
   flipWalls,
-  mirrorElements,
-  rotateElements,
   setDefinition,
   setInState,
   setSkewOk,
   updateDefinition,
   updateParams,
 } from '../core/commands';
+import { copyElements, mirrorElements, rotateElements } from '../core/transforms';
 import { onPaper as paperSpace, type Element, type ProjectDoc } from '../core/model';
-import { isViewportId, moveOnly } from '../core/sheets';
+import { isViewportId } from '../core/sheets';
 import type { Action, ViewStates } from '../core/states';
-import { actionOf, existingState } from '../core/states';
+import { actionOf } from '../core/states';
 import type { DocStore } from '../core/store';
 import { resolveParams, typeOf } from '../elements/registry';
 import { rotateFurniture, type FurnitureParams } from '../elements/furniture';
 import { faceChoices, faceOf, justificationFor, type WallFace } from '../elements/wallSides';
-import { QUICK_ACTIONS, type QuickId } from './uiSettings';
+import type { QuickId } from './uiSettings';
+import { quickButton, quickButtons } from './quickBar';
 import { icons } from './icons';
 import { escapeHtml, labelOf, nextLittera } from './labels';
 import type { Selection } from './selection';
@@ -29,31 +28,14 @@ import { skewOf, skewText } from '../elements/angleCheck';
 import { bindTreeForm, treeItemExists, treeItemMarkup, type TreeItem } from './treeItemPanel';
 import { bindSheetForm, sheetFormMarkup, type SheetFormHost } from './sheetForms';
 import { orderSection } from './app/drawOrderUi';
-import { drawingChange, drawingClick, hereOf, lockField, resetShowList, shapeSmartFields, showSection, underlayPlaceFields } from './drawingPanel';
+import { drawingChange, drawingClick, hereOf, lockField } from './drawingPanel';
+import { shapeSmartFields } from './shapeFields';
+import { resetShowList, showSection } from './showFields';
+import { underlayPlaceFields } from './underlayFields';
 import { instanceFields, propsSection, PROPS, sharedSection, summarizeTypes, typesMarkup } from './selectionFields';
 import { applyField, patchEach, pick, selectionCenter, straighten } from './selectionEdits';
 
 type Tab = 'selection' | 'types';
-
-/** Längre förklaringar till snabbknapparna, som visas vid hovring. */
-const QUICK_TITLES: Record<string, string> = {
-  'flip-swing': 'Vänd slag: dörren öppnas åt andra sidan väggen',
-  'flip-hinge': 'Byt hängning: gångjärnen flyttas till andra sidan dörren',
-  'toggle-glazed': 'Glasad dörr av eller på',
-  'cycle-ref': 'Referenslinje: byt mellan utsida, center och insida',
-  'flip-wall': 'Vänd väggen: insidan byter sida, väggen ligger kvar',
-  'rotate-90': 'Vrid 90° moturs kring mitten',
-  mirror: 'Spegla i en lodrät linje genom mitten',
-  copy: 'Kopiera på samma ställe; flytta sedan kopian',
-  demolish: 'Riv i det här förslaget (finns kvar i Befintligt)',
-  restore: 'Behåll: ångra rivningen i det här förslaget',
-  'zoom-selection': 'Zooma till det markerade',
-  'open-marker': 'Öppna fasaden eller sektionen',
-  delete: 'Ta bort helt, ur alla tillstånd (Delete)',
-  'smart-more': 'Visa alla inställningar här i smartmenyn',
-  'smart-less': 'Visa bara snabbknapparna',
-  deselect: 'Avmarkera (Esc)',
-};
 
 const ACTION_LABEL: Record<Action, string> = {
   plain: 'Visas',
@@ -224,73 +206,10 @@ export class PropertiesPanel {
     const vps = this.viewportsSelected(doc);
     if (els.length === 0 && vps === 0) return null;
 
-    const btn = (action: string, icon: string, label: string, extra = '') =>
-      `<button class="qb-btn${extra}" data-action="${action}" title="${escapeHtml(QUICK_TITLES[action] ?? label)}">${icon}<span>${escapeHtml(label)}</span></button>`;
-    const sameType = els.length > 0 && els.every((e) => e.type === els[0].type);
-    const kind = sameType && !vps ? els[0].type : 'mixed';
-    // Vyer på ett blad (0.8.9) går att flytta och ta bort, inte vrida, spegla eller kopiera; skalstockar och stämplar likaså (0.8.12).
-    const fixedShape = els.some((e) => moveOnly(doc, e.id));
-    const allowed = (id: QuickId, k: string) => {
-      const a = QUICK_ACTIONS.find((q) => q.id === id);
-      return !vps && !fixedShape && !!a && (a.types === 'all' || a.types.includes(k));
-    };
-    const buttons: string[] = [];
-    for (const id of this.quickFor(kind)) {
-      switch (id) {
-        case 'flip-swing':
-          if (kind === 'Door') buttons.push(btn('flip-swing', icons.flipSwing, 'Vänd slag'));
-          break;
-        case 'flip-hinge':
-          if (kind === 'Door') buttons.push(btn('flip-hinge', icons.flipHinge, 'Hängning'));
-          break;
-        case 'toggle-glazed':
-          if (kind === 'Door') {
-            const on = els.every((e) => resolveParams<{ glazed?: boolean }>(doc, e).glazed);
-            buttons.push(btn('toggle-glazed', icons.glazed, 'Glasad', on ? ' on' : ''));
-          }
-          break;
-        case 'cycle-ref':
-          if (kind === 'Wall') {
-            const faces = new Set(els.map((e) => faceOf(doc, e).label));
-            buttons.push(btn('cycle-ref', icons.refLine, faces.size === 1 ? [...faces][0] : 'Referens'));
-          }
-          break;
-        case 'rotate-90':
-          if (allowed(id, kind)) buttons.push(btn('rotate-90', icons.rotate, 'Vrid 90°'));
-          break;
-        case 'mirror':
-          if (allowed(id, kind)) buttons.push(btn('mirror', icons.mirror, 'Spegla'));
-          break;
-        case 'copy':
-          if (allowed(id, kind)) buttons.push(btn('copy', icons.copy, 'Kopiera'));
-          break;
-        case 'flip-wall':
-          if (kind === 'Wall') buttons.push(btn('flip-wall', icons.flipWall, 'Vänd väggen'));
-          break;
-        case 'demolish': {
-          // Riva eller behålla: bara för sådant som finns i Befintligt, när man tittar på ett förslag.
-          const view = this.getView();
-          const ex = existingState(doc);
-          if (!vps && ex && ex.id !== view.state && els.every((e) => e.states.includes(ex.id) && typeOf(e.type)?.compares)) {
-            if (els.every((e) => e.states.includes(view.state))) buttons.push(btn('demolish', icons.demolish, 'Riv'));
-            else if (els.every((e) => !e.states.includes(view.state))) buttons.push(btn('restore', icons.restore, 'Behåll'));
-          }
-          break;
-        }
-        case 'zoom-selection':
-          buttons.push(btn('zoom-selection', icons.zoomIn, 'Zooma till'));
-          break;
-        case 'open-marker':
-          if (els.length === 1 && allowed(id, kind)) buttons.push(btn('open-marker', icons.elevation, 'Öppna'));
-          break;
-        case 'delete':
-          buttons.push(btn('delete', icons.trash, 'Ta bort', ' danger'));
-          break;
-      }
-    }
-    if (more === true) buttons.push(btn('smart-more', icons.more, 'Mer'));
-    if (more === 'less') buttons.push(btn('smart-less', icons.collapse, 'Mindre'));
-    buttons.push(btn('deselect', icons.close, 'Avmarkera'));
+    const buttons = quickButtons(doc, els, vps > 0, this.getView(), this.quickFor);
+    if (more === true) buttons.push(quickButton('smart-more', icons.more, 'Mer'));
+    if (more === 'less') buttons.push(quickButton('smart-less', icons.collapse, 'Mindre'));
+    buttons.push(quickButton('deselect', icons.close, 'Avmarkera'));
 
     const head = withTitle ? this.quickTitle() : '';
     return `${head}<div class="qb-actions">${buttons.join('')}</div>`;

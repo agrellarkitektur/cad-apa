@@ -1,4 +1,5 @@
-import { moveElements, rotateElements } from '../../core/commands';
+import { moveElements } from '../../core/commands';
+import { rotateElements } from '../../core/transforms';
 import { mirrorAbout, multiplyElements } from '../../core/wallEdit';
 import { angleDeg, dist, left, sub } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';

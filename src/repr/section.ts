@@ -128,21 +128,30 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
       continue;
     }
     const plan = solidTriangles(s);
+    // Hörnen i vykoordinater, samma räkning som toView men utan en lista per
+    // hörn (0.8.27).
     const tris: number[] = [];
-    for (let i = 0; i + 8 < plan.length; i += 9) {
-      const a = toView(plan[i], plan[i + 1], plan[i + 2]);
-      const b = toView(plan[i + 3], plan[i + 4], plan[i + 5]);
-      const c = toView(plan[i + 6], plan[i + 7], plan[i + 8]);
-      tris.push(...a, ...b, ...c);
-      minZ = Math.min(minZ, a[1], b[1], c[1]);
-      maxZ = Math.max(maxZ, a[1], b[1], c[1]);
+    const whole = plan.length - (plan.length % 9);
+    for (let i = 0; i < whole; i += 3) {
+      const dx = plan[i] - O[0];
+      const dy = plan[i + 1] - O[1];
+      const z = plan[i + 2] + z0;
+      tris.push(dx * r[0] + dy * r[1], z, dx * v[0] + dy * v[1]);
+      minZ = Math.min(minZ, z);
+      maxZ = Math.max(maxZ, z);
     }
     // Kanter: skarpa veck och öppna kanter, och konturer av böjda ytor.
     for (const [a, b] of featureEdges(tris, { onlySilhouettes: !!s.noEdges })) pushSeg(a, b, key);
     // Det som rivs skymmer inget: det finns inte kvar.
     if (demolished) continue;
     const clipped: number[] = [];
+    const inside = (u: number, d: number) => d >= 0 && (depthMax === null || depthMax - d >= 0) && u >= 0 && uMax - u >= 0;
     for (let i = 0; i + 8 < tris.length; i += 9) {
+      // Hela triangeln innanför: som den är (klippningen ger samma hörn).
+      if (inside(tris[i], tris[i + 2]) && inside(tris[i + 3], tris[i + 5]) && inside(tris[i + 6], tris[i + 8])) {
+        for (let k = i; k < i + 9; k++) clipped.push(tris[k]);
+        continue;
+      }
       const poly = clipPlane(
         clipPlane(
           clipDepth(

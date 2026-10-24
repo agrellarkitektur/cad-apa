@@ -10,7 +10,7 @@ import type { Primitive } from '../src/repr/primitives';
 import { sampleProject } from '../src/sample/sampleProject';
 import { pickAt } from '../src/view2d/pick';
 import { commandFor, findCommand } from '../src/ui/commandRegistry';
-import { opacityFields, shapeSmartFields } from '../src/ui/drawingPanel';
+import { opacityFields, shapeSmartFields } from '../src/ui/shapeFields';
 
 beforeAll(() => registerBuiltInTypes());
 

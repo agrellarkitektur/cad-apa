@@ -509,7 +509,7 @@ describe('version 0.6', () => {
   });
 
   it('kopiera, vrida och spegla', async () => {
-    const { copyElements, rotateElements, mirrorElements } = await import('../src/core/commands');
+    const { copyElements, rotateElements, mirrorElements } = await import('../src/core/transforms');
     const store = new DocStore(sampleProject());
     const [copy] = copyElements(store, ['iv-1']);
     expect(store.doc.elements[copy].type).toBe('Wall');

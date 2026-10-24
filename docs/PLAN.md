@@ -94,6 +94,10 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.21 | Kommandoraden del 2: frågor med alternativ, SMARTSHELL vid blixten, kommandon som väntar på en markering, historik (F2), högerklick, dockningsbar rad, skrivna punkter i tak, sektion, fasad och Modifiera |
 | 0.8.22 | Småsaker: Linje är polylinjen, opacitet för linje och fyllning, skraffering i smartmenyn, Visa → Fyllningar, rumsstämpelns mall, sektionspilens hullingar |
 | 0.8.23 | Granskning: smartshell, Markera och projektträdets klick uppdelade; klick och hover i planen prövar bara det nära markören; rutnätet ritas inte om vid musrörelser |
+| 0.8.24 | Format 13: 2D-formen är en kedja av raka segment och bågar, Böj och Räta ut, ändformer (pil, triangel, punkt …) |
+| 0.8.25 | Ritordning (Längst bak … Främst), 2D-formens fyllning och linje framför eller bakom väggarna, fyllning i rum |
+| 0.8.26 | Pennor i stilmallen: tjocklek och färg för pilar och markörer |
+| 0.8.27 | Granskning: fasaderna ungefär dubbelt så fort, stilmallen, 2D-formens, underlagets och Visas i:s fält, snabbraden, Vrid/Spegla/Kopiera och `app.css` uppdelade |
 
 ## Framåt
 
@@ -1026,6 +1030,69 @@ följer skärmens tema. Bara det som ändrats sparas (`pens` i stilmallen,
 samma tabell som fasadernas linjer), och *Förval* tar bort det. Skalstocken,
 stämplarna och rumsstämpelns text har inga pennor. Inga pennor per objekt.*
 
+### 0.8.27 Granskning
+
+Carl August 25 oktober: granskningen enligt planen (ungefär var tredje
+version; förra var 0.8.23). Utan nya funktioner: städa, dela upp stora
+filer (`styleDialog.ts`, `app.css`) och leta efter långsam kod.
+
+*Byggd (25 oktober), samma format (13). Uppdelat: `app.css` (5 418 rader)
+i tretton filer i samma ordning, som ger exakt samma byggda CSS;
+stilmallen i `src/ui/style/` (åtgärderna, texterna, pennorna och
+färgerna, en fil per del med dess fält och ändringar); `drawingPanel.ts`
+436 → 79 rader (2D-formen i `shapeFields.ts`, underlaget i
+`underlayFields.ts`, Visas i i `showFields.ts`); snabbradens knappar i
+`quickBar.ts` (`propertiesPanel.ts` 654 → 575); Kopiera, Vrid och Spegla
+i `core/transforms.ts` (`commands.ts` 714 → 588). Tre oanvända funktioner
+borttagna. Långsamt som rättades: rutnätet i de dolda linjerna delade
+bredd och höjd i lika många rutor, så att en låg och bred fasad fick rutor
+några mm höga och varje vägg hamnade i tusentals; rutorna är nu
+kvadratiska och inte mindre än halva den vanliga triangeln. Hela trianglar
+innanför sektionens djup klipps inte. Fasaden av 312 väggar med dörrar och
+fönster 0,38 → 0,20 s; sektionerna nästan oförändrade. `modelBounds` och
+`northAngle` (som anropas flera gånger per fasad när planen ritas) går
+igenom elementen utan att bygga listor. Fasaderna och sektionerna i tre
+projekt ger exakt samma linjer före och efter, och samma klick i 0.8.26
+och 0.8.27 (114 steg: stilmallen, snabbraden, 2D-formens fält, underlag,
+fasader och sektion) gav samma läge. Mätt men lämnat: väggarnas
+sammanslagning (`union`, ca 0,06 s per fasad med 312 väggar) och
+triangleringen.*
+
+### 0.8.28 Rättelser i 2D-formen
+
+Carl Augusts provning 25 oktober (förslag 25 oktober). Liten–mellanstor,
+en session.
+
+- **Fortsätta en linje**: klicka på ändpunkten av en öppen 2D-form (också
+  med bågar) och rita vidare, som en polylinje
+- **Fyllningens färg i smartmenyn** ska synas direkt när formen får en
+  fyllning, inte först när den markerats om
+- **Det som ligger överst döljer det under**: när en 2D-form skickas fram
+  ska dess fyllning också dölja den undre formens linjer, inte bara dess
+  fyllning
+
+### 0.8.29 Linjetyper
+
+Carl Augusts synpunkter 25 oktober (förslag 25 oktober). Stor men troligen
+en session; egna linjetyper flyttas till nästa version om de inte ryms.
+Grunden för det punktstreckade ovanför snittet i 0.10.
+
+- **Linjetyp** (heldragen, streckad, punktstreckad, prickad m.fl.) för
+  linjer och objekt: 2D-former, väggar, fasadernas linjer och pennorna i
+  stilmallen
+- **Egna linjetyper**: ett mönster av streck och mellanrum i mm på papper
+- Kanske: DXF-underlagens streckade linjer ritas streckade
+
+### 0.8.30 Detaljnivåer i stilmallen
+
+Carl Augusts synpunkt 25 oktober (förslag 25 oktober). Storleken beror på
+svaret på frågan nedan.
+
+- **Litteran efter detaljnivå**: stilmallens innehåll för dörrar, fönster,
+  rum m.m. delas upp i skiss, normal och detalj. *Att fråga:* väljs
+  detaljnivån per vy (som i ArchiCAD) eller efter skalan? Ska dörrar och
+  fönster också ritas olika (då hör en del hemma i 0.11.2)?
+
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
 *Framflyttad från 0.14.*
@@ -1156,6 +1223,7 @@ efter pilotprojektet. Det som piloten visar behövs tidigt går först.
 Grafik:
 
 - Penntabell i stilmallen (pilar och markörer flyttade till 0.8.26): linjetjocklek och färg per sorts linje (hål, karm, båge, foder, sammanfogningar, glas, öppningssätt, marklinje …). I dag gäller fasta värden: 0,13 skraffering, glas och sammanfogningar; 0,18 mått, foder, möbler och detaljer; 0,25 karm, båge, dörrblad och konturer bortom; 0,35 hålens omfattning och fasadkonturer; 0,5 bärande snitt; 0,7 marklinje och sektionslinjens ändar
+- **Egna fyllningstyper** (skrafferingsmönster), kanske genom att läsa in färdiga `.pat`-filer (Carl August 25 oktober; parkerat 25 oktober, eller direkt efter 0.8.30 om de behövs tidigt)
 - Klicka på en glasmarkering för att ge den en egen stil i egenskaperna
 - Typsnitt: ett för hela projektet och eget per objekt
 - Öppningssätt för fönster: fast, sidohängt (vänster/höger), överkantshängt, underkantshängt, vridfönster. I dag har bara dörrar öppningssätt
