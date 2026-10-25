@@ -1,35 +1,15 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
-import { DocStore } from '../src/core/store';
-import type { Element } from '../src/core/model';
+import type { DocStore } from '../src/core/store';
 import type { Shape2DParams } from '../src/elements/drawing2d';
-import { buildPlan } from '../src/repr/plan';
 import { clipOutside, coverLines } from '../src/repr/cover';
 import type { PolylinePrim, Primitive } from '../src/repr/primitives';
-import { sampleProject } from '../src/sample/sampleProject';
-import type { ToolHost } from '../src/ui/tools/host';
 import { Draw2DTool } from '../src/ui/tools/draw2dTool';
 import { shapeSmartFields } from '../src/ui/shapeFields';
+import { planOf as plan, square, storeWithShapes as storeWith, toolHost as host } from './projekt';
 
 beforeAll(() => registerBuiltInTypes());
 
-const base: Shape2DParams = { shape: 'polyline', points: [], weight: 0.25, linetype: 'solid', fillAngle: 45, fillSpacing: 2 };
-const square = (x: number, y: number, s = 1000): [number, number][] => [
-  [x, y],
-  [x + s, y],
-  [x + s, y + s],
-  [x, y + s],
-];
-
-function storeWith(shapes: Record<string, Partial<Shape2DParams> & { order?: number }>) {
-  const doc = sampleProject();
-  const storey = doc.storeys[0].id;
-  for (const [id, { order, ...p }] of Object.entries(shapes))
-    doc.elements[id] = { id, type: 'Shape2D', storey, states: doc.states.map((s) => s.id), tags: [], params: { ...base, ...p }, props: {}, ...(order !== undefined ? { order } : {}) } as Element;
-  return new DocStore(doc);
-}
-
-const plan = (store: DocStore) => buildPlan(store.doc, store.doc.storeys[0].id, { state: store.doc.states.at(-1)!.id });
 const linesOf = (store: DocStore, id: string) => plan(store).prims.filter((q): q is PolylinePrim => q.kind === 'polyline' && q.origin?.objectId === id && q.pen.weight > 0);
 const length = (pts: readonly (readonly [number, number])[]) => pts.slice(1).reduce((s, q, i) => s + Math.hypot(q[0] - pts[i][0], q[1] - pts[i][1]), 0);
 
@@ -46,35 +26,27 @@ describe('Linjen kapas där en täckande yta ligger över (0.8.28)', () => {
   });
 });
 
-describe('Det överst döljer det under (0.8.28)', () => {
-  it('den övre formens hela fyllning döljer den undre formens linje', () => {
-    const store = storeWith({
-      under: { points: square(50000, 0), closed: true, order: 0 },
-      over: { points: square(50500, 500), closed: true, fill: 'solid', order: 1 },
-    });
-    const total = linesOf(store, 'under').reduce((s, q) => s + length(q.closed ? [...q.points, q.points[0]] : q.points), 0);
+describe('Det överst döljer det under (0.8.28–0.8.30)', () => {
+  /** Den undre kvadratens linje, med en kvadrat över hörnet. */
+  const under = (over: Partial<Shape2DParams>, underOrder = 0) =>
+    linesOf(storeWith({ under: { points: square(50000, 0), closed: true, order: underOrder }, over: { points: square(50500, 500), closed: true, order: 1, ...over } }), 'under');
+  const total = (lines: PolylinePrim[]) => lines.reduce((s, q) => s + length(q.closed ? [...q.points, q.points[0]] : q.points), 0);
+
+  it('en täckande fyllning ovanför döljer linjen: hel, bakgrund med 100 % (0.8.29) och mask (0.8.30)', () => {
+    const covers: Partial<Shape2DParams>[] = [{ fill: 'solid' }, { fill: 'hatch', fillBackground: '#ffffff' }, { fill: 'cross', fillBackground: 'paper' }, { fill: 'mask' }];
     // Två kanter går in i den övre kvadraten med 500 mm var.
-    expect(total).toBeCloseTo(4000 - 1000, 0);
-    // Den övre formens egen linje är hel.
+    for (const over of covers) expect(total(under(over)), JSON.stringify(over)).toBeCloseTo(4000 - 1000, 0);
+  });
+
+  it('skraffering, genomskinligt och en bakgrund under 100 % döljer ingenting', () => {
+    const open: Partial<Shape2DParams>[] = [{ fill: 'hatch' }, { fill: 'solid', opacity: 50 }, { fill: 'hatch', fillBackground: '#ffffff', fillBackgroundOpacity: 60 }];
+    for (const over of open) expect(under(over), JSON.stringify(over)).toHaveLength(1);
+  });
+
+  it('den övre formens linje är hel, och skickas den undre fram döljs ingenting', () => {
+    const store = storeWith({ under: { points: square(50000, 0), closed: true, order: 0 }, over: { points: square(50500, 500), closed: true, fill: 'solid', order: 1 } });
     expect(linesOf(store, 'over')).toHaveLength(1);
-  });
-
-  it('skickas den undre fram döljs ingenting av den andra', () => {
-    const store = storeWith({
-      under: { points: square(50000, 0), closed: true, order: 2 },
-      over: { points: square(50500, 500), closed: true, fill: 'solid', order: 1 },
-    });
-    expect(linesOf(store, 'under')).toHaveLength(1);
-  });
-
-  it('en skraffering eller en genomskinlig fyllning döljer ingenting', () => {
-    for (const p of [{ fill: 'hatch' as const }, { fill: 'solid' as const, opacity: 50 }]) {
-      const store = storeWith({
-        under: { points: square(50000, 0), closed: true, order: 0 },
-        over: { points: square(50500, 500), closed: true, order: 1, ...p },
-      });
-      expect(linesOf(store, 'under')).toHaveLength(1);
-    }
+    expect(under({ fill: 'solid' }, 2)).toHaveLength(1);
   });
 });
 
@@ -88,21 +60,6 @@ describe('Fyllningens färg i smartmenyn (0.8.28)', () => {
 });
 
 const shapes = (store: DocStore) => Object.values(store.doc.elements).filter((e) => e.type === 'Shape2D').length;
-
-/** Det verktyget behöver, med en markering och formerna synliga. */
-function host(store: DocStore, selected: string[]): ToolHost {
-  let sel = [...selected];
-  return {
-    store,
-    selection: { set: (ids: string[]) => (sel = [...ids]), list: () => sel } as never,
-    view: { requestRender: () => {}, camera: { scale: 1 }, drawingScale: 100 } as never,
-    plan: () => plan(store),
-    activeState: () => store.doc.states[0].id,
-    storey: () => store.doc.storeys[0].id,
-    snapSegments: () => [],
-    hint: () => {},
-  };
-}
 
 describe('Fortsätta en linje (0.8.28)', () => {
   it('ritar vidare från slutet av den markerade linjen', () => {

@@ -1,11 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
-import { DocStore } from '../src/core/store';
-import type { Element } from '../src/core/model';
-import { normalizeStyle, SWEDISH_STANDARD, type StyleSheet } from '../src/core/graphics';
+import { SWEDISH_STANDARD, type StyleSheet } from '../src/core/graphics';
 import { lineTypeDash, parseDash, formatDash, newLineTypeId } from '../src/core/lineTypes';
 import { fillPrims, shapePrims, type Shape2DParams } from '../src/elements/drawing2d';
-import { buildPlan } from '../src/repr/plan';
 import { coverLines } from '../src/repr/cover';
 import { dashPieces } from '../src/repr/dash';
 import { markerPen, solidPen } from '../src/repr/markerPens';
@@ -14,31 +11,16 @@ import { toPaper } from '../src/repr/sheet';
 import { writePdf } from '../src/formats/pdf';
 import { renderPrimitives } from '../src/view2d/renderPrimitives';
 import { Camera } from '../src/view2d/camera';
-import { sampleProject } from '../src/sample/sampleProject';
 import { shapeChange } from '../src/ui/shapeFields';
 import { addLineType, applyLineTypeField, removeLineType } from '../src/ui/style/lineTypes';
 import { applyPenField } from '../src/ui/style/pens';
+import { planOf as plan, SHAPE as base, square, storeWithShapes as storeWith } from './projekt';
 
 beforeAll(() => registerBuiltInTypes());
 
-const base: Shape2DParams = { shape: 'polyline', points: [], weight: 0.25, linetype: 'solid', fillAngle: 45, fillSpacing: 2 };
-const square = (x: number, y: number, s = 1000): [number, number][] => [
-  [x, y],
-  [x + s, y],
-  [x + s, y + s],
-  [x, y + s],
-];
 const circle = (r: number, n = 72): Vec2[] => Array.from({ length: n }, (_, i): Vec2 => [r * Math.cos((2 * Math.PI * i) / n), r * Math.sin((2 * Math.PI * i) / n)]);
 const withOwn = (dash: number[]): StyleSheet => ({ ...structuredClone(SWEDISH_STANDARD), lineTypes: [{ id: 'egen-1', name: 'Min', dash }] });
 
-function storeWith(shapes: Record<string, Partial<Shape2DParams> & { order?: number }>) {
-  const doc = sampleProject();
-  const storey = doc.storeys[0].id;
-  for (const [id, { order, ...p }] of Object.entries(shapes))
-    doc.elements[id] = { id, type: 'Shape2D', storey, states: doc.states.map((s) => s.id), tags: [], params: { ...base, ...p }, props: {}, ...(order !== undefined ? { order } : {}) } as Element;
-  return new DocStore(doc);
-}
-const plan = (store: DocStore) => buildPlan(store.doc, store.doc.storeys[0].id, { state: store.doc.states.at(-1)!.id });
 
 describe('Streckmönstret längs linjen (0.8.30)', () => {
   it('en cirkel är en sträcka med ett helt antal perioder', () => {
@@ -124,14 +106,6 @@ describe('Linjetyper (0.8.30)', () => {
     expect(formatDash([5, 1, 0.3, 1])).toBe('5 1 0,3 1');
   });
 
-  it('stilmallen från fil behåller egna linjetyper och pennornas linjetyp', () => {
-    const read = normalizeStyle({ ...withOwn([2, 1]), pens: { sectionLine: { weight: 0.5, linetype: 'dashdot' } } });
-    expect(read.lineTypes).toEqual([{ id: 'egen-1', name: 'Min', dash: [2, 1] }]);
-    expect(read.pens?.sectionLine.linetype).toBe('dashdot');
-    // En egen med en inbyggd nyckel hoppas över.
-    expect(normalizeStyle({ ...SWEDISH_STANDARD, lineTypes: [{ id: 'dashed', name: 'X', dash: [1, 1] }] }).lineTypes).toBeUndefined();
-  });
-
   it('en 2D-form ritas med en egen linjetyp, ändformerna heldragna', () => {
     const style = withOwn([4, 1]);
     const prims = shapePrims({ ...base, points: [[0, 0], [1000, 0]], linetype: 'egen-1', endCap: 'arrow' }, undefined, false, 100, style);
@@ -178,7 +152,7 @@ describe('Masken (0.8.30)', () => {
     const store = storeWith({ a: { points: square(0, 0), closed: true, fill: 'hatch' } });
     shapeChange(store, ['a'], 'fillBackgroundOn', { checked: true, value: 'on' } as HTMLInputElement);
     expect(store.doc.elements.a.params.fillBackground).toBe('paper');
-    const fills = fillPrims([square(0, 0)], store.doc.elements.a.params as Shape2DParams, undefined, true) as RegionPrim[];
+    const fills = fillPrims([square(0, 0)], store.doc.elements.a.params as unknown as Shape2DParams, undefined, true) as RegionPrim[];
     expect(fills[0].fill).toEqual({ kind: 'solid', color: 'paper' });
     shapeChange(store, ['a'], 'fillBackgroundKind', { value: 'color' } as HTMLSelectElement);
     expect(store.doc.elements.a.params.fillBackground).toBe('#ffffff');
@@ -186,14 +160,9 @@ describe('Masken (0.8.30)', () => {
     expect(store.doc.elements.a.params.fillBackground).toBe('paper');
   });
 
-  it('mönstret Mask är ritningens bakgrund och döljer linjerna under', () => {
+  it('mönstret Mask är ritningens bakgrund, också med en färg', () => {
+    // Att masken döljer det under prövas i v0828.
     expect((fillPrims([square(0, 0)], { fill: 'mask', fillColor: '#ff0000', fillAngle: 45, fillSpacing: 2 }, undefined, true)[0] as RegionPrim).fill).toEqual({ kind: 'solid', color: 'paper' });
-    const store = storeWith({
-      line: { points: [[60000, 500], [63000, 500]], order: 0 },
-      mask: { points: square(61000, 0), closed: true, weight: 0, fill: 'mask', order: 1 },
-    });
-    const lines = plan(store).prims.filter((q): q is PolylinePrim => q.origin?.objectId === 'line' && q.kind === 'polyline' && q.pen.weight > 0);
-    expect(lines).toHaveLength(2);
   });
 
   it('framför väggarna döljer masken väggarna, bakom gör den det inte', () => {

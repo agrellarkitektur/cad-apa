@@ -13,8 +13,6 @@ import { copyPayload, originalsHere, parsePayload, pasteClip } from '../src/core
 import { openingsInCorner, roundCorner } from '../src/core/wallEdit';
 import { readableAngle } from '../src/elements/markers';
 import { measure } from '../src/ui/tools/measureTool';
-import { renderPrimitives } from '../src/view2d/renderPrimitives';
-import { Camera } from '../src/view2d/camera';
 import type { Edges3D, Shape3D } from '../src/repr/solids';
 import type { Primitive } from '../src/repr/primitives';
 
@@ -215,7 +213,7 @@ describe('avrunda hörn med öppningar (0.7.1)', () => {
   });
 });
 
-describe('måttband och streckade linjer (0.7.1)', () => {
+describe('måttband (0.7.1)', () => {
   it('mäter sträckor, vinkel och yta', () => {
     const m = measure([
       [0, 0],
@@ -227,34 +225,5 @@ describe('måttband och streckade linjer (0.7.1)', () => {
     expect(m.angle).toBe(90);
     expect(m.turn).toBeCloseTo(90);
     expect(m.area).toBeCloseTo(6);
-  });
-  it('varje sträcka börjar och slutar med ett helt streck', () => {
-    const cam = new Camera();
-    cam.resize(1000, 1000);
-    cam.scale = 0.1;
-    const svg = renderPrimitives(
-      [
-        {
-          kind: 'polyline',
-          points: [
-            [0, 0],
-            [4000, 0],
-            [4000, 1230],
-          ],
-          closed: false,
-          pen: { weight: 0.25, dash: [3, 1.5] },
-        },
-      ],
-      cam,
-      { drawingScale: 100 },
-    );
-    const paths = [...svg.matchAll(/d="M([\d.-]+) ([\d.-]+)L([\d.-]+) ([\d.-]+)"[^>]*stroke-dasharray="([^"]+)"/g)];
-    expect(paths).toHaveLength(2);
-    for (const m of paths) {
-      const len = Math.hypot(Number(m[3]) - Number(m[1]), Number(m[4]) - Number(m[2]));
-      const [dash, gap] = m[5].split(' ').map(Number);
-      const n = (len - dash) / (dash + gap);
-      expect(Math.abs(n - Math.round(n))).toBeLessThan(0.02);
-    }
   });
 });

@@ -10,7 +10,6 @@ import { scaleBarLayout } from '../src/elements/scaleBar';
 import type { Primitive } from '../src/repr/primitives';
 import { buildSheet, placeableViews } from '../src/repr/sheet';
 import { sampleProject } from '../src/sample/sampleProject';
-import { parse, serialize } from '../src/storage/format';
 
 beforeAll(() => registerBuiltInTypes());
 
@@ -88,8 +87,8 @@ describe('stämplar (0.8.12)', () => {
     const store = new DocStore(sampleProject());
     const st = createStamp(store, 'Bygglov');
     addElements(store, [
-      { type: 'Text', storey: store.doc.storeys[0].id, space: st, states: [], params: { pos: [0, 0], text: 'BYGGLOV {ritningsnummer} {Granskare}', height: 5 } },
-    ]);
+      { type: 'Text', storey: store.doc.storeys[0].id, space: st, states: [], tags: [], props: {}, params: { pos: [0, 0], text: 'BYGGLOV {ritningsnummer} {Granskare}', height: 5 } },
+    ], 'st-a', 'Text');
     const a = createSheet(store, { number: 'A-101' });
     const b = createSheet(store, { number: 'A-102' });
     placeStamp(store, a, st, [100, 50]);
@@ -109,9 +108,6 @@ describe('stämplar (0.8.12)', () => {
     store.transact('ändra', (tx) => tx.putElement({ ...text, params: { ...text.params, text: 'STÄMPELN ÄNDRAD' } }));
     expect(texts(draw(a).prims).some((t) => t.text === 'STÄMPELN ÄNDRAD')).toBe(true);
     expect(texts(draw(b).prims).some((t) => t.text === 'STÄMPELN ÄNDRAD')).toBe(true);
-    // Sparas och öppnas igen.
-    const again = parse(serialize(store.doc));
-    expect(again.worksheets.find((w) => w.id === st)?.stamp).toBe(true);
     deleteWorksheet(store, st);
     expect(Object.values(store.doc.elements).some((e) => e.type === 'Stamp')).toBe(false);
     store.undo();
@@ -121,7 +117,7 @@ describe('stämplar (0.8.12)', () => {
   it('en stämpel i en stämpel ritar inte sig själv', () => {
     const store = new DocStore(sampleProject());
     const st = createStamp(store, 'Loop');
-    addElements(store, [{ type: 'Stamp', storey: store.doc.storeys[0].id, space: st, states: [], params: { pos: [0, 0], stamp: st } }]);
+    addElements(store, [{ type: 'Stamp', storey: store.doc.storeys[0].id, space: st, states: [], tags: [], props: {}, params: { pos: [0, 0], stamp: st } }], 'st-a', 'Stämpel');
     const a = createSheet(store);
     placeStamp(store, a, st, [10, 10]);
     expect(() => buildSheet(store.doc, store.doc.sheets.find((s) => s.id === a)!, { today: '2026-10-23' })).not.toThrow();

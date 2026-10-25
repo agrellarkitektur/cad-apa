@@ -100,6 +100,11 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.25 | Ritordning (Längst bak … Främst), 2D-formens fyllning och linje framför eller bakom väggarna, fyllning i rum |
 | 0.8.26 | Pennor i stilmallen: tjocklek och färg för pilar och markörer |
 | 0.8.27 | Granskning: fasaderna ungefär dubbelt så fort, stilmallen, 2D-formens, underlagets och Visas i:s fält, snabbraden, Vrid/Spegla/Kopiera och `app.css` uppdelade |
+| 0.8.28 | Rättelser i 2D-formen: fortsätta en markerad linje, fyllningens färg i smartmenyn direkt, en täckande fyllning döljer linjerna under |
+| 0.8.29 | Bakgrund i skraffering och korsskraffering (färg och egen opacitet), ändformerna döljs som linjen av en täckande fyllning ovanför |
+| 0.8.30 | Sju linjetyper och egna i stilmallen, för 2D-former och pennorna; streckningen längs hela linjen; bakgrunden och fyllningen *Mask* |
+| 0.8.31 | Egen penna (tjocklek, färg, linjetyp) för väggar, dörrar, fönster, tak och möbler, i planen, fasaderna och sektionerna |
+| 0.8.32 | Granskning: testerna (färre, snabbare, typkontrollerade, referensritningar för 2D-formerna), `dxf.ts` uppdelad, rummen och väggarnas utsida delar sammanslagningen |
 
 ## Framåt
 
@@ -1184,6 +1189,40 @@ funktioner: städa, dela upp stora filer och leta efter långsam kod, och
 tester som prövar samma sak två gånger och tester som låser detaljer
 utan anledning, och se till att hela körningen tar under en minut (386
 tester på ca 17 s efter 0.8.29).
+
+*Byggd (25 oktober), samma format (13). Testerna: 406 → 399, hela
+körningen 26 → 12 s i sandlådan. 19 borttagna eller sammanslagna: tio som
+sparade ett enskilt fält eller låste formatets nummer (elementen sparas
+som de är, så ett test i `core.test.ts` sparar nu ett rikt projekt, ett
+prövar stilmallen från fil och ett att äldre format får meddelandet),
+dubbletterna av "fyllningen bakom väggarna", sektionspilens tjocklek,
+kortkommandona i Modifiera-raden, streckningen per sträcka, L och PL i
+kommandoregistret, 30°-dörrarna i Befintligt och öppningarnas markering,
+ett svagt prov av ändformerna i planen och ett av bakgrunden som döljer.
+De tre proven av att en täckande fyllning döljer linjen under (hel,
+bakgrund, mask) är ett prov med en tabell. Tester som låste detaljer
+utan anledning är lösare: hela listan med Modifiera-val för en vägg,
+exakt åtta linjer i sektionspilen, bokstäverna N, H och Y och ett id.
+Nya: stilmallen från fil, två för sammanslagningen och nio
+referensritningar. Jämförelserna med den gamla koden (klick och snäpp) prövar
+600 och 120 punkter i stället för 5 000 och 400. Hjälpfunktionerna
+(`storeWithShapes`, `wallsProject`, `toolHost`, `dxf` …) ligger i
+`tests/projekt.ts`, testerna typkontrolleras med `tsc`, och de vanliga
+testerna körs utan att koden läses in igen för varje fil
+(`isolate: false`; prestandatestet har kvar sin egen process).
+Referensritningarna har fått ett projekt med 2D-formerna, linjetyperna,
+masken och de egna pennorna, och raden visar mönster, opacitet,
+bakgrund, `under` och streckningens fas. Koden: `dxf.ts` 793 → 342 rader
+(skrafferingen, texterna och läsningen av koderna i egna filer);
+rummens hål och husets ytterkontur tar sammanslagningen av väggarna ur
+samma minne (`bareWallUnion`), så att planen efter en flyttad vägg i
+`roomGrid(12)` tar ca 57 ms i stället för 70; `pathLength`, typen
+`SectionQueue` och rensningen av bladens texter från format 8 borttagna.
+Samma klick i 0.8.31 och 0.8.32 (141 steg, nu också linjetyper, mask
+och egen penna) ger samma läge. Mätt men lämnat: väggarnas sammanslagning
+med öppningar när planen ritas (ca 25 % av omritningen); den går inte att
+ta ur sammanslagningen utan öppningar, eftersom en öppning nära en
+T-skarv då skulle skära i grannväggen.*
 
 ### 0.8.33 Pennor per typ och symbollinjer
 

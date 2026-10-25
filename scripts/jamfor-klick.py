@@ -1,4 +1,5 @@
-"""Samma klick i två byggen (granskningen 0.8.27): läget efter varje steg
+"""Samma klick i två byggen (granskningen 0.8.27; linjetyper, mask och egen
+penna från 0.8.32): läget efter varje steg
 sparas, och två körningar jämförs steg för steg.
 
 Bygg den gamla versionen i en egen arbetskopia och den nya som vanligt,
@@ -17,10 +18,17 @@ from playwright.sync_api import sync_playwright
 
 def compare(a_path, b_path):
     a = json.load(open(a_path)); b = json.load(open(b_path))
-    keys = [k for k in a[0] if k not in ('step', 'err', '_raw')]
+    keys = [k for k in a[0] if k not in ('step', 'err', '_raw', 'tool')]
+    # Verktygets klassnamn minifieras olika i två byggen (0.8.32): samma
+    # verktyg är samma namn i varje bygge, så namnen ska motsvara varandra
+    # ett till ett genom hela körningen.
+    tools = {}
     bad = 0
     for x, y in zip(a, b):
         d = [k for k in keys if x[k] != y[k]]
+        ta, tb = x['_raw']['tool'], y['_raw']['tool']
+        if tools.setdefault(ta, tb) != tb or list(tools.values()).count(tb) > 1:
+            d.append('tool')
         bad += bool(d)
         if d or x['err'] != y['err']:
             print(f"{x['step']:28} {'OLIKA ' + ','.join(d) if d else ''} {x['err'][:60]} | {y['err'][:60]}")
@@ -158,6 +166,12 @@ def main():
         step('penna förval', "__click('[data-action=\"pen-reset\"][data-pen-key=\"sectionLine\"]', '.dialog')")
         step('ångra', "__click('[data-action=\"undo\"]')")
         step('penna förval igen', "__click('[data-action=\"pen-reset\"][data-pen-key=\"sectionLine\"]', '.dialog')")
+        # Linjetyperna (0.8.30, steg från 0.8.32).
+        step('ny linjetyp', "__click('[data-action=\"linetype-add\"]', '.dialog')")
+        step('linjetypens mönster', "__set('[data-linetype=\"egen-1:dash\"]', '4 1 0,5 1', '.dialog')")
+        step('linjetypens namn', "__set('[data-linetype=\"egen-1:name\"]', 'Egen', '.dialog')")
+        step('pennans linjetyp', "__set('[data-pen=\"elevationLine:linetype\"]', 'dashdot', '.dialog')")
+        step('penna med egen linjetyp', "__set('[data-pen=\"sectionLine:linetype\"]', 'egen-1', '.dialog')")
         step('förinställning', "__set('#style-preset', '1', '.dialog')")
         step('förinställning 0', "__set('#style-preset', '0', '.dialog')")
         step('stäng stilmallen', "__click('[data-action=\"close\"]', '.dialog')")
@@ -186,6 +200,18 @@ def main():
         step('markera fönster', "bacchus.selection.set(['f01'])")
         step('ta bort fönster', "__click('[data-action=\"delete\"]', 'aside.panel .quick-bar')")
         step('ångra borttagning', "__click('[data-action=\"undo\"]')")
+        # Egen penna (0.8.31, steg från 0.8.32).
+        step('markera innervägg', "bacchus.selection.set(['iv-1'])")
+        step('egen tjocklek', "__set('[data-key=\"pen:weight\"]', '0.7', 'aside.panel .panel-body')")
+        step('egen färg på', "__set('[data-key=\"pen:colorOn\"]', 'own', 'aside.panel .panel-body')")
+        step('egen färg', "__set('[data-key=\"pen:color\"]', '#00aa00', 'aside.panel .panel-body')")
+        step('egen linjetyp', "__set('[data-key=\"pen:linetype\"]', 'dashed', 'aside.panel .panel-body')")
+        step('två väggar olika', "bacchus.selection.set(['iv-1', 'iv-2'])")
+        step('stilmallens penna', "__click('[data-action=\"own-pen-reset\"]', 'aside.panel .panel-body')")
+        step('ångra penna', "__click('[data-action=\"undo\"]')")
+        step('yttervägg egen penna', "bacchus.selection.set(['yv-s'])", fn=lambda: pg.evaluate("__set('[data-key=\"pen:weight\"]', '1', 'aside.panel .panel-body')"))
+        step('dörr egen färg', "bacchus.selection.set(['d02'])", fn=lambda: pg.evaluate("__set('[data-key=\"pen:colorOn\"]', 'own', 'aside.panel .panel-body')"))
+        step('fönster egen linjetyp', "bacchus.selection.set(['f01'])", fn=lambda: pg.evaluate("__set('[data-key=\"pen:linetype\"]', 'dotted', 'aside.panel .panel-body')"))
         step('avmarkera', "bacchus.selection.clear()")
 
         # ---------- 2D-former ----------
@@ -226,6 +252,18 @@ def main():
         step('ändstorlek', "__set('[data-key=\"d2:capSize\"]', '4', 'aside.panel .panel-body')")
         step('ingen ände', "__set('[data-key=\"d2:endCap\"]', 'none', 'aside.panel .panel-body')")
         step('ingen linje', "__set('[data-key=\"d2:weight\"]', '0', 'aside.panel .panel-body')")
+        # Linjetyp, mask och bakgrund (0.8.29–0.8.30, steg från 0.8.32).
+        step('linje igen', "__set('[data-key=\"d2:weight\"]', '0.35', 'aside.panel .panel-body')")
+        step('egen linjetyp 2d', "__set('[data-key=\"d2:linetype\"]', 'egen-1', 'aside.panel .panel-body')")
+        step('sluten igen', "__set('[data-key=\"d2:closed\"]', true, 'aside.panel .panel-body')")
+        step('mönster mask', "__set('[data-key=\"d2:pattern\"]', 'mask', 'aside.panel .panel-body')")
+        step('mönster skraffering', "__set('[data-key=\"d2:pattern\"]', 'hatch', 'aside.panel .panel-body')")
+        step('bakgrund', "__set('[data-key=\"d2:fillBackgroundOn\"]', true, 'aside.panel .panel-body')")
+        step('bakgrund egen färg', "__set('[data-key=\"d2:fillBackgroundKind\"]', 'color', 'aside.panel .panel-body')")
+        step('bakgrundsfärg 2d', "__set('[data-key=\"d2:fillBackground\"]', '#ffeedd', 'aside.panel .panel-body')")
+        step('bakgrundens opacitet 2d', "__set('[data-key=\"d2:fillBackgroundOpacity\"]', '60', 'aside.panel .panel-body')")
+        step('bakgrund mask', "__set('[data-key=\"d2:fillBackgroundKind\"]', 'mask', 'aside.panel .panel-body')")
+        step('bakgrund i smartmenyn', "__set('[data-key=\"d2:fillBackgroundOpacity\"]', '80', '.smart-menu')")
         step('visas i bara här', "__set('[data-key=\"show:kind\"]', 'this', 'aside.panel .panel-body')")
         step('visas i utvalda', "__set('[data-key=\"show:kind\"]', 'views', 'aside.panel .panel-body')")
         step('visas i taggar', "__set('[data-key=\"show:kind\"]', 'tags', 'aside.panel .panel-body')")

@@ -1,5 +1,5 @@
 import { ownedOutlines } from '../repr/outlineOwners';
-import { sameItems } from '../repr/reuse';
+import { lastResults, sameItems } from '../repr/reuse';
 import type { Element } from '../core/model';
 import { boxesTouch, boxOf, difference, union, type Box, type Rings } from '../geometry/boolean';
 import { BoxIndex } from '../geometry/boxIndex';
@@ -272,6 +272,20 @@ const noOpenings = (): OpeningParams[] => [];
 export function bareWallShapes(walls: { id: string; p: WallParams }[]): Map<string, Rings[]> {
   return computeWallShapes(walls, noOpenings, bareWalls);
 }
+
+/**
+ * Väggarnas ytor utan öppningar, sammanslagna (0.8.32). Rummens hål och
+ * husets ytterkontur (vilken sida som är ute) tas ur samma sammanslagning,
+ * som görs en gång när de gäller samma väggar i samma ordning (samma
+ * parametrar, jämförda med ===).
+ */
+export function bareWallUnion(walls: { id: string; p: WallParams }[]): Rings[] {
+  return savedUnions(
+    walls.flatMap((w) => [w.id, w.p]),
+    () => union([...bareWallShapes(walls).values()].flat()),
+  );
+}
+const savedUnions = lastResults<Rings[]>();
 
 /** Väggarnas ytor för hela vyn, beräknade en gång per ritning. */
 export function wallShapesFor(ctx: PlanContext): Map<string, Rings[]> {

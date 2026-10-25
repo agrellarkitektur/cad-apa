@@ -1,0 +1,89 @@
+linje 9750,0 9750,2700 [w0.25 ink] @yv-s/wall
+linje 1750,0 1750,825.5 [w0.25 ink] @yv-s/wall
+linje 1750,2184.5 1750,2700 [w0.25 ink] @yv-s/wall
+linje 1750,0 1751.5,0 [w0.25 ink] @yv-s/wall
+linje 1750,2700 1751.5,2700 [w0.25 ink] @yv-s/wall
+linje 1750,0 1750,2700 [w0.25 ink] @yv-s/wall
+linje 9748.5,0 9750,0 [w0.25 ink] @yv-s/wall
+linje 9748.5,2700 9750,2700 [w0.25 ink] @yv-s/wall
+linje 1751.5,0 1750,0 [w0.25 ink] @yv-o/wall
+linje 1750,0 5750,0 [w0.25 ink] @yv-o/wall
+linje 1750,0 1750,2704.7 [w0.25 ink] @yv-o/wall
+linje 1750,0 1750,825.5 [w0.25 ink] @yv-o/wall
+linje 1750,2184.5 1750,2704.7 [w0.25 ink] @yv-o/wall
+linje 9750,0 9748.5,0 [w0.25 ink] @yv-o/wall
+linje 9750,0 9750,2704.7 [w0.25 ink] @yv-o/wall
+linje 5750,0 9750,0 [w0.25 ink] @yv-o/wall
+linje 9765,2180 9765,0 [w0.18 ink] @d01/lining
+linje 9750.1,2180 9765,2180 [w0.18 ink] @d01/lining
+linje 9750.1,0 9765,0 [w0.18 ink] @d01/lining
+linje 7195,900.1 7195,910 [w0.25 #c2372c] @d02/frame
+linje 6305,910 6305,900.1 [w0.25 #c2372c] @d02/frame
+linje 7145,900.1 7145,910 [w0.25 #c2372c] @d02/frame
+linje 6355,910 6355,900.1 [w0.25 #c2372c] @d02/frame
+linje 7275,900.1 7275,910 [w0.18 #c2372c] @d02/lining
+linje 7275,2100.1 7275,2110 [w0.18 #c2372c] @d02/lining
+linje 6225,2110 6225,2100.1 [w0.18 #c2372c] @d02/lining
+linje 6225,910 6225,900.1 [w0.18 #c2372c] @d02/lining
+linje 7205,900.1 7205,910 [w0.18 #c2372c] @d02/lining
+linje 7205,2100.1 7205,2110 [w0.18 #c2372c] @d02/lining
+linje 6295,2110 6295,2100.1 [w0.18 #c2372c] @d02/lining
+linje 6295,910 6295,900.1 [w0.18 #c2372c] @d02/lining
+linje 6447.9,900.1 6440.2,910 [w0.13 #c2372c d3/1.5] @d02/swing
+linje 1735,830 1735,2180 [w0.18 ink] @f04/lining
+linje 1735,2180 1735,830 [w0.18 ink] @f04/lining
+linje 1735,2180 1735,830 [w0.18 ink] @f05/lining
+linje 1735,900 1735,2110 [w0.18 ink] @f05/lining
+linje 1750,2180 1735,2180 [w0.18 ink] @f05/lining
+linje 1750,830 1735,830 [w0.18 ink] @f05/lining
+linje 7345,910 6155,910 [w0.25 ink] @f06/frame
+linje 6155,910 6155,2100 [w0.25 ink] @f06/frame
+linje 6155,2100 7345,2100 [w0.25 ink] @f06/frame
+linje 7345,2100 7345,910 [w0.25 ink] @f06/frame
+linje 7295,960 6205,960 [w0.25 ink] @f06/frame
+linje 6205,960 6205,2050 [w0.25 ink] @f06/frame
+linje 6205,2050 7295,2050 [w0.25 ink] @f06/frame
+linje 7295,2050 7295,960 [w0.25 ink] @f06/frame
+linje 7250,1005 6250,1005 [w0.25 ink] @f06/sash
+linje 6250,1005 6250,2005 [w0.25 ink] @f06/sash
+linje 6250,2005 7250,2005 [w0.25 ink] @f06/sash
+linje 7250,2005 7250,1005 [w0.25 ink] @f06/sash
+linje 6825.8,1501.6 6746.6,1580.8 [w0.13 muted] @f06/glass
+linje 6806.6,1448.4 6693.4,1561.6 [w0.13 muted] @f06/glass
+linje 6753.4,1429.2 6674.2,1508.4 [w0.13 muted] @f06/glass
+linje 7425,830 6075,830 [w0.18 ink] @f06/lining
+linje 6075,830 6075,2180 [w0.18 ink] @f06/lining
+linje 6075,2180 7425,2180 [w0.18 ink] @f06/lining
+linje 7425,2180 7425,830 [w0.18 ink] @f06/lining
+linje 7355,900 6145,900 [w0.18 ink] @f06/lining
+linje 6145,900 6145,2110 [w0.18 ink] @f06/lining
+linje 6145,2110 7355,2110 [w0.18 ink] @f06/lining
+linje 7355,2110 7355,900 [w0.18 ink] @f06/lining
+linje 2150,-30 9350,-30 [w0.18 ink] @r01/vy
+linje 9350,0 9350,-30 [w0.18 ink] @r01/vy
+linje 2150,0 2150,-30 [w0.18 ink] @r01/vy
+linje 2150,-0.3 2150,-30 [w0.18 ink] @r01/vy
+linje 2150,-0.3 2150,-30 [w0.18 ink] @r02/vy
+linje 1250,2450 1250,2786.7 [w0.5 #3355aa] @tak/roof
+linje 1250,2450 5750,4742.9 [w0.5 #3355aa] @tak/roof
+linje 1250,2786.7 5750,5079.6 [w0.5 #3355aa] @tak/roof
+linje 1250,2450 1250,2786.7 [w0.5 #3355aa] @tak/roof
+linje 10250,2450 10250,2786.7 [w0.5 #3355aa] @tak/roof
+linje 5750,4742.9 10250,2450 [w0.5 #3355aa] @tak/roof
+linje 5750,5079.6 10250,2786.7 [w0.5 #3355aa] @tak/roof
+linje -250,-30 11750,-30 [w0.7] @/mark
+linje 3725,4048 2150,4048 [w0.18] @slope:tak:0/taklutning
+båge 3725,4048 r1181.3 180°–207° [w0.18] @slope:tak:0/taklutning
+text "27°" 2333.3,3613.9 h2.2 middle [w0.18] @slope:tak:0/taklutning
+linje 7775,4048 9350,4048 [w0.18] @slope:tak:1/taklutning
+båge 7775,4048 r1181.3 -27°–0° [w0.18] @slope:tak:1/taklutning
+text "27°" 9166.7,3613.9 h2.2 middle [w0.18] @slope:tak:1/taklutning
+linje 10850,0 12450,0 [w0.18] @/nivå
+yta none [w0.18] 11450,0 11342,180 11558,180 @/nivå
+text "±0,000" 11630,63 h2.2 [w0.18] @/nivå
+linje 10850,2450 12450,2450 [w0.18] @/nivå
+yta none [w0.18] 11450,2450 11342,2630 11558,2630 @/nivå
+text "+2,450 takfot" 11630,2513 h2.2 [w0.18] @/nivå
+linje 10850,5080 12450,5080 [w0.18] @/nivå
+yta none [w0.18] 11450,5080 11342,5260 11558,5260 @/nivå
+text "+5,080 nock" 11630,5143 h2.2 [w0.18] @/nivå

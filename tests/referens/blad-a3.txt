@@ -54,7 +54,7 @@ text "IV01" 144.6,156.5 h2 90° start [w0.18] @iv-1/littera
 linje 139,159 142.3,159 [w0.18 ink] @iv-1/littera
 text "IV01" 169.5,153.4 h2 start [w0.18] @iv-2/littera
 linje 172,159 172,155.7 [w0.18 ink] @iv-2/littera
-yta hatch [w0.35 ink] 161.4,123 162.6,123 162.6,158.4 161.4,158.4 @/snitt
+yta hatch ink 45° a0.6 w0.18 [w0.35 ink] 161.4,123 162.6,123 162.6,158.4 161.4,158.4 @/snitt
 text "IV01" 167.6,138.5 h2 90° start [w0.18] @iv-4/littera
 linje 162,141 165.3,141 [w0.18 ink] @iv-4/littera
 polylinje sluten 119,120.5 118.5,120.5 118.5,119.5 119,119.5 [w0.25 ink] @d01/karm

@@ -1,37 +1,19 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { arrange, orderedWith } from '../src/core/drawOrder';
-import { DocStore } from '../src/core/store';
-import { FORMAT_VERSION, type Element } from '../src/core/model';
+import type { DocStore } from '../src/core/store';
 import type { Shape2DParams } from '../src/elements/drawing2d';
 import { buildPlan } from '../src/repr/plan';
-import { sampleProject } from '../src/sample/sampleProject';
-import { parse, serialize } from '../src/storage/format';
 import { pickAt } from '../src/view2d/pick';
 import { orderSection } from '../src/ui/app/drawOrderUi';
 import { instanceFields } from '../src/ui/selectionFields';
+import { planOf as plan, square, storeWithShapes } from './projekt';
 
 beforeAll(() => registerBuiltInTypes());
 
-const base: Shape2DParams = { shape: 'polyline', points: [], weight: 0.25, linetype: 'solid', fillAngle: 45, fillSpacing: 2 };
-const square = (x: number, y: number, s = 1000): [number, number][] => [
-  [x, y],
-  [x + s, y],
-  [x + s, y + s],
-  [x, y + s],
-];
-
 /** Exempelprojektet med några fyllda kvadrater långt från huset. */
-function storeWith(shapes: Record<string, Partial<Shape2DParams>>) {
-  const doc = sampleProject();
-  const storey = doc.storeys[0].id;
-  for (const [id, p] of Object.entries(shapes))
-    doc.elements[id] = { id, type: 'Shape2D', storey, states: doc.states.map((s) => s.id), tags: [], params: { ...base, closed: true, fill: 'solid', ...p }, props: {} } as Element;
-  return new DocStore(doc);
-}
-
+const storeWith = (shapes: Record<string, Partial<Shape2DParams>>) => storeWithShapes(shapes, { closed: true, fill: 'solid' });
 const vs = (store: DocStore) => ({ state: store.doc.states.at(-1)!.id });
-const plan = (store: DocStore) => buildPlan(store.doc, store.doc.storeys[0].id, vs(store));
 /** Var formens första primitiv (fyllningen) ligger i planen. */
 const at = (store: DocStore, id: string, part?: string) => plan(store).prims.findIndex((q) => q.origin?.objectId === id && (!part || q.origin.part === part));
 const boxes: Record<string, [number, number, number, number]> = {
@@ -43,14 +25,6 @@ const boxes: Record<string, [number, number, number, number]> = {
 const boxOf = (id: string) => boxes[id] ?? null;
 
 describe('ritordning (0.8.25)', () => {
-  it('formatet är kvar 13 och ordningen sparas med projektet', () => {
-    expect(FORMAT_VERSION).toBe(13);
-    const store = storeWith({ a: { points: square(50000, 0) }, b: { points: square(50500, 0) } });
-    arrange(store, ['a'], 'front');
-    const back = parse(serialize(store.doc));
-    expect(back.elements.a.order).toBe(1);
-  });
-
   it('Främst och Längst bak lägger det markerade först eller sist, och ritas så', () => {
     const store = storeWith({ a: { points: square(50000, 0) }, b: { points: square(50500, 0) }, c: { points: square(60000, 0) } });
     const fills = () => ['a', 'b', 'c'].map((id) => at(store, id));

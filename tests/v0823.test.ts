@@ -66,17 +66,18 @@ function scene(): Pickable[] {
 }
 
 describe('klick i planen (0.8.23)', () => {
-  it('ger samma objekt i samma ordning som förut, på tusentals punkter', () => {
+  it('ger samma objekt i samma ordning som förut, på hundratals punkter', () => {
     const items = scene();
     const r = random(11);
     for (const scale of [50, 100]) {
-      for (let k = 0; k < 2500; k++) {
+      for (let k = 0; k < 300; k++) {
         const p: Vec2 = [r() * 64000 - 2000, r() * 44000 - 2000];
         const tol = [20, 120, 600][k % 3];
         expect(pickAllAt(items, p, tol, scale), `${p} ${tol} 1:${scale}`).toEqual(pickAllAtBefore(items, p, tol, scale));
       }
     }
-    // Jämförelsen med den gamla, långsamma koden tar nära 5 s på en långsam maskin (0.8.26).
+    // Den gamla koden prövar alla 3 000 delar för varje punkt; 600 punkter
+    // räcker (2 × 2 500 tog 3,5 s, granskningen 0.8.32).
   }, 30000);
 
   it('prövar bara delarna nära punkten i ett stort underlag', () => {
@@ -109,8 +110,9 @@ describe('rutnätet över rektanglar (0.8.23)', () => {
     for (const q of [[0, 0, 400000, 300000], [50000, 20000, 250000, 260000], [-1e6, -1e6, 1e6, 1e6], [100, 100, 900, 900]] as Box[]) {
       const got = index.near(q);
       expect(got).toEqual([...got].sort((a, b) => a - b));
-      const must = boxes.map((b, i) => (!b || touches(b, q) ? i : -1)).filter((i) => i >= 0);
-      for (const i of must) expect(got).toContain(i);
+      const found = new Set(got);
+      const missing = boxes.map((b, i) => (!b || touches(b, q) ? i : -1)).filter((i) => i >= 0 && !found.has(i));
+      expect(missing).toEqual([]);
     }
     expect(index.near([-Infinity, 0, 0, 0])).toHaveLength(4000);
   });

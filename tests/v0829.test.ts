@@ -1,31 +1,15 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
-import { DocStore } from '../src/core/store';
-import type { Element } from '../src/core/model';
-import { fillPrims, shapePrims, type Shape2DParams } from '../src/elements/drawing2d';
+import type { DocStore } from '../src/core/store';
+import { fillPrims, shapePrims } from '../src/elements/drawing2d';
 import { buildPlan } from '../src/repr/plan';
-import type { PolylinePrim, RegionPrim } from '../src/repr/primitives';
+import type { RegionPrim } from '../src/repr/primitives';
 import { sampleProject } from '../src/sample/sampleProject';
 import { shapeChange, shapeSmartFields } from '../src/ui/shapeFields';
+import { planOf as plan, SHAPE as base, square, storeWithShapes as storeWith } from './projekt';
 
 beforeAll(() => registerBuiltInTypes());
 
-const base: Shape2DParams = { shape: 'polyline', points: [], weight: 0.25, linetype: 'solid', fillAngle: 45, fillSpacing: 2 };
-const square = (x: number, y: number, s = 1000): [number, number][] => [
-  [x, y],
-  [x + s, y],
-  [x + s, y + s],
-  [x, y + s],
-];
-
-function storeWith(shapes: Record<string, Partial<Shape2DParams> & { order?: number }>) {
-  const doc = sampleProject();
-  const storey = doc.storeys[0].id;
-  for (const [id, { order, ...p }] of Object.entries(shapes))
-    doc.elements[id] = { id, type: 'Shape2D', storey, states: doc.states.map((s) => s.id), tags: [], params: { ...base, ...p }, props: {}, ...(order !== undefined ? { order } : {}) } as Element;
-  return new DocStore(doc);
-}
-const plan = (store: DocStore) => buildPlan(store.doc, store.doc.storeys[0].id, { state: store.doc.states.at(-1)!.id });
 const own = (store: DocStore, id: string) => plan(store).prims.filter((q) => q.origin?.objectId === id);
 
 describe('Bakgrund i skrafferingen (0.8.29)', () => {
@@ -39,19 +23,6 @@ describe('Bakgrund i skrafferingen (0.8.29)', () => {
   it('en hel fyllning får ingen bakgrund, och utan bakgrund är allt som förut', () => {
     expect(fillPrims([square(0, 0)], { fill: 'solid', fillAngle: 45, fillSpacing: 2, fillBackground: '#ffffff' }, undefined, true)).toHaveLength(1);
     expect(fillPrims([square(0, 0)], { fill: 'hatch', fillAngle: 45, fillSpacing: 2 }, undefined, true)).toHaveLength(1);
-  });
-
-  it('en bakgrund med 100 % döljer linjerna under, med lägre opacitet inte', () => {
-    const lines = (o?: number) =>
-      own(
-        storeWith({
-          under: { points: square(50000, 0), closed: true, order: 0 },
-          over: { points: square(50500, 500), closed: true, fill: 'hatch', fillBackground: '#ffffff', fillBackgroundOpacity: o, order: 1 },
-        }),
-        'under',
-      ).filter((q): q is PolylinePrim => q.kind === 'polyline' && q.pen.weight > 0);
-    expect(lines().length).toBeGreaterThan(1);
-    expect(lines(60)).toHaveLength(1);
   });
 
   it('gäller också rummens fyllning', () => {

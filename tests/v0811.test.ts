@@ -1,14 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { mtextLines, parseDxf, type DxfItem } from '../src/formats/dxf';
+import { parseDxf, type DxfItem } from '../src/formats/dxf';
+import { mtextLines } from '../src/formats/dxfText';
+import { dxf } from './projekt';
 
-function dxf(entities: string): string {
-  const body = `0\nSECTION\n2\nHEADER\n9\n$INSUNITS\n70\n4\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n${entities.trim()}\n0\nENDSEC\n0\nEOF`;
-  return body
-    .split(/\n/)
-    .map((l) => l.trim())
-    .filter((l) => l)
-    .join('\n');
-}
 
 const texts = (d: ReturnType<typeof parseDxf>) => d.items.filter((i): i is Extract<DxfItem, { kind: 'text' }> => i.kind === 'text');
 const near = (a: readonly number[], b: readonly number[]) => expect(Math.hypot(a[0] - b[0], a[1] - b[1])).toBeLessThan(1e-6);
@@ -50,6 +44,15 @@ describe('text i DXF-underlag (0.8.11)', () => {
     // Vriden 90°: "uppåt" för texten är −x.
     near(a.at, [1000 - 20, 1000]);
     near(b.at, [1000 + 80, 1000]);
+  });
+
+  it('MTEXT fäst mitt i med vänsterjusterade stycken: raderna börjar på samma x, till vänster om punkten', () => {
+    const d = parseDxf(dxf(`0\nMTEXT\n8\nT\n10\n1000\n20\n0\n40\n100\n71\n5\n1\n\\pxql;Förråd\\PRad två längre\n`));
+    const [a, b] = texts(d);
+    expect(a.align).toBe('start');
+    expect(b.align).toBe('start');
+    expect(a.at[0]).toBeCloseTo(b.at[0]);
+    expect(a.at[0]).toBeLessThan(1000);
   });
 });
 
@@ -123,16 +126,5 @@ describe('markering av 2D (0.8.11)', () => {
     expect(pickAt(all, [20, 26], 2)).toBe('linje');
     expect(pickAt(all, [20, 40], 2)).toBe('fyllning');
     expect(pickAt(all, [80, 80], 2)).toBe('rum');
-  });
-});
-
-describe('MTEXT med styckesjustering (0.8.11)', () => {
-  it('fäst mitt i men vänsterjusterade rader: raderna börjar på samma x, till vänster om punkten', () => {
-    const d = parseDxf(dxf(`0\nMTEXT\n8\nT\n10\n1000\n20\n0\n40\n100\n71\n5\n1\n\\pxql;Förråd\\PRad två längre\n`));
-    const [a, b] = texts(d);
-    expect(a.align).toBe('start');
-    expect(b.align).toBe('start');
-    expect(a.at[0]).toBeCloseTo(b.at[0]);
-    expect(a.at[0]).toBeLessThan(1000);
   });
 });

@@ -1,6 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { addElements, deleteElements, moveElements } from '../src/core/commands';
-import { FORMAT_VERSION } from '../src/core/model';
 import { addViewport, createSheet, deleteSheet, duplicateSheet, isViewportId, sheetContents } from '../src/core/sheets';
 import { DocStore } from '../src/core/store';
 import { registerBuiltInTypes } from '../src/elements';
@@ -11,7 +10,6 @@ import { writePdf } from '../src/formats/pdf';
 import type { Primitive } from '../src/repr/primitives';
 import { buildSheet, centeredAt } from '../src/repr/sheet';
 import { sampleProject } from '../src/sample/sampleProject';
-import { parse, serialize } from '../src/storage/format';
 import { pickAt } from '../src/view2d/pick';
 
 beforeAll(() => registerBuiltInTypes());
@@ -29,7 +27,7 @@ function sheetWithDrawing() {
     store,
     [
       { ...text({ pos: [40, 100], text: 'Ritning {ritningsnummer}' }), space: id },
-      { type: 'Shape2D', storey: 'pl-1', tags: [], props: {}, space: id, params: { shape: 'line', points: [[30, 30], [130, 30]], weight: 0.35 } },
+      { type: 'Shape2D', storey: 'pl-1', tags: [], props: {}, space: id, params: { shape: 'polyline', points: [[30, 30], [130, 30]], weight: 0.35 } },
     ],
     'st-a',
     'Rita',
@@ -37,20 +35,9 @@ function sheetWithDrawing() {
   return { store, id, vp, t: t.id, l: l.id };
 }
 
-describe('grafik och textrutor på bladen (0.8.9, format 9)', () => {
-  it('format 9: bladen har inga texter i sig längre; format 8 får meddelandet om en äldre alfaversion', () => {
-    expect(FORMAT_VERSION).toBeGreaterThanOrEqual(9);
-    const { store } = sheetWithDrawing();
-    const raw = JSON.parse(serialize(store.doc));
-    raw.sheets[0].items = [{ kind: 'text', id: 'x', at: [0, 0], text: 'gammal', height: 2.5 }];
-    const back = parse(JSON.stringify(raw));
-    expect(back.sheets[0]).not.toHaveProperty('items');
-    expect(Object.values(back.elements).filter((e) => e.space === back.sheets[0].id)).toHaveLength(2);
-    expect(() => parse(serialize({ ...store.doc, formatVersion: 8 }))).toThrow(/äldre alfaversion/);
-  });
-
+describe('grafik och textrutor på bladen (0.8.9)', () => {
   it('det som är ritat på bladet ritas över vyerna i mm på papperet, med smarttext, och går att markera med vyerna', () => {
-    const { store, id, vp, t, l } = sheetWithDrawing();
+    const { store, vp, t, l } = sheetWithDrawing();
     const d = buildSheet(store.doc, store.doc.sheets[0], { today });
     expect(texts(d.prims)).toContain('Ritning A-101');
     const ids = d.pickables.map((p) => p.id);

@@ -1,44 +1,24 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.31.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.32.
 
 ## Läget
 
-- **0.8.31 Linjetyp och penna per objekt är klar** på `main` (samma
-  format, 13): egen tjocklek, färg och linjetyp för väggar, dörrar,
-  fönster, tak och möbler (`Element.pen`, avsnittet *Penna* i
-  egenskaperna), i planen, fasaderna och sektionerna. En vägg med egen
-  penna flyter ihop med grannarna; konturen delas per kant
-  (`ownedOutlines`). Prövat med `tests/v0831.test.ts` (alla 406 tester
-  går igenom) och i webbläsaren. Står i README, PLAN.md (med Claudes val)
-  och UTVECKLING.md.
-- **0.8.30 Linjetyper och mask är klar** på `main` (samma format, 13):
-  sju inbyggda linjetyper och egna i stilmallen (*Linjetyper*, mönster i
-  mm på papper), för 2D-former och pennorna i stilmallen; streckningen
-  löper genom bågar och splines och fortsätter förbi en täckande
-  fyllning (`src/repr/dash.ts`, `dashFrom`); bakgrunden är från början en
-  mask (ritningens bakgrund, papperet i PDF:en), och fyllningen *Mask* är
-  ny. Prövat med `tests/v0830.test.ts` (alla 400 tester går igenom) och i
-  webbläsaren. Står i README, PLAN.md (med Claudes val) och UTVECKLING.md.
-- **0.8.29 Bakgrund i fyllningar och ändformer är klar** på `main`
-  (samma format, 13): skraffering och korsskraffering kan få en bakgrund
-  (kryssrutan *Bakgrund*, färg förval vit, egen opacitet) i egenskaperna,
-  smartmenyn och 2D-verktyget, också för rum; med 100 % döljer den
-  linjerna bakom. Pilen och punkten kapas av en täckande fyllning ovanför
-  (`coverLines`, `difference`). Prövat med `tests/v0829.test.ts` (alla
-  386 tester går igenom) och i webbläsaren. Står i README, PLAN.md (med
-  Claudes val) och UTVECKLING.md.
-- **0.8.28 Rättelser i 2D-formen är klar** på `main` (samma format, 13,
-  i en session): fortsätta en markerad öppen linje eller spline från en
-  ände (också med bågar; Ctrl+klick börjar en ny; knappen *Fortsätt* i
-  snabbraden), fyllningens färg i smartmenyn direkt (omritning efter val i
-  radioknappar, kryssrutor, färger och listor; färgen står bland fälten),
-  och en hel ogenomskinlig fyllning döljer linjerna i 2D-former bakom den
-  i ritordningen (linjerna kapas i `src/repr/cover.ts`). Prövat med
-  `tests/v0828.test.ts` (alla 378 tester går igenom) och i webbläsaren
-  (Playwright mot `dist/`). Står i README, PLAN.md (med Claudes val) och
-  UTVECKLING.md.
+- **0.8.32 Granskning är klar** på `main` (samma format, 13, utan nya
+  funktioner). Testerna: 406 → 399 (dubbletter och prov av enskilda fält
+  sammanslagna, tester som låste detaljer lösare), hela körningen 26 → 12 s
+  (`isolate: false`), testerna typkontrolleras, hjälpfunktionerna i
+  `tests/projekt.ts`, och referensritningarna har ett projekt med
+  2D-formerna och de egna pennorna (`former`). Koden: `dxf.ts` i fyra
+  filer; rummen och väggarnas utsida delar sammanslagningen av väggarna
+  (`bareWallUnion`), planen efter en flyttad vägg i `roomGrid(12)` 70 → 57
+  ms. Samma klick i 0.8.31 och 0.8.32 (141 steg) ger samma läge. Står i
+  README, PLAN.md och UTVECKLING.md under *Granskning (0.8.32)*.
+- **0.8.28–0.8.31** (rättelser i 2D-formen, bakgrund i fyllningar och
+  ändformer, linjetyper och mask, linjetyp och penna per objekt) står i
+  PLAN.md med Claudes val och i UTVECKLING.md med var koden ligger.
+  Carl August har inte svarat på frågorna om 0.8.29–0.8.31 nedan.
 - **0.8.27 Granskning** (utan nya funktioner; fasaderna ungefär dubbelt så
   fort) står i README, PLAN.md och UTVECKLING.md under *Granskning
   (0.8.27)*.
@@ -56,7 +36,6 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 - **0.8.22–0.8.26** (småsaker, granskning, 2D-form del 2 med bågar och
   ändar i format 13, ritordning och fyllningar, pennor i stilmallen) står
   i PLAN.md med Claudes val och i UTVECKLING.md med var koden ligger.
-  Klicktestet i `v0823` har 30 s (det föll på tid vid en publicering).
 - **0.8.12–0.8.26 är inte provade fullt ut** av Carl August (han har
   provat 2D-formen, se ovan). Frågorna nedan gäller.
 - Tidigare versioner (0.8.15–0.8.21) står i PLAN.md med Claudes val.
@@ -102,9 +81,7 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.27 Granskning~~, ~~0.8.28 Rättelser i 2D-formen~~,
   ~~0.8.29 Bakgrund i fyllningar och ändformer~~,
   ~~0.8.30 Linjetyper och mask~~, ~~0.8.31 Linjetyp och penna per
-  objekt~~ (klara)
-- **0.8.32 Granskning** (också testerna: dubbletter, tester som låser
-  detaljer, hela körningen under en minut)
+  objekt~~, ~~0.8.32 Granskning~~ (klara)
 - **0.8.33 Pennor per typ och symbollinjer** (snitt, vy och symbol i
   stilmallen; egen penna i två delar; penna på typen)
 - **0.8.34 Rum: kontur och rumsgränser** (*Avgränsar rum* på 2D-linjer)
@@ -135,18 +112,23 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Carl August har (25 oktober) bekräftat ordningen: granskningen först,
-sedan 0.8.33–0.8.35 med Claudes förslag (rumsgräns som kryssruta på
-2D-linjer, tre klasser av pennor: snitt, vy och symbol). Fråga först om 0.8.31 syns på webbhotellet (numret vid alfa-knappen) och
-om den egna pennan fungerar som han tänkt. Läs synpunktsfilen och
-sortera ny Inkorg. Bygg **0.8.32 Granskning** (utan nya funktioner):
-städa, dela upp stora filer, leta efter långsam kod, och gå igenom
-testerna (dubbletter, tester som låser detaljer, hela körningen under en
-minut; 406 tester på ca 23 s efter 0.8.31). Kör klickjämförelsen
-(`scripts/jamfor-klick.py`) mot 0.8.31 före och efter, och lägg till steg
-för linjetyperna, masken och den egna pennan.
+Fråga först om 0.8.32 syns på webbhotellet (numret vid alfa-knappen) och
+om allt beter sig som förut, och om den egna pennan i 0.8.31 fungerar som
+han tänkt (han har inte svarat). Läs synpunktsfilen och sortera ny
+Inkorg. Bygg sedan **0.8.33 Pennor per typ och symbollinjer** (PLAN.md,
+bekräftat 25 oktober): pennor för dörrarnas och fönstrens delar i
+stilmallen i tre klasser, snitt (väggkontur, karm), vy (dörrblad,
+fönsterbåge) och symbol (slagbåge, öppningssätt), med symbollinjerna
+tunnare från början; den egna pennan i två delar, *Snitt* och *Symbol*;
+och penna per typ (objektets egen före typens, före stilmallens).
+Mellanstor, en session. Penna på typen är ett nytt valfritt fält på
+typen; sådana har inte krävt ett nytt format förut.
 
 ## Att fråga Carl August om
+
+- **0.8.32 efter provning**: inget nytt att prova; allt ska bete sig som
+  förut, och planen ritas om lite fortare när en vägg flyttas i ett stort
+  hus. Säg till om något beter sig annorlunda.
 
 - **0.8.31 efter provning** (Claudes val, se PLAN.md): att pennan finns
   för väggar, dörrar, fönster, tak och möbler men inte för rum (som inte
@@ -401,8 +383,11 @@ för linjetyperna, masken och den egna pennan.
 - **Att markera många väggar** (840) tar ca 0,15 s, nästan allt i
   webbläsarens ritning av markeringen (mätt i 0.8.15, lämnat).
 - **En flyttad vägg** räknar fortfarande om sammanslagningen av alla
-  väggytor på våningen (`union` i väggarnas `planBatch` och i rummens hål;
-  `polygon-clipping` står för det mesta), 0,07–0,16 s för 300–700 väggar. Ett nytt rumsnamn räknar om rum och dörrar (0,08 s).
+  väggytor på våningen, två gånger: med öppningar för ritningen (`union` i
+  väggarnas `planBatch`) och utan för rummen och utsidan (`bareWallUnion`,
+  en gång sedan 0.8.32 när vyn visar alla väggar); `polygon-clipping`
+  står för det mesta, ca 0,06 s för 312 väggar. Ett nytt rumsnamn räknar
+  om rum och dörrar (0,08 s).
 - Under en zoom med hjulet syns ritningen skalad i 140 ms innan den ritas
   om; texter som var för små att ritas dyker upp först då.
 - **Visas i** räknar vyer utan att bry sig om tillstånd.
@@ -462,9 +447,14 @@ för linjetyperna, masken och den egna pennan.
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (114 steg: stilmallen, snabbraden, 2D-formens fält, ritordning, Visas i,
+  (141 steg sedan 0.8.32: stilmallen med linjetyper, snabbraden, den egna
+  pennan, 2D-formens fält med mask och bakgrund, ritordning, Visas i,
   underlag, fasader och sektion). Kör den mot två byggen på var sin port
-  och sedan med `--jamfor`; lägg till steg för det som granskas. Vänta på
+  och sedan med `--jamfor`; lägg till steg för det som granskas. Tre steg
+  felar likadant i båda (`opacitet två`, `spegla linjen`, `x i
+  smartmenyn`: fältet finns inte där skriptet letar) och kan rättas.
+  Verktygets klassnamn minifieras olika i två byggen; jämförelsen kräver
+  bara att namnen motsvarar varandra. Vänta på
   `!bacchus.sections.pending` och tryck *Zooma till allt* innan en fasad
   jämförs (annars beror kameran på hur fort den räknats), och räkna inte
   `blob:`-adresser. En klick i modellen måste hamna inne i objektet, inte
@@ -475,8 +465,16 @@ för linjetyperna, masken och den egna pennan.
   båda byggena och jämför läget efter varje steg. Byt
   `crypto.getRandomValues` mot en fast följd i `add_init_script`, så att nya
   id blir desamma. Skript utan webbläsare buntas snabbast med
-  `npx rolldown skript.mts --file skript.mjs --format esm --platform node`
-  och körs med `node` (tsx lägger till `__name` som syns i profiler).
+  `npx rolldown skript.mts --dir ut --format esm --platform node` (med
+  `--file` vägrar den när koden delas i flera delar) och körs med `node
+  ut/skript.js` (tsx lägger till `__name` som syns i profiler). Skriptet kan
+  importera `tests/projekt.ts` (`roomGrid`, `shapesProject` …).
+- **Testerna** (0.8.32): de vanliga delar process (`isolate: false`), så
+  ett test får inte lämna något ändrat för de andra; prova en ny fil med
+  `npx vitest run --sequence.shuffle --sequence.seed=1` (och 2, 3).
+  `npx tsc --noEmit` kontrollerar också `tests/`. Hjälpfunktionerna och
+  testprojekten ligger i `tests/projekt.ts`; spara-och-läs prövas en gång,
+  i `core.test.ts`. Se *Tester* i UTVECKLING.md.
 - Demon bara på begäran: `npm run preview:artifact`, läs artefakten
   (https://claude.ai/artifact/2m7gq5gkkgSP2wFZ7fLGNJ, Artifact `read`) och
   publicera `artifact/cad-apa.html` till samma URL.

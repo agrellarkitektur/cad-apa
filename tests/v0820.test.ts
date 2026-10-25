@@ -24,9 +24,10 @@ describe('Kommandoregistret (0.8.20)', () => {
   });
 
   it('känner AutoCADs förkortningar och de svenska namnen', () => {
-    // L och LINE är polylinjen, som heter Linje, sedan 0.8.22.
-    expect(findCommand('L')?.id).toBe('polyline');
-    expect(findCommand('pl')?.id).toBe('polyline');
+    // L, LINE, PL och PLINE är polylinjen, som heter Linje, sedan 0.8.22.
+    for (const n of ['L', 'line', 'linje', 'pl', 'PLINE', 'polyline', 'polylinje']) expect(findCommand(n)?.shape, n).toBe('polyline');
+    expect(commandFor({ shape: 'polyline' })?.label).toBe('Linje');
+    expect(SHAPE_LABELS.polyline).toBe('Linje');
     expect(findCommand('REC')?.id).toBe('rect');
     expect(findCommand('c')?.id).toBe('circle');
     expect(findCommand('M')?.id).toBe('move');

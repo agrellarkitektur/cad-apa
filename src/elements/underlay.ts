@@ -1,6 +1,7 @@
 import type { FillDef } from '../core/graphics';
 import type { Asset, Id, ProjectDoc } from '../core/model';
-import { DXF_CAP_HEIGHT, parseDxf, type DxfDrawing } from '../formats/dxf';
+import { parseDxf, type DxfDrawing } from '../formats/dxf';
+import { DXF_CAP_HEIGHT } from '../formats/dxfText';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import type { ElementType } from './registry';
 

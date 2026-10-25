@@ -160,8 +160,6 @@ export function createSectionQueue(onReady: () => void, opt: SectionQueueOptions
   };
 }
 
-export type SectionQueue = ReturnType<typeof createSectionQueue>;
-
 /** Startar den riktiga tråden. I demon (en enda fil) ligger tråden i filen. */
 export async function spawnSectionWorker(): Promise<WorkerLike> {
   const mod =

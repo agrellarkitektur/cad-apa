@@ -63,8 +63,13 @@ export default defineConfig(({ mode }) => {
     test: {
       // Testen som mäter tid körs ensamma efter de andra, så att de inte
       // delar processorn med andra testfiler (på GitHub körs flera samtidigt).
+      // De andra delar process utan att läsa in koden igen för varje fil
+      // (isolate: false, 0.8.32): hela körningen tar halva tiden. De går
+      // igenom i slumpad ordning (--sequence.shuffle), så att inget test
+      // beror på ett annat; ett test som ändrar något för alla (som
+      // snapIndex.from) återställer det.
       projects: [
-        { extends: true, test: { name: 'tester', include: ['tests/**/*.test.ts'], exclude: ['tests/prestanda.test.ts'], sequence: { groupOrder: 0 } } },
+        { extends: true, test: { name: 'tester', include: ['tests/**/*.test.ts'], exclude: ['tests/prestanda.test.ts'], isolate: false, sequence: { groupOrder: 0 } } },
         { extends: true, test: { name: 'prestanda', include: ['tests/prestanda.test.ts'], sequence: { groupOrder: 1 } } },
       ],
     },

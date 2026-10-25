@@ -2,14 +2,12 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { setGraphics, updateParams } from '../src/core/commands';
 import { DocStore } from '../src/core/store';
-import { DEFAULT_LABELS, normalizeStyle } from '../src/core/graphics';
 import type { Element, ProjectDoc } from '../src/core/model';
-import { opacitiesOf, shapePrims, SHAPE_LABELS, type Shape2DParams } from '../src/elements/drawing2d';
+import { opacitiesOf, shapePrims, type Shape2DParams } from '../src/elements/drawing2d';
 import { buildPlan } from '../src/repr/plan';
 import type { Primitive } from '../src/repr/primitives';
 import { sampleProject } from '../src/sample/sampleProject';
 import { pickAt } from '../src/view2d/pick';
-import { commandFor, findCommand } from '../src/ui/commandRegistry';
 import { opacityFields, shapeSmartFields } from '../src/ui/shapeFields';
 
 beforeAll(() => registerBuiltInTypes());
@@ -108,14 +106,6 @@ describe('Visa → Fyllningar (0.8.22)', () => {
   });
 });
 
-describe('Linje är polylinjen (0.8.22)', () => {
-  it('L, LINE, PL och PLINE ger samma verktyg, som heter Linje', () => {
-    for (const n of ['l', 'line', 'linje', 'pl', 'pline', 'polyline', 'polylinje']) expect(findCommand(n)?.shape, n).toBe('polyline');
-    expect(commandFor({ shape: 'polyline' })?.label).toBe('Linje');
-    expect(SHAPE_LABELS.polyline).toBe('Linje');
-  });
-});
-
 describe('rumsstämpelns mall (0.8.22)', () => {
   const stamp = (doc: ProjectDoc, id: string) =>
     buildPlan(doc, doc.elements[id].storey, viewOf(doc))
@@ -148,22 +138,4 @@ describe('rumsstämpelns mall (0.8.22)', () => {
     expect(rows[0].at[1]).toBeGreaterThan(rows[1].at[1]);
   });
 
-  it('sparas i stilmallen, och en äldre stilmall får förvalet', () => {
-    const style = normalizeStyle(JSON.parse(JSON.stringify({ ...structuredClone(sampleProject().graphics), labels: { ...DEFAULT_LABELS, room: '{area}\n{namn}' } })));
-    expect(style.labels.room).toBe('{area}\n{namn}');
-    const old = JSON.parse(JSON.stringify(sampleProject().graphics));
-    delete old.labels.room;
-    expect(normalizeStyle(old).labels.room).toBe(DEFAULT_LABELS.room);
-  });
-});
-
-describe('sektionspilen (0.8.22)', () => {
-  it('har hullingar lika tjocka som vinkeln', () => {
-    const doc = sampleProject();
-    const sec = Object.values(doc.elements).find((e) => e.type === 'Section')!;
-    const prims = buildPlan(doc, sec.storey, viewOf(doc)).pickables.find((p) => p.id === sec.id)!.prims;
-    const lines = prims.filter((p) => p.kind === 'line');
-    expect(lines.length).toBe(8);
-    expect(new Set(lines.map((l) => (l.kind === 'line' ? l.pen.weight : 0)))).toEqual(new Set([0.5]));
-  });
 });

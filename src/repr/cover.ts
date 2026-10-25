@@ -71,7 +71,7 @@ export function coverLines(ones: readonly (readonly Primitive[])[]): Primitive[]
       changed = true;
       // Biten ritas streckad som den hela linjen (0.8.30, `dashPieces`).
       const whole = p.kind === 'polyline' ? { points: p.points, closed: p.closed } : { points: pts, closed: false };
-      const from = (at: number) => (p.pen.dash?.length ? { dashFrom: { ...whole, at } } : {});
+      const from = (start: number) => (p.pen.dash?.length ? { dashFrom: { ...whole, at: start } } : {});
       for (const piece of pieces) out.push({ ...p, kind: 'polyline', points: piece.points, closed: false, ...from(piece.at) } as Primitive);
     }
     return changed ? out : (prims as Primitive[]);

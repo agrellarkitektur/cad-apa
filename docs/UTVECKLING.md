@@ -179,12 +179,40 @@ v0.8.2 och v0.8.3. Test som tar mer än någon sekund får en egen tidsgräns
 `npx vitest run --maxWorkers=4`.
 
 **Referensritningar** (`tests/referens.test.ts`): planer, fasader,
-sektioner, 3D och ett blad för exemplet och ett rutnät av rum skrivs som
-text, en rad per primitiv (koordinater avrundade till 0,1 mm), och jämförs
-mot facit i `tests/referens/`. Ändras en ritning med avsikt skrivs nytt
-facit med `npx vitest run tests/referens.test.ts -u`; titta på skillnaden i
-git innan den läggs in. Testprojekten (`wallGrid`, `roomGrid`) ligger i
-`tests/projekt.ts`.
+sektioner, 3D och ett blad för exemplet, ett rutnät av rum och (0.8.32)
+exemplet med 2D-former och egna pennor (`shapesProject`) skrivs som text,
+en rad per primitiv (koordinater avrundade till 0,1 mm), och jämförs mot
+facit i `tests/referens/`. Raden visar också fyllningens mönster,
+opacitet och bakgrund, om primitiven ligger under modellen (`under`) och
+var streckningen börjar (`dashFrom.at`). Ändras en ritning med avsikt
+skrivs nytt facit med `npx vitest run tests/referens.test.ts -u`; titta
+på skillnaden i git innan den läggs in.
+
+**Testprojekt och hjälpfunktioner** ligger i `tests/projekt.ts` (0.8.32):
+`wallGrid`, `roomGrid` och `shapesProject`; `storeWithShapes` (exemplet
+med 2D-former, med `order`), `planOf`, `square` och `SHAPE`;
+`wallsProject` och `wallEnds` (tomt projekt med väggar och linjer, för
+Modifiera); `toolHost` (det ritverktygen behöver utan webbläsare); `dxf`
+(en liten DXF-fil). Använd dem i stället för att skriva en egen kopia.
+
+**Typkontroll**: `tsconfig.json` tar med `tests` sedan 0.8.32, så `npx tsc
+--noEmit` kontrollerar också testerna (en 2D-form med `shape: 'rect'` från
+före format 13 syntes så). Node-typerna finns inte; `tests/node.d.ts`
+deklarerar det testerna använder av `node:fs`. En fil läses hellre med
+`?raw` (`import text from './filer/skraffering.dxf?raw'`); CSS ger vitest
+tom, så stilarnas test läser från disken.
+
+**Körningen**: de vanliga testerna delar process (`isolate: false` i
+`vite.config.ts`, 0.8.32), så att koden inte läses in igen för varje
+fil; det halverar tiden. Ett test får därför inte lämna något ändrat för
+de andra (som `snapIndex.from` eller `forgetInferred`), och testerna ska
+gå igenom i vilken ordning som helst: prova med `npx vitest run
+--sequence.shuffle --sequence.seed=N`. Sparat, spara-och-läs, prövas i
+`core.test.ts` på ett rikt projekt (elementen sparas som de är), och
+att äldre format får meddelandet också där; skriv inget eget test för ett
+nytt fält eller formatnummer. En jämförelse med en fryst kopia av gammal
+kod (klick och snäpp i `v0823` och `v083`) behöver några hundra punkter,
+inte tusentals.
 
 ## Rum och anteckningar
 
@@ -1123,6 +1151,41 @@ projekt i 1 982 jämförelser.
   mappen, annars utanför alla. `moveIntoFolder` i `treeCommands.ts` flyttar
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
+
+## Granskning (0.8.32, format 13)
+
+Utan nya funktioner. Kontrollerat med samma klick i 0.8.31 och 0.8.32
+(`scripts/jamfor-klick.py`, 141 steg, nu också linjetyperna i
+stilmallen, masken och bakgrunden i 2D-formen och den egna pennan):
+samma projekt, markering, ritning, panel, snabbrad, smartmeny och dialog
+efter varje steg. Verktygets klassnamn minifieras olika i två byggen, så
+skriptet kräver bara att namnen motsvarar varandra. Referensritningarna
+(med det nya projektet `former`) skrevs i 0.8.31 innan koden ändrades.
+
+- **DXF-läsaren** i fyra filer: `src/formats/dxfCodes.ts` (filen som par
+  av kod och värde, `entities`, `num`/`str`/`all`, `arcPts`, `bulgePts`,
+  `bspline`), `dxfHatch.ts` (`readHatch`), `dxfText.ts` (`mtextLines`,
+  `textPlacement`, `DXF_CAP_HEIGHT`) och `dxf.ts` (typerna, avbildningen
+  för block och `parseDxf`)
+- **Väggarnas sammanslagning utan öppningar** (`bareWallUnion` i
+  `src/elements/wall.ts`): rummens hål (`roomHoles`) och husets
+  ytterkontur för vilken sida som är ute (`buildingOutlines` i
+  `wallSides.ts`) räknades var för sig ur samma väggar. Nu sparas
+  sammanslagningen för samma väggar i samma ordning (parametrarna jämförs
+  med ===, `lastResults`). När vyn visar alla väggar (som med jämförelse)
+  görs den en gång: planen efter en flyttad vägg i `roomGrid(12)` ca 70 →
+  57 ms
+- Mätt men lämnat: väggarnas sammanslagning med öppningar när planen ritas
+  (`union` i väggarnas `planBatch`, ca en fjärdedel av omritningen). Den
+  går inte att räkna ur sammanslagningen utan öppningar: en öppning nära
+  en T-skarv skulle då skära i grannväggen. Täckningen (`coverLines`),
+  streckningen och de egna pennorna kostar lite: 2 400 2D-former gör
+  planen från början 0,14 s långsammare och omritningen efter en flyttad
+  vägg inte märkbart
+- `centeredAt` ger en vanlig punkt (`[number, number]`), som `addViewport`
+  tar
+- Borttaget, oanvänt: `pathLength` (`dash.ts`), typen `SectionQueue` och
+  rensningen av bladens `items` (format 8) i `parse`
 
 ## Linjetyp och penna per objekt (0.8.31, format 13)
 

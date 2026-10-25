@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { addElements } from '../src/core/commands';
-import { emptyProject, FORMAT_VERSION } from '../src/core/model';
+import { emptyProject } from '../src/core/model';
 import { applyFieldChanges, fieldsOf, fieldValue, isBuiltIn } from '../src/core/sheetFields';
 import { addViewport, createSheet, saveSheet } from '../src/core/sheets';
 import { DocStore } from '../src/core/store';
@@ -10,7 +10,6 @@ import type { Primitive } from '../src/repr/primitives';
 import { buildSheet } from '../src/repr/sheet';
 import { smartVars } from '../src/repr/smartText';
 import { sampleProject } from '../src/sample/sampleProject';
-import { parse, serialize } from '../src/storage/format';
 
 beforeAll(() => registerBuiltInTypes());
 
@@ -98,11 +97,8 @@ describe('smarta fält (0.8.10, format 10)', () => {
     expect(smartVars(store.doc, { ...s, fields: { skala: '1:50 / 1:100' } }, today).skala).toBe('1:50 / 1:100');
   });
 
-  it('nya projekt har projektets vanliga fält; format 9 får meddelandet om en äldre alfaversion', () => {
-    expect(FORMAT_VERSION).toBeGreaterThanOrEqual(11);
+  it('nya projekt har projektets vanliga fält', () => {
     const doc = emptyProject('Villa', 'nybyggnad', { beställare: 'Anna' });
     expect(doc.project.fields).toEqual({ adress: '', fastighet: '', beställare: 'Anna', uppdragsnummer: '', arkitekt: '', ansvarig: '' });
-    expect(parse(serialize(doc)).project.fields).toEqual(doc.project.fields);
-    expect(() => parse(serialize({ ...doc, formatVersion: 9 }))).toThrow(/äldre alfaversion/);
   });
 });

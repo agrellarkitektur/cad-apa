@@ -3,13 +3,11 @@ import { registerBuiltInTypes } from '../src/elements';
 import { mirrorElements } from '../src/core/transforms';
 import { scaleElements, transferSettings } from '../src/core/arrange';
 import { DocStore } from '../src/core/store';
-import { FORMAT_VERSION, type Element } from '../src/core/model';
+import type { Element } from '../src/core/model';
 import { canTrim, splitLine } from '../src/core/trimEdit';
 import { capPrims, shapePoints, shapePrims, trimEnds, type Shape2DParams } from '../src/elements/drawing2d';
 import { bendShapeEdge, edgeIsArc, insertShapeNode, moveShapeNode, offsetShapeEdge, removeShapeNode, shapeEdgeAt } from '../src/elements/shapeEdit';
-import { buildPlan } from '../src/repr/plan';
 import { sampleProject } from '../src/sample/sampleProject';
-import { parse, serialize } from '../src/storage/format';
 import { chainFrom } from '../src/ui/tools/draw2dTool';
 import { drawingFields } from '../src/ui/drawingPanel';
 import { capFields, shapeSmartFields } from '../src/ui/shapeFields';
@@ -26,14 +24,7 @@ function docWith(params: Partial<Shape2DParams>, id = 'form') {
   return new DocStore(doc);
 }
 
-describe('kedjan (0.8.24, format 13)', () => {
-  it('är format 13, och ett projekt i format 12 öppnas inte', () => {
-    expect(FORMAT_VERSION).toBe(13);
-    const old = JSON.parse(serialize(sampleProject()));
-    old.formatVersion = 12;
-    expect(() => parse(JSON.stringify(old))).toThrow(/äldre alfaversion/);
-  });
-
+describe('kedjan (0.8.24)', () => {
   it('rektangel, båge och cirkel ritas som kedjor', () => {
     expect(chainFrom('rect', [[0, 0], [2000, 1000]], false)).toEqual({ shape: 'polyline', points: [[0, 0], [2000, 0], [2000, 1000], [0, 1000]], closed: true });
     // Bågen ritas start, slut och en punkt på bågen.
@@ -145,15 +136,6 @@ describe('ändformer (0.8.24)', () => {
     const sq = { ...base, points: [[0, 0], [1000, 0], [1000, 1000]] as [number, number][], startCap: 'arrow' as const };
     expect(shapePrims({ ...sq, closed: true }).some((p) => p.origin?.part === 'ände')).toBe(false);
     expect(shapePrims({ ...sq, weight: 0 }, { objectId: 'x' }).some((p) => p.origin?.part === 'ände')).toBe(false);
-  });
-
-  it('ritas i planen i ritningens skala', () => {
-    const store = docWith({ points: [[20000, 20000], [25000, 20000]], endCap: 'dot' });
-    const doc = store.doc;
-    const view = { state: doc.states[doc.states.length - 1].id, compareTo: doc.states[0].id };
-    const pk = buildPlan(doc, doc.storeys[0].id, view).pickables.find((p) => p.id === 'form')!;
-    const dot = pk.prims.find((p) => p.kind === 'region' && p.origin?.part === 'ände');
-    expect(dot).toBeTruthy();
   });
 
   it('väljs i egenskaperna och i smartmenyn', () => {

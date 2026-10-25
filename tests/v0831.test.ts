@@ -72,9 +72,11 @@ describe('Egen penna (0.8.31)', () => {
   it('fasader och sektioner ritar objektets linjer med den egna pennan', () => {
     const doc = sampleProject();
     const marker = Object.values(doc.elements).find((e) => e.type === 'Section')!;
-    const w = walls(doc).find((x) => buildSection(doc, marker.id, { state: doc.states.at(-1)!.id })?.prims.some((p) => p.origin?.objectId === x.id))!;
+    const view = { state: doc.states.at(-1)!.id };
+    const drawn = new Set(buildSection(doc, marker.id, view)!.prims.map((p) => p.origin?.objectId));
+    const w = walls(doc).find((x) => drawn.has(x.id))!;
     w.pen = { color: '#00aa00', weight: 1 };
-    const prims = buildSection(doc, marker.id, { state: doc.states.at(-1)!.id })!.prims.filter((p) => p.origin?.objectId === w.id);
+    const prims = buildSection(doc, marker.id, view)!.prims.filter((p) => p.origin?.objectId === w.id);
     const pens = prims.flatMap((p) => (p.kind === 'line' || p.kind === 'polyline' ? [p.pen] : p.kind === 'region' && p.outline ? [p.outline] : []));
     expect(pens.length).toBeGreaterThan(0);
     for (const pen of pens) expect(pen).toMatchObject({ color: '#00aa00', weight: 1 });

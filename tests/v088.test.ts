@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { addElements } from '../src/core/commands';
 import { EXAMPLE_MASTER_ID } from '../src/core/exampleMaster';
-import { emptyProject, FORMAT_VERSION, modelViewId } from '../src/core/model';
+import { emptyProject, modelViewId } from '../src/core/model';
 import { addViewport, createMaster, createSheet, masterOf, mastersOf, saveMaster, saveSheet, setDefaultMaster } from '../src/core/sheets';
 import { DocStore } from '../src/core/store';
 import { deleteWorksheet } from '../src/core/treeCommands';
@@ -11,7 +11,6 @@ import { buildPlan } from '../src/repr/plan';
 import type { Primitive } from '../src/repr/primitives';
 import { buildSheet, centeredAt, masterViewStates, placeableViews, viewSource } from '../src/repr/sheet';
 import { sampleProject } from '../src/sample/sampleProject';
-import { parse, serialize } from '../src/storage/format';
 import { ANNOTATION_SCALES } from '../src/ui/app/helpers';
 
 beforeAll(() => registerBuiltInTypes());
@@ -113,16 +112,6 @@ describe('mallblad (0.8.8, format 8)', () => {
     const left = { ...el, params: { ...el.params, align: 'start', bold: false } };
     expect(textType.plan!(left as never, ctx)[0]).not.toHaveProperty('align');
     expect(textType.plan!(left as never, ctx)[0]).not.toHaveProperty('bold');
-  });
-
-  it('sparas och läses; format 7 får meddelandet om en äldre alfaversion', () => {
-    const store = new DocStore(sampleProject());
-    createSheet(store);
-    const back = parse(serialize(store.doc));
-    expect(back.project.master).toBe(EXAMPLE_MASTER_ID);
-    expect(back.worksheets).toEqual(store.doc.worksheets);
-    expect(back.sheets).toEqual(store.doc.sheets);
-    expect(() => parse(serialize({ ...store.doc, formatVersion: 7 }))).toThrow(/äldre alfaversion.*format 7/);
   });
 
   it('skalorna i Carl Augusts ram finns att välja', () => {

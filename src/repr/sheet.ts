@@ -307,7 +307,7 @@ export function viewCenter(doc: ProjectDoc, view: Id, scale: number, at: Vec2, o
 }
 
 /** Läget (`at`) som lägger vyns mitt i en punkt på papperet. */
-export function centeredAt(doc: ProjectDoc, view: Id, scale: number, center: Vec2, opt: { autoDims?: boolean } = {}): Vec2 {
+export function centeredAt(doc: ProjectDoc, view: Id, scale: number, center: Vec2, opt: { autoDims?: boolean } = {}): [number, number] {
   const src = viewSource(doc, view);
   const b = src ? contentBounds(cachedViewPrims(doc, src.def, { scale, autoDims: opt.autoDims })) : null;
   if (!b) return [Math.round(center[0]), Math.round(center[1])];

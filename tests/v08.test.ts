@@ -7,31 +7,16 @@ import { registerBuiltInTypes } from '../src/elements';
 import { arcThrough, catmullRom, shapePoints } from '../src/elements/drawing2d';
 import { markerFrame } from '../src/elements/markers';
 import { buildPlan } from '../src/repr/plan';
-import { autoSlopeId, buildSection } from '../src/repr/section';
+import { buildSection } from '../src/repr/section';
 import { sampleProject } from '../src/sample/sampleProject';
-import { parse, serialize } from '../src/storage/format';
 
 beforeAll(() => registerBuiltInTypes());
 
 const view = { state: 'st-a', compareTo: 'st-bef', detail: 'normal' as const };
 
 function line(id: string, extra: Partial<Element> = {}): Element {
-  return { id, type: 'Shape2D', storey: 'pl-1', states: ['st-bef', 'st-a', 'st-b'], tags: [], params: { shape: 'line', points: [[0, 0], [1000, 0]], weight: 0.25, linetype: 'solid' }, props: {}, ...extra };
+  return { id, type: 'Shape2D', storey: 'pl-1', states: ['st-bef', 'st-a', 'st-b'], tags: [], params: { shape: 'polyline', points: [[0, 0], [1000, 0]], weight: 0.25, linetype: 'solid' }, props: {}, ...extra };
 }
-
-describe('format 5 (0.8)', () => {
-  it('sparas och läses utan förlust, med 2D-element, Visas i och lås', () => {
-    const doc = sampleProject();
-    doc.elements.l1 = line('l1', { show: { kind: 'tags', tags: ['undertak'], match: 'any' }, locked: true });
-    doc.elements.l2 = line('l2', { space: 'sektion-a' });
-    const back = parse(serialize(doc));
-    expect(back.elements.l1.show).toEqual({ kind: 'tags', tags: ['undertak'], match: 'any' });
-    expect(back.elements.l1.locked).toBe(true);
-    expect(back.elements.l2.space).toBe('sektion-a');
-    expect(back.folders).toEqual(doc.folders);
-    expect(back.tree).toEqual(doc.tree);
-  });
-});
 
 describe('Visas i (0.8)', () => {
   const plan = { id: modelViewId('pl-1'), place: 'pl-1', tags: [] as string[] };
@@ -150,6 +135,5 @@ describe('taklutning som eget objekt (0.8)', () => {
     expect(store.doc.elements[obj.id].params.hidden).toBe(true);
     expect(Object.keys(buildSection(store.doc, 'fasad-2', view)!.slopes)).not.toContain(ids[0]);
     expect(buildPlan(store.doc, 'pl-1', { ...view, place: 'fasad-2' }).prims).toHaveLength(0);
-    expect(autoSlopeId('tak', 0)).toBe('slope:tak:0');
   });
 });

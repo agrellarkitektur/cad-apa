@@ -1,6 +1,15 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { DocStore } from '../src/core/store';
+import { createFolder, moveIntoFolder } from '../src/core/treeCommands';
+import { registerBuiltInTypes } from '../src/elements';
+import { drawingText, textWidth } from '../src/formats/drawingFont';
+import { writePdf } from '../src/formats/pdf';
+import { sampleProject } from '../src/sample/sampleProject';
+import { dividePath } from '../src/ui/tools/measureTool';
 import { Camera } from '../src/view2d/camera';
 import { buildGrid, minorStepFor } from '../src/view2d/grid';
+
+beforeAll(() => registerBuiltInTypes());
 
 function cam(denominator: number): Camera {
   const c = new Camera();
@@ -37,14 +46,6 @@ describe('0.8.18 rutnätet', () => {
   });
 });
 
-import { dividePath } from '../src/ui/tools/measureTool';
-import { DocStore } from '../src/core/store';
-import { createFolder, moveIntoFolder } from '../src/core/treeCommands';
-import { sampleProject } from '../src/sample/sampleProject';
-import { registerBuiltInTypes } from '../src/elements';
-import { writePdf } from '../src/formats/pdf';
-import { drawingText, textWidth } from '../src/formats/drawingFont';
-
 describe('0.8.18 segmentpunkter', () => {
   it('delar en sträcka i lika delar', () => {
     expect(dividePath([[0, 0], [1000, 0]], 4)).toEqual([[250, 0], [500, 0], [750, 0]]);
@@ -60,7 +61,6 @@ describe('0.8.18 segmentpunkter', () => {
 });
 
 describe('0.8.18 dra till mappar', () => {
-  registerBuiltInTypes();
   it('flyttar flera, och en mapp i en mapp, i ett steg', () => {
     const store = new DocStore(sampleProject());
     const a = createFolder(store, 'vyer', 'A');

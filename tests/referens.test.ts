@@ -1,4 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
+import type { FillDef } from '../src/core/graphics';
 import type { ProjectDoc } from '../src/core/model';
 import { modelViewId } from '../src/core/model';
 import { DocStore } from '../src/core/store';
@@ -11,7 +12,7 @@ import { buildSection } from '../src/repr/section';
 import { buildSheet, centeredAt } from '../src/repr/sheet';
 import type { Shape3D } from '../src/repr/solids';
 import { sampleProject } from '../src/sample/sampleProject';
-import { roomGrid } from './projekt';
+import { roomGrid, shapesProject } from './projekt';
 
 /**
  * Referensritningar (0.8.2). Några testprojekt ritas (planer, fasader,
@@ -35,22 +36,29 @@ const pt = (p: Vec2): string => `${n(p[0])},${n(p[1])}`;
 const pen = (p: { weight: number; color?: string; dash?: readonly number[]; opacity?: number } | null | undefined): string =>
   p ? [`w${p.weight}`, p.color, p.dash?.length ? `d${p.dash.join('/')}` : '', p.opacity !== undefined && p.opacity !== 1 ? `o${p.opacity}` : ''].filter(Boolean).join(' ') : 'ingen';
 
+/** Fyllningen: slag, färg, mönster och opacitet (0.8.32: mönster, opacitet och bakgrund). */
+const fillOf = (f: FillDef): string => {
+  if (f.kind === 'none') return 'none';
+  const o = f.opacity !== undefined && f.opacity !== 1 ? ` o${f.opacity}` : '';
+  if (f.kind === 'solid') return `fylld ${f.color ?? ''}${o}`;
+  const bg = f.background ? ` bakgrund ${f.background}${f.backgroundOpacity !== undefined && f.backgroundOpacity !== 1 ? ` o${f.backgroundOpacity}` : ''}` : '';
+  return `hatch ${f.color} ${n(f.angle)}° a${n(f.spacing)} w${f.weight}${o}${bg}`;
+};
+
 /** En rad per primitiv: slag, geometri, penna och vems den är. */
 export function primLine(p: Primitive): string {
-  const who = p.origin ? ` @${p.origin.objectId ?? ''}${p.origin.part ? `/${p.origin.part}` : ''}` : '';
+  const who = `${p.origin ? ` @${p.origin.objectId ?? ''}${p.origin.part ? `/${p.origin.part}` : ''}` : ''}${p.under ? ' under' : ''}`;
   switch (p.kind) {
     case 'line':
       return `linje ${pt(p.a)} ${pt(p.b)} [${pen(p.pen)}]${who}`;
     case 'polyline':
-      return `polylinje${p.closed ? ' sluten' : ''} ${p.points.map(pt).join(' ')} [${pen(p.pen)}]${who}`;
+      return `polylinje${p.closed ? ' sluten' : ''} ${p.points.map(pt).join(' ')} [${pen(p.pen)}]${p.dashFrom ? ` från ${n(p.dashFrom.at)}` : ''}${who}`;
     case 'arc':
       return `båge ${pt(p.center)} r${n(p.radius)} ${n((p.start * 180) / Math.PI)}°–${n((p.end * 180) / Math.PI)}° [${pen(p.pen)}]${who}`;
     case 'text':
       return `text "${p.text}" ${pt(p.at)} h${n(p.height)}${p.angle ? ` ${n((p.angle * 180) / Math.PI)}°` : ''}${p.align ? ` ${p.align}` : ''}${p.bold ? ' fet' : ''} [${pen(p.pen)}]${who}`;
-    case 'region': {
-      const fill = p.fill.kind === 'solid' ? `fylld ${p.fill.color ?? ''}` : p.fill.kind;
-      return `yta ${fill} [${pen(p.outline)}] ${p.rings.map((r) => r.map(pt).join(' ')).join(' | ')}${who}`;
-    }
+    case 'region':
+      return `yta ${fillOf(p.fill)} [${pen(p.outline)}] ${p.rings.map((r) => r.map(pt).join(' ')).join(' | ')}${who}`;
     case 'image':
       return `bild ${p.source.asset} ${pt(p.corner)} ${pt(p.u)} ${pt(p.v)}${who}`;
   }
@@ -103,6 +111,7 @@ function referenceSet(name: string, doc: ProjectDoc) {
 
 referenceSet('exempel', sampleProject());
 referenceSet('rumsrutnat', roomGrid(3));
+referenceSet('former', shapesProject());
 
 describe('blad', () => {
   it('A3 med plan i 1:100 och fasad i 1:50, med exempelmallbladet', async () => {
@@ -112,5 +121,13 @@ describe('blad', () => {
     addViewport(store, id, { view: modelViewId('fasad-1'), scale: 50, at: centeredAt(store.doc, modelViewId('fasad-1'), 50, [300, 200]) });
     const d = buildSheet(store.doc, store.doc.sheets.find((s) => s.id === id)!, { today: '2026-10-20' });
     await expect(drawing(d.prims)).toMatchFileSnapshot(file('blad-a3'));
+  });
+
+  it('A3 med 2D-formerna och de egna pennorna i 1:50 (0.8.32)', async () => {
+    const store = new DocStore(shapesProject());
+    const id = createSheet(store, { number: 'A-40.1-102', name: 'Former', fields: { datum: '2026-10-25' } });
+    addViewport(store, id, { view: modelViewId('pl-1'), scale: 50, at: [200, 150] });
+    const d = buildSheet(store.doc, store.doc.sheets.find((s) => s.id === id)!, { today: '2026-10-25' });
+    await expect(drawing(d.prims)).toMatchFileSnapshot(file('blad-former'));
   });
 });

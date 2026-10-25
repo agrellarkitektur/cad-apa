@@ -145,11 +145,3 @@ export function dashPieces(pts: readonly Vec2[], closed: boolean, pattern: reado
   }
   return out;
 }
-
-/** Längden längs linjen, för att räkna om `DashFrom.at` till ritningens enheter. */
-export function pathLength(pts: readonly Vec2[], closed: boolean): number {
-  let s = 0;
-  for (let i = 0; i + 1 < pts.length; i++) s += Math.hypot(pts[i + 1][0] - pts[i][0], pts[i + 1][1] - pts[i][1]);
-  if (closed && pts.length > 2) s += Math.hypot(pts[0][0] - pts[pts.length - 1][0], pts[0][1] - pts[pts.length - 1][1]);
-  return s;
-}

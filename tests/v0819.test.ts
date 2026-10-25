@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { transferSettings } from '../src/core/arrange';
 import { DocStore } from '../src/core/store';
-import { FORMAT_VERSION, type Element, type ProjectDoc } from '../src/core/model';
+import type { Element, ProjectDoc } from '../src/core/model';
 import { shapePrims, type Shape2DParams } from '../src/elements/drawing2d';
 import { buildPlan } from '../src/repr/plan';
 import { sampleProject } from '../src/sample/sampleProject';
@@ -33,11 +33,11 @@ function setup(params: Partial<Shape2DParams>) {
 }
 
 describe('2D-formen (0.8.19)', () => {
-  it('är format 12, och linje och fyllning är samma objekt', () => {
-    expect(FORMAT_VERSION).toBeGreaterThanOrEqual(12);
-    const prims = shapePrims({ shape: 'rect', points: sq, weight: 0.35, linetype: 'solid', fill: 'cross', fillAngle: 30, fillSpacing: 2 });
-    expect(prims.map((p) => p.kind)).toEqual(['region', 'region', 'polyline']);
-    expect(prims.filter((p) => p.under).length).toBe(2);
+  it('linje och fyllning är samma objekt, fyllningen under modellen', () => {
+    const prims = shapePrims({ shape: 'polyline', points: sq, closed: true, weight: 0.35, linetype: 'solid', fill: 'cross', fillAngle: 30, fillSpacing: 2 });
+    expect(prims.some((p) => p.kind === 'polyline' && !p.under)).toBe(true);
+    expect(prims.filter((p) => p.kind === 'region').every((p) => p.under)).toBe(true);
+    expect(prims.some((p) => p.kind === 'region')).toBe(true);
   });
 
   it('utan fyllning går mitten inte att klicka på, bara linjen', () => {
@@ -61,7 +61,7 @@ describe('2D-formen (0.8.19)', () => {
   });
 
   it('en rak linje får ingen fyllning', () => {
-    expect(shapePrims({ shape: 'line', points: [[0, 0], [1000, 0]], weight: 0.25, linetype: 'solid', fill: 'solid', fillAngle: 45, fillSpacing: 2 }).map((p) => p.kind)).toEqual(['polyline']);
+    expect(shapePrims({ shape: 'polyline', points: [[0, 0], [1000, 0]], weight: 0.25, linetype: 'solid', fill: 'solid', fillAngle: 45, fillSpacing: 2 }).map((p) => p.kind)).toEqual(['polyline']);
   });
 
   it('tjockleken 0 ritas inte, men går att klicka på längs linjen', async () => {
@@ -77,29 +77,17 @@ describe('2D-formen (0.8.19)', () => {
     expect(drawn).toContain(' S Q');
   });
 
-  it('fyllningen ritas under väggarna, linjen över', () => {
-    const { doc, plan } = setup({ fill: 'solid' });
-    const wall = Object.values(doc.elements).find((e) => e.type === 'Wall')!;
-    const idx = (pred: (i: number) => boolean) => plan.prims.findIndex((_, i) => pred(i));
-    const fillAt = idx((i) => plan.prims[i].origin?.objectId === 'form' && plan.prims[i].kind === 'region');
-    const lineAt = idx((i) => plan.prims[i].origin?.objectId === 'form' && plan.prims[i].kind === 'polyline');
-    const wallAt = idx((i) => plan.prims[i].origin?.objectId === wall.id);
-    expect(fillAt).toBeGreaterThanOrEqual(0);
-    expect(fillAt).toBeLessThan(wallAt);
-    expect(lineAt).toBeGreaterThan(wallAt);
-  });
-
   it('pipetten tar med fyllningen och tar bort den när källan saknar fyllning', () => {
     const { doc } = setup({ fill: 'hatch', fillColor: '#ff0000', fillAngle: 30 });
-    doc.elements.b = { ...doc.elements.form, id: 'b', params: { shape: 'line', points: [[0, 0], [10, 0]], weight: 0.5, linetype: 'dashed' } };
+    doc.elements.b = { ...doc.elements.form, id: 'b', params: { shape: 'polyline', points: [[0, 0], [10, 0]], weight: 0.5, linetype: 'dashed' } };
     doc.elements.c = { ...doc.elements.form, id: 'c', params: { ...doc.elements.form.params } };
     const store = new DocStore(doc);
     transferSettings(store, 'form', ['b']);
-    expect(store.doc.elements.b.params).toMatchObject({ shape: 'line', weight: 0.25, linetype: 'solid', fill: 'hatch', fillColor: '#ff0000', fillAngle: 30 });
+    expect(store.doc.elements.b.params).toMatchObject({ points: [[0, 0], [10, 0]], weight: 0.25, linetype: 'solid', fill: 'hatch', fillColor: '#ff0000', fillAngle: 30 });
     transferSettings(store, 'b', ['c']);
     expect(store.doc.elements.c.params).toMatchObject({ shape: 'polyline', fill: 'hatch' });
     const s2 = new DocStore(store.doc);
-    const noFill = { ...s2.doc.elements.b, id: 'd', params: { shape: 'line', points: [[0, 0], [10, 0]], weight: 0.5, linetype: 'solid' } };
+    const noFill = { ...s2.doc.elements.b, id: 'd', params: { shape: 'polyline', points: [[0, 0], [10, 0]], weight: 0.5, linetype: 'solid' } };
     s2.transact('x', (tx) => tx.putElement(noFill as Element));
     transferSettings(s2, 'd', ['c']);
     expect(s2.doc.elements.c.params.fill).toBeUndefined();

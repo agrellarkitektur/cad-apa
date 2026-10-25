@@ -8,25 +8,12 @@ import { MarkerTool, RoofTool } from '../src/ui/tools/markerTools';
 import { WallTool } from '../src/ui/tools/wallTool';
 import { Draw2DTool } from '../src/ui/tools/draw2dTool';
 import { parsePoint, resolvePoint } from '../src/ui/pointInput';
+import { toolHost } from './projekt';
 
 beforeAll(() => registerBuiltInTypes());
 
 /** Det verktygen behöver för att ta emot skrivna punkter, utan webbläsare. */
-function host(): ToolHost & { hints: string[] } {
-  const store = new DocStore(sampleProject());
-  const hints: string[] = [];
-  return {
-    store,
-    hints,
-    selection: { set: () => {}, list: () => [] } as never,
-    view: { requestRender: () => {}, camera: { scale: 1 }, drawingScale: 100 } as never,
-    plan: () => ({ pickables: [] }) as never,
-    activeState: () => store.doc.states[0].id,
-    storey: () => store.doc.storeys[0].id,
-    snapSegments: () => [],
-    hint: (t: string) => hints.push(t),
-  };
-}
+const host = () => toolHost(new DocStore(sampleProject()));
 
 const count = (h: ToolHost, type: string) => Object.values(h.store.doc.elements).filter((e) => e.type === type).length;
 

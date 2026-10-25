@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
-import { normalizeStyle, SWEDISH_STANDARD, type StyleSheet } from '../src/core/graphics';
+import { SWEDISH_STANDARD, type StyleSheet } from '../src/core/graphics';
 import type { Element, ProjectDoc } from '../src/core/model';
 import { dimensionPrims } from '../src/elements/annotation';
 import { slopeSymbol } from '../src/elements/roofSlope';
@@ -96,9 +96,4 @@ describe('pennor för pilar och markörer (0.8.26)', () => {
     expect(colors(level)).toEqual(new Set([RED]));
   });
 
-  it('sparas med stilmallen och läses tillbaka', () => {
-    const style = styled({ sectionLine: { weight: 0.7, color: RED }, dimension: { weight: 0.13 } });
-    const back = normalizeStyle(JSON.parse(JSON.stringify(style)));
-    expect(back.pens).toEqual({ sectionLine: { weight: 0.7, color: RED }, dimension: { weight: 0.13 } });
-  });
 });

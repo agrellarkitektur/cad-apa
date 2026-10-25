@@ -404,7 +404,7 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
         const c = center(vp.crop, vp.at, vp.scale);
         const m = center(vp.crop, [0, 0], scale);
         at = [Math.round(c[0] - m[0]), Math.round(c[1] - m[1])];
-      } else if (moved) at = centeredAt(store.doc, view ?? vp.view, scale, vp.crop ? center(vp.crop, vp.at, vp.scale) : viewCenter(store.doc, vp.view, vp.scale, vp.at)) as [number, number];
+      } else if (moved) at = centeredAt(store.doc, view ?? vp.view, scale, vp.crop ? center(vp.crop, vp.at, vp.scale) : viewCenter(store.doc, vp.view, vp.scale, vp.at));
       updateViewport(
         store,
         sheet.id,

@@ -4,7 +4,6 @@ import { DocStore } from '../src/core/store';
 import { registerBuiltInTypes } from '../src/elements';
 import { buildSheet, centeredAt, contentCrop, modelToPaper } from '../src/repr/sheet';
 import { sampleProject } from '../src/sample/sampleProject';
-import { parse, serialize } from '../src/storage/format';
 
 beforeAll(() => registerBuiltInTypes());
 
@@ -53,13 +52,4 @@ describe('vyernas ram (0.8.7)', () => {
     expect(buildSheet(store.doc, store.doc.sheets[0], { today }).views[0].cropped).toBeFalsy();
   });
 
-  it('dold skala och ram sparas och läses', () => {
-    const store = new DocStore(sampleProject());
-    const id = createSheet(store);
-    const vp = addViewport(store, id, { view: 'vy-a-bl', scale: 100, at: [100, 100] })!;
-    updateViewport(store, id, vp, { hideScale: true });
-    setViewportCrop(store, id, vp, { minX: 0, minY: 0, maxX: 5000, maxY: 4000 });
-    const back = parse(serialize(store.doc));
-    expect(back.sheets[0].viewports[0]).toMatchObject({ hideScale: true, crop: { minX: 0, minY: 0, maxX: 5000, maxY: 4000 } });
-  });
 });

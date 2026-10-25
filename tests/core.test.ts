@@ -24,6 +24,7 @@ import type { Solid } from '../src/repr/solids';
 import { sampleProject } from '../src/sample/sampleProject';
 import { parse, serialize, ProjectFormatError } from '../src/storage/format';
 import { snap } from '../src/ui/tools/snap';
+import { dxf, shapesProject } from './projekt';
 
 beforeAll(() => registerBuiltInTypes());
 
@@ -239,12 +240,7 @@ describe('planen', () => {
     expect(span('d02')).toBeCloseTo(30); // befintlig
     expect(span('d05')).toBeCloseTo(90); // ny i B
     expect(span('d04')).toBeCloseTo(30); // rivs i B
-  });
-
-  it('Befintligt utan jämförelse ritas som befintligt, med 30°-dörrar', () => {
-    const { prims } = buildPlan(sampleProject(), 'pl-1', { state: 'st-bef' });
-    const a = prims.find((p) => p.kind === 'arc' && p.origin?.objectId === 'd02');
-    expect(a && a.kind === 'arc' ? ((a.end - a.start + Math.PI * 4) % (Math.PI * 2)) * (180 / Math.PI) : NaN).toBeCloseTo(30);
+    // Utan jämförelse beror vinkeln på Befintligt (0.6.2, doorAngleOf nedan).
   });
 
   it('rum visas bara i sina egna tillstånd', () => {
@@ -281,9 +277,44 @@ describe('snäpp', () => {
 });
 
 describe('filformat', () => {
-  it('sparar och läser utan förlust', () => {
-    const doc = sampleProject();
+  it('sparar och läser utan förlust, med blad, stämplar, underlag och objektens egna fält', async () => {
+    const { addViewport, addScaleBar, createSheet, createStamp, placeStamp, renameProject, setViewportCrop, updateViewport } = await import('../src/core/sheets');
+    const { addWithAsset, setLocked, setShowIn, setSkewOk } = await import('../src/core/commands');
+    const { applyFieldChanges } = await import('../src/core/sheetFields');
+    const { createFolder, createWorksheet, moveIntoFolder } = await import('../src/core/treeCommands');
+    const { modelViewId } = await import('../src/core/model');
+    // Pennor, egna linjetyper, ritordning och egna pennor (0.8.25–0.8.31).
+    const store = new DocStore(shapesProject());
+    store.transact('stil', (tx) => tx.setGraphics({ ...tx.doc.graphics, labels: { ...tx.doc.graphics.labels, room: '{nummer}\n{namn}' } }));
+    renameProject(store, 'Villa Test');
+    applyFieldChanges(store, [], { values: { arkitekt: 'Agrell Arkitektur' } });
+    const sheet = createSheet(store, { name: 'Planer', fields: { datum: '2026-10-25' } }, createFolder(store, 'ritningar', 'BYGGLOV'));
+    const vp = addViewport(store, sheet, { view: modelViewId('pl-1'), scale: 100, at: [200, 150] })!;
+    updateViewport(store, sheet, vp, { hideScale: true, title: 'PLAN 1' });
+    setViewportCrop(store, sheet, vp, { minX: 0, minY: 0, maxX: 5000, maxY: 4000 });
+    addScaleBar(store, sheet);
+    placeStamp(store, sheet, createStamp(store, 'Bygglov'), [100, 50]);
+    const ws = createWorksheet(store, 'Detaljer');
+    const asset = { id: 'fil-1', name: 'grannhus.dxf', mime: 'application/dxf', data: btoa(dxf('0\nLINE\n8\n0\n10\n0\n20\n0\n11\n1000\n21\n0')) };
+    addWithAsset(store, asset, { type: 'Underlay', name: 'Grannhus', storey: 'pl-1', space: ws, tags: [], props: {}, params: { asset: 'fil-1', kind: 'dxf', pos: [0, 0], angle: 0, scale: 1, size: [1000, 1], ref: [0, 0], opacity: 70 } }, 'st-a', 'Lägg in');
+    setLocked(store, ['f-egen'], true);
+    setShowIn(store, ['f-streck'], { kind: 'tags', tags: ['undertak'], match: 'any' });
+    setSkewOk(store, ['iv-1'], true);
+    moveIntoFolder(store, [store.doc.views[0].id], createFolder(store, 'vyer', 'Bygglov'));
+    const doc = store.doc;
+    const types = new Set(Object.values(doc.elements).map((e) => e.type));
+    for (const t of ['Shape2D', 'ScaleBar', 'Stamp', 'Underlay']) expect(types, t).toContain(t);
+    expect(doc.sheets[0].viewports[0]).toMatchObject({ hideScale: true, crop: { maxX: 5000 } });
+    expect(doc.assets['fil-1'] && doc.elements['f-egen'].locked && doc.elements['iv-1'].skewOk && doc.elements['f-streck'].show).toBeTruthy();
     expect(parse(serialize(doc))).toEqual(doc);
+  });
+
+  it('en stilmall från fil: det som saknas får förvalet, och en egen linjetyp med en inbyggd nyckel hoppas över', async () => {
+    const { DEFAULT_LABELS, normalizeStyle, SWEDISH_STANDARD } = await import('../src/core/graphics');
+    const old = JSON.parse(JSON.stringify(SWEDISH_STANDARD));
+    delete old.labels.room;
+    expect(normalizeStyle(old).labels.room).toBe(DEFAULT_LABELS.room);
+    expect(normalizeStyle({ ...SWEDISH_STANDARD, lineTypes: [{ id: 'dashed', name: 'X', dash: [1, 1] }] }).lineTypes).toBeUndefined();
   });
 
   it('ett projekt i ett äldre format får ett meddelande om alfaversionen (inga migreringar före formatfrysen)', () => {
@@ -318,7 +349,7 @@ describe('3D', () => {
     expect(ids.has('iv-4')).toBe(true); // ny vägg i A
     expect(ids.has('iv-3')).toBe(false); // rivs i A
     expect(ids.has('f01')).toBe(true);
-    expect(solids.some((s) => s.id === 'iv-4' && s.material === 'wall-new')).toBe(true);
+    expect(solids.some((s) => s.id === 'iv-4' && s.kind !== 'edges' && s.material === 'wall-new')).toBe(true);
   });
 
   it('väggen är en hel kropp med öppningarna som urtag', async () => {
@@ -374,9 +405,9 @@ function triArea(t: number[]): number {
 }
 
 describe('markeringar för öppningar', () => {
-  it('igensatt dörr och nya öppningar i befintlig vägg ritas som nytt', () => {
+  it('igensatt dörr och nya öppningar i befintlig vägg ritas som nytt, utan kontur mot väggen (0.6.2)', () => {
     const { prims } = buildPlan(sampleProject(), 'pl-1', { state: 'st-b', compareTo: 'st-bef' });
-    const marks = prims.filter((p) => p.origin?.part === 'markering' && p.kind === 'region');
+    const marks = prims.filter((p) => p.origin?.part === 'markering');
     expect(marks.some((p) => p.origin?.objectId === 'd04')).toBe(true); // igensatt
     expect(marks.filter((p) => p.origin?.objectId === 'd05').length).toBe(2); // två zoner
     expect(marks.every((p) => p.kind === 'region' && p.fill.kind === 'hatch')).toBe(true);
@@ -540,9 +571,7 @@ describe('version 0.6', () => {
     expect(litteraLines(ctx, doc.elements['d02'])).toEqual([doorNumbersFor(ctx).get('d02'), '910×2110']);
     const normal = createContext(doc, 'pl-1', { state: 'st-bef' }, doc.graphics, () => true).ctx;
     expect(litteraLines(normal, doc.elements['d02'])).toEqual(['D1']);
-    const sketch = createContext(doc, 'pl-1', { state: 'st-bef', detail: 'sketch' }, doc.graphics, () => true).ctx;
     expect(buildPlan(doc, 'pl-1', { state: 'st-bef', detail: 'sketch' }).prims.some((p) => p.origin?.part === 'littera')).toBe(false);
-    void sketch;
   });
 
   it('egna egenskaper kan visas i littera', async () => {
@@ -631,13 +660,6 @@ describe('version 0.6.2', () => {
       expect(angle('st-b', compareTo, 'd05')).toBe(90);
     }
     expect(angle('st-bef', undefined, 'd01')).toBe(30);
-  });
-
-  it('nya öppningar i befintlig vägg får ingen kontur mot väggen', () => {
-    const prims = buildPlan(sampleProject(), 'pl-1', { state: 'st-b', compareTo: 'st-bef' }).prims;
-    const marks = prims.filter((p) => p.origin?.part === 'markering');
-    expect(marks.length).toBeGreaterThan(0);
-    expect(marks.every((p) => p.kind === 'region')).toBe(true);
   });
 
   it('vägglittera har ett enda streck in till väggens mitt', () => {

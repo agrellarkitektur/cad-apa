@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.31** (alfa, linjetyp och penna per objekt); nästa är **0.8.32, granskning**.
+**0.8.32** (alfa, granskning); nästa är **0.8.33, pennor per typ och symbollinjer**.
 
 ## Vad som fungerar
 
@@ -951,6 +951,18 @@ Version 0.8.27, granskning (samma filformat, 13):
 - Stilmallen, egenskaperna för 2D-former, underlag och Visas i, och
   appens stilar ligger i fler och mindre filer, så att linjetyper och
   detaljnivåer får en egen plats när de kommer
+
+Version 0.8.32, granskning (samma filformat, 13):
+- Inga nya funktioner; allt beter sig som förut
+- **Planen ritas om fortare** när en vägg flyttas i ett stort hus (312
+  väggar: ca 70 → 57 ms): rummen och väggarnas utsida räknas ur samma
+  sammanslagning av väggarna i stället för var sin
+- **Testerna** är färre och snabbare: dubbletter sammanslagna, tester som
+  låste detaljer (formatets nummer, listor som växer med varje version)
+  borttagna, och hela körningen tar ca 12 s i stället för 26 s.
+  Referensritningarna har fått 2D-formerna, linjetyperna, masken och de
+  egna pennorna
+- DXF-läsaren ligger i fyra mindre filer
 
 Version 0.8.31, linjetyp och penna per objekt (samma filformat, 13):
 - **Egen penna** för väggar, dörrar, fönster, tak och möbler, under

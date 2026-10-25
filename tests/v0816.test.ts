@@ -7,17 +7,10 @@ import type { ProjectDoc } from '../src/core/model';
 import { sampleProject } from '../src/sample/sampleProject';
 import { forgetInferred, snap, type SnapSegment } from '../src/ui/tools/snap';
 import type { Vec2 } from '../src/repr/primitives';
+import { dxf } from './projekt';
 
 beforeAll(() => registerBuiltInTypes());
 
-function dxf(entities: string): string {
-  const body = `0\nSECTION\n2\nHEADER\n9\n$INSUNITS\n70\n4\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n${entities.trim()}\n0\nENDSEC\n0\nEOF`;
-  return body
-    .split(/\n/)
-    .map((l) => l.trim())
-    .filter((l) => l)
-    .join('\n');
-}
 
 const near = (a: readonly number[], b: readonly number[], eps = 1e-6) => expect(Math.hypot(a[0] - b[0], a[1] - b[1])).toBeLessThan(eps);
 

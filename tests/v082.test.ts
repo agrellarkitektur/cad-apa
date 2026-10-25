@@ -3,7 +3,7 @@ import { registerBuiltInTypes } from '../src/elements';
 import { sampleProject } from '../src/sample/sampleProject';
 import { buildSection } from '../src/repr/section';
 import { pickAt } from '../src/view2d/pick';
-import type { Vec2 } from '../src/core/model';
+import type { Vec2 } from '../src/repr/primitives';
 
 beforeAll(() => registerBuiltInTypes());
 

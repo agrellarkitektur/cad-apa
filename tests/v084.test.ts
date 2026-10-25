@@ -2,7 +2,6 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { setSkewOk, updateParams } from '../src/core/commands';
 import { DocStore } from '../src/core/store';
-import { serialize, parse } from '../src/storage/format';
 import { skewOf, skewWarnings } from '../src/elements/angleCheck';
 import { sampleProject } from '../src/sample/sampleProject';
 
@@ -19,7 +18,6 @@ describe('varningen för sneda vinklar per element (0.8.4)', () => {
     expect(skewOf(store.doc, store.doc.elements['iv-1'], 5)).toBeNull();
     // Egenskaperna räknar ändå, för raden som slår på varningen igen.
     expect(skewOf(store.doc, store.doc.elements['iv-1'], 5, true)?.nearest).toBe(90);
-    expect(parse(serialize(store.doc)).elements['iv-1'].skewOk).toBe(true);
 
     store.undo();
     expect(store.doc.elements['iv-1'].skewOk).toBeUndefined();

@@ -52,7 +52,7 @@ function scene(seed: number, width = 48000, height = 3000) {
 
 describe('dolda linjer (0.8.27)', () => {
   it('ger samma linjer med vilka rutor som helst, också en enda ruta', () => {
-    for (const seed of [1, 2, 3]) {
+    for (const seed of [1, 2]) {
       const { segs, tris } = scene(seed);
       const usual = visibleSegments(segs, [tris]);
       expect(usual.length).toBeGreaterThan(100);

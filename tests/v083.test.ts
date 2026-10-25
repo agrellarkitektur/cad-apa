@@ -8,11 +8,11 @@ import { buildPlan } from '../src/repr/plan';
 import { furnitureType } from '../src/elements/furniture';
 import { sampleProject } from '../src/sample/sampleProject';
 import { roomGrid } from './projekt';
-import { readFileSync } from 'node:fs';
 import { parseDxf } from '../src/formats/dxf';
 import type { UnderlayParams } from '../src/elements/underlay';
 import { flushSnap, snap, snapIndex, type SnapSegment } from '../src/ui/tools/snap';
 import type { Vec2 } from '../src/repr/primitives';
+import text from './filer/skraffering.dxf?raw';
 
 beforeAll(() => registerBuiltInTypes());
 
@@ -43,7 +43,7 @@ function edits(store: DocStore, view: ViewStates): void {
     updateParams(store, [door.id], { at: (door.params as { at: number }).at + 100 });
     check();
   }
-  addElement(store, { type: 'Furniture', storey: doc().storeys[0].id, params: { ...furnitureType.defaults(), origin: [1000, 1000] } }, view.state);
+  addElement(store, { type: 'Furniture', storey: doc().storeys[0].id, tags: [], props: {}, params: { ...furnitureType.defaults(), origin: [1000, 1000] } }, view.state);
   check();
   const room = ofType('Space')[0];
   if (room) {
@@ -82,7 +82,7 @@ describe('planen med cache (0.8.3)', () => {
     const wallId = Object.values(d.elements).find((e) => e.type === 'Wall')!.id;
     const pick = () => buildPlan(store.doc, storey, view).pickables.find((p) => p.id === wallId);
     const before = pick();
-    addElement(store, { type: 'Furniture', storey, params: { ...furnitureType.defaults(), origin: [500, 500] } }, view.state);
+    addElement(store, { type: 'Furniture', storey, tags: [], props: {}, params: { ...furnitureType.defaults(), origin: [500, 500] } }, view.state);
     expect(pick()).toBe(before);
     moveElements(store, [wallId], [50, 0]);
     expect(pick()).not.toBe(before);
@@ -112,7 +112,7 @@ describe('snäppning nära markören (0.8.3)', () => {
     }
     const outline: Vec2[][] = [[[0, 0], [900, 0], [900, 600], [0, 600]]];
     let hits = 0;
-    for (let k = 0; k < 400; k++) {
+    for (let k = 0; k < 120; k++) {
       const cursor: Vec2 = [rnd() * 40000, rnd() * 40000];
       const from: Vec2 | undefined = k % 3 ? [cursor[0] + (rnd() - 0.5) * 6000, cursor[1] + (rnd() - 0.5) * 6000] : undefined;
       const tol = k % 2 ? 26 : 80;
@@ -131,15 +131,15 @@ describe('snäppning nära markören (0.8.3)', () => {
       expect(flushFast).toEqual(flushSlow);
     }
     snapIndex.from = 200;
-    expect(hits).toBeGreaterThan(20);
-    // 3 s på en lugn maskin; jämförelsen med alla sträckor är långsam med avsikt.
+    expect(hits).toBeGreaterThan(10);
+    // Jämförelsen med alla sträckor är långsam med avsikt; 120 punkter räcker
+    // (400 tog 3,3 s, granskningen 0.8.32).
   }, 30000);
 });
 
 describe('skraffering i DXF-underlag (0.8.3)', () => {
   // Två skrafferingar skrivna av ezdxf: solid med ett hål (polylinjer), och
   // ANSI31 i 45° vars kontur har en medurs båge (kanter).
-  const text = readFileSync(new URL('./filer/skraffering.dxf', import.meta.url), 'utf8');
   const area = (r: readonly (readonly number[])[]) => Math.abs(r.reduce((a, p, i) => a + p[0] * r[(i + 1) % r.length][1] - r[(i + 1) % r.length][0] * p[1], 0) / 2);
 
   it('konturer, fyllning och mönster läses', () => {

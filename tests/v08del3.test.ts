@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { addElements, addWithAsset } from '../src/core/commands';
 import { modelViewId } from '../src/core/model';
-import { addViewport, createSheet, deleteSheet, duplicateSheet, nextSheetNumber, paperSize, removeViewport, renameProject, saveSheet, sheetOfViewport, updateViewport } from '../src/core/sheets';
+import { addViewport, createSheet, deleteSheet, duplicateSheet, nextSheetNumber, paperSize, removeViewport, saveSheet, sheetOfViewport, updateViewport } from '../src/core/sheets';
 import { DocStore } from '../src/core/store';
 import { applyFieldChanges } from '../src/core/sheetFields';
 import { clipPolyline, clipRing, clipSegment } from '../src/geometry/clipRect';
@@ -14,7 +14,6 @@ import { buildSheet, buildViewPage, centeredAt, placeableViews, toPaper, viewSou
 import { expandSmartText, sheetScales } from '../src/repr/smartText';
 import type { Primitive } from '../src/repr/primitives';
 import { sampleProject } from '../src/sample/sampleProject';
-import { parse, serialize } from '../src/storage/format';
 
 beforeAll(() => registerBuiltInTypes());
 
@@ -57,18 +56,6 @@ describe('ritningsblad (0.8 del 3)', () => {
     expect(c.viewports[0].id).not.toBe(vp);
     removeViewport(store, id, vp);
     expect(store.doc.sheets[0].viewports).toHaveLength(0);
-  });
-
-  it('sparas i projektfilen och läses tillbaka', () => {
-    const store = new DocStore(sampleProject());
-    const id = createSheet(store, { name: 'Planer' });
-    addViewport(store, id, { view: modelViewId('fasad-1'), scale: 100, at: [200, 150] });
-    applyFieldChanges(store, [], { values: { arkitekt: 'Agrell Arkitektur', adress: 'Exempelgatan 1' } });
-    renameProject(store, 'Villa Test');
-    const back = parse(serialize(store.doc));
-    expect(back.sheets).toEqual(store.doc.sheets);
-    expect(back.project.name).toBe('Villa Test');
-    expect(back.project.fields.arkitekt).toBe('Agrell Arkitektur');
   });
 
   it('allt som går att lägga på ett blad: sparade vyer och modellvyerna', () => {

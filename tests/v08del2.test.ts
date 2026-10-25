@@ -10,9 +10,9 @@ import { DocStore } from '../src/core/store';
 import { createWorksheet, deleteWorksheet } from '../src/core/treeCommands';
 import { underlayCorners, underlayInverse, underlayTransform, type UnderlayParams } from '../src/elements/underlay';
 import { buildPlan } from '../src/repr/plan';
-import { parse, serialize } from '../src/storage/format';
 import { insertShapeNode, moveShapeNode, offsetShapeEdge, removeShapeNode, shapeEdgeAt } from '../src/elements/shapeEdit';
 import { sampleProject } from '../src/sample/sampleProject';
+import { dxf } from './projekt';
 
 beforeAll(() => registerBuiltInTypes());
 
@@ -126,11 +126,6 @@ describe('punkter i 2D-element (0.8 del 2)', () => {
   });
 });
 
-/** En liten DXF: rubrik, ett block och entiteter. */
-function dxf(entities: string, blocks = '', units = 4): string {
-  const pairs = (s: string) => s.trim().split(/\n/).map((l) => l.trim()).join('\n');
-  return pairs(`0\nSECTION\n2\nHEADER\n9\n$INSUNITS\n70\n${units}\n0\nENDSEC\n0\nSECTION\n2\nBLOCKS\n${blocks}0\nENDSEC\n0\nSECTION\n2\nENTITIES\n${entities}0\nENDSEC\n0\nEOF`);
-}
 
 describe('DXF-läsaren (0.8 del 2)', () => {
   it('linjer, polylinjer och cirklar med lager och enhet', () => {
@@ -195,7 +190,7 @@ describe('underlag (0.8 del 2)', () => {
     expect(underlayCorners(dxfParams())[2]).toEqual([11000, 9000]);
   });
 
-  it('läggs in med sin fil i ett steg, ritas i planen och följer med när filen sparas', () => {
+  it('läggs in med sin fil i ett steg och ritas i planen', () => {
     const store = new DocStore(sampleProject());
     const el = addWithAsset(store, dxfAsset, underlay(dxfParams()), 'st-a', 'Lägg in');
     expect(store.doc.assets['fil-1'].name).toBe('grannhus.dxf');
@@ -204,9 +199,6 @@ describe('underlag (0.8 del 2)', () => {
     expect(mine.prims.filter((q) => q.kind === 'polyline')).toHaveLength(2);
     // I alla tillstånd: underlaget hör till ritningen.
     expect(buildPlan(store.doc, 'pl-1', { state: 'st-bef', detail: 'normal' }).pickables.some((pk) => pk.id === el.id)).toBe(true);
-    const back = parse(serialize(store.doc));
-    expect(back.assets['fil-1'].data).toBe(dxfAsset.data);
-    expect(back.elements[el.id].params).toEqual(store.doc.elements[el.id].params);
     // Ångra tar bort både elementet och filen.
     store.undo();
     expect(store.doc.elements[el.id]).toBeUndefined();
@@ -264,7 +256,7 @@ describe('arbetsblad (0.8 del 2)', () => {
     const store = new DocStore(sampleProject());
     const ws = createWorksheet(store, 'Detaljer');
     store.transact('vy', (tx) => tx.setViews([...tx.doc.views, { id: 'vy-ab', name: 'Detalj 1:20', storey: 'pl-1', state: 'st-a', compare: false, detail: 'detail', hide: [], hideDemolished: false, worksheet: ws }]));
-    const l = { id: 'l1', type: 'Shape2D', storey: 'pl-1', states: ['st-a'], tags: [], props: {}, params: { shape: 'line', points: [[0, 0], [1000, 0]], weight: 0.25, linetype: 'solid' } };
+    const l = { id: 'l1', type: 'Shape2D', storey: 'pl-1', states: ['st-a'], tags: [], props: {}, params: { shape: 'polyline', points: [[0, 0], [1000, 0]], weight: 0.25, linetype: 'solid' } };
     store.transact('linje', (tx) => tx.putElement(l));
     const [copy] = pasteClip(store, copyPayload(store.doc, ['l1'], 'pl-1')!, 'st-a', 'pl-1', [0, 0], ws);
     expect(store.doc.elements[copy].space).toBe(ws);
