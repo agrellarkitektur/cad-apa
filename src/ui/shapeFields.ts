@@ -92,7 +92,14 @@ export function shapeSmartFields(doc: ProjectDoc, els: Element[]): string | null
     const linked = ps.every((q) => q.fillOpacity === undefined) ? undefined : ps.every((q) => q.fillOpacity !== undefined) ? (same('fillOpacity') ?? NaN) : NaN;
     parts.push(opacityFields({ weight: ps.some((q) => q.weight > 0) ? 1 : 0, fill: ps.find((q) => q.fill)?.fill, opacity: same('opacity') ?? (ps.every((q) => q.opacity === undefined) ? undefined : NaN), fillOpacity: linked }, attrs));
   }
+  // Avgränsar rum (0.8.34), i modellen.
+  if (els.every((e) => !e.space)) parts.push(boundsField(ps.every((q) => !!q.boundsRooms === !!ps[0].boundsRooms) ? !!ps[0].boundsRooms : null, attrs));
   return parts.length ? parts.join('') : null;
+}
+
+/** Kryssrutan *Avgränsar rum* (0.8.34). Null = olika i markeringen. */
+export function boundsField(on: boolean | null, attrs: (key: string) => string): string {
+  return `<label class="check" title="Linjen räknas som en vägg när rummen räknas ut, också med pennan 0"><input type="checkbox" ${attrs('boundsRooms')}${on ? ' checked' : ''}${on === null ? ' data-mixed' : ''}> Avgränsar rum${on === null ? ' (olika)' : ''}</label>`;
 }
 
 /**
@@ -143,6 +150,7 @@ export function shapeFields(doc: ProjectDoc, el: Element): string {
         <label class="field"><span>Linjens färg</span><input type="color" data-key="d2:color" value="${p.color ?? '#1d2328'}"></label>` : ''}
       </div>
       <label class="check"><input type="checkbox" data-key="d2:closed"${p.closed ? ' checked' : ''}> Sluten</label>
+      ${el.space ? '' : boundsField(!!p.boundsRooms, (k) => `data-key="d2:${k}"`)}
       ${!p.closed && p.weight ? capFields(p, (k) => `data-key="d2:${k}"`) : ''}
       ${fillFields('d2-pattern-panel', p, (k) => `data-key="d2:${k}"`)}
       ${p.weight || p.fill ? opacityFields(p, (k) => `data-key="d2:${k}"`) : ''}
@@ -159,7 +167,10 @@ export function shapeChange(store: DocStore, ids: Id[], name: string, input: HTM
   if (name === 'weight' && num >= 0) updateParams(store, ids, { weight: num }, num ? 'Ändra penna' : 'Ingen linje');
   else if (name === 'linetype') updateParams(store, ids, { linetype: v }, 'Ändra linjetyp');
   else if (name === 'color') updateParams(store, ids, { color: v }, 'Ändra färg');
-  else if (name === 'closed') updateParams(store, ids, { closed: (input as HTMLInputElement).checked }, 'Sluten');
+  else if (name === 'boundsRooms') {
+    const on = (input as HTMLInputElement).checked;
+    updateParams(store, ids, { boundsRooms: on ? true : undefined }, on ? 'Avgränsar rum' : 'Avgränsar inte rum');
+  } else if (name === 'closed') updateParams(store, ids, { closed: (input as HTMLInputElement).checked }, 'Sluten');
   else if (name === 'startCap' || name === 'endCap') updateParams(store, ids, { [name]: v === 'none' ? undefined : v }, v === 'none' ? 'Ingen ändform' : 'Ändra ändform');
   else if (name === 'capSize' && num > 0) updateParams(store, ids, { capSize: num === CAP_SIZE ? undefined : num }, 'Ändra ändarnas storlek');
   else if (name === 'pattern') updateParams(store, ids, { fill: v === 'none' ? undefined : v }, v === 'none' ? 'Ingen fyllning' : 'Ändra fyllning');

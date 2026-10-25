@@ -1,7 +1,8 @@
 import { addElements } from '../../core/commands';
 import { actionOf } from '../../core/states';
 import { resolveParams } from '../../elements/registry';
-import { holeAt, roomHoles, type SpaceParams } from '../../elements/rooms';
+import type { Shape2DParams } from '../../elements/drawing2d';
+import { holeAt, isRoomBoundary, roomHoles, type SpaceParams } from '../../elements/rooms';
 import type { WallParams } from '../../elements/wall';
 import { pointInRings } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
@@ -52,10 +53,10 @@ export class RoomTool implements ViewTool {
     const doc = this.host.store.doc;
     const view = { state: this.host.activeState() };
     if (this.cache && this.cache.key === doc.elements && this.cache.state === view.state) return this.cache.holes;
-    const walls = Object.values(doc.elements)
-      .filter((e) => e.type === 'Wall' && e.storey === this.host.storey() && actionOf(e, view) !== 'absent')
-      .map((e) => ({ id: e.id, p: resolveParams<WallParams>(doc, e) }));
-    const holes = roomHoles(walls);
+    const here = Object.values(doc.elements).filter((e) => e.storey === this.host.storey() && actionOf(e, view) !== 'absent');
+    const walls = here.filter((e) => e.type === 'Wall').map((e) => ({ id: e.id, p: resolveParams<WallParams>(doc, e) }));
+    const bounds = here.filter(isRoomBoundary).map((e) => ({ id: e.id, p: resolveParams<Shape2DParams>(doc, e) }));
+    const holes = roomHoles(walls, bounds);
     this.cache = { key: doc.elements, state: view.state, holes };
     return holes;
   }

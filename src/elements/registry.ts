@@ -29,6 +29,11 @@ export interface PlanContext {
   openingsIn(hostId: string): Element[];
   /** Alla element i vyn som syns, oavsett åtgärd. */
   visible(type?: string): Element[];
+  /**
+   * 2D-formerna som avgränsar rum (0.8.34) på ytan, i det visade
+   * tillståndet, också när 2D är släckt i Visa eller formen inte visas i vyn.
+   */
+  roomBounds(): Element[];
   /** Räkna ut något en gång per ritning och återanvänd det. */
   memo<T>(key: string, fn: () => T): T;
   /** Elementets parametrar med typens värden ifyllda. */

@@ -88,7 +88,7 @@ describe('Egen penna (0.8.31)', () => {
     const [a, b] = walls(doc);
     const store = new DocStore(doc);
     expect(ownPenSection(store.doc, [a])).toContain('Stilmallens');
-    expect(ownPenSection(store.doc, Object.values(doc.elements).filter((e) => e.type === 'Space').slice(0, 1))).toBe('');
+    expect(ownPenSection(store.doc, Object.values(doc.elements).filter((e) => e.type === 'Section').slice(0, 1))).toBe('');
     ownPenChange(store, [a.id], 'colorOn', select('own'));
     expect(store.doc.elements[a.id].pen?.color).toMatch(/^#/);
     // Olika i markeringen.

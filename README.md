@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.33** (alfa, pennor per typ och symbollinjer); nästa är **0.8.34, rum: kontur och rumsgränser**.
+**0.8.34** (alfa, rum: kontur och rumsgränser); nästa är **0.8.35, filtrera och markera**.
 
 ## Vad som fungerar
 
@@ -963,6 +963,20 @@ Version 0.8.32, granskning (samma filformat, 13):
   Referensritningarna har fått 2D-formerna, linjetyperna, masken och de
   egna pennorna
 - DXF-läsaren ligger i fyra mindre filer
+
+Version 0.8.34, rum: kontur och rumsgränser (samma filformat, 13):
+- **Rummens kontur**: pennan *Rummens kontur* i stilmallen, under *Penna
+  för rum*, med tjocklek, färg och linjetyp. Från början *Ingen linje*,
+  så rummen ser ut som förut. Ett rum kan få en egen penna under *Penna*
+  i egenskaperna, och en rumstyp under *Påverkar fler objekt*. Konturen
+  ligger under väggarna (som fyllningen) och syns mot öppningar och
+  rumsgränser
+- **Avgränsar rum**: en kryssruta för 2D-former i modellen, i
+  egenskaperna och smartmenyn. Linjen räknas då som en tunn vägg (1 mm)
+  när rummen räknas ut, för alkover och öppna planlösningar; rummen på
+  båda sidor får var sin kontur och area. Gäller också med pennan *Ingen
+  linje* och när 2D är släckt i Visa. En sluten form gör ett rum
+  innanför sig. Linjen ska nå väggen (snäpp mot väggens liv)
 
 Version 0.8.33, pennor per typ och symbollinjer (samma filformat, 13):
 - **Pennor för dörrar och fönster** i stilmallen, under *Pennor för

@@ -1,8 +1,8 @@
 import type { Element, Id, ProjectDoc, RoomNumbering } from '../core/model';
-import { boxOf, type Box } from '../geometry/boolean';
+import { boxOf, union, type Box, type Rings } from '../geometry/boolean';
 import { pointInRings } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
-import type { FillPattern } from './drawing2d';
+import { shapePoints, type FillPattern, type Shape2DParams } from './drawing2d';
 import type { PlanContext } from './registry';
 import { lastResults } from '../repr/reuse';
 import { bareWallUnion, wallFrame, type OpeningParams, type WallParams } from './wall';
@@ -10,16 +10,49 @@ import { bareWallUnion, wallFrame, type OpeningParams, type WallParams } from '.
 /**
  * Rummens konturer ur väggarna: väggarna slås ihop (utan öppningar), och
  * hålen i väggmassan är rummen. Ett rum som skapats genom att klicka i ett
- * hål minns punkten och följer väggarna när de flyttas.
+ * hål minns punkten och följer väggarna när de flyttas. 2D-linjer som
+ * avgränsar rum (0.8.34) räknas som tunna väggar.
  */
-export function roomHoles(walls: { id: string; p: WallParams }[]): Vec2[][] {
+export function roomHoles(walls: { id: string; p: WallParams }[], bounds: { id: string; p: Shape2DParams }[] = []): Vec2[][] {
   // Samma väggar ger samma hål (0.8.3): ett nytt rum eller en flyttad dörr räknar inte om dem.
-  return savedHoles(
-    walls.flatMap((w) => [w.id, w.p]),
-    () => bareWallUnion(walls).flatMap((poly) => poly.slice(1)),
-  );
+  return savedHoles([...walls.flatMap((w) => [w.id, w.p]), bounds.length, ...bounds.flatMap((b) => [b.id, b.p])], () => {
+    const mass = bareWallUnion(walls);
+    const all = bounds.length ? union([...mass, ...bounds.flatMap((b) => boundaryStrips(b.p))]) : mass;
+    return all.flatMap((poly) => poly.slice(1));
+  });
 }
 const savedHoles = lastResults<Vec2[][]>();
+
+/** Rumsgränsens bredd i mm (0.8.34): tunn nog att inte märkas i arean. */
+export const BOUNDARY_WIDTH = 1;
+
+/**
+ * En rumsgräns som tunna rektanglar, en per segment, förlängda lika mycket
+ * i båda ändar så att de säkert når väggen eller nästa segment.
+ */
+export function boundaryStrips(p: Pick<Shape2DParams, 'shape' | 'points' | 'closed' | 'bulges'>): Rings[] {
+  const { points, closed } = shapePoints(p);
+  const out: Rings[] = [];
+  const h = BOUNDARY_WIDTH / 2;
+  const n = closed ? points.length : points.length - 1;
+  for (let i = 0; i < n; i++) {
+    const a = points[i];
+    const b = points[(i + 1) % points.length];
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (len < 1e-6) continue;
+    const d: Vec2 = [((b[0] - a[0]) / len) * BOUNDARY_WIDTH, ((b[1] - a[1]) / len) * BOUNDARY_WIDTH];
+    const m: Vec2 = [(-d[1] * h) / BOUNDARY_WIDTH, (d[0] * h) / BOUNDARY_WIDTH];
+    const s: Vec2 = [a[0] - d[0], a[1] - d[1]];
+    const e: Vec2 = [b[0] + d[0], b[1] + d[1]];
+    out.push([[[s[0] + m[0], s[1] + m[1]], [e[0] + m[0], e[1] + m[1]], [e[0] - m[0], e[1] - m[1]], [s[0] - m[0], s[1] - m[1]]]]);
+  }
+  return out;
+}
+
+/** 2D-formerna som avgränsar rum (0.8.34), i modellen (inte på blad). */
+export function isRoomBoundary(el: Element): boolean {
+  return el.type === 'Shape2D' && !el.space && !!(el.params as { boundsRooms?: boolean }).boundsRooms;
+}
 
 /** Det minsta hålet som innehåller punkten. */
 export function holeAt(holes: readonly Vec2[][], pt: Vec2): Vec2[] | null {
@@ -56,7 +89,12 @@ function outsideBox(p: Vec2, b: Box): boolean {
 
 /** Hålen för väggarna som syns i en vy. */
 export function roomHolesFor(ctx: PlanContext): Vec2[][] {
-  return ctx.memo('room-holes', () => roomHoles(ctx.visible('Wall').map((el) => ({ id: el.id, p: ctx.params<WallParams>(el) }))));
+  return ctx.memo('room-holes', () =>
+    roomHoles(
+      ctx.visible('Wall').map((el) => ({ id: el.id, p: ctx.params<WallParams>(el) })),
+      ctx.roomBounds().map((el) => ({ id: el.id, p: ctx.params<Shape2DParams>(el) })),
+    ),
+  );
 }
 
 export interface SpaceParams {

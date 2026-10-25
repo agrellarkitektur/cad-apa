@@ -21,11 +21,17 @@ export const MARKER_PENS = [
   { key: 'litteraLeader', label: 'Litterans streck', hint: 'Från väggens littera in till väggen', weight: 0.18 },
 ] as const;
 
-export type MarkerPenKey = (typeof MARKER_PENS)[number]['key'];
+/**
+ * Rummens kontur (0.8.34), i samma tabell. Från början ingen linje (0);
+ * ett rum eller en rumstyp kan få en egen penna.
+ */
+export const ROOM_PENS = [{ key: 'roomOutline', label: 'Rummens kontur', hint: 'Ingen linje från början; ligger under väggarna', weight: 0 }] as const;
+
+export type MarkerPenKey = (typeof MARKER_PENS)[number]['key'] | (typeof ROOM_PENS)[number]['key'];
 
 /** Förvalet för en markörpenna. */
 export function defaultMarkerPen(key: MarkerPenKey): PenDef {
-  return { weight: MARKER_PENS.find((m) => m.key === key)!.weight };
+  return { weight: [...MARKER_PENS, ...ROOM_PENS].find((m) => m.key === key)!.weight };
 }
 
 /**

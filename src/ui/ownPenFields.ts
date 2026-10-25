@@ -12,7 +12,7 @@ import { lineTypeOptions } from './lineTypePick';
  */
 
 /** Sorterna som kan få en egen penna. 2D-formen har redan sin egen. */
-export const OWN_PEN_TYPES = new Set(['Wall', 'Door', 'Window', 'Roof', 'Furniture']);
+export const OWN_PEN_TYPES = new Set(['Wall', 'Door', 'Window', 'Roof', 'Furniture', 'Space']);
 
 /** Sorterna med en symboldel (slagbåge, öppningssätt). */
 const SYMBOL_TYPES = new Set(['Door', 'Window']);
@@ -70,7 +70,9 @@ export function ownPenSection(doc: ProjectDoc, els: readonly Element[]): string 
   // Det som gäller utan egen: typens om någon av typerna har fältet, annars stilmallens.
   const inherited = (part: Part, k: Field) => (defs.some((d) => partOf(d, part)?.[k] !== undefined) ? 'Typens' : 'Stilmallens');
   const any = els.some((e) => e.pen);
-  const note = SYMBOL_TYPES.has(type)
+  const note = type === 'Space'
+    ? 'Stilmallens penna för rummens kontur gäller från början (ingen linje). En egen ger rummet en kontur i planen, under väggarna; inte fyllningen och rumsstämpeln.'
+    : SYMBOL_TYPES.has(type)
     ? 'Typens eller stilmallens penna gäller från början. <i>Snitt</i> gäller karmar, dörrblad, bågar och glas, <i>Symbol</i> slagbågen och öppningssättet; inte fyllningar och text.'
     : 'Typens eller stilmallens penna gäller från början. En egen gäller objektets linjer och konturer i planen, fasaderna och sektionerna, men inte fyllningar och text.';
   return `<section class="own-pen">

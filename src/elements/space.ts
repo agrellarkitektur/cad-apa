@@ -1,4 +1,6 @@
+import type { Element } from '../core/model';
 import { markerPen } from '../repr/markerPens';
+import { effectivePen, withOwnPen } from '../repr/ownPen';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import type { ElementType } from './registry';
 import { closestOnSegment, pointInRings } from '../geometry/vec';
@@ -17,7 +19,7 @@ export type { SpaceParams } from './rooms';
  */
 export const spaceType: ElementType<SpaceParams> = {
   type: 'Space',
-  planReads: ['Wall', 'Space', 'Door'],
+  planReads: ['Wall', 'Space', 'Door', 'Shape2D'],
   label: 'Rum',
   labelPlural: 'Rum',
   drawOrder: 40,
@@ -33,7 +35,11 @@ export const spaceType: ElementType<SpaceParams> = {
     if (pts.length < 3) return [];
     const p = ctx.params<SpaceParams>(el);
     // Fyllningen (0.8.25) bakom väggarna; den räknas inte när man klickar.
-    const fill = p.fill && !ctx.view.hide?.includes('fill') ? fillPrims([pts], p as FillParams, { objectId: el.id, objectType: 'Space' }, true).map((q) => ({ ...q, noPick: true })) : [];
+    const fill: Primitive[] = p.fill && !ctx.view.hide?.includes('fill') ? fillPrims([pts], p as FillParams, { objectId: el.id, objectType: 'Space' }, true).map((q) => ({ ...q, noPick: true })) : [];
+    // Konturen (0.8.34): stilmallens penna, typens eller rummets egen; under väggarna som fyllningen.
+    const own = effectivePen(ctx.doc, el as unknown as Element);
+    const pen = own ? withOwnPen(markerPen(ctx.style, 'roomOutline'), own, ctx.style) : markerPen(ctx.style, 'roomOutline');
+    if (pen.weight > 0) fill.push({ kind: 'polyline', points: pts, closed: true, pen, under: true, noPick: true, origin: { objectId: el.id, objectType: 'Space', part: 'kontur' } });
     const c = centroidOf(pts);
     const origin = { objectId: el.id, objectType: 'Space', part: 'rumstext' };
     const { heights, align } = ctx.style.labels;

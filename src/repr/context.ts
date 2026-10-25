@@ -2,6 +2,7 @@ import type { ActionKey, StyleSheet } from '../core/graphics';
 import { onPaper, modelViewId, type Element, type Id, type ProjectDoc } from '../core/model';
 import { actionOf, existingState, type Action, type ViewStates } from '../core/states';
 import { homeOf, shownIn, type ViewIdentity } from '../core/visibility';
+import { isRoomBoundary } from '../elements/rooms';
 import { resolveParams, typeOf, type ElementType, type PlanContext, type PlanItem } from '../elements/registry';
 
 /**
@@ -79,6 +80,7 @@ export function createContext(
     doorAngleOf: (el) => style.actions[existingId && el.states.includes(existingId) ? 'existing' : 'new'].doorAngle,
     openingsIn: (hostId) => openingsByHost().get(hostId) ?? [],
     visible: (type) => visible.filter((v) => !type || v.el.type === type).map((v) => v.el),
+    roomBounds: () => onStorey.filter((e) => homeOf(e) === place && isRoomBoundary(e) && actionFor(e) !== 'absent'),
     memo: <T>(key: string, fn: () => T): T => {
       if (!memo.has(key)) memo.set(key, fn());
       return memo.get(key) as T;

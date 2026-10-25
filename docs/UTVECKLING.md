@@ -1187,6 +1187,26 @@ skriptet kräver bara att namnen motsvarar varandra. Referensritningarna
 - Borttaget, oanvänt: `pathLength` (`dash.ts`), typen `SectionQueue` och
   rensningen av bladens `items` (format 8) i `parse`
 
+## Rum: kontur och rumsgränser (0.8.34, format 13)
+
+Inga nya format: fälten är frivilliga.
+
+- **Konturen**: `ROOM_PENS` i `src/repr/markerPens.ts` (nyckeln
+  `roomOutline` i stilmallens `pens`, förval 0 = ingen linje), raden i
+  `penSection` (`src/ui/style/pens.ts`; tjockleken 0 får sparas för
+  pennor vars förval är 0). `spaceType.plan` ritar en sluten polylinje
+  med `under: true` och `part: 'kontur'` när pennan, med `effectivePen`
+  ovanpå, har en tjocklek. `Space` finns i `OWN_PEN_TYPES`
+- **Rumsgränserna**: `Shape2DParams.boundsRooms`. `roomHoles(walls,
+  bounds)` i `src/elements/rooms.ts` slår ihop väggmassan
+  (`bareWallUnion`, oförändrad för väggarnas utsida) med
+  `boundaryStrips` (1 mm breda rektanglar per segment, förlängda 1 mm i
+  ändarna) och sparar svaret för samma väggar och gränser.
+  `PlanContext.roomBounds()` ger gränserna på ytan i det visade
+  tillståndet, oberoende av Visa och Visas i; rumsverktyget tar dem ur
+  dokumentet (`isRoomBoundary`). `Space.planReads` har fått `Shape2D`.
+  Fältet: `boundsField` i `src/ui/shapeFields.ts` (`d2:boundsRooms`)
+
 ## Pennor per typ och symbollinjer (0.8.33, format 13)
 
 Inga nya format: fälten är frivilliga.

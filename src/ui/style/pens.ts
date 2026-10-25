@@ -1,6 +1,6 @@
 import type { StyleSheet } from '../../core/graphics';
 import type { PenDef } from '../../core/graphics';
-import { defaultMarkerPen, MARKER_PENS, type MarkerPenKey } from '../../repr/markerPens';
+import { defaultMarkerPen, MARKER_PENS, ROOM_PENS, type MarkerPenKey } from '../../repr/markerPens';
 import { defaultOpeningPen, OPENING_PENS, type OpeningPenKey } from '../../repr/openingPens';
 import { escapeHtml } from '../labels';
 import { lineTypeOptions } from '../lineTypePick';
@@ -38,6 +38,11 @@ export function penSection(style: StyleSheet): string {
     ${rows(OPENING_PENS)}
   </section>
   <section class="style-labels style-pens">
+    <h3>Penna för rum</h3>
+    <p class="note">Rummens kontur i planen, för alla rum utan egen penna på typen eller rummet. Konturen ligger under väggarna och syns mot öppningar och rumsgränser.</p>
+    ${rows(ROOM_PENS)}
+  </section>
+  <section class="style-labels style-pens">
     <h3>Pennor för pilar och markörer</h3>
     <p class="note">Gäller hela projektet, i planen, fasaderna, sektionerna och på bladen. Färgen gäller också markörens text. Svart följer skärmens tema. Linjetypen gäller linjerna; pilspetsar och trianglar är heldragna.</p>
     ${rows(MARKER_PENS)}
@@ -55,7 +60,7 @@ export function applyPenField(style: StyleSheet, input: HTMLInputElement | HTMLS
   const [key, field] = input.dataset.pen.split(':') as [string, 'weight' | 'color' | 'linetype'];
   const pens = (style.pens ??= {});
   const pen = { ...defaultPen(key), ...pens[key] };
-  if (field === 'weight' && Number(input.value) > 0) pen.weight = Number(input.value);
+  if (field === 'weight' && (Number(input.value) > 0 || defaultPen(key).weight === 0)) pen.weight = Number(input.value);
   if (field === 'color') {
     const c = fromHex(input.value);
     if (c === 'ink' || c === 'paper') delete pen.color;

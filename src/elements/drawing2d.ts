@@ -103,6 +103,11 @@ export interface Shape2DParams {
   fillFront?: boolean;
   /** Linjen ritas bakom väggarna (0.8.25); utelämnad = framför, som förut. */
   lineBehind?: boolean;
+  /**
+   * Avgränsar rum (0.8.34): linjen räknas som en tunn vägg när rummen räknas
+   * ut, för alkover och öppna planlösningar. Gäller också med pennan 0.
+   */
+  boundsRooms?: boolean;
 }
 
 /** Fyllningens inställningar, samma för 2D-former och rum (0.8.25). */

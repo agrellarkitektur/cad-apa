@@ -1267,6 +1267,19 @@ Carl Augusts synpunkter 25 oktober. Mellanstor, en session.
   räknas som en vägg när rummen räknas ut, för alkover och öppna
   planlösningar. Med pennan 0 syns den inte
 
+*Byggd (25 oktober), samma format (13). Claudes val: pennan heter
+*Rummens kontur* och står under *Penna för rum* i stilmallen, med
+förvalet *Ingen linje*. Ett rum och en rumstyp kan få en egen penna,
+som väggarna. Konturen ritas under väggarna, så den syns bara mot
+öppningar och rumsgränser. *Avgränsar rum* finns för alla 2D-former i
+modellen (inte på blad), i egenskaperna och smartmenyn men inte i
+verktyget; linjen räknas som en 1 mm bred vägg, förlängd 1 mm i
+ändarna, så arean minskar bara med några kvadratcentimeter. Gränserna
+gäller också när 2D är släckt i Visa eller formen inte visas i vyn,
+eftersom rummen annars skulle ändras med vyn. Ett rum som ritats för
+hand (utan klickpunkt) följer inte gränserna, liksom det inte följer
+väggarna.*
+
 ### 0.8.35 Filtrera och markera
 
 Carl Augusts synpunkt 25 oktober. Mellanstor, en session.
