@@ -1,10 +1,17 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.33.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.34.
 
 ## Läget
 
+- **0.8.34 Rum: kontur och rumsgränser är klar** på `main` (samma
+  format, 13). Pennan *Rummens kontur* i stilmallen (förval *Ingen
+  linje*), egen penna per rum och rumstyp (`Space` i `OWN_PEN_TYPES`),
+  konturen under väggarna. Kryssrutan *Avgränsar rum* på 2D-former i
+  modellen: linjen blir en 1 mm vägg när rummen räknas ut, också med
+  pennan 0 och 2D släckt. Claudes val i PLAN.md, koden i UTVECKLING.md.
+  Testerna: 405 på ca 10 s.
 - **0.8.33 Pennor per typ och symbollinjer är klar** på `main` (samma
   format, 13). Dörrarnas och fönstrens delar i tre klasser i stilmallen
   (snitt 0,25, vy 0,18, symbol 0,13 mm), den egna pennan i två delar
@@ -89,8 +96,7 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.29 Bakgrund i fyllningar och ändformer~~,
   ~~0.8.30 Linjetyper och mask~~, ~~0.8.31 Linjetyp och penna per
   objekt~~, ~~0.8.32 Granskning~~, ~~0.8.33 Pennor per typ och
-  symbollinjer~~ (klara)
-- **0.8.34 Rum: kontur och rumsgränser** (*Avgränsar rum* på 2D-linjer)
+  symbollinjer~~, ~~0.8.34 Rum: kontur och rumsgränser~~ (klara)
 - **0.8.35 Filtrera och markera** (sort, typ, tillstånd, åtgärd, våning,
   egenskaper)
 - **0.8.36 Egna fyllningstyper** (linjefamiljer med streckning; kanske
@@ -118,17 +124,25 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.33 syns på webbhotellet (numret vid alfa-knappen) och
-hur pennorna känns (frågorna nedan). Läs synpunktsfilen och sortera ny
-Inkorg. Bygg sedan **0.8.34 Rum: kontur och rumsgränser** (PLAN.md):
-rummens kontur med penna i stilmallen och egen per rum (från början
-ingen kontur), och kryssrutan *Avgränsar rum* på en 2D-linje, som då
-räknas som en vägg när rummen räknas ut. Mellanstor, en session. Rummet
-finns inte i `OWN_PEN_TYPES` (`src/ui/ownPenFields.ts`) än. 0.8.35 är
-en granskning enligt tumregeln (var tredje version) om inget annat
-bestäms; föreslå den efter 0.8.34 eller 0.8.35.
+Fråga först om 0.8.34 syns på webbhotellet (numret vid alfa-knappen) och
+hur rumsgränserna och konturen känns (frågorna nedan). Läs
+synpunktsfilen och sortera ny Inkorg. Enligt tumregeln (var tredje
+version) är det dags att föreslå en granskning efter 0.8.35; bygg sedan
+**0.8.35 Filtrera och markera** (PLAN.md): välj sort, typ, tillstånd,
+åtgärd, våning, egen penna och egna egenskaper; ersätt, lägg till eller
+dra ifrån markeringen. Mellanstor, en session.
 
 ## Att fråga Carl August om
+
+- **0.8.34 efter provning** (Claudes val, se PLAN.md): att konturen
+  ligger under väggarna (halva linjen syns längs väggens liv, hela mot en
+  rumsgräns och i öppningar); att *Avgränsar rum* inte finns i
+  2D-verktyget, bara i egenskaperna och smartmenyn; att gränsen gäller
+  också när 2D är släckt i Visa; att linjen måste nå väggen (annars blir
+  det en vägg som slutar i rummet och rummet delas inte). Ska en
+  rumsgräns som inte syns (pennan 0) visas tonad när *Visa dolda
+  2D-element* är på? Ska rumsstämpelns pil och konturen stå tillsammans
+  under *Penna för rum* i stilmallen?
 
 - **0.8.33 efter provning** (Claudes val, se PLAN.md): förvalen snitt
   0,25, vy 0,18 och symbol 0,13 mm; att dörrbladen (0,35 → 0,18) och
