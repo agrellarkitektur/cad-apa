@@ -111,6 +111,8 @@ export interface UiSettings {
   nudgeLarge: number;
   /** 3D-vyn klipps längs en öppen sektion och visar snittytorna (0.8). */
   followSection: boolean;
+  /** 3D-vyn visar bara våningen som är vald, inte alla (0.9). */
+  storeyOnly3d: boolean;
   /** Läget Båda: planens andel av ritytans bredd, 0,15–0,85 (0.8.4). */
   split: number;
 }
@@ -158,6 +160,7 @@ export function defaultUiSettings(): UiSettings {
     nudge: 10,
     nudgeLarge: 100,
     followSection: true,
+    storeyOnly3d: false,
     split: 0.5,
   };
 }
@@ -193,6 +196,7 @@ export function loadUiSettings(): UiSettings {
       nudge: num(raw.nudge, 1, 10000, d.nudge),
       nudgeLarge: num(raw.nudgeLarge, 1, 100000, d.nudgeLarge),
       followSection: typeof raw.followSection === 'boolean' ? raw.followSection : d.followSection,
+      storeyOnly3d: typeof raw.storeyOnly3d === 'boolean' ? raw.storeyOnly3d : d.storeyOnly3d,
       split: num(raw.split, SPLIT.min, SPLIT.max, d.split),
     };
   } catch {

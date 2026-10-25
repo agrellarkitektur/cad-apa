@@ -223,6 +223,19 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
     }
     return true;
   }
+  if (scope === 'wall' && name === 'storeyHeight') {
+    // Väggens höjd följer våningen (0.9), eller är ett eget mått.
+    const on = (input as HTMLInputElement).checked;
+    store.transact(on ? 'Följ våningshöjden' : 'Egen höjd', (tx) => {
+      for (const id of ids) {
+        const el = tx.doc.elements[id];
+        if (el?.type !== 'Wall') continue;
+        const { height: _h, ...rest } = el.params;
+        tx.putElement({ ...el, params: on ? rest : { ...rest, height: resolveParams<WallParams>(tx.doc, el).height } });
+      }
+    });
+    return true;
+  }
   if (scope === 'wall' && name === 'radius') {
     const el = doc.elements[ids[0]];
     const p = el?.params as unknown as WallParams;

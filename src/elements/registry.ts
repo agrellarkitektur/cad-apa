@@ -1,5 +1,5 @@
 import type { ActionKey, ActionStyle, StyleSheet } from '../core/graphics';
-import type { Element, ProjectDoc } from '../core/model';
+import type { Element, ProjectDoc, Storey } from '../core/model';
 import type { Action, ViewStates } from '../core/states';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import type { Shape3D } from '../repr/solids';
@@ -72,6 +72,16 @@ export interface ElementType<P extends object = Record<string, unknown>> {
    * är markerat för: norrpil, fasad- och sektionslinjer.
    */
   global?: boolean;
+  /**
+   * Hör till projektet, inte till en våning (0.9): fasad- och sektionslinjer
+   * och norrpilen ritas i alla planer. Elementets `storey` används inte.
+   */
+  everyStorey?: boolean;
+  /**
+   * Förval som följer elementets våning (0.9), t.ex. väggens höjd. Gäller när
+   * varken elementet eller typen har ett eget värde.
+   */
+  storeyParams?: (storey: Storey) => Record<string, unknown>;
   /** Om elementet måste sitta i ett annat (dörrar och fönster i väggar). */
   hosted?: boolean;
   /**
@@ -137,14 +147,16 @@ export function resolveParams<P>(doc: ProjectDoc, el: Element<any>): P {
   const def = el.definition ? doc.definitions[el.definition] : undefined;
   // Samma element och samma definition ger samma objekt (0.8.3), så att
   // cacharna i planen kan jämföra parametrar med ===. Det får inte ändras.
-  const hit = resolved.get(el);
-  if (hit && hit.def === def) return hit.out as P;
   const t = types.get(el.type);
-  const out: Record<string, unknown> = { ...(t?.defaults() ?? {}), ...(def?.params ?? {}), ...el.params };
+  // Det som följer våningen (0.9), t.ex. väggens höjd; våningslistan byts ut när en våning ändras.
+  const storey = t?.storeyParams ? doc.storeys.find((s) => s.id === el.storey) : undefined;
+  const hit = resolved.get(el);
+  if (hit && hit.def === def && hit.storey === storey) return hit.out as P;
+  const out: Record<string, unknown> = { ...(t?.defaults() ?? {}), ...(storey ? t!.storeyParams!(storey) : {}), ...(def?.params ?? {}), ...el.params };
   if (def && t?.typeParams) for (const k of t.typeParams) if (k in def.params) out[k] = def.params[k];
   if (import.meta.env?.DEV) Object.freeze(out);
-  resolved.set(el, { def, out });
+  resolved.set(el, { def, storey, out });
   return out as P;
 }
 
-const resolved = new WeakMap<Element<any>, { def: unknown; out: Record<string, unknown> }>();
+const resolved = new WeakMap<Element<any>, { def: unknown; storey: unknown; out: Record<string, unknown> }>();

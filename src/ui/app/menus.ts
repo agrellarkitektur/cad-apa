@@ -132,6 +132,8 @@ export function installMenus(app: AppContext) {
     // Ritordning (0.8.25).
     const order = orderMenuItems(app, els);
     if (order.length) items.push({ kind: 'sep' }, ...order);
+    // Flytta och kopiera till en annan våning (0.9).
+    if (!app.ui.marker && !app.ui.worksheet && !app.ui.layout) items.push(...app.storeys.menuItems());
     // Underlag, fasader och annat som hör till ritningen finns i alla tillstånd, liksom det som är ritat på ett blad eller mallblad (0.8.9).
     const doc = app.store.doc;
     const onPaper = (e: (typeof els)[number]) => doc.sheets.some((s) => s.id === e.space) || doc.worksheets.some((w) => w.id === e.space && paperSpace(w));

@@ -1392,18 +1392,65 @@ men lämnat: DXF-underlag ritas om (markup och målning) vid varje
 ritade per underlag kräver ett eget lager och är större än en
 granskning.*
 
-### 0.9 Flera våningsplan och bjälklag · *nytt format*
+### 0.9 Flera våningsplan · *nytt format (14)*
 
-*Framflyttad från 0.14.*
+*Framflyttad från 0.14. Delad i 0.9, 0.9.1 och 0.9.2, en session var
+(Carl August 25 oktober).*
 
-- Våningsplan med egna nivåer och höjder; nytt, byt namn, ta bort, kopiera
-  väggar till ett annat plan
-- Planvyer per våning, och visa våningen under tonad
-- Bjälklag: kontur (ritad eller ur ytterväggarna), tjocklek, håltagning
-- Fasader, sektioner och 3D visar alla våningar; mått för fri höjd och
-  bjälklag i sektioner
+- Ny våning ovanför eller under, med golvnivån räknad från grannen
+  (golvnivå + våningshöjd). Byt namn, ändra nivå, ta bort (med objekt
+  och vyer, efter fråga)
+- Byta våning i projektträdet, med Page Up och Page Down och i smartshell
+- Kopiera eller flytta det markerade till en annan våning; dörrar och
+  fönster följer väggen
+- Väggarnas höjd följer våningshöjden från början, men kan sättas till
+  ett eget mått
+- Vyinställning i planen: våningen under (eller över) visas tonad
+- 3D visar alla våningar, med *Bara den här våningen* som val
+- Fasader och sektioner visar alla våningar och hör till projektet;
+  linjerna syns i alla planer (att välja våningar väntar till efter
+  piloten)
 - Fel (synpunkt 20 oktober): ändras golvnivån flyttas konturerna och
   karmarna i 3D, men inte ytorna och fönsterhålen
+
+*Byggd (25 oktober), format 14 (väggens höjd kan saknas och följer då
+våningen). Claudes val: en ny våning ovanför flyttar våningarna som
+redan ligger ovanför lika mycket (och under likaså), och en ändrad
+våningshöjd flyttar dem ovanför, som i ArchiCAD; golvnivån ändras bara
+för våningen själv. Nya våningar heter Plan 2, Plan 3 … och Källarplan.
+Att ta bort en våning tar bort det som är ritat på den och dess vyer
+(också på bladen); fasader, sektioner och det som är ritat i dem finns
+kvar. Flytta och kopiera finns i högerklicksmenyn (*Till våning*, en rad
+per våning) och smartshell, inte i smartmenyn; kopian finns i samma
+tillstånd som originalet. Den tonade våningen är ett val i *Kalkera*
+(Våningen under, Våningen över), så den sparas i vyn och har
+kalkeringens färg och opacitet; fasad- och sektionslinjerna ritas inte
+i den. *Bara den här våningen* gäller för användaren, inte vyn.
+Norrpilen hör också till projektet. Sektionen får en nivåkot för varje
+våning (de riktiga nivåmarkeringarna kommer i 0.9.2). Ett tak hör
+fortfarande till en våning, och väggarna kapas bara av tak på samma
+våning; riktiga tak kommer i 0.10.*
+
+### 0.9.1 Bjälklag · *nytt format (15)*
+
+- Nytt objekt med littera (BJ01 …) och tjocklek per typ
+- Ligger på våningen det är golv i: ovansidan i golvnivån, tjockleken
+  nedåt. Plattan på mark är bjälklaget i plan 1
+- Konturen ritas, eller tas ur ytterväggarna (till väggarnas insida, så
+  att väggarna går obrutna golv till golv i sektionen) och följer med när
+  de flyttas
+- Håltagning, med kryss i planen
+- Syns i 3D, fylls som väggarna i sektioner och ritas som kant i fasader
+- Rummens tunna golvskiva (30 mm) försvinner där det finns ett bjälklag
+
+### 0.9.2 Nivåer · *troligen samma format*
+
+Blir 0.9.1 liten kan 0.9.2 läggas i den.
+
+- Nivåmarkering per våning i sektioner och fasader, automatiskt.
+  Relativa nivåer: ±0 är plan 1:s golv. Höjd över havet (RH 2000) kommer
+  med koordinatversionen efter 0.12
+- Mått för fri höjd och bjälklagets tjocklek i sektioner
 
 ### 0.10 Tak · *nytt format*
 

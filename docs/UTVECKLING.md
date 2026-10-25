@@ -1155,6 +1155,46 @@ projekt i 1 982 jämförelser.
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
 
+## Flera våningsplan (0.9, format 14)
+
+- **Format 14**: väggens `height` kan saknas och följer då våningshöjden.
+  Det sköts av `storeyParams` på elementtypen (`registry.ts`): förval
+  som läses ur elementets våning i `resolveParams`, efter typens
+  `defaults` och före definitionens och elementets egna parametrar.
+  Cachen i `resolveParams` jämför också våningen (våningslistan byts ut
+  när en våning ändras, så objektet är nytt). Kryssrutan *Våningshöjd* tar
+  bort eller sätter `height` (`wall:storeyHeight` i `selectionEdits.ts`).
+- **`everyStorey`** på elementtypen (fasad, sektion, norrpil): hör till
+  projektet. `createContext` tar med dem i alla planer; deras `storey`
+  används inte (sätts till grannvåningen när deras våning tas bort).
+  `modelBounds(doc, storey?)` räknar med alla våningar när ingen anges,
+  så automatiska fasadlinjer omsluter hela huset.
+- **Våningarna** i `src/core/storeys.ts`: `addStorey` (golvnivån från
+  grannen, de ovanför eller under flyttas), `storeyPatch` (en ändrad
+  våningshöjd flyttar de ovanför; används av `saveStorey`),
+  `deleteStorey` (objekt, vyer, vyer på blad och trädets plats; det som
+  hör till projektet eller är ritat i en fasad, sektion eller på ett blad
+  flyttas till grannen), `toStorey` (flytta eller kopiera; kopian går
+  genom `copyPayload`/`pasteClip` med `keepStates`) och `tracedStorey`
+  (`trace` = `våning:under` eller `våning:över`).
+- **3D, fasader och sektioner**: `modelShapes` i
+  `src/repr/storeyShapes.ts` bygger formerna våning för våning (egen
+  `createContext`, så att väggar på olika våningar inte skarvas) och
+  lyfter dem med `liftShape`, som flyttar `z0`/`z1`, urtagen (`cuts`)
+  och de sneda planen (`top`/`bottom`); förut flyttades bara höjderna,
+  vilket var felet med golvnivån. `buildModel3d(doc, view, only?)`
+  har inte längre en våning som andra argument. `buildSection` räknar i
+  verkliga höjder (`z0 = 0`) och har en nivåkot per våning; 3D-vyns
+  klippning likaså.
+- **Gränssnittet** i `src/ui/app/storeys.ts` (`app.storeys`): `create`,
+  `step` (Page Up/Down i `keyboard.ts`), `remove` (med fråga),
+  `moveTo`, `menuItems` (högerklick, `menus.ts`) och `chooseTarget`
+  (smartshell). Kommandona heter `storey-*` i `commandRegistry.ts`.
+  Knappen *Bara den här våningen* i `pane3d.ts` (`storeyOnly3d` i
+  gränssnittsinställningarna); knapparna nere till höger i 3D ligger i
+  `.pane3d-tools`.
+- Tester: `tests/v09.test.ts`.
+
 ## Granskning (0.8.38, format 13)
 
 Utan nya funktioner. Kontrollerat med samma klick i 0.8.37 och 0.8.38

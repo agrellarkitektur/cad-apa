@@ -34,7 +34,13 @@ export type CommandAction =
   | 'order-backward'
   | 'order-forward'
   | 'order-front'
-  | 'filter-select';
+  | 'filter-select'
+  | 'storey-up'
+  | 'storey-down'
+  | 'storey-new-above'
+  | 'storey-new-below'
+  | 'storey-move'
+  | 'storey-copy';
 
 export interface CommandDef {
   /** Unikt id; samma som verktygets, 2D-formens eller Modifiera-knappens när det finns ett. */
@@ -126,6 +132,13 @@ export const COMMANDS: CommandDef[] = [
   A('order-forward', 'Fram', ['fram'], ['bringforward'], 'det markerade, ett steg'),
   A('order-front', 'Främst', ['främst'], ['bringtofront', 'drawfront'], 'det markerade'),
   A('filter-select', 'Filtrera och markera', ['filtrera', 'fm'], ['qselect', 'filter', 'fi']),
+  // Våningar (0.9).
+  A('storey-up', 'Våningen ovanför', ['uppåt', 'vö'], ['storeyup', 'pgup'], 'Page Up'),
+  A('storey-down', 'Våningen under', ['nedåt', 'vu'], ['storeydown', 'pgdn'], 'Page Down'),
+  A('storey-new-above', 'Ny våning ovanför', ['nyvåning', 'nyv'], ['newstorey', 'storey']),
+  A('storey-new-below', 'Ny våning under', ['nyvåningunder', 'nvu'], ['newstoreybelow']),
+  A('storey-move', 'Flytta till våning', ['tillvåning', 'tv'], ['tostorey'], 'det markerade'),
+  A('storey-copy', 'Kopiera till våning', ['kopieratillvåning', 'ktv'], ['copytostorey'], 'det markerade'),
   A('help', 'Alla kommandon', ['hjälp', '?'], ['help']),
 ];
 

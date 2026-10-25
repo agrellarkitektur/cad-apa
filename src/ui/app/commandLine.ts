@@ -137,7 +137,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     running = true;
     try {
       if (c.rail) pressRail(c.rail);
-      else if (c.action === 'erase') erase();
+      else if (c.action) action(c);
     } finally {
       running = false;
     }

@@ -106,7 +106,7 @@ function referenceSet(name: string, doc: ProjectDoc) {
       });
     }
     it('3D', async () => {
-      await expect(model(buildModel3d(doc, storey, compare))).toMatchFileSnapshot(file(`${name}-3d`));
+      await expect(model(buildModel3d(doc, compare))).toMatchFileSnapshot(file(`${name}-3d`));
     });
   });
 }
@@ -130,7 +130,7 @@ describe('detaljnivåer', () => {
   });
   it('3D och fasad i detalj, planen i skiss', async () => {
     const view = { ...compare, detail: 'sketch' as const, modelDetail: 'detail' as const };
-    await expect(model(buildModel3d(doc, storey, view))).toMatchFileSnapshot(file('nivaer-3d-detalj'));
+    await expect(model(buildModel3d(doc, view))).toMatchFileSnapshot(file('nivaer-3d-detalj'));
     await expect(drawing(buildSection(doc, 'fasad-1', view)!.prims)).toMatchFileSnapshot(file('nivaer-fasad-1-detalj'));
   });
 });

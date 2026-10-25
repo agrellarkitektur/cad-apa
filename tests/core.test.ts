@@ -344,7 +344,7 @@ describe('3D', () => {
   it('väggar, dörrar och fönster blir 3D-former, rivet syns inte', async () => {
     const { buildModel3d } = await import('../src/repr/model3d');
     const doc = sampleProject();
-    const solids = buildModel3d(doc, 'pl-1', { state: 'st-a', compareTo: 'st-bef' });
+    const solids = buildModel3d(doc, { state: 'st-a', compareTo: 'st-bef' });
     const ids = new Set(solids.map((s) => s.id));
     expect(ids.has('iv-4')).toBe(true); // ny vägg i A
     expect(ids.has('iv-3')).toBe(false); // rivs i A
@@ -354,7 +354,7 @@ describe('3D', () => {
 
   it('väggen är en hel kropp med öppningarna som urtag', async () => {
     const { buildModel3d } = await import('../src/repr/model3d');
-    const shapes = buildModel3d(sampleProject(), 'pl-1', { state: 'st-bef' });
+    const shapes = buildModel3d(sampleProject(), { state: 'st-bef' });
     const south = shapes.filter((s) => s.id === 'yv-s' && s.kind !== 'edges');
     expect(south).toHaveLength(1);
     const cuts = (south[0] as Solid).cuts ?? [];

@@ -175,6 +175,12 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
           app.selection.clear();
         }
         break;
+      case 'PageUp':
+      case 'PageDown':
+        // Våningen ovanför eller under (0.9).
+        e.preventDefault();
+        app.storeys.step(e.key === 'PageUp' ? 1 : -1);
+        break;
       case '2':
         void app.setMode('2d');
         break;

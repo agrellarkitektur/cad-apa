@@ -1,14 +1,25 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.38.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.9.
 
 ## Läget
 
-- **0.8 är klar** med 0.8.38 Granskning; nästa är **0.9 Flera
-  våningsplan och bjälklag** (nytt format). Carl Augusts önskan 25
-  oktober gäller fortfarande: inga fler 0.8.xx, och nya synpunkter
-  ryms i de versioner som redan finns i planen eller läggs i en senare.
+- **0.9 Flera våningsplan är klar** på `main` (format 14). 0.9 är delad
+  i tre (bekräftat av Carl August 25 oktober): **0.9.1 Bjälklag** (format
+  15) är nästa, sedan **0.9.2 Nivåer**. Punkterna står i PLAN.md och i
+  synpunktsfilen under *Planerat per version*. Nya synpunkter ryms i de
+  versioner som redan finns i planen eller läggs i en senare.
+- **0.9**: ny våning ovanför och under (golvnivån från grannen, de som
+  redan ligger där flyttas), byta våning (trädet, Page Up/Down,
+  smartshell), ta bort med fråga, flytta och kopiera till våning
+  (högerklick, smartshell), väggarnas höjd följer våningshöjden (format
+  14), kalkera våningen under eller över, 3D med alla våningar och *Bara
+  den här våningen*, fasader och sektioner med alla våningar och linjerna
+  i alla planer, felet med golvnivån i 3D. Claudes val i PLAN.md, koden i
+  UTVECKLING.md under *Flera våningsplan (0.9)*. Testerna: 432 på ca 10 s.
+  Klickjämförelsen kördes inte (referensritningarna är oförändrade); de
+  nya delarna provades med Playwright mot `dist/`.
 - **0.8.38 Granskning är klar** på `main` (samma format, 13, utan nya
   funktioner). DXF-underlag med grus och mark (mönster vars linjer är
   förskjutna hundratals linjeavstånd) ritas som klippta streck i stället
@@ -103,9 +114,10 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   objekt~~, ~~0.8.32 Granskning~~, ~~0.8.33 Pennor per typ och
   symbollinjer~~, ~~0.8.34 Rum: kontur och rumsgränser~~,
   ~~0.8.35 Filtrera och markera~~, ~~0.8.36 Egna fyllningstyper~~,
-  ~~0.8.37 Detaljnivåer och fyllningar~~, ~~0.8.38 Granskning~~ (klara)
-- **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
-  i 3D)
+  ~~0.8.37 Detaljnivåer och fyllningar~~, ~~0.8.38 Granskning~~,
+  ~~0.9 Flera våningsplan~~ (klara)
+- **0.9.1 Bjälklag** (nytt format, 15)
+- **0.9.2 Nivåer** (nivåmarkering, fri höjd; kan läggas i 0.9.1 om den blir liten)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade,
   footprint streckad genom taket som vyinställning)
 - **0.10.1 Dolda linjer i fasader** (närmaste bjälklag och väggarnas
@@ -126,17 +138,28 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.38 syns på webbhotellet och om något beter sig
-annorlunda (det ska inte; DXF-underlag med grus och mark ska komma
-fortare och se ut som i AutoCAD). Fråga också om 0.8.37 (frågorna
-nedan), om han inte svarat. Läs synpunktsfilen och sortera ny Inkorg.
-Gör sedan **0.9 Flera våningsplan och bjälklag** (nytt format, stor):
-läs *0.9* i PLAN.md och föreslå först hur den delas, eftersom den
-troligen behöver mer än en session (våningsplan med nivåer och
-höjder, planvyer per våning med våningen under tonad, bjälklag, alla
-våningar i fasader, sektioner och 3D, felet med golvnivån i 3D).
+Fråga först om 0.9 syns på webbhotellet och hur våningarna fungerar
+(frågorna nedan). Läs synpunktsfilen och sortera ny Inkorg. Gör sedan
+**0.9.1 Bjälklag** (nytt format, 15): läs *0.9.1* i PLAN.md. Bjälklaget
+är ett nytt objekt med en egen modelShapes-form (`src/repr/storeyShapes.ts`
+lyfter den till golvnivån), och rummens golvskiva (30 mm) ska bort där
+det finns ett bjälklag. Ett granskningsförslag kommer efter 0.9.2 (förra
+granskningen var 0.8.38).
 
 ## Att fråga Carl August om
+
+- **0.9 efter provning** (Claudes val, se PLAN.md): att en ny våning
+  ovanför flyttar dem som redan ligger ovanför, och att en ändrad
+  våningshöjd flyttar våningarna ovanför (golvnivån gäller bara våningen
+  själv); namnen Plan 2 … och Källarplan; att Ta bort också tar bort
+  vyerna av våningen från bladen; att Flytta/Kopiera till våning finns i
+  högerklicksmenyn och smartshell men inte i smartmenyn, och att kopian
+  får samma tillstånd som originalet; att den tonade våningen är ett val i
+  Kalkera (med kalkeringens färg och opacitet); att *Bara den här
+  våningen* gäller för honom, inte per vy; att norrpilen också hör till
+  projektet. Taket hör fortfarande till en våning (väggarna på plan 2
+  kapas inte av ett tak på plan 1); flytta taket till översta våningen
+  tills 0.10.
 
 - **0.8.38 efter provning**: inget nytt att prova; allt ska bete sig som
   förut. Ett DXF-underlag med grus, mark och liknande mönster ska ritas

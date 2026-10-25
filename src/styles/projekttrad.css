@@ -417,12 +417,17 @@
   padding: 0 4px 0 8px;
 }
 
-/* Följ sektionen i 3D-vyn (0.8). */
-.follow-section {
+/* Knapparna nere till höger i 3D-vyn: Bara den här våningen (0.9) och Följ sektionen (0.8). */
+.pane3d-tools {
   position: absolute;
   z-index: 3;
   right: 12px;
   bottom: 12px;
+  display: flex;
+  gap: 8px;
+}
+
+.follow-section {
   display: inline-flex;
   align-items: center;
   gap: 6px;

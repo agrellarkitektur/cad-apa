@@ -73,5 +73,22 @@ export function runAction(app: AppContext, c: CommandDef, line: { waitForSelecti
     case 'filter-select':
       app.filterSelect.open();
       break;
+    case 'storey-up':
+      app.storeys.step(1);
+      break;
+    case 'storey-down':
+      app.storeys.step(-1);
+      break;
+    case 'storey-new-above':
+      app.storeys.create('above');
+      break;
+    case 'storey-new-below':
+      app.storeys.create('below');
+      break;
+    case 'storey-move':
+    case 'storey-copy':
+      if (!app.selection.size) line.waitForSelection(c);
+      else app.storeys.chooseTarget(c.action === 'storey-copy');
+      break;
   }
 }

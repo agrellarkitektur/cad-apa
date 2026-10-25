@@ -46,7 +46,7 @@ function add<P extends object>(id: Id, t: string, params: P, extra: Partial<Elem
 }
 
 const wall = (id: Id, def: Id, start: [number, number], end: [number, number], states = ALL) =>
-  add<Omit<WallParams, 'thickness'>>(id, 'Wall', { start, end, height: 2700, justification: 'center' }, { definition: def, states });
+  add<Omit<WallParams, 'thickness' | 'height'>>(id, 'Wall', { start, end, justification: 'center' }, { definition: def, states });
 
 const door = (id: Id, def: Id, host: Id, at: number, swing: 1 | -1, states = ALL, glazed = false) =>
   add<Pick<DoorParams, 'at' | 'swing' | 'hinge' | 'glazed'>>(

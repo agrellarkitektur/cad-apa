@@ -55,7 +55,7 @@ describe('Detaljnivå per del av vyn (0.8.37)', () => {
   });
 
   it('3D följer sin egen nivå', () => {
-    const count = (view: Partial<ViewStates>) => buildModel3d(doc, storey, { state, ...view }).length;
+    const count = (view: Partial<ViewStates>) => buildModel3d(doc, { state, ...view }).length;
     expect(count({ detail: 'normal', modelDetail: 'sketch' })).toBe(count({ detail: 'sketch' }));
     expect(count({ detail: 'sketch', modelDetail: 'detail' })).toBe(count({ detail: 'detail' }));
     expect(count({ detail: 'sketch' })).toBeLessThan(count({ detail: 'detail' }));

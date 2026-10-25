@@ -1,14 +1,14 @@
 import type { StyleSheet } from '../core/graphics';
-import type { Id, ProjectDoc } from '../core/model';
+import type { Element, Id, ProjectDoc } from '../core/model';
 import type { Action, ViewStates } from '../core/states';
 import { markerFrame, markerName } from '../elements/markers';
-import { typeOf, type PlanItem } from '../elements/registry';
+import { typeOf } from '../elements/registry';
 import { difference, union, type Rings } from '../geometry/boolean';
 import { clipDepth, clipPlane, clipSegAxis, clipSegDepth, featureEdges, visibleSegments, type Seg, type V3 } from '../geometry/hiddenLine';
 import { roofPlanes, type RoofParams } from '../elements/roof';
 import { slopeSymbol, type RoofSlopeParams } from '../elements/roofSlope';
 import type { PlanContext } from '../elements/registry';
-import { createContext } from './context';
+import { modelShapes } from './storeyShapes';
 import { markerPen, solidPen, withWeight } from './markerPens';
 import { applyOwnPen, effectivePen, ownPenOf } from './ownPen';
 import { ownedOutlines } from './outlineOwners';
@@ -82,33 +82,23 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   if (!marker || (marker.type !== 'Section' && marker.type !== 'Elevation')) return null;
   const fr = markerFrame(doc, marker);
   const isSection = marker.type === 'Section';
-  const storey = doc.storeys.find((s) => s.id === marker.storey);
-  const z0 = storey?.elevation ?? 0;
+  // Alla våningar (0.9), var och en redan lyft till sin golvnivå.
+  const z0 = 0;
   const O = fr.start;
   const r = fr.right;
   const v = fr.view;
-  const toView = (x: number, y: number, z: number): V3 => [(x - O[0]) * r[0] + (y - O[1]) * r[1], z + z0, (x - O[0]) * v[0] + (y - O[1]) * v[1]];
+  const toView = (x: number, y: number, z: number): V3 => [(x - O[0]) * r[0] + (y - O[1]) * r[1], z, (x - O[0]) * v[0] + (y - O[1]) * v[1]];
   const depthMax = fr.depth;
   // Sektionen ritas bara så långt som linjen går.
   const uMax = Math.hypot(fr.end[0] - fr.start[0], fr.end[1] - fr.start[1]);
 
   // Formerna, med åtgärd. Det som rivs byggs för sig, så att det inte
-  // påverkar skarvarna i det som står kvar.
-  // Modellen på våningen; 2D-elementen i fasaden eller sektionen ritas för sig (se buildPlan med `place`).
-  const { ctx, visible } = createContext(doc, marker.storey, { ...view, place: undefined, viewId: undefined }, style, (t) => !!(t.model3d || t.model3dBatch));
-  const groups = new Map<string, PlanItem[]>();
-  for (const item of visible) {
-    const key = `${item.el.type}|${item.action === 'demolished' ? 'd' : 'k'}`;
-    const list = groups.get(key) ?? [];
-    list.push(item);
-    groups.set(key, list);
-  }
-  const shapes: { s: Shape3D; demolished: boolean }[] = [];
-  for (const [key, items] of groups) {
-    const t = typeOf(items[0].el.type)!;
-    const made = t.model3dBatch ? t.model3dBatch(items, ctx) : items.flatMap(({ el }) => t.model3d!(el, ctx));
-    for (const s of made) shapes.push({ s, demolished: key.endsWith('|d') });
-  }
+  // påverkar skarvarna i det som står kvar. 2D-elementen i fasaden eller
+  // sektionen ritas för sig (se buildPlan med `place`).
+  const { shapes, storeys } = modelShapes(doc, view, style, (t) => !!(t.model3d || t.model3dBatch));
+  // Stil, skala och åtgärd beror inte på våningen; taken med sin våningens golvnivå.
+  const ctx = storeys[0].ctx;
+  const roofs = storeys.flatMap(({ ctx: c, elevation }) => c.visible('Roof').filter((el) => c.actionOf(el) !== 'demolished').map((el) => ({ el, elevation })));
   const actionOfId = (id: string): Action => {
     const el = doc.elements[id];
     return el ? ctx.actionOf(el) : 'plain';
@@ -274,7 +264,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
           .filter((e) => e.type === 'RoofSlope' && e.space === markerId)
           .map((e) => autoSlopeId((e.params as unknown as RoofSlopeParams).roof, (e.params as unknown as RoofSlopeParams).face)),
       );
-      for (const pl of roofSlopes(ctx, toView)) {
+      for (const pl of roofSlopes(ctx, roofs, toView)) {
         const id = autoSlopeId(pl.roof, pl.face);
         if (taken.has(id)) continue;
         slopes[id] = pl;
@@ -287,14 +277,15 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
       }
     }
     // Nivåkoter: golv, takfot och nock (0.8). Takfoten är takets undersida vid kanten.
-    const levels = new Map<number, string>([[z0, '']]);
-    for (const el of ctx.visible('Roof')) {
-      if (ctx.actionOf(el) === 'demolished') continue;
-      const eave = Math.round(z0 + ctx.params<RoofParams>(el).eave);
-      if (eave > z0 && !levels.has(eave)) levels.set(eave, 'takfot');
+    // Varje vånings golv (0.9).
+    const levels = new Map<number, string>(doc.storeys.map((s) => [s.elevation, '']));
+    const floor = Math.min(...doc.storeys.map((s) => s.elevation));
+    for (const { el, elevation } of roofs) {
+      const eave = Math.round(elevation + ctx.params<RoofParams>(el).eave);
+      if (eave > floor && !levels.has(eave)) levels.set(eave, 'takfot');
     }
     const top = Math.round(maxZ);
-    if (!levels.has(top)) levels.set(top, ctx.visible('Roof').length ? 'nock' : '');
+    if (!levels.has(top)) levels.set(top, roofs.length ? 'nock' : '');
     for (const [z, label] of levels) prims.push(...levelMark(maxU + 12 * ctx.scale, z, style.labels.heights.dimension, label, ctx.scale, markerPen(style, 'level')));
   }
 
@@ -315,13 +306,12 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
  * i sin rätta lutning får den (man ser dem från gaveln), med symbolen en bit
  * upp på takfallets kant närmast betraktaren.
  */
-function roofSlopes(ctx: PlanContext, toView: (x: number, y: number, z: number) => V3): RoofSlopeParams[] {
+function roofSlopes(ctx: PlanContext, roofs: { el: Element; elevation: number }[], toView: (x: number, y: number, z: number) => V3): RoofSlopeParams[] {
   const out: RoofSlopeParams[] = [];
-  for (const el of ctx.visible('Roof')) {
-    if (ctx.actionOf(el) === 'demolished') continue;
+  for (const { el, elevation } of roofs) {
     const p = ctx.params<RoofParams>(el);
     roofPlanes(p).forEach((rp, face) => {
-      const pts = rp.rings[0].map((q) => toView(q[0], q[1], zOn(rp.top, q[0], q[1])));
+      const pts = rp.rings[0].map((q) => toView(q[0], q[1], elevation + zOn(rp.top, q[0], q[1])));
       if (pts.length < 3) return;
       // Takfallets kant närmast betraktaren, från takfot till nock.
       const dmin = Math.min(...pts.map((q) => q[2]));

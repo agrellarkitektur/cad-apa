@@ -1,3 +1,4 @@
+import { tracedStorey } from '../../core/storeys';
 import { addElements } from '../../core/commands';
 import { modelViewId, onPaper, type ViewDef } from '../../core/model';
 import { PRESETS, type StyleSheet } from '../../core/graphics';
@@ -196,8 +197,17 @@ export function installRender(app: AppContext, parts: RenderParts) {
       } else if (sheet.stamp) plan = { prims: [...stampOrigin(), ...plan.prims], pickables: plan.pickables };
     } else plan = buildPlan(doc, app.ui.storey, vs, styleFor(app.ui.styleName));
     // Kalkerad vy: en annan vy tonad under, t.ex. möbleringen under en undertaksplan.
-    const traced = app.ui.trace && !section && !sheet && !layout ? doc.views.find((v) => v.id === app.ui.trace) : undefined;
-    app.view.setUnderlay(traced ? buildPlan(doc, traced.storey, viewStatesOf(traced), styleFor(traced.style ?? null)).prims : []);
+    // Våningen under eller över (0.9) kalkeras med vyns inställningar, utan fasad- och sektionslinjerna.
+    const tracing = app.ui.trace && !section && !sheet && !layout;
+    const traced = tracing ? doc.views.find((v) => v.id === app.ui.trace) : undefined;
+    const nextTo = tracing ? tracedStorey(doc, app.ui.storey, app.ui.trace) : undefined;
+    app.view.setUnderlay(
+      nextTo
+        ? buildPlan(doc, nextTo.id, { ...vs, viewId: undefined, hide: [...(vs.hide ?? []), 'Section', 'Elevation', 'North'] }, styleFor(app.ui.styleName)).prims
+        : traced
+          ? buildPlan(doc, traced.storey, viewStatesOf(traced), styleFor(traced.style ?? null)).prims
+          : [],
+    );
     app.views.renderViewButton();
     if (app.ui.navOpen) app.navigator.render();
     positionMeasureBox();

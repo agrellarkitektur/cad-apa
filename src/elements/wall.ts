@@ -324,6 +324,8 @@ export const wallType: ElementType<WallParams> = {
   compares: true,
   typeParams: ['thickness'],
   defaults: () => ({ start: [0, 0], end: [3000, 0], thickness: 120, height: 2700, justification: 'center' }),
+  // Utan egen höjd följer väggen våningshöjden (0.9).
+  storeyParams: (s) => ({ height: s.height }),
 
   planBatch(items, ctx) {
     const shapes = wallShapesFor(ctx);

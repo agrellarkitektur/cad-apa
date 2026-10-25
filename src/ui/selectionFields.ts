@@ -106,6 +106,7 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         .join('');
       const arc = p.bulge && Math.abs(p.bulge) >= 0.5 ? radiusOf(p.start, p.end, p.bulge) : 0;
       return `<div class="fields">${numberField('wall:length', arc ? 'Korda' : 'Längd', length, 'mm')}${numberField('param:height', 'Höjd', p.height, 'mm')}${arc ? numberField('wall:radius', 'Radie', arc, 'mm') : ''}</div>
+        <label class="check" title="Utan egen höjd följer väggen våningshöjden"><input type="checkbox" data-key="wall:storeyHeight"${typeof el.params.height === 'number' ? '' : ' checked'}> Våningshöjd</label>
         <label class="check"><input type="checkbox" data-key="param:toRoof"${p.toRoof ? ' checked' : ''}> Upp till taket (gavlar)</label>
         <div class="field-label">Referenslinje</div><div class="segmented wide" role="group">${just}</div>`;
     }

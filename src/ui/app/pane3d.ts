@@ -33,7 +33,21 @@ export function installPane3d(app: AppContext) {
     saveUiSettings(app.uiSettings);
     update3d();
   });
-  app.pane3d.appendChild(followBtn);
+  // Bara den här våningen (0.9): annars visar 3D alla våningar.
+  const onlyBtn = document.createElement('button');
+  onlyBtn.className = 'follow-section';
+  onlyBtn.hidden = true;
+  onlyBtn.title = 'Visa bara våningen som är vald i planen';
+  onlyBtn.innerHTML = `${icons.storeys}<span>Bara den här våningen</span>`;
+  onlyBtn.addEventListener('click', () => {
+    app.uiSettings.storeyOnly3d = !app.uiSettings.storeyOnly3d;
+    saveUiSettings(app.uiSettings);
+    update3d();
+  });
+  const tools = document.createElement('div');
+  tools.className = 'pane3d-tools';
+  tools.append(onlyBtn, followBtn);
+  app.pane3d.appendChild(tools);
 
   installSplitGrip(app);
 
@@ -46,6 +60,9 @@ export function installPane3d(app: AppContext) {
       return Math.hypot(p.start[0] - at[0], p.start[1] - at[1]) <= 1 || Math.hypot(p.end[0] - at[0], p.end[1] - at[1]) <= 1;
     });
   }
+
+  /** Golvnivån för våningen som är vald, där greppen ritas i 3D (0.9). */
+  const floorOf = () => app.store.doc.storeys.find((s) => s.id === app.ui.storey)?.elevation ?? 0;
 
   // Redigering i 3D: samma kommandon och snäppregler som i planen.
   const edit3d: Edit3DHost = {
@@ -63,7 +80,7 @@ export function installPane3d(app: AppContext) {
           const pt = p[end];
           if (seen.some((s) => Math.hypot(s[0] - pt[0], s[1] - pt[1]) <= 1)) continue;
           seen.push(pt);
-          out.push({ wallId: id, end, point: pt, z: p.height, fixed: end === 'start' ? p.end : p.start });
+          out.push({ wallId: id, end, point: pt, z: p.height + floorOf(), fixed: end === 'start' ? p.end : p.start });
         }
       }
       return out;
@@ -76,7 +93,7 @@ export function installPane3d(app: AppContext) {
         .filter((el) => el?.type === 'Wall' && el.storey === app.ui.storey)
         .map((el) => {
           const p = resolveParams<WallParams>(app.store.doc, el);
-          return { a: p.start, b: p.end, z: p.height };
+          return { a: p.start, b: p.end, z: p.height + floorOf() };
         });
     },
     snap: (cursor, from, exclude, tol, ortho) => {
@@ -105,7 +122,10 @@ export function installPane3d(app: AppContext) {
   function update3d(): void {
     const { ui, store } = app;
     if (!view3d || ui.mode === '2d') return;
-    view3d.setSolids(buildModel3d(store.doc, ui.storey, app.viewStates()));
+    const several = store.doc.storeys.length > 1;
+    onlyBtn.hidden = !several;
+    onlyBtn.setAttribute('aria-pressed', String(app.uiSettings.storeyOnly3d));
+    view3d.setSolids(buildModel3d(store.doc, app.viewStates(), several && app.uiSettings.storeyOnly3d ? ui.storey : undefined));
     view3d.setSelection(app.selection.list());
     // Med en sektion öppen klipps modellen längs den, och snittet fylls (0.8).
     // Följ sektionen i 3D-vyn slår av och på det.
@@ -114,7 +134,8 @@ export function installPane3d(app: AppContext) {
     followBtn.setAttribute('aria-pressed', String(app.uiSettings.followSection));
     if (m?.type === 'Section' && app.uiSettings.followSection) {
       const f = markerFrame(store.doc, m);
-      const z0 = store.doc.storeys.find((x) => x.id === m.storey)?.elevation ?? 0;
+      // Snittytorna har sina verkliga höjder sedan 0.9 (alla våningar).
+      const z0 = 0;
       const caps = (app.section?.cutFaces ?? []).map((c) => ({ poche: ['wall', 'wall-new', 'roof', 'floor'].includes(c.material), rings: c.rings }));
       view3d.setClip({ start: f.start, right: f.right, view: f.view, length: Math.hypot(f.end[0] - f.start[0], f.end[1] - f.start[1]), depth: f.depth }, caps, z0);
     } else view3d.setClip(null);

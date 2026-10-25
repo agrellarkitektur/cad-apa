@@ -1,3 +1,4 @@
+import { TRACE_ABOVE, TRACE_BELOW } from '../../core/storeys';
 import { PRESETS } from '../../core/graphics';
 import { DETAIL_LABELS, DETAIL_LEVELS } from '../../core/states';
 import { parseScale, saveUiSettings } from '../uiSettings';
@@ -63,6 +64,16 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
     ],
   },
 ];
+
+/** Våningen under och över (0.9) först bland det som går att kalkera. */
+export function traceStoreyOptions(trace: string | null | undefined): string {
+  return [
+    [TRACE_BELOW, 'Våningen under'],
+    [TRACE_ABOVE, 'Våningen över'],
+  ]
+    .map(([v, label]) => `<option value="${v}"${trace === v ? ' selected' : ''}>${label}</option>`)
+    .join('');
+}
 
 /** Om det som nyckeln står för syns i vyn. */
 export function isShown(ui: Pick<UiState, 'hide' | 'hideDemolished'>, key: string): boolean {
@@ -224,7 +235,7 @@ export function installShowMenu(app: AppContext) {
       item('showHidden', 'Visa dolda 2D-element (tonade)', ui.showHidden) +
       `<label class="field"><span>Skala för texter och mått</span><select data-show-scale>${ANNOTATION_SCALES.map((n) => `<option value="${n}"${n === ui.scale ? ' selected' : ''}>1:${n}</option>`).join('')}${ANNOTATION_SCALES.includes(ui.scale) ? '' : `<option value="${ui.scale}" selected>1:${ui.scale}</option>`}</select></label>` +
       `<label class="field"><span>Stilmall i vyn</span><select data-show-style><option value="">Projektets (${escapeHtml(store.doc.graphics.name)})</option>${PRESETS.map((p) => `<option value="${escapeHtml(p.name)}"${ui.styleName === p.name ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}</select></label>` +
-      `<label class="field"><span>Kalkera en annan vy</span><select data-show-trace><option value="">Ingen</option>${store.doc.views
+      `<label class="field"><span>Kalkera en annan vy</span><select data-show-trace><option value="">Ingen</option>${traceStoreyOptions(ui.trace)}${store.doc.views
         .filter((v) => v.id !== ui.activeView)
         .map((v) => `<option value="${v.id}"${ui.trace === v.id ? ' selected' : ''}>${escapeHtml(v.name)}</option>`)
         .join('')}</select></label>` +

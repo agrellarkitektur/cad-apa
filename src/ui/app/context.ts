@@ -18,6 +18,7 @@ import type { installSheets } from './sheets';
 import type { installToolOptions } from './toolOptions';
 import type { installUnderlays } from './underlays';
 import type { installFilterSelect } from './filterSelect';
+import type { installStoreys } from './storeys';
 import type { SegmentPoints } from './segmentPoints';
 import type { installViews } from './views';
 import type { ViewTool } from '../../view2d/planView';
@@ -99,6 +100,8 @@ export interface AppContext {
   readonly underlays: ReturnType<typeof installUnderlays>;
   /** Filtrera och markera (0.8.35). */
   readonly filterSelect: ReturnType<typeof installFilterSelect>;
+  /** Våningarna (0.9): ny, byt, ta bort, flytta och kopiera till. */
+  readonly storeys: ReturnType<typeof installStoreys>;
   /** Måttbandets tillfälliga segmentpunkter (0.8.18). */
   readonly segmentPoints: SegmentPoints;
   /** Smartshell, kommandoraden (0.8.20). Saknas tills den är installerad. */

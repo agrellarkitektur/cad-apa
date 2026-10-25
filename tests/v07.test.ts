@@ -147,11 +147,11 @@ describe('fasader och sektioner (0.7)', () => {
     const { sampleProject } = await import('../src/sample/sampleProject');
     const { buildModel3d } = await import('../src/repr/model3d');
     const doc = sampleProject();
-    const solids = buildModel3d(doc, 'pl-1', { state: 'st-bef' }).filter((s) => s.kind !== 'edges' && s.id === 'yv-v');
+    const solids = buildModel3d(doc, { state: 'st-bef' }).filter((s) => s.kind !== 'edges' && s.id === 'yv-v');
     const top = Math.max(...solids.map((s) => (s.kind === 'edges' ? 0 : s.z1)));
     expect(top).toBeGreaterThan(4000);
     // Långsidan står kvar på sin höjd under taket.
-    const south = buildModel3d(doc, 'pl-1', { state: 'st-bef' }).filter((s) => s.kind !== 'edges' && s.id === 'yv-s');
+    const south = buildModel3d(doc, { state: 'st-bef' }).filter((s) => s.kind !== 'edges' && s.id === 'yv-s');
     expect(Math.max(...south.map((s) => (s.kind === 'edges' ? 0 : s.z1)))).toBe(2700);
   });
 });
@@ -249,7 +249,7 @@ describe('bågvägg med fönster (0.7)', () => {
     p.bulge = -1500;
     const plan = buildPlan(doc, 'pl-1', { state: 'st-bef' });
     expect(plan.prims.some((q) => q.kind === 'region' && q.origin?.objectType === 'Wall')).toBe(true);
-    const solids = buildModel3d(doc, 'pl-1', { state: 'st-bef' });
+    const solids = buildModel3d(doc, { state: 'st-bef' });
     expect(solids.filter((s) => s.id === 'f01').length).toBeGreaterThan(0);
     const r = buildSection(doc, 'fasad-1', { state: 'st-bef' })!;
     expect(r.pickables.some((q) => q.id === 'f01')).toBe(true);

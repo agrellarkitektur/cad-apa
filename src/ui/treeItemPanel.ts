@@ -1,3 +1,4 @@
+import { traceStoreyOptions } from './app/showMenu';
 import { PRESETS } from '../core/graphics';
 import { isMaster, type Id, type ProjectDoc, type TreeTab } from '../core/model';
 import type { DocStore } from '../core/store';
@@ -82,7 +83,7 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('2D-symboler', levelSelect('detail', v.detail))}
           ${field('3D och fasader', levelSelect('modelDetail', v.modelDetail ?? v.detail))}
           ${field('Stilmall', `<select name="style"><option value="">Projektets</option>${PRESETS.map((p) => `<option${p.name === v.style ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`)}
-          ${field('Kalkera', `<select name="trace"><option value="">Ingen</option>${doc.views.filter((x) => x.id !== v.id).map((x) => `<option value="${x.id}"${x.id === v.trace ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`)}
+          ${field('Kalkera', `<select name="trace"><option value="">Ingen</option>${traceStoreyOptions(v.trace)}${doc.views.filter((x) => x.id !== v.id).map((x) => `<option value="${x.id}"${x.id === v.trace ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`)}
           ${field('Skala', `<span class="input-unit scale-unit"><i>1:</i><input name="scale" type="text" inputmode="numeric" value="${v.scale ?? ''}" placeholder="100"></span>`)}
         </div>
         <label class="check"><input type="checkbox" name="compare"${v.compare ? ' checked' : ''}> Jämför med befintligt</label>
@@ -181,8 +182,13 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('Golvnivå', `<span class="input-unit"><input name="elevation" type="text" inputmode="decimal" value="${s.elevation}"><i>mm</i></span>`)}
           ${field('Våningshöjd', `<span class="input-unit"><input name="height" type="text" inputmode="decimal" value="${s.height}"><i>mm</i></span>`)}
         </div>
+        <p class="note">Golvnivån räknas från plan 1:s nolla. Våningshöjden är golv till golv; ändras den flyttas våningarna ovanför lika mycket. Väggar utan egen höjd följer våningshöjden.</p>
+        <div class="nav-actions">
+          <button type="button" class="btn" data-action="new-storey-above">Ny våning ovanför</button>
+          <button type="button" class="btn" data-action="new-storey-below">Ny våning under</button>
+        </div>
       </section>
-      ${actions()}
+      ${actions(doc.storeys.length > 1 ? `<button type="button" class="btn btn-danger" data-action="delete-storey" data-id="${s.id}">Ta bort…</button>` : '')}
     </form>`;
   }
   const f = doc.folders.find((x) => x.id === item.id);

@@ -56,12 +56,14 @@ export function originalsHere(doc: ProjectDoc, clip: ClipPayload, state: Id, sto
 }
 
 /**
- * Klistra in i ett tillstånd och en våning, förskjutet `offset`. Typer som
+ * Klistra in i ett tillstånd och en våning, förskjutet `offset`. Med
+ * `keepStates` (kopiera till en annan våning, 0.9) finns kopiorna i samma
+ * tillstånd som originalen. Typer som
  * finns med samma littera återanvänds; andra läggs till (med nytt namn om
  * namnet är upptaget av en annan sorts typ). Måttpunkter som hänger på
  * något som inte följer med blir fria punkter.
  */
-export function pasteClip(store: DocStore, clip: ClipPayload, state: Id, storey: Id, offset: readonly [number, number], space?: Id): Id[] {
+export function pasteClip(store: DocStore, clip: ClipPayload, state: Id, storey: Id, offset: readonly [number, number], space?: Id, keepStates = false): Id[] {
   const doc = store.doc;
   const elements = clip.elements.filter((e) => !(SINGLE.has(e.type) && Object.values(doc.elements).some((x) => x.type === e.type)));
   if (!elements.length) return [];
@@ -92,7 +94,7 @@ export function pasteClip(store: DocStore, clip: ClipPayload, state: Id, storey:
         ...structuredClone(e),
         id: idMap.get(e.id)!,
         storey,
-        states: e.type === 'Section' || e.type === 'Elevation' || e.type === 'North' ? e.states : [state],
+        states: keepStates || e.type === 'Section' || e.type === 'Elevation' || e.type === 'North' ? e.states : [state],
         host: e.host ? idMap.get(e.host) : undefined,
         definition: e.definition ? defMap.get(e.definition) : undefined,
         params,

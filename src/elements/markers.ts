@@ -38,8 +38,8 @@ export interface MarkerParams {
 /** Hur långt utanför byggnaden automatiska fasadlinjer läggs, mm. */
 const MARGIN = 2500;
 
-/** Byggnadens utbredning i plan på en våning: väggar och tak. */
-export function modelBounds(doc: ProjectDoc, storey: string): { minX: number; minY: number; maxX: number; maxY: number } | null {
+/** Byggnadens utbredning i plan: väggar och tak, på en våning eller alla (0.9). */
+export function modelBounds(doc: ProjectDoc, storey?: string): { minX: number; minY: number; maxX: number; maxY: number } | null {
   // Utan listor över alla punkter (0.8.27): anropas flera gånger för varje
   // fasad och sektion när planen ritas.
   let n = 0;
@@ -56,7 +56,7 @@ export function modelBounds(doc: ProjectDoc, storey: string): { minX: number; mi
   };
   for (const id in doc.elements) {
     const el = doc.elements[id];
-    if (el.storey !== storey) continue;
+    if (el.space || (storey && el.storey !== storey)) continue;
     if (el.type === 'Wall') {
       const p = resolveParams<{ start: Vec2; end: Vec2; thickness: number }>(doc, el);
       const h = (p.thickness ?? 0) / 2;
@@ -86,7 +86,7 @@ export interface MarkerFrame {
 export function markerFrame(doc: ProjectDoc, el: Element<any>): MarkerFrame {
   const p = resolveParams<MarkerParams>(doc, el);
   if (p.auto) {
-    const b = modelBounds(doc, el.storey) ?? { minX: -5000, minY: -5000, maxX: 5000, maxY: 5000 };
+    const b = modelBounds(doc) ?? { minX: -5000, minY: -5000, maxX: 5000, maxY: 5000 };
     const c: Vec2 = [(b.minX + b.maxX) / 2, (b.minY + b.maxY) / 2];
     const corners: Vec2[] = [
       [b.minX, b.minY],
@@ -262,6 +262,7 @@ export const northType: ElementType<NorthParams> = {
   drawOrder: 64,
   compares: false,
   global: true,
+  everyStorey: true,
   defaults: () => ({ pos: [0, 0], angle: 90 }),
   plan(el, ctx) {
     const p = ctx.params<NorthParams>(el);
@@ -301,6 +302,7 @@ export const sectionType: ElementType<MarkerParams> = {
   drawOrder: 66,
   compares: false,
   global: true,
+  everyStorey: true,
   defaults: () => ({ start: [0, 0], end: [5000, 0], side: 1, depth: null, auto: false, label: 'A' }),
   plan: sectionPlan,
 };
@@ -312,6 +314,7 @@ export const elevationType: ElementType<MarkerParams> = {
   drawOrder: 65,
   compares: false,
   global: true,
+  everyStorey: true,
   defaults: () => ({ start: [0, 0], end: [5000, 0], side: 1, depth: null, auto: true, facing: 270 }),
   plan: elevationPlan,
 };

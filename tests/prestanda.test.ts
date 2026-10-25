@@ -40,7 +40,7 @@ describe('prestanda', () => {
     const view = { state: doc.states[1].id, compareTo: doc.states[0].id };
     let plan: ReturnType<typeof buildPlan> | undefined;
     const planMs = ms(() => (plan = buildPlan(doc, storey, view)));
-    const model3dMs = ms(() => buildModel3d(doc, storey, view));
+    const model3dMs = ms(() => buildModel3d(doc, view));
     let numbers = new Map<string, string>();
     const numbersMs = ms(() => {
       const { ctx } = createContext(doc, storey, view, doc.graphics, () => true);

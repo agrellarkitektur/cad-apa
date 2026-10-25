@@ -20,7 +20,11 @@ export function createContext(
   // arbetsblad), och 2D-element från andra ytor som valts att synas i just den här vyn.
   const place = view.place ?? storey;
   const identity: ViewIdentity = { id: view.viewId ?? modelViewId(place), place, tags: view.viewTags ?? [] };
-  const onStorey = Object.values(doc.elements).filter((e) => homeOf(e) === place || (e.show?.kind === 'views' && e.show.views.includes(identity.id)));
+  // Fasad- och sektionslinjer och norrpilen hör till projektet (0.9) och ritas i alla planer.
+  const isPlan = doc.storeys.some((s) => s.id === place);
+  const onStorey = Object.values(doc.elements).filter(
+    (e) => homeOf(e) === place || (isPlan && !e.space && typeOf(e.type)?.everyStorey) || (e.show?.kind === 'views' && e.show.views.includes(identity.id)),
+  );
   const hiddenHere = new Set<Id>();
   // Ett mallblad (0.8.8) och ett ritningsblad (0.8.9) följer inte tillstånden: allt på dem syns alltid.
   const onMaster = !!view.place && (doc.worksheets.some((w) => w.id === view.place && onPaper(w)) || doc.sheets.some((s) => s.id === view.place));

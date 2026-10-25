@@ -20,7 +20,8 @@ export interface WallToolOptions {
    * medurs; när väggen är klar vänds de väggar som hamnade fel.
    */
   face: WallFace;
-  height: number;
+  /** Egen höjd, eller null: väggen följer våningshöjden (0.9). */
+  height: number | null;
 }
 
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
@@ -264,7 +265,8 @@ export class WallTool implements ViewTool, PointTaker {
   }
 
   private instanceParams(a: [number, number], b: [number, number]): Record<string, unknown> {
-    const p: Record<string, unknown> = { start: a, end: b, height: this.options.height, justification: this.justification() };
+    const p: Record<string, unknown> = { start: a, end: b, justification: this.justification() };
+    if (this.options.height !== null) p.height = this.options.height;
     if (!this.options.definition) p.thickness = 120;
     return p;
   }

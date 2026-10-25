@@ -245,6 +245,18 @@ export function installActions(app: AppContext, parts: ActionParts) {
         closeMenu();
         app.chooseUnderlayFiles();
         break;
+      case 'delete-storey': {
+        const id = target.closest<HTMLElement>('[data-id]')?.dataset.id;
+        if (id) void app.storeys.remove(id);
+        break;
+      }
+      case 'new-storey-above':
+      case 'new-storey-below': {
+        // Ny våning (0.9), med inställningarna i egenskaperna.
+        const id = app.storeys.create(action === 'new-storey-above' ? 'above' : 'below');
+        if (id) pickTreeItem({ kind: 'storey', id });
+        break;
+      }
       case 'new-worksheet': {
         const n = store.doc.worksheets.length + 1;
         const id = createWorksheet(store, `Arbetsblad ${n}`);

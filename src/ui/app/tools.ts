@@ -54,7 +54,7 @@ export function installTools(app: AppContext, host: ToolHost) {
 
 
   const selectTool = new SelectTool(host);
-  const wallTool = new WallTool(host, { definition: defaultWallType(app.store.doc), face: 'center', height: 2700 });
+  const wallTool = new WallTool(host, { definition: defaultWallType(app.store.doc), face: 'center', height: null });
   wallTool.onChange = () => {
     // Ny vägg härifrån: smartmenyn försvinner när första väggen är ritad, och
     // när kedjan är klar går det tillbaka till Markera.
@@ -273,7 +273,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     const p = resolveParams<WallParams>(app.store.doc, el);
     wallFrom ??= { ...wallTool.options };
     wallTool.options.definition = el.definition ?? null;
-    wallTool.options.height = p.height;
+    wallTool.options.height = typeof el.params.height === 'number' ? el.params.height : null;
     wallTool.options.face = p.justification === 'right' ? 'outside' : p.justification === 'left' ? 'inside' : 'center';
     setTool('wall', true);
     wallTool.startAt([p[ctx.end][0], p[ctx.end][1]]);

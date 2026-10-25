@@ -60,6 +60,7 @@ export const icons = {
   copy: svg('<rect x="8" y="8" width="11" height="11" rx="1.5"/><path d="M5 15V6a1 1 0 0 1 1-1h9"/>'),
   flipWall: svg('<path d="M3 10h18M3 14h18"/><path d="M8 6l-3 4M16 18l3-4"/>'),
   section: svg('<path d="M4 4v4M4 16v4M20 4v4M20 16v4" stroke-width="2.4"/><path d="M4 9v6M20 9v6" stroke-dasharray="2 2"/><path d="M4 6h4M20 6h-4M4 18h4M20 18h-4"/><path d="M7 4.5l1.5 1.5L7 7.5M17 4.5L15.5 6 17 7.5"/>'),
+  storeys: svg('<path d="M4 8.5 12 4l8 4.5-8 4.5z"/><path d="M4 12.5 12 17l8-4.5M4 16 12 20.5 20 16"/>'),
   elevation: svg('<circle cx="12" cy="12" r="5"/><path d="M12 3l3 4H9z" fill="currentColor"/><path d="M3 20h18" stroke-dasharray="2 2"/>'),
   roof: svg('<path d="M3 13l9-7 9 7"/><path d="M5 11.5V19h14v-7.5"/><path d="M3 13l1.5 1.2M21 13l-1.5 1.2"/>'),
   north: svg('<circle cx="12" cy="12" r="8"/><path d="M12 5l3 9-3-2-3 2z" fill="currentColor"/>'),

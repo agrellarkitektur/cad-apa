@@ -259,6 +259,10 @@ export class Navigator {
     return `${this.folders('modell', rowsById)}<section>
       <h2>Våningar</h2>
       ${list(storeys.map((s) => s.id), '')}
+      <div class="nav-actions">
+        <button class="btn" data-action="new-storey-above" title="Ny våning ovanför den som visas (byt våning med Page Up och Page Down)">${icons.plus}<span>Ovanför</span></button>
+        <button class="btn" data-action="new-storey-below" title="Ny våning under den som visas">${icons.plus}<span>Under</span></button>
+      </div>
     </section>
     <section>
       <h2>Fasader</h2>
@@ -374,8 +378,8 @@ export class Navigator {
 }
 
 function fmtLevel(mm: number): string {
-  const m = mm / 1000;
-  return `+${m.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`.replace('+-', '−');
+  // Med eget tecken: sv-SE skriver minus som U+2212, så "+-" gick inte att byta (0.9).
+  return `${mm < 0 ? '−' : '+'}${(Math.abs(mm) / 1000).toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
 function esc(s: string): string {

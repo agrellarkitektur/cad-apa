@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.38** (alfa, granskning); nästa är **0.9, flera våningsplan och bjälklag**.
+**0.9** (alfa, flera våningsplan); nästa är **0.9.1, bjälklag**.
 
 ## Vad som fungerar
 
@@ -964,6 +964,37 @@ Version 0.8.32, granskning (samma filformat, 13):
   egna pennorna
 - DXF-läsaren ligger i fyra mindre filer
 
+Version 0.9, flera våningsplan (filformat 14):
+- **Ny våning** ovanför eller under den som visas: knapparna *Ovanför* och
+  *Under* under Våningar i projektträdet, i våningens egenskaper och i
+  smartshell (`nyvåning`, `nyvåningunder`). Golvnivån räknas från grannen
+  (golvnivå + våningshöjd), och våningarna som redan ligger där flyttas
+  lika mycket. Namn: Plan 2, Plan 3 … uppåt, Källarplan nedåt
+- **Byta våning** i projektträdet, med **Page Up** och **Page Down** och
+  i smartshell (`uppåt`, `nedåt`)
+- **Ändra och ta bort**: namn, golvnivå och våningshöjd i våningens
+  egenskaper; ändras våningshöjden flyttas våningarna ovanför. *Ta bort…*
+  tar bort våningen med det som är ritat på den och vyerna av den, efter
+  en fråga. Den sista våningen går inte att ta bort
+- **Flytta och kopiera till en annan våning**: högerklicka på det
+  markerade (*Till våning*), eller `tillvåning` och `kopieratillvåning` i
+  smartshell. Samma läge i plan och samma tillstånd; dörrar och fönster
+  följer sin vägg
+- **Väggarnas höjd följer våningshöjden** från början; kryssrutan
+  *Våningshöjd* i egenskaperna slår av det och ger väggen ett eget mått
+- **Kalkera våningen under eller över**: Visa → *Kalkera en annan vy*, och
+  i en sparad vys inställningar. Den ritas tonad, utan fasad- och
+  sektionslinjerna
+- **3D visar alla våningar**, var och en på sin golvnivå; knappen *Bara den
+  här våningen* nere till höger visar bara våningen som är vald
+- **Fasader och sektioner visar alla våningar** och hör till projektet:
+  linjerna (och norrpilen) ritas i alla planer, och sektionen har en
+  nivåkot för varje våning
+- **Rättat**: ändrades golvnivån flyttades konturerna och karmarna i 3D,
+  men inte väggytorna och fönsterhålen
+- Nivåerna under ±0 i projektträdet skrivs −2,70 (förut +−2,70)
+- Projekt från 0.8.24–0.8.38 (format 13) öppnas inte
+
 Version 0.8.38, granskning (samma filformat, 13):
 - Inga nya funktioner; allt beter sig som förut
 - **DXF-underlag med grus och mark** ritas fort och rätt: mönster vars
@@ -1121,7 +1152,7 @@ Version 0.8.28, rättelser i 2D-formen (samma filformat, 13):
 
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer, i dag 13 (sedan 0.8.24). Fram till
+Projektfilerna har ett formatnummer, i dag 14 (sedan 0.9). Fram till
 den öppna betan uppgraderas inte projekt från äldre alfa- och betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp

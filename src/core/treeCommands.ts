@@ -1,5 +1,6 @@
 import { pruneAssets } from './commands';
 import { newId } from './ids';
+import { storeyPatch } from './storeys';
 import type { Element, Folder, Id, Storey, TreeTab, ViewDef } from './model';
 import type { DocStore, TxBuilder } from './store';
 
@@ -142,7 +143,8 @@ export function saveStorey(store: DocStore, id: Id, patch: Partial<Omit<Storey, 
   const s = store.doc.storeys.find((x) => x.id === id);
   if (!s) return;
   store.transact(`Spara ${patch.name ?? s.name}`, (tx) => {
-    tx.setStoreys(tx.doc.storeys.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+    // En ändrad våningshöjd flyttar våningarna ovanför (0.9).
+    tx.setStoreys(storeyPatch(tx.doc, id, patch));
     placeIn(tx, id, folder);
   });
 }
