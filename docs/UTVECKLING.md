@@ -180,10 +180,13 @@ v0.8.2 och v0.8.3. Test som tar mer än någon sekund får en egen tidsgräns
 
 **Referensritningar** (`tests/referens.test.ts`): planer, fasader,
 sektioner, 3D och ett blad för exemplet, ett rutnät av rum och (0.8.32)
-exemplet med 2D-former och egna pennor (`shapesProject`) skrivs som text,
+exemplet med 2D-former och egna pennor (`shapesProject`, sedan 0.8.38
+också fyllningstyperna, tegel som snittfyllning och en borttagen typ),
+och (0.8.38) exemplet med olika detaljnivåer för littera, 2D och 3D
+(`nivaer-*`) skrivs som text,
 en rad per primitiv (koordinater avrundade till 0,1 mm), och jämförs mot
-facit i `tests/referens/`. Raden visar också fyllningens mönster,
-opacitet och bakgrund, om primitiven ligger under modellen (`under`) och
+facit i `tests/referens/`. Raden visar också fyllningens mönster (med
+fasen, 0.8.38), opacitet och bakgrund, om primitiven ligger under modellen (`under`) och
 var streckningen börjar (`dashFrom.at`). Ändras en ritning med avsikt
 skrivs nytt facit med `npx vitest run tests/referens.test.ts -u`; titta
 på skillnaden i git innan den läggs in.
@@ -1152,6 +1155,45 @@ projekt i 1 982 jämförelser.
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
 
+## Granskning (0.8.38, format 13)
+
+Utan nya funktioner. Kontrollerat med samma klick i 0.8.37 och 0.8.38
+(`scripts/jamfor-klick.py --bilder`, 188 steg): samma projekt, markering,
+panel, snabbrad, smartmeny och dialog efter varje steg, och samma bild av
+ritytan (markupen skiljer sig, eftersom skrafferingen ritas med mönstrets
+kod). Referensritningarna (projektet `former` med fyllningstyperna, och
+`nivaer-*` för detaljnivåerna) skrevs med 0.8.37 innan koden ändrades.
+
+- **Starkt snedställda mönster** (`dashedFamily` i
+  `src/view2d/renderPrimitives.ts`): en streckad familj vars förskjutning,
+  minskad till högst en halv streckperiod, är mer än `MAX_SHEAR` (2)
+  linjeavstånd ritas som streck klippta mot ytan (`clippedDashes`), inte
+  som ett SVG-mönster. Chrome målar en nästan 90° sned mönsterruta
+  långsamt och fel; grus och mark i .pat är sådana. Styckena är högst
+  200 000 per ritning, sedan mönster igen. Antalet beror på ytan på
+  papperet, inte på zoomen. `familyFill` minskar förskjutningen på samma
+  sätt (en heldragen familj snedställs inte alls)
+- **`src/core/hatchStrokes.ts`**: `hatchStrokes` (linjerna över en ruta,
+  PDF:en och förhandsvisningarna) och `clippedDashes` (strecken inom en
+  yta, platt: fyra tal per streck; jämnt–udda som fyllningen, punkter som
+  streck med samma början och slut). Facit från ezdxf i `v0836.test.ts`
+  (`tests/filer/grus.dxf`); ezdxf:s `hatch_entity` flyttar mönstret
+  slumpvis (`jiggle_origin`), så facit räknas utan
+- **`src/core/patFile.ts`**: `parsePat`, `patFamily` (också DXF),
+  `patDash`, `formatPat`. `fillTypes.ts` har typerna, de inbyggda,
+  `patternLines`, `resolveFill`, `evenDash` och `drawnDash`
+- **Skrafferingen** görs om till ett mönster med en familj
+  (`hatchAsPattern`) innan den ritas, på skärmen och i PDF:en (där med
+  minst 0,3 mm mellan linjerna, som förut); `FillDef` har kvar `hatch`
+- `stylePen` i `src/repr/markerPens.ts` läser en rad i stilmallens
+  `pens` (markörerna och dörrarnas och fönstrens klasser).
+  `DETAIL_LEVELS` och `DETAIL_LABELS` i `src/core/states.ts`. `withPen`
+  i `ownPenFields.ts` gäller objekt och typer. Borttagen, oanvänd:
+  `typeFill`
+- Mätt men lämnat: DXF-underlagen är primitiver i planen och ritas om
+  (markup och målning) vid varje ändring, också när underlaget är
+  detsamma
+
 ## Granskning (0.8.32, format 13)
 
 Utan nya funktioner. Kontrollerat med samma klick i 0.8.31 och 0.8.32
@@ -1222,7 +1264,9 @@ Inget nytt format: fälten är frivilliga.
   `resolveFill` (gör `kind: 'type'` till `kind: 'pattern'`; en okänd typ
   blir skraffering), `hatchStrokes` (linjerna över en ruta med fasen per
   linje), `drawnDash` (streck under 0,5 mm blir punkter), `parsePat`,
-  `patFamily` (också DXF), `formatPat`, `normalizeFillTypes`
+  `patFamily` (också DXF), `formatPat`, `normalizeFillTypes`. Sedan
+  0.8.38 ligger `hatchStrokes` i `hatchStrokes.ts` och `.pat` i
+  `patFile.ts`
 - **FillDef** har fått `pattern` (ritas) och `type` (sparas i
   stilmallens `cutFill`, görs om i `applyStyle`, som har fått `scale`)
 - **Ritningen**: skärmen (`familyFill` i `renderPrimitives.ts`) gör ett

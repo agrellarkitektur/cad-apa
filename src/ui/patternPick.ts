@@ -1,5 +1,6 @@
 import { PATTERN_LABELS, type FillPattern } from '../elements/drawing2d';
-import { drawnDash, evenDash, hatchStrokes, patternLines, type CustomFillType, type FillTypeDef } from '../core/fillTypes';
+import { drawnDash, evenDash, patternLines, type CustomFillType, type FillTypeDef } from '../core/fillTypes';
+import { hatchStrokes } from '../core/hatchStrokes';
 import { escapeHtml } from './labels';
 
 /**

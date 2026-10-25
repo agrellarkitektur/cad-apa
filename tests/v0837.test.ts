@@ -1,7 +1,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { normalizeStyle, SWEDISH_STANDARD } from '../src/core/graphics';
-import { FILL_TYPES, hatchStrokes, patternLines, resolveFill } from '../src/core/fillTypes';
+import { FILL_TYPES, patternLines, resolveFill } from '../src/core/fillTypes';
+import { clippedDashes } from '../src/core/hatchStrokes';
 import { buildPlan } from '../src/repr/plan';
 import { buildModel3d } from '../src/repr/model3d';
 import type { ViewStates } from '../src/core/states';
@@ -14,16 +15,11 @@ describe('Inbyggda fyllningstyper och tjocklek (0.8.37)', () => {
     for (const t of Object.values(FILL_TYPES)) expect(patternLines(t, 0, 1, 100).length).toBe(t.families.length);
     // Uppåtstrecken slutar där nedåtstrecken börjar: (1, 2), (3, 2) …
     const [up, down] = patternLines(FILL_TYPES.sicksack);
-    const ends = (l: typeof up) =>
-      hatchStrokes(l, { minX: -10, minY: -10, maxX: 10, maxY: 10 }).flatMap((s) => {
-        // Strecken på linjen, från fasen: början och slut på varje streck inom rutan.
-        const len = Math.hypot(s.b[0] - s.a[0], s.b[1] - s.a[1]);
-        const dir = [(s.b[0] - s.a[0]) / len, (s.b[1] - s.a[1]) / len];
-        const period = l.dash![0] + l.dash![1];
-        const out: [number, number][] = [];
-        for (let t = -s.phase; t < len; t += period) if (t >= 0) out.push([s.a[0] + dir[0] * t, s.a[1] + dir[1] * t], [s.a[0] + dir[0] * (t + l.dash![0]), s.a[1] + dir[1] * (t + l.dash![0])]);
-        return out;
-      });
+    const box: [number, number][][] = [[[-10, -10], [10, -10], [10, 10], [-10, 10]]];
+    const ends = (l: typeof up): [number, number][] => {
+      const flat = clippedDashes(l, box);
+      return Array.from({ length: flat.length / 2 }, (_, i) => [flat[2 * i], flat[2 * i + 1]]);
+    };
     const key = (q: [number, number]) => `${Math.round(q[0] * 1000)},${Math.round(q[1] * 1000)}`;
     const downEnds = new Set(ends(down).map(key));
     const tops = ends(up).filter((q) => Math.abs(q[0]) < 5 && Math.abs(q[1]) < 5 && Math.abs(q[1] % 4) > 1);

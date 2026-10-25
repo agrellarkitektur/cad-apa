@@ -1,4 +1,5 @@
 import { PRESETS } from '../../core/graphics';
+import { DETAIL_LABELS, DETAIL_LEVELS } from '../../core/states';
 import { parseScale, saveUiSettings } from '../uiSettings';
 import { Camera } from '../../view2d/camera';
 import { escapeHtml } from '../labels';
@@ -209,8 +210,7 @@ export function installShowMenu(app: AppContext) {
       )
         .map(
           ([part, label, cur]) =>
-            `<div class="detail-part"><span>${label}</span><div class="segmented detail-switch detail-part-switch" role="group" aria-label="Detaljnivå för ${label.toLowerCase()}">${(['sketch', 'normal', 'detail'] as const)
-              .map((d) => `<button data-detail="${d}" data-detail-part="${part}" aria-pressed="${cur === d}">${{ sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' }[d]}</button>`)
+            `<div class="detail-part"><span>${label}</span><div class="segmented detail-switch detail-part-switch" role="group" aria-label="Detaljnivå för ${label.toLowerCase()}">${DETAIL_LEVELS.map((d) => `<button data-detail="${d}" data-detail-part="${part}" aria-pressed="${cur === d}">${DETAIL_LABELS[d]}</button>`)
               .join('')}</div></div>`,
         )
         .join('')}</div>` +

@@ -1,6 +1,7 @@
 import type { StyleSheet } from '../../core/graphics';
 import { formatDash, parseDash } from '../../core/lineTypes';
-import { FILL_TYPES, newFillTypeId, parsePat, type CustomFillType, type FillFamily, type FillTypeDef } from '../../core/fillTypes';
+import { FILL_TYPES, newFillTypeId, type CustomFillType, type FillFamily, type FillTypeDef } from '../../core/fillTypes';
+import { parsePat } from '../../core/patFile';
 import { escapeHtml } from '../labels';
 import { fillTypeSwatch } from '../patternPick';
 

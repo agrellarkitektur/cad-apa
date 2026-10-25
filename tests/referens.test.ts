@@ -43,7 +43,7 @@ const fillOf = (f: FillDef): string => {
   if (f.kind === 'solid') return `fylld ${f.color ?? ''}${o}`;
   const bg = f.background ? ` bakgrund ${f.background}${f.backgroundOpacity !== undefined && f.backgroundOpacity !== 1 ? ` o${f.backgroundOpacity}` : ''}` : '';
   if (f.kind === 'type') return `typ ${f.type}`;
-  if (f.kind === 'pattern') return `mönster ${f.color} ${f.lines.map((l) => `${n(l.angle)}° a${n(l.spacing)}${l.shift ? ` f${n(l.shift)}` : ''}${l.dash ? ` d${l.dash.map(n).join('/')}` : ''}`).join(' + ')} w${f.weight}${o}${bg}`;
+  if (f.kind === 'pattern') return `mönster ${f.color} ${f.lines.map((l) => `${n(l.angle)}° a${n(l.spacing)}${l.shift ? ` f${n(l.shift)}` : ''}${l.dash ? ` d${l.dash.map(n).join('/')}` : ''}${l.phase ? ` p${l.phase.map(n).join('/')}` : ''}`).join(' + ')} w${f.weight}${o}${bg}`;
   return `hatch ${f.color} ${n(f.angle)}° a${n(f.spacing)} w${f.weight}${o}${bg}`;
 };
 
@@ -114,6 +114,26 @@ function referenceSet(name: string, doc: ProjectDoc) {
 referenceSet('exempel', sampleProject());
 referenceSet('rumsrutnat', roomGrid(3));
 referenceSet('former', shapesProject());
+
+/** Detaljnivåerna (0.8.37, i referensritningarna sedan 0.8.38): littera, 2D-symboler och 3D var för sig. */
+describe('detaljnivåer', () => {
+  const doc = sampleProject();
+  const storey = doc.storeys[0].id;
+  const ex = doc.states.find((s) => s.kind === 'existing')!;
+  const proposal = doc.states.find((s) => s.kind !== 'existing')!;
+  const compare = { state: proposal.id, compareTo: ex.id };
+  it('plan: skiss med littera i detalj', async () => {
+    await expect(drawing(buildPlan(doc, storey, { ...compare, detail: 'sketch', labelDetail: 'detail' }).prims)).toMatchFileSnapshot(file('nivaer-plan-skiss'));
+  });
+  it('plan: detalj med littera i skiss', async () => {
+    await expect(drawing(buildPlan(doc, storey, { ...compare, detail: 'detail', labelDetail: 'sketch', modelDetail: 'sketch' }).prims)).toMatchFileSnapshot(file('nivaer-plan-detalj'));
+  });
+  it('3D och fasad i detalj, planen i skiss', async () => {
+    const view = { ...compare, detail: 'sketch' as const, modelDetail: 'detail' as const };
+    await expect(model(buildModel3d(doc, storey, view))).toMatchFileSnapshot(file('nivaer-3d-detalj'));
+    await expect(drawing(buildSection(doc, 'fasad-1', view)!.prims)).toMatchFileSnapshot(file('nivaer-fasad-1-detalj'));
+  });
+});
 
 describe('blad', () => {
   it('A3 med plan i 1:100 och fasad i 1:50, med exempelmallbladet', async () => {

@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.37** (alfa, detaljnivåer och fyllningar); nästa är **0.8.38, granskning**.
+**0.8.38** (alfa, granskning); nästa är **0.9, flera våningsplan och bjälklag**.
 
 ## Vad som fungerar
 
@@ -963,6 +963,21 @@ Version 0.8.32, granskning (samma filformat, 13):
   Referensritningarna har fått 2D-formerna, linjetyperna, masken och de
   egna pennorna
 - DXF-läsaren ligger i fyra mindre filer
+
+Version 0.8.38, granskning (samma filformat, 13):
+- Inga nya funktioner; allt beter sig som förut
+- **DXF-underlag med grus och mark** ritas fort och rätt: mönster vars
+  linjer förskjuts många linjeavstånd (grus, mark och liknande i .pat)
+  ritas nu som klippta streck i stället för som ett snedställt mönster,
+  som Chrome både ritade långsamt och fel (prickar i stället för stenar).
+  En DXF med 2 000 sådana skrafferingar ritas om på ca 0,6 s i stället
+  för 9–14 s. Tegel, betong och de andra inbyggda ser ut som förut
+- Skrafferingen och fyllningstyperna ritas med samma kod på skärmen och
+  i PDF:en
+- Referensritningarna har fått fyllningstyperna (också som snittfyllning)
+  och detaljnivåerna, och klickjämförelsen steg för fyllningstyperna,
+  pennorna för dörrar, fönster och rum, Filtrera och markera och
+  detaljnivåerna
 
 Version 0.8.37, detaljnivåer och fyllningar (samma filformat, 13):
 - **Detaljnivå per del av vyn**: Skiss, Normal eller Detalj för

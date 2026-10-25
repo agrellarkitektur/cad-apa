@@ -1,6 +1,7 @@
 import { PRESETS } from '../core/graphics';
 import { isMaster, type Id, type ProjectDoc, type TreeTab } from '../core/model';
 import type { DocStore } from '../core/store';
+import { DETAIL_LABELS, DETAIL_LEVELS } from '../core/states';
 import { PAPER_SIZES, saveMaster, setDefaultMaster, stampUsers } from '../core/sheets';
 import { deleteFolder, deleteWorksheet, descendantsOf, saveFolder, saveMarker, saveStorey, saveView, saveWorksheet, worksheetContents } from '../core/treeCommands';
 import { askConfirm } from './ask';
@@ -19,12 +20,12 @@ export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder' | 'worksh
 
 const esc = escapeHtml;
 
-/** Om det valda fortfarande finns i projektet. */
 /** Detaljnivåns val i vyns egenskaper (0.8.37). */
 function levelSelect(name: string, cur: string): string {
-  return `<select name="${name}">${(['sketch', 'normal', 'detail'] as const).map((d) => `<option value="${d}"${d === cur ? ' selected' : ''}>${{ sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' }[d]}</option>`).join('')}</select>`;
+  return `<select name="${name}">${DETAIL_LEVELS.map((d) => `<option value="${d}"${d === cur ? ' selected' : ''}>${DETAIL_LABELS[d]}</option>`).join('')}</select>`;
 }
 
+/** Om det valda fortfarande finns i projektet. */
 export function treeItemExists(doc: ProjectDoc, item: TreeItem): boolean {
   switch (item.kind) {
     case 'view':

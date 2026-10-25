@@ -127,11 +127,7 @@ function setPen(store: DocStore, ids: readonly Id[], part: Part, change: Partial
     for (const id of ids) {
       const el = store.doc.elements[id];
       if (!el || !OWN_PEN_TYPES.has(el.type)) continue;
-      const pen = changed(el.pen, part, change);
-      const next = { ...el };
-      if (pen) next.pen = pen;
-      else delete next.pen;
-      tx.putElement(next);
+      tx.putElement(withPen(el, changed(el.pen, part, change)));
     }
   });
 }
@@ -155,8 +151,9 @@ export function typePenChange(store: DocStore, ids: readonly Id[], name: string,
   return true;
 }
 
-function withPen(def: Definition, pen: OwnPen | undefined): Definition {
-  const next = { ...def };
+/** En kopia av objektet eller typen med pennan (undefined tar bort den). */
+function withPen<T extends { pen?: OwnPen }>(o: T, pen: OwnPen | undefined): T {
+  const next = { ...o };
   if (pen) next.pen = pen;
   else delete next.pen;
   return next;
@@ -167,10 +164,7 @@ export function resetOwnPen(store: DocStore, ids: readonly Id[]): void {
   store.transact('Ta bort egen penna', (tx) => {
     for (const id of ids) {
       const el = store.doc.elements[id];
-      if (!el?.pen) continue;
-      const next = { ...el };
-      delete next.pen;
-      tx.putElement(next);
+      if (el?.pen) tx.putElement(withPen(el, undefined));
     }
   });
 }

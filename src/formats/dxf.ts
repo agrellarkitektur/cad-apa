@@ -13,7 +13,8 @@
 
 import { all, arcPts, bspline, bulgePts, entities, num, pairs, str, type P2, type RawEntity } from './dxfCodes';
 import { readHatch } from './dxfHatch';
-import { patFamily, type FillFamily } from '../core/fillTypes';
+import type { FillFamily } from '../core/fillTypes';
+import { patFamily } from '../core/patFile';
 import { textPlacement } from './dxfText';
 
 export type DxfItem =

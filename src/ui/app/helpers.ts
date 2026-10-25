@@ -1,4 +1,5 @@
 import type { Id, ProjectDoc, ViewDef } from '../../core/model';
+import { DETAIL_LABELS } from '../../core/states';
 
 export const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 export const tf = new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2-digit' });
@@ -8,7 +9,7 @@ export const ANNOTATION_SCALES = [1, 2, 5, 10, 20, 25, 50, 100, 200, 400, 500, 1
 
 /** Kort beskrivning av en vy i vylistan. */
 export function describeView(v: ViewDef): string {
-  const names = { sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' };
+  const names = DETAIL_LABELS;
   const lab = v.labelDetail ?? v.detail;
   const mod = v.modelDetail ?? v.detail;
   // Olika nivåer (0.8.37): littera, 2D och 3D i den ordningen.

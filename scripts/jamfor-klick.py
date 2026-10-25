@@ -1,5 +1,6 @@
 """Samma klick i två byggen (granskningen 0.8.27; linjetyper, mask och egen
-penna från 0.8.32): läget efter varje steg
+penna från 0.8.32; fyllningstyper, pennor för dörrar och fönster, rummens
+kontur, Filtrera och markera och detaljnivåerna från 0.8.38): läget efter varje steg
 sparas, och två körningar jämförs steg för steg.
 
 Bygg den gamla versionen i en egen arbetskopia och den nya som vanligt,
@@ -9,10 +10,15 @@ servera dem på var sin port (python3 -m http.server) och kör
     python3 scripts/jamfor-klick.py 8766 ny.json
     python3 scripts/jamfor-klick.py --jamfor gammal.json ny.json
 
+Med `--bilder` (0.8.38) sparas också en bild av ritytan efter varje steg,
+bredvid json-filen. Skiljer sig ritningens markup (`content`), till exempel
+när ett mönster ritas på ett annat sätt, jämförs bilderna: antalet pixlar
+som skiljer mycket står efter stegets namn.
+
 Nya id blir desamma i båda (fast följd i crypto.getRandomValues), och
 blob-adresser för underlagens bilder räknas inte. Kräver Playwright och PIL.
 """
-import base64, hashlib, io, json, sys
+import base64, hashlib, io, json, os, sys
 from playwright.sync_api import sync_playwright
 
 
@@ -24,8 +30,15 @@ def compare(a_path, b_path):
     # ett till ett genom hela körningen.
     tools = {}
     bad = 0
-    for x, y in zip(a, b):
+    pics = [p[:-5] + '-bilder' for p in (a_path, b_path)]
+    for i, (x, y) in enumerate(zip(a, b)):
         d = [k for k in keys if x[k] != y[k]]
+        # Samma bild trots olika markup räknas som lika (0.8.38).
+        if 'content' in d and all(os.path.exists(f'{q}/{i}.png') for q in pics):
+            n = pixel_diff(*(f'{q}/{i}.png' for q in pics))
+            d.remove('content')
+            if n:
+                d.append(f'bild ({n} px)')
         ta, tb = x['_raw']['tool'], y['_raw']['tool']
         if tools.setdefault(ta, tb) != tb or list(tools.values()).count(tb) > 1:
             d.append('tool')
@@ -35,11 +48,19 @@ def compare(a_path, b_path):
     print(f'{len(a)} steg, {bad} olika')
 
 
+def pixel_diff(a, b):
+    """Pixlar som skiljer mer än en fjärdedel i gråskala (kantutjämningen räknas inte)."""
+    from PIL import Image, ImageChops
+    d = ImageChops.difference(Image.open(a).convert('L'), Image.open(b).convert('L'))
+    return sum(d.histogram()[64:])
+
+
 if sys.argv[1] == '--jamfor':
     compare(sys.argv[2], sys.argv[3])
     sys.exit()
 
 PORT, OUT = sys.argv[1], sys.argv[2]
+PICS = OUT[:-5] + '-bilder' if '--bilder' in sys.argv else None
 
 
 def _bild():
@@ -131,6 +152,9 @@ def main():
                 err = str(e).split('\n')[0][:200]
             settle()
             st = pg.evaluate(STATE)
+            if PICS:
+                os.makedirs(PICS, exist_ok=True)
+                pg.locator('.pane-2d').screenshot(path=f'{PICS}/{len(rows)}.png')
             rows.append({'step': name, 'err': err, **{k: hashlib.sha1(v.encode()).hexdigest()[:10] for k, v in st.items()}, '_raw': st})
 
         def click_model(x, y, shift=False):
@@ -172,6 +196,26 @@ def main():
         step('linjetypens namn', "__set('[data-linetype=\"egen-1:name\"]', 'Egen', '.dialog')")
         step('pennans linjetyp', "__set('[data-pen=\"elevationLine:linetype\"]', 'dashdot', '.dialog')")
         step('penna med egen linjetyp', "__set('[data-pen=\"sectionLine:linetype\"]', 'egen-1', '.dialog')")
+        # Pennor för dörrar, fönster och rum, och fyllningstyperna (0.8.33–0.8.37, steg från 0.8.38).
+        step('symbolpenna', "__set('[data-pen=\"openingSymbol:weight\"]', '0.25', '.dialog')")
+        step('vypenna färg', "__set('[data-pen=\"openingView:color\"]', '#3366aa', '.dialog')")
+        step('rummens kontur', "__set('[data-pen=\"roomOutline:weight\"]', '0.18', '.dialog')")
+        step('guiden', "document.querySelector('.dialog .filltype-guide').open = true")
+        step('ny fyllningstyp', "__click('[data-action=\"filltype-add\"]', '.dialog')")
+        step('typens namn', "__set('[data-filltype=\"fyllning-1:name\"]', 'Rutor', '.dialog')")
+        step('typens vinkel', "__set('[data-filltype=\"fyllning-1:0:angle\"]', '30', '.dialog')")
+        step('typens avstånd', "__set('[data-filltype=\"fyllning-1:0:spacing\"]', '1,5', '.dialog')")
+        step('typens förskjutning', "__set('[data-filltype=\"fyllning-1:0:shift\"]', '0,75', '.dialog')")
+        step('typens streckning', "__set('[data-filltype=\"fyllning-1:0:dash\"]', '2 1', '.dialog')")
+        step('ny linjefamilj', "__click('[data-action=\"filltype-family-add\"][data-filltype-id=\"fyllning-1\"]', '.dialog')")
+        step('familjens baspunkt', "__set('[data-filltype=\"fyllning-1:1:x\"]', '0,5', '.dialog')")
+        step('ta bort familjen', "__click('[data-action=\"filltype-family-remove\"][data-filltype-id=\"fyllning-1\"][data-family=\"0\"]', '.dialog')")
+        step('typens linjer', "__set('[data-filltype=\"fyllning-1:weight\"]', '0.25', '.dialog')")
+        step('verkliga mått', "__set('[data-filltype=\"fyllning-1:units\"]', 'model', '.dialog')")
+        step('kopiera tegel', "__click('[data-action=\"filltype-copy\"][data-filltype-id=\"tegel\"]', '.dialog')")
+        step('snittfyllning tegel', "__set('[data-key=\"new\"][data-field=\"fill\"]', 'type:tegel', '.dialog')")
+        step('snittfyllning egen', "__set('[data-key=\"existing\"][data-field=\"fill\"]', 'type:fyllning-1', '.dialog')")
+        step('ta bort typen', "__click('[data-action=\"filltype-remove\"][data-filltype-id=\"fyllning-1\"]', '.dialog')")
         step('förinställning', "__set('#style-preset', '1', '.dialog')")
         step('förinställning 0', "__set('#style-preset', '0', '.dialog')")
         step('stäng stilmallen', "__click('[data-action=\"close\"]', '.dialog')")
@@ -197,6 +241,10 @@ def main():
         step('vägg och dörr', "bacchus.selection.set(['yv-o', 'd02'])")
         step('vrid vägg', "__click('[data-action=\"rotate-90\"]', 'aside.panel .quick-bar')")
         step('markera rum', "bacchus.selection.set(['r01'])")
+        # Rummets fyllning och penna (0.8.34–0.8.36, steg från 0.8.38).
+        step('rum mönster', "__set('[data-key=\"d2:pattern\"]', 'type:plattor150', 'aside.panel .panel-body')")
+        step('rum vridning', "__set('[data-key=\"d2:fillTypeAngle\"]', '45', 'aside.panel .panel-body')")
+        step('rum penna', "__set('[data-key=\"pen:weight\"]', '0.25', 'aside.panel .panel-body')")
         step('markera fönster', "bacchus.selection.set(['f01'])")
         step('ta bort fönster', "__click('[data-action=\"delete\"]', 'aside.panel .quick-bar')")
         step('ångra borttagning', "__click('[data-action=\"undo\"]')")
@@ -264,6 +312,14 @@ def main():
         step('bakgrundens opacitet 2d', "__set('[data-key=\"d2:fillBackgroundOpacity\"]', '60', 'aside.panel .panel-body')")
         step('bakgrund mask', "__set('[data-key=\"d2:fillBackgroundKind\"]', 'mask', 'aside.panel .panel-body')")
         step('bakgrund i smartmenyn', "__set('[data-key=\"d2:fillBackgroundOpacity\"]', '80', '.smart-menu')")
+        # Fyllningstyperna och rumsgränsen på en 2D-form (0.8.34–0.8.36, steg från 0.8.38).
+        step('mönster tegel', "__set('[data-key=\"d2:pattern\"]', 'type:tegel', 'aside.panel .panel-body')")
+        step('typens vridning', "__set('[data-key=\"d2:fillTypeAngle\"]', '30', 'aside.panel .panel-body')")
+        step('typens skala', "__set('[data-key=\"d2:fillTypeScale\"]', '2', 'aside.panel .panel-body')")
+        step('skala i smartmenyn', "__set('[data-key=\"d2:fillTypeScale\"]', '1,5', '.smart-menu')")
+        step('mönster kopian', "__set('[data-key=\"d2:pattern\"]', 'type:fyllning-2', 'aside.panel .panel-body')")
+        step('mönster sicksack', "__set('[data-key=\"d2:pattern\"]', 'type:sicksack', 'aside.panel .panel-body')")
+        step('avgränsar rum', "__set('[data-key=\"d2:boundsRooms\"]', true, 'aside.panel .panel-body')")
         step('visas i bara här', "__set('[data-key=\"show:kind\"]', 'this', 'aside.panel .panel-body')")
         step('visas i utvalda', "__set('[data-key=\"show:kind\"]', 'views', 'aside.panel .panel-body')")
         step('visas i taggar', "__set('[data-key=\"show:kind\"]', 'tags', 'aside.panel .panel-body')")
@@ -307,6 +363,26 @@ def main():
         step('x i smartmenyn', "__set('[data-key=\"ul:x\"]', '-8000', '.smart-menu')")
         step('underlag visas i', "__set('[data-key=\"show:kind\"]', 'this', 'aside.panel .panel-body')")
         step('avmarkera underlag', "bacchus.selection.clear()")
+
+        # ---------- Detaljnivåer och Filtrera och markera (steg från 0.8.38) ----------
+        step('vyraden detalj', "__click('.detail-switch:not(.detail-part-switch) [data-detail=\"detail\"]')")
+        step('öppna Visa', "__click('[data-action=\"show-menu\"]')")
+        step('littera skiss', "__click('[data-detail=\"sketch\"][data-detail-part=\"label\"]')")
+        step('3D normal', "__click('[data-detail=\"normal\"][data-detail-part=\"model\"]')")
+        step('2D skiss', "__click('[data-detail=\"sketch\"][data-detail-part=\"plan\"]')")
+        step('stäng Visa', "__click('[data-action=\"show-menu\"]')")
+        step('vyraden normal', "__click('.detail-switch:not(.detail-part-switch) [data-detail=\"normal\"]')")
+        step('filtrera', "__click('[data-action=\"filter-select\"]')")
+        step('sort väggar', "__set('input[data-f=\"type\"][value=\"Wall\"]', true, '.filter-select')")
+        step('egen penna', "__set('select[data-f=\"pen\"]', 'with', '.filter-select')")
+        step('ersätt markeringen', "__click('[data-action=\"filter-apply\"][data-how=\"replace\"]', '.filter-select')")
+        step('filtrera igen', "__click('[data-action=\"filter-select\"]')")
+        step('utan egen penna', "__set('select[data-f=\"pen\"]', 'without', '.filter-select')")
+        step('lägg till', "__click('[data-action=\"filter-apply\"][data-how=\"add\"]', '.filter-select')")
+        step('filtrera en tredje gång', "__click('[data-action=\"filter-select\"]')")
+        step('rensa villkoren', "__click('[data-action=\"filter-reset\"]', '.filter-select')")
+        step('stäng filtret', "__click('[data-action=\"filter-close\"]', '.filter-select')")
+        step('avmarkera filtret', "bacchus.selection.clear()")
 
         # ---------- Fasader och sektion ----------
         def open_marker(m):

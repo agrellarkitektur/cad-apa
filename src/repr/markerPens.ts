@@ -39,11 +39,19 @@ export function defaultMarkerPen(key: MarkerPenKey): PenDef {
  * (0.8.30). Pilspetsar och fyllda trianglar ritas heldragna (`solidPen`).
  */
 export function markerPen(style: StyleSheet | undefined, key: MarkerPenKey): Pen {
+  return stylePen(style, key, defaultMarkerPen(key).weight);
+}
+
+/**
+ * En rad i stilmallens penntabell (`pens`) som penna: tjockleken (eller
+ * förvalet), färgen om den inte är svart, och linjetypens streckning.
+ * Markörerna och dörrarnas och fönstrens klasser (0.8.33) läser så.
+ */
+export function stylePen(style: StyleSheet | undefined, key: string, weight: number): Pen {
   const own = style?.pens?.[key];
-  const weight = own?.weight ?? defaultMarkerPen(key).weight;
   const color = own?.color && own.color !== 'ink' ? (own.color as Pen['color']) : undefined;
   const dash = lineTypeDash(style, own?.linetype);
-  return { weight, ...(color ? { color } : {}), ...(dash ? { dash } : {}) };
+  return { weight: own?.weight ?? weight, ...(color ? { color } : {}), ...(dash ? { dash } : {}) };
 }
 
 /** Samma penna heldragen, för pilspetsar och trianglar (0.8.30). */

@@ -1,8 +1,11 @@
 import { dashPieces, type DashFrom } from '../repr/dash';
 import type { FillDef } from '../core/graphics';
-import { drawnDash, evenDash, type HatchLine } from '../core/fillTypes';
+import { drawnDash, evenDash, hatchAsPattern, type HatchLine } from '../core/fillTypes';
+import { clippedDashes } from '../core/hatchStrokes';
 import type { Camera } from './camera';
 import { imageCorners, type Pen, type PenColor, type Primitive } from '../repr/primitives';
+
+type RegionRings = Extract<Primitive, { kind: 'region' }>['rings'];
 
 /**
  * Linjernas tjocklek på skärmen (0.8.11): `screen` pennans tjocklek, lika
@@ -29,6 +32,13 @@ export interface RenderOptions {
 const MIN_TEXT_PX = 4;
 
 /**
+ * Streckade familjer vars förskjutning (minskad till högst en halv
+ * streckperiod) är mer än så här många linjeavstånd ritas som stycken, inte
+ * som mönster (0.8.38): mönsterrutan skulle snedställas mer än 63°.
+ */
+const MAX_SHEAR = 2;
+
+/**
  * Ritar primitiver som SVG-markup i skärmkoordinater. "ink" och "paper"
  * följer temat, så att svart på papper blir ljust på mörk skärm.
  */
@@ -42,35 +52,15 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
   // Likadana skrafferingar delar mönster (0.8.3), t.ex. i ett DXF-underlag med många ytor.
   const shared = new Map<string, string>();
 
-  const fillAttr = (fill: Extract<FillDef, { kind: 'none' | 'solid' | 'hatch' }>): string => {
-    if (fill.kind === 'none') return 'fill="none"';
-    if (fill.kind === 'solid') return `style="fill:${color(fill.color)}${fill.opacity !== undefined && fill.opacity < 1 ? `;fill-opacity:${fill.opacity}` : ''}"`;
-    // Skraffering: mönstret följer modellen, inte skärmen, så det glider inte vid panorering.
-    const same = JSON.stringify(fill);
-    const known = shared.get(same);
-    if (known) return `fill="url(#${known})"`;
-    const spacing = Math.max(3, fill.spacing * paperToPx);
-    const w = penPx(fill.weight, paperToPx, mode, 0.6);
-    const o = cam.toScreen([0, 0]);
-    const id = `${opt.idPrefix ?? 'h'}${patterns.size}`;
-    // Vinkeln mäts moturs i modellen; på skärmen vänds y.
-    patterns.set(
-      id,
-      `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${f(spacing)}" height="${f(spacing)}" patternTransform="translate(${f(o[0])} ${f(o[1])}) rotate(${f(-fill.angle)})">${
-        fill.background
-          ? `<rect width="${f(spacing)}" height="${f(spacing)}" style="fill:${color(fill.background)};fill-opacity:${fill.backgroundOpacity ?? 1}"/>`
-          : ''
-      }<path d="M0 ${f(spacing / 2)}H${f(spacing)}" style="stroke:${color(fill.color)};stroke-opacity:${fill.opacity ?? 1}" stroke-width="${f(w)}"/></pattern>`,
-    );
-    shared.set(same, id);
-    return `fill="url(#${id})"`;
-  };
+  const solidFill = (fill: Extract<FillDef, { kind: 'solid' }>): string =>
+    `style="fill:${color(fill.color)}${fill.opacity !== undefined && fill.opacity < 1 ? `;fill-opacity:${fill.opacity}` : ''}"`;
 
   /**
    * Ett mönster av linjefamiljer (0.8.36): ett SVG-mönster per familj. Rutan
    * är en streckperiod lång och ett linjeavstånd hög, och snedställs
    * (skewX) så att förskjutningen längs linjerna stämmer. Med linjer tätare
-   * än 3 px förstoras hela mönstret, som skrafferingen.
+   * än 3 px förstoras hela mönstret, som skrafferingen. Starkt snedställda
+   * familjer ritas som stycken i stället (`dashedFamily`).
    */
   const familyFill = (fill: Extract<FillDef, { kind: 'pattern' }>, l: HatchLine): string => {
     const same = JSON.stringify([fill.color, fill.weight, fill.opacity, l]);
@@ -79,12 +69,15 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
     const sp0 = l.spacing * paperToPx;
     const u = paperToPx * (sp0 < 3 ? 3 / sp0 : 1);
     const sp = l.spacing * u;
-    const sh = (l.shift ?? 0) * u;
     const [p0, p1] = (l.phase ?? [0, 0]).map((x) => x * u);
     const mod = (a: number, m: number) => ((a % m) + m) % m;
     const drawn = evenDash(l.dash) && drawnDash(evenDash(l.dash)!);
     const dash = drawn ? drawn.dash.map((d) => d * u) : null;
     const period = dash ? dash.reduce((a, b) => a + b, 0) : 0;
+    // Förskjutningen gäller bara streckningen och bara upp till en streckperiod (0.8.38): den
+    // minsta som ger samma linjer gör rutan minst sned, och en heldragen linje behöver ingen.
+    const sh0 = (l.shift ?? 0) * u;
+    const sh = period > 0 ? sh0 - Math.round(sh0 / period) * period : 0;
     const width = period > 0 ? period : sp;
     const y0 = mod(-p1, sp);
     const u0 = p0 - (p1 * sh) / sp;
@@ -101,6 +94,42 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
     );
     shared.set(same, id);
     return `fill="url(#${id})"`;
+  };
+
+  /**
+   * En starkt snedställd familj som linjestycken klippta mot ytan (0.8.38),
+   * förstorad som mönstret ovan. Grus och mark i .pat har streck med långa
+   * mellanrum och en förskjutning många gånger linjeavståndet; en så sned
+   * mönsterruta målar Chrome långsamt och fel (prickar i stället för
+   * stenar), och en DXF med 2 000 skrafferingar i grus, mark och tegel tog
+   * 14 sekunder att rita. Snedheten och antalet stycken beror inte på zoomen. Null för
+   * familjer som ritas som mönster, och när styckena inte ryms i `pieces`.
+   */
+  let pieces = 200000;
+  const dashedFamily = (rings: RegionRings, fill: Extract<FillDef, { kind: 'pattern' }>, l: HatchLine): string | null => {
+    const even = evenDash(l.dash);
+    if (!even) return null;
+    const period = even.reduce((a, b) => a + b, 0);
+    const shift = l.shift ?? 0;
+    if (!(period > 0) || Math.abs(shift - Math.round(shift / period) * period) <= MAX_SHEAR * l.spacing) return null;
+    const sp0 = l.spacing * paperToPx;
+    const k = sp0 < 3 ? 3 / sp0 : 1;
+    const drawn = drawnDash(even);
+    const m = opt.drawingScale * k;
+    const line: HatchLine = { angle: l.angle, spacing: l.spacing * m, shift: (l.shift ?? 0) * m, dash: drawn.dash.map((d) => d * m), phase: [(l.phase?.[0] ?? 0) * m, (l.phase?.[1] ?? 0) * m] };
+    const segs = clippedDashes(line, rings, pieces + 1);
+    const n = segs.length / 4;
+    if (n > pieces) return null;
+    pieces -= n;
+    if (!n) return '';
+    // Modellens mm till skärmen: kameran är en förskjutning och en likformig skalning med y vänd.
+    const o = cam.toScreen([0, 0]);
+    const cs = cam.scale;
+    const parts: string[] = [];
+    for (let i = 0; i < segs.length; i += 4) parts.push(`M${f(o[0] + segs[i] * cs)} ${f(o[1] - segs[i + 1] * cs)}L${f(o[0] + segs[i + 2] * cs)} ${f(o[1] - segs[i + 3] * cs)}`);
+    const d = parts.join('');
+    const w = penPx(fill.weight, paperToPx, mode, 0.6);
+    return `<path d="${d}" style="stroke:${color(fill.color)};stroke-opacity:${fill.opacity ?? 1}" stroke-width="${f(w)}" fill="none"${drawn.round ? ' stroke-linecap="round"' : ''}/>`;
   };
 
   for (const p of prims) {
@@ -124,11 +153,12 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
       }
       case 'region': {
         const d = p.rings.map((r) => ring(r, cam, true)).join('');
-        if (p.fill.kind === 'pattern') {
-          const fl = p.fill;
+        // Skrafferingen är ett mönster med en familj (0.8.38). Mönstret följer modellen, inte skärmen, så det glider inte vid panorering.
+        const fl = hatchAsPattern(p.fill);
+        if (fl.kind === 'pattern') {
           if (fl.background) out.push(`<path d="${d}" fill-rule="evenodd" style="fill:${color(fl.background)};fill-opacity:${fl.backgroundOpacity ?? 1}"/>`);
-          for (const l of fl.lines) out.push(`<path d="${d}" fill-rule="evenodd" ${familyFill(fl, l)}/>`);
-        } else if (p.fill.kind !== 'none' && p.fill.kind !== 'type') out.push(`<path d="${d}" fill-rule="evenodd" ${fillAttr(p.fill)}/>`);
+          for (const l of fl.lines) out.push(dashedFamily(p.rings, fl, l) ?? `<path d="${d}" fill-rule="evenodd" ${familyFill(fl, l)}/>`);
+        } else if (fl.kind === 'solid') out.push(`<path d="${d}" fill-rule="evenodd" ${solidFill(fl)}/>`);
         if (p.outline?.dash?.length) for (const r of p.rings) out.push(dashed(r, true, p.outline));
         else if (p.outline) out.push(`<path d="${d}" fill="none" ${stroke(p.outline)}/>`);
         break;
@@ -229,10 +259,15 @@ export function penPx(weight: number, paperToPx: number, mode: LineWeights, min:
   return Math.max(min, weight * 4);
 }
 
-function strokeAttrs(pen: Pen, paperToPx: number, mode: LineWeights): string {
+/** Pennans färg, opacitet och bredd, med runda ändar och hörn. */
+function penStyle(pen: Pen, paperToPx: number, mode: LineWeights): string {
   const w = penPx(pen.weight, paperToPx, mode, 0.75);
   const op = pen.opacity !== undefined && pen.opacity < 1 ? `;stroke-opacity:${f(pen.opacity)}` : '';
-  let s = `style="stroke:${color(pen.color ?? 'ink')}${op}" stroke-width="${f(w)}" stroke-linecap="round" stroke-linejoin="round"`;
+  return `style="stroke:${color(pen.color ?? 'ink')}${op}" stroke-width="${f(w)}" stroke-linecap="round" stroke-linejoin="round"`;
+}
+
+function strokeAttrs(pen: Pen, paperToPx: number, mode: LineWeights): string {
+  let s = penStyle(pen, paperToPx, mode);
   if (pen.dash?.length) {
     const dash = pen.dash.map((d) => f(Math.max(2, d * paperToPx))).join(' ');
     s += ` stroke-dasharray="${dash}"`;
@@ -247,9 +282,7 @@ function strokeAttrs(pen: Pen, paperToPx: number, mode: LineWeights): string {
  */
 function dashedPath(points: readonly (readonly [number, number])[], closed: boolean, pen: Pen, cam: Camera, paperToPx: number, mode: LineWeights, from?: DashFrom): string {
   const base = pen.dash!.map((d) => Math.max(2, d * paperToPx));
-  const w = penPx(pen.weight, paperToPx, mode, 0.75);
-  const op = pen.opacity !== undefined && pen.opacity < 1 ? `;stroke-opacity:${f(pen.opacity)}` : '';
-  const style = `style="stroke:${color(pen.color ?? 'ink')}${op}" stroke-width="${f(w)}" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
+  const style = `${penStyle(pen, paperToPx, mode)} fill="none"`;
   const pts = points.map((q) => cam.toScreen(q));
   const whole = from && { points: from.points.map((q) => cam.toScreen(q)), closed: from.closed, at: from.at * cam.scale };
   return dashPieces(pts, closed, base, whole)

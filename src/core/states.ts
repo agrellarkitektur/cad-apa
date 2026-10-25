@@ -1,5 +1,18 @@
 import type { Element, Id, ProjectDoc, State } from './model';
 
+/** Skiss, normal eller detalj (0.8.37 delad i littera, 2D och 3D). */
+export type DetailLevel = 'sketch' | 'normal' | 'detail';
+
+/** Nivåerna i ordning, med namnen i appen. */
+export const DETAIL_LABELS: Record<DetailLevel, string> = { sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' };
+export const DETAIL_LEVELS = Object.keys(DETAIL_LABELS) as DetailLevel[];
+
+/** Detaljnivån för en del av ritningen: littera, 2D-symboler eller 3D (0.8.37). */
+export function detailOf(view: Pick<ViewStates, 'detail' | 'labelDetail' | 'modelDetail'>, part: 'label' | 'plan' | 'model'): DetailLevel {
+  const base = view.detail ?? 'normal';
+  return part === 'label' ? (view.labelDetail ?? base) : part === 'model' ? (view.modelDetail ?? base) : base;
+}
+
 /**
  * Hur ett element visas i en vy:
  * - plain: tillståndet visas utan jämförelse
@@ -8,15 +21,6 @@ import type { Element, Id, ProjectDoc, State } from './model';
  * - new: finns i tillståndet men inte i jämförelsen (nytt)
  * - absent: syns inte alls
  */
-/** Skiss, normal eller detalj (0.8.37 delad i littera, 2D och 3D). */
-export type DetailLevel = 'sketch' | 'normal' | 'detail';
-
-/** Detaljnivån för en del av ritningen: littera, 2D-symboler eller 3D (0.8.37). */
-export function detailOf(view: Pick<ViewStates, 'detail' | 'labelDetail' | 'modelDetail'>, part: 'label' | 'plan' | 'model'): DetailLevel {
-  const base = view.detail ?? 'normal';
-  return part === 'label' ? (view.labelDetail ?? base) : part === 'model' ? (view.modelDetail ?? base) : base;
-}
-
 export type Action = 'plain' | 'existing' | 'demolished' | 'new' | 'absent';
 
 export interface ViewStates {

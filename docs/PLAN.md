@@ -105,6 +105,12 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.30 | Sju linjetyper och egna i stilmallen, för 2D-former och pennorna; streckningen längs hela linjen; bakgrunden och fyllningen *Mask* |
 | 0.8.31 | Egen penna (tjocklek, färg, linjetyp) för väggar, dörrar, fönster, tak och möbler, i planen, fasaderna och sektionerna |
 | 0.8.32 | Granskning: testerna (färre, snabbare, typkontrollerade, referensritningar för 2D-formerna), `dxf.ts` uppdelad, rummen och väggarnas utsida delar sammanslagningen |
+| 0.8.33 | Pennor för dörrarnas och fönstrens delar i tre klasser (snitt, vy, symbol), egen penna i två delar, penna per typ |
+| 0.8.34 | Rummens kontur med penna i stilmallen och per rum, rumsgränser (*Avgränsar rum* på 2D-former) |
+| 0.8.35 | Filtrera och markera: sort, typ, tillstånd, åtgärd, egen penna, egen egenskap och våning |
+| 0.8.36 | Egna fyllningstyper (linjefamiljer med streckning), läsa och spara .pat, streckade mönster i DXF-underlag |
+| 0.8.37 | Detaljnivå för littera, 2D-symboler och 3D var för sig, färdiga fyllningstyper, linjetjocklek per typ, snabbguide |
+| 0.8.38 | Granskning: starkt snedställda mönster (grus, mark) som klippta streck, snabbt och rätt; skrafferingen som mönster; `fillTypes.ts` uppdelad; referensritningar och klick för fyllningstyperna och detaljnivåerna |
 
 ## Framåt
 
@@ -1358,7 +1364,34 @@ utfällbar ruta överst bland fyllningstyperna.*
 ### 0.8.38 Granskning
 
 Enligt planen (ungefär var tredje version; förra är 0.8.32). Utan nya
-funktioner.
+funktioner. Sist i 0.8 (Carl August 25 oktober).
+
+*Byggd (25 oktober), samma format (13). Testerna: 420 → 424 på ca 10 s.
+Det långsamma var DXF-underlag med grus och mark: deras linjer är
+förskjutna hundratals linjeavstånd, så mönsterrutan på skärmen blev
+nästan 90° sned, och en sådan ruta målar Chrome långsamt (2 000
+skrafferingar med grus, mark, tegel och betong: 14 s per omritning) och
+fel (prickar i stället för stenar, jämfört med ezdxf). Familjer som är
+snedare än 63° (förskjutningen minskad till högst en halv streckperiod
+är mer än två linjeavstånd) ritas nu som streck klippta mot ytan
+(`clippedDashes`), som stämmer med ezdxf; resten som mönster som förut.
+Samma fil ritas om på ca 0,6 s. Av de inbyggda typerna gäller det en av
+träets familjer; bilden är densamma. Skrafferingen ritas med mönstrets
+kod på skärmen och i PDF:en (samma bild, pixel för pixel).
+`fillTypes.ts` är uppdelad (strecken i `hatchStrokes.ts`, `.pat` i
+`patFile.ts`), stilmallens pennor läses på ett ställe (`stylePen`),
+detaljnivåernas namn finns på ett ställe och den oanvända `typeFill` är
+borttagen. Referensritningarna har fyllningstyperna (också tegel som
+snittfyllning och en borttagen typ) och detaljnivåerna, skrivna med
+0.8.37 innan koden ändrades. Klickjämförelsen har 188 steg (också
+fyllningstyperna, pennorna för dörrar, fönster och rum, Filtrera och
+markera och detaljnivåerna) och kan jämföra bilder när markupen skiljer
+sig (`--bilder`): samma läge och samma bild i 0.8.37 och 0.8.38. Mätt
+men lämnat: DXF-underlag ritas om (markup och målning) vid varje
+ändring i planen, också när underlaget är detsamma; att spara det
+ritade per underlag kräver ett eget lager och är större än en
+granskning.*
+
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
 *Framflyttad från 0.14.*

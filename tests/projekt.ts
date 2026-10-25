@@ -171,6 +171,9 @@ export function shapesProject(): ProjectDoc {
     ...doc.graphics,
     lineTypes: [{ id: 'egen-1', name: 'Egen', dash: [4, 1, 0.5, 1] }],
     pens: { sectionLine: { weight: 0.5, linetype: 'dashdot' }, north: { weight: 0.25, color: '#c2372c' } },
+    // Fyllningstyperna (0.8.36–0.8.37, i referensritningarna sedan 0.8.38): en egen typ och tegel som snittfyllning för nytt.
+    fillTypes: [{ id: 'egen-fyll', name: 'Egen', weight: 0.25, families: [{ angle: 0, x: 0, y: 0, spacing: 3, shift: 1.5, dash: [2, 1] }, { angle: 60, x: 1, y: 0.5, spacing: 4, shift: 0, dash: [] }] }],
+    actions: { ...doc.graphics.actions, new: { ...doc.graphics.actions.new, cutFill: { kind: 'type', type: 'tegel', color: 'ink', weight: 0.18 } } },
   };
   const states = doc.states.map((s) => s.id);
   const base = { weight: 0.25, linetype: 'solid', fillAngle: 45, fillSpacing: 2 };
@@ -186,11 +189,16 @@ export function shapesProject(): ProjectDoc {
   shape('f-mask', { shape: 'polyline', points: rect(-200, -200, 1200, 1200), closed: true, weight: 0, fill: 'mask', fillFront: true });
   shape('f-cirkel', { shape: 'polyline', points: [[-1000, 5000], [-3000, 5000]], bulges: [1000, 1000], closed: true, fill: 'cross', fillBackground: '#ffeedd', fillBackgroundOpacity: 60, linetype: 'dotted' });
   shape('f-spline', { shape: 'spline', points: [[-6000, -1000], [-5000, 0], [-4000, -1000], [-3000, 0]], linetype: 'dashdotdot', endCap: 'triangle' });
+  shape('f-tegel', { shape: 'polyline', points: rect(13000, 0, 3000, 2000), closed: true, fill: 'type', fillType: 'tegel', fillTypeAngle: 15, fillBackground: 'paper' });
+  shape('f-egen-typ', { shape: 'polyline', points: rect(13000, 3000, 3000, 2000), closed: true, fill: 'type', fillType: 'egen-fyll', fillTypeScale: 2, opacity: 70 });
+  shape('f-sicksack', { shape: 'polyline', points: rect(13000, 6000, 3000, 1000), closed: true, weight: 0, fill: 'type', fillType: 'sicksack' });
+  shape('f-saknad-typ', { shape: 'polyline', points: rect(13000, -3000, 2000, 2000), closed: true, fill: 'type', fillType: 'finns-inte' });
   doc.elements['iv-1'].pen = { weight: 0.7, linetype: 'dashed', color: '#00aa00' };
   doc.elements['d02'].pen = { color: '#c2372c' };
   doc.elements['f01'].pen = { weight: 0.13 };
   doc.elements['m01'].pen = { linetype: 'dotted' };
   doc.elements['tak'].pen = { color: '#3355aa', weight: 0.5 };
   doc.elements['r01'].params = { ...doc.elements['r01'].params, fill: 'hatch', fillBackground: '#eeeeff', fillColor: '#5566aa' };
+  doc.elements['r02'].params = { ...doc.elements['r02'].params, fill: 'type', fillType: 'plattor150', fillTypeAngle: 45, fillColor: '#5566aa' };
   return doc;
 }

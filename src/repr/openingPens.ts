@@ -1,5 +1,5 @@
 import type { PenDef, StyleSheet } from '../core/graphics';
-import { lineTypeDash } from '../core/lineTypes';
+import { stylePen } from './markerPens';
 import type { Pen } from './primitives';
 
 /**
@@ -30,11 +30,7 @@ export function defaultOpeningPen(key: OpeningPenKey): PenDef {
 /** Pennan för en klass, ur stilmallen eller förvalet, med färg och linjetyp. */
 export function openingPen(style: StyleSheet | undefined, cls: OpeningClass): Pen {
   const key = KEY_OF[cls];
-  const own = style?.pens?.[key];
-  const weight = own?.weight ?? defaultOpeningPen(key).weight;
-  const color = own?.color && own.color !== 'ink' ? (own.color as Pen['color']) : undefined;
-  const dash = lineTypeDash(style, own?.linetype);
-  return { weight, ...(color ? { color } : {}), ...(dash ? { dash } : {}) };
+  return stylePen(style, key, defaultOpeningPen(key).weight);
 }
 
 /** Alla tre pennorna, för en dörr eller ett fönster som ritas. */

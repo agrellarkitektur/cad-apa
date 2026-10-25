@@ -1,0 +1,147 @@
+yta fylld paper [w0.35 ink] 0,0 1995,0 1995,400 400,400 400,2395 0,2395 @/snitt
+yta fylld paper [w0.35 ink] 0,3605 400,3605 400,7600 1495,7600 1495,8000 0,8000 @/snitt
+yta fylld paper [w0.35 ink] 3005,0 6145,0 6145,400 5060,400 5060,2545 4940,2545 4940,400 3005,400 @/snitt
+yta fylld paper [w0.35 ink] 3905,7600 4940,7600 4940,6255 5060,6255 5060,7600 7545,7600 7545,8000 3905,8000 @/snitt
+yta fylld paper [w0.35 ink] 4940,3455 5060,3455 5060,3940 9645,3940 9645,4060 5060,4060 5060,5345 4940,5345 @/snitt
+yta fylld paper [w0.35 ink] 7355,0 9795,0 9795,400 7355,400 @/snitt
+yta fylld paper [w0.35 ink] 9055,7600 11600,7600 11600,6405 12000,6405 12000,8000 9055,8000 @/snitt
+yta fylld paper [w0.35 ink] 10405,0 12000,0 12000,5195 11600,5195 11600,4060 10555,4060 10555,3940 11600,3940 11600,400 10405,400 @/snitt
+text "YV01" 4012,700 h2 start [w0.18] @yv-s/littera
+linje 4260,200 4260,610 [w0.18 ink] @yv-s/littera
+text "YV01" 11300,3752 h2 90° start [w0.18] @yv-o/littera
+linje 11800,4000 11390,4000 [w0.18 ink] @yv-o/littera
+text "YV01" 5752,7100 h2 start [w0.18] @yv-n/littera
+linje 6000,7800 6000,7330 [w0.18 ink] @yv-n/littera
+text "YV01" 900,4892 h2 90° start [w0.18] @yv-v/littera
+linje 200,5140 670,5140 [w0.18 ink] @yv-v/littera
+text "IV01" 5560,3752 h2 90° start [w0.18] @iv-1/littera
+linje 5000,4000 5330,4000 [w0.18 ink] @iv-1/littera
+text "IV01" 8052,3440 h2 start [w0.18] @iv-2/littera
+linje 8300,4000 8300,3670 [w0.18 ink] @iv-2/littera
+yta hatch ink 45° a0.6 w0.18 [w0.35 ink] 7240,400 7360,400 7360,3940 7240,3940 @/snitt
+text "IV01" 7860,1952 h2 90° start [w0.18] @iv-4/littera
+linje 7300,2200 7630,2200 [w0.18 ink] @iv-4/littera
+linje 1995,400 2869.7,905 [w0.18 ink] @d01/dörrblad
+båge 1995,400 r1010 0°–30° [w0.13 ink] @d01/slagbåge
+text "D1101" 1942,-320 h2 start [w0.18] @d01/littera
+text "1010×2110" 1942,-610 h2 start [w0.18] @d01/littera
+linje 5060,2545 5515,3333.1 [w0.18 ink] @d02/dörrblad
+båge 5060,2545 r910 60°–90° [w0.13 ink] @d02/slagbåge
+text "D1104" 4530,2504 h2 90° start [w0.18] @d02/littera
+text "910×2110" 4820,2504 h2 90° start [w0.18] @d02/littera
+linje 5060,5345 5515,6133.1 [w0.18 ink] @d03/dörrblad
+båge 5060,5345 r910 60°–90° [w0.13 ink] @d03/slagbåge
+text "D1102" 4530,5304 h2 90° start [w0.18] @d03/littera
+text "910×2110" 4820,5304 h2 90° start [w0.18] @d03/littera
+linje 9645,3940 10433.1,3485 [w0.18 ink] @d04/dörrblad
+båge 9645,3940 r910 -30°–0° [w0.13 ink] @d04/slagbåge
+text "D1103" 9604,4470 h2 start [w0.18] @d04/littera
+text "910×2110" 9604,4180 h2 start [w0.18] @d04/littera
+linje 7355,400 7355,0 [w0.25 ink] @f01/sida
+linje 6145,400 6145,0 [w0.25 ink] @f01/sida
+linje 7355,230 6145,230 [w0.18 ink] @f01/glas
+linje 7355,170 6145,170 [w0.18 ink] @f01/glas
+linje 7355,400 6145,400 [w0.13 ink] @f01/under
+linje 7355,0 6145,0 [w0.13 ink] @f01/under
+text "F1" 6192,810 h2 start [w0.18] @f01/littera
+text "1210×1210" 6192,520 h2 start [w0.18] @f01/littera
+linje 10405,400 10405,0 [w0.25 ink] @f02/sida
+linje 9795,400 9795,0 [w0.25 ink] @f02/sida
+linje 10405,230 9795,230 [w0.18 ink] @f02/glas
+linje 10405,170 9795,170 [w0.18 ink] @f02/glas
+linje 10405,400 9795,400 [w0.13 ink] @f02/under
+linje 10405,0 9795,0 [w0.13 ink] @f02/under
+text "F2" 9666,810 h2 start [w0.18] @f02/littera
+text "610×610" 9666,520 h2 start [w0.18] @f02/littera
+linje 11600,6405 12000,6405 [w0.25 ink] @f03/sida
+linje 11600,5195 12000,5195 [w0.25 ink] @f03/sida
+linje 11770,6405 11770,5195 [w0.18 ink] @f03/glas
+linje 11830,6405 11830,5195 [w0.18 ink] @f03/glas
+linje 11600,6405 11600,5195 [w0.13 ink] @f03/under
+linje 12000,6405 12000,5195 [w0.13 ink] @f03/under
+text "F1" 11190,5242 h2 90° start [w0.18] @f03/littera
+text "1210×1210" 11480,5242 h2 90° start [w0.18] @f03/littera
+linje 7545,7600 7545,8000 [w0.25 ink] @f04/sida
+linje 9055,7600 9055,8000 [w0.25 ink] @f04/sida
+linje 7545,7770 9055,7770 [w0.18 ink] @f04/glas
+linje 7545,7830 9055,7830 [w0.18 ink] @f04/glas
+linje 7545,7600 9055,7600 [w0.13 ink] @f04/under
+linje 7545,8000 9055,8000 [w0.13 ink] @f04/under
+text "F3" 7742,7280 h2 start [w0.18] @f04/littera
+text "1510×1210" 7742,6990 h2 start [w0.18] @f04/littera
+linje 1495,7600 1495,8000 [w0.25 ink] @f05/sida
+linje 3905,7600 3905,8000 [w0.25 ink] @f05/sida
+linje 1495,7770 3905,7770 [w0.18 ink] @f05/glas
+linje 1495,7830 3905,7830 [w0.18 ink] @f05/glas
+linje 1495,7600 3905,7600 [w0.13 ink] @f05/under
+linje 1495,8000 3905,8000 [w0.13 ink] @f05/under
+text "F4" 2142,7280 h2 start [w0.18] @f05/littera
+text "2410×1210" 2142,6990 h2 start [w0.18] @f05/littera
+linje 400,2395 0,2395 [w0.25 ink] @f06/sida
+linje 400,3605 0,3605 [w0.25 ink] @f06/sida
+linje 230,2395 230,3605 [w0.18 ink] @f06/glas
+linje 170,2395 170,3605 [w0.18 ink] @f06/glas
+linje 400,2395 400,3605 [w0.13 ink] @f06/under
+linje 0,2395 0,3605 [w0.13 ink] @f06/under
+text "F1" 720,2442 h2 90° start [w0.18] @f06/littera
+text "1210×1210" 1010,2442 h2 90° start [w0.18] @f06/littera
+polylinje sluten 400,7000 3400,7000 3400,7600 400,7600 [w0.25 ink] @m01/symbol
+polylinje sluten 2300,7100 2800,7100 2800,7500 2300,7500 [w0.25 ink] @m02/symbol
+polylinje sluten 2380,7180 2720,7180 2720,7380 2380,7380 [w0.25 ink] @m02/symbol
+polylinje sluten 2220,4400 3120,4400 3120,6000 2220,6000 [w0.18 muted] @m03/symbol
+polylinje sluten 1300,1300 1300,3500 400,3500 400,1300 [w0.18 muted] @m04/symbol
+polylinje sluten 650,1300 650,3500 400,3500 400,1300 [w0.18 muted] @m04/symbol
+polylinje sluten 9800,5600 11400,5600 11400,7600 9800,7600 [w0.18 muted] @m05/symbol
+polylinje sluten 9900,7150 10550,7150 10550,7500 9900,7500 [w0.18 muted] @m05/symbol
+polylinje sluten 10650,7150 11300,7150 11300,7500 10650,7500 [w0.18 muted] @m05/symbol
+polylinje sluten 5960,2400 5060,2400 5060,400 5960,400 [w0.18 muted] @m06/symbol
+polylinje sluten 5860,850 5160,850 5160,500 5860,500 [w0.18 muted] @m06/symbol
+polylinje sluten 10700,3040 11600,3040 11600,3940 10700,3940 [w0.25 ink] @m07/symbol
+linje 10700,3040 11600,3940 [w0.25 ink] @m07/symbol
+polylinje sluten 11600,1800 11600,2400 11150,2400 11150,1800 [w0.25 ink] @m08/symbol
+polylinje sluten 11520,1880 11520,2320 11270,2320 11270,1880 [w0.25 ink] @m08/symbol
+text "ALLRUM" 2192.6,4290.7 h2.5 start fet [w0.18 ink] @r01/rumstext
+text "1101" 2192.6,3926.7 h2.2 start [w0.18 ink] @r01/rumstext
+text "32,7 m²" 2192.6,3552.7 h2.2 start [w0.18 ink] @r01/rumstext
+text "SOVRUM 1" 7710,6120.7 h2.5 start fet [w0.18 ink] @r02/rumstext
+text "1102" 7710,5756.7 h2.2 start [w0.18 ink] @r02/rumstext
+text "23,2 m²" 7710,5382.7 h2.2 start [w0.18 ink] @r02/rumstext
+text "SOVRUM 2" 5530,2460.7 h2.5 start fet [w0.18 ink] @r05/rumstext
+text "1104" 5530,2096.7 h2.2 start [w0.18 ink] @r05/rumstext
+text "7,7 m²" 5530,1722.7 h2.2 start [w0.18 ink] @r05/rumstext
+text "BAD" 9602.6,2460.7 h2.5 start fet [w0.18 ink] @r06/rumstext
+text "1103" 9602.6,2096.7 h2.2 start [w0.18 ink] @r06/rumstext
+text "10,8 m²" 9602.6,1722.7 h2.2 start [w0.18 ink] @r06/rumstext
+polylinje sluten 15400,7400 15392.6,7493.9 15370.6,7585.4 15334.6,7672.4 15285.4,7752.7 15224.3,7824.3 15152.7,7885.4 15072.4,7934.6 14985.4,7970.6 14893.9,7992.6 14800,8000 14706.1,7992.6 14614.6,7970.6 14527.6,7934.6 14447.3,7885.4 14375.7,7824.3 14314.6,7752.7 14265.4,7672.4 14229.4,7585.4 14207.4,7493.9 14200,7400 14207.4,7306.1 14229.4,7214.6 14265.4,7127.6 14314.6,7047.3 14375.7,6975.7 14447.3,6914.6 14527.6,6865.4 14614.6,6829.4 14706.1,6807.4 14800,6800 14893.9,6807.4 14985.4,6829.4 15072.4,6865.4 15152.7,6914.6 15224.3,6975.7 15285.4,7047.3 15334.6,7127.6 15370.6,7214.6 15392.6,7306.1 15400,7400 [w0.18 ink] @north
+linje 14800,6800 14800,8000 [w0.18 ink] @north
+yta fylld ink [w0.18] 14800,8000 14548,7070 14800,7400 @north
+polylinje sluten 14800,8000 15052,7070 14800,7400 [w0.18 ink] @north
+text "N" 14800,8290 h3.5 middle fet [w0.35] @north
+linje -1750,-3000 13750,-3000 [w0.18 ink] @fasad-1
+yta fylld ink [w0.18] 6000,-2740 6156,-3000 5844,-3000 @fasad-1
+text "FASAD MOT SYD" 13600,-2880 h2 0° end [w0.18] @fasad-1
+linje 15000,-1750 15000,9750 [w0.18 ink] @fasad-2
+yta fylld ink [w0.18] 14740,4000 15000,4156 15000,3844 @fasad-2
+text "FASAD MOT OST" 14880,9600 h2 90° end [w0.18] @fasad-2
+linje 13750,11000 -1750,11000 [w0.18 ink] @fasad-3
+yta fylld ink [w0.18] 6000,10740 5844,11000 6156,11000 @fasad-3
+text "FASAD MOT NORR" 13600,11120 h2 end [w0.18] @fasad-3
+linje -3000,9750 -3000,-1750 [w0.18 ink] @fasad-4
+yta fylld ink [w0.18] -2740,4000 -3000,3844 -3000,4156 @fasad-4
+text "FASAD MOT VÄST" -3120,9600 h2 90° end [w0.18] @fasad-4
+linje 6500,-1800 6500,-1000 [w0.5 ink] @sektion-a
+linje 6500,9000 6500,9800 [w0.5 ink] @sektion-a
+linje 6500,-1800 5900,-1800 [w0.5 ink] @sektion-a
+linje 5900,-1800 6150,-1925 [w0.5 ink] @sektion-a
+linje 5900,-1800 6150,-1675 [w0.5 ink] @sektion-a
+text "A" 6626,-2120 h3.5 90° middle fet [w0.35] @sektion-a
+linje 6500,9800 5900,9800 [w0.5 ink] @sektion-a
+linje 5900,9800 6150,9675 [w0.5 ink] @sektion-a
+linje 5900,9800 6150,9925 [w0.5 ink] @sektion-a
+text "A" 6626,10120 h3.5 90° middle fet [w0.35] @sektion-a
+linje -500,-500 12500,-500 [w0.18 ink d3/1.5] @tak
+linje 12500,-500 12500,8500 [w0.18 ink d3/1.5] @tak
+linje 12500,8500 -500,8500 [w0.18 ink d3/1.5] @tak
+linje -500,8500 -500,-500 [w0.18 ink d3/1.5] @tak
+linje -500,4000 12500,4000 [w0.18 ink d3/1.5] @tak/nock
+yta none [w0.35 ink d2/1] 8440,400 8560,400 8560,3940 8440,3940 @/snitt

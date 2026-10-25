@@ -1,6 +1,7 @@
 import { dashPieces, type DashFrom } from '../repr/dash';
 import type { FillDef } from '../core/graphics';
-import { drawnDash, evenDash, hatchStrokes } from '../core/fillTypes';
+import { drawnDash, evenDash, hatchAsPattern } from '../core/fillTypes';
+import { hatchStrokes } from '../core/hatchStrokes';
 import type { Bounds, Pen, PenColor, Primitive, Vec2 } from '../repr/primitives';
 import { drawingBytes, textWidth } from './drawingFont';
 import { OSIFONT_METRICS, OSIFONT_WIDTHS } from './osifontWidths';
@@ -123,48 +124,10 @@ class PageWriter {
 
   private fill(rings: readonly (readonly Vec2[])[], fill: FillDef): void {
     const d = rings.map((r) => this.path(r, true)).join(' ');
-    if (fill.kind === 'solid') {
-      this.ops.push(`q ${this.alpha(fill.opacity)}${colorOp(fill.color, false)} ${d} f* Q`);
-      return;
-    }
-    if (fill.kind === 'pattern') {
-      this.pattern(rings, d, fill);
-      return;
-    }
-    if (fill.kind !== 'hatch') return;
-    // Skraffering: ytan som klippram och parallella linjer över den, förankrade i papperets nollpunkt.
-    const pts = rings.flat();
-    const xs = pts.map((p) => p[0]);
-    const ys = pts.map((p) => p[1]);
-    const b = { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
-    const parts: string[] = [`q ${d} W* n`];
-    if (fill.background) parts.push(`${this.alpha(fill.backgroundOpacity)}${colorOp(fill.background, false)} ${d} f*`);
-    const a = (fill.angle * Math.PI) / 180;
-    const dir: Vec2 = [Math.cos(a), Math.sin(a)];
-    const nor: Vec2 = [-dir[1], dir[0]];
-    const spacing = Math.max(0.3, fill.spacing);
-    const corners: Vec2[] = [
-      [b.minX, b.minY],
-      [b.maxX, b.minY],
-      [b.maxX, b.maxY],
-      [b.minX, b.maxY],
-    ];
-    const along = corners.map((p) => p[0] * dir[0] + p[1] * dir[1]);
-    const across = corners.map((p) => p[0] * nor[0] + p[1] * nor[1]);
-    const t0 = Math.min(...along) - 1;
-    const t1 = Math.max(...along) + 1;
-    // Linjerna ligger mitt i varje band, som mönstret på skärmen.
-    const k0 = Math.floor(Math.min(...across) / spacing);
-    const k1 = Math.ceil(Math.max(...across) / spacing);
-    const lines: string[] = [];
-    for (let k = k0; k <= k1 && lines.length < 20000; k++) {
-      const s = (k + 0.5) * spacing;
-      const p0: Vec2 = [nor[0] * s + dir[0] * t0, nor[1] * s + dir[1] * t0];
-      const p1: Vec2 = [nor[0] * s + dir[0] * t1, nor[1] * s + dir[1] * t1];
-      lines.push(`${n(p0[0])} ${n(p0[1])} m ${n(p1[0])} ${n(p1[1])} l`);
-    }
-    parts.push(`${this.alpha(fill.opacity)}${colorOp(fill.color, true)} ${n(Math.max(0.05, fill.weight))} w 0 J ${lines.join(' ')} S Q`);
-    this.ops.push(parts.join(' '));
+    // Skrafferingen är ett mönster med en familj (0.8.38), förankrad i papperets nollpunkt.
+    const f = hatchAsPattern(fill, 0.3);
+    if (f.kind === 'solid') this.ops.push(`q ${this.alpha(f.opacity)}${colorOp(f.color, false)} ${d} f* Q`);
+    else if (f.kind === 'pattern') this.pattern(rings, d, f);
   }
 
   /**

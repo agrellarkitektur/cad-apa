@@ -1,15 +1,25 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.37.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.38.
 
 ## Läget
 
-- **Påminn Carl August** (hans önskan 25 oktober): resten av 0.8 är
-  bara 0.8.38 Granskning (utan nya funktioner), sedan 0.9. Lägg inte
-  till funktioner som blir fler 0.8.xx; nya synpunkter ska rymmas i de
-  versioner som redan finns i planen, annars läggs de i en senare
-  version. Säg det när han tar upp något nytt.
+- **0.8 är klar** med 0.8.38 Granskning; nästa är **0.9 Flera
+  våningsplan och bjälklag** (nytt format). Carl Augusts önskan 25
+  oktober gäller fortfarande: inga fler 0.8.xx, och nya synpunkter
+  ryms i de versioner som redan finns i planen eller läggs i en senare.
+- **0.8.38 Granskning är klar** på `main` (samma format, 13, utan nya
+  funktioner). DXF-underlag med grus och mark (mönster vars linjer är
+  förskjutna hundratals linjeavstånd) ritas som klippta streck i stället
+  för som ett nästan 90° snett SVG-mönster, som Chrome målade långsamt
+  och fel: 2 000 sådana skrafferingar 14 s → 0,6 s per omritning, och
+  stenar i stället för prickar (stämmer med ezdxf). Skrafferingen ritas
+  med mönstrets kod på skärmen och i PDF:en. `fillTypes.ts` uppdelad
+  (`hatchStrokes.ts`, `patFile.ts`). Referensritningar för
+  fyllningstyperna och detaljnivåerna, klickjämförelsen 188 steg med
+  `--bilder`. Testerna: 424 på ca 10 s. Står i README, PLAN.md och
+  UTVECKLING.md under *Granskning (0.8.38)*.
 - **0.8.37 Detaljnivåer och fyllningar är klar** på `main` (samma
   format, 13). Tre detaljnivåer per vy (littera, 2D-symboler, 3D och
   fasader) i Visa och vyns egenskaper; vyradens knappar sätter alla tre.
@@ -18,42 +28,12 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   Testerna: 420 på ca 11 s. Carl Augusts beslut 25 oktober: tre val per
   vy; rikare 3D-detalj i 0.11.2; att rita mönster grafiskt i 0.11.1;
   isoleringsobjekt efter piloten.
-- **0.8.36 Egna fyllningstyper är klar** på `main` (samma format, 13).
-  Fyllningstyper i stilmallen (linjefamiljer med vinkel, avstånd,
-  förskjutning, baspunkt och streckning; mått på papper eller i
-  verkligheten), *Läs in .pat…* och *Spara som .pat…*. Väljs för
-  2D-former, rum och som snittfyllning per åtgärd. DXF-underlagens
-  streckade mönster ritas streckade. Claudes val i PLAN.md, koden i
-  UTVECKLING.md. Testerna: 416 på ca 12 s.
-- **0.8.35 Filtrera och markera är klar** på `main` (samma format, 13).
-  Dialogen *Filtrera och markera…* (huvudmenyn, högerklick, `FM`):
-  sort, typ, finns i, åtgärd, egen penna, egen egenskap, alla våningar;
-  ersätt, lägg till, dra ifrån. Claudes val i PLAN.md, koden i
-  UTVECKLING.md. Testerna: 409 på ca 10 s.
-- **0.8.34 Rum: kontur och rumsgränser är klar** på `main` (samma
-  format, 13). Pennan *Rummens kontur* i stilmallen (förval *Ingen
-  linje*), egen penna per rum och rumstyp (`Space` i `OWN_PEN_TYPES`),
-  konturen under väggarna. Kryssrutan *Avgränsar rum* på 2D-former i
-  modellen: linjen blir en 1 mm vägg när rummen räknas ut, också med
-  pennan 0 och 2D släckt. Claudes val i PLAN.md, koden i UTVECKLING.md.
-  Testerna: 405 på ca 10 s.
-- **0.8.33 Pennor per typ och symbollinjer är klar** på `main` (samma
-  format, 13). Dörrarnas och fönstrens delar i tre klasser i stilmallen
-  (snitt 0,25, vy 0,18, symbol 0,13 mm), den egna pennan i två delar
-  (*Snitt* och *Symbol*) för dörrar och fönster, och typens penna under
-  *Påverkar fler objekt*. Dörrbladen och fönstrens glas ritas tunnare än
-  förut (referensritningarna har nytt facit). Claudes val står i
-  PLAN.md, koden i UTVECKLING.md. Testerna: 402 på ca 6 s.
-- **0.8.32 Granskning är klar** på `main` (samma format, 13, utan nya
-  funktioner). Testerna: 406 → 399 (dubbletter och prov av enskilda fält
-  sammanslagna, tester som låste detaljer lösare), hela körningen 26 → 12 s
-  (`isolate: false`), testerna typkontrolleras, hjälpfunktionerna i
-  `tests/projekt.ts`, och referensritningarna har ett projekt med
-  2D-formerna och de egna pennorna (`former`). Koden: `dxf.ts` i fyra
-  filer; rummen och väggarnas utsida delar sammanslagningen av väggarna
-  (`bareWallUnion`), planen efter en flyttad vägg i `roomGrid(12)` 70 → 57
-  ms. Samma klick i 0.8.31 och 0.8.32 (141 steg) ger samma läge. Står i
-  README, PLAN.md och UTVECKLING.md under *Granskning (0.8.32)*.
+- **0.8.33–0.8.36** (pennor per typ och symbollinjer, rummens kontur och
+  rumsgränser, Filtrera och markera, egna fyllningstyper med .pat) står i
+  PLAN.md med Claudes val och i UTVECKLING.md med var koden ligger.
+- **0.8.32 Granskning** (testerna färre, snabbare och typkontrollerade,
+  `dxf.ts` uppdelad, rummen och väggarnas utsida delar sammanslagningen)
+  står i README, PLAN.md och UTVECKLING.md under *Granskning (0.8.32)*.
 - **0.8.28–0.8.31** (rättelser i 2D-formen, bakgrund i fyllningar och
   ändformer, linjetyper och mask, linjetyp och penna per objekt) står i
   PLAN.md med Claudes val och i UTVECKLING.md med var koden ligger.
@@ -123,8 +103,7 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   objekt~~, ~~0.8.32 Granskning~~, ~~0.8.33 Pennor per typ och
   symbollinjer~~, ~~0.8.34 Rum: kontur och rumsgränser~~,
   ~~0.8.35 Filtrera och markera~~, ~~0.8.36 Egna fyllningstyper~~,
-  ~~0.8.37 Detaljnivåer och fyllningar~~ (klara)
-- **0.8.38 Granskning**
+  ~~0.8.37 Detaljnivåer och fyllningar~~, ~~0.8.38 Granskning~~ (klara)
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade,
@@ -147,17 +126,22 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.37 syns på webbhotellet och hur detaljnivåerna och
-fyllningarna känns (frågorna nedan). Läs synpunktsfilen och sortera ny
-Inkorg; nya funktioner läggs i 0.9 eller senare, inte i 0.8. Gör sedan
-**0.8.38 Granskning** (utan nya funktioner): städa, dela upp stora filer
-(t.ex. `src/ui/style/fillTypes.ts` om den växt, `renderPrimitives.ts`),
-leta efter långsam kod (mönster med många familjer på skärmen, DXF med
-många streckade skrafferingar), gå igenom testerna och lägg till steg i
-`scripts/jamfor-klick.py` för fyllningstyperna och detaljnivåerna.
-Sedan 0.9.
+Fråga först om 0.8.38 syns på webbhotellet och om något beter sig
+annorlunda (det ska inte; DXF-underlag med grus och mark ska komma
+fortare och se ut som i AutoCAD). Fråga också om 0.8.37 (frågorna
+nedan), om han inte svarat. Läs synpunktsfilen och sortera ny Inkorg.
+Gör sedan **0.9 Flera våningsplan och bjälklag** (nytt format, stor):
+läs *0.9* i PLAN.md och föreslå först hur den delas, eftersom den
+troligen behöver mer än en session (våningsplan med nivåer och
+höjder, planvyer per våning med våningen under tonad, bjälklag, alla
+våningar i fasader, sektioner och 3D, felet med golvnivån i 3D).
 
 ## Att fråga Carl August om
+
+- **0.8.38 efter provning**: inget nytt att prova; allt ska bete sig som
+  förut. Ett DXF-underlag med grus, mark och liknande mönster ska ritas
+  fortare och se ut som i AutoCAD (stenar, inte prickar). Säg till om
+  något beter sig annorlunda.
 
 - **0.8.37 efter provning** (Claudes val, se PLAN.md): att vyradens
   knappar sätter alla tre nivåerna och att valen var för sig ligger i
@@ -507,12 +491,18 @@ Sedan 0.9.
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (141 steg sedan 0.8.32: stilmallen med linjetyper, snabbraden, den egna
-  pennan, 2D-formens fält med mask och bakgrund, ritordning, Visas i,
-  underlag, fasader och sektion). Kör den mot två byggen på var sin port
-  och sedan med `--jamfor`; lägg till steg för det som granskas. Tre steg
-  felar likadant i båda (`opacitet två`, `spegla linjen`, `x i
-  smartmenyn`: fältet finns inte där skriptet letar) och kan rättas.
+  (188 steg sedan 0.8.38: stilmallen med linjetyper, pennor och
+  fyllningstyper, snabbraden, den egna pennan, rummets fyllning,
+  2D-formens fält med mask, bakgrund och fyllningstyp, ritordning, Visas
+  i, underlag, detaljnivåerna, Filtrera och markera, fasader och
+  sektion). Kör den mot två byggen på var sin port och sedan med
+  `--jamfor`; lägg till steg för det som granskas. Med `--bilder` sparas
+  en bild av ritytan efter varje steg, och när markupen skiljer sig
+  jämförs bilderna (så gjordes 0.8.38, där skrafferingen ritas med ny
+  kod). Tre steg felar likadant i båda (`opacitet två`, `spegla
+  linjen`, `x i smartmenyn`: fältet finns inte där skriptet letar) och
+  kan rättas. En rad om att en bild är inlagd kan skilja i steget efter
+  att Visa öppnats (meddelandet tonas ut olika fort).
   Verktygets klassnamn minifieras olika i två byggen; jämförelsen kräver
   bara att namnen motsvarar varandra. Vänta på
   `!bacchus.sections.pending` och tryck *Zooma till allt* innan en fasad
@@ -544,7 +534,14 @@ Sedan 0.9.
 - Testfiler att lägga in går snabbt att göra med reportlab (PDF), PIL
   (bild) och några rader text (DXF). Riktiga DXF med skraffering, block och
   bågar gör ezdxf (`pip install --break-system-packages ezdxf`), som också
-  ger facit för konturerna (`ezdxf.path.from_hatch_boundary_path`).
+  ger facit för konturerna (`ezdxf.path.from_hatch_boundary_path`) och
+  mönstrens streck (`ezdxf.render.hatching.hatch_entity(h,
+  jiggle_origin=False)`; utan det flyttas mönstret slumpvis några mm).
+- Mäta hur fort Chrome målar en SVG (0.8.38): lägg markupen i en tom
+  sida med `set_content`, sätt `innerHTML` och vänta två
+  `requestAnimationFrame`; jämför varianter (utan fyllning, ett mönster,
+  …). Bilderna jämförs med PIL (`ImageChops.difference`, pixlar som
+  skiljer mer än 64).
 - Mäta i webbläsaren: hela bildrutan, från `page.mouse.move` till två
   `requestAnimationFrame`, jämfört med ett tomt varv; att bara mäta
   JavaScript missar webbläsarens målning, som var det dyra vid panorering.

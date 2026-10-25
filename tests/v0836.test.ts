@@ -1,7 +1,9 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { normalizeStyle, SWEDISH_STANDARD, type FillDef, type StyleSheet } from '../src/core/graphics';
-import { formatPat, hatchStrokes, parsePat, patternLines, resolveFill, type HatchLine } from '../src/core/fillTypes';
+import { patternLines, resolveFill, type HatchLine } from '../src/core/fillTypes';
+import { clippedDashes, hatchStrokes } from '../src/core/hatchStrokes';
+import { formatPat, parsePat } from '../src/core/patFile';
 import { setGraphics } from '../src/core/commands';
 import { fillPrims } from '../src/elements/drawing2d';
 import { parseDxf } from '../src/formats/dxf';
@@ -12,6 +14,7 @@ import { Camera } from '../src/view2d/camera';
 import { importPat } from '../src/ui/style/fillTypes';
 import { planOf as plan, square, storeWithShapes as storeWith } from './projekt';
 import tegel from './filer/tegel.dxf?raw';
+import grus from './filer/grus.dxf?raw';
 
 beforeAll(() => registerBuiltInTypes());
 
@@ -94,15 +97,28 @@ describe('Ritade fyllningstyper (0.8.36)', () => {
     expect(resolveFill({ kind: 'solid', color: 'ink' }, g)).toEqual({ kind: 'solid', color: 'ink' });
   });
 
-  it('skärmen ritar ett snedställt mönster per familj, PDF:en strecken med fas', async () => {
-    const fill: FillDef = { kind: 'pattern', color: 'ink', weight: 0.13, lines: [{ angle: 0, spacing: 2 }, { angle: 90, spacing: 2, shift: 2, dash: [2, 2] }] };
+  it('skärmen ritar ett mönster per familj och starkt snedställda familjer som stycken, PDF:en strecken med fas', async () => {
+    // Den tredje familjen är förskjuten 21 mm per linje, tio linjeavstånd (0.8.38).
+    const fill: FillDef = { kind: 'pattern', color: 'ink', weight: 0.13, lines: [{ angle: 0, spacing: 2 }, { angle: 90, spacing: 2, shift: 2, dash: [2, 2] }, { angle: 30, spacing: 2, shift: 21, dash: [1, 49] }] };
     const prim: Primitive = { kind: 'region', role: 'cut', rings: [square(10, 10, 40)], fill, outline: null };
     const cam = new Camera();
     cam.resize(1000, 1000);
     const svg = renderPrimitives([prim], cam, { drawingScale: 1 });
     expect(svg.match(/<pattern/g)).toHaveLength(2);
-    expect(svg).toContain('skewX(-45)');
+    expect(svg).toMatch(/skewX\(-?45\)/);
     expect(svg).toContain('stroke-dasharray="');
+    // Efter mönstren i defs: ytans egna stycken.
+    const pieces = svg.split('</defs>')[1].match(/<path d="(M[^"]*)" style="stroke:var\(--ink\)[^"]*" stroke-width="[\d.]+" fill="none"\/>/);
+    expect(pieces).not.toBeNull();
+    // Styckena ligger i rutan (10–50 mm i modellen, på skärmen genom kameran).
+    const [lo, hi] = [cam.toScreen([10, 50]), cam.toScreen([50, 10])];
+    const xy = pieces![1].match(/-?[\d.]+/g)!.map(Number);
+    for (let i = 0; i < xy.length; i += 2) {
+      expect(xy[i]).toBeGreaterThanOrEqual(lo[0] - 0.01);
+      expect(xy[i]).toBeLessThanOrEqual(hi[0] + 0.01);
+      expect(xy[i + 1]).toBeGreaterThanOrEqual(lo[1] - 0.01);
+      expect(xy[i + 1]).toBeLessThanOrEqual(hi[1] + 0.01);
+    }
     const pdf = new TextDecoder('latin1').decode(await writePdf([{ size: [210, 297], prims: [prim] }]));
     expect(pdf).toMatch(/\[2 2\] [\d.]+ d/);
     // Varannan linje börjar sitt streck ett halvt varv senare (förbandet).
@@ -127,5 +143,37 @@ describe('Streckade mönster i DXF-underlag (0.8.36)', () => {
     const [l] = patternLines({ name: 't', families: [vertical] });
     for (const q of [[1560.44, 549.04], [1486.06, 271.47], [1282.86, 623.42], [1208.49, 345.84]] as Vec2[]) expect(onStroke(l, q)).toBe(true);
     for (const q of [[1662.04, 373.07], [1458.84, 725.02], [1384.46, 447.44], [1181.26, 799.4]] as Vec2[]) expect(onStroke(l, q)).toBe(false);
+  });
+
+  it('grus klipps mot ytan i stycken som ezdxf ritar dem (0.8.38)', () => {
+    // GRAVEL i skala 20 över 2 × 1 m: streck på några dm med mellanrum på sju meter, förskjutna 6 m per linje.
+    const fill = parseDxf(grus).items.find((it) => it.kind === 'fill');
+    if (fill?.kind !== 'fill') throw new Error('ingen skraffering');
+    const lines = patternLines({ name: 'grus', families: fill.lines });
+    const near = (flat: number[], q: Vec2) => {
+      for (let i = 0; i < flat.length; i += 4) {
+        const [ax, ay, bx, by] = flat.slice(i, i + 4);
+        const L = (bx - ax) ** 2 + (by - ay) ** 2;
+        const t = L ? Math.max(0, Math.min(1, ((q[0] - ax) * (bx - ax) + (q[1] - ay) * (by - ay)) / L)) : 0;
+        if (Math.hypot(q[0] - ax - t * (bx - ax), q[1] - ay - t * (by - ay)) < 0.5) return true;
+      }
+      return false;
+    };
+    // Facit från ezdxf (hatching, utan `jiggle_origin`): mitt på ett streck, och 15 mm efter strecket i mellanrummet.
+    const facit: [number, Vec2[], Vec2[]][] = [
+      [0, [[850.9, 482.6], [1351.7, 982.6], [1358.89, 482.59]], [[818.01, 446.05], [1326, 954.05], [1834, 446.05]]],
+      [3, [[510.54, 774.69], [1018.54, 266.69], [1526.54, 774.68]], [[507.29, 706.37], [1015.29, 198.37], [1523.29, 706.36]]],
+    ];
+    for (const [i, on, off] of facit) {
+      const flat = clippedDashes(lines[i], fill.rings);
+      for (let j = 0; j < flat.length; j += 2) {
+        expect(flat[j]).toBeGreaterThanOrEqual(-1e-6);
+        expect(flat[j]).toBeLessThanOrEqual(2000 + 1e-6);
+        expect(flat[j + 1]).toBeGreaterThanOrEqual(-1e-6);
+        expect(flat[j + 1]).toBeLessThanOrEqual(1000 + 1e-6);
+      }
+      for (const q of on) expect(near(flat, q), `familj ${i} på ${q}`).toBe(true);
+      for (const q of off) expect(near(flat, q), `familj ${i} av ${q}`).toBe(false);
+    }
   });
 });
