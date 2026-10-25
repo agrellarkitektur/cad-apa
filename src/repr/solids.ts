@@ -6,7 +6,7 @@ import type { Vec2 } from './primitives';
  * av 3D-vyn och senare av IFC-exporten utan att någon av dem känner till
  * elementtyperna.
  */
-export type Material3D = 'wall' | 'wall-new' | 'glass' | 'door' | 'frame' | 'furniture' | 'fixture' | 'floor' | 'roof';
+export type Material3D = 'wall' | 'wall-new' | 'glass' | 'door' | 'frame' | 'furniture' | 'fixture' | 'floor' | 'slab' | 'roof';
 
 /**
  * Ett plan i höjdled: z = a·x + b·y + c (mm). Används för sneda ovan- och

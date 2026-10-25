@@ -1195,6 +1195,34 @@ projekt i 1 982 jämförelser.
   `.pane3d-tools`.
 - Tester: `tests/v09.test.ts`.
 
+## Bjälklag (0.9.1, format 15)
+
+- **Elementtypen** `Slab` i `src/elements/slab.ts`: `thickness` (typens),
+  `outline`, `fromWalls` och `holes`. `slabBase(ctx, p)` ger konturen
+  utan hål: den ritade, eller `insideWalls(walls)` (husets ytterkontur ur
+  `bareWallUnion` minus ytterväggarnas ytor ur `bareWallShapes`; en vägg
+  är yttervägg när provpunkter på var sida hamnar inne och ute, som i
+  `outsideSide`). `slabRings` drar ifrån hålen, `slabsOn(ctx)` slår ihop
+  våningens bjälklag (rummens golvskiva i `space.ts` dras ifrån dem).
+  `slabAt(doc, storey, state, pt)` hittar bjälklaget för en håltagning
+  utan en ritad vy. `planReads: ['Wall']`.
+- **3D**: materialet `slab` (`solids.ts`, färgen i `view3d.ts`, fylls i
+  sektionen via `POCHE` i `section.ts` och snittets lock i `pane3d.ts`).
+  Formen går från `−thickness` till 0 och lyfts till golvnivån av
+  `modelShapes` som allt annat.
+- **Konturen i Modifiera**: `hasEditableOutline` i `src/core/roofEdit.ts`
+  (tak, och bjälklag utan `fromWalls`) används av greppen
+  (`highlight.ts`) och valen (`ops.ts`); valen heter fortfarande
+  `roof*` och `roofId`. `transformed` och `movePatch` flyttar `holes`.
+- **Verktyget** `SlabTool` i `src/ui/tools/slabTool.ts` (`mode`
+  `slab`/`hole`), *Ur väggarna* i `slabFromWalls` (`tools.ts`),
+  verktygsraden i `toolOptions.ts`, smartshell i `prompts.ts` och
+  `shellPoints.ts`. Egenskaperna: `case 'Slab'` i `selectionFields.ts`,
+  `slab:fromWalls` i `selectionEdits.ts`, `slab-hole-remove` i
+  `propertiesPanel.ts`.
+- Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
+  exempelvillan.
+
 ## Granskning (0.8.38, format 13)
 
 Utan nya funktioner. Kontrollerat med samma klick i 0.8.37 och 0.8.38

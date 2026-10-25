@@ -12,6 +12,7 @@ import { MeasureTool, ZoomBoxTool } from '../tools/measureTool';
 import { OpeningTool } from '../tools/openingTool';
 import { RoomTool } from '../tools/roomTool';
 import { SelectTool } from '../tools/selectTool';
+import { SlabTool } from '../tools/slabTool';
 import { forgetInferred } from '../tools/snap';
 import { WallTool, type WallToolOptions } from '../tools/wallTool';
 import { icons } from '../icons';
@@ -110,6 +111,12 @@ export function installTools(app: AppContext, host: ToolHost) {
     }
   };
   const roofTool = new RoofTool(host);
+  const slabTool = new SlabTool(host, firstDefinition(app.store.doc, 'Slab'));
+  slabTool.onCreated = (id) => {
+    app.selection.set([id]);
+    app.hint('Bjälklaget är lagt. Rita fler, eller välj Håltagning och dra upp ett hål i det.', 4000);
+  };
+  slabTool.onChange = () => app.toolOpts.renderToolOptions();
   const sectionTool = new MarkerTool(host, 'Section');
   const elevationTool = new MarkerTool(host, 'Elevation');
   const created = (id: Id) => {
@@ -137,6 +144,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     text: textTool,
     draw2d: draw2dTool,
     roof: roofTool,
+    slab: slabTool,
     section: sectionTool,
     elevation: elevationTool,
     measure: measureTool,
@@ -171,6 +179,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     if (app.ui.tool === 'dimension' && id !== 'dimension') dimensionTool.reset();
     if (app.ui.tool === 'draw2d' && id !== 'draw2d') draw2dTool.finish(false);
     if (app.ui.tool === 'roof' && id !== 'roof') roofTool.reset();
+    if (app.ui.tool === 'slab' && id !== 'slab') slabTool.reset();
     if (app.ui.tool === 'section' && id !== 'section') sectionTool.reset();
     if (app.ui.tool === 'elevation' && id !== 'elevation') elevationTool.reset();
     if (!keep) {
@@ -215,6 +224,27 @@ export function installTools(app: AppContext, host: ToolHost) {
     ]);
   }
 
+  /**
+   * Ett bjälklag innanför ytterväggarna på våningen (0.9.1). Finns det redan
+   * ett i tillståndet markeras det i stället.
+   */
+  function slabFromWalls(): void {
+    const doc = app.store.doc;
+    const state = host.activeState();
+    const here = Object.values(doc.elements).filter((e) => e.storey === app.ui.storey && !e.space && e.states.includes(state));
+    if (!here.some((e) => e.type === 'Wall')) {
+      app.hint('Rita väggar först, så läggs bjälklaget innanför ytterväggarna.');
+      return;
+    }
+    const old = here.find((e) => e.type === 'Slab' && e.params.fromWalls);
+    if (old) {
+      app.selection.set([old.id]);
+      app.hint('Det finns redan ett bjälklag ur väggarna på våningen. Det är markerat.');
+      return;
+    }
+    slabTool.create();
+  }
+
   /** Avbryt: först det pågående kommandot, sedan verktyget. */
   function cancelCommand(): void {
     if (app.underlays.busy()) {
@@ -225,6 +255,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     else if (app.ui.tool === 'dimension' && dimensionTool.count > 0) dimensionTool.reset();
     else if (app.ui.tool === 'draw2d' && draw2dTool.count > 0) draw2dTool.reset();
     else if (app.ui.tool === 'roof' && roofTool.started) roofTool.reset();
+    else if (app.ui.tool === 'slab' && slabTool.started) slabTool.reset();
     else if (app.ui.tool === 'section' && sectionTool.step > 0) sectionTool.reset();
     else if (app.ui.tool === 'elevation' && elevationTool.step > 0) elevationTool.reset();
     else if (app.ui.tool === 'measure' && measureTool.measurement().points > 0) measureTool.reset();
@@ -292,6 +323,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     draw2dTool,
     measureTool,
     roofTool,
+    slabTool,
     sectionTool,
     elevationTool,
     get aligning() {
@@ -308,6 +340,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     endZoomBox,
     previousZoom,
     roofOverHouse,
+    slabFromWalls,
     startWallFrom,
     endWallFrom,
   };

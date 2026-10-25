@@ -3,6 +3,7 @@ import { exampleMaster } from '../core/exampleMaster';
 import { drawingMarkers, emptyTree, FORMAT, FORMAT_VERSION, PROJECT_DEFAULT_FIELDS, type ViewDef, type Definition, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { DoorParams } from '../elements/door';
 import type { FurnitureParams } from '../elements/furniture';
+import type { SlabParams } from '../elements/slab';
 import type { RoofParams } from '../elements/roof';
 import type { SpaceParams } from '../elements/space';
 import type { WallParams } from '../elements/wall';
@@ -40,6 +41,7 @@ type('t-f1', 'Window', 'F1', { width: 1200, height: 1200 });
 type('t-f2', 'Window', 'F2', { width: 600, height: 600 });
 type('t-f3', 'Window', 'F3', { width: 1500, height: 1200 });
 type('t-f4', 'Window', 'F4', { width: 2400, height: 1200 });
+type('t-bj01', 'Slab', 'BJ01', { thickness: 400 }, 'Platta på mark, 100 betong på 300 cellplast');
 
 function add<P extends object>(id: Id, t: string, params: P, extra: Partial<Element> = {}): void {
   elements[id] = { id, type: t, storey: STOREY, states: ALL, tags: [], params, props: {}, ...extra } as Element;
@@ -125,6 +127,9 @@ room('r03', 'Sovrum 2', 5060, 400, 8440, 3940, [BEF, B]);
 room('r04', 'Bad', 8560, 400, 11600, 3940, [BEF, B]);
 room('r05', 'Sovrum 2', 5060, 400, 7240, 3940, [A]);
 room('r06', 'Bad', 7360, 400, 11600, 3940, [A]);
+
+// Plattan på mark (0.9.1): bjälklaget i plan 1, innanför ytterväggarna.
+add<Pick<SlabParams, 'outline' | 'fromWalls'>>('bj1', 'Slab', { outline: [], fromWalls: true }, { definition: 't-bj01' });
 
 // Sadeltak med nock i öst–västlig riktning och 500 mm utsprång. Undersidan
 // når väggarnas överkant (2700) vid ytterlivet.

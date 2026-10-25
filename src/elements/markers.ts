@@ -64,7 +64,7 @@ export function modelBounds(doc: ProjectDoc, storey?: string): { minX: number; m
         add(q[0] - h, q[1] - h);
         add(q[0] + h, q[1] + h);
       }
-    } else if (el.type === 'Roof') {
+    } else if (el.type === 'Roof' || el.type === 'Slab') {
       for (const q of resolveParams<RoofParams>(doc, el).outline) add(q[0], q[1]);
     }
   }

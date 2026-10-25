@@ -11,13 +11,19 @@ linje 8125.1,0 9400,0 [w0.25 ink] @yv-s/wall
 linje 5860,2700 9400,2700 [w0.25 ink] @yv-s/wall
 linje 5860,0 5860,2700 [w0.25 ink] @yv-s/wall
 linje 9400,0 9400,2700 [w0.25 ink] @yv-s/wall
-linje 9800,0 9412,0 [w0.25 ink] @yv-s/wall
+linje 9800,0 9400.1,0 [w0.25 ink] @yv-s/wall
 linje 9800,2700 9400.2,2700 [w0.25 ink] @yv-s/wall
 linje 9800,0 9800,825.5 [w0.25 ink] @yv-s/wall
 linje 9800,2184.5 9800,2700 [w0.25 ink] @yv-s/wall
+linje 8054.9,0 8045.1,0 [w0.25 ink] @yv-s/wall
+linje 7154.9,0 7145.1,0 [w0.25 ink] @yv-s/wall
+linje 5254.9,0 5245.1,0 [w0.25 ink] @yv-s/wall
+linje 4354.9,0 4345.1,0 [w0.25 ink] @yv-s/wall
 linje 2199.7,2700 1800,2700 [w0.25 ink] @yv-s/wall
+linje 7145.1,0 7154.9,0 [w0.25 ink] @yv-o/wall
+linje 8045.1,0 8054.9,0 [w0.25 ink] @yv-o/wall
 linje 5800,4742.9 9400,2908.6 [w0.25 ink] @yv-o/wall
-linje 9412,0 9800,0 [w0.25 ink] @yv-o/wall
+linje 9400.1,0 9800,0 [w0.25 ink] @yv-o/wall
 linje 9400,2908.6 9800,2704.8 [w0.25 ink] @yv-o/wall
 linje 9400,2700.1 9400,2908.6 [w0.25 ink] @yv-o/wall
 linje 9800,0 9798.5,0 [w0.25 ink] @yv-o/wall
@@ -129,6 +135,8 @@ linje 7155,740 7145.1,740 [w0.18 ink] @m03/vy
 linje 7155,700 7145.1,700 [w0.18 ink] @m03/vy
 linje 4345.1,420 4355,420 [w0.18 ink] @m04/vy
 linje 5245.1,420 5255,420 [w0.18 ink] @m04/vy
+linje 4345.1,0 4354.9,0 [w0.18 ink] @m04/vy
+linje 5245.1,0 5254.9,0 [w0.18 ink] @m04/vy
 linje 4345.1,780 4355,780 [w0.18 ink] @m04/vy
 linje 5245.1,780 5255,780 [w0.18 ink] @m04/vy
 linje 2200,450 4200,450 [w0.18 ink] @m06/vy
@@ -139,19 +147,11 @@ linje 2215.1,900 2280,900 [w0.18 ink] @m06/vy
 linje 2200,450 2280,450 [w0.18 ink] @m06/vy
 linje 2280,900 2280,450 [w0.18 ink] @m06/vy
 linje 2200,825.5 2200,450 [w0.18 ink] @m06/vy
-linje 5740.1,-30 5854.1,-30 [w0.18 ink] @r01/vy
-linje 9400,0 8125.1,0 [w0.18 ink] @r02/vy
-linje 8055,0 7145.1,0 [w0.18 ink] @r02/vy
-linje 7075,0 5860,0 [w0.18 ink] @r02/vy
-linje 9400,-30 5860,-30 [w0.18 ink] @r02/vy
-linje 5860,0 5860,-30 [w0.18 ink] @r02/vy
-linje 9400,0 9400,-30 [w0.18 ink] @r02/vy
-linje 5740,0 5325.1,0 [w0.18 ink] @r05/vy
-linje 5255,0 4345.1,0 [w0.18 ink] @r05/vy
-linje 4275,0 4200.1,0 [w0.18 ink] @r05/vy
-linje 5740,-30 2200,-30 [w0.18 ink] @r05/vy
-linje 2200,-0.1 2200,-30 [w0.18 ink] @r05/vy
-linje 5740,0 5740,-30 [w0.18 ink] @r05/vy
+linje 8054.9,0 8045.1,0 [w0.18 ink] @bj1/vy
+linje 7154.9,0 7145.1,0 [w0.18 ink] @bj1/vy
+linje 9400,-400 2200,-400 [w0.18 ink] @bj1/vy
+linje 2200,-7.3 2200,-400 [w0.18 ink] @bj1/vy
+linje 9400,-0.1 9400,-400 [w0.18 ink] @bj1/vy
 linje 10300,2450 9800.1,2704.7 [w0.5 #3355aa] @tak/roof
 linje 10300,2786.7 5800,5079.6 [w0.5 #3355aa] @tak/roof
 linje 10300,2450 10300,2786.7 [w0.5 #3355aa] @tak/roof
@@ -161,12 +161,13 @@ linje 5800,5079.6 1300,2786.7 [w0.5 #3355aa] @tak/roof
 yta fylld paper [ingen] 1300,2450 5800,4742.9 10300,2450 10300,2786.7 5800,5079.6 1300,2786.7 @yv-s/snitt
 yta fylld paper [ingen] 1800,0 2200,0 2200,900 1800,900 @yv-s/snitt
 yta fylld paper [ingen] 1800,2110 2200,2110 2200,2700 1800,2700 @yv-s/snitt
-yta fylld paper [ingen] 5740,0 5860,0 5860,2700 5740,2700 @yv-s/snitt
+yta fylld paper [ingen] 2200,-400 9400,-400 9400,0 5860,0 5860,2700 5740,2700 5740,0 2200,0 @yv-s/snitt
 yta fylld paper [ingen] 9400,0 9800,0 9800,2700 9400,2700 @yv-s/snitt
 polylinje sluten 1300,2450 5800,4742.9 10300,2450 10300,2786.7 5800,5079.6 1300,2786.7 [w0.5 #3355aa] @tak/snitt
 polylinje sluten 1800,0 2200,0 2200,900 1800,900 [w0.35 ink] @yv-s/snitt
 polylinje sluten 1800,2110 2200,2110 2200,2700 1800,2700 [w0.35 ink] @yv-s/snitt
-polylinje sluten 5740,0 5860,0 5860,2700 5740,2700 [w0.35 ink] @iv-2/snitt
+polylinje 5860,0 5860,2700 5800,2700 5740,2700 5740,0 [w0.35 ink] @iv-2/snitt
+polylinje 5740,0 2200,0 2200,-400 9400,-400 9400,0 5860,0 [w0.35 ink] @bj1/snitt
 polylinje sluten 9400,0 9800,0 9800,2700 9400,2700 [w0.35 ink] @yv-n/snitt
 yta none [ingen] 1850,910 1950,910 1950,960 1850,960 @f01/snitt
 yta none [ingen] 1850,2050 1950,2050 1950,2100 1850,2100 @f01/snitt
@@ -186,9 +187,7 @@ polylinje sluten 1785,2110 1800,2110 1800,2180 1785,2180 [w0.13] @f01/snitt
 polylinje sluten 1785,830 1800,830 1800,900 1785,900 [w0.13] @f01/snitt
 polylinje sluten 2200,2110 2215,2110 2215,2180 2200,2180 [w0.13] @f01/snitt
 polylinje sluten 2200,830 2215,830 2215,900 2200,900 [w0.13] @f01/snitt
-yta fylld paper [w0.35 ink] 2200,-30 5740,-30 5740,0 2200,0 @r02/snitt
-yta fylld paper [w0.35 ink] 5860,-30 9400,-30 9400,0 5860,0 @r02/snitt
-linje -200,-30 11800,-30 [w0.7] @/mark
+linje -200,-400 11800,-400 [w0.7] @/mark
 linje 7825,4048 9400,4048 [w0.18] @slope:tak:0/taklutning
 båge 7825,4048 r1181.3 -27°–0° [w0.18] @slope:tak:0/taklutning
 text "27°" 9216.7,3613.9 h2.2 middle [w0.18] @slope:tak:0/taklutning

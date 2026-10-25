@@ -1,15 +1,25 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.9.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.9.1.
 
 ## Läget
 
-- **0.9 Flera våningsplan är klar** på `main` (format 14). 0.9 är delad
-  i tre (bekräftat av Carl August 25 oktober): **0.9.1 Bjälklag** (format
-  15) är nästa, sedan **0.9.2 Nivåer**. Punkterna står i PLAN.md och i
-  synpunktsfilen under *Planerat per version*. Nya synpunkter ryms i de
-  versioner som redan finns i planen eller läggs i en senare.
+- **0.9.1 Bjälklag är klar** på `main` (format 15). Nästa är **0.9.2
+  Nivåer** (troligen samma format), sedan ett granskningsförslag.
+  Punkterna står i PLAN.md och i synpunktsfilen under *Planerat per
+  version*. Nya synpunkter ryms i de versioner som redan finns i planen
+  eller läggs i en senare.
+- **0.9.1**: nytt objekt `Slab` med littera BJ och tjocklek per typ,
+  verktyget *Bjälklag* (rektangel, *Ur väggarna*, *Håltagning*),
+  konturen ur ytterväggarnas insida som följer väggarna, ritad kontur som
+  ändras i Modifiera som takets, hål med kryss i planen, i 3D, fyllt i
+  sektioner och som kant i fasader, rummens golvskiva bort där det finns
+  bjälklag. Exempelvillan har en platta på mark (BJ01 400), så
+  referensritningarna ändrades. Claudes val i PLAN.md, koden i
+  UTVECKLING.md under *Bjälklag (0.9.1)*. Testerna: 437 på ca 11 s.
+  Klickjämförelsen kördes inte (det nya provades med Playwright mot
+  `dist/`).
 - **0.9**: ny våning ovanför och under (golvnivån från grannen, de som
   redan ligger där flyttas), byta våning (trädet, Page Up/Down,
   smartshell), ta bort med fråga, flytta och kopiera till våning
@@ -115,9 +125,9 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   symbollinjer~~, ~~0.8.34 Rum: kontur och rumsgränser~~,
   ~~0.8.35 Filtrera och markera~~, ~~0.8.36 Egna fyllningstyper~~,
   ~~0.8.37 Detaljnivåer och fyllningar~~, ~~0.8.38 Granskning~~,
-  ~~0.9 Flera våningsplan~~ (klara)
-- **0.9.1 Bjälklag** (nytt format, 15)
-- **0.9.2 Nivåer** (nivåmarkering, fri höjd; kan läggas i 0.9.1 om den blir liten)
+  ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~ (klara)
+- **0.9.2 Nivåer** (nivåmarkering, fri höjd och bjälklagets tjocklek i sektioner)
+- **Granskning** (förslag efter 0.9.2; förra var 0.8.38)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade,
   footprint streckad genom taket som vyinställning)
 - **0.10.1 Dolda linjer i fasader** (närmaste bjälklag och väggarnas
@@ -138,15 +148,26 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.9 syns på webbhotellet och hur våningarna fungerar
+Fråga först om 0.9.1 syns på webbhotellet och hur bjälklagen fungerar
 (frågorna nedan). Läs synpunktsfilen och sortera ny Inkorg. Gör sedan
-**0.9.1 Bjälklag** (nytt format, 15): läs *0.9.1* i PLAN.md. Bjälklaget
-är ett nytt objekt med en egen modelShapes-form (`src/repr/storeyShapes.ts`
-lyfter den till golvnivån), och rummens golvskiva (30 mm) ska bort där
-det finns ett bjälklag. Ett granskningsförslag kommer efter 0.9.2 (förra
-granskningen var 0.8.38).
+**0.9.2 Nivåer**: läs *0.9.2* i PLAN.md. Sektionen har redan en nivåkot
+per våning (`buildSection`, 0.9); bjälklagets tjocklek finns i
+`slabRings`/`thickness` (`src/elements/slab.ts`). Föreslå sedan en
+granskning (förra var 0.8.38).
 
 ## Att fråga Carl August om
+
+- **0.9.1 efter provning** (Claudes val, se PLAN.md): verktyget med
+  rektangel, *Ur väggarna* och *Håltagning*; att *Ur väggarna* slutar vid
+  ytterväggarnas insida och att innerväggarna står på bjälklaget; att
+  hålen är rektanglar som bara kan tas bort (inte ändras); att konturen i
+  planen är tunna linjer under väggarna och bara går att klicka på (Tab vid
+  väggens insida); förvald tjocklek 300 (BJ01) och 400 för plattan i
+  exempelvillan. Ska littera (BJ01) stå i planen, och i så fall var? Ska
+  en ny våning ovanför få ett bjälklag ur väggarna av sig själv?
+  Marklinjen i fasaderna ligger nu under plattan (−0,4); ska den hellre
+  vara en egen nivå (kommer med nivåerna eller terrängen)? Innerväggar på
+  våningen under går upp i bjälklaget ovanför; ska de kapas av det?
 
 - **0.9 efter provning** (Claudes val, se PLAN.md): att en ny våning
   ovanför flyttar dem som redan ligger ovanför, och att en ändrad

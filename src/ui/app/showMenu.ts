@@ -20,6 +20,7 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
     label: 'Modell',
     items: [
       ['demolished', 'Det som rivs'],
+      ['Slab', 'Bjälklag'],
       ['Roof', 'Tak'],
       ['Furniture', 'Möbler och inredning'],
       ['swing', 'Öppningssätt (dörrar)'],

@@ -8,6 +8,8 @@ import { centroidOf, roomNumbersFor, spaceOutline, type SpaceParams } from './ro
 import { fillTemplate, ownProp } from './littera';
 import { DEFAULT_LABELS } from '../core/graphics';
 import { fillPrims, type FillParams } from './drawing2d';
+import { slabsOn } from './slab';
+import { difference } from '../geometry/boolean';
 
 export type { SpaceParams } from './rooms';
 
@@ -28,7 +30,11 @@ export const spaceType: ElementType<SpaceParams> = {
   model3d(el, ctx) {
     const pts = spaceOutline(ctx, el);
     if (pts.length < 3) return [];
-    return [{ id: el.id, rings: [pts.map((q) => [q[0], q[1]] as Vec2)], z0: -30, z1: 0, material: 'floor' }];
+    const ring = pts.map((q) => [q[0], q[1]] as Vec2);
+    // Där det finns ett bjälklag (0.9.1) är det golvet; den tunna skivan bara utanför.
+    const slabs = slabsOn(ctx);
+    const parts = slabs.length ? difference([ring], slabs) : [[ring]];
+    return parts.filter((r) => r.length && r[0].length >= 3).map((rings) => ({ id: el.id, rings, z0: -30, z1: 0, material: 'floor' as const }));
   },
   plan(el, ctx) {
     const pts = spaceOutline(ctx, el);

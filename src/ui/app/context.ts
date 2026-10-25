@@ -26,6 +26,7 @@ import type { StyleDialog } from '../styleDialog';
 import type { Draw2DTool } from '../tools/draw2dTool';
 import type { DimensionTool, TextTool } from '../tools/annotationTools';
 import type { MarkerTool, RoofTool } from '../tools/markerTools';
+import type { SlabTool } from '../tools/slabTool';
 import type { MeasureTool } from '../tools/measureTool';
 import type { OpeningTool } from '../tools/openingTool';
 import type { RoomTool } from '../tools/roomTool';
@@ -76,6 +77,7 @@ export interface AppContext {
   readonly draw2dTool: Draw2DTool;
   readonly measureTool: MeasureTool;
   readonly roofTool: RoofTool;
+  readonly slabTool: SlabTool;
   readonly sectionTool: MarkerTool;
   readonly elevationTool: MarkerTool;
   /** Rikta efter objekt eller Zooma till område pågår. */
@@ -137,6 +139,7 @@ export interface AppContext {
   /** Flytta måttrutan till sin punkt i planen eller i 3D. */
   positionMeasureBox(): void;
   roofOverHouse(): void;
+  slabFromWalls(): void;
   screenMm(): number;
   saveNow(as: boolean): Promise<void>;
   openFile(): Promise<void>;

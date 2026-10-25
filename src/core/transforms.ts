@@ -74,7 +74,9 @@ export function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, movi
   if (Array.isArray(p.outline)) {
     // Tak har en nockriktning som vrids med.
     const ridge = typeof p.ridge === 'number' ? { ridge: t.angle(p.ridge) } : {};
-    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...ridge } }];
+    // Bjälklagets håltagningar (0.9.1) följer med.
+    const holes = Array.isArray(p.holes) ? { holes: (p.holes as Pt[][]).map((h) => h.map(t.map)) } : {};
+    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...ridge, ...holes } }];
   }
   if (Array.isArray(p.points)) {
     const points = p.points.map((q: any) => (Array.isArray(q) ? t.map(q as Pt) : { ...q, at: t.map(q.at) }));

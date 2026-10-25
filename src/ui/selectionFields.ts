@@ -13,6 +13,7 @@ import { escapeHtml, PARAM_LABELS } from './labels';
 import type { TextParams } from '../elements/annotation';
 import { markerFrame, markerName, type MarkerParams, type NorthParams } from '../elements/markers';
 import type { RoofParams } from '../elements/roof';
+import type { SlabParams } from '../elements/slab';
 import { radiusOf } from '../geometry/arc';
 import { drawingFields } from './drawingPanel';
 import { fillFields, opacityFields } from './shapeFields';
@@ -115,6 +116,21 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
       return `<label class="field"><span>Taktyp</span><select data-key="roof:kind"><option value="gable"${p.kind === 'gable' ? ' selected' : ''}>Sadeltak</option><option value="shed"${p.kind === 'shed' ? ' selected' : ''}>Pulpettak</option></select></label>
         <div class="fields">${numberField('param:slope', 'Lutning', p.slope, '°')}${numberField('param:eave', 'Takfot', p.eave, 'mm')}${numberField('param:thickness', 'Tjocklek', p.thickness, 'mm')}${numberField('param:ridge', p.kind === 'shed' ? 'Takfotens riktning' : 'Nockriktning', p.ridge, '°')}</div>
         <p class="note">Takfoten är undersidans höjd vid takets kant. Väggar under taket kapas av det; kryssa i Upp till taket på gavlarna.</p>`;
+    }
+    case 'Slab': {
+      const p = resolveParams<SlabParams>(doc, el);
+      const holes = (p.holes ?? [])
+        .map((h, i) => {
+          const xs = h.map((q) => q[0]);
+          const ys = h.map((q) => q[1]);
+          const size = `${Math.round(Math.max(...xs) - Math.min(...xs)).toLocaleString('sv-SE')} × ${Math.round(Math.max(...ys) - Math.min(...ys)).toLocaleString('sv-SE')} mm`;
+          return `<li><span>Hål ${i + 1} · ${size}</span><button class="icon-mini" data-action="slab-hole-remove" data-index="${i}" aria-label="Ta bort hål ${i + 1}">×</button></li>`;
+        })
+        .join('');
+      return `<label class="check" title="Konturen följer ytterväggarnas insida och flyttas med dem"><input type="checkbox" data-key="slab:fromWalls"${p.fromWalls ? ' checked' : ''}> Ur väggarna</label>
+        <div class="field-label">Håltagningar</div>
+        ${holes ? `<ul class="slab-holes">${holes}</ul>` : '<p class="note">Inga. Välj Håltagning i bjälklagsverktyget och dra upp ett hål.</p>'}
+        <p class="note">${p.fromWalls ? 'Bjälklaget slutar vid ytterväggarnas insida; innerväggarna står på det. Bocka ur för att ändra konturen själv.' : 'Konturen ändras med hörnen och kanterna, som takets.'} Ovansidan ligger i våningens golvnivå, tjockleken går nedåt.</p>`;
     }
     case 'North': {
       const p = resolveParams<NorthParams>(doc, el);

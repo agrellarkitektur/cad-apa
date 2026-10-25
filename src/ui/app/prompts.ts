@@ -94,6 +94,21 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
       if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.reset() });
       return { head, text: r.hintText(), options };
     }
+    case 'slab': {
+      const r = app.slabTool;
+      const mode = (m: 'slab' | 'hole') => () => {
+        r.options.mode = m;
+        r.reset();
+        redraw();
+      };
+      const options: PromptOption[] = [
+        { key: 'B', label: 'Bjälklag', run: mode('slab'), on: r.options.mode === 'slab' },
+        { key: 'H', label: 'Håltagning', run: mode('hole'), on: r.options.mode === 'hole' },
+      ];
+      if (!r.started && r.options.mode === 'slab') options.push({ key: 'V', label: 'Ur väggarna', run: () => app.slabFromWalls() });
+      if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.reset() });
+      return { head, text: r.hintText(), options };
+    }
     case 'section':
     case 'elevation': {
       const t = tool === 'section' ? app.sectionTool : app.elevationTool;

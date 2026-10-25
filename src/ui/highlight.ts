@@ -1,3 +1,4 @@
+import { hasEditableOutline } from '../core/roofEdit';
 import type { ProjectDoc } from '../core/model';
 import type { WallParams } from '../elements/wall';
 import { refFrame } from '../core/wallEdit';
@@ -94,7 +95,7 @@ export function renderHighlight(
   // Hörnen i markerade taks kontur.
   for (const id of selected) {
     const el = doc.elements[id];
-    if (el?.type !== 'Roof') continue;
+    if (!hasEditableOutline(el)) continue;
     for (const pt of el.params.outline as Vec2[]) {
       const s = cam.toScreen(pt);
       out.push(`<rect x="${s[0] - 4.5}" y="${s[1] - 4.5}" width="9" height="9" class="grip"/>`);

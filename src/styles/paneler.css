@@ -763,3 +763,17 @@
     display: none;
   }
 }
+
+/* Bjälklagets håltagningar (0.9.1). */
+.slab-holes {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+.slab-holes li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 0;
+}

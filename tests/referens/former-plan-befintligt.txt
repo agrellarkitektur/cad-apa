@@ -1,3 +1,7 @@
+linje 400,400 11600,400 [w0.13 ink] @bj1/kontur under
+linje 11600,400 11600,7600 [w0.13 ink] @bj1/kontur under
+linje 11600,7600 400,7600 [w0.13 ink] @bj1/kontur under
+linje 400,7600 400,400 [w0.13 ink] @bj1/kontur under
 yta fylld #eeeeff [ingen] 400,400 400,7600 4940,7600 4940,400 @r01/fyllning under
 yta hatch #5566aa 45° a2 w0.13 [ingen] 400,400 400,7600 4940,7600 4940,400 @r01/fyllning under
 yta mönster #5566aa 45° a1.5 + 135° a1.5 w0.13 [ingen] 5060,4060 5060,7600 11600,7600 11600,4060 @r02/fyllning under

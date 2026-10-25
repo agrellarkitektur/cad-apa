@@ -15,6 +15,7 @@ const MATERIAL_COLORS: Record<Material3D, string> = {
   furniture: '#c9cdd1',
   fixture: '#e8eef2',
   floor: '#d8d2c6',
+  slab: '#d6d0c4',
   roof: '#b9a597',
 };
 

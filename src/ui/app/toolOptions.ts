@@ -75,6 +75,24 @@ export function installToolOptions(app: AppContext) {
         <button class="btn" data-action="roof-house" title="Ett tak över alla väggar med 500 mm utsprång, som möter väggarnas överkant">Över hela huset</button>
         <span class="opt-hint">${app.roofTool.started ? 'Klicka det motsatta hörnet.' : 'Klicka ett hörn av taket, med utsprånget.'}</span>`;
       app.toolOptions.hidden = false;
+    } else if (app.ui.tool === 'slab') {
+      const t = app.slabTool;
+      const doc = app.store.doc;
+      const defs = Object.values(doc.definitions)
+        .filter((d) => d.elementType === 'Slab')
+        .sort((a, b) => a.name.localeCompare(b.name, 'sv', { numeric: true }));
+      if (!t.options.definition || !doc.definitions[t.options.definition]) t.options.definition = defs[0]?.id ?? null;
+      const opts = defs.map((d) => `<option value="${d.id}"${d.id === t.options.definition ? ' selected' : ''}>${escapeHtml(d.name)} · ${nf.format(Number(d.params.thickness))}</option>`).join('');
+      const hole = t.options.mode === 'hole';
+      app.toolOptions.innerHTML = `
+        <div class="opt"><span>Rita</span><div class="segmented" role="group" aria-label="Rita">
+          <button data-slab-mode="slab" aria-pressed="${!hole}">Bjälklag</button>
+          <button data-slab-mode="hole" aria-pressed="${hole}">Håltagning</button>
+        </div></div>
+        ${hole ? '' : `<label class="opt"><span>Typ</span><select id="slab-def" aria-label="Bjälklagstyp">${opts}</select></label>
+        <button class="btn" data-action="slab-walls" title="Ett bjälklag innanför ytterväggarna, som följer dem när de flyttas">Ur väggarna</button>`}
+        <span class="opt-hint">${t.hintText()}</span>`;
+      app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'section' || app.ui.tool === 'elevation') {
       const t = app.ui.tool === 'section' ? app.sectionTool : app.elevationTool;
       const what = app.ui.tool === 'section' ? 'sektionslinjen' : 'fasadlinjen';
@@ -201,6 +219,7 @@ export function installToolOptions(app: AppContext) {
     if (t.id === 'roof-slope' && Number.isFinite(num)) app.roofTool.options.slope = Math.max(0, Math.min(75, num));
     if (t.id === 'roof-eave' && Number.isFinite(num)) app.roofTool.options.eave = Math.round(num);
     if (t.id === 'wall-def') app.wallTool.options.definition = t.value;
+    if (t.id === 'slab-def') app.slabTool.options.definition = t.value;
     if (t.id === 'opening-def') (app.ui.tool === 'door' ? app.doorTool : app.windowTool).options.definition = t.value;
     if (t.id === 'd2-kind') app.draw2dTool.setKind(t.value as ShapeKind);
     if ((t as unknown as HTMLInputElement).name === 'd2-weight' && num >= 0) {
@@ -314,6 +333,11 @@ export function installToolOptions(app: AppContext) {
       renderToolOptions();
     }
     if (b.dataset.action === 'roof-house') app.roofOverHouse();
+    if (b.dataset.slabMode) {
+      app.slabTool.options.mode = b.dataset.slabMode as 'slab' | 'hole';
+      app.slabTool.reset();
+    }
+    if (b.dataset.action === 'slab-walls') app.slabFromWalls();
     if (b.dataset.action === 'dim-done') app.dimensionTool.donePoints();
     if (b.dataset.action === 'd2-done') app.draw2dTool.finish(false);
   });

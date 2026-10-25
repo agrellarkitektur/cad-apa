@@ -88,3 +88,11 @@ export function setOutline(store: DocStore, id: Id, outline: P[], label: string)
   if (!el) return;
   store.transact(label, (tx) => tx.putElement({ ...el, params: { ...el.params, outline } }));
 }
+
+/**
+ * Element med en kontur som ändras med punkter och kanter i Modifiera: tak,
+ * och bjälklag med ritad kontur (0.9.1; ett bjälklag ur väggarna följer väggarna).
+ */
+export function hasEditableOutline(el: { type: string; params: Record<string, unknown> } | undefined): boolean {
+  return !!el && (el.type === 'Roof' || (el.type === 'Slab' && !el.params.fromWalls)) && Array.isArray(el.params.outline);
+}

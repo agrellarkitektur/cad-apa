@@ -421,7 +421,14 @@ export function movePatch(doc: ProjectDoc, el: Element, d: [number, number]): Re
   if (p.start && p.end) return { start: add(p.start), end: add(p.end) };
   if (p.origin) return { origin: add(p.origin) };
   // Ett rum flyttar också sin punkt och sin flyttade rumsstämpel (0.8.17).
-  if (Array.isArray(p.outline)) return { outline: p.outline.map(add), ...(p.seed ? { seed: add(p.seed) } : {}), ...(p.labelAt ? { labelAt: add(p.labelAt) } : {}) };
+  if (Array.isArray(p.outline))
+    return {
+      outline: p.outline.map(add),
+      ...(p.seed ? { seed: add(p.seed) } : {}),
+      ...(p.labelAt ? { labelAt: add(p.labelAt) } : {}),
+      // Bjälklagets håltagningar (0.9.1).
+      ...(Array.isArray(p.holes) ? { holes: p.holes.map((h: [number, number][]) => h.map(add)) } : {}),
+    };
   if (Array.isArray(p.points)) {
     // Ett mått knutet till modellen flyttar bara måttlinjen; ett fritt mått flyttas helt.
     if (!Array.isArray(p.points[0]) && typeof p.angle === 'number') {

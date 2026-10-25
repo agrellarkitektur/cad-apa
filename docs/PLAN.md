@@ -1443,6 +1443,29 @@ våning; riktiga tak kommer i 0.10.*
 - Syns i 3D, fylls som väggarna i sektioner och ritas som kant i fasader
 - Rummens tunna golvskiva (30 mm) försvinner där det finns ett bjälklag
 
+*Byggd (25 oktober), format 15 (ny elementtyp `Slab`). Claudes val: en
+egen verktygsknapp *Bjälklag* under Rita (`bj`, `slab` i smartshell)
+som drar upp en rektangel med två klick, som taket, och *Ur väggarna*
+som lägger ett bjälklag innanför ytterväggarna (finns det redan ett på
+våningen i tillståndet markeras det). Ytterväggar är de som har inne på
+ena sidan och ute på den andra, som för väggarnas utsida; bjälklaget är
+husets ytterkontur minus deras massa, så innerväggarna står på det och
+fristående väggar ger inget. Kryssrutan *Ur väggarna* i egenskaperna
+gör konturen som den är till en ritad kontur (det största stycket), som
+sedan ändras med hörn och kanter i Modifiera som takets. Håltagningar är
+rektanglar som dras upp med *Håltagning* i verktyget, i bjälklaget under
+första hörnet; de listas med mått i egenskaperna och tas bort där (att
+ändra ett hål görs genom att ta bort det och rita ett nytt). I planen
+ritas konturen med tunna linjer (0,13) under väggarna och hålen med
+kryss; konturen är linjer, inte en sluten yta, så ett klick i ett rum
+markerar inte bjälklaget (Tab växlar till det vid väggens insida). Ny
+typ BJ01 (300 mm) i nya projekt; exempelvillan har BJ01 platta på mark
+400 mm. Förvald tjocklek 300. Ingen littera i planen än (bara i
+egenskaperna och typtabellen), ingen egen penna, och innerväggar på
+våningen under går upp i bjälklaget ovanför (det syns inte i sektionen,
+där båda fylls). Marklinjen i fasaderna ligger vid det lägsta, alltså
+under plattan (−0,4 i exempelvillan, förut −0,03).*
+
 ### 0.9.2 Nivåer · *troligen samma format*
 
 Blir 0.9.1 liten kan 0.9.2 läggas i den.

@@ -115,21 +115,12 @@ linje 3745.1,900 3755,900 [w0.18 ink] @m01/vy
 linje 4745.1,900 4755,900 [w0.18 ink] @m01/vy
 linje 4745.1,740 4755,740 [w0.18 ink] @m03/vy
 linje 4745.1,700 4755,700 [w0.18 ink] @m03/vy
-linje 3745.1,0 3754.9,0 [w0.18 ink] @r01/vy
-linje 4745.1,0 4754.6,0 [w0.18 ink] @r01/vy
-linje 2150,-30 6690,-30 [w0.18 ink] @r01/vy
-linje 2150,0 2150,-30 [w0.18 ink] @r01/vy
-linje 2150,-0.6 2150,-30 [w0.18 ink] @r01/vy
-linje 6690,0 6690,-30 [w0.18 ink] @r01/vy
-linje 8993.6,-30 10304.9,-30 [w0.18 ink] @r02/vy
-linje 6810,-7.3 6810,-30 [w0.18 ink] @r02/vy
-linje 6810,-30 8990,-30 [w0.18 ink] @r05/vy
-linje 6810,0 6810,-30 [w0.18 ink] @r05/vy
-linje 8990,0 8990,-30 [w0.18 ink] @r05/vy
-linje 10310,-30 13350,-30 [w0.18 ink] @r06/vy
-linje 10310,0 10310,-30 [w0.18 ink] @r06/vy
-linje 10310,0 10310,-30 [w0.18 ink] @r06/vy
-linje 13350,0 13350,-30 [w0.18 ink] @r06/vy
+linje 3745.1,0 3754.9,0 [w0.18 ink] @bj1/vy
+linje 4745.1,0 4754.6,0 [w0.18 ink] @bj1/vy
+linje 2150,-400 13350,-400 [w0.18 ink] @bj1/vy
+linje 2150,0 2150,-400 [w0.18 ink] @bj1/vy
+linje 13350,0 13350,-400 [w0.18 ink] @bj1/vy
+linje 2150,-0.6 2150,-400 [w0.18 ink] @bj1/vy
 linje 1250,5079.6 14250,5079.6 [w0.25 ink] @tak/roof
 linje 14250,5079.6 14250,5079.2 [w0.25 ink] @tak/roof
 linje 1250,5079.2 1250,5079.6 [w0.25 ink] @tak/roof
@@ -143,7 +134,7 @@ linje 14250,2450 14250,2786.7 [w0.25 ink] @tak/roof
 linje 14250,5079.6 1250,5079.6 [w0.25 ink] @tak/roof
 linje 1250,2450.8 1250,2450 [w0.25 ink] @tak/roof
 linje 1250,5079.6 1250,2786.7 [w0.25 ink] @tak/roof
-linje -250,-30 15750,-30 [w0.7] @/mark
+linje -250,-400 15750,-400 [w0.7] @/mark
 linje 14850,0 16450,0 [w0.18] @/nivå
 yta none [w0.18] 15450,0 15342,180 15558,180 @/nivå
 text "±0,000" 15630,63 h2.2 [w0.18] @/nivå

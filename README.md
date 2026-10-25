@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.9** (alfa, flera våningsplan); nästa är **0.9.1, bjälklag**.
+**0.9.1** (alfa, bjälklag); nästa är **0.9.2, nivåer**.
 
 ## Vad som fungerar
 
@@ -995,6 +995,27 @@ Version 0.9, flera våningsplan (filformat 14):
 - Nivåerna under ±0 i projektträdet skrivs −2,70 (förut +−2,70)
 - Projekt från 0.8.24–0.8.38 (format 13) öppnas inte
 
+Version 0.9.1, bjälklag (filformat 15):
+- **Bjälklag** är ett nytt objekt med littera (BJ01 …) och tjocklek per
+  typ. Det ligger på våningen det är golv i: ovansidan i golvnivån och
+  tjockleken nedåt. Plattan på mark är bjälklaget i plan 1
+- **Verktyget Bjälklag** (`bj` i smartshell): dra upp en rektangel med två
+  klick, eller tryck *Ur väggarna*. Ett bjälklag ur väggarna slutar vid
+  ytterväggarnas insida, så att väggarna går obrutna golv till golv i
+  sektionen; innerväggarna står på det, och det följer väggarna när de
+  flyttas. Kryssrutan *Ur väggarna* i egenskaperna slår av det, och då
+  blir konturen som den är en ritad kontur
+- Den ritade konturen ändras med hörnen och kanterna i Modifiera, som
+  takets (lägg till, flytta och ta bort punkt, förskjut kant)
+- **Håltagning**: välj *Håltagning* i verktyget och dra upp en rektangel i
+  bjälklaget. Hålet ritas med kryss i planen och tas bort i egenskaperna
+- **I 3D, sektioner och fasader**: bjälklaget syns i 3D, fylls som väggarna
+  i sektionen och ritas som kant i fasaderna. Rummens tunna golvskiva
+  (30 mm) försvinner där det finns ett bjälklag
+- *Bjälklag* under Visa (Modell) släcker bjälklagen
+- Exempelvillan har fått en platta på mark (BJ01, 400 mm)
+- Projekt från 0.9 (format 14) öppnas inte
+
 Version 0.8.38, granskning (samma filformat, 13):
 - Inga nya funktioner; allt beter sig som förut
 - **DXF-underlag med grus och mark** ritas fort och rätt: mönster vars
@@ -1152,7 +1173,7 @@ Version 0.8.28, rättelser i 2D-formen (samma filformat, 13):
 
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer, i dag 14 (sedan 0.9). Fram till
+Projektfilerna har ett formatnummer, i dag 15 (sedan 0.9.1). Fram till
 den öppna betan uppgraderas inte projekt från äldre alfa- och betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp

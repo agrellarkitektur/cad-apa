@@ -1,3 +1,4 @@
+import { hasEditableOutline } from '../../core/roofEdit';
 import { moveOnly } from '../../core/sheets';
 import type { Id } from '../../core/model';
 import { canScale } from '../../core/arrange';
@@ -264,10 +265,10 @@ export function modifyContextAt(host: ToolHost, p: ViewPointer, clientX: number,
     const e = shapeEdgeAt(el, p.model, tol);
     if (e) return { kind: 'edge', ids, shapeId: id, index: e.index, at: e.at, clientX, clientY };
   }
-  // Hörn och kanter i markerade taks kontur.
+  // Hörn och kanter i markerade taks och bjälklags kontur.
   for (const id of ids) {
     const el = doc.elements[id];
-    if (el?.type !== 'Roof') continue;
+    if (!hasEditableOutline(el)) continue;
     const o = el.params.outline as Vec2[];
     for (let i = 0; i < o.length; i++) if (dist(o[i], p.model) <= tol) return { kind: 'point', ids, roofId: id, index: i, at: o[i], clientX, clientY };
     for (let i = 0; i < o.length; i++) {
@@ -405,7 +406,7 @@ export function railFor(host: ToolHost, ids: readonly Id[]): Set<RailId> {
       on.add('remove');
     }
   }
-  if (els.some((e) => e.type === 'Roof')) for (const id of ['insert', 'pointMove', 'remove', 'offset'] as const) on.add(id);
+  if (els.some(hasEditableOutline)) for (const id of ['insert', 'pointMove', 'remove', 'offset'] as const) on.add(id);
   for (const op of editOps(host, ids)) on.add(op as RailId);
   for (const op of arrangeOps(host, ids)) on.add(op === 'extendAll' ? 'extend' : op === 'trimAll' ? 'trim' : (op as RailId));
   for (const el of els) {

@@ -324,7 +324,7 @@ export interface OwnPen extends OwnPenPart {
 }
 
 export const FORMAT = 'bacchus-project';
-export const FORMAT_VERSION = 14;
+export const FORMAT_VERSION = 15;
 
 export interface ProjectDoc {
   format: typeof FORMAT;
@@ -380,6 +380,7 @@ export function emptyProject(name: string, kind: ProjectKind, fields: Record<str
       't-iv01': { id: 't-iv01', origin: 'component', name: 'IV01', elementType: 'Wall', params: { thickness: 120 }, props: {}, description: 'Lätt innervägg' },
       't-d1': { id: 't-d1', origin: 'component', name: 'D1', elementType: 'Door', params: { width: 900, height: 2100 }, props: {}, description: 'Innerdörr M9×21' },
       't-f1': { id: 't-f1', origin: 'component', name: 'F1', elementType: 'Window', params: { width: 1200, height: 1200 }, props: {} },
+      't-bj01': { id: 't-bj01', origin: 'component', name: 'BJ01', elementType: 'Slab', params: { thickness: 300 }, props: {}, description: 'Bjälklag' },
     },
     elements: { ...drawingMarkers('pl-1'), ...master.elements },
     graphics: structuredClone(SWEDISH_STANDARD),

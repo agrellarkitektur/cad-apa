@@ -347,7 +347,7 @@ export class PropertiesPanel {
     if (show) sections.push(show);
 
     // Egna egenskaper, t.ex. brandklass och ljudklass, för littera och förteckningar.
-    if (els.length === 1 && ['Door', 'Window', 'Wall', 'Space', 'Furniture'].includes(els[0].type)) {
+    if (els.length === 1 && ['Door', 'Window', 'Wall', 'Slab', 'Space', 'Furniture'].includes(els[0].type)) {
       sections.push(propsSection(doc, els[0]));
     }
 
@@ -447,6 +447,13 @@ export class PropertiesPanel {
       case 'follow-building':
         updateParams(this.store, ids, { auto: true }, 'Följ byggnaden');
         return;
+      case 'slab-hole-remove': {
+        const el = doc.elements[ids[0]];
+        const i = Number(b.dataset.index);
+        const holes = (el?.params.holes as [number, number][][] | undefined) ?? [];
+        if (el && holes[i]) updateParams(this.store, [el.id], { holes: holes.filter((_, k) => k !== i) }, 'Ta bort håltagning');
+        return;
+      }
       case 'select-roof':
         if (b.dataset.roof && doc.elements[b.dataset.roof]) this.selection.set([b.dataset.roof]);
         return;

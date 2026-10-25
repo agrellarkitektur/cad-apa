@@ -9,6 +9,7 @@ import { roofType } from './roof';
 import { roofSlopeType } from './roofSlope';
 import { scaleBarType } from './scaleBar';
 import { stampType } from './stamp';
+import { slabType } from './slab';
 import { spaceType } from './space';
 import { underlayType } from './underlay';
 import { wallType } from './wall';
@@ -17,6 +18,7 @@ import { windowType } from './window';
 /** Alla elementtyper som programmet känner till. En ny typ = en ny rad här. */
 export function registerBuiltInTypes(): void {
   registerType(wallType);
+  registerType(slabType);
   registerType(doorType);
   registerType(windowType);
   registerType(furnitureType);

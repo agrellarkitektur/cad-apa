@@ -15,6 +15,7 @@ import { dimensionSegments, type DimensionParams } from '../elements/annotation'
 import { doorNumbersFor, numberingOf, roomNumbersFor } from '../elements/rooms';
 import { createContext } from '../repr/context';
 import type { RoofParams } from '../elements/roof';
+import { ringArea, slabBase, type SlabParams } from '../elements/slab';
 
 /**
  * Ändringar som egenskapspanelens knappar och fält gör (0.8.1, ur
@@ -232,6 +233,25 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
         if (el?.type !== 'Wall') continue;
         const { height: _h, ...rest } = el.params;
         tx.putElement({ ...el, params: on ? rest : { ...rest, height: resolveParams<WallParams>(tx.doc, el).height } });
+      }
+    });
+    return true;
+  }
+  if (scope === 'slab' && name === 'fromWalls') {
+    // Ur väggarna (0.9.1): bocka ur, så blir konturen som den är nu en ritad kontur.
+    const on = (input as HTMLInputElement).checked;
+    store.transact(on ? 'Bjälklag ur väggarna' : 'Egen kontur', (tx) => {
+      for (const id of ids) {
+        const el = tx.doc.elements[id];
+        if (el?.type !== 'Slab') continue;
+        if (on) {
+          tx.putElement({ ...el, params: { ...el.params, fromWalls: true, outline: [] } });
+          continue;
+        }
+        const { ctx } = createContext(doc, el.storey, view, doc.graphics, () => true);
+        const polys = slabBase(ctx, { ...resolveParams<SlabParams>(doc, el), fromWalls: true });
+        const largest = polys.map((p) => p[0]).sort((a, b) => Math.abs(ringArea(b)) - Math.abs(ringArea(a)))[0] ?? [];
+        tx.putElement({ ...el, params: { ...el.params, fromWalls: false, outline: largest.map((q) => [Math.round(q[0]), Math.round(q[1])]) } });
       }
     });
     return true;

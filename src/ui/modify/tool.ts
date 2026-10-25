@@ -39,7 +39,7 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
     const roof = ctx.roofId ? doc.elements[ctx.roofId] : undefined;
     const next = roof && removeNode(roof.params.outline as [number, number][], ctx.index!);
     if (next) setOutline(host.store, roof.id, next, 'Ta bort punkt');
-    else host.hint('Taket måste ha minst tre hörn.');
+    else host.hint('Konturen måste ha minst tre hörn.');
     return;
   }
   const el = ctx.wallId ? doc.elements[ctx.wallId] : undefined;

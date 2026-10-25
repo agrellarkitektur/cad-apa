@@ -59,11 +59,10 @@ linje 7355,900 6145,900 [w0.18 ink] @f06/lining
 linje 6145,900 6145,2110 [w0.18 ink] @f06/lining
 linje 6145,2110 7355,2110 [w0.18 ink] @f06/lining
 linje 7355,2110 7355,900 [w0.18 ink] @f06/lining
-linje 2150,-30 9350,-30 [w0.18 ink] @r01/vy
-linje 9350,0 9350,-30 [w0.18 ink] @r01/vy
-linje 2150,0 2150,-30 [w0.18 ink] @r01/vy
-linje 2150,-0.3 2150,-30 [w0.18 ink] @r01/vy
-linje 2150,-0.3 2150,-30 [w0.18 ink] @r02/vy
+linje 2150,-400 9350,-400 [w0.18 ink] @bj1/vy
+linje 9350,0 9350,-400 [w0.18 ink] @bj1/vy
+linje 2150,-0.3 2150,-400 [w0.18 ink] @bj1/vy
+linje 2150,0 2150,-400 [w0.18 ink] @bj1/vy
 linje 1250,2450 1250,2786.7 [w0.5 #3355aa] @tak/roof
 linje 1250,2450 5750,4742.9 [w0.5 #3355aa] @tak/roof
 linje 1250,2786.7 5750,5079.6 [w0.5 #3355aa] @tak/roof
@@ -71,7 +70,7 @@ linje 1250,2450 1250,2786.7 [w0.5 #3355aa] @tak/roof
 linje 10250,2450 10250,2786.7 [w0.5 #3355aa] @tak/roof
 linje 5750,4742.9 10250,2450 [w0.5 #3355aa] @tak/roof
 linje 5750,5079.6 10250,2786.7 [w0.5 #3355aa] @tak/roof
-linje -250,-30 11750,-30 [w0.7] @/mark
+linje -250,-400 11750,-400 [w0.7] @/mark
 linje 3725,4048 2150,4048 [w0.18] @slope:tak:0/taklutning
 båge 3725,4048 r1181.3 180°–207° [w0.18] @slope:tak:0/taklutning
 text "27°" 2333.3,3613.9 h2.2 middle [w0.18] @slope:tak:0/taklutning

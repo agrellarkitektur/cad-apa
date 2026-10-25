@@ -74,7 +74,7 @@ const PART_PEN: Record<EdgePart, Pen> = {
 };
 
 /** Material som fylls i snitt som väggar; resten ritas med kontur. */
-const POCHE = new Set(['wall', 'wall-new', 'roof', 'floor']);
+const POCHE = new Set(['wall', 'wall-new', 'roof', 'floor', 'slab']);
 
 export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, style: StyleSheet = doc.graphics): SectionResult | null {
   const t0 = performance.now();

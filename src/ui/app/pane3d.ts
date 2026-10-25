@@ -136,7 +136,7 @@ export function installPane3d(app: AppContext) {
       const f = markerFrame(store.doc, m);
       // Snittytorna har sina verkliga höjder sedan 0.9 (alla våningar).
       const z0 = 0;
-      const caps = (app.section?.cutFaces ?? []).map((c) => ({ poche: ['wall', 'wall-new', 'roof', 'floor'].includes(c.material), rings: c.rings }));
+      const caps = (app.section?.cutFaces ?? []).map((c) => ({ poche: ['wall', 'wall-new', 'roof', 'floor', 'slab'].includes(c.material), rings: c.rings }));
       view3d.setClip({ start: f.start, right: f.right, view: f.view, length: Math.hypot(f.end[0] - f.start[0], f.end[1] - f.start[1]), depth: f.depth }, caps, z0);
     } else view3d.setClip(null);
   }

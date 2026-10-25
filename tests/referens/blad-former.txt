@@ -34,6 +34,10 @@ text "Exempelgatan 1  " 231.5,56.4 h2.5 [w0.25] @mall-a3-32
 text "BESTÄLLARE" 351.5,66.4 h1.8 [w0.25] @mall-a3-34
 text "ARKITEKT" 231.5,82.4 h1.8 [w0.25] @mall-a3-37
 text "ANSVARIG" 351.5,82.4 h1.8 [w0.25] @mall-a3-40
+linje 208,158 432,158 [w0.13 ink] @bj1/kontur under
+linje 432,158 432,302 [w0.13 ink] @bj1/kontur under
+linje 432,302 208,302 [w0.13 ink] @bj1/kontur under
+linje 208,302 208,158 [w0.13 ink] @bj1/kontur under
 yta fylld #eeeeff [ingen] 208,158 208,302 298.8,302 298.8,158 @r01/fyllning under
 yta hatch #5566aa 45° a2 w0.13 [ingen] 208,158 208,302 298.8,302 298.8,158 @r01/fyllning under
 yta mönster #5566aa 45° a3 + 135° a3 w0.13 [ingen] 301.2,231.2 301.2,302 432,302 432,231.2 @r02/fyllning under

@@ -30,6 +30,8 @@ export function pointTaker(app: AppContext, pending: CommandDef | null): PointTa
       return app.dimensionTool;
     case 'roof':
       return app.roofTool;
+    case 'slab':
+      return app.slabTool;
     case 'section':
       return app.sectionTool;
     case 'elevation':
@@ -53,6 +55,8 @@ export function commandBusy(app: AppContext, pending: CommandDef | null): boolea
       return app.measureTool.measurement().points > 0;
     case 'roof':
       return app.roofTool.started;
+    case 'slab':
+      return app.slabTool.started;
     case 'section':
       return app.sectionTool.step > 0;
     case 'elevation':
