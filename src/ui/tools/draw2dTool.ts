@@ -1,6 +1,6 @@
 import { addElements, updateParams } from '../../core/commands';
 import type { Element, Id } from '../../core/model';
-import { isClosed, segmentCount, shapePrims, type FillPattern, type LineType, type Shape2DParams, type ShapeKind } from '../../elements/drawing2d';
+import { hasBackground, isClosed, segmentCount, shapePrims, type FillPattern, type LineType, type Shape2DParams, type ShapeKind } from '../../elements/drawing2d';
 import { bulgeThrough, STRAIGHT } from '../../geometry/arc';
 import { add, dist, dot, fromAngleDeg, scale, sub } from '../../geometry/vec';
 import type { Primitive, Vec2 } from '../../repr/primitives';
@@ -22,6 +22,8 @@ export interface Draw2DOptions {
   linetype: LineType;
   /** Fyllningen; utelämnad = ingen. */
   fill?: FillPattern;
+  /** Den egna fyllningstypen (0.8.36), när `fill` är `type`. */
+  fillType?: string;
   /** Skrafferingens bakgrund (0.8.29); utelämnad = ingen. */
   fillBackground?: string;
 }
@@ -245,7 +247,7 @@ export class Draw2DTool implements ViewTool, PointTaker {
   /** Parametrarna för formen genom punkterna. */
   private params(pts: Vec2[], closed: boolean): Record<string, unknown> {
     const o = this.options;
-    const fill = o.fill ? { fill: o.fill, ...((o.fill === 'hatch' || o.fill === 'cross') && o.fillBackground ? { fillBackground: o.fillBackground } : {}) } : {};
+    const fill = o.fill ? { fill: o.fill, ...(o.fill === 'type' && o.fillType ? { fillType: o.fillType } : {}), ...(hasBackground(o.fill) && o.fillBackground ? { fillBackground: o.fillBackground } : {}) } : {};
     return { ...chainFrom(o.kind, pts, closed), weight: o.weight, linetype: o.linetype, ...fill };
   }
 

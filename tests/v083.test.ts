@@ -175,10 +175,11 @@ describe('skraffering i DXF-underlag (0.8.3)', () => {
     expect(solid.fill).toMatchObject({ kind: 'solid' });
     expect(solid.rings).toHaveLength(2);
     // Vriden 10° och skalad 2: linjerna i 100°, 2 × 31,75 mm i modellen = 0,635 mm på papper i 1:100.
-    expect(hatch.fill).toMatchObject({ kind: 'hatch' });
-    if (hatch.fill.kind === 'hatch') {
-      expect(hatch.fill.angle).toBeCloseTo(100);
-      expect(hatch.fill.spacing).toBeCloseTo(0.635);
+    // Sedan 0.8.36 ett mönster med familjerna.
+    expect(hatch.fill).toMatchObject({ kind: 'pattern' });
+    if (hatch.fill.kind === 'pattern') {
+      expect(hatch.fill.lines[0].angle).toBeCloseTo(100);
+      expect(hatch.fill.lines[0].spacing).toBeCloseTo(0.635);
     }
     // Släckt lager: ingen fyllning.
     const off = addWithAsset(store, null, { type: 'Underlay', name: 'Skraffering', storey: 'pl-1', tags: [], props: {}, params: { ...params, layersOff: ['Fyll'] } as unknown as Record<string, unknown> }, 'st-a', 'Lägg in igen');

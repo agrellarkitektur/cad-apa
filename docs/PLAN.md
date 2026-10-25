@@ -1311,6 +1311,21 @@ mönstrens linjer kan vara streckade.
   skärmen, i PDF:en och i DXF:en
 - Kanske: läsa in färdiga `.pat`-filer (AutoCAD, ArchiCAD)
 
+*Byggd (25 oktober), samma format (13). Claudes val: typerna ligger i
+stilmallen och följer med den (också vid byte till en förinställd), som
+linjetyperna. En typ har måtten på papper eller i verkligheten (ett val
+per typ, inte per familj). Familjens fält är som i `.pat`: vinkel,
+baspunkt X och Y, avstånd, förskjutning och streckning; streckningen
+skrivs som linjetypernas (streck och mellanrum, decimalkomma). Ingen
+inbyggd typ utöver skraffering och korsskraffering. En 2D-form eller ett
+rum med en typ får *Vridning* och *Skala* i stället för vinkel och
+avstånd, och kan ha bakgrund; typens penna är 0,13 mm (0,18 mm som
+snittfyllning), utan eget val. `.pat` läses in (samma namn byts ut,
+över 20 mm mellan linjerna = verkliga mått) och sparas. DXF-underlagens
+streckade mönster ritas nu streckade. Linjernas fas räknas från
+modellens nollpunkt på skärmen och från papperets i PDF:en, som
+skrafferingen förut.*
+
 ### 0.8.37 Detaljnivåer i stilmallen
 
 Carl Augusts synpunkt 25 oktober. Detaljnivån väljs per vy, som i

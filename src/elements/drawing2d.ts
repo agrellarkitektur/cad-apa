@@ -2,6 +2,7 @@ import { arcFromBulge, arcSegments, bulgeThrough, STRAIGHT, type Arc } from '../
 import { dist } from '../geometry/vec';
 import type { Color, FillDef, StyleSheet } from '../core/graphics';
 import { lineTypeDash } from '../core/lineTypes';
+import { resolveFill } from '../core/fillTypes';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import type { ElementType } from './registry';
 
@@ -48,7 +49,7 @@ export const PEN_COLORS: Record<number, { name: string; color: string }> = {
  * Fyllningens mönster. `mask` (0.8.30) är en yta utan egen färg: den döljer
  * det som ligger under och syns som ritningens bakgrund (papperet i PDF:en).
  */
-export type FillPattern = 'solid' | 'hatch' | 'cross' | 'mask';
+export type FillPattern = 'solid' | 'hatch' | 'cross' | 'mask' | 'type';
 
 export interface Shape2DParams {
   /**
@@ -71,8 +72,16 @@ export interface Shape2DParams {
   linetype: LineType;
   /** Linjens färg som #rrggbb; utelämnad = ritningens svart. */
   color?: string;
-  /** Fyllningens mönster; utelämnad = ingen fyllning. */
+  /** Fyllningens mönster; utelämnad = ingen fyllning. `type` = en egen fyllningstyp (0.8.36). */
   fill?: FillPattern;
+  /**
+   * Den egna fyllningstypens nyckel i stilmallen (0.8.36), med vridning i
+   * grader och skala (utelämnade = 0 och 1). En typ som inte finns ritas
+   * som en skraffering.
+   */
+  fillType?: string;
+  fillTypeAngle?: number;
+  fillTypeScale?: number;
   /** Fyllningens färg som #rrggbb; utelämnad = grå. */
   fillColor?: string;
   /** Skrafferingens vinkel i grader och avstånd på papper i mm. */
@@ -111,7 +120,12 @@ export interface Shape2DParams {
 }
 
 /** Fyllningens inställningar, samma för 2D-former och rum (0.8.25). */
-export type FillParams = Pick<Shape2DParams, 'fill' | 'fillColor' | 'fillAngle' | 'fillSpacing' | 'opacity' | 'fillOpacity' | 'fillBackground' | 'fillBackgroundOpacity'>;
+export type FillParams = Pick<Shape2DParams, 'fill' | 'fillType' | 'fillTypeAngle' | 'fillTypeScale' | 'fillColor' | 'fillAngle' | 'fillSpacing' | 'opacity' | 'fillOpacity' | 'fillBackground' | 'fillBackgroundOpacity'>;
+
+/** Fyllningar med streck och därmed bakgrund: skraffering, korsskraffering och egna typer. */
+export function hasBackground(fill: FillPattern | undefined): boolean {
+  return fill === 'hatch' || fill === 'cross' || fill === 'type';
+}
 
 /** Bakgrundens förval (0.8.30): en mask, ritningens bakgrund utan egen färg. */
 export const FILL_BACKGROUND = 'paper';
@@ -123,11 +137,11 @@ export const BACKGROUND_COLOR = '#ffffff';
  * Fyllningens ytor för konturen `rings` (0.8.25): en hel fyllning eller en
  * eller två skrafferingar. `under` = bakom väggarna.
  */
-export function fillPrims(rings: readonly (readonly Vec2[])[], p: FillParams, origin: Primitive['origin'] | undefined, under: boolean): Primitive[] {
+export function fillPrims(rings: readonly (readonly Vec2[])[], p: FillParams, origin: Primitive['origin'] | undefined, under: boolean, style?: StyleSheet, scale = 1): Primitive[] {
   if (!p.fill) return [];
   const fills: FillDef[] = [];
   // Bakgrunden under skrafferingen (0.8.29), med egen opacitet.
-  const back = (p.fill === 'hatch' || p.fill === 'cross') && p.fillBackground ? backgroundOpacity(p) : 0;
+  const back = hasBackground(p.fill) && p.fillBackground ? backgroundOpacity(p) : 0;
   if (back > 0) fills.push({ kind: 'solid', color: p.fillBackground as Color, ...(back < 1 ? { opacity: back } : {}) });
   const op = opacitiesOf(p).fill;
   if (op > 0) {
@@ -137,7 +151,9 @@ export function fillPrims(rings: readonly (readonly Vec2[])[], p: FillParams, or
     const spacing = p.fillSpacing > 0 ? p.fillSpacing : 2;
     const hatch = (a: number): FillDef => ({ kind: 'hatch', color, angle: a, spacing, weight: 0.13, ...alpha });
     const solid = (c: Color): FillDef => ({ kind: 'solid', color: c, ...alpha });
-    fills.push(...(p.fill === 'mask' ? [solid('paper')] : p.fill === 'solid' ? [solid(color)] : p.fill === 'cross' ? [hatch(angle), hatch(angle + 90)] : [hatch(angle)]));
+    // En egen fyllningstyp (0.8.36): alla familjer i en yta.
+    const own = (): FillDef => resolveFill({ kind: 'type', type: p.fillType ?? '', color, weight: 0.13, angle: p.fillTypeAngle ?? 0, scale: p.fillTypeScale ?? 1, ...alpha }, style, scale);
+    fills.push(...(p.fill === 'type' ? [own()] : p.fill === 'mask' ? [solid('paper')] : p.fill === 'solid' ? [solid(color)] : p.fill === 'cross' ? [hatch(angle), hatch(angle + 90)] : [hatch(angle)]));
   }
   return fills.map((fill): Primitive => ({ kind: 'region', role: 'cut', rings, fill, outline: null, noOutline: true, ownFill: true, ...(under ? { under: true } : {}), origin: origin && { ...origin, part: 'fyllning' } }));
 }
@@ -187,6 +203,7 @@ export const PATTERN_LABELS: Record<FillPattern, string> = {
   hatch: 'Skraffering',
   cross: 'Korsskraffering',
   mask: 'Mask',
+  type: 'Egen fyllningstyp',
 };
 
 /** Antalet segment: ett mindre än punkterna, eller lika många i en sluten form. */
@@ -318,7 +335,7 @@ export function shapePrims(p: Shape2DParams, origin?: Primitive['origin'], noFil
     out.push({ kind: 'polyline', points, closed, pen: { ...pen, weight: 0 }, origin });
   } else out.push({ kind: 'polyline', points, closed, pen, origin });
   // Fyllningen först; linjen och ändarna bakom väggarna om så valts (0.8.25).
-  const fill = points.length > 2 && !noFill ? fillPrims([points], p, origin, !p.fillFront) : [];
+  const fill = points.length > 2 && !noFill ? fillPrims([points], p, origin, !p.fillFront, style, scale) : [];
   return [...fill, ...(p.lineBehind ? out.map((q) => ({ ...q, under: true })) : out)];
 }
 

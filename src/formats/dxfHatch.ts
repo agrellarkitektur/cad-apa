@@ -10,7 +10,7 @@ import { arcPts, bspline, bulgePts, num, type P2, type RawEntity } from './dxfCo
  * koordinater. Koderna läses i ordning, eftersom samma koder (10, 20, 40 …)
  * återkommer i varje kontur och kant.
  */
-export function readHatch(e: RawEntity): { rings: P2[][]; solid: boolean; lines: { dir: P2; off: P2 }[] } | null {
+export function readHatch(e: RawEntity): { rings: P2[][]; solid: boolean; lines: { dir: P2; base: P2; off: P2; dash: number[] }[] } | null {
   const c = e.codes;
   let i = c.findIndex((x) => x[0] === 91);
   if (i < 0) return null;
@@ -113,7 +113,7 @@ export function readHatch(e: RawEntity): { rings: P2[][]; solid: boolean; lines:
   if (!rings.length) return null;
 
   const solid = num(e, 70) === 1 || e.codes.some((x) => x[0] === 450 && Number(x[1]) === 1);
-  const lines: { dir: P2; off: P2 }[] = [];
+  const lines: { dir: P2; base: P2; off: P2; dash: number[] }[] = [];
   if (!solid) {
     const at78 = c.findIndex((x, j) => j >= i && x[0] === 78);
     if (at78 >= 0) {
@@ -121,12 +121,13 @@ export function readHatch(e: RawEntity): { rings: P2[][]; solid: boolean; lines:
       const n = need(78);
       for (let k = 0; k < n && i < c.length; k++) {
         const angle = (need(53) * Math.PI) / 180;
-        need(43);
-        need(44);
+        const base = point(43, 44);
         const off = point(45, 46);
         const dashes = need(79);
-        for (let j = 0; j < dashes; j++) opt(49);
-        lines.push({ dir: [Math.cos(angle), Math.sin(angle)], off });
+        // Strecken (0.8.36): positiva streck, negativa mellanrum, 0 en punkt, som i .pat.
+        const dash: number[] = [];
+        for (let j = 0; j < dashes; j++) dash.push(opt(49) ?? 0);
+        lines.push({ dir: [Math.cos(angle), Math.sin(angle)], base, off, dash });
       }
     }
   }

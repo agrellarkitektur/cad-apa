@@ -116,6 +116,10 @@ export interface SpaceParams {
    * färg, vinkel, avstånd och opacitet (`opacity`). Bakom väggarna.
    */
   fill?: FillPattern;
+  /** En egen fyllningstyp (0.8.36), som 2D-formernas. */
+  fillType?: string;
+  fillTypeAngle?: number;
+  fillTypeScale?: number;
   fillColor?: string;
   fillAngle?: number;
   fillSpacing?: number;

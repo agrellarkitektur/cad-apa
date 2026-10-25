@@ -1,3 +1,4 @@
+import { normalizeFillTypes, type CustomFillType, type HatchLine } from './fillTypes';
 import { normalizeLineTypes, type CustomLineType } from './lineTypes';
 /**
  * Stilmallen bestämmer hur ritningen ser ut för varje åtgärd: vanlig vy,
@@ -26,6 +27,36 @@ export type FillDef =
       angle: number;
       spacing: number;
       weight: number;
+      opacity?: number;
+      background?: Color | null;
+      backgroundOpacity?: number;
+    }
+  /**
+   * Ett mönster av linjefamiljer (0.8.36), som det ritas: måtten på papper i
+   * mm (`HatchLine`). Egna fyllningstyper och DXF-underlagens skraffering
+   * blir detta.
+   */
+  | {
+      kind: 'pattern';
+      color: Color;
+      weight: number;
+      lines: HatchLine[];
+      opacity?: number;
+      background?: Color | null;
+      backgroundOpacity?: number;
+    }
+  /**
+   * En egen fyllningstyp i stilmallen (0.8.36), med sin nyckel, vridning och
+   * skala. Sparas så (t.ex. som snittfyllning) och görs om till `pattern`
+   * med `resolveFill` innan den ritas; ritas inte annars.
+   */
+  | {
+      kind: 'type';
+      type: string;
+      color: Color;
+      weight?: number;
+      angle?: number;
+      scale?: number;
       opacity?: number;
       background?: Color | null;
       backgroundOpacity?: number;
@@ -74,6 +105,8 @@ export interface StyleSheet {
   font?: string;
   /** Projektets egna linjetyper (0.8.30), utöver de inbyggda (`LINE_TYPES`). */
   lineTypes?: CustomLineType[];
+  /** Projektets egna fyllningstyper (0.8.36). */
+  fillTypes?: CustomFillType[];
 }
 
 /** En rad i penntabellen. */
@@ -215,6 +248,7 @@ export function normalizeStyle(data: any): StyleSheet {
     ...(normalizePens(data.pens) ? { pens: normalizePens(data.pens)! } : {}),
     ...(typeof data.font === 'string' && data.font.trim() ? { font: data.font.trim() } : {}),
     ...(normalizeLineTypes(data.lineTypes) ? { lineTypes: normalizeLineTypes(data.lineTypes)! } : {}),
+    ...(normalizeFillTypes(data.fillTypes) ? { fillTypes: normalizeFillTypes(data.fillTypes)! } : {}),
   };
 }
 

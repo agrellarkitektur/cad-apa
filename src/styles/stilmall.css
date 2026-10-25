@@ -191,6 +191,63 @@
   margin-top: 8px;
 }
 
+/* Fyllningstyper (0.8.36): namn, bild, måtten och knappar, och en rad per linjefamilj. */
+.filltype {
+  padding: 8px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.filltype-head {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) 44px auto auto auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.filltype-head .pattern-swatch {
+  color: var(--ink);
+  align-self: center;
+}
+
+.filltype-head label,
+.filltype-family label {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.filltype-head label > span,
+.filltype-family label > span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.filltype-family {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(56px, 1fr)) minmax(96px, 1.6fr) 32px;
+  gap: 6px;
+  align-items: end;
+  margin-top: 6px;
+}
+
+.filltype-family input {
+  min-width: 0;
+  width: 100%;
+}
+
+.style-filltypes .row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .filltype-head,
+  .filltype-family {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
 /* ---------- Panelens grupp för det som påverkar fler objekt ---------- */
 
 .panel-body section.shared {

@@ -1,11 +1,13 @@
 import { updateParams } from '../core/commands';
 import type { Element, Id, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
-import { BACKGROUND_COLOR, CAP_LABELS, CAP_SIZE, FILL_BACKGROUND, FILL_COLOR, PATH_LABELS, segmentCount, type CapKind, type Shape2DParams } from '../elements/drawing2d';
+import { BACKGROUND_COLOR, CAP_LABELS, CAP_SIZE, FILL_BACKGROUND, FILL_COLOR, hasBackground, PATH_LABELS, segmentCount, type CapKind, type Shape2DParams } from '../elements/drawing2d';
+import type { StyleSheet } from '../core/graphics';
+import { fillTypeOf } from '../core/fillTypes';
 import { resolveParams } from '../elements/registry';
 import { STRAIGHT } from '../geometry/arc';
 import { lineTypeOptions } from './lineTypePick';
-import { patternPicker } from './patternPick';
+import { patternPicker, patternValue } from './patternPick';
 import { weightPicker } from './weightPick';
 
 /**
@@ -20,19 +22,35 @@ const comma = (n: number) => n.toLocaleString('sv-SE');
  * Fyllningens fält (0.8.19): mönstret (eller ingen), färgen och för en
  * skraffering vinkel och avstånd. Samma fält i verktyget och i egenskaperna.
  */
-export function fillFields(name: string, p: Pick<Shape2DParams, 'fill' | 'fillColor' | 'fillAngle' | 'fillSpacing' | 'fillBackground' | 'fillBackgroundOpacity'>, attrs: (key: string) => string): string {
+export function fillFields(
+  name: string,
+  p: Pick<Shape2DParams, 'fill' | 'fillType' | 'fillTypeAngle' | 'fillTypeScale' | 'fillColor' | 'fillAngle' | 'fillSpacing' | 'fillBackground' | 'fillBackgroundOpacity'>,
+  attrs: (key: string) => string,
+  style?: StyleSheet,
+): string {
   const color = p.fillColor ?? FILL_COLOR;
-  const hatched = p.fill === 'hatch' || p.fill === 'cross';
+  const hatched = hasBackground(p.fill);
+  // En egen fyllningstyp (0.8.36): vridning och skala i stället för vinkel och avstånd.
+  const own = p.fill === 'type';
+  const gone = own && !fillTypeOf(style, p.fillType) ? '<p class="note">Fyllningstypen finns inte längre i stilmallen och ritas som en skraffering.</p>' : '';
   // Masken (0.8.30) har ingen egen färg.
   const more =
     p.fill === 'mask'
       ? '<p class="note">Masken döljer det som ligger under och syns som ritningens bakgrund (papperet i PDF:en).</p>'
       : p.fill
         ? `<div class="fields"><label class="field"><span>Färg</span><input type="color" ${attrs('fillColor')} value="${color}"></label>
-    ${hatched ? hatchFields(p, attrs) : ''}</div>
+    ${own ? typeFields({ fillTypeAngle: p.fillTypeAngle ?? 0, fillTypeScale: p.fillTypeScale ?? 1 }, attrs) : hatched ? hatchFields(p, attrs) : ''}</div>${gone}
     ${hatched ? backgroundFields({ fillBackground: p.fillBackground, fillBackgroundOpacity: p.fillBackgroundOpacity }, attrs) : ''}`
         : '';
-  return `<div class="field-label">Fyllning</div>${patternPicker(name, p.fill ?? 'none', attrs('pattern'), { color, angle: p.fillAngle })}${more}`;
+  return `<div class="field-label">Fyllning</div>${patternPicker(name, p.fill ?? 'none', attrs('pattern'), { color, angle: p.fillAngle, types: style?.fillTypes, type: p.fillType })}${more}`;
+}
+
+/** En egen fyllningstyps vridning och skala (0.8.36). Null = olika i markeringen. */
+export function typeFields(p: { fillTypeAngle: number | null; fillTypeScale: number | null }, attrs: (key: string) => string): string {
+  const v = (n: number | null) => (n === null ? '' : comma(n));
+  const mixed = (n: number | null) => (n === null ? ' placeholder="Olika"' : '');
+  return `<label class="field"><span>Vridning</span><span class="input-unit"><input type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" ${attrs('fillTypeAngle')} value="${v(p.fillTypeAngle)}"${mixed(p.fillTypeAngle)}><i>°</i></span></label>
+    <label class="field"><span>Skala</span><span class="input-unit"><input type="text" data-expr data-unit="" inputmode="decimal" autocomplete="off" ${attrs('fillTypeScale')} value="${v(p.fillTypeScale)}"${mixed(p.fillTypeScale)}><i>×</i></span></label>`;
 }
 
 /** Skrafferingens vinkel och avstånd; också direkt i smartmenyn (0.8.22). Null = olika i markeringen. */
@@ -75,10 +93,14 @@ export function shapeSmartFields(doc: ProjectDoc, els: Element[]): string | null
   // Fyllningens färg (0.8.28), när alla har en fyllning; tom ruta = olika.
   const color = ps.every((q) => q.fill && q.fill !== 'mask') ? (ps.every((q) => (q.fillColor ?? FILL_COLOR) === (ps[0].fillColor ?? FILL_COLOR)) ? (ps[0].fillColor ?? FILL_COLOR) : null) : undefined;
   const colorField = color === undefined ? '' : `<label class="field"><span>Fyllningens färg</span><input type="color" ${attrs('fillColor')} value="${color ?? FILL_COLOR}"${color === null ? ' title="Olika"' : ''}></label>`;
-  const hatch = ps.every((q) => q.fill === 'hatch' || q.fill === 'cross') ? hatchFields({ fillAngle: same('fillAngle'), fillSpacing: same('fillSpacing') }, attrs) : '';
+  const hatch = ps.every((q) => q.fill === 'hatch' || q.fill === 'cross')
+    ? hatchFields({ fillAngle: same('fillAngle'), fillSpacing: same('fillSpacing') }, attrs)
+    : ps.every((q) => q.fill === 'type')
+      ? typeFields({ fillTypeAngle: ps.every((q) => (q.fillTypeAngle ?? 0) === (ps[0].fillTypeAngle ?? 0)) ? (ps[0].fillTypeAngle ?? 0) : null, fillTypeScale: ps.every((q) => (q.fillTypeScale ?? 1) === (ps[0].fillTypeScale ?? 1)) ? (ps[0].fillTypeScale ?? 1) : null }, attrs)
+      : '';
   if (colorField || hatch) parts.push(`<div class="fields">${colorField}${hatch}</div>`);
-  // Bakgrunden (0.8.29), när alla är skrafferade.
-  if (hatch) {
+  // Bakgrunden (0.8.29), när alla är skrafferade eller har en egen typ.
+  if (hatch && ps.every((q) => hasBackground(q.fill))) {
     const backs = ps.map((q) => q.fillBackground);
     const back = backs.every((b) => b === backs[0]) ? backs[0] : backs.some((b) => b) ? null : undefined;
     parts.push(backgroundFields({ fillBackground: back, fillBackgroundOpacity: ps.every((q) => q.fillBackgroundOpacity === ps[0].fillBackgroundOpacity) ? ps[0].fillBackgroundOpacity : null }, attrs));
@@ -152,7 +174,7 @@ export function shapeFields(doc: ProjectDoc, el: Element): string {
       <label class="check"><input type="checkbox" data-key="d2:closed"${p.closed ? ' checked' : ''}> Sluten</label>
       ${el.space ? '' : boundsField(!!p.boundsRooms, (k) => `data-key="d2:${k}"`)}
       ${!p.closed && p.weight ? capFields(p, (k) => `data-key="d2:${k}"`) : ''}
-      ${fillFields('d2-pattern-panel', p, (k) => `data-key="d2:${k}"`)}
+      ${fillFields('d2-pattern-panel', p, (k) => `data-key="d2:${k}"`, doc.graphics)}
       ${p.weight || p.fill ? opacityFields(p, (k) => `data-key="d2:${k}"`) : ''}
       ${p.weight === 0 && !p.fill ? '<p class="note">Formen har varken linje eller fyllning och syns inte, men går att klicka på längs linjen.</p>' : ''}
       ${p.shape === 'polyline' ? '<p class="note">Böj eller räta ut en kant med Modifiera: klicka på kanten när formen är markerad.</p>' : ''}`;
@@ -173,7 +195,11 @@ export function shapeChange(store: DocStore, ids: Id[], name: string, input: HTM
   } else if (name === 'closed') updateParams(store, ids, { closed: (input as HTMLInputElement).checked }, 'Sluten');
   else if (name === 'startCap' || name === 'endCap') updateParams(store, ids, { [name]: v === 'none' ? undefined : v }, v === 'none' ? 'Ingen ändform' : 'Ändra ändform');
   else if (name === 'capSize' && num > 0) updateParams(store, ids, { capSize: num === CAP_SIZE ? undefined : num }, 'Ändra ändarnas storlek');
-  else if (name === 'pattern') updateParams(store, ids, { fill: v === 'none' ? undefined : v }, v === 'none' ? 'Ingen fyllning' : 'Ändra fyllning');
+  else if (name === 'pattern') {
+    const pick = patternValue(v);
+    updateParams(store, ids, { fill: pick.fill, fillType: pick.fillType }, v === 'none' ? 'Ingen fyllning' : 'Ändra fyllning');
+  } else if (name === 'fillTypeAngle' && Number.isFinite(num)) updateParams(store, ids, { fillTypeAngle: num || undefined }, 'Vrid fyllningen');
+  else if (name === 'fillTypeScale' && num > 0) updateParams(store, ids, { fillTypeScale: num === 1 ? undefined : num }, 'Ändra fyllningens skala');
   else if (name === 'fillBackgroundOn') {
     const on = (input as HTMLInputElement).checked;
     updateParams(store, ids, on ? { fillBackground: FILL_BACKGROUND } : { fillBackground: undefined, fillBackgroundOpacity: undefined }, on ? 'Bakgrund' : 'Ingen bakgrund');

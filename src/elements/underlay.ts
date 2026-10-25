@@ -1,3 +1,4 @@
+import { evenDash, type FillFamily, type HatchLine } from '../core/fillTypes';
 import type { FillDef } from '../core/graphics';
 import type { Asset, Id, ProjectDoc } from '../core/model';
 import { parseDxf, type DxfDrawing } from '../formats/dxf';
@@ -108,6 +109,27 @@ export function dxfOf(doc: ProjectDoc, asset: Id): DxfDrawing | null {
 /** De senast ritade DXF-underlagen, så att samma ritning inte räknas om vid varje ändring. */
 const primCache = new Map<string, Primitive[]>();
 
+/**
+ * DXF-skrafferingens linjefamiljer på papper (0.8.36): baspunkten genom
+ * underlagets läge, vridning och skala, och måtten genom ritningens skala,
+ * så att också streckade mönster (tegel) ritas som i filen.
+ */
+function underlayLines(fams: readonly FillFamily[], t: (q: Vec2) => Vec2, p: UnderlayParams, drawingScale: number): HatchLine[] {
+  const k = p.scale / drawingScale;
+  return fams.map((f) => {
+    const a = ((f.angle + p.angle) * Math.PI) / 180;
+    const b = t([f.x, f.y]);
+    const dash = evenDash(f.dash);
+    return {
+      angle: f.angle + p.angle,
+      spacing: f.spacing * k,
+      ...(f.shift ? { shift: f.shift * k } : {}),
+      ...(dash ? { dash: dash.map((d) => d * k) } : {}),
+      phase: [(b[0] * Math.cos(a) + b[1] * Math.sin(a)) / drawingScale, (-b[0] * Math.sin(a) + b[1] * Math.cos(a)) / drawingScale],
+    };
+  });
+}
+
 function dxfPrims(doc: ProjectDoc, id: Id, p: UnderlayParams, drawingScale: number): Primitive[] {
   const d = dxfOf(doc, p.asset);
   if (!d) return [];
@@ -129,7 +151,7 @@ function dxfPrims(doc: ProjectDoc, id: Id, p: UnderlayParams, drawingScale: numb
       const rings = it.rings.map((r) => r.map(t));
       const fills: FillDef[] = it.solid
         ? [{ kind: 'solid', color: 'ink', opacity: opacity * 0.35 }]
-        : it.lines.map((l) => ({ kind: 'hatch', color: 'ink', angle: l.angle + p.angle, spacing: (l.spacing * p.scale) / drawingScale, weight: 0.1, opacity }));
+        : [{ kind: 'pattern', color: 'ink', weight: 0.1, opacity, lines: underlayLines(it.lines, t, p, drawingScale) }];
       for (const fill of fills) out.push({ kind: 'region', role: 'cut', rings, fill, outline: null, ownFill: true, noOutline: true, origin });
     } else
       out.push({

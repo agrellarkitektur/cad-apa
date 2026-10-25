@@ -1,5 +1,6 @@
 import { dashPieces, type DashFrom } from '../repr/dash';
 import type { FillDef } from '../core/graphics';
+import { drawnDash, evenDash, hatchStrokes } from '../core/fillTypes';
 import type { Bounds, Pen, PenColor, Primitive, Vec2 } from '../repr/primitives';
 import { drawingBytes, textWidth } from './drawingFont';
 import { OSIFONT_METRICS, OSIFONT_WIDTHS } from './osifontWidths';
@@ -126,6 +127,10 @@ class PageWriter {
       this.ops.push(`q ${this.alpha(fill.opacity)}${colorOp(fill.color, false)} ${d} f* Q`);
       return;
     }
+    if (fill.kind === 'pattern') {
+      this.pattern(rings, d, fill);
+      return;
+    }
     if (fill.kind !== 'hatch') return;
     // Skraffering: ytan som klippram och parallella linjer över den, förankrade i papperets nollpunkt.
     const pts = rings.flat();
@@ -159,6 +164,37 @@ class PageWriter {
       lines.push(`${n(p0[0])} ${n(p0[1])} m ${n(p1[0])} ${n(p1[1])} l`);
     }
     parts.push(`${this.alpha(fill.opacity)}${colorOp(fill.color, true)} ${n(Math.max(0.05, fill.weight))} w 0 J ${lines.join(' ')} S Q`);
+    this.ops.push(parts.join(' '));
+  }
+
+  /**
+   * Ett mönster av linjefamiljer (0.8.36): ytan som klippram och varje
+   * familjs linjer över den, var och en med sin streckning och fas.
+   */
+  private pattern(rings: readonly (readonly Vec2[])[], d: string, fill: Extract<FillDef, { kind: 'pattern' }>): void {
+    const pts = rings.flat();
+    const xs = pts.map((p) => p[0]);
+    const ys = pts.map((p) => p[1]);
+    const box = { minX: Math.min(...xs), minY: Math.min(...ys), maxX: Math.max(...xs), maxY: Math.max(...ys) };
+    const parts: string[] = [`q ${d} W* n`];
+    if (fill.background) parts.push(`${this.alpha(fill.backgroundOpacity)}${colorOp(fill.background, false)} ${d} f*`);
+    parts.push(`${this.alpha(fill.opacity)}${colorOp(fill.color, true)} ${n(Math.max(0.05, fill.weight))} w`);
+    let budget = 20000;
+    for (const l of fill.lines) {
+      if (!(l.spacing >= 0.05) || budget <= 0) continue;
+      const even = evenDash(l.dash);
+      const drawn = even && drawnDash(even);
+      parts.push(drawn?.round ? '1 J' : '0 J');
+      const strokes = hatchStrokes(l, box, budget);
+      budget -= strokes.length;
+      const seg = (s: (typeof strokes)[number]) => `${n(s.a[0])} ${n(s.a[1])} m ${n(s.b[0])} ${n(s.b[1])} l`;
+      if (!drawn) parts.push(`[] 0 d ${strokes.map(seg).join(' ')} S`);
+      else {
+        const arr = `[${drawn.dash.map(n).join(' ')}]`;
+        parts.push(strokes.map((s) => `${arr} ${n(s.phase)} d ${seg(s)} S`).join(' '));
+      }
+    }
+    parts.push('Q');
     this.ops.push(parts.join(' '));
   }
 

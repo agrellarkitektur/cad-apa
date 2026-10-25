@@ -42,6 +42,8 @@ const fillOf = (f: FillDef): string => {
   const o = f.opacity !== undefined && f.opacity !== 1 ? ` o${f.opacity}` : '';
   if (f.kind === 'solid') return `fylld ${f.color ?? ''}${o}`;
   const bg = f.background ? ` bakgrund ${f.background}${f.backgroundOpacity !== undefined && f.backgroundOpacity !== 1 ? ` o${f.backgroundOpacity}` : ''}` : '';
+  if (f.kind === 'type') return `typ ${f.type}`;
+  if (f.kind === 'pattern') return `mönster ${f.color} ${f.lines.map((l) => `${n(l.angle)}° a${n(l.spacing)}${l.shift ? ` f${n(l.shift)}` : ''}${l.dash ? ` d${l.dash.map(n).join('/')}` : ''}`).join(' + ')} w${f.weight}${o}${bg}`;
   return `hatch ${f.color} ${n(f.angle)}° a${n(f.spacing)} w${f.weight}${o}${bg}`;
 };
 

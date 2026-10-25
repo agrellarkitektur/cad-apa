@@ -1,5 +1,6 @@
 import { dashPieces, type DashFrom } from '../repr/dash';
 import type { FillDef } from '../core/graphics';
+import { drawnDash, evenDash, type HatchLine } from '../core/fillTypes';
 import type { Camera } from './camera';
 import { imageCorners, type Pen, type PenColor, type Primitive } from '../repr/primitives';
 
@@ -41,7 +42,7 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
   // Likadana skrafferingar delar mönster (0.8.3), t.ex. i ett DXF-underlag med många ytor.
   const shared = new Map<string, string>();
 
-  const fillAttr = (fill: FillDef): string => {
+  const fillAttr = (fill: Extract<FillDef, { kind: 'none' | 'solid' | 'hatch' }>): string => {
     if (fill.kind === 'none') return 'fill="none"';
     if (fill.kind === 'solid') return `style="fill:${color(fill.color)}${fill.opacity !== undefined && fill.opacity < 1 ? `;fill-opacity:${fill.opacity}` : ''}"`;
     // Skraffering: mönstret följer modellen, inte skärmen, så det glider inte vid panorering.
@@ -60,6 +61,43 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
           ? `<rect width="${f(spacing)}" height="${f(spacing)}" style="fill:${color(fill.background)};fill-opacity:${fill.backgroundOpacity ?? 1}"/>`
           : ''
       }<path d="M0 ${f(spacing / 2)}H${f(spacing)}" style="stroke:${color(fill.color)};stroke-opacity:${fill.opacity ?? 1}" stroke-width="${f(w)}"/></pattern>`,
+    );
+    shared.set(same, id);
+    return `fill="url(#${id})"`;
+  };
+
+  /**
+   * Ett mönster av linjefamiljer (0.8.36): ett SVG-mönster per familj. Rutan
+   * är en streckperiod lång och ett linjeavstånd hög, och snedställs
+   * (skewX) så att förskjutningen längs linjerna stämmer. Med linjer tätare
+   * än 3 px förstoras hela mönstret, som skrafferingen.
+   */
+  const familyFill = (fill: Extract<FillDef, { kind: 'pattern' }>, l: HatchLine): string => {
+    const same = JSON.stringify([fill.color, fill.weight, fill.opacity, l]);
+    const known = shared.get(same);
+    if (known) return `fill="url(#${known})"`;
+    const sp0 = l.spacing * paperToPx;
+    const u = paperToPx * (sp0 < 3 ? 3 / sp0 : 1);
+    const sp = l.spacing * u;
+    const sh = (l.shift ?? 0) * u;
+    const [p0, p1] = (l.phase ?? [0, 0]).map((x) => x * u);
+    const mod = (a: number, m: number) => ((a % m) + m) % m;
+    const drawn = evenDash(l.dash) && drawnDash(evenDash(l.dash)!);
+    const dash = drawn ? drawn.dash.map((d) => d * u) : null;
+    const period = dash ? dash.reduce((a, b) => a + b, 0) : 0;
+    const width = period > 0 ? period : sp;
+    const y0 = mod(-p1, sp);
+    const u0 = p0 - (p1 * sh) / sp;
+    const w = penPx(fill.weight, paperToPx, mode, 0.6);
+    const o = cam.toScreen([0, 0]);
+    const id = `${opt.idPrefix ?? 'h'}${patterns.size}`;
+    const skew = (Math.atan2(-sh, sp) * 180) / Math.PI;
+    const dashAttr = dash && period > 0 ? ` stroke-dasharray="${dash.map(f).join(' ')}" stroke-dashoffset="${f(mod(-u0, period))}"${drawn!.round ? ' stroke-linecap="round"' : ''}` : '';
+    // Linjen och dess grannar ovanför och under, så att tjocka linjer inte klipps vid rutans kant.
+    const d = [y0 - sp, y0, y0 + sp].map((y) => `M${f(-width)} ${f(y)}H${f(2 * width)}`).join('');
+    patterns.set(
+      id,
+      `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${f(width)}" height="${f(sp)}" patternTransform="translate(${f(o[0])} ${f(o[1])}) rotate(${f(-l.angle)})${Math.abs(skew) > 1e-6 ? ` skewX(${f(skew)})` : ''}"><path d="${d}" style="stroke:${color(fill.color)};stroke-opacity:${fill.opacity ?? 1}" stroke-width="${f(w)}" fill="none"${dashAttr}/></pattern>`,
     );
     shared.set(same, id);
     return `fill="url(#${id})"`;
@@ -86,7 +124,11 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
       }
       case 'region': {
         const d = p.rings.map((r) => ring(r, cam, true)).join('');
-        if (p.fill.kind !== 'none') out.push(`<path d="${d}" fill-rule="evenodd" ${fillAttr(p.fill)}/>`);
+        if (p.fill.kind === 'pattern') {
+          const fl = p.fill;
+          if (fl.background) out.push(`<path d="${d}" fill-rule="evenodd" style="fill:${color(fl.background)};fill-opacity:${fl.backgroundOpacity ?? 1}"/>`);
+          for (const l of fl.lines) out.push(`<path d="${d}" fill-rule="evenodd" ${familyFill(fl, l)}/>`);
+        } else if (p.fill.kind !== 'none' && p.fill.kind !== 'type') out.push(`<path d="${d}" fill-rule="evenodd" ${fillAttr(p.fill)}/>`);
         if (p.outline?.dash?.length) for (const r of p.rings) out.push(dashed(r, true, p.outline));
         else if (p.outline) out.push(`<path d="${d}" fill="none" ${stroke(p.outline)}/>`);
         break;

@@ -1187,6 +1187,39 @@ skriptet kräver bara att namnen motsvarar varandra. Referensritningarna
 - Borttaget, oanvänt: `pathLength` (`dash.ts`), typen `SectionQueue` och
   rensningen av bladens `items` (format 8) i `parse`
 
+## Egna fyllningstyper (0.8.36, format 13)
+
+Inget nytt format: fälten är frivilliga.
+
+- **Kärnan**: `src/core/fillTypes.ts`. `FillFamily` (som den skrivs in),
+  `FillTypeDef`/`CustomFillType` (`StyleSheet.fillTypes`, `model` =
+  måtten i verkligheten), `HatchLine` (som den ritas, på papper:
+  `angle`, `spacing`, `shift`, `dash`, `phase` = baspunkten längs och
+  tvärs linjerna). `patternLines(typ, vridning, skala, modelPerPaper)`,
+  `resolveFill` (gör `kind: 'type'` till `kind: 'pattern'`; en okänd typ
+  blir skraffering), `hatchStrokes` (linjerna över en ruta med fasen per
+  linje), `drawnDash` (streck under 0,5 mm blir punkter), `parsePat`,
+  `patFamily` (också DXF), `formatPat`, `normalizeFillTypes`
+- **FillDef** har fått `pattern` (ritas) och `type` (sparas i
+  stilmallens `cutFill`, görs om i `applyStyle`, som har fått `scale`)
+- **Ritningen**: skärmen (`familyFill` i `renderPrimitives.ts`) gör ett
+  SVG-mönster per familj, en streckperiod brett och ett linjeavstånd
+  högt, med `skewX` för förskjutningen; PDF:en (`PageWriter.pattern`)
+  ritar `hatchStrokes` med en `d`-operator per linje
+- **2D-former och rum**: `fill: 'type'` med `fillType`, `fillTypeAngle`
+  och `fillTypeScale` (`fillPrims` tar stilmallen och skalan;
+  `hasBackground`). Väljaren: `patternPicker` med `types`, värdet
+  `type:<nyckel>` (`patternValue`), bilden `fillTypeSwatch`; fälten
+  `typeFields` i `shapeFields.ts`
+- **Stilmallen**: `src/ui/style/fillTypes.ts` (fälten `data-filltype=
+  "nyckel:fält"` och `"nyckel:familj:fält"`), knapparna i
+  `styleDialog.ts`; snittfyllningens lista i `style/actions.ts`
+- **DXF**: `readHatch` läser baspunkt och streck; `parseDxf` gör
+  familjerna till `FillFamily` (förskjutningen i HATCH är i världens
+  riktning, i `.pat` längs och tvärs linjen); `underlayLines` i
+  `underlay.ts` räknar om dem till papper. Facit från ezdxf
+  (`tests/filer/tegel.dxf`, AR-B816 vriden 30°) i `v0836.test.ts`
+
 ## Filtrera och markera (0.8.35, format 13)
 
 Inget nytt i formatet; villkoren sparas inte.

@@ -1,5 +1,6 @@
 import type { ActionKey, Color, FillDef, StyleSheet } from '../../core/graphics';
 import { clamp01, fromHex, toHex } from './colors';
+import { escapeHtml } from '../labels';
 
 /**
  * Stilmallens första del: hur väggar och linjer ritas för varje åtgärd
@@ -18,6 +19,11 @@ export function actionRows(style: StyleSheet): string {
     const a = style.actions[key];
     const fill = a.cutFill;
     const fillColor = fill.kind === 'none' ? 'ink' : fill.color;
+    // Skraffering och egna fyllningstyper (0.8.36) har streck och kan ha en bakgrund.
+    const striped = fill.kind === 'hatch' || fill.kind === 'type';
+    const back = striped && fill.background ? fill : null;
+    const types = (style.fillTypes ?? []).map((t) => `<option value="type:${escapeHtml(t.id)}"${fill.kind === 'type' && fill.type === t.id ? ' selected' : ''}>${escapeHtml(t.name)}</option>`).join('');
+    const gone = fill.kind === 'type' && !style.fillTypes?.some((t) => t.id === fill.type) ? `<option value="type:${escapeHtml(fill.type)}" selected disabled>Borttagen typ</option>` : '';
     const outline = a.cutOutline ? (a.cutOutline.dash?.length ? 'dashed' : 'solid') : 'none';
     return `<div class="style-row">
         <div class="style-name"><b>${label}</b><span>${hint}</span></div>
@@ -25,10 +31,11 @@ export function actionRows(style: StyleSheet): string {
           <option value="none"${fill.kind === 'none' ? ' selected' : ''}>Ingen</option>
           <option value="solid"${fill.kind === 'solid' ? ' selected' : ''}>Solid</option>
           <option value="hatch"${fill.kind === 'hatch' ? ' selected' : ''}>Skraffering</option>
+          ${types}${gone}
         </select></label>
-        <label><span>${fill.kind === 'hatch' ? 'Linjefärg' : 'Färg'}</span><input type="color" data-key="${key}" data-field="color" value="${toHex(fillColor)}"${fill.kind === 'none' ? ' disabled' : ''}></label>
+        <label><span>${striped ? 'Linjefärg' : 'Färg'}</span><input type="color" data-key="${key}" data-field="color" value="${toHex(fillColor)}"${fill.kind === 'none' ? ' disabled' : ''}></label>
         <label><span>Opacitet</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="10" inputmode="decimal" autocomplete="off" data-key="${key}" data-field="opacity" value="${Math.round((fill.kind === 'none' ? 1 : fill.opacity ?? 1) * 100)}"${fill.kind === 'none' ? ' disabled' : ''}><i>%</i></span></label>
-        <label><span>Bakgrund</span><span class="bg-pick"><input type="checkbox" data-key="${key}" data-field="bgOn"${fill.kind === 'hatch' && fill.background ? ' checked' : ''}${fill.kind === 'hatch' ? '' : ' disabled'} aria-label="Bakgrund"><input type="color" data-key="${key}" data-field="bg" value="${toHex(fill.kind === 'hatch' && fill.background ? fill.background : 'paper')}"${fill.kind === 'hatch' && fill.background ? '' : ' disabled'}><input type="text" data-expr data-unit="" data-step="10" inputmode="decimal" autocomplete="off" data-key="${key}" data-field="bgOpacity" value="${Math.round((fill.kind === 'hatch' ? fill.backgroundOpacity ?? 1 : 1) * 100)}"${fill.kind === 'hatch' && fill.background ? '' : ' disabled'} aria-label="Bakgrundens opacitet" title="Bakgrundens opacitet, %"></span></label>
+        <label><span>Bakgrund</span><span class="bg-pick"><input type="checkbox" data-key="${key}" data-field="bgOn"${back ? ' checked' : ''}${striped ? '' : ' disabled'} aria-label="Bakgrund"><input type="color" data-key="${key}" data-field="bg" value="${toHex(back?.background ?? 'paper')}"${back ? '' : ' disabled'}><input type="text" data-expr data-unit="" data-step="10" inputmode="decimal" autocomplete="off" data-key="${key}" data-field="bgOpacity" value="${Math.round((back?.backgroundOpacity ?? 1) * 100)}"${back ? '' : ' disabled'} aria-label="Bakgrundens opacitet" title="Bakgrundens opacitet, %"></span></label>
         <label><span>Kontur</span><select data-key="${key}" data-field="outline">
           <option value="solid"${outline === 'solid' ? ' selected' : ''}>Heldragen</option>
           <option value="dashed"${outline === 'dashed' ? ' selected' : ''}>Streckad</option>
@@ -51,7 +58,7 @@ export function applyActionField(style: StyleSheet, input: HTMLInputElement | HT
   switch (input.dataset.field) {
     case 'fill': {
       const color: Color = a.cutFill.kind === 'none' ? 'ink' : a.cutFill.color;
-      a.cutFill = makeFill(input.value as FillDef['kind'], color);
+      a.cutFill = makeFill(input.value, color);
       break;
     }
     case 'color':
@@ -61,13 +68,13 @@ export function applyActionField(style: StyleSheet, input: HTMLInputElement | HT
       if (a.cutFill.kind !== 'none') a.cutFill = { ...a.cutFill, opacity: clamp01(Number(input.value) / 100) };
       break;
     case 'bgOn':
-      if (a.cutFill.kind === 'hatch') a.cutFill = { ...a.cutFill, background: (input as HTMLInputElement).checked ? 'paper' : null };
+      if (a.cutFill.kind === 'hatch' || a.cutFill.kind === 'type') a.cutFill = { ...a.cutFill, background: (input as HTMLInputElement).checked ? 'paper' : null };
       break;
     case 'bg':
-      if (a.cutFill.kind === 'hatch') a.cutFill = { ...a.cutFill, background: fromHex(input.value) };
+      if (a.cutFill.kind === 'hatch' || a.cutFill.kind === 'type') a.cutFill = { ...a.cutFill, background: fromHex(input.value) };
       break;
     case 'bgOpacity':
-      if (a.cutFill.kind === 'hatch') a.cutFill = { ...a.cutFill, backgroundOpacity: clamp01(Number(input.value) / 100) };
+      if (a.cutFill.kind === 'hatch' || a.cutFill.kind === 'type') a.cutFill = { ...a.cutFill, backgroundOpacity: clamp01(Number(input.value) / 100) };
       break;
     case 'outline': {
       const base = a.cutOutline ?? { weight: 0.35, color: a.lines.color };
@@ -89,8 +96,10 @@ export function applyActionField(style: StyleSheet, input: HTMLInputElement | HT
   return 'Ändra stilmall';
 }
 
-function makeFill(kind: FillDef['kind'], color: Color): FillDef {
+function makeFill(kind: string, color: Color): FillDef {
   if (kind === 'none') return { kind: 'none' };
+  // En egen fyllningstyp (0.8.36), som snittfyllningens skraffering men med typens mönster.
+  if (kind.startsWith('type:')) return { kind: 'type', type: kind.slice(5), color, weight: 0.18 };
   if (kind === 'solid') return { kind: 'solid', color };
   return { kind: 'hatch', color, angle: 45, spacing: 0.6, weight: 0.18 };
 }

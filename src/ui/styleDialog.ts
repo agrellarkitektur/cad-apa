@@ -5,6 +5,9 @@ import { escapeHtml } from './labels';
 import { actionRows, applyActionField } from './style/actions';
 import { applyLabelField, labelSection } from './style/labels';
 import { addLineType, applyLineTypeField, lineTypeSection, removeLineType } from './style/lineTypes';
+import { addFamily, addFillType, applyFillTypeField, fillTypeSection, importPat, removeFamily, removeFillType } from './style/fillTypes';
+import { formatPat } from '../core/fillTypes';
+import { saveBlobFile } from '../storage/projectFile';
 import { applyPenField, penSection, resetPen } from './style/pens';
 import { resolveParams } from '../elements/registry';
 
@@ -14,7 +17,7 @@ import { resolveParams } from '../elements/registry';
  *
  * Delarna ligger i `src/ui/style/` (0.8.27), en fil per del med dess HTML och
  * det dess fält ändrar: åtgärderna, texterna och litteran, pennorna och
- * (0.8.30) linjetyperna.
+ * (0.8.30) linjetyperna och (0.8.36) fyllningstyperna.
  */
 export class StyleDialog {
   readonly el: HTMLElement;
@@ -65,6 +68,7 @@ export class StyleDialog {
         ${labelSection(style)}
         ${penSection(style)}
         ${lineTypeSection(style, this.lineTypeUses())}
+        ${fillTypeSection(style, this.fillTypeUses())}
       </div>
       <footer>
         <button class="btn" data-action="open-style">Öppna stilmall…</button>
@@ -84,6 +88,20 @@ export class StyleDialog {
     return uses;
   }
 
+  /** Hur många former, rum och snittfyllningar som har varje fyllningstyp (0.8.36). */
+  private fillTypeUses(): Map<string, number> {
+    const doc = this.store.doc;
+    const uses = new Map<string, number>();
+    const add = (k: unknown) => typeof k === 'string' && uses.set(k, (uses.get(k) ?? 0) + 1);
+    for (const el of Object.values(doc.elements)) {
+      if (el.type !== 'Shape2D' && el.type !== 'Space') continue;
+      const p = resolveParams<{ fill?: string; fillType?: string }>(doc, el);
+      if (p.fill === 'type') add(p.fillType);
+    }
+    for (const a of Object.values(doc.graphics.actions)) if (a.cutFill.kind === 'type') add(a.cutFill.type);
+    return uses;
+  }
+
   private onClick(e: Event): void {
     const action = (e.target as HTMLElement).closest<HTMLElement>('[data-action]')?.dataset.action;
     if (action === 'close') this.close();
@@ -94,6 +112,47 @@ export class StyleDialog {
       else if (!id || !removeLineType(style, id)) return;
       style.name = 'Egen stilmall';
       setGraphics(this.store, style, action === 'linetype-add' ? 'Ny linjetyp' : 'Ta bort linjetyp');
+    }
+    // Fyllningstyperna (0.8.36).
+    if (action?.startsWith('filltype-') && action !== 'filltype-import' && action !== 'filltype-export') {
+      const at = (e.target as HTMLElement).closest<HTMLElement>('[data-filltype-id]');
+      const id = at?.dataset.filltypeId ?? '';
+      const style: StyleSheet = structuredClone(this.store.doc.graphics);
+      const label =
+        action === 'filltype-add'
+          ? (addFillType(style), 'Ny fyllningstyp')
+          : action === 'filltype-remove' && removeFillType(style, id)
+            ? 'Ta bort fyllningstyp'
+            : action === 'filltype-family-add' && addFamily(style, id)
+              ? 'Ny linjefamilj'
+              : action === 'filltype-family-remove' && removeFamily(style, id, Number(at?.dataset.family))
+                ? 'Ta bort linjefamilj'
+                : null;
+      if (!label) return;
+      style.name = 'Egen stilmall';
+      setGraphics(this.store, style, label);
+    }
+    if (action === 'filltype-import') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = '.pat,text/plain';
+      input.addEventListener('change', async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        const style: StyleSheet = structuredClone(this.store.doc.graphics);
+        const { added, replaced } = importPat(style, await file.text());
+        if (!added && !replaced) {
+          this.onError('Filen har inga fyllningstyper som går att läsa.');
+          return;
+        }
+        style.name = 'Egen stilmall';
+        setGraphics(this.store, style, added + replaced === 1 ? 'Läs in fyllningstyp' : 'Läs in fyllningstyper');
+      });
+      input.click();
+    }
+    if (action === 'filltype-export') {
+      const types = this.store.doc.graphics.fillTypes ?? [];
+      void saveBlobFile(new Blob([formatPat(types)], { type: 'text/plain' }), 'fyllningar.pat', 'Fyllningstyper', { 'text/plain': ['.pat'] });
     }
     if (action === 'pen-reset') {
       const key = (e.target as HTMLElement).closest<HTMLElement>('[data-pen-key]')?.dataset.penKey;
@@ -116,6 +175,9 @@ export class StyleDialog {
           const read = normalizeStyle(JSON.parse(await file.text()));
           const keep = (this.store.doc.graphics.lineTypes ?? []).filter((t) => !read.lineTypes?.some((r) => r.id === t.id));
           if (keep.length) read.lineTypes = [...(read.lineTypes ?? []), ...keep];
+          // Och fyllningstyperna (0.8.36).
+          const keepFills = (this.store.doc.graphics.fillTypes ?? []).filter((t) => !read.fillTypes?.some((r) => r.id === t.id));
+          if (keepFills.length) read.fillTypes = [...(read.fillTypes ?? []), ...keepFills];
           setGraphics(this.store, read);
         } catch (err) {
           this.onError(err instanceof SyntaxError ? 'Filen gick inte att läsa som stilmall.' : (err as Error).message);
@@ -129,13 +191,13 @@ export class StyleDialog {
     const input = e.target as HTMLInputElement | HTMLSelectElement;
     if (input.id === 'style-preset') {
       // Projektets egna linjetyper är kvar (0.8.30): formerna och pennorna använder dem.
-      const own = this.store.doc.graphics.lineTypes;
-      setGraphics(this.store, { ...structuredClone(PRESETS[Number(input.value)]), ...(own ? { lineTypes: structuredClone(own) } : {}) });
+      const { lineTypes: own, fillTypes: fills } = this.store.doc.graphics;
+      setGraphics(this.store, { ...structuredClone(PRESETS[Number(input.value)]), ...(own ? { lineTypes: structuredClone(own) } : {}), ...(fills ? { fillTypes: structuredClone(fills) } : {}) });
       return;
     }
     const style: StyleSheet = structuredClone(this.store.doc.graphics);
     // Varje del av stilmallen svarar för sina egna fält.
-    const label = applyPenField(style, input) ?? applyLineTypeField(style, input) ?? applyLabelField(style, input) ?? applyActionField(style, input);
+    const label = applyPenField(style, input) ?? applyLineTypeField(style, input) ?? applyFillTypeField(style, input) ?? applyLabelField(style, input) ?? applyActionField(style, input);
     // Ett mönster som inte gick att läsa: visa det gamla igen.
     if (label === '') this.render();
     if (!label) return;

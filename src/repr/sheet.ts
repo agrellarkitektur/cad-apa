@@ -95,7 +95,8 @@ export interface ViewPrimOptions {
 
 function styleOf(doc: ProjectDoc, name: string | undefined): StyleSheet {
   const preset = name ? PRESETS.find((p) => p.name === name) : undefined;
-  return preset ? { ...preset, labels: doc.graphics.labels, ...(doc.graphics.lineTypes ? { lineTypes: doc.graphics.lineTypes } : {}) } : doc.graphics;
+  const g = doc.graphics;
+  return preset ? { ...preset, labels: g.labels, ...(g.lineTypes ? { lineTypes: g.lineTypes } : {}), ...(g.fillTypes ? { fillTypes: g.fillTypes } : {}) } : g;
 }
 
 /** En vys inställningar som de gäller när den ritas. */

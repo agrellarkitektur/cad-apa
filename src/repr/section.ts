@@ -226,7 +226,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
       : { weight: 0.18 };
     const raw: Primitive = { kind: 'line', a: l.a, b: l.b, pen, origin: { objectId: l.key.id, objectType: doc.elements[l.key.id]?.type, part: l.key.part ?? 'vy' } };
     // Objektets egen penna (0.8.31) efter stilmallens.
-    const p = applyOwnPen(applyStyle(raw, style.actions[ctx.styleKeyOf(l.key.action)], l.key.action, style), ownPenOf(doc, raw), style);
+    const p = applyOwnPen(applyStyle(raw, style.actions[ctx.styleKeyOf(l.key.action)], l.key.action, style, ctx.scale), ownPenOf(doc, raw), style);
     prims.push(p);
     own(l.key.id, p);
     minU = Math.min(minU, l.a[0], l.b[0]);
@@ -242,7 +242,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
       const raw: Primitive = g.poche
         ? { kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { objectId: first, part: 'snitt' }, ...split }
         : { kind: 'region', role: 'cut', rings, fill: { kind: 'none' }, outline: { weight: 0.25 }, ownFill: true, origin: { objectId: first, part: 'snitt' }, ...split };
-      const p = applyStyle(raw, style.actions[ctx.styleKeyOf(g.action)], g.action, style);
+      const p = applyStyle(raw, style.actions[ctx.styleKeyOf(g.action)], g.action, style, ctx.scale);
       prims.push(p);
       for (const ring of rings) for (const q of ring) {
         minU = Math.min(minU, q[0]);
@@ -254,7 +254,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
       for (const o of ownedOutlines(merged, pieces, owned)) {
         const id = o.id ?? first;
         const raw: Primitive = { kind: 'polyline', points: o.points, closed: o.closed, pen: { weight: g.poche ? 0.35 : 0.25 }, ...(g.poche ? { asOutline: true } : {}), origin: { objectId: id, part: 'snitt' } };
-        const styled = g.poche ? applyStyle(raw, style.actions[ctx.styleKeyOf(g.action)], g.action, style) : raw;
+        const styled = g.poche ? applyStyle(raw, style.actions[ctx.styleKeyOf(g.action)], g.action, style, ctx.scale) : raw;
         const p = applyOwnPen(styled, o.id && doc.elements[o.id] ? effectivePen(doc, doc.elements[o.id]) : undefined, style);
         prims.push(p);
         own(id, p);

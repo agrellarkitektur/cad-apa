@@ -1,3 +1,4 @@
+import { resolveFill } from '../core/fillTypes';
 import type { ActionStyle, StyleSheet } from '../core/graphics';
 import type { Element, Id, ProjectDoc } from '../core/model';
 import type { Action, ViewStates } from '../core/states';
@@ -127,7 +128,7 @@ function drawGroup(t: ElementType, items: PlanItem[], ctx: PlanContext, style: S
   const s = style.actions[ctx.styleKeyOf(action)];
   const hidden = ctx.hiddenInView(items[0].el);
   // Objektets egen penna (0.8.31) efter stilmallens; ett dolt element ritas tonat som förut.
-  const styled = (p: Primitive) => (hidden ? ghost(applyStyle(p, s, action, style)) : applyOwnPen(applyStyle(p, s, action, style), ownPenOf(ctx.doc, p), style));
+  const styled = (p: Primitive) => (hidden ? ghost(applyStyle(p, s, action, style, ctx.scale)) : applyOwnPen(applyStyle(p, s, action, style, ctx.scale), ownPenOf(ctx.doc, p), style));
   const pickable = (el: Element, own: Primitive[]): Pickable => ({
     id: el.id,
     priority: t.drawOrder,
@@ -200,13 +201,14 @@ function ghost(p: Primitive): Primitive {
 }
 
 /** Lägg på stilmallens färger, fyllningar och streckning för åtgärden. */
-export function applyStyle(p: Primitive, s: ActionStyle, action: Action, sheet: StyleSheet): Primitive {
+/** `scale` är modellens mm per mm på papper, för fyllningstyper med mått i modellen (0.8.36). */
+export function applyStyle(p: Primitive, s: ActionStyle, action: Action, sheet: StyleSheet, scale = 1): Primitive {
   if (p.kind === 'text' || p.kind === 'image') return p;
   if (p.kind === 'region') {
     if (p.ownFill) return p;
     const rs = p.styleAs ? sheet.actions[p.styleAs] : s;
     const o = p.noOutline ? null : rs.cutOutline;
-    return { ...p, fill: rs.cutFill, outline: o ? { weight: o.weight, color: o.color, dash: o.dash } : null };
+    return { ...p, fill: resolveFill(rs.cutFill, sheet, scale), outline: o ? { weight: o.weight, color: o.color, dash: o.dash } : null };
   }
   // En snittkontur ritad som linje (0.8.31) får snittkonturens penna; utan kontur i stilmallen ritas den inte.
   if (p.kind === 'polyline' && p.asOutline) {

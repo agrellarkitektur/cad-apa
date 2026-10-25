@@ -1,8 +1,8 @@
 import { dividePath } from '../tools/measureTool';
 import type { WallFace } from '../../elements/wallSides';
-import { BACKGROUND_COLOR, FILL_BACKGROUND, SHAPE_LABELS, type FillPattern, type ShapeKind } from '../../elements/drawing2d';
+import { BACKGROUND_COLOR, FILL_BACKGROUND, hasBackground, SHAPE_LABELS, type ShapeKind } from '../../elements/drawing2d';
 import { lineTypeOptions } from '../lineTypePick';
-import { patternPicker } from '../patternPick';
+import { patternPicker, patternValue } from '../patternPick';
 import { weightPicker } from '../weightPick';
 import { icons } from '../icons';
 import { escapeHtml, labelOf } from '../labels';
@@ -114,8 +114,8 @@ export function installToolOptions(app: AppContext) {
         <label class="opt"><span>Rita</span><select id="d2-kind" aria-label="Rita som">${kinds.map(([k, l]) => `<option value="${k}"${k === o.kind ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
         <div class="opt"><span>Penna</span>${weightPicker('d2-weight', o.weight, '')}</div>
         ${o.weight ? `<label class="opt"><span>Linje</span><select id="d2-linetype" aria-label="Linjetyp">${lineTypeOptions(app.store.doc.graphics, o.linetype)}</select></label>` : ''}
-        <div class="opt"><span>Fyllning</span>${patternPicker('d2-pattern', o.fill ?? 'none', '')}</div>
-        ${o.fill === 'hatch' || o.fill === 'cross' ? `<label class="opt opt-check"><input type="checkbox" id="d2-background"${o.fillBackground ? ' checked' : ''}><span>Bakgrund</span></label>${o.fillBackground ? `<select id="d2-background-kind" aria-label="Bakgrund"><option value="mask"${o.fillBackground === 'paper' ? ' selected' : ''}>Mask</option><option value="color"${o.fillBackground !== 'paper' ? ' selected' : ''}>Egen färg</option></select>${o.fillBackground !== 'paper' ? `<input type="color" id="d2-background-color" value="${o.fillBackground}" aria-label="Bakgrundens färg">` : ''}` : ''}` : ''}
+        <div class="opt"><span>Fyllning</span>${patternPicker('d2-pattern', o.fill ?? 'none', '', { types: app.store.doc.graphics.fillTypes, type: o.fillType })}</div>
+        ${hasBackground(o.fill) ? `<label class="opt opt-check"><input type="checkbox" id="d2-background"${o.fillBackground ? ' checked' : ''}><span>Bakgrund</span></label>${o.fillBackground ? `<select id="d2-background-kind" aria-label="Bakgrund"><option value="mask"${o.fillBackground === 'paper' ? ' selected' : ''}>Mask</option><option value="color"${o.fillBackground !== 'paper' ? ' selected' : ''}>Egen färg</option></select>${o.fillBackground !== 'paper' ? `<input type="color" id="d2-background-color" value="${o.fillBackground}" aria-label="Bakgrundens färg">` : ''}` : ''}` : ''}
         ${t.open ? `<button class="btn btn-primary" data-action="d2-done" ${t.count >= 2 ? '' : 'disabled'}>Klar</button>` : ''}
         <span class="opt-hint">${t.hintText()}</span>`;
       app.toolOptions.hidden = false;
@@ -209,7 +209,9 @@ export function installToolOptions(app: AppContext) {
     }
     if (t.id === 'd2-linetype') app.draw2dTool.options.linetype = t.value;
     if ((t as unknown as HTMLInputElement).name === 'd2-pattern') {
-      app.draw2dTool.options.fill = t.value === 'none' ? undefined : (t.value as FillPattern);
+      const pick = patternValue(t.value);
+      app.draw2dTool.options.fill = pick.fill;
+      app.draw2dTool.options.fillType = pick.fillType;
       renderToolOptions();
       app.view.requestRender();
     }

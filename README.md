@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.35** (alfa, filtrera och markera); nästa är **0.8.36, egna fyllningstyper**.
+**0.8.36** (alfa, egna fyllningstyper); nästa är **0.8.37, detaljnivåer i stilmallen**.
 
 ## Vad som fungerar
 
@@ -963,6 +963,26 @@ Version 0.8.32, granskning (samma filformat, 13):
   Referensritningarna har fått 2D-formerna, linjetyperna, masken och de
   egna pennorna
 - DXF-läsaren ligger i fyra mindre filer
+
+Version 0.8.36, egna fyllningstyper (samma filformat, 13):
+- **Fyllningstyper** i stilmallen: ett mönster av en eller flera
+  linjefamiljer, var och en med vinkel, avstånd mellan linjerna,
+  förskjutning längs linjen från en linje till nästa, baspunkt och
+  streckning (som linjetyperna). Måtten är på papper eller *i
+  verkligheten*, för mönster som tegel och plattor som ska följa
+  ritningens skala. *Ny fyllningstyp*, *Ny linjefamilj*, och en bild av
+  mönstret bredvid namnet
+- **Läs in .pat…** läser AutoCADs och ArchiCADs mönsterfiler (en typ per
+  `*NAMN`); en typ med samma namn byts ut när filen läses in igen.
+  Mönster med mer än 20 mm mellan linjerna antas vara i verkliga mått.
+  **Spara som .pat…** skriver projektets typer
+- Typerna väljs bland fyllningarna för **2D-former** (i egenskaperna,
+  smartmenyn och verktyget) och **rum**, med vridning, skala, färg och
+  bakgrund, och som **snittfyllning** för varje åtgärd i stilmallen
+  (t.ex. tegel i nya väggar). En borttagen typ ritas som skraffering
+- Lika på skärmen och i PDF:en. **DXF-underlagens** skraffering ritas nu
+  med strecken och förskjutningen, så att tegel i förband ser ut som i
+  filen (förut heldragna linjer)
 
 Version 0.8.35, filtrera och markera (samma filformat, 13):
 - **Filtrera och markera…** i huvudmenyn, i högerklicksmenyn och med

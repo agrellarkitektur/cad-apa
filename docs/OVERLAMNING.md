@@ -1,7 +1,7 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.35.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.36.
 
 ## Läget
 
@@ -10,6 +10,13 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   till funktioner som blir fler 0.8.xx; nya synpunkter ska rymmas i de
   versioner som redan finns i planen, annars läggs de i en senare
   version. Säg det när han tar upp något nytt.
+- **0.8.36 Egna fyllningstyper är klar** på `main` (samma format, 13).
+  Fyllningstyper i stilmallen (linjefamiljer med vinkel, avstånd,
+  förskjutning, baspunkt och streckning; mått på papper eller i
+  verkligheten), *Läs in .pat…* och *Spara som .pat…*. Väljs för
+  2D-former, rum och som snittfyllning per åtgärd. DXF-underlagens
+  streckade mönster ritas streckade. Claudes val i PLAN.md, koden i
+  UTVECKLING.md. Testerna: 416 på ca 12 s.
 - **0.8.35 Filtrera och markera är klar** på `main` (samma format, 13).
   Dialogen *Filtrera och markera…* (huvudmenyn, högerklick, `FM`):
   sort, typ, finns i, åtgärd, egen penna, egen egenskap, alla våningar;
@@ -107,9 +114,7 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.30 Linjetyper och mask~~, ~~0.8.31 Linjetyp och penna per
   objekt~~, ~~0.8.32 Granskning~~, ~~0.8.33 Pennor per typ och
   symbollinjer~~, ~~0.8.34 Rum: kontur och rumsgränser~~,
-  ~~0.8.35 Filtrera och markera~~ (klara)
-- **0.8.36 Egna fyllningstyper** (linjefamiljer med streckning; kanske
-  `.pat`-filer)
+  ~~0.8.35 Filtrera och markera~~, ~~0.8.36 Egna fyllningstyper~~ (klara)
 - **0.8.37 Detaljnivåer i stilmallen** (per vy, som i ArchiCAD)
 - **0.8.38 Granskning**
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
@@ -133,16 +138,26 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.35 syns på webbhotellet och hur filtret känns
-(frågorna nedan). Läs synpunktsfilen och sortera ny Inkorg, och påminn
-om att inget nytt ska bli en egen 0.8.xx (se *Läget*). Bygg sedan
-**0.8.36 Egna fyllningstyper** (PLAN.md): mönster av linjefamiljer
-(vinkel, avstånd, förskjutning, streckning), lika på skärmen, i PDF:en
-och DXF:en; kanske `.pat`. Stor, troligen en session; föreslå att
-`.pat` blir valfritt sist om tiden tryter. Sedan 0.8.37 Detaljnivåer och
-0.8.38 Granskning, sedan 0.9.
+Fråga först om 0.8.36 syns på webbhotellet och hur fyllningstyperna
+känns (frågorna nedan). Läs synpunktsfilen och sortera ny Inkorg, och
+påminn om att inget nytt ska bli en egen 0.8.xx (se *Läget*). Bygg sedan
+**0.8.37 Detaljnivåer i stilmallen** (PLAN.md): litteran per detaljnivå
+(skiss, normal, detalj), vald per vy. Fråga först om dörrar och fönster
+också ska ritas olika (då hör en del hemma i 0.11.2). Sedan 0.8.38
+Granskning, sedan 0.9.
 
 ## Att fråga Carl August om
+
+- **0.8.36 efter provning** (Claudes val, se PLAN.md): att typerna ligger
+  i stilmallen och att måtten väljs per typ (papper eller i
+  verkligheten); att det inte finns några inbyggda typer utöver
+  skraffering och korsskraffering (vill han ha några färdiga, t.ex.
+  tegel, isolering, betong?); att en form med en typ har *Vridning* och
+  *Skala*, och att typens linjer är 0,13 mm (0,18 mm i snittytor) utan
+  eget val av penna; att mönster med mer än 20 mm mellan linjerna i en
+  `.pat` antas vara i verkliga mått. Fungerar hans egna `.pat`-filer
+  (ArchiCAD-export eller AutoCAD)? Isolering (vågor) går inte att göra av
+  raka linjer; behövs det före piloten?
 
 - **0.8.35 efter provning** (Claudes val, se PLAN.md): att det är en
   dialog (inte en panel) och inte finns i smartmenyns *Mer*; att *Finns
@@ -415,8 +430,7 @@ och DXF:en; kanske `.pat`. Stor, troligen en session; föreslå att
 - Taksprånget ändras lika på båda sidor av ett sadeltak; riktiga tak med
   takfot per kant kommer i 0.10.
 - Spegla vänder inte bilden i ett underlag, bara läget.
-- DXF: skraffering ritar streckade mönsterlinjer heldragna och solid
-  fyllning som en ton (färgerna i DXF läses inte). Bilder och externa
+- DXF: skraffering med solid fyllning ritas som en ton (färgerna i DXF läses inte). Bilder och externa
   referenser efter pilotprojektet. Vektorsnäpp mot PDF avvaktar.
 - **Att markera många väggar** (840) tar ca 0,15 s, nästan allt i
   webbläsarens ritning av markeringen (mätt i 0.8.15, lämnat).

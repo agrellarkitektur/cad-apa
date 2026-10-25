@@ -35,7 +35,7 @@ export const spaceType: ElementType<SpaceParams> = {
     if (pts.length < 3) return [];
     const p = ctx.params<SpaceParams>(el);
     // Fyllningen (0.8.25) bakom väggarna; den räknas inte när man klickar.
-    const fill: Primitive[] = p.fill && !ctx.view.hide?.includes('fill') ? fillPrims([pts], p as FillParams, { objectId: el.id, objectType: 'Space' }, true).map((q) => ({ ...q, noPick: true })) : [];
+    const fill: Primitive[] = p.fill && !ctx.view.hide?.includes('fill') ? fillPrims([pts], p as FillParams, { objectId: el.id, objectType: 'Space' }, true, ctx.style, ctx.scale).map((q) => ({ ...q, noPick: true })) : [];
     // Konturen (0.8.34): stilmallens penna, typens eller rummets egen; under väggarna som fyllningen.
     const own = effectivePen(ctx.doc, el as unknown as Element);
     const pen = own ? withOwnPen(markerPen(ctx.style, 'roomOutline'), own, ctx.style) : markerPen(ctx.style, 'roomOutline');

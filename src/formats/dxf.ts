@@ -13,6 +13,7 @@
 
 import { all, arcPts, bspline, bulgePts, entities, num, pairs, str, type P2, type RawEntity } from './dxfCodes';
 import { readHatch } from './dxfHatch';
+import { patFamily, type FillFamily } from '../core/fillTypes';
 import { textPlacement } from './dxfText';
 
 export type DxfItem =
@@ -37,10 +38,10 @@ export type DxfItem =
   | { kind: 'text'; layer: string; at: P2; height: number; text: string; angle: number; align?: 'start' | 'middle' | 'end' }
   /**
    * Skraffering (HATCH, 0.8.3): konturerna (jämn–udda), och antingen solid
-   * fyllning eller mönstrets linjefamiljer med riktning (grader) och avstånd
-   * mellan linjerna, i filens enheter. Streckade mönsterlinjer blir heldragna.
+   * fyllning eller mönstrets linjefamiljer (0.8.36 med baspunkt,
+   * förskjutning och streck, som de egna fyllningstyperna), i filens enheter.
    */
-  | { kind: 'fill'; layer: string; rings: P2[][]; solid: boolean; lines: { angle: number; spacing: number }[] };
+  | { kind: 'fill'; layer: string; rings: P2[][]; solid: boolean; lines: FillFamily[] };
 
 export interface DxfDrawing {
   items: DxfItem[];
@@ -269,18 +270,23 @@ export function parseDxf(text: string): DxfDrawing {
             return [m[0] * w[0] + m[2] * w[1], m[1] * w[0] + m[3] * w[1]];
           };
           const seen = new Set<string>();
-          const lines = h.lines.flatMap(({ dir, off }) => {
+          const lines = h.lines.flatMap(({ dir, base, off, dash }) => {
             const u = lin(dir);
             const len = Math.hypot(u[0], u[1]);
             if (len < 1e-12) return [];
             const o = lin(off);
-            const spacing = Math.abs(u[0] * o[1] - u[1] * o[0]) / len;
             const angle = (Math.atan2(u[1], u[0]) * 180) / Math.PI;
-            // Streckade familjer med samma riktning och avstånd (tegel) blir en.
-            const key = `${(((Math.round(angle * 100) % 18000) + 18000) % 18000)}|${spacing.toFixed(3)}`;
-            if (spacing < 1e-9 || seen.has(key)) return [];
+            // Förskjutningen längs och tvärs linjerna; strecken skalas som linjerna (0.8.36).
+            const along = (u[0] * o[0] + u[1] * o[1]) / len;
+            const across = (u[0] * o[1] - u[1] * o[0]) / len;
+            const b = apply(m, ocs(base));
+            const f = patFamily(angle, b[0], b[1], along, across, dash.map((d) => d * len));
+            if (!f) return [];
+            // Likadana familjer ritas en gång.
+            const key = JSON.stringify(f);
+            if (seen.has(key)) return [];
             seen.add(key);
-            return [{ angle, spacing }];
+            return [f];
           });
           if (!h.solid && !lines.length) break;
           useLayer(layer);
