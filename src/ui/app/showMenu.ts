@@ -199,8 +199,20 @@ export function installShowMenu(app: AppContext) {
     const { ui, store } = app;
     const item = (key: string, label: string, on: boolean) => `<label class="check"><input type="checkbox" data-show="${key}"${on ? ' checked' : ''}> ${label}</label>`;
     m.innerHTML =
-      `<div class="segmented detail-switch in-menu" role="group" aria-label="Detaljnivå">${(['sketch', 'normal', 'detail'] as const)
-        .map((d) => `<button data-detail="${d}" aria-pressed="${ui.detail === d}">${{ sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' }[d]}</button>`)
+      // Detaljnivån för litteran, 2D-symbolerna och 3D var för sig (0.8.37).
+      `<div class="detail-parts">${(
+        [
+          ['label', 'Littera', ui.labelDetail],
+          ['plan', '2D-symboler', ui.detail],
+          ['model', '3D och fasader', ui.modelDetail],
+        ] as const
+      )
+        .map(
+          ([part, label, cur]) =>
+            `<div class="detail-part"><span>${label}</span><div class="segmented detail-switch detail-part-switch" role="group" aria-label="Detaljnivå för ${label.toLowerCase()}">${(['sketch', 'normal', 'detail'] as const)
+              .map((d) => `<button data-detail="${d}" data-detail-part="${part}" aria-pressed="${cur === d}">${{ sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' }[d]}</button>`)
+              .join('')}</div></div>`,
+        )
         .join('')}</div>` +
       SHOW_GROUPS.map((g) => {
         const shown = g.items.filter(([k]) => isShown(ui, k)).length;

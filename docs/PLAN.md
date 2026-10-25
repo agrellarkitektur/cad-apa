@@ -1326,15 +1326,33 @@ streckade mönster ritas nu streckade. Linjernas fas räknas från
 modellens nollpunkt på skärmen och från papperets i PDF:en, som
 skrafferingen förut.*
 
-### 0.8.37 Detaljnivåer i stilmallen
+### 0.8.37 Detaljnivåer och fyllningar
 
-Carl Augusts synpunkt 25 oktober. Detaljnivån väljs per vy, som i
-ArchiCAD (Carl August 25 oktober); det finns redan (Skiss, Normal, Detalj
-i vyraden), så det nya är vad stilmallen visar på varje nivå.
+Carl Augusts synpunkter 25 oktober. Detaljnivån väljs per vy, som i
+ArchiCAD, med tre val per vy: littera, 2D-symboler och 3D (Carl August
+25 oktober). Rikare 3D-detalj (foder, bågar, handtag) kommer med 0.11.2.
+Efter 0.8.36 kom tre önskemål om fyllningarna, som lades här.
 
-- **Litteran efter detaljnivå**: stilmallens innehåll för dörrar, fönster,
-  rum m.m. delas upp i skiss, normal och detalj. *Att fråga:* ska dörrar
-  och fönster också ritas olika (då hör en del hemma i 0.11.2)?
+- **Detaljnivå per del**: varje vy har en nivå (Skiss, Normal, Detalj)
+  för litteran, en för 2D-symbolerna och en för 3D
+- **Fyllningstypernas linjetjocklek**, per typ i stilmallen
+- **Färdiga fyllningstyper**: tegel, lättbetong, betong, trä, plattor,
+  mark och sicksack
+- **Snabbguide** för egna fyllningstyper i stilmallen
+
+*Byggd (25 oktober), samma format (13). Claudes val: vyradens knappar
+sätter alla tre nivåerna på en gång, och de tre valen finns i Visa och
+i vyns egenskaper (*Littera*, *2D-symboler*, *3D och fasader*). Med
+olika nivåer är ingen av vyradens knappar nedtryckt och knappraden har
+en streckad ram. Fasaderna följer 3D-nivån, eftersom dörrarna och
+fönstren där ritas ur 3D-modellen; taklutningens symbol följer 2D.
+Vyerna sparar littera och 3D bara när de skiljer sig från 2D, så äldre
+vyer är oförändrade. Rumsstämpeln följer ingen nivå (som förut).
+Typens tjocklek gäller före fyllningens förval (0,13 mm i former och
+rum, 0,18 mm i snittytor) och ändras inte av skalan. De inbyggda typerna
+går inte att ändra, men att kopiera till en egen; tegel, block och
+plattor har verkliga mått, de andra mått på papper. Guiden är en
+utfällbar ruta överst bland fyllningstyperna.*
 
 
 ### 0.8.38 Granskning
@@ -1398,6 +1416,11 @@ Carl August 22 oktober; före piloten (24 oktober). Stor.
   linjen. Ett verktyg i stället för Archicads flera (pelare, balkar,
   räcken): man anger om profilen är generell eller en byggdel (pelare,
   balk, yttervägg …)
+- **Rita ett mönster och gör det till en fyllningstyp** (Carl August 25
+  oktober): linjer ritade i en ruta (mönstrets upprepning) blir
+  linjefamiljer. Samma mekanism som profilen (rita 2D och gör det till
+  en definition). Linjerna måste gå vågrätt, lodrätt eller genom rutans
+  hörn för att upprepas; bågar blir raka bitar
 
 ### 0.11.2 Dörrar och fönster
 
@@ -1469,6 +1492,9 @@ efter pilotprojektet. Det som piloten visar behövs tidigt går först.
 
 - **Kulör, yta och material för alla objekt** (Carl August 22 oktober).
   Behövs fasadkulörer i bygglovet flyttas en enkel kulör per yta upp
+- **Isoleringsobjekt** för detaljer (Carl August 25 oktober): en linje
+  med bredd där isoleringens våg följer linjen. Till dess finns
+  fyllningen *Sicksack* för ytor
 - **Sparade filter** i Filtrera och markera (0.8.35): spara villkoren
   med ett namn, i projektet eller stilmallen
 

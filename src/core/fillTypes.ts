@@ -35,6 +35,11 @@ export interface FillTypeDef {
   families: FillFamily[];
   /** Måtten är i modellen (mm i verkligheten), inte på papper. */
   model?: boolean;
+  /**
+   * Linjernas tjocklek på papper i mm (0.8.37); utelämnad = fyllningens
+   * förval (0,13 mm i 2D-former och rum, 0,18 mm i snittytor).
+   */
+  weight?: number;
 }
 
 export interface CustomFillType extends FillTypeDef {
@@ -54,13 +59,45 @@ export interface HatchLine {
   phase?: [number, number];
 }
 
-/** Stilmallens fyllningstyper. */
-export function fillTypeList(style: StyleSheet | undefined): CustomFillType[] {
-  return style?.fillTypes ?? [];
+const fam = (angle: number, spacing: number, shift = 0, dash: number[] = [], x = 0, y = 0): FillFamily => ({ angle, x, y, spacing, shift, dash });
+const ZIG = Math.sqrt(5);
+const ZIG_ANGLE = (Math.atan2(2, 1) * 180) / Math.PI;
+
+/**
+ * De inbyggda fyllningstyperna (0.8.37), i den ordning de står i listorna.
+ * Nycklarna sparas i projekten. Tegel, block och plattor har verkliga mått.
+ */
+export const FILL_TYPES: Record<string, FillTypeDef> = {
+  tegel: { name: 'Tegel i förband', model: true, families: [fam(0, 75), fam(90, 131, 75, [75, 75])] },
+  block: { name: 'Lättbetong, block', model: true, families: [fam(0, 200), fam(90, 300, 200, [200, 200])] },
+  betong: { name: 'Betong', families: [fam(50, 2, 1.1, [0.6, 2.4]), fam(335, 2.3, 0.7, [0.5, 2.9]), fam(100, 2.6, 1.6, [0, 3.1])] },
+  tra: { name: 'Trä', families: [fam(0, 1.2, 3, [6, 1.5]), fam(0, 1.2, 2, [3, 3], 0, 0.6)] },
+  plattor300: { name: 'Plattor 300', model: true, families: [fam(0, 300), fam(90, 300)] },
+  plattor150: { name: 'Plattor 150', model: true, families: [fam(0, 150), fam(90, 150)] },
+  mark: {
+    name: 'Mark',
+    families: [
+      fam(0, 3.175, 3.175, [3.175, 3.175]),
+      fam(0, 3.175, 3.175, [3.175, 3.175], 0, 1.19),
+      fam(0, 3.175, 3.175, [3.175, 3.175], 0, 2.38),
+      fam(90, 3.175, 3.175, [3.175, 3.175], 0.4, 2.78),
+      fam(90, 3.175, 3.175, [3.175, 3.175], 1.59, 2.78),
+      fam(90, 3.175, 3.175, [3.175, 3.175], 2.78, 2.78),
+    ],
+  },
+  // Sicksack 2 mm hög och 2 mm per tand, med 2 mm mellan raderna: uppåt- och nedåtstrecken som två familjer.
+  sicksack: { name: 'Sicksack', families: [fam(ZIG_ANGLE, (2 * 2) / ZIG, -2 / ZIG, [ZIG, ZIG]), fam(-ZIG_ANGLE, (2 * 2) / ZIG, 2 / ZIG, [ZIG, ZIG], 1, 2)] },
+};
+
+/** Alla fyllningstyper som går att välja: de inbyggda (`own: false`) och stilmallens egna. */
+export function fillTypeList(style: StyleSheet | undefined): (CustomFillType & { own: boolean })[] {
+  return [...Object.entries(FILL_TYPES).map(([id, t]) => ({ id, ...t, own: false })), ...(style?.fillTypes ?? []).map((t) => ({ ...t, own: true }))];
 }
 
-export function fillTypeOf(style: StyleSheet | undefined, id: string | undefined): CustomFillType | undefined {
-  return id ? style?.fillTypes?.find((t) => t.id === id) : undefined;
+/** Typen för nyckeln: en inbyggd eller en av stilmallens egna. */
+export function fillTypeOf(style: StyleSheet | undefined, id: string | undefined): FillTypeDef | undefined {
+  if (!id) return undefined;
+  return FILL_TYPES[id] ?? style?.fillTypes?.find((t) => t.id === id);
 }
 
 /** En ny nyckel som inte krockar med någon annan. */
@@ -120,7 +157,7 @@ export function resolveFill(fill: FillDef, style: StyleSheet | undefined, modelP
   return {
     kind: 'pattern',
     color: fill.color,
-    weight: fill.weight ?? 0.13,
+    weight: t?.weight ?? fill.weight ?? 0.13,
     lines: lines.length ? lines : hatchAsLines(45, 2),
     ...(fill.opacity !== undefined ? { opacity: fill.opacity } : {}),
     ...(fill.background ? { background: fill.background, ...(fill.backgroundOpacity !== undefined ? { backgroundOpacity: fill.backgroundOpacity } : {}) } : {}),
@@ -191,10 +228,11 @@ export function normalizeFillTypes(v: unknown): CustomFillType[] | null {
   if (!Array.isArray(v)) return null;
   const out: CustomFillType[] = [];
   for (const t of v) {
-    if (typeof t?.id !== 'string' || !t.id || out.some((o) => o.id === t.id)) continue;
+    if (typeof t?.id !== 'string' || !t.id || FILL_TYPES[t.id] || out.some((o) => o.id === t.id)) continue;
     const families = (Array.isArray(t.families) ? t.families : []).map(normalizeFamily).filter((f: FillFamily | null): f is FillFamily => !!f);
     if (!families.length) continue;
-    out.push({ id: t.id, name: typeof t.name === 'string' && t.name.trim() ? t.name.trim() : t.id, families, ...(t.model ? { model: true } : {}) });
+    const w = Number(t.weight);
+    out.push({ id: t.id, name: typeof t.name === 'string' && t.name.trim() ? t.name.trim() : t.id, families, ...(t.model ? { model: true } : {}), ...(w > 0 ? { weight: w } : {}) });
   }
   return out.length ? out : null;
 }

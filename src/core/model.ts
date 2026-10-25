@@ -53,7 +53,14 @@ export interface ViewDef {
   state: Id;
   /** Jämför med befintligt. */
   compare: boolean;
+  /** Detaljnivå för 2D-symbolerna (och litteran och 3D när de saknas). */
   detail: 'sketch' | 'normal' | 'detail';
+  /**
+   * Detaljnivå för litteran och för 3D-objekten (0.8.37), när de skiljer sig
+   * från 2D-symbolernas. Utelämnade = som `detail`.
+   */
+  labelDetail?: 'sketch' | 'normal' | 'detail';
+  modelDetail?: 'sketch' | 'normal' | 'detail';
   /** Dolda kategorier: elementtyper och "littera". */
   hide: string[];
   hideDemolished: boolean;

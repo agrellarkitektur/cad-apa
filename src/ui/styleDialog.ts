@@ -6,7 +6,7 @@ import { actionRows, applyActionField } from './style/actions';
 import { applyLabelField, labelSection } from './style/labels';
 import { addLineType, applyLineTypeField, lineTypeSection, removeLineType } from './style/lineTypes';
 import { addFamily, addFillType, applyFillTypeField, fillTypeSection, importPat, removeFamily, removeFillType } from './style/fillTypes';
-import { formatPat } from '../core/fillTypes';
+import { FILL_TYPES, formatPat } from '../core/fillTypes';
 import { saveBlobFile } from '../storage/projectFile';
 import { applyPenField, penSection, resetPen } from './style/pens';
 import { resolveParams } from '../elements/registry';
@@ -57,6 +57,8 @@ export class StyleDialog {
 
   private render(): void {
     const style = this.store.doc.graphics;
+    // Snabbguiden (0.8.37) är kvar utfälld när dialogen ritas om efter en ändring.
+    const guideOpen = this.el.querySelector<HTMLDetailsElement>('.filltype-guide')?.open ?? false;
     const presetOptions = PRESETS.map((p, i) => `<option value="${i}"${p.name === style.name ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('');
     const custom = PRESETS.some((p) => p.name === style.name) ? '' : `<option selected disabled>${escapeHtml(style.name)}</option>`;
     this.el.innerHTML = `<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="style-title">
@@ -76,6 +78,7 @@ export class StyleDialog {
         <button class="btn btn-primary" data-action="close">Klar</button>
       </footer>
     </div>`;
+    if (guideOpen) this.el.querySelector<HTMLDetailsElement>('.filltype-guide')!.open = true;
   }
 
   /** Hur många former och pennor som har varje linjetyp (0.8.30). */
@@ -121,6 +124,8 @@ export class StyleDialog {
       const label =
         action === 'filltype-add'
           ? (addFillType(style), 'Ny fyllningstyp')
+          : action === 'filltype-copy' && FILL_TYPES[id]
+            ? (addFillType(style, { ...FILL_TYPES[id], name: `${FILL_TYPES[id].name} (kopia)` }), 'Kopiera fyllningstyp')
           : action === 'filltype-remove' && removeFillType(style, id)
             ? 'Ta bort fyllningstyp'
             : action === 'filltype-family-add' && addFamily(style, id)
@@ -152,6 +157,7 @@ export class StyleDialog {
     }
     if (action === 'filltype-export') {
       const types = this.store.doc.graphics.fillTypes ?? [];
+      if (!types.length) return;
       void saveBlobFile(new Blob([formatPat(types)], { type: 'text/plain' }), 'fyllningar.pat', 'Fyllningstyper', { 'text/plain': ['.pat'] });
     }
     if (action === 'pen-reset') {

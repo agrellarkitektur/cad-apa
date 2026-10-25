@@ -1,3 +1,4 @@
+import { detailOf } from '../core/states';
 import { add, scale, sub } from '../geometry/vec';
 import { openingPens } from '../repr/openingPens';
 import type { Primitive, Vec2 } from '../repr/primitives';
@@ -62,7 +63,7 @@ export const doorType: ElementType<DoorParams> = {
         leaf: LEAF,
         showSwing: !ctx.view.hide?.includes('swing'),
       },
-      ctx.view.detail ?? 'normal',
+      detailOf(ctx.view, 'model'),
     );
   },
   plan(el, ctx) {

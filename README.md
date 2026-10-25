@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.36** (alfa, egna fyllningstyper); nästa är **0.8.37, detaljnivåer i stilmallen**.
+**0.8.37** (alfa, detaljnivåer och fyllningar); nästa är **0.8.38, granskning**.
 
 ## Vad som fungerar
 
@@ -963,6 +963,19 @@ Version 0.8.32, granskning (samma filformat, 13):
   Referensritningarna har fått 2D-formerna, linjetyperna, masken och de
   egna pennorna
 - DXF-läsaren ligger i fyra mindre filer
+
+Version 0.8.37, detaljnivåer och fyllningar (samma filformat, 13):
+- **Detaljnivå per del av vyn**: Skiss, Normal eller Detalj för
+  **littera**, **2D-symboler** och **3D och fasader** var för sig, under
+  Visa och i vyns egenskaper. Vyradens knappar sätter alla tre på en
+  gång; med olika nivåer har knappraden en streckad ram. En vy kan till
+  exempel ha enkel littera, normala 2D-symboler och detaljerad 3D
+- **Färdiga fyllningstyper**: tegel i förband, lättbetong, betong, trä,
+  plattor 300 och 150, mark och sicksack. De finns i alla fyllningslistor
+  och går att kopiera till en egen typ att ändra
+- **Linjetjocklek** per fyllningstyp i stilmallen (*Linjer*)
+- **Så gör du en egen fyllning**: en snabbguide överst bland
+  fyllningstyperna, med vad fälten gör och tre exempel
 
 Version 0.8.36, egna fyllningstyper (samma filformat, 13):
 - **Fyllningstyper** i stilmallen: ett mönster av en eller flera

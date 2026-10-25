@@ -8,7 +8,11 @@ export const ANNOTATION_SCALES = [1, 2, 5, 10, 20, 25, 50, 100, 200, 400, 500, 1
 
 /** Kort beskrivning av en vy i vylistan. */
 export function describeView(v: ViewDef): string {
-  const detail = { sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' }[v.detail];
+  const names = { sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' };
+  const lab = v.labelDetail ?? v.detail;
+  const mod = v.modelDetail ?? v.detail;
+  // Olika nivåer (0.8.37): littera, 2D och 3D i den ordningen.
+  const detail = lab === v.detail && mod === v.detail ? names[v.detail] : `${names[lab]}/${names[v.detail]}/${names[mod]}`;
   return [`1:${v.scale ?? 100}`, detail, v.compare ? 'jämför' : '', v.hideDemolished ? 'utan rivet' : '', v.style ?? ''].filter(Boolean).join(' · ');
 }
 

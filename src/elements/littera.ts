@@ -1,4 +1,5 @@
 import type { Element } from '../core/model';
+import { detailOf } from '../core/states';
 import { markerPen } from '../repr/markerPens';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import type { PlanContext } from './registry';
@@ -12,7 +13,7 @@ import { FRAME_LESS, HOLE_EXTRA, type WallFrame } from './wall';
  */
 export function showLittera(ctx: PlanContext, type: string): boolean {
   const hide = ctx.view.hide;
-  return !hide?.includes('littera') && !hide?.includes(`littera:${type}`) && ctx.view.detail !== 'sketch';
+  return !hide?.includes('littera') && !hide?.includes(`littera:${type}`) && detailOf(ctx.view, 'label') !== 'sketch';
 }
 
 const LETTER: Record<string, string> = { Door: 'D', Window: 'F', Wall: '' };
@@ -92,7 +93,7 @@ export function litteraLines(ctx: PlanContext, el: Element<any>): string[] {
   if (ctx.actionOf(el) === 'demolished') return [];
   const templates = ctx.style.labels.templates[el.type as 'Wall' | 'Door' | 'Window'];
   if (!templates) return [];
-  const tpl = ctx.view.detail === 'detail' ? templates.detail : templates.normal;
+  const tpl = detailOf(ctx.view, 'label') === 'detail' ? templates.detail : templates.normal;
   return fillTemplate(tpl, (name) => field(ctx, el, name)).map((r) => r.text);
 }
 

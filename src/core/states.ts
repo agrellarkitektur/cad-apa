@@ -8,6 +8,15 @@ import type { Element, Id, ProjectDoc, State } from './model';
  * - new: finns i tillståndet men inte i jämförelsen (nytt)
  * - absent: syns inte alls
  */
+/** Skiss, normal eller detalj (0.8.37 delad i littera, 2D och 3D). */
+export type DetailLevel = 'sketch' | 'normal' | 'detail';
+
+/** Detaljnivån för en del av ritningen: littera, 2D-symboler eller 3D (0.8.37). */
+export function detailOf(view: Pick<ViewStates, 'detail' | 'labelDetail' | 'modelDetail'>, part: 'label' | 'plan' | 'model'): DetailLevel {
+  const base = view.detail ?? 'normal';
+  return part === 'label' ? (view.labelDetail ?? base) : part === 'model' ? (view.modelDetail ?? base) : base;
+}
+
 export type Action = 'plain' | 'existing' | 'demolished' | 'new' | 'absent';
 
 export interface ViewStates {
@@ -16,10 +25,14 @@ export interface ViewStates {
   /** Tillståndet det jämförs med, oftast Befintligt. Utelämnas för en ren vy. */
   compareTo?: Id;
   /**
-   * Detaljnivå: "sketch" för tidiga skisser (öppningar utan karmar),
-   * "normal" med karmar och glasningslinjer. Utelämnad = normal.
+   * Detaljnivå för 2D-symbolerna: "sketch" för tidiga skisser (öppningar
+   * utan karmar), "normal" med karmar och glasningslinjer. Utelämnad = normal.
    */
-  detail?: 'sketch' | 'normal' | 'detail';
+  detail?: DetailLevel;
+  /** Detaljnivå för litteran (0.8.37); utelämnad = som `detail`. */
+  labelDetail?: DetailLevel;
+  /** Detaljnivå för 3D-objekten och fasaderna (0.8.37); utelämnad = som `detail`. */
+  modelDetail?: DetailLevel;
   /** Dölj det som rivs, t.ex. i en plan som bara visar förslaget. */
   hideDemolished?: boolean;
   /** Elementtyper eller kategorier som inte visas: "Furniture", "Space", "littera" … */

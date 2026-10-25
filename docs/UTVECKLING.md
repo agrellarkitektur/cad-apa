@@ -1187,6 +1187,29 @@ skriptet kräver bara att namnen motsvarar varandra. Referensritningarna
 - Borttaget, oanvänt: `pathLength` (`dash.ts`), typen `SectionQueue` och
   rensningen av bladens `items` (format 8) i `parse`
 
+## Detaljnivåer och fyllningar (0.8.37, format 13)
+
+Inget nytt format: fälten är frivilliga.
+
+- **Detaljnivåerna**: `ViewStates.labelDetail` och `modelDetail` (och
+  `ViewDef`), utelämnade = som `detail` (2D-symbolerna). Läs alltid med
+  `detailOf(view, 'label' | 'plan' | 'model')` i `src/core/states.ts`.
+  `showLittera` och litteramallen använder `label`; dörrarnas och
+  fönstrens `model3d` använder `model` (och därmed fasaderna). I appen
+  `ui.labelDetail` och `ui.modelDetail` (`shell.ts`); `currentViewDef`
+  sparar dem bara när de skiljer sig, och `saveView` städar bort lika.
+  Knapparna: `[data-detail]` med `data-detail-part` (`label`, `plan`,
+  `model`) i Visa (`showMenu.ts`), utan del i vyraden (alla tre);
+  `syncDetailSwitch` i `views.ts`. Vyns egenskaper: `levelSelect` i
+  `treeItemPanel.ts`
+- **Fyllningarna**: `FILL_TYPES` (de inbyggda) i `src/core/fillTypes.ts`;
+  `fillTypeOf` tar de inbyggda först, `fillTypeList` ger alla med `own`.
+  En egen typ med en inbyggds nyckel hoppas över när stilmallen läses.
+  `FillTypeDef.weight` går före fyllningens förval i `resolveFill`.
+  Stilmallen: de inbyggda med *Kopiera* (`filltype-copy`), *Linjer*
+  (`:weight`) och guiden (`GUIDE`, hålls utfälld vid omritning) i
+  `src/ui/style/fillTypes.ts`
+
 ## Egna fyllningstyper (0.8.36, format 13)
 
 Inget nytt format: fälten är frivilliga.

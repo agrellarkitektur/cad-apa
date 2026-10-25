@@ -20,6 +20,11 @@ export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder' | 'worksh
 const esc = escapeHtml;
 
 /** Om det valda fortfarande finns i projektet. */
+/** Detaljnivåns val i vyns egenskaper (0.8.37). */
+function levelSelect(name: string, cur: string): string {
+  return `<select name="${name}">${(['sketch', 'normal', 'detail'] as const).map((d) => `<option value="${d}"${d === cur ? ' selected' : ''}>${{ sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' }[d]}</option>`).join('')}</select>`;
+}
+
 export function treeItemExists(doc: ProjectDoc, item: TreeItem): boolean {
   switch (item.kind) {
     case 'view':
@@ -72,7 +77,9 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('Namn', `<input name="name" value="${esc(v.name)}">`)}
           ${field('Mapp', `<select name="folder">${folderOptions(doc, 'vyer', folder)}</select>`)}
           ${field('Tillstånd', `<select name="state">${doc.states.map((s) => `<option value="${s.id}"${s.id === v.state ? ' selected' : ''}>${esc(s.name)}</option>`).join('')}</select>`)}
-          ${field('Detaljnivå', `<select name="detail">${(['sketch', 'normal', 'detail'] as const).map((d) => `<option value="${d}"${d === v.detail ? ' selected' : ''}>${{ sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' }[d]}</option>`).join('')}</select>`)}
+          ${field('Littera', levelSelect('labelDetail', v.labelDetail ?? v.detail))}
+          ${field('2D-symboler', levelSelect('detail', v.detail))}
+          ${field('3D och fasader', levelSelect('modelDetail', v.modelDetail ?? v.detail))}
           ${field('Stilmall', `<select name="style"><option value="">Projektets</option>${PRESETS.map((p) => `<option${p.name === v.style ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`)}
           ${field('Kalkera', `<select name="trace"><option value="">Ingen</option>${doc.views.filter((x) => x.id !== v.id).map((x) => `<option value="${x.id}"${x.id === v.trace ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`)}
           ${field('Skala', `<span class="input-unit scale-unit"><i>1:</i><input name="scale" type="text" inputmode="numeric" value="${v.scale ?? ''}" placeholder="100"></span>`)}
@@ -257,6 +264,9 @@ export function bindTreeForm(root: HTMLElement, store: DocStore, onSaved: (item:
           ...(str('name').trim() ? { name: str('name').trim() } : {}),
           state: str('state'),
           detail: str('detail') as 'sketch' | 'normal' | 'detail',
+          // Littera och 3D bara när de skiljer sig från 2D (0.8.37).
+          labelDetail: str('labelDetail') !== str('detail') ? (str('labelDetail') as 'sketch' | 'normal' | 'detail') : undefined,
+          modelDetail: str('modelDetail') !== str('detail') ? (str('modelDetail') as 'sketch' | 'normal' | 'detail') : undefined,
           style: str('style') || undefined,
           trace: str('trace') || null,
           compare: d.has('compare'),

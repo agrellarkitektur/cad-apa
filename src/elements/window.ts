@@ -1,3 +1,4 @@
+import { detailOf } from '../core/states';
 import type { Pen, Primitive } from '../repr/primitives';
 import { openingPens } from '../repr/openingPens';
 import { FRAME_DEFAULTS, openingZone, type FrameParams } from './opening';
@@ -54,7 +55,7 @@ export const windowType: ElementType<WindowParams> = {
         frameWidth: p.frameWidth,
         outside: z.insetFrom === 'utsidan' ? (z.face as 1 | -1) : 0,
       },
-      ctx.view.detail ?? 'normal',
+      detailOf(ctx.view, 'model'),
     );
   },
   plan(el, ctx) {

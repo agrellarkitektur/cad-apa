@@ -441,3 +441,28 @@ button.link {
 .expr-keys button[data-ins='cm'] {
   font: 600 14px var(--font-ui);
 }
+
+/* Detaljnivån för littera, 2D och 3D var för sig i Visa-menyn (0.8.37). */
+.detail-parts {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.detail-part {
+  display: grid;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.detail-part .detail-switch {
+  display: inline-flex;
+  width: fit-content;
+}
+
+/* Vyradens knappar när delarna har olika nivåer: ingen nedtryckt, streckad ram. */
+.detail-switch.mixed {
+  outline: 1px dashed var(--muted);
+  outline-offset: 1px;
+}

@@ -55,6 +55,9 @@ export function installViews(app: AppContext) {
       state: app.ui.state,
       compare: app.ui.compare,
       detail: app.ui.detail,
+      // Littera och 3D sparas bara när de skiljer sig från 2D (0.8.37).
+      ...(app.ui.labelDetail !== app.ui.detail ? { labelDetail: app.ui.labelDetail } : {}),
+      ...(app.ui.modelDetail !== app.ui.detail ? { modelDetail: app.ui.modelDetail } : {}),
       hide: [...app.ui.hide],
       hideDemolished: app.ui.hideDemolished,
       ...(app.ui.styleName ? { style: app.ui.styleName } : {}),
@@ -72,6 +75,8 @@ export function installViews(app: AppContext) {
       c.state !== v.state ||
       c.compare !== v.compare ||
       c.detail !== v.detail ||
+      (c.labelDetail ?? c.detail) !== (v.labelDetail ?? v.detail) ||
+      (c.modelDetail ?? c.detail) !== (v.modelDetail ?? v.detail) ||
       c.hideDemolished !== v.hideDemolished ||
       [...c.hide].sort().join() !== [...v.hide].sort().join() ||
       (c.style ?? null) !== (v.style ?? null) ||
@@ -88,6 +93,8 @@ export function installViews(app: AppContext) {
     app.ui.state = v.state;
     app.ui.compare = v.compare;
     app.ui.detail = v.detail;
+    app.ui.labelDetail = v.labelDetail ?? v.detail;
+    app.ui.modelDetail = v.modelDetail ?? v.detail;
     app.ui.hide = [...v.hide];
     app.ui.hideDemolished = v.hideDemolished;
     app.ui.styleName = v.style ?? null;
@@ -117,9 +124,19 @@ export function installViews(app: AppContext) {
     app.$<HTMLElement>('.viewbar').classList.toggle('modified', modified);
   }
 
+  const NAMES = { sketch: 'skiss', normal: 'normal', detail: 'detalj' } as const;
+
   /** Detaljnivåns knappar (i vyraden och i Visa-menyn) visar vyns detaljnivå. */
   function syncDetailSwitch(): void {
-    document.querySelectorAll<HTMLElement>('.detail-switch [data-detail]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.detail === app.ui.detail)));
+    // Vyradens knappar gäller alla tre delarna (0.8.37); med olika nivåer är ingen nedtryckt.
+    const { detail, labelDetail, modelDetail } = app.ui;
+    const same = detail === labelDetail && detail === modelDetail;
+    const of = (part: string | undefined) => (part === 'label' ? labelDetail : part === 'model' ? modelDetail : part === 'plan' ? detail : same ? detail : null);
+    document.querySelectorAll<HTMLElement>('.detail-switch [data-detail]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.detail === of(b.dataset.detailPart))));
+    document.querySelectorAll<HTMLElement>('.detail-switch:not(.detail-part-switch)').forEach((s) => {
+      s.classList.toggle('mixed', !same);
+      s.title = same ? '' : `Olika nivåer: littera ${NAMES[labelDetail]}, 2D ${NAMES[detail]}, 3D ${NAMES[modelDetail]}. Ändra var för sig under Visa.`;
+    });
   }
 
   function goTo(p: Place): void {

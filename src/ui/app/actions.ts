@@ -125,7 +125,13 @@ export function installActions(app: AppContext, parts: ActionParts) {
     if (styleSel) return;
     const detailBtn = target.closest<HTMLElement>('[data-detail]');
     if (detailBtn) {
-      ui.detail = detailBtn.dataset.detail as 'sketch' | 'normal' | 'detail';
+      // En del (Visa-menyn, 0.8.37) eller alla tre (vyraden).
+      const level = detailBtn.dataset.detail as 'sketch' | 'normal' | 'detail';
+      const part = detailBtn.dataset.detailPart;
+      if (part === 'label') ui.labelDetail = level;
+      else if (part === 'model') ui.modelDetail = level;
+      else if (part === 'plan') ui.detail = level;
+      else ui.detail = ui.labelDetail = ui.modelDetail = level;
       views.syncDetailSwitch();
       app.renderAll();
       return;

@@ -3,7 +3,7 @@ import type { Element, Id, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
 import { BACKGROUND_COLOR, CAP_LABELS, CAP_SIZE, FILL_BACKGROUND, FILL_COLOR, hasBackground, PATH_LABELS, segmentCount, type CapKind, type Shape2DParams } from '../elements/drawing2d';
 import type { StyleSheet } from '../core/graphics';
-import { fillTypeOf } from '../core/fillTypes';
+import { fillTypeList, fillTypeOf } from '../core/fillTypes';
 import { resolveParams } from '../elements/registry';
 import { STRAIGHT } from '../geometry/arc';
 import { lineTypeOptions } from './lineTypePick';
@@ -42,7 +42,7 @@ export function fillFields(
     ${own ? typeFields({ fillTypeAngle: p.fillTypeAngle ?? 0, fillTypeScale: p.fillTypeScale ?? 1 }, attrs) : hatched ? hatchFields(p, attrs) : ''}</div>${gone}
     ${hatched ? backgroundFields({ fillBackground: p.fillBackground, fillBackgroundOpacity: p.fillBackgroundOpacity }, attrs) : ''}`
         : '';
-  return `<div class="field-label">Fyllning</div>${patternPicker(name, p.fill ?? 'none', attrs('pattern'), { color, angle: p.fillAngle, types: style?.fillTypes, type: p.fillType })}${more}`;
+  return `<div class="field-label">Fyllning</div>${patternPicker(name, p.fill ?? 'none', attrs('pattern'), { color, angle: p.fillAngle, types: fillTypeList(style), type: p.fillType })}${more}`;
 }
 
 /** En egen fyllningstyps vridning och skala (0.8.36). Null = olika i markeringen. */

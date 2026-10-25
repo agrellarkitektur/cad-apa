@@ -58,7 +58,10 @@ export function createUiState(initial: ProjectDoc, uiSettings: UiSettings, deskt
     sheet: 'peek' as 'peek' | 'full',
     tool: 'select' as ToolId,
     mode: '2d' as ViewMode,
+    /** Detaljnivån för 2D-symbolerna, litteran och 3D (0.8.37 tre val). */
     detail: 'normal' as 'sketch' | 'normal' | 'detail',
+    labelDetail: 'normal' as 'sketch' | 'normal' | 'detail',
+    modelDetail: 'normal' as 'sketch' | 'normal' | 'detail',
     /** Det som döljs i vyn (elementtyper och "littera"), och om rivet visas. */
     hide: [] as string[],
     hideDemolished: false,

@@ -1,15 +1,23 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.36.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.37.
 
 ## Läget
 
 - **Påminn Carl August** (hans önskan 25 oktober): resten av 0.8 är
-  0.8.36–0.8.38, med granskningen sist (0.8.38) innan 0.9. Lägg inte
+  bara 0.8.38 Granskning (utan nya funktioner), sedan 0.9. Lägg inte
   till funktioner som blir fler 0.8.xx; nya synpunkter ska rymmas i de
   versioner som redan finns i planen, annars läggs de i en senare
   version. Säg det när han tar upp något nytt.
+- **0.8.37 Detaljnivåer och fyllningar är klar** på `main` (samma
+  format, 13). Tre detaljnivåer per vy (littera, 2D-symboler, 3D och
+  fasader) i Visa och vyns egenskaper; vyradens knappar sätter alla tre.
+  Fyllningarna: åtta inbyggda typer (kopierbara), linjetjocklek per typ
+  och snabbguiden. Claudes val i PLAN.md, koden i UTVECKLING.md.
+  Testerna: 420 på ca 11 s. Carl Augusts beslut 25 oktober: tre val per
+  vy; rikare 3D-detalj i 0.11.2; att rita mönster grafiskt i 0.11.1;
+  isoleringsobjekt efter piloten.
 - **0.8.36 Egna fyllningstyper är klar** på `main` (samma format, 13).
   Fyllningstyper i stilmallen (linjefamiljer med vinkel, avstånd,
   förskjutning, baspunkt och streckning; mått på papper eller i
@@ -114,8 +122,8 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.30 Linjetyper och mask~~, ~~0.8.31 Linjetyp och penna per
   objekt~~, ~~0.8.32 Granskning~~, ~~0.8.33 Pennor per typ och
   symbollinjer~~, ~~0.8.34 Rum: kontur och rumsgränser~~,
-  ~~0.8.35 Filtrera och markera~~, ~~0.8.36 Egna fyllningstyper~~ (klara)
-- **0.8.37 Detaljnivåer i stilmallen** (per vy, som i ArchiCAD)
+  ~~0.8.35 Filtrera och markera~~, ~~0.8.36 Egna fyllningstyper~~,
+  ~~0.8.37 Detaljnivåer och fyllningar~~ (klara)
 - **0.8.38 Granskning**
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
@@ -124,7 +132,8 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 - **0.10.1 Dolda linjer i fasader** (närmaste bjälklag och väggarnas
   insida streckade, vyinställning)
 - **0.11 Trappor** (nytt format)
-- **0.11.1 Profilverktyget** (nytt format, stor) och **0.11.2 Dörrar och
+- **0.11.1 Profilverktyget** (nytt format, stor; också att rita ett
+  mönster och göra det till en fyllningstyp) och **0.11.2 Dörrar och
   fönster** (stor)
 - **0.12 Export**: IFC4, DXF, areor för bygglov
 - **Koordinater, SWEREF och sol** (stor; före eller efter piloten, bestäms
@@ -138,26 +147,30 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.36 syns på webbhotellet och hur fyllningstyperna
-känns (frågorna nedan). Läs synpunktsfilen och sortera ny Inkorg, och
-påminn om att inget nytt ska bli en egen 0.8.xx (se *Läget*). Bygg sedan
-**0.8.37 Detaljnivåer i stilmallen** (PLAN.md): litteran per detaljnivå
-(skiss, normal, detalj), vald per vy. Fråga först om dörrar och fönster
-också ska ritas olika (då hör en del hemma i 0.11.2). Sedan 0.8.38
-Granskning, sedan 0.9.
+Fråga först om 0.8.37 syns på webbhotellet och hur detaljnivåerna och
+fyllningarna känns (frågorna nedan). Läs synpunktsfilen och sortera ny
+Inkorg; nya funktioner läggs i 0.9 eller senare, inte i 0.8. Gör sedan
+**0.8.38 Granskning** (utan nya funktioner): städa, dela upp stora filer
+(t.ex. `src/ui/style/fillTypes.ts` om den växt, `renderPrimitives.ts`),
+leta efter långsam kod (mönster med många familjer på skärmen, DXF med
+många streckade skrafferingar), gå igenom testerna och lägg till steg i
+`scripts/jamfor-klick.py` för fyllningstyperna och detaljnivåerna.
+Sedan 0.9.
 
 ## Att fråga Carl August om
 
-- **0.8.36 efter provning** (Claudes val, se PLAN.md): att typerna ligger
-  i stilmallen och att måtten väljs per typ (papper eller i
-  verkligheten); att det inte finns några inbyggda typer utöver
-  skraffering och korsskraffering (vill han ha några färdiga, t.ex.
-  tegel, isolering, betong?); att en form med en typ har *Vridning* och
-  *Skala*, och att typens linjer är 0,13 mm (0,18 mm i snittytor) utan
-  eget val av penna; att mönster med mer än 20 mm mellan linjerna i en
-  `.pat` antas vara i verkliga mått. Fungerar hans egna `.pat`-filer
-  (ArchiCAD-export eller AutoCAD)? Isolering (vågor) går inte att göra av
-  raka linjer; behövs det före piloten?
+- **0.8.37 efter provning** (Claudes val, se PLAN.md): att vyradens
+  knappar sätter alla tre nivåerna och att valen var för sig ligger i
+  Visa och vyns egenskaper; att fasaderna följer 3D-nivån; att
+  rumsstämpeln inte följer någon nivå. Fyllningarna: ser de inbyggda
+  rätt ut (tegelmåtten 250 × 62 med fog, block 600 × 200, betong och trä
+  på papper)? Räcker guiden?
+
+- **0.8.36**: Carl August svarade 25 oktober: linjetjocklek per typ,
+  färdiga typer och en guide (gjorda i 0.8.37), att rita mönster
+  grafiskt (0.11.1) och isolering som objekt (efter piloten). Kvar att
+  fråga: fungerar hans `.pat`-filer (han har inte använt dem förut), och
+  att mönster med mer än 20 mm mellan linjerna antas vara i verkliga mått.
 
 - **0.8.35 efter provning** (Claudes val, se PLAN.md): att det är en
   dialog (inte en panel) och inte finns i smartmenyns *Mer*; att *Finns
@@ -246,11 +259,6 @@ Granskning, sedan 0.9.
   smartmenyn alltid visa *Ändar* för en markerad linje, eller tar det för
   mycket plats? Ska bågar kunna ritas direkt i Linje (som `A` i AutoCADs
   PLINE)?
-
-- **Detaljnivåerna (0.8.37)**: per vy är bestämt. Gäller det bara
-  litteran, eller ska dörrar och fönster också ritas olika (då hör en del
-  hemma i 0.11.2)? Carl Augusts "ja" 25 oktober tolkades som per vy; säg
-  till om det var fel.
 
 - **0.8.22 efter provning** (Claudes val, se PLAN.md): opaciteten är *Samma
   för linje och fyllning* från början, och kryssrutan skiljer dem; den

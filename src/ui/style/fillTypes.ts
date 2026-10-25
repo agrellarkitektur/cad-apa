@@ -1,6 +1,6 @@
 import type { StyleSheet } from '../../core/graphics';
 import { formatDash, parseDash } from '../../core/lineTypes';
-import { newFillTypeId, parsePat, type CustomFillType, type FillFamily, type FillTypeDef } from '../../core/fillTypes';
+import { FILL_TYPES, newFillTypeId, parsePat, type CustomFillType, type FillFamily, type FillTypeDef } from '../../core/fillTypes';
 import { escapeHtml } from '../labels';
 import { fillTypeSwatch } from '../patternPick';
 
@@ -36,6 +36,7 @@ export function fillTypeSection(style: StyleSheet, uses: ReadonlyMap<string, num
         <div class="filltype-head">
           <input type="text" data-filltype="${id}:name" value="${escapeHtml(t.name)}" aria-label="Namn">
           ${fillTypeSwatch(t, 'currentColor', 44, 28)}
+          <label><span>Linjer</span><select data-filltype="${id}:weight">${weightOptions(t.weight)}</select></label>
           <label><span>Måtten</span><select data-filltype="${id}:units"><option value="paper"${t.model ? '' : ' selected'}>På papper</option><option value="model"${t.model ? ' selected' : ''}>I verkligheten</option></select></label>
           <button class="btn" data-action="filltype-family-add" data-filltype-id="${id}">Ny linjefamilj</button>
           <button class="btn" data-action="filltype-remove" data-filltype-id="${id}" title="${n ? `Används av ${n}; de ritas som skraffering` : 'Används inte'}">Ta bort</button>
@@ -44,9 +45,17 @@ export function fillTypeSection(style: StyleSheet, uses: ReadonlyMap<string, num
       </div>`;
     })
     .join('');
+  // De inbyggda (0.8.37): att se, och att kopiera till en egen som går att ändra.
+  const builtIn = Object.entries(FILL_TYPES)
+    .map(
+      ([id, t]) => `<div class="filltype-builtin">${fillTypeSwatch(t, 'currentColor', 44, 28)}<span class="filltype-bname">${escapeHtml(t.name)}<small>${t.model ? 'i verkligheten' : 'på papper'}</small></span><button class="btn" data-action="filltype-copy" data-filltype-id="${escapeHtml(id)}" title="Gör en egen kopia att ändra">Kopiera</button></div>`,
+    )
+    .join('');
   return `<section class="style-labels style-filltypes">
     <h3>Fyllningstyper</h3>
-    <p class="note">Ett mönster av en eller flera linjefamiljer, som i AutoCADs och ArchiCADs .pat-filer: parallella linjer med vinkel, avstånd mellan linjerna, förskjutning längs linjen från en linje till nästa, baspunkt (X, Y) och streckning (streck och mellanrum omväxlande, som linjetyperna). Måtten är i mm på papper, eller i verkligheten för mönster som tegel och plattor. Typerna väljs bland fyllningarna för 2D-former, rum och snittytor, och följer med stilmallen.</p>
+    <p class="note">Ett mönster av en eller flera linjefamiljer, som i AutoCADs och ArchiCADs .pat-filer. Typerna väljs bland fyllningarna för 2D-former, rum och snittytor, och de egna följer med stilmallen.</p>
+    ${GUIDE}
+    <div class="filltype-builtins">${builtIn}</div>
     ${own}
     <div class="row">
       <button class="btn" data-action="filltype-add">Ny fyllningstyp</button>
@@ -55,6 +64,36 @@ export function fillTypeSection(style: StyleSheet, uses: ReadonlyMap<string, num
     </div>
   </section>`;
 }
+
+/** Tjocklekarna att välja för en typs linjer (0.8.37); tomt = fyllningens förval. */
+const WEIGHTS = [0.05, 0.09, 0.13, 0.18, 0.25, 0.35, 0.5];
+
+function weightOptions(current: number | undefined): string {
+  const list = current && !WEIGHTS.includes(current) ? [...WEIGHTS, current].sort((a, b) => a - b) : WEIGHTS;
+  return `<option value=""${current ? '' : ' selected'}>Förval</option>${list.map((w) => `<option value="${w}"${w === current ? ' selected' : ''}>${String(w).replace('.', ',')} mm</option>`).join('')}`;
+}
+
+/**
+ * Snabbguiden (0.8.37): vad fälten gör, med tre exempel att skriva in.
+ */
+const GUIDE = `<details class="filltype-guide"><summary>Så gör du en egen fyllning</summary>
+  <p>Ett mönster byggs av <b>linjefamiljer</b>: parallella linjer som upprepas över ytan. Varje familj har</p>
+  <ul>
+    <li><b>Vinkel</b>: linjernas riktning, 0° vågrätt och 90° lodrätt.</li>
+    <li><b>Avstånd</b>: mellan två linjer, mätt vinkelrätt mot dem.</li>
+    <li><b>Förskjutning</b>: hur långt streckningen flyttas längs linjen från en linje till nästa. Den gör förband av tegel och plattor.</li>
+    <li><b>X och Y</b>: baspunkten, där första linjen och dess första streck börjar.</li>
+    <li><b>Streckning</b>: streck och mellanrum omväxlande, som linjetyperna (t.ex. <i>75 75</i>). Tomt är heldragen, och ett streck under 0,5 mm blir en punkt.</li>
+  </ul>
+  <p><b>Måtten</b> är i mm på papper (mönstret är lika tätt i alla skalor) eller i verkligheten (mönstret följer ritningens skala, som riktigt tegel). <b>Linjer</b> är tjockleken på papperet.</p>
+  <p><b>Exempel</b> (Ny fyllningstyp, sedan Ny linjefamilj för den andra raden):</p>
+  <ul>
+    <li><b>Rutor 2 mm</b>, på papper: 0° avstånd 2, och 90° avstånd 2.</li>
+    <li><b>Tegel</b>, i verkligheten: 0° avstånd 75 (skiften), och 90° avstånd 131, förskjutning 75, streckning <i>75 75</i> (stötfogarna, förskjutna varannat skift).</li>
+    <li><b>Streckad skraffering</b>, på papper: 45° avstånd 1,5, förskjutning 1, streckning <i>2 1</i>.</li>
+  </ul>
+  <p>Enklast är ofta att kopiera en inbyggd typ och ändra den, eller att läsa in en .pat-fil. Att rita ett mönster och göra det till en fyllningstyp kommer i 0.11.1.</p>
+</details>`;
 
 /** Ändra en fyllningstyp i `style` (en kopia) efter fältet; null om fältet inte hör hit, '' om värdet inte gick att läsa. */
 export function applyFillTypeField(style: StyleSheet, input: HTMLInputElement | HTMLSelectElement): string | null {
@@ -72,6 +111,12 @@ export function applyFillTypeField(style: StyleSheet, input: HTMLInputElement | 
       if (!name || name === t.name) return null;
       t.name = name;
       return 'Byt namn på fyllningstyp';
+    }
+    if (field === 'weight') {
+      const w = Number(input.value);
+      if (w > 0) t.weight = w;
+      else delete t.weight;
+      return 'Ändra fyllningstypens linjer';
     }
     if (field === 'units') {
       if (input.value === 'model') t.model = true;

@@ -106,6 +106,8 @@ export function viewStatesFor(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions)
     state: v.state,
     compareTo: v.compare && ex && ex.id !== v.state ? ex.id : undefined,
     detail: v.detail,
+    labelDetail: v.labelDetail,
+    modelDetail: v.modelDetail,
     hide: v.hide,
     hideDemolished: v.hideDemolished,
     autoDims: opt.autoDims,

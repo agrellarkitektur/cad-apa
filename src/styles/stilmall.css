@@ -191,6 +191,47 @@
   margin-top: 8px;
 }
 
+/* Inbyggda fyllningstyper och snabbguiden (0.8.37). */
+.filltype-builtins {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 6px 14px;
+  margin: 8px 0;
+}
+
+.filltype-builtin {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  color: var(--ink);
+}
+
+.filltype-bname {
+  display: grid;
+  line-height: 1.25;
+}
+
+.filltype-bname small {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.filltype-guide {
+  margin: 6px 0 10px;
+  font-size: 13px;
+}
+
+.filltype-guide summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.filltype-guide ul {
+  margin: 4px 0 8px 18px;
+  padding: 0;
+}
+
 /* Fyllningstyper (0.8.36): namn, bild, måtten och knappar, och en rad per linjefamilj. */
 .filltype {
   padding: 8px 0;
@@ -199,7 +240,7 @@
 
 .filltype-head {
   display: grid;
-  grid-template-columns: minmax(140px, 1fr) 44px auto auto auto;
+  grid-template-columns: minmax(140px, 1fr) 44px auto auto auto auto;
   gap: 10px;
   align-items: end;
 }

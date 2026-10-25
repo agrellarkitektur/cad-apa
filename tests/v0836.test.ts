@@ -73,10 +73,10 @@ describe('Fyllningstyper ur .pat (0.8.36)', () => {
 });
 
 describe('Ritade fyllningstyper (0.8.36)', () => {
-  const style: StyleSheet = { ...structuredClone(SWEDISH_STANDARD), fillTypes: [{ id: 'tegel', ...parsePat(PAT)[0] }] };
+  const style: StyleSheet = { ...structuredClone(SWEDISH_STANDARD), fillTypes: [{ id: 'ar-b816', ...parsePat(PAT)[0] }] };
 
   it('en 2D-form med typen blir ett mönster; en borttagen typ en skraffering', () => {
-    const [r] = fillPrims([square(0, 0, 4000)], { fill: 'type', fillType: 'tegel', fillAngle: 45, fillSpacing: 2 }, undefined, true, style, 100) as RegionPrim[];
+    const [r] = fillPrims([square(0, 0, 4000)], { fill: 'type', fillType: 'ar-b816', fillAngle: 45, fillSpacing: 2 }, undefined, true, style, 100) as RegionPrim[];
     expect(r.fill).toMatchObject({ kind: 'pattern' });
     if (r.fill.kind === 'pattern') expect(r.fill.lines.map((l) => l.spacing)).toEqual([2.032, 2.032]);
     const [gone] = fillPrims([square(0, 0, 4000)], { fill: 'type', fillType: 'finns-inte', fillAngle: 45, fillSpacing: 2 }, undefined, true, style, 100) as RegionPrim[];
@@ -86,7 +86,7 @@ describe('Ritade fyllningstyper (0.8.36)', () => {
   it('snittfyllningen i stilmallen kan vara en typ', () => {
     const store = storeWith({});
     const g: StyleSheet = { ...structuredClone(store.doc.graphics), fillTypes: style.fillTypes };
-    g.actions.plain.cutFill = { kind: 'type', type: 'tegel', color: 'ink', weight: 0.18 };
+    g.actions.plain.cutFill = { kind: 'type', type: 'ar-b816', color: 'ink', weight: 0.18 };
     setGraphics(store, g);
     const walls = plan(store).prims.filter((q): q is RegionPrim => q.kind === 'region' && q.origin?.objectType === 'Wall');
     expect(walls.length).toBeGreaterThan(0);

@@ -1,6 +1,7 @@
 import type { ActionKey, Color, FillDef, StyleSheet } from '../../core/graphics';
 import { clamp01, fromHex, toHex } from './colors';
 import { escapeHtml } from '../labels';
+import { fillTypeList, fillTypeOf } from '../../core/fillTypes';
 
 /**
  * Stilmallens första del: hur väggar och linjer ritas för varje åtgärd
@@ -22,8 +23,8 @@ export function actionRows(style: StyleSheet): string {
     // Skraffering och egna fyllningstyper (0.8.36) har streck och kan ha en bakgrund.
     const striped = fill.kind === 'hatch' || fill.kind === 'type';
     const back = striped && fill.background ? fill : null;
-    const types = (style.fillTypes ?? []).map((t) => `<option value="type:${escapeHtml(t.id)}"${fill.kind === 'type' && fill.type === t.id ? ' selected' : ''}>${escapeHtml(t.name)}</option>`).join('');
-    const gone = fill.kind === 'type' && !style.fillTypes?.some((t) => t.id === fill.type) ? `<option value="type:${escapeHtml(fill.type)}" selected disabled>Borttagen typ</option>` : '';
+    const types = fillTypeList(style).map((t) => `<option value="type:${escapeHtml(t.id)}"${fill.kind === 'type' && fill.type === t.id ? ' selected' : ''}>${escapeHtml(t.name)}</option>`).join('');
+    const gone = fill.kind === 'type' && !fillTypeOf(style, fill.type) ? `<option value="type:${escapeHtml(fill.type)}" selected disabled>Borttagen typ</option>` : '';
     const outline = a.cutOutline ? (a.cutOutline.dash?.length ? 'dashed' : 'solid') : 'none';
     return `<div class="style-row">
         <div class="style-name"><b>${label}</b><span>${hint}</span></div>
