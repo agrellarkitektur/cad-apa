@@ -1,10 +1,18 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.28.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.29.
 
 ## Läget
 
+- **0.8.29 Bakgrund i fyllningar och ändformer är klar** på `main`
+  (samma format, 13): skraffering och korsskraffering kan få en bakgrund
+  (kryssrutan *Bakgrund*, färg förval vit, egen opacitet) i egenskaperna,
+  smartmenyn och 2D-verktyget, också för rum; med 100 % döljer den
+  linjerna bakom. Pilen och punkten kapas av en täckande fyllning ovanför
+  (`coverLines`, `difference`). Prövat med `tests/v0829.test.ts` (alla
+  386 tester går igenom) och i webbläsaren. Står i README, PLAN.md (med
+  Claudes val) och UTVECKLING.md.
 - **0.8.28 Rättelser i 2D-formen är klar** på `main` (samma format, 13,
   i en session): fortsätta en markerad öppen linje eller spline från en
   ände (också med bågar; Ctrl+klick börjar en ny; knappen *Fortsätt* i
@@ -74,10 +82,8 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 - ~~0.8.8 Mallblad~~ … ~~0.8.21 Kommandoraden del 2~~,
   ~~0.8.22 Småsaker~~, ~~0.8.23 Granskning~~, ~~0.8.24 2D-form del 2~~,
   ~~0.8.25 Ritordning och fyllningar~~, ~~0.8.26 Pennor i stilmallen~~,
-  ~~0.8.27 Granskning~~, ~~0.8.28 Rättelser i 2D-formen~~ (klara)
-- **0.8.29 Bakgrund i fyllningar och ändformer** (liten: bakgrundsfärg
-  med opacitet för skraffering, också i rum; de fyllda ändformerna döljs
-  med linjen)
+  ~~0.8.27 Granskning~~, ~~0.8.28 Rättelser i 2D-formen~~,
+  ~~0.8.29 Bakgrund i fyllningar och ändformer~~ (klara)
 - **0.8.30 Linjetyper** (också egna; grunden för det punktstreckade i 0.10)
 - **0.8.31 Egna fyllningstyper** (linjefamiljer med streckning; kanske
   `.pat`-filer)
@@ -102,22 +108,23 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.28 syns på webbhotellet (numret vid alfa-knappen) och
-om de tre rättelserna fungerar som han tänkt. Läs synpunktsfilen och
-sortera ny Inkorg (ordningen 0.8.29–0.8.33 är bekräftad). Bygg sedan
-**0.8.29 Bakgrund i fyllningar och ändformer** (liten, en session; samma
-format med valfria parametrar). Att börja med: `fillPrims` i
-`src/elements/drawing2d.ts` gör fyllningens ytor (för 2D-former och rum,
-`FillParams`); en bakgrund blir en hel yta före skrafferingen, och
-fälten läggs i `fillFields` och `shapeSmartFields` i
-`src/ui/shapeFields.ts` (och rummens fält). `coverLines` i
-`src/repr/cover.ts` räknar bara hela ytor med opacitet 1 som täckande,
-så en bakgrund med 100 % täcker av sig själv. Ändformerna: `coverLines`
-kapar `line` och `polyline`; de fyllda ändformerna är `region` (kan
-kapas med `difference` i `src/geometry/boolean.ts`) och cirkeln en `arc`
-(gör om till en polylinje och kapa).
+Fråga först om 0.8.29 syns på webbhotellet (numret vid alfa-knappen) och
+om bakgrunden och ändformerna fungerar som han tänkt. Läs synpunktsfilen
+och sortera ny Inkorg. Fråga sedan om linjetyperna ska gälla väggar och
+fasadernas linjer också (se nedan), och bygg **0.8.30 Linjetyper**.
+Att börja med: `LINE_TYPES` och `penOf` i `src/elements/drawing2d.ts`
+(streckmönstret på papper, `Pen.dash`); de kapade linjerna från
+`coverLines` börjar om strecket i varje bit, så ett jämnt mönster behöver
+räkna fasen.
 
 ## Att fråga Carl August om
+
+- **0.8.29 efter provning** (Claudes val, se PLAN.md): bakgrunden slås på
+  med en kryssruta och är vit från början; opaciteten är bakgrundens egen
+  (skrafferingens opacitet påverkar den inte); i verktyget väljs bara
+  färgen. En bakgrund döljer linjer och ändformer bakom, men inte en undre
+  forms fyllning (den ritas i ritordningen som förut). Ska bakgrunden
+  också kunna sättas i stilmallen?
 
 - **0.8.28 efter provning**: Carl August har svarat (25 oktober) att
   bara den markerade linjen ska fortsättas, som nu; skrafferingens
