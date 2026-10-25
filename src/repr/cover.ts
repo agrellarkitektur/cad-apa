@@ -63,13 +63,16 @@ export function coverLines(ones: readonly (readonly Primitive[])[]): Primitive[]
         out.push(p);
         continue;
       }
-      const pieces = clipOutside(pts, over.map((c) => c.rings));
-      if (pieces.length === 1 && pieces[0].length === pts.length && pieces[0].every((q, k) => q === pts[k])) {
+      const pieces = clipOutsideAt(pts, over.map((c) => c.rings));
+      if (pieces.length === 1 && pieces[0].points.length === pts.length && pieces[0].points.every((q, k) => q === pts[k])) {
         out.push(p);
         continue;
       }
       changed = true;
-      for (const piece of pieces) out.push({ ...p, kind: 'polyline', points: piece, closed: false } as Primitive);
+      // Biten ritas streckad som den hela linjen (0.8.30, `dashPieces`).
+      const whole = p.kind === 'polyline' ? { points: p.points, closed: p.closed } : { points: pts, closed: false };
+      const from = (at: number) => (p.pen.dash?.length ? { dashFrom: { ...whole, at } } : {});
+      for (const piece of pieces) out.push({ ...p, kind: 'polyline', points: piece.points, closed: false, ...from(piece.at) } as Primitive);
     }
     return changed ? out : (prims as Primitive[]);
   });
@@ -81,14 +84,21 @@ export function coverLines(ones: readonly (readonly Primitive[])[]): Primitive[]
  * behålls om dess mitt ligger utanför.
  */
 export function clipOutside(pts: readonly Vec2[], areas: readonly (readonly (readonly Vec2[])[])[]): Vec2[][] {
+  return clipOutsideAt(pts, areas).map((p) => p.points);
+}
+
+/** Som `clipOutside`, och var varje bit börjar längs linjen (mm, 0.8.30). */
+export function clipOutsideAt(pts: readonly Vec2[], areas: readonly (readonly (readonly Vec2[])[])[]): { points: Vec2[]; at: number }[] {
   const inside = (q: Vec2) => areas.some((rings) => pointInRings(q, rings));
-  const out: Vec2[][] = [];
+  const out: { points: Vec2[]; at: number }[] = [];
   let run: Vec2[] | null = null;
+  let s = 0;
   const keep = (a: Vec2, b: Vec2) => {
     if (run && run[run.length - 1] === a) run.push(b);
-    else out.push((run = [a, b]));
+    else out.push({ points: (run = [a, b]), at: s + Math.hypot(a[0] - pts[k][0], a[1] - pts[k][1]) });
   };
-  for (let k = 0; k + 1 < pts.length; k++) {
+  let k = 0;
+  for (; k + 1 < pts.length; s += Math.hypot(pts[k + 1][0] - pts[k][0], pts[k + 1][1] - pts[k][1]), k++) {
     const a = pts[k];
     const b = pts[k + 1];
     const ts = [0, 1];

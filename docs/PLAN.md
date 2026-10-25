@@ -1136,6 +1136,25 @@ om de inte ryms. Grunden för det punktstreckade ovanför snittet i 0.10.
   0.8.25 och prövas för masken)
 - Kanske: DXF-underlagens streckade linjer ritas streckade
 
+*Byggd (25 oktober), samma format (13). Claudes val: sju inbyggda
+linjetyper (heldragen, streckad, kort och lång streckad, prickad,
+punktstreckad och streck med två punkter); de egna ligger i stilmallen
+(inte i projektet för sig), med nycklarna `egen-1`, `egen-2` …, och
+följer med när stilmallen sparas, öppnas (de egna som filen saknar är
+kvar) eller byts mot en förinställd. Mönstret skrivs som tal med
+mellanslag och decimalkomma; ett streck under 0,5 mm blir en punkt. En
+borttagen linjetyp ritas heldragen och står som *Saknas* i listan;
+stilmallen visar hur många som använder en egen linjetyp (i knappens
+tips). Pennornas linjetyp gäller linjerna, inte pilspetsar, trianglar
+och text. Streckningen räknas nu längs hela linjen: en sträcka slutar vid
+ett hörn skarpare än 35°, och mönstret töjs så att varje sträcka börjar
+och slutar med ett helt streck (en sluten kurva utan hörn får ett helt
+antal perioder). Masken är bakgrundens förval (kryssrutan *Bakgrund*), med
+*Egen färg* som alternativ i en lista; fyllningen *Mask* är ny. Masken är
+ritningens bakgrund, så den döljer också rutnätet. Inte gjort:
+DXF-underlagens streckade linjer (ritas heldragna som förut), och DXF-export
+finns inte ännu (0.12).*
+
 ### 0.8.31 Linjetyp och penna per objekt
 
 Carl Augusts synpunkt 25 oktober. Mellanstor, en session. Bygger på 0.8.30.

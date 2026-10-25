@@ -63,15 +63,16 @@ export function installRender(app: AppContext, parts: RenderParts) {
 
   /** Stilmallen för vyn: en förinställd mall med projektets texter, eller projektets egen. */
   // Samma förinställda stilmall ger samma objekt, så att planens cache träffar (0.8.3).
-  const presetStyles = new Map<string, { labels: StyleSheet['labels']; sheet: StyleSheet }>();
+  // Projektets egna linjetyper följer med (0.8.30), så att formerna ritas likadant.
+  const presetStyles = new Map<string, { labels: StyleSheet['labels']; lineTypes: StyleSheet['lineTypes']; sheet: StyleSheet }>();
   function styleFor(name: string | null): StyleSheet {
     const g = app.store.doc.graphics;
     const preset = name ? PRESETS.find((p) => p.name === name) : undefined;
     if (!preset) return g;
     const hit = presetStyles.get(preset.name);
-    if (hit && hit.labels === g.labels) return hit.sheet;
-    const sheet = { ...preset, labels: g.labels };
-    presetStyles.set(preset.name, { labels: g.labels, sheet });
+    if (hit && hit.labels === g.labels && hit.lineTypes === g.lineTypes) return hit.sheet;
+    const sheet = { ...preset, labels: g.labels, ...(g.lineTypes ? { lineTypes: g.lineTypes } : {}) };
+    presetStyles.set(preset.name, { labels: g.labels, lineTypes: g.lineTypes, sheet });
     return sheet;
   }
 

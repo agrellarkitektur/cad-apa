@@ -1,3 +1,4 @@
+import { normalizeLineTypes, type CustomLineType } from './lineTypes';
 /**
  * Stilmallen bestämmer hur ritningen ser ut för varje åtgärd: vanlig vy,
  * befintligt, rivs och nytt. Den är ren data, sparas i projektet och kan
@@ -71,6 +72,8 @@ export interface StyleSheet {
   pens?: Record<string, PenDef>;
   /** Typsnittet för hela projektet (0.8). Utelämnat = programmets tekniska typsnitt. */
   font?: string;
+  /** Projektets egna linjetyper (0.8.30), utöver de inbyggda (`LINE_TYPES`). */
+  lineTypes?: CustomLineType[];
 }
 
 /** En rad i penntabellen. */
@@ -78,6 +81,8 @@ export interface PenDef {
   weight: number;
   /** "ink", "muted" eller en färg som #rrggbb. */
   color?: string;
+  /** Linjetypens nyckel (0.8.30); utelämnad = heldragen. */
+  linetype?: string;
 }
 
 /** Litteramallar för en objekttyp. Rader skiljs med radbrytning. */
@@ -209,6 +214,7 @@ export function normalizeStyle(data: any): StyleSheet {
     labels: normalizeLabels(data.labels),
     ...(normalizePens(data.pens) ? { pens: normalizePens(data.pens)! } : {}),
     ...(typeof data.font === 'string' && data.font.trim() ? { font: data.font.trim() } : {}),
+    ...(normalizeLineTypes(data.lineTypes) ? { lineTypes: normalizeLineTypes(data.lineTypes)! } : {}),
   };
 }
 
@@ -218,7 +224,7 @@ function normalizePens(p: any): Record<string, PenDef> | null {
   for (const [k, v] of Object.entries<any>(p)) {
     const w = Number(v?.weight);
     if (!(w > 0)) continue;
-    out[k] = { weight: w, ...(typeof v.color === 'string' ? { color: v.color } : {}) };
+    out[k] = { weight: w, ...(typeof v.color === 'string' ? { color: v.color } : {}), ...(typeof v.linetype === 'string' && v.linetype !== 'solid' ? { linetype: v.linetype } : {}) };
   }
   return Object.keys(out).length ? out : null;
 }

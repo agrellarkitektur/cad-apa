@@ -1124,6 +1124,38 @@ projekt i 1 982 jämförelser.
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
 
+## Linjetyper och mask (0.8.30, format 13)
+
+Inga nya format: fälten är frivilliga.
+
+- **Linjetyperna** ligger i `src/core/lineTypes.ts`: `LINE_TYPES` (de
+  inbyggda, nycklarna sparas i projekten), stilmallens egna i
+  `StyleSheet.lineTypes` (`{ id, name, dash }`, nycklar `egen-n` från
+  `newLineTypeId`). `lineTypeDash(style, nyckel)` ger mönstret på papper i
+  mm, eller undefined för heldragen och okända nycklar. `Shape2DParams.linetype`
+  och `PenDef.linetype` är en nyckel; `shapePrims` tar stilmallen som sista
+  parameter och `markerPen` lägger på mönstret. `solidPen` tar bort det
+  för pilspetsar och trianglar. Listorna i gränssnittet ritas av
+  `lineTypeOptions` i `src/ui/lineTypePick.ts`, stilmallens del av
+  `lineTypeSection` i `src/ui/style/lineTypes.ts`. En förinställd
+  stilmall i en vy (`styleFor` i `render.ts`, `styleOf` i `sheet.ts`) får
+  projektets egna linjetyper
+- **Streckningen** räknas av `dashPieces` i `src/repr/dash.ts`, för
+  skärmen (`dashedPath` i `renderPrimitives.ts`) och PDF:en (`stroke`).
+  Linjen delas i sträckor vid hörn skarpare än `CORNER` (35°); varje
+  sträcka blir en bana med en `stroke-dasharray` (PDF: `[…] fas d`), så
+  att mönstret löper genom bågar och splines. En kapad bit
+  (`coverLines`, med `clipOutsideAt`) har `PolylinePrim.dashFrom`: linjen
+  den kommer ifrån och var den börjar (mm i modellen), så att mönstret
+  ritas som på den hela linjen (fasen, `stroke-dashoffset`). `toPaper`
+  räknar om `dashFrom` till papperet; `clipPrims` tar bort den (ramen på
+  bladet börjar om mönstret)
+- **Masken**: färgen `paper` på en bakgrund (`FILL_BACKGROUND`, förvalet)
+  eller fyllningen `mask` (`fillPrims` ger en hel yta i `paper`). `paper`
+  är `var(--paper)` på skärmen och vitt i PDF:en; som en hel fyllning
+  döljer den linjerna under (`coverLines`). Med `fillFront` ligger den
+  efter väggarna och döljer dem
+
 ## Bakgrund i fyllningar och ändformer (0.8.29, format 13)
 
 - **Bakgrunden**: `fillBackground` (#rrggbb) och `fillBackgroundOpacity`

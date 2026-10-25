@@ -1,11 +1,13 @@
 import type { StyleSheet } from '../../core/graphics';
 import { defaultMarkerPen, MARKER_PENS, type MarkerPenKey } from '../../repr/markerPens';
 import { escapeHtml } from '../labels';
+import { lineTypeOptions } from '../lineTypePick';
 import { weightPicker } from '../weightPick';
 import { fromHex, toHex } from './colors';
 
 /**
- * Pennor för pilar och markörer (0.8.26): linjetjocklek och färg per sorts
+ * Pennor för pilar och markörer (0.8.26): linjetjocklek, färg och (0.8.30)
+ * linjetyp per sorts
  * markör, för hela projektet. Färgen gäller också markörens text och fyllda
  * trianglar.
  */
@@ -20,12 +22,13 @@ export function penSection(style: StyleSheet): string {
       <div class="style-name"><b>${escapeHtml(label)}</b><span>${escapeHtml(hint)}</span></div>
       <div class="pen-weight"><span>Tjocklek</span>${weightPicker(`pen-${key}`, weight, `data-pen="${key}:weight"`, ' mm')}</div>
       <label><span>Färg</span><input type="color" data-pen="${key}:color" value="${toHex(own?.color ?? 'ink')}"></label>
+      <label><span>Linjetyp</span><select data-pen="${key}:linetype">${lineTypeOptions(style, own?.linetype)}</select></label>
       ${reset}
     </div>`;
   }).join('');
   return `<section class="style-labels style-pens">
     <h3>Pennor för pilar och markörer</h3>
-    <p class="note">Gäller hela projektet, i planen, fasaderna, sektionerna och på bladen. Färgen gäller också markörens text. Svart följer skärmens tema.</p>
+    <p class="note">Gäller hela projektet, i planen, fasaderna, sektionerna och på bladen. Färgen gäller också markörens text. Svart följer skärmens tema. Linjetypen gäller linjerna; pilspetsar och trianglar är heldragna.</p>
     ${rows}
   </section>`;
 }
@@ -33,7 +36,7 @@ export function penSection(style: StyleSheet): string {
 /** Ändra en penna i `style` (en kopia) efter fältet; null om fältet inte hör hit. */
 export function applyPenField(style: StyleSheet, input: HTMLInputElement | HTMLSelectElement): string | null {
   if (!input.dataset.pen) return null;
-  const [key, field] = input.dataset.pen.split(':') as [MarkerPenKey, 'weight' | 'color'];
+  const [key, field] = input.dataset.pen.split(':') as [MarkerPenKey, 'weight' | 'color' | 'linetype'];
   const pens = (style.pens ??= {});
   const pen = { ...defaultMarkerPen(key), ...pens[key] };
   if (field === 'weight' && Number(input.value) > 0) pen.weight = Number(input.value);
@@ -42,8 +45,12 @@ export function applyPenField(style: StyleSheet, input: HTMLInputElement | HTMLS
     if (c === 'ink' || c === 'paper') delete pen.color;
     else pen.color = c;
   }
+  if (field === 'linetype') {
+    if (input.value === 'solid') delete pen.linetype;
+    else pen.linetype = input.value;
+  }
   // Förvalet sparas inte, så att en senare ändring av förvalen slår igenom.
-  if (pen.weight === defaultMarkerPen(key).weight && !pen.color) delete pens[key];
+  if (pen.weight === defaultMarkerPen(key).weight && !pen.color && !pen.linetype) delete pens[key];
   else pens[key] = pen;
   if (!Object.keys(pens).length) delete style.pens;
   return 'Ändra pennor';

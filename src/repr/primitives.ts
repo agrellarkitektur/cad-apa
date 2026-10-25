@@ -1,3 +1,4 @@
+import type { DashFrom } from './dash';
 import type { ActionKey, Color, FillDef } from '../core/graphics';
 
 /**
@@ -60,6 +61,8 @@ export interface PolylinePrim extends Base {
   points: readonly Vec2[];
   closed: boolean;
   pen: Pen;
+  /** En bit av en längre streckad linje (0.8.30): mönstret följer den hela. */
+  dashFrom?: DashFrom;
 }
 
 /**

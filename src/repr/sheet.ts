@@ -95,7 +95,7 @@ export interface ViewPrimOptions {
 
 function styleOf(doc: ProjectDoc, name: string | undefined): StyleSheet {
   const preset = name ? PRESETS.find((p) => p.name === name) : undefined;
-  return preset ? { ...preset, labels: doc.graphics.labels } : doc.graphics;
+  return preset ? { ...preset, labels: doc.graphics.labels, ...(doc.graphics.lineTypes ? { lineTypes: doc.graphics.lineTypes } : {}) } : doc.graphics;
 }
 
 /** En vys inställningar som de gäller när den ritas. */
@@ -185,7 +185,7 @@ export function toPaper(prims: readonly Primitive[], at: Vec2, scale: number): P
       case 'line':
         return { ...p, a: t(p.a), b: t(p.b) };
       case 'polyline':
-        return { ...p, points: p.points.map(t) };
+        return { ...p, points: p.points.map(t), ...(p.dashFrom ? { dashFrom: { ...p.dashFrom, points: p.dashFrom.points.map(t), at: p.dashFrom.at / scale } } : {}) };
       case 'region':
         return { ...p, rings: p.rings.map((r) => r.map(t)) };
       case 'arc':

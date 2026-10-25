@@ -372,6 +372,13 @@
   stroke-width: 1;
 }
 
+/* Masken (0.8.30): ritningens bakgrund med streckad kant. */
+.pattern-swatch .pattern-mask {
+  fill: var(--paper);
+  stroke: var(--muted);
+  stroke-width: 1;
+}
+
 .opt .pattern-pick label {
   padding: 2px 3px;
 }

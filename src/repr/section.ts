@@ -9,7 +9,7 @@ import { roofPlanes, type RoofParams } from '../elements/roof';
 import { slopeSymbol, type RoofSlopeParams } from '../elements/roofSlope';
 import type { PlanContext } from '../elements/registry';
 import { createContext } from './context';
-import { markerPen, withWeight } from './markerPens';
+import { markerPen, solidPen, withWeight } from './markerPens';
 import { solidTriangles } from './mesh';
 import { applyStyle, type Pickable } from './plan';
 import type { Pen, Primitive, Vec2 } from './primitives';
@@ -385,7 +385,7 @@ function levelMark(x: number, z: number, height: number, label: string, s: numbe
         ],
       ],
       fill: { kind: 'none' },
-      outline: pen,
+      outline: solidPen(pen),
       ownFill: true,
       origin,
     },

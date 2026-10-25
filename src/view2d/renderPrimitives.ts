@@ -1,3 +1,4 @@
+import { dashPieces, type DashFrom } from '../repr/dash';
 import type { FillDef } from '../core/graphics';
 import type { Camera } from './camera';
 import { imageCorners, type Pen, type PenColor, type Primitive } from '../repr/primitives';
@@ -34,7 +35,7 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
   const paperToPx = opt.drawingScale * cam.scale; // px per pappers-mm
   const mode = opt.lineWeights ?? 'screen';
   const stroke = (pen: Pen) => strokeAttrs(pen, paperToPx, mode);
-  const dashed = (points: readonly (readonly [number, number])[], closed: boolean, pen: Pen) => dashedPath(points, closed, pen, cam, paperToPx, mode);
+  const dashed = (points: readonly (readonly [number, number])[], closed: boolean, pen: Pen, from?: DashFrom) => dashedPath(points, closed, pen, cam, paperToPx, mode, from);
   const out: string[] = [];
   const patterns = new Map<string, string>();
   // Likadana skrafferingar delar mönster (0.8.3), t.ex. i ett DXF-underlag med många ytor.
@@ -79,7 +80,7 @@ export function renderPrimitives(prims: readonly Primitive[], cam: Camera, opt: 
         break;
       }
       case 'polyline': {
-        if (p.pen.dash?.length) out.push(dashed(p.points, p.closed, p.pen));
+        if (p.pen.dash?.length) out.push(dashed(p.points, p.closed, p.pen, p.dashFrom));
         else out.push(`<path d="${ring(p.points, cam, p.closed)}" ${stroke(p.pen)} fill="none"/>`);
         break;
       }
@@ -198,38 +199,24 @@ function strokeAttrs(pen: Pen, paperToPx: number, mode: LineWeights): string {
 }
 
 /**
- * Streckad linje genom punkter, sträcka för sträcka. Mönstret töjs lite på
- * varje sträcka så att den börjar och slutar med ett helt streck: då möts
- * strecken i hörnen och de två sidorna av en riven vägg blir lika.
+ * Streckad linje genom punkter (0.8.30): mönstret löper obrutet genom
+ * mjuka brytpunkter och töjs så att varje sträcka mellan skarpa hörn
+ * börjar och slutar med ett helt streck (`dashPieces`).
  */
-function dashedPath(points: readonly (readonly [number, number])[], closed: boolean, pen: Pen, cam: Camera, paperToPx: number, mode: LineWeights): string {
+function dashedPath(points: readonly (readonly [number, number])[], closed: boolean, pen: Pen, cam: Camera, paperToPx: number, mode: LineWeights, from?: DashFrom): string {
   const base = pen.dash!.map((d) => Math.max(2, d * paperToPx));
-  // Ett udda antal värden upprepas i SVG två gånger; gör det jämnt.
-  const pattern = base.length % 2 ? [...base, ...base] : base;
-  const period = pattern.reduce((a, b) => a + b, 0);
-  const first = pattern[0];
   const w = penPx(pen.weight, paperToPx, mode, 0.75);
   const op = pen.opacity !== undefined && pen.opacity < 1 ? `;stroke-opacity:${f(pen.opacity)}` : '';
-  const style = `style="stroke:${color(pen.color ?? 'ink')}${op}" stroke-width="${f(w)}" stroke-linecap="round" fill="none"`;
+  const style = `style="stroke:${color(pen.color ?? 'ink')}${op}" stroke-width="${f(w)}" stroke-linecap="round" stroke-linejoin="round" fill="none"`;
   const pts = points.map((q) => cam.toScreen(q));
-  if (closed && pts.length > 2) pts.push(pts[0]);
-  const parts: string[] = [];
-  for (let i = 0; i + 1 < pts.length; i++) {
-    const a = pts[i];
-    const b = pts[i + 1];
-    const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-    if (len < 0.5) continue;
-    const d = `M${f(a[0])} ${f(a[1])}L${f(b[0])} ${f(b[1])}`;
-    const n = Math.round((len - first) / period);
-    if (n < 1) {
-      // För kort för ett mönster: ett streck i varje ände och ett mellanrum.
-      parts.push(len > first * 1.6 ? `<path d="${d}" ${style} stroke-dasharray="${f(len * 0.38)} ${f(len * 0.24)}"/>` : `<path d="${d}" ${style}/>`);
-      continue;
-    }
-    const k = len / (n * period + first);
-    parts.push(`<path d="${d}" ${style} stroke-dasharray="${pattern.map((x) => f(x * k)).join(' ')}"/>`);
-  }
-  return parts.join('');
+  const whole = from && { points: from.points.map((q) => cam.toScreen(q)), closed: from.closed, at: from.at * cam.scale };
+  return dashPieces(pts, closed, base, whole)
+    .map((d) => {
+      const path = d.points.map((q, i) => `${i ? 'L' : 'M'}${f(q[0])} ${f(q[1])}`).join('');
+      const dash = d.dash ? ` stroke-dasharray="${d.dash.map(f).join(' ')}"${d.offset > 1e-3 ? ` stroke-dashoffset="${f(d.offset)}"` : ''}` : '';
+      return `<path d="${path}" ${style}${dash}/>`;
+    })
+    .join('');
 }
 
 function normalizeAngle(a: number): number {

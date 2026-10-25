@@ -1,4 +1,5 @@
 import type { Color, FillDef, PenDef, StyleSheet } from '../core/graphics';
+import { lineTypeDash } from '../core/lineTypes';
 import type { Pen } from './primitives';
 
 /**
@@ -27,12 +28,23 @@ export function defaultMarkerPen(key: MarkerPenKey): PenDef {
   return { weight: MARKER_PENS.find((m) => m.key === key)!.weight };
 }
 
-/** Pennan för en sorts markör, ur stilmallen eller förvalet. */
+/**
+ * Pennan för en sorts markör, ur stilmallen eller förvalet, med linjetypen
+ * (0.8.30). Pilspetsar och fyllda trianglar ritas heldragna (`solidPen`).
+ */
 export function markerPen(style: StyleSheet | undefined, key: MarkerPenKey): Pen {
   const own = style?.pens?.[key];
   const weight = own?.weight ?? defaultMarkerPen(key).weight;
   const color = own?.color && own.color !== 'ink' ? (own.color as Pen['color']) : undefined;
-  return color ? { weight, color } : { weight };
+  const dash = lineTypeDash(style, own?.linetype);
+  return { weight, ...(color ? { color } : {}), ...(dash ? { dash } : {}) };
+}
+
+/** Samma penna heldragen, för pilspetsar och trianglar (0.8.30). */
+export function solidPen(pen: Pen): Pen {
+  if (!pen.dash) return pen;
+  const { dash: _, ...rest } = pen;
+  return rest;
 }
 
 /** Samma penna med en annan tjocklek, t.ex. för text (färgen följer med). */

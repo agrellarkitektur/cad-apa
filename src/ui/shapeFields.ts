@@ -1,9 +1,10 @@
 import { updateParams } from '../core/commands';
 import type { Element, Id, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
-import { CAP_LABELS, CAP_SIZE, FILL_BACKGROUND, FILL_COLOR, LINE_TYPES, PATH_LABELS, segmentCount, type CapKind, type Shape2DParams } from '../elements/drawing2d';
+import { BACKGROUND_COLOR, CAP_LABELS, CAP_SIZE, FILL_BACKGROUND, FILL_COLOR, PATH_LABELS, segmentCount, type CapKind, type Shape2DParams } from '../elements/drawing2d';
 import { resolveParams } from '../elements/registry';
 import { STRAIGHT } from '../geometry/arc';
+import { lineTypeOptions } from './lineTypePick';
 import { patternPicker } from './patternPick';
 import { weightPicker } from './weightPick';
 
@@ -21,11 +22,16 @@ const comma = (n: number) => n.toLocaleString('sv-SE');
  */
 export function fillFields(name: string, p: Pick<Shape2DParams, 'fill' | 'fillColor' | 'fillAngle' | 'fillSpacing' | 'fillBackground' | 'fillBackgroundOpacity'>, attrs: (key: string) => string): string {
   const color = p.fillColor ?? FILL_COLOR;
-  const more = p.fill
-    ? `<div class="fields"><label class="field"><span>Färg</span><input type="color" ${attrs('fillColor')} value="${color}"></label>
-    ${p.fill !== 'solid' ? hatchFields(p, attrs) : ''}</div>
-    ${p.fill !== 'solid' ? backgroundFields({ fillBackground: p.fillBackground, fillBackgroundOpacity: p.fillBackgroundOpacity }, attrs) : ''}`
-    : '';
+  const hatched = p.fill === 'hatch' || p.fill === 'cross';
+  // Masken (0.8.30) har ingen egen färg.
+  const more =
+    p.fill === 'mask'
+      ? '<p class="note">Masken döljer det som ligger under och syns som ritningens bakgrund (papperet i PDF:en).</p>'
+      : p.fill
+        ? `<div class="fields"><label class="field"><span>Färg</span><input type="color" ${attrs('fillColor')} value="${color}"></label>
+    ${hatched ? hatchFields(p, attrs) : ''}</div>
+    ${hatched ? backgroundFields({ fillBackground: p.fillBackground, fillBackgroundOpacity: p.fillBackgroundOpacity }, attrs) : ''}`
+        : '';
   return `<div class="field-label">Fyllning</div>${patternPicker(name, p.fill ?? 'none', attrs('pattern'), { color, angle: p.fillAngle })}${more}`;
 }
 
@@ -47,7 +53,11 @@ export function backgroundFields(p: { fillBackground?: string | null; fillBackgr
   const op = p.fillBackgroundOpacity === null ? NaN : (p.fillBackgroundOpacity ?? 100);
   const box = `<label class="check"><input type="checkbox" ${attrs('fillBackgroundOn')}${on && !mixed ? ' checked' : ''}${mixed ? ' title="Olika"' : ''}> Bakgrund</label>`;
   if (!on) return box;
-  return `${box}<div class="fields"><label class="field"><span>Bakgrundens färg</span><input type="color" ${attrs('fillBackground')} value="${p.fillBackground ?? FILL_BACKGROUND}"${mixed ? ' title="Olika"' : ''}></label>
+  // Masken (0.8.30, förval) eller en egen färg.
+  const mask = p.fillBackground === FILL_BACKGROUND;
+  const kind = `<label class="field"><span>Bakgrund</span><select ${attrs('fillBackgroundKind')}>${mixed ? '<option selected disabled>Olika</option>' : ''}<option value="mask"${mask ? ' selected' : ''}>Mask</option><option value="color"${!mask && !mixed ? ' selected' : ''}>Egen färg</option></select></label>`;
+  const colorField = mask || mixed ? '' : `<label class="field"><span>Bakgrundens färg</span><input type="color" ${attrs('fillBackground')} value="${p.fillBackground}"></label>`;
+  return `${box}<div class="fields">${kind}${colorField}
     <label class="field"><span>Bakgrundens opacitet</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="10" inputmode="decimal" autocomplete="off" ${attrs('fillBackgroundOpacity')} value="${Number.isFinite(op) ? Math.round(op) : ''}"${Number.isFinite(op) ? '' : ' placeholder="Olika"'}><i>%</i></span></label></div>`;
 }
 
@@ -63,7 +73,7 @@ export function shapeSmartFields(doc: ProjectDoc, els: Element[]): string | null
   const attrs = (k: string) => `data-key="d2:${k}"`;
   const parts: string[] = [];
   // Fyllningens färg (0.8.28), när alla har en fyllning; tom ruta = olika.
-  const color = ps.every((q) => q.fill) ? (ps.every((q) => (q.fillColor ?? FILL_COLOR) === (ps[0].fillColor ?? FILL_COLOR)) ? (ps[0].fillColor ?? FILL_COLOR) : null) : undefined;
+  const color = ps.every((q) => q.fill && q.fill !== 'mask') ? (ps.every((q) => (q.fillColor ?? FILL_COLOR) === (ps[0].fillColor ?? FILL_COLOR)) ? (ps[0].fillColor ?? FILL_COLOR) : null) : undefined;
   const colorField = color === undefined ? '' : `<label class="field"><span>Fyllningens färg</span><input type="color" ${attrs('fillColor')} value="${color ?? FILL_COLOR}"${color === null ? ' title="Olika"' : ''}></label>`;
   const hatch = ps.every((q) => q.fill === 'hatch' || q.fill === 'cross') ? hatchFields({ fillAngle: same('fillAngle'), fillSpacing: same('fillSpacing') }, attrs) : '';
   if (colorField || hatch) parts.push(`<div class="fields">${colorField}${hatch}</div>`);
@@ -129,7 +139,7 @@ export function shapeFields(doc: ProjectDoc, el: Element): string {
   return `<div class="fields">
         <label class="field"><span>Form</span><input value="${PATH_LABELS[p.shape] ?? 'Linje'}${arcs ? ` · ${arcs} ${arcs === 1 ? 'båge' : 'bågar'}` : ''}" readonly></label>
         <div class="field"><span>Penna</span>${weightPicker('d2-weight-panel', p.weight, 'data-key="d2:weight"', ' mm')}</div>
-        ${p.weight ? `<label class="field"><span>Linjetyp</span><select data-key="d2:linetype">${Object.entries(LINE_TYPES).map(([k, v]) => `<option value="${k}"${k === p.linetype ? ' selected' : ''}>${v.label}</option>`).join('')}</select></label>
+        ${p.weight ? `<label class="field"><span>Linjetyp</span><select data-key="d2:linetype">${lineTypeOptions(doc.graphics, p.linetype)}</select></label>
         <label class="field"><span>Linjens färg</span><input type="color" data-key="d2:color" value="${p.color ?? '#1d2328'}"></label>` : ''}
       </div>
       <label class="check"><input type="checkbox" data-key="d2:closed"${p.closed ? ' checked' : ''}> Sluten</label>
@@ -156,7 +166,8 @@ export function shapeChange(store: DocStore, ids: Id[], name: string, input: HTM
   else if (name === 'fillBackgroundOn') {
     const on = (input as HTMLInputElement).checked;
     updateParams(store, ids, on ? { fillBackground: FILL_BACKGROUND } : { fillBackground: undefined, fillBackgroundOpacity: undefined }, on ? 'Bakgrund' : 'Ingen bakgrund');
-  } else if (name === 'fillBackground') updateParams(store, ids, { fillBackground: v }, 'Ändra bakgrundens färg');
+  } else if (name === 'fillBackgroundKind') updateParams(store, ids, { fillBackground: v === 'mask' ? FILL_BACKGROUND : BACKGROUND_COLOR }, v === 'mask' ? 'Bakgrunden som mask' : 'Bakgrund med egen färg');
+  else if (name === 'fillBackground') updateParams(store, ids, { fillBackground: v }, 'Ändra bakgrundens färg');
   else if (name === 'fillBackgroundOpacity' && percent(num) !== null) updateParams(store, ids, { fillBackgroundOpacity: percent(num) === 100 ? undefined : percent(num) }, 'Ändra bakgrundens opacitet');
   else if (name === 'fillColor') updateParams(store, ids, { fillColor: v }, 'Ändra fyllningens färg');
   else if (name === 'fillAngle' && Number.isFinite(num)) updateParams(store, ids, { fillAngle: num }, 'Ändra vinkel');

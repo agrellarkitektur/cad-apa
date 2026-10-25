@@ -1,10 +1,18 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.29.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.30.
 
 ## Läget
 
+- **0.8.30 Linjetyper och mask är klar** på `main` (samma format, 13):
+  sju inbyggda linjetyper och egna i stilmallen (*Linjetyper*, mönster i
+  mm på papper), för 2D-former och pennorna i stilmallen; streckningen
+  löper genom bågar och splines och fortsätter förbi en täckande
+  fyllning (`src/repr/dash.ts`, `dashFrom`); bakgrunden är från början en
+  mask (ritningens bakgrund, papperet i PDF:en), och fyllningen *Mask* är
+  ny. Prövat med `tests/v0830.test.ts` (alla 400 tester går igenom) och i
+  webbläsaren. Står i README, PLAN.md (med Claudes val) och UTVECKLING.md.
 - **0.8.29 Bakgrund i fyllningar och ändformer är klar** på `main`
   (samma format, 13): skraffering och korsskraffering kan få en bakgrund
   (kryssrutan *Bakgrund*, färg förval vit, egen opacitet) i egenskaperna,
@@ -84,9 +92,8 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.22 Småsaker~~, ~~0.8.23 Granskning~~, ~~0.8.24 2D-form del 2~~,
   ~~0.8.25 Ritordning och fyllningar~~, ~~0.8.26 Pennor i stilmallen~~,
   ~~0.8.27 Granskning~~, ~~0.8.28 Rättelser i 2D-formen~~,
-  ~~0.8.29 Bakgrund i fyllningar och ändformer~~ (klara)
-- **0.8.30 Linjetyper och mask** (också egna; bakgrunden som mask utan
-  egen färg; grunden för det punktstreckade i 0.10)
+  ~~0.8.29 Bakgrund i fyllningar och ändformer~~,
+  ~~0.8.30 Linjetyper och mask~~ (klara)
 - **0.8.31 Linjetyp och penna per objekt** (också väggar; Stilmallens
   eller egen)
 - **0.8.32 Granskning** (också testerna: dubbletter, tester som låser
@@ -115,18 +122,27 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.29 syns på webbhotellet (numret vid alfa-knappen) och
-om bakgrunden och ändformerna fungerar som han tänkt. Läs synpunktsfilen
-och sortera ny Inkorg. Linjetyperna gäller också väggar m.fl., men det
-kommer i 0.8.31 (bekräftat 25 oktober). Bygg **0.8.30 Linjetyper och mask**; masken är en bakgrund utan
-egen färg (ritningens bakgrund på skärmen, papperet i PDF:en) och ska
-dölja väggarna när fyllningen ligger framför dem (`fillFront`).
-Att börja med: `LINE_TYPES` och `penOf` i `src/elements/drawing2d.ts`
-(streckmönstret på papper, `Pen.dash`); de kapade linjerna från
-`coverLines` börjar om strecket i varje bit, så ett jämnt mönster behöver
-räkna fasen.
+Fråga först om 0.8.30 syns på webbhotellet (numret vid alfa-knappen) och
+om linjetyperna, de egna linjetyperna och masken fungerar som han tänkt.
+Läs synpunktsfilen och sortera ny Inkorg. Bygg **0.8.31 Linjetyp och
+penna per objekt**: *Stilmallens* (förval) eller egen penna och linjetyp
+för väggar, dörrar, fönster, rum och tak, i planen, fasaderna och
+sektionerna. Att börja med: `applyStyle` i `src/repr/plan.ts` (där
+stilmallens kontur och linjer läggs på) och `PART_PEN` i
+`src/repr/section.ts`; linjetyperna slås upp med `lineTypeDash` och
+listan ritas med `lineTypeOptions`.
 
 ## Att fråga Carl August om
+
+- **0.8.30 efter provning** (Claudes val, se PLAN.md): vilka sju
+  inbyggda linjetyper som finns och deras mönster; att de egna ligger i
+  stilmallen och följer med den (också vid byte till en förinställd); att
+  mönstret skrivs med mellanslag och decimalkomma; att pennornas linjetyp
+  inte gäller pilspetsar, trianglar och text; att hörn skarpare än 35°
+  börjar om mönstret (med ett helt streck i varje hörn); att masken också
+  döljer rutnätet på skärmen. Ska DXF-underlagens streckade linjer ritas
+  streckade (inte gjort)? Behövs en förhandsvisning av linjetypen i
+  listorna (nu bara namnet), eller räcker bilden i stilmallen?
 
 - **0.8.29 efter provning** (Claudes val, se PLAN.md): bakgrunden slås på
   med en kryssruta och är vit från början; opaciteten är bakgrundens egen

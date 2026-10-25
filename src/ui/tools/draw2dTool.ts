@@ -245,7 +245,7 @@ export class Draw2DTool implements ViewTool, PointTaker {
   /** Parametrarna för formen genom punkterna. */
   private params(pts: Vec2[], closed: boolean): Record<string, unknown> {
     const o = this.options;
-    const fill = o.fill ? { fill: o.fill, ...(o.fill !== 'solid' && o.fillBackground ? { fillBackground: o.fillBackground } : {}) } : {};
+    const fill = o.fill ? { fill: o.fill, ...((o.fill === 'hatch' || o.fill === 'cross') && o.fillBackground ? { fillBackground: o.fillBackground } : {}) } : {};
     return { ...chainFrom(o.kind, pts, closed), weight: o.weight, linetype: o.linetype, ...fill };
   }
 
@@ -292,10 +292,10 @@ export class Draw2DTool implements ViewTool, PointTaker {
       const own = resolveParams<Shape2DParams>(this.host.store.doc, el);
       const bulges = own.shape === 'spline' ? undefined : [...this.base.bulges, ...pts.slice(this.base.n).map(() => 0)];
       const caps = this.base.reversed ? { startCap: own.endCap, endCap: own.startCap } : {};
-      return shapePrims({ ...own, ...caps, points: pts as [number, number][], bulges, closed: false, weight: own.weight || 0.13 }, undefined, false, this.host.view.drawingScale);
+      return shapePrims({ ...own, ...caps, points: pts as [number, number][], bulges, closed: false, weight: own.weight || 0.13 }, undefined, false, this.host.view.drawingScale, this.host.store.doc.graphics);
     }
     const p = { fillAngle: 45, fillSpacing: 2, ...this.params(pts, false) } as unknown as Shape2DParams;
-    return shapePrims({ ...p, weight: p.weight || 0.13 }, undefined, false, this.host.view.drawingScale);
+    return shapePrims({ ...p, weight: p.weight || 0.13 }, undefined, false, this.host.view.drawingScale, this.host.store.doc.graphics);
   }
 
   hintText(): string {

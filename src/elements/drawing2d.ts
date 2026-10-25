@@ -1,6 +1,7 @@
 import { arcFromBulge, arcSegments, bulgeThrough, STRAIGHT, type Arc } from '../geometry/arc';
 import { dist } from '../geometry/vec';
-import type { Color, FillDef } from '../core/graphics';
+import type { Color, FillDef, StyleSheet } from '../core/graphics';
+import { lineTypeDash } from '../core/lineTypes';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import type { ElementType } from './registry';
 
@@ -19,15 +20,8 @@ import type { ElementType } from './registry';
 export type ShapeKind = 'polyline' | 'rect' | 'arc' | 'circle' | 'spline';
 /** Vad formen är: en kedja av raka segment och bågar, eller en spline (0.8.24, format 13). */
 export type ShapePath = 'polyline' | 'spline';
-export type LineType = 'solid' | 'dashed' | 'dotted' | 'dashdot';
-
-/** Linjetypernas streckmönster på papper, mm. */
-export const LINE_TYPES: Record<LineType, { label: string; dash?: number[] }> = {
-  solid: { label: 'Heldragen' },
-  dashed: { label: 'Streckad', dash: [3, 1.5] },
-  dotted: { label: 'Prickad', dash: [0.3, 1] },
-  dashdot: { label: 'Streckprickad', dash: [5, 1, 0.3, 1] },
-};
+/** Linjetypens nyckel: en inbyggd eller en egen i stilmallen (0.8.30, `src/core/lineTypes.ts`). */
+export type LineType = string;
 
 /**
  * Linjebredderna som går att välja, mm på papper. 0 = ingen linje (0.8.19):
@@ -50,7 +44,11 @@ export const PEN_COLORS: Record<number, { name: string; color: string }> = {
   1.4: { name: 'Gul', color: '#e8b800' },
 };
 
-export type FillPattern = 'solid' | 'hatch' | 'cross';
+/**
+ * Fyllningens mönster. `mask` (0.8.30) är en yta utan egen färg: den döljer
+ * det som ligger under och syns som ritningens bakgrund (papperet i PDF:en).
+ */
+export type FillPattern = 'solid' | 'hatch' | 'cross' | 'mask';
 
 export interface Shape2DParams {
   /**
@@ -88,9 +86,11 @@ export interface Shape2DParams {
    */
   fillOpacity?: number;
   /**
-   * Skrafferingens bakgrund (0.8.29) som #rrggbb; utelämnad = ingen. En hel
-   * yta under strecken, med egen opacitet i procent (utelämnad = 100). Bara
-   * skraffering och korsskraffering; en hel fyllning har redan sin färg.
+   * Skrafferingens bakgrund (0.8.29) som #rrggbb, eller `paper` för en mask
+   * (0.8.30, förvalet): ritningens bakgrund, utan egen färg. Utelämnad =
+   * ingen. En hel yta under strecken, med egen opacitet i procent
+   * (utelämnad = 100). Bara skraffering och korsskraffering; en hel
+   * fyllning har redan sin färg.
    */
   fillBackground?: string;
   fillBackgroundOpacity?: number;
@@ -108,8 +108,11 @@ export interface Shape2DParams {
 /** Fyllningens inställningar, samma för 2D-former och rum (0.8.25). */
 export type FillParams = Pick<Shape2DParams, 'fill' | 'fillColor' | 'fillAngle' | 'fillSpacing' | 'opacity' | 'fillOpacity' | 'fillBackground' | 'fillBackgroundOpacity'>;
 
-/** Bakgrundens förvalda färg (0.8.29): papperets vita. */
-export const FILL_BACKGROUND = '#ffffff';
+/** Bakgrundens förval (0.8.30): en mask, ritningens bakgrund utan egen färg. */
+export const FILL_BACKGROUND = 'paper';
+
+/** Färgen som föreslås när bakgrunden får en egen färg (0.8.29). */
+export const BACKGROUND_COLOR = '#ffffff';
 
 /**
  * Fyllningens ytor för konturen `rings` (0.8.25): en hel fyllning eller en
@@ -119,7 +122,7 @@ export function fillPrims(rings: readonly (readonly Vec2[])[], p: FillParams, or
   if (!p.fill) return [];
   const fills: FillDef[] = [];
   // Bakgrunden under skrafferingen (0.8.29), med egen opacitet.
-  const back = p.fill !== 'solid' && p.fillBackground ? backgroundOpacity(p) : 0;
+  const back = (p.fill === 'hatch' || p.fill === 'cross') && p.fillBackground ? backgroundOpacity(p) : 0;
   if (back > 0) fills.push({ kind: 'solid', color: p.fillBackground as Color, ...(back < 1 ? { opacity: back } : {}) });
   const op = opacitiesOf(p).fill;
   if (op > 0) {
@@ -128,7 +131,8 @@ export function fillPrims(rings: readonly (readonly Vec2[])[], p: FillParams, or
     const angle = Number.isFinite(p.fillAngle) ? p.fillAngle : 45;
     const spacing = p.fillSpacing > 0 ? p.fillSpacing : 2;
     const hatch = (a: number): FillDef => ({ kind: 'hatch', color, angle: a, spacing, weight: 0.13, ...alpha });
-    fills.push(...(p.fill === 'solid' ? [{ kind: 'solid', color, ...alpha } as FillDef] : p.fill === 'cross' ? [hatch(angle), hatch(angle + 90)] : [hatch(angle)]));
+    const solid = (c: Color): FillDef => ({ kind: 'solid', color: c, ...alpha });
+    fills.push(...(p.fill === 'mask' ? [solid('paper')] : p.fill === 'solid' ? [solid(color)] : p.fill === 'cross' ? [hatch(angle), hatch(angle + 90)] : [hatch(angle)]));
   }
   return fills.map((fill): Primitive => ({ kind: 'region', role: 'cut', rings, fill, outline: null, noOutline: true, ownFill: true, ...(under ? { under: true } : {}), origin: origin && { ...origin, part: 'fyllning' } }));
 }
@@ -177,6 +181,7 @@ export const PATTERN_LABELS: Record<FillPattern, string> = {
   solid: 'Hel fyllning',
   hatch: 'Skraffering',
   cross: 'Korsskraffering',
+  mask: 'Mask',
 };
 
 /** Antalet segment: ett mindre än punkterna, eller lika många i en sluten form. */
@@ -259,8 +264,8 @@ export function catmullRom(pts: Vec2[], closed: boolean): Vec2[] {
   return out;
 }
 
-function penOf(p: Shape2DParams, opacity: number): Pen {
-  const dash = LINE_TYPES[p.linetype]?.dash;
+function penOf(p: Shape2DParams, opacity: number, style?: StyleSheet): Pen {
+  const dash = lineTypeDash(style, p.linetype);
   return { weight: p.weight, ...(p.color ? { color: p.color as Color } : {}), ...(dash ? { dash } : {}), ...(opacity < 1 ? { opacity } : {}) };
 }
 
@@ -272,9 +277,9 @@ export const FILL_COLOR = '#9aa0a6';
  * ändformerna (0.8.24). Linjen finns också med tjockleken 0; den ritas inte,
  * men går att klicka på och snäppa mot. Med `noFill` ritas ingen fyllning
  * (Visa → Fyllningar, 0.8.22). `scale` är modellens mm per mm på papper,
- * för ändformernas storlek.
+ * för ändformernas storlek, och `style` ger de egna linjetyperna (0.8.30).
  */
-export function shapePrims(p: Shape2DParams, origin?: Primitive['origin'], noFill = false, scale = 1): Primitive[] {
+export function shapePrims(p: Shape2DParams, origin?: Primitive['origin'], noFill = false, scale = 1, style?: StyleSheet): Primitive[] {
   const { points, closed } = shapePoints(p);
   if (points.length < 2) return [];
   const out: Primitive[] = [];
@@ -283,7 +288,7 @@ export function shapePrims(p: Shape2DParams, origin?: Primitive['origin'], noFil
   let line = points;
   if (caps) {
     const size = (p.capSize ?? CAP_SIZE) * scale;
-    const pen: Pen = { ...penOf(p, op.line), dash: undefined };
+    const pen: Pen = { ...penOf(p, op.line) };
     delete pen.dash;
     const o = origin && { ...origin, part: 'ände' };
     let cutA = 0;
@@ -302,7 +307,7 @@ export function shapePrims(p: Shape2DParams, origin?: Primitive['origin'], noFil
   }
   // Helt genomskinlig ritas som ingen linje: går att klicka på, syns inte.
   // Den kapade linjen ritas; den hela går att klicka på (tjocklek 0) där ändformen täcker.
-  const pen = op.line > 0 ? penOf(p, op.line) : { ...penOf(p, 1), weight: 0 };
+  const pen = op.line > 0 ? penOf(p, op.line, style) : { ...penOf(p, 1, style), weight: 0 };
   if (line !== points) {
     if (line.length >= 2) out.push({ kind: 'polyline', points: line, closed: false, pen, origin: origin && { ...origin, part: 'linje' } });
     out.push({ kind: 'polyline', points, closed, pen: { ...pen, weight: 0 }, origin });
@@ -393,7 +398,7 @@ export const shape2dType: ElementType<Shape2DParams> = {
   defaults: () => ({ shape: 'polyline', points: [], weight: 0.25, linetype: 'solid', fillAngle: 45, fillSpacing: 2 }),
   plan(el, ctx) {
     const p = ctx.params<Shape2DParams>(el);
-    return shapePrims(p, { objectId: el.id, objectType: 'Shape2D', part: p.shape }, !!ctx.view.hide?.includes('fill'), ctx.scale);
+    return shapePrims(p, { objectId: el.id, objectType: 'Shape2D', part: p.shape }, !!ctx.view.hide?.includes('fill'), ctx.scale, ctx.style);
   },
   // Mitten går att klicka på bara när formen har en fyllning (0.8.19); annars bara linjen.
   // En fyllning framför väggarna (0.8.25) går före dem också när man klickar.

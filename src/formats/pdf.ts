@@ -1,3 +1,4 @@
+import { dashPieces, type DashFrom } from '../repr/dash';
 import type { FillDef } from '../core/graphics';
 import type { Bounds, Pen, PenColor, Primitive, Vec2 } from '../repr/primitives';
 import { drawingBytes, textWidth } from './drawingFont';
@@ -102,7 +103,7 @@ class PageWriter {
   }
 
   /** En linje genom punkterna, streckad sträcka för sträcka som på skärmen. */
-  private stroke(points: readonly Vec2[], closed: boolean, pen: Pen): void {
+  private stroke(points: readonly Vec2[], closed: boolean, pen: Pen, from?: DashFrom): void {
     // Tjockleken 0 ritas inte (2D-former utan linje, 0.8.19).
     if (points.length < 2 || pen.weight === 0) return;
     const state = this.strokeState(pen);
@@ -110,27 +111,12 @@ class PageWriter {
       this.ops.push(`q ${state} ${this.path(points, closed)} S Q`);
       return;
     }
-    // Mönstret töjs på varje sträcka så att den börjar och slutar med ett helt streck.
+    // Mönstret löper genom mjuka brytpunkter och töjs mellan skarpa hörn (0.8.30, `dashPieces`).
     const base = pen.dash.map((d) => Math.max(0.2, d));
-    const pattern = base.length % 2 ? [...base, ...base] : base;
-    const period = pattern.reduce((a, b) => a + b, 0);
-    const first = pattern[0];
-    const pts = closed && points.length > 2 ? [...points, points[0]] : points;
-    const parts: string[] = [];
-    for (let i = 0; i + 1 < pts.length; i++) {
-      const a = pts[i];
-      const b = pts[i + 1];
-      const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-      if (len < 1e-3) continue;
-      const seg = `${n(a[0])} ${n(a[1])} m ${n(b[0])} ${n(b[1])} l`;
-      const count = Math.round((len - first) / period);
-      if (count < 1) {
-        parts.push(len > first * 1.6 ? `[${n(len * 0.38)} ${n(len * 0.24)}] 0 d ${seg} S` : `[] 0 d ${seg} S`);
-        continue;
-      }
-      const k = len / (count * period + first);
-      parts.push(`[${pattern.map((x) => n(x * k)).join(' ')}] 0 d ${seg} S`);
-    }
+    const parts = dashPieces(points, closed, base, from).map((d) => {
+      const seg = d.points.map((q, i) => `${n(q[0])} ${n(q[1])} ${i ? 'l' : 'm'}`).join(' ');
+      return `${d.dash ? `[${d.dash.map(n).join(' ')}] ${n(d.offset)}` : '[] 0'} d ${seg} S`;
+    });
     if (parts.length) this.ops.push(`q ${state} ${parts.join(' ')} Q`);
   }
 
@@ -258,7 +244,7 @@ class PageWriter {
         this.stroke([p.a, p.b], false, p.pen);
         break;
       case 'polyline':
-        this.stroke(p.points, p.closed, p.pen);
+        this.stroke(p.points, p.closed, p.pen, p.dashFrom);
         break;
       case 'region':
         if (p.fill.kind !== 'none') this.fill(p.rings, p.fill);

@@ -66,7 +66,7 @@ describe('Bakgrund i skrafferingen (0.8.29)', () => {
     const store = storeWith({ a: { points: square(0, 0), closed: true, fill: 'hatch' } });
     const box = { checked: true, value: 'on' } as HTMLInputElement;
     shapeChange(store, ['a'], 'fillBackgroundOn', box);
-    expect(store.doc.elements.a.params.fillBackground).toBe('#ffffff');
+    expect(store.doc.elements.a.params.fillBackground).toBe('paper');
     expect(shapeSmartFields(store.doc, [store.doc.elements.a])).toContain('Bakgrundens opacitet');
     shapeChange(store, ['a'], 'fillBackgroundOn', { checked: false, value: 'on' } as HTMLInputElement);
     expect(store.doc.elements.a.params.fillBackground).toBeUndefined();

@@ -17,7 +17,7 @@ export function clipPrims(prims: readonly Primitive[], r: Bounds): Primitive[] {
       }
       case 'polyline':
         for (const pts of clipPolyline(p.closed && p.points.length > 2 ? [...p.points, p.points[0]] : p.points, r))
-          out.push({ ...p, points: pts, closed: false });
+          out.push({ ...p, points: pts, closed: false, dashFrom: undefined });
         break;
       case 'region': {
         const rings = p.rings.map((ring) => clipRing(ring, r)).filter((ring) => ring.length >= 3);

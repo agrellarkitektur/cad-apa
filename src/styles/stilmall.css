@@ -119,7 +119,7 @@
 /* Pennor för pilar och markörer (0.8.26). */
 .pen-row {
   display: grid;
-  grid-template-columns: minmax(150px, 1.6fr) minmax(110px, 1fr) 72px 76px;
+  grid-template-columns: minmax(150px, 1.6fr) minmax(110px, 1fr) 72px minmax(110px, 1fr) 76px;
   gap: 10px;
   align-items: end;
   padding: 8px 0;
@@ -160,6 +160,35 @@
   .pen-row .style-name {
     grid-column: 1 / -1;
   }
+}
+
+/* Linjetyper (0.8.30): namnet, mönstret som bild och som tal, och Ta bort. */
+.linetype-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.4fr) 90px minmax(100px, 1fr) 76px;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.linetype-row .linetype-dash {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.linetype-row input[type='text'] {
+  min-width: 0;
+}
+
+.linetype-swatch {
+  color: var(--ink);
+}
+
+.style-linetypes > .btn {
+  justify-self: start;
+  width: auto;
+  margin-top: 8px;
 }
 
 /* ---------- Panelens grupp för det som påverkar fler objekt ---------- */

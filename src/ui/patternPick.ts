@@ -11,6 +11,9 @@ export function patternSwatch(pattern: FillPattern | 'none', color = '#9aa0a6', 
   // Ingen fyllning (0.8.19): ett snett streck genom rutan.
   if (pattern === 'none')
     return `<svg class="pattern-swatch" viewBox="0 0 22 16" width="22" height="16" aria-hidden="true"><line x1="2" y1="14" x2="20" y2="2" class="pattern-edge"/><rect x="0.5" y="0.5" width="21" height="15" fill="none" class="pattern-edge"/></svg>`;
+  // Mask (0.8.30): ritningens bakgrund, med en streckad kant.
+  if (pattern === 'mask')
+    return `<svg class="pattern-swatch" viewBox="0 0 22 16" width="22" height="16" aria-hidden="true"><rect x="0.5" y="0.5" width="21" height="15" class="pattern-mask" stroke-dasharray="2 1.5"/></svg>`;
   const lines = (a: number) =>
     `<g transform="rotate(${-a} 11 8)">${Array.from({ length: 13 }, (_, i) => `<line x1="-12" x2="34" y1="${-16 + i * 4}" y2="${-16 + i * 4}"/>`).join('')}</g>`;
   const body = pattern === 'solid' ? `<rect width="22" height="16" fill="${c}"/>` : lines(angle) + (pattern === 'cross' ? lines(angle + 90) : '');

@@ -1,6 +1,6 @@
 import type { Element, ProjectDoc } from '../core/model';
 import { left, norm, sub } from '../geometry/vec';
-import { markerPen, penFill, withWeight } from '../repr/markerPens';
+import { markerPen, penFill, solidPen, withWeight } from '../repr/markerPens';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
 import type { RoofParams } from './roof';
@@ -203,7 +203,7 @@ function sectionPlan(el: Element<any>, ctx: PlanContext): Primitive[] {
     const tip: Vec2 = [base[0] + f.view[0] * 6 * k, base[1] + f.view[1] * 6 * k];
     out.push({ kind: 'line', a: base, b: tip, pen: thick, origin });
     // Pilens hullingar är lika tjocka som vinkeln (0.8.22).
-    out.push(...openArrow(tip, f.view, 2.5 * k, thick, origin));
+    out.push(...openArrow(tip, f.view, 2.5 * k, solidPen(thick), origin));
     const side = t === 0 ? -1 : 1;
     const c: Vec2 = [base[0] + u[0] * side * 3.2 * k, base[1] + u[1] * side * 3.2 * k];
     out.push({ kind: 'text', at: [c[0] + down[0] * h * 0.36 * k, c[1] + down[1] * h * 0.36 * k], text: tag, height: h, bold: true, align: 'middle', angle, pen: withWeight(thick, 0.35), origin });
@@ -238,7 +238,7 @@ function elevationPlan(el: Element<any>, ctx: PlanContext): Primitive[] {
       role: 'cut',
       rings: [[tip, [m[0] + u[0] * s * 0.6, m[1] + u[1] * s * 0.6], [m[0] - u[0] * s * 0.6, m[1] - u[1] * s * 0.6]]],
       fill: penFill(pen),
-      outline: pen,
+      outline: solidPen(pen),
       ownFill: true,
       origin,
     },
@@ -287,8 +287,8 @@ export const northType: ElementType<NorthParams> = {
     return [
       { kind: 'polyline', points: circle, closed: true, pen, origin },
       { kind: 'line', a: tail, b: tip, pen, origin },
-      { kind: 'region', role: 'cut', rings: [[tip, l, c]], fill: penFill(pen), outline: pen, ownFill: true, origin },
-      { kind: 'polyline', points: [tip, rr, c], closed: true, pen, origin },
+      { kind: 'region', role: 'cut', rings: [[tip, l, c]], fill: penFill(pen), outline: solidPen(pen), ownFill: true, origin },
+      { kind: 'polyline', points: [tip, rr, c], closed: true, pen: solidPen(pen), origin },
       { kind: 'text', at: label, text: 'N', height: 3.5, bold: true, align: 'middle', pen: withWeight(pen, 0.35), origin },
     ];
   },

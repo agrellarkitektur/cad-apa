@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.29** (alfa, bakgrund i fyllningar och ändformer); nästa är **0.8.30, linjetyper och mask**.
+**0.8.30** (alfa, linjetyper och mask); nästa är **0.8.31, linjetyp och penna per objekt**.
 
 ## Vad som fungerar
 
@@ -951,6 +951,29 @@ Version 0.8.27, granskning (samma filformat, 13):
 - Stilmallen, egenskaperna för 2D-former, underlag och Visas i, och
   appens stilar ligger i fler och mindre filer, så att linjetyper och
   detaljnivåer får en egen plats när de kommer
+
+Version 0.8.30, linjetyper och mask (samma filformat, 13):
+- **Fler linjetyper**: heldragen, streckad, kort och lång streckad,
+  prickad, punktstreckad och streck med två punkter, för 2D-former (i
+  egenskaperna och 2D-verktyget) och för pennorna i stilmallen
+  (sektionslinjen, fasadlinjen, norrpilen, måtten …). Pilspetsar och
+  trianglar ritas heldragna
+- **Egna linjetyper** i stilmallen, under *Linjetyper*: *Ny linjetyp*,
+  ett namn och ett mönster av streck och mellanrum på papper i mm, t.ex.
+  `5 1 0,3 1`. De följer med stilmallen när den sparas som fil, och är
+  kvar när man byter till en förinställd stilmall. En borttagen linjetyp
+  ritas heldragen
+- **Jämnare streck**: mönstret löper obrutet genom bågar, cirklar och
+  splines, och töjs så att varje sträcka mellan skarpa hörn börjar och
+  slutar med ett helt streck (förut började det om på varje kort bit, så
+  att en streckad cirkel blev nästan heldragen). En linje som döljs av en
+  fyllning ovanför fortsätter mönstret på andra sidan, som om fyllningen
+  låg över den. Lika på skärmen och i PDF:en
+- **Masken**: bakgrunden i en skraffering är från början en mask, utan
+  egen färg: den döljer det som ligger under och syns som ritningens
+  bakgrund (också i mörkt tema), och som papperet i PDF:en. *Egen färg*
+  går att välja som förut. Fyllningen *Mask* är en mask utan skraffering.
+  Med fyllningen framför väggarna döljer masken också väggarna i planen
 
 Version 0.8.29, bakgrund i fyllningar och ändformer (samma filformat, 13):
 - **Bakgrund i skrafferingen**: en skraffering och en korsskraffering kan

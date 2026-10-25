@@ -4,14 +4,17 @@ import type { DocStore } from '../core/store';
 import { escapeHtml } from './labels';
 import { actionRows, applyActionField } from './style/actions';
 import { applyLabelField, labelSection } from './style/labels';
+import { addLineType, applyLineTypeField, lineTypeSection, removeLineType } from './style/lineTypes';
 import { applyPenField, penSection, resetPen } from './style/pens';
+import { resolveParams } from '../elements/registry';
 
 /**
  * Stilmallen: hur väggar och linjer ritas för varje åtgärd. Ändringar syns
  * direkt och kan ångras. Stilmallen kan sparas som fil och öppnas i andra projekt.
  *
  * Delarna ligger i `src/ui/style/` (0.8.27), en fil per del med dess HTML och
- * det dess fält ändrar: åtgärderna, texterna och litteran, och pennorna.
+ * det dess fält ändrar: åtgärderna, texterna och litteran, pennorna och
+ * (0.8.30) linjetyperna.
  */
 export class StyleDialog {
   readonly el: HTMLElement;
@@ -61,6 +64,7 @@ export class StyleDialog {
         ${actionRows(style)}
         ${labelSection(style)}
         ${penSection(style)}
+        ${lineTypeSection(style, this.lineTypeUses())}
       </div>
       <footer>
         <button class="btn" data-action="open-style">Öppna stilmall…</button>
@@ -70,9 +74,27 @@ export class StyleDialog {
     </div>`;
   }
 
+  /** Hur många former och pennor som har varje linjetyp (0.8.30). */
+  private lineTypeUses(): Map<string, number> {
+    const doc = this.store.doc;
+    const uses = new Map<string, number>();
+    const add = (k: unknown) => typeof k === 'string' && uses.set(k, (uses.get(k) ?? 0) + 1);
+    for (const el of Object.values(doc.elements)) if (el.type === 'Shape2D') add(resolveParams<{ linetype?: string }>(doc, el).linetype);
+    for (const pen of Object.values(doc.graphics.pens ?? {})) add(pen.linetype);
+    return uses;
+  }
+
   private onClick(e: Event): void {
     const action = (e.target as HTMLElement).closest<HTMLElement>('[data-action]')?.dataset.action;
     if (action === 'close') this.close();
+    if (action === 'linetype-add' || action === 'linetype-remove') {
+      const style: StyleSheet = structuredClone(this.store.doc.graphics);
+      const id = (e.target as HTMLElement).closest<HTMLElement>('[data-linetype-id]')?.dataset.linetypeId;
+      if (action === 'linetype-add') addLineType(style);
+      else if (!id || !removeLineType(style, id)) return;
+      style.name = 'Egen stilmall';
+      setGraphics(this.store, style, action === 'linetype-add' ? 'Ny linjetyp' : 'Ta bort linjetyp');
+    }
     if (action === 'pen-reset') {
       const key = (e.target as HTMLElement).closest<HTMLElement>('[data-pen-key]')?.dataset.penKey;
       const style: StyleSheet = structuredClone(this.store.doc.graphics);
@@ -90,7 +112,11 @@ export class StyleDialog {
         const file = input.files?.[0];
         if (!file) return;
         try {
-          setGraphics(this.store, normalizeStyle(JSON.parse(await file.text())));
+          // Projektets egna linjetyper som filen saknar är kvar (0.8.30), så att formerna ritas som förut.
+          const read = normalizeStyle(JSON.parse(await file.text()));
+          const keep = (this.store.doc.graphics.lineTypes ?? []).filter((t) => !read.lineTypes?.some((r) => r.id === t.id));
+          if (keep.length) read.lineTypes = [...(read.lineTypes ?? []), ...keep];
+          setGraphics(this.store, read);
         } catch (err) {
           this.onError(err instanceof SyntaxError ? 'Filen gick inte att läsa som stilmall.' : (err as Error).message);
         }
@@ -102,12 +128,16 @@ export class StyleDialog {
   private onChange(e: Event): void {
     const input = e.target as HTMLInputElement | HTMLSelectElement;
     if (input.id === 'style-preset') {
-      setGraphics(this.store, structuredClone(PRESETS[Number(input.value)]));
+      // Projektets egna linjetyper är kvar (0.8.30): formerna och pennorna använder dem.
+      const own = this.store.doc.graphics.lineTypes;
+      setGraphics(this.store, { ...structuredClone(PRESETS[Number(input.value)]), ...(own ? { lineTypes: structuredClone(own) } : {}) });
       return;
     }
     const style: StyleSheet = structuredClone(this.store.doc.graphics);
     // Varje del av stilmallen svarar för sina egna fält.
-    const label = applyPenField(style, input) ?? applyLabelField(style, input) ?? applyActionField(style, input);
+    const label = applyPenField(style, input) ?? applyLineTypeField(style, input) ?? applyLabelField(style, input) ?? applyActionField(style, input);
+    // Ett mönster som inte gick att läsa: visa det gamla igen.
+    if (label === '') this.render();
     if (!label) return;
     style.name = 'Egen stilmall';
     setGraphics(this.store, style, label);
