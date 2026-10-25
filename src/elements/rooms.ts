@@ -87,6 +87,9 @@ export interface SpaceParams {
   fillAngle?: number;
   fillSpacing?: number;
   opacity?: number;
+  /** Skrafferingens bakgrund och dess opacitet (0.8.29), som 2D-formernas. */
+  fillBackground?: string;
+  fillBackgroundOpacity?: number;
 }
 
 /** Rummets kontur i vyn: ur väggarna om det har en punkt, annars den sparade. */

@@ -1,4 +1,4 @@
-import { boxOf, type Box } from '../geometry/boolean';
+import { boxOf, difference, type Box } from '../geometry/boolean';
 import { BoxIndex } from '../geometry/boxIndex';
 import { pointInRings } from '../geometry/vec';
 import type { Primitive, Vec2 } from './primitives';
@@ -9,7 +9,11 @@ import type { Primitive, Vec2 } from './primitives';
  * inte dölja en undre forms linje genom att ritas efter den. I stället kapas
  * de undre formernas linjer där en senare form (i ritordningen) har en
  * täckande fyllning: hel och utan genomskinlighet. En skraffering har ingen
- * bakgrund och döljer ingenting, som förut.
+ * bakgrund och döljer ingenting, som förut, men en bakgrund med opacitet
+ * 100 % (0.8.29) är en hel yta och döljer.
+ *
+ * De fyllda ändformerna (pil och punkt, `part` = 'ände') kapas på samma sätt
+ * (0.8.29): ytan minus de täckande ytorna, och konturen som linjerna.
  *
  * `ones` är varje elements primitiver i ritordning (längst bak först). Svaret
  * har samma form; ett element utan något att kapa får tillbaka samma lista.
@@ -30,6 +34,22 @@ export function coverLines(ones: readonly (readonly Primitive[])[]): Primitive[]
     let changed = false;
     const out: Primitive[] = [];
     for (const p of prims) {
+      if (p.kind === 'region' && p.origin?.part === 'ände') {
+        const over = index
+          .near(boxOf(p.rings as Vec2[][]))
+          .map((i) => covers[i])
+          .filter((c) => c.at > at);
+        if (!over.length) {
+          out.push(p);
+          continue;
+        }
+        changed = true;
+        const areas = over.map((c) => c.rings);
+        for (const rings of difference(p.rings as Vec2[][], areas as Vec2[][][])) out.push({ ...p, rings, outline: null, noOutline: true });
+        if (p.outline && p.outline.weight > 0)
+          for (const ring of p.rings) for (const piece of clipOutside([...ring, ring[0]], areas)) out.push({ kind: 'polyline', points: piece, closed: false, pen: p.outline, origin: p.origin } as Primitive);
+        continue;
+      }
       const pts = p.kind === 'polyline' ? (p.closed ? [...p.points, p.points[0]] : p.points) : p.kind === 'line' ? [p.a, p.b] : null;
       if (!pts || pts.length < 2 || (p.kind !== 'polyline' && p.kind !== 'line') || p.pen.weight <= 0) {
         out.push(p);

@@ -87,6 +87,13 @@ export interface Shape2DParams {
    * så att en ändring av `opacity` gäller båda tills de skiljs åt.
    */
   fillOpacity?: number;
+  /**
+   * Skrafferingens bakgrund (0.8.29) som #rrggbb; utelämnad = ingen. En hel
+   * yta under strecken, med egen opacitet i procent (utelämnad = 100). Bara
+   * skraffering och korsskraffering; en hel fyllning har redan sin färg.
+   */
+  fillBackground?: string;
+  fillBackgroundOpacity?: number;
   /** Ändformen i början och slutet av en öppen form (0.8.24); utelämnad = ingen. */
   startCap?: CapKind;
   endCap?: CapKind;
@@ -99,22 +106,37 @@ export interface Shape2DParams {
 }
 
 /** Fyllningens inställningar, samma för 2D-former och rum (0.8.25). */
-export type FillParams = Pick<Shape2DParams, 'fill' | 'fillColor' | 'fillAngle' | 'fillSpacing' | 'opacity' | 'fillOpacity'>;
+export type FillParams = Pick<Shape2DParams, 'fill' | 'fillColor' | 'fillAngle' | 'fillSpacing' | 'opacity' | 'fillOpacity' | 'fillBackground' | 'fillBackgroundOpacity'>;
+
+/** Bakgrundens förvalda färg (0.8.29): papperets vita. */
+export const FILL_BACKGROUND = '#ffffff';
 
 /**
  * Fyllningens ytor för konturen `rings` (0.8.25): en hel fyllning eller en
  * eller två skrafferingar. `under` = bakom väggarna.
  */
 export function fillPrims(rings: readonly (readonly Vec2[])[], p: FillParams, origin: Primitive['origin'] | undefined, under: boolean): Primitive[] {
+  if (!p.fill) return [];
+  const fills: FillDef[] = [];
+  // Bakgrunden under skrafferingen (0.8.29), med egen opacitet.
+  const back = p.fill !== 'solid' && p.fillBackground ? backgroundOpacity(p) : 0;
+  if (back > 0) fills.push({ kind: 'solid', color: p.fillBackground as Color, ...(back < 1 ? { opacity: back } : {}) });
   const op = opacitiesOf(p).fill;
-  if (!p.fill || op <= 0) return [];
-  const color = (p.fillColor ?? FILL_COLOR) as Color;
-  const alpha = op < 1 ? { opacity: op } : {};
-  const angle = Number.isFinite(p.fillAngle) ? p.fillAngle : 45;
-  const spacing = p.fillSpacing > 0 ? p.fillSpacing : 2;
-  const hatch = (a: number): FillDef => ({ kind: 'hatch', color, angle: a, spacing, weight: 0.13, ...alpha });
-  const fills: FillDef[] = p.fill === 'solid' ? [{ kind: 'solid', color, ...alpha }] : p.fill === 'cross' ? [hatch(angle), hatch(angle + 90)] : [hatch(angle)];
+  if (op > 0) {
+    const color = (p.fillColor ?? FILL_COLOR) as Color;
+    const alpha = op < 1 ? { opacity: op } : {};
+    const angle = Number.isFinite(p.fillAngle) ? p.fillAngle : 45;
+    const spacing = p.fillSpacing > 0 ? p.fillSpacing : 2;
+    const hatch = (a: number): FillDef => ({ kind: 'hatch', color, angle: a, spacing, weight: 0.13, ...alpha });
+    fills.push(...(p.fill === 'solid' ? [{ kind: 'solid', color, ...alpha } as FillDef] : p.fill === 'cross' ? [hatch(angle), hatch(angle + 90)] : [hatch(angle)]));
+  }
   return fills.map((fill): Primitive => ({ kind: 'region', role: 'cut', rings, fill, outline: null, noOutline: true, ownFill: true, ...(under ? { under: true } : {}), origin: origin && { ...origin, part: 'fyllning' } }));
+}
+
+/** Bakgrundens opacitet 0–1 (0.8.29); utelämnad = 1. */
+export function backgroundOpacity(p: Pick<FillParams, 'fillBackgroundOpacity'>): number {
+  const v = p.fillBackgroundOpacity;
+  return v === undefined || !Number.isFinite(v) ? 1 : Math.max(0, Math.min(100, v)) / 100;
 }
 
 /** Ändformerna (0.8.24). */

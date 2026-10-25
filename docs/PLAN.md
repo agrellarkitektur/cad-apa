@@ -1105,6 +1105,17 @@ session; samma format (valfria parametrar).
   (triangel, punkt, pil) och cirkeln döljs av en fyllning ovanför, som
   linjen (pilarnas och strecken linjer gör det redan sedan 0.8.28)
 
+*Byggd (25 oktober), samma format (13). Claudes val: bakgrunden slås på
+med en kryssruta och får vit färg från början; opaciteten är bakgrundens
+egen och påverkas inte av skrafferingens (eller rummets) opacitet. Den
+finns bara för skraffering och korsskraffering och följer med när
+fyllningarna släcks i Visa. I verktyget väljs bara färgen (opaciteten i
+egenskaperna). Pilen och punkten kapas med en boolesk differens mot de
+täckande ytorna ovanför, och deras kontur som linjerna; triangeln och
+cirkeln är linjer och kapades redan. En bakgrund döljer inte fyllningen
+i en undre form, bara linjerna och ändformerna (fyllningarna ritas i
+ritordningen som förut).*
+
 ### 0.8.30 Linjetyper
 
 Carl Augusts synpunkter 25 oktober (förslag 25 oktober). Stor men troligen

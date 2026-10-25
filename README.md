@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.28** (alfa, rättelser i 2D-formen); nästa är **0.8.29, bakgrund i fyllningar och ändformer**.
+**0.8.29** (alfa, bakgrund i fyllningar och ändformer); nästa är **0.8.30, linjetyper**.
 
 ## Vad som fungerar
 
@@ -951,6 +951,18 @@ Version 0.8.27, granskning (samma filformat, 13):
 - Stilmallen, egenskaperna för 2D-former, underlag och Visas i, och
   appens stilar ligger i fler och mindre filer, så att linjetyper och
   detaljnivåer får en egen plats när de kommer
+
+Version 0.8.29, bakgrund i fyllningar och ändformer (samma filformat, 13):
+- **Bakgrund i skrafferingen**: en skraffering och en korsskraffering kan
+  få en bakgrund, en hel yta under strecken med egen färg (förval vit)
+  och egen opacitet. Kryssrutan *Bakgrund* finns i egenskaperna, i
+  smartmenyn och i 2D-verktyget, och gäller också rummens fyllning. En
+  bakgrund med opacitet 100 % döljer linjerna i 2D-former bakom den, som
+  en hel fyllning. I PDF:en och DXF:en blir den en hel fyllning under
+  strecken
+- **Ändformerna följer linjen**: pilen och punkten döljs av en hel
+  fyllning ovanför i ritordningen, som linjen (bara det som sticker ut
+  syns)
 
 Version 0.8.28, rättelser i 2D-formen (samma filformat, 13):
 - **Fortsätta en linje**: med 2D-verktyget (Linje eller Spline) ritar ett

@@ -1,6 +1,6 @@
 import { dividePath } from '../tools/measureTool';
 import type { WallFace } from '../../elements/wallSides';
-import { LINE_TYPES, SHAPE_LABELS, type FillPattern, type LineType, type ShapeKind } from '../../elements/drawing2d';
+import { FILL_BACKGROUND, LINE_TYPES, SHAPE_LABELS, type FillPattern, type LineType, type ShapeKind } from '../../elements/drawing2d';
 import { patternPicker } from '../patternPick';
 import { weightPicker } from '../weightPick';
 import { icons } from '../icons';
@@ -114,6 +114,7 @@ export function installToolOptions(app: AppContext) {
         <div class="opt"><span>Penna</span>${weightPicker('d2-weight', o.weight, '')}</div>
         ${o.weight ? `<label class="opt"><span>Linje</span><select id="d2-linetype" aria-label="Linjetyp">${(Object.entries(LINE_TYPES) as [LineType, { label: string }][]).map(([k, v]) => `<option value="${k}"${k === o.linetype ? ' selected' : ''}>${v.label}</option>`).join('')}</select></label>` : ''}
         <div class="opt"><span>Fyllning</span>${patternPicker('d2-pattern', o.fill ?? 'none', '')}</div>
+        ${o.fill && o.fill !== 'solid' ? `<label class="opt opt-check"><input type="checkbox" id="d2-background"${o.fillBackground ? ' checked' : ''}><span>Bakgrund</span></label>${o.fillBackground ? `<input type="color" id="d2-background-color" value="${o.fillBackground}" aria-label="Bakgrundens färg">` : ''}` : ''}
         ${t.open ? `<button class="btn btn-primary" data-action="d2-done" ${t.count >= 2 ? '' : 'disabled'}>Klar</button>` : ''}
         <span class="opt-hint">${t.hintText()}</span>`;
       app.toolOptions.hidden = false;
@@ -208,8 +209,16 @@ export function installToolOptions(app: AppContext) {
     if (t.id === 'd2-linetype') app.draw2dTool.options.linetype = t.value as LineType;
     if ((t as unknown as HTMLInputElement).name === 'd2-pattern') {
       app.draw2dTool.options.fill = t.value === 'none' ? undefined : (t.value as FillPattern);
+      renderToolOptions();
       app.view.requestRender();
     }
+    // Skrafferingens bakgrund (0.8.29).
+    if (t.id === 'd2-background') {
+      app.draw2dTool.options.fillBackground = (t as unknown as HTMLInputElement).checked ? FILL_BACKGROUND : undefined;
+      renderToolOptions();
+      app.view.requestRender();
+    }
+    if (t.id === 'd2-background-color') app.draw2dTool.options.fillBackground = t.value;
     if (t.id === 'text-height' && num > 0) app.textTool.height = num;
     if (t.id === 'text-bold') app.textTool.bold = (t as unknown as HTMLInputElement).checked;
   });

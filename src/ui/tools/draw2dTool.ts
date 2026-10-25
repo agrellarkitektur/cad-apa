@@ -22,6 +22,8 @@ export interface Draw2DOptions {
   linetype: LineType;
   /** Fyllningen; utelämnad = ingen. */
   fill?: FillPattern;
+  /** Skrafferingens bakgrund (0.8.29); utelämnad = ingen. */
+  fillBackground?: string;
 }
 
 /** Hur många punkter formen behöver; null = så många man vill (avslutas med dubbelklick, Enter eller Klar). */
@@ -243,7 +245,7 @@ export class Draw2DTool implements ViewTool, PointTaker {
   /** Parametrarna för formen genom punkterna. */
   private params(pts: Vec2[], closed: boolean): Record<string, unknown> {
     const o = this.options;
-    const fill = o.fill ? { fill: o.fill } : {};
+    const fill = o.fill ? { fill: o.fill, ...(o.fill !== 'solid' && o.fillBackground ? { fillBackground: o.fillBackground } : {}) } : {};
     return { ...chainFrom(o.kind, pts, closed), weight: o.weight, linetype: o.linetype, ...fill };
   }
 

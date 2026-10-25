@@ -1,7 +1,7 @@
 import { updateParams } from '../core/commands';
 import type { Element, Id, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
-import { CAP_LABELS, CAP_SIZE, FILL_COLOR, LINE_TYPES, PATH_LABELS, segmentCount, type CapKind, type Shape2DParams } from '../elements/drawing2d';
+import { CAP_LABELS, CAP_SIZE, FILL_BACKGROUND, FILL_COLOR, LINE_TYPES, PATH_LABELS, segmentCount, type CapKind, type Shape2DParams } from '../elements/drawing2d';
 import { resolveParams } from '../elements/registry';
 import { STRAIGHT } from '../geometry/arc';
 import { patternPicker } from './patternPick';
@@ -19,11 +19,12 @@ const comma = (n: number) => n.toLocaleString('sv-SE');
  * Fyllningens fält (0.8.19): mönstret (eller ingen), färgen och för en
  * skraffering vinkel och avstånd. Samma fält i verktyget och i egenskaperna.
  */
-export function fillFields(name: string, p: Pick<Shape2DParams, 'fill' | 'fillColor' | 'fillAngle' | 'fillSpacing'>, attrs: (key: string) => string): string {
+export function fillFields(name: string, p: Pick<Shape2DParams, 'fill' | 'fillColor' | 'fillAngle' | 'fillSpacing' | 'fillBackground' | 'fillBackgroundOpacity'>, attrs: (key: string) => string): string {
   const color = p.fillColor ?? FILL_COLOR;
   const more = p.fill
     ? `<div class="fields"><label class="field"><span>Färg</span><input type="color" ${attrs('fillColor')} value="${color}"></label>
-    ${p.fill !== 'solid' ? hatchFields(p, attrs) : ''}</div>`
+    ${p.fill !== 'solid' ? hatchFields(p, attrs) : ''}</div>
+    ${p.fill !== 'solid' ? backgroundFields({ fillBackground: p.fillBackground, fillBackgroundOpacity: p.fillBackgroundOpacity }, attrs) : ''}`
     : '';
   return `<div class="field-label">Fyllning</div>${patternPicker(name, p.fill ?? 'none', attrs('pattern'), { color, angle: p.fillAngle })}${more}`;
 }
@@ -34,6 +35,20 @@ export function hatchFields(p: { fillAngle: number | null; fillSpacing: number |
   const mixed = (n: number | null) => (n === null ? ' placeholder="Olika"' : '');
   return `<label class="field"><span>Vinkel</span><span class="input-unit"><input type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" ${attrs('fillAngle')} value="${v(p.fillAngle)}"${mixed(p.fillAngle)}><i>°</i></span></label>
     <label class="field"><span>Avstånd på papper</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" ${attrs('fillSpacing')} value="${v(p.fillSpacing)}"${mixed(p.fillSpacing)}><i>mm</i></span></label>`;
+}
+
+/**
+ * Skrafferingens bakgrund (0.8.29): en kryssruta, och när den är på färgen
+ * och opaciteten. Null = olika i markeringen (för smartmenyn).
+ */
+export function backgroundFields(p: { fillBackground?: string | null; fillBackgroundOpacity?: number | null }, attrs: (key: string) => string): string {
+  const on = p.fillBackground !== undefined;
+  const mixed = p.fillBackground === null;
+  const op = p.fillBackgroundOpacity === null ? NaN : (p.fillBackgroundOpacity ?? 100);
+  const box = `<label class="check"><input type="checkbox" ${attrs('fillBackgroundOn')}${on && !mixed ? ' checked' : ''}${mixed ? ' title="Olika"' : ''}> Bakgrund</label>`;
+  if (!on) return box;
+  return `${box}<div class="fields"><label class="field"><span>Bakgrundens färg</span><input type="color" ${attrs('fillBackground')} value="${p.fillBackground ?? FILL_BACKGROUND}"${mixed ? ' title="Olika"' : ''}></label>
+    <label class="field"><span>Bakgrundens opacitet</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="10" inputmode="decimal" autocomplete="off" ${attrs('fillBackgroundOpacity')} value="${Number.isFinite(op) ? Math.round(op) : ''}"${Number.isFinite(op) ? '' : ' placeholder="Olika"'}><i>%</i></span></label></div>`;
 }
 
 /**
@@ -52,6 +67,12 @@ export function shapeSmartFields(doc: ProjectDoc, els: Element[]): string | null
   const colorField = color === undefined ? '' : `<label class="field"><span>Fyllningens färg</span><input type="color" ${attrs('fillColor')} value="${color ?? FILL_COLOR}"${color === null ? ' title="Olika"' : ''}></label>`;
   const hatch = ps.every((q) => q.fill === 'hatch' || q.fill === 'cross') ? hatchFields({ fillAngle: same('fillAngle'), fillSpacing: same('fillSpacing') }, attrs) : '';
   if (colorField || hatch) parts.push(`<div class="fields">${colorField}${hatch}</div>`);
+  // Bakgrunden (0.8.29), när alla är skrafferade.
+  if (hatch) {
+    const backs = ps.map((q) => q.fillBackground);
+    const back = backs.every((b) => b === backs[0]) ? backs[0] : backs.some((b) => b) ? null : undefined;
+    parts.push(backgroundFields({ fillBackground: back, fillBackgroundOpacity: ps.every((q) => q.fillBackgroundOpacity === ps[0].fillBackgroundOpacity) ? ps[0].fillBackgroundOpacity : null }, attrs));
+  }
   // Ändarna (0.8.24), när alla är öppna och har en linje.
   if (ps.every((q) => !q.closed && q.weight > 0)) {
     const cap = (k: 'startCap' | 'endCap') => (ps.every((q) => q[k] === ps[0][k]) ? ps[0][k] : null);
@@ -132,6 +153,11 @@ export function shapeChange(store: DocStore, ids: Id[], name: string, input: HTM
   else if (name === 'startCap' || name === 'endCap') updateParams(store, ids, { [name]: v === 'none' ? undefined : v }, v === 'none' ? 'Ingen ändform' : 'Ändra ändform');
   else if (name === 'capSize' && num > 0) updateParams(store, ids, { capSize: num === CAP_SIZE ? undefined : num }, 'Ändra ändarnas storlek');
   else if (name === 'pattern') updateParams(store, ids, { fill: v === 'none' ? undefined : v }, v === 'none' ? 'Ingen fyllning' : 'Ändra fyllning');
+  else if (name === 'fillBackgroundOn') {
+    const on = (input as HTMLInputElement).checked;
+    updateParams(store, ids, on ? { fillBackground: FILL_BACKGROUND } : { fillBackground: undefined, fillBackgroundOpacity: undefined }, on ? 'Bakgrund' : 'Ingen bakgrund');
+  } else if (name === 'fillBackground') updateParams(store, ids, { fillBackground: v }, 'Ändra bakgrundens färg');
+  else if (name === 'fillBackgroundOpacity' && percent(num) !== null) updateParams(store, ids, { fillBackgroundOpacity: percent(num) === 100 ? undefined : percent(num) }, 'Ändra bakgrundens opacitet');
   else if (name === 'fillColor') updateParams(store, ids, { fillColor: v }, 'Ändra fyllningens färg');
   else if (name === 'fillAngle' && Number.isFinite(num)) updateParams(store, ids, { fillAngle: num }, 'Ändra vinkel');
   else if (name === 'fillSpacing' && num > 0) updateParams(store, ids, { fillSpacing: num }, 'Ändra avstånd');

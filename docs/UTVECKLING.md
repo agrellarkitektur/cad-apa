@@ -1124,6 +1124,21 @@ projekt i 1 982 jämförelser.
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
 
+## Bakgrund i fyllningar och ändformer (0.8.29, format 13)
+
+- **Bakgrunden**: `fillBackground` (#rrggbb) och `fillBackgroundOpacity`
+  (procent, utelämnad = 100) i `Shape2DParams` och `SpaceParams`, med i
+  `FillParams`. `fillPrims` i `src/elements/drawing2d.ts` lägger en hel
+  yta före skrafferingarna; `backgroundOpacity` räknar opaciteten.
+  Fälten är `backgroundFields` i `src/ui/shapeFields.ts` (i `fillFields`
+  och `shapeSmartFields`), nycklarna `d2:fillBackgroundOn`,
+  `d2:fillBackground` och `d2:fillBackgroundOpacity` i `shapeChange`
+  (rummen använder samma). Verktyget har `Draw2DOptions.fillBackground`
+  (`#d2-background` i `src/ui/app/toolOptions.ts`)
+- **Ändformerna**: `coverLines` i `src/repr/cover.ts` kapar också ytor
+  med `origin.part === 'ände'` (pilen, punkten) med `difference`, och
+  ritar deras kontur som kapade polylinjer. Prövat i `tests/v0829.test.ts`
+
 ## Rättelser i 2D-formen (0.8.28, format 13)
 
 - **Fortsätta en linje**: `Draw2DTool.continueAt(pt, tol)` i
