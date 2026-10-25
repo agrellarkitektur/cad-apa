@@ -1116,19 +1116,45 @@ cirkeln är linjer och kapades redan. En bakgrund döljer inte fyllningen
 i en undre form, bara linjerna och ändformerna (fyllningarna ritas i
 ritordningen som förut).*
 
-### 0.8.30 Linjetyper
+### 0.8.30 Linjetyper och mask
 
-Carl Augusts synpunkter 25 oktober (förslag 25 oktober). Stor men troligen
-en session; egna linjetyper flyttas till nästa version om de inte ryms.
-Grunden för det punktstreckade ovanför snittet i 0.10.
+Carl Augusts synpunkter 25 oktober (ordningen bekräftad efter 0.8.29).
+Stor men troligen en session; egna linjetyper flyttas till nästa version
+om de inte ryms. Grunden för det punktstreckade ovanför snittet i 0.10.
 
 - **Linjetyp** (heldragen, streckad, punktstreckad, prickad m.fl.) för
-  linjer och objekt: 2D-former och pennorna i stilmallen, kanske också
-  väggar och fasadernas linjer (*att fråga*)
+  2D-former och pennorna i stilmallen. Väggar och andra objekt får sin
+  linjetyp i 0.8.31
 - **Egna linjetyper**: ett mönster av streck och mellanrum i mm på papper
+- **Bakgrunden som mask** (liten): kryssrutan *Bakgrund* ger från början
+  en mask, som döljer det under i ritordningen men har ingen egen färg (den
+  syns som ritningens bakgrund på skärmen, också i mörkt tema, och som
+  papperet i PDF:en). En egen färg går att välja som i 0.8.29. Med
+  fyllningen *framför väggarna* (0.8.25) döljer masken också väggar och
+  andra modellobjekt; 2D-formernas linjer, fyllningar och masker ska
+  kunna ligga framför väggarna (Carl August 25 oktober; finns sedan
+  0.8.25 och prövas för masken)
 - Kanske: DXF-underlagens streckade linjer ritas streckade
 
-### 0.8.31 Egna fyllningstyper
+### 0.8.31 Linjetyp och penna per objekt
+
+Carl Augusts synpunkt 25 oktober. Mellanstor, en session. Bygger på 0.8.30.
+
+- **Egen penna och linjetyp** för de flesta objekt, också väggar, dörrar,
+  fönster, rum och tak: *Stilmallens* (förval) eller en egen, för de udda
+  fall där standardrepresentationen blir missvisande. I planen, fasaderna
+  och sektionerna
+
+### 0.8.32 Granskning
+
+Enligt planen (ungefär var tredje version; förra var 0.8.27). Utan nya
+funktioner: städa, dela upp stora filer och leta efter långsam kod, och
+(Carl August 25 oktober) gå igenom testerna: slå ihop dubbletter, ta bort
+tester som prövar samma sak två gånger och tester som låser detaljer
+utan anledning, och se till att hela körningen tar under en minut (386
+tester på ca 17 s efter 0.8.29).
+
+### 0.8.33 Egna fyllningstyper
 
 Carl Augusts synpunkt 25 oktober; tidigarelagd från *Efter
 pilotprojektet* samma dag. Stor, troligen en session. Bygger på 0.8.30:
@@ -1139,7 +1165,7 @@ mönstrens linjer kan vara streckade.
   skärmen, i PDF:en och i DXF:en
 - Kanske: läsa in färdiga `.pat`-filer (AutoCAD, ArchiCAD)
 
-### 0.8.32 Detaljnivåer i stilmallen
+### 0.8.34 Detaljnivåer i stilmallen
 
 Carl Augusts synpunkt 25 oktober. Detaljnivån väljs per vy, som i
 ArchiCAD (Carl August 25 oktober); det finns redan (Skiss, Normal, Detalj
@@ -1148,15 +1174,6 @@ i vyraden), så det nya är vad stilmallen visar på varje nivå.
 - **Litteran efter detaljnivå**: stilmallens innehåll för dörrar, fönster,
   rum m.m. delas upp i skiss, normal och detalj. *Att fråga:* ska dörrar
   och fönster också ritas olika (då hör en del hemma i 0.11.2)?
-
-### 0.8.33 Granskning
-
-Enligt planen (ungefär var tredje version; förra var 0.8.27). Utan nya
-funktioner: städa, dela upp stora filer och leta efter långsam kod, och
-(Carl August 25 oktober) gå igenom testerna: slå ihop dubbletter, ta bort
-tester som prövar samma sak två gånger och tester som låser detaljer
-utan anledning, och se till att hela körningen tar under en minut (378
-tester på ca 23 s efter 0.8.28).
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
@@ -1178,6 +1195,8 @@ Ett riktigt tak i stället för testtaket:
 - Tak och andra volymer ovanför planets snitt ritas punktstreckade i planen
   (synpunkt 20 oktober). Grunden för "ovanför snittet" kan behövas redan i
   0.9 med flera våningsplan
+- Vyinställning: byggnadens footprint (ytterväggarnas kontur) som streckad
+  linje genom taket i planen (synpunkt 25 oktober)
 
 - Referenslinje som polygon; varje kant är takfot eller gavel
 - Lutning per takfall, taksprång vid takfot och gavelsprång vid gavel
@@ -1189,6 +1208,14 @@ Ett riktigt tak i stället för testtaket:
 - Byggnadshöjd enligt PBF (medelmarknivå och 45°-planet)
 
 Enfallstak som delar som sätts ihop väntar till efter pilotprojektet.
+
+### 0.10.1 Dolda linjer i fasader
+
+Carl Augusts synpunkt 25 oktober. Mellanstor, en session; efter
+bjälklagen (0.9) och taken (0.10).
+
+- Vyinställning i fasader: närmaste bjälklag och ytterväggarnas insida som
+  streckade linjer genom fasaden
 
 ### 0.11 Trappor · *nytt format*
 

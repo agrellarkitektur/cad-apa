@@ -32,10 +32,11 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   ordningen bekräftades av Carl August. Efter 0.8.28 (samma dag) svarade
   han: fortsätta bara den markerade linjen är bra; fyllningarna ska få en
   bakgrundsfärg med egen opacitet; ändformerna ska följa linjen i
-  ritordningen. Det blev en ny liten **0.8.29**, och resten flyttades ett
-  steg: 0.8.30 Linjetyper (med egna), 0.8.31 Egna fyllningstyper
-  (tidigarelagd på hans begäran), 0.8.32 Detaljnivåer i stilmallen (per
-  vy, som i ArchiCAD), 0.8.33 Granskning, där också testerna granskas.
+  ritordningen. Det blev **0.8.29** (klar). Efter 0.8.29 kom fyra nya
+  synpunkter (mask, penna och linjetyp per objekt, footprint genom taket,
+  dolda linjer i fasader), och ordningen i färdplanen nedan bekräftades
+  samma dag. 2D-formernas linjer, fyllningar och masker ska kunna ligga
+  framför väggarna i planen.
 - **0.8.22–0.8.26** (småsaker, granskning, 2D-form del 2 med bågar och
   ändar i format 13, ritordning och fyllningar, pennor i stilmallen) står
   i PLAN.md med Claudes val och i UTVECKLING.md med var koden ligger.
@@ -84,15 +85,21 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.25 Ritordning och fyllningar~~, ~~0.8.26 Pennor i stilmallen~~,
   ~~0.8.27 Granskning~~, ~~0.8.28 Rättelser i 2D-formen~~,
   ~~0.8.29 Bakgrund i fyllningar och ändformer~~ (klara)
-- **0.8.30 Linjetyper** (också egna; grunden för det punktstreckade i 0.10)
-- **0.8.31 Egna fyllningstyper** (linjefamiljer med streckning; kanske
-  `.pat`-filer)
-- **0.8.32 Detaljnivåer i stilmallen** (per vy, som i ArchiCAD)
-- **0.8.33 Granskning** (också testerna: dubbletter, tester som låser
+- **0.8.30 Linjetyper och mask** (också egna; bakgrunden som mask utan
+  egen färg; grunden för det punktstreckade i 0.10)
+- **0.8.31 Linjetyp och penna per objekt** (också väggar; Stilmallens
+  eller egen)
+- **0.8.32 Granskning** (också testerna: dubbletter, tester som låser
   detaljer, hela körningen under en minut)
+- **0.8.33 Egna fyllningstyper** (linjefamiljer med streckning; kanske
+  `.pat`-filer)
+- **0.8.34 Detaljnivåer i stilmallen** (per vy, som i ArchiCAD)
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
-- **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade)
+- **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade,
+  footprint streckad genom taket som vyinställning)
+- **0.10.1 Dolda linjer i fasader** (närmaste bjälklag och väggarnas
+  insida streckade, vyinställning)
 - **0.11 Trappor** (nytt format)
 - **0.11.1 Profilverktyget** (nytt format, stor) och **0.11.2 Dörrar och
   fönster** (stor)
@@ -110,8 +117,10 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 Fråga först om 0.8.29 syns på webbhotellet (numret vid alfa-knappen) och
 om bakgrunden och ändformerna fungerar som han tänkt. Läs synpunktsfilen
-och sortera ny Inkorg. Fråga sedan om linjetyperna ska gälla väggar och
-fasadernas linjer också (se nedan), och bygg **0.8.30 Linjetyper**.
+och sortera ny Inkorg. Linjetyperna gäller också väggar m.fl., men det
+kommer i 0.8.31 (bekräftat 25 oktober). Bygg **0.8.30 Linjetyper och mask**; masken är en bakgrund utan
+egen färg (ritningens bakgrund på skärmen, papperet i PDF:en) och ska
+dölja väggarna när fyllningen ligger framför dem (`fillFront`).
 Att börja med: `LINE_TYPES` och `penOf` i `src/elements/drawing2d.ts`
 (streckmönstret på papper, `Pen.dash`); de kapade linjerna från
 `coverLines` börjar om strecket i varje bit, så ett jämnt mönster behöver
@@ -165,12 +174,7 @@ räkna fasen.
   mycket plats? Ska bågar kunna ritas direkt i Linje (som `A` i AutoCADs
   PLINE)?
 
-- **Linjetyperna (0.8.30)**: ska de gälla väggar och fasadernas linjer
-  också, eller bara 2D-former och pennorna i stilmallen? (Fråga senast
-  när 0.8.30 börjar.) Kapade linjer från 0.8.28 (`coverLines`) börjar om
-  strecket i varje bit; ett mönster som ska löpa jämnt behöver räkna
-  fasen.
-- **Detaljnivåerna (0.8.32)**: per vy är bestämt. Gäller det bara
+- **Detaljnivåerna (0.8.34)**: per vy är bestämt. Gäller det bara
   litteran, eller ska dörrar och fönster också ritas olika (då hör en del
   hemma i 0.11.2)? Carl Augusts "ja" 25 oktober tolkades som per vy; säg
   till om det var fel.
