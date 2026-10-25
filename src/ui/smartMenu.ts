@@ -6,6 +6,17 @@ import type { PropertiesPanel } from './propertiesPanel';
 import { aliasText, commandFor } from './commandRegistry';
 
 /** Kommandot i smartshell för valet (0.8.20), efter kortkommandot. */
+/** Fält där någon skriver; de ritas inte om under fingrarna (0.8.28). */
+const TYPING = 'textarea, input:not([type="radio"]):not([type="checkbox"]):not([type="color"])';
+
+/** En väljare som hittar samma fält efter omritning: data-key och, för radioknappar, värdet. */
+function focusKey(el: HTMLElement): string | null {
+  const key = el.dataset.key;
+  if (!key || !el.matches('input, select')) return null;
+  const v = el instanceof HTMLInputElement && el.type === 'radio' ? `[value="${CSS.escape(el.value)}"]` : '';
+  return `[data-key="${CSS.escape(key)}"]${v}`;
+}
+
 function railAlias(op: OpId): string {
   const c = commandFor({ rail: railOf(op)?.id });
   return c ? `, skriv ${aliasText(c)}` : '';
@@ -198,7 +209,12 @@ export class SmartMenu {
       return;
     }
     const focused = document.activeElement as HTMLElement | null;
-    if (!force && focused && this.el.contains(focused) && focused.matches('input, select, textarea')) return;
+    // Bara skrivfält skyddas (0.8.28): en radioknapp, kryssruta, färg eller lista
+    // behåller fokus efter valet, och då ska menyn ändå visa det nya (t.ex.
+    // fyllningens färg när formen fått en fyllning).
+    const inMenu = !!focused && this.el.contains(focused);
+    if (!force && inMenu && focused!.matches(TYPING)) return;
+    const refocus = inMenu ? focusKey(focused!) : null;
     const m = this.modifier;
     const where = m.where();
     // Änden, hörnet eller kanten man klickat på; med flera markerade också vilket objekt.
@@ -222,6 +238,7 @@ export class SmartMenu {
       (body ? `<div class="sm-body compact">${body}<div class="sm-foot"><button type="button" class="btn" data-action="open-panel">Visa i egenskapspanelen</button></div></div>` : '');
     const b = this.el.querySelector('.sm-body');
     if (b) b.scrollTop = scroll;
+    if (refocus) this.el.querySelector<HTMLElement>(refocus)?.focus({ preventScroll: true });
     this.place();
   }
 

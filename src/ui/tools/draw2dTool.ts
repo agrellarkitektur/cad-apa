@@ -1,5 +1,6 @@
-import { addElements } from '../../core/commands';
-import { shapePrims, type FillPattern, type LineType, type Shape2DParams, type ShapeKind } from '../../elements/drawing2d';
+import { addElements, updateParams } from '../../core/commands';
+import type { Element, Id } from '../../core/model';
+import { isClosed, segmentCount, shapePrims, type FillPattern, type LineType, type Shape2DParams, type ShapeKind } from '../../elements/drawing2d';
 import { bulgeThrough, STRAIGHT } from '../../geometry/arc';
 import { add, dist, dot, fromAngleDeg, scale, sub } from '../../geometry/vec';
 import type { Primitive, Vec2 } from '../../repr/primitives';
@@ -7,6 +8,8 @@ import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { renderPrimitives } from '../../view2d/renderPrimitives';
 import { pxToMm, type ToolHost } from './host';
+import { resolveParams } from '../../elements/registry';
+import { pickableById } from '../../repr/plan';
 import { snapMarker } from './overlay';
 import { roundMm, snap, type SnapResult } from './snap';
 import type { PointTaker } from '../pointInput';
@@ -40,6 +43,12 @@ export class Draw2DTool implements ViewTool, PointTaker {
   private current: SnapResult | null = null;
   private lastUp = { t: 0, at: [0, 0] as Vec2 };
   options: Draw2DOptions = { kind: 'polyline', weight: 0.25, linetype: 'solid' };
+  /**
+   * Formen som ritas vidare (0.8.28): en markerad öppen linje eller spline som
+   * man klickat på en ände av. Dess punkter ligger först i `points`, med den
+   * klickade änden sist; `bulges` är dess bågar i samma riktning.
+   */
+  private base: { id: Id; n: number; bulges: number[]; reversed: boolean } | null = null;
   /** Riktningen låst med <45 i smartshell (0.8.20), till nästa punkt. */
   lockAngle: number | null = null;
   onChange?: () => void;
@@ -81,6 +90,8 @@ export class Draw2DTool implements ViewTool, PointTaker {
       this.finish(false);
       return;
     }
+    // Klick på änden av en markerad öppen form ritar den vidare (0.8.28); Ctrl börjar en ny.
+    if (this.open && !this.points.length && !p.mod && this.continueAt(this.current.point, pxToMm(this.host, p.pointerType === 'touch' ? 18 : 10))) return;
     // Klick på första punkten sluter en polylinje eller spline.
     if (this.open && this.points.length >= 3 && dist(pt, this.points[0]) <= pxToMm(this.host, 10)) {
       this.finish(true);
@@ -98,6 +109,56 @@ export class Draw2DTool implements ViewTool, PointTaker {
     else this.onChange?.();
   }
 
+  /** Formen som ritas vidare, om någon. */
+  get continuing(): Id | null {
+    return this.base?.id ?? null;
+  }
+
+  /**
+   * De markerade öppna 2D-formerna (linjer och splines, också med bågar) som
+   * går att rita vidare: synliga och möjliga att ändra här.
+   */
+  continuable(): Element[] {
+    const host = this.host;
+    const doc = host.store.doc;
+    const shown = pickableById(host.plan().pickables);
+    const ro = !!host.readOnly?.();
+    return host.selection
+      .list()
+      .map((id) => doc.elements[id])
+      .filter((el): el is Element => {
+        if (el?.type !== 'Shape2D' || !shown.has(el.id) || (ro && !host.canEdit?.(el.id))) return false;
+        const q = resolveParams<Shape2DParams>(doc, el);
+        return (q.shape === 'polyline' || q.shape === 'spline') && q.points.length >= 2 && !isClosed(q);
+      });
+  }
+
+  /**
+   * Börja rita vidare från änden närmast `pt` av en markerad öppen form, om
+   * någon ände ligger inom `tol`. Svarar true om det blev så.
+   */
+  continueAt(pt: Vec2, tol: number): boolean {
+    let best: { el: Element; atStart: boolean; d: number } | null = null;
+    for (const el of this.continuable()) {
+      const pts = resolveParams<Shape2DParams>(this.host.store.doc, el).points as Vec2[];
+      for (const atStart of [false, true]) {
+        const d = dist(pt, atStart ? pts[0] : pts[pts.length - 1]);
+        if (d <= tol && (!best || d < best.d)) best = { el, atStart, d };
+      }
+    }
+    if (!best) return false;
+    const q = resolveParams<Shape2DParams>(this.host.store.doc, best.el);
+    const n = q.points.length;
+    const bulges = Array.from({ length: n - 1 }, (_, i) => q.bulges?.[i] ?? 0);
+    // Från början: punkterna vänds, och bågarna byter tecken när riktningen vänds.
+    this.points = (best.atStart ? [...q.points].reverse() : [...q.points]) as Vec2[];
+    this.base = { id: best.el.id, n, bulges: best.atStart ? bulges.reverse().map((b) => (b ? -b : 0)) : bulges, reversed: best.atStart };
+    this.lockAngle = null;
+    this.onChange?.();
+    this.host.view.requestRender();
+    return true;
+  }
+
   // Skrivna punkter i smartshell (0.8.20).
   lastPoint(): Vec2 | undefined {
     return this.points.at(-1);
@@ -109,6 +170,8 @@ export class Draw2DTool implements ViewTool, PointTaker {
 
   takePoint(p: Vec2): void {
     const pt = roundMm(p);
+    // En skriven punkt på änden av en markerad öppen form ritar den vidare (0.8.28).
+    if (this.open && !this.points.length && this.continueAt(pt, 1)) return;
     if (this.open && this.points.length >= 3 && dist(pt, this.points[0]) < 1) this.finish(true);
     else this.addPoint(pt);
     this.host.view.requestRender();
@@ -123,6 +186,11 @@ export class Draw2DTool implements ViewTool, PointTaker {
 
   /** Ta bort den senaste punkten (Ångra i smartshell, 0.8.21). */
   undoPoint(): void {
+    // Formens egna punkter tas inte bort; utan nya punkter slutar fortsättningen.
+    if (this.base && this.points.length <= this.base.n) {
+      this.reset();
+      return;
+    }
     this.points.pop();
     this.lockAngle = null;
     this.onChange?.();
@@ -131,6 +199,7 @@ export class Draw2DTool implements ViewTool, PointTaker {
 
   reset(): void {
     this.points = [];
+    this.base = null;
     this.lockAngle = null;
     this.onChange?.();
     this.host.view.requestRender();
@@ -144,8 +213,31 @@ export class Draw2DTool implements ViewTool, PointTaker {
 
   /** Avsluta formen med de punkter som finns. */
   finish(closed: boolean): void {
-    if (this.points.length >= 2) this.create(this.points, closed);
+    if (this.base) this.extend(this.base, this.points, closed);
+    else if (this.points.length >= 2) this.create(this.points, closed);
     this.reset();
+  }
+
+  /**
+   * Formen med de nya punkterna (0.8.28). De nya kanterna är raka; en form
+   * som ritats vidare från början har sina punkter vända, och då byter
+   * ändformerna plats så att de sitter kvar där de satt.
+   */
+  private extend(base: NonNullable<Draw2DTool['base']>, pts: Vec2[], closed: boolean): void {
+    if (pts.length <= base.n) return;
+    const el = this.host.store.doc.elements[base.id];
+    if (!el) return;
+    const q = resolveParams<Shape2DParams>(this.host.store.doc, el);
+    const at = (v: Vec2): [number, number] => [Math.round(v[0]), Math.round(v[1])];
+    const bulges = [...base.bulges, ...Array.from({ length: segmentCount(pts.length, closed) - base.bulges.length }, () => 0)];
+    const patch: Record<string, unknown> = {
+      points: pts.map(at),
+      bulges: q.shape === 'spline' || !bulges.some((b) => b) ? undefined : bulges,
+      closed: closed || undefined,
+    };
+    if (base.reversed) Object.assign(patch, { startCap: q.endCap, endCap: q.startCap });
+    updateParams(this.host.store, [base.id], patch, closed ? 'Fortsätt och slut linjen' : 'Fortsätt linjen');
+    this.host.selection.set([base.id]);
   }
 
   /** Parametrarna för formen genom punkterna. */
@@ -192,6 +284,14 @@ export class Draw2DTool implements ViewTool, PointTaker {
     const pts = [...this.points];
     if (this.current) pts.push(this.current.point);
     if (pts.length < 2) return [];
+    const el = this.base && this.host.store.doc.elements[this.base.id];
+    if (el && this.base) {
+      // Som formen blir: dess penna och fyllning, de gamla bågarna och raka nya kanter.
+      const own = resolveParams<Shape2DParams>(this.host.store.doc, el);
+      const bulges = own.shape === 'spline' ? undefined : [...this.base.bulges, ...pts.slice(this.base.n).map(() => 0)];
+      const caps = this.base.reversed ? { startCap: own.endCap, endCap: own.startCap } : {};
+      return shapePrims({ ...own, ...caps, points: pts as [number, number][], bulges, closed: false, weight: own.weight || 0.13 }, undefined, false, this.host.view.drawingScale);
+    }
     const p = { fillAngle: 45, fillSpacing: 2, ...this.params(pts, false) } as unknown as Shape2DParams;
     return shapePrims({ ...p, weight: p.weight || 0.13 }, undefined, false, this.host.view.drawingScale);
   }
@@ -206,10 +306,15 @@ export class Draw2DTool implements ViewTool, PointTaker {
       case 'arc':
         return n === 0 ? 'Klicka där bågen börjar.' : n === 1 ? 'Klicka där bågen slutar.' : 'Klicka en punkt på bågen.';
       case 'polyline':
-        return n === 0 ? 'Klicka där linjen börjar.' : 'Klicka nästa punkt, eller dubbelklicka för att sluta.';
+        return n === 0 ? `Klicka där linjen börjar${this.continueHint()}.` : 'Klicka nästa punkt, eller dubbelklicka för att sluta.';
       default:
-        return n === 0 ? 'Klicka första punkten.' : 'Klicka nästa punkt, eller dubbelklicka för att sluta.';
+        return n === 0 ? `Klicka första punkten${this.continueHint()}.` : 'Klicka nästa punkt, eller dubbelklicka för att sluta.';
     }
+  }
+
+  /** Tipset om att rita vidare (0.8.28), när det finns en markerad öppen form. */
+  private continueHint(): string {
+    return this.continuable().length ? ', eller på en ände av den markerade för att rita vidare (Ctrl+klick börjar en ny)' : '';
   }
 
   overlay(cam: Camera): string {

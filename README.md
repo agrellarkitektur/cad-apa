@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.27** (alfa, granskning); nästa är **0.8.28, rättelser i 2D-formen**.
+**0.8.28** (alfa, rättelser i 2D-formen); nästa är **0.8.29, linjetyper**.
 
 ## Vad som fungerar
 
@@ -951,6 +951,22 @@ Version 0.8.27, granskning (samma filformat, 13):
 - Stilmallen, egenskaperna för 2D-former, underlag och Visas i, och
   appens stilar ligger i fler och mindre filer, så att linjetyper och
   detaljnivåer får en egen plats när de kommer
+
+Version 0.8.28, rättelser i 2D-formen (samma filformat, 13):
+- **Fortsätta en linje**: med 2D-verktyget (Linje eller Spline) ritar ett
+  klick på en ände av den markerade öppna linjen vidare från den änden,
+  också med bågar; nya kanter är raka. En linje är markerad direkt efter
+  att den ritats, så den går att fortsätta på en gång. **Ctrl+klick**
+  börjar en ny linje i änden i stället. Knappen *Fortsätt* i snabbraden
+  och smartmenyn tar fram verktyget med linjen kvar markerad. Ett klick
+  på första punkten sluter formen; Ångra tar bara bort de nya punkterna
+- **Fyllningens färg i smartmenyn** syns så snart formen fått en
+  fyllning, både när den valts i den utfällda smartmenyn och direkt bland
+  fälten (med vinkel, avstånd och opacitet)
+- **Det överst döljer det under**: en 2D-form med hel fyllning (utan
+  genomskinlighet) döljer linjerna i 2D-former som ligger bakom den i
+  ritordningen, på skärmen, i PDF:en och i DXF:en. En skraffering döljer
+  ingenting, som förut
 
 ## Versioner och gamla projekt
 

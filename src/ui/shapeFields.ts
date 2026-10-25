@@ -38,7 +38,7 @@ export function hatchFields(p: { fillAngle: number | null; fillSpacing: number |
 
 /**
  * Fälten som smartmenyn visar direkt för markerade 2D-former (0.8.22):
- * skrafferingens vinkel och avstånd och opaciteten. Värden som skiljer sig
+ * fyllningens färg (0.8.28), skrafferingens vinkel och avstånd och opaciteten. Värden som skiljer sig
  * mellan formerna står tomma. Null när det inte finns något att visa.
  */
 export function shapeSmartFields(doc: ProjectDoc, els: Element[]): string | null {
@@ -47,7 +47,11 @@ export function shapeSmartFields(doc: ProjectDoc, els: Element[]): string | null
   const same = <K extends keyof Shape2DParams>(k: K): Shape2DParams[K] | null => (ps.every((q) => q[k] === ps[0][k]) ? ps[0][k] : null);
   const attrs = (k: string) => `data-key="d2:${k}"`;
   const parts: string[] = [];
-  if (ps.every((q) => q.fill === 'hatch' || q.fill === 'cross')) parts.push(`<div class="fields">${hatchFields({ fillAngle: same('fillAngle'), fillSpacing: same('fillSpacing') }, attrs)}</div>`);
+  // Fyllningens färg (0.8.28), när alla har en fyllning; tom ruta = olika.
+  const color = ps.every((q) => q.fill) ? (ps.every((q) => (q.fillColor ?? FILL_COLOR) === (ps[0].fillColor ?? FILL_COLOR)) ? (ps[0].fillColor ?? FILL_COLOR) : null) : undefined;
+  const colorField = color === undefined ? '' : `<label class="field"><span>Fyllningens färg</span><input type="color" ${attrs('fillColor')} value="${color ?? FILL_COLOR}"${color === null ? ' title="Olika"' : ''}></label>`;
+  const hatch = ps.every((q) => q.fill === 'hatch' || q.fill === 'cross') ? hatchFields({ fillAngle: same('fillAngle'), fillSpacing: same('fillSpacing') }, attrs) : '';
+  if (colorField || hatch) parts.push(`<div class="fields">${colorField}${hatch}</div>`);
   // Ändarna (0.8.24), när alla är öppna och har en linje.
   if (ps.every((q) => !q.closed && q.weight > 0)) {
     const cap = (k: 'startCap' | 'endCap') => (ps.every((q) => q[k] === ps[0][k]) ? ps[0][k] : null);

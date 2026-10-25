@@ -98,6 +98,11 @@ export interface ElementType<P extends object = Record<string, unknown>> {
    * ytan från `pickShape` går att klicka inuti, inte en sluten linje.
    */
   pickSoft?: boolean | ((el: Element, ctx: PlanContext) => boolean);
+  /**
+   * En hel, ogenomskinlig fyllning döljer linjerna i element av samma typ
+   * som ligger bakom i ritordningen (0.8.28, 2D-former; se `coverLines`).
+   */
+  planCovers?: boolean;
   /** Elementet i 3D, som lodräta extruderingar (mm, z uppåt från våningens golv). */
   model3d?(el: Element<P>, ctx: PlanContext): Shape3D[];
   /** Flera element i 3D tillsammans, t.ex. väggar som ska skarvas. Går före `model3d`. */

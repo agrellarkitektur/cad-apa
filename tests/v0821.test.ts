@@ -18,7 +18,7 @@ function host(): ToolHost & { hints: string[] } {
   return {
     store,
     hints,
-    selection: { set: () => {} } as never,
+    selection: { set: () => {}, list: () => [] } as never,
     view: { requestRender: () => {}, camera: { scale: 1 }, drawingScale: 100 } as never,
     plan: () => ({ pickables: [] }) as never,
     activeState: () => store.doc.states[0].id,

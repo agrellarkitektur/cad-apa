@@ -314,6 +314,13 @@ export function installActions(app: AppContext, parts: ActionParts) {
       case 'zoom-selection':
         app.zoomToSelection();
         break;
+      case 'continue-line':
+        // Rita vidare (0.8.28): 2D-verktyget med linjen kvar markerad; klicka på en ände.
+        if (!['polyline', 'spline'].includes(app.draw2dTool.options.kind)) app.draw2dTool.setKind('polyline');
+        app.setTool('draw2d', true);
+        app.smartMenu.hide();
+        app.hint('Klicka på den ände av linjen där den ska fortsätta.', 4000);
+        break;
       case 'draw-order': {
         // Ritordning (0.8.25), knapparna i egenskaperna och smartmenyn.
         const move = target.closest<HTMLElement>('[data-action]')?.dataset.order as OrderMove | undefined;

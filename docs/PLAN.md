@@ -1071,6 +1071,23 @@ en session.
   ska dess fyllning också dölja den undre formens linjer, inte bara dess
   fyllning
 
+*Byggd (25 oktober), samma format (13). Claudes val: man fortsätter bara
+den markerade linjen (en ny linje är markerad när den ritats), så att man
+fortfarande kan börja en ny linje i en annan linjes ände; Ctrl+klick
+börjar en ny också i den markerades ände. Knappen *Fortsätt* finns i
+snabbraden för en ensam öppen linje eller spline (inte i inställningarna
+för snabbknappar). Från början vänds punkterna, bågarna byter tecken och
+ändformerna byter plats, så att formen ser likadan ut. Nya kanter är raka;
+formens penna och fyllning gäller, inte verktygets. Ångra tar inte bort
+formens egna punkter. Smartmenyn ritas om efter ett val i en radioknapp,
+kryssruta, färg eller lista (bara skrivfält skyddas), och fyllningens färg
+står bland fälten. Det överst: de undre formernas linjer kapas geometriskt
+där en senare form har hel fyllning med opaciteten 100 %, eftersom
+fyllningarna ligger bakom väggarna och linjerna framför; skraffering och
+genomskinlig fyllning döljer ingenting. Bara mellan 2D-former på samma
+yta och i samma tillstånd; ändformerna (pilar, punkter) kapas inte, och
+markeringen visar hela formen.*
+
 ### 0.8.29 Linjetyper
 
 Carl Augusts synpunkter 25 oktober (förslag 25 oktober). Stor men troligen

@@ -376,6 +376,8 @@ export const shape2dType: ElementType<Shape2DParams> = {
   // Mitten går att klicka på bara när formen har en fyllning (0.8.19); annars bara linjen.
   // En fyllning framför väggarna (0.8.25) går före dem också när man klickar.
   pickSoft: (el, ctx) => !ctx.params<Shape2DParams>(el).fillFront,
+  // Det som ligger överst döljer det under (0.8.28).
+  planCovers: true,
   pickShape(el, ctx) {
     const p = ctx.params<Shape2DParams>(el);
     if (!p.fill) return [];

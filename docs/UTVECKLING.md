@@ -1124,6 +1124,33 @@ projekt i 1 982 jämförelser.
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
 
+## Rättelser i 2D-formen (0.8.28, format 13)
+
+- **Fortsätta en linje**: `Draw2DTool.continueAt(pt, tol)` i
+  `src/ui/tools/draw2dTool.ts` letar bland `continuable()` (markerade,
+  synliga, öppna `polyline`/`spline`) efter en ände inom `tol` och lägger
+  formens punkter först i `points` med den klickade änden sist; `base`
+  har id, antalet egna punkter, bågarna i den riktningen och om de
+  vändes. `finish` kallar då `extend` (en `updateParams`, Ångra-rubrik
+  *Fortsätt linjen*) i stället för `create`. Första klicket i `up` och en
+  skriven punkt i `takePoint` prövar `continueAt`; `p.mod` (Ctrl) hoppar
+  över. Knappen är `continue-line` i `quickBar.ts`, och
+  `app/actions.ts` väljer verktyget med `setTool('draw2d', true)` så att
+  markeringen ligger kvar
+- **Smartmenyn ritas om** efter ändringar också när fokus ligger i menyn,
+  utom i skrivfält (`TYPING` i `smartMenu.ts`); fältet med fokus får
+  fokus igen efter omritningen (`focusKey`: `data-key` och, för
+  radioknappar, värdet). Fyllningens färg är med i `shapeSmartFields`
+- **Det överst döljer det under**: `coverLines` i `src/repr/cover.ts`
+  kapar linjer (`polyline`, `line`) i element som ligger bakom en hel,
+  ogenomskinlig fyllning i ett senare element i samma grupp. Typer med
+  `planCovers` (bara `Shape2D`) får det i `drawGroup` i `src/repr/plan.ts`;
+  de sparade primitiverna per element är okapade, så det som markeras och
+  klickas är hela formen. Ytorna läggs i ett `BoxIndex`, så varje linje
+  prövas bara mot ytor i närheten. `clipOutside` delar varje sträcka där
+  den korsar en kant och behåller bitar vars mitt ligger utanför
+  (jämn–udda, så att hål räknas). Prövat i `tests/v0828.test.ts`
+
 ## Granskning (0.8.27, format 13)
 
 Utan nya funktioner. Kontrollerat med samma klick i 0.8.26 och 0.8.27

@@ -1,6 +1,7 @@
 import type { Element, ProjectDoc } from '../core/model';
 import { moveOnly } from '../core/sheets';
 import { existingState, type ViewStates } from '../core/states';
+import { isClosed, type Shape2DParams } from '../elements/drawing2d';
 import { resolveParams, typeOf } from '../elements/registry';
 import { faceOf } from '../elements/wallSides';
 import { icons } from './icons';
@@ -26,6 +27,7 @@ const QUICK_TITLES: Record<string, string> = {
   demolish: 'Riv i det här förslaget (finns kvar i Befintligt)',
   restore: 'Behåll: ångra rivningen i det här förslaget',
   'zoom-selection': 'Zooma till det markerade',
+  'continue-line': 'Fortsätt: rita vidare från en ände av linjen',
   'open-marker': 'Öppna fasaden eller sektionen',
   delete: 'Ta bort helt, ur alla tillstånd (Delete)',
   'smart-more': 'Visa alla inställningar här i smartmenyn',
@@ -53,6 +55,11 @@ export function quickButtons(doc: ProjectDoc, els: Element[], viewports: boolean
     return !viewports && !fixedShape && !!a && (a.types === 'all' || a.types.includes(k));
   };
   const buttons: string[] = [];
+  // Rita vidare (0.8.28): en ensam öppen linje eller spline.
+  if (kind === 'Shape2D' && els.length === 1 && !fixedShape) {
+    const q = resolveParams<Shape2DParams>(doc, els[0]);
+    if ((q.shape === 'polyline' || q.shape === 'spline') && q.points.length >= 2 && !isClosed(q)) buttons.push(quickButton('continue-line', icons.draw2d, 'Fortsätt'));
+  }
   for (const id of quickFor(kind)) {
     switch (id) {
       case 'flip-swing':

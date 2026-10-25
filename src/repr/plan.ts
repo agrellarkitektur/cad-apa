@@ -5,6 +5,7 @@ import { allTypes, typeOf, type ElementType, type PlanContext, type PlanItem } f
 import { autoDimensions } from '../elements/autoDims';
 import { sortByOrder } from '../core/drawOrder';
 import { createContext } from './context';
+import { coverLines } from './cover';
 import { sameItems } from './reuse';
 import type { Pen, Primitive, Vec2 } from './primitives';
 
@@ -135,7 +136,7 @@ function drawGroup(t: ElementType, items: PlanItem[], ctx: PlanContext, style: S
 
   // Element som bara ritar sig själva: ett och ett, och oförändrade återanvänds.
   if (!t.planBatch && t.planReads?.length === 0) {
-    const prims: Primitive[] = [];
+    const ones: Primitive[][] = [];
     const pickables: Pickable[] = [];
     for (const { el } of items) {
       let one = before.get(el.id);
@@ -144,10 +145,12 @@ function drawGroup(t: ElementType, items: PlanItem[], ctx: PlanContext, style: S
         one = { el, prims: own.map(styled), pickable: pickable(el, own) };
       }
       now.set(el.id, one);
-      for (const p of one.prims) prims.push(p);
+      ones.push(one.prims);
       pickables.push(one.pickable);
     }
-    return { inputs: [], prims, pickables };
+    // En övre fyllning döljer de undre linjerna (0.8.28); det som markeras är hela formen.
+    const drawn = t.planCovers && !hidden && ones.length > 1 ? coverLines(ones) : ones;
+    return { inputs: [], prims: drawn.flat(), pickables };
   }
 
   // Varje element ritas en gång; samma primitiver används för att markera det.

@@ -1,29 +1,26 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.27.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.28.
 
 ## Läget
 
-- **0.8.27 Granskning är klar** på `main` (samma format, 13, i en
-  session), utan nya funktioner: `app.css` i tretton filer i samma ordning
-  (samma byggda CSS byte för byte), stilmallen i `src/ui/style/`
-  (`actions.ts`, `labels.ts`, `pens.ts`, `colors.ts`), `drawingPanel.ts`
-  uppdelad (`shapeFields.ts`, `underlayFields.ts`, `showFields.ts`),
-  snabbradens knappar i `quickBar.ts`, Kopiera/Vrid/Spegla i
-  `core/transforms.ts`, tre oanvända funktioner borta. Fasaderna ungefär
-  dubbelt så fort (rutnätet i `hiddenLine.ts` med kvadratiska rutor;
-  312 väggar 0,38 → 0,20 s). Kontrollerat med samma klick i 0.8.26 och
-  0.8.27 (Playwright, 114 steg, samma läge efter varje), samma primitiver
-  för fasader och sektioner i tre projekt, och `tests/v0827.test.ts`; alla
-  368 tester går igenom. Står i README, PLAN.md och UTVECKLING.md under
-  *Granskning (0.8.27)*.
+- **0.8.28 Rättelser i 2D-formen är klar** på `main` (samma format, 13,
+  i en session): fortsätta en markerad öppen linje eller spline från en
+  ände (också med bågar; Ctrl+klick börjar en ny; knappen *Fortsätt* i
+  snabbraden), fyllningens färg i smartmenyn direkt (omritning efter val i
+  radioknappar, kryssrutor, färger och listor; färgen står bland fälten),
+  och en hel ogenomskinlig fyllning döljer linjerna i 2D-former bakom den
+  i ritordningen (linjerna kapas i `src/repr/cover.ts`). Prövat med
+  `tests/v0828.test.ts` (alla 378 tester går igenom) och i webbläsaren
+  (Playwright mot `dist/`). Står i README, PLAN.md (med Claudes val) och
+  UTVECKLING.md.
+- **0.8.27 Granskning** (utan nya funktioner; fasaderna ungefär dubbelt så
+  fort) står i README, PLAN.md och UTVECKLING.md under *Granskning
+  (0.8.27)*.
 - **Carl Augusts provning 25 oktober**: 0.8.26 syns på webbhotellet, och
   sorteringen av Inkorgen 24 oktober stämde. Tre fel i 2D-formen blev
-  **0.8.28 Rättelser i 2D-formen** (se PLAN.md): fortsätta en öppen linje
-  från ändpunkten (också med bågar), fyllningens färg i smartmenyn syns
-  först efter ny markering, och en form som skickas fram döljer bara den
-  undres fyllning, inte dess linjer. Inkorgen 25 oktober sorterades och
+  0.8.28 (klar). Inkorgen 25 oktober sorterades och
   ordningen bekräftades av Carl August: 0.8.29 Linjetyper (med egna
   linjetyper), 0.8.30 Egna fyllningstyper (tidigarelagd på hans begäran),
   0.8.31 Detaljnivåer i stilmallen (detaljnivån väljs per vy, som i
@@ -74,9 +71,7 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 - ~~0.8.8 Mallblad~~ … ~~0.8.21 Kommandoraden del 2~~,
   ~~0.8.22 Småsaker~~, ~~0.8.23 Granskning~~, ~~0.8.24 2D-form del 2~~,
   ~~0.8.25 Ritordning och fyllningar~~, ~~0.8.26 Pennor i stilmallen~~,
-  ~~0.8.27 Granskning~~ (klara)
-- **0.8.28 Rättelser i 2D-formen** (fortsätta en linje, fyllningens färg
-  i smartmenyn, det överst döljer det under)
+  ~~0.8.27 Granskning~~, ~~0.8.28 Rättelser i 2D-formen~~ (klara)
 - **0.8.29 Linjetyper** (också egna; grunden för det punktstreckade i 0.10)
 - **0.8.30 Egna fyllningstyper** (linjefamiljer med streckning; kanske
   `.pat`-filer)
@@ -99,24 +94,29 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.27 syns på webbhotellet (numret vid alfa-knappen) och
-om något beter sig annorlunda än i 0.8.26 (det ska det inte; fasaderna ska
-bara komma fortare). Läs synpunktsfilen och sortera ny Inkorg (ordningen 0.8.28–0.8.31 är
-bekräftad). Bygg sedan **0.8.28
-Rättelser i 2D-formen** (liten–mellanstor, en session). Att börja med:
-smartmenyns fält kommer från `shapeSmartFields` i `src/ui/shapeFields.ts`
-och visar inte fyllningens färg alls (bara vinkel och avstånd för
-skraffering); se varför smartmenyn inte ritas om när `d2:pattern` ändras.
-Linjerna bakom en fyllning: 2D-formernas fyllningar och linjer ritas i
-olika lager (fyllningar före väggarna, linjer efter), så en övre forms
-fyllning kan inte dölja en undre forms linje utan att formerna ritas
-fyllning-och-linje i ritordning; det rör `drawGroup` i `src/repr/plan.ts`
-och lagren för `fillFront`/`lineBehind`. Fortsätta en linje: Markera har
-grepp i ändarna (`shapeNodeAt` i `src/ui/tools/selectGrips.ts`); ett klick
-på ändpunkten med 2D-verktyget, eller ett *Fortsätt*-val på greppet, kan
-starta verktyget med formens punkter och bågar.
+Fråga först om 0.8.28 syns på webbhotellet (numret vid alfa-knappen) och
+om de tre rättelserna fungerar som han tänkt (se frågorna nedan). Läs
+synpunktsfilen och sortera ny Inkorg (ordningen 0.8.29–0.8.31 är
+bekräftad). Fråga om linjetyperna (gäller de väggar och fasadernas linjer
+också?) och bygg sedan **0.8.29 Linjetyper** (stor men troligen en
+session; egna linjetyper flyttas till 0.8.30 om de inte ryms). Att börja
+med: `LINE_TYPES` i `src/elements/drawing2d.ts` har redan några streckade
+typer för 2D-formerna (`dash` i `Pen`); pennorna i stilmallen ligger i
+`src/ui/style/pens.ts`. Kapade linjer från 0.8.28 (`coverLines`) börjar
+om strecket i varje bit; ett mönster som ska löpa jämnt behöver räkna
+fasen.
 
 ## Att fråga Carl August om
+
+- **0.8.28 efter provning** (Claudes val, se PLAN.md): att bara den
+  markerade linjen fortsätts (en nyritad är markerad), och att Ctrl+klick
+  börjar en ny linje i dess ände; att knappen *Fortsätt* inte kan väljas
+  bort i inställningarna för snabbknappar; att nya kanter är raka och får
+  formens penna, inte verktygets. Att bara hel fyllning med opacitet
+  100 % döljer det under: ska en skraffering också dölja (då behöver den
+  en bakgrundsfärg, som i ArchiCAD)? Ändformerna (pilar, punkter) under en
+  fyllning kapas inte, och det döljs bara mellan 2D-former, inte rum,
+  väggar eller text.
 
 - **0.8.26 efter provning** (Claudes val, se PLAN.md): vilka nio pennor
   som finns och deras namn; att färgen också gäller markörens text och
