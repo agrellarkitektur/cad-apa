@@ -627,7 +627,7 @@ på bladet sina egna.
   för att dokumentet aldrig ändras på plats och `resolveParams` ger samma
   parametrar så länge elementet och definitionen är desamma (frysta i
   utveckling och tester, så att den som skriver i dem märks).
-- **Väggarnas ytor** sparas per vägg (`WallShapeCache` i `wall.ts`): en
+- **Väggarnas ytor** sparas per vägg (`WallShapeCache` i `wallBodies.ts`, förut `wall.ts`): en
   vägg räknas om när den själv, väggarna som når dess ändar (rutnätet ger
   dem) eller dess öppningar ändrats. Ytorna utan öppningar (`bareWallShapes`)
   delas av rummen, 3D och väggarnas sidor. Rummens hål sparas så länge
@@ -1207,14 +1207,10 @@ projekt i 1 982 jämförelser.
   bjälklagen nerifrån; kedjan ritas med `dimensionPrims` (vinkel 90)
   bredvid byggnaden, origin `part: 'höjdmått'`. Bara i sektioner;
   `hide: ['heightDims']`.
-- **Väggar under bjälklag**: `trimUnderSlabs` i `src/repr/storeyShapes.ts`,
-  efter att alla våningar byggts i `modelShapes`. En väggkropp vars
-  konturmitt ligger i ett bjälklag (inte i ett hål) och vars höjdintervall
-  bjälklagets undersida går igenom slutar där; urtag och väggens
-  kantlinjer kapas med. Väggar med sned ovansida (under tak) lämnas. Med
-  `only` (Bara den här våningen) byggs bjälklagen på våningarna ovanför i
-  samma slinga, med bara väggar och bjälklag i sammanhanget (bjälklag ur
-  väggarna behöver väggarna), och visas inte.
+- **Väggar under bjälklag**: sedan 0.10.1 kapar bjälklagen väggarna där
+  de täcker dem, i väggens 3D (`underSlabs` i `src/elements/wall3d.ts`,
+  se *Granskning (0.10.1)*); `trimUnderSlabs` med regeln om väggens mitt
+  finns inte längre.
 - Valen i Visa: `level` och `heightDims` under Markörer
   (`src/ui/app/showMenu.ts`). Tester i `tests/v092.test.ts`.
 
@@ -1258,7 +1254,7 @@ projekt i 1 982 jämförelser.
   (planet genom spetsen och konens linjer vid bitens kanter). Svaret
   sparas per parameterobjekt (WeakMap). `roofRange` ger lägsta undersida
   och högsta ovansida (Takfot och Nock i `sectionLevels.ts`).
-- **Väggar**: `roofPlanesAround(ctx)` tar takfall från alla våningar
+- **Väggar** (i `src/elements/wall3d.ts` sedan 0.10.1): `roofPlanesAround(ctx)` tar takfall från alla våningar
   (`ctx.storey` är ny i `PlanContext`, satt i plan) och flyttar dem till
   väggens höjder; andra våningars bitar har `foreign`. `trimToRoofs`
   kapar bara där taket ligger ovanför väggens fot (`claimsOf`, ordnat
@@ -1296,6 +1292,52 @@ projekt i 1 982 jämförelser.
   flyttal (två takfall som möts i nocken gav dubbla punkter i snittet).
 - Tester: `tests/v010.test.ts`. Referensritningarna ändrades av
   exempelvillans två takfall; `twoStoreys` flyttar båda till plan 2.
+
+## Granskning (0.10.1, format 17)
+
+Tre rättelser för flera våningar och en uppdelning. Referensritningarna
+ändrades med avsikt: linjerna har väggens id (och delas där väggarna
+möts), väggarna på plan 1 i `tva-*` kapas där bjälklaget täcker dem och
+linjerna mellan våningarna är borta.
+
+- **Väggen i tre filer**: `wallBodies.ts` (parametrarna, öppningarnas hål,
+  `computeWallShapes`, de sparade ytorna, `bareWallShapes`,
+  `bareWallUnion`, `wallShapesFor`), `wall3d.ts` (`wallModel3d`, som är
+  väggtypens `model3dBatch`, och kantlinjerna) och `wall.ts` (typen,
+  planen och littera). `wall.ts` exporterar också det som andra delar
+  använder ur `wallBodies.ts`, så importerna är oförändrade
+- **Bjälklagen ovanför** i `modelShapes` (`src/repr/storeyShapes.ts`):
+  först byggs sammanhanget och bjälklagen för varje våning (också
+  våningarna ovanför med `only`), sedan resten, med
+  `PlanContext.slabsAbove` (konturen och undersidan i våningens höjder)
+  för de bjälklag vars undersida ligger ovanför våningens golv.
+  Ordningen på formerna är densamma som förut. `slabCuts` sorterar dem
+  nerifrån med kanterna i ett rutnät; `underSlabs(rings, top, height,
+  slabs)` delar en väggbit som `trimToRoofs` gör för taken: delen i
+  bjälklaget får undersidans höjd (under tak det lägsta av planet och
+  höjden, med `halfPlaneBelow`), resten prövas mot nästa. `cover` ser utan
+  boolesk operation om biten ligger helt i eller utanför (inget hörn på
+  andra sidan och ingen av bjälklagets kanter går in i biten, `enters`);
+  flisor tunnare än 0,5 mm (`solidEnough`) räknas inte. Bitarna har egen
+  `height`, och urtagen kapas vid den
+- **Kantlinjerna per vägg**: `wallEdges` slår ihop bitarna per åtgärd och
+  ovansida som förut, men delar konturen efter ägare med `edgeOwners`
+  (`src/repr/outlineOwners.ts`, utbruten ur `ownedOutlines`), så att varje
+  vägg får en egen `Edges3D`. Förut fick hela gruppen den första väggens id
+- **Skarvarna mellan våningar**: `joinStoreys` i `storeyShapes.ts`, efter
+  att alla våningar byggts. Vågräta väggkanter på samma höjd från olika
+  våningar, med samma riktning (väggen till vänster, eftersom konturerna
+  kommer ur `union`: yttre ringar moturs, hål medurs), på samma linje och
+  med samma åtgärd tas bort där de går omlott. Urtag som börjar vid
+  väggens fot eller går upp till dess ovansida (`cuts` på väggens
+  `Solid`) behåller kanten (`inside`, `without`). Bara höjder där kanter
+  från två våningar möts prövas, med `BoxIndex`
+- **3D-vyn** (`setSolids` i `view3d.ts`) lägger alla kantlinjer i en
+  `LineSegments`
+- I `wallModel3d` slås bitarna upp per vägg (förut en slinga över alla
+  bitar för varje vägg)
+- Tester i `tests/v0101.test.ts`; testet för 0.9.2:s kapning i
+  `v092.test.ts` är ihopslaget med det
 
 ## Bjälklag del 2 (0.9.4, format 16)
 
@@ -1417,7 +1459,7 @@ skriptet kräver bara att namnen motsvarar varandra. Referensritningarna
   `textPlacement`, `DXF_CAP_HEIGHT`) och `dxf.ts` (typerna, avbildningen
   för block och `parseDxf`)
 - **Väggarnas sammanslagning utan öppningar** (`bareWallUnion` i
-  `src/elements/wall.ts`): rummens hål (`roomHoles`) och husets
+  `src/elements/wallBodies.ts`, förut `wall.ts`): rummens hål (`roomHoles`) och husets
   ytterkontur för vilken sida som är ute (`buildingOutlines` i
   `wallSides.ts`) räknades var för sig ur samma väggar. Nu sparas
   sammanslagningen för samma väggar i samma ordning (parametrarna jämförs

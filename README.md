@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.0** (alfa, tak); nästa är **0.10.1, takfot och taket i planen**.
+**0.10.1** (alfa, granskning); nästa är **0.10.2, takfot och taket i planen**.
 
 ## Vad som fungerar
 
@@ -1084,6 +1084,24 @@ Version 0.10.0, tak (filformat 17):
   taken. Skarven vid nocken mellan två takfall syns inte
 - Exempelvillans sadeltak är två takfall med referenslinjerna i ytterlivet
 - Projekt från 0.9.4 (format 16) öppnas inte
+
+Version 0.10.1, granskning (samma filformat, 17):
+- Inga nya funktioner, men tre rättelser för hus med flera våningar
+- **Bjälklaget kapar väggarna under sig där det täcker dem**, som taket
+  gör: ritat till halva väggens tjocklek kapas halva väggen, ritat till
+  utsidan hela. Ett bjälklag *Ur väggarna* slutar vid ytterväggarnas
+  insida, så de går golv till golv som förut, och i en håltagning står
+  väggen kvar. Under tak gäller det som är lägst av taket och bjälklaget.
+  Förut kapades en vägg bara när mitten av den låg under bjälklaget
+- **Väggarnas linjer hör till sin vägg** i 3D, fasader och sektioner.
+  Förut fick alla väggar på en våning en enda väggs linjer, så att
+  innerväggarnas linjer gick upp genom bjälklaget ovanför och en markerad
+  yttervägg i sektionen lyste upp de andra väggarnas linjer. En vägg med
+  egen penna har den nu också på sina linjer i fasader och sektioner
+- **Ingen linje mellan våningarna** där väggarna har samma liv, i 3D och
+  fasader. Linjen är kvar under en dörr och där väggen ovanför kragar ut
+- 3D-vyn ritar alla kantlinjer på en gång, och väggarnas 3D byggs lite
+  fortare i stora hus
 
 Version 0.8.38, granskning (samma filformat, 13):
 - Inga nya funktioner; allt beter sig som förut

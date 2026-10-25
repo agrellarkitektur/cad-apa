@@ -203,10 +203,10 @@ linje 420,152 420,200.9 [w0.25 ink] @yv-s/wall
 linje 240.1,152 239.9,152 [w0.25 ink] @yv-s/wall
 linje 220.1,152 219.9,152 [w0.25 ink] @yv-s/wall
 linje 180,152 180,152 [w0.25 ink] @yv-s/wall
-linje 180,152 180,168.5 [w0.25 ink] @yv-o/wall
-linje 180,195.7 180,200.9 [w0.25 ink] @yv-o/wall
-linje 180,152 180,152 [w0.25 ink] @yv-o/wall
-linje 180,152 180,200.9 [w0.25 ink] @yv-o/wall
+linje 180,152 180,168.5 [w0.25 ink] @yv-v/wall
+linje 180,195.7 180,200.9 [w0.25 ink] @yv-v/wall
+linje 180,152 180,152 [w0.25 ink] @yv-v/wall
+linje 180,152 180,200.9 [w0.25 ink] @yv-v/wall
 linje 420,152 420,152 [w0.25 ink] @yv-o/wall
 linje 420,152 420,200.9 [w0.25 ink] @yv-o/wall
 linje 324.8,170 324.8,170.2 [w0.25 ink] @iv-4/wall

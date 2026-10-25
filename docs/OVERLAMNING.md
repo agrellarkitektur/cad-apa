@@ -1,14 +1,31 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.10.0.
+överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.1.
 
 ## Läget
 
-- **0.10.0 Tak är klar** på `main` (format 17). Nästa är **0.10.1 Takfot
-  och taket i planen** (se *Nästa session*). 0.10 delades 25 oktober i
-  0.10–0.10.4 (bekräftat), och Inkorgen efter 0.9.4 sorterades in i
-  0.10.2, 0.10.5 och 0.10.6 (Claude sorterade på Carl Augusts begäran).
+- **0.10.1 Granskning är klar** på `main` (samma format, 17). Carl August
+  bad om granskningen före takfoten (26 oktober), så den blev 0.10.1 och
+  *Takfot och taket i planen* 0.10.2 (se *Nästa session*). Inkorgens
+  punkt 26 oktober (bjälklaget kapar väggen som taket) tog Claude med i
+  granskningen, eftersom det är samma kod; Carl August fick planen i
+  chatten innan arbetet började och har inte svarat.
+- **0.10.1**: felet Carl August såg (väggar under bjälklag i 3D och
+  sektion) var väggarnas kantlinjer: de slogs ihop per våning och fick
+  den första väggens id, så bjälklaget kapade inte innerväggarnas linjer
+  och en markerad YV01 lyste upp alla väggars linjer i sektionen. Nu har
+  varje vägg sina linjer (`edgeOwners`), bjälklagen ovanför kapar väggen
+  exakt där de täcker den (`underSlabs` i den nya `wall3d.ts`, i stället
+  för regeln om väggens mitt), och linjen mellan våningar med samma liv
+  är borta (`joinStoreys`; kvar under dörrar och där väggen kragar ut).
+  `wall.ts` delad i `wallBodies.ts`, `wall3d.ts` och `wall.ts`; 3D-vyn
+  ritar alla kantlinjer i en geometri; en kvadratisk slinga i väggarnas
+  3D borta. Referensritningarna ändrades med avsikt (linjernas id, `tva-*`).
+  Klickjämförelsen mot 0.10.0: 223 steg, bara de tio med fasader och
+  sektion av tvåvåningshuset skiljer (som väntat: egna pennor på rätt
+  linjer, kapningen, skarvarna). Testerna: 459 på ca 11 s. Claudes val i
+  PLAN.md, koden i UTVECKLING.md under *Granskning (0.10.1)*.
 - **0.10.0**: Carl August valde enkla takfall i stället för en kontur med
   takfot och gavel per kant: komplexa tak byggs av flera. Ett tak har
   kontur (2D-form med bågar) och referenslinje (`ref`, `refBulge`) med
@@ -174,11 +191,10 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.35 Filtrera och markera~~, ~~0.8.36 Egna fyllningstyper~~,
   ~~0.8.37 Detaljnivåer och fyllningar~~, ~~0.8.38 Granskning~~,
   ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~, ~~0.9.2 Nivåer~~,
-  ~~0.9.3 Granskning~~, ~~0.9.4 Bjälklag del 2~~, ~~0.10 Tak~~ (klara)
-- **0.10.1 Takfot och taket i planen** (språngets tjocklek, takfotens
+  ~~0.9.3 Granskning~~, ~~0.9.4 Bjälklag del 2~~, ~~0.10 Tak~~,
+  ~~0.10.1 Granskning~~ (klara)
+- **0.10.2 Takfot och taket i planen** (språngets tjocklek, takfotens
   snitt per kant, punktstreckat ovanför snittet, footprint genom taket)
-- **0.10.2 Granskning** (väggar under bjälklag i 3D, konturlinjer mellan
-  våningar)
 - **0.10.3 Mark och byggnadshöjd** (markhöjder, medelmarknivå,
   byggnadshöjd enligt PBF, marklinjen)
 - **0.10.4 Dolda linjer i fasader**
@@ -201,10 +217,10 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.10.0 syns på webbhotellet och hur taken fungerar
-(frågorna nedan; 0.9.2–0.9.4 har inte provats än). Läs synpunktsfilen och
-sortera ny Inkorg. Sedan **0.10.1 Takfot och taket i planen** (PLAN.md),
-mellanstor:
+Fråga först om 0.10.1 syns på webbhotellet och om väggarna under
+bjälklagen nu ser rätt ut (frågorna nedan; 0.9.2–0.10.0 har inte provats
+än). Läs synpunktsfilen och sortera ny Inkorg. Sedan **0.10.2 Takfot och
+taket i planen** (PLAN.md), mellanstor:
 
 - Språngets tjocklek: språnget är delen utanför ytterväggarnas utsida
   (räknas ur väggarna, som *Ur väggarna* för bjälklag)
@@ -213,9 +229,22 @@ mellanstor:
 - En snitthöjd per våning; tak och volymer ovanför ritas punktstreckade
 - Footprint streckad genom taket, som vyinställning
 
-Granskningen 0.10.2 efter det.
+Nästa granskning ungefär vid 0.10.5 eller 0.11.
 
 ## Att fråga Carl August om
+
+- **0.10.1 efter provning** (Claudes val, se PLAN.md): bjälklaget kapar
+  alla väggar det täcker, också ytterväggar och gavlar med *Upp till
+  taket* (under tak gäller det lägsta av taket och bjälklaget). Ska *Upp
+  till taket* hellre gå före ett bjälklag som täcker väggen? Ritas
+  bjälklaget till ytterväggarnas utsida syns dess kant som ett band i
+  fasaden (bjälklagets egna linjer); ska fasaden i stället visa väggen som
+  obruten? Linjen mellan våningarna tas bara bort mellan väggar med samma
+  åtgärd (mellan befintligt och nytt är den kvar). En vägg med egen penna
+  har den nu på sina linjer i fasader och sektioner; förut fick alla
+  väggar på våningen den första väggens penna där. Syns en tunn ljus
+  skarv mellan våningarna i 3D på hans dator (i sandlådans webbläsare
+  syns en svag)?
 
 - **0.10.0 efter provning** (Claudes val, se PLAN.md): att taket stiger
   åt vänster om referenslinjen och *Vänd lutningen* byter; att höjden
@@ -252,8 +281,8 @@ Granskningen 0.10.2 efter det.
   är en kedja bredvid nivåerna; en översta våning utan bjälklag ovanför
   får ingen fri höjd förrän taket finns (fri höjd under tak är inte gjort). Ska fri höjd hellre stå
   som text i rummet (t.ex. *RH 2400*)? Ska våningens namn också stå vid
-  FG? En vägg kapas när mitten av den ligger i bjälklaget ovanför, också
-  med egen höjd; väggar under tak lämnas.
+  FG? (Sedan 0.10.1 kapar bjälklaget väggen där det täcker den, också
+  under tak.)
 
 - **0.9.1 efter provning** (Claudes val, se PLAN.md): verktyget med
   rektangel, *Ur väggarna* och *Håltagning*; att *Ur väggarna* slutar vid
@@ -558,6 +587,10 @@ Granskningen 0.10.2 efter det.
   så det kan vara svårt att se vad som är vad.
 - Konens bitar syns svagt i 3D-vyns skuggning (64 bitar per varv, plan
   skuggning).
+- **Skarven mellan våningarna i 3D** (0.10.1): utan linjen syns en mycket
+  svag ljus streckad skarv i sandlådans webbläsare (SwiftShader). Att låta
+  väggarna gå 1 mm ned i det de står på hjälpte inte (prövat och
+  borttaget), så det är troligen skuggningen; se efter på en riktig dator.
 - Två takfall som möts ritar samma linje två gånger i fasaden (nocken och
   takfoten bakom), utan att det syns.
 - Spegla vänder inte bilden i ett underlag, bara läget.
@@ -687,6 +720,10 @@ Granskningen 0.10.2 efter det.
 - Mäta i webbläsaren: hela bildrutan, från `page.mouse.move` till två
   `requestAnimationFrame`, jämfört med ett tomt varv; att bara mäta
   JavaScript missar webbläsarens målning, som var det dyra vid panorering.
+- En profil (`node --cpu-prof`) sammanfattas snabbast med några rader
+  Python som summerar `timeDeltas` per `callFrame` i `.cpuprofile`, och
+  inklusive tid genom att gå upp till föräldrarna (så mättes 0.10.1).
+  Polygon-clippings egna funktioner heter `split`, `compare` och `run`.
 - Fasader, sektioner och blad utan webbläsare: ett skript med
   `registerBuiltInTypes()` från `src/elements` först, sedan `buildSection`
   eller `buildSheet` och `writePdf`. Stora projekt att mäta på: `wallGrid`

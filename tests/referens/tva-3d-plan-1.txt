@@ -1,4 +1,9 @@
-kanter @yv-s wall 48
+kanter @yv-s wall 6
+kanter @yv-o wall 10
+kanter @yv-n wall 6
+kanter @yv-v wall 10
+kanter @iv-1 wall 17
+kanter @iv-2 wall 11
 kanter @iv-4 wall 12
 form @yv-s wall z0–2700 urtag 3 0,0 12000,0 11600,400 400,400
 kanter @yv-s hole 8

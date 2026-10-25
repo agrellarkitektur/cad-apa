@@ -1,9 +1,9 @@
 linje 1750,0 1751.5,0 [w0.25 ink] @yv-s/wall
 linje 1750.1,2700 1751.5,2700 [w0.25 ink] @yv-s/wall
 linje 1750,0 1750,2699.9 [w0.25 ink] @yv-s/wall
-linje 9748.5,0 9750,0 [w0.25 ink] @yv-s/wall
-linje 9748.5,2700 9749.9,2700 [w0.25 ink] @yv-s/wall
-linje 9750,0 9750,2699.9 [w0.25 ink] @yv-s/wall
+linje 9748.5,0 9750,0 [w0.25 ink] @yv-n/wall
+linje 9748.5,2700 9749.9,2700 [w0.25 ink] @yv-n/wall
+linje 9750,0 9750,2699.9 [w0.25 ink] @yv-n/wall
 linje 5750,0 9750,0 [w0.25 ink] @yv-o/wall
 linje 9750,0 9748.5,0 [w0.25 ink] @yv-o/wall
 linje 9750,0 9750,2699.9 [w0.25 ink] @yv-o/wall

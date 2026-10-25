@@ -172,14 +172,17 @@ export class View3D {
     this.root.clear();
     this.meshes = [];
 
+    // Alla kantlinjer i en geometri (0.10.1): väggarnas linjer är en per
+    // vägg, och en ritning per lista blev många.
+    let count = 0;
+    for (const s of shapes) if (s.kind === 'edges' && !s.drawingOnly) count += s.segments.length * 6;
+    const edgePos = new Float32Array(count);
+    let at = 0;
     for (const s of shapes) {
       if (s.kind === 'edges') {
         // Glasmarkering och öppningssätt hör till ritningarna, inte till 3D.
         if (s.drawingOnly) continue;
-        const pos = new Float32Array(s.segments.flat());
-        const geom = new THREE.BufferGeometry();
-        geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        this.root.add(new THREE.LineSegments(geom, this.edgeMaterial));
+        for (const q of s.segments) for (let k = 0; k < 6; k++) edgePos[at++] = q[k];
         continue;
       }
       const geom = extrude(s);
@@ -191,6 +194,11 @@ export class View3D {
       if (s.material !== 'glass' && !s.noEdges) mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geom, 25), this.edgeMaterial));
       this.root.add(mesh);
       this.meshes.push(mesh);
+    }
+    if (count) {
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.BufferAttribute(edgePos, 3));
+      this.root.add(new THREE.LineSegments(geom, this.edgeMaterial));
     }
     if (!this.framed && this.meshes.length && this.el.clientWidth > 0) {
       this.frameAll();

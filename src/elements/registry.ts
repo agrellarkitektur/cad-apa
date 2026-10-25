@@ -42,6 +42,17 @@ export interface PlanContext {
   params<P>(el: Element<any>): P;
   /** Elementet syns inte i vyn men visas tonat (Visa dolda 2D-element). */
   hiddenInView(el: Element<any>): boolean;
+  /**
+   * Bjälklagen på våningarna ovanför (0.10.1), som kapar väggarna under sig.
+   * Bara när 3D-formerna byggs (`modelShapes`), inte i planen.
+   */
+  slabsAbove?: readonly SlabAbove[];
+}
+
+/** Ett bjälklag ovanför en våning (0.10.1): konturen med hål och undersidan i våningens höjder. */
+export interface SlabAbove {
+  rings: Vec2[][];
+  under: number;
 }
 
 /** Ett element med den åtgärd det visas med. */

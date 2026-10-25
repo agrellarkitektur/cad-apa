@@ -1607,9 +1607,49 @@ Skarven vid nocken syns inte i 3D och fasader: ett hörn som ett annat
 takfall delar, där de fria kanterna ligger på en linje, får ingen
 lodrät kantlinje.*
 
-### 0.10.1 Takfot och taket i planen
+### 0.10.1 Granskning
 
-Mellanstor.
+Före takfoten (Carl August 26 oktober; takfoten blev 0.10.2). Enligt
+planen (ungefär var tredje version; förra var 0.9.3).
+
+- Väggar under bjälklag i 3D och sektion (synpunkt 25 oktober)
+- Väggar med samma liv på två våningar ska inte ge konturlinjer mellan
+  dem i 3D och fasad (synpunkt 25 oktober)
+- Bjälklaget kapar väggen där det täcker den, som taket (synpunkt 26
+  oktober, sorterad hit av Claude eftersom det är samma kod)
+
+*Byggd (26 oktober), samma format (17). Testerna: 456 → 459 på ca 11 s.
+Felet var väggarnas kantlinjer: de slogs ihop per våning (för att
+skarvarna inte ska synas) och fick den första väggens id, så att
+bjälklagen inte kapade innerväggarnas linjer (de kapades efter id) och
+en markerad vägg i sektionen lyste upp alla väggars linjer. Ytterväggarnas
+snittyta går golv till golv med flit när bjälklaget är *Ur väggarna*.
+Nu delas linjerna efter vilken vägg kanten kommer ifrån, med samma
+uppslag som de egna pennorna (`edgeOwners`), så en vägg med egen penna
+har den också på sina linjer i fasader och sektioner. Claudes val:
+bjälklagen ovanför kapar väggen exakt där de täcker den, i stället för
+regeln från 0.9.2 (väggens mitt under bjälklaget), och gäller alla väggar,
+också ytterväggar och väggar under tak (där gäller det lägsta av taket
+och bjälklaget). Det lägsta bjälklaget ovanför gäller; ett som ligger
+högre än väggen gör ingenting. Flisor tunnare än en halv millimeter, där
+bjälklagets kant nästan följer väggens liv, räknas inte. Linjen mellan
+våningarna tas bort där ovansidan av en vägg och undersidan av en vägg på
+en annan våning har samma kant, med väggen på samma sida och samma
+åtgärd; den är kvar under en dörr (eller en öppning som går upp till
+väggens ovansida) och där väggen ovanför kragar ut. Bjälklagens kanter
+ritas som förut, så ett bjälklag ritat till ytterväggarnas utsida syns
+som ett band i fasaden. Granskningen: `wall.ts` 572 → 147 rader
+(kropparna i `wallBodies.ts`, 3D i `wall3d.ts`); väggarnas bitar slås upp
+per vägg i 3D (förut prövades alla bitar för varje vägg); 3D-vyn ritar
+alla kantlinjer i en geometri i stället för en per lista; en vägg som
+ligger helt i eller utanför ett bjälklag kapas utan boolesk operation.
+3D av ett hus med tre våningar à 312 väggar och bjälklag tar ungefär som
+förut (ca 0,3 s, några hundradelar mer för kapningen och skarvarna).
+Testet för 0.9.2:s kapning är ihopslaget med det nya.*
+
+### 0.10.2 Takfot och taket i planen
+
+Mellanstor. Var 0.10.1 före granskningen.
 
 - Språngets tjocklek separat från takets (språnget är delen utanför
   ytterväggarnas utsida)
@@ -1619,13 +1659,6 @@ Mellanstor.
   oktober), med en snitthöjd per våning
 - Vyinställning: byggnadens footprint (ytterväggarnas kontur) som streckad
   linje genom taket i planen (synpunkt 25 oktober)
-
-### 0.10.2 Granskning
-
-- Väggar under bjälklag i 3D (synpunkt 25 oktober; innerväggar kapas
-  sedan 0.9.2, så felet behöver återskapas)
-- Väggar med samma liv på två våningar ska inte ge konturlinjer mellan
-  dem i 3D och fasad (synpunkt 25 oktober)
 
 ### 0.10.3 Mark och byggnadshöjd
 

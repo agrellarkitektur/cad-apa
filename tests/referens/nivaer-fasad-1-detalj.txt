@@ -7,10 +7,10 @@ linje 13750,0 13750,2445.2 [w0.25 ink] @yv-s/wall
 linje 4754.6,0 4745.1,0 [w0.25 ink] @yv-s/wall
 linje 3754.9,0 3745.1,0 [w0.25 ink] @yv-s/wall
 linje 1751.5,0 1750,0 [w0.25 ink] @yv-s/wall
-linje 1750,0 1750,804.9 [w0.25 ink] @yv-o/wall
-linje 1750,2184.5 1750,2445.2 [w0.25 ink] @yv-o/wall
-linje 1750,0 1751.5,0 [w0.25 ink] @yv-o/wall
-linje 1750,0 1750,2445.2 [w0.25 ink] @yv-o/wall
+linje 1750,0 1750,804.9 [w0.25 ink] @yv-v/wall
+linje 1750,2184.5 1750,2445.2 [w0.25 ink] @yv-v/wall
+linje 1750,0 1751.5,0 [w0.25 ink] @yv-v/wall
+linje 1750,0 1750,2445.2 [w0.25 ink] @yv-v/wall
 linje 13748.5,0 13750,0 [w0.25 ink] @yv-o/wall
 linje 13750,0 13750,2445.2 [w0.25 ink] @yv-o/wall
 linje 8990,900.1 8990,910 [w0.25 ink] @iv-4/wall

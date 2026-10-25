@@ -1,4 +1,9 @@
-kanter @yv-s wall 48
+kanter @yv-s wall 7
+kanter @yv-o wall 6
+kanter @yv-n wall 5
+kanter @yv-v wall 6
+kanter @iv-1 wall 17
+kanter @iv-2 wall 11
 kanter @iv-4 wall 12
 form @yv-s wall z0–2700 urtag 3 0,0 12000,0 11600,400 400,400
 kanter @yv-s hole 8
@@ -245,9 +250,12 @@ form @tak roof z5145.2–7774.8 sned -500,-500 12500,-500 12500,4000 -500,4000
 kanter @tak roof 10
 form @tak-n roof z5145.2–7774.8 sned 12500,8500 -500,8500 -500,4000 12500,4000
 kanter @tak-n roof 10
-kanter @yv-s-2 wall 48
-kanter @yv-o-2 wall 20
-kanter @yv-o-2 wall 20
+kanter @yv-s-2 wall 14
+kanter @iv-1-2 wall 11
+kanter @iv-2-2 wall 11
+kanter @yv-n-2 wall 12
+kanter @yv-v-2 wall 16
+kanter @yv-o-2 wall 16
 kanter @iv-4-2 wall 12
 form @yv-s-2 wall z2700–5400 urtag 3 0,0 12000,0 11600,400 400,400
 kanter @yv-s-2 hole 8
