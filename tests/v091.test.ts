@@ -46,13 +46,13 @@ describe('Bjälklag (0.9.1)', () => {
   it('håltagning: dras ifrån i 3D och ritas med kryss i planen; följer med när bjälklaget flyttas', () => {
     const s = store();
     const hole: [number, number][] = [[1000, 1000], [2000, 1000], [2000, 2000], [1000, 2000]];
-    s.transact('hål', (tx) => tx.putElement({ ...tx.doc.elements['bj1'], params: { ...tx.doc.elements['bj1'].params, holes: [hole] } }));
+    s.transact('hål', (tx) => tx.putElement({ ...tx.doc.elements['bj1'], params: { ...tx.doc.elements['bj1'].params, holes: [{ points: hole }] } }));
     expect(inside(solids(s, 'bj1'), [1500, 1500])).toBe(false);
     expect(inside(solids(s, 'bj1'), [2500, 2500])).toBe(true);
     const own = buildPlan(s.doc, 'pl-1', view).pickables.find((p) => p.id === 'bj1')!;
     expect(own.prims.filter((p) => p.origin?.part === 'hål')).toHaveLength(6);
     moveElements(s, ['bj1'], [100, 0]);
-    expect((s.doc.elements['bj1'].params.holes as number[][][])[0][0]).toEqual([1100, 1000]);
+    expect((s.doc.elements['bj1'].params.holes as { points: number[][] }[])[0].points[0]).toEqual([1100, 1000]);
   });
 
   it('fylls som väggarna i sektionen och ligger på sin våning', () => {

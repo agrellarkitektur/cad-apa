@@ -120,6 +120,7 @@ export function installRender(app: AppContext, parts: RenderParts) {
       viewId,
       viewTags: v?.tags ?? [],
       showHidden: app.ui.showHidden,
+      ...(app.uiSettings.slabArea ? { slabArea: true } : {}),
       scale: shownMaster() ? 1 : app.ui.scale,
     };
   }

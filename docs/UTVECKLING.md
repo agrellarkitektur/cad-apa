@@ -1246,6 +1246,36 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Bjälklag del 2 (0.9.4, format 16)
+
+- **Format 16**: en håltagning är `SlabHole` (`src/elements/slab.ts`),
+  `{ points, bulges? }` som en sluten 2D-form. `holeRing` ger konturen med
+  bågarna som korta bitar (för `slabRings`, 3D och sektionerna);
+  planen ritar raka kanter som linjer och bågar som polylinjer, och
+  `holeCross` går mellan hörnen, eller med bågar längs den omslutande
+  rektangelns diagonaler klippta till hålet (`clipToRing`). Flytt, vridning
+  och spegling av bjälklaget (`movePatch` i `commands.ts`, `transformed` i
+  `transforms.ts`) flyttar punkterna och vänder bågarna vid spegling
+- **Hålen i Modifiera**: `ModifyContext.hole` tillsammans med `shapeId`
+  (bjälklagets id). `editedShape(doc, id, hole)` i `src/elements/shapeEdit.ts`
+  ger 2D-elementet, eller hålet som en 2D-form (`holeShape`), och
+  `shapePatch` gör om formens ändring till elementets parametrar (för ett
+  hål hela listan `holes`). Allt i `outlineOps.ts`, `runInstant` i
+  `tool.ts`, greppen (`highlight.ts`), dragningen (`shapeNodeAt` i
+  `selectGrips.ts`, `node.hole` i `selectTool.ts`) och `railFor` går genom
+  dem. `modifyContextAt` prövar hålens hörn och kanter efter 2D-formerna
+  och före takets och bjälklagets kontur. För ett hål visar `opsFor`
+  formens val och `holeMove` och `holeRemove`, inte de allmänna
+- **Avrunda och fasa** (`shapeFillet`, `shapeChamfer`): `canRoundCorner`
+  och `roundShapeCorner` i `shapeEdit.ts`. Hörnet ersätts av två punkter
+  på avståndet `r / tan(φ/2)` (fasen `r`) längs kanterna, och bågen
+  mellan dem får pilhöjden ur `bulgeTangent`. Null när det inte ryms
+- **Klickbar yta**: `uiSettings.slabArea` går in i vyn som
+  `ViewStates.slabArea` (`render.ts`, som `autoDims`), och bjälklagets
+  `pickShape` ger då `slabRings` med `pickSoft`
+- Pipetten: `holes` och `fromWalls` är form (`PLACEMENT` i `arrange.ts`)
+- Tester: `tests/v094.test.ts`
+
 ## Granskning (0.9.3, format 15)
 
 Utan nya funktioner. Kontrollerat med samma klick i 0.9.2 och 0.9.3

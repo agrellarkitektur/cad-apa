@@ -450,7 +450,7 @@ export class PropertiesPanel {
       case 'slab-hole-remove': {
         const el = doc.elements[ids[0]];
         const i = Number(b.dataset.index);
-        const holes = (el?.params.holes as [number, number][][] | undefined) ?? [];
+        const holes = (el?.params.holes as unknown[] | undefined) ?? [];
         if (el && holes[i]) updateParams(this.store, [el.id], { holes: holes.filter((_, k) => k !== i) }, 'Ta bort håltagning');
         return;
       }

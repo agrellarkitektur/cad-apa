@@ -71,6 +71,9 @@ export class SettingsDialog {
       case 'autodims':
         s.autoDims = t.checked;
         break;
+      case 'slabarea':
+        s.slabArea = t.checked;
+        break;
       case 'autosavefile':
         s.autosaveFile = t.checked;
         break;
@@ -164,6 +167,7 @@ export class SettingsDialog {
           <label class="check"><input type="checkbox" data-setting="rail"${s.modifyRail ? ' checked' : ''}> Modifiera-raden innanför ritverktygen</label>
           <label class="check"><input type="checkbox" data-setting="smartshell"${s.smartshell ? ' checked' : ''}> Smartshell, kommandoraden under ritytan <span class="muted">(Enter)</span></label>
           <label class="check"><input type="checkbox" data-setting="autodims"${s.autoDims ? ' checked' : ''}> Måttsätt nya väggar och öppningar automatiskt när man jämför med befintligt</label>
+          <label class="check" title="Annars bara kanterna. Ett klick i ett rum markerar då bjälklaget; rummet markeras med rumsstämpeln eller Tab."><input type="checkbox" data-setting="slabarea"${s.slabArea ? ' checked' : ''}> Bjälklagens yta går att klicka i, inte bara kanterna</label>
           <label class="check"><input type="checkbox" data-setting="autosavefile"${s.autosaveFile ? ' checked' : ''}> Autospara till projektfilen (när den sparats eller öppnats här, i Chrome och Edge)</label>
           <label class="field inline-field"><span>Varna för nästan raka vinklar, inom</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="0.5" inputmode="decimal" autocomplete="off" data-setting="anglewarn" value="${s.angleWarn}"><i>°</i></span></label>
           <p class="note">Väggar, sektions- och fasadlinjer, fast inredning och taknockar som ligger nära 0°, 45° eller 90° utan att vara exakta markeras med ett utropstecken. 0 stänger av varningen.</p>

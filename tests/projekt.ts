@@ -173,7 +173,7 @@ export function twoStoreys(): ProjectDoc {
     const id = `${e.id}-2`;
     doc.elements[id] = { ...structuredClone(e), id, storey: 'pl-2', ...(e.host ? { host: `${e.host}-2` } : {}) };
   }
-  doc.elements['bj1-2'].params = { ...doc.elements['bj1-2'].params, holes: [[[6000, 5000], [7200, 5000], [7200, 6500], [6000, 6500]]] };
+  doc.elements['bj1-2'].params = { ...doc.elements['bj1-2'].params, holes: [{ points: [[6000, 5000], [7200, 5000], [7200, 6500], [6000, 6500]] }] };
   doc.elements['tak'].storey = 'pl-2';
   return doc;
 }

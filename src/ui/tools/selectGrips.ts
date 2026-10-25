@@ -1,7 +1,7 @@
 import type { Element } from '../../core/model';
 import { dist } from '../../geometry/vec';
 import type { WallParams } from '../../elements/wall';
-import { isShape, shapeNodes } from '../../elements/shapeEdit';
+import { holeShape, holesOf, isShape, shapeNodes } from '../../elements/shapeEdit';
 import { roofGripsInView, type RoofGrip } from '../../elements/roofGrips';
 import type { UnderlayParams } from '../../elements/underlay';
 import { hasImageGrips, underlayGrips, type UnderlayGrip } from '../../elements/underlayEdit';
@@ -102,22 +102,29 @@ export function underlayGripAt(host: ToolHost, pt: Vec2, touch: boolean): { id: 
   return best;
 }
 
-/** Punkten i ett markerat 2D-element som ligger närmast, om något går att ändra här. */
-export function shapeNodeAt(host: ToolHost, pt: Vec2, touch: boolean): { id: string; index: number; from: Vec2 } | null {
+/**
+ * Punkten i ett markerat 2D-element, eller i en håltagning i ett markerat
+ * bjälklag (0.9.4, `hole`), som ligger närmast, om något går att ändra här.
+ */
+export function shapeNodeAt(host: ToolHost, pt: Vec2, touch: boolean): { id: string; hole?: number; index: number; from: Vec2 } | null {
   const doc = host.store.doc;
-  const ids = host.selection.list().filter((id) => isShape(doc.elements[id]));
+  const ids = host.selection.list().filter((id) => isShape(doc.elements[id]) || holesOf(doc.elements[id]).length);
   if (!ids.length) return null;
   const tol = pxToMm(host, touch ? 18 : 10);
   const ro = !!host.readOnly?.();
   const shown = pickableById(host.plan().pickables);
-  let best: { id: string; index: number; from: Vec2; d: number } | null = null;
+  let best: { id: string; hole?: number; index: number; from: Vec2; d: number } | null = null;
+  const take = (id: string, hole: number | undefined, nodes: Vec2[]) =>
+    nodes.forEach((q, index) => {
+      const d = dist(q, pt);
+      if (d <= tol && (!best || d < best.d)) best = { id, ...(hole !== undefined ? { hole } : {}), index, from: q, d };
+    });
   for (const id of ids) {
     const el = doc.elements[id];
     if (!shown.has(id) || (ro && !host.canEdit?.(id))) continue;
-    shapeNodes(el).forEach((q, index) => {
-      const d = dist(q, pt);
-      if (d <= tol && (!best || d < best.d)) best = { id, index, from: q, d };
-    });
+    if (isShape(el)) take(id, undefined, shapeNodes(el));
+    // Håltagningarna finns bara i planen.
+    else if (!ro) holesOf(el).forEach((h, hole) => take(id, hole, shapeNodes(holeShape(h))));
   }
   return best;
 }

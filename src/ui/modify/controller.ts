@@ -204,9 +204,13 @@ export class Modifier {
     if (!ctx) return null;
     const doc = this.host.store.doc;
     const where = ctx.shapeId
-      ? ctx.kind === 'edge'
-        ? 'Kanten'
-        : 'Punkten'
+      ? ctx.hole !== undefined
+        ? ctx.kind === 'edge'
+          ? `Hål ${ctx.hole + 1}, kanten`
+          : `Hål ${ctx.hole + 1}, hörnet`
+        : ctx.kind === 'edge'
+          ? 'Kanten'
+          : 'Punkten'
       : ctx.roofId
         ? ctx.kind === 'edge'
           ? 'Kanten'

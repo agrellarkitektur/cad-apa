@@ -2,7 +2,7 @@ import { updateParams } from '../../core/commands';
 import type { Id } from '../../core/model';
 import { removeNode, setOutline } from '../../core/roofEdit';
 import { mergeAtCorner, reshapeWall } from '../../core/wallEdit';
-import { bendShapeEdge, removeShapeNode } from '../../elements/shapeEdit';
+import { bendShapeEdge, editedShape, holesOf, removeShapeNode, shapePatch } from '../../elements/shapeEdit';
 import { dist } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
@@ -23,16 +23,23 @@ import { WALL_OPS, commitWall, currentLength, fixedEnd, overlayWall } from './wa
 export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
   const doc = host.store.doc;
   if (op === 'shapeRemove') {
-    const el = ctx.shapeId ? doc.elements[ctx.shapeId] : undefined;
+    const el = editedShape(doc, ctx.shapeId, ctx.hole);
     const patch = el && removeShapeNode(el, ctx.index!);
-    if (el && patch) updateParams(host.store, [el.id], patch, 'Ta bort punkt');
-    else host.hint('Formen har för få punkter för att ta bort en.');
+    if (el && patch) updateParams(host.store, [ctx.shapeId!], shapePatch(doc, ctx.shapeId!, ctx.hole, patch), 'Ta bort punkt');
+    else host.hint(ctx.hole !== undefined ? 'Hålet måste ha minst tre hörn.' : 'Formen har för få punkter för att ta bort en.');
     return;
   }
   if (op === 'shapeStraighten') {
-    const el = ctx.shapeId ? doc.elements[ctx.shapeId] : undefined;
+    const el = editedShape(doc, ctx.shapeId, ctx.hole);
     const patch = el && bendShapeEdge(el, ctx.index!, 0);
-    if (el && patch) updateParams(host.store, [el.id], patch, 'Räta ut');
+    if (el && patch) updateParams(host.store, [ctx.shapeId!], shapePatch(doc, ctx.shapeId!, ctx.hole, patch), 'Räta ut');
+    return;
+  }
+  // Håltagningen ur bjälklaget (0.9.4).
+  if (op === 'holeRemove') {
+    const slab = ctx.shapeId ? doc.elements[ctx.shapeId] : undefined;
+    const holes = holesOf(slab);
+    if (slab && ctx.hole !== undefined && holes[ctx.hole]) updateParams(host.store, [slab.id], { holes: holes.filter((_, k) => k !== ctx.hole) }, 'Ta bort håltagning');
     return;
   }
   if (op === 'roofRemove') {
@@ -50,7 +57,7 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
 }
 
 /** Val som inte visar snäppmarkören. */
-const NO_MARKER = new Set<OpId>(['fillet', 'chamfer', 'filletAll', 'chamferAll', 'trim', 'join']);
+const NO_MARKER = new Set<OpId>(['fillet', 'chamfer', 'filletAll', 'chamferAll', 'shapeFillet', 'shapeChamfer', 'trim', 'join']);
 
 /**
  * Verktyget som kör ett val: förhandsvisar med markören och utför vid

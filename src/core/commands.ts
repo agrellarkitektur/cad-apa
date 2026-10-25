@@ -427,7 +427,7 @@ export function movePatch(doc: ProjectDoc, el: Element, d: [number, number]): Re
       ...(p.seed ? { seed: add(p.seed) } : {}),
       ...(p.labelAt ? { labelAt: add(p.labelAt) } : {}),
       // Bjälklagets håltagningar (0.9.1).
-      ...(Array.isArray(p.holes) ? { holes: p.holes.map((h: [number, number][]) => h.map(add)) } : {}),
+      ...(Array.isArray(p.holes) ? { holes: p.holes.map((h: { points: [number, number][] }) => ({ ...h, points: h.points.map(add) })) } : {}),
     };
   if (Array.isArray(p.points)) {
     // Ett mått knutet till modellen flyttar bara måttlinjen; ett fritt mått flyttas helt.

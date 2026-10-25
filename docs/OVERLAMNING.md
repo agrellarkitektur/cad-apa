@@ -1,14 +1,26 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.9.3.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.9.4.
 
 ## Läget
 
-- **0.9.3 Granskning är klar** på `main` (samma format, 15, utan nya
-  funktioner). Nästa är **0.9.4 Bjälklag del 2** (liten, troligen nytt
-  format; numret flyttat från 0.9.3 när granskningen tog det). Punkterna
-  står i PLAN.md och i synpunktsfilen under *Planerat per version*.
+- **0.9.4 Bjälklag del 2 är klar** på `main` (format 16). Nästa är
+  **0.10 Tak**, som är stor: föreslå en uppdelning först (se *Nästa
+  session*). Punkterna står i PLAN.md och i synpunktsfilen under
+  *Planerat per version*.
+- **0.9.4**: håltagningarna är `{ points, bulges? }` och ändras som en
+  2D-form när bjälklaget är markerat (grepp, Lägg till/Flytta/Ta bort
+  punkt, Förskjut kant, Böj, Räta ut, *Flytta hålet*, *Ta bort hålet*);
+  *Avrunda* och *Fasa hörn* för både hål och 2D-former; kryssrutan
+  *Bjälklagens yta går att klicka i* i Gränssnitt (av från början).
+  Rättat: pipetten förde över håltagningarna och *Ur väggarna*; speglade
+  hål behöll bågarnas riktning. Claudes val i PLAN.md, koden i
+  UTVECKLING.md under *Bjälklag del 2 (0.9.4)*. Testerna: 450 på ca 11 s.
+  Klickjämförelsen mot 0.9.3 (med formatnumret och hålens form
+  normaliserade) skiljer bara där ett bjälklag med hål är markerat:
+  hålens grepp och en rad i egenskaperna. Det nya provat med Playwright
+  mot `dist/`.
 - **0.9.3**: fasader och sektioner av samma projekt och vy bygger
   3D-modellen en gång (`modelShapes` sparar de senaste svaren), och
   kanterna räknas fortare: fyra fasader och en sektion av ett hus med tre
@@ -149,8 +161,7 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.35 Filtrera och markera~~, ~~0.8.36 Egna fyllningstyper~~,
   ~~0.8.37 Detaljnivåer och fyllningar~~, ~~0.8.38 Granskning~~,
   ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~, ~~0.9.2 Nivåer~~,
-  ~~0.9.3 Granskning~~ (klara)
-- **0.9.4 Bjälklag del 2** (hål som 2D-form, klickbar yta som inställning)
+  ~~0.9.3 Granskning~~, ~~0.9.4 Bjälklag del 2~~ (klara)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade,
   footprint streckad genom taket som vyinställning, markhöjder runt huset
   och marklinjen efter dem)
@@ -172,14 +183,37 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.9.2 och 0.9.3 syns på webbhotellet och hur nivåerna
-fungerar (frågorna nedan). Läs synpunktsfilen och sortera ny Inkorg.
-Sedan **0.9.4 Bjälklag del 2**: läs *0.9.4* i PLAN.md. Hålen är i dag
-rektanglar i `SlabParams.holes` (`src/elements/slab.ts`); 2D-formens
-punkter, radier och avrundning finns i `src/elements/shapeEdit.ts` och
-`drawing2d.ts`. Nästa granskning ungefär efter 0.10.1.
+Fråga först om 0.9.4 syns på webbhotellet och hur hålen fungerar
+(frågorna nedan; 0.9.2 och 0.9.3 har inte provats än). Läs
+synpunktsfilen och sortera ny Inkorg. **0.10 Tak** i PLAN.md har tolv
+punkter och ryms inte i en session. Föreslå en uppdelning och låt Carl
+August bekräfta den innan något byggs, till exempel:
+
+- **0.10 Tak** (nytt format): konturen som polygon där varje kant är
+  takfot eller gavel, lutning per takfall, takfots- och gavelsprång,
+  språngets tjocklek, takfotens snitt, snabbval (sadel, pulpet, valm),
+  Modifiera på konturen
+- **0.10.1 Tak i planen och marken**: volymer ovanför snittet
+  punktstreckade, footprint genom taket som vyinställning, markhöjder runt
+  huset, medelmarknivå och byggnadshöjd enligt PBF, marklinjen efter
+  markhöjderna
+- **0.10.2 Dolda linjer i fasader** (i dag 0.10.1)
+
+Taket hör i dag till en våning och kapar bara väggar på samma våning
+(`toRoof`); exempelvillans tak ligger på plan 1. Nästa granskning ungefär
+efter 0.10.1.
 
 ## Att fråga Carl August om
+
+- **0.9.4 efter provning** (Claudes val, se PLAN.md): att hålen är kvar i
+  bjälklaget och ändras när det är markerat, inte som egna objekt; att
+  menyn för ett hål har *Flytta hålet* och *Ta bort hålet* men inte
+  Vrid och Spegla (de gäller hela bjälklaget); förvalen 500 mm för
+  Avrunda och 300 mm för Fasa; krysset i ett hål med bågar (den
+  omslutande rektangelns diagonaler). Med klickbar yta går ett klick i ett
+  rum till bjälklaget, och rummet nås med stämpeln eller Tab: är det rätt
+  avvägt, eller ska rummen gå före? Ska håltagningsverktyget också kunna
+  rita en cirkel direkt?
 
 - **0.9.3 efter provning**: inget nytt att prova; allt ska bete sig som
   förut. Ett blad med flera fasader och sektioner av ett stort hus, och
@@ -198,9 +232,8 @@ punkter, radier och avrundning finns i `src/elements/shapeEdit.ts` och
 - **0.9.1 efter provning** (Claudes val, se PLAN.md): verktyget med
   rektangel, *Ur väggarna* och *Håltagning*; att *Ur väggarna* slutar vid
   ytterväggarnas insida och att innerväggarna står på bjälklaget; att
-  hålen är rektanglar som bara kan tas bort (inte ändras); att konturen i
-  planen är tunna linjer under väggarna och bara går att klicka på (Tab vid
-  väggens insida); förvald tjocklek 300 (BJ01) och 400 för plattan i
+  konturen i planen är tunna linjer under väggarna och bara går att klicka
+  på (Tab vid väggens insida); förvald tjocklek 300 (BJ01) och 400 för plattan i
   exempelvillan. (Svarat 25 oktober: ingen littera som standard, inga
   automatiska bjälklag, marklinjen efter marken, innerväggarna kapas; se
   *Läget*.)

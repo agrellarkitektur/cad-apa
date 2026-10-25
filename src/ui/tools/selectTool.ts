@@ -2,7 +2,7 @@ import { moveElements, moveWallEnd, updateParams } from '../../core/commands';
 import { multiplyElements } from '../../core/wallEdit';
 import { add, angleDeg, dist, dot, norm, scale, sub } from '../../geometry/vec';
 import type { WallParams } from '../../elements/wall';
-import { moveShapeNode, previewShape, shapeNodes } from '../../elements/shapeEdit';
+import { editedShape, moveShapeNode, previewShape, shapeNodes, shapePatch } from '../../elements/shapeEdit';
 import { dragRoofGrip, type RoofDrag, type RoofGrip } from '../../elements/roofGrips';
 import { underlayCorners, type UnderlayParams } from '../../elements/underlay';
 import { dragUnderlayGrip, type UnderlayGrip } from '../../elements/underlayEdit';
@@ -67,7 +67,7 @@ export class SelectTool implements ViewTool {
   /** Ett grepp i takets nock eller takfot som dras i en fasad eller sektion (0.8). */
   private roof: { grip: RoofGrip; drag: RoofDrag | null; snap: SnapResult | null } | null = null;
   /** En punkt i ett 2D-element som dras (0.8 del 2). */
-  private node: { id: string; index: number; from: Vec2; snap: SnapResult | null } | null = null;
+  private node: { id: string; hole?: number; index: number; from: Vec2; snap: SnapResult | null } | null = null;
   /** Ett grepp i en markerad bild eller PDF-sida som dras (0.8.16). */
   private ulGrip: { id: string; grip: UnderlayGrip; from: Vec2; snap: SnapResult | null; free: boolean } | null = null;
 
@@ -136,7 +136,7 @@ export class SelectTool implements ViewTool {
     }
     if (this.node) {
       const n = this.node;
-      const el = this.host.store.doc.elements[n.id];
+      const el = editedShape(this.host.store.doc, n.id, n.hole);
       const pts = el ? shapeNodes(el) : [];
       // Vinkellås (Shift) från grannpunkten.
       const from = pts[n.index - 1] ?? pts[n.index + 1];
@@ -233,7 +233,8 @@ export class SelectTool implements ViewTool {
         this.host.hint('Låst. Lås upp i egenskaperna för att ändra.', 3000);
         return;
       }
-      updateParams(this.host.store, [n.id], moveShapeNode(el, n.index, roundMm(n.snap.point)), 'Flytta punkt');
+      const shape = editedShape(this.host.store.doc, n.id, n.hole);
+      if (shape) updateParams(this.host.store, [n.id], shapePatch(this.host.store.doc, n.id, n.hole, moveShapeNode(shape, n.index, roundMm(n.snap.point))), 'Flytta punkt');
       return;
     }
     if (this.roof) {
@@ -420,7 +421,7 @@ export class SelectTool implements ViewTool {
     if (this.node?.snap) {
       const n = this.node;
       const sn = this.node.snap;
-      const el = this.host.store.doc.elements[n.id];
+      const el = editedShape(this.host.store.doc, n.id, n.hole);
       if (el) {
         const shp = previewShape(el, moveShapeNode(el, n.index, sn.point));
         out.push(`<path d="${shp.points.map((q, i) => `${i ? 'L' : 'M'}${cam.toScreen(q).join(' ')}`).join('')}${shp.closed ? 'Z' : ''}" class="ghost"/>`);

@@ -59,6 +59,8 @@ export interface ViewStates {
   viewTags?: readonly string[];
   /** Visa 2D-element som inte syns i vyn, tonade, för att hitta dem. */
   showHidden?: boolean;
+  /** Bjälklagens yta går att klicka i (0.9.4, en inställning i Gränssnitt), inte bara kanterna. Ändrar inte ritningen. */
+  slabArea?: boolean;
   /**
    * Annoteringsskalan (0.8 del 3): skalan som texter, mått och symboler ritas
    * för, så att de får rätt höjd på papper. Utelämnad = 1:100.

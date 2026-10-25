@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.9.3** (alfa, granskning); nästa är **0.9.4, bjälklag del 2**.
+**0.9.4** (alfa, bjälklag del 2); nästa är **0.10, tak**.
 
 ## Vad som fungerar
 
@@ -1038,6 +1038,23 @@ Version 0.9.3, granskning (samma filformat, 15):
 - Referensritningarna har fått ett hus med två våningar (plan 2 med
   håltagning, sektion med nivåer och höjdmått, fasad och 3D, också med
   bara plan 1), och klickjämförelsen steg för våningar, bjälklag och nivåer
+
+Version 0.9.4, bjälklag del 2 (filformat 16):
+- **Håltagningarna ändras som en 2D-form**: markera bjälklaget, så får
+  hålens hörn grepp som går att dra. Ett klick på ett hörn eller en kant
+  ger Lägg till punkt, Flytta punkt, Ta bort punkt, Förskjut kant, Böj och
+  Räta ut, och för hålet *Flytta hålet* och *Ta bort hålet*
+- **Avrunda och fasa hörn** i hål och 2D-former: ett hörn mellan två raka
+  kanter får en båge med radien som tangerar båda kanterna, eller en fas på
+  avståndet från hörnet (Modifiera-raden: **Shift+F** och **Shift+C**)
+- Hål med bågar ritas med bågarna i planen, 3D, sektioner och fasader;
+  krysset i ett sådant hål följer den omslutande rektangelns diagonaler
+- **Bjälklagens yta går att klicka i** med en kryssruta i Gränssnitt
+  (Planen), av från början. Då markerar ett klick i ett rum bjälklaget;
+  väggar, linjer och rumsstämpeln går före, och Tab växlar till rummet
+- Rättat: pipetten förde över håltagningarna och *Ur väggarna* till ett
+  annat bjälklag, och ett speglat bjälklags hålbågar buktade åt fel håll
+- Projekt från 0.9.1–0.9.3 (format 15) öppnas inte
 
 Version 0.8.38, granskning (samma filformat, 13):
 - Inga nya funktioner; allt beter sig som förut

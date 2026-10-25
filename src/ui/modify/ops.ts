@@ -4,7 +4,7 @@ import type { Id } from '../../core/model';
 import { canScale } from '../../core/arrange';
 import { canJoin, canTrim } from '../../core/trimEdit';
 import { cornerPartner, cornersAmong, refFrame } from '../../core/wallEdit';
-import { edgeIsArc, isShape, shapeCan, shapeEdgeAt, shapeNodes } from '../../elements/shapeEdit';
+import { canRoundCorner, edgeIsArc, editedShape, holeShape, holesOf, isShape, shapeCan, shapeEdgeAt, shapeNodes, type ShapeLike } from '../../elements/shapeEdit';
 import { dist, sub } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
@@ -38,6 +38,8 @@ export interface ModifyContext {
   roofId?: Id;
   /** 2D-elementet man klickade på, med punktens eller kantens nummer (0.8 del 2). */
   shapeId?: Id;
+  /** Med `shapeId` ett bjälklag: håltagningen man klickade på (0.9.4), som ändras som en 2D-form. */
+  hole?: number;
   index?: number;
   end?: 'start' | 'end';
   /** Punkten man klickade (på referenslinjen för kanter), mm. */
@@ -77,6 +79,10 @@ export type OpId =
   | 'shapeOffset'
   | 'shapeBend'
   | 'shapeStraighten'
+  | 'shapeFillet'
+  | 'shapeChamfer'
+  | 'holeMove'
+  | 'holeRemove'
   | 'trim'
   | 'join'
   | 'split'
@@ -138,6 +144,10 @@ export const OPS: Record<OpId, OpDef> = {
   shapeBend: { label: 'Böj', short: 'Böj', icon: 'curveEdge', value: { label: 'Radie', unit: 'mm', initial: 1000 }, hint: 'Klicka en punkt som bågen ska gå igenom, eller skriv radien.' },
   shapeStraighten: { label: 'Räta ut', short: 'Räta ut', icon: 'straighten', instant: true, hint: 'Bågen blir rak igen.' },
   shapeOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'Kanten flyttas vinkelrätt dit du klickar, eller skriv avståndet; grannkanterna följer med.' },
+  shapeFillet: { label: 'Avrunda hörn', short: 'Avrunda', icon: 'fillet', value: { label: 'Radie', unit: 'mm', initial: 500 }, hint: 'Skriv radien och tryck Enter, eller klicka för att använda den. Bågen tangerar båda kanterna.' },
+  shapeChamfer: { label: 'Fasa hörn', short: 'Fasa', icon: 'chamfer', value: { label: 'Avstånd', unit: 'mm', initial: 300 }, hint: 'Skriv avståndet från hörnet och tryck Enter, eller klicka för att använda det.' },
+  holeMove: { label: 'Flytta hålet', short: 'Flytta hål', icon: 'move', hint: 'Klicka var hålet ska hamna, räknat från punkten du klickade på.' },
+  holeRemove: { label: 'Ta bort hålet', short: 'Ta bort hål', icon: 'trash', instant: true, hint: 'Håltagningen tas bort ur bjälklaget.' },
 };
 
 const COMMON: OpId[] = ['move', 'rotate', 'mirror', 'multiply'];
@@ -167,7 +177,7 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
   const cuts = editOps(host, ctx.ids);
   const withCuts = (groups: OpId[][]): OpId[][] => (cuts.length ? [...groups.slice(0, -1), cuts, groups[groups.length - 1]] : groups);
   if (ctx.shapeId) {
-    const el = doc.elements[ctx.shapeId];
+    const el = editedShape(doc, ctx.shapeId, ctx.hole);
     const can = el ? shapeCan(el) : { insert: false, remove: false, offset: false, bend: false };
     const arc = !!el && ctx.kind === 'edge' && edgeIsArc(el, ctx.index!);
     const own: OpId[] =
@@ -178,7 +188,9 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
             ...(arc ? (['shapeStraighten'] as OpId[]) : []),
             ...(can.offset && !arc ? (['shapeOffset'] as OpId[]) : []),
           ]
-        : ['shapeMove', ...(can.remove ? (['shapeRemove'] as OpId[]) : [])];
+        : ['shapeMove', ...(can.remove ? (['shapeRemove'] as OpId[]) : []), ...(el && canRoundCorner(el, ctx.index!) ? (['shapeFillet', 'shapeChamfer'] as OpId[]) : [])];
+    // En håltagning (0.9.4) flyttas och tas bort för sig; det allmänna gäller hela bjälklaget.
+    if (ctx.hole !== undefined) return [own, ['holeMove', 'holeRemove']];
     return withCuts(own.length ? [own, COMMON] : [COMMON]);
   }
   if (ctx.roofId) {
@@ -264,6 +276,16 @@ export function modifyContextAt(host: ToolHost, p: ViewPointer, clientX: number,
     if (!isShape(el) || !shown.has(id)) continue;
     const e = shapeEdgeAt(el, p.model, tol);
     if (e) return { kind: 'edge', ids, shapeId: id, index: e.index, at: e.at, clientX, clientY };
+  }
+  // Hörn och kanter i håltagningarna i markerade bjälklag (0.9.4).
+  const holes = ids.flatMap((id) => (shown.has(id) ? holesOf(doc.elements[id]).map((h, hole) => ({ id, hole, shape: holeShape(h) })) : []));
+  for (const { id, hole, shape } of holes) {
+    const pts = shapeNodes(shape);
+    for (let i = 0; i < pts.length; i++) if (dist(pts[i], p.model) <= tol) return { kind: 'point', ids, shapeId: id, hole, index: i, at: pts[i], clientX, clientY };
+  }
+  for (const { id, hole, shape } of holes) {
+    const e = shapeEdgeAt(shape, p.model, tol);
+    if (e) return { kind: 'edge', ids, shapeId: id, hole, index: e.index, at: e.at, clientX, clientY };
   }
   // Hörn och kanter i markerade taks och bjälklags kontur.
   for (const id of ids) {
@@ -367,8 +389,8 @@ export const RAIL: RailDef[][] = [
     { id: 'straighten', label: 'Räta ut', icon: 'straighten', ops: ['straighten', 'shapeStraighten'], ask: 'Klicka på referenslinjen eller kanten för bågen som ska rätas ut.', key: 'L' },
   ],
   [
-    { id: 'fillet', label: 'Avrunda hörn', icon: 'fillet', ops: ['fillet', 'filletAll'], ask: 'Klicka på hörnet som ska avrundas.', key: 'F' },
-    { id: 'chamfer', label: 'Fasa hörn', icon: 'chamfer', ops: ['chamfer', 'chamferAll'], ask: 'Klicka på hörnet som ska fasas.', key: 'C' },
+    { id: 'fillet', label: 'Avrunda hörn', icon: 'fillet', ops: ['fillet', 'filletAll', 'shapeFillet'], ask: 'Klicka på hörnet som ska avrundas.', key: 'F' },
+    { id: 'chamfer', label: 'Fasa hörn', icon: 'chamfer', ops: ['chamfer', 'chamferAll', 'shapeChamfer'], ask: 'Klicka på hörnet som ska fasas.', key: 'C' },
   ],
   [
     { id: 'align', label: 'Justera och fördela', icon: 'align', ops: ['align'], key: 'N' },
@@ -409,8 +431,9 @@ export function railFor(host: ToolHost, ids: readonly Id[]): Set<RailId> {
   if (els.some(hasEditableOutline)) for (const id of ['insert', 'pointMove', 'remove', 'offset'] as const) on.add(id);
   for (const op of editOps(host, ids)) on.add(op as RailId);
   for (const op of arrangeOps(host, ids)) on.add(op === 'extendAll' ? 'extend' : op === 'trimAll' ? 'trim' : (op as RailId));
-  for (const el of els) {
-    if (!isShape(el)) continue;
+  // 2D-formerna, och håltagningarna i bjälklagen (0.9.4).
+  const shapes: ShapeLike[] = els.flatMap((el) => (isShape(el) ? [el] : holesOf(el).map(holeShape)));
+  for (const el of shapes) {
     const can = shapeCan(el);
     on.add('pointMove');
     if (can.insert) on.add('insert');
@@ -418,6 +441,10 @@ export function railFor(host: ToolHost, ids: readonly Id[]): Set<RailId> {
     if (can.offset) on.add('offset');
     if (can.bend) on.add('curve');
     if (can.bend && ((el.params.bulges as number[] | undefined) ?? []).some((b) => Math.abs(b) >= 0.5)) on.add('straighten');
+    if (shapeNodes(el).some((_, i) => canRoundCorner(el, i))) {
+      on.add('fillet');
+      on.add('chamfer');
+    }
   }
   return on;
 }

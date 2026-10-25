@@ -1,8 +1,10 @@
+import type { Id, ProjectDoc } from '../core/model';
 import { offsetEdge } from '../core/roofEdit';
-import { arcFromBulge, STRAIGHT } from '../geometry/arc';
-import { dist, left, norm, sub } from '../geometry/vec';
+import { arcFromBulge, bulgeTangent, STRAIGHT } from '../geometry/arc';
+import { dist, dot, left, norm, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import { catmullRom, isClosed, segmentArc, segmentCount, shapePoints, type Shape2DParams, type ShapePath } from './drawing2d';
+import type { SlabHole } from './slab';
 
 /**
  * Punkter och kanter i 2D-former (0.8 del 2, 0.8.19, 0.8.24): greppen som
@@ -41,6 +43,43 @@ function bulgesParam(b: number[]): { bulges: number[] | undefined } {
 /** Om elementet har punkter som går att dra. */
 export function isShape(s: ShapeLike | undefined): s is ShapeLike {
   return s?.type === 'Shape2D';
+}
+
+/** En håltagning som en sluten 2D-form (0.9.4), så att samma grepp och val gäller. */
+export function holeShape(h: SlabHole): ShapeLike {
+  return { type: 'Shape2D', params: { shape: 'polyline', points: h.points, ...(h.bulges ? { bulges: h.bulges } : {}), closed: true } };
+}
+
+/** Bjälklagets håltagningar. */
+export function holesOf(el: ShapeLike | undefined): SlabHole[] {
+  return el?.type === 'Slab' ? ((el.params.holes as SlabHole[] | undefined) ?? []) : [];
+}
+
+/**
+ * Formen som Modifiera ändrar: 2D-elementet `id`, eller med `hole`
+ * håltagning nummer `hole` i bjälklaget `id` (0.9.4).
+ */
+export function editedShape(doc: ProjectDoc, id: Id | undefined, hole?: number): ShapeLike | undefined {
+  const el = id ? doc.elements[id] : undefined;
+  if (hole === undefined) return isShape(el) ? el : undefined;
+  const h = holesOf(el)[hole];
+  return h ? holeShape(h) : undefined;
+}
+
+/**
+ * Elementets parametrar efter en ändring av formen (punkter och
+ * pilhöjder): 2D-elementets egna, eller bjälklagets håltagningar med den
+ * ändrade på sin plats.
+ */
+export function shapePatch(doc: ProjectDoc, id: Id, hole: number | undefined, patch: Record<string, unknown>): Record<string, unknown> {
+  if (hole === undefined) return patch;
+  const holes = [...holesOf(doc.elements[id])];
+  const h = holes[hole];
+  if (!h) return {};
+  const points = (patch.points as [number, number][] | undefined) ?? h.points;
+  const bulges = 'bulges' in patch ? (patch.bulges as number[] | undefined) : h.bulges;
+  holes[hole] = { points, ...(bulges ? { bulges } : {}) };
+  return { holes };
 }
 
 /** Punkterna som får grepp. */
@@ -173,6 +212,46 @@ export function removeShapeNode(s: ShapeLike, i: number): Record<string, unknown
   b[(i - 1 + b.length) % b.length] = 0;
   b.splice(i, 1);
   return { points: pts, ...(pathOf(s) === 'polyline' ? bulgesParam(b) : {}) };
+}
+
+/** Om hörn i ligger mellan två raka kanter, så att det går att avrunda eller fasa (0.9.4). */
+export function canRoundCorner(s: ShapeLike, i: number): boolean {
+  if (pathOf(s) !== 'polyline') return false;
+  const n = pointsOf(s).length;
+  if (closedOf(s) ? n < 3 : i <= 0 || i >= n - 1) return false;
+  const b = fullBulges(s);
+  return Math.abs(b[(i - 1 + n) % n]) < STRAIGHT && Math.abs(b[i]) < STRAIGHT;
+}
+
+/**
+ * Hörn i avrundat med radien r (en båge som tangerar båda kanterna) eller
+ * fasat r mm från hörnet längs båda kanterna (0.9.4). Null om det inte
+ * ryms på kanterna.
+ */
+export function roundShapeCorner(s: ShapeLike, i: number, r: number, kind: 'fillet' | 'chamfer'): Record<string, unknown> | null {
+  if (!canRoundCorner(s, i) || !(r > 0)) return null;
+  const pts = pointsOf(s);
+  const n = pts.length;
+  const at = pts[i];
+  const prev = pts[(i - 1 + n) % n];
+  const next = pts[(i + 1) % n];
+  const l1 = dist(at, prev);
+  const l2 = dist(at, next);
+  if (l1 < 1 || l2 < 1) return null;
+  const u1 = norm(sub(prev, at));
+  const u2 = norm(sub(next, at));
+  const phi = Math.acos(Math.max(-1, Math.min(1, dot(u1, u2))));
+  // Raka (eller vända) hörn går inte att runda.
+  if (phi < 1e-3 || Math.PI - phi < 1e-3) return null;
+  const t = kind === 'fillet' ? r / Math.tan(phi / 2) : r;
+  if (t > l1 - 1 || t > l2 - 1) return null;
+  const a: P = [Math.round(at[0] + u1[0] * t), Math.round(at[1] + u1[1] * t)];
+  const b: P = [Math.round(at[0] + u2[0] * t), Math.round(at[1] + u2[1] * t)];
+  const bulge = kind === 'fillet' ? bulgeTangent(a, b, [-u1[0], -u1[1]]) : 0;
+  pts.splice(i, 1, a, b);
+  const bs = fullBulges(s);
+  bs.splice(i, 1, bulge, 0);
+  return { points: pts, ...bulgesParam(bs) };
 }
 
 /** Kant i böjd till pilhöjden `bulge` (0 = rak), 0.8.24. */

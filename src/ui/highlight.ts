@@ -92,6 +92,17 @@ export function renderHighlight(
       out.push(`<circle cx="${s[0]}" cy="${s[1]}" r="6" class="grip"/>`);
     }
   }
+  // Håltagningarnas hörn i markerade bjälklag (0.9.4): dras som 2D-formens punkter.
+  for (const id of selected) {
+    const el = doc.elements[id];
+    if (el?.type !== 'Slab' || !byId.has(id)) continue;
+    for (const h of (el.params.holes as { points: Vec2[] }[] | undefined) ?? []) {
+      for (const pt of h.points) {
+        const s = cam.toScreen(pt);
+        out.push(`<rect x="${s[0] - 4.5}" y="${s[1] - 4.5}" width="9" height="9" class="grip"/>`);
+      }
+    }
+  }
   // Hörnen i markerade taks kontur.
   for (const id of selected) {
     const el = doc.elements[id];

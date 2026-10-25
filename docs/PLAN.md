@@ -115,6 +115,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.9.1 | Format 15: bjälklag med littera och tjocklek per typ, ur väggarna eller ritade, håltagning |
 | 0.9.2 | Nivåkoter FG, UK bjl, takfot och nock; höjdmått med bjälklagens tjocklek och fri höjd; innerväggarna slutar vid bjälklaget ovanför |
 | 0.9.3 | Granskning: fasader och sektioner av samma projekt bygger 3D-modellen en gång; `section.ts` uppdelad; referensritningar och klick för våningar, bjälklag och nivåer |
+| 0.9.4 | Format 16: håltagningarna ändras som 2D-former (grepp, punkter, bågar, flytta, ta bort), avrunda och fasa hörn i hål och 2D-former, klickbar bjälklagsyta som inställning |
 
 ## Framåt
 
@@ -1528,13 +1529,34 @@ markörerna ritas i alla planer ersattes av referensritningen för plan 2.
 Mätt men lämnat: resten av tiden i en fasad är de dolda linjerna
 (`visibleSegments`) och sammanslagningarna, som förut.*
 
-### 0.9.4 Bjälklag del 2 · *troligen nytt format*, liten
+### 0.9.4 Bjälklag del 2 · *nytt format (16)*
 
 Synpunkter 25 oktober, efter 0.9.1.
 
 - Håltagningarna får samma Modifiera-verktyg som 2D-formen (lägga till
   punkter, radier, runda av hörn …) och kan ändras, inte bara tas bort
 - UI-inställning: om bjälklagets yta är klickbar eller bara kanterna
+
+*Byggd (25 oktober), format 16 (en håltagning är `{ points, bulges? }`
+som en 2D-form, inte bara en lista med punkter). Claudes val: hålen är
+kvar i bjälklaget, inte egna objekt, och ändras när bjälklaget är
+markerat: hörnen får grepp som dras som 2D-formens punkter, och ett klick
+på ett hörn eller en kant ger 2D-formens val. 2D-formen hade inte
+*Avrunda* och *Fasa*; de finns nu för båda (ett hörn mellan två raka
+kanter, förval 500 och 300 mm; för stort ger ett tips), också i
+Modifiera-raden (Shift+F, Shift+C). För ett hål finns *Flytta hålet* (från
+punkten man klickade) och *Ta bort hålet*; Flytta, Vrid, Spegla och I rad
+finns inte i menyn för ett hål, eftersom de gäller hela bjälklaget (klicka
+någon annanstans på det). Vrida och spegla ett hål för sig går inte.
+Hålets raka kanter ritas som förut och bågarna som korta raka bitar;
+krysset går mellan hörnen som förut, och i ett hål med bågar längs den
+omslutande rektangelns diagonaler, klippta till hålet. Klickbar yta är en
+kryssruta i Gränssnitt under Planen, av från början, och gäller användaren
+(inte projektet eller vyn). Ytan är mjuk: väggar, linjer, 2D-former och
+rumsstämplar går före, men ytan går före rummen, så ett klick i ett rum
+markerar bjälklaget (rummet med stämpeln eller Tab). Två fel rättade:
+pipetten förde över håltagningarna och *Ur väggarna*, och speglade hål
+behöll bågarnas riktning.*
 
 ### 0.10 Tak · *nytt format*
 

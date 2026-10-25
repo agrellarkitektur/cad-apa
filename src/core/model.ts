@@ -324,7 +324,7 @@ export interface OwnPen extends OwnPenPart {
 }
 
 export const FORMAT = 'bacchus-project';
-export const FORMAT_VERSION = 15;
+export const FORMAT_VERSION = 16;
 
 export interface ProjectDoc {
   format: typeof FORMAT;
