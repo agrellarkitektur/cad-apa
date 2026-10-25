@@ -184,30 +184,31 @@ linje 148,217 150.5,215.8 [w0.5 ink] @sektion-a
 linje 148,217 150.5,218.3 [w0.5 ink] @sektion-a
 text "A" 155.3,220.2 h3.5 90° middle fet [w0.35] @sektion-a
 linje 84,114 214,114 [w0.18 ink d3/1.5] @tak
-linje 214,114 214,204 [w0.18 ink d3/1.5] @tak
-linje 214,204 84,204 [w0.18 ink d3/1.5] @tak
-linje 84,204 84,114 [w0.18 ink d3/1.5] @tak
-linje 84,159 214,159 [w0.18 ink d3/1.5] @tak/nock
+linje 214,114 214,159 [w0.18 ink d3/1.5] @tak
+linje 214,159 84,159 [w0.18 ink d3/1.5] @tak
+linje 84,159 84,114 [w0.18 ink d3/1.5] @tak
+linje 214,204 84,204 [w0.18 ink d3/1.5] @tak-n
+linje 84,204 84,159 [w0.18 ink d3/1.5] @tak-n
+linje 84,159 214,159 [w0.18 ink d3/1.5] @tak-n
+linje 214,159 214,204 [w0.18 ink d3/1.5] @tak-n
 text "Plan 1 – Förslag A, bygglov" 57.8,79 h3.5 fet [w0.25] @/vyrubrik
 linje 57.8,77.8 99.7,77.8 [w0.25] @/vyrubrik
 text "SKALA 1:100" 102.2,79 h2.5 [w0.18] @/vyrubrik
 linje 180,152 218.5,152 [w0.25 ink] @yv-s/wall
 linje 219.9,152 240.1,152 [w0.25 ink] @yv-s/wall
 linje 241.5,152 420,152 [w0.25 ink] @yv-s/wall
-linje 180,152 180,201 [w0.25 ink] @yv-s/wall
+linje 180,152 180,200.9 [w0.25 ink] @yv-s/wall
 linje 420,152 420,152 [w0.25 ink] @yv-s/wall
-linje 420,152 420,201 [w0.25 ink] @yv-s/wall
-linje 180,152 180,168.5 [w0.25 ink] @yv-s/wall
-linje 180,195.7 180,201 [w0.25 ink] @yv-s/wall
+linje 420,152 420,200.9 [w0.25 ink] @yv-s/wall
 linje 240.1,152 239.9,152 [w0.25 ink] @yv-s/wall
 linje 220.1,152 219.9,152 [w0.25 ink] @yv-s/wall
 linje 180,152 180,152 [w0.25 ink] @yv-s/wall
 linje 180,152 180,168.5 [w0.25 ink] @yv-o/wall
-linje 180,195.7 180,201 [w0.25 ink] @yv-o/wall
+linje 180,195.7 180,200.9 [w0.25 ink] @yv-o/wall
 linje 180,152 180,152 [w0.25 ink] @yv-o/wall
-linje 180,152 180,201 [w0.25 ink] @yv-o/wall
+linje 180,152 180,200.9 [w0.25 ink] @yv-o/wall
 linje 420,152 420,152 [w0.25 ink] @yv-o/wall
-linje 420,152 420,201 [w0.25 ink] @yv-o/wall
+linje 420,152 420,200.9 [w0.25 ink] @yv-o/wall
 linje 324.8,170 324.8,170.2 [w0.25 ink] @iv-4/wall
 linje 324.8,194 324.8,194.2 [w0.25 ink] @iv-4/wall
 linje 324.8,170 324.8,170.2 [w0.25 ink] @iv-4/wall
@@ -314,29 +315,29 @@ linje 188,144 412,144 [w0.18 ink] @bj1/vy
 linje 188,152 188,144 [w0.18 ink] @bj1/vy
 linje 412,152 412,144 [w0.18 ink] @bj1/vy
 linje 188,152 188,144 [w0.18 ink] @bj1/vy
-linje 170,253.6 430,253.6 [w0.25 ink] @tak/roof
-linje 430,253.6 430,253.6 [w0.25 ink] @tak/roof
-linje 170,253.6 170,253.6 [w0.25 ink] @tak/roof
-linje 170,201 170,201 [w0.25 ink] @tak/roof
-linje 170,201 430,201 [w0.25 ink] @tak/roof
-linje 170,207.7 430,207.7 [w0.25 ink] @tak/roof
-linje 170,201 170,207.7 [w0.25 ink] @tak/roof
-linje 430,201 430,201 [w0.25 ink] @tak/roof
-linje 430,207.7 430,253.6 [w0.25 ink] @tak/roof
-linje 430,201 430,207.7 [w0.25 ink] @tak/roof
-linje 430,253.6 170,253.6 [w0.25 ink] @tak/roof
-linje 170,201 170,201 [w0.25 ink] @tak/roof
-linje 170,253.6 170,207.7 [w0.25 ink] @tak/roof
+linje 170,200.9 430,200.9 [w0.25 ink] @tak/roof
+linje 170,207.6 430,207.6 [w0.25 ink] @tak/roof
+linje 430,200.9 430,200.9 [w0.25 ink] @tak/roof
+linje 430,207.6 430,253.5 [w0.25 ink] @tak/roof
+linje 430,253.5 170,253.5 [w0.25 ink] @tak/roof
+linje 170,200.9 170,200.9 [w0.25 ink] @tak/roof
+linje 170,253.5 170,207.6 [w0.25 ink] @tak/roof
+linje 170,200.9 170,207.6 [w0.25 ink] @tak/roof
+linje 430,200.9 430,207.6 [w0.25 ink] @tak/roof
+linje 170,253.5 170,253.5 [w0.25 ink] @tak-n/roof
+linje 170,253.5 430,253.5 [w0.25 ink] @tak-n/roof
+linje 430,253.5 430,253.5 [w0.25 ink] @tak-n/roof
+linje 170,200.9 170,200.9 [w0.25 ink] @tak-n/roof
 linje 140,144 460,144 [w0.7] @/mark
 linje 436,152 456,152 [w0.18] @/nivå
 yta none [w0.18] 442,152 440.9,153.8 443.1,153.8 @/nivå
 text "FG ±0,000" 444.5,152.6 h2.2 [w0.18] @/nivå
-linje 436,201 456,201 [w0.18] @/nivå
-yta none [w0.18] 442,201 440.9,202.8 443.1,202.8 @/nivå
-text "Takfot +2,450" 444.5,201.6 h2.2 [w0.18] @/nivå
-linje 436,253.6 456,253.6 [w0.18] @/nivå
-yta none [w0.18] 442,253.6 440.9,255.4 443.1,255.4 @/nivå
-text "Nock +5,080" 444.5,254.2 h2.2 [w0.18] @/nivå
+linje 436,200.9 456,200.9 [w0.18] @/nivå
+yta none [w0.18] 442,200.9 440.9,202.7 443.1,202.7 @/nivå
+text "Takfot +2,445" 444.5,201.5 h2.2 [w0.18] @/nivå
+linje 436,253.5 456,253.5 [w0.18] @/nivå
+yta none [w0.18] 442,253.5 440.9,255.3 443.1,255.3 @/nivå
+text "Nock +5,075" 444.5,254.1 h2.2 [w0.18] @/nivå
 text "Fasad mot syd" 140,134 h3.5 fet [w0.25] @/vyrubrik
 linje 140,132.8 161.7,132.8 [w0.25] @/vyrubrik
 text "SKALA 1:50" 164.2,134 h2.5 [w0.18] @/vyrubrik

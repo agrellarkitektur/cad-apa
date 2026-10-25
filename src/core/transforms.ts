@@ -71,12 +71,17 @@ export function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, movi
     }
     return [{ ...el, params: { ...el.params, origin: t.map(p.origin), rotation: t.angle(p.rotation ?? 0) } }];
   }
+  if (Array.isArray(p.outline) && Array.isArray(p.ref)) {
+    // Takfallet (0.10): konturen och referenslinjen. Speglingen byter
+    // linjens riktning så att taket stiger åt samma håll; bågarnas pilhöjd
+    // byter tecken, referenslinjens behåller det (bytet tar ut speglingen).
+    const ref = p.ref.map(t.map);
+    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ref: t.mirror ? [ref[1], ref[0]] : ref, ...(t.mirror && Array.isArray(p.bulges) ? { bulges: p.bulges.map((b: number) => -b) } : {}) } }];
+  }
   if (Array.isArray(p.outline)) {
-    // Tak har en nockriktning som vrids med.
-    const ridge = typeof p.ridge === 'number' ? { ridge: t.angle(p.ridge) } : {};
     // Bjälklagets håltagningar (0.9.1) följer med; speglade bågar buktar åt andra hållet (0.9.4).
     const holes = Array.isArray(p.holes) ? { holes: p.holes.map((h: any) => ({ ...h, points: h.points.map(t.map), ...(t.mirror && h.bulges ? { bulges: h.bulges.map((b: number) => -b) } : {}) })) } : {};
-    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...ridge, ...holes } }];
+    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...holes } }];
   }
   if (Array.isArray(p.points)) {
     const points = p.points.map((q: any) => (Array.isArray(q) ? t.map(q as Pt) : { ...q, at: t.map(q.at) }));

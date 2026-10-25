@@ -428,6 +428,8 @@ export function movePatch(doc: ProjectDoc, el: Element, d: [number, number]): Re
       ...(p.labelAt ? { labelAt: add(p.labelAt) } : {}),
       // Bjälklagets håltagningar (0.9.1).
       ...(Array.isArray(p.holes) ? { holes: p.holes.map((h: { points: [number, number][] }) => ({ ...h, points: h.points.map(add) })) } : {}),
+      // Takfallets referenslinje (0.10).
+      ...(Array.isArray(p.ref) ? { ref: p.ref.map(add) } : {}),
     };
   if (Array.isArray(p.points)) {
     // Ett mått knutet till modellen flyttar bara måttlinjen; ett fritt mått flyttas helt.

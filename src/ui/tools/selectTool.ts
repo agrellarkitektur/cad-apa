@@ -152,9 +152,9 @@ export class SelectTool implements ViewTool {
       const exact = s.kind !== 'free' && s.kind !== 'angle';
       r.snap = exact ? s : null;
       let to: Vec2 = exact ? s.point : p.model;
-      // Nocken går bara upp och ned.
-      if (r.grip.kind === 'ridge') to = [r.grip.at[0], to[1]];
-      r.drag = dragRoofGrip(this.host.store.doc, space, r.grip, roundMm(to), { free: p.alt, keepRidge: p.shift });
+      // Greppen går bara upp och ned.
+      to = [r.grip.at[0], to[1]];
+      r.drag = dragRoofGrip(this.host.store.doc, space, r.grip, roundMm(to), { free: p.alt });
       return;
     }
     if (this.grip) {
@@ -245,8 +245,7 @@ export class SelectTool implements ViewTool {
         this.host.hint('Taket är låst. Lås upp i egenskaperna för att ändra det.', 3000);
         return;
       }
-      const { outline, eave, slope } = r.drag.params;
-      updateParams(this.host.store, [r.grip.roof], { outline, eave, slope }, r.grip.kind === 'ridge' ? 'Dra i nocken' : 'Dra i takfoten');
+      updateParams(this.host.store, [r.grip.roof], r.drag.patch, r.grip.kind === 'slope' ? 'Ändra lutningen' : 'Ändra höjden');
       return;
     }
     if (this.grip) {
@@ -258,6 +257,16 @@ export class SelectTool implements ViewTool {
         if (g.kind === 'marker') {
           const pt = roundMm(g.snap.point);
           updateParams(this.host.store, [g.wallId], { [g.end]: [pt[0], pt[1]] }, 'Dra linjens ände');
+        } else if (g.kind === 'roofRef') {
+          // Referenslinjens ände (0.10); en båge behåller sin vinkel.
+          const pt = roundMm(g.snap.point);
+          const el = this.host.store.doc.elements[g.wallId];
+          const ref = [...(el.params.ref as [number, number][])];
+          const old = dist(ref[0], ref[1]);
+          ref[g.end === 'start' ? 0 : 1] = [pt[0], pt[1]];
+          const bulge = Number(el.params.refBulge ?? 0);
+          const now = dist(ref[0], ref[1]);
+          if (now >= 100) updateParams(this.host.store, [g.wallId], { ref, ...(bulge && old ? { refBulge: Math.round(((bulge * now) / old) * 10) / 10 } : {}) }, 'Flytta referenslinjen');
         } else {
           moveWallEnd(this.host.store, g.wallId, g.end, roundMm(g.snap.point), { label: 'Dra väggände', connected: ids });
           this.host.wallEndMoved?.(g.wallId, g.end, dist(fixed, g.from), ids);
@@ -399,7 +408,7 @@ export class SelectTool implements ViewTool {
     // Greppen för markerade tak i en fasad eller sektion, och taket medan det dras.
     for (const g of roofGripsShown(this.host)) {
       const s = cam.toScreen(g.at);
-      out.push(g.kind === 'ridge' ? `<path d="M${s[0]} ${s[1] - 7}L${s[0] + 7} ${s[1]}L${s[0]} ${s[1] + 7}L${s[0] - 7} ${s[1]}Z" class="grip"/>` : `<rect x="${s[0] - 5}" y="${s[1] - 5}" width="10" height="10" class="grip"/>`);
+      out.push(g.kind === 'slope' ? `<path d="M${s[0]} ${s[1] - 7}L${s[0] + 7} ${s[1]}L${s[0]} ${s[1] + 7}L${s[0] - 7} ${s[1]}Z" class="grip"/>` : `<rect x="${s[0] - 5}" y="${s[1] - 5}" width="10" height="10" class="grip"/>`);
     }
     for (const g of this.ulGrip?.snap ? [] : underlayGripsShown(this.host)) {
       const q = cam.toScreen(g.at);
@@ -435,10 +444,8 @@ export class SelectTool implements ViewTool {
       const path = d.outline.map((ring) => ring.map((q, i) => `${i ? 'L' : 'M'}${cam.toScreen(q).join(' ')}`).join('') + 'Z').join('');
       out.push(`<path d="${path}" class="ghost"/>`);
       const at = this.roof.grip.at;
-      const lo = d.outline.flat();
-      const target: Vec2 = this.roof.grip.kind === 'ridge' ? [at[0], Math.max(...lo.map((q) => q[1]))] : [at[0], at[1]];
       if (this.roof.snap) out.push(snapMarker(cam, this.roof.snap));
-      out.push(lengthLabel(cam, at, [target[0] + 1, target[1]], d.text));
+      out.push(lengthLabel(cam, at, [at[0] + 1, at[1]], d.text));
     }
     if (this.box) {
       const a = cam.toScreen(this.box.a);
@@ -537,6 +544,10 @@ export class SelectTool implements ViewTool {
     if (!this.grip) return undefined;
     const el = this.host.store.doc.elements[this.grip.wallId];
     if (!el) return undefined;
+    if (this.grip.kind === 'roofRef') {
+      const ref = el.params.ref as [Vec2, Vec2];
+      return this.grip.end === 'start' ? ref[1] : ref[0];
+    }
     const p = el.params as unknown as WallParams;
     return this.grip.end === 'start' ? p.end : p.start;
   }

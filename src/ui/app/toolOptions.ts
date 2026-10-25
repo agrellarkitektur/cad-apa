@@ -1,3 +1,4 @@
+import type { RoofMode } from '../tools/roofTool';
 import { fillTypeList } from '../../core/fillTypes';
 import { dividePath } from '../tools/measureTool';
 import type { WallFace } from '../../elements/wallSides';
@@ -65,15 +66,21 @@ export function installToolOptions(app: AppContext) {
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'roof') {
       const o = app.roofTool.options;
+      const mode = (m: string, label: string, title: string) => `<button data-roof-mode="${m}" aria-pressed="${o.mode === m}" title="${title}">${label}</button>`;
+      const num = (id: string, label: string, value: number, unit: string, title: string, deg = false) =>
+        `<label class="opt"><span>${label}</span><span class="input-unit"><input id="${id}" type="text" data-expr${deg ? ' data-unit="deg"' : ''} inputmode="decimal" autocomplete="off" value="${value}" title="${title}"><i>${unit}</i></span></label>`;
+      const quick = o.mode !== 'face';
       app.toolOptions.innerHTML = `
-        <div class="opt"><span>Typ</span><div class="segmented" role="group" aria-label="Taktyp">
-          <button data-roof-kind="gable" aria-pressed="${o.kind === 'gable'}">Sadeltak</button>
-          <button data-roof-kind="shed" aria-pressed="${o.kind === 'shed'}">Pulpettak</button>
+        <div class="opt"><span>Rita</span><div class="segmented" role="group" aria-label="Rita">
+          ${mode('face', 'Takfall', 'Ett takfall: konturen, sedan referenslinjen och sidan där taket stiger')}${mode('shed', 'Pulpet', 'Ett takfall över en rektangel')}${mode('gable', 'Sadel', 'Två takfall över en rektangel, nocken längs den längre sidan')}${mode('hip', 'Valm', 'Fyra takfall över en rektangel')}
         </div></div>
-        <label class="opt"><span>Lutning</span><span class="input-unit"><input id="roof-slope" type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" value="${o.slope}"><i>°</i></span></label>
-        <label class="opt"><span>Takfot</span><span class="input-unit"><input id="roof-eave" type="text" data-expr inputmode="decimal" autocomplete="off" value="${o.eave}" title="Takets undersida vid takfoten, över golvet"><i>mm</i></span></label>
-        <button class="btn" data-action="roof-house" title="Ett tak över alla väggar med 500 mm utsprång, som möter väggarnas överkant">Över hela huset</button>
-        <span class="opt-hint">${app.roofTool.started ? 'Klicka det motsatta hörnet.' : 'Klicka ett hörn av taket, med utsprånget.'}</span>`;
+        ${num('roof-slope', 'Lutning', o.slope, '°', 'Taklutning', true)}
+        ${num('roof-height', quick ? 'Höjd vid ytterliv' : 'Höjd', o.height, 'mm', 'Höjden vid referenslinjen, över golvet')}
+        <label class="opt"><span>Gäller</span><select id="roof-height-at"><option value="under"${o.heightAt === 'under' ? ' selected' : ''}>Undersidan</option><option value="top"${o.heightAt === 'top' ? ' selected' : ''}>Ovansidan</option></select></label>
+        ${quick ? num('roof-eave', 'Takfotssprång', o.eave, 'mm', 'Utanför ytterlivet vid takfoten') : ''}
+        ${quick && o.mode !== 'hip' ? num('roof-gable', 'Gavelsprång', o.gable, 'mm', 'Utanför ytterlivet vid gaveln') : ''}
+        ${quick ? '<button class="btn" data-action="roof-house" title="Snabbvalet över ytterväggarna på våningen, med höjden där väggarna slutar">Över hela huset</button>' : app.roofTool.canClose ? '<button class="btn btn-primary" data-action="roof-close">Klar med konturen</button>' : ''}
+        <span class="opt-hint">${app.roofTool.hintText()}</span>`;
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'slab') {
       const t = app.slabTool;
@@ -217,7 +224,10 @@ export function installToolOptions(app: AppContext) {
     const t = e.target as HTMLSelectElement;
     const num = Number(t.value);
     if (t.id === 'roof-slope' && Number.isFinite(num)) app.roofTool.options.slope = Math.max(0, Math.min(75, num));
-    if (t.id === 'roof-eave' && Number.isFinite(num)) app.roofTool.options.eave = Math.round(num);
+    if (t.id === 'roof-height' && Number.isFinite(num)) app.roofTool.options.height = Math.round(num);
+    if (t.id === 'roof-height-at') app.roofTool.options.heightAt = t.value === 'top' ? 'top' : 'under';
+    if (t.id === 'roof-eave' && Number.isFinite(num)) app.roofTool.options.eave = Math.max(0, Math.round(num));
+    if (t.id === 'roof-gable' && Number.isFinite(num)) app.roofTool.options.gable = Math.max(0, Math.round(num));
     if (t.id === 'wall-def') app.wallTool.options.definition = t.value;
     if (t.id === 'slab-def') app.slabTool.options.definition = t.value;
     if (t.id === 'opening-def') (app.ui.tool === 'door' ? app.doorTool : app.windowTool).options.definition = t.value;
@@ -328,11 +338,13 @@ export function installToolOptions(app: AppContext) {
         () => app.hint('Det gick inte att kopiera här.'),
       );
     }
-    if (b.dataset.roofKind) {
-      app.roofTool.options.kind = b.dataset.roofKind as 'gable' | 'shed';
+    if (b.dataset.roofMode) {
+      app.roofTool.options.mode = b.dataset.roofMode as RoofMode;
+      app.roofTool.reset();
       renderToolOptions();
     }
     if (b.dataset.action === 'roof-house') app.roofOverHouse();
+    if (b.dataset.action === 'roof-close') app.roofTool.closeContour();
     if (b.dataset.slabMode) {
       app.slabTool.options.mode = b.dataset.slabMode as 'slab' | 'hole';
       app.slabTool.reset();

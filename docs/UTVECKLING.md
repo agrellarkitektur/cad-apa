@@ -1246,6 +1246,57 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Tak (0.10, format 17)
+
+- **Elementtypen** `Roof` i `src/elements/roof.ts`: ett takfall med
+  `outline` och `bulges` (som en sluten 2D-form), `ref` (två punkter) och
+  `refBulge`, `height`, `heightAt` (`'top'`, annars undersidan), `slope`
+  och `thickness`. `roofFrame(p)` ger `w(q)` (avståndet från
+  referenslinjen åt det håll taket stiger) och `under(q)`/`top(q)`.
+  `roofPlanes(p)` ger takfallet i plana bitar (`RoofPlane` med `rings`,
+  `under`, `top`): en bit för en rak linje, 64 per varv för en kon
+  (planet genom spetsen och konens linjer vid bitens kanter). Svaret
+  sparas per parameterobjekt (WeakMap). `roofRange` ger lägsta undersida
+  och högsta ovansida (Takfot och Nock i `sectionLevels.ts`).
+- **Väggar**: `roofPlanesAround(ctx)` tar takfall från alla våningar
+  (`ctx.storey` är ny i `PlanContext`, satt i plan) och flyttar dem till
+  väggens höjder; andra våningars bitar har `foreign`. `trimToRoofs`
+  kapar bara där taket ligger ovanför väggens fot (`claimsOf`, ordnat
+  nerifrån, med `boxesTouch` före polygonerna) och drar upp väggar med
+  Upp till taket bara under egna våningens tak.
+- **3D-kanter**: konturen på över- och undersidan (på en kon delad i
+  bitar på 300 mm) och lodräta hörn, utom skarvar mot ett annat takfall
+  (`seams`).
+- **Snabbval och Kapa mot tak** i `src/elements/roofMaker.ts`:
+  `quickRoofs(a, b, o)` (pulpet, sadel, valm; valmen klipps med
+  `halfPlaneBelow` mot de andra takfallens plan) och `trimRoof(a, b,
+  keep, dz)` (b:s yta över ett stort område, delen där a ligger lägre,
+  den sida som innehåller `keep` eller den största).
+- **Verktyget** `RoofTool` i `src/ui/tools/roofTool.ts` (ur
+  `markerTools.ts`): `mode` `face`/`shed`/`gable`/`hip`, steg `contour`,
+  `refStart`, `refEnd`, `side`. Verktygsraden i `toolOptions.ts`,
+  smartshell i `prompts.ts`, *Över hela huset* i `roofOverHouse`
+  (`tools.ts`, med `bareWallUnion`).
+- **Modifiera**: konturen går genom 2D-formens väg: `shapeOf(el)` och
+  `roofShape` i `shapeEdit.ts`, `editedShape` och `shapePatch` (som skriver
+  `outline` och `bulges`). `hasEditableOutline` och valen `roof*` gäller
+  nu bara bjälklag. `roofTrim` (Kapa mot tak) i `src/ui/modify/roofOps.ts`.
+  Referenslinjens ändar är `EndGrip` med `kind: 'roofRef'`
+  (`selectGrips.ts`, `selectTool.ts`); linjen och pilen ritas i
+  `highlight.ts`. Flytta, vrid och spegla i `movePatch` och `transformed`
+  (spegling byter linjens riktning), pipetten hoppar över `ref` och
+  `refBulge`.
+- **Fasader och sektioner**: greppen `height` och `slope` i
+  `roofGrips.ts` (`slopeThrough` löser lutningen med halvering), en
+  taklutning per takfall i `roofSlopes` (`section.ts`).
+- **Egenskaperna**: `case 'Roof'` i `selectionFields.ts`, `roof:heightAt`
+  och `roof:radius` i `selectionEdits.ts`, `roof-flip` i
+  `propertiesPanel.ts`; flera markerade takfall visar fälten för alla.
+- `fromMulti` i `boolean.ts` tar bort punkter som bara skiljer sig på
+  flyttal (två takfall som möts i nocken gav dubbla punkter i snittet).
+- Tester: `tests/v010.test.ts`. Referensritningarna ändrades av
+  exempelvillans två takfall; `twoStoreys` flyttar båda till plan 2.
+
 ## Bjälklag del 2 (0.9.4, format 16)
 
 - **Format 16**: en håltagning är `SlabHole` (`src/elements/slab.ts`),

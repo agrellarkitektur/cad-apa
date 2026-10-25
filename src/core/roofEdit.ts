@@ -4,8 +4,8 @@ import type { DocStore } from './store';
 type P = [number, number];
 
 /**
- * Ändra takets kontur (0.7.1): lägg till, flytta och ta bort hörn, och
- * förskjut en kant. Konturen är en sluten polygon; kant i går från hörn i
+ * Ändra en kontur (0.7.1, takets till 0.10, nu bjälklagets): lägg till,
+ * flytta och ta bort hörn, och förskjut en kant. Konturen är en sluten polygon; kant i går från hörn i
  * till hörn i + 1.
  */
 
@@ -90,9 +90,10 @@ export function setOutline(store: DocStore, id: Id, outline: P[], label: string)
 }
 
 /**
- * Element med en kontur som ändras med punkter och kanter i Modifiera: tak,
- * och bjälklag med ritad kontur (0.9.1; ett bjälklag ur väggarna följer väggarna).
+ * Element med en kontur som ändras med punkter och kanter i Modifiera:
+ * bjälklag med ritad kontur (0.9.1; ett bjälklag ur väggarna följer
+ * väggarna). Takfallets kontur ändras sedan 0.10 som en 2D-form (`shapeOf`).
  */
 export function hasEditableOutline(el: { type: string; params: Record<string, unknown> } | undefined): boolean {
-  return !!el && (el.type === 'Roof' || (el.type === 'Slab' && !el.params.fromWalls)) && Array.isArray(el.params.outline);
+  return !!el && el.type === 'Slab' && !el.params.fromWalls && Array.isArray(el.params.outline);
 }

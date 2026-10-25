@@ -131,20 +131,38 @@ room('r06', 'Bad', 7360, 400, 11600, 3940, [A]);
 // Plattan på mark (0.9.1): bjälklaget i plan 1, innanför ytterväggarna.
 add<Pick<SlabParams, 'outline' | 'fromWalls'>>('bj1', 'Slab', { outline: [], fromWalls: true }, { definition: 't-bj01' });
 
-// Sadeltak med nock i öst–västlig riktning och 500 mm utsprång. Undersidan
-// når väggarnas överkant (2700) vid ytterlivet.
+// Sadeltak av två takfall (0.10) med nock i öst–västlig riktning och 500 mm
+// utsprång. Referenslinjerna ligger i ytterlivet, där undersidan når
+// väggarnas överkant (2700).
 add<RoofParams>('tak', 'Roof', {
   outline: [
     [-500, -500],
     [12500, -500],
+    [12500, 4000],
+    [-500, 4000],
+  ],
+  ref: [
+    [0, 0],
+    [12000, 0],
+  ],
+  height: 2700,
+  slope: 27,
+  thickness: 300,
+});
+add<RoofParams>('tak-n', 'Roof', {
+  outline: [
     [12500, 8500],
     [-500, 8500],
+    [-500, 4000],
+    [12500, 4000],
   ],
-  kind: 'gable',
+  ref: [
+    [12000, 8000],
+    [0, 8000],
+  ],
+  height: 2700,
   slope: 27,
-  eave: 2450,
   thickness: 300,
-  ridge: 0,
 });
 
 // Norrpil, fyra fasader runt huset och en sektion tvärs nocken, mot väster.

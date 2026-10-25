@@ -149,12 +149,12 @@ linje 7154.9,0 7145.1,0 [w0.18 ink] @bj1/vy
 linje 9400,-400 2200,-400 [w0.18 ink] @bj1/vy
 linje 2200,-7.3 2200,-400 [w0.18 ink] @bj1/vy
 linje 9400,-0.1 9400,-400 [w0.18 ink] @bj1/vy
-linje 10300,5150 9800.1,5404.7 [w0.25 ink] @tak/roof
-linje 10300,5486.7 5800,7779.6 [w0.25 ink] @tak/roof
-linje 10300,5150 10300,5486.7 [w0.25 ink] @tak/roof
-linje 1300,5150 1300,5486.7 [w0.25 ink] @tak/roof
-linje 1800,5404.7 1300,5150 [w0.25 ink] @tak/roof
-linje 5800,7779.6 1300,5486.7 [w0.25 ink] @tak/roof
+linje 1800,5400 1300,5145.2 [w0.25 ink] @tak/roof
+linje 5800,7774.8 1300,5481.9 [w0.25 ink] @tak/roof
+linje 1300,5145.2 1300,5481.9 [w0.25 ink] @tak/roof
+linje 10300,5145.2 9800.1,5400 [w0.25 ink] @tak-n/roof
+linje 10300,5481.9 5800,7774.8 [w0.25 ink] @tak-n/roof
+linje 10300,5145.2 10300,5481.9 [w0.25 ink] @tak-n/roof
 linje 1800,4887.3 1800,5400 [w0.25 ink] @yv-s-2/wall
 linje 2200,2700 4275,2700 [w0.25 ink] @yv-s-2/wall
 linje 4345.1,2700 5255,2700 [w0.25 ink] @yv-s-2/wall
@@ -170,26 +170,26 @@ linje 5860,2700 5860,5400 [w0.25 ink] @yv-s-2/wall
 linje 9400,2700 9400,5400 [w0.25 ink] @yv-s-2/wall
 linje 9800,2700 9400.1,2700 [w0.25 ink] @yv-s-2/wall
 linje 9800,5400 9400.2,5400 [w0.25 ink] @yv-s-2/wall
-linje 9800,2700 9800,3525.5 [w0.25 ink] @yv-s-2/wall
-linje 9800,4884.5 9800,5400 [w0.25 ink] @yv-s-2/wall
+linje 9800,2700 9800,3599.8 [w0.25 ink] @yv-s-2/wall
+linje 9800,4810.2 9800,5400 [w0.25 ink] @yv-s-2/wall
 linje 5254.9,2700 5245.1,2700 [w0.25 ink] @yv-s-2/wall
 linje 4354.9,2700 4345.1,2700 [w0.25 ink] @yv-s-2/wall
 linje 2199.7,5400 1800,5400 [w0.25 ink] @yv-s-2/wall
-linje 5800,7442.9 9400,5608.6 [w0.25 ink] @yv-o-2/wall
+linje 5800,7438.1 9400,5603.8 [w0.25 ink] @yv-o-2/wall
 linje 9400.1,2700 9800,2700 [w0.25 ink] @yv-o-2/wall
-linje 9400,5608.6 9800,5404.8 [w0.25 ink] @yv-o-2/wall
-linje 9400,5400.1 9400,5608.6 [w0.25 ink] @yv-o-2/wall
+linje 9400,5603.8 9800,5400 [w0.25 ink] @yv-o-2/wall
+linje 9400,5400.1 9400,5603.8 [w0.25 ink] @yv-o-2/wall
 linje 9800,2700 9798.5,2700 [w0.25 ink] @yv-o-2/wall
-linje 9800,5404.8 9798.5,5405.5 [w0.25 ink] @yv-o-2/wall
+linje 9800,5400 9798.5,5400.8 [w0.25 ink] @yv-o-2/wall
 linje 9800,2700 9800,3525.5 [w0.25 ink] @yv-o-2/wall
-linje 9800,4884.5 9800,5404.8 [w0.25 ink] @yv-o-2/wall
-linje 1800,5404.8 2200,5608.6 [w0.25 ink] @yv-o-2/wall
-linje 1800,4887.3 1800,5404.8 [w0.25 ink] @yv-o-2/wall
+linje 9800,4884.5 9800,5400 [w0.25 ink] @yv-o-2/wall
+linje 1800,5400 2200,5603.8 [w0.25 ink] @yv-o-2/wall
+linje 1800,4887.3 1800,5400 [w0.25 ink] @yv-o-2/wall
 linje 4345.1,2700 4354.9,2700 [w0.25 ink] @yv-o-2/wall
 linje 5245.1,2700 5254.9,2700 [w0.25 ink] @yv-o-2/wall
-linje 2200,5608.6 5800,7442.9 [w0.25 ink] @yv-o-2/wall
-linje 2200,5400.1 2200,5608.6 [w0.25 ink] @yv-o-2/wall
-linje 1801.5,5405.5 1800,5404.8 [w0.25 ink] @yv-o-2/wall
+linje 2200,5603.8 5800,7438.1 [w0.25 ink] @yv-o-2/wall
+linje 2200,5400.1 2200,5603.8 [w0.25 ink] @yv-o-2/wall
+linje 1801.5,5400.8 1800,5400 [w0.25 ink] @yv-o-2/wall
 linje 2200,3600 2200,4810 [w0.35 ink] @yv-s-2/hole
 linje 1800,3600 1800,4810 [w0.35 ink] @yv-s-2/hole
 linje 2200,4810 1800,4810 [w0.35 ink] @yv-s-2/hole
@@ -293,11 +293,11 @@ linje 2200,2692.7 2200,2300.1 [w0.18 ink] @bj1-2/vy
 linje 9400,2699.9 9400,2300.1 [w0.18 ink] @bj1-2/vy
 linje 6800,2700 6800,2300 [w0.18 ink] @bj1-2/vy
 linje 8300,2700 8300,2300 [w0.18 ink] @bj1-2/vy
-yta fylld paper [w0.35 ink] 1300,5150 5800,7442.9 10300,5150 10300,5486.7 5800,7779.6 1300,5486.7 @yv-s/snitt
+yta fylld paper [w0.35 ink] 1300,5145.2 5800,7438.1 9800,5400 10300,5145.2 10300,5481.9 5800,7774.8 1300,5481.9 @yv-s/snitt
 yta fylld paper [w0.35 ink] 1800,0 2200,0 2200,900 1800,900 @yv-s/snitt
 yta fylld paper [w0.35 ink] 1800,2110 2200,2110 2200,2300 5740,2300 5740,0 2200,0 2200,-400 9400,-400 9400,0 5860,0 5860,2300 6800,2300 6800,2700 5860,2700 5860,5400 5740,5400 5740,2700 2200,2700 2200,3600 1800,3600 @yv-s/snitt
 yta fylld paper [w0.35 ink] 1800,4810 2200,4810 2200,5400 1800,5400 @yv-s/snitt
-yta fylld paper [w0.35 ink] 8300,2300 9400,2300 9400,0 9800,0 9800,5400 9400,5400 9400,2700 8300,2700 @yv-s/snitt
+yta fylld paper [w0.35 ink] 8300,2300 9400,2300 9400,0 9800,0 9800,2700 9800,5400 9400,5400 9400,2700 8300,2700 @yv-s/snitt
 yta none [w0.25] 1850,910 1950,910 1950,960 1850,960 @f01/snitt
 yta none [w0.25] 1850,2050 1950,2050 1950,2100 1850,2100 @f01/snitt
 yta none [w0.25] 1870,960 1930,960 1930,1005 1870,1005 @f01/snitt
@@ -318,12 +318,12 @@ yta none [w0.25] 2200,4810 2215,4810 2215,4880 2200,4880 @f01-2/snitt
 yta none [w0.25] 2200,3530 2215,3530 2215,3600 2200,3600 @f01-2/snitt
 yta fylld paper [w0.35 ink] 6800,2670 8300,2670 8300,2700 6800,2700 @r02-2/snitt
 linje -200,-400 11800,-400 [w0.7] @/mark
-linje 7825,6748 9400,6748 [w0.18] @slope:tak:0/taklutning
-båge 7825,6748 r1181.3 -27°–0° [w0.18] @slope:tak:0/taklutning
-text "27°" 9216.7,6313.9 h2.2 middle [w0.18] @slope:tak:0/taklutning
-linje 3775,6748 2200,6748 [w0.18] @slope:tak:1/taklutning
-båge 3775,6748 r1181.3 180°–207° [w0.18] @slope:tak:1/taklutning
-text "27°" 2383.3,6313.9 h2.2 middle [w0.18] @slope:tak:1/taklutning
+linje 3775,6743 2200,6743 [w0.18] @slope:tak:0/taklutning
+båge 3775,6743 r1181.3 180°–207° [w0.18] @slope:tak:0/taklutning
+text "27°" 2383.3,6308.9 h2.2 middle [w0.18] @slope:tak:0/taklutning
+linje 7825,6743 9400,6743 [w0.18] @slope:tak-n:0/taklutning
+båge 7825,6743 r1181.3 -27°–0° [w0.18] @slope:tak-n:0/taklutning
+text "27°" 9216.7,6308.9 h2.2 middle [w0.18] @slope:tak-n:0/taklutning
 linje 11100,-400 13100,-400 [w0.18] @/nivå
 yta none [w0.18] 11700,-400 11592,-220 11808,-220 @/nivå
 text "UK bjl −0,400" 11952,-337 h2.2 [w0.18] @/nivå
@@ -336,12 +336,12 @@ text "UK bjl +2,300" 11952,2363 h2.2 [w0.18] @/nivå
 linje 11100,2700 13100,2700 [w0.18] @/nivå
 yta none [w0.18] 11700,2700 11592,2880 11808,2880 @/nivå
 text "FG +2,700" 11952,2763 h2.2 [w0.18] @/nivå
-linje 11100,5150 13100,5150 [w0.18] @/nivå
-yta none [w0.18] 11700,5150 11592,5330 11808,5330 @/nivå
-text "Takfot +5,150" 11952,5213 h2.2 [w0.18] @/nivå
-linje 11100,7780 13100,7780 [w0.18] @/nivå
-yta none [w0.18] 11700,7780 11592,7960 11808,7960 @/nivå
-text "Nock +7,780" 11952,7843 h2.2 [w0.18] @/nivå
+linje 11100,5145 13100,5145 [w0.18] @/nivå
+yta none [w0.18] 11700,5145 11592,5325 11808,5325 @/nivå
+text "Takfot +5,145" 11952,5208 h2.2 [w0.18] @/nivå
+linje 11100,7775 13100,7775 [w0.18] @/nivå
+yta none [w0.18] 11700,7775 11592,7955 11808,7955 @/nivå
+text "Nock +7,775" 11952,7838 h2.2 [w0.18] @/nivå
 linje 10900,-600 10900,2900 [w0.18] @/höjdmått
 linje 10400,-400 11050,-400 [w0.18] @/höjdmått
 linje 10400,0 11050,0 [w0.18] @/höjdmått

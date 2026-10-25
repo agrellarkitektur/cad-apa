@@ -3,7 +3,7 @@ import type { Element, ProjectDoc } from '../core/model';
 import type { ViewStates } from '../core/states';
 import { dimensionPrims } from '../elements/annotation';
 import type { PlanContext } from '../elements/registry';
-import type { RoofParams } from '../elements/roof';
+import { roofRange, type RoofParams } from '../elements/roof';
 import { markerPen, solidPen, withWeight } from './markerPens';
 import type { Pen, Primitive } from './primitives';
 
@@ -41,7 +41,7 @@ export function levelPrims(
     }
     const floor = Math.min(...doc.storeys.map((s) => s.elevation));
     for (const { el, elevation } of at.roofs) {
-      const eave = Math.round(elevation + ctx.params<RoofParams>(el).eave);
+      const eave = Math.round(elevation + roofRange(ctx.params<RoofParams>(el)).underMin);
       if (eave > floor && !levels.has(eave)) levels.set(eave, 'Takfot');
     }
     const top = Math.round(at.maxZ);

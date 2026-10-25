@@ -4,7 +4,7 @@ import type { Id } from '../../core/model';
 import { canScale } from '../../core/arrange';
 import { canJoin, canTrim } from '../../core/trimEdit';
 import { cornerPartner, cornersAmong, refFrame } from '../../core/wallEdit';
-import { canRoundCorner, edgeIsArc, editedShape, holeShape, holesOf, isShape, shapeCan, shapeEdgeAt, shapeNodes, type ShapeLike } from '../../elements/shapeEdit';
+import { canRoundCorner, edgeIsArc, editedShape, holeShape, holesOf, shapeCan, shapeEdgeAt, shapeNodes, shapeOf, type ShapeLike } from '../../elements/shapeEdit';
 import { dist, sub } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
@@ -83,6 +83,7 @@ export type OpId =
   | 'shapeChamfer'
   | 'holeMove'
   | 'holeRemove'
+  | 'roofTrim'
   | 'trim'
   | 'join'
   | 'split'
@@ -147,6 +148,7 @@ export const OPS: Record<OpId, OpDef> = {
   shapeFillet: { label: 'Avrunda hörn', short: 'Avrunda', icon: 'fillet', value: { label: 'Radie', unit: 'mm', initial: 500 }, hint: 'Skriv radien och tryck Enter, eller klicka för att använda den. Bågen tangerar båda kanterna.' },
   shapeChamfer: { label: 'Fasa hörn', short: 'Fasa', icon: 'chamfer', value: { label: 'Avstånd', unit: 'mm', initial: 300 }, hint: 'Skriv avståndet från hörnet och tryck Enter, eller klicka för att använda det.' },
   holeMove: { label: 'Flytta hålet', short: 'Flytta hål', icon: 'move', hint: 'Klicka var hålet ska hamna, räknat från punkten du klickade på.' },
+  roofTrim: { label: 'Kapa mot tak', short: 'Kapa mot tak', icon: 'trim', hint: 'Klicka på takfallet som det ska kapas mot. Kvar blir den del du klickade på, eller den största.' },
   holeRemove: { label: 'Ta bort hålet', short: 'Ta bort hål', icon: 'trash', instant: true, hint: 'Håltagningen tas bort ur bjälklaget.' },
 };
 
@@ -191,6 +193,8 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
         : ['shapeMove', ...(can.remove ? (['shapeRemove'] as OpId[]) : []), ...(el && canRoundCorner(el, ctx.index!) ? (['shapeFillet', 'shapeChamfer'] as OpId[]) : [])];
     // En håltagning (0.9.4) flyttas och tas bort för sig; det allmänna gäller hela bjälklaget.
     if (ctx.hole !== undefined) return [own, ['holeMove', 'holeRemove']];
+    // Ett takfall (0.10) kapas mot ett annat.
+    if (doc.elements[ctx.shapeId]?.type === 'Roof') return [own, ['roofTrim'], COMMON];
     return withCuts(own.length ? [own, COMMON] : [COMMON]);
   }
   if (ctx.roofId) {
@@ -215,6 +219,7 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
       // och avrunda eller fasa alla hörn mellan dem (0.8.13).
       const own: OpId[] = walls.length >= 2 ? ['offsetAll'] : [];
       if (walls.length >= 2 && cornersAmong(doc, walls).length) own.push('filletAll', 'chamferAll');
+      if (ctx.ids.some((id) => doc.elements[id]?.type === 'Roof')) own.push('roofTrim');
       const groups = withCuts(own.length ? [own, COMMON] : [COMMON]);
       const more = arrangeOps(host, ctx.ids);
       return more.length ? [...groups, more] : groups;
@@ -265,15 +270,16 @@ export function modifyContextAt(host: ToolHost, p: ViewPointer, clientX: number,
   }
   // Punkter och kanter i markerade 2D-element (0.8 del 2).
   const shown = new Set(host.plan().pickables.map((pk) => pk.id));
+  // Takfallens kontur (0.10) som en 2D-form.
   for (const id of ids) {
-    const el = doc.elements[id];
-    if (!isShape(el) || !shown.has(id)) continue;
+    const el = shapeOf(doc.elements[id]);
+    if (!el || !shown.has(id)) continue;
     const pts = shapeNodes(el);
     for (let i = 0; i < pts.length; i++) if (dist(pts[i], p.model) <= tol) return { kind: 'point', ids, shapeId: id, index: i, at: pts[i], clientX, clientY };
   }
   for (const id of ids) {
-    const el = doc.elements[id];
-    if (!isShape(el) || !shown.has(id)) continue;
+    const el = shapeOf(doc.elements[id]);
+    if (!el || !shown.has(id)) continue;
     const e = shapeEdgeAt(el, p.model, tol);
     if (e) return { kind: 'edge', ids, shapeId: id, index: e.index, at: e.at, clientX, clientY };
   }
@@ -431,8 +437,11 @@ export function railFor(host: ToolHost, ids: readonly Id[]): Set<RailId> {
   if (els.some(hasEditableOutline)) for (const id of ['insert', 'pointMove', 'remove', 'offset'] as const) on.add(id);
   for (const op of editOps(host, ids)) on.add(op as RailId);
   for (const op of arrangeOps(host, ids)) on.add(op === 'extendAll' ? 'extend' : op === 'trimAll' ? 'trim' : (op as RailId));
-  // 2D-formerna, och håltagningarna i bjälklagen (0.9.4).
-  const shapes: ShapeLike[] = els.flatMap((el) => (isShape(el) ? [el] : holesOf(el).map(holeShape)));
+  // 2D-formerna, takfallens kontur (0.10) och håltagningarna i bjälklagen (0.9.4).
+  const shapes: ShapeLike[] = els.flatMap((el) => {
+    const own = shapeOf(el);
+    return own ? [own] : holesOf(el).map(holeShape);
+  });
   for (const el of shapes) {
     const can = shapeCan(el);
     on.add('pointMove');

@@ -1,20 +1,24 @@
 kanter @yv-s wall 48
 kanter @iv-4 wall 12
-form @yv-s wall z0–2700 urtag 3 11600,400 400,400 0,0 12000,0
+form @yv-s wall z0–2700 urtag 3 0,0 12000,0 11600,400 400,400
 kanter @yv-s hole 8
 kanter @yv-s hole 12
 kanter @yv-s hole 12
-form @yv-o wall z0–2700 urtag 1 11600,400 12000,0 12000,8000 11600,7600
+form @yv-o wall z0–2700 urtag 1 11600,4000 12000,4000 12000,8000 11600,7600
+form @yv-o wall z0–2700 urtag 1 11600,400 12000,0 12000,4000 11600,4000
 kanter @yv-o hole 12
-form @yv-n wall z0–2700 urtag 2 400,7600 11600,7600 12000,8000 0,8000
+form @yv-n wall z0–2700 urtag 2 0,8000 400,7600 11600,7600 12000,8000
 kanter @yv-n hole 12
 kanter @yv-n hole 12
-form @yv-v wall z0–2700 urtag 1 0,0 400,400 400,7600 0,8000
+form @yv-v wall z0–2700 urtag 1 0,4000 400,4000 400,7600 0,8000
+form @yv-v wall z0–2700 urtag 1 0,0 400,400 400,4000 0,4000
 kanter @yv-v hole 12
-form @iv-1 wall z0–2300 urtag 2 4940,400 5060,400 5060,7600 4940,7600
+form @iv-1 wall z0–2300 urtag 2 4940,4000 5060,4000 5060,7600 4940,7600
+form @iv-1 wall z0–2300 urtag 2 4940,400 5060,400 5060,4000 4940,4000
 kanter @iv-1 hole 8
 kanter @iv-1 hole 8
-form @iv-2 wall z0–2300 urtag 1 5060,3940 11600,3940 11600,4060 5060,4060
+form @iv-2 wall z0–2300 urtag 1 5060,4000 11600,4000 11600,4060 5060,4060
+form @iv-2 wall z0–2300 urtag 1 5060,3940 11600,3940 11600,4000 5060,4000
 kanter @iv-2 hole 8
 form @iv-4 wall-new z0–2300 urtag 0 7240,400 7360,400 7360,3940 7240,3940
 form @d01 frame z0–2040 2995,150 2945,150 2945,50 2995,50

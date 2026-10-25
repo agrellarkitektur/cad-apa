@@ -1,13 +1,15 @@
 import { resolveParams } from '../../elements/registry';
-import { markerName, modelBounds } from '../../elements/markers';
-import type { WallParams } from '../../elements/wall';
+import { markerName } from '../../elements/markers';
+import { ringArea } from '../../elements/slab';
+import { bareWallUnion, type WallParams } from '../../elements/wall';
 import type { Id } from '../../core/model';
 import type { ViewTool } from '../../view2d/planView';
 import type { ModifyContext } from '../modify/ops';
 import { DimensionTool, TextTool } from '../tools/annotationTools';
 import { Draw2DTool } from '../tools/draw2dTool';
 import type { ToolHost } from '../tools/host';
-import { AlignTool, MarkerTool, RoofTool } from '../tools/markerTools';
+import { AlignTool, MarkerTool } from '../tools/markerTools';
+import { RoofTool } from '../tools/roofTool';
 import { MeasureTool, ZoomBoxTool } from '../tools/measureTool';
 import { OpeningTool } from '../tools/openingTool';
 import { RoomTool } from '../tools/roomTool';
@@ -127,7 +129,11 @@ export function installTools(app: AppContext, host: ToolHost) {
       app.hint(`${markerName(app.store.doc, el)} finns nu i projektträdet under Modell. Dubbelklicka på linjen för att öppna den.`, 5000);
     }
   };
-  roofTool.onCreated = created;
+  roofTool.onCreated = (ids) => {
+    setTool('select');
+    app.selection.set(ids);
+    if (ids.length > 1) app.hint('Takfallen är lagda. Ändra dem ett och ett, eller markera alla och ändra lutningen på en gång.', 4000);
+  };
   sectionTool.onCreated = created;
   elevationTool.onCreated = created;
   roofTool.onChange = () => app.toolOpts.renderToolOptions();
@@ -205,23 +211,36 @@ export function installTools(app: AppContext, host: ToolHost) {
    * Ett tak över alla väggar på våningen, med 500 mm utsprång och takfoten
    * så att undersidan möter de högsta väggarnas överkant vid ytterlivet.
    */
+  /**
+   * Snabbvalet över hela huset (0.10): rektangeln runt ytterväggarna på
+   * våningen, med höjden vid ytterlivet där väggarna slutar. Bara när huset
+   * är rektangulärt; annars ritas ett tak per huskropp.
+   */
   function roofOverHouse(): void {
-    const b = modelBounds(app.store.doc, app.ui.storey);
-    if (!b) {
+    const doc = app.store.doc;
+    const state = host.activeState();
+    const walls = Object.values(doc.elements)
+      .filter((e) => e.type === 'Wall' && e.storey === app.ui.storey && !e.space && e.states.includes(state))
+      .map((e) => ({ id: e.id, p: resolveParams<WallParams>(doc, e) }));
+    if (!walls.length) {
       app.hint('Rita väggar först, så läggs taket över dem.');
       return;
     }
-    const over = 500;
-    const walls = Object.values(app.store.doc.elements).filter((e) => e.type === 'Wall' && e.storey === app.ui.storey);
-    const top = Math.max(...walls.map((w) => resolveParams<WallParams>(app.store.doc, w).height));
-    const k = Math.tan((roofTool.options.slope * Math.PI) / 180);
-    roofTool.options.eave = Math.round(top - k * over);
-    roofTool.create([
-      [Math.round(b.minX - over), Math.round(b.minY - over)],
-      [Math.round(b.maxX + over), Math.round(b.minY - over)],
-      [Math.round(b.maxX + over), Math.round(b.maxY + over)],
-      [Math.round(b.minX - over), Math.round(b.maxY + over)],
-    ]);
+    const outer = bareWallUnion(walls)
+      .map((poly) => poly[0])
+      .sort((a, b) => ringArea(b) - ringArea(a))[0];
+    if (!outer) return;
+    const xs = outer.map((q) => q[0]);
+    const ys = outer.map((q) => q[1]);
+    const [x0, x1, y0, y1] = [Math.min(...xs), Math.max(...xs), Math.min(...ys), Math.max(...ys)];
+    if (ringArea(outer) < 0.97 * (x1 - x0) * (y1 - y0)) {
+      app.hint('Huset är inte rektangulärt. Dra upp ett tak per huskropp, eller rita takfallen och kapa dem mot varandra.', 5000);
+      return;
+    }
+    if (roofTool.options.mode === 'face') roofTool.options.mode = 'gable';
+    roofTool.options.height = Math.max(...walls.map((w) => w.p.height));
+    roofTool.options.heightAt = 'under';
+    roofTool.createQuick([Math.round(x0), Math.round(y0)], [Math.round(x1), Math.round(y1)]);
   }
 
   /**

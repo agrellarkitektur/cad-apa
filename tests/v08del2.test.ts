@@ -1,8 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
-import type { RoofParams } from '../src/elements/roof';
-import { dragRoofGrip, roofGripsInView, slopeForRidge } from '../src/elements/roofGrips';
-import { buildSection } from '../src/repr/section';
 import { parseDxf } from '../src/formats/dxf';
 import { addWithAsset, deleteElements, moveElements } from '../src/core/commands';
 import { copyPayload, pasteClip } from '../src/core/clipboard';
@@ -17,74 +14,6 @@ import { dxf } from './projekt';
 beforeAll(() => registerBuiltInTypes());
 
 const view = { state: 'st-a', compareTo: 'st-bef', detail: 'normal' as const };
-
-describe('grepp för taket i fasader och sektioner (0.8 del 2)', () => {
-  it('från gaveln: ett grepp i nocken och ett i varje takfot, på takets linjer', () => {
-    const doc = sampleProject();
-    const grips = roofGripsInView(doc, 'fasad-2', ['tak']);
-    expect(grips.filter((g) => g.kind === 'ridge')).toHaveLength(1);
-    expect(grips.filter((g) => g.kind === 'eave')).toHaveLength(2);
-    const p = doc.elements.tak.params as unknown as RoofParams;
-    for (const g of grips.filter((x) => x.kind === 'eave')) expect(g.at[1]).toBe(p.eave);
-    // Nocken är takets högsta punkt i fasaden.
-    const s = buildSection(doc, 'fasad-2', view)!;
-    const ys = s.prims.flatMap((q) => (q.kind === 'line' && q.origin?.objectId === 'tak' ? [q.a[1], q.b[1]] : []));
-    expect(Math.abs(grips.find((g) => g.kind === 'ridge')!.at[1] - Math.max(...ys))).toBeLessThan(2);
-  });
-
-  it('från långsidan ligger takfötterna på varandra: ett grepp räcker', () => {
-    const grips = roofGripsInView(sampleProject(), 'fasad-1', ['tak']);
-    expect(grips.filter((g) => g.kind === 'eave')).toHaveLength(1);
-  });
-
-  it('nocken uppåt ger brantare tak i hela grader, och takfoten ligger kvar', () => {
-    const doc = sampleProject();
-    const ridge = roofGripsInView(doc, 'fasad-2', ['tak']).find((g) => g.kind === 'ridge')!;
-    const r = dragRoofGrip(doc, 'fasad-2', ridge, [ridge.at[0], ridge.at[1] + 600])!;
-    const p = doc.elements.tak.params as unknown as RoofParams;
-    expect(r.params.slope).toBeGreaterThan(p.slope);
-    expect(Number.isInteger(r.params.slope)).toBe(true);
-    expect(r.params.eave).toBe(p.eave);
-    expect(r.text).toContain('Lutning');
-    // Fritt (Alt): en decimal.
-    const free = dragRoofGrip(doc, 'fasad-2', ridge, [ridge.at[0], ridge.at[1] + 613], { free: true })!;
-    expect(free.params.slope).not.toBe(r.params.slope);
-  });
-
-  it('lutningen räknas tillbaka ur nockens höjd', () => {
-    const top = 2450 + Math.tan((30 * Math.PI) / 180) * 4000 + 300 / Math.cos((30 * Math.PI) / 180);
-    expect(slopeForRidge(2450, 4000, 300, top)).toBeCloseTo(30, 3);
-  });
-
-  it('takfoten uppåt höjer hela taket med samma lutning; med Shift står nocken still', () => {
-    const doc = sampleProject();
-    const eave = roofGripsInView(doc, 'fasad-2', ['tak']).find((g) => g.kind === 'eave')!;
-    const p = doc.elements.tak.params as unknown as RoofParams;
-    const up = dragRoofGrip(doc, 'fasad-2', eave, [eave.at[0], eave.at[1] + 200])!;
-    expect(up.params.eave).toBe(p.eave + 200);
-    expect(up.params.slope).toBe(p.slope);
-    expect(up.params.outline).toEqual(p.outline);
-    const keep = dragRoofGrip(doc, 'fasad-2', eave, [eave.at[0], eave.at[1] + 200], { keepRidge: true })!;
-    expect(keep.params.eave).toBe(p.eave + 200);
-    expect(keep.params.slope).toBeLessThan(p.slope);
-  });
-
-  it('takfoten åt sidan ändrar taksprånget lika på båda sidor, längs takfallet', () => {
-    const doc = sampleProject();
-    const p = doc.elements.tak.params as unknown as RoofParams;
-    const grips = roofGripsInView(doc, 'fasad-2', ['tak']).filter((g) => g.kind === 'eave');
-    // Greppet längst till höger, dras 300 mm utåt (åt höger).
-    const right = grips.reduce((a, g) => (g.at[0] > a.at[0] ? g : a));
-    const r = dragRoofGrip(doc, 'fasad-2', right, [right.at[0] + 300, right.at[1]])!;
-    const ys = (o: [number, number][]) => o.map((q) => q[1]);
-    const span = (o: [number, number][]) => Math.max(...ys(o)) - Math.min(...ys(o));
-    expect(span(r.params.outline)).toBe(span(p.outline) + 600);
-    // Takfallet ligger kvar: takfoten sänks med lutningen.
-    expect(r.params.eave).toBe(Math.round(p.eave - Math.tan((p.slope * Math.PI) / 180) * 300));
-    expect(r.params.slope).toBe(p.slope);
-    expect(r.text).toContain('Taksprång');
-  });
-});
 
 const shape = (params: Record<string, unknown>, type = 'Shape2D') => ({ type, params: { weight: 0.25, linetype: 'solid', ...params } });
 

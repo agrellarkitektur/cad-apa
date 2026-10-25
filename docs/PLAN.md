@@ -1558,34 +1558,109 @@ markerar bjälklaget (rummet med stämpeln eller Tab). Två fel rättade:
 pipetten förde över håltagningarna och *Ur väggarna*, och speglade hål
 behöll bågarnas riktning.*
 
-### 0.10 Tak · *nytt format*
+### 0.10 Tak · *nytt format (17)*
 
-Ett riktigt tak i stället för testtaket:
+Uppdelat 25 oktober i fem versioner (bekräftat av Carl August). Taket görs
+som enkla takfall i stället för en kontur där varje kant är takfot eller
+gavel: komplexa tak byggs av flera takfall (Carl August 25 oktober). Det
+tar bort den svåra geometrin (vinkelrännor ur en godtycklig kontur).
 
-- Tak och andra volymer ovanför planets snitt ritas punktstreckade i planen
-  (synpunkt 20 oktober). Grunden för "ovanför snittet" kan behövas redan i
-  0.9 med flera våningsplan
+- Ett tak är ett takfall: en kontur (raka kanter och bågar, ändras som en
+  2D-form) och en referenslinje med höjd, lutning och tjocklek. Höjden
+  gäller översidan eller undersidan. Referenslinjen kan ligga var som
+  helst, även mitt i takfallet; taket fortsätter nedåt på andra sidan
+- Referenslinje med radie: taket lutar vinkelrätt mot bågen, så en
+  halvcirkel blir en halv kon
+- Verktyget: konturen, sedan referenslinjen och sidan som stiger.
+  Snabbval över en rektangel: pulpet (ett takfall), sadel (två) och valm
+  (fyra), med takfots- och gavelsprång. *Över hela huset* när huset är
+  rektangulärt
+- Kapa mot tak i Modifiera: ett takfalls kontur kapas där det möter ett
+  annat (nock, grat, vinkelränna)
+- Taket kapar väggar på alla våningar efter verklig höjd
+- Greppen i fasad och sektion (höjd och lutning), taklutningen och
+  nivåkoterna följer de nya taken
+
+*Byggd (25 oktober), format 17. Claudes val: referenslinjen sparas som
+två punkter (`ref`) med pilhöjd (`refBulge`), och taket stiger åt vänster
+sett från start mot slut; *Vänd lutningen* byter riktning. Höjden gäller
+undersidan från början. Byts valet till ovansidan ligger taket kvar
+(höjden räknas om). Konen delas i 64 plana bitar per varv, så att väggar,
+3D, fasader och sektioner fungerar som förut; positiv radie i
+egenskaperna stiger mot centrum. Snabbvalen dras upp i husets ytterliv
+(referenslinjerna där), nocken längs den längre sidan och pulpettakets
+takfot på den långsida som första hörnet ligger på; förval 27°, 2700,
+takfotssprång 500 och gavelsprång 300. Valmens takfall räknas så att varje
+del är där takfallet ligger lägst. *Över hela huset* finns bara när
+ytterkonturen är en rektangel (97 % av den omslutande rektangeln).
+Kapa mot tak kapar de markerade takfallen längs skärningen med det man
+klickar på, förlängd över hela konturen; kvar blir den sida där man
+klickade på takfallet (strax innanför kanten), med flera markerade den
+största. Kapade kanter blir raka (bågar blir polylinjer). Taket kapar
+väggar på alla våningar där det ligger ovanför väggens fot, men Upp till
+taket drar bara upp väggar under tak på samma våning (en gavel på plan 1
+går inte upp genom plan 2). Nivåkoten *Takfot* är takets lägsta punkt på
+undersidan, som förut (i fasadlivet med byggnadshöjden i 0.10.3). I
+fasaden sitter höjdgreppet vid referenslinjen och lutningsgreppet i
+punkten längst från den; Shift (nocken still) finns inte längre.
+Skarven vid nocken syns inte i 3D och fasader: ett hörn som ett annat
+takfall delar, där de fria kanterna ligger på en linje, får ingen
+lodrät kantlinje.*
+
+### 0.10.1 Takfot och taket i planen
+
+Mellanstor.
+
+- Språngets tjocklek separat från takets (språnget är delen utanför
+  ytterväggarnas utsida)
+- Takfotens snitt per kant: vinkelrätt mot takytan (förval för takfoten),
+  lodrätt (nock och grat) eller egen vinkel
+- Tak och volymer ovanför planets snitt ritas punktstreckade (synpunkt 20
+  oktober), med en snitthöjd per våning
 - Vyinställning: byggnadens footprint (ytterväggarnas kontur) som streckad
   linje genom taket i planen (synpunkt 25 oktober)
 
-- Referenslinje som polygon; varje kant är takfot eller gavel
-- Lutning per takfall, taksprång vid takfot och gavelsprång vid gavel
-- Språngets tjocklek separat från takets
-- Takfotens snitt: vinkelrätt mot takytan (förval), lodrätt eller egen vinkel
-- Snabbval för sadeltak, pulpettak och valmat tak
-- Ändra takets form i planen med Modifiera (finns för konturen sedan 0.7.1)
-- Medelmarknivå utan terräng: markhöjder anges runt huset och medelmarknivån räknas ut enligt PBF. Marklinjen i fasader och sektioner följer markhöjderna i stället för det lägsta i byggnaden (synpunkt 25 oktober; urgrävning för bjälklag i mark kommer med terrängen efter piloten)
-- Byggnadshöjd enligt PBF (medelmarknivå och 45°-planet)
+### 0.10.2 Granskning
 
-Enfallstak som delar som sätts ihop väntar till efter pilotprojektet.
+- Väggar under bjälklag i 3D (synpunkt 25 oktober; innerväggar kapas
+  sedan 0.9.2, så felet behöver återskapas)
+- Väggar med samma liv på två våningar ska inte ge konturlinjer mellan
+  dem i 3D och fasad (synpunkt 25 oktober)
 
-### 0.10.1 Dolda linjer i fasader
+### 0.10.3 Mark och byggnadshöjd
 
-Carl Augusts synpunkt 25 oktober. Mellanstor, en session; efter
-bjälklagen (0.9) och taken (0.10).
+Mellanstor.
+
+- Medelmarknivå utan terräng: markhöjder anges runt huset och
+  medelmarknivån räknas ut enligt PBF. Marklinjen i fasader och sektioner
+  följer markhöjderna i stället för det lägsta i byggnaden (synpunkt 25
+  oktober; urgrävning för bjälklag i mark kommer med terrängen efter
+  piloten)
+- Byggnadshöjd enligt PBF: där fasadlivet skär takets översida, och för
+  tak brantare än 45° med 45°-planet
+
+### 0.10.4 Dolda linjer i fasader
+
+Carl Augusts synpunkt 25 oktober. Mellanstor.
 
 - Vyinställning i fasader: närmaste bjälklag och ytterväggarnas insida som
   streckade linjer genom fasaden
+
+### 0.10.5 Småsaker
+
+Synpunkter 25 oktober, efter 0.9.4.
+
+- Högerklick på planerna i modellfliken
+- Visa-menyn i flera kolumner, så att allt syns samtidigt
+- Snäppa mot kalkerunderlaget
+- Hovring i 3D visar vad som väljs, som i planen
+
+### 0.10.6 Höjder i förhållande till våningen
+
+Synpunkt 25 oktober. Mellanstor.
+
+- En minus- eller plusnivå i förhållande till våningen för bjälklag,
+  väggar, objekt m.m.
 
 ### 0.11 Trappor · *nytt format*
 
@@ -1740,7 +1815,8 @@ Vinklar:
 
 ### Tak, våningar och trappor, fortsättning
 
-- Enfallstak som delar som kan sättas ihop
+- Tak ur en kontur där varje kant är takfot eller gavel (valm och vinkelhus
+  som ett objekt, med vinkelrännor); till dess byggs de av takfall (0.10)
 - Fler trappformer (spiraltrappa, fri form) och räcken som eget objekt
 
 ### Situationsplan och terräng

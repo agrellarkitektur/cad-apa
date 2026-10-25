@@ -1,6 +1,7 @@
 import { hasEditableOutline } from '../core/roofEdit';
 import type { ProjectDoc } from '../core/model';
 import type { WallParams } from '../elements/wall';
+import { refArc, type RoofParams } from '../elements/roof';
 import { refFrame } from '../core/wallEdit';
 import { pickableById, type Pickable } from '../repr/plan';
 import { boundsOf, imageCorners, type Primitive, type Vec2 } from '../repr/primitives';
@@ -103,7 +104,44 @@ export function renderHighlight(
       }
     }
   }
-  // Hörnen i markerade taks kontur.
+  // Takfallens referenslinje med pilen mot den sida där taket stiger, och
+  // greppen i linjens ändar (0.10).
+  for (const id of selected) {
+    const el = doc.elements[id];
+    if (el?.type !== 'Roof' || !byId.has(id)) continue;
+    const p = el.params as unknown as RoofParams;
+    if (!p.ref) continue;
+    const arc = refArc(p);
+    const pts: Vec2[] = arc
+      ? Array.from({ length: 33 }, (_, i): Vec2 => {
+          const t = arc.theta0 - (arc.sigma * arc.sweep * i) / 32;
+          return [arc.center[0] + arc.radius * Math.cos(t), arc.center[1] + arc.radius * Math.sin(t)];
+        })
+      : [p.ref[0], p.ref[1]];
+    out.push(`<path d="${path(cam, pts, false)}" class="ref-line"/>`);
+    // Pilen från linjens mitt, åt vänster sett längs den.
+    const k = Math.floor((pts.length - 1) / 2);
+    const a = cam.toScreen(pts[k]);
+    const b = cam.toScreen(pts[k + 1]);
+    const len = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    const m = arc ? a : [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    // Skärmens y går nedåt: vänster sett längs linjen i modellen är (dy, −dx) på skärmen.
+    const nx = (b[1] - a[1]) / len;
+    const ny = -(b[0] - a[0]) / len;
+    const tip = [m[0] + nx * 36, m[1] + ny * 36];
+    const ux = -nx;
+    const uy = -ny;
+    out.push(`<path d="M${m[0]} ${m[1]}L${tip[0]} ${tip[1]}M${tip[0] + ux * 9 - uy * 5} ${tip[1] + uy * 9 + ux * 5}L${tip[0]} ${tip[1]}L${tip[0] + ux * 9 + uy * 5} ${tip[1] + uy * 9 - ux * 5}" class="ref-line"/>`);
+    for (const pt of p.ref) {
+      const q = cam.toScreen(pt as Vec2);
+      out.push(`<circle cx="${q[0]}" cy="${q[1]}" r="6" class="grip"/>`);
+    }
+    for (const pt of p.outline) {
+      const q = cam.toScreen(pt as Vec2);
+      out.push(`<rect x="${q[0] - 4.5}" y="${q[1] - 4.5}" width="9" height="9" class="grip"/>`);
+    }
+  }
+  // Hörnen i markerade bjälklags kontur.
   for (const id of selected) {
     const el = doc.elements[id];
     if (!hasEditableOutline(el)) continue;

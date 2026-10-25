@@ -129,8 +129,15 @@ export function straighten(store: DocStore, el: Element, nearest: number): void 
     const target = snapAngle(((fp.rotation % 180) + 180) % 180) + (fp.rotation - (((fp.rotation % 180) + 180) % 180));
     updateParams(store, [el.id], rotateFurniture(fp, target - fp.rotation), 'Räta upp');
   } else if (el.type === 'Roof') {
+    // Hela takfallet vrids kring referenslinjens start (0.10).
     const rp = resolveParams<RoofParams>(doc, el);
-    updateParams(store, [el.id], { ridge: Math.round(rp.ridge / 45) * 45 }, 'Räta upp');
+    const [a, b] = rp.ref;
+    const now = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    const turn = (snapAngle((now * 180) / Math.PI) * Math.PI) / 180 - now;
+    const c = Math.cos(turn);
+    const s = Math.sin(turn);
+    const rot = (q: readonly number[]): [number, number] => [Math.round(a[0] + (q[0] - a[0]) * c - (q[1] - a[1]) * s), Math.round(a[1] + (q[0] - a[0]) * s + (q[1] - a[1]) * c)];
+    updateParams(store, [el.id], { outline: rp.outline.map(rot), ref: [rot(a), rot(b)] }, 'Räta upp');
   }
 }
 
@@ -191,8 +198,25 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
     updateParams(store, ids, { stamp: input.value }, 'Byt stämpel');
     return true;
   }
-  if (scope === 'roof') {
-    updateParams(store, ids, { kind: input.value }, 'Ändra taktyp');
+  if (scope === 'roof' && name === 'heightAt') {
+    // Taket ligger kvar; höjden räknas om till den andra sidan (0.10).
+    const top = input.value === 'top';
+    patchEach(store, ids, top ? 'Höjden gäller ovansidan' : 'Höjden gäller undersidan', (_, el) => {
+      const rp = resolveParams<RoofParams>(doc, el);
+      if ((rp.heightAt === 'top') === top) return {};
+      const tv = rp.thickness / Math.cos((Math.max(0, Math.min(80, rp.slope)) * Math.PI) / 180);
+      return { heightAt: top ? 'top' : undefined, height: Math.round(rp.height + (top ? tv : -tv)) };
+    });
+    return true;
+  }
+  if (scope === 'roof' && name === 'radius') {
+    // Positiv radie: taket stiger mot bågens centrum (en kon med spetsen uppåt).
+    const v = Number(input.value.replace(',', '.'));
+    if (!Number.isFinite(v)) return false;
+    patchEach(store, ids, v ? 'Ändra referenslinjens radie' : 'Rak referenslinje', (_, el) => {
+      const rp = resolveParams<RoofParams>(doc, el);
+      return { refBulge: v ? Math.round(bulgeForRadius(rp.ref[0], rp.ref[1], Math.abs(v), v > 0 ? -1 : 1) * 10) / 10 : undefined };
+    });
     return true;
   }
   if (scope === 'marker') {

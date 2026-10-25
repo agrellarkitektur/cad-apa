@@ -98,9 +98,11 @@ export function scaleElements(store: DocStore, ids: readonly Id[], base: readonl
  */
 const PLACEMENT = new Set([
   'start', 'end', 'bulge', 'bulges', 'points', 'closed', 'shape', 'origin', 'rotation', 'pos', 'size', 'asset', 'page', 'kind', 'layersOff',
-  'text', 'at', 'hinge', 'swing', 'outline', 'seed', 'labelAt', 'ridge', 'offset', 'auto', 'side', 'label', 'roof', 'face', 'toward', 'stamp', 'scale', 'facing',
+  'text', 'at', 'hinge', 'swing', 'outline', 'seed', 'labelAt', 'offset', 'auto', 'side', 'label', 'roof', 'face', 'toward', 'stamp', 'scale', 'facing',
   // Bjälklagets form (0.9.4): håltagningarna och konturen ur väggarna.
   'holes', 'fromWalls',
+  // Takfallets referenslinje (0.10).
+  'ref', 'refBulge',
 ]);
 
 /** Vridning är läge (skrafferingens vinkel heter `fillAngle` och följer med). Möblernas mått är form. */

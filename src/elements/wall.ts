@@ -8,7 +8,7 @@ import { wallFrame, type WallFrame } from '../geometry/wallFrame';
 import { add, cross, dist, dot, intersectLines, scale, sub } from '../geometry/vec';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { zOn, type Edges3D, type Plane, type Shape3D } from '../repr/solids';
-import { planeRange, roofPlanes, trimToRoofs, type RoofParams } from './roof';
+import { planeRange, roofPlanesAround, trimToRoofs } from './roof';
 import { litteraTag, showLittera } from './littera';
 import type { ElementType, PlanContext } from './registry';
 import { INSIDE } from './wallSides';
@@ -396,13 +396,9 @@ export const wallType: ElementType<WallParams> = {
       for (const r of body) taken.push({ rings: r, box: boxOf(r) });
     }
 
-    // Taken på våningen kapar väggarna, eller drar upp dem (Upp till taket).
-    const roofs = ctx.memo('roof-planes', () =>
-      ctx
-        .visible('Roof')
-        .filter((r) => ctx.actionOf(r) !== 'demolished')
-        .flatMap((r) => roofPlanes(ctx.params<RoofParams>(r))),
-    );
+    // Taken kapar väggarna, eller drar upp dem (Upp till taket).
+    // Takfall på alla våningar (0.10), i den här våningens höjder.
+    const roofs = ctx.memo('roof-planes', () => roofPlanesAround(ctx));
     const pieces: WallPiece[] = [];
     for (const { el, action, p } of walls) {
       for (const piece of own.get(el.id) ?? []) {

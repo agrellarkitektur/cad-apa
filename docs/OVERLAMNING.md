@@ -1,14 +1,27 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.9.4.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.10.0.
 
 ## Läget
 
-- **0.9.4 Bjälklag del 2 är klar** på `main` (format 16). Nästa är
-  **0.10 Tak**, som är stor: föreslå en uppdelning först (se *Nästa
-  session*). Punkterna står i PLAN.md och i synpunktsfilen under
-  *Planerat per version*.
+- **0.10.0 Tak är klar** på `main` (format 17). Nästa är **0.10.1 Takfot
+  och taket i planen** (se *Nästa session*). 0.10 delades 25 oktober i
+  0.10–0.10.4 (bekräftat), och Inkorgen efter 0.9.4 sorterades in i
+  0.10.2, 0.10.5 och 0.10.6 (Claude sorterade på Carl Augusts begäran).
+- **0.10.0**: Carl August valde enkla takfall i stället för en kontur med
+  takfot och gavel per kant: komplexa tak byggs av flera. Ett tak har
+  kontur (2D-form med bågar) och referenslinje (`ref`, `refBulge`) med
+  höjd för under- eller ovansidan, lutning och tjocklek; en båge ger en
+  kon (64 plana bitar). Verktyget: Takfall (kontur, referenslinje, sida),
+  snabbvalen Pulpet/Sadel/Valm över en rektangel i ytterlivet och *Över
+  hela huset*. Kapa mot tak i Modifiera. Taket kapar väggar på alla
+  våningar; Upp till taket bara på egen våning. Exempelvillans tak är två
+  takfall, så referensritningarna ändrades (samma geometri som förut,
+  utom att undersidan når 2700 exakt i ytterlivet). Claudes val i
+  PLAN.md, koden i UTVECKLING.md under *Tak (0.10)*. Testerna: 456 på ca
+  15 s. Provat med Playwright mot `dist/` (valm, takfall, kon, Kapa mot
+  tak, greppen i fasaden); klickjämförelsen kördes inte.
 - **0.9.4**: håltagningarna är `{ points, bulges? }` och ändras som en
   2D-form när bjälklaget är markerat (grepp, Lägg till/Flytta/Ta bort
   punkt, Förskjut kant, Böj, Räta ut, *Flytta hålet*, *Ta bort hålet*);
@@ -44,7 +57,7 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   Carl August: kapade innerväggar i 0.9.2; ingen littera på bjälklag som
   standard och inga automatiska bjälklag på nya våningar (redan så); hål
   som 2D-form och klickbar bjälklagsyta i 0.9.3; marklinjen efter
-  markhöjder i 0.10, urgrävning med terrängen efter piloten.
+  markhöjder i 0.10.3, urgrävning med terrängen efter piloten.
 - **0.9.1**: nytt objekt `Slab` med littera BJ och tjocklek per typ,
   verktyget *Bjälklag* (rektangel, *Ur väggarna*, *Håltagning*),
   konturen ur ytterväggarnas insida som följer väggarna, ritad kontur som
@@ -161,12 +174,17 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.35 Filtrera och markera~~, ~~0.8.36 Egna fyllningstyper~~,
   ~~0.8.37 Detaljnivåer och fyllningar~~, ~~0.8.38 Granskning~~,
   ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~, ~~0.9.2 Nivåer~~,
-  ~~0.9.3 Granskning~~, ~~0.9.4 Bjälklag del 2~~ (klara)
-- **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade,
-  footprint streckad genom taket som vyinställning, markhöjder runt huset
-  och marklinjen efter dem)
-- **0.10.1 Dolda linjer i fasader** (närmaste bjälklag och väggarnas
-  insida streckade, vyinställning)
+  ~~0.9.3 Granskning~~, ~~0.9.4 Bjälklag del 2~~, ~~0.10 Tak~~ (klara)
+- **0.10.1 Takfot och taket i planen** (språngets tjocklek, takfotens
+  snitt per kant, punktstreckat ovanför snittet, footprint genom taket)
+- **0.10.2 Granskning** (väggar under bjälklag i 3D, konturlinjer mellan
+  våningar)
+- **0.10.3 Mark och byggnadshöjd** (markhöjder, medelmarknivå,
+  byggnadshöjd enligt PBF, marklinjen)
+- **0.10.4 Dolda linjer i fasader**
+- **0.10.5 Småsaker** (högerklick på planer, Visa i kolumner, snäpp mot
+  kalkering, hovring i 3D) och **0.10.6 Höjder i förhållande till
+  våningen**
 - **0.11 Trappor** (nytt format)
 - **0.11.1 Profilverktyget** (nytt format, stor; också att rita ett
   mönster och göra det till en fyllningstyp) och **0.11.2 Dörrar och
@@ -183,27 +201,35 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.9.4 syns på webbhotellet och hur hålen fungerar
-(frågorna nedan; 0.9.2 och 0.9.3 har inte provats än). Läs
-synpunktsfilen och sortera ny Inkorg. **0.10 Tak** i PLAN.md har tolv
-punkter och ryms inte i en session. Föreslå en uppdelning och låt Carl
-August bekräfta den innan något byggs, till exempel:
+Fråga först om 0.10.0 syns på webbhotellet och hur taken fungerar
+(frågorna nedan; 0.9.2–0.9.4 har inte provats än). Läs synpunktsfilen och
+sortera ny Inkorg. Sedan **0.10.1 Takfot och taket i planen** (PLAN.md),
+mellanstor:
 
-- **0.10 Tak** (nytt format): konturen som polygon där varje kant är
-  takfot eller gavel, lutning per takfall, takfots- och gavelsprång,
-  språngets tjocklek, takfotens snitt, snabbval (sadel, pulpet, valm),
-  Modifiera på konturen
-- **0.10.1 Tak i planen och marken**: volymer ovanför snittet
-  punktstreckade, footprint genom taket som vyinställning, markhöjder runt
-  huset, medelmarknivå och byggnadshöjd enligt PBF, marklinjen efter
-  markhöjderna
-- **0.10.2 Dolda linjer i fasader** (i dag 0.10.1)
+- Språngets tjocklek: språnget är delen utanför ytterväggarnas utsida
+  (räknas ur väggarna, som *Ur väggarna* för bjälklag)
+- Takfotens snitt per kant (vinkelrätt, lodrätt, egen vinkel): en extra
+  `Solid` per kant med kantplanet som undersida ryms i dagens 3D-former
+- En snitthöjd per våning; tak och volymer ovanför ritas punktstreckade
+- Footprint streckad genom taket, som vyinställning
 
-Taket hör i dag till en våning och kapar bara väggar på samma våning
-(`toRoof`); exempelvillans tak ligger på plan 1. Nästa granskning ungefär
-efter 0.10.1.
+Granskningen 0.10.2 efter det.
 
 ## Att fråga Carl August om
+
+- **0.10.0 efter provning** (Claudes val, se PLAN.md): att taket stiger
+  åt vänster om referenslinjen och *Vänd lutningen* byter; att höjden
+  gäller undersidan från början och taket ligger kvar när valet byts; att
+  positiv radie stiger mot centrum; att snabbvalen dras upp i ytterlivet
+  med nocken längs den längre sidan, och pulpettakets takfot på den
+  långsida som första hörnet ligger på; att *Över hela huset* bara finns
+  för rektangulära hus. Kapa mot tak behåller sidan där man klickade på
+  takfallet (strax innanför kanten); kapade bågar blir polylinjer. Upp
+  till taket drar bara upp väggar under tak på samma våning. I fasaden
+  finns inte längre Shift för att låta nocken stå still. Takfot-koten är
+  takets lägsta undersida som förut. Ska referenslinjen synas i planen
+  också när taket inte är markerat (t.ex. med lutningspil), och ska
+  konturen kunna ritas med bågar direkt i verktyget?
 
 - **0.9.4 efter provning** (Claudes val, se PLAN.md): att hålen är kvar i
   bjälklaget och ändras när det är markerat, inte som egna objekt; att
@@ -224,7 +250,7 @@ efter 0.10.1.
   inte (bjälklagets ovansida är golvet). Beteckningen står före höjden
   (*FG +2,700*), och *Takfot* och *Nock* har fått stor bokstav. Höjdmåttet
   är en kedja bredvid nivåerna; en översta våning utan bjälklag ovanför
-  får ingen fri höjd förrän taket finns (0.10). Ska fri höjd hellre stå
+  får ingen fri höjd förrän taket finns (fri höjd under tak är inte gjort). Ska fri höjd hellre stå
   som text i rummet (t.ex. *RH 2400*)? Ska våningens namn också stå vid
   FG? En vägg kapas när mitten av den ligger i bjälklaget ovanför, också
   med egen höjd; väggar under tak lämnas.
@@ -247,9 +273,7 @@ efter 0.10.1.
   får samma tillstånd som originalet; att den tonade våningen är ett val i
   Kalkera (med kalkeringens färg och opacitet); att *Bara den här
   våningen* gäller för honom, inte per vy; att norrpilen också hör till
-  projektet. Taket hör fortfarande till en våning (väggarna på plan 2
-  kapas inte av ett tak på plan 1); flytta taket till översta våningen
-  tills 0.10.
+  projektet. (Sedan 0.10 kapar taket väggar på alla våningar.)
 
 - **0.8.38 efter provning**: inget nytt att prova; allt ska bete sig som
   förut. Ett DXF-underlag med grus, mark och liknande mönster ska ritas
@@ -532,8 +556,10 @@ efter 0.10.1.
 - Markeringen på ett blad markerar inte mallens grafik (bara bladets egen),
   som väntat; men det ritade på bladet och mallen ligger på samma papper,
   så det kan vara svårt att se vad som är vad.
-- Taksprånget ändras lika på båda sidor av ett sadeltak; riktiga tak med
-  takfot per kant kommer i 0.10.
+- Konens bitar syns svagt i 3D-vyns skuggning (64 bitar per varv, plan
+  skuggning).
+- Två takfall som möts ritar samma linje två gånger i fasaden (nocken och
+  takfoten bakom), utan att det syns.
 - Spegla vänder inte bilden i ett underlag, bara läget.
 - DXF: skraffering med solid fyllning ritas som en ton (färgerna i DXF läses inte). Bilder och externa
   referenser efter pilotprojektet. Vektorsnäpp mot PDF avvaktar.

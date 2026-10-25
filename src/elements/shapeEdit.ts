@@ -50,6 +50,19 @@ export function holeShape(h: SlabHole): ShapeLike {
   return { type: 'Shape2D', params: { shape: 'polyline', points: h.points, ...(h.bulges ? { bulges: h.bulges } : {}), closed: true } };
 }
 
+/** Takfallets kontur (0.10) som en sluten 2D-form, så att samma grepp och val gäller. */
+export function roofShape(el: ShapeLike): ShapeLike {
+  const bulges = el.params.bulges as number[] | undefined;
+  return { type: 'Shape2D', params: { shape: 'polyline', points: el.params.outline, ...(bulges ? { bulges } : {}), closed: true } };
+}
+
+/** Formen som Modifiera och greppen ändrar för ett element: 2D-formen själv, eller takfallets kontur. */
+export function shapeOf(el: ShapeLike | undefined): ShapeLike | undefined {
+  if (!el) return undefined;
+  if (el.type === 'Shape2D') return el;
+  return el.type === 'Roof' && Array.isArray(el.params.outline) ? roofShape(el) : undefined;
+}
+
 /** Bjälklagets håltagningar. */
 export function holesOf(el: ShapeLike | undefined): SlabHole[] {
   return el?.type === 'Slab' ? ((el.params.holes as SlabHole[] | undefined) ?? []) : [];
@@ -61,7 +74,7 @@ export function holesOf(el: ShapeLike | undefined): SlabHole[] {
  */
 export function editedShape(doc: ProjectDoc, id: Id | undefined, hole?: number): ShapeLike | undefined {
   const el = id ? doc.elements[id] : undefined;
-  if (hole === undefined) return isShape(el) ? el : undefined;
+  if (hole === undefined) return shapeOf(el);
   const h = holesOf(el)[hole];
   return h ? holeShape(h) : undefined;
 }
@@ -72,6 +85,10 @@ export function editedShape(doc: ProjectDoc, id: Id | undefined, hole?: number):
  * ändrade på sin plats.
  */
 export function shapePatch(doc: ProjectDoc, id: Id, hole: number | undefined, patch: Record<string, unknown>): Record<string, unknown> {
+  if (hole === undefined && doc.elements[id]?.type === 'Roof') {
+    // Takfallets kontur (0.10): punkterna och bågarna.
+    return { ...('points' in patch ? { outline: patch.points } : {}), ...('bulges' in patch ? { bulges: patch.bulges } : {}) };
+  }
   if (hole === undefined) return patch;
   const holes = [...holesOf(doc.elements[id])];
   const h = holes[hole];

@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.9.4** (alfa, bjälklag del 2); nästa är **0.10, tak**.
+**0.10.0** (alfa, tak); nästa är **0.10.1, takfot och taket i planen**.
 
 ## Vad som fungerar
 
@@ -207,7 +207,7 @@ Version 0.7, fasader och sektioner (filformat 4):
   vy kan visa en fasad eller sektion
 - Tak: sadeltak eller pulpettak över en rektangel, eller Över hela huset.
   Väggar kapas av taket, och Upp till taket gör gavlar. Taket syns streckat i
-  planen
+  planen (tak av takfall sedan 0.10)
 - Modifiera: klicka på en markerad vägg (utan att dra). På referenslinjen:
   Lägg till punkt, Böj, Båge med tangent, Räta ut, Förskjut, Parallell kopia
   och, för flera väggar, Förskjut alla kanter. På en ände: Sträck och Förläng
@@ -1055,6 +1055,35 @@ Version 0.9.4, bjälklag del 2 (filformat 16):
 - Rättat: pipetten förde över håltagningarna och *Ur väggarna* till ett
   annat bjälklag, och ett speglat bjälklags hålbågar buktade åt fel håll
 - Projekt från 0.9.1–0.9.3 (format 15) öppnas inte
+
+Version 0.10.0, tak (filformat 17):
+- **Ett tak är ett takfall**: en kontur och en referenslinje med höjd,
+  lutning och tjocklek. Höjden gäller undersidan eller ovansidan vid
+  referenslinjen, och taket stiger åt pilens håll. Referenslinjen kan
+  ligga var som helst, också mitt i takfallet; på andra sidan fortsätter
+  taket nedåt. Komplexa tak byggs av flera takfall
+- **Takverktyget**: *Takfall* ritas med konturens hörn, sedan
+  referenslinjens start och slut och sist en punkt på den sida där taket
+  stiger. Snabbvalen *Pulpet*, *Sadel* och *Valm* dras upp med två hörn i
+  husets ytterliv och blir ett, två och fyra takfall, med takfots- och
+  gavelsprång. *Över hela huset* gör snabbvalet över ytterväggarna när
+  huset är rektangulärt
+- **Referenslinje med radie**: taket lutar vinkelrätt mot bågen över hela
+  dess längd, så en halvcirkel blir en halv kon (fältet *Radie* i
+  egenskaperna; positiv radie stiger mot centrum)
+- **Kapa mot tak** i Modifiera: ett takfall kapas där det möter ett
+  annat (nock, grat, vinkelränna). Kvar blir den del man klickade på
+- Konturen ändras som en 2D-form (punkter, Förskjut kant, Böj, Avrunda,
+  Fasa); referenslinjen ritas med en pil när taket är markerat och dras i
+  ändarna. *Vänd lutningen* i egenskaperna. Flera markerade takfall
+  ändras på en gång
+- **Taket kapar väggar på alla våningar** efter verklig höjd. *Upp till
+  taket* gäller tak på väggens egen våning
+- I fasader och sektioner: höjden dras vid referenslinjen och lutningen i
+  takfallets punkt längst bort; taklutningen och nivåkoterna följer de nya
+  taken. Skarven vid nocken mellan två takfall syns inte
+- Exempelvillans sadeltak är två takfall med referenslinjerna i ytterlivet
+- Projekt från 0.9.4 (format 16) öppnas inte
 
 Version 0.8.38, granskning (samma filformat, 13):
 - Inga nya funktioner; allt beter sig som förut

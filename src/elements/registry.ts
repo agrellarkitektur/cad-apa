@@ -1,5 +1,5 @@
 import type { ActionKey, ActionStyle, StyleSheet } from '../core/graphics';
-import type { Element, ProjectDoc, Storey } from '../core/model';
+import type { Element, Id, ProjectDoc, Storey } from '../core/model';
 import type { Action, ViewStates } from '../core/states';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import type { Shape3D } from '../repr/solids';
@@ -9,6 +9,8 @@ import type { Shape3D } from '../repr/solids';
  */
 export interface PlanContext {
   doc: ProjectDoc;
+  /** Våningen som ritas, när ytan är en plan (inte en fasad, sektion eller ett blad). */
+  storey?: Id;
   view: ViewStates;
   style: StyleSheet;
   /** Ritningsskalans nämnare. Mått på papper (mm) gånger skalan blir mm i modellen. */

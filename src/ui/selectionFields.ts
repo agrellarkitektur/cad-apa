@@ -12,7 +12,7 @@ import { faceChoices, faceOf, outsideSide } from '../elements/wallSides';
 import { escapeHtml, PARAM_LABELS } from './labels';
 import type { TextParams } from '../elements/annotation';
 import { markerFrame, markerName, type MarkerParams, type NorthParams } from '../elements/markers';
-import type { RoofParams } from '../elements/roof';
+import { refArc, type RoofParams } from '../elements/roof';
 import { holeRing, type SlabParams } from '../elements/slab';
 import { radiusOf } from '../geometry/arc';
 import { drawingFields } from './drawingPanel';
@@ -113,9 +113,13 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
     }
     case 'Roof': {
       const p = resolveParams<RoofParams>(doc, el);
-      return `<label class="field"><span>Taktyp</span><select data-key="roof:kind"><option value="gable"${p.kind === 'gable' ? ' selected' : ''}>Sadeltak</option><option value="shed"${p.kind === 'shed' ? ' selected' : ''}>Pulpettak</option></select></label>
-        <div class="fields">${numberField('param:slope', 'Lutning', p.slope, '°')}${numberField('param:eave', 'Takfot', p.eave, 'mm')}${numberField('param:thickness', 'Tjocklek', p.thickness, 'mm')}${numberField('param:ridge', p.kind === 'shed' ? 'Takfotens riktning' : 'Nockriktning', p.ridge, '°')}</div>
-        <p class="note">Takfoten är undersidans höjd vid takets kant. Väggar under taket kapas av det; kryssa i Upp till taket på gavlarna.</p>`;
+      const arc = refArc(p);
+      // Positiv radie: taket stiger mot bågens centrum.
+      const radius = arc ? Math.round(arc.radius) * (arc.sigma < 0 ? 1 : -1) : 0;
+      return `<div class="fields">${numberField('param:height', 'Höjd', p.height, 'mm')}${numberField('param:slope', 'Lutning', p.slope, '°')}${numberField('param:thickness', 'Tjocklek', p.thickness, 'mm')}${numberField('roof:radius', 'Radie', radius, 'mm')}</div>
+        <label class="field"><span>Höjden gäller</span><select data-key="roof:heightAt"><option value="under"${p.heightAt !== 'top' ? ' selected' : ''}>Undersidan</option><option value="top"${p.heightAt === 'top' ? ' selected' : ''}>Ovansidan</option></select></label>
+        <div class="row"><button class="btn" data-action="roof-flip" title="Taket stiger åt andra hållet från referenslinjen">Vänd lutningen</button></div>
+        <p class="note">Höjden gäller vid referenslinjen, och taket stiger åt pilens håll. Dra i referenslinjens ändar för att flytta den; konturen ändras som en 2D-form. Radie gör referenslinjen till en båge och taket till en kon (0 = rak). Väggar under taket kapas; kryssa i Upp till taket på gavlarna.</p>`;
     }
     case 'Slab': {
       const p = resolveParams<SlabParams>(doc, el);

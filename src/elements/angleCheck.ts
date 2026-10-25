@@ -3,7 +3,7 @@ import type { Vec2 } from '../repr/primitives';
 import { isFixed, type FurnitureParams } from './furniture';
 import type { MarkerParams } from './markers';
 import { resolveParams, typeOf } from './registry';
-import { ridgeLine, type RoofParams } from './roof';
+import type { RoofParams } from './roof';
 import { lastResults } from '../repr/reuse';
 
 /**
@@ -56,13 +56,10 @@ function lineOf(doc: ProjectDoc, el: Element): { a: Vec2; b: Vec2 } | null {
       return { a: p.origin, b: [p.origin[0] + Math.cos(r) * len, p.origin[1] + Math.sin(r) * len] };
     }
     case 'Roof': {
+      // Takfallets referenslinje (0.10); en båge har ingen riktning.
       const p = resolveParams<RoofParams>(doc, el);
-      const ridge = ridgeLine(p);
-      if (ridge) return { a: ridge[0], b: ridge[1] };
-      const r = (p.ridge * Math.PI) / 180;
-      const xs = p.outline.map((q) => q[0]);
-      const c: Vec2 = [(Math.min(...xs) + Math.max(...xs)) / 2, p.outline.reduce((s, q) => s + q[1], 0) / Math.max(1, p.outline.length)];
-      return { a: c, b: [c[0] + Math.cos(r) * 5000, c[1] + Math.sin(r) * 5000] };
+      if (!p.ref || Math.abs(p.refBulge ?? 0) >= 0.5) return null;
+      return { a: p.ref[0], b: p.ref[1] };
     }
     default:
       return null;

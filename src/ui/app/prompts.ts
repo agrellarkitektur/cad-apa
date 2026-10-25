@@ -1,3 +1,4 @@
+import type { RoofMode } from '../tools/roofTool';
 import { commandFor, type CommandDef } from '../commandRegistry';
 import { ALIGN_BUTTONS, ArrangeTool } from '../modify/arrangeTool';
 import { OPS, RAIL_ITEMS } from '../modify/ops';
@@ -83,15 +84,20 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
     }
     case 'roof': {
       const r = app.roofTool;
-      const kind = (k: 'gable' | 'shed') => () => {
-        r.options.kind = k;
+      const mode = (m: RoofMode) => () => {
+        r.options.mode = m;
+        r.reset();
         redraw();
       };
       const options: PromptOption[] = [
-        { key: 'S', label: 'Sadeltak', run: kind('gable'), on: r.options.kind === 'gable' },
-        { key: 'P', label: 'Pulpettak', run: kind('shed'), on: r.options.kind === 'shed' },
+        { key: 'T', label: 'Takfall', run: mode('face'), on: r.options.mode === 'face' },
+        { key: 'P', label: 'Pulpet', run: mode('shed'), on: r.options.mode === 'shed' },
+        { key: 'S', label: 'Sadel', run: mode('gable'), on: r.options.mode === 'gable' },
+        { key: 'V', label: 'Valm', run: mode('hip'), on: r.options.mode === 'hip' },
       ];
-      if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.reset() });
+      if (!r.started) options.push({ key: 'H', label: 'Över hela huset', run: () => app.roofOverHouse() });
+      if (r.canClose) options.push({ key: 'A', label: 'Avsluta', run: () => r.closeContour() });
+      if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.undoPoint() });
       return { head, text: r.hintText(), options };
     }
     case 'slab': {

@@ -303,6 +303,8 @@ function roofSlopes(ctx: PlanContext, roofs: { el: Element; elevation: number }[
   const out: RoofSlopeParams[] = [];
   for (const { el, elevation } of roofs) {
     const p = ctx.params<RoofParams>(el);
+    // En kon (0.10) är många plana bitar: bara den som syns mest i sin rätta lutning får symbolen.
+    let best: { q: RoofSlopeParams; err: number } | null = null;
     roofPlanes(p).forEach((rp, face) => {
       const pts = rp.rings[0].map((q) => toView(q[0], q[1], elevation + zOn(rp.top, q[0], q[1])));
       if (pts.length < 3) return;
@@ -316,17 +318,22 @@ function roofSlopes(ctx: PlanContext, roofs: { el: Element; elevation: number }[
       const dz = high[1] - low[1];
       if (Math.abs(du) < 100 || dz < 10) return;
       const apparent = (Math.atan2(dz, Math.abs(du)) * 180) / Math.PI;
-      if (Math.abs(apparent - p.slope) > 0.5) return;
+      const err = Math.abs(apparent - p.slope);
+      if (err > 0.5 || (best && best.err <= err)) return;
       const t = 0.55;
-      out.push({
-        roof: el.id,
-        face,
-        at: [Math.round(low[0] + du * t), Math.round(low[1] + dz * t)],
-        toward: low[0] > high[0] ? 1 : -1,
-        len: Math.round(Math.max(600, Math.abs(du) * 0.35)),
-        style: 'auto',
-      });
+      best = {
+        err,
+        q: {
+          roof: el.id,
+          face,
+          at: [Math.round(low[0] + du * t), Math.round(low[1] + dz * t)],
+          toward: low[0] > high[0] ? 1 : -1,
+          len: Math.round(Math.max(600, Math.abs(du) * 0.35)),
+          style: 'auto',
+        },
+      };
     });
+    if (best) out.push((best as { q: RoofSlopeParams }).q);
   }
   return out;
 }

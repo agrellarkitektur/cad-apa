@@ -1,7 +1,7 @@
 import type { Element } from '../../core/model';
 import { dist } from '../../geometry/vec';
 import type { WallParams } from '../../elements/wall';
-import { holeShape, holesOf, isShape, shapeNodes } from '../../elements/shapeEdit';
+import { holeShape, holesOf, shapeNodes, shapeOf } from '../../elements/shapeEdit';
 import { roofGripsInView, type RoofGrip } from '../../elements/roofGrips';
 import type { UnderlayParams } from '../../elements/underlay';
 import { hasImageGrips, underlayGrips, type UnderlayGrip } from '../../elements/underlayEdit';
@@ -33,9 +33,9 @@ export function isManualMarker(el: Element | undefined): el is Element {
 }
 
 export interface EndGrip {
-  /** Väggen eller sektions- eller fasadlinjen vars ände dras. */
+  /** Väggen, sektions- eller fasadlinjen, eller takfallet (referenslinjen, 0.10) vars ände dras. */
   wallId: string;
-  kind: 'wall' | 'marker';
+  kind: 'wall' | 'marker' | 'roofRef';
   end: 'start' | 'end';
   from: Vec2;
 }
@@ -50,6 +50,14 @@ export function endGripAt(host: ToolHost, pt: Vec2): EndGrip | null {
   let best: (EndGrip & { d: number }) | null = null;
   for (const id of host.selection.list()) {
     const el = doc.elements[id];
+    if (el?.type === 'Roof' && Array.isArray(el.params.ref) && !el.locked) {
+      const ref = el.params.ref as [Vec2, Vec2];
+      (['start', 'end'] as const).forEach((end, i) => {
+        const d = dist(ref[i], pt);
+        if (d <= tol && (!best || d < best.d)) best = { wallId: id, kind: 'roofRef', end, from: ref[i], d };
+      });
+      continue;
+    }
     const kind = el?.type === 'Wall' ? 'wall' : isManualMarker(el) ? 'marker' : null;
     if (!kind) continue;
     const p = el.params as unknown as WallParams;
@@ -108,7 +116,7 @@ export function underlayGripAt(host: ToolHost, pt: Vec2, touch: boolean): { id: 
  */
 export function shapeNodeAt(host: ToolHost, pt: Vec2, touch: boolean): { id: string; hole?: number; index: number; from: Vec2 } | null {
   const doc = host.store.doc;
-  const ids = host.selection.list().filter((id) => isShape(doc.elements[id]) || holesOf(doc.elements[id]).length);
+  const ids = host.selection.list().filter((id) => shapeOf(doc.elements[id]) || holesOf(doc.elements[id]).length);
   if (!ids.length) return null;
   const tol = pxToMm(host, touch ? 18 : 10);
   const ro = !!host.readOnly?.();
@@ -122,8 +130,9 @@ export function shapeNodeAt(host: ToolHost, pt: Vec2, touch: boolean): { id: str
   for (const id of ids) {
     const el = doc.elements[id];
     if (!shown.has(id) || (ro && !host.canEdit?.(id))) continue;
-    if (isShape(el)) take(id, undefined, shapeNodes(el));
-    // Håltagningarna finns bara i planen.
+    const own = shapeOf(el);
+    // Takfallens kontur (0.10) och håltagningarna finns bara i planen.
+    if (own && (el.type === 'Shape2D' || !ro)) take(id, undefined, shapeNodes(own));
     else if (!ro) holesOf(el).forEach((h, hole) => take(id, hole, shapeNodes(holeShape(h))));
   }
   return best;

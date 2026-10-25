@@ -12,6 +12,7 @@ import { snapMarker } from '../tools/overlay';
 import type { PointTaker } from '../pointInput';
 import { roundMm, snap, type SnapResult, type SnapSegment } from '../tools/snap';
 import { CUT_OPS, clickCut, firstOfJoin, overlayCut } from './cutOps';
+import { clickRoofTrim, roofAt } from './roofOps';
 import type { ModifyContext, OpId } from './ops';
 import { OUTLINE_OPS, commitOutline, overlayOutline } from './outlineOps';
 import type { ModifyState } from './state';
@@ -57,7 +58,7 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
 }
 
 /** Val som inte visar snäppmarkören. */
-const NO_MARKER = new Set<OpId>(['fillet', 'chamfer', 'filletAll', 'chamferAll', 'shapeFillet', 'shapeChamfer', 'trim', 'join']);
+const NO_MARKER = new Set<OpId>(['fillet', 'chamfer', 'filletAll', 'chamferAll', 'shapeFillet', 'shapeChamfer', 'trim', 'join', 'roofTrim']);
 
 /**
  * Verktyget som kör ett val: förhandsvisar med markören och utför vid
@@ -161,7 +162,7 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
 
   /** Om verktyget tar emot skrivna punkter: inte de som klickar på ett objekt (Trimma, Hörnskarv …). */
   get takesPoints(): boolean {
-    return !CUT_OPS.has(this.op) && this.op !== 'extend';
+    return !CUT_OPS.has(this.op) && this.op !== 'extend' && this.op !== 'roofTrim';
   }
 
   // Skrivna punkter i smartshell (0.8.21): Flytta @1200,0 räknas från baspunkten.
@@ -211,6 +212,10 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
       this.ref = at;
       return;
     }
+    if (this.op === 'roofTrim') {
+      if (clickRoofTrim(this, model)) this.done();
+      return;
+    }
     if (CUT_OPS.has(this.op)) {
       const r = clickCut(this, model, at);
       if (r.done) this.done();
@@ -254,6 +259,12 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
     else if (WALL_OPS.has(this.op)) overlayWall(this, cam, base, at, out);
     else if (OUTLINE_OPS.has(this.op)) overlayOutline(this, cam, base, at, out);
     else if (CUT_OPS.has(this.op)) overlayCut(this, cam, at, out);
+    else if (this.op === 'roofTrim' && this.hoverAt) {
+      // Takfallet som det kapas mot, under markören.
+      const target = roofAt(this, this.hoverAt);
+      const ring = target && (target.params.outline as Vec2[]);
+      if (ring) out.push(`<path d="M${ring.map((q) => cam.toScreen(q).join(' ')).join('L')}Z" class="ghost"/>`);
+    }
     if (this.cursorAt && !NO_MARKER.has(this.op)) out.push(snapMarker(cam, this.cursorAt));
     return out.join('');
   }

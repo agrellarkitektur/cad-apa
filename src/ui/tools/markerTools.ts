@@ -1,6 +1,5 @@
 import { addElement, updateParams } from '../../core/commands';
 import type { MarkerParams } from '../../elements/markers';
-import type { RoofParams } from '../../elements/roof';
 import { dist, distToSegment, left, norm, sub } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
@@ -181,117 +180,6 @@ export function nextLetter(used: string[]): string {
   return `A${used.length}`;
 }
 
-/**
- * Tak (0.7, för att pröva fasader och sektioner): dra upp en rektangel med
- * två klick. Nocken går längs den längre sidan.
- */
-export class RoofTool implements ViewTool, PointTaker {
-  cursor = 'crosshair';
-  private host: ToolHost;
-  private a: Vec2 | null = null;
-  private current: SnapResult | null = null;
-  options: Pick<RoofParams, 'kind' | 'slope' | 'eave' | 'thickness'> = { kind: 'gable', slope: 27, eave: 2450, thickness: 300 };
-  onCreated?: (id: string) => void;
-  onChange?: () => void;
-
-  constructor(host: ToolHost) {
-    this.host = host;
-  }
-
-  get started(): boolean {
-    return !!this.a;
-  }
-
-  down(): 'capture' {
-    return 'capture';
-  }
-
-  drag(p: ViewPointer): void {
-    this.track(p);
-  }
-
-  hover(p: ViewPointer | null): void {
-    if (p) this.track(p);
-  }
-
-  private track(p: ViewPointer): void {
-    if (this.a && this.lockAngle !== null) {
-      this.current = lockedAt(this.a, this.lockAngle, p.model);
-      return;
-    }
-    this.current = snap({ cursor: p.model, segments: this.host.snapSegments(), tol: pxToMm(this.host, p.pointerType === 'touch' ? 18 : 10) });
-  }
-
-  up(p: ViewPointer): void {
-    this.track(p);
-    this.click(roundMm(this.current?.point ?? p.model));
-  }
-
-  private click(pt: Vec2): void {
-    if (!this.a) {
-      this.a = pt;
-      this.onChange?.();
-      return;
-    }
-    if (Math.abs(pt[0] - this.a[0]) < 500 || Math.abs(pt[1] - this.a[1]) < 500) {
-      this.host.hint('Taket måste vara minst 500 mm åt båda hållen.');
-      return;
-    }
-    this.create(rect(this.a, pt));
-    this.a = null;
-    this.lockAngle = null;
-    this.onChange?.();
-  }
-
-  // Skrivna punkter i smartshell (0.8.21): hörnen, t.ex. @9000,6000 från det första.
-  lockAngle: number | null = null;
-
-  lastPoint(): Vec2 | undefined {
-    return this.a ?? undefined;
-  }
-
-  cursorPoint(): Vec2 | undefined {
-    return this.current?.point;
-  }
-
-  takePoint(p: Vec2): void {
-    this.click(roundMm(p));
-    this.host.view.requestRender();
-  }
-
-  hintText(): string {
-    return this.a ? 'Klicka det motsatta hörnet.' : 'Klicka ett hörn av taket, med utsprånget.';
-  }
-
-  cancel(): void {}
-
-  reset(): void {
-    this.a = null;
-    this.onChange?.();
-  }
-
-  /** Lägg ett tak över en rektangel. */
-  create(outline: [number, number][]): void {
-    const xs = outline.map((q) => q[0]);
-    const ys = outline.map((q) => q[1]);
-    const w = Math.max(...xs) - Math.min(...xs);
-    const h = Math.max(...ys) - Math.min(...ys);
-    const params: RoofParams = { outline, ...this.options, ridge: w >= h ? 0 : 90 };
-    const el = addElement(this.host.store, { type: 'Roof', storey: this.host.storey(), tags: [], params: params as unknown as Record<string, unknown>, props: {} }, this.host.activeState());
-    this.onCreated?.(el.id);
-  }
-
-  overlay(cam: Camera): string {
-    const out: string[] = [];
-    if (this.a && this.current) {
-      const pts = rect(this.a, this.current.point).map((q) => cam.toScreen(q));
-      out.push(`<path d="M${pts.map((q) => q.join(' ')).join('L')}Z" class="rubber"/>`);
-    }
-    if (this.current) out.push(snapMarker(cam, this.current));
-    return out.join('');
-  }
-}
-
 /** Markörens punkt längs en låst riktning från `from` (<45 i smartshell). */
 function lockedAt(from: Vec2, deg: number, at: Vec2): SnapResult {
   const r = (deg * Math.PI) / 180;
@@ -301,18 +189,6 @@ function lockedAt(from: Vec2, deg: number, at: Vec2): SnapResult {
   return { point, kind: 'angle', label: `${deg.toLocaleString('sv-SE')}°`, guide: [from, [from[0] + dir[0] * (len * 3 + 2000), from[1] + dir[1] * (len * 3 + 2000)]] };
 }
 
-function rect(a: Vec2, b: Vec2): [number, number][] {
-  const x0 = Math.min(a[0], b[0]);
-  const x1 = Math.max(a[0], b[0]);
-  const y0 = Math.min(a[1], b[1]);
-  const y1 = Math.max(a[1], b[1]);
-  return [
-    [x0, y0],
-    [x1, y0],
-    [x1, y1],
-    [x0, y1],
-  ];
-}
 
 /**
  * Rikta efter objekt (0.7.1): klicka på en vägg eller linje, så vrids en

@@ -327,6 +327,9 @@ export class PropertiesPanel {
       const instance = instanceFields(doc, els[0], view);
       if (instance) sections.push(`<section><h3>${escapeHtml(t?.label ?? '')}</h3>${instance}${lockField(els)}</section>`);
       else if (lockField(els)) sections.push(`<section>${lockField(els)}</section>`);
+    } else if (els.every((e) => e.type === 'Roof')) {
+      // Flera takfall (0.10, t.ex. ett snabbval): fälten gäller alla, med det första takfallets värden.
+      sections.push(`<section><h3>Tak · ${els.length} takfall</h3>${instanceFields(doc, els[0], view)}<p class="note">Ett ändrat värde gäller alla markerade takfall.</p>${lockField(els)}</section>`);
     } else if (lockField(els)) sections.push(`<section>${lockField(els)}</section>`);
 
     // Ritordning (0.8.25): Längst bak … Främst, och 2D-formens lager mot väggarna.
@@ -454,6 +457,14 @@ export class PropertiesPanel {
         if (el && holes[i]) updateParams(this.store, [el.id], { holes: holes.filter((_, k) => k !== i) }, 'Ta bort håltagning');
         return;
       }
+      case 'roof-flip':
+        // Referenslinjen vänds; bågen ligger kvar där den låg (0.10).
+        patchEach(this.store, ids.filter((id) => doc.elements[id]?.type === 'Roof'), 'Vänd lutningen', (p) => {
+          const ref = p.ref as [[number, number], [number, number]];
+          const bulge = Number(p.refBulge ?? 0);
+          return { ref: [ref[1], ref[0]], refBulge: bulge ? -bulge : undefined };
+        });
+        return;
       case 'select-roof':
         if (b.dataset.roof && doc.elements[b.dataset.roof]) this.selection.set([b.dataset.roof]);
         return;

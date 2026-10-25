@@ -75,6 +75,7 @@ export function createContext(
   };
   const ctx: PlanContext = {
     doc,
+    ...(isPlan ? { storey: place } : {}),
     view,
     style,
     scale: view.scale ?? 100,

@@ -20,8 +20,6 @@ export const PARAM_LABELS: Record<string, string> = {
   sill: 'Bröstning',
   at: 'Läge längs vägg',
   slope: 'Lutning',
-  eave: 'Takfot',
-  ridge: 'Nockriktning',
   angle: 'Riktning',
   maxWidth: 'Textrutans bredd',
   maxHeight: 'Textrutans höjd',

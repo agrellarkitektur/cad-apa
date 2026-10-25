@@ -4,7 +4,8 @@ import { registerBuiltInTypes } from '../src/elements';
 import { sampleProject } from '../src/sample/sampleProject';
 import { matchOption, type PromptOption } from '../src/ui/app/prompts';
 import type { ToolHost } from '../src/ui/tools/host';
-import { MarkerTool, RoofTool } from '../src/ui/tools/markerTools';
+import { MarkerTool } from '../src/ui/tools/markerTools';
+import { RoofTool } from '../src/ui/tools/roofTool';
 import { WallTool } from '../src/ui/tools/wallTool';
 import { Draw2DTool } from '../src/ui/tools/draw2dTool';
 import { parsePoint, resolvePoint } from '../src/ui/pointInput';
@@ -94,7 +95,8 @@ describe('Skrivna punkter i tak, sektion och fasad (0.8.21)', () => {
     const r = resolvePoint(parsePoint('@9000,6000')!, t.lastPoint(), undefined);
     expect('p' in r && r.p).toEqual([59000, 6000]);
     if ('p' in r) t.takePoint(r.p);
-    expect(count(h, 'Roof') - before).toBe(1);
+    // Sadeltaket är två takfall (0.10).
+    expect(count(h, 'Roof') - before).toBe(2);
   });
 
   it('ett för litet tak säger till i stället för att tyst låta bli', () => {

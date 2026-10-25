@@ -54,6 +54,21 @@ function toPoly(rings: Rings): Polygon {
 }
 
 function fromMulti(m: MultiPolygon): Rings[] {
-  // polygon-clipping upprepar första punkten sist i varje ring; den tas bort.
-  return m.map((poly) => poly.map((ring) => ring.slice(0, -1).map((p) => [p[0], p[1]] as Vec2)));
+  // polygon-clipping upprepar första punkten sist i varje ring; den tas bort,
+  // liksom punkter som bara skiljer sig på flyttalsavrundning (0.10: två
+  // takfall som möts i nocken).
+  return m.map((poly) =>
+    poly.map((ring) => {
+      const out: Vec2[] = [];
+      for (const p of ring.slice(0, -1)) {
+        const last = out[out.length - 1];
+        if (last && Math.abs(last[0] - p[0]) < 1e-6 && Math.abs(last[1] - p[1]) < 1e-6) continue;
+        out.push([p[0], p[1]]);
+      }
+      const first = out[0];
+      const end = out[out.length - 1];
+      if (out.length > 1 && Math.abs(first[0] - end[0]) < 1e-6 && Math.abs(first[1] - end[1]) < 1e-6) out.pop();
+      return out;
+    }),
+  );
 }
