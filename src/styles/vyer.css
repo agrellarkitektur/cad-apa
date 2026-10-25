@@ -293,3 +293,17 @@ table.keys td:first-child {
   white-space: nowrap;
   padding-right: 16px;
 }
+
+/* Filtrera och markera (0.8.35) */
+.dialog.filter-select {
+  width: min(640px, 100%);
+}
+.filter-select .quick-row small {
+  color: var(--muted);
+}
+.filter-select .quick-row input[type='text'] {
+  min-width: 220px;
+}
+.filter-select .filter-count {
+  font-weight: 600;
+}

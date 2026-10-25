@@ -71,6 +71,7 @@ export function installMenus(app: AppContext) {
           ...recent,
           { label: 'Zooma till allt', hint: 'F', run: () => (app.ui.mode !== '3d' ? app.view.zoomToFit() : app.view3d?.frameAll()) },
           { label: 'Klistra in', hint: 'Ctrl+V', run: () => void app.pasteFromMenu() },
+          { label: 'Filtrera och markera…', hint: 'FM', run: () => app.filterSelect.open() },
           { label: 'Lägg in underlag…', run: () => app.chooseUnderlayFiles() },
           ...(app.segmentPoints.count ? [{ label: 'Rensa segmentpunkter', run: () => app.toolOpts.clearSegmentPoints() }] : []),
           { kind: 'sep' },
@@ -119,6 +120,7 @@ export function installMenus(app: AppContext) {
       const label = { Wall: 'väggar', Door: 'dörrar', Window: 'fönster', Furniture: 'möbler', Space: 'rum', Dimension: 'mått', Text: 'texter' }[t] ?? 'av samma sort';
       items.push({ label: `Markera alla ${label}`, run: () => selectAllOfType(t) });
     }
+    items.push({ label: 'Filtrera och markera…', hint: 'FM', run: () => app.filterSelect.open() });
     if (els.length === 1 && first.type === 'Underlay') {
       // Underlag (0.8 del 2).
       items.push(

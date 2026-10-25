@@ -33,7 +33,8 @@ export type CommandAction =
   | 'order-back'
   | 'order-backward'
   | 'order-forward'
-  | 'order-front';
+  | 'order-front'
+  | 'filter-select';
 
 export interface CommandDef {
   /** Unikt id; samma som verktygets, 2D-formens eller Modifiera-knappens när det finns ett. */
@@ -124,6 +125,7 @@ export const COMMANDS: CommandDef[] = [
   A('order-backward', 'Bak', ['bak'], ['sendbackward'], 'det markerade, ett steg'),
   A('order-forward', 'Fram', ['fram'], ['bringforward'], 'det markerade, ett steg'),
   A('order-front', 'Främst', ['främst'], ['bringtofront', 'drawfront'], 'det markerade'),
+  A('filter-select', 'Filtrera och markera', ['filtrera', 'fm'], ['qselect', 'filter', 'fi']),
   A('help', 'Alla kommandon', ['hjälp', '?'], ['help']),
 ];
 

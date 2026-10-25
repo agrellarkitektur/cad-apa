@@ -70,5 +70,8 @@ export function runAction(app: AppContext, c: CommandDef, line: { waitForSelecti
     case 'order-front':
       arrangeSelection(app, 'front');
       break;
+    case 'filter-select':
+      app.filterSelect.open();
+      break;
   }
 }

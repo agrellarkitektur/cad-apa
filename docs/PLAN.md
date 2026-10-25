@@ -1289,6 +1289,17 @@ Carl Augusts synpunkt 25 oktober. Mellanstor, en session.
   ersätt markeringen, lägg till eller dra ifrån. Sedan ändras alla i
   egenskaperna som förut
 
+*Byggd (25 oktober), samma format (13). Claudes val: en dialog, inte en
+panel, som öppnas från huvudmenyn, högerklicksmenyerna och kommandot
+`FM` (`QSELECT` och `FILTER` som i AutoCAD); inte från smartmenyns
+*Mer*, som visar egenskaperna. *Finns i* kräver alla ikryssade
+tillstånd; *Åtgärd* syns bara när vyn jämför. Egenskapens värde ska
+finnas i texten, utan hänsyn till stora och små bokstäver, och ett tomt
+värde betyder att egenskapen har ett värde. Bara det som syns i
+tillståndet räknas; markörerna (fasader, sektioner, norrpil) alltid.
+Efter Ersätt eller Lägg till öppnas egenskaperna. Sparade filter ligger
+under *Efter pilotprojektet*.*
+
 ### 0.8.36 Egna fyllningstyper
 
 Carl Augusts synpunkt 25 oktober; tidigarelagd från *Efter
@@ -1443,6 +1454,8 @@ efter pilotprojektet. Det som piloten visar behövs tidigt går först.
 
 - **Kulör, yta och material för alla objekt** (Carl August 22 oktober).
   Behövs fasadkulörer i bygglovet flyttas en enkel kulör per yta upp
+- **Sparade filter** i Filtrera och markera (0.8.35): spara villkoren
+  med ett namn, i projektet eller stilmallen
 
 ### Grafik och markörer (från 0.8 del 3)
 

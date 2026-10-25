@@ -17,6 +17,7 @@ import type { SmartMenu } from '../smartMenu';
 import type { installSheets } from './sheets';
 import type { installToolOptions } from './toolOptions';
 import type { installUnderlays } from './underlays';
+import type { installFilterSelect } from './filterSelect';
 import type { SegmentPoints } from './segmentPoints';
 import type { installViews } from './views';
 import type { ViewTool } from '../../view2d/planView';
@@ -96,6 +97,8 @@ export interface AppContext {
   readonly toolOpts: ReturnType<typeof installToolOptions>;
   /** Underlagen: lägga in, kalibrera och rikta (0.8 del 2). */
   readonly underlays: ReturnType<typeof installUnderlays>;
+  /** Filtrera och markera (0.8.35). */
+  readonly filterSelect: ReturnType<typeof installFilterSelect>;
   /** Måttbandets tillfälliga segmentpunkter (0.8.18). */
   readonly segmentPoints: SegmentPoints;
   /** Smartshell, kommandoraden (0.8.20). Saknas tills den är installerad. */

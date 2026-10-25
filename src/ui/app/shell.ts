@@ -108,6 +108,7 @@ export function shellMarkup(brand: Brand): string {
             <button role="menuitem" data-action="add-underlay">${icons.openFile}<span>Lägg in underlag…</span></button>
             <hr>
             <button role="menuitem" data-action="new-proposal">${icons.states}<span>Nytt förslag</span></button>
+            <button role="menuitem" data-action="filter-select">${icons.select}<span>Filtrera och markera…</span><kbd>FM</kbd></button>
             <button role="menuitem" data-action="show-types">${icons.wall}<span>Typer och littera</span></button>
             <button role="menuitem" data-action="style">${icons.dimension}<span>Stilmall…</span></button>
             <button role="menuitem" data-action="settings">${icons.properties}<span>Gränssnitt…</span></button>

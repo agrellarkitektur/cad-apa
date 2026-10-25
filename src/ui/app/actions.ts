@@ -315,6 +315,10 @@ export function installActions(app: AppContext, parts: ActionParts) {
       case 'zoom-selection':
         app.zoomToSelection();
         break;
+      case 'filter-select':
+        closeMenu();
+        app.filterSelect.open();
+        break;
       case 'continue-line':
         // Rita vidare (0.8.28): 2D-verktyget med linjen kvar markerad; klicka på en ände.
         if (!['polyline', 'spline'].includes(app.draw2dTool.options.kind)) app.draw2dTool.setKind('polyline');

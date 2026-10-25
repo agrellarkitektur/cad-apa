@@ -1187,6 +1187,23 @@ skriptet kräver bara att namnen motsvarar varandra. Referensritningarna
 - Borttaget, oanvänt: `pathLength` (`dash.ts`), typen `SectionQueue` och
   rensningen av bladens `items` (format 8) i `parse`
 
+## Filtrera och markera (0.8.35, format 13)
+
+Inget nytt i formatet; villkoren sparas inte.
+
+- **Kärnan**: `src/core/filterSelect.ts`. `FilterCriteria` (tomma listor
+  gäller allt), `filterScope` (ytan, eller alla våningar i modellen; bara
+  det som inte är `absent` i vyn, markörerna alltid), `matches`,
+  `filterElements`, `propertyNames` (objektens och typernas egna
+  egenskaper) och `combine` (ersätt, lägg till, dra ifrån). Egen penna
+  är `effectivePen`; 2D-former räknas som utan
+- **Dialogen**: `installFilterSelect` i `src/ui/app/filterSelect.ts`
+  (`app.filterSelect`, också `bacchus.filterSelect`). Ytan är
+  `ui.layout ?? ui.marker ?? ui.worksheet ?? ui.storey`. Kommandot
+  `filter-select` i `commandRegistry.ts` (`shellActions.ts`), knappen i
+  huvudmenyn (`actions.ts`) och raderna i högerklicksmenyerna
+  (`menus.ts`). Stilarna i `vyer.css`
+
 ## Rum: kontur och rumsgränser (0.8.34, format 13)
 
 Inga nya format: fälten är frivilliga.

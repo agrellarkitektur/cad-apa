@@ -1,10 +1,20 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.34.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.35.
 
 ## Läget
 
+- **Påminn Carl August** (hans önskan 25 oktober): resten av 0.8 är
+  0.8.36–0.8.38, med granskningen sist (0.8.38) innan 0.9. Lägg inte
+  till funktioner som blir fler 0.8.xx; nya synpunkter ska rymmas i de
+  versioner som redan finns i planen, annars läggs de i en senare
+  version. Säg det när han tar upp något nytt.
+- **0.8.35 Filtrera och markera är klar** på `main` (samma format, 13).
+  Dialogen *Filtrera och markera…* (huvudmenyn, högerklick, `FM`):
+  sort, typ, finns i, åtgärd, egen penna, egen egenskap, alla våningar;
+  ersätt, lägg till, dra ifrån. Claudes val i PLAN.md, koden i
+  UTVECKLING.md. Testerna: 409 på ca 10 s.
 - **0.8.34 Rum: kontur och rumsgränser är klar** på `main` (samma
   format, 13). Pennan *Rummens kontur* i stilmallen (förval *Ingen
   linje*), egen penna per rum och rumstyp (`Space` i `OWN_PEN_TYPES`),
@@ -96,9 +106,8 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.29 Bakgrund i fyllningar och ändformer~~,
   ~~0.8.30 Linjetyper och mask~~, ~~0.8.31 Linjetyp och penna per
   objekt~~, ~~0.8.32 Granskning~~, ~~0.8.33 Pennor per typ och
-  symbollinjer~~, ~~0.8.34 Rum: kontur och rumsgränser~~ (klara)
-- **0.8.35 Filtrera och markera** (sort, typ, tillstånd, åtgärd, våning,
-  egenskaper)
+  symbollinjer~~, ~~0.8.34 Rum: kontur och rumsgränser~~,
+  ~~0.8.35 Filtrera och markera~~ (klara)
 - **0.8.36 Egna fyllningstyper** (linjefamiljer med streckning; kanske
   `.pat`-filer)
 - **0.8.37 Detaljnivåer i stilmallen** (per vy, som i ArchiCAD)
@@ -124,25 +133,27 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.34 syns på webbhotellet (numret vid alfa-knappen) och
-hur rumsgränserna och konturen känns (frågorna nedan). Läs
-synpunktsfilen och sortera ny Inkorg. Enligt tumregeln (var tredje
-version) är det dags att föreslå en granskning efter 0.8.35; bygg sedan
-**0.8.35 Filtrera och markera** (PLAN.md): välj sort, typ, tillstånd,
-åtgärd, våning, egen penna och egna egenskaper; ersätt, lägg till eller
-dra ifrån markeringen. Mellanstor, en session.
+Fråga först om 0.8.35 syns på webbhotellet och hur filtret känns
+(frågorna nedan). Läs synpunktsfilen och sortera ny Inkorg, och påminn
+om att inget nytt ska bli en egen 0.8.xx (se *Läget*). Bygg sedan
+**0.8.36 Egna fyllningstyper** (PLAN.md): mönster av linjefamiljer
+(vinkel, avstånd, förskjutning, streckning), lika på skärmen, i PDF:en
+och DXF:en; kanske `.pat`. Stor, troligen en session; föreslå att
+`.pat` blir valfritt sist om tiden tryter. Sedan 0.8.37 Detaljnivåer och
+0.8.38 Granskning, sedan 0.9.
 
 ## Att fråga Carl August om
 
-- **0.8.34 efter provning** (Claudes val, se PLAN.md): att konturen
-  ligger under väggarna (halva linjen syns längs väggens liv, hela mot en
-  rumsgräns och i öppningar); att *Avgränsar rum* inte finns i
-  2D-verktyget, bara i egenskaperna och smartmenyn; att gränsen gäller
-  också när 2D är släckt i Visa; att linjen måste nå väggen (annars blir
-  det en vägg som slutar i rummet och rummet delas inte). Ska en
-  rumsgräns som inte syns (pennan 0) visas tonad när *Visa dolda
-  2D-element* är på? Ska rumsstämpelns pil och konturen stå tillsammans
-  under *Penna för rum* i stilmallen?
+- **0.8.35 efter provning** (Claudes val, se PLAN.md): att det är en
+  dialog (inte en panel) och inte finns i smartmenyns *Mer*; att *Finns
+  i* kräver alla ikryssade tillstånd; att bara det som syns i tillståndet
+  räknas; att egenskapens värde är "innehåller" utan hänsyn till stora
+  och små bokstäver; att egenskaperna öppnas efter Ersätt och Lägg till.
+  Saknas något villkor (t.ex. riktning, längd, area)?
+
+- **0.8.34**: Carl August svarade 25 oktober att de fyra punkterna
+  (kontur under väggarna, gränsen gäller med 2D släckt, osynlig gräns
+  inte tonad, rumsstämpelns pil kvar bland markörerna) är bra som de är.
 
 - **0.8.33 efter provning** (Claudes val, se PLAN.md): förvalen snitt
   0,25, vy 0,18 och symbol 0,13 mm; att dörrbladen (0,35 → 0,18) och

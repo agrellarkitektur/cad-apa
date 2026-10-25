@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.34** (alfa, rum: kontur och rumsgränser); nästa är **0.8.35, filtrera och markera**.
+**0.8.35** (alfa, filtrera och markera); nästa är **0.8.36, egna fyllningstyper**.
 
 ## Vad som fungerar
 
@@ -963,6 +963,21 @@ Version 0.8.32, granskning (samma filformat, 13):
   Referensritningarna har fått 2D-formerna, linjetyperna, masken och de
   egna pennorna
 - DXF-läsaren ligger i fyra mindre filer
+
+Version 0.8.35, filtrera och markera (samma filformat, 13):
+- **Filtrera och markera…** i huvudmenyn, i högerklicksmenyn och med
+  kommandot `FM` (`filtrera`; `QSELECT`, `FILTER`): välj sort, typ,
+  vilka tillstånd objektet finns i, åtgärd i jämförelsen (befintligt,
+  rivs, nytt), egen penna (objektets eller typens) och en egen egenskap,
+  t.ex. brandklass, med ett värde som ska finnas i egenskapens text.
+  Alla villkor ska stämma; det som inte är ikryssat gäller allt. Antalet
+  syns medan villkoren väljs
+- Söker på ytan som visas (planen, fasaden, sektionen eller bladet) och
+  bara det som syns i tillståndet; *Alla våningar* när projektet har
+  flera
+- **Ersätt markeringen**, **Lägg till** och **Dra ifrån**; sedan ändras
+  alla i egenskaperna som förut. Villkoren finns kvar till nästa gång
+  dialogen öppnas (inte mellan sidladdningar)
 
 Version 0.8.34, rum: kontur och rumsgränser (samma filformat, 13):
 - **Rummens kontur**: pennan *Rummens kontur* i stilmallen, under *Penna
