@@ -105,9 +105,15 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   objekt~~ (klara)
 - **0.8.32 Granskning** (också testerna: dubbletter, tester som låser
   detaljer, hela körningen under en minut)
-- **0.8.33 Egna fyllningstyper** (linjefamiljer med streckning; kanske
+- **0.8.33 Pennor per typ och symbollinjer** (snitt, vy och symbol i
+  stilmallen; egen penna i två delar; penna på typen)
+- **0.8.34 Rum: kontur och rumsgränser** (*Avgränsar rum* på 2D-linjer)
+- **0.8.35 Filtrera och markera** (sort, typ, tillstånd, åtgärd, våning,
+  egenskaper)
+- **0.8.36 Egna fyllningstyper** (linjefamiljer med streckning; kanske
   `.pat`-filer)
-- **0.8.34 Detaljnivåer i stilmallen** (per vy, som i ArchiCAD)
+- **0.8.37 Detaljnivåer i stilmallen** (per vy, som i ArchiCAD)
+- **0.8.38 Granskning**
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade,
@@ -129,7 +135,9 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.31 syns på webbhotellet (numret vid alfa-knappen) och
+Carl August har (25 oktober) bekräftat ordningen: granskningen först,
+sedan 0.8.33–0.8.35 med Claudes förslag (rumsgräns som kryssruta på
+2D-linjer, tre klasser av pennor: snitt, vy och symbol). Fråga först om 0.8.31 syns på webbhotellet (numret vid alfa-knappen) och
 om den egna pennan fungerar som han tänkt. Läs synpunktsfilen och
 sortera ny Inkorg. Bygg **0.8.32 Granskning** (utan nya funktioner):
 städa, dela upp stora filer, leta efter långsam kod, och gå igenom
@@ -204,7 +212,7 @@ för linjetyperna, masken och den egna pennan.
   mycket plats? Ska bågar kunna ritas direkt i Linje (som `A` i AutoCADs
   PLINE)?
 
-- **Detaljnivåerna (0.8.34)**: per vy är bestämt. Gäller det bara
+- **Detaljnivåerna (0.8.37)**: per vy är bestämt. Gäller det bara
   litteran, eller ska dörrar och fönster också ritas olika (då hör en del
   hemma i 0.11.2)? Carl Augusts "ja" 25 oktober tolkades som per vy; säg
   till om det var fel.

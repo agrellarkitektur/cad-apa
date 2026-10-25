@@ -1185,7 +1185,40 @@ tester som prövar samma sak två gånger och tester som låser detaljer
 utan anledning, och se till att hela körningen tar under en minut (386
 tester på ca 17 s efter 0.8.29).
 
-### 0.8.33 Egna fyllningstyper
+### 0.8.33 Pennor per typ och symbollinjer
+
+Carl Augusts synpunkter 25 oktober (ordningen bekräftad samma dag).
+Mellanstor, en session.
+
+- **Pennor för dörrarnas och fönstrens delar** i stilmallen, i tre
+  klasser: snitt (väggkontur, karm), vy (dörrblad, fönsterbåge) och
+  symbol (slagbåge, öppningssätt). Symbollinjerna tunnare än
+  snittlinjerna från början
+- **Egen penna i två delar**: *Snitt* och *Symbol*, så att t.ex. en dörr
+  kan få en egen tjocklek bara på slagbågen
+- **Penna per typ** (YV01, D10 …): objektets egen går före typens, som
+  går före stilmallens
+
+### 0.8.34 Rum: kontur och rumsgränser
+
+Carl Augusts synpunkter 25 oktober. Mellanstor, en session.
+
+- **Rummens kontur**, med penna i stilmallen och egen per rum (från
+  början ingen kontur, som förut)
+- **Rumsgränser**: kryssrutan *Avgränsar rum* på en 2D-linje; linjen
+  räknas som en vägg när rummen räknas ut, för alkover och öppna
+  planlösningar. Med pennan 0 syns den inte
+
+### 0.8.35 Filtrera och markera
+
+Carl Augusts synpunkt 25 oktober. Mellanstor, en session.
+
+- **Filtrera och markera**: välj sort, typ, tillstånd, åtgärd (befintligt,
+  rivs, nytt), våning, egen penna och egna egenskaper (t.ex. brandklass);
+  ersätt markeringen, lägg till eller dra ifrån. Sedan ändras alla i
+  egenskaperna som förut
+
+### 0.8.36 Egna fyllningstyper
 
 Carl Augusts synpunkt 25 oktober; tidigarelagd från *Efter
 pilotprojektet* samma dag. Stor, troligen en session. Bygger på 0.8.30:
@@ -1196,7 +1229,7 @@ mönstrens linjer kan vara streckade.
   skärmen, i PDF:en och i DXF:en
 - Kanske: läsa in färdiga `.pat`-filer (AutoCAD, ArchiCAD)
 
-### 0.8.34 Detaljnivåer i stilmallen
+### 0.8.37 Detaljnivåer i stilmallen
 
 Carl Augusts synpunkt 25 oktober. Detaljnivån väljs per vy, som i
 ArchiCAD (Carl August 25 oktober); det finns redan (Skiss, Normal, Detalj
@@ -1206,6 +1239,11 @@ i vyraden), så det nya är vad stilmallen visar på varje nivå.
   rum m.m. delas upp i skiss, normal och detalj. *Att fråga:* ska dörrar
   och fönster också ritas olika (då hör en del hemma i 0.11.2)?
 
+
+### 0.8.38 Granskning
+
+Enligt planen (ungefär var tredje version; förra är 0.8.32). Utan nya
+funktioner.
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 
 *Framflyttad från 0.14.*
