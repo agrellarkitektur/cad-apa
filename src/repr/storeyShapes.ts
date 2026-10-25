@@ -4,6 +4,7 @@ import type { Action, ViewStates } from '../core/states';
 import { typeOf, type ElementType, type PlanContext, type PlanItem } from '../elements/registry';
 import { pointInRings } from '../geometry/vec';
 import { createContext } from './context';
+import { lastResults } from './reuse';
 import type { Edges3D, Plane, Shape3D, Solid } from './solids';
 
 /** En 3D-form flyttad `dz` i höjd: höjderna, urtagen och de sneda planen (0.9). */
@@ -21,27 +22,52 @@ export function liftShape(s: Shape3D, dz: number): Shape3D {
   };
 }
 
+/** Vilka objekt som byggs, efter typ och åtgärd. */
+export type Included = (t: ElementType, action: Action) => boolean;
+
+/** Allt som har en 3D-form, också det som rivs (fasader och sektioner). */
+export const WITH_DEMOLISHED: Included = (t) => !!(t.model3d || t.model3dBatch);
+/** Allt som har en 3D-form utom det som rivs (3D-vyn). */
+export const WITHOUT_DEMOLISHED: Included = (t, action) => !!(t.model3d || t.model3dBatch) && action !== 'demolished';
+
+export interface StoreyShapes {
+  shapes: { s: Shape3D; demolished: boolean }[];
+  storeys: { ctx: PlanContext; elevation: number }[];
+}
+
 /**
  * 3D-formerna för flera våningar (0.9), var och en lyft till sin golvnivå.
  * Varje våning byggs för sig, så att väggar på olika våningar inte skarvas
  * ihop. Det som rivs byggs för sig, så att det inte påverkar skarvarna i det
  * som står kvar. Utan `only` tas alla våningar med.
+ *
+ * Samma projekt, vy och stilmall ger samma former (0.9.3), så att fyra
+ * fasader på ett blad inte bygger modellen fyra gånger. Formerna ändras
+ * inte av den som får dem.
  */
-export function modelShapes(
-  doc: ProjectDoc,
-  view: ViewStates,
-  style: StyleSheet,
-  include: (t: ElementType, action: Action) => boolean,
-  only?: Id,
-): { shapes: { s: Shape3D; demolished: boolean }[]; storeys: { ctx: PlanContext; elevation: number }[] } {
-  const shapes: { s: Shape3D; demolished: boolean }[] = [];
-  const storeys: { ctx: PlanContext; elevation: number }[] = [];
+export function modelShapes(doc: ProjectDoc, view: ViewStates, style: StyleSheet, include: Included, only?: Id): StoreyShapes {
+  // Ytan och vyn gäller 2D-elementen, inte formerna.
+  const v: ViewStates = { ...view, place: undefined, viewId: undefined };
+  return saved([doc, style, include, only, JSON.stringify(v)], () => build(doc, v, style, include, only));
+}
+const saved = lastResults<StoreyShapes>();
+
+function build(doc: ProjectDoc, view: ViewStates, style: StyleSheet, include: Included, only?: Id): StoreyShapes {
+  const shapes: StoreyShapes['shapes'] = [];
+  const storeys: StoreyShapes['storeys'] = [];
+  // Bjälklagen kapar väggarna under dem (0.9.2). Med bara en våning byggs
+  // bjälklagen på våningarna ovanför ändå, för sig, så att väggarna ser
+  // likadana ut; där behövs bara väggarna (för bjälklag ur väggarna) och bjälklagen.
+  const slabs: Solid[] = [];
+  const here = only ? doc.storeys.find((s) => s.id === only) : undefined;
   for (const storey of doc.storeys) {
-    if (only && storey.id !== only) continue;
-    const { ctx, visible } = createContext(doc, storey.id, { ...view, place: undefined, viewId: undefined }, style, include);
-    storeys.push({ ctx, elevation: storey.elevation });
+    const shown = !only || storey.id === only;
+    if (!shown && !(here && storey.elevation > here.elevation)) continue;
+    const { ctx, visible } = createContext(doc, storey.id, view, style, shown ? include : (t, action) => (t.type === 'Wall' || t.type === 'Slab') && include(t, action));
+    if (shown) storeys.push({ ctx, elevation: storey.elevation });
     const groups = new Map<string, PlanItem[]>();
     for (const item of visible) {
+      if (!shown && item.el.type !== 'Slab') continue;
       const key = `${item.el.type}|${item.action === 'demolished' ? 'd' : 'k'}`;
       const list = groups.get(key);
       if (list) list.push(item);
@@ -49,20 +75,13 @@ export function modelShapes(
     }
     for (const [key, items] of groups) {
       const t = typeOf(items[0].el.type)!;
+      const demolished = key.endsWith('|d');
       const made = t.model3dBatch ? t.model3dBatch(items, ctx) : items.flatMap(({ el }) => t.model3d!(el, ctx));
-      for (const s of made) shapes.push({ s: liftShape(s, storey.elevation), demolished: key.endsWith('|d') });
-    }
-  }
-  // Bjälklagen ovanför kapar väggarna (0.9.2). Med bara en våning byggs
-  // bjälklagen ovanför den för sig, så att väggarna ser likadana ut.
-  const slabs: Solid[] = shapes.filter((x) => !x.demolished && x.s.kind !== 'edges' && x.s.material === 'slab').map((x) => x.s as Solid);
-  if (only) {
-    const here = doc.storeys.find((s) => s.id === only);
-    for (const storey of doc.storeys) {
-      if (!here || storey.elevation <= here.elevation) continue;
-      const { ctx, visible } = createContext(doc, storey.id, { ...view, place: undefined, viewId: undefined }, style, include);
-      // Bjälklaget ur väggarna behöver väggarna i sammanhanget.
-      for (const { el, action } of visible) if (el.type === 'Slab' && action !== 'demolished') for (const s of typeOf('Slab')!.model3d!(el, ctx)) if (s.kind !== 'edges') slabs.push(liftShape(s, storey.elevation) as Solid);
+      for (const s of made) {
+        const lifted = liftShape(s, storey.elevation);
+        if (shown) shapes.push({ s: lifted, demolished });
+        if (!demolished && lifted.kind !== 'edges' && lifted.material === 'slab') slabs.push(lifted);
+      }
     }
   }
   trimUnderSlabs(shapes, slabs);

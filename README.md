@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.9.2** (alfa, nivåer); nästa är **0.9.3, bjälklag del 2**.
+**0.9.3** (alfa, granskning); nästa är **0.9.4, bjälklag del 2**.
 
 ## Vad som fungerar
 
@@ -1027,6 +1027,17 @@ Version 0.9.2, nivåer (samma filformat, 15):
 - **Innerväggarna slutar vid bjälklaget ovanför** i 3D, fasader och
   sektioner; ytterväggarna (utanför bjälklaget) går golv till golv som förut
 - Projekt från 0.9 (format 14) öppnas inte
+
+Version 0.9.3, granskning (samma filformat, 15):
+- Inga nya funktioner; allt beter sig som förut
+- **Fasader och sektioner fortare** i stora hus: flera fasader och
+  sektioner av samma projekt (på ett blad, vid export) bygger 3D-modellen
+  en gång i stället för en gång var, och kanterna i dem räknas fortare.
+  Fyra fasader och en sektion av ett hus med tre våningar à 312 väggar tar
+  ca 3,0–3,6 s i stället för 4,3–4,9 s
+- Referensritningarna har fått ett hus med två våningar (plan 2 med
+  håltagning, sektion med nivåer och höjdmått, fasad och 3D, också med
+  bara plan 1), och klickjämförelsen steg för våningar, bjälklag och nivåer
 
 Version 0.8.38, granskning (samma filformat, 13):
 - Inga nya funktioner; allt beter sig som förut

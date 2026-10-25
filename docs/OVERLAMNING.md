@@ -1,15 +1,24 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.9.2.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.9.3.
 
 ## Läget
 
-- **0.9.2 Nivåer är klar** på `main` (samma format, 15). Nästa är ett
-  **granskningsförslag** (förra var 0.8.38; nu har tre versioner med nytt
-  innehåll gått), sedan **0.9.3 Bjälklag del 2** (liten, troligen nytt
-  format). Punkterna står i PLAN.md och i synpunktsfilen under *Planerat
-  per version*.
+- **0.9.3 Granskning är klar** på `main` (samma format, 15, utan nya
+  funktioner). Nästa är **0.9.4 Bjälklag del 2** (liten, troligen nytt
+  format; numret flyttat från 0.9.3 när granskningen tog det). Punkterna
+  står i PLAN.md och i synpunktsfilen under *Planerat per version*.
+- **0.9.3**: fasader och sektioner av samma projekt och vy bygger
+  3D-modellen en gång (`modelShapes` sparar de senaste svaren), och
+  kanterna räknas fortare: fyra fasader och en sektion av ett hus med tre
+  våningar à 312 väggar ca 4,3–4,9 → 3,0–3,6 s. `section.ts` 519 → 371
+  rader (`sectionLevels.ts`, `sectionCut.ts`), en slinga i `modelShapes`,
+  kvarlevorna `z0 = 0` borttagna. Testprojektet `twoStoreys` (två
+  våningar, fasta id) med referensritningar `tva-*`, skrivna med 0.9.2;
+  klickjämförelsen 223 steg (våningar, bjälklag, nivåer), samma läge och
+  bild i 0.9.2 och 0.9.3. Testerna: 444 på ca 11 s. Står i README,
+  PLAN.md och UTVECKLING.md under *Granskning (0.9.3)*.
 - **0.9.2**: nivåkoter med beteckning (FG, UK bjl, Takfot, Nock; Carl
   August valde FG/ÖK/UK), höjdmått i sektioner (bjälklagens tjocklek och
   fri höjd), innerväggarna slutar vid bjälklaget ovanför (synpunkt från
@@ -139,9 +148,9 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   symbollinjer~~, ~~0.8.34 Rum: kontur och rumsgränser~~,
   ~~0.8.35 Filtrera och markera~~, ~~0.8.36 Egna fyllningstyper~~,
   ~~0.8.37 Detaljnivåer och fyllningar~~, ~~0.8.38 Granskning~~,
-  ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~, ~~0.9.2 Nivåer~~ (klara)
-- **Granskning** (förslag nu; förra var 0.8.38)
-- **0.9.3 Bjälklag del 2** (hål som 2D-form, klickbar yta som inställning)
+  ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~, ~~0.9.2 Nivåer~~,
+  ~~0.9.3 Granskning~~ (klara)
+- **0.9.4 Bjälklag del 2** (hål som 2D-form, klickbar yta som inställning)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade,
   footprint streckad genom taket som vyinställning, markhöjder runt huset
   och marklinjen efter dem)
@@ -163,17 +172,18 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.9.2 syns på webbhotellet och hur nivåerna fungerar
-(frågorna nedan). Läs synpunktsfilen och sortera ny Inkorg. Föreslå sedan
-en **granskning** (förra var 0.8.38): `section.ts` har vuxit (nivåer,
-höjdmått), `storeyShapes.ts` bygger bjälklagen ovanför en gång till med
-*Bara den här våningen*; klickjämförelsen saknar steg för våningar,
-bjälklag och nivåer. Därefter **0.9.3 Bjälklag del 2**: läs *0.9.3* i
-PLAN.md. Hålen är i dag rektanglar i `SlabParams.holes`
-(`src/elements/slab.ts`); 2D-formens punkter, radier och avrundning
-finns i `src/elements/shapeEdit.ts` och `drawing2d.ts`.
+Fråga först om 0.9.2 och 0.9.3 syns på webbhotellet och hur nivåerna
+fungerar (frågorna nedan). Läs synpunktsfilen och sortera ny Inkorg.
+Sedan **0.9.4 Bjälklag del 2**: läs *0.9.4* i PLAN.md. Hålen är i dag
+rektanglar i `SlabParams.holes` (`src/elements/slab.ts`); 2D-formens
+punkter, radier och avrundning finns i `src/elements/shapeEdit.ts` och
+`drawing2d.ts`. Nästa granskning ungefär efter 0.10.1.
 
 ## Att fråga Carl August om
+
+- **0.9.3 efter provning**: inget nytt att prova; allt ska bete sig som
+  förut. Ett blad med flera fasader och sektioner av ett stort hus, och
+  exporten, ska gå fortare. Säg till om något beter sig annorlunda.
 
 - **0.9.2 efter provning** (Claudes val, se PLAN.md): FG vid varje
   vånings golv och UK bjl bara där sektionen skär ett bjälklag; ÖK skrivs
@@ -561,18 +571,20 @@ finns i `src/elements/shapeEdit.ts` och `drawing2d.ts`.
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (188 steg sedan 0.8.38: stilmallen med linjetyper, pennor och
+  (223 steg sedan 0.9.3: stilmallen med linjetyper, pennor och
   fyllningstyper, snabbraden, den egna pennan, rummets fyllning,
   2D-formens fält med mask, bakgrund och fyllningstyp, ritordning, Visas
-  i, underlag, detaljnivåerna, Filtrera och markera, fasader och
-  sektion). Kör den mot två byggen på var sin port och sedan med
+  i, underlag, detaljnivåerna, Filtrera och markera, våningar, bjälklag,
+  kalkering, fasader, sektion och nivåer). Kommandon skrivs i smartshell
+  (`#ss-input`, Enter), och en meny (som *Kopiera till våning*) väljs i
+  `.ctx-menu`. Kör den mot två byggen på var sin port och sedan med
   `--jamfor`; lägg till steg för det som granskas. Med `--bilder` sparas
   en bild av ritytan efter varje steg, och när markupen skiljer sig
   jämförs bilderna (så gjordes 0.8.38, där skrafferingen ritas med ny
-  kod). Tre steg felar likadant i båda (`opacitet två`, `spegla
-  linjen`, `x i smartmenyn`: fältet finns inte där skriptet letar) och
-  kan rättas. En rad om att en bild är inlagd kan skilja i steget efter
-  att Visa öppnats (meddelandet tonas ut olika fort).
+  kod). Inget steg felar sedan 0.9.3; kör den gamla versionen två gånger
+  mot sig själv om något skiljer, så syns det som inte är bestämt. En
+  rad om att en bild är inlagd kan skilja i steget efter att Visa
+  öppnats (meddelandet tonas ut olika fort).
   Verktygets klassnamn minifieras olika i två byggen; jämförelsen kräver
   bara att namnen motsvarar varandra. Vänta på
   `!bacchus.sections.pending` och tryck *Zooma till allt* innan en fasad
@@ -594,7 +606,8 @@ finns i `src/elements/shapeEdit.ts` och `drawing2d.ts`.
   `npx vitest run --sequence.shuffle --sequence.seed=1` (och 2, 3).
   `npx tsc --noEmit` kontrollerar också `tests/`. Hjälpfunktionerna och
   testprojekten ligger i `tests/projekt.ts`; spara-och-läs prövas en gång,
-  i `core.test.ts`. Se *Tester* i UTVECKLING.md.
+  i `core.test.ts`. Ett hus med två våningar och fasta id är
+  `twoStoreys` (0.9.3). Se *Tester* i UTVECKLING.md.
 - Demon bara på begäran: `npm run preview:artifact`, läs artefakten
   (https://claude.ai/artifact/2m7gq5gkkgSP2wFZ7fLGNJ, Artifact `read`) och
   publicera `artifact/cad-apa.html` till samma URL.

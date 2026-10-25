@@ -7,11 +7,11 @@ import { registerBuiltInTypes } from '../src/elements';
 import { resolveParams } from '../src/elements/registry';
 import type { WallParams } from '../src/elements/wall';
 import { buildModel3d } from '../src/repr/model3d';
-import { buildPlan } from '../src/repr/plan';
 import { buildSection } from '../src/repr/section';
-import type { Solid } from '../src/repr/solids';
+import type { Shape3D, Solid } from '../src/repr/solids';
 import { liftShape } from '../src/repr/storeyShapes';
 import { sampleProject } from '../src/sample/sampleProject';
+import { twoStoreys } from './projekt';
 
 beforeAll(() => registerBuiltInTypes());
 
@@ -74,23 +74,13 @@ describe('Våningar (0.9)', () => {
     expect(Object.keys(s.doc.elements)).toHaveLength(n);
   });
 
-  it('fasad- och sektionslinjerna och norrpilen ritas i alla planer', () => {
-    const s = store();
-    const two = addStorey(s, 'pl-1', 'above')!;
-    const ids = new Set(buildPlan(s.doc, two, { state: 'st-a' }).pickables.map((p) => p.id));
-    for (const id of ['north', 'fasad-1', 'sektion-a']) expect(ids.has(id)).toBe(true);
-  });
-
   it('3D, fasader och sektioner visar alla våningar, var och en på sin golvnivå', () => {
-    const s = store();
-    const one = buildModel3d(s.doc, { state: 'st-a' });
-    const two = addStorey(s, 'pl-1', 'above')!;
-    toStorey(s, Object.values(s.doc.elements).filter((e) => e.type === 'Wall').map((e) => e.id), two, true, 'st-a');
-    const both = buildModel3d(s.doc, { state: 'st-a' });
-    expect(buildModel3d(s.doc, { state: 'st-a' }, 'pl-1')).toHaveLength(one.length);
-    const top = Math.max(...both.filter((x): x is Solid => x.kind !== 'edges').map((x) => x.z1));
-    expect(top).toBeGreaterThanOrEqual(5400);
-    const sec = buildSection(s.doc, 'sektion-a', { state: 'st-a' })!;
+    const doc = twoStoreys();
+    const top = (shapes: Shape3D[]) => Math.max(...shapes.filter((x): x is Solid => x.kind !== 'edges').map((x) => x.z1));
+    expect(top(buildModel3d(doc, { state: 'st-a' }))).toBeGreaterThanOrEqual(5400);
+    // Bara plan 1: inget från plan 2.
+    expect(buildModel3d(doc, { state: 'st-a' }, 'pl-1').some((x) => doc.elements[x.id]?.storey === 'pl-2')).toBe(false);
+    const sec = buildSection(doc, 'sektion-a', { state: 'st-a' })!;
     const ys = sec.prims.flatMap((p) => (p.kind === 'polyline' ? p.points.map((q) => q[1]) : p.kind === 'line' ? [p.a[1], p.b[1]] : []));
     expect(Math.max(...ys)).toBeGreaterThanOrEqual(5400);
   });

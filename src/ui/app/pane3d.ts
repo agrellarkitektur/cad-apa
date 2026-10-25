@@ -5,6 +5,7 @@ import { resolveParams } from '../../elements/registry';
 import type { WallParams } from '../../elements/wall';
 import type { Vec2 } from '../../repr/primitives';
 import { buildModel3d } from '../../repr/model3d';
+import { POCHE_MATERIALS } from '../../repr/section';
 import type { Edit3DHost, Handle3D, View3D } from '../../view3d/view3d';
 import { icons } from '../icons';
 import { releasedHint } from '../tools/selectTool';
@@ -135,9 +136,8 @@ export function installPane3d(app: AppContext) {
     if (m?.type === 'Section' && app.uiSettings.followSection) {
       const f = markerFrame(store.doc, m);
       // Snittytorna har sina verkliga höjder sedan 0.9 (alla våningar).
-      const z0 = 0;
-      const caps = (app.section?.cutFaces ?? []).map((c) => ({ poche: ['wall', 'wall-new', 'roof', 'floor', 'slab'].includes(c.material), rings: c.rings }));
-      view3d.setClip({ start: f.start, right: f.right, view: f.view, length: Math.hypot(f.end[0] - f.start[0], f.end[1] - f.start[1]), depth: f.depth }, caps, z0);
+      const caps = (app.section?.cutFaces ?? []).map((c) => ({ poche: POCHE_MATERIALS.has(c.material), rings: c.rings }));
+      view3d.setClip({ start: f.start, right: f.right, view: f.view, length: Math.hypot(f.end[0] - f.start[0], f.end[1] - f.start[1]), depth: f.depth }, caps);
     } else view3d.setClip(null);
   }
 

@@ -1,7 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { moveElements } from '../src/core/commands';
 import { DocStore } from '../src/core/store';
-import { addStorey, toStorey } from '../src/core/storeys';
 import { registerBuiltInTypes } from '../src/elements';
 import { slabAt } from '../src/elements/slab';
 import { pointInRings } from '../src/geometry/vec';
@@ -11,7 +10,7 @@ import { buildSection } from '../src/repr/section';
 import type { Solid } from '../src/repr/solids';
 import { sampleProject } from '../src/sample/sampleProject';
 import { SlabTool } from '../src/ui/tools/slabTool';
-import { toolHost } from './projekt';
+import { toolHost, twoStoreys } from './projekt';
 
 beforeAll(() => registerBuiltInTypes());
 
@@ -57,15 +56,11 @@ describe('Bjälklag (0.9.1)', () => {
   });
 
   it('fylls som väggarna i sektionen och ligger på sin våning', () => {
-    const s = store();
+    const s = new DocStore(twoStoreys());
     const sec = buildSection(s.doc, 'sektion-a', view)!;
     const cut = sec.prims.filter((p) => p.kind === 'region' && p.role === 'cut' && p.rings.some((r) => r.some((q) => q[1] === -400)));
     expect(cut.length).toBeGreaterThan(0);
-    const two = addStorey(s, 'pl-1', 'above')!;
-    const walls = Object.values(s.doc.elements).filter((e) => e.type === 'Wall').map((e) => e.id);
-    const copies = toStorey(s, ['bj1', ...walls], two, true, 'st-a');
-    const copy = copies.find((id) => s.doc.elements[id].type === 'Slab')!;
-    expect(solids(s, copy)[0]).toMatchObject({ z0: 2300, z1: 2700 });
+    expect(solids(s, 'bj1-2')[0]).toMatchObject({ z0: 2300, z1: 2700 });
   });
 
   it('verktyget: en rektangel, och en håltagning i bjälklaget under första hörnet', () => {

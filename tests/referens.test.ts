@@ -12,7 +12,7 @@ import { buildSection } from '../src/repr/section';
 import { buildSheet, centeredAt } from '../src/repr/sheet';
 import type { Shape3D } from '../src/repr/solids';
 import { sampleProject } from '../src/sample/sampleProject';
-import { roomGrid, shapesProject } from './projekt';
+import { roomGrid, shapesProject, twoStoreys } from './projekt';
 
 /**
  * Referensritningar (0.8.2). Några testprojekt ritas (planer, fasader,
@@ -132,6 +132,30 @@ describe('detaljnivåer', () => {
     const view = { ...compare, detail: 'sketch' as const, modelDetail: 'detail' as const };
     await expect(model(buildModel3d(doc, view))).toMatchFileSnapshot(file('nivaer-3d-detalj'));
     await expect(drawing(buildSection(doc, 'fasad-1', view)!.prims)).toMatchFileSnapshot(file('nivaer-fasad-1-detalj'));
+  });
+});
+
+/**
+ * Två våningar (0.9–0.9.2, i referensritningarna sedan 0.9.3): plan 2 med
+ * håltagningen, sektionen med nivåer och höjdmått, en fasad och 3D, också
+ * med bara plan 1 (väggarna kapas av bjälklaget ovanför).
+ */
+describe('två våningar', () => {
+  const doc = twoStoreys();
+  const ex = doc.states.find((s) => s.kind === 'existing')!;
+  const proposal = doc.states.find((s) => s.kind !== 'existing')!;
+  const compare = { state: proposal.id, compareTo: ex.id };
+  it('plan 2', async () => {
+    await expect(drawing(buildPlan(doc, 'pl-2', compare).prims)).toMatchFileSnapshot(file('tva-plan-2'));
+  });
+  for (const id of ['sektion-a', 'fasad-1']) {
+    it(id, async () => {
+      await expect(drawing(buildSection(doc, id, compare)!.prims)).toMatchFileSnapshot(file(`tva-${id}`));
+    });
+  }
+  it('3D, alla våningar och bara plan 1', async () => {
+    await expect(model(buildModel3d(doc, compare))).toMatchFileSnapshot(file('tva-3d'));
+    await expect(model(buildModel3d(doc, compare, 'pl-1'))).toMatchFileSnapshot(file('tva-3d-plan-1'));
   });
 });
 

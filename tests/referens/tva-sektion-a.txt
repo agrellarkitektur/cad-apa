@@ -1,0 +1,356 @@
+linje 1800,2187.3 1800,2692.7 [w0.25 ink] @yv-s/wall
+linje 9800,0 9798.5,0 [w0.25 ink] @yv-s/wall
+linje 9800,2700 9798.5,2700 [w0.25 ink] @yv-s/wall
+linje 9800,0 9800,825.5 [w0.25 ink] @yv-s/wall
+linje 9800,2184.5 9800,2700 [w0.25 ink] @yv-s/wall
+linje 7145.1,0 7154.9,0 [w0.25 ink] @yv-s/wall
+linje 8045.1,0 8054.9,0 [w0.25 ink] @yv-s/wall
+linje 4345.1,2700 4354.9,2700 [w0.25 ink] @yv-s/wall
+linje 5245.1,2700 5254.9,2700 [w0.25 ink] @yv-s/wall
+linje 2200,2300.1 2200,2692.7 [w0.25 ink] @yv-s/wall
+linje 9400,2300.1 9400,2699.9 [w0.25 ink] @yv-s/wall
+linje 8054.9,0 8045.1,0 [w0.25 ink] @yv-s/wall
+linje 7154.9,0 7145.1,0 [w0.25 ink] @yv-s/wall
+linje 5254.9,0 5245.1,0 [w0.25 ink] @yv-s/wall
+linje 4354.9,0 4345.1,0 [w0.25 ink] @yv-s/wall
+linje 5254.9,2700 5245.1,2700 [w0.25 ink] @yv-s/wall
+linje 4354.9,2700 4345.1,2700 [w0.25 ink] @yv-s/wall
+linje 9400,2300.1 9400,2699.9 [w0.25 ink] @yv-s/wall
+linje 2200,2300.1 2200,2700 [w0.25 ink] @yv-s/wall
+linje 4200.1,0 4275,0 [w0.25 ink] @yv-s/wall
+linje 4345.1,0 5255,0 [w0.25 ink] @yv-s/wall
+linje 5325.1,0 5740,0 [w0.25 ink] @yv-s/wall
+linje 2200,2700 4275,2700 [w0.25 ink] @yv-s/wall
+linje 4345.1,2700 5255,2700 [w0.25 ink] @yv-s/wall
+linje 5325.1,2700 5740,2700 [w0.25 ink] @yv-s/wall
+linje 2200,2184.5 2200,2700 [w0.25 ink] @yv-s/wall
+linje 5740,0 5740,2700 [w0.25 ink] @yv-s/wall
+linje 5860,0 7075,0 [w0.25 ink] @yv-s/wall
+linje 7145.1,0 8055,0 [w0.25 ink] @yv-s/wall
+linje 8125.1,0 9400,0 [w0.25 ink] @yv-s/wall
+linje 5860,2700 6797.5,2700 [w0.25 ink] @yv-s/wall
+linje 8300.2,2700 9400,2700 [w0.25 ink] @yv-s/wall
+linje 5860,0 5860,2700 [w0.25 ink] @yv-s/wall
+linje 9400,0 9400,2700 [w0.25 ink] @yv-s/wall
+linje 2200,900 2200,2110 [w0.35 ink] @yv-s/hole
+linje 1800,900 1800,2110 [w0.35 ink] @yv-s/hole
+linje 2200,2110 1800,2110 [w0.35 ink] @yv-s/hole
+linje 2200,900 1800,900 [w0.35 ink] @yv-s/hole
+linje 9400.1,2110 9800,2110 [w0.35 ink] @yv-n/hole
+linje 9400.1,900 9800,900 [w0.35 ink] @yv-n/hole
+linje 1785,0 1785,825.5 [w0.18 ink] @d01/lining
+linje 1800,0 1785,0 [w0.18 ink] @d01/lining
+linje 4355,0 4355,2090 [w0.25 ink] @d02/frame
+linje 4355,2090 5245,2090 [w0.25 ink] @d02/frame
+linje 5245,2090 5245,0 [w0.25 ink] @d02/frame
+linje 4405,0 4405,2040 [w0.25 ink] @d02/frame
+linje 4405,2040 5195,2040 [w0.25 ink] @d02/frame
+linje 5195,2040 5195,0 [w0.25 ink] @d02/frame
+linje 4355,0 4405,0 [w0.25 ink] @d02/frame
+linje 5245,0 5195,0 [w0.25 ink] @d02/frame
+linje 4405,0 5195,0 [w0.25 ink] @d02/leaf
+linje 5195,0 5195,2040 [w0.25 ink] @d02/leaf
+linje 5195,2040 4405,2040 [w0.25 ink] @d02/leaf
+linje 4405,2040 4405,0 [w0.25 ink] @d02/leaf
+linje 4995,1000 5125,1000 [w0.18 ink] @d02/handle
+linje 5125,1000 5125,1020 [w0.18 ink] @d02/handle
+linje 5125,1020 4995,1020 [w0.18 ink] @d02/handle
+linje 4995,1020 4995,1000 [w0.18 ink] @d02/handle
+linje 4275,0 4275,2180 [w0.18 ink] @d02/lining
+linje 4275,2180 5325,2180 [w0.18 ink] @d02/lining
+linje 5325,2180 5325,0 [w0.18 ink] @d02/lining
+linje 4345,0 4345,2110 [w0.18 ink] @d02/lining
+linje 4345,2110 5255,2110 [w0.18 ink] @d02/lining
+linje 5255,2110 5255,0 [w0.18 ink] @d02/lining
+linje 4275,0 4345,0 [w0.18 ink] @d02/lining
+linje 5325,0 5255,0 [w0.18 ink] @d02/lining
+linje 4405,2040 5195,1020 [w0.13 ink d3/1.5] @d02/swing
+linje 4405,0 5195,1020 [w0.13 ink d3/1.5] @d02/swing
+linje 7155,0 7155,2090 [w0.25 ink] @d03/frame
+linje 7155,2090 8045,2090 [w0.25 ink] @d03/frame
+linje 8045,2090 8045,0 [w0.25 ink] @d03/frame
+linje 7205,0 7205,2040 [w0.25 ink] @d03/frame
+linje 7205,2040 7995,2040 [w0.25 ink] @d03/frame
+linje 7995,2040 7995,0 [w0.25 ink] @d03/frame
+linje 7155,0 7205,0 [w0.25 ink] @d03/frame
+linje 8045,0 7995,0 [w0.25 ink] @d03/frame
+linje 7205,0 7995,0 [w0.25 ink] @d03/leaf
+linje 7995,0 7995,2040 [w0.25 ink] @d03/leaf
+linje 7995,2040 7205,2040 [w0.25 ink] @d03/leaf
+linje 7205,2040 7205,0 [w0.25 ink] @d03/leaf
+linje 7795,1000 7925,1000 [w0.18 ink] @d03/handle
+linje 7925,1000 7925,1020 [w0.18 ink] @d03/handle
+linje 7925,1020 7795,1020 [w0.18 ink] @d03/handle
+linje 7795,1020 7795,1000 [w0.18 ink] @d03/handle
+linje 7075,0 7075,2180 [w0.18 ink] @d03/lining
+linje 7075,2180 8125,2180 [w0.18 ink] @d03/lining
+linje 8125,2180 8125,0 [w0.18 ink] @d03/lining
+linje 7145,0 7145,2110 [w0.18 ink] @d03/lining
+linje 7145,2110 8055,2110 [w0.18 ink] @d03/lining
+linje 8055,2110 8055,0 [w0.18 ink] @d03/lining
+linje 7075,0 7145,0 [w0.18 ink] @d03/lining
+linje 8125,0 8055,0 [w0.18 ink] @d03/lining
+linje 7205,2040 7995,1020 [w0.13 ink d3/1.5] @d03/swing
+linje 7205,0 7995,1020 [w0.13 ink d3/1.5] @d03/swing
+linje 1950,910 1950,960 [w0.25 ink] @f01/frame
+linje 1950,2050.5 1950,2100 [w0.25 ink] @f01/frame
+linje 1950,960 1950,2050 [w0.25 ink] @f01/frame
+linje 1850,910 1850,959.5 [w0.25 ink] @f01/frame
+linje 1850,2050.1 1850,2100 [w0.25 ink] @f01/frame
+linje 1850,960 1850,2050 [w0.25 ink] @f01/frame
+linje 1950,910 1850,910 [w0.25 ink] @f01/frame
+linje 1950,2100 1850,2100 [w0.25 ink] @f01/frame
+linje 1930,960 1930,1005 [w0.25 ink] @f01/sash
+linje 1930,2005.8 1930,2050 [w0.25 ink] @f01/sash
+linje 1930,1005 1930,2005 [w0.25 ink] @f01/sash
+linje 1870,960 1870,1004.2 [w0.25 ink] @f01/sash
+linje 1870,2005.1 1870,2050 [w0.25 ink] @f01/sash
+linje 1870,1005 1870,2005 [w0.25 ink] @f01/sash
+linje 1930,960 1870,960 [w0.25 ink] @f01/sash
+linje 1930,2050 1870,2050 [w0.25 ink] @f01/sash
+linje 1785,900 1785,2110 [w0.18 ink] @f01/lining
+linje 2215,900 2215,2110 [w0.18 ink] @f01/lining
+linje 9815,830 9815,2180 [w0.18 ink] @f05/lining
+linje 9800,2180 9815,2180 [w0.18 ink] @f05/lining
+linje 9800,830 9815,830 [w0.18 ink] @f05/lining
+linje 4345.1,910 4355,910 [w0.25 ink] @f06/frame
+linje 5245.1,910 5255,910 [w0.25 ink] @f06/frame
+linje 5255,2100 4345.1,2100 [w0.25 ink] @f06/frame
+linje 4345.1,960 4355,960 [w0.25 ink] @f06/frame
+linje 5245.1,960 5255,960 [w0.25 ink] @f06/frame
+linje 5255,2050 5245.1,2050 [w0.25 ink] @f06/frame
+linje 4355,2050 4345.1,2050 [w0.25 ink] @f06/frame
+linje 4345.1,1005 4355,1005 [w0.25 ink] @f06/sash
+linje 5245.1,1005 5255,1005 [w0.25 ink] @f06/sash
+linje 5255,2005 5245.1,2005 [w0.25 ink] @f06/sash
+linje 4355,2005 4345.1,2005 [w0.25 ink] @f06/sash
+linje 4345.1,830 4355,830 [w0.18 ink] @f06/lining
+linje 5245.1,830 5255,830 [w0.18 ink] @f06/lining
+linje 4345.1,900 4355,900 [w0.18 ink] @f06/lining
+linje 5245.1,900 5255,900 [w0.18 ink] @f06/lining
+linje 7155,740 7145.1,740 [w0.18 ink] @m03/vy
+linje 7155,700 7145.1,700 [w0.18 ink] @m03/vy
+linje 4345.1,420 4355,420 [w0.18 ink] @m04/vy
+linje 5245.1,420 5255,420 [w0.18 ink] @m04/vy
+linje 4345.1,0 4354.9,0 [w0.18 ink] @m04/vy
+linje 5245.1,0 5254.9,0 [w0.18 ink] @m04/vy
+linje 4345.1,780 4355,780 [w0.18 ink] @m04/vy
+linje 5245.1,780 5255,780 [w0.18 ink] @m04/vy
+linje 2200,450 4200,450 [w0.18 ink] @m06/vy
+linje 2200,0 4200,0 [w0.18 ink] @m06/vy
+linje 4200,450 4200,0 [w0.18 ink] @m06/vy
+linje 2200,450 2200,0 [w0.18 ink] @m06/vy
+linje 2215.1,900 2280,900 [w0.18 ink] @m06/vy
+linje 2200,450 2280,450 [w0.18 ink] @m06/vy
+linje 2280,900 2280,450 [w0.18 ink] @m06/vy
+linje 2200,825.5 2200,450 [w0.18 ink] @m06/vy
+linje 8054.9,0 8045.1,0 [w0.18 ink] @bj1/vy
+linje 7154.9,0 7145.1,0 [w0.18 ink] @bj1/vy
+linje 9400,-400 2200,-400 [w0.18 ink] @bj1/vy
+linje 2200,-7.3 2200,-400 [w0.18 ink] @bj1/vy
+linje 9400,-0.1 9400,-400 [w0.18 ink] @bj1/vy
+linje 10300,5150 9800.1,5404.7 [w0.25 ink] @tak/roof
+linje 10300,5486.7 5800,7779.6 [w0.25 ink] @tak/roof
+linje 10300,5150 10300,5486.7 [w0.25 ink] @tak/roof
+linje 1300,5150 1300,5486.7 [w0.25 ink] @tak/roof
+linje 1800,5404.7 1300,5150 [w0.25 ink] @tak/roof
+linje 5800,7779.6 1300,5486.7 [w0.25 ink] @tak/roof
+linje 1800,4887.3 1800,5400 [w0.25 ink] @yv-s-2/wall
+linje 2200,2700 4275,2700 [w0.25 ink] @yv-s-2/wall
+linje 4345.1,2700 5255,2700 [w0.25 ink] @yv-s-2/wall
+linje 5325.1,2700 5740,2700 [w0.25 ink] @yv-s-2/wall
+linje 2200,5400 5740,5400 [w0.25 ink] @yv-s-2/wall
+linje 2200,2700 2200,3525.5 [w0.25 ink] @yv-s-2/wall
+linje 2200,4884.5 2200,5400 [w0.25 ink] @yv-s-2/wall
+linje 5740,2700 5740,5400 [w0.25 ink] @yv-s-2/wall
+linje 5860,2700 6797.5,2700 [w0.25 ink] @yv-s-2/wall
+linje 8300.2,2700 9400,2700 [w0.25 ink] @yv-s-2/wall
+linje 5860,5400 9400,5400 [w0.25 ink] @yv-s-2/wall
+linje 5860,2700 5860,5400 [w0.25 ink] @yv-s-2/wall
+linje 9400,2700 9400,5400 [w0.25 ink] @yv-s-2/wall
+linje 9800,2700 9400.1,2700 [w0.25 ink] @yv-s-2/wall
+linje 9800,5400 9400.2,5400 [w0.25 ink] @yv-s-2/wall
+linje 9800,2700 9800,3525.5 [w0.25 ink] @yv-s-2/wall
+linje 9800,4884.5 9800,5400 [w0.25 ink] @yv-s-2/wall
+linje 5254.9,2700 5245.1,2700 [w0.25 ink] @yv-s-2/wall
+linje 4354.9,2700 4345.1,2700 [w0.25 ink] @yv-s-2/wall
+linje 2199.7,5400 1800,5400 [w0.25 ink] @yv-s-2/wall
+linje 5800,7442.9 9400,5608.6 [w0.25 ink] @yv-o-2/wall
+linje 9400.1,2700 9800,2700 [w0.25 ink] @yv-o-2/wall
+linje 9400,5608.6 9800,5404.8 [w0.25 ink] @yv-o-2/wall
+linje 9400,5400.1 9400,5608.6 [w0.25 ink] @yv-o-2/wall
+linje 9800,2700 9798.5,2700 [w0.25 ink] @yv-o-2/wall
+linje 9800,5404.8 9798.5,5405.5 [w0.25 ink] @yv-o-2/wall
+linje 9800,2700 9800,3525.5 [w0.25 ink] @yv-o-2/wall
+linje 9800,4884.5 9800,5404.8 [w0.25 ink] @yv-o-2/wall
+linje 1800,5404.8 2200,5608.6 [w0.25 ink] @yv-o-2/wall
+linje 1800,4887.3 1800,5404.8 [w0.25 ink] @yv-o-2/wall
+linje 4345.1,2700 4354.9,2700 [w0.25 ink] @yv-o-2/wall
+linje 5245.1,2700 5254.9,2700 [w0.25 ink] @yv-o-2/wall
+linje 2200,5608.6 5800,7442.9 [w0.25 ink] @yv-o-2/wall
+linje 2200,5400.1 2200,5608.6 [w0.25 ink] @yv-o-2/wall
+linje 1801.5,5405.5 1800,5404.8 [w0.25 ink] @yv-o-2/wall
+linje 2200,3600 2200,4810 [w0.35 ink] @yv-s-2/hole
+linje 1800,3600 1800,4810 [w0.35 ink] @yv-s-2/hole
+linje 2200,4810 1800,4810 [w0.35 ink] @yv-s-2/hole
+linje 2200,3600 1800,3600 [w0.35 ink] @yv-s-2/hole
+linje 9400.1,4810 9800,4810 [w0.35 ink] @yv-n-2/hole
+linje 9400.1,3600 9800,3600 [w0.35 ink] @yv-n-2/hole
+linje 1785,2700 1785,3525.5 [w0.18 ink] @d01-2/lining
+linje 1800,2700 1785,2700 [w0.18 ink] @d01-2/lining
+linje 4355,2700 4355,4790 [w0.25 ink] @d02-2/frame
+linje 4355,4790 5245,4790 [w0.25 ink] @d02-2/frame
+linje 5245,4790 5245,2700 [w0.25 ink] @d02-2/frame
+linje 4405,2700 4405,4740 [w0.25 ink] @d02-2/frame
+linje 4405,4740 5195,4740 [w0.25 ink] @d02-2/frame
+linje 5195,4740 5195,2700 [w0.25 ink] @d02-2/frame
+linje 4355,2700 4405,2700 [w0.25 ink] @d02-2/frame
+linje 5245,2700 5195,2700 [w0.25 ink] @d02-2/frame
+linje 4405,2700 5195,2700 [w0.25 ink] @d02-2/leaf
+linje 5195,2700 5195,4740 [w0.25 ink] @d02-2/leaf
+linje 5195,4740 4405,4740 [w0.25 ink] @d02-2/leaf
+linje 4405,4740 4405,2700 [w0.25 ink] @d02-2/leaf
+linje 4995,3700 5125,3700 [w0.18 ink] @d02-2/handle
+linje 5125,3700 5125,3720 [w0.18 ink] @d02-2/handle
+linje 5125,3720 4995,3720 [w0.18 ink] @d02-2/handle
+linje 4995,3720 4995,3700 [w0.18 ink] @d02-2/handle
+linje 4275,2700 4275,4880 [w0.18 ink] @d02-2/lining
+linje 4275,4880 5325,4880 [w0.18 ink] @d02-2/lining
+linje 5325,4880 5325,2700 [w0.18 ink] @d02-2/lining
+linje 4345,2700 4345,4810 [w0.18 ink] @d02-2/lining
+linje 4345,4810 5255,4810 [w0.18 ink] @d02-2/lining
+linje 5255,4810 5255,2700 [w0.18 ink] @d02-2/lining
+linje 4275,2700 4345,2700 [w0.18 ink] @d02-2/lining
+linje 5325,2700 5255,2700 [w0.18 ink] @d02-2/lining
+linje 4405,4740 5195,3720 [w0.13 ink d3/1.5] @d02-2/swing
+linje 4405,2700 5195,3720 [w0.13 ink d3/1.5] @d02-2/swing
+linje 7155,2700.1 7155,4790 [w0.25 ink] @d03-2/frame
+linje 7155,4790 8045,4790 [w0.25 ink] @d03-2/frame
+linje 8045,4790 8045,2700.1 [w0.25 ink] @d03-2/frame
+linje 7205,2700.1 7205,4740 [w0.25 ink] @d03-2/frame
+linje 7205,4740 7995,4740 [w0.25 ink] @d03-2/frame
+linje 7995,4740 7995,2700.1 [w0.25 ink] @d03-2/frame
+linje 7995,2700.1 7995,4740 [w0.25 ink] @d03-2/leaf
+linje 7995,4740 7205,4740 [w0.25 ink] @d03-2/leaf
+linje 7205,4740 7205,2700.1 [w0.25 ink] @d03-2/leaf
+linje 7795,3700 7925,3700 [w0.18 ink] @d03-2/handle
+linje 7925,3700 7925,3720 [w0.18 ink] @d03-2/handle
+linje 7925,3720 7795,3720 [w0.18 ink] @d03-2/handle
+linje 7795,3720 7795,3700 [w0.18 ink] @d03-2/handle
+linje 7075,2700.1 7075,4880 [w0.18 ink] @d03-2/lining
+linje 7075,4880 8125,4880 [w0.18 ink] @d03-2/lining
+linje 8125,4880 8125,2700.1 [w0.18 ink] @d03-2/lining
+linje 7145,2700.1 7145,4810 [w0.18 ink] @d03-2/lining
+linje 7145,4810 8055,4810 [w0.18 ink] @d03-2/lining
+linje 8055,4810 8055,2700.1 [w0.18 ink] @d03-2/lining
+linje 7205,4740 7995,3720 [w0.13 ink d3/1.5] @d03-2/swing
+linje 7205,2700.1 7995,3720 [w0.13 ink d3/1.5] @d03-2/swing
+linje 1950,3610 1950,3660 [w0.25 ink] @f01-2/frame
+linje 1950,4750.5 1950,4800 [w0.25 ink] @f01-2/frame
+linje 1950,3660 1950,4750 [w0.25 ink] @f01-2/frame
+linje 1850,3610 1850,3659.5 [w0.25 ink] @f01-2/frame
+linje 1850,4750.1 1850,4800 [w0.25 ink] @f01-2/frame
+linje 1850,3660 1850,4750 [w0.25 ink] @f01-2/frame
+linje 1950,3610 1850,3610 [w0.25 ink] @f01-2/frame
+linje 1950,4800 1850,4800 [w0.25 ink] @f01-2/frame
+linje 1930,3660 1930,3705 [w0.25 ink] @f01-2/sash
+linje 1930,4705.8 1930,4750 [w0.25 ink] @f01-2/sash
+linje 1930,3705 1930,4705 [w0.25 ink] @f01-2/sash
+linje 1870,3660 1870,3704.2 [w0.25 ink] @f01-2/sash
+linje 1870,4705.1 1870,4750 [w0.25 ink] @f01-2/sash
+linje 1870,3705 1870,4705 [w0.25 ink] @f01-2/sash
+linje 1930,3660 1870,3660 [w0.25 ink] @f01-2/sash
+linje 1930,4750 1870,4750 [w0.25 ink] @f01-2/sash
+linje 1785,3600 1785,4810 [w0.18 ink] @f01-2/lining
+linje 2215,3600 2215,4810 [w0.18 ink] @f01-2/lining
+linje 9815,3530 9815,4880 [w0.18 ink] @f05-2/lining
+linje 9800,4880 9815,4880 [w0.18 ink] @f05-2/lining
+linje 9800,3530 9815,3530 [w0.18 ink] @f05-2/lining
+linje 4345.1,3610 4355,3610 [w0.25 ink] @f06-2/frame
+linje 5245.1,3610 5255,3610 [w0.25 ink] @f06-2/frame
+linje 5255,4800 4345.1,4800 [w0.25 ink] @f06-2/frame
+linje 4345.1,3660 4355,3660 [w0.25 ink] @f06-2/frame
+linje 5245.1,3660 5255,3660 [w0.25 ink] @f06-2/frame
+linje 5255,4750 5245.1,4750 [w0.25 ink] @f06-2/frame
+linje 4355,4750 4345.1,4750 [w0.25 ink] @f06-2/frame
+linje 4345.1,3705 4355,3705 [w0.25 ink] @f06-2/sash
+linje 5245.1,3705 5255,3705 [w0.25 ink] @f06-2/sash
+linje 5255,4705 5245.1,4705 [w0.25 ink] @f06-2/sash
+linje 4355,4705 4345.1,4705 [w0.25 ink] @f06-2/sash
+linje 4345.1,3530 4355,3530 [w0.18 ink] @f06-2/lining
+linje 5245.1,3530 5255,3530 [w0.18 ink] @f06-2/lining
+linje 4345.1,3600 4355,3600 [w0.18 ink] @f06-2/lining
+linje 5245.1,3600 5255,3600 [w0.18 ink] @f06-2/lining
+linje 8300,2700 6800,2700 [w0.18 ink] @r02-2/vy
+linje 8300,2670 6800,2670 [w0.18 ink] @r02-2/vy
+linje 6800,2700 6800,2670 [w0.18 ink] @r02-2/vy
+linje 8300,2700 8300,2670 [w0.18 ink] @r02-2/vy
+linje 6800,2700 8300,2700 [w0.18 ink] @bj1-2/vy
+linje 4345.1,2700 4354.9,2700 [w0.18 ink] @bj1-2/vy
+linje 5245.1,2700 5254.9,2700 [w0.18 ink] @bj1-2/vy
+linje 6800,2300 8300,2300 [w0.18 ink] @bj1-2/vy
+linje 2200,2692.7 2200,2300.1 [w0.18 ink] @bj1-2/vy
+linje 9400,2699.9 9400,2300.1 [w0.18 ink] @bj1-2/vy
+linje 6800,2700 6800,2300 [w0.18 ink] @bj1-2/vy
+linje 8300,2700 8300,2300 [w0.18 ink] @bj1-2/vy
+yta fylld paper [w0.35 ink] 1300,5150 5800,7442.9 10300,5150 10300,5486.7 5800,7779.6 1300,5486.7 @yv-s/snitt
+yta fylld paper [w0.35 ink] 1800,0 2200,0 2200,900 1800,900 @yv-s/snitt
+yta fylld paper [w0.35 ink] 1800,2110 2200,2110 2200,2300 5740,2300 5740,0 2200,0 2200,-400 9400,-400 9400,0 5860,0 5860,2300 6800,2300 6800,2700 5860,2700 5860,5400 5740,5400 5740,2700 2200,2700 2200,3600 1800,3600 @yv-s/snitt
+yta fylld paper [w0.35 ink] 1800,4810 2200,4810 2200,5400 1800,5400 @yv-s/snitt
+yta fylld paper [w0.35 ink] 8300,2300 9400,2300 9400,0 9800,0 9800,5400 9400,5400 9400,2700 8300,2700 @yv-s/snitt
+yta none [w0.25] 1850,910 1950,910 1950,960 1850,960 @f01/snitt
+yta none [w0.25] 1850,2050 1950,2050 1950,2100 1850,2100 @f01/snitt
+yta none [w0.25] 1870,960 1930,960 1930,1005 1870,1005 @f01/snitt
+yta none [w0.25] 1870,2005 1930,2005 1930,2050 1870,2050 @f01/snitt
+yta none [w0.25] 1894,1005 1906,1005 1906,2005 1894,2005 @f01/snitt
+yta none [w0.25] 1785,2110 1800,2110 1800,2180 1785,2180 @f01/snitt
+yta none [w0.25] 1785,830 1800,830 1800,900 1785,900 @f01/snitt
+yta none [w0.25] 2200,2110 2215,2110 2215,2180 2200,2180 @f01/snitt
+yta none [w0.25] 2200,830 2215,830 2215,900 2200,900 @f01/snitt
+yta none [w0.25] 1850,3610 1950,3610 1950,3660 1850,3660 @f01-2/snitt
+yta none [w0.25] 1850,4750 1950,4750 1950,4800 1850,4800 @f01-2/snitt
+yta none [w0.25] 1870,3660 1930,3660 1930,3705 1870,3705 @f01-2/snitt
+yta none [w0.25] 1870,4705 1930,4705 1930,4750 1870,4750 @f01-2/snitt
+yta none [w0.25] 1894,3705 1906,3705 1906,4705 1894,4705 @f01-2/snitt
+yta none [w0.25] 1785,4810 1800,4810 1800,4880 1785,4880 @f01-2/snitt
+yta none [w0.25] 1785,3530 1800,3530 1800,3600 1785,3600 @f01-2/snitt
+yta none [w0.25] 2200,4810 2215,4810 2215,4880 2200,4880 @f01-2/snitt
+yta none [w0.25] 2200,3530 2215,3530 2215,3600 2200,3600 @f01-2/snitt
+yta fylld paper [w0.35 ink] 6800,2670 8300,2670 8300,2700 6800,2700 @r02-2/snitt
+linje -200,-400 11800,-400 [w0.7] @/mark
+linje 7825,6748 9400,6748 [w0.18] @slope:tak:0/taklutning
+båge 7825,6748 r1181.3 -27°–0° [w0.18] @slope:tak:0/taklutning
+text "27°" 9216.7,6313.9 h2.2 middle [w0.18] @slope:tak:0/taklutning
+linje 3775,6748 2200,6748 [w0.18] @slope:tak:1/taklutning
+båge 3775,6748 r1181.3 180°–207° [w0.18] @slope:tak:1/taklutning
+text "27°" 2383.3,6313.9 h2.2 middle [w0.18] @slope:tak:1/taklutning
+linje 11100,-400 13100,-400 [w0.18] @/nivå
+yta none [w0.18] 11700,-400 11592,-220 11808,-220 @/nivå
+text "UK bjl −0,400" 11952,-337 h2.2 [w0.18] @/nivå
+linje 11100,0 13100,0 [w0.18] @/nivå
+yta none [w0.18] 11700,0 11592,180 11808,180 @/nivå
+text "FG ±0,000" 11952,63 h2.2 [w0.18] @/nivå
+linje 11100,2300 13100,2300 [w0.18] @/nivå
+yta none [w0.18] 11700,2300 11592,2480 11808,2480 @/nivå
+text "UK bjl +2,300" 11952,2363 h2.2 [w0.18] @/nivå
+linje 11100,2700 13100,2700 [w0.18] @/nivå
+yta none [w0.18] 11700,2700 11592,2880 11808,2880 @/nivå
+text "FG +2,700" 11952,2763 h2.2 [w0.18] @/nivå
+linje 11100,5150 13100,5150 [w0.18] @/nivå
+yta none [w0.18] 11700,5150 11592,5330 11808,5330 @/nivå
+text "Takfot +5,150" 11952,5213 h2.2 [w0.18] @/nivå
+linje 11100,7780 13100,7780 [w0.18] @/nivå
+yta none [w0.18] 11700,7780 11592,7960 11808,7960 @/nivå
+text "Nock +7,780" 11952,7843 h2.2 [w0.18] @/nivå
+linje 10900,-600 10900,2900 [w0.18] @/höjdmått
+linje 10400,-400 11050,-400 [w0.18] @/höjdmått
+linje 10400,0 11050,0 [w0.18] @/höjdmått
+linje 10400,2300 11050,2300 [w0.18] @/höjdmått
+linje 10400,2700 11050,2700 [w0.18] @/höjdmått
+linje 10988.4,-488.4 10811.6,-311.6 [w0.35] @/höjdmått
+linje 10988.4,-88.4 10811.6,88.4 [w0.35] @/höjdmått
+linje 10988.4,2211.6 10811.6,2388.4 [w0.35] @/höjdmått
+linje 10988.4,2611.6 10811.6,2788.4 [w0.35] @/höjdmått
+text "400" 10810,-200 h2.2 90° middle [w0.18] @/höjdmått
+text "2300" 10810,1150 h2.2 90° middle [w0.18] @/höjdmått
+text "400" 10810,2500 h2.2 90° middle [w0.18] @/höjdmått

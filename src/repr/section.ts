@@ -3,14 +3,15 @@ import type { Element, Id, ProjectDoc } from '../core/model';
 import type { Action, ViewStates } from '../core/states';
 import { markerFrame, markerName } from '../elements/markers';
 import { typeOf } from '../elements/registry';
-import { difference, union, type Rings } from '../geometry/boolean';
+import { union, type Rings } from '../geometry/boolean';
 import { clipDepth, clipPlane, clipSegAxis, clipSegDepth, featureEdges, visibleSegments, type Seg, type V3 } from '../geometry/hiddenLine';
 import { roofPlanes, type RoofParams } from '../elements/roof';
-import { dimensionPrims } from '../elements/annotation';
 import { slopeSymbol, type RoofSlopeParams } from '../elements/roofSlope';
 import type { PlanContext } from '../elements/registry';
-import { modelShapes } from './storeyShapes';
-import { markerPen, solidPen, withWeight } from './markerPens';
+import { cutSolid } from './sectionCut';
+import { levelPrims } from './sectionLevels';
+import { modelShapes, WITH_DEMOLISHED } from './storeyShapes';
+import { markerPen } from './markerPens';
 import { applyOwnPen, effectivePen, ownPenOf } from './ownPen';
 import { ownedOutlines } from './outlineOwners';
 import { solidTriangles } from './mesh';
@@ -74,8 +75,8 @@ const PART_PEN: Record<EdgePart, Pen> = {
   swing: { weight: 0.13, dash: [3, 1.5] },
 };
 
-/** Material som fylls i snitt som väggar; resten ritas med kontur. */
-const POCHE = new Set(['wall', 'wall-new', 'roof', 'floor', 'slab']);
+/** Material som fylls i snitt som väggar; resten ritas med kontur (också snittets lock i 3D). */
+export const POCHE_MATERIALS: ReadonlySet<string> = new Set(['wall', 'wall-new', 'roof', 'floor', 'slab']);
 
 export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, style: StyleSheet = doc.graphics): SectionResult | null {
   const t0 = performance.now();
@@ -83,8 +84,6 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   if (!marker || (marker.type !== 'Section' && marker.type !== 'Elevation')) return null;
   const fr = markerFrame(doc, marker);
   const isSection = marker.type === 'Section';
-  // Alla våningar (0.9), var och en redan lyft till sin golvnivå.
-  const z0 = 0;
   const O = fr.start;
   const r = fr.right;
   const v = fr.view;
@@ -95,8 +94,9 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
 
   // Formerna, med åtgärd. Det som rivs byggs för sig, så att det inte
   // påverkar skarvarna i det som står kvar. 2D-elementen i fasaden eller
-  // sektionen ritas för sig (se buildPlan med `place`).
-  const { shapes, storeys } = modelShapes(doc, view, style, (t) => !!(t.model3d || t.model3dBatch));
+  // sektionen ritas för sig (se buildPlan med `place`). Alla våningar (0.9),
+  // var och en redan lyft till sin golvnivå.
+  const { shapes, storeys } = modelShapes(doc, view, style, WITH_DEMOLISHED);
   // Stil, skala och åtgärd beror inte på våningen; taken med sin våningens golvnivå.
   const ctx = storeys[0].ctx;
   const roofs = storeys.flatMap(({ ctx: c, elevation }) => c.visible('Roof').filter((el) => c.actionOf(el) !== 'demolished').map((el) => ({ el, elevation })));
@@ -129,7 +129,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     for (let i = 0; i < whole; i += 3) {
       const dx = plan[i] - O[0];
       const dy = plan[i + 1] - O[1];
-      const z = plan[i + 2] + z0;
+      const z = plan[i + 2];
       tris.push(dx * r[0] + dy * r[1], z, dx * v[0] + dy * v[1]);
       minZ = Math.min(minZ, z);
       maxZ = Math.max(maxZ, z);
@@ -183,14 +183,14 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   if (isSection) {
     for (const { s, demolished } of shapes) {
       if (s.kind === 'edges' || demolished) continue;
-      const polys = cutSolid(s, O, r, v, z0, uMax);
+      const polys = cutSolid(s, O, r, v, uMax);
       if (!polys.length) continue;
       for (const rings of polys) cutFaces.push({ material: s.material, rings });
       const mine = ownCuts.get(s.id) ?? [];
       mine.push(...polys);
       ownCuts.set(s.id, mine);
       const action = actionOfId(s.id);
-      const poche = POCHE.has(s.material);
+      const poche = POCHE_MATERIALS.has(s.material);
       const k = `${action}|${poche ? 'p' : 'o'}|${poche ? '' : s.id}`;
       let g = cuts.get(k);
       if (!g) cuts.set(k, (g = { action, poche, ids: new Set(), rings: [] }));
@@ -255,7 +255,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
 
   if (Number.isFinite(minU) && Number.isFinite(minZ)) {
     // Marklinje under byggnaden, och nivåer för golv och högsta punkt.
-    const ground = Math.min(minZ, z0);
+    const ground = Math.min(minZ, 0);
     prims.push({ kind: 'line', a: [minU - 1500, ground], b: [maxU + 1500, ground], pen: { weight: 0.7 }, origin: { part: 'mark' } });
     // Taklutningen, där takfallet syns i sin rätta vinkel. Takfall som har
     // en taklutning som eget objekt i den här vyn hoppas över; objektet ritar sig själv.
@@ -277,47 +277,9 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
         }
       }
     }
-    // Nivåkoter (0.9.2): FG för varje vånings golv, UK bjl för bjälklagen
-    // som sektionen skär, takfot och nock. Bjälklagets ovansida är golvet,
-    // så ÖK skrivs inte för sig. ±0 är nollnivån, plan 1:s golv.
+    // Nivåkoter och höjdmått (0.9.2).
     const cutSlabs = isSection ? shapes.filter(({ s, demolished }) => !demolished && s.kind !== 'edges' && s.material === 'slab' && ownCuts.has(s.id)).map(({ s }) => s as Solid) : [];
-    const chainX = maxU;
-    const heights = isSection && !view.hide?.includes('heightDims') ? heightChain(cutSlabs) : [];
-    const markX = maxU + (heights.length ? 14 : 12) * ctx.scale;
-    if (!view.hide?.includes('level')) {
-      const levels = new Map<number, string>(doc.storeys.map((s) => [s.elevation, 'FG']));
-      for (const sl of cutSlabs) {
-        const z = Math.round(sl.z0);
-        if (!levels.has(z)) levels.set(z, 'UK bjl');
-      }
-      const floor = Math.min(...doc.storeys.map((s) => s.elevation));
-      for (const { el, elevation } of roofs) {
-        const eave = Math.round(elevation + ctx.params<RoofParams>(el).eave);
-        if (eave > floor && !levels.has(eave)) levels.set(eave, 'Takfot');
-      }
-      const top = Math.round(maxZ);
-      if (!levels.has(top)) levels.set(top, roofs.length ? 'Nock' : '');
-      // Texter som skulle krocka (nivåer närmare än en textrad) skjuts
-      // uppåt. Strecket går under texten som förut, utom där en annan
-      // nivås text hamnat på det.
-      const h = style.labels.heights.dimension;
-      const marks: { z: number; label: string; textY: number }[] = [];
-      let prevText = -Infinity;
-      for (const [z, label] of [...levels].sort((a, b) => a[0] - b[0])) {
-        const textY = Math.max(z + 1.8 * ctx.scale * 0.35, prevText + h * 1.35 * ctx.scale);
-        prevText = textY;
-        marks.push({ z, label, textY });
-      }
-      for (const m of marks) {
-        const crossed = marks.some((o) => o !== m && m.z > o.textY - h * 0.3 * ctx.scale && m.z < o.textY + h * 1.1 * ctx.scale);
-        prims.push(...levelMark(markX, m.z, h, m.label, ctx.scale, markerPen(style, 'level'), m.textY, !crossed));
-      }
-    }
-    // Höjdmått (0.9.2): bjälklagens tjocklek och den fria höjden mellan dem.
-    if (heights.length >= 2) {
-      const points = heights.map((z): [number, number] => [chainX, z]);
-      prims.push(...dimensionPrims({ points, angle: 90, offset: -6 * ctx.scale }, ctx.scale, { part: 'höjdmått' }, style.labels.heights.dimension, style));
-    }
+    prims.push(...levelPrims(doc, ctx, style, view, { cutSlabs, roofs, maxU, maxZ, isSection }));
   }
 
   const pickables: Pickable[] = [...new Set([...byId.keys(), ...ownCuts.keys()])].map((id) => {
@@ -405,115 +367,5 @@ function wallSilhouettes(shapes: { s: Shape3D; demolished: boolean }[], v: Vec2)
       }
     }
   }
-  return out;
-}
-
-/**
- * Höjderna för höjdmåttet: under- och ovansidan av bjälklagen som sektionen
- * skär, nerifrån. Två bjälklag på olika våningar ger tjocklek, fri höjd och
- * tjocklek. Höjder närmare än 1 mm räknas som en.
- */
-export function heightChain(slabs: readonly { z0: number; z1: number }[]): number[] {
-  const zs = [...new Set(slabs.flatMap((s) => [Math.round(s.z0), Math.round(s.z1)]))].sort((a, b) => a - b);
-  return zs.length >= 2 ? zs : [];
-}
-
-/**
- * En nivåkota: ett streck, en triangel som pekar ned på det och höjden i
- * meter bredvid. Ett kort streck (0.9.2) slutar vid triangeln, så att en
- * text som skjutits upp för en granne inte stryks över.
- */
-function levelMark(x: number, z: number, height: number, label: string, s: number, pen: Pen, textY?: number, long = true): Primitive[] {
-  // s: ritningsskalan, för storleken på papper.
-  const tri = 1.8 * s;
-  const origin = { part: 'nivå' };
-  const m = z / 1000;
-  const text = `${m === 0 ? '±' : m > 0 ? '+' : '−'}${Math.abs(m).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
-  return [
-    { kind: 'line', a: [x - 6 * s, z], b: [x + (long ? 14 * s : tri), z], pen, origin },
-    {
-      kind: 'region',
-      role: 'cut',
-      rings: [
-        [
-          [x, z],
-          [x - tri * 0.6, z + tri],
-          [x + tri * 0.6, z + tri],
-        ],
-      ],
-      fill: { kind: 'none' },
-      outline: solidPen(pen),
-      ownFill: true,
-      origin,
-    },
-    { kind: 'text', at: [x + tri * 1.4, textY ?? z + tri * 0.35], text: label ? `${label} ${text}` : text, height, pen: withWeight(pen, 0.18), origin },
-  ];
-}
-
-/**
- * Formens snitt med det lodräta planet genom linjen, i vyns koordinater
- * (x längs linjen, y = höjd). Formen är en lodrät extrudering, så snittet
- * är för varje bit av linjen inne i formen en fyrhörning mellan under- och
- * ovansidan, minus de urtag (öppningar) som linjen går igenom.
- */
-export function cutSolid(s: Solid, O: Vec2, r: Vec2, v: Vec2, z0 = 0, uMax = Infinity): Rings[] {
-  const inside = intervalsOnLine(s.rings, O, r, v)
-    .map(([a, b]): [number, number] => [Math.max(0, a), Math.min(uMax, b)])
-    .filter(([a, b]) => b > a);
-  if (!inside.length) return [];
-  const at = (u: number): Vec2 => [O[0] + r[0] * u, O[1] + r[1] * u];
-  const zb = (u: number) => (s.bottom ? zOn(s.bottom, ...at(u)) : s.z0) + z0;
-  const zt = (u: number) => (s.top ? zOn(s.top, ...at(u)) : s.z1) + z0;
-  const out: Rings[] = [];
-  for (const [u0, u1] of inside) {
-    if (u1 - u0 < 0.5) continue;
-    const quad: Rings = [
-      [
-        [u0, zb(u0)],
-        [u1, zb(u1)],
-        [u1, zt(u1)],
-        [u0, zt(u0)],
-      ],
-    ];
-    const holes: Rings[] = [];
-    for (const c of s.cuts ?? []) {
-      for (const [c0, c1] of intervalsOnLine(c.rings, O, r, v)) {
-        const a = Math.max(c0, u0);
-        const b = Math.min(c1, u1);
-        if (b - a < 0.5) continue;
-        holes.push([
-          [
-            [a, c.z0 + z0],
-            [b, c.z0 + z0],
-            [b, c.z1 + z0],
-            [a, c.z1 + z0],
-          ],
-        ]);
-      }
-    }
-    out.push(...(holes.length ? difference(quad, holes) : [quad]));
-  }
-  return out;
-}
-
-/** Var linjen O + r·u går inne i formen (jämn–udda), som intervall i u. */
-function intervalsOnLine(rings: readonly (readonly Vec2[])[], O: Vec2, r: Vec2, v: Vec2): [number, number][] {
-  const us: number[] = [];
-  for (const ring of rings) {
-    for (let i = 0; i < ring.length; i++) {
-      const p = ring[i];
-      const q = ring[(i + 1) % ring.length];
-      const dp = (p[0] - O[0]) * v[0] + (p[1] - O[1]) * v[1];
-      const dq = (q[0] - O[0]) * v[0] + (q[1] - O[1]) * v[1];
-      if (dp > 0 === dq > 0) continue;
-      const t = dp / (dp - dq);
-      const up = (p[0] - O[0]) * r[0] + (p[1] - O[1]) * r[1];
-      const uq = (q[0] - O[0]) * r[0] + (q[1] - O[1]) * r[1];
-      us.push(up + (uq - up) * t);
-    }
-  }
-  us.sort((a, b) => a - b);
-  const out: [number, number][] = [];
-  for (let i = 0; i + 1 < us.length; i += 2) out.push([us[i], us[i + 1]]);
   return out;
 }

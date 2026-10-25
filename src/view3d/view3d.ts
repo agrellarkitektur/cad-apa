@@ -454,9 +454,8 @@ export class View3D {
   setClip(
     c: { start: readonly [number, number]; right: readonly [number, number]; view: readonly [number, number]; length: number; depth: number | null } | null,
     caps: { poche: boolean; rings: (readonly (readonly [number, number])[])[] }[] = [],
-    z0 = 0,
   ): void {
-    this.setCaps(c, caps, z0);
+    this.setCaps(c, caps);
     const planes: THREE.Plane[] = [];
     if (c) {
       // Modellens (x, y, z) i mm blir (x, z, −y) i meter.
@@ -485,14 +484,13 @@ export class View3D {
   private setCaps(
     c: { start: readonly [number, number]; right: readonly [number, number]; view: readonly [number, number] } | null,
     caps: { poche: boolean; rings: (readonly (readonly [number, number])[])[] }[],
-    z0: number,
   ): void {
     for (const child of this.capsGroup.children) {
       if (child instanceof THREE.Mesh || child instanceof THREE.LineSegments) child.geometry.dispose();
     }
     this.capsGroup.clear();
     if (!c) return;
-    const at = (u: number, z: number): [number, number, number] => [c.start[0] + c.right[0] * u + c.view[0] * 0.5, c.start[1] + c.right[1] * u + c.view[1] * 0.5, z - z0];
+    const at = (u: number, z: number): [number, number, number] => [c.start[0] + c.right[0] * u + c.view[0] * 0.5, c.start[1] + c.right[1] * u + c.view[1] * 0.5, z];
     for (const cap of caps) {
       const rings = cap.rings.filter((r) => r.length >= 3);
       if (!rings.length) continue;

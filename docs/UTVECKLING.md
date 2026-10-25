@@ -183,7 +183,7 @@ sektioner, 3D och ett blad för exemplet, ett rutnät av rum och (0.8.32)
 exemplet med 2D-former och egna pennor (`shapesProject`, sedan 0.8.38
 också fyllningstyperna, tegel som snittfyllning och en borttagen typ),
 och (0.8.38) exemplet med olika detaljnivåer för littera, 2D och 3D
-(`nivaer-*`) skrivs som text,
+(`nivaer-*`) och (0.9.3) exemplet med två våningar (`tva-*`) skrivs som text,
 en rad per primitiv (koordinater avrundade till 0,1 mm), och jämförs mot
 facit i `tests/referens/`. Raden visar också fyllningens mönster (med
 fasen, 0.8.38), opacitet och bakgrund, om primitiven ligger under modellen (`under`) och
@@ -192,7 +192,7 @@ skrivs nytt facit med `npx vitest run tests/referens.test.ts -u`; titta
 på skillnaden i git innan den läggs in.
 
 **Testprojekt och hjälpfunktioner** ligger i `tests/projekt.ts` (0.8.32):
-`wallGrid`, `roomGrid` och `shapesProject`; `storeWithShapes` (exemplet
+`wallGrid`, `roomGrid`, `shapesProject` och `twoStoreys` (0.9.3); `storeWithShapes` (exemplet
 med 2D-former, med `order`), `planOf`, `square` och `SHAPE`;
 `wallsProject` och `wallEnds` (tomt projekt med väggar och linjer, för
 Modifiera); `toolHost` (det ritverktygen behöver utan webbläsare); `dxf`
@@ -1197,9 +1197,9 @@ projekt i 1 982 jämförelser.
 
 ## Nivåer (0.9.2, format 15)
 
-- **Nivåkoter** i `buildSection` (`src/repr/section.ts`): FG för varje
-  våning, UK bjl för bjälklag som sektionen skär (`ownCuts` med material
-  `slab`), Takfot och Nock. Texterna skjuts uppåt när två nivåer ligger
+- **Nivåkoter** i `levelPrims` (`src/repr/sectionLevels.ts` sedan 0.9.3,
+  anropas av `buildSection`): FG för varje våning, UK bjl för bjälklag som
+  sektionen skär (`ownCuts` med material `slab`), Takfot och Nock. Texterna skjuts uppåt när två nivåer ligger
   närmare än en textrad, och strecket kortas till triangeln där en annan
   nivås text hamnat på det (`levelMark` med `textY` och `long`).
   Släcks med `hide: ['level']`.
@@ -1212,8 +1212,9 @@ projekt i 1 982 jämförelser.
   konturmitt ligger i ett bjälklag (inte i ett hål) och vars höjdintervall
   bjälklagets undersida går igenom slutar där; urtag och väggens
   kantlinjer kapas med. Väggar med sned ovansida (under tak) lämnas. Med
-  `only` (Bara den här våningen) byggs bjälklagen ovanför för sig, med
-  väggarna i sammanhanget (bjälklag ur väggarna behöver dem).
+  `only` (Bara den här våningen) byggs bjälklagen på våningarna ovanför i
+  samma slinga, med bara väggar och bjälklag i sammanhanget (bjälklag ur
+  väggarna behöver väggarna), och visas inte.
 - Valen i Visa: `level` och `heightDims` under Markörer
   (`src/ui/app/showMenu.ts`). Tester i `tests/v092.test.ts`.
 
@@ -1244,6 +1245,41 @@ projekt i 1 982 jämförelser.
   `propertiesPanel.ts`.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
+
+## Granskning (0.9.3, format 15)
+
+Utan nya funktioner. Kontrollerat med samma klick i 0.9.2 och 0.9.3
+(`scripts/jamfor-klick.py --bilder`, 223 steg, nu också våningar,
+bjälklag och nivåer): samma läge efter varje steg. Referensritningarna
+för två våningar (`tva-*`, projektet `twoStoreys` i `tests/projekt.ts`)
+skrevs med 0.9.2 innan koden ändrades.
+
+- **3D-formerna sparas** (`modelShapes` i `src/repr/storeyShapes.ts`):
+  de senaste fyra svaren för samma projekt, stilmall, urval, våning och vy
+  (som JSON, utan `place` och `viewId`, som bara gäller 2D-elementen)
+  återanvänds (`lastResults`). Det förutsätter att projektet aldrig ändras
+  på plats (se `reuse.ts`) och att ingen ändrar formerna den får. Urvalet
+  är `WITH_DEMOLISHED` (fasader och sektioner) eller `WITHOUT_DEMOLISHED`
+  (3D-vyn), så att samma funktion är samma objekt. Fyra fasader på ett
+  blad bygger modellen en gång
+- **En slinga** i `modelShapes`: med `only` byggs våningarna ovanför i
+  samma slinga, med bara väggar och bjälklag, och bara bjälklagen tas med
+  (för `trimUnderSlabs`)
+- **`featureEdges`** (`src/geometry/hiddenLine.ts`) slår upp hörnen med
+  heltal (avrundade till 0,01 mm) och en hashkedja i stället för text, och
+  kanterna med `a · n + b`; samma hörn och kanter i samma ordning
+- **`section.ts`** i tre filer: `buildSection`, taklutningen och
+  väggarnas konturer kvar; nivåkoterna och höjdmåttet i `sectionLevels.ts`
+  (`levelPrims`, `heightChain`); snittet genom en form i `sectionCut.ts`
+  (`cutSolid`, utan `z0`). `POCHE_MATERIALS` (materialen som fylls) används
+  också av 3D-vyns lock i `pane3d.ts`. `setClip` och `setCaps` i
+  `view3d.ts` har inte längre `z0` (snittytorna har verkliga höjder sedan 0.9)
+- Klickjämförelsen: tre steg som felade likadant i båda byggena (fält som
+  inte finns där skriptet letade) gör nu något som finns. Hålet ritas i en
+  rektangel som skriptet själv ritat, eftersom bjälklaget ur väggarna har
+  en annan form efter de tidigare stegen
+- Mätt men lämnat: resten av en fasad är de dolda linjerna
+  (`visibleSegments`) och sammanslagningarna (`polygon-clipping`)
 
 ## Granskning (0.8.38, format 13)
 

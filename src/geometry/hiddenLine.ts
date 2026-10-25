@@ -316,16 +316,24 @@ function visibleParts(hidden: [number, number][]): [number, number][] {
 export function featureEdges(tris: readonly number[], opts: { crease?: number; onlySilhouettes?: boolean } = {}): [V3, V3][] {
   const crease = Math.cos(((opts.crease ?? 25) * Math.PI) / 180);
   const smooth = Math.cos((30 * Math.PI) / 180);
+  // Hörn närmare än 0,01 mm är samma hörn. Uppslaget med tal i stället för
+  // text (0.9.3): en kedja av hörn per hashvärde.
   const verts: V3[] = [];
-  const index = new Map<string, number>();
+  const keys: number[] = [];
+  const next: number[] = [];
+  const head = new Map<number, number>();
   const vid = (x: number, y: number, d: number) => {
-    const k = `${Math.round(x * 100)},${Math.round(y * 100)},${Math.round(d * 100)}`;
-    let i = index.get(k);
-    if (i === undefined) {
-      i = verts.length;
-      verts.push([x, y, d]);
-      index.set(k, i);
-    }
+    const ix = Math.round(x * 100);
+    const iy = Math.round(y * 100);
+    const iz = Math.round(d * 100);
+    const h = Math.imul(ix, 73856093) ^ Math.imul(iy, 19349663) ^ Math.imul(iz, 83492791);
+    const first = head.get(h) ?? -1;
+    for (let i = first; i >= 0; i = next[i]) if (keys[3 * i] === ix && keys[3 * i + 1] === iy && keys[3 * i + 2] === iz) return i;
+    const i = verts.length;
+    verts.push([x, y, d]);
+    keys.push(ix, iy, iz);
+    next.push(first);
+    head.set(h, i);
     return i;
   };
   const faces: { v: [number, number, number]; n: V3 }[] = [];
@@ -350,12 +358,13 @@ export function featureEdges(tris: readonly number[], opts: { crease?: number; o
     if (nl < 1e-6) continue;
     faces.push({ v: [a, b, c], n: [nx / nl, ny / nl, nz / nl] });
   }
-  const edges = new Map<string, { a: number; b: number; f: number[] }>();
+  const edges = new Map<number, { a: number; b: number; f: number[] }>();
+  const n = verts.length;
   faces.forEach((f, fi) => {
     for (let k = 0; k < 3; k++) {
       const a = f.v[k];
       const b = f.v[(k + 1) % 3];
-      const key = a < b ? `${a}|${b}` : `${b}|${a}`;
+      const key = a < b ? a * n + b : b * n + a;
       let e = edges.get(key);
       if (!e) edges.set(key, (e = { a: Math.min(a, b), b: Math.max(a, b), f: [] }));
       e.f.push(fi);

@@ -159,6 +159,26 @@ export function roomGrid(n: number): ProjectDoc {
 }
 
 /**
+ * Exempelvillan med en våning till (0.9.3): plan 2 på +2 700 med kopior av
+ * väggarna, dörrarna, fönstren, rummen och plattan (BJ01, 400), och en
+ * håltagning i plattan på plan 2 där sektionen går. Taket ligger på plan 2.
+ * Kopiorna heter `<id>-2`, så att referensritningarna blir desamma varje gång.
+ */
+export function twoStoreys(): ProjectDoc {
+  const doc = sampleProject();
+  doc.storeys.push({ id: 'pl-2', name: 'Plan 2', elevation: 2700, height: 2700 });
+  const copied = ['Wall', 'Door', 'Window', 'Space', 'Slab'];
+  for (const e of Object.values(doc.elements)) {
+    if (e.storey !== 'pl-1' || e.space || !copied.includes(e.type)) continue;
+    const id = `${e.id}-2`;
+    doc.elements[id] = { ...structuredClone(e), id, storey: 'pl-2', ...(e.host ? { host: `${e.host}-2` } : {}) };
+  }
+  doc.elements['bj1-2'].params = { ...doc.elements['bj1-2'].params, holes: [[[6000, 5000], [7200, 5000], [7200, 6500], [6000, 6500]]] };
+  doc.elements['tak'].storey = 'pl-2';
+  return doc;
+}
+
+/**
  * Exempelprojektet med 2D-former och egna pennor (0.8.32): linjetyper,
  * också en egen, bågar och ändformer, skraffering med bakgrund och mask,
  * fyllningar i ritordning, en mask framför väggarna och egna pennor på

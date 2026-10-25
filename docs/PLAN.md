@@ -114,6 +114,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.9 | Format 14: flera våningsplan, byta, flytta och kopiera mellan våningar, väggarnas höjd följer våningen, kalkera våningen under och över, alla våningar i 3D, fasader och sektioner |
 | 0.9.1 | Format 15: bjälklag med littera och tjocklek per typ, ur väggarna eller ritade, håltagning |
 | 0.9.2 | Nivåkoter FG, UK bjl, takfot och nock; höjdmått med bjälklagens tjocklek och fri höjd; innerväggarna slutar vid bjälklaget ovanför |
+| 0.9.3 | Granskning: fasader och sektioner av samma projekt bygger 3D-modellen en gång; `section.ts` uppdelad; referensritningar och klick för våningar, bjälklag och nivåer |
 
 ## Framåt
 
@@ -1495,7 +1496,39 @@ egen höjd. Väggar under tak (sned ovansida) kapas inte. Ingen littera på
 bjälklag som standard och inga automatiska bjälklag på nya våningar
 (Carl August 25 oktober; så var det redan).*
 
-### 0.9.3 Bjälklag del 2 · *troligen nytt format*, liten
+### 0.9.3 Granskning
+
+Enligt planen (ungefär var tredje version; förra var 0.8.38). Utan nya
+funktioner. `section.ts` hade vuxit med nivåerna och höjdmåttet,
+`storeyShapes.ts` byggde bjälklagen ovanför en gång till med *Bara den här
+våningen*, och klickjämförelsen saknade våningar, bjälklag och nivåer.
+
+*Byggd (25 oktober), samma format (15). Testerna: 440 → 444 på ca 11 s.
+Skyddet först, skrivet med 0.9.2 innan koden ändrades: ett testprojekt
+med två våningar (`twoStoreys`: exempelvillan med väggar, öppningar, rum
+och platta på plan 2, en håltagning där sektionen går och taket på plan
+2) med referensritningar för plan 2, sektionen, en fasad och 3D, också
+med bara plan 1; klickjämförelsen har 223 steg (ny våning, byta, kopiera
+till våning, väggens våningshöjd, kalkera, bjälklag ur väggarna och som
+rektangel, håltagning, egen kontur, ta bort hålet, släcka nivåer och
+höjdmått), och de tre steg som felade likadant i båda byggena är
+rättade. Samma klick i 0.9.2 och 0.9.3 ger samma läge och samma bild.
+Det långsamma var att varje fasad och sektion byggde hela 3D-modellen
+själv: nu sparas de senaste formerna för samma projekt, vy och
+stilmall, så att fyra fasader och en sektion av ett hus med tre våningar
+à 312 väggar tar ca 3,0–3,6 s i stället för 4,3–4,9 s (också kanterna
+räknas fortare, med tal i stället för text som nycklar). Koden:
+`section.ts` 519 → 371 rader (nivåerna och höjdmåttet i
+`sectionLevels.ts`, snittet genom formerna i `sectionCut.ts`), en
+slinga i `modelShapes` i stället för två, materialen som fylls i snitt på
+ett ställe (också 3D-vyns lock), och kvarlevorna från före 0.9 (`z0 = 0` i
+sektionen och 3D-vyns klippning) borttagna. Testerna för 0.9–0.9.2
+använder det gemensamma projektet med två våningar; provet av att
+markörerna ritas i alla planer ersattes av referensritningen för plan 2.
+Mätt men lämnat: resten av tiden i en fasad är de dolda linjerna
+(`visibleSegments`) och sammanslagningarna, som förut.*
+
+### 0.9.4 Bjälklag del 2 · *troligen nytt format*, liten
 
 Synpunkter 25 oktober, efter 0.9.1.
 
