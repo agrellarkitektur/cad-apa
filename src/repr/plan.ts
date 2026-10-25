@@ -6,6 +6,7 @@ import { autoDimensions } from '../elements/autoDims';
 import { sortByOrder } from '../core/drawOrder';
 import { createContext } from './context';
 import { coverLines } from './cover';
+import { applyOwnPen, ownPenOf } from './ownPen';
 import { sameItems } from './reuse';
 import type { Pen, Primitive, Vec2 } from './primitives';
 
@@ -125,7 +126,8 @@ function drawGroup(t: ElementType, items: PlanItem[], ctx: PlanContext, style: S
   const action = items[0].action;
   const s = style.actions[ctx.styleKeyOf(action)];
   const hidden = ctx.hiddenInView(items[0].el);
-  const styled = (p: Primitive) => (hidden ? ghost(applyStyle(p, s, action, style)) : applyStyle(p, s, action, style));
+  // Objektets egen penna (0.8.31) efter stilmallens; ett dolt element ritas tonat som förut.
+  const styled = (p: Primitive) => (hidden ? ghost(applyStyle(p, s, action, style)) : applyOwnPen(applyStyle(p, s, action, style), ownPenOf(ctx.doc, p), style));
   const pickable = (el: Element, own: Primitive[]): Pickable => ({
     id: el.id,
     priority: t.drawOrder,
@@ -205,6 +207,11 @@ export function applyStyle(p: Primitive, s: ActionStyle, action: Action, sheet: 
     const rs = p.styleAs ? sheet.actions[p.styleAs] : s;
     const o = p.noOutline ? null : rs.cutOutline;
     return { ...p, fill: rs.cutFill, outline: o ? { weight: o.weight, color: o.color, dash: o.dash } : null };
+  }
+  // En snittkontur ritad som linje (0.8.31) får snittkonturens penna; utan kontur i stilmallen ritas den inte.
+  if (p.kind === 'polyline' && p.asOutline) {
+    const o = s.cutOutline;
+    return { ...p, pen: o ? { weight: o.weight, color: o.color, ...(o.dash?.length ? { dash: o.dash } : {}) } : { weight: 0 } };
   }
   const pen: Pen = { ...p.pen };
   if (!pen.color || pen.color === 'ink') pen.color = s.lines.color;

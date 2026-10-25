@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.30** (alfa, linjetyper och mask); nästa är **0.8.31, linjetyp och penna per objekt**.
+**0.8.31** (alfa, linjetyp och penna per objekt); nästa är **0.8.32, granskning**.
 
 ## Vad som fungerar
 
@@ -951,6 +951,18 @@ Version 0.8.27, granskning (samma filformat, 13):
 - Stilmallen, egenskaperna för 2D-former, underlag och Visas i, och
   appens stilar ligger i fler och mindre filer, så att linjetyper och
   detaljnivåer får en egen plats när de kommer
+
+Version 0.8.31, linjetyp och penna per objekt (samma filformat, 13):
+- **Egen penna** för väggar, dörrar, fönster, tak och möbler, under
+  *Penna* i egenskaperna: tjocklek, färg och linjetyp var för sig, med
+  *Stilmallens* från början. För de udda fall där stilmallens ritning
+  blir missvisande, t.ex. en vägg som ska ritas streckad. Gäller
+  objektets linjer och konturer i planen, fasaderna och sektionerna, inte
+  fyllningar och text. Knappen *Stilmallens penna* tar bort den egna, och
+  pipetten tar med den
+- **Väggarna flyter ihop som förut**: en vägg med egen penna får den på
+  sina egna kanter, medan väggytan är en, utan skarvar mot grannväggarna.
+  Likadant för snitten i sektionerna
 
 Version 0.8.30, linjetyper och mask (samma filformat, 13):
 - **Fler linjetyper**: heldragen, streckad, kort och lång streckad,

@@ -281,8 +281,25 @@ export interface Element<P extends object = Record<string, unknown>> {
    * ritas bakom. Utelämnad = 0; vid lika värden gäller ordningen i listan.
    */
   order?: number;
+  /**
+   * Egen penna (0.8.31) i stället för stilmallens, för de udda fall där
+   * standardritningen blir missvisande: tjocklek, färg och linjetyp, var
+   * för sig. Utelämnad = stilmallens. Gäller objektets linjer och konturer
+   * i planen, fasaderna och sektionerna, inte fyllningar och text.
+   */
+  pen?: OwnPen;
   params: P;
   props: PropertySets;
+}
+
+/** Ett objekts egen penna (0.8.31); det som saknas tas från stilmallen. */
+export interface OwnPen {
+  /** Linjebredd på papper i mm. */
+  weight?: number;
+  /** Färg som #rrggbb. */
+  color?: string;
+  /** Linjetypens nyckel (`lineTypeDash`); `solid` tar bort stilmallens streckning. */
+  linetype?: string;
 }
 
 export const FORMAT = 'bacchus-project';

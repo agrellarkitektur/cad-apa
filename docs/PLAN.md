@@ -1164,6 +1164,18 @@ Carl Augusts synpunkt 25 oktober. Mellanstor, en session. Bygger på 0.8.30.
   fall där standardrepresentationen blir missvisande. I planen, fasaderna
   och sektionerna
 
+*Byggd (25 oktober), samma format (13). Claudes val: pennan är ett eget
+fält på objektet (`Element.pen`), inte i typen, med tjocklek, färg och
+linjetyp var för sig och *Stilmallens* för varje fält. Den finns för
+väggar, dörrar, fönster, tak och möbler; inte för rum, som inte ritar
+någon kontur i planen (fyllningen har sin egen färg). Tjockleken gäller
+alla objektets linjer, så en dörr med egen tjocklek får samma på blad,
+karm och slagbåge. Linjetypen *Heldragen* tar bort stilmallens
+streckning (t.ex. på en riven vägg). En vägg med egen penna flyter ihop
+med grannarna som förut; konturen delas efter vilken vägg varje kant
+kommer ifrån. Texter (littera, rumsstämplar) och fyllningar följer
+stilmallen. Inte i smartmenyn och inte för objekt på blad.*
+
 ### 0.8.32 Granskning
 
 Enligt planen (ungefär var tredje version; förra var 0.8.27). Utan nya

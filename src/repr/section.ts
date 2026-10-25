@@ -10,6 +10,8 @@ import { slopeSymbol, type RoofSlopeParams } from '../elements/roofSlope';
 import type { PlanContext } from '../elements/registry';
 import { createContext } from './context';
 import { markerPen, solidPen, withWeight } from './markerPens';
+import { applyOwnPen, ownPenOf } from './ownPen';
+import { ownedOutlines } from './outlineOwners';
 import { solidTriangles } from './mesh';
 import { applyStyle, type Pickable } from './plan';
 import type { Pen, Primitive, Vec2 } from './primitives';
@@ -218,7 +220,8 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   for (const l of visibleLines) {
     const pen: Pen = l.key.part ? { ...PART_PEN[l.key.part], ...(style.pens?.[l.key.part] as Pen | undefined), ...(l.key.dash ? { dash: l.key.dash } : {}) } : { weight: 0.18 };
     const raw: Primitive = { kind: 'line', a: l.a, b: l.b, pen, origin: { objectId: l.key.id, objectType: doc.elements[l.key.id]?.type, part: l.key.part ?? 'vy' } };
-    const p = applyStyle(raw, style.actions[ctx.styleKeyOf(l.key.action)], l.key.action, style);
+    // Objektets egen penna (0.8.31) efter stilmallens.
+    const p = applyOwnPen(applyStyle(raw, style.actions[ctx.styleKeyOf(l.key.action)], l.key.action, style), ownPenOf(doc, raw), style);
     prims.push(p);
     own(l.key.id, p);
     minU = Math.min(minU, l.a[0], l.b[0]);
@@ -227,15 +230,29 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   for (const g of cuts.values()) {
     const merged = g.poche ? union(g.rings) : g.rings;
     const first = [...g.ids][0];
+    // Snitt med egen penna (0.8.31): konturen delas efter objekt, som väggarna i planen.
+    const owned = new Set([...g.ids].filter((id) => doc.elements[id]?.pen));
+    const split = owned.size ? { outline: null, noOutline: true } : {};
     for (const rings of merged) {
       const raw: Primitive = g.poche
-        ? { kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { objectId: first, part: 'snitt' } }
-        : { kind: 'region', role: 'cut', rings, fill: { kind: 'none' }, outline: { weight: 0.25 }, ownFill: true, origin: { objectId: first, part: 'snitt' } };
+        ? { kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { objectId: first, part: 'snitt' }, ...split }
+        : { kind: 'region', role: 'cut', rings, fill: { kind: 'none' }, outline: { weight: 0.25 }, ownFill: true, origin: { objectId: first, part: 'snitt' }, ...split };
       const p = applyStyle(raw, style.actions[ctx.styleKeyOf(g.action)], g.action, style);
       prims.push(p);
       for (const ring of rings) for (const q of ring) {
         minU = Math.min(minU, q[0]);
         maxU = Math.max(maxU, q[0]);
+      }
+    }
+    if (owned.size) {
+      const pieces = [...g.ids].flatMap((id) => (ownCuts.get(id) ?? []).map((r) => ({ id, rings: r })));
+      for (const o of ownedOutlines(merged, pieces, owned)) {
+        const id = o.id ?? first;
+        const raw: Primitive = { kind: 'polyline', points: o.points, closed: o.closed, pen: { weight: g.poche ? 0.35 : 0.25 }, ...(g.poche ? { asOutline: true } : {}), origin: { objectId: id, part: 'snitt' } };
+        const styled = g.poche ? applyStyle(raw, style.actions[ctx.styleKeyOf(g.action)], g.action, style) : raw;
+        const p = applyOwnPen(styled, o.id ? doc.elements[o.id]?.pen : undefined, style);
+        prims.push(p);
+        own(id, p);
       }
     }
   }

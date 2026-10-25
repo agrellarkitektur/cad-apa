@@ -1,3 +1,4 @@
+import { ownedOutlines } from '../repr/outlineOwners';
 import { sameItems } from '../repr/reuse';
 import type { Element } from '../core/model';
 import { boxesTouch, boxOf, difference, union, type Box, type Rings } from '../geometry/boolean';
@@ -327,6 +328,9 @@ export const wallType: ElementType<WallParams> = {
       );
       if (existing.length) regions = regions.flatMap((r) => difference(r, existing));
     }
+    // Väggar med egen penna (0.8.31): ytan är en, men konturen delas efter
+    // vilken vägg kanten kommer ifrån, så att den egna pennan hamnar på rätt kanter.
+    const owned = new Set(items.filter(({ el }) => el.pen).map(({ el }) => el.id));
     const out = regions.map(
       (rings): Primitive => ({
         kind: 'region',
@@ -334,9 +338,15 @@ export const wallType: ElementType<WallParams> = {
         rings,
         fill: { kind: 'solid', color: 'ink' },
         outline: { weight: 0.35 },
+        ...(owned.size ? { noOutline: true } : {}),
         origin: { objectType: 'Wall', part: 'snitt' },
       }),
     );
+    if (owned.size) {
+      const own = items.flatMap(({ el }) => (shapes.get(el.id) ?? []).map((r) => ({ id: el.id, rings: r })));
+      for (const o of ownedOutlines(regions, own, owned))
+        out.push({ kind: 'polyline', points: o.points, closed: o.closed, pen: { weight: 0.35 }, asOutline: true, origin: { ...(o.id ? { objectId: o.id } : {}), objectType: 'Wall', part: 'kontur' } });
+    }
     if (showLittera(ctx, 'Wall') && action !== 'demolished') {
       for (const { el } of items) out.push(...wallTag(ctx, el));
     }

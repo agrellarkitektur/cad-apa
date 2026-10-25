@@ -1124,6 +1124,28 @@ projekt i 1 982 jämförelser.
   saker och mappar i en transaktion och hoppar över en mapp som skulle
   hamna i sig själv eller en undermapp
 
+## Linjetyp och penna per objekt (0.8.31, format 13)
+
+Inga nya format: fältet är frivilligt.
+
+- **`Element.pen`** (`OwnPen`: `weight`, `color`, `linetype`, alla
+  frivilliga). `applyOwnPen` i `src/repr/ownPen.ts` lägger den på en
+  primitiv efter stilmallen (`applyStyle`): linjer, bågar och konturer,
+  inte fyllningar och text; `ownPenOf(doc, p)` hittar pennan via
+  `origin.objectId` (2D-former har sin egen och hoppas över). Planen gör
+  det i `drawGroup` (`styled`), sektionerna och fasaderna för varje linje
+- **Sammanslagna ytor**: har en vägg i gruppen en egen penna ritar
+  `wallType.planBatch` ytorna utan kontur (`noOutline`) och konturen som
+  linjer med `asOutline`, delade av `ownedOutlines` i
+  `src/repr/outlineOwners.ts` efter vilken vägg varje kant kommer ifrån
+  (raka kanter genom flera väggar delas där väggarna möts). `applyStyle`
+  ger en `asOutline`-linje snittkonturens penna. Sektionernas snitt gör
+  samma sak. Utan egna pennor ritas allt som förut
+- **Gränssnittet**: `ownPenSection` och `ownPenChange` i
+  `src/ui/ownPenFields.ts` (nycklarna `pen:…`, via `drawingChange`), och
+  knappen `own-pen-reset` i `actions.ts`. `OWN_PEN_TYPES` säger vilka
+  sorter som har avsnittet. Pipetten (`transferSettings`) tar med pennan
+
 ## Linjetyper och mask (0.8.30, format 13)
 
 Inga nya format: fälten är frivilliga.

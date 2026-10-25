@@ -1,10 +1,18 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.30.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.31.
 
 ## Läget
 
+- **0.8.31 Linjetyp och penna per objekt är klar** på `main` (samma
+  format, 13): egen tjocklek, färg och linjetyp för väggar, dörrar,
+  fönster, tak och möbler (`Element.pen`, avsnittet *Penna* i
+  egenskaperna), i planen, fasaderna och sektionerna. En vägg med egen
+  penna flyter ihop med grannarna; konturen delas per kant
+  (`ownedOutlines`). Prövat med `tests/v0831.test.ts` (alla 406 tester
+  går igenom) och i webbläsaren. Står i README, PLAN.md (med Claudes val)
+  och UTVECKLING.md.
 - **0.8.30 Linjetyper och mask är klar** på `main` (samma format, 13):
   sju inbyggda linjetyper och egna i stilmallen (*Linjetyper*, mönster i
   mm på papper), för 2D-former och pennorna i stilmallen; streckningen
@@ -93,9 +101,8 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.25 Ritordning och fyllningar~~, ~~0.8.26 Pennor i stilmallen~~,
   ~~0.8.27 Granskning~~, ~~0.8.28 Rättelser i 2D-formen~~,
   ~~0.8.29 Bakgrund i fyllningar och ändformer~~,
-  ~~0.8.30 Linjetyper och mask~~ (klara)
-- **0.8.31 Linjetyp och penna per objekt** (också väggar; Stilmallens
-  eller egen)
+  ~~0.8.30 Linjetyper och mask~~, ~~0.8.31 Linjetyp och penna per
+  objekt~~ (klara)
 - **0.8.32 Granskning** (också testerna: dubbletter, tester som låser
   detaljer, hela körningen under en minut)
 - **0.8.33 Egna fyllningstyper** (linjefamiljer med streckning; kanske
@@ -122,17 +129,24 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.30 syns på webbhotellet (numret vid alfa-knappen) och
-om linjetyperna, de egna linjetyperna och masken fungerar som han tänkt.
-Läs synpunktsfilen och sortera ny Inkorg. Bygg **0.8.31 Linjetyp och
-penna per objekt**: *Stilmallens* (förval) eller egen penna och linjetyp
-för väggar, dörrar, fönster, rum och tak, i planen, fasaderna och
-sektionerna. Att börja med: `applyStyle` i `src/repr/plan.ts` (där
-stilmallens kontur och linjer läggs på) och `PART_PEN` i
-`src/repr/section.ts`; linjetyperna slås upp med `lineTypeDash` och
-listan ritas med `lineTypeOptions`.
+Fråga först om 0.8.31 syns på webbhotellet (numret vid alfa-knappen) och
+om den egna pennan fungerar som han tänkt. Läs synpunktsfilen och
+sortera ny Inkorg. Bygg **0.8.32 Granskning** (utan nya funktioner):
+städa, dela upp stora filer, leta efter långsam kod, och gå igenom
+testerna (dubbletter, tester som låser detaljer, hela körningen under en
+minut; 406 tester på ca 23 s efter 0.8.31). Kör klickjämförelsen
+(`scripts/jamfor-klick.py`) mot 0.8.31 före och efter, och lägg till steg
+för linjetyperna, masken och den egna pennan.
 
 ## Att fråga Carl August om
+
+- **0.8.31 efter provning** (Claudes val, se PLAN.md): att pennan finns
+  för väggar, dörrar, fönster, tak och möbler men inte för rum (som inte
+  ritar någon kontur); att tjockleken gäller alla objektets linjer (en
+  dörrs blad, karm och slagbåge blir lika); att texter och fyllningar
+  följer stilmallen; att pennan inte finns i smartmenyn. Ska rummen ha en
+  kontur som kan få en penna? Ska den egna pennan kunna sättas på en typ
+  (t.ex. alla YV01) i stället för ett objekt i taget?
 
 - **0.8.30 efter provning** (Claudes val, se PLAN.md): vilka sju
   inbyggda linjetyper som finns och deras mönster; att de egna ligger i

@@ -63,6 +63,11 @@ export interface PolylinePrim extends Base {
   pen: Pen;
   /** En bit av en längre streckad linje (0.8.30): mönstret följer den hela. */
   dashFrom?: DashFrom;
+  /**
+   * En snittytas kontur ritad som linje (0.8.31), så att en del av den kan
+   * få ett objekts egen penna: stilmallen ger den snittkonturens penna.
+   */
+  asOutline?: boolean;
 }
 
 /**

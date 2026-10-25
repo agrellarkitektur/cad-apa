@@ -139,6 +139,9 @@ export function transferSettings(store: DocStore, sourceId: Id, ids: readonly Id
       const next: Element = { ...el, params: params as Element['params'] };
       if (src.definition) next.definition = src.definition;
       else delete next.definition;
+      // Den egna pennan (0.8.31) följer också med.
+      if (src.pen) next.pen = structuredClone(src.pen);
+      else delete next.pen;
       tx.putElement(next);
       out.done++;
     }

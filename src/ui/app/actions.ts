@@ -21,6 +21,7 @@ import type { installShowMenu } from './showMenu';
 import type { installViews } from './views';
 import { installTreeClicks } from './treeClicks';
 import { arrangeSelection } from './drawOrderUi';
+import { resetOwnPen } from '../ownPenFields';
 import type { OrderMove } from '../../core/drawOrder';
 
 /** De delar av appen som knapparna når utöver `app`. */
@@ -320,6 +321,10 @@ export function installActions(app: AppContext, parts: ActionParts) {
         app.setTool('draw2d', true);
         app.smartMenu.hide();
         app.hint('Klicka på den ände av linjen där den ska fortsätta.', 4000);
+        break;
+      case 'own-pen-reset':
+        // Egen penna (0.8.31) tillbaka till stilmallens.
+        resetOwnPen(app.store, app.selection.list());
         break;
       case 'draw-order': {
         // Ritordning (0.8.25), knapparna i egenskaperna och smartmenyn.

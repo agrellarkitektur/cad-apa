@@ -28,6 +28,7 @@ import { skewOf, skewText } from '../elements/angleCheck';
 import { bindTreeForm, treeItemExists, treeItemMarkup, type TreeItem } from './treeItemPanel';
 import { bindSheetForm, sheetFormMarkup, type SheetFormHost } from './sheetForms';
 import { orderSection } from './app/drawOrderUi';
+import { ownPenSection } from './ownPenFields';
 import { drawingChange, drawingClick, hereOf, lockField } from './drawingPanel';
 import { shapeSmartFields } from './shapeFields';
 import { resetShowList, showSection } from './showFields';
@@ -331,6 +332,10 @@ export class PropertiesPanel {
     // Ritordning (0.8.25): Längst bak … Främst, och 2D-formens lager mot väggarna.
     const order = orderSection(doc, els);
     if (order) sections.push(order);
+
+    // Egen penna (0.8.31) för väggar, dörrar, fönster, tak och möbler.
+    const pen = ownPenSection(doc, els);
+    if (pen) sections.push(pen);
 
     // Visas i (0.8): 2D-element, text och mått kan visas i vissa vyer.
     const selKey = els.map((e) => e.id).join();

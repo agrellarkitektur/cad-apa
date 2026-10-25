@@ -1,3 +1,4 @@
+import { ownPenChange } from './ownPenFields';
 import { setLocked, updateParams } from '../core/commands';
 import { modelViewId, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
@@ -65,6 +66,7 @@ export function drawingChange(store: DocStore, ids: Id[], key: string, input: HT
     return true;
   }
   if (scope === 'show') return showChange(store, ids, name, input, here);
+  if (scope === 'pen') return ownPenChange(store, ids, name, input);
   return false;
 }
 

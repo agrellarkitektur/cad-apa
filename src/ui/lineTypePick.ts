@@ -5,16 +5,17 @@ import { escapeHtml } from './labels';
 /**
  * Valen i en lista med linjetyper (0.8.30): de inbyggda och stilmallens
  * egna. En nyckel som inte finns längre (en borttagen egen linjetyp) står
- * kvar som vald, och ritas heldragen.
+ * kvar som vald, och ritas heldragen. `first` är ett val före listan.
  */
-export function lineTypeOptions(style: StyleSheet | undefined, selected: string | undefined | null): string {
+export function lineTypeOptions(style: StyleSheet | undefined, selected: string | undefined | null, first?: { value: string; label: string }): string {
   const list = lineTypeList(style);
-  const key = selected ?? undefined;
+  // Utan val: det första valet (t.ex. Stilmallens, 0.8.31), annars heldragen.
+  const key = selected ?? (first ? first.value : 'solid');
   const missing = selected && !list.some((t) => t.id === selected) ? `<option value="${escapeHtml(selected)}" selected>Saknas (heldragen)</option>` : '';
   const mixed = selected === null ? '<option selected disabled>Olika</option>' : '';
+  const opt = (t: { id: string; name: string }) => `<option value="${escapeHtml(t.id)}"${selected !== null && t.id === key ? ' selected' : ''}>${escapeHtml(t.name)}</option>`;
   const own = list.filter((t) => t.own);
-  const opt = (t: { id: string; name: string }) => `<option value="${escapeHtml(t.id)}"${t.id === (key ?? 'solid') && selected !== null ? ' selected' : ''}>${escapeHtml(t.name)}</option>`;
-  return `${mixed}${missing}${list.filter((t) => !t.own).map(opt).join('')}${own.length ? `<optgroup label="Egna">${own.map(opt).join('')}</optgroup>` : ''}`;
+  return `${mixed}${missing}${first ? opt({ id: first.value, name: first.label }) : ''}${list.filter((t) => !t.own).map(opt).join('')}${own.length ? `<optgroup label="Egna">${own.map(opt).join('')}</optgroup>` : ''}`;
 }
 
 /** Mönstret som en liten bild, för listan över linjetyper i stilmallen. */
