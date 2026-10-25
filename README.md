@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.28** (alfa, rättelser i 2D-formen); nästa är **0.8.29, linjetyper**.
+**0.8.28** (alfa, rättelser i 2D-formen); nästa är **0.8.29, bakgrund i fyllningar och ändformer**.
 
 ## Vad som fungerar
 

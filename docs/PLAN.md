@@ -51,8 +51,10 @@ något att bygga vidare på; ordningen efter den bestäms då.
 - **Kvalitet:** prestandatestet (`tests/prestanda.test.ts`, sedan 0.8 del
   2.1) ska gå igenom i varje version. Referensritningar läggs till i 0.8.2.
   Var tredje version eller så görs en granskningssession utan nya
-  funktioner: städa, dela upp stora filer (`app.ts`, `propertiesPanel.ts`)
-  och leta efter algoritmer som växer med kvadraten på antalet objekt.
+  funktioner: städa, dela upp stora filer (`app.ts`, `propertiesPanel.ts`),
+  leta efter algoritmer som växer med kvadraten på antalet objekt och gå
+  igenom testerna (dubbletter, tester som låser detaljer, och hela
+  körningen under en minut; sedan 0.8.28).
 
 Versioner som ändrar filformatet (`FORMAT_VERSION`) markeras med *nytt
 format* nedan. Före formatfrysen behöver formatändringar inte samlas: en
@@ -1088,7 +1090,22 @@ genomskinlig fyllning döljer ingenting. Bara mellan 2D-former på samma
 yta och i samma tillstånd; ändformerna (pilar, punkter) kapas inte, och
 markeringen visar hela formen.*
 
-### 0.8.29 Linjetyper
+### 0.8.29 Bakgrund i fyllningar och ändformer
+
+Carl Augusts svar efter provningen av 0.8.28 (25 oktober). Liten, en
+session; samma format (valfria parametrar).
+
+- **Bakgrund i fyllningar**: en skraffering och en korsskraffering får en
+  bakgrund, ingen (förval) eller en färg med egen opacitet, i
+  egenskaperna, smartmenyn och 2D-verktyget. Hel fyllning har redan sin
+  färg. Gäller också rummens fyllning (samma fält). En bakgrund med
+  opacitet 100 % döljer linjerna under, som en hel fyllning (0.8.28). I
+  PDF:en och DXF:en en hel fyllning under strecken
+- **Ändformerna följer linjen i ritordningen**: de fyllda ändformerna
+  (triangel, punkt, pil) och cirkeln döljs av en fyllning ovanför, som
+  linjen (pilarnas och strecken linjer gör det redan sedan 0.8.28)
+
+### 0.8.30 Linjetyper
 
 Carl Augusts synpunkter 25 oktober (förslag 25 oktober). Stor men troligen
 en session; egna linjetyper flyttas till nästa version om de inte ryms.
@@ -1100,10 +1117,10 @@ Grunden för det punktstreckade ovanför snittet i 0.10.
 - **Egna linjetyper**: ett mönster av streck och mellanrum i mm på papper
 - Kanske: DXF-underlagens streckade linjer ritas streckade
 
-### 0.8.30 Egna fyllningstyper
+### 0.8.31 Egna fyllningstyper
 
 Carl Augusts synpunkt 25 oktober; tidigarelagd från *Efter
-pilotprojektet* samma dag. Stor, troligen en session. Bygger på 0.8.29:
+pilotprojektet* samma dag. Stor, troligen en session. Bygger på 0.8.30:
 mönstrens linjer kan vara streckade.
 
 - **Egna fyllningstyper**: ett mönster av en eller flera linjefamiljer
@@ -1111,7 +1128,7 @@ mönstrens linjer kan vara streckade.
   skärmen, i PDF:en och i DXF:en
 - Kanske: läsa in färdiga `.pat`-filer (AutoCAD, ArchiCAD)
 
-### 0.8.31 Detaljnivåer i stilmallen
+### 0.8.32 Detaljnivåer i stilmallen
 
 Carl Augusts synpunkt 25 oktober. Detaljnivån väljs per vy, som i
 ArchiCAD (Carl August 25 oktober); det finns redan (Skiss, Normal, Detalj
@@ -1120,6 +1137,15 @@ i vyraden), så det nya är vad stilmallen visar på varje nivå.
 - **Litteran efter detaljnivå**: stilmallens innehåll för dörrar, fönster,
   rum m.m. delas upp i skiss, normal och detalj. *Att fråga:* ska dörrar
   och fönster också ritas olika (då hör en del hemma i 0.11.2)?
+
+### 0.8.33 Granskning
+
+Enligt planen (ungefär var tredje version; förra var 0.8.27). Utan nya
+funktioner: städa, dela upp stora filer och leta efter långsam kod, och
+(Carl August 25 oktober) gå igenom testerna: slå ihop dubbletter, ta bort
+tester som prövar samma sak två gånger och tester som låser detaljer
+utan anledning, och se till att hela körningen tar under en minut (378
+tester på ca 23 s efter 0.8.28).
 
 ### 0.9 Flera våningsplan och bjälklag · *nytt format*
 

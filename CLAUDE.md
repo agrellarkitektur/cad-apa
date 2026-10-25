@@ -41,7 +41,9 @@ byggs i vilken version), `docs/ARKITEKTUR.md` (idé och principer) och
   `src/geometry/boolean.ts`). Ändringar i flera objekt görs i en
   transaktion, inte en per objekt.
 - Ungefär var tredje version föreslås en granskningssession utan nya
-  funktioner: städa, dela upp stora filer och leta efter långsam kod.
+  funktioner: städa, dela upp stora filer, leta efter långsam kod och gå
+  igenom testerna (slå ihop dubbletter, ta bort tester som prövar samma
+  sak eller låser detaljer utan anledning; hela körningen under en minut).
 - En session per version. Småversioner (0.7.2 …) har 3–6 punkter. Säg till
   när chatten blir lång, och skriv då en överlämning i `docs/OVERLAMNING.md`.
 - `docs/OVERLAMNING.md` har alltid en kort **färdplan** (en rad per

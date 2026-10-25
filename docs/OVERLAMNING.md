@@ -21,10 +21,13 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 - **Carl Augusts provning 25 oktober**: 0.8.26 syns på webbhotellet, och
   sorteringen av Inkorgen 24 oktober stämde. Tre fel i 2D-formen blev
   0.8.28 (klar). Inkorgen 25 oktober sorterades och
-  ordningen bekräftades av Carl August: 0.8.29 Linjetyper (med egna
-  linjetyper), 0.8.30 Egna fyllningstyper (tidigarelagd på hans begäran),
-  0.8.31 Detaljnivåer i stilmallen (detaljnivån väljs per vy, som i
-  ArchiCAD).
+  ordningen bekräftades av Carl August. Efter 0.8.28 (samma dag) svarade
+  han: fortsätta bara den markerade linjen är bra; fyllningarna ska få en
+  bakgrundsfärg med egen opacitet; ändformerna ska följa linjen i
+  ritordningen. Det blev en ny liten **0.8.29**, och resten flyttades ett
+  steg: 0.8.30 Linjetyper (med egna), 0.8.31 Egna fyllningstyper
+  (tidigarelagd på hans begäran), 0.8.32 Detaljnivåer i stilmallen (per
+  vy, som i ArchiCAD), 0.8.33 Granskning, där också testerna granskas.
 - **0.8.22–0.8.26** (småsaker, granskning, 2D-form del 2 med bågar och
   ändar i format 13, ritordning och fyllningar, pennor i stilmallen) står
   i PLAN.md med Claudes val och i UTVECKLING.md med var koden ligger.
@@ -72,10 +75,15 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.22 Småsaker~~, ~~0.8.23 Granskning~~, ~~0.8.24 2D-form del 2~~,
   ~~0.8.25 Ritordning och fyllningar~~, ~~0.8.26 Pennor i stilmallen~~,
   ~~0.8.27 Granskning~~, ~~0.8.28 Rättelser i 2D-formen~~ (klara)
-- **0.8.29 Linjetyper** (också egna; grunden för det punktstreckade i 0.10)
-- **0.8.30 Egna fyllningstyper** (linjefamiljer med streckning; kanske
+- **0.8.29 Bakgrund i fyllningar och ändformer** (liten: bakgrundsfärg
+  med opacitet för skraffering, också i rum; de fyllda ändformerna döljs
+  med linjen)
+- **0.8.30 Linjetyper** (också egna; grunden för det punktstreckade i 0.10)
+- **0.8.31 Egna fyllningstyper** (linjefamiljer med streckning; kanske
   `.pat`-filer)
-- **0.8.31 Detaljnivåer i stilmallen** (per vy, som i ArchiCAD)
+- **0.8.32 Detaljnivåer i stilmallen** (per vy, som i ArchiCAD)
+- **0.8.33 Granskning** (också testerna: dubbletter, tester som låser
+  detaljer, hela körningen under en minut)
 - **0.9 Flera våningsplan och bjälklag** (nytt format; felet med golvnivån
   i 3D)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade)
@@ -95,28 +103,27 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 ## Nästa session
 
 Fråga först om 0.8.28 syns på webbhotellet (numret vid alfa-knappen) och
-om de tre rättelserna fungerar som han tänkt (se frågorna nedan). Läs
-synpunktsfilen och sortera ny Inkorg (ordningen 0.8.29–0.8.31 är
-bekräftad). Fråga om linjetyperna (gäller de väggar och fasadernas linjer
-också?) och bygg sedan **0.8.29 Linjetyper** (stor men troligen en
-session; egna linjetyper flyttas till 0.8.30 om de inte ryms). Att börja
-med: `LINE_TYPES` i `src/elements/drawing2d.ts` har redan några streckade
-typer för 2D-formerna (`dash` i `Pen`); pennorna i stilmallen ligger i
-`src/ui/style/pens.ts`. Kapade linjer från 0.8.28 (`coverLines`) börjar
-om strecket i varje bit; ett mönster som ska löpa jämnt behöver räkna
-fasen.
+om de tre rättelserna fungerar som han tänkt. Läs synpunktsfilen och
+sortera ny Inkorg (ordningen 0.8.29–0.8.33 är bekräftad). Bygg sedan
+**0.8.29 Bakgrund i fyllningar och ändformer** (liten, en session; samma
+format med valfria parametrar). Att börja med: `fillPrims` i
+`src/elements/drawing2d.ts` gör fyllningens ytor (för 2D-former och rum,
+`FillParams`); en bakgrund blir en hel yta före skrafferingen, och
+fälten läggs i `fillFields` och `shapeSmartFields` i
+`src/ui/shapeFields.ts` (och rummens fält). `coverLines` i
+`src/repr/cover.ts` räknar bara hela ytor med opacitet 1 som täckande,
+så en bakgrund med 100 % täcker av sig själv. Ändformerna: `coverLines`
+kapar `line` och `polyline`; de fyllda ändformerna är `region` (kan
+kapas med `difference` i `src/geometry/boolean.ts`) och cirkeln en `arc`
+(gör om till en polylinje och kapa).
 
 ## Att fråga Carl August om
 
-- **0.8.28 efter provning** (Claudes val, se PLAN.md): att bara den
-  markerade linjen fortsätts (en nyritad är markerad), och att Ctrl+klick
-  börjar en ny linje i dess ände; att knappen *Fortsätt* inte kan väljas
-  bort i inställningarna för snabbknappar; att nya kanter är raka och får
-  formens penna, inte verktygets. Att bara hel fyllning med opacitet
-  100 % döljer det under: ska en skraffering också dölja (då behöver den
-  en bakgrundsfärg, som i ArchiCAD)? Ändformerna (pilar, punkter) under en
-  fyllning kapas inte, och det döljs bara mellan 2D-former, inte rum,
-  väggar eller text.
+- **0.8.28 efter provning**: Carl August har svarat (25 oktober) att
+  bara den markerade linjen ska fortsättas, som nu; skrafferingens
+  bakgrund och ändformerna blir 0.8.29. Kvar att fråga: ska *Fortsätt*
+  kunna väljas bort i inställningarna för snabbknappar, och ska nya kanter
+  få verktygets penna i stället för formens?
 
 - **0.8.26 efter provning** (Claudes val, se PLAN.md): vilka nio pennor
   som finns och deras namn; att färgen också gäller markörens text och
@@ -151,10 +158,12 @@ fasen.
   mycket plats? Ska bågar kunna ritas direkt i Linje (som `A` i AutoCADs
   PLINE)?
 
-- **Linjetyperna (0.8.29)**: ska de gälla väggar och fasadernas linjer
+- **Linjetyperna (0.8.30)**: ska de gälla väggar och fasadernas linjer
   också, eller bara 2D-former och pennorna i stilmallen? (Fråga senast
-  när 0.8.29 börjar.)
-- **Detaljnivåerna (0.8.31)**: per vy är bestämt. Gäller det bara
+  när 0.8.30 börjar.) Kapade linjer från 0.8.28 (`coverLines`) börjar om
+  strecket i varje bit; ett mönster som ska löpa jämnt behöver räkna
+  fasen.
+- **Detaljnivåerna (0.8.32)**: per vy är bestämt. Gäller det bara
   litteran, eller ska dörrar och fönster också ritas olika (då hör en del
   hemma i 0.11.2)? Carl Augusts "ja" 25 oktober tolkades som per vy; säg
   till om det var fel.
