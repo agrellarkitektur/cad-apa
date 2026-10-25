@@ -62,6 +62,8 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
       ['Section', 'Sektioner'],
       ['North', 'Norrpil'],
       ['roofSlope', 'Taklutning i fasad och sektion'],
+      ['level', 'Nivåer i fasad och sektion'],
+      ['heightDims', 'Höjdmått i sektion'],
     ],
   },
 ];

@@ -111,6 +111,9 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.36 | Egna fyllningstyper (linjefamiljer med streckning), läsa och spara .pat, streckade mönster i DXF-underlag |
 | 0.8.37 | Detaljnivå för littera, 2D-symboler och 3D var för sig, färdiga fyllningstyper, linjetjocklek per typ, snabbguide |
 | 0.8.38 | Granskning: starkt snedställda mönster (grus, mark) som klippta streck, snabbt och rätt; skrafferingen som mönster; `fillTypes.ts` uppdelad; referensritningar och klick för fyllningstyperna och detaljnivåerna |
+| 0.9 | Format 14: flera våningsplan, byta, flytta och kopiera mellan våningar, väggarnas höjd följer våningen, kalkera våningen under och över, alla våningar i 3D, fasader och sektioner |
+| 0.9.1 | Format 15: bjälklag med littera och tjocklek per typ, ur väggarna eller ritade, håltagning |
+| 0.9.2 | Nivåkoter FG, UK bjl, takfot och nock; höjdmått med bjälklagens tjocklek och fri höjd; innerväggarna slutar vid bjälklaget ovanför |
 
 ## Framåt
 
@@ -1474,6 +1477,31 @@ Blir 0.9.1 liten kan 0.9.2 läggas i den.
   Relativa nivåer: ±0 är plan 1:s golv. Höjd över havet (RH 2000) kommer
   med koordinatversionen efter 0.12
 - Mått för fri höjd och bjälklagets tjocklek i sektioner
+- Innerväggar kapas av bjälklaget ovanför (synpunkt 25 oktober)
+
+*Byggd (25 oktober), samma format (15). Beteckningarna valde Carl August
+(FG/ÖK/UK). Claudes val: FG vid varje vånings golv och UK bjl vid
+undersidan av bjälklag som sektionen skär; ÖK skrivs inte, eftersom
+bjälklagets ovansida är golvet. Takfot och Nock som förut men med stor
+bokstav och beteckningen före höjden (*FG +2,700*). Fasaderna har bara
+FG, takfot och nock (de skär inga bjälklag). Höjdmåttet är en måttkedja
+bredvid nivåerna genom bjälklagens under- och ovansidor (tjocklek, fri
+höjd, tjocklek …); en översta våning utan bjälklag ovanför får ingen fri
+höjd (taket kommer i 0.10). Nivåer närmare än en textrad får texten
+uppskjuten. Både nivåer och höjdmått kan släckas under Visa (Markörer).
+En vägg räknas som under ett bjälklag när mitten av dess kontur ligger i
+det (inte i ett hål); den slutar då vid bjälklagets undersida, också med
+egen höjd. Väggar under tak (sned ovansida) kapas inte. Ingen littera på
+bjälklag som standard och inga automatiska bjälklag på nya våningar
+(Carl August 25 oktober; så var det redan).*
+
+### 0.9.3 Bjälklag del 2 · *troligen nytt format*, liten
+
+Synpunkter 25 oktober, efter 0.9.1.
+
+- Håltagningarna får samma Modifiera-verktyg som 2D-formen (lägga till
+  punkter, radier, runda av hörn …) och kan ändras, inte bara tas bort
+- UI-inställning: om bjälklagets yta är klickbar eller bara kanterna
 
 ### 0.10 Tak · *nytt format*
 
@@ -1491,7 +1519,7 @@ Ett riktigt tak i stället för testtaket:
 - Takfotens snitt: vinkelrätt mot takytan (förval), lodrätt eller egen vinkel
 - Snabbval för sadeltak, pulpettak och valmat tak
 - Ändra takets form i planen med Modifiera (finns för konturen sedan 0.7.1)
-- Medelmarknivå utan terräng: markhöjder anges runt huset och medelmarknivån räknas ut enligt PBF
+- Medelmarknivå utan terräng: markhöjder anges runt huset och medelmarknivån räknas ut enligt PBF. Marklinjen i fasader och sektioner följer markhöjderna i stället för det lägsta i byggnaden (synpunkt 25 oktober; urgrävning för bjälklag i mark kommer med terrängen efter piloten)
 - Byggnadshöjd enligt PBF (medelmarknivå och 45°-planet)
 
 Enfallstak som delar som sätts ihop väntar till efter pilotprojektet.
@@ -1664,6 +1692,7 @@ Vinklar:
 
 - Situationsplan med terräng och höjdkurvor från höjdkurvor.se
 - Medelmarknivå, byggnadshöjd och nockhöjd ur markmodellen
+- Marken grävs ur där ett bjälklag ligger i den; marklinjen följer den importerade marken (synpunkt 25 oktober)
 
 ### Utbyte med andra program
 

@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.9.1** (alfa, bjälklag); nästa är **0.9.2, nivåer**.
+**0.9.2** (alfa, nivåer); nästa är **0.9.3, bjälklag del 2**.
 
 ## Vad som fungerar
 
@@ -1014,6 +1014,18 @@ Version 0.9.1, bjälklag (filformat 15):
   (30 mm) försvinner där det finns ett bjälklag
 - *Bjälklag* under Visa (Modell) släcker bjälklagen
 - Exempelvillan har fått en platta på mark (BJ01, 400 mm)
+
+Version 0.9.2, nivåer (samma filformat, 15):
+- **Nivåkoter** i fasader och sektioner med beteckning: *FG* för varje
+  vånings golv, *UK bjl* för undersidan av bjälklagen som sektionen skär,
+  *Takfot* och *Nock*. ±0 är nollnivån (plan 1:s golv). Nivåer som ligger
+  tätt får texten uppskjuten, så att den inte krockar med grannens
+- **Höjdmått** i sektioner: en måttkedja bredvid nivåerna med bjälklagens
+  tjocklek och den fria höjden mellan dem
+- Båda släcks under Visa (Markörer): *Nivåer i fasad och sektion* och
+  *Höjdmått i sektion*
+- **Innerväggarna slutar vid bjälklaget ovanför** i 3D, fasader och
+  sektioner; ytterväggarna (utanför bjälklaget) går golv till golv som förut
 - Projekt från 0.9 (format 14) öppnas inte
 
 Version 0.8.38, granskning (samma filformat, 13):

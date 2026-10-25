@@ -87,7 +87,7 @@ describe('linjer i fasad och sektion (0.7.1)', () => {
     const el = doc.elements['sektion-a'];
     el.params = { ...el.params, auto: false, start: [2000, 4000], end: [6000, 4000], side: 1 };
     const r = buildSection(doc, 'sektion-a', view('normal'))!;
-    const xs = r.prims.flatMap((p) => (p.kind === 'line' && p.origin?.part !== 'mark' && p.origin?.part !== 'nivå' ? [p.a[0], p.b[0]] : p.kind === 'region' && p.role === 'cut' && p.origin?.part !== 'nivå' ? p.rings.flat().map((q) => q[0]) : []));
+    const xs = r.prims.flatMap((p) => (p.kind === 'line' && p.origin?.part !== 'mark' && p.origin?.part !== 'nivå' && p.origin?.part !== 'höjdmått' ? [p.a[0], p.b[0]] : p.kind === 'region' && p.role === 'cut' && p.origin?.part !== 'nivå' ? p.rings.flat().map((q) => q[0]) : []));
     expect(Math.min(...xs)).toBeGreaterThanOrEqual(-1);
     expect(Math.max(...xs)).toBeLessThanOrEqual(4001);
   });

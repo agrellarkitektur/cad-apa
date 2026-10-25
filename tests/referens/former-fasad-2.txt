@@ -74,12 +74,12 @@ text "27°" 9166.7,3613.9 h2.2 middle [w0.18] @slope:tak:0/taklutning
 linje 3725,4048 2150,4048 [w0.18] @slope:tak:1/taklutning
 båge 3725,4048 r1181.3 180°–207° [w0.18] @slope:tak:1/taklutning
 text "27°" 2333.3,3613.9 h2.2 middle [w0.18] @slope:tak:1/taklutning
-linje 10850,0 12450,0 [w0.18] @/nivå
+linje 10850,0 12850,0 [w0.18] @/nivå
 yta none [w0.18] 11450,0 11342,180 11558,180 @/nivå
-text "±0,000" 11630,63 h2.2 [w0.18] @/nivå
-linje 10850,2450 12450,2450 [w0.18] @/nivå
+text "FG ±0,000" 11702,63 h2.2 [w0.18] @/nivå
+linje 10850,2450 12850,2450 [w0.18] @/nivå
 yta none [w0.18] 11450,2450 11342,2630 11558,2630 @/nivå
-text "+2,450 takfot" 11630,2513 h2.2 [w0.18] @/nivå
-linje 10850,5080 12450,5080 [w0.18] @/nivå
+text "Takfot +2,450" 11702,2513 h2.2 [w0.18] @/nivå
+linje 10850,5080 12850,5080 [w0.18] @/nivå
 yta none [w0.18] 11450,5080 11342,5260 11558,5260 @/nivå
-text "+5,080 nock" 11630,5143 h2.2 [w0.18] @/nivå
+text "Nock +5,080" 11702,5143 h2.2 [w0.18] @/nivå

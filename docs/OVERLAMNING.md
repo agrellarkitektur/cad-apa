@@ -1,15 +1,29 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.9.1.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.9.2.
 
 ## Läget
 
-- **0.9.1 Bjälklag är klar** på `main` (format 15). Nästa är **0.9.2
-  Nivåer** (troligen samma format), sedan ett granskningsförslag.
-  Punkterna står i PLAN.md och i synpunktsfilen under *Planerat per
-  version*. Nya synpunkter ryms i de versioner som redan finns i planen
-  eller läggs i en senare.
+- **0.9.2 Nivåer är klar** på `main` (samma format, 15). Nästa är ett
+  **granskningsförslag** (förra var 0.8.38; nu har tre versioner med nytt
+  innehåll gått), sedan **0.9.3 Bjälklag del 2** (liten, troligen nytt
+  format). Punkterna står i PLAN.md och i synpunktsfilen under *Planerat
+  per version*.
+- **0.9.2**: nivåkoter med beteckning (FG, UK bjl, Takfot, Nock; Carl
+  August valde FG/ÖK/UK), höjdmått i sektioner (bjälklagens tjocklek och
+  fri höjd), innerväggarna slutar vid bjälklaget ovanför (synpunkt från
+  Inkorgen), båda markeringarna i Visa (Markörer). Referensritningarna för
+  fasader och sektioner ändrades (texterna och UK bjl under plattan).
+  Claudes val i PLAN.md, koden i UTVECKLING.md under *Nivåer (0.9.2)*.
+  Testerna: 440 på ca 12 s. Provat med Playwright mot `dist/` med ett
+  tvåvåningshus (exempelvillan med väggarna och plattan kopierade till
+  plan 2); klickjämförelsen kördes inte.
+- **Inkorgen 25 oktober (efter 0.9.1)** sorterades och bekräftades av
+  Carl August: kapade innerväggar i 0.9.2; ingen littera på bjälklag som
+  standard och inga automatiska bjälklag på nya våningar (redan så); hål
+  som 2D-form och klickbar bjälklagsyta i 0.9.3; marklinjen efter
+  markhöjder i 0.10, urgrävning med terrängen efter piloten.
 - **0.9.1**: nytt objekt `Slab` med littera BJ och tjocklek per typ,
   verktyget *Bjälklag* (rektangel, *Ur väggarna*, *Håltagning*),
   konturen ur ytterväggarnas insida som följer väggarna, ritad kontur som
@@ -125,11 +139,12 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   symbollinjer~~, ~~0.8.34 Rum: kontur och rumsgränser~~,
   ~~0.8.35 Filtrera och markera~~, ~~0.8.36 Egna fyllningstyper~~,
   ~~0.8.37 Detaljnivåer och fyllningar~~, ~~0.8.38 Granskning~~,
-  ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~ (klara)
-- **0.9.2 Nivåer** (nivåmarkering, fri höjd och bjälklagets tjocklek i sektioner)
-- **Granskning** (förslag efter 0.9.2; förra var 0.8.38)
+  ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~, ~~0.9.2 Nivåer~~ (klara)
+- **Granskning** (förslag nu; förra var 0.8.38)
+- **0.9.3 Bjälklag del 2** (hål som 2D-form, klickbar yta som inställning)
 - **0.10 Tak** (nytt format; volymer ovanför snittet punktstreckade,
-  footprint streckad genom taket som vyinställning)
+  footprint streckad genom taket som vyinställning, markhöjder runt huset
+  och marklinjen efter dem)
 - **0.10.1 Dolda linjer i fasader** (närmaste bjälklag och väggarnas
   insida streckade, vyinställning)
 - **0.11 Trappor** (nytt format)
@@ -148,14 +163,27 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.9.1 syns på webbhotellet och hur bjälklagen fungerar
-(frågorna nedan). Läs synpunktsfilen och sortera ny Inkorg. Gör sedan
-**0.9.2 Nivåer**: läs *0.9.2* i PLAN.md. Sektionen har redan en nivåkot
-per våning (`buildSection`, 0.9); bjälklagets tjocklek finns i
-`slabRings`/`thickness` (`src/elements/slab.ts`). Föreslå sedan en
-granskning (förra var 0.8.38).
+Fråga först om 0.9.2 syns på webbhotellet och hur nivåerna fungerar
+(frågorna nedan). Läs synpunktsfilen och sortera ny Inkorg. Föreslå sedan
+en **granskning** (förra var 0.8.38): `section.ts` har vuxit (nivåer,
+höjdmått), `storeyShapes.ts` bygger bjälklagen ovanför en gång till med
+*Bara den här våningen*; klickjämförelsen saknar steg för våningar,
+bjälklag och nivåer. Därefter **0.9.3 Bjälklag del 2**: läs *0.9.3* i
+PLAN.md. Hålen är i dag rektanglar i `SlabParams.holes`
+(`src/elements/slab.ts`); 2D-formens punkter, radier och avrundning
+finns i `src/elements/shapeEdit.ts` och `drawing2d.ts`.
 
 ## Att fråga Carl August om
+
+- **0.9.2 efter provning** (Claudes val, se PLAN.md): FG vid varje
+  vånings golv och UK bjl bara där sektionen skär ett bjälklag; ÖK skrivs
+  inte (bjälklagets ovansida är golvet). Beteckningen står före höjden
+  (*FG +2,700*), och *Takfot* och *Nock* har fått stor bokstav. Höjdmåttet
+  är en kedja bredvid nivåerna; en översta våning utan bjälklag ovanför
+  får ingen fri höjd förrän taket finns (0.10). Ska fri höjd hellre stå
+  som text i rummet (t.ex. *RH 2400*)? Ska våningens namn också stå vid
+  FG? En vägg kapas när mitten av den ligger i bjälklaget ovanför, också
+  med egen höjd; väggar under tak lämnas.
 
 - **0.9.1 efter provning** (Claudes val, se PLAN.md): verktyget med
   rektangel, *Ur väggarna* och *Håltagning*; att *Ur väggarna* slutar vid
@@ -163,11 +191,9 @@ granskning (förra var 0.8.38).
   hålen är rektanglar som bara kan tas bort (inte ändras); att konturen i
   planen är tunna linjer under väggarna och bara går att klicka på (Tab vid
   väggens insida); förvald tjocklek 300 (BJ01) och 400 för plattan i
-  exempelvillan. Ska littera (BJ01) stå i planen, och i så fall var? Ska
-  en ny våning ovanför få ett bjälklag ur väggarna av sig själv?
-  Marklinjen i fasaderna ligger nu under plattan (−0,4); ska den hellre
-  vara en egen nivå (kommer med nivåerna eller terrängen)? Innerväggar på
-  våningen under går upp i bjälklaget ovanför; ska de kapas av det?
+  exempelvillan. (Svarat 25 oktober: ingen littera som standard, inga
+  automatiska bjälklag, marklinjen efter marken, innerväggarna kapas; se
+  *Läget*.)
 
 - **0.9 efter provning** (Claudes val, se PLAN.md): att en ny våning
   ovanför flyttar dem som redan ligger ovanför, och att en ändrad

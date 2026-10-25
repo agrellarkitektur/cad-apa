@@ -328,15 +328,15 @@ linje 430,253.6 170,253.6 [w0.25 ink] @tak/roof
 linje 170,201 170,201 [w0.25 ink] @tak/roof
 linje 170,253.6 170,207.7 [w0.25 ink] @tak/roof
 linje 140,144 460,144 [w0.7] @/mark
-linje 436,152 452,152 [w0.18] @/nivå
+linje 436,152 456,152 [w0.18] @/nivå
 yta none [w0.18] 442,152 440.9,153.8 443.1,153.8 @/nivå
-text "±0,000" 443.8,152.6 h2.2 [w0.18] @/nivå
-linje 436,201 452,201 [w0.18] @/nivå
+text "FG ±0,000" 444.5,152.6 h2.2 [w0.18] @/nivå
+linje 436,201 456,201 [w0.18] @/nivå
 yta none [w0.18] 442,201 440.9,202.8 443.1,202.8 @/nivå
-text "+2,450 takfot" 443.8,201.6 h2.2 [w0.18] @/nivå
-linje 436,253.6 452,253.6 [w0.18] @/nivå
+text "Takfot +2,450" 444.5,201.6 h2.2 [w0.18] @/nivå
+linje 436,253.6 456,253.6 [w0.18] @/nivå
 yta none [w0.18] 442,253.6 440.9,255.4 443.1,255.4 @/nivå
-text "+5,080 nock" 443.8,254.2 h2.2 [w0.18] @/nivå
+text "Nock +5,080" 444.5,254.2 h2.2 [w0.18] @/nivå
 text "Fasad mot syd" 140,134 h3.5 fet [w0.25] @/vyrubrik
 linje 140,132.8 161.7,132.8 [w0.25] @/vyrubrik
 text "SKALA 1:50" 164.2,134 h2.5 [w0.18] @/vyrubrik

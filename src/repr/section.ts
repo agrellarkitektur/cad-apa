@@ -6,6 +6,7 @@ import { typeOf } from '../elements/registry';
 import { difference, union, type Rings } from '../geometry/boolean';
 import { clipDepth, clipPlane, clipSegAxis, clipSegDepth, featureEdges, visibleSegments, type Seg, type V3 } from '../geometry/hiddenLine';
 import { roofPlanes, type RoofParams } from '../elements/roof';
+import { dimensionPrims } from '../elements/annotation';
 import { slopeSymbol, type RoofSlopeParams } from '../elements/roofSlope';
 import type { PlanContext } from '../elements/registry';
 import { modelShapes } from './storeyShapes';
@@ -276,17 +277,47 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
         }
       }
     }
-    // Nivåkoter: golv, takfot och nock (0.8). Takfoten är takets undersida vid kanten.
-    // Varje vånings golv (0.9).
-    const levels = new Map<number, string>(doc.storeys.map((s) => [s.elevation, '']));
-    const floor = Math.min(...doc.storeys.map((s) => s.elevation));
-    for (const { el, elevation } of roofs) {
-      const eave = Math.round(elevation + ctx.params<RoofParams>(el).eave);
-      if (eave > floor && !levels.has(eave)) levels.set(eave, 'takfot');
+    // Nivåkoter (0.9.2): FG för varje vånings golv, UK bjl för bjälklagen
+    // som sektionen skär, takfot och nock. Bjälklagets ovansida är golvet,
+    // så ÖK skrivs inte för sig. ±0 är nollnivån, plan 1:s golv.
+    const cutSlabs = isSection ? shapes.filter(({ s, demolished }) => !demolished && s.kind !== 'edges' && s.material === 'slab' && ownCuts.has(s.id)).map(({ s }) => s as Solid) : [];
+    const chainX = maxU;
+    const heights = isSection && !view.hide?.includes('heightDims') ? heightChain(cutSlabs) : [];
+    const markX = maxU + (heights.length ? 14 : 12) * ctx.scale;
+    if (!view.hide?.includes('level')) {
+      const levels = new Map<number, string>(doc.storeys.map((s) => [s.elevation, 'FG']));
+      for (const sl of cutSlabs) {
+        const z = Math.round(sl.z0);
+        if (!levels.has(z)) levels.set(z, 'UK bjl');
+      }
+      const floor = Math.min(...doc.storeys.map((s) => s.elevation));
+      for (const { el, elevation } of roofs) {
+        const eave = Math.round(elevation + ctx.params<RoofParams>(el).eave);
+        if (eave > floor && !levels.has(eave)) levels.set(eave, 'Takfot');
+      }
+      const top = Math.round(maxZ);
+      if (!levels.has(top)) levels.set(top, roofs.length ? 'Nock' : '');
+      // Texter som skulle krocka (nivåer närmare än en textrad) skjuts
+      // uppåt. Strecket går under texten som förut, utom där en annan
+      // nivås text hamnat på det.
+      const h = style.labels.heights.dimension;
+      const marks: { z: number; label: string; textY: number }[] = [];
+      let prevText = -Infinity;
+      for (const [z, label] of [...levels].sort((a, b) => a[0] - b[0])) {
+        const textY = Math.max(z + 1.8 * ctx.scale * 0.35, prevText + h * 1.35 * ctx.scale);
+        prevText = textY;
+        marks.push({ z, label, textY });
+      }
+      for (const m of marks) {
+        const crossed = marks.some((o) => o !== m && m.z > o.textY - h * 0.3 * ctx.scale && m.z < o.textY + h * 1.1 * ctx.scale);
+        prims.push(...levelMark(markX, m.z, h, m.label, ctx.scale, markerPen(style, 'level'), m.textY, !crossed));
+      }
     }
-    const top = Math.round(maxZ);
-    if (!levels.has(top)) levels.set(top, roofs.length ? 'nock' : '');
-    for (const [z, label] of levels) prims.push(...levelMark(maxU + 12 * ctx.scale, z, style.labels.heights.dimension, label, ctx.scale, markerPen(style, 'level')));
+    // Höjdmått (0.9.2): bjälklagens tjocklek och den fria höjden mellan dem.
+    if (heights.length >= 2) {
+      const points = heights.map((z): [number, number] => [chainX, z]);
+      prims.push(...dimensionPrims({ points, angle: 90, offset: -6 * ctx.scale }, ctx.scale, { part: 'höjdmått' }, style.labels.heights.dimension, style));
+    }
   }
 
   const pickables: Pickable[] = [...new Set([...byId.keys(), ...ownCuts.keys()])].map((id) => {
@@ -377,15 +408,29 @@ function wallSilhouettes(shapes: { s: Shape3D; demolished: boolean }[], v: Vec2)
   return out;
 }
 
-/** En nivåkota: ett streck, en triangel som pekar ned på det och höjden i meter. */
-function levelMark(x: number, z: number, height: number, label: string, s: number, pen: Pen): Primitive[] {
+/**
+ * Höjderna för höjdmåttet: under- och ovansidan av bjälklagen som sektionen
+ * skär, nerifrån. Två bjälklag på olika våningar ger tjocklek, fri höjd och
+ * tjocklek. Höjder närmare än 1 mm räknas som en.
+ */
+export function heightChain(slabs: readonly { z0: number; z1: number }[]): number[] {
+  const zs = [...new Set(slabs.flatMap((s) => [Math.round(s.z0), Math.round(s.z1)]))].sort((a, b) => a - b);
+  return zs.length >= 2 ? zs : [];
+}
+
+/**
+ * En nivåkota: ett streck, en triangel som pekar ned på det och höjden i
+ * meter bredvid. Ett kort streck (0.9.2) slutar vid triangeln, så att en
+ * text som skjutits upp för en granne inte stryks över.
+ */
+function levelMark(x: number, z: number, height: number, label: string, s: number, pen: Pen, textY?: number, long = true): Primitive[] {
   // s: ritningsskalan, för storleken på papper.
   const tri = 1.8 * s;
   const origin = { part: 'nivå' };
   const m = z / 1000;
   const text = `${m === 0 ? '±' : m > 0 ? '+' : '−'}${Math.abs(m).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
   return [
-    { kind: 'line', a: [x - 6 * s, z], b: [x + 10 * s, z], pen, origin },
+    { kind: 'line', a: [x - 6 * s, z], b: [x + (long ? 14 * s : tri), z], pen, origin },
     {
       kind: 'region',
       role: 'cut',
@@ -401,7 +446,7 @@ function levelMark(x: number, z: number, height: number, label: string, s: numbe
       ownFill: true,
       origin,
     },
-    { kind: 'text', at: [x + tri, z + tri * 0.35], text: label ? `${text} ${label}` : text, height, pen: withWeight(pen, 0.18), origin },
+    { kind: 'text', at: [x + tri * 1.4, textY ?? z + tri * 0.35], text: label ? `${label} ${text}` : text, height, pen: withWeight(pen, 0.18), origin },
   ];
 }
 

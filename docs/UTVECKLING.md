@@ -1195,6 +1195,28 @@ projekt i 1 982 jämförelser.
   `.pane3d-tools`.
 - Tester: `tests/v09.test.ts`.
 
+## Nivåer (0.9.2, format 15)
+
+- **Nivåkoter** i `buildSection` (`src/repr/section.ts`): FG för varje
+  våning, UK bjl för bjälklag som sektionen skär (`ownCuts` med material
+  `slab`), Takfot och Nock. Texterna skjuts uppåt när två nivåer ligger
+  närmare än en textrad, och strecket kortas till triangeln där en annan
+  nivås text hamnat på det (`levelMark` med `textY` och `long`).
+  Släcks med `hide: ['level']`.
+- **Höjdmåttet**: `heightChain` ger under- och ovansidan av de skurna
+  bjälklagen nerifrån; kedjan ritas med `dimensionPrims` (vinkel 90)
+  bredvid byggnaden, origin `part: 'höjdmått'`. Bara i sektioner;
+  `hide: ['heightDims']`.
+- **Väggar under bjälklag**: `trimUnderSlabs` i `src/repr/storeyShapes.ts`,
+  efter att alla våningar byggts i `modelShapes`. En väggkropp vars
+  konturmitt ligger i ett bjälklag (inte i ett hål) och vars höjdintervall
+  bjälklagets undersida går igenom slutar där; urtag och väggens
+  kantlinjer kapas med. Väggar med sned ovansida (under tak) lämnas. Med
+  `only` (Bara den här våningen) byggs bjälklagen ovanför för sig, med
+  väggarna i sammanhanget (bjälklag ur väggarna behöver dem).
+- Valen i Visa: `level` och `heightDims` under Markörer
+  (`src/ui/app/showMenu.ts`). Tester i `tests/v092.test.ts`.
+
 ## Bjälklag (0.9.1, format 15)
 
 - **Elementtypen** `Slab` i `src/elements/slab.ts`: `thickness` (typens),
