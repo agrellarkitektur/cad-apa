@@ -29,7 +29,7 @@ linje 7205,900.1 7205,910 [w0.18 #c2372c] @d02/lining
 linje 7205,2100.1 7205,2110 [w0.18 #c2372c] @d02/lining
 linje 6295,2110 6295,2100.1 [w0.18 #c2372c] @d02/lining
 linje 6295,910 6295,900.1 [w0.18 #c2372c] @d02/lining
-linje 6447.9,900.1 6440.2,910 [w0.13 #c2372c d3/1.5] @d02/swing
+linje 6447.9,900.1 6440.2,910 [w0.13 ink d3/1.5] @d02/swing
 linje 1735,830 1735,2180 [w0.18 ink] @f04/lining
 linje 1735,2180 1735,830 [w0.18 ink] @f04/lining
 linje 1735,2180 1735,830 [w0.18 ink] @f05/lining

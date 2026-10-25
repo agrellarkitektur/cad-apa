@@ -65,7 +65,8 @@ describe('Egen penna (0.8.31)', () => {
     const own = plan(doc).prims.filter((p) => p.origin?.objectId === door.id);
     const lines = own.filter((p): p is Extract<Primitive, { pen: unknown }> & Primitive => p.kind === 'line' || p.kind === 'polyline' || p.kind === 'arc');
     expect(lines.length).toBeGreaterThan(0);
-    for (const p of lines) if ('pen' in p && p.pen.weight > 0) expect(p.pen.color).toBe('#ff0000');
+    // Slagbågen har pennans symboldel (0.8.33), som inte är satt här.
+    for (const p of lines.filter((q) => q.pen.weight > 0)) expect(p.pen.color === '#ff0000').toBe(p.origin?.part !== 'slagbåge');
     for (const p of own) if (p.kind === 'text') expect(p.pen.color).not.toBe('#ff0000');
   });
 

@@ -1238,6 +1238,25 @@ Mellanstor, en session.
 - **Penna per typ** (YV01, D10 …): objektets egen går före typens, som
   går före stilmallens
 
+*Byggd (25 oktober), samma format (13). Claudes val: klasserna ligger i
+stilmallens `pens` (som markörerna) under *Pennor för dörrar och
+fönster*, med förvalen snitt 0,25, vy 0,18 och symbol 0,13 mm. Väggens
+kontur har sin penna under åtgärderna som förut, så *Snitt* gäller
+karmarna. Klassen ger varje del samma tjocklek, så dörrbladen (0,35) och
+fönstrens glas (0,25) blev 0,18 mm, och fönstrens bågar och glas i
+Detalj ritas lika tjocka. Väggen under fönstret (sedd nedanför snittet)
+är kvar på 0,13 utan klass. I fasader och sektioner gäller bara
+*Symbol*, för öppningssättet (streckat som förut om klassen inte har en
+egen linjetyp); karmar och bågar där har sina pennor som förut. Den
+egna pennans två delar heter *Snitt* (karmar, blad, bågar och glas) och
+*Symbol*; de är oberoende, så en dörr som fått en egen färg i 0.8.31
+har nu slagbågen i stilmallens färg tills *Symbol* också får en.
+Väggar, tak och möbler har bara en del. Typens penna (`Definition.pen`)
+står under *Påverkar fler objekt* och går fält för fält under
+objektets; i objektets fält heter det ärvda *Typens* när typen har
+fältet. Knappen under typen heter *Stilmallens penna*, den på objektet
+*Typens penna* (eller *Stilmallens* utan typens).*
+
 ### 0.8.34 Rum: kontur och rumsgränser
 
 Carl Augusts synpunkter 25 oktober. Mellanstor, en session.

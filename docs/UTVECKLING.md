@@ -1187,6 +1187,29 @@ skriptet kräver bara att namnen motsvarar varandra. Referensritningarna
 - Borttaget, oanvänt: `pathLength` (`dash.ts`), typen `SectionQueue` och
   rensningen av bladens `items` (format 8) i `parse`
 
+## Pennor per typ och symbollinjer (0.8.33, format 13)
+
+Inga nya format: fälten är frivilliga.
+
+- **Klasserna** står i `OPENING_PENS` i `src/repr/openingPens.ts`
+  (`openingCut`, `openingView`, `openingSymbol` i stilmallens `pens`).
+  `openingPens(style)` ger alla tre; dörren och fönstret (`plan` i
+  `door.ts` och `window.ts`) ritar karmar med `cut`, blad, bågar och glas
+  med `view` och slagbågen med `symbol`. Fasadernas och sektionernas
+  `swing` får `openingPen(style, 'symbol')` ovanpå `PART_PEN` i
+  `buildSection`. Stilmallens rader ritas av `penSection` i
+  `src/ui/style/pens.ts`, båda listorna med samma kod (`defaultPen`)
+- **Den egna pennan i två delar**: `OwnPen.symbol` (en `OwnPenPart`).
+  `applyOwnPen` tar symboldelen för delarna i `SYMBOL_PARTS` (`slagbåge`,
+  `swing`) och den övre för resten
+- **Typens penna**: `Definition.pen`. `effectivePen(doc, el)` i
+  `src/repr/ownPen.ts` slår ihop typens och objektets (`mergePens`, fält
+  för fält, symboldelen för sig) och sparar resultatet per element; använd
+  den, inte `el.pen`, där pennan ritas (`ownPenOf`, väggarnas `planBatch`,
+  sektionernas snitt). Fälten: `ownPenSection` (nycklar `pen:…` och
+  `pen:symbol.…`) och `typePenFields` (`defpen:…`, i `sharedSection`) i
+  `src/ui/ownPenFields.ts`; knappen `type-pen-reset` i `actions.ts`
+
 ## Linjetyp och penna per objekt (0.8.31, format 13)
 
 Inga nya format: fältet är frivilligt.

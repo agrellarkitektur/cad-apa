@@ -10,9 +10,10 @@ import { slopeSymbol, type RoofSlopeParams } from '../elements/roofSlope';
 import type { PlanContext } from '../elements/registry';
 import { createContext } from './context';
 import { markerPen, solidPen, withWeight } from './markerPens';
-import { applyOwnPen, ownPenOf } from './ownPen';
+import { applyOwnPen, effectivePen, ownPenOf } from './ownPen';
 import { ownedOutlines } from './outlineOwners';
 import { solidTriangles } from './mesh';
+import { openingPen } from './openingPens';
 import { applyStyle, type Pickable } from './plan';
 import type { Pen, Primitive, Vec2 } from './primitives';
 import { zOn, type EdgePart, type Shape3D, type Solid } from './solids';
@@ -218,7 +219,11 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   let maxU = -Infinity;
   const slopes: Record<string, RoofSlopeParams> = {};
   for (const l of visibleLines) {
-    const pen: Pen = l.key.part ? { ...PART_PEN[l.key.part], ...(style.pens?.[l.key.part] as Pen | undefined), ...(l.key.dash ? { dash: l.key.dash } : {}) } : { weight: 0.18 };
+    // Öppningssättet följer stilmallens symbolpenna (0.8.33), streckat om den inte har en egen linjetyp.
+    const part = l.key.part;
+    const pen: Pen = part
+      ? { ...PART_PEN[part], ...(part === 'swing' ? openingPen(style, 'symbol') : {}), ...(style.pens?.[part] as Pen | undefined), ...(l.key.dash ? { dash: l.key.dash } : {}) }
+      : { weight: 0.18 };
     const raw: Primitive = { kind: 'line', a: l.a, b: l.b, pen, origin: { objectId: l.key.id, objectType: doc.elements[l.key.id]?.type, part: l.key.part ?? 'vy' } };
     // Objektets egen penna (0.8.31) efter stilmallens.
     const p = applyOwnPen(applyStyle(raw, style.actions[ctx.styleKeyOf(l.key.action)], l.key.action, style), ownPenOf(doc, raw), style);
@@ -231,7 +236,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     const merged = g.poche ? union(g.rings) : g.rings;
     const first = [...g.ids][0];
     // Snitt med egen penna (0.8.31): konturen delas efter objekt, som väggarna i planen.
-    const owned = new Set([...g.ids].filter((id) => doc.elements[id]?.pen));
+    const owned = new Set([...g.ids].filter((id) => doc.elements[id] && effectivePen(doc, doc.elements[id])));
     const split = owned.size ? { outline: null, noOutline: true } : {};
     for (const rings of merged) {
       const raw: Primitive = g.poche
@@ -250,7 +255,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
         const id = o.id ?? first;
         const raw: Primitive = { kind: 'polyline', points: o.points, closed: o.closed, pen: { weight: g.poche ? 0.35 : 0.25 }, ...(g.poche ? { asOutline: true } : {}), origin: { objectId: id, part: 'snitt' } };
         const styled = g.poche ? applyStyle(raw, style.actions[ctx.styleKeyOf(g.action)], g.action, style) : raw;
-        const p = applyOwnPen(styled, o.id ? doc.elements[o.id]?.pen : undefined, style);
+        const p = applyOwnPen(styled, o.id && doc.elements[o.id] ? effectivePen(doc, doc.elements[o.id]) : undefined, style);
         prims.push(p);
         own(id, p);
       }

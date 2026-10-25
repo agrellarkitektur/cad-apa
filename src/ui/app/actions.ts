@@ -21,7 +21,7 @@ import type { installShowMenu } from './showMenu';
 import type { installViews } from './views';
 import { installTreeClicks } from './treeClicks';
 import { arrangeSelection } from './drawOrderUi';
-import { resetOwnPen } from '../ownPenFields';
+import { resetOwnPen, resetTypePen } from '../ownPenFields';
 import type { OrderMove } from '../../core/drawOrder';
 
 /** De delar av appen som knapparna når utöver `app`. */
@@ -326,6 +326,12 @@ export function installActions(app: AppContext, parts: ActionParts) {
         // Egen penna (0.8.31) tillbaka till stilmallens.
         resetOwnPen(app.store, app.selection.list());
         break;
+      case 'type-pen-reset': {
+        // Typens penna (0.8.33) tillbaka till stilmallens.
+        const def = target.closest<HTMLElement>('[data-def]')?.dataset.def;
+        if (def) resetTypePen(app.store, def);
+        break;
+      }
       case 'draw-order': {
         // Ritordning (0.8.25), knapparna i egenskaperna och smartmenyn.
         const move = target.closest<HTMLElement>('[data-action]')?.dataset.order as OrderMove | undefined;

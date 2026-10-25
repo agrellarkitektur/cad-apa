@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.8.32** (alfa, granskning); nästa är **0.8.33, pennor per typ och symbollinjer**.
+**0.8.33** (alfa, pennor per typ och symbollinjer); nästa är **0.8.34, rum: kontur och rumsgränser**.
 
 ## Vad som fungerar
 
@@ -963,6 +963,21 @@ Version 0.8.32, granskning (samma filformat, 13):
   Referensritningarna har fått 2D-formerna, linjetyperna, masken och de
   egna pennorna
 - DXF-läsaren ligger i fyra mindre filer
+
+Version 0.8.33, pennor per typ och symbollinjer (samma filformat, 13):
+- **Pennor för dörrar och fönster** i stilmallen, under *Pennor för
+  dörrar och fönster*, i tre klasser: *Snitt* (karmarna, 0,25 mm), *Vy*
+  (dörrblad, bågar och glas, 0,18 mm) och *Symbol* (slagbågen i planen,
+  öppningssättet i fasader och sektioner, 0,13 mm). Tjocklek, färg och
+  linjetyp för varje klass. Dörrbladen är tunnare än förut (0,35 → 0,18)
+  och glaset i fönstren likaså (0,25 → 0,18); karmarna är som förut
+- **Egen penna i två delar** för dörrar och fönster: *Snitt* (karmar,
+  blad, bågar och glas) och *Symbol* (slagbåge, öppningssätt), var för
+  sig. En dörr kan få en egen tjocklek bara på slagbågen
+- **Typens penna**, under *Påverkar fler objekt* för typen (YV01, D10 …):
+  gäller alla av typen. Objektets egen går före typens, som går före
+  stilmallens, fält för fält. Knappen *Stilmallens penna* under typen
+  tar bort typens
 
 Version 0.8.31, linjetyp och penna per objekt (samma filformat, 13):
 - **Egen penna** för väggar, dörrar, fönster, tak och möbler, under

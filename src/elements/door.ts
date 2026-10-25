@@ -1,5 +1,6 @@
 import { add, scale, sub } from '../geometry/vec';
-import type { Pen, Primitive, Vec2 } from '../repr/primitives';
+import { openingPens } from '../repr/openingPens';
+import type { Primitive, Vec2 } from '../repr/primitives';
 import { FRAME_DEFAULTS, openingZone, type FrameParams } from './opening';
 import { litteraTag, showLittera } from './littera';
 import type { ElementType } from './registry';
@@ -74,6 +75,8 @@ export const doorType: ElementType<DoorParams> = {
     const sketch = level === 'sketch';
     const detail = level === 'detail';
     const origin = { objectId: el.id, objectType: 'Door' };
+    // Pennorna för karmen, bladet och slagbågen ur stilmallen (0.8.33).
+    const pens = openingPens(ctx.style);
     const prims: Primitive[] = [];
 
     // Skiss: bladet från väggens liv över hela hålet. Normal: karmar och blad
@@ -106,7 +109,7 @@ export const doorType: ElementType<DoorParams> = {
               f.at(outer, leafO),
             ]
           : [f.at(outer, lo), f.at(inner, lo), f.at(inner, hi), f.at(outer, hi)];
-        return { kind: 'polyline', points: pts, closed: true, pen: { weight: 0.25 }, origin: { ...origin, part: 'karm' } };
+        return { kind: 'polyline', points: pts, closed: true, pen: pens.cut, origin: { ...origin, part: 'karm' } };
       };
       prims.push(frame(s1, s1 + fw), frame(s2, s2 - fw));
     }
@@ -134,20 +137,19 @@ export const doorType: ElementType<DoorParams> = {
         kind: 'polyline',
         points: [hinge, tip, add(tip, perp), add(hinge, perp)],
         closed: true,
-        pen: { weight: 0.25 },
+        pen: pens.view,
         origin: { ...origin, part: 'dörrblad' },
       });
     } else {
-      prims.push({ kind: 'line', a: hinge, b: tip, pen: { weight: 0.35 }, origin: { ...origin, part: 'dörrblad' } });
+      prims.push({ kind: 'line', a: hinge, b: tip, pen: pens.view, origin: { ...origin, part: 'dörrblad' } });
     }
-    prims.push({ kind: 'arc', center: hinge, radius: leafLen, start, end, pen: { weight: 0.13 }, origin: { ...origin, part: 'slagbåge' } });
+    prims.push({ kind: 'arc', center: hinge, radius: leafLen, start, end, pen: pens.symbol, origin: { ...origin, part: 'slagbåge' } });
 
     // Glasad dörr: en linje mitt i karmens djup, över ungefär 3/5 av den fria bredden.
     if (p.glazed) {
       const mid = sketch ? 0 : (lo + hi) / 2;
       const half = clear * 0.3;
-      const pen: Pen = { weight: 0.35 };
-      prims.push({ kind: 'line', a: f.at(p.at - half, mid), b: f.at(p.at + half, mid), pen, origin: { ...origin, part: 'glasning' } });
+      prims.push({ kind: 'line', a: f.at(p.at - half, mid), b: f.at(p.at + half, mid), pen: pens.view, origin: { ...origin, part: 'glasning' } });
     }
 
     // Littera på motsatt sida mot slaget, där bågen inte är i vägen.

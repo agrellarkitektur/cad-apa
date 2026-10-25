@@ -242,6 +242,11 @@ export interface Definition {
   /** Förval för instansernas parametrar. */
   params: Record<string, Value>;
   props: PropertySets;
+  /**
+   * Typens penna (0.8.33), för alla instanser utan egen. Objektets egen går
+   * före typens, som går före stilmallens; fält för fält.
+   */
+  pen?: OwnPen;
 }
 
 /**
@@ -292,14 +297,23 @@ export interface Element<P extends object = Record<string, unknown>> {
   props: PropertySets;
 }
 
-/** Ett objekts egen penna (0.8.31); det som saknas tas från stilmallen. */
-export interface OwnPen {
+/** En del av en egen penna: det som saknas tas från typen eller stilmallen. */
+export interface OwnPenPart {
   /** Linjebredd på papper i mm. */
   weight?: number;
   /** Färg som #rrggbb. */
   color?: string;
   /** Linjetypens nyckel (`lineTypeDash`); `solid` tar bort stilmallens streckning. */
   linetype?: string;
+}
+
+/**
+ * Ett objekts eller en typs egen penna (0.8.31). Fälten överst gäller
+ * snittet och vyn (konturer, karmar, dörrblad); `symbol` (0.8.33) gäller
+ * dörrarnas och fönstrens symbollinjer (slagbågen, öppningssättet).
+ */
+export interface OwnPen extends OwnPenPart {
+  symbol?: OwnPenPart;
 }
 
 export const FORMAT = 'bacchus-project';

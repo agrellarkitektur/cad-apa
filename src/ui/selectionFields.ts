@@ -20,6 +20,7 @@ import type { ScaleBarParams } from '../elements/scaleBar';
 import type { StampParams } from '../elements/stamp';
 import { stampsOf } from '../core/sheets';
 import { viewSource } from '../repr/sheet';
+import { typePenFields } from './ownPenFields';
 
 /**
  * Fälten i egenskapspanelen (0.8.1, ur propertiesPanel.ts): det markerade
@@ -66,6 +67,7 @@ export function sharedSection(doc: ProjectDoc, els: Element[]): string | null {
       <div class="shared-head">Typen ${escapeHtml(def.name)} <span>gäller alla ${users} ${users === 1 ? t.label.toLowerCase() : t.labelPlural.toLowerCase()}</span></div>
       <div class="fields">${t.typeParams.map((k) => numberField(`def:${k}`, PARAM_LABELS[k] ?? k, Number(def.params[k] ?? 0), 'mm')).join('')}${propRows}</div>
       <div class="row"><input id="new-defprop" placeholder="Ny egenskap för typen" aria-label="Ny egenskap för typen"><button class="btn" data-action="add-defprop">Lägg till</button></div>
+      ${typePenFields(doc, def)}
     </div>`);
   }
   if (els.length === 1 && els[0].type === 'Space') {

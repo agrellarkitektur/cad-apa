@@ -1,3 +1,4 @@
+import { effectivePen } from '../repr/ownPen';
 import { ownedOutlines } from '../repr/outlineOwners';
 import { lastResults, sameItems } from '../repr/reuse';
 import type { Element } from '../core/model';
@@ -344,7 +345,7 @@ export const wallType: ElementType<WallParams> = {
     }
     // Väggar med egen penna (0.8.31): ytan är en, men konturen delas efter
     // vilken vägg kanten kommer ifrån, så att den egna pennan hamnar på rätt kanter.
-    const owned = new Set(items.filter(({ el }) => el.pen).map(({ el }) => el.id));
+    const owned = new Set(items.filter(({ el }) => effectivePen(ctx.doc, el)).map(({ el }) => el.id));
     const out = regions.map(
       (rings): Primitive => ({
         kind: 'region',

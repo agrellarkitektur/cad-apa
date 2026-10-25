@@ -1,65 +1,133 @@
-import type { Element, Id, OwnPen, ProjectDoc } from '../core/model';
+import type { Definition, Element, Id, OwnPen, OwnPenPart, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
 import { PEN_WEIGHTS } from '../elements/drawing2d';
+import { escapeHtml } from './labels';
 import { lineTypeOptions } from './lineTypePick';
 
 /**
- * Egen penna för ett objekt (0.8.31): tjocklek, färg och linjetyp var för
- * sig, *Stilmallens* från början. För de udda fall där stilmallens
- * ritning blir missvisande, t.ex. en vägg som ska vara streckad.
+ * Egen penna för ett objekt (0.8.31) eller en typ (0.8.33): tjocklek, färg
+ * och linjetyp var för sig. Dörrar och fönster har två delar (0.8.33):
+ * *Snitt* (karmar, dörrblad, bågar och glas) och *Symbol* (slagbågen,
+ * öppningssättet). Objektets egen går före typens, som går före stilmallens.
  */
 
 /** Sorterna som kan få en egen penna. 2D-formen har redan sin egen. */
 export const OWN_PEN_TYPES = new Set(['Wall', 'Door', 'Window', 'Roof', 'Furniture']);
 
+/** Sorterna med en symboldel (slagbåge, öppningssätt). */
+const SYMBOL_TYPES = new Set(['Door', 'Window']);
+
+type Part = 'main' | 'symbol';
+type Field = keyof OwnPenPart;
+
 const comma = (n: number) => n.toLocaleString('sv-SE');
+const partOf = (pen: OwnPen | undefined, part: Part): OwnPenPart | undefined => (part === 'symbol' ? pen?.symbol : pen);
 
 /** Värdet om det är lika för alla, null om det skiljer sig. */
-function same<K extends keyof OwnPen>(els: readonly Element[], k: K): OwnPen[K] | null {
-  const v = els[0].pen?.[k];
-  return els.every((e) => e.pen?.[k] === v) ? v : null;
+function same<K extends Field>(pens: readonly (OwnPen | undefined)[], part: Part, k: K): OwnPenPart[K] | null {
+  const v = partOf(pens[0], part)?.[k];
+  return pens.every((p) => partOf(p, part)?.[k] === v) ? v : null;
+}
+
+/**
+ * Fälten för en del av pennan. `scope` är `pen` (objekten) eller `defpen`
+ * (typen); `inherited` säger vad som gäller utan egen, per fält.
+ */
+function partFields(doc: ProjectDoc, scope: string, pens: readonly (OwnPen | undefined)[], part: Part, inherited: (k: Field) => string): string {
+  const pre = part === 'symbol' ? 'symbol.' : '';
+  const mixed = '<option selected disabled>Olika</option>';
+  const weight = same(pens, part, 'weight');
+  const weights = `<select data-key="${scope}:${pre}weight" aria-label="Tjocklek">${weight === null ? mixed : ''}<option value="style"${weight === undefined ? ' selected' : ''}>${inherited('weight')}</option>${PEN_WEIGHTS.filter((w) => w > 0)
+    .map((w) => `<option value="${w}"${w === weight ? ' selected' : ''}>${comma(w)} mm</option>`)
+    .join('')}</select>`;
+  const color = same(pens, part, 'color');
+  const colors = `<select data-key="${scope}:${pre}colorOn" aria-label="Färg">${color === null ? mixed : ''}<option value="style"${color === undefined ? ' selected' : ''}>${inherited('color')}</option><option value="own"${color ? ' selected' : ''}>Egen</option></select>`;
+  const own = color ? `<label class="field"><span>Egen färg</span><input type="color" data-key="${scope}:${pre}color" value="${color}"></label>` : '';
+  const linetype = same(pens, part, 'linetype');
+  const types = `<select data-key="${scope}:${pre}linetype" aria-label="Linjetyp">${lineTypeOptions(doc.graphics, linetype, { value: 'style', label: inherited('linetype') })}</select>`;
+  return `<div class="fields">
+      <label class="field"><span>Tjocklek</span>${weights}</label>
+      <label class="field"><span>Färg</span>${colors}</label>
+      ${own}
+      <label class="field"><span>Linjetyp</span>${types}</label>
+    </div>`;
+}
+
+/** Båda delarna för dörrar och fönster, annars en. */
+function penParts(doc: ProjectDoc, scope: string, type: string, pens: readonly (OwnPen | undefined)[], inherited: (part: Part, k: Field) => string): string {
+  if (!SYMBOL_TYPES.has(type)) return partFields(doc, scope, pens, 'main', (k) => inherited('main', k));
+  return `<h4>Snitt</h4>
+    ${partFields(doc, scope, pens, 'main', (k) => inherited('main', k))}
+    <h4>Symbol</h4>
+    ${partFields(doc, scope, pens, 'symbol', (k) => inherited('symbol', k))}`;
 }
 
 /** Avsnittet i egenskaperna, eller tomt om något markerat inte kan få en penna. */
 export function ownPenSection(doc: ProjectDoc, els: readonly Element[]): string {
   if (!els.length || !els.every((e) => OWN_PEN_TYPES.has(e.type) && !e.space)) return '';
-  const mixed = '<option selected disabled>Olika</option>';
-  const weight = same(els, 'weight');
-  const weights = `<select data-key="pen:weight" aria-label="Tjocklek">${weight === null ? mixed : ''}<option value="style"${weight === undefined ? ' selected' : ''}>Stilmallens</option>${PEN_WEIGHTS.filter((w) => w > 0)
-    .map((w) => `<option value="${w}"${w === weight ? ' selected' : ''}>${comma(w)} mm</option>`)
-    .join('')}</select>`;
-  const color = same(els, 'color');
-  const colors = `<select data-key="pen:colorOn" aria-label="Färg">${color === null ? mixed : ''}<option value="style"${color === undefined ? ' selected' : ''}>Stilmallens</option><option value="own"${color ? ' selected' : ''}>Egen</option></select>`;
-  const own = color ? `<label class="field"><span>Egen färg</span><input type="color" data-key="pen:color" value="${color}"></label>` : '';
-  const linetype = same(els, 'linetype');
-  const types = `<select data-key="pen:linetype" aria-label="Linjetyp">${lineTypeOptions(doc.graphics, linetype, { value: 'style', label: 'Stilmallens' })}</select>`;
+  const type = els.every((e) => e.type === els[0].type) ? els[0].type : '';
+  const defs = els.map((e) => (e.definition ? doc.definitions[e.definition]?.pen : undefined));
+  // Det som gäller utan egen: typens om någon av typerna har fältet, annars stilmallens.
+  const inherited = (part: Part, k: Field) => (defs.some((d) => partOf(d, part)?.[k] !== undefined) ? 'Typens' : 'Stilmallens');
   const any = els.some((e) => e.pen);
+  const note = SYMBOL_TYPES.has(type)
+    ? 'Typens eller stilmallens penna gäller från början. <i>Snitt</i> gäller karmar, dörrblad, bågar och glas, <i>Symbol</i> slagbågen och öppningssättet; inte fyllningar och text.'
+    : 'Typens eller stilmallens penna gäller från början. En egen gäller objektets linjer och konturer i planen, fasaderna och sektionerna, men inte fyllningar och text.';
   return `<section class="own-pen">
     <h3>Penna</h3>
-    <div class="fields">
-      <label class="field"><span>Tjocklek</span>${weights}</label>
-      <label class="field"><span>Färg</span>${colors}</label>
-      ${own}
-      <label class="field"><span>Linjetyp</span>${types}</label>
-    </div>
-    <p class="note">Stilmallens penna gäller från början. En egen gäller objektets linjer och konturer i planen, fasaderna och sektionerna, men inte fyllningar och text.</p>
-    ${any ? '<div class="row"><button class="btn" data-action="own-pen-reset">Stilmallens penna</button></div>' : ''}
+    ${penParts(doc, 'pen', type, els.map((e) => e.pen), inherited)}
+    <p class="note">${note}</p>
+    ${any ? `<div class="row"><button class="btn" data-action="own-pen-reset">${defs.some(Boolean) ? 'Typens' : 'Stilmallens'} penna</button></div>` : ''}
   </section>`;
 }
 
+/** Typens penna (0.8.33) i *Påverkar fler objekt*, eller tomt om typens sort inte har någon. */
+export function typePenFields(doc: ProjectDoc, def: Definition): string {
+  if (!OWN_PEN_TYPES.has(def.elementType)) return '';
+  return `<div class="own-pen type-pen">
+      <div class="shared-head">Typens penna <span>för dem utan egen</span></div>
+      ${penParts(doc, 'defpen', def.elementType, [def.pen], () => 'Stilmallens')}
+      ${def.pen ? `<div class="row"><button class="btn" data-action="type-pen-reset" data-def="${escapeHtml(def.id)}">Stilmallens penna</button></div>` : ''}
+    </div>`;
+}
+
+/** Pennan med fälten ändrade (undefined tar bort); undefined om inget är kvar. */
+function changed(pen: OwnPen | undefined, part: Part, change: Partial<Record<Field, unknown>>): OwnPen | undefined {
+  const next: OwnPen = { ...pen };
+  const target: OwnPenPart = part === 'symbol' ? { ...next.symbol } : next;
+  for (const [k, v] of Object.entries(change) as [Field, unknown][]) {
+    if (v === undefined) delete target[k];
+    else (target as Record<string, unknown>)[k] = v;
+  }
+  if (part === 'symbol') {
+    if (Object.keys(target).length) next.symbol = target;
+    else delete next.symbol;
+  }
+  return Object.keys(next).length ? next : undefined;
+}
+
+/** Ändringen för ett fält, och ångrarubriken. */
+function fieldChange(name: string, input: HTMLInputElement | HTMLSelectElement, current: () => string | undefined): { part: Part; change: Partial<Record<Field, unknown>>; label: string } | null {
+  const part: Part = name.startsWith('symbol.') ? 'symbol' : 'main';
+  const field = part === 'symbol' ? name.slice(7) : name;
+  const v = input.value;
+  const what = part === 'symbol' ? ' för symbolen' : '';
+  if (field === 'weight') return { part, change: { weight: v === 'style' ? undefined : Number(v) }, label: (v === 'style' ? 'Ärvd tjocklek' : 'Egen tjocklek') + what };
+  if (field === 'colorOn') return { part, change: { color: v === 'style' ? undefined : (current() ?? '#c2372c') }, label: (v === 'style' ? 'Ärvd färg' : 'Egen färg') + what };
+  if (field === 'color') return { part, change: { color: v }, label: 'Ändra färg' + what };
+  if (field === 'linetype') return { part, change: { linetype: v === 'style' ? undefined : v }, label: (v === 'style' ? 'Ärvd linjetyp' : 'Egen linjetyp') + what };
+  return null;
+}
+
 /** Sätt eller ta bort ett fält i pennan för de markerade, i en transaktion. */
-function setPen(store: DocStore, ids: readonly Id[], change: Partial<Record<keyof OwnPen, unknown>>, label: string): void {
+function setPen(store: DocStore, ids: readonly Id[], part: Part, change: Partial<Record<Field, unknown>>, label: string): void {
   store.transact(label, (tx) => {
     for (const id of ids) {
       const el = store.doc.elements[id];
       if (!el || !OWN_PEN_TYPES.has(el.type)) continue;
-      const pen: OwnPen = { ...el.pen };
-      for (const [k, v] of Object.entries(change) as [keyof OwnPen, unknown][]) {
-        if (v === undefined) delete pen[k];
-        else (pen as Record<string, unknown>)[k] = v;
-      }
+      const pen = changed(el.pen, part, change);
       const next = { ...el };
-      if (Object.keys(pen).length) next.pen = pen;
+      if (pen) next.pen = pen;
       else delete next.pen;
       tx.putElement(next);
     }
@@ -68,16 +136,45 @@ function setPen(store: DocStore, ids: readonly Id[], change: Partial<Record<keyo
 
 /** Ändringar i fälten (`pen:…`). Svarar true om ändringen hanterades. */
 export function ownPenChange(store: DocStore, ids: readonly Id[], name: string, input: HTMLInputElement | HTMLSelectElement): boolean {
-  const v = input.value;
-  if (name === 'weight') setPen(store, ids, { weight: v === 'style' ? undefined : Number(v) }, v === 'style' ? 'Stilmallens tjocklek' : 'Egen tjocklek');
-  else if (name === 'colorOn') setPen(store, ids, { color: v === 'style' ? undefined : (ids.map((id) => store.doc.elements[id]?.pen?.color).find(Boolean) ?? '#c2372c') }, v === 'style' ? 'Stilmallens färg' : 'Egen färg');
-  else if (name === 'color') setPen(store, ids, { color: v }, 'Ändra färg');
-  else if (name === 'linetype') setPen(store, ids, { linetype: v === 'style' ? undefined : v }, v === 'style' ? 'Stilmallens linjetyp' : 'Egen linjetyp');
-  else return false;
+  const c = fieldChange(name, input, () => ids.map((id) => partOf(store.doc.elements[id]?.pen, name.startsWith('symbol.') ? 'symbol' : 'main')?.color).find(Boolean));
+  if (!c) return false;
+  setPen(store, ids, c.part, c.change, c.label);
   return true;
 }
 
-/** Knappen Stilmallens penna: allt tillbaka. */
+/** Ändringar i typens penna (`defpen:…`) för typen de markerade har. */
+export function typePenChange(store: DocStore, ids: readonly Id[], name: string, input: HTMLInputElement | HTMLSelectElement): boolean {
+  const defId = store.doc.elements[ids[0]]?.definition;
+  const def = defId ? store.doc.definitions[defId] : undefined;
+  if (!def) return false;
+  const c = fieldChange(name, input, () => partOf(def.pen, name.startsWith('symbol.') ? 'symbol' : 'main')?.color);
+  if (!c) return false;
+  store.transact(`${c.label} för ${def.name}`, (tx) => tx.putDefinition(withPen(def, changed(def.pen, c.part, c.change))));
+  return true;
+}
+
+function withPen(def: Definition, pen: OwnPen | undefined): Definition {
+  const next = { ...def };
+  if (pen) next.pen = pen;
+  else delete next.pen;
+  return next;
+}
+
+/** Knappen Typens (eller Stilmallens) penna: objektens egna tas bort. */
 export function resetOwnPen(store: DocStore, ids: readonly Id[]): void {
-  setPen(store, ids, { weight: undefined, color: undefined, linetype: undefined }, 'Stilmallens penna');
+  store.transact('Ta bort egen penna', (tx) => {
+    for (const id of ids) {
+      const el = store.doc.elements[id];
+      if (!el?.pen) continue;
+      const next = { ...el };
+      delete next.pen;
+      tx.putElement(next);
+    }
+  });
+}
+
+/** Knappen Stilmallens penna under typen: typens egen tas bort. */
+export function resetTypePen(store: DocStore, defId: Id): void {
+  const def = store.doc.definitions[defId];
+  if (def?.pen) store.transact(`Stilmallens penna för ${def.name}`, (tx) => tx.putDefinition(withPen(def, undefined)));
 }

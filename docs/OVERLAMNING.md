@@ -1,10 +1,17 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.32.
+överlämning; historiken finns i git. Senast: 25 oktober 2026, efter 0.8.33.
 
 ## Läget
 
+- **0.8.33 Pennor per typ och symbollinjer är klar** på `main` (samma
+  format, 13). Dörrarnas och fönstrens delar i tre klasser i stilmallen
+  (snitt 0,25, vy 0,18, symbol 0,13 mm), den egna pennan i två delar
+  (*Snitt* och *Symbol*) för dörrar och fönster, och typens penna under
+  *Påverkar fler objekt*. Dörrbladen och fönstrens glas ritas tunnare än
+  förut (referensritningarna har nytt facit). Claudes val står i
+  PLAN.md, koden i UTVECKLING.md. Testerna: 402 på ca 6 s.
 - **0.8.32 Granskning är klar** på `main` (samma format, 13, utan nya
   funktioner). Testerna: 406 → 399 (dubbletter och prov av enskilda fält
   sammanslagna, tester som låste detaljer lösare), hela körningen 26 → 12 s
@@ -81,9 +88,8 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.27 Granskning~~, ~~0.8.28 Rättelser i 2D-formen~~,
   ~~0.8.29 Bakgrund i fyllningar och ändformer~~,
   ~~0.8.30 Linjetyper och mask~~, ~~0.8.31 Linjetyp och penna per
-  objekt~~, ~~0.8.32 Granskning~~ (klara)
-- **0.8.33 Pennor per typ och symbollinjer** (snitt, vy och symbol i
-  stilmallen; egen penna i två delar; penna på typen)
+  objekt~~, ~~0.8.32 Granskning~~, ~~0.8.33 Pennor per typ och
+  symbollinjer~~ (klara)
 - **0.8.34 Rum: kontur och rumsgränser** (*Avgränsar rum* på 2D-linjer)
 - **0.8.35 Filtrera och markera** (sort, typ, tillstånd, åtgärd, våning,
   egenskaper)
@@ -112,19 +118,27 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.8.32 syns på webbhotellet (numret vid alfa-knappen) och
-om allt beter sig som förut, och om den egna pennan i 0.8.31 fungerar som
-han tänkt (han har inte svarat). Läs synpunktsfilen och sortera ny
-Inkorg. Bygg sedan **0.8.33 Pennor per typ och symbollinjer** (PLAN.md,
-bekräftat 25 oktober): pennor för dörrarnas och fönstrens delar i
-stilmallen i tre klasser, snitt (väggkontur, karm), vy (dörrblad,
-fönsterbåge) och symbol (slagbåge, öppningssätt), med symbollinjerna
-tunnare från början; den egna pennan i två delar, *Snitt* och *Symbol*;
-och penna per typ (objektets egen före typens, före stilmallens).
-Mellanstor, en session. Penna på typen är ett nytt valfritt fält på
-typen; sådana har inte krävt ett nytt format förut.
+Fråga först om 0.8.33 syns på webbhotellet (numret vid alfa-knappen) och
+hur pennorna känns (frågorna nedan). Läs synpunktsfilen och sortera ny
+Inkorg. Bygg sedan **0.8.34 Rum: kontur och rumsgränser** (PLAN.md):
+rummens kontur med penna i stilmallen och egen per rum (från början
+ingen kontur), och kryssrutan *Avgränsar rum* på en 2D-linje, som då
+räknas som en vägg när rummen räknas ut. Mellanstor, en session. Rummet
+finns inte i `OWN_PEN_TYPES` (`src/ui/ownPenFields.ts`) än. 0.8.35 är
+en granskning enligt tumregeln (var tredje version) om inget annat
+bestäms; föreslå den efter 0.8.34 eller 0.8.35.
 
 ## Att fråga Carl August om
+
+- **0.8.33 efter provning** (Claudes val, se PLAN.md): förvalen snitt
+  0,25, vy 0,18 och symbol 0,13 mm; att dörrbladen (0,35 → 0,18) och
+  fönstrens glas (0,25 → 0,18) blev tunnare; att väggen under fönstret
+  är kvar på 0,13 utan klass; att bara *Symbol* gäller i fasader och
+  sektioner. Den egna pennans *Snitt* och *Symbol* är oberoende: en dörr
+  som fick en egen färg i 0.8.31 har nu slagbågen i stilmallens färg.
+  Ska *Symbol* hellre följa *Snitt* när den inte är satt? Ska *Vy* också
+  finnas som egen del i den egna pennan? Typens penna går fält för fält
+  under objektets.
 
 - **0.8.32 efter provning**: inget nytt att prova; allt ska bete sig som
   förut, och planen ritas om lite fortare när en vägg flyttas i ett stort
@@ -132,11 +146,10 @@ typen; sådana har inte krävt ett nytt format förut.
 
 - **0.8.31 efter provning** (Claudes val, se PLAN.md): att pennan finns
   för väggar, dörrar, fönster, tak och möbler men inte för rum (som inte
-  ritar någon kontur); att tjockleken gäller alla objektets linjer (en
-  dörrs blad, karm och slagbåge blir lika); att texter och fyllningar
-  följer stilmallen; att pennan inte finns i smartmenyn. Ska rummen ha en
-  kontur som kan få en penna? Ska den egna pennan kunna sättas på en typ
-  (t.ex. alla YV01) i stället för ett objekt i taget?
+  ritar någon kontur); att tjockleken gäller alla objektets linjer
+  (sedan 0.8.33 utom slagbågen, som har *Symbol*); att texter och fyllningar
+  följer stilmallen; att pennan inte finns i smartmenyn. Rummens kontur
+  kommer i 0.8.34; pennan på typen kom i 0.8.33.
 
 - **0.8.30 efter provning** (Claudes val, se PLAN.md): vilka sju
   inbyggda linjetyper som finns och deras mönster; att de egna ligger i

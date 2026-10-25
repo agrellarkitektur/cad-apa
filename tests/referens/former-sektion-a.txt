@@ -61,8 +61,8 @@ linje 4345,2110 5255,2110 [w0.18 #c2372c] @d02/lining
 linje 5255,2110 5255,0 [w0.18 #c2372c] @d02/lining
 linje 4275,0 4345,0 [w0.18 #c2372c] @d02/lining
 linje 5325,0 5255,0 [w0.18 #c2372c] @d02/lining
-linje 4405,2040 5195,1020 [w0.13 #c2372c d3/1.5] @d02/swing
-linje 4405,0 5195,1020 [w0.13 #c2372c d3/1.5] @d02/swing
+linje 4405,2040 5195,1020 [w0.13 ink d3/1.5] @d02/swing
+linje 4405,0 5195,1020 [w0.13 ink d3/1.5] @d02/swing
 linje 7155,0 7155,2090 [w0.25 ink] @d03/frame
 linje 7155,2090 8045,2090 [w0.25 ink] @d03/frame
 linje 8045,2090 8045,0 [w0.25 ink] @d03/frame
