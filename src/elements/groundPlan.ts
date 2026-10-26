@@ -1,8 +1,8 @@
 import type { Element } from '../core/model';
-import { groundDefaults, levelText } from '../core/site';
+import { groundAt, groundDefaults, levelText, terrainOf } from '../core/site';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { fillPrims, type FillParams } from './drawing2d';
-import { groundLabel, isLineKind, wallCrest, type GroundGeometry, type GroundParams } from './groundGeometry';
+import { finishedTerrain, groundLabel, isLineKind, wallCrest, type GroundGeometry, type GroundParams } from './groundGeometry';
 import { lineLength, pathRatio, pathWarnings } from './groundLines';
 import type { PlanContext } from './registry';
 
@@ -22,15 +22,154 @@ export function groundPlan(ctx: PlanContext, el: Element<any>, g: GroundGeometry
   for (const poly of g.rings) for (const ring of poly) out.push({ kind: 'polyline', points: ring, closed: true, pen, origin: { ...origin, part: 'kontur' } });
   const text = `${groundLabel(p)} ${levelText(ctx.doc.site, g.label.height)}${g.label.fall ? ` · 1:${g.label.fall.toLocaleString('sv-SE')}` : ''}`;
   out.push({ kind: 'text', at: g.label.at, text, height: 2, align: 'middle', pen: { weight: 0.18 }, origin: { ...origin, part: 'höjd' } });
-  // Fallets riktning som en pil från mitten (platå med fall).
+  // Fallets riktning: runt huset en pil ut från varje fasad (0.10.8), annars en från mitten.
+  if (g.label.fall && p.around) out.push(...aroundArrows(ctx, g, p.distance ?? groundDefaults(ctx.doc.site).distance, { ...origin, part: 'fall' }));
   if (g.label.fall && !p.around) {
     const a = ((p.fallDir ?? 0) * Math.PI) / 180;
     const l = 8 * ctx.scale;
     const s: Vec2 = [g.label.at[0], g.label.at[1] - 3 * ctx.scale];
     out.push(...arrow(ctx, s, [s[0] + Math.cos(a) * l, s[1] + Math.sin(a) * l], { ...origin, part: 'fall' }));
   }
+  out.push(...slopeMarks(ctx, g, { ...origin, part: 'slänt' }));
   return out;
 }
+
+/** Ytan som ringen omsluter, positiv moturs. */
+function signedArea(ring: readonly Vec2[]): number {
+  let a = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const p = ring[i];
+    const q = ring[(i + 1) % ring.length];
+    a += p[0] * q[1] - q[0] * p[1];
+  }
+  return a / 2;
+}
+
+/** Normalen ut från ringen längs kanten `a`–`b`, eller null för en kant utan längd. */
+function outward(ring: readonly Vec2[], a: Vec2, b: Vec2): Vec2 | null {
+  const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  if (l < 1) return null;
+  const sgn = signedArea(ring) >= 0 ? 1 : -1;
+  return [(sgn * (b[1] - a[1])) / l, (-sgn * (b[0] - a[0])) / l];
+}
+
+/** Fasader kortare än så får ingen egen pil runt huset, mm. */
+const ARROW_FACADE = 3000;
+
+/** Runt huset (0.10.8): en pil ut från varje fasad, mitt på markytan, med fallet. */
+function aroundArrows(ctx: PlanContext, g: GroundGeometry, distance: number, origin: Primitive['origin']): Primitive[] {
+  const out: Primitive[] = [];
+  const fall = g.label.fall!;
+  const l = Math.min(6 * ctx.scale, Math.max(distance * 0.8, 1));
+  for (const ring of g.holes) {
+    for (let i = 0; i < ring.length; i++) {
+      const a = ring[i];
+      const b = ring[(i + 1) % ring.length];
+      const n = outward(ring, a, b);
+      if (!n || Math.hypot(b[0] - a[0], b[1] - a[1]) < ARROW_FACADE) continue;
+      const m: Vec2 = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      const s: Vec2 = [m[0] + n[0] * (distance - l) / 2, m[1] + n[1] * (distance - l) / 2];
+      const e: Vec2 = [s[0] + n[0] * l, s[1] + n[1] * l];
+      out.push(...arrow(ctx, s, e, origin));
+      // Fallet vid pilen, längs fasaden.
+      let ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+      if (ang > Math.PI / 2 + 1e-6) ang -= Math.PI;
+      if (ang < -Math.PI / 2 + 1e-6) ang += Math.PI;
+      const t = 2 * ctx.scale;
+      out.push({ kind: 'text', at: [(s[0] + e[0]) / 2 + Math.cos(ang) * t * 1.5, (s[1] + e[1]) / 2 + Math.sin(ang) * t * 1.5], angle: ang, text: `1:${fall.toLocaleString('sv-SE')}`, height: 1.8, align: 'middle', pen: { weight: 0.18 }, origin });
+    }
+  }
+  return out;
+}
+
+/** Hur tätt släntstrecken ligger, mm på papperet. */
+const MARK_SPACING = 2.5;
+
+/**
+ * Släntmarkeringar (0.10.8): där markobjektet möter marken med slänt,
+ * streck vinkelrätt mot kanten från släntens krön ned mot foten, långa och
+ * korta om vartannat. Slänten känns ut från kanten i den färdiga marken: den
+ * går så länge den färdiga skiljer sig från den befintliga och lutar som en
+ * slänt. Schakt har krönet ute vid marken, fyll vid kanten.
+ */
+function slopeMarks(ctx: PlanContext, g: GroundGeometry, origin: Primitive['origin']): Primitive[] {
+  const sh = g.shape;
+  if (!sh || sh.slope === null || sh.blend) return [];
+  const f = finishedTerrain(ctx);
+  const t = terrainOf(ctx.doc);
+  if (!f || !t) return [];
+  const spacing = MARK_SPACING * ctx.scale;
+  const step = Math.max(100, (t.grid.s * 1000) / 3);
+  const steep = 0.5 / sh.slope;
+  const minLen = 0.8 * ctx.scale;
+  const pen = { weight: 0.13 };
+  const out: Primitive[] = [];
+  const diff = (x: number, y: number): number | null => {
+    const a = groundAt(f.terrain, x, y);
+    const b = groundAt(t, x, y);
+    return a === null || b === null ? null : a - b;
+  };
+  let k = 0;
+  /** Ett streck från kanten i `q` ut längs `n`, om slänten börjar där. */
+  const tick = (q: Vec2, n: Vec2): void => {
+    k++;
+    const d0 = diff(q[0] + n[0] * 60, q[1] + n[1] * 60);
+    if (d0 === null || Math.abs(d0) < 30) return;
+    // Gå ut längs normalen så länge marken är ändrad och lutar som en slänt.
+    let d = 60;
+    let prev = groundAt(f.terrain, q[0] + n[0] * d, q[1] + n[1] * d)!;
+    while (d < MARK_REACH) {
+      const x = q[0] + n[0] * (d + step);
+      const y = q[1] + n[1] * (d + step);
+      const z = groundAt(f.terrain, x, y);
+      const dz = diff(x, y);
+      if (z === null || dz === null || Math.abs(dz) < 15 || Math.abs(z - prev) / step < steep) break;
+      prev = z;
+      d += step;
+    }
+    if (d < minLen) return;
+    const end: Vec2 = [q[0] + n[0] * d, q[1] + n[1] * d];
+    // Krönet: ute vid marken i schakt, vid kanten i fyll.
+    const [from, to] = d0 < 0 ? [end, q] : [q, end];
+    const part = k % 2 === 1 ? 1 : 0.4;
+    out.push({ kind: 'line', a: from, b: [from[0] + (to[0] - from[0]) * part, from[1] + (to[1] - from[1]) * part], pen, origin });
+  };
+  for (const poly of g.rings) {
+    const ring = poly[0];
+    const ccw = signedArea(ring) >= 0;
+    for (let i = 0; i < ring.length; i++) {
+      const a = ring[i];
+      const b = ring[(i + 1) % ring.length];
+      const n = outward(ring, a, b);
+      if (!n) continue;
+      const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      for (let s = spacing / 2; s < len; s += spacing) tick([a[0] + ((b[0] - a[0]) * s) / len, a[1] + ((b[1] - a[1]) * s) / len], n);
+      // Ett utåtgående hörn: strecken i en solfjäder mellan kanternas normaler.
+      const c = ring[(i + 2) % ring.length];
+      const n2 = outward(ring, b, c);
+      if (!n2) continue;
+      const turn = (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]);
+      if (ccw ? turn <= 0 : turn >= 0) continue;
+      const a1 = Math.atan2(n[1], n[0]);
+      let da = Math.atan2(n2[1], n2[0]) - a1;
+      while (da > Math.PI) da -= 2 * Math.PI;
+      while (da < -Math.PI) da += 2 * Math.PI;
+      // Lika tätt som längs kanten 1,5 m ut från hörnet.
+      const m = Math.floor((Math.abs(da) * FAN_RADIUS) / spacing);
+      for (let j = 1; j <= m; j++) {
+        const ang = a1 + (da * j) / (m + 1);
+        tick(b, [Math.cos(ang), Math.sin(ang)]);
+      }
+    }
+  }
+  return out;
+}
+
+/** Där solfjäderns streck i ett hörn ligger lika tätt som längs kanten, mm. */
+const FAN_RADIUS = 1500;
+
+/** Hur långt ut en slänt högst känns, mm. */
+const MARK_REACH = 40_000;
 
 /** Fyllningen (0.10.7), som 2D-formens, bakom väggarna. */
 function fillOf(ctx: PlanContext, el: Element<any>, p: GroundParams, polys: Vec2[][][]): Primitive[] {
@@ -123,6 +262,7 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
   const ratio = Number.isFinite(n) ? `1:${(Math.round(n * 10) / 10).toLocaleString('sv-SE')}` : 'Plan';
   const mid = pointAlong(center, total / 2);
   text([mid[0], mid[1] + 2 * ctx.scale], `${groundLabel(p)} ${ratio}${warn.length ? ' !' : ''}`, 'lutning', warn.length ? { pen: { weight: 0.18, color: 'accent' } } : {});
+  out.push(...slopeMarks(ctx, g, { ...origin, part: 'slänt' }));
   text([center[0][0], center[0][1] - 3 * ctx.scale], hText(ctx, h0), 'höjd');
   if (Math.abs(h1 - h0) >= 1) text([center[center.length - 1][0], center[center.length - 1][1] - 3 * ctx.scale], hText(ctx, h1), 'höjd');
   return out;

@@ -1,5 +1,5 @@
 import { emptyProject } from '../../core/model';
-import { CONTOUR_STEPS, DEFAULT_CONTOURS, GROUND_DEFAULTS, groundDefaults, terrainOf, toRh, type GroundDefaults } from '../../core/site';
+import { CONTOUR_STEPS, DEFAULT_CONTOURS, GROUND_DEFAULTS, groundAt, groundDefaults, terrainOf, toRh, type GroundDefaults } from '../../core/site';
 import { finishedTerrain, groundObjects, m3, showsProposal } from '../../elements/ground';
 import { applySitePackage, cropSite, parseSitePackage, removeSite, sameSite, siteProjectName, SitePackageError, updateSite, type Platspaket } from '../../core/siteImport';
 import { DocStore } from '../../core/store';
@@ -125,7 +125,7 @@ export function installSite(app: AppContext) {
   }
 
   /** Dialogen Platsen: varifrån, koordinatsystem, ±0, höjdkurvor, beskärning, licens. */
-  async function showDialog(): Promise<void> {
+  async function showDialog(over?: { datum?: number }): Promise<void> {
     const doc = app.store.doc;
     const site = doc.site;
     if (!site) {
@@ -151,12 +151,12 @@ export function installSite(app: AppContext) {
           ${m.bh && m.bh.height !== null ? row('Byggnadshöjd', `${mf(m.bh.height / 1000, 2)} m enligt PBF, på fasaden mot ${compass(m.bh.main.out, northOf(site))} (den längsta), +${mf(toRh(site, m.bh.main.z))}. Undantagen (kupor, allmän plats närmare än 6 m, annan beräkningsgrundande fasad) bedöms för hand.`) : ''}
           ${m.volumes ? row('Schakt och fyll', `${m3(m.volumes.cut)} schakt, ${m3(m.volumes.fill)} fyll (${m.objects} markobjekt i tillståndet som visas)`) : ''}
         </dl>
-        <label class="site-field"><span>±0, plan 1:s golv, i RH 2000 (m)</span><span class="site-datum"><input class="ask-input" data-site="datum" inputmode="decimal" value="${mf(site.datum)}">${m.existing !== null ? `<button type="button" class="btn" data-site-mmn="${mf(Math.round(toRh(site, m.existing) * 100) / 100)}" title="Sätt ±0 till den befintliga markens medelmarknivå längs huset, avrundad till centimeter">Medelmarknivån</button>` : ''}</span></label>
+        <label class="site-field"><span>±0, plan 1:s golv, i RH 2000 (m)</span><span class="site-datum"><input class="ask-input" data-site="datum" inputmode="decimal" value="${mf(over?.datum ?? site.datum)}">${t ? `<button type="button" class="btn" data-site-action="pick" title="Klicka på marken i planen; höjden där blir ±0, avrundad till centimeter. Den kan ändras här efteråt.">Klicka i planen</button>` : ''}${m.existing !== null ? `<button type="button" class="btn" data-site-mmn="${mf(Math.round(toRh(site, m.existing) * 100) / 100)}" title="Sätt ±0 till den befintliga markens medelmarknivå längs huset, avrundad till centimeter">Medelmarknivån</button>` : ''}</span></label>
         ${t ? `<label class="site-field"><span>Höjdkurvor var</span><select data-site="contours">${CONTOUR_STEPS.map((c) => `<option value="${c}"${c === interval ? ' selected' : ''}>${mf(c / 1000, 2)} m</option>`).join('')}</select></label>` : ''}
         ${t ? `<div class="site-field site-crop"><span>Beskär markmodellen till</span><input class="ask-input" data-site="crop" inputmode="decimal" value="30"><span>m runt huset</span><button type="button" class="btn" data-site-action="crop"${m.house ? '' : ' disabled title="Rita huset först"'}>Beskär</button></div>` : ''}
-        ${t ? groundSettings(site.ground, site.meanOnExisting, site.earthHatch) : ''}
+        ${t ? groundSettings(site.ground, site.meanOnExisting, site.earthHatch ? 'hatch' : site.earthWhite ? 'white' : 'none') : ''}
         ${site.boundaryWarning ? `<p class="site-note">${escapeHtml(site.boundaryWarning)}</p>` : ''}
-        ${site.licence ? `<p class="site-note">${escapeHtml(site.licence)}</p>` : ''}
+        ${site.licence ? `<p class="site-note">${escapeHtml(site.licence)} Skriv <code>{licens}</code> i en text på bladet eller mallbladet för att få med den.</p>` : ''}
         ${src.link ? `<p class="site-note"><a href="${escapeHtml(src.link)}" target="_blank" rel="noopener">Öppna platsen i Höjdkurvor</a></p>` : ''}
       </div>
       <footer><button type="button" class="btn" data-site-action="remove">Ta bort platsen</button><button type="button" class="btn" data-site-action="file">Uppdatera ur fil…</button><div class="spacer"></div><button type="button" class="btn" data-cancel>Avbryt</button><button type="submit" class="btn btn-primary">Spara</button></footer>`;
@@ -181,7 +181,9 @@ export function installSite(app: AppContext) {
           }
           patch.ground = Object.keys(ground).length ? ground : undefined;
           patch.meanOnExisting = form.querySelector<HTMLSelectElement>('[data-site="mean"]')?.value === 'existing' || undefined;
-          patch.earthHatch = form.querySelector<HTMLInputElement>('[data-site="earth"]')?.checked || undefined;
+          const earth = form.querySelector<HTMLSelectElement>('[data-site="earth"]')?.value;
+          patch.earthHatch = earth === 'hatch' || undefined;
+          patch.earthWhite = earth === 'white' || undefined;
         }
         const changed = (Object.keys(patch) as (keyof typeof patch)[]).some((k) => JSON.stringify(patch[k]) !== JSON.stringify(site[k]));
         if (changed) updateSite(app.store, patch);
@@ -204,6 +206,7 @@ export function installSite(app: AppContext) {
     if (r === 'remove') {
       if (await askConfirm('Ta bort platsen', 'Markmodellen, grannhusen, träden och fastighetsgränserna tas bort. Huset och norrpilen står kvar.')) removeSite(app.store);
     } else if (r === 'file') chooseFile();
+    else if (r === 'pick') pickDatum();
     else if (r?.startsWith('crop:')) {
       const margin = Number(r.slice(5));
       const d = app.store.doc;
@@ -219,6 +222,46 @@ export function installSite(app: AppContext) {
       const ok = await askConfirm('Beskär markmodellen', `Markmodellen och det som kom med platsen beskärs till ${mf(margin / 1000, 0)} m runt huset. Det går att ångra, men inte att få tillbaka efter att projektet sparats utan att lägga in platsen igen.`, 'Beskär');
       if (ok && !cropSite(app.store, box)) app.hint('Rutan täcker inte markmodellen.', 4000);
     }
+  }
+
+  /**
+   * ±0 med ett klick (0.10.8): ett tillfälligt verktyg i planen. Klicket
+   * läser den befintliga marken där, och dialogen öppnas igen med höjden
+   * ifylld, så att den kan ändras innan den sparas. Esc avbryter.
+   */
+  function pickDatum(): void {
+    const t = terrainOf(app.store.doc);
+    if (!t) return;
+    if (app.ui.mode === '3d' || app.view.currentTool === app.sheets.tool) {
+      app.hint('Öppna en plan för att klicka på marken.', 4000);
+      return;
+    }
+    const back = (): void => {
+      window.removeEventListener('keydown', onKey, true);
+      app.view.setTool(app.toolFor(app.ui.tool));
+      app.view.requestRender();
+    };
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      back();
+      app.hint('±0 är oförändrat.', 2500);
+    };
+    window.addEventListener('keydown', onKey, true);
+    app.view.setTool({
+      cursor: 'crosshair',
+      down: () => 'capture',
+      up: (p) => {
+        const z = groundAt(t, p.model[0], p.model[1]);
+        if (z === null) {
+          app.hint('Ingen markmodell där. Klicka på marken, eller Esc.', 3000);
+          return;
+        }
+        back();
+        void showDialog({ datum: Math.round(toRh(t.site, z) * 100) / 100 });
+      },
+    });
+    app.hint('Klicka på marken där ±0 ska ligga (den befintliga marken). Esc avbryter.', 5000);
   }
 
   // Från Höjdkurvor (Fortsätt rita i cad-apa): säg att vi är redo, ta emot platsen och kvittera.
@@ -251,7 +294,7 @@ export function installSite(app: AppContext) {
 }
 
 /** Markobjektens förval och valen för den färdiga marken (0.10.4) i dialogen Platsen. */
-function groundSettings(own: Partial<GroundDefaults> | undefined, meanOnExisting: boolean | undefined, earth: boolean | undefined): string {
+function groundSettings(own: Partial<GroundDefaults> | undefined, meanOnExisting: boolean | undefined, earth: 'none' | 'hatch' | 'white'): string {
   const d = groundDefaults({ ground: own });
   const field = (k: keyof GroundDefaults, label: string, unit: string) =>
     `<label class="site-field"><span>${label}</span><span class="input-unit"><input class="ask-input" data-ground="${k}" inputmode="decimal" value="${d[k].toLocaleString('sv-SE')}"><i>${unit}</i></span></label>`;
@@ -264,7 +307,15 @@ function groundSettings(own: Partial<GroundDefaults> | undefined, meanOnExisting
       </div>
       <p class="site-note">Ramp 1:12 och gångväg 1:20 med vilplan var 0,5 m höjd är förval efter Boverkets regler om tillgänglighet (ALM och BBR); kontrollera mot det som gäller i projektet.</p>
       <label class="site-field"><span>Medelmarknivån mot</span><select data-site="mean"><option value="finished">Färdig mark</option><option value="existing"${meanOnExisting ? ' selected' : ''}>Befintlig mark</option></select></label>
-      <label class="check"><input type="checkbox" data-site="earth"${earth ? ' checked' : ''}> Jord under marklinjen i sektionerna</label>
+      <label class="site-field"><span>Jord under marklinjen i sektionerna</span><select data-site="earth">${(
+        [
+          ['none', 'Ingen'],
+          ['hatch', 'Skrafferad'],
+          ['white', 'Vit (bara snittlinjen)'],
+        ] as const
+      )
+        .map(([v, l]) => `<option value="${v}"${v === earth ? ' selected' : ''}>${l}</option>`)
+        .join('')}</select></label>
       <p class="site-note">Förvalen gäller markobjekt som inte har egna värden. Den färdiga marken räknas ur den befintliga och markobjekten i förslaget; den befintliga ändras aldrig.</p>
     </fieldset>`;
 }

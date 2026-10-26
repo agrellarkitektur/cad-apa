@@ -36,7 +36,8 @@ export const groundType: ElementType<GroundParams> = {
   labelPlural: 'Markobjekt',
   drawOrder: 4.5,
   compares: true,
-  planReads: ['Wall', 'Slab'],
+  // Släntmarkeringarna (0.10.8) följer den färdiga marken, som alla markobjekt gör.
+  planReads: ['Wall', 'Slab', 'Ground'],
   pickSoft: true,
   defaults: () => ({ kind: 'area', outline: [] }),
   model3d(el, ctx): Shape3D[] {

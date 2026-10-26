@@ -1242,6 +1242,22 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Marken i ritningarna (0.10.8, format 19)
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/elements/site.ts` | `changedCells(f, base)` (om en punkt ligger i en ruta som markobjekten ändrat), `groundContours(doc, f)` (`solid` och `old`, sparade per `Finished`), `contourSegments3d(doc, f)` (kurvorna för 3D-vyn); `Terrain.plan` ritar `höjdkurva` och `befintlig mark` |
+| `src/elements/groundPlan.ts` | `slopeMarks` (släntmarkeringarna, part `slänt`), `aroundArrows` (en pil per fasad runt huset, part `fall`), `outward` och `signedArea` |
+| `src/repr/terrain.ts` | `groundLines`: tjock marklinje också i Befintligt; jorden vit med `site.earthWhite` |
+| `src/view3d/view3d.ts`, `src/ui/app/pane3d.ts` | `setTerrain(mesh, contours)`; nyckeln `contours3d` i Visa |
+| `src/ui/app/site.ts` | *Klicka i planen* (`pickDatum`, ett tillfälligt `ViewTool`), jorden som val, `{licens}` i noten |
+| `src/core/sheetFields.ts`, `src/repr/smartText.ts` | `licens` bland den inbyggda smarttexten |
+
+- `Ground` har `planReads: ['Wall', 'Slab', 'Ground']`: släntmarkeringarna
+  beror på den färdiga marken, alltså på de andra markobjekten.
+- Tester: `tests/v0108.test.ts`. Referensritningarna `mark-plan` och
+  `mark-plan-befintligt` ändrades.
+
 ## Markobjekt del 3 (0.10.7, format 19)
 
 Sorterna är `area` (markyta: platå och urgrävning), `path` (ramp/väg),

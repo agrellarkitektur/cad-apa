@@ -3,34 +3,37 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 26 oktober 2026, efter 0.10.7.
+Senast: 26 oktober 2026, efter 0.10.8.
 
 ## Läget
 
-- **0.10.7 Markobjekt del 3 är klar** på `main` (format 19). Carl August
-  ville ta marken före de dolda linjerna och sa "kör" efter upplägget i
-  chatten. Rättat: markobjekt längs en linje (höjdpunkt, ramp, brytlinje,
-  stödmur) flyttades inte (`movePatch` tog inte `line`); *Avrunda* och
-  *Böj* finns inte för markobjektens linjer (`noArcs`). **Ramp/väg** är en
-  sort (namn, bredd 1 500, egen gräns `maxSlope` med förval 1:12, vilplan
-  när den är brantare än 1:20 och går mer än 0,5 m). **Markyta** är platå
-  och urgrävning i ett (schakt och fyll i samma objekt; urgrävningen under
-  bjälklaget tar fortfarande bara ned). Referenslinjen i mitten eller på en
-  kant med förskjutning (negativ mot mitten), blå när vägen är markerad i
-  planen och 3D. Tvärlinjerna kan slås av. Penna, linjetyp, fyllning och
-  lås för markobjekten. Testerna: 504 på ca 12–14 s. Klickjämförelsen 293
-  steg utan fel mot 0.10.7 (mot 0.10.6 går den inte: andra knappar).
-  Provat med Playwright mot `dist/`. Claudes val i PLAN.md, koden i
-  UTVECKLING.md under *Markobjekt del 3 (0.10.7)*.
-- **Carl Augusts svar 26 oktober** (frågorna 1–16, se nedan) ligger i
-  planen: 0.10.8 Marken i ritningarna, 0.10.9 Stödmur del 2, 0.10.10 Dolda
-  linjer och vyns djup, 0.12.1 3D-vyer (före piloten). Inkorgen 26 oktober
-  är sorterad och bekräftad (synpunktsfilen).
+- **0.10.8 Marken i ritningarna är klar** på `main` (samma format, 19).
+  Carl August delade versionen i två och sa "kör": höjderna i fasaden blir
+  **0.10.8b**. Byggt: höjdkurvorna heldragna där marken är orörd och den
+  befintliga streckad bara där den ändrats, halvmeterskurvorna tunnare,
+  marklinjen heldragen också i Befintligt, höjdkurvor i 3D (släcks under
+  Visa), släntmarkeringar (solfjäder i hörnen), en fallpil per fasad runt
+  huset, vit jord i sektionerna, ±0 med *Klicka i planen* i *Platsen* och
+  `{licens}`. Testerna: 508 på ca 13–18 s (sandlådan varierar; samma tid
+  före ändringarna). Klickjämförelsen kördes inte. Provat med Playwright
+  mot `dist/`. Claudes val i PLAN.md, koden i UTVECKLING.md under *Marken
+  i ritningarna (0.10.8)*.
+- **Carl Augusts svar 26 oktober kväll**: 0.10.7 bra som det är (referens-
+  linjen inte på papperet, förskjutningens tecken, fyllningen bakom
+  väggarna, vägens egen gräns). Fråga 19: byggnadshöjden mot en
+  beräkningsgrundande fasad han själv ritar, och nock- och totalhöjd
+  (0.10.8b). 21 och 55 till 0.10.10, 25 till 0.10.11, 23 parkerad (husets
+  kontur på situationsplanen, helhetsgrepp efter piloten). 22, 28, 30, 33
+  och 81 strukna ("vet inte" räknas som bra).
 - **Frågorna:** de obesvarade (17–81 nedan) ställs **tio per session**,
   de som hör till den kommande versionen först. En fråga han hoppar över
   räknas som "bra som det är" och stryks.
+- **Släntmarkeringarna** (0.10.8) jämför den färdiga marken med den
+  befintliga efter alla markobjekt; där två objekt möts kan strecken gå
+  in över grannens yta om den också är ändrad men lutar som en slänt.
+  Inte sett i `groundProject`, men inte prövat med branta grannar.
 - **0.10.6 Granskning** och äldre versioner står i README, PLAN.md och
-  UTVECKLING.md. **0.9.2–0.10.7 är inte provade fullt ut** av Carl August.
+  UTVECKLING.md. **0.9.2–0.10.8 är inte provade fullt ut** av Carl August.
 - **Publicering:** varje push till `main` laddas upp med
   `.github/workflows/publicera.yml` (FTPS; secrets `FTP_SERVER`,
   `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR` =
@@ -61,9 +64,10 @@ Senast: 26 oktober 2026, efter 0.10.7.
 
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
-- ~~0.8.8 Mallblad~~ … ~~0.10.6 Granskning~~, ~~0.10.7 Markobjekt del 3~~
-  (klara)
-- **0.10.8 Marken i ritningarna** (mellanstor)
+- ~~0.8.8 Mallblad~~ … ~~0.10.7 Markobjekt del 3~~, ~~0.10.8 Marken i
+  ritningarna~~ (klara)
+- **0.10.8b Höjderna i fasaden** (mellanstor: beräkningsgrundande fasad,
+  BH utan språng, nock- och totalhöjd, medelmarknivån)
 - **0.10.9 Stödmur del 2** (mellanstor)
 - **0.10.10 Dolda linjer och vyns djup** (mellanstor)
 - **0.10.11 Småsaker** (högerklick på planer, Visa i kolumner, snäpp mot
@@ -85,15 +89,19 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.10.7 syns på webbhotellet och hur Markyta, Ramp/väg,
-referenslinjen, fyllningen och låset känns (frågorna om 0.10.7 nedan).
-Ställ sedan tio av de obesvarade frågorna (först de som rör marken och
-fasaderna). Sedan **0.10.8 Marken i ritningarna** (mellanstor): lägg
-upplägget i chatten först (hur den oförändrade marken skiljs från den
-ändrade, släntmarkeringarnas form, kryssrutan för BH per fasad, klicket
-på topografin för ±0) och säg hur stort det är.
+Fråga först om 0.10.8 syns på webbhotellet och hur kurvorna, strecken,
+3D-kurvorna och ±0-klicket känns (frågorna om 0.10.8 nedan). Ställ sedan
+tio av de obesvarade frågorna (först de som rör fasaderna och taken).
+Sedan **0.10.8b Höjderna i fasaden** (mellanstor): lägg upplägget i
+chatten först. Att tänka på: byggnadshöjden finns sedan 0.10.5
+(`repr/buildingHeight.ts`, PBF:s 45°-plan, språnget med, den längsta
+fasaden); den nya linjen *Beräkningsgrundande fasad* ritas i planen
+längs fasadlivet och byter fasaden; BH utan språng mäts där fasadlivet
+möter takets överkant; nock- och totalhöjd från medelmarknivån; kryssrutor
+per fasad; knappen *Medelmarknivån* för ±0 ur den färdiga marken med den
+befintliga bredvid.
 
-## Carl Augusts svar 26 oktober
+## Carl Augusts svar 26 oktober (dag)
 
 - **Byggnadshöjd:** oftast mot den mest framträdande fasaden (mot gatan).
   Varje fasad får en kryssruta som visar dess BH. Språnget räknas oftast
@@ -127,41 +135,30 @@ på topografin för ±0) och säg hur stort det är.
 Tio per session, de som hör till nästa version först. Hoppar han över en
 räknas den som bra och stryks. Claudes val står i varje fråga.
 
-**0.10.7 efter provning** (Claudes val, se PLAN.md)
-- Referenslinjen syns bara när vägen är markerad (som takets); ska den
-  kunna ritas på papperet?
-- Vägens förskjutning i mitten är positiv åt vänster; på en kant positiv
-  utåt. Begripligt?
-- Pennan gäller linjerna men inte texterna; fyllningen ligger bakom
-  väggarna. Ska markobjektens fyllning kunna ligga framför?
-- En gångväg varnade förut brantare än 1:20; nu gäller vägens egen
-  gräns (förval 1:12, ändras per väg eller under Platsen). Ok?
+**0.10.8 efter provning** (Claudes val, se PLAN.md)
+- Höjdkurvorna: hela meter 0,25 och halvmeter 0,13 heldragna; den gamla
+  marken grå streckad. Lagom?
+- Släntstrecken var 2,5 mm på papperet, korta 40 %, solfjäder i
+  utåtgående hörn; jämförs med den färdiga marken efter alla objekt.
+  Ser de rätt ut, också där två markobjekt möts?
+- Fallpilen runt huset: en per fasad längre än 3 m. Lagom?
+- ±0-klicket läser den befintliga marken (inte den färdiga). Rätt?
 
 **Tak (0.10–0.10.2)**
 17. Takfoten är kanterna som vetter nedåt och snittas vinkelrätt från
     början; vinkeln räknas mot det vågräta (90 = lodrätt).
 18. En kants eget snitt glöms när kanten ändras.
-19. Språnget räknas från ytterväggarnas utsida på alla våningar: hur blir
-    det för ett hus med en lägre tillbyggnad?
 20. Snitthöjden 1200 från början: vilken använder han?
-21. Ett tak på plan 2 streckat i planen under, som vyinställning?
-22. Snittytan i planen med stilmallens snittfyllning: ska den vara egen?
-23. Husets kontur också utan tak (en situationsplan)?
 24. Ska *Upp till taket* gå före ett bjälklag som täcker väggen?
-25. Linjen mellan våningarna är kvar mellan befintligt och nytt: ok?
 26. Taket stiger åt vänster om referenslinjen (*Vänd lutningen* byter);
     höjden gäller undersidan; positiv radie stiger mot centrum.
 27. Snabbvalen: nocken längs den längre sidan, pulpettakets takfot på
     första hörnets långsida, *Över hela huset* bara för rektangulära hus.
-28. Takets referenslinje i planen också omarkerad, med lutningspil?
 29. Takets kontur med bågar direkt i verktyget?
-30. Shift för att låta nocken stå still i fasaden finns inte: saknas den?
 
 **Bjälklag och våningar (0.9–0.9.4)**
 31. Hålen hör till bjälklaget; de vrids och speglas inte var för sig.
 32. Förvalen 500 mm för Avrunda och 300 mm för Fasa.
-33. Med klickbar bjälklagsyta går ett klick i ett rum till bjälklaget:
-    ska rummet gå före?
 34. Håltagningen som cirkel direkt?
 35. Fri höjd som text i rummet (*RH 2400*) i stället för måttkedja?
 36. Våningens namn vid FG?
@@ -191,8 +188,6 @@ räknas den som bra och stryks. Claudes val står i varje fråga.
 53. *Fortsätt* bortvalbar bland snabbknapparna? Nya kanter med verktygets
     penna?
 54. Saknas någon markör bland pennorna? Streckning valbar?
-55. Ritordningen bakom eller framför väggarna också i fasader och
-    sektioner?
 56. Rummets fyllning för flera rum på en gång, per rumstyp eller i
     stilmallen?
 57. En rektangel förblir inte rät när ett hörn dras; cirkeln saknar
@@ -232,7 +227,6 @@ räknas den som bra och stryks. Claudes val står i varje fråga.
 79. Kommer synpunktsformulärets brev fram till Gmail nu (efter `-f`)?
     Annars Gmail-adressen direkt som `to` i `feedback-config.php`.
 80. Smartmenyns placering; ska rubriken *Ändra* heta något annat?
-81. Har felet med polylinjer som bara markeras vid kanten kommit tillbaka?
 
 ## Öppna frågor och kända begränsningar
 
@@ -250,8 +244,8 @@ räknas den som bra och stryks. Claudes val står i varje fråga.
   `contours` har en `Map` per nivå som går att byta mot typade listor om
   det behövs. Platsens objekt läggs på våningen närmast ±0 och syns inte i
   de andra planerna. Beskärningen tar bort kartobjekt utan någon punkt i
-  rutan (en gräns som bara korsar den försvinner). Licenstexten skrivs
-  inte ut på bladen.
+  rutan (en gräns som bara korsar den försvinner). Licenstexten kommer
+  med på bladen bara där `{licens}` står i en text (0.10.8).
 - **Synpunkter på webbhotellet:** formuläret skickar (sedan 0.8.2) och
   breven kommer fram till webbposten hos Loopia, men nådde inte Gmail.
   0.8.6 sätter kuvertavsändaren; se *Att fråga Carl August om*.

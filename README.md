@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.7** (alfa); nästa är **0.10.8, marken i ritningarna**.
+**0.10.8** (alfa); nästa är **0.10.8b, höjderna i fasaden**.
 
 ## Vad som fungerar
 
@@ -1105,6 +1105,27 @@ Version 0.10.2, takfot och taket i planen (samma filformat, 17):
   ytterväggarnas utsida på alla våningar, streckad där taket ligger över
 - Nivåkoten *Takfot* är takets lägsta undersida med snittet och språnget
 - Referensritningarna med tak ändrades (punktstreckat och takfotens snitt)
+
+Version 0.10.8, marken i ritningarna (samma filformat, 19):
+- **Höjdkurvorna** är heldragna där marken inte ändrats, som den färdiga
+  marken. Den befintliga marken ritas tunn, grå och streckad bara där
+  markobjekten ändrat den. Halvmeterskurvorna är tunnare än
+  helmeterskurvorna
+- **Marklinjen** i fasader och sektioner i Befintligt är heldragen och tjock,
+  som den färdiga i ett förslag
+- **Höjdkurvor i 3D-vyn**, på marken; de släcks under Visa, Platsen
+- **Släntmarkeringar** i planen där en markyta, en ramp/väg, markytan runt
+  huset eller urgrävningen under bjälklaget möter marken med slänt: långa
+  och korta streck om vartannat från släntens krön, i en solfjäder runt
+  utåtgående hörn. Schakt har krönet ute vid marken, fyll vid kanten
+- **Markytan runt huset** har en pil med fallet ut från varje fasad (längre
+  än 3 m)
+- **Vit jord** i sektionerna, så att bara snittlinjen syns: *Jord under
+  marklinjen* under *Platsen* är Ingen, Skrafferad eller Vit
+- **±0 med ett klick**: *Klicka i planen* under *Platsen* läser den
+  befintliga markens höjd där man klickar (avrundad till cm) och fyller i
+  den i dialogen, där den kan ändras innan den sparas. Esc avbryter
+- **`{licens}`**: platsens licenstext som smarttext på blad och mallblad
 
 Version 0.10.7, markobjekt del 3 (nytt filformat, 19; projekt från 0.10.6 öppnas inte):
 - **Rättat**: höjdpunkter, vägar, brytlinjer och stödmurar följde inte med

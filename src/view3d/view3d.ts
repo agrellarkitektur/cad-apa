@@ -79,6 +79,8 @@ export class View3D {
   private edgeMaterial: THREE.LineBasicMaterial;
   private accentLine: THREE.LineBasicMaterial;
   private handleMaterial: THREE.MeshBasicMaterial;
+  /** Höjdkurvorna på marken (0.10.8): mörka och halvgenomskinliga. */
+  private contourMaterial = new THREE.LineBasicMaterial({ color: 0x3d4a3a, transparent: true, opacity: 0.55 });
   private refMaterial = new THREE.LineBasicMaterial({ color: 0x1f4fa3, depthTest: false, linewidth: 2 });
   private highlightMaterial: THREE.MeshStandardMaterial;
   private meshes: THREE.Mesh[] = [];
@@ -220,7 +222,8 @@ export class View3D {
    * Den befintliga marken (0.10.3) som triangelnät i modellens mm (z uppåt
    * från ±0), eller null. Med mark tas skuggplanet vid ±0 bort.
    */
-  setTerrain(mesh: { positions: Float32Array; indices: Uint32Array } | null): void {
+  /** Marken som triangelnät, och höjdkurvorna som sträckor (0.10.8, sex tal per sträcka). */
+  setTerrain(mesh: { positions: Float32Array; indices: Uint32Array } | null, contours: Float32Array | null = null): void {
     for (const child of this.terrainGroup.children) disposeTree(child);
     this.terrainGroup.clear();
     this.shadowPlane.visible = !mesh;
@@ -232,6 +235,11 @@ export class View3D {
       const m = new THREE.Mesh(geom, this.material('ground'));
       m.receiveShadow = true;
       this.terrainGroup.add(m);
+      if (contours?.length) {
+        const lg = new THREE.BufferGeometry();
+        lg.setAttribute('position', new THREE.BufferAttribute(contours, 3));
+        this.terrainGroup.add(new THREE.LineSegments(lg, this.contourMaterial));
+      }
     }
     this.requestRender();
   }

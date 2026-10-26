@@ -61,6 +61,7 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
     label: 'Platsen',
     items: [
       ['Terrain', 'Marken (höjdkurvor, 3D, marklinjer)'],
+      ['contours3d', 'Höjdkurvor i 3D-vyn'],
       ['Ground', 'Markobjekt (konturerna)'],
       ['SiteBuilding', 'Grannhus'],
       ['Tree', 'Träd'],

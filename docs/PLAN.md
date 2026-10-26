@@ -2014,7 +2014,8 @@ tvärlinje i slutet och med skraffering).*
 
 ### 0.10.8 Marken i ritningarna
 
-Carl Augusts synpunkter och svar 26 oktober. Mellanstor.
+Carl Augusts synpunkter och svar 26 oktober. Mellanstor; delad i två
+(Carl August 26 oktober): höjderna i fasaden i 0.10.8b.
 
 - Höjdkurvor och marklinje som inte ändrats ritas heldragna; streckat bara
   den tidigare marken där den ändrats
@@ -2023,13 +2024,57 @@ Carl Augusts synpunkter och svar 26 oktober. Mellanstor.
 - Släntmarkeringar i planen (långa och korta streck nedför slänten)
 - Flera lutningspilar när fallet varierar mycket
 - Jorden i sektionerna med skraffering eller bara vit bakgrund
-- Byggnadshöjden utan språng (där fasadlivet möter takets överkant), och
-  en kryssruta per fasad som visar dess BH (den man bedömer är
-  beräkningsgrundande)
-- Medelmarknivån (knappen för ±0) ur den nya marken, med den befintliga
-  att jämföra
 - ±0 med ett klick på topografin, ändras efteråt
 - Licenstexten som fältet `{licens}`
+
+*Byggd (26 oktober), samma format (19). Testerna: 504 → 508, ca 13 s.
+**Höjdkurvorna** (`groundContours` i `elements/site.ts`): `solid` är den
+befintliga marken utanför de ändrade rutorna och den färdiga innanför,
+`old` den befintliga innanför. En ruta är ändrad när någon av dess fyra
+noder skiljer sig mer än 10 mm (`changedCells`); varje sträcka i en kurva
+går genom en ruta och delas efter sin mitt. Heldragna 0,25 (hela meter)
+och 0,13 (halvmeter, förut 0,25 och 0,18 i grått streckat); den gamla
+grå och streckad 0,18/0,13 som förut. I Befintligt är allt heldraget,
+och marklinjen i fasader och sektioner också (0,5, förut tunn och
+streckad). **3D**: samma kurvor som sträckor 40 mm över marken
+(`contourSegments3d`, `setTerrain` med en andra parameter), mörka och
+halvgenomskinliga; *Höjdkurvor i 3D-vyn* under Visa, Platsen
+(`contours3d`). **Släntmarkeringar** (`slopeMarks` i `groundPlan.ts`):
+för markobjekt med slänt (inte stödmur eller utjämning), från ringens
+kanter (inte husets hål) var 2,5 mm på papperet: gå ut längs normalen i
+steg om en tredjedels ruta så länge den färdiga marken skiljer sig från
+den befintliga (15 mm) och lutar minst hälften så brant som slänten.
+Schakt (den färdiga lägre) har krönet ute, fyll vid kanten; långa och
+korta (40 %) om vartannat; i utåtgående hörn en solfjäder lika tät som
+kanten 1,5 m ut. Jämförs med den färdiga marken efter alla objekt, så
+ett objekt som fylls igen av ett senare får inga streck. `Ground` läser
+`Ground` (`planReads`), eftersom strecken beror på de andra
+markobjekten. **Fallet** runt huset: en pil per fasad längre än 3 m, mitt
+på markytan, med *1:20*; en markyta är plan och har en pil som förut.
+**Jorden**: `site.earthWhite` (vit fyllning, `paper`) bredvid
+`earthHatch`; en valfri parameter, inget nytt format. **±0**: *Klicka i
+planen* i dialogen *Platsen* sätter ett tillfälligt verktyg; klicket
+läser den befintliga marken (`groundAt`), avrundar till cm och öppnar
+dialogen igen med värdet ifyllt (inte sparat). Esc avbryter. Andra
+ändringar i dialogen sparas inte när man klickar i planen. **`{licens}`**
+i `BUILT_IN` och `smartVars` (`doc.site.licence`). Referensritningarna
+`mark-plan` och `mark-plan-befintligt` ändrades med avsikt (kurvorna,
+strecken och pilarna). Provat med Playwright mot `dist/` (planen,
+3D-vyn och ±0). Klickjämförelsen kördes inte (bara ritningen av marken
+är ändrad, och den ändras med avsikt).*
+
+### 0.10.8b Höjderna i fasaden
+
+Carl Augusts svar 26 oktober (fråga 19). Mellanstor.
+
+- En linje i planen, *Beräkningsgrundande fasad*, längs fasadlivet; byggnadshöjden
+  mäts mot den (finns ingen: den längsta fasaden, som nu)
+- Byggnadshöjden utan språng: där fasadlivet möter takets överkant
+  (0.10.5 räknar med PBF:s 45°-plan, språnget med)
+- Kryssrutor per fasad för byggnadshöjd, nockhöjd och totalhöjd, från
+  medelmarknivån
+- Medelmarknivån (knappen för ±0) ur den nya marken, med den befintliga
+  att jämföra
 
 ### 0.10.9 Stödmur del 2
 
@@ -2048,6 +2093,10 @@ Carl Augusts synpunkter 25 och 26 oktober. Mellanstor.
   streckade linjer genom fasaden
 - Fasader och sektioner med ett största djup och en zon före det där allt
   ritas tonat (tunna grå linjer)
+- Ett tak på våningen ovanför streckprickat i planen (över snittet), ett
+  under vyn streckat, som vyinställning (svar 26 oktober, fråga 21)
+- Ritordningen (bakom eller framför väggarna) också i fasader och
+  sektioner (fråga 55)
 
 ### 0.10.11 Småsaker
 
@@ -2060,6 +2109,8 @@ Synpunkter 25 och 26 oktober.
   markera i 3D
 - Importerade träd, grannhus m.m. som befintligt eller förslag, och att ta
   bort dem helt
+- Ingen skarv i fasaden mellan befintligt och nytt när fasadmaterialet är
+  detsamma (svar 26 oktober, fråga 25)
 
 ### 0.10.12 Höjder i förhållande till våningen
 
@@ -2181,6 +2232,8 @@ efter pilotprojektet. Det som piloten visar behövs tidigt går först.
   fyllningen *Sicksack* för ytor
 - **Sparade filter** i Filtrera och markera (0.8.35): spara villkoren
   med ett namn, i projektet eller stilmallen
+- **Husets kontur på situationsplanen**, också utan tak: ett helhetsgrepp
+  om situationsplanen (Carl August 26 oktober, fråga 23)
 
 ### Grafik och markörer (från 0.8 del 3)
 

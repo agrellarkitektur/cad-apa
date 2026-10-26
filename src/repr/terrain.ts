@@ -73,11 +73,12 @@ export function terrainProfile(
 const EARTH_DEPTH = 600;
 
 /**
- * Marklinjerna i en fasad eller sektion (0.10.4). I ett förslag den färdiga
- * marken tjock och heldragen (den befintliga där inga markobjekt finns), och
- * den befintliga tunn och streckad där markobjekten ändrat den. I Befintligt
- * bara den befintliga, tunn och streckad som i 0.10.3. Jord under den
- * tjocka linjen i sektioner, om det valts under *Platsen*.
+ * Marklinjerna i en fasad eller sektion (0.10.4). Marken som den blir är
+ * tjock och heldragen: i ett förslag den färdiga (den befintliga där inga
+ * markobjekt finns), i Befintligt den befintliga (0.10.8). Den befintliga
+ * ritas tunn och streckad bara där markobjekten ändrat den. Under den
+ * tjocka linjen i sektioner jord, skrafferad eller vit, om det valts under
+ * *Platsen* (vit sedan 0.10.8: bara snittlinjen syns).
  */
 export function groundLines(
   ctx: PlanContext,
@@ -91,20 +92,18 @@ export function groundLines(
   const out: Primitive[] = [];
   const existing = terrainProfile(t, frame, u0, u1, footprint);
   const dashed = (pts: Vec2[]): Primitive => ({ kind: 'polyline', points: pts, closed: false, pen: { weight: 0.18, dash: [3, 1.5] }, origin: { part: 'befintlig mark' } });
-  if (!showsProposal(ctx)) {
-    for (const pts of existing) out.push(dashed(pts));
-    return out;
-  }
-  const f = finishedTerrain(ctx);
+  const f = showsProposal(ctx) ? finishedTerrain(ctx) : null;
   const finished = f ? terrainProfile(f.terrain, frame, u0, u1, footprint) : existing;
-  if (isSection && ctx.doc.site?.earthHatch) {
-    const fill = resolveFill({ kind: 'type', type: 'mark', color: 'ink', weight: 0.13 }, ctx.style, ctx.scale);
+  const site = ctx.doc.site;
+  if (isSection && (site?.earthHatch || site?.earthWhite)) {
+    const fill = site.earthHatch ? resolveFill({ kind: 'type', type: 'mark', color: 'ink', weight: 0.13 }, ctx.style, ctx.scale) : { kind: 'solid' as const, color: 'paper' as const };
     for (const pts of finished) {
       const ring: Vec2[] = [...pts, ...pts.map((q): Vec2 => [q[0], q[1] - EARTH_DEPTH]).reverse()];
       out.push({ kind: 'region', role: 'cut', rings: [ring], fill, outline: null, noOutline: true, ownFill: true, origin: { part: 'jord' } });
     }
   }
-  for (const pts of finished) out.push({ kind: 'polyline', points: pts, closed: false, pen: { weight: 0.5 }, origin: { part: 'färdig mark' } });
+  const part = showsProposal(ctx) ? 'färdig mark' : 'befintlig mark';
+  for (const pts of finished) out.push({ kind: 'polyline', points: pts, closed: false, pen: { weight: 0.5 }, origin: { part } });
   if (f) for (const pts of differing(existing, finished)) out.push(dashed(pts));
   return out;
 }

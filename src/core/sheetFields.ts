@@ -27,6 +27,7 @@ export const BUILT_IN: [string, string][] = [
   ['skala a3', 'Skalan när bladet skrivs ut på A3, t.ex. 1:100 för ett A1 i 1:50'],
   ['format', 'Pappersformatet, t.ex. A3'],
   ['idag', 'Dagens datum'],
+  ['licens', 'Licenstexten för platsen ur Höjdkurvor (kartdata)'],
 ];
 
 const BUILT_IN_KEYS = new Set(BUILT_IN.map(([k]) => k));

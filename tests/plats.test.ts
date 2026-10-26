@@ -111,7 +111,7 @@ describe('platsen (0.10.3)', () => {
     expect(meanGroundLevel(t, [tall])).toBeCloseTo(500, 0);
   });
 
-  it('ritar befintlig mark som tunn streckad marklinje i sektionen, och nivåerna i RH 2000', () => {
+  it('ritar befintlig mark som heldragen marklinje i sektionen i Befintligt (0.10.8), och nivåerna i RH 2000', () => {
     const store = new DocStore(structuredClone(sampleProject()));
     applySitePackage(store, pkg());
     const doc = store.doc;
@@ -123,7 +123,8 @@ describe('platsen (0.10.3)', () => {
     const line = mark[0];
     expect(line.kind).toBe('polyline');
     if (line.kind === 'polyline') {
-      expect(line.pen.dash).toBeTruthy();
+      expect(line.pen.dash).toBeFalsy();
+      expect(line.pen.weight).toBe(0.5);
       // Marken stiger 0,1 m per meter österut; längs sektionen så mycket som linjen går österut.
       const [a, b] = [line.points[0], line.points.at(-1)!];
       expect((b[1] - a[1]) / (b[0] - a[0])).toBeCloseTo(0.1 * markerFrame(doc, sec).right[0], 2);

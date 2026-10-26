@@ -8,6 +8,8 @@ import { lineLength } from '../../elements/groundLines';
 import type { Vec2 } from '../../repr/primitives';
 import { buildModel3d } from '../../repr/model3d';
 import { finishedForView, terrainMesh } from '../../repr/terrain';
+import { contourSegments3d } from '../../elements/site';
+import { isShown } from './showMenu';
 import { POCHE_MATERIALS } from '../../repr/section';
 import type { Edit3DHost, Handle3D, View3D } from '../../view3d/view3d';
 import { icons } from '../icons';
@@ -26,7 +28,7 @@ export function installPane3d(app: AppContext) {
   let view3d: View3D | null = null;
   let loading3d: Promise<void> | null = null;
   /** Platsen som marken i 3D-vyn byggdes av. */
-  let shownSite: object | undefined | null = null;
+  let shownSite: unknown[] = [];
 
   // Följ sektionen (0.8): 3D-vyn klipps längs en öppen sektion, eller visar hela modellen.
   const followBtn = document.createElement('button');
@@ -138,10 +140,12 @@ export function installPane3d(app: AppContext) {
     // (0.10.4, i ett förslag med markobjekt) ändras.
     const site = app.ui.hide.includes('Terrain') ? undefined : store.doc.site;
     const finished = site ? finishedForView(store.doc, app.viewStates()) : null;
-    const shown = finished ?? site;
-    if (shown !== shownSite) {
+    // Höjdkurvorna på marken (0.10.8), om de inte släckts under Visa.
+    const lines = !!site && isShown(app.ui, 'contours3d');
+    const shown = [finished ?? site, site?.contours, lines];
+    if (shown.some((v, i) => v !== shownSite[i])) {
       shownSite = shown;
-      view3d.setTerrain(site ? terrainMesh(store.doc, undefined, finished?.z) : null);
+      view3d.setTerrain(site ? terrainMesh(store.doc, undefined, finished?.z) : null, lines ? contourSegments3d(store.doc, finished) : null);
     }
     view3d.setSelection(app.selection.list());
     // Med en sektion öppen klipps modellen längs den, och snittet fylls (0.8).

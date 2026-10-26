@@ -1,5 +1,5 @@
 import type { Element, ProjectDoc } from '../core/model';
-import { contours, cropGrid, DEFAULT_CONTOURS, fromRh, groundAt, terrainOf, type Contour } from '../core/site';
+import { contours, cropGrid, DEFAULT_CONTOURS, fromRh, groundAt, terrainOf, type Contour, type Terrain } from '../core/site';
 import { withHeights } from '../core/ground';
 import { finishedTerrain, showsProposal, type Finished } from './ground';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
@@ -81,6 +81,130 @@ export function finishedContours(f: Finished, interval: number): Contour[] {
   return out;
 }
 
+/**
+ * Om punkten (mm i modellen) ligger i en ruta där markobjekten ändrat
+ * marken: någon av rutans fyra noder skiljer sig mer än 10 mm (0.10.8).
+ */
+export function changedCells(f: Finished, base: Terrain): (x: number, y: number) => boolean {
+  const ch = f.changed;
+  if (!ch) return () => false;
+  const { x0, y1, s, W, H } = base.grid;
+  const a = base.z;
+  const b = f.z;
+  const differs = (n: number): boolean => {
+    const p = a[n];
+    const q = b[n];
+    if (p !== p) return q === q;
+    return q !== q || Math.abs(p - q) > 0.01;
+  };
+  // Som `localToZone`, med vridningen räknad en gång.
+  const v = (base.site.rotation * Math.PI) / 180;
+  const cs = Math.cos(v);
+  const sn = Math.sin(v);
+  const [ox, oy] = base.site.origin;
+  return (x, y) => {
+    const X = ox + (x * cs - y * sn) / 1000;
+    const Y = oy + (x * sn + y * cs) / 1000;
+    const i = Math.min(Math.max(Math.floor((X - x0) / s), 0), W - 2);
+    const j = Math.min(Math.max(Math.floor((y1 - Y) / s), 0), H - 2);
+    if (i < ch.i0 - 1 || i > ch.i1 || j < ch.j0 - 1 || j > ch.j1) return false;
+    const n = j * W + i;
+    return differs(n) || differs(n + 1) || differs(n + W) || differs(n + W + 1);
+  };
+}
+
+/** Bitarna av kurvorna där `keep` gäller för varje sträckas mitt; en hel sluten kurva förblir sluten. */
+function piecesWhere(cs: readonly Contour[], keep: (x: number, y: number) => boolean): Contour[] {
+  const out: Contour[] = [];
+  for (const c of cs) {
+    const n = c.pts.length;
+    const segs = c.closed ? n : n - 1;
+    let run: [number, number][] = [];
+    let all = true;
+    const pieces: [number, number][][] = [];
+    for (let k = 0; k < segs; k++) {
+      const p = c.pts[k];
+      const q = c.pts[(k + 1) % n];
+      if (keep((p[0] + q[0]) / 2, (p[1] + q[1]) / 2)) {
+        if (!run.length) run.push(p);
+        run.push(q);
+      } else {
+        all = false;
+        if (run.length >= 2) pieces.push(run);
+        run = [];
+      }
+    }
+    if (all) {
+      out.push(c);
+      continue;
+    }
+    if (run.length >= 2) {
+      // En sluten kurvas sista bit fortsätter i den första.
+      if (c.closed && pieces.length && pieces[0][0] === c.pts[0]) pieces[0] = [...run, ...pieces[0].slice(1)];
+      else pieces.push(run);
+    }
+    for (const pts of pieces) out.push({ z: c.z, pts, closed: false });
+  }
+  return out;
+}
+
+/**
+ * Höjdkurvorna som de ritas (0.10.8): `solid` är marken som den blir, den
+ * befintliga där den inte ändrats och den färdiga där den ändrats, och
+ * `old` den befintliga där markobjekten ändrat den, som ritas streckad.
+ */
+export interface GroundContours {
+  solid: Contour[];
+  old: Contour[];
+}
+
+const contourSets = new WeakMap<Finished, { src: Contour[]; fin: Contour[]; out: GroundContours }>();
+
+export function groundContours(doc: ProjectDoc, f: Finished | null): GroundContours {
+  const t = terrainOf(doc);
+  if (!t) return { solid: [], old: [] };
+  const all = siteContours(doc);
+  if (!f || !f.changed) return { solid: all, old: [] };
+  const fin = finishedContours(f, t.site.contours ?? DEFAULT_CONTOURS);
+  const hit = contourSets.get(f);
+  if (hit && hit.src === all && hit.fin === fin) return hit.out;
+  const inside = changedCells(f, t);
+  const outside = (x: number, y: number) => !inside(x, y);
+  const out = { solid: [...piecesWhere(all, outside), ...piecesWhere(fin, inside)], old: piecesWhere(all, inside) };
+  contourSets.set(f, { src: all, fin, out });
+  return out;
+}
+
+/**
+ * Höjdkurvorna för 3D-vyn (0.10.8): sträckor (x, y, z i mm från ±0, två
+ * punkter per sträcka), en bit över marken så att de syns.
+ */
+export function contourSegments3d(doc: ProjectDoc, f: Finished | null, lift = 40): Float32Array | null {
+  const t = terrainOf(doc);
+  if (!t) return null;
+  const { solid } = groundContours(doc, f);
+  let n = 0;
+  for (const c of solid) n += c.closed ? c.pts.length : c.pts.length - 1;
+  const out = new Float32Array(n * 6);
+  let k = 0;
+  for (const c of solid) {
+    const z = fromRh(t.site, c.z) + lift;
+    const m = c.pts.length;
+    const segs = c.closed ? m : m - 1;
+    for (let i = 0; i < segs; i++) {
+      const a = c.pts[i];
+      const b = c.pts[(i + 1) % m];
+      out[k++] = a[0];
+      out[k++] = a[1];
+      out[k++] = z;
+      out[k++] = b[0];
+      out[k++] = b[1];
+      out[k++] = z;
+    }
+  }
+  return out;
+}
+
 export const terrainType: ElementType<TerrainParams> = {
   type: 'Terrain',
   label: 'Befintlig mark',
@@ -92,15 +216,14 @@ export const terrainType: ElementType<TerrainParams> = {
   planReads: ['Ground', 'Wall', 'Slab'],
   defaults: () => ({}),
   plan(el, ctx) {
-    const t = terrainOf(ctx.doc);
-    if (!t) return [];
-    const interval = t.site.contours ?? DEFAULT_CONTOURS;
-    // Den färdiga marken i ett förslag: tjocka, heldragna kurvor där markobjekten ändrat marken.
+    if (!terrainOf(ctx.doc)) return [];
+    // Marken som den blir heldragen, den befintliga streckad bara där markobjekten ändrat den (0.10.8).
     const f = showsProposal(ctx) ? finishedTerrain(ctx) : null;
+    const { solid, old } = groundContours(ctx.doc, f);
     const key = `${el.id}|${ctx.scale}`;
     return [
-      ...(f ? contourPrims(finishedContours(f, interval), key, () => contourLines(finishedContours(f, interval), { objectId: el.id, objectType: 'Terrain', part: 'färdig mark' }, ctx.scale, true)) : []),
-      ...contourPrims(siteContours(ctx.doc), key, () => contourLines(siteContours(ctx.doc), { objectId: el.id, objectType: 'Terrain', part: 'höjdkurva' }, ctx.scale, false)),
+      ...contourPrims(solid, key, () => contourLines(solid, { objectId: el.id, objectType: 'Terrain', part: 'höjdkurva' }, ctx.scale, false)),
+      ...contourPrims(old, key, () => contourLines(old, { objectId: el.id, objectType: 'Terrain', part: 'befintlig mark' }, ctx.scale, true)),
     ];
   },
 };
@@ -120,16 +243,20 @@ function contourPrims(cs: Contour[], key: string, make: () => Primitive[]): Prim
   return out;
 }
 
-/** Kurvorna som linjer; hela meter lite tjockare och med höjden utskriven. Den färdiga marken tjock och heldragen, den befintliga tunn och streckad. */
-function contourLines(cs: readonly Contour[], origin: Primitive['origin'], scale: number, finished: boolean): Primitive[] {
+/**
+ * Kurvorna som linjer, med höjden utskriven på hela meter (0.10.8):
+ * heldragna, halvmeterskurvorna tunnare; den befintliga marken där den
+ * ändrats tunn, grå och streckad.
+ */
+function contourLines(cs: readonly Contour[], origin: Primitive['origin'], scale: number, old: boolean): Primitive[] {
   const out: Primitive[] = [];
   for (const c of cs) {
     const whole = Math.abs(c.z - Math.round(c.z)) < 1e-6;
-    const pen: Pen = finished ? { weight: whole ? 0.35 : 0.25 } : { weight: whole ? 0.18 : 0.13, color: 'muted', dash: [2, 1] };
+    const pen: Pen = old ? { weight: whole ? 0.18 : 0.13, color: 'muted', dash: [2, 1] } : { weight: whole ? 0.25 : 0.13 };
     out.push({ kind: 'polyline', points: c.pts, closed: c.closed, pen, origin, noPick: true });
     if (!whole) continue;
-    const label = contourLabel(c, (finished ? 20 : 30) * scale);
-    if (label) out.push({ kind: 'text', at: label.at, angle: label.angle, align: 'middle', text: c.z.toLocaleString('sv-SE'), height: 1.8, pen: finished ? { weight: 0.18 } : thin, origin, noPick: true });
+    const label = contourLabel(c, (old ? 30 : 20) * scale);
+    if (label) out.push({ kind: 'text', at: label.at, angle: label.angle, align: 'middle', text: c.z.toLocaleString('sv-SE'), height: 1.8, pen: old ? thin : { weight: 0.18 }, origin, noPick: true });
   }
   return out;
 }

@@ -57,6 +57,8 @@ export interface Site {
   meanOnExisting?: boolean;
   /** Jord under marklinjen i sektionerna (0.10.4). */
   earthHatch?: boolean;
+  /** Vit jord under marklinjen i sektionerna, när den inte är skrafferad (0.10.8). */
+  earthWhite?: boolean;
 }
 
 /** Förvalen för markobjekten (0.10.4), i mm och som 1:N. */

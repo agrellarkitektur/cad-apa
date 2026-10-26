@@ -29,7 +29,7 @@ function a3Factor(sheet: Pick<Sheet, 'size'>): number {
  * Värdena för smarttexten på ett blad: bladets fält, projektets fält och
  * den inbyggda smarttexten. Skalorna kan skrivas över med bladets fält.
  */
-export function smartVars(doc: Pick<ProjectDoc, 'project' | 'folders' | 'tree'>, sheet: Sheet, todayText: string): Record<string, string> {
+export function smartVars(doc: Pick<ProjectDoc, 'project' | 'folders' | 'tree'> & Partial<Pick<ProjectDoc, 'site'>>, sheet: Sheet, todayText: string): Record<string, string> {
   const own = (k: string) => sheet.fields[k]?.trim();
   return {
     ...sheet.fields,
@@ -42,5 +42,6 @@ export function smartVars(doc: Pick<ProjectDoc, 'project' | 'folders' | 'tree'>,
     'skala a3': own('skala a3') || sheetScales(sheet, a3Factor(sheet)),
     format: sheet.size,
     idag: todayText,
+    licens: doc.site?.licence ?? '',
   };
 }

@@ -179,7 +179,7 @@ function putSite(tx: TxBuilder, pkg: Platspaket): void {
 const SITE_ELEMENT_TYPES: ReadonlySet<string> = new Set(['Terrain', 'SiteBuilding', 'Tree', 'SiteMap']);
 
 /** Ändra platsens ±0, höjdkurvornas avstånd eller annat i huvudet. */
-export function updateSite(store: DocStore, patch: Partial<Pick<Site, 'datum' | 'contours' | 'ground' | 'meanOnExisting' | 'earthHatch'>>, label = 'Ändra platsen'): void {
+export function updateSite(store: DocStore, patch: Partial<Pick<Site, 'datum' | 'contours' | 'ground' | 'meanOnExisting' | 'earthHatch' | 'earthWhite'>>, label = 'Ändra platsen'): void {
   const site = store.doc.site;
   if (!site) return;
   store.transact(label, (tx) => tx.setField('site', { ...site, ...patch }));
