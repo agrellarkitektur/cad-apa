@@ -110,6 +110,7 @@ export function shellMarkup(brand: Brand): string {
             <hr>
             <button role="menuitem" data-action="plot">${icons.plot}<span>Plot/export…</span></button>
             <button role="menuitem" data-action="add-underlay">${icons.openFile}<span>Lägg in underlag…</span></button>
+            <button role="menuitem" data-action="site">${icons.north}<span>Platsen…</span></button>
             <hr>
             <button role="menuitem" data-action="new-proposal">${icons.states}<span>Nytt förslag</span></button>
             <button role="menuitem" data-action="filter-select">${icons.select}<span>Filtrera och markera…</span><kbd>FM</kbd></button>

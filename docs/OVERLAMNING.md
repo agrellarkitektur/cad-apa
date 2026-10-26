@@ -1,11 +1,26 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.2
-(marken planerad samma dag).
+överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.3.
 
 ## Läget
 
+- **0.10.3 Markmodell är klar** på `main` (format 18). Carl August
+  skickade platsfilen *Bosgård* (Nybro, SWEREF 99 16 30, 200 × 150 m,
+  1 m rutnät, med fastighetsgränser och 225 träd) och sa "bygg nästa
+  version". Platsen är projektets `site` (nollpunkt, vridning, sann nord,
+  ±0 i RH 2000) med rutnätet som fil bland projektets filer; marken
+  ritas som höjdkurvor i planen, nät i 3D och tunn streckad marklinje i
+  fasader och sektioner, med medelmarknivån (*MMN*) och nivåkoterna i
+  RH 2000. Grannhus, träd och kartobjekt (gränser, vägar, punkter,
+  beteckningar, stompunkter) är låsta objekt i alla tillstånd. Platsen
+  tas emot med meddelandet från Höjdkurvor, Öppna fil eller släpp på
+  planen; dialogen *Platsen* i huvudmenyn har ±0, kurvavståndet,
+  beskärning, licens och gränsvarning. Provat med Playwright mot `dist/`
+  (Bosgård som nytt projekt och i exempelvillan, 3D, sektion, fasad,
+  dialogen, handskakningen med en låtsas-Höjdkurvor på samma ursprung);
+  klickjämförelsen kördes inte. Testerna: 474 på ca 12 s. Claudes val i
+  PLAN.md, koden i UTVECKLING.md under *Markmodell (0.10.3)*.
 - **0.10.2 Takfot och taket i planen är klar** på `main` (samma format,
   17; bara valfria nya parametrar). Carl August sa "kör nästa version"
   och fick planen i chatten innan arbetet började (inget svar än). Taket
@@ -219,10 +234,9 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.37 Detaljnivåer och fyllningar~~, ~~0.8.38 Granskning~~,
   ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~, ~~0.9.2 Nivåer~~,
   ~~0.9.3 Granskning~~, ~~0.9.4 Bjälklag del 2~~, ~~0.10 Tak~~,
-  ~~0.10.1 Granskning~~, ~~0.10.2 Takfot och taket i planen~~ (klara)
-- **Marken före piloten** (Carl August 26 oktober): **0.10.3 Markmodell**
-  (platspaketet från Höjdkurvor, nollpunkt och SWEREF, RH 2000, befintlig
-  mark, automatisk medelmarknivå; nytt format 18), **0.10.4 Markobjekt del
+  ~~0.10.1 Granskning~~, ~~0.10.2 Takfot och taket i planen~~,
+  ~~0.10.3 Markmodell~~ (klara)
+- **Marken före piloten** (Carl August 26 oktober): **0.10.4 Markobjekt del
   1** (platå, platå runt huset, urgrävning, färdig mark, schakt och fyll;
   stor), **0.10.5 Markobjekt del 2 och byggnadshöjd** (ramp, gångväg,
   infart, höjdpunkt, brytlinje, stödmur; byggnadshöjd enligt PBF; stor),
@@ -250,26 +264,17 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.10.2 syns på webbhotellet och hur taket ser ut i planen,
-3D och fasaderna (frågorna nedan; 0.9.2–0.10.1 har inte provats fullt ut
-än). Be honom bekräfta sorteringen av Inkorgen 26 oktober (0.10.10,
-0.10.11 och 3D-vyerna, se synpunktsfilen). Läs synpunktsfilen och sortera
-ny Inkorg. Be om en riktig platsfil (*Spara platsfil för cad-apa* i
-Höjdkurvor, helst pilotens tomt) om den inte redan finns. Sedan **0.10.3
-Markmodell** (PLAN.md, *Marken före piloten*), mellanstor till stor:
-
-- Ta emot platspaketet (`docs/UTBYTE-CAD-APA.md` i
-  `agrellarkitektur/hojdkurvor`, läsbart utan rättigheter): `postMessage`
-  och `.hkplats.json`. Höjdkurvors sida är byggd; `test/cad-apa-mock.html`
-  där visar handskakningen
-- Nollpunkt, zon, vridning och sann nord; höjder i RH 2000 (modellen
-  relativt projektets höjd, visat i RH 2000)
-- Rutnätet sparas för sig, inte som tal i projektets JSON
-- Befintlig mark i 3D, höjdkurvor i planen (0,5 m), tunn streckad
-  marklinje i fasader och sektioner, grannhus som volymer
-- Automatisk medelmarknivå
-- Föreslå fältet `fastigheter` för Höjdkurvor (finns inte än, står på
-  deras lista) och läs det om det finns
+Fråga först om 0.10.3 syns på webbhotellet och om *Fortsätt rita i
+cad-apa* i Höjdkurvor går hela vägen (frågorna nedan; 0.9.2–0.10.2 har
+inte provats fullt ut än). Be honom bekräfta sorteringen av Inkorgen 26
+oktober (0.10.10, 0.10.11 och 3D-vyerna, se synpunktsfilen). Läs
+synpunktsfilen och sortera ny Inkorg. Sedan **0.10.4 Markobjekt del 1**
+(PLAN.md), stor och kan behöva två sessioner: färdig mark ur befintlig
+och markobjekten (platå, platå runt huset, urgrävning), höjdkurvor och
+marklinje för ny mark, tillstånden, schakt och fyll. Bygg på
+`src/core/site.ts` (`terrainOf`, `groundAt`, `contours`) och
+`src/repr/terrain.ts` (`terrainProfile`, `terrainMesh`): den färdiga
+marken kan vara ett rutnät till, räknat ur det befintliga och objekten.
 
 Besluten 26 oktober: befintlig mark ändras aldrig; markobjekten är
 fristående; ingen penselmodellering; befintlig tunn streckad, ny tjock
@@ -282,6 +287,20 @@ taket* är kvar.
 Nästa granskning: 0.10.6, efter marken.
 
 ## Att fråga Carl August om
+
+- **0.10.3 efter provning** (Claudes val, se PLAN.md): ±0 är från början
+  markens höjd mitt i utsnittet (62,6 för Bosgård), ändras under
+  *Platsen* (knappen *Medelmarknivån* fyller i den); ska den hellre vara
+  medelmarknivån plus något, eller frågas när platsen läggs in? Modellens
+  origo är Höjdkurvors nollpunkt (Bosgård: utsnittets sydvästra hörn),
+  så ett nytt projekt har huset långt från platsens mitt; ska nollpunkten
+  kunna flyttas i cad-apa, eller väljs den i Höjdkurvor? Grannhus och träd
+  syns bara i 3D, inte i fasaderna; behövs grannhusen i en fasad? Utan ny
+  mark (0.10.4) saknas den tjocka marklinjen i fasaderna när det finns en
+  markmodell. Höjdkurvorna räknas i cad-apa ur rutnätet (paketets kurvor
+  används inte) och blir brusiga på 0,25 m; räcker 0,5 m som förval?
+  Trädens kronor är prismor i 3D. Licenstexten skrivs inte ut på bladen
+  än; ska den stå på situationsplanen (ett fält, `{licens}`)?
 
 - **0.10.2 efter provning** (Claudes val, se PLAN.md): att takfoten är
   kanterna som vetter nedåt i lutningen och snittas vinkelrätt från
@@ -641,6 +660,13 @@ Nästa granskning: 0.10.6, efter marken.
 
 ## Öppna frågor och kända begränsningar
 
+- **Marken (0.10.3):** höjdkurvorna för ett stort, brusigt rutnät (1,2
+  miljoner noder, 0,5 m) tar ca 2 s första gången (sedan sparade);
+  `contours` har en `Map` per nivå som går att byta mot typade listor om
+  det behövs. Platsens objekt läggs på våningen närmast ±0 och syns inte i
+  de andra planerna. Beskärningen tar bort kartobjekt utan någon punkt i
+  rutan (en gräns som bara korsar den försvinner). Licenstexten skrivs
+  inte ut på bladen.
 - **Synpunkter på webbhotellet:** formuläret skickar (sedan 0.8.2) och
   breven kommer fram till webbposten hos Loopia, men nådde inte Gmail.
   0.8.6 sätter kuvertavsändaren; se *Att fråga Carl August om*.

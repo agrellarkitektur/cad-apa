@@ -28,7 +28,7 @@ export function liftShape(s: Shape3D, dz: number): Shape3D {
 export type Included = (t: ElementType, action: Action) => boolean;
 
 /** Allt som har en 3D-form, också det som rivs (fasader och sektioner). */
-export const WITH_DEMOLISHED: Included = (t) => !!(t.model3d || t.model3dBatch);
+export const WITH_DEMOLISHED: Included = (t) => !!(t.model3d || t.model3dBatch) && !t.only3dView;
 /** Allt som har en 3D-form utom det som rivs (3D-vyn). */
 export const WITHOUT_DEMOLISHED: Included = (t, action) => !!(t.model3d || t.model3dBatch) && action !== 'demolished';
 

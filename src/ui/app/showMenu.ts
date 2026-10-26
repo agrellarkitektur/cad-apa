@@ -56,6 +56,17 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
     ],
   },
   {
+    // Platsen ur Höjdkurvor (0.10.3); gruppen visas bara när projektet har en plats.
+    id: 'site',
+    label: 'Platsen',
+    items: [
+      ['Terrain', 'Befintlig mark (höjdkurvor, 3D, marklinje)'],
+      ['SiteBuilding', 'Grannhus'],
+      ['Tree', 'Träd'],
+      ['SiteMap', 'Fastighetsgränser, vägar och punkter'],
+    ],
+  },
+  {
     id: 'markers',
     label: 'Markörer',
     items: [
@@ -241,7 +252,7 @@ export function installShowMenu(app: AppContext) {
               .join('')}</div></div>`,
         )
         .join('')}</div>` +
-      SHOW_GROUPS.map((g) => {
+      SHOW_GROUPS.filter((g) => g.id !== 'site' || !!store.doc.site).map((g) => {
         const shown = g.items.filter(([k]) => isShown(ui, k)).length;
         return `<div class="show-group" role="group" aria-label="${g.label}">
           <label class="check show-group-head"><input type="checkbox" data-show-group="${g.id}"${shown === g.items.length ? ' checked' : ''}> ${g.label}</label>

@@ -6,6 +6,7 @@ import type { PlanContext } from '../elements/registry';
 import { planeRange, roofBodyOf, roofRange, type RoofParams } from '../elements/roof';
 import { markerPen, solidPen, withWeight } from './markerPens';
 import type { Pen, Primitive } from './primitives';
+import { levelText, meanGround } from './terrain';
 
 /**
  * Nivåkoter och höjdmått i fasader och sektioner (0.9.2; egen fil sedan
@@ -47,20 +48,24 @@ export function levelPrims(
     }
     const top = Math.round(at.maxZ);
     if (!levels.has(top)) levels.set(top, at.roofs.length ? 'Nock' : '');
+    const entries = [...levels];
+    // Medelmarknivån längs husets kontur (0.10.3), när projektet har en markmodell.
+    const mmn = view.hide?.includes('Terrain') ? null : meanGround(ctx);
+    if (mmn !== null) entries.push([Math.round(mmn), 'MMN']);
     // Texter som skulle krocka (nivåer närmare än en textrad) skjuts
     // uppåt. Strecket går under texten som förut, utom där en annan
     // nivås text hamnat på det.
     const h = style.labels.heights.dimension;
     const marks: { z: number; label: string; textY: number }[] = [];
     let prevText = -Infinity;
-    for (const [z, label] of [...levels].sort((a, b) => a[0] - b[0])) {
+    for (const [z, label] of entries.sort((a, b) => a[0] - b[0])) {
       const textY = Math.max(z + 1.8 * ctx.scale * 0.35, prevText + h * 1.35 * ctx.scale);
       prevText = textY;
       marks.push({ z, label, textY });
     }
     for (const m of marks) {
       const crossed = marks.some((o) => o !== m && m.z > o.textY - h * 0.3 * ctx.scale && m.z < o.textY + h * 1.1 * ctx.scale);
-      out.push(...levelMark(markX, m.z, h, m.label, ctx.scale, markerPen(style, 'level'), m.textY, !crossed));
+      out.push(...levelMark(markX, m.z, h, m.label, ctx.scale, markerPen(style, 'level'), levelText(doc, m.z), m.textY, !crossed));
     }
   }
   if (heights.length >= 2) {
@@ -85,12 +90,10 @@ export function heightChain(slabs: readonly { z0: number; z1: number }[]): numbe
  * meter bredvid. Ett kort streck (0.9.2) slutar vid triangeln, så att en
  * text som skjutits upp för en granne inte stryks över.
  */
-function levelMark(x: number, z: number, height: number, label: string, s: number, pen: Pen, textY?: number, long = true): Primitive[] {
+function levelMark(x: number, z: number, height: number, label: string, s: number, pen: Pen, text: string, textY?: number, long = true): Primitive[] {
   // s: ritningsskalan, för storleken på papper.
   const tri = 1.8 * s;
   const origin = { part: 'nivå' };
-  const m = z / 1000;
-  const text = `${m === 0 ? '±' : m > 0 ? '+' : '−'}${Math.abs(m).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
   return [
     { kind: 'line', a: [x - 6 * s, z], b: [x + (long ? 14 * s : tri), z], pen, origin },
     {

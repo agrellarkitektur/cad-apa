@@ -1,6 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { moveElements } from '../src/core/commands';
-import { FORMAT_VERSION } from '../src/core/model';
 import { DocStore } from '../src/core/store';
 import { mirrorAbout } from '../src/core/wallEdit';
 import { registerBuiltInTypes } from '../src/elements';
@@ -189,9 +188,5 @@ describe('takfallet i Modifiera, egenskaperna och greppen (0.10)', () => {
     expect(up.patch.slope).toBeGreaterThan(27);
     expect(Number.isInteger(up.patch.slope)).toBe(true);
     expect(up.text).toContain('Lutning');
-  });
-
-  it('formatet är 17', () => {
-    expect(FORMAT_VERSION).toBe(17);
   });
 });

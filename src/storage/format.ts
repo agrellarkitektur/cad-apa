@@ -81,6 +81,7 @@ function normalize(d: any): ProjectDoc {
     worksheets: Array.isArray(d.worksheets) ? d.worksheets : [],
     sheets: Array.isArray(d.sheets) ? d.sheets.map((s: any) => ({ ...s, fields: s.fields ?? {}, viewports: Array.isArray(s.viewports) ? s.viewports : [] })) : [],
     assets: d.assets && typeof d.assets === 'object' ? d.assets : {},
+    ...(d.site && typeof d.site === 'object' && Array.isArray(d.site.origin) ? { site: d.site } : {}),
   };
   for (const [id, el] of Object.entries<any>(d.elements ?? {})) {
     doc.elements[id] = { ...el, id, states: el.states ?? [], tags: el.tags ?? [], params: el.params ?? {}, props: el.props ?? {} };

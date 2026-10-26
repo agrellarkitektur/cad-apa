@@ -1736,6 +1736,58 @@ Mellanstor till stor, en session.
   platsfil ur Höjdkurvor; testdata går att göra med Höjdkurvors
   `test/data/make_dtm.py`)
 
+*Byggd (26 oktober), format 18. Provad mot Carl Augusts platsfil
+Bosgård (Nybro, 200 × 150 m, 1 m rutnät, Höjdkurvor 0.7.0). Testerna:
+467 → 474 på ca 12 s. Claudes val: **Platsen** är ett eget fält i
+projektet (`site`: koordinatsystem, nollpunkt, vridning, sann nord,
+utsnitt, ±0 i RH 2000, rutnätets mått, källa, licens och gränsvarning);
+rutnätets höjder ligger i en fil bland projektets filer (`assets`,
+base64 som i paketet), inte som tal i JSON. Modellens origo är paketets
+nollpunkt, och zonens koordinater räknas om med Höjdkurvors formler; de
+når aldrig planen eller 3D-vyn. **±0** (plan 1:s golv) är markens höjd
+mitt i utsnittet avrundad till decimeter från början och ändras i
+dialogen *Platsen* (huvudmenyn), där knappen *Medelmarknivån* fyller i
+den; nivåkoterna i fasader och sektioner skrivs i RH 2000 (*FG +62,600*)
+när projektet har en plats, och våningens egenskaper visar golvets
+RH-höjd. Grannhus, träd och stompunkter har kvar sina höjder i RH 2000,
+så att ett nytt ±0 flyttar huset mot marken. **Det som kommer med
+platsen** blir låsta objekt i alla tillstånd på plan 1: *Befintlig mark*
+(höjdkurvorna), *Grannhus* (fotavtrycket, i 3D en volym på marken med
+registrets höjd, 6 m utan), *Träd* (kronan i plan, stam och krona som
+prismor i 3D) och *Kartobjekt* (fastighetsgränser streck-punkt, tunnare
+och grå med mer än 1 m osäkerhet som i Höjdkurvor; vägar; gränspunkter;
+fastighetens beteckning; stompunkter med höjd). Fastighetsgränserna
+läses: fältet `fastigheter` finns sedan Höjdkurvor 0.7.0. Grannhus och
+träd syns i 3D-vyn men inte i fasader och sektioner (de skulle fylla
+fasaderna med det som står långt bort). **Höjdkurvorna** räknas i
+cad-apa ur rutnätet (paketets kurvor används inte), 0,5 m från början
+och 0,25 eller 1 m i dialogen; hela meter 0,18 med höjden utskriven,
+övriga 0,13, alla grå och streckade, och de går inte att klicka på.
+**Marken i 3D** är ett triangelnät (högst 250 000 noder, glesare annars)
+utan skuggplanet vid ±0; det räknas inte när 3D-vyn ställer in sig på
+huset. **Marklinjen** i en sektion följer linjen; i en fasad följer den
+husets kontur närmast betraktaren och utanför huset konturens framkant,
+5 m ut på varje sida, tunn (0,18) och streckad. Den tjocka linjen vid
+±0 ritas inte när det finns en markmodell (den nya marken kommer i
+0.10.4). **Medelmarknivån** är markhöjden längs husets kontur (som
+genom taket) i medel per meter, med nivåkoten *MMN* i fasader och
+sektioner och värdet i dialogen. **Ta emot platsen**: Öppna fil, dra
+och släpp en `.hkplats.json` på planen, *Uppdatera ur fil…* i dialogen,
+och meddelandet från Höjdkurvors flik (`#hojdkurvor-import`, `cad-apa:redo`,
+`hojdkurvor:plats`, `cad-apa:mottaget`; godkända ursprung är cad-apas eget,
+agrellarkitektur.se och höjdkurvor.se). En fråga följer alltid: *Nytt
+projekt* (förval) eller *Lägg i det öppna*; för samma plats (`projekt.id`)
+är förvalet *Uppdatera platsen*. Läggs en plats in i ett projekt som
+redan har en i samma koordinatsystem behålls nollpunkten, vridningen och
+±0, så att huset står kvar, och det som kom med den gamla platsen byts ut.
+Norrpilen ställs mot sann nord (rutnätets nord vriden med
+meridiankonvergensen). **Beskär** i dialogen skär markmodellen och det
+som kom med platsen till en ruta runt huset (30 m från början).
+Licenstexten och gränsvarningen står i dialogen. Kända begränsningar:
+höjdkurvorna för ett stort och brusigt rutnät (1,2 miljoner noder) tar
+ett par sekunder första gången; licenstexten skrivs ännu inte ut på
+bladen; skissen tillbaka till Höjdkurvor görs inte (beslut 26 oktober).*
+
 ### 0.10.4 Markobjekt del 1
 
 Stor, kan behöva två sessioner.

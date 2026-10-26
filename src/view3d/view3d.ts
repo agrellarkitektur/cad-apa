@@ -17,6 +17,9 @@ const MATERIAL_COLORS: Record<Material3D, string> = {
   floor: '#d8d2c6',
   slab: '#d6d0c4',
   roof: '#b9a597',
+  site: '#d9d6d0',
+  tree: '#9fb18f',
+  ground: '#cfd3bf',
 };
 
 /** Ett grepp i en väggände som kan dras i 3D. */
@@ -66,6 +69,9 @@ export class View3D {
   private previewGroup = new THREE.Group();
   /** Snittytorna där en sektion skär modellen (0.8). */
   private capsGroup = new THREE.Group();
+  /** Den befintliga marken (0.10.3), för sig: går inte att klicka på och räknas inte när vyn ställs in. */
+  private terrainGroup = new THREE.Group();
+  private shadowPlane: THREE.Mesh;
   private capMaterials: { poche: THREE.MeshBasicMaterial; other: THREE.MeshBasicMaterial; edge: THREE.LineBasicMaterial };
   private sun: THREE.DirectionalLight;
   private materials = new Map<string, THREE.Material>();
@@ -132,7 +138,7 @@ export class View3D {
       other: new THREE.MeshBasicMaterial({ color: 0x9aa1a7, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
       edge: new THREE.LineBasicMaterial({ color: 0x1d2328 }),
     };
-    for (const g of [this.root, this.handlesGroup, this.previewGroup, this.capsGroup]) {
+    for (const g of [this.root, this.handlesGroup, this.previewGroup, this.capsGroup, this.terrainGroup]) {
       g.rotation.x = -Math.PI / 2;
       g.scale.setScalar(0.001);
       this.scene.add(g);
@@ -152,6 +158,7 @@ export class View3D {
     ground.position.y = -0.031;
     ground.receiveShadow = true;
     this.scene.add(ground);
+    this.shadowPlane = ground;
 
     this.edgeMaterial = new THREE.LineBasicMaterial({ color: 0x1d2328, transparent: true, opacity: 0.6 });
     this.accentLine = new THREE.LineBasicMaterial({ color: 0xa86b12, depthTest: false });
@@ -209,6 +216,26 @@ export class View3D {
     this.requestRender();
   }
 
+  /**
+   * Den befintliga marken (0.10.3) som triangelnät i modellens mm (z uppåt
+   * från ±0), eller null. Med mark tas skuggplanet vid ±0 bort.
+   */
+  setTerrain(mesh: { positions: Float32Array; indices: Uint32Array } | null): void {
+    for (const child of this.terrainGroup.children) disposeTree(child);
+    this.terrainGroup.clear();
+    this.shadowPlane.visible = !mesh;
+    if (mesh && mesh.indices.length) {
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.BufferAttribute(mesh.positions, 3));
+      geom.setIndex(new THREE.BufferAttribute(mesh.indices, 1));
+      geom.computeVertexNormals();
+      const m = new THREE.Mesh(geom, this.material('ground'));
+      m.receiveShadow = true;
+      this.terrainGroup.add(m);
+    }
+    this.requestRender();
+  }
+
   setSelection(ids: Iterable<string>): void {
     this.selected = new Set(ids);
     for (const m of this.meshes) {
@@ -221,7 +248,11 @@ export class View3D {
 
   /** Visa hela modellen snett ovanifrån. */
   frameAll(): void {
-    const box = new THREE.Box3().setFromObject(this.root);
+    // Huset, inte grannhusen och träden runt det (0.10.3), när det finns ett.
+    const own = this.meshes.filter((m) => !['site', 'tree'].includes((m.userData as { material: Material3D }).material));
+    const box = new THREE.Box3();
+    if (own.length) for (const m of own) box.expandByObject(m);
+    else box.setFromObject(this.root);
     if (box.isEmpty()) return;
     const center = box.getCenter(new THREE.Vector3());
     const sphere = box.getBoundingSphere(new THREE.Sphere());

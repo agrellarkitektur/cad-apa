@@ -100,6 +100,10 @@ export function installFiles(app: AppContext, brand: Brand, start: { saved: Loca
   async function openFile(): Promise<void> {
     try {
       const doc = await openProjectFile(brand.fileExtension);
+      if (doc && 'siteText' in doc) {
+        await app.site.receive(doc.siteText);
+        return;
+      }
       if (doc) {
         app.ui.state = defaultState(doc);
         app.store.load(doc);

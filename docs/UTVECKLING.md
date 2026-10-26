@@ -1242,6 +1242,49 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Markmodell (0.10.3, format 18)
+
+Platsen ur Höjdkurvor. Utbytet står i `docs/UTBYTE-CAD-APA.md` i
+hojdkurvor-repot (version 1); en låtsas-Höjdkurvor att prova
+handskakningen med finns i `test/cad-apa-mock.html` där.
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/core/site.ts` | `Site` (projektets `site`), omräkning zon ↔ modell (`zoneToLocal`, `localToZone`), RH 2000 (`toRh`, `fromRh`), rutnätet (`decodeGrid`, `encodeGrid`, `terrainOf` som avkodar en gång per fil, `heightAtZone`, `groundAt`), `meanGroundLevel`, höjdkurvorna (`contours`, marching squares med kanternas nummer för att foga ihop bitarna) och `cropGrid` |
+| `src/core/siteImport.ts` | Platspaketet: `parseSitePackage` (kontroll av `format` och `version`), `applySitePackage` (en transaktion: platsen, rutnätets fil, objekten, norrpilen), `updateSite`, `removeSite`, `cropSite` |
+| `src/elements/site.ts` | Typerna `Terrain` (höjdkurvorna, `siteContours` med cache), `SiteBuilding`, `Tree` och `SiteMap` (gränser, vägar, punkter, beteckningar, stompunkter) |
+| `src/repr/terrain.ts` | `terrainProfile` (marklinjen i fasader och sektioner), `meanGround` (medelmarknivån för husets kontur), `levelText` (nivåkoten i RH 2000) och `terrainMesh` (nätet för 3D-vyn) |
+| `src/ui/app/site.ts` | Ta emot paketet (fil, släpp, meddelande), frågan, dialogen *Platsen* och `HOJDKURVOR_ORIGINS` |
+
+- **Höjderna**: modellen räknar i mm från ±0 som förut. `site.datum` är
+  ±0 i RH 2000 (m). Rutnätet, grannhusens och trädens `mark` och
+  stompunkternas `z` är i RH 2000 och räknas om när de ritas, så att ett
+  nytt ±0 flyttar huset mot marken.
+- **Rutnätet** ligger i `assets` (typen `application/x-hojdkurvor-terrang`,
+  Float32 little-endian i base64 som i paketet). Fasadernas och
+  sektionernas tråd får den filen men inga andra (`docForWorker`).
+- **Objekten ur platsen** är `global` (alla tillstånd, åtgärd `plain`),
+  låsta och ligger på våningen närmast ±0. `applySitePackage` och
+  `removeSite` känner igen dem på typen (`SITE_ELEMENT_TYPES` i kärnan,
+  samma som `SITE_TYPES` i `elements/site.ts`).
+- **`only3dView`** (ny i `ElementType`): grannhus och träd har 3D-former
+  men tas inte med i fasader och sektioner (`WITH_DEMOLISHED` hoppar över
+  dem). Materialen `site`, `tree` och `ground` är nya.
+- **3D-vyn**: `View3D.setTerrain` lägger marken i en egen grupp, som inte
+  går att klicka på och inte räknas av `frameAll` (som också hoppar över
+  grannhus och träd när det finns annat). Skuggplanet vid ±0 döljs med
+  mark. `pane3d.ts` bygger nätet bara när `doc.site` byts.
+- **Fasader och sektioner**: med markmodell ritas marklinjen
+  (`origin.part = 'befintlig mark'`) i stället för den tjocka linjen vid
+  ±0, och nivåkoterna får *MMN*. Att släcka *Befintlig mark* under Visa
+  släcker också marklinjen, *MMN* och marken i 3D.
+- **Handskakningen** (`installSite`): med `#hojdkurvor-import` i adressen
+  och en `window.opener` skickas `cad-apa:redo` till de godkända
+  ursprungen; `hojdkurvor:plats` kvitteras med `cad-apa:mottaget` direkt
+  (innan frågan), och adressen rensas.
+- Testerna i `tests/plats.test.ts` bygger ett eget paket med en jämnt
+  sluttande mark.
+
 ## Tak (0.10, format 17)
 
 - **Elementtypen** `Roof` i `src/elements/roof.ts`: ett takfall med

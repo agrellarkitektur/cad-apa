@@ -51,6 +51,7 @@ import { installViews } from './app/views';
 import { installUnderlays } from './app/underlays';
 import { installFilterSelect } from './app/filterSelect';
 import { installStoreys } from './app/storeys';
+import { installSite } from './app/site';
 import { installSegmentPoints } from './app/segmentPoints';
 import { installTreeDrag } from './app/treeDrag';
 import { installSheets } from './app/sheets';
@@ -506,6 +507,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     underlays: () => underlays,
     filterSelect: () => filterSelect,
     storeys: () => storeys,
+    site: () => site,
     segmentPoints: () => segmentPoints,
     views: () => views,
     commandLine: () => commandLine,
@@ -528,6 +530,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const underlays = installUnderlays(app);
   const filterSelect = installFilterSelect(app);
   const storeys = installStoreys(app);
+  const site = installSite(app);
   installTreeDrag(app);
   const sheets = installSheets(app);
   const plot = installPlot(app, underlays.exportImage);

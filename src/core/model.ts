@@ -1,5 +1,6 @@
 import { exampleMaster } from './exampleMaster';
 import { SWEDISH_STANDARD, type StyleSheet } from './graphics';
+import type { Site } from './site';
 
 /**
  * Bacchus datamodell. Ren data som kan sparas som JSON: inga klasser, inga
@@ -326,7 +327,7 @@ export interface OwnPen extends OwnPenPart {
 }
 
 export const FORMAT = 'bacchus-project';
-export const FORMAT_VERSION = 17;
+export const FORMAT_VERSION = 18;
 
 export interface ProjectDoc {
   format: typeof FORMAT;
@@ -352,6 +353,11 @@ export interface ProjectDoc {
   sheets: Sheet[];
   /** Filer som underlag (format 5). */
   assets: Record<Id, Asset>;
+  /**
+   * Platsen (0.10.3, format 18): koordinatsystem, nollpunkt, ±0 i RH 2000 och
+   * markmodellen ur Höjdkurvor. Utelämnad = plan mark som förut.
+   */
+  site?: Site;
 }
 
 /**

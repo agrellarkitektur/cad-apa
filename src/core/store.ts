@@ -29,7 +29,7 @@ export type Change =
   | { [K in FieldKey]: { kind: 'field'; key: K; before: ProjectDoc[K]; after: ProjectDoc[K] } }[FieldKey];
 
 /** Fält på projektnivå som byts ut i sin helhet. */
-export type FieldKey = 'project' | 'graphics' | 'folders' | 'tree' | 'viewTags' | 'worksheets' | 'sheets';
+export type FieldKey = 'project' | 'graphics' | 'folders' | 'tree' | 'viewTags' | 'worksheets' | 'sheets' | 'site';
 
 export interface Transaction {
   /** Visas i gränssnittet, t.ex. "Ångra: Riv vägg". */

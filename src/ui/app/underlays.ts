@@ -227,7 +227,11 @@ export function installUnderlays(app: AppContext) {
   }
 
   async function importFiles(files: Iterable<File>): Promise<void> {
-    for (const f of files) await importFile(f);
+    for (const f of files) {
+      // En platsfil ur Höjdkurvor (0.10.3) är inget underlag.
+      if (/\.json$/i.test(f.name)) await app.site.receive(await f.text());
+      else await importFile(f);
+    }
   }
 
   /** Välj filer att lägga in. */

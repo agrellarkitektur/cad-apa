@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.2** (alfa); nästa är **0.10.3, mark och byggnadshöjd**.
+**0.10.3** (alfa); nästa är **0.10.4, markobjekt del 1**.
 
 ## Vad som fungerar
 
@@ -1105,6 +1105,28 @@ Version 0.10.2, takfot och taket i planen (samma filformat, 17):
   ytterväggarnas utsida på alla våningar, streckad där taket ligger över
 - Nivåkoten *Takfot* är takets lägsta undersida med snittet och språnget
 - Referensritningarna med tak ändrades (punktstreckat och takfotens snitt)
+
+Version 0.10.3, markmodell (filformat 18):
+- **Platsen ur Höjdkurvor**: *Fortsätt rita i cad-apa* i Höjdkurvor öppnar
+  cad-apa och skickar platsen, eller öppna en platsfil (`.hkplats.json`,
+  *Spara platsfil för cad-apa*) med Öppna fil eller dra och släpp den på
+  planen. Ett nytt projekt eller platsen i det öppna; samma plats igen
+  uppdateras utan att huset flyttas
+- **Nollpunkt, SWEREF 99 och RH 2000**: modellens origo är platsens
+  nollpunkt, och ±0 (plan 1:s golv) ligger på en höjd i RH 2000 som ställs
+  in under *Platsen* i menyn. Nivåkoterna i fasader och sektioner skrivs
+  i RH 2000 (*FG +62,600*), och våningens golv visas i RH 2000. Norrpilen
+  pekar mot sann nord
+- **Befintlig mark**: höjdkurvor i planen (0,5 m från början, 0,25 eller
+  1 m; hela meter med höjden), marken i 3D och en tunn streckad marklinje
+  i fasader och sektioner
+- **Medelmarknivån** längs husets kontur, viktad efter fasadernas längd,
+  som nivåkot (*MMN*) och i dialogen *Platsen*
+- **Grannhus** som volymer, **träd**, **fastighetsgränser** med
+  beteckningar och gränspunkter, vägar och stompunkter, låsta och under
+  Visa (Platsen)
+- Markmodellen kan beskäras till en ruta runt huset
+- Projekt från 0.10.2 (format 17) öppnas inte
 
 Version 0.10.1, granskning (samma filformat, 17):
 - Inga nya funktioner, men tre rättelser för hus med flera våningar

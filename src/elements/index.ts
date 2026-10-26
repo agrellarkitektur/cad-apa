@@ -10,6 +10,7 @@ import { roofSlopeType } from './roofSlope';
 import { scaleBarType } from './scaleBar';
 import { stampType } from './stamp';
 import { slabType } from './slab';
+import { siteBuildingType, siteMapType, terrainType, treeType } from './site';
 import { spaceType } from './space';
 import { underlayType } from './underlay';
 import { wallType } from './wall';
@@ -34,6 +35,10 @@ export function registerBuiltInTypes(): void {
   registerType(underlayType);
   registerType(scaleBarType);
   registerType(stampType);
+  registerType(terrainType);
+  registerType(siteBuildingType);
+  registerType(treeType);
+  registerType(siteMapType);
   // Fasader och sektioner som följer byggnaden placeras där de ligger när de flyttas.
   placement.auto = (doc, el) => {
     const f = markerFrame(doc, el);

@@ -137,7 +137,14 @@ export async function saveBlobFile(blob: Blob, name: string, description: string
 }
 
 /** Låt användaren välja en fil och läs den som projekt. */
-export async function openProjectFile(extension: string): Promise<ProjectDoc | null> {
+/** En platsfil ur Höjdkurvor som öppnades i stället för ett projekt (0.10.3). */
+export interface SiteFileText {
+  siteText: string;
+}
+
+const isSiteText = (text: string) => /^\s*\{[\s\S]{0,200}"format"\s*:\s*"hojdkurvor-plats"/.test(text);
+
+export async function openProjectFile(extension: string): Promise<ProjectDoc | SiteFileText | null> {
   const picker = (window as any).showOpenFilePicker;
   if (typeof picker === 'function') {
     let handle: any;
@@ -151,7 +158,9 @@ export async function openProjectFile(extension: string): Promise<ProjectDoc | n
       handle = null;
     }
     if (handle) {
-      const doc = parse(await (await handle.getFile()).text());
+      const text = await (await handle.getFile()).text();
+      if (isSiteText(text)) return { siteText: text };
+      const doc = parse(text);
       currentHandle = handle;
       lastText = serialize(doc);
       return doc;
@@ -165,7 +174,9 @@ export async function openProjectFile(extension: string): Promise<ProjectDoc | n
       const file = input.files?.[0];
       if (!file) return resolve(null);
       try {
-        const doc = parse(await file.text());
+        const text = await file.text();
+        if (isSiteText(text)) return resolve({ siteText: text });
+        const doc = parse(text);
         forgetProjectFile();
         resolve(doc);
       } catch (e) {

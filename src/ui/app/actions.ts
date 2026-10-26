@@ -245,6 +245,10 @@ export function installActions(app: AppContext, parts: ActionParts) {
         closeMenu();
         app.chooseUnderlayFiles();
         break;
+      case 'site':
+        closeMenu();
+        void app.site.showDialog();
+        break;
       case 'delete-storey': {
         const id = target.closest<HTMLElement>('[data-id]')?.dataset.id;
         if (id) void app.storeys.remove(id);

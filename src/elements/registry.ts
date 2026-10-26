@@ -100,6 +100,11 @@ export interface ElementType<P extends object = Record<string, unknown>> {
    * varken elementet eller typen har ett eget värde.
    */
   storeyParams?: (storey: Storey) => Record<string, unknown>;
+  /**
+   * Syns i 3D-vyn men inte i fasader och sektioner (0.10.3): grannhus och
+   * träd ur platsen, som annars skulle fylla fasaderna med det som står långt bort.
+   */
+  only3dView?: boolean;
   /** Om elementet måste sitta i ett annat (dörrar och fönster i väggar). */
   hosted?: boolean;
   /**

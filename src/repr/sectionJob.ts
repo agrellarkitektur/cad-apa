@@ -44,5 +44,7 @@ export function handleSectionJob(job: SectionJob): SectionReply {
  * DXF) behövs inte för fasader och sektioner och kan vara stora.
  */
 export function docForWorker(doc: ProjectDoc): ProjectDoc {
-  return { ...doc, assets: {} };
+  // Markmodellens fil (0.10.3) behövs för marklinjen och medelmarknivån.
+  const grid = doc.site?.grid ? doc.assets[doc.site.grid.asset] : undefined;
+  return { ...doc, assets: grid ? { [grid.id]: grid } : {} };
 }
