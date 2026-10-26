@@ -1,10 +1,29 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.3.
+överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.4.
 
 ## Läget
 
+- **0.10.4 Markobjekt del 1 är klar** på `main` (samma format, 18; en ny
+  elementtyp). Carl August sa "kör nästa version" och fick upplägget i
+  chatten innan arbetet började (inget svar än). Ett nytt objekt,
+  *Markobjekt* (`Ground`, `src/elements/ground.ts`), och verktyget **Mark**:
+  platå och urgrävning (rektangel, konturen i Modifiera), platå runt huset
+  och urgrävning under bjälklaget. Den färdiga marken räknas i
+  `src/core/ground.ts` ur den befintliga och objekten (slänt som ett band
+  som vidgas med avståndet, stödmur utan slänt), i förslaget tjock och
+  heldragen i planen (höjdkurvor där marken ändrats), fasader, sektioner och
+  3D; befintlig tunn streckad där den skiljer sig. Medelmarknivån mot
+  färdig mark (befintlig som val), schakt och fyll, jord i sektionerna och
+  förvalen i dialogen *Platsen*. Urgrävningens kontur är botten och
+  slänten går utåt (avsteg från planen). Provat med Playwright mot `dist/`
+  med en egen kuperad platsfil (platå, runt huset, under bjälklaget,
+  sektionen med jord, 3D, dialogen, egenskaperna); klickjämförelsen kördes
+  inte. Testerna: 481 på ca 12 s. Claudes val i PLAN.md, koden i
+  UTVECKLING.md under *Markobjekt (0.10.4)*.
+- **Inkorgen 26 oktober (efter 0.10.3)**, tre punkter om träden, inte
+  sorterade med Carl August än; Claudes förslag i *Att fråga*.
 - **0.10.3 Markmodell är klar** på `main` (format 18). Carl August
   skickade platsfilen *Bosgård* (Nybro, SWEREF 99 16 30, 200 × 150 m,
   1 m rutnät, med fastighetsgränser och 225 träd) och sa "bygg nästa
@@ -235,10 +254,8 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~, ~~0.9.2 Nivåer~~,
   ~~0.9.3 Granskning~~, ~~0.9.4 Bjälklag del 2~~, ~~0.10 Tak~~,
   ~~0.10.1 Granskning~~, ~~0.10.2 Takfot och taket i planen~~,
-  ~~0.10.3 Markmodell~~ (klara)
-- **Marken före piloten** (Carl August 26 oktober): **0.10.4 Markobjekt del
-  1** (platå, platå runt huset, urgrävning, färdig mark, schakt och fyll;
-  stor), **0.10.5 Markobjekt del 2 och byggnadshöjd** (ramp, gångväg,
+  ~~0.10.3 Markmodell~~, ~~0.10.4 Markobjekt del 1~~ (klara)
+- **Marken före piloten** (Carl August 26 oktober): **0.10.5 Markobjekt del 2 och byggnadshöjd** (ramp, gångväg,
   infart, höjdpunkt, brytlinje, stödmur; byggnadshöjd enligt PBF; stor),
   **0.10.6 Granskning**
 - **0.10.7 Dolda linjer i fasader**
@@ -264,17 +281,20 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.10.3 syns på webbhotellet och om *Fortsätt rita i
-cad-apa* i Höjdkurvor går hela vägen (frågorna nedan; 0.9.2–0.10.2 har
-inte provats fullt ut än). Be honom bekräfta sorteringen av Inkorgen 26
-oktober (0.10.10, 0.10.11 och 3D-vyerna, se synpunktsfilen). Läs
-synpunktsfilen och sortera ny Inkorg. Sedan **0.10.4 Markobjekt del 1**
-(PLAN.md), stor och kan behöva två sessioner: färdig mark ur befintlig
-och markobjekten (platå, platå runt huset, urgrävning), höjdkurvor och
-marklinje för ny mark, tillstånden, schakt och fyll. Bygg på
-`src/core/site.ts` (`terrainOf`, `groundAt`, `contours`) och
-`src/repr/terrain.ts` (`terrainProfile`, `terrainMesh`): den färdiga
-marken kan vara ett rutnät till, räknat ur det befintliga och objekten.
+Fråga först om 0.10.4 syns på webbhotellet och hur markobjekten känns
+(frågorna nedan; 0.9.2–0.10.3 har inte provats fullt ut än). Sortera
+Inkorgen 26 oktober om träden med honom (förslagen i *Att fråga*), och
+be honom bekräfta sorteringen från förra gången (0.10.10, 0.10.11 och
+3D-vyerna). Sedan **0.10.5 Markobjekt del 2 och byggnadshöjd** (PLAN.md),
+stor: ramp och gångväg (mittlinje med bredd, höjder i ändarna eller
+lutning, slänt eller mur, lutningspil, varning), infart, höjdpunkt och
+brytlinje, stödmur som eget objekt, byggnadshöjd enligt PBF med nivåkot
+*BH* (kontrollera PBF 1 kap. 3 § och Boverkets vägledning först). Bygg
+markobjekten som nya sorter av `Ground` eller egna typer som ger
+`GroundShape` (`src/core/ground.ts`): en ramp är en yta med höjd längs
+mittlinjen, en höjdpunkt och brytlinje behöver troligen interpolation
+mellan dem och marken runt (ett nytt sätt i `finishedGround`).
+Byggnadshöjden ur `roofBody` (översidan) och `meanGround`.
 
 Besluten 26 oktober: befintlig mark ändras aldrig; markobjekten är
 fristående; ingen penselmodellering; befintlig tunn streckad, ny tjock
@@ -288,6 +308,29 @@ Nästa granskning: 0.10.6, efter marken.
 
 ## Att fråga Carl August om
 
+- **0.10.4 efter provning** (Claudes val, se PLAN.md): urgrävningens
+  kontur är botten och slänten går utåt (planen sa inåt); platåns höjd
+  föreslås ur marken i mitten och urgrävningens en meter under; fallet
+  anges som 1:N med riktning i grader och höjden gäller i mitten; runt
+  huset rör marken under huset inte (utom närmast fasaden), hörnen är
+  rundade, sockeln räknas från objektets våning; urgrävningen under
+  bjälklaget har husets kontur när bjälklaget följer väggarna, och räknas
+  alltid först så att platån fyller igen. I ett förslag är marklinjen
+  alltid tjock (den färdiga marken), också utan markobjekt; i Befintligt
+  tunn och streckad. Ska Befintligt också ha en tjock linje? Jorden är
+  600 mm djup och ritas också under huset; räcker det? Stödmuren är bara
+  ett språng i marken tills den blir ett objekt (0.10.5). Knappen
+  *Medelmarknivån* för ±0 använder den befintliga marken. Verktyget ritar
+  bara rektanglar; behövs en polylinje direkt i verktyget?
+- **Inkorgen 26 oktober, träden** (Claudes förslag, inte bekräftade): att
+  sätta importerade träd, grannhus m.m. till befintligt eller förslag och
+  ta bort dem helt i **0.10.8 Småsaker** (liten: låsta objekt i alla
+  tillstånd i dag); fem trädmodeller som slumpas vid import och går att
+  byta för markerade träd, och träd i tre detaljnivåer (low poly,
+  silhuett, detalj) som en egen version tillsammans med 3D-vyerna efter
+  0.12 eller efter piloten (mellanstor; behövs inte för bygglovet). Träd
+  på Enscape-nivå kräver texturer och många trianglar, efter piloten.
+
 - **0.10.3 efter provning** (Claudes val, se PLAN.md): ±0 är från början
   markens höjd mitt i utsnittet (62,6 för Bosgård), ändras under
   *Platsen* (knappen *Medelmarknivån* fyller i den); ska den hellre vara
@@ -295,9 +338,8 @@ Nästa granskning: 0.10.6, efter marken.
   origo är Höjdkurvors nollpunkt (Bosgård: utsnittets sydvästra hörn),
   så ett nytt projekt har huset långt från platsens mitt; ska nollpunkten
   kunna flyttas i cad-apa, eller väljs den i Höjdkurvor? Grannhus och träd
-  syns bara i 3D, inte i fasaderna; behövs grannhusen i en fasad? Utan ny
-  mark (0.10.4) saknas den tjocka marklinjen i fasaderna när det finns en
-  markmodell. Höjdkurvorna räknas i cad-apa ur rutnätet (paketets kurvor
+  syns bara i 3D, inte i fasaderna; behövs grannhusen i en fasad? (Den tjocka
+  marklinjen finns sedan 0.10.4 i förslagen.) Höjdkurvorna räknas i cad-apa ur rutnätet (paketets kurvor
   används inte) och blir brusiga på 0,25 m; räcker 0,5 m som förval?
   Trädens kronor är prismor i 3D. Licenstexten skrivs inte ut på bladen
   än; ska den stå på situationsplanen (ett fält, `{licens}`)?

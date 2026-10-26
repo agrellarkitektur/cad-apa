@@ -1,3 +1,4 @@
+import { applyGroundField } from './groundFields';
 import { moveElements, moveWallEnd, renameElement, updateDefinition, updateParams } from '../core/commands';
 import type { Element, ProjectDoc } from '../core/model';
 import type { ViewStates } from '../core/states';
@@ -176,6 +177,7 @@ export function pick(o: Record<string, number>, keys: string[]): Record<string, 
 export function applyField(store: DocStore, ids: string[], key: string, input: HTMLInputElement | HTMLSelectElement, view: ViewStates): boolean {
   const doc = store.doc;
   const [scope, name] = key.split(':');
+  if (scope === 'ground') return applyGroundField(store, ids, name, input);
   if (scope === 'name') {
     renameElement(store, ids[0], input.value);
     return true;

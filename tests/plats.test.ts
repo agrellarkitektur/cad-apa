@@ -127,7 +127,8 @@ describe('platsen (0.10.3)', () => {
     applySitePackage(store, pkg());
     const doc = store.doc;
     const sec = Object.values(doc.elements).find((e) => e.type === 'Section')!;
-    const r = buildSection(doc, sec.id, { state: doc.states.at(-1)!.id })!;
+    // I Befintligt (0.10.4): i ett förslag är marken den färdiga, tjock.
+    const r = buildSection(doc, sec.id, { state: doc.states[0].id })!;
     const mark = r.prims.filter((p) => p.origin?.part === 'befintlig mark');
     expect(mark.length).toBeGreaterThan(0);
     const line = mark[0];

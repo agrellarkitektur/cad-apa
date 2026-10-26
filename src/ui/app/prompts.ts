@@ -1,3 +1,4 @@
+import type { GroundMode } from '../tools/groundTool';
 import type { RoofMode } from '../tools/roofTool';
 import { commandFor, type CommandDef } from '../commandRegistry';
 import { ALIGN_BUTTONS, ArrangeTool } from '../modify/arrangeTool';
@@ -112,6 +113,22 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
         { key: 'H', label: 'Håltagning', run: mode('hole'), on: r.options.mode === 'hole' },
       ];
       if (!r.started && r.options.mode === 'slab') options.push({ key: 'V', label: 'Ur väggarna', run: () => app.slabFromWalls() });
+      if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.reset() });
+      return { head, text: r.hintText(), options };
+    }
+    case 'ground': {
+      const r = app.groundTool;
+      const mode = (m: GroundMode) => () => {
+        r.options.mode = m;
+        r.reset();
+        redraw();
+      };
+      const options: PromptOption[] = [
+        { key: 'P', label: 'Platå', run: mode('plateau'), on: r.options.mode === 'plateau' },
+        { key: 'U', label: 'Urgrävning', run: mode('excavation'), on: r.options.mode === 'excavation' },
+        { key: 'B', label: 'Under bjälklag', run: mode('slab'), on: r.options.mode === 'slab' },
+      ];
+      if (!r.started) options.push({ key: 'H', label: 'Runt huset', run: () => r.aroundHouse() });
       if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.reset() });
       return { head, text: r.hintText(), options };
     }

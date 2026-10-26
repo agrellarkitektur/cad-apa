@@ -1242,6 +1242,37 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Markobjekt (0.10.4, format 18)
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/core/ground.ts` | Den färdiga marken: `GroundShape` (ytans `probe`, slänt eller stödmur, schakt och/eller fyll), `finishedGround` (rutnätet kopieras och objekten läggs på i ordning, med schakt och fyll per objekt och rutorna som ändrats), `nearestEdge` och `withHeights` |
+| `src/geometry/offset.ts` | `bufferRings`: ytor utvidgade med ett avstånd (rektangel per kant och cirkel per hörn, sammanslagna i hela mm) |
+| `src/elements/ground.ts` | Typen `Ground` (Markobjekt), `groundGeometry` (formen per objekt, sparad per element), `groundObjects` (de som gäller i vyn, urgrävningar under bjälklag först), `finishedTerrain` (den färdiga marken i vyn, eller null), `showsProposal` |
+| `src/ui/tools/groundTool.ts` | Verktyget Mark |
+| `src/ui/groundFields.ts` | Egenskaperna (`ground:` i `data-key`) |
+
+- **Förvalen** ligger i `site.ground` (bara det som skiljer sig från
+  `GROUND_DEFAULTS`); `groundDefaults(site)` fyller i. Ett objekt utan eget
+  värde följer förvalet. `site.meanOnExisting` och `site.earthHatch` är
+  valen i dialogen.
+- **Den färdiga marken** räknas per vy (tillståndet avgör vilka objekt
+  som gäller) och sparas med `lastResults` så länge rutnätet, platsen och
+  objektens former är samma objekt. `groundGeometry` sparas per element
+  (WeakMap) med parametrarna, förvalen, våningarna, husets kontur och
+  bjälklaget som indata. Noder som slänten inte kan nå hoppas över med
+  avståndet till ytans rektangel och dess högsta och lägsta höjd.
+- **Planen**: typen `Terrain` läser `Ground`, `Wall` och `Slab`
+  (`planReads`) och ritar den färdiga markens höjdkurvor (`finishedContours`
+  i `elements/site.ts`, marching squares på rutorna som ändrats).
+- **Fasader och sektioner**: `groundLines` i `repr/terrain.ts` (delarna
+  `färdig mark`, `befintlig mark` och `jord`); `meanGround(ctx, existing)`.
+- **3D-vyn**: `finishedForView` och `terrainMesh(doc, max, heights)`;
+  nätet byggs om när den färdiga marken eller platsen byts.
+- `hasEditableOutline` gäller markobjekt med ritad kontur, och `Ground`
+  har ritordning (`ORDERABLE`).
+- Tester: `tests/v0104.test.ts`.
+
 ## Markmodell (0.10.3, format 18)
 
 Platsen ur Höjdkurvor. Utbytet står i `docs/UTBYTE-CAD-APA.md` i

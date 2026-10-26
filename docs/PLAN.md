@@ -1810,6 +1810,50 @@ Stor, kan behöva två sessioner.
 - Schakt och fyll i m³
 - Förvalen (lutningar, avstånd) går att ändra i projektet
 
+*Byggd (26 oktober) i en session, samma format (18): en ny elementtyp
+gör inte äldre filer oläsliga. Testerna: 474 → 481 på ca 12 s. Claudes
+val: **ett objekt**, *Markobjekt* (`Ground`), med sorten i parametrarna:
+platå, urgrävning, platå runt huset (`around`) och urgrävning under ett
+bjälklag (`slab`). Verktyget **Mark** (Rita) drar upp en rektangel som
+bjälklagsverktyget; konturen ändras sedan i Modifiera som bjälklagets.
+Platåns höjd föreslås ur marken i rektangelns mitt, urgrävningens en
+meter under (avrundat till 50 mm), och skrivs i RH 2000 i egenskaperna.
+**Urgrävningens kontur är botten och slänten går utåt** (avsteg från
+"slänt inåt", så att urgrävningen under bjälklaget har hela bjälklaget
+med arbetsutrymme i botten och samma regel gäller som för platån). **Slänten**
+är ett band runt ytan som vidgas med avståndet (d/N över och under
+kantens höjd); befintlig mark inom bandet är orörd, annars schaktas eller
+fylls den till bandet. En urgrävning tar bara ned. En stödmur ger ingen
+slänt (lodrätt mellan två noder i rutnätet); den ritas tjock i planen.
+**Platå med fall**: 1:N och riktning, höjden gäller i konturens mitt, och
+en pil visar fallet. **Runt huset**: marken vid fasaden en sockel (200)
+under objektets våning, fall 1:20 de första 3 m, platån 3 m ut (rundade
+hörn); marken under huset rörs inte, utom noderna närmast fasaden.
+**Under bjälklaget**: bjälklagets kontur (husets kontur när det följer
+väggarna) plus 500 arbetsutrymme, botten i underkanten. Urgrävningar under
+bjälklag räknas alltid först (grunden fylls igen av platån runt huset),
+övriga i ritordning (Fram och Bak finns för markobjekt). **Förvalen**
+(slänt 1:2, fall 1:20, 3 m, 3 m ut, sockel 200, arbetsutrymme 500) står i
+*Platsen*; ett tomt fält i egenskaperna följer dem. **Tillstånden**:
+markobjekt hör till förslaget; ritas de i Befintligt läggs de i alla
+förslag. I ett förslag är marklinjen den färdiga marken, tjock (0,5) och
+heldragen, också utan markobjekt (då lika med den befintliga); den
+befintliga ritas tunn och streckad bara där den skiljer sig. I
+Befintligt som i 0.10.3. Höjdkurvorna för färdig mark (0,25, hela meter
+0,35 med höjden) ritas bara där markobjekten ändrat marken; den befintligas
+som förut. **Medelmarknivån** mot den färdiga marken i ett förslag, mot
+den befintliga som val i *Platsen*, där båda visas; knappen
+*Medelmarknivån* för ±0 använder den befintliga (annars flyttar platån
+runt huset sig med ±0). **Schakt och fyll** per objekt (det objektet
+ändrar efter dem bakom) i egenskaperna och för förslaget i *Platsen*.
+**Jord** under marklinjen i sektionerna (fyllningen *Mark*, 600 mm
+djup) som val i *Platsen*, av från början. Under Visa heter *Befintlig
+mark* nu *Marken*, och *Markobjekt* släcker konturerna (marken räknas
+ändå med dem). Kända begränsningar: stödmuren är bara ett språng i marken,
+inget eget objekt (0.10.5); jorden ritas också under huset; konturerna
+ritas bara som rektanglar med verktyget (Lägg till punkt i Modifiera ger
+andra former).*
+
 ### 0.10.5 Markobjekt del 2 och byggnadshöjd
 
 Stor.

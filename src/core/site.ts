@@ -51,6 +51,35 @@ export interface Site {
   licence?: string;
   /** Varningen om fastighetsgränsernas läge. */
   boundaryWarning?: string;
+  /** Förvalen för markobjekten (0.10.4); det som saknas tas ur `GROUND_DEFAULTS`. */
+  ground?: Partial<GroundDefaults>;
+  /** Medelmarknivån räknas mot den befintliga marken i stället för den färdiga (0.10.4). */
+  meanOnExisting?: boolean;
+  /** Jord under marklinjen i sektionerna (0.10.4). */
+  earthHatch?: boolean;
+}
+
+/** Förvalen för markobjekten (0.10.4), i mm och som 1:N. */
+export interface GroundDefaults {
+  /** Släntens lutning 1:N. */
+  slope: number;
+  /** Fallet från huset 1:N. */
+  fall: number;
+  /** Hur långt ut från fasaden fallet gäller, mm. */
+  fallLength: number;
+  /** Hur långt ut platån runt huset går, mm. */
+  distance: number;
+  /** Sockeln: från golvet ned till marken vid fasaden, mm. */
+  sockel: number;
+  /** Arbetsutrymmet runt bjälklaget i en urgrävning, mm. */
+  margin: number;
+}
+
+export const GROUND_DEFAULTS: GroundDefaults = { slope: 2, fall: 20, fallLength: 3000, distance: 3000, sockel: 200, margin: 500 };
+
+/** Projektets förval för markobjekten. */
+export function groundDefaults(site: Pick<Site, 'ground'> | undefined): GroundDefaults {
+  return { ...GROUND_DEFAULTS, ...(site?.ground ?? {}) };
 }
 
 /** Förvalt avstånd mellan höjdkurvorna, mm. */
@@ -88,6 +117,13 @@ export function northOf(site: Pick<Site, 'rotation' | 'trueNorth'>): number {
 /** En höjd i modellen (mm från ±0) i RH 2000 (m). */
 export function toRh(site: Pick<Site, 'datum'>, zMm: number): number {
   return site.datum + zMm / 1000;
+}
+
+/** En höjd (mm från ±0) som nivåkot: RH 2000 när projektet har en plats, annars från ±0 (*+62,400*). */
+export function levelText(site: Pick<Site, 'datum'> | undefined, zMm: number): string {
+  const m = site ? site.datum + zMm / 1000 : zMm / 1000;
+  const r = Math.round(m * 1000) / 1000;
+  return `${r === 0 ? '±' : r > 0 ? '+' : '−'}${Math.abs(r).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
 }
 
 /** En höjd i RH 2000 (m) i modellen (mm från ±0). */

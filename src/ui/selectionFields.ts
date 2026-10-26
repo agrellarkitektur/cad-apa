@@ -1,3 +1,4 @@
+import { groundFieldsMarkup } from './groundFields';
 import type { Element, ProjectDoc } from '../core/model';
 import type { ViewStates } from '../core/states';
 import { createContext } from '../repr/context';
@@ -148,6 +149,8 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         ${holes ? `<ul class="slab-holes">${holes}</ul><p class="note">Klicka på ett håls hörn eller kant för att ändra det, som en 2D-form, eller dra i hörnen.</p>` : '<p class="note">Inga. Välj Håltagning i bjälklagsverktyget och dra upp ett hål.</p>'}
         <p class="note">${p.fromWalls ? 'Bjälklaget slutar vid ytterväggarnas insida; innerväggarna står på det. Bocka ur för att ändra konturen själv.' : 'Konturen ändras med hörnen och kanterna, som takets.'} Ovansidan ligger i våningens golvnivå, tjockleken går nedåt.</p>`;
     }
+    case 'Ground':
+      return groundFieldsMarkup(doc, el, view);
     case 'North': {
       const p = resolveParams<NorthParams>(doc, el);
       return `<div class="fields">${numberField('param:angle', 'Norr', p.angle, '°')}</div>

@@ -29,6 +29,7 @@ import type { DimensionTool, TextTool } from '../tools/annotationTools';
 import type { MarkerTool } from '../tools/markerTools';
 import type { RoofTool } from '../tools/roofTool';
 import type { SlabTool } from '../tools/slabTool';
+import type { GroundTool } from '../tools/groundTool';
 import type { MeasureTool } from '../tools/measureTool';
 import type { OpeningTool } from '../tools/openingTool';
 import type { RoomTool } from '../tools/roomTool';
@@ -80,6 +81,7 @@ export interface AppContext {
   readonly measureTool: MeasureTool;
   readonly roofTool: RoofTool;
   readonly slabTool: SlabTool;
+  readonly groundTool: GroundTool;
   readonly sectionTool: MarkerTool;
   readonly elevationTool: MarkerTool;
   /** Rikta efter objekt eller Zooma till område pågår. */

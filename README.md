@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.3** (alfa); nästa är **0.10.4, markobjekt del 1**.
+**0.10.4** (alfa); nästa är **0.10.5, markobjekt del 2 och byggnadshöjd**.
 
 ## Vad som fungerar
 
@@ -1105,6 +1105,33 @@ Version 0.10.2, takfot och taket i planen (samma filformat, 17):
   ytterväggarnas utsida på alla våningar, streckad där taket ligger över
 - Nivåkoten *Takfot* är takets lägsta undersida med snittet och språnget
 - Referensritningarna med tak ändrades (punktstreckat och takfotens snitt)
+
+Version 0.10.4, markobjekt del 1 (samma filformat, 18):
+- **Verktyget Mark** (Rita) lägger markobjekt: en **platå** eller en
+  **urgrävning** med två klick, en **platå runt huset** (*Runt huset*) och
+  en **urgrävning under bjälklaget** (klick i bjälklaget). Platån får
+  höjden ur marken i mitten, urgrävningen en meter under
+- **Platån** är plan eller har fall (1:N och riktning); kanterna möter
+  marken med slänt (1:2) eller stödmur. **Urgrävningen** är botten, och
+  slänten går utåt och tar bara ned marken
+- **Platån runt huset** följer husets kontur: marken vid fasaden en sockel
+  (200) under golvet, fall 1:20 de första 3 m och 3 m ut. **Urgrävningen
+  under bjälklaget** följer bjälklaget med 500 arbetsutrymme och botten i
+  bjälklagets underkant; den räknas först och fylls igen av det övriga
+- Höjder, fall, slänt, avstånd, sockel och arbetsutrymme i egenskaperna,
+  höjden i RH 2000; tomma fält följer projektets förval under *Platsen*.
+  Konturen ändras med hörnen och kanterna, som bjälklagets
+- **Den färdiga marken** räknas ur den befintliga och markobjekten i
+  ritordning (det främsta gäller där de överlappar). Den befintliga ändras
+  aldrig. I ett förslag ritas den färdiga marken tjock och heldragen
+  (höjdkurvor där marken ändrats, marklinjen i fasader och sektioner) och
+  den befintliga tunn och streckad; i Befintligt bara den befintliga
+- Den färdiga marken i **3D**, **medelmarknivån** mot den färdiga marken
+  (eller den befintliga, val under *Platsen*), **schakt och fyll** i m³ per
+  objekt och för hela förslaget, och **jord** under marklinjen i
+  sektionerna som val
+- Markobjekten hör till förslaget: ritas de i Befintligt läggs de i
+  förslagen
 
 Version 0.10.3, markmodell (filformat 18):
 - **Platsen ur Höjdkurvor**: *Fortsätt rita i cad-apa* i Höjdkurvor öppnar

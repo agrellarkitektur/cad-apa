@@ -15,6 +15,7 @@ import { OpeningTool } from '../tools/openingTool';
 import { RoomTool } from '../tools/roomTool';
 import { SelectTool } from '../tools/selectTool';
 import { SlabTool } from '../tools/slabTool';
+import { GroundTool } from '../tools/groundTool';
 import { forgetInferred } from '../tools/snap';
 import { WallTool, type WallToolOptions } from '../tools/wallTool';
 import { icons } from '../icons';
@@ -119,6 +120,12 @@ export function installTools(app: AppContext, host: ToolHost) {
     app.hint('Bjälklaget är lagt. Rita fler, eller välj Håltagning och dra upp ett hål i det.', 4000);
   };
   slabTool.onChange = () => app.toolOpts.renderToolOptions();
+  const groundTool = new GroundTool(host);
+  groundTool.onCreated = (id) => {
+    app.selection.set([id]);
+    app.hint('Markobjektet är lagt. Ändra höjd, fall och slänt i egenskaperna, konturen med hörnen och kanterna.', 5000);
+  };
+  groundTool.onChange = () => app.toolOpts.renderToolOptions();
   const sectionTool = new MarkerTool(host, 'Section');
   const elevationTool = new MarkerTool(host, 'Elevation');
   const created = (id: Id) => {
@@ -151,6 +158,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     draw2d: draw2dTool,
     roof: roofTool,
     slab: slabTool,
+    ground: groundTool,
     section: sectionTool,
     elevation: elevationTool,
     measure: measureTool,
@@ -186,6 +194,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     if (app.ui.tool === 'draw2d' && id !== 'draw2d') draw2dTool.finish(false);
     if (app.ui.tool === 'roof' && id !== 'roof') roofTool.reset();
     if (app.ui.tool === 'slab' && id !== 'slab') slabTool.reset();
+    if (app.ui.tool === 'ground' && id !== 'ground') groundTool.reset();
     if (app.ui.tool === 'section' && id !== 'section') sectionTool.reset();
     if (app.ui.tool === 'elevation' && id !== 'elevation') elevationTool.reset();
     if (!keep) {
@@ -275,6 +284,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     else if (app.ui.tool === 'draw2d' && draw2dTool.count > 0) draw2dTool.reset();
     else if (app.ui.tool === 'roof' && roofTool.started) roofTool.reset();
     else if (app.ui.tool === 'slab' && slabTool.started) slabTool.reset();
+    else if (app.ui.tool === 'ground' && groundTool.started) groundTool.reset();
     else if (app.ui.tool === 'section' && sectionTool.step > 0) sectionTool.reset();
     else if (app.ui.tool === 'elevation' && elevationTool.step > 0) elevationTool.reset();
     else if (app.ui.tool === 'measure' && measureTool.measurement().points > 0) measureTool.reset();
@@ -343,6 +353,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     measureTool,
     roofTool,
     slabTool,
+    groundTool,
     sectionTool,
     elevationTool,
     get aligning() {

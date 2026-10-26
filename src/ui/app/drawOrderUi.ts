@@ -65,11 +65,11 @@ export function orderSection(doc: ProjectDoc, els: readonly Element[]): string {
       pick('lineLayer', 'Linjen', same((p) => !p.lineBehind), shapes.some((p) => p.weight > 0));
     if (fields) parts.push(`<div class="fields">${fields}</div>`);
   }
-  return `<section><h3>Ritordning</h3>${parts.join('')}<p class="note">Gäller bland ${sortWord(els)} på samma ${els[0].space ? 'yta' : 'våning'}. Bak och Fram flyttar förbi närmaste som överlappar.</p></section>`;
+  return `<section><h3>Ritordning</h3>${parts.join('')}<p class="note">Gäller bland ${sortWord(els)} på samma ${els[0].space ? 'yta' : 'våning'}. Bak och Fram flyttar förbi närmaste som överlappar.${els[0].type === 'Ground' ? ' Där markobjekt överlappar gäller det främsta; urgrävningar under bjälklag räknas alltid först (grunden fylls igen).' : ''}</p></section>`;
 }
 
 function sortWord(els: readonly Element[]): string {
-  const words: Record<string, string> = { Shape2D: '2D-formerna', Text: 'texterna', Underlay: 'underlagen', Furniture: 'möblerna', Dimension: 'måtten', Space: 'rummen' };
+  const words: Record<string, string> = { Shape2D: '2D-formerna', Text: 'texterna', Underlay: 'underlagen', Furniture: 'möblerna', Dimension: 'måtten', Space: 'rummen', Ground: 'markobjekten' };
   const types = new Set(els.map((e) => e.type));
   return types.size === 1 ? words[els[0].type] : 'objekt av samma sort';
 }

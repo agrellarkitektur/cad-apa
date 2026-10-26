@@ -1,10 +1,12 @@
 import { emptyProject } from '../../core/model';
-import { CONTOUR_STEPS, DEFAULT_CONTOURS, terrainOf, toRh } from '../../core/site';
+import { CONTOUR_STEPS, DEFAULT_CONTOURS, GROUND_DEFAULTS, groundDefaults, terrainOf, toRh, type GroundDefaults } from '../../core/site';
+import { finishedTerrain, groundObjects, m3, showsProposal } from '../../elements/ground';
 import { applySitePackage, cropSite, parseSitePackage, removeSite, sameSite, siteProjectName, SitePackageError, updateSite, type Platspaket } from '../../core/siteImport';
 import { DocStore } from '../../core/store';
 import { buildingFootprint } from '../../elements/footprint';
 import { createContext } from '../../repr/context';
 import { meanGround } from '../../repr/terrain';
+import { meanGroundLevel } from '../../core/site';
 import { forgetProjectFile } from '../../storage/projectFile';
 import { askChoice, askConfirm, dialog } from '../ask';
 import { escapeHtml } from '../labels';
@@ -91,11 +93,26 @@ export function installSite(app: AppContext) {
     input.click();
   }
 
-  /** Medelmarknivån längs husets kontur (mm från ±0), och om det finns ett hus. */
-  function mmn(): { z: number | null; house: boolean } {
+  /**
+   * Medelmarknivån längs husets kontur (mm från ±0) mot den befintliga och
+   * (0.10.4) den färdiga marken i tillståndet som visas, om det finns ett hus,
+   * och schakt och fyll för markobjekten.
+   */
+  function mmn(): { z: number | null; existing: number | null; finished: number | null; house: boolean; volumes: { cut: number; fill: number } | null; objects: number } {
     const doc = app.store.doc;
     const { ctx } = createContext(doc, doc.storeys[0].id, app.viewStates(), doc.graphics, () => true);
-    return { z: meanGround(ctx), house: buildingFootprint(ctx).length > 0 };
+    const f = showsProposal(ctx) ? finishedTerrain(ctx) : null;
+    const existing = meanGround(ctx, true);
+    const finished = f ? meanGroundLevel(f.terrain, buildingFootprint(ctx).map((poly) => poly[0])) : null;
+    let volumes: { cut: number; fill: number } | null = null;
+    if (f) {
+      volumes = { cut: 0, fill: 0 };
+      for (const v of f.volumes.values()) {
+        volumes.cut += v.cut;
+        volumes.fill += v.fill;
+      }
+    }
+    return { z: meanGround(ctx), existing, finished, house: buildingFootprint(ctx).length > 0, volumes, objects: groundObjects(ctx).length };
   }
 
   /** Dialogen Platsen: varifrån, koordinatsystem, ±0, höjdkurvor, beskärning, licens. */
@@ -121,11 +138,13 @@ export function installSite(app: AppContext) {
           ${row('Nollpunkt', `N ${coord(site.origin[1])}, E ${coord(site.origin[0])}`)}
           ${row('Vridning och sann nord', `${mf(site.rotation, 2)}°, sann nord ${mf(site.trueNorth, 3)}°`)}
           ${row('Markmodell', t ? `${t.grid.W} × ${t.grid.H} punkter, ${mf(t.grid.s, 2)} m mellan, ${mf(t.min, 2)}–${mf(t.max, 2)} m` : 'Ingen (skapa underlaget i Höjdkurvor)')}
-          ${row('Medelmarknivå', m.z !== null ? `+${mf(toRh(site, m.z))} längs husets kontur (${m.z >= 0 ? '+' : '−'}${mf(Math.abs(m.z) / 1000)} från ±0)` : m.house ? 'Ingen mark under huset' : 'Rita huset först')}
+          ${row('Medelmarknivå', m.z !== null ? `+${mf(toRh(site, m.z))} längs husets kontur (${m.z >= 0 ? '+' : '−'}${mf(Math.abs(m.z) / 1000)} från ±0)${m.finished !== null && m.existing !== null ? `; färdig mark +${mf(toRh(site, m.finished))}, befintlig +${mf(toRh(site, m.existing))}` : ''}` : m.house ? 'Ingen mark under huset' : 'Rita huset först')}
+          ${m.volumes ? row('Schakt och fyll', `${m3(m.volumes.cut)} schakt, ${m3(m.volumes.fill)} fyll (${m.objects} markobjekt i tillståndet som visas)`) : ''}
         </dl>
-        <label class="site-field"><span>±0, plan 1:s golv, i RH 2000 (m)</span><span class="site-datum"><input class="ask-input" data-site="datum" inputmode="decimal" value="${mf(site.datum)}">${m.z !== null ? `<button type="button" class="btn" data-site-mmn="${mf(Math.round(toRh(site, m.z) * 100) / 100)}" title="Sätt ±0 till medelmarknivån, avrundad till centimeter">Medelmarknivån</button>` : ''}</span></label>
+        <label class="site-field"><span>±0, plan 1:s golv, i RH 2000 (m)</span><span class="site-datum"><input class="ask-input" data-site="datum" inputmode="decimal" value="${mf(site.datum)}">${m.existing !== null ? `<button type="button" class="btn" data-site-mmn="${mf(Math.round(toRh(site, m.existing) * 100) / 100)}" title="Sätt ±0 till den befintliga markens medelmarknivå längs huset, avrundad till centimeter">Medelmarknivån</button>` : ''}</span></label>
         ${t ? `<label class="site-field"><span>Höjdkurvor var</span><select data-site="contours">${CONTOUR_STEPS.map((c) => `<option value="${c}"${c === interval ? ' selected' : ''}>${mf(c / 1000, 2)} m</option>`).join('')}</select></label>` : ''}
         ${t ? `<div class="site-field site-crop"><span>Beskär markmodellen till</span><input class="ask-input" data-site="crop" inputmode="decimal" value="30"><span>m runt huset</span><button type="button" class="btn" data-site-action="crop"${m.house ? '' : ' disabled title="Rita huset först"'}>Beskär</button></div>` : ''}
+        ${t ? groundSettings(site.ground, site.meanOnExisting, site.earthHatch) : ''}
         ${site.boundaryWarning ? `<p class="site-note">${escapeHtml(site.boundaryWarning)}</p>` : ''}
         ${site.licence ? `<p class="site-note">${escapeHtml(site.licence)}</p>` : ''}
         ${src.link ? `<p class="site-note"><a href="${escapeHtml(src.link)}" target="_blank" rel="noopener">Öppna platsen i Höjdkurvor</a></p>` : ''}
@@ -141,8 +160,21 @@ export function installSite(app: AppContext) {
           return;
         }
         const c = form.querySelector<HTMLSelectElement>('[data-site="contours"]');
-        const patch = { datum: Math.round(datum * 1000) / 1000, ...(c ? { contours: Number(c.value) } : {}) };
-        if (patch.datum !== site.datum || (c && Number(c.value) !== interval)) updateSite(app.store, patch);
+        const patch: Parameters<typeof updateSite>[1] = { datum: Math.round(datum * 1000) / 1000, ...(c ? { contours: Number(c.value) } : {}) };
+        // Markobjektens förval (0.10.4): bara de som skiljer sig från programmets sparas.
+        if (t) {
+          const ground: Partial<GroundDefaults> = {};
+          for (const k of Object.keys(GROUND_DEFAULTS) as (keyof GroundDefaults)[]) {
+            const input = form.querySelector<HTMLInputElement>(`[data-ground="${k}"]`);
+            const v = input ? Number(input.value.replace(/\s/g, '').replace(',', '.')) : NaN;
+            if (Number.isFinite(v) && v > 0 && v !== GROUND_DEFAULTS[k]) ground[k] = v;
+          }
+          patch.ground = Object.keys(ground).length ? ground : undefined;
+          patch.meanOnExisting = form.querySelector<HTMLSelectElement>('[data-site="mean"]')?.value === 'existing' || undefined;
+          patch.earthHatch = form.querySelector<HTMLInputElement>('[data-site="earth"]')?.checked || undefined;
+        }
+        const changed = (Object.keys(patch) as (keyof typeof patch)[]).some((k) => JSON.stringify(patch[k]) !== JSON.stringify(site[k]));
+        if (changed) updateSite(app.store, patch);
         done('saved');
       });
       form.querySelector<HTMLButtonElement>('[data-site-mmn]')?.addEventListener('click', (e) => {
@@ -206,4 +238,20 @@ export function installSite(app: AppContext) {
   }
 
   return { receive, chooseFile, showDialog };
+}
+
+/** Markobjektens förval och valen för den färdiga marken (0.10.4) i dialogen Platsen. */
+function groundSettings(own: Partial<GroundDefaults> | undefined, meanOnExisting: boolean | undefined, earth: boolean | undefined): string {
+  const d = groundDefaults({ ground: own });
+  const field = (k: keyof GroundDefaults, label: string, unit: string) =>
+    `<label class="site-field"><span>${label}</span><span class="input-unit"><input class="ask-input" data-ground="${k}" inputmode="decimal" value="${d[k].toLocaleString('sv-SE')}"><i>${unit}</i></span></label>`;
+  return `<fieldset class="site-ground"><legend>Markobjekt</legend>
+      <div class="site-ground-grid">
+        ${field('slope', 'Slänt', '1:N')}${field('fall', 'Fall från huset', '1:N')}${field('fallLength', 'Fallet gäller ut', 'mm')}
+        ${field('distance', 'Platå runt huset ut', 'mm')}${field('sockel', 'Sockel', 'mm')}${field('margin', 'Arbetsutrymme', 'mm')}
+      </div>
+      <label class="site-field"><span>Medelmarknivån mot</span><select data-site="mean"><option value="finished">Färdig mark</option><option value="existing"${meanOnExisting ? ' selected' : ''}>Befintlig mark</option></select></label>
+      <label class="check"><input type="checkbox" data-site="earth"${earth ? ' checked' : ''}> Jord under marklinjen i sektionerna</label>
+      <p class="site-note">Förvalen gäller markobjekt som inte har egna värden. Den färdiga marken räknas ur den befintliga och markobjekten i förslaget; den befintliga ändras aldrig.</p>
+    </fieldset>`;
 }

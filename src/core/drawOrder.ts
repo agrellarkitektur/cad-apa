@@ -26,7 +26,7 @@ export const ORDER_LABELS: Record<OrderMove, string> = {
 };
 
 /** Sorterna som har en egen ritordning. Väggar, dörrar och fönster ritas ihop och har ingen. */
-export const ORDERABLE = new Set(['Shape2D', 'Text', 'Underlay', 'Furniture', 'Dimension', 'Space']);
+export const ORDERABLE = new Set(['Shape2D', 'Text', 'Underlay', 'Furniture', 'Dimension', 'Space', 'Ground']);
 
 export function canOrder(els: readonly Element[]): boolean {
   return els.length > 0 && els.every((e) => ORDERABLE.has(e.type));

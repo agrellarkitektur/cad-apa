@@ -1,8 +1,12 @@
 import type { ProjectDoc } from '../core/model';
-import { fromRh, groundAt, meanGroundLevel, terrainOf, type Terrain } from '../core/site';
+import { fromRh, groundAt, levelText as siteLevelText, meanGroundLevel, terrainOf, type Terrain } from '../core/site';
 import { buildingFootprint } from '../elements/footprint';
 import type { PlanContext } from '../elements/registry';
-import type { Vec2 } from './primitives';
+import type { ViewStates } from '../core/states';
+import { createContext } from './context';
+import { finishedTerrain, showsProposal, type Finished } from '../elements/ground';
+import { resolveFill } from '../core/fillTypes';
+import type { Primitive, Vec2 } from './primitives';
 
 /**
  * Den befintliga marken i fasader, sektioner och 3D-vyn (0.10.3). Marken är
@@ -64,23 +68,90 @@ export function terrainProfile(
   return parts;
 }
 
-/** Medelmarknivån längs husets kontur (mm från ±0), eller null utan markmodell eller hus. */
-export function meanGround(ctx: PlanContext): number | null {
+/** Jordskrafferingens djup under marklinjen, mm. */
+const EARTH_DEPTH = 600;
+
+/**
+ * Marklinjerna i en fasad eller sektion (0.10.4). I ett förslag den färdiga
+ * marken tjock och heldragen (den befintliga där inga markobjekt finns), och
+ * den befintliga tunn och streckad där markobjekten ändrat den. I Befintligt
+ * bara den befintliga, tunn och streckad som i 0.10.3. Jord under den
+ * tjocka linjen i sektioner, om det valts under *Platsen*.
+ */
+export function groundLines(
+  ctx: PlanContext,
+  t: Terrain,
+  frame: { start: Vec2; right: Vec2; view: Vec2 },
+  u0: number,
+  u1: number,
+  footprint: readonly (readonly Vec2[])[] | null,
+  isSection: boolean,
+): Primitive[] {
+  const out: Primitive[] = [];
+  const existing = terrainProfile(t, frame, u0, u1, footprint);
+  const dashed = (pts: Vec2[]): Primitive => ({ kind: 'polyline', points: pts, closed: false, pen: { weight: 0.18, dash: [3, 1.5] }, origin: { part: 'befintlig mark' } });
+  if (!showsProposal(ctx)) {
+    for (const pts of existing) out.push(dashed(pts));
+    return out;
+  }
+  const f = finishedTerrain(ctx);
+  const finished = f ? terrainProfile(f.terrain, frame, u0, u1, footprint) : existing;
+  if (isSection && ctx.doc.site?.earthHatch) {
+    const fill = resolveFill({ kind: 'type', type: 'mark', color: 'ink', weight: 0.13 }, ctx.style, ctx.scale);
+    for (const pts of finished) {
+      const ring: Vec2[] = [...pts, ...pts.map((q): Vec2 => [q[0], q[1] - EARTH_DEPTH]).reverse()];
+      out.push({ kind: 'region', role: 'cut', rings: [ring], fill, outline: null, noOutline: true, ownFill: true, origin: { part: 'jord' } });
+    }
+  }
+  for (const pts of finished) out.push({ kind: 'polyline', points: pts, closed: false, pen: { weight: 0.5 }, origin: { part: 'färdig mark' } });
+  if (f) for (const pts of differing(existing, finished)) out.push(dashed(pts));
+  return out;
+}
+
+/** Bitarna av den befintliga linjen som skiljer sig från den färdiga (mer än 10 mm), med punkterna på var sida. */
+function differing(existing: Vec2[][], finished: Vec2[][]): Vec2[][] {
+  const at = new Map<number, number>();
+  for (const part of finished) for (const q of part) at.set(Math.round(q[0]), q[1]);
+  const out: Vec2[][] = [];
+  for (const part of existing) {
+    const diff = part.map((q) => {
+      const g = at.get(Math.round(q[0]));
+      return g === undefined || Math.abs(g - q[1]) > 10;
+    });
+    let run: Vec2[] = [];
+    for (let i = 0; i < part.length; i++) {
+      if (diff[i] || diff[i - 1] || diff[i + 1]) run.push(part[i]);
+      else if (run.length) {
+        if (run.length >= 2) out.push(run);
+        run = [];
+      }
+    }
+    if (run.length >= 2) out.push(run);
+  }
+  return out;
+}
+
+/**
+ * Medelmarknivån längs husets kontur (mm från ±0), eller null utan markmodell
+ * eller hus. I ett förslag mot den färdiga marken (0.10.4), om inte projektet
+ * valt den befintliga (`existing` tvingar den befintliga).
+ */
+export function meanGround(ctx: PlanContext, existing = false): number | null {
   const t = terrainOf(ctx.doc);
   if (!t) return null;
   const rings = buildingFootprint(ctx).map((poly) => poly[0]);
-  return rings.length ? meanGroundLevel(t, rings) : null;
+  if (!rings.length) return null;
+  const f = !existing && !ctx.doc.site?.meanOnExisting && showsProposal(ctx) ? finishedTerrain(ctx) : null;
+  return meanGroundLevel(f ? f.terrain : t, rings);
 }
 
 /** En höjd (mm från ±0) som nivåkot: RH 2000 när projektet har en plats, annars från ±0. */
 export function levelText(doc: Pick<ProjectDoc, 'site'>, zMm: number): string {
-  const m = doc.site ? doc.site.datum + zMm / 1000 : zMm / 1000;
-  const r = Math.round(m * 1000) / 1000;
-  return `${r === 0 ? '±' : r > 0 ? '+' : '−'}${Math.abs(r).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
+  return siteLevelText(doc.site, zMm);
 }
 
 /** Terrängen som triangelnät för 3D-vyn, i modellens mm med z från ±0. Glesas ut till högst `maxNodes` noder. */
-export function terrainMesh(doc: ProjectDoc, maxNodes = 250_000): { positions: Float32Array; indices: Uint32Array } | null {
+export function terrainMesh(doc: ProjectDoc, maxNodes = 250_000, heights?: Float32Array): { positions: Float32Array; indices: Uint32Array } | null {
   const t = terrainOf(doc);
   if (!t) return null;
   const { W, H, x0, y1, s } = t.grid;
@@ -95,7 +166,7 @@ export function terrainMesh(doc: ProjectDoc, maxNodes = 250_000): { positions: F
   const valid = new Uint8Array(w * h);
   for (let j = 0; j < h; j++) {
     for (let i = 0; i < w; i++) {
-      const zz = t.z[j * k * W + i * k];
+      const zz = (heights ?? t.z)[j * k * W + i * k];
       const a = x0 + i * k * s - site.origin[0];
       const b = y1 - j * k * s - site.origin[1];
       const n = j * w + i;
@@ -118,4 +189,12 @@ export function terrainMesh(doc: ProjectDoc, maxNodes = 250_000): { positions: F
     }
   }
   return { positions, indices: Uint32Array.from(idx) };
+}
+
+/** Den färdiga marken i en vy av projektet (för 3D-vyn), eller null i Befintligt och utan markobjekt. */
+export function finishedForView(doc: ProjectDoc, view: ViewStates): Finished | null {
+  const storey = doc.storeys[0]?.id;
+  if (!storey || !doc.site) return null;
+  const { ctx } = createContext(doc, storey, view, doc.graphics, () => true);
+  return showsProposal(ctx) ? finishedTerrain(ctx) : null;
 }

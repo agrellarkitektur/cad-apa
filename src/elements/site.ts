@@ -1,5 +1,7 @@
 import type { Element, ProjectDoc } from '../core/model';
-import { contours, DEFAULT_CONTOURS, fromRh, groundAt, terrainOf, type Contour } from '../core/site';
+import { contours, cropGrid, DEFAULT_CONTOURS, fromRh, groundAt, terrainOf, type Contour } from '../core/site';
+import { withHeights } from '../core/ground';
+import { finishedTerrain, showsProposal, type Finished } from './ground';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import type { Solid } from '../repr/solids';
 import type { ElementType, PlanContext } from './registry';
@@ -54,6 +56,31 @@ export function siteContours(doc: ProjectDoc): Contour[] {
   return out;
 }
 
+const finishedContourCache = new WeakMap<Finished, { interval: number; out: Contour[] }>();
+
+/**
+ * Höjdkurvorna för den färdiga marken (0.10.4), bara där den skiljer sig
+ * från den befintliga (rutorna som markobjekten ändrat, en nod till på varje
+ * sida). Utanför är den färdiga marken den befintliga.
+ */
+export function finishedContours(f: Finished, interval: number): Contour[] {
+  const hit = finishedContourCache.get(f);
+  if (hit && hit.interval === interval) return hit.out;
+  let out: Contour[] = [];
+  const ch = f.changed;
+  if (ch) {
+    const { x0, y1, s, W, H } = f.terrain.grid;
+    const i0 = Math.max(0, ch.i0 - 1);
+    const i1 = Math.min(W - 1, ch.i1 + 1);
+    const j0 = Math.max(0, ch.j0 - 1);
+    const j1 = Math.min(H - 1, ch.j1 + 1);
+    const crop = cropGrid(f.terrain, { xmin: x0 + i0 * s, xmax: x0 + i1 * s, ymin: y1 - j1 * s, ymax: y1 - j0 * s });
+    if (crop) out = contours(withHeights({ ...f.terrain, grid: { ...crop.grid, asset: f.terrain.grid.asset } }, crop.z), interval);
+  }
+  finishedContourCache.set(f, { interval, out });
+  return out;
+}
+
 export const terrainType: ElementType<TerrainParams> = {
   type: 'Terrain',
   label: 'Befintlig mark',
@@ -61,7 +88,8 @@ export const terrainType: ElementType<TerrainParams> = {
   drawOrder: 1,
   compares: false,
   global: true,
-  planReads: [],
+  // Den färdiga marken (0.10.4) följer markobjekten, husets kontur och bjälklagen.
+  planReads: ['Ground', 'Wall', 'Slab'],
   defaults: () => ({}),
   plan(el, ctx) {
     const t = terrainOf(ctx.doc);
@@ -69,6 +97,19 @@ export const terrainType: ElementType<TerrainParams> = {
     const origin = { objectId: el.id, objectType: 'Terrain', part: 'höjdkurva' };
     const out: Primitive[] = [];
     const h = 1.8;
+    // Den färdiga marken i ett förslag: tjocka, heldragna kurvor där markobjekten ändrat marken.
+    const f = showsProposal(ctx) ? finishedTerrain(ctx) : null;
+    if (f) {
+      const fo = { objectId: el.id, objectType: 'Terrain', part: 'färdig mark' };
+      for (const c of finishedContours(f, t.site.contours ?? DEFAULT_CONTOURS)) {
+        const whole = Math.abs(c.z - Math.round(c.z)) < 1e-6;
+        out.push({ kind: 'polyline', points: c.pts, closed: c.closed, pen: { weight: whole ? 0.35 : 0.25 }, origin: fo, noPick: true });
+        if (whole) {
+          const label = contourLabel(c, 20 * ctx.scale);
+          if (label) out.push({ kind: 'text', at: label.at, angle: label.angle, align: 'middle', text: c.z.toLocaleString('sv-SE'), height: h, pen: { weight: 0.18 }, origin: fo, noPick: true });
+        }
+      }
+    }
     for (const c of siteContours(ctx.doc)) {
       // Hela meter lite tjockare och med höjden utskriven.
       const whole = Math.abs(c.z - Math.round(c.z)) < 1e-6;

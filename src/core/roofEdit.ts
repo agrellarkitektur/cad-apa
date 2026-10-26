@@ -92,8 +92,11 @@ export function setOutline(store: DocStore, id: Id, outline: P[], label: string)
 /**
  * Element med en kontur som ändras med punkter och kanter i Modifiera:
  * bjälklag med ritad kontur (0.9.1; ett bjälklag ur väggarna följer
- * väggarna). Takfallets kontur ändras sedan 0.10 som en 2D-form (`shapeOf`).
+ * väggarna) och markobjekt (0.10.4). Takfallets kontur ändras sedan 0.10 som en 2D-form (`shapeOf`).
  */
 export function hasEditableOutline(el: { type: string; params: Record<string, unknown> } | undefined): boolean {
-  return !!el && el.type === 'Slab' && !el.params.fromWalls && Array.isArray(el.params.outline);
+  if (!el || !Array.isArray(el.params.outline)) return false;
+  // Markobjekt (0.10.4) med ritad kontur; platån runt huset och urgrävningen under ett bjälklag följer dem.
+  if (el.type === 'Ground') return !el.params.around && !el.params.slab;
+  return el.type === 'Slab' && !el.params.fromWalls;
 }

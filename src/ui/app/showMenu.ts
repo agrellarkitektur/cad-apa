@@ -60,7 +60,8 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
     id: 'site',
     label: 'Platsen',
     items: [
-      ['Terrain', 'Befintlig mark (höjdkurvor, 3D, marklinje)'],
+      ['Terrain', 'Marken (höjdkurvor, 3D, marklinjer)'],
+      ['Ground', 'Markobjekt (konturerna)'],
       ['SiteBuilding', 'Grannhus'],
       ['Tree', 'Träd'],
       ['SiteMap', 'Fastighetsgränser, vägar och punkter'],

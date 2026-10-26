@@ -5,7 +5,7 @@ import { resolveParams } from '../../elements/registry';
 import type { WallParams } from '../../elements/wall';
 import type { Vec2 } from '../../repr/primitives';
 import { buildModel3d } from '../../repr/model3d';
-import { terrainMesh } from '../../repr/terrain';
+import { finishedForView, terrainMesh } from '../../repr/terrain';
 import { POCHE_MATERIALS } from '../../repr/section';
 import type { Edit3DHost, Handle3D, View3D } from '../../view3d/view3d';
 import { icons } from '../icons';
@@ -130,11 +130,14 @@ export function installPane3d(app: AppContext) {
     onlyBtn.hidden = !several;
     onlyBtn.setAttribute('aria-pressed', String(app.uiSettings.storeyOnly3d));
     view3d.setSolids(buildModel3d(store.doc, app.viewStates(), several && app.uiSettings.storeyOnly3d ? ui.storey : undefined));
-    // Den befintliga marken (0.10.3): byggs om bara när platsen ändras.
+    // Marken (0.10.3): byggs om bara när platsen eller den färdiga marken
+    // (0.10.4, i ett förslag med markobjekt) ändras.
     const site = app.ui.hide.includes('Terrain') ? undefined : store.doc.site;
-    if (site !== shownSite) {
-      shownSite = site;
-      view3d.setTerrain(site ? terrainMesh(store.doc) : null);
+    const finished = site ? finishedForView(store.doc, app.viewStates()) : null;
+    const shown = finished ?? site;
+    if (shown !== shownSite) {
+      shownSite = shown;
+      view3d.setTerrain(site ? terrainMesh(store.doc, undefined, finished?.z) : null);
     }
     view3d.setSelection(app.selection.list());
     // Med en sektion öppen klipps modellen längs den, och snittet fylls (0.8).

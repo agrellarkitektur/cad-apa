@@ -9,7 +9,7 @@ import { roofPlanes, type RoofParams } from '../elements/roof';
 import { slopeSymbol, type RoofSlopeParams } from '../elements/roofSlope';
 import type { PlanContext } from '../elements/registry';
 import { cutSolid } from './sectionCut';
-import { terrainProfile } from './terrain';
+import { groundLines } from './terrain';
 import { terrainOf } from '../core/site';
 import { buildingFootprint } from '../elements/footprint';
 import { levelPrims } from './sectionLevels';
@@ -260,13 +260,14 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     // Marklinje under byggnaden, och nivåer för golv och högsta punkt. Med
     // en markmodell (0.10.3) den befintliga marken, tunn och streckad: längs
     // linjen i en sektion, vid husets kontur närmast betraktaren i en fasad.
+    // Med markobjekt (0.10.4) i ett förslag den färdiga marken tjock och
+    // heldragen, och den befintliga streckad där den skiljer sig.
     const terrain = terrainOf(doc);
     if (terrain && !view.hide?.includes('Terrain')) {
       const u0 = Math.max(0, minU - 5000);
       const u1 = Math.min(uMax, maxU + 5000);
       const outline = isSection ? null : buildingFootprint(ctx).map((poly) => poly[0]);
-      for (const pts of terrainProfile(terrain, fr, u0, u1, outline))
-        prims.push({ kind: 'polyline', points: pts, closed: false, pen: { weight: 0.18, dash: [3, 1.5] }, origin: { part: 'befintlig mark' } });
+      prims.push(...groundLines(ctx, terrain, fr, u0, u1, outline, isSection));
     } else if (!terrain) {
       const ground = Math.min(minZ, 0);
       prims.push({ kind: 'line', a: [minU - 1500, ground], b: [maxU + 1500, ground], pen: { weight: 0.7 }, origin: { part: 'mark' } });

@@ -1,3 +1,4 @@
+import type { GroundMode } from '../tools/groundTool';
 import type { RoofMode } from '../tools/roofTool';
 import { fillTypeList } from '../../core/fillTypes';
 import { dividePath } from '../tools/measureTool';
@@ -99,6 +100,18 @@ export function installToolOptions(app: AppContext) {
         ${hole ? '' : `<label class="opt"><span>Typ</span><select id="slab-def" aria-label="Bjälklagstyp">${opts}</select></label>
         <button class="btn" data-action="slab-walls" title="Ett bjälklag innanför ytterväggarna, som följer dem när de flyttas">Ur väggarna</button>`}
         <span class="opt-hint">${t.hintText()}</span>`;
+      app.toolOptions.hidden = false;
+    } else if (app.ui.tool === 'ground') {
+      // Mark (0.10.4): platå, urgrävning, under ett bjälklag, eller platån runt huset.
+      const m = app.groundTool.options.mode;
+      app.toolOptions.innerHTML = `
+        <div class="opt"><span>Lägg</span><div class="segmented" role="group" aria-label="Lägg">
+          <button data-ground-mode="plateau" aria-pressed="${m === 'plateau'}">Platå</button>
+          <button data-ground-mode="excavation" aria-pressed="${m === 'excavation'}">Urgrävning</button>
+          <button data-ground-mode="slab" aria-pressed="${m === 'slab'}" title="Klicka i ett bjälklag: urgrävningen följer det">Under bjälklag</button>
+        </div></div>
+        <button class="btn" data-action="ground-around" title="En platå som följer husets kontur, med fall från fasaden">Runt huset</button>
+        <span class="opt-hint">${app.groundTool.hintText()}</span>`;
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'section' || app.ui.tool === 'elevation') {
       const t = app.ui.tool === 'section' ? app.sectionTool : app.elevationTool;
@@ -350,6 +363,11 @@ export function installToolOptions(app: AppContext) {
       app.slabTool.reset();
     }
     if (b.dataset.action === 'slab-walls') app.slabFromWalls();
+    if (b.dataset.groundMode) {
+      app.groundTool.options.mode = b.dataset.groundMode as GroundMode;
+      app.groundTool.reset();
+    }
+    if (b.dataset.action === 'ground-around') app.groundTool.aroundHouse();
     if (b.dataset.action === 'dim-done') app.dimensionTool.donePoints();
     if (b.dataset.action === 'd2-done') app.draw2dTool.finish(false);
   });
