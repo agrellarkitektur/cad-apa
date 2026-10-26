@@ -1,22 +1,24 @@
 import type { Element } from '../core/model';
 import { groundDefaults, levelText } from '../core/site';
 import type { Primitive, Vec2 } from '../repr/primitives';
+import { fillPrims, type FillParams } from './drawing2d';
 import { groundLabel, isLineKind, wallCrest, type GroundGeometry, type GroundParams } from './groundGeometry';
 import { lineLength, pathRatio, pathWarnings } from './groundLines';
 import type { PlanContext } from './registry';
 
 /**
- * Markobjekten i planen (0.10.4–0.10.5, för sig sedan 0.10.6): platåer och
- * urgrävningar som en kontur med höjden (och fallets pil), vägar med
- * lutningen och höjderna i ändarna, höjdpunkter, brytlinjer och stödmurar.
+ * Markobjekten i planen (0.10.4–0.10.5, för sig sedan 0.10.6): markytor
+ * som en kontur med höjden (och fallets pil), vägar med lutningen och
+ * höjderna i ändarna, höjdpunkter, brytlinjer och stödmurar. Markytan och
+ * vägen kan ha en fyllning (0.10.7), bakom väggarna.
  */
 export function groundPlan(ctx: PlanContext, el: Element<any>, g: GroundGeometry): Primitive[] {
   const p = ctx.params<GroundParams>(el);
   if (isLineKind(p.kind)) return linePlan(ctx, el, p, g);
   const origin = { objectId: el.id, objectType: 'Ground' };
-  const out: Primitive[] = [];
-  // Konturen: tunn, eller tjock där kanten är en stödmur. Urgrävningen streckad.
-  const pen = p.edge === 'wall' ? { weight: 0.5 } : p.kind === 'excavation' || p.slab ? { weight: 0.18, dash: [4, 1.5] } : { weight: 0.25 };
+  const out: Primitive[] = fillOf(ctx, el, p, g.rings.map((poly) => [...poly, ...g.holes]));
+  // Konturen: tunn, eller tjock där kanten är en stödmur. Urgrävningen under bjälklaget streckad.
+  const pen = p.edge === 'wall' ? { weight: 0.5 } : p.slab ? { weight: 0.18, dash: [4, 1.5] } : { weight: 0.25 };
   for (const poly of g.rings) for (const ring of poly) out.push({ kind: 'polyline', points: ring, closed: true, pen, origin: { ...origin, part: 'kontur' } });
   const text = `${groundLabel(p)} ${levelText(ctx.doc.site, g.label.height)}${g.label.fall ? ` · 1:${g.label.fall.toLocaleString('sv-SE')}` : ''}`;
   out.push({ kind: 'text', at: g.label.at, text, height: 2, align: 'middle', pen: { weight: 0.18 }, origin: { ...origin, part: 'höjd' } });
@@ -28,6 +30,12 @@ export function groundPlan(ctx: PlanContext, el: Element<any>, g: GroundGeometry
     out.push(...arrow(ctx, s, [s[0] + Math.cos(a) * l, s[1] + Math.sin(a) * l], { ...origin, part: 'fall' }));
   }
   return out;
+}
+
+/** Fyllningen (0.10.7), som 2D-formens, bakom väggarna. */
+function fillOf(ctx: PlanContext, el: Element<any>, p: GroundParams, polys: Vec2[][][]): Primitive[] {
+  if (!p.fill || ctx.view.hide?.includes('fill')) return [];
+  return polys.flatMap((rings) => fillPrims(rings, p as FillParams, { objectId: el.id, objectType: 'Ground' }, true, ctx.style, ctx.scale));
 }
 
 /** En pil från `a` till `b` med öppen spets, i ritningens skala. */
@@ -57,9 +65,10 @@ function pointAlong(pts: readonly Vec2[], s: number): Vec2 {
 }
 
 /**
- * Ramp, gångväg, infart, höjdpunkt, brytlinje och stödmur i planen (0.10.5).
- * Vägen: konturen, en pil nedför mittlinjen med lutningen (*1:12*) och
- * höjderna i ändarna; en varning när den är för brant eller saknar vilplan.
+ * Ramp/väg, höjdpunkt, brytlinje och stödmur i planen (0.10.5).
+ * Vägen: sidorna och tvärlinjerna i ändarna (som kan slås av, 0.10.7), en
+ * pil nedför mittlinjen med lutningen (*1:12*) och höjderna i ändarna; en
+ * varning när den är för brant eller saknar vilplan.
  */
 function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: GroundGeometry): Primitive[] {
   const origin = { objectId: el.id, objectType: 'Ground' };
@@ -89,22 +98,32 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
     if (crest) text([g.label.at[0], g.label.at[1] + 2.5 * ctx.scale], `Stödmur ${hText(ctx, crest.top)}`, 'höjd');
     return out;
   }
-  // Vägen.
-  for (const ring of g.rings[0]) out.push({ kind: 'polyline', points: ring, closed: true, pen: { weight: p.edge === 'wall' ? 0.5 : 0.25 }, origin: { ...origin, part: 'kontur' } });
-  const kind = p.path ?? 'ramp';
-  const n = pathRatio(pts, h0, h1);
+  // Vägen: fyllningen, sidorna och tvärlinjerna. Ringen är höger sida framåt och vänster bakåt.
+  out.unshift(...fillOf(ctx, el, p, [g.rings[0]]));
+  const ring = g.rings[0][0];
+  const n2 = ring.length / 2;
+  const pen = { weight: p.edge === 'wall' ? 0.5 : 0.25 };
+  const edge = (points: Vec2[], part: string) => out.push({ kind: 'polyline', points, closed: false, pen, origin: { ...origin, part } });
+  edge(ring.slice(0, n2), 'kant');
+  edge(ring.slice(n2), 'kant');
+  if (p.startLine !== false) edge([ring[ring.length - 1], ring[0]], 'början');
+  if (p.endLine !== false) edge([ring[n2 - 1], ring[n2]], 'slutet');
+  // Lutningen och höjderna längs vägens mittlinje.
+  const center = g.center ?? pts;
+  const n = pathRatio(center, h0, h1);
   // Pilen går nedför, längs mittlinjen kring mitten.
-  const total = lineLength(pts);
+  const total = lineLength(center);
   const len = Math.min(total * 0.6, 14 * ctx.scale);
   const down = h1 <= h0;
   const sA = total / 2 + (down ? -len / 2 : len / 2);
   const sB = total / 2 + (down ? len / 2 : -len / 2);
-  if (Number.isFinite(n)) out.push(...arrow(ctx, pointAlong(pts, sA), pointAlong(pts, sB), { ...origin, part: 'lutning' }));
-  const warn = pathWarnings(kind, pts, h0, h1, groundDefaults(ctx.doc.site));
+  if (Number.isFinite(n)) out.push(...arrow(ctx, pointAlong(center, sA), pointAlong(center, sB), { ...origin, part: 'lutning' }));
+  const def = groundDefaults(ctx.doc.site);
+  const warn = pathWarnings(center, h0, h1, p.maxSlope ?? def.rampMax, def);
   const ratio = Number.isFinite(n) ? `1:${(Math.round(n * 10) / 10).toLocaleString('sv-SE')}` : 'Plan';
-  const mid = pointAlong(pts, total / 2);
+  const mid = pointAlong(center, total / 2);
   text([mid[0], mid[1] + 2 * ctx.scale], `${groundLabel(p)} ${ratio}${warn.length ? ' !' : ''}`, 'lutning', warn.length ? { pen: { weight: 0.18, color: 'accent' } } : {});
-  text([pts[0][0], pts[0][1] - 3 * ctx.scale], hText(ctx, h0), 'höjd');
-  if (Math.abs(h1 - h0) >= 1) text([pts[pts.length - 1][0], pts[pts.length - 1][1] - 3 * ctx.scale], hText(ctx, h1), 'höjd');
+  text([center[0][0], center[0][1] - 3 * ctx.scale], hText(ctx, h0), 'höjd');
+  if (Math.abs(h1 - h0) >= 1) text([center[center.length - 1][0], center[center.length - 1][1] - 3 * ctx.scale], hText(ctx, h1), 'höjd');
   return out;
 }

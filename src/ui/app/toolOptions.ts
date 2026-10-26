@@ -102,17 +102,17 @@ export function installToolOptions(app: AppContext) {
         <span class="opt-hint">${t.hintText()}</span>`;
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'ground') {
-      // Mark (0.10.4): platå, urgrävning, under ett bjälklag, eller platån runt huset.
-      // Längs en linje (0.10.5): ramp, gångväg, infart, brytlinje, stödmur; och höjdpunkten.
+      // Mark (0.10.4): markyta, under ett bjälklag, eller markytan runt huset.
+      // Längs en linje (0.10.5): ramp/väg, brytlinje, stödmur; och höjdpunkten.
       const m = app.groundTool.options.mode;
       const b = (mode: string, label: string, title = '') => `<button data-ground-mode="${mode}" aria-pressed="${m === mode}"${title ? ` title="${title}"` : ''}>${label}</button>`;
       app.toolOptions.innerHTML = `
         <div class="opt"><span>Yta</span><div class="segmented" role="group" aria-label="Yta">
-          ${b('plateau', 'Platå')}${b('excavation', 'Urgrävning')}${b('slab', 'Under bjälklag', 'Klicka i ett bjälklag: urgrävningen följer det')}
+          ${b('area', 'Markyta', 'Schakt där marken ligger högre, fyll där den ligger lägre')}${b('slab', 'Under bjälklag', 'Klicka i ett bjälklag: urgrävningen följer det')}
         </div></div>
-        <button class="btn" data-action="ground-around" title="En platå som följer husets kontur, med fall från fasaden">Runt huset</button>
+        <button class="btn" data-action="ground-around" title="En markyta som följer husets kontur, med fall från fasaden">Runt huset</button>
         <div class="opt"><span>Linje</span><div class="segmented" role="group" aria-label="Linje">
-          ${b('ramp', 'Ramp')}${b('walk', 'Gångväg')}${b('drive', 'Infart')}${b('breakline', 'Brytlinje', 'Låser marken längs linjen och tonar den runt omkring')}${b('wall', 'Stödmur')}${b('point', 'Höjdpunkt', 'Låser marken i en punkt och tonar den runt omkring')}
+          ${b('path', 'Ramp/väg')}${b('breakline', 'Brytlinje', 'Låser marken längs linjen och tonar den runt omkring')}${b('wall', 'Stödmur')}${b('point', 'Höjdpunkt', 'Låser marken i en punkt och tonar den runt omkring')}
         </div></div>
         ${app.groundTool.started && isLineMode(m) ? '<button class="btn" data-action="ground-done">Klar</button>' : ''}
         <span class="opt-hint">${app.groundTool.hintText()}</span>`;

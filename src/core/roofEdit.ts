@@ -97,6 +97,6 @@ export function setOutline(store: DocStore, id: Id, outline: P[], label: string)
 export function hasEditableOutline(el: { type: string; params: Record<string, unknown> } | undefined): boolean {
   if (!el || !Array.isArray(el.params.outline)) return false;
   // Markobjekt (0.10.4) med ritad kontur; platån runt huset och urgrävningen under ett bjälklag följer dem.
-  if (el.type === 'Ground') return !el.params.around && !el.params.slab && (el.params.kind === 'plateau' || el.params.kind === 'excavation');
+  if (el.type === 'Ground') return !el.params.around && !el.params.slab && (el.params.kind === 'area');
   return el.type === 'Slab' && !el.params.fromWalls;
 }

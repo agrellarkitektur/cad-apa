@@ -1242,6 +1242,30 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Markobjekt del 3 (0.10.7, format 19)
+
+Sorterna är `area` (markyta: platå och urgrävning), `path` (ramp/väg),
+`point`, `breakline` och `wall`. Varianterna `around` och `slab` är
+markytor; urgrävningen under bjälklaget är den enda som bara tar ned.
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/elements/groundLines.ts` | `RefSide`, `centerShift` (vägens mitt från referenslinjen), `offsetLine` (en förskjuten polylinje med gering; `stripRing` byggs av två), `pathWarnings(pts, h0, h1, max, def)` |
+| `src/elements/groundGeometry.ts` | `GroundParams` med `name`, `refSide`, `refOffset`, `maxSlope`, `startLine`, `endLine` och fyllningen (`FillParams`); `GroundGeometry.center` (vägens mittlinje) |
+| `src/elements/groundPlan.ts` | Vägen som sidor (`kant`) och ändar (`början`, `slutet`); fyllningen med `fillPrims` bakom väggarna |
+| `src/ui/groundFields.ts` | Vägens fält (namn, referenslinjen, förskjutning, gräns, tvärlinjer) och fyllningen med 2D-formens fält (`d2:`) |
+| `src/ui/highlight.ts`, `src/ui/app/pane3d.ts` | Referenslinjen när vägen är markerad (`ref-line` i planen, `refLines` med `zb` i 3D) |
+| `src/elements/shapeEdit.ts` | `noArcs` på markobjektens linjer och `allowsArcs`: Böj och Avrunda finns inte i Modifiera (`ops.ts`) |
+
+- `movePatch` (`commands.ts`) flyttar `line` (rättat 0.10.7).
+- `Ground` finns i `LOCKABLE` (`drawingPanel.ts`) och `OWN_PEN_TYPES`
+  (`ownPenFields.ts`); pennan läggs på i planen som för de andra (`ownPenOf`).
+- Förvalen: `rampMax` är förvalet för vägens `maxSlope`, `walkMax` gränsen
+  för vilplan; `crossFall` är borta.
+- Tester: `tests/mark.test.ts`. Referensritningarna `mark-plan` och
+  `mark-siffror` ändrades (namnen, rampens referenslinje på vänster kant,
+  gångvägen utan tvärlinje i slutet och med skraffering).
+
 ## Granskning (0.10.6, format 18)
 
 Utan nya funktioner. Marken räknas om bara när den ändras, och

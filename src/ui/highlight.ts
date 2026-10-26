@@ -1,8 +1,10 @@
 import { hasEditableOutline } from '../core/roofEdit';
+import { resolveParams } from '../elements/registry';
 import type { ProjectDoc } from '../core/model';
 import type { WallParams } from '../elements/wall';
 import { refArc, type RoofParams } from '../elements/roof';
 import { refFrame } from '../core/wallEdit';
+import type { GroundParams } from '../elements/ground';
 import { pickableById, type Pickable } from '../repr/plan';
 import { boundsOf, imageCorners, type Primitive, type Vec2 } from '../repr/primitives';
 import type { Camera } from '../view2d/camera';
@@ -140,6 +142,13 @@ export function renderHighlight(
       const q = cam.toScreen(pt as Vec2);
       out.push(`<rect x="${q[0] - 4.5}" y="${q[1] - 4.5}" width="9" height="9" class="grip"/>`);
     }
+  }
+  // Vägens referenslinje (0.10.7) i markerade markobjekt.
+  for (const id of selected) {
+    const el = doc.elements[id];
+    if (el?.type !== 'Ground' || el.params.kind !== 'path' || !byId.has(id)) continue;
+    const pts = (resolveParams<GroundParams>(doc, el).line ?? []) as Vec2[];
+    if (pts.length >= 2) out.push(`<path d="${path(cam, pts, false)}" class="ref-line"/>`);
   }
   // Hörnen i markerade bjälklags kontur.
   for (const id of selected) {

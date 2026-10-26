@@ -124,12 +124,9 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
         redraw();
       };
       const options: PromptOption[] = [
-        { key: 'P', label: 'Platå', run: mode('plateau'), on: r.options.mode === 'plateau' },
-        { key: 'U', label: 'Urgrävning', run: mode('excavation'), on: r.options.mode === 'excavation' },
+        { key: 'Y', label: 'Markyta', run: mode('area'), on: r.options.mode === 'area' },
         { key: 'B', label: 'Under bjälklag', run: mode('slab'), on: r.options.mode === 'slab' },
-        { key: 'R', label: 'Ramp', run: mode('ramp'), on: r.options.mode === 'ramp' },
-        { key: 'G', label: 'Gångväg', run: mode('walk'), on: r.options.mode === 'walk' },
-        { key: 'I', label: 'Infart', run: mode('drive'), on: r.options.mode === 'drive' },
+        { key: 'R', label: 'Ramp/väg', run: mode('path'), on: r.options.mode === 'path' },
         { key: 'L', label: 'Brytlinje', run: mode('breakline'), on: r.options.mode === 'breakline' },
         { key: 'M', label: 'Stödmur', run: mode('wall'), on: r.options.mode === 'wall' },
         { key: 'K', label: 'Höjdpunkt', run: mode('point'), on: r.options.mode === 'point' },

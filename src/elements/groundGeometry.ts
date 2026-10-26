@@ -6,7 +6,8 @@ import { bufferRings } from '../geometry/offset';
 import type { Vec2 } from '../repr/primitives';
 import { sameItems } from '../repr/reuse';
 import { buildingFootprint } from './footprint';
-import { along, barriersOf, lineLength, lockShape, PATH_WIDTH, pathShape, stripRing, type PathKind } from './groundLines';
+import type { FillParams } from './drawing2d';
+import { along, barriersOf, centerShift, lineLength, lockShape, offsetLine, PATH_WIDTH, pathShape, stripRing, type RefSide } from './groundLines';
 import { resolveParams, type PlanContext } from './registry';
 import type { SlabParams } from './slab';
 
@@ -16,18 +17,20 @@ import type { SlabParams } from './slab';
  * marken i vyn och stödmurens krön. Ritningen i planen ligger i
  * `groundPlan.ts`, elementtypen i `ground.ts`.
  *
- * - **Platå**: en ritad kontur med en höjd, plan eller med fall. Kanterna
- *   möter marken med slänt (förval 1:2) eller stödmur.
- * - **Urgrävning**: en ritad kontur med bottenhöjd; slänten går utåt och
- *   tar bara ned marken.
- * - **Platå runt huset** (`around`): husets kontur, avståndet ut och fallet
+ * - **Markyta** (`area`; platå och urgrävning var för sig före 0.10.7):
+ *   en ritad kontur med en höjd, plan eller med fall. Kanterna möter marken
+ *   med slänt (förval 1:2) eller stödmur: där marken ligger högre tas den
+ *   ned (schakt, slänten går upp från ytan), där den ligger lägre fylls den
+ *   upp (fyll, slänten går ned), också inom samma yta.
+ * - **Markyta runt huset** (`around`): husets kontur, avståndet ut och fallet
  *   från fasaden (förval sockel 200, 1:20 de första 3 m). Följer huset.
  * - **Urgrävning under bjälklaget** (`slab`): bjälklagets kontur (med
  *   väggarna, när det följer dem) och arbetsutrymmet; botten i
  *   bjälklagets underkant. Följer bjälklaget.
- * - **Ramp, gångväg och infart** (`path`, 0.10.5): en mittlinje med
- *   bredd och höjd i början och slutet; infarten med tvärfall. Sidorna
- *   möter marken med slänt eller stödmur.
+ * - **Ramp/väg** (`path`, 0.10.5; en sort sedan 0.10.7): en referenslinje
+ *   med bredd, höjd i början och slutet och tvärfall. Referenslinjen ligger
+ *   i mitten eller på en kant, med förskjutning. Sidorna möter marken med
+ *   slänt eller stödmur; brantare än gränsen (förval 1:12) ger en varning.
  * - **Höjdpunkt** och **brytlinje** (`point`, `breakline`, 0.10.5): låser
  *   marken och tonar den runt omkring inom en radie.
  * - **Stödmur** (`wall`, 0.10.5): en linje med tjocklek som slänterna inte
@@ -38,21 +41,21 @@ import type { SlabParams } from './slab';
  * objekt som inte har ett eget värde.
  */
 
-export type GroundKind = 'plateau' | 'excavation' | 'path' | 'point' | 'breakline' | 'wall';
+export type GroundKind = 'area' | 'path' | 'point' | 'breakline' | 'wall';
 
 /** Sorterna som ritas som en linje (eller en punkt) i stället för en kontur. */
 export const LINE_KINDS: readonly GroundKind[] = ['path', 'point', 'breakline', 'wall'];
 export const isLineKind = (k: GroundKind | undefined): boolean => !!k && LINE_KINDS.includes(k);
 
-export interface GroundParams {
+export interface GroundParams extends Partial<FillParams> {
   kind: GroundKind;
-  /** Den ritade konturen, mm. Tom för platån runt huset och urgrävningen under ett bjälklag. */
+  /** Den ritade konturen, mm. Tom för markytan runt huset och urgrävningen under ett bjälklag. */
   outline: [number, number][];
-  /** Platån runt huset. */
+  /** Markytan runt huset. */
   around?: boolean;
   /** Bjälklaget som urgrävningen följer. */
   slab?: Id;
-  /** Platåns höjd (i konturens mitt när den har fall) eller urgrävningens botten, mm från ±0. */
+  /** Markytans höjd (i konturens mitt när den har fall), mm från ±0. */
   height?: number;
   /** Fallet 1:N; 0 eller utelämnat = plan. Runt huset: fallet från fasaden. */
   fall?: number;
@@ -69,15 +72,23 @@ export interface GroundParams {
   sockel?: number;
   /** Under bjälklaget: arbetsutrymmet (mm). */
   margin?: number;
-  /** Mittlinjen, brytlinjen, murens linje eller höjdpunkten (en punkt), mm (0.10.5). */
+  /** Vägens referenslinje, brytlinjen, murens linje eller höjdpunkten (en punkt), mm (0.10.5). */
   line?: [number, number][];
-  /** Vägens sort. */
-  path?: PathKind;
+  /** Vägens namn (0.10.7), t.ex. *Ramp* eller *Infart*; tomt = *Ramp/väg*. */
+  name?: string;
   /** Vägens bredd, mm. */
   width?: number;
+  /** Var referenslinjen ligger på vägen och hur långt den är förskjuten, mm (0.10.7). */
+  refSide?: RefSide;
+  refOffset?: number;
+  /** Vägens brantaste lutning 1:N innan den varnar (0.10.7). */
+  maxSlope?: number;
+  /** Tvärlinjen i vägens början och slut; false = ritas inte (0.10.7). */
+  startLine?: boolean;
+  endLine?: boolean;
   /** Höjden i linjens slut (i början gäller `height`), mm från ±0. */
   endHeight?: number;
-  /** Infartens tvärfall 1:N; positivt faller åt höger, negativt åt vänster. */
+  /** Vägens tvärfall 1:N; positivt faller åt höger, negativt åt vänster. */
   crossFall?: number;
   /** Höjdpunkt och brytlinje: hur långt marken tonas, mm. */
   radius?: number;
@@ -87,14 +98,12 @@ export interface GroundParams {
 }
 
 /** Namnet på objektets sort, som i egenskaperna. */
-export function groundLabel(p: Pick<GroundParams, 'kind' | 'around' | 'slab' | 'path'>): string {
-  if (p.around) return 'Platå runt huset';
+export function groundLabel(p: Pick<GroundParams, 'kind' | 'around' | 'slab' | 'name'>): string {
+  if (p.around) return 'Markyta runt huset';
   if (p.slab) return 'Urgrävning under bjälklaget';
   switch (p.kind) {
-    case 'excavation':
-      return 'Urgrävning';
     case 'path':
-      return p.path === 'walk' ? 'Gångväg' : p.path === 'drive' ? 'Infart' : 'Ramp';
+      return p.name?.trim() || 'Ramp/väg';
     case 'point':
       return 'Höjdpunkt';
     case 'breakline':
@@ -102,7 +111,7 @@ export function groundLabel(p: Pick<GroundParams, 'kind' | 'around' | 'slab' | '
     case 'wall':
       return 'Stödmur';
     default:
-      return 'Platå';
+      return 'Markyta';
   }
 }
 
@@ -118,6 +127,8 @@ export interface GroundGeometry {
   shape: GroundShape | null;
   /** Stödmurens linje, som slänterna inte går över. */
   barriers?: Barrier[];
+  /** Vägens mittlinje (0.10.7), som höjden och tvärfallet räknas längs. */
+  center?: Vec2[];
   /** Där höjden skrivs ut, och texten. */
   label: { at: Vec2; height: number; fall?: number };
 }
@@ -209,7 +220,7 @@ function computeGeometry(ctx: PlanContext, el: Element<any>, p: GroundParams, fo
     if (p.outline.length < 3) return null;
     polys = [[p.outline.map((q): Vec2 => [q[0], q[1]])]];
     height = p.height ?? 0;
-    fall = p.kind === 'plateau' ? (p.fall ?? 0) : 0;
+    fall = p.fall ?? 0;
   }
   const flat = polys.flat();
   const box = boxOfRings(polys);
@@ -222,7 +233,7 @@ function computeGeometry(ctx: PlanContext, el: Element<any>, p: GroundParams, fo
   const shape: GroundShape = {
     id: el.id,
     cut: true,
-    fill: p.kind === 'plateau' && !p.slab,
+    fill: !p.slab,
     slope,
     box,
     hMin: Math.min(...corners),
@@ -256,11 +267,11 @@ function lineGeometry(el: Element<any>, p: GroundParams, slope: number | null, d
     const ring = stripRing(pts, Math.max(50, p.thickness ?? def.wallThickness));
     return { rings: [[ring]], holes: [], shape: null, barriers: barriersOf(pts), label: { at: mid.at, height: h0 } };
   }
-  const kind = p.path ?? 'ramp';
-  const w = Math.max(100, p.width ?? PATH_WIDTH[kind]);
-  const cross = kind === 'drive' ? (p.crossFall ?? def.crossFall) : (p.crossFall ?? 0);
-  const { shape, ring } = pathShape(el.id, pts, w, h0, h1, cross, slope);
-  return { rings: [[ring]], holes: [], shape, label: { at: mid.at, height: h0 } };
+  const w = Math.max(100, p.width ?? PATH_WIDTH);
+  const c = centerShift(p.refSide, p.refOffset, w);
+  const center = Math.abs(c) > 0.5 ? offsetLine(pts, c) : pts;
+  const { shape, ring } = pathShape(el.id, center, w, h0, h1, p.crossFall ?? 0, slope);
+  return { rings: [[ring]], holes: [], shape, center, label: { at: mid.at, height: h0 } };
 }
 
 /** Punkten halvvägs längs linjen. */

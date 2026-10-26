@@ -11,8 +11,8 @@ import { lineTypeOptions } from './lineTypePick';
  * öppningssättet). Objektets egen går före typens, som går före stilmallens.
  */
 
-/** Sorterna som kan få en egen penna. 2D-formen har redan sin egen. */
-export const OWN_PEN_TYPES = new Set(['Wall', 'Door', 'Window', 'Roof', 'Furniture', 'Space']);
+/** Sorterna som kan få en egen penna. 2D-formen har redan sin egen. Markobjekten sedan 0.10.7. */
+export const OWN_PEN_TYPES = new Set(['Wall', 'Door', 'Window', 'Roof', 'Furniture', 'Space', 'Ground']);
 
 /** Sorterna med en symboldel (slagbåge, öppningssätt). */
 const SYMBOL_TYPES = new Set(['Door', 'Window']);

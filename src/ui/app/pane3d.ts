@@ -3,6 +3,8 @@ import type { Id } from '../../core/model';
 import { markerFrame } from '../../elements/markers';
 import { resolveParams } from '../../elements/registry';
 import type { WallParams } from '../../elements/wall';
+import type { GroundParams } from '../../elements/ground';
+import { lineLength } from '../../elements/groundLines';
 import type { Vec2 } from '../../repr/primitives';
 import { buildModel3d } from '../../repr/model3d';
 import { finishedForView, terrainMesh } from '../../repr/terrain';
@@ -91,14 +93,16 @@ export function installPane3d(app: AppContext) {
     },
     refLines: () => {
       if (app.ui.tool !== 'select') return [];
-      return app.selection
-        .list()
-        .map((id) => app.store.doc.elements[id])
+      const els = app.selection.list().map((id) => app.store.doc.elements[id]);
+      const walls = els
         .filter((el) => el?.type === 'Wall' && el.storey === app.ui.storey)
         .map((el) => {
           const p = resolveParams<WallParams>(app.store.doc, el);
           return { a: p.start, b: p.end, z: p.height + floorOf() };
         });
+      // Vägens referenslinje (0.10.7), strax över ytan, med höjden rakt mellan ändarna.
+      const paths = els.filter((el) => el?.type === 'Ground' && el.params.kind === 'path').flatMap((el) => groundRefLine(resolveParams<GroundParams>(app.store.doc, el)));
+      return [...walls, ...paths];
     },
     snap: (cursor, from, exclude, tol, ortho) => {
       const r = snap({ cursor, from, segments: app.host.snapSegments(), tol, ortho, exclude: new Set(exclude) });
@@ -258,4 +262,21 @@ function installSplitGrip(app: AppContext): void {
     apply(uiSettings.split + (e.key === 'ArrowLeft' ? -step : step));
     saveUiSettings(uiSettings);
   });
+}
+
+/** Vägens referenslinje i 3D (0.10.7): segmenten med höjden längs linjen, mm från ±0, 30 mm över ytan. */
+function groundRefLine(p: GroundParams): { a: Vec2; b: Vec2; z: number; zb: number }[] {
+  const pts = p.line ?? [];
+  const total = lineLength(pts);
+  const h0 = p.height ?? 0;
+  const h1 = p.endHeight ?? h0;
+  const out: { a: Vec2; b: Vec2; z: number; zb: number }[] = [];
+  let s = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    const z = (at: number) => (total > 0 ? h0 + ((h1 - h0) * at) / total : h0) + 30;
+    out.push({ a: [pts[i - 1][0], pts[i - 1][1]], b: [pts[i][0], pts[i][1]], z: z(s), zb: z(s + l) });
+    s += l;
+  }
+  return out;
 }

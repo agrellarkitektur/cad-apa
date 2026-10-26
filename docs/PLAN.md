@@ -1959,28 +1959,136 @@ lika med och utan mark); på en brant plats ändrar ett objekt stora ytor
 1–3 µs; den färdiga markens höjdkurvor räknas för hela området som
 markobjekten ändrat (ca 70–100 ms på den branta platsen).*
 
-### 0.10.7 Dolda linjer i fasader
+### 0.10.7 Markobjekt del 3 · *nytt format*
 
-Carl Augusts synpunkt 25 oktober. Mellanstor.
+Carl Augusts synpunkter 26 oktober, efter 0.10.5. Marken togs före de
+dolda linjerna, medan den är färsk (Carl August 26 oktober).
+
+- Felen: höjdpunkten (och vägar, brytlinjer och stödmurar) gick inte att
+  flytta; *Avrunda* på en ramp eller brytlinje gav fler raka bitar
+- Ramp, gångväg och infart blir en sort, *Ramp/väg*, med namn och en egen
+  gräns för lutningen
+- Platå och urgrävning blir en sort, *Markyta*: schakt där marken ligger
+  högre, fyll där den ligger lägre, också i samma objekt
+- Vägens referenslinje syns, i mitten eller på en kant, med förskjutning
+- Tvärlinjen i vägens början och slut går att slå av
+- Linjetyp, penna och fyllning för markobjekten; alla går att låsa
+
+*Byggd (26 oktober), format 19. Testerna: 501 → 504, ca 12 s. **Felen:**
+`movePatch` flyttade konturen men inte `line`, så att alla markobjekt
+längs en linje stod kvar när de flyttades (med Flytta, dragning eller
+pilarna); nu följer linjen med. Markobjektens linjer är 2D-former utan
+bågar (`noArcs`, `allowsArcs`): Böj och Avrunda finns inte i Modifiera
+förrän bågarna kommer (0.10.15), Fasa finns kvar. **Ramp/väg**
+(`kind: 'path'` utan `path`): förvald bredd 1 500, tvärfall bara när det
+anges (förvalet 1:50 för infarten är borta), varning när den är brantare
+än sin gräns (`maxSlope`, förval *Brantaste ramp/väg* 1:12 under
+*Platsen*) och, när den är brantare än *Vilplan brantare än* (1:20), när
+höjdskillnaden är mer än 0,5 m. Namnet (*Ramp*, *Infart* …) står i
+planen i stället för *Ramp/väg*. **Markyta** (`kind: 'area'`): tar ned
+och fyller som platån gjorde; urgrävningen under bjälklaget tar
+fortfarande bara ned (grunden). Planen: heldragen kontur; den ritade
+urgrävningen var streckad, nu bara den under bjälklaget. **Referenslinjen**
+är den ritade linjen; vägens mitt ligger `centerShift` från den (vänster
+kant: vägen till höger; förskjutningen positiv utåt från vägen, negativ
+mot mitten, och i mitten positiv åt vänster). Höjden, tvärfallet och
+lutningen räknas längs mitten. Den ritas blå och tunn som takets och
+väggarnas när vägen är markerad, i planen och i 3D (med höjden längs
+linjen); som fast linje på papperet behövs den inte. **Tvärlinjerna**:
+vägen ritas som två sidor och två ändar (`kant`, `början`, `slutet`), och
+`startLine`/`endLine` false släcker en ände. **Penna**: `Ground` i
+`OWN_PEN_TYPES` (tjocklek, färg och linjetyp gäller linjerna och
+konturerna, inte texterna och stödmurens fyllning); **fyllning**:
+2D-formens fält (`d2:`) för markytor och vägar, ritad bakom väggarna och
+släckt med *Fyllningar* i Visa; **lås**: `Ground` i `LOCKABLE`. Format 19
+eftersom sorterna `plateau`, `excavation` och `path` (ramp, walk, drive)
+är borta; äldre filer får meddelandet. Provat med Playwright mot `dist/`
+med `groundProject` (dra höjdpunkten, rampens egenskaper, referenslinjen i
+planen och 3D, smartmenyn på gångvägens hörn, lås och dragning).
+Klickjämförelsen (293 steg, nya steg för namn, referenslinje,
+förskjutning, tvärlinje, gräns och lås) kördes mot 0.10.7 utan fel;
+mot 0.10.6 går den inte, eftersom verktygets knappar är andra.
+Referensritningarna `mark-plan` och `mark-siffror` ändrades med avsikt
+(namnen, rampens referenslinje på vänster kant, gångvägen utan
+tvärlinje i slutet och med skraffering).*
+
+### 0.10.8 Marken i ritningarna
+
+Carl Augusts synpunkter och svar 26 oktober. Mellanstor.
+
+- Höjdkurvor och marklinje som inte ändrats ritas heldragna; streckat bara
+  den tidigare marken där den ändrats
+- Halvmeterskurvorna tunnare än helmeterskurvorna
+- Höjdkurvor i 3D-vyn
+- Släntmarkeringar i planen (långa och korta streck nedför slänten)
+- Flera lutningspilar när fallet varierar mycket
+- Jorden i sektionerna med skraffering eller bara vit bakgrund
+- Byggnadshöjden utan språng (där fasadlivet möter takets överkant), och
+  en kryssruta per fasad som visar dess BH (den man bedömer är
+  beräkningsgrundande)
+- Medelmarknivån (knappen för ±0) ur den nya marken, med den befintliga
+  att jämföra
+- ±0 med ett klick på topografin, ändras efteråt
+- Licenstexten som fältet `{licens}`
+
+### 0.10.9 Stödmur del 2
+
+Carl Augusts synpunkt 26 oktober. Mellanstor.
+
+- Referenslinje i mitten eller på en kant, med förskjutning
+- Höjd över marken i början och slutet (t.ex. 700 och 900); krönet följer
+  den utjämnade marken (medelvärdet av det den passerar)
+- Fler kontrollpunkter, och höjdpunkter längs muren med *ÖK +65,765*
+
+### 0.10.10 Dolda linjer och vyns djup
+
+Carl Augusts synpunkter 25 och 26 oktober. Mellanstor.
 
 - Vyinställning i fasader: närmaste bjälklag och ytterväggarnas insida som
   streckade linjer genom fasaden
+- Fasader och sektioner med ett största djup och en zon före det där allt
+  ritas tonat (tunna grå linjer)
 
-### 0.10.8 Småsaker
+### 0.10.11 Småsaker
 
-Synpunkter 25 oktober, efter 0.9.4.
+Synpunkter 25 och 26 oktober.
 
 - Högerklick på planerna i modellfliken
 - Visa-menyn i flera kolumner, så att allt syns samtidigt
 - Snäppa mot kalkerunderlaget
-- Hovring i 3D visar vad som väljs, som i planen
+- Hovring i 3D visar vad som väljs, som i planen; markobjekten går att
+  markera i 3D
+- Importerade träd, grannhus m.m. som befintligt eller förslag, och att ta
+  bort dem helt
 
-### 0.10.9 Höjder i förhållande till våningen
+### 0.10.12 Höjder i förhållande till våningen
 
 Synpunkt 25 oktober. Mellanstor.
 
 - En minus- eller plusnivå i förhållande till våningen för bjälklag,
   väggar, objekt m.m.
+
+### 0.10.13 Visa och dölja (förslag)
+
+- Väggar m.m. var för sig under Visa; dölja ett objekt eller en typ med
+  högerklick, sparat i vyn
+
+### 0.10.14 Linjerna i 2D-formen (förslag)
+
+- Fortsätta och sluta en linje med ändpunkterna; Förskjut flera kanter;
+  foga ihop linjer
+- Ett klick mitt på en linje startar det senast använda verktyget
+
+### 0.10.15 Markobjektens linjer
+
+Carl Augusts synpunkter 26 oktober. Stor; efter 0.10.14, som har samma
+verktyg.
+
+- 2D-formens redigering för markobjekten: Böj, Avrunda med riktiga bågar,
+  Fasa
+- Bågar på vägens referenslinje och på kanterna (kanterna ändrar bara
+  bredden)
+- Docka ihop två ramper med olika lutning
 
 ### 0.11 Trappor · *nytt format*
 
@@ -2022,6 +2130,17 @@ Carl August 22 oktober. Stor; delas om det behövs.
   i en gratis IFC-visare
 - DXF av vyer och blad, med lager per objekttyp
 - Areor för bygglov (BTA, BYA, OPA) ur modellen, så långt piloten behöver
+
+### 0.12.1 3D-vyer
+
+Carl August 26 oktober: före piloten, det är något man kan förvänta sig.
+Mellanstor.
+
+- 3D-vyn som en egen punkt i modellfliken, där vyer sparas som perspektiv
+  eller axonometri
+- Trädmodeller: fem som slumpas vid import och går att byta för markerade
+  träd, i tre detaljnivåer (low poly, silhuett, detalj); träd på
+  Enscape-nivå efter piloten
 
 ### 0.13 Pilotprojektet (proof of concept)
 

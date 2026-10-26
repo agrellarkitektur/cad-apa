@@ -39,7 +39,7 @@ export interface Edit3DHost {
   selectedIds(): string[];
   handles(): Handle3D[];
   /** Referenslinjerna på markerade väggar, på väggarnas överkant. */
-  refLines(): { a: Vec2; b: Vec2; z: number }[];
+  refLines(): { a: Vec2; b: Vec2; z: number; zb?: number }[];
   /** Snäpp en punkt (mm) med samma regler som i planen. */
   snap(cursor: Vec2, from: Vec2 | undefined, exclude: string[], tolMm: number, ortho: boolean): { point: Vec2; label: string };
   commitWallEnd(wallId: string, end: 'start' | 'end', to: Vec2): void;
@@ -318,7 +318,7 @@ export class View3D {
     this.handlesGroup.clear();
     if (!this.editor) return;
     for (const r of this.editor.refLines()) {
-      const geom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(r.a[0], r.a[1], r.z), new THREE.Vector3(r.b[0], r.b[1], r.z)]);
+      const geom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(r.a[0], r.a[1], r.z), new THREE.Vector3(r.b[0], r.b[1], r.zb ?? r.z)]);
       const line = new THREE.Line(geom, this.refMaterial);
       line.renderOrder = 9;
       this.handlesGroup.add(line);

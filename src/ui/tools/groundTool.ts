@@ -2,7 +2,6 @@ import { addElements } from '../../core/commands';
 import type { Element, Id } from '../../core/model';
 import { groundAt, terrainOf } from '../../core/site';
 import type { GroundParams } from '../../elements/ground';
-import type { PathKind } from '../../elements/groundLines';
 import { dist } from '../../geometry/vec';
 import { slabAt } from '../../elements/slab';
 import type { Vec2 } from '../../repr/primitives';
@@ -14,22 +13,22 @@ import { snapMarker } from './overlay';
 import { roundMm, snap, type SnapResult } from './snap';
 
 /**
- * Vad verktyget lägger: en platå, en urgrävning eller en urgrävning under
- * ett bjälklag (klick i bjälklaget); längs en linje (0.10.5) en ramp,
- * gångväg, infart, brytlinje eller stödmur; eller en höjdpunkt.
+ * Vad verktyget lägger: en markyta eller en urgrävning under ett bjälklag
+ * (klick i bjälklaget); längs en linje (0.10.5) en ramp/väg, brytlinje
+ * eller stödmur; eller en höjdpunkt. Platå och urgrävning är sedan 0.10.7
+ * samma markyta, och ramp, gångväg och infart samma väg.
  */
-export type GroundMode = 'plateau' | 'excavation' | 'slab' | PathKind | 'point' | 'breakline' | 'wall';
+export type GroundMode = 'area' | 'slab' | 'path' | 'point' | 'breakline' | 'wall';
 
 /** Sätten som ritas som en linje, avslutad med dubbelklick, Enter eller Klar. */
-const LINE_MODES: readonly GroundMode[] = ['ramp', 'walk', 'drive', 'breakline', 'wall'];
+const LINE_MODES: readonly GroundMode[] = ['path', 'breakline', 'wall'];
 export const isLineMode = (m: GroundMode): boolean => LINE_MODES.includes(m);
 
 /**
- * Mark (0.10.4): dra upp en platå eller en urgrävning med två klick, lägg en
- * platå runt huset, eller klicka i ett bjälklag för en urgrävning under det.
- * Konturen ändras sedan i Modifiera, som bjälklagets. Höjden föreslås ur
- * den befintliga marken i rektangelns mitt (en urgrävning en meter under),
- * avrundad till 50 mm.
+ * Mark (0.10.4): dra upp en markyta med två klick, lägg en markyta runt
+ * huset, eller klicka i ett bjälklag för en urgrävning under det. Konturen
+ * ändras sedan i Modifiera, som bjälklagets. Höjden föreslås ur den
+ * befintliga marken i rektangelns mitt, avrundad till 50 mm.
  *
  * Markobjekten hör till förslaget: ritas de i Befintligt läggs de i alla
  * förslag i stället.
@@ -42,7 +41,7 @@ export class GroundTool implements ViewTool, PointTaker {
   private pts: Vec2[] = [];
   private lastUp = { t: 0, at: [0, 0] as Vec2 };
   private current: SnapResult | null = null;
-  options: { mode: GroundMode } = { mode: 'plateau' };
+  options: { mode: GroundMode } = { mode: 'area' };
   lockAngle: number | null = null;
   onCreated?: (id: string) => void;
   onChange?: () => void;
@@ -114,16 +113,14 @@ export class GroundTool implements ViewTool, PointTaker {
       return;
     }
     if (Math.abs(pt[0] - this.a[0]) < 500 || Math.abs(pt[1] - this.a[1]) < 500) {
-      this.host.hint(`${this.options.mode === 'excavation' ? 'Urgrävningen' : 'Platån'} måste vara minst 500 mm åt båda hållen.`);
+      this.host.hint('Markytan måste vara minst 500 mm åt båda hållen.');
       return;
     }
     const outline = rect(this.a, pt);
     const c: Vec2 = [(this.a[0] + pt[0]) / 2, (this.a[1] + pt[1]) / 2];
     const t = terrainOf(this.host.store.doc);
     const g = (t && groundAt(t, c[0], c[1])) ?? 0;
-    const kind = this.options.mode === 'excavation' ? 'excavation' : 'plateau';
-    const height = Math.round((kind === 'excavation' ? g - 1000 : g) / 50) * 50;
-    this.create({ kind, outline, height });
+    this.create({ kind: 'area', outline, height: Math.round(g / 50) * 50 });
     this.reset();
   }
 
@@ -151,7 +148,7 @@ export class GroundTool implements ViewTool, PointTaker {
     const h0 = Math.round(this.groundHeight(pts[0]) / 10) * 10;
     const h1 = Math.round(this.groundHeight(pts[pts.length - 1]) / 10) * 10;
     if (mode === 'breakline') this.create({ kind: 'breakline', outline: [], line, height: h0, endHeight: h1 });
-    else this.create({ kind: 'path', path: mode as PathKind, outline: [], line, height: h0, endHeight: h1 });
+    else this.create({ kind: 'path', outline: [], line, height: h0, endHeight: h1 });
   }
 
   /** En urgrävning under bjälklaget där man klickade. Finns den redan markeras den. */
@@ -168,24 +165,24 @@ export class GroundTool implements ViewTool, PointTaker {
       this.host.hint('Bjälklaget har redan en urgrävning. Den är markerad.');
       return;
     }
-    this.create({ kind: 'excavation', outline: [], slab });
+    this.create({ kind: 'area', outline: [], slab });
   }
 
-  /** En platå runt huset. Finns den redan i tillståndet markeras den. */
+  /** En markyta runt huset. Finns den redan i tillståndet markeras den. */
   aroundHouse(): void {
     if (!this.hasTerrain()) return;
     const doc = this.host.store.doc;
     if (!Object.values(doc.elements).some((e) => e.type === 'Wall' && !e.space)) {
-      this.host.hint('Rita huset först, så följer platån dess kontur.');
+      this.host.hint('Rita huset först, så följer markytan dess kontur.');
       return;
     }
     const old = this.existing((e) => !!e.params.around);
     if (old) {
       this.host.selection.set([old.id]);
-      this.host.hint('Huset har redan en platå runt sig. Den är markerad.');
+      this.host.hint('Huset har redan en markyta runt sig. Den är markerad.');
       return;
     }
-    this.create({ kind: 'plateau', outline: [], around: true });
+    this.create({ kind: 'area', outline: [], around: true });
   }
 
   private existing(test: (e: Element) => boolean): Element | undefined {
@@ -230,11 +227,10 @@ export class GroundTool implements ViewTool, PointTaker {
     if (m === 'slab') return 'Klicka i ett bjälklag: urgrävningen följer det, med arbetsutrymme runt om.';
     if (m === 'point') return 'Klicka där höjdpunkten ska ligga; höjden tas ur marken och ändras i egenskaperna.';
     if (isLineMode(m)) {
-      const what = { ramp: 'rampens mittlinje', walk: 'gångvägens mittlinje', drive: 'infartens mittlinje', breakline: 'brytlinjen', wall: 'stödmurens linje' }[m as 'ramp'];
+      const what = { path: 'vägens referenslinje (mitten från början)', breakline: 'brytlinjen', wall: 'stödmurens linje' }[m as 'path'];
       return this.pts.length ? 'Klicka nästa punkt. Dubbelklick, Enter eller Klar avslutar.' : `Klicka första punkten av ${what}.`;
     }
-    const what = this.options.mode === 'excavation' ? 'urgrävningens botten' : 'platån';
-    return this.a ? 'Klicka det motsatta hörnet.' : `Klicka ett hörn av ${what}, eller välj Runt huset.`;
+    return this.a ? 'Klicka det motsatta hörnet.' : 'Klicka ett hörn av markytan, eller välj Runt huset.';
   }
 
   cancel(): void {}

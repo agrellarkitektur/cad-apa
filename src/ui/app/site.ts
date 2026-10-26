@@ -258,9 +258,9 @@ function groundSettings(own: Partial<GroundDefaults> | undefined, meanOnExisting
   return `<fieldset class="site-ground"><legend>Markobjekt</legend>
       <div class="site-ground-grid">
         ${field('slope', 'Slänt', '1:N')}${field('fall', 'Fall från huset', '1:N')}${field('fallLength', 'Fallet gäller ut', 'mm')}
-        ${field('distance', 'Platå runt huset ut', 'mm')}${field('sockel', 'Sockel', 'mm')}${field('margin', 'Arbetsutrymme', 'mm')}
-        ${field('rampMax', 'Brantaste ramp', '1:N')}${field('walkMax', 'Brantaste gångväg', '1:N')}${field('landingRise', 'Vilplan var', 'mm höjd')}
-        ${field('crossFall', 'Infartens tvärfall', '1:N')}${field('blend', 'Höjdpunkt och brytlinje tonas', 'mm')}${field('wallThickness', 'Stödmurens tjocklek', 'mm')}
+        ${field('distance', 'Markyta runt huset ut', 'mm')}${field('sockel', 'Sockel', 'mm')}${field('margin', 'Arbetsutrymme', 'mm')}
+        ${field('rampMax', 'Brantaste ramp/väg', '1:N')}${field('walkMax', 'Vilplan brantare än', '1:N')}${field('landingRise', 'Vilplan var', 'mm höjd')}
+        ${field('blend', 'Höjdpunkt och brytlinje tonas', 'mm')}${field('wallThickness', 'Stödmurens tjocklek', 'mm')}
       </div>
       <p class="site-note">Ramp 1:12 och gångväg 1:20 med vilplan var 0,5 m höjd är förval efter Boverkets regler om tillgänglighet (ALM och BBR); kontrollera mot det som gäller i projektet.</p>
       <label class="site-field"><span>Medelmarknivån mot</span><select data-site="mean"><option value="finished">Färdig mark</option><option value="existing"${meanOnExisting ? ' selected' : ''}>Befintlig mark</option></select></label>

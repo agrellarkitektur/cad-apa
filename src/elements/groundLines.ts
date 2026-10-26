@@ -3,17 +3,30 @@ import type { GroundDefaults } from '../core/site';
 import type { Vec2 } from '../repr/primitives';
 
 /**
- * Markobjekt längs en linje (0.10.5): ramp, gångväg och infart (en mittlinje
- * med bredd), brytlinje och höjdpunkt (låser marken och tonar den runt
- * omkring), och stödmuren (en linje som slänterna inte går över). Ren
- * geometri; ritningen ligger i `ground.ts`.
+ * Markobjekt längs en linje (0.10.5): ramp/väg (en referenslinje med
+ * bredd; en sort sedan 0.10.7), brytlinje och höjdpunkt (låser marken och
+ * tonar den runt omkring), och stödmuren (en linje som slänterna inte går
+ * över). Ren geometri; ritningen ligger i `groundPlan.ts`.
  */
 
-/** Vägens sort: ramp, gångväg eller infart. */
-export type PathKind = 'ramp' | 'walk' | 'drive';
+/** Förvald bredd för en ramp eller väg, mm (en ramps rekommenderade fria bredd). */
+export const PATH_WIDTH = 1500;
 
-/** Förvald bredd per sort, mm: rampens fria bredd (rekommenderad 1 500), en gångväg och en infart. */
-export const PATH_WIDTH: Record<PathKind, number> = { ramp: 1500, walk: 1200, drive: 3000 };
+/** Var referenslinjen ligger på vägen (0.10.7): i mitten eller på vänster eller höger kant, sett i linjens riktning. */
+export type RefSide = 'center' | 'left' | 'right';
+
+/**
+ * Var vägens mitt ligger från referenslinjen, mm åt vänster (negativt åt
+ * höger). Förskjutningen flyttar referenslinjen utåt från mitten när den
+ * ligger på en kant (negativt mot mitten), och åt vänster när den ligger i
+ * mitten.
+ */
+export function centerShift(side: RefSide | undefined, offset: number | undefined, width: number): number {
+  const o = offset ?? 0;
+  if (side === 'left') return -(width / 2 + o);
+  if (side === 'right') return width / 2 + o;
+  return -o;
+}
 
 type P = readonly [number, number];
 
@@ -52,9 +65,13 @@ export function along(pts: readonly P[], x: number, y: number): Along {
   return best;
 }
 
-/** En remsa med bredden `w` kring linjen, med räta ändar och gering i hörnen. Moturs. */
+/** En remsa med bredden `w` kring linjen, med räta ändar och gering i hörnen. Moturs: höger sida framåt, vänster bakåt. */
 export function stripRing(pts: readonly P[], w: number): Vec2[] {
-  const h = w / 2;
+  return [...offsetLine(pts, -w / 2), ...offsetLine(pts, w / 2).reverse()];
+}
+
+/** Linjen förskjuten `d` mm åt vänster (negativt åt höger), med gering i hörnen (högst fyra gånger, som ett spetsigt hörn). */
+export function offsetLine(pts: readonly P[], d: number): Vec2[] {
   const n = pts.length;
   const normal = (i: number): Vec2 => {
     const a = pts[i];
@@ -62,8 +79,7 @@ export function stripRing(pts: readonly P[], w: number): Vec2[] {
     const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
     return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
   };
-  const left: Vec2[] = [];
-  const right: Vec2[] = [];
+  const out: Vec2[] = [];
   for (let i = 0; i < n; i++) {
     let m: Vec2;
     let k = 1;
@@ -79,10 +95,9 @@ export function stripRing(pts: readonly P[], w: number): Vec2[] {
       // Geringen blir längre i hörnen, högst fyra gånger (som ett spetsigt hörn).
       k = Math.min(4, 1 / Math.max(0.25, m[0] * a[0] + m[1] * a[1]));
     }
-    left.push([pts[i][0] + m[0] * h * k, pts[i][1] + m[1] * h * k]);
-    right.push([pts[i][0] - m[0] * h * k, pts[i][1] - m[1] * h * k]);
+    out.push([pts[i][0] + m[0] * d * k, pts[i][1] + m[1] * d * k]);
   }
-  return [...right, ...left.reverse()];
+  return out;
 }
 
 /** Murens segment som stoppar slänterna. */
@@ -192,13 +207,15 @@ export function pathRatio(pts: readonly P[], h0: number, h1: number): number {
   return rise < 1 ? Infinity : lineLength(pts) / rise;
 }
 
-/** Varningarna för en ramp eller gångväg: för brant, eller för hög utan vilplan. */
-export function pathWarnings(kind: PathKind, pts: readonly P[], h0: number, h1: number, def: GroundDefaults): string[] {
-  if (kind === 'drive') return [];
+/**
+ * Varningarna för en ramp eller väg (0.10.7): brantare än gränsen (`max`,
+ * 1:N), eller brantare än en gångväg (förval 1:20) och högre än ett vilplan
+ * tillåter utan att vara delad.
+ */
+export function pathWarnings(pts: readonly P[], h0: number, h1: number, max: number, def: GroundDefaults): string[] {
   const out: string[] = [];
   const n = pathRatio(pts, h0, h1);
-  const max = kind === 'ramp' ? def.rampMax : def.walkMax;
   if (n < max - 1e-6) out.push(`Brantare än 1:${max.toLocaleString('sv-SE')}`);
-  if (kind === 'ramp' && Math.abs(h1 - h0) > def.landingRise + 0.5) out.push(`Höjdskillnaden är mer än ${(def.landingRise / 1000).toLocaleString('sv-SE')} m: dela rampen med ett vilplan`);
+  if (n < def.walkMax - 1e-6 && Math.abs(h1 - h0) > def.landingRise + 0.5) out.push(`Höjdskillnaden är mer än ${(def.landingRise / 1000).toLocaleString('sv-SE')} m: dela rampen med ett vilplan`);
   return out;
 }

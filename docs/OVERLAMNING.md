@@ -1,749 +1,238 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.6.
+överlämning; historiken finns i git (äldre versioners läge och frågor står
+i tidigare versioner av den här filen, och Claudes val i PLAN.md).
+Senast: 26 oktober 2026, efter 0.10.7.
 
 ## Läget
 
-- **0.10.6 Granskning är klar** på `main` (samma format, 18, utan nya
-  funktioner). Carl August sa "kör granskning" och fick upplägget i
-  chatten. Skyddet först, med 0.10.5: testprojektet `groundProject`
-  (exempelvillan på en kuperad, vriden plats med alla sorters
-  markobjekt) med referensritningar `mark-*` och siffrorna för den färdiga
-  marken; klickjämförelsen har 288 steg med platsen och verktyget Mark
-  (samma läge och bild i 0.10.5 och 0.10.6, och samma 3D-bild). Det som
-  räknades om i onödan: husets kontur jämförs nu till värdet (en ändrad
-  vägg räknade om hela marken), platsen som objekt används inte som nyckel
-  (kurvavståndet och jorden räknade om den), ett ändrat markobjekt räknas
-  från sig självt (`finishedGround(..., prev)` med `steps`), höjdkurvornas
-  linjer sparas och 3D-nätet byter bara höjderna. På en brant plats 200 ×
-  150 m med 0,5 m: en innervägg 208 → under 4 ms för marken, den sista
-  brytlinjen 208 → 22 ms, 3D-nätet 44 → 4,5 ms. `ground.ts` delad
-  (`groundGeometry.ts`, `groundPlan.ts`); testerna för marken i
-  `tests/mark.test.ts`, den sneda marken en gång (`slopeSite`). I
-  klickjämförelsen upprepades nya id efter några hundra (rättat: de höga
-  bitarna). Testerna: 501 på ca 16 s. Står i README, PLAN.md och
-  UTVECKLING.md under *Granskning (0.10.6)*.
-- **0.10.5 Markobjekt del 2 och byggnadshöjd är klar** på `main` (samma
-  format, 18; nya sorter av `Ground`). Carl August sa "kör nästa version"
-  och fick upplägget i chatten innan arbetet började (inget svar än).
-  **Byggnadshöjd** enligt PBF 1 kap. 3 § (`src/repr/buildingHeight.ts`):
-  45°-planet mot takets ovansida per fasad, den längsta fasaden
-  beräkningsgrundande, nivåkoten *BH* i fasader och sektioner och värdet i
-  *Platsen*. I verktyget Mark: **ramp, gångväg, infart** (mittlinje med
-  bredd, höjder i ändarna, tvärfall, lutningspil och varning),
-  **höjdpunkt** och **brytlinje** (låser marken och tonar den inom 5 m)
-  och **stödmur** (en linje som slänterna inte går över, kropp i 3D och
-  sektioner). Geometrin i `src/elements/groundLines.ts`, utjämningen och
-  murarna i `finishedGround`. Provat med Playwright mot `dist/` med en
-  egen kuperad platsfil; klickjämförelsen kördes inte. Testerna: 491 på ca
-  11 s. Referensritningarna för fasader och sektioner fick BH. Claudes val
-  i PLAN.md, koden i UTVECKLING.md under *Markobjekt del 2 och
-  byggnadshöjd (0.10.5)*.
-- **0.10.4 Markobjekt del 1 är klar** på `main` (samma format, 18; en ny
-  elementtyp). Carl August sa "kör nästa version" och fick upplägget i
-  chatten innan arbetet började (inget svar än). Ett nytt objekt,
-  *Markobjekt* (`Ground`, `src/elements/ground.ts`), och verktyget **Mark**:
-  platå och urgrävning (rektangel, konturen i Modifiera), platå runt huset
-  och urgrävning under bjälklaget. Den färdiga marken räknas i
-  `src/core/ground.ts` ur den befintliga och objekten (slänt som ett band
-  som vidgas med avståndet, stödmur utan slänt), i förslaget tjock och
-  heldragen i planen (höjdkurvor där marken ändrats), fasader, sektioner och
-  3D; befintlig tunn streckad där den skiljer sig. Medelmarknivån mot
-  färdig mark (befintlig som val), schakt och fyll, jord i sektionerna och
-  förvalen i dialogen *Platsen*. Urgrävningens kontur är botten och
-  slänten går utåt (avsteg från planen). Provat med Playwright mot `dist/`
-  med en egen kuperad platsfil (platå, runt huset, under bjälklaget,
-  sektionen med jord, 3D, dialogen, egenskaperna); klickjämförelsen kördes
-  inte. Testerna: 481 på ca 12 s. Claudes val i PLAN.md, koden i
-  UTVECKLING.md under *Markobjekt (0.10.4)*.
-- **Inkorgen 26 oktober (efter 0.10.3)**, tre punkter om träden, inte
-  sorterade med Carl August än; Claudes förslag i *Att fråga*.
-- **0.10.3 Markmodell är klar** på `main` (format 18). Carl August
-  skickade platsfilen *Bosgård* (Nybro, SWEREF 99 16 30, 200 × 150 m,
-  1 m rutnät, med fastighetsgränser och 225 träd) och sa "bygg nästa
-  version". Platsen är projektets `site` (nollpunkt, vridning, sann nord,
-  ±0 i RH 2000) med rutnätet som fil bland projektets filer; marken
-  ritas som höjdkurvor i planen, nät i 3D och tunn streckad marklinje i
-  fasader och sektioner, med medelmarknivån (*MMN*) och nivåkoterna i
-  RH 2000. Grannhus, träd och kartobjekt (gränser, vägar, punkter,
-  beteckningar, stompunkter) är låsta objekt i alla tillstånd. Platsen
-  tas emot med meddelandet från Höjdkurvor, Öppna fil eller släpp på
-  planen; dialogen *Platsen* i huvudmenyn har ±0, kurvavståndet,
-  beskärning, licens och gränsvarning. Provat med Playwright mot `dist/`
-  (Bosgård som nytt projekt och i exempelvillan, 3D, sektion, fasad,
-  dialogen, handskakningen med en låtsas-Höjdkurvor på samma ursprung);
-  klickjämförelsen kördes inte. Testerna: 474 på ca 12 s. Claudes val i
-  PLAN.md, koden i UTVECKLING.md under *Markmodell (0.10.3)*.
-- **0.10.2 Takfot och taket i planen är klar** på `main` (samma format,
-  17; bara valfria nya parametrar). Carl August sa "kör nästa version"
-  och fick planen i chatten innan arbetet började (inget svar än). Taket
-  är nu en kropp av plana bitar (`roofBody` i den nya `roofBody.ts`):
-  takfoten snittas vinkelrätt mot takytan från början (en remsa längs
-  kanten), nock, grat och gavel lodrätt; takfotens snitt väljs på taket
-  och en kant kan få ett eget i Modifiera (*Vinkelrätt*, *Lodrätt*,
-  *Vinkel*, *Förval*). Språngets tjocklek (utanför husets kontur,
-  `footprint.ts`) är ett fält på taket. Snitthöjd per våning (förval
-  1200, `Storey.cutHeight`): taket ritas punktstreckat ovanför,
-  heldraget under och med snittyta där planet skär (`roofPlan.ts`); ett
-  tak syns också i planen för en våning det går upp i
-  (`ElementType.alsoOnStorey`, bara planen). *Husets kontur genom taket*
-  under Visa (Modell), släckt från början (`+footprint` i vyns `hide`).
-  Nivåkoten *Takfot* är kroppens lägsta undersida. Referensritningarna
-  med tak ändrades med avsikt. Testerna: 467 på ca 11 s. Provat med
-  Playwright mot `dist/` (egenskaperna, Visa, snitthöjden, sektionen,
-  smartmenyn för en kant); klickjämförelsen kördes inte. Claudes val i
-  PLAN.md, koden i UTVECKLING.md under *Takfot och taket i planen
-  (0.10.2)*.
-- **Inkorgen 26 oktober** (efter 0.10.1) sorterades av Claude som
-  förslag, inte bekräftade (se synpunktsfilen och *Att fråga*): skarven
-  mellan våningarna syns inte hos Carl August, och bandet i fasaden får
-  vara (svar på frågorna om 0.10.1); Visa för väggar m.m. och att dölja
-  objekt med högerklick föreslås som 0.10.10, linjerna i 2D-formen
-  (Förskjut flera kanter, fortsätta och sluta en linje, foga ihop) som
-  0.10.11, sparade 3D-vyer efter 0.12 eller efter piloten. *Upp till
-  taket* är kvar (26 oktober).
-- **0.10.1 Granskning**: Carl August bad om granskningen före takfoten
-  (26 oktober). Inkorgens punkt 26 oktober (bjälklaget kapar väggen som
-  taket) togs med, eftersom det är samma kod.
-- **0.10.1**: felet Carl August såg (väggar under bjälklag i 3D och
-  sektion) var väggarnas kantlinjer: de slogs ihop per våning och fick
-  den första väggens id, så bjälklaget kapade inte innerväggarnas linjer
-  och en markerad YV01 lyste upp alla väggars linjer i sektionen. Nu har
-  varje vägg sina linjer (`edgeOwners`), bjälklagen ovanför kapar väggen
-  exakt där de täcker den (`underSlabs` i den nya `wall3d.ts`, i stället
-  för regeln om väggens mitt), och linjen mellan våningar med samma liv
-  är borta (`joinStoreys`; kvar under dörrar och där väggen kragar ut).
-  `wall.ts` delad i `wallBodies.ts`, `wall3d.ts` och `wall.ts`; 3D-vyn
-  ritar alla kantlinjer i en geometri; en kvadratisk slinga i väggarnas
-  3D borta. Referensritningarna ändrades med avsikt (linjernas id, `tva-*`).
-  Klickjämförelsen mot 0.10.0: 223 steg, bara de tio med fasader och
-  sektion av tvåvåningshuset skiljer (som väntat: egna pennor på rätt
-  linjer, kapningen, skarvarna). Testerna: 459 på ca 11 s. Claudes val i
-  PLAN.md, koden i UTVECKLING.md under *Granskning (0.10.1)*.
-- **0.10.0**: Carl August valde enkla takfall i stället för en kontur med
-  takfot och gavel per kant: komplexa tak byggs av flera. Ett tak har
-  kontur (2D-form med bågar) och referenslinje (`ref`, `refBulge`) med
-  höjd för under- eller ovansidan, lutning och tjocklek; en båge ger en
-  kon (64 plana bitar). Verktyget: Takfall (kontur, referenslinje, sida),
-  snabbvalen Pulpet/Sadel/Valm över en rektangel i ytterlivet och *Över
-  hela huset*. Kapa mot tak i Modifiera. Taket kapar väggar på alla
-  våningar; Upp till taket bara på egen våning. Exempelvillans tak är två
-  takfall, så referensritningarna ändrades (samma geometri som förut,
-  utom att undersidan når 2700 exakt i ytterlivet). Claudes val i
-  PLAN.md, koden i UTVECKLING.md under *Tak (0.10)*. Testerna: 456 på ca
-  15 s. Provat med Playwright mot `dist/` (valm, takfall, kon, Kapa mot
-  tak, greppen i fasaden); klickjämförelsen kördes inte.
-- **0.9.4**: håltagningarna är `{ points, bulges? }` och ändras som en
-  2D-form när bjälklaget är markerat (grepp, Lägg till/Flytta/Ta bort
-  punkt, Förskjut kant, Böj, Räta ut, *Flytta hålet*, *Ta bort hålet*);
-  *Avrunda* och *Fasa hörn* för både hål och 2D-former; kryssrutan
-  *Bjälklagens yta går att klicka i* i Gränssnitt (av från början).
-  Rättat: pipetten förde över håltagningarna och *Ur väggarna*; speglade
-  hål behöll bågarnas riktning. Claudes val i PLAN.md, koden i
-  UTVECKLING.md under *Bjälklag del 2 (0.9.4)*. Testerna: 450 på ca 11 s.
-  Klickjämförelsen mot 0.9.3 (med formatnumret och hålens form
-  normaliserade) skiljer bara där ett bjälklag med hål är markerat:
-  hålens grepp och en rad i egenskaperna. Det nya provat med Playwright
-  mot `dist/`.
-- **0.9.3**: fasader och sektioner av samma projekt och vy bygger
-  3D-modellen en gång (`modelShapes` sparar de senaste svaren), och
-  kanterna räknas fortare: fyra fasader och en sektion av ett hus med tre
-  våningar à 312 väggar ca 4,3–4,9 → 3,0–3,6 s. `section.ts` 519 → 371
-  rader (`sectionLevels.ts`, `sectionCut.ts`), en slinga i `modelShapes`,
-  kvarlevorna `z0 = 0` borttagna. Testprojektet `twoStoreys` (två
-  våningar, fasta id) med referensritningar `tva-*`, skrivna med 0.9.2;
-  klickjämförelsen 223 steg (våningar, bjälklag, nivåer), samma läge och
-  bild i 0.9.2 och 0.9.3. Testerna: 444 på ca 11 s. Står i README,
-  PLAN.md och UTVECKLING.md under *Granskning (0.9.3)*.
-- **0.9.2**: nivåkoter med beteckning (FG, UK bjl, Takfot, Nock; Carl
-  August valde FG/ÖK/UK), höjdmått i sektioner (bjälklagens tjocklek och
-  fri höjd), innerväggarna slutar vid bjälklaget ovanför (synpunkt från
-  Inkorgen), båda markeringarna i Visa (Markörer). Referensritningarna för
-  fasader och sektioner ändrades (texterna och UK bjl under plattan).
-  Claudes val i PLAN.md, koden i UTVECKLING.md under *Nivåer (0.9.2)*.
-  Testerna: 440 på ca 12 s. Provat med Playwright mot `dist/` med ett
-  tvåvåningshus (exempelvillan med väggarna och plattan kopierade till
-  plan 2); klickjämförelsen kördes inte.
-- **Inkorgen 25 oktober (efter 0.9.1)** sorterades och bekräftades av
-  Carl August: kapade innerväggar i 0.9.2; ingen littera på bjälklag som
-  standard och inga automatiska bjälklag på nya våningar (redan så); hål
-  som 2D-form och klickbar bjälklagsyta i 0.9.3; marklinjen efter
-  markhöjder i 0.10.3 (sedan 26 oktober: marken ur Höjdkurvor i
-  0.10.3–0.10.5, urgrävningen i 0.10.4).
-- **0.9.1**: nytt objekt `Slab` med littera BJ och tjocklek per typ,
-  verktyget *Bjälklag* (rektangel, *Ur väggarna*, *Håltagning*),
-  konturen ur ytterväggarnas insida som följer väggarna, ritad kontur som
-  ändras i Modifiera som takets, hål med kryss i planen, i 3D, fyllt i
-  sektioner och som kant i fasader, rummens golvskiva bort där det finns
-  bjälklag. Exempelvillan har en platta på mark (BJ01 400), så
-  referensritningarna ändrades. Claudes val i PLAN.md, koden i
-  UTVECKLING.md under *Bjälklag (0.9.1)*. Testerna: 437 på ca 11 s.
-  Klickjämförelsen kördes inte (det nya provades med Playwright mot
-  `dist/`).
-- **0.9**: ny våning ovanför och under (golvnivån från grannen, de som
-  redan ligger där flyttas), byta våning (trädet, Page Up/Down,
-  smartshell), ta bort med fråga, flytta och kopiera till våning
-  (högerklick, smartshell), väggarnas höjd följer våningshöjden (format
-  14), kalkera våningen under eller över, 3D med alla våningar och *Bara
-  den här våningen*, fasader och sektioner med alla våningar och linjerna
-  i alla planer, felet med golvnivån i 3D. Claudes val i PLAN.md, koden i
-  UTVECKLING.md under *Flera våningsplan (0.9)*. Testerna: 432 på ca 10 s.
-  Klickjämförelsen kördes inte (referensritningarna är oförändrade); de
-  nya delarna provades med Playwright mot `dist/`.
-- **0.8.38 Granskning är klar** på `main` (samma format, 13, utan nya
-  funktioner). DXF-underlag med grus och mark (mönster vars linjer är
-  förskjutna hundratals linjeavstånd) ritas som klippta streck i stället
-  för som ett nästan 90° snett SVG-mönster, som Chrome målade långsamt
-  och fel: 2 000 sådana skrafferingar 14 s → 0,6 s per omritning, och
-  stenar i stället för prickar (stämmer med ezdxf). Skrafferingen ritas
-  med mönstrets kod på skärmen och i PDF:en. `fillTypes.ts` uppdelad
-  (`hatchStrokes.ts`, `patFile.ts`). Referensritningar för
-  fyllningstyperna och detaljnivåerna, klickjämförelsen 188 steg med
-  `--bilder`. Testerna: 424 på ca 10 s. Står i README, PLAN.md och
-  UTVECKLING.md under *Granskning (0.8.38)*.
-- **0.8.37 Detaljnivåer och fyllningar är klar** på `main` (samma
-  format, 13). Tre detaljnivåer per vy (littera, 2D-symboler, 3D och
-  fasader) i Visa och vyns egenskaper; vyradens knappar sätter alla tre.
-  Fyllningarna: åtta inbyggda typer (kopierbara), linjetjocklek per typ
-  och snabbguiden. Claudes val i PLAN.md, koden i UTVECKLING.md.
-  Testerna: 420 på ca 11 s. Carl Augusts beslut 25 oktober: tre val per
-  vy; rikare 3D-detalj i 0.11.2; att rita mönster grafiskt i 0.11.1;
-  isoleringsobjekt efter piloten.
-- **0.8.33–0.8.36** (pennor per typ och symbollinjer, rummens kontur och
-  rumsgränser, Filtrera och markera, egna fyllningstyper med .pat) står i
-  PLAN.md med Claudes val och i UTVECKLING.md med var koden ligger.
-- **0.8.32 Granskning** (testerna färre, snabbare och typkontrollerade,
-  `dxf.ts` uppdelad, rummen och väggarnas utsida delar sammanslagningen)
-  står i README, PLAN.md och UTVECKLING.md under *Granskning (0.8.32)*.
-- **0.8.28–0.8.31** (rättelser i 2D-formen, bakgrund i fyllningar och
-  ändformer, linjetyper och mask, linjetyp och penna per objekt) står i
-  PLAN.md med Claudes val och i UTVECKLING.md med var koden ligger.
-  Carl August har inte svarat på frågorna om 0.8.29–0.8.31 nedan.
-- **0.8.27 Granskning** (utan nya funktioner; fasaderna ungefär dubbelt så
-  fort) står i README, PLAN.md och UTVECKLING.md under *Granskning
-  (0.8.27)*.
-- **Carl Augusts provning 25 oktober**: 0.8.26 syns på webbhotellet, och
-  sorteringen av Inkorgen 24 oktober stämde. Tre fel i 2D-formen blev
-  0.8.28 (klar). Inkorgen 25 oktober sorterades och
-  ordningen bekräftades av Carl August. Efter 0.8.28 (samma dag) svarade
-  han: fortsätta bara den markerade linjen är bra; fyllningarna ska få en
-  bakgrundsfärg med egen opacitet; ändformerna ska följa linjen i
-  ritordningen. Det blev **0.8.29** (klar). Efter 0.8.29 kom fyra nya
-  synpunkter (mask, penna och linjetyp per objekt, footprint genom taket,
-  dolda linjer i fasader), och ordningen i färdplanen nedan bekräftades
-  samma dag. 2D-formernas linjer, fyllningar och masker ska kunna ligga
-  framför väggarna i planen.
-- **0.8.22–0.8.26** (småsaker, granskning, 2D-form del 2 med bågar och
-  ändar i format 13, ritordning och fyllningar, pennor i stilmallen) står
-  i PLAN.md med Claudes val och i UTVECKLING.md med var koden ligger.
-- **0.8.12–0.8.26 är inte provade fullt ut** av Carl August (han har
-  provat 2D-formen, se ovan). Frågorna nedan gäller.
-- Tidigare versioner (0.8.15–0.8.21) står i PLAN.md med Claudes val.
+- **0.10.7 Markobjekt del 3 är klar** på `main` (format 19). Carl August
+  ville ta marken före de dolda linjerna och sa "kör" efter upplägget i
+  chatten. Rättat: markobjekt längs en linje (höjdpunkt, ramp, brytlinje,
+  stödmur) flyttades inte (`movePatch` tog inte `line`); *Avrunda* och
+  *Böj* finns inte för markobjektens linjer (`noArcs`). **Ramp/väg** är en
+  sort (namn, bredd 1 500, egen gräns `maxSlope` med förval 1:12, vilplan
+  när den är brantare än 1:20 och går mer än 0,5 m). **Markyta** är platå
+  och urgrävning i ett (schakt och fyll i samma objekt; urgrävningen under
+  bjälklaget tar fortfarande bara ned). Referenslinjen i mitten eller på en
+  kant med förskjutning (negativ mot mitten), blå när vägen är markerad i
+  planen och 3D. Tvärlinjerna kan slås av. Penna, linjetyp, fyllning och
+  lås för markobjekten. Testerna: 504 på ca 12–14 s. Klickjämförelsen 293
+  steg utan fel mot 0.10.7 (mot 0.10.6 går den inte: andra knappar).
+  Provat med Playwright mot `dist/`. Claudes val i PLAN.md, koden i
+  UTVECKLING.md under *Markobjekt del 3 (0.10.7)*.
+- **Carl Augusts svar 26 oktober** (frågorna 1–16, se nedan) ligger i
+  planen: 0.10.8 Marken i ritningarna, 0.10.9 Stödmur del 2, 0.10.10 Dolda
+  linjer och vyns djup, 0.12.1 3D-vyer (före piloten). Inkorgen 26 oktober
+  är sorterad och bekräftad (synpunktsfilen).
+- **Frågorna:** de obesvarade (17–81 nedan) ställs **tio per session**,
+  de som hör till den kommande versionen först. En fråga han hoppar över
+  räknas som "bra som det är" och stryks.
+- **0.10.6 Granskning** och äldre versioner står i README, PLAN.md och
+  UTVECKLING.md. **0.9.2–0.10.7 är inte provade fullt ut** av Carl August.
 - **Publicering:** varje push till `main` laddas upp med
   `.github/workflows/publicera.yml` (FTPS; secrets `FTP_SERVER`,
   `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR` =
   `/agrellarkitektur.se/public_html/cad-apa/`). Se efter med `gh run list`.
-  Halvfärdigt arbete kan läggas på en egen gren (som `granskning-0823`
-  i 0.8.23), så att det inte publiceras.
-- **Prestandatestet** varierar med sandlådans hastighet (gick över 1,6 s i
-  0.8.16 och 0.8.25). Fasaden i testet tar sedan 0.8.27 ca 0,2 s, så
-  marginalen är större.
+  Halvfärdigt arbete kan läggas på en egen gren, så att det inte
+  publiceras.
+- **Prestandatestet** varierar med sandlådans hastighet.
 - **Färdplan** (Carl August 22 oktober): 0.13 är hans egen provning (han
   ritar ett hus), sedan en inbjuden **alfa** för arkitektvänner, sedan en
   **öppen beta**. **Formatfrysen kommer med den öppna betan.** Inget av
-  stegen är 1.0. Håll färdplanen nedan aktuell vid varje överlämning
-  (CLAUDE.md).
+  stegen är 1.0. Håll färdplanen nedan aktuell vid varje överlämning.
 - **Ord:** *palett* och *snabbmeny* betyder samma sak för honom. Säg bara
   **smartmeny**.
-- **Bakåtkompatibilitet:** inga migreringar före formatfrysen (den öppna
-  betan). Höj `FORMAT_VERSION` när formatet ändras; äldre filer får ett
-  meddelande om att de kommer från en äldre alfaversion (`parse` i
-  `src/storage/format.ts`). Valfria nya parametrar (som `opacity` och
-  `labelAt`) har inte krävt ett nytt format.
+- **Bakåtkompatibilitet:** inga migreringar före formatfrysen. Höj
+  `FORMAT_VERSION` när formatet ändras; äldre filer får ett meddelande
+  (`parse` i `src/storage/format.ts`). Valfria nya parametrar har inte
+  krävt ett nytt format.
 - **Telefonen är inget mål.** Testa på dator (Chrome).
 - Arbetssätt: Carl August testar varje version på webbhotellet. Ingen demo
   och ingen zip om han inte ber om det. Säg alltid hur stora föreslagna
-  ändringar är och om de riskerar att behöva mer än en session (CLAUDE.md).
+  ändringar är och om de riskerar att behöva mer än en session.
 - **Synpunkter:** Carl August samlar dem i `cad-apa-synpunkter.md`
   (projektets kunskapsbas), med rubrikerna Inkorg, Planerat per version,
   Parkerat och Avfärdat. Läs den vid sessionsstart (Projects-verktyget,
-  `project_read`). Sortera Inkorgen tillsammans med honom: föreslå version
-  för varje punkt och säg om något är för stort för en session. Ta bort
-  hanterade punkter när de görs; behåll Avfärdat med anledning.
+  `project_read`). Sortera Inkorgen tillsammans med honom.
 
 ## Färdplan
 
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
-- ~~0.8.8 Mallblad~~ … ~~0.8.21 Kommandoraden del 2~~,
-  ~~0.8.22 Småsaker~~, ~~0.8.23 Granskning~~, ~~0.8.24 2D-form del 2~~,
-  ~~0.8.25 Ritordning och fyllningar~~, ~~0.8.26 Pennor i stilmallen~~,
-  ~~0.8.27 Granskning~~, ~~0.8.28 Rättelser i 2D-formen~~,
-  ~~0.8.29 Bakgrund i fyllningar och ändformer~~,
-  ~~0.8.30 Linjetyper och mask~~, ~~0.8.31 Linjetyp och penna per
-  objekt~~, ~~0.8.32 Granskning~~, ~~0.8.33 Pennor per typ och
-  symbollinjer~~, ~~0.8.34 Rum: kontur och rumsgränser~~,
-  ~~0.8.35 Filtrera och markera~~, ~~0.8.36 Egna fyllningstyper~~,
-  ~~0.8.37 Detaljnivåer och fyllningar~~, ~~0.8.38 Granskning~~,
-  ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~, ~~0.9.2 Nivåer~~,
-  ~~0.9.3 Granskning~~, ~~0.9.4 Bjälklag del 2~~, ~~0.10 Tak~~,
-  ~~0.10.1 Granskning~~, ~~0.10.2 Takfot och taket i planen~~,
-  ~~0.10.3 Markmodell~~, ~~0.10.4 Markobjekt del 1~~,
-  ~~0.10.5 Markobjekt del 2 och byggnadshöjd~~, ~~0.10.6 Granskning~~
+- ~~0.8.8 Mallblad~~ … ~~0.10.6 Granskning~~, ~~0.10.7 Markobjekt del 3~~
   (klara)
-- **0.10.7 Dolda linjer i fasader**
-- **0.10.8 Småsaker** (högerklick på planer, Visa i kolumner, snäpp mot
-  kalkering, hovring i 3D) och **0.10.9 Höjder i förhållande till
-  våningen**
-- Förslag, inte bekräftade: **0.10.10 Visa och dölja** (väggar m.m. i
-  Visa, dölja ett objekt eller en typ med högerklick) och **0.10.11
-  Linjerna i 2D-formen** (Förskjut flera kanter, fortsätta och sluta en
-  linje, foga ihop linjer)
+- **0.10.8 Marken i ritningarna** (mellanstor)
+- **0.10.9 Stödmur del 2** (mellanstor)
+- **0.10.10 Dolda linjer och vyns djup** (mellanstor)
+- **0.10.11 Småsaker** (högerklick på planer, Visa i kolumner, snäpp mot
+  kalkering, hovring och markering i 3D, importerade objekt som
+  befintligt eller förslag och att ta bort dem)
+- **0.10.12 Höjder i förhållande till våningen**
+- **0.10.13 Visa och dölja** och **0.10.14 Linjerna i 2D-formen**
+  (förslag, inte bekräftade)
+- **0.10.15 Markobjektens linjer** (stor: bågar, Avrunda, docka ramper)
 - **0.11 Trappor** (nytt format)
-- **0.11.1 Profilverktyget** (nytt format, stor; också att rita ett
-  mönster och göra det till en fyllningstyp) och **0.11.2 Dörrar och
-  fönster** (stor)
+- **0.11.1 Profilverktyget** (stor) och **0.11.2 Dörrar och fönster**
+  (stor)
 - **0.12 Export**: IFC4, DXF, areor för bygglov
+- **0.12.1 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller)
 - **0.13 Pilotprojektet**: Carl August ritar själv ett hus
-- **Inbjuden alfa** för arkitektvänner; deras synpunkter i småversioner
-- **Öppen beta och formatfrys**; etiketten blir *Beta*
-- Efter piloten: se *Efter pilotprojektet* i PLAN.md (bl.a. kulör och
-  material, explodera DXF-underlag, mallblad mellan projekt, **sol och
-  analys på platsen**: skuggstudie, horisont, skyfall, lutning). **1.0**
+- **Inbjuden alfa**, sedan **öppen beta och formatfrys**
+- Efter piloten: se *Efter pilotprojektet* i PLAN.md. **1.0**
   bygglovshandling.
 
 ## Nästa session
 
-Fråga först om 0.10.6 syns på webbhotellet och hur ramperna, stödmuren
-och byggnadshöjden från 0.10.5 känns (frågorna nedan; 0.9.2–0.10.4 har
-inte provats fullt ut än). Sortera Inkorgen 26 oktober om träden med honom
-(förslagen i *Att fråga*), och be honom bekräfta sorteringen från förra
-gången (0.10.10, 0.10.11 och 3D-vyerna). Sedan **0.10.7 Dolda linjer i
-fasader** (mellanstor): en vyinställning i fasader som ritar närmaste
-bjälklag och ytterväggarnas insida streckade genom fasaden. Lägg upplägget
-i chatten först (vilka linjer, var inställningen finns, hur de ritas i
-fasader med flera våningar) och säg hur stort det är.
+Fråga först om 0.10.7 syns på webbhotellet och hur Markyta, Ramp/väg,
+referenslinjen, fyllningen och låset känns (frågorna om 0.10.7 nedan).
+Ställ sedan tio av de obesvarade frågorna (först de som rör marken och
+fasaderna). Sedan **0.10.8 Marken i ritningarna** (mellanstor): lägg
+upplägget i chatten först (hur den oförändrade marken skiljs från den
+ändrade, släntmarkeringarnas form, kryssrutan för BH per fasad, klicket
+på topografin för ±0) och säg hur stort det är.
 
-Besluten 26 oktober: befintlig mark ändras aldrig; markobjekten är
-fristående; ingen penselmodellering; befintlig tunn streckad, ny tjock
-heldragen; jordskraffering som val, av från början; medelmarknivån mot
-färdig mark som förval, befintlig också (tillstånden); förvalen (slänt
-1:2, fall 1:20 de första 3 m, ramp 1:12) går att ändra; ingen skiss
-tillbaka till Höjdkurvor; analyserna i cad-apa efter piloten; *Upp till
-taket* är kvar.
+## Carl Augusts svar 26 oktober
+
+- **Byggnadshöjd:** oftast mot den mest framträdande fasaden (mot gatan).
+  Varje fasad får en kryssruta som visar dess BH. Språnget räknas oftast
+  inte: från skärningen mellan fasadliv och takets överkant (0.10.8).
+- **Ramp/väg**: en sort (gjort i 0.10.7). Gränsen 1:12 och 1:20 vanliga
+  men lutningen kan vara vilken som helst.
+- **Toningen** för höjdpunkt och brytlinje ska gå att ställa in (finns per
+  objekt, *Tonas inom*, med förval under Platsen).
+- **3D-vyer före piloten** (0.12.1).
+- Rampens höjder ur marken och vilplan genom att dela rampen: bra.
+- Urgrävningens kontur som botten: bra; **automatiska släntmarkeringar**
+  (0.10.8). Platå och urgrävning som ett objekt (gjort i 0.10.7).
+- Fallet 1:N med riktning: bra; **flera lutningspilar** när fallet
+  varierar (0.10.8).
+- Runt huset: rundade hörn och sockeln från våningen är ok.
+- Jorden 600 mm, också under huset: prova; **vit fyllning** som val
+  (0.10.8).
+- Markverktyget med bara rektangel räcker så länge punkter kan läggas
+  till och tas bort.
+- **Medelmarknivån** ur den nya marken, med den befintliga att jämföra
+  (0.10.8).
+- **±0 med ett klick på topografin**, ändras efteråt (0.10.8).
+- Origo i sydvästra hörnet är bra så länge.
+- Grannhus i fasader: oftast inte; **vyns djup** med tonad zon i fasader
+  och sektioner (0.10.10).
+- 0,5 m kurvor räcker; **halvmeterskurvorna tunnare** (0.10.8).
+- **Licenstexten** som `{licens}` (0.10.8).
 
 ## Att fråga Carl August om
 
-- **0.10.6 efter provning**: inget nytt att prova; allt ska bete sig som
-  förut. Med en plats och markobjekt ska planen och 3D-vyn ritas om
-  fortare när en vägg eller ett markobjekt ändras, särskilt på en stor
-  eller brant plats. Säg till om något beter sig annorlunda.
+Tio per session, de som hör till nästa version först. Hoppar han över en
+räknas den som bra och stryks. Claudes val står i varje fråga.
 
-- **0.10.5 efter provning** (Claudes val, se PLAN.md): byggnadshöjden
-  räknas mot den **längsta fasaden** (bland lika långa den högsta); ska
-  det gå att välja en annan beräkningsgrundande fasad, och ska BH i en
-  fasad gälla just den fasaden? Språnget räknas fullt (planet berör
-  takfotens yttre kant); stämmer det med hur hans kommuner räknar?
-  Gränserna för ramp (1:12, vilplan var 0,5 m) och gångväg (1:20) är
-  Claudes läsning av ALM/BBR via Göteborgs tekniska handbok: stämmer de?
-  Rampen får höjderna ur den befintliga marken i ändarna; en vilplan görs
-  genom att dela rampen. Höjdpunkt och brytlinje tonar marken inom 5 m;
-  lagom? Stödmurens krön är vågrätt (den högre sidans högsta punkt) och
-  foten 300 under den lägre; behövs ett krön som följer marken, och
-  ändar som möter marken? Linjerna går inte att böja (bågar).
+**0.10.7 efter provning** (Claudes val, se PLAN.md)
+- Referenslinjen syns bara när vägen är markerad (som takets); ska den
+  kunna ritas på papperet?
+- Vägens förskjutning i mitten är positiv åt vänster; på en kant positiv
+  utåt. Begripligt?
+- Pennan gäller linjerna men inte texterna; fyllningen ligger bakom
+  väggarna. Ska markobjektens fyllning kunna ligga framför?
+- En gångväg varnade förut brantare än 1:20; nu gäller vägens egen
+  gräns (förval 1:12, ändras per väg eller under Platsen). Ok?
 
-- **0.10.4 efter provning** (Claudes val, se PLAN.md): urgrävningens
-  kontur är botten och slänten går utåt (planen sa inåt); platåns höjd
-  föreslås ur marken i mitten och urgrävningens en meter under; fallet
-  anges som 1:N med riktning i grader och höjden gäller i mitten; runt
-  huset rör marken under huset inte (utom närmast fasaden), hörnen är
-  rundade, sockeln räknas från objektets våning; urgrävningen under
-  bjälklaget har husets kontur när bjälklaget följer väggarna, och räknas
-  alltid först så att platån fyller igen. I ett förslag är marklinjen
-  alltid tjock (den färdiga marken), också utan markobjekt; i Befintligt
-  tunn och streckad. Ska Befintligt också ha en tjock linje? Jorden är
-  600 mm djup och ritas också under huset; räcker det? Stödmuren är bara
-  ett språng i marken tills den blir ett objekt (0.10.5). Knappen
-  *Medelmarknivån* för ±0 använder den befintliga marken. Verktyget ritar
-  bara rektanglar; behövs en polylinje direkt i verktyget?
-- **Inkorgen 26 oktober, träden** (Claudes förslag, inte bekräftade): att
-  sätta importerade träd, grannhus m.m. till befintligt eller förslag och
-  ta bort dem helt i **0.10.8 Småsaker** (liten: låsta objekt i alla
-  tillstånd i dag); fem trädmodeller som slumpas vid import och går att
-  byta för markerade träd, och träd i tre detaljnivåer (low poly,
-  silhuett, detalj) som en egen version tillsammans med 3D-vyerna efter
-  0.12 eller efter piloten (mellanstor; behövs inte för bygglovet). Träd
-  på Enscape-nivå kräver texturer och många trianglar, efter piloten.
+**Tak (0.10–0.10.2)**
+17. Takfoten är kanterna som vetter nedåt och snittas vinkelrätt från
+    början; vinkeln räknas mot det vågräta (90 = lodrätt).
+18. En kants eget snitt glöms när kanten ändras.
+19. Språnget räknas från ytterväggarnas utsida på alla våningar: hur blir
+    det för ett hus med en lägre tillbyggnad?
+20. Snitthöjden 1200 från början: vilken använder han?
+21. Ett tak på plan 2 streckat i planen under, som vyinställning?
+22. Snittytan i planen med stilmallens snittfyllning: ska den vara egen?
+23. Husets kontur också utan tak (en situationsplan)?
+24. Ska *Upp till taket* gå före ett bjälklag som täcker väggen?
+25. Linjen mellan våningarna är kvar mellan befintligt och nytt: ok?
+26. Taket stiger åt vänster om referenslinjen (*Vänd lutningen* byter);
+    höjden gäller undersidan; positiv radie stiger mot centrum.
+27. Snabbvalen: nocken längs den längre sidan, pulpettakets takfot på
+    första hörnets långsida, *Över hela huset* bara för rektangulära hus.
+28. Takets referenslinje i planen också omarkerad, med lutningspil?
+29. Takets kontur med bågar direkt i verktyget?
+30. Shift för att låta nocken stå still i fasaden finns inte: saknas den?
 
-- **0.10.3 efter provning** (Claudes val, se PLAN.md): ±0 är från början
-  markens höjd mitt i utsnittet (62,6 för Bosgård), ändras under
-  *Platsen* (knappen *Medelmarknivån* fyller i den); ska den hellre vara
-  medelmarknivån plus något, eller frågas när platsen läggs in? Modellens
-  origo är Höjdkurvors nollpunkt (Bosgård: utsnittets sydvästra hörn),
-  så ett nytt projekt har huset långt från platsens mitt; ska nollpunkten
-  kunna flyttas i cad-apa, eller väljs den i Höjdkurvor? Grannhus och träd
-  syns bara i 3D, inte i fasaderna; behövs grannhusen i en fasad? (Den tjocka
-  marklinjen finns sedan 0.10.4 i förslagen.) Höjdkurvorna räknas i cad-apa ur rutnätet (paketets kurvor
-  används inte) och blir brusiga på 0,25 m; räcker 0,5 m som förval?
-  Trädens kronor är prismor i 3D. Licenstexten skrivs inte ut på bladen
-  än; ska den stå på situationsplanen (ett fält, `{licens}`)?
+**Bjälklag och våningar (0.9–0.9.4)**
+31. Hålen hör till bjälklaget; de vrids och speglas inte var för sig.
+32. Förvalen 500 mm för Avrunda och 300 mm för Fasa.
+33. Med klickbar bjälklagsyta går ett klick i ett rum till bjälklaget:
+    ska rummet gå före?
+34. Håltagningen som cirkel direkt?
+35. Fri höjd som text i rummet (*RH 2400*) i stället för måttkedja?
+36. Våningens namn vid FG?
+37. Bjälklagets kontur tunn under väggarna, klickbar vid kanten; förval
+    300.
+38. En ny våning ovanför flyttar dem där; ändrad våningshöjd flyttar
+    våningarna ovanför.
+39. Namnen Plan 2 … och Källarplan.
+40. En borttagen våning tar bort sina vyer från bladen.
+41. Flytta och Kopiera till våning i högerklicksmenyn, inte i smartmenyn.
+42. *Bara den här våningen* gäller för honom, inte per vy.
 
-- **0.10.2 efter provning** (Claudes val, se PLAN.md): att takfoten är
-  kanterna som vetter nedåt i lutningen och snittas vinkelrätt från
-  början; att vinkeln räknas mot det vågräta (90 = lodrätt); att en kants
-  eget snitt glöms när kanten ändras (ett hörn flyttas, kanten förskjuts,
-  taket kapas). Språnget räknas från ytterväggarnas utsida på alla
-  våningar (husets kontur); stämmer det för ett hus med en lägre
-  tillbyggnad? Snitthöjden 1200 från början: vilken använder han? Ett
-  tak syns i planen för en våning det går upp i, men ett tak på plan 2
-  syns inte i plan 1; ska takfoten (eller hela taket) kunna visas
-  streckad i planen under, som vyinställning? Snittytan i planen får
-  stilmallens snittfyllning, som väggarna; ska den vara egen? Husets
-  kontur ritas bara inne i taken; ska den kunna visas också utan tak (en
-  situationsplan)? Nivåkoten *Takfot* är takets lägsta undersida (med
-  snittet nu 2515 i stället för 2445 i exempelvillan); byggnadshöjden
-  kommer i 0.10.5.
+**Pennor, linjer och fyllningar (0.8.22–0.8.37)**
+43. Vyradens knappar sätter alla tre detaljnivåer; fasaderna följer
+    3D-nivån; rumsstämpeln ingen nivå.
+44. Ser de inbyggda fyllningarna rätt ut? Räcker guiden?
+45. Fungerar hans `.pat`-filer? Mönster med mer än 20 mm mellan linjerna
+    antas vara i verkliga mått.
+46. Saknas något villkor i Filtrera och markera (riktning, längd, area)?
+47. Förvalen snitt 0,25, vy 0,18, symbol 0,13 mm; *Vy* som egen del i den
+    egna pennan?
+48. Rum har ingen egen penna; pennan finns inte i smartmenyn.
+49. DXF-underlagens streckade linjer streckade?
+50. Förhandsvisning av linjetypen i listorna?
+51. Masken döljer också rutnätet på skärmen.
+52. Fyllningens bakgrund i stilmallen?
+53. *Fortsätt* bortvalbar bland snabbknapparna? Nya kanter med verktygets
+    penna?
+54. Saknas någon markör bland pennorna? Streckning valbar?
+55. Ritordningen bakom eller framför väggarna också i fasader och
+    sektioner?
+56. Rummets fyllning för flera rum på en gång, per rumstyp eller i
+    stilmallen?
+57. En rektangel förblir inte rät när ett hörn dras; cirkeln saknar
+    centrumgrepp.
+58. Smartmenyn alltid *Ändar* för en markerad linje?
+59. Bågar direkt i Linje (A som i PLINE)?
+60. Rumsstämpelns ordning gäller hela projektet; *Fyllningar* under Visa
+    gäller vyn.
 
-- **Upp till taket**: kryssrutan är kvar (Carl August 26 oktober). Kvar
-  att fråga: ska den gå före ett bjälklag som täcker väggen? (Bakgrund:
-  synpunkt 26 oktober, "behöver vi ens det?"): taket
-  kapar redan väggar som når upp i det, på alla våningar, automatiskt.
-  *Upp till taket* gör det omvända: drar upp en vägg som slutar under
-  taket (gaveln) till takets undersida. Utan kryssrutan skulle gaveln få
-  en höjd över nocken, som taket sedan kapar; det fungerar redan i dag,
-  men väggens höjd säger då inget och den sticker upp där den går utanför
-  taket. Ska kryssrutan vara kvar, bli förval för ytterväggar under tak,
-  eller tas bort? Och ska den gå före ett bjälklag som täcker väggen
-  (fråga kvar från 0.10.1)?
+**Kommandoraden, ritande och underlag (0.8.13–0.8.21)**
+61. *Avbryt* bland alternativen? Skala och måttbandet med skrivna
+    punkter?
+62. Kommandon direkt utan Enter (kortkommandon med en bokstav
+    försvinner)? Fungerar `@` med AltGr?
+63. Rutnätet lagom tydligt? Segmentpunkterna per vy; Rensa rensar alla.
+64. Typsnitt per projekt?
+65. Autosparen kommer ihåg filen mellan sidladdningar (Chrome frågar)?
+66. Rumsstämpelns pil mot närmaste kant eller rummets mitt?
+67. X och Y nedre vänstra hörnet också för DXF, inte filens nollpunkt.
+68. Gruppen för en fil på flera ställen utfälld från början?
+69. Tjocklekstabell för linjer i stilmallen?
+70. Trimma avslutas efter ett klick: fortsätta tills Esc som i AutoCAD?
 
-- **0.10.1 efter provning** (Claudes val, se PLAN.md): bandet i fasaden
-  när bjälklaget ritas till utsidan får vara (svar 26 oktober), och ingen
-  skarv syns mellan våningarna i hans Chrome (svar 26 oktober). Kvar:
-  linjen mellan våningarna tas bara bort mellan väggar med samma åtgärd
-  (mellan befintligt och nytt är den kvar); en vägg med egen penna har
-  den nu på sina linjer i fasader och sektioner.
+**Blad och mallar (0.8.7–0.8.12)**
+71. Bilder under vyerna, linjer och text över; inga mått på bladet;
+    bladet följer inte tillstånden.
+72. Arbetsbladen oberoende av tillstånden?
+73. Textrutor: dra upp rutan med textverktyget, se kanten markerad?
+74. Fält utan värde blir tomma på papperet.
+75. Mallen från papperets nedre vänstra hörn på andra format.
+76. Stämmer platshållarna i hans ram som blev smarttext?
+77. Skalstocken 230 mm från högerkanten och 40 mm upp; i 1:50 är strecket
+    vid 10 mm kort och tunt: avsiktligt?
+78. Dölja hela vyrubriken, inte bara skalan?
 
-- **0.10.0 efter provning** (Claudes val, se PLAN.md): att taket stiger
-  åt vänster om referenslinjen och *Vänd lutningen* byter; att höjden
-  gäller undersidan från början och taket ligger kvar när valet byts; att
-  positiv radie stiger mot centrum; att snabbvalen dras upp i ytterlivet
-  med nocken längs den längre sidan, och pulpettakets takfot på den
-  långsida som första hörnet ligger på; att *Över hela huset* bara finns
-  för rektangulära hus. Kapa mot tak behåller sidan där man klickade på
-  takfallet (strax innanför kanten); kapade bågar blir polylinjer. Upp
-  till taket drar bara upp väggar under tak på samma våning. I fasaden
-  finns inte längre Shift för att låta nocken stå still. Takfot-koten är
-  takets lägsta undersida som förut. Ska referenslinjen synas i planen
-  också när taket inte är markerat (t.ex. med lutningspil), och ska
-  konturen kunna ritas med bågar direkt i verktyget?
-
-- **0.9.4 efter provning** (Claudes val, se PLAN.md): att hålen är kvar i
-  bjälklaget och ändras när det är markerat, inte som egna objekt; att
-  menyn för ett hål har *Flytta hålet* och *Ta bort hålet* men inte
-  Vrid och Spegla (de gäller hela bjälklaget); förvalen 500 mm för
-  Avrunda och 300 mm för Fasa; krysset i ett hål med bågar (den
-  omslutande rektangelns diagonaler). Med klickbar yta går ett klick i ett
-  rum till bjälklaget, och rummet nås med stämpeln eller Tab: är det rätt
-  avvägt, eller ska rummen gå före? Ska håltagningsverktyget också kunna
-  rita en cirkel direkt?
-
-- **0.9.3 efter provning**: inget nytt att prova; allt ska bete sig som
-  förut. Ett blad med flera fasader och sektioner av ett stort hus, och
-  exporten, ska gå fortare. Säg till om något beter sig annorlunda.
-
-- **0.9.2 efter provning** (Claudes val, se PLAN.md): FG vid varje
-  vånings golv och UK bjl bara där sektionen skär ett bjälklag; ÖK skrivs
-  inte (bjälklagets ovansida är golvet). Beteckningen står före höjden
-  (*FG +2,700*), och *Takfot* och *Nock* har fått stor bokstav. Höjdmåttet
-  är en kedja bredvid nivåerna; en översta våning utan bjälklag ovanför
-  får ingen fri höjd förrän taket finns (fri höjd under tak är inte gjort). Ska fri höjd hellre stå
-  som text i rummet (t.ex. *RH 2400*)? Ska våningens namn också stå vid
-  FG? (Sedan 0.10.1 kapar bjälklaget väggen där det täcker den, också
-  under tak.)
-
-- **0.9.1 efter provning** (Claudes val, se PLAN.md): verktyget med
-  rektangel, *Ur väggarna* och *Håltagning*; att *Ur väggarna* slutar vid
-  ytterväggarnas insida och att innerväggarna står på bjälklaget; att
-  konturen i planen är tunna linjer under väggarna och bara går att klicka
-  på (Tab vid väggens insida); förvald tjocklek 300 (BJ01) och 400 för plattan i
-  exempelvillan. (Svarat 25 oktober: ingen littera som standard, inga
-  automatiska bjälklag, marklinjen efter marken, innerväggarna kapas; se
-  *Läget*.)
-
-- **0.9 efter provning** (Claudes val, se PLAN.md): att en ny våning
-  ovanför flyttar dem som redan ligger ovanför, och att en ändrad
-  våningshöjd flyttar våningarna ovanför (golvnivån gäller bara våningen
-  själv); namnen Plan 2 … och Källarplan; att Ta bort också tar bort
-  vyerna av våningen från bladen; att Flytta/Kopiera till våning finns i
-  högerklicksmenyn och smartshell men inte i smartmenyn, och att kopian
-  får samma tillstånd som originalet; att den tonade våningen är ett val i
-  Kalkera (med kalkeringens färg och opacitet); att *Bara den här
-  våningen* gäller för honom, inte per vy; att norrpilen också hör till
-  projektet. (Sedan 0.10 kapar taket väggar på alla våningar.)
-
-- **0.8.38 efter provning**: inget nytt att prova; allt ska bete sig som
-  förut. Ett DXF-underlag med grus, mark och liknande mönster ska ritas
-  fortare och se ut som i AutoCAD (stenar, inte prickar). Säg till om
-  något beter sig annorlunda.
-
-- **0.8.37 efter provning** (Claudes val, se PLAN.md): att vyradens
-  knappar sätter alla tre nivåerna och att valen var för sig ligger i
-  Visa och vyns egenskaper; att fasaderna följer 3D-nivån; att
-  rumsstämpeln inte följer någon nivå. Fyllningarna: ser de inbyggda
-  rätt ut (tegelmåtten 250 × 62 med fog, block 600 × 200, betong och trä
-  på papper)? Räcker guiden?
-
-- **0.8.36**: Carl August svarade 25 oktober: linjetjocklek per typ,
-  färdiga typer och en guide (gjorda i 0.8.37), att rita mönster
-  grafiskt (0.11.1) och isolering som objekt (efter piloten). Kvar att
-  fråga: fungerar hans `.pat`-filer (han har inte använt dem förut), och
-  att mönster med mer än 20 mm mellan linjerna antas vara i verkliga mått.
-
-- **0.8.35 efter provning** (Claudes val, se PLAN.md): att det är en
-  dialog (inte en panel) och inte finns i smartmenyns *Mer*; att *Finns
-  i* kräver alla ikryssade tillstånd; att bara det som syns i tillståndet
-  räknas; att egenskapens värde är "innehåller" utan hänsyn till stora
-  och små bokstäver; att egenskaperna öppnas efter Ersätt och Lägg till.
-  Saknas något villkor (t.ex. riktning, längd, area)?
-
-- **0.8.34**: Carl August svarade 25 oktober att de fyra punkterna
-  (kontur under väggarna, gränsen gäller med 2D släckt, osynlig gräns
-  inte tonad, rumsstämpelns pil kvar bland markörerna) är bra som de är.
-
-- **0.8.33 efter provning** (Claudes val, se PLAN.md): förvalen snitt
-  0,25, vy 0,18 och symbol 0,13 mm; att dörrbladen (0,35 → 0,18) och
-  fönstrens glas (0,25 → 0,18) blev tunnare; att väggen under fönstret
-  är kvar på 0,13 utan klass; att bara *Symbol* gäller i fasader och
-  sektioner. Den egna pennans *Snitt* och *Symbol* är oberoende: en dörr
-  som fick en egen färg i 0.8.31 har nu slagbågen i stilmallens färg.
-  Ska *Symbol* hellre följa *Snitt* när den inte är satt? Ska *Vy* också
-  finnas som egen del i den egna pennan? Typens penna går fält för fält
-  under objektets.
-
-- **0.8.32 efter provning**: inget nytt att prova; allt ska bete sig som
-  förut, och planen ritas om lite fortare när en vägg flyttas i ett stort
-  hus. Säg till om något beter sig annorlunda.
-
-- **0.8.31 efter provning** (Claudes val, se PLAN.md): att pennan finns
-  för väggar, dörrar, fönster, tak och möbler men inte för rum (som inte
-  ritar någon kontur); att tjockleken gäller alla objektets linjer
-  (sedan 0.8.33 utom slagbågen, som har *Symbol*); att texter och fyllningar
-  följer stilmallen; att pennan inte finns i smartmenyn. Rummens kontur
-  kommer i 0.8.34; pennan på typen kom i 0.8.33.
-
-- **0.8.30 efter provning** (Claudes val, se PLAN.md): vilka sju
-  inbyggda linjetyper som finns och deras mönster; att de egna ligger i
-  stilmallen och följer med den (också vid byte till en förinställd); att
-  mönstret skrivs med mellanslag och decimalkomma; att pennornas linjetyp
-  inte gäller pilspetsar, trianglar och text; att hörn skarpare än 35°
-  börjar om mönstret (med ett helt streck i varje hörn); att masken också
-  döljer rutnätet på skärmen. Ska DXF-underlagens streckade linjer ritas
-  streckade (inte gjort)? Behövs en förhandsvisning av linjetypen i
-  listorna (nu bara namnet), eller räcker bilden i stilmallen?
-
-- **0.8.29 efter provning** (Claudes val, se PLAN.md): bakgrunden slås på
-  med en kryssruta och är vit från början; opaciteten är bakgrundens egen
-  (skrafferingens opacitet påverkar den inte); i verktyget väljs bara
-  färgen. En bakgrund döljer linjer och ändformer bakom, men inte en undre
-  forms fyllning (den ritas i ritordningen som förut). Ska bakgrunden
-  också kunna sättas i stilmallen?
-
-- **0.8.28 efter provning**: Carl August har svarat (25 oktober) att
-  bara den markerade linjen ska fortsättas, som nu; skrafferingens
-  bakgrund och ändformerna blir 0.8.29. Kvar att fråga: ska *Fortsätt*
-  kunna väljas bort i inställningarna för snabbknappar, och ska nya kanter
-  få verktygets penna i stället för formens?
-
-- **0.8.26 efter provning** (Claudes val, se PLAN.md): vilka nio pennor
-  som finns och deras namn; att färgen också gäller markörens text och
-  fyllda trianglar, men tjockleken bara linjerna; att pennorna ligger längst
-  ned i stilmallen (inte i en egen dialog); att det inte går att ge ett
-  enskilt objekt en egen penna. Saknas någon markör (skalstocken,
-  stämplarna, rumsstämpelns text)? Ska streckning också kunna väljas?
-
-- **0.8.25 efter provning** (Claudes val, se PLAN.md): att ritordningen
-  bara gäller inom en sort på samma yta (en text går inte att lägga bakom
-  en 2D-form; sorterna ligger i fasta lager), och att väggar, dörrar och
-  fönster inte har någon; att Bak och Fram hoppar förbi det som inte
-  överlappar; var knapparna finns (egenskaperna, Mer i smartmenyn,
-  högerklick, `främst`/`fram`/`bak`/`längstbak`) och att det inte finns
-  kortkommandon (Ctrl+] och Ctrl+[ som i Illustrator kräver AltGr på
-  svenskt tangentbord). Bakom eller framför väggarna gäller bara planen;
-  i fasader och sektioner ligger det ritade ovanpå som förut. Ska det
-  gälla där också? Rummets fyllning ligger alltid bakom väggarna och
-  2D-formerna, ställs in för ett rum i taget och går inte att klicka i;
-  ska flera rum kunna fyllas på en gång, och ska fyllningen kunna sättas
-  per rumstyp eller i stilmallen? Vid lika poäng vinner nu det som ritas
-  överst när man klickar; säg till om något annat markeras än förut.
-
-- **0.8.24 efter provning** (Claudes val, se PLAN.md): att en rektangel
-  inte förblir rät när ett hörn dras (som en polylinje i AutoCAD), och att
-  cirkeln saknar centrumgrepp (två punkter på cirkeln; flytta med Flytta);
-  att Böj och Räta ut finns i Modifiera och inte som grepp mitt på kanten;
-  att en böjd kant inte går att förskjuta, trimma eller dela; ändformernas
-  utseende och förvalda storlek (2,5 mm), att de bara väljs i egenskaperna
-  och smartmenyn (inte i verktyget) och bara på öppna linjer. Ska
-  smartmenyn alltid visa *Ändar* för en markerad linje, eller tar det för
-  mycket plats? Ska bågar kunna ritas direkt i Linje (som `A` i AutoCADs
-  PLINE)?
-
-- **0.8.22 efter provning** (Claudes val, se PLAN.md): opaciteten är *Samma
-  för linje och fyllning* från början, och kryssrutan skiljer dem; den
-  finns i egenskaperna och smartmenyn, inte i verktyget. Rumsstämpelns
-  ordning är en mall i stilmallen (som litteramallarna) och gäller hela
-  projektet, inte ett rum i taget; raden med `{namn}` är den stora och
-  feta. *Fyllningar* under Visa gäller vyn, så en sparad vy med
-  fyllningarna släckta visas utan dem också på bladen. Rumsstämpelns pil är
-  kvar tunn (bara sektionspilen ändrades). Former ritade som enkellinje
-  före 0.8.22 heter också *Linje*.
-
-- **0.8.27 och 0.8.23 efter provning**: inget nytt att prova; allt ska
-  bete sig som förut. I 0.8.27 ska fasaderna komma fortare, i 0.8.23
-  pekandet i planen kännas lika snabbt med ett stort DXF-underlag som
-  utan. Säg till om något beter sig annorlunda.
-
-- **0.8.21 efter provning** (Claudes val, se PLAN.md): bokstäverna för
-  alternativen (Å för Ångra, ML/MV i Justera) och att de går direkt till
-  raden bara medan något ritas (S är då Stäng, inte snäpp); att *Avsluta*
-  är samma som Enter; att taket visar Sadeltak/Pulpettak redan före första
-  klicket; att högerklick i ritningen medan något pågår visar frågans
-  alternativ (inte objektmenyn); att historiken bara låter klicka på
-  kommandon, inte på punkter; 48 px som gräns för att docka och 720 px som
-  största bredd för den fria raden. Ska *Avbryt* också stå bland
-  alternativen? Ska Skala och måttbandet ta emot skrivna punkter?
-
-- **0.8.20 efter provning** (Claudes val, se PLAN.md): namnet *smartshell*
-  på raden (prompten heter SMARTSHELL sedan 0.8.21); att den ligger under ritytan och inte
-  under panelerna; att bokstäverna (W, D, L …) är kvar som kortkommandon så
-  att kommandon skrivs efter Enter, men siffror, `@`, `#` och `<` i vägg-,
-  2D- och måttverktyget går direkt till raden (2, 3 och 4 byter inte vyläge
-  där); att Enter i ett tomt fält kör senaste kommandot igen; att `CO` är
-  Kopiera i rad; förkortningarna för det som inte finns i AutoCAD (`VG`,
-  `WA`, `NP`, `HS` …). Ska man kunna skriva kommandon direkt utan Enter,
-  som i AutoCAD (då försvinner kortkommandona med en bokstav)? Fungerar
-  `@` med AltGr på hans tangentbord?
-
-- **0.8.19 efter provning** (Claudes val, se PLAN.md): namnen *2D-form*,
-  *Rita* och *Ritad som*; att sättet att rita inte går att byta efteråt;
-  att fyllningen väljs redan i verktyget (förval ingen) och att en rak
-  linje inte får någon; att en form utan linje och fyllning inte syns alls
-  utom markerad eller med *Visa dolda 2D-element*; att fyllningar inte
-  längre går att släcka för sig i Visa; mönstren utan namn i
-  verktygsraden. Ska fyllningen kunna ligga över väggarna (ordning per
-  form)? Projekt från 0.8.18 öppnas inte (format 11).
-
-- **0.8.18 efter provning** (Claudes val, se PLAN.md): är rutnätet lagom
-  tydligt (nivåerna tonas in mellan 4 och 16 px; finare linjer är svagare)?
-  Ska segmentpunkterna gälla bara vyn de lades i (som nu), och ska Rensa
-  rensa alla vyer (som nu)? Delningen gäller hela mätningen, alla klickade
-  sträckor. osifont gäller all ritningstext utan val; vill han kunna välja
-  typsnitt per projekt? Fet text är osifont med ett tunt streck. Tecknen ”
-  och … saknas i osifont och skrivs som " och ... Autospar till fil är på
-  från början och kräver att filen sparats eller öppnats efter att sidan
-  laddats; ska appen komma ihåg filen mellan sidladdningar (kräver att
-  Chrome frågar om lov)?
-
-- **0.8.17 efter provning** (Claudes val, se PLAN.md): att man drar i
-  stämpeln först när rummet är markerat; att stämpelns läge är en fast
-  punkt i modellen (står kvar när väggarna flyttas, följer med när rummet
-  flyttas); pilens utseende (tunn linje, öppen spets, till närmaste kant
-  och 2 mm in); att stämpeln inte snäpper när den dras. Ska pilen hellre
-  gå mot rummets mitt?
-
-- **0.8.16 efter provning** (Claudes val, se PLAN.md): att X och Y är
-  nedre vänstra hörnet också för DXF (inte filens nollpunkt, som kan vara
-  bra för koordinatsatta DXF); att bredd och höjd i fälten sträcker en bild
-  var för sig; Shift i ett hörn sträcker fritt; att linjen man kände på
-  glöms vid byte av verktyg, och att sneda linjer i jämna 15° inte får eget
-  *Parallellt* (vinkellåset tar dem); att skärningar nu snäpps överallt,
-  också mellan väggliv. Hittade *Zooma till* inte DXF-underlag förut? (Det
-  gjorde den inte; rättat.) Ska gruppen för en fil på flera ställen vara
-  utfälld från början?
-
-- **0.8.15 efter provning**: inget nytt att prova; Modifiera ska bete sig
-  exakt som förut, bara snabbare med många markerade väggar. Säg till om
-  något ändå beter sig annorlunda.
-
-- **0.8.14 efter provning** (Claudes val, se PLAN.md): Justeras knappar och
-  att ett klick på en vägg lägger objekten mot livet som vetter mot dem;
-  vad pipetten tar med (allt utom form och läge, möblernas mått räknas som
-  form, bara samma slag); att Skala inte gäller väggar, tak och rum och inte
-  ändrar texthöjden; att Shift+X väljer Förläng alla med flera markerade
-  men Shift+T behåller den gamla Trimma; bokstäverna Shift+N, H och Y.
-  Smartmenyn för flera markerade har nu en fjärde grupp och bryts på fler
-  rader. Ska tjocklekstabellen också finnas för linjer i stilmallen?
-
-- **0.8.13 efter provning** (Claudes val, se PLAN.md): bokstäverna för
-  kortkommandona (Shift+Q Ta bort punkt och Shift+K Flytta punkt är
-  godtyckliga); att Trimma, Hörnskarv och Dela avslutas efter ett klick (i
-  AutoCAD fortsätter Trimma tills Esc); att Dela finns fast Lägg till punkt
-  också delar en vägg; att baspunkten gäller också Spegla och I rad. Ska
-  Avrunda alla och Fasa alla också gälla 2D-polylinjer?
-
-- **Bladen efter provning** (0.8.9, Claudes val): att bilder på bladet
-  ligger under vyerna och linjer och text över; att mått inte går att rita
-  på bladet; att en vy i en större markering bara går att flytta (inte
-  vrida, spegla eller kopiera); att bladet inte följer tillstånden.
-- **Textrutorna**: förankringen är punkten i rutans över-, mitt- eller
-  underkant och justeringen rutans vänster-, mitt- eller högerkant; utan
-  förankring står första radens baslinje på punkten som förut. Rutan ställs
-  in i egenskaperna (0 = ingen gräns). Vill han kunna dra upp rutan med
-  textverktyget, och se rutans kant när texten är markerad? Skärmen och PDF:en
-  har samma typsnitt sedan 0.8.18 (osifont).
-- **Fälten efter provning** (0.8.10, Claudes val): vad som är inbyggt och
-  vilka fält som gäller hela projektet från början, `{skala a3}` (nämnaren
-  gånger långsidan / 420), att fält utan värde blir tomma på papperet, att
-  ett fält med *(olika)* inte går att tömma på flera blad samtidigt, och
-  att rubrikerna i tabellen är namnet som det först skrivs, med stor
-  bokstav.
-- **Mallbladen efter provning** (0.8.8, Claudes val): att mallen ritas från
-  papperets nedre vänstra hörn på blad i andra format (med ett tips), att
-  ett valt mallblad föreslår sitt format, att loggan nu är ett underlag på
-  mallbladet och att mallbladet inte följer tillstånden.
-- **Hans ram** (gjord om i format 10, 21 oktober): platshållarna som blev smarttext är Claudes gissning
-  (#PROJEKTNAMN, #DATUM, #RITNINGSNR, #RAD 3, #FÖRHANDSKOPIA,
-  #FASTIGHETSBETECKNING, #PROJEKTNR, #REV, #ARKITEKTKONTOR, #INITIALER MV,
-  #SIGN ANSVARIG, #SKALA A1). Övriga (#KOMMUN, #MAPPNAMN, #RAD 1, 2 och 4,
-  #INITIALER HL, #SKALA A3) blev fält, `{mapp}` och `{skala a3}`. Skriptet
-  kördes med `--utan 605,22,716,50 --behall HÖJD --behall SWEREF` (utan
-  skalstocken) och projektet med fälten `kommun,projektbeskrivning,handläggare`.
-- **0.8.12 efter provning** (Claudes val): skalstocken alltid 100 mm (ingen
-  inställning för längd och indelning); andra skalor än hans tolv delas in
-  som den med samma siffror (1:200 som 1:2000) eller efter jämna tal;
-  skalan från bladets första vy när den läggs på; läget 230 mm från
-  papperets högerkant och 40 mm upp på alla format (x 611 på A1); texthöjd
-  3 mm, linjerna 0,7/0,35/0,18 och texten 0,25; skalstockar och stämplar
-  går bara att flytta; en stämpel läggs nere till vänster innanför ramen
-  (eller där man högerklickar) och ritas över vyerna; en stämpel i en
-  stämpel blir en streckad ruta. I 1:50 är strecket vid 10 mm 4 mm långt
-  och tunt, som i DXF:en (de andra skalorna har ett mellanstreck där);
-  avsiktligt?
-- **Vyns ram efter provning** (0.8.7, Claudes val): att ramen följer med
-  när skalan byts. Vill han kunna dölja hela vyrubriken, inte bara skalan?
-- **Synpunktsformuläret**: kommer breven fram till Gmail nu, efter `-f`?
-  Annars: prova att sätta Gmail-adressen direkt som `to` i
-  `feedback-config.php`. Kommer de fram då är det vidarebefordran från
-  Loopia som stoppar dem.
-- **Smartmenyn efter provning**: placeringen (höger, vänster, under, över
-  det markerade), att den syns vid markering med ruta, och om rubriken
-  *Ändra* i Modifiera-raden ska heta något annat.
-- **0.8.11 efter provning** (Claudes val): kategorierna i Visa (Modell,
-  Littera, Rum, mått och text, 2D, Markörer), littera per typ och underlag
-  i Visa; att MTEXT fästs efter sin bredaste rad; namnen Skärm, Verklig och
-  Tunna på *Linjer*; snett streck på avslagna knappar och accentfärg på
-  påslagna (också verktygen och panelknapparna fick en tydligare ram); att
-  en sluten 2D-form inuti ett rum går före rummet men en linje nära klicket
-  går före båda. Synpunkten om polylinjer som bara markeras vid kanten gick
-  inte att återskapa (slutna polylinjer gick att klicka inuti); nu räknas
-  också en polylinje vars ändar möts som sluten. Hände det på ett annat
-  sätt behövs ett exempel.
-
-### Från 0.8.0
-
-- **Typsnittet** är osifont på skärmen och i PDF:en sedan 0.8.18.
-- Modellvyer på blad ritas med förslaget jämfört med befintligt. Sparade
-  vyer ritas med sina egna inställningar.
+**Övrigt**
+79. Kommer synpunktsformulärets brev fram till Gmail nu (efter `-f`)?
+    Annars Gmail-adressen direkt som `to` i `feedback-config.php`.
+80. Smartmenyns placering; ska rubriken *Ändra* heta något annat?
+81. Har felet med polylinjer som bara markeras vid kanten kommit tillbaka?
 
 ## Öppna frågor och kända begränsningar
 
@@ -857,7 +346,7 @@ taket* är kvar.
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (288 steg sedan 0.10.6: stilmallen med linjetyper, pennor och
+  (293 steg sedan 0.10.7: stilmallen med linjetyper, pennor och
   fyllningstyper, snabbraden, den egna pennan, rummets fyllning,
   2D-formens fält med mask, bakgrund och fyllningstyp, ritordning, Visas
   i, underlag, detaljnivåerna, Filtrera och markera, våningar, bjälklag,

@@ -61,7 +61,8 @@ export function shapeOf(el: ShapeLike | undefined): ShapeLike | undefined {
   if (!el) return undefined;
   if (el.type === 'Shape2D') return el;
   // Markobjekt längs en linje (0.10.5): linjen som en öppen 2D-form, utan bågar.
-  if (el.type === 'Ground' && Array.isArray(el.params.line) && (el.params.line as unknown[]).length >= 2) return { type: 'Shape2D', params: { shape: 'polyline', points: el.params.line, closed: false } };
+  // Utan bågar (`noArcs`): Böj och Avrunda finns inte förrän markobjekten kan ha bågar.
+  if (el.type === 'Ground' && Array.isArray(el.params.line) && (el.params.line as unknown[]).length >= 2) return { type: 'Shape2D', params: { shape: 'polyline', points: el.params.line, closed: false, noArcs: true } };
   return el.type === 'Roof' && Array.isArray(el.params.outline) ? roofShape(el) : undefined;
 }
 
@@ -195,8 +196,13 @@ export function shapeCan(s: ShapeLike): { insert: boolean; remove: boolean; offs
     insert: n >= 2,
     remove: n > (closedOf(s) ? 3 : 2),
     offset: chain,
-    bend: chain,
+    bend: chain && allowsArcs(s),
   };
+}
+
+/** Om formen kan ha bågar (Böj, Avrunda). Markobjektens linjer kan det inte än (0.10.7). */
+export function allowsArcs(s: ShapeLike): boolean {
+  return !s.params.noArcs;
 }
 
 /** En ny punkt på kant i. På en båge hamnar punkten på bågen, som delas i två. */

@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { updateParams } from '../src/core/commands';
+import { moveElements, updateParams } from '../src/core/commands';
 import { finishedGround, type GroundShape } from '../src/core/ground';
 import { hasEditableOutline } from '../src/core/roofEdit';
 import { GROUND_DEFAULTS, groundAt, terrainOf } from '../src/core/site';
@@ -8,8 +8,8 @@ import { DocStore } from '../src/core/store';
 import { mirrorElements } from '../src/core/transforms';
 import { registerBuiltInTypes } from '../src/elements';
 import { finishedTerrain, groundGeometry, groundObjects, groundType, wallCrest } from '../src/elements/ground';
-import { pathWarnings } from '../src/elements/groundLines';
-import { shapeOf, shapePatch } from '../src/elements/shapeEdit';
+import { centerShift, pathWarnings } from '../src/elements/groundLines';
+import { allowsArcs, shapeCan, shapeOf, shapePatch } from '../src/elements/shapeEdit';
 import { buildingHeight } from '../src/repr/buildingHeight';
 import { buildSection } from '../src/repr/section';
 import { meanGround, terrainMesh } from '../src/repr/terrain';
@@ -62,9 +62,20 @@ describe('Markobjekt (0.10.4)', () => {
     expect(t.z).toEqual(before);
   });
 
+  it('markytan (0.10.7): schakt där marken ligger högre, fyll där den ligger lägre, i samma objekt', () => {
+    const store = onSlope();
+    // Mitt i slänten: marken går från +2 000 till +3 000 under ytan på +2 500.
+    const id = addGround(store, { kind: 'area', outline: [[20000, -5000], [30000, -5000], [30000, 5000], [20000, 5000]], height: 2500 });
+    const f = finishedTerrain(planCtx(store))!;
+    expect(groundAt(f.terrain, 21000, 0)).toBeCloseTo(2500, 0);
+    expect(groundAt(f.terrain, 29000, 0)).toBeCloseTo(2500, 0);
+    expect(f.volumes.get(id)!.cut).toBeGreaterThan(10);
+    expect(f.volumes.get(id)!.fill).toBeGreaterThan(10);
+  });
+
   it('gäller bara i förslaget: Befintligt visar den befintliga marken, också i sektionen', () => {
     const store = onSlope();
-    addGround(store, { kind: 'plateau', outline: [[-20000, -5000], [-10000, -5000], [-10000, 5000], [-20000, 5000]], height: 0 });
+    addGround(store, { kind: 'area', outline: [[-20000, -5000], [-10000, -5000], [-10000, 5000], [-20000, 5000]], height: 0 });
     expect(finishedTerrain(planCtx(store))).not.toBeNull();
     expect(finishedTerrain(planCtx(store, 'st-bef'))).toBeNull();
     const parts = buildSection(store.doc, 'sektion-a', { state: 'st-bef' })!.prims.map((p) => p.origin?.part);
@@ -74,7 +85,7 @@ describe('Markobjekt (0.10.4)', () => {
 
   it('platån runt huset följer fasaden med sockeln, och medelmarknivån räknas mot den färdiga marken', () => {
     const store = onSlope();
-    const id = addGround(store, { kind: 'plateau', outline: [], around: true });
+    const id = addGround(store, { kind: 'area', outline: [], around: true });
     const ctx = planCtx(store);
     const g = groundGeometry(ctx, store.doc.elements[id])!;
     expect(g.label.height).toBe(-200);
@@ -89,8 +100,8 @@ describe('Markobjekt (0.10.4)', () => {
 
   it('urgrävningen under bjälklaget: botten i plattans underkant, tar bara ned marken och räknas före platån runt huset', () => {
     const store = onSlope();
-    addGround(store, { kind: 'plateau', outline: [], around: true });
-    addGround(store, { kind: 'excavation', outline: [], slab: 'bj1' });
+    addGround(store, { kind: 'area', outline: [], around: true });
+    addGround(store, { kind: 'area', outline: [], slab: 'bj1' });
     const ctx = planCtx(store);
     const f = finishedTerrain(ctx)!;
     const [first, around] = f.volumes.keys();
@@ -150,10 +161,10 @@ describe('Byggnadshöjd (0.10.5)', () => {
   });
 });
 
-describe('Ramp, gångväg och infart (0.10.5)', () => {
+describe('Ramp/väg (0.10.5, en sort sedan 0.10.7)', () => {
   it('rampen: höjden längs mittlinjen, slänt på sidorna, orörd mark utanför', () => {
     const store = onSlope();
-    addGround(store, { kind: 'path', path: 'ramp', outline: [], line: [[20000, 0], [26000, 0]], height: 2000, endHeight: 2500 });
+    addGround(store, { kind: 'path', outline: [], line: [[20000, 0], [26000, 0]], height: 2000, endHeight: 2500 });
     const t = finished(store);
     expect(groundAt(t, 23000, 0)).toBeCloseTo(2250, 0);
     expect(groundAt(t, 20000, 0)).toBeCloseTo(2000, 0);
@@ -161,17 +172,18 @@ describe('Ramp, gångväg och infart (0.10.5)', () => {
     expect(groundAt(t, 23000, 3000)).toBeCloseTo(2300, 0);
   });
 
-  it('varnar för en ramp brantare än 1:12 och utan vilplan över 0,5 m, men inte för en infart', () => {
+  it('varnar brantare än gränsen (förval 1:12), och utan vilplan över 0,5 m när den är brantare än 1:20', () => {
     const line: [number, number][] = [[0, 0], [6000, 0]];
-    expect(pathWarnings('ramp', line, 0, 500, GROUND_DEFAULTS)).toEqual([]);
-    expect(pathWarnings('ramp', line, 0, 600, GROUND_DEFAULTS)).toHaveLength(2);
-    expect(pathWarnings('walk', line, 0, 400, GROUND_DEFAULTS)).toHaveLength(1);
-    expect(pathWarnings('drive', line, 0, 900, GROUND_DEFAULTS)).toEqual([]);
+    expect(pathWarnings(line, 0, 500, 12, GROUND_DEFAULTS)).toEqual([]);
+    expect(pathWarnings(line, 0, 600, 12, GROUND_DEFAULTS)).toHaveLength(2);
+    expect(pathWarnings(line, 0, 400, 20, GROUND_DEFAULTS)).toHaveLength(1);
+    // Flackare än 1:20 behövs inget vilplan, hur hög den än är.
+    expect(pathWarnings([[0, 0], [30000, 0]], 0, 1200, 12, GROUND_DEFAULTS)).toEqual([]);
   });
 
-  it('infarten har tvärfall: förvalet 1:50 faller åt höger, och speglad åt vänster', () => {
+  it('tvärfallet faller åt höger, och speglat åt vänster', () => {
     const store = onSlope();
-    const id = addGround(store, { kind: 'path', path: 'drive', outline: [], line: [[20000, 0], [30000, 0]], height: 2500, endHeight: 2500, crossFall: 50 });
+    const id = addGround(store, { kind: 'path', outline: [], line: [[20000, 0], [30000, 0]], width: 3000, height: 2500, endHeight: 2500, crossFall: 50 });
     const t = finished(store);
     // Tre meter bred: en meter åt vänster (y = +1 000) 40 mm högre än en meter åt höger.
     expect(groundAt(t, 25000, 1000)! - groundAt(t, 25000, -1000)!).toBeCloseTo(40, 0);
@@ -179,25 +191,59 @@ describe('Ramp, gångväg och infart (0.10.5)', () => {
     expect(store.doc.elements[id].params.crossFall).toBe(-50);
   });
 
-  it('mittlinjen ändras som en öppen 2D-form, inte som en kontur', () => {
+  it('referenslinjen ändras som en öppen 2D-form utan bågar, och flyttas med objektet', () => {
     const store = onSlope();
-    const id = addGround(store, { kind: 'path', path: 'walk', outline: [], line: [[0, 20000], [5000, 20000]], height: 0 });
+    const id = addGround(store, { kind: 'path', outline: [], line: [[0, 20000], [5000, 20000]], height: 0 });
     const el = store.doc.elements[id];
     expect(hasEditableOutline(el)).toBe(false);
     expect(shapeOf(el)?.params.closed).toBe(false);
+    expect(allowsArcs(shapeOf(el)!)).toBe(false);
+    expect(shapeCan(shapeOf(el)!).bend).toBe(false);
     expect(shapePatch(store.doc, id, undefined, { points: [[0, 20000], [6000, 20000]] })).toEqual({ line: [[0, 20000], [6000, 20000]] });
+    // Höjdpunkten och linjerna följde inte med när de flyttades (före 0.10.7).
+    moveElements(store, [id], [1000, -500]);
+    expect(store.doc.elements[id].params.line).toEqual([[1000, 19500], [6000, 19500]]);
   });
 
-  it('verktyget: en ramp med höjderna ur marken i ändarna, avslutad med Enter', () => {
+  it('referenslinjen på en kant: vägen ligger på andra sidan, och förskjutningen flyttar den mot mitten', () => {
+    // Längs x: vänster är +y. Med linjen på vänster kant ligger vägen åt höger (−y).
+    expect(centerShift('left', undefined, 2000)).toBe(-1000);
+    expect(centerShift('right', undefined, 2000)).toBe(1000);
+    // 100 mm närmare mitten: linjen ligger 100 innanför kanten.
+    expect(centerShift('left', -100, 2000)).toBe(-900);
+    expect(centerShift(undefined, 300, 2000)).toBe(-300);
+    const store = onSlope();
+    const id = addGround(store, { kind: 'path', outline: [], line: [[20000, 0], [26000, 0]], width: 2000, refSide: 'left', height: 2000, endHeight: 2000 });
+    const g = groundGeometry(planCtx(store), store.doc.elements[id])!;
+    expect(g.center).toEqual([[20000, -1000], [26000, -1000]]);
+    const ys = g.rings[0][0].map((q) => q[1]);
+    expect(Math.min(...ys)).toBeCloseTo(-2000, 6);
+    expect(Math.max(...ys)).toBeCloseTo(0, 6);
+  });
+
+  it('tvärlinjerna i ändarna kan slås av, och fyllningen ritas bakom väggarna', () => {
+    const store = onSlope();
+    const id = addGround(store, { kind: 'path', outline: [], line: [[20000, 0], [26000, 0]], height: 2000, endHeight: 2000, fill: 'hatch' });
+    const parts = (over: Record<string, unknown> = {}) => {
+      updateParams(store, [id], over, 'Prov');
+      return groundType.plan!(store.doc.elements[id] as never, planCtx(store)).map((q) => q.origin?.part);
+    };
+    expect(parts()).toEqual(expect.arrayContaining(['fyllning', 'kant', 'början', 'slutet']));
+    const off = parts({ startLine: false, endLine: false });
+    expect(off).not.toContain('början');
+    expect(off).not.toContain('slutet');
+  });
+
+  it('verktyget: en ramp/väg med höjderna ur marken i ändarna, avslutad med Enter', () => {
     const store = onSlope();
     const tool = new GroundTool(toolHost(store));
-    tool.options.mode = 'ramp';
+    tool.options.mode = 'path';
     tool.takePoint([20000, 10000]);
     tool.takePoint([26000, 10000]);
     expect(tool.started).toBe(true);
     tool.finish();
     const el = Object.values(store.doc.elements).find((e) => e.type === 'Ground')!;
-    expect(el.params).toMatchObject({ kind: 'path', path: 'ramp', height: 2000, endHeight: 2600 });
+    expect(el.params).toMatchObject({ kind: 'path', height: 2000, endHeight: 2600 });
   });
 });
 
@@ -221,7 +267,7 @@ describe('Höjdpunkt, brytlinje och stödmur (0.10.5)', () => {
 
   it('stödmuren stoppar slänten: marken bakom är orörd, och krönet följer den högre sidan', () => {
     const store = onSlope();
-    addGround(store, { kind: 'plateau', outline: [[20000, -5000], [30000, -5000], [30000, 5000], [20000, 5000]], height: 3000 });
+    addGround(store, { kind: 'area', outline: [[20000, -5000], [30000, -5000], [30000, 5000], [20000, 5000]], height: 3000 });
     // Utan mur fylls marken väster om platån till slänten.
     expect(groundAt(finished(store), 19000, 0)).toBeCloseTo(2500, 0);
     const wall = addGround(store, { kind: 'wall', outline: [], line: [[20000, -6000], [20000, 6000]] });

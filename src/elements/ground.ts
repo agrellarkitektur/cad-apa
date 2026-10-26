@@ -38,7 +38,7 @@ export const groundType: ElementType<GroundParams> = {
   compares: true,
   planReads: ['Wall', 'Slab'],
   pickSoft: true,
-  defaults: () => ({ kind: 'plateau', outline: [] }),
+  defaults: () => ({ kind: 'area', outline: [] }),
   model3d(el, ctx): Shape3D[] {
     // Stödmuren som kropp (0.10.5), från foten till krönet. Den övriga marken är markmodellen.
     const p = ctx.params<GroundParams>(el);

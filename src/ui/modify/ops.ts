@@ -4,7 +4,7 @@ import type { Id } from '../../core/model';
 import { canScale } from '../../core/arrange';
 import { canJoin, canTrim } from '../../core/trimEdit';
 import { cornerPartner, cornersAmong, refFrame } from '../../core/wallEdit';
-import { canRoundCorner, edgeIsArc, editedShape, holeShape, holesOf, shapeCan, shapeEdgeAt, shapeNodes, shapeOf, type ShapeLike } from '../../elements/shapeEdit';
+import { allowsArcs, canRoundCorner, edgeIsArc, editedShape, holeShape, holesOf, shapeCan, shapeEdgeAt, shapeNodes, shapeOf, type ShapeLike } from '../../elements/shapeEdit';
 import { dist, sub } from '../../geometry/vec';
 import { resolveParams } from '../../elements/registry';
 import type { RoofParams } from '../../elements/roof';
@@ -201,7 +201,7 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
             ...(arc ? (['shapeStraighten'] as OpId[]) : []),
             ...(can.offset && !arc ? (['shapeOffset'] as OpId[]) : []),
           ]
-        : ['shapeMove', ...(can.remove ? (['shapeRemove'] as OpId[]) : []), ...(el && canRoundCorner(el, ctx.index!) ? (['shapeFillet', 'shapeChamfer'] as OpId[]) : [])];
+        : ['shapeMove', ...(can.remove ? (['shapeRemove'] as OpId[]) : []), ...(el && canRoundCorner(el, ctx.index!) ? ((allowsArcs(el) ? ['shapeFillet', 'shapeChamfer'] : ['shapeChamfer']) as OpId[]) : [])];
     // En håltagning (0.9.4) flyttas och tas bort för sig; det allmänna gäller hela bjälklaget.
     if (ctx.hole !== undefined) return [own, ['holeMove', 'holeRemove']];
     // Ett takfall (0.10) kapas mot ett annat.
@@ -466,7 +466,7 @@ export function railFor(host: ToolHost, ids: readonly Id[]): Set<RailId> {
     if (can.bend) on.add('curve');
     if (can.bend && ((el.params.bulges as number[] | undefined) ?? []).some((b) => Math.abs(b) >= 0.5)) on.add('straighten');
     if (shapeNodes(el).some((_, i) => canRoundCorner(el, i))) {
-      on.add('fillet');
+      if (allowsArcs(el)) on.add('fillet');
       on.add('chamfer');
     }
   }

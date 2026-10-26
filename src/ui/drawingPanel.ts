@@ -18,8 +18,8 @@ import { underlayChange, underlayFields } from './underlayFields';
  * Lås och det som fördelar fälten och knapparna till dem.
  */
 
-/** Typer som kan låsas. */
-export const LOCKABLE = new Set(['Shape2D', 'Text', 'Dimension', 'RoofSlope', 'Section', 'Elevation', 'North', 'Underlay']);
+/** Typer som kan låsas. Markobjekten sedan 0.10.7. */
+export const LOCKABLE = new Set(['Shape2D', 'Text', 'Dimension', 'RoofSlope', 'Section', 'Elevation', 'North', 'Underlay', 'Ground']);
 
 const comma = (n: number) => n.toLocaleString('sv-SE');
 

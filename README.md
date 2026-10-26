@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.6** (alfa); nästa är **0.10.7, dolda linjer i fasader**.
+**0.10.7** (alfa); nästa är **0.10.8, marken i ritningarna**.
 
 ## Vad som fungerar
 
@@ -1106,6 +1106,26 @@ Version 0.10.2, takfot och taket i planen (samma filformat, 17):
 - Nivåkoten *Takfot* är takets lägsta undersida med snittet och språnget
 - Referensritningarna med tak ändrades (punktstreckat och takfotens snitt)
 
+Version 0.10.7, markobjekt del 3 (nytt filformat, 19; projekt från 0.10.6 öppnas inte):
+- **Rättat**: höjdpunkter, vägar, brytlinjer och stödmurar följde inte med
+  när de flyttades. *Avrunda* finns inte längre för markobjektens linjer
+  (den gav bara fler raka bitar); riktiga bågar kommer senare
+- **Ramp/väg** i stället för ramp, gångväg och infart: ett namn (*Ramp*,
+  *Infart* …) som står i planen, bredd 1 500 från början, tvärfall när det
+  anges, och en egen gräns för hur brant den får vara innan den varnar
+  (förval 1:12 under *Platsen*). Vilplan behövs när den är brantare än
+  1:20 och går mer än 0,5 m
+- **Markyta** i stället för platå och urgrävning: där marken ligger högre
+  tas den ned, där den ligger lägre fylls den upp, också i samma objekt
+  (mitt i en slänt)
+- **Referenslinjen** på en ramp/väg kan ligga i mitten eller på vänster
+  eller höger kant, med förskjutning (negativ mot mitten). Den syns blå när
+  vägen är markerad, i planen och i 3D
+- **Tvärlinjerna** i vägens början och slut går att slå av
+- **Penna** (tjocklek, färg, linjetyp) och **fyllning** för markobjekten,
+  som för 2D-formerna; markytor och vägar fylls bakom väggarna
+- Markobjekten går att **låsa**
+
 Version 0.10.6, granskning (samma filformat, 18):
 - Inga nya funktioner; allt beter sig som förut
 - **Den färdiga marken räknas om bara när den ändras**: inte när en
@@ -1363,7 +1383,7 @@ Version 0.8.28, rättelser i 2D-formen (samma filformat, 13):
 
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer, i dag 15 (sedan 0.9.1). Fram till
+Projektfilerna har ett formatnummer, i dag 19 (sedan 0.10.7). Fram till
 den öppna betan uppgraderas inte projekt från äldre alfa- och betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp
