@@ -148,7 +148,7 @@ Fasader och sektioner räknas exakt ur 3D-formerna. Det som återstår av dem
 byggs vidare i takt med resten:
 
 - Brutna sektionslinjer
-- Fler nivåkoter, höjdmått och marklinje mot terräng (med terrängen, efter pilotprojektet)
+- Fler nivåkoter, höjdmått och marklinje mot terräng (med marken, 0.10.3–0.10.5)
 - Fönster- och dörrsymboler i fasad efter typ (med smartobjekten, efter pilotprojektet)
 - Skuggor och djup i fasader
 
@@ -1600,7 +1600,7 @@ största. Kapade kanter blir raka (bågar blir polylinjer). Taket kapar
 väggar på alla våningar där det ligger ovanför väggens fot, men Upp till
 taket drar bara upp väggar under tak på samma våning (en gavel på plan 1
 går inte upp genom plan 2). Nivåkoten *Takfot* är takets lägsta punkt på
-undersidan, som förut (i fasadlivet med byggnadshöjden i 0.10.3). I
+undersidan, som förut (i fasadlivet med byggnadshöjden i 0.10.5). I
 fasaden sitter höjdgreppet vid referenslinjen och lutningsgreppet i
 punkten längst från den; Shift (nocken still) finns inte längre.
 Skarven vid nocken syns inte i 3D och fasader: ett hörn som ett annat
@@ -1698,26 +1698,96 @@ takfötter på samma takfall) tar den första kantens snitt hörnet; ett
 vinkelrätt snitt i hörnet mellan takfot och en gavel med vinkel ritas
 inte som ett geringssnitt.*
 
-### 0.10.3 Mark och byggnadshöjd
+### Marken före piloten (bestämt 26 oktober)
 
-Mellanstor.
+Carl August 26 oktober: marken ska inte behöva anges för hand. Med
+platspaketet från Höjdkurvor finns alltid en markmodell, och
+medelmarknivån räknas automatiskt, också när marken fylls upp eller grävs
+ut runt huset. Därför flyttas terrängen från *Efter pilotprojektet* till
+0.10.3–0.10.5, och koordinaterna från *Koordinater, SWEREF och sol*.
+Höjderna är riktiga (RH 2000). Den befintliga marken ändras aldrig; den
+färdiga marken räknas om ur den och markobjekten, som är fristående och går
+att flytta och ändra. Ingen penselmodellering. Skissen skickas inte
+tillbaka till Höjdkurvor: analyserna görs i cad-apa (efter piloten).
 
-- Medelmarknivå utan terräng: markhöjder anges runt huset och
-  medelmarknivån räknas ut enligt PBF. Marklinjen i fasader och sektioner
-  följer markhöjderna i stället för det lägsta i byggnaden (synpunkt 25
-  oktober; urgrävning för bjälklag i mark kommer med terrängen efter
-  piloten)
-- Byggnadshöjd enligt PBF: där fasadlivet skär takets översida, och för
-  tak brantare än 45° med 45°-planet
+### 0.10.3 Markmodell · *nytt format (18)*
 
-### 0.10.4 Dolda linjer i fasader
+Mellanstor till stor, en session.
+
+- Ta emot platspaketet från Höjdkurvor (`docs/UTBYTE-CAD-APA.md` i
+  hojdkurvor-repot, version 1): `postMessage` med handskakningen och
+  `.hkplats.json` som fil. Fråga innan ett öppet projekt ersätts
+- Projektet får nollpunkt, SWEREF-zon, vridning och sann nord (norrpilen);
+  planen ritas runt nollpunkten, så att stora koordinater inte når 3D-vyn
+- Höjder i RH 2000: modellen räknar relativt projektets höjd och visar
+  RH 2000 (*FG +114,500*). Utan markmodell som i dag (plan mark)
+- Rutnätet sparas för sig (inte som tal i projektets JSON; upp till 1,2
+  miljoner punkter) och kan beskäras till ett mindre utsnitt
+- Befintlig mark i 3D, som höjdkurvor i planen (förval 0,5 m, val 0,25 och
+  1 m; tunna och streckade) och som tunn streckad marklinje i fasader och
+  sektioner
+- Grannhusen (`byggnader`) som enkla volymer, träd, vägar och stompunkter
+- Medelmarknivån räknas automatiskt längs husets kontur, viktad efter
+  fasadernas längd, och visas i husets egenskaper och som nivåkot
+- Fastighetsgränser läses om paketet har dem (fältet finns inte än; står
+  på Höjdkurvors lista). cad-apa föreslår fältets form och läser det när
+  det finns
+- Behöver ett riktigt platspaket att prova mot (Carl August sparar en
+  platsfil ur Höjdkurvor; testdata går att göra med Höjdkurvors
+  `test/data/make_dtm.py`)
+
+### 0.10.4 Markobjekt del 1
+
+Stor, kan behöva två sessioner.
+
+- Den färdiga marken räknas ur den befintliga och markobjekten (ritordning
+  där de överlappar), och räknas om när ett objekt ändras
+- **Platå**: kontur med höjd, plan eller med fall; varje kant möter marken
+  med slänt (förval 1:2) eller stödmur
+- **Platå runt huset**: följer husets kontur och sockel, avstånd ut från
+  fasaden och fall från huset (förval 1:20 de första 3 m); följer med när
+  huset flyttas
+- **Urgrävning**: kontur med bottenhöjd och slänt inåt; en variant följer
+  bjälklaget i mark
+- Höjdkurvor över färdig mark (tjocka) och befintlig (tunna, streckade);
+  marksnittslinjen för ny mark tjock och heldragen i fasader och sektioner;
+  jordskraffering under snittlinjen som val (av från början)
+- Befintlig mark hör till tillståndet *befintligt*, markobjekten till
+  *nytt*: före och efter syns med tillstånden. Medelmarknivån mot färdig
+  mark (förval) och mot befintlig
+- Schakt och fyll i m³
+- Förvalen (lutningar, avstånd) går att ändra i projektet
+
+### 0.10.5 Markobjekt del 2 och byggnadshöjd
+
+Stor.
+
+- **Ramp och gångväg**: mittlinje med bredd och höjder i ändarna eller en
+  lutning; sidorna möter marken med slänt eller mur; lutningspil med
+  *1:12*; varning när en gräns som ställts in i projektet överskrids (som
+  projektvinklarna). Gränserna kontrolleras mot BBR innan de blir förval
+- **Infart**: som rampen, bredare och med tvärfall
+- **Höjdpunkt och brytlinje**: låser marken i en punkt eller längs en linje
+- **Stödmur** som eget objekt längs en linje
+- Byggnadshöjd enligt PBF: från medelmarknivån till där fasadlivet skär
+  takets översida (för tak brantare än 45° med 45°-planet); `roofBody` har
+  översidan. Kontrolleras mot PBF 1 kap. 3 § och Boverkets vägledning
+  (takutsprång, beräkningsgrundande fasad) innan den byggs. Nivåkot *BH*
+- *Upp till taket* är kvar (Carl August 26 oktober); fråga kvar om den går
+  före ett bjälklag som täcker väggen
+
+### 0.10.6 Granskning
+
+Efter marken, som är ny och tung geometri.
+
+### 0.10.7 Dolda linjer i fasader
 
 Carl Augusts synpunkt 25 oktober. Mellanstor.
 
 - Vyinställning i fasader: närmaste bjälklag och ytterväggarnas insida som
   streckade linjer genom fasaden
 
-### 0.10.5 Småsaker
+### 0.10.8 Småsaker
 
 Synpunkter 25 oktober, efter 0.9.4.
 
@@ -1726,7 +1796,7 @@ Synpunkter 25 oktober, efter 0.9.4.
 - Snäppa mot kalkerunderlaget
 - Hovring i 3D visar vad som väljs, som i planen
 
-### 0.10.6 Höjder i förhållande till våningen
+### 0.10.9 Höjder i förhållande till våningen
 
 Synpunkt 25 oktober. Mellanstor.
 
@@ -1774,28 +1844,12 @@ Carl August 22 oktober. Stor; delas om det behövs.
 - DXF av vyer och blad, med lager per objekttyp
 - Areor för bygglov (BTA, BYA, OPA) ur modellen, så långt piloten behöver
 
-### Koordinater, SWEREF och sol (egen version efter 0.12, stor)
-
-Carl Augusts synpunkter 20 oktober; före eller efter piloten bestäms när
-0.12 är klar.
-
-- Startar man ett projekt från Höjdkurvor får projektets origo en lokal
-  nollsymbol med koordinater inklusive Z = 0, vilket SWEREF som gäller och
-  en norrpil mot sann nord. Det ska följa med vid export av modellfiler.
-  Fråga: behövs en funktion för att ändra Z, eller går det att rita på
-  t.ex. Z = 1000 i motorn?
-- Lokal nollpunkt och SWEREF kan också anges för hand
-- Har projektet SWEREF kan planmodellen och IFC exporteras i SWEREF, utöver
-  lokal nolla (som är förval)
-- Sol och skugga hämtas ur SWEREF-koordinaterna; datum och tid anges per vy
-  (plan, sektion, fasad och 3D)
-
 ### 0.13 Pilotprojektet (proof of concept)
 
 - Carl August ritar själv ett hus, helst ett av sina egna inlämnade bygglov
   (gärna en 1½-plansvilla eller en tillbyggnad), i cad-apa, från underlag
   till plottade blad. Situationsplanen ritas på kommunens grundkarta som
-  DXF-underlag; terrängen väntar
+  DXF-underlag och terrängen från Höjdkurvor
 - Varje gång något saknas eller måste fuskas skrivs det ner, och tiden
   jämförs med Archicad
 - Det som stoppar piloten åtgärdas i småversioner; resten sorteras in under
@@ -1890,11 +1944,16 @@ Vinklar:
   som ett objekt, med vinkelrännor); till dess byggs de av takfall (0.10)
 - Fler trappformer (spiraltrappa, fri form) och räcken som eget objekt
 
-### Situationsplan och terräng
+### Sol och analys på platsen (stor, minst två sessioner)
 
-- Situationsplan med terräng och höjdkurvor från höjdkurvor.se
-- Medelmarknivå, byggnadshöjd och nockhöjd ur markmodellen
-- Marken grävs ur där ett bjälklag ligger i den; marklinjen följer den importerade marken (synpunkt 25 oktober)
+Carl August 26 oktober: efter piloten. Samma analyser som i Höjdkurvor,
+direkt i cad-apa: sol och skugga per vy (datum och tid), skuggstudie,
+horisont (behöver höjddata 5 km ut: nytt fält i platspaketet eller hämtning
+direkt), skyfall och lutning. Export i SWEREF utöver lokal nolla.
+
+### Fler markobjekt
+
+- Svackdike och utvändig trappa (med 0.11 Trappor)
 
 ### Utbyte med andra program
 

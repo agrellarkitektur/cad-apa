@@ -1,7 +1,8 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.2.
+överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.2
+(marken planerad samma dag).
 
 ## Läget
 
@@ -29,10 +30,10 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   förslag, inte bekräftade (se synpunktsfilen och *Att fråga*): skarven
   mellan våningarna syns inte hos Carl August, och bandet i fasaden får
   vara (svar på frågorna om 0.10.1); Visa för väggar m.m. och att dölja
-  objekt med högerklick föreslås som 0.10.7, linjerna i 2D-formen
+  objekt med högerklick föreslås som 0.10.10, linjerna i 2D-formen
   (Förskjut flera kanter, fortsätta och sluta en linje, foga ihop) som
-  0.10.8, sparade 3D-vyer efter 0.12 eller efter piloten. *Upp till
-  taket* är en fråga tillbaka.
+  0.10.11, sparade 3D-vyer efter 0.12 eller efter piloten. *Upp till
+  taket* är kvar (26 oktober).
 - **0.10.1 Granskning**: Carl August bad om granskningen före takfoten
   (26 oktober). Inkorgens punkt 26 oktober (bjälklaget kapar väggen som
   taket) togs med, eftersom det är samma kod.
@@ -99,7 +100,8 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
   Carl August: kapade innerväggar i 0.9.2; ingen littera på bjälklag som
   standard och inga automatiska bjälklag på nya våningar (redan så); hål
   som 2D-form och klickbar bjälklagsyta i 0.9.3; marklinjen efter
-  markhöjder i 0.10.3, urgrävning med terrängen efter piloten.
+  markhöjder i 0.10.3 (sedan 26 oktober: marken ur Höjdkurvor i
+  0.10.3–0.10.5, urgrävningen i 0.10.4).
 - **0.9.1**: nytt objekt `Slab` med littera BJ och tjocklek per typ,
   verktyget *Bjälklag* (rektangel, *Ur väggarna*, *Håltagning*),
   konturen ur ytterväggarnas insida som följer väggarna, ritad kontur som
@@ -218,47 +220,66 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~, ~~0.9.2 Nivåer~~,
   ~~0.9.3 Granskning~~, ~~0.9.4 Bjälklag del 2~~, ~~0.10 Tak~~,
   ~~0.10.1 Granskning~~, ~~0.10.2 Takfot och taket i planen~~ (klara)
-- **0.10.3 Mark och byggnadshöjd** (markhöjder, medelmarknivå,
-  byggnadshöjd enligt PBF, marklinjen)
-- **0.10.4 Dolda linjer i fasader**
-- **0.10.5 Småsaker** (högerklick på planer, Visa i kolumner, snäpp mot
-  kalkering, hovring i 3D) och **0.10.6 Höjder i förhållande till
+- **Marken före piloten** (Carl August 26 oktober): **0.10.3 Markmodell**
+  (platspaketet från Höjdkurvor, nollpunkt och SWEREF, RH 2000, befintlig
+  mark, automatisk medelmarknivå; nytt format 18), **0.10.4 Markobjekt del
+  1** (platå, platå runt huset, urgrävning, färdig mark, schakt och fyll;
+  stor), **0.10.5 Markobjekt del 2 och byggnadshöjd** (ramp, gångväg,
+  infart, höjdpunkt, brytlinje, stödmur; byggnadshöjd enligt PBF; stor),
+  **0.10.6 Granskning**
+- **0.10.7 Dolda linjer i fasader**
+- **0.10.8 Småsaker** (högerklick på planer, Visa i kolumner, snäpp mot
+  kalkering, hovring i 3D) och **0.10.9 Höjder i förhållande till
   våningen**
-- Förslag, inte bekräftade: **0.10.7 Visa och dölja** (väggar m.m. i
-  Visa, dölja ett objekt eller en typ med högerklick) och **0.10.8
+- Förslag, inte bekräftade: **0.10.10 Visa och dölja** (väggar m.m. i
+  Visa, dölja ett objekt eller en typ med högerklick) och **0.10.11
   Linjerna i 2D-formen** (Förskjut flera kanter, fortsätta och sluta en
-  linje, foga ihop linjer); nästa granskning ungefär där
+  linje, foga ihop linjer)
 - **0.11 Trappor** (nytt format)
 - **0.11.1 Profilverktyget** (nytt format, stor; också att rita ett
   mönster och göra det till en fyllningstyp) och **0.11.2 Dörrar och
   fönster** (stor)
 - **0.12 Export**: IFC4, DXF, areor för bygglov
-- **Koordinater, SWEREF och sol** (stor; före eller efter piloten, bestäms
-  efter 0.12)
 - **0.13 Pilotprojektet**: Carl August ritar själv ett hus
 - **Inbjuden alfa** för arkitektvänner; deras synpunkter i småversioner
 - **Öppen beta och formatfrys**; etiketten blir *Beta*
 - Efter piloten: se *Efter pilotprojektet* i PLAN.md (bl.a. kulör och
-  material, explodera DXF-underlag, mallblad mellan projekt). **1.0**
+  material, explodera DXF-underlag, mallblad mellan projekt, **sol och
+  analys på platsen**: skuggstudie, horisont, skyfall, lutning). **1.0**
   bygglovshandling.
 
 ## Nästa session
 
 Fråga först om 0.10.2 syns på webbhotellet och hur taket ser ut i planen,
 3D och fasaderna (frågorna nedan; 0.9.2–0.10.1 har inte provats fullt ut
-än). Be honom bekräfta sorteringen av Inkorgen 26 oktober (0.10.7, 0.10.8
-och 3D-vyerna, se synpunktsfilen) och svara på frågan om *Upp till
-taket*. Läs synpunktsfilen och sortera ny Inkorg. Sedan **0.10.3 Mark
-och byggnadshöjd** (PLAN.md), mellanstor:
+än). Be honom bekräfta sorteringen av Inkorgen 26 oktober (0.10.10,
+0.10.11 och 3D-vyerna, se synpunktsfilen). Läs synpunktsfilen och sortera
+ny Inkorg. Be om en riktig platsfil (*Spara platsfil för cad-apa* i
+Höjdkurvor, helst pilotens tomt) om den inte redan finns. Sedan **0.10.3
+Markmodell** (PLAN.md, *Marken före piloten*), mellanstor till stor:
 
-- Markhöjder runt huset (punkter med höjd, eller en höjd per fasad) och
-  medelmarknivån enligt PBF
-- Marklinjen i fasader och sektioner följer markhöjderna i stället för
-  det lägsta i byggnaden
-- Byggnadshöjden där fasadlivet skär takets ovansida (för tak brantare än
-  45° med 45°-planet), som nivåkot; kroppens ovansida finns i `roofBody`
+- Ta emot platspaketet (`docs/UTBYTE-CAD-APA.md` i
+  `agrellarkitektur/hojdkurvor`, läsbart utan rättigheter): `postMessage`
+  och `.hkplats.json`. Höjdkurvors sida är byggd; `test/cad-apa-mock.html`
+  där visar handskakningen
+- Nollpunkt, zon, vridning och sann nord; höjder i RH 2000 (modellen
+  relativt projektets höjd, visat i RH 2000)
+- Rutnätet sparas för sig, inte som tal i projektets JSON
+- Befintlig mark i 3D, höjdkurvor i planen (0,5 m), tunn streckad
+  marklinje i fasader och sektioner, grannhus som volymer
+- Automatisk medelmarknivå
+- Föreslå fältet `fastigheter` för Höjdkurvor (finns inte än, står på
+  deras lista) och läs det om det finns
 
-Nästa granskning ungefär vid 0.10.6–0.10.8.
+Besluten 26 oktober: befintlig mark ändras aldrig; markobjekten är
+fristående; ingen penselmodellering; befintlig tunn streckad, ny tjock
+heldragen; jordskraffering som val, av från början; medelmarknivån mot
+färdig mark som förval, befintlig också (tillstånden); förvalen (slänt
+1:2, fall 1:20 de första 3 m, ramp 1:12) går att ändra; ingen skiss
+tillbaka till Höjdkurvor; analyserna i cad-apa efter piloten; *Upp till
+taket* är kvar.
+
+Nästa granskning: 0.10.6, efter marken.
 
 ## Att fråga Carl August om
 
@@ -276,9 +297,11 @@ Nästa granskning ungefär vid 0.10.6–0.10.8.
   kontur ritas bara inne i taken; ska den kunna visas också utan tak (en
   situationsplan)? Nivåkoten *Takfot* är takets lägsta undersida (med
   snittet nu 2515 i stället för 2445 i exempelvillan); byggnadshöjden
-  kommer i 0.10.3.
+  kommer i 0.10.5.
 
-- **Upp till taket** (synpunkt 26 oktober, "behöver vi ens det?"): taket
+- **Upp till taket**: kryssrutan är kvar (Carl August 26 oktober). Kvar
+  att fråga: ska den gå före ett bjälklag som täcker väggen? (Bakgrund:
+  synpunkt 26 oktober, "behöver vi ens det?"): taket
   kapar redan väggar som når upp i det, på alla våningar, automatiskt.
   *Upp till taket* gör det omvända: drar upp en vägg som slutar under
   taket (gaveln) till takets undersida. Utan kryssrutan skulle gaveln få
