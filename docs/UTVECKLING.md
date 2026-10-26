@@ -1242,6 +1242,29 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Stödmur del 2 (0.10.9, format 20)
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/elements/groundWall.ts` | Ny: `computeProfile(ref, th, p, ground)` (punkterna längs mittlinjen med krön och fot, ren räkning), `simplify`, `crestAtS`, `wallCenter`, `wallThickness`, `wallSolids(id, prof, base)` (bitar med `top`/`bottom`-plan och `noEdges`, plus en `Edges3D`) |
+| `src/elements/groundGeometry.ts` | `GroundParams` med `endAbove`, `crest` (`CrestPoint[]`) och `straight`; murens ring och spärrar längs mittlinjen (`center`); `wallProfile(ctx, el)` (sparad per vy, mot den färdiga marken) och `wallCrest` (högsta krön, lägsta fot) |
+| `src/elements/groundPlan.ts` | ÖK vid ändarna och höjdpunkterna (part `höjd`, `höjdpunkt`), `normalAt` |
+| `src/ui/groundFields.ts` | `refRows` (delas med vägen), *Krönet* (`ground:straight`), *Över marken* och *ÖK* i båda ändar, höjdpunkterna (`ground:crest<i>`, tomt tar bort) |
+| `src/ui/modify/ops.ts`, `tool.ts` | Valet `crestPoint` (instant) på murens linje; `addCrestPoint` |
+| `src/ui/highlight.ts`, `src/ui/app/pane3d.ts` | Referenslinjen med pil för väg och mur; murens på krönet i 3D |
+| `src/core/transforms.ts` | `crest` följer med; spegling byter `refSide` (och `refOffset` i mitten) |
+
+- Profilen räknas i punkter var 0,5 m, i hörnen och vid höjdpunkterna.
+  Höjdpunkterna sparas som punkter på referenslinjen och projiceras på
+  mittlinjen, så de följer med när linjen ändras.
+- Bitarna har `noEdges`; i fasader och sektioner ger `featureEdges` då bara
+  böjda ytors konturer, så skarvarna mellan bitarna syns inte. Kanterna
+  saknar `part`, så de ritas med vy-pennan (0,18) och berörs inte av
+  `joinStoreys`.
+- Tester: `tests/mark.test.ts` (*Stödmur del 2*). Referensritningarna
+  `mark-plan`, `mark-fasad-2`, `mark-fasad-4`, `mark-3d` och
+  `mark-siffror` ändrades.
+
 ## Höjderna i fasaden (0.10.8b, format 20)
 
 | Fil | Innehåll |

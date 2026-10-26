@@ -3,8 +3,10 @@ import type { Id } from '../../core/model';
 import { markerFrame } from '../../elements/markers';
 import { resolveParams } from '../../elements/registry';
 import type { WallParams } from '../../elements/wall';
-import type { GroundParams } from '../../elements/ground';
-import { lineLength } from '../../elements/groundLines';
+import { wallProfile, type GroundParams } from '../../elements/ground';
+import { crestAtS } from '../../elements/groundWall';
+import { createContext } from '../../repr/context';
+import { along, lineLength } from '../../elements/groundLines';
 import type { Vec2 } from '../../repr/primitives';
 import { buildModel3d } from '../../repr/model3d';
 import { finishedForView, terrainMesh } from '../../repr/terrain';
@@ -104,7 +106,18 @@ export function installPane3d(app: AppContext) {
         });
       // Vägens referenslinje (0.10.7), strax över ytan, med höjden rakt mellan ändarna.
       const paths = els.filter((el) => el?.type === 'Ground' && el.params.kind === 'path').flatMap((el) => groundRefLine(resolveParams<GroundParams>(app.store.doc, el)));
-      return [...walls, ...paths];
+      // Stödmurens referenslinje (0.10.9) strax över krönet.
+      const retaining = els
+        .filter((el) => el?.type === 'Ground' && el.params.kind === 'wall')
+        .flatMap((el) => {
+          const { ctx } = createContext(app.store.doc, el.storey, app.viewStates(), app.store.doc.graphics, () => true);
+          const prof = wallProfile(ctx, el);
+          const pts = (resolveParams<GroundParams>(app.store.doc, el).line ?? []) as Vec2[];
+          if (!prof) return [];
+          const z = (q: Vec2) => crestAtS(prof, along(prof.center, q[0], q[1]).s) + 30;
+          return pts.slice(1).map((b, i) => ({ a: pts[i], b, z: z(pts[i]), zb: z(b) }));
+        });
+      return [...walls, ...paths, ...retaining];
     },
     snap: (cursor, from, exclude, tol, ortho) => {
       const r = snap({ cursor, from, segments: app.host.snapSegments(), tol, ortho, exclude: new Set(exclude) });

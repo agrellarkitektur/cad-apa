@@ -5,6 +5,10 @@ import { mergeAtCorner, reshapeWall } from '../../core/wallEdit';
 import { bendShapeEdge, editedShape, holesOf, removeShapeNode, shapePatch } from '../../elements/shapeEdit';
 import { resolveParams } from '../../elements/registry';
 import type { RoofParams } from '../../elements/roof';
+import { wallProfile, type GroundParams } from '../../elements/ground';
+import { crestAtS } from '../../elements/groundWall';
+import { along } from '../../elements/groundLines';
+import { createContext } from '../../repr/context';
 import { withOwnCut, type EdgeCut } from '../../elements/roofBody';
 import { dist } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
@@ -39,6 +43,11 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
     if (el && patch) updateParams(host.store, [ctx.shapeId!], shapePatch(doc, ctx.shapeId!, ctx.hole, patch), 'Räta ut');
     return;
   }
+  // En höjdpunkt på stödmuren (0.10.9), med krönets höjd där man klickade.
+  if (op === 'crestPoint') {
+    addCrestPoint(host, ctx);
+    return;
+  }
   // Håltagningen ur bjälklaget (0.9.4).
   if (op === 'holeRemove') {
     const slab = ctx.shapeId ? doc.elements[ctx.shapeId] : undefined;
@@ -63,6 +72,32 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
   const p = el.params as { start: [number, number]; end: [number, number] };
   if (op === 'straighten') reshapeWall(host.store, el.id, p.start, p.end, 0, 'Räta ut');
   if (op === 'merge' && ctx.end && !mergeAtCorner(host.store, el.id, ctx.end)) host.hint('Hörnet har inte precis två väggar.');
+}
+
+/** En höjdpunkt på stödmuren där man klickade, med krönets höjd där (avrundad till 5 mm). */
+export function addCrestPoint(host: ToolHost, ctx: ModifyContext): void {
+  const doc = host.store.doc;
+  const el = ctx.shapeId ? doc.elements[ctx.shapeId] : undefined;
+  if (el?.type !== 'Ground' || el.params.kind !== 'wall') return;
+  if (el.locked) {
+    host.hint('Låst. Lås upp i egenskaperna för att ändra.', 3000);
+    return;
+  }
+  const { ctx: pc } = createContext(doc, el.storey, { state: host.activeState() }, doc.graphics, () => true);
+  const prof = wallProfile(pc, el);
+  if (!prof) {
+    host.hint('Krönet följer marken; lägg in en markmodell under Platsen först.');
+    return;
+  }
+  const a = along(prof.center, ctx.at[0], ctx.at[1]);
+  if (a.s < 100 || a.s > prof.stations[prof.stations.length - 1].s - 100) {
+    host.hint('Ändarnas höjd ändras i egenskaperna (ÖK i början och slutet).');
+    return;
+  }
+  const h = Math.round(crestAtS(prof, a.s) / 5) * 5;
+  const p = resolveParams<GroundParams>(doc, el);
+  const at: [number, number] = [Math.round(ctx.at[0]), Math.round(ctx.at[1])];
+  updateParams(host.store, [el.id], { crest: [...(p.crest ?? []), { at, h }] }, 'Höjdpunkt på krönet');
 }
 
 /** Ge kanten man klickat på ett eget snitt, eller ta bort det (`cut` utelämnat). */

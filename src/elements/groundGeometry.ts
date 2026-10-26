@@ -8,6 +8,7 @@ import { sameItems } from '../repr/reuse';
 import { buildingFootprint } from './footprint';
 import type { FillParams } from './drawing2d';
 import { along, barriersOf, centerShift, lineLength, lockShape, offsetLine, PATH_WIDTH, pathShape, stripRing, type RefSide } from './groundLines';
+import { computeProfile, wallCenter, wallThickness, type CrestPoint, type WallProfile } from './groundWall';
 import { resolveParams, type PlanContext } from './registry';
 import type { SlabParams } from './slab';
 
@@ -34,7 +35,9 @@ import type { SlabParams } from './slab';
  * - **Höjdpunkt** och **brytlinje** (`point`, `breakline`, 0.10.5): låser
  *   marken och tonar den runt omkring inom en radie.
  * - **Stödmur** (`wall`, 0.10.5): en linje med tjocklek som slänterna inte
- *   går över. Krönet följer den högre sidan, eller en egen höjd.
+ *   går över. Referenslinjen i mitten eller på en kant (0.10.9); krönet
+ *   följer den högre sidans mark utjämnad, eller går rakt, mellan ändarna
+ *   och höjdpunkterna (se `groundWall.ts`).
  *
  * Höjderna är i mm från ±0, som allt annat i modellen. Det som saknas tas ur
  * projektets förval (`site.ground`), så att ett ändrat förval gäller alla
@@ -92,9 +95,18 @@ export interface GroundParams extends Partial<FillParams> {
   crossFall?: number;
   /** Höjdpunkt och brytlinje: hur långt marken tonas, mm. */
   radius?: number;
-  /** Stödmuren: tjockleken, mm. Krönet är `height` när den är satt, annars den högre sidan plus `above`. */
+  /**
+   * Stödmuren: tjockleken, mm. Krönet i början är `height` (ÖK) när den är
+   * satt, annars den högre sidan plus `above`; i slutet `endHeight` eller
+   * `endAbove` (0.10.9).
+   */
   thickness?: number;
   above?: number;
+  endAbove?: number;
+  /** Stödmurens höjdpunkter (0.10.9): en punkt på referenslinjen och krönets höjd där. */
+  crest?: CrestPoint[];
+  /** Stödmurens krön rakt mellan ändarna och höjdpunkterna, i stället för att följa marken (0.10.9). */
+  straight?: boolean;
 }
 
 /** Namnet på objektets sort, som i egenskaperna. */
@@ -264,8 +276,9 @@ function lineGeometry(el: Element<any>, p: GroundParams, slope: number | null, d
     return { rings: [[ring]], holes: [], shape: lockShape(el.id, pts, h0, h1, Math.max(1, p.radius ?? def.blend)), label: { at: mid.at, height: h0 } };
   }
   if (p.kind === 'wall') {
-    const ring = stripRing(pts, Math.max(50, p.thickness ?? def.wallThickness));
-    return { rings: [[ring]], holes: [], shape: null, barriers: barriersOf(pts), label: { at: mid.at, height: h0 } };
+    const th = Math.max(50, p.thickness ?? def.wallThickness);
+    const center = wallCenter(pts, th, p);
+    return { rings: [[stripRing(center, th)]], holes: [], shape: null, barriers: barriersOf(center), center, label: { at: mid.at, height: h0 } };
   }
   const w = Math.max(100, p.width ?? PATH_WIDTH);
   const c = centerShift(p.refSide, p.refOffset, w);
@@ -352,45 +365,23 @@ export function showsProposal(ctx: PlanContext): boolean {
   return ctx.doc.states.find((s) => s.id === ctx.view.state)?.kind !== 'existing';
 }
 
-/** Hur långt ut från muren marken känns på, mm (en ruta i rutnätet räcker). */
-const WALL_REACH = 700;
-/** Stödmurens grund under den lägre sidan, mm. */
-export const WALL_FOOTING = 300;
-
 /**
- * Stödmurens krön och fot (mm från ±0): krönet är den egna höjden, eller
- * den högre sidans högsta mark längs muren plus `above`; foten ligger
- * under den lägre sidans lägsta mark. Null utan markmodell.
+ * Stödmurens profil (0.10.9): punkterna längs mittlinjen med krön och fot,
+ * mot den färdiga marken. Null utan markmodell eller med för kort linje.
  */
-export function wallCrest(ctx: PlanContext, el: Element<any>): { top: number; bottom: number } | null {
-  return ctx.memo(`wall-crest:${el.id}`, () => {
+export function wallProfile(ctx: PlanContext, el: Element<any>): WallProfile | null {
+  return ctx.memo(`wall-profile:${el.id}`, () => {
     const p = ctx.params<GroundParams>(el);
-    const pts = (p.line ?? []).map((q): Vec2 => [q[0], q[1]]);
-    if (pts.length < 2) return null;
+    const ref = (p.line ?? []).map((q): Vec2 => [q[0], q[1]]);
+    if (ref.length < 2) return null;
     const t = finishedTerrain(ctx)?.terrain ?? terrainOf(ctx.doc);
     if (!t) return null;
-    const half = Math.max(50, p.thickness ?? groundDefaults(ctx.doc.site).wallThickness) / 2;
-    let hi = -Infinity;
-    let lo = Infinity;
-    for (let i = 1; i < pts.length; i++) {
-      const a = pts[i - 1];
-      const b = pts[i];
-      const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
-      if (l < 1) continue;
-      const nx = -(b[1] - a[1]) / l;
-      const ny = (b[0] - a[0]) / l;
-      const steps = Math.max(1, Math.ceil(l / 500));
-      for (let k = 0; k <= steps; k++) {
-        const x = a[0] + ((b[0] - a[0]) * k) / steps;
-        const y = a[1] + ((b[1] - a[1]) * k) / steps;
-        const l1 = groundAt(t, x + nx * (half + WALL_REACH), y + ny * (half + WALL_REACH));
-        const r1 = groundAt(t, x - nx * (half + WALL_REACH), y - ny * (half + WALL_REACH));
-        if (l1 === null || r1 === null) continue;
-        hi = Math.max(hi, l1, r1);
-        lo = Math.min(lo, l1, r1);
-      }
-    }
-    if (!Number.isFinite(hi)) return null;
-    return { top: p.height ?? hi + (p.above ?? 0), bottom: lo - WALL_FOOTING };
+    return computeProfile(ref, wallThickness(ctx, p), p, (x, y) => groundAt(t, x, y));
   });
+}
+
+/** Stödmurens högsta krön och lägsta fot (mm från ±0). Null utan markmodell. */
+export function wallCrest(ctx: PlanContext, el: Element<any>): { top: number; bottom: number } | null {
+  const prof = wallProfile(ctx, el);
+  return prof ? { top: prof.top, bottom: prof.bottom } : null;
 }

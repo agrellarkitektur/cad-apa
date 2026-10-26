@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.8b** (alfa); nästa är **0.10.9, stödmur del 2**.
+**0.10.9** (alfa); nästa är **0.10.10, dolda linjer och vyns djup**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,26 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.9, stödmur del 2 (samma filformat, 20):
+- **Referenslinjen** på stödmuren ligger i mitten eller på vänster eller
+  höger kant, med förskjutning, som vägens. Den syns när muren är
+  markerad, med en pil i linjens riktning, i planen och i 3D-vyn
+- **Krönet i ändarna**: *Över marken i början* och *i slutet* (t.ex. 700
+  och 900), mot den högre sidans mark, eller en egen *ÖK* i början och
+  slutet
+- **Krönet längs muren** följer den högre sidans mark utjämnad (medelvärdet
+  inom en meter åt båda håll), med tillägget rakt mellan ändarna; eller
+  går rakt mellan ändarna och höjdpunkterna (*Krönet: Rakt*)
+- **Höjdpunkter på krönet**: klicka på murens referenslinje i Modifiera och
+  välj *Höjdpunkt på krönet*. Den får krönets höjd där, och höjden ändras i
+  egenskaperna (ett tomt fält tar bort den). Krönet går genom
+  höjdpunkterna, och de följer med när muren flyttas, vrids eller speglas
+- **ÖK i planen** vid murens ändar och höjdpunkter (*ÖK +65,765*), med ett
+  streck tvärs över muren vid höjdpunkterna
+- **Muren i 3D, fasader och sektioner** har lutande krön och fot (foten 300
+  under den lägre sidan), utan skarvar
+- Speglade vägar och murar byter referenslinjens sida
 
 Version 0.10.8, marken i ritningarna (samma filformat, 19):
 - **Höjdkurvorna** är heldragna där marken inte ändrats, som den färdiga

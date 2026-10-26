@@ -2,7 +2,7 @@ import type { Element } from '../core/model';
 import { groundAt, groundDefaults, levelText, terrainOf } from '../core/site';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { fillPrims, type FillParams } from './drawing2d';
-import { finishedTerrain, groundLabel, isLineKind, wallCrest, type GroundGeometry, type GroundParams } from './groundGeometry';
+import { finishedTerrain, groundLabel, isLineKind, wallProfile, type GroundGeometry, type GroundParams } from './groundGeometry';
 import { lineLength, pathRatio, pathWarnings } from './groundLines';
 import type { PlanContext } from './registry';
 
@@ -192,6 +192,17 @@ function arrow(ctx: PlanContext, a: Vec2, b: Vec2, origin: Primitive['origin']):
 /** Höjden som text, i RH 2000 när projektet har en plats. */
 const hText = (ctx: PlanContext, h: number) => levelText(ctx.doc.site, h);
 
+/** Normalen åt vänster längs polylinjen vid sträckan `s` mm. */
+function normalAt(pts: readonly Vec2[], s: number): Vec2 {
+  let rest = s;
+  for (let i = 1; i < pts.length; i++) {
+    const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    if ((l >= rest || i === pts.length - 1) && l > 0) return [-(pts[i][1] - pts[i - 1][1]) / l, (pts[i][0] - pts[i - 1][0]) / l];
+    rest -= l;
+  }
+  return [0, 1];
+}
+
 /** Punkten `s` mm längs polylinjen (slutet om den är kortare). */
 function pointAlong(pts: readonly Vec2[], s: number): Vec2 {
   let rest = s;
@@ -233,8 +244,24 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
   }
   if (p.kind === 'wall') {
     for (const ring of g.rings[0]) out.push({ kind: 'region', role: 'cut', rings: [ring], fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'mur' } } as Primitive);
-    const crest = wallCrest(ctx, el);
-    if (crest) text([g.label.at[0], g.label.at[1] + 2.5 * ctx.scale], `Stödmur ${hText(ctx, crest.top)}`, 'höjd');
+    // Krönet (0.10.9): ÖK i ändarna och vid höjdpunkterna, som får ett streck tvärs över muren.
+    const prof = wallProfile(ctx, el);
+    if (!prof) return out;
+    const st = prof.stations;
+    const half = Math.hypot(st[0].left[0] - st[0].at[0], st[0].left[1] - st[0].at[1]);
+    const beside = (at: Vec2, s: number, h: number, side: 1 | -1) => {
+      const n = normalAt(prof.center, s);
+      const d = half + 3 * ctx.scale;
+      text([at[0] + n[0] * d * side, at[1] + n[1] * d * side - 0.7 * ctx.scale], `ÖK ${hText(ctx, h)}`, 'höjd');
+    };
+    beside(st[0].at, 0, prof.start, 1);
+    beside(st[st.length - 1].at, st[st.length - 1].s, prof.end, 1);
+    for (const pin of prof.pins) {
+      const n = normalAt(prof.center, pin.s);
+      const r = half + 1.2 * ctx.scale;
+      out.push({ kind: 'line', a: [pin.at[0] - n[0] * r, pin.at[1] - n[1] * r], b: [pin.at[0] + n[0] * r, pin.at[1] + n[1] * r], pen: { weight: 0.25 }, origin: { ...origin, part: 'höjdpunkt' } });
+      beside(pin.at, pin.s, pin.h, -1);
+    }
     return out;
   }
   // Vägen: fyllningen, sidorna och tvärlinjerna. Ringen är höger sida framåt och vänster bakåt.

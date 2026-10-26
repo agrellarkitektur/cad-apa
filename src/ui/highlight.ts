@@ -143,12 +143,20 @@ export function renderHighlight(
       out.push(`<rect x="${q[0] - 4.5}" y="${q[1] - 4.5}" width="9" height="9" class="grip"/>`);
     }
   }
-  // Vägens referenslinje (0.10.7) i markerade markobjekt.
+  // Vägens (0.10.7) och stödmurens (0.10.9) referenslinje i markerade markobjekt, med en pil i linjens riktning.
   for (const id of selected) {
     const el = doc.elements[id];
-    if (el?.type !== 'Ground' || el.params.kind !== 'path' || !byId.has(id)) continue;
+    if (el?.type !== 'Ground' || (el.params.kind !== 'path' && el.params.kind !== 'wall') || !byId.has(id)) continue;
     const pts = (resolveParams<GroundParams>(doc, el).line ?? []) as Vec2[];
-    if (pts.length >= 2) out.push(`<path d="${path(cam, pts, false)}" class="ref-line"/>`);
+    if (pts.length < 2) continue;
+    out.push(`<path d="${path(cam, pts, false)}" class="ref-line"/>`);
+    const a = cam.toScreen(pts[pts.length - 2]);
+    const b = cam.toScreen(pts[pts.length - 1]);
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (l < 12) continue;
+    const u = [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
+    const m = [b[0] - u[0] * 4, b[1] - u[1] * 4];
+    out.push(`<path d="M${m[0] - u[0] * 9 - u[1] * 5} ${m[1] - u[1] * 9 + u[0] * 5}L${m[0]} ${m[1]}L${m[0] - u[0] * 9 + u[1] * 5} ${m[1] - u[1] * 9 - u[0] * 5}" class="ref-line"/>`);
   }
   // Hörnen i markerade bjälklags kontur.
   for (const id of selected) {

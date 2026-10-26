@@ -2103,7 +2103,7 @@ raden *Byggnadshöjd* säger beräkningsgrundande eller längsta och
 nockhöjden. Provat med Playwright mot `dist/` (fasaderna, kryssrutorna,
 verktyget, linjen i planen, Platsen). Klickjämförelsen kördes inte.*
 
-### 0.10.9 Stödmur del 2
+### 0.10.9 Stödmur del 2 ✓
 
 Carl Augusts synpunkt 26 oktober. Mellanstor.
 
@@ -2111,6 +2111,33 @@ Carl Augusts synpunkt 26 oktober. Mellanstor.
 - Höjd över marken i början och slutet (t.ex. 700 och 900); krönet följer
   den utjämnade marken (medelvärdet av det den passerar)
 - Fler kontrollpunkter, och höjdpunkter längs muren med *ÖK +65,765*
+
+*Byggd (26 oktober), samma format (20). Testerna: 510 → 514, ca 10–13 s.
+Carl August sa "kör" på upplägget, och ja till ett rakt krön som val.
+Claudes val: **referenslinjen** som vägens (`refSide`, `refOffset`,
+`centerShift` med tjockleken); den syns markerad med en pil i linjens
+riktning, också i 3D. **Krönet** i ändarna är *Över marken* (`above`,
+`endAbove`, mot den högre sidan) eller en egen ÖK (`height`,
+`endHeight`; förut gällde `height` hela muren). Längs muren följer det
+den högre sidans mark utjämnad med ett glidande medelvärde (±1 m), med
+korrigeringen rakt mellan ankarna (ändarna och höjdpunkterna); med
+*Rakt* (`straight`) går krönet rakt mellan ankarna. **Höjdpunkter**
+(`crest`: punkt på referenslinjen och höjd) läggs med *Höjdpunkt på
+krönet* i Modifiera (smartmenyn på murens linje) med krönets höjd där,
+avrundad till 5 mm; höjden ändras och tas bort i egenskaperna. **Foten**
+300 under den lägre sidans lägsta mark inom ±1 m. **Planen**: ÖK vid
+ändarna (på vänster sida) och vid höjdpunkterna (på höger sida, med ett
+streck tvärs över muren); texten *Stödmur +…* i mitten är borta.
+**3D**: bitar på högst 0,5 m med lutande ovan- och undersida, slagna
+ihop där krönet och foten går rakt (inom 5 mm), utan egna kanter;
+kanterna (krönet, foten, ändarna och hörnen) levereras för sig med
+fasadens tunna vy-penna, som förut. Spegling byter referenslinjens sida
+(också för vägen, där det saknades). Provat med Playwright mot `dist/`
+(planen, Modifiera, egenskaperna, 3D). Klickjämförelsen kördes inte.
+Kända begränsningar: bitarna syns svagt som strimmor i 3D-vyn (som
+konens); där en fasads djup slutar mitt i muren ritas ingen kant vid
+gränsen (som för husets väggar); murens ändar möter fortfarande inte
+marken med slänt.*
 
 ### 0.10.10 Dolda linjer och vyns djup
 

@@ -3,30 +3,36 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 26 oktober 2026, efter 0.10.8b.
+Senast: 26 oktober 2026, efter 0.10.9.
 
 ## Läget
 
-- **0.10.8b Höjderna i fasaden är klar** på `main` (nytt format, 20).
-  Carl August sa "kör" på upplägget med Claudes val (nivåkota och mått
-  båda, totalhöjden ur det som syns, en beräkningsgrundande fasad per
-  projekt). Byggt: linjen *Beräkningsgrundande fasad* (`BasisFacade`,
-  ritas med Fasadverktygets val), byggnadshöjden utan språng, måtten BH,
-  NH och TH från MMN, kryssrutor per fasad- och sektionslinje (också *MMN
-  bef.*), och *Medelmarknivån* i Platsen ur den nya marken med *Befintlig*
-  bredvid. Testerna: 510 på ca 17–20 s. Provat med Playwright mot `dist/`.
-  Klickjämförelsen kördes inte. Claudes val i PLAN.md, koden i
-  UTVECKLING.md under *Höjderna i fasaden (0.10.8b)*.
-- **Versionsnumret** är `0.10.8b` i `engine.ts` och `0.10.8-b` i
-  `package.json` (semver tillåter inte `0.10.8b`).
+- **0.10.9 Stödmur del 2 är klar** på `main` (samma format, 20).
+  Carl August sa "kör" på upplägget och ja till rakt krön som val.
+  Byggt: referenslinjen i mitten eller på en kant med förskjutning (syns
+  markerad, också i 3D), *Över marken* och *ÖK* i båda ändar, krönet
+  utjämnat efter marken eller rakt, höjdpunkter med *Höjdpunkt på krönet*
+  i Modifiera, ÖK i planen, lutande krön och fot i 3D, fasader och
+  sektioner. Testerna: 514 på ca 10–13 s. Provat med Playwright mot
+  `dist/`. Klickjämförelsen kördes inte. Claudes val i PLAN.md, koden i
+  UTVECKLING.md under *Stödmur del 2 (0.10.9)*.
+- **0.10.8b Höjderna i fasaden** (nytt format, 20): linjen
+  *Beräkningsgrundande fasad*, byggnadshöjden utan språng, måtten BH, NH
+  och TH, *Medelmarknivån* ur den nya marken. Se PLAN.md.
+- **Carl August väntar med frågorna** (26 oktober kväll): de om 0.10.8
+  och 0.10.8b, och 35–36, ställdes men han avvaktar med att svara. Ställ
+  dem igen när han provat.
+- **Versionsnumret** är `0.10.9` i `engine.ts` och `package.json`
+  (en b-version skrivs `0.10.8-b` i `package.json`, semver tillåter inte
+  `0.10.8b`).
 - **Carl Augusts svar 26 oktober kväll** på fråga 17–34: 17, 18, 24 och 27
   bra som de är (24: bjälklaget går före *Upp till taket*). 20 och 32 till
   0.10.11 (snitthöjden 1100, Fasa 500), 26 till 0.10.12 (takets höjd
   gäller referenslinjen, mot över- eller undersidan), 29, 31 och 34 till
   0.10.14 (bågar i takets kontur, hålet ändras för sig, cirkulärt hål).
   De står också i `cad-apa-synpunkter.md`.
-- **0.10.8 är inte provad** av Carl August än; frågorna om den står kvar
-  nedan, med 0.10.8b:s.
+- **0.10.8–0.10.9 är inte provade** av Carl August än; frågorna om dem
+  står nedan.
 - **Frågorna:** de obesvarade (nedan) ställs **tio per session**, de som
   hör till den kommande versionen först. En fråga han hoppar över räknas
   som "bra som det är" och stryks.
@@ -35,7 +41,7 @@ Senast: 26 oktober 2026, efter 0.10.8b.
   in över grannens yta om den också är ändrad men lutar som en slänt.
   Inte sett i `groundProject`, men inte prövat med branta grannar.
 - **0.10.6 Granskning** och äldre versioner står i README, PLAN.md och
-  UTVECKLING.md. **0.9.2–0.10.8b är inte provade fullt ut** av Carl August.
+  UTVECKLING.md. **0.9.2–0.10.9 är inte provade fullt ut** av Carl August.
 - **Publicering:** varje push till `main` laddas upp med
   `.github/workflows/publicera.yml` (FTPS; secrets `FTP_SERVER`,
   `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR` =
@@ -72,9 +78,8 @@ Senast: 26 oktober 2026, efter 0.10.8b.
 
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
-- ~~0.8.8 Mallblad~~ … ~~0.10.8 Marken i ritningarna~~, ~~0.10.8b Höjderna
-  i fasaden~~ (klara)
-- **0.10.9 Stödmur del 2** (mellanstor)
+- ~~0.8.8 Mallblad~~ … ~~0.10.8b Höjderna i fasaden~~, ~~0.10.9 Stödmur
+  del 2~~ (klara)
 - **0.10.10 Dolda linjer och vyns djup** (mellanstor)
 - **0.10.11 Småsaker** (högerklick på planer, Visa i kolumner, snäpp mot
   kalkering, hovring och markering i 3D, importerade objekt som
@@ -98,20 +103,33 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.10.8 och 0.10.8b syns på webbhotellet och hur de känns
-(frågorna nedan). Ställ sedan högst tio av de obesvarade frågorna (först
-de som rör marken och fasaderna). Sedan **0.10.9 Stödmur del 2**
-(mellanstor): lägg upplägget i chatten först. Att tänka på: stödmuren är
-ett markobjekt längs en linje sedan 0.10.5 (`groundLines.ts`,
-`wallCrest`); synpunkten (26 oktober) vill ha en synlig referenslinje i
-mitten eller på en kant med förskjutning, höjd över marken i början och
-slutet (t.ex. 700 och 900) med krönet som följer den utjämnade marken,
-fler kontrollpunkter och höjdpunkter längs muren (*ÖK +65,765*).
+Fråga först om 0.10.8, 0.10.8b och 0.10.9 syns på webbhotellet och hur de
+känns. Ställ sedan högst tio av de obesvarade frågorna (först de om
+stödmuren, marken och fasaderna; han avvaktade med dem 26 oktober). Sedan
+**0.10.10 Dolda linjer och vyns djup** (mellanstor): lägg upplägget i
+chatten först. Att tänka på: fasaderna och sektionerna har redan ett djup
+(`fr.depth` i `section.ts`, `clipSegDepth`); synpunkterna vill ha
+närmaste bjälklag och ytterväggarnas insida streckade genom fasaden, ett
+tonat mellansteg före största djupet, tak ovanför och under vyn
+streckprickade/streckade i planen och ritordningen i fasader och
+sektioner. Former med `noEdges` (väggar, stödmuren) får ingen kant där
+djupet slutar mitt i dem; det kan höra hit.
 
 ## Att fråga Carl August om
 
 Tio per session, de som hör till nästa version först. Hoppar han över en
 räknas den som bra och stryks. Claudes val står i varje fråga.
+
+**0.10.9 efter provning** (Claudes val, se PLAN.md)
+- Krönet följer marken utjämnat inom ±1 m som förval, *Rakt* som val.
+  Lagom utjämnat?
+- *Över marken* mäts mot den högre sidan. Rätt, eller ska den lägre
+  kunna väljas?
+- Höjdpunkter läggs med *Höjdpunkt på krönet* i smartmenyn och ändras i
+  egenskaperna. Räcker det, eller ska man kunna skriva höjden direkt
+  när man klickar, och dra punkten längs muren?
+- ÖK står vid ändarna på vänster sida och vid höjdpunkterna på höger,
+  med ett streck tvärs över muren. Bra, eller också UK (foten)?
 
 **0.10.8b efter provning** (Claudes val, se PLAN.md)
 - Måtten BH, NH och TH står 25 mm till höger om nivåkoterna, 7 mm isär,
@@ -204,6 +222,9 @@ räknas den som bra och stryks. Claudes val står i varje fråga.
 
 ## Öppna frågor och kända begränsningar
 
+- **Stödmuren (0.10.9):** bitarna (högst 0,5 m) syns svagt som strimmor i
+  3D-vyn; där en fasads djup slutar mitt i muren ritas ingen kant vid
+  gränsen (`mark-fasad-2`); murens ändar möter inte marken med slänt.
 - **Marken efter 0.10.6** (mätt men lämnat): fasader och sektioner byggs
   om helt vid varje ändring i projektet, också av ett markobjekt (ca
   20–60 ms per vy i exempelvillan, lika med och utan mark; nyckeln är hela

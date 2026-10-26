@@ -7,7 +7,8 @@ import { updateSite } from '../src/core/siteImport';
 import { DocStore } from '../src/core/store';
 import { mirrorElements } from '../src/core/transforms';
 import { registerBuiltInTypes } from '../src/elements';
-import { finishedTerrain, groundGeometry, groundObjects, groundType, wallCrest } from '../src/elements/ground';
+import { finishedTerrain, groundGeometry, groundObjects, groundType, wallCrest, wallProfile } from '../src/elements/ground';
+import { computeProfile, crestAtS } from '../src/elements/groundWall';
 import { centerShift, pathWarnings } from '../src/elements/groundLines';
 import { allowsArcs, shapeCan, shapeOf, shapePatch } from '../src/elements/shapeEdit';
 import { buildingHeight } from '../src/repr/buildingHeight';
@@ -274,7 +275,61 @@ describe('Höjdpunkt, brytlinje och stödmur (0.10.5)', () => {
     expect(groundAt(finished(store), 19000, 0)).toBeCloseTo(1900, 0);
     const ctx = planCtx(store);
     expect(wallCrest(ctx, store.doc.elements[wall])!.top).toBeCloseTo(3000, 0);
-    expect(groundType.model3d!(store.doc.elements[wall] as never, ctx)).toHaveLength(1);
+    // Bitarna med lutande krön och kanterna för sig (0.10.9).
+    const shapes = groundType.model3d!(store.doc.elements[wall] as never, ctx);
+    expect(shapes.filter((s) => s.kind !== 'edges').length).toBeGreaterThan(1);
+    expect(shapes[shapes.length - 1].kind).toBe('edges');
+  });
+});
+
+describe('Stödmur del 2 (0.10.9)', () => {
+  // Marken stiger 1:10 åt norr (y), lika på båda sidor om en mur längs y.
+  const slope = (_x: number, y: number) => y / 10;
+  const ref: [number, number][] = [[0, 0], [0, 10000]];
+
+  it('krönet över marken i början och slutet, och tillägget rakt däremellan', () => {
+    const prof = computeProfile(ref, 200, { above: 700, endAbove: 900 }, slope)!;
+    // Utjämningen (±1 m) kortar inte av en jämn lutning mitt på muren.
+    expect(crestAtS(prof, 5000)).toBeCloseTo(500 + 800, 0);
+    // I ändarna ligger medelvärdet en halv meter in: 50 mm högre i början, lägre i slutet.
+    expect(prof.start).toBeCloseTo(50 + 700, 0);
+    expect(prof.end).toBeCloseTo(950 + 900, 0);
+    // Foten 300 under den lägsta marken inom en meter.
+    expect(prof.stations[0].bottom).toBeCloseTo(-300, 0);
+  });
+
+  it('ÖK i ändarna och en höjdpunkt: krönet går genom dem, också med rakt krön', () => {
+    const p = { height: 1000, endHeight: 2000, crest: [{ at: [0, 4000] as [number, number], h: 3000 }] };
+    const follow = computeProfile(ref, 200, p, slope)!;
+    expect(follow.start).toBeCloseTo(1000, 0);
+    expect(follow.end).toBeCloseTo(2000, 0);
+    expect(crestAtS(follow, 4000)).toBeCloseTo(3000, 0);
+    expect(follow.pins).toHaveLength(1);
+    const straight = computeProfile(ref, 200, { ...p, straight: true }, slope)!;
+    expect(crestAtS(straight, 2000)).toBeCloseTo(2000, 0);
+    expect(crestAtS(straight, 7000)).toBeCloseTo(2500, 0);
+  });
+
+  it('krönet följer en ojämn mark utjämnat', () => {
+    const bumpy = (_x: number, y: number) => 300 * Math.sin(y / 300);
+    const prof = computeProfile([[0, 0], [0, 20000]], 200, {}, bumpy)!;
+    const tops = prof.stations.slice(4, -4).map((s) => s.top);
+    expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(200);
+  });
+
+  it('referenslinjen på en kant: muren ligger bredvid linjen', () => {
+    const store = onSlope();
+    const wall = addGround(store, { kind: 'wall', outline: [], line: [[20000, -6000], [20000, 6000]], thickness: 400, refSide: 'left' });
+    const g = groundGeometry(planCtx(store), store.doc.elements[wall])!;
+    // Sett i linjens riktning (norrut) är vänster kant väster: muren ligger öster om linjen.
+    expect(g.center![0][0]).toBeCloseTo(20200, 0);
+    // Speglad i y-axeln byter den sida, och höjdpunkten följer med.
+    updateParams(store, [wall], { crest: [{ at: [20000, 0], h: 2000 }] }, 'Höjdpunkt');
+    mirrorElements(store, [wall], [0, 0]);
+    const p = store.doc.elements[wall].params as { refSide: string; crest: { at: [number, number] }[] };
+    expect(p.refSide).toBe('right');
+    expect(p.crest[0].at[0]).toBeCloseTo(-20000, 0);
+    expect(wallProfile(planCtx(store), store.doc.elements[wall])!.pins).toHaveLength(1);
   });
 });
 

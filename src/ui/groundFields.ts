@@ -3,7 +3,7 @@ import type { Element, ProjectDoc } from '../core/model';
 import { fromRh, groundDefaults, toRh } from '../core/site';
 import type { DocStore } from '../core/store';
 import type { ViewStates } from '../core/states';
-import { finishedTerrain, groundGeometry, groundLabel, isLineKind, m3, wallCrest, type GroundParams } from '../elements/ground';
+import { finishedTerrain, groundGeometry, groundLabel, isLineKind, m3, wallProfile, type GroundParams } from '../elements/ground';
 import { centerShift, lineLength, offsetLine, PATH_WIDTH, pathRatio, pathWarnings } from '../elements/groundLines';
 import { fillFields } from './shapeFields';
 import { resolveParams } from '../elements/registry';
@@ -73,6 +73,13 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
   const rows: string[] = [];
   const notes: string[] = [];
   const pts = p.line ?? [];
+  /** Referenslinjen i mitten eller på en kant, med förskjutning (vägen 0.10.7, stödmuren 0.10.9). */
+  const refRows = (q: GroundParams) => {
+    const side = q.refSide ?? 'center';
+    const opt = (v: string, l: string) => `<option value="${v}"${side === v ? ' selected' : ''}>${l}</option>`;
+    const what = q.kind === 'wall' ? 'muren' : 'vägen';
+    return `<label class="field" title="Sett i linjens riktning"><span>Referenslinjen</span><select data-key="ground:refSide">${opt('center', 'I mitten')}${opt('left', 'Vänster kant')}${opt('right', 'Höger kant')}</select></label>${field('refOffset', 'Förskjutning', 'mm', q.refOffset, 0, side === 'center' ? 'Positivt åt vänster i linjens riktning' : `Positivt utåt från ${what}, negativt mot mitten`)}`;
+  };
   const h0 = p.height ?? 0;
   const h1 = p.endHeight ?? h0;
   if (p.kind === 'path') {
@@ -80,10 +87,7 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
     const center = g?.center ?? pts;
     rows.push(`<label class="field"><span>Namn</span><input type="text" autocomplete="off" data-key="ground:name" value="${escapeHtml(p.name ?? '')}" placeholder="Ramp/väg"></label>`);
     rows.push(field('width', 'Bredd', 'mm', p.width, PATH_WIDTH));
-    const side = p.refSide ?? 'center';
-    const opt = (v: string, l: string) => `<option value="${v}"${side === v ? ' selected' : ''}>${l}</option>`;
-    rows.push(`<label class="field" title="Sett i linjens riktning"><span>Referenslinjen</span><select data-key="ground:refSide">${opt('center', 'I mitten')}${opt('left', 'Vänster kant')}${opt('right', 'Höger kant')}</select></label>`);
-    rows.push(field('refOffset', 'Förskjutning', 'mm', p.refOffset, 0, side === 'center' ? 'Positivt åt vänster i linjens riktning' : 'Positivt utåt från vägen, negativt mot mitten'));
+    rows.push(refRows(p));
     rows.push(rh('height', 'Höjd i början', h0));
     rows.push(rh('endHeight', 'Höjd i slutet', h1));
     const n = pathRatio(center, h0, h1);
@@ -107,11 +111,24 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
     rows.push(field('radius', 'Tonas inom', 'mm', p.radius, def.blend));
     notes.push('Låser marken längs linjen (höjden rakt mellan ändarna); marken runt omkring tonas mot den.');
   } else {
+    // Stödmuren (0.10.5; referenslinjen, ändarna, höjdpunkterna och rakt krön 0.10.9).
     rows.push(field('thickness', 'Tjocklek', 'mm', p.thickness, def.wallThickness));
-    rows.push(rh('height', 'Krön', p.height, 'Tomt = följer den högre sidans mark'));
-    if (p.height === undefined) rows.push(field('above', 'Över marken', 'mm', p.above, 0, 'Krönet över den högre sidans högsta mark'));
-    const c = wallCrest(ctx, el);
-    if (c && site) notes.push(`Krön +${toRh(site, c.top).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}, fot +${toRh(site, c.bottom).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })} (300 under den lägre sidan).`);
+    rows.push(refRows(p));
+    const prof = wallProfile(ctx, el);
+    const lvl = (h: number) => (site ? `+${toRh(site, h).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}` : `${Math.round(h)} mm`);
+    rows.push(`<label class="field"><span>Krönet</span><select data-key="ground:straight"><option value="">Följer marken</option><option value="1"${p.straight ? ' selected' : ''}>Rakt</option></select></label>`);
+    rows.push(field('above', 'Över marken i början', 'mm', p.above, 0, 'Krönet över den högre sidans mark; gäller när ÖK i början är tom'));
+    rows.push(field('endAbove', 'Över marken i slutet', 'mm', p.endAbove, p.above ?? 0, 'Tomt = som i början; gäller när ÖK i slutet är tom'));
+    rows.push(rh('height', 'ÖK i början', p.height, 'Tomt = över marken'));
+    rows.push(rh('endHeight', 'ÖK i slutet', p.endHeight, 'Tomt = över marken'));
+    (p.crest ?? []).forEach((c, i) => {
+      const at = prof?.pins.find((q) => Math.hypot(q.at[0] - c.at[0], q.at[1] - c.at[1]) < 2000);
+      const label = `Höjdpunkt ${i + 1}${at ? ` (${(Math.round(at.s / 100) / 10).toLocaleString('sv-SE')} m)` : ''}`;
+      const v = site ? Math.round(toRh(site, c.h) * 1000) / 1000 : c.h;
+      rows.push(`<label class="field" title="Tomt tar bort höjdpunkten"><span>${label}</span><span class="input-unit"><input type="text" inputmode="decimal" autocomplete="off" data-key="ground:crest${i}" value="${v.toLocaleString('sv-SE', { maximumFractionDigits: 3 })}"><i>${site ? 'm' : 'mm'}</i></span></label>`);
+    });
+    if (prof) notes.push(`Krönet ${lvl(prof.start)} i början och ${lvl(prof.end)} i slutet, högst ${lvl(prof.top)}; foten lägst ${lvl(prof.bottom)} (300 under den lägre sidan).`);
+    notes.push('Höjdpunkter läggs till med <em>Höjdpunkt på krönet</em> i Modifiera (klicka på referenslinjen); ett tomt fält tar bort en. Krönet går genom dem. Referenslinjen syns när muren är markerad.');
     notes.push('Slänterna från markobjekten går inte över muren: marken bakom den är orörd.');
   }
   return `<div class="field-label">${escapeHtml(groundLabel(p))}</div>
@@ -130,6 +147,26 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
   }
   if (name === 'refSide') {
     updateParams(store, ids, { refSide: input.value === 'left' || input.value === 'right' ? input.value : undefined }, 'Flytta referenslinjen');
+    return true;
+  }
+  if (name === 'straight') {
+    updateParams(store, ids, { straight: input.value ? true : undefined }, input.value ? 'Rakt krön' : 'Krönet följer marken');
+    return true;
+  }
+  // Stödmurens höjdpunkter (0.10.9): tomt tar bort.
+  const pin = /^crest(\d+)$/.exec(name);
+  if (pin) {
+    const k = Number(pin[1]);
+    const raw = input.value.replace(/\s/g, '').replace(',', '.').replace('−', '-');
+    const v = Number(raw);
+    if (raw !== '' && !Number.isFinite(v)) return false;
+    for (const id of ids) {
+      const list = [...(resolveParams<GroundParams>(doc, doc.elements[id]).crest ?? [])];
+      if (!list[k]) continue;
+      if (raw === '') list.splice(k, 1);
+      else list[k] = { ...list[k], h: doc.site ? Math.round(fromRh(doc.site, v)) : Math.round(v) };
+      updateParams(store, [id], { crest: list.length ? list : undefined }, raw === '' ? 'Ta bort höjdpunkt' : 'Ändra höjdpunkten');
+    }
     return true;
   }
   if (name === 'startLine' || name === 'endLine') {
@@ -165,9 +202,9 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
     updateParams(store, ids, { crossFall: v }, 'Ändra tvärfallet');
     return true;
   }
-  // Stödmurens krön: tomt följer marken.
-  if (raw === '' && name === 'height' && ids.every((id) => doc.elements[id]?.params.kind === 'wall')) {
-    updateParams(store, ids, { height: undefined }, 'Krönet följer marken');
+  // Stödmurens ÖK i ändarna: tomt följer marken.
+  if (raw === '' && (name === 'height' || name === 'endHeight') && ids.every((id) => doc.elements[id]?.params.kind === 'wall')) {
+    updateParams(store, ids, { [name]: undefined }, 'Krönet följer marken');
     return true;
   }
   if (raw === '' && name !== 'height' && name !== 'endHeight') {
@@ -189,8 +226,8 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
     updateParams(store, ids, { fallDir: ((v % 360) + 360) % 360 }, 'Ändra fallets riktning');
     return true;
   }
-  if (v < 0 || (v === 0 && name !== 'fall' && name !== 'distance' && name !== 'margin' && name !== 'sockel' && name !== 'above')) return false;
-  const labels: Record<string, string> = { maxSlope: 'Ändra gränsen', width: 'Ändra bredden', radius: 'Ändra radien', thickness: 'Ändra tjockleken', above: 'Ändra krönet', fall: 'Ändra fallet', slope: 'Ändra slänten', distance: 'Ändra avståndet', sockel: 'Ändra sockeln', fallLength: 'Ändra fallets längd', margin: 'Ändra arbetsutrymmet' };
+  if (v < 0 || (v === 0 && name !== 'fall' && name !== 'distance' && name !== 'margin' && name !== 'sockel' && name !== 'above' && name !== 'endAbove')) return false;
+  const labels: Record<string, string> = { maxSlope: 'Ändra gränsen', width: 'Ändra bredden', radius: 'Ändra radien', thickness: 'Ändra tjockleken', above: 'Ändra krönet', endAbove: 'Ändra krönet', fall: 'Ändra fallet', slope: 'Ändra slänten', distance: 'Ändra avståndet', sockel: 'Ändra sockeln', fallLength: 'Ändra fallets längd', margin: 'Ändra arbetsutrymmet' };
   updateParams(store, ids, { [name]: v }, labels[name] ?? 'Ändra');
   return true;
 }

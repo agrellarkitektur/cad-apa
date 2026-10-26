@@ -85,6 +85,7 @@ export type OpId =
   | 'shapeFillet'
   | 'shapeChamfer'
   | 'holeMove'
+  | 'crestPoint'
   | 'holeRemove'
   | 'roofTrim'
   | 'roofCutPerp'
@@ -160,6 +161,7 @@ export const OPS: Record<OpId, OpDef> = {
   shapeChamfer: { label: 'Fasa hörn', short: 'Fasa', icon: 'chamfer', value: { label: 'Avstånd', unit: 'mm', initial: 300 }, hint: 'Skriv avståndet från hörnet och tryck Enter, eller klicka för att använda det.' },
   holeMove: { label: 'Flytta hålet', short: 'Flytta hål', icon: 'move', hint: 'Klicka var hålet ska hamna, räknat från punkten du klickade på.' },
   roofTrim: { label: 'Kapa mot tak', short: 'Kapa mot tak', icon: 'trim', hint: 'Klicka på takfallet som det ska kapas mot. Kvar blir den del du klickade på, eller den största.' },
+  crestPoint: { label: 'Höjdpunkt på krönet', short: 'Höjdpunkt', icon: 'insertNode', instant: true, hint: 'En höjdpunkt där du klickade, med krönets höjd just där. Ändra höjden i egenskaperna; krönet går genom den.' },
   holeRemove: { label: 'Ta bort hålet', short: 'Ta bort hål', icon: 'trash', instant: true, hint: 'Håltagningen tas bort ur bjälklaget.' },
 };
 
@@ -202,6 +204,9 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
             ...(can.offset && !arc ? (['shapeOffset'] as OpId[]) : []),
           ]
         : ['shapeMove', ...(can.remove ? (['shapeRemove'] as OpId[]) : []), ...(el && canRoundCorner(el, ctx.index!) ? ((allowsArcs(el) ? ['shapeFillet', 'shapeChamfer'] : ['shapeChamfer']) as OpId[]) : [])];
+    // Stödmurens höjdpunkter (0.10.9) på referenslinjen.
+    const host0 = doc.elements[ctx.shapeId];
+    if (host0?.type === 'Ground' && host0.params.kind === 'wall') own.push('crestPoint');
     // En håltagning (0.9.4) flyttas och tas bort för sig; det allmänna gäller hela bjälklaget.
     if (ctx.hole !== undefined) return [own, ['holeMove', 'holeRemove']];
     // Ett takfall (0.10) kapas mot ett annat.

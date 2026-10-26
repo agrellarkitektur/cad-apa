@@ -1,6 +1,7 @@
 import type { Shape3D } from '../repr/solids';
 import type { Vec2 } from '../repr/primitives';
-import { groundGeometry, storeyElevation, wallCrest, type GroundParams } from './groundGeometry';
+import { groundGeometry, storeyElevation, wallProfile, type GroundParams } from './groundGeometry';
+import { wallSolids } from './groundWall';
 import { groundPlan } from './groundPlan';
 import type { ElementType } from './registry';
 
@@ -24,6 +25,7 @@ export {
   m3,
   showsProposal,
   wallCrest,
+  wallProfile,
   type Finished,
   type GroundGeometry,
   type GroundKind,
@@ -41,14 +43,11 @@ export const groundType: ElementType<GroundParams> = {
   pickSoft: true,
   defaults: () => ({ kind: 'area', outline: [] }),
   model3d(el, ctx): Shape3D[] {
-    // Stödmuren som kropp (0.10.5), från foten till krönet. Den övriga marken är markmodellen.
+    // Stödmuren som kropp (0.10.5), från foten till krönet, i bitar med lutande krön (0.10.9). Den övriga marken är markmodellen.
     const p = ctx.params<GroundParams>(el);
     if (p.kind !== 'wall') return [];
-    const g = groundGeometry(ctx, el);
-    const c = wallCrest(ctx, el);
-    if (!g || !c || c.top <= c.bottom) return [];
-    const base = storeyElevation(ctx, el.storey);
-    return [{ id: el.id, rings: g.rings[0], z0: c.bottom - base, z1: c.top - base, material: 'wall' }];
+    const prof = wallProfile(ctx, el);
+    return prof ? wallSolids(el.id, prof, storeyElevation(ctx, el.storey)) : [];
   },
   pickShape(el, ctx) {
     const g = groundGeometry(ctx, el);

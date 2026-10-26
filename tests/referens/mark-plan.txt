@@ -582,7 +582,8 @@ polylinje -14000,-8000 -14000,6000 [w0.25 ink d6/1.5/1/1.5] @m-bryt/linje
 text "+60,300" -14000,-7800 h2 middle [w0.18] @m-bryt/höjd
 text "+61,200" -14000,6200 h2 middle [w0.18] @m-bryt/höjd
 yta hatch ink 45° a0.6 w0.18 [w0.35 ink] 14000,375 20000,375 20000,625 14000,625 @m-stod/mur
-text "Stödmur +63,233" 17000,750 h2 middle [w0.18] @m-stod/höjd
+text "ÖK +62,676" 14000,855 h2 middle [w0.18] @m-stod/höjd
+text "ÖK +63,193" 20000,855 h2 middle [w0.18] @m-stod/höjd
 yta fylld paper [w0.35 ink] 0,0 1995,0 1995,400 400,400 400,2395 0,2395 @/snitt
 yta fylld paper [w0.35 ink] 0,3605 400,3605 400,7600 1495,7600 1495,8000 0,8000 @/snitt
 yta fylld paper [w0.35 ink] 3005,0 6145,0 6145,400 5060,400 5060,2545 4940,2545 4940,400 3005,400 @/snitt

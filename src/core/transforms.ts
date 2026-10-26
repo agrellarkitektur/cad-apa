@@ -84,7 +84,18 @@ export function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, movi
     // Bjälklagets håltagningar (0.9.1) följer med; speglade bågar buktar åt andra hållet (0.9.4).
     const holes = Array.isArray(p.holes) ? { holes: p.holes.map((h: any) => ({ ...h, points: h.points.map(t.map), ...(t.mirror && h.bulges ? { bulges: h.bulges.map((b: number) => -b) } : {}) })) } : {};
     // Markobjektens linje (0.10.5) följer med; speglat faller infarten åt andra sidan.
-    const line = Array.isArray(p.line) ? { line: p.line.map(t.map), ...(t.mirror && typeof p.crossFall === 'number' ? { crossFall: -p.crossFall } : {}) } : {};
+    // Markobjekt längs en linje (0.10.5): spegling byter vänster och höger (tvärfall, referenslinjens sida); stödmurens höjdpunkter följer med (0.10.9).
+    const mirrorSide = t.mirror && (p.refSide === 'left' || p.refSide === 'right') ? { refSide: p.refSide === 'left' ? 'right' : 'left' } : {};
+    const mirrorOffset = t.mirror && (p.refSide ?? 'center') === 'center' && typeof p.refOffset === 'number' ? { refOffset: -p.refOffset } : {};
+    const line = Array.isArray(p.line)
+      ? {
+          line: p.line.map(t.map),
+          ...(t.mirror && typeof p.crossFall === 'number' ? { crossFall: -p.crossFall } : {}),
+          ...mirrorSide,
+          ...mirrorOffset,
+          ...(Array.isArray(p.crest) ? { crest: p.crest.map((c: { at: [number, number]; h: number }) => ({ ...c, at: t.map(c.at) })) } : {}),
+        }
+      : {};
     return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...holes, ...line } }];
   }
   if (Array.isArray(p.points)) {
