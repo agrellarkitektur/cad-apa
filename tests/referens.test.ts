@@ -12,7 +12,10 @@ import { buildSection } from '../src/repr/section';
 import { buildSheet, centeredAt } from '../src/repr/sheet';
 import type { Shape3D } from '../src/repr/solids';
 import { sampleProject } from '../src/sample/sampleProject';
-import { roomGrid, shapesProject, twoStoreys } from './projekt';
+import { finishedTerrain, wallCrest } from '../src/elements/ground';
+import { buildingHeight } from '../src/repr/buildingHeight';
+import { meanGround } from '../src/repr/terrain';
+import { groundProject, planCtx, roomGrid, shapesProject, twoStoreys } from './projekt';
 
 /**
  * Referensritningar (0.8.2). Några testprojekt ritas (planer, fasader,
@@ -114,6 +117,34 @@ function referenceSet(name: string, doc: ProjectDoc) {
 referenceSet('exempel', sampleProject());
 referenceSet('rumsrutnat', roomGrid(3));
 referenceSet('former', shapesProject());
+referenceSet('mark', groundProject());
+
+/**
+ * Den färdiga marken som siffror (0.10.6): höjderna (mm från ±0) i rutorna
+ * som markobjekten ändrat, schakt och fyll per objekt, medelmarknivån,
+ * byggnadshöjden och stödmurens krön och fot.
+ */
+it('mark: den färdiga marken, volymerna och höjderna', async () => {
+  const store = new DocStore(groundProject());
+  const ctx = planCtx(store);
+  const f = finishedTerrain(ctx)!;
+  const { W } = f.terrain.grid;
+  const datum = store.doc.site!.datum;
+  const ch = f.changed!;
+  const rows = [`ändrat i ${ch.i0}–${ch.i1}, ${ch.j0}–${ch.j1}; ${n(f.min * 1000)}–${n(f.max * 1000)}`];
+  for (let j = ch.j0; j <= ch.j1; j++) {
+    const row: string[] = [];
+    for (let i = ch.i0; i <= ch.i1; i++) row.push(n((f.z[j * W + i] - datum) * 1000));
+    rows.push(row.join(' '));
+  }
+  for (const [id, v] of f.volumes) rows.push(`${id} schakt ${v.cut.toFixed(2)} fyll ${v.fill.toFixed(2)}`);
+  const bh = buildingHeight(ctx)!;
+  const crest = wallCrest(ctx, store.doc.elements['m-stod'])!;
+  rows.push(`medelmarknivå ${n(meanGround(ctx)!)}, befintlig ${n(meanGround(ctx, true)!)}`);
+  rows.push(`byggnadshöjd ${n(bh.height!)}, fasaden ${pt(bh.main.a)} ${pt(bh.main.b)}`);
+  rows.push(`stödmuren ${n(crest.top)}–${n(crest.bottom)}`);
+  await expect(`${rows.join('\n')}\n`).toMatchFileSnapshot(file('mark-siffror'));
+});
 
 /** Detaljnivåerna (0.8.37, i referensritningarna sedan 0.8.38): littera, 2D-symboler och 3D var för sig. */
 describe('detaljnivåer', () => {

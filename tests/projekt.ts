@@ -1,5 +1,10 @@
+import { addElements } from '../src/core/commands';
 import type { Element, ProjectDoc } from '../src/core/model';
+import { encodeGrid } from '../src/core/site';
+import { applySitePackage, type Platspaket } from '../src/core/siteImport';
 import { DocStore } from '../src/core/store';
+import type { GroundParams } from '../src/elements/ground';
+import { createContext } from '../src/repr/context';
 import type { Shape2DParams } from '../src/elements/drawing2d';
 import { buildPlan } from '../src/repr/plan';
 import { sampleProject } from '../src/sample/sampleProject';
@@ -220,5 +225,97 @@ export function shapesProject(): ProjectDoc {
   doc.elements['tak'].pen = { color: '#3355aa', weight: 0.5 };
   doc.elements['r01'].params = { ...doc.elements['r01'].params, fill: 'hatch', fillBackground: '#eeeeff', fillColor: '#5566aa' };
   doc.elements['r02'].params = { ...doc.elements['r02'].params, fill: 'type', fillType: 'plattor150', fillTypeAngle: 45, fillColor: '#5566aa' };
+  return doc;
+}
+
+/**
+ * Ett platspaket med en sned mark (0.10.3–0.10.5, samlat här i 0.10.6): 60 m
+ * i väster, stiger 0,1 m per meter österut. 100 × 80 m, 1 m mellan noderna,
+ * nollpunkten mitt i, så att ±0 blir 65 m och marken x/10 mm i modellen.
+ */
+export function slopeSite(over: Partial<Platspaket> = {}): Platspaket {
+  const W = 101;
+  const H = 81;
+  const z = new Float32Array(W * H);
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) z[j * W + i] = 60 + 0.1 * i;
+  return {
+    format: 'hojdkurvor-plats',
+    version: 1,
+    projekt: { id: 'p1', namn: 'Provet' },
+    koordinatsystem: { plan: { epsg: 3010, namn: 'SWEREF 99 16 30' }, hojd: 'RH 2000', enhet: 'm' },
+    utsnitt: { xmin: 1000, ymin: 5000, xmax: 1100, ymax: 5080 },
+    nollpunkt: { x: 1050, y: 5040, z: 0 },
+    vridning: 0,
+    sannNord: 0,
+    terrang: { rutnat: { x0: 1000, y1: 5080, s: 1, W, H, z: encodeGrid(z) } },
+    ...over,
+  };
+}
+
+/** Exempelvillan på den sneda marken (±0 = 65 m). */
+export function onSlope(): DocStore {
+  const store = new DocStore(structuredClone(sampleProject()));
+  applySitePackage(store, slopeSite());
+  return store;
+}
+
+/** Ett markobjekt i Förslag A; svarar med id:t. */
+export function addGround(store: DocStore, params: GroundParams): string {
+  const [el] = addElements(store, [{ type: 'Ground', storey: store.doc.storeys[0].id, tags: [], params: params as unknown as Record<string, unknown>, props: {}, states: ['st-a'] }], 'st-a', 'Markobjekt');
+  return el.id;
+}
+
+/** Planens sammanhang för våning 1 i ett tillstånd (Förslag A från början). */
+export const planCtx = (store: DocStore, state = 'st-a') => createContext(store.doc, store.doc.storeys[0].id, { state }, store.doc.graphics, () => true).ctx;
+
+/**
+ * Exempelvillan på en kuperad plats med alla sorters markobjekt (0.10.6):
+ * platån runt huset, urgrävningen under plattan, en platå med fall, en med
+ * stödmur, en urgrävning, ramp, gångväg och infart med tvärfall, höjdpunkt,
+ * brytlinje och en stödmur, jord i sektionerna, ett träd och ett grannhus.
+ * Platsen är vriden 10°. Id:na är fasta, så att referensritningarna blir
+ * desamma varje gång.
+ */
+export function groundProject(): ProjectDoc {
+  const W = 61;
+  const H = 51;
+  const z = new Float32Array(W * H);
+  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) z[j * W + i] = 60 + 0.06 * i + 0.8 * Math.sin(i / 7) * Math.cos(j / 5) + 0.02 * j;
+  const store = new DocStore(structuredClone(sampleProject()));
+  applySitePackage(store, {
+    ...slopeSite(),
+    utsnitt: { xmin: 1000, ymin: 5000, xmax: 1060, ymax: 5050 },
+    nollpunkt: { x: 1025, y: 5020, z: 0 },
+    vridning: 10,
+    terrang: { rutnat: { x0: 1000, y1: 5050, s: 1, W, H, z: encodeGrid(z) } },
+    trad: [{ x: 1045, y: 5040, mark: null, hojd: 9, krona: 5 }],
+    byggnader: [{ fotavtryck: [[1005, 5038], [1013, 5038], [1013, 5046], [1005, 5046]], mark: null, hojd: 6, typ: 'Bostad', husnummer: '3' }],
+  });
+  const doc = structuredClone(store.doc);
+  // Fasta id i stället för de slumpade.
+  const site = Object.keys(doc.elements).filter((id) => id.startsWith('plats-'));
+  site.forEach((id, i) => {
+    const e = doc.elements[id];
+    delete doc.elements[id];
+    doc.elements[`plats-${i + 1}`] = { ...e, id: `plats-${i + 1}` };
+  });
+  const asset = doc.site!.grid!.asset;
+  doc.assets = { 'mark-1': { ...doc.assets[asset], id: 'mark-1' } };
+  doc.site = { ...doc.site!, grid: { ...doc.site!.grid!, asset: 'mark-1' }, earthHatch: true };
+  const ground = (id: string, params: GroundParams) => {
+    doc.elements[id] = { id, type: 'Ground', storey: 'pl-1', states: ['st-a'], tags: [], props: {}, params } as unknown as Element;
+  };
+  const rect = (x: number, y: number, w: number, h: number): [number, number][] => [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
+  ground('m-runt', { kind: 'plateau', outline: [], around: true });
+  ground('m-schakt', { kind: 'excavation', outline: [], slab: 'bj1' });
+  ground('m-fall', { kind: 'plateau', outline: rect(14000, 1000, 6000, 5000), height: 600, fall: 50, fallDir: 30 });
+  ground('m-mur', { kind: 'plateau', outline: rect(-12000, 1000, 6000, 4000), height: -1500, edge: 'wall' });
+  ground('m-grop', { kind: 'excavation', outline: rect(-10000, -12000, 4000, 3000), height: -2500, slope: 1.5 });
+  ground('m-ramp', { kind: 'path', path: 'ramp', outline: [], line: [[1000, -6000], [7000, -6000]], height: -800, endHeight: -300 });
+  ground('m-gang', { kind: 'path', path: 'walk', outline: [], line: [[3000, 11000], [8000, 12000], [12000, 12000]], height: 200, endHeight: 400 });
+  ground('m-infart', { kind: 'path', path: 'drive', outline: [], line: [[-2000, -2500], [16000, -2500]], height: -400, endHeight: 300, crossFall: 50 });
+  ground('m-punkt', { kind: 'point', outline: [], line: [[-6000, 12000]], height: 900, radius: 4000 });
+  ground('m-bryt', { kind: 'breakline', outline: [], line: [[-14000, -8000], [-14000, 6000]], height: -1800, endHeight: -900 });
+  ground('m-stod', { kind: 'wall', outline: [], line: [[14000, 500], [20000, 500]], thickness: 250 });
   return doc;
 }
