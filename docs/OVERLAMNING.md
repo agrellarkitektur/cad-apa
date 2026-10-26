@@ -48,7 +48,10 @@ Senast: 26 oktober 2026, efter 0.10.8b.
   **öppen beta**. **Formatfrysen kommer med den öppna betan.** Inget av
   stegen är 1.0. Håll färdplanen nedan aktuell vid varje överlämning.
 - **Ord:** *palett* och *snabbmeny* betyder samma sak för honom. Säg bara
-  **smartmeny**.
+  **smartmeny**. Symboler i ritningen heter **-markör** (Carl August 26
+  oktober): *nivåmarkör* (inte nivåkota), *sektionsmarkör* och
+  *fasadmarkör* (inte sektions- och fasadlinje). Bytet i programmet och
+  dokumenten görs i 0.10.11.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen. Höj
   `FORMAT_VERSION` när formatet ändras; äldre filer får ett meddelande
   (`parse` i `src/storage/format.ts`). Valfria nya parametrar har inte
@@ -75,7 +78,8 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 - **0.10.10 Dolda linjer och vyns djup** (mellanstor)
 - **0.10.11 Småsaker** (högerklick på planer, Visa i kolumner, snäpp mot
   kalkering, hovring och markering i 3D, importerade objekt som
-  befintligt eller förslag och att ta bort dem, snitthöjd 1100, Fasa 500)
+  befintligt eller förslag och att ta bort dem, snitthöjd 1100, Fasa 500,
+  -markör i stället för nivåkota och sektions-/fasadlinje)
 - **0.10.12 Höjder i förhållande till våningen** (och takets
   referenslinje mot över- eller undersidan)
 - **0.10.13 Visa och dölja** och **0.10.14 Linjerna i 2D-formen**

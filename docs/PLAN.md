@@ -2140,6 +2140,11 @@ Synpunkter 25 och 26 oktober.
   detsamma (svar 26 oktober, fråga 25)
 - Takets snitthöjd 1100 från början, inte 1200 (fråga 20)
 - Bjälklagets *Fasa* får förvalet 500 mm, som *Avrunda* (fråga 32)
+- **-markör** för symbolerna i ritningen (Carl August 26 oktober):
+  *nivåmarkör* i stället för nivåkota, *sektionsmarkör* och *fasadmarkör*
+  i stället för sektions- och fasadlinje, och liknande. I gränssnittet
+  (penntabellen, hjälptexter, verktygen, egenskaperna), i README och
+  dokumenten; koden byter ord i kommentarerna
 
 ### 0.10.12 Höjder i förhållande till våningen
 
