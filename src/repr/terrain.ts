@@ -7,6 +7,7 @@ import { createContext } from './context';
 import { finishedTerrain, showsProposal, type Finished } from '../elements/ground';
 import { resolveFill } from '../core/fillTypes';
 import type { Primitive, Vec2 } from './primitives';
+import { lastResults } from './reuse';
 
 /**
  * Den befintliga marken i fasader, sektioner och 3D-vyn (0.10.3). Marken är
@@ -150,12 +151,34 @@ export function levelText(doc: Pick<ProjectDoc, 'site'>, zMm: number): string {
   return siteLevelText(doc.site, zMm);
 }
 
-/** Terrängen som triangelnät för 3D-vyn, i modellens mm med z från ±0. Glesas ut till högst `maxNodes` noder. */
+/**
+ * Terrängen som triangelnät för 3D-vyn, i modellens mm med z från ±0. Glesas
+ * ut till högst `maxNodes` noder. Med `heights` (den färdiga marken, samma
+ * rutnät och samma noder utan höjd) byts bara höjderna: punkternas läge och
+ * trianglarna sparas per rutnät och plats (0.10.6), så att ett ändrat
+ * markobjekt inte bygger om hela nätet.
+ */
 export function terrainMesh(doc: ProjectDoc, maxNodes = 250_000, heights?: Float32Array): { positions: Float32Array; indices: Uint32Array } | null {
   const t = terrainOf(doc);
   if (!t) return null;
   const { W, H, x0, y1, s } = t.grid;
   const k = Math.max(1, Math.ceil(Math.sqrt((W * H) / maxNodes)));
+  const w = Math.floor((W - 1) / k) + 1;
+  const site = t.site;
+  const grid = savedGrids([t.z, W, H, x0, y1, s, k, site.origin[0], site.origin[1], site.rotation], () => meshGrid(t, k));
+  const positions = grid.positions.slice();
+  const z = heights ?? t.z;
+  for (let n = 0; n < grid.valid.length; n++) {
+    const zz = z[Math.floor(n / w) * k * W + (n % w) * k];
+    positions[n * 3 + 2] = zz === zz ? fromRh(site, zz) : 0;
+  }
+  return { positions, indices: grid.indices };
+}
+const savedGrids = lastResults<{ positions: Float32Array; valid: Uint8Array; indices: Uint32Array }>(2);
+
+/** Nätets punkter i planen (z = 0), vilka som har en höjd och trianglarna. */
+function meshGrid(t: Terrain, k: number): { positions: Float32Array; valid: Uint8Array; indices: Uint32Array } {
+  const { W, H, x0, y1, s } = t.grid;
   const w = Math.floor((W - 1) / k) + 1;
   const h = Math.floor((H - 1) / k) + 1;
   const site = t.site;
@@ -164,19 +187,19 @@ export function terrainMesh(doc: ProjectDoc, maxNodes = 250_000, heights?: Float
   const sn = Math.sin(rot);
   const positions = new Float32Array(w * h * 3);
   const valid = new Uint8Array(w * h);
+  let triangles = 0;
   for (let j = 0; j < h; j++) {
     for (let i = 0; i < w; i++) {
-      const zz = (heights ?? t.z)[j * k * W + i * k];
+      const zz = t.z[j * k * W + i * k];
       const a = x0 + i * k * s - site.origin[0];
       const b = y1 - j * k * s - site.origin[1];
       const n = j * w + i;
       positions[n * 3] = (a * c + b * sn) * 1000;
       positions[n * 3 + 1] = (-a * sn + b * c) * 1000;
-      positions[n * 3 + 2] = zz === zz ? fromRh(site, zz) : 0;
       valid[n] = zz === zz ? 1 : 0;
     }
   }
-  const idx: number[] = [];
+  const idx = new Uint32Array((w - 1) * (h - 1) * 6);
   for (let j = 0; j < h - 1; j++) {
     for (let i = 0; i < w - 1; i++) {
       const a = j * w + i;
@@ -184,11 +207,19 @@ export function terrainMesh(doc: ProjectDoc, maxNodes = 250_000, heights?: Float
       const d = a + w;
       const e = d + 1;
       // Moturs sedda ovanifrån (z uppåt): a, d, b och b, d, e, eftersom j ökar söderut.
-      if (valid[a] && valid[d] && valid[b]) idx.push(a, d, b);
-      if (valid[b] && valid[d] && valid[e]) idx.push(b, d, e);
+      if (valid[a] && valid[d] && valid[b]) {
+        idx[triangles++] = a;
+        idx[triangles++] = d;
+        idx[triangles++] = b;
+      }
+      if (valid[b] && valid[d] && valid[e]) {
+        idx[triangles++] = b;
+        idx[triangles++] = d;
+        idx[triangles++] = e;
+      }
     }
   }
-  return { positions, indices: Uint32Array.from(idx) };
+  return { positions, valid, indices: idx.slice(0, triangles) };
 }
 
 /** Den färdiga marken i en vy av projektet (för 3D-vyn), eller null i Befintligt och utan markobjekt. */

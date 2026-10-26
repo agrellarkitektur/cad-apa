@@ -21,7 +21,11 @@ export function buildingFootprint(ctx: PlanContext): Rings[] {
       byStorey.set(el.storey, list);
     }
     const outer = [...byStorey.values()].flatMap((walls) => bareWallUnion(walls).map((poly): Rings => [poly[0]]));
-    return saved(outer.map((r) => r[0]), () => (outer.length > 1 ? union(outer).map((poly): Rings => [poly[0]]) : outer));
+    // Samma kontur till värdet ger samma svar (0.10.6), så att det som följer
+    // huset (markobjekten, språnget) inte räknas om när en innervägg, en
+    // väggs höjd eller penna ändras.
+    const key = outer.map((r) => r[0].join(' ')).join('|');
+    return saved([key], () => (outer.length > 1 ? union(outer).map((poly): Rings => [poly[0]]) : outer));
   });
 }
 const saved = lastResults<Rings[]>();

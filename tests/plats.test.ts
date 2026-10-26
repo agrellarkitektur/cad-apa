@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { emptyProject } from '../src/core/model';
-import { contours, encodeGrid, groundAt, localToZone, meanGroundLevel, northOf, terrainOf, zoneToLocal } from '../src/core/site';
+import { contours, groundAt, localToZone, meanGroundLevel, northOf, terrainOf, zoneToLocal } from '../src/core/site';
 import { applySitePackage, cropSite, parseSitePackage, removeSite, SitePackageError, updateSite, type Platspaket } from '../src/core/siteImport';
 import { DocStore } from '../src/core/store';
 import { registerBuiltInTypes } from '../src/elements';
@@ -8,32 +8,21 @@ import { buildSection } from '../src/repr/section';
 import { markerFrame } from '../src/elements/markers';
 import { parse, serialize } from '../src/storage/format';
 import { sampleProject } from '../src/sample/sampleProject';
+import { slopeSite } from './projekt';
 
 beforeAll(() => registerBuiltInTypes());
 
-/** Ett platspaket med en sned mark: 60 m i väster, stiger 0,1 m per meter österut. 100 × 80 m, 1 m mellan noderna. */
-function pkg(over: Partial<Platspaket> = {}): Platspaket {
-  const W = 101;
-  const H = 81;
-  const z = new Float32Array(W * H);
-  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) z[j * W + i] = 60 + 0.1 * i;
-  return {
-    format: 'hojdkurvor-plats',
-    version: 1,
+/** Den sneda marken (`slopeSite`) med kommun, sann nord, ett träd, ett grannhus, en gräns och licensen. */
+const pkg = (over: Partial<Platspaket> = {}): Platspaket =>
+  slopeSite({
     projekt: { id: 'p1', namn: 'Provet', kommun: 'Nybro kommun' },
-    koordinatsystem: { plan: { epsg: 3010, namn: 'SWEREF 99 16 30' }, hojd: 'RH 2000', enhet: 'm' },
-    utsnitt: { xmin: 1000, ymin: 5000, xmax: 1100, ymax: 5080 },
-    nollpunkt: { x: 1050, y: 5040, z: 0 },
-    vridning: 0,
     sannNord: -0.4,
-    terrang: { rutnat: { x0: 1000, y1: 5080, s: 1, W, H, z: encodeGrid(z) } },
     trad: [{ x: 1060, y: 5050, mark: 61, hojd: 12, krona: 6 }],
     byggnader: [{ fotavtryck: [[1070, 5060], [1080, 5060], [1080, 5070], [1070, 5070]], mark: 62, hojd: 7, typ: 'Bostad', husnummer: '2' }],
     fastigheter: { granser: [{ pts: [[1000, 5000], [1100, 5080]], osakerhet: 0.25 }], ytor: [{ etikett: '1:2', ankare: [1020, 5020] }], varning: 'Inte bindande.' },
     licens: '© Lantmäteriet',
     ...over,
-  };
-}
+  });
 
 describe('platsen (0.10.3)', () => {
   it('räknar mellan zonens koordinater och modellen åt båda hållen, med vridning', () => {

@@ -1242,6 +1242,56 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Granskning (0.10.6, format 18)
+
+Utan nya funktioner. Marken räknas om bara när den ändras, och
+`ground.ts` är delad. Referensritningarna är oförändrade; de nya för
+marken (`mark-*`) skrevs med 0.10.5.
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/elements/groundGeometry.ts` | Parametrarna och sorterna, `groundLabel`, `m3`, `groundGeometry` (formen per objekt), `groundObjects`, `finishedTerrain`, `showsProposal`, `wallCrest` |
+| `src/elements/groundPlan.ts` | `groundPlan`: markobjekten i planen (konturen, höjden, pilarna, vägarnas lutning och varning, höjdpunkt, brytlinje, stödmur) |
+| `src/elements/ground.ts` | Typen `Ground` (3D för stödmuren, klickytan, planen); exporterar också det som andra delar använder ur `groundGeometry.ts` |
+
+- **Husets kontur till värdet**: `buildingFootprint` sparar svaret med
+  konturens koordinater som nyckel (text), så att samma kontur ger samma
+  objekt också när `bareWallUnion` räknats om (en innervägg, en väggs
+  höjd eller penna). Det som följer konturen (platån runt huset,
+  urgrävningen under en platta ur väggarna, takets språng) räknas då
+  inte om.
+- **`groundGeometry`** sparas per element med förvalen, våningens
+  golvnivå (ett tal, inte våningslistan), husets kontur och bjälklagets
+  `fromWalls`, `outline`, `thickness` och golvnivå (inte elementet, som
+  byts med en penna eller ett namn).
+- **`finishedTerrain`** sparar de sex senaste svaren med rutnätets höjder
+  (`t.z`) och mått, platsens nollpunkt, vridning och ±0 och objektens
+  former som nyckel; `site` och `site.grid` byts när platsen ändras på
+  något sätt (kurvavståndet, jorden) och används inte.
+- **Från det ändrade objektet**: `finishedGround(t, shapes, barriers,
+  prev)` sparar i `steps` vad varje objekt ändrade (nodernas index och
+  höjder, schakt och fyll, rutorna och lägsta och högsta höjd efter det)
+  och i `base` det det räknades mot (höjderna, rutnätet, platsen och
+  murarna). Med `prev` mot samma `base` läggs stegen för objekten i
+  början som är samma objekt (`===`) på direkt, och räkningen börjar vid
+  det första som skiljer sig. Svaret är detsamma som utan `prev`
+  (testat i `tests/mark.test.ts`).
+- **Höjdkurvorna i planen**: `contourPrims` i `elements/site.ts` sparar
+  linjerna och texterna per kurvlista, element och skala, så att en
+  ändrad vägg (som `Terrain` läser) inte bygger dem igen.
+- **3D-nätet**: `terrainMesh` sparar punkternas läge i planen och
+  trianglarna per rutnät och plats (`meshGrid`) och fyller bara i
+  höjderna; den färdiga marken har samma noder utan höjd som den
+  befintliga.
+- **Klickjämförelsen** har 288 steg (platsen släpps på planen, verktyget
+  Mark i alla sätt, egenskaperna för varje sort, dialogen *Platsen*, en
+  innerväggs höjd). Den fasta följden i `crypto.getRandomValues` tar nu
+  de höga bitarna: med de låga upprepades id efter några hundra, så att
+  ett nytt element kunde ersätta ett annat.
+- Tester: `tests/mark.test.ts` (0.10.4–0.10.6, förut `v0104` och `v0105`);
+  den sneda marken och testprojektet `groundProject` (alla sorter på en
+  kuperad, vriden plats, fasta id) i `tests/projekt.ts`.
+
 ## Markobjekt del 2 och byggnadshöjd (0.10.5, format 18)
 
 | Fil | Innehåll |
@@ -1269,8 +1319,8 @@ projekt i 1 982 jämförelser.
   flyttar linjen och byter tecken på tvärfallet vid spegling.
 - **Verktyget** samlar punkter för en linje och avslutar med dubbelklick,
   Enter (`enterInTool`), *Klar* eller verktygsbyte (`finish`).
-- Tester: `tests/v0105.test.ts`. Referensritningarna för fasader och
-  sektioner fick nivåkoten BH.
+- Tester: `tests/mark.test.ts` (förut `v0105.test.ts`). Referensritningarna
+  för fasader och sektioner fick nivåkoten BH.
 
 ## Markobjekt (0.10.4, format 18)
 
@@ -1278,7 +1328,7 @@ projekt i 1 982 jämförelser.
 | --- | --- |
 | `src/core/ground.ts` | Den färdiga marken: `GroundShape` (ytans `probe`, slänt eller stödmur, schakt och/eller fyll), `finishedGround` (rutnätet kopieras och objekten läggs på i ordning, med schakt och fyll per objekt och rutorna som ändrats), `nearestEdge` och `withHeights` |
 | `src/geometry/offset.ts` | `bufferRings`: ytor utvidgade med ett avstånd (rektangel per kant och cirkel per hörn, sammanslagna i hela mm) |
-| `src/elements/ground.ts` | Typen `Ground` (Markobjekt), `groundGeometry` (formen per objekt, sparad per element), `groundObjects` (de som gäller i vyn, urgrävningar under bjälklag först), `finishedTerrain` (den färdiga marken i vyn, eller null), `showsProposal` |
+| `src/elements/ground.ts` | Typen `Ground` (Markobjekt); sedan 0.10.6 ligger `groundGeometry` (formen per objekt, sparad per element), `groundObjects` (de som gäller i vyn, urgrävningar under bjälklag först), `finishedTerrain` (den färdiga marken i vyn, eller null) och `showsProposal` i `groundGeometry.ts` och ritningen i `groundPlan.ts` |
 | `src/ui/tools/groundTool.ts` | Verktyget Mark |
 | `src/ui/groundFields.ts` | Egenskaperna (`ground:` i `data-key`) |
 
@@ -1287,21 +1337,21 @@ projekt i 1 982 jämförelser.
   värde följer förvalet. `site.meanOnExisting` och `site.earthHatch` är
   valen i dialogen.
 - **Den färdiga marken** räknas per vy (tillståndet avgör vilka objekt
-  som gäller) och sparas med `lastResults` så länge rutnätet, platsen och
-  objektens former är samma objekt. `groundGeometry` sparas per element
-  (WeakMap) med parametrarna, förvalen, våningarna, husets kontur och
-  bjälklaget som indata. Noder som slänten inte kan nå hoppas över med
-  avståndet till ytans rektangel och dess högsta och lägsta höjd.
+  som gäller) och sparas så länge rutnätet, platsen och objektens former
+  är desamma (vad som räknas, se *Granskning (0.10.6)*). Noder som
+  slänten inte kan nå hoppas över med avståndet till ytans rektangel och
+  dess högsta och lägsta höjd.
 - **Planen**: typen `Terrain` läser `Ground`, `Wall` och `Slab`
   (`planReads`) och ritar den färdiga markens höjdkurvor (`finishedContours`
   i `elements/site.ts`, marching squares på rutorna som ändrats).
 - **Fasader och sektioner**: `groundLines` i `repr/terrain.ts` (delarna
   `färdig mark`, `befintlig mark` och `jord`); `meanGround(ctx, existing)`.
 - **3D-vyn**: `finishedForView` och `terrainMesh(doc, max, heights)`;
-  nätet byggs om när den färdiga marken eller platsen byts.
+  nätet byggs om när den färdiga marken eller platsen byts (sedan 0.10.6
+  bara höjderna).
 - `hasEditableOutline` gäller markobjekt med ritad kontur, och `Ground`
   har ritordning (`ORDERABLE`).
-- Tester: `tests/v0104.test.ts`.
+- Tester: `tests/mark.test.ts` (förut `v0104.test.ts`).
 
 ## Markmodell (0.10.3, format 18)
 

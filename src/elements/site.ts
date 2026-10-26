@@ -94,34 +94,45 @@ export const terrainType: ElementType<TerrainParams> = {
   plan(el, ctx) {
     const t = terrainOf(ctx.doc);
     if (!t) return [];
-    const origin = { objectId: el.id, objectType: 'Terrain', part: 'höjdkurva' };
-    const out: Primitive[] = [];
-    const h = 1.8;
+    const interval = t.site.contours ?? DEFAULT_CONTOURS;
     // Den färdiga marken i ett förslag: tjocka, heldragna kurvor där markobjekten ändrat marken.
     const f = showsProposal(ctx) ? finishedTerrain(ctx) : null;
-    if (f) {
-      const fo = { objectId: el.id, objectType: 'Terrain', part: 'färdig mark' };
-      for (const c of finishedContours(f, t.site.contours ?? DEFAULT_CONTOURS)) {
-        const whole = Math.abs(c.z - Math.round(c.z)) < 1e-6;
-        out.push({ kind: 'polyline', points: c.pts, closed: c.closed, pen: { weight: whole ? 0.35 : 0.25 }, origin: fo, noPick: true });
-        if (whole) {
-          const label = contourLabel(c, 20 * ctx.scale);
-          if (label) out.push({ kind: 'text', at: label.at, angle: label.angle, align: 'middle', text: c.z.toLocaleString('sv-SE'), height: h, pen: { weight: 0.18 }, origin: fo, noPick: true });
-        }
-      }
-    }
-    for (const c of siteContours(ctx.doc)) {
-      // Hela meter lite tjockare och med höjden utskriven.
-      const whole = Math.abs(c.z - Math.round(c.z)) < 1e-6;
-      out.push({ kind: 'polyline', points: c.pts, closed: c.closed, pen: { weight: whole ? 0.18 : 0.13, color: 'muted', dash: [2, 1] }, origin, noPick: true });
-      if (whole) {
-        const label = contourLabel(c, 30 * ctx.scale);
-        if (label) out.push({ kind: 'text', at: label.at, angle: label.angle, align: 'middle', text: c.z.toLocaleString('sv-SE'), height: h, pen: thin, origin, noPick: true });
-      }
-    }
-    return out;
+    const key = `${el.id}|${ctx.scale}`;
+    return [
+      ...(f ? contourPrims(finishedContours(f, interval), key, () => contourLines(finishedContours(f, interval), { objectId: el.id, objectType: 'Terrain', part: 'färdig mark' }, ctx.scale, true)) : []),
+      ...contourPrims(siteContours(ctx.doc), key, () => contourLines(siteContours(ctx.doc), { objectId: el.id, objectType: 'Terrain', part: 'höjdkurva' }, ctx.scale, false)),
+    ];
   },
 };
+
+const savedPrims = new WeakMap<Contour[], { key: string; out: Primitive[] }>();
+
+/**
+ * Höjdkurvornas linjer och texter, sparade per kurvor, element och skala
+ * (0.10.6): de ritas om när en vägg eller ett markobjekt ändras, men
+ * kurvorna är oftast desamma.
+ */
+function contourPrims(cs: Contour[], key: string, make: () => Primitive[]): Primitive[] {
+  const hit = savedPrims.get(cs);
+  if (hit && hit.key === key) return hit.out;
+  const out = make();
+  savedPrims.set(cs, { key, out });
+  return out;
+}
+
+/** Kurvorna som linjer; hela meter lite tjockare och med höjden utskriven. Den färdiga marken tjock och heldragen, den befintliga tunn och streckad. */
+function contourLines(cs: readonly Contour[], origin: Primitive['origin'], scale: number, finished: boolean): Primitive[] {
+  const out: Primitive[] = [];
+  for (const c of cs) {
+    const whole = Math.abs(c.z - Math.round(c.z)) < 1e-6;
+    const pen: Pen = finished ? { weight: whole ? 0.35 : 0.25 } : { weight: whole ? 0.18 : 0.13, color: 'muted', dash: [2, 1] };
+    out.push({ kind: 'polyline', points: c.pts, closed: c.closed, pen, origin, noPick: true });
+    if (!whole) continue;
+    const label = contourLabel(c, (finished ? 20 : 30) * scale);
+    if (label) out.push({ kind: 'text', at: label.at, angle: label.angle, align: 'middle', text: c.z.toLocaleString('sv-SE'), height: 1.8, pen: finished ? { weight: 0.18 } : thin, origin, noPick: true });
+  }
+  return out;
+}
 
 /** Var en höjdkurva får sin höjd: mitt på den, om den är längre än `min` mm. */
 function contourLabel(c: Contour, min: number): { at: Vec2; angle: number } | null {

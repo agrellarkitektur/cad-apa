@@ -1,10 +1,29 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.5.
+överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.6.
 
 ## Läget
 
+- **0.10.6 Granskning är klar** på `main` (samma format, 18, utan nya
+  funktioner). Carl August sa "kör granskning" och fick upplägget i
+  chatten. Skyddet först, med 0.10.5: testprojektet `groundProject`
+  (exempelvillan på en kuperad, vriden plats med alla sorters
+  markobjekt) med referensritningar `mark-*` och siffrorna för den färdiga
+  marken; klickjämförelsen har 288 steg med platsen och verktyget Mark
+  (samma läge och bild i 0.10.5 och 0.10.6, och samma 3D-bild). Det som
+  räknades om i onödan: husets kontur jämförs nu till värdet (en ändrad
+  vägg räknade om hela marken), platsen som objekt används inte som nyckel
+  (kurvavståndet och jorden räknade om den), ett ändrat markobjekt räknas
+  från sig självt (`finishedGround(..., prev)` med `steps`), höjdkurvornas
+  linjer sparas och 3D-nätet byter bara höjderna. På en brant plats 200 ×
+  150 m med 0,5 m: en innervägg 208 → under 4 ms för marken, den sista
+  brytlinjen 208 → 22 ms, 3D-nätet 44 → 4,5 ms. `ground.ts` delad
+  (`groundGeometry.ts`, `groundPlan.ts`); testerna för marken i
+  `tests/mark.test.ts`, den sneda marken en gång (`slopeSite`). I
+  klickjämförelsen upprepades nya id efter några hundra (rättat: de höga
+  bitarna). Testerna: 501 på ca 16 s. Står i README, PLAN.md och
+  UTVECKLING.md under *Granskning (0.10.6)*.
 - **0.10.5 Markobjekt del 2 och byggnadshöjd är klar** på `main` (samma
   format, 18; nya sorter av `Ground`). Carl August sa "kör nästa version"
   och fick upplägget i chatten innan arbetet började (inget svar än).
@@ -271,9 +290,8 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.9.3 Granskning~~, ~~0.9.4 Bjälklag del 2~~, ~~0.10 Tak~~,
   ~~0.10.1 Granskning~~, ~~0.10.2 Takfot och taket i planen~~,
   ~~0.10.3 Markmodell~~, ~~0.10.4 Markobjekt del 1~~,
-  ~~0.10.5 Markobjekt del 2 och byggnadshöjd~~ (klara)
-- **0.10.6 Granskning** (efter marken: `ground.ts` delas, marken räknas
-  fortare, klickjämförelse med markobjekt)
+  ~~0.10.5 Markobjekt del 2 och byggnadshöjd~~, ~~0.10.6 Granskning~~
+  (klara)
 - **0.10.7 Dolda linjer i fasader**
 - **0.10.8 Småsaker** (högerklick på planer, Visa i kolumner, snäpp mot
   kalkering, hovring i 3D) och **0.10.9 Höjder i förhållande till
@@ -297,16 +315,15 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.10.5 syns på webbhotellet och hur ramperna, stödmuren
-och byggnadshöjden känns (frågorna nedan; 0.9.2–0.10.4 har inte provats
-fullt ut än). Sortera Inkorgen 26 oktober om träden med honom (förslagen
-i *Att fråga*), och be honom bekräfta sorteringen från förra gången
-(0.10.10, 0.10.11 och 3D-vyerna). Sedan **0.10.6 Granskning**, utan nya
-funktioner: dela `src/elements/ground.ts` (ritningen för sig), se om den
-färdiga marken räknas om i onödan (varje markobjekt går genom hela sin
-rektangel plus slänt; `wallCrest` läser marken per mur), slå ihop
-dubbletter mellan `v0104` och `v0105` (samma platsfil), och lägg steg för
-markobjekten i klickjämförelsen (`scripts/jamfor-klick.py`).
+Fråga först om 0.10.6 syns på webbhotellet och hur ramperna, stödmuren
+och byggnadshöjden från 0.10.5 känns (frågorna nedan; 0.9.2–0.10.4 har
+inte provats fullt ut än). Sortera Inkorgen 26 oktober om träden med honom
+(förslagen i *Att fråga*), och be honom bekräfta sorteringen från förra
+gången (0.10.10, 0.10.11 och 3D-vyerna). Sedan **0.10.7 Dolda linjer i
+fasader** (mellanstor): en vyinställning i fasader som ritar närmaste
+bjälklag och ytterväggarnas insida streckade genom fasaden. Lägg upplägget
+i chatten först (vilka linjer, var inställningen finns, hur de ritas i
+fasader med flera våningar) och säg hur stort det är.
 
 Besluten 26 oktober: befintlig mark ändras aldrig; markobjekten är
 fristående; ingen penselmodellering; befintlig tunn streckad, ny tjock
@@ -317,6 +334,11 @@ tillbaka till Höjdkurvor; analyserna i cad-apa efter piloten; *Upp till
 taket* är kvar.
 
 ## Att fråga Carl August om
+
+- **0.10.6 efter provning**: inget nytt att prova; allt ska bete sig som
+  förut. Med en plats och markobjekt ska planen och 3D-vyn ritas om
+  fortare när en vägg eller ett markobjekt ändras, särskilt på en stor
+  eller brant plats. Säg till om något beter sig annorlunda.
 
 - **0.10.5 efter provning** (Claudes val, se PLAN.md): byggnadshöjden
   räknas mot den **längsta fasaden** (bland lika långa den högsta); ska
@@ -725,6 +747,15 @@ taket* är kvar.
 
 ## Öppna frågor och kända begränsningar
 
+- **Marken efter 0.10.6** (mätt men lämnat): fasader och sektioner byggs
+  om helt vid varje ändring i projektet, också av ett markobjekt (ca
+  20–60 ms per vy i exempelvillan, lika med och utan mark; nyckeln är hela
+  projektet i `modelShapes`). På en brant plats ändrar ett objekt stora
+  ytor (40 000 noder för urgrävningen under plattan på 0,5 m) och varje
+  ändrad nod kostar 1–3 µs i `probe` (närmaste kant); den färdiga markens
+  höjdkurvor räknas för hela området som alla markobjekt ändrat (ca
+  70–100 ms på en brant plats). 3D-vyn i Chromium utan grafikkort ritar
+  en stor mark på ca 1 s; inte mätt på en riktig dator.
 - **Marken (0.10.3):** höjdkurvorna för ett stort, brusigt rutnät (1,2
   miljoner noder, 0,5 m) tar ca 2 s första gången (sedan sparade);
   `contours` har en `Map` per nivå som går att byta mot typade listor om
@@ -826,11 +857,18 @@ taket* är kvar.
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (223 steg sedan 0.9.3: stilmallen med linjetyper, pennor och
+  (288 steg sedan 0.10.6: stilmallen med linjetyper, pennor och
   fyllningstyper, snabbraden, den egna pennan, rummets fyllning,
   2D-formens fält med mask, bakgrund och fyllningstyp, ritordning, Visas
   i, underlag, detaljnivåerna, Filtrera och markera, våningar, bjälklag,
-  kalkering, fasader, sektion och nivåer). Kommandon skrivs i smartshell
+  kalkering, platsen och markobjekten, fasader, sektion och nivåer).
+  Platsen släpps på planen som en fil (`PLATS`, samma mark som
+  `groundProject`), och dialogen väljs med `pg.click` (flera `.dialog`
+  finns i sidan; dialogen *Platsen* har klassen `site-dialog`). Väggarna
+  är vridna när marken prövas, så plattan ur väggarna har ingen kontur:
+  urgrävningen läggs under ett ritat bjälklag. Den fasta följden i
+  `crypto.getRandomValues` tar de höga bitarna sedan 0.10.6 (med de låga
+  upprepades id efter några hundra). Kommandon skrivs i smartshell
   (`#ss-input`, Enter), och en meny (som *Kopiera till våning*) väljs i
   `.ctx-menu`. Kör den mot två byggen på var sin port och sedan med
   `--jamfor`; lägg till steg för det som granskas. Med `--bilder` sparas
@@ -887,6 +925,13 @@ taket* är kvar.
   Python som summerar `timeDeltas` per `callFrame` i `.cpuprofile`, och
   inklusive tid genom att gå upp till föräldrarna (så mättes 0.10.1).
   Polygon-clippings egna funktioner heter `split`, `compare` och `run`.
+- **Marken utan webbläsare** (0.10.6): ett skript som importerar
+  `tests/projekt.ts` (`groundProject`, `slopeSite`, `planCtx`) och byter
+  platsen mot ett större rutnät med `applySitePackage` (t.ex. 200 × 150 m
+  med 0,5 m och en brant sluttning), buntat med rolldown; mät
+  `finishedTerrain(planCtx(store))` och `buildPlan` efter `updateParams`.
+  Jämför med en färsk `finishedGround` utan `prev` för att se att svaret
+  är detsamma.
 - Fasader, sektioner och blad utan webbläsare: ett skript med
   `registerBuiltInTypes()` från `src/elements` först, sedan `buildSection`
   eller `buildSheet` och `writePdf`. Stora projekt att mäta på: `wallGrid`

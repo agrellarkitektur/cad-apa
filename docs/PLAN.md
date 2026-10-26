@@ -1921,6 +1921,44 @@ inte per byggnadskropp.*
 
 Efter marken, som är ny och tung geometri.
 
+*Byggd (26 oktober), samma format (18), utan nya funktioner. Testerna:
+491 → 501, ca 16 s (20 s med 0.10.5 i samma sandlåda). Skyddet först,
+skrivet med 0.10.5: testprojektet `groundProject` (exempelvillan på en
+kuperad plats, vriden 10°, med alla sorters markobjekt, ett träd och ett
+grannhus) med referensritningar för planen, Befintligt, sektionen,
+fasaderna och 3D, och den färdiga marken som siffror (höjderna där den
+ändrats, schakt och fyll per objekt, medelmarknivån, byggnadshöjden och
+stödmurens krön). Klickjämförelsen har 288 steg (platsen släpps på
+planen, verktyget Mark i alla sätt, egenskaperna för varje sort, dialogen
+*Platsen*, en innerväggs höjd). Samma klick i 0.10.5 och 0.10.6 ger samma
+läge och bild, och 3D-vyn samma bild. I klickjämförelsen upprepades nya id
+efter några hundra (den fasta följden tog de låga bitarna), så att ett
+nytt markobjekt kunde ersätta ett annat; rättat. **Det som räknades om i
+onödan**, mätt på en brant plats 200 × 150 m med 0,5 m mellan noderna och
+tio markobjekt: varje ändrad vägg (också en innervägg, en väggs höjd eller
+penna) räknade om hela den färdiga marken, eftersom husets kontur blev ett
+nytt objekt; nu jämförs den till värdet (208 → under 4 ms). Kurvavståndet
+och jorden i sektionerna räknade också om den, eftersom platsen byts som
+objekt (ca 200 → 0,2 ms). Ett ändrat markobjekt räknade om alla; nu
+börjar räkningen vid objektet, så att den sista brytlinjen tar 22 ms i
+stället för 208 och den tredje platån 141 i stället för 230.
+Höjdkurvornas linjer i planen byggdes om när en vägg ändrades (nu
+sparade), så att planen efter en ändrad innervägg tar 18 ms i stället för
+338. 3D-nätet byggdes om helt för varje ny färdig mark; nu byts bara
+höjderna (44 → 4,5 ms). I Chromium blir en ändrad innervägg på den platsen
+färdig i planen på ca 177 ms i stället för 308. Koden: `ground.ts` 497 →
+61 rader (formerna och den färdiga marken i `groundGeometry.ts`,
+ritningen i `groundPlan.ts`). Testerna för 0.10.4 och 0.10.5 i en fil
+(`mark.test.ts`), den sneda marken en gång (`slopeSite` i
+`tests/projekt.ts`, också för platstestet), och provet av att den färdiga
+marken ritas tjock i planen och sektionen ersatt av referensritningarna.
+Mätt men lämnat: fasader och sektioner byggs om helt vid varje ändring i
+projektet, också av ett markobjekt (ca 20–60 ms per vy i exempelvillan,
+lika med och utan mark); på en brant plats ändrar ett objekt stora ytor
+(40 000 noder för urgrävningen under plattan) och varje ändrad nod kostar
+1–3 µs; den färdiga markens höjdkurvor räknas för hela området som
+markobjekten ändrat (ca 70–100 ms på den branta platsen).*
+
 ### 0.10.7 Dolda linjer i fasader
 
 Carl Augusts synpunkt 25 oktober. Mellanstor.

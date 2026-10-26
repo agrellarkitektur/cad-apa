@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.5** (alfa); nästa är **0.10.6, granskning**.
+**0.10.6** (alfa); nästa är **0.10.7, dolda linjer i fasader**.
 
 ## Vad som fungerar
 
@@ -1105,6 +1105,19 @@ Version 0.10.2, takfot och taket i planen (samma filformat, 17):
   ytterväggarnas utsida på alla våningar, streckad där taket ligger över
 - Nivåkoten *Takfot* är takets lägsta undersida med snittet och språnget
 - Referensritningarna med tak ändrades (punktstreckat och takfotens snitt)
+
+Version 0.10.6, granskning (samma filformat, 18):
+- Inga nya funktioner; allt beter sig som förut
+- **Den färdiga marken räknas om bara när den ändras**: inte när en
+  innervägg, en väggs höjd eller penna, kurvavståndet eller jorden i
+  sektionerna ändras. Förut räknades hela marken om, och höjdkurvorna och
+  3D-nätet byggdes om, vid varje ändrad vägg
+- **Ett ändrat markobjekt räknas från sig självt**: objekten före det i
+  ordningen används som de var. Den sista brytlinjen på en brant plats
+  (200 × 150 m, 0,5 m mellan punkterna, tio markobjekt) tar 22 ms i
+  stället för 208
+- Höjdkurvorna i planen ritas inte om när en vägg ändras, och 3D-vyn
+  byter bara höjderna i nätet när den färdiga marken ändras (44 → 4,5 ms)
 
 Version 0.10.5, markobjekt del 2 och byggnadshöjd (samma filformat, 18):
 - **Byggnadshöjd enligt PBF** (1 kap. 3 §): från medelmarknivån till där

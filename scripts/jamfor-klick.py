@@ -1,8 +1,8 @@
 """Samma klick i två byggen (granskningen 0.8.27; linjetyper, mask och egen
 penna från 0.8.32; fyllningstyper, pennor för dörrar och fönster, rummens
 kontur, Filtrera och markera och detaljnivåerna från 0.8.38; våningar,
-bjälklag och nivåer från 0.9.3): läget efter varje steg sparas, och två
-körningar jämförs steg för steg.
+bjälklag och nivåer från 0.9.3; platsen och markobjekten från 0.10.6):
+läget efter varje steg sparas, och två körningar jämförs steg för steg.
 
 Bygg den gamla versionen i en egen arbetskopia och den nya som vanligt,
 servera dem på var sin port (python3 -m http.server) och kör
@@ -16,7 +16,8 @@ bredvid json-filen. Skiljer sig ritningens markup (`content`), till exempel
 när ett mönster ritas på ett annat sätt, jämförs bilderna: antalet pixlar
 som skiljer mycket står efter stegets namn.
 
-Nya id blir desamma i båda (fast följd i crypto.getRandomValues), och
+Nya id blir desamma i båda (fast följd i crypto.getRandomValues, sedan
+0.10.6 med de höga bitarna, så att två nya id inte blir lika), och
 blob-adresser för underlagens bilder räknas inte. Kräver Playwright och PIL.
 """
 import base64, hashlib, io, json, os, sys
@@ -77,10 +78,29 @@ def _bild():
 
 BILD = _bild()
 
+
+def _plats():
+    """En kuperad plats, 60 × 50 m med 1 m mellan noderna, vriden 10° (samma mark som `groundProject` i testerna)."""
+    import math, struct
+    W, H = 61, 51
+    z = [60 + 0.06 * i + 0.8 * math.sin(i / 7) * math.cos(j / 5) + 0.02 * j for j in range(H) for i in range(W)]
+    return json.dumps({
+        'format': 'hojdkurvor-plats', 'version': 1, 'projekt': {'id': 'p1', 'namn': 'Provet'},
+        'koordinatsystem': {'plan': {'epsg': 3010, 'namn': 'SWEREF 99 16 30'}, 'hojd': 'RH 2000', 'enhet': 'm'},
+        'utsnitt': {'xmin': 1000, 'ymin': 5000, 'xmax': 1060, 'ymax': 5050},
+        'nollpunkt': {'x': 1025, 'y': 5020, 'z': 0}, 'vridning': 10, 'sannNord': 0,
+        'terrang': {'rutnat': {'x0': 1000, 'y1': 5050, 's': 1, 'W': W, 'H': H, 'z': base64.b64encode(struct.pack(f'<{W * H}f', *z)).decode()}},
+        'trad': [{'x': 1045, 'y': 5040, 'mark': None, 'hojd': 9, 'krona': 5}],
+        'byggnader': [{'fotavtryck': [[1005, 5038], [1013, 5038], [1013, 5046], [1005, 5046]], 'mark': None, 'hojd': 6, 'typ': 'Bostad', 'husnummer': '3'}],
+    })
+
+
+PLATS = _plats()
+
 INIT = r"""
 (() => {
   let n = 1;
-  crypto.getRandomValues = (a) => { for (let i = 0; i < a.length; i++) { n = (n * 1103515245 + 12345) & 0x7fffffff; a[i] = n & 0xff; } return a; };
+  crypto.getRandomValues = (a) => { for (let i = 0; i < a.length; i++) { n = (n * 1103515245 + 12345) & 0x7fffffff; a[i] = (n >>> 16) & 0xff; } return a; };
   window.showSaveFilePicker = undefined;
   window.showOpenFilePicker = undefined;
   window.__set = (sel, val, root) => {
@@ -436,6 +456,90 @@ def main():
         step('ta bort hålet', "__click('[data-action=\"slab-hole-remove\"][data-index=\"0\"]', 'aside.panel .panel-body')")
         step('ångra hålet', "__click('[data-action=\"undo\"]')")
         step('avmarkera plattan', "bacchus.selection.clear()")
+
+        # ---------- Platsen och markobjekten (0.10.3–0.10.5, steg från 0.10.6) ----------
+        def drop_site():
+            pg.evaluate("""(text) => {
+              const f = new File([text], 'provet.hkplats.json', { type: 'application/json' });
+              const dt = new DataTransfer(); dt.items.add(f);
+              const t = document.querySelector('.pane-2d');
+              const r = t.getBoundingClientRect();
+              const o = { bubbles: true, cancelable: true, dataTransfer: dt, clientX: r.left + 300, clientY: r.top + 300 };
+              t.dispatchEvent(new DragEvent('dragover', o));
+              t.dispatchEvent(new DragEvent('drop', o));
+            }""", PLATS)
+            pg.wait_for_selector('.dialog [data-choice="here"]', timeout=5000)
+
+        def ground_ids(test):
+            return f"Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Ground' && ({test})).map((e) => e.id)"
+
+        panel = 'aside.panel .panel-body'
+        step('planen igen', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(300))
+        step('släpp platsen', fn=drop_site)
+        step('i det öppna projektet', fn=lambda: (pg.click('[data-choice="here"]'), pg.wait_for_timeout(500)))
+        step('zooma till platsen', "__click('[data-action=\"fit\"]')", fn=lambda: pg.wait_for_timeout(400))
+        step('markverktyget', "bacchus.setTool('ground')")
+        step('runt huset', "__click('[data-action=\"ground-around\"]')")
+        # Väggarna är vridna ovan, så plattan ur väggarna har ingen kontur: ett bjälklag till på plan 1.
+        step('bjälklag på plan 1', "bacchus.selection.clear(); bacchus.setTool('slab')")
+        step('bjälklagets första hörn', fn=lambda: click_model(-7000, -4000))
+        step('bjälklagets andra hörn', fn=lambda: click_model(-3000, -1000))
+        step('markverktyget igen', "bacchus.setTool('ground')")
+        step('under bjälklag', "bacchus.selection.clear(); __click('[data-ground-mode=\"slab\"]')")
+        step('klicka i bjälklaget', fn=lambda: click_model(-5000, -2500))
+        step('platå', "bacchus.selection.clear(); __click('[data-ground-mode=\"plateau\"]')")
+        step('platåns första hörn', fn=lambda: click_model(19000, 6000))
+        step('platåns andra hörn', fn=lambda: click_model(25000, 11000))
+        step('urgrävning', "bacchus.selection.clear(); __click('[data-ground-mode=\"excavation\"]')")
+        step('gropens första hörn', fn=lambda: click_model(-20000, 8000))
+        step('gropens andra hörn', fn=lambda: click_model(-15000, 12000))
+        step('ramp', "bacchus.selection.clear(); __click('[data-ground-mode=\"ramp\"]')")
+        step('rampens början', fn=lambda: click_model(2000, -8000))
+        step('rampens slut', fn=lambda: click_model(8000, -8000))
+        step('rampen klar', "__click('[data-action=\"ground-done\"]')")
+        step('stödmur', "bacchus.selection.clear(); __click('[data-ground-mode=\"wall\"]')")
+        step('murens början', fn=lambda: click_model(19000, 5000))
+        step('murens slut', fn=lambda: click_model(25000, 5000))
+        step('muren klar', "__click('[data-action=\"ground-done\"]')")
+        step('brytlinje', "bacchus.selection.clear(); __click('[data-ground-mode=\"breakline\"]')")
+        step('brytlinjens början', fn=lambda: click_model(-22000, -6000))
+        step('brytlinjens slut', fn=lambda: click_model(-22000, 4000))
+        step('brytlinjen klar', "__click('[data-action=\"ground-done\"]')")
+        step('höjdpunkt', "bacchus.selection.clear(); __click('[data-ground-mode=\"point\"]')")
+        step('höjdpunkten', fn=lambda: click_model(-10000, 16000))
+        step('esc mark', fn=lambda: pg.keyboard.press('Escape'))
+        step('markera platån', f"bacchus.selection.set({ground_ids("e.params.kind === 'plateau' && e.params.outline.length")})")
+        step('platåns höjd', f"__set('[data-key=\"ground:height\"]', '62,4', '{panel}')")
+        step('platåns fall', f"__set('[data-key=\"ground:fall\"]', '40', '{panel}')")
+        step('fallets riktning', f"__set('[data-key=\"ground:fallDir\"]', '120', '{panel}')")
+        step('platåns slänt', f"__set('[data-key=\"ground:slope\"]', '3', '{panel}')")
+        step('kanterna stödmur', f"__set('[data-key=\"ground:edge\"]', 'wall', '{panel}')")
+        step('markera platån runt huset', f"bacchus.selection.set({ground_ids('e.params.around')})")
+        step('sockeln', f"__set('[data-key=\"ground:sockel\"]', '300', '{panel}')")
+        step('ut från fasaden', f"__set('[data-key=\"ground:distance\"]', '4000', '{panel}')")
+        step('markera urgrävningen', f"bacchus.selection.set({ground_ids('e.params.slab')})")
+        step('arbetsutrymmet', f"__set('[data-key=\"ground:margin\"]', '800', '{panel}')")
+        step('markera rampen', f"bacchus.selection.set({ground_ids("e.params.kind === 'path'")})")
+        step('rampens bredd', f"__set('[data-key=\"ground:width\"]', '1800', '{panel}')")
+        step('rampens lutning', f"__set('[data-key=\"ground:ratio\"]', '15', '{panel}')")
+        step('infart', f"__set('[data-key=\"ground:path\"]', 'drive', '{panel}')")
+        step('tvärfall', f"__set('[data-key=\"ground:crossFall\"]', '-40', '{panel}')")
+        step('sidorna stödmur', f"__set('[data-key=\"ground:edge\"]', 'wall', '{panel}')")
+        step('markera stödmuren', f"bacchus.selection.set({ground_ids("e.params.kind === 'wall'")})")
+        step('murens tjocklek', f"__set('[data-key=\"ground:thickness\"]', '300', '{panel}')")
+        step('över marken', f"__set('[data-key=\"ground:above\"]', '200', '{panel}')")
+        step('markera brytlinjen', f"bacchus.selection.set({ground_ids("e.params.kind === 'breakline'")})")
+        step('tonas inom', f"__set('[data-key=\"ground:radius\"]', '3000', '{panel}')")
+        step('brytlinjens slut höjd', f"__set('[data-key=\"ground:endHeight\"]', '61', '{panel}')")
+        step('ångra brytlinjen', "__click('[data-action=\"undo\"]')")
+        step('avmarkera mark', "bacchus.selection.clear()")
+        step('öppna Platsen', "__click('[data-action=\"site\"]')", fn=lambda: pg.wait_for_selector('.dialog [data-ground=\"slope\"]', timeout=5000))
+        step('slänten i förvalen', "__set('[data-ground=\"slope\"]', '2,5', '.site-dialog')")
+        step('jord i sektionerna', "__set('[data-site=\"earth\"]', true, '.site-dialog')")
+        step('höjdkurvor var', "__set('[data-site=\"contours\"]', '250', '.site-dialog')")
+        step('spara Platsen', "__click('[type=\"submit\"]', '.site-dialog')")
+        step('innerväggens höjd', "bacchus.selection.set(['iv-1'])", fn=lambda: pg.evaluate("__set('[data-key=\"param:height\"]', '2500', 'aside.panel .panel-body')"))
+        step('avmarkera väggen', "bacchus.selection.clear()")
 
         # ---------- Fasader och sektion ----------
         def open_marker(m):

@@ -70,15 +70,34 @@ export interface FinishedGround {
   /** Lägsta och högsta höjd (RH 2000, m): den befintligas, vidgade med det som ändrats. */
   min: number;
   max: number;
+  /** Vad varje objekt ändrade, och det det räknades mot, så att nästa räkning kan börja efter objekten som är sig lika (0.10.6). */
+  steps: readonly Step[];
+  base: readonly unknown[];
+}
+
+/** Ett objekts ändringar (0.10.6): nodernas index och nya höjder, och läget efter objektet. */
+interface Step {
+  shape: GroundShape;
+  idx: Int32Array;
+  val: Float32Array;
+  vol: CutFill;
+  changed: FinishedGround['changed'];
+  min: number;
+  max: number;
 }
 
 /** Hur långt slänten högst når från ytan, mm. */
 const MAX_REACH = 100_000;
 
-/** Den färdiga marken: den befintliga med objekten i ordning. */
-export function finishedGround(t: Terrain, shapes: readonly GroundShape[], barriers: readonly Barrier[] = []): FinishedGround {
+/**
+ * Den färdiga marken: den befintliga med objekten i ordning. Med `prev`, ett
+ * tidigare svar mot samma mark och murar (0.10.6), används dess ändringar
+ * för objekten i början som är desamma (samma objekt), så att bara objektet
+ * som ändrats och de efter det räknas om.
+ */
+export function finishedGround(t: Terrain, shapes: readonly GroundShape[], barriers: readonly Barrier[] = [], prev?: FinishedGround | null): FinishedGround {
   const { W, H, x0, y1, s } = t.grid;
-  const z = Float32Array.from(t.z);
+  const z = t.z.slice();
   const volumes = new Map<string, CutFill>();
   const site = t.site;
   const v = (site.rotation * Math.PI) / 180;
@@ -91,9 +110,23 @@ export function finishedGround(t: Terrain, shapes: readonly GroundShape[], barri
   let changed: FinishedGround['changed'] = null;
   let min = t.min;
   let max = t.max;
-  for (const sh of shapes) {
+  const base = [t.z, x0, y1, s, W, H, ox, oy, site.rotation, datum, ...barriers];
+  const steps: Step[] = [];
+  // Objekten i början som är desamma som förra gången: deras ändringar läggs på direkt.
+  if (prev && prev.base.length === base.length && prev.base.every((b, i) => b === base[i])) {
+    for (const st of prev.steps) {
+      if (steps.length >= shapes.length || st.shape !== shapes[steps.length]) break;
+      for (let m = 0; m < st.idx.length; m++) z[st.idx[m]] = st.val[m];
+      volumes.set(st.shape.id, st.vol);
+      ({ changed, min, max } = st);
+      steps.push(st);
+    }
+  }
+  for (const sh of shapes.slice(steps.length)) {
     const vol: CutFill = { cut: 0, fill: 0 };
     volumes.set(sh.id, vol);
+    const idx: number[] = [];
+    const val: number[] = [];
     const lo = Math.min(sh.hMin, (t.min - datum) * 1000);
     const hi = Math.max(sh.hMax, (t.max - datum) * 1000);
     const blend = sh.blend ?? 0;
@@ -175,19 +208,18 @@ export function finishedGround(t: Terrain, shapes: readonly GroundShape[], barri
         else vol.cut -= d * cell;
         const h = datum + next / 1000;
         z[n] = h;
+        idx.push(n);
+        val.push(h);
         if (h < min) min = h;
         if (h > max) max = h;
         if (!changed) changed = { i0: i, i1: i, j0: j, j1: j };
-        else {
-          if (i < changed.i0) changed.i0 = i;
-          if (i > changed.i1) changed.i1 = i;
-          if (j < changed.j0) changed.j0 = j;
-          if (j > changed.j1) changed.j1 = j;
-        }
+        else if (i < changed.i0 || i > changed.i1 || j < changed.j0 || j > changed.j1)
+          changed = { i0: Math.min(i, changed.i0), i1: Math.max(i, changed.i1), j0: Math.min(j, changed.j0), j1: Math.max(j, changed.j1) };
       }
     }
+    steps.push({ shape: sh, idx: Int32Array.from(idx), val: Float32Array.from(val), vol, changed, min, max });
   }
-  return { z, changed, volumes, min, max };
+  return { z, changed, volumes, min, max, steps, base };
 }
 
 type V2 = readonly [number, number];
