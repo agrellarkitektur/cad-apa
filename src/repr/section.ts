@@ -294,7 +294,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     }
     // Nivåkoter och höjdmått (0.9.2).
     const cutSlabs = isSection ? shapes.filter(({ s, demolished }) => !demolished && s.kind !== 'edges' && s.material === 'slab' && ownCuts.has(s.id)).map(({ s }) => s as Solid) : [];
-    prims.push(...levelPrims(doc, ctx, style, view, { cutSlabs, roofs, maxU, maxZ, isSection }));
+    prims.push(...levelPrims(doc, ctx, style, view, { cutSlabs, roofs, maxU, maxZ, isSection, marker, view: fr.view }));
   }
 
   const pickables: Pickable[] = [...new Set([...byId.keys(), ...ownCuts.keys()])].map((id) => {

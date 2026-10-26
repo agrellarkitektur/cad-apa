@@ -327,8 +327,8 @@ export interface OwnPen extends OwnPenPart {
 }
 
 export const FORMAT = 'bacchus-project';
-/** 19 (0.10.7): markobjektens sort `area` (platå och urgrävning) och vägen utan `path` (ramp, gångväg, infart). */
-export const FORMAT_VERSION = 19;
+/** 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionslinjernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
+export const FORMAT_VERSION = 20;
 
 export interface ProjectDoc {
   format: typeof FORMAT;

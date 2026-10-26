@@ -139,6 +139,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     setTool('select');
     app.selection.set([id]);
     const el = app.store.doc.elements[id];
+    if (el?.type === 'BasisFacade') app.hint('Byggnadshöjden mäts nu mot den här fasaden. Fasaden som ser den visar BH från början.', 5000);
     if (el && (el.type === 'Section' || el.type === 'Elevation')) {
       app.hint(`${markerName(app.store.doc, el)} finns nu i projektträdet under Modell. Dubbelklicka på linjen för att öppna den.`, 5000);
     }

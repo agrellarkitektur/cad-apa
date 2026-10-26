@@ -5,7 +5,9 @@ import type { ViewStates } from '../core/states';
 import type { DocStore } from '../core/store';
 import { reshapeWall } from '../core/wallEdit';
 import { resolveParams } from '../elements/registry';
-import { markerFrame, type MarkerParams } from '../elements/markers';
+import { markerFrame, type MarkerHeights, type MarkerParams } from '../elements/markers';
+import { markerHeights } from '../repr/sectionLevels';
+import { buildingHeight } from '../repr/buildingHeight';
 import type { WallParams } from '../elements/wall';
 import { bulgeForRadius } from '../geometry/arc';
 import { add, norm, scale, sub } from '../geometry/vec';
@@ -255,6 +257,12 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
       // Början ligger still; slutet flyttas.
       const end: [number, number] = [Math.round(p.start[0] + Math.cos(ang) * len), Math.round(p.start[1] + Math.sin(ang) * len)];
       updateParams(store, [el.id], raw.auto ? { auto: false, start: p.start, side: 1, end } : { end }, name === 'length' ? 'Ändra längd' : 'Ändra vinkel');
+    } else if (name.startsWith('heights.')) {
+      // Höjderna i fasaden eller sektionen (0.10.8b): alla fyra sparas, så att förvalet inte ändras under ens fötter.
+      const k = name.slice(8) as keyof MarkerHeights;
+      const { ctx } = createContext(doc, doc.storeys[0].id, view, doc.graphics, () => true);
+      const now = markerHeights(el, markerFrame(doc, el).view, buildingHeight(ctx));
+      updateParams(store, [el.id], { heights: { ...now, [k]: (input as HTMLInputElement).checked } }, 'Höjder i vyn');
     } else if (name === 'depth') {
       const v = Number(input.value);
       updateParams(store, [el.id], { depth: input.value === '' || !(v > 0) ? null : Math.round(v) }, 'Ändra djup');

@@ -1,4 +1,5 @@
 import { dimensionType, textType } from './annotation';
+import { basisFacadeType } from './basisFacade';
 import { doorType } from './door';
 import { shape2dType } from './drawing2d';
 import { furnitureType } from './furniture';
@@ -41,6 +42,7 @@ export function registerBuiltInTypes(): void {
   registerType(treeType);
   registerType(siteMapType);
   registerType(groundType);
+  registerType(basisFacadeType);
   // Fasader och sektioner som följer byggnaden placeras där de ligger när de flyttas.
   placement.auto = (doc, el) => {
     const f = markerFrame(doc, el);

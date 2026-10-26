@@ -124,6 +124,20 @@ export function installSite(app: AppContext) {
     return { z: meanGround(ctx), existing, finished, house: buildingFootprint(ctx).length > 0, volumes, objects: groundObjects(ctx).length, bh: buildingHeight(ctx) };
   }
 
+  /**
+   * Knapparna som sätter ±0 till medelmarknivån (0.10.8b): den nya markens
+   * (med markobjekten), och den befintligas bredvid när de skiljer sig.
+   */
+  function mmnButtons(m: ReturnType<typeof mmn>): string {
+    const site = app.store.doc.site!;
+    const cm = (z: number) => mf(Math.round(toRh(site, z) * 100) / 100);
+    const out: string[] = [];
+    const main = m.finished ?? m.existing;
+    if (main !== null) out.push(`<button type="button" class="btn" data-site-mmn="${cm(main)}" title="Sätt ±0 till ${m.finished !== null ? 'den nya markens' : 'markens'} medelmarknivå längs huset (+${cm(main)}), avrundad till centimeter">Medelmarknivån</button>`);
+    if (m.finished !== null && m.existing !== null && cm(m.finished) !== cm(m.existing)) out.push(`<button type="button" class="btn" data-site-mmn="${cm(m.existing)}" title="Sätt ±0 till den befintliga markens medelmarknivå längs huset (+${cm(m.existing)})">Befintlig</button>`);
+    return out.join('');
+  }
+
   /** Dialogen Platsen: varifrån, koordinatsystem, ±0, höjdkurvor, beskärning, licens. */
   async function showDialog(over?: { datum?: number }): Promise<void> {
     const doc = app.store.doc;
@@ -148,10 +162,10 @@ export function installSite(app: AppContext) {
           ${row('Vridning och sann nord', `${mf(site.rotation, 2)}°, sann nord ${mf(site.trueNorth, 3)}°`)}
           ${row('Markmodell', t ? `${t.grid.W} × ${t.grid.H} punkter, ${mf(t.grid.s, 2)} m mellan, ${mf(t.min, 2)}–${mf(t.max, 2)} m` : 'Ingen (skapa underlaget i Höjdkurvor)')}
           ${row('Medelmarknivå', m.z !== null ? `+${mf(toRh(site, m.z))} längs husets kontur (${m.z >= 0 ? '+' : '−'}${mf(Math.abs(m.z) / 1000)} från ±0)${m.finished !== null && m.existing !== null ? `; färdig mark +${mf(toRh(site, m.finished))}, befintlig +${mf(toRh(site, m.existing))}` : ''}` : m.house ? 'Ingen mark under huset' : 'Rita huset först')}
-          ${m.bh && m.bh.height !== null ? row('Byggnadshöjd', `${mf(m.bh.height / 1000, 2)} m enligt PBF, på fasaden mot ${compass(m.bh.main.out, northOf(site))} (den längsta), +${mf(toRh(site, m.bh.main.z))}. Undantagen (kupor, allmän plats närmare än 6 m, annan beräkningsgrundande fasad) bedöms för hand.`) : ''}
+          ${m.bh && m.bh.height !== null ? row('Byggnadshöjd', `${mf(m.bh.height / 1000, 2)} m enligt PBF utan språng, på fasaden mot ${compass(m.bh.main.out, northOf(site))} (${m.bh.basis ? 'den beräkningsgrundande' : 'den längsta; rita en beräkningsgrundande fasad med verktyget Fasad'}), +${mf(toRh(site, m.bh.main.z))}. Nockhöjd ${mf((m.bh.ridge - (m.z ?? 0)) / 1000, 2)} m. Undantagen (kupor, allmän plats närmare än 6 m) bedöms för hand.`) : ''}
           ${m.volumes ? row('Schakt och fyll', `${m3(m.volumes.cut)} schakt, ${m3(m.volumes.fill)} fyll (${m.objects} markobjekt i tillståndet som visas)`) : ''}
         </dl>
-        <label class="site-field"><span>±0, plan 1:s golv, i RH 2000 (m)</span><span class="site-datum"><input class="ask-input" data-site="datum" inputmode="decimal" value="${mf(over?.datum ?? site.datum)}">${t ? `<button type="button" class="btn" data-site-action="pick" title="Klicka på marken i planen; höjden där blir ±0, avrundad till centimeter. Den kan ändras här efteråt.">Klicka i planen</button>` : ''}${m.existing !== null ? `<button type="button" class="btn" data-site-mmn="${mf(Math.round(toRh(site, m.existing) * 100) / 100)}" title="Sätt ±0 till den befintliga markens medelmarknivå längs huset, avrundad till centimeter">Medelmarknivån</button>` : ''}</span></label>
+        <label class="site-field"><span>±0, plan 1:s golv, i RH 2000 (m)</span><span class="site-datum"><input class="ask-input" data-site="datum" inputmode="decimal" value="${mf(over?.datum ?? site.datum)}">${t ? `<button type="button" class="btn" data-site-action="pick" title="Klicka på marken i planen; höjden där blir ±0, avrundad till centimeter. Den kan ändras här efteråt.">Klicka i planen</button>` : ''}${mmnButtons(m)}</span></label>
         ${t ? `<label class="site-field"><span>Höjdkurvor var</span><select data-site="contours">${CONTOUR_STEPS.map((c) => `<option value="${c}"${c === interval ? ' selected' : ''}>${mf(c / 1000, 2)} m</option>`).join('')}</select></label>` : ''}
         ${t ? `<div class="site-field site-crop"><span>Beskär markmodellen till</span><input class="ask-input" data-site="crop" inputmode="decimal" value="30"><span>m runt huset</span><button type="button" class="btn" data-site-action="crop"${m.house ? '' : ' disabled title="Rita huset först"'}>Beskär</button></div>` : ''}
         ${t ? groundSettings(site.ground, site.meanOnExisting, site.earthHatch ? 'hatch' : site.earthWhite ? 'white' : 'none') : ''}
@@ -189,10 +203,12 @@ export function installSite(app: AppContext) {
         if (changed) updateSite(app.store, patch);
         done('saved');
       });
-      form.querySelector<HTMLButtonElement>('[data-site-mmn]')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        form.querySelector<HTMLInputElement>('[data-site="datum"]')!.value = (e.currentTarget as HTMLButtonElement).dataset.siteMmn!;
-      });
+      form.querySelectorAll<HTMLButtonElement>('[data-site-mmn]').forEach((b) =>
+        b.addEventListener('click', (e) => {
+          e.preventDefault();
+          form.querySelector<HTMLInputElement>('[data-site="datum"]')!.value = b.dataset.siteMmn!;
+        }),
+      );
       form.querySelectorAll<HTMLButtonElement>('[data-site-action]').forEach((b) =>
         b.addEventListener('click', () => {
           const a = b.dataset.siteAction;

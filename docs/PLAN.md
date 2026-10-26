@@ -2063,7 +2063,7 @@ strecken och pilarna). Provat med Playwright mot `dist/` (planen,
 3D-vyn och ±0). Klickjämförelsen kördes inte (bara ritningen av marken
 är ändrad, och den ändras med avsikt).*
 
-### 0.10.8b Höjderna i fasaden
+### 0.10.8b Höjderna i fasaden ✓
 
 Carl Augusts svar 26 oktober (fråga 19). Mellanstor.
 
@@ -2075,6 +2075,33 @@ Carl Augusts svar 26 oktober (fråga 19). Mellanstor.
   medelmarknivån
 - Medelmarknivån (knappen för ±0) ur den nya marken, med den befintliga
   att jämföra
+
+*Byggd (26 oktober), nytt format (20). Testerna: 508 → 510, ca 17–20 s.
+Carl August sa "kör" på upplägget med Claudes val: nivåkotan och måttet
+visas båda, totalhöjden räknar det som syns i vyn (tak och väggar så
+länge), och en beräkningsgrundande fasad per projekt (inte per
+tillstånd). **Linjen** är objekttypen `BasisFacade` (`start`, `end`;
+global och på alla våningar som fasadlinjerna), ritad med Fasadverktygets
+val *Beräkningsgrundande fasad* (två klick, ingen sida); en ny tar bort
+den gamla i samma steg. Den ritas streckprickad 0,5 med texten utanför
+huset. Byggnadshöjden mäts mot den närmaste fasaden i husets kontur som
+är parallell inom 15° och vars sträcka linjens mitt ligger högst 1,5 m
+från. **Utan språng**: 45°-planet räknas bara över huset (d ≥ 0); för ett
+tak flackare än 45° blir det precis skärningen mellan fasadlivet och
+takets ovansida, för ett brantare nocken (PBF). I exempelvillan sjönk BH
+från +3,282 till +3,037. **Höjderna per linje** (`heights` på fasad- och
+sektionslinjer: `bh`, `nh`, `th`, `mmnOld`); förvalet är BH i fasaden som
+ser den beräkningsgrundande fasaden (blicken inom 45° mot fasadens
+normal), inget annat. Kryssas en ruta sparas alla fyra. Måtten står 25 mm
+(på papper) till höger om nivåkoterna, 7 mm isär: lodrätt streck med
+snedstreck, texten längs strecket (*BH 3,04 m*). NH är takets högsta
+ovansida, TH den högsta punkten i vyn (minst NH). *MMN bef.* blir en
+egen nivåkota när den skiljer sig från MMN. Visa-valet *Byggnadshöjd*
+döljer allt. **Platsen**: *Medelmarknivån* ur den nya marken (den
+färdiga i förslaget som visas), *Befintlig* bredvid när den skiljer sig;
+raden *Byggnadshöjd* säger beräkningsgrundande eller längsta och
+nockhöjden. Provat med Playwright mot `dist/` (fasaderna, kryssrutorna,
+verktyget, linjen i planen, Platsen). Klickjämförelsen kördes inte.*
 
 ### 0.10.9 Stödmur del 2
 
@@ -2111,6 +2138,8 @@ Synpunkter 25 och 26 oktober.
   bort dem helt
 - Ingen skarv i fasaden mellan befintligt och nytt när fasadmaterialet är
   detsamma (svar 26 oktober, fråga 25)
+- Takets snitthöjd 1100 från början, inte 1200 (fråga 20)
+- Bjälklagets *Fasa* får förvalet 500 mm, som *Avrunda* (fråga 32)
 
 ### 0.10.12 Höjder i förhållande till våningen
 
@@ -2118,6 +2147,9 @@ Synpunkt 25 oktober. Mellanstor.
 
 - En minus- eller plusnivå i förhållande till våningen för bjälklag,
   väggar, objekt m.m.
+- Takets höjd gäller referenslinjen, och man väljer om den ligger mot
+  takets översida eller undersida (fråga 26). Lutningsriktningen, *Vänd
+  lutningen* och radiens tecken som nu
 
 ### 0.10.13 Visa och dölja (förslag)
 
@@ -2129,6 +2161,10 @@ Synpunkt 25 oktober. Mellanstor.
 - Fortsätta och sluta en linje med ändpunkterna; Förskjut flera kanter;
   foga ihop linjer
 - Ett klick mitt på en linje startar det senast använda verktyget
+- Takets kontur med bågar direkt i verktyget (fråga 29); håltagningen i
+  bjälklaget som en cirkel direkt (fråga 34)
+- Ett markerat hål i bjälklaget ändras (flyttas, formas om, vrids,
+  speglas) utan att bjälklaget påverkas (fråga 31)
 
 ### 0.10.15 Markobjektens linjer
 

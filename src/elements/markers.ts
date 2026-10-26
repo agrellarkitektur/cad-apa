@@ -33,6 +33,19 @@ export interface MarkerParams {
   facing?: number;
   /** Sektioner: bokstaven, t.ex. "A" för Sektion A-A. */
   label?: string;
+  /**
+   * Höjderna som visas (0.10.8b): byggnadshöjd, nockhöjd och totalhöjd från
+   * medelmarknivån, och den befintliga markens medelmarknivå. Saknas ett
+   * värde gäller förvalet (`markerHeights`).
+   */
+  heights?: Partial<MarkerHeights>;
+}
+
+export interface MarkerHeights {
+  bh: boolean;
+  nh: boolean;
+  th: boolean;
+  mmnOld: boolean;
 }
 
 /** Hur långt utanför byggnaden automatiska fasadlinjer läggs, mm. */

@@ -119,10 +119,12 @@ export function installToolOptions(app: AppContext) {
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'section' || app.ui.tool === 'elevation') {
       const t = app.ui.tool === 'section' ? app.sectionTool : app.elevationTool;
-      const what = app.ui.tool === 'section' ? 'sektionslinjen' : 'fasadlinjen';
-      app.toolOptions.innerHTML = `<span class="opt-hint">${
-        t.step === 0 ? `Klicka där ${what} börjar.` : t.step === 1 ? `Klicka där ${what} slutar.` : 'Klicka på den sida som ska synas.'
-      }</span>`;
+      // Fasadverktyget ritar också linjen Beräkningsgrundande fasad (0.10.8b).
+      const choice =
+        app.ui.tool === 'elevation'
+          ? `<div class="opt"><span>Linje</span><div class="segmented" role="group" aria-label="Linje"><button data-elev-basis="0" aria-pressed="${!t.basis}">Fasadlinje</button><button data-elev-basis="1" aria-pressed="${t.basis}" title="Linjen längs fasadlivet som byggnadshöjden mäts mot; det finns bara en">Beräkningsgrundande fasad</button></div></div>`
+          : '';
+      app.toolOptions.innerHTML = `${choice}<span class="opt-hint">${t.hintText()}</span>`;
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'measure') {
       const cell = (key: string, label: string) =>
@@ -372,6 +374,11 @@ export function installToolOptions(app: AppContext) {
       app.groundTool.reset();
     }
     if (b.dataset.action === 'ground-around') app.groundTool.aroundHouse();
+    if (b.dataset.elevBasis) {
+      app.elevationTool.basis = b.dataset.elevBasis === '1';
+      app.elevationTool.reset();
+      renderToolOptions();
+    }
     if (b.dataset.action === 'ground-done') app.groundTool.finish();
     if (b.dataset.action === 'dim-done') app.dimensionTool.donePoints();
     if (b.dataset.action === 'd2-done') app.draw2dTool.finish(false);

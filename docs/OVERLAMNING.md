@@ -3,37 +3,39 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 26 oktober 2026, efter 0.10.8.
+Senast: 26 oktober 2026, efter 0.10.8b.
 
 ## Läget
 
-- **0.10.8 Marken i ritningarna är klar** på `main` (samma format, 19).
-  Carl August delade versionen i två och sa "kör": höjderna i fasaden blir
-  **0.10.8b**. Byggt: höjdkurvorna heldragna där marken är orörd och den
-  befintliga streckad bara där den ändrats, halvmeterskurvorna tunnare,
-  marklinjen heldragen också i Befintligt, höjdkurvor i 3D (släcks under
-  Visa), släntmarkeringar (solfjäder i hörnen), en fallpil per fasad runt
-  huset, vit jord i sektionerna, ±0 med *Klicka i planen* i *Platsen* och
-  `{licens}`. Testerna: 508 på ca 13–18 s (sandlådan varierar; samma tid
-  före ändringarna). Klickjämförelsen kördes inte. Provat med Playwright
-  mot `dist/`. Claudes val i PLAN.md, koden i UTVECKLING.md under *Marken
-  i ritningarna (0.10.8)*.
-- **Carl Augusts svar 26 oktober kväll**: 0.10.7 bra som det är (referens-
-  linjen inte på papperet, förskjutningens tecken, fyllningen bakom
-  väggarna, vägens egen gräns). Fråga 19: byggnadshöjden mot en
-  beräkningsgrundande fasad han själv ritar, och nock- och totalhöjd
-  (0.10.8b). 21 och 55 till 0.10.10, 25 till 0.10.11, 23 parkerad (husets
-  kontur på situationsplanen, helhetsgrepp efter piloten). 22, 28, 30, 33
-  och 81 strukna ("vet inte" räknas som bra).
-- **Frågorna:** de obesvarade (17–81 nedan) ställs **tio per session**,
-  de som hör till den kommande versionen först. En fråga han hoppar över
-  räknas som "bra som det är" och stryks.
+- **0.10.8b Höjderna i fasaden är klar** på `main` (nytt format, 20).
+  Carl August sa "kör" på upplägget med Claudes val (nivåkota och mått
+  båda, totalhöjden ur det som syns, en beräkningsgrundande fasad per
+  projekt). Byggt: linjen *Beräkningsgrundande fasad* (`BasisFacade`,
+  ritas med Fasadverktygets val), byggnadshöjden utan språng, måtten BH,
+  NH och TH från MMN, kryssrutor per fasad- och sektionslinje (också *MMN
+  bef.*), och *Medelmarknivån* i Platsen ur den nya marken med *Befintlig*
+  bredvid. Testerna: 510 på ca 17–20 s. Provat med Playwright mot `dist/`.
+  Klickjämförelsen kördes inte. Claudes val i PLAN.md, koden i
+  UTVECKLING.md under *Höjderna i fasaden (0.10.8b)*.
+- **Versionsnumret** är `0.10.8b` i `engine.ts` och `0.10.8-b` i
+  `package.json` (semver tillåter inte `0.10.8b`).
+- **Carl Augusts svar 26 oktober kväll** på fråga 17–34: 17, 18, 24 och 27
+  bra som de är (24: bjälklaget går före *Upp till taket*). 20 och 32 till
+  0.10.11 (snitthöjden 1100, Fasa 500), 26 till 0.10.12 (takets höjd
+  gäller referenslinjen, mot över- eller undersidan), 29, 31 och 34 till
+  0.10.14 (bågar i takets kontur, hålet ändras för sig, cirkulärt hål).
+  De står också i `cad-apa-synpunkter.md`.
+- **0.10.8 är inte provad** av Carl August än; frågorna om den står kvar
+  nedan, med 0.10.8b:s.
+- **Frågorna:** de obesvarade (nedan) ställs **tio per session**, de som
+  hör till den kommande versionen först. En fråga han hoppar över räknas
+  som "bra som det är" och stryks.
 - **Släntmarkeringarna** (0.10.8) jämför den färdiga marken med den
   befintliga efter alla markobjekt; där två objekt möts kan strecken gå
   in över grannens yta om den också är ändrad men lutar som en slänt.
   Inte sett i `groundProject`, men inte prövat med branta grannar.
 - **0.10.6 Granskning** och äldre versioner står i README, PLAN.md och
-  UTVECKLING.md. **0.9.2–0.10.8 är inte provade fullt ut** av Carl August.
+  UTVECKLING.md. **0.9.2–0.10.8b är inte provade fullt ut** av Carl August.
 - **Publicering:** varje push till `main` laddas upp med
   `.github/workflows/publicera.yml` (FTPS; secrets `FTP_SERVER`,
   `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR` =
@@ -59,23 +61,26 @@ Senast: 26 oktober 2026, efter 0.10.8.
   (projektets kunskapsbas), med rubrikerna Inkorg, Planerat per version,
   Parkerat och Avfärdat. Läs den vid sessionsstart (Projects-verktyget,
   `project_read`). Sortera Inkorgen tillsammans med honom.
+- **Svar med nummer:** chatten gör om "17. Ok / 20. 1100" till en
+  numrerad lista som börjar på 17 (Carl August såg 17, 18, 19 …). Läs
+  numren i texten han skickat, och be honom gärna skriva "17:".
 
 ## Färdplan
 
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
-- ~~0.8.8 Mallblad~~ … ~~0.10.7 Markobjekt del 3~~, ~~0.10.8 Marken i
-  ritningarna~~ (klara)
-- **0.10.8b Höjderna i fasaden** (mellanstor: beräkningsgrundande fasad,
-  BH utan språng, nock- och totalhöjd, medelmarknivån)
+- ~~0.8.8 Mallblad~~ … ~~0.10.8 Marken i ritningarna~~, ~~0.10.8b Höjderna
+  i fasaden~~ (klara)
 - **0.10.9 Stödmur del 2** (mellanstor)
 - **0.10.10 Dolda linjer och vyns djup** (mellanstor)
 - **0.10.11 Småsaker** (högerklick på planer, Visa i kolumner, snäpp mot
   kalkering, hovring och markering i 3D, importerade objekt som
-  befintligt eller förslag och att ta bort dem)
-- **0.10.12 Höjder i förhållande till våningen**
+  befintligt eller förslag och att ta bort dem, snitthöjd 1100, Fasa 500)
+- **0.10.12 Höjder i förhållande till våningen** (och takets
+  referenslinje mot över- eller undersidan)
 - **0.10.13 Visa och dölja** och **0.10.14 Linjerna i 2D-formen**
-  (förslag, inte bekräftade)
+  (förslag, inte bekräftade; 0.10.14 med bågar i takets kontur, cirkulära
+  hål och hål som ändras för sig)
 - **0.10.15 Markobjektens linjer** (stor: bågar, Avrunda, docka ramper)
 - **0.11 Trappor** (nytt format)
 - **0.11.1 Profilverktyget** (stor) och **0.11.2 Dörrar och fönster**
@@ -89,51 +94,31 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.10.8 syns på webbhotellet och hur kurvorna, strecken,
-3D-kurvorna och ±0-klicket känns (frågorna om 0.10.8 nedan). Ställ sedan
-tio av de obesvarade frågorna (först de som rör fasaderna och taken).
-Sedan **0.10.8b Höjderna i fasaden** (mellanstor): lägg upplägget i
-chatten först. Att tänka på: byggnadshöjden finns sedan 0.10.5
-(`repr/buildingHeight.ts`, PBF:s 45°-plan, språnget med, den längsta
-fasaden); den nya linjen *Beräkningsgrundande fasad* ritas i planen
-längs fasadlivet och byter fasaden; BH utan språng mäts där fasadlivet
-möter takets överkant; nock- och totalhöjd från medelmarknivån; kryssrutor
-per fasad; knappen *Medelmarknivån* för ±0 ur den färdiga marken med den
-befintliga bredvid.
-
-## Carl Augusts svar 26 oktober (dag)
-
-- **Byggnadshöjd:** oftast mot den mest framträdande fasaden (mot gatan).
-  Varje fasad får en kryssruta som visar dess BH. Språnget räknas oftast
-  inte: från skärningen mellan fasadliv och takets överkant (0.10.8).
-- **Ramp/väg**: en sort (gjort i 0.10.7). Gränsen 1:12 och 1:20 vanliga
-  men lutningen kan vara vilken som helst.
-- **Toningen** för höjdpunkt och brytlinje ska gå att ställa in (finns per
-  objekt, *Tonas inom*, med förval under Platsen).
-- **3D-vyer före piloten** (0.12.1).
-- Rampens höjder ur marken och vilplan genom att dela rampen: bra.
-- Urgrävningens kontur som botten: bra; **automatiska släntmarkeringar**
-  (0.10.8). Platå och urgrävning som ett objekt (gjort i 0.10.7).
-- Fallet 1:N med riktning: bra; **flera lutningspilar** när fallet
-  varierar (0.10.8).
-- Runt huset: rundade hörn och sockeln från våningen är ok.
-- Jorden 600 mm, också under huset: prova; **vit fyllning** som val
-  (0.10.8).
-- Markverktyget med bara rektangel räcker så länge punkter kan läggas
-  till och tas bort.
-- **Medelmarknivån** ur den nya marken, med den befintliga att jämföra
-  (0.10.8).
-- **±0 med ett klick på topografin**, ändras efteråt (0.10.8).
-- Origo i sydvästra hörnet är bra så länge.
-- Grannhus i fasader: oftast inte; **vyns djup** med tonad zon i fasader
-  och sektioner (0.10.10).
-- 0,5 m kurvor räcker; **halvmeterskurvorna tunnare** (0.10.8).
-- **Licenstexten** som `{licens}` (0.10.8).
+Fråga först om 0.10.8 och 0.10.8b syns på webbhotellet och hur de känns
+(frågorna nedan). Ställ sedan högst tio av de obesvarade frågorna (först
+de som rör marken och fasaderna). Sedan **0.10.9 Stödmur del 2**
+(mellanstor): lägg upplägget i chatten först. Att tänka på: stödmuren är
+ett markobjekt längs en linje sedan 0.10.5 (`groundLines.ts`,
+`wallCrest`); synpunkten (26 oktober) vill ha en synlig referenslinje i
+mitten eller på en kant med förskjutning, höjd över marken i början och
+slutet (t.ex. 700 och 900) med krönet som följer den utjämnade marken,
+fler kontrollpunkter och höjdpunkter längs muren (*ÖK +65,765*).
 
 ## Att fråga Carl August om
 
 Tio per session, de som hör till nästa version först. Hoppar han över en
 räknas den som bra och stryks. Claudes val står i varje fråga.
+
+**0.10.8b efter provning** (Claudes val, se PLAN.md)
+- Måtten BH, NH och TH står 25 mm till höger om nivåkoterna, 7 mm isär,
+  med texten längs strecket. Lagom, eller hellre till vänster om huset?
+- Linjen *Beräkningsgrundande fasad* gäller fasaden inom 1,5 m och 15°.
+  Ritas den som en egen tjock streckprickad linje med text, och ska den
+  synas på papperet (nu ja; den släcks under Visa)?
+- Förvalet: BH bara i fasaden som ser den beräkningsgrundande fasaden,
+  NH och TH ingenstans. Rätt?
+- Språnget räknas inte alls. Behövs ett val för att räkna det (som
+  0.10.5)?
 
 **0.10.8 efter provning** (Claudes val, se PLAN.md)
 - Höjdkurvorna: hela meter 0,25 och halvmeter 0,13 heldragna; den gamla
@@ -144,22 +129,7 @@ räknas den som bra och stryks. Claudes val står i varje fråga.
 - Fallpilen runt huset: en per fasad längre än 3 m. Lagom?
 - ±0-klicket läser den befintliga marken (inte den färdiga). Rätt?
 
-**Tak (0.10–0.10.2)**
-17. Takfoten är kanterna som vetter nedåt och snittas vinkelrätt från
-    början; vinkeln räknas mot det vågräta (90 = lodrätt).
-18. En kants eget snitt glöms när kanten ändras.
-20. Snitthöjden 1200 från början: vilken använder han?
-24. Ska *Upp till taket* gå före ett bjälklag som täcker väggen?
-26. Taket stiger åt vänster om referenslinjen (*Vänd lutningen* byter);
-    höjden gäller undersidan; positiv radie stiger mot centrum.
-27. Snabbvalen: nocken längs den längre sidan, pulpettakets takfot på
-    första hörnets långsida, *Över hela huset* bara för rektangulära hus.
-29. Takets kontur med bågar direkt i verktyget?
-
 **Bjälklag och våningar (0.9–0.9.4)**
-31. Hålen hör till bjälklaget; de vrids och speglas inte var för sig.
-32. Förvalen 500 mm för Avrunda och 300 mm för Fasa.
-34. Håltagningen som cirkel direkt?
 35. Fri höjd som text i rummet (*RH 2400*) i stället för måttkedja?
 36. Våningens namn vid FG?
 37. Bjälklagets kontur tunn under väggarna, klickbar vid kanten; förval

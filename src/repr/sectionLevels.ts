@@ -5,9 +5,10 @@ import { dimensionPrims } from '../elements/annotation';
 import type { PlanContext } from '../elements/registry';
 import { planeRange, roofBodyOf, roofRange, type RoofParams } from '../elements/roof';
 import { markerPen, solidPen, withWeight } from './markerPens';
-import type { Pen, Primitive } from './primitives';
-import { buildingHeight } from './buildingHeight';
+import type { Pen, Primitive, Vec2 } from './primitives';
+import { buildingHeight, type BuildingHeight } from './buildingHeight';
 import { levelText, meanGround } from './terrain';
+import type { MarkerHeights, MarkerParams } from '../elements/markers';
 
 /**
  * Nivåkoter och höjdmått i fasader och sektioner (0.9.2; egen fil sedan
@@ -30,11 +31,18 @@ export function levelPrims(
     maxU: number;
     maxZ: number;
     isSection: boolean;
+    /** Linjen och blickriktningen (0.10.8b), för höjderna som visas. */
+    marker: Element;
+    view: Vec2;
   },
 ): Primitive[] {
   const out: Primitive[] = [];
+  const bh = view.hide?.includes('buildingHeight') ? null : buildingHeight(ctx);
+  const shows = markerHeights(at.marker, at.view, bh);
   const heights = at.isSection && !view.hide?.includes('heightDims') ? heightChain(at.cutSlabs) : [];
   const markX = at.maxU + (heights.length ? 14 : 12) * ctx.scale;
+  const mmn = view.hide?.includes('Terrain') ? null : meanGround(ctx);
+  const mmnOld = shows.mmnOld && mmn !== null ? meanGround(ctx, true) : null;
   if (!view.hide?.includes('level')) {
     const levels = new Map<number, string>(doc.storeys.map((s) => [s.elevation, 'FG']));
     for (const sl of at.cutSlabs) {
@@ -50,19 +58,17 @@ export function levelPrims(
     const top = Math.round(at.maxZ);
     if (!levels.has(top)) levels.set(top, at.roofs.length ? 'Nock' : '');
     const entries = [...levels];
+    const add = (z: number, label: string) => {
+      const i = entries.findIndex((e) => e[0] === z);
+      if (i >= 0) entries[i] = [z, entries[i][1] ? `${entries[i][1]}, ${label}` : label];
+      else entries.push([z, label]);
+    };
     // Medelmarknivån längs husets kontur (0.10.3), när projektet har en markmodell.
-    const mmn = view.hide?.includes('Terrain') ? null : meanGround(ctx);
     if (mmn !== null) entries.push([Math.round(mmn), 'MMN']);
-    // Byggnadshöjden enligt PBF (0.10.5), när huset har tak.
-    if (!view.hide?.includes('buildingHeight')) {
-      const bh = buildingHeight(ctx);
-      if (bh) {
-        const z = Math.round(bh.main.z);
-        const i = entries.findIndex((e) => e[0] === z);
-        if (i >= 0) entries[i] = [z, entries[i][1] ? `${entries[i][1]}, BH` : 'BH'];
-        else entries.push([z, 'BH']);
-      }
-    }
+    // Den befintliga markens, när den skiljer sig (0.10.8b, kryssruta på linjen).
+    if (mmnOld !== null && Math.round(mmnOld) !== Math.round(mmn ?? NaN)) add(Math.round(mmnOld), 'MMN bef.');
+    // Byggnadshöjden enligt PBF (0.10.5), när huset har tak och linjen visar den.
+    if (bh && shows.bh) add(Math.round(bh.main.z), 'BH');
     // Texter som skulle krocka (nivåer närmare än en textrad) skjuts
     // uppåt. Strecket går under texten som förut, utom där en annan
     // nivås text hamnat på det.
@@ -79,11 +85,47 @@ export function levelPrims(
       out.push(...levelMark(markX, m.z, h, m.label, ctx.scale, markerPen(style, 'level'), levelText(doc, m.z), m.textY, !crossed));
     }
   }
+  // Byggnadshöjd, nockhöjd och totalhöjd som mått från medelmarknivån (0.10.8b).
+  if (mmn !== null && bh) {
+    const measures: [string, number][] = [];
+    if (shows.bh) measures.push(['BH', bh.main.z]);
+    if (shows.nh) measures.push(['NH', bh.ridge]);
+    if (shows.th) measures.push(['TH', Math.max(at.maxZ, bh.ridge)]);
+    measures.forEach(([label, z], i) => out.push(...heightMeasure(markX + (25 + 7 * i) * ctx.scale, mmn, z, label, style.labels.heights.dimension, ctx.scale, markerPen(style, 'level'))));
+  }
   if (heights.length >= 2) {
     const points = heights.map((z): [number, number] => [at.maxU, z]);
     out.push(...dimensionPrims({ points, angle: 90, offset: -6 * ctx.scale }, ctx.scale, { part: 'höjdmått' }, style.labels.heights.dimension, style));
   }
   return out;
+}
+
+/**
+ * Höjderna som en fasad- eller sektionslinje visar (0.10.8b). Förvalet:
+ * byggnadshöjden i fasaden som ser den beräkningsgrundande fasaden rakt
+ * framifrån (inom 45°), inget annat.
+ */
+export function markerHeights(marker: Element, view: Vec2, bh: BuildingHeight | null): MarkerHeights {
+  const own = (marker.params as unknown as MarkerParams).heights ?? {};
+  const facing = !!bh && marker.type === 'Elevation' && view[0] * bh.main.out[0] + view[1] * bh.main.out[1] < -Math.SQRT1_2;
+  return { bh: own.bh ?? facing, nh: own.nh ?? false, th: own.th ?? false, mmnOld: own.mmnOld ?? false };
+}
+
+/**
+ * Ett höjdmått från medelmarknivån (0.10.8b): ett lodrätt streck med
+ * snedstreck i ändarna och texten längs strecket, t.ex. *BH 4,85 m*.
+ */
+function heightMeasure(x: number, z0: number, z1: number, label: string, height: number, s: number, pen: Pen): Primitive[] {
+  const origin = { part: 'höjd' };
+  const tick = 1.2 * s;
+  const m = (z1 - z0) / 1000;
+  const text = `${label} ${m.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m`;
+  const thin = withWeight(pen, 0.18);
+  return [
+    { kind: 'line', a: [x, z0 - 1.5 * s], b: [x, z1 + 1.5 * s], pen: thin, origin },
+    ...[z0, z1].map((z): Primitive => ({ kind: 'line', a: [x - tick, z - tick], b: [x + tick, z + tick], pen: withWeight(pen, 0.35), origin })),
+    { kind: 'text', at: [x - 1 * s, (z0 + z1) / 2], text, height, align: 'middle', angle: Math.PI / 2, pen: thin, origin },
+  ];
 }
 
 /**

@@ -73,12 +73,13 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
     label: 'Markörer',
     items: [
       ['Elevation', 'Fasader'],
+      ['BasisFacade', 'Beräkningsgrundande fasad'],
       ['Section', 'Sektioner'],
       ['North', 'Norrpil'],
       ['roofSlope', 'Taklutning i fasad och sektion'],
       ['level', 'Nivåer i fasad och sektion'],
       ['heightDims', 'Höjdmått i sektion'],
-      ['buildingHeight', 'Byggnadshöjd (BH) i fasad och sektion'],
+      ['buildingHeight', 'Byggnadshöjd, nock- och totalhöjd i fasad och sektion'],
     ],
   },
 ];

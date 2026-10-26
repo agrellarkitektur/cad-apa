@@ -132,15 +132,15 @@ describe('Markobjekt (0.10.4)', () => {
 });
 
 describe('Byggnadshöjd (0.10.5)', () => {
-  it('flackt tak: 45°-planet berör takfotens yttre kant, så språnget räknas; långsidan är beräkningsgrundande', () => {
+  it('flackt tak: 45°-planet berör ovansidan i fasadlivet, utan språnget (0.10.8b); långsidan är beräkningsgrundande', () => {
     const ctx = planCtx(onSlope());
     const bh = buildingHeight(ctx)!;
-    // Exempelvillan: 27°, undersidan 2 700 i ytterlivet, 300 tjockt, 500 språng.
-    // Ovansidan vid takfotens kant: 2 700 + 300/cos 27° − 500 · tan 27° = 2 782; plus språnget 500.
-    expect(bh.main.z).toBeCloseTo(3282, 0);
+    // Exempelvillan: 27°, undersidan 2 700 i ytterlivet, 300 tjockt: ovansidan 2 700 + 300/cos 27° i fasadlivet.
+    expect(bh.main.z).toBeCloseTo(2700 + 300 / Math.cos((27 * Math.PI) / 180), 0);
     expect(Math.hypot(bh.main.b[0] - bh.main.a[0], bh.main.b[1] - bh.main.a[1])).toBe(12000);
-    // Gaveln skulle ge nockens höjd plus språnget.
-    expect(Math.max(...bh.facades.map((f) => f.z))).toBeCloseTo(5575, 0);
+    expect(bh.basis).toBe(false);
+    // Gaveln ger nockens höjd.
+    expect(Math.max(...bh.facades.map((f) => f.z))).toBeCloseTo(bh.ridge, 0);
     expect(bh.height).toBeCloseTo(bh.main.z - meanGround(ctx)!, 3);
   });
 

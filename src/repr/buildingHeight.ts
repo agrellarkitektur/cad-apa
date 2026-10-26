@@ -1,4 +1,4 @@
-import { difference, intersection, type Rings } from '../geometry/boolean';
+import { intersection, type Rings } from '../geometry/boolean';
 import type { Vec2 } from './primitives';
 import { zOn } from './solids';
 import { buildingFootprint } from '../elements/footprint';
@@ -13,24 +13,23 @@ import { meanGround } from './terrain';
  *
  * För varje fasad (en kant i husets kontur, ytterväggarnas utsida) är
  * 45°-planets höjd vid fasaden det största värdet av z − d över takets
- * ovansida, där d är avståndet inåt från fasaden (negativt ute i språnget).
- * Ovansidan är plan bit för bit, så det största värdet ligger i ett hörn.
- * Ett flackt tak berörs därför vid takfotens yttre kant (språnget höjer
- * byggnadshöjden med sitt mått), ett tak brantare än 45° vid nocken.
+ * ovansida, där d är avståndet inåt från fasaden. Ovansidan är plan bit för
+ * bit, så det största värdet ligger i ett hörn.
  *
- * Byggnadshöjden gäller den beräkningsgrundande fasaden. Här är det den
- * längsta (bland lika långa, inom 1 %, den högsta), som i praxis oftast en
- * långsida; gavlarna skulle annars ge nockens höjd.
+ * Språnget räknas inte (0.10.8b, som Carl August mäter): bara den del av
+ * taket som står över huset, mellan fasadens ändar. Ett tak flackare än 45°
+ * berörs därför där fasadlivet möter takets ovansida, ett brantare vid
+ * nocken. (0.10.5 räknade språnget med, upp till 3 m ut.)
  *
- * Bara den del av taket som ligger framför fasaden räknas: mellan fasadens
- * ändar, och utanför fasaden bara det som inte står över huset (en annan
- * flygel i ett vinkelhus) och högst `OVERHANG` ut. Undantagen (kupor och
+ * Byggnadshöjden gäller den beräkningsgrundande fasaden: den som linjen
+ * *Beräkningsgrundande fasad* (`BasisFacade`) ligger på, annars den längsta
+ * (bland lika långa, inom 1 %, den högsta). Undantagen (kupor och
  * frontespiser under en tredjedel av takfoten, allmän plats närmare än
- * 6 m, beräkningsgrundande fasad) avgörs av den som ritar.
+ * 6 m) avgörs av den som ritar.
  */
 
-/** Hur långt utanför fasaden ett tak räknas som fasadens språng, mm. */
-const OVERHANG = 3000;
+/** Hur långt från en fasad linjen *Beräkningsgrundande fasad* får ligga, mm. */
+const BASIS_REACH = 1500;
 /** Fasader kortare än så räknas inte (hörn, smygar), mm. */
 const MIN_FACADE = 1000;
 
@@ -47,10 +46,14 @@ export interface BuildingHeight {
   /** Medelmarknivån, mm från ±0, eller null utan markmodell. */
   mmn: number | null;
   facades: FacadeHeight[];
-  /** Den beräkningsgrundande fasaden: den längsta. */
+  /** Den beräkningsgrundande fasaden: den som linjen ligger på, annars den längsta. */
   main: FacadeHeight;
+  /** Om `main` kommer från en ritad linje *Beräkningsgrundande fasad*. */
+  basis: boolean;
   /** Byggnadshöjden (mm), när medelmarknivån är känd. */
   height: number | null;
+  /** Takets högsta punkt, nocken (mm från ±0). */
+  ridge: number;
 }
 
 /** Byggnadshöjden för huset i vyns tillstånd, eller null utan hus eller tak. */
@@ -67,7 +70,7 @@ export function buildingHeight(ctx: PlanContext): BuildingHeight | null {
       for (let i = 0; i < ring.length; i++) {
         const a = ring[i];
         const b = ring[(i + 1) % ring.length];
-        const z = facadeLevel(a, b, ccw, tops, fp);
+        const z = facadeLevel(a, b, ccw, tops);
         if (z === null) continue;
         const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
         const t: Vec2 = [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
@@ -77,9 +80,12 @@ export function buildingHeight(ctx: PlanContext): BuildingHeight | null {
     if (!facades.length) return null;
     const len = (f: FacadeHeight) => Math.hypot(f.b[0] - f.a[0], f.b[1] - f.a[1]);
     const longest = Math.max(...facades.map(len));
-    const main = facades.filter((f) => len(f) >= longest * 0.99).reduce((m, f) => (f.z > m.z ? f : m));
+    const drawn = basisFacade(ctx.doc, facades);
+    const main = drawn ?? facades.filter((f) => len(f) >= longest * 0.99).reduce((m, f) => (f.z > m.z ? f : m));
     const mmn = meanGround(ctx);
-    return { mmn, facades, main, height: mmn === null ? null : main.z - mmn };
+    let ridge = -Infinity;
+    for (const top of tops) for (const ring of top.rings) for (const q of ring) ridge = Math.max(ridge, top.z(q[0], q[1]));
+    return { mmn, facades, main, basis: !!drawn, height: mmn === null ? null : main.z - mmn, ridge };
   });
 }
 
@@ -103,8 +109,8 @@ function roofTops(ctx: PlanContext): Top[] {
   return out;
 }
 
-/** 45°-planets höjd vid fasaden a–b, eller null när inget tak ligger framför den. */
-function facadeLevel(a: Vec2, b: Vec2, ccw: boolean, tops: readonly Top[], fp: Rings[]): number | null {
+/** 45°-planets höjd vid fasaden a–b, eller null när inget tak står över huset innanför den. */
+function facadeLevel(a: Vec2, b: Vec2, ccw: boolean, tops: readonly Top[]): number | null {
   const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
   if (l < MIN_FACADE) return null;
   const t: Vec2 = [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
@@ -112,23 +118,43 @@ function facadeLevel(a: Vec2, b: Vec2, ccw: boolean, tops: readonly Top[], fp: R
   const far = 1e6;
   const at = (u: number, d: number): Vec2 => [a[0] + t[0] * u + inw[0] * d, a[1] + t[1] * u + inw[1] * d];
   const inside: Rings = [[at(0, 0), at(l, 0), at(l, far), at(0, far)]];
-  const outside: Rings = [[at(0, -OVERHANG), at(l, -OVERHANG), at(l, 0), at(0, 0)]];
-  // Utanför fasaden: inte det som står över huset (en annan flygel).
-  const over = fp.flatMap((poly) => intersection(poly, [outside]));
-  const front = over.length ? difference(outside, over) : [outside];
   let best = -Infinity;
   for (const top of tops) {
-    for (const zone of [[inside], front]) {
-      for (const clip of intersection(top.rings, zone)) {
-        for (const q of clip[0]) {
-          const d = (q[0] - a[0]) * inw[0] + (q[1] - a[1]) * inw[1];
-          const v = top.z(q[0], q[1]) - d;
-          if (v > best) best = v;
-        }
+    for (const clip of intersection(top.rings, [inside])) {
+      for (const q of clip[0]) {
+        const d = (q[0] - a[0]) * inw[0] + (q[1] - a[1]) * inw[1];
+        const v = top.z(q[0], q[1]) - d;
+        if (v > best) best = v;
       }
     }
   }
   return Number.isFinite(best) ? best : null;
+}
+
+/**
+ * Fasaden som linjen *Beräkningsgrundande fasad* ligger på (0.10.8b): den
+ * närmaste parallella (inom 15°) som linjens mitt ligger högst
+ * `BASIS_REACH` från. Null utan linje eller när ingen fasad passar.
+ */
+function basisFacade(doc: PlanContext['doc'], facades: readonly FacadeHeight[]): FacadeHeight | null {
+  const el = Object.values(doc.elements).find((e) => e.type === 'BasisFacade');
+  if (!el) return null;
+  const p = el.params as { start?: Vec2; end?: Vec2 };
+  if (!p.start || !p.end) return null;
+  const ll = Math.hypot(p.end[0] - p.start[0], p.end[1] - p.start[1]);
+  if (ll < 1) return null;
+  const u: Vec2 = [(p.end[0] - p.start[0]) / ll, (p.end[1] - p.start[1]) / ll];
+  const m: Vec2 = [(p.start[0] + p.end[0]) / 2, (p.start[1] + p.end[1]) / 2];
+  let best: { f: FacadeHeight; d: number } | null = null;
+  for (const f of facades) {
+    const fl = Math.hypot(f.b[0] - f.a[0], f.b[1] - f.a[1]);
+    const fu: Vec2 = [(f.b[0] - f.a[0]) / fl, (f.b[1] - f.a[1]) / fl];
+    if (Math.abs(u[0] * fu[1] - u[1] * fu[0]) > Math.sin((15 * Math.PI) / 180)) continue;
+    const s = Math.max(0, Math.min(fl, (m[0] - f.a[0]) * fu[0] + (m[1] - f.a[1]) * fu[1]));
+    const d = Math.hypot(m[0] - f.a[0] - fu[0] * s, m[1] - f.a[1] - fu[1] * s);
+    if (d <= BASIS_REACH && (!best || d < best.d)) best = { f, d };
+  }
+  return best?.f ?? null;
 }
 
 function signedArea(r: readonly Vec2[]): number {

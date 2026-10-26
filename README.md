@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.8** (alfa); nästa är **0.10.8b, höjderna i fasaden**.
+**0.10.8b** (alfa); nästa är **0.10.9, stödmur del 2**.
 
 ## Vad som fungerar
 
@@ -1105,6 +1105,24 @@ Version 0.10.2, takfot och taket i planen (samma filformat, 17):
   ytterväggarnas utsida på alla våningar, streckad där taket ligger över
 - Nivåkoten *Takfot* är takets lägsta undersida med snittet och språnget
 - Referensritningarna med tak ändrades (punktstreckat och takfotens snitt)
+
+Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 öppnas inte):
+- **Beräkningsgrundande fasad**: verktyget *Fasad* har valet *Beräkningsgrundande
+  fasad*. Två klick längs fasadlivet ritar linjen, och byggnadshöjden mäts
+  sedan mot den fasad som linjen ligger på (inom 1,5 m och 15°). Det finns
+  bara en i projektet: en ny ersätter den gamla. Utan linje gäller den
+  längsta fasaden, som förut
+- **Byggnadshöjden utan språng**: 45°-planet räknas bara över huset, så ett
+  tak flackare än 45° ger höjden där fasadlivet möter takets ovansida, ett
+  brantare nockens
+- **Byggnadshöjd, nockhöjd och totalhöjd** som mått från medelmarknivån
+  bredvid nivåkoterna, t.ex. *BH 3,04 m*. Varje fasad- och sektionslinje
+  har kryssrutor för de tre och för den befintliga markens medelmarknivå
+  (*MMN bef.*, en egen nivåkota när den skiljer sig). Från början visar
+  bara fasaden som ser den beräkningsgrundande fasaden byggnadshöjden
+- **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
+  markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
+  *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
 
 Version 0.10.8, marken i ritningarna (samma filformat, 19):
 - **Höjdkurvorna** är heldragna där marken inte ändrats, som den färdiga

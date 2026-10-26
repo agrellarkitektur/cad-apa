@@ -29,7 +29,7 @@ export const isRoomLabel = (q: Primitive): q is Primitive => q.origin?.part === 
 
 /** En sektions- eller fasadlinje som placerats för hand och har grepp i ändarna. */
 export function isManualMarker(el: Element | undefined): el is Element {
-  return !!el && (el.type === 'Section' || el.type === 'Elevation') && !el.params.auto && !el.locked;
+  return !!el && (el.type === 'Section' || el.type === 'Elevation' || el.type === 'BasisFacade') && !el.params.auto && !el.locked;
 }
 
 export interface EndGrip {

@@ -1,4 +1,7 @@
 import { addElement, updateParams } from '../../core/commands';
+import { statesForNewElement } from '../../core/states';
+import type { Element } from '../../core/model';
+import { newId } from '../../core/ids';
 import type { MarkerParams } from '../../elements/markers';
 import { dist, distToSegment, left, norm, sub } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
@@ -23,6 +26,11 @@ export class MarkerTool implements ViewTool, PointTaker {
   private a: Vec2 | null = null;
   private b: Vec2 | null = null;
   private current: SnapResult | null = null;
+  /**
+   * Fasadverktyget ritar i stället linjen *Beräkningsgrundande fasad*
+   * (0.10.8b): två klick längs fasadlivet, ingen sida.
+   */
+  basis = false;
   /** Ett nytt element har lagts till. */
   onCreated?: (id: string) => void;
   onChange?: () => void;
@@ -82,6 +90,7 @@ export class MarkerTool implements ViewTool, PointTaker {
       }
       this.b = pt;
       this.lockAngle = null;
+      if (this.basis) this.commitBasis();
     } else {
       this.commit(side);
     }
@@ -107,6 +116,7 @@ export class MarkerTool implements ViewTool, PointTaker {
   }
 
   hintText(): string {
+    if (this.basis) return this.step === 0 ? 'Klicka där den beräkningsgrundande fasaden börjar, på fasadlivet.' : 'Klicka där den slutar. Byggnadshöjden mäts sedan mot den fasaden.';
     const what = this.kind === 'Section' ? 'sektionslinjen' : 'fasadlinjen';
     return this.step === 0 ? `Klicka där ${what} börjar.` : this.step === 1 ? `Klicka där ${what} slutar.` : 'Klicka på den sida som ska synas.';
   }
@@ -138,6 +148,21 @@ export class MarkerTool implements ViewTool, PointTaker {
     const el = addElement(this.host.store, { type: this.kind, storey: this.host.storey(), tags: [], params: params as unknown as Record<string, unknown>, props: {} }, this.host.activeState());
     this.a = null;
     this.b = null;
+    this.onCreated?.(el.id);
+  }
+
+  /** Linjen *Beräkningsgrundande fasad*: den gamla tas bort i samma steg. */
+  private commitBasis(): void {
+    const store = this.host.store;
+    const old = Object.values(store.doc.elements).filter((e) => e.type === 'BasisFacade');
+    const el: Element = { id: newId('el'), type: 'BasisFacade', storey: this.host.storey(), tags: [], states: statesForNewElement(store.doc, this.host.activeState()), params: { start: [this.a![0], this.a![1]], end: [this.b![0], this.b![1]] }, props: {} } as Element;
+    store.transact('Beräkningsgrundande fasad', (tx) => {
+      for (const o of old) tx.removeElement(o.id);
+      tx.putElement(el);
+    });
+    this.a = null;
+    this.b = null;
+    if (old.length) this.host.hint('Den beräkningsgrundande fasaden är flyttad hit; det finns bara en i projektet.', 4000);
     this.onCreated?.(el.id);
   }
 

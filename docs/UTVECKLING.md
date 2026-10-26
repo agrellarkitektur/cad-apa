@@ -1242,6 +1242,26 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Höjderna i fasaden (0.10.8b, format 20)
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/elements/basisFacade.ts` | Objekttypen `BasisFacade` (linjen *Beräkningsgrundande fasad*, `start` och `end`); texten utanför huset (`modelBounds`), därför `planReads: ['Wall', 'Roof', 'Slab']` |
+| `src/repr/buildingHeight.ts` | 45°-planet bara över huset (inget språng); `basisFacade` väljer fasaden linjen ligger på; `basis` och `ridge` i svaret |
+| `src/repr/sectionLevels.ts` | `markerHeights(marker, view, bh)` (linjens `heights` med förval), `heightMeasure` (måtten BH, NH, TH från MMN, part `höjd`), kotan *MMN bef.*; `levelPrims` får `marker` och `view` |
+| `src/elements/markers.ts` | `MarkerParams.heights`, `MarkerHeights` |
+| `src/ui/tools/markerTools.ts` | `MarkerTool.basis`: två klick, `commitBasis` tar bort den gamla linjen i samma transaktion |
+| `src/ui/app/toolOptions.ts` | Valet Fasadlinje / Beräkningsgrundande fasad (`data-elev-basis`) |
+| `src/ui/selectionFields.ts`, `src/ui/selectionEdits.ts` | Kryssrutorna `marker:heights.<k>`; en ändring sparar alla fyra |
+| `src/ui/app/site.ts` | `mmnButtons`: ±0 ur den nya marken, *Befintlig* bredvid |
+
+- Förvalet för BH följer den beräkningsgrundande fasaden tills en ruta
+  kryssats; då sparas alla fyra värden på linjen.
+- Ändarna dras med samma grepp som fasadlinjerna (`isManualMarker`).
+- Tester: `tests/v0108b.test.ts`; `tests/mark.test.ts` (BH utan språng).
+  Referensritningarna för fasader, sektioner och bladet ändrades: BH bara
+  i fasaden mot syd, lägre, och med måttet.
+
 ## Marken i ritningarna (0.10.8, format 19)
 
 | Fil | Innehåll |

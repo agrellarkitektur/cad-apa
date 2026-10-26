@@ -12,7 +12,9 @@ import { numberingOf, roomNumbersFor, type SpaceParams } from '../elements/rooms
 import { faceChoices, faceOf, outsideSide } from '../elements/wallSides';
 import { escapeHtml, PARAM_LABELS } from './labels';
 import type { TextParams } from '../elements/annotation';
-import { markerFrame, markerName, type MarkerParams, type NorthParams } from '../elements/markers';
+import { markerFrame, markerName, type MarkerHeights, type MarkerParams, type NorthParams } from '../elements/markers';
+import { markerHeights } from '../repr/sectionLevels';
+import { buildingHeight } from '../repr/buildingHeight';
 import { refArc, type RoofParams } from '../elements/roof';
 import { holeRing, type SlabParams } from '../elements/slab';
 import { radiusOf } from '../geometry/arc';
@@ -156,6 +158,8 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
       return `<div class="fields">${numberField('param:angle', 'Norr', p.angle, '°')}</div>
         <p class="note">Riktningen mot norr, moturs från planens x-axel: 90° är rakt upp. Fasaderna namnges efter närmaste väderstreck.</p>`;
     }
+    case 'BasisFacade':
+      return `<p class="note">Byggnadshöjden mäts mot fasaden som linjen ligger på (inom 1,5 m och 15°). Dra ändarna för att flytta den. Det finns bara en i projektet; rita en ny med Fasad, Beräkningsgrundande fasad.</p>`;
     case 'Section':
     case 'Elevation': {
       const p = resolveParams<MarkerParams>(doc, el);
@@ -167,6 +171,7 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
       return `<label class="field"><span>Namn</span><input data-key="name:" value="${escapeHtml(el.name ?? '')}" placeholder="${escapeHtml(markerName(doc, { ...el, name: undefined }))}"></label>
         <div class="fields">${label}<label class="field"><span>Djup</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="marker:depth" value="${p.depth ?? ''}" placeholder="Allt"><i>mm</i></span></label></div>
         ${markerLineFields(shown)}
+        ${markerHeightFields(doc, el, view)}
         <div class="row"><button class="btn btn-primary" data-action="open-marker">Öppna ${el.type === 'Section' ? 'sektionen' : 'fasaden'}</button><button class="btn" data-action="flip-side">Vänd blickriktningen</button>${canFollow ? '<button class="btn" data-action="follow-building" title="Lägg fasaden runt byggnaden igen, så att den följer med när byggnaden ändras">Följ byggnaden igen</button>' : ''}</div>`;
     }
     case 'Shape2D':
@@ -336,4 +341,22 @@ export function summarizeTypes(els: Element[]): string {
       return `${n} ${(n === 1 ? t?.label : t?.labelPlural)?.toLowerCase() ?? type}`;
     })
     .join(', ');
+}
+
+/**
+ * Höjderna som fasaden eller sektionen visar (0.10.8b): kryssrutor med
+ * förvalet ikryssat (byggnadshöjden i fasaden mot den beräkningsgrundande).
+ */
+function markerHeightFields(doc: ProjectDoc, el: Element, view: ViewStates): string {
+  const { ctx } = createContext(doc, doc.storeys[0].id, view, doc.graphics, () => true);
+  const bh = buildingHeight(ctx);
+  const h = markerHeights(el, markerFrame(doc, el).view, bh);
+  const box = (k: keyof MarkerHeights, label: string, title: string) =>
+    `<label class="check" title="${escapeHtml(title)}"><input type="checkbox" data-key="marker:heights.${k}"${h[k] ? ' checked' : ''}> ${label}</label>`;
+  return `<div>
+      ${box('bh', 'Byggnadshöjd (BH)', 'Nivåkota och mått från medelmarknivån till byggnadshöjden mot den beräkningsgrundande fasaden')}
+      ${box('nh', 'Nockhöjd (NH)', 'Mått från medelmarknivån till takets högsta punkt')}
+      ${box('th', 'Totalhöjd (TH)', 'Mått från medelmarknivån till husets högsta punkt')}
+      ${box('mmnOld', 'Medelmarknivå, befintlig mark', 'Nivåkota för den befintliga markens medelmarknivå bredvid den nya')}
+    </div>${bh ? '' : '<p class="note">Höjderna visas när huset har tak.</p>'}`;
 }
