@@ -14,6 +14,12 @@ import type { Terrain } from './site';
  * ned, en platå både tar ned och fyller. En stödmur ger ingen slänt: marken
  * utanför är orörd.
  *
+ * Höjdpunkter och brytlinjer (0.10.5) möter marken på ett annat sätt: de
+ * låser marken där de ligger, och marken runt tonas mot dem inom en radie
+ * (`blend`), mjukt (vikten följer en S-kurva från 1 vid objektet till 0 vid
+ * radien). Stödmurar (0.10.5) är linjer som slänterna och utjämningen inte
+ * går över (`barriers`): marken på andra sidan muren är orörd.
+ *
  * Ren matematik på rutnätet, utan ritning eller elementtyper.
  */
 
@@ -37,8 +43,16 @@ export interface GroundShape {
    * `skip`: punkten hör inte till objektet alls (huset inne i platån runt det).
    * `cell` är rutnätets maskvidd (mm).
    */
-  probe(x: number, y: number, cell: number): { inside: boolean; d: number; h: number; skip?: boolean };
+  probe(x: number, y: number, cell: number): { inside: boolean; d: number; h: number; skip?: boolean; at?: readonly [number, number] };
+  /**
+   * Utjämning (0.10.5): radien (mm) inom vilken marken tonas mot objektets
+   * höjd, i stället för slänt. `slope` gäller då inte.
+   */
+  blend?: number;
 }
+
+/** En stödmurs linje (0.10.5): ett segment i modellen, mm. */
+export type Barrier = readonly [number, number, number, number];
 
 /** Schakt och fyll i m³ för ett objekt. */
 export interface CutFill {
@@ -62,7 +76,7 @@ export interface FinishedGround {
 const MAX_REACH = 100_000;
 
 /** Den färdiga marken: den befintliga med objekten i ordning. */
-export function finishedGround(t: Terrain, shapes: readonly GroundShape[]): FinishedGround {
+export function finishedGround(t: Terrain, shapes: readonly GroundShape[], barriers: readonly Barrier[] = []): FinishedGround {
   const { W, H, x0, y1, s } = t.grid;
   const z = Float32Array.from(t.z);
   const volumes = new Map<string, CutFill>();
@@ -82,11 +96,14 @@ export function finishedGround(t: Terrain, shapes: readonly GroundShape[]): Fini
     volumes.set(sh.id, vol);
     const lo = Math.min(sh.hMin, (t.min - datum) * 1000);
     const hi = Math.max(sh.hMax, (t.max - datum) * 1000);
-    const reach = sh.slope === null ? 0 : Math.min(MAX_REACH, (hi - lo) * sh.slope);
+    const blend = sh.blend ?? 0;
+    const reach = blend > 0 ? blend : sh.slope === null ? 0 : Math.min(MAX_REACH, (hi - lo) * sh.slope);
     const bx0 = sh.box[0] - reach - s * 1000;
     const by0 = sh.box[1] - reach - s * 1000;
     const bx1 = sh.box[2] + reach + s * 1000;
     const by1 = sh.box[3] + reach + s * 1000;
+    // Murarna som kan ligga mellan ytan och noderna runt den.
+    const walls = barriers.filter((w) => Math.max(w[0], w[2]) >= bx0 && Math.min(w[0], w[2]) <= bx1 && Math.max(w[1], w[3]) >= by0 && Math.min(w[1], w[3]) <= by1);
     // Rutan i zonens koordinater, ur modellens fyra hörn.
     let Xmin = Infinity;
     let Xmax = -Infinity;
@@ -125,14 +142,26 @@ export function finishedGround(t: Terrain, shapes: readonly GroundShape[]): Fini
         const dx = x < sh.box[0] ? sh.box[0] - x : x > sh.box[2] ? x - sh.box[2] : 0;
         const dy = y < sh.box[1] ? sh.box[1] - y : y > sh.box[3] ? y - sh.box[3] : 0;
         if (dx || dy) {
-          if (sh.slope === null) continue;
-          const band = Math.hypot(dx, dy) / sh.slope;
-          if ((!sh.fill || cur >= sh.hMax - band) && (!sh.cut || cur <= sh.hMin + band)) continue;
+          if (blend > 0) {
+            if (Math.hypot(dx, dy) > blend) continue;
+          } else {
+            if (sh.slope === null) continue;
+            const band = Math.hypot(dx, dy) / sh.slope;
+            if ((!sh.fill || cur >= sh.hMax - band) && (!sh.cut || cur <= sh.hMin + band)) continue;
+          }
         }
         const p = sh.probe(x, y, s * 1000);
         if (p.skip) continue;
         let next = cur;
-        if (p.inside) {
+        // Bakom en stödmur (sett från ytan) är marken orörd.
+        if (!p.inside && walls.length && p.at && blocked(x, y, p.at[0], p.at[1], walls)) continue;
+        if (blend > 0) {
+          if (p.inside) next = p.h;
+          else if (p.d < blend) {
+            const f = p.d / blend;
+            next = cur + (p.h - cur) * (1 - f * f * (3 - 2 * f));
+          }
+        } else if (p.inside) {
           if (sh.cut && cur > p.h) next = p.h;
           if (sh.fill && cur < p.h) next = p.h;
         } else if (sh.slope !== null && p.d <= reach) {
@@ -162,6 +191,22 @@ export function finishedGround(t: Terrain, shapes: readonly GroundShape[]): Fini
 }
 
 type V2 = readonly [number, number];
+
+/** Om sträckan från (x, y) till (ax, ay) korsar eller når någon av murarna (en yta vars kant ligger på muren hålls av den). */
+function blocked(x: number, y: number, ax: number, ay: number, walls: readonly Barrier[]): boolean {
+  for (const w of walls) {
+    const d1 = side(w[0], w[1], w[2], w[3], x, y);
+    const d2 = side(w[0], w[1], w[2], w[3], ax, ay);
+    if ((d1 > 0 && d2 > 0) || (d1 < 0 && d2 < 0)) continue;
+    const d3 = side(x, y, ax, ay, w[0], w[1]);
+    const d4 = side(x, y, ax, ay, w[2], w[3]);
+    if ((d3 > 0 && d4 > 0) || (d3 < 0 && d4 < 0)) continue;
+    return true;
+  }
+  return false;
+}
+
+const side = (ax: number, ay: number, bx: number, by: number, x: number, y: number) => Math.sign((bx - ax) * (y - ay) - (by - ay) * (x - ax));
 
 /**
  * Var en punkt ligger mot några ringar (jämn–udda, så att hål fungerar):

@@ -1,9 +1,11 @@
-import { finishedGround, nearestEdge, withHeights, type FinishedGround, type GroundShape } from '../core/ground';
+import { finishedGround, nearestEdge, withHeights, type Barrier, type FinishedGround, type GroundShape } from '../core/ground';
 import type { Element, Id } from '../core/model';
-import { groundDefaults, levelText, terrainOf, type Terrain } from '../core/site';
+import { groundAt, groundDefaults, levelText, terrainOf, type Terrain } from '../core/site';
 import type { Rings } from '../geometry/boolean';
 import { bufferRings } from '../geometry/offset';
 import type { Primitive, Vec2 } from '../repr/primitives';
+import type { Shape3D } from '../repr/solids';
+import { along, barriersOf, lineLength, lockShape, PATH_WIDTH, pathRatio, pathShape, pathWarnings, stripRing, type PathKind } from './groundLines';
 import { lastResults } from '../repr/reuse';
 import { buildingFootprint } from './footprint';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
@@ -24,12 +26,24 @@ import type { SlabParams } from './slab';
  *   väggarna, när det följer dem) och arbetsutrymmet; botten i
  *   bjälklagets underkant. Följer bjälklaget.
  *
+ * - **Ramp, gångväg och infart** (`path`, 0.10.5): en mittlinje med
+ *   bredd och höjd i början och slutet; infarten med tvärfall. Sidorna
+ *   möter marken med slänt eller stödmur.
+ * - **Höjdpunkt** och **brytlinje** (`point`, `breakline`, 0.10.5): låser
+ *   marken och tonar den runt omkring inom en radie.
+ * - **Stödmur** (`wall`, 0.10.5): en linje med tjocklek som slänterna inte
+ *   går över. Krönet följer den högre sidan, eller en egen höjd.
+ *
  * Höjderna är i mm från ±0, som allt annat i modellen. Det som saknas tas ur
  * projektets förval (`site.ground`), så att ett ändrat förval gäller alla
  * objekt som inte har ett eget värde.
  */
 
-export type GroundKind = 'plateau' | 'excavation';
+export type GroundKind = 'plateau' | 'excavation' | 'path' | 'point' | 'breakline' | 'wall';
+
+/** Sorterna som ritas som en linje (eller en punkt) i stället för en kontur. */
+export const LINE_KINDS: readonly GroundKind[] = ['path', 'point', 'breakline', 'wall'];
+export const isLineKind = (k: GroundKind | undefined): boolean => !!k && LINE_KINDS.includes(k);
 
 export interface GroundParams {
   kind: GroundKind;
@@ -56,13 +70,41 @@ export interface GroundParams {
   sockel?: number;
   /** Under bjälklaget: arbetsutrymmet (mm). */
   margin?: number;
+  /** Mittlinjen, brytlinjen, murens linje eller höjdpunkten (en punkt), mm (0.10.5). */
+  line?: [number, number][];
+  /** Vägens sort. */
+  path?: PathKind;
+  /** Vägens bredd, mm. */
+  width?: number;
+  /** Höjden i linjens slut (i början gäller `height`), mm från ±0. */
+  endHeight?: number;
+  /** Infartens tvärfall 1:N; positivt faller åt höger, negativt åt vänster. */
+  crossFall?: number;
+  /** Höjdpunkt och brytlinje: hur långt marken tonas, mm. */
+  radius?: number;
+  /** Stödmuren: tjockleken, mm. Krönet är `height` när den är satt, annars den högre sidan plus `above`. */
+  thickness?: number;
+  above?: number;
 }
 
 /** Namnet på objektets sort, som i egenskaperna. */
-export function groundLabel(p: Pick<GroundParams, 'kind' | 'around' | 'slab'>): string {
+export function groundLabel(p: Pick<GroundParams, 'kind' | 'around' | 'slab' | 'path'>): string {
   if (p.around) return 'Platå runt huset';
   if (p.slab) return 'Urgrävning under bjälklaget';
-  return p.kind === 'excavation' ? 'Urgrävning' : 'Platå';
+  switch (p.kind) {
+    case 'excavation':
+      return 'Urgrävning';
+    case 'path':
+      return p.path === 'walk' ? 'Gångväg' : p.path === 'drive' ? 'Infart' : 'Ramp';
+    case 'point':
+      return 'Höjdpunkt';
+    case 'breakline':
+      return 'Brytlinje';
+    case 'wall':
+      return 'Stödmur';
+    default:
+      return 'Platå';
+  }
 }
 
 /** Ett markobjekt som det ritas och räknas: ytans ringar, hålen (huset) och formen för den färdiga marken. */
@@ -70,7 +112,10 @@ export interface GroundGeometry {
   rings: Rings[];
   /** Det som inte hör till ytan men ligger innanför den (husets kontur runt huset). */
   holes: Vec2[][];
-  shape: GroundShape;
+  /** Formen för den färdiga marken; en stödmur har ingen, bara `barriers`. */
+  shape: GroundShape | null;
+  /** Stödmurens linje, som slänterna inte går över. */
+  barriers?: Barrier[];
   /** Där höjden skrivs ut, och texten. */
   label: { at: Vec2; height: number; fall?: number };
 }
@@ -111,6 +156,7 @@ export function groundGeometry(ctx: PlanContext, el: Element<any>): GroundGeomet
 function computeGeometry(ctx: PlanContext, el: Element<any>, p: GroundParams, footprint: Rings[] | null, slabEl: Element<any> | undefined, slabP: SlabParams | undefined): GroundGeometry | null {
   const def = groundDefaults(ctx.doc.site);
   const slope = p.edge === 'wall' ? null : Math.max(0.1, p.slope ?? def.slope);
+  if (isLineKind(p.kind)) return lineGeometry(el, p, slope, def);
   if (p.around) {
     if (!footprint?.length) return null;
     const fp = footprint.map((poly) => poly[0]);
@@ -136,7 +182,7 @@ function computeGeometry(ctx: PlanContext, el: Element<any>, p: GroundParams, fo
         // närmast fasaden får platåns höjd, så att marken mellan noderna ligger rätt vid fasaden.
         if (e.inside) return e.d > cell ? { inside: true, d: 0, h: h0, skip: true } : { inside: true, d: 0, h: h0 };
         const d = e.d;
-        return d <= distance ? { inside: true, d: 0, h: h0 - drop(d) } : { inside: false, d: d - distance, h: edgeH };
+        return d <= distance ? { inside: true, d: 0, h: h0 - drop(d) } : { inside: false, d: d - distance, h: edgeH, at: e.at };
       },
     };
     const b = boxOfRings(footprint);
@@ -175,10 +221,52 @@ function computeGeometry(ctx: PlanContext, el: Element<any>, p: GroundParams, fo
     hMax: Math.max(...corners),
     probe(x, y) {
       const e = nearestEdge(flat, x, y);
-      return e.inside ? { inside: true, d: 0, h: hAt(x, y) } : { inside: false, d: e.d, h: hAt(e.at[0], e.at[1]) };
+      return e.inside ? { inside: true, d: 0, h: hAt(x, y) } : { inside: false, d: e.d, h: hAt(e.at[0], e.at[1]), at: e.at };
     },
   };
   return { rings: polys, holes: [], shape, label: { at: c, height, ...(fall > 0 ? { fall } : {}) } };
+}
+
+function lineGeometry(el: Element<any>, p: GroundParams, slope: number | null, def: ReturnType<typeof groundDefaults>): GroundGeometry | null {
+  const pts = (p.line ?? []).map((q): Vec2 => [q[0], q[1]]);
+  const h0 = p.height ?? 0;
+  const h1 = p.endHeight ?? h0;
+  if (p.kind === 'point') {
+    if (!pts.length) return null;
+    const r = 500;
+    const c = pts[0];
+    const ring: Vec2[] = [[c[0] - r, c[1] - r], [c[0] + r, c[1] - r], [c[0] + r, c[1] + r], [c[0] - r, c[1] + r]];
+    return { rings: [[ring]], holes: [], shape: lockShape(el.id, [c], h0, h0, Math.max(1, p.radius ?? def.blend)), label: { at: c, height: h0 } };
+  }
+  if (pts.length < 2 || lineLength(pts) < 1) return null;
+  const mid = along(pts, ...midPoint(pts));
+  if (p.kind === 'breakline') {
+    const ring = stripRing(pts, 400);
+    return { rings: [[ring]], holes: [], shape: lockShape(el.id, pts, h0, h1, Math.max(1, p.radius ?? def.blend)), label: { at: mid.at, height: h0 } };
+  }
+  if (p.kind === 'wall') {
+    const ring = stripRing(pts, Math.max(50, p.thickness ?? def.wallThickness));
+    return { rings: [[ring]], holes: [], shape: null, barriers: barriersOf(pts), label: { at: mid.at, height: h0 } };
+  }
+  const kind = p.path ?? 'ramp';
+  const w = Math.max(100, p.width ?? PATH_WIDTH[kind]);
+  const cross = kind === 'drive' ? (p.crossFall ?? def.crossFall) : (p.crossFall ?? 0);
+  const { shape, ring } = pathShape(el.id, pts, w, h0, h1, cross, slope);
+  return { rings: [[ring]], holes: [], shape, label: { at: mid.at, height: h0 } };
+}
+
+/** Punkten halvvägs längs linjen. */
+function midPoint(pts: readonly Vec2[]): [number, number] {
+  let rest = lineLength(pts) / 2;
+  for (let i = 1; i < pts.length; i++) {
+    const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+    if (l >= rest && l > 0) {
+      const f = rest / l;
+      return [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * f, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * f];
+    }
+    rest -= l;
+  }
+  return [pts[0][0], pts[0][1]];
 }
 
 /**
@@ -219,9 +307,10 @@ export function finishedTerrain(ctx: PlanContext): Finished | null {
     if (!els.length) return null;
     const geoms = els.map((e) => groundGeometry(ctx, e));
     return savedFinished([t.z, t.site, ...geoms], () => {
-      const shapes = geoms.filter((g): g is GroundGeometry => !!g).map((g) => g.shape);
+      const shapes = geoms.flatMap((g) => (g?.shape ? [g.shape] : []));
       if (!shapes.length) return null;
-      const f = finishedGround(t, shapes);
+      const barriers = geoms.flatMap((g) => g?.barriers ?? []);
+      const f = finishedGround(t, shapes, barriers);
       return { ...f, terrain: withHeights(t, f.z, f) };
     });
   });
@@ -235,6 +324,126 @@ export function showsProposal(ctx: PlanContext): boolean {
 /** Volymen som text, m³ med en decimal. */
 export const m3 = (v: number): string => `${(Math.round(v * 10) / 10).toLocaleString('sv-SE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m³`;
 
+/** Höjden som text, i RH 2000 när projektet har en plats. */
+const hText = (ctx: PlanContext, h: number) => levelText(ctx.doc.site, h);
+
+/** En pil från `a` till `b` med öppen spets, i ritningens skala. */
+function arrow(ctx: PlanContext, a: Vec2, b: Vec2, origin: Primitive['origin']): Primitive[] {
+  const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
+  const h = 1.5 * ctx.scale;
+  const pen = { weight: 0.18 };
+  return [
+    { kind: 'line', a, b, pen, origin },
+    { kind: 'line', a: b, b: [b[0] - Math.cos(ang - 0.4) * h, b[1] - Math.sin(ang - 0.4) * h], pen, origin },
+    { kind: 'line', a: b, b: [b[0] - Math.cos(ang + 0.4) * h, b[1] - Math.sin(ang + 0.4) * h], pen, origin },
+  ];
+}
+
+/**
+ * Ramp, gångväg, infart, höjdpunkt, brytlinje och stödmur i planen (0.10.5).
+ * Vägen: konturen, en pil nedför mittlinjen med lutningen (*1:12*) och
+ * höjderna i ändarna; en varning när den är för brant eller saknar vilplan.
+ */
+function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: GroundGeometry): Primitive[] {
+  const origin = { objectId: el.id, objectType: 'Ground' };
+  const out: Primitive[] = [];
+  const pts = (p.line ?? []).map((q): Vec2 => [q[0], q[1]]);
+  const h0 = p.height ?? 0;
+  const h1 = p.endHeight ?? h0;
+  const th = 2;
+  const text = (at: Vec2, t: string, part: string, extra: Partial<Primitive> = {}) => out.push({ kind: 'text', at, text: t, height: th, align: 'middle', pen: { weight: 0.18 }, origin: { ...origin, part }, ...extra } as Primitive);
+  if (p.kind === 'point') {
+    const c = pts[0];
+    const r = 1.2 * ctx.scale;
+    out.push({ kind: 'line', a: [c[0] - r, c[1] - r], b: [c[0] + r, c[1] + r], pen: { weight: 0.25 }, origin: { ...origin, part: 'punkt' } });
+    out.push({ kind: 'line', a: [c[0] - r, c[1] + r], b: [c[0] + r, c[1] - r], pen: { weight: 0.25 }, origin: { ...origin, part: 'punkt' } });
+    text([c[0], c[1] + 2 * ctx.scale], hText(ctx, h0), 'höjd');
+    return out;
+  }
+  if (p.kind === 'breakline') {
+    out.push({ kind: 'polyline', points: pts, closed: false, pen: { weight: 0.25, dash: [6, 1.5, 1, 1.5] }, origin: { ...origin, part: 'linje' } });
+    text([pts[0][0], pts[0][1] + 2 * ctx.scale], hText(ctx, h0), 'höjd');
+    if (Math.abs(h1 - h0) >= 1) text([pts[pts.length - 1][0], pts[pts.length - 1][1] + 2 * ctx.scale], hText(ctx, h1), 'höjd');
+    return out;
+  }
+  if (p.kind === 'wall') {
+    for (const ring of g.rings[0]) out.push({ kind: 'region', role: 'cut', rings: [ring], fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'mur' } } as Primitive);
+    const crest = wallCrest(ctx, el);
+    if (crest) text([g.label.at[0], g.label.at[1] + 2.5 * ctx.scale], `Stödmur ${hText(ctx, crest.top)}`, 'höjd');
+    return out;
+  }
+  // Vägen.
+  for (const ring of g.rings[0]) out.push({ kind: 'polyline', points: ring, closed: true, pen: { weight: p.edge === 'wall' ? 0.5 : 0.25 }, origin: { ...origin, part: 'kontur' } });
+  const kind = p.path ?? 'ramp';
+  const n = pathRatio(pts, h0, h1);
+  // Pilen går nedför, längs mittlinjen kring mitten.
+  const total = lineLength(pts);
+  const len = Math.min(total * 0.6, 14 * ctx.scale);
+  const at = (s: number): Vec2 => {
+    let rest = s;
+    for (let i = 1; i < pts.length; i++) {
+      const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+      if (l >= rest && l > 0) return [pts[i - 1][0] + ((pts[i][0] - pts[i - 1][0]) * rest) / l, pts[i - 1][1] + ((pts[i][1] - pts[i - 1][1]) * rest) / l];
+      rest -= l;
+    }
+    return pts[pts.length - 1];
+  };
+  const down = h1 <= h0;
+  const sA = total / 2 + (down ? -len / 2 : len / 2);
+  const sB = total / 2 + (down ? len / 2 : -len / 2);
+  if (Number.isFinite(n)) out.push(...arrow(ctx, at(sA), at(sB), { ...origin, part: 'lutning' }));
+  const warn = pathWarnings(kind, pts, h0, h1, groundDefaults(ctx.doc.site));
+  const ratio = Number.isFinite(n) ? `1:${(Math.round(n * 10) / 10).toLocaleString('sv-SE')}` : 'Plan';
+  const mid = at(total / 2);
+  text([mid[0], mid[1] + 2 * ctx.scale], `${groundLabel(p)} ${ratio}${warn.length ? ' !' : ''}`, 'lutning', warn.length ? { pen: { weight: 0.18, color: 'accent' } } : {});
+  text([pts[0][0], pts[0][1] - 3 * ctx.scale], hText(ctx, h0), 'höjd');
+  if (Math.abs(h1 - h0) >= 1) text([pts[pts.length - 1][0], pts[pts.length - 1][1] - 3 * ctx.scale], hText(ctx, h1), 'höjd');
+  return out;
+}
+
+/** Hur långt ut från muren marken känns på, mm (en ruta i rutnätet räcker). */
+const WALL_REACH = 700;
+/** Stödmurens grund under den lägre sidan, mm. */
+const WALL_FOOTING = 300;
+
+/**
+ * Stödmurens krön och fot (mm från ±0): krönet är den egna höjden, eller
+ * den högre sidans högsta mark längs muren plus `above`; foten ligger
+ * under den lägre sidans lägsta mark. Null utan markmodell.
+ */
+export function wallCrest(ctx: PlanContext, el: Element<any>): { top: number; bottom: number } | null {
+  return ctx.memo(`wall-crest:${el.id}`, () => {
+    const p = ctx.params<GroundParams>(el);
+    const pts = (p.line ?? []).map((q): Vec2 => [q[0], q[1]]);
+    if (pts.length < 2) return null;
+    const t = finishedTerrain(ctx)?.terrain ?? terrainOf(ctx.doc);
+    if (!t) return null;
+    const half = Math.max(50, p.thickness ?? groundDefaults(ctx.doc.site).wallThickness) / 2;
+    let hi = -Infinity;
+    let lo = Infinity;
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1];
+      const b = pts[i];
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+      if (l < 1) continue;
+      const nx = -(b[1] - a[1]) / l;
+      const ny = (b[0] - a[0]) / l;
+      const steps = Math.max(1, Math.ceil(l / 500));
+      for (let k = 0; k <= steps; k++) {
+        const x = a[0] + ((b[0] - a[0]) * k) / steps;
+        const y = a[1] + ((b[1] - a[1]) * k) / steps;
+        const l1 = groundAt(t, x + nx * (half + WALL_REACH), y + ny * (half + WALL_REACH));
+        const r1 = groundAt(t, x - nx * (half + WALL_REACH), y - ny * (half + WALL_REACH));
+        if (l1 === null || r1 === null) continue;
+        hi = Math.max(hi, l1, r1);
+        lo = Math.min(lo, l1, r1);
+      }
+    }
+    if (!Number.isFinite(hi)) return null;
+    return { top: p.height ?? hi + (p.above ?? 0), bottom: lo - WALL_FOOTING };
+  });
+}
+
 export const groundType: ElementType<GroundParams> = {
   type: 'Ground',
   label: 'Markobjekt',
@@ -244,6 +453,16 @@ export const groundType: ElementType<GroundParams> = {
   planReads: ['Wall', 'Slab'],
   pickSoft: true,
   defaults: () => ({ kind: 'plateau', outline: [] }),
+  model3d(el, ctx): Shape3D[] {
+    // Stödmuren som kropp (0.10.5), från foten till krönet. Den övriga marken är markmodellen.
+    const p = ctx.params<GroundParams>(el);
+    if (p.kind !== 'wall') return [];
+    const g = groundGeometry(ctx, el);
+    const c = wallCrest(ctx, el);
+    if (!g || !c || c.top <= c.bottom) return [];
+    const base = storeyElevation(ctx, el.storey);
+    return [{ id: el.id, rings: g.rings[0], z0: c.bottom - base, z1: c.top - base, material: 'wall' }];
+  },
   pickShape(el, ctx) {
     const g = groundGeometry(ctx, el);
     if (!g) return [];
@@ -254,6 +473,7 @@ export const groundType: ElementType<GroundParams> = {
     if (!g) return [];
     const p = ctx.params<GroundParams>(el);
     const origin = { objectId: el.id, objectType: 'Ground' };
+    if (isLineKind(p.kind)) return linePlan(ctx, el, p, g);
     const out: Primitive[] = [];
     // Konturen: tunn, eller tjock där kanten är en stödmur. Urgrävningen streckad.
     const pen = p.edge === 'wall' ? { weight: 0.5 } : p.kind === 'excavation' || p.slab ? { weight: 0.18, dash: [4, 1.5] } : { weight: 0.25 };

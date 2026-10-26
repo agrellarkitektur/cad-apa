@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.4** (alfa); nästa är **0.10.5, markobjekt del 2 och byggnadshöjd**.
+**0.10.5** (alfa); nästa är **0.10.6, granskning**.
 
 ## Vad som fungerar
 
@@ -1105,6 +1105,26 @@ Version 0.10.2, takfot och taket i planen (samma filformat, 17):
   ytterväggarnas utsida på alla våningar, streckad där taket ligger över
 - Nivåkoten *Takfot* är takets lägsta undersida med snittet och språnget
 - Referensritningarna med tak ändrades (punktstreckat och takfotens snitt)
+
+Version 0.10.5, markobjekt del 2 och byggnadshöjd (samma filformat, 18):
+- **Byggnadshöjd enligt PBF** (1 kap. 3 §): från medelmarknivån till där
+  fasadplanet skärs av ett plan som lutar 45° inåt och berör takets
+  ovansida. Ett flackt tak berörs vid takfotens yttre kant (taksprånget
+  räknas), ett brant vid nocken. Den längsta fasaden är
+  beräkningsgrundande. Nivåkoten **BH** i fasader och sektioner (Visa,
+  Markörer) och värdet i dialogen *Platsen*
+- **Ramp, gångväg och infart** i verktyget Mark: en mittlinje med bredd
+  och höjd i början och slutet, ur marken från början; infarten med
+  tvärfall (1:50). Sidorna möter marken med slänt eller stödmur.
+  Lutningspilen med *1:12* i planen, och en varning när rampen är
+  brantare än gränsen eller går över 0,5 m utan vilplan (gränserna under
+  *Platsen*)
+- **Höjdpunkt** och **brytlinje**: låser marken i en punkt eller längs en
+  linje, och marken runt omkring tonas mot den inom 5 m
+- **Stödmur** som eget objekt längs en linje: slänterna går inte över den,
+  krönet följer den högre sidan (eller en egen höjd), och den syns tjock i
+  planen och som kropp i 3D, fasader och sektioner
+- Linjerna ändras med punkterna i Modifiera, som 2D-linjer
 
 Version 0.10.4, markobjekt del 1 (samma filformat, 18):
 - **Verktyget Mark** (Rita) lägger markobjekt: en **platå** eller en

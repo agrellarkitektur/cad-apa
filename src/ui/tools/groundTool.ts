@@ -1,7 +1,9 @@
 import { addElements } from '../../core/commands';
 import type { Element, Id } from '../../core/model';
 import { groundAt, terrainOf } from '../../core/site';
-import type { GroundKind, GroundParams } from '../../elements/ground';
+import type { GroundParams } from '../../elements/ground';
+import type { PathKind } from '../../elements/groundLines';
+import { dist } from '../../geometry/vec';
 import { slabAt } from '../../elements/slab';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
@@ -11,8 +13,16 @@ import { pxToMm, type ToolHost } from './host';
 import { snapMarker } from './overlay';
 import { roundMm, snap, type SnapResult } from './snap';
 
-/** Vad verktyget lägger: en platå, en urgrävning eller en urgrävning under ett bjälklag (klick i bjälklaget). */
-export type GroundMode = GroundKind | 'slab';
+/**
+ * Vad verktyget lägger: en platå, en urgrävning eller en urgrävning under
+ * ett bjälklag (klick i bjälklaget); längs en linje (0.10.5) en ramp,
+ * gångväg, infart, brytlinje eller stödmur; eller en höjdpunkt.
+ */
+export type GroundMode = 'plateau' | 'excavation' | 'slab' | PathKind | 'point' | 'breakline' | 'wall';
+
+/** Sätten som ritas som en linje, avslutad med dubbelklick, Enter eller Klar. */
+const LINE_MODES: readonly GroundMode[] = ['ramp', 'walk', 'drive', 'breakline', 'wall'];
+export const isLineMode = (m: GroundMode): boolean => LINE_MODES.includes(m);
 
 /**
  * Mark (0.10.4): dra upp en platå eller en urgrävning med två klick, lägg en
@@ -28,6 +38,9 @@ export class GroundTool implements ViewTool, PointTaker {
   cursor = 'crosshair';
   private host: ToolHost;
   private a: Vec2 | null = null;
+  /** Linjens punkter (ramp, brytlinje, stödmur …). */
+  private pts: Vec2[] = [];
+  private lastUp = { t: 0, at: [0, 0] as Vec2 };
   private current: SnapResult | null = null;
   options: { mode: GroundMode } = { mode: 'plateau' };
   lockAngle: number | null = null;
@@ -39,7 +52,7 @@ export class GroundTool implements ViewTool, PointTaker {
   }
 
   get started(): boolean {
-    return !!this.a;
+    return !!this.a || this.pts.length > 0;
   }
 
   down(): 'capture' {
@@ -60,6 +73,14 @@ export class GroundTool implements ViewTool, PointTaker {
 
   up(p: ViewPointer): void {
     this.track(p);
+    const now = performance.now();
+    const double = now - this.lastUp.t < 350 && dist(p.screen, this.lastUp.at) < 8;
+    this.lastUp = { t: now, at: p.screen };
+    // Dubbelklick avslutar linjen (andra klicket lade redan samma punkt).
+    if (double && isLineMode(this.options.mode) && this.pts.length >= 2) {
+      this.finish();
+      return;
+    }
     this.click(roundMm(this.current?.point ?? p.model));
   }
 
@@ -76,6 +97,17 @@ export class GroundTool implements ViewTool, PointTaker {
       this.underSlab(pt);
       return;
     }
+    if (this.options.mode === 'point') {
+      const h = this.groundHeight(pt);
+      this.create({ kind: 'point', outline: [], line: [[pt[0], pt[1]]], height: Math.round(h / 10) * 10 });
+      return;
+    }
+    if (isLineMode(this.options.mode)) {
+      const last = this.pts[this.pts.length - 1];
+      if (!last || dist(last, pt) >= 1) this.pts.push(pt);
+      this.onChange?.();
+      return;
+    }
     if (!this.a) {
       this.a = pt;
       this.onChange?.();
@@ -89,10 +121,37 @@ export class GroundTool implements ViewTool, PointTaker {
     const c: Vec2 = [(this.a[0] + pt[0]) / 2, (this.a[1] + pt[1]) / 2];
     const t = terrainOf(this.host.store.doc);
     const g = (t && groundAt(t, c[0], c[1])) ?? 0;
-    const kind = this.options.mode;
+    const kind = this.options.mode === 'excavation' ? 'excavation' : 'plateau';
     const height = Math.round((kind === 'excavation' ? g - 1000 : g) / 50) * 50;
     this.create({ kind, outline, height });
     this.reset();
+  }
+
+  /** Den befintliga markens höjd (mm från ±0) i en punkt, eller 0. */
+  private groundHeight(pt: Vec2): number {
+    const t = terrainOf(this.host.store.doc);
+    return (t && groundAt(t, pt[0], pt[1])) ?? 0;
+  }
+
+  /**
+   * Avsluta linjen: en väg med höjderna ur marken i ändarna, en brytlinje
+   * likadant, en stödmur med krönet efter marken.
+   */
+  finish(): void {
+    const pts = this.pts;
+    const mode = this.options.mode;
+    this.pts = [];
+    this.onChange?.();
+    if (pts.length < 2 || !isLineMode(mode)) return;
+    const line = pts.map((q): [number, number] => [q[0], q[1]]);
+    if (mode === 'wall') {
+      this.create({ kind: 'wall', outline: [], line });
+      return;
+    }
+    const h0 = Math.round(this.groundHeight(pts[0]) / 10) * 10;
+    const h1 = Math.round(this.groundHeight(pts[pts.length - 1]) / 10) * 10;
+    if (mode === 'breakline') this.create({ kind: 'breakline', outline: [], line, height: h0, endHeight: h1 });
+    else this.create({ kind: 'path', path: mode as PathKind, outline: [], line, height: h0, endHeight: h1 });
   }
 
   /** En urgrävning under bjälklaget där man klickade. Finns den redan markeras den. */
@@ -154,7 +213,7 @@ export class GroundTool implements ViewTool, PointTaker {
   }
 
   lastPoint(): Vec2 | undefined {
-    return this.a ?? undefined;
+    return this.a ?? this.pts[this.pts.length - 1];
   }
 
   cursorPoint(): Vec2 | undefined {
@@ -167,7 +226,13 @@ export class GroundTool implements ViewTool, PointTaker {
   }
 
   hintText(): string {
-    if (this.options.mode === 'slab') return 'Klicka i ett bjälklag: urgrävningen följer det, med arbetsutrymme runt om.';
+    const m = this.options.mode;
+    if (m === 'slab') return 'Klicka i ett bjälklag: urgrävningen följer det, med arbetsutrymme runt om.';
+    if (m === 'point') return 'Klicka där höjdpunkten ska ligga; höjden tas ur marken och ändras i egenskaperna.';
+    if (isLineMode(m)) {
+      const what = { ramp: 'rampens mittlinje', walk: 'gångvägens mittlinje', drive: 'infartens mittlinje', breakline: 'brytlinjen', wall: 'stödmurens linje' }[m as 'ramp'];
+      return this.pts.length ? 'Klicka nästa punkt. Dubbelklick, Enter eller Klar avslutar.' : `Klicka första punkten av ${what}.`;
+    }
     const what = this.options.mode === 'excavation' ? 'urgrävningens botten' : 'platån';
     return this.a ? 'Klicka det motsatta hörnet.' : `Klicka ett hörn av ${what}, eller välj Runt huset.`;
   }
@@ -176,6 +241,7 @@ export class GroundTool implements ViewTool, PointTaker {
 
   reset(): void {
     this.a = null;
+    this.pts = [];
     this.lockAngle = null;
     this.onChange?.();
   }
@@ -185,6 +251,10 @@ export class GroundTool implements ViewTool, PointTaker {
     if (this.a && this.current) {
       const pts = rect(this.a, this.current.point).map((q) => cam.toScreen(q));
       out.push(`<path d="M${pts.map((q) => q.join(' ')).join('L')}Z" class="rubber"/>`);
+    }
+    if (this.pts.length) {
+      const pts = [...this.pts, ...(this.current ? [this.current.point] : [])].map((q) => cam.toScreen(q));
+      out.push(`<path d="M${pts.map((q) => q.join(' ')).join('L')}" class="rubber"/>`);
     }
     if (this.current) out.push(snapMarker(cam, this.current));
     return out.join('');

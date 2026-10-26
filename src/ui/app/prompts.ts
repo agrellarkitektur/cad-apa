@@ -1,4 +1,4 @@
-import type { GroundMode } from '../tools/groundTool';
+import { isLineMode, type GroundMode } from '../tools/groundTool';
 import type { RoofMode } from '../tools/roofTool';
 import { commandFor, type CommandDef } from '../commandRegistry';
 import { ALIGN_BUTTONS, ArrangeTool } from '../modify/arrangeTool';
@@ -127,7 +127,14 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
         { key: 'P', label: 'Platå', run: mode('plateau'), on: r.options.mode === 'plateau' },
         { key: 'U', label: 'Urgrävning', run: mode('excavation'), on: r.options.mode === 'excavation' },
         { key: 'B', label: 'Under bjälklag', run: mode('slab'), on: r.options.mode === 'slab' },
+        { key: 'R', label: 'Ramp', run: mode('ramp'), on: r.options.mode === 'ramp' },
+        { key: 'G', label: 'Gångväg', run: mode('walk'), on: r.options.mode === 'walk' },
+        { key: 'I', label: 'Infart', run: mode('drive'), on: r.options.mode === 'drive' },
+        { key: 'L', label: 'Brytlinje', run: mode('breakline'), on: r.options.mode === 'breakline' },
+        { key: 'M', label: 'Stödmur', run: mode('wall'), on: r.options.mode === 'wall' },
+        { key: 'K', label: 'Höjdpunkt', run: mode('point'), on: r.options.mode === 'point' },
       ];
+      if (r.started && isLineMode(r.options.mode)) options.push({ key: 'A', label: 'Avsluta', run: () => r.finish() });
       if (!r.started) options.push({ key: 'H', label: 'Runt huset', run: () => r.aroundHouse() });
       if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.reset() });
       return { head, text: r.hintText(), options };

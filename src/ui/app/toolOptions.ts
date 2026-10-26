@@ -1,4 +1,4 @@
-import type { GroundMode } from '../tools/groundTool';
+import { isLineMode, type GroundMode } from '../tools/groundTool';
 import type { RoofMode } from '../tools/roofTool';
 import { fillTypeList } from '../../core/fillTypes';
 import { dividePath } from '../tools/measureTool';
@@ -103,14 +103,18 @@ export function installToolOptions(app: AppContext) {
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'ground') {
       // Mark (0.10.4): platå, urgrävning, under ett bjälklag, eller platån runt huset.
+      // Längs en linje (0.10.5): ramp, gångväg, infart, brytlinje, stödmur; och höjdpunkten.
       const m = app.groundTool.options.mode;
+      const b = (mode: string, label: string, title = '') => `<button data-ground-mode="${mode}" aria-pressed="${m === mode}"${title ? ` title="${title}"` : ''}>${label}</button>`;
       app.toolOptions.innerHTML = `
-        <div class="opt"><span>Lägg</span><div class="segmented" role="group" aria-label="Lägg">
-          <button data-ground-mode="plateau" aria-pressed="${m === 'plateau'}">Platå</button>
-          <button data-ground-mode="excavation" aria-pressed="${m === 'excavation'}">Urgrävning</button>
-          <button data-ground-mode="slab" aria-pressed="${m === 'slab'}" title="Klicka i ett bjälklag: urgrävningen följer det">Under bjälklag</button>
+        <div class="opt"><span>Yta</span><div class="segmented" role="group" aria-label="Yta">
+          ${b('plateau', 'Platå')}${b('excavation', 'Urgrävning')}${b('slab', 'Under bjälklag', 'Klicka i ett bjälklag: urgrävningen följer det')}
         </div></div>
         <button class="btn" data-action="ground-around" title="En platå som följer husets kontur, med fall från fasaden">Runt huset</button>
+        <div class="opt"><span>Linje</span><div class="segmented" role="group" aria-label="Linje">
+          ${b('ramp', 'Ramp')}${b('walk', 'Gångväg')}${b('drive', 'Infart')}${b('breakline', 'Brytlinje', 'Låser marken längs linjen och tonar den runt omkring')}${b('wall', 'Stödmur')}${b('point', 'Höjdpunkt', 'Låser marken i en punkt och tonar den runt omkring')}
+        </div></div>
+        ${app.groundTool.started && isLineMode(m) ? '<button class="btn" data-action="ground-done">Klar</button>' : ''}
         <span class="opt-hint">${app.groundTool.hintText()}</span>`;
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'section' || app.ui.tool === 'elevation') {
@@ -368,6 +372,7 @@ export function installToolOptions(app: AppContext) {
       app.groundTool.reset();
     }
     if (b.dataset.action === 'ground-around') app.groundTool.aroundHouse();
+    if (b.dataset.action === 'ground-done') app.groundTool.finish();
     if (b.dataset.action === 'dim-done') app.dimensionTool.donePoints();
     if (b.dataset.action === 'd2-done') app.draw2dTool.finish(false);
   });

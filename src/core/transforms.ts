@@ -83,7 +83,9 @@ export function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, movi
   if (Array.isArray(p.outline)) {
     // Bjälklagets håltagningar (0.9.1) följer med; speglade bågar buktar åt andra hållet (0.9.4).
     const holes = Array.isArray(p.holes) ? { holes: p.holes.map((h: any) => ({ ...h, points: h.points.map(t.map), ...(t.mirror && h.bulges ? { bulges: h.bulges.map((b: number) => -b) } : {}) })) } : {};
-    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...holes } }];
+    // Markobjektens linje (0.10.5) följer med; speglat faller infarten åt andra sidan.
+    const line = Array.isArray(p.line) ? { line: p.line.map(t.map), ...(t.mirror && typeof p.crossFall === 'number' ? { crossFall: -p.crossFall } : {}) } : {};
+    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...holes, ...line } }];
   }
   if (Array.isArray(p.points)) {
     const points = p.points.map((q: any) => (Array.isArray(q) ? t.map(q as Pt) : { ...q, at: t.map(q.at) }));

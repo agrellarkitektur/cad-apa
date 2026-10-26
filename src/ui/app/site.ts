@@ -6,7 +6,8 @@ import { DocStore } from '../../core/store';
 import { buildingFootprint } from '../../elements/footprint';
 import { createContext } from '../../repr/context';
 import { meanGround } from '../../repr/terrain';
-import { meanGroundLevel } from '../../core/site';
+import { meanGroundLevel, northOf } from '../../core/site';
+import { buildingHeight } from '../../repr/buildingHeight';
 import { forgetProjectFile } from '../../storage/projectFile';
 import { askChoice, askConfirm, dialog } from '../ask';
 import { escapeHtml } from '../labels';
@@ -27,6 +28,14 @@ export const HOJDKURVOR_ORIGINS = ['https://agrellarkitektur.se', 'https://www.a
 /** Höjdkurvors adress, för skissen tillbaka (senare). */
 export const HOJDKURVOR_URL = 'https://agrellarkitektur.se/terrang/';
 const IMPORT_HASH = '#hojdkurvor-import';
+
+/** Väderstrecket en riktning i modellen pekar åt, när norr ligger åt `north` (grader moturs från x-axeln). */
+export function compass(dir: readonly [number, number], north: number): string {
+  const a = (Math.atan2(dir[1], dir[0]) * 180) / Math.PI;
+  // Medurs från norr.
+  const b = (((north - a) % 360) + 360) % 360;
+  return ['norr', 'nordost', 'öster', 'sydost', 'söder', 'sydväst', 'väster', 'nordväst'][Math.round(b / 45) % 8];
+}
 
 const mf = (n: number, d = 3) => n.toLocaleString('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d });
 const coord = (n: number) => n.toLocaleString('sv-SE', { maximumFractionDigits: 3 });
@@ -98,7 +107,7 @@ export function installSite(app: AppContext) {
    * (0.10.4) den färdiga marken i tillståndet som visas, om det finns ett hus,
    * och schakt och fyll för markobjekten.
    */
-  function mmn(): { z: number | null; existing: number | null; finished: number | null; house: boolean; volumes: { cut: number; fill: number } | null; objects: number } {
+  function mmn(): { z: number | null; existing: number | null; finished: number | null; house: boolean; volumes: { cut: number; fill: number } | null; objects: number; bh: ReturnType<typeof buildingHeight> } {
     const doc = app.store.doc;
     const { ctx } = createContext(doc, doc.storeys[0].id, app.viewStates(), doc.graphics, () => true);
     const f = showsProposal(ctx) ? finishedTerrain(ctx) : null;
@@ -112,7 +121,7 @@ export function installSite(app: AppContext) {
         volumes.fill += v.fill;
       }
     }
-    return { z: meanGround(ctx), existing, finished, house: buildingFootprint(ctx).length > 0, volumes, objects: groundObjects(ctx).length };
+    return { z: meanGround(ctx), existing, finished, house: buildingFootprint(ctx).length > 0, volumes, objects: groundObjects(ctx).length, bh: buildingHeight(ctx) };
   }
 
   /** Dialogen Platsen: varifrån, koordinatsystem, ±0, höjdkurvor, beskärning, licens. */
@@ -139,6 +148,7 @@ export function installSite(app: AppContext) {
           ${row('Vridning och sann nord', `${mf(site.rotation, 2)}°, sann nord ${mf(site.trueNorth, 3)}°`)}
           ${row('Markmodell', t ? `${t.grid.W} × ${t.grid.H} punkter, ${mf(t.grid.s, 2)} m mellan, ${mf(t.min, 2)}–${mf(t.max, 2)} m` : 'Ingen (skapa underlaget i Höjdkurvor)')}
           ${row('Medelmarknivå', m.z !== null ? `+${mf(toRh(site, m.z))} längs husets kontur (${m.z >= 0 ? '+' : '−'}${mf(Math.abs(m.z) / 1000)} från ±0)${m.finished !== null && m.existing !== null ? `; färdig mark +${mf(toRh(site, m.finished))}, befintlig +${mf(toRh(site, m.existing))}` : ''}` : m.house ? 'Ingen mark under huset' : 'Rita huset först')}
+          ${m.bh && m.bh.height !== null ? row('Byggnadshöjd', `${mf(m.bh.height / 1000, 2)} m enligt PBF, på fasaden mot ${compass(m.bh.main.out, northOf(site))} (den längsta), +${mf(toRh(site, m.bh.main.z))}. Undantagen (kupor, allmän plats närmare än 6 m, annan beräkningsgrundande fasad) bedöms för hand.`) : ''}
           ${m.volumes ? row('Schakt och fyll', `${m3(m.volumes.cut)} schakt, ${m3(m.volumes.fill)} fyll (${m.objects} markobjekt i tillståndet som visas)`) : ''}
         </dl>
         <label class="site-field"><span>±0, plan 1:s golv, i RH 2000 (m)</span><span class="site-datum"><input class="ask-input" data-site="datum" inputmode="decimal" value="${mf(site.datum)}">${m.existing !== null ? `<button type="button" class="btn" data-site-mmn="${mf(Math.round(toRh(site, m.existing) * 100) / 100)}" title="Sätt ±0 till den befintliga markens medelmarknivå längs huset, avrundad till centimeter">Medelmarknivån</button>` : ''}</span></label>
@@ -249,7 +259,10 @@ function groundSettings(own: Partial<GroundDefaults> | undefined, meanOnExisting
       <div class="site-ground-grid">
         ${field('slope', 'Slänt', '1:N')}${field('fall', 'Fall från huset', '1:N')}${field('fallLength', 'Fallet gäller ut', 'mm')}
         ${field('distance', 'Platå runt huset ut', 'mm')}${field('sockel', 'Sockel', 'mm')}${field('margin', 'Arbetsutrymme', 'mm')}
+        ${field('rampMax', 'Brantaste ramp', '1:N')}${field('walkMax', 'Brantaste gångväg', '1:N')}${field('landingRise', 'Vilplan var', 'mm höjd')}
+        ${field('crossFall', 'Infartens tvärfall', '1:N')}${field('blend', 'Höjdpunkt och brytlinje tonas', 'mm')}${field('wallThickness', 'Stödmurens tjocklek', 'mm')}
       </div>
+      <p class="site-note">Ramp 1:12 och gångväg 1:20 med vilplan var 0,5 m höjd är förval efter Boverkets regler om tillgänglighet (ALM och BBR); kontrollera mot det som gäller i projektet.</p>
       <label class="site-field"><span>Medelmarknivån mot</span><select data-site="mean"><option value="finished">Färdig mark</option><option value="existing"${meanOnExisting ? ' selected' : ''}>Befintlig mark</option></select></label>
       <label class="check"><input type="checkbox" data-site="earth"${earth ? ' checked' : ''}> Jord under marklinjen i sektionerna</label>
       <p class="site-note">Förvalen gäller markobjekt som inte har egna värden. Den färdiga marken räknas ur den befintliga och markobjekten i förslaget; den befintliga ändras aldrig.</p>

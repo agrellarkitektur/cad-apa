@@ -1,10 +1,26 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.4.
+överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.5.
 
 ## Läget
 
+- **0.10.5 Markobjekt del 2 och byggnadshöjd är klar** på `main` (samma
+  format, 18; nya sorter av `Ground`). Carl August sa "kör nästa version"
+  och fick upplägget i chatten innan arbetet började (inget svar än).
+  **Byggnadshöjd** enligt PBF 1 kap. 3 § (`src/repr/buildingHeight.ts`):
+  45°-planet mot takets ovansida per fasad, den längsta fasaden
+  beräkningsgrundande, nivåkoten *BH* i fasader och sektioner och värdet i
+  *Platsen*. I verktyget Mark: **ramp, gångväg, infart** (mittlinje med
+  bredd, höjder i ändarna, tvärfall, lutningspil och varning),
+  **höjdpunkt** och **brytlinje** (låser marken och tonar den inom 5 m)
+  och **stödmur** (en linje som slänterna inte går över, kropp i 3D och
+  sektioner). Geometrin i `src/elements/groundLines.ts`, utjämningen och
+  murarna i `finishedGround`. Provat med Playwright mot `dist/` med en
+  egen kuperad platsfil; klickjämförelsen kördes inte. Testerna: 491 på ca
+  11 s. Referensritningarna för fasader och sektioner fick BH. Claudes val
+  i PLAN.md, koden i UTVECKLING.md under *Markobjekt del 2 och
+  byggnadshöjd (0.10.5)*.
 - **0.10.4 Markobjekt del 1 är klar** på `main` (samma format, 18; en ny
   elementtyp). Carl August sa "kör nästa version" och fick upplägget i
   chatten innan arbetet började (inget svar än). Ett nytt objekt,
@@ -254,10 +270,10 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~, ~~0.9.2 Nivåer~~,
   ~~0.9.3 Granskning~~, ~~0.9.4 Bjälklag del 2~~, ~~0.10 Tak~~,
   ~~0.10.1 Granskning~~, ~~0.10.2 Takfot och taket i planen~~,
-  ~~0.10.3 Markmodell~~, ~~0.10.4 Markobjekt del 1~~ (klara)
-- **Marken före piloten** (Carl August 26 oktober): **0.10.5 Markobjekt del 2 och byggnadshöjd** (ramp, gångväg,
-  infart, höjdpunkt, brytlinje, stödmur; byggnadshöjd enligt PBF; stor),
-  **0.10.6 Granskning**
+  ~~0.10.3 Markmodell~~, ~~0.10.4 Markobjekt del 1~~,
+  ~~0.10.5 Markobjekt del 2 och byggnadshöjd~~ (klara)
+- **0.10.6 Granskning** (efter marken: `ground.ts` delas, marken räknas
+  fortare, klickjämförelse med markobjekt)
 - **0.10.7 Dolda linjer i fasader**
 - **0.10.8 Småsaker** (högerklick på planer, Visa i kolumner, snäpp mot
   kalkering, hovring i 3D) och **0.10.9 Höjder i förhållande till
@@ -281,20 +297,16 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.10.4 syns på webbhotellet och hur markobjekten känns
-(frågorna nedan; 0.9.2–0.10.3 har inte provats fullt ut än). Sortera
-Inkorgen 26 oktober om träden med honom (förslagen i *Att fråga*), och
-be honom bekräfta sorteringen från förra gången (0.10.10, 0.10.11 och
-3D-vyerna). Sedan **0.10.5 Markobjekt del 2 och byggnadshöjd** (PLAN.md),
-stor: ramp och gångväg (mittlinje med bredd, höjder i ändarna eller
-lutning, slänt eller mur, lutningspil, varning), infart, höjdpunkt och
-brytlinje, stödmur som eget objekt, byggnadshöjd enligt PBF med nivåkot
-*BH* (kontrollera PBF 1 kap. 3 § och Boverkets vägledning först). Bygg
-markobjekten som nya sorter av `Ground` eller egna typer som ger
-`GroundShape` (`src/core/ground.ts`): en ramp är en yta med höjd längs
-mittlinjen, en höjdpunkt och brytlinje behöver troligen interpolation
-mellan dem och marken runt (ett nytt sätt i `finishedGround`).
-Byggnadshöjden ur `roofBody` (översidan) och `meanGround`.
+Fråga först om 0.10.5 syns på webbhotellet och hur ramperna, stödmuren
+och byggnadshöjden känns (frågorna nedan; 0.9.2–0.10.4 har inte provats
+fullt ut än). Sortera Inkorgen 26 oktober om träden med honom (förslagen
+i *Att fråga*), och be honom bekräfta sorteringen från förra gången
+(0.10.10, 0.10.11 och 3D-vyerna). Sedan **0.10.6 Granskning**, utan nya
+funktioner: dela `src/elements/ground.ts` (ritningen för sig), se om den
+färdiga marken räknas om i onödan (varje markobjekt går genom hela sin
+rektangel plus slänt; `wallCrest` läser marken per mur), slå ihop
+dubbletter mellan `v0104` och `v0105` (samma platsfil), och lägg steg för
+markobjekten i klickjämförelsen (`scripts/jamfor-klick.py`).
 
 Besluten 26 oktober: befintlig mark ändras aldrig; markobjekten är
 fristående; ingen penselmodellering; befintlig tunn streckad, ny tjock
@@ -304,9 +316,20 @@ färdig mark som förval, befintlig också (tillstånden); förvalen (slänt
 tillbaka till Höjdkurvor; analyserna i cad-apa efter piloten; *Upp till
 taket* är kvar.
 
-Nästa granskning: 0.10.6, efter marken.
-
 ## Att fråga Carl August om
+
+- **0.10.5 efter provning** (Claudes val, se PLAN.md): byggnadshöjden
+  räknas mot den **längsta fasaden** (bland lika långa den högsta); ska
+  det gå att välja en annan beräkningsgrundande fasad, och ska BH i en
+  fasad gälla just den fasaden? Språnget räknas fullt (planet berör
+  takfotens yttre kant); stämmer det med hur hans kommuner räknar?
+  Gränserna för ramp (1:12, vilplan var 0,5 m) och gångväg (1:20) är
+  Claudes läsning av ALM/BBR via Göteborgs tekniska handbok: stämmer de?
+  Rampen får höjderna ur den befintliga marken i ändarna; en vilplan görs
+  genom att dela rampen. Höjdpunkt och brytlinje tonar marken inom 5 m;
+  lagom? Stödmurens krön är vågrätt (den högre sidans högsta punkt) och
+  foten 300 under den lägre; behövs ett krön som följer marken, och
+  ändar som möter marken? Linjerna går inte att böja (bågar).
 
 - **0.10.4 efter provning** (Claudes val, se PLAN.md): urgrävningens
   kontur är botten och slänten går utåt (planen sa inåt); platåns höjd

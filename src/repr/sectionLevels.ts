@@ -6,12 +6,13 @@ import type { PlanContext } from '../elements/registry';
 import { planeRange, roofBodyOf, roofRange, type RoofParams } from '../elements/roof';
 import { markerPen, solidPen, withWeight } from './markerPens';
 import type { Pen, Primitive } from './primitives';
+import { buildingHeight } from './buildingHeight';
 import { levelText, meanGround } from './terrain';
 
 /**
  * Nivåkoter och höjdmått i fasader och sektioner (0.9.2; egen fil sedan
  * 0.9.3). FG för varje vånings golv, UK bjl för bjälklagen som sektionen
- * skär, takfot och nock. Bjälklagets ovansida är golvet, så ÖK skrivs inte
+ * skär, takfot och nock, MMN och BH (byggnadshöjden, 0.10.5). Bjälklagets ovansida är golvet, så ÖK skrivs inte
  * för sig. ±0 är nollnivån, plan 1:s golv. Höjdmåttet (bara i sektioner)
  * går genom de skurna bjälklagens under- och ovansidor: tjocklek, fri höjd,
  * tjocklek …
@@ -52,6 +53,16 @@ export function levelPrims(
     // Medelmarknivån längs husets kontur (0.10.3), när projektet har en markmodell.
     const mmn = view.hide?.includes('Terrain') ? null : meanGround(ctx);
     if (mmn !== null) entries.push([Math.round(mmn), 'MMN']);
+    // Byggnadshöjden enligt PBF (0.10.5), när huset har tak.
+    if (!view.hide?.includes('buildingHeight')) {
+      const bh = buildingHeight(ctx);
+      if (bh) {
+        const z = Math.round(bh.main.z);
+        const i = entries.findIndex((e) => e[0] === z);
+        if (i >= 0) entries[i] = [z, entries[i][1] ? `${entries[i][1]}, BH` : 'BH'];
+        else entries.push([z, 'BH']);
+      }
+    }
     // Texter som skulle krocka (nivåer närmare än en textrad) skjuts
     // uppåt. Strecket går under texten som förut, utom där en annan
     // nivås text hamnat på det.

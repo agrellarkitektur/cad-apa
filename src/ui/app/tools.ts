@@ -123,7 +123,14 @@ export function installTools(app: AppContext, host: ToolHost) {
   const groundTool = new GroundTool(host);
   groundTool.onCreated = (id) => {
     app.selection.set([id]);
-    app.hint('Markobjektet är lagt. Ändra höjd, fall och slänt i egenskaperna, konturen med hörnen och kanterna.', 5000);
+    const kind = app.store.doc.elements[id]?.params.kind;
+    const text: Record<string, string> = {
+      path: 'Vägen är lagd med höjderna ur marken i ändarna. Ändra höjder, lutning och bredd i egenskaperna, mittlinjen med punkterna.',
+      breakline: 'Brytlinjen är lagd med höjderna ur marken i ändarna. Ändra dem och radien i egenskaperna.',
+      point: 'Höjdpunkten är lagd med markens höjd. Ändra den och radien i egenskaperna.',
+      wall: 'Stödmuren är lagd; krönet följer den högre sidans mark. Ändra det i egenskaperna, linjen med punkterna.',
+    };
+    app.hint(text[String(kind)] ?? 'Markobjektet är lagt. Ändra höjd, fall och slänt i egenskaperna, konturen med hörnen och kanterna.', 5000);
   };
   groundTool.onChange = () => app.toolOpts.renderToolOptions();
   const sectionTool = new MarkerTool(host, 'Section');
@@ -194,6 +201,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     if (app.ui.tool === 'draw2d' && id !== 'draw2d') draw2dTool.finish(false);
     if (app.ui.tool === 'roof' && id !== 'roof') roofTool.reset();
     if (app.ui.tool === 'slab' && id !== 'slab') slabTool.reset();
+    if (app.ui.tool === 'ground' && id !== 'ground') groundTool.finish();
     if (app.ui.tool === 'ground' && id !== 'ground') groundTool.reset();
     if (app.ui.tool === 'section' && id !== 'section') sectionTool.reset();
     if (app.ui.tool === 'elevation' && id !== 'elevation') elevationTool.reset();
@@ -284,6 +292,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     else if (app.ui.tool === 'draw2d' && draw2dTool.count > 0) draw2dTool.reset();
     else if (app.ui.tool === 'roof' && roofTool.started) roofTool.reset();
     else if (app.ui.tool === 'slab' && slabTool.started) slabTool.reset();
+    else if (app.ui.tool === 'ground' && groundTool.started) groundTool.reset();
     else if (app.ui.tool === 'ground' && groundTool.started) groundTool.reset();
     else if (app.ui.tool === 'section' && sectionTool.step > 0) sectionTool.reset();
     else if (app.ui.tool === 'elevation' && elevationTool.step > 0) elevationTool.reset();

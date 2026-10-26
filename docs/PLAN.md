@@ -1872,6 +1872,51 @@ Stor.
 - *Upp till taket* är kvar (Carl August 26 oktober); fråga kvar om den går
   före ett bjälklag som täcker väggen
 
+*Byggd (26 oktober) i en session, samma format (18): nya sorter av
+`Ground` och valfria parametrar. Testerna: 481 → 491 på ca 11 s. Claudes
+val: **Byggnadshöjden** följer PBF 1 kap. 3 § (kontrollerad på lagen.nu):
+från medelmarknivån invid byggnaden till skärningen mellan fasadplanet och
+ett plan som lutar 45° inåt och berör takets ovansida. Den räknas för
+varje fasad i husets kontur som det största z − d över takkroppens
+ovansida (d = avståndet inåt från fasaden), så ett flackt tak berörs vid
+takfotens yttre kant och språnget höjer byggnadshöjden med sitt mått,
+ett tak brantare än 45° vid nocken. Bara taket framför fasaden räknas
+(mellan dess ändar, och utanför den bara det som inte står över huset,
+högst 3 m ut). **Den beräkningsgrundande fasaden är den längsta** (bland
+lika långa den högsta), som oftast är en långsida; en gavel skulle ge
+nockens höjd. Undantagen (kupor och frontespiser under en tredjedel av
+takfoten, allmän plats närmare än 6 m, en annan beräkningsgrundande
+fasad) bedöms för hand och står i dialogen. Boverkets *treplansmodell*
+(2016:30) är ett förslag och används inte. Nivåkoten **BH** i fasader
+och sektioner (Visa, Markörer, *Byggnadshöjd*), också utan markmodell;
+värdet och fasadens väderstreck i dialogen *Platsen*. **Ramp, gångväg och
+infart** är en sort (`path`) med mittlinje (polylinje), bredd (ramp 1 500,
+gångväg 1 200, infart 3 000) och höjd i början och slutet, ur den
+befintliga marken när den ritas; fältet *Lutning* ändrar höjden i slutet.
+Tvärfall 1:N (positivt faller åt höger i linjens riktning; infarten 1:50
+från början). Sidorna och ändarna möter marken med slänt eller stödmur.
+Planen: konturen, pilen nedför mittlinjen med *Ramp 1:12* och höjderna i
+ändarna; en varning (accentfärg och *!* i planen, raden i egenskaperna)
+när en ramp är brantare än 1:12 eller går mer än 0,5 m utan vilplan, och
+när en gångväg är brantare än 1:20. Värdena kommer ur Boverkets regler om
+tillgänglighet (ALM, BBR) via Göteborgs tekniska handbok; paragrafen
+kunde inte läsas, så de ska kontrolleras. De går att ändra under
+*Platsen*. Vilplan ritas genom att dela rampen i flera. **Höjdpunkt och
+brytlinje** låser marken (brytlinjen rakt mellan höjderna i ändarna) och
+tonar marken runt omkring mot dem inom 5 m (vikten en S-kurva), ett nytt
+sätt i den färdiga marken; de följer ritordningen som de andra.
+**Stödmuren** är en linje med tjocklek (200): slänterna och
+utjämningen går inte över den, så att marken bakom är orörd. Krönet är
+den högre sidans högsta mark längs muren plus *Över marken* (0), eller en
+egen höjd; foten 300 under den lägre sidans lägsta. Planen: fylld svart
+med tjock kontur; 3D, fasader och sektioner: en kropp. Linjerna ändras med
+punkterna i Modifiera som en öppen 2D-linje (bågar går inte). Provat med
+Playwright mot `dist/` med en egen kuperad platsfil i exempelvillan;
+klickjämförelsen kördes inte. Kända begränsningar: rutnätet (1 m) är
+grovt för en smal ramp; krönet är vågrätt längs hela muren; murens
+ändar möter inte marken med slänt; byggnadshöjden räknas för hela huset,
+inte per byggnadskropp.*
+
 ### 0.10.6 Granskning
 
 Efter marken, som är ny och tung geometri.

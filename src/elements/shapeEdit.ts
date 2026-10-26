@@ -60,6 +60,8 @@ export function roofShape(el: ShapeLike): ShapeLike {
 export function shapeOf(el: ShapeLike | undefined): ShapeLike | undefined {
   if (!el) return undefined;
   if (el.type === 'Shape2D') return el;
+  // Markobjekt längs en linje (0.10.5): linjen som en öppen 2D-form, utan bågar.
+  if (el.type === 'Ground' && Array.isArray(el.params.line) && (el.params.line as unknown[]).length >= 2) return { type: 'Shape2D', params: { shape: 'polyline', points: el.params.line, closed: false } };
   return el.type === 'Roof' && Array.isArray(el.params.outline) ? roofShape(el) : undefined;
 }
 
@@ -89,6 +91,7 @@ export function shapePatch(doc: ProjectDoc, id: Id, hole: number | undefined, pa
     // Takfallets kontur (0.10): punkterna och bågarna.
     return { ...('points' in patch ? { outline: patch.points } : {}), ...('bulges' in patch ? { bulges: patch.bulges } : {}) };
   }
+  if (hole === undefined && doc.elements[id]?.type === 'Ground') return 'points' in patch ? { line: patch.points } : {};
   if (hole === undefined) return patch;
   const holes = [...holesOf(doc.elements[id])];
   const h = holes[hole];

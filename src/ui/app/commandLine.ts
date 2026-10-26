@@ -176,6 +176,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     else if (app.ui.tool === 'wall') app.wallTool.finish();
     else if (app.ui.tool === 'dimension') app.dimensionTool.donePoints();
     else if (app.ui.tool === 'draw2d') app.draw2dTool.finish(false);
+    else if (app.ui.tool === 'ground') app.groundTool.finish();
     refresh();
   }
 

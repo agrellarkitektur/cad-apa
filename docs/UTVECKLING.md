@@ -1242,6 +1242,36 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Markobjekt del 2 och byggnadshöjd (0.10.5, format 18)
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/repr/buildingHeight.ts` | `buildingHeight(ctx)`: 45°-planets höjd vid varje fasad i husets kontur (största z − d över takkropparnas ovansidor framför fasaden), den beräkningsgrundande fasaden (den längsta) och byggnadshöjden mot medelmarknivån |
+| `src/elements/groundLines.ts` | Markobjekt längs en linje: `along` (avstånd, sträcka och sida mot en polylinje), `stripRing` (remsa med gering), `pathShape` (väg med höjd längs linjen och tvärfall), `lockShape` (brytlinje och höjdpunkt med utjämning), `barriersOf`, `pathRatio`, `pathWarnings` |
+
+- **Byggnadshöjden**: fasaderna är husets kontur med raka fortsättningar
+  ihopslagna. Utanför fasaden räknas bara takets del upp till 3 m ut som
+  inte står över huset (en annan flygel). Nivåkoten *BH* i
+  `sectionLevels.ts` (Visa: `buildingHeight`), raden i dialogen
+  *Platsen* (`compass` ger väderstrecket).
+- **Utjämning**: `GroundShape.blend` (radien); `finishedGround` tonar
+  marken med vikten 1 − (3f² − 2f³). Noder utanför rektangeln plus radien
+  hoppas över.
+- **Stödmurar**: `finishedGround(t, shapes, barriers)`. En nod utanför en
+  yta lämnas orörd när sträckan till ytans närmaste kantpunkt (`probe`
+  ger `at`) korsar eller når en mur. Murens kropp i 3D och sektioner
+  (`model3d` i `ground.ts`, material `wall`) går från 300 under den lägre
+  sidan till krönet (`wallCrest`, mark 700 mm ut på båda sidor var 500 mm).
+- **Linjen** ligger i `params.line`; `outline` är tom. `shapeOf` gör den
+  till en öppen 2D-form, så att Modifiera och greppen fungerar som för
+  2D-linjer (`shapePatch` skriver `line`, bågar sparas inte);
+  `hasEditableOutline` gäller bara platå och urgrävning. `transformed`
+  flyttar linjen och byter tecken på tvärfallet vid spegling.
+- **Verktyget** samlar punkter för en linje och avslutar med dubbelklick,
+  Enter (`enterInTool`), *Klar* eller verktygsbyte (`finish`).
+- Tester: `tests/v0105.test.ts`. Referensritningarna för fasader och
+  sektioner fick nivåkoten BH.
+
 ## Markobjekt (0.10.4, format 18)
 
 | Fil | Innehåll |

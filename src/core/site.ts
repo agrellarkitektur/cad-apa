@@ -73,9 +73,20 @@ export interface GroundDefaults {
   sockel: number;
   /** Arbetsutrymmet runt bjälklaget i en urgrävning, mm. */
   margin: number;
+  /** Brantaste ramp och gångväg 1:N (0.10.5): brantare ger en varning. */
+  rampMax: number;
+  walkMax: number;
+  /** Höjdskillnaden en ramp får ha utan vilplan, mm. */
+  landingRise: number;
+  /** Infartens tvärfall 1:N. */
+  crossFall: number;
+  /** Hur långt marken tonas mot en höjdpunkt eller brytlinje, mm. */
+  blend: number;
+  /** Stödmurens tjocklek, mm. */
+  wallThickness: number;
 }
 
-export const GROUND_DEFAULTS: GroundDefaults = { slope: 2, fall: 20, fallLength: 3000, distance: 3000, sockel: 200, margin: 500 };
+export const GROUND_DEFAULTS: GroundDefaults = { slope: 2, fall: 20, fallLength: 3000, distance: 3000, sockel: 200, margin: 500, rampMax: 12, walkMax: 20, landingRise: 500, crossFall: 50, blend: 5000, wallThickness: 200 };
 
 /** Projektets förval för markobjekten. */
 export function groundDefaults(site: Pick<Site, 'ground'> | undefined): GroundDefaults {
