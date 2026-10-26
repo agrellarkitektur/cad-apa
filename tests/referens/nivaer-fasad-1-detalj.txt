@@ -1,18 +1,18 @@
 linje 1750,0 3674.9,0 [w0.25 ink] @yv-s/wall
 linje 3745.1,0 4754.9,0 [w0.25 ink] @yv-s/wall
 linje 4825.1,0 13750,0 [w0.25 ink] @yv-s/wall
-linje 1750,0 1750,2445.2 [w0.25 ink] @yv-s/wall
+linje 1750,0 1750,2514.6 [w0.25 ink] @yv-s/wall
 linje 13750,0 13748.5,0 [w0.25 ink] @yv-s/wall
-linje 13750,0 13750,2445.2 [w0.25 ink] @yv-s/wall
+linje 13750,0 13750,2514.6 [w0.25 ink] @yv-s/wall
 linje 4754.6,0 4745.1,0 [w0.25 ink] @yv-s/wall
 linje 3754.9,0 3745.1,0 [w0.25 ink] @yv-s/wall
 linje 1751.5,0 1750,0 [w0.25 ink] @yv-s/wall
 linje 1750,0 1750,804.9 [w0.25 ink] @yv-v/wall
-linje 1750,2184.5 1750,2445.2 [w0.25 ink] @yv-v/wall
+linje 1750,2184.5 1750,2514.6 [w0.25 ink] @yv-v/wall
 linje 1750,0 1751.5,0 [w0.25 ink] @yv-v/wall
-linje 1750,0 1750,2445.2 [w0.25 ink] @yv-v/wall
+linje 1750,0 1750,2514.6 [w0.25 ink] @yv-v/wall
 linje 13748.5,0 13750,0 [w0.25 ink] @yv-o/wall
-linje 13750,0 13750,2445.2 [w0.25 ink] @yv-o/wall
+linje 13750,0 13750,2514.6 [w0.25 ink] @yv-o/wall
 linje 8990,900.1 8990,910 [w0.25 ink] @iv-4/wall
 linje 8990,2100.1 8990,2110 [w0.25 ink] @iv-4/wall
 linje 8990,900.1 8990,910 [w0.25 ink] @iv-4/wall
@@ -163,26 +163,28 @@ linje 2150,-400 13350,-400 [w0.18 ink] @bj1/vy
 linje 2150,0 2150,-400 [w0.18 ink] @bj1/vy
 linje 13350,0 13350,-400 [w0.18 ink] @bj1/vy
 linje 2150,-0.6 2150,-400 [w0.18 ink] @bj1/vy
-linje 1250,2445.2 14250,2445.2 [w0.25 ink] @tak/roof
 linje 1250,2781.9 14250,2781.9 [w0.25 ink] @tak/roof
-linje 14250,2445.2 14250,2446 [w0.25 ink] @tak/roof
 linje 14250,2781.9 14250,5074.8 [w0.25 ink] @tak/roof
 linje 14250,5074.8 1250,5074.8 [w0.25 ink] @tak/roof
-linje 1250,2446 1250,2445.2 [w0.25 ink] @tak/roof
 linje 1250,5074.8 1250,2781.9 [w0.25 ink] @tak/roof
-linje 1250,2445.2 1250,2781.9 [w0.25 ink] @tak/roof
-linje 14250,2445.2 14250,2781.9 [w0.25 ink] @tak/roof
+linje 14250,2781.9 14250,2514.6 [w0.25 ink] @tak/roof
+linje 14250,2514.6 1250,2514.6 [w0.25 ink] @tak/roof
+linje 1250,2514.6 1250,2781.9 [w0.25 ink] @tak/roof
+linje 14250,2514.6 14250,2515.2 [w0.25 ink] @tak/roof
+linje 1250,2515.2 1250,2514.6 [w0.25 ink] @tak/roof
 linje 1250,5074.4 1250,5074.8 [w0.25 ink] @tak-n/roof
 linje 1250,5074.8 14250,5074.8 [w0.25 ink] @tak-n/roof
 linje 14250,5074.8 14250,5074.4 [w0.25 ink] @tak-n/roof
-linje 1250,2445.2 1250,2446 [w0.25 ink] @tak-n/roof
+linje 1250,2514.6 1750,2514.6 [w0.25 ink] @tak-n/roof
+linje 13750.1,2514.6 14250,2514.6 [w0.25 ink] @tak-n/roof
+linje 1250,2515.2 1250,2514.6 [w0.25 ink] @tak-n/roof
 linje -250,-400 15750,-400 [w0.7] @/mark
 linje 14850,0 16850,0 [w0.18] @/nivå
 yta none [w0.18] 15450,0 15342,180 15558,180 @/nivå
 text "FG ±0,000" 15702,63 h2.2 [w0.18] @/nivå
-linje 14850,2445 16850,2445 [w0.18] @/nivå
-yta none [w0.18] 15450,2445 15342,2625 15558,2625 @/nivå
-text "Takfot +2,445" 15702,2508 h2.2 [w0.18] @/nivå
+linje 14850,2515 16850,2515 [w0.18] @/nivå
+yta none [w0.18] 15450,2515 15342,2695 15558,2695 @/nivå
+text "Takfot +2,515" 15702,2578 h2.2 [w0.18] @/nivå
 linje 14850,5075 16850,5075 [w0.18] @/nivå
 yta none [w0.18] 15450,5075 15342,5255 15558,5255 @/nivå
 text "Nock +5,075" 15702,5138 h2.2 [w0.18] @/nivå

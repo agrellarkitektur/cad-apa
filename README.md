@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.1** (alfa, granskning); nästa är **0.10.2, takfot och taket i planen**.
+**0.10.2** (alfa); nästa är **0.10.3, mark och byggnadshöjd**.
 
 ## Vad som fungerar
 
@@ -1084,6 +1084,27 @@ Version 0.10.0, tak (filformat 17):
   taken. Skarven vid nocken mellan två takfall syns inte
 - Exempelvillans sadeltak är två takfall med referenslinjerna i ytterlivet
 - Projekt från 0.9.4 (format 16) öppnas inte
+
+Version 0.10.2, takfot och taket i planen (samma filformat, 17):
+- **Takfotens snitt**: takfoten (kanterna som vetter nedåt i lutningen)
+  snittas vinkelrätt mot takytan från början, nock, grat och gavel
+  lodrätt. I takets egenskaper väljs takfotens snitt (vinkelrätt, lodrätt
+  eller en vinkel mot det vågräta), och i Modifiera kan en kant få ett
+  eget snitt (*Vinkelrätt*, *Lodrätt*, *Vinkel*, *Förval*). Kantens eget
+  snitt följer med när taket flyttas, vrids och speglas, men försvinner
+  när kanten själv ändras
+- **Språngets tjocklek** i takets egenskaper: delen utanför ytterväggarnas
+  utsida kan vara tunnare (eller tjockare) än taket. Ovansidan är densamma;
+  undersidan går upp ett steg vid väggen
+- **Snitthöjd per våning** (förval 1200 mm, i våningens egenskaper): det
+  av taket som ligger ovanför ritas punktstreckat i planen (förut
+  streckat), det under heldraget, och där snittet går genom taket ritas en
+  snittyta (under väggarna). Ett tak syns också i planen för en våning som
+  det går upp i, t.ex. vindsplanet under ett tak som ligger på plan 1
+- **Husets kontur genom taket** under Visa (Modell), släckt från början:
+  ytterväggarnas utsida på alla våningar, streckad där taket ligger över
+- Nivåkoten *Takfot* är takets lägsta undersida med snittet och språnget
+- Referensritningarna med tak ändrades (punktstreckat och takfotens snitt)
 
 Version 0.10.1, granskning (samma filformat, 17):
 - Inga nya funktioner, men tre rättelser för hus med flera våningar

@@ -22,6 +22,7 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
       ['demolished', 'Det som rivs'],
       ['Slab', 'Bjälklag'],
       ['Roof', 'Tak'],
+      ['footprint', 'Husets kontur genom taket'],
       ['Furniture', 'Möbler och inredning'],
       ['swing', 'Öppningssätt (dörrar)'],
       ['Underlay', 'Underlag'],
@@ -78,9 +79,16 @@ export function traceStoreyOptions(trace: string | null | undefined): string {
     .join('');
 }
 
+/**
+ * Det som är släckt från början (0.10.2): det tänds med nyckeln och ett plus
+ * i vyns `hide`, så att äldre vyer inte får det.
+ */
+const OFF_BY_DEFAULT = new Set(['footprint']);
+
 /** Om det som nyckeln står för syns i vyn. */
 export function isShown(ui: Pick<UiState, 'hide' | 'hideDemolished'>, key: string): boolean {
   if (key === 'demolished') return !ui.hideDemolished;
+  if (OFF_BY_DEFAULT.has(key)) return ui.hide.includes(`+${key}`);
   if (key.startsWith('littera:') && ui.hide.includes('littera')) return false;
   return !ui.hide.includes(key);
 }
@@ -89,6 +97,11 @@ export function isShown(ui: Pick<UiState, 'hide' | 'hideDemolished'>, key: strin
 export function setShown(ui: Pick<UiState, 'hide' | 'hideDemolished'>, key: string, on: boolean): void {
   if (key === 'demolished') {
     ui.hideDemolished = !on;
+    return;
+  }
+  if (OFF_BY_DEFAULT.has(key)) {
+    const k = `+${key}`;
+    ui.hide = on ? (ui.hide.includes(k) ? ui.hide : [...ui.hide, k]) : ui.hide.filter((h) => h !== k);
     return;
   }
   // Släckte en äldre vy all littera: dela upp den på objekttyperna först.

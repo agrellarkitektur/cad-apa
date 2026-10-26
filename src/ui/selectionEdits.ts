@@ -209,6 +209,24 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
     });
     return true;
   }
+  if (scope === 'roof' && name === 'overhang') {
+    // Språngets tjocklek (0.10.2); samma som takets sparas inte.
+    const v = Number(input.value.replace(',', '.'));
+    if (!Number.isFinite(v) || v < 0) return false;
+    patchEach(store, ids, 'Språngets tjocklek', (_, el) => ({ overhangThickness: Math.round(v) === resolveParams<RoofParams>(doc, el).thickness ? undefined : Math.round(v) }));
+    return true;
+  }
+  if (scope === 'roof' && (name === 'eaveCut' || name === 'eaveAngle')) {
+    // Takfotens snitt (0.10.2): vinkelrätt (förval), lodrätt eller en vinkel mot det vågräta.
+    const v = name === 'eaveAngle' ? Number(input.value.replace(',', '.')) : input.value;
+    if (typeof v === 'number' && (!Number.isFinite(v) || v < 5 || v > 90)) return false;
+    patchEach(store, ids, 'Takfotens snitt', (_, el) => {
+      const rp = resolveParams<RoofParams>(doc, el);
+      if (v === 'angle') return { eaveCut: typeof rp.eaveCut === 'number' ? rp.eaveCut : Math.round(90 - rp.slope) };
+      return { eaveCut: v === 'perp' ? undefined : v };
+    });
+    return true;
+  }
   if (scope === 'roof' && name === 'radius') {
     // Positiv radie: taket stiger mot bågens centrum (en kon med spetsen uppåt).
     const v = Number(input.value.replace(',', '.'));

@@ -149,12 +149,12 @@ linje 6500,9800 5900,9800 [w0.5 ink] @sektion-a
 linje 5900,9800 6150,9675 [w0.5 ink] @sektion-a
 linje 5900,9800 6150,9925 [w0.5 ink] @sektion-a
 text "A" 6626,10120 h3.5 90° middle fet [w0.35] @sektion-a
-linje -500,-500 12500,-500 [w0.18 ink d3/1.5] @tak
-linje 12500,-500 12500,4000 [w0.18 ink d3/1.5] @tak
-linje 12500,4000 -500,4000 [w0.18 ink d3/1.5] @tak
-linje -500,4000 -500,-500 [w0.18 ink d3/1.5] @tak
-linje 12500,8500 -500,8500 [w0.18 ink d3/1.5] @tak-n
-linje -500,8500 -500,4000 [w0.18 ink d3/1.5] @tak-n
-linje -500,4000 12500,4000 [w0.18 ink d3/1.5] @tak-n
-linje 12500,4000 12500,8500 [w0.18 ink d3/1.5] @tak-n
+linje -500,-500 12500,-500 [w0.18 ink d5/1/0.3/1] @tak
+linje 12500,-500 12500,4000 [w0.18 ink d5/1/0.3/1] @tak
+linje 12500,4000 -500,4000 [w0.18 ink d5/1/0.3/1] @tak
+linje -500,4000 -500,-500 [w0.18 ink d5/1/0.3/1] @tak
+linje 12500,8500 -500,8500 [w0.18 ink d5/1/0.3/1] @tak-n
+linje -500,8500 -500,4000 [w0.18 ink d5/1/0.3/1] @tak-n
+linje -500,4000 12500,4000 [w0.18 ink d5/1/0.3/1] @tak-n
+linje 12500,4000 12500,8500 [w0.18 ink d5/1/0.3/1] @tak-n
 yta none [w0.35 ink d2/1] 8440,400 8560,400 8560,3940 8440,3940 @/snitt

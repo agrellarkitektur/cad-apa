@@ -75,8 +75,10 @@ describe('takfallet (0.10)', () => {
     expect(trimToRoofs(piece, 2700, false, [{ rings: piece, under: [0, 0, -100], top: [0, 0, 200] }])).toEqual([{ rings: piece }]);
   });
 
-  it('i 3D syns inte skarven vid nocken mellan sadeltakets två takfall, men hörnen vid takfoten gör det', () => {
-    const shapes = buildModel3d(sampleProject(), { state: 'st-a' });
+  it('i 3D syns inte skarven vid nocken mellan sadeltakets två takfall, men hörnen vid takfoten gör det (med lodrätt snitt, 0.10.2)', () => {
+    const doc = sampleProject();
+    for (const id of ['tak', 'tak-n']) doc.elements[id] = { ...doc.elements[id], params: { ...doc.elements[id].params, eaveCut: 'plumb' } };
+    const shapes = buildModel3d(doc, { state: 'st-a' });
     for (const id of ['tak', 'tak-n']) {
       const e = shapes.find((s): s is Edges3D => s.kind === 'edges' && s.id === id)!;
       const upright = e.segments.filter((q) => q[0] === q[3] && q[1] === q[4]);

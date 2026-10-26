@@ -1,3 +1,4 @@
+import { cutHeightOf, DEFAULT_CUT_HEIGHT } from '../elements/roofPlan';
 import { traceStoreyOptions } from './app/showMenu';
 import { PRESETS } from '../core/graphics';
 import { isMaster, type Id, type ProjectDoc, type TreeTab } from '../core/model';
@@ -181,8 +182,9 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('Mapp', `<select name="folder">${folderOptions(doc, 'modell', folder)}</select>`)}
           ${field('Golvnivå', `<span class="input-unit"><input name="elevation" type="text" inputmode="decimal" value="${s.elevation}"><i>mm</i></span>`)}
           ${field('Våningshöjd', `<span class="input-unit"><input name="height" type="text" inputmode="decimal" value="${s.height}"><i>mm</i></span>`)}
+          ${field('Snitthöjd', `<span class="input-unit"><input name="cutHeight" type="text" inputmode="decimal" value="${cutHeightOf(s)}"><i>mm</i></span>`)}
         </div>
-        <p class="note">Golvnivån räknas från plan 1:s nolla. Våningshöjden är golv till golv; ändras den flyttas våningarna ovanför lika mycket. Väggar utan egen höjd följer våningshöjden.</p>
+        <p class="note">Golvnivån räknas från plan 1:s nolla. Våningshöjden är golv till golv; ändras den flyttas våningarna ovanför lika mycket. Väggar utan egen höjd följer våningshöjden. Planen är ett snitt i snitthöjden över golvet: tak ovanför den ritas punktstreckade.</p>
         <div class="nav-actions">
           <button type="button" class="btn" data-action="new-storey-above">Ny våning ovanför</button>
           <button type="button" class="btn" data-action="new-storey-below">Ny våning under</button>
@@ -289,10 +291,12 @@ export function bindTreeForm(root: HTMLElement, store: DocStore, onSaved: (item:
       if (d.has('label')) params.label = str('label').trim() || 'A';
       saveMarker(store, id, { name: str('name'), params, locked: d.has('locked') }, folder);
     } else if (kind === 'storey') {
-      const patch: { name?: string; elevation?: number; height?: number } = {};
+      const patch: { name?: string; elevation?: number; height?: number; cutHeight?: number } = {};
       if (str('name').trim()) patch.name = str('name').trim();
       if (Number.isFinite(num('elevation'))) patch.elevation = Math.round(num('elevation'));
       if (num('height') > 0) patch.height = Math.round(num('height'));
+      // Snitthöjden (0.10.2): förvalet sparas inte.
+      if (str('cutHeight').trim() && Number.isFinite(num('cutHeight')) && num('cutHeight') >= 0) patch.cutHeight = Math.round(num('cutHeight')) === DEFAULT_CUT_HEIGHT ? undefined : Math.round(num('cutHeight'));
       saveStorey(store, id, patch, folder);
     } else if (kind === 'folder') {
       saveFolder(store, id, { name: str('name'), parent: folder });

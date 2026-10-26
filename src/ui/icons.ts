@@ -79,6 +79,10 @@ export const icons = {
   fillet: svg('<path d="M4 20V11a7 7 0 0 1 7-7h9"/><path d="M4 4h7M4 4v7" stroke-dasharray="1.5 1.5"/>'),
   chamfer: svg('<path d="M4 20V10l6-6h10"/><path d="M4 4h6M4 4v6" stroke-dasharray="1.5 1.5"/>'),
   merge: svg('<path d="M3 18l9-9 9 9" stroke-dasharray="2 2"/><path d="M3 18h18"/>'),
+  // Takfotens snitt (0.10.2): takets ände vinkelrätt, lodrätt eller med en vinkel.
+  eavePerp: svg('<path d="M21 4 8 10l2.2 4L21 9"/>'),
+  eavePlumb: svg('<path d="M21 4 8 10v5l13-6"/>'),
+  eaveAngle: svg('<path d="M21 4 8 10l4 3.2L21 9"/><path d="M12 13.2H5" stroke-dasharray="1.5 1.5"/>'),
   extend: svg('<path d="M20 4v16"/><path d="M3 12h12" /><path d="M15 12h5" stroke-dasharray="1.5 1.5"/><path d="M14 9l3 3-3 3"/>'),
   // Trimma: en linje som kapas mot en annan; den borttagna biten streckad (0.8.13).
   trim: svg('<path d="M14 4v16"/><path d="M3 12h11"/><path d="M14 12h7" stroke-dasharray="1.5 1.5"/><path d="M17.5 9.5l2 5M19.5 9.5l-2 5"/>'),

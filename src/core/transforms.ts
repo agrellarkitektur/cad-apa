@@ -76,7 +76,9 @@ export function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, movi
     // linjens riktning så att taket stiger åt samma håll; bågarnas pilhöjd
     // byter tecken, referenslinjens behåller det (bytet tar ut speglingen).
     const ref = p.ref.map(t.map);
-    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ref: t.mirror ? [ref[1], ref[0]] : ref, ...(t.mirror && Array.isArray(p.bulges) ? { bulges: p.bulges.map((b: number) => -b) } : {}) } }];
+    // Kanternas egna snitt (0.10.2) är kända på kantens hörn och följer med.
+    const cuts = Array.isArray(p.edgeCuts) ? { edgeCuts: p.edgeCuts.map((c: any) => ({ ...c, a: t.map(c.a), b: t.map(c.b) })) } : {};
+    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ref: t.mirror ? [ref[1], ref[0]] : ref, ...(t.mirror && Array.isArray(p.bulges) ? { bulges: p.bulges.map((b: number) => -b) } : {}), ...cuts } }];
   }
   if (Array.isArray(p.outline)) {
     // Bjälklagets håltagningar (0.9.1) följer med; speglade bågar buktar åt andra hållet (0.9.4).

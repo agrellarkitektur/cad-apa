@@ -1,16 +1,41 @@
 # Överlämning
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
-överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.1.
+överlämning; historiken finns i git. Senast: 26 oktober 2026, efter 0.10.2.
 
 ## Läget
 
-- **0.10.1 Granskning är klar** på `main` (samma format, 17). Carl August
-  bad om granskningen före takfoten (26 oktober), så den blev 0.10.1 och
-  *Takfot och taket i planen* 0.10.2 (se *Nästa session*). Inkorgens
-  punkt 26 oktober (bjälklaget kapar väggen som taket) tog Claude med i
-  granskningen, eftersom det är samma kod; Carl August fick planen i
-  chatten innan arbetet började och har inte svarat.
+- **0.10.2 Takfot och taket i planen är klar** på `main` (samma format,
+  17; bara valfria nya parametrar). Carl August sa "kör nästa version"
+  och fick planen i chatten innan arbetet började (inget svar än). Taket
+  är nu en kropp av plana bitar (`roofBody` i den nya `roofBody.ts`):
+  takfoten snittas vinkelrätt mot takytan från början (en remsa längs
+  kanten), nock, grat och gavel lodrätt; takfotens snitt väljs på taket
+  och en kant kan få ett eget i Modifiera (*Vinkelrätt*, *Lodrätt*,
+  *Vinkel*, *Förval*). Språngets tjocklek (utanför husets kontur,
+  `footprint.ts`) är ett fält på taket. Snitthöjd per våning (förval
+  1200, `Storey.cutHeight`): taket ritas punktstreckat ovanför,
+  heldraget under och med snittyta där planet skär (`roofPlan.ts`); ett
+  tak syns också i planen för en våning det går upp i
+  (`ElementType.alsoOnStorey`, bara planen). *Husets kontur genom taket*
+  under Visa (Modell), släckt från början (`+footprint` i vyns `hide`).
+  Nivåkoten *Takfot* är kroppens lägsta undersida. Referensritningarna
+  med tak ändrades med avsikt. Testerna: 467 på ca 11 s. Provat med
+  Playwright mot `dist/` (egenskaperna, Visa, snitthöjden, sektionen,
+  smartmenyn för en kant); klickjämförelsen kördes inte. Claudes val i
+  PLAN.md, koden i UTVECKLING.md under *Takfot och taket i planen
+  (0.10.2)*.
+- **Inkorgen 26 oktober** (efter 0.10.1) sorterades av Claude som
+  förslag, inte bekräftade (se synpunktsfilen och *Att fråga*): skarven
+  mellan våningarna syns inte hos Carl August, och bandet i fasaden får
+  vara (svar på frågorna om 0.10.1); Visa för väggar m.m. och att dölja
+  objekt med högerklick föreslås som 0.10.7, linjerna i 2D-formen
+  (Förskjut flera kanter, fortsätta och sluta en linje, foga ihop) som
+  0.10.8, sparade 3D-vyer efter 0.12 eller efter piloten. *Upp till
+  taket* är en fråga tillbaka.
+- **0.10.1 Granskning**: Carl August bad om granskningen före takfoten
+  (26 oktober). Inkorgens punkt 26 oktober (bjälklaget kapar väggen som
+  taket) togs med, eftersom det är samma kod.
 - **0.10.1**: felet Carl August såg (väggar under bjälklag i 3D och
   sektion) var väggarnas kantlinjer: de slogs ihop per våning och fick
   den första väggens id, så bjälklaget kapade inte innerväggarnas linjer
@@ -192,15 +217,17 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
   ~~0.8.37 Detaljnivåer och fyllningar~~, ~~0.8.38 Granskning~~,
   ~~0.9 Flera våningsplan~~, ~~0.9.1 Bjälklag~~, ~~0.9.2 Nivåer~~,
   ~~0.9.3 Granskning~~, ~~0.9.4 Bjälklag del 2~~, ~~0.10 Tak~~,
-  ~~0.10.1 Granskning~~ (klara)
-- **0.10.2 Takfot och taket i planen** (språngets tjocklek, takfotens
-  snitt per kant, punktstreckat ovanför snittet, footprint genom taket)
+  ~~0.10.1 Granskning~~, ~~0.10.2 Takfot och taket i planen~~ (klara)
 - **0.10.3 Mark och byggnadshöjd** (markhöjder, medelmarknivå,
   byggnadshöjd enligt PBF, marklinjen)
 - **0.10.4 Dolda linjer i fasader**
 - **0.10.5 Småsaker** (högerklick på planer, Visa i kolumner, snäpp mot
   kalkering, hovring i 3D) och **0.10.6 Höjder i förhållande till
   våningen**
+- Förslag, inte bekräftade: **0.10.7 Visa och dölja** (väggar m.m. i
+  Visa, dölja ett objekt eller en typ med högerklick) och **0.10.8
+  Linjerna i 2D-formen** (Förskjut flera kanter, fortsätta och sluta en
+  linje, foga ihop linjer); nästa granskning ungefär där
 - **0.11 Trappor** (nytt format)
 - **0.11.1 Profilverktyget** (nytt format, stor; också att rita ett
   mönster och göra det till en fyllningstyp) och **0.11.2 Dörrar och
@@ -217,34 +244,56 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.10.1 syns på webbhotellet och om väggarna under
-bjälklagen nu ser rätt ut (frågorna nedan; 0.9.2–0.10.0 har inte provats
-än). Läs synpunktsfilen och sortera ny Inkorg. Sedan **0.10.2 Takfot och
-taket i planen** (PLAN.md), mellanstor:
+Fråga först om 0.10.2 syns på webbhotellet och hur taket ser ut i planen,
+3D och fasaderna (frågorna nedan; 0.9.2–0.10.1 har inte provats fullt ut
+än). Be honom bekräfta sorteringen av Inkorgen 26 oktober (0.10.7, 0.10.8
+och 3D-vyerna, se synpunktsfilen) och svara på frågan om *Upp till
+taket*. Läs synpunktsfilen och sortera ny Inkorg. Sedan **0.10.3 Mark
+och byggnadshöjd** (PLAN.md), mellanstor:
 
-- Språngets tjocklek: språnget är delen utanför ytterväggarnas utsida
-  (räknas ur väggarna, som *Ur väggarna* för bjälklag)
-- Takfotens snitt per kant (vinkelrätt, lodrätt, egen vinkel): en extra
-  `Solid` per kant med kantplanet som undersida ryms i dagens 3D-former
-- En snitthöjd per våning; tak och volymer ovanför ritas punktstreckade
-- Footprint streckad genom taket, som vyinställning
+- Markhöjder runt huset (punkter med höjd, eller en höjd per fasad) och
+  medelmarknivån enligt PBF
+- Marklinjen i fasader och sektioner följer markhöjderna i stället för
+  det lägsta i byggnaden
+- Byggnadshöjden där fasadlivet skär takets ovansida (för tak brantare än
+  45° med 45°-planet), som nivåkot; kroppens ovansida finns i `roofBody`
 
-Nästa granskning ungefär vid 0.10.5 eller 0.11.
+Nästa granskning ungefär vid 0.10.6–0.10.8.
 
 ## Att fråga Carl August om
 
-- **0.10.1 efter provning** (Claudes val, se PLAN.md): bjälklaget kapar
-  alla väggar det täcker, också ytterväggar och gavlar med *Upp till
-  taket* (under tak gäller det lägsta av taket och bjälklaget). Ska *Upp
-  till taket* hellre gå före ett bjälklag som täcker väggen? Ritas
-  bjälklaget till ytterväggarnas utsida syns dess kant som ett band i
-  fasaden (bjälklagets egna linjer); ska fasaden i stället visa väggen som
-  obruten? Linjen mellan våningarna tas bara bort mellan väggar med samma
-  åtgärd (mellan befintligt och nytt är den kvar). En vägg med egen penna
-  har den nu på sina linjer i fasader och sektioner; förut fick alla
-  väggar på våningen den första väggens penna där. Syns en tunn ljus
-  skarv mellan våningarna i 3D på hans dator (i sandlådans webbläsare
-  syns en svag)?
+- **0.10.2 efter provning** (Claudes val, se PLAN.md): att takfoten är
+  kanterna som vetter nedåt i lutningen och snittas vinkelrätt från
+  början; att vinkeln räknas mot det vågräta (90 = lodrätt); att en kants
+  eget snitt glöms när kanten ändras (ett hörn flyttas, kanten förskjuts,
+  taket kapas). Språnget räknas från ytterväggarnas utsida på alla
+  våningar (husets kontur); stämmer det för ett hus med en lägre
+  tillbyggnad? Snitthöjden 1200 från början: vilken använder han? Ett
+  tak syns i planen för en våning det går upp i, men ett tak på plan 2
+  syns inte i plan 1; ska takfoten (eller hela taket) kunna visas
+  streckad i planen under, som vyinställning? Snittytan i planen får
+  stilmallens snittfyllning, som väggarna; ska den vara egen? Husets
+  kontur ritas bara inne i taken; ska den kunna visas också utan tak (en
+  situationsplan)? Nivåkoten *Takfot* är takets lägsta undersida (med
+  snittet nu 2515 i stället för 2445 i exempelvillan); byggnadshöjden
+  kommer i 0.10.3.
+
+- **Upp till taket** (synpunkt 26 oktober, "behöver vi ens det?"): taket
+  kapar redan väggar som når upp i det, på alla våningar, automatiskt.
+  *Upp till taket* gör det omvända: drar upp en vägg som slutar under
+  taket (gaveln) till takets undersida. Utan kryssrutan skulle gaveln få
+  en höjd över nocken, som taket sedan kapar; det fungerar redan i dag,
+  men väggens höjd säger då inget och den sticker upp där den går utanför
+  taket. Ska kryssrutan vara kvar, bli förval för ytterväggar under tak,
+  eller tas bort? Och ska den gå före ett bjälklag som täcker väggen
+  (fråga kvar från 0.10.1)?
+
+- **0.10.1 efter provning** (Claudes val, se PLAN.md): bandet i fasaden
+  när bjälklaget ritas till utsidan får vara (svar 26 oktober), och ingen
+  skarv syns mellan våningarna i hans Chrome (svar 26 oktober). Kvar:
+  linjen mellan våningarna tas bara bort mellan väggar med samma åtgärd
+  (mellan befintligt och nytt är den kvar); en vägg med egen penna har
+  den nu på sina linjer i fasader och sektioner.
 
 - **0.10.0 efter provning** (Claudes val, se PLAN.md): att taket stiger
   åt vänster om referenslinjen och *Vänd lutningen* byter; att höjden
@@ -587,12 +636,12 @@ Nästa granskning ungefär vid 0.10.5 eller 0.11.
   så det kan vara svårt att se vad som är vad.
 - Konens bitar syns svagt i 3D-vyns skuggning (64 bitar per varv, plan
   skuggning).
-- **Skarven mellan våningarna i 3D** (0.10.1): utan linjen syns en mycket
-  svag ljus streckad skarv i sandlådans webbläsare (SwiftShader). Att låta
-  väggarna gå 1 mm ned i det de står på hjälpte inte (prövat och
-  borttaget), så det är troligen skuggningen; se efter på en riktig dator.
 - Två takfall som möts ritar samma linje två gånger i fasaden (nocken och
   takfoten bakom), utan att det syns.
+- Takfotens snitt (0.10.2): där två snittade kanter möts i ett konvext
+  hörn av samma takfall tar den första kantens snitt hörnet (ingen
+  gering). En kon snittas bit för bit; en boolesk operation som inte går
+  att räkna ger lodrätt snitt för den biten.
 - Spegla vänder inte bilden i ett underlag, bara läget.
 - DXF: skraffering med solid fyllning ritas som en ton (färgerna i DXF läses inte). Bilder och externa
   referenser efter pilotprojektet. Vektorsnäpp mot PDF avvaktar.

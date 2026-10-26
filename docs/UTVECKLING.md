@@ -1293,6 +1293,59 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v010.test.ts`. Referensritningarna ändrades av
   exempelvillans två takfall; `twoStoreys` flyttar båda till plan 2.
 
+## Takfot och taket i planen (0.10.2, format 17)
+
+- **Kroppen** i `src/elements/roofBody.ts`: `roofBody(p, footprint)` ger
+  `BodyPiece`-bitar (`rings`, `under`, `top`, `kind`: `in`, `out` för
+  språnget och `cut<kant>` för snittets remsa). Byggs ur `roofPlanes(p)`,
+  delas mot husets kontur när `overhangThickness` skiljer sig från
+  `thickness`, och sedan kant för kant (`edgeBits`, bågar i korta bitar
+  med normalen inåt) med `stripOf`: remsan är biten ∩ en rektangel längs
+  kanten ∩ halvplanet där snittets plan (`cutPlane`) ligger över bitens
+  undersida. Remsor snittas inte igen (den första kanten vinner i ett
+  hörn). En boolesk operation som kastar ger ett lodrätt snitt för den
+  biten. Sparas per parameterobjekt och kontur (`WeakMap`).
+- **Snitten**: `EdgeCut` är `'perp' | 'plumb' | number` (vinkel mot det
+  vågräta). `isEave` (kanten vetter nedåt: lutningen in mot taket mer än
+  0,5) avgör förvalet `p.eaveCut ?? 'perp'`, annars lodrätt.
+  `p.edgeCuts` är `{ a, b, cut }` med kantens hörn (`ownCut`,
+  `withOwnCut`); `movePatch` (`commands.ts`) och `transformed`
+  (`transforms.ts`) flyttar hörnen, pipetten tar inte med dem
+  (`arrange.ts`).
+- **Kantlinjerna** i `bodyEdges(pieces, corners, top)`: varje bits kant
+  får en granne genom en provpunkt 0,5 mm utanför. Utan granne är det
+  konturen (ritas om undersidan inte ligger i ovansidans kant), med en
+  granne ritas ett steg från båda sidor och ett veck en gång mellan bitar
+  av olika slag (konens bitar har samma slag och ingen linje). Lodräta
+  linjer i konturens punkter: upp till ovansidan i hörnen (utom skarvar
+  mot ett annat takfall, `seams`), annars mellan bitarnas undersidor.
+  Ovansidans kontur ritas som förut (`outlineEdges`, som nu också ger
+  kantens nummer).
+- **Husets kontur** i `src/elements/footprint.ts`: `buildingFootprint(ctx)`
+  slår ihop `bareWallUnion` per våning (bara ytterringarna), utan det som
+  rivs. `roofBodyOf(ctx, p)` i `roof.ts` ger kroppen med konturen;
+  `roofPlanesAround` (väggarnas kapning) och `model3d` använder den, och
+  nivåkoten *Takfot* (`lowestUnder` i `sectionLevels.ts`).
+- **Planen** i `src/elements/roofPlan.ts`: `roofPlanPrims` delar konturen
+  där `under` och `top` går genom snitthöjden (`cutHeightOf(storey)`,
+  `Storey.cutHeight`, förval `DEFAULT_CUT_HEIGHT` 1200) och slår ihop
+  bitar med samma slag till en linje per kant; snittytan (`under: true`)
+  ur `roofPlanes`. Husets kontur med `clipToRing` när vyns `hide` har
+  `+footprint` (`FOOTPRINT_KEY`; `OFF_BY_DEFAULT` i `showMenu.ts`).
+  `planReads: ['Wall']`.
+- **Tak från andra våningar** i planen: `ElementType.alsoOnStorey`
+  (`roofShownOn`: takets höjder når in mellan våningens golv och nästa),
+  läst av `createContext(..., otherStoreys)` bara från `buildPlan`, så att
+  3D och sektioner inte får taket två gånger.
+- **Gränssnittet**: `roof:overhang`, `roof:eaveCut` och `roof:eaveAngle`
+  i `selectionFields.ts`/`selectionEdits.ts`; snitthöjden i våningens
+  formulär (`treeItemPanel.ts`); valen `roofCutPerp`, `roofCutPlumb`,
+  `roofCutAngle` och `roofCutAuto` i `ops.ts` (för en kant av ett tak),
+  utförda i `runInstant` och `setEdgeCut` (`tool.ts`); ikonerna
+  `eavePerp`, `eavePlumb`, `eaveAngle`.
+- Tester i `tests/v0102.test.ts`; testet för skarven vid nocken
+  (`v010.test.ts`) använder lodrätt snitt.
+
 ## Granskning (0.10.1, format 17)
 
 Tre rättelser för flera våningar och en uppdelning. Referensritningarna

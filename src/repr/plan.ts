@@ -44,7 +44,7 @@ export interface PlanResult {
 export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: StyleSheet = doc.graphics): PlanResult {
   const saved = savedFor(doc, storey, view, style);
   if (saved.elements === doc.elements && saved.result) return saved.result;
-  const { ctx, visible } = createContext(doc, storey, view, style, (t) => !!(t.plan || t.planBatch));
+  const { ctx, visible } = createContext(doc, storey, view, style, (t) => !!(t.plan || t.planBatch), true);
 
   // Rita i typernas ordning; rivet sist så att de streckade linjerna syns.
   const groups = new Map<string, PlanItem[]>();

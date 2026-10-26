@@ -6,6 +6,9 @@ import { canJoin, canTrim } from '../../core/trimEdit';
 import { cornerPartner, cornersAmong, refFrame } from '../../core/wallEdit';
 import { canRoundCorner, edgeIsArc, editedShape, holeShape, holesOf, shapeCan, shapeEdgeAt, shapeNodes, shapeOf, type ShapeLike } from '../../elements/shapeEdit';
 import { dist, sub } from '../../geometry/vec';
+import { resolveParams } from '../../elements/registry';
+import type { RoofParams } from '../../elements/roof';
+import { ownCut } from '../../elements/roofBody';
 import type { Vec2 } from '../../repr/primitives';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import type { IconName } from '../icons';
@@ -84,6 +87,10 @@ export type OpId =
   | 'holeMove'
   | 'holeRemove'
   | 'roofTrim'
+  | 'roofCutPerp'
+  | 'roofCutPlumb'
+  | 'roofCutAngle'
+  | 'roofCutAuto'
   | 'trim'
   | 'join'
   | 'split'
@@ -132,6 +139,10 @@ export const OPS: Record<OpId, OpDef> = {
   shapeInsert: { label: 'Lägg till punkt', short: 'Ny punkt', icon: 'insertNode', hint: 'Klicka där den nya punkten ska ligga.' },
   shapeMove: { label: 'Flytta punkt', short: 'Flytta', icon: 'move', hint: 'Klicka var punkten ska hamna. (Det går också att dra i den.)' },
   shapeRemove: { label: 'Ta bort punkt', short: 'Ta bort', icon: 'merge', instant: true, hint: 'Punkten tas bort; grannarna binds ihop.' },
+  roofCutPerp: { label: 'Vinkelrätt snitt', short: 'Vinkelrätt', icon: 'eavePerp', instant: true, hint: 'Kanten snittas vinkelrätt mot takytan.' },
+  roofCutPlumb: { label: 'Lodrätt snitt', short: 'Lodrätt', icon: 'eavePlumb', instant: true, hint: 'Kanten snittas lodrätt.' },
+  roofCutAngle: { label: 'Snitt med vinkel', short: 'Vinkel', icon: 'eaveAngle', value: { label: 'Vinkel', unit: '°', initial: 60 }, hint: 'Skriv snittets vinkel mot det vågräta och tryck Enter (90 = lodrätt), eller klicka för att använda den.' },
+  roofCutAuto: { label: 'Snitt som förvalt', short: 'Förval', icon: 'roof', instant: true, hint: 'Kanten får takets förval igen: takfotens snitt, eller lodrätt för nock, grat och gavel.' },
   trim: { label: 'Trimma', short: 'Trimma', icon: 'trim', hint: 'Klicka på biten som ska bort. Den kapas där andra väggar eller linjer korsar.' },
   join: { label: 'Hörnskarv', short: 'Hörnskarv', icon: 'cornerJoin', hint: 'Klicka på den andra väggen eller linjen, på den del som ska vara kvar. Båda förlängs eller kortas till ett hörn.' },
   split: { label: 'Dela', short: 'Dela', icon: 'split', hint: 'Klicka där det ska delas. Det blir två, utan något hörn.' },
@@ -194,7 +205,11 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
     // En håltagning (0.9.4) flyttas och tas bort för sig; det allmänna gäller hela bjälklaget.
     if (ctx.hole !== undefined) return [own, ['holeMove', 'holeRemove']];
     // Ett takfall (0.10) kapas mot ett annat.
-    if (doc.elements[ctx.shapeId]?.type === 'Roof') return [own, ['roofTrim'], COMMON];
+    // Takfotens snitt (0.10.2) för en kant.
+    if (doc.elements[ctx.shapeId]?.type === 'Roof') {
+      const cuts: OpId[] = ctx.kind === 'edge' ? ['roofCutPerp', 'roofCutPlumb', 'roofCutAngle', ...(ownCut(resolveParams<RoofParams>(doc, doc.elements[ctx.shapeId]), ctx.index!) !== undefined ? (['roofCutAuto'] as OpId[]) : [])] : [];
+      return cuts.length ? [own, cuts, ['roofTrim'], COMMON] : [own, ['roofTrim'], COMMON];
+    }
     return withCuts(own.length ? [own, COMMON] : [COMMON]);
   }
   if (ctx.roofId) {

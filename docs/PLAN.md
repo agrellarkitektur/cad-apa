@@ -1660,6 +1660,44 @@ Mellanstor. Var 0.10.1 före granskningen.
 - Vyinställning: byggnadens footprint (ytterväggarnas kontur) som streckad
   linje genom taket i planen (synpunkt 25 oktober)
 
+*Byggd (26 oktober), samma format (17), med valfria nya parametrar. Testerna:
+459 → 467 på ca 11 s. Claudes val: taket är en kropp av plana bitar
+(`roofBody`) med takets ovansida överallt; undersidan är takets innanför
+husets kontur, språngets utanför och snittets i en remsa längs en snett
+snittad kant. Väggarna kapas, och 3D, fasader och sektioner ritas, efter
+samma bitar. **Takfot** är en kant som vetter nedåt i lutningen (taket
+stiger in från den); den snittas vinkelrätt mot takytan från början, och
+remsan är tjockleken gånger sin(lutningen) bred (136 mm för 300 och 27°).
+Nock, grat, gavel och kanter mot ett annat takfall snittas lodrätt. Ett
+vinkelrätt snitt som inte går in under ovansidan (vid en nock) blir
+lodrätt. Takfotens snitt väljs på taket (*Vinkelrätt mot takytan*,
+*Lodrätt*, *Med vinkel mot det vågräta*, förval för vinkeln 90° minus
+lutningen); en kant får ett eget i Modifiera (*Vinkelrätt*, *Lodrätt*,
+*Vinkel* med 60° från början, och *Förval* när kanten har ett eget). En
+kants eget snitt sparas med kantens två hörn, så det följer med när taket
+flyttas, vrids och speglas men glöms när kanten ändras (ett hörn flyttas,
+kanten förskjuts, taket kapas). En båge som takfot snittas bit för bit
+utan synliga skarvar. **Språnget** är delen utanför husets kontur:
+ytterväggarnas utsida på alla våningar, sammanslagen (rummen och gårdar
+fylls i, det som rivs räknas inte). Språngets tjocklek är vinkelrätt mot
+takytan som takets; samma som takets sparas inte. Vid väggen syns steget i
+undersidan som två linjer. **Snitthöjden** är våningens, 1200 mm från
+början (förvalet sparas inte); i planen ritas det av konturen som ligger
+ovanför punktstreckat, det under heldraget, och snittytan (där höjden
+ligger mellan undersidan och ovansidan) får stilmallens snittfyllning och
+ritas under väggarna. Ett tak syns i planen för en annan våning när det
+når in i våningens höjd (golv till golv), så ett tak på plan 1 syns i
+vindsplanet men ett tak på plan 2 syns inte i plan 1. **Husets kontur
+genom taket** står under Visa (Modell) och är släckt från början; den
+tänds med `+footprint` i vyns `hide`, så att äldre vyer inte får den. Den
+ritas streckad (*Streckad*, 0,18) inne i varje takfall och går inte att
+klicka på. Nivåkoten *Takfot* är nu kroppens lägsta undersida (2515 i
+stället för 2445 i exempelvillan, där snittet tar takfotens nedre hörn).
+Kända begränsningar: där två snittade kanter möts i ett konvext hörn (två
+takfötter på samma takfall) tar den första kantens snitt hörnet; ett
+vinkelrätt snitt i hörnet mellan takfot och en gavel med vinkel ritas
+inte som ett geringssnitt.*
+
 ### 0.10.3 Mark och byggnadshöjd
 
 Mellanstor.

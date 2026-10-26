@@ -119,6 +119,17 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
       return `<div class="fields">${numberField('param:height', 'Höjd', p.height, 'mm')}${numberField('param:slope', 'Lutning', p.slope, '°')}${numberField('param:thickness', 'Tjocklek', p.thickness, 'mm')}${numberField('roof:radius', 'Radie', radius, 'mm')}</div>
         <label class="field"><span>Höjden gäller</span><select data-key="roof:heightAt"><option value="under"${p.heightAt !== 'top' ? ' selected' : ''}>Undersidan</option><option value="top"${p.heightAt === 'top' ? ' selected' : ''}>Ovansidan</option></select></label>
         <div class="row"><button class="btn" data-action="roof-flip" title="Taket stiger åt andra hållet från referenslinjen">Vänd lutningen</button></div>
+        <div class="fields">${numberField('roof:overhang', 'Språngets tjocklek', p.overhangThickness ?? p.thickness, 'mm')}${typeof p.eaveCut === 'number' ? numberField('roof:eaveAngle', 'Snittets vinkel', p.eaveCut, '°') : ''}</div>
+        <label class="field"><span>Takfotens snitt</span><select data-key="roof:eaveCut">${(
+          [
+            ['perp', 'Vinkelrätt mot takytan'],
+            ['plumb', 'Lodrätt'],
+            ['angle', 'Med vinkel mot det vågräta'],
+          ] as const
+        )
+          .map(([v, label]) => `<option value="${v}"${(typeof p.eaveCut === 'number' ? 'angle' : (p.eaveCut ?? 'perp')) === v ? ' selected' : ''}>${label}</option>`)
+          .join('')}</select></label>
+        <p class="note">Språnget är delen utanför ytterväggarnas utsida; ovansidan är densamma. Takfoten är kanterna som vetter nedåt i lutningen; nock, grat och gavel snittas lodrätt. En kant kan få ett eget snitt i Modifiera.${p.edgeCuts?.length ? ` ${p.edgeCuts.length === 1 ? 'En kant har' : `${p.edgeCuts.length} kanter har`} ett eget snitt.` : ''}</p>
         <p class="note">Höjden gäller vid referenslinjen, och taket stiger åt pilens håll. Dra i referenslinjens ändar för att flytta den; konturen ändras som en 2D-form. Radie gör referenslinjen till en båge och taket till en kon (0 = rak). Väggar under taket kapas; kryssa i Upp till taket på gavlarna.</p>`;
     }
     case 'Slab': {

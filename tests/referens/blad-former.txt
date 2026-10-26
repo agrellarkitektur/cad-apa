@@ -237,14 +237,14 @@ linje 330,346 324,346 [w0.5 ink d5/1/0.3/1] @sektion-a
 linje 324,346 326.5,344.8 [w0.5 ink] @sektion-a
 linje 324,346 326.5,347.3 [w0.5 ink] @sektion-a
 text "A" 331.3,349.2 h3.5 90° middle fet [w0.35] @sektion-a
-linje 190,140 450,140 [w0.5 #3355aa d3/1.5] @tak
-linje 450,140 450,230 [w0.5 #3355aa d3/1.5] @tak
-linje 450,230 190,230 [w0.5 #3355aa d3/1.5] @tak
-linje 190,230 190,140 [w0.5 #3355aa d3/1.5] @tak
-linje 450,320 190,320 [w0.18 ink d3/1.5] @tak-n
-linje 190,320 190,230 [w0.18 ink d3/1.5] @tak-n
-linje 190,230 450,230 [w0.18 ink d3/1.5] @tak-n
-linje 450,230 450,320 [w0.18 ink d3/1.5] @tak-n
+linje 190,140 450,140 [w0.5 #3355aa d5/1/0.3/1] @tak
+linje 450,140 450,230 [w0.5 #3355aa d5/1/0.3/1] @tak
+linje 450,230 190,230 [w0.5 #3355aa d5/1/0.3/1] @tak
+linje 190,230 190,140 [w0.5 #3355aa d5/1/0.3/1] @tak
+linje 450,320 190,320 [w0.18 ink d5/1/0.3/1] @tak-n
+linje 190,320 190,230 [w0.18 ink d5/1/0.3/1] @tak-n
+linje 190,230 450,230 [w0.18 ink d5/1/0.3/1] @tak-n
+linje 450,230 450,320 [w0.18 ink d5/1/0.3/1] @tak-n
 yta none [w0.35 ink d2/1] 368.8,158 371.2,158 371.2,228.8 368.8,228.8 @/snitt
 text "Plan 1" 80,60 h3.5 fet [w0.25] @/vyrubrik
 linje 80,58.8 89,58.8 [w0.25] @/vyrubrik

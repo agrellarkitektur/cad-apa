@@ -430,6 +430,8 @@ export function movePatch(doc: ProjectDoc, el: Element, d: [number, number]): Re
       ...(Array.isArray(p.holes) ? { holes: p.holes.map((h: { points: [number, number][] }) => ({ ...h, points: h.points.map(add) })) } : {}),
       // Takfallets referenslinje (0.10).
       ...(Array.isArray(p.ref) ? { ref: p.ref.map(add) } : {}),
+      // Kanternas egna snitt (0.10.2).
+      ...(Array.isArray(p.edgeCuts) ? { edgeCuts: p.edgeCuts.map((c: { a: [number, number]; b: [number, number] }) => ({ ...c, a: add(c.a), b: add(c.b) })) } : {}),
     };
   if (Array.isArray(p.points)) {
     // Ett mått knutet till modellen flyttar bara måttlinjen; ett fritt mått flyttas helt.

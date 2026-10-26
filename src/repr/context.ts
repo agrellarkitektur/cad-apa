@@ -15,6 +15,8 @@ export function createContext(
   view: ViewStates,
   style: StyleSheet,
   include: (t: ElementType, action: Action) => boolean,
+  /** Planen (0.10.2): också element från andra våningar som typen vill rita här (`alsoOnStorey`). */
+  otherStoreys = false,
 ): { ctx: PlanContext; visible: PlanItem[] } {
   // Det som hör hemma på ytan som ritas (planen, en fasad, sektion eller ett
   // arbetsblad), och 2D-element från andra ytor som valts att synas i just den här vyn.
@@ -23,7 +25,11 @@ export function createContext(
   // Fasad- och sektionslinjer och norrpilen hör till projektet (0.9) och ritas i alla planer.
   const isPlan = doc.storeys.some((s) => s.id === place);
   const onStorey = Object.values(doc.elements).filter(
-    (e) => homeOf(e) === place || (isPlan && !e.space && typeOf(e.type)?.everyStorey) || (e.show?.kind === 'views' && e.show.views.includes(identity.id)),
+    (e) =>
+      homeOf(e) === place ||
+      (isPlan && !e.space && typeOf(e.type)?.everyStorey) ||
+      (e.show?.kind === 'views' && e.show.views.includes(identity.id)) ||
+      (otherStoreys && isPlan && !e.space && !!typeOf(e.type)?.alsoOnStorey?.(e, doc, place)),
   );
   const hiddenHere = new Set<Id>();
   // Ett mallblad (0.8.8) och ett ritningsblad (0.8.9) följer inte tillstånden: allt på dem syns alltid.

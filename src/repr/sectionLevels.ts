@@ -3,7 +3,7 @@ import type { Element, ProjectDoc } from '../core/model';
 import type { ViewStates } from '../core/states';
 import { dimensionPrims } from '../elements/annotation';
 import type { PlanContext } from '../elements/registry';
-import { roofRange, type RoofParams } from '../elements/roof';
+import { planeRange, roofBodyOf, roofRange, type RoofParams } from '../elements/roof';
 import { markerPen, solidPen, withWeight } from './markerPens';
 import type { Pen, Primitive } from './primitives';
 
@@ -41,7 +41,8 @@ export function levelPrims(
     }
     const floor = Math.min(...doc.storeys.map((s) => s.elevation));
     for (const { el, elevation } of at.roofs) {
-      const eave = Math.round(elevation + roofRange(ctx.params<RoofParams>(el)).underMin);
+      // Takets lägsta undersida, med takfotens snitt och språnget (0.10.2).
+      const eave = Math.round(elevation + lowestUnder(ctx, ctx.params<RoofParams>(el)));
       if (eave > floor && !levels.has(eave)) levels.set(eave, 'Takfot');
     }
     const top = Math.round(at.maxZ);
@@ -109,4 +110,10 @@ function levelMark(x: number, z: number, height: number, label: string, s: numbe
     },
     { kind: 'text', at: [x + tri * 1.4, textY ?? z + tri * 0.35], text: label ? `${label} ${text}` : text, height, pen: withWeight(pen, 0.18), origin },
   ];
+}
+
+/** Takets lägsta punkt på undersidan: kroppens bitar, eller takfallets om de saknas. */
+function lowestUnder(ctx: PlanContext, p: RoofParams): number {
+  const body = roofBodyOf(ctx, p);
+  return body.length ? Math.min(...body.map((pc) => planeRange(pc.under, pc.rings)[0])) : roofRange(p).underMin;
 }

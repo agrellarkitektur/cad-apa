@@ -101,8 +101,8 @@ const PLACEMENT = new Set([
   'text', 'at', 'hinge', 'swing', 'outline', 'seed', 'labelAt', 'offset', 'auto', 'side', 'label', 'roof', 'face', 'toward', 'stamp', 'scale', 'facing',
   // Bjälklagets form (0.9.4): håltagningarna och konturen ur väggarna.
   'holes', 'fromWalls',
-  // Takfallets referenslinje (0.10).
-  'ref', 'refBulge',
+  // Takfallets referenslinje (0.10) och kanternas egna snitt, kända på hörnen (0.10.2).
+  'ref', 'refBulge', 'edgeCuts',
 ]);
 
 /** Vridning är läge (skrafferingens vinkel heter `fillAngle` och följer med). Möblernas mått är form. */

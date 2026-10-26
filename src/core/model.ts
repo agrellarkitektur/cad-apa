@@ -224,6 +224,8 @@ export interface Storey {
   elevation: number;
   /** Våningshöjd i mm (golv till golv). */
   height: number;
+  /** Planens snitthöjd över golvet i mm (0.10.2): det som ligger ovanför ritas punktstreckat. Utelämnad = 1200. */
+  cutHeight?: number;
 }
 
 /**

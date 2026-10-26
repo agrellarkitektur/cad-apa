@@ -3,6 +3,9 @@ import type { Id } from '../../core/model';
 import { removeNode, setOutline } from '../../core/roofEdit';
 import { mergeAtCorner, reshapeWall } from '../../core/wallEdit';
 import { bendShapeEdge, editedShape, holesOf, removeShapeNode, shapePatch } from '../../elements/shapeEdit';
+import { resolveParams } from '../../elements/registry';
+import type { RoofParams } from '../../elements/roof';
+import { withOwnCut, type EdgeCut } from '../../elements/roofBody';
 import { dist } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
@@ -43,6 +46,11 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
     if (slab && ctx.hole !== undefined && holes[ctx.hole]) updateParams(host.store, [slab.id], { holes: holes.filter((_, k) => k !== ctx.hole) }, 'Ta bort håltagning');
     return;
   }
+  // Takfotens snitt för en kant (0.10.2).
+  if (op === 'roofCutPerp' || op === 'roofCutPlumb' || op === 'roofCutAuto') {
+    setEdgeCut(host, ctx, op === 'roofCutPerp' ? 'perp' : op === 'roofCutPlumb' ? 'plumb' : undefined);
+    return;
+  }
   if (op === 'roofRemove') {
     const roof = ctx.roofId ? doc.elements[ctx.roofId] : undefined;
     const next = roof && removeNode(roof.params.outline as [number, number][], ctx.index!);
@@ -57,8 +65,20 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
   if (op === 'merge' && ctx.end && !mergeAtCorner(host.store, el.id, ctx.end)) host.hint('Hörnet har inte precis två väggar.');
 }
 
+/** Ge kanten man klickat på ett eget snitt, eller ta bort det (`cut` utelämnat). */
+export function setEdgeCut(host: ToolHost, ctx: ModifyContext, cut?: EdgeCut): void {
+  const el = ctx.shapeId ? host.store.doc.elements[ctx.shapeId] : undefined;
+  if (el?.type !== 'Roof' || ctx.index === undefined) return;
+  if (el.locked) {
+    host.hint('Låst. Lås upp i egenskaperna för att ändra.', 3000);
+    return;
+  }
+  const p = resolveParams<RoofParams>(host.store.doc, el);
+  updateParams(host.store, [el.id], { edgeCuts: withOwnCut(p, ctx.index, cut) }, cut === undefined ? 'Snitt som förvalt' : 'Kantens snitt');
+}
+
 /** Val som inte visar snäppmarkören. */
-const NO_MARKER = new Set<OpId>(['fillet', 'chamfer', 'filletAll', 'chamferAll', 'shapeFillet', 'shapeChamfer', 'trim', 'join', 'roofTrim']);
+const NO_MARKER = new Set<OpId>(['roofCutAngle', 'fillet', 'chamfer', 'filletAll', 'chamferAll', 'shapeFillet', 'shapeChamfer', 'trim', 'join', 'roofTrim']);
 
 /**
  * Verktyget som kör ett val: förhandsvisar med markören och utför vid
@@ -216,6 +236,10 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
       if (clickRoofTrim(this, model)) this.done();
       return;
     }
+    if (this.op === 'roofCutAngle') {
+      this.commitCutAngle(this.value);
+      return;
+    }
     if (CUT_OPS.has(this.op)) {
       const r = clickCut(this, model, at);
       if (r.done) this.done();
@@ -228,9 +252,22 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
     this.commit(at, null);
   }
 
+  private commitCutAngle(v: number): void {
+    if (!(v >= 5 && v <= 90)) {
+      this.host.hint('Vinkeln mot det vågräta ska vara mellan 5° och 90°.');
+      return;
+    }
+    setEdgeCut(this.host, this.ctx, Math.round(v * 10) / 10);
+    this.done();
+  }
+
   /** Ett inskrivet värde: utför med det. */
   applyValue(v: number): void {
     this.value = v;
+    if (this.op === 'roofCutAngle') {
+      this.commitCutAngle(v);
+      return;
+    }
     this.commit(this.cursorAt?.point ?? null, v);
   }
 

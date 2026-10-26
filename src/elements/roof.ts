@@ -5,6 +5,9 @@ import { dist, distToSegment, left, norm, sub } from '../geometry/vec';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import { zOn, type Edges3D, type Plane, type Shape3D } from '../repr/solids';
 import { segmentCount, shapePoints } from './drawing2d';
+import { bodyEdges, roofBody, type EdgeCut, type EdgeCutOverride } from './roofBody';
+import { buildingFootprint } from './footprint';
+import { roofPlanPrims, roofShownOn } from './roofPlan';
 import type { ElementType, PlanContext } from './registry';
 
 /**
@@ -39,6 +42,15 @@ export interface RoofParams {
   slope: number;
   /** Takets tjocklek vinkelrätt mot takytan, mm. */
   thickness: number;
+  /**
+   * Språngets tjocklek (0.10.2): delen utanför ytterväggarnas utsida, med
+   * samma ovansida. Utelämnad = takets.
+   */
+  overhangThickness?: number;
+  /** Takfotens snitt (0.10.2), för kanter som vetter nedåt i lutningen. Utelämnat = vinkelrätt mot takytan. */
+  eaveCut?: EdgeCut;
+  /** Kanternas egna snitt (0.10.2), kända igen på kantens hörn. */
+  edgeCuts?: EdgeCutOverride[];
 }
 
 /** En del av takfallet med plan för under- och ovansida (en kon delas i plana bitar). */
@@ -285,7 +297,7 @@ export function roofPlanesAround(ctx: PlanContext): RoofPlane[] {
   const here = ctx.storey ? ctx.doc.storeys.find((s) => s.id === ctx.storey) : undefined;
   const own = (els: { el: Element; dz: number }[]) =>
     els.flatMap(({ el, dz }) =>
-      roofPlanes(ctx.params<RoofParams>(el)).map((rp): RoofPlane => (el.storey !== ctx.storey ? { rings: rp.rings, under: liftPlane(rp.under, dz), top: liftPlane(rp.top, dz), foreign: true } : rp)),
+      roofBodyOf(ctx, ctx.params<RoofParams>(el)).map((rp): RoofPlane => (el.storey !== ctx.storey ? { rings: rp.rings, under: liftPlane(rp.under, dz), top: liftPlane(rp.top, dz), foreign: true } : rp)),
     );
   if (!here) return own(ctx.visible('Roof').filter((r) => ctx.actionOf(r) !== 'demolished').map((el) => ({ el, dz: 0 })));
   if (ctx.view.hide?.includes('Roof')) return [];
@@ -301,6 +313,9 @@ export function roofPlanesAround(ctx: PlanContext): RoofPlane[] {
 }
 
 const liftPlane = (pl: Plane, dz: number): Plane => [pl[0], pl[1], pl[2] + dz];
+
+/** Takets kropp i sammanhanget (0.10.2): med språnget utanför husets kontur. */
+export const roofBodyOf = (ctx: PlanContext, p: RoofParams) => roofBody(p, () => buildingFootprint(ctx));
 
 /**
  * Hörn där två takfall möts i en skarv som inte syns: där ett annat takfall
@@ -347,10 +362,10 @@ function seams(ctx: PlanContext): Map<string, Vec2[][]> {
   });
 }
 
-/** Kanterna längs konturen, med bågar som korta bitar. */
-function outlineEdges(p: RoofParams): [Vec2, Vec2][] {
+/** Kanterna längs konturen, med bågar som korta bitar (och raka kanter på en kon delade). */
+export function outlineEdges(p: RoofParams): [Vec2, Vec2, number][] {
   const pts = p.outline as Vec2[];
-  const out: [Vec2, Vec2][] = [];
+  const out: [Vec2, Vec2, number][] = [];
   const cone = !!refArc(p);
   for (let i = 0; i < segmentCount(pts.length, true); i++) {
     const a = pts[i];
@@ -368,6 +383,7 @@ function outlineEdges(p: RoofParams): [Vec2, Vec2][] {
         out.push([
           [x[0] + (y[0] - x[0]) * t0, x[1] + (y[1] - x[1]) * t0],
           [x[0] + (y[0] - x[0]) * t1, x[1] + (y[1] - x[1]) * t1],
+          i,
         ]);
       }
     }
@@ -391,43 +407,37 @@ export function outlinePrims(p: Pick<RoofParams, 'outline' | 'bulges'>, pen: Pen
 
 export const roofType: ElementType<RoofParams> = {
   type: 'Roof',
-  planReads: [],
+  // Husets kontur genom taket och språnget läser väggarna (0.10.2).
+  planReads: ['Wall'],
   label: 'Tak',
   labelPlural: 'Tak',
   drawOrder: 70,
   compares: true,
   defaults: () => ({ outline: [], ref: [[0, 0], [1000, 0]], height: 2700, slope: 27, thickness: 300 }),
 
-  plan(el, ctx) {
-    const p = ctx.params<RoofParams>(el);
-    // Taket ligger ovanför snittet: streckat, som överliggande.
-    const pen = { weight: 0.18, dash: [3, 1.5] as const };
-    return outlinePrims(p, pen, { objectId: el.id, objectType: 'Roof' });
-  },
+  // Ovanför snittet punktstreckat, under heldraget, och snittytan där planet skär (0.10.2).
+  plan: (el, ctx) => roofPlanPrims(el, ctx),
+  alsoOnStorey: roofShownOn,
 
   model3d(el, ctx) {
     const p = ctx.params<RoofParams>(el);
     const out: Shape3D[] = [];
-    const planes = roofPlanes(p);
-    if (!planes.length) return out;
-    for (const rp of planes) {
-      const [z0] = planeRange(rp.under, rp.rings);
-      const [, z1] = planeRange(rp.top, rp.rings);
-      out.push({ id: el.id, rings: rp.rings, z0, z1, bottom: rp.under, top: rp.top, material: 'roof', noEdges: true });
+    const body = roofBodyOf(ctx, p);
+    if (!body.length) return out;
+    for (const pc of body) {
+      const [z0] = planeRange(pc.under, pc.rings);
+      const [, z1] = planeRange(pc.top, pc.rings);
+      out.push({ id: el.id, rings: pc.rings, z0, z1, bottom: pc.under, top: pc.top, material: 'roof', noEdges: true });
     }
-    // Egna kantlinjer: konturen på över- och undersidan och de lodräta
-    // hörnen, utom skarvar mot ett annat takfall som inte syns (0.10).
+    // Egna kantlinjer: konturen på ovansidan, undersidan med språnget och
+    // takfotens snitt, och de lodräta hörnen, utom skarvar mot ett annat
+    // takfall som inte syns (0.10).
     const f = roofFrame(p);
     const edges: Edges3D = { kind: 'edges', id: el.id, segments: [], part: 'roof' };
-    for (const [a, b] of outlineEdges(p)) {
-      edges.segments.push([a[0], a[1], f.under(a), b[0], b[1], f.under(b)]);
-      edges.segments.push([a[0], a[1], f.top(a), b[0], b[1], f.top(b)]);
-    }
+    for (const [a, b] of outlineEdges(p)) edges.segments.push([a[0], a[1], f.top(a), b[0], b[1], f.top(b)]);
     const hidden = seams(ctx).get(el.id) ?? [];
-    for (const v of p.outline as Vec2[]) {
-      if (hidden.some(([q]) => Math.abs(q[0] - v[0]) < 1 && Math.abs(q[1] - v[1]) < 1)) continue;
-      edges.segments.push([v[0], v[1], f.under(v), v[0], v[1], f.top(v)]);
-    }
+    const corners = (p.outline as Vec2[]).filter((v) => !hidden.some(([q]) => Math.abs(q[0] - v[0]) < 1 && Math.abs(q[1] - v[1]) < 1));
+    edges.segments.push(...bodyEdges(body, corners, f.top));
     out.push(edges);
     return out;
   },
