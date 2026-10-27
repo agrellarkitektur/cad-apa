@@ -107,6 +107,19 @@ export interface StyleSheet {
   lineTypes?: CustomLineType[];
   /** Projektets egna fyllningstyper (0.8.36). */
   fillTypes?: CustomFillType[];
+  /**
+   * Sparade fyllningar (0.10.14): en fyllning med alla inställningar och ett
+   * namn, som objekt kopplas till (`fillStyle`). Ändras den sparade ändras
+   * alla objekt som är kopplade till den.
+   */
+  fills?: SavedFill[];
+}
+
+/** En sparad fyllning: fyllningens parametrar som i 2D-formen (`FillParams`), med nyckel och namn. */
+export interface SavedFill {
+  id: string;
+  name: string;
+  [key: string]: unknown;
 }
 
 /** En rad i penntabellen. */
@@ -249,7 +262,19 @@ export function normalizeStyle(data: any): StyleSheet {
     ...(typeof data.font === 'string' && data.font.trim() ? { font: data.font.trim() } : {}),
     ...(normalizeLineTypes(data.lineTypes) ? { lineTypes: normalizeLineTypes(data.lineTypes)! } : {}),
     ...(normalizeFillTypes(data.fillTypes) ? { fillTypes: normalizeFillTypes(data.fillTypes)! } : {}),
+    ...(normalizeSavedFills(data.fills) ? { fills: normalizeSavedFills(data.fills)! } : {}),
   };
+}
+
+/** Sparade fyllningar från fil; de utan nyckel eller fyllning hoppas över. */
+function normalizeSavedFills(v: unknown): SavedFill[] | null {
+  if (!Array.isArray(v)) return null;
+  const out: SavedFill[] = [];
+  for (const f of v) {
+    if (!f || typeof f !== 'object' || typeof f.id !== 'string' || !f.id || typeof f.fill !== 'string' || out.some((o) => o.id === f.id)) continue;
+    out.push({ ...f, name: typeof f.name === 'string' && f.name.trim() ? f.name.trim() : f.id });
+  }
+  return out.length ? out : null;
 }
 
 function normalizePens(p: any): Record<string, PenDef> | null {

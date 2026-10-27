@@ -132,6 +132,6 @@ describe('fyllning i rum (0.8.25)', () => {
     const html = instanceFields(store.doc, { ...room, params: { ...room.params, fill: 'hatch' } }, vs(store));
     expect(html).toContain('data-key="d2:pattern"');
     expect(html).toContain('data-key="d2:fillAngle"');
-    expect(html).toContain('data-key="d2:opacity"');
+    expect(html).toContain('data-key="d2:fillOpacity"');
   });
 });

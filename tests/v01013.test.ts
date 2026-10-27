@@ -21,7 +21,7 @@ const solidsOf = (s: DocStore, id: string): Solid[] =>
   modelShapes(s.doc, { state: s.doc.states.at(-1)!.id }, s.doc.graphics, WITHOUT_DEMOLISHED).shapes.map((x) => x.s).filter((x): x is Solid => x.kind !== 'edges' && x.id === id);
 
 describe('Höjder i förhållande till våningen (0.10.13)', () => {
-  it('foten i egenskaperna flyttar bara foten; Flytta i höjd flyttar hela väggen med dess fönster', () => {
+  it('foten i egenskaperna flyttar bara foten; Flytta i höjd flyttar hela väggen', () => {
     const s = new DocStore(sampleProject());
     const win = Object.values(s.doc.elements).find((e) => e.type === 'Window' && e.host)!;
     const wall = s.doc.elements[win.host!];
@@ -32,7 +32,8 @@ describe('Höjder i förhållande till våningen (0.10.13)', () => {
     const after = solidsOf(s, wall.id);
     expect(Math.min(...after.map((x) => x.z0))).toBe(300);
     expect(Math.max(...after.map((x) => x.z1))).toBeCloseTo(top);
-    expect(Math.min(...solidsOf(s, win.id).map((x) => x.z0))).toBeCloseTo(winLow + 300);
+    // Fönstret ligger kvar mot våningens golv sedan 0.10.14 (v01014.test.ts).
+    expect(Math.min(...solidsOf(s, win.id).map((x) => x.z0))).toBeCloseTo(winLow);
     // Lägre än 10 mm går inte.
     expect(setLevel(s, [wall.id], top - 5)).toBe(false);
 

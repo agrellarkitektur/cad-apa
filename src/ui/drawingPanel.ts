@@ -6,7 +6,9 @@ import { resolveParams } from '../elements/registry';
 import { SLOPE_STYLES, type RoofSlopeParams } from '../elements/roofSlope';
 import { icons } from './icons';
 import { escapeHtml } from './labels';
-import { shapeChange, shapeFields } from './shapeFields';
+import { fillChange, shapeChange, shapeFields } from './shapeFields';
+import { askText } from './ask';
+import { deleteSavedFill, saveFill } from '../core/savedFills';
 import { showChange, showClick } from './showFields';
 import { underlayChange, underlayFields } from './underlayFields';
 
@@ -60,6 +62,8 @@ export function drawingChange(store: DocStore, ids: Id[], key: string, input: HT
     return true;
   }
   if (scope === 'd2') return shapeChange(store, ids, name, input);
+  // Markobjektets slänter (0.10.14): en egen fyllning i `slopeFill`.
+  if (scope === 'sf') return fillChange(store, ids, name, input, 'slopeFill');
   if (scope === 'ul') return underlayChange(store, ids, name, input);
   if (scope === 'slope') {
     if (name === 'style') updateParams(store, ids, { style: input.value }, 'Ändra stil');
@@ -74,6 +78,18 @@ export function drawingChange(store: DocStore, ids: Id[], key: string, input: HT
 
 /** Klick på knappar i Visas i. Svarar true om klicket hanterades. */
 export function drawingClick(store: DocStore, ids: Id[], b: HTMLElement, root: HTMLElement): boolean {
+  // Sparade fyllningar (0.10.14).
+  if (b.dataset.action === 'fill-save') {
+    const nested = b.dataset.scope === 'sf' ? 'slopeFill' : undefined;
+    void askText('Spara fyllningen i stilmallen som', b.dataset.name ?? '').then((name) => {
+      if (name?.trim()) saveFill(store, ids, name, nested);
+    });
+    return true;
+  }
+  if (b.dataset.action === 'fill-unsave' && b.dataset.id) {
+    deleteSavedFill(store, b.dataset.id);
+    return true;
+  }
   return showClick(store, ids, b, root);
 }
 

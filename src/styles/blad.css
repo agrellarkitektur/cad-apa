@@ -383,6 +383,145 @@
   padding: 2px 3px;
 }
 
+/* ---------- Fyllningens panel (0.10.14) ---------- */
+
+.fill-panel {
+  display: grid;
+  gap: 6px;
+}
+
+/* Lägena Ingen, Solid, Mask och Mönster som en knapprad. */
+.fill-seg {
+  gap: 0;
+}
+
+.fill-seg label {
+  border-radius: 0;
+  margin-left: -1px;
+  padding: 3px 10px;
+}
+
+.fill-seg label:first-child {
+  border-radius: 6px 0 0 6px;
+  margin-left: 0;
+}
+
+.fill-seg label:last-child {
+  border-radius: 0 6px 6px 0;
+}
+
+/* Opaciteten i tio steg, och det skrivna värdet. */
+.fill-opacity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+}
+
+.fill-opacity-label {
+  width: 100%;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.fill-opacity .field {
+  width: 76px;
+}
+
+.fill-opacity .field > span:first-child:empty {
+  display: none;
+}
+
+.fill-steps {
+  display: inline-flex;
+}
+
+.fill-steps label {
+  position: relative;
+  min-width: 26px;
+  padding: 2px 0;
+  border: 1px solid var(--rule);
+  margin-left: -1px;
+  background: var(--paper);
+  font-size: 11px;
+  font-family: var(--font-data);
+  text-align: center;
+  cursor: pointer;
+}
+
+.fill-steps label:first-child {
+  border-radius: 5px 0 0 5px;
+  margin-left: 0;
+}
+
+.fill-steps label:last-child {
+  border-radius: 0 5px 5px 0;
+}
+
+.fill-steps input,
+.fill-chips input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.fill-steps label:has(input:checked) {
+  z-index: 1;
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 650;
+}
+
+/* Förslagen som bubblor. */
+.fill-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.fill-chips-label {
+  font-size: 12px;
+  color: var(--muted);
+  margin-right: 2px;
+}
+
+.fill-chips label {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.fill-chips label:hover,
+.fill-chips label:has(input:focus-visible) {
+  border-color: var(--accent);
+}
+
+.fill-chips label.is-on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  font-weight: 650;
+}
+
+.fill-chips .pattern-swatch {
+  border-radius: 2px;
+}
+
+.fill-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--rule);
+}
+
 /* I verktygsraden bara bilderna (0.8.19); namnen står i title. */
 .opt .pattern-pick label span {
   display: none;

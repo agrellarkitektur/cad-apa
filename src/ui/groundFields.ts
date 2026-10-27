@@ -7,6 +7,7 @@ import { finishedTerrain, groundGeometry, groundLabel, isLineKind, m3, wallProfi
 import { massBalance } from '../elements/groundGeometry';
 import { centerShift, lineLength, offsetLine, PATH_WIDTH, pathRatio, pathWarnings } from '../elements/groundLines';
 import { fillFields } from './shapeFields';
+import type { FillParams } from '../elements/drawing2d';
 import { resolveParams } from '../elements/registry';
 import { createContext } from '../repr/context';
 import { escapeHtml } from './labels';
@@ -65,9 +66,18 @@ export function groundFieldsMarkup(doc: ProjectDoc, el: Element, view: ViewState
     ${groundFill(doc, p)}`;
 }
 
-/** Fyllningen för en markyta eller väg (0.10.7), med 2D-formens fält. */
+/**
+ * Fyllningen för en markyta eller väg (0.10.7), med 2D-formens panel, och
+ * slänternas egen (0.10.14) när kanterna möter marken med slänt.
+ */
 function groundFill(doc: ProjectDoc, p: GroundParams): string {
-  return `<div class="ground-fill">${fillFields('ground-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 }, (k) => `data-key="d2:${k}"`, doc.graphics)}</div>`;
+  const own = fillFields('ground-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 } as FillParams, (k) => `data-key="d2:${k}"`, doc.graphics);
+  const sf = p.slopeFill;
+  const slopes =
+    p.edge === 'wall'
+      ? ''
+      : fillFields('ground-slope-panel', { ...sf, fillAngle: sf?.fillAngle ?? 45, fillSpacing: sf?.fillSpacing ?? 2 } as FillParams, (k) => `data-key="sf:${k}"`, doc.graphics, 'Slänternas fyllning');
+  return `<div class="ground-fill">${own}</div>${slopes ? `<div class="ground-fill">${slopes}<p class="note">Ytan som släntmarkeringarna täcker, bakom objektets egen fyllning.</p></div>` : ''}`;
 }
 
 type Field = (key: keyof GroundParams, label: string, unit: string, own: number | undefined, fallback?: number, title?: string) => string;

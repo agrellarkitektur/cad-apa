@@ -2,6 +2,7 @@ import type { Element } from '../core/model';
 import type { PlanContext } from './registry';
 import { FRAME_LESS, HOLE_EXTRA, wallFrame, type OpeningParams, type WallFrame, type WallParams } from './wall';
 import { outsideSide } from './wallSides';
+import { levelOf } from '../repr/solids';
 
 /** Karm och djupplacering, gemensamt för dörrar och fönster. */
 export interface FrameParams {
@@ -84,4 +85,14 @@ export function openingZone(
   const karm = p.width - FRAME_LESS;
   const hole = p.width + HOLE_EXTRA;
   return { f, lo, hi, face, inset, insetFrom, s1: p.at - karm / 2, s2: p.at + karm / 2, h1: p.at - hole / 2, h2: p.at + hole / 2 };
+}
+
+/**
+ * Hur mycket öppningen lyfts från våningens golv (0.10.14). Ett fönsters
+ * bröstning räknas från våningens golv, så att det ligger kvar när väggens
+ * fot flyttas, om inte *Följer väggens fot* är valt (`sillFromWall`).
+ * Dörrar (utan bröstning) sitter alltid i väggens fot.
+ */
+export function openingLift(wall: { level?: unknown }, op: { sill?: number; sillFromWall?: boolean }): number {
+  return op.sill === undefined || op.sillFromWall ? levelOf(wall) : 0;
 }

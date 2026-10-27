@@ -1,17 +1,18 @@
 import { detailOf } from '../core/states';
 import type { Pen, Primitive } from '../repr/primitives';
 import { openingPens } from '../repr/openingPens';
-import { FRAME_DEFAULTS, openingZone, type FrameParams } from './opening';
+import { FRAME_DEFAULTS, openingLift, openingZone, type FrameParams } from './opening';
 import { litteraTag, showLittera } from './littera';
 import { windowModel } from './openingModel';
-import { levelOf, liftShape } from '../repr/solids';
+import { liftShape } from '../repr/solids';
 import type { ElementType } from './registry';
 import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, wallFrame, type OpeningParams, type WallParams } from './wall';
 
 export interface WindowParams extends OpeningParams, FrameParams {
   height: number;
-  /** Bröstningshöjd från golv, mm. */
+  /** Bröstningshöjd från våningens golv, mm; med `sillFromWall` från väggens fot (0.10.14). */
   sill: number;
+  sillFromWall?: boolean;
 }
 
 /** Bågens bredd och djup i Detalj, mm. */
@@ -38,8 +39,8 @@ export const windowType: ElementType<WindowParams> = {
     if (!host) return [];
     const p = ctx.params<WindowParams>(el);
     const z = openingZone(ctx, host, p);
-    // Bröstningen räknas från väggens fot (0.10.13).
-    const lift = levelOf(ctx.params<WallParams>(host));
+    // Bröstningen räknas från våningens golv, eller från väggens fot (0.10.14).
+    const lift = openingLift(ctx.params<WallParams>(host), p);
     // Hålet går från bröstningen och är 10 mm högre än modulmåttet; karmen sitter mitt i.
     return windowModel(
       el.id,

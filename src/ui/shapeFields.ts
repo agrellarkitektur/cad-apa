@@ -1,13 +1,13 @@
 import { updateParams } from '../core/commands';
 import type { Element, Id, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
-import { BACKGROUND_COLOR, CAP_LABELS, CAP_SIZE, FILL_BACKGROUND, FILL_COLOR, hasBackground, PATH_LABELS, segmentCount, type CapKind, type Shape2DParams } from '../elements/drawing2d';
+import { CAP_LABELS, CAP_SIZE, FILL_BACKGROUND, FILL_COLOR, hasBackground, PATH_LABELS, segmentCount, type CapKind, effectiveFill, type FillParams, type Shape2DParams } from '../elements/drawing2d';
 import type { StyleSheet } from '../core/graphics';
-import { fillTypeList, fillTypeOf } from '../core/fillTypes';
 import { resolveParams } from '../elements/registry';
 import { STRAIGHT } from '../geometry/arc';
 import { lineTypeOptions } from './lineTypePick';
-import { patternPicker, patternValue } from './patternPick';
+import { FILL_KEYS, fillOpacityOf, fillPanel, fillPatch, withPatch } from './fillPanel';
+import { fillFieldsOf, fillOfElement, linkFill, withFill } from '../core/savedFills';
 import { weightPicker } from './weightPick';
 
 /**
@@ -19,30 +19,46 @@ import { weightPicker } from './weightPick';
 const comma = (n: number) => n.toLocaleString('sv-SE');
 
 /**
- * Fyllningens fält (0.8.19): mönstret (eller ingen), färgen och för en
- * skraffering vinkel och avstånd. Samma fält i verktyget och i egenskaperna.
+ * Fyllningens fält (0.8.19), sedan 0.10.14 fyllningens panel (`fillPanel`):
+ * samma i 2D-former, rum och markobjekt.
  */
 export function fillFields(
   name: string,
-  p: Pick<Shape2DParams, 'fill' | 'fillType' | 'fillTypeAngle' | 'fillTypeScale' | 'fillColor' | 'fillAngle' | 'fillSpacing' | 'fillBackground' | 'fillBackgroundOpacity'>,
+  p: FillParams,
   attrs: (key: string) => string,
   style?: StyleSheet,
+  title?: string,
 ): string {
-  const color = p.fillColor ?? FILL_COLOR;
-  const hatched = hasBackground(p.fill);
-  // En egen fyllningstyp (0.8.36): vridning och skala i stället för vinkel och avstånd.
-  const own = p.fill === 'type';
-  const gone = own && !fillTypeOf(style, p.fillType) ? '<p class="note">Fyllningstypen finns inte längre i stilmallen och ritas som en skraffering.</p>' : '';
-  // Masken (0.8.30) har ingen egen färg.
-  const more =
-    p.fill === 'mask'
-      ? '<p class="note">Masken döljer det som ligger under och syns som ritningens bakgrund (papperet i PDF:en).</p>'
-      : p.fill
-        ? `<div class="fields"><label class="field"><span>Färg</span><input type="color" ${attrs('fillColor')} value="${color}"></label>
-    ${own ? typeFields({ fillTypeAngle: p.fillTypeAngle ?? 0, fillTypeScale: p.fillTypeScale ?? 1 }, attrs) : hatched ? hatchFields(p, attrs) : ''}</div>${gone}
-    ${hatched ? backgroundFields({ fillBackground: p.fillBackground, fillBackgroundOpacity: p.fillBackgroundOpacity }, attrs) : ''}`
-        : '';
-  return `<div class="field-label">Fyllning</div>${patternPicker(name, p.fill ?? 'none', attrs('pattern'), { color, angle: p.fillAngle, types: fillTypeList(style), type: p.fillType })}${more}`;
+  return fillPanel(name, effectiveFill(p, style), attrs, style, title);
+}
+
+/**
+ * En ändring i fyllningens panel för objekten `ids`. Med `nested` gäller
+ * den en fyllning som ligger i en egen parameter (slänternas, `slopeFill`).
+ * Svarar false när nyckeln inte hör till fyllningen.
+ */
+export function fillChange(store: DocStore, ids: Id[], name: string, input: HTMLInputElement | HTMLSelectElement, nested?: string): boolean {
+  if (name === 'fillStyle') {
+    // En sparad fyllning (0.10.14), eller Egen.
+    linkFill(store, ids, input.value || null, nested);
+    return true;
+  }
+  if (!FILL_KEYS.has(name)) return false;
+  const doc = store.doc;
+  const first = ids.map((id) => doc.elements[id]).find(Boolean);
+  if (!first) return true;
+  const own = (el: Element): FillParams => effectiveFill(fillOfElement(el, nested) as FillParams, doc.graphics);
+  const change = fillPatch(name, input.value, own(first));
+  if (!change) return true;
+  store.transact(change.label, (tx) => {
+    for (const id of ids) {
+      const el = tx.doc.elements[id];
+      if (!el) continue;
+      // En ändring i en kopplad fyllning gör den till objektets egen.
+      tx.putElement(withFill(el, withPatch({ ...fillFieldsOf(own(el)) }, change.patch), nested));
+    }
+  });
+  return true;
 }
 
 /** En egen fyllningstyps vridning och skala (0.8.36). Null = olika i markeringen. */
@@ -62,21 +78,19 @@ export function hatchFields(p: { fillAngle: number | null; fillSpacing: number |
 }
 
 /**
- * Skrafferingens bakgrund (0.8.29): en kryssruta, och när den är på färgen
- * och opaciteten. Null = olika i markeringen (för smartmenyn).
+ * Mönstrets bakgrund (0.8.29) i smartmenyn: ingen, mask eller egen färg
+ * (0.10.14 en lista i stället för en kryssruta), färgen och opaciteten.
+ * Null = olika i markeringen.
  */
 export function backgroundFields(p: { fillBackground?: string | null; fillBackgroundOpacity?: number | null }, attrs: (key: string) => string): string {
-  const on = p.fillBackground !== undefined;
   const mixed = p.fillBackground === null;
+  const kind = mixed ? null : p.fillBackground === undefined ? 'none' : p.fillBackground === FILL_BACKGROUND ? 'mask' : 'color';
   const op = p.fillBackgroundOpacity === null ? NaN : (p.fillBackgroundOpacity ?? 100);
-  const box = `<label class="check"><input type="checkbox" ${attrs('fillBackgroundOn')}${on && !mixed ? ' checked' : ''}${mixed ? ' title="Olika"' : ''}> Bakgrund</label>`;
-  if (!on) return box;
-  // Masken (0.8.30, förval) eller en egen färg.
-  const mask = p.fillBackground === FILL_BACKGROUND;
-  const kind = `<label class="field"><span>Bakgrund</span><select ${attrs('fillBackgroundKind')}>${mixed ? '<option selected disabled>Olika</option>' : ''}<option value="mask"${mask ? ' selected' : ''}>Mask</option><option value="color"${!mask && !mixed ? ' selected' : ''}>Egen färg</option></select></label>`;
-  const colorField = mask || mixed ? '' : `<label class="field"><span>Bakgrundens färg</span><input type="color" ${attrs('fillBackground')} value="${p.fillBackground}"></label>`;
-  return `${box}<div class="fields">${kind}${colorField}
-    <label class="field"><span>Bakgrundens opacitet</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="10" inputmode="decimal" autocomplete="off" ${attrs('fillBackgroundOpacity')} value="${Number.isFinite(op) ? Math.round(op) : ''}"${Number.isFinite(op) ? '' : ' placeholder="Olika"'}><i>%</i></span></label></div>`;
+  const opt = (v: string, l: string) => `<option value="${v}"${kind === v ? ' selected' : ''}>${l}</option>`;
+  const select = `<label class="field"><span>Bakgrund</span><select ${attrs('fillBackgroundKind')}>${mixed ? '<option selected disabled>Olika</option>' : ''}${opt('none', 'Ingen')}${opt('mask', 'Mask')}${opt('color', 'Egen färg')}</select></label>`;
+  const colorField = kind === 'color' ? `<label class="field"><span>Bakgrundens färg</span><input type="color" ${attrs('fillBackground')} value="${p.fillBackground}"></label>` : '';
+  const opField = kind === 'none' ? '' : `<label class="field"><span>Bakgrundens opacitet</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="10" inputmode="decimal" autocomplete="off" ${attrs('fillBackgroundOpacity')} value="${Number.isFinite(op) ? Math.round(op) : ''}"${Number.isFinite(op) ? '' : ' placeholder="Olika"'}><i>%</i></span></label>`;
+  return `<div class="fields">${select}${colorField}${opField}</div>`;
 }
 
 /**
@@ -111,8 +125,10 @@ export function shapeSmartFields(doc: ProjectDoc, els: Element[]): string | null
     parts.push(capFields({ startCap: cap('startCap'), endCap: cap('endCap'), capSize: ps.every((q) => (q.capSize ?? CAP_SIZE) === (ps[0].capSize ?? CAP_SIZE)) ? ps[0].capSize : null }, attrs));
   }
   if (ps.some((q) => q.weight > 0 || q.fill)) {
-    const linked = ps.every((q) => q.fillOpacity === undefined) ? undefined : ps.every((q) => q.fillOpacity !== undefined) ? (same('fillOpacity') ?? NaN) : NaN;
-    parts.push(opacityFields({ weight: ps.some((q) => q.weight > 0) ? 1 : 0, fill: ps.find((q) => q.fill)?.fill, opacity: same('opacity') ?? (ps.every((q) => q.opacity === undefined) ? undefined : NaN), fillOpacity: linked }, attrs));
+    const fills = ps.filter((q) => q.fill).map((q) => fillOpacityOf(q));
+    const lines = ps.filter((q) => q.weight > 0).map((q) => q.opacity ?? 100);
+    const one = (v: number[]) => (v.every((x) => x === v[0]) ? v[0] : NaN);
+    parts.push(opacityFields({ weight: lines.length ? 1 : 0, fill: ps.find((q) => q.fill)?.fill, opacity: lines.length ? one(lines) : undefined, fillOpacity: fills.length ? one(fills) : undefined }, attrs, true));
   }
   // Avgränsar rum (0.8.34), i modellen.
   if (els.every((e) => !e.space)) parts.push(boundsField(ps.every((q) => !!q.boundsRooms === !!ps[0].boundsRooms) ? !!ps[0].boundsRooms : null, attrs));
@@ -125,22 +141,17 @@ export function boundsField(on: boolean | null, attrs: (key: string) => string):
 }
 
 /**
- * Opaciteten (0.8.22): för linjen och fyllningen tillsammans, eller var för
- * sig. Tillsammans är förvalt; då styr `opacity` båda och `fillOpacity`
- * saknas. Med bara linje eller bara fyllning visas ett fält.
+ * Opaciteten (0.8.22). Sedan 0.10.14 har fyllningen alltid sin egen
+ * (`fillOpacity`, i fyllningens panel), så här står linjens; i smartmenyn
+ * (`withFill`) också fyllningens. NaN = olika i markeringen.
  */
-export function opacityFields(p: Pick<Shape2DParams, 'weight' | 'fill' | 'opacity' | 'fillOpacity'>, attrs: (key: string) => string): string {
-  const linked = p.fillOpacity === undefined;
-  const line = p.opacity ?? 100;
-  const fill = p.fillOpacity ?? line;
+export function opacityFields(p: Pick<Shape2DParams, 'weight' | 'fill' | 'opacity' | 'fillOpacity'>, attrs: (key: string) => string, withFill = false): string {
   const field = (key: string, label: string, v: number) =>
     `<label class="field"><span>${label}</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="10" inputmode="decimal" autocomplete="off" ${attrs(key)} value="${Number.isFinite(v) ? Math.round(v) : ''}"${Number.isFinite(v) ? '' : ' placeholder="Olika"'}><i>%</i></span></label>`;
-  if (p.weight > 0 && p.fill) {
-    const fields = linked ? field('opacity', 'Opacitet', line) : `${field('opacity', 'Linjens opacitet', line)}${field('fillOpacity', 'Fyllningens opacitet', fill)}`;
-    return `<div class="fields">${fields}</div><label class="check"><input type="checkbox" ${attrs('opacityLinked')}${linked ? ' checked' : ''}> Samma för linje och fyllning</label>`;
-  }
-  if (p.fill) return `<div class="fields">${field(linked ? 'opacity' : 'fillOpacity', 'Opacitet', fill)}</div>`;
-  return `<div class="fields">${field('opacity', 'Opacitet', line)}</div>`;
+  const parts: string[] = [];
+  if (p.weight > 0) parts.push(field('opacity', p.fill && withFill ? 'Linjens opacitet' : 'Opacitet', p.opacity ?? 100));
+  if (withFill && p.fill) parts.push(field('fillOpacity', p.weight > 0 ? 'Fyllningens opacitet' : 'Opacitet', Number.isNaN(p.fillOpacity) ? NaN : fillOpacityOf(p)));
+  return parts.length ? `<div class="fields">${parts.join('')}</div>` : '';
 }
 
 /**
@@ -171,19 +182,17 @@ export function shapeFields(doc: ProjectDoc, el: Element): string {
         ${p.weight ? `<label class="field"><span>Linjetyp</span><select data-key="d2:linetype">${lineTypeOptions(doc.graphics, p.linetype)}</select></label>
         <label class="field"><span>Linjens färg</span><input type="color" data-key="d2:color" value="${p.color ?? '#1d2328'}"></label>` : ''}
       </div>
+      ${p.weight ? opacityFields(p, (k) => `data-key="d2:${k}"`) : ''}
       <label class="check"><input type="checkbox" data-key="d2:closed"${p.closed ? ' checked' : ''}> Sluten</label>
       ${el.space ? '' : boundsField(!!p.boundsRooms, (k) => `data-key="d2:${k}"`)}
       ${!p.closed && p.weight ? capFields(p, (k) => `data-key="d2:${k}"`) : ''}
       ${fillFields('d2-pattern-panel', p, (k) => `data-key="d2:${k}"`, doc.graphics)}
-      ${p.weight || p.fill ? opacityFields(p, (k) => `data-key="d2:${k}"`) : ''}
       ${p.weight === 0 && !p.fill ? '<p class="note">Formen har varken linje eller fyllning och syns inte, men går att klicka på längs linjen.</p>' : ''}
       ${p.shape === 'polyline' ? '<p class="note">Böj eller räta ut en kant med Modifiera: klicka på kanten när formen är markerad.</p>' : ''}`;
 }
 
-/** Ändringar i 2D-formens fält (`d2:…`). */
+/** Ändringar i 2D-formens fält (`d2:…`); fyllningens går till `fillChange`. Också rummens och markobjektens fyllning. */
 export function shapeChange(store: DocStore, ids: Id[], name: string, input: HTMLInputElement | HTMLSelectElement): boolean {
-  const doc = store.doc;
-  const els = ids.map((id) => doc.elements[id]).filter(Boolean);
   const v = input.value;
   const num = Number(v.replace(',', '.'));
   if (name === 'weight' && num >= 0) updateParams(store, ids, { weight: num }, num ? 'Ändra penna' : 'Ingen linje');
@@ -195,30 +204,26 @@ export function shapeChange(store: DocStore, ids: Id[], name: string, input: HTM
   } else if (name === 'closed') updateParams(store, ids, { closed: (input as HTMLInputElement).checked }, 'Sluten');
   else if (name === 'startCap' || name === 'endCap') updateParams(store, ids, { [name]: v === 'none' ? undefined : v }, v === 'none' ? 'Ingen ändform' : 'Ändra ändform');
   else if (name === 'capSize' && num > 0) updateParams(store, ids, { capSize: num === CAP_SIZE ? undefined : num }, 'Ändra ändarnas storlek');
-  else if (name === 'pattern') {
-    const pick = patternValue(v);
-    updateParams(store, ids, { fill: pick.fill, fillType: pick.fillType }, v === 'none' ? 'Ingen fyllning' : 'Ändra fyllning');
-  } else if (name === 'fillTypeAngle' && Number.isFinite(num)) updateParams(store, ids, { fillTypeAngle: num || undefined }, 'Vrid fyllningen');
-  else if (name === 'fillTypeScale' && num > 0) updateParams(store, ids, { fillTypeScale: num === 1 ? undefined : num }, 'Ändra fyllningens skala');
   else if (name === 'fillBackgroundOn') {
+    // Kryssrutan före 0.10.14; finns kvar för äldre anrop.
     const on = (input as HTMLInputElement).checked;
     updateParams(store, ids, on ? { fillBackground: FILL_BACKGROUND } : { fillBackground: undefined, fillBackgroundOpacity: undefined }, on ? 'Bakgrund' : 'Ingen bakgrund');
-  } else if (name === 'fillBackgroundKind') updateParams(store, ids, { fillBackground: v === 'mask' ? FILL_BACKGROUND : BACKGROUND_COLOR }, v === 'mask' ? 'Bakgrunden som mask' : 'Bakgrund med egen färg');
-  else if (name === 'fillBackground') updateParams(store, ids, { fillBackground: v }, 'Ändra bakgrundens färg');
-  else if (name === 'fillBackgroundOpacity' && percent(num) !== null) updateParams(store, ids, { fillBackgroundOpacity: percent(num) === 100 ? undefined : percent(num) }, 'Ändra bakgrundens opacitet');
-  else if (name === 'fillColor') updateParams(store, ids, { fillColor: v }, 'Ändra fyllningens färg');
-  else if (name === 'fillAngle' && Number.isFinite(num)) updateParams(store, ids, { fillAngle: num }, 'Ändra vinkel');
-  else if (name === 'fillSpacing' && num > 0) updateParams(store, ids, { fillSpacing: num }, 'Ändra avstånd');
-  else if (name === 'opacity' && percent(num) !== null) updateParams(store, ids, { opacity: percent(num) === 100 ? undefined : percent(num) }, 'Ändra opacitet');
-  else if (name === 'fillOpacity' && percent(num) !== null) updateParams(store, ids, { fillOpacity: percent(num) }, 'Ändra fyllningens opacitet');
-  else if (name === 'fillLayer') updateParams(store, ids, { fillFront: v === 'front' ? true : undefined }, v === 'front' ? 'Fyllningen framför väggarna' : 'Fyllningen bakom väggarna');
-  else if (name === 'lineLayer') updateParams(store, ids, { lineBehind: v === 'behind' ? true : undefined }, v === 'behind' ? 'Linjen bakom väggarna' : 'Linjen framför väggarna');
-  else if (name === 'opacityLinked') {
-    // Var för sig: fyllningen börjar med linjens värde, för varje form.
-    const linked = (input as HTMLInputElement).checked;
-    store.transact(linked ? 'Samma opacitet' : 'Opacitet var för sig', (tx) => {
-      for (const el of els) tx.putElement({ ...el, params: { ...el.params, fillOpacity: linked ? undefined : (el.params.opacity ?? 100) } });
+  } else if (name === 'opacity' && percent(num) !== null) {
+    // Linjens opacitet (0.10.14): fyllningen behåller sin, också när den förut följde linjen.
+    const op = percent(num)!;
+    store.transact('Ändra opacitet', (tx) => {
+      for (const id of ids) {
+        const el = tx.doc.elements[id];
+        if (!el) continue;
+        const params = { ...el.params } as Record<string, unknown>;
+        if (params.fill && params.fillOpacity === undefined) params.fillOpacity = (params.opacity as number | undefined) ?? 100;
+        if (op === 100) delete params.opacity;
+        else params.opacity = op;
+        tx.putElement({ ...el, params });
+      }
     });
-  }
+  } else if (name === 'fillLayer') updateParams(store, ids, { fillFront: v === 'front' ? true : undefined }, v === 'front' ? 'Fyllningen framför väggarna' : 'Fyllningen bakom väggarna');
+  else if (name === 'lineLayer') updateParams(store, ids, { lineBehind: v === 'behind' ? true : undefined }, v === 'behind' ? 'Linjen bakom väggarna' : 'Linjen framför väggarna');
+  else fillChange(store, ids, name, input);
   return true;
 }

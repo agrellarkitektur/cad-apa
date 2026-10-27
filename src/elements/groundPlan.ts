@@ -2,6 +2,8 @@ import type { Element } from '../core/model';
 import { groundAt, groundDefaults, levelText, terrainOf } from '../core/site';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { fillPrims, type FillParams } from './drawing2d';
+import { union, type Rings } from '../geometry/boolean';
+import { sameItems } from '../repr/reuse';
 import { finishedTerrain, groundLabel, isLineKind, wallProfile, type GroundGeometry, type GroundParams } from './groundGeometry';
 import { lineLength, pathRatio, pathWarnings } from './groundLines';
 import type { PlanContext } from './registry';
@@ -30,6 +32,8 @@ export function groundPlan(ctx: PlanContext, el: Element<any>, g: GroundGeometry
     const s: Vec2 = [g.label.at[0], g.label.at[1] - 3 * ctx.scale];
     out.push(...arrow(ctx, s, [s[0] + Math.cos(a) * l, s[1] + Math.sin(a) * l], { ...origin, part: 'fall' }));
   }
+  // Slänternas fyllning (0.10.14) bakom objektets egen.
+  if (p.slopeFill?.fill) out.unshift(...fillOf(ctx, el, p.slopeFill, slopeArea(ctx, g), 'släntens fyllning'));
   out.push(...slopeMarks(ctx, g, { ...origin, part: 'slänt' }));
   return out;
 }
@@ -93,28 +97,45 @@ const MARK_SPACING = 2.5;
  * slänt. Schakt har krönet ute vid marken, fyll vid kanten.
  */
 function slopeMarks(ctx: PlanContext, g: GroundGeometry, origin: Primitive['origin']): Primitive[] {
-  const sh = g.shape;
-  if (!sh || sh.slope === null || sh.blend) return [];
-  const f = finishedTerrain(ctx);
-  const t = terrainOf(ctx.doc);
-  if (!f || !t) return [];
-  const spacing = MARK_SPACING * ctx.scale;
-  const step = Math.max(100, (t.grid.s * 1000) / 3);
-  const steep = 0.5 / sh.slope;
+  const reach = slopeReach(ctx, g);
+  if (!reach) return [];
   const minLen = 0.8 * ctx.scale;
   const pen = { weight: 0.13 };
   const out: Primitive[] = [];
+  let k = 0;
+  walkSlope(g, MARK_SPACING * ctx.scale, false, (q, n) => {
+    k++;
+    const r = reach(q, n);
+    if (!r || r.d < minLen) return;
+    const end: Vec2 = [q[0] + n[0] * r.d, q[1] + n[1] * r.d];
+    // Krönet: ute vid marken i schakt, vid kanten i fyll.
+    const [from, to] = r.cut ? [end, q] : [q, end];
+    const part = k % 2 === 1 ? 1 : 0.4;
+    out.push({ kind: 'line', a: from, b: [from[0] + (to[0] - from[0]) * part, from[1] + (to[1] - from[1]) * part], pen, origin });
+  });
+  return out;
+}
+
+/**
+ * Hur långt slänten går ut från kanten i `q` längs normalen `n`, och om den
+ * är schakt; null där ingen slänt börjar. Null för ett objekt utan slänt.
+ */
+function slopeReach(ctx: PlanContext, g: GroundGeometry): ((q: Vec2, n: Vec2) => { d: number; cut: boolean } | null) | null {
+  const sh = g.shape;
+  if (!sh || sh.slope === null || sh.blend) return null;
+  const f = finishedTerrain(ctx);
+  const t = terrainOf(ctx.doc);
+  if (!f || !t) return null;
+  const step = Math.max(100, (t.grid.s * 1000) / 3);
+  const steep = 0.5 / sh.slope;
   const diff = (x: number, y: number): number | null => {
     const a = groundAt(f.terrain, x, y);
     const b = groundAt(t, x, y);
     return a === null || b === null ? null : a - b;
   };
-  let k = 0;
-  /** Ett streck från kanten i `q` ut längs `n`, om slänten börjar där. */
-  const tick = (q: Vec2, n: Vec2): void => {
-    k++;
+  return (q, n) => {
     const d0 = diff(q[0] + n[0] * 60, q[1] + n[1] * 60);
-    if (d0 === null || Math.abs(d0) < 30) return;
+    if (d0 === null || Math.abs(d0) < 30) return null;
     // Gå ut längs normalen så länge marken är ändrad och lutar som en slänt.
     let d = 60;
     let prev = groundAt(f.terrain, q[0] + n[0] * d, q[1] + n[1] * d)!;
@@ -127,15 +148,18 @@ function slopeMarks(ctx: PlanContext, g: GroundGeometry, origin: Primitive['orig
       prev = z;
       d += step;
     }
-    if (d < minLen) return;
-    const end: Vec2 = [q[0] + n[0] * d, q[1] + n[1] * d];
-    // Krönet: ute vid marken i schakt, vid kanten i fyll.
-    const [from, to] = d0 < 0 ? [end, q] : [q, end];
-    const part = k % 2 === 1 ? 1 : 0.4;
-    out.push({ kind: 'line', a: from, b: [from[0] + (to[0] - from[0]) * part, from[1] + (to[1] - from[1]) * part], pen, origin });
+    return { d, cut: d0 < 0 };
   };
-  for (const poly of g.rings) {
-    const ring = poly[0];
+}
+
+/**
+ * Går runt konturens kanter med avståndet `spacing` och anropar `at` med
+ * punkten på kanten och normalen ut; i utåtgående hörn i en solfjäder.
+ * Med `ends` också i kanternas ändar (för slänternas yta, som ska vara hel).
+ */
+function walkSlope(g: GroundGeometry, spacing: number, ends: boolean, at: (q: Vec2, n: Vec2, ring: number) => void): void {
+  for (let r = 0; r < g.rings.length; r++) {
+    const ring = g.rings[r][0];
     const ccw = signedArea(ring) >= 0;
     for (let i = 0; i < ring.length; i++) {
       const a = ring[i];
@@ -143,7 +167,9 @@ function slopeMarks(ctx: PlanContext, g: GroundGeometry, origin: Primitive['orig
       const n = outward(ring, a, b);
       if (!n) continue;
       const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-      for (let s = spacing / 2; s < len; s += spacing) tick([a[0] + ((b[0] - a[0]) * s) / len, a[1] + ((b[1] - a[1]) * s) / len], n);
+      if (ends) at(a, n, r);
+      for (let s = spacing / 2; s < len; s += spacing) at([a[0] + ((b[0] - a[0]) * s) / len, a[1] + ((b[1] - a[1]) * s) / len], n, r);
+      if (ends) at(b, n, r);
       // Ett utåtgående hörn: strecken i en solfjäder mellan kanternas normaler.
       const c = ring[(i + 2) % ring.length];
       const n2 = outward(ring, b, c);
@@ -158,11 +184,46 @@ function slopeMarks(ctx: PlanContext, g: GroundGeometry, origin: Primitive['orig
       const m = Math.floor((Math.abs(da) * FAN_RADIUS) / spacing);
       for (let j = 1; j <= m; j++) {
         const ang = a1 + (da * j) / (m + 1);
-        tick(b, [Math.cos(ang), Math.sin(ang)]);
+        at(b, [Math.cos(ang), Math.sin(ang)], r);
       }
     }
   }
-  return out;
+}
+
+const savedSlopeArea = new WeakMap<GroundGeometry, { inputs: unknown[]; out: Rings[] }>();
+
+/**
+ * Slänternas yta (0.10.14): det släntmarkeringarna täcker, som polygoner.
+ * Kanten känns av tätare än strecken (halva avståndet, och kanternas
+ * ändar), och fyrhörningarna mellan två grannar slås ihop. Sparas tills
+ * formen, den färdiga marken eller skalan ändras.
+ */
+export function slopeArea(ctx: PlanContext, g: GroundGeometry): Rings[] {
+  const f = finishedTerrain(ctx);
+  const inputs = [f, terrainOf(ctx.doc)?.z, ctx.scale];
+  const hit = savedSlopeArea.get(g);
+  if (hit && sameItems(hit.inputs, inputs)) return hit.out;
+  const reach = slopeReach(ctx, g);
+  const out: Rings[] = [];
+  if (reach) {
+    // Strålarna per kontur; grannarna går inte över till nästa kontur.
+    const rays: { q: Vec2; e: Vec2 | null }[][] = g.rings.map(() => []);
+    walkSlope(g, (MARK_SPACING * ctx.scale) / 2, true, (q, n, ring) => {
+      const r = reach(q, n);
+      rays[ring].push({ q, e: r ? [q[0] + n[0] * r.d, q[1] + n[1] * r.d] : null });
+    });
+    for (const list of rays)
+      for (let i = 0; i < list.length; i++) {
+        const a = list[i];
+        const b = list[(i + 1) % list.length];
+        if (!a.e && !b.e) continue;
+        const quad = [a.q, a.e ?? a.q, b.e ?? b.q, b.q];
+        if (Math.abs(signedArea(quad)) > 1) out.push([quad]);
+      }
+  }
+  const merged = out.length ? union(out) : [];
+  savedSlopeArea.set(g, { inputs, out: merged });
+  return merged;
 }
 
 /** Där solfjäderns streck i ett hörn ligger lika tätt som längs kanten, mm. */
@@ -172,9 +233,9 @@ const FAN_RADIUS = 1500;
 const MARK_REACH = 40_000;
 
 /** Fyllningen (0.10.7), som 2D-formens, bakom väggarna. */
-function fillOf(ctx: PlanContext, el: Element<any>, p: GroundParams, polys: Vec2[][][]): Primitive[] {
+function fillOf(ctx: PlanContext, el: Element<any>, p: Partial<FillParams>, polys: Vec2[][][], part?: string): Primitive[] {
   if (!p.fill || ctx.view.hide?.includes('fill')) return [];
-  return polys.flatMap((rings) => fillPrims(rings, p as FillParams, { objectId: el.id, objectType: 'Ground' }, true, ctx.style, ctx.scale));
+  return polys.flatMap((rings) => fillPrims(rings, p as FillParams, { objectId: el.id, objectType: 'Ground' }, true, ctx.style, ctx.scale)).map((q) => (part && q.origin ? { ...q, origin: { ...q.origin, part } } : q));
 }
 
 /** En pil från `a` till `b` med öppen spets, i ritningens skala. */

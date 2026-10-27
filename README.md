@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.13** (alfa); nästa är **0.10.14, fyllningar och opacitet**.
+**0.10.14** (alfa); nästa är **0.10.15, visa och dölja**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,32 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.14, fyllningar och opacitet (samma filformat, 20):
+- **Fyllningens panel**, densamma i 2D-former, rum, markytor, vägar och
+  slänterna: lägena **Ingen**, **Solid**, **Mask** och **Mönster**.
+  Solid har färg och opacitet i tio steg eller skriven; Mask opacitet ur
+  en lista; Mönster mönstret (skraffering, kors och fyllningstyperna),
+  förgrundens penna, färg och opacitet, vinkel och avstånd (eller vridning
+  och skala), bakgrunden (ingen, mask eller egen färg) med egen opacitet.
+  **Förslag** som bubblor under varje läge (Gräs, Grus, Tegel …)
+- **Mönstrets mått** på papper eller i verkligheten, för varje objekt
+  (förvalet från fyllningstypen). Mönstret **utgår från objektets första
+  hörn**, så att det följer med när objektet flyttas
+- **Sparade fyllningar i stilmallen**: *Spara i stilmallen…* ger
+  fyllningen ett namn, och objekt kopplas till den med en bubbla under
+  *Sparade*. Samma namn skriver över den sparade, och alla kopplade objekt
+  ändras; ändrar man ett fält i ett kopplat objekt blir fyllningen dess
+  egen. *Ta bort ur stilmallen* låter objekten se ut som förut
+- **Opaciteten**: fyllningen har alltid sin egen; linjens står vid linjen
+  (kryssrutan *Samma för linje och fyllning* finns inte längre)
+- **Markobjekten** har opacitet i fyllningen och en egen **fyllning för
+  slänterna**: ytan som släntmarkeringarna täcker, bakom objektets egen
+- **Fönstrets bröstning** räknas från våningens golv, så att fönstret
+  ligger kvar när väggens fot flyttas; *Bröstningen från väggens fot* gör
+  att det följer väggen. Dörrar sitter i väggens fot som förut
+- **Flytta i höjd från kommandoraden**: `M Z -500`, `FZ -500` eller
+  `MZ -500` flyttar det markerade 500 ned, och `Z 300` medan Flytta pågår
 
 Version 0.10.13, höjder i förhållande till våningen (samma filformat, 20):
 - **Nivå mot våningen** för väggar, bjälklag och möbler, plus eller minus

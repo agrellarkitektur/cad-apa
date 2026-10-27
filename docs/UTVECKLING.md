@@ -1242,6 +1242,59 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Fyllningar och opacitet (0.10.14, format 20)
+
+- **Panelen** är `fillPanel` i `src/ui/fillPanel.ts` (`fillFields` i
+  `shapeFields.ts` anropar den med fyllningen som den gäller,
+  `effectiveFill`). Lägena (`fillKind`) är Ingen, Solid, Mask och Mönster
+  (`fillKindOf`); förslagen `FILL_PRESETS` sätter alla fält för läget.
+  Ändringar blir parametrar i `fillPatch(name, value, p)` (ren funktion,
+  nycklarna i `FILL_KEYS`) och skrivs av `fillChange(store, ids, name,
+  input, nested?)` i `shapeFields.ts`. Med `nested` ligger fyllningen i en
+  egen parameter: markobjektets `slopeFill` (fälten heter `sf:…` och går
+  via `drawingChange` i `drawingPanel.ts`).
+- **Opaciteten**: fyllningens är `fillOpacity` (`fillOpacityOf` läser
+  `fillOpacity ?? opacity ?? 100`, så äldre filer ser likadana ut);
+  `opacityFields` visar linjens, och i smartmenyn (`withFill`) båda. En
+  ändrad linjeopacitet ger fyllningen ett eget värde först, så att den
+  inte följer med.
+- **Nya parametrar** i `FillParams` (`drawing2d.ts`): `fillWeight`
+  (mönstrets penna, förval `FILL_WEIGHT` = 0,13 eller typens), `fillModel`
+  (mönstrets mått i verkligheten; förval typens `model`, skrafferingen på
+  papper) och `fillStyle` (kopplingen till en sparad fyllning).
+  `FILL_FIELDS` är fyllningens fält utan kopplingen.
+- **Mönstren** i `fillPrims` ritas nu alla som `kind: 'pattern'` (också
+  skraffering och kors, med `hatchAsLines`), och `anchorLines(lines, at,
+  scale)` flyttar dem så att de utgår från ringens första punkt i stället
+  för modellens nollpunkt; läget minskas till inom ett linjeavstånd och en
+  streckperiod, så att lika placerade objekt delar SVG-mönster.
+  Referensritningarna `former` och `mark` och `blad-former` ändrades bara
+  i fyllningarnas rader (`hatch` → `mönster` med fas).
+- **Sparade fyllningar**: `StyleSheet.fills` (`SavedFill`, läses av
+  `normalizeSavedFills` i `graphics.ts`). `src/core/savedFills.ts` har
+  `saveFill` (samma namn skriver över och uppdaterar alla kopplade),
+  `linkFill` (koppla eller koppla loss) och `deleteSavedFill`. Ett kopplat
+  objekt har också en kopia av fälten, så att `p.fill` alltid är satt där
+  rum och markobjekt frågar och objektet ser likadant ut om den sparade
+  tas bort. `effectiveFill(p, style)` ger fyllningen som den gäller.
+  Knapparna `fill-save` och `fill-unsave` hanteras i `drawingClick`.
+- **Slänternas yta**: `slopeArea(ctx, g)` i `groundPlan.ts` går runt
+  konturen med `walkSlope` (samma gång som släntstrecken, med ändarna och
+  halva avståndet), känner av slänten med `slopeReach` och slår ihop
+  fyrhörningarna mellan grannar (`union`). Sparas per `GroundGeometry`
+  tills den färdiga marken eller skalan ändras (ca 100 ms första gången på
+  den sneda platsen i 1:50, 12 ms i 1:200). Ritas bara när `slopeFill`
+  finns, under objektets egen fyllning (delen `släntens fyllning`).
+- **Fönstrets bröstning**: `openingLift(wall, op)` i `opening.ts` ger 0
+  (våningens golv) för fönster utan `sillFromWall`, annars väggens
+  `level`; dörrar (utan `sill`) följer foten. Används i `window.ts` och
+  i väggarnas urtag i `wall3d.ts`.
+- **Flytta i höjd från kommandoraden**: `moveZValue(text, moving)` i
+  `commandLine.ts` tolkar `M Z -500`, `FZ`, `MZ` och `Z` (bara medan
+  Flytta pågår); `Modifier.moveZ(v)` i `controller.ts` startar `moveZ` och
+  lägger värdet.
+- Tester: `tests/v01014.test.ts`.
+
 ## Höjder i förhållande till våningen (0.10.13, format 20)
 
 - **Nivån** `level` (mm från våningens golv, plus eller minus) finns i

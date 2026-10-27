@@ -53,17 +53,15 @@ describe('opacitet för 2D-former (0.8.22)', () => {
     expect(pickAt(plan.pickables, [20500, 20500], 20)).toBe('form');
   });
 
-  it('fälten visar ett värde tillsammans och två var för sig', () => {
+  it('linjens opacitet i egenskaperna, och båda i smartmenyn (0.10.14)', () => {
     const attrs = (k: string) => `data-key="d2:${k}"`;
-    const together = opacityFields({ weight: 0.25, fill: 'solid', opacity: 60 }, attrs);
-    expect(together).toContain('data-key="d2:opacity"');
-    expect(together).not.toContain('d2:fillOpacity');
-    expect(together).toMatch(/d2:opacityLinked" checked/);
-    const apart = opacityFields({ weight: 0.25, fill: 'solid', opacity: 60, fillOpacity: 30 }, attrs);
-    expect(apart).toContain('d2:fillOpacity');
-    expect(apart).toContain('value="30"');
-    // Bara linje: ett fält, ingen kryssruta.
-    expect(opacityFields({ weight: 0.25, opacity: 60 }, attrs)).not.toContain('opacityLinked');
+    const panel = opacityFields({ weight: 0.25, fill: 'solid', opacity: 60 }, attrs);
+    expect(panel).toContain('data-key="d2:opacity"');
+    expect(panel).not.toContain('d2:fillOpacity');
+    const smart = opacityFields({ weight: 0.25, fill: 'solid', opacity: 60, fillOpacity: 30 }, attrs, true);
+    expect(smart).toContain('d2:fillOpacity');
+    expect(smart).toContain('value="30"');
+    expect(smart).not.toContain('opacityLinked');
   });
 });
 

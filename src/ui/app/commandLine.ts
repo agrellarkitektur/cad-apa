@@ -227,6 +227,23 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     return true;
   }
 
+  /**
+   * Flytta i höjd (0.10.14): `M Z -500`, `FZ -500` och `MZ -500` med något
+   * markerat, eller `Z -500` medan Flytta pågår. Svarar true om texten var
+   * en sådan.
+   */
+  function enterMoveZ(text: string): boolean {
+    const v = moveZValue(text, app.modifier.active === 'move');
+    if (v === null) return false;
+    if (!app.selection.size) {
+      app.hint('Markera det som ska flyttas i höjd först.', 2500);
+      return true;
+    }
+    if (app.modifier.moveZ(v)) addLog({ text: `Flytta i höjd ${nf.format(v)}`, kind: 'point' });
+    else app.hint('Det markerade kan inte flyttas i höjd (väggar, bjälklag, möbler och tak kan det).', 3500);
+    return true;
+  }
+
   // ---------- Fältet ----------
 
   function submit(): void {
@@ -246,6 +263,11 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     if (opt) {
       clear();
       runOption(opt);
+      return;
+    }
+    if (enterMoveZ(text)) {
+      clear();
+      refresh();
       return;
     }
     if (isPoint(text)) {
@@ -585,3 +607,14 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
 }
 
 export type CommandLine = ReturnType<typeof installCommandLine>;
+
+/**
+ * Värdet i `M Z -500`, `FZ -500`, `MZ -500` (eller `Flytta Z -500`), och
+ * `Z -500` när Flytta pågår (`moving`); null annars (0.10.14).
+ */
+export function moveZValue(text: string, moving: boolean): number | null {
+  const m = /^(?:(?:m|move|fl|flytta)\s+z|fz|mz|(z))\s*([-+−]?\s*\d+(?:[.,]\d+)?)$/i.exec(text.trim());
+  if (!m || (m[1] && !moving)) return null;
+  const v = Number(m[2].replace(/\s/g, '').replace('−', '-').replace(',', '.'));
+  return Number.isFinite(v) ? v : null;
+}

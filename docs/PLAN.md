@@ -1979,7 +1979,7 @@ dolda linjerna, medan den är färsk (Carl August 26 oktober).
 längs en linje stod kvar när de flyttades (med Flytta, dragning eller
 pilarna); nu följer linjen med. Markobjektens linjer är 2D-former utan
 bågar (`noArcs`, `allowsArcs`): Böj och Avrunda finns inte i Modifiera
-förrän bågarna kommer (0.10.17, förut 0.10.16), Fasa finns kvar. **Ramp/väg**
+förrän bågarna kommer (0.10.18, förut 0.10.16 och 0.10.17), Fasa finns kvar. **Ramp/väg**
 (`kind: 'path'` utan `path`): förvald bredd 1 500, tvärfall bara när det
 anges (förvalet 1:50 för infarten är borta), varning när den är brantare
 än sin gräns (`maxSlope`, förval *Brantaste ramp/väg* 1:12 under
@@ -2348,24 +2348,48 @@ schakt, och *Berg i schakten* (`rock`, procent) delar schakten i berg och
 jord. Inte gjort: en vägg vars fot ligger över planens snitthöjd ritas
 fortfarande som snittad i planen; klickjämförelsen har inga nya steg.*
 
-### 0.10.14 Fyllningar och opacitet (förslag, mellanstor)
+### 0.10.14 Fyllningar och opacitet ✓
 
 Inkorgen 27 oktober. En gemensam mall för alla objekt med fyllning, med
-så många egenskaper som möjligt (Carl August: kom gärna på fler).
+så många egenskaper som möjligt.
 
 - Tre sorter: **Solid** (färg, opacitet i tio steg eller skriven),
   **Mask** (solid med pappersbakgrund, opacitet ur en lista) och
   **Mönster** (mönstret, förgrundens penna och opacitet, bakgrundens färg
   och opacitet), med förslagsbubblor under varje
-- Samma kontroller för markobjekten (också slänterna för sig), 2D-former,
-  rum och allt annat med fyllning
-- Det som tidigare frågats: fyllningens bakgrund i stilmallen (fråga 52),
-  rummets fyllning för flera rum eller per rumstyp (56), masken och
-  rutnätet (51), ritordningen, mönstrets skala, vinkel och utgångspunkt i
-  papper eller verkliga mått (45), egna `.pat`
-- Claudes förslag att pröva: fyllning per status (befintligt, nytt,
-  rivs), en gradient för slänter, och sparade fyllningar i stilmallen som
-  går att välja i alla objekt
+- Samma kontroller för markobjekten (också slänterna för sig), 2D-former
+  och rum
+- Det som tidigare frågats: fyllningens bakgrund och sparade fyllningar i
+  stilmallen (fråga 52 och 56), masken och rutnätet (51), mönstrets mått i
+  papper eller verkligheten och utgångspunkt (45)
+- Ur svaren 27 oktober: fönstrets bröstning från våningens golv med ett
+  val att följa väggens fot, och Flytta i höjd från kommandoraden
+
+*Byggd 27 oktober, samma format (20; nya valfria parametrar). Carl
+Augusts svar (Claudes val, godkända): mönstrets mått på papper eller i
+verkligheten per objekt, med förvalet från fyllningstypen, och mönstret
+utgår från objektets första hörn; masken döljer rutnätet på skärmen som
+förut; sparade fyllningar i stilmallen **kopplas** till objekten, och ett
+ändrat fält gör fyllningen objektets egen; kryssrutan *Samma för linje och
+fyllning* är borta, fyllningen har alltid sin egen opacitet; det som ligger
+över snittet blir en egen version, 0.10.16. Hans svar om höjderna: fönster
+följer våningens golv som förval men kan följa väggens fot (dörrar följer
+foten); `M Z -500` flyttar det markerade i höjd. Claudes val: lägena heter
+Ingen, Solid, Mask och Mönster; opaciteten i tio knappar (10–100) och ett
+skrivet fält, för masken en lista (100, 75, 50, 25); förslagen är Vit,
+Ljusgrå, Grå 50 %, Gräs, Grus, Hårdgjort och Vatten (Solid), hel och halv
+mask, och Skraffering, Tät skraffering, Kors, Tegel, Betong, Plattor 300
+och Mark (Mönster). Mönstrets penna är ny (förval 0,13 eller typens).
+Bakgrunden är en lista (ingen, mask, egen färg) i stället för en
+kryssruta. En sparad fyllning sparas med *Spara i stilmallen…*; samma namn
+skriver över den. Kopplade objekt har en kopia av fälten, så att de ser
+likadana ut när den sparade tas bort. Slänternas fyllning täcker ytan som
+släntstrecken går över (känns av med halva strecktätheten), bakom
+objektets egen. Kommandoraden tar också `FZ -500`, `MZ -500` och `Z -500`
+medan Flytta pågår. Inte gjort: fyllning per status och gradient för
+slänter (Claudes förslag; efter piloten om de behövs), sparade fyllningar
+i stilmallens dialog (de sparas och tas bort från panelen); egna `.pat`
+läses som förut som fyllningstyper i stilmallen.*
 
 ### 0.10.15 Visa och dölja (förslag)
 
@@ -2376,7 +2400,19 @@ så många egenskaper som möjligt (Carl August: kom gärna på fler).
 - Kryssrutor för om markobjektens linjer och släntmarkeringarna syns i 3D
   (Inkorgen 27 oktober)
 
-### 0.10.16 Linjerna i 2D-formen (förslag)
+### 0.10.16 Snittet i planen (förslag, mellanstor)
+
+Carl Augusts svar 27 oktober (fråga om väggar över snittet efter 0.10.13).
+
+- Objekten ritas "smart" mot planens snitthöjd (1100): snittyta bara där
+  objektet skär snittet, delar under snittet som vanliga vylinjer och
+  delar över snittet som sticker ut utanför det snittade streckprickat
+- Gäller väggar vars fot ligger över snittet eller vars topp ligger under
+  det, stödmurar och andra objekt som varierar i höjd
+- Fråga först: vilka objekt utöver väggar (bjälklag, möbler, tak) och
+  vilken penna det överliggande får
+
+### 0.10.17 Linjerna i 2D-formen (förslag)
 
 - Fortsätta och sluta en linje med ändpunkterna; Förskjut flera kanter;
   foga ihop linjer
@@ -2386,9 +2422,9 @@ så många egenskaper som möjligt (Carl August: kom gärna på fler).
 - Ett markerat hål i bjälklaget ändras (flyttas, formas om, vrids,
   speglas) utan att bjälklaget påverkas (fråga 31)
 
-### 0.10.17 Markobjektens linjer
+### 0.10.18 Markobjektens linjer
 
-Carl Augusts synpunkter 26 oktober. Stor; efter 0.10.16, som har samma
+Carl Augusts synpunkter 26 oktober. Stor; efter 0.10.17, som har samma
 verktyg.
 
 - 2D-formens redigering för markobjekten: Böj, Avrunda med riktiga bågar,
@@ -2397,7 +2433,7 @@ verktyg.
   bredden)
 - Docka ihop två ramper med olika lutning
 
-### 0.10.18 Situationsplanens beteckningar (förslag, mellanstor)
+### 0.10.19 Situationsplanens beteckningar (förslag, mellanstor)
 
 Carl Augusts bilder 27 oktober; som landskapsarkitekter redovisar.
 

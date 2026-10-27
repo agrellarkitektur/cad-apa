@@ -15,7 +15,7 @@ const own = (store: DocStore, id: string) => plan(store).prims.filter((q) => q.o
 describe('Bakgrund i skrafferingen (0.8.29)', () => {
   it('en bakgrund är en hel yta under strecken, med egen opacitet', () => {
     const fills = fillPrims([square(0, 0)], { fill: 'cross', fillAngle: 45, fillSpacing: 2, fillBackground: '#ffeedd', fillBackgroundOpacity: 40, fillOpacity: 80 }, undefined, true) as RegionPrim[];
-    expect(fills.map((f) => f.fill.kind)).toEqual(['solid', 'hatch', 'hatch']);
+    expect(fills.map((f) => f.fill.kind)).toEqual(['solid', 'pattern', 'pattern']);
     expect(fills[0].fill).toMatchObject({ color: '#ffeedd', opacity: 0.4 });
     expect(fills[1].fill).toMatchObject({ opacity: 0.8 });
   });

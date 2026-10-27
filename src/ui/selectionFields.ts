@@ -14,7 +14,7 @@ import { refArc, type RoofParams } from '../elements/roof';
 import { holeRing, type SlabParams } from '../elements/slab';
 import { radiusOf } from '../geometry/arc';
 import { drawingFields } from './drawingPanel';
-import { fillFields, opacityFields } from './shapeFields';
+import { fillFields } from './shapeFields';
 import { typePenFields } from './ownPenFields';
 import { annotationFields } from './annotationFields';
 import { markerViewFields } from './markerFields';
@@ -172,8 +172,9 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         <label class="check"><input type="checkbox" data-key="param:mainEntrance"${p.mainEntrance ? ' checked' : ''}> Huvudentré (rum och dörrar numreras härifrån)</label>`;
     }
     case 'Window': {
-      const p = resolveParams<{ at: number; sill: number }>(doc, el);
+      const p = resolveParams<{ at: number; sill: number; sillFromWall?: boolean }>(doc, el);
       return `<div class="fields">${numberField('param:at', 'Läge längs vägg', p.at, 'mm')}${numberField('param:sill', 'Bröstning', p.sill, 'mm')}${textField('name', 'Nummer', el.name ?? '')}</div>
+        <label class="check" title="Annars räknas bröstningen från våningens golv och fönstret ligger kvar när väggens fot flyttas"><input type="checkbox" data-key="param:sillFromWall"${p.sillFromWall ? ' checked' : ''}> Bröstningen från väggens fot</label>
         ${frameFields(doc, el, false)}`;
     }
     case 'Furniture': {
@@ -194,7 +195,6 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         <div class="row"><button class="btn" data-action="room-label-center"${p.labelAt ? '' : ' disabled'} title="Lägg tillbaka rumsstämpeln i rummets mitt">Stämpeln i mitten</button></div>
         <p class="note">Dra i rumsstämpeln för att flytta den. Utanför rummet får den en pil in i rummet.</p>
         ${fillFields('room-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 }, (k) => `data-key="d2:${k}"`, doc.graphics)}
-        ${p.fill ? opacityFields({ weight: 0, fill: p.fill, opacity: p.opacity }, (k) => `data-key="d2:${k}"`) : ''}
 `;
     }
     case 'Dimension':

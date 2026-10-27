@@ -111,6 +111,11 @@ export interface GroundParams extends Partial<FillParams> {
   aboveSide?: 'high' | 'low';
   /** Uppskattad andel berg i schakten, procent (0.10.13). Utelämnad = okänd. */
   rock?: number;
+  /**
+   * Slänternas fyllning (0.10.14), samma inställningar som objektets egen:
+   * ytan som släntmarkeringarna täcker. Utelämnad = ingen.
+   */
+  slopeFill?: FillParams;
 }
 
 /** Namnet på objektets sort, som i egenskaperna. */

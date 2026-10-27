@@ -3,40 +3,44 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 27 oktober 2026 (mitt på dagen), efter 0.10.13.
+Senast: 27 oktober 2026 (eftermiddag), efter 0.10.14.
 
 ## Läget
 
-- **Nästa session:** **0.10.14 Fyllningar och opacitet** (se *Nästa
-  session*). Inkorgen är sorterad (27 oktober); svaren står i PLAN.md och
-  i `cad-apa-synpunkter.md`.
-- **0.10.13 Höjder i förhållande till våningen är klar** på `main` (samma
-  format, 20). Byggt: *Fot mot våningen* för väggar (bara foten, toppen
-  kvar) och *Nivå mot våningen* för bjälklag och möbler; *Flytta i höjd*
-  i Modifiera (väggar, bjälklag, möbler, tak); stödmurens höjdpunkter med
-  skriven höjd och dragning längs muren; BH, NH och TH dras i sidled i
-  fasaden; netto och *Berg i schakten* för markobjekten. Takets *Höjden
-  gäller* fanns redan (undersidan som förval). Koden i UTVECKLING.md
-  under *Höjder i förhållande till våningen*; Claudes val i PLAN.md.
-  Testerna: 529 på ca 14 s.
-- **Märks i hans ritningar efter 0.10.13:** måtten BH, NH och TH har en
-  ruta i överänden i fasaden (dras i sidled); *Höjdpunkt på krönet* frågar
-  efter höjden i stället för att läggas direkt.
-- **Versionerna efter sorteringen (27 oktober):** en ny 0.10.14
-  Fyllningar och opacitet, så att Visa och dölja blev 0.10.15, Linjerna i
-  2D-formen 0.10.16, Markobjektens linjer 0.10.17 och Situationsplanens
-  beteckningar 0.10.18 (förslag; Carl August frågade vilken version den
-  har). Ortofotot på marken är en egen liten undersökning. Förteckningen
+- **Nästa session:** **0.10.15 Visa och dölja** (se *Nästa session*),
+  sedan en **granskning**.
+- **0.10.14 Fyllningar och opacitet är klar** på `main` (samma format,
+  20). Byggt: fyllningens panel (Ingen, Solid, Mask, Mönster) med
+  opacitet i tio steg, mönstrets penna, bakgrund och förslagsbubblor, i
+  2D-former, rum, markobjekt och slänterna (egen fyllning, `slopeFill`);
+  mönstrets mått på papper eller i verkligheten och utgångspunkt i
+  objektets första hörn; sparade fyllningar i stilmallen (kopplade);
+  fönstrets bröstning från våningens golv (val: från väggens fot);
+  `M Z -500` i kommandoraden. Koden i UTVECKLING.md under *Fyllningar och
+  opacitet*; Claudes val i PLAN.md. Testerna: 538 på ca 14 s.
+- **Märks i hans ritningar efter 0.10.14:** alla mönster (också
+  skraffering och kors) har flyttats så att de utgår från objektets första
+  hörn, så linjerna ligger lite annorlunda än förut; fönster i en vägg med
+  *Fot mot våningen* ligger kvar mot våningens golv (i 0.10.13 följde de
+  foten); fyllningens opacitet följer inte längre linjens.
+- **Versionerna efter 27 oktober:** svaret om det som ligger över snittet
+  blev en ny **0.10.16 Snittet i planen**, så Linjerna i 2D-formen blev
+  0.10.17, Markobjektens linjer 0.10.18 och Situationsplanens beteckningar
+  0.10.19. Ortofotot på marken är en egen liten undersökning. Förteckningen
   över markförändringarna hör till 0.12 Export.
+- **Granskningen** föreslås efter 0.10.15 (den förra var efter 0.10.12).
+  Lägg till steg i klickjämförelsen för 0.10.13 och 0.10.14 (se *Öppna
+  frågor*).
+- **0.10.13 Höjder i förhållande till våningen**: se PLAN.md.
 - **Granskningen efter 0.10.12** och **0.10.12 Småjusteringar**: se
-  PLAN.md. Nästa granskning efter ungefär 0.10.15.
+  PLAN.md.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.13` i `engine.ts` och `package.json`;
-  nästa version är `0.10.14`.
-- **0.10.8–0.10.13 är inte provade fullt ut** av Carl August; han har
-  svarat på frågor om 0.10.9–0.10.11 utifrån beskrivningarna.
+- **Versionsnumret** är `0.10.14` i `engine.ts` och `package.json`;
+  nästa version är `0.10.15`.
+- **0.10.8–0.10.14 är inte provade fullt ut** av Carl August; han har
+  svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
   åt gången**. En fråga han hoppar över räknas som "bra som det är" och
@@ -88,16 +92,16 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`. Uppdateras
 vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.10.12 Småjusteringar~~, ~~Granskning efter
-  0.10.12~~, ~~0.10.13 Höjder i förhållande till våningen~~ (klara)
-- **0.10.14 Fyllningar och opacitet** (mellanstor: Solid, Mask och
-  Mönster med opacitet och förslag, för alla objekt med fyllning, också
-  markobjektens slänter)
+  0.10.12~~, ~~0.10.13 Höjder i förhållande till våningen~~, ~~0.10.14
+  Fyllningar och opacitet~~ (klara)
 - **0.10.15 Visa och dölja** (med grepp för *Tonat från* och kryssrutor
   för markobjektens linjer i 3D), sedan en **granskning**
-- **0.10.16 Linjerna i 2D-formen** (bågar i takets kontur, cirkulära hål,
+- **0.10.16 Snittet i planen** (mellanstor: snitt bara vid 1100, det under
+  som vy, det över streckprickat)
+- **0.10.17 Linjerna i 2D-formen** (bågar i takets kontur, cirkulära hål,
   hål som ändras för sig)
-- **0.10.17 Markobjektens linjer** (stor: bågar, Avrunda, docka ramper)
-- **0.10.18 Situationsplanens beteckningar** (förslag: murens ledare,
+- **0.10.18 Markobjektens linjer** (stor: bågar, Avrunda, docka ramper)
+- **0.10.19 Situationsplanens beteckningar** (förslag: murens ledare,
   markhöjder med status, sidolutning, låglinje, kontur runt slänterna,
   slänter ur den befintliga marken)
 - **Ortofotot på marken** (liten undersökning med terrängappen, när det
@@ -116,16 +120,13 @@ vid varje överlämning.
 
 ## Nästa session
 
-**0.10.14 Fyllningar och opacitet** (mellanstor, en session; se PLAN.md).
-En gemensam mall för fyllningar i alla objekt: **Solid** (färg och
-opacitet i tio steg eller skriven), **Mask** (solid med pappersbakgrund,
-opacitet ur en lista) och **Mönster** (mönster, förgrundens penna och
-opacitet, bakgrundens färg och opacitet), med förslagsbubblor. Samma
-kontroller i markobjekten (och för slänterna för sig), 2D-former, rum
-och allt annat med fyllning. Carl August vill ha så många egenskaper som
-möjligt; de tidigare frågorna 45, 51, 52 och 56 hör dit och kan ställas
-först. Börja med att se vilka fält som finns i `shapeFields.ts`
-(`fillFields`, `opacityFields`) och vilka objekt som har egna.
+**0.10.15 Visa och dölja** (mellanstor, en session; se PLAN.md). Väggar
+och nästan allt annat kryssas ur under Visa var för sig; högerklick döljer
+ett objekt eller alla av samma typ, sparat i vyn; *Tonat från* ställs in
+med ett grepp när vyn är markerad i planen; kryssrutor för markobjektens
+linjer och släntmarkeringarna i 3D. Börja med Visa-menyn
+(`src/ui/app/showMenu.ts`) och vyns `hide` (`ViewStates`). Sedan föreslås
+en granskning.
 
 ## Att fråga Carl August om
 
@@ -133,14 +134,14 @@ Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
 
-**0.10.13 efter provning** (Claudes val, se PLAN.md)
-- En vägg vars fot ligger över planens snitthöjd ritas fortfarande som
-  snittad i planen. Ska den ritas streckad (ovanför snittet), eller räcker
-  det tills vidare?
-- Bröstningen räknas från väggens fot, så fönstren följer med när foten
-  flyttas. Rätt, eller ska bröstningen gälla från våningens golv?
-- Flytta i höjd finns i smartmenyn för det markerade. Behövs den också
-  som kommando i smartshell (t.ex. *H 300*)?
+**0.10.14 efter provning** (Claudes val, se PLAN.md)
+- Förslagen (Gräs, Grus, Tegel …): rätt sorter och färger? Vilka saknas?
+- Ska de sparade fyllningarna också gå att byta namn på och ta bort i
+  stilmallens dialog (nu bara från panelen)?
+- Slänternas fyllning täcker ytan som släntstrecken går över. Rätt yta,
+  också där två markobjekt möts?
+- Mönstret utgår från objektets första hörn. Behövs ett grepp för att
+  flytta utgångspunkten?
 
 **0.10.12 efter provning** (Claudes val, se PLAN.md)
 - Riv och *Finns i* fungerar på låsta objekt (de ändrar status, inte
@@ -192,22 +193,15 @@ fråga.
 43. Vyradens knappar sätter alla tre detaljnivåer; fasaderna följer
     3D-nivån; rumsstämpeln ingen nivå.
 44. Ser de inbyggda fyllningarna rätt ut? Räcker guiden?
-45. Fungerar hans `.pat`-filer? Mönster med mer än 20 mm mellan linjerna
-    antas vara i verkliga mått.
 46. Saknas något villkor i Filtrera och markera (riktning, längd, area)?
 47. Förvalen snitt 0,25, vy 0,18, symbol 0,13 mm; *Vy* som egen del i den
     egna pennan?
 48. Rum har ingen egen penna; pennan finns inte i smartmenyn.
 49. DXF-underlagens streckade linjer streckade?
 50. Förhandsvisning av linjetypen i listorna?
-51. Masken döljer också rutnätet på skärmen.
-52. Fyllningens bakgrund i stilmallen? (Hör ihop med Inkorgens förslag om
-    en gemensam mall för fyllningar, 27 oktober.)
 53. *Fortsätt* bortvalbar bland snabbknapparna? Nya kanter med verktygets
     penna?
 54. Saknas någon markör bland pennorna? Streckning valbar?
-56. Rummets fyllning för flera rum på en gång, per rumstyp eller i
-    stilmallen?
 57. En rektangel förblir inte rät när ett hörn dras; cirkeln saknar
     centrumgrepp.
 58. Smartmenyn alltid *Ändar* för en markerad linje?
@@ -249,9 +243,16 @@ fråga.
 ## Öppna frågor och kända begränsningar
 
 - **Höjder mot våningen (0.10.13):** en vägg vars fot ligger över planens
-  snitthöjd ritas ändå som snittad i planen. Klickjämförelsen har inga
-  steg för 0.10.13 än (lägg till dem i nästa granskning: *Fot mot
-  våningen*, Flytta i höjd, höjdpunktens värde och dragning, BH-greppet).
+  snitthöjd ritas ändå som snittad i planen (0.10.16). Klickjämförelsen
+  har inga steg för 0.10.13 och 0.10.14 än (lägg till dem i nästa
+  granskning: *Fot mot våningen*, Flytta i höjd, höjdpunktens värde och
+  dragning, BH-greppet; fyllningens lägen, förslag, sparade fyllningar och
+  slänternas fyllning).
+- **Fyllningar (0.10.14):** slänternas yta räknas om när den färdiga
+  marken ändras (ca 100 ms första gången i 1:50 på den sneda platsen,
+  sedan sparad). De sparade fyllningarna finns inte i stilmallens dialog.
+  2D-verktygets fyllningsval i verktygsraden är det gamla (bara
+  mönstret).
 
 - **Låst (0.10.12):** låset hindrar flytt, grepp och borttagning, men inte
   Riv, *Finns i* eller ändrade värden i egenskaperna. En våning som tas

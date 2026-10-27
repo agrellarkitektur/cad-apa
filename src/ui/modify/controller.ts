@@ -152,6 +152,20 @@ export class Modifier {
     this.changed();
   }
 
+  /**
+   * Flytta i höjd med ett värde direkt (0.10.14), från kommandoraden
+   * (`M Z -500`, `FZ -500`, eller `Z -500` medan Flytta pågår). Falskt när
+   * det markerade inte kan flyttas i höjd.
+   */
+  moveZ(v: number): boolean {
+    if (!this.body || !opsFor(this.host, this.body).flat().includes('moveZ')) return false;
+    this.abort();
+    this.ctx = this.body;
+    this.choose('moveZ');
+    this.applyValue(v);
+    return true;
+  }
+
   /** Avbryt det som pågår, men behåll det markerade. */
   cancel(): void {
     this.abort();
