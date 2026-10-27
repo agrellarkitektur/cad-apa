@@ -1244,6 +1244,56 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Linjerna i 2D-formen (0.10.17, format 20)
+
+Inget nytt format.
+
+- **Rita vidare**: `Draw2DTool.continuable()` tar alla öppna, olåsta
+  `polyline`/`spline` bland vyns `pickables` (de markerade sorteras först,
+  och `continueAt` slutar leta bland de omarkerade när en markerad redan
+  träffat). `extend` gör nu också något när inga nya punkter lagts till
+  men formen sluts (`pts.length === base.n && closed`)
+- **Flera kanter**: `edgeRun(s, i, count)` och `offsetShapeEdges(s,
+  edges, d)` i `src/elements/shapeEdit.ts`. Varje vald kant flyttas d åt
+  vänster sett längs den; ett hörn blir skärningen mellan de två kanternas
+  förskjutna tangentlinjer (en båges tangent i hörnet, `tangent`), eller
+  förskjuts längs normalen i en öppen ände och där tangenterna är
+  parallella. Bågarnas pilhöjd skalas med kordan (samma vinkel). Null om en
+  kant vänder eller den slutna ytan byter tecken eller blir mindre än
+  1 dm². `ModifyState.edges` (0 = alla) sätts av `Modifier.edges`/`setEdges`
+  och väljs i `detailMarkup` (`select[data-modify-edges]`, `EDGE_CHOICES`,
+  `change` i `bindValue`). `shapeOffsetPatch` och `roofOffsetPreview` i
+  `outlineOps.ts` använder den gamla `offsetShapeEdge`/`offsetEdge` för en
+  rak kant, annars den nya
+- **Foga ihop**: `src/core/joinLines.ts` (`canFuse`, `fuseChains`,
+  `fuseLines`, en transaktion). Valet `shapeFuse` (instant) kommer med
+  `editOps` i `ops.ts`, knappen `fuse` i raden (Shift+V), kommandot `fuse`
+  i `commandRegistry.ts` och ikonen `fuse`
+- **Senaste valet på en kant**: `Modifier.lastEdge` (en `RailId`) sätts i
+  `choose` för kanter i 2D-former, takfall, håltagningar, markobjekt och
+  bjälklagets kontur (`isLineEdge`: `kind === 'edge'` med `shapeId` eller
+  `roofId`), inte för val med `instant`. `setPart` väljer samma knapps val
+  igen när det finns där man klickade
+- **Konturer med bågar**: `ChainInput` i `src/ui/tools/chainInput.ts`
+  (punkter, pilhöjder per kant, `arc`, och `arcEnd` medan bågen väntar på
+  sin mittpunkt; `result()` ger 2D-formens `points`/`bulges` med den
+  slutande kanten sist; `load` öppnar en sluten kontur igen). `RoofTool`
+  ritar takfallets kontur med den (`chain`, `setArc`, `takeContour`);
+  `createFace` vänder bågarna med konturen (kant k i den vända är kant
+  n − 2 − k baklänges). `SlabTool.options.shape` (`SlabShape`: `rect`,
+  `polygon`, `circle`; cirkeln bara för håltagningar, bågar bara i
+  håltagningens polygon). Enter sluter i `keyboard.ts` och
+  `commandLine.ts`; knapparna i `toolOptions.ts`, alternativen i
+  `prompts.ts` (G Båge, R/P/C formen, K Klar)
+- **Hålet för sig**: valen `holeRotate` och `holeMirror` i
+  `outlineOps.ts` (`rotatedHole`, `mirroredHole`; `holeAngle` med
+  `ModifyState.ref` som Vrid), med baspunkten där man klickade. Radens
+  Flytta, Vrid och Spegla har hålets val först (`RAIL`), så att de gäller
+  hålet när man klickat på det
+- **Punkterna** på markobjektens linjer i `highlight.ts`
+- Tester: `tests/v01017.test.ts`; `v0828.test.ts` prövar att en omarkerad
+  linje ritas vidare och sluts
+
 ## Snittet i planen (0.10.16, format 20)
 
 Inga nya format: fälten är frivilliga (`OwnPen.above`, nya nycklar i

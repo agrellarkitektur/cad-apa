@@ -150,6 +150,11 @@ export function renderHighlight(
     const pts = (resolveParams<GroundParams>(doc, el).line ?? []) as Vec2[];
     if (pts.length < 2) continue;
     out.push(`<path d="${path(cam, pts, false)}" class="ref-line"/>`);
+    // Linjens punkter som riktiga punkter (0.10.17), som 2D-formens; de dras och ändras på samma sätt.
+    for (const pt of pts) {
+      const s = cam.toScreen(pt);
+      out.push(`<rect x="${s[0] - 4.5}" y="${s[1] - 4.5}" width="9" height="9" class="grip"/>`);
+    }
     const a = cam.toScreen(pts[pts.length - 2]);
     const b = cam.toScreen(pts[pts.length - 1]);
     const l = Math.hypot(b[0] - a[0], b[1] - a[1]);

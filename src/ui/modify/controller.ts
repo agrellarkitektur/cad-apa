@@ -22,6 +22,13 @@ export class Modifier {
   picking: RailId | null = null;
   /** Senaste värdet per val, så att man slipper skriva samma radie igen. */
   private remembered = new Map<OpId, number>();
+  /**
+   * Knappen i raden som senast användes på en kant i en linje eller kontur
+   * (0.10.17): ett klick mitt på en kant startar den igen.
+   */
+  private lastEdge: RailId | null = null;
+  /** Förskjut (0.10.17): hur många kanter, kvar till nästa gång; 0 = alla. */
+  edges = 1;
   private listeners = new Set<() => void>();
 
   constructor(host: ModifyHost) {
@@ -92,7 +99,14 @@ export class Modifier {
       this.changed();
       return;
     }
-    if (start && avail.includes(start)) this.choose(start);
+    if (start && avail.includes(start)) {
+      this.choose(start);
+      return;
+    }
+    // Ett klick mitt på en kant i en 2D-form, ett takfall, en håltagning eller
+    // ett markobjekt startar det som senast användes på en kant (0.10.17).
+    const again = this.lastEdge && isLineEdge(ctx) ? RAIL_ITEMS.find((r) => r.id === this.lastEdge)?.ops.find((o) => avail.includes(o)) : undefined;
+    if (again) this.choose(again);
     else this.changed();
   }
 
@@ -108,6 +122,8 @@ export class Modifier {
       return;
     }
     const def = OPS[op];
+    // Val som utförs direkt (Räta ut …) startas inte av sig själva.
+    if (isLineEdge(ctx) && !def.instant) this.lastEdge = railOf(op)?.id ?? this.lastEdge;
     if (def.instant) {
       runInstant(this.host, op, ctx);
       this.finish();
@@ -118,6 +134,7 @@ export class Modifier {
     // Höjdpunkten (0.10.13) föreslår krönets höjd där man klickade.
     const start = op === 'crestPoint' ? (crestSuggestion(this.host, ctx)?.value ?? 0) : (this.remembered.get(op) ?? def.value?.initial ?? 0);
     this.tool = new Tool(this.host, op, ctx, start, () => this.finish(), () => this.changed());
+    if (this.tool instanceof ModifyTool) this.tool.edges = this.edges;
     this.host.startModify(this.tool);
     this.changed();
   }
@@ -182,6 +199,12 @@ export class Modifier {
 
   setValue(v: number): void {
     this.tool?.setValue(v);
+  }
+
+  /** Antalet kanter för Förskjut (0.10.17); 0 = alla. */
+  setEdges(n: number): void {
+    this.edges = n;
+    if (this.tool instanceof ModifyTool) this.tool.setEdges(n);
   }
 
   applyValue(v: number): void {
@@ -263,7 +286,12 @@ export class Modifier {
       op === 'align'
         ? `<span class="sm-align" role="group" aria-label="Justera och fördela">${ALIGN_BUTTONS.map((b) => `<button type="button" class="qb-btn sm-align-btn" data-align="${b.kind}" title="${escapeHtml(b.label)}" aria-label="${escapeHtml(b.label)}">${icons[ALIGN_ICONS[b.kind]]}</button>`).join('')}</span>`
         : '';
-    return `<div class="sm-detail"><b>${escapeHtml(def.label)}</b>${value}${align}<span class="sm-hint">${escapeHtml(hint)}</span></div>`;
+    // Förskjut (0.10.17): en kant, flera symmetriskt kring den eller alla.
+    const edges =
+      op === 'shapeOffset' || op === 'roofOffset'
+        ? `<label class="sm-value"><span>Kanter</span><select data-modify-edges>${EDGE_CHOICES.map(([n, l]) => `<option value="${n}"${n === this.edges ? ' selected' : ''}>${l}</option>`).join('')}</select></label>`
+        : '';
+    return `<div class="sm-detail"><b>${escapeHtml(def.label)}</b>${value}${edges}${align}<span class="sm-hint">${escapeHtml(hint)}</span></div>`;
   }
 
   /**
@@ -291,6 +319,10 @@ export class Modifier {
         this.cancel();
       }
     });
+    el.addEventListener('change', (e) => {
+      const sel = e.target as HTMLSelectElement;
+      if (sel.matches('select[data-modify-edges]')) this.setEdges(Number(sel.value));
+    });
     el.addEventListener('input', (e) => {
       const input = e.target as HTMLInputElement;
       if (!input.matches('input[data-modify-value]')) return;
@@ -311,6 +343,19 @@ export class Modifier {
       }
     }, 0);
   }
+}
+
+/** Valen för hur många kanter Förskjut flyttar (0.10.17). */
+const EDGE_CHOICES: [number, string][] = [
+  [1, '1'],
+  [3, '3'],
+  [5, '5'],
+  [0, 'Alla'],
+];
+
+/** En kant i en 2D-form, ett takfalls eller bjälklags kontur, en håltagning eller ett markobjekts linje (inte en vägg). */
+function isLineEdge(ctx: ModifyContext): boolean {
+  return ctx.kind === 'edge' && (!!ctx.shapeId || !!ctx.roofId);
 }
 
 /** Ikonerna för Justera och Fördela. */

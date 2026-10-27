@@ -3,11 +3,34 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 27 oktober 2026 (kväll), efter 0.10.16 Snittet i planen.
+Senast: 27 oktober 2026 (kväll), efter 0.10.17 Linjerna i 2D-formen.
 
 ## Läget
 
-- **Nästa session:** **0.10.17 Linjerna i 2D-formen** (se *Nästa session*).
+- **Nästa session:** **0.10.18 Rampens referenslinje** (se *Nästa session*).
+- **0.10.17 Linjerna i 2D-formen är klar** på `main` (samma format, 20).
+  Byggt: rita vidare från änden av en omarkerad linje och sluta den med
+  ett klick på andra änden; *Kanter* (1, 3, 5, Alla) i Förskjut, också
+  på bågar, takfall, håltagningar, bjälklag och markytor; Foga ihop
+  (Shift+V, `foga`/`join`); ett klick mitt på en kant startar det som
+  senast användes på en kant; *Båge* i takets kontur och i håltagningens
+  polygon; bjälklag som rektangel eller polygon och håltagningar också som
+  cirkel; Vrid och Spegla hålet (Flytta, Vrid och Spegla i raden gäller
+  hålet man klickat på); punkter på markobjektens linjer. Enter sluter nu
+  takets kontur. Koden i UTVECKLING.md under *Linjerna i 2D-formen*;
+  Claudes val i PLAN.md. Carl August hoppade över frågorna. Testerna: 558
+  på ca 14 s. Klickjämförelsen är inte körd (inga steg för 0.10.16–0.10.17).
+- **Märks i hans ritningar efter 0.10.17:** ett klick på änden av en
+  linje med 2D-verktyget ritar vidare på den, också när den inte är
+  markerad (Ctrl+klick börjar en ny); ett klick mitt på en kant i en
+  markerad form kan starta ett val direkt (det senast använda på en kant);
+  Shift+V är Foga ihop (V utan Shift är fortfarande Markera).
+- **Inkorgen har tre nya punkter** (27 oktober, efter sorteringen):
+  stilmallens fönster bredare och i kolumner, egen färg på höjdkurvor,
+  Mer-knappen i smartmenyn när inget mer finns. Inte sorterade; Claudes
+  förslag: Mer-knappen och höjdkurvornas färg som småfel i granskningen
+  efter 0.10.18, stilmallens fönster i samma granskning eller en egen
+  liten version.
 - **0.10.16 Snittet i planen är klar** på `main` (samma format, 20).
   Byggt: väggar, dörrar och fönster, bjälklag, möbler, tak och stödmurar
   ritas mot snitthöjden: snittade där de går genom den, som vy helt under
@@ -81,11 +104,11 @@ Senast: 27 oktober 2026 (kväll), efter 0.10.16 Snittet i planen.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.16` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.17` i `engine.ts`, `package.json` och
   `package-lock.json` (npm godtar fyra delar i ett privat paket); nästa
-  version är `0.10.17`. En granskning höjer inte numret, eller får en
+  version är `0.10.18`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.16 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.17 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -140,9 +163,8 @@ vid varje överlämning.
 - ~~0.8.8 Mallblad~~ … ~~0.10.12 Småjusteringar~~, ~~Granskning efter
   0.10.12~~, ~~0.10.13 Höjder i förhållande till våningen~~, ~~0.10.14
   Fyllningar och opacitet~~, ~~0.10.15 Visa och dölja~~, ~~Granskning
-  efter 0.10.15 (0.10.15.1)~~, ~~0.10.16 Snittet i planen~~ (klara)
-- **0.10.17 Linjerna i 2D-formen** (bågar i takets kontur, cirkulära hål,
-  hål som ändras för sig, synliga punkter på referens- och konturlinjer)
+  efter 0.10.15 (0.10.15.1)~~, ~~0.10.16 Snittet i planen~~, ~~0.10.17
+  Linjerna i 2D-formen~~ (klara)
 - **0.10.18 Rampens referenslinje** (mellanstor till stor: referenslinjen
   styr lutningen, sidorna bredden, höjdpunkter i ändarna, förlänga, mur
   eller slänt per sida)
@@ -168,15 +190,28 @@ vid varje överlämning.
 
 ## Nästa session
 
-**0.10.17 Linjerna i 2D-formen** (mellanstor, se PLAN.md och
-synpunkterna). Läs `cad-apa-synpunkter.md` och sortera Inkorgen först.
-Granskningen är planerad efter 0.10.18.
+**0.10.18 Rampens referenslinje** (mellanstor till stor, se PLAN.md och
+synpunkterna). Läs `cad-apa-synpunkter.md` och sortera Inkorgen först (tre
+punkter väntar). Granskningen är planerad efter 0.10.18; lägg då till
+klickjämförelsens steg för 0.10.16 och 0.10.17.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
+
+**0.10.17 efter provning** (Claudes val, se PLAN.md)
+- Ett klick på änden av en omarkerad linje ritar vidare på den. Störande
+  när man vill börja en ny linje där (Ctrl+klick)?
+- Ett klick mitt på en kant startar det senast använda valet på en kant.
+  Var det så du menade, eller ville du bli av med något sådant?
+- *Kanter* i Förskjut: 1, 3, 5 eller Alla. Räcker det, eller behövs ett
+  skrivet antal (och jämna antal)?
+- Bågar direkt i takets kontur och håltagningen (*Båge*, G). Ska 2D-
+  verktygets linje få samma (fråga 59)?
+- Vrid och spegla hålet kring punkten man klickade på. Hellre kring hålets
+  mitt?
 
 **0.10.16 efter provning** (Claudes val, se PLAN.md)
 - En låg stödmur (krönet under snitthöjden) ritas som kontur. Rätt på
@@ -306,6 +341,14 @@ fråga.
 80. Smartmenyns placering; ska rubriken *Ändra* heta något annat?
 
 ## Öppna frågor och kända begränsningar
+
+- **Linjerna (0.10.17):** Foga ihop fogar inte linjer med splines, och
+  inte linjer på olika ytor. Förskjut med flera kanter räknar hörn mellan
+  en båge och en rak kant med bågens tangent, vilket är exakt bara där de
+  möts tangentiellt (annars hamnar hörnet lite fel). Ett klick inne i ett
+  hål markerar inte hålet; man klickar på hålets kant eller hörn. Bågar i
+  bjälklagets kontur finns inte (formatet har inga); takfall och
+  håltagningar har dem.
 
 - **Snittet i planen (0.10.16):** en vägg räknas efter sin fot och höjd;
   en vägg som kapas av ett tak under snitthöjden (en knävägg utan egen låg

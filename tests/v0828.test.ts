@@ -106,15 +106,17 @@ describe('Fortsätta en linje (0.8.28)', () => {
     expect(p.points).toHaveLength(3);
   });
 
-  it('börjar en ny linje när ingen öppen form är markerad', () => {
-    const store = storeWith({ l: { points: [[50000, 0], [51000, 0]] } });
+  it('ritar vidare också från en omarkerad linje, och sluter den med ett klick på andra änden (0.10.17)', () => {
+    const store = storeWith({ l: { points: [[50000, 0], [51000, 0], [51000, 1000]] } });
     const before = shapes(store);
     const t = new Draw2DTool(host(store, []));
     t.setKind('polyline');
-    t.takePoint([51000, 0]);
-    expect(t.continuing).toBeNull();
-    t.takePoint([52000, 0]);
-    t.finish(false);
-    expect(shapes(store)).toBe(before + 1);
+    t.takePoint([51000, 1000]);
+    expect(t.continuing).toBe('l');
+    t.takePoint([50000, 0]);
+    const p = store.doc.elements.l.params as unknown as Shape2DParams;
+    expect(p.points).toHaveLength(3);
+    expect(p.closed).toBe(true);
+    expect(shapes(store)).toBe(before);
   });
 });

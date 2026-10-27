@@ -1,6 +1,6 @@
 import { updateParams } from '../../core/commands';
 import { insertNode, moveNode, offsetEdge, orientation, setOutline } from '../../core/roofEdit';
-import { bendShapeEdge, editedShape, insertShapeNode, moveShapeNode, offsetShapeEdge, previewShape, roundShapeCorner, shapeNodes, shapePatch } from '../../elements/shapeEdit';
+import { bendShapeEdge, edgeIsArc, edgeRun, editedShape, insertShapeNode, moveShapeNode, offsetShapeEdge, offsetShapeEdges, previewShape, roundShapeCorner, shapeNodes, shapePatch, type ShapeLike } from '../../elements/shapeEdit';
 import { bulgeForRadius, bulgeThrough } from '../../geometry/arc';
 import { dist } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
@@ -14,7 +14,7 @@ import type { ModifyState } from './state';
  * Punkter och kanter i Modifiera (0.8.15, ur tool.ts): lägg till, flytta och
  * förskjut på 2D-element, bjälklagens håltagningar (0.9.4) och takets kontur.
  */
-export const OUTLINE_OPS = new Set<OpId>(['shapeInsert', 'shapeMove', 'shapeOffset', 'shapeBend', 'shapeFillet', 'shapeChamfer', 'holeMove', 'roofInsert', 'roofMove', 'roofOffset']);
+export const OUTLINE_OPS = new Set<OpId>(['shapeInsert', 'shapeMove', 'shapeOffset', 'shapeBend', 'shapeFillet', 'shapeChamfer', 'holeMove', 'holeRotate', 'holeMirror', 'roofInsert', 'roofMove', 'roofOffset']);
 
 /** Takets kontur. */
 function roofOutline(s: ModifyState): [number, number][] | null {
@@ -33,11 +33,21 @@ function roofOut(s: ModifyState, at: Vec2): number {
   return -orientation(o) * ((at[0] - a[0]) * n[0] + (at[1] - a[1]) * n[1]);
 }
 
-/** Takets kontur efter förskjutningen, eller null. */
+/** Takets (bjälklagets, markobjektets) kontur efter förskjutningen, eller null. Med fler kanter (0.10.17) som 2D-formens. */
 function roofOffsetPreview(s: ModifyState, out: number): [number, number][] | null {
   const o = roofOutline(s);
   if (!o) return null;
-  return offsetEdge(o, s.ctx.index!, -orientation(o) * out);
+  if (s.edges === 1) return offsetEdge(o, s.ctx.index!, -orientation(o) * out);
+  const shape: ShapeLike = { type: 'Shape2D', params: { shape: 'polyline', points: o, closed: true } };
+  const r = offsetShapeEdges(shape, edgeRun(shape, s.ctx.index!, s.edges), -orientation(o) * out);
+  return (r?.points as [number, number][] | undefined) ?? null;
+}
+
+/** 2D-formens kanter förskjutna d mm åt vänster om den klickade: en kant som förut, eller flera (0.10.17). */
+function shapeOffsetPatch(s: ModifyState, el: ShapeLike, d: number): Record<string, unknown> | null {
+  const i = s.ctx.index!;
+  if (s.edges === 1 && !edgeIsArc(el, i)) return offsetShapeEdge(el, i, d);
+  return offsetShapeEdges(el, edgeRun(el, i, s.edges), d);
 }
 
 /** 2D-elementet eller håltagningen som ändras, om det är en. */
@@ -74,6 +84,38 @@ function movedHole(s: ModifyState, base: Vec2, at: Vec2): Record<string, unknown
   if (!el) return null;
   const d: Vec2 = [Math.round(at[0] - base[0]), Math.round(at[1] - base[1])];
   return { points: shapeNodes(el).map((q) => [q[0] + d[0], q[1] + d[1]]) };
+}
+
+/** Vinkeln för Vrid hålet: den skrivna, eller från riktningen man vrider från till markören (grader). */
+function holeAngle(s: ModifyState, base: Vec2, at: Vec2 | null, typed: number | null): number | null {
+  if (typed !== null) return typed;
+  if (!at || !s.ref) return null;
+  const a = (v: Vec2) => (Math.atan2(v[1] - base[1], v[0] - base[0]) * 180) / Math.PI;
+  return Math.round((a(at) - a(s.ref)) * 10) / 10;
+}
+
+/** Håltagningen vriden kring baspunkten (0.10.17). */
+function rotatedHole(s: ModifyState, base: Vec2, deg: number): Record<string, unknown> | null {
+  const el = shapeOf(s);
+  if (!el || !deg) return null;
+  const r = (deg * Math.PI) / 180;
+  const c = Math.cos(r);
+  const sn = Math.sin(r);
+  return { points: shapeNodes(el).map((q) => [Math.round(base[0] + (q[0] - base[0]) * c - (q[1] - base[1]) * sn), Math.round(base[1] + (q[0] - base[0]) * sn + (q[1] - base[1]) * c)]) };
+}
+
+/** Håltagningen speglad i linjen genom baspunkten och `at` (0.10.17); bågarna byter sida. */
+function mirroredHole(s: ModifyState, base: Vec2, at: Vec2): Record<string, unknown> | null {
+  const el = shapeOf(s);
+  const len = dist(base, at);
+  if (!el || len < 1) return null;
+  const n: Vec2 = [-(at[1] - base[1]) / len, (at[0] - base[0]) / len];
+  const points = shapeNodes(el).map((q) => {
+    const o = (q[0] - base[0]) * n[0] + (q[1] - base[1]) * n[1];
+    return [Math.round(q[0] - 2 * o * n[0]), Math.round(q[1] - 2 * o * n[1])];
+  });
+  const bulges = el.params.bulges as number[] | undefined;
+  return { points, ...(bulges ? { bulges: bulges.map((b) => (b ? -b : 0)) } : {}) };
 }
 
 /** Avståndet till vänster om kanten (sett längs den) till en punkt. */
@@ -137,18 +179,31 @@ export function commitOutline(s: ModifyState, base: Vec2, at: Vec2 | null, typed
       if (patch) applyShape(s, patch, 'Flytta hålet');
       return true;
     }
+    case 'holeRotate': {
+      const deg = holeAngle(s, base, at, typed);
+      if (deg === null) return false;
+      const patch = rotatedHole(s, base, deg);
+      if (patch) applyShape(s, patch, 'Vrid hålet');
+      return true;
+    }
+    case 'holeMirror': {
+      if (!at || dist(at, base) < 1) return false;
+      const patch = mirroredHole(s, base, at);
+      if (patch) applyShape(s, patch, 'Spegla hålet');
+      return true;
+    }
     case 'shapeOffset': {
       const el = shapeOf(s);
       if (!el) return true;
       const sd = at ? shapeSide(s, at) : 1;
       const d = typed !== null ? Math.abs(typed) * (sd >= 0 ? 1 : -1) : Math.round(sd);
       if (Math.abs(d) < 1) return false;
-      const patch = offsetShapeEdge(el, ctx.index!, d);
+      const patch = shapeOffsetPatch(s, el, d);
       if (!patch) {
-        s.host.hint('Kanten kan inte förskjutas så långt.');
+        s.host.hint(s.edges === 1 ? 'Kanten kan inte förskjutas så långt.' : 'Kanterna kan inte förskjutas så långt.');
         return false;
       }
-      applyShape(s, patch, 'Förskjut kant');
+      applyShape(s, patch, s.edges === 1 ? 'Förskjut kant' : 'Förskjut kanter');
       return true;
     }
     case 'shapeBend': {
@@ -177,7 +232,7 @@ export function commitOutline(s: ModifyState, base: Vec2, at: Vec2 | null, typed
         s.host.hint('Kanten kan inte förskjutas så långt.');
         return false;
       }
-      setOutline(store, ctx.roofId, next, 'Förskjut kant');
+      setOutline(store, ctx.roofId, next, s.edges === 1 ? 'Förskjut kant' : 'Förskjut kanter');
       return true;
     }
     default:
@@ -205,7 +260,7 @@ export function overlayOutline(s: ModifyState, cam: Camera, base: Vec2, at: Vec2
     case 'shapeOffset':
       if (shp && at) {
         const d = Math.round(shapeSide(s, at));
-        shapeGhost(offsetShapeEdge(shp, s.ctx.index!, d));
+        shapeGhost(shapeOffsetPatch(s, shp, d));
         out.push(lengthLabel(cam, base, at, `${Math.abs(d).toLocaleString('sv-SE')} mm`));
       }
       break;
@@ -220,6 +275,25 @@ export function overlayOutline(s: ModifyState, cam: Camera, base: Vec2, at: Vec2
       if (shp && at) {
         shapeGhost(movedHole(s, base, at));
         out.push(lengthLabel(cam, base, at, `${Math.round(dist(base, at)).toLocaleString('sv-SE')} mm`));
+      }
+      break;
+    case 'holeRotate':
+      if (shp && at) {
+        out.push(line([base, at]));
+        if (s.ref) {
+          out.push(svgLine(cam, [base, s.ref], 'snap-guide'));
+          const deg = holeAngle(s, base, at, null) ?? 0;
+          shapeGhost(rotatedHole(s, base, deg));
+          out.push(lengthLabel(cam, base, at, `${(Math.round((((deg % 360) + 360) % 360) * 10) / 10).toLocaleString('sv-SE')}°`));
+        }
+      }
+      break;
+    case 'holeMirror':
+      if (shp && at && dist(at, base) > 1) {
+        const len = dist(at, base);
+        const u: Vec2 = [(at[0] - base[0]) / len, (at[1] - base[1]) / len];
+        out.push(svgLine(cam, [[base[0] - u[0] * 20000, base[1] - u[1] * 20000], [base[0] + u[0] * 20000, base[1] + u[1] * 20000]], 'snap-guide'));
+        shapeGhost(mirroredHole(s, base, at));
       }
       break;
     case 'roofInsert':

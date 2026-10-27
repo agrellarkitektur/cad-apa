@@ -101,6 +101,7 @@ export const COMMANDS: CommandDef[] = [
   R('trim', 'Trimma', ['trimma', 'tri'], ['trim', 'tr']),
   R('join', 'Hörnskarv', ['hörnskarv', 'hs'], ['corner', 'jn']),
   R('split', 'Dela', ['dela', 'de'], ['break', 'br']),
+  R('fuse', 'Foga ihop', ['foga', 'fo'], ['join', 'j']),
   R('insert', 'Lägg till punkt', ['nypunkt', 'np'], ['addvertex', 'av']),
   R('pointMove', 'Flytta punkt', ['flyttapunkt', 'fp'], ['movevertex', 'mv']),
   R('remove', 'Ta bort punkt', ['tabortpunkt', 'tp'], ['removevertex', 'rv']),

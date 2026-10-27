@@ -1,5 +1,6 @@
 import { isLineMode, type GroundMode } from '../tools/groundTool';
 import type { RoofMode } from '../tools/roofTool';
+import type { SlabShape } from '../tools/slabTool';
 import { commandFor, type CommandDef } from '../commandRegistry';
 import { ALIGN_BUTTONS, ArrangeTool } from '../modify/arrangeTool';
 import { OPS, RAIL_ITEMS } from '../modify/ops';
@@ -97,6 +98,17 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
         { key: 'V', label: 'Valm', run: mode('hip'), on: r.options.mode === 'hip' },
       ];
       if (!r.started) options.push({ key: 'H', label: 'Över hela huset', run: () => app.roofOverHouse() });
+      // Bågar i konturen direkt (0.10.17).
+      if (r.options.mode === 'face' && r.step === 'contour')
+        options.push({
+          key: 'G',
+          label: 'Båge',
+          run: () => {
+            r.setArc(!r.arc);
+            redraw();
+          },
+          on: r.arc,
+        });
       if (r.canClose) options.push({ key: 'A', label: 'Avsluta', run: () => r.closeContour() });
       if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.undoPoint() });
       return { head, text: r.hintText(), options };
@@ -112,8 +124,27 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
         { key: 'B', label: 'Bjälklag', run: mode('slab'), on: r.options.mode === 'slab' },
         { key: 'H', label: 'Håltagning', run: mode('hole'), on: r.options.mode === 'hole' },
       ];
+      // Formen (0.10.17): rektangel, polygon, och cirkel för håltagningar.
+      const shape = (f: SlabShape) => () => {
+        r.options.shape = f;
+        r.reset();
+        redraw();
+      };
+      options.push({ key: 'R', label: 'Rektangel', run: shape('rect'), on: r.shape === 'rect' }, { key: 'P', label: 'Polygon', run: shape('polygon'), on: r.shape === 'polygon' });
+      if (r.options.mode === 'hole') options.push({ key: 'C', label: 'Cirkel', run: shape('circle'), on: r.shape === 'circle' });
+      if (r.options.mode === 'hole' && r.shape === 'polygon')
+        options.push({
+          key: 'G',
+          label: 'Båge',
+          run: () => {
+            r.setArc(!r.arc);
+            redraw();
+          },
+          on: r.arc,
+        });
+      if (r.canClose) options.push({ key: 'K', label: 'Klar', run: () => r.closePolygon() });
       if (!r.started && r.options.mode === 'slab') options.push({ key: 'V', label: 'Ur väggarna', run: () => app.slabFromWalls() });
-      if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.reset() });
+      if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.undoPoint() });
       return { head, text: r.hintText(), options };
     }
     case 'ground': {

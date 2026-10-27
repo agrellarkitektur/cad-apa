@@ -330,3 +330,98 @@ export function offsetShapeEdge(s: ShapeLike, i: number, d: number): Record<stri
 export function previewShape(s: ShapeLike, patch: Record<string, unknown>): { points: Vec2[]; closed: boolean } {
   return shapePoints({ ...s.params, ...patch } as unknown as Shape2DParams);
 }
+
+/**
+ * Kanterna som Förskjut flyttar när flera kanter väljs (0.10.17): `count`
+ * kanter symmetriskt kring kant i (en på var sida för 3 …), eller alla när
+ * `count` är 0 eller minst så många som formen har. I en sluten form går
+ * följden runt; i en öppen slutar den vid ändarna.
+ */
+export function edgeRun(s: ShapeLike, i: number, count: number): number[] {
+  const segs = segmentCount(pointsOf(s).length, closedOf(s));
+  if (count <= 0 || count >= segs) return Array.from({ length: segs }, (_, k) => k);
+  const half = Math.floor(count / 2);
+  const out = new Set<number>();
+  for (let k = i - half; k <= i + half; k++) {
+    if (closedOf(s)) out.add(((k % segs) + segs) % segs);
+    else if (k >= 0 && k < segs) out.add(k);
+  }
+  return [...out].sort((a, b) => a - b);
+}
+
+/**
+ * Kanterna `edges` förskjutna d mm åt vänster sett längs var och en
+ * (0.10.17). I en sluten form ligger vänster på samma sida för alla kanter,
+ * så alla kanter ger en större eller mindre form. Hörnen räknas om där två
+ * förskjutna kanter (eller en förskjuten och en kvar) möts; en båge
+ * förskjuts med sin tangent i hörnet och behåller sin vinkel, så att en
+ * avrundning förblir en avrundning och en cirkel en cirkel. Null om en
+ * kant då byter riktning eller ytan vänder sig eller klappar ihop.
+ */
+export function offsetShapeEdges(s: ShapeLike, edges: readonly number[], d: number): Record<string, unknown> | null {
+  if (!shapeCan(s).offset || !edges.length || Math.abs(d) < 0.5) return null;
+  const pts = pointsOf(s);
+  const n = pts.length;
+  const closed = closedOf(s);
+  const segs = segmentCount(n, closed);
+  if (n < 2) return null;
+  const b = fullBulges(s);
+  const on = new Set(edges);
+  const off = (k: number) => (on.has(k) ? d : 0);
+  // Tangenten i kantens början och slut: kordan, vriden med halva bågens vinkel.
+  const tangent = (k: number, atEnd: boolean): Vec2 => {
+    const a = pts[k];
+    const c = pts[(k + 1) % n];
+    const u = norm(sub(c, a));
+    const h = dist(a, c) / 2;
+    const phi = h > 0 && Math.abs(b[k]) >= STRAIGHT ? 2 * Math.atan(b[k] / h) : 0;
+    const r = atEnd ? -phi : phi;
+    return [u[0] * Math.cos(r) - u[1] * Math.sin(r), u[0] * Math.sin(r) + u[1] * Math.cos(r)];
+  };
+  const next: P[] = pts.map((v, j) => {
+    const into = closed || j > 0 ? (j - 1 + segs) % segs : -1;
+    const from = closed || j < n - 1 ? j % segs : -1;
+    const dIn = into >= 0 ? off(into) : 0;
+    const dOut = from >= 0 ? off(from) : 0;
+    if (!dIn && !dOut) return v;
+    const push = (t: Vec2, dd: number): Vec2 => {
+      const l = left(t);
+      return [v[0] + l[0] * dd, v[1] + l[1] * dd];
+    };
+    if (into < 0 || from < 0) {
+      const q = into >= 0 ? push(tangent(into, true), dIn) : push(tangent(from, false), dOut);
+      return [Math.round(q[0]), Math.round(q[1])];
+    }
+    const t1 = tangent(into, true);
+    const t2 = tangent(from, false);
+    const p1 = push(t1, dIn);
+    const p2 = push(t2, dOut);
+    const den = t1[0] * t2[1] - t1[1] * t2[0];
+    let q: Vec2;
+    if (Math.abs(den) < 1e-9) q = dIn ? p1 : p2;
+    else {
+      const t = ((p2[0] - p1[0]) * t2[1] - (p2[1] - p1[1]) * t2[0]) / den;
+      q = [p1[0] + t1[0] * t, p1[1] + t1[1] * t];
+    }
+    return [Math.round(q[0]), Math.round(q[1])];
+  });
+  // Bågarna behåller sin vinkel: pilhöjden följer kordan. Ingen kant får vända.
+  const nb = [...b];
+  for (let k = 0; k < segs; k++) {
+    const a0 = pts[k];
+    const c0 = pts[(k + 1) % n];
+    const a1 = next[k];
+    const c1 = next[(k + 1) % n];
+    const before = dist(a0, c0);
+    const after = dist(a1, c1);
+    if (before >= 1 && ((c1[0] - a1[0]) * (c0[0] - a0[0]) + (c1[1] - a1[1]) * (c0[1] - a0[1])) / before <= 1) return null;
+    if (nb[k]) nb[k] = before > 1 ? (nb[k] * after) / before : 0;
+  }
+  if (closed && n >= 3) {
+    const area = (q: readonly P[]) => q.reduce((acc, p, k) => acc + p[0] * q[(k + 1) % q.length][1] - q[(k + 1) % q.length][0] * p[1], 0);
+    const a0 = area(pts);
+    const a1 = area(next);
+    if (a0 * a1 <= 0 || Math.abs(a1) < 1e4) return null;
+  }
+  return { points: next, ...(pathOf(s) === 'polyline' && s.params.bulges ? bulgesParam(nb) : {}) };
+}

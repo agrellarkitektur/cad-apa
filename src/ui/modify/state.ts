@@ -19,6 +19,8 @@ export interface ModifyState {
   readonly ctx: ModifyContext;
   /** Värdet i rutan: radie, avstånd, antal … */
   readonly value: number;
+  /** Förskjut (0.10.17): hur många kanter, symmetriskt kring den klickade; 0 = alla. */
+  readonly edges: number;
   /** Vrid: riktningen man vrider från, när den klickats. */
   readonly ref: Vec2 | null;
   /** Hörnskarv: den första väggen eller linjen och var man klickade på den. */

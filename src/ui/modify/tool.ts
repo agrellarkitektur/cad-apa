@@ -1,5 +1,6 @@
 import { updateParams } from '../../core/commands';
 import { moveVertically } from '../../core/levels';
+import { fuseLines } from '../../core/joinLines';
 import type { Id } from '../../core/model';
 import { removeNode, setOutline } from '../../core/roofEdit';
 import { mergeAtCorner, reshapeWall } from '../../core/wallEdit';
@@ -43,6 +44,13 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
     const el = editedShape(doc, ctx.shapeId, ctx.hole);
     const patch = el && bendShapeEdge(el, ctx.index!, 0);
     if (el && patch) updateParams(host.store, [ctx.shapeId!], shapePatch(doc, ctx.shapeId!, ctx.hole, patch), 'Räta ut');
+    return;
+  }
+  // Foga ihop linjer (0.10.17).
+  if (op === 'shapeFuse') {
+    const kept = fuseLines(host.store, ctx.ids);
+    if (kept) host.selection.set(kept);
+    else host.hint('Linjerna har ingen gemensam ändpunkt (linjer och splines fogas var för sig).', 3500);
     return;
   }
   // Håltagningen ur bjälklaget (0.9.4).
@@ -141,6 +149,8 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
   readonly op: OpId;
   readonly ctx: ModifyContext;
   value: number;
+  /** Förskjut (0.10.17): antalet kanter, 0 = alla. Sätts av Modifier. */
+  edges = 1;
   private done: () => void;
   private cursorAt: SnapResult | null = null;
   ref: Vec2 | null = null;
@@ -194,6 +204,12 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
     this.host.view.requestRender();
   }
 
+  /** Hur många kanter Förskjut flyttar (0.10.17); 0 = alla. */
+  setEdges(n: number): void {
+    this.edges = n;
+    this.host.view.requestRender();
+  }
+
   /** Väggens längd nu (för Sträck). */
   currentLength(): number {
     return currentLength(this);
@@ -236,7 +252,7 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
   lockAngle: number | null = null;
 
   lastPoint(): Vec2 | undefined {
-    if (this.op === 'rotate' && this.ref) return this.base ?? undefined;
+    if ((this.op === 'rotate' || this.op === 'holeRotate') && this.ref) return (this.op === 'rotate' ? this.base : this.ctx.at) ?? undefined;
     return (BASE_OPS.has(this.op) ? this.base : this.op === 'stretch' ? fixedEnd(this) : this.ctx.at) ?? undefined;
   }
 
@@ -274,8 +290,8 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
       this.changed();
       return;
     }
-    if (this.op === 'rotate' && !this.ref) {
-      if (dist(at, this.base!) < 1) return;
+    if ((this.op === 'rotate' || this.op === 'holeRotate') && !this.ref) {
+      if (dist(at, this.op === 'rotate' ? this.base! : this.ctx.at) < 1) return;
       this.ref = at;
       return;
     }

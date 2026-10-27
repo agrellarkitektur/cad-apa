@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.16** (alfa); nästa är **0.10.17, linjerna i 2D-formen**.
+**0.10.17** (alfa); nästa är **0.10.18, rampens referenslinje**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,32 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.17, linjerna i 2D-formen (samma filformat, 20):
+- **Rita vidare** på en linje genom att klicka på änden, också när den
+  inte är markerad (Ctrl+klick börjar en ny linje). Ett klick på ena
+  änden och sedan den andra sluter en öppen linje utan nya punkter
+- **Förskjut flera kanter**: i Förskjut finns *Kanter* (1, 3, 5 eller
+  Alla). Tre kanter flyttar den klickade och en på var sida; Alla gör en
+  sluten rektangel till en större eller mindre rektangel. Gäller 2D-former,
+  takfall, håltagningar, bjälklag och markytor. En båge förskjuts också och
+  behåller sin vinkel, så att en cirkel blir en större cirkel
+- **Foga ihop** (Shift+V, kommandot `foga` eller `join`): markerade
+  linjer som delar en ändpunkt blir en lång linje; slutar den där den
+  började blir den sluten. Den första linjen behåller sin penna
+- **Ett klick mitt på en kant** i en markerad 2D-form, takkontur,
+  håltagning eller ett markobjekt startar det som senast användes på en
+  kant (t.ex. Lägg till punkt). Smartmenyn visar de andra valen som förut
+- **Takets kontur med bågar**: knappen *Båge* (eller G i smartshell) gör
+  nästa kant till en båge; klicka var den slutar och sedan en punkt på den.
+  Enter sluter konturen
+- **Bjälklag och håltagningar** ritas som rektangel, polygon eller (för
+  håltagningar) cirkel; håltagningens polygon kan ha bågar
+- **Håltagningen för sig**: klicka på ett hörn eller en kant i hålet, så
+  flyttas, vrids och speglas hålet utan bjälklaget (Flytta, Vrid och Spegla
+  i raden gäller hålet)
+- **Markobjektens linjer** (väg, ramp och stödmur) visar sina punkter när
+  de är markerade
 
 Version 0.10.16, snittet i planen (samma filformat, 20):
 - **Planen är ett snitt i snitthöjden** (1100 över golvet, inställt per

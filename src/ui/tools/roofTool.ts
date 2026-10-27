@@ -8,6 +8,8 @@ import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import type { PointTaker } from '../pointInput';
 import { pxToMm, type ToolHost } from './host';
 import { snapMarker } from './overlay';
+import { ChainInput } from './chainInput';
+import { shapePoints } from '../../elements/drawing2d';
 import { roundMm, snap, type SnapResult } from './snap';
 
 /** Vad verktyget ritar: ett takfall för hand, eller ett snabbval över en rektangel. */
@@ -35,9 +37,11 @@ export interface RoofToolOptions {
 export class RoofTool implements ViewTool, PointTaker {
   cursor = 'crosshair';
   private host: ToolHost;
-  /** Konturens punkter, eller rektangelns första hörn. */
+  /** Snabbvalens första hörn. */
   private points: Vec2[] = [];
-  private contour: Vec2[] | null = null;
+  /** Takfallets kontur medan den klickas, med bågar (0.10.17). */
+  readonly chain = new ChainInput();
+  private contour: { points: [number, number][]; bulges?: number[] } | null = null;
   private refA: Vec2 | null = null;
   private refB: Vec2 | null = null;
   private current: SnapResult | null = null;
@@ -52,7 +56,7 @@ export class RoofTool implements ViewTool, PointTaker {
   }
 
   get started(): boolean {
-    return this.points.length > 0 || !!this.contour;
+    return this.points.length > 0 || this.chain.count > 0 || !!this.contour;
   }
 
   /** Steget: kontur, referenslinjens start, slut eller sidan. */
@@ -65,7 +69,18 @@ export class RoofTool implements ViewTool, PointTaker {
 
   /** Konturen kan slutas (Avsluta i smartshell). */
   get canClose(): boolean {
-    return this.options.mode === 'face' && !this.contour && this.points.length >= 3;
+    return this.options.mode === 'face' && !this.contour && this.chain.canClose;
+  }
+
+  /** Nästa kant i konturen blir en båge (0.10.17). */
+  get arc(): boolean {
+    return this.chain.arc;
+  }
+
+  setArc(on: boolean): void {
+    this.chain.arc = on;
+    this.onChange?.();
+    this.host.view.requestRender();
   }
 
   down(): 'capture' {
@@ -82,7 +97,7 @@ export class RoofTool implements ViewTool, PointTaker {
 
   private from(): Vec2 | undefined {
     if (this.step === 'refEnd') return this.refA ?? undefined;
-    if (this.step === 'contour') return this.points.at(-1);
+    if (this.step === 'contour') return this.chain.last();
     return undefined;
   }
 
@@ -128,14 +143,15 @@ export class RoofTool implements ViewTool, PointTaker {
       return;
     }
     switch (this.step) {
-      case 'contour':
-        if (this.points.length >= 3 && dist(pt, this.points[0]) <= pxToMm(this.host, 10)) {
-          this.closeContour();
+      case 'contour': {
+        const r = this.chain.click(pt, pxToMm(this.host, 10));
+        if (r === 'closed') {
+          this.takeContour();
           return;
         }
-        if (this.points.length && dist(pt, this.points[this.points.length - 1]) < 1) return;
-        this.points.push(pt);
+        if (r === 'none') return;
         break;
+      }
       case 'refStart':
         this.refA = pt;
         break;
@@ -159,11 +175,15 @@ export class RoofTool implements ViewTool, PointTaker {
     this.onChange?.();
   }
 
-  /** Konturen är klar; nu referenslinjen. */
+  /** Konturen är klar (Enter, Klar): den sista kanten rak; nu referenslinjen. */
   closeContour(): void {
-    if (!this.canClose) return;
-    this.contour = this.points;
-    this.points = [];
+    if (!this.canClose || !this.chain.close()) return;
+    this.takeContour();
+  }
+
+  private takeContour(): void {
+    this.contour = this.chain.result();
+    this.chain.reset();
     this.lockAngle = null;
     this.onChange?.();
     this.host.view.requestRender();
@@ -185,16 +205,25 @@ export class RoofTool implements ViewTool, PointTaker {
     this.onCreated?.(els.map((e) => e.id));
   }
 
-  /** Ett takfall med konturen och referenslinjen. */
-  createFace(contour: Vec2[], ref: [Vec2, Vec2]): void {
+  /**
+   * Ett takfall med konturen och referenslinjen. Konturen läggs moturs; bågarna
+   * (0.10.17) vänds med den.
+   */
+  createFace(contour: Vec2[] | { points: [number, number][]; bulges?: number[] }, ref: [Vec2, Vec2]): void {
+    const c = Array.isArray(contour) ? { points: contour.map((q): [number, number] => [q[0], q[1]]) } : contour;
+    const n = c.points.length;
+    const ring = shapePoints({ shape: 'polyline', points: c.points, bulges: c.bulges, closed: true }).points;
     let a = 0;
-    for (let i = 0; i < contour.length; i++) {
-      const p = contour[i];
-      const q = contour[(i + 1) % contour.length];
+    for (let i = 0; i < ring.length; i++) {
+      const p = ring[i];
+      const q = ring[(i + 1) % ring.length];
       a += p[0] * q[1] - q[0] * p[1];
     }
-    const outline = (a < 0 ? [...contour].reverse() : contour).map((q): [number, number] => [q[0], q[1]]);
-    this.add([{ outline, ref: [[ref[0][0], ref[0][1]], [ref[1][0], ref[1][1]]], ...this.base() }]);
+    const flip = a < 0;
+    const outline = (flip ? [...c.points].reverse() : c.points).map((q): [number, number] => [q[0], q[1]]);
+    // Kant k i den vända konturen är kant n − 2 − k baklänges (den sista är den slutande).
+    const bulges = c.bulges && (flip ? c.points.map((_, k) => -(c.bulges![(n - 2 - k + n) % n] ?? 0) || 0) : c.bulges);
+    this.add([{ outline, ...(bulges?.some((b) => b) ? { bulges } : {}), ref: [[ref[0][0], ref[0][1]], [ref[1][0], ref[1][1]]], ...this.base() }]);
   }
 
   /** Snabbvalet över rektangeln mellan a och b (husets ytterliv). */
@@ -223,9 +252,11 @@ export class RoofTool implements ViewTool, PointTaker {
     if (this.refB) this.refB = null;
     else if (this.refA) this.refA = null;
     else if (this.contour) {
-      this.points = this.contour;
+      // Konturen öppnas igen; den slutande kanten tas bort.
+      this.chain.load(this.contour.points, this.contour.bulges);
       this.contour = null;
-    } else this.points.pop();
+    } else if (this.options.mode === 'face') this.chain.undo();
+    else this.points.pop();
     this.lockAngle = null;
     this.onChange?.();
     this.host.view.requestRender();
@@ -235,7 +266,9 @@ export class RoofTool implements ViewTool, PointTaker {
     if (this.options.mode !== 'face') return this.points.length ? 'Klicka det motsatta hörnet av huset.' : 'Klicka ett hörn av huset i ytterlivet; takfallen får sprången utanför.';
     switch (this.step) {
       case 'contour':
-        return this.points.length >= 3 ? 'Klicka nästa hörn. Klicka på första hörnet, dubbelklicka eller tryck Enter när konturen är klar.' : 'Klicka konturens hörn, med språnget.';
+        if (this.chain.waiting) return 'Klicka en punkt på bågen.';
+        if (this.chain.arc) return this.chain.count ? 'Klicka var bågen slutar (på första hörnet för att sluta konturen med en båge).' : 'Klicka konturens första hörn.';
+        return this.chain.count >= 3 ? 'Klicka nästa hörn. Klicka på första hörnet, dubbelklicka eller tryck Enter när konturen är klar.' : 'Klicka konturens hörn, med språnget. Med Båge blir nästa kant en båge.';
       case 'refStart':
         return 'Klicka referenslinjens start, där höjden gäller (t.ex. ytterlivet vid takfoten).';
       case 'refEnd':
@@ -249,6 +282,7 @@ export class RoofTool implements ViewTool, PointTaker {
 
   reset(): void {
     this.points = [];
+    this.chain.reset();
     this.contour = null;
     this.refA = null;
     this.refB = null;
@@ -266,7 +300,7 @@ export class RoofTool implements ViewTool, PointTaker {
         out.push(`<path d="${path([a, [cur[0], a[1]], cur, [a[0], cur[1]]], true)}" class="rubber"/>`);
       }
     } else {
-      const contour = this.contour ?? (cur && this.points.length ? [...this.points, cur] : this.points);
+      const contour = this.contour ? shapePoints({ shape: 'polyline', points: this.contour.points, bulges: this.contour.bulges, closed: true }).points : this.chain.preview(cur);
       if (contour.length >= 2) out.push(`<path d="${path(contour, !!this.contour)}" class="rubber"/>`);
       const a = this.refA;
       const b = this.refB ?? (a && cur ? cur : null);

@@ -2497,7 +2497,7 @@ detaljnivåerna ändras inte. Märks i hans ritningar: en låg stödmur (krön
 under 1100 över våningens golv) ritas som kontur, inte skrafferad; en
 vägg vars fot ligger över snittet är inte längre snittad.*
 
-### 0.10.17 Linjerna i 2D-formen (förslag)
+### 0.10.17 Linjerna i 2D-formen ✓
 
 - Fortsätta och sluta en linje med ändpunkterna; Förskjut flera kanter;
   foga ihop linjer
@@ -2508,6 +2508,43 @@ vägg vars fot ligger över snittet är inte längre snittad.*
   speglas) utan att bjälklaget påverkas (fråga 31)
 - Referens- och konturlinjernas punkter (t.ex. takets kontur) syns som
   riktiga punkter när objektet är markerat (Inkorgen 27 oktober)
+
+*Byggd 27 oktober (kväll), samma format (20). Carl August hoppade över
+frågorna. Claudes val: **Rita vidare** gäller alla öppna linjer och
+splines i vyn, inte bara de markerade (de markerade går före när två ändar
+ligger i samma punkt; Ctrl+klick börjar en ny linje som förut); ett klick
+på ena änden och sedan den andra sluter linjen utan nya punkter (det var
+felet: utan nya punkter gjordes ingenting). **Förskjut** har *Kanter* (1,
+3, 5, Alla) bredvid avståndet i smartmenyn och verktygsraden, kvar till
+nästa gång; kanterna väljs symmetriskt kring den klickade (runt en sluten
+form, till ändarna i en öppen); vänster sett längs varje kant, så alla
+kanter i en sluten form går åt samma håll; hörnen räknas om där kanterna
+möts (en förskjuten kant och en kvar som förut); en båge förskjuts med sin
+tangent i hörnen och behåller sin vinkel (Förskjut finns nu också på
+bågar); en kant får inte vända och ytan inte klappa ihop. Samma *Kanter*
+för bjälklagets och markytans kontur. **Foga ihop** är en egen knapp i
+raden (Shift+V, ikon två linjer och en punkt), också i smartmenyn när
+minst två öppna linjer är markerade; linjer och splines fogas var för sig,
+ändar inom 1 mm räknas som samma, den första i markeringen behåller penna
+och id, ändformerna sitter kvar i kedjans ändar, och en kedja som slutar
+där den började blir sluten. **Klick mitt på en kant** (inte väggar)
+startar det som senast valts på en kant (Lägg till punkt, Böj, Förskjut
+…), inte val som utförs direkt (Räta ut); första gången visas bara
+smartmenyn. Läst som en önskan; säg till om det var ett fel du ville bli
+av med. **Bågar** i takets kontur och håltagningens polygon: *Båge*
+(knapp, G) gör nästa kant till en båge, med slutet och en punkt på bågen
+(som 2D-formens båge); ett klick på första punkten med Båge på sluter med
+en båge; Enter och Klar sluter med en rak kant (Enter slöt inte takets
+kontur förut). Bågar i 2D-verktygets linje (fråga 59) är inte gjort.
+**Bjälklaget** ritas som rektangel eller polygon (utan bågar, konturen har
+inga), håltagningen som rektangel, polygon eller cirkel. **Hålet för sig**:
+Vrid hålet och Spegla hålet bredvid Flytta hålet och Ta bort hålet, kring
+punkten man klickade på; Flytta, Vrid och Spegla i raden gäller hålet när
+man klickat på det; att forma om (punkterna, Avrunda …) fanns redan. Ett
+klick inne i hålet markerar inte hålet (det träffar inget). **Punkterna**:
+takets och bjälklagets kontur hade dem redan; markobjektens linjer (väg,
+ramp, stödmur) får dem nu. Inte gjort: klickjämförelsen har inga steg för
+0.10.16–0.10.17 än (läggs till i granskningen).*
 
 ### 0.10.18 Rampens referenslinje (förslag, mellanstor till stor)
 

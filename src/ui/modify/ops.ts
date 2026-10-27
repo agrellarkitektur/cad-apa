@@ -4,6 +4,7 @@ import type { Id } from '../../core/model';
 import { canScale } from '../../core/arrange';
 import { movesVertically } from '../../core/levels';
 import { canJoin, canTrim } from '../../core/trimEdit';
+import { canFuse } from '../../core/joinLines';
 import { cornerPartner, cornersAmong, refFrame } from '../../core/wallEdit';
 import { allowsArcs, canRoundCorner, edgeIsArc, editedShape, holeShape, holesOf, shapeCan, shapeEdgeAt, shapeNodes, shapeOf, type ShapeLike } from '../../elements/shapeEdit';
 import { dist, sub } from '../../geometry/vec';
@@ -86,6 +87,8 @@ export type OpId =
   | 'shapeFillet'
   | 'shapeChamfer'
   | 'holeMove'
+  | 'holeRotate'
+  | 'holeMirror'
   | 'crestPoint'
   | 'holeRemove'
   | 'roofTrim'
@@ -103,7 +106,8 @@ export type OpId =
   | 'scale'
   | 'extendAll'
   | 'trimAll'
-  | 'moveZ';
+  | 'moveZ'
+  | 'shapeFuse';
 
 export interface OpDef {
   label: string;
@@ -138,7 +142,7 @@ export const OPS: Record<OpId, OpDef> = {
   roofInsert: { label: 'Lägg till punkt', short: 'Ny punkt', icon: 'insertNode', hint: 'Klicka där den nya punkten i takets kontur ska ligga.' },
   roofMove: { label: 'Flytta punkt', short: 'Flytta', icon: 'move', hint: 'Klicka var hörnet ska hamna.' },
   roofRemove: { label: 'Ta bort punkt', short: 'Ta bort', icon: 'merge', instant: true, hint: 'Hörnet tas bort; grannarna binds ihop med en rak kant.' },
-  roofOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 300 }, hint: 'Kanten flyttas vinkelrätt, utåt med plus; grannkanterna följer med.' },
+  roofOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 300 }, hint: 'Kanten flyttas vinkelrätt, utåt med plus; grannkanterna följer med. Med fler kanter flyttas också grannarna på var sida, eller alla.' },
   shapeInsert: { label: 'Lägg till punkt', short: 'Ny punkt', icon: 'insertNode', hint: 'Klicka där den nya punkten ska ligga.' },
   shapeMove: { label: 'Flytta punkt', short: 'Flytta', icon: 'move', hint: 'Klicka var punkten ska hamna. (Det går också att dra i den.)' },
   shapeRemove: { label: 'Ta bort punkt', short: 'Ta bort', icon: 'merge', instant: true, hint: 'Punkten tas bort; grannarna binds ihop.' },
@@ -158,13 +162,16 @@ export const OPS: Record<OpId, OpDef> = {
   trimAll: { label: 'Trimma mot gräns', short: 'Mot gräns', icon: 'trim', hint: 'Klicka på gränsen, sedan på den sida av den som ska bort.' },
   shapeBend: { label: 'Böj', short: 'Böj', icon: 'curveEdge', value: { label: 'Radie', unit: 'mm', initial: 1000 }, hint: 'Klicka en punkt som bågen ska gå igenom, eller skriv radien.' },
   shapeStraighten: { label: 'Räta ut', short: 'Räta ut', icon: 'straighten', instant: true, hint: 'Bågen blir rak igen.' },
-  shapeOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'Kanten flyttas vinkelrätt dit du klickar, eller skriv avståndet; grannkanterna följer med.' },
+  shapeOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'Kanten flyttas vinkelrätt dit du klickar, eller skriv avståndet; grannkanterna följer med. Med fler kanter flyttas också grannarna på var sida, eller alla.' },
   shapeFillet: { label: 'Avrunda hörn', short: 'Avrunda', icon: 'fillet', value: { label: 'Radie', unit: 'mm', initial: 500 }, hint: 'Skriv radien och tryck Enter, eller klicka för att använda den. Bågen tangerar båda kanterna.' },
   shapeChamfer: { label: 'Fasa hörn', short: 'Fasa', icon: 'chamfer', value: { label: 'Avstånd', unit: 'mm', initial: 500 }, hint: 'Skriv avståndet från hörnet och tryck Enter, eller klicka för att använda det.' },
-  holeMove: { label: 'Flytta hålet', short: 'Flytta hål', icon: 'move', hint: 'Klicka var hålet ska hamna, räknat från punkten du klickade på.' },
+  holeMove: { label: 'Flytta hålet', short: 'Flytta hål', icon: 'move', hint: 'Klicka var hålet ska hamna, räknat från punkten du klickade på. Bjälklaget ligger kvar.' },
+  holeRotate: { label: 'Vrid hålet', short: 'Vrid hål', icon: 'rotate', value: { label: 'Vinkel', unit: '°', initial: 90 }, hint: 'Hålet vrids kring punkten du klickade på: klicka en riktning att vrida från och sedan dit, eller skriv vinkeln. Bjälklaget ligger kvar.' },
+  holeMirror: { label: 'Spegla hålet', short: 'Spegla hål', icon: 'mirror', hint: 'Speglingslinjen går genom punkten du klickade på; klicka linjens riktning. Bjälklaget ligger kvar.' },
   roofTrim: { label: 'Kapa mot tak', short: 'Kapa mot tak', icon: 'trim', hint: 'Klicka på takfallet som det ska kapas mot. Kvar blir den del du klickade på, eller den största.' },
   crestPoint: { label: 'Höjdpunkt på krönet', short: 'Höjdpunkt', icon: 'insertNode', value: { label: 'ÖK', unit: 'mm', initial: 0 }, hint: 'Skriv krönets höjd i punkten och tryck Enter (förslaget är höjden där nu), eller klicka för att använda den. Punkten dras sedan längs muren.' },
   moveZ: { label: 'Flytta i höjd', short: 'I höjd', icon: 'moveZ', value: { label: 'Höjd', unit: 'mm', initial: 100 }, hint: 'Skriv hur mycket upp (minus för ned) och tryck Enter. Hela objektet flyttas: väggens fot och topp, bjälklaget, möbeln eller taket.' },
+  shapeFuse: { label: 'Foga ihop', short: 'Foga ihop', icon: 'fuse', instant: true, hint: 'De markerade linjerna som delar en ändpunkt blir en lång linje. Den första behåller sin penna.' },
   holeRemove: { label: 'Ta bort hålet', short: 'Ta bort hål', icon: 'trash', instant: true, hint: 'Håltagningen tas bort ur bjälklaget.' },
 };
 
@@ -204,14 +211,16 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
             ...(can.insert ? (['shapeInsert'] as OpId[]) : []),
             ...(can.bend ? (['shapeBend'] as OpId[]) : []),
             ...(arc ? (['shapeStraighten'] as OpId[]) : []),
-            ...(can.offset && !arc ? (['shapeOffset'] as OpId[]) : []),
+            // En båge förskjuts också (0.10.17): den behåller sin vinkel.
+            ...(can.offset ? (['shapeOffset'] as OpId[]) : []),
           ]
         : ['shapeMove', ...(can.remove ? (['shapeRemove'] as OpId[]) : []), ...(el && canRoundCorner(el, ctx.index!) ? ((allowsArcs(el) ? ['shapeFillet', 'shapeChamfer'] : ['shapeChamfer']) as OpId[]) : [])];
     // Stödmurens höjdpunkter (0.10.9) på referenslinjen.
     const host0 = doc.elements[ctx.shapeId];
     if (host0?.type === 'Ground' && host0.params.kind === 'wall') own.push('crestPoint');
     // En håltagning (0.9.4) flyttas och tas bort för sig; det allmänna gäller hela bjälklaget.
-    if (ctx.hole !== undefined) return [own, ['holeMove', 'holeRemove']];
+    // Vrida och spegla hålet för sig (0.10.17).
+    if (ctx.hole !== undefined) return [own, ['holeMove', 'holeRotate', 'holeMirror', 'holeRemove']];
     // Ett takfall (0.10) kapas mot ett annat.
     // Takfotens snitt (0.10.2) för en kant.
     if (doc.elements[ctx.shapeId]?.type === 'Roof') {
@@ -269,6 +278,8 @@ function editOps(host: ToolHost, ids: readonly Id[]): OpId[] {
   if (els.some((e) => canTrim(e))) out.push('trim');
   if (els.some((e) => canJoin(e))) out.push('join');
   if (els.some((e) => canTrim(e))) out.push('split');
+  // Foga ihop (0.10.17): minst två öppna linjer.
+  if (els.filter((e) => canFuse(host.store.doc, e)).length >= 2) out.push('shapeFuse');
   return out;
 }
 
@@ -373,6 +384,7 @@ export type RailId =
   | 'trim'
   | 'join'
   | 'split'
+  | 'fuse'
   | 'align'
   | 'pick'
   | 'scale';
@@ -391,9 +403,10 @@ export interface RailDef {
 /** Modifiera-radens knappar i grupper, i den ordning de visas. */
 export const RAIL: RailDef[][] = [
   [
-    { id: 'move', label: 'Flytta', icon: 'move', ops: ['move'], key: 'M' },
-    { id: 'rotate', label: 'Vrid', icon: 'rotate', ops: ['rotate'], key: 'R' },
-    { id: 'mirror', label: 'Spegla', icon: 'mirror', ops: ['mirror'], key: 'S' },
+    // En håltagning man klickat på flyttas, vrids och speglas för sig (0.10.17).
+    { id: 'move', label: 'Flytta', icon: 'move', ops: ['holeMove', 'move'], key: 'M' },
+    { id: 'rotate', label: 'Vrid', icon: 'rotate', ops: ['holeRotate', 'rotate'], key: 'R' },
+    { id: 'mirror', label: 'Spegla', icon: 'mirror', ops: ['holeMirror', 'mirror'], key: 'S' },
     { id: 'multiply', label: 'Kopiera i rad', icon: 'multiply', ops: ['multiply'], key: 'U' },
   ],
   [
@@ -407,6 +420,7 @@ export const RAIL: RailDef[][] = [
     { id: 'extend', label: 'Förläng till', icon: 'extend', ops: ['extend', 'extendAll'], ask: 'Klicka på änden som ska förlängas.', key: 'X' },
     { id: 'trim', label: 'Trimma', icon: 'trim', ops: ['trim', 'trimAll'], key: 'T' },
     { id: 'join', label: 'Hörnskarv', icon: 'cornerJoin', ops: ['join'], key: 'J' },
+    { id: 'fuse', label: 'Foga ihop', icon: 'fuse', ops: ['shapeFuse'], key: 'V' },
   ],
   [
     { id: 'insert', label: 'Lägg till punkt', icon: 'insertNode', ops: ['insert', 'roofInsert', 'shapeInsert'], ask: 'Klicka på referenslinjen eller kanten där punkten ska läggas till.', key: 'I' },
@@ -460,7 +474,7 @@ export function railFor(host: ToolHost, ids: readonly Id[]): Set<RailId> {
     }
   }
   if (els.some(hasEditableOutline)) for (const id of ['insert', 'pointMove', 'remove', 'offset'] as const) on.add(id);
-  for (const op of editOps(host, ids)) on.add(op as RailId);
+  for (const op of editOps(host, ids)) on.add(op === 'shapeFuse' ? 'fuse' : (op as RailId));
   for (const op of arrangeOps(host, ids)) on.add(op === 'extendAll' ? 'extend' : op === 'trimAll' ? 'trim' : (op as RailId));
   // 2D-formerna, takfallens kontur (0.10) och håltagningarna i bjälklagen (0.9.4).
   const shapes: ShapeLike[] = els.flatMap((el) => {

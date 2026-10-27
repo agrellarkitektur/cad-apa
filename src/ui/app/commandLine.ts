@@ -176,6 +176,9 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     else if (app.ui.tool === 'dimension') app.dimensionTool.donePoints();
     else if (app.ui.tool === 'draw2d') app.draw2dTool.finish(false);
     else if (app.ui.tool === 'ground') app.groundTool.finish();
+    // Takets och bjälklagets kontur sluts med Enter (0.10.17).
+    else if (app.ui.tool === 'roof') app.roofTool.closeContour();
+    else if (app.ui.tool === 'slab') app.slabTool.closePolygon();
     refresh();
   }
 

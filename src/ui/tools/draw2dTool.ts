@@ -9,7 +9,6 @@ import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { renderPrimitives } from '../../view2d/renderPrimitives';
 import { pxToMm, type ToolHost } from './host';
 import { resolveParams } from '../../elements/registry';
-import { pickableById } from '../../repr/plan';
 import { snapMarker } from './overlay';
 import { roundMm, snap, type SnapResult } from './snap';
 import type { PointTaker } from '../pointInput';
@@ -94,7 +93,7 @@ export class Draw2DTool implements ViewTool, PointTaker {
       this.finish(false);
       return;
     }
-    // Klick på änden av en markerad öppen form ritar den vidare (0.8.28); Ctrl börjar en ny.
+    // Klick på änden av en öppen form ritar den vidare (0.8.28; också omarkerad sedan 0.10.17); Ctrl börjar en ny.
     if (this.open && !this.points.length && !p.mod && this.continueAt(this.current.point, pxToMm(this.host, p.pointerType === 'touch' ? 18 : 10))) return;
     // Klick på första punkten sluter en polylinje eller spline.
     if (this.open && this.points.length >= 3 && dist(pt, this.points[0]) <= pxToMm(this.host, 10)) {
@@ -119,22 +118,24 @@ export class Draw2DTool implements ViewTool, PointTaker {
   }
 
   /**
-   * De markerade öppna 2D-formerna (linjer och splines, också med bågar) som
-   * går att rita vidare: synliga och möjliga att ändra här.
+   * De öppna 2D-formerna (linjer och splines, också med bågar) som går att
+   * rita vidare: synliga i vyn, olåsta och möjliga att ändra här. Sedan
+   * 0.10.17 också de som inte är markerade; de markerade kommer först, så att
+   * de vinner när två ändar ligger i samma punkt.
    */
   continuable(): Element[] {
     const host = this.host;
     const doc = host.store.doc;
-    const shown = pickableById(host.plan().pickables);
     const ro = !!host.readOnly?.();
-    return host.selection
-      .list()
-      .map((id) => doc.elements[id])
-      .filter((el): el is Element => {
-        if (el?.type !== 'Shape2D' || !shown.has(el.id) || (ro && !host.canEdit?.(el.id))) return false;
-        const q = resolveParams<Shape2DParams>(doc, el);
-        return (q.shape === 'polyline' || q.shape === 'spline') && q.points.length >= 2 && !isClosed(q);
-      });
+    const sel = new Set(host.selection.list());
+    const out: Element[] = [];
+    for (const pk of host.plan().pickables) {
+      const el = doc.elements[pk.id];
+      if (el?.type !== 'Shape2D' || el.locked || (ro && !host.canEdit?.(el.id))) continue;
+      const q = resolveParams<Shape2DParams>(doc, el);
+      if ((q.shape === 'polyline' || q.shape === 'spline') && q.points.length >= 2 && !isClosed(q)) out.push(el);
+    }
+    return out.sort((a, b) => Number(sel.has(b.id)) - Number(sel.has(a.id)));
   }
 
   /**
@@ -143,7 +144,10 @@ export class Draw2DTool implements ViewTool, PointTaker {
    */
   continueAt(pt: Vec2, tol: number): boolean {
     let best: { el: Element; atStart: boolean; d: number } | null = null;
+    const sel = new Set(this.host.selection.list());
     for (const el of this.continuable()) {
+      // En markerad form går före en omarkerad som har en ände lika nära.
+      if (best && sel.has(best.el.id) && !sel.has(el.id)) break;
       const pts = resolveParams<Shape2DParams>(this.host.store.doc, el).points as Vec2[];
       for (const atStart of [false, true]) {
         const d = dist(pt, atStart ? pts[0] : pts[pts.length - 1]);
@@ -228,7 +232,8 @@ export class Draw2DTool implements ViewTool, PointTaker {
    * ändformerna plats så att de sitter kvar där de satt.
    */
   private extend(base: NonNullable<Draw2DTool['base']>, pts: Vec2[], closed: boolean): void {
-    if (pts.length <= base.n) return;
+    // Utan nya punkter går formen bara att sluta (ett klick på ena änden och sedan den andra, 0.10.17).
+    if (pts.length < base.n || (pts.length === base.n && !closed)) return;
     const el = this.host.store.doc.elements[base.id];
     if (!el) return;
     const q = resolveParams<Shape2DParams>(this.host.store.doc, el);
@@ -316,9 +321,9 @@ export class Draw2DTool implements ViewTool, PointTaker {
     }
   }
 
-  /** Tipset om att rita vidare (0.8.28), när det finns en markerad öppen form. */
+  /** Tipset om att rita vidare (0.8.28). */
   private continueHint(): string {
-    return this.continuable().length ? ', eller på en ände av den markerade för att rita vidare (Ctrl+klick börjar en ny)' : '';
+    return ', eller på änden av en linje för att rita vidare (Ctrl+klick börjar en ny)';
   }
 
   overlay(cam: Camera): string {

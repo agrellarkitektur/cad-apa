@@ -1,5 +1,6 @@
 import { isLineMode, type GroundMode } from '../tools/groundTool';
 import type { RoofMode } from '../tools/roofTool';
+import type { SlabShape } from '../tools/slabTool';
 import { fillTypeList } from '../../core/fillTypes';
 import { dividePath } from '../tools/measureTool';
 import type { WallFace } from '../../elements/wallSides';
@@ -80,6 +81,7 @@ export function installToolOptions(app: AppContext) {
         <label class="opt"><span>Gäller</span><select id="roof-height-at"><option value="under"${o.heightAt === 'under' ? ' selected' : ''}>Undersidan</option><option value="top"${o.heightAt === 'top' ? ' selected' : ''}>Ovansidan</option></select></label>
         ${quick ? num('roof-eave', 'Takfotssprång', o.eave, 'mm', 'Utanför ytterlivet vid takfoten') : ''}
         ${quick && o.mode !== 'hip' ? num('roof-gable', 'Gavelsprång', o.gable, 'mm', 'Utanför ytterlivet vid gaveln') : ''}
+        ${!quick && app.roofTool.step === 'contour' ? `<button class="btn" data-action="roof-arc" aria-pressed="${app.roofTool.arc}" title="Nästa kant i konturen blir en båge: klicka var den slutar och sedan en punkt på den (G)">Båge</button>` : ''}
         ${quick ? '<button class="btn" data-action="roof-house" title="Snabbvalet över ytterväggarna på våningen, med höjden där väggarna slutar">Över hela huset</button>' : app.roofTool.canClose ? '<button class="btn btn-primary" data-action="roof-close">Klar med konturen</button>' : ''}
         <span class="opt-hint">${app.roofTool.hintText()}</span>`;
       app.toolOptions.hidden = false;
@@ -97,6 +99,13 @@ export function installToolOptions(app: AppContext) {
           <button data-slab-mode="slab" aria-pressed="${!hole}">Bjälklag</button>
           <button data-slab-mode="hole" aria-pressed="${hole}">Håltagning</button>
         </div></div>
+        <div class="opt"><span>Form</span><div class="segmented" role="group" aria-label="Form">
+          <button data-slab-shape="rect" aria-pressed="${t.shape === 'rect'}" title="Två motsatta hörn">Rektangel</button>
+          <button data-slab-shape="polygon" aria-pressed="${t.shape === 'polygon'}" title="Hörn för hörn${hole ? ', med bågar' : ''}">Polygon</button>
+          ${hole ? `<button data-slab-shape="circle" aria-pressed="${t.shape === 'circle'}" title="Centrum och en punkt på cirkeln">Cirkel</button>` : ''}
+        </div></div>
+        ${hole && t.shape === 'polygon' ? `<button class="btn" data-action="slab-arc" aria-pressed="${t.arc}" title="Nästa kant blir en båge: klicka var den slutar och sedan en punkt på den (G)">Båge</button>` : ''}
+        ${t.canClose ? '<button class="btn btn-primary" data-action="slab-close">Klar med konturen</button>' : ''}
         ${hole ? '' : `<label class="opt"><span>Typ</span><select id="slab-def" aria-label="Bjälklagstyp">${opts}</select></label>
         <button class="btn" data-action="slab-walls" title="Ett bjälklag innanför ytterväggarna, som följer dem när de flyttas">Ur väggarna</button>`}
         <span class="opt-hint">${t.hintText()}</span>`;
@@ -364,11 +373,24 @@ export function installToolOptions(app: AppContext) {
     }
     if (b.dataset.action === 'roof-house') app.roofOverHouse();
     if (b.dataset.action === 'roof-close') app.roofTool.closeContour();
+    if (b.dataset.action === 'roof-arc') {
+      app.roofTool.setArc(!app.roofTool.arc);
+      renderToolOptions();
+    }
     if (b.dataset.slabMode) {
       app.slabTool.options.mode = b.dataset.slabMode as 'slab' | 'hole';
       app.slabTool.reset();
     }
     if (b.dataset.action === 'slab-walls') app.slabFromWalls();
+    if (b.dataset.slabShape) {
+      app.slabTool.options.shape = b.dataset.slabShape as SlabShape;
+      app.slabTool.reset();
+    }
+    if (b.dataset.action === 'slab-arc') {
+      app.slabTool.setArc(!app.slabTool.arc);
+      renderToolOptions();
+    }
+    if (b.dataset.action === 'slab-close') app.slabTool.closePolygon();
     if (b.dataset.groundMode) {
       app.groundTool.options.mode = b.dataset.groundMode as GroundMode;
       app.groundTool.reset();

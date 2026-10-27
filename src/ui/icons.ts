@@ -90,6 +90,8 @@ export const icons = {
   trim: svg('<path d="M14 4v16"/><path d="M3 12h11"/><path d="M14 12h7" stroke-dasharray="1.5 1.5"/><path d="M17.5 9.5l2 5M19.5 9.5l-2 5"/>'),
   // Hörnskarv: två linjer som förlängs till ett rent hörn.
   cornerJoin: svg('<path d="M4 20v-9M13 4h7"/><path d="M4 11V4h9" stroke-dasharray="1.5 1.5"/><circle cx="4" cy="4" r="1.6" fill="currentColor"/>'),
+  // Foga ihop (0.10.17): två linjer som möts i en punkt blir en.
+  fuse: svg('<path d="M3 18l6-7h6"/><path d="M15 11l6-6" stroke-dasharray="2 2"/><circle cx="15" cy="11" r="1.6" fill="currentColor"/>'),
   // Dela: en linje med ett snitt.
   split: svg('<path d="M3 12h7M14 12h7"/><path d="M10 7v10M14 7v10"/>'),
   // Avrunda och fasa alla hörn i markeringen.
