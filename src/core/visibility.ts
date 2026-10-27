@@ -57,3 +57,31 @@ export function allViews(doc: ProjectDoc): (ViewIdentity & { name: string; model
 export function countViews(doc: ProjectDoc, el: Pick<Element, 'storey' | 'space' | 'show'>): number {
   return allViews(doc).filter((v) => shownIn(el, v)).length;
 }
+
+/**
+ * Dolda objekt (0.10.15): ett enskilt objekt döljs i en vy med `obj:` och
+ * objektets id i vyns `hide`, bredvid de dolda typerna.
+ */
+export const HIDDEN_OBJECT = 'obj:';
+
+/** Nyckeln i vyns `hide` som döljer ett enskilt objekt. */
+export function hiddenObjectKey(id: Id): string {
+  return HIDDEN_OBJECT + id;
+}
+
+/** Id för de enskilt dolda objekten i en vys `hide`. */
+export function hiddenObjects(hide: readonly string[] | undefined): Id[] {
+  return (hide ?? []).filter((h) => h.startsWith(HIDDEN_OBJECT)).map((h) => h.slice(HIDDEN_OBJECT.length));
+}
+
+/**
+ * Om objektet är dolt i vyn, för sig eller genom sin typ (0.10.15). En dörr
+ * eller ett fönster följer väggen: döljs väggen döljs öppningarna i den.
+ */
+export function hiddenBy(doc: Pick<ProjectDoc, 'elements'>, el: Pick<Element, 'id' | 'type' | 'host'>, hide: readonly string[] | undefined, objects?: ReadonlySet<Id>): boolean {
+  if (!hide?.length) return false;
+  const objs = objects ?? new Set(hiddenObjects(hide));
+  if (hide.includes(el.type) || objs.has(el.id)) return true;
+  const host = el.host ? doc.elements[el.host] : undefined;
+  return !!host && (hide.includes(host.type) || objs.has(host.id));
+}

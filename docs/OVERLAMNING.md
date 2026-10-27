@@ -3,13 +3,27 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 27 oktober 2026 (eftermiddag), efter 0.10.14.
+Senast: 27 oktober 2026 (eftermiddag), efter 0.10.15.
 
 ## Läget
 
-- **Nästa session:** **0.10.15 Visa och dölja** (se *Nästa session*),
-  sedan en **granskning**.
-- **0.10.14 Fyllningar och opacitet är klar** på `main` (samma format,
+- **Nästa session:** en **granskning** (se *Nästa session*), sedan
+  **0.10.16 Snittet i planen**.
+- **0.10.15 Visa och dölja är klar** på `main` (samma format, 20).
+  Byggt: väggar, dörrar och fönster under Visa; *Dölj i vyn* och *Dölj
+  alla …* i högerklicksmenyn, sparat i vyns `hide` (`obj:` och id), med
+  *Visa dolda objekt* under Visa och i planens högerklicksmeny; grepp för
+  *Tonat från* (och djupet när det är satt) på en markerad markör i
+  planen; markobjektens linjer och släntmarkeringarna i 3D-vyn (två
+  kryssrutor under Platsen). Det dolda ritas inte men räknas med i
+  skarvar, rum och nummer. Koden i UTVECKLING.md under *Visa och dölja*;
+  Claudes val i PLAN.md. Carl August hoppade över frågorna den här
+  gången. Testerna: 542.
+- **Märks i hans ritningar efter 0.10.15:** ett dolt bjälklag eller tak
+  räknas nu med i rummens golv och väggarnas kapning (förut försvann det
+  helt ur vyns beräkningar); automåtten tar inte med dolda väggar och
+  öppningar.
+- **0.10.14 Fyllningar och opacitet** (samma format,
   20). Byggt: fyllningens panel (Ingen, Solid, Mask, Mönster) med
   opacitet i tio steg, mönstrets penna, bakgrund och förslagsbubblor, i
   2D-former, rum, markobjekt och slänterna (egen fyllning, `slopeFill`);
@@ -28,18 +42,18 @@ Senast: 27 oktober 2026 (eftermiddag), efter 0.10.14.
   0.10.17, Markobjektens linjer 0.10.18 och Situationsplanens beteckningar
   0.10.19. Ortofotot på marken är en egen liten undersökning. Förteckningen
   över markförändringarna hör till 0.12 Export.
-- **Granskningen** föreslås efter 0.10.15 (den förra var efter 0.10.12).
-  Lägg till steg i klickjämförelsen för 0.10.13 och 0.10.14 (se *Öppna
-  frågor*).
+- **Granskningen** är nästa (den förra var efter 0.10.12). Lägg till
+  steg i klickjämförelsen för 0.10.13–0.10.15 (se *Öppna frågor*).
 - **0.10.13 Höjder i förhållande till våningen**: se PLAN.md.
 - **Granskningen efter 0.10.12** och **0.10.12 Småjusteringar**: se
   PLAN.md.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.14` i `engine.ts` och `package.json`;
-  nästa version är `0.10.15`.
-- **0.10.8–0.10.14 är inte provade fullt ut** av Carl August; han har
+- **Versionsnumret** är `0.10.15` i `engine.ts` och `package.json`;
+  nästa version är `0.10.16` (granskningen höjer inte numret, eller blir
+  0.10.15.1 om något ändras som syns; följ det som gjordes efter 0.10.12).
+- **0.10.8–0.10.15 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -93,9 +107,8 @@ vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.10.12 Småjusteringar~~, ~~Granskning efter
   0.10.12~~, ~~0.10.13 Höjder i förhållande till våningen~~, ~~0.10.14
-  Fyllningar och opacitet~~ (klara)
-- **0.10.15 Visa och dölja** (med grepp för *Tonat från* och kryssrutor
-  för markobjektens linjer i 3D), sedan en **granskning**
+  Fyllningar och opacitet~~, ~~0.10.15 Visa och dölja~~ (klara)
+- **Granskning** efter 0.10.15
 - **0.10.16 Snittet i planen** (mellanstor: snitt bara vid 1100, det under
   som vy, det över streckprickat)
 - **0.10.17 Linjerna i 2D-formen** (bågar i takets kontur, cirkulära hål,
@@ -120,19 +133,29 @@ vid varje överlämning.
 
 ## Nästa session
 
-**0.10.15 Visa och dölja** (mellanstor, en session; se PLAN.md). Väggar
-och nästan allt annat kryssas ur under Visa var för sig; högerklick döljer
-ett objekt eller alla av samma typ, sparat i vyn; *Tonat från* ställs in
-med ett grepp när vyn är markerad i planen; kryssrutor för markobjektens
-linjer och släntmarkeringarna i 3D. Börja med Visa-menyn
-(`src/ui/app/showMenu.ts`) och vyns `hide` (`ViewStates`). Sedan föreslås
-en granskning.
+**Granskning** utan nya funktioner (den förra var efter 0.10.12; se
+*Granskningen efter 0.10.12* i PLAN.md för hur den gick till): städa,
+dela upp stora filer (`selectTool.ts` har vuxit med greppen,
+`showMenu.ts`), leta efter långsam kod (fasader och sektioner byggs om
+helt vid varje ändring, se *Öppna frågor*) och gå igenom testerna. Lägg
+till steg i klickjämförelsen för 0.10.13–0.10.15. Sedan **0.10.16
+Snittet i planen** (fråga först vilka objekt utöver väggar och vilken
+penna det överliggande får).
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
+
+**0.10.15 efter provning** (Claudes val, se PLAN.md)
+- Det dolda räknas med i väggarnas skarvar och rummen. Rätt, eller ska en
+  dold vägg också försvinna ur rummens konturer?
+- De dolda objekten tas fram alla på en gång. Behövs en lista att ta fram
+  dem ett och ett?
+- Greppet för *Tonat från* ligger en bit från mitten (romb), djupets i
+  mitten (fyrkant). Lätt att hitta?
+- Ska högerklick i 3D-vyn dölja bara i 3D, eller gälla vyn som nu?
 
 **0.10.14 efter provning** (Claudes val, se PLAN.md)
 - Förslagen (Gräs, Grus, Tegel …): rätt sorter och färger? Vilka saknas?
@@ -244,10 +267,15 @@ fråga.
 
 - **Höjder mot våningen (0.10.13):** en vägg vars fot ligger över planens
   snitthöjd ritas ändå som snittad i planen (0.10.16). Klickjämförelsen
-  har inga steg för 0.10.13 och 0.10.14 än (lägg till dem i nästa
-  granskning: *Fot mot våningen*, Flytta i höjd, höjdpunktens värde och
-  dragning, BH-greppet; fyllningens lägen, förslag, sparade fyllningar och
-  slänternas fyllning).
+  har inga steg för 0.10.13–0.10.15 än (lägg till dem i granskningen:
+  *Fot mot våningen*, Flytta i höjd, höjdpunktens värde och dragning,
+  BH-greppet; fyllningens lägen, förslag, sparade fyllningar och
+  slänternas fyllning; Dölj i vyn, Dölj alla väggar, Visa dolda objekt,
+  greppet för Tonat från, linjerna i 3D).
+- **Dolt (0.10.15):** det dolda gäller vyn, så 3D-vyn följer planen. *Markera
+  alla …* tar inte med det dolda; Filtrera och markera är inte prövat med
+  dolda objekt. Linjerna i 3D räknas om vid
+  varje ändring i projektet när de är tända (släntstrecken ur planen).
 - **Fyllningar (0.10.14):** slänternas yta räknas om när den färdiga
   marken ändras (ca 100 ms första gången i 1:50 på den sneda platsen,
   sedan sparad). De sparade fyllningarna finns inte i stilmallens dialog.

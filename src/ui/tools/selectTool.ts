@@ -16,7 +16,7 @@ import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { pxToMm, type ToolHost } from './host';
 import { flushSnap, roundMm, snap, type SnapResult } from './snap';
 import { lengthLabel, snapMarker } from './overlay';
-import { crestDragTo, crestGripAt, crestGripsShown, heightGripAt, heightGripsShown, type CrestGrip, type HeightGrip } from './selectGrips';
+import { crestDragTo, crestGripAt, crestGripsShown, depthDragValue, depthGeometry, depthGripAt, depthGripsShown, heightGripAt, heightGripsShown, type CrestGrip, type DepthGrip, type HeightGrip } from './selectGrips';
 import { companionsAt, endGripAt, isRoomLabel, roofGripAt, roofGripsShown, roomLabelAt, shapeNodeAt, underlayGripAt, underlayGripsShown, type Companions, type EndGrip } from './selectGrips';
 
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
@@ -69,6 +69,8 @@ export class SelectTool implements ViewTool {
   private roof: { grip: RoofGrip; drag: RoofDrag | null; snap: SnapResult | null } | null = null;
   /** En höjdpunkt på en stödmur som dras längs muren (0.10.13). */
   private crest: { grip: CrestGrip; to: Vec2 | null } | null = null;
+  /** Djupet eller *Tonat från* för en markerad fasad eller sektion som dras (0.10.15). */
+  private depthDrag: { grip: DepthGrip; value: number | null; moved: boolean } | null = null;
   /** Ett höjdmått (BH, NH, TH) som dras i sidled i en fasad eller sektion (0.10.13). */
   private measure: { grip: HeightGrip; x: number | null } | null = null;
   /** En punkt i ett 2D-element som dras (0.8 del 2). */
@@ -101,6 +103,11 @@ export class SelectTool implements ViewTool {
     const ug = this.underlayGripAt(p.model, p.pointerType === 'touch');
     if (ug) {
       this.ulGrip = { ...ug, snap: null, free: false };
+      return 'capture';
+    }
+    const dg = depthGripAt(this.host, p.model, p.pointerType === 'touch');
+    if (dg) {
+      this.depthDrag = { grip: dg, value: dg.value, moved: false };
       return 'capture';
     }
     const cg = crestGripAt(this.host, p.model, p.pointerType === 'touch');
@@ -151,6 +158,11 @@ export class SelectTool implements ViewTool {
     }
     if (this.measure) {
       this.measure.x = Math.round(p.model[0]);
+      return;
+    }
+    if (this.depthDrag) {
+      this.depthDrag.value = depthDragValue(this.depthDrag.grip, p.model);
+      this.depthDrag.moved = true;
       return;
     }
     if (this.crest) {
@@ -229,6 +241,13 @@ export class SelectTool implements ViewTool {
   }
 
   up(p: ViewPointer, moved: boolean): void {
+    if (this.depthDrag) {
+      const d = this.depthDrag;
+      this.depthDrag = null;
+      if (!moved || !d.moved || d.value === d.grip.value) return;
+      updateParams(this.host.store, [d.grip.id], { [d.grip.key]: d.value }, d.grip.key === 'depth' ? 'Ändra djupet' : 'Ändra Tonat från');
+      return;
+    }
     if (this.measure) {
       const m = this.measure;
       this.measure = null;
@@ -451,7 +470,7 @@ export class SelectTool implements ViewTool {
       this.host.view.svg.style.cursor = this.cursor = 'default';
       return;
     }
-    this.cursor = p && (endGripAt(this.host, p.model) || crestGripAt(this.host, p.model, false) || (this.host.readOnly?.() && heightGripAt(this.host, p.model, false)) || this.underlayGripAt(p.model, false)) ? 'crosshair' : this.hoverId && this.host.selection.has(this.hoverId) ? 'move' : 'default';
+    this.cursor = p && (endGripAt(this.host, p.model) || depthGripAt(this.host, p.model, false) || crestGripAt(this.host, p.model, false) || (this.host.readOnly?.() && heightGripAt(this.host, p.model, false)) || this.underlayGripAt(p.model, false)) ? 'crosshair' : this.hoverId && this.host.selection.has(this.hoverId) ? 'move' : 'default';
     this.host.view.svg.style.cursor = this.cursor;
   }
 
@@ -470,6 +489,21 @@ export class SelectTool implements ViewTool {
       if (dragging) {
         const a = cam.toScreen([this.measure!.x!, g.at[1]]);
         out.push(`<path d="M${a[0]} ${a[1]}L${a[0]} ${a[1] + 160}" class="rubber"/>`);
+      }
+    }
+    // Djupet och Tonat från för en markerad fasad eller sektion (0.10.15):
+    // gränsen streckad, och ett grepp som dras längs blickriktningen.
+    for (const g of depthGripsShown(this.host)) {
+      const dragging = this.depthDrag?.grip.key === g.key && this.depthDrag.moved;
+      const v = dragging ? this.depthDrag!.value : g.value;
+      const { a, b, at } = depthGeometry(g, dragging ? (v ?? 0) : g.shown);
+      const [sa, sb, ss] = [a, b, at].map((q) => cam.toScreen(q));
+      // Utan värde (inget tonat) ritas bara greppet, ihåligt.
+      if (v !== null) out.push(`<path d="M${sa[0]} ${sa[1]}L${sb[0]} ${sb[1]}" class="depth-line${g.key === 'toneDepth' ? ' tone' : ''}"/>`);
+      out.push(g.key === 'depth' ? `<rect x="${ss[0] - 5}" y="${ss[1] - 5}" width="10" height="10" class="grip"/>` : `<path d="M${ss[0]} ${ss[1] - 7}L${ss[0] + 7} ${ss[1]}L${ss[0]} ${ss[1] + 7}L${ss[0] - 7} ${ss[1]}Z" class="grip${v === null ? ' hollow' : ''}"/>`);
+      if (dragging) {
+        const name = g.key === 'depth' ? 'Djup' : 'Tonat från';
+        out.push(lengthLabel(cam, at, at, v === null ? `${name}: ${g.key === 'depth' ? 'allt' : 'inget'}` : `${name} ${nf.format(v)} mm`));
       }
     }
     // Stödmurarnas höjdpunkter (0.10.13): romber som dras längs muren.

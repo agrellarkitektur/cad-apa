@@ -1,6 +1,7 @@
 import { onPaper as paperSpace } from '../../core/model';
 import { setInState } from '../../core/commands';
 import { actionOf } from '../../core/states';
+import { hiddenBy } from '../../core/visibility';
 import { typeOf } from '../../elements/registry';
 import { onLongPress, type MenuItem } from '../contextMenu';
 import { pickAt } from '../../view2d/pick';
@@ -9,6 +10,7 @@ import { isSnapEnabled } from '../tools/snap';
 import { saveUiSettings } from '../uiSettings';
 import type { AppContext } from './context';
 import { orderMenuItems } from './drawOrderUi';
+import { hideMenuItems, unhideMenuItems } from './hideObjects';
 
 /** Högerklick och långt tryck: menyn för det markerade eller för planen, i plan, 3D och projektträdet. */
 export function installMenus(app: AppContext) {
@@ -95,6 +97,7 @@ export function installMenus(app: AppContext) {
           { label: 'Text', hint: 'T', run: () => app.setTool('text') },
           { kind: 'sep' },
           { label: 'Visa…', run: () => app.$<HTMLElement>('.show-btn').click() },
+          ...unhideMenuItems(app),
           { label: 'Snäppning', checked: isSnapEnabled(), run: () => app.$<HTMLElement>('[data-action="snap"]').click() },
           {
             label: 'Snäpp mot kalkeringen',
@@ -150,6 +153,8 @@ export function installMenus(app: AppContext) {
         { label: 'Rikta…', run: () => app.startUnderlayTool(first.id, 'align') },
       );
     }
+    // Dölja i vyn (0.10.15), inte på blad och mallblad.
+    if (!app.ui.layout && !app.ui.worksheet) items.push({ kind: 'sep' }, ...hideMenuItems(app, els));
     // Ritordning (0.8.25).
     const order = orderMenuItems(app, els);
     if (order.length) items.push({ kind: 'sep' }, ...order);
@@ -174,7 +179,7 @@ export function installMenus(app: AppContext) {
     const vs = app.viewStates();
     app.selection.set(
       Object.values(app.store.doc.elements)
-        .filter((e) => e.type === type && e.storey === app.ui.storey && actionOf(e, vs) !== 'absent')
+        .filter((e) => e.type === type && e.storey === app.ui.storey && actionOf(e, vs) !== 'absent' && !hiddenBy(app.store.doc, e, app.ui.hide))
         .map((e) => e.id),
     );
   }

@@ -51,7 +51,7 @@ export function autoDimensions(ctx: PlanContext): Primitive[] {
   const origin = { objectType: 'Dimension', part: 'auto' };
   const height = ctx.style.labels.heights.dimension;
   const paper = (mm: number) => mm * ctx.scale;
-  const walls = ctx.visible('Wall').filter((w) => ctx.actionOf(w) !== 'demolished');
+  const walls = ctx.visible('Wall').filter((w) => ctx.actionOf(w) !== 'demolished' && !ctx.hiddenByView(w));
   const params = (e: Element) => ctx.params<WallParams>(e);
   const out: Primitive[] = [];
   const angleOf = (v: Vec2) => (Math.atan2(v[1], v[0]) * 180) / Math.PI;
@@ -78,7 +78,7 @@ export function autoDimensions(ctx: PlanContext): Primitive[] {
   }
 
   // Nya öppningar: från närmaste vinkelräta vägglivs till hålets kanter.
-  for (const o of [...ctx.visible('Door'), ...ctx.visible('Window')]) {
+  for (const o of [...ctx.visible('Door'), ...ctx.visible('Window')].filter((o) => !ctx.hiddenByView(o))) {
     if (ctx.actionOf(o) !== 'new' || !o.host) continue;
     const host = ctx.doc.elements[o.host];
     if (!host) continue;

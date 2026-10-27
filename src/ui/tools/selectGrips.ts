@@ -8,6 +8,7 @@ import { hasImageGrips, underlayGrips, type UnderlayGrip } from '../../elements/
 import { resolveParams } from '../../elements/registry';
 import type { GroundParams } from '../../elements/ground';
 import { along, lineLength } from '../../elements/groundLines';
+import { markerFrame } from '../../elements/markers';
 import { pickableById } from '../../repr/plan';
 import type { Primitive, Vec2 } from '../../repr/primitives';
 import { distToPrim } from '../../view2d/pick';
@@ -282,4 +283,77 @@ export function heightGripAt(host: ToolHost, pt: Vec2, touch: boolean): HeightGr
     if (d <= tol && (!best || d < best.d)) best = { ...g, d };
   }
   return best;
+}
+
+/** Var greppet för *Tonat från* ligger när inget är tonat och djupet är allt, mm från linjen. */
+const TONE_DEFAULT = 4000;
+
+/**
+ * Ett grepp för en fasads eller sektions djup eller *Tonat från* (0.10.15),
+ * när markören är markerad i planen. Greppet dras längs blickriktningen.
+ */
+export interface DepthGrip {
+  id: string;
+  key: 'toneDepth' | 'depth';
+  /** Värdet nu, mm från linjen; null = inget tonat eller allt. */
+  value: number | null;
+  /** Var greppet står, mm från linjen (också när värdet saknas). */
+  shown: number;
+  /** Greppet. */
+  at: Vec2;
+  /** Markörens linje (betraktarens vänster till höger), blickriktningen och var längs linjen greppet står (0–1). */
+  start: Vec2;
+  end: Vec2;
+  view: Vec2;
+  t: number;
+}
+
+/** Gränsen `d` mm från markörens linje, och greppet på den. */
+export function depthGeometry(g: Pick<DepthGrip, 'start' | 'end' | 'view' | 't'>, d: number): { a: Vec2; b: Vec2; at: Vec2 } {
+  const off = (q: Vec2): Vec2 => [q[0] + g.view[0] * d, q[1] + g.view[1] * d];
+  const a = off(g.start);
+  const b = off(g.end);
+  return { a, b, at: [a[0] + (b[0] - a[0]) * g.t, a[1] + (b[1] - a[1]) * g.t] };
+}
+
+/** Greppen för djup och *Tonat från* på en ensam markerad fasad- eller sektionsmarkör i planen. */
+export function depthGripsShown(host: ToolHost): DepthGrip[] {
+  if (host.readOnly?.() || host.space?.()) return [];
+  const ids = host.selection.list();
+  if (ids.length !== 1) return [];
+  const doc = host.store.doc;
+  const el = doc.elements[ids[0]];
+  if ((el?.type !== 'Section' && el?.type !== 'Elevation') || el.locked) return [];
+  const f = markerFrame(doc, el);
+  const grip = (key: DepthGrip['key'], value: number | null, shown: number, t: number): DepthGrip => {
+    const base = { start: f.start, end: f.end, view: f.view, t };
+    return { id: el.id, key, value, shown, ...base, at: depthGeometry(base, shown).at };
+  };
+  const out: DepthGrip[] = [];
+  // Djupet har ett grepp när det är satt (fasader som placeras automatiskt har inget djup).
+  if (f.depth !== null) out.push(grip('depth', f.depth, f.depth, 0.5));
+  // Tonat från: en bit från mitten, så att greppen går att skilja åt när de ligger lika långt bort.
+  out.push(grip('toneDepth', f.tone, f.tone ?? f.depth ?? TONE_DEFAULT, 0.7));
+  return out;
+}
+
+/** Greppet för djup eller *Tonat från* under markören, om något. */
+export function depthGripAt(host: ToolHost, pt: Vec2, touch: boolean): DepthGrip | null {
+  const tol = pxToMm(host, touch ? 18 : 10);
+  let best: (DepthGrip & { d: number }) | null = null;
+  for (const g of depthGripsShown(host)) {
+    const d = dist(g.at, pt);
+    if (d <= tol && (!best || d < best.d)) best = { ...g, d };
+  }
+  return best;
+}
+
+/**
+ * Det nya värdet när greppet dras till punkten: avståndet från linjen längs
+ * blickriktningen, avrundat till 10 mm. Närmare linjen än 100 mm blir
+ * *Tonat från* inget och djupet allt (null).
+ */
+export function depthDragValue(g: Pick<DepthGrip, 'start' | 'view'>, pt: Vec2): number | null {
+  const d = (pt[0] - g.start[0]) * g.view[0] + (pt[1] - g.start[1]) * g.view[1];
+  return d < 100 ? null : Math.round(d / 10) * 10;
 }

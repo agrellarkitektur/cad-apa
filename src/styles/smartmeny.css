@@ -476,3 +476,9 @@
     columns: 1;
   }
 }
+
+/* Dolda objekt (0.10.15) längst ned i Visa-menyn. */
+.show-hidden-objects {
+  font-size: 12px;
+  color: var(--ink-2, inherit);
+}

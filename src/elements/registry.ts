@@ -29,8 +29,14 @@ export interface PlanContext {
   doorAngleOf(el: Element<any>): number;
   /** Element som sitter i `hostId` och finns i det visade tillståndet. */
   openingsIn(hostId: string): Element[];
-  /** Alla element i vyn som syns, oavsett åtgärd. */
+  /**
+   * Alla element i vyn, oavsett åtgärd, också det som döljs under Visa eller
+   * med högerklick (0.10.15): det ritas inte, men väggarnas skarvar, rummens
+   * konturer och numren blir desamma.
+   */
   visible(type?: string): Element[];
+  /** Elementet döljs i vyn under Visa eller med högerklick (0.10.15) och ritas inte. */
+  hiddenByView(el: Element<any>): boolean;
   /**
    * 2D-formerna som avgränsar rum (0.8.34) på ytan, i det visade
    * tillståndet, också när 2D är släckt i Visa eller formen inte visas i vyn.

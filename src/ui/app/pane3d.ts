@@ -13,7 +13,7 @@ import { buildModel3d } from '../../repr/model3d';
 import { finishedForView, terrainMesh } from '../../repr/terrain';
 import { contourSegments3d } from '../../elements/site';
 import { isShown } from './showMenu';
-import { ground3dHost } from './ground3d';
+import { ground3dHost, groundLines3d } from './ground3d';
 import { POCHE_MATERIALS } from '../../repr/section';
 import type { Edit3DHost, Handle3D, View3D } from '../../view3d/view3d';
 import { icons } from '../icons';
@@ -32,6 +32,7 @@ export function installPane3d(app: AppContext) {
   let view3d: View3D | null = null;
   let loading3d: Promise<void> | null = null;
   /** Platsen som marken i 3D-vyn byggdes av. */
+  let shownLines: unknown[] = [];
   let shownSite: unknown[] = [];
 
   // Följ sektionen (0.8): 3D-vyn klipps längs en öppen sektion, eller visar hela modellen.
@@ -164,6 +165,14 @@ export function installPane3d(app: AppContext) {
     }
     // Markobjekten går att hovra och markera på marken (0.10.11).
     view3d.ground = ground3dHost(store.doc, app.viewStates());
+    // Och deras linjer ritas på marken, om de tänts under Visa (0.10.15).
+    const want = { outlines: !!site && isShown(app.ui, 'ground3d'), slopes: !!site && isShown(app.ui, 'slopes3d') };
+    const linesKey = [store.doc, finished, want.outlines, want.slopes, JSON.stringify(app.viewStates())];
+    if (linesKey.some((v, i) => v !== shownLines[i])) {
+      shownLines = linesKey;
+      const l = groundLines3d(store.doc, app.viewStates(), want);
+      view3d.setGroundLines(l.outlines, l.slopes);
+    }
     view3d.setSelection(app.selection.list());
     // Med en sektion öppen klipps modellen längs den, och snittet fylls (0.8).
     // Följ sektionen i 3D-vyn slår av och på det.

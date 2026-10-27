@@ -102,7 +102,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   const { shapes, storeys } = modelShapes(doc, view, style, WITH_DEMOLISHED);
   // Stil, skala och åtgärd beror inte på våningen; taken med sin våningens golvnivå.
   const ctx = storeys[0].ctx;
-  const roofs = storeys.flatMap(({ ctx: c, elevation }) => c.visible('Roof').filter((el) => c.actionOf(el) !== 'demolished').map((el) => ({ el, elevation })));
+  const roofs = storeys.flatMap(({ ctx: c, elevation }) => c.visible('Roof').filter((el) => c.actionOf(el) !== 'demolished' && !c.hiddenByView(el)).map((el) => ({ el, elevation })));
   const actionOfId = (id: string): Action => {
     const el = doc.elements[id];
     return el ? ctx.actionOf(el) : 'plain';

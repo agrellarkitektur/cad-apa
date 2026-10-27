@@ -2391,7 +2391,7 @@ slänter (Claudes förslag; efter piloten om de behövs), sparade fyllningar
 i stilmallens dialog (de sparas och tas bort från panelen); egna `.pat`
 läses som förut som fyllningstyper i stilmallen.*
 
-### 0.10.15 Visa och dölja (förslag)
+### 0.10.15 Visa och dölja ✓
 
 - Väggar m.m. var för sig under Visa; dölja ett objekt eller en typ med
   högerklick, sparat i vyn
@@ -2399,6 +2399,23 @@ läses som förut som fyllningstyper i stilmallen.*
   oktober)
 - Kryssrutor för om markobjektens linjer och släntmarkeringarna syns i 3D
   (Inkorgen 27 oktober)
+
+*Byggd 27 oktober, samma format (20). Carl August hoppade över frågorna
+den här gången. Claudes val: väggar, dörrar och fönster fick egna
+kryssrutor under Modell (de andra typerna fanns redan); dörrar och
+fönster följer väggen när den döljs; det dolda ritas inte, men räknas med
+i väggarnas skarvar, rummens konturer, bjälklag ur väggarna och
+numreringen (gäller också typerna som kunde döljas förut); högerklick
+har *Dölj i vyn* och *Dölj alla …* (typer med en egen kryssruta), inte på
+blad; de enskilt dolda tas fram alla på en gång med *Visa dolda objekt*
+under Visa och i planens högerklicksmeny (inte ett och ett); greppet för
+*Tonat från* är en romb en bit från mitten, streckad utan värde (då vid
+djupet eller 4 m ut), och djupet får ett fyrkantigt grepp i mitten när
+det är satt; närmare linjen än 100 mm blir inget; bara i planen och för
+en ensam olåst markör; linjerna i 3D är släckta från början och ligger
+under Visa → Platsen, konturerna mörka och släntstrecken halvt
+genomskinliga. Inte gjort: dölja i 3D-vyn och planen för sig (det dolda
+gäller vyn, och 3D följer vyn som förut); ett och ett tillbaka.*
 
 ### 0.10.16 Snittet i planen (förslag, mellanstor)
 

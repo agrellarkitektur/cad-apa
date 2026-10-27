@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.14** (alfa); nästa är **0.10.15, visa och dölja**.
+**0.10.15** (alfa); nästa är **0.10.16, snittet i planen**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,24 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.15, visa och dölja (samma filformat, 20):
+- **Väggar, dörrar och fönster under Visa**, var för sig. Döljs väggarna
+  döljs dörrarna och fönstren i dem också. Det dolda ritas inte, men
+  skarvarna mellan de andra väggarna, rummens konturer och numren blir
+  desamma
+- **Dölj i vyn** i högerklicksmenyn döljer det markerade, och **Dölj alla
+  väggar** (eller dörrar, bjälklag …) hela typen, som kryssrutan under
+  Visa. Det dolda sparas med vyn. Visa-menyn säger hur många objekt som
+  är dolda, och *Visa dolda objekt* (där och i planens högerklicksmeny)
+  tar fram dem igen
+- **Grepp för Tonat från** när en fasad- eller sektionsmarkör är markerad
+  i planen: gränsen streckad och ett grepp som dras längs blickriktningen
+  (närmare linjen än 100 mm = inget tonat). Djupet får ett grepp på samma
+  sätt när det är satt
+- **Markobjektens linjer och släntmarkeringarna i 3D-vyn**: två kryssrutor
+  under Visa → Platsen lägger konturerna och släntstrecken på den färdiga
+  marken, också när objekten inte är markerade (släckta från början)
 
 Version 0.10.14, fyllningar och opacitet (samma filformat, 20):
 - **Fyllningens panel**, densamma i 2D-former, rum, markytor, vägar och

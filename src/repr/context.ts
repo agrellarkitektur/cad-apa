@@ -1,7 +1,7 @@
 import type { ActionKey, StyleSheet } from '../core/graphics';
 import { onPaper, modelViewId, type Element, type Id, type ProjectDoc } from '../core/model';
 import { actionOf, existingState, type Action, type ViewStates } from '../core/states';
-import { homeOf, shownIn, type ViewIdentity } from '../core/visibility';
+import { hiddenBy, hiddenObjects, homeOf, shownIn, type ViewIdentity } from '../core/visibility';
 import { isRoomBoundary } from '../elements/rooms';
 import { resolveParams, typeOf, type ElementType, type PlanContext, type PlanItem } from '../elements/registry';
 
@@ -43,12 +43,16 @@ export function createContext(
   };
 
   const visible: PlanItem[] = [];
+  // Det som döljs under Visa eller med högerklick (0.10.15) ritas inte, men
+  // finns kvar för det andra: väggarnas skarvar, rummens konturer, numren.
+  const present: PlanItem[] = [];
+  const hiddenIds = new Set(hiddenObjects(view.hide));
+  const hiddenByView = new Set<Id>();
   for (const el of onStorey) {
     const t = typeOf(el.type);
     if (!t) continue; // Okända typer ligger kvar i filen men visas inte.
     const action = actionFor(el);
     if (action === 'absent' || !include(t, action)) continue;
-    if (view.hide?.includes(el.type)) continue;
     // Visas i (format 5): 2D-element, text och mått kan vara valda för vissa vyer.
     if (el.show && !shownIn(el, identity)) {
       if (!view.showHidden || homeOf(el) !== place) continue;
@@ -56,7 +60,9 @@ export function createContext(
     }
     // Rivna dörrar behålls även när rivet döljs: igensättningen ska synas.
     if (action === 'demolished' && view.hideDemolished && !t.hosted) continue;
-    visible.push({ el, action });
+    present.push({ el, action });
+    if (hiddenBy(doc, el, view.hide, hiddenIds)) hiddenByView.add(el.id);
+    else visible.push({ el, action });
   }
 
   // Visas Befintligt utan jämförelse ritas allt som befintligt, med 30°-dörrar.
@@ -90,7 +96,7 @@ export function createContext(
     styleKeyOf,
     doorAngleOf: (el) => style.actions[existingId && el.states.includes(existingId) ? 'existing' : 'new'].doorAngle,
     openingsIn: (hostId) => openingsByHost().get(hostId) ?? [],
-    visible: (type) => visible.filter((v) => !type || v.el.type === type).map((v) => v.el),
+    visible: (type) => present.filter((v) => !type || v.el.type === type).map((v) => v.el),
     roomBounds: () => onStorey.filter((e) => homeOf(e) === place && isRoomBoundary(e) && actionFor(e) !== 'absent'),
     memo: <T>(key: string, fn: () => T): T => {
       if (!memo.has(key)) memo.set(key, fn());
@@ -98,6 +104,7 @@ export function createContext(
     },
     params: <P>(el: Element<any>) => resolveParams<P>(doc, el),
     hiddenInView: (el) => hiddenHere.has(el.id),
+    hiddenByView: (el) => hiddenByView.has(el.id),
   };
   return { ctx, visible };
 }

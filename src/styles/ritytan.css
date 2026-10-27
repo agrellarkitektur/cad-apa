@@ -433,3 +433,20 @@
   cursor: default;
   background: transparent;
 }
+
+/* Djupet och Tonat från för en markerad fasad eller sektion (0.10.15). */
+.depth-line {
+  stroke: var(--accent);
+  stroke-width: 1;
+  stroke-dasharray: 8 4;
+  fill: none;
+}
+
+.depth-line.tone {
+  stroke-dasharray: 2 3;
+}
+
+/* Tonat från utan värde: greppet streckat. */
+.grip.hollow {
+  stroke-dasharray: 3 2;
+}

@@ -1242,6 +1242,38 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Visa och dölja (0.10.15, format 20)
+
+- **Dolda objekt** står i vyns `hide` som `obj:` och id (`hiddenObjectKey`,
+  `hiddenObjects` i `src/core/visibility.ts`), bredvid de dolda typerna.
+  `hiddenBy` säger om ett objekt är dolt, för sig, genom sin typ eller
+  genom väggen det sitter i (dörrar och fönster följer värden).
+- **I `createContext`** (`src/repr/context.ts`) ritas det dolda inte (det
+  är inte med i `visible` som kommer tillbaka), men `ctx.visible(typ)` har
+  det kvar, så att väggarnas skarvar, rummens konturer, bjälklag ur
+  väggarna och numreringen blir desamma när något döljs. Det som bara ska
+  gälla det synliga frågar `ctx.hiddenByView(el)`: automåtten och taken i
+  fasadens taklutningar. Det gäller också typerna som kunde döljas förut
+  (bjälklag, tak …).
+- **Visa-menyn**: `Wall`, `Door` och `Window` i `SHOW_GROUPS`, och
+  `ground3d` och `slopes3d` (släckta från början, `OFF_BY_DEFAULT`).
+  Raden om dolda objekt och knappen `[data-unhide-all]` i `showMenu.ts`.
+- **Högerklick**: `hideMenuItems` och `unhideMenuItems` i
+  `src/ui/app/hideObjects.ts`, inkopplade i `menus.ts` (inte på blad och
+  mallblad). *Dölj alla …* finns för typer med en egen kryssruta under
+  Visa.
+- **Greppen för djup och Tonat från**: `depthGripsShown`, `depthGripAt`,
+  `depthGeometry` och `depthDragValue` i `src/ui/tools/selectGrips.ts`,
+  dragningen (`depthDrag`) och ritningen i `selectTool.ts` (klasserna
+  `depth-line` och `grip hollow`). Bara i planen, en ensam olåst markör.
+  Utan Tonat från står greppet vid djupet eller 4 m från linjen.
+- **Linjerna i 3D**: `groundLines3d` i `src/ui/app/ground3d.ts` lägger
+  konturerna (`pickShape`) och släntstrecken (planens linjer med `part`
+  `slänt`) på den färdiga marken med `drape`; `View3D.setGroundLines`
+  ritar dem. `pane3d.ts` räknar om dem bara när projektet, marken eller
+  vyn ändras.
+- Tester: `tests/v01015.test.ts`.
+
 ## Fyllningar och opacitet (0.10.14, format 20)
 
 - **Panelen** är `fillPanel` i `src/ui/fillPanel.ts` (`fillFields` i

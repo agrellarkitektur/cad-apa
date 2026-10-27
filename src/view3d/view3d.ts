@@ -70,6 +70,10 @@ export class View3D {
   private hovered: string | null = null;
   private hoverAt: { x: number; y: number } | null = null;
   private hoverFrame = 0;
+  /** Markobjektens linjer på marken (0.10.15), när de tänts under Visa: konturerna och släntmarkeringarna. */
+  private groundLinesGroup = new THREE.Group();
+  private groundLineMaterial = new THREE.LineBasicMaterial({ color: 0x2b302a });
+  private slopeLineMaterial = new THREE.LineBasicMaterial({ color: 0x2b302a, transparent: true, opacity: 0.6 });
   /** Markobjektens konturer på marken: de markerade och det som hovras. */
   private marksGroup = new THREE.Group();
   private markLine = new THREE.LineBasicMaterial({ color: 0xa86b12, depthTest: false });
@@ -141,7 +145,7 @@ export class View3D {
       other: new THREE.MeshBasicMaterial({ color: 0x9aa1a7, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
       edge: new THREE.LineBasicMaterial({ color: 0x1d2328 }),
     };
-    for (const g of [this.root, this.edit.handlesGroup, this.edit.previewGroup, this.capsGroup, this.terrainGroup, this.marksGroup]) {
+    for (const g of [this.root, this.edit.handlesGroup, this.edit.previewGroup, this.capsGroup, this.terrainGroup, this.groundLinesGroup, this.marksGroup]) {
       g.rotation.x = -Math.PI / 2;
       g.scale.setScalar(0.001);
       this.scene.add(g);
@@ -238,6 +242,21 @@ export class View3D {
         lg.setAttribute('position', new THREE.BufferAttribute(contours, 3));
         this.terrainGroup.add(new THREE.LineSegments(lg, this.contourMaterial));
       }
+    }
+    this.requestRender();
+  }
+
+  /** Markobjektens konturer och släntmarkeringar på marken (0.10.15), sex tal per sträcka, eller null. */
+  setGroundLines(outlines: Float32Array | null, slopes: Float32Array | null): void {
+    clearGroup(this.groundLinesGroup);
+    for (const [pos, mat] of [
+      [outlines, this.groundLineMaterial],
+      [slopes, this.slopeLineMaterial],
+    ] as const) {
+      if (!pos?.length) continue;
+      const geom = new THREE.BufferGeometry();
+      geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      this.groundLinesGroup.add(new THREE.LineSegments(geom, mat));
     }
     this.requestRender();
   }

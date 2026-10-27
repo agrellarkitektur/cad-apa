@@ -4,6 +4,7 @@ import { DETAIL_LABELS, DETAIL_LEVELS } from '../../core/states';
 import { parseScale, saveUiSettings } from '../uiSettings';
 import { Camera } from '../../view2d/camera';
 import { escapeHtml } from '../labels';
+import { hiddenObjects, HIDDEN_OBJECT } from '../../core/visibility';
 import type { AppContext } from './context';
 import { ANNOTATION_SCALES, formatScale, nf } from './helpers';
 import type { UiState } from './shell';
@@ -20,6 +21,10 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
     label: 'Modell',
     items: [
       ['demolished', 'Det som rivs'],
+      // Väggar, dörrar och fönster var för sig (0.10.15). Dörrar och fönster följer väggarna.
+      ['Wall', 'Väggar'],
+      ['Door', 'Dörrar'],
+      ['Window', 'Fönster'],
       ['Slab', 'Bjälklag'],
       ['Roof', 'Tak'],
       ['footprint', 'Husets kontur genom taket'],
@@ -67,6 +72,8 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
       ['Terrain', 'Marken (höjdkurvor, 3D, marklinjer)'],
       ['contours3d', 'Höjdkurvor i 3D-vyn'],
       ['Ground', 'Markobjekt (konturerna)'],
+      ['ground3d', 'Markobjektens linjer i 3D-vyn'],
+      ['slopes3d', 'Släntmarkeringar i 3D-vyn'],
       ['SiteBuilding', 'Grannhus'],
       ['Tree', 'Träd'],
       ['SiteMap', 'Fastighetsgränser, vägar och punkter'],
@@ -103,7 +110,7 @@ export function traceStoreyOptions(trace: string | null | undefined): string {
  * i vyns `hide`, så att äldre vyer inte får det. Tak på andra våningar och
  * de dolda linjerna i fasader (0.10.10) likaså.
  */
-const OFF_BY_DEFAULT = new Set(['footprint', 'roofsAround', 'hiddenSlabs', 'hiddenWalls']);
+const OFF_BY_DEFAULT = new Set(['footprint', 'roofsAround', 'hiddenSlabs', 'hiddenWalls', 'ground3d', 'slopes3d']);
 
 /** Om det som nyckeln står för syns i vyn. */
 export function isShown(ui: Pick<UiState, 'hide' | 'hideDemolished'>, key: string): boolean {
@@ -273,6 +280,7 @@ export function installShowMenu(app: AppContext) {
         </div>`;
       }).join('') +
       item('showHidden', 'Visa dolda 2D-element (tonade)', ui.showHidden) +
+      hiddenObjectsMarkup() +
       `</div>`;
     m.hidden = false;
     fitInPane(m);
@@ -294,6 +302,22 @@ export function installShowMenu(app: AppContext) {
     const over = m.getBoundingClientRect().right - (pane.right - 8);
     if (over > 0) m.style.left = `${-Math.min(over, r.left - pane.left - 8)}px`;
   }
+
+  /** De enskilt dolda objekten (0.10.15): hur många, och en knapp som tar fram dem. */
+  function hiddenObjectsMarkup(): string {
+    const n = hiddenObjects(app.ui.hide).filter((id) => app.store.doc.elements[id]).length;
+    if (!n) return '';
+    return `<div class="show-hidden-objects">${n === 1 ? 'Ett objekt' : `${n} objekt`} dolt i vyn. <button type="button" class="link" data-unhide-all>Visa dolda objekt</button></div>`;
+  }
+
+  // Visa dolda objekt (0.10.15).
+  app.root.addEventListener('click', (e) => {
+    if (!(e.target as Element).closest('[data-unhide-all]')) return;
+    app.ui.hide = app.ui.hide.filter((h) => !h.startsWith(HIDDEN_OBJECT));
+    app.renderAll();
+    // Efter klicket, så att menyn inte stängs av att knappen försvunnit.
+    setTimeout(refreshShowMenu);
+  });
 
   /** Visa-menyns inställningar: skala, stilmall och kalkering. */
   function settingsMarkup(): string {
