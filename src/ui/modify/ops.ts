@@ -2,6 +2,7 @@ import { hasEditableOutline } from '../../core/roofEdit';
 import { moveOnly } from '../../core/sheets';
 import type { Id } from '../../core/model';
 import { canScale } from '../../core/arrange';
+import { movesVertically } from '../../core/levels';
 import { canJoin, canTrim } from '../../core/trimEdit';
 import { cornerPartner, cornersAmong, refFrame } from '../../core/wallEdit';
 import { allowsArcs, canRoundCorner, edgeIsArc, editedShape, holeShape, holesOf, shapeCan, shapeEdgeAt, shapeNodes, shapeOf, type ShapeLike } from '../../elements/shapeEdit';
@@ -101,7 +102,8 @@ export type OpId =
   | 'pick'
   | 'scale'
   | 'extendAll'
-  | 'trimAll';
+  | 'trimAll'
+  | 'moveZ';
 
 export interface OpDef {
   label: string;
@@ -109,7 +111,7 @@ export interface OpDef {
   short: string;
   icon: IconName;
   /** Ett värde som kan skrivas in, med enhet och förval. */
-  value?: { label: string; unit: 'mm' | '°' | 'st' | '×'; initial: number };
+  value?: { label: string; unit: 'mm' | 'm' | '°' | 'st' | '×'; initial: number };
   /** Utförs direkt när man väljer det, utan att klicka i ritningen. */
   instant?: boolean;
   hint: string;
@@ -161,7 +163,8 @@ export const OPS: Record<OpId, OpDef> = {
   shapeChamfer: { label: 'Fasa hörn', short: 'Fasa', icon: 'chamfer', value: { label: 'Avstånd', unit: 'mm', initial: 500 }, hint: 'Skriv avståndet från hörnet och tryck Enter, eller klicka för att använda det.' },
   holeMove: { label: 'Flytta hålet', short: 'Flytta hål', icon: 'move', hint: 'Klicka var hålet ska hamna, räknat från punkten du klickade på.' },
   roofTrim: { label: 'Kapa mot tak', short: 'Kapa mot tak', icon: 'trim', hint: 'Klicka på takfallet som det ska kapas mot. Kvar blir den del du klickade på, eller den största.' },
-  crestPoint: { label: 'Höjdpunkt på krönet', short: 'Höjdpunkt', icon: 'insertNode', instant: true, hint: 'En höjdpunkt där du klickade, med krönets höjd just där. Ändra höjden i egenskaperna; krönet går genom den.' },
+  crestPoint: { label: 'Höjdpunkt på krönet', short: 'Höjdpunkt', icon: 'insertNode', value: { label: 'ÖK', unit: 'mm', initial: 0 }, hint: 'Skriv krönets höjd i punkten och tryck Enter (förslaget är höjden där nu), eller klicka för att använda den. Punkten dras sedan längs muren.' },
+  moveZ: { label: 'Flytta i höjd', short: 'I höjd', icon: 'moveZ', value: { label: 'Höjd', unit: 'mm', initial: 100 }, hint: 'Skriv hur mycket upp (minus för ned) och tryck Enter. Hela objektet flyttas: väggens fot och topp, bjälklaget, möbeln eller taket.' },
   holeRemove: { label: 'Ta bort hålet', short: 'Ta bort hål', icon: 'trash', instant: true, hint: 'Håltagningen tas bort ur bjälklaget.' },
 };
 
@@ -240,6 +243,8 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
       const own: OpId[] = walls.length >= 2 ? ['offsetAll'] : [];
       if (walls.length >= 2 && cornersAmong(doc, walls).length) own.push('filletAll', 'chamferAll');
       if (ctx.ids.some((id) => doc.elements[id]?.type === 'Roof')) own.push('roofTrim');
+      // Flytta i höjd (0.10.13) för väggar, bjälklag, möbler och tak.
+      if (ctx.ids.some((id) => movesVertically(doc.elements[id]) && !doc.elements[id].locked)) own.push('moveZ');
       const groups = withCuts(own.length ? [own, COMMON] : [COMMON]);
       const more = arrangeOps(host, ctx.ids);
       return more.length ? [...groups, more] : groups;

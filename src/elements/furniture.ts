@@ -1,5 +1,5 @@
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
-import type { Solid } from '../repr/solids';
+import { levelOf, liftShape, type Solid } from '../repr/solids';
 import type { ElementType } from './registry';
 
 /**
@@ -21,6 +21,8 @@ export interface FurnitureParams {
    * bänkar, tvättställ och duschar är fasta, övrigt löst.
    */
   fixed?: boolean;
+  /** Undersidans nivå mot våningens golv, mm (0.10.13). Utelämnad = 0. */
+  level?: number;
 }
 
 /** Om möbeln är fast inredning. */
@@ -30,25 +32,14 @@ export function isFixed(p: FurnitureParams): boolean {
 
 type Local = [number, number];
 
-export const furnitureType: ElementType<FurnitureParams> = {
-  type: 'Furniture',
-  planReads: [],
-  label: 'Möbel',
-  labelPlural: 'Möbler',
-  drawOrder: 30,
-  compares: true,
-  defaults: () => ({ origin: [0, 0], rotation: 0, width: 900, depth: 600, symbol: 'table' }),
-  pickShape(el, ctx) {
-    return [[furnitureOutline(ctx.params<FurnitureParams>(el))]];
-  },
-  model3d(el, ctx) {
-    const p = ctx.params<FurnitureParams>(el);
+/** Möbelns kroppar i 3D från golvet. */
+function furnitureSolids(id: string, p: FurnitureParams): Solid[] {
     const r = (p.rotation * Math.PI) / 180;
     const tr = ([x, y]: Local): Vec2 => [p.origin[0] + x * Math.cos(r) - y * Math.sin(r), p.origin[1] + x * Math.sin(r) + y * Math.cos(r)];
     const box = (x0: number, y0: number, x1: number, y1: number): Vec2[][] => [[tr([x0, y0]), tr([x1, y0]), tr([x1, y1]), tr([x0, y1])]];
     const w = p.width;
     const d = p.depth;
-    const s = (rings: Vec2[][], z0: number, z1: number, material: Solid['material'] = 'furniture'): Solid => ({ id: el.id, rings, z0, z1, material });
+    const s = (rings: Vec2[][], z0: number, z1: number, material: Solid['material'] = 'furniture'): Solid => ({ id, rings, z0, z1, material });
     switch (p.symbol) {
       case 'bed':
         return [s(box(0, 0, w, d), 0, 450), s(box(0, d - 80, w, d), 450, 900)];
@@ -64,6 +55,23 @@ export const furnitureType: ElementType<FurnitureParams> = {
       default:
         return [s(box(0, 0, w, d), 700, 740), s(box(40, 40, 100, 100), 0, 700), s(box(w - 100, 40, w - 40, 100), 0, 700), s(box(40, d - 100, 100, d - 40), 0, 700), s(box(w - 100, d - 100, w - 40, d - 40), 0, 700)];
     }
+}
+
+
+export const furnitureType: ElementType<FurnitureParams> = {
+  type: 'Furniture',
+  planReads: [],
+  label: 'Möbel',
+  labelPlural: 'Möbler',
+  drawOrder: 30,
+  compares: true,
+  defaults: () => ({ origin: [0, 0], rotation: 0, width: 900, depth: 600, symbol: 'table' }),
+  pickShape(el, ctx) {
+    return [[furnitureOutline(ctx.params<FurnitureParams>(el))]];
+  },
+  model3d(el, ctx) {
+    const p = ctx.params<FurnitureParams>(el);
+    return furnitureSolids(el.id, p).map((s) => liftShape(s, levelOf(p)));
   },
   plan(el, ctx) {
     const p = ctx.params<FurnitureParams>(el);

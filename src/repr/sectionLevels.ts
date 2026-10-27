@@ -8,7 +8,7 @@ import { markerPen, solidPen, withWeight } from './markerPens';
 import type { Pen, Primitive, Vec2 } from './primitives';
 import { buildingHeight, type BuildingHeight } from './buildingHeight';
 import { levelText, meanGround } from './terrain';
-import type { MarkerHeights, MarkerParams } from '../elements/markers';
+import type { HeightMeasure, MarkerHeights, MarkerParams } from '../elements/markers';
 
 /**
  * Nivåmarkörer och höjdmått i fasader och sektioner (0.9.2; egen fil sedan
@@ -87,11 +87,15 @@ export function levelPrims(
   }
   // Byggnadshöjd, nockhöjd och totalhöjd som mått från medelmarknivån (0.10.8b).
   if (mmn !== null && bh) {
-    const measures: [string, number][] = [];
-    if (shows.bh) measures.push(['BH', bh.main.z]);
-    if (shows.nh) measures.push(['NH', bh.ridge]);
-    if (shows.th) measures.push(['TH', Math.max(at.maxZ, bh.ridge)]);
-    measures.forEach(([label, z], i) => out.push(...heightMeasure(markX + (25 + 7 * i) * ctx.scale, mmn, z, label, style.labels.heights.dimension, ctx.scale, markerPen(style, 'level'))));
+    const measures: [HeightMeasure, string, number][] = [];
+    if (shows.bh) measures.push(['bh', 'BH', bh.main.z]);
+    if (shows.nh) measures.push(['nh', 'NH', bh.ridge]);
+    if (shows.th) measures.push(['th', 'TH', Math.max(at.maxZ, bh.ridge)]);
+    // Måtten kan dras i sidled (0.10.13); flyttningen sparas på markören.
+    const moved = (at.marker.params as unknown as MarkerParams).heightOffsets ?? {};
+    measures.forEach(([key, label, z], i) =>
+      out.push(...heightMeasure(markX + (25 + 7 * i) * ctx.scale + (moved[key] ?? 0), mmn, z, label, style.labels.heights.dimension, ctx.scale, markerPen(style, 'level'), key)),
+    );
   }
   if (heights.length >= 2) {
     const points = heights.map((z): [number, number] => [at.maxU, z]);
@@ -115,8 +119,8 @@ export function markerHeights(marker: Element, view: Vec2, bh: BuildingHeight | 
  * Ett höjdmått från medelmarknivån (0.10.8b): ett lodrätt streck med
  * snedstreck i ändarna och texten längs strecket, t.ex. *BH 4,85 m*.
  */
-function heightMeasure(x: number, z0: number, z1: number, label: string, height: number, s: number, pen: Pen): Primitive[] {
-  const origin = { part: 'höjd' };
+function heightMeasure(x: number, z0: number, z1: number, label: string, height: number, s: number, pen: Pen, key: HeightMeasure): Primitive[] {
+  const origin = { part: `höjd-${key}` };
   const tick = 1.2 * s;
   const m = (z1 - z0) / 1000;
   const text = `${label} ${m.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m`;

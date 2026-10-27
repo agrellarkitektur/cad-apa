@@ -96,5 +96,5 @@ function markerHeightFields(doc: ProjectDoc, el: Element, view: ViewStates): str
       ${box('nh', 'Nockhöjd (NH)', 'Mått från medelmarknivån till takets högsta punkt')}
       ${box('th', 'Totalhöjd (TH)', 'Mått från medelmarknivån till husets högsta punkt')}
       ${box('mmnOld', 'Medelmarknivå, befintlig mark', 'Nivåmarkör för den befintliga markens medelmarknivå bredvid den nya')}
-    </div>${bh ? '' : '<p class="note">Höjderna visas när huset har tak.</p>'}`;
+    </div>${bh ? '<p class="note">Måtten dras i sidled i fasaden eller sektionen, i rutan i överänden.</p>' : '<p class="note">Höjderna visas när huset har tak.</p>'}`;
 }

@@ -6,6 +6,8 @@ import { roofGripsInView, type RoofGrip } from '../../elements/roofGrips';
 import type { UnderlayParams } from '../../elements/underlay';
 import { hasImageGrips, underlayGrips, type UnderlayGrip } from '../../elements/underlayEdit';
 import { resolveParams } from '../../elements/registry';
+import type { GroundParams } from '../../elements/ground';
+import { along, lineLength } from '../../elements/groundLines';
 import { pickableById } from '../../repr/plan';
 import type { Primitive, Vec2 } from '../../repr/primitives';
 import { distToPrim } from '../../view2d/pick';
@@ -181,4 +183,103 @@ export function roomLabelAt(host: ToolHost, id: string, p: ViewPointer): Vec2 | 
   const top = Math.max(...ys) + (texts[0]?.height ?? 0) * s / 3;
   const bottom = Math.min(...ys) + (texts[texts.length - 1]?.height ?? 0) * s / 3;
   return [left ? xs[0] + widest / 2 : xs[0], (top + bottom) / 2];
+}
+
+/** En höjdpunkt på en markerad stödmur (0.10.13), som dras längs referenslinjen. */
+export interface CrestGrip {
+  id: string;
+  index: number;
+  at: Vec2;
+}
+
+/** Höjdpunkterna på de markerade stödmurarna, i planen. */
+export function crestGripsShown(host: ToolHost): CrestGrip[] {
+  if (host.readOnly?.()) return [];
+  const doc = host.store.doc;
+  const out: CrestGrip[] = [];
+  for (const id of host.selection.list()) {
+    const el = doc.elements[id];
+    if (el?.type !== 'Ground' || el.params.kind !== 'wall') continue;
+    const p = resolveParams<GroundParams>(doc, el);
+    const line = (p.line ?? []) as Vec2[];
+    if (line.length < 2) continue;
+    // Greppet på referenslinjen, rakt ut från punkten där den klickades.
+    (p.crest ?? []).forEach((c, index) => out.push({ id, index, at: along(line, c.at[0], c.at[1]).at as Vec2 }));
+  }
+  return out;
+}
+
+/** Höjdpunkten under markören, om någon. */
+export function crestGripAt(host: ToolHost, pt: Vec2, touch: boolean): CrestGrip | null {
+  const tol = pxToMm(host, touch ? 18 : 10);
+  let best: (CrestGrip & { d: number }) | null = null;
+  for (const g of crestGripsShown(host)) {
+    const d = dist(g.at, pt);
+    if (d <= tol && (!best || d < best.d)) best = { ...g, d };
+  }
+  return best;
+}
+
+/** Var höjdpunkten hamnar när den dras: på referenslinjen, minst 100 mm från ändarna. Null utanför muren. */
+export function crestDragTo(host: ToolHost, id: string, pt: Vec2): Vec2 | null {
+  const el = host.store.doc.elements[id];
+  if (!el) return null;
+  const line = (resolveParams<GroundParams>(host.store.doc, el).line ?? []) as Vec2[];
+  if (line.length < 2) return null;
+  const a = along(line, pt[0], pt[1]);
+  const total = lineLength(line);
+  if (total < 300) return null;
+  const s = Math.max(100, Math.min(total - 100, a.s));
+  const q = s === a.s ? a.at : pointAt(line, s);
+  return [Math.round(q[0]), Math.round(q[1])];
+}
+
+/** Punkten `s` mm längs linjen. */
+function pointAt(line: readonly Vec2[], s: number): Vec2 {
+  let left = s;
+  for (let i = 1; i < line.length; i++) {
+    const l = dist(line[i - 1], line[i]);
+    if (left <= l || i === line.length - 1) {
+      const f = l ? Math.min(1, left / l) : 0;
+      return [line[i - 1][0] + (line[i][0] - line[i - 1][0]) * f, line[i - 1][1] + (line[i][1] - line[i - 1][1]) * f];
+    }
+    left -= l;
+  }
+  return line[line.length - 1];
+}
+
+/** Ett höjdmått (BH, NH, TH) i en öppen fasad eller sektion (0.10.13), som dras i sidled. */
+export interface HeightGrip {
+  marker: string;
+  key: 'bh' | 'nh' | 'th';
+  /** Greppet: måttets överände, i vyns mått. */
+  at: Vec2;
+}
+
+/** Höjdmåtten i fasaden eller sektionen som är öppen. */
+export function heightGripsShown(host: ToolHost): HeightGrip[] {
+  const marker = host.space?.();
+  if (!marker || !host.readOnly?.()) return [];
+  const el = host.store.doc.elements[marker];
+  if (el?.type !== 'Section' && el?.type !== 'Elevation') return [];
+  const out: HeightGrip[] = [];
+  for (const q of host.plan().prims) {
+    if (q.kind !== 'line') continue;
+    const m = /^höjd-(bh|nh|th)$/.exec(q.origin?.part ?? '');
+    // Måttets långa lodräta streck (snedstrecken är inte lodräta).
+    if (!m || Math.abs(q.a[0] - q.b[0]) > 0.01) continue;
+    out.push({ marker, key: m[1] as HeightGrip['key'], at: [q.a[0], Math.max(q.a[1], q.b[1])] });
+  }
+  return out;
+}
+
+/** Höjdmåttet under markören, om något. */
+export function heightGripAt(host: ToolHost, pt: Vec2, touch: boolean): HeightGrip | null {
+  const tol = pxToMm(host, touch ? 18 : 10);
+  let best: (HeightGrip & { d: number }) | null = null;
+  for (const g of heightGripsShown(host)) {
+    const d = dist(g.at, pt);
+    if (d <= tol && (!best || d < best.d)) best = { ...g, d };
+  }
+  return best;
 }

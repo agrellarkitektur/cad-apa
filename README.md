@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.12** (alfa), granskad; nästa är **0.10.13, höjder i förhållande till våningen**.
+**0.10.13** (alfa); nästa är **0.10.14, fyllningar och opacitet**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,28 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.13, höjder i förhållande till våningen (samma filformat, 20):
+- **Nivå mot våningen** för väggar, bjälklag och möbler, plus eller minus
+  i mm från våningens golv. För en vägg heter fältet *Fot mot våningen*:
+  det flyttar bara foten, och toppen ligger kvar (höjden räknas om).
+  Bjälklagets nivå gäller ovansidan, möbelns undersidan. Dörrar och
+  fönster sitter kvar i väggen. 3D, fasader och sektioner följer
+- **Flytta i höjd** i Modifiera (smartmenyn) flyttar hela det markerade
+  upp eller ned: väggar med fot och topp, bjälklag, möbler och tak (takets
+  höjd). Låsta objekt flyttas inte
+- **Stödmurens höjdpunkter**: *Höjdpunkt på krönet* frågar efter höjden
+  (förslaget är krönets höjd där man klickade, i RH 2000 när projektet har
+  en plats). Punkten syns som en romb när muren är markerad och dras längs
+  referenslinjen
+- **BH, NH och TH** dras i sidled i fasaden eller sektionen, i rutan i
+  måttets överände. Läget sparas på markören och behålls när måtten slås
+  av och på
+- **Markobjektens massor**: egenskaperna visar netto (fyll minus schakt,
+  med *tillförs* eller *överskott*), och fältet *Berg i schakten* (procent)
+  delar schakten i berg och jord
+- Takets höjd gäller som förut referenslinjen, mot undersidan från början
+  eller ovansidan (*Höjden gäller*)
 
 Granskning efter 0.10.12 (samma version och filformat, 20):
 - Inga nya funktioner; allt beter sig som förut (samma klick ger samma

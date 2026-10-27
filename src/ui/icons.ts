@@ -72,6 +72,7 @@ export const icons = {
   tangentArc: svg('<path d="M2 18h8"/><path d="M10 18c5 0 9-4 10-10" /><circle cx="10" cy="18" r="1.6" fill="currentColor"/><path d="M16 18h4" stroke-dasharray="1.5 1.5"/>'),
   straighten: svg('<path d="M3 16Q12 6 21 16" stroke-dasharray="2 2"/><path d="M3 18h18"/><circle cx="3" cy="18" r="1.6" fill="currentColor"/><circle cx="21" cy="18" r="1.6" fill="currentColor"/>'),
   move: svg('<path d="M12 3v18M3 12h18M12 3l-2.5 2.5M12 3l2.5 2.5M12 21l-2.5-2.5M12 21l2.5-2.5M3 12l2.5-2.5M3 12l2.5 2.5M21 12l-2.5-2.5M21 12l-2.5 2.5"/>'),
+  moveZ: svg('<path d="M12 3v14"/><path d="M8 7l4-4 4 4"/><path d="M8 13l4 4 4-4"/><path d="M4 21h16"/>'),
   multiply: svg('<rect x="3" y="9" width="5" height="6" rx="0.8"/><rect x="10" y="9" width="5" height="6" rx="0.8"/><rect x="17" y="9" width="4" height="6" rx="0.8" stroke-dasharray="1.5 1.5"/>'),
   offset: svg('<path d="M3 16h18"/><path d="M3 8h18" stroke-dasharray="2 2"/><path d="M12 15V9M10 11l2-2 2 2"/>'),
   offsetAll: svg('<path d="M5 19V9h14v10"/><path d="M2 21V6h20v15" stroke-dasharray="2 2"/>'),

@@ -67,3 +67,28 @@ export interface Edges3D {
 }
 
 export type Shape3D = Solid | Edges3D;
+
+/** En 3D-form flyttad `dz` i höjd: höjderna, urtagen och de sneda planen (0.9). */
+export function liftShape(s: Shape3D, dz: number): Shape3D {
+  if (!dz) return s;
+  if (s.kind === 'edges') return { ...s, segments: s.segments.map(([a, b, c, d, e, f]) => [a, b, c + dz, d, e, f + dz] as Edges3D['segments'][number]) };
+  const lift = (pl: Plane): Plane => [pl[0], pl[1], pl[2] + dz];
+  return {
+    ...s,
+    z0: s.z0 + dz,
+    z1: s.z1 + dz,
+    ...(s.top ? { top: lift(s.top) } : {}),
+    ...(s.bottom ? { bottom: lift(s.bottom) } : {}),
+    ...(s.cuts ? { cuts: s.cuts.map((c) => ({ ...c, z0: c.z0 + dz, z1: c.z1 + dz })) } : {}),
+  };
+}
+
+
+/**
+ * Objektets nivå mot våningen (0.10.13): hur mycket över (eller med minus
+ * under) våningens golv det ligger, mm. För en vägg gäller den foten, för
+ * ett bjälklag ovansidan och för en möbel undersidan. Utelämnad = 0.
+ */
+export function levelOf(p: { level?: unknown }): number {
+  return typeof p.level === 'number' && Number.isFinite(p.level) ? p.level : 0;
+}

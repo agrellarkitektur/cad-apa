@@ -19,6 +19,7 @@ import { typePenFields } from './ownPenFields';
 import { annotationFields } from './annotationFields';
 import { markerViewFields } from './markerFields';
 import { numberField, textField } from './fieldMarkup';
+import { levelOf } from '../repr/solids';
 
 export { markerSection } from './markerFields';
 export { numberField, textField } from './fieldMarkup';
@@ -108,10 +109,11 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         .map((c) => `<button data-action="justify" data-value="${c.face}" aria-pressed="${c.face === current}">${c.label}</button>`)
         .join('');
       const arc = p.bulge && Math.abs(p.bulge) >= 0.5 ? radiusOf(p.start, p.end, p.bulge) : 0;
-      return `<div class="fields">${numberField('wall:length', arc ? 'Korda' : 'Längd', length, 'mm')}${numberField('param:height', 'Höjd', p.height, 'mm')}${arc ? numberField('wall:radius', 'Radie', arc, 'mm') : ''}</div>
+      return `<div class="fields">${numberField('wall:length', arc ? 'Korda' : 'Längd', length, 'mm')}${numberField('param:height', 'Höjd', p.height, 'mm')}${numberField('level:level', 'Fot mot våningen', levelOf(p), 'mm')}${arc ? numberField('wall:radius', 'Radie', arc, 'mm') : ''}</div>
         <label class="check" title="Utan egen höjd följer väggen våningshöjden"><input type="checkbox" data-key="wall:storeyHeight"${typeof el.params.height === 'number' ? '' : ' checked'}> Våningshöjd</label>
         <label class="check"><input type="checkbox" data-key="param:toRoof"${p.toRoof ? ' checked' : ''}> Upp till taket (gavlar)</label>
-        <div class="field-label">Referenslinje</div><div class="segmented wide" role="group">${just}</div>`;
+        <div class="field-label">Referenslinje</div><div class="segmented wide" role="group">${just}</div>
+        <p class="note">Fot mot våningen flyttar bara foten; toppen ligger kvar. Flytta i höjd (Modifiera) flyttar hela väggen.</p>`;
     }
     case 'Roof': {
       const p = resolveParams<RoofParams>(doc, el);
@@ -145,10 +147,11 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
           return `<li><span>Hål ${i + 1} · ${size}</span><button class="icon-mini" data-action="slab-hole-remove" data-index="${i}" aria-label="Ta bort hål ${i + 1}">×</button></li>`;
         })
         .join('');
-      return `<label class="check" title="Konturen följer ytterväggarnas insida och flyttas med dem"><input type="checkbox" data-key="slab:fromWalls"${p.fromWalls ? ' checked' : ''}> Ur väggarna</label>
+      return `<div class="fields">${numberField('level:level', 'Nivå mot våningen', levelOf(p), 'mm')}</div>
+        <label class="check" title="Konturen följer ytterväggarnas insida och flyttas med dem"><input type="checkbox" data-key="slab:fromWalls"${p.fromWalls ? ' checked' : ''}> Ur väggarna</label>
         <div class="field-label">Håltagningar</div>
         ${holes ? `<ul class="slab-holes">${holes}</ul><p class="note">Klicka på ett håls hörn eller kant för att ändra det, som en 2D-form, eller dra i hörnen.</p>` : '<p class="note">Inga. Välj Håltagning i bjälklagsverktyget och dra upp ett hål.</p>'}
-        <p class="note">${p.fromWalls ? 'Bjälklaget slutar vid ytterväggarnas insida; innerväggarna står på det. Bocka ur för att ändra konturen själv.' : 'Konturen ändras med hörnen och kanterna, som takets.'} Ovansidan ligger i våningens golvnivå, tjockleken går nedåt.</p>`;
+        <p class="note">${p.fromWalls ? 'Bjälklaget slutar vid ytterväggarnas insida; innerväggarna står på det. Bocka ur för att ändra konturen själv.' : 'Konturen ändras med hörnen och kanterna, som takets.'} Ovansidan ligger på nivån mot våningens golv (0 = golvet), tjockleken går nedåt.</p>`;
     }
     case 'Ground':
       return groundFieldsMarkup(doc, el, view);
@@ -175,7 +178,7 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
     }
     case 'Furniture': {
       const p = resolveParams<FurnitureParams>(doc, el);
-      return `<div class="fields">${textField('name', 'Namn', el.name ?? '')}</div>
+      return `<div class="fields">${textField('name', 'Namn', el.name ?? '')}${numberField('level:level', 'Nivå mot våningen', levelOf(p), 'mm')}</div>
         <label class="check"><input type="checkbox" data-key="param:fixed"${isFixed(p) ? ' checked' : ''}> Fast inredning (svart linje, annars utgråad)</label>`;
     }
     case 'Space': {

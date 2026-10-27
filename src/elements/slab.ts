@@ -2,7 +2,7 @@ import { difference, union, type Rings } from '../geometry/boolean';
 import { pointInRings } from '../geometry/vec';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { lastResults } from '../repr/reuse';
-import type { Shape3D } from '../repr/solids';
+import { levelOf, type Shape3D } from '../repr/solids';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
 import { bareWallShapes, bareWallUnion, wallFrame, type WallParams } from './wall';
 import type { Element, Id, ProjectDoc } from '../core/model';
@@ -37,6 +37,8 @@ export interface SlabParams {
   fromWalls?: boolean;
   /** Håltagningarna. */
   holes?: SlabHole[];
+  /** Ovansidans nivå mot våningens golv, mm (0.10.13). Utelämnad = 0. */
+  level?: number;
 }
 
 /** Ytterväggarna: en vägg vars ena sida ligger inne i huset och den andra ute. */
@@ -232,6 +234,8 @@ export const slabType: ElementType<SlabParams> = {
   model3d(el, ctx) {
     const p = ctx.params<SlabParams>(el);
     const t = Math.max(1, p.thickness);
-    return slabRings(ctx, el).map((rings): Shape3D => ({ id: el.id, rings, z0: -t, z1: 0, material: 'slab' }));
+    // Ovansidan på bjälklagets nivå mot våningen (0.10.13).
+    const lv = levelOf(p);
+    return slabRings(ctx, el).map((rings): Shape3D => ({ id: el.id, rings, z0: lv - t, z1: lv, material: 'slab' }));
   },
 };

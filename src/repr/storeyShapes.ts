@@ -7,22 +7,9 @@ import { BoxIndex } from '../geometry/boxIndex';
 import { createContext } from './context';
 import type { Vec2 } from './primitives';
 import { lastResults } from './reuse';
-import type { Edges3D, Plane, Shape3D, Solid } from './solids';
+import { liftShape, type Edges3D, type Shape3D, type Solid } from './solids';
 
-/** En 3D-form flyttad `dz` i höjd: höjderna, urtagen och de sneda planen (0.9). */
-export function liftShape(s: Shape3D, dz: number): Shape3D {
-  if (!dz) return s;
-  if (s.kind === 'edges') return { ...s, segments: s.segments.map(([a, b, c, d, e, f]) => [a, b, c + dz, d, e, f + dz] as Edges3D['segments'][number]) };
-  const lift = (pl: Plane): Plane => [pl[0], pl[1], pl[2] + dz];
-  return {
-    ...s,
-    z0: s.z0 + dz,
-    z1: s.z1 + dz,
-    ...(s.top ? { top: lift(s.top) } : {}),
-    ...(s.bottom ? { bottom: lift(s.bottom) } : {}),
-    ...(s.cuts ? { cuts: s.cuts.map((c) => ({ ...c, z0: c.z0 + dz, z1: c.z1 + dz })) } : {}),
-  };
-}
+export { liftShape } from './solids';
 
 /** Vilka objekt som byggs, efter typ och åtgärd. */
 export type Included = (t: ElementType, action: Action) => boolean;

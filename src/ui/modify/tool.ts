@@ -1,4 +1,5 @@
 import { updateParams } from '../../core/commands';
+import { moveVertically } from '../../core/levels';
 import type { Id } from '../../core/model';
 import { removeNode, setOutline } from '../../core/roofEdit';
 import { mergeAtCorner, reshapeWall } from '../../core/wallEdit';
@@ -7,6 +8,7 @@ import { resolveParams } from '../../elements/registry';
 import type { RoofParams } from '../../elements/roof';
 import { wallProfile, type GroundParams } from '../../elements/ground';
 import { crestAtS } from '../../elements/groundWall';
+import { fromRh, toRh } from '../../core/site';
 import { along } from '../../elements/groundLines';
 import { createContext } from '../../repr/context';
 import { withOwnCut, type EdgeCut } from '../../elements/roofBody';
@@ -43,11 +45,6 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
     if (el && patch) updateParams(host.store, [ctx.shapeId!], shapePatch(doc, ctx.shapeId!, ctx.hole, patch), 'Räta ut');
     return;
   }
-  // En höjdpunkt på stödmuren (0.10.9), med krönets höjd där man klickade.
-  if (op === 'crestPoint') {
-    addCrestPoint(host, ctx);
-    return;
-  }
   // Håltagningen ur bjälklaget (0.9.4).
   if (op === 'holeRemove') {
     const slab = ctx.shapeId ? doc.elements[ctx.shapeId] : undefined;
@@ -74,8 +71,29 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
   if (op === 'merge' && ctx.end && !mergeAtCorner(host.store, el.id, ctx.end)) host.hint('Hörnet har inte precis två väggar.');
 }
 
-/** En höjdpunkt på stödmuren där man klickade, med krönets höjd där (avrundad till 5 mm). */
-export function addCrestPoint(host: ToolHost, ctx: ModifyContext): void {
+/**
+ * Krönets höjd där man klickade på stödmuren (avrundad till 5 mm), som
+ * förslag i värdefältet (0.10.13): i meter i RH 2000 när projektet har en
+ * plats, annars i mm från ±0. Null om det inte går att lägga en punkt där.
+ */
+export function crestSuggestion(host: ToolHost, ctx: ModifyContext): { value: number; unit: 'mm' | 'm'; h: number } | null {
+  const doc = host.store.doc;
+  const el = ctx.shapeId ? doc.elements[ctx.shapeId] : undefined;
+  if (el?.type !== 'Ground' || el.params.kind !== 'wall') return null;
+  const { ctx: pc } = createContext(doc, el.storey, { state: host.activeState() }, doc.graphics, () => true);
+  const prof = wallProfile(pc, el);
+  if (!prof) return null;
+  const a = along(prof.center, ctx.at[0], ctx.at[1]);
+  if (a.s < 100 || a.s > prof.stations[prof.stations.length - 1].s - 100) return null;
+  const h = Math.round(crestAtS(prof, a.s) / 5) * 5;
+  return doc.site ? { value: Math.round(toRh(doc.site, h) * 1000) / 1000, unit: 'm', h } : { value: h, unit: 'mm', h };
+}
+
+/**
+ * En höjdpunkt på stödmuren där man klickade, med höjden som skrevs (0.10.13;
+ * i meter RH 2000 när projektet har en plats) eller krönets höjd där.
+ */
+export function addCrestPoint(host: ToolHost, ctx: ModifyContext, typed?: number | null): void {
   const doc = host.store.doc;
   const el = ctx.shapeId ? doc.elements[ctx.shapeId] : undefined;
   if (el?.type !== 'Ground' || el.params.kind !== 'wall') return;
@@ -83,18 +101,12 @@ export function addCrestPoint(host: ToolHost, ctx: ModifyContext): void {
     host.hint('Låst. Lås upp i egenskaperna för att ändra.', 3000);
     return;
   }
-  const { ctx: pc } = createContext(doc, el.storey, { state: host.activeState() }, doc.graphics, () => true);
-  const prof = wallProfile(pc, el);
-  if (!prof) {
-    host.hint('Krönet följer marken; lägg in en markmodell under Platsen först.');
+  const sug = crestSuggestion(host, ctx);
+  if (!sug) {
+    host.hint(wallProfile(createContext(doc, el.storey, { state: host.activeState() }, doc.graphics, () => true).ctx, el) ? 'Ändarnas höjd ändras i egenskaperna (ÖK i början och slutet).' : 'Krönet följer marken; lägg in en markmodell under Platsen först.');
     return;
   }
-  const a = along(prof.center, ctx.at[0], ctx.at[1]);
-  if (a.s < 100 || a.s > prof.stations[prof.stations.length - 1].s - 100) {
-    host.hint('Ändarnas höjd ändras i egenskaperna (ÖK i början och slutet).');
-    return;
-  }
-  const h = Math.round(crestAtS(prof, a.s) / 5) * 5;
+  const h = typed === null || typed === undefined || !Number.isFinite(typed) ? sug.h : doc.site ? Math.round(fromRh(doc.site, typed)) : Math.round(typed);
   const p = resolveParams<GroundParams>(doc, el);
   const at: [number, number] = [Math.round(ctx.at[0]), Math.round(ctx.at[1])];
   updateParams(host.store, [el.id], { crest: [...(p.crest ?? []), { at, h }] }, 'Höjdpunkt på krönet');
@@ -113,7 +125,7 @@ export function setEdgeCut(host: ToolHost, ctx: ModifyContext, cut?: EdgeCut): v
 }
 
 /** Val som inte visar snäppmarkören. */
-const NO_MARKER = new Set<OpId>(['roofCutAngle', 'fillet', 'chamfer', 'filletAll', 'chamferAll', 'shapeFillet', 'shapeChamfer', 'trim', 'join', 'roofTrim']);
+const NO_MARKER = new Set<OpId>(['roofCutAngle', 'fillet', 'chamfer', 'filletAll', 'chamferAll', 'shapeFillet', 'shapeChamfer', 'trim', 'join', 'roofTrim', 'moveZ', 'crestPoint']);
 
 /**
  * Verktyget som kör ett val: förhandsvisar med markören och utför vid
@@ -306,6 +318,13 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
     this.commit(this.cursorAt?.point ?? null, v);
   }
 
+  /** Flytta i höjd (0.10.13): det inskrivna värdet, eller värdet i rutan vid ett klick. */
+  private commitMoveZ(typed: number | null): boolean {
+    const n = moveVertically(this.host.store, this.ctx.ids, typed ?? this.value);
+    if (!n) this.host.hint('Inget att flytta i höjd (låst, eller 0 mm).', 3000);
+    return true;
+  }
+
   private commit(at: Vec2 | null, typed: number | null): void {
     const base = BASE_OPS.has(this.op) ? this.base : this.ctx.at;
     if (!base) return;
@@ -315,7 +334,11 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
         ? commitWall(this, base, at, typed)
         : OUTLINE_OPS.has(this.op)
           ? commitOutline(this, base, at, typed)
-          : true;
+          : this.op === 'moveZ'
+            ? this.commitMoveZ(typed)
+            : this.op === 'crestPoint'
+              ? (addCrestPoint(this.host, this.ctx, typed ?? this.value), true)
+              : true;
     if (finished) this.done();
   }
 

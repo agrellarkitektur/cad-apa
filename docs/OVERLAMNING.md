@@ -3,52 +3,45 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 27 oktober 2026 (förmiddag), efter granskningen efter 0.10.12.
+Senast: 27 oktober 2026 (mitt på dagen), efter 0.10.13.
 
 ## Läget
 
-- **Nästa session:** sortera Inkorgen med Carl August, sedan **0.10.13
-  Höjder i förhållande till våningen** (se *Nästa session*).
-- **Granskningen efter 0.10.12 är klar** på `main` (samma format, 20, och
-  samma versionsnummer). Inga nya funktioner. Delat: `view3d.ts`
-  (`edit3d.ts`, `geometry3d.ts`), `selectionFields.ts` (`markerFields.ts`,
-  `annotationFields.ts`, `fieldMarkup.ts`), `propertiesPanel.ts`
-  (`selectionActions.ts`), `section.ts` (`sectionLines.ts`) och
-  `commands.ts` (`moveCommands.ts`); de gamla filerna exporterar vidare.
-  Testerna: 524 (fyra dubbletter ihopslagna) på ca 14–18 s.
-  Klickjämförelsen har 347 steg (54 nya för 0.10.11, 0.10.12 och 3D-vyn)
-  och ger samma läge, ritning och 3D-bild före och efter granskningen;
-  mot 0.10.10 skiljer bara det som 0.10.11 och 0.10.12 ändrade med avsikt
-  (se PLAN.md).
-  Detaljerna i PLAN.md och UTVECKLING.md under *Granskning efter 0.10.12*.
-- **0.10.12 Småjusteringar är klar** på `main` (samma format, 20), byggd
-  efter Carl Augusts svar 27 oktober. Byggt: låst betyder låst (också
-  träd och grannhus; låset finns för alla objekt utom marken och kartan),
-  delen *Markör* i egenskaperna, väggarnas *Fasa* 500, *Snäpp mot
-  kalkeringen* som inställning, bjälklag bakom snittet streckade i
-  sektioner, tak från våningen ovanför och alla under, stödmurens *Över
-  marken mot* den högre eller lägre sidan. Koden i UTVECKLING.md under
-  *Småjusteringar (0.10.12)*; Claudes val i PLAN.md.
-- **Märks i hans ritningar efter 0.10.12:** låsta objekt (också
-  importerade träd och grannhus) går inte att ta bort förrän de låsts upp;
-  väggarnas *Fasa* börjar på 500; *Tak på andra våningar* visar inte
-  längre tak två våningar upp; sektionerna visar bjälklag bakom snittet
-  streckade (släcks under Visa).
-- **Versionerna flyttades fram ett steg** (Carl August 27 oktober): inga
-  b-versioner. Det som förut hette 0.10.12–0.10.15 heter nu
-  0.10.13–0.10.16, också i PLAN.md.
+- **Nästa session:** **0.10.14 Fyllningar och opacitet** (se *Nästa
+  session*). Inkorgen är sorterad (27 oktober); svaren står i PLAN.md och
+  i `cad-apa-synpunkter.md`.
+- **0.10.13 Höjder i förhållande till våningen är klar** på `main` (samma
+  format, 20). Byggt: *Fot mot våningen* för väggar (bara foten, toppen
+  kvar) och *Nivå mot våningen* för bjälklag och möbler; *Flytta i höjd*
+  i Modifiera (väggar, bjälklag, möbler, tak); stödmurens höjdpunkter med
+  skriven höjd och dragning längs muren; BH, NH och TH dras i sidled i
+  fasaden; netto och *Berg i schakten* för markobjekten. Takets *Höjden
+  gäller* fanns redan (undersidan som förval). Koden i UTVECKLING.md
+  under *Höjder i förhållande till våningen*; Claudes val i PLAN.md.
+  Testerna: 529 på ca 14 s.
+- **Märks i hans ritningar efter 0.10.13:** måtten BH, NH och TH har en
+  ruta i överänden i fasaden (dras i sidled); *Höjdpunkt på krönet* frågar
+  efter höjden i stället för att läggas direkt.
+- **Versionerna efter sorteringen (27 oktober):** en ny 0.10.14
+  Fyllningar och opacitet, så att Visa och dölja blev 0.10.15, Linjerna i
+  2D-formen 0.10.16, Markobjektens linjer 0.10.17 och Situationsplanens
+  beteckningar 0.10.18 (förslag; Carl August frågade vilken version den
+  har). Ortofotot på marken är en egen liten undersökning. Förteckningen
+  över markförändringarna hör till 0.12 Export.
+- **Granskningen efter 0.10.12** och **0.10.12 Småjusteringar**: se
+  PLAN.md. Nästa granskning efter ungefär 0.10.15.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.12` i `engine.ts` och `package.json`
-  (granskningen fick inget eget); nästa version är `0.10.13`.
-- **0.10.8–0.10.12 är inte provade fullt ut** av Carl August; han har
+- **Versionsnumret** är `0.10.13` i `engine.ts` och `package.json`;
+  nästa version är `0.10.14`.
+- **0.10.8–0.10.13 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.11 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
   åt gången**. En fråga han hoppar över räknas som "bra som det är" och
   stryks. Han bad 27 oktober att resten väntar; ställ dem inte förrän han
-  ber om det, utom de som hör till 0.10.13.
+  ber om det, utom de som hör till nästa version.
 - **Släntmarkeringarna** (0.10.8) jämför den färdiga marken med den
   befintliga efter alla markobjekt; där två objekt möts kan strecken gå
   in över grannens yta om den också är ändrad men lutar som en slänt.
@@ -83,8 +76,8 @@ Senast: 27 oktober 2026 (förmiddag), efter granskningen efter 0.10.12.
 - **Synpunkter:** Carl August samlar dem i `cad-apa-synpunkter.md`
   (projektets kunskapsbas), med rubrikerna Inkorg, Planerat per version,
   Parkerat och Avfärdat. Läs den vid sessionsstart (Projects-verktyget,
-  `project_read`). Sortera Inkorgen tillsammans med honom (tio punkter från
-  27 oktober väntar, om marken, fyllningar och opacitet).
+  `project_read`). Sortera Inkorgen tillsammans med honom, kort, med
+  Claudes förslag per punkt (bokstäver, så att chatten inte numrerar om).
 - **Svar med nummer:** chatten gör om "17. Ok / 20. 1100" till en
   numrerad lista som börjar på 17. Läs numren i texten han skickat, och be
   honom gärna skriva "17:".
@@ -94,23 +87,26 @@ Senast: 27 oktober 2026 (förmiddag), efter granskningen efter 0.10.12.
 Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`. Uppdateras
 vid varje överlämning.
 
-- ~~0.8.8 Mallblad~~ … ~~0.10.11 Småsaker~~, ~~0.10.12
-  Småjusteringar~~ (klara)
-- ~~Granskning efter 0.10.12~~ (klar; nästa granskning om ungefär tre
-  versioner)
-- **0.10.13 Höjder i förhållande till våningen** (och takets
-  referenslinje mot över- eller undersidan, stödmurens höjdpunkter med
-  skriven höjd och dragning, flyttbara BH, NH och TH)
-- **0.10.14 Visa och dölja** (med grepp för *Tonat från*) och **0.10.15
-  Linjerna i 2D-formen** (förslag; bågar i takets kontur, cirkulära hål,
+- ~~0.8.8 Mallblad~~ … ~~0.10.12 Småjusteringar~~, ~~Granskning efter
+  0.10.12~~, ~~0.10.13 Höjder i förhållande till våningen~~ (klara)
+- **0.10.14 Fyllningar och opacitet** (mellanstor: Solid, Mask och
+  Mönster med opacitet och förslag, för alla objekt med fyllning, också
+  markobjektens slänter)
+- **0.10.15 Visa och dölja** (med grepp för *Tonat från* och kryssrutor
+  för markobjektens linjer i 3D), sedan en **granskning**
+- **0.10.16 Linjerna i 2D-formen** (bågar i takets kontur, cirkulära hål,
   hål som ändras för sig)
-- **0.10.16 Markobjektens linjer** (stor: bågar, Avrunda, docka ramper)
-- **Situationsplanens beteckningar** (förslag: murens ledare *M01 / MK*,
-  markhöjder med status, sidolutning, låglinje; i eller efter 0.10.16)
+- **0.10.17 Markobjektens linjer** (stor: bågar, Avrunda, docka ramper)
+- **0.10.18 Situationsplanens beteckningar** (förslag: murens ledare,
+  markhöjder med status, sidolutning, låglinje, kontur runt slänterna,
+  slänter ur den befintliga marken)
+- **Ortofotot på marken** (liten undersökning med terrängappen, när det
+  passar)
 - **0.11 Trappor** (nytt format)
 - **0.11.1 Profilverktyget** (stor) och **0.11.2 Dörrar och fönster**
   (stor)
-- **0.12 Export**: IFC4, DXF, areor för bygglov
+- **0.12 Export**: IFC4, DXF, areor för bygglov, förteckning över
+  markförändringarna
 - **0.12.1 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
   trädens status i planen)
 - **0.13 Pilotprojektet**: Carl August ritar själv ett hus
@@ -120,38 +116,31 @@ vid varje överlämning.
 
 ## Nästa session
 
-**Först Inkorgen** (tio punkter från 27 oktober, om marken, fyllningar och
-opacitet; i `cad-apa-synpunkter.md`). Sortera dem tillsammans med Carl
-August, kort, och flytta dem till versionerna. Claudes förslag att utgå
-från:
-
-- Schakt, fyllnad och netto för ett markobjekt: schakt och fyll står
-  redan i egenskaperna (*Schakt … m³, fyll … m³*); nettot och andelen
-  berg är små tillägg. Förteckningen med namn och volymer hör ihop med
-  0.12 Export (areor och förteckningar).
-- Opacitet på mask och fyllningar i markobjekten, och samma kontroller
-  för alla objekt med fyllning (Solid, Mask, Mönster med förslag):
-  mellanstor; en egen version efter 0.10.13 eller i 0.10.14.
-- Kontur runt släntmarkeringarna, egen fyllning för slänterna,
-  kryssrutor för markobjektens linjer och släntmarkeringarna i 3D:
-  tillsammans med *Situationsplanens beteckningar*.
-- Slänter och annan grafik som räknas fram ur den befintliga marken:
-  också där, eller efter piloten.
-- Ortofotot på marken (också den ändrade): en undersökning med repot och
-  terrängappen, för sig.
-
-Sedan **0.10.13 Höjder i förhållande till våningen** (mellanstor, en
-session; se PLAN.md): en plus- eller minusnivå mot våningen för
-bjälklag, väggar och objekt; takets referenslinje mot över- eller
-undersidan; stödmurens höjdpunkter med höjden skriven direkt och dragna
-längs muren; BH, NH och TH flyttbara i fasaden. Frågorna om 0.10.8b
-(BH, NH och TH) hör dit och kan ställas först.
+**0.10.14 Fyllningar och opacitet** (mellanstor, en session; se PLAN.md).
+En gemensam mall för fyllningar i alla objekt: **Solid** (färg och
+opacitet i tio steg eller skriven), **Mask** (solid med pappersbakgrund,
+opacitet ur en lista) och **Mönster** (mönster, förgrundens penna och
+opacitet, bakgrundens färg och opacitet), med förslagsbubblor. Samma
+kontroller i markobjekten (och för slänterna för sig), 2D-former, rum
+och allt annat med fyllning. Carl August vill ha så många egenskaper som
+möjligt; de tidigare frågorna 45, 51, 52 och 56 hör dit och kan ställas
+först. Börja med att se vilka fält som finns i `shapeFields.ts`
+(`fillFields`, `opacityFields`) och vilka objekt som har egna.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
+
+**0.10.13 efter provning** (Claudes val, se PLAN.md)
+- En vägg vars fot ligger över planens snitthöjd ritas fortfarande som
+  snittad i planen. Ska den ritas streckad (ovanför snittet), eller räcker
+  det tills vidare?
+- Bröstningen räknas från väggens fot, så fönstren följer med när foten
+  flyttas. Rätt, eller ska bröstningen gälla från våningens golv?
+- Flytta i höjd finns i smartmenyn för det markerade. Behövs den också
+  som kommando i smartshell (t.ex. *H 300*)?
 
 **0.10.12 efter provning** (Claudes val, se PLAN.md)
 - Riv och *Finns i* fungerar på låsta objekt (de ändrar status, inte
@@ -177,14 +166,6 @@ fråga.
 - Markobjekten markeras med ett klick i marken, och konturen ritas på
   marken. Ska hörnen också gå att dra i 3D?
 
-**0.10.8b efter provning** (Claudes val, se PLAN.md)
-- Linjen *Beräkningsgrundande fasad* gäller fasaden inom 1,5 m och 15°.
-  Den ritas som en egen tjock streckprickad linje med text och syns på
-  papperet (den släcks under Visa). Rätt som förval?
-- Förvalet: BH bara i fasaden som ser den beräkningsgrundande fasaden,
-  NH och TH ingenstans. Rätt?
-- Språnget räknas inte alls. Behövs ett val för att räkna det (som
-  0.10.5)?
 
 **0.10.8 efter provning** (Claudes val, se PLAN.md)
 - Höjdkurvorna: hela meter 0,25 och halvmeter 0,13 heldragna; den gamla
@@ -266,6 +247,11 @@ fråga.
 80. Smartmenyns placering; ska rubriken *Ändra* heta något annat?
 
 ## Öppna frågor och kända begränsningar
+
+- **Höjder mot våningen (0.10.13):** en vägg vars fot ligger över planens
+  snitthöjd ritas ändå som snittad i planen. Klickjämförelsen har inga
+  steg för 0.10.13 än (lägg till dem i nästa granskning: *Fot mot
+  våningen*, Flytta i höjd, höjdpunktens värde och dragning, BH-greppet).
 
 - **Låst (0.10.12):** låset hindrar flytt, grepp och borttagning, men inte
   Riv, *Finns i* eller ändrade värden i egenskaperna. En våning som tas

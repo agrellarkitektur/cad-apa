@@ -4,6 +4,7 @@ import { fromRh, groundDefaults, toRh } from '../core/site';
 import type { DocStore } from '../core/store';
 import type { ViewStates } from '../core/states';
 import { finishedTerrain, groundGeometry, groundLabel, isLineKind, m3, wallProfile, type GroundParams } from '../elements/ground';
+import { massBalance } from '../elements/groundGeometry';
 import { centerShift, lineLength, offsetLine, PATH_WIDTH, pathRatio, pathWarnings } from '../elements/groundLines';
 import { fillFields } from './shapeFields';
 import { resolveParams } from '../elements/registry';
@@ -44,7 +45,14 @@ export function groundFieldsMarkup(doc: ProjectDoc, el: Element, view: ViewState
   if (p.edge !== 'wall') rows.push(field('slope', 'Slänt', '1:N', p.slope, def.slope));
   const edge = `<label class="field"><span>Kanterna</span><select data-key="ground:edge"><option value="slope">Slänt</option><option value="wall"${p.edge === 'wall' ? ' selected' : ''}>Stödmur</option></select></label>`;
   const level = g && site ? `<p class="note">${p.slab ? `Botten +${toRh(site, g.label.height).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}, bjälklagets underkant. ` : p.around ? `Marken vid fasaden +${toRh(site, g.label.height).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}. ` : ''}</p>` : '';
-  const volumes = vol ? `<p class="note">Schakt ${m3(vol.cut)}, fyll ${m3(vol.fill)} (det objektet ändrar efter dem bakom i ritordningen).</p>` : '';
+  // Massorna (0.10.13): netto, och schakten delad i berg och jord efter andelen berg.
+  const mass = vol ? massBalance(vol, p.rock) : null;
+  const signed = (v: number) => `${v > 0.05 ? '+' : v < -0.05 ? '−' : ''}${m3(Math.abs(v))}`;
+  const volumes =
+    vol && mass
+      ? `<p class="note">Schakt ${m3(vol.cut)}, fyll ${m3(vol.fill)}, netto ${signed(mass.net)} ${mass.net > 0.05 ? '(tillförs)' : mass.net < -0.05 ? '(överskott)' : ''}${mass.rock !== null ? `. Av schakten berg ${m3(mass.rock)}, jord ${m3(mass.soil!)}` : ''}. Det objektet ändrar efter dem bakom i ritordningen.</p>`
+      : '';
+  if (vol) rows.push(field('rock', 'Berg i schakten', '%', p.rock, undefined, 'Uppskattad andel berg i det som schaktas; tomt = okänt'));
   const what = p.around
     ? 'Följer husets kontur. Marken faller från fasaden och möter den befintliga med slänt eller stödmur.'
     : p.slab
@@ -129,7 +137,7 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
       rows.push(`<label class="field" title="Tomt tar bort höjdpunkten"><span>${label}</span><span class="input-unit"><input type="text" inputmode="decimal" autocomplete="off" data-key="ground:crest${i}" value="${v.toLocaleString('sv-SE', { maximumFractionDigits: 3 })}"><i>${site ? 'm' : 'mm'}</i></span></label>`);
     });
     if (prof) notes.push(`Krönet ${lvl(prof.start)} i början och ${lvl(prof.end)} i slutet, högst ${lvl(prof.top)}; foten lägst ${lvl(prof.bottom)} (300 under den lägre sidan).`);
-    notes.push('Höjdpunkter läggs till med <em>Höjdpunkt på krönet</em> i Modifiera (klicka på referenslinjen); ett tomt fält tar bort en. Krönet går genom dem. Referenslinjen syns när muren är markerad.');
+    notes.push('Höjdpunkter läggs till med <em>Höjdpunkt på krönet</em> i Modifiera: klicka på referenslinjen och skriv höjden. Dra romben för att flytta punkten längs muren; ett tomt fält tar bort den. Krönet går genom dem. Referenslinjen syns när muren är markerad.');
     notes.push('Slänterna från markobjekten går inte över muren: marken bakom den är orörd.');
   }
   return `<div class="field-label">${escapeHtml(groundLabel(p))}</div>
@@ -199,6 +207,12 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
       const rise = Number.isFinite(n) ? lineLength(Math.abs(c) > 0.5 && pts.length >= 2 ? offsetLine(pts, c) : pts) / n : 0;
       updateParams(store, [id], { endHeight: Math.round(h0 + (up ? rise : -rise)) }, 'Ändra lutningen');
     }
+    return true;
+  }
+  if (name === 'rock' && raw !== '') {
+    const v = Number(raw);
+    if (!Number.isFinite(v) || v < 0 || v > 100) return false;
+    updateParams(store, ids, { rock: v }, 'Ändra andelen berg');
     return true;
   }
   if (name === 'crossFall' && raw !== '') {

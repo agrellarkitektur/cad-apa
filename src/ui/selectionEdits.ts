@@ -1,4 +1,5 @@
 import { applyGroundField } from './groundFields';
+import { setLevel } from '../core/levels';
 import { moveElements, moveWallEnd, renameElement, updateDefinition, updateParams } from '../core/commands';
 import type { Element, ProjectDoc } from '../core/model';
 import type { ViewStates } from '../core/states';
@@ -200,6 +201,15 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
   if (scope === 'stamp') {
     if (!input.value) return false;
     updateParams(store, ids, { stamp: input.value }, 'Byt stämpel');
+    return true;
+  }
+  if (scope === 'level') {
+    // Nivån mot våningen (0.10.13); väggens topp ligger kvar.
+    const v = Number(input.value.replace(',', '.').replace('−', '-'));
+    if (!Number.isFinite(v)) return false;
+    if (!setLevel(store, ids, v)) {
+      return false;
+    }
     return true;
   }
   if (scope === 'roof' && name === 'heightAt') {

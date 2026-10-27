@@ -1,3 +1,4 @@
+import { levelOf } from '../../repr/solids';
 import { moveElements, moveWallEnd } from '../../core/commands';
 import type { Id } from '../../core/model';
 import { markerFrame } from '../../elements/markers';
@@ -91,7 +92,7 @@ export function installPane3d(app: AppContext) {
           const pt = p[end];
           if (seen.some((s) => Math.hypot(s[0] - pt[0], s[1] - pt[1]) <= 1)) continue;
           seen.push(pt);
-          out.push({ wallId: id, end, point: pt, z: p.height + floorOf(), fixed: end === 'start' ? p.end : p.start });
+          out.push({ wallId: id, end, point: pt, z: levelOf(p) + p.height + floorOf(), fixed: end === 'start' ? p.end : p.start });
         }
       }
       return out;
@@ -103,7 +104,7 @@ export function installPane3d(app: AppContext) {
         .filter((el) => el?.type === 'Wall' && el.storey === app.ui.storey)
         .map((el) => {
           const p = resolveParams<WallParams>(app.store.doc, el);
-          return { a: p.start, b: p.end, z: p.height + floorOf() };
+          return { a: p.start, b: p.end, z: levelOf(p) + p.height + floorOf() };
         });
       // Vägens referenslinje (0.10.7), strax över ytan, med höjden rakt mellan ändarna.
       const paths = els.filter((el) => el?.type === 'Ground' && el.params.kind === 'path').flatMap((el) => groundRefLine(resolveParams<GroundParams>(app.store.doc, el)));

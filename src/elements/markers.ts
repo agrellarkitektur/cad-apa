@@ -44,7 +44,12 @@ export interface MarkerParams {
    * värde gäller förvalet (`markerHeights`).
    */
   heights?: Partial<MarkerHeights>;
+  /** Höjdmåttens flyttning i sidled från sitt förvalda läge, mm i vyn (0.10.13). */
+  heightOffsets?: Partial<Record<HeightMeasure, number>>;
 }
+
+/** Höjdmåtten i en fasad eller sektion (0.10.8b). */
+export type HeightMeasure = 'bh' | 'nh' | 'th';
 
 export interface MarkerHeights {
   bh: boolean;

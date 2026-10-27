@@ -1979,7 +1979,7 @@ dolda linjerna, medan den är färsk (Carl August 26 oktober).
 längs en linje stod kvar när de flyttades (med Flytta, dragning eller
 pilarna); nu följer linjen med. Markobjektens linjer är 2D-former utan
 bågar (`noArcs`, `allowsArcs`): Böj och Avrunda finns inte i Modifiera
-förrän bågarna kommer (0.10.16), Fasa finns kvar. **Ramp/väg**
+förrän bågarna kommer (0.10.17, förut 0.10.16), Fasa finns kvar. **Ramp/väg**
 (`kind: 'path'` utan `path`): förvald bredd 1 500, tvärfall bara när det
 anges (förvalet 1:50 för infarten är borta), varning när den är brantare
 än sin gräns (`maxSlope`, förval *Brantaste ramp/väg* 1:12 under
@@ -2309,7 +2309,7 @@ mellan våningarna (gaveln i fasad 2), och snäpp mot kalkeringen: hörnen
 i bjälklaget som ritas på plan 2 snäpper mot en kalkerad 2D-form på plan 1
 (y 0 i stället för 200), vilket följer med i projektet till slutet.*
 
-### 0.10.13 Höjder i förhållande till våningen
+### 0.10.13 Höjder i förhållande till våningen ✓
 
 Synpunkt 25 oktober. Mellanstor.
 
@@ -2321,15 +2321,62 @@ Synpunkt 25 oktober. Mellanstor.
 - Stödmurens höjdpunkter: höjden skrivs när punkten klickas ut, och
   punkten dras längs muren (27 oktober)
 - BH, NH och TH i fasaden flyttas för hand (27 oktober)
+- Ur Inkorgen 27 oktober: netto och andel berg för markobjekten
 
-### 0.10.14 Visa och dölja (förslag)
+*Byggd 27 oktober, samma format (20; nya valfria parametrar). Carl
+Augusts svar: en vägg vars nivå ändras i egenskaperna flyttar bara foten
+(toppen ligger kvar), medan en flyttning flyttar hela väggen; takets
+referenslinje mot undersidan från början. Claudes val: **nivån** heter
+`level` (mm från våningens golv) och finns för väggar (foten; fältet *Fot
+mot våningen*), bjälklag (ovansidan) och möbler (undersidan). Väggens
+höjd räknas från foten, så toppen är `level + height`; dörrar och fönster
+lyfts med väggens fot (bröstningen räknas från foten). Bjälklag kapar
+bara väggar vars fot ligger under dem. **Flytta i höjd** är ett nytt val
+i Modifiera för det markerade (väggar, bjälklag, möbler och tak, inte
+låsta), med ett värde som skrivs in; det fanns ingen lodrät flytt förut.
+Takets *Höjden gäller* fanns redan (sedan 0.10), med undersidan som
+förval: inget ändrat. **Höjdpunkten** på stödmuren är inte längre ett
+direktval: värdefältet föreslår krönets höjd där man klickade (i meter
+RH 2000 med plats, annars mm) och Enter eller ett klick lägger punkten.
+Punkterna har romber på referenslinjen när muren är markerad, och dras
+längs linjen (minst 100 mm från ändarna); höjden följer med. **BH, NH och
+TH** får en ruta i måttets överände i den öppna fasaden eller sektionen
+och dras i sidled; flyttningen från förvalet sparas på markören
+(`heightOffsets`), så den följer med när huset ändras. Måttens delar heter
+nu `höjd-bh`, `höjd-nh` och `höjd-th`. **Massorna**: netto = fyll −
+schakt, och *Berg i schakten* (`rock`, procent) delar schakten i berg och
+jord. Inte gjort: en vägg vars fot ligger över planens snitthöjd ritas
+fortfarande som snittad i planen; klickjämförelsen har inga nya steg.*
+
+### 0.10.14 Fyllningar och opacitet (förslag, mellanstor)
+
+Inkorgen 27 oktober. En gemensam mall för alla objekt med fyllning, med
+så många egenskaper som möjligt (Carl August: kom gärna på fler).
+
+- Tre sorter: **Solid** (färg, opacitet i tio steg eller skriven),
+  **Mask** (solid med pappersbakgrund, opacitet ur en lista) och
+  **Mönster** (mönstret, förgrundens penna och opacitet, bakgrundens färg
+  och opacitet), med förslagsbubblor under varje
+- Samma kontroller för markobjekten (också slänterna för sig), 2D-former,
+  rum och allt annat med fyllning
+- Det som tidigare frågats: fyllningens bakgrund i stilmallen (fråga 52),
+  rummets fyllning för flera rum eller per rumstyp (56), masken och
+  rutnätet (51), ritordningen, mönstrets skala, vinkel och utgångspunkt i
+  papper eller verkliga mått (45), egna `.pat`
+- Claudes förslag att pröva: fyllning per status (befintligt, nytt,
+  rivs), en gradient för slänter, och sparade fyllningar i stilmallen som
+  går att välja i alla objekt
+
+### 0.10.15 Visa och dölja (förslag)
 
 - Väggar m.m. var för sig under Visa; dölja ett objekt eller en typ med
   högerklick, sparat i vyn
 - *Tonat från* ställs in med ett grepp när vyn är markerad i planen (27
   oktober)
+- Kryssrutor för om markobjektens linjer och släntmarkeringarna syns i 3D
+  (Inkorgen 27 oktober)
 
-### 0.10.15 Linjerna i 2D-formen (förslag)
+### 0.10.16 Linjerna i 2D-formen (förslag)
 
 - Fortsätta och sluta en linje med ändpunkterna; Förskjut flera kanter;
   foga ihop linjer
@@ -2339,9 +2386,9 @@ Synpunkt 25 oktober. Mellanstor.
 - Ett markerat hål i bjälklaget ändras (flyttas, formas om, vrids,
   speglas) utan att bjälklaget påverkas (fråga 31)
 
-### 0.10.16 Markobjektens linjer
+### 0.10.17 Markobjektens linjer
 
-Carl Augusts synpunkter 26 oktober. Stor; efter 0.10.15, som har samma
+Carl Augusts synpunkter 26 oktober. Stor; efter 0.10.16, som har samma
 verktyg.
 
 - 2D-formens redigering för markobjekten: Böj, Avrunda med riktiga bågar,
@@ -2349,6 +2396,27 @@ verktyg.
 - Bågar på vägens referenslinje och på kanterna (kanterna ändrar bara
   bredden)
 - Docka ihop två ramper med olika lutning
+
+### 0.10.18 Situationsplanens beteckningar (förslag, mellanstor)
+
+Carl Augusts bilder 27 oktober; som landskapsarkitekter redovisar.
+
+- Murens ledare *M01* och *MK +22.20*; markhöjder (befintlig
+  understruken, utgående inom parentes, ny utan) med ett litet kors;
+  minsta sidolutning i procent; låglinje för dagvatten som pilar;
+  littera med två siffror som förval (inställning)
+- Kontur runt släntmarkeringarna (Inkorgen 27 oktober)
+- Släntmarkeringar ritade ur den befintliga marken där den är brantare än
+  ett gränsvärde (inställning, 1:3 som förval). Annan grafik ur
+  topografin (lågpunkter, avrinning, punkthöjder, lutningsfärger) efter
+  piloten
+
+### Ortofotot på marken (undersökning, liten)
+
+Inkorgen 27 oktober. Ortofotot syns inte draperat på marken och bör också
+ligga på den ändrade marken. En session med repot och terrängappen tar
+reda på om det inte följer med från Höjdkurvor eller tappas här. Efter
+0.10.13, när det passar.
 
 ### 0.11 Trappor · *nytt format*
 
@@ -2390,6 +2458,11 @@ Carl August 22 oktober. Stor; delas om det behövs.
   i en gratis IFC-visare
 - DXF av vyer och blad, med lager per objekttyp
 - Areor för bygglov (BTA, BYA, OPA) ur modellen, så långt piloten behöver
+- Förteckning över markförändringarna (Inkorgen 27 oktober): littera och
+  namn, status, area i plan, schakt, fyll och netto, berg och jord (m³ och
+  procent), lägsta och högsta nya höjd, största lutning, avtagen matjord
+  (area × tjocklek, tjockleken en inställning) och en summarad med
+  massbalansen för hela projektet
 
 ### 0.12.1 3D-vyer
 

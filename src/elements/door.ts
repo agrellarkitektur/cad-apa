@@ -7,6 +7,7 @@ import { litteraTag, showLittera } from './littera';
 import type { ElementType } from './registry';
 import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, wallFrame, type OpeningParams, type WallParams } from './wall';
 import { doorModel } from './openingModel';
+import { levelOf, liftShape } from '../repr/solids';
 
 export interface DoorParams extends OpeningParams, FrameParams {
   height: number;
@@ -43,6 +44,8 @@ export const doorType: ElementType<DoorParams> = {
     if (!host) return [];
     const p = ctx.params<DoorParams>(el);
     const z = openingZone(ctx, host, p);
+    // Dörren sitter i väggens fot (0.10.13).
+    const lift = levelOf(ctx.params<WallParams>(host));
     return doorModel(
       el.id,
       {
@@ -64,7 +67,7 @@ export const doorType: ElementType<DoorParams> = {
         showSwing: !ctx.view.hide?.includes('swing'),
       },
       detailOf(ctx.view, 'model'),
-    );
+    ).map((s) => liftShape(s, lift));
   },
   plan(el, ctx) {
     const host = el.host ? ctx.doc.elements[el.host] : undefined;

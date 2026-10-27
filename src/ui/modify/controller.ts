@@ -2,7 +2,7 @@ import { escapeHtml, labelOf } from '../labels';
 import { OPS, opsFor, RAIL_ITEMS, railOf, type ModifyContext, type ModifyHost, type OpId, type RailId } from './ops';
 import { ALIGN_BUTTONS, ArrangeTool, type AlignKind } from './arrangeTool';
 import { icons } from '../icons';
-import { ModifyTool, runInstant } from './tool';
+import { crestSuggestion, ModifyTool, runInstant } from './tool';
 
 /**
  * Det som pågår i Modifiera (0.8.5): vad valen gäller (det markerade, eller
@@ -115,7 +115,9 @@ export class Modifier {
     }
     this.active = op;
     const Tool = ArrangeTool.handles(op) ? ArrangeTool : ModifyTool;
-    this.tool = new Tool(this.host, op, ctx, this.remembered.get(op) ?? def.value?.initial ?? 0, () => this.finish(), () => this.changed());
+    // Höjdpunkten (0.10.13) föreslår krönets höjd där man klickade.
+    const start = op === 'crestPoint' ? (crestSuggestion(this.host, ctx)?.value ?? 0) : (this.remembered.get(op) ?? def.value?.initial ?? 0);
+    this.tool = new Tool(this.host, op, ctx, start, () => this.finish(), () => this.changed());
     this.host.startModify(this.tool);
     this.changed();
   }
@@ -233,10 +235,13 @@ export class Modifier {
     const op = this.active;
     if (!op) return '';
     const def = OPS[op];
-    const v = def.value;
-    const initial = this.remembered.get(op) ?? (op === 'stretch' ? Math.round(this.tool?.currentLength() ?? 0) : (v?.initial ?? 0));
+    const crest = op === 'crestPoint' && this.ctx ? crestSuggestion(this.host, this.ctx) : null;
+    const v = def.value && crest ? { ...def.value, unit: crest.unit } : def.value;
+    const initial = crest
+      ? String(crest.value).replace('.', ',')
+      : (this.remembered.get(op) ?? (op === 'stretch' ? Math.round(this.tool?.currentLength() ?? 0) : (v?.initial ?? 0)));
     const value = v
-      ? `<label class="sm-value"><span>${v.label}</span><input type="text" data-modify-value data-expr ${v.unit === '°' ? 'data-unit="deg"' : v.unit === 'st' || v.unit === '×' ? 'data-unit=""' : ''} inputmode="decimal" autocomplete="off" value="${initial}"><i>${v.unit}</i></label>`
+      ? `<label class="sm-value"><span>${v.label}</span><input type="text" data-modify-value data-expr ${v.unit === '°' ? 'data-unit="deg"' : v.unit === 'st' || v.unit === '×' || v.unit === 'm' ? 'data-unit=""' : ''} inputmode="decimal" autocomplete="off" value="${initial}"><i>${v.unit}</i></label>`
       : '';
     const hint = this.tool?.prompt() ?? def.hint;
     // Justera och Fördela (0.8.14): en knapp per sätt, bredvid tipset om att klicka en linje.

@@ -109,6 +109,8 @@ export interface GroundParams extends Partial<FillParams> {
   straight?: boolean;
   /** Stödmurens *Över marken* mot den lägre sidans mark (0.10.12); förval den högre. */
   aboveSide?: 'high' | 'low';
+  /** Uppskattad andel berg i schakten, procent (0.10.13). Utelämnad = okänd. */
+  rock?: number;
 }
 
 /** Namnet på objektets sort, som i egenskaperna. */
@@ -130,6 +132,16 @@ export function groundLabel(p: Pick<GroundParams, 'kind' | 'around' | 'slab' | '
 }
 
 /** Volymen som text, m³ med en decimal. */
+/**
+ * Massorna för ett markobjekt (0.10.13): netto (fyll minus schakt; plus =
+ * massor som tillförs, minus = överskott som körs bort), och schakten
+ * delad i berg och jord efter den uppskattade andelen berg.
+ */
+export function massBalance(vol: { cut: number; fill: number }, rockPercent?: number): { net: number; rock: number | null; soil: number | null } {
+  const share = typeof rockPercent === 'number' && Number.isFinite(rockPercent) ? Math.max(0, Math.min(100, rockPercent)) / 100 : null;
+  return { net: vol.fill - vol.cut, rock: share === null ? null : vol.cut * share, soil: share === null ? null : vol.cut * (1 - share) };
+}
+
 export const m3 = (v: number): string => `${(Math.round(v * 10) / 10).toLocaleString('sv-SE', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m³`;
 
 /** Ett markobjekt som det ritas och räknas: ytans ringar, hålen (huset) och formen för den färdiga marken. */

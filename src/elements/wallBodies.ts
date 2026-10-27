@@ -26,6 +26,8 @@ export interface WallParams {
   bulge?: number;
   /** Väggen går upp till taket ovanför (och kapas av det). (Format 4.) */
   toRoof?: boolean;
+  /** Väggens fot mot våningens golv, mm (0.10.13); höjden räknas därifrån. Utelämnad = 0. */
+  level?: number;
 }
 
 /**

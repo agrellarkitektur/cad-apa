@@ -1242,6 +1242,48 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Höjder i förhållande till våningen (0.10.13, format 20)
+
+- **Nivån** `level` (mm från våningens golv, plus eller minus) finns i
+  `WallParams` (foten), `SlabParams` (ovansidan) och `FurnitureParams`
+  (undersidan); `levelOf(p)` i `src/repr/solids.ts` läser den (0 när den
+  saknas). `liftShape` ligger nu också i `solids.ts` (exporteras vidare från
+  `storeyShapes.ts`), så att elementtyperna kan lyfta sina former.
+- **Väggarna i 3D** (`wall3d.ts`): `WallPiece` har `base`; toppen är
+  `base + height`, kropparnas `z0` är `base`, öppningarnas höjder räknas
+  från foten, `underSlabs` hoppar över bjälklag under foten (`base`), och
+  `wallEdges` grupperar också efter foten (nedre kanterna och de lodräta
+  från `base`). Dörrar och fönster lyfts med värdväggens `level`
+  (`door.ts`, `window.ts`), bjälklaget i `slab.ts` och möbeln i
+  `furniture.ts` (`furnitureSolids`). 3D-vyns grepp och referenslinjer
+  (`pane3d.ts`) ligger på `level + height`.
+- **Ändra nivån**: `src/core/levels.ts` har `setLevel` (egenskaperna; en
+  vägg flyttar foten och får `height` omräknad, false om den blir lägre än
+  10 mm), `moveVertically` (Flytta i höjd; `level` eller takets `height`,
+  inte låsta) och `hasLevel`/`movesVertically`. Fältet är `level:level` i
+  `selectionFields.ts` och `selectionEdits.ts`.
+- **Flytta i höjd** är `moveZ` i `ops.ts` (värde i mm, ikonen `moveZ`),
+  bland valen för det markerade som helhet; `ModifyTool.commitMoveZ` i
+  `modify/tool.ts`.
+- **Stödmurens höjdpunkt**: `crestPoint` har ett värde i stället för
+  `instant`. `crestSuggestion` (i `modify/tool.ts`) ger förslaget och
+  enheten (`m` i RH 2000 med plats, annars `mm`; `OpDef.value.unit` kan
+  vara `'m'`), och `Modifier.choose` och `detailMarkup` använder det.
+  `addCrestPoint(host, ctx, typed)` lägger punkten. Greppen:
+  `crestGripsShown`, `crestGripAt` och `crestDragTo` i `selectGrips.ts`
+  (på referenslinjen, minst 100 mm från ändarna), dragningen i
+  `SelectTool` (`crest`).
+- **Höjdmåtten** (`sectionLevels.ts`): delarna heter `höjd-bh`, `höjd-nh`
+  och `höjd-th`, och `MarkerParams.heightOffsets` flyttar dem i sidled
+  från förvalet. Greppen: `heightGripsShown`/`heightGripAt` i
+  `selectGrips.ts` letar upp måttets lodräta streck i den öppna vyns
+  primitiver; `SelectTool.measure` sparar flyttningen.
+- **Massorna**: `massBalance(vol, rock)` i `groundGeometry.ts` (netto =
+  fyll − schakt, berg och jord ur `GroundParams.rock`), visat i
+  `groundFields.ts` med fältet `ground:rock` (0–100).
+- Tester: `tests/v01013.test.ts`. Referensritningen `mark > fasad
+  fasad-1` ändrades bara av de nya namnen på måttens delar.
+
 ## Granskning efter 0.10.12 (format 20)
 
 Utan nya funktioner och utan eget versionsnummer (nästa är 0.10.13).

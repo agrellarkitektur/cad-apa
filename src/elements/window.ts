@@ -4,6 +4,7 @@ import { openingPens } from '../repr/openingPens';
 import { FRAME_DEFAULTS, openingZone, type FrameParams } from './opening';
 import { litteraTag, showLittera } from './littera';
 import { windowModel } from './openingModel';
+import { levelOf, liftShape } from '../repr/solids';
 import type { ElementType } from './registry';
 import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, wallFrame, type OpeningParams, type WallParams } from './wall';
 
@@ -37,6 +38,8 @@ export const windowType: ElementType<WindowParams> = {
     if (!host) return [];
     const p = ctx.params<WindowParams>(el);
     const z = openingZone(ctx, host, p);
+    // Bröstningen räknas från väggens fot (0.10.13).
+    const lift = levelOf(ctx.params<WallParams>(host));
     // Hålet går från bröstningen och är 10 mm högre än modulmåttet; karmen sitter mitt i.
     return windowModel(
       el.id,
@@ -56,7 +59,7 @@ export const windowType: ElementType<WindowParams> = {
         outside: z.insetFrom === 'utsidan' ? (z.face as 1 | -1) : 0,
       },
       detailOf(ctx.view, 'model'),
-    );
+    ).map((s) => liftShape(s, lift));
   },
   plan(el, ctx) {
     const host = el.host ? ctx.doc.elements[el.host] : undefined;
