@@ -6,7 +6,7 @@ import { hiddenObjects, HIDDEN_OBJECT } from '../../core/visibility';
 import type { AppContext } from './context';
 import { ANNOTATION_SCALES } from './helpers';
 import { installScalePop } from './scalePop';
-import { isShown, setShown, SHOW_GROUPS, traceStoreyOptions } from './showKeys';
+import { isShown, OFF_BY_DEFAULT, setShown, SHOW_GROUPS, traceStoreyOptions } from './showKeys';
 
 /** Visa-menyn med kalkeringen (och skärmskalan i statusraden, `scalePop.ts`). */
 export function installShowMenu(app: AppContext) {
@@ -150,6 +150,27 @@ export function installShowMenu(app: AppContext) {
     app.renderAll();
     // Efter klicket, så att menyn inte stängs av att knappen försvunnit.
     setTimeout(refreshShowMenu);
+  });
+
+  /**
+   * Dubbelklick på Visa (0.10.16): allt som är släckt i vyn tänds och de
+   * dolda objekten tas fram. Det som är släckt från början (husets kontur
+   * genom taket, linjerna i 3D …) och detaljnivåerna ändras inte. Klicken
+   * öppnar och stänger menyn först, så den är stängd efteråt.
+   */
+  app.root.addEventListener('dblclick', (e) => {
+    if (!(e.target as Element).closest('.show-btn')) return;
+    const ui = app.ui;
+    const before = JSON.stringify([ui.hide, ui.hideDemolished]);
+    for (const g of SHOW_GROUPS) for (const [k] of g.items) if (!OFF_BY_DEFAULT.has(k)) setShown(ui, k, true);
+    ui.hide = ui.hide.filter((h) => !h.startsWith(HIDDEN_OBJECT));
+    closeShowMenu();
+    if (JSON.stringify([ui.hide, ui.hideDemolished]) === before) {
+      app.hint('Allt visas redan i vyn');
+      return;
+    }
+    app.renderAll();
+    app.hint('Allt i vyn visas');
   });
 
   /** Visa-menyns inställningar: skala, stilmall och kalkering. */

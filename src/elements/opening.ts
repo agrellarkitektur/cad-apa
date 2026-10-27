@@ -3,6 +3,8 @@ import type { PlanContext } from './registry';
 import { FRAME_LESS, HOLE_EXTRA, wallFrame, type OpeningParams, type WallFrame, type WallParams } from './wall';
 import { outsideSide } from './wallSides';
 import { levelOf } from '../repr/solids';
+import { ABOVE_PART, planCutPen } from '../repr/planCutPens';
+import type { Primitive } from '../repr/primitives';
 
 /** Karm och djupplacering, gemensamt för dörrar och fönster. */
 export interface FrameParams {
@@ -95,4 +97,21 @@ export function openingZone(
  */
 export function openingLift(wall: { level?: unknown }, op: { sill?: number; sillFromWall?: boolean }): number {
   return op.sill === undefined || op.sillFromWall ? levelOf(wall) : 0;
+}
+
+/**
+ * En dörr eller ett fönster som inte går genom planens snitt (0.10.16):
+ * väggen går obruten förbi, och öppningen ritas som hålets kant i väggen
+ * och, för ett fönster, glaset i mitten. Över snittet streckprickat, under
+ * snittet med vyns penna. Litteran står kvar.
+ */
+export function uncutOpening(ctx: PlanContext, el: Element<any>, host: Element<any>, p: OpeningParams & FrameParams, zone: 'above' | 'below', glass: boolean): Primitive[] {
+  const z = openingZone(ctx, host, p);
+  const { f, h1, h2, lo, hi } = z;
+  const pen = planCutPen(ctx.style, 'Opening', zone);
+  const origin = { objectId: el.id, objectType: el.type, part: zone === 'above' ? ABOVE_PART : 'vy' };
+  const line = (a: number, oa: number, b: number, ob: number): Primitive => ({ kind: 'line', a: f.at(a, oa), b: f.at(b, ob), pen, origin });
+  const out = [line(h1, -f.half, h1, f.half), line(h2, -f.half, h2, f.half)];
+  if (glass) out.push(line(h1, (lo + hi) / 2, h2, (lo + hi) / 2));
+  return out;
 }

@@ -2,10 +2,10 @@ import { detailOf } from '../core/states';
 import { add, scale, sub } from '../geometry/vec';
 import { openingPens } from '../repr/openingPens';
 import type { Primitive, Vec2 } from '../repr/primitives';
-import { FRAME_DEFAULTS, openingZone, type FrameParams } from './opening';
+import { FRAME_DEFAULTS, openingZone, uncutOpening, type FrameParams } from './opening';
 import { litteraTag, showLittera } from './littera';
 import type { ElementType } from './registry';
-import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, wallFrame, type OpeningParams, type WallParams } from './wall';
+import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, openingZoneInPlan, wallFrame, type OpeningParams, type WallParams } from './wall';
 import { doorModel } from './openingModel';
 import { levelOf, liftShape } from '../repr/solids';
 
@@ -75,6 +75,9 @@ export const doorType: ElementType<DoorParams> = {
     const p = ctx.params<DoorParams>(el);
     // När rivet döljs syns bara igensättningen av en riven dörr.
     if (ctx.actionOf(el) === 'demolished' && ctx.view.hideDemolished) return openingMarks(el, host, p, ctx, { infillWhenRemoved: true });
+    // En dörr över eller under planens snitt (0.10.16): väggen går obruten förbi.
+    const zone = openingZoneInPlan(ctx, ctx.params<WallParams>(host), p);
+    if (zone !== 'cut') return uncutOpening(ctx, el, host, p, zone, false);
     const level = ctx.view.detail ?? 'normal';
     const sketch = level === 'sketch';
     const detail = level === 'detail';

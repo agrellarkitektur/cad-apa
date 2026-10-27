@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.15.1** (alfa); nästa är **0.10.16, snittet i planen**.
+**0.10.16** (alfa); nästa är **0.10.17, linjerna i 2D-formen**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,29 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.16, snittet i planen (samma filformat, 20):
+- **Planen är ett snitt i snitthöjden** (1100 över golvet, inställt per
+  våning) för fler objekt än taket. Det som går genom snittet ritas
+  snittat, det som ligger helt under som vy och det som ligger helt över
+  streckprickat där det sticker ut utanför det snittade
+- **Väggar**: en vägg vars fot ligger över snittet ritas streckprickad,
+  en låg vägg (t.ex. en knävägg) som vy, utan fyllning
+- **Dörrar och fönster**: ett fönster som ligger helt över snittet (eller
+  helt under, som ett källarfönster) tar inget hål i väggen i planen;
+  väggen går obruten förbi och fönstret ritas som hålets kanter och glaset
+- **Bjälklag**: ett bjälklag som går genom snittet är en snittyta, ett
+  över snittet (t.ex. ett entresolplan) streckprickat
+- **Möbler** över snittet, t.ex. överskåp, streckprickade
+- **Stödmurar** delas längs sin längd: där krönet ligger under
+  snitthöjden ritas muren som vy, där den går genom snittet som förut
+- **Pennorna** ställs in per objekttyp i stilmallen, under *Snittet i
+  planen* (över och under snittet). Ett objekt eller en typ kan få en egen
+  penna för det som ligger över, under *Penna* i egenskaperna. Bjälklag
+  kan nu få en egen penna
+- **Dubbelklick på Visa** visar allt i vyn: det som är släckt tänds och
+  de dolda objekten tas fram (det som är släckt från början, som husets
+  kontur genom taket, och detaljnivåerna ändras inte)
 
 Version 0.10.15.1, granskning (samma filformat, 20):
 - **Markobjektens linjer i 3D** följer planen: en väg vars tvärlinje i

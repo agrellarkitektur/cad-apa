@@ -1,12 +1,13 @@
 import { effectivePen } from '../repr/ownPen';
 import { ownedOutlines } from '../repr/outlineOwners';
 import type { Element } from '../core/model';
-import { difference, union } from '../geometry/boolean';
+import { difference, union, type Rings } from '../geometry/boolean';
+import { ABOVE_PART, planCutPen, type CutZone } from '../repr/planCutPens';
 import { wallFrame } from '../geometry/wallFrame';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { litteraTag, showLittera } from './littera';
-import type { ElementType, PlanContext } from './registry';
-import { holeWidth, openingRings, wallShapesFor, type OpeningParams, type WallParams } from './wallBodies';
+import type { ElementType, PlanContext, PlanItem } from './registry';
+import { holeWidth, openingRings, wallShapesFor, wallZone, type OpeningParams, type WallParams } from './wallBodies';
 import { wallModel3d } from './wall3d';
 import { INSIDE } from './wallSides';
 
@@ -23,7 +24,10 @@ export {
   holeWidth,
   JOIN_TOLERANCE,
   openingRings,
+  openingSpan,
+  openingZoneInPlan,
   sagittaOver,
+  wallZone,
   wallShapesFor,
   wallsWithOpenings,
   type OpeningParams,
@@ -83,6 +87,33 @@ function wallTag(ctx: PlanContext, el: Element): Primitive[] {
   return litteraTag(ctx, el, f.local(s), s, INSIDE, { leader: true });
 }
 
+/**
+ * Väggarna som inte går genom snittet (0.10.16), som konturer: under
+ * snittet med vyns penna, över snittet streckprickade och bara där de
+ * ligger utanför de snittade väggarna. Varje vägg för sig, så att en egen
+ * penna hamnar rätt.
+ */
+function uncutWalls(ctx: PlanContext, items: readonly PlanItem[], shapes: Map<string, Rings[]>, zoneOf: (el: Element) => CutZone): Primitive[] {
+  const out: Primitive[] = [];
+  const zoned = items.filter(({ el }) => zoneOf(el) !== 'cut');
+  if (!zoned.length) return out;
+  const cut = ctx.memo('walls-cut', () => union(ctx.visible('Wall').filter((w) => zoneOf(w) === 'cut' && !ctx.hiddenByView(w)).flatMap((w) => shapes.get(w.id) ?? [])));
+  for (const zone of ['below', 'above'] as const) {
+    const these = zoned.filter(({ el }) => zoneOf(el) === zone);
+    if (!these.length) continue;
+    const pen = planCutPen(ctx.style, 'Wall', zone);
+    // Väggarna i samma läge flyter ihop, så att skarvarna mellan dem inte ritas.
+    const merged = union(these.flatMap(({ el }) => shapes.get(el.id) ?? []));
+    const visible = cut.length ? merged.flatMap((r) => difference(r, cut)) : merged;
+    const own = these.flatMap(({ el }) => (shapes.get(el.id) ?? []).map((r) => ({ id: el.id, rings: r })));
+    const ids = new Set(these.map(({ el }) => el.id));
+    // Kanter längs de snittade väggarna (utan ägare) ritas redan av snittets kontur.
+    for (const o of ownedOutlines(visible, own, ids))
+      if (o.id) out.push({ kind: 'polyline', points: o.points, closed: o.closed, pen, origin: { objectId: o.id, objectType: 'Wall', part: zone === 'above' ? ABOVE_PART : 'vy' } });
+  }
+  return out;
+}
+
 export const wallType: ElementType<WallParams> = {
   type: 'Wall',
   planReads: ['Wall', 'hosted'],
@@ -98,7 +129,12 @@ export const wallType: ElementType<WallParams> = {
 
   planBatch(items, ctx) {
     const shapes = wallShapesFor(ctx);
-    const pieces = items.flatMap(({ el }) => shapes.get(el.id) ?? []);
+    // Snittet i planen (0.10.16): väggar som går genom snitthöjden ritas
+    // snittade, låga väggar som vy och väggar vars fot ligger över snittet
+    // streckprickade där de sticker ut utanför det snittade.
+    const zoneOf = (el: Element) => wallZone(ctx, ctx.params<WallParams>(el));
+    const cutItems = items.filter(({ el }) => zoneOf(el) === 'cut');
+    const pieces = cutItems.flatMap(({ el }) => shapes.get(el.id) ?? []);
     // Väggar med samma åtgärd flyter ihop till en yta, så att skarvarna blir rena.
     let regions = union(pieces);
     // Där en ny eller riven vägg går in i en befintlig hör ytan till den befintliga.
@@ -108,7 +144,7 @@ export const wallType: ElementType<WallParams> = {
         union(
           ctx
             .visible('Wall')
-            .filter((w) => ctx.actionOf(w) === 'existing')
+            .filter((w) => ctx.actionOf(w) === 'existing' && zoneOf(w) === 'cut')
             .flatMap((w) => shapes.get(w.id) ?? []),
         ),
       );
@@ -116,7 +152,7 @@ export const wallType: ElementType<WallParams> = {
     }
     // Väggar med egen penna (0.8.31): ytan är en, men konturen delas efter
     // vilken vägg kanten kommer ifrån, så att den egna pennan hamnar på rätt kanter.
-    const owned = new Set(items.filter(({ el }) => effectivePen(ctx.doc, el)).map(({ el }) => el.id));
+    const owned = new Set(cutItems.filter(({ el }) => effectivePen(ctx.doc, el)).map(({ el }) => el.id));
     const out = regions.map(
       (rings): Primitive => ({
         kind: 'region',
@@ -129,12 +165,13 @@ export const wallType: ElementType<WallParams> = {
       }),
     );
     if (owned.size) {
-      const own = items.flatMap(({ el }) => (shapes.get(el.id) ?? []).map((r) => ({ id: el.id, rings: r })));
+      const own = cutItems.flatMap(({ el }) => (shapes.get(el.id) ?? []).map((r) => ({ id: el.id, rings: r })));
       for (const o of ownedOutlines(regions, own, owned))
         out.push({ kind: 'polyline', points: o.points, closed: o.closed, pen: { weight: 0.35 }, asOutline: true, origin: { ...(o.id ? { objectId: o.id } : {}), objectType: 'Wall', part: 'kontur' } });
     }
+    out.push(...uncutWalls(ctx, items, shapes, zoneOf));
     if (showLittera(ctx, 'Wall') && action !== 'demolished') {
-      for (const { el } of items) out.push(...wallTag(ctx, el));
+      for (const { el } of cutItems) out.push(...wallTag(ctx, el));
     }
     return out;
   },

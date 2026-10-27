@@ -1,12 +1,12 @@
 import { detailOf } from '../core/states';
 import type { Pen, Primitive } from '../repr/primitives';
 import { openingPens } from '../repr/openingPens';
-import { FRAME_DEFAULTS, openingLift, openingZone, type FrameParams } from './opening';
+import { FRAME_DEFAULTS, openingLift, openingZone, uncutOpening, type FrameParams } from './opening';
 import { litteraTag, showLittera } from './littera';
 import { windowModel } from './openingModel';
 import { liftShape } from '../repr/solids';
 import type { ElementType } from './registry';
-import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, wallFrame, type OpeningParams, type WallParams } from './wall';
+import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, openingZoneInPlan, wallFrame, type OpeningParams, type WallParams } from './wall';
 
 export interface WindowParams extends OpeningParams, FrameParams {
   height: number;
@@ -67,6 +67,12 @@ export const windowType: ElementType<WindowParams> = {
     if (!host) return [];
     const p = ctx.params<WindowParams>(el);
     if (ctx.actionOf(el) === 'demolished' && ctx.view.hideDemolished) return [];
+    // Ett fönster över eller under planens snitt (0.10.16): väggen går obruten förbi.
+    const zone = openingZoneInPlan(ctx, ctx.params<WallParams>(host), p);
+    if (zone !== 'cut') {
+      const face = openingZone(ctx, host, p).face;
+      return [...uncutOpening(ctx, el, host, p, zone, true), ...(showLittera(ctx, 'Window') ? litteraTag(ctx, el, wallFrame(ctx.params<WallParams>(host)), p.at, face === 0 ? 1 : face === 1 ? -1 : 1) : [])];
+    }
     const origin = { objectId: el.id, objectType: 'Window', part: 'glas' };
     // Pennorna för karmen och bågarna ur stilmallen (0.8.33).
     const pens = openingPens(ctx.style);

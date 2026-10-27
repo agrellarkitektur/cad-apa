@@ -186,7 +186,7 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('Snitthöjd', `<span class="input-unit"><input name="cutHeight" type="text" inputmode="decimal" value="${cutHeightOf(s)}"><i>mm</i></span>`)}
         </div>
         ${doc.site ? `<p class="note">Golvet ligger på +${(doc.site.datum + s.elevation / 1000).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })} i RH 2000 (±0 = +${doc.site.datum.toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}, ändras under Platsen i menyn).</p>` : ''}
-        <p class="note">Golvnivån räknas från plan 1:s nolla. Våningshöjden är golv till golv; ändras den flyttas våningarna ovanför lika mycket. Väggar utan egen höjd följer våningshöjden. Planen är ett snitt i snitthöjden över golvet: tak ovanför den ritas punktstreckade.</p>
+        <p class="note">Golvnivån räknas från plan 1:s nolla. Våningshöjden är golv till golv; ändras den flyttas våningarna ovanför lika mycket. Väggar utan egen höjd följer våningshöjden. Planen är ett snitt i snitthöjden över golvet: det som ligger helt ovanför ritas streckprickat, det som ligger helt under som vy.</p>
         <div class="nav-actions">
           <button type="button" class="btn" data-action="new-storey-above">Ny våning ovanför</button>
           <button type="button" class="btn" data-action="new-storey-below">Ny våning under</button>

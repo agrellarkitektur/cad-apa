@@ -3,6 +3,8 @@ import { pointInRings } from '../geometry/vec';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { lastResults } from '../repr/reuse';
 import { levelOf, type Shape3D } from '../repr/solids';
+import { ABOVE_PART, planCutPen } from '../repr/planCutPens';
+import { zoneInPlan } from './planCut';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
 import { bareWallShapes, bareWallUnion, wallFrame, type WallParams } from './wall';
 import type { Element, Id, ProjectDoc } from '../core/model';
@@ -209,24 +211,33 @@ export const slabType: ElementType<SlabParams> = {
     const p = ctx.params<SlabParams>(el);
     const origin = { objectId: el.id, objectType: 'Slab' };
     const out: Primitive[] = [];
-    // Bjälklaget ligger under snittet: tunna linjer, under väggarna. Som
-    // linjer, inte en sluten form, så att ett klick i ett rum inte träffar bjälklaget.
-    const pen = { weight: 0.13 };
+    // Snittet i planen (0.10.16): ett bjälklag som går genom snitthöjden är
+    // en snittyta, ett över snittet ritas streckprickat. Annars ligger det
+    // under snittet: tunna linjer, under väggarna.
+    const lv = levelOf(p);
+    const zone = zoneInPlan(ctx, lv - Math.max(1, p.thickness), lv);
+    if (zone === 'cut') {
+      for (const rings of slabRings(ctx, el)) out.push({ kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'snitt' } });
+      return out;
+    }
+    // Som linjer, inte en sluten form, så att ett klick i ett rum inte träffar bjälklaget.
+    const pen = planCutPen(ctx.style, 'Slab', zone);
+    const above = zone === 'above';
     const edges = (ring: readonly Vec2[], part: string, under: boolean) => {
       for (let i = 0; i < ring.length; i++) out.push({ kind: 'line', a: ring[i], b: ring[(i + 1) % ring.length], pen, ...(under ? { under: true } : {}), origin: { ...origin, part } });
     };
-    for (const poly of slabBase(ctx, p)) for (const ring of poly) edges(ring, 'kontur', true);
-    // Håltagningarna med kryss. Raka kanter är linjer, bågar korta raka bitar (0.9.4).
+    for (const poly of slabBase(ctx, p)) for (const ring of poly) edges(ring, above ? ABOVE_PART : 'kontur', !above);
+    // Håltagningarna, med kryss under snittet. Raka kanter är linjer, bågar korta raka bitar (0.9.4).
     for (const h of p.holes ?? []) {
       if (h.points.length < 3) continue;
-      const part = { ...origin, part: 'hål' };
+      const part = { ...origin, part: above ? ABOVE_PART : 'hål' };
       for (let i = 0; i < segmentCount(h.points.length, true); i++) {
         const a = h.points[i];
         const b = h.points[(i + 1) % h.points.length];
         if (!segmentArc(h, i)) out.push({ kind: 'line', a, b, pen, origin: part });
         else out.push({ kind: 'polyline', points: shapePoints({ shape: 'polyline', points: [a, b], bulges: [h.bulges![i]] }).points, closed: false, pen, origin: part });
       }
-      for (const [a, b] of holeCross(h)) out.push({ kind: 'line', a, b, pen, origin: part });
+      if (!above) for (const [a, b] of holeCross(h)) out.push({ kind: 'line', a, b, pen, origin: part });
     }
     return out;
   },

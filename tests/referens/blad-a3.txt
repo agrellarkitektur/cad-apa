@@ -183,14 +183,14 @@ linje 154,217 148,217 [w0.5 ink] @sektion-a
 linje 148,217 150.5,215.8 [w0.5 ink] @sektion-a
 linje 148,217 150.5,218.3 [w0.5 ink] @sektion-a
 text "A" 155.3,220.2 h3.5 90° middle fet [w0.35] @sektion-a
-linje 84,114 214,114 [w0.18 ink d5/1/0.3/1] @tak
-linje 214,114 214,159 [w0.18 ink d5/1/0.3/1] @tak
-linje 214,159 84,159 [w0.18 ink d5/1/0.3/1] @tak
-linje 84,159 84,114 [w0.18 ink d5/1/0.3/1] @tak
-linje 214,204 84,204 [w0.18 ink d5/1/0.3/1] @tak-n
-linje 84,204 84,159 [w0.18 ink d5/1/0.3/1] @tak-n
-linje 84,159 214,159 [w0.18 ink d5/1/0.3/1] @tak-n
-linje 214,159 214,204 [w0.18 ink d5/1/0.3/1] @tak-n
+linje 84,114 214,114 [w0.18 ink d5/1/0.3/1] @tak/över
+linje 214,114 214,159 [w0.18 ink d5/1/0.3/1] @tak/över
+linje 214,159 84,159 [w0.18 ink d5/1/0.3/1] @tak/över
+linje 84,159 84,114 [w0.18 ink d5/1/0.3/1] @tak/över
+linje 214,204 84,204 [w0.18 ink d5/1/0.3/1] @tak-n/över
+linje 84,204 84,159 [w0.18 ink d5/1/0.3/1] @tak-n/över
+linje 84,159 214,159 [w0.18 ink d5/1/0.3/1] @tak-n/över
+linje 214,159 214,204 [w0.18 ink d5/1/0.3/1] @tak-n/över
 text "Plan 1 – Förslag A, bygglov" 57.8,79 h3.5 fet [w0.25] @/vyrubrik
 linje 57.8,77.8 99.7,77.8 [w0.25] @/vyrubrik
 text "SKALA 1:100" 102.2,79 h2.5 [w0.18] @/vyrubrik

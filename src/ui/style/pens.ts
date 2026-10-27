@@ -3,6 +3,7 @@ import type { PenDef } from '../../core/graphics';
 import { defaultMarkerPen, MARKER_PENS, ROOM_PENS, type MarkerPenKey } from '../../repr/markerPens';
 import { defaultOpeningPen, OPENING_PENS, type OpeningPenKey } from '../../repr/openingPens';
 import { escapeHtml } from '../labels';
+import { defaultPlanCutPen, PLAN_CUT_PENS } from '../../repr/planCutPens';
 import { lineTypeOptions } from '../lineTypePick';
 import { weightPicker } from '../weightPick';
 import { fromHex, toHex } from './colors';
@@ -20,6 +21,7 @@ export function penSection(style: StyleSheet): string {
       .map(({ key, label, hint }) => {
         const own = style.pens?.[key];
         const weight = own?.weight ?? defaultPen(key).weight;
+        const linetype = own?.linetype ?? defaultPen(key).linetype;
         const reset = own
           ? `<button class="btn" data-action="pen-reset" data-pen-key="${key}" title="Tillbaka till förvalet">Förval</button>`
           : '<span aria-hidden="true"></span>';
@@ -27,7 +29,7 @@ export function penSection(style: StyleSheet): string {
       <div class="style-name"><b>${escapeHtml(label)}</b><span>${escapeHtml(hint)}</span></div>
       <div class="pen-weight"><span>Tjocklek</span>${weightPicker(`pen-${key}`, weight, `data-pen="${key}:weight"`, ' mm')}</div>
       <label><span>Färg</span><input type="color" data-pen="${key}:color" value="${toHex(own?.color ?? 'ink')}"></label>
-      <label><span>Linjetyp</span><select data-pen="${key}:linetype">${lineTypeOptions(style, own?.linetype)}</select></label>
+      <label><span>Linjetyp</span><select data-pen="${key}:linetype">${lineTypeOptions(style, linetype)}</select></label>
       ${reset}
     </div>`;
       })
@@ -36,6 +38,11 @@ export function penSection(style: StyleSheet): string {
     <h3>Pennor för dörrar och fönster</h3>
     <p class="note">Tre klasser för dörrarnas och fönstrens delar. Gäller alla dörrar och fönster utan egen penna, på typen eller objektet. Väggens kontur ställs in under åtgärderna ovan.</p>
     ${rows(OPENING_PENS)}
+  </section>
+  <section class="style-labels style-pens">
+    <h3>Snittet i planen</h3>
+    <p class="note">Det som ligger helt under planens snitthöjd ritas som vy, det som ligger helt över streckprickat där det sticker ut utanför det snittade. Snitthöjden ställs in per våning (1100 från början). Ett objekt eller en typ kan få en egen penna för det som ligger över.</p>
+    ${rows(PLAN_CUT_PENS)}
   </section>
   <section class="style-labels style-pens">
     <h3>Penna för rum</h3>
@@ -51,6 +58,8 @@ export function penSection(style: StyleSheet): string {
 
 /** Förvalet för en penna i stilmallen, markör eller dörrarnas och fönstrens klass. */
 function defaultPen(key: string): PenDef {
+  const cut = defaultPlanCutPen(key);
+  if (cut) return cut;
   return OPENING_PENS.some((o) => o.key === key) ? defaultOpeningPen(key as OpeningPenKey) : defaultMarkerPen(key as MarkerPenKey);
 }
 
@@ -67,11 +76,13 @@ export function applyPenField(style: StyleSheet, input: HTMLInputElement | HTMLS
     else pen.color = c;
   }
   if (field === 'linetype') {
-    if (input.value === 'solid') delete pen.linetype;
+    // Heldraget sparas bara när förvalet är en annan linjetyp (snittets pennor, 0.10.16).
+    if (input.value === 'solid' && !defaultPen(key).linetype) delete pen.linetype;
     else pen.linetype = input.value;
   }
   // Förvalet sparas inte, så att en senare ändring av förvalen slår igenom.
-  if (pen.weight === defaultPen(key).weight && !pen.color && !pen.linetype) delete pens[key];
+  const d = defaultPen(key);
+  if (pen.weight === d.weight && !pen.color && (pen.linetype ?? undefined) === d.linetype) delete pens[key];
   else pens[key] = pen;
   if (!Object.keys(pens).length) delete style.pens;
   return 'Ändra pennor';

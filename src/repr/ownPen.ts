@@ -2,6 +2,7 @@ import type { StyleSheet } from '../core/graphics';
 import { lineTypeDash } from '../core/lineTypes';
 import type { Element, OwnPen, OwnPenPart, ProjectDoc } from '../core/model';
 import { SYMBOL_PARTS } from './openingPens';
+import { ABOVE_PART } from './planCutPens';
 import type { Pen, Primitive } from './primitives';
 
 /**
@@ -27,6 +28,7 @@ export function mergePens(base: OwnPen | undefined, top: OwnPen | undefined): Ow
   if (!top) return base;
   const out: OwnPen = { ...base, ...top };
   if (base.symbol || top.symbol) out.symbol = { ...base.symbol, ...top.symbol };
+  if (base.above || top.above) out.above = { ...base.above, ...top.above };
   return out;
 }
 
@@ -58,7 +60,9 @@ export function ownPenOf(doc: ProjectDoc, p: Primitive): OwnPen | undefined {
  */
 export function applyOwnPen(p: Primitive, pen: OwnPen | undefined, style: StyleSheet | undefined): Primitive {
   // Slagbågen och öppningssättet har pennans symboldel (0.8.33), resten den övre.
-  const own = pen && p.origin?.part && SYMBOL_PARTS.has(p.origin.part) ? pen.symbol : pen;
+  // Det som ligger över snittet i planen har delen `above` (0.10.16), ovanpå den övre.
+  const part = p.origin?.part;
+  const own = pen && part && SYMBOL_PARTS.has(part) ? pen.symbol : pen && part === ABOVE_PART && pen.above ? { ...pen, ...pen.above } : pen;
   if (!own) return p;
   switch (p.kind) {
     case 'line':

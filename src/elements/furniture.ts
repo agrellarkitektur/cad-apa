@@ -1,6 +1,8 @@
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import { levelOf, liftShape, type Solid } from '../repr/solids';
 import type { ElementType } from './registry';
+import { zoneInPlan } from './planCut';
+import { ABOVE_PART, planCutPen } from '../repr/planCutPens';
 
 /**
  * Enkla möbler och inredning tills smartobjekten finns (efter pilotprojektet). Varje
@@ -79,8 +81,11 @@ export const furnitureType: ElementType<FurnitureParams> = {
     const cos = Math.cos(r);
     const sin = Math.sin(r);
     const tr = ([x, y]: Local): Vec2 => [p.origin[0] + x * cos - y * sin, p.origin[1] + x * sin + y * cos];
-    const pen: Pen = isFixed(p) ? { weight: 0.25 } : { weight: 0.18, color: 'muted' };
-    const origin = { objectId: el.id, objectType: 'Furniture', part: 'symbol' };
+    // Över planens snitt (0.10.16), t.ex. ett överskåp: streckprickat.
+    const solids = furnitureSolids(el.id, p);
+    const above = zoneInPlan(ctx, levelOf(p) + Math.min(...solids.map((x) => x.z0)), levelOf(p) + Math.max(...solids.map((x) => x.z1))) === 'above';
+    const pen: Pen = above ? planCutPen(ctx.style, 'Furniture', 'above') : isFixed(p) ? { weight: 0.25 } : { weight: 0.18, color: 'muted' };
+    const origin = { objectId: el.id, objectType: 'Furniture', part: above ? ABOVE_PART : 'symbol' };
     const poly = (pts: Local[], closed = true): Primitive => ({ kind: 'polyline', closed, points: pts.map(tr), pen, origin });
     const rect = (x0: number, y0: number, x1: number, y1: number) =>
       poly([

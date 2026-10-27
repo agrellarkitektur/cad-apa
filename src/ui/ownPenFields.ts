@@ -12,16 +12,21 @@ import { lineTypeOptions } from './lineTypePick';
  */
 
 /** Sorterna som kan få en egen penna. 2D-formen har redan sin egen. Markobjekten sedan 0.10.7. */
-export const OWN_PEN_TYPES = new Set(['Wall', 'Door', 'Window', 'Roof', 'Furniture', 'Space', 'Ground']);
+export const OWN_PEN_TYPES = new Set(['Wall', 'Door', 'Window', 'Roof', 'Furniture', 'Space', 'Ground', 'Slab']);
 
 /** Sorterna med en symboldel (slagbåge, öppningssätt). */
 const SYMBOL_TYPES = new Set(['Door', 'Window']);
 
-type Part = 'main' | 'symbol';
+/** Sorterna med en del för det som ligger över planens snitt (0.10.16). */
+const ABOVE_TYPES = new Set(['Wall', 'Door', 'Window', 'Roof', 'Furniture', 'Ground', 'Slab']);
+
+type Part = 'main' | 'symbol' | 'above';
 type Field = keyof OwnPenPart;
 
 const comma = (n: number) => n.toLocaleString('sv-SE');
-const partOf = (pen: OwnPen | undefined, part: Part): OwnPenPart | undefined => (part === 'symbol' ? pen?.symbol : pen);
+const partOf = (pen: OwnPen | undefined, part: Part): OwnPenPart | undefined => (part === 'main' ? pen : pen?.[part]);
+/** Delen ur fältets namn (`symbol.weight`, `above.color`, `weight`). */
+const partOfName = (name: string): Part => (name.startsWith('symbol.') ? 'symbol' : name.startsWith('above.') ? 'above' : 'main');
 
 /** Värdet om det är lika för alla, null om det skiljer sig. */
 function same<K extends Field>(pens: readonly (OwnPen | undefined)[], part: Part, k: K): OwnPenPart[K] | null {
@@ -34,7 +39,7 @@ function same<K extends Field>(pens: readonly (OwnPen | undefined)[], part: Part
  * (typen); `inherited` säger vad som gäller utan egen, per fält.
  */
 function partFields(doc: ProjectDoc, scope: string, pens: readonly (OwnPen | undefined)[], part: Part, inherited: (k: Field) => string): string {
-  const pre = part === 'symbol' ? 'symbol.' : '';
+  const pre = part === 'main' ? '' : `${part}.`;
   const mixed = '<option selected disabled>Olika</option>';
   const weight = same(pens, part, 'weight');
   const weights = `<select data-key="${scope}:${pre}weight" aria-label="Tjocklek">${weight === null ? mixed : ''}<option value="style"${weight === undefined ? ' selected' : ''}>${inherited('weight')}</option>${PEN_WEIGHTS.filter((w) => w > 0)
@@ -55,11 +60,13 @@ function partFields(doc: ProjectDoc, scope: string, pens: readonly (OwnPen | und
 
 /** Båda delarna för dörrar och fönster, annars en. */
 function penParts(doc: ProjectDoc, scope: string, type: string, pens: readonly (OwnPen | undefined)[], inherited: (part: Part, k: Field) => string): string {
-  if (!SYMBOL_TYPES.has(type)) return partFields(doc, scope, pens, 'main', (k) => inherited('main', k));
-  return `<h4>Snitt</h4>
+  const above = ABOVE_TYPES.has(type);
+  if (!SYMBOL_TYPES.has(type) && !above) return partFields(doc, scope, pens, 'main', (k) => inherited('main', k));
+  // Över snittet (0.10.16): det som saknas tas från den övre delen, sedan stilmallens penna för snittet.
+  return `<h4>${SYMBOL_TYPES.has(type) ? 'Snitt' : 'Snitt och vy'}</h4>
     ${partFields(doc, scope, pens, 'main', (k) => inherited('main', k))}
-    <h4>Symbol</h4>
-    ${partFields(doc, scope, pens, 'symbol', (k) => inherited('symbol', k))}`;
+    ${SYMBOL_TYPES.has(type) ? `<h4>Symbol</h4>${partFields(doc, scope, pens, 'symbol', (k) => inherited('symbol', k))}` : ''}
+    ${above ? `<h4>Över snittet i planen</h4>${partFields(doc, scope, pens, 'above', (k) => inherited('above', k))}` : ''}`;
 }
 
 /** Avsnittet i egenskaperna, eller tomt om något markerat inte kan få en penna. */
@@ -96,24 +103,24 @@ export function typePenFields(doc: ProjectDoc, def: Definition): string {
 /** Pennan med fälten ändrade (undefined tar bort); undefined om inget är kvar. */
 function changed(pen: OwnPen | undefined, part: Part, change: Partial<Record<Field, unknown>>): OwnPen | undefined {
   const next: OwnPen = { ...pen };
-  const target: OwnPenPart = part === 'symbol' ? { ...next.symbol } : next;
+  const target: OwnPenPart = part === 'main' ? next : { ...next[part] };
   for (const [k, v] of Object.entries(change) as [Field, unknown][]) {
     if (v === undefined) delete target[k];
     else (target as Record<string, unknown>)[k] = v;
   }
-  if (part === 'symbol') {
-    if (Object.keys(target).length) next.symbol = target;
-    else delete next.symbol;
+  if (part !== 'main') {
+    if (Object.keys(target).length) next[part] = target;
+    else delete next[part];
   }
   return Object.keys(next).length ? next : undefined;
 }
 
 /** Ändringen för ett fält, och ångrarubriken. */
 function fieldChange(name: string, input: HTMLInputElement | HTMLSelectElement, current: () => string | undefined): { part: Part; change: Partial<Record<Field, unknown>>; label: string } | null {
-  const part: Part = name.startsWith('symbol.') ? 'symbol' : 'main';
-  const field = part === 'symbol' ? name.slice(7) : name;
+  const part = partOfName(name);
+  const field = part === 'main' ? name : name.slice(part.length + 1);
   const v = input.value;
-  const what = part === 'symbol' ? ' för symbolen' : '';
+  const what = part === 'symbol' ? ' för symbolen' : part === 'above' ? ' över snittet' : '';
   if (field === 'weight') return { part, change: { weight: v === 'style' ? undefined : Number(v) }, label: (v === 'style' ? 'Ärvd tjocklek' : 'Egen tjocklek') + what };
   if (field === 'colorOn') return { part, change: { color: v === 'style' ? undefined : (current() ?? '#c2372c') }, label: (v === 'style' ? 'Ärvd färg' : 'Egen färg') + what };
   if (field === 'color') return { part, change: { color: v }, label: 'Ändra färg' + what };
@@ -134,7 +141,7 @@ function setPen(store: DocStore, ids: readonly Id[], part: Part, change: Partial
 
 /** Ändringar i fälten (`pen:…`). Svarar true om ändringen hanterades. */
 export function ownPenChange(store: DocStore, ids: readonly Id[], name: string, input: HTMLInputElement | HTMLSelectElement): boolean {
-  const c = fieldChange(name, input, () => ids.map((id) => partOf(store.doc.elements[id]?.pen, name.startsWith('symbol.') ? 'symbol' : 'main')?.color).find(Boolean));
+  const c = fieldChange(name, input, () => ids.map((id) => partOf(store.doc.elements[id]?.pen, partOfName(name))?.color).find(Boolean));
   if (!c) return false;
   setPen(store, ids, c.part, c.change, c.label);
   return true;
@@ -145,7 +152,7 @@ export function typePenChange(store: DocStore, ids: readonly Id[], name: string,
   const defId = store.doc.elements[ids[0]]?.definition;
   const def = defId ? store.doc.definitions[defId] : undefined;
   if (!def) return false;
-  const c = fieldChange(name, input, () => partOf(def.pen, name.startsWith('symbol.') ? 'symbol' : 'main')?.color);
+  const c = fieldChange(name, input, () => partOf(def.pen, partOfName(name))?.color);
   if (!c) return false;
   store.transact(`${c.label} för ${def.name}`, (tx) => tx.putDefinition(withPen(def, changed(def.pen, c.part, c.change))));
   return true;

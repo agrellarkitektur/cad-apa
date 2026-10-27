@@ -3,11 +3,29 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 27 oktober 2026 (kväll), efter granskningen (0.10.15.1).
+Senast: 27 oktober 2026 (kväll), efter 0.10.16 Snittet i planen.
 
 ## Läget
 
-- **Nästa session:** **0.10.16 Snittet i planen** (se *Nästa session*).
+- **Nästa session:** **0.10.17 Linjerna i 2D-formen** (se *Nästa session*).
+- **0.10.16 Snittet i planen är klar** på `main` (samma format, 20).
+  Byggt: väggar, dörrar och fönster, bjälklag, möbler, tak och stödmurar
+  ritas mot snitthöjden: snittade där de går genom den, som vy helt under
+  och streckprickade helt över (där de sticker ut utanför det snittade);
+  fönster och dörrar utanför snittet tar inget hål i väggen; elva pennor
+  under *Snittet i planen* i stilmallen och en egen del *Över snittet i
+  planen* i objektets och typens penna (bjälklag kan nu få en egen penna);
+  dubbelklick på Visa visar allt. Koden i UTVECKLING.md under *Snittet i
+  planen*; Claudes val i PLAN.md. Carl August svarade i början: bjälklag,
+  möbler, tak, väggar (som ska kunna luta, ny förslagsversion **0.10.21
+  Lutande väggar**) och pelare/profiler (i 0.11.1); pennan per objekttyp i
+  stilmallen med en egen per objekt. Testerna: 548 på ca 14 s.
+  Klickjämförelsen mot 0.10.15.1 skiljer bara i stilmallens dialog, den
+  egna pennans del och stödmuren i `mark` (krönet under snittet).
+- **Märks i hans ritningar efter 0.10.16:** en låg stödmur (krön under
+  1100 över våningens golv) ritas som kontur, inte skrafferad; en vägg vars
+  fot ligger över snittet är streckprickad; ett högt fönster tar inget hål
+  i väggen; takets egen penna gäller som förut också det streckprickade.
 - **Granskningen efter 0.10.15 är klar** som **0.10.15.1** på `main`
   (samma format, 20). Två småfel ur Inkorgen: vägarnas tvärlinjer i 3D
   följer planen (en avslagen tvärlinje syns inte i 3D), och maskens
@@ -51,10 +69,10 @@ Senast: 27 oktober 2026 (kväll), efter granskningen (0.10.15.1).
   hörn, så linjerna ligger lite annorlunda än förut; fönster i en vägg med
   *Fot mot våningen* ligger kvar mot våningens golv (i 0.10.13 följde de
   foten); fyllningens opacitet följer inte längre linjens.
-- **Versionerna efter 27 oktober:** 0.10.16 Snittet i planen, 0.10.17
-  Linjerna i 2D-formen, 0.10.18 Rampens referenslinje, 0.10.19
-  Markobjektens bågar (förut 0.10.18 Markobjektens linjer) och 0.10.20
-  Situationsplanens beteckningar. Ortofotot på marken är en egen liten
+- **Versionerna efter 27 oktober:** 0.10.17 Linjerna i 2D-formen, 0.10.18
+  Rampens referenslinje, 0.10.19 Markobjektens bågar (förut 0.10.18
+  Markobjektens linjer), 0.10.20 Situationsplanens beteckningar och
+  0.10.21 Lutande väggar (förslag; fråga om före eller efter piloten). Ortofotot på marken är en egen liten
   undersökning. Förteckningen över markförändringarna hör till 0.12
   Export. Nästa granskning efter ungefär tre versioner (0.10.18).
 - **0.10.13 Höjder i förhållande till våningen**: se PLAN.md.
@@ -63,11 +81,11 @@ Senast: 27 oktober 2026 (kväll), efter granskningen (0.10.15.1).
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.15.1` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.16` i `engine.ts`, `package.json` och
   `package-lock.json` (npm godtar fyra delar i ett privat paket); nästa
-  version är `0.10.16`. En granskning höjer inte numret, eller får en
+  version är `0.10.17`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.15 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.16 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -122,9 +140,7 @@ vid varje överlämning.
 - ~~0.8.8 Mallblad~~ … ~~0.10.12 Småjusteringar~~, ~~Granskning efter
   0.10.12~~, ~~0.10.13 Höjder i förhållande till våningen~~, ~~0.10.14
   Fyllningar och opacitet~~, ~~0.10.15 Visa och dölja~~, ~~Granskning
-  efter 0.10.15 (0.10.15.1)~~ (klara)
-- **0.10.16 Snittet i planen** (mellanstor: snitt bara vid 1100, det under
-  som vy, det över streckprickat; dubbelklick på Visa visar allt)
+  efter 0.10.15 (0.10.15.1)~~, ~~0.10.16 Snittet i planen~~ (klara)
 - **0.10.17 Linjerna i 2D-formen** (bågar i takets kontur, cirkulära hål,
   hål som ändras för sig, synliga punkter på referens- och konturlinjer)
 - **0.10.18 Rampens referenslinje** (mellanstor till stor: referenslinjen
@@ -134,6 +150,8 @@ vid varje överlämning.
 - **0.10.20 Situationsplanens beteckningar** (förslag: murens ledare,
   markhöjder med status, sidolutning, låglinje, kontur runt slänterna,
   slänter ur den befintliga marken)
+- **0.10.21 Lutande väggar** (förslag, mellanstor till stor; fråga om
+  före eller efter piloten)
 - **Ortofotot på marken** (liten undersökning med terrängappen, när det
   passar)
 - **0.11 Trappor** (nytt format)
@@ -150,16 +168,27 @@ vid varje överlämning.
 
 ## Nästa session
 
-**0.10.16 Snittet i planen** (mellanstor). Fråga först vilka objekt
-utöver väggar (bjälklag, möbler, tak) och vilken penna det överliggande
-får. Med i versionen: dubbelklick på Visa-knappen visar allt i vyn. Läs
-`cad-apa-synpunkter.md` och sortera Inkorgen först.
+**0.10.17 Linjerna i 2D-formen** (mellanstor, se PLAN.md och
+synpunkterna). Läs `cad-apa-synpunkter.md` och sortera Inkorgen först.
+Granskningen är planerad efter 0.10.18.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
+
+**0.10.16 efter provning** (Claudes val, se PLAN.md)
+- En låg stödmur (krönet under snitthöjden) ritas som kontur. Rätt på
+  situationsplanen, eller ska murar alltid vara snittade?
+- Ett fönster helt över eller under snittet ritas som hålets två kanter
+  och glaset. Räcker det, eller ska karmen synas?
+- En möbel som går genom snittet (t.ex. ett högskåp) ritas som förut, som
+  symbol. Ska den ritas snittad?
+- Den egna pennans del *Över snittet* följer objektets penna när den är
+  tom. Rätt, eller ska den följa stilmallen?
+- Dubbelklick på Visa tänder inte det som är släckt från början (husets
+  kontur genom taket, linjerna i 3D). Rätt?
 
 **0.10.15 efter provning** (Claudes val, se PLAN.md)
 - Det dolda räknas med i väggarnas skarvar och rummen. Rätt, eller ska en
@@ -278,8 +307,12 @@ fråga.
 
 ## Öppna frågor och kända begränsningar
 
-- **Höjder mot våningen (0.10.13):** en vägg vars fot ligger över planens
-  snitthöjd ritas ändå som snittad i planen (0.10.16).
+- **Snittet i planen (0.10.16):** en vägg räknas efter sin fot och höjd;
+  en vägg som kapas av ett tak under snitthöjden (en knävägg utan egen låg
+  höjd) räknas ändå som snittad. Ett bjälklag på våningen ovanför syns
+  inte (bara våningens egna). Fasader och sektioner påverkas inte.
+  Klickjämförelsen har inga egna steg för 0.10.16 än (läggs till i
+  granskningen).
 - **Dolt (0.10.15):** det dolda gäller vyn, så 3D-vyn följer planen. *Markera
   alla …* tar inte med det dolda; Filtrera och markera är inte prövat med
   dolda objekt. Linjerna i 3D räknas om vid

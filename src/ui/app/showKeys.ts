@@ -102,7 +102,7 @@ export function traceStoreyOptions(trace: string | null | undefined): string {
  * i vyns `hide`, så att äldre vyer inte får det. Tak på andra våningar och
  * de dolda linjerna i fasader (0.10.10) likaså.
  */
-const OFF_BY_DEFAULT = new Set(['footprint', 'roofsAround', 'hiddenSlabs', 'hiddenWalls', 'ground3d', 'slopes3d']);
+export const OFF_BY_DEFAULT: ReadonlySet<string> = new Set(['footprint', 'roofsAround', 'hiddenSlabs', 'hiddenWalls', 'ground3d', 'slopes3d']);
 
 /** Om det som nyckeln står för syns i vyn. */
 export function isShown(ui: Pick<UiState, 'hide' | 'hideDemolished'>, key: string): boolean {

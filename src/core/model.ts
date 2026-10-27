@@ -324,6 +324,8 @@ export interface OwnPenPart {
  */
 export interface OwnPen extends OwnPenPart {
   symbol?: OwnPenPart;
+  /** Det som ligger över planens snitthöjd (0.10.16), streckprickat från början. */
+  above?: OwnPenPart;
 }
 
 export const FORMAT = 'bacchus-project';

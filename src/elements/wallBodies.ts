@@ -5,6 +5,9 @@ import { wallFrame, type WallFrame } from '../geometry/wallFrame';
 import { add, cross, dist, dot, intersectLines, scale, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import type { PlanContext } from './registry';
+import { zoneInPlan } from './planCut';
+import type { CutZone } from '../repr/planCutPens';
+import { levelOf } from '../repr/solids';
 
 /*
  * Väggarnas kroppar i plan (ur wall.ts i 0.10.1): parametrarna, öppningarnas
@@ -54,6 +57,25 @@ export function sagittaOver(f: WallFrame, width: number): number {
 /** Hålet är 10 mm större än modulmåttet, karmen 10 mm mindre. */
 export const HOLE_EXTRA = 10;
 export const FRAME_LESS = 10;
+
+/**
+ * Hålets höjder från våningens golv (0.10.16): från bröstningen (ett
+ * fönster) eller väggens fot (en dörr) och modulmåttet + 10 uppåt. Ett
+ * fönsters bröstning räknas från golvet, om det inte följer väggens fot.
+ */
+export function openingSpan(wall: { level?: unknown }, o: { height?: number; sill?: number; sillFromWall?: boolean }): [number, number] {
+  const z0 = (o.sill === undefined || o.sillFromWall ? levelOf(wall) : 0) + (o.sill ?? 0);
+  return [z0, z0 + (o.height ?? 0) + HOLE_EXTRA];
+}
+
+/** Var väggen och öppningen ligger mot planens snitt; utan snitt (fasader, 3D) `cut`. */
+export function wallZone(ctx: Pick<PlanContext, 'doc' | 'storey'>, p: WallParams): CutZone {
+  return zoneInPlan(ctx, levelOf(p), levelOf(p) + p.height);
+}
+export function openingZoneInPlan(ctx: Pick<PlanContext, 'doc' | 'storey'>, wall: WallParams, o: { height?: number; sill?: number; sillFromWall?: boolean }): CutZone {
+  const [z0, z1] = openingSpan(wall, o);
+  return zoneInPlan(ctx, z0, z1);
+}
 
 export function holeWidth(o: OpeningParams): number {
   return o.width + HOLE_EXTRA;
@@ -255,7 +277,16 @@ export function wallShapesFor(ctx: PlanContext): Map<string, Rings[]> {
   return ctx.memo('wall-shapes', () =>
     computeWallShapes(
       ctx.visible('Wall').map((el) => ({ id: el.id, p: ctx.params<WallParams>(el) })),
-      (id) => ctx.openingsIn(id).map((o) => ctx.params<OpeningParams>(o)),
+      // Bara öppningar som går genom snittet tar upp hål i planen (0.10.16):
+      // förbi ett högt fönster går väggen obruten.
+      (id) => {
+        const w = ctx.doc.elements[id];
+        const wp = w ? ctx.params<WallParams>(w) : undefined;
+        return ctx
+          .openingsIn(id)
+          .map((o) => ctx.params<OpeningParams & { height?: number; sill?: number; sillFromWall?: boolean }>(o))
+          .filter((o) => !wp || openingZoneInPlan(ctx, wp, o) === 'cut');
+      },
       wallsWithOpenings,
     ),
   );

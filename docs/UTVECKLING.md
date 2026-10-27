@@ -1244,6 +1244,66 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Snittet i planen (0.10.16, format 20)
+
+Inga nya format: fälten är frivilliga (`OwnPen.above`, nya nycklar i
+stilmallens `pens`).
+
+- **Snitthöjden** och zonerna: `cutHeightOf` och `DEFAULT_CUT_HEIGHT`
+  ligger nu i `src/elements/planCut.ts` (roofPlan.ts exporterar vidare),
+  med `planCutHeight(ctx)` (undefined när ytan inte är en plan) och
+  `zoneInPlan(ctx, z0, z1)`. `cutZone(z0, z1, h)` i
+  `src/repr/planCutPens.ts` ger `cut`, `above` eller `below` (ett objekt
+  som bara rör snittet räknas som snittat, 0,5 mm).
+- **Pennorna**: `PLAN_CUT_PENS` (nycklarna `aboveWall`, `belowWall`,
+  `aboveOpening`, …, `belowGround`) i stilmallens `pens`, med förval där
+  det över är punktstreckat (`linetype: 'dashdot'`). `planCutPen(style,
+  type, zone)` slår ihop förvalet och stilmallens rad, så att förvalets
+  linjetyp gäller tills stilmallen har en egen; därför sparar
+  `applyPenField` (`src/ui/style/pens.ts`) `solid` när förvalet har en
+  annan linjetyp. Raderna står under *Snittet i planen* i `penSection`.
+- **Delen över snittet**: det som ligger över har `origin.part` =
+  `ABOVE_PART` (`'över'`). `applyOwnPen` lägger `OwnPen.above` ovanpå den
+  övre delen för dem (utan `above` gäller den övre som förut, så att
+  takens egna pennor ser ut som förut). `mergePens` slår ihop `above`
+  fält för fält. Fälten heter `pen:above.…` och `defpen:above.…`
+  (`ABOVE_TYPES` i `ownPenFields.ts`, rubriken *Över snittet i planen*);
+  `Slab` finns nu i `OWN_PEN_TYPES`.
+- **Väggar** (`wall.ts`): `wallZone(ctx, p)` (i `wallBodies.ts`) ur foten
+  (`level`) och höjden. `planBatch` slår ihop bara de snittade; de andra
+  ritas av `uncutWalls`: sammanslagna per läge, minus de snittade
+  (`walls-cut`, utan det som döljs i vyn), som konturer delade per vägg
+  med `ownedOutlines`. Kanter utan ägare (längs de snittade väggarna)
+  ritas inte, eftersom snittets kontur redan ritar dem. Litteran bara på
+  de snittade.
+- **Öppningar**: `openingSpan(wall, o)` ger hålets höjder från våningens
+  golv (bröstningen från golvet eller väggens fot, som `openingLift`), och
+  `openingZoneInPlan`. `wallShapesFor` tar bara med öppningar som går
+  genom snittet, så att väggen går obruten förbi de andra (cachen
+  `wallsWithOpenings` jämför listan, så den räknas om när läget ändras).
+  `uncutOpening` i `opening.ts` ritar hålets två kanter och, för fönster,
+  glaset; fönstret behåller litteran.
+- **Bjälklag** (`slab.ts`): genom snittet en snittyta (`role: 'cut'`,
+  delen `snitt`, med håltagningarna som hål), över snittet linjer med
+  delen `över` (håltagningarna utan kryss), annars som förut med
+  stilmallens penna under snittet.
+- **Möbler** (`furniture.ts`): över snittet om den lägsta kroppen
+  (`furnitureSolids` plus `level`) ligger över; då alla linjer med
+  pennan för möbler över snittet.
+- **Tak** (`roofPlan.ts`): pennorna ur stilmallen (`aboveRoof`,
+  `belowRoof`); delen ovanför har `över`. Under golvet som förut (streckat).
+- **Stödmurar** (`groundPlan.ts`): `wallCutParts(prof, cut)` delar
+  profilens bitar där krönet eller foten går genom snittet (absoluta
+  höjder: våningens golv plus snitthöjden), slår ihop per läge och tar
+  bort det över som täcks av det snittade. Null när allt är snittat; då
+  ritas muren ur konturen som förut.
+- **Visa** (`showMenu.ts`): dubbelklick på `.show-btn` sätter allt i
+  `SHOW_GROUPS` utom `OFF_BY_DEFAULT` (exporterad från `showKeys.ts`) till
+  synligt och tar bort `obj:`-nycklarna ur `hide`.
+- Tester: `tests/v01016.test.ts`. Referensritningarna ändrades av takets
+  del `över` och stödmuren i `mark` (krönet under snitthöjden ritas nu
+  som vy).
+
 ## Visa och dölja (0.10.15, format 20)
 
 - **Dolda objekt** står i vyns `hide` som `obj:` och id (`hiddenObjectKey`,

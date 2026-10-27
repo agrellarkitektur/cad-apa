@@ -4,6 +4,8 @@ import { difference, intersection, union, type Rings } from '../geometry/boolean
 import { dist, pointInRings } from '../geometry/vec';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import { buildingFootprint } from './footprint';
+import { cutHeightOf } from './planCut';
+import { ABOVE_PART, planCutPen } from '../repr/planCutPens';
 import { resolveParams, type PlanContext } from './registry';
 import { halfPlaneBelow, outlineEdges, outlineRing, roofFrame, roofPlanes, roofRange, type RoofParams } from './roof';
 
@@ -15,8 +17,7 @@ import { halfPlaneBelow, outlineEdges, outlineRing, roofFrame, roofPlanes, roofR
  * utsida streckad där taket ligger över.
  */
 
-/** Snitthöjden över golvet när våningen inte har någon egen. */
-export const DEFAULT_CUT_HEIGHT = 1100;
+export { cutHeightOf, DEFAULT_CUT_HEIGHT } from './planCut';
 
 /** Visa-nyckeln för husets kontur genom taket; den är släckt om den inte står i vyns `hide` med plus. */
 export const FOOTPRINT_KEY = 'footprint';
@@ -28,7 +29,6 @@ export const FOOTPRINT_KEY = 'footprint';
  */
 export const ROOFS_AROUND_KEY = 'roofsAround';
 
-export const cutHeightOf = (s: Pick<Storey, 'cutHeight'>): number => s.cutHeight ?? DEFAULT_CUT_HEIGHT;
 
 /**
  * Om taket syns i planen för en annan våning: det går upp i våningen, så att
@@ -60,8 +60,6 @@ function aroundStorey(doc: ProjectDoc, home: Storey, here: Storey): boolean {
 /** `under`: under våningens golv (0.10.10), syns bara med *Tak på andra våningar*. */
 type Zone = 'above' | 'below' | 'cut' | 'under';
 
-const ABOVE: Pen = { weight: 0.18, dash: LINE_TYPES.dashdot.dash };
-const SEEN: Pen = { weight: 0.18 };
 const UNDER: Pen = { weight: 0.18, dash: LINE_TYPES.dashed.dash };
 
 export function roofPlanPrims(el: Element<any>, ctx: PlanContext): Primitive[] {
@@ -75,6 +73,9 @@ export function roofPlanPrims(el: Element<any>, ctx: PlanContext): Primitive[] {
   // Våningens golv i takets höjder: det som ligger under ritas streckat.
   const floor = here && home ? here.elevation - home.elevation : -Infinity;
   const f = roofFrame(p);
+  // Pennorna ur stilmallen (0.10.16).
+  const ABOVE = planCutPen(ctx.style, 'Roof', 'above');
+  const SEEN = planCutPen(ctx.style, 'Roof', 'below');
   const zone = (q: Vec2): Zone => (f.under(q) > h + 0.5 ? 'above' : f.top(q) < floor - 0.5 ? 'under' : f.top(q) < h - 0.5 ? 'below' : 'cut');
 
   // Konturen, delad där undersidan och ovansidan går genom snitthöjden.
@@ -84,7 +85,8 @@ export function roofPlanPrims(el: Element<any>, ctx: PlanContext): Primitive[] {
   const flush = () => {
     if (run.length >= 2 && runZone) {
       const pen = runZone === 'above' ? ABOVE : runZone === 'under' ? UNDER : SEEN;
-      out.push(run.length === 2 ? { kind: 'line', a: run[0], b: run[1], pen, origin } : { kind: 'polyline', points: run, closed: false, pen, origin });
+      const o = runZone === 'above' ? { ...origin, part: ABOVE_PART } : origin;
+      out.push(run.length === 2 ? { kind: 'line', a: run[0], b: run[1], pen, origin: o } : { kind: 'polyline', points: run, closed: false, pen, origin: o });
     }
     run = [];
     runZone = null;

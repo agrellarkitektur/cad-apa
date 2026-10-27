@@ -2,9 +2,12 @@ import type { Element } from '../core/model';
 import { groundAt, groundDefaults, levelText, terrainOf } from '../core/site';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { fillPrims, type FillParams } from './drawing2d';
-import { union, type Rings } from '../geometry/boolean';
+import { difference, union, type Rings } from '../geometry/boolean';
+import { ABOVE_PART, cutZone, planCutPen, type CutZone } from '../repr/planCutPens';
+import { planCutHeight } from './planCut';
+import type { WallProfile } from './groundWall';
 import { sameItems } from '../repr/reuse';
-import { finishedTerrain, groundLabel, isLineKind, wallProfile, type GroundGeometry, type GroundParams } from './groundGeometry';
+import { finishedTerrain, groundLabel, isLineKind, storeyElevation, wallProfile, type GroundGeometry, type GroundParams } from './groundGeometry';
 import { lineLength, pathRatio, pathWarnings } from './groundLines';
 import type { PlanContext } from './registry';
 
@@ -304,9 +307,21 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
     return out;
   }
   if (p.kind === 'wall') {
-    for (const ring of g.rings[0]) out.push({ kind: 'region', role: 'cut', rings: [ring], fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'mur' } } as Primitive);
-    // Krönet (0.10.9): ÖK i ändarna och vid höjdpunkterna, som får ett streck tvärs över muren.
     const prof = wallProfile(ctx, el);
+    // Snittet i planen (0.10.16): där krönet ligger under snitthöjden ritas
+    // muren som vy, där foten ligger över streckprickad.
+    const h = planCutHeight(ctx);
+    const parts = prof && h !== undefined ? wallCutParts(prof, storeyElevation(ctx, el.storey) + h) : null;
+    if (!parts) for (const ring of g.rings[0]) out.push({ kind: 'region', role: 'cut', rings: [ring], fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'mur' } } as Primitive);
+    else {
+      for (const rings of parts.cut) out.push({ kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'mur' } });
+      for (const zone of ['below', 'above'] as const) {
+        const pen = planCutPen(ctx.style, 'Ground', zone);
+        for (const rings of parts[zone])
+          for (const ring of rings) out.push({ kind: 'polyline', points: ring, closed: true, pen, origin: { ...origin, part: zone === 'above' ? ABOVE_PART : 'mur' } });
+      }
+    }
+    // Krönet (0.10.9): ÖK i ändarna och vid höjdpunkterna, som får ett streck tvärs över muren.
     if (!prof) return out;
     const st = prof.stations;
     const half = Math.hypot(st[0].left[0] - st[0].at[0], st[0].left[1] - st[0].at[1]);
@@ -354,4 +369,45 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
   text([center[0][0], center[0][1] - 3 * ctx.scale], hText(ctx, h0), 'höjd');
   if (Math.abs(h1 - h0) >= 1) text([center[center.length - 1][0], center[center.length - 1][1] - 3 * ctx.scale], hText(ctx, h1), 'höjd');
   return out;
+}
+
+/**
+ * Stödmuren delad längs sin längd efter planens snitt (0.10.16), `cut` i
+ * absoluta höjder: bitarna mellan profilens punkter, delade där krönet
+ * eller foten går genom snitthöjden. Null när hela muren är snittad (då
+ * ritas den som förut, ur konturen). Det som ligger över snittet tas bort
+ * där det täcks av det snittade.
+ */
+export function wallCutParts(prof: WallProfile, cut: number): Record<CutZone, Rings[]> | null {
+  const st = prof.stations;
+  const zoneOf = (top: number, bottom: number) => cutZone(bottom, top, cut);
+  if (st.every((x) => zoneOf(x.top, x.bottom) === 'cut')) return null;
+  const lerp = (a: Vec2, b: Vec2, t: number): Vec2 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+  const quads: Record<CutZone, Rings[]> = { cut: [], below: [], above: [] };
+  for (let i = 1; i < st.length; i++) {
+    const a = st[i - 1];
+    const b = st[i];
+    const ts = [0, 1];
+    for (const [ga, gb] of [
+      [a.top - cut, b.top - cut],
+      [a.bottom - cut, b.bottom - cut],
+    ])
+      if ((ga < 0 && gb > 0) || (ga > 0 && gb < 0)) ts.push(ga / (ga - gb));
+    ts.sort((x, y) => x - y);
+    for (let k = 0; k + 1 < ts.length; k++) {
+      const t0 = ts[k];
+      const t1 = ts[k + 1];
+      if (t1 - t0 < 1e-6) continue;
+      const tm = (t0 + t1) / 2;
+      const z = zoneOf(a.top + (b.top - a.top) * tm, a.bottom + (b.bottom - a.bottom) * tm);
+      quads[z].push([[lerp(a.right, b.right, t0), lerp(a.right, b.right, t1), lerp(a.left, b.left, t1), lerp(a.left, b.left, t0)]]);
+    }
+  }
+  const cutU = quads.cut.length ? union(quads.cut) : [];
+  const above = quads.above.length ? union(quads.above) : [];
+  return {
+    cut: cutU,
+    below: quads.below.length ? union(quads.below) : [],
+    above: cutU.length ? above.flatMap((r) => difference(r, cutU)) : above,
+  };
 }

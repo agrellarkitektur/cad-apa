@@ -2460,7 +2460,7 @@ förut), och de gamla stegen för 2D-formens fyllning följer panelen från
 0.10.14. Samma klick i 0.10.15 och 0.10.15.1 skiljer bara i maskens panel
 (tre steg) och rampens tvärlinje i början i 3D-bilden (två steg).*
 
-### 0.10.16 Snittet i planen (förslag, mellanstor)
+### 0.10.16 Snittet i planen ✓
 
 Carl Augusts svar 27 oktober (fråga om väggar över snittet efter 0.10.13).
 
@@ -2469,9 +2469,33 @@ Carl Augusts svar 27 oktober (fråga om väggar över snittet efter 0.10.13).
   delar över snittet som sticker ut utanför det snittade streckprickat
 - Gäller väggar vars fot ligger över snittet eller vars topp ligger under
   det, stödmurar och andra objekt som varierar i höjd
-- Fråga först: vilka objekt utöver väggar (bjälklag, möbler, tak) och
-  vilken penna det överliggande får
 - Dubbelklick på Visa-knappen visar allt i vyn (Inkorgen 27 oktober)
+
+*Byggd 27 oktober, samma format (20). Carl Augusts svar (frågorna i
+början): bjälklag, möbler, tak och väggar följer snittet, och pelare och
+profiler när de finns (0.11.1); väggarna ska kunna luta (en egen version,
+0.10.21); pennan ställs in per objekttyp i stilmallen, med en egen per
+objekt. Claudes val: zonerna är tre (genom, helt under, helt över; ett
+objekt som bara rör snittet är snittat); en vägg under snittet ritas som
+kontur med vyns penna utan fyllning, över snittet streckprickad och bara
+där den sticker ut utanför de snittade väggarna; dörrar och fönster som
+inte går genom snittet tar inget hål i väggen och ritas som hålets två
+kanter (och glaset), streckprickat över och med vyns penna under (t.ex.
+källarfönster); ett bjälklag genom snittet är en snittyta med väggens
+fyllning, över snittet streckprickat utan kryss i håltagningarna; möbler
+över snittet streckprickade (en möbel genom snittet ritas som förut, som
+symbol); stödmurar delas längs muren där krönet går genom snitthöjden;
+taken som förut men med stilmallens pennor. Pennorna: elva rader under
+*Snittet i planen* i stilmallen (över och under för väggar, dörrar och
+fönster, bjälklag, tak och stödmurar; över för möbler), det över 0,13
+eller 0,18 punktstreckat; den egna pennan har en tredje del, *Över snittet
+i planen*, som utan värden följer objektets övre del. Bjälklag kan få en
+egen penna. Dubbelklick på Visa tänder allt utom det som är släckt från
+början (husets kontur genom taket, tak på andra våningar, de dolda
+linjerna i fasader och linjerna i 3D) och tar fram de dolda objekten;
+detaljnivåerna ändras inte. Märks i hans ritningar: en låg stödmur (krön
+under 1100 över våningens golv) ritas som kontur, inte skrafferad; en
+vägg vars fot ligger över snittet är inte längre snittad.*
 
 ### 0.10.17 Linjerna i 2D-formen (förslag)
 
@@ -2524,6 +2548,18 @@ Carl Augusts bilder 27 oktober; som landskapsarkitekter redovisar.
   topografin (lågpunkter, avrinning, punkthöjder, lutningsfärger) efter
   piloten
 
+### 0.10.21 Lutande väggar (förslag, mellanstor till stor)
+
+Carl August 27 oktober, i svaret om snittet i planen.
+
+- En vägg kan luta: en vinkel (eller ett mått i toppen) åt ena sidan, och
+  väggen ritas som en lutande kropp i 3D, fasader och sektioner
+- I planen följer den snittet: snittytan där väggen skär snitthöjden,
+  foten som vy och det som lutar ut över snittet streckprickat
+- Öppningarna följer lutningen; skarvarna mot andra väggar och tak prövas
+- Fråga först: före eller efter piloten, och om lutningen ska kunna vara
+  olika i ändarna (vriden vägg)
+
 ### Ortofotot på marken (undersökning, liten)
 
 Inkorgen 27 oktober. Ortofotot syns inte draperat på marken och bör också
@@ -2542,6 +2578,8 @@ reda på om det inte följer med från Höjdkurvor eller tappas här. Efter
 
 Carl August 22 oktober; före piloten (24 oktober). Stor.
 
+- Pelare och profiler följer planens snitt som de andra objekten (0.10.16,
+  Carl August 27 oktober)
 - Man ritar en profil och sedan en referenslinje, och profilen följer
   linjen. Ett verktyg i stället för Archicads flera (pelare, balkar,
   räcken): man anger om profilen är generell eller en byggdel (pelare,
