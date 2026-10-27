@@ -1,9 +1,11 @@
 import * as THREE from 'three';
-import earcut from 'earcut';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Vec2 } from '../repr/primitives';
-import { solidTriangles } from '../repr/mesh';
-import type { Material3D, Shape3D, Solid } from '../repr/solids';
+import type { Material3D, Shape3D } from '../repr/solids';
+import { Edit3D, type Edit3DHost } from './edit3d';
+import { capObjects, clearGroup, clipPlanes, extrude, groundHit, resolveColor, shown, type Cap3D, type Clip3D } from './geometry3d';
+
+export type { Edit3DHost, Handle3D } from './edit3d';
 
 /** Färger för materialen. Dämpade, så att linjerna bär ritningen. */
 const MATERIAL_COLORS: Record<Material3D, string> = {
@@ -22,30 +24,6 @@ const MATERIAL_COLORS: Record<Material3D, string> = {
   ground: '#cfd3bf',
 };
 
-/** Ett grepp i en väggände som kan dras i 3D. */
-export interface Handle3D {
-  wallId: string;
-  end: 'start' | 'end';
-  point: Vec2;
-  /** Höjd där greppet visas, mm. */
-  z: number;
-  /** Den andra änden, som ligger still. */
-  fixed: Vec2;
-}
-
-/** Det 3D-vyn behöver från appen för att kunna ändra modellen. */
-export interface Edit3DHost {
-  isSelected(id: string): boolean;
-  selectedIds(): string[];
-  handles(): Handle3D[];
-  /** Referenslinjerna på markerade väggar, på väggarnas överkant. */
-  refLines(): { a: Vec2; b: Vec2; z: number; zb?: number }[];
-  /** Snäpp en punkt (mm) med samma regler som i planen. */
-  snap(cursor: Vec2, from: Vec2 | undefined, exclude: string[], tolMm: number, ortho: boolean): { point: Vec2; label: string };
-  commitWallEnd(wallId: string, end: 'start' | 'end', to: Vec2): void;
-  commitMove(ids: string[], d: Vec2, anchor: Vec2): void;
-}
-
 /**
  * Markobjekten (0.10.11): de är inga egna kroppar utan delar av marken, så
  * vyn träffar marken och frågar appen vilket objekt som ligger där.
@@ -59,17 +37,11 @@ export interface Ground3DHost {
   outline(id: string): Float32Array | null;
 }
 
-type Drag =
-  | { kind: 'grip'; handle: Handle3D; plane: THREE.Plane; point: Vec2; label: string }
-  | { kind: 'move'; ids: string[]; plane: THREE.Plane; base: Vec2; point: Vec2; label: string };
-
-const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
-
 /**
  * 3D-vyn: ritar formerna från modellen med three.js. Modellens mm med z uppåt
  * blir meter med y uppåt. Markerade väggar får grepp i ändarna, och markerade
- * objekt kan dras på golvplanet. Vyn ritas bara om när något ändras, för att
- * spara batteri på mobilen.
+ * objekt kan dras på golvplanet (`edit3d.ts`). Vyn ritas bara om när något
+ * ändras, för att spara batteri på mobilen.
  */
 export class View3D {
   readonly el: HTMLElement;
@@ -78,8 +50,8 @@ export class View3D {
   private camera: THREE.PerspectiveCamera;
   private controls: OrbitControls;
   private root = new THREE.Group();
-  private handlesGroup = new THREE.Group();
-  private previewGroup = new THREE.Group();
+  /** Greppen och dragningen. */
+  private edit: Edit3D;
   /** Snittytorna där en sektion skär modellen (0.8). */
   private capsGroup = new THREE.Group();
   /** Den befintliga marken (0.10.3), för sig: går inte att klicka på och räknas inte när vyn ställs in. */
@@ -90,11 +62,8 @@ export class View3D {
   private materials = new Map<string, THREE.Material>();
   private clipPlanes: THREE.Plane[] = [];
   private edgeMaterial: THREE.LineBasicMaterial;
-  private accentLine: THREE.LineBasicMaterial;
-  private handleMaterial: THREE.MeshBasicMaterial;
   /** Höjdkurvorna på marken (0.10.8): mörka och halvgenomskinliga. */
   private contourMaterial = new THREE.LineBasicMaterial({ color: 0x3d4a3a, transparent: true, opacity: 0.55 });
-  private refMaterial = new THREE.LineBasicMaterial({ color: 0x1f4fa3, depthTest: false, linewidth: 2 });
   private highlightMaterial: THREE.MeshStandardMaterial;
   /** Det som pekaren står över (0.10.11), svagare än markeringen. */
   private hoverMaterial: THREE.MeshStandardMaterial;
@@ -109,9 +78,6 @@ export class View3D {
   private selected = new Set<string>();
   private framed = false;
   private frame = 0;
-  private down: { x: number; y: number } | null = null;
-  private drag: Drag | null = null;
-  private label: HTMLElement;
 
   /** Anropas med elementets id när man klickar på något, eller null för tomt. */
   onPick?: (id: string | null, additive: boolean) => void;
@@ -130,21 +96,31 @@ export class View3D {
     this.renderer.domElement.className = 'view3d-canvas';
     host.appendChild(this.renderer.domElement);
 
-    this.label = document.createElement('div');
-    this.label.className = 'label3d';
-    this.label.hidden = true;
-    host.appendChild(this.label);
-
     this.camera = new THREE.PerspectiveCamera(40, 1, 0.05, 2000);
     this.camera.position.set(14, 12, 16);
 
+    const canvas = this.renderer.domElement;
+    this.edit = new Edit3D({
+      el: host,
+      canvas,
+      editor: () => this.editor,
+      meshes: () => this.meshes,
+      orbit: (on) => (this.controls.enabled = on),
+      project: (p, z) => this.project(p, z),
+      mmPerPx: (p, z) => this.mmPerPx(p, z),
+      ray: (e) => this.ray(e),
+      hitAt: (e) => this.hitAt(e),
+      pick: (e) => this.pick(e),
+      hover: (e) => this.queueHover(e),
+      render: () => this.requestRender(),
+    });
+
     // Våra egna pekarhändelser måste komma före kamerastyrningen, så att ett
     // drag i ett grepp inte också snurrar vyn.
-    const canvas = this.renderer.domElement;
-    canvas.addEventListener('pointerdown', (e) => this.onDown(e), { capture: true });
-    canvas.addEventListener('pointermove', (e) => this.onMove(e), { capture: true });
-    canvas.addEventListener('pointerup', (e) => this.onUp(e), { capture: true });
-    canvas.addEventListener('pointercancel', () => this.cancelDrag(), { capture: true });
+    canvas.addEventListener('pointerdown', (e) => this.edit.onDown(e), { capture: true });
+    canvas.addEventListener('pointermove', (e) => this.edit.onMove(e), { capture: true });
+    canvas.addEventListener('pointerup', (e) => this.edit.onUp(e), { capture: true });
+    canvas.addEventListener('pointercancel', () => this.edit.cancelDrag(), { capture: true });
     canvas.addEventListener('pointerleave', () => this.setHover(null));
 
     this.controls = new OrbitControls(this.camera, canvas);
@@ -165,7 +141,7 @@ export class View3D {
       other: new THREE.MeshBasicMaterial({ color: 0x9aa1a7, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
       edge: new THREE.LineBasicMaterial({ color: 0x1d2328 }),
     };
-    for (const g of [this.root, this.handlesGroup, this.previewGroup, this.capsGroup, this.terrainGroup, this.marksGroup]) {
+    for (const g of [this.root, this.edit.handlesGroup, this.edit.previewGroup, this.capsGroup, this.terrainGroup, this.marksGroup]) {
       g.rotation.x = -Math.PI / 2;
       g.scale.setScalar(0.001);
       this.scene.add(g);
@@ -188,8 +164,6 @@ export class View3D {
     this.shadowPlane = ground;
 
     this.edgeMaterial = new THREE.LineBasicMaterial({ color: 0x1d2328, transparent: true, opacity: 0.6 });
-    this.accentLine = new THREE.LineBasicMaterial({ color: 0xa86b12, depthTest: false });
-    this.handleMaterial = new THREE.MeshBasicMaterial({ color: 0xa86b12, depthTest: false });
     this.highlightMaterial = new THREE.MeshStandardMaterial({ color: 0xf2b468, roughness: 0.8, emissive: 0x6b3a00, emissiveIntensity: 0.25, side: THREE.DoubleSide });
     this.hoverMaterial = new THREE.MeshStandardMaterial({ color: 0xf6d3a6, roughness: 0.85, emissive: 0x6b3a00, emissiveIntensity: 0.1, side: THREE.DoubleSide });
 
@@ -203,8 +177,7 @@ export class View3D {
 
   /** Ersätt allt i scenen med nya former. Kameran ligger kvar. */
   setSolids(shapes: Shape3D[]): void {
-    for (const child of this.root.children) disposeTree(child);
-    this.root.clear();
+    clearGroup(this.root);
     this.meshes = [];
 
     // Alla kantlinjer i en geometri (0.10.1): väggarnas linjer är en per
@@ -240,18 +213,17 @@ export class View3D {
       this.framed = true;
     }
     this.fitShadow();
-    this.updateHandles();
+    this.edit.updateHandles();
     this.requestRender();
   }
 
   /**
    * Den befintliga marken (0.10.3) som triangelnät i modellens mm (z uppåt
-   * från ±0), eller null. Med mark tas skuggplanet vid ±0 bort.
+   * från ±0), och höjdkurvorna som sträckor (0.10.8, sex tal per sträcka),
+   * eller null. Med mark tas skuggplanet vid ±0 bort.
    */
-  /** Marken som triangelnät, och höjdkurvorna som sträckor (0.10.8, sex tal per sträcka). */
   setTerrain(mesh: { positions: Float32Array; indices: Uint32Array } | null, contours: Float32Array | null = null): void {
-    for (const child of this.terrainGroup.children) disposeTree(child);
-    this.terrainGroup.clear();
+    clearGroup(this.terrainGroup);
     this.shadowPlane.visible = !mesh;
     if (mesh && mesh.indices.length) {
       const geom = new THREE.BufferGeometry();
@@ -273,7 +245,7 @@ export class View3D {
   setSelection(ids: Iterable<string>): void {
     this.selected = new Set(ids);
     this.paint();
-    this.updateHandles();
+    this.edit.updateHandles();
   }
 
   private materialFor(id: string, material: Material3D): THREE.Material {
@@ -286,8 +258,7 @@ export class View3D {
       const { id, material } = m.userData as { id: string; material: Material3D };
       m.material = this.materialFor(id, material);
     }
-    for (const c of this.marksGroup.children) disposeTree(c);
-    this.marksGroup.clear();
+    clearGroup(this.marksGroup);
     const g = this.ground;
     if (g) {
       const add = (id: string, mat: THREE.LineBasicMaterial) => {
@@ -367,10 +338,7 @@ export class View3D {
     this.edgeMaterial.color.set(read('--ink', '#1d2328'));
     // Samma färger som markeringen och referenslinjerna i planen.
     const sel = resolveColor('--sel', '#a86b12');
-    const ref = resolveColor('--ref', '#1f4fa3');
-    this.accentLine.color.set(ref);
-    this.handleMaterial.color.set(ref);
-    this.refMaterial.color.set(ref);
+    this.edit.setColor(resolveColor('--ref', '#1f4fa3'));
     this.highlightMaterial.color.set(sel).lerp(new THREE.Color('#ffffff'), 0.35);
     this.highlightMaterial.emissive.set(sel).multiplyScalar(0.35);
     this.hoverMaterial.color.set(sel).lerp(new THREE.Color('#ffffff'), 0.65);
@@ -384,39 +352,12 @@ export class View3D {
     if (this.frame) return;
     this.frame = requestAnimationFrame(() => {
       this.frame = 0;
-      // Greppen har samma storlek på skärmen oavsett avstånd.
-      for (const c of this.handlesGroup.children) {
-        const h = (c.userData as { handle?: Handle3D }).handle;
-        if (!h) continue;
-        c.scale.setScalar(this.mmPerPx([c.position.x, c.position.y], h.z) * (matchMedia('(pointer: coarse)').matches ? 8 : 5.5));
-      }
+      this.edit.scaleHandles();
       this.renderer.render(this.scene, this.camera);
     });
   }
 
-  // ---------- Redigering ----------
-
-  /** Grepp i ändarna på markerade väggar, som små klot på väggens överkant. */
-  private updateHandles(): void {
-    for (const c of this.handlesGroup.children) disposeTree(c);
-    this.handlesGroup.clear();
-    if (!this.editor) return;
-    for (const r of this.editor.refLines()) {
-      const geom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(r.a[0], r.a[1], r.z), new THREE.Vector3(r.b[0], r.b[1], r.zb ?? r.z)]);
-      const line = new THREE.Line(geom, this.refMaterial);
-      line.renderOrder = 9;
-      this.handlesGroup.add(line);
-    }
-    for (const h of this.editor.handles()) {
-      const ball = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 12), this.handleMaterial);
-      ball.position.set(h.point[0], h.point[1], h.z);
-      ball.renderOrder = 10;
-      ball.userData = { handle: h };
-      this.handlesGroup.add(ball);
-    }
-  }
-
-  private ray(e: PointerEvent): THREE.Raycaster {
+  private ray(e: Pick<PointerEvent, 'clientX' | 'clientY'>): THREE.Raycaster {
     const rect = this.renderer.domElement.getBoundingClientRect();
     const ndc = new THREE.Vector2(((e.clientX - rect.left) / rect.width) * 2 - 1, -((e.clientY - rect.top) / rect.height) * 2 + 1);
     const ray = new THREE.Raycaster();
@@ -424,136 +365,11 @@ export class View3D {
     return ray;
   }
 
-  /** Var pekaren träffar ett vågrätt plan, i modellens mm. */
-  private onPlane(e: PointerEvent, plane: THREE.Plane): Vec2 | null {
-    const hit = this.ray(e).ray.intersectPlane(plane, new THREE.Vector3());
-    return hit ? [hit.x * 1000, -hit.z * 1000] : null;
-  }
-
   /** Ungefär hur många mm en pixel motsvarar vid en punkt. */
   private mmPerPx(p: Vec2, z: number): number {
     const d = this.camera.position.distanceTo(new THREE.Vector3(p[0] / 1000, z / 1000, -p[1] / 1000));
     const h = this.el.clientHeight || 1;
     return ((2 * Math.tan((this.camera.fov * Math.PI) / 360) * d) / h) * 1000;
-  }
-
-  private onDown(e: PointerEvent): void {
-    this.down = { x: e.clientX, y: e.clientY };
-    if (!this.editor || (e.pointerType === 'mouse' && e.button !== 0)) return;
-    // Greppen träffas på avstånd i skärmen, så att de är lätta att ta med fingret.
-    const rect = this.el.getBoundingClientRect();
-    const at: Vec2 = [e.clientX - rect.left + this.el.offsetLeft, e.clientY - rect.top + this.el.offsetTop];
-    let handle: Handle3D | null = null;
-    let best = e.pointerType === 'touch' ? 26 : 12;
-    for (const c of this.handlesGroup.children) {
-      const h = (c.userData as { handle?: Handle3D }).handle;
-      if (!h) continue;
-      const s = this.project(h.point, h.z);
-      const d = s ? Math.hypot(s[0] - at[0], s[1] - at[1]) : Infinity;
-      if (d < best) {
-        best = d;
-        handle = h;
-      }
-    }
-    if (handle) {
-      this.drag = { kind: 'grip', handle, plane: horizontalPlane(handle.z), point: handle.point, label: '' };
-    } else {
-      const hit = this.hitAt(e);
-      const id = hit ? (hit.object.userData as { id: string }).id : null;
-      if (!hit || !id || !this.editor.isSelected(id)) return;
-      const z = hit.point.y * 1000;
-      const base: Vec2 = [hit.point.x * 1000, -hit.point.z * 1000];
-      this.drag = { kind: 'move', ids: this.editor.selectedIds(), plane: horizontalPlane(z), base, point: base, label: '' };
-    }
-    // Draget är vårt: kamerastyrningen får inte händelsen.
-    e.stopImmediatePropagation();
-    this.controls.enabled = false;
-    this.renderer.domElement.setPointerCapture(e.pointerId);
-  }
-
-  private onMove(e: PointerEvent): void {
-    const d = this.drag;
-    if (!d) this.queueHover(e);
-    if (!d || !this.editor) return;
-    e.stopImmediatePropagation();
-    const raw = this.onPlane(e, d.plane);
-    if (!raw) return;
-    const z = -d.plane.constant * 1000;
-    const tol = this.mmPerPx(raw, z) * (e.pointerType === 'touch' ? 18 : 12);
-    if (d.kind === 'grip') {
-      const s = this.editor.snap(raw, d.handle.fixed, [d.handle.wallId], tol, e.shiftKey);
-      d.point = s.point;
-      const len = Math.hypot(s.point[0] - d.handle.fixed[0], s.point[1] - d.handle.fixed[1]);
-      const before = Math.hypot(d.handle.point[0] - d.handle.fixed[0], d.handle.point[1] - d.handle.fixed[1]);
-      const delta = Math.round(len - before);
-      d.label = `${nf.format(Math.round(len))} mm  ${delta >= 0 ? '+' : '−'}${nf.format(Math.abs(delta))}  ${angleText(s.point[0] - d.handle.fixed[0], s.point[1] - d.handle.fixed[1])}`;
-      this.showPreviewLine(d.handle.fixed, s.point, d.handle.z);
-      const ball = this.handlesGroup.children.find((c) => (c.userData as { handle?: Handle3D }).handle === d.handle);
-      ball?.position.set(s.point[0], s.point[1], d.handle.z);
-    } else {
-      const s = this.editor.snap(raw, d.base, d.ids, tol, e.shiftKey);
-      d.point = s.point;
-      const dx = s.point[0] - d.base[0];
-      const dy = s.point[1] - d.base[1];
-      d.label = `${nf.format(Math.round(Math.hypot(dx, dy)))} mm  ${angleText(dx, dy)}`;
-      // Förhandsvisning: de markerade formerna flyttas tills draget släpps.
-      for (const m of this.meshes) if (d.ids.includes((m.userData as { id: string }).id)) m.position.set(dx, dy, 0);
-      this.showPreviewLine(d.base, s.point, z);
-    }
-    this.showLabel(e);
-    this.requestRender();
-  }
-
-  private onUp(e: PointerEvent): void {
-    const d = this.drag;
-    const moved = this.down ? Math.hypot(e.clientX - this.down.x, e.clientY - this.down.y) > 5 : false;
-    this.down = null;
-    if (d) {
-      e.stopImmediatePropagation();
-      this.endDrag();
-      if (!moved) {
-        if (d.kind === 'move') this.pick(e);
-        return;
-      }
-      if (d.kind === 'grip') this.editor?.commitWallEnd(d.handle.wallId, d.handle.end, [Math.round(d.point[0]), Math.round(d.point[1])]);
-      else this.editor?.commitMove(d.ids, [Math.round(d.point[0] - d.base[0]), Math.round(d.point[1] - d.base[1])], d.point);
-      return;
-    }
-    if (!moved) this.pick(e);
-  }
-
-  private cancelDrag(): void {
-    if (!this.drag) return;
-    this.endDrag();
-    for (const m of this.meshes) m.position.set(0, 0, 0);
-    this.updateHandles();
-  }
-
-  private endDrag(): void {
-    this.drag = null;
-    this.controls.enabled = true;
-    this.label.hidden = true;
-    for (const c of this.previewGroup.children) disposeTree(c);
-    this.previewGroup.clear();
-    this.requestRender();
-  }
-
-  private showPreviewLine(a: Vec2, b: Vec2, z: number): void {
-    for (const c of this.previewGroup.children) disposeTree(c);
-    this.previewGroup.clear();
-    const geom = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(a[0], a[1], z), new THREE.Vector3(b[0], b[1], z)]);
-    const line = new THREE.Line(geom, this.accentLine);
-    line.renderOrder = 11;
-    this.previewGroup.add(line);
-  }
-
-  private showLabel(e: PointerEvent): void {
-    if (!this.drag) return;
-    const rect = this.el.getBoundingClientRect();
-    this.label.textContent = this.drag.label;
-    this.label.style.left = `${e.clientX - rect.left + 16}px`;
-    this.label.style.top = `${e.clientY - rect.top + 16}px`;
-    this.label.hidden = false;
   }
 
   private material(kind: Material3D): THREE.Material {
@@ -571,77 +387,21 @@ export class View3D {
   }
 
   /**
-   * Klipp modellen längs en sektion (0.7.1): det som ligger bakom
-   * betraktaren, utanför linjens ändar eller bortom djupet syns inte. Null
-   * tar bort klippningen.
+   * Klipp modellen längs en sektion (0.7.1) och fyll snittet: det som
+   * ligger bakom betraktaren, utanför linjens ändar eller bortom djupet syns
+   * inte. Null tar bort klippningen.
    */
-  setClip(
-    c: { start: readonly [number, number]; right: readonly [number, number]; view: readonly [number, number]; length: number; depth: number | null } | null,
-    caps: { poche: boolean; rings: (readonly (readonly [number, number])[])[] }[] = [],
-  ): void {
-    this.setCaps(c, caps);
-    const planes: THREE.Plane[] = [];
-    if (c) {
-      // Modellens (x, y, z) i mm blir (x, z, −y) i meter.
-      const plane = (n: readonly [number, number], p: readonly [number, number]) => new THREE.Plane(new THREE.Vector3(n[0], 0, -n[1]), -(n[0] * p[0] + n[1] * p[1]) * 0.001);
-      const at = (u: number, d: number): [number, number] => [c.start[0] + c.right[0] * u + c.view[0] * d, c.start[1] + c.right[1] * u + c.view[1] * d];
-      planes.push(plane(c.view, c.start));
-      planes.push(plane(c.right, c.start));
-      planes.push(plane([-c.right[0], -c.right[1]], at(c.length, 0)));
-      if (c.depth !== null) planes.push(plane([-c.view[0], -c.view[1]], at(0, c.depth)));
-    }
+  setClip(c: Clip3D | null, caps: Cap3D[] = []): void {
+    clearGroup(this.capsGroup);
+    if (c) for (const o of capObjects(c, caps, this.capMaterials)) this.capsGroup.add(o);
     this.clipPlanes.length = 0;
-    this.clipPlanes.push(...planes);
+    this.clipPlanes.push(...clipPlanes(c));
     for (const m of [...this.materials.values(), this.edgeMaterial, this.highlightMaterial, this.hoverMaterial, this.markLine, this.hoverLine]) {
       m.clippingPlanes = this.clipPlanes;
       m.clipShadows = true;
       m.needsUpdate = true;
     }
     this.requestRender();
-  }
-
-  /**
-   * Fyll snittet: ytorna ligger i sektionens plan, i linjens koordinater
-   * (x längs linjen, y höjd över nollnivån). Väggar, bjälklag och tak blir
-   * mörka som i ritningen, annat grått.
-   */
-  private setCaps(
-    c: { start: readonly [number, number]; right: readonly [number, number]; view: readonly [number, number] } | null,
-    caps: { poche: boolean; rings: (readonly (readonly [number, number])[])[] }[],
-  ): void {
-    for (const child of this.capsGroup.children) {
-      if (child instanceof THREE.Mesh || child instanceof THREE.LineSegments) child.geometry.dispose();
-    }
-    this.capsGroup.clear();
-    if (!c) return;
-    const at = (u: number, z: number): [number, number, number] => [c.start[0] + c.right[0] * u + c.view[0] * 0.5, c.start[1] + c.right[1] * u + c.view[1] * 0.5, z];
-    for (const cap of caps) {
-      const rings = cap.rings.filter((r) => r.length >= 3);
-      if (!rings.length) continue;
-      const flat: number[] = [];
-      const holes: number[] = [];
-      for (const [k, r] of rings.entries()) {
-        if (k > 0) holes.push(flat.length / 2);
-        for (const q of r) flat.push(q[0], q[1]);
-      }
-      const tri = earcut(flat, holes);
-      const pos: number[] = [];
-      for (let i = 0; i < flat.length; i += 2) pos.push(...at(flat[i], flat[i + 1]));
-      const geom = new THREE.BufferGeometry();
-      geom.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-      geom.setIndex(tri);
-      this.capsGroup.add(new THREE.Mesh(geom, cap.poche ? this.capMaterials.poche : this.capMaterials.other));
-      const edges: number[] = [];
-      for (const r of rings)
-        for (let i = 0; i < r.length; i++) {
-          const a = r[i];
-          const b = r[(i + 1) % r.length];
-          edges.push(...at(a[0], a[1]), ...at(b[0], b[1]));
-        }
-      const eg = new THREE.BufferGeometry();
-      eg.setAttribute('position', new THREE.Float32BufferAttribute(edges, 3));
-      this.capsGroup.add(new THREE.LineSegments(eg, this.capMaterials.edge));
-    }
   }
 
   private resize(): void {
@@ -677,51 +437,13 @@ export class View3D {
    * hovring: en kropp, eller ett markobjekt där marken ligger närmast (0.10.11).
    */
   idAt(clientX: number, clientY: number): string | null {
-    const e = { clientX, clientY } as PointerEvent;
+    const e = { clientX, clientY };
     const hit = this.hitAt(e);
-    const ground = this.groundHit(this.ray(e).ray, hit?.distance ?? Infinity);
-    const onGround = ground ? this.ground!.pick(ground) : null;
-    return onGround ?? (hit ? (hit.object.userData as { id: string }).id : null);
-  }
-
-  /**
-   * Där strålen först går ner i den färdiga marken, i planens mm, om det är
-   * närmare än `before` (meter). Marken provas i steg längs strålen, längre
-   * ju längre bort, och punkten letas sedan upp mellan två steg. Inte det som
-   * en sektion klipper bort.
-   */
-  private groundHit(ray: THREE.Ray, before: number): Vec2 | null {
     const g = this.ground;
-    if (!g) return null;
-    const o = ray.origin;
-    const d = ray.direction;
-    const at = (t: number): Vec2 => [(o.x + d.x * t) * 1000, -(o.z + d.z * t) * 1000];
-    const above = (t: number): boolean | null => {
-      const h = g.height(at(t));
-      return h === null ? null : (o.y + d.y * t) * 1000 > h;
-    };
-    const end = Math.min(before, this.camera.far);
-    let prev = this.camera.near;
-    let was = above(prev);
-    for (let t = prev; t < end; ) {
-      t = Math.min(end, t + Math.max(0.1, t * 0.004));
-      const now = above(t);
-      if (was === true && now === false) {
-        let lo = prev;
-        let hi = t;
-        for (let k = 0; k < 24; k++) {
-          const mid = (lo + hi) / 2;
-          if (above(mid) === false) hi = mid;
-          else lo = mid;
-        }
-        const p = new THREE.Vector3(o.x + d.x * hi, o.y + d.y * hi, o.z + d.z * hi);
-        return this.clipPlanes.every((pl) => pl.distanceToPoint(p) >= -1e-6) ? at(hi) : null;
-      }
-      prev = t;
-      was = now;
-      if (t >= end) break;
-    }
-    return null;
+    const end = Math.min(hit?.distance ?? Infinity, this.camera.far);
+    const at = g ? groundHit(this.ray(e).ray, (p) => g.height(p), this.camera.near, end, this.clipPlanes) : null;
+    const onGround = at ? g!.pick(at) : null;
+    return onGround ?? (hit ? (hit.object.userData as { id: string }).id : null);
   }
 
   /**
@@ -730,10 +452,9 @@ export class View3D {
    * bilden ritas, så träffar på den bortklippta sidan sorteras bort här.
    */
   private hitAt(e: Pick<PointerEvent, 'clientX' | 'clientY'>): THREE.Intersection | undefined {
-    const shown = (p: THREE.Vector3) => this.clipPlanes.every((pl) => pl.distanceToPoint(p) >= -1e-6);
-    return this.ray(e as PointerEvent)
+    return this.ray(e)
       .intersectObjects(this.meshes, false)
-      .find((h) => (h.object.userData as { material: Material3D }).material !== 'floor' && shown(h.point));
+      .find((h) => (h.object.userData as { material: Material3D }).material !== 'floor' && shown(this.clipPlanes, h.point));
   }
 
   private pick(e: PointerEvent): void {
@@ -741,50 +462,3 @@ export class View3D {
   }
 }
 
-/** Ett vågrätt plan på höjden z (mm) i scenens koordinater (meter, y uppåt). */
-/** En CSS-variabels färg som rgb, med var() upplöst. */
-function resolveColor(name: string, fallback: string): string {
-  const probe = document.createElement('span');
-  probe.style.color = `var(${name}, ${fallback})`;
-  document.body.appendChild(probe);
-  const c = getComputedStyle(probe).color;
-  probe.remove();
-  return c || fallback;
-}
-
-function horizontalPlane(zMm: number): THREE.Plane {
-  return new THREE.Plane(new THREE.Vector3(0, 1, 0), -zMm / 1000);
-}
-
-function angleText(dx: number, dy: number): string {
-  let a = (Math.atan2(dy, dx) * 180) / Math.PI;
-  if (a < 0) a += 360;
-  const r = Math.round(a * 10) / 10;
-  return `${(r === 360 ? 0 : r).toLocaleString('sv-SE')}°`;
-}
-
-function disposeTree(obj: THREE.Object3D): void {
-  obj.traverse((o) => {
-    const g = (o as THREE.Mesh).geometry;
-    if (g) g.dispose();
-  });
-}
-
-/** En plan form med hål, extruderad från z0 till z1 (mm). */
-function extrude(s: Solid): THREE.BufferGeometry | null {
-  if (s.cuts || s.top || s.bottom) {
-    const tris = solidTriangles(s);
-    if (!tris.length) return null;
-    const geom = new THREE.BufferGeometry();
-    geom.setAttribute('position', new THREE.Float32BufferAttribute(tris, 3));
-    geom.computeVertexNormals();
-    return geom;
-  }
-  const [outer, ...holes] = s.rings;
-  if (!outer || outer.length < 3 || s.z1 - s.z0 < 0.5) return null;
-  const shape = new THREE.Shape(outer.map(([x, y]) => new THREE.Vector2(x, y)));
-  for (const h of holes) if (h.length >= 3) shape.holes.push(new THREE.Path(h.map(([x, y]) => new THREE.Vector2(x, y))));
-  const geom = new THREE.ExtrudeGeometry(shape, { depth: s.z1 - s.z0, bevelEnabled: false });
-  geom.translate(0, 0, s.z0);
-  return geom;
-}

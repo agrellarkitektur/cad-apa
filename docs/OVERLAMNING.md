@@ -3,21 +3,32 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 27 oktober 2026 (förmiddag), efter 0.10.12 Småjusteringar.
+Senast: 27 oktober 2026 (förmiddag), efter granskningen efter 0.10.12.
 
 ## Läget
 
-- **Nästa session är granskningen** (se *Nästa session*), sedan 0.10.13.
+- **Nästa session:** sortera Inkorgen med Carl August, sedan **0.10.13
+  Höjder i förhållande till våningen** (se *Nästa session*).
+- **Granskningen efter 0.10.12 är klar** på `main` (samma format, 20, och
+  samma versionsnummer). Inga nya funktioner. Delat: `view3d.ts`
+  (`edit3d.ts`, `geometry3d.ts`), `selectionFields.ts` (`markerFields.ts`,
+  `annotationFields.ts`, `fieldMarkup.ts`), `propertiesPanel.ts`
+  (`selectionActions.ts`), `section.ts` (`sectionLines.ts`) och
+  `commands.ts` (`moveCommands.ts`); de gamla filerna exporterar vidare.
+  Testerna: 524 (fyra dubbletter ihopslagna) på ca 14–18 s.
+  Klickjämförelsen har 347 steg (54 nya för 0.10.11, 0.10.12 och 3D-vyn)
+  och ger samma läge, ritning och 3D-bild före och efter granskningen;
+  mot 0.10.10 skiljer bara det som 0.10.11 och 0.10.12 ändrade med avsikt
+  (se PLAN.md).
+  Detaljerna i PLAN.md och UTVECKLING.md under *Granskning efter 0.10.12*.
 - **0.10.12 Småjusteringar är klar** på `main` (samma format, 20), byggd
   efter Carl Augusts svar 27 oktober. Byggt: låst betyder låst (också
   träd och grannhus; låset finns för alla objekt utom marken och kartan),
   delen *Markör* i egenskaperna, väggarnas *Fasa* 500, *Snäpp mot
   kalkeringen* som inställning, bjälklag bakom snittet streckade i
   sektioner, tak från våningen ovanför och alla under, stödmurens *Över
-  marken mot* den högre eller lägre sidan. Testerna: 526 på ca 18 s.
-  Provat med Playwright mot `dist/`. Klickjämförelsen kördes inte (görs i
-  granskningen). Koden i UTVECKLING.md under *Småjusteringar (0.10.12)*;
-  Claudes val i PLAN.md.
+  marken mot* den högre eller lägre sidan. Koden i UTVECKLING.md under
+  *Småjusteringar (0.10.12)*; Claudes val i PLAN.md.
 - **Märks i hans ritningar efter 0.10.12:** låsta objekt (också
   importerade träd och grannhus) går inte att ta bort förrän de låsts upp;
   väggarnas *Fasa* börjar på 500; *Tak på andra våningar* visar inte
@@ -29,15 +40,15 @@ Senast: 27 oktober 2026 (förmiddag), efter 0.10.12 Småjusteringar.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.12` i `engine.ts` och `package.json`; nästa
-  version efter granskningen blir `0.10.13`.
+- **Versionsnumret** är `0.10.12` i `engine.ts` och `package.json`
+  (granskningen fick inget eget); nästa version är `0.10.13`.
 - **0.10.8–0.10.12 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.11 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
   åt gången**. En fråga han hoppar över räknas som "bra som det är" och
-  stryks. Han bad 27 oktober att resten väntar; ställ dem inte i
-  granskningen om han inte ber om det.
+  stryks. Han bad 27 oktober att resten väntar; ställ dem inte förrän han
+  ber om det, utom de som hör till 0.10.13.
 - **Släntmarkeringarna** (0.10.8) jämför den färdiga marken med den
   befintliga efter alla markobjekt; där två objekt möts kan strecken gå
   in över grannens yta om den också är ändrad men lutar som en slänt.
@@ -85,7 +96,8 @@ vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.10.11 Småsaker~~, ~~0.10.12
   Småjusteringar~~ (klara)
-- **Granskning** (nästa session; den senaste var 0.10.6)
+- ~~Granskning efter 0.10.12~~ (klar; nästa granskning om ungefär tre
+  versioner)
 - **0.10.13 Höjder i förhållande till våningen** (och takets
   referenslinje mot över- eller undersidan, stödmurens höjdpunkter med
   skriven höjd och dragning, flyttbara BH, NH och TH)
@@ -108,23 +120,32 @@ vid varje överlämning.
 
 ## Nästa session
 
-**Granskningen** (ingen ny funktion). Lägg upplägget kort i chatten först
-och vänta på hans "kör". Förslag, en session:
+**Först Inkorgen** (tio punkter från 27 oktober, om marken, fyllningar och
+opacitet; i `cad-apa-synpunkter.md`). Sortera dem tillsammans med Carl
+August, kort, och flytta dem till versionerna. Claudes förslag att utgå
+från:
 
-1. Dela stora filer (`view3d.ts` först; se med `wc -l` vilka andra som
-   vuxit, t.ex. `selectionFields.ts`, `propertiesPanel.ts`, `section.ts`).
-2. Gå igenom testerna: slå ihop dubbletter, ta bort det som låser
-   detaljer utan anledning; hela körningen under en minut (nu ca 18 s).
-3. Leta efter långsam kod (marken efter 0.10.6 är mätt men lämnad; se
-   *Öppna frågor*).
-4. Kör klickjämförelsen (`scripts/jamfor-klick.py`) mot 0.10.10 med nya
-   steg för 0.10.11 och 0.10.12 (våningens meny, Visa-menyn, snäpp mot
-   kalkeringen av och på, låst mot borttagning, delen *Markör* med
-   pennan, stödmurens *Över marken mot*, bjälklag bakom snittet).
-5. Uppdatera README, PLAN.md, UTVECKLING.md och den här filen, och pusha.
+- Schakt, fyllnad och netto för ett markobjekt: schakt och fyll står
+  redan i egenskaperna (*Schakt … m³, fyll … m³*); nettot och andelen
+  berg är små tillägg. Förteckningen med namn och volymer hör ihop med
+  0.12 Export (areor och förteckningar).
+- Opacitet på mask och fyllningar i markobjekten, och samma kontroller
+  för alla objekt med fyllning (Solid, Mask, Mönster med förslag):
+  mellanstor; en egen version efter 0.10.13 eller i 0.10.14.
+- Kontur runt släntmarkeringarna, egen fyllning för slänterna,
+  kryssrutor för markobjektens linjer och släntmarkeringarna i 3D:
+  tillsammans med *Situationsplanens beteckningar*.
+- Slänter och annan grafik som räknas fram ur den befintliga marken:
+  också där, eller efter piloten.
+- Ortofotot på marken (också den ändrade): en undersökning med repot och
+  terrängappen, för sig.
 
-Sedan **0.10.13 Höjder i förhållande till våningen** (mellanstor; se
-PLAN.md).
+Sedan **0.10.13 Höjder i förhållande till våningen** (mellanstor, en
+session; se PLAN.md): en plus- eller minusnivå mot våningen för
+bjälklag, väggar och objekt; takets referenslinje mot över- eller
+undersidan; stödmurens höjdpunkter med höjden skriven direkt och dragna
+längs muren; BH, NH och TH flyttbara i fasaden. Frågorna om 0.10.8b
+(BH, NH och TH) hör dit och kan ställas först.
 
 ## Att fråga Carl August om
 
@@ -256,10 +277,13 @@ fråga.
 - **Stödmuren (0.10.9):** bitarna (högst 0,5 m) syns svagt som strimmor i
   3D-vyn; där en fasads djup slutar mitt i muren ritas ingen kant vid
   gränsen (`mark-fasad-2`); murens ändar möter inte marken med slänt.
-- **Marken efter 0.10.6** (mätt men lämnat): fasader och sektioner byggs
-  om helt vid varje ändring i projektet, också av ett markobjekt (ca
-  20–60 ms per vy i exempelvillan, lika med och utan mark; nyckeln är hela
-  projektet i `modelShapes`). På en brant plats ändrar ett objekt stora
+- **Marken efter 0.10.6** (mätt men lämnat, mätt igen i granskningen
+  efter 0.10.12): fasader och sektioner byggs om helt vid varje ändring i
+  projektet, också av ett markobjekt (11–25 ms per vy i exempelvillan på
+  den kuperade platsen när koden är varm, lika med och utan mark; nyckeln
+  är hela projektet i `modelShapes`, och efter ett ändrat markobjekt är
+  ingen av 3D-formerna samma objekt, så linjerna i `sectionLines` kan inte
+  sparas förrän formerna för oförändrade objekt blir desamma). På en brant plats ändrar ett objekt stora
   ytor (40 000 noder för urgrävningen under plattan på 0,5 m) och varje
   ändrad nod kostar 1–3 µs i `probe` (närmaste kant); den färdiga markens
   höjdkurvor räknas för hela området som alla markobjekt ändrat (ca
@@ -366,11 +390,19 @@ fråga.
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (293 steg sedan 0.10.7: stilmallen med linjetyper, pennor och
-  fyllningstyper, snabbraden, den egna pennan, rummets fyllning,
-  2D-formens fält med mask, bakgrund och fyllningstyp, ritordning, Visas
-  i, underlag, detaljnivåerna, Filtrera och markera, våningar, bjälklag,
-  kalkering, platsen och markobjekten, fasader, sektion och nivåer).
+  (347 steg sedan granskningen efter 0.10.12: stilmallen med linjetyper,
+  pennor och fyllningstyper, snabbraden, den egna pennan, rummets
+  fyllning, 2D-formens fält med mask, bakgrund och fyllningstyp,
+  ritordning, Visas i, underlag, detaljnivåerna, Filtrera och markera,
+  våningar, bjälklag, kalkering, platsen och markobjekten, fasader,
+  sektion och nivåer till och med `slut`; efter den våningens meny,
+  Visa-menyn, snäpp mot kalkeringen, låst mot borttagning, delen
+  *Markör*, *Över marken mot*, bjälklag bakom snittet och 3D-vyn med en
+  bild per steg, `v3d`). Mot ett bygge äldre än 0.10.12 jämförs bara
+  stegen till och med `slut`. 3D-stegen räknar ut skärmpunkten med
+  `bacchus.view3d.project` och vyns läge (`at3d`), greppen med
+  `bacchus.view3d.editor.handles()`, och höjden i marken med
+  `bacchus.view3d.ground.height`.
   Platsen släpps på planen som en fil (`PLATS`, samma mark som
   `groundProject`), och dialogen väljs med `pg.click` (flera `.dialog`
   finns i sidan; dialogen *Platsen* har klassen `site-dialog`). Väggarna

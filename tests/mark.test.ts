@@ -145,7 +145,7 @@ describe('Byggnadshöjd (0.10.5)', () => {
     expect(bh.height).toBeCloseTo(bh.main.z - meanGround(ctx)!, 3);
   });
 
-  it('brant tak: planet berör nocken; BH står bland nivåerna i fasaden', () => {
+  it('brant tak: planet berör nocken (BH i fasaden prövas i v0108b)', () => {
     const store = onSlope();
     const roofs = Object.values(store.doc.elements).filter((e) => e.type === 'Roof');
     updateParams(
@@ -157,8 +157,6 @@ describe('Byggnadshöjd (0.10.5)', () => {
     const bh = buildingHeight(planCtx(store))!;
     // Nocken mitt i huset (4 000 in): 2 700 + 300/cos 60° + 4 000 · tan 60° − 4 000.
     expect(bh.main.z).toBeCloseTo(2700 + 600 + 4000 * Math.tan(Math.PI / 3) - 4000, 0);
-    const texts = buildSection(store.doc, 'fasad-1', { state: 'st-a' })!.prims.flatMap((p) => (p.kind === 'text' ? [p.text] : []));
-    expect(texts.some((t) => t.startsWith('BH +'))).toBe(true);
   });
 });
 

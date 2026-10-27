@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.12** (alfa); nästa är en granskning och sedan **0.10.13, höjder i förhållande till våningen**.
+**0.10.12** (alfa), granskad; nästa är **0.10.13, höjder i förhållande till våningen**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,15 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Granskning efter 0.10.12 (samma version och filformat, 20):
+- Inga nya funktioner; allt beter sig som förut (samma klick ger samma
+  läge, ritning och 3D-bild som före granskningen)
+- Stora filer delade: 3D-vyns dragning och grepp, egenskapernas knappar
+  och markörernas fält, fasadernas och sektionernas linjer, och flytta och
+  vända för sig
+- Fyra tester som prövade samma sak är ihopslagna; klickjämförelsen
+  prövar också 0.10.11, 0.10.12 och 3D-vyn
 
 Version 0.10.12, småjusteringar (samma filformat, 20):
 - **Låst betyder låst**: ett låst objekt går inte att ta bort (Delete, Ta

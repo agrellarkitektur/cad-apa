@@ -2262,6 +2262,53 @@ muren följer då den lägre sidans mark. Provat med Playwright mot `dist/`
 (Delete på en låst vägg, *Markör*, högerklicksmenyn). Klickjämförelsen
 kördes inte. Inga referensritningar ändrades.*
 
+### Granskning efter 0.10.12 ✓
+
+Enligt planen (förra var 0.10.6). Inget eget versionsnummer (Carl August
+27 oktober: nästa lediga nummer, och granskningen har inga nya
+funktioner); appen heter fortfarande 0.10.12.
+
+- Dela stora filer: `view3d.ts` först, sedan de som vuxit
+- Gå igenom testerna: dubbletter, det som låser detaljer, under en minut
+- Leta efter långsam kod
+- Klickjämförelsen med nya steg för 0.10.11 och 0.10.12
+
+*Gjord (27 oktober), samma format (20). Testerna: 526 → 524, ca 14–18 s.
+**Filerna**: `view3d.ts` 790 → 464 rader (dragningen och greppen i
+`edit3d.ts`, klippningen, snittytorna, markträffen och kropparna i
+`geometry3d.ts`); `selectionFields.ts` 389 → 266 (markörernas fält i
+`markerFields.ts`, måttens, textens, skalstockens och stämpelns i
+`annotationFields.ts`, `numberField` och `textField` i `fieldMarkup.ts`);
+`propertiesPanel.ts` 614 → 434 (knapparna i `selectionActions.ts`);
+`section.ts` 431 → 302 (linjerna, det som skymmer dem och de dolda i
+`sectionLines.ts`); `commands.ts` 625 → 310 (flytta och vända i
+`moveCommands.ts`). Allt exporteras vidare från de gamla filerna, så
+inget annat ändrades. **Testerna**: fyra som prövade samma sak är
+ihopslagna eller kortade (skarven mellan våningarna befintligt mot nytt,
+tak på andra våningar, låst mot borttagning, byggnadshöjden i fasaden).
+Hela körningen är långt under en minut; snäpptestet från 0.8.3 (1,2 s)
+står kvar med sina 120 punkter. **Långsam kod**: inget nytt som växer med
+kvadraten. En fasad eller sektion tar 11–25 ms i exempelvillan på den
+kuperade platsen efter en ändring, med eller utan markobjekt; 3D-formerna
+byggs om vid varje ändring (inga är samma objekt efter ett ändrat
+markobjekt), så linjerna kan inte sparas förrän formerna för oförändrade
+objekt blir desamma. Det är lämnat (en egen, mellanstor uppgift, inte
+före piloten om det inte märks). Ytterväggarnas insida tar 36 ms för ett
+rutnät av 12 × 12 rum och 129 ms för 24 × 24. **Klickjämförelsen** har
+347 steg (54 nya efter `slut`: våningens meny, Visa-menyn, snäpp mot
+kalkeringen av och på, låst mot borttagning, delen *Markör* med pennan,
+stödmurens *Över marken mot*, bjälklag bakom snittet, och 3D-vyn med
+hovring, klick på vägg och mark, grepp, flytt och *Följ sektionen*, med en
+bild av 3D-vyn efter varje steg). Samma klick i 0.10.12 före och efter
+granskningen ger samma läge, ritning och 3D-bild i alla 347 steg. Mot
+0.10.10 (de 293 stegen till och med `slut`) skiljer sig bara det som
+0.10.11 och 0.10.12 ändrade med avsikt: orden i stilmallen (-markör),
+*Lås* i egenskaperna för alla objekt, Visa-menyns kolumner, snitthöjden
+1100 (takets snitt på plan 2), ingen skarv mellan befintligt och nytt
+mellan våningarna (gaveln i fasad 2), och snäpp mot kalkeringen: hörnen
+i bjälklaget som ritas på plan 2 snäpper mot en kalkerad 2D-form på plan 1
+(y 0 i stället för 200), vilket följer med i projektet till slutet.*
+
 ### 0.10.13 Höjder i förhållande till våningen
 
 Synpunkt 25 oktober. Mellanstor.

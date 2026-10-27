@@ -92,14 +92,12 @@ describe('2D-element (0.8)', () => {
 });
 
 describe('lås och fasader som följer byggnaden (0.8)', () => {
-  it('ett låst objekt flyttas inte och tas inte bort', () => {
+  it('ett låst objekt flyttas inte (borttagning prövas i v01012)', () => {
     const store = new DocStore(sampleProject());
     store.transact('x', (tx) => tx.putElement(line('l1')));
     setLocked(store, ['l1'], true);
     moveElements(store, ['l1'], [500, 0]);
     expect(store.doc.elements.l1.params.points).toEqual([[0, 0], [1000, 0]]);
-    deleteElements(store, ['l1']);
-    expect(store.doc.elements.l1).toBeDefined();
     setLocked(store, ['l1'], false);
     expect(store.doc.elements.l1.locked).toBeUndefined();
     moveElements(store, ['l1'], [500, 0]);

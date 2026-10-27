@@ -1,30 +1,15 @@
-import {
-  createDefinition,
-  deleteDefinition,
-  deleteElements,
-  flipWalls,
-  setDefinition,
-  setInState,
-  setGraphics,
-  setSkewOk,
-  updateDefinition,
-  updateParams,
-} from '../core/commands';
-import { copyElements, mirrorElements, rotateElements } from '../core/transforms';
+import { setDefinition, setGraphics, updateDefinition } from '../core/commands';
 import { onPaper as paperSpace, type Element, type ProjectDoc } from '../core/model';
 import { isViewportId } from '../core/sheets';
 import type { Action, ViewStates } from '../core/states';
 import { actionOf } from '../core/states';
 import type { DocStore } from '../core/store';
-import { resolveParams, typeOf } from '../elements/registry';
-import { rotateFurniture, type FurnitureParams } from '../elements/furniture';
-import { faceChoices, faceOf, justificationFor, type WallFace } from '../elements/wallSides';
+import { typeOf } from '../elements/registry';
 import type { QuickId } from './uiSettings';
 import { quickButton, quickButtons } from './quickBar';
 import { icons } from './icons';
-import { escapeHtml, labelOf, nextLittera } from './labels';
+import { escapeHtml, labelOf } from './labels';
 import type { Selection } from './selection';
-import { markerFrame } from '../elements/markers';
 import { skewOf, skewText } from '../elements/angleCheck';
 import { bindTreeForm, treeItemExists, treeItemMarkup, type TreeItem } from './treeItemPanel';
 import { bindSheetForm, sheetFormMarkup, type SheetFormHost } from './sheetForms';
@@ -34,9 +19,10 @@ import { drawingChange, drawingClick, hereOf, lockField } from './drawingPanel';
 import { shapeSmartFields } from './shapeFields';
 import { resetShowList, showSection } from './showFields';
 import { underlayPlaceFields } from './underlayFields';
-import { instanceFields, markerSection, propsSection, PROPS, sharedSection, summarizeTypes, typesMarkup } from './selectionFields';
+import { instanceFields, markerSection, propsSection, sharedSection, summarizeTypes, typesMarkup } from './selectionFields';
 import { applyPenField } from './style/pens';
-import { applyField, patchEach, pick, selectionCenter, straighten } from './selectionEdits';
+import { applyField } from './selectionEdits';
+import { selectionAction, type ActionPanel } from './selectionActions';
 
 type Tab = 'selection' | 'types';
 
@@ -52,12 +38,12 @@ const ACTION_LABEL: Record<Action, string> = {
  * Sidopanelen: egenskaper för det som är markerat, och typerna (littera) med
  * deras gemensamma mått. På mobilen ligger den som ett blad nederst.
  *
- * Fältens HTML ligger i selectionFields.ts och det fälten och knapparna
- * ändrar i selectionEdits.ts; 2D, taklutning, Visas i och Lås i
- * drawingPanel.ts, och det som väljs i projektträdet i treeItemPanel.ts och
- * sheetForms.ts.
+ * Fältens HTML ligger i selectionFields.ts, det fälten ändrar i
+ * selectionEdits.ts och det knapparna gör i selectionActions.ts; 2D,
+ * taklutning, Visas i och Lås i drawingPanel.ts, och det som väljs i
+ * projektträdet i treeItemPanel.ts och sheetForms.ts.
  */
-export class PropertiesPanel {
+export class PropertiesPanel implements ActionPanel {
   readonly el: HTMLElement;
   private body: HTMLElement;
   private tab: Tab = 'selection';
@@ -408,174 +394,8 @@ export class PropertiesPanel {
   private onClick(e: Event): void {
     const b = (e.target as HTMLElement).closest<HTMLElement>('[data-action]');
     if (!b) return;
-    const doc = this.store.doc;
-    const ids = this.selection.list();
-    if (drawingClick(this.store, ids, b, this.el)) return;
-    switch (b.dataset.action) {
-      case 'ul-calibrate':
-      case 'ul-align':
-        if (ids[0]) this.onUnderlayTool?.(ids[0], b.dataset.action === 'ul-calibrate' ? 'calibrate' : 'align');
-        return;
-      case 'ul-proportions':
-        if (ids[0]) this.onUnderlayProportions?.(ids[0]);
-        return;
-      case 'open-marker':
-        if (ids[0]) this.onOpenMarker?.(ids[0]);
-        return;
-      case 'open-stamp': {
-        const stamp = doc.elements[ids[0]]?.params.stamp;
-        if (typeof stamp === 'string') this.sheetHost?.openMaster(stamp);
-        return;
-      }
-      case 'straighten-angle': {
-        const el = doc.elements[ids[0]];
-        const w = el && skewOf(doc, el, this.angleWarn(), true);
-        if (el && w) straighten(this.store, el, w.nearest);
-        return;
-      }
-      case 'skew-ok':
-        setSkewOk(this.store, ids.slice(0, 1), true);
-        return;
-      case 'skew-warn':
-        setSkewOk(this.store, ids.slice(0, 1), false);
-        return;
-      case 'align-marker':
-        if (ids[0]) this.onAlignMarker?.(ids[0]);
-        return;
-      case 'room-label-center':
-        updateParams(this.store, ids.filter((id) => doc.elements[id]?.type === 'Space'), { labelAt: undefined }, 'Rumsstämpeln i mitten');
-        return;
-      case 'flip-side': {
-        const el = doc.elements[ids[0]];
-        if (!el) return;
-        if (el.params.auto) {
-          // Följer linjen byggnaden placeras den först där den ligger.
-          const f = markerFrame(doc, el);
-          updateParams(this.store, [el.id], { auto: false, start: [Math.round(f.start[0]), Math.round(f.start[1])], end: [Math.round(f.end[0]), Math.round(f.end[1])], side: -1 }, 'Vänd blickriktningen');
-        } else updateParams(this.store, [el.id], { side: -Number(el.params.side ?? 1) }, 'Vänd blickriktningen');
-        return;
-      }
-      case 'follow-building':
-        updateParams(this.store, ids, { auto: true }, 'Följ byggnaden');
-        return;
-      case 'slab-hole-remove': {
-        const el = doc.elements[ids[0]];
-        const i = Number(b.dataset.index);
-        const holes = (el?.params.holes as unknown[] | undefined) ?? [];
-        if (el && holes[i]) updateParams(this.store, [el.id], { holes: holes.filter((_, k) => k !== i) }, 'Ta bort håltagning');
-        return;
-      }
-      case 'roof-flip':
-        // Referenslinjen vänds; bågen ligger kvar där den låg (0.10).
-        patchEach(this.store, ids.filter((id) => doc.elements[id]?.type === 'Roof'), 'Vänd lutningen', (p) => {
-          const ref = p.ref as [[number, number], [number, number]];
-          const bulge = Number(p.refBulge ?? 0);
-          return { ref: [ref[1], ref[0]], refBulge: bulge ? -bulge : undefined };
-        });
-        return;
-      case 'select-roof':
-        if (b.dataset.roof && doc.elements[b.dataset.roof]) this.selection.set([b.dataset.roof]);
-        return;
-      case 'toggle-state': {
-        const s = b.dataset.state!;
-        const allIn = ids.every((id) => doc.elements[id]?.states.includes(s));
-        setInState(this.store, ids, s, !allIn);
-        break;
-      }
-      case 'new-def': {
-        const el = doc.elements[ids[0]];
-        const t = typeOf(el.type)!;
-        const p = resolveParams<Record<string, number>>(doc, el);
-        const params = Object.fromEntries(t.typeParams!.map((k) => [k, Number(p[k] ?? 0)]));
-        createDefinition(this.store, el.type, nextLittera(doc, el.type, t.litteraPrefix ?? 'T'), params, ids);
-        break;
-      }
-      case 'add-def': {
-        const t = typeOf(b.dataset.type!)!;
-        createDefinition(this.store, t.type, nextLittera(doc, t.type, t.litteraPrefix ?? 'T'), pick(t.defaults() as Record<string, number>, t.typeParams!));
-        break;
-      }
-      case 'delete-def':
-        deleteDefinition(this.store, b.dataset.def!);
-        break;
-      case 'delete':
-        if (this.onErase) this.onErase(ids);
-        else {
-          deleteElements(this.store, ids);
-          this.selection.clear();
-        }
-        break;
-      case 'justify': {
-        const face = b.dataset.value as WallFace;
-        patchEach(this.store, ids, 'Byt referenslinje', (_p, el) => ({ justification: justificationFor(doc, el, face) }));
-        break;
-      }
-      case 'cycle-ref': {
-        // Utsida → Center → Insida → Utsida (innerväggar: vänster → center → höger).
-        patchEach(this.store, ids, 'Byt referenslinje', (_p, el) => {
-          const choices = faceChoices(doc, el);
-          const i = choices.findIndex((c) => c.face === faceOf(doc, el).face);
-          return { justification: justificationFor(doc, el, choices[(i + 1) % choices.length].face) };
-        });
-        break;
-      }
-      case 'toggle-glazed': {
-        const on = ids.every((id) => resolveParams<{ glazed?: boolean }>(doc, doc.elements[id]).glazed);
-        patchEach(this.store, ids, on ? 'Ej glasad' : 'Glasad', () => ({ glazed: !on }));
-        break;
-      }
-      case 'flip-swing':
-        patchEach(this.store, ids, 'Vänd slag', (p) => ({ swing: -((p.swing as number | undefined) ?? 1) }));
-        break;
-      case 'flip-hinge':
-        patchEach(this.store, ids, 'Byt hängning', (p) => ({ hinge: p.hinge === 'end' ? 'start' : 'end' }));
-        break;
-      case 'rotate-90':
-        if (ids.length === 1 && doc.elements[ids[0]]?.type === 'Furniture') {
-          patchEach(this.store, ids, 'Vrid 90°', (_p, el) => rotateFurniture(resolveParams<FurnitureParams>(doc, el), 90));
-        } else rotateElements(this.store, ids, selectionCenter(doc, ids));
-        break;
-      case 'mirror':
-        mirrorElements(this.store, ids, selectionCenter(doc, ids));
-        break;
-      case 'flip-wall':
-        flipWalls(this.store, ids);
-        break;
-      case 'copy': {
-        const copies = copyElements(this.store, ids);
-        this.selection.set(copies);
-        this.onCopied?.(copies, selectionCenter(this.store.doc, copies));
-        break;
-      }
-      case 'demolish':
-        setInState(this.store, ids, this.getView().state, false);
-        break;
-      case 'restore':
-        setInState(this.store, ids, this.getView().state, true);
-        break;
-      case 'deselect':
-        this.selection.clear();
-        break;
-      case 'add-prop':
-      case 'add-defprop': {
-        // Fältet bredvid knappen, i panelen eller i den utfällda smartmenyn.
-        const input =
-          b.parentElement?.querySelector<HTMLInputElement>('input') ??
-          this.body.querySelector<HTMLInputElement>(b.dataset.action === 'add-prop' ? '#new-prop' : '#new-defprop');
-        const name = input?.value.trim();
-        if (!name) break;
-        const el = doc.elements[ids[0]];
-        if (b.dataset.action === 'add-prop') {
-          this.store.transact(`Ny egenskap: ${name}`, (tx) => tx.putElement({ ...el, props: { ...el.props, [PROPS]: { ...(el.props[PROPS] ?? {}), [name]: '' } } }));
-        } else if (el.definition) {
-          const def = doc.definitions[el.definition];
-          this.store.transact(`Ny egenskap för ${def.name}: ${name}`, (tx) =>
-            tx.putDefinition({ ...def, props: { ...def.props, [PROPS]: { ...(def.props[PROPS] ?? {}), [name]: '' } } }),
-          );
-        }
-        break;
-      }
-    }
+    if (drawingClick(this.store, this.selection.list(), b, this.el)) return;
+    selectionAction({ panel: this, store: this.store, selection: this.selection, getView: this.getView, body: this.body }, b);
   }
 
   private onChange(e: Event): void {

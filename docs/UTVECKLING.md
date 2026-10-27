@@ -1242,6 +1242,52 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Granskning efter 0.10.12 (format 20)
+
+Utan nya funktioner och utan eget versionsnummer (nästa är 0.10.13).
+Stora filer delade; allt som förut importerades från de gamla filerna
+finns kvar där (exporteras vidare), så att inget annat behövde ändras.
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/view3d/view3d.ts` | `View3D`: scenen, kropparna, marken, markeringen och hovringen, kameran, klippningen och träffarna (790 → 464 rader) |
+| `src/view3d/edit3d.ts` | Ny: `Edit3D`, greppen i väggändarna och dragningen (grepp och flytt) med förhandsvisning och mått; `Handle3D`, `Edit3DHost` och `EditView` (det dragningen behöver av vyn) |
+| `src/view3d/geometry3d.ts` | Ny: `extrude`, `clipPlanes` och `capObjects` (sektionens klippning och snittytor), `groundHit` (där strålen går ner i marken), `shown`, `horizontalPlane`, `resolveColor`, `disposeTree`, `clearGroup` |
+| `src/ui/selectionFields.ts` | Egna egenskaper, *Påverkar fler objekt*, typtabellen och fälten för väggar, tak, bjälklag, dörrar, fönster, möbler och rum (389 → 266 rader) |
+| `src/ui/markerFields.ts` | Ny: `markerViewFields` (norrpilen, *Beräkningsgrundande fasad*, sektionens och fasadens vy med höjderna) och `markerSection` (delen *Markör*) |
+| `src/ui/annotationFields.ts` | Ny: fälten för mått, text, skalstock och stämpel |
+| `src/ui/fieldMarkup.ts` | Ny: `numberField` och `textField` |
+| `src/ui/propertiesPanel.ts` | Panelen: flikarna, snabbraden, det markerade och fälten (614 → 434 rader) |
+| `src/ui/selectionActions.ts` | Ny: `selectionAction`, det knapparna i panelen, snabbraden och smartmenyn gör (`data-action`); `ActionPanel` är det panelen förmedlar till appen |
+| `src/repr/section.ts` | `buildSection`: snitten, pennorna, marken, taklutningen, nivåerna och klickytorna (431 → 302 rader) |
+| `src/repr/sectionLines.ts` | Ny: `sectionLines`, formernas kanter i vyn, det som skymmer dem och vilka som syns, också de dolda; `wallSilhouettes` |
+| `src/core/commands.ts` | Kommandona (625 → 310 rader) |
+| `src/core/moveCommands.ts` | Ny: flytta och vända (`moveElements`, `followJoins`, `movePatch`, `moveWallEnd`, `reversedWall`, `flipWalls` …), exporteras också från `commands.ts` |
+
+- **Tester** (526 → 524): skarven mellan våningarna befintligt mot nytt
+  (0.10.11) är ett fall i testet för 0.10.1; tak på andra våningar
+  (0.10.12) i testet för 0.10.10; låsta som inte tas bort bara i
+  `v01012` (testet för 0.8 prövar flytten); byggnadshöjden i fasaden bara i
+  `v0108b`.
+- **Klickjämförelsen** (`scripts/jamfor-klick.py`) har 54 nya steg efter
+  `slut`: våningens meny, Visa-menyn, snäpp mot kalkeringen av och på,
+  låst mot borttagning, delen *Markör* med pennan, stödmurens *Över
+  marken mot*, bjälklag bakom snittet, och 3D-vyn (hovring, klick på en
+  vägg och på marken, grepp, flytt och *Följ sektionen*) med en bild av
+  3D-vyn efter varje steg (`v3d`, med `--bilder` som `N-3d.png`). Ritytan
+  fotograferas bara när den syns. Mot ett äldre bygge jämförs bara stegen
+  till och med `slut` (`--till-slut`; de nya stegen väntar 30 s på menyer
+  som saknas där).
+  Före och efter granskningen: inga skillnader i 347 steg.
+- **Mätt men lämnat**: en fasad eller sektion tar 11–25 ms i exempelvillan
+  på den kuperade platsen efter en ändring, med eller utan markobjekt;
+  formerna byggs om (inga av dem är samma objekt efter en ändring av ett
+  markobjekt), så linjernas uträkning kan inte sparas utan att 3D-formerna
+  först blir desamma för oförändrade objekt. Ytterväggarnas insida
+  (`innerFaceEdges`) tar 36 ms för `roomGrid(12)` och 129 ms för
+  `roomGrid(24)`; med de dolda linjerna tända tar fasaden 30–50 % längre
+  tid.
+
 ## Småjusteringar (0.10.12, format 20)
 
 | Fil | Innehåll |

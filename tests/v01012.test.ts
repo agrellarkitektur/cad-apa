@@ -3,7 +3,6 @@ import { deleteElements } from '../src/core/commands';
 import { DocStore } from '../src/core/store';
 import { registerBuiltInTypes } from '../src/elements';
 import { computeProfile } from '../src/elements/groundWall';
-import { roofShownOn } from '../src/elements/roofPlan';
 import { buildSection } from '../src/repr/section';
 import { sampleProject } from '../src/sample/sampleProject';
 import { twoStoreys } from './projekt';
@@ -28,18 +27,6 @@ describe('Småjusteringar (0.10.12)', () => {
     expect(store.doc.elements[wall]).toBeDefined();
     expect(store.doc.elements[door.id]).toBeDefined();
     expect(store.doc.elements[shape.id]).toBeDefined();
-  });
-
-  it('tak på andra våningar: våningen ovanför och alla under, inte två upp', () => {
-    const doc = twoStoreys();
-    doc.storeys.push({ id: 'pl-3', name: 'Plan 3', elevation: 5400, height: 2700 });
-    doc.elements['tak'].storey = 'pl-3';
-    doc.elements['tak-n'].storey = 'pl-1';
-    const around = ['+roofsAround'];
-    expect(roofShownOn(doc.elements['tak'], doc, 'pl-2', around)).toBe(true);
-    expect(roofShownOn(doc.elements['tak'], doc, 'pl-1', around)).toBe(false);
-    expect(roofShownOn(doc.elements['tak-n'], doc, 'pl-3', around)).toBe(true);
-    expect(roofShownOn(doc.elements['tak'], doc, 'pl-1')).toBe(false);
   });
 
   it('stödmurens Över marken mot den högre sidan, eller den lägre', () => {

@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { LINE_TYPES } from '../src/core/lineTypes';
 import type { Element, ProjectDoc } from '../src/core/model';
 import { registerBuiltInTypes } from '../src/elements';
+import { roofShownOn } from '../src/elements/roofPlan';
 import { buildPlan } from '../src/repr/plan';
 import type { Primitive } from '../src/repr/primitives';
 import { buildSection } from '../src/repr/section';
@@ -47,7 +48,7 @@ describe('Dolda linjer och vyns djup (0.10.10)', () => {
     expect(grey(buildSection(doc, el.id, { state: stateOf(doc) })!.prims).length).toBe(grey(before).length);
   });
 
-  it('Tak på andra våningar: ovanför vyn streckprickat, under golvet streckat', () => {
+  it('Tak på andra våningar: ovanför vyn streckprickat, under golvet streckat; våningen ovanför och alla under', () => {
     const doc = twoStoreys();
     const roofs = (d: ProjectDoc, storey: string, hide?: string[]) => buildPlan(d, storey, { state: stateOf(d), hide }).prims.filter((p) => p.origin?.objectType === 'Roof' && (p.kind === 'line' || p.kind === 'polyline'));
     expect(roofs(doc, 'pl-1')).toHaveLength(0);
@@ -61,6 +62,14 @@ describe('Dolda linjer och vyns djup (0.10.10)', () => {
     const under = roofs(low, 'pl-hog', ['+roofsAround']);
     expect(under.length).toBeGreaterThan(0);
     expect(under.every((p) => 'pen' in p && p.pen.dash === LINE_TYPES.dashed.dash)).toBe(true);
+    // Våningen närmast ovanför och alla under (0.10.12): inte ett tak två våningar upp.
+    const three = twoStoreys();
+    three.storeys.push({ id: 'pl-3', name: 'Plan 3', elevation: 5400, height: 2700 });
+    three.elements['tak'].storey = 'pl-3';
+    three.elements['tak-n'].storey = 'pl-1';
+    expect(roofShownOn(three.elements['tak'], three, 'pl-2', ['+roofsAround'])).toBe(true);
+    expect(roofShownOn(three.elements['tak'], three, 'pl-1', ['+roofsAround'])).toBe(false);
+    expect(roofShownOn(three.elements['tak-n'], three, 'pl-3', ['+roofsAround'])).toBe(true);
   });
 
   it('ritordningen i fasaden: fyllningen bakom modellen som förval, framför när den valts', () => {

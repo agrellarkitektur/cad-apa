@@ -1,8 +1,9 @@
 """Samma klick i två byggen (granskningen 0.8.27; linjetyper, mask och egen
 penna från 0.8.32; fyllningstyper, pennor för dörrar och fönster, rummens
 kontur, Filtrera och markera och detaljnivåerna från 0.8.38; våningar,
-bjälklag och nivåer från 0.9.3; platsen och markobjekten från 0.10.6):
-läget efter varje steg sparas, och två körningar jämförs steg för steg.
+bjälklag och nivåer från 0.9.3; platsen och markobjekten från 0.10.6;
+0.10.11, 0.10.12 och 3D-vyn från granskningen efter 0.10.12): läget efter
+varje steg sparas, och två körningar jämförs steg för steg.
 
 Bygg den gamla versionen i en egen arbetskopia och den nya som vanligt,
 servera dem på var sin port (python3 -m http.server) och kör
@@ -16,6 +17,11 @@ bredvid json-filen. Skiljer sig ritningens markup (`content`), till exempel
 när ett mönster ritas på ett annat sätt, jämförs bilderna: antalet pixlar
 som skiljer mycket står efter stegets namn.
 
+Stegen i 3D-vyn (efter `slut`) sparar en bild av 3D-vyn (`v3d`); skiljer
+sig bilderna jämförs de som ritytan. Stegen efter `slut` prövar det som är
+nytt sedan 0.10.10, så mot ett äldre bygge jämförs bara stegen till och med
+`slut` (`--jamfor gammal.json ny.json --till-slut`).
+
 Nya id blir desamma i båda (fast följd i crypto.getRandomValues, sedan
 0.10.6 med de höga bitarna, så att två nya id inte blir lika), och
 blob-adresser för underlagens bilder räknas inte. Kräver Playwright och PIL.
@@ -24,8 +30,12 @@ import base64, hashlib, io, json, os, sys
 from playwright.sync_api import sync_playwright
 
 
-def compare(a_path, b_path):
+def compare(a_path, b_path, till_slut=False):
     a = json.load(open(a_path)); b = json.load(open(b_path))
+    if till_slut:
+        # Mot ett bygge före 0.10.12: bara stegen till och med `slut`.
+        end = next(i for i, r in enumerate(b) if r['step'] == 'slut') + 1
+        a, b = a[:end], b[:end]
     keys = [k for k in a[0] if k not in ('step', 'err', '_raw', 'tool')]
     # Verktygets klassnamn minifieras olika i två byggen (0.8.32): samma
     # verktyg är samma namn i varje bygge, så namnen ska motsvara varandra
@@ -41,6 +51,11 @@ def compare(a_path, b_path):
             d.remove('content')
             if n:
                 d.append(f'bild ({n} px)')
+        if 'v3d' in d and all(os.path.exists(f'{q}/{i}-3d.png') for q in pics):
+            n = pixel_diff(*(f'{q}/{i}-3d.png' for q in pics))
+            d.remove('v3d')
+            if n:
+                d.append(f'3D ({n} px)')
         ta, tb = x['_raw']['tool'], y['_raw']['tool']
         if tools.setdefault(ta, tb) != tb or list(tools.values()).count(tb) > 1:
             d.append('tool')
@@ -58,7 +73,7 @@ def pixel_diff(a, b):
 
 
 if sys.argv[1] == '--jamfor':
-    compare(sys.argv[2], sys.argv[3])
+    compare(sys.argv[2], sys.argv[3], '--till-slut' in sys.argv)
     sys.exit()
 
 PORT, OUT = sys.argv[1], sys.argv[2]
@@ -162,7 +177,7 @@ def main():
             pg.evaluate('() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))')
             pg.wait_for_timeout(120)
 
-        def step(name, js=None, fn=None):
+        def step(name, js=None, fn=None, shot3d=False):
             err = ''
             try:
                 if js:
@@ -175,8 +190,19 @@ def main():
             st = pg.evaluate(STATE)
             if PICS:
                 os.makedirs(PICS, exist_ok=True)
-                pg.locator('.pane-2d').screenshot(path=f'{PICS}/{len(rows)}.png')
-            rows.append({'step': name, 'err': err, **{k: hashlib.sha1(v.encode()).hexdigest()[:10] for k, v in st.items()}, '_raw': st})
+                # Ritytan, när den syns (inte i 3D-läget).
+                if pg.locator('.pane-2d').is_visible():
+                    pg.locator('.pane-2d').screenshot(path=f'{PICS}/{len(rows)}.png')
+            v3d = ''
+            if shot3d:
+                try:
+                    png = pg.locator('.view3d-canvas').screenshot(timeout=5000)
+                    v3d = hashlib.sha1(png).hexdigest()[:10]
+                    if PICS:
+                        open(f'{PICS}/{len(rows)}-3d.png', 'wb').write(png)
+                except Exception as e:  # noqa
+                    err = err or str(e).split('\n')[0][:200]
+            rows.append({'step': name, 'err': err, **{k: hashlib.sha1(v.encode()).hexdigest()[:10] for k, v in st.items()}, 'v3d': v3d, '_raw': st})
 
         def click_model(x, y, shift=False):
             sx, sy = pg.evaluate(f'__screen({x}, {y})')
@@ -567,6 +593,134 @@ def main():
         step('vänd blicken', "__click('[data-action=\"flip-side\"]', 'aside.panel .panel-body')")
         step('följ byggnaden', "__click('[data-action=\"follow-building\"]', 'aside.panel .panel-body')")
         step('slut', "bacchus.selection.clear()")
+
+        # ---------- 0.10.11 och 0.10.12 (steg från granskningen efter 0.10.12) ----------
+        plan2 = 'bacchus.store.doc.storeys.find((s) => s.elevation > 0).id'
+        step('trädet', "if (!bacchus.ui.navOpen) __click('[data-action=\"toggle-nav\"]'); __click('[data-nav-tab=\"modell\"]')")
+        step('våningens meny', f"__click(`[data-storey-menu=\"${{{plan2}}}\"]`)")
+        step('våningens inställningar', fn=lambda: ctx_item('Inställningar'))
+        step('våningens meny igen', f"__click(`[data-storey-menu=\"${{{plan2}}}\"]`)")
+        step('visa våningen', fn=lambda: ctx_item('Visa'))
+        step('Visa-menyn', "__click('[data-action=\"show-menu\"]')")
+        step('stäng Visa-menyn', "__click('[data-action=\"show-menu\"]')")
+        # Snäpp mot kalkeringen (0.10.11, inställning 0.10.12): linjen tf-2 finns bara på plan 1, som kalkeras.
+        def hover_model(x, y):
+            def run():
+                for dx in (300, 0):
+                    sx, sy = pg.evaluate(f'__screen({x + dx}, {y})')
+                    pg.mouse.move(sx, sy, steps=3)
+                pg.wait_for_timeout(200)
+            return run
+
+        def plan_menu(label):
+            def run():
+                pg.evaluate("bacchus.setTool('select')")
+                sx, sy = pg.evaluate('__screen(30000, -15000)')
+                pg.mouse.click(sx, sy, button='right')
+                pg.wait_for_timeout(300)
+                ctx_item(label)
+            return run
+        step('väggverktyget på plan 2', f"bacchus.goTo({{kind: 'storey', id: {plan2}}}); bacchus.setTool('wall')", fn=lambda: pg.wait_for_timeout(300))
+        step('nära den kalkerade linjen', fn=hover_model(13500, -1950))
+        step('snäpp mot kalkeringen av', fn=plan_menu('Snäpp mot kalkeringen'))
+        step('väggverktyget igen', "bacchus.setTool('wall')")
+        step('nära linjen utan snäpp', fn=hover_model(13500, -1950))
+        step('snäpp mot kalkeringen på', fn=plan_menu('Snäpp mot kalkeringen'))
+        step('markera på plan 1', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(300))
+        # Låst betyder låst (0.10.12).
+        step('markera innerväggen', "bacchus.selection.set(['iv-2'])")
+        step('lås väggen', f"__set('[data-key=\"lock:\"]', true, '{panel}')")
+        step('Delete på låst', fn=key('Delete'))
+        step('låst och olåst', "bacchus.selection.set(['iv-2', 'm02'])")
+        step('Delete på blandat', fn=key('Delete'))
+        step('ångra blandat', "__click('[data-action=\"undo\"]')")
+        step('lås upp', "bacchus.selection.set(['iv-2'])", fn=lambda: pg.evaluate(f"__set('[data-key=\"lock:\"]', false, '{panel}')"))
+        step('avmarkera låst', "bacchus.selection.clear()")
+        # Delen Markör med pennan (0.10.12).
+        step('markera sektionsmarkören', "bacchus.selection.set(['sektion-a'])")
+        step('markörens beteckning', f"__set('[data-key=\"text:label\"]', 'B', '{panel}')")
+        step('markörens tjocklek', f"__set('[data-pen=\"sectionLine:weight\"]', '0.5', '{panel}')")
+        step('markörens färg', f"__set('[data-pen=\"sectionLine:color\"]', '#aa3300', '{panel}')")
+        step('markörens linjetyp', f"__set('[data-pen=\"sectionLine:linetype\"]', 'dashed', '{panel}')")
+        # Stödmurens Över marken mot (0.10.12).
+        step('markera stödmuren igen', f"bacchus.selection.set({ground_ids("e.params.kind === 'wall'")})")
+        step('över marken mot den lägre', f"__set('[data-key=\"ground:aboveSide\"]', 'low', '{panel}')")
+        step('avmarkera muren', "bacchus.selection.clear()")
+        # Bjälklag bakom snittet (0.10.12).
+        step('öppna sektionen igen', fn=lambda: open_marker('sektion-a'))
+        step('Visa i sektionen igen', "__click('[data-action=\"show-menu\"]')")
+        step('släck bjälklag bakom snittet', "__set('[data-show=\"hiddenSlabsSection\"]', false, '.show-menu')", fn=lambda: pg.wait_for_function('!bacchus.sections.pending', timeout=20000))
+        step('stäng Visa igen', "__click('[data-action=\"show-menu\"]')")
+        step('planen en sista gång', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(500))
+
+        # ---------- 3D-vyn (steg från granskningen efter 0.10.12) ----------
+        def at3d(js):
+            """Skärmpunkt för en modellpunkt i 3D-vyn: `js` ger [x, y, z] i mm."""
+            return pg.evaluate(f"""() => {{
+              const v = bacchus.view3d; const [x, y, z] = {js};
+              const p = v.project([x, y], z); const r = v.el.getBoundingClientRect();
+              return [r.left + p[0] - v.el.offsetLeft, r.top + p[1] - v.el.offsetTop];
+            }}""")
+
+        def show3d():
+            pg.evaluate("bacchus.setMode('3d')")
+            pg.wait_for_function('bacchus.view3d', timeout=20000)
+            pg.wait_for_timeout(1500)
+
+        def click3d(js, shift=False):
+            def run():
+                sx, sy = at3d(js)
+                pg.mouse.move(sx, sy)
+                if shift:
+                    pg.keyboard.down('Shift')
+                pg.mouse.click(sx, sy)
+                if shift:
+                    pg.keyboard.up('Shift')
+                pg.wait_for_timeout(300)
+            return run
+
+        def hover3d(js):
+            def run():
+                sx, sy = at3d(js)
+                pg.mouse.move(sx - 20, sy, steps=2)
+                pg.mouse.move(sx, sy, steps=2)
+                pg.wait_for_timeout(300)
+            return run
+
+        def drag3d(js_from, js_to):
+            def run():
+                ax, ay = at3d(js_from)
+                bx, by = at3d(js_to)
+                pg.mouse.move(ax, ay)
+                pg.mouse.down()
+                for k in range(1, 9):
+                    pg.mouse.move(ax + (bx - ax) * k / 8, ay + (by - ay) * k / 8)
+                pg.mouse.up()
+                pg.wait_for_timeout(400)
+            return run
+
+        ramp = "(() => { const p = [5000, -8000]; return [...p, bacchus.view3d.ground.height(p)]; })()"
+        handle = "(() => { const h = bacchus.view3d.editor.handles().find((q) => q.end === 'end'); return [...h.point, h.z]; })()"
+        handle_to = "(() => { const h = bacchus.view3d.editor.handles().find((q) => q.end === 'end'); return [h.point[0] + 600, h.point[1], h.z]; })()"
+        step('visa 3D', fn=show3d, shot3d=True)
+        step('zooma till allt i 3D', "__click('[data-action=\"fit\"]')", fn=lambda: pg.wait_for_timeout(500), shot3d=True)
+        step('hovra över väggen', fn=hover3d('[9000, 200, 1500]'), shot3d=True)
+        step('klicka på väggen i 3D', fn=click3d('[9000, 200, 1500]'), shot3d=True)
+        step('klicka på rampen i 3D', fn=click3d(ramp), shot3d=True)
+        step('lägg till väggen', fn=click3d('[9000, 200, 1500]', shift=True), shot3d=True)
+        step('klicka i tomma luften', fn=click3d('[0, 0, 60000]'), shot3d=True)
+        step('markera innerväggen i 3D', "bacchus.selection.set(['iv-1'])", fn=lambda: pg.wait_for_timeout(300), shot3d=True)
+        step('dra greppet i 3D', fn=lambda: drag3d(handle, handle_to)(), shot3d=True)
+        step('ångra greppet', "__click('[data-action=\"undo\"]')", fn=lambda: pg.wait_for_timeout(300), shot3d=True)
+        step('markera ytterväggen i 3D', "bacchus.selection.set(['yv-s'])", fn=lambda: pg.wait_for_timeout(300), shot3d=True)
+        step('flytta väggen i 3D', fn=lambda: drag3d('[9000, 200, 1500]', '[9600, 200, 1500]')(), shot3d=True)
+        step('ångra flytten', "__click('[data-action=\"undo\"]')", fn=lambda: pg.wait_for_timeout(300), shot3d=True)
+        step('avmarkera i 3D', "bacchus.selection.clear()", fn=lambda: pg.wait_for_timeout(300), shot3d=True)
+        step('sektionen bredvid 3D', fn=lambda: (open_marker('sektion-a'), pg.evaluate("bacchus.setMode('split')"), pg.wait_for_timeout(1200)), shot3d=True)
+        step('följ sektionen', fn=lambda: (pg.click('button.follow-section:has-text("Följ sektionen")'), pg.wait_for_timeout(1500)), shot3d=True)
+        step('klicka i den klippta 3D-vyn', fn=click3d('[9000, 200, 1500]'), shot3d=True)
+        step('tillbaka till 2D', "bacchus.setMode('2d')", fn=lambda: pg.wait_for_timeout(500))
+        step('planen till sist', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(500))
         b.close()
     json.dump(rows, open(OUT, 'w'), ensure_ascii=False)
 

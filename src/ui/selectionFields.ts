@@ -6,35 +6,30 @@ import { allTypes, resolveParams, typeOf } from '../elements/registry';
 import type { WallParams } from '../elements/wall';
 import { dist } from '../geometry/vec';
 import { isFixed, type FurnitureParams } from '../elements/furniture';
-import { dimensionSegments, type DimensionParams } from '../elements/annotation';
 import { EXTERIOR_INSET, FRAME_DEFAULTS } from '../elements/opening';
 import { numberingOf, roomNumbersFor, type SpaceParams } from '../elements/rooms';
 import { faceChoices, faceOf, outsideSide } from '../elements/wallSides';
 import { escapeHtml, PARAM_LABELS } from './labels';
-import type { TextParams } from '../elements/annotation';
-import { markerFrame, markerName, type MarkerHeights, type MarkerParams, type NorthParams } from '../elements/markers';
-import { markerHeights } from '../repr/sectionLevels';
-import { buildingHeight } from '../repr/buildingHeight';
 import { refArc, type RoofParams } from '../elements/roof';
 import { holeRing, type SlabParams } from '../elements/slab';
 import { radiusOf } from '../geometry/arc';
 import { drawingFields } from './drawingPanel';
 import { fillFields, opacityFields } from './shapeFields';
-import type { ScaleBarParams } from '../elements/scaleBar';
-import type { StampParams } from '../elements/stamp';
-import { stampsOf } from '../core/sheets';
-import { viewSource } from '../repr/sheet';
 import { typePenFields } from './ownPenFields';
-import { defaultMarkerPen } from '../repr/markerPens';
-import { weightPicker } from './weightPick';
-import { lineTypeOptions } from './lineTypePick';
-import { toHex } from './style/colors';
+import { annotationFields } from './annotationFields';
+import { markerViewFields } from './markerFields';
+import { numberField, textField } from './fieldMarkup';
+
+export { markerSection } from './markerFields';
+export { numberField, textField } from './fieldMarkup';
 
 /**
  * Fälten i egenskapspanelen (0.8.1, ur propertiesPanel.ts): det markerade
  * objektets egna mått, egna egenskaper, det som gäller hela typen eller
  * projektet, och typtabellen. Bara HTML; ändringarna görs i
- * selectionEdits.ts när fälten ändras.
+ * selectionEdits.ts när fälten ändras. Markörernas fält står i
+ * `markerFields.ts`, måttens, textens, skalstockens och stämpelns i
+ * `annotationFields.ts` (granskningen efter 0.10.12).
  */
 
 /** Egenskapsgruppen där egna egenskaper sparas. */
@@ -157,23 +152,11 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
     }
     case 'Ground':
       return groundFieldsMarkup(doc, el, view);
-    case 'North': {
-      const p = resolveParams<NorthParams>(doc, el);
-      return `<div class="fields">${numberField('param:angle', 'Norr', p.angle, '°')}</div>
-        <p class="note">Riktningen mot norr, moturs från planens x-axel: 90° är rakt upp. Fasaderna namnges efter närmaste väderstreck.</p>`;
-    }
+    case 'North':
     case 'BasisFacade':
-      return `<p class="note">Byggnadshöjden mäts mot fasaden som linjen ligger på (inom 1,5 m och 15°). Dra ändarna för att flytta den. Det finns bara en i projektet; rita en ny med Fasad, Beräkningsgrundande fasad.</p>`;
     case 'Section':
-    case 'Elevation': {
-      // Vyn: namn, djup, höjder. Markörens läge och stil står i en egen del, *Markör* (0.10.12).
-      const p = resolveParams<MarkerParams>(doc, el);
-      const canFollow = !p.auto && el.type === 'Elevation' && typeof p.facing === 'number';
-      return `<label class="field"><span>Namn</span><input data-key="name:" value="${escapeHtml(el.name ?? '')}" placeholder="${escapeHtml(markerName(doc, { ...el, name: undefined }))}"></label>
-        <div class="fields"><label class="field"><span>Djup</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="marker:depth" value="${p.depth ?? ''}" placeholder="Allt"><i>mm</i></span></label><label class="field" title="Det som ligger längre bort från linjen än så ritas med tunn grå linje"><span>Tonat från</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="marker:toneDepth" value="${p.toneDepth ?? ''}" placeholder="Inget"><i>mm</i></span></label></div>
-        ${markerHeightFields(doc, el, view)}
-        <div class="row"><button class="btn btn-primary" data-action="open-marker">Öppna ${el.type === 'Section' ? 'sektionen' : 'fasaden'}</button>${canFollow ? '<button class="btn" data-action="follow-building" title="Lägg fasaden runt byggnaden igen, så att den följer med när byggnaden ändras">Följ byggnaden igen</button>' : ''}</div>`;
-    }
+    case 'Elevation':
+      return markerViewFields(doc, el, view);
     case 'Shape2D':
     case 'RoofSlope':
     case 'Underlay':
@@ -211,46 +194,11 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         ${p.fill ? opacityFields({ weight: 0, fill: p.fill, opacity: p.opacity }, (k) => `data-key="d2:${k}"`) : ''}
 `;
     }
-    case 'Dimension': {
-      const p = resolveParams<DimensionParams>(doc, el);
-      const segs = dimensionSegments(doc, p);
-      const linked = p.points.some((q) => !Array.isArray(q));
-      return `<div class="fields">${segs.map((sg, k) => numberField(`dimseg:${k}`, segs.length > 1 ? `Mått ${k + 1}` : 'Mått', sg.value, 'mm')).join('')}</div>
-        <p class="note">${linked ? 'Måttet följer väggar och öppningar. Skriv ett nytt värde så flyttas det som måttet pekar på.' : 'Fritt mått. Skriv ett nytt värde så flyttas måttpunkten.'}</p>`;
-    }
-    case 'Text': {
-      const p = resolveParams<TextParams>(doc, el);
-      const opt = (cur: string, v: string, label: string) => `<option value="${v}"${v === cur ? ' selected' : ''}>${label}</option>`;
-      const align = p.align ?? 'start';
-      const anchor = p.anchor ?? '';
-      return `<label class="field" for="f-text-text"><span>Text</span><textarea id="f-text-text" data-key="text:text" rows="2">${escapeHtml(p.text)}</textarea></label>
-        <div class="fields">${numberField('param:height', 'Texthöjd på papper', p.height, 'mm', 2)}${numberField('param:angle', 'Vridning', p.angle, '°')}
-        <label class="field"><span>Justering</span><select data-key="text:align">${opt(align, 'start', 'Vänster')}${opt(align, 'middle', 'Mitten')}${opt(align, 'end', 'Höger')}</select></label>
-        <label class="field"><span>Förankring</span><select data-key="text:anchor">${opt(anchor, '', 'Första radens baslinje')}${opt(anchor, 'top', 'Överkant')}${opt(anchor, 'middle', 'Mitt')}${opt(anchor, 'bottom', 'Underkant')}</select></label></div>
-        <label class="check"><input type="checkbox" data-key="param:bold"${p.bold ? ' checked' : ''}> Fet stil</label>
-        <h3>Textruta</h3>
-        <div class="fields">${numberField('param:maxWidth', 'Största bredd', p.maxWidth ?? 0, 'mm', 1)}${numberField('param:maxHeight', 'Största höjd', p.maxHeight ?? 0, 'mm', 1)}</div>
-        <p class="note">Mått på papperet; 0 är ingen gräns. Raderna bryts vid ord. Ryms texten inte i höjden visas en röd ram på skärmen, som inte skrivs ut.</p>`;
-    }
-    case 'ScaleBar': {
-      const p = resolveParams<ScaleBarParams>(doc, el);
-      const sheet = doc.sheets.find((s) => s.id === el.space);
-      const vps = sheet?.viewports ?? [];
-      const current = p.view && vps.some((v) => v.id === p.view) ? p.view : '';
-      const opt = (v: string, label: string) => `<option value="${escapeHtml(v)}"${v === current ? ' selected' : ''}>${escapeHtml(label)}</option>`;
-      const vpName = (vp: (typeof vps)[number]) => `${vp.title?.trim() || viewSource(doc, vp.view)?.name || 'Vyn'} · 1:${vp.scale}`;
-      return `<label class="field"><span>Skala från</span><select data-key="scalebar:view">${vps.map((vp) => opt(vp.id, vpName(vp))).join('')}${opt('', 'Egen skala')}</select></label>
-        ${current ? '' : `<div class="fields">${numberField('scalebar:scale', 'Skala 1:', p.scale, '')}</div>`}
-        <p class="note">${current ? 'Skalstocken följer vyns skala, också när den ändras.' : 'Skriv skalans nämnare, t.ex. 100 för 1:100.'} Skalstocken är 100 mm lång och delas in som Agrell Arkitekturs skalstockar. Dra den dit den ska; den går att flytta när som helst.</p>`;
-    }
-    case 'Stamp': {
-      const p = resolveParams<StampParams>(doc, el);
-      const stamps = stampsOf(doc);
-      const known = stamps.some((w) => w.id === p.stamp);
-      return `<label class="field"><span>Stämpel</span><select data-key="stamp:stamp">${known ? '' : '<option selected>Finns inte längre</option>'}${stamps.map((w) => `<option value="${w.id}"${w.id === p.stamp ? ' selected' : ''}>${escapeHtml(w.name)}</option>`).join('')}</select></label>
-        <div class="row"><button class="btn" data-action="open-stamp"${known ? '' : ' disabled'}>Öppna stämpeln</button></div>
-        <p class="note">Stämpeln ritas en gång och ändras på alla blad den ligger på. Dra den dit den ska.</p>`;
-    }
+    case 'Dimension':
+    case 'Text':
+    case 'ScaleBar':
+    case 'Stamp':
+      return annotationFields(doc, el);
     default:
       return '';
   }
@@ -268,43 +216,6 @@ function frameFields(doc: ProjectDoc, el: Element, isDoor: boolean): string {
       ? `<label class="field" for="f-param-inset"><span>Indrag ${from}</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" id="f-param-inset" data-key="param:inset" value="${p.inset ?? ''}" placeholder="Auto ${auto}"><i>mm</i></span></label>`
       : '';
   return `<div class="fields">${numberField('param:frameWidth', 'Karmbredd', p.frameWidth ?? FRAME_DEFAULTS.frameWidth, 'mm')}${numberField('param:frameDepth', 'Karmdjup', p.frameDepth ?? FRAME_DEFAULTS.frameDepth, 'mm')}${inset}</div>`;
-}
-
-/** Längd och vinkel för en linje som placerats för hand, och knappen för att rikta den efter något. */
-/**
- * Markören (0.10.12): beteckningen, läget och stilen, för sig från vyn.
- * Pennan är stilmallens för den sortens markör och gäller alla i projektet.
- */
-export function markerSection(doc: ProjectDoc, el: Element, lock: string): string {
-  if (el.type !== 'Section' && el.type !== 'Elevation') return '';
-  const p = resolveParams<MarkerParams>(doc, el);
-  // En linje som följer byggnaden visar var den ligger just nu; ändras den placeras den för hand (0.8).
-  const f = markerFrame(doc, el);
-  const shown: MarkerParams = p.auto ? { ...p, start: [f.start[0], f.start[1]], end: [f.end[0], f.end[1]], side: 1 } : p;
-  const isSection = el.type === 'Section';
-  const key = isSection ? 'sectionLine' : 'elevationLine';
-  const own = doc.graphics.pens?.[key];
-  const weight = own?.weight ?? defaultMarkerPen(key).weight;
-  return `<section><h3>Markör</h3>
-    ${isSection ? `<div class="fields">${textField('text:label', 'Beteckning', p.label ?? 'A')}</div>` : ''}
-    ${markerLineFields(shown)}
-    <div class="fields marker-pen">
-      <div class="field pen-weight"><span>Tjocklek</span>${weightPicker(`mpen-${el.id}`, weight, `data-pen="${key}:weight"`, ' mm')}</div>
-      <label class="field"><span>Färg</span><input type="color" data-pen="${key}:color" value="${toHex(own?.color ?? 'ink')}"></label>
-      <label class="field"><span>Linjetyp</span><select data-pen="${key}:linetype">${lineTypeOptions(doc.graphics, own?.linetype)}</select></label>
-    </div>
-    <p class="note">Pennan gäller alla ${isSection ? 'sektionsmarkörer' : 'fasadmarkörer'} i projektet (stilmallens pennor).</p>
-    ${lock}
-  </section>`;
-}
-
-function markerLineFields(p: MarkerParams): string {
-  const d = [p.end[0] - p.start[0], p.end[1] - p.start[1]];
-  const len = Math.round(Math.hypot(d[0], d[1]));
-  const a = (((Math.atan2(d[1], d[0]) * 180) / Math.PI) % 360 + 360) % 360;
-  const deg = Math.round(a * 100) / 100;
-  return `<div class="fields">${numberField('marker:length', 'Längd', len, 'mm')}${numberField('marker:angle', 'Vinkel', deg, '°', 2)}</div>
-    <div class="row"><button class="btn" data-action="align-marker" title="Klicka sedan på en vägg eller linje i planen. Linjen blir parallell med den. Håll Shift för vinkelrät.">Rikta efter objekt</button><button class="btn" data-action="flip-side">Vänd blickriktningen</button></div>`;
 }
 
 /** Fliken Typer: varje elementtyp med littera och typens gemensamma mått. */
@@ -342,22 +253,6 @@ export function typesMarkup(doc: ProjectDoc): string {
     .concat('<p class="note pad">Mått i mm. Ändras ett mått ändras alla objekt av typen.</p>');
 }
 
-/**
- * Sifferfält. Mått i modellen visas i hela mm; mått på papper för
- * annotering (texthöjder) med två decimaler, `decimals = 2`.
- */
-export function numberField(key: string, label: string, value: number, unit: string, decimals = 0): string {
-  const id = `f-${key.replace(':', '-')}`;
-  const shown = decimals > 0 ? Number(value).toFixed(decimals) : String(Math.round(value));
-  const exprUnit = unit === '°' ? 'deg' : unit === 'mm' ? 'mm' : '';
-  const step = decimals > 0 ? (1 / 10 ** decimals).toFixed(decimals) : '1';
-  return `<label class="field" for="${id}"><span>${label}</span><span class="input-unit"><input type="text" data-expr data-unit="${exprUnit}" data-step="${step}" inputmode="decimal" autocomplete="off" id="${id}" data-key="${key}" value="${shown}"><i>${unit}</i></span></label>`;
-}
-
-export function textField(key: string, label: string, value: string): string {
-  return `<label class="field" for="f-${key}"><span>${label}</span><input id="f-${key}" data-key="${key}" value="${escapeHtml(value)}"></label>`;
-}
-
 /** Typerna i en blandad markering: "2 väggar, 1 dörr". */
 export function summarizeTypes(els: Element[]): string {
   const counts = new Map<string, number>();
@@ -368,22 +263,4 @@ export function summarizeTypes(els: Element[]): string {
       return `${n} ${(n === 1 ? t?.label : t?.labelPlural)?.toLowerCase() ?? type}`;
     })
     .join(', ');
-}
-
-/**
- * Höjderna som fasaden eller sektionen visar (0.10.8b): kryssrutor med
- * förvalet ikryssat (byggnadshöjden i fasaden mot den beräkningsgrundande).
- */
-function markerHeightFields(doc: ProjectDoc, el: Element, view: ViewStates): string {
-  const { ctx } = createContext(doc, doc.storeys[0].id, view, doc.graphics, () => true);
-  const bh = buildingHeight(ctx);
-  const h = markerHeights(el, markerFrame(doc, el).view, bh);
-  const box = (k: keyof MarkerHeights, label: string, title: string) =>
-    `<label class="check" title="${escapeHtml(title)}"><input type="checkbox" data-key="marker:heights.${k}"${h[k] ? ' checked' : ''}> ${label}</label>`;
-  return `<div>
-      ${box('bh', 'Byggnadshöjd (BH)', 'Nivåmarkör och mått från medelmarknivån till byggnadshöjden mot den beräkningsgrundande fasaden')}
-      ${box('nh', 'Nockhöjd (NH)', 'Mått från medelmarknivån till takets högsta punkt')}
-      ${box('th', 'Totalhöjd (TH)', 'Mått från medelmarknivån till husets högsta punkt')}
-      ${box('mmnOld', 'Medelmarknivå, befintlig mark', 'Nivåmarkör för den befintliga markens medelmarknivå bredvid den nya')}
-    </div>${bh ? '' : '<p class="note">Höjderna visas när huset har tak.</p>'}`;
 }

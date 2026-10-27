@@ -68,12 +68,15 @@ describe('Granskning (0.10.1)', () => {
     expect(part.map((o) => o.height).sort()).toEqual([2300, 2700]);
   });
 
-  it('ingen linje mellan våningar med samma liv, men kvar under dörren och där väggen kragar ut', () => {
-    const joint = (doc: ProjectDoc) =>
-      buildSection(doc, 'fasad-1', view)!.prims.flatMap((p) => (p.kind === 'line' && p.origin?.part === 'wall' && Math.abs(p.a[1] - 2700) < 0.1 && Math.abs(p.b[1] - 2700) < 0.1 ? [Math.abs(p.b[0] - p.a[0])] : []));
+  it('ingen linje mellan våningar med samma liv, också befintligt mot nytt (0.10.11), men kvar under dörren och där väggen kragar ut', () => {
+    const joint = (doc: ProjectDoc, v: { state: string; compareTo?: string } = view) =>
+      buildSection(doc, 'fasad-1', v)!.prims.flatMap((p) => (p.kind === 'line' && p.origin?.part === 'wall' && Math.abs(p.a[1] - 2700) < 0.1 && Math.abs(p.b[1] - 2700) < 0.1 ? [Math.abs(p.b[0] - p.a[0])] : []));
     // Bara dörren på plan 2 (D10, 1010 mm hål) står på skarven, och hörnens små bitar.
     const doc = twoStoreys();
     expect(joint(doc).filter((l) => l > 10).map(Math.round)).toEqual([1010, 1010]);
+    // Söderväggen på plan 2 ny (bara i förslagen), den på plan 1 befintlig: samma, också i jämförelsen.
+    doc.elements['yv-s-2'].states = ['st-a', 'st-b'];
+    for (const v of [view, { state: 'st-a', compareTo: 'st-bef' }]) expect(joint(doc, v).filter((l) => l > 10).map(Math.round)).toEqual([1010, 1010]);
     // Med söderväggen på plan 2 400 mm utanför den på plan 1 är skarven en kant.
     const out = twoStoreys();
     const p = out.elements['yv-s-2'].params as { start: [number, number]; end: [number, number] };
