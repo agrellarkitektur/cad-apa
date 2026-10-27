@@ -1,3 +1,4 @@
+import { eraseSelection } from './app/erase';
 import type { Brand } from '../brand';
 import type { ProjectDoc } from '../core/model';
 import { DocStore } from '../core/store';
@@ -220,6 +221,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   panel.onUnderlayTool = (id, mode) => underlays.startUnderlayTool(id, mode);
   panel.onUnderlayProportions = (id) => void underlays.resetProportions(id);
   panel.angleWarn = () => uiSettings.angleWarn;
+  panel.onErase = (ids) => eraseSelection(app, ids);
   const navigator = new Navigator({
     doc: () => store.doc,
     storey: () => ui.storey,

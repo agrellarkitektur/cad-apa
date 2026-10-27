@@ -92,6 +92,8 @@ export interface UiSettings {
   shellAt: [number, number];
   /** Måttsätt nya väggar och öppningar automatiskt när man jämför. */
   autoDims: boolean;
+  /** Snäpp mot linjerna i den kalkerade vyn eller våningen (0.10.12; alltid på i 0.10.11). */
+  snapTrace: boolean;
   /** Bjälklagens yta går att klicka i, inte bara kanterna (0.9.4). */
   slabArea: boolean;
   /** Autospara till projektfilen som är öppen (0.8.18). */
@@ -156,6 +158,7 @@ export function defaultUiSettings(): UiSettings {
     shellDock: 'bottom',
     shellAt: [0.1, 0.75],
     autoDims: true,
+    snapTrace: true,
     slabArea: false,
     autosaveFile: true,
     selColor: null,
@@ -193,6 +196,7 @@ export function loadUiSettings(): UiSettings {
       shellDock: raw.shellDock === 'top' || raw.shellDock === 'float' ? raw.shellDock : 'bottom',
       shellAt: Array.isArray(raw.shellAt) && raw.shellAt.length === 2 && raw.shellAt.every((v) => Number.isFinite(v) && v >= 0 && v <= 1) ? [raw.shellAt[0], raw.shellAt[1]] : d.shellAt,
       autoDims: typeof raw.autoDims === 'boolean' ? raw.autoDims : d.autoDims,
+      snapTrace: typeof raw.snapTrace === 'boolean' ? raw.snapTrace : d.snapTrace,
       slabArea: typeof raw.slabArea === 'boolean' ? raw.slabArea : d.slabArea,
       autosaveFile: typeof raw.autosaveFile === 'boolean' ? raw.autosaveFile : d.autosaveFile,
       selColor: typeof raw.selColor === 'string' ? raw.selColor : null,

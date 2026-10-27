@@ -23,7 +23,8 @@ export const FOOTPRINT_KEY = 'footprint';
 
 /**
  * Visa-nyckeln för tak på andra våningar (0.10.10), släckt från början: ett
- * tak ovanför vyn streckprickat, ett under våningens golv streckat.
+ * tak ovanför vyn streckprickat, ett under våningens golv streckat. Gäller
+ * våningen ovanför och alla under (0.10.12).
  */
 export const ROOFS_AROUND_KEY = 'roofsAround';
 
@@ -32,7 +33,8 @@ export const cutHeightOf = (s: Pick<Storey, 'cutHeight'>): number => s.cutHeight
 /**
  * Om taket syns i planen för en annan våning: det går upp i våningen, så att
  * en vindsvåning ser ett tak som ligger på planet under. Med *Tak på andra
- * våningar* under Visa (0.10.10) syns alla tak.
+ * våningar* under Visa (0.10.10) syns också taken på våningen ovanför och på
+ * alla våningar under (0.10.12).
  */
 export function roofShownOn(el: Element<any>, doc: ProjectDoc, storey: Id, hide?: readonly string[]): boolean {
   const home = doc.storeys.find((s) => s.id === el.storey);
@@ -40,9 +42,19 @@ export function roofShownOn(el: Element<any>, doc: ProjectDoc, storey: Id, hide?
   if (!home || !here || home === here) return false;
   const p = resolveParams<RoofParams>(doc, el);
   if (!p.outline?.length || !p.ref) return false;
-  if (hide?.includes(`+${ROOFS_AROUND_KEY}`)) return true;
   const r = roofRange(p);
+  if (hide?.includes(`+${ROOFS_AROUND_KEY}`) && aroundStorey(doc, home, here)) return true;
   return home.elevation + r.topMax > here.elevation + 1 && home.elevation + r.underMin < here.elevation + here.height - 1;
+}
+
+/**
+ * Våningarna vars tak syns med *Tak på andra våningar* (0.10.12): våningen
+ * närmast ovanför och alla under (förut alla våningar).
+ */
+function aroundStorey(doc: ProjectDoc, home: Storey, here: Storey): boolean {
+  if (home.elevation < here.elevation) return true;
+  const above = doc.storeys.filter((s) => s.elevation > here.elevation);
+  return above.length > 0 && home.elevation === Math.min(...above.map((s) => s.elevation));
 }
 
 /** `under`: under våningens golv (0.10.10), syns bara med *Tak på andra våningar*. */

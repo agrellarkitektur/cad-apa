@@ -6,6 +6,7 @@ import { onLongPress, type MenuItem } from '../contextMenu';
 import { pickAt } from '../../view2d/pick';
 import { isNarrow } from '../sheet';
 import { isSnapEnabled } from '../tools/snap';
+import { saveUiSettings } from '../uiSettings';
 import type { AppContext } from './context';
 import { orderMenuItems } from './drawOrderUi';
 
@@ -95,6 +96,15 @@ export function installMenus(app: AppContext) {
           { kind: 'sep' },
           { label: 'Visa…', run: () => app.$<HTMLElement>('.show-btn').click() },
           { label: 'Snäppning', checked: isSnapEnabled(), run: () => app.$<HTMLElement>('[data-action="snap"]').click() },
+          {
+            label: 'Snäpp mot kalkeringen',
+            checked: app.uiSettings.snapTrace,
+            run: () => {
+              app.uiSettings.snapTrace = !app.uiSettings.snapTrace;
+              saveUiSettings(app.uiSettings);
+              app.hint(app.uiSettings.snapTrace ? 'Snäpper mot kalkeringen' : 'Snäpper inte mot kalkeringen');
+            },
+          },
           { label: 'Rutnät', hint: 'G', checked: app.uiSettings.grid, run: () => app.toggleGrid() },
         ],
         'Planen',

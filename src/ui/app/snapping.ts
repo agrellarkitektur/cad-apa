@@ -37,12 +37,13 @@ export function snapSegments(app: AppContext): SnapSegment[] {
   // Samma plan och samma vy ger samma lista (0.8.3): verktygen frågar vid
   // varje musrörelse, och listan bär rutnätet som snäppningen söker i.
   const vs = app.viewStates();
-  const traced = app.view.underlayPrimitives;
+  const traced = app.uiSettings.snapTrace ? app.view.underlayPrimitives : NO_PRIMS;
   return saved([plan, traced, app.store.doc.elements, ui.storey, ui.marker, ui.worksheet, JSON.stringify(vs)], () =>
     ui.marker || ui.worksheet ? sectionSnapSegments(app) : [...planSnapSegments(app), ...tracedSegments(traced)],
   );
 }
 const saved = lastResults<SnapSegment[]>(2);
+const NO_PRIMS: readonly Primitive[] = [];
 
 function planSnapSegments(app: AppContext): SnapSegment[] {
   const { ui, plan } = app;

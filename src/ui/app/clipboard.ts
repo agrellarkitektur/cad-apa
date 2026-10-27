@@ -1,5 +1,5 @@
 import { onPaper } from '../../core/model';
-import { deleteElements } from '../../core/commands';
+import { eraseSelection } from './erase';
 import { copyPayload, originalsHere, parsePayload, pasteClip, type ClipPayload } from '../../core/clipboard';
 import type { AppContext } from './context';
 
@@ -59,8 +59,7 @@ export function installClipboard(app: AppContext) {
     if (isTyping(e.target) || app.ctxMenu.isOpen) return;
     if (copySelection(e.clipboardData)) {
       e.preventDefault();
-      deleteElements(app.store, app.selection.list());
-      app.selection.clear();
+      eraseSelection(app);
     }
   });
   document.addEventListener('paste', (e) => {

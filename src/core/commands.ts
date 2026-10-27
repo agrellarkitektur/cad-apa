@@ -28,19 +28,34 @@ export function addElements(store: DocStore, els: NewElement[], activeState: Id,
   return full;
 }
 
-/** Platsens objekt, som går att ta bort fast de är låsta. */
-const REMOVABLE_LOCKED: ReadonlySet<string> = new Set(['SiteBuilding', 'Tree', 'SiteMap']);
+/** Det `deleteElements` gjorde: hur många som togs bort och hur många som var låsta. */
+export interface DeleteResult {
+  removed: number;
+  /** Låsta objekt (eller objekt med något låst i sig) som inte togs bort (0.10.12). */
+  locked: Id[];
+}
 
 /** Ta bort element helt ur modellen, tillsammans med det som sitter i dem. */
-export function deleteElements(store: DocStore, ids: Id[]): void {
-  // Låsta objekt tas inte bort (format 5), utom det som kom med platsen
-  // (0.10.11): låset skyddar det mot att flyttas av misstag. Marken tas bort
-  // med platsen.
+export function deleteElements(store: DocStore, ids: Id[]): DeleteResult {
+  // Låst betyder låst (0.10.12): låsta objekt tas aldrig bort, inte heller
+  // platsens träd och grannhus; man låser upp först. En vägg med en låst dörr
+  // i sig står också kvar. Marken tas bort med platsen.
+  const doc = store.doc;
+  const hostsLocked = new Set<Id>();
+  for (const el of Object.values(doc.elements)) {
+    if (!el.locked) continue;
+    for (let h = el.host; h && !hostsLocked.has(h); h = doc.elements[h]?.host) hostsLocked.add(h);
+  }
+  const locked: Id[] = [];
   const open = ids.filter((id) => {
-    const el = store.doc.elements[id];
-    return !el?.locked || REMOVABLE_LOCKED.has(el.type);
+    const el = doc.elements[id];
+    if (el && (el.locked || hostsLocked.has(id))) {
+      locked.push(id);
+      return false;
+    }
+    return true;
   });
-  if (!open.length) return;
+  if (!open.length) return { removed: 0, locked };
   const viewports = open.filter((id) => !store.doc.elements[id] && isViewportId(store.doc, id));
   const label = viewports.length === open.length ? (open.length === 1 ? 'Ta bort vyn från bladet' : 'Ta bort vyerna från bladet') : open.length === 1 ? 'Ta bort objekt' : `Ta bort ${open.length} objekt`;
   store.transact(label, (tx) => {
@@ -59,6 +74,7 @@ export function deleteElements(store: DocStore, ids: Id[]): void {
     // Ett underlags fil tas bort med den sista placeringen av den (0.8 del 2); ångra tar tillbaka båda.
     pruneAssets(tx, files);
   });
+  return { removed: open.length, locked };
 }
 
 /** Ta bort filer som inget element längre använder (bland `candidates`). */

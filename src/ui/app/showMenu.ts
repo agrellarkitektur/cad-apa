@@ -26,6 +26,7 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
       ['roofsAround', 'Tak på andra våningar'],
       ['hiddenSlabs', 'Bjälklag streckade i fasad'],
       ['hiddenWalls', 'Ytterväggarnas insida streckad i fasad'],
+      ['hiddenSlabsSection', 'Bjälklag bakom snittet streckade i sektion'],
       ['Furniture', 'Möbler och inredning'],
       ['swing', 'Öppningssätt (dörrar)'],
       ['Underlay', 'Underlag'],

@@ -19,7 +19,8 @@ import { underlayChange, underlayFields } from './underlayFields';
  */
 
 /** Typer som kan låsas. Markobjekten sedan 0.10.7. */
-export const LOCKABLE = new Set(['Shape2D', 'Text', 'Dimension', 'RoofSlope', 'Section', 'Elevation', 'North', 'Underlay', 'Ground']);
+/** Allt går att låsa (0.10.12), utom marken och kartan som hör till platsen. */
+const UNLOCKABLE: ReadonlySet<string> = new Set(['Terrain', 'SiteMap']);
 
 const comma = (n: number) => n.toLocaleString('sv-SE');
 
@@ -43,7 +44,7 @@ export function drawingFields(doc: ProjectDoc, el: Element): string {
 
 /** Lås, med hänglås. Delvis ifyllt när markeringen är blandad. */
 export function lockField(els: Element[]): string {
-  if (!els.every((e) => LOCKABLE.has(e.type))) return '';
+  if (!els.length || els.some((e) => UNLOCKABLE.has(e.type))) return '';
   const n = els.filter((e) => e.locked).length;
   const mixed = n > 0 && n < els.length;
   return `<label class="check lock-check" title="Ett låst objekt kan inte flyttas eller tas bort av misstag">

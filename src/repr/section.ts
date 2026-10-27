@@ -20,7 +20,7 @@ import { ownedOutlines } from './outlineOwners';
 import { solidTriangles } from './mesh';
 import { openingPen } from './openingPens';
 import { applyStyle, type Pickable } from './plan';
-import { HIDDEN_SLABS, HIDDEN_WALLS, innerFaceEdges, mergeCollinear } from './sectionHidden';
+import { HIDDEN_SLABS, HIDDEN_SLABS_SECTION, HIDDEN_WALLS, innerFaceEdges, mergeCollinear } from './sectionHidden';
 import { LINE_TYPES } from '../core/lineTypes';
 import type { Pen, Primitive, Vec2 } from './primitives';
 import { zOn, type EdgePart, type Shape3D, type Solid } from './solids';
@@ -119,8 +119,9 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
 
   // Det tonade djupet (0.10.10): bortom det tunna grå linjer.
   const tone = fr.tone !== null && fr.tone > 0 && (depthMax === null || fr.tone < depthMax) ? fr.tone : null;
-  // Dolda linjer i fasader (0.10.10), tända under Visa.
-  const hiddenSlabs = !isSection && !!view.hide?.includes(`+${HIDDEN_SLABS}`);
+  // Dolda linjer i fasader (0.10.10), tända under Visa. I sektioner (0.10.12)
+  // bjälklagen bakom snittet, på från början; de snittade ritas som snitt.
+  const hiddenSlabs = isSection ? !view.hide?.includes(HIDDEN_SLABS_SECTION) : !!view.hide?.includes(`+${HIDDEN_SLABS}`);
   const hiddenWalls = !isSection && !!view.hide?.includes(`+${HIDDEN_WALLS}`);
 
   const occluders: number[][] = [];
@@ -260,6 +261,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   }
   // Dolda linjer (0.10.10): tunna och streckade, går inte att klicka på.
   for (const l of hiddenLines) {
+    if (ownCuts.has(l.key.id)) continue;
     prims.push({ kind: 'line', a: l.a, b: l.b, pen: HIDDEN_PEN, noPick: true, origin: { objectId: l.key.id, objectType: doc.elements[l.key.id]?.type, part: 'dold' } });
   }
   for (const g of cuts.values()) {

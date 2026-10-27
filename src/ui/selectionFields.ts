@@ -25,6 +25,10 @@ import type { StampParams } from '../elements/stamp';
 import { stampsOf } from '../core/sheets';
 import { viewSource } from '../repr/sheet';
 import { typePenFields } from './ownPenFields';
+import { defaultMarkerPen } from '../repr/markerPens';
+import { weightPicker } from './weightPick';
+import { lineTypeOptions } from './lineTypePick';
+import { toHex } from './style/colors';
 
 /**
  * Fälten i egenskapspanelen (0.8.1, ur propertiesPanel.ts): det markerade
@@ -162,17 +166,13 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
       return `<p class="note">Byggnadshöjden mäts mot fasaden som linjen ligger på (inom 1,5 m och 15°). Dra ändarna för att flytta den. Det finns bara en i projektet; rita en ny med Fasad, Beräkningsgrundande fasad.</p>`;
     case 'Section':
     case 'Elevation': {
+      // Vyn: namn, djup, höjder. Markörens läge och stil står i en egen del, *Markör* (0.10.12).
       const p = resolveParams<MarkerParams>(doc, el);
-      const label = el.type === 'Section' ? textField('text:label', 'Beteckning', p.label ?? 'A') : '';
-      // En linje som följer byggnaden visar var den ligger just nu; ändras den placeras den för hand (0.8).
-      const f = markerFrame(doc, el);
-      const shown: MarkerParams = p.auto ? { ...p, start: [f.start[0], f.start[1]], end: [f.end[0], f.end[1]], side: 1 } : p;
       const canFollow = !p.auto && el.type === 'Elevation' && typeof p.facing === 'number';
       return `<label class="field"><span>Namn</span><input data-key="name:" value="${escapeHtml(el.name ?? '')}" placeholder="${escapeHtml(markerName(doc, { ...el, name: undefined }))}"></label>
-        <div class="fields">${label}<label class="field"><span>Djup</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="marker:depth" value="${p.depth ?? ''}" placeholder="Allt"><i>mm</i></span></label><label class="field" title="Det som ligger längre bort från linjen än så ritas med tunn grå linje"><span>Tonat från</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="marker:toneDepth" value="${p.toneDepth ?? ''}" placeholder="Inget"><i>mm</i></span></label></div>
-        ${markerLineFields(shown)}
+        <div class="fields"><label class="field"><span>Djup</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="marker:depth" value="${p.depth ?? ''}" placeholder="Allt"><i>mm</i></span></label><label class="field" title="Det som ligger längre bort från linjen än så ritas med tunn grå linje"><span>Tonat från</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="marker:toneDepth" value="${p.toneDepth ?? ''}" placeholder="Inget"><i>mm</i></span></label></div>
         ${markerHeightFields(doc, el, view)}
-        <div class="row"><button class="btn btn-primary" data-action="open-marker">Öppna ${el.type === 'Section' ? 'sektionen' : 'fasaden'}</button><button class="btn" data-action="flip-side">Vänd blickriktningen</button>${canFollow ? '<button class="btn" data-action="follow-building" title="Lägg fasaden runt byggnaden igen, så att den följer med när byggnaden ändras">Följ byggnaden igen</button>' : ''}</div>`;
+        <div class="row"><button class="btn btn-primary" data-action="open-marker">Öppna ${el.type === 'Section' ? 'sektionen' : 'fasaden'}</button>${canFollow ? '<button class="btn" data-action="follow-building" title="Lägg fasaden runt byggnaden igen, så att den följer med när byggnaden ändras">Följ byggnaden igen</button>' : ''}</div>`;
     }
     case 'Shape2D':
     case 'RoofSlope':
@@ -271,13 +271,40 @@ function frameFields(doc: ProjectDoc, el: Element, isDoor: boolean): string {
 }
 
 /** Längd och vinkel för en linje som placerats för hand, och knappen för att rikta den efter något. */
+/**
+ * Markören (0.10.12): beteckningen, läget och stilen, för sig från vyn.
+ * Pennan är stilmallens för den sortens markör och gäller alla i projektet.
+ */
+export function markerSection(doc: ProjectDoc, el: Element, lock: string): string {
+  if (el.type !== 'Section' && el.type !== 'Elevation') return '';
+  const p = resolveParams<MarkerParams>(doc, el);
+  // En linje som följer byggnaden visar var den ligger just nu; ändras den placeras den för hand (0.8).
+  const f = markerFrame(doc, el);
+  const shown: MarkerParams = p.auto ? { ...p, start: [f.start[0], f.start[1]], end: [f.end[0], f.end[1]], side: 1 } : p;
+  const isSection = el.type === 'Section';
+  const key = isSection ? 'sectionLine' : 'elevationLine';
+  const own = doc.graphics.pens?.[key];
+  const weight = own?.weight ?? defaultMarkerPen(key).weight;
+  return `<section><h3>Markör</h3>
+    ${isSection ? `<div class="fields">${textField('text:label', 'Beteckning', p.label ?? 'A')}</div>` : ''}
+    ${markerLineFields(shown)}
+    <div class="fields marker-pen">
+      <div class="field pen-weight"><span>Tjocklek</span>${weightPicker(`mpen-${el.id}`, weight, `data-pen="${key}:weight"`, ' mm')}</div>
+      <label class="field"><span>Färg</span><input type="color" data-pen="${key}:color" value="${toHex(own?.color ?? 'ink')}"></label>
+      <label class="field"><span>Linjetyp</span><select data-pen="${key}:linetype">${lineTypeOptions(doc.graphics, own?.linetype)}</select></label>
+    </div>
+    <p class="note">Pennan gäller alla ${isSection ? 'sektionsmarkörer' : 'fasadmarkörer'} i projektet (stilmallens pennor).</p>
+    ${lock}
+  </section>`;
+}
+
 function markerLineFields(p: MarkerParams): string {
   const d = [p.end[0] - p.start[0], p.end[1] - p.start[1]];
   const len = Math.round(Math.hypot(d[0], d[1]));
   const a = (((Math.atan2(d[1], d[0]) * 180) / Math.PI) % 360 + 360) % 360;
   const deg = Math.round(a * 100) / 100;
   return `<div class="fields">${numberField('marker:length', 'Längd', len, 'mm')}${numberField('marker:angle', 'Vinkel', deg, '°', 2)}</div>
-    <div class="row"><button class="btn" data-action="align-marker" title="Klicka sedan på en vägg eller linje i planen. Linjen blir parallell med den. Håll Shift för vinkelrät.">Rikta efter objekt</button></div>`;
+    <div class="row"><button class="btn" data-action="align-marker" title="Klicka sedan på en vägg eller linje i planen. Linjen blir parallell med den. Håll Shift för vinkelrät.">Rikta efter objekt</button><button class="btn" data-action="flip-side">Vänd blickriktningen</button></div>`;
 }
 
 /** Fliken Typer: varje elementtyp med littera och typens gemensamma mått. */

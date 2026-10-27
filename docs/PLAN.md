@@ -1979,7 +1979,7 @@ dolda linjerna, medan den är färsk (Carl August 26 oktober).
 längs en linje stod kvar när de flyttades (med Flytta, dragning eller
 pilarna); nu följer linjen med. Markobjektens linjer är 2D-former utan
 bågar (`noArcs`, `allowsArcs`): Böj och Avrunda finns inte i Modifiera
-förrän bågarna kommer (0.10.15), Fasa finns kvar. **Ramp/väg**
+förrän bågarna kommer (0.10.16), Fasa finns kvar. **Ramp/väg**
 (`kind: 'path'` utan `path`): förvald bredd 1 500, tvärfall bara när det
 anges (förvalet 1:50 för infarten är borta), varning när den är brantare
 än sin gräns (`maxSlope`, förval *Brantaste ramp/väg* 1:12 under
@@ -2220,7 +2220,49 @@ heter fortfarande *Sektion* och *Fasad*. Provat med Playwright mot
 markobjekt i 3D). Klickjämförelsen kördes inte. Inga referensritningar
 ändrades.*
 
-### 0.10.12 Höjder i förhållande till våningen
+### 0.10.12 Småjusteringar ✓
+
+Carl Augusts svar 27 oktober (förmiddag), om 0.10.9–0.10.11. Små, före
+granskningen. Versionerna efter 0.10.11 flyttades samtidigt fram ett steg:
+inga b-versioner, nästa lediga nummer i stället.
+
+- Låst betyder låst, också mot borttagning, för alla objekt; vill man ta
+  bort låser man upp först
+- Sektions- och fasadmarkören: vyn heter som nu *Sektion* och *Fasad*; en
+  egen del *Markör* i egenskaperna med markörens stil
+- *Fasa* 500 som förval överallt, också väggarnas hörn
+- Snäpp mot kalkeringen som inställning, på från början
+- Bjälklag bakom snittet streckade i sektioner, med en vyinställning
+- Tak på andra våningar: våningen ovanför och alla under
+- Stödmurens *Över marken* mot den högre sidan, eller den lägre
+
+*Byggd (27 oktober), samma format (20). Testerna: 522 → 526, ca 18 s.
+**Låst**: `deleteElements` tar aldrig bort ett låst objekt, inte heller
+träd och grannhus (undantaget från 0.10.11 är borta) eller en vägg med en
+låst dörr eller ett låst fönster i sig. En blandad markering tar bort det
+olåsta; de låsta står kvar markerade och ett meddelande säger att de måste
+låsas upp. Låset finns nu i egenskaperna för alla objekt (förut bara
+2D-former, text, mått, markörer, underlag och markobjekt), utom marken och
+kartan, som tas bort med platsen. **Riv** och *Finns i* fungerar på låsta
+objekt (de ändrar status, inte läget; träden importeras låsta och rivs
+så), och en våning som tas bort tar med sina låsta objekt efter frågan.
+**Markör**: delen *Sektion*/*Fasad* har vyns namn, djup, *Tonat från*,
+höjderna och *Öppna*; delen *Markör* har beteckningen, längden, vinkeln,
+*Rikta efter objekt*, *Vänd blickriktningen*, pennan (tjocklek, färg,
+linjetyp) och *Lås*. Pennan är stilmallens för sektions- respektive
+fasadmarkörer och gäller alla i projektet, som i stilmallen; en egen
+penna per markör har inte byggts. **Snäpp mot kalkeringen**: i
+Inställningar (Planen) och i planens högerklicksmeny under *Snäppning*;
+sparas i webbläsaren. **Bjälklag bakom snittet** (`hiddenSlabsSection`):
+**på** från början i sektioner (i fasaderna är de släckta från början),
+släcks under Visa; ett snittat bjälklag får inga streckade linjer. **Tak
+på andra våningar**: våningen närmast ovanför och alla under. **Stödmuren**:
+*Över marken mot* Den högre sidan (förval) eller Den lägre; krönet längs
+muren följer då den lägre sidans mark. Provat med Playwright mot `dist/`
+(Delete på en låst vägg, *Markör*, högerklicksmenyn). Klickjämförelsen
+kördes inte. Inga referensritningar ändrades.*
+
+### 0.10.13 Höjder i förhållande till våningen
 
 Synpunkt 25 oktober. Mellanstor.
 
@@ -2229,13 +2271,18 @@ Synpunkt 25 oktober. Mellanstor.
 - Takets höjd gäller referenslinjen, och man väljer om den ligger mot
   takets översida eller undersida (fråga 26). Lutningsriktningen, *Vänd
   lutningen* och radiens tecken som nu
+- Stödmurens höjdpunkter: höjden skrivs när punkten klickas ut, och
+  punkten dras längs muren (27 oktober)
+- BH, NH och TH i fasaden flyttas för hand (27 oktober)
 
-### 0.10.13 Visa och dölja (förslag)
+### 0.10.14 Visa och dölja (förslag)
 
 - Väggar m.m. var för sig under Visa; dölja ett objekt eller en typ med
   högerklick, sparat i vyn
+- *Tonat från* ställs in med ett grepp när vyn är markerad i planen (27
+  oktober)
 
-### 0.10.14 Linjerna i 2D-formen (förslag)
+### 0.10.15 Linjerna i 2D-formen (förslag)
 
 - Fortsätta och sluta en linje med ändpunkterna; Förskjut flera kanter;
   foga ihop linjer
@@ -2245,9 +2292,9 @@ Synpunkt 25 oktober. Mellanstor.
 - Ett markerat hål i bjälklaget ändras (flyttas, formas om, vrids,
   speglas) utan att bjälklaget påverkas (fråga 31)
 
-### 0.10.15 Markobjektens linjer
+### 0.10.16 Markobjektens linjer
 
-Carl Augusts synpunkter 26 oktober. Stor; efter 0.10.14, som har samma
+Carl Augusts synpunkter 26 oktober. Stor; efter 0.10.15, som har samma
 verktyg.
 
 - 2D-formens redigering för markobjekten: Böj, Avrunda med riktiga bågar,

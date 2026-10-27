@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { deleteElements, setInState } from '../src/core/commands';
+import { deleteElements, setInState, setLocked } from '../src/core/commands';
 import type { ProjectDoc } from '../src/core/model';
 import { DocStore } from '../src/core/store';
 import { registerBuiltInTypes } from '../src/elements';
@@ -27,7 +27,7 @@ describe('Småsaker (0.10.11)', () => {
     for (const view of [{ state: 'st-a' }, { state: 'st-a', compareTo: 'st-bef' }]) expect(joint(doc, view).filter((l) => l > 10).map(Math.round)).toEqual([1010, 1010]);
   });
 
-  it('träd och grannhus följer tillstånden och går att ta bort fast de är låsta', () => {
+  it('träd och grannhus följer tillstånden och går att ta bort när de låsts upp', () => {
     const store = new DocStore(groundProject());
     const tree = Object.values(store.doc.elements).find((e) => e.type === 'Tree')!;
     const house = Object.values(store.doc.elements).find((e) => e.type === 'SiteBuilding')!;
@@ -39,6 +39,9 @@ describe('Småsaker (0.10.11)', () => {
     expect(buildModel3d(store.doc, { state: 'st-bef' }).some((s) => s.id === tree.id)).toBe(true);
     const plan = buildPlan(store.doc, tree.storey, { state: 'st-a', compareTo: 'st-bef' });
     expect(plan.prims.some((p) => p.origin?.objectId === tree.id)).toBe(true);
+    // Låst betyder låst (0.10.12): de tas bort först när de låsts upp.
+    expect(deleteElements(store, [tree.id, house.id])).toEqual({ removed: 0, locked: [tree.id, house.id] });
+    setLocked(store, [tree.id, house.id], false);
     deleteElements(store, [tree.id, house.id]);
     expect(store.doc.elements[tree.id]).toBeUndefined();
     expect(store.doc.elements[house.id]).toBeUndefined();

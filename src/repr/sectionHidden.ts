@@ -13,6 +13,8 @@ import { zOn, type Shape3D, type Solid } from './solids';
 /** Visa-nycklarna (tänds med plus i vyns `hide`). */
 export const HIDDEN_SLABS = 'hiddenSlabs';
 export const HIDDEN_WALLS = 'hiddenWalls';
+/** Bjälklag bakom snittet streckade i sektioner (0.10.12): på från början, släcks med nyckeln utan plus. */
+export const HIDDEN_SLABS_SECTION = 'hiddenSlabsSection';
 
 type Seg3 = [x1: number, y1: number, z1: number, x2: number, y2: number, z2: number];
 

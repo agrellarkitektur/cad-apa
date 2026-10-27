@@ -1,4 +1,5 @@
-import { deleteElements, moveElements } from '../../core/commands';
+import { moveElements } from '../../core/commands';
+import { eraseSelection } from './erase';
 import { releasedHint } from '../tools/selectTool';
 import { isNarrow } from '../sheet';
 import type { AppContext } from './context';
@@ -171,8 +172,7 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
       case 'Delete':
       case 'Backspace':
         if (app.selection.size) {
-          deleteElements(app.store, app.selection.list());
-          app.selection.clear();
+          eraseSelection(app);
         }
         break;
       case 'PageUp':

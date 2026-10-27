@@ -5,6 +5,7 @@ import {
   flipWalls,
   setDefinition,
   setInState,
+  setGraphics,
   setSkewOk,
   updateDefinition,
   updateParams,
@@ -33,7 +34,8 @@ import { drawingChange, drawingClick, hereOf, lockField } from './drawingPanel';
 import { shapeSmartFields } from './shapeFields';
 import { resetShowList, showSection } from './showFields';
 import { underlayPlaceFields } from './underlayFields';
-import { instanceFields, propsSection, PROPS, sharedSection, summarizeTypes, typesMarkup } from './selectionFields';
+import { instanceFields, markerSection, propsSection, PROPS, sharedSection, summarizeTypes, typesMarkup } from './selectionFields';
+import { applyPenField } from './style/pens';
 import { applyField, patchEach, pick, selectionCenter, straighten } from './selectionEdits';
 
 type Tab = 'selection' | 'types';
@@ -69,6 +71,9 @@ export class PropertiesPanel {
   quickFor: (type: string) => QuickId[] = () => ['demolish', 'delete'];
   /** Anropas när något kopierats, så att kopian kan flyttas. */
   onCopied?: (ids: string[], center: [number, number]) => void;
+
+  /** Ta bort det markerade (snabbknappen), med meddelande om låsta (0.10.12). */
+  onErase?: (ids: string[]) => void;
 
   /** Öppna en fasad eller sektion (knappen i panelen). */
   onOpenMarker?: (id: string) => void;
@@ -325,8 +330,11 @@ export class PropertiesPanel {
     // Egna mått för ett enskilt element.
     if (els.length === 1) {
       const instance = instanceFields(doc, els[0], view);
-      if (instance) sections.push(`<section><h3>${escapeHtml(t?.label ?? '')}</h3>${instance}${lockField(els)}</section>`);
-      else if (lockField(els)) sections.push(`<section>${lockField(els)}</section>`);
+      // En markör (0.10.12): vyn för sig och markören för sig, med låset där.
+      const marker = markerSection(doc, els[0], lockField(els));
+      if (instance) sections.push(`<section><h3>${escapeHtml(t?.label ?? '')}</h3>${instance}${marker ? '' : lockField(els)}</section>`);
+      else if (!marker && lockField(els)) sections.push(`<section>${lockField(els)}</section>`);
+      if (marker) sections.push(marker);
     } else if (els.every((e) => e.type === 'Roof')) {
       // Flera takfall (0.10, t.ex. ett snabbval): fälten gäller alla, med det första takfallets värden.
       sections.push(`<section><h3>Tak · ${els.length} takfall</h3>${instanceFields(doc, els[0], view)}<p class="note">Ett ändrat värde gäller alla markerade takfall.</p>${lockField(els)}</section>`);
@@ -491,8 +499,11 @@ export class PropertiesPanel {
         deleteDefinition(this.store, b.dataset.def!);
         break;
       case 'delete':
-        deleteElements(this.store, ids);
-        this.selection.clear();
+        if (this.onErase) this.onErase(ids);
+        else {
+          deleteElements(this.store, ids);
+          this.selection.clear();
+        }
         break;
       case 'justify': {
         const face = b.dataset.value as WallFace;
@@ -588,6 +599,13 @@ export class PropertiesPanel {
       return;
     }
 
+    // Markörens penna (0.10.12): stilmallens, för alla markörer av samma sort.
+    if (input.dataset.pen) {
+      const style = structuredClone(doc.graphics);
+      const label = applyPenField(style, input);
+      if (label) setGraphics(this.store, { ...style, name: 'Egen stilmall' }, label);
+      return;
+    }
     const key = input.dataset.key;
     if (!key) return;
     if (drawingChange(this.store, ids, key, input, hereOf(this.getView(), doc.elements[ids[0]]?.storey ?? ''))) return;

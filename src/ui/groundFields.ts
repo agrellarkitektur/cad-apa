@@ -117,7 +117,8 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
     const prof = wallProfile(ctx, el);
     const lvl = (h: number) => (site ? `+${toRh(site, h).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}` : `${Math.round(h)} mm`);
     rows.push(`<label class="field"><span>Krönet</span><select data-key="ground:straight"><option value="">Följer marken</option><option value="1"${p.straight ? ' selected' : ''}>Rakt</option></select></label>`);
-    rows.push(field('above', 'Över marken i början', 'mm', p.above, 0, 'Krönet över den högre sidans mark; gäller när ÖK i början är tom'));
+    rows.push(`<label class="field" title="Sidan vars mark Över marken och krönet längs muren mäts mot"><span>Över marken mot</span><select data-key="ground:aboveSide"><option value="">Den högre sidan</option><option value="low"${p.aboveSide === 'low' ? ' selected' : ''}>Den lägre sidan</option></select></label>`);
+    rows.push(field('above', 'Över marken i början', 'mm', p.above, 0, `Krönet över den ${p.aboveSide === 'low' ? 'lägre' : 'högre'} sidans mark; gäller när ÖK i början är tom`));
     rows.push(field('endAbove', 'Över marken i slutet', 'mm', p.endAbove, p.above ?? 0, 'Tomt = som i början; gäller när ÖK i slutet är tom'));
     rows.push(rh('height', 'ÖK i början', p.height, 'Tomt = över marken'));
     rows.push(rh('endHeight', 'ÖK i slutet', p.endHeight, 'Tomt = över marken'));
@@ -147,6 +148,10 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
   }
   if (name === 'refSide') {
     updateParams(store, ids, { refSide: input.value === 'left' || input.value === 'right' ? input.value : undefined }, 'Flytta referenslinjen');
+    return true;
+  }
+  if (name === 'aboveSide') {
+    updateParams(store, ids, { aboveSide: input.value === 'low' ? 'low' : undefined }, input.value === 'low' ? 'Över den lägre sidans mark' : 'Över den högre sidans mark');
     return true;
   }
   if (name === 'straight') {

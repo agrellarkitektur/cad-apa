@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.11** (alfa); nästa är **0.10.12, höjder i förhållande till våningen**.
+**0.10.12** (alfa); nästa är en granskning och sedan **0.10.13, höjder i förhållande till våningen**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,27 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.12, småjusteringar (samma filformat, 20):
+- **Låst betyder låst**: ett låst objekt går inte att ta bort (Delete, Ta
+  bort, Klipp ut, kommandot), inte heller träd och grannhus eller en vägg
+  med en låst dörr i sig. Lås upp först; ett meddelande säger det. Är
+  några av de markerade låsta tas de andra bort. Alla objekt går att låsa
+  i egenskaperna. Riv och *Finns i* fungerar som förut
+- **Markör** i egenskaperna när en sektions- eller fasadmarkör är
+  markerad: beteckningen, längden och vinkeln, *Rikta efter objekt*,
+  *Vänd blickriktningen*, pennan (tjocklek, färg och linjetyp, för alla
+  markörer av samma sort) och *Lås*. Delen *Sektion* eller *Fasad* har
+  vyns namn, djup, *Tonat från* och höjder
+- **Fasa** 500 mm från början också för väggarnas hörn
+- **Snäpp mot kalkeringen** går att slå av, i Inställningar och i planens
+  högerklicksmeny
+- **Bjälklag bakom snittet** streckade i sektionerna (på från början,
+  släcks under Visa); de snittade ritas som snitt
+- **Tak på andra våningar** visar taken på våningen ovanför och alla
+  våningar under (förut alla våningar)
+- **Stödmurens Över marken** mäts mot den högre sidans mark, eller mot den
+  lägre (*Över marken mot*)
 
 Version 0.10.11, småsaker (samma filformat, 20):
 - **Högerklick på en våning** i projektträdet (Modell), eller ⋯ på raden:

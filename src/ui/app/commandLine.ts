@@ -1,4 +1,4 @@
-import { deleteElements } from '../../core/commands';
+import { eraseSelection } from './erase';
 import { COMMANDS, commandFor, complete, findCommand, type CommandDef, type Match } from '../commandRegistry';
 import type { MenuItem } from '../contextMenu';
 import { icons } from '../icons';
@@ -154,8 +154,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
   }
 
   function erase(): void {
-    deleteElements(app.store, app.selection.list());
-    app.selection.clear();
+    eraseSelection(app);
   }
 
   function action(c: CommandDef): void {

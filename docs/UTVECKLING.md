@@ -1242,6 +1242,26 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Småjusteringar (0.10.12, format 20)
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/core/commands.ts` | `deleteElements` svarar `DeleteResult` (`removed`, `locked`); låsta tas aldrig bort, inte heller en värd med något låst i sig. `REMOVABLE_LOCKED` borta |
+| `src/ui/app/erase.ts` | Ny: `eraseSelection(app, ids?)`: Delete, Klipp ut, kommandot och snabbknappen (`panel.onErase`); låsta förblir markerade, med meddelande |
+| `src/ui/drawingPanel.ts` | `lockField` för alla typer utom `Terrain` och `SiteMap` (`UNLOCKABLE`) |
+| `src/ui/selectionFields.ts`, `propertiesPanel.ts` | `markerSection`: delen *Markör* (beteckning, längd, vinkel, Rikta, Vänd, stilmallens penna `sectionLine`/`elevationLine` via `data-pen` och `applyPenField`, Lås) |
+| `src/ui/modify/ops.ts` | `chamfer` och `chamferAll` 500 |
+| `src/ui/uiSettings.ts`, `settingsDialog.ts`, `app/menus.ts`, `app/snapping.ts` | `snapTrace` (på); i Inställningar och planens högerklicksmeny |
+| `src/repr/section.ts`, `sectionHidden.ts`, `app/showMenu.ts` | `HIDDEN_SLABS_SECTION` (`hiddenSlabsSection`, på; släcks utan plus); de snittade (`ownCuts`) hoppas över |
+| `src/elements/roofPlan.ts` | `aroundStorey`: våningen närmast ovanför och alla under |
+| `src/elements/groundWall.ts`, `groundGeometry.ts`, `ui/groundFields.ts` | `aboveSide: 'low'` (valfri; utan = den högre sidan) |
+
+- Riv och *Finns i* fungerar på låsta objekt: de ändrar status, inte
+  läget, och träden importeras låsta och rivs så. En våning som tas bort
+  tar med sig sina låsta objekt (frågan ställs först).
+- Tester: `tests/v01012.test.ts`; testet för träd i `v01011.test.ts` låser
+  upp före borttagningen. Inga referensritningar ändrades.
+
 ## Småsaker (0.10.11, format 20)
 
 | Fil | Innehåll |
@@ -1252,7 +1272,7 @@ projekt i 1 982 jämförelser.
 | `src/view2d/planView.ts`, `src/ui/app/snapping.ts` | `underlayPrimitives`; `tracedSegments` (id `kalkering`) läggs efter planens sträckor |
 | `src/view3d/view3d.ts` | `Ground3DHost`, `ground`; `idAt` provar marken (`groundHit`, steg längs strålen och halvering); hovring (`queueHover`, `setHover`, `hoverMaterial`), `paint` och `marksGroup` för markobjektens konturer |
 | `src/ui/app/ground3d.ts` | Ny: `ground3dHost(doc, view)`: markens höjd, objektet i en punkt (`pickShape`) och konturen på marken |
-| `src/elements/site.ts`, `src/core/commands.ts` | Träd och grannhus `compares: true` utan `global`; `REMOVABLE_LOCKED` |
+| `src/elements/site.ts`, `src/core/commands.ts` | Träd och grannhus `compares: true` utan `global`; `REMOVABLE_LOCKED` (borta i 0.10.12) |
 | `src/repr/storeyShapes.ts` | `joinStoreys` utan åtgärd |
 | `src/ui/uiSettings.ts` | Snabbknappar för `Tree` och `SiteBuilding` |
 | `src/elements/roofPlan.ts`, `src/ui/modify/ops.ts` | `DEFAULT_CUT_HEIGHT` 1100; `shapeChamfer` 500 |

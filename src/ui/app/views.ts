@@ -239,7 +239,7 @@ export function installViews(app: AppContext) {
         },
         { label: 'Vänd blickriktningen', disabled: !!p.auto, run: () => updateParams(app.store, [id], { side: -(p.side ?? 1) }, 'Vänd blickriktningen') },
         { kind: 'sep' },
-        { label: 'Ta bort…', danger: true, run: () => void deleteMarker(id) },
+        { label: 'Ta bort…', danger: true, disabled: !!el.locked, sub: el.locked ? 'Låst' : undefined, run: () => void deleteMarker(id) },
       ],
       name,
     );

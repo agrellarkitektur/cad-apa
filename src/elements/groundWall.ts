@@ -9,7 +9,7 @@ import type { PlanContext } from './registry';
  * på en kant med förskjutning, som vägens. Krönet:
  *
  * - i ändarna *Över marken* (början och slutet), eller en egen ÖK;
- * - längs muren följer det den högre sidans mark, utjämnad med ett
+ * - längs muren följer det den högre sidans mark (eller den lägre, 0.10.12), utjämnad med ett
  *   glidande medelvärde (±1 m), med tillägget rakt mellan ändarna; eller,
  *   med *Rakt krön*, en rät linje mellan ändarna och höjdpunkterna;
  * - höjdpunkter på muren (en punkt på referenslinjen och en ÖK) låser
@@ -49,6 +49,8 @@ export interface WallParams {
   /** Krönet över den högre sidans mark i början och slutet, mm. Slutet följer början när det är tomt. */
   above?: number;
   endAbove?: number;
+  /** Vilken sidas mark *Över marken* och krönet längs muren mäts mot (0.10.12): den högre (förval) eller den lägre. */
+  aboveSide?: 'high' | 'low';
   /** Höjdpunkterna på muren. */
   crest?: CrestPoint[];
   /** Rakt krön mellan ändarna och höjdpunkterna, i stället för att följa marken. */
@@ -142,8 +144,10 @@ export function computeProfile(ref: readonly Vec2[], th: number, p: WallParams, 
     return { s, i, at };
   });
   if (hi.every((h) => h === null)) return null;
-  // Utjämnat: medelvärdet av den högre sidan, och den lägre sidans lägsta, inom ±1 m.
-  const hiS: number[] = [];
+  // Utjämnat: medelvärdet av den sida krönet mäts mot (den högre om inget
+  // annat valts), och den lägre sidans lägsta, inom ±1 m.
+  const side = p.aboveSide === 'low' ? lo : hi;
+  const refS: number[] = [];
   const loS: number[] = [];
   for (let k = 0; k < raw.length; k++) {
     let sum = 0;
@@ -151,7 +155,7 @@ export function computeProfile(ref: readonly Vec2[], th: number, p: WallParams, 
     let low = Infinity;
     for (let j = 0; j < raw.length; j++) {
       if (Math.abs(raw[j].s - raw[k].s) > SMOOTH) continue;
-      const h = hi[j];
+      const h = side[j];
       if (h !== null) {
         sum += h;
         n++;
@@ -159,12 +163,12 @@ export function computeProfile(ref: readonly Vec2[], th: number, p: WallParams, 
       const l = lo[j];
       if (l !== null) low = Math.min(low, l);
     }
-    hiS.push(n ? sum / n : NaN);
+    refS.push(n ? sum / n : NaN);
     loS.push(low);
   }
-  fillGaps(hiS);
+  fillGaps(refS);
   fillGaps(loS);
-  const smooth = (s: number) => interp(raw.map((r) => r.s), hiS, s);
+  const smooth = (s: number) => interp(raw.map((r) => r.s), refS, s);
   // Ankarna: ändarna och höjdpunkterna, med krönet där.
   const above0 = p.above ?? 0;
   const above1 = p.endAbove ?? above0;

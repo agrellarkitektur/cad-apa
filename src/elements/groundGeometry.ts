@@ -107,6 +107,8 @@ export interface GroundParams extends Partial<FillParams> {
   crest?: CrestPoint[];
   /** Stödmurens krön rakt mellan ändarna och höjdpunkterna, i stället för att följa marken (0.10.9). */
   straight?: boolean;
+  /** Stödmurens *Över marken* mot den lägre sidans mark (0.10.12); förval den högre. */
+  aboveSide?: 'high' | 'low';
 }
 
 /** Namnet på objektets sort, som i egenskaperna. */
