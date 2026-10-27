@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.15** (alfa); nästa är **0.10.16, snittet i planen**.
+**0.10.15.1** (alfa); nästa är **0.10.16, snittet i planen**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,16 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.15.1, granskning (samma filformat, 20):
+- **Markobjektens linjer i 3D** följer planen: en väg vars tvärlinje i
+  början eller slutet är avslagen har ingen tvärlinje där i 3D-vyn heller
+- **Maskens opacitet** har samma tio steg som Solid och Mönster, och kan
+  skrivas (förut en lista med 100, 75, 50 och 25)
+- Ett grepp som avbryts mitt i dragningen (en höjdpunkt, djupet eller ett
+  höjdmått, t.ex. när verktyget byts) hänger inte kvar till nästa klick
+- Inget annat ändrat: koden städad och uppdelad, samma klick ger samma
+  resultat som i 0.10.15
 
 Version 0.10.15, visa och dölja (samma filformat, 20):
 - **Väggar, dörrar och fönster under Visa**, var för sig. Döljs väggarna

@@ -103,7 +103,7 @@ describe('vyerna på bladen räknas inte om i onödan (0.8.11)', () => {
 
 describe('Visa-menyn i kategorier (0.8.11)', () => {
   it('littera släcks per typ, och en äldre vy med all littera delas upp när en typ tänds', async () => {
-    const { isShown, setShown } = await import('../src/ui/app/showMenu');
+    const { isShown, setShown } = await import('../src/ui/app/showKeys');
     const ui = { hide: ['littera'], hideDemolished: false };
     expect(isShown(ui, 'littera:Door')).toBe(false);
     setShown(ui, 'littera:Door', true);

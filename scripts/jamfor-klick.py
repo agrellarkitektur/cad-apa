@@ -2,8 +2,13 @@
 penna från 0.8.32; fyllningstyper, pennor för dörrar och fönster, rummens
 kontur, Filtrera och markera och detaljnivåerna från 0.8.38; våningar,
 bjälklag och nivåer från 0.9.3; platsen och markobjekten från 0.10.6;
-0.10.11, 0.10.12 och 3D-vyn från granskningen efter 0.10.12): läget efter
-varje steg sparas, och två körningar jämförs steg för steg.
+0.10.11, 0.10.12 och 3D-vyn från granskningen efter 0.10.12; 0.10.13–0.10.15
+och greppen som dras, mitt i dragningen, från granskningen efter 0.10.15):
+läget efter varje steg sparas, och två körningar jämförs steg för steg.
+
+Kryssrutorna under Visa klickas (`__click`): menyn lyssnar på klick, så
+`__set` ändrade bara rutan (rättat i granskningen efter 0.10.15). Stegen
+för fyllningen följer panelen från 0.10.14 (`d2:fillKind`).
 
 Bygg den gamla versionen i en egen arbetskopia och den nya som vanligt,
 servera dem på var sin port (python3 -m http.server) och kör
@@ -289,7 +294,7 @@ def main():
         step('vrid vägg', "__click('[data-action=\"rotate-90\"]', 'aside.panel .quick-bar')")
         step('markera rum', "bacchus.selection.set(['r01'])")
         # Rummets fyllning och penna (0.8.34–0.8.36, steg från 0.8.38).
-        step('rum mönster', "__set('[data-key=\"d2:pattern\"]', 'type:plattor150', 'aside.panel .panel-body')")
+        step('rum mönster', "__set('[data-key=\"d2:fillKind\"]', 'pattern', 'aside.panel .panel-body')", fn=lambda: pg.evaluate("__set('[data-key=\"d2:pattern\"]', 'type:plattor150', 'aside.panel .panel-body')"))
         step('rum vridning', "__set('[data-key=\"d2:fillTypeAngle\"]', '45', 'aside.panel .panel-body')")
         step('rum penna', "__set('[data-key=\"pen:weight\"]', '0.25', 'aside.panel .panel-body')")
         step('markera fönster', "bacchus.selection.set(['f01'])")
@@ -326,8 +331,8 @@ def main():
         step('zooma ut', "__click('[data-action=\"fit\"]')", fn=lambda: pg.wait_for_timeout(400))
         step('avmarkera före klick', "bacchus.selection.clear()")
         step('klicka form', fn=lambda: click_model(13800, 600))
-        step('mönster solid', "__set('[data-key=\"d2:pattern\"]', 'solid', 'aside.panel .panel-body')")
-        step('mönster kors', "__set('[data-key=\"d2:pattern\"]', 'cross', 'aside.panel .panel-body')")
+        step('mönster solid', "__set('[data-key=\"d2:fillKind\"]', 'solid', 'aside.panel .panel-body')")
+        step('mönster kors', "__set('[data-key=\"d2:fillKind\"]', 'pattern', 'aside.panel .panel-body')", fn=lambda: pg.evaluate("__set('[data-key=\"d2:pattern\"]', 'cross', 'aside.panel .panel-body')"))
         step('fyllningsfärg', "__set('[data-key=\"d2:fillColor\"]', '#88aa22', 'aside.panel .panel-body')")
         step('vinkel', "__set('[data-key=\"d2:fillAngle\"]', '30', 'aside.panel .panel-body')")
         step('avstånd', "__set('[data-key=\"d2:fillSpacing\"]', '3', 'aside.panel .panel-body')")
@@ -335,7 +340,6 @@ def main():
         step('linjetyp', "__set('[data-key=\"d2:linetype\"]', 'dashed', 'aside.panel .panel-body')")
         step('linjefärg 2d', "__set('[data-key=\"d2:color\"]', '#224488', 'aside.panel .panel-body')")
         step('opacitet 2d', "__set('[data-key=\"d2:opacity\"]', '70', 'aside.panel .panel-body')")
-        step('opacitet var för sig', "__set('[data-key=\"d2:opacityLinked\"]', false, 'aside.panel .panel-body')")
         step('fyllningens opacitet', "__set('[data-key=\"d2:fillOpacity\"]', '40', 'aside.panel .panel-body')")
         step('framför väggarna', "__set('[data-key=\"d2:fillLayer\"]', 'front', 'aside.panel .panel-body')")
         step('linjen bakom', "__set('[data-key=\"d2:lineLayer\"]', 'behind', 'aside.panel .panel-body')")
@@ -351,9 +355,9 @@ def main():
         step('linje igen', "__set('[data-key=\"d2:weight\"]', '0.35', 'aside.panel .panel-body')")
         step('egen linjetyp 2d', "__set('[data-key=\"d2:linetype\"]', 'egen-1', 'aside.panel .panel-body')")
         step('sluten igen', "__set('[data-key=\"d2:closed\"]', true, 'aside.panel .panel-body')")
-        step('mönster mask', "__set('[data-key=\"d2:pattern\"]', 'mask', 'aside.panel .panel-body')")
-        step('mönster skraffering', "__set('[data-key=\"d2:pattern\"]', 'hatch', 'aside.panel .panel-body')")
-        step('bakgrund', "__set('[data-key=\"d2:fillBackgroundOn\"]', true, 'aside.panel .panel-body')")
+        step('mönster mask', "__set('[data-key=\"d2:fillKind\"]', 'mask', 'aside.panel .panel-body')")
+        step('mönster skraffering', "__set('[data-key=\"d2:fillKind\"]', 'pattern', 'aside.panel .panel-body')")
+        step('bakgrund', "__set('[data-key=\"d2:fillBackgroundKind\"]', 'mask', 'aside.panel .panel-body')")
         step('bakgrund egen färg', "__set('[data-key=\"d2:fillBackgroundKind\"]', 'color', 'aside.panel .panel-body')")
         step('bakgrundsfärg 2d', "__set('[data-key=\"d2:fillBackground\"]', '#ffeedd', 'aside.panel .panel-body')")
         step('bakgrundens opacitet 2d', "__set('[data-key=\"d2:fillBackgroundOpacity\"]', '60', 'aside.panel .panel-body')")
@@ -584,9 +588,9 @@ def main():
             step(f'öppna {m}', fn=lambda m=m: open_marker(m))
         # Nivåer och höjdmått (0.9.2, steg från 0.9.3).
         step('öppna Visa i sektionen', "__click('[data-action=\"show-menu\"]')")
-        step('släck nivåerna', "__set('[data-show=\"level\"]', false, '.show-menu')", fn=lambda: pg.wait_for_function('!bacchus.sections.pending', timeout=20000))
-        step('släck höjdmåtten', "__set('[data-show=\"heightDims\"]', false, '.show-menu')", fn=lambda: pg.wait_for_function('!bacchus.sections.pending', timeout=20000))
-        step('nivåerna igen', "__set('[data-show=\"level\"]', true, '.show-menu')", fn=lambda: pg.wait_for_function('!bacchus.sections.pending', timeout=20000))
+        step('släck nivåerna', "__click('[data-show=\"level\"]', '.show-menu')", fn=lambda: pg.wait_for_function('!bacchus.sections.pending', timeout=20000))
+        step('släck höjdmåtten', "__click('[data-show=\"heightDims\"]', '.show-menu')", fn=lambda: pg.wait_for_function('!bacchus.sections.pending', timeout=20000))
+        step('nivåerna igen', "__click('[data-show=\"level\"]', '.show-menu')", fn=lambda: pg.wait_for_function('!bacchus.sections.pending', timeout=20000))
         step('stäng Visa i sektionen', "__click('[data-action=\"show-menu\"]')")
         step('tillbaka till planen', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(500))
         step('markera fasadmarkör', "bacchus.selection.set(['fasad-1'])")
@@ -649,7 +653,7 @@ def main():
         # Bjälklag bakom snittet (0.10.12).
         step('öppna sektionen igen', fn=lambda: open_marker('sektion-a'))
         step('Visa i sektionen igen', "__click('[data-action=\"show-menu\"]')")
-        step('släck bjälklag bakom snittet', "__set('[data-show=\"hiddenSlabsSection\"]', false, '.show-menu')", fn=lambda: pg.wait_for_function('!bacchus.sections.pending', timeout=20000))
+        step('släck bjälklag bakom snittet', "__click('[data-show=\"hiddenSlabsSection\"]', '.show-menu')", fn=lambda: pg.wait_for_function('!bacchus.sections.pending', timeout=20000))
         step('stäng Visa igen', "__click('[data-action=\"show-menu\"]')")
         step('planen en sista gång', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(500))
 
@@ -721,6 +725,120 @@ def main():
         step('klicka i den klippta 3D-vyn', fn=click3d('[9000, 200, 1500]'), shot3d=True)
         step('tillbaka till 2D', "bacchus.setMode('2d')", fn=lambda: pg.wait_for_timeout(500))
         step('planen till sist', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(500))
+
+        # ---------- 0.10.13–0.10.15 (steg från granskningen efter 0.10.15) ----------
+        # Smartmenyn ligger annars ibland över greppen som dras.
+        pg.add_style_tag(content='.smart-menu{display:none!important}')
+
+        def press_drag(a_js, b_js, release=True, start=True):
+            """Dra från skärmpunkten `a_js` till `b_js` (JS som ger [x, y]); utan `release` står musen kvar nedtryckt."""
+            def run():
+                ax, ay = pg.evaluate(a_js)
+                bx, by = pg.evaluate(b_js)
+                if start:
+                    pg.mouse.move(ax, ay)
+                    pg.mouse.down()
+                for k in range(1, 7):
+                    pg.mouse.move(ax + (bx - ax) * k / 6, ay + (by - ay) * k / 6)
+                if release:
+                    pg.mouse.up()
+                pg.wait_for_timeout(300)
+            return run
+
+        def release():
+            pg.mouse.up()
+            pg.wait_for_timeout(300)
+
+        def grip_center(sel, nth=0):
+            return f"(() => {{ const r = document.querySelectorAll('svg.plan .overlay {sel}')[{nth}].getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; }})()"
+
+        def ctx_on(id_, label):
+            """Högerklick mitt i objektet och ett val i menyn."""
+            def run():
+                pg.evaluate("bacchus.setTool('select')")
+                sx, sy = pg.evaluate(f"""() => {{
+                  const it = bacchus.plan.pickables.find((p) => p.id === '{id_}');
+                  const ring = it.regions[0][0];
+                  const c = ring.reduce((a, q) => [a[0] + q[0] / ring.length, a[1] + q[1] / ring.length], [0, 0]);
+                  return __screen(c[0], c[1]);
+                }}""")
+                pg.mouse.click(sx, sy, button='right')
+                pg.wait_for_timeout(300)
+                ctx_item(label)
+            return run
+
+        def model_pt(x, y):
+            return f'__screen({x}, {y})'
+
+        # Höjder mot våningen (0.10.13).
+        step('markera innerväggen för foten', "bacchus.selection.set(['iv-1'])")
+        step('fot mot våningen', f"__set('[data-key=\"level:level\"]', '300', '{panel}')")
+        step('flytta i höjd', fn=shell('M Z -200'))
+        step('ångra höjden', "__click('[data-action=\"undo\"]')")
+        # Stödmurens höjdpunkt, som dras längs muren (0.10.13).
+        def add_crest():
+            pg.evaluate("""() => {
+              const w = Object.values(bacchus.store.doc.elements).find((e) => e.type === 'Ground' && e.params.kind === 'wall');
+              bacchus.store.transact('höjdpunkt', (tx) => tx.putElement({ ...w, params: { ...w.params, crest: [{ at: [22000, 5000], h: 62500 }] } }));
+              bacchus.selection.set([w.id]);
+            }""")
+        step('höjdpunkt på muren', fn=add_crest)
+        step('dra höjdpunkten (mitt i)', fn=press_drag(model_pt(22000, 5000), model_pt(23200, 5300), release=False))
+        step('släpp höjdpunkten', fn=release)
+        step('avmarkera höjdpunkten', "bacchus.selection.clear()")
+        # En 2D-forms punkt och bildens hörn (greppen som delades ut ur selectTool.ts).
+        step('markera formen för punkten', "bacchus.selection.set(['tf-1'])")
+        step('dra punkten (mitt i)', fn=press_drag(model_pt(12000, 0), model_pt(11400, -500), release=False))
+        step('släpp punkten', fn=release)
+        step('markera bilden', "bacchus.selection.set([Object.values(bacchus.store.doc.elements).find((e) => e.type === 'Underlay').id])")
+        step('dra bildens hörn (mitt i)', fn=press_drag(grip_center('rect.grip'), grip_center('rect.grip') + '.map((v) => v + 40)', release=False))
+        step('släpp bildens hörn', fn=release)
+        step('avmarkera bilden', "bacchus.selection.clear()")
+        # Fyllningens panel (0.10.14).
+        step('formen för fyllningen', "bacchus.selection.set(['tf-1'])")
+        step('fyllning solid', f"__set('[data-key=\"d2:fillKind\"]', 'solid', '{panel}')")
+        step('opacitet 30', f"__set('[data-key=\"d2:fillOpacity\"]', '30', '{panel}')")
+        step('förslaget Gräs', f"__set('[data-key=\"d2:fillPreset\"]', 'grasyta', '{panel}')")
+        step('fyllning mask', f"__set('[data-key=\"d2:fillKind\"]', 'mask', '{panel}')")
+        step('maskens opacitet 50', f"__set('[data-key=\"d2:fillOpacity\"]', '50', '{panel}')")
+        step('fyllning mönster', f"__set('[data-key=\"d2:fillKind\"]', 'pattern', '{panel}')")
+        step('förslaget Tegel', f"__set('[data-key=\"d2:fillPreset\"]', 'tegel', '{panel}')")
+        step('mönstrets penna', f"__set('[data-key=\"d2:fillWeight\"]', '0.25', '{panel}')")
+        step('spara fyllningen', "__click('[data-action=\"fill-save\"]', 'aside.panel .panel-body')", fn=lambda: (pg.wait_for_selector('.ask-input', timeout=5000), pg.fill('.ask-input', 'Tegelyta'), pg.keyboard.press('Enter'), pg.wait_for_timeout(300)))
+        step('formen och kopian kopplas', "bacchus.selection.set(['tf-3'])", fn=lambda: pg.evaluate(f"__set('[data-key=\"d2:fillStyle\"]', bacchus.store.doc.graphics.fills?.[0]?.id ?? '', '{panel}')"))
+        step('markera gropen för slänten', f"bacchus.selection.set({ground_ids("e.params.kind === 'area' && e.params.outline.length").replace('.map(', '.slice(1, 2).map(')})")
+        step('slänternas fyllning', f"__set('[data-key=\"sf:fillKind\"]', 'solid', '{panel}')")
+        step('slänternas förslag', f"__set('[data-key=\"sf:fillPreset\"]', 'grus', '{panel}')")
+        step('avmarkera fyllningen', "bacchus.selection.clear()")
+        # Dölja i vyn (0.10.15).
+        step('dölj innerväggen', fn=ctx_on('iv-2', 'Dölj i vyn'))
+        step('dölj alla möbler', fn=ctx_on('m02', 'Dölj alla möbler i vyn'))
+        step('Visa med de dolda', "__click('[data-action=\"show-menu\"]')")
+        step('möblerna igen', "__click('[data-show=\"Furniture\"]', '.show-menu')")
+        step('linjerna i 3D', "__click('[data-show=\"ground3d\"]', '.show-menu')")
+        step('släntstrecken i 3D', "__click('[data-show=\"slopes3d\"]', '.show-menu')")
+        step('stäng Visa med de dolda', "__click('[data-action=\"show-menu\"]')")
+        step('visa dolda objekt', fn=plan_menu('Visa dolda objekt'))
+        # Djupet och Tonat från med greppen (0.10.15).
+        step('markera sektionen för greppet', "bacchus.selection.set(['sektion-a'])")
+        step('dra Tonat från (mitt i)', fn=press_drag(grip_center('path.grip'), grip_center('path.grip') + '.map((v) => v + 50)', release=False))
+        step('släpp Tonat från', fn=release)
+        step('avmarkera sektionen', "bacchus.selection.clear()")
+        # BH, NH och TH flyttas i fasaden (0.10.13): fasaden med måtten.
+        def open_with_heights():
+            for m in ['fasad-1', 'fasad-2', 'fasad-3', 'fasad-4']:
+                open_marker(m)
+                if pg.evaluate("document.querySelectorAll('svg.plan .overlay rect.side-grip').length"):
+                    return
+        step('fasaden med höjdmåtten', fn=open_with_heights)
+        step('dra höjdmåttet (mitt i)', fn=press_drag(grip_center('rect.side-grip'), grip_center('rect.side-grip') + '.map((v, i) => i ? v : v - 60)', release=False))
+        step('släpp höjdmåttet', fn=release)
+        step('planen efter fasaden', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(500))
+        # Markobjektens linjer i 3D, rampen utan tvärlinje i början (0.10.15, 0.10.15.1).
+        step('3D med linjerna', fn=show3d, shot3d=True)
+        step('zooma till allt med linjerna', "__click('[data-action=\"fit\"]')", fn=lambda: pg.wait_for_timeout(500), shot3d=True)
+        step('2D efter linjerna', "bacchus.setMode('2d')", fn=lambda: pg.wait_for_timeout(500))
+        step('allra sist', "bacchus.selection.clear()")
         b.close()
     json.dump(rows, open(OUT, 'w'), ensure_ascii=False)
 

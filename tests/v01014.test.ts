@@ -32,8 +32,10 @@ describe('Fyllningar och opacitet (0.10.14)', () => {
     expect(solid.match(/data-key="d2:fillOpacity"/g)).toHaveLength(11);
     expect(solid).toMatch(/value="40" data-key="d2:fillOpacity" checked/);
     expect(solid).toContain('d2:fillPreset');
-    // Mask: opaciteten ur en lista.
-    expect(fillPanel('x', { fill: 'mask', fillAngle: 45, fillSpacing: 2 }, attrs)).toMatch(/<select data-key="d2:fillOpacity"><option value="100" selected>/);
+    // Mask: samma tio steg och skrivna värde (0.10.15.1).
+    const mask = fillPanel('x', { fill: 'mask', fillOpacity: 35, fillAngle: 45, fillSpacing: 2 }, attrs);
+    expect(mask.match(/data-key="d2:fillOpacity"/g)).toHaveLength(11);
+    expect(mask).toContain(`data-key="d2:fillOpacity" value="35"`);
     // Mönster: penna, vinkel, bakgrund.
     const hatch = fillPanel('x', { fill: 'hatch', fillAngle: 30, fillSpacing: 2, fillBackground: 'paper' }, attrs);
     for (const k of ['fillWeight', 'fillAngle', 'fillSpacing', 'fillBackgroundKind', 'fillBackgroundOpacity', 'pattern']) expect(hatch).toContain(`d2:${k}`);

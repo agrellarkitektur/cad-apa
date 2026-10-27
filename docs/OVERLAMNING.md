@@ -3,12 +3,26 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 27 oktober 2026 (eftermiddag), efter 0.10.15.
+Senast: 27 oktober 2026 (kväll), efter granskningen (0.10.15.1).
 
 ## Läget
 
-- **Nästa session:** en **granskning** (se *Nästa session*), sedan
-  **0.10.16 Snittet i planen**.
+- **Nästa session:** **0.10.16 Snittet i planen** (se *Nästa session*).
+- **Granskningen efter 0.10.15 är klar** som **0.10.15.1** på `main`
+  (samma format, 20). Två småfel ur Inkorgen: vägarnas tvärlinjer i 3D
+  följer planen (en avslagen tvärlinje syns inte i 3D), och maskens
+  opacitet har tio steg och ett skrivet värde. Delat: `selectTool.ts`
+  (greppen i `selectDrags.ts`), `showMenu.ts` (`showKeys.ts`,
+  `scalePop.ts`), `drawing2d.ts` (fyllningen i `fill2d.ts`) och `blad.css`
+  (`fyllningar.css`). Markera glömde inte längre ett avbrutet grepp.
+  Klickjämförelsen: 396 steg, före och efter skiljer bara maskens panel
+  och rampens tvärlinje i 3D. Se PLAN.md och UTVECKLING.md. Testerna: 542
+  på ca 14 s.
+- **Inkorgen sorterad 27 oktober (eftermiddag)**, Claudes förslag A–H
+  godkända: dubbelklick på Visa i 0.10.16; synliga punkter på referens-
+  och konturlinjer i 0.10.17; rampens önskemål i en ny **0.10.18 Rampens
+  referenslinje**, så Markobjektens bågar blev 0.10.19 och
+  Situationsplanens beteckningar 0.10.20.
 - **0.10.15 Visa och dölja är klar** på `main` (samma format, 20).
   Byggt: väggar, dörrar och fönster under Visa; *Dölj i vyn* och *Dölj
   alla …* i högerklicksmenyn, sparat i vyns `hide` (`obj:` och id), med
@@ -37,22 +51,22 @@ Senast: 27 oktober 2026 (eftermiddag), efter 0.10.15.
   hörn, så linjerna ligger lite annorlunda än förut; fönster i en vägg med
   *Fot mot våningen* ligger kvar mot våningens golv (i 0.10.13 följde de
   foten); fyllningens opacitet följer inte längre linjens.
-- **Versionerna efter 27 oktober:** svaret om det som ligger över snittet
-  blev en ny **0.10.16 Snittet i planen**, så Linjerna i 2D-formen blev
-  0.10.17, Markobjektens linjer 0.10.18 och Situationsplanens beteckningar
-  0.10.19. Ortofotot på marken är en egen liten undersökning. Förteckningen
-  över markförändringarna hör till 0.12 Export.
-- **Granskningen** är nästa (den förra var efter 0.10.12). Lägg till
-  steg i klickjämförelsen för 0.10.13–0.10.15 (se *Öppna frågor*).
+- **Versionerna efter 27 oktober:** 0.10.16 Snittet i planen, 0.10.17
+  Linjerna i 2D-formen, 0.10.18 Rampens referenslinje, 0.10.19
+  Markobjektens bågar (förut 0.10.18 Markobjektens linjer) och 0.10.20
+  Situationsplanens beteckningar. Ortofotot på marken är en egen liten
+  undersökning. Förteckningen över markförändringarna hör till 0.12
+  Export. Nästa granskning efter ungefär tre versioner (0.10.18).
 - **0.10.13 Höjder i förhållande till våningen**: se PLAN.md.
 - **Granskningen efter 0.10.12** och **0.10.12 Småjusteringar**: se
   PLAN.md.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.15` i `engine.ts` och `package.json`;
-  nästa version är `0.10.16` (granskningen höjer inte numret, eller blir
-  0.10.15.1 om något ändras som syns; följ det som gjordes efter 0.10.12).
+- **Versionsnumret** är `0.10.15.1` i `engine.ts`, `package.json` och
+  `package-lock.json` (npm godtar fyra delar i ett privat paket); nästa
+  version är `0.10.16`. En granskning höjer inte numret, eller får en
+  fjärde siffra om något ändras som syns.
 - **0.10.8–0.10.15 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
@@ -107,14 +121,17 @@ vid varje överlämning.
 
 - ~~0.8.8 Mallblad~~ … ~~0.10.12 Småjusteringar~~, ~~Granskning efter
   0.10.12~~, ~~0.10.13 Höjder i förhållande till våningen~~, ~~0.10.14
-  Fyllningar och opacitet~~, ~~0.10.15 Visa och dölja~~ (klara)
-- **Granskning** efter 0.10.15
+  Fyllningar och opacitet~~, ~~0.10.15 Visa och dölja~~, ~~Granskning
+  efter 0.10.15 (0.10.15.1)~~ (klara)
 - **0.10.16 Snittet i planen** (mellanstor: snitt bara vid 1100, det under
-  som vy, det över streckprickat)
+  som vy, det över streckprickat; dubbelklick på Visa visar allt)
 - **0.10.17 Linjerna i 2D-formen** (bågar i takets kontur, cirkulära hål,
-  hål som ändras för sig)
-- **0.10.18 Markobjektens linjer** (stor: bågar, Avrunda, docka ramper)
-- **0.10.19 Situationsplanens beteckningar** (förslag: murens ledare,
+  hål som ändras för sig, synliga punkter på referens- och konturlinjer)
+- **0.10.18 Rampens referenslinje** (mellanstor till stor: referenslinjen
+  styr lutningen, sidorna bredden, höjdpunkter i ändarna, förlänga, mur
+  eller slänt per sida)
+- **0.10.19 Markobjektens bågar** (stor: bågar, Avrunda, docka ramper)
+- **0.10.20 Situationsplanens beteckningar** (förslag: murens ledare,
   markhöjder med status, sidolutning, låglinje, kontur runt slänterna,
   slänter ur den befintliga marken)
 - **Ortofotot på marken** (liten undersökning med terrängappen, när det
@@ -133,14 +150,10 @@ vid varje överlämning.
 
 ## Nästa session
 
-**Granskning** utan nya funktioner (den förra var efter 0.10.12; se
-*Granskningen efter 0.10.12* i PLAN.md för hur den gick till): städa,
-dela upp stora filer (`selectTool.ts` har vuxit med greppen,
-`showMenu.ts`), leta efter långsam kod (fasader och sektioner byggs om
-helt vid varje ändring, se *Öppna frågor*) och gå igenom testerna. Lägg
-till steg i klickjämförelsen för 0.10.13–0.10.15. Sedan **0.10.16
-Snittet i planen** (fråga först vilka objekt utöver väggar och vilken
-penna det överliggande får).
+**0.10.16 Snittet i planen** (mellanstor). Fråga först vilka objekt
+utöver väggar (bjälklag, möbler, tak) och vilken penna det överliggande
+får. Med i versionen: dubbelklick på Visa-knappen visar allt i vyn. Läs
+`cad-apa-synpunkter.md` och sortera Inkorgen först.
 
 ## Att fråga Carl August om
 
@@ -266,12 +279,7 @@ fråga.
 ## Öppna frågor och kända begränsningar
 
 - **Höjder mot våningen (0.10.13):** en vägg vars fot ligger över planens
-  snitthöjd ritas ändå som snittad i planen (0.10.16). Klickjämförelsen
-  har inga steg för 0.10.13–0.10.15 än (lägg till dem i granskningen:
-  *Fot mot våningen*, Flytta i höjd, höjdpunktens värde och dragning,
-  BH-greppet; fyllningens lägen, förslag, sparade fyllningar och
-  slänternas fyllning; Dölj i vyn, Dölj alla väggar, Visa dolda objekt,
-  greppet för Tonat från, linjerna i 3D).
+  snitthöjd ritas ändå som snittad i planen (0.10.16).
 - **Dolt (0.10.15):** det dolda gäller vyn, så 3D-vyn följer planen. *Markera
   alla …* tar inte med det dolda; Filtrera och markera är inte prövat med
   dolda objekt. Linjerna i 3D räknas om vid
@@ -405,7 +413,13 @@ fråga.
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (347 steg sedan granskningen efter 0.10.12: stilmallen med linjetyper,
+  (396 steg sedan granskningen efter 0.10.15, som lade till 0.10.13–0.10.15
+  sist: höjderna mot våningen, greppen som dras med ett steg mitt i varje
+  dragning (`press_drag(..., release=False)` och sedan `release`),
+  fyllningens panel, Dölj i vyn och linjerna i 3D; smartmenyn döljs med en
+  stilregel där. Kryssrutorna under Visa klickas med `__click`, eftersom
+  menyn lyssnar på `click`; `__set` ändrar bara rutan. 347 steg efter
+  granskningen efter 0.10.12: stilmallen med linjetyper,
   pennor och fyllningstyper, snabbraden, den egna pennan, rummets
   fyllning, 2D-formens fält med mask, bakgrund och fyllningstyp,
   ritordning, Visas i, underlag, detaljnivåerna, Filtrera och markera,

@@ -12,7 +12,7 @@ import type { Vec2 } from '../../repr/primitives';
 import { buildModel3d } from '../../repr/model3d';
 import { finishedForView, terrainMesh } from '../../repr/terrain';
 import { contourSegments3d } from '../../elements/site';
-import { isShown } from './showMenu';
+import { isShown } from './showKeys';
 import { ground3dHost, groundLines3d } from './ground3d';
 import { POCHE_MATERIALS } from '../../repr/section';
 import type { Edit3DHost, Handle3D, View3D } from '../../view3d/view3d';

@@ -1979,7 +1979,7 @@ dolda linjerna, medan den är färsk (Carl August 26 oktober).
 längs en linje stod kvar när de flyttades (med Flytta, dragning eller
 pilarna); nu följer linjen med. Markobjektens linjer är 2D-former utan
 bågar (`noArcs`, `allowsArcs`): Böj och Avrunda finns inte i Modifiera
-förrän bågarna kommer (0.10.18, förut 0.10.16 och 0.10.17), Fasa finns kvar. **Ramp/väg**
+förrän bågarna kommer (0.10.19, förut 0.10.16, 0.10.17 och 0.10.18), Fasa finns kvar. **Ramp/väg**
 (`kind: 'path'` utan `path`): förvald bredd 1 500, tvärfall bara när det
 anges (förvalet 1:50 för infarten är borta), varning när den är brantare
 än sin gräns (`maxSlope`, förval *Brantaste ramp/väg* 1:12 under
@@ -2417,6 +2417,49 @@ under Visa → Platsen, konturerna mörka och släntstrecken halvt
 genomskinliga. Inte gjort: dölja i 3D-vyn och planen för sig (det dolda
 gäller vyn, och 3D följer vyn som förut); ett och ett tillbaka.*
 
+### Granskning efter 0.10.15 ✓ (0.10.15.1)
+
+Enligt planen (förra var efter 0.10.12). Två småfel ur Inkorgen 27 oktober
+gör att något syns, så den heter 0.10.15.1 (Carl August 27 oktober).
+
+- Markobjektens start- och ändmarkering i 3D följer planen
+- Maskens opacitet i samma tio steg som de andra lägena, och skriven
+- Dela stora filer: `selectTool.ts`, `showMenu.ts` och det som vuxit
+- Gå igenom testerna och leta efter långsam kod
+- Klickjämförelsen med steg för 0.10.13–0.10.15
+
+*Gjord 27 oktober, samma format (20). Testerna: 542, ca 14 s.
+**Småfelen**: 3D-vyns konturer för vägar (`groundLines3d`) tar kanterna
+och tvärlinjerna ur planen (delarna `kant`, `början` och `slutet`), så en
+avslagen tvärlinje (`startLine`, `endLine`) syns inte i 3D heller; andra
+markobjekt har konturen som förut. Masken har knapparna 10–100 och ett
+skrivet fält som Solid (`MASK_STEPS` är borta). **Filerna**:
+`selectTool.ts` 682 → 445 rader (greppen utöver väggändarna, med
+dragningen, skrivningen och ritningen, i `selectDrags.ts` som en typ
+`GripDrag`); `showMenu.ts` 368 → 204 (det som kan tändas och släckas,
+`SHOW_GROUPS`, `isShown` och `setShown`, i `showKeys.ts`, och skärmskalan
+i statusraden i `scalePop.ts`); `drawing2d.ts` 515 → 354 (fyllningen,
+`FillParams` som eget gränssnitt och `fillPrims`, i `fill2d.ts`, som
+`drawing2d.ts` exporterar vidare); `blad.css` 528 → 324 (mönstren och
+fyllningens panel i `fyllningar.css`, direkt efter i kaskaden). En sak
+rättad på vägen: Markera glömde höjdpunkten, djupet och höjdmåttet när en
+dragning avbröts (verktygsbyte, avbruten pekare), så att nästa släpp kunde
+gå till dem. **Testerna**: inga dubbletter bland de nya; hela körningen
+14 s. **Långsam kod**: inget nytt som växer med kvadraten. Linjerna i 3D
+tar 4–7 ms för exempelvillan på den kuperade platsen (konturerna) och
+6–10 ms med släntstrecken efter en ändring. Fasader och sektioner byggs
+fortfarande om helt vid varje ändring (lämnat, se granskningen efter
+0.10.12). **Klickjämförelsen** har 396 steg (50 nya efter 3D-stegen: Fot
+mot våningen, Flytta i höjd med `M Z`, stödmurens höjdpunkt, en 2D-forms
+punkt och bildens hörn som dras, med ett steg mitt i varje dragning,
+fyllningens lägen, förslag, mask, sparad och kopplad fyllning, slänternas
+fyllning, Dölj i vyn, Dölj alla möbler, Visa dolda objekt, greppet för
+Tonat från, BH-måttet i fasaden och linjerna i 3D). Kryssrutorna under
+Visa klickas nu (`__set` ändrade bara rutan, så stegen gjorde ingenting
+förut), och de gamla stegen för 2D-formens fyllning följer panelen från
+0.10.14. Samma klick i 0.10.15 och 0.10.15.1 skiljer bara i maskens panel
+(tre steg) och rampens tvärlinje i början i 3D-bilden (två steg).*
+
 ### 0.10.16 Snittet i planen (förslag, mellanstor)
 
 Carl Augusts svar 27 oktober (fråga om väggar över snittet efter 0.10.13).
@@ -2428,6 +2471,7 @@ Carl Augusts svar 27 oktober (fråga om väggar över snittet efter 0.10.13).
   det, stödmurar och andra objekt som varierar i höjd
 - Fråga först: vilka objekt utöver väggar (bjälklag, möbler, tak) och
   vilken penna det överliggande får
+- Dubbelklick på Visa-knappen visar allt i vyn (Inkorgen 27 oktober)
 
 ### 0.10.17 Linjerna i 2D-formen (förslag)
 
@@ -2438,11 +2482,27 @@ Carl Augusts svar 27 oktober (fråga om väggar över snittet efter 0.10.13).
   bjälklaget som en cirkel direkt (fråga 34)
 - Ett markerat hål i bjälklaget ändras (flyttas, formas om, vrids,
   speglas) utan att bjälklaget påverkas (fråga 31)
+- Referens- och konturlinjernas punkter (t.ex. takets kontur) syns som
+  riktiga punkter när objektet är markerat (Inkorgen 27 oktober)
 
-### 0.10.18 Markobjektens linjer
+### 0.10.18 Rampens referenslinje (förslag, mellanstor till stor)
 
-Carl Augusts synpunkter 26 oktober. Stor; efter 0.10.17, som har samma
-verktyg.
+Inkorgen 27 oktober. Den gamla 0.10.18 delades, eftersom rampen fick
+många nya önskemål (Carl August 27 oktober).
+
+- Referenslinjen lever sitt eget liv och styr lutningen i XYZ; sidornas
+  linjer styr rampens utbredning i XY, så att bredden kan variera längs
+  rampen (nu är det sidorna som är klickbara och styr referenslinjen)
+- Höjden i början och slutet: två sorters kontrollpunkter med olika färg,
+  vanliga för X och Y och en sort (oftast bara i ändarna) för XYZ
+- Förlänga rampen med ett klick på första eller sista ändpunkten
+- Stödmur eller slänt per sida
+- Referenslinjens punkter syns som riktiga punkter när rampen är markerad
+
+### 0.10.19 Markobjektens bågar
+
+Carl Augusts synpunkter 26 oktober (förut 0.10.18). Stor; efter 0.10.17,
+som har samma verktyg.
 
 - 2D-formens redigering för markobjekten: Böj, Avrunda med riktiga bågar,
   Fasa
@@ -2450,7 +2510,7 @@ verktyg.
   bredden)
 - Docka ihop två ramper med olika lutning
 
-### 0.10.19 Situationsplanens beteckningar (förslag, mellanstor)
+### 0.10.20 Situationsplanens beteckningar (förslag, mellanstor)
 
 Carl Augusts bilder 27 oktober; som landskapsarkitekter redovisar.
 

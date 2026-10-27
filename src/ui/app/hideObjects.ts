@@ -3,7 +3,7 @@ import { hiddenObjectKey, hiddenObjects, HIDDEN_OBJECT } from '../../core/visibi
 import { typeOf } from '../../elements/registry';
 import type { MenuItem } from '../contextMenu';
 import type { AppContext } from './context';
-import { isShown, setShown, SHOW_GROUPS } from './showMenu';
+import { isShown, setShown, SHOW_GROUPS } from './showKeys';
 
 /**
  * Dölja objekt i vyn (0.10.15): högerklick döljer det markerade, eller alla

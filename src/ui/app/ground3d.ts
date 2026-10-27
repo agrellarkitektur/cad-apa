@@ -1,7 +1,7 @@
 import type { ProjectDoc } from '../../core/model';
 import { groundAt, terrainOf } from '../../core/site';
 import type { ViewStates } from '../../core/states';
-import { groundObjects } from '../../elements/ground';
+import { groundObjects, type GroundParams } from '../../elements/ground';
 import { typeOf } from '../../elements/registry';
 import { pointInRings } from '../../geometry/vec';
 import { createContext } from '../../repr/context';
@@ -78,10 +78,18 @@ export function groundLines3d(doc: ProjectDoc, view: ViewStates, want: { outline
   const outlines: number[] = [];
   const slopes: number[] = [];
   for (const el of groundObjects(ctx)) {
-    if (want.outlines)
-      for (const rings of type?.pickShape?.(el, ctx) ?? []) for (const ring of rings) for (let i = 0; i < ring.length; i++) drape(outlines, ring[i], ring[(i + 1) % ring.length], height);
-    if (want.slopes)
-      for (const q of type?.plan?.(el, ctx) ?? []) if (q.kind === 'line' && q.origin?.part === 'slänt') drape(slopes, q.a, q.b, height);
+    const isPath = ctx.params<GroundParams>(el).kind === 'path';
+    const plan = want.slopes || (want.outlines && isPath) ? (type?.plan?.(el, ctx) ?? []) : [];
+    if (want.outlines) {
+      // Vägens kanter och tvärlinjer som i planen, så att en avslagen tvärlinje inte syns i 3D heller (0.10.15.1).
+      if (isPath) {
+        for (const q of plan) if (q.kind === 'polyline' && PATH_EDGES.has(q.origin?.part ?? '')) for (let i = 1; i < q.points.length; i++) drape(outlines, q.points[i - 1], q.points[i], height);
+      } else for (const rings of type?.pickShape?.(el, ctx) ?? []) for (const ring of rings) for (let i = 0; i < ring.length; i++) drape(outlines, ring[i], ring[(i + 1) % ring.length], height);
+    }
+    if (want.slopes) for (const q of plan) if (q.kind === 'line' && q.origin?.part === 'slänt') drape(slopes, q.a, q.b, height);
   }
   return { outlines: outlines.length ? new Float32Array(outlines) : null, slopes: slopes.length ? new Float32Array(slopes) : null };
 }
+
+/** Vägens linjer i planen som också är dess kontur i 3D. */
+const PATH_EDGES = new Set(['kant', 'början', 'slutet']);

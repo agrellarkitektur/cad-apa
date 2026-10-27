@@ -2,11 +2,6 @@ import { moveElements, moveWallEnd, updateParams } from '../../core/commands';
 import { multiplyElements } from '../../core/wallEdit';
 import { add, angleDeg, dist, dot, norm, scale, sub } from '../../geometry/vec';
 import type { WallParams } from '../../elements/wall';
-import { editedShape, moveShapeNode, previewShape, shapeNodes, shapePatch } from '../../elements/shapeEdit';
-import { dragRoofGrip, type RoofDrag, type RoofGrip } from '../../elements/roofGrips';
-import { underlayCorners, type UnderlayParams } from '../../elements/underlay';
-import { dragUnderlayGrip, type UnderlayGrip } from '../../elements/underlayEdit';
-import { resolveParams } from '../../elements/registry';
 import { pickableById, type Pickable } from '../../repr/plan';
 import type { Primitive, Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
@@ -16,8 +11,8 @@ import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { pxToMm, type ToolHost } from './host';
 import { flushSnap, roundMm, snap, type SnapResult } from './snap';
 import { lengthLabel, snapMarker } from './overlay';
-import { crestDragTo, crestGripAt, crestGripsShown, depthDragValue, depthGeometry, depthGripAt, depthGripsShown, heightGripAt, heightGripsShown, type CrestGrip, type DepthGrip, type HeightGrip } from './selectGrips';
-import { companionsAt, endGripAt, isRoomLabel, roofGripAt, roofGripsShown, roomLabelAt, shapeNodeAt, underlayGripAt, underlayGripsShown, type Companions, type EndGrip } from './selectGrips';
+import { companionsAt, crestGripAt, depthGripAt, endGripAt, heightGripAt, isRoomLabel, roofGripAt, roomLabelAt, shapeNodeAt, type Companions, type EndGrip } from './selectGrips';
+import { dragGrip, finishGrip, fmtAngle, gripDragAt, gripsOverlay, idleUnderlayGripAt, type GripDrag } from './selectDrags';
 
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 
@@ -44,7 +39,8 @@ interface Move {
  * dra en ruta för flera (på pekskärm lägger varje tryck till). Markerade väggar får grepp i ändarna som kan dras,
  * och det som är markerat kan flyttas genom att dra i det. På pekskärm
  * panorerar ett finger i tomma delar av planen och ett tryck markerar.
- * Greppen under markören hittas i selectGrips.ts (0.8.23).
+ * Greppen under markören hittas i selectGrips.ts (0.8.23); greppen utöver
+ * väggändarna dras med selectDrags.ts (granskningen efter 0.10.15).
  */
 export class SelectTool implements ViewTool {
   cursor = 'default';
@@ -65,18 +61,8 @@ export class SelectTool implements ViewTool {
   private lastClick: { id: string | null; t: number; at: Vec2 } | null = null;
   /** Nästa klick hoppas över, t.ex. efter ett långt tryck som öppnat en meny. */
   private skipClick = false;
-  /** Ett grepp i takets nock eller takfot som dras i en fasad eller sektion (0.8). */
-  private roof: { grip: RoofGrip; drag: RoofDrag | null; snap: SnapResult | null } | null = null;
-  /** En höjdpunkt på en stödmur som dras längs muren (0.10.13). */
-  private crest: { grip: CrestGrip; to: Vec2 | null } | null = null;
-  /** Djupet eller *Tonat från* för en markerad fasad eller sektion som dras (0.10.15). */
-  private depthDrag: { grip: DepthGrip; value: number | null; moved: boolean } | null = null;
-  /** Ett höjdmått (BH, NH, TH) som dras i sidled i en fasad eller sektion (0.10.13). */
-  private measure: { grip: HeightGrip; x: number | null } | null = null;
-  /** En punkt i ett 2D-element som dras (0.8 del 2). */
-  private node: { id: string; hole?: number; index: number; from: Vec2; snap: SnapResult | null } | null = null;
-  /** Ett grepp i en markerad bild eller PDF-sida som dras (0.8.16). */
-  private ulGrip: { id: string; grip: UnderlayGrip; from: Vec2; snap: SnapResult | null; free: boolean } | null = null;
+  /** Ett annat grepp än väggens ände som dras: tak, höjdmått, bild, djup, höjdpunkt eller punkt i en 2D-form. */
+  private active: GripDrag | null = null;
 
   suppressNextClick(): void {
     this.skipClick = true;
@@ -90,36 +76,8 @@ export class SelectTool implements ViewTool {
     // I fasader och sektioner går modellen bara att markera; det som är
     // ritat i dem (mått, text, 2D, taklutningar) går att flytta (0.8).
     const ro = !!this.host.readOnly?.();
-    const rg = ro ? roofGripAt(this.host, p.model, p.pointerType === 'touch') : null;
-    if (rg) {
-      this.roof = { grip: rg, drag: null, snap: null };
-      return 'capture';
-    }
-    const hg = ro ? heightGripAt(this.host, p.model, p.pointerType === 'touch') : null;
-    if (hg) {
-      this.measure = { grip: hg, x: null };
-      return 'capture';
-    }
-    const ug = this.underlayGripAt(p.model, p.pointerType === 'touch');
-    if (ug) {
-      this.ulGrip = { ...ug, snap: null, free: false };
-      return 'capture';
-    }
-    const dg = depthGripAt(this.host, p.model, p.pointerType === 'touch');
-    if (dg) {
-      this.depthDrag = { grip: dg, value: dg.value, moved: false };
-      return 'capture';
-    }
-    const cg = crestGripAt(this.host, p.model, p.pointerType === 'touch');
-    if (cg) {
-      this.crest = { grip: cg, to: null };
-      return 'capture';
-    }
-    const nd = shapeNodeAt(this.host, p.model, p.pointerType === 'touch');
-    if (nd) {
-      this.node = { ...nd, snap: null };
-      return 'capture';
-    }
+    this.active = gripDragAt(this.host, p, ro);
+    if (this.active) return 'capture';
     const g = ro ? null : endGripAt(this.host, p.model);
     if (g) {
       this.grip = { ...g, companions: companionsAt(this.host, g.wallId, g.from), snap: null };
@@ -150,46 +108,8 @@ export class SelectTool implements ViewTool {
   drag(p: ViewPointer): void {
     this.copying = p.mod;
     const tol = pxToMm(this.host, p.pointerType === 'touch' ? 18 : 12);
-    if (this.ulGrip) {
-      const u = this.ulGrip;
-      u.free = p.shift;
-      u.snap = snap({ cursor: p.model, segments: this.host.snapSegments(), tol, exclude: new Set([u.id]) });
-      return;
-    }
-    if (this.measure) {
-      this.measure.x = Math.round(p.model[0]);
-      return;
-    }
-    if (this.depthDrag) {
-      this.depthDrag.value = depthDragValue(this.depthDrag.grip, p.model);
-      this.depthDrag.moved = true;
-      return;
-    }
-    if (this.crest) {
-      this.crest.to = crestDragTo(this.host, this.crest.grip.id, p.model);
-      return;
-    }
-    if (this.node) {
-      const n = this.node;
-      const el = editedShape(this.host.store.doc, n.id, n.hole);
-      const pts = el ? shapeNodes(el) : [];
-      // Vinkellås (Shift) från grannpunkten.
-      const from = pts[n.index - 1] ?? pts[n.index + 1];
-      n.snap = snap({ cursor: p.model, from, segments: this.host.snapSegments(), tol, ortho: p.shift, exclude: new Set([n.id]) });
-      return;
-    }
-    if (this.roof) {
-      const r = this.roof;
-      const space = this.host.space?.();
-      if (!space) return;
-      // Snäpp mot linjerna i vyn (t.ex. väggens överkant), inte mot taket självt.
-      const s = snap({ cursor: p.model, segments: this.host.snapSegments(), tol, exclude: new Set([r.grip.roof]) });
-      const exact = s.kind !== 'free' && s.kind !== 'angle';
-      r.snap = exact ? s : null;
-      let to: Vec2 = exact ? s.point : p.model;
-      // Greppen går bara upp och ned.
-      to = [r.grip.at[0], to[1]];
-      r.drag = dragRoofGrip(this.host.store.doc, space, r.grip, roundMm(to), { free: p.alt });
+    if (this.active) {
+      dragGrip(this.host, this.active, p, tol);
       return;
     }
     if (this.grip) {
@@ -241,82 +161,10 @@ export class SelectTool implements ViewTool {
   }
 
   up(p: ViewPointer, moved: boolean): void {
-    if (this.depthDrag) {
-      const d = this.depthDrag;
-      this.depthDrag = null;
-      if (!moved || !d.moved || d.value === d.grip.value) return;
-      updateParams(this.host.store, [d.grip.id], { [d.grip.key]: d.value }, d.grip.key === 'depth' ? 'Ändra djupet' : 'Ändra Tonat från');
-      return;
-    }
-    if (this.measure) {
-      const m = this.measure;
-      this.measure = null;
-      const el = this.host.store.doc.elements[m.grip.marker];
-      if (!el || !moved || m.x === null) return;
-      const old = (el.params.heightOffsets as Record<string, number> | undefined) ?? {};
-      const next = Math.round((old[m.grip.key] ?? 0) + m.x - m.grip.at[0]);
-      updateParams(this.host.store, [el.id], { heightOffsets: { ...old, [m.grip.key]: next || undefined } }, 'Flytta höjdmåttet');
-      return;
-    }
-    if (this.crest) {
-      const c = this.crest;
-      this.crest = null;
-      const el = this.host.store.doc.elements[c.grip.id];
-      if (!el) return;
-      if (!moved || !c.to) {
-        this.host.modify?.(p, c.grip.id);
-        return;
-      }
-      if (el.locked) {
-        this.host.hint('Låst. Lås upp i egenskaperna för att ändra.', 3000);
-        return;
-      }
-      const list = [...((el.params.crest as { at: [number, number]; h: number }[] | undefined) ?? [])];
-      if (!list[c.grip.index]) return;
-      list[c.grip.index] = { ...list[c.grip.index], at: [c.to[0], c.to[1]] };
-      updateParams(this.host.store, [el.id], { crest: list }, 'Flytta höjdpunkten');
-      return;
-    }
-    if (this.ulGrip) {
-      const u = this.ulGrip;
-      this.ulGrip = null;
-      const el = this.host.store.doc.elements[u.id];
-      if (!el || !moved || !u.snap) return;
-      if (el.locked) {
-        this.host.hint('Låst. Lås upp i egenskaperna för att ändra.', 3000);
-        return;
-      }
-      const next = dragUnderlayGrip(resolveParams<UnderlayParams>(this.host.store.doc, el), u.grip, u.snap.point, u.free);
-      if (next) updateParams(this.host.store, [u.id], next, u.grip.kind === 'side' ? 'Sträck bilden' : u.free ? 'Sträck bilden' : 'Skala bilden');
-      return;
-    }
-    if (this.node) {
-      const n = this.node;
-      this.node = null;
-      const el = this.host.store.doc.elements[n.id];
-      if (!el) return;
-      if (!moved || !n.snap) {
-        // Klick på en punkt: Modifiera med det som går att göra med den.
-        this.host.modify?.(p, n.id);
-        return;
-      }
-      if (el.locked) {
-        this.host.hint('Låst. Lås upp i egenskaperna för att ändra.', 3000);
-        return;
-      }
-      const shape = editedShape(this.host.store.doc, n.id, n.hole);
-      if (shape) updateParams(this.host.store, [n.id], shapePatch(this.host.store.doc, n.id, n.hole, moveShapeNode(shape, n.index, roundMm(n.snap.point))), 'Flytta punkt');
-      return;
-    }
-    if (this.roof) {
-      const r = this.roof;
-      this.roof = null;
-      if (!moved || !r.drag) return;
-      if (this.host.store.doc.elements[r.grip.roof]?.locked) {
-        this.host.hint('Taket är låst. Lås upp i egenskaperna för att ändra det.', 3000);
-        return;
-      }
-      updateParams(this.host.store, [r.grip.roof], r.drag.patch, r.grip.kind === 'slope' ? 'Ändra lutningen' : 'Ändra höjden');
+    if (this.active) {
+      const d = this.active;
+      this.active = null;
+      finishGrip(this.host, d, p, moved);
       return;
     }
     if (this.grip) {
@@ -419,7 +267,7 @@ export class SelectTool implements ViewTool {
    */
   cycle(back = false): boolean {
     const st = this.stack;
-    if (!st || st.ids.length < 2 || this.box || this.move || this.grip || this.ulGrip) return false;
+    if (!st || st.ids.length < 2 || this.box || this.move || this.grip || this.active) return false;
     const n = st.ids.length;
     st.index = (st.index + (back ? n - 1 : 1)) % n;
     this.hoverId = st.ids[st.index];
@@ -443,9 +291,7 @@ export class SelectTool implements ViewTool {
 
   cancel(): void {
     this.stack = null;
-    this.roof = null;
-    this.node = null;
-    this.ulGrip = null;
+    this.active = null;
     this.box = null;
     this.grip = null;
     this.move = null;
@@ -470,86 +316,12 @@ export class SelectTool implements ViewTool {
       this.host.view.svg.style.cursor = this.cursor = 'default';
       return;
     }
-    this.cursor = p && (endGripAt(this.host, p.model) || depthGripAt(this.host, p.model, false) || crestGripAt(this.host, p.model, false) || (this.host.readOnly?.() && heightGripAt(this.host, p.model, false)) || this.underlayGripAt(p.model, false)) ? 'crosshair' : this.hoverId && this.host.selection.has(this.hoverId) ? 'move' : 'default';
+    this.cursor = p && (endGripAt(this.host, p.model) || depthGripAt(this.host, p.model, false) || crestGripAt(this.host, p.model, false) || (this.host.readOnly?.() && heightGripAt(this.host, p.model, false)) || idleUnderlayGripAt(this.host, this.active, p.model, false)) ? 'crosshair' : this.hoverId && this.host.selection.has(this.hoverId) ? 'move' : 'default';
     this.host.view.svg.style.cursor = this.cursor;
   }
 
   overlay(cam: Camera): string {
-    const out: string[] = [];
-    // Greppen för markerade tak i en fasad eller sektion, och taket medan det dras.
-    for (const g of roofGripsShown(this.host)) {
-      const s = cam.toScreen(g.at);
-      out.push(g.kind === 'slope' ? `<path d="M${s[0]} ${s[1] - 7}L${s[0] + 7} ${s[1]}L${s[0]} ${s[1] + 7}L${s[0] - 7} ${s[1]}Z" class="grip"/>` : `<rect x="${s[0] - 5}" y="${s[1] - 5}" width="10" height="10" class="grip"/>`);
-    }
-    // Höjdmåtten i fasaden eller sektionen (0.10.13): en ruta i överänden, som dras i sidled.
-    for (const g of heightGripsShown(this.host)) {
-      const dragging = this.measure && this.measure.grip.key === g.key && this.measure.x !== null;
-      const s = cam.toScreen(g.at);
-      out.push(`<rect x="${s[0] - 4}" y="${s[1] - 4}" width="8" height="8" class="grip side-grip"/>`);
-      if (dragging) {
-        const a = cam.toScreen([this.measure!.x!, g.at[1]]);
-        out.push(`<path d="M${a[0]} ${a[1]}L${a[0]} ${a[1] + 160}" class="rubber"/>`);
-      }
-    }
-    // Djupet och Tonat från för en markerad fasad eller sektion (0.10.15):
-    // gränsen streckad, och ett grepp som dras längs blickriktningen.
-    for (const g of depthGripsShown(this.host)) {
-      const dragging = this.depthDrag?.grip.key === g.key && this.depthDrag.moved;
-      const v = dragging ? this.depthDrag!.value : g.value;
-      const { a, b, at } = depthGeometry(g, dragging ? (v ?? 0) : g.shown);
-      const [sa, sb, ss] = [a, b, at].map((q) => cam.toScreen(q));
-      // Utan värde (inget tonat) ritas bara greppet, ihåligt.
-      if (v !== null) out.push(`<path d="M${sa[0]} ${sa[1]}L${sb[0]} ${sb[1]}" class="depth-line${g.key === 'toneDepth' ? ' tone' : ''}"/>`);
-      out.push(g.key === 'depth' ? `<rect x="${ss[0] - 5}" y="${ss[1] - 5}" width="10" height="10" class="grip"/>` : `<path d="M${ss[0]} ${ss[1] - 7}L${ss[0] + 7} ${ss[1]}L${ss[0]} ${ss[1] + 7}L${ss[0] - 7} ${ss[1]}Z" class="grip${v === null ? ' hollow' : ''}"/>`);
-      if (dragging) {
-        const name = g.key === 'depth' ? 'Djup' : 'Tonat från';
-        out.push(lengthLabel(cam, at, at, v === null ? `${name}: ${g.key === 'depth' ? 'allt' : 'inget'}` : `${name} ${nf.format(v)} mm`));
-      }
-    }
-    // Stödmurarnas höjdpunkter (0.10.13): romber som dras längs muren.
-    for (const g of crestGripsShown(this.host)) {
-      const dragged = this.crest && this.crest.grip.id === g.id && this.crest.grip.index === g.index && this.crest.to;
-      const s = cam.toScreen(dragged || g.at);
-      out.push(`<path d="M${s[0]} ${s[1] - 7}L${s[0] + 7} ${s[1]}L${s[0]} ${s[1] + 7}L${s[0] - 7} ${s[1]}Z" class="grip"/>`);
-      if (dragged) out.push(lengthLabel(cam, g.at, dragged, `${nf.format(Math.round(dist(g.at, dragged)))} mm`));
-    }
-    for (const g of this.ulGrip?.snap ? [] : underlayGripsShown(this.host)) {
-      const q = cam.toScreen(g.at);
-      out.push(g.kind === 'corner' ? `<rect x="${q[0] - 5}" y="${q[1] - 5}" width="10" height="10" class="grip"/>` : `<rect x="${q[0] - 4}" y="${q[1] - 4}" width="8" height="8" class="grip side-grip"/>`);
-    }
-    if (this.ulGrip?.snap) {
-      const u = this.ulGrip;
-      const sn = this.ulGrip.snap;
-      const el = this.host.store.doc.elements[u.id];
-      const p = el ? resolveParams<UnderlayParams>(this.host.store.doc, el) : null;
-      const next = p && dragUnderlayGrip(p, u.grip, sn.point, u.free);
-      if (p && next) {
-        const c = underlayCorners({ ...p, ...next }).map((q) => cam.toScreen(q));
-        out.push(`<path d="M${c.map((q) => q.join(' ')).join('L')}Z" class="ghost"/>`);
-        out.push(lengthLabel(cam, sn.point, sn.point, `${nf.format(Math.round(next.size[0] * next.scale))} × ${nf.format(Math.round(next.size[1] * next.scale))} mm`));
-      }
-      out.push(snapMarker(cam, sn));
-    }
-    if (this.node?.snap) {
-      const n = this.node;
-      const sn = this.node.snap;
-      const el = editedShape(this.host.store.doc, n.id, n.hole);
-      if (el) {
-        const shp = previewShape(el, moveShapeNode(el, n.index, sn.point));
-        out.push(`<path d="${shp.points.map((q, i) => `${i ? 'L' : 'M'}${cam.toScreen(q).join(' ')}`).join('')}${shp.closed ? 'Z' : ''}" class="ghost"/>`);
-        out.push(snapMarker(cam, sn));
-        const d = sub(sn.point, n.from);
-        out.push(lengthLabel(cam, n.from, sn.point, `${nf.format(Math.round(Math.hypot(d[0], d[1])))} mm  ${fmtAngle(angleDeg(d))}`));
-      }
-    }
-    if (this.roof?.drag) {
-      const d = this.roof.drag;
-      const path = d.outline.map((ring) => ring.map((q, i) => `${i ? 'L' : 'M'}${cam.toScreen(q).join(' ')}`).join('') + 'Z').join('');
-      out.push(`<path d="${path}" class="ghost"/>`);
-      const at = this.roof.grip.at;
-      if (this.roof.snap) out.push(snapMarker(cam, this.roof.snap));
-      out.push(lengthLabel(cam, at, [at[0] + 1, at[1]], d.text));
-    }
+    const out: string[] = [gripsOverlay(this.host, cam, this.active)];
     if (this.box) {
       const a = cam.toScreen(this.box.a);
       const b = cam.toScreen(this.box.b);
@@ -637,11 +409,6 @@ export class SelectTool implements ViewTool {
       .flatMap((p) => p.regions.map((rings) => rings[0]).filter(Boolean));
   }
 
-  /** Greppet i en markerad bild under punkten; inget medan ett grepp dras. */
-  private underlayGripAt(pt: Vec2, touch: boolean): { id: string; grip: UnderlayGrip; from: Vec2 } | null {
-    return this.ulGrip?.snap ? null : underlayGripAt(this.host, pt, touch);
-  }
-
   /** Den ände av väggen som ligger still medan den andra dras. */
   private fixedEnd(): Vec2 | undefined {
     if (!this.grip) return undefined;
@@ -660,11 +427,6 @@ export function releasedHint(n: number): string {
   return n === 1
     ? 'En anslutning släppte: väggen i rak förlängning kan inte följa med i sidled, eller skulle bli för kort.'
     : `${n} anslutningar släppte: väggar i rak förlängning kan inte följa med i sidled, eller skulle bli för korta.`;
-}
-
-function fmtAngle(a: number): string {
-  const r = Math.round(a * 10) / 10;
-  return `${(r === 360 ? 0 : r).toLocaleString('sv-SE')}°`;
 }
 
 /** Konturen av ett element förskjuten med d, som förhandsvisning av en flytt. */

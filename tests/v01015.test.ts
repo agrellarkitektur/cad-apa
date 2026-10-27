@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { buildPlan } from '../src/repr/plan';
 import { hiddenBy, hiddenObjectKey, hiddenObjects } from '../src/core/visibility';
-import { isShown, setShown } from '../src/ui/app/showMenu';
+import { isShown, setShown } from '../src/ui/app/showKeys';
 import { depthDragValue, depthGeometry, depthGripAt, depthGripsShown } from '../src/ui/tools/selectGrips';
 import { groundLines3d } from '../src/ui/app/ground3d';
 import { DocStore } from '../src/core/store';
@@ -83,5 +83,11 @@ describe('Visa och dölja (0.10.15)', () => {
     expect(l.slopes!.length).toBeGreaterThan(0);
     // Släckta markobjekt: inga linjer.
     expect(groundLines3d(s.doc, { ...view, hide: ['Ground'] }, { outlines: true, slopes: true }).outlines).toBeNull();
+    // Vägens tvärlinjer följer planen (0.10.15.1): en avslagen tvärlinje syns inte i 3D heller.
+    const vag = addGround(s, { kind: 'path', outline: [], width: 2000, line: [[-30000, 0], [-20000, 0]], height: 0, endHeight: 400 });
+    const segs = () => groundLines3d(s.doc, view, { outlines: true, slopes: false }).outlines!.length / 6;
+    const med = segs();
+    updateParams(s, [vag], { startLine: false, endLine: false });
+    expect(segs()).toBeLessThan(med);
   });
 });

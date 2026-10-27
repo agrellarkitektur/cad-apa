@@ -140,7 +140,9 @@ och smartmenyn, markeringen). Resten ligger i `src/ui/app/`, en fil per del
 | `snapping.ts` | Det verktygen snäpper mot, i planen och i fasader, sektioner och arbetsblad |
 | `toolOptions.ts` | Verktygsraden under ritytan och måttbandets värden |
 | `views.ts` | Vyhistorik, `goTo`, sparade vyer med deras inställningar (`applyView`, `viewModified`) och menyerna för vyer och markörer |
-| `showMenu.ts` | Visa-menyn med kalkeringens utseende, och skärmskalan |
+| `showMenu.ts` | Visa-menyn med kalkeringens utseende |
+| `showKeys.ts` | Det som kan tändas och släckas under Visa: `SHOW_GROUPS`, `isShown`, `setShown`, `traceStoreyOptions` (granskningen efter 0.10.15, ur `showMenu.ts`) |
+| `scalePop.ts` | Skärmskalan i statusraden (granskningen efter 0.10.15, ur `showMenu.ts`) |
 | `menus.ts` | Högerklick och långt tryck i plan, 3D och projektträdet |
 | `keyboard.ts` | Kortkommandona |
 | `clipboard.ts` | Kopiera, klipp ut och klistra in |
@@ -1257,21 +1259,24 @@ projekt i 1 982 jämförelser.
   (bjälklag, tak …).
 - **Visa-menyn**: `Wall`, `Door` och `Window` i `SHOW_GROUPS`, och
   `ground3d` och `slopes3d` (släckta från början, `OFF_BY_DEFAULT`).
-  Raden om dolda objekt och knappen `[data-unhide-all]` i `showMenu.ts`.
+  Raden om dolda objekt och knappen `[data-unhide-all]` i `showMenu.ts`
+  (nycklarna i `showKeys.ts` sedan granskningen efter 0.10.15).
 - **Högerklick**: `hideMenuItems` och `unhideMenuItems` i
   `src/ui/app/hideObjects.ts`, inkopplade i `menus.ts` (inte på blad och
   mallblad). *Dölj alla …* finns för typer med en egen kryssruta under
   Visa.
 - **Greppen för djup och Tonat från**: `depthGripsShown`, `depthGripAt`,
   `depthGeometry` och `depthDragValue` i `src/ui/tools/selectGrips.ts`,
-  dragningen (`depthDrag`) och ritningen i `selectTool.ts` (klasserna
+  dragningen och ritningen i `selectDrags.ts` (förut `selectTool.ts`; klasserna
   `depth-line` och `grip hollow`). Bara i planen, en ensam olåst markör.
   Utan Tonat från står greppet vid djupet eller 4 m från linjen.
 - **Linjerna i 3D**: `groundLines3d` i `src/ui/app/ground3d.ts` lägger
   konturerna (`pickShape`) och släntstrecken (planens linjer med `part`
   `slänt`) på den färdiga marken med `drape`; `View3D.setGroundLines`
   ritar dem. `pane3d.ts` räknar om dem bara när projektet, marken eller
-  vyn ändras.
+  vyn ändras. Vägarnas kontur är planens delar `kant`, `början` och
+  `slutet` (`PATH_EDGES`, 0.10.15.1), så att en avslagen tvärlinje inte
+  syns i 3D heller.
 - Tester: `tests/v01015.test.ts`.
 
 ## Fyllningar och opacitet (0.10.14, format 20)
@@ -1368,6 +1373,41 @@ projekt i 1 982 jämförelser.
   `groundFields.ts` med fältet `ground:rock` (0–100).
 - Tester: `tests/v01013.test.ts`. Referensritningen `mark > fasad
   fasad-1` ändrades bara av de nya namnen på måttens delar.
+
+## Granskning efter 0.10.15 (0.10.15.1, format 20)
+
+Två småfel (markobjektens tvärlinjer i 3D, maskens opacitet i tio steg)
+och stora filer delade. `drawing2d.ts` exporterar fyllningen vidare, så
+att inget som importerade den behövde ändras; Visa-menyns nycklar
+importeras från `showKeys.ts` (också i testerna).
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/ui/tools/selectTool.ts` | Markera: väggändarna, flytten, rutan, klick, hovring och Tab (682 → 445 rader) |
+| `src/ui/tools/selectDrags.ts` | Ny: de andra greppen som `GripDrag` (`roof`, `measure`, `underlay`, `depth`, `crest`, `node`): `gripDragAt` hittar greppet, `dragGrip` följer musen, `finishGrip` skriver ändringen och `gripsOverlay` ritar greppen och spöket; `fmtAngle` |
+| `src/ui/app/showMenu.ts` | Visa-menyn (368 → 204 rader) |
+| `src/ui/app/showKeys.ts` | Ny: `SHOW_GROUPS`, `OFF_BY_DEFAULT`, `isShown`, `setShown`, `traceStoreyOptions` |
+| `src/ui/app/scalePop.ts` | Ny: skärmskalan i statusraden (`installScalePop`; `installShowMenu` lämnar tillbaka den också) |
+| `src/elements/drawing2d.ts` | 2D-formen (515 → 354 rader) |
+| `src/elements/fill2d.ts` | Ny: `FillParams` (eget gränssnitt, som `Shape2DParams` bygger på), `FillPattern`, `FILL_FIELDS`, `effectiveFill`, `fillPrims`, `anchorLines`, `opacitiesOf`, förvalen och `PATTERN_LABELS` |
+| `src/styles/blad.css` | Bladen, bakgrundstråden och egen skala (528 → 324 rader) |
+| `src/styles/fyllningar.css` | Ny: mönstren med förhandsvisning och fyllningens panel, direkt efter `blad.css` i `app.css` |
+
+- **Markera** glömde höjdpunkten, djupet och höjdmåttet i `cancel`; nu är
+  de ett och samma fält (`active`) som `cancel` tömmer.
+- **Klickjämförelsen** har 50 nya steg: höjderna mot våningen, greppen som
+  dras (höjdpunkt, 2D-punkt, bildens hörn, Tonat från, BH-måttet) med ett
+  steg mitt i varje dragning (musen nedtryckt, `press_drag` med
+  `release=False`), fyllningens panel, sparad och kopplad fyllning,
+  slänternas fyllning, Dölj i vyn och Visa dolda objekt, och linjerna i
+  3D. Smartmenyn döljs med en stilregel i de stegen. Kryssrutorna under
+  Visa klickas (`__click`): menyn lyssnar på `click`, så de gamla stegen
+  med `__set` ändrade bara rutan. Före och efter granskningen skiljer bara
+  maskens panel och rampens tvärlinje i 3D-bilden.
+- **Mätt**: `groundLines3d` 4–7 ms för konturerna och 6–10 ms med
+  släntstrecken efter en ändring, i exempelvillan på den kuperade platsen
+  (planen räknas bara för vägar när bara konturerna är tända). Inget nytt
+  som växer med kvadraten.
 
 ## Granskning efter 0.10.12 (format 20)
 

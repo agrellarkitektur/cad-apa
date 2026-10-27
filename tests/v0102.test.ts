@@ -11,7 +11,7 @@ import { buildPlan } from '../src/repr/plan';
 import type { LinePrim, Primitive, Vec2 } from '../src/repr/primitives';
 import { zOn, type Solid } from '../src/repr/solids';
 import { sampleProject } from '../src/sample/sampleProject';
-import { isShown, setShown } from '../src/ui/app/showMenu';
+import { isShown, setShown } from '../src/ui/app/showKeys';
 import { modifyContextAt, opsFor } from '../src/ui/modify/ops';
 import { ModifyTool, runInstant } from '../src/ui/modify/tool';
 import type { ViewPointer } from '../src/view2d/planView';

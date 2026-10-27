@@ -25,9 +25,8 @@ export function fillKindOf(fill: FillPattern | undefined): FillKind {
   return !fill ? 'none' : fill === 'solid' ? 'solid' : fill === 'mask' ? 'mask' : 'pattern';
 }
 
-/** Opaciteten i tio steg för Solid och Mönster, och listan för Mask. */
+/** Opaciteten i tio steg för alla lägen (masken också sedan 0.10.15.1). */
 export const OPACITY_STEPS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
-export const MASK_STEPS = [100, 75, 50, 25];
 
 /** Fyllningens opacitet i procent som den ritas: egen, annars linjens (som före 0.10.14), annars 100. */
 export function fillOpacityOf(p: Pick<FillParams, 'opacity' | 'fillOpacity'>): number {
@@ -74,9 +73,9 @@ function numberInput(key: string, label: string, v: number, unit: string, attrs:
 }
 
 /** Opaciteten i tio steg (knappar) och skriven. */
-function opacitySteps(name: string, key: string, label: string, v: number, attrs: (key: string) => string, steps = OPACITY_STEPS): string {
+function opacitySteps(name: string, key: string, label: string, v: number, attrs: (key: string) => string): string {
   const ok = Number.isFinite(v);
-  const buttons = steps.map((s) => `<label title="${s} %"><input type="radio" name="${escapeHtml(name)}" value="${s}" ${attrs(key)}${ok && Math.round(v) === s ? ' checked' : ''}><span>${s}</span></label>`).join('');
+  const buttons = OPACITY_STEPS.map((s) => `<label title="${s} %"><input type="radio" name="${escapeHtml(name)}" value="${s}" ${attrs(key)}${ok && Math.round(v) === s ? ' checked' : ''}><span>${s}</span></label>`).join('');
   return `<div class="fill-opacity"><span class="fill-opacity-label">${label}</span><div class="fill-steps" role="radiogroup" aria-label="${label}">${buttons}</div>${numberInput(key, '', v, '%', attrs, ' data-unit="" data-step="10"')}</div>`;
 }
 
@@ -164,7 +163,7 @@ export function fillPanel(name: string, p: FillParams, attrs: (key: string) => s
     body = `<div class="fields"><label class="field"><span>Färg</span><input type="color" ${attrs('fillColor')} value="${escapeHtml(color)}"></label></div>
       ${opacitySteps(`${name}-op`, 'fillOpacity', 'Opacitet', op, attrs)}`;
   else if (kind === 'mask')
-    body = `<div class="fields"><label class="field"><span>Opacitet</span><select ${attrs('fillOpacity')}>${MASK_STEPS.map((s) => `<option value="${s}"${Math.round(op) === s ? ' selected' : ''}>${s} %</option>`).join('')}${MASK_STEPS.includes(Math.round(op)) ? '' : `<option value="${Math.round(op)}" selected>${Math.round(op)} %</option>`}</select></label></div>
+    body = `${opacitySteps(`${name}-op`, 'fillOpacity', 'Opacitet', op, attrs)}
       <p class="note">Masken döljer det som ligger under och syns som ritningens bakgrund (papperet i PDF:en).</p>`;
   else if (kind === 'pattern') {
     const own = p.fill === 'type';
