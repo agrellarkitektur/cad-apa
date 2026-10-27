@@ -5,5 +5,5 @@
 export const ENGINE = {
   name: 'Bacchus',
   /** Versionen. Vad varje version innehåller står i README och docs/PLAN.md. */
-  version: '0.10.17',
+  version: '0.10.18',
 } as const;

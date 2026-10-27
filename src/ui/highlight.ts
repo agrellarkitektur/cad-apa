@@ -1,4 +1,5 @@
 import { hasEditableOutline } from '../core/roofEdit';
+import { rampLevels, rampSides } from '../elements/groundRamp';
 import { resolveParams } from '../elements/registry';
 import type { ProjectDoc } from '../core/model';
 import type { WallParams } from '../elements/wall';
@@ -150,11 +151,21 @@ export function renderHighlight(
     const pts = (resolveParams<GroundParams>(doc, el).line ?? []) as Vec2[];
     if (pts.length < 2) continue;
     out.push(`<path d="${path(cam, pts, false)}" class="ref-line"/>`);
+    const gp = resolveParams<GroundParams>(doc, el);
+    // Rampens sidor (0.10.18): punkterna som styr utbredningen, tunnare.
+    if (gp.kind === 'path')
+      for (const side of Object.values(rampSides(gp)))
+        for (const pt of side) {
+          const s = cam.toScreen(pt);
+          out.push(`<rect x="${s[0] - 3.5}" y="${s[1] - 3.5}" width="7" height="7" class="grip side"/>`);
+        }
     // Linjens punkter som riktiga punkter (0.10.17), som 2D-formens; de dras och ändras på samma sätt.
-    for (const pt of pts) {
+    // Rampens punkter med höjd (0.10.18) i en annan färg: de styr lutningen.
+    const level = new Set(gp.kind === 'path' ? rampLevels(gp).map((l) => l.i) : []);
+    pts.forEach((pt, i) => {
       const s = cam.toScreen(pt);
-      out.push(`<rect x="${s[0] - 4.5}" y="${s[1] - 4.5}" width="9" height="9" class="grip"/>`);
-    }
+      out.push(level.has(i) ? `<circle cx="${s[0]}" cy="${s[1]}" r="6" class="grip level"/>` : `<rect x="${s[0] - 4.5}" y="${s[1] - 4.5}" width="9" height="9" class="grip"/>`);
+    });
     const a = cam.toScreen(pts[pts.length - 2]);
     const b = cam.toScreen(pts[pts.length - 1]);
     const l = Math.hypot(b[0] - a[0], b[1] - a[1]);

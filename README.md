@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.17** (alfa); nästa är **0.10.18, rampens referenslinje**.
+**0.10.18** (alfa); nästa är en **granskning**, sedan **0.10.19, markobjektens bågar**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,26 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.18, rampens referenslinje (samma filformat, 20):
+- **Referenslinjen styr lutningen**: höjden räknas längs den, och tvärfallet
+  vrider kring den (också när den ligger på en kant). En punkt på
+  referenslinjen kan få en egen höjd med *Höjd i punkten* i Modifiera; då
+  går rampen rakt mellan punkterna med höjd, och en plan sträcka mellan två
+  sådana punkter är ett vilplan. Punkterna med höjd är orange när rampen är
+  markerad, de andra vita. Lutningen och varningarna gäller varje sträcka
+- **Sidorna styr utbredningen**: de följer referenslinjen med bredden tills
+  en av dem ändras (klicka på en punkt eller kant på sidan i Modifiera, eller
+  dra punkten), och lever sedan sitt eget liv, så att rampen kan vara olika
+  bred längs sin längd. *Sidorna* i egenskaperna gör dem ritade eller låter
+  dem följa referenslinjen igen
+- **Stödmur eller slänt per sida**: *Vänster sida* och *Höger sida* för sig;
+  *Kanterna* gäller alla kanter. En sida som är stödmur ritas tjock och har
+  inga släntstreck, och marken utanför den är orörd
+- **Förläng rampen**: klicka på rampens första eller sista punkt med verktyget
+  Mark (Ramp/väg), eller välj *Förläng* på en ände i Modifiera, och klicka nya
+  punkter. Lutningen fortsätter, den gamla änden behåller sin höjd och ritade
+  sidor förlängs lika långt från referenslinjen
 
 Version 0.10.17, linjerna i 2D-formen (samma filformat, 20):
 - **Rita vidare** på en linje genom att klicka på änden, också när den

@@ -297,6 +297,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     // höjd och liv, som börjar i änden. Verktygets egna val kommer tillbaka efteråt.
     startWallFrom: (ctx) => tools.startWallFrom(ctx),
     stopWall: () => tools.endWallFrom(),
+    startRampFrom: (ctx) => tools.startRampFrom(ctx),
     endModify: () => {
       if (ui.tool === 'select') view.setTool(tools.toolFor('select'));
       view.requestRender();

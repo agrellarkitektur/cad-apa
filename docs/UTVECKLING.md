@@ -1244,6 +1244,62 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Rampens referenslinje (0.10.18, format 20)
+
+Inget nytt format: de nya parametrarna i `GroundParams` är frivilliga.
+
+- **Modellen**: `src/elements/groundRamp.ts`. `levels` (en per punkt i
+  `line`, null = ingen höjd; ändarna är `height` och `endHeight`),
+  `rampLevels` och `rampRuns` (sträckorna mellan punkterna med höjd och
+  deras 1:N), `heightAtS`. `left`/`right` är ritade sidor; utelämnade
+  följer referenslinjen (`derivedSides`, som förut med `width`, `refSide`
+  och `refOffset`), och `rampSides` ger båda. `leftEdge`/`rightEdge`
+  ('slope' eller 'wall') gäller sidorna, annars `edge`, som också gäller
+  ändarna. `rampShape` ger formen för den färdiga marken: ringen är höger
+  sida framåt, slutets tvärlinje, vänster sida bakåt och början
+  (`rampRing`, med `wall` per kant). Höjden i en punkt är `heightAtS` vid
+  `along(ref).s` plus `along(ref).lat / crossFall`, alltså kring
+  referenslinjen (förut kring mittlinjen, med `lat` begränsad till halva
+  bredden). `pathShape`, `pathRatio` och `pathWarnings` i `groundLines.ts`
+  är borta; varningarna är `rampWarnings` per sträcka
+- **Stödmur per kant**: `GroundShape.probe` kan svara `wall: true` för en
+  punkt utanför; `finishedGround` lämnar då noden orörd. `slope` är null
+  bara när alla kanter är mur. `GroundGeometry.edgeWall` (per kant i
+  ringen) och `sides`; `walkSlope` i `groundPlan.ts` hoppar över murens
+  kanter och solfjädrarna intill dem. `g.center` är referenslinjen
+- **Planen**: sidorna ritas var för sig (0,5 där de är mur), pilen och
+  1:N för varje lutande sträcka mitt på rampen (`middleAt`, halvvägs mellan
+  sidornas punkter närmast referenslinjen), namnet i mitten (med 1:N bara
+  när rampen har en sträcka), ändarnas höjd mitt på tvärlinjen och de
+  andra vid punkten
+- **Modifiera**: rampens sidor är formerna inne i elementet, som
+  bjälklagets håltagningar: `subShapes(el)` i `shapeEdit.ts` (`hole` 0 =
+  vänster, 1 = höger; `rampSideShape`), och `editedShape`/`shapePatch`
+  känner igen dem (`left`/`right`). Ändras referenslinjen följer `levels`
+  med (`remapLevels`: lika många punkter efter nummer, annars efter läge).
+  `modifyContextAt` och `shapeNodeAt` går igenom `subShapes`, och
+  håltagningens egna val (`holeMove` …) gäller bara bjälklag. Valen
+  `pathLevel` (värde, förslaget ur lutningen som `crestPoint`),
+  `pathLevelClear` och `pathExtend` i `src/ui/modify/rampOps.ts`;
+  `pathExtend` anropar `ModifyHost.startRampFrom`
+  (`startRampFrom` i `src/ui/app/tools.ts`), som byter till Mark och
+  `GroundTool.continueFrom`
+- **Förlänga**: `GroundTool.continueAt` (ett klick på en ände av en synlig,
+  olåst ramp i sättet Ramp/väg, de markerade först; Ctrl börjar en ny) och
+  `continueFrom`; `finish` lägger till punkterna med `extendRamp`
+  (lutningen i sista eller första sträckan fortsätter, avrundad till 10 mm;
+  den gamla änden får sin höjd i `levels`; ritade sidor förlängs med
+  `offsetLine` av den nya biten, lika långt från referenslinjen)
+- **Transformationer**: `movePatch` flyttar `left`/`right`; `rampSides` i
+  `transforms.ts` byter dem (och `leftEdge`/`rightEdge`) när det speglas
+- **Greppen**: `.grip.level` (orange, punkterna med höjd) och `.grip.side`
+  i `highlight.ts` och `ritytan.css`; referenslinjen i 3D följer
+  `heightAtS` (`groundRefLine` i `pane3d.ts`)
+- Tester: `tests/v01018.test.ts`. Klickjämförelsen mot 0.10.17 kördes:
+  samma `doc` i alla 396 steg; ritningen skiljer från steget *tvärfall*
+  (en ramp med referenslinjen på vänster kant, förskjuten, med tvärfall,
+  vrider nu kring referenslinjen), panelen och greppen för rampen
+
 ## Linjerna i 2D-formen (0.10.17, format 20)
 
 Inget nytt format.

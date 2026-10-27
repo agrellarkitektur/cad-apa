@@ -5,6 +5,7 @@ import { dist, dot, left, norm, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import { catmullRom, isClosed, segmentArc, segmentCount, shapePoints, type Shape2DParams, type ShapePath } from './drawing2d';
 import type { SlabHole } from './slab';
+import { rampSides, remapLevels, type RampParams } from './groundRamp';
 
 /**
  * Punkter och kanter i 2D-former (0.8 del 2, 0.8.19, 0.8.24): greppen som
@@ -66,6 +67,30 @@ export function shapeOf(el: ShapeLike | undefined): ShapeLike | undefined {
   return el.type === 'Roof' && Array.isArray(el.params.outline) ? roofShape(el) : undefined;
 }
 
+/** Om elementet är en ramp/väg med sidor som kan ritas om (0.10.18). */
+export function isRamp(el: ShapeLike | undefined): boolean {
+  return el?.type === 'Ground' && el.params.kind === 'path' && Array.isArray(el.params.line) && (el.params.line as unknown[]).length >= 2;
+}
+
+/** Rampens sida som en öppen 2D-form utan bågar (0.10.18): `hole` 0 är vänster sida, 1 höger. */
+export function rampSideShape(el: ShapeLike, hole: number): ShapeLike | undefined {
+  const pts = rampSides(el.params as RampParams)[hole === 0 ? 'left' : 'right'];
+  return pts.length >= 2 ? { type: 'Shape2D', params: { shape: 'polyline', points: pts.map((q) => [Math.round(q[0]), Math.round(q[1])]), closed: false, noArcs: true } } : undefined;
+}
+
+/**
+ * Formerna inne i elementet som ändras för sig, med sitt nummer (`hole`):
+ * bjälklagets håltagningar (0.9.4), eller rampens sidor (0.10.18, 0
+ * vänster och 1 höger).
+ */
+export function subShapes(el: ShapeLike | undefined): { hole: number; shape: ShapeLike }[] {
+  if (isRamp(el)) return [0, 1].flatMap((hole) => {
+    const shape = rampSideShape(el!, hole);
+    return shape ? [{ hole, shape }] : [];
+  });
+  return holesOf(el).map((h, hole) => ({ hole, shape: holeShape(h) }));
+}
+
 /** Bjälklagets håltagningar. */
 export function holesOf(el: ShapeLike | undefined): SlabHole[] {
   return el?.type === 'Slab' ? ((el.params.holes as SlabHole[] | undefined) ?? []) : [];
@@ -78,6 +103,7 @@ export function holesOf(el: ShapeLike | undefined): SlabHole[] {
 export function editedShape(doc: ProjectDoc, id: Id | undefined, hole?: number): ShapeLike | undefined {
   const el = id ? doc.elements[id] : undefined;
   if (hole === undefined) return shapeOf(el);
+  if (isRamp(el)) return rampSideShape(el!, hole);
   const h = holesOf(el)[hole];
   return h ? holeShape(h) : undefined;
 }
@@ -92,7 +118,16 @@ export function shapePatch(doc: ProjectDoc, id: Id, hole: number | undefined, pa
     // Takfallets kontur (0.10): punkterna och bågarna.
     return { ...('points' in patch ? { outline: patch.points } : {}), ...('bulges' in patch ? { bulges: patch.bulges } : {}) };
   }
-  if (hole === undefined && doc.elements[id]?.type === 'Ground') return 'points' in patch ? { line: patch.points } : {};
+  const el = doc.elements[id];
+  // Rampens sidor (0.10.18): den ändrade sidan blir ritad och lever sitt eget liv.
+  if (hole !== undefined && isRamp(el)) return 'points' in patch ? { [hole === 0 ? 'left' : 'right']: patch.points } : {};
+  if (hole === undefined && el?.type === 'Ground') {
+    if (!('points' in patch)) return {};
+    // Rampens höjder i punkterna följer punkterna (0.10.18).
+    const before = (el.params.line as [number, number][] | undefined) ?? [];
+    const after = patch.points as [number, number][];
+    return isRamp(el) && Array.isArray(el.params.levels) ? { line: after, levels: remapLevels(before, after, el.params.levels as (number | null)[]) } : { line: after };
+  }
   if (hole === undefined) return patch;
   const holes = [...holesOf(doc.elements[id])];
   const h = holes[hole];

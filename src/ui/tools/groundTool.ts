@@ -1,7 +1,9 @@
-import { addElements } from '../../core/commands';
+import { addElements, updateParams } from '../../core/commands';
 import type { Element, Id } from '../../core/model';
 import { groundAt, terrainOf } from '../../core/site';
 import type { GroundParams } from '../../elements/ground';
+import { extendRamp } from '../../elements/groundRamp';
+import { resolveParams } from '../../elements/registry';
 import { dist } from '../../geometry/vec';
 import { slabAt } from '../../elements/slab';
 import type { Vec2 } from '../../repr/primitives';
@@ -42,6 +44,11 @@ export class GroundTool implements ViewTool, PointTaker {
   private lastUp = { t: 0, at: [0, 0] as Vec2 };
   private current: SnapResult | null = null;
   options: { mode: GroundMode } = { mode: 'area' };
+  /**
+   * Rampen som förlängs (0.10.18): ett klick på änden av en ramp ritar
+   * vidare på den, som 2D-formens linje. `pts` börjar då i änden.
+   */
+  private base: { id: Id; atStart: boolean } | null = null;
   lockAngle: number | null = null;
   onCreated?: (id: string) => void;
   onChange?: () => void;
@@ -80,7 +87,53 @@ export class GroundTool implements ViewTool, PointTaker {
       this.finish();
       return;
     }
-    this.click(roundMm(this.current?.point ?? p.model));
+    const pt = roundMm(this.current?.point ?? p.model);
+    // Klick på änden av en ramp förlänger den (0.10.18); Ctrl börjar en ny.
+    if (this.options.mode === 'path' && !this.pts.length && !p.mod && this.continueAt(pt, pxToMm(this.host, p.pointerType === 'touch' ? 18 : 10))) return;
+    this.click(pt);
+  }
+
+  /** Rampen som förlängs, om någon. */
+  get continuing(): Id | null {
+    return this.base?.id ?? null;
+  }
+
+  /**
+   * Börja förlänga rampen vars ände ligger närmast `pt`, inom `tol`:
+   * synliga, olåsta ramper, de markerade först. Svarar true om det blev så.
+   */
+  continueAt(pt: Vec2, tol: number): boolean {
+    const host = this.host;
+    const doc = host.store.doc;
+    const sel = new Set(host.selection.list());
+    let best: { id: Id; atStart: boolean; d: number; sel: boolean } | null = null;
+    for (const pk of host.plan().pickables) {
+      const el = doc.elements[pk.id];
+      if (el?.type !== 'Ground' || el.locked || el.params.kind !== 'path') continue;
+      const line = (el.params.line ?? []) as Vec2[];
+      if (line.length < 2) continue;
+      for (const atStart of [true, false]) {
+        const d = dist(pt, atStart ? line[0] : line[line.length - 1]);
+        const s = sel.has(el.id);
+        if (d <= tol && (!best || (s && !best.sel) || (s === best.sel && d < best.d))) best = { id: el.id, atStart, d, sel: s };
+      }
+    }
+    return !!best && this.continueFrom(best.id, best.atStart);
+  }
+
+  /** Förläng rampen `id` från början eller slutet (också från Modifiera). */
+  continueFrom(id: Id, atStart: boolean): boolean {
+    const el = this.host.store.doc.elements[id];
+    const line = (el?.params.line ?? []) as Vec2[];
+    if (!el || el.locked || line.length < 2) return false;
+    this.options.mode = 'path';
+    this.a = null;
+    this.base = { id, atStart };
+    const end = atStart ? line[0] : line[line.length - 1];
+    this.pts = [[end[0], end[1]]];
+    this.onChange?.();
+    this.host.view.requestRender();
+    return true;
   }
 
   /** Om projektet har en markmodell; annars ett tips. */
@@ -137,8 +190,14 @@ export class GroundTool implements ViewTool, PointTaker {
   finish(): void {
     const pts = this.pts;
     const mode = this.options.mode;
+    const base = this.base;
     this.pts = [];
+    this.base = null;
     this.onChange?.();
+    if (base) {
+      this.extend(base, pts.slice(1));
+      return;
+    }
     if (pts.length < 2 || !isLineMode(mode)) return;
     const line = pts.map((q): [number, number] => [q[0], q[1]]);
     if (mode === 'wall') {
@@ -149,6 +208,15 @@ export class GroundTool implements ViewTool, PointTaker {
     const h1 = Math.round(this.groundHeight(pts[pts.length - 1]) / 10) * 10;
     if (mode === 'breakline') this.create({ kind: 'breakline', outline: [], line, height: h0, endHeight: h1 });
     else this.create({ kind: 'path', outline: [], line, height: h0, endHeight: h1 });
+  }
+
+  /** Rampen med de nya punkterna (0.10.18); lutningen fortsätter, och den gamla änden behåller sin höjd. */
+  private extend(base: { id: Id; atStart: boolean }, added: Vec2[]): void {
+    const el = this.host.store.doc.elements[base.id];
+    if (!el || !added.length) return;
+    const patch = extendRamp(resolveParams<GroundParams>(this.host.store.doc, el), base.atStart, added);
+    updateParams(this.host.store, [base.id], patch as Record<string, unknown>, 'Förläng rampen');
+    this.host.selection.set([base.id]);
   }
 
   /** En urgrävning under bjälklaget där man klickade. Finns den redan markeras den. */
@@ -218,7 +286,9 @@ export class GroundTool implements ViewTool, PointTaker {
   }
 
   takePoint(p: Vec2): void {
-    this.click(roundMm(p));
+    const pt = roundMm(p);
+    if (this.options.mode === 'path' && !this.pts.length && this.continueAt(pt, 1)) return;
+    this.click(pt);
     this.host.view.requestRender();
   }
 
@@ -228,7 +298,8 @@ export class GroundTool implements ViewTool, PointTaker {
     if (m === 'point') return 'Klicka där höjdpunkten ska ligga; höjden tas ur marken och ändras i egenskaperna.';
     if (isLineMode(m)) {
       const what = { path: 'vägens referenslinje (mitten från början)', breakline: 'brytlinjen', wall: 'stödmurens linje' }[m as 'path'];
-      return this.pts.length ? 'Klicka nästa punkt. Dubbelklick, Enter eller Klar avslutar.' : `Klicka första punkten av ${what}.`;
+      if (this.base) return 'Klicka nästa punkt av förlängningen. Dubbelklick, Enter eller Klar avslutar; lutningen fortsätter.';
+      return this.pts.length ? 'Klicka nästa punkt. Dubbelklick, Enter eller Klar avslutar.' : `Klicka första punkten av ${what}${m === 'path' ? ', eller änden av en ramp för att förlänga den' : ''}.`;
     }
     return this.a ? 'Klicka det motsatta hörnet.' : 'Klicka ett hörn av markytan, eller välj Runt huset.';
   }
@@ -238,6 +309,7 @@ export class GroundTool implements ViewTool, PointTaker {
   reset(): void {
     this.a = null;
     this.pts = [];
+    this.base = null;
     this.lockAngle = null;
     this.onChange?.();
   }

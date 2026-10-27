@@ -8,6 +8,7 @@ import { bendShapeEdge, editedShape, holesOf, removeShapeNode, shapePatch } from
 import { resolveParams } from '../../elements/registry';
 import type { RoofParams } from '../../elements/roof';
 import { wallProfile, type GroundParams } from '../../elements/ground';
+import { clearRampLevel, setRampLevel } from './rampOps';
 import { crestAtS } from '../../elements/groundWall';
 import { fromRh, toRh } from '../../core/site';
 import { along } from '../../elements/groundLines';
@@ -37,7 +38,7 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
     const el = editedShape(doc, ctx.shapeId, ctx.hole);
     const patch = el && removeShapeNode(el, ctx.index!);
     if (el && patch) updateParams(host.store, [ctx.shapeId!], shapePatch(doc, ctx.shapeId!, ctx.hole, patch), 'Ta bort punkt');
-    else host.hint(ctx.hole !== undefined ? 'Hålet måste ha minst tre hörn.' : 'Formen har för få punkter för att ta bort en.');
+    else host.hint(ctx.hole !== undefined && doc.elements[ctx.shapeId!]?.type === 'Slab' ? 'Hålet måste ha minst tre hörn.' : 'Formen har för få punkter för att ta bort en.');
     return;
   }
   if (op === 'shapeStraighten') {
@@ -51,6 +52,11 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
     const kept = fuseLines(host.store, ctx.ids);
     if (kept) host.selection.set(kept);
     else host.hint('Linjerna har ingen gemensam ändpunkt (linjer och splines fogas var för sig).', 3500);
+    return;
+  }
+  // Rampens punkt utan egen höjd (0.10.18).
+  if (op === 'pathLevelClear') {
+    clearRampLevel(host, ctx);
     return;
   }
   // Håltagningen ur bjälklaget (0.9.4).
@@ -133,7 +139,7 @@ export function setEdgeCut(host: ToolHost, ctx: ModifyContext, cut?: EdgeCut): v
 }
 
 /** Val som inte visar snäppmarkören. */
-const NO_MARKER = new Set<OpId>(['roofCutAngle', 'fillet', 'chamfer', 'filletAll', 'chamferAll', 'shapeFillet', 'shapeChamfer', 'trim', 'join', 'roofTrim', 'moveZ', 'crestPoint']);
+const NO_MARKER = new Set<OpId>(['roofCutAngle', 'fillet', 'chamfer', 'filletAll', 'chamferAll', 'shapeFillet', 'shapeChamfer', 'trim', 'join', 'roofTrim', 'moveZ', 'crestPoint', 'pathLevel']);
 
 /**
  * Verktyget som kör ett val: förhandsvisar med markören och utför vid
@@ -354,7 +360,9 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
             ? this.commitMoveZ(typed)
             : this.op === 'crestPoint'
               ? (addCrestPoint(this.host, this.ctx, typed ?? this.value), true)
-              : true;
+              : this.op === 'pathLevel'
+                ? (setRampLevel(this.host, this.ctx, typed ?? this.value), true)
+                : true;
     if (finished) this.done();
   }
 

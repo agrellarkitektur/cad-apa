@@ -1,7 +1,7 @@
 import type { Element } from '../../core/model';
 import { dist } from '../../geometry/vec';
 import type { WallParams } from '../../elements/wall';
-import { holeShape, holesOf, shapeNodes, shapeOf } from '../../elements/shapeEdit';
+import { shapeNodes, shapeOf, subShapes } from '../../elements/shapeEdit';
 import { roofGripsInView, type RoofGrip } from '../../elements/roofGrips';
 import type { UnderlayParams } from '../../elements/underlay';
 import { hasImageGrips, underlayGrips, type UnderlayGrip } from '../../elements/underlayEdit';
@@ -119,7 +119,7 @@ export function underlayGripAt(host: ToolHost, pt: Vec2, touch: boolean): { id: 
  */
 export function shapeNodeAt(host: ToolHost, pt: Vec2, touch: boolean): { id: string; hole?: number; index: number; from: Vec2 } | null {
   const doc = host.store.doc;
-  const ids = host.selection.list().filter((id) => shapeOf(doc.elements[id]) || holesOf(doc.elements[id]).length);
+  const ids = host.selection.list().filter((id) => shapeOf(doc.elements[id]) || subShapes(doc.elements[id]).length);
   if (!ids.length) return null;
   const tol = pxToMm(host, touch ? 18 : 10);
   const ro = !!host.readOnly?.();
@@ -136,7 +136,8 @@ export function shapeNodeAt(host: ToolHost, pt: Vec2, touch: boolean): { id: str
     const own = shapeOf(el);
     // Takfallens kontur (0.10) och håltagningarna finns bara i planen.
     if (own && (el.type === 'Shape2D' || !ro)) take(id, undefined, shapeNodes(own));
-    else if (!ro) holesOf(el).forEach((h, hole) => take(id, hole, shapeNodes(holeShape(h))));
+    // Håltagningarna och rampens sidor (0.10.18); referenslinjens punkter går före.
+    if (!ro && (!own || el.type === 'Ground')) for (const { hole, shape } of subShapes(el)) take(id, hole, shapeNodes(shape));
   }
   return best;
 }

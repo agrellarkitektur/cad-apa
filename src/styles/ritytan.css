@@ -350,6 +350,17 @@
   stroke-width: 2.5;
 }
 
+/* Rampens punkter med höjd (0.10.18) och sidornas punkter. */
+.grip.level {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+}
+
+.grip.side {
+  stroke: var(--muted);
+  stroke-width: 2;
+}
+
 /* Referenslinjen på markerade väggar, mellan greppen. */
 .ref-line {
   fill: none;

@@ -3,34 +3,39 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 27 oktober 2026 (kväll), efter 0.10.17 Linjerna i 2D-formen.
+Senast: 27 oktober 2026 (kväll), efter 0.10.18 Rampens referenslinje.
 
 ## Läget
 
-- **Nästa session:** **0.10.18 Rampens referenslinje** (se *Nästa session*).
-- **0.10.17 Linjerna i 2D-formen är klar** på `main` (samma format, 20).
-  Byggt: rita vidare från änden av en omarkerad linje och sluta den med
-  ett klick på andra änden; *Kanter* (1, 3, 5, Alla) i Förskjut, också
-  på bågar, takfall, håltagningar, bjälklag och markytor; Foga ihop
-  (Shift+V, `foga`/`join`); ett klick mitt på en kant startar det som
-  senast användes på en kant; *Båge* i takets kontur och i håltagningens
-  polygon; bjälklag som rektangel eller polygon och håltagningar också som
-  cirkel; Vrid och Spegla hålet (Flytta, Vrid och Spegla i raden gäller
-  hålet man klickat på); punkter på markobjektens linjer. Enter sluter nu
-  takets kontur. Koden i UTVECKLING.md under *Linjerna i 2D-formen*;
-  Claudes val i PLAN.md. Carl August hoppade över frågorna. Testerna: 558
-  på ca 14 s. Klickjämförelsen är inte körd (inga steg för 0.10.16–0.10.17).
-- **Märks i hans ritningar efter 0.10.17:** ett klick på änden av en
-  linje med 2D-verktyget ritar vidare på den, också när den inte är
-  markerad (Ctrl+klick börjar en ny); ett klick mitt på en kant i en
-  markerad form kan starta ett val direkt (det senast använda på en kant);
-  Shift+V är Foga ihop (V utan Shift är fortfarande Markera).
-- **Inkorgen har tre nya punkter** (27 oktober, efter sorteringen):
-  stilmallens fönster bredare och i kolumner, egen färg på höjdkurvor,
-  Mer-knappen i smartmenyn när inget mer finns. Inte sorterade; Claudes
-  förslag: Mer-knappen och höjdkurvornas färg som småfel i granskningen
-  efter 0.10.18, stilmallens fönster i samma granskning eller en egen
-  liten version.
+- **Nästa session:** **Granskning efter 0.10.18** (se *Nästa session*).
+- **0.10.18 Rampens referenslinje är klar** på `main` (samma format, 20).
+  Byggt: referenslinjen styr höjden och tvärfallet; punkter på den kan få
+  en egen höjd (*Höjd i punkten* i Modifiera, orange när rampen är
+  markerad), och rampen går rakt mellan dem, så att en plan sträcka är ett
+  vilplan; lutning och varningar per sträcka. Sidorna följer referenslinjen
+  med bredden tills de ändras i Modifiera och lever sedan sitt eget liv
+  (*Sidorna* i egenskaperna). Stödmur eller slänt per sida (*Vänster
+  sida*, *Höger sida*; *Kanterna* gäller alla). Förläng med ett klick på en
+  ände med Mark (Ramp/väg) eller *Förläng* i Modifiera. Koden i
+  UTVECKLING.md under *Rampens referenslinje*; Claudes val i PLAN.md. Carl
+  August hoppade över frågorna. Testerna: 569 på ca 13 s. Klickjämförelsen
+  mot 0.10.17 kördes: samma `doc` i alla steg; ritningen skiljer från
+  steget *tvärfall* (se nedan), och rampens grepp och panel.
+- **Märks i hans ritningar efter 0.10.18:** en ramp med tvärfall och
+  referenslinjen på en kant (eller förskjuten) vrider kring
+  referenslinjen, inte kring mitten, så att höjderna flyttas med halva
+  bredden gånger tvärfallet; en bruten ramp med referenslinjen på en kant
+  får lutningen räknad längs referenslinjen. Fältet *Kanterna* finns kvar
+  och gäller alla kanter.
+- **Inkorgen** (tre punkter från 27 oktober) är lagd i *Granskning efter
+  0.10.18* efter Claudes förslag (frågorna hoppades över): Mer-knappen i
+  smartmenyn och höjdkurvornas färg som småfel, stilmallens fönster om det
+  ryms. Synpunktsfilen är uppdaterad.
+- **0.10.17 Linjerna i 2D-formen** (samma format, 20): rita vidare från
+  änden av en omarkerad linje; *Kanter* i Förskjut; Foga ihop (Shift+V);
+  ett klick mitt på en kant startar det senast använda valet; *Båge* i
+  takets kontur och håltagningen; bjälklag som polygon och hål som cirkel;
+  Vrid och Spegla hålet. Se PLAN.md.
 - **0.10.16 Snittet i planen är klar** på `main` (samma format, 20).
   Byggt: väggar, dörrar och fönster, bjälklag, möbler, tak och stödmurar
   ritas mot snitthöjden: snittade där de går genom den, som vy helt under
@@ -97,18 +102,18 @@ Senast: 27 oktober 2026 (kväll), efter 0.10.17 Linjerna i 2D-formen.
   Markobjektens linjer), 0.10.20 Situationsplanens beteckningar och
   0.10.21 Lutande väggar (förslag; fråga om före eller efter piloten). Ortofotot på marken är en egen liten
   undersökning. Förteckningen över markförändringarna hör till 0.12
-  Export. Nästa granskning efter ungefär tre versioner (0.10.18).
+  Export. Granskningen efter 0.10.18 är nästa session.
 - **0.10.13 Höjder i förhållande till våningen**: se PLAN.md.
 - **Granskningen efter 0.10.12** och **0.10.12 Småjusteringar**: se
   PLAN.md.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.17` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.18` i `engine.ts`, `package.json` och
   `package-lock.json` (npm godtar fyra delar i ett privat paket); nästa
-  version är `0.10.18`. En granskning höjer inte numret, eller får en
+  version är `0.10.19` (granskningen höjer inte numret). En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.17 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.18 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -164,10 +169,10 @@ vid varje överlämning.
   0.10.12~~, ~~0.10.13 Höjder i förhållande till våningen~~, ~~0.10.14
   Fyllningar och opacitet~~, ~~0.10.15 Visa och dölja~~, ~~Granskning
   efter 0.10.15 (0.10.15.1)~~, ~~0.10.16 Snittet i planen~~, ~~0.10.17
-  Linjerna i 2D-formen~~ (klara)
-- **0.10.18 Rampens referenslinje** (mellanstor till stor: referenslinjen
-  styr lutningen, sidorna bredden, höjdpunkter i ändarna, förlänga, mur
-  eller slänt per sida)
+  Linjerna i 2D-formen~~, ~~0.10.18 Rampens referenslinje~~ (klara)
+- **Granskning efter 0.10.18** (Mer-knappen, höjdkurvornas färg,
+  stilmallens fönster om det ryms, klickjämförelsens steg för
+  0.10.16–0.10.18, städning)
 - **0.10.19 Markobjektens bågar** (stor: bågar, Avrunda, docka ramper)
 - **0.10.20 Situationsplanens beteckningar** (förslag: murens ledare,
   markhöjder med status, sidolutning, låglinje, kontur runt slänterna,
@@ -190,16 +195,30 @@ vid varje överlämning.
 
 ## Nästa session
 
-**0.10.18 Rampens referenslinje** (mellanstor till stor, se PLAN.md och
-synpunkterna). Läs `cad-apa-synpunkter.md` och sortera Inkorgen först (tre
-punkter väntar). Granskningen är planerad efter 0.10.18; lägg då till
-klickjämförelsens steg för 0.10.16 och 0.10.17.
+**Granskning efter 0.10.18** (se PLAN.md): småfelen ur Inkorgen
+(Mer-knappen i smartmenyn när inget mer finns, egen färg på höjdkurvorna,
+stilmallens fönster i kolumner om det ryms), klickjämförelsens steg för
+0.10.16–0.10.18, städa och dela upp stora filer (`groundFields.ts`,
+`groundPlan.ts`, `ops.ts`), gå igenom testerna. Läs `cad-apa-synpunkter.md`
+först. Därefter **0.10.19 Markobjektens bågar**.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
+
+**0.10.18 efter provning** (Claudes val, se PLAN.md)
+- Tvärfallet vrider kring referenslinjen, också när den ligger på en
+  kant. Rätt, eller ska det vrida kring rampens mitt?
+- En ritad sida ligger kvar när referenslinjen flyttas. Ska den hellre
+  följa med när hela referenslinjen flyttas (men inte när en punkt dras)?
+- *Kanterna* gäller alla kanter och nollställer sidorna; ändarna har inget
+  eget val. Behövs *Början* och *Slutet* för sig?
+- En sida som är stödmur är bara en tjock linje (ingen kropp i 3D, ingen
+  höjd). Ska den bli en riktig stödmur med krön, som Stödmur-objektet?
+- Förlängd ramp: lutningen fortsätter. Hellre plan (vilplan) eller
+  höjden ur marken i den nya änden?
 
 **0.10.17 efter provning** (Claudes val, se PLAN.md)
 - Ett klick på änden av en omarkerad linje ritar vidare på den. Störande
@@ -341,6 +360,14 @@ fråga.
 80. Smartmenyns placering; ska rubriken *Ändra* heta något annat?
 
 ## Öppna frågor och kända begränsningar
+
+- **Rampen (0.10.18):** en sida som är stödmur har ingen kropp i 3D och
+  ingen höjd (som `edge: 'wall'` förut). Ritade sidor får inga bågar
+  (0.10.19). Där referenslinjen ligger på en kant träffar ett klick på
+  den sidan referenslinjen (den går först); sidan följer då med så länge
+  den inte är ritad. För att ändra den sidan för sig: gör sidorna ritade
+  och flytta referenslinjen, eller lägg den i mitten. Sidor som korsar varandra eller referenslinjen ger en
+  självskärande kontur; det prövas inte.
 
 - **Linjerna (0.10.17):** Foga ihop fogar inte linjer med splines, och
   inte linjer på olika ytor. Förskjut med flera kanter räknar hörn mellan

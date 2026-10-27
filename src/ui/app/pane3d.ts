@@ -2,12 +2,13 @@ import { levelOf } from '../../repr/solids';
 import { moveElements, moveWallEnd } from '../../core/commands';
 import type { Id } from '../../core/model';
 import { markerFrame } from '../../elements/markers';
+import { heightAtS, rampLevels } from '../../elements/groundRamp';
 import { resolveParams } from '../../elements/registry';
 import type { WallParams } from '../../elements/wall';
 import { wallProfile, type GroundParams } from '../../elements/ground';
 import { crestAtS } from '../../elements/groundWall';
 import { createContext } from '../../repr/context';
-import { along, lineLength } from '../../elements/groundLines';
+import { along } from '../../elements/groundLines';
 import type { Vec2 } from '../../repr/primitives';
 import { buildModel3d } from '../../repr/model3d';
 import { finishedForView, terrainMesh } from '../../repr/terrain';
@@ -294,18 +295,15 @@ function installSplitGrip(app: AppContext): void {
   });
 }
 
-/** Vägens referenslinje i 3D (0.10.7): segmenten med höjden längs linjen, mm från ±0, 30 mm över ytan. */
+/** Vägens referenslinje i 3D (0.10.7): segmenten med höjden längs linjen (mellan punkterna med höjd sedan 0.10.18), mm från ±0, 30 mm över ytan. */
 function groundRefLine(p: GroundParams): { a: Vec2; b: Vec2; z: number; zb: number }[] {
   const pts = p.line ?? [];
-  const total = lineLength(pts);
-  const h0 = p.height ?? 0;
-  const h1 = p.endHeight ?? h0;
+  const levels = rampLevels(p);
   const out: { a: Vec2; b: Vec2; z: number; zb: number }[] = [];
   let s = 0;
   for (let i = 1; i < pts.length; i++) {
     const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-    const z = (at: number) => (total > 0 ? h0 + ((h1 - h0) * at) / total : h0) + 30;
-    out.push({ a: [pts[i - 1][0], pts[i - 1][1]], b: [pts[i][0], pts[i][1]], z: z(s), zb: z(s + l) });
+    out.push({ a: [pts[i - 1][0], pts[i - 1][1]], b: [pts[i][0], pts[i][1]], z: heightAtS(levels, s) + 30, zb: heightAtS(levels, s + l) + 30 });
     s += l;
   }
   return out;

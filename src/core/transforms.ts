@@ -94,6 +94,8 @@ export function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, movi
           ...mirrorSide,
           ...mirrorOffset,
           ...(Array.isArray(p.crest) ? { crest: p.crest.map((c: { at: [number, number]; h: number }) => ({ ...c, at: t.map(c.at) })) } : {}),
+          // Rampens ritade sidor (0.10.18); speglat byter de plats, liksom sidornas kant.
+          ...rampSides(p, t),
         }
       : {};
     return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...holes, ...line } }];
@@ -153,4 +155,12 @@ export function copyElements(store: DocStore, ids: Id[]): Id[] {
     }
   });
   return ids.map((id) => map.get(id)).filter((x): x is Id => !!x);
+}
+
+/** Rampens ritade sidor och sidornas kant efter en transformation (0.10.18): speglat byter vänster och höger plats. */
+function rampSides(p: Record<string, any>, t: { map: (q: Pt) => Pt; mirror: boolean }): Record<string, unknown> {
+  if (!Array.isArray(p.left) && !Array.isArray(p.right) && p.leftEdge === undefined && p.rightEdge === undefined) return {};
+  const m = (q: unknown) => (Array.isArray(q) ? (q as Pt[]).map(t.map) : undefined);
+  if (!t.mirror) return { left: m(p.left), right: m(p.right) };
+  return { left: m(p.right), right: m(p.left), leftEdge: p.rightEdge, rightEdge: p.leftEdge };
 }

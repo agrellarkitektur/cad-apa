@@ -41,9 +41,10 @@ export interface GroundShape {
    * En punkt i modellen (mm): om den ligger på ytan, avståndet till ytans kant
    * (0 på ytan) och höjden (mm från ±0) där, eller vid närmaste kant utanför.
    * `skip`: punkten hör inte till objektet alls (huset inne i platån runt det).
-   * `cell` är rutnätets maskvidd (mm).
+   * `cell` är rutnätets maskvidd (mm). `wall` (0.10.18): närmaste kant är
+   * en stödmur, så marken utanför den är orörd (rampens sidor var för sig).
    */
-  probe(x: number, y: number, cell: number): { inside: boolean; d: number; h: number; skip?: boolean; at?: readonly [number, number] };
+  probe(x: number, y: number, cell: number): { inside: boolean; d: number; h: number; skip?: boolean; at?: readonly [number, number]; wall?: boolean };
   /**
    * Utjämning (0.10.5): radien (mm) inom vilken marken tonas mot objektets
    * höjd, i stället för slänt. `slope` gäller då inte.
@@ -184,7 +185,7 @@ export function finishedGround(t: Terrain, shapes: readonly GroundShape[], barri
           }
         }
         const p = sh.probe(x, y, s * 1000);
-        if (p.skip) continue;
+        if (p.skip || (p.wall && !p.inside)) continue;
         let next = cur;
         // Bakom en stödmur (sett från ytan) är marken orörd.
         if (!p.inside && walls.length && p.at && blocked(x, y, p.at[0], p.at[1], walls)) continue;

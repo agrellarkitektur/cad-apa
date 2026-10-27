@@ -9,7 +9,8 @@ import { mirrorElements } from '../src/core/transforms';
 import { registerBuiltInTypes } from '../src/elements';
 import { finishedTerrain, groundGeometry, groundObjects, groundType, wallCrest, wallProfile } from '../src/elements/ground';
 import { computeProfile, crestAtS } from '../src/elements/groundWall';
-import { centerShift, pathWarnings } from '../src/elements/groundLines';
+import { centerShift } from '../src/elements/groundLines';
+import { rampLevels, rampWarnings } from '../src/elements/groundRamp';
 import { allowsArcs, shapeCan, shapeOf, shapePatch } from '../src/elements/shapeEdit';
 import { buildingHeight } from '../src/repr/buildingHeight';
 import { buildSection } from '../src/repr/section';
@@ -172,12 +173,13 @@ describe('Ramp/väg (0.10.5, en sort sedan 0.10.7)', () => {
   });
 
   it('varnar brantare än gränsen (förval 1:12), och utan vilplan över 0,5 m när den är brantare än 1:20', () => {
+    const warn = (line: [number, number][], height: number, endHeight: number, max: number) => rampWarnings(rampLevels({ line, height, endHeight }), max, GROUND_DEFAULTS);
     const line: [number, number][] = [[0, 0], [6000, 0]];
-    expect(pathWarnings(line, 0, 500, 12, GROUND_DEFAULTS)).toEqual([]);
-    expect(pathWarnings(line, 0, 600, 12, GROUND_DEFAULTS)).toHaveLength(2);
-    expect(pathWarnings(line, 0, 400, 20, GROUND_DEFAULTS)).toHaveLength(1);
+    expect(warn(line, 0, 500, 12)).toEqual([]);
+    expect(warn(line, 0, 600, 12)).toHaveLength(2);
+    expect(warn(line, 0, 400, 20)).toHaveLength(1);
     // Flackare än 1:20 behövs inget vilplan, hur hög den än är.
-    expect(pathWarnings([[0, 0], [30000, 0]], 0, 1200, 12, GROUND_DEFAULTS)).toEqual([]);
+    expect(warn([[0, 0], [30000, 0]], 0, 1200, 12)).toEqual([]);
   });
 
   it('tvärfallet faller åt höger, och speglat åt vänster', () => {
@@ -214,7 +216,8 @@ describe('Ramp/väg (0.10.5, en sort sedan 0.10.7)', () => {
     const store = onSlope();
     const id = addGround(store, { kind: 'path', outline: [], line: [[20000, 0], [26000, 0]], width: 2000, refSide: 'left', height: 2000, endHeight: 2000 });
     const g = groundGeometry(planCtx(store), store.doc.elements[id])!;
-    expect(g.center).toEqual([[20000, -1000], [26000, -1000]]);
+    // Referenslinjen styr höjden (0.10.18); mittlinjen före det.
+    expect(g.center).toEqual([[20000, 0], [26000, 0]]);
     const ys = g.rings[0][0].map((q) => q[1]);
     expect(Math.min(...ys)).toBeCloseTo(-2000, 6);
     expect(Math.max(...ys)).toBeCloseTo(0, 6);

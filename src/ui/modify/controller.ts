@@ -3,6 +3,7 @@ import { OPS, opsFor, RAIL_ITEMS, railOf, type ModifyContext, type ModifyHost, t
 import { ALIGN_BUTTONS, ArrangeTool, type AlignKind } from './arrangeTool';
 import { icons } from '../icons';
 import { crestSuggestion, ModifyTool, runInstant } from './tool';
+import { levelSuggestion } from './rampOps';
 
 /**
  * Det som pågår i Modifiera (0.8.5): vad valen gäller (det markerade, eller
@@ -116,6 +117,12 @@ export class Modifier {
     if (!ctx) return;
     this.abort();
     this.picking = null;
+    // Förläng rampen (0.10.18): verktyget Mark ritar vidare från änden.
+    if (op === 'pathExtend') {
+      this.host.startRampFrom?.(ctx);
+      this.finish();
+      return;
+    }
     if (op === 'wallOn') {
       this.active = this.host.startWallFrom?.(ctx) ? 'wallOn' : null;
       this.changed();
@@ -132,7 +139,7 @@ export class Modifier {
     this.active = op;
     const Tool = ArrangeTool.handles(op) ? ArrangeTool : ModifyTool;
     // Höjdpunkten (0.10.13) föreslår krönets höjd där man klickade.
-    const start = op === 'crestPoint' ? (crestSuggestion(this.host, ctx)?.value ?? 0) : (this.remembered.get(op) ?? def.value?.initial ?? 0);
+    const start = op === 'crestPoint' ? (crestSuggestion(this.host, ctx)?.value ?? 0) : op === 'pathLevel' ? (levelSuggestion(this.host, ctx)?.value ?? 0) : (this.remembered.get(op) ?? def.value?.initial ?? 0);
     this.tool = new Tool(this.host, op, ctx, start, () => this.finish(), () => this.changed());
     if (this.tool instanceof ModifyTool) this.tool.edges = this.edges;
     this.host.startModify(this.tool);
@@ -244,9 +251,11 @@ export class Modifier {
     const doc = this.host.store.doc;
     const where = ctx.shapeId
       ? ctx.hole !== undefined
-        ? ctx.kind === 'edge'
-          ? `Hål ${ctx.hole + 1}, kanten`
-          : `Hål ${ctx.hole + 1}, hörnet`
+        ? doc.elements[ctx.shapeId]?.type === 'Ground'
+          ? `${ctx.hole === 0 ? 'Vänster' : 'Höger'} sida, ${ctx.kind === 'edge' ? 'kanten' : 'punkten'}`
+          : ctx.kind === 'edge'
+            ? `Hål ${ctx.hole + 1}, kanten`
+            : `Hål ${ctx.hole + 1}, hörnet`
         : ctx.kind === 'edge'
           ? 'Kanten'
           : 'Punkten'
@@ -272,7 +281,7 @@ export class Modifier {
     const op = this.active;
     if (!op) return '';
     const def = OPS[op];
-    const crest = op === 'crestPoint' && this.ctx ? crestSuggestion(this.host, this.ctx) : null;
+    const crest = op === 'crestPoint' && this.ctx ? crestSuggestion(this.host, this.ctx) : op === 'pathLevel' && this.ctx ? levelSuggestion(this.host, this.ctx) : null;
     const v = def.value && crest ? { ...def.value, unit: crest.unit } : def.value;
     const initial = crest
       ? String(crest.value).replace('.', ',')

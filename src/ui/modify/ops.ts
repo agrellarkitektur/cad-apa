@@ -6,7 +6,8 @@ import { movesVertically } from '../../core/levels';
 import { canJoin, canTrim } from '../../core/trimEdit';
 import { canFuse } from '../../core/joinLines';
 import { cornerPartner, cornersAmong, refFrame } from '../../core/wallEdit';
-import { allowsArcs, canRoundCorner, edgeIsArc, editedShape, holeShape, holesOf, shapeCan, shapeEdgeAt, shapeNodes, shapeOf, type ShapeLike } from '../../elements/shapeEdit';
+import { hasOwnLevel, rampPoint } from './rampOps';
+import { allowsArcs, canRoundCorner, edgeIsArc, editedShape, holeShape, holesOf, shapeCan, shapeEdgeAt, shapeNodes, shapeOf, subShapes, type ShapeLike } from '../../elements/shapeEdit';
 import { dist, sub } from '../../geometry/vec';
 import { resolveParams } from '../../elements/registry';
 import type { RoofParams } from '../../elements/roof';
@@ -90,6 +91,9 @@ export type OpId =
   | 'holeRotate'
   | 'holeMirror'
   | 'crestPoint'
+  | 'pathLevel'
+  | 'pathLevelClear'
+  | 'pathExtend'
   | 'holeRemove'
   | 'roofTrim'
   | 'roofCutPerp'
@@ -170,6 +174,9 @@ export const OPS: Record<OpId, OpDef> = {
   holeMirror: { label: 'Spegla hålet', short: 'Spegla hål', icon: 'mirror', hint: 'Speglingslinjen går genom punkten du klickade på; klicka linjens riktning. Bjälklaget ligger kvar.' },
   roofTrim: { label: 'Kapa mot tak', short: 'Kapa mot tak', icon: 'trim', hint: 'Klicka på takfallet som det ska kapas mot. Kvar blir den del du klickade på, eller den största.' },
   crestPoint: { label: 'Höjdpunkt på krönet', short: 'Höjdpunkt', icon: 'insertNode', value: { label: 'ÖK', unit: 'mm', initial: 0 }, hint: 'Skriv krönets höjd i punkten och tryck Enter (förslaget är höjden där nu), eller klicka för att använda den. Punkten dras sedan längs muren.' },
+  pathLevel: { label: 'Höjd i punkten', short: 'Höjd', icon: 'moveZ', value: { label: 'Höjd', unit: 'mm', initial: 0 }, hint: 'Skriv höjden i punkten och tryck Enter (förslaget är höjden där nu), eller klicka för att använda den. Punkterna med höjd styr rampens lutning; mellan dem går den rakt.' },
+  pathLevelClear: { label: 'Ta bort höjden', short: 'Utan höjd', icon: 'trash', instant: true, hint: 'Punkten följer lutningen mellan grannarna igen.' },
+  pathExtend: { label: 'Förläng rampen', short: 'Förläng', icon: 'extend', hint: 'Klicka nya punkter från änden. Dubbelklick, Enter eller Klar avslutar; lutningen fortsätter.' },
   moveZ: { label: 'Flytta i höjd', short: 'I höjd', icon: 'moveZ', value: { label: 'Höjd', unit: 'mm', initial: 100 }, hint: 'Skriv hur mycket upp (minus för ned) och tryck Enter. Hela objektet flyttas: väggens fot och topp, bjälklaget, möbeln eller taket.' },
   shapeFuse: { label: 'Foga ihop', short: 'Foga ihop', icon: 'fuse', instant: true, hint: 'De markerade linjerna som delar en ändpunkt blir en lång linje. Den första behåller sin penna.' },
   holeRemove: { label: 'Ta bort hålet', short: 'Ta bort hål', icon: 'trash', instant: true, hint: 'Håltagningen tas bort ur bjälklaget.' },
@@ -190,10 +197,12 @@ export interface ModifyHost extends ToolHost {
   startWallFrom?(ctx: ModifyContext): boolean;
   /** Avbryt väggen som började i änden, när ett annat val görs eller menyn stängs. */
   stopWall?(): void;
+  /** Förläng rampen från änden (0.10.18): verktyget Mark ritar vidare på den. Svarar false om det inte går. */
+  startRampFrom?(ctx: ModifyContext): boolean;
 }
 
 /** Valen för ett klick, i den ordning de visas, med ett streck före de allmänna. */
-export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'>>, ctx: ModifyContext): OpId[][] {
+export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom' | 'startRampFrom'>>, ctx: ModifyContext): OpId[][] {
   const doc = host.store.doc;
   // Vyer, skalstockar och stämplar på ett blad (0.8.9, 0.8.12) går bara att flytta, också tillsammans med det som är ritat på bladet.
   if (ctx.ids.some((id) => moveOnly(doc, id))) return [['move']];
@@ -218,9 +227,16 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
     // Stödmurens höjdpunkter (0.10.9) på referenslinjen.
     const host0 = doc.elements[ctx.shapeId];
     if (host0?.type === 'Ground' && host0.params.kind === 'wall') own.push('crestPoint');
+    // Rampens referenslinje (0.10.18): höjden i punkten, och förläng från en ände.
+    const rp = rampPoint(doc, ctx);
+    if (rp) {
+      own.push('pathLevel');
+      if (hasOwnLevel(doc, ctx)) own.push('pathLevelClear');
+      if (rp.end && host.startRampFrom) own.push('pathExtend');
+    }
     // En håltagning (0.9.4) flyttas och tas bort för sig; det allmänna gäller hela bjälklaget.
     // Vrida och spegla hålet för sig (0.10.17).
-    if (ctx.hole !== undefined) return [own, ['holeMove', 'holeRotate', 'holeMirror', 'holeRemove']];
+    if (ctx.hole !== undefined && host0?.type === 'Slab') return [own, ['holeMove', 'holeRotate', 'holeMirror', 'holeRemove']];
     // Ett takfall (0.10) kapas mot ett annat.
     // Takfotens snitt (0.10.2) för en kant.
     if (doc.elements[ctx.shapeId]?.type === 'Roof') {
@@ -319,8 +335,8 @@ export function modifyContextAt(host: ToolHost, p: ViewPointer, clientX: number,
     const e = shapeEdgeAt(el, p.model, tol);
     if (e) return { kind: 'edge', ids, shapeId: id, index: e.index, at: e.at, clientX, clientY };
   }
-  // Hörn och kanter i håltagningarna i markerade bjälklag (0.9.4).
-  const holes = ids.flatMap((id) => (shown.has(id) ? holesOf(doc.elements[id]).map((h, hole) => ({ id, hole, shape: holeShape(h) })) : []));
+  // Hörn och kanter i håltagningarna i markerade bjälklag (0.9.4), och rampens sidor (0.10.18).
+  const holes = ids.flatMap((id) => (shown.has(id) ? subShapes(doc.elements[id]).map(({ hole, shape }) => ({ id, hole, shape })) : []));
   for (const { id, hole, shape } of holes) {
     const pts = shapeNodes(shape);
     for (let i = 0; i < pts.length; i++) if (dist(pts[i], p.model) <= tol) return { kind: 'point', ids, shapeId: id, hole, index: i, at: pts[i], clientX, clientY };

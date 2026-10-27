@@ -8,7 +8,8 @@ import { planCutHeight } from './planCut';
 import type { WallProfile } from './groundWall';
 import { sameItems } from '../repr/reuse';
 import { finishedTerrain, groundLabel, isLineKind, storeyElevation, wallProfile, type GroundGeometry, type GroundParams } from './groundGeometry';
-import { lineLength, pathRatio, pathWarnings } from './groundLines';
+import { lineLength } from './groundLines';
+import { middleAt, rampLevels, rampRuns, rampWarnings, sideEdge, steepest } from './groundRamp';
 import type { PlanContext } from './registry';
 
 /**
@@ -168,7 +169,8 @@ function walkSlope(g: GroundGeometry, spacing: number, ends: boolean, at: (q: Ve
       const a = ring[i];
       const b = ring[(i + 1) % ring.length];
       const n = outward(ring, a, b);
-      if (!n) continue;
+      // Rampens sidor som är stödmur (0.10.18) har ingen slänt.
+      if (!n || (r === 0 && g.edgeWall?.[i])) continue;
       const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
       if (ends) at(a, n, r);
       for (let s = spacing / 2; s < len; s += spacing) at([a[0] + ((b[0] - a[0]) * s) / len, a[1] + ((b[1] - a[1]) * s) / len], n, r);
@@ -176,7 +178,7 @@ function walkSlope(g: GroundGeometry, spacing: number, ends: boolean, at: (q: Ve
       // Ett utåtgående hörn: strecken i en solfjäder mellan kanternas normaler.
       const c = ring[(i + 2) % ring.length];
       const n2 = outward(ring, b, c);
-      if (!n2) continue;
+      if (!n2 || (r === 0 && g.edgeWall?.[(i + 1) % ring.length])) continue;
       const turn = (b[0] - a[0]) * (c[1] - b[1]) - (b[1] - a[1]) * (c[0] - b[0]);
       if (ccw ? turn <= 0 : turn >= 0) continue;
       const a1 = Math.atan2(n[1], n[0]);
@@ -267,17 +269,6 @@ function normalAt(pts: readonly Vec2[], s: number): Vec2 {
   return [0, 1];
 }
 
-/** Punkten `s` mm längs polylinjen (slutet om den är kortare). */
-function pointAlong(pts: readonly Vec2[], s: number): Vec2 {
-  let rest = s;
-  for (let i = 1; i < pts.length; i++) {
-    const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-    if (l >= rest && l > 0) return [pts[i - 1][0] + ((pts[i][0] - pts[i - 1][0]) * rest) / l, pts[i - 1][1] + ((pts[i][1] - pts[i - 1][1]) * rest) / l];
-    rest -= l;
-  }
-  return pts[pts.length - 1];
-}
-
 /**
  * Ramp/väg, höjdpunkt, brytlinje och stödmur i planen (0.10.5).
  * Vägen: sidorna och tvärlinjerna i ändarna (som kan slås av, 0.10.7), en
@@ -340,34 +331,50 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
     }
     return out;
   }
-  // Vägen: fyllningen, sidorna och tvärlinjerna. Ringen är höger sida framåt och vänster bakåt.
+  // Vägen: fyllningen, sidorna och tvärlinjerna. Sidorna för sig (0.10.18), tjocka där de är stödmur.
   out.unshift(...fillOf(ctx, el, p, [g.rings[0]]));
-  const ring = g.rings[0][0];
-  const n2 = ring.length / 2;
-  const pen = { weight: p.edge === 'wall' ? 0.5 : 0.25 };
-  const edge = (points: Vec2[], part: string) => out.push({ kind: 'polyline', points, closed: false, pen, origin: { ...origin, part } });
-  edge(ring.slice(0, n2), 'kant');
-  edge(ring.slice(n2), 'kant');
-  if (p.startLine !== false) edge([ring[ring.length - 1], ring[0]], 'början');
-  if (p.endLine !== false) edge([ring[n2 - 1], ring[n2]], 'slutet');
-  // Lutningen och höjderna längs vägens mittlinje.
+  const sides = g.sides!;
+  const edge = (points: Vec2[], part: string, wall: boolean) => out.push({ kind: 'polyline', points, closed: false, pen: { weight: wall ? 0.5 : 0.25 }, origin: { ...origin, part } });
+  edge(sides.right, 'kant', sideEdge(p, 'right') === 'wall');
+  edge([...sides.left].reverse(), 'kant', sideEdge(p, 'left') === 'wall');
+  const ends = p.edge === 'wall';
+  if (p.startLine !== false) edge([sides.left[0], sides.right[0]], 'början', ends);
+  if (p.endLine !== false) edge([sides.right[sides.right.length - 1], sides.left[sides.left.length - 1]], 'slutet', ends);
+  // Lutningen längs referenslinjen: en pil nedför och 1:N för varje sträcka mellan punkter med höjd (0.10.18).
   const center = g.center ?? pts;
-  const n = pathRatio(center, h0, h1);
-  // Pilen går nedför, längs mittlinjen kring mitten.
-  const total = lineLength(center);
-  const len = Math.min(total * 0.6, 14 * ctx.scale);
-  const down = h1 <= h0;
-  const sA = total / 2 + (down ? -len / 2 : len / 2);
-  const sB = total / 2 + (down ? len / 2 : -len / 2);
-  if (Number.isFinite(n)) out.push(...arrow(ctx, pointAlong(center, sA), pointAlong(center, sB), { ...origin, part: 'lutning' }));
+  const levels = rampLevels(p);
+  const runs = rampRuns(levels);
   const def = groundDefaults(ctx.doc.site);
-  const warn = pathWarnings(center, h0, h1, p.maxSlope ?? def.rampMax, def);
-  const ratio = Number.isFinite(n) ? `1:${(Math.round(n * 10) / 10).toLocaleString('sv-SE')}` : 'Plan';
-  const mid = pointAlong(center, total / 2);
-  text([mid[0], mid[1] + 2 * ctx.scale], `${groundLabel(p)} ${ratio}${warn.length ? ' !' : ''}`, 'lutning', warn.length ? { pen: { weight: 0.18, color: 'accent' } } : {});
+  const max = p.maxSlope ?? def.rampMax;
+  const warn = rampWarnings(levels, max, def);
+  const total = lineLength(center);
+  const ratioText = (n: number) => `1:${(Math.round(n * 10) / 10).toLocaleString('sv-SE')}`;
+  for (const r of runs) {
+    if (!Number.isFinite(r.ratio)) continue;
+    const len = Math.min((r.b.s - r.a.s) * 0.6, 14 * ctx.scale);
+    const m = (r.a.s + r.b.s) / 2;
+    const down = r.b.h <= r.a.h;
+    out.push(...arrow(ctx, middleAt(center, sides, m + (down ? -len / 2 : len / 2)), middleAt(center, sides, m + (down ? len / 2 : -len / 2)), { ...origin, part: 'lutning' }));
+    if (runs.length > 1) {
+      const at = middleAt(center, sides, m);
+      const steep = r.ratio < max - 1e-6;
+      text([at[0], at[1] - 3.5 * ctx.scale], `${ratioText(r.ratio)}${steep ? ' !' : ''}`, 'lutning', steep ? { pen: { weight: 0.18, color: 'accent' } } : {});
+    }
+  }
+  const n = steepest(levels);
+  const ratio = runs.length > 1 ? '' : Number.isFinite(n) ? ` ${ratioText(n)}` : ' Plan';
+  const mid = middleAt(center, sides, total / 2);
+  text([mid[0], mid[1] + 2 * ctx.scale], `${groundLabel(p)}${ratio}${warn.length ? ' !' : ''}`, 'lutning', warn.length ? { pen: { weight: 0.18, color: 'accent' } } : {});
   out.push(...slopeMarks(ctx, g, { ...origin, part: 'slänt' }));
-  text([center[0][0], center[0][1] - 3 * ctx.scale], hText(ctx, h0), 'höjd');
-  if (Math.abs(h1 - h0) >= 1) text([center[center.length - 1][0], center[center.length - 1][1] - 3 * ctx.scale], hText(ctx, h1), 'höjd');
+  // Höjderna i ändarna (i slutet bara när den skiljer sig från början) och i punkterna däremellan som har en höjd.
+  // Ändarnas höjd står mitt på tvärlinjen, som förut; de andra vid punkten.
+  const last = center.length - 1;
+  const midOf = (a: Vec2, b: Vec2): Vec2 => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  for (const l of levels) {
+    if (levels.length === 2 && l.i === last && Math.abs(l.h - h0) < 1) continue;
+    const at = l.i === 0 ? midOf(sides.left[0], sides.right[0]) : l.i === last ? midOf(sides.left[sides.left.length - 1], sides.right[sides.right.length - 1]) : l.at;
+    text([at[0], at[1] - 3 * ctx.scale], hText(ctx, l.h), 'höjd');
+  }
   return out;
 }
 

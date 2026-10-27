@@ -5,7 +5,8 @@ import type { DocStore } from '../core/store';
 import type { ViewStates } from '../core/states';
 import { finishedTerrain, groundGeometry, groundLabel, isLineKind, m3, wallProfile, type GroundParams } from '../elements/ground';
 import { massBalance } from '../elements/groundGeometry';
-import { centerShift, lineLength, offsetLine, PATH_WIDTH, pathRatio, pathWarnings } from '../elements/groundLines';
+import { lineLength, PATH_WIDTH } from '../elements/groundLines';
+import { rampLevels, rampRuns, rampSides, rampWarnings, sideEdge, tidyLevels } from '../elements/groundRamp';
 import { fillFields } from './shapeFields';
 import type { FillParams } from '../elements/drawing2d';
 import { resolveParams } from '../elements/registry';
@@ -101,24 +102,51 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
   const h0 = p.height ?? 0;
   const h1 = p.endHeight ?? h0;
   if (p.kind === 'path') {
-    const g = groundGeometry(ctx, el);
-    const center = g?.center ?? pts;
+    // Rampen (0.10.18): referenslinjen styr lutningen, sidorna utbredningen, var sida för sig mot marken.
+    const levels = rampLevels(p);
+    const runs = rampRuns(levels);
+    const drawn = !!(p.left || p.right);
+    const derived = !(p.left && p.right);
     rows.push(`<label class="field"><span>Namn</span><input type="text" autocomplete="off" data-key="ground:name" value="${escapeHtml(p.name ?? '')}" placeholder="Ramp/väg"></label>`);
-    rows.push(field('width', 'Bredd', 'mm', p.width, PATH_WIDTH));
-    rows.push(refRows(p));
+    rows.push(
+      `<label class="field" title="Ritade sidor ändras med sina punkter i Modifiera och följer inte referenslinjen"><span>Sidorna</span><select data-key="ground:sides"><option value="">Följer referenslinjen</option><option value="drawn"${drawn ? ' selected' : ''}>${p.left && p.right ? 'Ritade' : 'Ritade (en)'}</option></select></label>`,
+    );
+    if (derived) {
+      rows.push(field('width', 'Bredd', 'mm', p.width, PATH_WIDTH));
+      rows.push(refRows(p));
+    }
     rows.push(rh('height', 'Höjd i början', h0));
     rows.push(rh('endHeight', 'Höjd i slutet', h1));
-    const n = pathRatio(center, h0, h1);
-    rows.push(field('ratio' as keyof GroundParams, 'Lutning', '1:N', Number.isFinite(n) ? Math.round(n * 10) / 10 : undefined, undefined, 'Ändrar höjden i slutet; tomt = plan'));
+    // Punkterna däremellan som har en höjd; tomt tar bort höjden.
+    for (const l of levels) {
+      if (l.i === 0 || l.i === pts.length - 1) continue;
+      const v = site ? Math.round(toRh(site, l.h) * 1000) / 1000 : l.h;
+      rows.push(
+        `<label class="field" title="Tomt: punkten följer lutningen mellan grannarna"><span>Höjd i punkt ${l.i + 1}${site ? ' (RH 2000)' : ''}</span><span class="input-unit"><input type="text" inputmode="decimal" autocomplete="off" data-key="ground:level${l.i}" value="${v.toLocaleString('sv-SE', { maximumFractionDigits: 3 })}"><i>${site ? 'm' : 'mm'}</i></span></label>`,
+      );
+    }
+    if (runs.length === 1) {
+      const n = runs[0].ratio;
+      rows.push(field('ratio' as keyof GroundParams, 'Lutning', '1:N', Number.isFinite(n) ? Math.round(n * 10) / 10 : undefined, undefined, 'Ändrar höjden i slutet; tomt = plan'));
+    }
     rows.push(field('maxSlope', 'Varna brantare än', '1:N', p.maxSlope, def.rampMax, 'Tomt = projektets förval under Platsen'));
-    rows.push(field('crossFall', 'Tvärfall', '1:N', p.crossFall, undefined, 'Positivt faller åt höger i linjens riktning, negativt åt vänster; tomt = inget'));
-    if (p.edge !== 'wall') rows.push(field('slope', 'Slänt', '1:N', p.slope, def.slope));
-    rows.push(`<label class="field"><span>Sidorna</span><select data-key="ground:edge"><option value="slope">Slänt</option><option value="wall"${p.edge === 'wall' ? ' selected' : ''}>Stödmur</option></select></label>`);
+    rows.push(field('crossFall', 'Tvärfall', '1:N', p.crossFall, undefined, 'Kring referenslinjen. Positivt faller åt höger i linjens riktning, negativt åt vänster; tomt = inget'));
+    const sel = (key: string, label: string, v: 'slope' | 'wall', title: string) =>
+      `<label class="field" title="${title}"><span>${label}</span><select data-key="ground:${key}"><option value="slope">Slänt</option><option value="wall"${v === 'wall' ? ' selected' : ''}>Stödmur</option></select></label>`;
+    rows.push(sel('edge', 'Kanterna', p.edge ?? 'slope', 'Alla kanter: sidorna och ändarna. Sidorna kan sedan ändras för sig.'));
+    rows.push(sel('leftEdge', 'Vänster sida', sideEdge(p, 'left'), 'Sett i linjens riktning'));
+    rows.push(sel('rightEdge', 'Höger sida', sideEdge(p, 'right'), 'Sett i linjens riktning'));
+    if ([sideEdge(p, 'left'), sideEdge(p, 'right'), p.edge ?? 'slope'].includes('slope')) rows.push(field('slope', 'Slänt', '1:N', p.slope, def.slope));
     const check = (key: 'startLine' | 'endLine', label: string) => `<label class="check"><input type="checkbox" data-key="ground:${key}"${p[key] !== false ? ' checked' : ''}> ${label}</label>`;
     notes.push(`<span class="row">${check('startLine', 'Tvärlinje i början')} ${check('endLine', 'Tvärlinje i slutet')}</span>`);
-    notes.push(`Längd ${(Math.round(lineLength(center)) / 1000).toLocaleString('sv-SE')} m, höjdskillnad ${(Math.round(Math.abs(h1 - h0)) / 1000).toLocaleString('sv-SE')} m.`);
-    for (const w of pathWarnings(center, h0, h1, p.maxSlope ?? def.rampMax, def)) notes.push(`<strong>${escapeHtml(w)}.</strong>`);
-    notes.push('Referenslinjen ändras med punkterna och syns när vägen är markerad. Vilplanets gränser står under Platsen.');
+    const ratioText = (n: number) => (Number.isFinite(n) ? `1:${(Math.round(n * 10) / 10).toLocaleString('sv-SE')}` : 'plan');
+    notes.push(
+      `Längd ${(Math.round(lineLength(pts)) / 1000).toLocaleString('sv-SE')} m, höjdskillnad ${(Math.round(Math.abs(h1 - h0)) / 1000).toLocaleString('sv-SE')} m${runs.length > 1 ? `; lutningen ${runs.map((r) => ratioText(r.ratio)).join(', ')}` : ''}.`,
+    );
+    for (const w of rampWarnings(levels, p.maxSlope ?? def.rampMax, def)) notes.push(`<strong>${escapeHtml(w)}.</strong>`);
+    notes.push(
+      'Referenslinjen styr lutningen: punkterna med höjd (orange) ändras med <em>Höjd i punkten</em> i Modifiera, och mellan dem går rampen rakt. Sidorna ändras med sina punkter och lever sedan sitt eget liv. Klicka på en ände med verktyget Mark (Ramp/väg), eller <em>Förläng</em> i Modifiera, för att förlänga rampen. Vilplanets gränser står under Platsen.',
+    );
   } else if (p.kind === 'point') {
     rows.push(rh('height', 'Höjd', h0));
     rows.push(field('radius', 'Tonas inom', 'mm', p.radius, def.blend));
@@ -198,7 +226,42 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
     return true;
   }
   if (name === 'edge') {
-    updateParams(store, ids, { edge: input.value === 'wall' ? 'wall' : undefined }, input.value === 'wall' ? 'Stödmur' : 'Slänt');
+    // Alla kanter, också rampens sidor som ändrats för sig (0.10.18).
+    updateParams(store, ids, { edge: input.value === 'wall' ? 'wall' : undefined, leftEdge: undefined, rightEdge: undefined }, input.value === 'wall' ? 'Stödmur' : 'Slänt');
+    return true;
+  }
+  if (name === 'leftEdge' || name === 'rightEdge') {
+    // Samma som kanterna behöver inte stå för sig.
+    for (const id of ids) {
+      const edge = resolveParams<GroundParams>(doc, doc.elements[id]).edge ?? 'slope';
+      const v = input.value === 'wall' ? 'wall' : 'slope';
+      updateParams(store, [id], { [name]: v === edge ? undefined : v }, v === 'wall' ? 'Stödmur på sidan' : 'Slänt på sidan');
+    }
+    return true;
+  }
+  if (name === 'sides') {
+    // Ritade sidor (0.10.18) börjar där de låg; att följa referenslinjen tar bort dem.
+    for (const id of ids) {
+      const p = resolveParams<GroundParams>(doc, doc.elements[id]);
+      const r = (q: readonly (readonly [number, number])[]) => q.map((v): [number, number] => [Math.round(v[0]), Math.round(v[1])]);
+      const sides = rampSides(p);
+      updateParams(store, [id], input.value === 'drawn' ? { left: r(sides.left), right: r(sides.right) } : { left: undefined, right: undefined }, input.value === 'drawn' ? 'Ritade sidor' : 'Sidorna följer referenslinjen');
+    }
+    return true;
+  }
+  // Rampens höjd i en punkt (0.10.18): tomt tar bort den.
+  const lv = /^level(\d+)$/.exec(name);
+  if (lv) {
+    const k = Number(lv[1]);
+    const raw = input.value.replace(/\s/g, '').replace(',', '.').replace('−', '-');
+    const v = Number(raw);
+    if (raw !== '' && !Number.isFinite(v)) return false;
+    for (const id of ids) {
+      const list = [...(resolveParams<GroundParams>(doc, doc.elements[id]).levels ?? [])];
+      while (list.length <= k) list.push(null);
+      list[k] = raw === '' ? null : doc.site ? Math.round(fromRh(doc.site, v)) : Math.round(v);
+      updateParams(store, [id], { levels: tidyLevels(list) }, raw === '' ? 'Ta bort höjden' : 'Höjd i punkten');
+    }
     return true;
   }
   const raw = input.value.replace(/\s/g, '').replace(',', '.').replace('−', '-');
@@ -210,11 +273,8 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
       const up = (p.endHeight ?? h0) >= h0;
       const n = raw === '' ? Infinity : Number(raw);
       if (!(n > 0)) return false;
-      // Längs vägens mittlinje, som kan ligga vid sidan av referenslinjen (0.10.7).
-      const w = Math.max(100, p.width ?? PATH_WIDTH);
-      const pts = p.line ?? [];
-      const c = centerShift(p.refSide, p.refOffset, w);
-      const rise = Number.isFinite(n) ? lineLength(Math.abs(c) > 0.5 && pts.length >= 2 ? offsetLine(pts, c) : pts) / n : 0;
+      // Längs referenslinjen, som styr lutningen (0.10.18; mittlinjen före det).
+      const rise = Number.isFinite(n) ? lineLength(p.line ?? []) / n : 0;
       updateParams(store, [id], { endHeight: Math.round(h0 + (up ? rise : -rise)) }, 'Ändra lutningen');
     }
     return true;

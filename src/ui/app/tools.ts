@@ -350,6 +350,16 @@ export function installTools(app: AppContext, host: ToolHost) {
     return true;
   }
 
+  /** Förläng rampen från änden man klickat på i Modifiera (0.10.18): verktyget Mark ritar vidare på den. */
+  function startRampFrom(ctx: ModifyContext): boolean {
+    const el = ctx.shapeId ? app.store.doc.elements[ctx.shapeId] : undefined;
+    const n = ((el?.params.line ?? []) as unknown[]).length;
+    if (!el || el.type !== 'Ground' || el.params.kind !== 'path' || ctx.index === undefined || (ctx.index !== 0 && ctx.index !== n - 1)) return false;
+    groundTool.options.mode = 'path';
+    setTool('ground', true);
+    return groundTool.continueFrom(el.id, ctx.index === 0);
+  }
+
   return {
     tools,
     selectTool,
@@ -383,5 +393,6 @@ export function installTools(app: AppContext, host: ToolHost) {
     slabFromWalls,
     startWallFrom,
     endWallFrom,
+    startRampFrom,
   };
 }

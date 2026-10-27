@@ -226,6 +226,9 @@ export function movePatch(doc: ProjectDoc, el: Element, d: [number, number]): Re
       ...(Array.isArray(p.ref) ? { ref: p.ref.map(add) } : {}),
       // Markobjektens linje och höjdpunkten (0.10.5; följde inte med före 0.10.7).
       ...(Array.isArray(p.line) ? { line: p.line.map(add) } : {}),
+      // Rampens ritade sidor (0.10.18).
+      ...(Array.isArray(p.left) ? { left: p.left.map(add) } : {}),
+      ...(Array.isArray(p.right) ? { right: p.right.map(add) } : {}),
       // Kanternas egna snitt (0.10.2).
       ...(Array.isArray(p.edgeCuts) ? { edgeCuts: p.edgeCuts.map((c: { a: [number, number]; b: [number, number] }) => ({ ...c, a: add(c.a), b: add(c.b) })) } : {}),
     };

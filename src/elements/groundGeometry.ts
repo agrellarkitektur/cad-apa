@@ -7,7 +7,8 @@ import type { Vec2 } from '../repr/primitives';
 import { sameItems } from '../repr/reuse';
 import { buildingFootprint } from './footprint';
 import type { FillParams } from './drawing2d';
-import { along, barriersOf, centerShift, lineLength, lockShape, offsetLine, PATH_WIDTH, pathShape, stripRing, type RefSide } from './groundLines';
+import { along, barriersOf, lineLength, lockShape, stripRing, type RefSide } from './groundLines';
+import { rampShape, rampSides } from './groundRamp';
 import { computeProfile, wallCenter, wallThickness, type CrestPoint, type WallProfile } from './groundWall';
 import { resolveParams, type PlanContext } from './registry';
 import type { SlabParams } from './slab';
@@ -91,8 +92,19 @@ export interface GroundParams extends Partial<FillParams> {
   endLine?: boolean;
   /** Höjden i linjens slut (i början gäller `height`), mm från ±0. */
   endHeight?: number;
-  /** Vägens tvärfall 1:N; positivt faller åt höger, negativt åt vänster. */
+  /** Vägens tvärfall 1:N; positivt faller åt höger, negativt åt vänster (kring referenslinjen sedan 0.10.18). */
   crossFall?: number;
+  /**
+   * Rampens höjd i referenslinjens punkter mellan ändarna (0.10.18), en per
+   * punkt; null eller utelämnad = punkten har ingen höjd (bara läge).
+   */
+  levels?: (number | null)[];
+  /** Rampens ritade sidor (0.10.18); utelämnade följer referenslinjen med bredden. */
+  left?: [number, number][];
+  right?: [number, number][];
+  /** Rampens sidor var för sig (0.10.18): slänt eller stödmur; utelämnad = som `edge`. */
+  leftEdge?: 'slope' | 'wall';
+  rightEdge?: 'slope' | 'wall';
   /** Höjdpunkt och brytlinje: hur långt marken tonas, mm. */
   radius?: number;
   /**
@@ -158,8 +170,12 @@ export interface GroundGeometry {
   shape: GroundShape | null;
   /** Stödmurens linje, som slänterna inte går över. */
   barriers?: Barrier[];
-  /** Vägens mittlinje (0.10.7), som höjden och tvärfallet räknas längs. */
+  /** Vägens referenslinje (mittlinjen 0.10.7–0.10.17), som höjden och tvärfallet räknas längs; stödmurens mittlinje. */
   center?: Vec2[];
+  /** Rampens sidor (0.10.18), vänster och höger i linjens riktning. */
+  sides?: { left: Vec2[]; right: Vec2[] };
+  /** Vilka av ringens kanter som är stödmur (0.10.18; kant i från punkt i till nästa). */
+  edgeWall?: boolean[];
   /** Där höjden skrivs ut, och texten. */
   label: { at: Vec2; height: number; fall?: number };
 }
@@ -206,7 +222,7 @@ export function groundGeometry(ctx: PlanContext, el: Element<any>): GroundGeomet
 function computeGeometry(ctx: PlanContext, el: Element<any>, p: GroundParams, footprint: Rings[] | null, slabEl: Element<any> | undefined, slabP: SlabParams | undefined): GroundGeometry | null {
   const def = groundDefaults(ctx.doc.site);
   const slope = p.edge === 'wall' ? null : Math.max(0.1, p.slope ?? def.slope);
-  if (isLineKind(p.kind)) return lineGeometry(el, p, slope, def);
+  if (isLineKind(p.kind)) return lineGeometry(el, p, def);
   if (p.around) {
     if (!footprint?.length) return null;
     const fp = footprint.map((poly) => poly[0]);
@@ -277,7 +293,7 @@ function computeGeometry(ctx: PlanContext, el: Element<any>, p: GroundParams, fo
   return { rings: polys, holes: [], shape, label: { at: c, height, ...(fall > 0 ? { fall } : {}) } };
 }
 
-function lineGeometry(el: Element<any>, p: GroundParams, slope: number | null, def: ReturnType<typeof groundDefaults>): GroundGeometry | null {
+function lineGeometry(el: Element<any>, p: GroundParams, def: ReturnType<typeof groundDefaults>): GroundGeometry | null {
   const pts = (p.line ?? []).map((q): Vec2 => [q[0], q[1]]);
   const h0 = p.height ?? 0;
   const h1 = p.endHeight ?? h0;
@@ -299,11 +315,11 @@ function lineGeometry(el: Element<any>, p: GroundParams, slope: number | null, d
     const center = wallCenter(pts, th, p);
     return { rings: [[stripRing(center, th)]], holes: [], shape: null, barriers: barriersOf(center), center, label: { at: mid.at, height: h0 } };
   }
-  const w = Math.max(100, p.width ?? PATH_WIDTH);
-  const c = centerShift(p.refSide, p.refOffset, w);
-  const center = Math.abs(c) > 0.5 ? offsetLine(pts, c) : pts;
-  const { shape, ring } = pathShape(el.id, center, w, h0, h1, p.crossFall ?? 0, slope);
-  return { rings: [[ring]], holes: [], shape, center, label: { at: mid.at, height: h0 } };
+  // Rampen (0.10.18): höjden längs referenslinjen, sidorna för sig.
+  const sides = rampSides(p);
+  if (sides.left.length < 2 || sides.right.length < 2) return null;
+  const { shape, ring, wall } = rampShape(el.id, p, Math.max(0.1, p.slope ?? def.slope), sides);
+  return { rings: [[ring]], holes: [], shape, center: pts, sides, edgeWall: wall, label: { at: mid.at, height: h0 } };
 }
 
 /** Punkten halvvägs längs linjen. */

@@ -2546,7 +2546,7 @@ takets och bjälklagets kontur hade dem redan; markobjektens linjer (väg,
 ramp, stödmur) får dem nu. Inte gjort: klickjämförelsen har inga steg för
 0.10.16–0.10.17 än (läggs till i granskningen).*
 
-### 0.10.18 Rampens referenslinje (förslag, mellanstor till stor)
+### 0.10.18 Rampens referenslinje ✓
 
 Inkorgen 27 oktober. Den gamla 0.10.18 delades, eftersom rampen fick
 många nya önskemål (Carl August 27 oktober).
@@ -2559,6 +2559,52 @@ många nya önskemål (Carl August 27 oktober).
 - Förlänga rampen med ett klick på första eller sista ändpunkten
 - Stödmur eller slänt per sida
 - Referenslinjens punkter syns som riktiga punkter när rampen är markerad
+
+*Byggd (27 oktober, kväll), samma format (20). Carl August hoppade över
+frågorna. Testerna: 558 → 569 på ca 13 s. Claudes val: **referenslinjen
+styr höjden och tvärfallet**: höjden räknas längs den och tvärfallet
+vrider kring den, också när den ligger på en kant eller är förskjuten
+(förut kring mittlinjen). **Punkterna med höjd**: ändarna alltid, och
+punkter däremellan när de fått en med *Höjd i punkten* i Modifiera
+(förslaget är höjden som lutningen ger där); *Utan höjd* tar bort den. En
+punkt utan höjd styr bara läget. Mellan punkterna med höjd går rampen
+rakt, så att en plan sträcka är ett vilplan i samma ramp; lutningen (1:N
+med pil) och varningarna gäller varje sträcka. Fältet *Lutning* finns bara
+när rampen har en sträcka. Punkterna med höjd är orange cirklar när rampen
+är markerad, de andra vita fyrkanter, sidornas små grå. **Sidorna**
+följer referenslinjen med bredden som förut tills en av dem ändras i
+Modifiera (punkterna och kanterna som 2D-formens, utan bågar); då sparas
+den sidan och ligger kvar när referenslinjen ändras. *Sidorna: Följer
+referenslinjen / Ritade* i egenskaperna. **Kanterna**: *Kanterna* gäller
+alla som förut och nollställer sidorna; *Vänster sida* och *Höger sida*
+för sig; ändarna följer *Kanterna*. En sida som är mur ritas tjock (0,5),
+har inga släntstreck och lämnar marken utanför orörd (ingen kropp i 3D,
+som förut). **Förlänga**: ett klick på en ände med Mark (Ramp/väg), eller
+*Förläng* på en ände i Modifiera; lutningen i sista (eller första)
+sträckan fortsätter, avrundad till 10 mm, och den gamla änden behåller sin
+höjd som en punkt med höjd. Provat med Playwright mot `dist/` med
+`groundProject` (sidans punkt i Modifiera och dragen, Höjd i punkten,
+förlängd med Mark, höger sida som mur, 3D). Klickjämförelsen mot 0.10.17:
+samma `doc` i alla 396 steg; ritningen skiljer från *tvärfall* (rampen
+med referenslinjen på kanten vrider kring den), greppen och panelen för
+rampen.*
+
+### Granskning efter 0.10.18
+
+Ungefär tre versioner efter den förra (0.10.16–0.10.18). Utan nya
+funktioner, utom småfelen ur Inkorgen (Carl August hoppade över frågorna
+27 oktober, så Claudes förslag gäller):
+
+- Mer-knappen i smartmenyn syns fast det inte finns fler val (t.ex. för
+  fastighetsgränsen från Höjdkurvor); leta upp fler ställen och visa den
+  bara när valen inte får plats
+- Egen färg på höjdkurvorna i stilmallen
+- Stilmallens fönster bredare, i kolumner grupperade efter typ (om det
+  ryms; annars en egen liten version)
+- Klickjämförelsen får steg för 0.10.16–0.10.18 (snittet i planen,
+  linjerna i 2D-formen, rampens punkter med höjd, sidorna och
+  förlängningen)
+- Städa, dela upp stora filer, gå igenom testerna
 
 ### 0.10.19 Markobjektens bågar
 
