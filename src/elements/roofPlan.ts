@@ -21,26 +21,36 @@ export const DEFAULT_CUT_HEIGHT = 1200;
 /** Visa-nyckeln för husets kontur genom taket; den är släckt om den inte står i vyns `hide` med plus. */
 export const FOOTPRINT_KEY = 'footprint';
 
+/**
+ * Visa-nyckeln för tak på andra våningar (0.10.10), släckt från början: ett
+ * tak ovanför vyn streckprickat, ett under våningens golv streckat.
+ */
+export const ROOFS_AROUND_KEY = 'roofsAround';
+
 export const cutHeightOf = (s: Pick<Storey, 'cutHeight'>): number => s.cutHeight ?? DEFAULT_CUT_HEIGHT;
 
 /**
  * Om taket syns i planen för en annan våning: det går upp i våningen, så att
- * en vindsvåning ser ett tak som ligger på planet under.
+ * en vindsvåning ser ett tak som ligger på planet under. Med *Tak på andra
+ * våningar* under Visa (0.10.10) syns alla tak.
  */
-export function roofShownOn(el: Element<any>, doc: ProjectDoc, storey: Id): boolean {
+export function roofShownOn(el: Element<any>, doc: ProjectDoc, storey: Id, hide?: readonly string[]): boolean {
   const home = doc.storeys.find((s) => s.id === el.storey);
   const here = doc.storeys.find((s) => s.id === storey);
   if (!home || !here || home === here) return false;
   const p = resolveParams<RoofParams>(doc, el);
   if (!p.outline?.length || !p.ref) return false;
+  if (hide?.includes(`+${ROOFS_AROUND_KEY}`)) return true;
   const r = roofRange(p);
   return home.elevation + r.topMax > here.elevation + 1 && home.elevation + r.underMin < here.elevation + here.height - 1;
 }
 
-type Zone = 'above' | 'below' | 'cut';
+/** `under`: under våningens golv (0.10.10), syns bara med *Tak på andra våningar*. */
+type Zone = 'above' | 'below' | 'cut' | 'under';
 
 const ABOVE: Pen = { weight: 0.18, dash: LINE_TYPES.dashdot.dash };
 const SEEN: Pen = { weight: 0.18 };
+const UNDER: Pen = { weight: 0.18, dash: LINE_TYPES.dashed.dash };
 
 export function roofPlanPrims(el: Element<any>, ctx: PlanContext): Primitive[] {
   const p = ctx.params<RoofParams>(el);
@@ -50,8 +60,10 @@ export function roofPlanPrims(el: Element<any>, ctx: PlanContext): Primitive[] {
   const home = ctx.doc.storeys.find((s) => s.id === el.storey);
   // Snitthöjden i takets egna höjder (från dess våningsgolv).
   const h = here && home ? cutHeightOf(here) + here.elevation - home.elevation : -Infinity;
+  // Våningens golv i takets höjder: det som ligger under ritas streckat.
+  const floor = here && home ? here.elevation - home.elevation : -Infinity;
   const f = roofFrame(p);
-  const zone = (q: Vec2): Zone => (f.under(q) > h + 0.5 ? 'above' : f.top(q) < h - 0.5 ? 'below' : 'cut');
+  const zone = (q: Vec2): Zone => (f.under(q) > h + 0.5 ? 'above' : f.top(q) < floor - 0.5 ? 'under' : f.top(q) < h - 0.5 ? 'below' : 'cut');
 
   // Konturen, delad där undersidan och ovansidan går genom snitthöjden.
   let run: Vec2[] = [];
@@ -59,7 +71,7 @@ export function roofPlanPrims(el: Element<any>, ctx: PlanContext): Primitive[] {
   let runEdge = -1;
   const flush = () => {
     if (run.length >= 2 && runZone) {
-      const pen = runZone === 'above' ? ABOVE : SEEN;
+      const pen = runZone === 'above' ? ABOVE : runZone === 'under' ? UNDER : SEEN;
       out.push(run.length === 2 ? { kind: 'line', a: run[0], b: run[1], pen, origin } : { kind: 'polyline', points: run, closed: false, pen, origin });
     }
     run = [];
@@ -69,7 +81,7 @@ export function roofPlanPrims(el: Element<any>, ctx: PlanContext): Primitive[] {
     if (edge !== runEdge) flush();
     runEdge = edge;
     const ts = [0, 1];
-    for (const g of [(q: Vec2) => f.under(q) - h, (q: Vec2) => f.top(q) - h]) {
+    for (const g of [(q: Vec2) => f.under(q) - h, (q: Vec2) => f.top(q) - h, (q: Vec2) => f.top(q) - floor]) {
       const ga = g(a);
       const gb = g(b);
       if ((ga < 0 && gb > 0) || (ga > 0 && gb < 0)) ts.push(ga / (ga - gb));

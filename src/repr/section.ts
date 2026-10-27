@@ -20,6 +20,8 @@ import { ownedOutlines } from './outlineOwners';
 import { solidTriangles } from './mesh';
 import { openingPen } from './openingPens';
 import { applyStyle, type Pickable } from './plan';
+import { HIDDEN_SLABS, HIDDEN_WALLS, innerFaceEdges, mergeCollinear } from './sectionHidden';
+import { LINE_TYPES } from '../core/lineTypes';
 import type { Pen, Primitive, Vec2 } from './primitives';
 import { zOn, type EdgePart, type Shape3D, type Solid } from './solids';
 
@@ -55,6 +57,8 @@ interface EdgeKey {
   action: Action;
   part?: EdgePart;
   dash?: readonly number[];
+  /** I den tonade delen av vyn (0.10.10). */
+  far?: boolean;
 }
 
 /**
@@ -77,6 +81,11 @@ const PART_PEN: Record<EdgePart, Pen> = {
   glass: { weight: 0.13, color: 'muted' },
   swing: { weight: 0.13, dash: [3, 1.5] },
 };
+
+/** Det tonade djupet (0.10.10). */
+const FAR_PEN = { weight: 0.13, color: 'muted' } as const;
+/** Dolda linjer (0.10.10). */
+const HIDDEN_PEN: Pen = { weight: 0.13, dash: LINE_TYPES.dashed.dash };
 
 /** Material som fylls i snitt som väggar; resten ritas med kontur (också snittets lock i 3D). */
 export const POCHE_MATERIALS: ReadonlySet<string> = new Set(['wall', 'wall-new', 'roof', 'floor', 'slab']);
@@ -108,13 +117,29 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     return el ? ctx.actionOf(el) : 'plain';
   };
 
+  // Det tonade djupet (0.10.10): bortom det tunna grå linjer.
+  const tone = fr.tone !== null && fr.tone > 0 && (depthMax === null || fr.tone < depthMax) ? fr.tone : null;
+  // Dolda linjer i fasader (0.10.10), tända under Visa.
+  const hiddenSlabs = !isSection && !!view.hide?.includes(`+${HIDDEN_SLABS}`);
+  const hiddenWalls = !isSection && !!view.hide?.includes(`+${HIDDEN_WALLS}`);
+
   const occluders: number[][] = [];
   const segs: Seg<EdgeKey>[] = [];
-  const pushSeg = (a: V3, b: V3, key: EdgeKey) => {
+  const hiddenSegs: Seg<EdgeKey>[] = [];
+  const pushSeg = (a: V3, b: V3, key: EdgeKey, list = segs) => {
     const c = clipSegDepth(a, b, 0, depthMax);
     const u = c && clipSegAxis(c[0], c[1], 0, 0, uMax);
-    if (u) segs.push({ a: u[0], b: u[1], key });
+    if (!u) return;
+    if (tone === null) {
+      list.push({ a: u[0], b: u[1], key });
+      return;
+    }
+    const near = clipSegDepth(u[0], u[1], 0, tone);
+    if (near) list.push({ a: near[0], b: near[1], key });
+    const far = clipSegDepth(u[0], u[1], tone, depthMax);
+    if (far) list.push({ a: far[0], b: far[1], key: { ...key, far: true } });
   };
+  const isSlab = (id: string) => doc.elements[id]?.type === 'Slab';
   let minZ = Infinity;
   let maxZ = -Infinity;
 
@@ -122,6 +147,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     const key: EdgeKey = { id: s.id, action: actionOfId(s.id), ...(s.kind === 'edges' ? { part: s.part, dash: s.dash } : {}) };
     if (s.kind === 'edges') {
       for (const q of s.segments) pushSeg(toView(q[0], q[1], q[2]), toView(q[3], q[4], q[5]), key);
+      if (hiddenSlabs && !demolished && isSlab(s.id)) for (const q of s.segments) pushSeg(toView(q[0], q[1], q[2]), toView(q[3], q[4], q[5]), key, hiddenSegs);
       continue;
     }
     const plan = solidTriangles(s);
@@ -138,7 +164,9 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
       maxZ = Math.max(maxZ, z);
     }
     // Kanter: skarpa veck och öppna kanter, och konturer av böjda ytor.
-    for (const [a, b] of featureEdges(tris, { onlySilhouettes: !!s.noEdges })) pushSeg(a, b, key);
+    const edges = featureEdges(tris, { onlySilhouettes: !!s.noEdges });
+    for (const [a, b] of edges) pushSeg(a, b, key);
+    if (hiddenSlabs && !demolished && isSlab(s.id)) for (const [a, b] of edges) pushSeg(a, b, key, hiddenSegs);
     // Det som rivs skymmer inget: det finns inte kvar.
     if (demolished) continue;
     const clipped: number[] = [];
@@ -175,6 +203,8 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   for (const seg of wallSilhouettes(shapes, v)) pushSeg(toView(seg.x, seg.y, seg.z0), toView(seg.x, seg.y, seg.z1), { id: seg.id, action: actionOfId(seg.id) });
 
   const visibleLines = visibleSegments(segs, occluders);
+  if (hiddenWalls) for (const { id, seg: q } of innerFaceEdges(doc, shapes)) pushSeg(toView(q[0], q[1], q[2]), toView(q[3], q[4], q[5]), { id, action: actionOfId(id) }, hiddenSegs);
+  const hiddenLines = hiddenSegs.length ? mergeCollinear(visibleSegments(hiddenSegs, occluders, undefined, true), (k) => doc.elements[k.id]?.type ?? '') : [];
 
   // Snittytor där linjen skär formerna.
   const cuts = new Map<string, { action: Action; poche: boolean; ids: Set<string>; rings: Rings[] }>();
@@ -220,11 +250,17 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
       : { weight: 0.18 };
     const raw: Primitive = { kind: 'line', a: l.a, b: l.b, pen, origin: { objectId: l.key.id, objectType: doc.elements[l.key.id]?.type, part: l.key.part ?? 'vy' } };
     // Objektets egen penna (0.8.31) efter stilmallens.
-    const p = applyOwnPen(applyStyle(raw, style.actions[ctx.styleKeyOf(l.key.action)], l.key.action, style, ctx.scale), ownPenOf(doc, raw), style);
+    const styled = applyOwnPen(applyStyle(raw, style.actions[ctx.styleKeyOf(l.key.action)], l.key.action, style, ctx.scale), ownPenOf(doc, raw), style);
+    // Det tonade (0.10.10): tunt och grått, oavsett penna.
+    const p: Primitive = l.key.far && styled.kind === 'line' ? { ...styled, pen: { ...styled.pen, weight: Math.min(styled.pen.weight, FAR_PEN.weight), color: FAR_PEN.color } } : styled;
     prims.push(p);
     own(l.key.id, p);
     minU = Math.min(minU, l.a[0], l.b[0]);
     maxU = Math.max(maxU, l.a[0], l.b[0]);
+  }
+  // Dolda linjer (0.10.10): tunna och streckade, går inte att klicka på.
+  for (const l of hiddenLines) {
+    prims.push({ kind: 'line', a: l.a, b: l.b, pen: HIDDEN_PEN, noPick: true, origin: { objectId: l.key.id, objectType: doc.elements[l.key.id]?.type, part: 'dold' } });
   }
   for (const g of cuts.values()) {
     const merged = g.poche ? union(g.rings) : g.rings;

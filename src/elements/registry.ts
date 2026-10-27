@@ -92,9 +92,10 @@ export interface ElementType<P extends object = Record<string, unknown>> {
   everyStorey?: boolean;
   /**
    * Ritas också i planen för en annan våning än sin egen (0.10.2): ett tak i
-   * planen för en våning som det går upp i. Bara planen, inte 3D.
+   * planen för en våning som det går upp i. Bara planen, inte 3D. `hide`
+   * är vyns Visa-val (0.10.10: tak på andra våningar).
    */
-  alsoOnStorey?: (el: Element<any>, doc: ProjectDoc, storey: Id) => boolean;
+  alsoOnStorey?: (el: Element<any>, doc: ProjectDoc, storey: Id, hide?: readonly string[]) => boolean;
   /**
    * Förval som följer elementets våning (0.9), t.ex. väggens höjd. Gäller när
    * varken elementet eller typen har ett eget värde.

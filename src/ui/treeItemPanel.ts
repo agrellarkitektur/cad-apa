@@ -112,6 +112,7 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('Mapp', `<select name="folder">${folderOptions(doc, 'modell', folder)}</select>`)}
           ${isSection ? field('Beteckning', `<input name="label" value="${esc(p.label ?? 'A')}">`) : ''}
           ${field('Djup', `<span class="input-unit"><input name="depth" type="text" inputmode="decimal" value="${p.depth ?? ''}" placeholder="Allt"><i>mm</i></span>`)}
+          ${field('Tonat från', `<span class="input-unit"><input name="toneDepth" type="text" inputmode="decimal" value="${p.toneDepth ?? ''}" placeholder="Inget"><i>mm</i></span>`)}
         </div>
         <label class="check lock-check" title="En låst linje kan inte flyttas eller tas bort av misstag"><input type="checkbox" name="locked"${el.locked ? ' checked' : ''}><span class="lock-icon">${el.locked ? icons.lock : icons.unlock}</span> Lås</label>
       </section>
@@ -288,7 +289,8 @@ export function bindTreeForm(root: HTMLElement, store: DocStore, onSaved: (item:
       );
     } else if (kind === 'marker') {
       const depth = num('depth');
-      const params: Record<string, unknown> = { depth: str('depth').trim() === '' || !(depth > 0) ? null : Math.round(depth) };
+      const tone = num('toneDepth');
+      const params: Record<string, unknown> = { depth: str('depth').trim() === '' || !(depth > 0) ? null : Math.round(depth), toneDepth: str('toneDepth').trim() === '' || !(tone > 0) ? null : Math.round(tone) };
       if (d.has('label')) params.label = str('label').trim() || 'A';
       saveMarker(store, id, { name: str('name'), params, locked: d.has('locked') }, folder);
     } else if (kind === 'storey') {

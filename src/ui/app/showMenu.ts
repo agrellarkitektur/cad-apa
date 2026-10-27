@@ -23,6 +23,9 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
       ['Slab', 'Bjälklag'],
       ['Roof', 'Tak'],
       ['footprint', 'Husets kontur genom taket'],
+      ['roofsAround', 'Tak på andra våningar'],
+      ['hiddenSlabs', 'Bjälklag streckade i fasad'],
+      ['hiddenWalls', 'Ytterväggarnas insida streckad i fasad'],
       ['Furniture', 'Möbler och inredning'],
       ['swing', 'Öppningssätt (dörrar)'],
       ['Underlay', 'Underlag'],
@@ -96,9 +99,10 @@ export function traceStoreyOptions(trace: string | null | undefined): string {
 
 /**
  * Det som är släckt från början (0.10.2): det tänds med nyckeln och ett plus
- * i vyns `hide`, så att äldre vyer inte får det.
+ * i vyns `hide`, så att äldre vyer inte får det. Tak på andra våningar och
+ * de dolda linjerna i fasader (0.10.10) likaså.
  */
-const OFF_BY_DEFAULT = new Set(['footprint']);
+const OFF_BY_DEFAULT = new Set(['footprint', 'roofsAround', 'hiddenSlabs', 'hiddenWalls']);
 
 /** Om det som nyckeln står för syns i vyn. */
 export function isShown(ui: Pick<UiState, 'hide' | 'hideDemolished'>, key: string): boolean {

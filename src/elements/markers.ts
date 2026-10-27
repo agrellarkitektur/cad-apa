@@ -27,6 +27,11 @@ export interface MarkerParams {
   side: 1 | -1;
   /** Hur långt bortom linjen som visas, mm. Null = allt. */
   depth: number | null;
+  /**
+   * Var den tonade delen börjar (0.10.10), mm bortom linjen: det som ligger
+   * längre bort ritas med tunn grå linje. Utelämnad = inget tonas.
+   */
+  toneDepth?: number | null;
   /** Placeras automatiskt utanför byggnaden (fasader) eller genom mitten (sektioner). */
   auto: boolean;
   /** Fasader: åt vilket håll fasaden vetter, grader moturs från x-axeln. */
@@ -94,6 +99,8 @@ export interface MarkerFrame {
   /** Betraktarens högerhand: x-led i fasaden. */
   right: Vec2;
   depth: number | null;
+  /** Var den tonade delen börjar (0.10.10), eller null. */
+  tone: number | null;
 }
 
 export function markerFrame(doc: ProjectDoc, el: Element<any>): MarkerFrame {
@@ -115,12 +122,12 @@ export function markerFrame(doc: ProjectDoc, el: Element<any>): MarkerFrame {
       const out = Math.max(...corners.map((q) => (q[0] - c[0]) * f[0] + (q[1] - c[1]) * f[1])) + MARGIN;
       const half = Math.max(...corners.map((q) => Math.abs((q[0] - c[0]) * right[0] + (q[1] - c[1]) * right[1]))) + MARGIN / 2;
       const m: Vec2 = [c[0] + f[0] * out, c[1] + f[1] * out];
-      return { start: [m[0] - right[0] * half, m[1] - right[1] * half], end: [m[0] + right[0] * half, m[1] + right[1] * half], view, right, depth: null };
+      return { start: [m[0] - right[0] * half, m[1] - right[1] * half], end: [m[0] + right[0] * half, m[1] + right[1] * half], view, right, depth: null, tone: p.toneDepth ?? null };
     }
     // Sektion: vågrätt genom mitten, man ser uppåt i planen.
     const start: Vec2 = [b.minX - MARGIN / 2, c[1]];
     const end: Vec2 = [b.maxX + MARGIN / 2, c[1]];
-    return { start, end, view: [0, 1], right: [1, 0], depth: p.depth };
+    return { start, end, view: [0, 1], right: [1, 0], depth: p.depth, tone: p.toneDepth ?? null };
   }
   const u = norm(sub(p.end, p.start));
   const l = left(u);
@@ -128,7 +135,7 @@ export function markerFrame(doc: ProjectDoc, el: Element<any>): MarkerFrame {
   const right: Vec2 = [view[1], -view[0]];
   // Linjen räknas alltid från betraktarens vänster till höger.
   const [start, end] = p.side === 1 ? [p.start, p.end] : [p.end, p.start];
-  return { start, end, view, right, depth: p.depth };
+  return { start, end, view, right, depth: p.depth, tone: p.toneDepth ?? null };
 }
 
 const COMPASS = ['norr', 'nordost', 'ost', 'sydost', 'syd', 'sydväst', 'väst', 'nordväst'];

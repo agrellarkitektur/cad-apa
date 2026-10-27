@@ -263,9 +263,9 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
       const { ctx } = createContext(doc, doc.storeys[0].id, view, doc.graphics, () => true);
       const now = markerHeights(el, markerFrame(doc, el).view, buildingHeight(ctx));
       updateParams(store, [el.id], { heights: { ...now, [k]: (input as HTMLInputElement).checked } }, 'Höjder i vyn');
-    } else if (name === 'depth') {
+    } else if (name === 'depth' || name === 'toneDepth') {
       const v = Number(input.value);
-      updateParams(store, [el.id], { depth: input.value === '' || !(v > 0) ? null : Math.round(v) }, 'Ändra djup');
+      updateParams(store, [el.id], { [name]: input.value === '' || !(v > 0) ? null : Math.round(v) }, name === 'depth' ? 'Ändra djup' : 'Ändra tonat djup');
     } else if (name === 'auto') {
       const on = (input as HTMLInputElement).checked;
       if (on) updateParams(store, [el.id], { auto: true }, 'Placera automatiskt');

@@ -2139,7 +2139,7 @@ konens); där en fasads djup slutar mitt i muren ritas ingen kant vid
 gränsen (som för husets väggar); murens ändar möter fortfarande inte
 marken med slänt.*
 
-### 0.10.10 Dolda linjer och vyns djup
+### 0.10.10 Dolda linjer och vyns djup ✓
 
 Carl Augusts synpunkter 25 och 26 oktober. Mellanstor.
 
@@ -2151,6 +2151,28 @@ Carl Augusts synpunkter 25 och 26 oktober. Mellanstor.
   under vyn streckat, som vyinställning (svar 26 oktober, fråga 21)
 - Ritordningen (bakom eller framför väggarna) också i fasader och
   sektioner (fråga 55)
+
+*Byggd (27 oktober), samma format (20). Testerna: 514 → 518, ca 14 s.
+Carl August sa "kör nästa version" utan att se upplägget; Claudes val
+står här och som frågor till nästa session. **Dolda linjer**: två
+Visa-val, släckta från början (`+hiddenSlabs`, `+hiddenWalls`), bara i
+fasader. Alla bjälklagens kanter (inte bara det närmaste) ritas där de är
+skymda, tunt streckade (0,13, *Streckad*), och linjer som ligger på
+varandra slås ihop, så att fram- och bakkant blir en linje. Ytterväggarnas
+insida är en lodrät linje i varje hörn av det som ligger innanför
+ytterväggarna (de väggar som når husets utsida), från väggens fot till
+krön; inga vågräta linjer (bjälklagen visar dem). Linjerna går inte att
+klicka på. **Tonat från** (`toneDepth`, mm från linjen) bredvid *Djup*,
+för fasader och sektioner: kanter bortom ritas 0,13 grå, oavsett penna;
+snittet och det som skymmer är detsamma. **Tak på andra våningar**
+(`+roofsAround`): alla tak syns i alla planer; det som ligger över
+snitthöjden streckprickat (som förut), under våningens golv streckat.
+**Ritordningen**: 2D-formernas *Fyllningen* och *Linjen* gäller också i
+fasader och sektioner (*Bakom/Framför modellen*), med samma förval som i
+planen: fyllningen bakom, linjen framför. Det ändrar fasader där en
+fyllning förut låg över modellen (också en mask). Provat med Playwright
+mot `dist/` (Visa-menyn, *Tonat från*). Klickjämförelsen kördes inte.
+Inga referensritningar ändrades.*
 
 ### 0.10.11 Småsaker
 

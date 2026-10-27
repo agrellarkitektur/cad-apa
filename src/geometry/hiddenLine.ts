@@ -129,9 +129,10 @@ function makeOccluder(a: V3, b: V3, c: V3): Occluder | null {
 /**
  * De synliga delarna av kanterna. `triangles` är platta listor med nio tal
  * per triangel (x, y, d för tre hörn). `cellSide` ger rutnätets rutor en
- * egen storlek, för testerna; resultatet är detsamma.
+ * egen storlek, för testerna; resultatet är detsamma. Med `hiddenOnly`
+ * (0.10.10) blir svaret i stället de skymda delarna, för streckade linjer.
  */
-export function visibleSegments<K>(segs: readonly Seg<K>[], triangles: readonly (readonly number[])[], cellSide?: number): Visible<K>[] {
+export function visibleSegments<K>(segs: readonly Seg<K>[], triangles: readonly (readonly number[])[], cellSide?: number, hiddenOnly = false): Visible<K>[] {
   const occ: Occluder[] = [];
   for (const tris of triangles) {
     for (let i = 0; i + 8 < tris.length; i += 9) {
@@ -221,12 +222,15 @@ export function visibleSegments<K>(segs: readonly Seg<K>[], triangles: readonly 
             // Helt dold: inget mer att pröva, och inget att rita. Provas när
             // biten når en ände och när antalet bitar fördubblats.
             const n = hidden.length;
-            if ((iv[0] <= 0 || iv[1] >= 1 || (n & (n - 1)) === 0) && fullyHidden(hidden)) return;
+            if ((iv[0] <= 0 || iv[1] >= 1 || (n & (n - 1)) === 0) && fullyHidden(hidden)) {
+              if (hiddenOnly) out.push({ a: [a[0], a[1]], b: [b[0], b[1]], key: seg.key });
+              return;
+            }
           }
         }
       }
     }
-    for (const [t0, t1] of visibleParts(hidden)) {
+    for (const [t0, t1] of hiddenOnly ? hiddenParts(hidden) : visibleParts(hidden)) {
       if ((t1 - t0) * len < MIN_PIECE) continue;
       out.push({
         a: [a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0],
@@ -304,6 +308,21 @@ function visibleParts(hidden: [number, number][]): [number, number][] {
     if (at >= 1) break;
   }
   if (at < 1) out.push([at, 1]);
+  return out;
+}
+
+/** De skymda intervallen, sammanslagna (0.10.10, för dolda linjer). */
+function hiddenParts(hidden: [number, number][]): [number, number][] {
+  hidden.sort((p, q) => p[0] - q[0]);
+  const out: [number, number][] = [];
+  for (const [s, e] of hidden) {
+    const a = Math.max(0, s);
+    const b = Math.min(1, e);
+    if (b <= a) continue;
+    const last = out[out.length - 1];
+    if (last && a <= last[1]) last[1] = Math.max(last[1], b);
+    else out.push([a, b]);
+  }
   return out;
 }
 

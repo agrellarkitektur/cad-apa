@@ -1242,6 +1242,29 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Dolda linjer och vyns djup (0.10.10, format 20)
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/geometry/hiddenLine.ts` | `visibleSegments(..., hiddenOnly)` ger de skymda delarna i stället (`hiddenParts`) |
+| `src/repr/sectionHidden.ts` | Ny: `HIDDEN_SLABS`, `HIDDEN_WALLS`, `innerFaceEdges(doc, shapes)` (ytterväggarnas insida som lodräta kanter, per våning) och `mergeCollinear` (linjer som ligger på varandra blir en) |
+| `src/repr/section.ts` | `pushSeg` delar kanterna vid `fr.tone` (`far` i `EdgeKey`, ritas med `FAR_PEN`); de dolda linjerna (`hiddenSegs`, `HIDDEN_PEN`, part `dold`, `noPick`) bara i fasader |
+| `src/elements/markers.ts` | `MarkerParams.toneDepth`, `MarkerFrame.tone` |
+| `src/elements/roofPlan.ts` | `ROOFS_AROUND_KEY`; `roofShownOn` får vyns `hide`; zonen `under` (under våningens golv, streckad) |
+| `src/elements/registry.ts`, `src/repr/context.ts` | `alsoOnStorey(el, doc, storey, hide)` |
+| `src/repr/sheet.ts`, `src/ui/app/render.ts` | `splitPlaced`: underlagen och prims med `under` ritas under fasaden eller sektionen |
+| `src/ui/app/drawOrderUi.ts` | *Bakom/Framför modellen* för 2D-former i en fasad eller sektion |
+| `src/ui/app/showMenu.ts` | `roofsAround`, `hiddenSlabs`, `hiddenWalls` i `OFF_BY_DEFAULT` |
+
+- De dolda linjerna räknas med samma skymmande trianglar som de synliga,
+  med `hiddenOnly`. Bjälklagens kanter tas ur deras `featureEdges` (och
+  `Edges3D`, om ett bjälklag har egna); ytterväggarna är de vars kontur når
+  husets utsida på våningen, och insidan är utsidan minus dem.
+- Det tonade djupet ändrar bara pennan (tunn, grå) för kanter bortom
+  `tone`; det som skymmer är detsamma. Inget nytt format: `toneDepth` är
+  valfri.
+- Tester: `tests/v01010.test.ts`. Inga referensritningar ändrades.
+
 ## Stödmur del 2 (0.10.9, format 20)
 
 | Fil | Innehåll |

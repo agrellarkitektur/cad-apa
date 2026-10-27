@@ -99,6 +99,19 @@ function styleOf(doc: ProjectDoc, name: string | undefined): StyleSheet {
   return preset ? { ...preset, labels: g.labels, ...(g.lineTypes ? { lineTypes: g.lineTypes } : {}), ...(g.fillTypes ? { fillTypes: g.fillTypes } : {}) } : g;
 }
 
+/**
+ * Det som ritats i en fasad eller sektion, delat i det som ligger under
+ * modellen och det som ligger över: underlagen, och sedan 0.10.10 de
+ * fyllningar och linjer i 2D-formerna som ligger bakom (ritordningen, som
+ * bakom väggarna i planen).
+ */
+export function splitPlaced(prims: readonly Primitive[]): { under: Primitive[]; over: Primitive[] } {
+  const under: Primitive[] = [];
+  const over: Primitive[] = [];
+  for (const q of prims) (q.origin?.objectType === 'Underlay' || q.under ? under : over).push(q);
+  return { under, over };
+}
+
 /** En vys inställningar som de gäller när den ritas. */
 export function viewStatesFor(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions): ViewStates {
   const ex = existingState(doc);
@@ -126,8 +139,7 @@ export function buildViewPrims(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions
     const section = marker ? buildSection(doc, marker.id, vs, style) : null;
     if (!marker || !section) return [];
     const drawn = buildPlan(doc, marker.storey, { ...vs, place: marker.id }, style);
-    const under = drawn.prims.filter((q) => q.origin?.objectType === 'Underlay');
-    const over = drawn.prims.filter((q) => q.origin?.objectType !== 'Underlay');
+    const { under, over } = splitPlaced(drawn.prims);
     return [...under, ...section.prims, ...over];
   }
   if (v.worksheet) return buildPlan(doc, v.storey, { ...vs, place: v.worksheet }, style).prims;

@@ -8,7 +8,7 @@ import { skewText, skewWarnings } from '../../elements/angleCheck';
 import { markerName } from '../../elements/markers';
 import { buildPlan, type PlanResult } from '../../repr/plan';
 import type { SectionResult } from '../../repr/section';
-import { paperPrim, stampOrigin } from '../../repr/sheet';
+import { paperPrim, splitPlaced, stampOrigin } from '../../repr/sheet';
 import type { Camera } from '../../view2d/camera';
 import { icons } from '../icons';
 import { escapeHtml } from '../labels';
@@ -184,10 +184,9 @@ export function installRender(app: AppContext, parts: RenderParts) {
       plan = { prims: paper.prims, pickables: paper.pickables };
     } else if (markerEl) {
       const drawn = buildPlan(doc, markerEl.storey, { ...vs, place: markerEl.id }, styleFor(app.ui.styleName));
-      // Underlagen ligger under fasaden eller sektionen; det andra som ritats i den ovanpå.
+      // Underlagen och det som ligger bakom (0.10.10) under fasaden eller sektionen; det andra som ritats i den ovanpå.
       // Första gången en stor vy räknas finns ingen fasad än, bara det ritade.
-      const under = drawn.prims.filter((q) => q.origin?.objectType === 'Underlay');
-      const over = drawn.prims.filter((q) => q.origin?.objectType !== 'Underlay');
+      const { under, over } = splitPlaced(drawn.prims);
       plan = { prims: [...under, ...(section?.prims ?? []), ...over], pickables: [...(section?.pickables ?? []), ...drawn.pickables] };
     } else if (sheet) {
       // Ett arbetsblad (0.8 del 2): bara det som är ritat på det. Ett mallblad (0.8.8) med papperet under.

@@ -51,13 +51,15 @@ export function orderSection(doc: ProjectDoc, els: readonly Element[]): string {
   if (!canOrder(els)) return '';
   const buttons = ORDER_MOVES.map((m) => `<button class="btn" data-action="draw-order" data-order="${m}">${ORDER_LABELS[m]}</button>`).join('');
   const parts = [`<div class="row order-row">${buttons}</div>`];
-  // Bakom eller framför väggarna: bara i planen, där det finns väggar.
-  const shapes = els.every((e) => e.type === 'Shape2D' && !e.space) ? els.map((e) => resolveParams<Shape2DParams>(doc, e)) : [];
+  // Bakom eller framför väggarna: i planen, och i fasader och sektioner bakom eller framför modellen (0.10.10).
+  const inMarker = (e: Element) => !!e.space && ['Section', 'Elevation'].includes(doc.elements[e.space]?.type ?? '');
+  const shapes = els.every((e) => e.type === 'Shape2D' && (!e.space || inMarker(e))) ? els.map((e) => resolveParams<Shape2DParams>(doc, e)) : [];
+  const what = els.some(inMarker) ? 'modellen' : 'väggarna';
   if (shapes.length) {
     const pick = (key: string, label: string, front: boolean | null, show: boolean) => {
       if (!show) return '';
       const opt = (v: string, l: string, on: boolean) => `<option value="${v}"${on ? ' selected' : ''}>${l}</option>`;
-      return `<label class="field"><span>${label}</span><select data-key="d2:${key}">${front === null ? '<option selected disabled>Olika</option>' : ''}${opt('behind', 'Bakom väggarna', front === false)}${opt('front', 'Framför väggarna', front === true)}</select></label>`;
+      return `<label class="field"><span>${label}</span><select data-key="d2:${key}">${front === null ? '<option selected disabled>Olika</option>' : ''}${opt('behind', `Bakom ${what}`, front === false)}${opt('front', `Framför ${what}`, front === true)}</select></label>`;
     };
     const same = (f: (p: Shape2DParams) => boolean) => (shapes.every((p) => f(p) === f(shapes[0])) ? f(shapes[0]) : null);
     const fields =

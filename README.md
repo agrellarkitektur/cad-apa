@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.9** (alfa); nästa är **0.10.10, dolda linjer och vyns djup**.
+**0.10.10** (alfa); nästa är **0.10.11, småsaker**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,21 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.10, dolda linjer och vyns djup (samma filformat, 20):
+- **Bjälklag streckade i fasad** och **Ytterväggarnas insida streckad i
+  fasad** under Visa (släckta från början): bjälklagens kanter och
+  ytterväggarnas insida (en lodrät linje i varje hörn innanför
+  ytterväggarna) ritas tunt streckade där de ligger dolda bakom fasaden
+- **Tonat från** bredvid *Djup* för fasader och sektioner: det som ligger
+  längre bort från linjen än så ritas med tunn grå linje. Det bortom
+  *Djup* syns inte, som förut
+- **Tak på andra våningar** under Visa (släckt från början): i planen syns
+  också taken på de andra våningarna, streckprickade ovanför vyn och
+  streckade under våningens golv
+- **Ritordningen i fasader och sektioner**: en 2D-forms fyllning och linje
+  ligger *Bakom modellen* eller *Framför modellen*, som bakom eller
+  framför väggarna i planen. Fyllningen ligger bakom från början
 
 Version 0.10.9, stödmur del 2 (samma filformat, 20):
 - **Referenslinjen** på stödmuren ligger i mitten eller på vänster eller
