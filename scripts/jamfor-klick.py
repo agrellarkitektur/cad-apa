@@ -563,7 +563,7 @@ def main():
         step('nivåerna igen', "__set('[data-show=\"level\"]', true, '.show-menu')", fn=lambda: pg.wait_for_function('!bacchus.sections.pending', timeout=20000))
         step('stäng Visa i sektionen', "__click('[data-action=\"show-menu\"]')")
         step('tillbaka till planen', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(500))
-        step('markera fasadlinje', "bacchus.selection.set(['fasad-1'])")
+        step('markera fasadmarkör', "bacchus.selection.set(['fasad-1'])")
         step('vänd blicken', "__click('[data-action=\"flip-side\"]', 'aside.panel .panel-body')")
         step('följ byggnaden', "__click('[data-action=\"follow-building\"]', 'aside.panel .panel-body')")
         step('slut', "bacchus.selection.clear()")

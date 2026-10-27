@@ -10,14 +10,14 @@ import type { Pen } from './primitives';
  * tjockleken gäller linjerna (texten behåller sin).
  */
 export const MARKER_PENS = [
-  { key: 'sectionLine', label: 'Sektionslinje', hint: 'Ändar, skaft, pil och bokstav', weight: 0.5 },
-  { key: 'elevationLine', label: 'Fasadlinje', hint: 'Linje, triangel och namn', weight: 0.18 },
+  { key: 'sectionLine', label: 'Sektionsmarkör', hint: 'Ändar, skaft, pil och bokstav', weight: 0.5 },
+  { key: 'elevationLine', label: 'Fasadmarkör', hint: 'Linje, triangel och namn', weight: 0.18 },
   { key: 'north', label: 'Norrpil', hint: 'Cirkel, pil och N', weight: 0.18 },
   { key: 'roomLeader', label: 'Rumsstämpelns pil', hint: 'När stämpeln står utanför rummet', weight: 0.18 },
   { key: 'roofSlope', label: 'Taklutning', hint: 'Båge eller triangel och gradtal', weight: 0.18 },
   { key: 'dimension', label: 'Mått', hint: 'Måttlinje, hjälplinjer och måttal', weight: 0.18 },
   { key: 'dimensionTick', label: 'Måttens snedstreck', hint: 'Strecket i varje måttpunkt', weight: 0.35 },
-  { key: 'level', label: 'Nivåkota', hint: 'I fasader och sektioner', weight: 0.18 },
+  { key: 'level', label: 'Nivåmarkör', hint: 'I fasader och sektioner', weight: 0.18 },
   { key: 'litteraLeader', label: 'Litterans streck', hint: 'Från väggens littera in till väggen', weight: 0.18 },
 ] as const;
 

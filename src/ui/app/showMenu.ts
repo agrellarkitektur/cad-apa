@@ -245,9 +245,11 @@ export function installShowMenu(app: AppContext) {
     }
     const { ui, store } = app;
     const item = (key: string, label: string, on: boolean) => `<label class="check"><input type="checkbox" data-show="${key}"${on ? ' checked' : ''}> ${label}</label>`;
+    // I kolumner (0.10.11), så att allt syns samtidigt: inställningarna till
+    // vänster, kategorierna i två kolumner till höger.
     m.innerHTML =
       // Detaljnivån för litteran, 2D-symbolerna och 3D var för sig (0.8.37).
-      `<div class="detail-parts">${(
+      `<div class="show-col show-settings"><div class="detail-parts">${(
         [
           ['label', 'Littera', ui.labelDetail],
           ['plan', '2D-symboler', ui.detail],
@@ -260,6 +262,8 @@ export function installShowMenu(app: AppContext) {
               .join('')}</div></div>`,
         )
         .join('')}</div>` +
+      settingsMarkup() +
+      `</div><div class="show-col show-groups">` +
       SHOW_GROUPS.filter((g) => g.id !== 'site' || !!store.doc.site).map((g) => {
         const shown = g.items.filter(([k]) => isShown(ui, k)).length;
         return `<div class="show-group" role="group" aria-label="${g.label}">
@@ -268,6 +272,32 @@ export function installShowMenu(app: AppContext) {
         </div>`;
       }).join('') +
       item('showHidden', 'Visa dolda 2D-element (tonade)', ui.showHidden) +
+      `</div>`;
+    m.hidden = false;
+    fitInPane(m);
+    syncGroups();
+    app.$<HTMLElement>('.show-btn').setAttribute('aria-expanded', 'true');
+  }
+
+  /**
+   * Menyn ryms i ritytan (0.10.11): den flyttas åt vänster om den går utanför,
+   * och blir smalare (kategorierna i en kolumn) om ytan är för smal.
+   */
+  function fitInPane(m: HTMLElement): void {
+    m.style.left = '';
+    m.style.width = '';
+    const pane = (m.closest('.canvas') ?? document.body).getBoundingClientRect();
+    const r = m.getBoundingClientRect();
+    const room = pane.width - 16;
+    if (r.width > room) m.style.width = `${room}px`;
+    const over = m.getBoundingClientRect().right - (pane.right - 8);
+    if (over > 0) m.style.left = `${-Math.min(over, r.left - pane.left - 8)}px`;
+  }
+
+  /** Visa-menyns inställningar: skala, stilmall och kalkering. */
+  function settingsMarkup(): string {
+    const { ui, store } = app;
+    return (
       `<label class="field"><span>Skala för texter och mått</span><select data-show-scale>${ANNOTATION_SCALES.map((n) => `<option value="${n}"${n === ui.scale ? ' selected' : ''}>1:${n}</option>`).join('')}${ANNOTATION_SCALES.includes(ui.scale) ? '' : `<option value="${ui.scale}" selected>1:${ui.scale}</option>`}</select></label>` +
       `<label class="field"><span>Stilmall i vyn</span><select data-show-style><option value="">Projektets (${escapeHtml(store.doc.graphics.name)})</option>${PRESETS.map((p) => `<option value="${escapeHtml(p.name)}"${ui.styleName === p.name ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}</select></label>` +
       `<label class="field"><span>Kalkera en annan vy</span><select data-show-trace><option value="">Ingen</option>${traceStoreyOptions(ui.trace)}${store.doc.views
@@ -275,10 +305,8 @@ export function installShowMenu(app: AppContext) {
         .map((v) => `<option value="${v.id}"${ui.trace === v.id ? ' selected' : ''}>${escapeHtml(v.name)}</option>`)
         .join('')}</select></label>` +
       traceLookMarkup() +
-      `<button class="btn show-style-link" data-action="style">Stilmall och ritningsgrafik…</button>`;
-    m.hidden = false;
-    syncGroups();
-    app.$<HTMLElement>('.show-btn').setAttribute('aria-expanded', 'true');
+      `<button class="btn show-style-link" data-action="style">Stilmall och ritningsgrafik…</button>`
+    );
   }
 
   /** Kategoriernas kryssrutor: ikryssad när allt syns, halvt när en del syns. */

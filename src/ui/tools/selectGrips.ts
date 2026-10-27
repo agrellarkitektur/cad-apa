@@ -15,7 +15,7 @@ import { pxToMm, type ToolHost } from './host';
 /**
  * Greppen som Markera hittar under markören (ur selectTool.ts i 0.8.23):
  * ändarna på markerade väggar och för hand placerade sektions- och
- * fasadlinjer, punkterna i markerade 2D-former, greppen i en markerad bild,
+ * fasadmarkörer, punkterna i markerade 2D-former, greppen i en markerad bild,
  * takets nock och takfot i en fasad eller sektion, och rumsstämpeln i ett
  * markerat rum. Allt gäller bara det markerade, så inget söks i hela
  * projektet vid varje musrörelse.
@@ -27,13 +27,13 @@ export const GRIP_PX = 14;
 /** Rumsstämpelns text och pil. */
 export const isRoomLabel = (q: Primitive): q is Primitive => q.origin?.part === 'rumstext';
 
-/** En sektions- eller fasadlinje som placerats för hand och har grepp i ändarna. */
+/** En sektions- eller fasadmarkör som placerats för hand och har grepp i ändarna. */
 export function isManualMarker(el: Element | undefined): el is Element {
   return !!el && (el.type === 'Section' || el.type === 'Elevation' || el.type === 'BasisFacade') && !el.params.auto && !el.locked;
 }
 
 export interface EndGrip {
-  /** Väggen, sektions- eller fasadlinjen, eller takfallet (referenslinjen, 0.10) vars ände dras. */
+  /** Väggen, sektions- eller fasadmarkören, eller takfallet (referenslinjen, 0.10) vars ände dras. */
   wallId: string;
   kind: 'wall' | 'marker' | 'roofRef';
   end: 'start' | 'end';
@@ -43,7 +43,7 @@ export interface EndGrip {
 /** Andra markerade väggar vars ände ligger i samma punkt; de följer med. */
 export type Companions = { id: string; end: 'start' | 'end'; fixed: Vec2 }[];
 
-/** Grepp i ändarna på markerade väggar och på sektions- och fasadlinjer som placerats för hand. */
+/** Grepp i ändarna på markerade väggar och på sektions- och fasadmarkörer som placerats för hand. */
 export function endGripAt(host: ToolHost, pt: Vec2): EndGrip | null {
   const tol = pxToMm(host, GRIP_PX);
   const doc = host.store.doc;

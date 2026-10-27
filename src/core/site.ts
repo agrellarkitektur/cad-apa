@@ -131,7 +131,7 @@ export function toRh(site: Pick<Site, 'datum'>, zMm: number): number {
   return site.datum + zMm / 1000;
 }
 
-/** En höjd (mm från ±0) som nivåkot: RH 2000 när projektet har en plats, annars från ±0 (*+62,400*). */
+/** En höjd (mm från ±0) som nivåmarkör: RH 2000 när projektet har en plats, annars från ±0 (*+62,400*). */
 export function levelText(site: Pick<Site, 'datum'> | undefined, zMm: number): string {
   const m = site ? site.datum + zMm / 1000 : zMm / 1000;
   const r = Math.round(m * 1000) / 1000;

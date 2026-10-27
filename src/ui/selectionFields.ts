@@ -354,9 +354,9 @@ function markerHeightFields(doc: ProjectDoc, el: Element, view: ViewStates): str
   const box = (k: keyof MarkerHeights, label: string, title: string) =>
     `<label class="check" title="${escapeHtml(title)}"><input type="checkbox" data-key="marker:heights.${k}"${h[k] ? ' checked' : ''}> ${label}</label>`;
   return `<div>
-      ${box('bh', 'Byggnadshöjd (BH)', 'Nivåkota och mått från medelmarknivån till byggnadshöjden mot den beräkningsgrundande fasaden')}
+      ${box('bh', 'Byggnadshöjd (BH)', 'Nivåmarkör och mått från medelmarknivån till byggnadshöjden mot den beräkningsgrundande fasaden')}
       ${box('nh', 'Nockhöjd (NH)', 'Mått från medelmarknivån till takets högsta punkt')}
       ${box('th', 'Totalhöjd (TH)', 'Mått från medelmarknivån till husets högsta punkt')}
-      ${box('mmnOld', 'Medelmarknivå, befintlig mark', 'Nivåkota för den befintliga markens medelmarknivå bredvid den nya')}
+      ${box('mmnOld', 'Medelmarknivå, befintlig mark', 'Nivåmarkör för den befintliga markens medelmarknivå bredvid den nya')}
     </div>${bh ? '' : '<p class="note">Höjderna visas när huset har tak.</p>'}`;
 }

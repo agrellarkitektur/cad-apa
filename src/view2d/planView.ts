@@ -178,6 +178,11 @@ export class PlanView {
   }
 
   /** En annan vy som visas tonad under ritningen, att rita mot (kalkering). */
+  /** Det kalkerade under ritningen (0.10.11: snäppningen läser det). */
+  get underlayPrimitives(): readonly Primitive[] {
+    return this.underlayPrims;
+  }
+
   setUnderlay(prims: readonly Primitive[]): void {
     if (prims === this.underlayPrims || (!prims.length && !this.underlayPrims.length)) return;
     this.underlayPrims = prims;

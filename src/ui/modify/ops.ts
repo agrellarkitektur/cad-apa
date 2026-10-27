@@ -158,7 +158,7 @@ export const OPS: Record<OpId, OpDef> = {
   shapeStraighten: { label: 'Räta ut', short: 'Räta ut', icon: 'straighten', instant: true, hint: 'Bågen blir rak igen.' },
   shapeOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'Kanten flyttas vinkelrätt dit du klickar, eller skriv avståndet; grannkanterna följer med.' },
   shapeFillet: { label: 'Avrunda hörn', short: 'Avrunda', icon: 'fillet', value: { label: 'Radie', unit: 'mm', initial: 500 }, hint: 'Skriv radien och tryck Enter, eller klicka för att använda den. Bågen tangerar båda kanterna.' },
-  shapeChamfer: { label: 'Fasa hörn', short: 'Fasa', icon: 'chamfer', value: { label: 'Avstånd', unit: 'mm', initial: 300 }, hint: 'Skriv avståndet från hörnet och tryck Enter, eller klicka för att använda det.' },
+  shapeChamfer: { label: 'Fasa hörn', short: 'Fasa', icon: 'chamfer', value: { label: 'Avstånd', unit: 'mm', initial: 500 }, hint: 'Skriv avståndet från hörnet och tryck Enter, eller klicka för att använda det.' },
   holeMove: { label: 'Flytta hålet', short: 'Flytta hål', icon: 'move', hint: 'Klicka var hålet ska hamna, räknat från punkten du klickade på.' },
   roofTrim: { label: 'Kapa mot tak', short: 'Kapa mot tak', icon: 'trim', hint: 'Klicka på takfallet som det ska kapas mot. Kvar blir den del du klickade på, eller den största.' },
   crestPoint: { label: 'Höjdpunkt på krönet', short: 'Höjdpunkt', icon: 'insertNode', instant: true, hint: 'En höjdpunkt där du klickade, med krönets höjd just där. Ändra höjden i egenskaperna; krönet går genom den.' },

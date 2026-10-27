@@ -197,7 +197,7 @@ export function installRender(app: AppContext, parts: RenderParts) {
       } else if (sheet.stamp) plan = { prims: [...stampOrigin(), ...plan.prims], pickables: plan.pickables };
     } else plan = buildPlan(doc, app.ui.storey, vs, styleFor(app.ui.styleName));
     // Kalkerad vy: en annan vy tonad under, t.ex. möbleringen under en undertaksplan.
-    // Våningen under eller över (0.9) kalkeras med vyns inställningar, utan fasad- och sektionslinjerna.
+    // Våningen under eller över (0.9) kalkeras med vyns inställningar, utan fasad- och sektionsmarkörerna.
     const tracing = app.ui.trace && !section && !sheet && !layout;
     const traced = tracing ? doc.views.find((v) => v.id === app.ui.trace) : undefined;
     const nextTo = tracing ? tracedStorey(doc, app.ui.storey, app.ui.trace) : undefined;

@@ -122,7 +122,7 @@ export function installToolOptions(app: AppContext) {
       // Fasadverktyget ritar också linjen Beräkningsgrundande fasad (0.10.8b).
       const choice =
         app.ui.tool === 'elevation'
-          ? `<div class="opt"><span>Linje</span><div class="segmented" role="group" aria-label="Linje"><button data-elev-basis="0" aria-pressed="${!t.basis}">Fasadlinje</button><button data-elev-basis="1" aria-pressed="${t.basis}" title="Linjen längs fasadlivet som byggnadshöjden mäts mot; det finns bara en">Beräkningsgrundande fasad</button></div></div>`
+          ? `<div class="opt"><span>Linje</span><div class="segmented" role="group" aria-label="Linje"><button data-elev-basis="0" aria-pressed="${!t.basis}">Fasadmarkör</button><button data-elev-basis="1" aria-pressed="${t.basis}" title="Linjen längs fasadlivet som byggnadshöjden mäts mot; det finns bara en">Beräkningsgrundande fasad</button></div></div>`
           : '';
       app.toolOptions.innerHTML = `${choice}<span class="opt-hint">${t.hintText()}</span>`;
       app.toolOptions.hidden = false;

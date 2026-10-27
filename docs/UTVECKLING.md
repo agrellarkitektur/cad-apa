@@ -279,7 +279,7 @@ på bladet sina egna.
   `src/core/model.ts`). En `ViewDef` kan ha `marker` och visar då en fasad
   eller sektion.
 - **Globala typer.** `ElementType.global` betyder att elementet finns i
-  alla tillstånd oavsett `states` (norrpil, fasad- och sektionslinjer).
+  alla tillstånd oavsett `states` (norrpil, fasad- och sektionsmarkörer).
   Panelen visar inte Finns i för dem.
 - **Väggens ram** ligger i `src/geometry/wallFrame.ts`: `at(s, o)`,
   `tangent(s)`, `normal(s)`, `project(p)`, `trace(s1, s2, o)` och `local(s)`.
@@ -505,7 +505,7 @@ på bladet sina egna.
 
 - **Annoteringsskala.** `ViewStates.scale` (nämnaren, förval 100) blir
   `ctx.scale` i `createContext`, och allt som ritas i papperets storlek
-  räknar med den: mått, rumsetiketter, littera, markörer, nivåkoter
+  räknar med den: mått, rumsetiketter, littera, markörer, nivåmarkörer
   (`levelMark` i `section.ts`), taklutningar (`slopeSymbol(…, K)`) och
   texter i DXF-underlag. Texthöjder i primitiverna är alltid mm på papper.
   Skärmen ritar med `PlanView.drawingScale`, som appen sätter till vyns
@@ -1168,7 +1168,7 @@ projekt i 1 982 jämförelser.
   projektet. `createContext` tar med dem i alla planer; deras `storey`
   används inte (sätts till grannvåningen när deras våning tas bort).
   `modelBounds(doc, storey?)` räknar med alla våningar när ingen anges,
-  så automatiska fasadlinjer omsluter hela huset.
+  så automatiska fasadmarkörer omsluter hela huset.
 - **Våningarna** i `src/core/storeys.ts`: `addStorey` (golvnivån från
   grannen, de ovanför eller under flyttas), `storeyPatch` (en ändrad
   våningshöjd flyttar de ovanför; används av `saveStorey`),
@@ -1184,7 +1184,7 @@ projekt i 1 982 jämförelser.
   och de sneda planen (`top`/`bottom`); förut flyttades bara höjderna,
   vilket var felet med golvnivån. `buildModel3d(doc, view, only?)`
   har inte längre en våning som andra argument. `buildSection` räknar i
-  verkliga höjder (`z0 = 0`) och har en nivåkot per våning; 3D-vyns
+  verkliga höjder (`z0 = 0`) och har en nivåmarkör per våning; 3D-vyns
   klippning likaså.
 - **Gränssnittet** i `src/ui/app/storeys.ts` (`app.storeys`): `create`,
   `step` (Page Up/Down i `keyboard.ts`), `remove` (med fråga),
@@ -1197,7 +1197,7 @@ projekt i 1 982 jämförelser.
 
 ## Nivåer (0.9.2, format 15)
 
-- **Nivåkoter** i `levelPrims` (`src/repr/sectionLevels.ts` sedan 0.9.3,
+- **Nivåmarkörer** i `levelPrims` (`src/repr/sectionLevels.ts` sedan 0.9.3,
   anropas av `buildSection`): FG för varje våning, UK bjl för bjälklag som
   sektionen skär (`ownCuts` med material `slab`), Takfot och Nock. Texterna skjuts uppåt när två nivåer ligger
   närmare än en textrad, och strecket kortas till triangeln där en annan
@@ -1241,6 +1241,27 @@ projekt i 1 982 jämförelser.
   `propertiesPanel.ts`.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
+
+## Småsaker (0.10.11, format 20)
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/ui/app/storeys.ts` | `openMenu(id, x, y)`: våningens meny i trädet; `rename` |
+| `src/ui/navigator.ts`, `src/ui/app/menus.ts`, `treeClicks.ts` | ⋯ (`data-storey-menu`), högerklick och långt tryck på `data-storey-pick` |
+| `src/ui/app/showMenu.ts` | Visa-menyn i `.show-settings` och `.show-groups`; `settingsMarkup`, `fitInPane` (ryms i `.canvas`) |
+| `src/view2d/planView.ts`, `src/ui/app/snapping.ts` | `underlayPrimitives`; `tracedSegments` (id `kalkering`) läggs efter planens sträckor |
+| `src/view3d/view3d.ts` | `Ground3DHost`, `ground`; `idAt` provar marken (`groundHit`, steg längs strålen och halvering); hovring (`queueHover`, `setHover`, `hoverMaterial`), `paint` och `marksGroup` för markobjektens konturer |
+| `src/ui/app/ground3d.ts` | Ny: `ground3dHost(doc, view)`: markens höjd, objektet i en punkt (`pickShape`) och konturen på marken |
+| `src/elements/site.ts`, `src/core/commands.ts` | Träd och grannhus `compares: true` utan `global`; `REMOVABLE_LOCKED` |
+| `src/repr/storeyShapes.ts` | `joinStoreys` utan åtgärd |
+| `src/ui/uiSettings.ts` | Snabbknappar för `Tree` och `SiteBuilding` |
+| `src/elements/roofPlan.ts`, `src/ui/modify/ops.ts` | `DEFAULT_CUT_HEIGHT` 1100; `shapeChamfer` 500 |
+
+- Markobjekten är inga kroppar i 3D, så de träffas genom marken: strålen
+  provas mot den färdiga markens höjd (`groundAt`) i steg som växer med
+  avståndet, och punkten letas upp med halvering. Det är billigt nog för
+  hovring en gång per bildruta; markens triangelnät provas inte.
+- Tester: `tests/v01011.test.ts`. Inga referensritningar ändrades.
 
 ## Dolda linjer och vyns djup (0.10.10, format 20)
 
@@ -1297,13 +1318,13 @@ projekt i 1 982 jämförelser.
 | `src/repr/sectionLevels.ts` | `markerHeights(marker, view, bh)` (linjens `heights` med förval), `heightMeasure` (måtten BH, NH, TH från MMN, part `höjd`), kotan *MMN bef.*; `levelPrims` får `marker` och `view` |
 | `src/elements/markers.ts` | `MarkerParams.heights`, `MarkerHeights` |
 | `src/ui/tools/markerTools.ts` | `MarkerTool.basis`: två klick, `commitBasis` tar bort den gamla linjen i samma transaktion |
-| `src/ui/app/toolOptions.ts` | Valet Fasadlinje / Beräkningsgrundande fasad (`data-elev-basis`) |
+| `src/ui/app/toolOptions.ts` | Valet Fasadmarkör / Beräkningsgrundande fasad (`data-elev-basis`) |
 | `src/ui/selectionFields.ts`, `src/ui/selectionEdits.ts` | Kryssrutorna `marker:heights.<k>`; en ändring sparar alla fyra |
 | `src/ui/app/site.ts` | `mmnButtons`: ±0 ur den nya marken, *Befintlig* bredvid |
 
 - Förvalet för BH följer den beräkningsgrundande fasaden tills en ruta
   kryssats; då sparas alla fyra värden på linjen.
-- Ändarna dras med samma grepp som fasadlinjerna (`isManualMarker`).
+- Ändarna dras med samma grepp som fasadmarkörerna (`isManualMarker`).
 - Tester: `tests/v0108b.test.ts`; `tests/mark.test.ts` (BH utan språng).
   Referensritningarna för fasader, sektioner och bladet ändrades: BH bara
   i fasaden mot syd, lägre, och med måttet.
@@ -1407,7 +1428,7 @@ marken (`mark-*`) skrevs med 0.10.5.
 
 - **Byggnadshöjden**: fasaderna är husets kontur med raka fortsättningar
   ihopslagna. Utanför fasaden räknas bara takets del upp till 3 m ut som
-  inte står över huset (en annan flygel). Nivåkoten *BH* i
+  inte står över huset (en annan flygel). Nivåmarkören *BH* i
   `sectionLevels.ts` (Visa: `buildingHeight`), raden i dialogen
   *Platsen* (`compass` ger väderstrecket).
 - **Utjämning**: `GroundShape.blend` (radien); `finishedGround` tonar
@@ -1426,7 +1447,7 @@ marken (`mark-*`) skrevs med 0.10.5.
 - **Verktyget** samlar punkter för en linje och avslutar med dubbelklick,
   Enter (`enterInTool`), *Klar* eller verktygsbyte (`finish`).
 - Tester: `tests/mark.test.ts` (förut `v0105.test.ts`). Referensritningarna
-  för fasader och sektioner fick nivåkoten BH.
+  för fasader och sektioner fick nivåmarkören BH.
 
 ## Markobjekt (0.10.4, format 18)
 
@@ -1470,7 +1491,7 @@ handskakningen med finns i `test/cad-apa-mock.html` där.
 | `src/core/site.ts` | `Site` (projektets `site`), omräkning zon ↔ modell (`zoneToLocal`, `localToZone`), RH 2000 (`toRh`, `fromRh`), rutnätet (`decodeGrid`, `encodeGrid`, `terrainOf` som avkodar en gång per fil, `heightAtZone`, `groundAt`), `meanGroundLevel`, höjdkurvorna (`contours`, marching squares med kanternas nummer för att foga ihop bitarna) och `cropGrid` |
 | `src/core/siteImport.ts` | Platspaketet: `parseSitePackage` (kontroll av `format` och `version`), `applySitePackage` (en transaktion: platsen, rutnätets fil, objekten, norrpilen), `updateSite`, `removeSite`, `cropSite` |
 | `src/elements/site.ts` | Typerna `Terrain` (höjdkurvorna, `siteContours` med cache), `SiteBuilding`, `Tree` och `SiteMap` (gränser, vägar, punkter, beteckningar, stompunkter) |
-| `src/repr/terrain.ts` | `terrainProfile` (marklinjen i fasader och sektioner), `meanGround` (medelmarknivån för husets kontur), `levelText` (nivåkoten i RH 2000) och `terrainMesh` (nätet för 3D-vyn) |
+| `src/repr/terrain.ts` | `terrainProfile` (marklinjen i fasader och sektioner), `meanGround` (medelmarknivån för husets kontur), `levelText` (nivåmarkören i RH 2000) och `terrainMesh` (nätet för 3D-vyn) |
 | `src/ui/app/site.ts` | Ta emot paketet (fil, släpp, meddelande), frågan, dialogen *Platsen* och `HOJDKURVOR_ORIGINS` |
 
 - **Höjderna**: modellen räknar i mm från ±0 som förut. `site.datum` är
@@ -1493,7 +1514,7 @@ handskakningen med finns i `test/cad-apa-mock.html` där.
   mark. `pane3d.ts` bygger nätet bara när `doc.site` byts.
 - **Fasader och sektioner**: med markmodell ritas marklinjen
   (`origin.part = 'befintlig mark'`) i stället för den tjocka linjen vid
-  ±0, och nivåkoterna får *MMN*. Att släcka *Befintlig mark* under Visa
+  ±0, och nivåmarkörerna får *MMN*. Att släcka *Befintlig mark* under Visa
   släcker också marklinjen, *MMN* och marken i 3D.
 - **Handskakningen** (`installSite`): med `#hojdkurvor-import` i adressen
   och en `window.opener` skickas `cad-apa:redo` till de godkända
@@ -1585,7 +1606,7 @@ handskakningen med finns i `test/cad-apa-mock.html` där.
   slår ihop `bareWallUnion` per våning (bara ytterringarna), utan det som
   rivs. `roofBodyOf(ctx, p)` i `roof.ts` ger kroppen med konturen;
   `roofPlanesAround` (väggarnas kapning) och `model3d` använder den, och
-  nivåkoten *Takfot* (`lowestUnder` i `sectionLevels.ts`).
+  nivåmarkören *Takfot* (`lowestUnder` i `sectionLevels.ts`).
 - **Planen** i `src/elements/roofPlan.ts`: `roofPlanPrims` delar konturen
   där `under` och `top` går genom snitthöjden (`cutHeightOf(storey)`,
   `Storey.cutHeight`, förval `DEFAULT_CUT_HEIGHT` 1200) och slår ihop
@@ -1705,7 +1726,7 @@ skrevs med 0.9.2 innan koden ändrades.
   heltal (avrundade till 0,01 mm) och en hashkedja i stället för text, och
   kanterna med `a · n + b`; samma hörn och kanter i samma ordning
 - **`section.ts`** i tre filer: `buildSection`, taklutningen och
-  väggarnas konturer kvar; nivåkoterna och höjdmåttet i `sectionLevels.ts`
+  väggarnas konturer kvar; nivåmarkörerna och höjdmåttet i `sectionLevels.ts`
   (`levelPrims`, `heightChain`); snittet genom en form i `sectionCut.ts`
   (`cutSolid`, utan `z0`). `POCHE_MATERIALS` (materialen som fylls) används
   också av 3D-vyns lock i `pane3d.ts`. `setClip` och `setCaps` i

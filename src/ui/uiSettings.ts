@@ -29,7 +29,7 @@ export const QUICK_ACTIONS: { id: QuickId; label: string; types: string[] | 'all
   { id: 'rotate-90', label: 'Vrid 90°', types: ['Wall', 'Furniture', 'Text', 'Roof', 'Slab', 'North', 'Section', 'mixed'] },
   { id: 'mirror', label: 'Spegla', types: ['Wall', 'Furniture', 'Roof', 'Slab', 'mixed'] },
   { id: 'copy', label: 'Kopiera', types: ['Wall', 'Furniture', 'Space', 'Dimension', 'Text', 'Roof', 'Slab', 'Ground', 'Section', 'Elevation', 'mixed'] },
-  { id: 'demolish', label: 'Riv / behåll', types: ['Wall', 'Door', 'Window', 'Furniture', 'Roof', 'Slab', 'mixed'] },
+  { id: 'demolish', label: 'Riv / behåll', types: ['Wall', 'Door', 'Window', 'Furniture', 'Roof', 'Slab', 'Tree', 'SiteBuilding', 'mixed'] },
   { id: 'open-marker', label: 'Öppna vyn', types: ['Section', 'Elevation'] },
   { id: 'zoom-selection', label: 'Zooma till', types: 'all' },
   { id: 'delete', label: 'Ta bort', types: 'all' },
@@ -51,6 +51,8 @@ export const QUICK_TYPES: { type: string; label: string }[] = [
   { type: 'Elevation', label: 'Fasad' },
   { type: 'North', label: 'Norrpil' },
   { type: 'Underlay', label: 'Underlag' },
+  { type: 'Tree', label: 'Träd' },
+  { type: 'SiteBuilding', label: 'Grannhus' },
   { type: 'mixed', label: 'Blandat' },
 ];
 
@@ -68,6 +70,9 @@ const QUICK_DEFAULTS: Record<string, QuickId[]> = {
   Elevation: ['open-marker', 'delete'],
   North: ['rotate-90'],
   Underlay: ['zoom-selection', 'delete'],
+  // Platsens träd och grannhus (0.10.11): riv, behåll och ta bort.
+  Tree: ['demolish', 'zoom-selection', 'delete'],
+  SiteBuilding: ['demolish', 'zoom-selection', 'delete'],
   mixed: ['copy', 'rotate-90', 'mirror', 'demolish', 'delete'],
 };
 

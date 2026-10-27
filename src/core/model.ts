@@ -225,7 +225,7 @@ export interface Storey {
   elevation: number;
   /** Våningshöjd i mm (golv till golv). */
   height: number;
-  /** Planens snitthöjd över golvet i mm (0.10.2): det som ligger ovanför ritas punktstreckat. Utelämnad = 1200. */
+  /** Planens snitthöjd över golvet i mm (0.10.2): det som ligger ovanför ritas punktstreckat. Utelämnad = 1100 (1200 före 0.10.11). */
   cutHeight?: number;
 }
 
@@ -327,7 +327,7 @@ export interface OwnPen extends OwnPenPart {
 }
 
 export const FORMAT = 'bacchus-project';
-/** 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionslinjernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
+/** 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionsmarkörernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
 export const FORMAT_VERSION = 20;
 
 export interface ProjectDoc {

@@ -11,7 +11,7 @@ import { levelText, meanGround } from './terrain';
 import type { MarkerHeights, MarkerParams } from '../elements/markers';
 
 /**
- * Nivåkoter och höjdmått i fasader och sektioner (0.9.2; egen fil sedan
+ * Nivåmarkörer och höjdmått i fasader och sektioner (0.9.2; egen fil sedan
  * 0.9.3). FG för varje vånings golv, UK bjl för bjälklagen som sektionen
  * skär, takfot och nock, MMN och BH (byggnadshöjden, 0.10.5). Bjälklagets ovansida är golvet, så ÖK skrivs inte
  * för sig. ±0 är nollnivån, plan 1:s golv. Höjdmåttet (bara i sektioner)
@@ -101,7 +101,7 @@ export function levelPrims(
 }
 
 /**
- * Höjderna som en fasad- eller sektionslinje visar (0.10.8b). Förvalet:
+ * Höjderna som en fasad- eller sektionsmarkör visar (0.10.8b). Förvalet:
  * byggnadshöjden i fasaden som ser den beräkningsgrundande fasaden rakt
  * framifrån (inom 45°), inget annat.
  */
@@ -139,7 +139,7 @@ export function heightChain(slabs: readonly { z0: number; z1: number }[]): numbe
 }
 
 /**
- * En nivåkota: ett streck, en triangel som pekar ned på det och höjden i
+ * En nivåmarkör: ett streck, en triangel som pekar ned på det och höjden i
  * meter bredvid. Ett kort streck (0.9.2) slutar vid triangeln, så att en
  * text som skjutits upp för en granne inte stryks över.
  */

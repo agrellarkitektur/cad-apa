@@ -135,6 +135,12 @@ export function installTreeClicks(app: AppContext, parts: { sheets: ReturnType<t
       app.openMarkerMenu(markerMore.dataset.markerMenu!, r.left, r.bottom + 4);
       return true;
     }
+    const storeyMore = target.closest<HTMLElement>('[data-storey-menu]');
+    if (storeyMore) {
+      const r = storeyMore.getBoundingClientRect();
+      app.storeys.openMenu(storeyMore.dataset.storeyMenu!, r.left, r.bottom + 4);
+      return true;
+    }
     const storeyPick = target.closest<HTMLElement>('[data-storey-pick]');
     if (storeyPick) {
       treeDoubleClick(`storey:${storeyPick.dataset.storeyPick}`);

@@ -82,11 +82,11 @@ export interface ElementType<P extends object = Record<string, unknown>> {
   compares: boolean;
   /**
    * Hör till ritningen och finns i alla tillstånd, oavsett vilka elementet
-   * är markerat för: norrpil, fasad- och sektionslinjer.
+   * är markerat för: norrpil, fasad- och sektionsmarkörer.
    */
   global?: boolean;
   /**
-   * Hör till projektet, inte till en våning (0.9): fasad- och sektionslinjer
+   * Hör till projektet, inte till en våning (0.9): fasad- och sektionsmarkörer
    * och norrpilen ritas i alla planer. Elementets `storey` används inte.
    */
   everyStorey?: boolean;

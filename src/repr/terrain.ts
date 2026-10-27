@@ -145,7 +145,7 @@ export function meanGround(ctx: PlanContext, existing = false): number | null {
   return meanGroundLevel(f ? f.terrain : t, rings);
 }
 
-/** En höjd (mm från ±0) som nivåkot: RH 2000 när projektet har en plats, annars från ±0. */
+/** En höjd (mm från ±0) som nivåmarkör: RH 2000 när projektet har en plats, annars från ±0. */
 export function levelText(doc: Pick<ProjectDoc, 'site'>, zMm: number): string {
   return siteLevelText(doc.site, zMm);
 }

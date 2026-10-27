@@ -104,7 +104,7 @@ describe('vyer på bladet och annoteringsskalan (0.8 del 3)', () => {
     expect(room(at50)[0].height).toBe(room(at100)[0].height);
     const gap = (ps: Primitive[]) => Math.abs(room(ps)[0].at[1] - room(ps)[1].at[1]);
     expect(gap(at50)).toBeCloseTo(gap(at100) / 2, 3);
-    // Nivåkoterna i en sektion följer också skalan.
+    // Nivåmarkörerna i en sektion följer också skalan.
     const s100 = buildSection(doc, 'sektion-a', { ...view, scale: 100 })!;
     const s50 = buildSection(doc, 'sektion-a', { ...view, scale: 50 })!;
     const level = (r: typeof s100) => texts(r.prims).find((t) => t.origin?.part === 'nivå')!;
@@ -144,7 +144,7 @@ describe('vyer på bladet och annoteringsskalan (0.8 del 3)', () => {
       { ...store.doc.sheets[0], viewports: [{ ...store.doc.sheets[0].viewports[1], scale: 100 }] },
       { today: '' },
     ).views[0].frame;
-    // Nivåkoterna ligger lite närmare i 1:50, så det blir inte exakt dubbelt.
+    // Nivåmarkörerna ligger lite närmare i 1:50, så det blir inte exakt dubbelt.
     expect((f50.maxX - f50.minX - 8) / (f100.maxX - f100.minX - 8)).toBeGreaterThan(1.85);
     expect(d.prims[0].origin?.part).toBe('papper');
     expect(texts(d.prims).some((t) => t.text === 'A-101')).toBe(true);

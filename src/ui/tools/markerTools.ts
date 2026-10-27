@@ -117,7 +117,7 @@ export class MarkerTool implements ViewTool, PointTaker {
 
   hintText(): string {
     if (this.basis) return this.step === 0 ? 'Klicka där den beräkningsgrundande fasaden börjar, på fasadlivet.' : 'Klicka där den slutar. Byggnadshöjden mäts sedan mot den fasaden.';
-    const what = this.kind === 'Section' ? 'sektionslinjen' : 'fasadlinjen';
+    const what = this.kind === 'Section' ? 'sektionsmarkören' : 'fasadmarkören';
     return this.step === 0 ? `Klicka där ${what} börjar.` : this.step === 1 ? `Klicka där ${what} slutar.` : 'Klicka på den sida som ska synas.';
   }
 
@@ -217,7 +217,7 @@ function lockedAt(from: Vec2, deg: number, at: Vec2): SnapResult {
 
 /**
  * Rikta efter objekt (0.7.1): klicka på en vägg eller linje, så vrids en
- * sektions- eller fasadlinje runt sin mitt och blir parallell med den
+ * sektions- eller fasadmarkör runt sin mitt och blir parallell med den
  * (sedan 0.8 även sektioner); med Shift vinkelrät. Blickriktningen behålls
  * så långt det går.
  */

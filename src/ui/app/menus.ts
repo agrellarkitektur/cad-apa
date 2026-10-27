@@ -24,6 +24,12 @@ export function installMenus(app: AppContext) {
       app.openUnderlayMenu(urow.dataset.underlayPick!, e.clientX, e.clientY);
       return;
     }
+    const srow = (e.target as HTMLElement).closest<HTMLElement>('[data-storey-pick]');
+    if (srow) {
+      e.preventDefault();
+      app.storeys.openMenu(srow.dataset.storeyPick!, e.clientX, e.clientY);
+      return;
+    }
     const mrow = (e.target as HTMLElement).closest<HTMLElement>('[data-marker-pick]');
     if (mrow) {
       e.preventDefault();
@@ -39,6 +45,11 @@ export function installMenus(app: AppContext) {
     const urow = (target as HTMLElement | null)?.closest<HTMLElement>('[data-underlay-pick]');
     if (urow) {
       app.openUnderlayMenu(urow.dataset.underlayPick!, x, y);
+      return;
+    }
+    const srow = (target as HTMLElement | null)?.closest<HTMLElement>('[data-storey-pick]');
+    if (srow) {
+      app.storeys.openMenu(srow.dataset.storeyPick!, x, y);
       return;
     }
     const mrow = (target as HTMLElement | null)?.closest<HTMLElement>('[data-marker-pick]');

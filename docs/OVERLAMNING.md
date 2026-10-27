@@ -3,24 +3,28 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 27 oktober 2026, efter 0.10.10.
+Senast: 27 oktober 2026, efter 0.10.11.
 
 ## Läget
 
-- **0.10.10 Dolda linjer och vyns djup är klar** på `main` (samma format,
-  20). Carl August sa "kör nästa version" (27 oktober, tidigt) utan att se
-  upplägget, så Claudes val står i PLAN.md och som frågor nedan. Byggt:
-  *Bjälklag streckade i fasad* och *Ytterväggarnas insida streckad i
-  fasad* under Visa, *Tonat från* bredvid *Djup*, *Tak på andra våningar*
-  under Visa (ovanför streckprickat, under golvet streckat), och
-  ritordningen *Bakom/Framför modellen* för 2D-former i fasader och
-  sektioner. Testerna: 518 på ca 14 s. Provat med Playwright mot `dist/`.
-  Klickjämförelsen kördes inte. Koden i UTVECKLING.md under *Dolda linjer
-  och vyns djup (0.10.10)*.
-- **Märks i hans ritningar:** en 2D-forms fyllning i en fasad eller
-  sektion ligger nu bakom modellen som förval (som i planen). En fyllning
-  eller mask som förut täckte något i fasaden gör det bara med *Framför
-  modellen*. Säg det när han provar.
+- **0.10.11 Småsaker är klar** på `main` (samma format, 20). Carl August
+  sa "kör, mina val som frågor" (27 oktober, morgon), så Claudes val står
+  i PLAN.md och som frågor nedan. Byggt: högerklick och ⋯ på våningarna i
+  trädet, Visa-menyn i kolumner, snäpp mot kalkeringen, hovring i 3D och
+  markobjekt som går att klicka på i marken, träd och grannhus som följer
+  tillstånden och går att ta bort, ingen linje mellan befintligt och nytt
+  mellan våningarna, snitthöjden 1100, *Fasa* 500, och ordbytet till
+  *-markör*. Testerna: 522 på ca 13 s. Provat med Playwright mot `dist/`.
+  Klickjämförelsen kördes inte. Koden i UTVECKLING.md under *Småsaker
+  (0.10.11)*.
+- **Märks i hans ritningar:** planer utan egen snitthöjd snittas nu på
+  1100 (förut 1200). Träd och grannhus som importerats finns i alla
+  tillstånd och ser ut som förut; de rivs med *Riv* eller rutorna under
+  *Finns i*.
+- **0.10.10 Dolda linjer och vyns djup**: streckade bjälklag och
+  ytterväggarnas insida i fasader, *Tonat från*, tak på andra våningar,
+  ritordningen i fasader. En 2D-forms fyllning i en fasad ligger nu bakom
+  modellen som förval; säg det när han provar. Se PLAN.md.
 - **0.10.9 Stödmur del 2**: referenslinjen, krönet i ändarna, utjämnat
   eller rakt krön, höjdpunkter. Se PLAN.md.
 - **0.10.8b Höjderna i fasaden** (nytt format, 20): linjen
@@ -30,7 +34,7 @@ Senast: 27 oktober 2026, efter 0.10.10.
   och 0.10.8b, och 35–36, ställdes men han avvaktar med att svara. 27
   oktober bad han att frågorna sparas till nästa session; inga ställdes.
   Ställ dem när han provat.
-- **Versionsnumret** är `0.10.10` i `engine.ts` och `package.json`
+- **Versionsnumret** är `0.10.11` i `engine.ts` och `package.json`
   (en b-version skrivs `0.10.8-b` i `package.json`, semver tillåter inte
   `0.10.8b`).
 - **Carl Augusts svar 26 oktober kväll** på fråga 17–34: 17, 18, 24 och 27
@@ -39,7 +43,7 @@ Senast: 27 oktober 2026, efter 0.10.10.
   gäller referenslinjen, mot över- eller undersidan), 29, 31 och 34 till
   0.10.14 (bågar i takets kontur, hålet ändras för sig, cirkulärt hål).
   De står också i `cad-apa-synpunkter.md`.
-- **0.10.8–0.10.10 är inte provade** av Carl August än; frågorna om dem
+- **0.10.8–0.10.11 är inte provade** av Carl August än; frågorna om dem
   står nedan.
 - **Frågorna:** de obesvarade (nedan) ställs **tio per session**, de som
   hör till den kommande versionen först. En fråga han hoppar över räknas
@@ -49,7 +53,7 @@ Senast: 27 oktober 2026, efter 0.10.10.
   in över grannens yta om den också är ändrad men lutar som en slänt.
   Inte sett i `groundProject`, men inte prövat med branta grannar.
 - **0.10.6 Granskning** och äldre versioner står i README, PLAN.md och
-  UTVECKLING.md. **0.9.2–0.10.10 är inte provade fullt ut** av Carl August.
+  UTVECKLING.md. **0.9.2–0.10.11 är inte provade fullt ut** av Carl August.
 - **Publicering:** varje push till `main` laddas upp med
   `.github/workflows/publicera.yml` (FTPS; secrets `FTP_SERVER`,
   `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR` =
@@ -63,9 +67,8 @@ Senast: 27 oktober 2026, efter 0.10.10.
   stegen är 1.0. Håll färdplanen nedan aktuell vid varje överlämning.
 - **Ord:** *palett* och *snabbmeny* betyder samma sak för honom. Säg bara
   **smartmeny**. Symboler i ritningen heter **-markör** (Carl August 26
-  oktober): *nivåmarkör* (inte nivåkota), *sektionsmarkör* och
-  *fasadmarkör* (inte sektions- och fasadlinje). Bytet i programmet och
-  dokumenten görs i 0.10.11.
+  oktober, bytt överallt i 0.10.11): *nivåmarkör*, *sektionsmarkör*,
+  *fasadmarkör*. Säg inte nivåkota, sektionslinje eller fasadlinje.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen. Höj
   `FORMAT_VERSION` när formatet ändras; äldre filer får ett meddelande
   (`parse` i `src/storage/format.ts`). Valfria nya parametrar har inte
@@ -86,12 +89,10 @@ Senast: 27 oktober 2026, efter 0.10.10.
 
 Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
-- ~~0.8.8 Mallblad~~ … ~~0.10.9 Stödmur del 2~~, ~~0.10.10 Dolda linjer
-  och vyns djup~~ (klara)
-- **0.10.11 Småsaker** (högerklick på planer, Visa i kolumner, snäpp mot
-  kalkering, hovring och markering i 3D, importerade objekt som
-  befintligt eller förslag och att ta bort dem, snitthöjd 1100, Fasa 500,
-  -markör i stället för nivåkota och sektions-/fasadlinje)
+- ~~0.8.8 Mallblad~~ … ~~0.10.10 Dolda linjer och vyns djup~~,
+  ~~0.10.11 Småsaker~~ (klara)
+- **Granskning** (föreslås, ungefär var tredje version; den senaste var
+  0.10.6)
 - **0.10.12 Höjder i förhållande till våningen** (och takets
   referenslinje mot över- eller undersidan)
 - **0.10.13 Visa och dölja** och **0.10.14 Linjerna i 2D-formen**
@@ -110,19 +111,38 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om 0.10.8–0.10.10 syns på webbhotellet och hur de känns.
-Ställ sedan högst tio av de obesvarade frågorna (först de om 0.10.10, sedan
-stödmuren, marken och fasaderna). Sedan **0.10.11 Småsaker** (se
-färdplanen och `cad-apa-synpunkter.md`): lägg upplägget i chatten först.
-Det är många punkter (nio); föreslå gärna att dela den, t.ex. ordbytet
-*-markör* och förvalen (snitthöjd 1100, Fasa 500) för sig. Ungefär var
-tredje version är en granskning; den senaste var 0.10.6, så föreslå en
-efter 0.10.11.
+Fråga först om 0.10.8–0.10.11 syns på webbhotellet och hur de känns.
+Ställ sedan högst tio av de obesvarade frågorna (först de om 0.10.11 och
+0.10.10, sedan stödmuren, marken och fasaderna). Föreslå sedan en
+**granskning** (den senaste var 0.10.6; städa, dela stora filer som
+`view3d.ts`, gå igenom testerna) före **0.10.12 Höjder i förhållande till
+våningen**. Lägg upplägget i chatten först.
 
 ## Att fråga Carl August om
 
 Tio per session, de som hör till nästa version först. Hoppar han över en
 räknas den som bra och stryks. Claudes val står i varje fråga.
+
+**0.10.11 efter provning** (Claudes val, se PLAN.md)
+- Våningens meny: Visa, Inställningar, Byt namn, Ny våning ovanför och
+  under (den högerklickade våningen), Ta bort. Saknas något? Ska
+  arbetsbladen få en meny också?
+- Visa-menyn: inställningarna till vänster, kategorierna i två kolumner
+  till höger. Bra ordning, eller detaljnivåerna överst över hela bredden?
+- Snäpp mot kalkeringen är alltid på när den syns. Ska det gå att slå av
+  för sig?
+- Hovring i 3D tonar objektet ljust i markeringsfärgen. Lagom tydligt?
+- Markobjekten markeras med ett klick i marken, och konturen ritas på
+  marken. Ska hörnen också gå att dra i 3D?
+- Nya träd ritas som befintliga (grå). Ska ett nytt träd synas
+  annorlunda i en jämförelse?
+- Låsta träd, grannhus och kartobjekt går att ta bort (låset skyddar bara
+  mot att flytta). Rätt, eller ska låst betyda låst också här?
+- Sektions- och fasadmarkören heter fortfarande *Sektion* och *Fasad*
+  när de är markerade (och verktygen likaså). Ska de heta
+  *Sektionsmarkör* och *Fasadmarkör* där också?
+- Väggarnas *Fasa* (hörnet mellan två väggar) är kvar på 600; bara
+  bjälklagens och 2D-formernas är 500. Också väggarnas?
 
 **0.10.10 efter provning** (Claudes val, se PLAN.md)
 - De dolda linjerna: alla bjälklag (inte bara det närmaste), tunt
@@ -130,7 +150,7 @@ räknas den som bra och stryks. Claudes val står i varje fråga.
   sektioner, och tjockare?
 - Ytterväggarnas insida: bara lodräta linjer i hörnen innanför
   ytterväggarna (de vågräta visar bjälklagen). Räcker det?
-- *Tonat från* mäts från fasad- eller sektionslinjen, och det tonade är
+- *Tonat från* mäts från fasad- eller sektionsmarkören, och det tonade är
   0,13 grått oavsett penna. En automatisk fasad ligger 2,5 m utanför
   huset; ska djupet hellre mätas från husets närmaste fasad?
 - *Tak på andra våningar* visar alla tak på alla våningar. Bara våningen
@@ -150,7 +170,7 @@ räknas den som bra och stryks. Claudes val står i varje fråga.
   med ett streck tvärs över muren. Bra, eller också UK (foten)?
 
 **0.10.8b efter provning** (Claudes val, se PLAN.md)
-- Måtten BH, NH och TH står 25 mm till höger om nivåkoterna, 7 mm isär,
+- Måtten BH, NH och TH står 25 mm till höger om nivåmarkörerna, 7 mm isär,
   med texten längs strecket. Lagom, eller hellre till vänster om huset?
 - Linjen *Beräkningsgrundande fasad* gäller fasaden inom 1,5 m och 15°.
   Ritas den som en egen tjock streckprickad linje med text, och ska den

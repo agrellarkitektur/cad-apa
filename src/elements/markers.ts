@@ -17,7 +17,7 @@ export interface NorthParams {
 }
 
 /**
- * En fasad- eller sektionslinje. Betraktaren står vid linjen och ser åt
+ * En fasad- eller sektionsmarkör. Betraktaren står vid linjen och ser åt
  * `side`: 1 = åt vänster sett från start mot slut, -1 = åt höger. Det som
  * ligger bakom betraktaren syns inte; en sektion skär där linjen går.
  */
@@ -53,7 +53,7 @@ export interface MarkerHeights {
   mmnOld: boolean;
 }
 
-/** Hur långt utanför byggnaden automatiska fasadlinjer läggs, mm. */
+/** Hur långt utanför byggnaden automatiska fasadmarkörer läggs, mm. */
 const MARGIN = 2500;
 
 /** Byggnadens utbredning i plan: väggar och tak, på en våning eller alla (0.9). */
@@ -196,7 +196,7 @@ function openArrow(tip: Vec2, dir: Vec2, size: number, pen: Pen, origin: Primiti
 }
 
 /**
- * Sektionslinjen i planen (0.7.1): tjocka streck vid ändarna, ett lika
+ * Sektionsmarkören i planen (0.7.1): tjocka streck vid ändarna, ett lika
  * tjockt skaft mot blickriktningen med en lika tjock öppen pil (0.8.22), och bokstaven ute vid
  * linjens ände, vriden efter linjen. Linjen emellan ritas inte.
  */
@@ -232,7 +232,7 @@ function sectionPlan(el: Element<any>, ctx: PlanContext): Primitive[] {
 }
 
 /**
- * Fasadlinjen i planen (0.7.1): heldragen, med en liten fylld triangel i
+ * Fasadmarkören i planen (0.7.1): heldragen, med en liten fylld triangel i
  * mitten som pekar mot huset och namnet i liten text högerställt ovanför
  * linjen, vriden efter den.
  */

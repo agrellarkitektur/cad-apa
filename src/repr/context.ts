@@ -22,7 +22,7 @@ export function createContext(
   // arbetsblad), och 2D-element från andra ytor som valts att synas i just den här vyn.
   const place = view.place ?? storey;
   const identity: ViewIdentity = { id: view.viewId ?? modelViewId(place), place, tags: view.viewTags ?? [] };
-  // Fasad- och sektionslinjer och norrpilen hör till projektet (0.9) och ritas i alla planer.
+  // Fasad- och sektionsmarkörer och norrpilen hör till projektet (0.9) och ritas i alla planer.
   const isPlan = doc.storeys.some((s) => s.id === place);
   const onStorey = Object.values(doc.elements).filter(
     (e) =>

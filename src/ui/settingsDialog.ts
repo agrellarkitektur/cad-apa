@@ -170,7 +170,7 @@ export class SettingsDialog {
           <label class="check" title="Annars bara kanterna. Ett klick i ett rum markerar då bjälklaget; rummet markeras med rumsstämpeln eller Tab."><input type="checkbox" data-setting="slabarea"${s.slabArea ? ' checked' : ''}> Bjälklagens yta går att klicka i, inte bara kanterna</label>
           <label class="check"><input type="checkbox" data-setting="autosavefile"${s.autosaveFile ? ' checked' : ''}> Autospara till projektfilen (när den sparats eller öppnats här, i Chrome och Edge)</label>
           <label class="field inline-field"><span>Varna för nästan raka vinklar, inom</span><span class="input-unit"><input type="text" data-expr data-unit="" data-step="0.5" inputmode="decimal" autocomplete="off" data-setting="anglewarn" value="${s.angleWarn}"><i>°</i></span></label>
-          <p class="note">Väggar, sektions- och fasadlinjer, fast inredning och taknockar som ligger nära 0°, 45° eller 90° utan att vara exakta markeras med ett utropstecken. 0 stänger av varningen.</p>
+          <p class="note">Väggar, sektions- och fasadmarkörer, fast inredning och taknockar som ligger nära 0°, 45° eller 90° utan att vara exakta markeras med ett utropstecken. 0 stänger av varningen.</p>
           <label class="field inline-field"><span>Piltangenterna flyttar</span><span class="input-unit"><input type="text" data-expr data-step="1" inputmode="decimal" autocomplete="off" data-setting="nudge" value="${s.nudge}"><i>mm</i></span></label>
           <label class="field inline-field"><span>Med Shift</span><span class="input-unit"><input type="text" data-expr data-step="10" inputmode="decimal" autocomplete="off" data-setting="nudgelarge" value="${s.nudgeLarge}"><i>mm</i></span></label>
         </section>

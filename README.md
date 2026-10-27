@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.10** (alfa); nästa är **0.10.11, småsaker**.
+**0.10.11** (alfa); nästa är **0.10.12, höjder i förhållande till våningen**.
 
 ## Vad som fungerar
 
@@ -196,7 +196,7 @@ Version 0.6.3 (liten uppdatering, samma filformat):
 Version 0.7, fasader och sektioner (filformat 4):
 - Fasader och sektioner räknas fram ur modellen med dolda linjer borttagna,
   i det tillstånd och den jämförelse som är vald. Sektionen fyller det som
-  skärs enligt stilmallen. Marklinje och nivåkoter för golv och högsta punkt
+  skärs enligt stilmallen. Marklinje och nivåmarkörer för golv och högsta punkt
 - Varje projekt har en norrpil, fyra fasader som placeras runt huset av sig
   själva och en sektion. Fasaderna heter efter närmaste väderstreck: Fasad
   mot norr, nordost, ost … Automatiskt läge kan slås av; då ligger linjen
@@ -249,14 +249,14 @@ Version 0.7.1, beta (samma filformat):
   den. Sektionsmarkören: öppna pilar, ingen streckprickad linje, skaft lika
   tjocka som ändarna och bokstaven ute vid linjens ände, vriden efter linjen
   men aldrig upp och ned
-- Fasad- och sektionslinjer som placerats för hand har grepp i ändarna (med
+- Fasad- och sektionsmarkörer som placerats för hand har grepp i ändarna (med
   förlängning, längd och vinkel som vid väggar), Längd och Vinkel i
   egenskaperna och knappen Rikta efter objekt: klicka på en vägg eller linje,
   så blir fasaden parallell och sektionen vinkelrät mot den (Shift för det
   omvända)
 - Streckade linjer (t.ex. väggar som rivs) börjar och slutar med ett helt
   streck i varje hörn, så att väggens två sidor ser likadana ut
-- Varning för nästan raka vinklar: väggar, sektions- och fasadlinjer, fast
+- Varning för nästan raka vinklar: väggar, sektions- och fasadmarkörer, fast
   inredning och taknockar som ligger inom 5° från 0°, 45° eller 90° utan att
   vara exakta (mer än en halv millimeter fel i änden) får ett utropstecken i
   planen och en rad i egenskaperna med knappen Räta upp. Gränsen ställs in
@@ -304,7 +304,7 @@ Version 0.8, del 1 av 3 (filformat 5; släpps som 0.8.0 när alla delar är klar
   går den att flytta och ge en stil (båge och gradtal, bara gradtal eller
   lutningstriangel). Lutningen följer taket. Tas den bort kommer den inte
   tillbaka
-- Nivåkoter för takfot och nock i fasader och sektioner
+- Nivåmarkörer för takfot och nock i fasader och sektioner
 - Fasaderna följer byggnaden tills man flyttar dem; texten "placeras
   automatiskt" är borta. Följ byggnaden igen lägger tillbaka en fasad.
   **Lås** (med hänglås) på fasader, sektioner, norrpilen, 2D, text, mått och
@@ -397,7 +397,7 @@ Version 0.8, del 3 av 3, släpps som **0.8.0** (samma filformat, 5):
   öppna den, högerklicka för en meny, Delete tar bort den från bladet.
   Underlagen syns genom vyerna och klipps mot vyns ram, så att en stor
   grundkarta inte täcker bladet
-- **Annoteringsskala**: texter, mått, rumsetiketter, littera, nivåkoter och
+- **Annoteringsskala**: texter, mått, rumsetiketter, littera, nivåmarkörer och
   taklutningar ritas för vyns skala, så att de får rätt höjd på papperet i
   alla skalor. Skalan väljs under Visa (*Skala för texter och mått*) och
   sparas i vyn
@@ -880,7 +880,7 @@ Version 0.8.21, kommandoraden del 2 (samma filformat, 12):
   knappen längst till höger. Läget sparas i webbläsaren
 - **Skrivna punkter också i tak-, sektions- och fasadverktyget och i
   Modifiera**: Flytta `@1200,0` från baspunkten, `x,y` som baspunkt, Vrid
-  `90` som vinkel. Ett för litet tak eller en för kort sektionslinje säger
+  `90` som vinkel. Ett för litet tak eller en för kort sektionsmarkör säger
   nu till i stället för att tyst låta bli
 
 Version 0.8.22, småsaker (samma filformat, 12):
@@ -938,8 +938,8 @@ Version 0.8.25, ritordning och fyllningar (samma filformat, 13):
 
 Version 0.8.26, pennor i stilmallen (samma filformat, 13):
 - **Pennor för pilar och markörer** i stilmallen: linjetjocklek och färg
-  för sektionslinjen, fasadlinjen, norrpilen, rumsstämpelns pil,
-  taklutningen, måtten, måttens snedstreck, nivåkotorna och litterans
+  för sektionsmarkören, fasadmarkören, norrpilen, rumsstämpelns pil,
+  taklutningen, måtten, måttens snedstreck, nivåmarkörerna och litterans
   streck. Gäller hela projektet, i planen, fasaderna, sektionerna och på
   bladen. Färgen gäller också markörens text och fyllda trianglar; svart
   följer skärmens tema. *Förval* tar tillbaka programmets värde
@@ -984,12 +984,12 @@ Version 0.9, flera våningsplan (filformat 14):
   *Våningshöjd* i egenskaperna slår av det och ger väggen ett eget mått
 - **Kalkera våningen under eller över**: Visa → *Kalkera en annan vy*, och
   i en sparad vys inställningar. Den ritas tonad, utan fasad- och
-  sektionslinjerna
+  sektionsmarkörerna
 - **3D visar alla våningar**, var och en på sin golvnivå; knappen *Bara den
   här våningen* nere till höger visar bara våningen som är vald
 - **Fasader och sektioner visar alla våningar** och hör till projektet:
   linjerna (och norrpilen) ritas i alla planer, och sektionen har en
-  nivåkot för varje våning
+  nivåmarkör för varje våning
 - **Rättat**: ändrades golvnivån flyttades konturerna och karmarna i 3D,
   men inte väggytorna och fönsterhålen
 - Nivåerna under ±0 i projektträdet skrivs −2,70 (förut +−2,70)
@@ -1016,7 +1016,7 @@ Version 0.9.1, bjälklag (filformat 15):
 - Exempelvillan har fått en platta på mark (BJ01, 400 mm)
 
 Version 0.9.2, nivåer (samma filformat, 15):
-- **Nivåkoter** i fasader och sektioner med beteckning: *FG* för varje
+- **Nivåmarkörer** i fasader och sektioner med beteckning: *FG* för varje
   vånings golv, *UK bjl* för undersidan av bjälklagen som sektionen skär,
   *Takfot* och *Nock*. ±0 är nollnivån (plan 1:s golv). Nivåer som ligger
   tätt får texten uppskjuten, så att den inte krockar med grannens
@@ -1080,7 +1080,7 @@ Version 0.10.0, tak (filformat 17):
 - **Taket kapar väggar på alla våningar** efter verklig höjd. *Upp till
   taket* gäller tak på väggens egen våning
 - I fasader och sektioner: höjden dras vid referenslinjen och lutningen i
-  takfallets punkt längst bort; taklutningen och nivåkoterna följer de nya
+  takfallets punkt längst bort; taklutningen och nivåmarkörerna följer de nya
   taken. Skarven vid nocken mellan två takfall syns inte
 - Exempelvillans sadeltak är två takfall med referenslinjerna i ytterlivet
 - Projekt från 0.9.4 (format 16) öppnas inte
@@ -1103,7 +1103,7 @@ Version 0.10.2, takfot och taket i planen (samma filformat, 17):
   det går upp i, t.ex. vindsplanet under ett tak som ligger på plan 1
 - **Husets kontur genom taket** under Visa (Modell), släckt från början:
   ytterväggarnas utsida på alla våningar, streckad där taket ligger över
-- Nivåkoten *Takfot* är takets lägsta undersida med snittet och språnget
+- Nivåmarkören *Takfot* är takets lägsta undersida med snittet och språnget
 - Referensritningarna med tak ändrades (punktstreckat och takfotens snitt)
 
 Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 öppnas inte):
@@ -1116,13 +1116,35 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
   tak flackare än 45° ger höjden där fasadlivet möter takets ovansida, ett
   brantare nockens
 - **Byggnadshöjd, nockhöjd och totalhöjd** som mått från medelmarknivån
-  bredvid nivåkoterna, t.ex. *BH 3,04 m*. Varje fasad- och sektionslinje
+  bredvid nivåmarkörerna, t.ex. *BH 3,04 m*. Varje fasad- och sektionsmarkör
   har kryssrutor för de tre och för den befintliga markens medelmarknivå
-  (*MMN bef.*, en egen nivåkota när den skiljer sig). Från början visar
+  (*MMN bef.*, en egen nivåmarkör när den skiljer sig). Från början visar
   bara fasaden som ser den beräkningsgrundande fasaden byggnadshöjden
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.11, småsaker (samma filformat, 20):
+- **Högerklick på en våning** i projektträdet (Modell), eller ⋯ på raden:
+  Visa, Inställningar, Byt namn, Ny våning ovanför eller under just den
+  våningen, och Ta bort
+- **Visa-menyn i kolumner**: detaljnivåerna, skalan, stilmallen och
+  kalkeringen till vänster, kategorierna i två kolumner till höger, så att
+  allt syns utan att rulla. Menyn håller sig inom ritytan
+- **Snäpp mot kalkeringen**: linjerna och kanterna i den kalkerade vyn eller
+  våningen går att snäppa mot (*På kalkeringen*), som ritningens egna
+- **Hovring i 3D**: det som pekaren står över tonas, som i planen.
+  **Markobjekten** går att hovra och klicka på i marken; konturen ritas på
+  marken
+- **Träd och grannhus** från platsen följer tillstånden (*Finns i*), så att
+  de kan vara befintliga, rivas eller vara nya i ett förslag (*Riv* och
+  *Behåll* bland snabbknapparna), och går att ta bort fast de är låsta
+- **Ingen linje mellan befintligt och nytt** mellan våningarna i fasaden
+  när väggarna har samma liv
+- **Förval**: snitthöjden 1100 (förut 1200; planer utan egen snitthöjd
+  ändras), *Fasa* hörn i bjälklag och 2D-former 500 mm
+- **-markör**: nivåmarkör, sektionsmarkör och fasadmarkör i stället för
+  nivåkota, sektionslinje och fasadlinje, i programmet och dokumenten
 
 Version 0.10.10, dolda linjer och vyns djup (samma filformat, 20):
 - **Bjälklag streckade i fasad** och **Ytterväggarnas insida streckad i
@@ -1218,7 +1240,7 @@ Version 0.10.5, markobjekt del 2 och byggnadshöjd (samma filformat, 18):
   fasadplanet skärs av ett plan som lutar 45° inåt och berör takets
   ovansida. Ett flackt tak berörs vid takfotens yttre kant (taksprånget
   räknas), ett brant vid nocken. Den längsta fasaden är
-  beräkningsgrundande. Nivåkoten **BH** i fasader och sektioner (Visa,
+  beräkningsgrundande. Nivåmarkören **BH** i fasader och sektioner (Visa,
   Markörer) och värdet i dialogen *Platsen*
 - **Ramp, gångväg och infart** i verktyget Mark: en mittlinje med bredd
   och höjd i början och slutet, ur marken från början; infarten med
@@ -1268,14 +1290,14 @@ Version 0.10.3, markmodell (filformat 18):
   uppdateras utan att huset flyttas
 - **Nollpunkt, SWEREF 99 och RH 2000**: modellens origo är platsens
   nollpunkt, och ±0 (plan 1:s golv) ligger på en höjd i RH 2000 som ställs
-  in under *Platsen* i menyn. Nivåkoterna i fasader och sektioner skrivs
+  in under *Platsen* i menyn. Nivåmarkörerna i fasader och sektioner skrivs
   i RH 2000 (*FG +62,600*), och våningens golv visas i RH 2000. Norrpilen
   pekar mot sann nord
 - **Befintlig mark**: höjdkurvor i planen (0,5 m från början, 0,25 eller
   1 m; hela meter med höjden), marken i 3D och en tunn streckad marklinje
   i fasader och sektioner
 - **Medelmarknivån** längs husets kontur, viktad efter fasadernas längd,
-  som nivåkot (*MMN*) och i dialogen *Platsen*
+  som nivåmarkör (*MMN*) och i dialogen *Platsen*
 - **Grannhus** som volymer, **träd**, **fastighetsgränser** med
   beteckningar och gränspunkter, vägar och stompunkter, låsta och under
   Visa (Platsen)
@@ -1408,7 +1430,7 @@ Version 0.8.30, linjetyper och mask (samma filformat, 13):
 - **Fler linjetyper**: heldragen, streckad, kort och lång streckad,
   prickad, punktstreckad och streck med två punkter, för 2D-former (i
   egenskaperna och 2D-verktyget) och för pennorna i stilmallen
-  (sektionslinjen, fasadlinjen, norrpilen, måtten …). Pilspetsar och
+  (sektionsmarkören, fasadmarkören, norrpilen, måtten …). Pilspetsar och
   trianglar ritas heldragna
 - **Egna linjetyper** i stilmallen, under *Linjetyper*: *Ny linjetyp*,
   ett namn och ett mönster av streck och mellanrum på papper i mm, t.ex.

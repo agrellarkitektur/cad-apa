@@ -240,7 +240,7 @@ export class Navigator {
       `<div class="view-row${id === marker ? ' active' : ''}${id === picked ? ' picked' : ''}"><button class="view-apply" data-marker-pick="${id}" title="Öppna, och visa inställningarna i egenskaperna. Högerklicka (håll in på telefonen) för fler val">${esc(name)}${locked ? `<span class="row-lock" title="Låst">${icons.lock}</span>` : ''}</button><button class="icon-mini view-more" data-marker-menu="${id}" aria-label="Fler val för ${esc(name)}" title="Fler val">${icons.more}</button></div>`;
     const rowsById = new Map<Id, string>();
     for (const s of storeys)
-      rowsById.set(s.id, `<div class="view-row${s.id === current ? ' active' : ''}${s.id === picked ? ' picked' : ''}"><button class="view-apply" data-storey-pick="${s.id}">${esc(s.name)}<small>${fmtLevel(s.elevation)}</small></button></div>`);
+      rowsById.set(s.id, `<div class="view-row${s.id === current ? ' active' : ''}${s.id === picked ? ' picked' : ''}"><button class="view-apply" data-storey-pick="${s.id}" title="Öppna planen, och visa inställningarna i egenskaperna. Högerklicka (håll in på telefonen) för fler val">${esc(s.name)}<small>${fmtLevel(s.elevation)}</small></button><button class="icon-mini view-more" data-storey-menu="${s.id}" aria-label="Fler val för ${esc(s.name)}" title="Fler val">${icons.more}</button></div>`);
     const elevations = markers('Elevation');
     const sections = markers('Section');
     for (const { e, name } of [...elevations, ...sections]) rowsById.set(e.id, markerRow(e.id, name, !!e.locked));

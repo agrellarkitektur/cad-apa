@@ -8,7 +8,7 @@ beforeAll(() => registerBuiltInTypes());
 
 const view = { state: 'st-a' };
 describe('Nivåer (0.9.2)', () => {
-  it('nivåkoter FG och UK bjl, och höjdmått med tjocklek och fri höjd', () => {
+  it('nivåmarkörer FG och UK bjl, och höjdmått med tjocklek och fri höjd', () => {
     const doc = twoStoreys();
     const sec = buildSection(doc, 'sektion-a', view)!;
     const texts = (part: string) => sec.prims.flatMap((p) => (p.kind === 'text' && p.origin?.part === part ? [p.text] : []));

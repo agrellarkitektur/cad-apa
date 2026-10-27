@@ -113,7 +113,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.8.38 | Granskning: starkt snedställda mönster (grus, mark) som klippta streck, snabbt och rätt; skrafferingen som mönster; `fillTypes.ts` uppdelad; referensritningar och klick för fyllningstyperna och detaljnivåerna |
 | 0.9 | Format 14: flera våningsplan, byta, flytta och kopiera mellan våningar, väggarnas höjd följer våningen, kalkera våningen under och över, alla våningar i 3D, fasader och sektioner |
 | 0.9.1 | Format 15: bjälklag med littera och tjocklek per typ, ur väggarna eller ritade, håltagning |
-| 0.9.2 | Nivåkoter FG, UK bjl, takfot och nock; höjdmått med bjälklagens tjocklek och fri höjd; innerväggarna slutar vid bjälklaget ovanför |
+| 0.9.2 | Nivåmarkörer FG, UK bjl, takfot och nock; höjdmått med bjälklagens tjocklek och fri höjd; innerväggarna slutar vid bjälklaget ovanför |
 | 0.9.3 | Granskning: fasader och sektioner av samma projekt bygger 3D-modellen en gång; `section.ts` uppdelad; referensritningar och klick för våningar, bjälklag och nivåer |
 | 0.9.4 | Format 16: håltagningarna ändras som 2D-former (grepp, punkter, bågar, flytta, ta bort), avrunda och fasa hörn i hål och 2D-former, klickbar bjälklagsyta som inställning |
 
@@ -147,8 +147,8 @@ någon behöver det.
 Fasader och sektioner räknas exakt ur 3D-formerna. Det som återstår av dem
 byggs vidare i takt med resten:
 
-- Brutna sektionslinjer
-- Fler nivåkoter, höjdmått och marklinje mot terräng (med marken, 0.10.3–0.10.5)
+- Brutna sektionsmarkörer
+- Fler nivåmarkörer, höjdmått och marklinje mot terräng (med marken, 0.10.3–0.10.5)
 - Fönster- och dörrsymboler i fasad efter typ (med smartobjekten, efter pilotprojektet)
 - Skuggor och djup i fasader
 
@@ -947,7 +947,7 @@ inte ett rum i taget, och raden med namnet är den stora och feta.
 *Fyllningar* ligger under Visa (2D) och gäller vyn, som det andra där, så
 en sparad vy med fyllningarna släckta visas utan dem också på bladen.
 Former som ritats som enkellinje finns kvar och heter också *Linje*.
-Pilarna gäller sektionslinjen i planen; rumsstämpelns pil är kvar tunn.*
+Pilarna gäller sektionsmarkören i planen; rumsstämpelns pil är kvar tunn.*
 
 ### 0.8.23 Granskning
 
@@ -1038,8 +1038,8 @@ av penntabellen under *Efter pilotprojektet*, framflyttad.
   stilmallen
 
 *Byggd (24 oktober), samma format (13), i en session. Claudes val, att
-stämma av: nio pennor (sektionslinje, fasadlinje, norrpil, rumsstämpelns
-pil, taklutning, mått, måttens snedstreck, nivåkota, litterans streck) i
+stämma av: nio pennor (sektionsmarkör, fasadmarkör, norrpil, rumsstämpelns
+pil, taklutning, mått, måttens snedstreck, nivåmarkör, litterans streck) i
 en egen del längst ned i stilmallen, med tjocklek ur samma tabell som
 2D-formerna och en färg. Färgen gäller också markörens text (sektionens
 bokstav, fasadens namn, N, måttal, gradtal, nivåns höjd) och de fyllda
@@ -1429,9 +1429,9 @@ kvar. Flytta och kopiera finns i högerklicksmenyn (*Till våning*, en rad
 per våning) och smartshell, inte i smartmenyn; kopian finns i samma
 tillstånd som originalet. Den tonade våningen är ett val i *Kalkera*
 (Våningen under, Våningen över), så den sparas i vyn och har
-kalkeringens färg och opacitet; fasad- och sektionslinjerna ritas inte
+kalkeringens färg och opacitet; fasad- och sektionsmarkörerna ritas inte
 i den. *Bara den här våningen* gäller för användaren, inte vyn.
-Norrpilen hör också till projektet. Sektionen får en nivåkot för varje
+Norrpilen hör också till projektet. Sektionen får en nivåmarkör för varje
 våning (de riktiga nivåmarkeringarna kommer i 0.9.2). Ett tak hör
 fortfarande till en våning, och väggarna kapas bara av tak på samma
 våning; riktiga tak kommer i 0.10.*
@@ -1579,7 +1579,7 @@ tar bort den svåra geometrin (vinkelrännor ur en godtycklig kontur).
   annat (nock, grat, vinkelränna)
 - Taket kapar väggar på alla våningar efter verklig höjd
 - Greppen i fasad och sektion (höjd och lutning), taklutningen och
-  nivåkoterna följer de nya taken
+  nivåmarkörerna följer de nya taken
 
 *Byggd (25 oktober), format 17. Claudes val: referenslinjen sparas som
 två punkter (`ref`) med pilhöjd (`refBulge`), och taket stiger åt vänster
@@ -1599,7 +1599,7 @@ klickade på takfallet (strax innanför kanten), med flera markerade den
 största. Kapade kanter blir raka (bågar blir polylinjer). Taket kapar
 väggar på alla våningar där det ligger ovanför väggens fot, men Upp till
 taket drar bara upp väggar under tak på samma våning (en gavel på plan 1
-går inte upp genom plan 2). Nivåkoten *Takfot* är takets lägsta punkt på
+går inte upp genom plan 2). Nivåmarkören *Takfot* är takets lägsta punkt på
 undersidan, som förut (i fasadlivet med byggnadshöjden i 0.10.5). I
 fasaden sitter höjdgreppet vid referenslinjen och lutningsgreppet i
 punkten längst från den; Shift (nocken still) finns inte längre.
@@ -1691,7 +1691,7 @@ vindsplanet men ett tak på plan 2 syns inte i plan 1. **Husets kontur
 genom taket** står under Visa (Modell) och är släckt från början; den
 tänds med `+footprint` i vyns `hide`, så att äldre vyer inte får den. Den
 ritas streckad (*Streckad*, 0,18) inne i varje takfall och går inte att
-klicka på. Nivåkoten *Takfot* är nu kroppens lägsta undersida (2515 i
+klicka på. Nivåmarkören *Takfot* är nu kroppens lägsta undersida (2515 i
 stället för 2445 i exempelvillan, där snittet tar takfotens nedre hörn).
 Kända begränsningar: där två snittade kanter möts i ett konvext hörn (två
 takfötter på samma takfall) tar den första kantens snitt hörnet; ett
@@ -1728,7 +1728,7 @@ Mellanstor till stor, en session.
   sektioner
 - Grannhusen (`byggnader`) som enkla volymer, träd, vägar och stompunkter
 - Medelmarknivån räknas automatiskt längs husets kontur, viktad efter
-  fasadernas längd, och visas i husets egenskaper och som nivåkot
+  fasadernas längd, och visas i husets egenskaper och som nivåmarkör
 - Fastighetsgränser läses om paketet har dem (fältet finns inte än; står
   på Höjdkurvors lista). cad-apa föreslår fältets form och läser det när
   det finns
@@ -1747,7 +1747,7 @@ nollpunkt, och zonens koordinater räknas om med Höjdkurvors formler; de
 når aldrig planen eller 3D-vyn. **±0** (plan 1:s golv) är markens höjd
 mitt i utsnittet avrundad till decimeter från början och ändras i
 dialogen *Platsen* (huvudmenyn), där knappen *Medelmarknivån* fyller i
-den; nivåkoterna i fasader och sektioner skrivs i RH 2000 (*FG +62,600*)
+den; nivåmarkörerna i fasader och sektioner skrivs i RH 2000 (*FG +62,600*)
 när projektet har en plats, och våningens egenskaper visar golvets
 RH-höjd. Grannhus, träd och stompunkter har kvar sina höjder i RH 2000,
 så att ett nytt ±0 flyttar huset mot marken. **Det som kommer med
@@ -1770,7 +1770,7 @@ husets kontur närmast betraktaren och utanför huset konturens framkant,
 5 m ut på varje sida, tunn (0,18) och streckad. Den tjocka linjen vid
 ±0 ritas inte när det finns en markmodell (den nya marken kommer i
 0.10.4). **Medelmarknivån** är markhöjden längs husets kontur (som
-genom taket) i medel per meter, med nivåkoten *MMN* i fasader och
+genom taket) i medel per meter, med nivåmarkören *MMN* i fasader och
 sektioner och värdet i dialogen. **Ta emot platsen**: Öppna fil, dra
 och släpp en `.hkplats.json` på planen, *Uppdatera ur fil…* i dialogen,
 och meddelandet från Höjdkurvors flik (`#hojdkurvor-import`, `cad-apa:redo`,
@@ -1868,7 +1868,7 @@ Stor.
 - Byggnadshöjd enligt PBF: från medelmarknivån till där fasadlivet skär
   takets översida (för tak brantare än 45° med 45°-planet); `roofBody` har
   översidan. Kontrolleras mot PBF 1 kap. 3 § och Boverkets vägledning
-  (takutsprång, beräkningsgrundande fasad) innan den byggs. Nivåkot *BH*
+  (takutsprång, beräkningsgrundande fasad) innan den byggs. Nivåmarkör *BH*
 - *Upp till taket* är kvar (Carl August 26 oktober); fråga kvar om den går
   före ett bjälklag som täcker väggen
 
@@ -1887,7 +1887,7 @@ lika långa den högsta), som oftast är en långsida; en gavel skulle ge
 nockens höjd. Undantagen (kupor och frontespiser under en tredjedel av
 takfoten, allmän plats närmare än 6 m, en annan beräkningsgrundande
 fasad) bedöms för hand och står i dialogen. Boverkets *treplansmodell*
-(2016:30) är ett förslag och används inte. Nivåkoten **BH** i fasader
+(2016:30) är ett förslag och används inte. Nivåmarkören **BH** i fasader
 och sektioner (Visa, Markörer, *Byggnadshöjd*), också utan markmodell;
 värdet och fasadens väderstreck i dialogen *Platsen*. **Ramp, gångväg och
 infart** är en sort (`path`) med mittlinje (polylinje), bredd (ramp 1 500,
@@ -2077,11 +2077,11 @@ Carl Augusts svar 26 oktober (fråga 19). Mellanstor.
   att jämföra
 
 *Byggd (26 oktober), nytt format (20). Testerna: 508 → 510, ca 17–20 s.
-Carl August sa "kör" på upplägget med Claudes val: nivåkotan och måttet
+Carl August sa "kör" på upplägget med Claudes val: nivåmarkören och måttet
 visas båda, totalhöjden räknar det som syns i vyn (tak och väggar så
 länge), och en beräkningsgrundande fasad per projekt (inte per
 tillstånd). **Linjen** är objekttypen `BasisFacade` (`start`, `end`;
-global och på alla våningar som fasadlinjerna), ritad med Fasadverktygets
+global och på alla våningar som fasadmarkörerna), ritad med Fasadverktygets
 val *Beräkningsgrundande fasad* (två klick, ingen sida); en ny tar bort
 den gamla i samma steg. Den ritas streckprickad 0,5 med texten utanför
 huset. Byggnadshöjden mäts mot den närmaste fasaden i husets kontur som
@@ -2090,13 +2090,13 @@ från. **Utan språng**: 45°-planet räknas bara över huset (d ≥ 0); för et
 tak flackare än 45° blir det precis skärningen mellan fasadlivet och
 takets ovansida, för ett brantare nocken (PBF). I exempelvillan sjönk BH
 från +3,282 till +3,037. **Höjderna per linje** (`heights` på fasad- och
-sektionslinjer: `bh`, `nh`, `th`, `mmnOld`); förvalet är BH i fasaden som
+sektionsmarkörer: `bh`, `nh`, `th`, `mmnOld`); förvalet är BH i fasaden som
 ser den beräkningsgrundande fasaden (blicken inom 45° mot fasadens
 normal), inget annat. Kryssas en ruta sparas alla fyra. Måtten står 25 mm
-(på papper) till höger om nivåkoterna, 7 mm isär: lodrätt streck med
+(på papper) till höger om nivåmarkörerna, 7 mm isär: lodrätt streck med
 snedstreck, texten längs strecket (*BH 3,04 m*). NH är takets högsta
 ovansida, TH den högsta punkten i vyn (minst NH). *MMN bef.* blir en
-egen nivåkota när den skiljer sig från MMN. Visa-valet *Byggnadshöjd*
+egen nivåmarkör när den skiljer sig från MMN. Visa-valet *Byggnadshöjd*
 döljer allt. **Platsen**: *Medelmarknivån* ur den nya marken (den
 färdiga i förslaget som visas), *Befintlig* bredvid när den skiljer sig;
 raden *Byggnadshöjd* säger beräkningsgrundande eller längsta och
@@ -2174,7 +2174,7 @@ fyllning förut låg över modellen (också en mask). Provat med Playwright
 mot `dist/` (Visa-menyn, *Tonat från*). Klickjämförelsen kördes inte.
 Inga referensritningar ändrades.*
 
-### 0.10.11 Småsaker
+### 0.10.11 Småsaker ✓
 
 Synpunkter 25 och 26 oktober.
 
@@ -2191,9 +2191,34 @@ Synpunkter 25 och 26 oktober.
 - Bjälklagets *Fasa* får förvalet 500 mm, som *Avrunda* (fråga 32)
 - **-markör** för symbolerna i ritningen (Carl August 26 oktober):
   *nivåmarkör* i stället för nivåkota, *sektionsmarkör* och *fasadmarkör*
-  i stället för sektions- och fasadlinje, och liknande. I gränssnittet
+  i stället för sektions- och fasadlinje, och liknande (klart i 0.10.11). I gränssnittet
   (penntabellen, hjälptexter, verktygen, egenskaperna), i README och
   dokumenten; koden byter ord i kommentarerna
+
+*Byggd (27 oktober), samma format (20). Testerna: 518 → 522, ca 13 s.
+Carl August sa "kör" med Claudes val som frågor. **Högerklick på en
+våning** (och ⋯ på raden): Visa, Inställningar, Byt namn, Ny våning
+ovanför/under den våningen, Ta bort. **Visa-menyn**: inställningarna i en
+kolumn till vänster, kategorierna i två (CSS-kolumner) till höger, 680 px
+bred och flyttad eller smalare så att den ryms i ritytan. **Snäpp mot
+kalkeringen**: linjerna, polylinjerna och ytornas kanter i det kalkerade
+(utom `noPick`), sist i listan, alltid på när kalkeringen syns.
+**Hovring i 3D**: en ljusare variant av markeringsfärgen, en gång per
+bildruta, inte medan vyn dras. **Markobjekt i 3D**: strålen provas mot den
+färdiga marken i steg, och objektet i punkten (det som ritas sist går
+före) markeras; konturen ritas 60 mm över marken, heldragen markerad och
+svagare hovrad. **Träd och grannhus** jämförs (`compares`, inte `global`)
+och går att ta bort fast de är låsta (också kartobjekten; marken bara med
+platsen); *Riv* och *Behåll* bland deras snabbknappar. Nya träd ritas som
+befintliga (grå). **Skarven**: `joinStoreys` jämför inte längre åtgärden,
+eftersom alla väggar har samma fasadmaterial tills material går att
+välja. **Förvalen**: snitthöjd 1100, *Fasa* för hörn i bjälklag och
+2D-former 500 (väggarnas *Fasa* är kvar på 600). **-markör** i
+gränssnittet, README, dokumenten och kommentarerna; verktygen och vyerna
+heter fortfarande *Sektion* och *Fasad*. Provat med Playwright mot
+`dist/` (Visa-menyn, våningens meny, snäpp mot kalkeringen, hovring och
+markobjekt i 3D). Klickjämförelsen kördes inte. Inga referensritningar
+ändrades.*
 
 ### 0.10.12 Höjder i förhållande till våningen
 
@@ -2335,7 +2360,7 @@ efter pilotprojektet. Det som piloten visar behövs tidigt går först.
 
 Grafik:
 
-- Penntabell i stilmallen (pilar och markörer flyttade till 0.8.26): linjetjocklek och färg per sorts linje (hål, karm, båge, foder, sammanfogningar, glas, öppningssätt, marklinje …). I dag gäller fasta värden: 0,13 skraffering, glas och sammanfogningar; 0,18 mått, foder, möbler och detaljer; 0,25 karm, båge, dörrblad och konturer bortom; 0,35 hålens omfattning och fasadkonturer; 0,5 bärande snitt; 0,7 marklinje och sektionslinjens ändar
+- Penntabell i stilmallen (pilar och markörer flyttade till 0.8.26): linjetjocklek och färg per sorts linje (hål, karm, båge, foder, sammanfogningar, glas, öppningssätt, marklinje …). I dag gäller fasta värden: 0,13 skraffering, glas och sammanfogningar; 0,18 mått, foder, möbler och detaljer; 0,25 karm, båge, dörrblad och konturer bortom; 0,35 hålens omfattning och fasadkonturer; 0,5 bärande snitt; 0,7 marklinje och sektionsmarkörens ändar
 - Klicka på en glasmarkering för att ge den en egen stil i egenskaperna
 - Typsnitt: ett för hela projektet och eget per objekt
 - Öppningssätt för fönster: fast, sidohängt (vänster/höger), överkantshängt, underkantshängt, vridfönster. I dag har bara dörrar öppningssätt

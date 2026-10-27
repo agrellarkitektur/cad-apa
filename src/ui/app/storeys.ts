@@ -1,7 +1,8 @@
 import type { Id } from '../../core/model';
 import { addStorey, deleteStorey, neighbourStorey, storeyContents, storeysUp, toStorey } from '../../core/storeys';
 import { typeOf } from '../../elements/registry';
-import { askConfirm } from '../ask';
+import { askConfirm, askText } from '../ask';
+import { saveStorey } from '../../core/treeCommands';
 import type { MenuItem } from '../contextMenu';
 import type { AppContext } from './context';
 
@@ -105,7 +106,42 @@ export function installStoreys(app: AppContext) {
     );
   }
 
-  return { create, step, remove, moveTo, menuItems, chooseTarget, open };
+  async function rename(id: Id): Promise<void> {
+    const name = (await askText('Byt namn', nameOf(id)))?.trim();
+    if (name) saveStorey(app.store, id, { name });
+  }
+
+  /**
+   * Högerklick eller ⋯ på en våning i projektträdet (0.10.11): visa den,
+   * dess inställningar, byt namn, ny våning ovanför eller under just den,
+   * och ta bort.
+   */
+  function openMenu(id: Id, x: number, y: number): void {
+    const s = doc().storeys.find((v) => v.id === id);
+    if (!s) return;
+    app.ctxMenu.open(
+      x,
+      y,
+      [
+        { kind: 'header', label: s.name, sub: `Våning ${fmt(s.elevation)}` },
+        { label: 'Visa', disabled: app.ui.storey === id && !app.ui.marker && !app.ui.layout, run: () => open(id) },
+        { label: 'Inställningar', run: () => {
+          app.selection.clear();
+          app.panel.showTreeItem({ kind: 'storey', id });
+          if (app.ui.navOpen) app.navigator.render();
+        } },
+        { label: 'Byt namn…', run: () => void rename(id) },
+        { kind: 'sep' },
+        { label: 'Ny våning ovanför', run: () => void create('above', id) },
+        { label: 'Ny våning under', run: () => void create('below', id) },
+        { kind: 'sep' },
+        { label: 'Ta bort…', danger: true, disabled: doc().storeys.length < 2, run: () => void remove(id) },
+      ],
+      s.name,
+    );
+  }
+
+  return { create, step, remove, moveTo, menuItems, chooseTarget, open, openMenu };
 }
 
 const nfLevel = new Intl.NumberFormat('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 });

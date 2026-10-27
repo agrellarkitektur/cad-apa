@@ -37,8 +37,9 @@ export function snapSegments(app: AppContext): SnapSegment[] {
   // Samma plan och samma vy ger samma lista (0.8.3): verktygen frågar vid
   // varje musrörelse, och listan bär rutnätet som snäppningen söker i.
   const vs = app.viewStates();
-  return saved([plan, app.store.doc.elements, ui.storey, ui.marker, ui.worksheet, JSON.stringify(vs)], () =>
-    ui.marker || ui.worksheet ? sectionSnapSegments(app) : planSnapSegments(app),
+  const traced = app.view.underlayPrimitives;
+  return saved([plan, traced, app.store.doc.elements, ui.storey, ui.marker, ui.worksheet, JSON.stringify(vs)], () =>
+    ui.marker || ui.worksheet ? sectionSnapSegments(app) : [...planSnapSegments(app), ...tracedSegments(traced)],
   );
 }
 const saved = lastResults<SnapSegment[]>(2);
@@ -78,6 +79,24 @@ function planSnapSegments(app: AppContext): SnapSegment[] {
       for (const ring of rings) for (let i = 0; i < ring.length; i++) edges.push({ id: pk.id, a: ring[i], b: ring[(i + 1) % ring.length] });
   }
   return [...refs, ...edges];
+}
+
+/**
+ * Kalkeringen (0.10.11): linjerna och ytornas kanter i den kalkerade vyn
+ * eller våningen. De kommer sist, så att ritningens egna punkter går före
+ * när två ligger lika nära.
+ */
+function tracedSegments(prims: readonly Primitive[]): SnapSegment[] {
+  const out: SnapSegment[] = [];
+  for (const p of prims) {
+    if (p.noPick) continue;
+    if (p.kind === 'line') out.push({ id: 'kalkering', a: p.a, b: p.b, on: 'På kalkeringen' });
+    else if (p.kind === 'polyline') {
+      const n = p.points.length;
+      for (let i = 0; i + 1 < n + (p.closed ? 1 : 0); i++) out.push({ id: 'kalkering', a: p.points[i], b: p.points[(i + 1) % n], on: 'På kalkeringen' });
+    } else if (p.kind === 'region') for (const ring of p.rings) for (let i = 0; i < ring.length; i++) out.push({ id: 'kalkering', a: ring[i], b: ring[(i + 1) % ring.length], on: 'På kalkeringen' });
+  }
+  return out;
 }
 
 /** Linjerna i den öppna fasaden, sektionen eller arbetsbladet, att snäppa mot. */

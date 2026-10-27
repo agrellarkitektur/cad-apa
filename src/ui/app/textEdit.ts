@@ -16,7 +16,7 @@ export function installTextEdit(app: AppContext, textEditor: InlineTextEditor) {
   function editTextAt(id: Id, at: Vec2): boolean {
     const { store, ui, view } = app;
     const el = store.doc.elements[id];
-    // Dubbelklick på en fasad- eller sektionslinje öppnar vyn.
+    // Dubbelklick på en fasad- eller sektionsmarkör öppnar vyn.
     if (el && (el.type === 'Section' || el.type === 'Elevation') && !ui.marker) {
       app.goTo({ kind: 'marker', id });
       return true;

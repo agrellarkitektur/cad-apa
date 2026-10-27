@@ -28,10 +28,18 @@ export function addElements(store: DocStore, els: NewElement[], activeState: Id,
   return full;
 }
 
+/** Platsens objekt, som går att ta bort fast de är låsta. */
+const REMOVABLE_LOCKED: ReadonlySet<string> = new Set(['SiteBuilding', 'Tree', 'SiteMap']);
+
 /** Ta bort element helt ur modellen, tillsammans med det som sitter i dem. */
 export function deleteElements(store: DocStore, ids: Id[]): void {
-  // Låsta objekt tas inte bort (format 5).
-  const open = ids.filter((id) => !store.doc.elements[id]?.locked);
+  // Låsta objekt tas inte bort (format 5), utom det som kom med platsen
+  // (0.10.11): låset skyddar det mot att flyttas av misstag. Marken tas bort
+  // med platsen.
+  const open = ids.filter((id) => {
+    const el = store.doc.elements[id];
+    return !el?.locked || REMOVABLE_LOCKED.has(el.type);
+  });
   if (!open.length) return;
   const viewports = open.filter((id) => !store.doc.elements[id] && isViewportId(store.doc, id));
   const label = viewports.length === open.length ? (open.length === 1 ? 'Ta bort vyn från bladet' : 'Ta bort vyerna från bladet') : open.length === 1 ? 'Ta bort objekt' : `Ta bort ${open.length} objekt`;

@@ -46,6 +46,19 @@ export interface Edit3DHost {
   commitMove(ids: string[], d: Vec2, anchor: Vec2): void;
 }
 
+/**
+ * Markobjekten (0.10.11): de är inga egna kroppar utan delar av marken, så
+ * vyn träffar marken och frågar appen vilket objekt som ligger där.
+ */
+export interface Ground3DHost {
+  /** Den färdiga markens höjd i en punkt, mm från ±0, eller null utanför markmodellen. */
+  height(p: Vec2): number | null;
+  /** Markobjektet i en punkt i planen, eller null. */
+  pick(p: Vec2): string | null;
+  /** Objektets kontur på marken, sex tal per sträcka (mm), eller null om id inte är ett markobjekt. */
+  outline(id: string): Float32Array | null;
+}
+
 type Drag =
   | { kind: 'grip'; handle: Handle3D; plane: THREE.Plane; point: Vec2; label: string }
   | { kind: 'move'; ids: string[]; plane: THREE.Plane; base: Vec2; point: Vec2; label: string };
@@ -83,6 +96,15 @@ export class View3D {
   private contourMaterial = new THREE.LineBasicMaterial({ color: 0x3d4a3a, transparent: true, opacity: 0.55 });
   private refMaterial = new THREE.LineBasicMaterial({ color: 0x1f4fa3, depthTest: false, linewidth: 2 });
   private highlightMaterial: THREE.MeshStandardMaterial;
+  /** Det som pekaren står över (0.10.11), svagare än markeringen. */
+  private hoverMaterial: THREE.MeshStandardMaterial;
+  private hovered: string | null = null;
+  private hoverAt: { x: number; y: number } | null = null;
+  private hoverFrame = 0;
+  /** Markobjektens konturer på marken: de markerade och det som hovras. */
+  private marksGroup = new THREE.Group();
+  private markLine = new THREE.LineBasicMaterial({ color: 0xa86b12, depthTest: false });
+  private hoverLine = new THREE.LineBasicMaterial({ color: 0xa86b12, depthTest: false, transparent: true, opacity: 0.55 });
   private meshes: THREE.Mesh[] = [];
   private selected = new Set<string>();
   private framed = false;
@@ -95,6 +117,8 @@ export class View3D {
   onPick?: (id: string | null, additive: boolean) => void;
   /** Koppling till appen för att ändra modellen. Utan den går 3D bara att titta i. */
   editor?: Edit3DHost;
+  /** Markobjekten på marken (0.10.11), eller null utan markmodell. */
+  ground: Ground3DHost | null = null;
 
   constructor(host: HTMLElement) {
     this.el = host;
@@ -121,6 +145,7 @@ export class View3D {
     canvas.addEventListener('pointermove', (e) => this.onMove(e), { capture: true });
     canvas.addEventListener('pointerup', (e) => this.onUp(e), { capture: true });
     canvas.addEventListener('pointercancel', () => this.cancelDrag(), { capture: true });
+    canvas.addEventListener('pointerleave', () => this.setHover(null));
 
     this.controls = new OrbitControls(this.camera, canvas);
     this.controls.enableDamping = false;
@@ -140,7 +165,7 @@ export class View3D {
       other: new THREE.MeshBasicMaterial({ color: 0x9aa1a7, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
       edge: new THREE.LineBasicMaterial({ color: 0x1d2328 }),
     };
-    for (const g of [this.root, this.handlesGroup, this.previewGroup, this.capsGroup, this.terrainGroup]) {
+    for (const g of [this.root, this.handlesGroup, this.previewGroup, this.capsGroup, this.terrainGroup, this.marksGroup]) {
       g.rotation.x = -Math.PI / 2;
       g.scale.setScalar(0.001);
       this.scene.add(g);
@@ -166,6 +191,7 @@ export class View3D {
     this.accentLine = new THREE.LineBasicMaterial({ color: 0xa86b12, depthTest: false });
     this.handleMaterial = new THREE.MeshBasicMaterial({ color: 0xa86b12, depthTest: false });
     this.highlightMaterial = new THREE.MeshStandardMaterial({ color: 0xf2b468, roughness: 0.8, emissive: 0x6b3a00, emissiveIntensity: 0.25, side: THREE.DoubleSide });
+    this.hoverMaterial = new THREE.MeshStandardMaterial({ color: 0xf6d3a6, roughness: 0.85, emissive: 0x6b3a00, emissiveIntensity: 0.1, side: THREE.DoubleSide });
 
     this.refreshColors();
     new ResizeObserver(() => this.resize()).observe(host);
@@ -196,7 +222,7 @@ export class View3D {
       }
       const geom = extrude(s);
       if (!geom) continue;
-      const mesh = new THREE.Mesh(geom, this.selected.has(s.id) ? this.highlightMaterial : this.material(s.material));
+      const mesh = new THREE.Mesh(geom, this.materialFor(s.id, s.material));
       mesh.userData = { id: s.id, material: s.material };
       mesh.castShadow = s.material !== 'glass' && s.material !== 'floor';
       mesh.receiveShadow = true;
@@ -246,12 +272,58 @@ export class View3D {
 
   setSelection(ids: Iterable<string>): void {
     this.selected = new Set(ids);
+    this.paint();
+    this.updateHandles();
+  }
+
+  private materialFor(id: string, material: Material3D): THREE.Material {
+    return this.selected.has(id) ? this.highlightMaterial : id === this.hovered ? this.hoverMaterial : this.material(material);
+  }
+
+  /** Färga det markerade och det som hovras, och rita markobjektens konturer (0.10.11). */
+  private paint(): void {
     for (const m of this.meshes) {
       const { id, material } = m.userData as { id: string; material: Material3D };
-      m.material = this.selected.has(id) ? this.highlightMaterial : this.material(material);
+      m.material = this.materialFor(id, material);
     }
-    this.updateHandles();
+    for (const c of this.marksGroup.children) disposeTree(c);
+    this.marksGroup.clear();
+    const g = this.ground;
+    if (g) {
+      const add = (id: string, mat: THREE.LineBasicMaterial) => {
+        const pos = g.outline(id);
+        if (!pos) return;
+        const geom = new THREE.BufferGeometry();
+        geom.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        const line = new THREE.LineSegments(geom, mat);
+        line.renderOrder = 10;
+        this.marksGroup.add(line);
+      };
+      for (const id of this.selected) add(id, this.markLine);
+      if (this.hovered && !this.selected.has(this.hovered)) add(this.hovered, this.hoverLine);
+    }
     this.requestRender();
+  }
+
+  /** Det som pekaren står över; null när den lämnar vyn eller står över tomt. */
+  private setHover(id: string | null): void {
+    this.hoverAt = null;
+    if (id === this.hovered) return;
+    this.hovered = id;
+    this.paint();
+  }
+
+  /** Hovringen räknas en gång per bildruta, där pekaren står då. */
+  private queueHover(e: PointerEvent): void {
+    // Inte medan vyn snurras eller panoreras, och inte med fingret.
+    if (e.buttons || e.pointerType === 'touch') return;
+    this.hoverAt = { x: e.clientX, y: e.clientY };
+    if (this.hoverFrame) return;
+    this.hoverFrame = requestAnimationFrame(() => {
+      this.hoverFrame = 0;
+      const at = this.hoverAt;
+      if (at) this.setHover(this.idAt(at.x, at.y));
+    });
   }
 
   /** Visa hela modellen snett ovanifrån. */
@@ -301,6 +373,10 @@ export class View3D {
     this.refMaterial.color.set(ref);
     this.highlightMaterial.color.set(sel).lerp(new THREE.Color('#ffffff'), 0.35);
     this.highlightMaterial.emissive.set(sel).multiplyScalar(0.35);
+    this.hoverMaterial.color.set(sel).lerp(new THREE.Color('#ffffff'), 0.65);
+    this.hoverMaterial.emissive.set(sel).multiplyScalar(0.12);
+    this.markLine.color.set(sel);
+    this.hoverLine.color.set(sel);
     this.requestRender();
   }
 
@@ -397,6 +473,7 @@ export class View3D {
 
   private onMove(e: PointerEvent): void {
     const d = this.drag;
+    if (!d) this.queueHover(e);
     if (!d || !this.editor) return;
     e.stopImmediatePropagation();
     const raw = this.onPlane(e, d.plane);
@@ -515,7 +592,7 @@ export class View3D {
     }
     this.clipPlanes.length = 0;
     this.clipPlanes.push(...planes);
-    for (const m of [...this.materials.values(), this.edgeMaterial, this.highlightMaterial]) {
+    for (const m of [...this.materials.values(), this.edgeMaterial, this.highlightMaterial, this.hoverMaterial, this.markLine, this.hoverLine]) {
       m.clippingPlanes = this.clipPlanes;
       m.clipShadows = true;
       m.needsUpdate = true;
@@ -595,10 +672,56 @@ export class View3D {
     cam.updateProjectionMatrix();
   }
 
-  /** Det objekt som syns under en punkt i fönstret, för högerklick. */
+  /**
+   * Det objekt som syns under en punkt i fönstret, för klick, högerklick och
+   * hovring: en kropp, eller ett markobjekt där marken ligger närmast (0.10.11).
+   */
   idAt(clientX: number, clientY: number): string | null {
-    const hit = this.hitAt({ clientX, clientY } as PointerEvent);
-    return hit ? (hit.object.userData as { id: string }).id : null;
+    const e = { clientX, clientY } as PointerEvent;
+    const hit = this.hitAt(e);
+    const ground = this.groundHit(this.ray(e).ray, hit?.distance ?? Infinity);
+    const onGround = ground ? this.ground!.pick(ground) : null;
+    return onGround ?? (hit ? (hit.object.userData as { id: string }).id : null);
+  }
+
+  /**
+   * Där strålen först går ner i den färdiga marken, i planens mm, om det är
+   * närmare än `before` (meter). Marken provas i steg längs strålen, längre
+   * ju längre bort, och punkten letas sedan upp mellan två steg. Inte det som
+   * en sektion klipper bort.
+   */
+  private groundHit(ray: THREE.Ray, before: number): Vec2 | null {
+    const g = this.ground;
+    if (!g) return null;
+    const o = ray.origin;
+    const d = ray.direction;
+    const at = (t: number): Vec2 => [(o.x + d.x * t) * 1000, -(o.z + d.z * t) * 1000];
+    const above = (t: number): boolean | null => {
+      const h = g.height(at(t));
+      return h === null ? null : (o.y + d.y * t) * 1000 > h;
+    };
+    const end = Math.min(before, this.camera.far);
+    let prev = this.camera.near;
+    let was = above(prev);
+    for (let t = prev; t < end; ) {
+      t = Math.min(end, t + Math.max(0.1, t * 0.004));
+      const now = above(t);
+      if (was === true && now === false) {
+        let lo = prev;
+        let hi = t;
+        for (let k = 0; k < 24; k++) {
+          const mid = (lo + hi) / 2;
+          if (above(mid) === false) hi = mid;
+          else lo = mid;
+        }
+        const p = new THREE.Vector3(o.x + d.x * hi, o.y + d.y * hi, o.z + d.z * hi);
+        return this.clipPlanes.every((pl) => pl.distanceToPoint(p) >= -1e-6) ? at(hi) : null;
+      }
+      prev = t;
+      was = now;
+      if (t >= end) break;
+    }
+    return null;
   }
 
   /**
@@ -614,8 +737,7 @@ export class View3D {
   }
 
   private pick(e: PointerEvent): void {
-    const hit = this.hitAt(e);
-    this.onPick?.(hit ? (hit.object.userData as { id: string }).id : null, e.shiftKey || e.ctrlKey || e.metaKey || e.pointerType === 'touch');
+    this.onPick?.(this.idAt(e.clientX, e.clientY), e.shiftKey || e.ctrlKey || e.metaKey || e.pointerType === 'touch');
   }
 }
 

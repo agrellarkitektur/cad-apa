@@ -74,7 +74,7 @@ export class PropertiesPanel {
   onOpenMarker?: (id: string) => void;
   /** Gränsen för varningen om nästan raka vinklar, grader (0 = av). */
   angleWarn: () => number = () => 5;
-  /** Rikta en sektions- eller fasadlinje efter något man klickar på i planen. */
+  /** Rikta en sektions- eller fasadmarkör efter något man klickar på i planen. */
   onAlignMarker?: (id: string) => void;
   /** Kalibrera eller rikta ett underlag (0.8 del 2). */
   onUnderlayTool?: (id: string, mode: 'calibrate' | 'align') => void;

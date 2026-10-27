@@ -7,7 +7,7 @@ import type { RoofParams } from './roof';
 import { lastResults } from '../repr/reuse';
 
 /**
- * Nästan raka vinklar (0.7.1). En vägg, en sektions- eller fasadlinje, fast
+ * Nästan raka vinklar (0.7.1). En vägg, en sektions- eller fasadmarkör, fast
  * inredning eller en taknock som går nästan men inte exakt i 0°, 45° eller
  * 90° är oftast ett misstag: en klick bredvid när man ritade. De markeras i
  * planen och får en rad i egenskaperna.

@@ -38,7 +38,7 @@ describe('pennor för pilar och markörer (0.8.26)', () => {
     expect(weights(primsOf(doc, 'North', doc.graphics))).toEqual(new Set([0.18]));
   });
 
-  it('ger sektionslinjen egen tjocklek och färg, också pilen och bokstaven', () => {
+  it('ger sektionsmarkören egen tjocklek och färg, också pilen och bokstaven', () => {
     const doc = sampleProject();
     const prims = primsOf(doc, 'Section', styled({ sectionLine: { weight: 0.7, color: RED } }));
     expect(weights(prims)).toEqual(new Set([0.7]));
@@ -47,7 +47,7 @@ describe('pennor för pilar och markörer (0.8.26)', () => {
     expect(text?.kind === 'text' && text.pen.weight).toBe(0.35);
   });
 
-  it('färgar norrpilens och fasadlinjens fyllda trianglar', () => {
+  it('färgar norrpilens och fasadmarkörens fyllda trianglar', () => {
     const doc = sampleProject();
     const style = styled({ north: { weight: 0.25, color: RED }, elevationLine: { weight: 0.35, color: RED } });
     for (const type of ['North', 'Elevation']) {
@@ -86,7 +86,7 @@ describe('pennor för pilar och markörer (0.8.26)', () => {
     expect(leader.every((p) => p.kind === 'line' && p.pen.weight === 0.35 && p.pen.color === RED)).toBe(true);
   });
 
-  it('ger nivåkotorna i en sektion sin penna', () => {
+  it('ger nivåmarkörerna i en sektion sin penna', () => {
     const doc = sampleProject();
     const sec = Object.values(doc.elements).find((e) => e.type === 'Section')!;
     doc.graphics = styled({ level: { weight: 0.25, color: RED } });

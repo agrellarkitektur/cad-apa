@@ -438,3 +438,41 @@
   font: 500 13px var(--font-ui);
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
 }
+
+/* Visa-menyn i kolumner (0.10.11): inställningarna till vänster, kategorierna
+   i två kolumner till höger, så att allt syns utan att rulla. Smal skärm: en. */
+.show-menu:not([hidden]) {
+  grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
+  align-items: start;
+  gap: 8px 20px;
+  left: 0;
+  right: auto;
+  width: min(680px, calc(100vw - 32px));
+}
+
+.show-col {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.show-groups {
+  display: block;
+  columns: 2 180px;
+  column-gap: 20px;
+}
+
+.show-groups > * {
+  break-inside: avoid;
+  margin-bottom: 8px;
+}
+
+@media (max-width: 720px) {
+  .show-menu:not([hidden]) {
+    grid-template-columns: minmax(0, 1fr);
+    width: auto;
+  }
+  .show-groups {
+    columns: 1;
+  }
+}

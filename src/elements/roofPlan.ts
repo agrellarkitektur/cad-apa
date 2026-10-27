@@ -16,7 +16,7 @@ import { halfPlaneBelow, outlineEdges, outlineRing, roofFrame, roofPlanes, roofR
  */
 
 /** Snitthöjden över golvet när våningen inte har någon egen. */
-export const DEFAULT_CUT_HEIGHT = 1200;
+export const DEFAULT_CUT_HEIGHT = 1100;
 
 /** Visa-nyckeln för husets kontur genom taket; den är släckt om den inte står i vyns `hide` med plus. */
 export const FOOTPRINT_KEY = 'footprint';

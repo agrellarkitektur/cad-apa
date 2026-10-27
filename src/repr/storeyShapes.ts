@@ -101,7 +101,7 @@ function build(doc: ProjectDoc, view: ViewStates, style: StyleSheet, include: In
       }
     }
   }
-  if (storeys.length > 1) joinStoreys(shapes, storeyOf, (id) => (doc.elements[id] ? storeys[0].ctx.actionOf(doc.elements[id]) : 'plain'));
+  if (storeys.length > 1) joinStoreys(shapes, storeyOf);
   return { shapes, storeys };
 }
 
@@ -110,18 +110,20 @@ function make(items: PlanItem[], ctx: PlanContext): Shape3D[] {
   return t.model3dBatch ? t.model3dBatch(items, ctx) : items.flatMap(({ el }) => t.model3d!(el, ctx));
 }
 
-type Flat = { shape: number; seg: number; z: number; a: Vec2; d: Vec2; len: number; storey: number; action: string; cut: [number, number][] };
+type Flat = { shape: number; seg: number; z: number; a: Vec2; d: Vec2; len: number; storey: number; cut: [number, number][] };
 
 /**
  * Väggar med samma liv på två våningar har ingen linje mellan sig (0.10.1):
  * där ovansidan av en vägg och undersidan av en vägg på en annan våning har
- * samma vågräta kant, med väggen på samma sida och samma åtgärd, tas
- * kanten bort ur båda. Står väggen ovanför på andra sidan kanten (kragar
+ * samma vågräta kant, med väggen på samma sida, tas kanten bort ur båda.
+ * Också mellan befintligt och nytt (0.10.11): väggarna har samma
+ * fasadmaterial så länge det inte går att välja material (efter piloten;
+ * då jämförs materialet här). Det som rivs är inte med. Står väggen ovanför på andra sidan kanten (kragar
  * ut) är kanten kvar, för där viker ytan. Väggen ligger till vänster om
  * varje kant, eftersom konturerna kommer ur sammanslagningen (yttre ringar
  * moturs, hål medurs).
  */
-export function joinStoreys(shapes: { s: Shape3D; demolished: boolean }[], storeyOf: readonly number[], actionOf: (id: string) => string): void {
+export function joinStoreys(shapes: { s: Shape3D; demolished: boolean }[], storeyOf: readonly number[]): void {
   const TOL = 0.5;
   const walls = (x: { s: Shape3D; demolished: boolean }): x is { s: Edges3D; demolished: boolean } => x.s.kind === 'edges' && x.s.part === 'wall' && !x.demolished;
   // Höjderna där kanter från mer än en våning möts; bara där prövas något.
@@ -142,12 +144,11 @@ export function joinStoreys(shapes: { s: Shape3D; demolished: boolean }[], store
   const levels = new Map<number, Flat[]>();
   shapes.forEach((x, i) => {
     if (!walls(x)) return;
-    const action = actionOf(x.s.id);
     x.s.segments.forEach((q, j) => {
       if (Math.abs(q[2] - q[5]) > 0.01 || !shared.has(Math.round(q[2] * 10))) return;
       const len = Math.hypot(q[3] - q[0], q[4] - q[1]);
       if (len < TOL) return;
-      const f: Flat = { shape: i, seg: j, z: q[2], a: [q[0], q[1]], d: [(q[3] - q[0]) / len, (q[4] - q[1]) / len], len, storey: storeyOf[i], action, cut: [] };
+      const f: Flat = { shape: i, seg: j, z: q[2], a: [q[0], q[1]], d: [(q[3] - q[0]) / len, (q[4] - q[1]) / len], len, storey: storeyOf[i], cut: [] };
       const key = Math.round(f.z * 10);
       const list = levels.get(key);
       if (list) list.push(f);
@@ -182,7 +183,7 @@ export function joinStoreys(shapes: { s: Shape3D; demolished: boolean }[], store
     list.forEach((f, i) => {
       for (const k of index.near(boxOfFlat(f))) {
         const g = list[k];
-        if (k <= i || g.storey === f.storey || g.action !== f.action) continue;
+        if (k <= i || g.storey === f.storey) continue;
         // Samma riktning och samma linje.
         if (f.d[0] * g.d[0] + f.d[1] * g.d[1] < 0.99999) continue;
         const rx = g.a[0] - f.a[0];
