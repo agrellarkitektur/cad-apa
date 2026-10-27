@@ -1,5 +1,5 @@
 import type { PenDef, StyleSheet } from '../core/graphics';
-import { stylePen } from './markerPens';
+import { defaultedPen } from './markerPens';
 import type { Pen } from './primitives';
 
 /**
@@ -47,10 +47,7 @@ export function defaultPlanCutPen(key: string): PenDef | undefined {
  */
 export function planCutPen(style: StyleSheet | undefined, type: CutPenType, zone: 'above' | 'below'): Pen {
   const key = `${zone}${type}`;
-  const def = defaultPlanCutPen(key) ?? { weight: 0.18 };
-  const own = style?.pens?.[key];
-  const merged: PenDef = { ...def, ...own };
-  return stylePen({ ...style, pens: { ...style?.pens, [key]: merged } } as StyleSheet, key, def.weight);
+  return defaultedPen(style, key, defaultPlanCutPen(key) ?? { weight: 0.18 });
 }
 
 /**

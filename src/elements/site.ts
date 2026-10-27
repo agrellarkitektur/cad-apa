@@ -5,6 +5,8 @@ import { finishedTerrain, showsProposal, type Finished } from './ground';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import type { Solid } from '../repr/solids';
 import type { ElementType, PlanContext } from './registry';
+import { contourPen } from '../repr/contourPens';
+import { withWeight } from '../repr/markerPens';
 
 /**
  * Platsen ur Höjdkurvor (0.10.3): den befintliga marken som höjdkurvor,
@@ -220,10 +222,12 @@ export const terrainType: ElementType<TerrainParams> = {
     // Marken som den blir heldragen, den befintliga streckad bara där markobjekten ändrat den (0.10.8).
     const f = showsProposal(ctx) ? finishedTerrain(ctx) : null;
     const { solid, old } = groundContours(ctx.doc, f);
-    const key = `${el.id}|${ctx.scale}`;
+    // Pennorna ur stilmallen (granskningen efter 0.10.18) hör till nyckeln.
+    const pens = { major: contourPen(ctx.style, 'contour'), minor: contourPen(ctx.style, 'contourMinor'), old: contourPen(ctx.style, 'contourOld') };
+    const key = `${el.id}|${ctx.scale}|${JSON.stringify(pens)}`;
     return [
-      ...contourPrims(solid, key, () => contourLines(solid, { objectId: el.id, objectType: 'Terrain', part: 'höjdkurva' }, ctx.scale, false)),
-      ...contourPrims(old, key, () => contourLines(old, { objectId: el.id, objectType: 'Terrain', part: 'befintlig mark' }, ctx.scale, true)),
+      ...contourPrims(solid, key, () => contourLines(solid, { objectId: el.id, objectType: 'Terrain', part: 'höjdkurva' }, ctx.scale, pens, false)),
+      ...contourPrims(old, key, () => contourLines(old, { objectId: el.id, objectType: 'Terrain', part: 'befintlig mark' }, ctx.scale, pens, true)),
     ];
   },
 };
@@ -244,19 +248,27 @@ function contourPrims(cs: Contour[], key: string, make: () => Primitive[]): Prim
 }
 
 /**
- * Kurvorna som linjer, med höjden utskriven på hela meter (0.10.8):
- * heldragna, halvmeterskurvorna tunnare; den befintliga marken där den
- * ändrats tunn, grå och streckad.
+ * Kurvorna som linjer, med höjden utskriven på hela meter (0.10.8), med
+ * stilmallens pennor (granskningen efter 0.10.18): hela meter, kurvorna
+ * däremellan, och den befintliga marken där den ändrats (däremellan högst
+ * 0,13). Höjden har kurvans färg.
  */
-function contourLines(cs: readonly Contour[], origin: Primitive['origin'], scale: number, old: boolean): Primitive[] {
+function contourLines(
+  cs: readonly Contour[],
+  origin: Primitive['origin'],
+  scale: number,
+  pens: { major: Pen; minor: Pen; old: Pen },
+  old: boolean,
+): Primitive[] {
   const out: Primitive[] = [];
+  const oldMinor: Pen = { ...pens.old, weight: Math.min(pens.old.weight, 0.13) };
   for (const c of cs) {
     const whole = Math.abs(c.z - Math.round(c.z)) < 1e-6;
-    const pen: Pen = old ? { weight: whole ? 0.18 : 0.13, color: 'muted', dash: [2, 1] } : { weight: whole ? 0.25 : 0.13 };
+    const pen = old ? (whole ? pens.old : oldMinor) : whole ? pens.major : pens.minor;
     out.push({ kind: 'polyline', points: c.pts, closed: c.closed, pen, origin, noPick: true });
     if (!whole) continue;
     const label = contourLabel(c, (old ? 30 : 20) * scale);
-    if (label) out.push({ kind: 'text', at: label.at, angle: label.angle, align: 'middle', text: c.z.toLocaleString('sv-SE'), height: 1.8, pen: old ? thin : { weight: 0.18 }, origin, noPick: true });
+    if (label) out.push({ kind: 'text', at: label.at, angle: label.angle, align: 'middle', text: c.z.toLocaleString('sv-SE'), height: 1.8, pen: withWeight(pen, old ? 0.13 : 0.18), origin, noPick: true });
   }
   return out;
 }

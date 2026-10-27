@@ -1,0 +1,349 @@
+/* Stilmallens fönster (flyttat ur stilmall.css i granskningen efter 0.10.18): åtgärderna, litteramallarna, pennorna, linjetyperna och fyllningstyperna, och kolumnerna. En del av app.css; ordningen mellan filerna är kaskadens. */
+
+.style-labels {
+  display: grid;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid var(--rule);
+}
+
+.style-labels h3 {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.labels-row {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  border-top: 0;
+}
+
+.tpl-row {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.tpl-row label {
+  display: grid;
+  gap: 4px;
+}
+
+/* Rumsstämpeln (0.8.22): en mall, över båda kolumnerna. */
+.tpl-row.wide label {
+  grid-column: 2 / -1;
+}
+
+.tpl-row label > span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.tpl-row textarea {
+  font: 500 12.5px var(--font-data);
+  color: var(--ink);
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: 5px 7px;
+  resize: vertical;
+}
+
+@media (max-width: 720px) {
+  .tpl-row,
+  .labels-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .tpl-row b {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Pennor för pilar och markörer (0.8.26). */
+.pen-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.6fr) minmax(110px, 1fr) 72px minmax(110px, 1fr) 76px;
+  gap: 10px;
+  align-items: end;
+  padding: 8px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.pen-row label,
+.pen-weight {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.pen-row label > span:first-child,
+.pen-weight > span:first-child {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.pen-row input[type='color'] {
+  width: 100%;
+  height: 31px;
+  padding: 2px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+}
+
+.style-pens .wp-table {
+  top: calc(100% + 4px);
+  bottom: auto;
+}
+
+@media (max-width: 720px) {
+  .pen-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .pen-row .style-name {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Linjetyper (0.8.30): namnet, mönstret som bild och som tal, och Ta bort. */
+.linetype-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.4fr) 90px minmax(100px, 1fr) 76px;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.linetype-row .linetype-dash {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.linetype-row input[type='text'] {
+  min-width: 0;
+}
+
+.linetype-swatch {
+  color: var(--ink);
+}
+
+.style-linetypes > .btn {
+  justify-self: start;
+  width: auto;
+  margin-top: 8px;
+}
+
+/* Inbyggda fyllningstyper och snabbguiden (0.8.37). */
+.filltype-builtins {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 6px 14px;
+  margin: 8px 0;
+}
+
+.filltype-builtin {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  gap: 8px;
+  align-items: center;
+  color: var(--ink);
+}
+
+.filltype-bname {
+  display: grid;
+  line-height: 1.25;
+}
+
+.filltype-bname small {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.filltype-guide {
+  margin: 6px 0 10px;
+  font-size: 13px;
+}
+
+.filltype-guide summary {
+  cursor: pointer;
+  color: var(--accent);
+}
+
+.filltype-guide ul {
+  margin: 4px 0 8px 18px;
+  padding: 0;
+}
+
+/* Fyllningstyper (0.8.36): namn, bild, måtten och knappar, och en rad per linjefamilj. */
+.filltype {
+  padding: 8px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.filltype-head {
+  display: grid;
+  grid-template-columns: minmax(140px, 1fr) 44px auto auto auto auto;
+  gap: 10px;
+  align-items: end;
+}
+
+.filltype-head .pattern-swatch {
+  color: var(--ink);
+  align-self: center;
+}
+
+.filltype-head label,
+.filltype-family label {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.filltype-head label > span,
+.filltype-family label > span {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.filltype-family {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(56px, 1fr)) minmax(96px, 1.6fr) 32px;
+  gap: 6px;
+  align-items: end;
+  margin-top: 6px;
+}
+
+.filltype-family input {
+  min-width: 0;
+  width: 100%;
+}
+
+.style-filltypes .row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+@media (max-width: 720px) {
+  .filltype-head,
+  .filltype-family {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ---------- Kolumnerna (granskningen efter 0.10.18) ----------
+   Tre kolumner, en per sorts inställning, var och en med sin rullning när
+   skärmen är bred nog; annars under varandra som förut. Inuti en kolumn
+   staplas raderna: namnet överst och fälten under. */
+
+.style-top {
+  display: grid;
+  gap: 4px;
+}
+
+.style-top .note {
+  margin: 0;
+}
+
+.style-cols,
+.style-col {
+  display: grid;
+  gap: 12px;
+  align-content: start;
+}
+
+.style-actions .style-row:first-of-type {
+  border-top: 0;
+}
+
+@media (min-width: 1180px) {
+  .style-dialog {
+    width: min(1480px, 100%);
+    height: calc(100dvh - 32px);
+  }
+
+  .style-dialog .style-body {
+    overflow: hidden;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .style-cols {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0;
+    min-height: 0;
+  }
+
+  .style-col {
+    min-height: 0;
+    overflow: auto;
+    overscroll-behavior: contain;
+    padding: 0 16px 16px;
+    border-left: 1px solid var(--rule);
+  }
+
+  .style-col:first-child {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .style-col:last-child {
+    padding-right: 0;
+  }
+
+  .style-col .style-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    row-gap: 8px;
+  }
+
+  .style-col .style-row .style-name {
+    grid-column: 1 / -1;
+  }
+
+  .style-col .style-row .style-name span {
+    display: inline;
+  }
+
+  /* Pennorna: namnet överst, fälten under utan sina små rubriker (de är
+     desamma på varje rad och finns kvar för skärmläsare). */
+  .style-col .pen-row {
+    grid-template-columns: auto 56px minmax(0, 1fr) auto;
+    row-gap: 6px;
+    align-items: center;
+  }
+
+  .style-col .pen-row .style-name {
+    grid-column: 1 / -1;
+  }
+
+  .style-col .pen-row label > span:first-child,
+  .style-col .pen-weight > span:first-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .style-col .pen-row .pen-weight,
+  .style-col .pen-row label {
+    display: block;
+  }
+
+  .style-col .linetype-row {
+    grid-template-columns: minmax(0, 1fr) 120px minmax(0, 0.8fr) auto;
+  }
+
+  .style-col .filltype-head {
+    grid-template-columns: minmax(0, 1fr) 44px repeat(2, minmax(0, auto));
+  }
+
+  .style-col .filltype-family {
+    grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 1.6fr) 32px;
+  }
+}

@@ -2589,7 +2589,7 @@ samma `doc` i alla 396 steg; ritningen skiljer från *tvärfall* (rampen
 med referenslinjen på kanten vrider kring den), greppen och panelen för
 rampen.*
 
-### Granskning efter 0.10.18
+### Granskning efter 0.10.18 ✓ (0.10.18.1)
 
 Ungefär tre versioner efter den förra (0.10.16–0.10.18). Utan nya
 funktioner, utom småfelen ur Inkorgen (Carl August hoppade över frågorna
@@ -2605,6 +2605,38 @@ funktioner, utom småfelen ur Inkorgen (Carl August hoppade över frågorna
   linjerna i 2D-formen, rampens punkter med höjd, sidorna och
   förlängningen)
 - Städa, dela upp stora filer, gå igenom testerna
+
+*Gjord 27 oktober (kväll), samma format (20). Det syns något, så den
+heter 0.10.18.1. Testerna: 569 → 572, ca 14–17 s. **Mer**: smartmenyn
+visar *Mer* (och högerklicksmenyn *Alla inställningar här*) bara när det
+utfällda har något; utan var de kartans linjer (fastighetsgränser,
+vägar, punkter), den befintliga marken och markeringar av bara sådana.
+Andra objekt har alltid något (Finns i, Lås, typen, pennan). **Höjdkurvorna**:
+tre pennor i stilmallen under *Höjdkurvor* (hela meter, däremellan, den
+befintliga marken där den ändrats) med tjocklek, färg och linjetyp, och
+höjden på hela meter i kurvans färg; förvalen som förut, utom att den
+ändrade markens streckning nu är *Streckad* (3 och 1,5 mm i stället för
+2 och 1). 3D-vyns kurvor har sin egen färg. **Stilmallens fönster**: upp
+till 1480 px brett med tre kolumner som rullar var för sig när skärmen är
+minst 1180 px: åtgärderna (med en egen rubrik) och texterna, pennorna,
+och linjetyperna och fyllningstyperna. Raderna staplas i kolumnerna, och
+pennorna har inte tjocklek, färg och linjetyp utskrivet på varje rad.
+Läst som *efter sorts inställning*; säg till om du menade efter objekttyp
+(väggar, dörrar …), det är en större omflyttning. Rättat på vägen:
+fönstret hoppade till början vid varje ändring (nu är rullningen och
+fokus kvar), och en penna för snittet som ställts heldragen blev
+punktstreckad igen när projektet öppnades. **Filerna**: `ops.ts` 514 →
+301 rader (`opDefs.ts`, `rail.ts`), `groundPlan.ts` 420 → 254
+(`groundSlopes.ts`), `groundFields.ts` 322 → 183 (`groundFieldEdits.ts`);
+stilmallens CSS i `stilmallen.css`. `commandLine.ts` (623) och
+`planView.ts` (591) är störst nu; de är en sluten helhet var och lämnas
+till en granskning där de hinner provas för sig. **Testerna**: inga
+dubbletter bland 0.10.16–0.10.18; tre nya (höjdkurvornas pennor, heldraget
+kvar, den ändrade markens färg). **Långsam kod**: inget nytt som växer med
+kvadraten. **Klickjämförelsen** har 457 steg (61 nya): mot 0.10.18 samma
+`doc` i alla steg före de nya sist; ritningen skiljer bara i den ändrade
+markens streckning (från att platsen läggs in) och stilmallens fönster i
+sin markup.*
 
 ### 0.10.19 Markobjektens bågar
 

@@ -8,9 +8,13 @@ export function fromHex(hex: string): Color {
   return h as Color;
 }
 
-/** Färgen i ett färgfält: temafärgerna som svart och vitt. */
+/** Det grå som följer temat ("muted"), som det skrivs ut (granskningen efter 0.10.18). */
+const MUTED_HEX = '#8c8c8c';
+
+/** Färgen i ett färgfält: temafärgerna som svart och vitt, det grå som grått. */
 export function toHex(c: string): string {
-  if (c === 'ink' || c === 'muted' || c === 'accent') return '#000000';
+  if (c === 'muted') return MUTED_HEX;
+  if (c === 'ink' || c === 'accent') return '#000000';
   if (c === 'paper') return '#ffffff';
   return c;
 }

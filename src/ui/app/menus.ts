@@ -119,14 +119,16 @@ export function installMenus(app: AppContext) {
     const quick = app.panel.quickMarkup(false);
     const items: MenuItem[] = [...recent];
     if (quick) items.push({ kind: 'html', html: `<div class="quick-bar ctx-quick">${quick}</div>`, onClick: (e) => app.panel.handleClick(e) });
-    items.push(
-      { kind: 'sep' },
-      {
+    items.push({ kind: 'sep' });
+    // Bara när det finns fler inställningar än snabbraden (granskningen efter 0.10.18).
+    if (app.panel.hasMore())
+      items.push({
         label: 'Alla inställningar här',
         hint: 'Mer',
         // På telefonen finns ingen smartmeny; där fälls bladet upp i stället.
         run: () => (isNarrow() ? (app.setPanel(true, 'full'), app.panel.showTab('selection')) : app.smartMenu.show(x, y, true)),
-      },
+      });
+    items.push(
       { label: 'Visa i egenskaper', hint: 'P', run: () => (app.setPanel(true, 'full'), app.panel.showTab('selection')) },
       { label: 'Zooma till', run: () => app.zoomToSelection() },
       { label: 'Kopiera', hint: 'Ctrl+C', run: () => void app.copySelection(null) },

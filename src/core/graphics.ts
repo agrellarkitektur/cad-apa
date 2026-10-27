@@ -283,7 +283,8 @@ function normalizePens(p: any): Record<string, PenDef> | null {
   for (const [k, v] of Object.entries<any>(p)) {
     const w = Number(v?.weight);
     if (!(w > 0)) continue;
-    out[k] = { weight: w, ...(typeof v.color === 'string' ? { color: v.color } : {}), ...(typeof v.linetype === 'string' && v.linetype !== 'solid' ? { linetype: v.linetype } : {}) };
+    // Heldraget sparas bara när förvalet är en annan linjetyp (snittet, höjdkurvorna) och ska vara kvar (granskningen efter 0.10.18).
+    out[k] = { weight: w, ...(typeof v.color === 'string' ? { color: v.color } : {}), ...(typeof v.linetype === 'string' ? { linetype: v.linetype } : {}) };
   }
   return Object.keys(out).length ? out : null;
 }

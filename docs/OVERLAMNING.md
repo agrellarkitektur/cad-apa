@@ -3,11 +3,30 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 27 oktober 2026 (kväll), efter 0.10.18 Rampens referenslinje.
+Senast: 27 oktober 2026 (kväll), efter granskningen efter 0.10.18 (0.10.18.1).
 
 ## Läget
 
-- **Nästa session:** **Granskning efter 0.10.18** (se *Nästa session*).
+- **Nästa session:** **0.10.19 Markobjektens bågar** (se *Nästa session*).
+- **Granskningen efter 0.10.18 är klar** som **0.10.18.1** på `main`
+  (samma format, 20). Småfelen ur Inkorgen: *Mer* i smartmenyn (och *Alla
+  inställningar här* i högerklicksmenyn) bara när det utfällda har något
+  (inte för kartans linjer eller den befintliga marken); höjdkurvornas tre
+  pennor i stilmallen under *Höjdkurvor* (hela meter, däremellan, den
+  ändrade marken; tjocklek, färg, linjetyp); stilmallens fönster upp till
+  1480 px brett med tre kolumner som rullar var för sig (åtgärderna och
+  texterna, pennorna, linjetyperna och fyllningstyperna). Rättat på vägen:
+  stilmallens fönster hoppade till början vid varje ändring, och en penna
+  för snittet som ställts heldragen blev punktstreckad när filen lästes
+  (`normalizePens`). Delat: `ops.ts` (`opDefs.ts`, `rail.ts`),
+  `groundPlan.ts` (`groundSlopes.ts`), `groundFields.ts`
+  (`groundFieldEdits.ts`), stilmallens CSS (`stilmallen.css`).
+  Klickjämförelsen har 457 steg; mot 0.10.18 skiljer bara stilmallens
+  fönster, den ändrade markens streckning och de nya stegen sist. Testerna:
+  572 på ca 14 s. Se PLAN.md och UTVECKLING.md.
+- **Märks i hans ritningar efter 0.10.18.1:** den befintliga markens
+  kurvor där markobjekten ändrat den är *Streckad* (3 och 1,5 mm) i
+  stället för det kortare strecket (2 och 1 mm); allt annat ritas som förut.
 - **0.10.18 Rampens referenslinje är klar** på `main` (samma format, 20).
   Byggt: referenslinjen styr höjden och tvärfallet; punkter på den kan få
   en egen höjd (*Höjd i punkten* i Modifiera, orange när rampen är
@@ -27,10 +46,8 @@ Senast: 27 oktober 2026 (kväll), efter 0.10.18 Rampens referenslinje.
   bredden gånger tvärfallet; en bruten ramp med referenslinjen på en kant
   får lutningen räknad längs referenslinjen. Fältet *Kanterna* finns kvar
   och gäller alla kanter.
-- **Inkorgen** (tre punkter från 27 oktober) är lagd i *Granskning efter
-  0.10.18* efter Claudes förslag (frågorna hoppades över): Mer-knappen i
-  smartmenyn och höjdkurvornas färg som småfel, stilmallens fönster om det
-  ryms. Synpunktsfilen är uppdaterad.
+- **Inkorgen** är tom; de tre punkterna från 27 oktober är gjorda i
+  0.10.18.1. Synpunktsfilen är uppdaterad.
 - **0.10.17 Linjerna i 2D-formen** (samma format, 20): rita vidare från
   änden av en omarkerad linje; *Kanter* i Förskjut; Foga ihop (Shift+V);
   ett klick mitt på en kant startar det senast använda valet; *Båge* i
@@ -102,18 +119,18 @@ Senast: 27 oktober 2026 (kväll), efter 0.10.18 Rampens referenslinje.
   Markobjektens linjer), 0.10.20 Situationsplanens beteckningar och
   0.10.21 Lutande väggar (förslag; fråga om före eller efter piloten). Ortofotot på marken är en egen liten
   undersökning. Förteckningen över markförändringarna hör till 0.12
-  Export. Granskningen efter 0.10.18 är nästa session.
+  Export. Nästa granskning efter ungefär tre versioner (efter 0.10.21).
 - **0.10.13 Höjder i förhållande till våningen**: se PLAN.md.
 - **Granskningen efter 0.10.12** och **0.10.12 Småjusteringar**: se
   PLAN.md.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.18` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.18.1` i `engine.ts`, `package.json` och
   `package-lock.json` (npm godtar fyra delar i ett privat paket); nästa
-  version är `0.10.19` (granskningen höjer inte numret). En granskning höjer inte numret, eller får en
+  version är `0.10.19`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.18 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.18.1 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -169,10 +186,8 @@ vid varje överlämning.
   0.10.12~~, ~~0.10.13 Höjder i förhållande till våningen~~, ~~0.10.14
   Fyllningar och opacitet~~, ~~0.10.15 Visa och dölja~~, ~~Granskning
   efter 0.10.15 (0.10.15.1)~~, ~~0.10.16 Snittet i planen~~, ~~0.10.17
-  Linjerna i 2D-formen~~, ~~0.10.18 Rampens referenslinje~~ (klara)
-- **Granskning efter 0.10.18** (Mer-knappen, höjdkurvornas färg,
-  stilmallens fönster om det ryms, klickjämförelsens steg för
-  0.10.16–0.10.18, städning)
+  Linjerna i 2D-formen~~, ~~0.10.18 Rampens referenslinje~~, ~~Granskning
+  efter 0.10.18 (0.10.18.1)~~ (klara)
 - **0.10.19 Markobjektens bågar** (stor: bågar, Avrunda, docka ramper)
 - **0.10.20 Situationsplanens beteckningar** (förslag: murens ledare,
   markhöjder med status, sidolutning, låglinje, kontur runt slänterna,
@@ -195,18 +210,37 @@ vid varje överlämning.
 
 ## Nästa session
 
-**Granskning efter 0.10.18** (se PLAN.md): småfelen ur Inkorgen
-(Mer-knappen i smartmenyn när inget mer finns, egen färg på höjdkurvorna,
-stilmallens fönster i kolumner om det ryms), klickjämförelsens steg för
-0.10.16–0.10.18, städa och dela upp stora filer (`groundFields.ts`,
-`groundPlan.ts`, `ops.ts`), gå igenom testerna. Läs `cad-apa-synpunkter.md`
-först. Därefter **0.10.19 Markobjektens bågar**.
+**0.10.19 Markobjektens bågar** (se PLAN.md): 2D-formens redigering för
+markobjekten (Böj, Avrunda med riktiga bågar, Fasa), bågar på vägens
+referenslinje och på kanterna (kanterna ändrar bara bredden), och att
+docka ihop två ramper med olika lutning. Stor: säg i början att den kan
+behöva två sessioner och föreslå i så fall att dockningen blir en egen
+liten version. Läs `cad-apa-synpunkter.md` först och ställ frågorna för
+0.10.19 nedan (fem åt gången).
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
+
+**0.10.19 före bygget** (Claudes val)
+- Dockningen: två markerade ramper fogas ihop med *Foga ihop* (Shift+V),
+  som linjerna, när en ände ligger nära den andras; där de möts blir en
+  punkt med höjd (lutningen bryts där, ingen avrundning i höjd). Eller
+  ska ändarna dras ihop med greppet och fogas av sig själva?
+- Bågar på referenslinjen: lutningen räknas längs bågen, och sidorna
+  följer den med bredden. Gäller samma verktyg (Böj, Avrunda, Fasa) också
+  stödmurens och brytlinjens linjer?
+- En båge på en sida (när sidorna är ritade) ändrar bara bredden; höjden
+  tas som förut från referenslinjen. Rätt?
+
+**0.10.18.1 efter provning** (Claudes val, se PLAN.md)
+- Stilmallens fönster i tre kolumner efter sorts inställning (åtgärder och
+  texter, pennor, linjetyper och fyllningstyper). Menade du så, eller
+  grupperat efter objekttyp (väggar, dörrar och fönster, mark …)?
+- Höjdkurvornas färg gäller planen och bladen; 3D-vyns kurvor har sin
+  egen. Ska de följa stilmallen också?
 
 **0.10.18 efter provning** (Claudes val, se PLAN.md)
 - Tvärfallet vrider kring referenslinjen, också när den ligger på en
@@ -360,6 +394,11 @@ fråga.
 80. Smartmenyns placering; ska rubriken *Ändra* heta något annat?
 
 ## Öppna frågor och kända begränsningar
+
+- **Stora filer efter 0.10.18.1:** `commandLine.ts` (623 rader, en sluten
+  helhet med eget läge) och `planView.ts` (591) är störst; de lämnades i
+  granskningen. Stilmallens fönster har tre kolumner från 1180 px; under
+  det ligger delarna under varandra som förut.
 
 - **Rampen (0.10.18):** en sida som är stödmur har ingen kropp i 3D och
   ingen höjd (som `edge: 'wall'` förut). Ritade sidor får inga bågar
@@ -516,7 +555,14 @@ fråga.
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (396 steg sedan granskningen efter 0.10.15, som lade till 0.10.13–0.10.15
+  (457 steg sedan granskningen efter 0.10.18, som lade till 0.10.16–0.10.18
+  efter `allra sist`: snittet i planen, rita vidare, Förskjut alla kanter,
+  Foga ihop, ett takfall med båge (Båge slås av före sista hörnet; den är
+  kvar tills den slås av), bjälklag med cirkelhål som vrids och speglas,
+  rampens punkt med höjd, sidor och förlängning; och sist det nya i
+  0.10.18.1. Stegen före de sista går att jämföra med 0.10.18. Koordinater
+  längst ned i ritytan hamnar under verktygsraden; ta dem högre upp.
+  396 steg efter granskningen efter 0.10.15, som lade till 0.10.13–0.10.15
   sist: höjderna mot våningen, greppen som dras med ett steg mitt i varje
   dragning (`press_drag(..., release=False)` och sedan `release`),
   fyllningens panel, Dölj i vyn och linjerna i 3D; smartmenyn döljs med en

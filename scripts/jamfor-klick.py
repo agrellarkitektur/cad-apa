@@ -3,7 +3,9 @@ penna från 0.8.32; fyllningstyper, pennor för dörrar och fönster, rummens
 kontur, Filtrera och markera och detaljnivåerna från 0.8.38; våningar,
 bjälklag och nivåer från 0.9.3; platsen och markobjekten från 0.10.6;
 0.10.11, 0.10.12 och 3D-vyn från granskningen efter 0.10.12; 0.10.13–0.10.15
-och greppen som dras, mitt i dragningen, från granskningen efter 0.10.15):
+och greppen som dras, mitt i dragningen, från granskningen efter 0.10.15;
+0.10.16–0.10.18 från granskningen efter 0.10.18, och sist det som är nytt i
+den, höjdkurvornas pennor och Mer bara när det finns mer):
 läget efter varje steg sparas, och två körningar jämförs steg för steg.
 
 Kryssrutorna under Visa klickas (`__click`): menyn lyssnar på klick, så
@@ -839,6 +841,84 @@ def main():
         step('zooma till allt med linjerna', "__click('[data-action=\"fit\"]')", fn=lambda: pg.wait_for_timeout(500), shot3d=True)
         step('2D efter linjerna', "bacchus.setMode('2d')", fn=lambda: pg.wait_for_timeout(500))
         step('allra sist', "bacchus.selection.clear()")
+
+        # ---------- 0.10.16–0.10.18 (steg från granskningen efter 0.10.18) ----------
+        # Snittet i planen (0.10.16): en vägg, ett fönster och en möbel över snitthöjden, pennorna och dubbelklick på Visa.
+        step('innerväggen över snittet', "bacchus.setTool('select'); bacchus.selection.set(['iv-1'])", fn=lambda: pg.evaluate(f"__set('[data-key=\"level:level\"]', '1500', '{panel}')"))
+        step('egen penna över snittet', f"__set('[data-key=\"pen:above.weight\"]', '0.35', '{panel}')")
+        step('fönstret över snittet', "bacchus.selection.set(['f01'])", fn=lambda: pg.evaluate(f"__set('[data-key=\"param:sill\"]', '1400', '{panel}')"))
+        step('möbeln över snittet', "bacchus.selection.set(['m01'])", fn=lambda: pg.evaluate(f"__set('[data-key=\"level:level\"]', '1600', '{panel}')"))
+        step('avmarkera snittet', "bacchus.selection.clear()")
+        step('stilmallen för snittet', "__click('[data-action=\"style\"]')")
+        step('väggar över snittet i stilmallen', "__set('[data-pen=\"aboveWall:weight\"]', '0.25', '.dialog')")
+        step('möbler över snittet heldragna', "__set('[data-pen=\"aboveFurniture:linetype\"]', 'solid', '.dialog')")
+        step('stäng stilmallen för snittet', "__click('[data-action=\"close\"]', '.dialog')")
+        step('dubbelklick på Visa', "document.querySelector('[data-action=\"show-menu\"]').dispatchEvent(new MouseEvent('dblclick', { bubbles: true }))")
+        # Linjerna i 2D-formen (0.10.17): rita vidare från en omarkerad linje, Förskjut flera kanter, Foga ihop, klick mitt på en kant.
+        step('linjeverktyget', "bacchus.selection.clear()", fn=shell('pl'))
+        step('klicka på linjens ände', fn=lambda: (pg.mouse.move(*pg.evaluate('__screen(16200, -3200)')), click_model(16000, -3000)))
+        step('rita vidare', fn=lambda: click_model(17000, -4000))
+        step('linjen klar', fn=key('Enter'))
+        step('markera rutan för kanterna', "bacchus.setTool('select'); bacchus.selection.set(['tf-3'])")
+        step('klicka på rutans kant', fn=lambda: click_model(14500, 3000))
+        step('förskjut alla kanter', "bacchus.modifier.chooseRail('offset'); bacchus.modifier.setEdges(0)", fn=lambda: pg.evaluate('bacchus.modifier.applyValue(200)'))
+        step('klick mitt på en annan kant', fn=lambda: click_model(16200, 2000))
+        step('förskjutningen igen', "bacchus.modifier.setEdges(1); bacchus.modifier.applyValue(100)")
+        def add_line():
+            pg.evaluate("""() => {
+              const d = bacchus.store.doc;
+              const st = d.storeys[0].id, states = d.states.map((s) => s.id);
+              const end = d.elements['tf-2'].params.points.at(-1);
+              bacchus.store.transact('linje', (tx) => tx.putElement({ id: 'tf-4', type: 'Shape2D', storey: st, states, tags: [], props: {}, params: { shape: 'polyline', weight: 0.25, linetype: 'solid', fillAngle: 45, fillSpacing: 2, closed: false, points: [end, [end[0] + 2000, end[1]]] } }));
+            }""")
+        step('en linje till i änden', fn=add_line)
+        step('foga ihop', "bacchus.selection.set(['tf-2', 'tf-4']); bacchus.modifier.chooseRail('fuse')")
+        step('avmarkera linjerna', "bacchus.selection.clear()")
+        # Takets kontur med en båge (0.10.17).
+        step('takverktyget', "bacchus.setTool('roof'); __click('[data-roof-mode=\"face\"]')")
+        step('takets första hörn', fn=lambda: click_model(-16000, -20000))
+        step('takets andra hörn', fn=lambda: click_model(-10000, -20000))
+        step('båge i konturen', "__click('[data-action=\"roof-arc\"]')")
+        step('bågens slut', fn=lambda: click_model(-10000, -14000))
+        step('punkt på bågen', fn=lambda: click_model(-8500, -17000))
+        step('båge av', "__click('[data-action=\"roof-arc\"]')")
+        step('takets sista hörn', fn=lambda: click_model(-16000, -14000))
+        step('konturen klar', "__click('[data-action=\"roof-close\"]')")
+        step('takets referenslinje', fn=lambda: (click_model(-16000, -20000), click_model(-10000, -20000)))
+        step('sidan där taket stiger', fn=lambda: click_model(-13000, -17000))
+        # Bjälklag som polygon och håltagning som cirkel, som vrids och speglas för sig (0.10.17).
+        step('bjälklagsverktyget', "bacchus.selection.clear(); bacchus.setTool('slab'); __click('[data-slab-mode=\"slab\"]'); __click('[data-slab-shape=\"polygon\"]')")
+        step('bjälklagets hörn', fn=lambda: [click_model(x, y) for x, y in ((30000, -12000), (37000, -12000), (37000, -5000), (30000, -5000))])
+        step('bjälklaget klart', "__click('[data-action=\"slab-close\"]')")
+        step('cirkelhål', "__click('[data-slab-mode=\"hole\"]'); __click('[data-slab-shape=\"circle\"]')")
+        step('hålets centrum och radie', fn=lambda: (click_model(32000, -9000), click_model(33000, -9000)))
+        step('markera det nya bjälklaget', "bacchus.setTool('select'); bacchus.selection.set([Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Slab').at(-1).id])")
+        step('klicka på hålet', fn=lambda: click_model(33000, -9000))
+        step('vrid hålet', "bacchus.modifier.chooseRail('rotate'); bacchus.modifier.applyValue(45)")
+        step('klicka på hålet igen', fn=lambda: click_model(31000, -9000))
+        step('spegla hålet', "bacchus.modifier.chooseRail('mirror')", fn=lambda: click_model(31000, -6000))
+        step('avmarkera bjälklaget', "bacchus.selection.clear()")
+        # Rampens referenslinje (0.10.18): en punkt med höjd, ritade sidor, slänt på ena sidan och förlängning.
+        ramp_ids = ground_ids("e.params.kind === 'path'")
+        step('markera rampen för punkterna', f"bacchus.setTool('select'); bacchus.selection.set({ramp_ids})")
+        step('klicka på referenslinjen', fn=lambda: click_model(5000, -8000))
+        step('ny punkt på referenslinjen', "bacchus.modifier.chooseRail('insert')", fn=lambda: click_model(5000, -8000))
+        step('klicka på den nya punkten', fn=lambda: click_model(5000, -8000))
+        step('höjd i punkten', "bacchus.modifier.choose('pathLevel')", fn=lambda: pg.evaluate('bacchus.modifier.applyValue(61)'))
+        step('sidorna ritade', f"__set('[data-key=\"ground:sides\"]', 'drawn', '{panel}')")
+        step('vänster sida slänt', f"__set('[data-key=\"ground:leftEdge\"]', 'slope', '{panel}')")
+        step('klicka på rampens ände', fn=lambda: click_model(8000, -8000))
+        step('förläng rampen', "bacchus.modifier.choose('pathExtend')", fn=lambda: (click_model(11000, -8000), pg.keyboard.press('Enter'), pg.wait_for_timeout(300)))
+        step('avmarkera rampen', "bacchus.setTool('select'); bacchus.selection.clear()")
+
+        # ---------- Nytt i granskningen efter 0.10.18 (sist, så att stegen före jämförs mot 0.10.18) ----------
+        step('stilmallen för höjdkurvorna', "__click('[data-action=\"style\"]')")
+        step('höjdkurvornas färg', "__set('[data-pen=\"contour:color\"]', '#aa5500', '.dialog')")
+        step('den ändrade markens linjetyp', "__set('[data-pen=\"contourOld:linetype\"]', 'dotted', '.dialog')")
+        step('stäng stilmallen sist', "__click('[data-action=\"close\"]', '.dialog')")
+        step('marken utan Mer', f"bacchus.selection.set(Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Terrain').map((e) => e.id)); bacchus.smartMenu.show(400, 400)")
+        step('ett träd med Mer', f"bacchus.selection.set(Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Tree').map((e) => e.id)); bacchus.smartMenu.show(400, 400)")
+        step('sist av allt', "bacchus.selection.clear()")
         b.close()
     json.dump(rows, open(OUT, 'w'), ensure_ascii=False)
 

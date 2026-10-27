@@ -1,4 +1,4 @@
-import { applyGroundField } from './groundFields';
+import { applyGroundField } from './groundFieldEdits';
 import { setLevel } from '../core/levels';
 import { moveElements, moveWallEnd, renameElement, updateDefinition, updateParams } from '../core/commands';
 import type { Element, ProjectDoc } from '../core/model';

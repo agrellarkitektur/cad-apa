@@ -1,7 +1,7 @@
 {
   "name": "bacchus",
   "private": true,
-  "version": "0.10.18",
+  "version": "0.10.18.1",
   "type": "module",
   "scripts": {
     "dev": "vite --host",

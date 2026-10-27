@@ -199,7 +199,8 @@ export class PropertiesPanel implements ActionPanel {
     if (els.length === 0 && vps === 0) return null;
 
     const buttons = quickButtons(doc, els, vps > 0, this.getView(), this.quickFor);
-    if (more === true) buttons.push(quickButton('smart-more', icons.more, 'Mer'));
+    // *Mer* bara när det finns fler inställningar än de som syns (granskningen efter 0.10.18).
+    if (more === true && this.hasMore()) buttons.push(quickButton('smart-more', icons.more, 'Mer'));
     if (more === 'less') buttons.push(quickButton('smart-less', icons.collapse, 'Mindre'));
     buttons.push(quickButton('deselect', icons.close, 'Avmarkera'));
 
@@ -238,20 +239,34 @@ export class PropertiesPanel implements ActionPanel {
   // ---------- Markerat ----------
 
   private renderSelection(doc: ProjectDoc): string {
+    const s = this.selectionParts(doc);
+    return s.head + s.sections.join('');
+  }
+
+  /**
+   * Panelens innehåll för det markerade: rubriken (eller en text när inget
+   * är markerat) och inställningarna, en del per avsnitt. Inga delar betyder
+   * att det inte finns något att ställa in (granskningen efter 0.10.18).
+   */
+  private selectionParts(doc: ProjectDoc): { head: string; sections: string[] } {
     const els = this.selection
       .list()
       .map((id) => doc.elements[id])
       .filter(Boolean);
     if (els.length === 0 && this.viewportsSelected(doc)) {
       const t = this.titleOf(doc, els);
-      return `<header class="sel-head"><h2>${escapeHtml(t.title)}</h2><p>${escapeHtml(t.sub)}</p></header><p class="note">Vyerna flyttas och tas bort tillsammans. Markera en vy ensam för att ändra den.</p>`;
+      return {
+        head: `<header class="sel-head"><h2>${escapeHtml(t.title)}</h2><p>${escapeHtml(t.sub)}</p></header><p class="note">Vyerna flyttas och tas bort tillsammans. Markera en vy ensam för att ändra den.</p>`,
+        sections: [],
+      };
     }
     if (els.length === 0) {
-      return `<div class="empty">
+      const head = `<div class="empty">
         <p><b>Inget är markerat.</b></p>
         <p>Klicka på en vägg, dörr eller möbel i planen. Håll Shift för att markera flera, eller dra en ruta: åt höger tar det som ligger helt innanför, åt vänster allt som berörs.</p>
         <p>På mobilen lägger varje tryck till i markeringen, och ett tryck i tomma delar av planen avmarkerar.</p>
       </div>`;
+      return { head, sections: [] };
     }
 
     const view = this.getView();
@@ -261,8 +276,8 @@ export class PropertiesPanel implements ActionPanel {
     const title = named.title;
     const sub = els.length === 1 && named.title === labelOf(doc, els[0]) ? '' : named.sub;
 
+    const head = `<header class="sel-head"><h2>${escapeHtml(title)}</h2>${sub ? `<p>${escapeHtml(sub)}</p>` : ''}</header>`;
     const sections: string[] = [];
-    sections.push(`<header class="sel-head"><h2>${escapeHtml(title)}</h2>${sub ? `<p>${escapeHtml(sub)}</p>` : ''}</header>`);
     // Nästan rak vinkel: en rad med en knapp som rätar upp.
     // Varningen kan stängas av för elementet (0.8.4); då står en kryssruta kvar.
     const skew = els.length === 1 ? skewOf(doc, els[0], this.angleWarn(), true) : null;
@@ -353,7 +368,7 @@ export class PropertiesPanel implements ActionPanel {
     if (shared) sections.push(shared);
 
     // Ta bort, riv, vänd m.m. ligger i snabbraden överst.
-    return sections.join('');
+    return { head, sections: sections.filter(Boolean) };
   }
 
   // ---------- Händelser ----------
@@ -388,7 +403,18 @@ export class PropertiesPanel implements ActionPanel {
    */
   selectionMarkup(): string | null {
     if (this.selection.size === 0) return null;
-    return this.renderSelection(this.store.doc).replace(/<header class="sel-head">[\s\S]*?<\/header>/, '');
+    const s = this.selectionParts(this.store.doc).sections;
+    return s.length ? s.join('') : null;
+  }
+
+  /**
+   * Om det markerade har inställningar utöver snabbraden (granskningen efter
+   * 0.10.18): annars visas inte *Mer* i smartmenyn eller *Alla
+   * inställningar här* i högerklicksmenyn, t.ex. för kartans linjer och den
+   * befintliga marken.
+   */
+  hasMore(): boolean {
+    return this.selection.size > 0 && this.selectionParts(this.store.doc).sections.length > 0;
   }
 
   private onClick(e: Event): void {

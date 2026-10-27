@@ -687,9 +687,12 @@ på bladet sina egna.
 
 ## Smartmenyn och Modifiera-raden (0.8.5, format 5)
 
-- **`src/ui/modify/`** är Modifiera, uppdelat: `ops.ts` har valen (`OPS`,
-  `opsFor`), vad ett klick träffade (`modifyContextAt`), `ModifyHost` och
-  Modifiera-radens knappar (`RAIL`, `railFor`); `tool.ts` har `ModifyTool`
+- **`src/ui/modify/`** är Modifiera, uppdelat: `ops.ts` har vilka val
+  ett klick ger (`opsFor`), vad ett klick träffade (`modifyContextAt`),
+  `ModifyHost` och vilka knappar i raden som tänds (`railFor`); valens
+  namn och förklaringar (`OPS`) ligger i `opDefs.ts` och radens knappar
+  (`RAIL`, `railOf`) i `rail.ts` (sedan granskningen efter 0.10.18; `ops.ts`
+  exporterar dem vidare); `tool.ts` har `ModifyTool`
   (förhandsvisning och utförande, sedan 0.8.15 med valen i grupper, se
   *Granskning (0.8.15)*) och `runInstant`; `controller.ts` har
   `Modifier`, läget som smartmenyn, raden och verktygsraden delar.
@@ -1244,6 +1247,65 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Granskning efter 0.10.18 (0.10.18.1, format 20)
+
+Tre småfel ur Inkorgen och stora filer delade. Det som flyttats exporteras
+vidare där det är vanligt att importera det (`ops.ts`); annars importerar
+de som använder det den nya filen (testerna också).
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/ui/modify/ops.ts` | Vilka val ett klick ger, vad det träffade och vilka knappar som tänds (514 → 301 rader) |
+| `src/ui/modify/opDefs.ts` | Ny: `OpId`, `OpDef` och `OPS` |
+| `src/ui/modify/rail.ts` | Ny: `RailId`, `RailDef`, `RAIL`, `RAIL_ITEMS` och `railOf` |
+| `src/elements/groundPlan.ts` | Markobjekten i planen (420 → 254 rader) |
+| `src/elements/groundSlopes.ts` | Ny: `slopeMarks`, `slopeArea`, `slopeReach`, `walkSlope`, `outward` och `signedArea` |
+| `src/ui/groundFields.ts` | Markobjektets fält (322 → 183 rader) |
+| `src/ui/groundFieldEdits.ts` | Ny: `applyGroundField`, fälten när de ändras |
+| `src/repr/contourPens.ts` | Ny: `CONTOUR_PENS` (`contour`, `contourMinor`, `contourOld`) och `contourPen` |
+| `src/styles/stilmallen.css` | Ny: stilmallens fönster (flyttat ur `stilmall.css`) och kolumnerna, direkt efter `stilmall.css` i `app.css` |
+
+- **Mer** (`smart-more`) läggs till i `quickMarkup` bara när
+  `PropertiesPanel.hasMore()` säger att det utfällda har något
+  (`selectionParts` ger rubriken och avsnitten för sig; inga avsnitt =
+  inget mer). Samma för *Alla inställningar här* i högerklicksmenyn
+  (`menus.ts`). En utfälld smartmeny fälls ihop när det nya markerade
+  saknar mer. Kartobjekten och den befintliga marken har inget mer.
+- **Höjdkurvornas pennor** är rader i stilmallens `pens`, som markörernas.
+  `defaultedPen(style, nyckel, förval)` i `markerPens.ts` slår ihop
+  stilmallens rad med ett förval som har färg eller linjetyp (snittets
+  pennor använder den också). `contourLines` i `elements/site.ts` får de
+  tre pennorna; nyckeln för de sparade linjerna har pennorna med.
+  Förvalet för den ändrade marken är `muted` och `dashed` (förut `[2, 1]`).
+  I stilmallen visar färgfältet `muted` som `#8c8c8c` (`toHex`), och
+  `applyPenField` behåller ett förval med färg när samma grå väljs; svart
+  sparas då som `ink`.
+- **`normalizePens`** behåller `linetype: 'solid'`: den sparas bara när
+  förvalet är en annan linjetyp (snittet sedan 0.10.16, den ändrade
+  marken), och tappades förut när filen lästes.
+- **Stilmallens fönster** (`StyleDialog.render`) har tre `.style-col` i
+  `.style-cols`; från 1180 px bred skärm rullar de var för sig (raderna
+  staplade inuti, pennornas små rubriker dolda men kvar för skärmläsare),
+  smalare som förut. Rullningen (`.dialog-body` och kolumnerna) och fältet
+  med fokus (`focusSelector`, efter data-attributen) är kvar när fönstret
+  ritas om efter en ändring.
+- **Klickjämförelsen** har 457 steg (61 nya efter `allra sist`): väggen,
+  fönstret och möbeln över snittet, den egna pennans del över snittet,
+  stilmallens pennor för snittet och dubbelklick på Visa; rita vidare
+  från en omarkerad linje, Förskjut alla kanter, klick mitt på en kant,
+  Foga ihop; ett takfall med en båge i konturen (Båge slås av igen före
+  sista hörnet: den är kvar tills den slås av); bjälklag som polygon med
+  ett cirkelhål som vrids och speglas; rampens nya punkt med höjd, ritade
+  sidor, slänt på vänster sida och förlängning. Sist det nya i granskningen
+  (höjdkurvornas pennor, smartmenyn för marken och ett träd), så att stegen
+  före går att jämföra med 0.10.18. Mot 0.10.18 skiljer bara stilmallens
+  fönster, den ändrade markens streckning (från `runt huset`) och de sista
+  stegen.
+- **Mätt**: planen för exempelvillan på den kuperade platsen 43 ms från
+  början och 24 ms efter en ändrad ramp; rutnätet av rum 93 ms (12 × 12)
+  och 347 ms (24 × 24), alltså linjärt. Inget nytt som växer med
+  kvadraten; rita vidare prövar de öppna linjerna i vyn bara vid klick.
+
 ## Rampens referenslinje (0.10.18, format 20)
 
 Inget nytt format: de nya parametrarna i `GroundParams` är frivilliga.
@@ -1265,7 +1327,7 @@ Inget nytt format: de nya parametrarna i `GroundParams` är frivilliga.
 - **Stödmur per kant**: `GroundShape.probe` kan svara `wall: true` för en
   punkt utanför; `finishedGround` lämnar då noden orörd. `slope` är null
   bara när alla kanter är mur. `GroundGeometry.edgeWall` (per kant i
-  ringen) och `sides`; `walkSlope` i `groundPlan.ts` hoppar över murens
+  ringen) och `sides`; `walkSlope` i `groundSlopes.ts` hoppar över murens
   kanter och solfjädrarna intill dem. `g.center` är referenslinjen
 - **Planen**: sidorna ritas var för sig (0,5 där de är mur), pilen och
   1:N för varje lutande sträcka mitt på rampen (`middleAt`, halvvägs mellan
@@ -1481,7 +1543,7 @@ stilmallens `pens`).
   rum och markobjekt frågar och objektet ser likadant ut om den sparade
   tas bort. `effectiveFill(p, style)` ger fyllningen som den gäller.
   Knapparna `fill-save` och `fill-unsave` hanteras i `drawingClick`.
-- **Slänternas yta**: `slopeArea(ctx, g)` i `groundPlan.ts` går runt
+- **Slänternas yta**: `slopeArea(ctx, g)` i `groundSlopes.ts` går runt
   konturen med `walkSlope` (samma gång som släntstrecken, med ändarna och
   halva avståndet), känner av slänten med `slopeReach` och slår ihop
   fyrhörningarna mellan grannar (`union`). Sparas per `GroundGeometry`

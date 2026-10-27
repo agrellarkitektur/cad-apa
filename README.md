@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.18** (alfa); nästa är en **granskning**, sedan **0.10.19, markobjektens bågar**.
+**0.10.18.1** (alfa); nästa är **0.10.19, markobjektens bågar**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,24 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.18.1, granskning (samma filformat, 20):
+- **Mer** i smartmenyn (och *Alla inställningar här* i högerklicksmenyn)
+  bara när det finns fler inställningar än de som syns, t.ex. inte för
+  kartans linjer från Höjdkurvor eller den befintliga marken
+- **Höjdkurvornas pennor** i stilmallen, under *Höjdkurvor*: hela meter,
+  kurvorna däremellan och den befintliga marken där markobjekten ändrat
+  den, med tjocklek, färg och linjetyp. Höjden på hela meter har kurvans
+  färg. Den ändrade markens kurvor är *Streckad* från början (förut ett
+  kortare streck)
+- **Stilmallens fönster** är bredare och har tre kolumner på en bred
+  skärm: åtgärderna och texterna, pennorna, och linjetyperna och
+  fyllningstyperna, var och en med sin egen rullning. Fönstret hoppar
+  inte längre till början när något ändras
+- En penna för snittet som ställts heldragen (t.ex. väggar över snittet)
+  är kvar heldragen när projektet öppnas igen
+- Inget annat ändrat: koden städad och uppdelad, samma klick ger samma
+  resultat som i 0.10.18
 
 Version 0.10.18, rampens referenslinje (samma filformat, 20):
 - **Referenslinjen styr lutningen**: höjden räknas längs den, och tvärfallet

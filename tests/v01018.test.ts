@@ -1,7 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { moveElements, updateParams } from '../src/core/commands';
 import { GROUND_DEFAULTS, groundAt, terrainOf } from '../src/core/site';
-import type { DocStore } from '../src/core/store';
 import { mirrorElements } from '../src/core/transforms';
 import { registerBuiltInTypes } from '../src/elements';
 import { finishedTerrain, groundGeometry, groundType, type GroundParams } from '../src/elements/ground';
@@ -12,7 +11,11 @@ import { clearRampLevel, setRampLevel } from '../src/ui/modify/rampOps';
 import { GroundTool } from '../src/ui/tools/groundTool';
 import type { ViewPointer } from '../src/view2d/planView';
 import { buildPlan } from '../src/repr/plan';
-import { addGround, onSlope, planCtx, toolHost } from './projekt';
+import { addGround, groundProject, onSlope, planCtx, toolHost } from './projekt';
+import { DocStore } from '../src/core/store';
+import { setGraphics } from '../src/core/commands';
+import { SWEDISH_STANDARD as DEFAULT_STYLE, normalizeStyle } from '../src/core/graphics';
+import { applyPenField } from '../src/ui/style/pens';
 
 /**
  * Rampens referenslinje (0.10.18). Den sneda marken (`onSlope`): marken
@@ -177,5 +180,41 @@ describe('Modifiera och förlängning (0.10.18)', () => {
     expect(params(store, id)).toMatchObject({ line: [[20000, 10000], [26000, 10000], [32000, 10000]], endHeight: 3000, levels: [null, 2500] });
     expect(Object.values(store.doc.elements).filter((e) => e.type === 'Ground')).toHaveLength(1);
     expect(terrainOf(store.doc)).toBeTruthy();
+  });
+});
+
+describe('Granskningen efter 0.10.18', () => {
+  it('höjdkurvorna ritas med stilmallens pennor, med förvalen som förut utom streckningen', () => {
+    const store = new DocStore(groundProject());
+    const prims = (part: string) => buildPlan(store.doc, store.doc.storeys[0].id, { state: 'st-a' }).prims.filter((q) => q.origin?.part === part);
+    const lines = (part: string) => prims(part).filter((q) => q.kind === 'polyline');
+    // Förvalen: hela meter 0,25, däremellan 0,13; den ändrade markens grå och streckad.
+    expect(new Set(lines('höjdkurva').map((q) => q.pen.weight))).toEqual(new Set([0.25, 0.13]));
+    expect(lines('befintlig mark').every((q) => q.pen.color === 'muted' && q.pen.dash?.join() === '3,1.5')).toBe(true);
+    const style = structuredClone(store.doc.graphics);
+    style.pens = { ...style.pens, contour: { weight: 0.35, color: '#aa5500' }, contourOld: { weight: 0.25, color: 'ink', linetype: 'solid' } };
+    setGraphics(store, style);
+    const major = lines('höjdkurva').filter((q) => q.pen.weight === 0.35);
+    expect(major.length).toBeGreaterThan(0);
+    expect(major.every((q) => q.pen.color === '#aa5500')).toBe(true);
+    // Höjden har kurvans färg; den ändrade marken svart och heldragen, däremellan högst 0,13.
+    expect(prims('höjdkurva').filter((q) => q.kind === 'text').every((q) => q.pen.color === '#aa5500')).toBe(true);
+    const old = lines('befintlig mark');
+    expect(old.every((q) => (q.pen.color ?? 'ink') === 'ink' && !q.pen.dash)).toBe(true);
+    expect(new Set(old.map((q) => q.pen.weight))).toEqual(new Set([0.25, 0.13]));
+  });
+
+  it('en penna som ställts heldragen är kvar heldragen när filen läses', () => {
+    const style = normalizeStyle({ ...structuredClone(DEFAULT_STYLE), pens: { aboveWall: { weight: 0.18, linetype: 'solid' } } });
+    expect(style.pens?.aboveWall.linetype).toBe('solid');
+  });
+
+  it('den ändrade markens färg: grått är förvalet, svart sparas', () => {
+    const field = (pen: string, value: string) => ({ dataset: { pen }, value }) as unknown as HTMLInputElement;
+    const style = structuredClone(DEFAULT_STYLE);
+    applyPenField(style, field('contourOld:color', '#000000'));
+    expect(style.pens?.contourOld).toEqual({ weight: 0.18, color: 'ink', linetype: 'dashed' });
+    applyPenField(style, field('contourOld:color', '#8c8c8c'));
+    expect(style.pens).toBeUndefined();
   });
 });

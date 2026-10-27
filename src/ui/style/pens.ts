@@ -4,6 +4,7 @@ import { defaultMarkerPen, MARKER_PENS, ROOM_PENS, type MarkerPenKey } from '../
 import { defaultOpeningPen, OPENING_PENS, type OpeningPenKey } from '../../repr/openingPens';
 import { escapeHtml } from '../labels';
 import { defaultPlanCutPen, PLAN_CUT_PENS } from '../../repr/planCutPens';
+import { CONTOUR_PENS, defaultContourPen } from '../../repr/contourPens';
 import { lineTypeOptions } from '../lineTypePick';
 import { weightPicker } from '../weightPick';
 import { fromHex, toHex } from './colors';
@@ -28,7 +29,7 @@ export function penSection(style: StyleSheet): string {
         return `<div class="pen-row">
       <div class="style-name"><b>${escapeHtml(label)}</b><span>${escapeHtml(hint)}</span></div>
       <div class="pen-weight"><span>Tjocklek</span>${weightPicker(`pen-${key}`, weight, `data-pen="${key}:weight"`, ' mm')}</div>
-      <label><span>Färg</span><input type="color" data-pen="${key}:color" value="${toHex(own?.color ?? 'ink')}"></label>
+      <label><span>Färg</span><input type="color" data-pen="${key}:color" value="${toHex(own?.color ?? defaultPen(key).color ?? 'ink')}"></label>
       <label><span>Linjetyp</span><select data-pen="${key}:linetype">${lineTypeOptions(style, linetype)}</select></label>
       ${reset}
     </div>`;
@@ -36,7 +37,7 @@ export function penSection(style: StyleSheet): string {
       .join('');
   return `<section class="style-labels style-pens">
     <h3>Pennor för dörrar och fönster</h3>
-    <p class="note">Tre klasser för dörrarnas och fönstrens delar. Gäller alla dörrar och fönster utan egen penna, på typen eller objektet. Väggens kontur ställs in under åtgärderna ovan.</p>
+    <p class="note">Tre klasser för dörrarnas och fönstrens delar. Gäller alla dörrar och fönster utan egen penna, på typen eller objektet. Väggens kontur ställs in under Åtgärder.</p>
     ${rows(OPENING_PENS)}
   </section>
   <section class="style-labels style-pens">
@@ -50,15 +51,20 @@ export function penSection(style: StyleSheet): string {
     ${rows(ROOM_PENS)}
   </section>
   <section class="style-labels style-pens">
+    <h3>Höjdkurvor</h3>
+    <p class="note">Den befintliga marken ur Höjdkurvor och marken som den blir med markobjekten, i planen och på bladen. Höjden på hela meter har kurvans färg. Grått följer skärmens tema; 3D-vyn har sina egna linjer.</p>
+    ${rows(CONTOUR_PENS)}
+  </section>
+  <section class="style-labels style-pens">
     <h3>Pennor för pilar och markörer</h3>
     <p class="note">Gäller hela projektet, i planen, fasaderna, sektionerna och på bladen. Färgen gäller också markörens text. Svart följer skärmens tema. Linjetypen gäller linjerna; pilspetsar och trianglar är heldragna.</p>
     ${rows(MARKER_PENS)}
   </section>`;
 }
 
-/** Förvalet för en penna i stilmallen, markör eller dörrarnas och fönstrens klass. */
+/** Förvalet för en penna i stilmallen: snittet, höjdkurvorna, markör eller dörrarnas och fönstrens klass. */
 function defaultPen(key: string): PenDef {
-  const cut = defaultPlanCutPen(key);
+  const cut = defaultPlanCutPen(key) ?? defaultContourPen(key);
   if (cut) return cut;
   return OPENING_PENS.some((o) => o.key === key) ? defaultOpeningPen(key as OpeningPenKey) : defaultMarkerPen(key as MarkerPenKey);
 }
@@ -71,8 +77,11 @@ export function applyPenField(style: StyleSheet, input: HTMLInputElement | HTMLS
   const pen = { ...defaultPen(key), ...pens[key] };
   if (field === 'weight' && (Number(input.value) > 0 || defaultPen(key).weight === 0)) pen.weight = Number(input.value);
   if (field === 'color') {
+    // Ett förval med färg (den ändrade markens grå) behåller den; annars är svart förvalet.
     const c = fromHex(input.value);
-    if (c === 'ink' || c === 'paper') delete pen.color;
+    const dc = defaultPen(key).color;
+    if (dc && input.value.toLowerCase() === toHex(dc)) pen.color = dc;
+    else if (!dc && (c === 'ink' || c === 'paper')) delete pen.color;
     else pen.color = c;
   }
   if (field === 'linetype') {
@@ -82,7 +91,7 @@ export function applyPenField(style: StyleSheet, input: HTMLInputElement | HTMLS
   }
   // Förvalet sparas inte, så att en senare ändring av förvalen slår igenom.
   const d = defaultPen(key);
-  if (pen.weight === d.weight && !pen.color && (pen.linetype ?? undefined) === d.linetype) delete pens[key];
+  if (pen.weight === d.weight && pen.color === d.color && (pen.linetype ?? undefined) === d.linetype) delete pens[key];
   else pens[key] = pen;
   if (!Object.keys(pens).length) delete style.pens;
   return 'Ändra pennor';

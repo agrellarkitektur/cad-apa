@@ -54,6 +54,16 @@ export function stylePen(style: StyleSheet | undefined, key: string, weight: num
   return { weight: own?.weight ?? weight, ...(color ? { color } : {}), ...(dash ? { dash } : {}) };
 }
 
+/**
+ * En rad i penntabellen med ett förval som har färg eller linjetyp
+ * (snittets pennor, 0.10.16, och höjdkurvorna): förvalet gäller för det
+ * stilmallen inte har satt (heldraget och svart sparas då uttryckligen).
+ */
+export function defaultedPen(style: StyleSheet | undefined, key: string, def: PenDef): Pen {
+  const merged: PenDef = { ...def, ...style?.pens?.[key] };
+  return stylePen({ ...style, pens: { ...style?.pens, [key]: merged } } as StyleSheet, key, def.weight);
+}
+
 /** Samma penna heldragen, för pilspetsar och trianglar (0.8.30). */
 export function solidPen(pen: Pen): Pen {
   if (!pen.dash) return pen;

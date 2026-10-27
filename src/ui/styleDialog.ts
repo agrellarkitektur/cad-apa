@@ -56,22 +56,44 @@ export class StyleDialog {
     return !this.el.hidden;
   }
 
+  /**
+   * Dialogen i tre kolumner, en per sorts inställning (granskningen efter
+   * 0.10.18): åtgärderna och texterna, pennorna, och linjetyperna och
+   * fyllningstyperna. På en bred skärm har varje kolumn sin egen
+   * rullning; på en smal ligger de under varandra. Rullningen och fältet
+   * med fokus är kvar när dialogen ritas om efter en ändring (förut
+   * hoppade den till början).
+   */
   private render(): void {
     const style = this.store.doc.graphics;
     // Snabbguiden (0.8.37) är kvar utfälld när dialogen ritas om efter en ändring.
     const guideOpen = this.el.querySelector<HTMLDetailsElement>('.filltype-guide')?.open ?? false;
+    const scrolled = [...this.el.querySelectorAll<HTMLElement>('.dialog-body, .style-col')].map((e) => e.scrollTop);
+    const focus = focusSelector(document.activeElement, this.el);
     const presetOptions = PRESETS.map((p, i) => `<option value="${i}"${p.name === style.name ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('');
     const custom = PRESETS.some((p) => p.name === style.name) ? '' : `<option selected disabled>${escapeHtml(style.name)}</option>`;
-    this.el.innerHTML = `<div class="dialog" role="dialog" aria-modal="true" aria-labelledby="style-title">
+    this.el.innerHTML = `<div class="dialog style-dialog" role="dialog" aria-modal="true" aria-labelledby="style-title">
       <header><h2 id="style-title">Stilmall</h2><button class="icon-btn" data-action="close" aria-label="Stäng">×</button></header>
-      <div class="dialog-body">
-        <label class="field inline"><span>Utgå från</span><select id="style-preset">${custom}${presetOptions}</select></label>
-        <p class="note">Svart visas ljust på mörk skärm och vitt följer bakgrunden. På papper blir de svart och vitt.</p>
-        ${actionRows(style)}
-        ${labelSection(style)}
-        ${penSection(style)}
-        ${lineTypeSection(style, this.lineTypeUses())}
-        ${fillTypeSection(style, this.fillTypeUses())}
+      <div class="dialog-body style-body">
+        <div class="style-top">
+          <label class="field inline"><span>Utgå från</span><select id="style-preset">${custom}${presetOptions}</select></label>
+          <p class="note">Svart visas ljust på mörk skärm och vitt följer bakgrunden. På papper blir de svart och vitt.</p>
+        </div>
+        <div class="style-cols">
+          <div class="style-col" role="group" aria-label="Åtgärder och texter">
+            <section class="style-labels style-actions">
+              <h3>Åtgärder</h3>
+              <p class="note">Hur väggarnas snitt och linjerna ritas för det som finns kvar, rivs och planeras.</p>
+              ${actionRows(style)}
+            </section>
+            ${labelSection(style)}
+          </div>
+          <div class="style-col" role="group" aria-label="Pennor">${penSection(style)}</div>
+          <div class="style-col" role="group" aria-label="Linjetyper och fyllningstyper">
+            ${lineTypeSection(style, this.lineTypeUses())}
+            ${fillTypeSection(style, this.fillTypeUses())}
+          </div>
+        </div>
       </div>
       <footer>
         <button class="btn" data-action="open-style">Öppna stilmall…</button>
@@ -80,6 +102,8 @@ export class StyleDialog {
       </footer>
     </div>`;
     if (guideOpen) this.el.querySelector<HTMLDetailsElement>('.filltype-guide')!.open = true;
+    this.el.querySelectorAll<HTMLElement>('.dialog-body, .style-col').forEach((e, i) => (e.scrollTop = scrolled[i] ?? 0));
+    if (focus) this.el.querySelector<HTMLElement>(focus)?.focus({ preventScroll: true });
   }
 
   /** Hur många former och pennor som har varje linjetyp (0.8.30). */
@@ -211,4 +235,15 @@ export class StyleDialog {
     style.name = 'Egen stilmall';
     setGraphics(this.store, style, label);
   }
+}
+
+/** Fältets data-attribut och värde, så att samma fält hittas efter omritningen; null utanför dialogen. */
+function focusSelector(el: Element | null, root: HTMLElement): string | null {
+  if (!(el instanceof HTMLElement) || !root.contains(el)) return null;
+  if (el.id) return `#${CSS.escape(el.id)}`;
+  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family'];
+  const parts = attrs.filter((a) => el.hasAttribute(a)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a)!)}"]`);
+  if (!parts.length) return null;
+  const v = el instanceof HTMLInputElement && el.type === 'radio' ? `[value="${CSS.escape(el.value)}"]` : '';
+  return el.tagName.toLowerCase() + parts.join('') + v;
 }
