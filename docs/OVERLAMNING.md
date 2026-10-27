@@ -112,6 +112,9 @@ Kort; detaljerna står i PLAN.md. Uppdateras vid varje överlämning.
 ## Nästa session
 
 Fråga först om 0.10.8–0.10.11 syns på webbhotellet och hur de känns.
+Sortera Inkorgen i `cad-apa-synpunkter.md` tillsammans med honom (fyra
+nya 27 oktober: ortofotot på marken, schakt och fyll per markobjekt,
+andel berg, en förteckning över markförändringarna).
 Ställ sedan högst tio av de obesvarade frågorna (först de om 0.10.11 och
 0.10.10, sedan stödmuren, marken och fasaderna). Föreslå sedan en
 **granskning** (den senaste var 0.10.6; städa, dela stora filer som
