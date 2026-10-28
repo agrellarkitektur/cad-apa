@@ -5,7 +5,8 @@ import { dist, dot, left, norm, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import { catmullRom, isClosed, segmentArc, segmentCount, shapePoints, type Shape2DParams, type ShapePath } from './drawing2d';
 import type { SlabHole } from './slab';
-import { rampSideLines, remapEases, remapLevels, type EasePoint, type RampParams } from './groundRamp';
+import { rampSideLines, type EasePoint, type RampParams } from './groundRamp';
+import { remapEases, remapLevels } from './rampEdits';
 import { hasArcs } from './groundLines';
 
 /**

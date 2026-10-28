@@ -1,4 +1,4 @@
-import { groundAt, terrainOf } from '../core/site';
+import { groundAt, groundDefaults, terrainOf } from '../core/site';
 import { union, type Rings } from '../geometry/boolean';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { sameItems } from '../repr/reuse';
@@ -30,8 +30,13 @@ export function outward(ring: readonly Vec2[], a: Vec2, b: Vec2): Vec2 | null {
   return [(sgn * (b[1] - a[1])) / l, (-sgn * (b[0] - a[0])) / l];
 }
 
-/** Hur tätt släntstrecken ligger, mm på papperet. */
-const MARK_SPACING = 2.5;
+/** Hur tätt slänten känns av för konturen och ytan, mm på papperet (strecken följer Platsen, 0.10.21.1). */
+const SENSE_SPACING = 1.25;
+
+/** Släntstreckens avstånd på papperet, mm, ur Platsen (förval 5). */
+function markSpacing(ctx: PlanContext): number {
+  return Math.max(0.5, groundDefaults(ctx.doc.site).markSpacing);
+}
 
 /**
  * Släntmarkeringar (0.10.8): där markobjektet möter marken med slänt,
@@ -47,7 +52,7 @@ export function slopeMarks(ctx: PlanContext, g: GroundGeometry, origin: Primitiv
   const pen = { weight: 0.13 };
   const out: Primitive[] = [];
   let k = 0;
-  walkSlope(g, MARK_SPACING * ctx.scale, false, (q, n) => {
+  walkSlope(g, markSpacing(ctx) * ctx.scale, false, (q, n) => {
     k++;
     const r = reach(q, n);
     if (!r || r.d < minLen) return;
@@ -170,7 +175,7 @@ export function slopeOutline(ctx: PlanContext, g: GroundGeometry, origin: Primit
   const broken: boolean[] = g.rings.map(() => false);
   walkSlope(
     g,
-    (MARK_SPACING * ctx.scale) / 2,
+    SENSE_SPACING * ctx.scale,
     true,
     (q, n, ring) => {
       const r = reach(q, n);
@@ -232,7 +237,7 @@ export function slopeArea(ctx: PlanContext, g: GroundGeometry): Rings[] {
   if (reach) {
     // Strålarna per kontur; grannarna går inte över till nästa kontur.
     const rays: { q: Vec2; e: Vec2 | null }[][] = g.rings.map(() => []);
-    walkSlope(g, (MARK_SPACING * ctx.scale) / 2, true, (q, n, ring) => {
+    walkSlope(g, SENSE_SPACING * ctx.scale, true, (q, n, ring) => {
       const r = reach(q, n);
       rays[ring].push({ q, e: r ? [q[0] + n[0] * r.d, q[1] + n[1] * r.d] : null });
     });

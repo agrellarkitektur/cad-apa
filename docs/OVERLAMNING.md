@@ -3,14 +3,27 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 28 oktober 2026 (förmiddag), efter 0.10.21 Lutande väggar.
+Senast: 28 oktober 2026 (förmiddag), efter granskningen efter 0.10.21
+(0.10.21.1).
 
 ## Läget
 
-- **Nästa session:** **Granskning efter 0.10.21** (småfelen ur Inkorgen,
-  klickjämförelsen med steg för 0.10.19–0.10.21, `groundRamp.ts` delad)
-  eller **0.10.20.1 Litteran**, det Carl August vill först. Se *Nästa
-  session*.
+- **Nästa session:** **0.10.20.1 Litteran** om Carl August inte säger
+  annat (liten). Se *Nästa session*.
+- **Granskningen efter 0.10.21 är klar** som **0.10.21.1** på `main`
+  (samma format, 20), gjord 28 oktober (förmiddag). Småfelen ur Inkorgen:
+  slänternas fyllning ritas nu också för rampen och vägen (`linePlan`
+  glömde den; markytan hade den — säg till om den inte syns där heller);
+  *Släntstreckens avstånd* under Platsen (5 mm på papperet som förval,
+  förut fast 2,5; också de branta slänterna); 3D-kameran ligger kvar när
+  man växlar mellan Båda och 3D (`fresh` i `setMode`). Delat:
+  `groundRamp.ts` 618 → 257 rader (`rampProfile.ts`, `rampEdits.ts`).
+  Testerna: 617 på ca 16 s; referensen `mark-plan.txt` omskriven för det
+  glesare avståndet. Klickjämförelsen: 496 steg (39 nya för
+  0.10.19–0.10.21); samma `doc` i alla steg; ritningen skiljer bara i släntstrecken (lika vid 2,5 mm), 3D-bilderna där kameran står kvar, och Platsens dialog. Se PLAN.md och UTVECKLING.md.
+- **Märks i hans ritningar efter 0.10.21.1:** släntstrecken ligger
+  dubbelt så glest (ställbart under Platsen); rampers och vägars slänter
+  får sin fyllning om de har en; i 3D står kameran kvar vid växling.
 - **0.10.21 Lutande väggar är klar** på `main` (samma format, 20), byggd
   28 oktober (förmiddag) på Carl Augusts "kör nästa version"; han hoppade
   över frågan om olika lutning i ändarna (samma i båda). Byggt: *Lutning*
@@ -189,18 +202,17 @@ Senast: 28 oktober 2026 (förmiddag), efter 0.10.21 Lutande väggar.
   Rampens referenslinje, 0.10.19 Markobjektens bågar, 0.10.20
   Situationsplanens beteckningar och 0.10.21 Lutande väggar (alla klara).
   Ortofotot på marken är en egen liten undersökning. Förteckningen över
-  markförändringarna hör till 0.12 Export. Nästa granskning: efter
-  0.10.21 (nu).
+  markförändringarna hör till 0.12 Export. Granskningen efter 0.10.21 är
+  gjord (0.10.21.1); nästa granskning efter ungefär tre versioner till.
 - **0.10.13 Höjder i förhållande till våningen**: se PLAN.md.
 - **Granskningen efter 0.10.12** och **0.10.12 Småjusteringar**: se
   PLAN.md.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.21` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.21.1` i `engine.ts`, `package.json` och
   `package-lock.json` (npm godtar fyra delar i ett privat paket); nästa
-  version är `0.10.20.1` (Litteran) eller `0.10.21.1` (granskningen, om
-  något ändras som syns). En granskning höjer inte numret, eller får en
+  version är `0.10.20.1` (Litteran). En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
 - **0.10.8–0.10.21 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
@@ -261,9 +273,8 @@ vid varje överlämning.
   Linjerna i 2D-formen~~, ~~0.10.18 Rampens referenslinje~~, ~~Granskning
   efter 0.10.18 (0.10.18.1)~~, ~~0.10.19 Markobjektens bågar~~, ~~0.10.20
   Situationsplanens beteckningar~~ (klara)
-- ~~0.10.21 Lutande väggar~~ (klar)
-- **Granskning efter 0.10.21** (småfelen ur Inkorgen 28 oktober;
-  klickjämförelsen får steg för 0.10.19–0.10.21; `groundRamp.ts` delas)
+- ~~0.10.21 Lutande väggar~~, ~~Granskning efter 0.10.21 (0.10.21.1)~~
+  (klara)
 - **0.10.20.1 Litteran** (liten: flytta litteran för hand, ledarens grepp)
 - **Snäpp i marken** (mellanstor: gränser, byggnader, markobjekt;
   trollstaven för stödmur längs ett objekt)
@@ -287,19 +298,14 @@ vid varje överlämning.
 
 ## Nästa session
 
-Kör **Granskning efter 0.10.21** om Carl August inte säger annat: rätta
-slänternas fyllning (prova med `groundProject` och `slopeFill`), gör
-släntstrecken dubbelt så glesa som en inställning under Platsen (5 mm som
-förval), låt 3D-perspektivet ligga kvar när man växlar mellan Båda och 3D
-(`pane3d.ts`/`setMode`), dela `groundRamp.ts` (`rampProfile`,
-`fusedRamp`/`reversedRamp`), gå igenom testerna, och kör klickjämförelsen
-mot 0.10.21 med nya steg för 0.10.19–0.10.21 (bågar på rampen, mjuka
-övergångar, Foga ihop, markhöjd, låglinje, murens ledare, en lutande vägg
-i planen och 3D). Vill han hellre ha **0.10.20.1 Litteran** först: grepp
-för litteran på alla objekt (`littera.ts`), två för ledaren (punkten och
-texten), sidan byter när texten korsar mittlinjen. Läs
+Kör **0.10.20.1 Litteran** om Carl August inte säger annat (liten):
+grepp för litteran på alla objekt som har en (`littera.ts`), två för
+stödmurens ledare (punkten den pekar på och texten; `wallLeader` i
+`groundMarks.ts`), och ledarens sida byter när texten korsar mittlinjen.
+Det flyttade sparas som en förskjutning i objektets parametrar (valfri,
+samma format). Sedan **Snäpp i marken** (mellanstor). Läs
 `cad-apa-synpunkter.md` först och ställ frågorna för 0.10.21 (fem åt
-gången).
+gången), om han inte redan svarat.
 
 ## Att fråga Carl August om
 
@@ -506,9 +512,9 @@ fråga.
 
 - **Stora filer efter 0.10.21:** `commandLine.ts` (623 rader, en sluten
   helhet med eget läge) och `planView.ts` (591) är störst; de lämnades i
-  granskningen. `groundRamp.ts` växte till ca 480 rader (profilen,
-  dockningen); dela den i nästa granskning (`rampProfile` och
-  `fusedRamp`/`reversedRamp` kan bli egna filer). Stilmallens fönster har tre kolumner från 1180 px; under
+  granskningen efter 0.10.21 också. `groundRamp.ts` är delad i
+  0.10.21.1 (`rampProfile.ts`, `rampEdits.ts`); `arrangeTool.ts` (527) och
+  `app.ts` (566) är näst störst. Stilmallens fönster har tre kolumner från 1180 px; under
   det ligger delarna under varandra som förut.
 
 - **Lutande väggar (0.10.21):** samma lutning i båda ändarna; bågväggar
@@ -692,8 +698,13 @@ fråga.
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (457 steg sedan granskningen efter 0.10.18; 0.10.19–0.10.21 har inga
-  steg än; 0.10.19 kördes mot 0.10.18.1 utan nya steg, med `--bilder`, eftersom 3D-bildernas hashar
+  (496 steg sedan granskningen efter 0.10.21, som lade till 39 steg sist
+  för 0.10.19–0.10.21: Böj på rampens referenslinje, mjuka övergångar och
+  en skarp punkt, en ramp till med Båge i verktyget Mark och Foga ihop,
+  markhöjd, låglinje, murens littera, minsta sidolutning, decimalerna och
+  siffrorna under Platsen, branta slänter under Visa, och en lutande vägg
+  i planen och 3D; 457 efter granskningen efter 0.10.18, kör den med
+  `--bilder`, eftersom 3D-bildernas hashar
   kan skilja utan att en pixel gör det, som lade till 0.10.16–0.10.18
   efter `allra sist`: snittet i planen, rita vidare, Förskjut alla kanter,
   Foga ihop, ett takfall med båge (Båge slås av före sista hörnet; den är

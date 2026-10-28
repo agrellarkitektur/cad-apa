@@ -4,8 +4,10 @@ kontur, Filtrera och markera och detaljnivåerna från 0.8.38; våningar,
 bjälklag och nivåer från 0.9.3; platsen och markobjekten från 0.10.6;
 0.10.11, 0.10.12 och 3D-vyn från granskningen efter 0.10.12; 0.10.13–0.10.15
 och greppen som dras, mitt i dragningen, från granskningen efter 0.10.15;
-0.10.16–0.10.18 från granskningen efter 0.10.18, och sist det som är nytt i
-den, höjdkurvornas pennor och Mer bara när det finns mer):
+0.10.16–0.10.18 från granskningen efter 0.10.18, det som är nytt i den,
+höjdkurvornas pennor och Mer bara när det finns mer, och sist 0.10.19–0.10.21
+från granskningen efter 0.10.21: rampens bågar och övergångar, Foga ihop,
+beteckningarna och en lutande vägg):
 läget efter varje steg sparas, och två körningar jämförs steg för steg.
 
 Kryssrutorna under Visa klickas (`__click`): menyn lyssnar på klick, så
@@ -919,6 +921,52 @@ def main():
         step('marken utan Mer', f"bacchus.selection.set(Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Terrain').map((e) => e.id)); bacchus.smartMenu.show(400, 400)")
         step('ett träd med Mer', f"bacchus.selection.set(Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Tree').map((e) => e.id)); bacchus.smartMenu.show(400, 400)")
         step('sist av allt', "bacchus.selection.clear()")
+
+        # ---------- 0.10.19–0.10.21 (granskningen efter 0.10.21) ----------
+        # Bågar och mjuka övergångar på rampen (0.10.19): Böj på referenslinjen, Mjuka i panelen,
+        # Skarp i en punkt, en ramp till med Båge i verktyget och Foga ihop.
+        step('markera rampen för bågen', f"bacchus.setTool('select'); bacchus.selection.set({ramp_ids})")
+        step('klicka på referenslinjens första kant', fn=lambda: click_model(3500, -8000))
+        step('böj kanten', "bacchus.modifier.chooseRail('curve')", fn=lambda: pg.evaluate('bacchus.modifier.applyValue(6000)'))
+        step('mjuka övergångar', f"__set('[data-key=\"ground:ease\"]', 'soft', '{panel}')")
+        step('övergångarnas radie', f"__set('[data-key=\"ground:easeRadius\"]', '12000', '{panel}')")
+        step('klicka på punkten med höjd', fn=lambda: click_model(5000, -8000))
+        step('skarp övergång i punkten', "bacchus.modifier.choose('pathEaseSharp')")
+        step('en ramp till', "bacchus.selection.clear(); bacchus.setTool('ground'); __click('[data-ground-mode=\"path\"]')")
+        step('den andra rampens början', fn=lambda: click_model(11000, -8000))
+        step('båge i verktyget Mark', "__click('[data-action=\"ground-arc\"]')")
+        step('bågens slut', fn=lambda: click_model(16000, -8000))
+        step('punkt på rampens båge', fn=lambda: click_model(13500, -9500))
+        step('den andra rampen klar', "__click('[data-action=\"ground-done\"]')")
+        step('foga ihop ramperna', f"bacchus.setTool('select'); bacchus.selection.set({ramp_ids}); bacchus.modifier.chooseRail('fuse')")
+        step('avmarkera den fogade rampen', "bacchus.selection.clear()")
+        # Situationsplanens beteckningar (0.10.20): markhöjd, låglinje, murens littera, minsta sidolutning,
+        # decimalerna under Platsen och de branta slänterna under Visa.
+        step('markhöjd', "bacchus.setTool('ground'); __click('[data-ground-mode=\"level\"]')")
+        step('markhöjden på platån', fn=lambda: click_model(21000, 8000))
+        step('markhöjden i orörd mark', fn=lambda: click_model(-4000, 15000))
+        step('låglinje', "__click('[data-ground-mode=\"drain\"]')")
+        step('låglinjens början', fn=lambda: click_model(-18000, -14000))
+        step('låglinjens slut', fn=lambda: click_model(-10000, -16000))
+        step('låglinjen klar', "__click('[data-action=\"ground-done\"]')")
+        step('markera stödmuren för litteran', f"bacchus.setTool('select'); bacchus.selection.set({ground_ids("e.params.kind === 'wall'")})")
+        step('murens littera', f"__set('[data-key=\"ground:name\"]', 'M07', '{panel}')")
+        step('markera rampen för sidolutningen', f"bacchus.selection.set({ramp_ids})")
+        step('minsta sidolutning', f"__set('[data-key=\"ground:minCross\"]', '2', '{panel}')")
+        step('öppna Platsen för decimalerna', "bacchus.selection.clear(); __click('[data-action=\"site\"]')", fn=lambda: pg.wait_for_selector('.dialog [data-ground=\"levelDecimals\"]', timeout=5000))
+        step('en decimal i markhöjderna', "__set('[data-ground=\"levelDecimals\"]', '1', '.site-dialog')")
+        step('tre siffror i littera', "__set('[data-ground=\"litteraDigits\"]', '3', '.site-dialog')")
+        step('spara Platsen igen', "__click('[type=\"submit\"]', '.site-dialog')")
+        step('visa branta slänter', "__click('[data-action=\"show-menu\"]')", fn=lambda: pg.evaluate('''__click('[data-show="steepSlopes"]', '.show-menu')'''))
+        step('stäng Visa', fn=key('Escape'))
+        # Lutande väggar (0.10.21): lutningen och toppen i sidled på en yttervägg, i planen och i 3D.
+        step('markera gavelväggen', "bacchus.selection.set(['yv-o'])")
+        step('väggens lutning', f"__set('[data-key=\"wall:lean\"]', '15', '{panel}')")
+        step('toppen i sidled', f"__set('[data-key=\"wall:topOffset\"]', '300', '{panel}')")
+        step('den lutande väggen i 3D', fn=show3d, shot3d=True)
+        step('tillbaka till planen', "bacchus.setMode('2d')", fn=lambda: pg.wait_for_timeout(300))
+        step('lutningen tillbaka', f"__set('[data-key=\"wall:lean\"]', '0', '{panel}')")
+        step('allra sist', "bacchus.selection.clear()")
         b.close()
     json.dump(rows, open(OUT, 'w'), ensure_ascii=False)
 

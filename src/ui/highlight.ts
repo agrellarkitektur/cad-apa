@@ -1,5 +1,6 @@
 import { hasEditableOutline } from '../core/roofEdit';
-import { rampLevels, rampSideLines, refPoints } from '../elements/groundRamp';
+import { rampSideLines, refPoints } from '../elements/groundRamp';
+import { rampLevels } from '../elements/rampProfile';
 import { resolveParams } from '../elements/registry';
 import type { ProjectDoc } from '../core/model';
 import type { WallParams } from '../elements/wall';

@@ -1,6 +1,7 @@
 import { isClosed, type Shape2DParams } from '../elements/drawing2d';
 import { PATH_WIDTH } from '../elements/groundLines';
-import { fusedRamp, reversedRamp, type RampParams } from '../elements/groundRamp';
+import type { RampParams } from '../elements/groundRamp';
+import { fusedRamp, reversedRamp } from '../elements/rampEdits';
 import { resolveParams } from '../elements/registry';
 import type { Element, Id, ProjectDoc } from './model';
 import type { DocStore } from './store';

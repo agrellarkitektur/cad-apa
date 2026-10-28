@@ -1247,6 +1247,34 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Granskning efter 0.10.21 (0.10.21.1, format 20)
+
+Tre småfel ur Inkorgen och `groundRamp.ts` delad. De som använder det
+flyttade importerar den nya filen (testerna också); `groundRamp.ts`
+behåller typerna (`RampParams`, `RampLevel`, `RampRun`, `EasePoint`),
+sidorna, konturen och varningarna.
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/elements/groundRamp.ts` | Rampens parametrar, sidor, kontur, varningar (618 → 257 rader) |
+| `src/elements/rampProfile.ts` | Ny: höjdprofilen — `rampLevels`, `easeRadiusAt`, `rampRuns`, `heightAtS`, `rampProfile`, `EASE_RADIUS` |
+| `src/elements/rampEdits.ts` | Ny: ändringar i referenslinjen — `remapLevels`, `remapEases`, `tidyLevels`, `tidyEases`, `extendRamp`, `reversedRamp`, `fusedRamp` |
+
+- **Slänternas fyllning**: `linePlan` i `groundPlan.ts` ritar nu
+  `p.slopeFill` över `slopeArea(ctx, g)` bakom vägens egen fyllning, som
+  `areaPlan` gjort sedan 0.10.14 (primitivens `part` är *släntens
+  fyllning*).
+- **Släntstreckens avstånd**: `markSpacing` i `GroundDefaults`
+  (`core/site.ts`, förval 5 mm på papperet) med fältet under Platsen
+  (`ui/app/site.ts`). `slopeMarks` i `groundSlopes.ts` läser det ur
+  `groundDefaults(ctx.doc.site)`; konturen (`slopeOutline`) och ytan
+  (`slopeArea`) känner av slänten var `SENSE_SPACING` (1,25 mm) oberoende
+  av det. `steepMarks`/`steepSlopePrims` i `terrainSlopes.ts` tar
+  avståndet som parameter (med i nyckeln för de sparade strecken).
+- **3D-kameran**: `setMode` i `pane3d.ts` kallar `frameAll` bara när
+  `View3D` just skapats (`fresh`), inte vid varje växling till Båda eller
+  3D.
+
 ## Lutande väggar (0.10.21, format 20)
 
 Inga nya format: `WallParams.lean` är frivillig (grader från lodlinjen,

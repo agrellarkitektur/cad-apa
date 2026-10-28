@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DocStore } from '../src/core/store';
+import { updateSite } from '../src/core/siteImport';
 import { registerBuiltInTypes } from '../src/elements';
 import { fillPrims, type FillParams } from '../src/elements/drawing2d';
 import { groundType } from '../src/elements/ground';
@@ -92,6 +93,21 @@ describe('Fyllningar och opacitet (0.10.14)', () => {
     expect(slope).toBeLessThan(own);
     fillChange(store, [id], 'fillKind', input('none'), 'slopeFill');
     expect(store.doc.elements[id].params.slopeFill).toBeUndefined();
+
+    // Rampen (0.10.21.1): panelen hade fältet, men planen ritade inte fyllningen.
+    const ramp = addGround(store, { kind: 'path', outline: [], line: [[20000, -20000], [30000, -20000]], height: 2500, endHeight: 2800, slopeFill: { fill: 'solid' } } as never);
+    const rp = groundType.plan!(store.doc.elements[ramp] as never, planCtx(store));
+    expect(rp[0].origin?.part).toBe('släntens fyllning');
+  });
+
+  it('släntstreckens avstånd följer Platsen (0.10.21.1): 5 mm på papperet som förval', () => {
+    const store = onSlope();
+    const id = addGround(store, { kind: 'area', outline: [[20000, -5000], [30000, -5000], [30000, 5000], [20000, 5000]], height: 2500 });
+    const marks = (s: DocStore) => groundType.plan!(s.doc.elements[id] as never, planCtx(s)).filter((q) => q.origin?.part === 'slänt').length;
+    const five = marks(store);
+    expect(five).toBeGreaterThan(10);
+    updateSite(store, { ground: { markSpacing: 2.5 } });
+    expect(marks(store)).toBeGreaterThan(five * 1.8);
   });
 });
 

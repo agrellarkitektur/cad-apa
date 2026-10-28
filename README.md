@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.21** (alfa); nästa är **granskningen efter 0.10.21**.
+**0.10.21.1** (alfa); nästa är **0.10.20.1 Litteran**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,17 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.21.1, granskning (samma filformat, 20):
+- **Slänternas fyllning** ritas nu också för rampen och vägen (förut
+  bara för markytan, fast panelen hade fältet)
+- **Släntstreckens avstånd** är en inställning under Platsen, 5 mm på
+  papperet som förval (förut fast 2,5); gäller markobjektens slänter och
+  de branta slänterna i den befintliga marken
+- **3D-vyn behåller kameran** när man växlar mellan Båda och 3D; hela
+  modellen visas bara första gången vyn öppnas
+- Inget annat ändrat: koden städad och uppdelad, samma klick ger samma
+  resultat som i 0.10.21
 
 Version 0.10.21, lutande väggar (samma filformat, 20):
 - **Lutning** i väggens egenskaper: vinkeln från lodlinjen i grader,

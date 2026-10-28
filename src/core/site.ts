@@ -93,9 +93,11 @@ export interface GroundDefaults {
   litteraDigits: number;
   /** Decimaler i markhöjderna i planen (0.10.20): +22,20 med två. */
   levelDecimals: number;
+  /** Släntstreckens avstånd på papperet, mm (0.10.21.1; förut fast 2,5). */
+  markSpacing: number;
 }
 
-export const GROUND_DEFAULTS: GroundDefaults = { slope: 2, fall: 20, fallLength: 3000, distance: 3000, sockel: 200, margin: 500, rampMax: 12, walkMax: 20, landingRise: 500, blend: 5000, wallThickness: 200, easeRadius: 20000, steepSlope: 3, litteraDigits: 2, levelDecimals: 2 };
+export const GROUND_DEFAULTS: GroundDefaults = { slope: 2, fall: 20, fallLength: 3000, distance: 3000, sockel: 200, margin: 500, rampMax: 12, walkMax: 20, landingRise: 500, blend: 5000, wallThickness: 200, easeRadius: 20000, steepSlope: 3, litteraDigits: 2, levelDecimals: 2, markSpacing: 5 };
 
 /** Projektets förval för markobjekten. */
 export function groundDefaults(site: Pick<Site, 'ground'> | undefined): GroundDefaults {

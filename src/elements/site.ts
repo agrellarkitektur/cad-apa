@@ -238,7 +238,8 @@ export const terrainType: ElementType<TerrainParams> = {
     if (ctx.view.hide?.includes(`+${STEEP_SLOPES_KEY}`)) {
       const t = terrainOf(ctx.doc)!;
       const skip = f ? changedCells(f, t) : undefined;
-      out.push(...steepSlopePrims(t, groundDefaults(ctx.doc.site).steepSlope, ctx.scale, { objectId: el.id, objectType: 'Terrain', part: 'brant slänt' }, skip));
+      const def = groundDefaults(ctx.doc.site);
+      out.push(...steepSlopePrims(t, def.steepSlope, ctx.scale, { objectId: el.id, objectType: 'Terrain', part: 'brant slänt' }, skip, def.markSpacing));
     }
     return out;
   },

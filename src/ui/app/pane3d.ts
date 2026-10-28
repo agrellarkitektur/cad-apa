@@ -2,7 +2,8 @@ import { levelOf } from '../../repr/solids';
 import { moveElements, moveWallEnd } from '../../core/commands';
 import type { Id } from '../../core/model';
 import { markerFrame } from '../../elements/markers';
-import { rampProfile, refPoints } from '../../elements/groundRamp';
+import { refPoints } from '../../elements/groundRamp';
+import { rampProfile } from '../../elements/rampProfile';
 import { resolveParams } from '../../elements/registry';
 import type { WallParams } from '../../elements/wall';
 import { wallProfile, type GroundParams } from '../../elements/ground';
@@ -203,6 +204,9 @@ export function installPane3d(app: AppContext) {
     setTimeout(() => {
       if (mode !== '3d') app.view.zoomToFit();
     }, 60);
+    // Kameran ligger kvar när man växlar mellan Båda och 3D (0.10.21.1);
+    // hela modellen visas bara när vyn öppnas första gången.
+    const fresh = !view3d;
     if (mode !== '2d' && !view3d) {
       loading3d ??= import('../../view3d/view3d').then(({ View3D }) => {
         view3d = new View3D(app.pane3d);
@@ -224,7 +228,7 @@ export function installPane3d(app: AppContext) {
       }
     }
     update3d();
-    if (mode !== '2d') setTimeout(() => view3d?.frameAll(), 60);
+    if (mode !== '2d' && fresh) setTimeout(() => view3d?.frameAll(), 60);
   }
 
   return {

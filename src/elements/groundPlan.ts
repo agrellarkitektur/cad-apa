@@ -11,7 +11,8 @@ import { flatPoints, lineLength } from './groundLines';
 import { arrow, drainLine, groundText, levelMark, minCrossText, wallLeader } from './groundMarks';
 import { showLittera } from './littera';
 import { outward, slopeArea, slopeMarks, slopeOutline } from './groundSlopes';
-import { middleAt, rampProfile, rampWarnings, sideEdge, steepest } from './groundRamp';
+import { middleAt, rampWarnings, sideEdge, steepest } from './groundRamp';
+import { rampProfile } from './rampProfile';
 import type { PlanContext } from './registry';
 
 /**
@@ -164,6 +165,8 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
   }
   // Vägen: fyllningen, sidorna och tvärlinjerna. Sidorna för sig (0.10.18), tjocka där de är stödmur.
   out.unshift(...fillOf(ctx, el, p, [g.rings[0]]));
+  // Slänternas fyllning (0.10.14) bakom vägens egen; glömd här till 0.10.21.1.
+  if (p.slopeFill?.fill) out.unshift(...fillOf(ctx, el, p.slopeFill, slopeArea(ctx, g), 'släntens fyllning'));
   const sides = g.sides!;
   const edge = (points: Vec2[], part: string, wall: boolean) => out.push({ kind: 'polyline', points, closed: false, pen: { weight: wall ? 0.5 : 0.25 }, origin: { ...origin, part } });
   edge(sides.right, 'kant', sideEdge(p, 'right') === 'wall');

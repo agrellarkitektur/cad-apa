@@ -2772,7 +2772,7 @@ foten, en bit ifrån. Inte gjort: olika lutning i ändarna; lutande
 bågväggar; ytterväggarnas insida som dold linje i fasaden ritas lodrät;
 ingen lutning i väggverktyget (sätts i panelen efteråt).*
 
-### Granskning efter 0.10.21
+### Granskning efter 0.10.21 ✓ (0.10.21.1)
 
 Utan nya funktioner. Klickjämförelsen får steg för 0.10.19–0.10.21,
 `groundRamp.ts` delas, testerna gås igenom. Småfelen ur Inkorgen 28
@@ -2783,6 +2783,32 @@ oktober (Carl August godkände Claudes förslag A–H samma morgon):
   under Platsen
 - 3D-perspektivet återställs när man växlar mellan Båda och 3D; det ska
   ligga kvar
+
+*Gjord 28 oktober (förmiddag), samma format (20). Det syns något, så den
+heter 0.10.21.1. Testerna: 616 → 617, ca 16 s. **Slänternas fyllning**:
+felet låg i rampen och vägen (`linePlan`), som aldrig ritade
+`slopeFill` fast panelen hade fältet; markytan ritade den. Nu ritas den
+för båda, bakom objektets egen fyllning. Säg till om det inte händer
+något på en markyta heller. **Släntstrecken**: *Släntstreckens avstånd*
+under Platsen, mm på papperet, 5 som förval (förut fast 2,5); gäller
+markobjektens slänter och de branta slänterna i den befintliga marken.
+Konturen runt slänterna och slänternas yta känns av var 1,25 mm som
+förut, oberoende av inställningen, så de blir inte grövre. **3D-kameran**
+ligger kvar när man växlar mellan Båda och 3D; hela modellen visas bara
+första gången 3D-vyn öppnas. **Filerna**: `groundRamp.ts` 618 → 257
+rader: höjdprofilen i `rampProfile.ts` (`rampLevels`, `rampRuns`,
+`easeRadiusAt`, `heightAtS`, `rampProfile`) och ändringarna i
+referenslinjen i `rampEdits.ts` (`remapLevels`, `remapEases`,
+`tidyLevels`, `tidyEases`, `extendRamp`, `reversedRamp`, `fusedRamp`).
+`commandLine.ts` (623) och `planView.ts` (591) lämnas som förut.
+**Testerna**: inga dubbletter bland 0.10.19–0.10.21; två nya (rampens
+släntfyllning, strecken följer Platsen); referensen `mark-plan.txt`
+omskriven för det glesare avståndet. **Klickjämförelsen** har 496 steg
+(39 nya för 0.10.19–0.10.21: Böj på referenslinjen, mjuka övergångar och
+en skarp punkt, en ramp till med Båge i verktyget och Foga ihop,
+markhöjd, låglinje, murens littera, minsta sidolutning, decimalerna och
+siffrorna under Platsen, branta slänter under Visa, en lutande vägg i
+planen och 3D): mot 0.10.21 samma `doc` i alla steg; ritningen skiljer från det att platsen läggs in (släntstrecken glesare; med avståndet ställt på 2,5 mm är ritningen densamma i alla steg), 3D-bilderna där kameran nu står kvar, och Platsens dialog med det nya fältet.*
 
 ### 0.10.20.1 Litteran (liten)
 

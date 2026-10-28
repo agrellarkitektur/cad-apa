@@ -3,7 +3,9 @@ import { fromRh, groundDefaults } from '../core/site';
 import type { DocStore } from '../core/store';
 import type { GroundParams } from '../elements/ground';
 import { lineLength } from '../elements/groundLines';
-import { easeRadiusAt, rampSideLines, refPoints, tidyLevels } from '../elements/groundRamp';
+import { rampSideLines, refPoints } from '../elements/groundRamp';
+import { easeRadiusAt } from '../elements/rampProfile';
+import { tidyLevels } from '../elements/rampEdits';
 import { resolveParams } from '../elements/registry';
 
 /*

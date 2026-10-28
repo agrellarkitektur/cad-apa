@@ -2,7 +2,7 @@ import { addElements, updateParams } from '../../core/commands';
 import type { Element, Id } from '../../core/model';
 import { groundAt, terrainOf } from '../../core/site';
 import type { GroundParams } from '../../elements/ground';
-import { extendRamp } from '../../elements/groundRamp';
+import { extendRamp } from '../../elements/rampEdits';
 import { tidyBulges } from '../../elements/groundLines';
 import { ChainInput } from './chainInput';
 import { resolveParams } from '../../elements/registry';

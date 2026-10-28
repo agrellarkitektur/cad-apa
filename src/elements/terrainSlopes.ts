@@ -14,8 +14,8 @@ import type { Primitive, Vec2 } from '../repr/primitives';
  * går nedför tills lutningen blir flackare igen.
  */
 
-/** Hur tätt strecken ligger, mm på papperet (som markobjektens). */
-const MARK_SPACING = 2.5;
+/** Strecken ligger som markobjektens (`markSpacing` under Platsen, 0.10.21.1), mm på papperet. */
+const DEFAULT_SPACING = 5;
 /** Hur långt ett streck högst går, mm. */
 const MARK_REACH = 20_000;
 
@@ -56,17 +56,17 @@ const saved = new WeakMap<Float32Array, { key: string; out: SteepMark[] }>();
  * Strecken för de branta slänterna, hela längden från krönet till foten;
  * räknas en gång per markmodell, gränsvärde och skala. `ratio` är N i 1:N.
  */
-export function steepMarks(t: Terrain, ratio: number, scale: number): SteepMark[] {
+export function steepMarks(t: Terrain, ratio: number, scale: number, markSpacing = DEFAULT_SPACING): SteepMark[] {
   const { grid, site } = t;
-  const key = `${grid.x0}|${grid.y1}|${grid.s}|${grid.W}|${grid.H}|${site.origin}|${site.rotation}|${ratio}|${scale}`;
+  const key = `${grid.x0}|${grid.y1}|${grid.s}|${grid.W}|${grid.H}|${site.origin}|${site.rotation}|${ratio}|${scale}|${markSpacing}`;
   const hit = saved.get(t.z);
   if (hit && hit.key === key) return hit.out;
-  const out = computeMarks(t, ratio, scale);
+  const out = computeMarks(t, ratio, scale, markSpacing);
   saved.set(t.z, { key, out });
   return out;
 }
 
-function computeMarks(t: Terrain, ratio: number, scale: number): SteepMark[] {
+function computeMarks(t: Terrain, ratio: number, scale: number, markSpacing: number): SteepMark[] {
   const limit = 1 / Math.max(0.1, ratio);
   const field = slopeField(t);
   // Gränsen som en kurva på nivån 0 i (lutning − gräns): ett enda steg, större än allt, så att bara nivån 0 räknas.
@@ -82,7 +82,7 @@ function computeMarks(t: Terrain, ratio: number, scale: number): SteepMark[] {
   const cell = grid.s * 1000;
   const probe = cell / 2;
   const step = Math.max(100, cell / 3);
-  const spacing = MARK_SPACING * scale;
+  const spacing = markSpacing * scale;
   const out: SteepMark[] = [];
   const downhill = (x: number, y: number): Vec2 | null => {
     const l = groundAt(t, x - probe, y);
@@ -140,12 +140,12 @@ function computeMarks(t: Terrain, ratio: number, scale: number): SteepMark[] {
  * Strecken som primitiver: långa och korta om vartannat, från krönet.
  * `skip` tar bort streck som börjar där markobjekten ändrat marken.
  */
-export function steepSlopePrims(t: Terrain, ratio: number, scale: number, origin: Primitive['origin'], skip?: (x: number, y: number) => boolean): Primitive[] {
+export function steepSlopePrims(t: Terrain, ratio: number, scale: number, origin: Primitive['origin'], skip?: (x: number, y: number) => boolean, markSpacing = DEFAULT_SPACING): Primitive[] {
   const pen = { weight: 0.13, color: 'muted' as const };
   const minLen = 0.8 * scale;
   const out: Primitive[] = [];
   let k = 0;
-  for (const m of steepMarks(t, ratio, scale)) {
+  for (const m of steepMarks(t, ratio, scale, markSpacing)) {
     const a = m.pts[0];
     if (skip?.(a[0], a[1])) continue;
     k++;
