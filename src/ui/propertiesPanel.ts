@@ -1,3 +1,4 @@
+import { litteraSection } from './litteraSection';
 import { setDefinition, setGraphics, updateDefinition } from '../core/commands';
 import { onPaper as paperSpace, type Element, type ProjectDoc } from '../core/model';
 import { isViewportId } from '../core/sheets';
@@ -340,6 +341,10 @@ export class PropertiesPanel implements ActionPanel {
       // Flera takfall (0.10, t.ex. ett snabbval): fälten gäller alla, med det första takfallets värden.
       sections.push(`<section><h3>Tak · ${els.length} takfall</h3>${instanceFields(doc, els[0], view)}<p class="note">Ett ändrat värde gäller alla markerade takfall.</p>${lockField(els)}</section>`);
     } else if (lockField(els)) sections.push(`<section>${lockField(els)}</section>`);
+
+    // Littera (0.10.20.1): stammens sida och längd, änden, tillbaka till förvalet.
+    const tags = litteraSection(doc, els);
+    if (tags) sections.push(tags);
 
     // Ritordning (0.8.25): Längst bak … Främst, och 2D-formens lager mot väggarna.
     const order = orderSection(doc, els);

@@ -11,20 +11,20 @@ yta fylld paper [w0.35 ink] 7355,0 9795,0 9795,400 7355,400 @/snitt
 yta fylld paper [w0.35 ink] 9055,7600 11600,7600 11600,6405 12000,6405 12000,8000 9055,8000 @/snitt
 yta fylld paper [w0.35 ink] 10405,0 12000,0 12000,5195 11600,5195 11600,4060 10555,4060 10555,3940 11600,3940 11600,400 10405,400 @/snitt
 text "YV01" 4012,700 h2 start [w0.18] @yv-s/littera
-linje 4260,200 4260,610 [w0.18 ink] @yv-s/littera
+linje 4260,590 4260,200 [w0.18 ink] @yv-s/littera
 text "YV01" 11300,3752 h2 90° start [w0.18] @yv-o/littera
-linje 11800,4000 11390,4000 [w0.18 ink] @yv-o/littera
+linje 11410,4000 11800,4000 [w0.18 ink] @yv-o/littera
 text "YV01" 5752,7100 h2 start [w0.18] @yv-n/littera
-linje 6000,7800 6000,7330 [w0.18 ink] @yv-n/littera
+linje 6000,7350 6000,7800 [w0.18 ink] @yv-n/littera
 text "YV01" 900,4892 h2 90° start [w0.18] @yv-v/littera
-linje 200,5140 670,5140 [w0.18 ink] @yv-v/littera
+linje 650,5140 200,5140 [w0.18 ink] @yv-v/littera
 text "IV01" 5560,3752 h2 90° start [w0.18] @iv-1/littera
-linje 5000,4000 5330,4000 [w0.18 ink] @iv-1/littera
+linje 5310,4000 5000,4000 [w0.18 ink] @iv-1/littera
 text "IV01" 8052,3440 h2 start [w0.18] @iv-2/littera
-linje 8300,4000 8300,3670 [w0.18 ink] @iv-2/littera
+linje 8300,3690 8300,4000 [w0.18 ink] @iv-2/littera
 yta hatch ink 45° a0.6 w0.18 [w0.35 ink] 7240,400 7360,400 7360,3940 7240,3940 @/snitt
 text "IV01" 7860,1952 h2 90° start [w0.18] @iv-4/littera
-linje 7300,2200 7630,2200 [w0.18 ink] @iv-4/littera
+linje 7610,2200 7300,2200 [w0.18 ink] @iv-4/littera
 linje 1995,400 2869.7,905 [w0.18 ink] @d01/dörrblad
 båge 1995,400 r1010 0°–30° [w0.13 ink] @d01/slagbåge
 text "D1101" 1942,-320 h2 start [w0.18] @d01/littera

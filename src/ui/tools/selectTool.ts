@@ -11,7 +11,8 @@ import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { pxToMm, type ToolHost } from './host';
 import { flushSnap, roundMm, snap, type SnapResult } from './snap';
 import { lengthLabel, snapMarker } from './overlay';
-import { companionsAt, crestGripAt, depthGripAt, endGripAt, heightGripAt, isRoomLabel, roofGripAt, roomLabelAt, shapeNodeAt, type Companions, type EndGrip } from './selectGrips';
+import { companionsAt, crestGripAt, depthGripAt, endGripAt, heightGripAt, roofGripAt, shapeNodeAt, type Companions, type EndGrip } from './selectGrips';
+import { tagGripAt } from './tagGrips';
 import { dragGrip, finishGrip, fmtAngle, gripDragAt, gripsOverlay, idleUnderlayGripAt, type GripDrag } from './selectDrags';
 
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
@@ -30,8 +31,6 @@ interface Move {
   target: SnapResult | null;
   /** Kanterna som det flyttade ligger an mot. */
   flush?: [Vec2, Vec2][] | null;
-  /** Det är rumsstämpeln i ett markerat rum som dras, inte rummet (0.8.17). */
-  label?: Vec2;
 }
 
 /**
@@ -88,12 +87,6 @@ export class SelectTool implements ViewTool {
     const movable = hit && (!ro || this.host.canEdit?.(hit));
     // Med Ctrl (Cmd på Mac) blir det en kopia som dras.
     if (hit && movable && this.host.selection.has(hit) && !p.shift) {
-      // Rumsstämpeln i ett markerat rum dras för sig (0.8.17).
-      const label = !p.mod ? roomLabelAt(this.host, hit, p) : null;
-      if (label) {
-        this.move = { ids: [hit], hit, base: p.model, target: null, label };
-        return 'capture';
-      }
       // Trycker man nära ett hörn på det markerade blir hörnet baspunkt, så
       // att det kan läggas exakt mot ett annat hörn.
       const base = snap({ cursor: p.model, segments: this.host.snapSegments(), tol: pxToMm(this.host, p.pointerType === 'touch' ? 20 : 10) });
@@ -126,10 +119,6 @@ export class SelectTool implements ViewTool {
           this.grip.snap = { point: along, kind: 'angle', label: 'I linje', guide: [fixed, add(fixed, scale(dir, dist(fixed, along) * 2 + 2000))] };
         }
       }
-      return;
-    }
-    if (this.move?.label) {
-      this.move.target = { point: p.model, kind: 'free', label: '' };
       return;
     }
     if (this.move) {
@@ -199,15 +188,6 @@ export class SelectTool implements ViewTool {
     if (this.move) {
       const m = this.move;
       this.move = null;
-      if (moved && m.target && m.label) {
-        if (this.host.store.doc.elements[m.hit]?.locked) {
-          this.host.hint('Låst. Lås upp i egenskaperna för att flytta.', 3000);
-          return;
-        }
-        const to = roundMm(add(m.label, sub(m.target.point, m.base)));
-        updateParams(this.host.store, [m.hit], { labelAt: [to[0], to[1]] }, 'Flytta rumsstämpeln');
-        return;
-      }
       if (moved && m.target) {
         const d = sub(roundMm(m.target.point), roundMm(m.base));
         if (p.mod) {
@@ -316,7 +296,7 @@ export class SelectTool implements ViewTool {
       this.host.view.svg.style.cursor = this.cursor = 'default';
       return;
     }
-    this.cursor = p && (endGripAt(this.host, p.model) || depthGripAt(this.host, p.model, false) || crestGripAt(this.host, p.model, false) || (this.host.readOnly?.() && heightGripAt(this.host, p.model, false)) || idleUnderlayGripAt(this.host, this.active, p.model, false)) ? 'crosshair' : this.hoverId && this.host.selection.has(this.hoverId) ? 'move' : 'default';
+    this.cursor = p && (endGripAt(this.host, p.model) || tagGripAt(this.host, p) || depthGripAt(this.host, p.model, false) || crestGripAt(this.host, p.model, false) || (this.host.readOnly?.() && heightGripAt(this.host, p.model, false)) || idleUnderlayGripAt(this.host, this.active, p.model, false)) ? 'crosshair' : this.hoverId && this.host.selection.has(this.hoverId) ? 'move' : 'default';
     this.host.view.svg.style.cursor = this.cursor;
   }
 
@@ -353,8 +333,7 @@ export class SelectTool implements ViewTool {
       const byId = pickableById(this.host.plan().pickables);
       for (const id of this.move.ids) {
         const item = byId.get(id);
-        if (item && this.move.label) out.push(ghost(cam, { ...item, regions: [], prims: item.prims.filter(isRoomLabel) }, d));
-        else if (item) out.push(ghost(cam, item, d));
+        if (item) out.push(ghost(cam, item, d));
       }
       const a = cam.toScreen(this.move.base);
       const b = cam.toScreen(this.move.target.point);

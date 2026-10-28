@@ -1,3 +1,4 @@
+import type { LeaderEnd } from '../elements/leader';
 import { normalizeFillTypes, type CustomFillType, type HatchLine } from './fillTypes';
 import { normalizeLineTypes, type CustomLineType } from './lineTypes';
 /**
@@ -155,7 +156,22 @@ export interface LabelStyle {
    * fet stil, en rad med bara {takhöjd} grå text. Tomma rader hoppas över.
    */
   room: string;
+  /**
+   * Ledarna per littera-sort (0.10.20.1): änden och stammens längd (mm på
+   * papperet). Objektets egna val i `tag` går före.
+   */
+  leaders: Record<LeaderKind, LeaderStyle>;
 }
+
+/** Littera-sorterna som har en ledare (0.10.20.1); `Ground` är stödmurens. */
+export type LeaderKind = 'Wall' | 'Door' | 'Window' | 'Space' | 'Ground';
+
+export interface LeaderStyle {
+  end: LeaderEnd;
+  stub: number;
+}
+
+const LEADER_END_KEYS: readonly LeaderEnd[] = ['auto', 'none', 'arrow', 'filled', 'dot', 'slash', 'ring'];
 
 export const DEFAULT_LABELS: LabelStyle = {
   align: 'left',
@@ -166,6 +182,14 @@ export const DEFAULT_LABELS: LabelStyle = {
     Window: { normal: '{typ}', detail: '{typ}\n{hål}' },
   },
   room: '{namn}\n{nummer}\n{area}\nTH {takhöjd}',
+  // Förvalen ritar som före 0.10.20.1: väggens och murens streck utan ände, rummets öppna pil.
+  leaders: {
+    Wall: { end: 'none', stub: 3 },
+    Door: { end: 'auto', stub: 3 },
+    Window: { end: 'auto', stub: 3 },
+    Space: { end: 'arrow', stub: 3 },
+    Ground: { end: 'none', stub: 3 },
+  },
 };
 
 const outline: LineDef = { weight: 0.35, color: 'ink' };
@@ -301,5 +325,11 @@ function normalizeLabels(l: any): LabelStyle {
     heights: { roomName: h('roomName'), roomInfo: h('roomInfo'), littera: h('littera'), dimension: h('dimension') },
     templates: { Wall: t('Wall'), Door: t('Door'), Window: t('Window') },
     room: typeof l?.room === 'string' ? l.room : d.room,
+    leaders: Object.fromEntries(
+      (Object.keys(d.leaders) as LeaderKind[]).map((k) => {
+        const v = l?.leaders?.[k];
+        return [k, { end: LEADER_END_KEYS.includes(v?.end) ? v.end : d.leaders[k].end, stub: Number(v?.stub) >= 0 && v?.stub !== null && v?.stub !== '' && v?.stub !== undefined ? Number(v.stub) : d.leaders[k].stub }];
+      }),
+    ) as Record<LeaderKind, LeaderStyle>,
   };
 }

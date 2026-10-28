@@ -2,6 +2,8 @@ import type { Element } from '../core/model';
 import { detailOf } from '../core/states';
 import { markerPen } from '../repr/markerPens';
 import type { Primitive, Vec2 } from '../repr/primitives';
+import type { LeaderKind } from '../core/graphics';
+import { fromFrame, leaderOf, type TagParams, type TextBox } from './leader';
 import type { PlanContext } from './registry';
 import { doorNumbersFor } from './rooms';
 import { FRAME_LESS, HOLE_EXTRA, type WallFrame } from './wall';
@@ -100,8 +102,10 @@ export function litteraLines(ctx: PlanContext, el: Element<any>): string[] {
 /**
  * Littera intill en vägg, dörr eller ett fönster, längs väggen på angiven
  * sida. Texten vänds så att den läses nedifrån eller från höger, och raderna
- * justeras enligt stilmallen. Väggar får ett rakt streck från texten in
- * till väggens mitt.
+ * justeras enligt stilmallen. Väggar får en ledare från texten in till
+ * väggens mitt; dörrar och fönster får en när litteran flyttats (0.10.20.1).
+ * Texten och punkten kan flyttas (`tag` i objektets parametrar), i textens
+ * egna axlar så att de följer väggen.
  */
 export function litteraTag(ctx: PlanContext, el: Element<any>, f: WallFrame, s: number, side: 1 | -1, opts: { leader?: boolean } = {}): Primitive[] {
   const lines = litteraLines(ctx, el);
@@ -115,34 +119,47 @@ export function litteraTag(ctx: PlanContext, el: Element<any>, f: WallFrame, s: 
   while (a <= -Math.PI / 2 + 1e-6) a += Math.PI;
   const along: Vec2 = [Math.cos(a), Math.sin(a)];
   const up: Vec2 = [-Math.sin(a), Math.cos(a)];
+  const frame = { along, up };
+  const tag = (ctx.params<{ tag?: TagParams }>(el).tag ?? {}) as TagParams;
   // Ligger etiketten "ovanför" väggen i läsriktningen staplas raderna uppåt
   // från väggen; annars nedåt.
   const onUpSide = (f.n[0] * up[0] + f.n[1] * up[1]) * side > 0;
   const gap = paper(opts.leader ? 3 : 1.2);
   const n = lines.length;
   const width = Math.max(...lines.map((l) => l.length)) * paper(height) * 0.62;
-  const origin = { objectId: el.id, objectType: el.type, part: 'littera' };
   const base = f.at(s, side * f.half);
   const outward: Vec2 = [f.n[0] * side, f.n[1] * side];
-  const at = (d: number, x: number): Vec2 => [base[0] + outward[0] * d + along[0] * x, base[1] + outward[1] * d + along[1] * x];
+  const shift = fromFrame(tag.at, frame);
+  const at = (d: number, x: number): Vec2 => [base[0] + outward[0] * d + along[0] * x + shift[0], base[1] + outward[1] * d + along[1] * x + shift[1]];
   const left = labels.align === 'left';
-  const out: Primitive[] = lines.map((text, k) => {
-    const d = onUpSide ? gap + (n - 1 - k) * step : gap + paper(height) + k * step;
-    return {
-      kind: 'text',
-      at: at(d, left ? -width / 2 : 0),
-      text,
-      height,
-      align: left ? 'start' : 'middle',
-      angle: a,
-      pen: { weight: 0.18 },
-      origin,
-    };
-  });
-  if (opts.leader) {
-    // Ett rakt streck från texten in till väggens mitt, utan streck längs texten.
-    const d = onUpSide ? gap - paper(0.9) : gap - paper(0.3);
-    out.push({ kind: 'line', a: at(-f.half, 0), b: at(d, 0), pen: markerPen(ctx.style, 'litteraLeader'), origin });
-  }
+  const rows = lines.map((text, k) => ({ text, at: at(onUpSide ? gap + (n - 1 - k) * step : gap + paper(height) + k * step, left ? -width / 2 : 0) }));
+  // Textens ruta längs textens axlar: från understa radens fot till översta radens topp.
+  const ys = rows.map((r) => (r.at[0] - base[0] - shift[0]) * up[0] + (r.at[1] - base[1] - shift[1]) * up[1]);
+  const lo = Math.min(...ys) - paper(height) * 0.3;
+  const hi = Math.max(...ys) + paper(height);
+  const box: TextBox = { center: [base[0] + up[0] * (lo + hi) / 2 + shift[0], base[1] + up[1] * (lo + hi) / 2 + shift[1]], halfW: width / 2, halfH: (hi - lo) / 2, along, up };
+  const moved = !!(tag.at || tag.to);
+  const show = opts.leader || moved;
+  const target = show ? add(f.at(s, 0), fromFrame(tag.to, frame)) : null;
+  const style = labels.leaders[el.type as LeaderKind] ?? labels.leaders.Wall;
+  const geo = target
+    ? leaderOf(box, [{ at: target, inside: true }], { side: tag.side, end: tag.end ?? style.end, stub: tag.stub ?? style.stub, gap: 0.5, scale: ctx.scale, pen: markerPen(ctx.style, 'litteraLeader') })
+    : null;
+  const origin = { objectId: el.id, objectType: el.type, part: 'littera', tag: { param: 'tag' as const, text: box.center, target, stubStart: geo?.start ?? null, stubEnd: geo?.stubEnd ?? null, dir: geo?.dir ?? null, frame } };
+  const out: Primitive[] = rows.map((r) => ({
+    kind: 'text',
+    at: r.at,
+    text: r.text,
+    height,
+    align: left ? 'start' : 'middle',
+    angle: a,
+    pen: { weight: 0.18 },
+    origin,
+  }));
+  for (const q of geo?.prims ?? []) out.push({ ...q, origin });
   return out;
+}
+
+function add(a: Vec2, b: Vec2): Vec2 {
+  return [a[0] + b[0], a[1] + b[1]];
 }

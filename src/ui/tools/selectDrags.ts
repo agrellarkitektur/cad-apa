@@ -11,6 +11,7 @@ import type { ViewPointer } from '../../view2d/planView';
 import type { ToolHost } from './host';
 import { roundMm, snap, type SnapResult } from './snap';
 import { lengthLabel, snapMarker } from './overlay';
+import { tagDragPoint, tagGripAt, tagOverlay, tagPatch, type TagGrip } from './tagGrips';
 import { crestDragTo, crestGripAt, crestGripsShown, depthDragValue, depthGeometry, depthGripAt, depthGripsShown, heightGripAt, heightGripsShown, roofGripAt, roofGripsShown, shapeNodeAt, underlayGripAt, underlayGripsShown, type CrestGrip, type DepthGrip, type HeightGrip } from './selectGrips';
 
 /**
@@ -33,7 +34,9 @@ export type GripDrag =
   /** En höjdpunkt på en stödmur som dras längs muren (0.10.13). */
   | { kind: 'crest'; grip: CrestGrip; to: Vec2 | null }
   /** En punkt i ett 2D-element (0.8 del 2). */
-  | { kind: 'node'; id: string; hole?: number; index: number; from: Vec2; snap: SnapResult | null };
+  | { kind: 'node'; id: string; hole?: number; index: number; from: Vec2; snap: SnapResult | null }
+  /** Litterans text, punkt eller knäck (0.10.20.1). */
+  | { kind: 'tag'; grip: TagGrip; from: Vec2; to: Vec2 | null };
 
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 const LOCKED = 'Låst. Lås upp i egenskaperna för att ändra.';
@@ -53,6 +56,8 @@ export function gripDragAt(host: ToolHost, p: ViewPointer, ro: boolean): GripDra
   if (cg) return { kind: 'crest', grip: cg, to: null };
   const nd = shapeNodeAt(host, p.model, touch);
   if (nd) return { kind: 'node', ...nd, snap: null };
+  const tg = tagGripAt(host, p);
+  if (tg) return { kind: 'tag', grip: tg, from: p.model, to: null };
   return null;
 }
 
@@ -78,6 +83,12 @@ export function dragGrip(host: ToolHost, d: GripDrag, p: ViewPointer, tol: numbe
     case 'crest':
       d.to = crestDragTo(host, d.grip.id, p.model);
       return;
+    case 'tag': {
+      // Punkten snäpper mot det som ritats; texten och knäcken följer musen.
+      const sn = d.grip.kind === 'target' && !p.shift ? snap({ cursor: p.model, segments: host.snapSegments(), tol, exclude: new Set([d.grip.id]) }) : null;
+      d.to = tagDragPoint(d.grip, d.from, sn && sn.kind !== 'free' ? sn.point : p.model, p.shift);
+      return;
+    }
     case 'node': {
       const el = editedShape(host.store.doc, d.id, d.hole);
       const pts = el ? shapeNodes(el) : [];
@@ -131,6 +142,18 @@ export function finishGrip(host: ToolHost, d: GripDrag, p: ViewPointer, moved: b
       updateParams(host.store, [el.id], { crest: list }, 'Flytta höjdpunkten');
       return;
     }
+    case 'tag': {
+      const el = doc.elements[d.grip.id];
+      if (!el) return;
+      if (!moved || !d.to) {
+        host.modify?.(p, d.grip.id);
+        return;
+      }
+      if (el.locked) return void host.hint(LOCKED, 3000);
+      const ch = tagPatch(host, d.grip, d.to);
+      if (ch) updateParams(host.store, [el.id], ch.patch, ch.label);
+      return;
+    }
     case 'underlay': {
       const el = doc.elements[d.id];
       if (!el || !moved || !d.snap) return;
@@ -168,7 +191,7 @@ const diamond = (s: Vec2, cls = 'grip') => `<path d="M${s[0]} ${s[1] - 7}L${s[0]
  * ändras.
  */
 export function gripsOverlay(host: ToolHost, cam: Camera, d: GripDrag | null): string {
-  const out: string[] = [];
+  const out: string[] = [tagOverlay(host, cam, d?.kind === 'tag' ? d : null)];
   // Greppen för markerade tak i en fasad eller sektion, och taket medan det dras.
   for (const g of roofGripsShown(host)) {
     const s = cam.toScreen(g.at);

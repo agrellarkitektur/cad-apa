@@ -1247,6 +1247,48 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Litteran (0.10.20.1, format 20)
+
+Inga nya format: `tag` (`TagParams` i `src/elements/leader.ts`) är en
+frivillig parameter på väggar, dörrar, fönster, rum och stödmurar, och
+stilmallen har `labels.leaders` (änden och stammens längd per sort,
+`LeaderKind`: `Wall`, `Door`, `Window`, `Space`, `Ground`), kompletterad i
+`normalizeLabels`.
+
+- **Ledaren** (`leaderOf`): en `TextBox` (mitt, halv bredd och höjd, textens
+  axlar `along` och `up`) och en eller flera `LeaderTarget`. Stammen börjar
+  `gap` mm (papper) utanför rutans sida och är minst `stub` mm lång; varje
+  punkt får en knäck på stammen och en sned del. Med `angle` räknas
+  knäckarna ut så att de sneda delarna blir parallella (`k = a − l/tan`),
+  och stammen slutar vid den yttersta. En punkt i stammens linje nås av
+  stammen själv. `autoSide` väljer sidan; `leaderEnd` ritar ändarna;
+  `snap15` är Shift.
+- **Förskjutningarna** `tag.at` (texten) och `tag.to` (punkten) är mm i
+  modellen från förvalet. Littera längs en vägg (`litteraTag` i
+  `littera.ts`) räknar dem i textens axlar (`toFrame`, `fromFrame`), så att
+  de följer väggen; rummets och stödmurens i planens axlar, och
+  `transformed` i `transforms.ts` vrider och speglar dem som vektorer.
+  Rummets text står kvar i `labelAt`. `tag.stub` är mm på papperet.
+- **Greppen** läses ur ritningen: litterans primitiver har `origin.tag`
+  (`TagHandles` i `primitives.ts`: textens läge, punkten, stammens början,
+  ände och riktning, och vilken parameter texten skrivs till). `tagGrips.ts`
+  samlar dem per objekt en gång per plan (en `WeakMap` på `plan.prims`,
+  eftersom väggarnas littera ritas i väggarnas `planBatch` och inte hör till
+  väggens klickbara form). `gripDragAt` i `selectDrags.ts` har sorten
+  `tag`; `tagDragPoint` räknar läget (Shift, knäcken längs stammen),
+  `tagPatch` ändringen. Rumsstämpelns gamla drag i `selectTool.ts`
+  (`roomLabelAt`) är borta.
+- **Panelen**: `src/ui/litteraSection.ts` (fälten `tag:side`, `tag:end`,
+  `tag:stub` via `applyField`, knappen `tag-reset`), stilmallens rader i
+  `src/ui/style/labels.ts` (`le:` och `ls:`).
+- **Ny sort med ledare**: rita texten, räkna en `TextBox` och punkten, kalla
+  `leaderOf` med stilmallens `labels.leaders[sort]` och objektets `tag`, och
+  ge alla litterans primitiver samma `origin` med `tag`. Lägg sorten i
+  `LeaderKind`, `DEFAULT_LABELS.leaders` och `leaderKindOf`.
+- Tester: `tests/v010201.test.ts`. Referensritningarna ändrades: väggarnas
+  streck går nu från texten till väggen (och 20 mm kortare), stödmurens
+  text har strecket mellan raderna och en stam till knäcken.
+
 ## Granskning efter 0.10.21 (0.10.21.1, format 20)
 
 Tre småfel ur Inkorgen och `groundRamp.ts` delad. De som använder det

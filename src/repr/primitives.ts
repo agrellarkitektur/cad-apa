@@ -36,7 +36,26 @@ export interface Origin {
   objectType?: string;
   /** Vilken del av objektet, t.ex. "snitt", "dörrblad", "slagbåge". */
   part?: string;
+  /** Litterans grepp (0.10.20.1), på litterans primitiver. */
+  tag?: TagHandles;
 }
+
+/**
+ * Litterans grepp (0.10.20.1), som Markera läser ur primitivernas ursprung:
+ * textens mitt, punkten, stammens ände och riktning. `param` säger var
+ * texten sparas (`labelAt` för rummet, annars `tag.at`), och `frame` i
+ * vilka axlar förskjutningarna står (textens för littera längs en vägg).
+ */
+export interface TagHandles {
+  param: 'labelAt' | 'tag';
+  text: Vec2;
+  target: Vec2 | null;
+  stubStart: Vec2 | null;
+  stubEnd: Vec2 | null;
+  dir: Vec2 | null;
+  frame?: { along: Vec2; up: Vec2 };
+}
+
 
 interface Base {
   origin?: Origin;

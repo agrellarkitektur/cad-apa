@@ -3,13 +3,39 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 28 oktober 2026 (förmiddag), efter granskningen efter 0.10.21
-(0.10.21.1).
+Senast: 28 oktober 2026 (förmiddag), efter 0.10.20.1 Litteran.
 
 ## Läget
 
-- **Nästa session:** **0.10.20.1 Litteran** om Carl August inte säger
-  annat (liten). Se *Nästa session*.
+- **Nästa session:** **0.10.20.2 Generell littera** om Carl August inte
+  säger annat (mellanstor till stor, troligen nytt format). Se *Nästa
+  session*.
+- **0.10.20.1 Litteran är klar** på `main` (samma format, 20), byggd 28
+  oktober (förmiddag). Carl August utvidgade den i samtalet: alla littera
+  med ledare ska kunna flyttas (också rummets), ledaren går vinkelrätt ut
+  från texten (stammen) och viker sedan av, Shift i 15°-steg, olika ändar;
+  flera ledare delar stammen (hans skiss: parallella sneda delar). Det
+  generella littrat blev 0.10.20.2. Han svarade på frågorna om 0.10.21
+  "kör enligt ditt förslag" (strukna) och godtog Claudes val O–S. Byggt:
+  `src/elements/leader.ts` (`leaderOf`, `autoSide`, `leaderEnd`, `snap15`;
+  parallella knäckar med `angle`, prövat men inte använt än); rummet,
+  väggarna, dörrarna, fönstren och stödmuren använder den, med `tag` i
+  parametrarna (`at`, `to`, `stub`, `side`, `end`); greppen i
+  `src/ui/tools/tagGrips.ts` (texten dras i sig själv, punkten rund,
+  knäcken fyrkant), läst ur `origin.tag` på primitiverna; *Littera* i
+  egenskaperna (`src/ui/litteraSection.ts`), *Ledarna* i stilmallen
+  (`labels.leaders`). Rumsstämpelns gamla drag i `selectTool.ts` och
+  knappen *Stämpeln i mitten* är borta (*Litteran tillbaka*). Koden i
+  UTVECKLING.md under *Litteran*; Claudes val i PLAN.md. Testerna: 629 på
+  ca 18 s. Provat i Playwright mot `dist/` (väggens littera dragen ut med
+  Shift på punkten, dörrens, rummets stämpel utanför rummet, panelen).
+  Klickjämförelsen kördes **inte**; nya steg i nästa granskning.
+  Versionsnumret går "bakåt" (0.10.20.1 efter 0.10.21.1), enligt planen.
+- **Märks i hans ritningar efter 0.10.20.1:** väggarnas streck in till
+  väggen är 20 mm kortare vid texten; stödmurens text har strecket mellan
+  raderna och en stam (3 mm) till knäcken rakt ut från muren, i stället
+  för det fasta vågräta strecket på 11 mm; rummets pil utanför rummet har
+  en stam och pekar på konturen (förut 2 mm in i rummet).
 - **Granskningen efter 0.10.21 är klar** som **0.10.21.1** på `main`
   (samma format, 20), gjord 28 oktober (förmiddag). Småfelen ur Inkorgen:
   slänternas fyllning ritas nu också för rampen och vägen (`linePlan`
@@ -210,11 +236,11 @@ Senast: 28 oktober 2026 (förmiddag), efter granskningen efter 0.10.21
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.21.1` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.20.1` i `engine.ts`, `package.json` och
   `package-lock.json` (npm godtar fyra delar i ett privat paket); nästa
-  version är `0.10.20.1` (Litteran). En granskning höjer inte numret, eller får en
+  version är `0.10.20.2` (Generell littera). En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.21 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.21 och 0.10.20.1 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -273,9 +299,10 @@ vid varje överlämning.
   Linjerna i 2D-formen~~, ~~0.10.18 Rampens referenslinje~~, ~~Granskning
   efter 0.10.18 (0.10.18.1)~~, ~~0.10.19 Markobjektens bågar~~, ~~0.10.20
   Situationsplanens beteckningar~~ (klara)
-- ~~0.10.21 Lutande väggar~~, ~~Granskning efter 0.10.21 (0.10.21.1)~~
-  (klara)
-- **0.10.20.1 Litteran** (liten: flytta litteran för hand, ledarens grepp)
+- ~~0.10.21 Lutande väggar~~, ~~Granskning efter 0.10.21 (0.10.21.1)~~,
+  ~~0.10.20.1 Litteran~~ (klara)
+- **0.10.20.2 Generell littera** (mellanstor till stor, troligen nytt
+  format: fritext och smarttext ur det man pekar på, flera ledare)
 - **Snäpp i marken** (mellanstor: gränser, byggnader, markobjekt;
   trollstaven för stödmur längs ett objekt)
 - **Utredning: material i stället för fyllningar** (egen session, rör
@@ -298,14 +325,17 @@ vid varje överlämning.
 
 ## Nästa session
 
-Kör **0.10.20.1 Litteran** om Carl August inte säger annat (liten):
-grepp för litteran på alla objekt som har en (`littera.ts`), två för
-stödmurens ledare (punkten den pekar på och texten; `wallLeader` i
-`groundMarks.ts`), och ledarens sida byter när texten korsar mittlinjen.
-Det flyttade sparas som en förskjutning i objektets parametrar (valfri,
-samma format). Sedan **Snäpp i marken** (mellanstor). Läs
-`cad-apa-synpunkter.md` först och ställ frågorna för 0.10.21 (fem åt
-gången), om han inte redan svarat.
+Kör **0.10.20.2 Generell littera** om Carl August inte säger annat
+(mellanstor till stor, troligen nytt format eftersom det är en ny
+objekttyp; kan ta mer än en session, säg det). Förslagen står i PLAN.md:
+fritext och smarttext ur objektet ledaren pekar på, flera ledare på
+stammen (parallella med `angle` i `leaderOf`, eller fria), ledare som
+sitter fast i objekten, rikta och fördela, löpnummer, Visa per sort, ram.
+Bygg på `leader.ts`, `tagGrips.ts` och `litteraSection.ts`. Sedan **Snäpp
+i marken** (mellanstor). Därefter är det dags för en granskning (efter
+0.10.20.1, 0.10.20.2 och Snäpp i marken), med klicksteg för litteran.
+Läs `cad-apa-synpunkter.md` först och ställ frågorna för 0.10.20.1 (fem
+åt gången), om han inte redan svarat.
 
 ## Att fråga Carl August om
 
@@ -313,18 +343,18 @@ Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
 
-**0.10.21 efter provning** (Claudes val, se PLAN.md)
-- Lutningen är positiv åt vänster (som bågen). Hellre "ut" och "in" för
-  ytterväggar, eller räcker tecknet?
-- Skarvarna i 3D räknas vid foten: en lutande vägg som möter en lodrät
-  får en glipa eller går in i den högre upp. Behövs en riktig skarv
-  (mellanstor)?
-- I planen ligger greppen på referenslinjen vid foten, en bit från
-  snittytan. Störande, eller rätt?
-- Fotens kontur (vy) och toppens (streckprickad) ritas utan skarvar mot
-  grannväggarna. Räcker det?
-- Ska väggverktyget få lutningen som ett val, eller sätts den i panelen
-  efteråt som nu?
+**0.10.20.1 efter provning** (Claudes val, se PLAN.md)
+- Förskjutningarna sparas i mm i modellen, så litteran står lika långt
+  från objektet i verkligheten i alla skalor. Hellre på papperet (lika
+  långt på papperet i 1:50 och 1:100)?
+- Sidan byter mellan höger och vänster vid textens mittlinje, och blir
+  uppåt eller nedåt när punkten ligger rakt under textens mittersta halva.
+  Lagom?
+- Förvalen ritar som förut: väggens och murens streck utan ände, rummets
+  öppna pil, dörrar och fönster prick (Automatiskt). Rätt?
+- Texten har inget synligt grepp (man drar i texten). Svårt att hitta?
+- Stödmurens text har strecket mellan raderna, och stammen fortsätter det.
+  Ser det rätt ut?
 
 **0.10.20 efter provning** (Claudes val, se PLAN.md)
 - Markhöjden räknar marken som oförändrad när ny och befintlig skiljer
@@ -517,6 +547,14 @@ fråga.
   `app.ts` (566) är näst störst. Stilmallens fönster har tre kolumner från 1180 px; under
   det ligger delarna under varandra som förut.
 
+- **Litteran (0.10.20.1):** markhöjdens och markbeteckningarnas text och
+  nivåmarkörernas har ingen ledare och går inte att flytta. Textens ruta
+  räknas ur antalet tecken (0,62 × höjden per tecken för väggar, dörrar,
+  fönster och rum, som förut), så stammen kan börja en bit från en smal
+  text. Väggarnas förskjutningar står i textens axlar; en speglad vägg
+  vänder textens riktning, så en flyttad littera kan hamna på andra sidan
+  (inte prövat). Litterans grepp söks i hela ritningen en gång per plan
+  (`WeakMap` på `plan.prims`); inte mätt på ett stort projekt.
 - **Lutande väggar (0.10.21):** samma lutning i båda ändarna; bågväggar
   lutar inte; skarvarna i 3D vid foten (glipa eller överlapp mot lodräta
   grannar högre upp, inte prövat); takets yta i plan flyttas tillbaka med

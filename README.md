@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.21.1** (alfa); nästa är **0.10.20.1 Litteran**.
+**0.10.20.1** (alfa, efter 0.10.21.1); nästa är **0.10.20.2 Generell littera**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,25 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.20.1, litteran (samma filformat, 20):
+- **En gemensam ledare** för alla littera: rummets stämpel, väggarnas,
+  dörrarnas och fönstrens littera och stödmurens. Ledaren går först
+  vinkelrätt ut från textens sida (stammen) och viker sedan av snett mot
+  punkten den pekar på. Ligger punkten rakt ut från texten räcker stammen
+- **Flytta litteran för hand**: markera objektet och dra i texten. Dörrar
+  och fönster får en ledare när litteran flyttats; rummets stämpel får en
+  när den står utanför rummet, som förut. Punkten som ledaren pekar på
+  (den runda) och stammens längd (fyrkanten) har egna grepp. **Shift**
+  håller den sneda delen i steg om 15°. Stammen byter sida av sig själv
+  när texten dras förbi punkten
+- **Littera** i egenskaperna: stammens sida (automatiskt, uppåt, åt höger,
+  nedåt, åt vänster), änden (pil, fylld pil, prick, snedstreck, ring eller
+  ingen; *Automatiskt* ger pil mot en kant och prick inne i en yta),
+  stammens längd och *Litteran tillbaka*. Förvalen per sort står i
+  stilmallen under *Texter och littera* (*Ledarna*)
+- Det flyttade följer objektet när det flyttas, vrids och speglas
+- *Stämpeln i mitten* heter nu *Litteran tillbaka* (under Littera)
 
 Version 0.10.21.1, granskning (samma filformat, 20):
 - **Slänternas fyllning** ritas nu också för rampen och vägen (förut

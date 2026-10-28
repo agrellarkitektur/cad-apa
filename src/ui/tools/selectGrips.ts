@@ -10,25 +10,20 @@ import type { GroundParams } from '../../elements/ground';
 import { along, flatPoints, lineLength } from '../../elements/groundLines';
 import { markerFrame } from '../../elements/markers';
 import { pickableById } from '../../repr/plan';
-import type { Primitive, Vec2 } from '../../repr/primitives';
-import { distToPrim } from '../../view2d/pick';
-import type { ViewPointer } from '../../view2d/planView';
+import type { Vec2 } from '../../repr/primitives';
 import { pxToMm, type ToolHost } from './host';
 
 /**
  * Greppen som Markera hittar under markören (ur selectTool.ts i 0.8.23):
  * ändarna på markerade väggar och för hand placerade sektions- och
  * fasadmarkörer, punkterna i markerade 2D-former, greppen i en markerad bild,
- * takets nock och takfot i en fasad eller sektion, och rumsstämpeln i ett
- * markerat rum. Allt gäller bara det markerade, så inget söks i hela
+ * takets nock och takfot i en fasad eller sektion. Litterans grepp
+ * (också rumsstämpelns) ligger i tagGrips.ts sedan 0.10.20.1. Allt gäller bara det markerade, så inget söks i hela
  * projektet vid varje musrörelse.
  */
 
 /** Hur nära ett grepp markören ska vara, px. */
 export const GRIP_PX = 14;
-
-/** Rumsstämpelns text och pil. */
-export const isRoomLabel = (q: Primitive): q is Primitive => q.origin?.part === 'rumstext';
 
 /** En sektions- eller fasadmarkör som placerats för hand och har grepp i ändarna. */
 export function isManualMarker(el: Element | undefined): el is Element {
@@ -160,31 +155,6 @@ export function roofGripAt(host: ToolHost, pt: Vec2, touch: boolean): RoofGrip |
     if (d <= tol && (!best || d < best.d)) best = { g, d };
   }
   return best?.g ?? null;
-}
-
-/**
- * Rumsstämpelns mittpunkt om punkten ligger på stämpeln i ett markerat rum
- * (texten eller pilen), annars null (0.8.17).
- */
-export function roomLabelAt(host: ToolHost, id: string, p: ViewPointer): Vec2 | null {
-  const el = host.store.doc.elements[id];
-  if (el?.type !== 'Space') return null;
-  const item = pickableById(host.plan().pickables).get(id);
-  const prims = item?.prims.filter(isRoomLabel) ?? [];
-  const tol = pxToMm(host, p.pointerType === 'touch' ? 14 : 6);
-  if (!prims.some((q) => distToPrim(p.model, q, host.view.drawingScale) <= tol)) return null;
-  const own = (el.params as { labelAt?: [number, number] }).labelAt;
-  if (own) return [own[0], own[1]];
-  // Stämpeln står i mitten av texterna.
-  const texts = prims.filter((q) => q.kind === 'text');
-  const ys = texts.map((q) => q.at[1]);
-  const xs = texts.map((q) => q.at[0]);
-  const s = host.view.drawingScale;
-  const left = texts[0]?.align === 'start';
-  const widest = Math.max(...texts.map((q) => q.text.length * q.height * 0.62)) * s;
-  const top = Math.max(...ys) + (texts[0]?.height ?? 0) * s / 3;
-  const bottom = Math.min(...ys) + (texts[texts.length - 1]?.height ?? 0) * s / 3;
-  return [left ? xs[0] + widest / 2 : xs[0], (top + bottom) / 2];
 }
 
 /** En höjdpunkt på en markerad stödmur (0.10.13), som dras längs referenslinjen. */

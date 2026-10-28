@@ -672,11 +672,11 @@ describe('version 0.6.2', () => {
     for (const l of lines) {
       if (l.kind !== 'line') continue;
       const w = resolveParams<WallParams>(doc, doc.elements[l.origin!.objectId!]);
-      // Startpunkten ligger på väggens mittlinje.
+      // Spetsen ligger på väggens mittlinje (0.10.20.1: ledaren går från texten).
       const dx = w.end[0] - w.start[0], dy = w.end[1] - w.start[1];
       const len = Math.hypot(dx, dy);
       const shift = w.justification === 'left' ? w.thickness / 2 : w.justification === 'right' ? -w.thickness / 2 : 0;
-      const cross = ((l.a[0] - w.start[0]) * -dy + (l.a[1] - w.start[1]) * dx) / len;
+      const cross = ((l.b[0] - w.start[0]) * -dy + (l.b[1] - w.start[1]) * dx) / len;
       expect(Math.abs(cross - shift)).toBeLessThan(0.01);
     }
   });

@@ -40,6 +40,23 @@ function mirrorX(center: Pt): PlanTransform {
 
 /** Elementets nya parametrar efter avbildningen, och följdändringar i det som sitter i det. */
 export function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, moving: Set<Id>): Element[] {
+  const out = transformedParams(doc, el, t, moving);
+  // Litterans förskjutningar i planens axlar (0.10.20.1: rummets och stödmurens)
+  // vrids och speglas med objektet; väggarnas står i textens egna axlar.
+  const tag = (el.params as { tag?: { at?: Pt; to?: Pt } }).tag;
+  if (tag && (el.type === 'Space' || el.type === 'Ground') && out[0]?.id === el.id) {
+    const o = t.map([0, 0]);
+    const vec = (v?: Pt): Pt | undefined => {
+      if (!v) return undefined;
+      const q = t.map(v);
+      return [q[0] - o[0], q[1] - o[1]];
+    };
+    out[0] = { ...out[0], params: { ...out[0].params, tag: { ...tag, ...(tag.at ? { at: vec(tag.at) } : {}), ...(tag.to ? { to: vec(tag.to) } : {}) } } };
+  }
+  return out;
+}
+
+function transformedParams(doc: ProjectDoc, el: Element, t: PlanTransform, moving: Set<Id>): Element[] {
   const p = el.params as Record<string, any>;
   const out: Element[] = [];
   if (p.start && p.end) {

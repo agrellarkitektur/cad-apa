@@ -82,7 +82,7 @@ describe('pennor för pilar och markörer (0.8.26)', () => {
     doc.elements[room.id] = { ...room, params: { ...room.params, labelAt: [-50000, -50000] } };
     const prims = primsOf(doc, 'Space', styled({ roomLeader: { weight: 0.35, color: RED } }));
     const leader = prims.filter((p) => p.kind === 'line');
-    expect(leader.length).toBe(3);
+    expect(leader.length).toBe(4);
     expect(leader.every((p) => p.kind === 'line' && p.pen.weight === 0.35 && p.pen.color === RED)).toBe(true);
   });
 

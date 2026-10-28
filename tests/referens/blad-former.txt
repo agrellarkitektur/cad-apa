@@ -79,20 +79,20 @@ polylinje 432,231.2 411.1,231.2 411.1,228.8 432,228.8 [w0.35 ink] @iv-2/kontur
 polylinje 432,228.8 432,158 [w0.35 ink] @yv-o/kontur
 polylinje 432,158 408.1,158 408.1,150 440,150 [w0.35 ink] @yv-s/kontur
 text "YV01" 352.3,161 h2 start [w0.18] @yv-s/littera
-linje 354.8,154 354.8,160.1 [w0.18 ink] @yv-s/littera
+linje 354.8,159.9 354.8,154 [w0.18 ink] @yv-s/littera
 text "YV01" 429,227.5 h2 90° start [w0.18] @yv-o/littera
-linje 436,230 429.9,230 [w0.18 ink] @yv-o/littera
+linje 430.1,230 436,230 [w0.18 ink] @yv-o/littera
 text "YV01" 317.5,297 h2 start [w0.18] @yv-n/littera
-linje 320,306 320,299.3 [w0.18 ink] @yv-n/littera
+linje 320,299.5 320,306 [w0.18 ink] @yv-n/littera
 text "YV01" 213,227.5 h2 90° start [w0.18] @yv-v/littera
-linje 204,230 210.7,230 [w0.18 ink] @yv-v/littera
+linje 210.5,230 204,230 [w0.18 ink] @yv-v/littera
 text "IV01" 306.2,227.5 h2 90° start [w0.18] @iv-1/littera
-linje 300,230 303.9,230 [w0.7 #00aa00 d3/1.5] @iv-1/littera
+linje 303.7,230 300,230 [w0.7 #00aa00 d3/1.5] @iv-1/littera
 text "IV01" 363.5,223.8 h2 start [w0.18] @iv-2/littera
-linje 366,230 366,226.1 [w0.18 ink] @iv-2/littera
+linje 366,226.3 366,230 [w0.18 ink] @iv-2/littera
 yta mönster ink 0° a1.5 + 90° a2.6 f1.5 d1.5/1.5 w0.18 [w0.35 ink] 344.8,158 347.2,158 347.2,228.8 344.8,228.8 @/snitt
 text "IV01" 352.2,191.5 h2 90° start [w0.18] @iv-4/littera
-linje 346,194 349.9,194 [w0.18 ink] @iv-4/littera
+linje 349.7,194 346,194 [w0.18 ink] @iv-4/littera
 polylinje sluten 259.9,153 258.9,153 258.9,151 259.9,151 [w0.25 ink] @d01/karm
 polylinje sluten 240.1,153 241.1,153 241.1,151 240.1,151 [w0.25 ink] @d01/karm
 linje 241.1,153 256.5,161.9 [w0.18 ink] @d01/dörrblad

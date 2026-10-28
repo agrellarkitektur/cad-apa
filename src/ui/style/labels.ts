@@ -1,5 +1,9 @@
 import type { StyleSheet } from '../../core/graphics';
+import type { LeaderKind } from '../../core/graphics';
+import { LEADER_ENDS, type LeaderEnd } from '../../elements/leader';
 import { escapeHtml } from '../labels';
+
+const LEADER_NAMES: Record<LeaderKind, string> = { Wall: 'Väggar', Door: 'Dörrar', Window: 'Fönster', Space: 'Rum', Ground: 'Stödmurar' };
 
 /** Stilmallens texter och littera: justering, texthöjder och mallarna. */
 export function labelSection(style: StyleSheet): string {
@@ -25,6 +29,15 @@ export function labelSection(style: StyleSheet): string {
       <div class="tpl-row wide"><b>Rum</b>
         <label><span>Rumsstämpel</span><textarea rows="4" data-lab="room">${escapeHtml(l.room)}</textarea></label></div>
       <p class="note">Rumsstämpeln: en rad per textrad, i den ordning de ska stå. Fält: <code>{namn}</code>, <code>{nummer}</code>, <code>{area}</code>, <code>{takhöjd}</code> och rummets egna egenskaper. Raden med namnet blir större och fet.</p>
+      <h4>Ledarna</h4>
+      ${(Object.keys(l.leaders) as LeaderKind[])
+        .map(
+          (k) => `<div class="style-row labels-row"><b>${LEADER_NAMES[k]}</b>
+          <label><span>Ände</span><select data-lab="le:${k}">${LEADER_ENDS.map(([v, n]) => `<option value="${v}"${l.leaders[k].end === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
+          <label><span>Stammens längd</span><span class="input-unit"><input type="text" data-expr data-step="0.5" inputmode="decimal" autocomplete="off" data-lab="ls:${k}" value="${l.leaders[k].stub}"><i>mm</i></span></label></div>`,
+        )
+        .join('')}
+      <p class="note">Ledaren går vinkelrätt ut från texten (stammen) och viker sedan av mot punkten. <i>Automatiskt</i> ger pil mot en kant och prick inne i en yta. Varje littera kan få egna värden under Littera i egenskaperna.</p>
     </section>`;
 }
 
@@ -36,5 +49,7 @@ export function applyLabelField(style: StyleSheet, input: HTMLInputElement | HTM
   if (kind === 'h' && Number(input.value) > 0) style.labels.heights[a as keyof StyleSheet['labels']['heights']] = Number(input.value);
   if (kind === 't') style.labels.templates[a as keyof StyleSheet['labels']['templates']][b as 'normal' | 'detail'] = input.value;
   if (kind === 'room') style.labels.room = input.value;
+  if (kind === 'le' && LEADER_ENDS.some(([v]) => v === input.value)) style.labels.leaders[a as LeaderKind].end = input.value as LeaderEnd;
+  if (kind === 'ls' && Number(input.value.replace(',', '.')) >= 0) style.labels.leaders[a as LeaderKind].stub = Math.round(Number(input.value.replace(',', '.')) * 2) / 2;
   return 'Ändra texter';
 }

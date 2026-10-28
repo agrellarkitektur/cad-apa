@@ -1,3 +1,4 @@
+import { resetTags } from './litteraSection';
 import { createDefinition, deleteDefinition, deleteElements, flipWalls, setInState, setSkewOk, updateParams } from '../core/commands';
 import { copyElements, mirrorElements, rotateElements } from '../core/transforms';
 import type { ViewStates } from '../core/states';
@@ -84,8 +85,8 @@ export function selectionAction({ panel, store, selection, getView, body }: Acti
     case 'align-marker':
       if (ids[0]) panel.onAlignMarker?.(ids[0]);
       return;
-    case 'room-label-center':
-      updateParams(store, ids.filter((id) => doc.elements[id]?.type === 'Space'), { labelAt: undefined }, 'Rumsstämpeln i mitten');
+    case 'tag-reset':
+      resetTags(store, ids);
       return;
     case 'flip-side': {
       const el = doc.elements[ids[0]];

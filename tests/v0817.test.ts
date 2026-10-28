@@ -54,7 +54,7 @@ describe('rumsstämpeln (0.8.17)', () => {
     });
   });
 
-  it('utanför rummet får den en pil vars spets ligger i rummet', () => {
+  it('utanför rummet får den en ledare med stam och pil mot rummets kant (0.10.20.1)', () => {
     const { store, id } = setup();
     const ring = outlineOf(store.doc, id);
     const xs = (ring ?? (store.doc.elements[id].params as { outline: Vec2[] }).outline).map((q) => q[0]);
@@ -62,10 +62,15 @@ describe('rumsstämpeln (0.8.17)', () => {
     const outside: [number, number] = [Math.max(...xs) + 6000, (Math.min(...ys) + Math.max(...ys)) / 2];
     updateParams(store, [id], { labelAt: outside });
     const lines = stampOf(store.doc, id).filter((q): q is Extract<Primitive, { kind: 'line' }> => q.kind === 'line');
-    expect(lines).toHaveLength(3);
+    // Stammen, den sneda delen och pilens två streck.
+    expect(lines).toHaveLength(4);
     const outline = (ring ?? (store.doc.elements[id].params as { outline: Vec2[] }).outline) as Vec2[];
-    expect(pointInRings(lines[0].b, [outline])).toBe(true);
     expect(pointInRings(lines[0].a, [outline])).toBe(false);
+    // Stammen går vågrätt ut från texten, åt vänster mot rummet.
+    expect(lines[0].a[1]).toBeCloseTo(lines[0].b[1]);
+    expect(lines[0].b[0]).toBeLessThan(lines[0].a[0]);
+    // Spetsen på rummets högra kant.
+    expect(lines[1].b[0]).toBeCloseTo(Math.max(...xs));
   });
 
   it('följer med när rummet flyttas eller vrids', () => {

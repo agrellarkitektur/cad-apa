@@ -2810,12 +2810,78 @@ markhöjd, låglinje, murens littera, minsta sidolutning, decimalerna och
 siffrorna under Platsen, branta slänter under Visa, en lutande vägg i
 planen och 3D): mot 0.10.21 samma `doc` i alla steg; ritningen skiljer från det att platsen läggs in (släntstrecken glesare; med avståndet ställt på 2,5 mm är ritningen densamma i alla steg), 3D-bilderna där kameran nu står kvar, och Platsens dialog med det nya fältet.*
 
-### 0.10.20.1 Litteran (liten)
+### 0.10.20.1 Litteran ✓
 
-Inkorgen 28 oktober. Litteran ska gå att flytta för hand på alla objekt
-som har en. Där den har en ledare (stödmuren) flyttas både punkten ledaren
-pekar på och texten; ledarens sida byter av sig själv när texten flyttas
-över mittlinjen.
+Inkorgen 28 oktober; utvidgad samma dag i samtalet. Carl August: alla
+littera med ledare ska gå att flytta (också rumslitteran utanför rummet),
+inte bara murens; ledaren går först vinkelrätt ut från texten (uppåt, åt
+höger, nedåt eller åt vänster) och viker sedan av mot punkten, med Shift i
+steg om 15°, och olika ändar. Flera ledare från samma littera delar stammen
+och viker av från den (hans skiss: parallella sneda delar från en vågrät
+stam). Ett generellt littera med fritext och smarttext ur det man pekar på
+och flera ledare blev en egen version, **0.10.20.2**. Han godtog Claudes
+val O–S ("allt blir bra, kör").
+
+- **Den gemensamma ledaren** (`src/elements/leader.ts`): textens ruta,
+  stammen ut från en sida och knäcken, de sneda delarna och ändarna. Med en
+  gemensam vinkel räknas knäckarna ut så att flera ledare blir parallella
+  och stammen så lång som behövs (till 0.10.20.2; prövat men inte använt
+  än). En punkt rakt ut från texten nås av stammen själv
+- **Sidan** väljs automatiskt: åt höger eller vänster efter vilken sida av
+  textens mittlinje punkten ligger, uppåt eller nedåt när den ligger rakt
+  över eller under textens mittersta halva; går att låsa
+- **Ändarna**: ingen, pil, fylld pil, prick, snedstreck, ring och
+  *Automatiskt* (pil mot en kant, prick inne i en yta)
+- **Rummet, väggarna, dörrarna, fönstren och stödmuren** använder den. Rummet
+  får en ledare när stämpeln står utanför rummet (som förut), väggar alltid
+  (rakt in till väggens mitt, som förut), dörrar och fönster när litteran
+  flyttats. Stödmurens text har strecket mellan raderna, och stammen
+  fortsätter det in till knäcken rakt ut från muren
+- **Grepp** i Markera för det markerade: texten dras i sig själv,
+  punkten (rund) och knäcken (fyrkant, stammens längd). Shift: den sneda
+  delen i steg om 15°. Punkten snäpper mot det ritade
+- **Littera** i egenskaperna: stammens sida, änden, stammens längd och
+  *Litteran tillbaka*; förvalen per sort i stilmallen (*Ledarna* under
+  *Texter och littera*)
+- Valfria parametrar, samma format (20)
+
+*Claudes val:* förskjutningarna sparas på objektet i mm i modellen (inte
+på papperet, som Claude först föreslog), eftersom rumsstämpeln redan
+sparades så (`labelAt`) och punkten sitter på objektet; i olika skalor
+står litteran därför lika långt från objektet i verkligheten. För littera
+längs en vägg står de i textens egna axlar och följer väggen när den
+vrids; rummets och stödmurens i planens axlar, och de vrids och speglas med
+objektet. Förvalen ritar som förut: väggens och murens streck utan ände,
+rummets öppna pil, dörrarnas och fönstrens *Automatiskt* (prick i
+öppningens mitt). Stammen 3 mm på papperet. Textens grepp ritas inte (det
+skulle dölja texten); man drar i texten. *Stämpeln i mitten* blev
+*Litteran tillbaka*.
+
+*Gjordes inte:* flera ledare och det generella littrat (0.10.20.2),
+markhöjdens och de andra markbeteckningarnas text (de har ingen ledare),
+nivåmarkörernas text, ett grepp för ramens storlek, en egen penna per
+littera (stilmallens *Litterans streck* och *Rumsstämpelns pil* gäller).
+Klickjämförelsen kördes inte; nya steg i nästa granskning.
+
+### 0.10.20.2 Generell littera (mellanstor till stor, troligen nytt format)
+
+Carl August 28 oktober, i samtalet om litteran. Ett littera som ritas för
+sig med fritext eller smarttext ur det det pekar på, med flera ledare, på
+den gemensamma ledaren från 0.10.20.1. Claudes förslag (godkända):
+
+- Fritext och smarttext ur objektet ledaren pekar på: `{brandklass}`,
+  `{id}`, `{area}`, `{bredd}`, `{typ}`, `{löpnummer}` och egna egenskaper.
+  Pekar ledarna på objekt med olika värden visas *varierar* (eller en
+  lista om man väljer det)
+- Flera ledare som delar stammen och viker av från den, parallella med en
+  gemensam vinkel som förval (`angle` i `leaderOf`), fria som val
+- Ledarna sitter fast i objekten och följer dem; ett borttaget objekt gör
+  ledaren röd
+- Rikta och fördela flera markerade litteror i rad
+- Löpnummer per sort, i ritordning eller efter läget
+- Visa och dölj per sort under Visa
+- Ramen: ingen, understrykning, rektangel, cirkel, sexhörning
+- (Förteckningen ur samma smarttext hör till 0.12 Export)
 
 ### Snäpp i marken (mellanstor, före piloten)
 

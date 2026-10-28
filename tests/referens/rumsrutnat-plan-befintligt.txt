@@ -9,53 +9,53 @@ yta fylld paper [w0.35 ink] 9955,7940 11800,7940 11800,6605 12200,6605 12200,939
 yta fylld paper [w0.35 ink] 10605,-200 12200,-200 12200,1395 11800,1395 11800,200 10605,200 @/snitt
 yta fylld paper [w0.35 ink] 10605,11800 11800,11800 11800,10605 12200,10605 12200,12200 10605,12200 @/snitt
 text "YV01" 2352,-700 h2 start [w0.18] @rv-0/littera
-linje 2600,0 2600,-470 [w0.18 ink] @rv-0/littera
+linje 2600,-450 2600,0 [w0.18 ink] @rv-0/littera
 text "YV01" 700,552 h2 90° start [w0.18] @rv-1/littera
-linje 0,800 470,800 [w0.18 ink] @rv-1/littera
+linje 450,800 0,800 [w0.18 ink] @rv-1/littera
 text "YV01" 4552,-700 h2 start [w0.18] @rv-2/littera
-linje 4800,0 4800,-470 [w0.18 ink] @rv-2/littera
+linje 4800,-450 4800,0 [w0.18 ink] @rv-2/littera
 text "YV01" 700,4552 h2 90° start [w0.18] @rv-3/littera
-linje 0,4800 470,4800 [w0.18 ink] @rv-3/littera
+linje 450,4800 0,4800 [w0.18 ink] @rv-3/littera
 text "YV01" 8552,-700 h2 start [w0.18] @rv-4/littera
-linje 8800,0 8800,-470 [w0.18 ink] @rv-4/littera
+linje 8800,-450 8800,0 [w0.18 ink] @rv-4/littera
 text "YV01" 700,8552 h2 90° start [w0.18] @rv-5/littera
-linje 0,8800 470,8800 [w0.18 ink] @rv-5/littera
+linje 450,8800 0,8800 [w0.18 ink] @rv-5/littera
 text "IV01" 2352,3440 h2 start [w0.18] @rv-6/littera
-linje 2600,4000 2600,3670 [w0.18 ink] @rv-6/littera
+linje 2600,3690 2600,4000 [w0.18 ink] @rv-6/littera
 text "IV01" 4560,1752 h2 90° start [w0.18] @rv-7/littera
-linje 4000,2000 4330,2000 [w0.18 ink] @rv-7/littera
+linje 4310,2000 4000,2000 [w0.18 ink] @rv-7/littera
 text "IV01" 6352,3440 h2 start [w0.18] @rv-8/littera
-linje 6600,4000 6600,3670 [w0.18 ink] @rv-8/littera
+linje 6600,3690 6600,4000 [w0.18 ink] @rv-8/littera
 text "IV01" 4560,5752 h2 90° start [w0.18] @rv-9/littera
-linje 4000,6000 4330,6000 [w0.18 ink] @rv-9/littera
+linje 4310,6000 4000,6000 [w0.18 ink] @rv-9/littera
 text "IV01" 10352,3440 h2 start [w0.18] @rv-10/littera
-linje 10600,4000 10600,3670 [w0.18 ink] @rv-10/littera
+linje 10600,3690 10600,4000 [w0.18 ink] @rv-10/littera
 text "IV01" 4560,9752 h2 90° start [w0.18] @rv-11/littera
-linje 4000,10000 4330,10000 [w0.18 ink] @rv-11/littera
+linje 4310,10000 4000,10000 [w0.18 ink] @rv-11/littera
 text "IV01" 2352,7440 h2 start [w0.18] @rv-12/littera
-linje 2600,8000 2600,7670 [w0.18 ink] @rv-12/littera
+linje 2600,7690 2600,8000 [w0.18 ink] @rv-12/littera
 text "IV01" 8560,1752 h2 90° start [w0.18] @rv-13/littera
-linje 8000,2000 8330,2000 [w0.18 ink] @rv-13/littera
+linje 8310,2000 8000,2000 [w0.18 ink] @rv-13/littera
 text "IV01" 6352,7440 h2 start [w0.18] @rv-14/littera
-linje 6600,8000 6600,7670 [w0.18 ink] @rv-14/littera
+linje 6600,7690 6600,8000 [w0.18 ink] @rv-14/littera
 text "IV01" 8560,5752 h2 90° start [w0.18] @rv-15/littera
-linje 8000,6000 8330,6000 [w0.18 ink] @rv-15/littera
+linje 8310,6000 8000,6000 [w0.18 ink] @rv-15/littera
 text "IV01" 10352,7440 h2 start [w0.18] @rv-16/littera
-linje 10600,8000 10600,7670 [w0.18 ink] @rv-16/littera
+linje 10600,7690 10600,8000 [w0.18 ink] @rv-16/littera
 text "IV01" 8560,9752 h2 90° start [w0.18] @rv-17/littera
-linje 8000,10000 8330,10000 [w0.18 ink] @rv-17/littera
+linje 8310,10000 8000,10000 [w0.18 ink] @rv-17/littera
 text "YV01" 552,11300 h2 start [w0.18] @rv-18/littera
-linje 800,12000 800,11530 [w0.18 ink] @rv-18/littera
+linje 800,11550 800,12000 [w0.18 ink] @rv-18/littera
 text "YV01" 12700,552 h2 90° start [w0.18] @rv-19/littera
-linje 12000,800 12470,800 [w0.18 ink] @rv-19/littera
+linje 12450,800 12000,800 [w0.18 ink] @rv-19/littera
 text "YV01" 4552,11300 h2 start [w0.18] @rv-20/littera
-linje 4800,12000 4800,11530 [w0.18 ink] @rv-20/littera
+linje 4800,11550 4800,12000 [w0.18 ink] @rv-20/littera
 text "YV01" 12700,4552 h2 90° start [w0.18] @rv-21/littera
-linje 12000,4800 12470,4800 [w0.18 ink] @rv-21/littera
+linje 12450,4800 12000,4800 [w0.18 ink] @rv-21/littera
 text "YV01" 8552,11300 h2 start [w0.18] @rv-22/littera
-linje 8800,12000 8800,11530 [w0.18 ink] @rv-22/littera
+linje 8800,11550 8800,12000 [w0.18 ink] @rv-22/littera
 text "YV01" 12700,8552 h2 90° start [w0.18] @rv-23/littera
-linje 12000,8800 12470,8800 [w0.18 ink] @rv-23/littera
+linje 12450,8800 12000,8800 [w0.18 ink] @rv-23/littera
 polylinje sluten 1055,3960 1105,3960 1105,4060 1055,4060 [w0.25 ink] @d-rv-6/karm
 polylinje sluten 1945,3960 1895,3960 1895,4060 1945,4060 [w0.25 ink] @d-rv-6/karm
 linje 1105,4060 1789.2,4455 [w0.18 ink] @d-rv-6/dörrblad

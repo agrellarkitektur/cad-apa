@@ -5,6 +5,8 @@ import type { Primitive, TextPrim, Vec2 } from '../repr/primitives';
 import { finishedTerrain, groundObjects, showsProposal, type GroundGeometry, type GroundParams } from './groundGeometry';
 import { along, flatPoints, lineLength } from './groundLines';
 import { crestAtS, type WallProfile } from './groundWall';
+import { markerPen } from '../repr/markerPens';
+import { leaderOf, type TagParams, type TextBox } from './leader';
 import type { PlanContext } from './registry';
 
 /**
@@ -158,14 +160,19 @@ export function wallLittera(ctx: PlanContext, el: Element<any>): string {
 }
 
 /**
- * Murens ledare (0.10.20): från murens mitt vinkelrätt ut åt höger (i
- * linjens riktning), med ett vågrätt streck och texten på det: littera på
- * raden över, *MK* och krönets höjd på raden under. Varierar krönet skrivs
- * lägsta–högsta.
+ * Murens ledare (0.10.20, med den gemensamma ledaren från 0.10.20.1): från
+ * murens kant vid mitten, vinkelrätt ut åt höger (i linjens riktning) till
+ * knäcken och sedan en vågrät stam in till texten, som har ett streck mellan
+ * raderna: littera på raden över, *MK* och krönets höjd på raden under.
+ * Varierar krönet skrivs lägsta–högsta. Texten och punkten kan flyttas
+ * (`tag`, i planens axlar).
  */
 export function wallLeader(ctx: PlanContext, el: Element<any>, prof: WallProfile): Primitive[] {
-  const origin = { objectId: el.id, objectType: 'Ground', part: 'littera' };
   const s = ctx.scale;
+  const p = ctx.params<GroundParams & { tag?: TagParams }>(el);
+  const tag = p.tag ?? {};
+  const style = ctx.style.labels.leaders.Ground;
+  const stub = tag.stub ?? style.stub;
   const center = prof.center;
   const total = lineLength(center);
   const mid = pointAt(center, total / 2);
@@ -175,23 +182,28 @@ export function wallLeader(ctx: PlanContext, el: Element<any>, prof: WallProfile
   const n: Vec2 = [dir[1], -dir[0]];
   const half = Math.hypot(prof.stations[0].left[0] - prof.stations[0].at[0], prof.stations[0].left[1] - prof.stations[0].at[1]);
   const from: Vec2 = [mid[0] + n[0] * half, mid[1] + n[1] * half];
-  const len = 7 * s;
-  const elbow: Vec2 = [from[0] + n[0] * len, from[1] + n[1] * len];
+  const elbow: Vec2 = [from[0] + n[0] * 7 * s, from[1] + n[1] * 7 * s];
   const right = n[0] >= 0 ? 1 : -1;
-  const shoulder = 11 * s;
-  const end: Vec2 = [elbow[0] + right * shoulder, elbow[1]];
-  const pen = { weight: 0.18 };
-  const out: Primitive[] = [
-    { kind: 'line', a: from, b: elbow, pen, origin },
-    { kind: 'line', a: elbow, b: end, pen, origin },
-  ];
-  const x = right > 0 ? elbow[0] + 0.5 * s : end[0] + 0.5 * s;
   const lo = Math.min(prof.start, prof.end, ...prof.pins.map((q) => q.h));
   const hi = Math.max(prof.start, prof.end, ...prof.pins.map((q) => q.h));
-  const level = hi - lo < SAME_LEVEL;
-  const mk = level ? groundText(ctx, crestAtS(prof, a.s)) : `${groundText(ctx, lo)}–${groundText(ctx, hi)}`;
-  out.push(...markText(ctx, [x, elbow[1] + 0.6 * s], wallLittera(ctx, el), origin));
-  out.push(...markText(ctx, [x, elbow[1] - 2.6 * s], `MK ${mk}`, origin));
+  const mk = `MK ${hi - lo < SAME_LEVEL ? groundText(ctx, crestAtS(prof, a.s)) : `${groundText(ctx, lo)}–${groundText(ctx, hi)}`}`;
+  const littera = wallLittera(ctx, el);
+  const w = Math.max(textWidth(littera, MARK_TEXT), textWidth(mk, MARK_TEXT)) * s;
+  const halfW = w / 2 + 0.5 * s;
+  const halfH = Math.max(0.6 + MARK_TEXT, 2.6 + 0.35 * MARK_TEXT) * s;
+  // Texten står så att stammen når knäcken rakt ut från muren, om den inte flyttats.
+  const gap = 1;
+  const c: Vec2 = [elbow[0] + right * ((stub + gap) * s + halfW) + (tag.at?.[0] ?? 0), elbow[1] + (tag.at?.[1] ?? 0)];
+  const target: Vec2 = [from[0] + (tag.to?.[0] ?? 0), from[1] + (tag.to?.[1] ?? 0)];
+  const box: TextBox = { center: c, halfW, halfH, along: [1, 0], up: [0, 1] };
+  const pen = markerPen(ctx.style, 'litteraLeader');
+  const geo = leaderOf(box, [{ at: target }], { side: tag.side, end: tag.end ?? style.end, stub, gap, scale: s, pen });
+  const origin = { objectId: el.id, objectType: 'Ground', part: 'littera', tag: { param: 'tag' as const, text: c, target, stubStart: geo?.start ?? null, stubEnd: geo?.stubEnd ?? null, dir: geo?.dir ?? null } };
+  const x = c[0] - halfW + 0.5 * s;
+  const out: Primitive[] = [{ kind: 'line', a: [c[0] - halfW, c[1]], b: [c[0] + halfW, c[1]], pen: { weight: 0.18 }, origin }];
+  for (const q of geo?.prims ?? []) out.push({ ...q, origin });
+  out.push(...markText(ctx, [x, c[1] + 0.6 * s], littera, origin));
+  out.push(...markText(ctx, [x, c[1] - 2.6 * s], mk, origin));
   return out;
 }
 
