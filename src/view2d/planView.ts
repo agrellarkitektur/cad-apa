@@ -3,6 +3,8 @@ import { buildGrid } from './grid';
 import { renderPrimitives, type LineWeights } from './renderPrimitives';
 import { renderScaleBar } from './scaleBar';
 import { boundsOf, type Primitive, type Vec2 } from '../repr/primitives';
+import { bindPlanInput } from './planInput';
+import { ZoomHistory } from './zoomHistory';
 
 /** En pekarhändelse i planen, i både modell- och skärmkoordinater. */
 export interface ViewPointer {
@@ -47,12 +49,12 @@ export interface PlanViewEvents {
 }
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
-/** Så långt (px) pekaren får röra sig innan ett klick räknas som ett drag. */
-const CLICK_SLOP = 5;
 
 /**
  * Planvyn: ett SVG-element som ritar rutnät, primitiver, hjälpgrafik och
  * skalstock. Vyn läser bara primitiver; den vet ingenting om väggar.
+ * Pekaren (mus, fingrar, hjul) sköts i planInput.ts och förra zoomen i
+ * zoomHistory.ts (0.10.22.1).
  */
 export class PlanView {
   readonly camera = new Camera();
@@ -75,7 +77,7 @@ export class PlanView {
   private chrome: SVGGElement;
 
   private host: HTMLElement;
-  private events: PlanViewEvents;
+  readonly events: PlanViewEvents;
   private prims: readonly Primitive[] = [];
   private underlayPrims: readonly Primitive[] = [];
   private frame = 0;
@@ -96,10 +98,8 @@ export class PlanView {
   private zoomSettle = 0;
   private scaleOfDrawing = 100;
 
-  /** Fingrar och knappar som är nedtryckta just nu. */
-  private pointers = new Map<number, { pos: Vec2; start: Vec2; mode: 'capture' | 'pan' | 'pinch'; pinched?: boolean }>();
-  private lastMiddleDown = 0;
-  private spaceDown = false;
+  private readonly zooms = new ZoomHistory(this.camera);
+  private readonly input: { updateCursor: () => void };
 
   /** Ritningsskalans nämnare. Styr texthöjder; 1 på ritningsblad, där allt är mm på papperet. */
   get drawingScale(): number {
@@ -168,7 +168,7 @@ export class PlanView {
 
     new ResizeObserver(() => this.resize()).observe(host);
     this.resize();
-    this.bindInput();
+    this.input = bindPlanInput(this);
   }
 
   setPrimitives(prims: readonly Primitive[]): void {
@@ -227,7 +227,7 @@ export class PlanView {
     this.tool?.cancel?.();
     this.tool?.hover?.(null);
     this.tool = tool;
-    this.updateCursor();
+    this.input.updateCursor();
     this.requestRender();
   }
 
@@ -285,52 +285,15 @@ export class PlanView {
     else this.changed();
   }
 
-  private changed(): void {
+  changed(): void {
     this.requestRender();
-    this.noteZoom();
+    this.zooms.note();
     this.events.onViewChange?.(this.camera);
-  }
-
-  // Förra zoomen (0.7.1): kameran sparas när den legat still en stund, och
-  // läget innan en ändring läggs på en stapel.
-  private zoomStack: { center: Vec2; scale: number }[] = [];
-  private settled: { center: Vec2; scale: number } | null = null;
-  private settleTimer = 0;
-  private restoring = false;
-
-  private noteZoom(): void {
-    const now = { center: [this.camera.center[0], this.camera.center[1]] as Vec2, scale: this.camera.scale };
-    if (!this.settled) {
-      this.settled = now;
-      return;
-    }
-    const s = this.settled;
-    const same = Math.abs(s.scale - now.scale) < 1e-9 && Math.abs(s.center[0] - now.center[0]) < 1e-6 && Math.abs(s.center[1] - now.center[1]) < 1e-6;
-    if (same) return;
-    if (!this.settleTimer && !this.restoring) {
-      this.zoomStack.push(s);
-      if (this.zoomStack.length > 30) this.zoomStack.shift();
-    }
-    clearTimeout(this.settleTimer);
-    this.settleTimer = window.setTimeout(() => {
-      this.settleTimer = 0;
-      this.settled = { center: [this.camera.center[0], this.camera.center[1]], scale: this.camera.scale };
-    }, 450);
   }
 
   /** Tillbaka till läget före den senaste zoomningen eller panoreringen. Falskt om det inte finns något. */
   previousZoom(): boolean {
-    clearTimeout(this.settleTimer);
-    this.settleTimer = 0;
-    const prev = this.zoomStack.pop();
-    if (!prev) return false;
-    this.camera.center = [prev.center[0], prev.center[1]];
-    this.camera.scale = prev.scale;
-    this.settled = prev;
-    this.restoring = true;
-    this.changed();
-    this.restoring = false;
-    return true;
+    return this.zooms.previous(() => this.changed());
   }
 
   /** Visa precis ett område (mm), t.ex. en ruta man dragit upp. */
@@ -412,17 +375,12 @@ export class PlanView {
     this.drawingSvg.classList.toggle('zooming', !!t);
   }
 
-  private updateCursor(): void {
-    const panning = [...this.pointers.values()].some((p) => p.mode === 'pan');
-    this.svg.style.cursor = panning ? 'grabbing' : this.spaceDown ? 'grab' : (this.tool?.cursor ?? 'grab');
-  }
-
-  private local(e: PointerEvent | WheelEvent | MouseEvent): Vec2 {
+  local(e: PointerEvent | WheelEvent | MouseEvent): Vec2 {
     const r = this.svg.getBoundingClientRect();
     return [e.clientX - r.left, e.clientY - r.top];
   }
 
-  private pointer(e: PointerEvent, screen: Vec2): ViewPointer {
+  pointer(e: PointerEvent, screen: Vec2): ViewPointer {
     return {
       model: this.camera.toModel(screen),
       screen,
@@ -433,152 +391,6 @@ export class PlanView {
     };
   }
 
-  private bindInput(): void {
-    const svg = this.svg;
-
-    window.addEventListener('keydown', (e) => {
-      if (e.code === 'Space' && !(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLTextAreaElement)) {
-        if (!this.spaceDown) {
-          this.spaceDown = true;
-          this.updateCursor();
-        }
-        e.preventDefault();
-      }
-    });
-    window.addEventListener('keyup', (e) => {
-      if (e.code === 'Space') {
-        this.spaceDown = false;
-        this.updateCursor();
-      }
-    });
-
-    svg.addEventListener('pointerdown', (e) => {
-      const screen = this.local(e);
-      if (e.pointerType === 'mouse' && e.button === 1) {
-        e.preventDefault();
-        const now = performance.now();
-        // Dubbelklick med mittenknappen: zooma till allt, som i AutoCAD.
-        if (now - this.lastMiddleDown < 350) {
-          this.zoomToFit();
-          this.lastMiddleDown = 0;
-          return;
-        }
-        this.lastMiddleDown = now;
-      }
-      if (e.pointerType === 'mouse' && e.button > 1) return;
-      svg.setPointerCapture(e.pointerId);
-
-      // Ett andra finger: avbryt verktygets gest och nyp-zooma i stället.
-      if (e.pointerType === 'touch' && this.pointers.size >= 1) {
-        for (const p of this.pointers.values()) {
-          if (p.mode === 'capture') this.tool?.cancel?.();
-          p.mode = 'pinch';
-          p.pinched = true;
-        }
-        this.pointers.set(e.pointerId, { pos: screen, start: screen, mode: 'pinch', pinched: true });
-        return;
-      }
-
-      let mode: 'capture' | 'pan' = 'pan';
-      const primary = !(e.pointerType === 'mouse' && e.button === 1) && !this.spaceDown;
-      if (primary && this.tool) {
-        const answer = this.tool.down(this.pointer(e, screen));
-        if (answer === 'ignore') return;
-        mode = answer;
-      }
-      this.pointers.set(e.pointerId, { pos: screen, start: screen, mode });
-      this.updateCursor();
-    });
-
-    svg.addEventListener('pointermove', (e) => {
-      const screen = this.local(e);
-      if (e.pointerType !== 'touch') this.events.onCursor?.(this.camera.toModel(screen));
-      const cur = this.pointers.get(e.pointerId);
-
-      if (!cur) {
-        if (e.pointerType !== 'touch') {
-          this.tool?.hover?.(this.pointer(e, screen));
-          this.requestRender();
-        }
-        return;
-      }
-
-      if (cur.mode === 'pinch') {
-        const others = [...this.pointers.entries()].filter(([id]) => id !== e.pointerId);
-        if (others.length) {
-          const other = others[0][1].pos;
-          const prev = cur.pos;
-          const midBefore: Vec2 = [(prev[0] + other[0]) / 2, (prev[1] + other[1]) / 2];
-          const midAfter: Vec2 = [(screen[0] + other[0]) / 2, (screen[1] + other[1]) / 2];
-          const distBefore = Math.hypot(prev[0] - other[0], prev[1] - other[1]);
-          const distAfter = Math.hypot(screen[0] - other[0], screen[1] - other[1]);
-          this.camera.panBy(midAfter[0] - midBefore[0], midAfter[1] - midBefore[1]);
-          if (distBefore > 4) this.camera.zoomAt(midAfter, distAfter / distBefore);
-          this.changed();
-        }
-        cur.pos = screen;
-        return;
-      }
-
-      if (cur.mode === 'pan') {
-        this.camera.panBy(screen[0] - cur.pos[0], screen[1] - cur.pos[1]);
-        cur.pos = screen;
-        this.changed();
-        return;
-      }
-
-      cur.pos = screen;
-      this.tool?.drag?.(this.pointer(e, screen));
-      this.requestRender();
-    });
-
-    const release = (e: PointerEvent, cancelled: boolean) => {
-      const cur = this.pointers.get(e.pointerId);
-      if (!cur) return;
-      this.pointers.delete(e.pointerId);
-      const screen = this.local(e);
-      const moved = Math.hypot(screen[0] - cur.start[0], screen[1] - cur.start[1]) > CLICK_SLOP;
-      if (cur.mode === 'capture') {
-        if (cancelled) this.tool?.cancel?.();
-        else this.tool?.up?.(this.pointer(e, screen), moved);
-        this.requestRender();
-      } else if (cur.mode === 'pan' && !cur.pinched && !moved && !cancelled && this.pointers.size === 0) {
-        this.tool?.tap?.(this.pointer(e, screen));
-        this.requestRender();
-      }
-      // När alla fingrar släppts efter en nypning är gesten slut.
-      if (this.pointers.size > 0 && [...this.pointers.values()].every((p) => p.mode === 'pinch') && this.pointers.size === 1) {
-        for (const p of this.pointers.values()) p.mode = 'pan';
-      }
-      this.updateCursor();
-    };
-    svg.addEventListener('pointerup', (e) => release(e, false));
-    svg.addEventListener('pointercancel', (e) => release(e, true));
-    svg.addEventListener('pointerleave', (e) => {
-      if (e.pointerType !== 'touch' && !this.pointers.has(e.pointerId)) {
-        this.events.onCursor?.(null);
-        this.tool?.hover?.(null);
-        this.requestRender();
-      }
-    });
-
-    // Hjulet zoomar kring pekaren.
-    // Nypning på styrplattan kommer som hjul med ctrlKey och får högre känslighet.
-    svg.addEventListener(
-      'wheel',
-      (e) => {
-        e.preventDefault();
-        const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? this.camera.height : 1;
-        const k = e.ctrlKey ? 0.01 : 0.0015;
-        this.camera.zoomAt(this.local(e), Math.exp(-e.deltaY * unit * k));
-        this.changed();
-      },
-      { passive: false },
-    );
-
-    svg.addEventListener('auxclick', (e) => e.preventDefault());
-    svg.addEventListener('contextmenu', (e) => e.preventDefault());
-  }
 }
 
 /** Det som senast skrevs in i en grupp. */

@@ -2960,6 +2960,44 @@ ritningsbladen och i 3D, ett skrivet avstånd från kanten (förskjutning),
 hål i 2D-formen runt en yta med hål. Klickjämförelsen kördes inte; nya
 steg i granskningen.
 
+### Granskning efter 0.10.22 ✓ (0.10.22.1)
+
+Utan nya funktioner: Carl Augusts svar C om 0.10.22 (inget snäpp mot
+höjdkurvorna i planen, men mot marken i sektion och fasad), klicksteg
+för 0.10.20.1, 0.10.20.2 och 0.10.22, mätning av snäppet och spöet på en
+stor plats, och `commandLine.ts` och `planView.ts` delade.
+
+*Gjord 28 oktober (eftermiddag), samma format (21). Det syns, så den
+heter 0.10.22.1. Testerna: 648 → 650, ca 17 s. **Höjdkurvorna** ligger
+kvar i snäppets lista men bara för smartspöt (`wandOnly`), så en stödmur
+längs en höjdkurva går som förut; i sektionen och fasaden snäpper man mot
+marklinjen (*På marken*, på linjen utan ändpunkter i rutnätets steg).
+**Klickjämförelsen** fick 43 steg: punkten, texten och knäcken dragna på
+väggens littera, delen Littera, det generella littrat med två ledare,
+ram, understruken, löpnummer, lodrät, lista och en borttagen ledare,
+vridningen i stilmallen, och spöet i Vägg (hovra, Tab, Tab, klick),
+Markera (klick, Tab, klick), Mark (stödmur längs sidan) och 2D (form runt
+bjälklaget). Den visade två småsaker som rättades: **Tab direkt efter
+ett klick** gjorde inget (förslagen töms efter klicket och räknades om
+först vid nästa musrörelse); och när **litterans grepp** ligger på
+varandra (en rak ledare har knäcken i punkten) tog knäcken greppet, nu
+punkten. Ett steg från förra granskningen (*stäng Visa* med Esc) stängde
+inte menyn, så den låg över ritningen i stegen efter; rättat i skriptet.
+Med snäppet oförändrat är 528 steg lika mot 0.10.22 och de 11 som skiljer
+är de två rättelserna; med svar C skiljer stegen från gropens andra hörn,
+som förut drogs till en höjdkurva. **Mätt**: 1,2 miljoner noder ger
+105 000 kurvbitar i snäppets lista (10–40 ms att bygga, 40 ms för
+rutnätet första gången); spöets `faceAround` tog 81 ms per hovring med
+1040 höjdkurvebitar, nu 17 ms med en `BoxIndex` för skärningarna.
+**Filerna**: `commandLine.ts` 623 → 542 (`shellList.ts`, `shellMenus.ts`),
+`planView.ts` 591 → 403 (`planInput.ts`, `zoomHistory.ts`).*
+
+*Claudes val:* höjdkurvorna hålls kvar i listan med en flagga i stället
+för att tas bort, så att spöet kan följa dem; Justera och markörerna
+hoppar också över dem. Marklinjen snäpps som en kurva (inga ändpunkter
+och mittpunkter i varje steg, som höjdkurvorna i 0.10.22). Punkten går
+före knäcken bara när de ligger inom samma tolerans.
+
 ### 0.10.23 Smartspöt del 2 (mellanstor)
 
 Claudes förslag 28 oktober, godkända med *kör* för 0.10.22.

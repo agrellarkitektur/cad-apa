@@ -276,7 +276,7 @@ export class AlignTool implements ViewTool {
     let best: { s: SnapSegment; d: number } | null = null;
     // Bara sträckorna nära markören (0.8.23), i listans ordning.
     for (const s of nearSegments(this.host.snapSegments(), p.model, tol)) {
-      if (s.id === this.target) continue;
+      if (s.id === this.target || s.wandOnly) continue;
       const d = distToSegment(p.model, s.a, s.b);
       if (d <= tol && (!best || d < best.d)) best = { s, d };
     }

@@ -1124,6 +1124,20 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
 
+Version 0.10.22.1, granskning (samma filformat, 21):
+- **Höjdkurvorna snäpps inte längre mot i planen**; smartspöt följer dem
+  fortfarande (en stödmur längs en höjdkurva). I **fasaden och sektionen**
+  snäpper man i stället mot marklinjen (*På marken*)
+- **Tab** i smartspöt fungerar också direkt efter ett klick, utan att
+  musen flyttats (Markera: allt av sorten efter det som hänger ihop)
+- **Litterans grepp**: när punkten, knäcken och texten ligger på varandra
+  (en rak ledare) tar punkten greppet, sedan knäcken, sist texten
+- **Snabbare 2D-form runt ytan mellan många linjer** (smartspöt i 2D);
+  skärningarna söks bara bland grannarna
+- Inget annat ändrat: koden städad och uppdelad (smartshells lista och
+  menyer, planvyns pekare och förra zoomen i egna filer), samma klick ger
+  samma resultat som i 0.10.22
+
 Version 0.10.22, snäpp och smartspöt (samma filformat, 21):
 - **Snäpp mot allt som ritas**: markobjekt (rampens sidor, markytans kant,
   stödmurar), bjälklag, tak, rum, grannhus, fastighetsgränser och vägar

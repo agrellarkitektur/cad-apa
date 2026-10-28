@@ -1,5 +1,6 @@
 import type { Vec2 } from '../repr/primitives';
 import { closestOnSegment, cross, dist, dot, sub } from './vec';
+import { BoxIndex } from './boxIndex';
 
 /**
  * Kedjor och slutna ytor ur lösa sträckor (0.10.22), för smartspöt: följ en
@@ -159,15 +160,23 @@ export function faceAround(segs: readonly Seg[], p: Vec2, max = 1500): Vec2[] | 
       .slice(0, max)
       .map((x) => x.s);
   }
-  // Dela sträckorna i skärningspunkterna.
+  // Dela sträckorna i skärningspunkterna. Bara grannar prövas (0.10.22.1):
+  // rutnätets sida är en typisk sträckas längd, så att höjdkurvornas
+  // många korta bitar inte prövas mot varandra alla.
   const cuts: number[][] = list.map(() => [0, 1]);
+  const boxOf = (s: Seg): [number, number, number, number] => [Math.min(s.a[0], s.b[0]), Math.min(s.a[1], s.b[1]), Math.max(s.a[0], s.b[0]), Math.max(s.a[1], s.b[1])];
+  const typical = list.length ? list.map((s) => dist(s.a, s.b)).sort((x, y) => x - y)[list.length >> 1] : 1000;
+  const index = new BoxIndex(Math.max(100, Math.min(5000, typical)));
+  list.forEach((s, i) => index.add(i, boxOf(s)));
   for (let i = 0; i < list.length; i++) {
     const s = list[i];
     const r = sub(s.b, s.a);
-    for (let j = i + 1; j < list.length; j++) {
+    const box = boxOf(s);
+    for (const j of index.near(box)) {
+      if (j <= i) continue;
       const t = list[j];
-      if (Math.max(s.a[0], s.b[0]) < Math.min(t.a[0], t.b[0]) || Math.min(s.a[0], s.b[0]) > Math.max(t.a[0], t.b[0])) continue;
-      if (Math.max(s.a[1], s.b[1]) < Math.min(t.a[1], t.b[1]) || Math.min(s.a[1], s.b[1]) > Math.max(t.a[1], t.b[1])) continue;
+      if (box[2] < Math.min(t.a[0], t.b[0]) || box[0] > Math.max(t.a[0], t.b[0])) continue;
+      if (box[3] < Math.min(t.a[1], t.b[1]) || box[1] > Math.max(t.a[1], t.b[1])) continue;
       const q = sub(t.b, t.a);
       const d = cross(r, q);
       if (Math.abs(d) < 1e-9 * Math.hypot(...r) * Math.hypot(...q)) continue;

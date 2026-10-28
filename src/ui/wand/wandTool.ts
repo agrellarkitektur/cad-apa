@@ -18,6 +18,8 @@ export class WandTool implements ViewTool {
   private index = 0;
   private at: Vec2 | null = null;
   private screen: Vec2 | null = null;
+  /** Pekaren senast, så att Tab direkt efter ett klick kan räkna om förslagen (0.10.22.1). */
+  private last: ViewPointer | null = null;
   /** Förslag samlade med Shift, som utförs med nästa klick. */
   private pending: WandHit[] = [];
   /** Signaturen för förslagen, så att Tab-valet ligger kvar medan markören rör sig längs samma sak. */
@@ -47,11 +49,13 @@ export class WandTool implements ViewTool {
     this.index = 0;
     this.pending = [];
     this.at = null;
+    this.last = null;
     this.sig = '';
   }
 
-  /** Nästa (eller förra) förslag där markören står. */
+  /** Nästa (eller förra) förslag där markören står. Efter ett klick utan rörelse räknas förslagen om först. */
   cycle(back = false): boolean {
+    if (!this.hits.length && this.last) this.find(this.last);
     if (this.hits.length < 2) return false;
     this.index = (this.index + (back ? this.hits.length - 1 : 1)) % this.hits.length;
     this.app.view.requestRender();
@@ -64,6 +68,7 @@ export class WandTool implements ViewTool {
 
   private find(p: ViewPointer): void {
     const ctx = this.ctx(p);
+    this.last = p;
     this.at = p.model;
     this.screen = p.screen;
     const hits: WandHit[] = [];

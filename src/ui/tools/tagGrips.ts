@@ -76,8 +76,9 @@ export function tagGripAt(host: ToolHost, p: ViewPointer): TagGrip | null {
   let best: { g: TagGrip; d: number } | null = null;
   for (const g of tagGripsShown(host)) {
     const d = Math.hypot(g.at[0] - p.model[0], g.at[1] - p.model[1]);
-    // Textens ruta går efter punkten och knäcken när de ligger nära varandra.
-    const dd = g.kind === 'text' ? d + tol / 2 : d;
+    // Punkten går före knäcken och knäcken före textens ruta när de ligger
+    // nära varandra (en rak ledare har knäcken i punkten, 0.10.22.1).
+    const dd = g.kind === 'text' ? d + tol / 2 : g.kind === 'knee' ? d + tol / 4 : d;
     if (d <= tol && (!best || dd < best.d)) best = { g, d: dd };
   }
   if (best) return best.g;

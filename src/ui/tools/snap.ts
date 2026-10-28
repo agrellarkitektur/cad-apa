@@ -22,6 +22,12 @@ export interface SnapSegment {
   on?: string;
   /** Väggens referenslinje (0.10.22): snäpps mot, men smartspöt följer bara livet. */
   ref?: boolean;
+  /**
+   * Bara för smartspöt (0.10.22.1): höjdkurvorna i planen följs av spöet
+   * (en stödmur längs en höjdkurva) men snäpps inte mot, så att planen
+   * inte blir klistrig.
+   */
+  wandOnly?: boolean;
 }
 
 export type SnapKind = 'division' | 'endpoint' | 'midpoint' | 'center' | 'quadrant' | 'start' | 'perpendicular' | 'intersection' | 'on-wall' | 'parallel' | 'track' | 'angle' | 'free';
@@ -84,7 +90,7 @@ export function snap(input: SnapInput): SnapResult {
   const { cursor, from, tol } = input;
   // Allt nedan ligger inom spårlinjernas räckvidd från markören, så bara
   // sträckorna där prövas (0.8.3). De kommer i samma ordning som i listan.
-  const segs = nearSegments(input.segments, cursor, tol * TRACK_REACH).filter((s) => !input.exclude?.has(s.id));
+  const segs = nearSegments(input.segments, cursor, tol * TRACK_REACH).filter((s) => !s.wandOnly && !input.exclude?.has(s.id));
 
   // 1. Punkter.
   const points: { p: Vec2; kind: SnapKind; label: string }[] = [];

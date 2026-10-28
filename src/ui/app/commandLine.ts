@@ -1,6 +1,5 @@
 import { eraseSelection } from './erase';
-import { COMMANDS, commandFor, complete, findCommand, type CommandDef, type Match } from '../commandRegistry';
-import type { MenuItem } from '../contextMenu';
+import { commandFor, findCommand, type CommandDef } from '../commandRegistry';
 import { icons } from '../icons';
 import { escapeHtml } from '../labels';
 import { OPS, type RailId } from '../modify/ops';
@@ -12,7 +11,9 @@ import type { ToolId } from './shell';
 import { runAction } from './shellActions';
 import { installShellDock } from './shellDock';
 import { nf, POINT_HELP, promptMarkup, xy } from './shellHint';
+import { createShellList } from './shellList';
 import { createShellLog } from './shellLog';
+import { createShellMenus } from './shellMenus';
 import { commandBusy, pointFor as pointOf, pointTaker, wantsPoint as modifierWantsPoint } from './shellPoints';
 
 /**
@@ -32,7 +33,8 @@ import { commandBusy, pointFor as pointOf, pointTaker, wantsPoint as modifierWan
  *
  * Delarna (0.8.23): läget i shellPoints.ts, historiken i shellLog.ts, var
  * raden ligger i shellDock.ts, frågans text i shellHint.ts och kommandona
- * som gör något direkt i shellActions.ts.
+ * som gör något direkt i shellActions.ts; listan med kommandon i
+ * shellList.ts och menyerna i shellMenus.ts (0.10.22.1).
  */
 export function installCommandLine(app: AppContext, pressRail: (id: RailId) => void) {
   const el = app.$<HTMLElement>('.smartshell');
@@ -55,15 +57,18 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
   const grip = el.querySelector<HTMLElement>('.ss-grip')!;
 
   let last: CommandDef | null = null;
-  let matches: Match[] = [];
-  let picked = 0;
-  /** Alla kommandon visas (Kommandon, ? eller hjälp). */
-  let showAll = false;
   /** Det som skrivits tidigare, för pil upp och ned. */
   const typed: string[] = [];
   let typedAt = -1;
   /** Allt som hänt, för historiken (F2) och högerklicket. */
   const log = createShellLog(el, logEl, listEl, (c) => run(c));
+  /** Listan med kommandon: kompletteringen, pil upp och ned, Tab och alla kommandon. */
+  const list = createShellList(input, listEl, {
+    taken: (text) => isPoint(text) || !!(prompt && matchOption(prompt.options, text)),
+    renderLog: () => log.render(),
+    renderHint: () => renderHint(),
+  });
+  const { clear, openAll, update } = list;
   /** Medan ett kommando körs från raden ska setTool inte skriva över det som det senaste. */
   let running = false;
   /** Ett kommando för det markerade som väntar på att något markeras (Flytta utan markering). */
@@ -279,7 +284,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
       refresh();
       return;
     }
-    const c = matches[picked]?.cmd ?? findCommand(text);
+    const c = list.matches[list.picked]?.cmd ?? findCommand(text);
     if (!c) {
       app.hint(looksLikePoint(text) ? 'Välj ett ritverktyg först, t.ex. vägg eller linje.' : `Inget kommando heter ”${text}”. Skriv ? för alla.`, 3000);
       input.select();
@@ -290,56 +295,6 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     run(c);
   }
 
-  function clear(): void {
-    input.value = '';
-    showAll = false;
-    matches = [];
-    picked = 0;
-    renderList();
-    renderHint();
-  }
-
-  function openAll(): void {
-    input.focus();
-    showAll = true;
-    matches = COMMANDS.map((cmd) => ({ cmd, name: cmd.sv[0], exact: false }));
-    picked = -1;
-    renderList();
-    renderHint();
-  }
-
-  function update(): void {
-    const text = input.value;
-    showAll = false;
-    if (!text.trim() || isPoint(text) || (prompt && matchOption(prompt.options, text))) matches = [];
-    else if (text.trim() === '?') {
-      openAll();
-      return;
-    } else matches = complete(text);
-    picked = 0;
-    renderList();
-    renderHint();
-  }
-
-  function renderList(): void {
-    const open = matches.length > 0 && (showAll || !(matches.length === 1 && matches[0].exact)) && document.activeElement === input;
-    listEl.hidden = !open;
-    input.setAttribute('aria-expanded', String(open));
-    log.render();
-    if (!open) return;
-    let group = '';
-    listEl.innerHTML = matches
-      .map((m, i) => {
-        const c = m.cmd;
-        const g = showAll ? (c.rail ? 'Ändra det markerade' : c.action ? 'Direkt' : 'Visa och rita') : '';
-        const head = g && g !== group ? `<li class="ss-group" role="presentation">${(group = g)}</li>` : '';
-        const names = [...c.en, ...c.sv].map((n) => `<code${n === m.name ? ' class="hit"' : ''}>${escapeHtml(n.toUpperCase())}</code>`).join('');
-        return `${head}<li role="option" data-i="${i}" aria-selected="${i === picked}"><b>${escapeHtml(c.label)}</b>${c.note ? `<small>${escapeHtml(c.note)}</small>` : ''}<span class="ss-names">${names}</span></li>`;
-      })
-      .join('');
-    listEl.querySelector('[aria-selected="true"]')?.scrollIntoView({ block: 'nearest' });
-  }
-
   function renderHint(): void {
     const text = input.value.trim();
     const t = taker();
@@ -347,7 +302,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     let h = '';
     let bad = false;
     const opt = text && prompt ? matchOption(prompt.options, text) : null;
-    if (showAll) h = 'Klicka på ett kommando, eller skriv namnet eller förkortningen. Esc stänger listan.';
+    if (list.showAll) h = 'Klicka på ett kommando, eller skriv namnet eller förkortningen. Esc stänger listan.';
     else if (!text) {
       if (prompt) h = promptMarkup(prompt, !!t);
       else if (busy()) h = 'Enter avslutar det som pågår, Esc avbryter.';
@@ -365,8 +320,8 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
       else if ('value' in r) h = `Enter: ${escapeHtml(OPS[app.modifier.active!].value!.label.toLowerCase())} <b>${nf.format(r.value)}</b>.`;
       else h = `Enter: punkt i <b>${xy(r.p)}</b>${t.lastPoint() ? `, ${nf.format(Math.hypot(r.p[0] - t.lastPoint()![0], r.p[1] - t.lastPoint()![1]))} mm från förra` : ''}.`;
     } else {
-      const m = matches[picked];
-      if (m) h = `Enter: <b>${escapeHtml(m.cmd.label)}</b>${m.cmd.note ? ` (${escapeHtml(m.cmd.note)})` : ''}.${matches.length > 1 ? ' Pil upp och ned väljer, Tab fyller i.' : ''}`;
+      const m = list.matches[list.picked];
+      if (m) h = `Enter: <b>${escapeHtml(m.cmd.label)}</b>${m.cmd.note ? ` (${escapeHtml(m.cmd.note)})` : ''}.${list.matches.length > 1 ? ' Pil upp och ned väljer, Tab fyller i.' : ''}`;
       else {
         h = looksLikePoint(text) ? 'Välj ett ritverktyg först, t.ex. vägg eller linje, så går punkter att skriva.' : 'Inget kommando heter så. Skriv <b>?</b> för alla.';
         bad = true;
@@ -389,54 +344,30 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
 
   // ---------- Menyerna ----------
 
-  /**
-   * De senaste kommandona för högerklicksmenyn (0.8.21). Med något markerat
-   * de som gäller det markerade, annars de andra.
-   */
-  function recentItems(forSelection: boolean): MenuItem[] {
-    const cmds = log.recent((c) => (forSelection ? !!c.rail : !c.rail));
-    if (!cmds.length) return [];
-    return [
-      { kind: 'header', label: 'Senaste kommandon' },
-      ...cmds.map((c, i): MenuItem => ({ label: c.label, hint: i === 0 && c === last ? 'Mellanslag' : undefined, run: () => run(c) })),
-      { kind: 'sep' },
-    ];
-  }
-
-  /** Högerklick medan något pågår: alternativen i frågan, Enter och Avbryt, som i AutoCAD. */
-  function promptItems(): MenuItem[] | null {
-    if (!shown() || !busy()) return null;
-    const p = currentPrompt(app, pending, runPending);
-    return [
-      ...(p ? [{ kind: 'header', label: p.head } as MenuItem] : []),
-      // Enter avslutar; finns Avsluta eller Klar bland alternativen räcker de.
-      ...(app.modifier.busy || p?.options.some((o) => o.label === 'Avsluta' || o.label === 'Klar') ? [] : [{ label: 'Enter', run: () => enterInTool() } as MenuItem]),
-      ...(p?.options.map((o): MenuItem => ({ label: o.label, hint: o.key, checked: o.on, run: () => runOption(o) })) ?? []),
-      { kind: 'sep' },
-      { label: 'Avbryt', hint: 'Esc', run: () => (cancelPending() || app.cancelCommand(), refresh()) },
-    ];
-  }
-
-  function shellMenu(x: number, y: number): void {
-    app.ctxMenu.open(
-      x,
-      y,
-      [
-        ...recentItems(app.selection.size > 0),
-        { label: 'Historik', hint: 'F2', checked: log.open, run: () => log.toggle() },
-        { label: 'Alla kommandon', run: () => openAll() },
-        { kind: 'sep' },
-        ...dock.items(),
-      ],
-      'Smartshell',
-    );
-  }
+  const menus = createShellMenus({
+    app,
+    shown,
+    busy,
+    last: () => last,
+    pending: () => pending,
+    recent: log.recent,
+    run,
+    runPending,
+    runOption,
+    enterInTool,
+    cancelPending,
+    refresh,
+    logOpen: () => log.open,
+    toggleLog: log.toggle,
+    openAll,
+    dockItems: () => dock.items(),
+  });
 
   // ---------- Händelser ----------
 
   input.addEventListener('input', update);
   input.addEventListener('focus', () => {
-    if (!showAll) update();
+    if (!list.showAll) update();
     el.classList.add('active');
   });
   input.addEventListener('blur', () => {
@@ -444,21 +375,17 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     // Ett klick i listan ska hinna fram innan den stängs.
     setTimeout(() => {
       if (document.activeElement !== input) {
-        showAll = false;
-        listEl.hidden = true;
-        input.setAttribute('aria-expanded', 'false');
-        log.render();
+        list.close();
         renderHint();
       }
     }, 150);
   });
   input.addEventListener('keydown', (e) => {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
-    const open = !listEl.hidden;
     switch (e.key) {
       case 'Enter':
         e.preventDefault();
-        if (showAll && picked < 0) return;
+        if (list.showAll && list.picked < 0) return;
         submit();
         break;
       case ' ':
@@ -471,22 +398,14 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
         } else submit();
         break;
       case 'Tab':
-        if (open && matches[Math.max(0, picked)]) {
-          e.preventDefault();
-          const m = matches[Math.max(0, picked)];
-          input.value = m.name.toUpperCase();
-          update();
-        }
+        if (list.open && list.fill()) e.preventDefault();
         break;
       case 'ArrowDown':
       case 'ArrowUp': {
         e.preventDefault();
         const step = e.key === 'ArrowDown' ? 1 : -1;
-        if (open) {
-          picked = (Math.max(-1, picked) + step + matches.length) % matches.length;
-          renderList();
-          renderHint();
-        } else if (typed.length) {
+        if (list.open) list.step(step);
+        else if (typed.length) {
           typedAt = Math.max(-1, Math.min(typed.length - 1, typedAt - step));
           input.value = typedAt < 0 ? '' : typed[typedAt];
           update();
@@ -496,7 +415,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
       case 'Escape':
         e.preventDefault();
         e.stopPropagation();
-        if (input.value || showAll) clear();
+        if (input.value || list.showAll) clear();
         else {
           input.blur();
           if (!cancelPending() && (busy() || app.ui.tool !== 'select')) app.cancelCommand();
@@ -508,7 +427,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
   listEl.addEventListener('mousedown', (e) => e.preventDefault());
   listEl.addEventListener('click', (e) => {
     const li = (e.target as HTMLElement).closest<HTMLElement>('[data-i]');
-    const m = li ? matches[Number(li.dataset.i)] : undefined;
+    const m = li ? list.matches[Number(li.dataset.i)] : undefined;
     if (!m) return;
     clear();
     input.blur();
@@ -524,7 +443,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     if (o) runOption(o);
   });
   for (const b of el.querySelectorAll<HTMLElement>('.ss-btn')) b.addEventListener('mousedown', (e) => e.preventDefault());
-  el.querySelector('[data-ss="help"]')!.addEventListener('click', () => (showAll && !listEl.hidden ? clear() : openAll()));
+  el.querySelector('[data-ss="help"]')!.addEventListener('click', () => (list.showAll && list.open ? clear() : openAll()));
   el.querySelector('[data-ss="log"]')!.addEventListener('click', () => log.toggle());
   el.querySelector('[data-ss="dock"]')!.addEventListener('click', (e) => {
     const r = (e.currentTarget as HTMLElement).getBoundingClientRect();
@@ -532,7 +451,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
   });
   el.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    shellMenu(e.clientX, e.clientY);
+    menus.shellMenu(e.clientX, e.clientY);
   });
   // F2 visar och döljer historiken, också när man skriver i ett fält.
   window.addEventListener('keydown', (e) => {
@@ -598,8 +517,8 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     optionLetter,
     wantsPoint,
     cancelPending,
-    recentItems,
-    promptItems,
+    recentItems: menus.recentItems,
+    promptItems: menus.promptItems,
     toggleLog: log.toggle,
     setDock: dock.set,
     open,

@@ -7,7 +7,8 @@ och greppen som dras, mitt i dragningen, från granskningen efter 0.10.15;
 0.10.16–0.10.18 från granskningen efter 0.10.18, det som är nytt i den,
 höjdkurvornas pennor och Mer bara när det finns mer, och sist 0.10.19–0.10.21
 från granskningen efter 0.10.21: rampens bågar och övergångar, Foga ihop,
-beteckningarna och en lutande vägg):
+beteckningarna och en lutande vägg, och sist litteran, det generella
+littrat och smartspöt från granskningen efter 0.10.22):
 läget efter varje steg sparas, och två körningar jämförs steg för steg.
 
 Kryssrutorna under Visa klickas (`__click`): menyn lyssnar på klick, så
@@ -958,7 +959,7 @@ def main():
         step('tre siffror i littera', "__set('[data-ground=\"litteraDigits\"]', '3', '.site-dialog')")
         step('spara Platsen igen', "__click('[type=\"submit\"]', '.site-dialog')")
         step('visa branta slänter', "__click('[data-action=\"show-menu\"]')", fn=lambda: pg.evaluate('''__click('[data-show="steepSlopes"]', '.show-menu')'''))
-        step('stäng Visa', fn=key('Escape'))
+        step('stäng Visa efter slänterna', "__click('[data-action=\"show-menu\"]')")
         # Lutande väggar (0.10.21): lutningen och toppen i sidled på en yttervägg, i planen och i 3D.
         step('markera gavelväggen', "bacchus.selection.set(['yv-o'])")
         step('väggens lutning', f"__set('[data-key=\"wall:lean\"]', '15', '{panel}')")
@@ -967,6 +968,83 @@ def main():
         step('tillbaka till planen', "bacchus.setMode('2d')", fn=lambda: pg.wait_for_timeout(300))
         step('lutningen tillbaka', f"__set('[data-key=\"wall:lean\"]', '0', '{panel}')")
         step('allra sist', "bacchus.selection.clear()")
+
+        # ---------- 0.10.20.1, 0.10.20.2 och 0.10.22 (granskningen efter 0.10.22) ----------
+        # Litteran (0.10.20.1): väggens littera dras ut i texten (romben), punkten (ringen) med Shift,
+        # knäcken (fyrkanten), och delen Littera i egenskaperna.
+        def shift_drag(a_js, b_js):
+            """Dra som press_drag, med Shift nedtryckt under dragningen (inte vid nedtryckningen, som då lägger till i markeringen)."""
+            def run():
+                ax, ay = pg.evaluate(a_js)
+                bx, by = pg.evaluate(b_js)
+                pg.mouse.move(ax, ay)
+                pg.mouse.down()
+                pg.keyboard.down('Shift')
+                try:
+                    for k in range(1, 7):
+                        pg.mouse.move(ax + (bx - ax) * k / 6, ay + (by - ay) * k / 6)
+                    pg.mouse.up()
+                finally:
+                    pg.keyboard.up('Shift')
+                pg.wait_for_timeout(300)
+            return run
+
+        step('markera väggen för litteran', "bacchus.setTool('select'); bacchus.selection.set(['yv-s'])")
+        # Greppen ligger på varandra från början: punkten går först, sedan knäcken, sist texten.
+        step('dra litterans punkt med Shift', fn=shift_drag(grip_center('circle.grip'), "(() => { const [x, y] = __screen(7800, -600); return [x, y]; })()"))
+        step('dra litterans text', fn=press_drag(grip_center('path.grip'), "(() => { const [x, y] = __screen(6000, -2500); return [x, y]; })()"))
+        step('dra litterans knäck', fn=press_drag(grip_center('rect.side-grip'), "(() => { const [x, y] = __screen(7000, -1500); return [x, y]; })()"))
+        step('stammens sida', f"__set('[data-key=\"tag:side\"]', 'left', '{panel}')")
+        step('ledarens ände', f"__set('[data-key=\"tag:end\"]', 'dot', '{panel}')")
+        step('litteran tillbaka', f"__click('[data-action=\"tag-reset\"]', '{panel}')")
+        # Det generella littrat (0.10.20.2): verktyget Littera med två ledare till väggarna, ram,
+        # understruken, sort och löpnummer, Visa per sort.
+        step('litteraverktyget', "bacchus.selection.clear(); bacchus.setTool('label')")
+        step('litterans text', "__set('#label-text', '{typ} {nummer}', '.tool-options')")
+        step('litterans sort', "__set('#label-sort', 'Vägg', '.tool-options')")
+        step('första väggen', fn=lambda: click_model(6000, 200))
+        step('andra väggen med Shift', fn=lambda: click_model(11800, 4000, shift=True))
+        step('där texten står', fn=lambda: click_model(6000, -4000))
+        step('markera det nya littrat', "bacchus.setTool('select'); bacchus.selection.set([Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Label').at(-1).id])")
+        step('ram rektangel', f"__set('[data-key=\"label:frame\"]', 'rect', '{panel}')")
+        step('understruken', f"__set('[data-key=\"tag:attach\"]', 'underline', '{panel}')")
+        step('eget löpnummer', f"__set('[data-key=\"label:number\"]', '7', '{panel}')")
+        step('lodrät text', f"__click('[data-action=\"label-angle\"][data-angle=\"90\"]', '{panel}')")
+        step('värdena som lista', f"__click('[data-key=\"label:list\"]', '{panel}')")
+        step('ta bort andra ledaren', f"__click('[data-action=\"label-drop\"][data-index=\"1\"]', '{panel}')")
+        step('littera i stilmallen', "bacchus.selection.clear(); __click('[data-action=\"style\"]')")
+        step('litterans vridning i stilmallen', "__set('[data-lab=\"lr:Label\"]', '90', '.dialog')")
+        step('stäng stilmallen efter litteran', "__click('[data-action=\"close\"]', '.dialog')")
+        # Smartspöt (0.10.22): Q i Vägg med hovring över bjälklagets kant, Tab för sidan, klick;
+        # Markera sammanhängande och allt av sorten; stödmur längs bjälklagets sida; 2D-form runt bjälklaget.
+        def hover_model(x, y):
+            def run():
+                sx, sy = pg.evaluate(f'__screen({x}, {y})')
+                pg.mouse.move(sx, sy)
+                pg.wait_for_timeout(200)
+            return run
+
+        step('väggverktyget för spöet', "bacchus.setTool('wall')")
+        step('spöet på', "__click('[data-action=\"wand\"]')")
+        step('hovra bjälklagets kant', fn=hover_model(33500, -12000))
+        step('tab till sidan', fn=lambda: (pg.keyboard.press('Tab'), pg.wait_for_timeout(200)))
+        step('tab tillbaka till konturen', fn=lambda: (pg.keyboard.press('Tab'), pg.wait_for_timeout(200)))
+        step('väggar runt bjälklaget', fn=lambda: click_model(33500, -12000))
+        step('spöet av med Esc', fn=lambda: (pg.keyboard.press('Escape'), pg.wait_for_timeout(200)))
+        step('markera med spöet', "bacchus.setTool('select')", fn=lambda: (pg.keyboard.press('q'), pg.wait_for_timeout(200)))
+        step('hovra en ny vägg', fn=hover_model(33500, -12000))
+        step('allt som hänger ihop', fn=lambda: click_model(33500, -12000))
+        # Tab direkt efter klicket, utan att röra musen (0.10.22.1 räknar om förslagen då).
+        step('tab till alla väggar', fn=lambda: (pg.keyboard.press('Tab'), pg.wait_for_timeout(200)))
+        step('alla av sorten', fn=lambda: click_model(33500, -12000))
+        step('spöet av igen', fn=lambda: (pg.keyboard.press('Escape'), pg.wait_for_timeout(200)))
+        step('stödmur med spöet', "bacchus.selection.clear(); bacchus.setTool('ground'); __click('[data-ground-mode=\"wall\"]')", fn=lambda: (pg.keyboard.press('q'), pg.wait_for_timeout(200)))
+        step('hovra bjälklagets högra sida', fn=hover_model(37000, -8500))
+        step('stödmur längs sidan', fn=lambda: click_model(37000, -8500))
+        step('2d-form med spöet', "bacchus.setTool('draw2d')", fn=lambda: (pg.keyboard.press('q'), pg.wait_for_timeout(200)))
+        step('hovra i bjälklaget', fn=hover_model(35000, -7000))
+        step('2d-form runt bjälklaget', fn=lambda: click_model(35000, -7000))
+        step('sist efter spöet', "bacchus.setTool('select'); bacchus.selection.clear()")
         b.close()
     json.dump(rows, open(OUT, 'w'), ensure_ascii=False)
 

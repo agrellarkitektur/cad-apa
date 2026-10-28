@@ -93,8 +93,15 @@ const NO_SNAP_TYPES = new Set(['Text', 'Label', 'Stamp', 'ScaleBar', 'North']);
  * fallpilar, lutningar, litteror, texter och fyllningar. De snäpps inte.
  */
 const NO_SNAP_PARTS = new Set(['slänt', 'släntkontur', 'brant slänt', 'fall', 'lutning', 'sidolutning', 'taklutning', 'littera', 'rumstext', 'markhöjd', 'markering', 'höjd', 'fyllning', 'släntens fyllning', 'label', 'auto']);
-/** Linjer som snäpps på men inte i ändar och mittpunkter: höjdkurvorna, som är delade i många korta bitar. */
+/**
+ * Höjdkurvorna: delade i många korta bitar, så de har inga ändar och
+ * mittpunkter. I planen snäpps de inte mot (0.10.22.1, Carl Augusts svar),
+ * men smartspöt följer dem (`wandOnly`); i fasaden och sektionen snäpps man
+ * mot marklinjen (`GROUND_PARTS`).
+ */
 const CURVE_PARTS = new Set(['höjdkurva', 'befintlig mark']);
+/** Marklinjen i fasaden och sektionen (0.10.22.1): den färdiga, den befintliga och den platta utan terräng. */
+const GROUND_PARTS = new Set(['färdig mark', 'befintlig mark', 'mark']);
 /** Texten när man ligger på linjen, per typ eller del. */
 function onLabel(type: string | undefined, part: string | undefined): string {
   if (part === 'boundary') return 'På fastighetsgränsen';
@@ -112,8 +119,8 @@ function onLabel(type: string | undefined, part: string | undefined): string {
 /**
  * Det som ritas i planen och inte har egna snäpp-punkter (0.10.22): linjer,
  * polylinjer, ytornas kanter och bågar ur primitiverna, med objektets id.
- * Höjdkurvorna (som annars inte går att klicka på) snäpps på men ger inga
- * ändpunkter; texter, bilder och beteckningar ingår inte.
+ * Höjdkurvorna (som annars inte går att klicka på) följs av smartspöt men
+ * snäpps inte mot; texter, bilder och beteckningar ingår inte.
  */
 export function drawnSegments(prims: readonly Primitive[]): SnapSegment[] {
   const out: SnapSegment[] = [];
@@ -126,7 +133,7 @@ export function drawnSegments(prims: readonly Primitive[]): SnapSegment[] {
     if (p.noPick && !curve) continue;
     const on = onLabel(o.objectType, o.part);
     const seg = (a: Vec2, b: Vec2): void => {
-      if (a[0] !== b[0] || a[1] !== b[1]) out.push(curve ? { id, a, b, on, curve: true } : { id, a, b, on });
+      if (a[0] !== b[0] || a[1] !== b[1]) out.push(curve ? { id, a, b, on, curve: true, wandOnly: true } : { id, a, b, on });
     };
     if (p.kind === 'line') seg(p.a, p.b);
     else if (p.kind === 'polyline') {
@@ -188,7 +195,10 @@ function sectionSnapSegments(app: AppContext): SnapSegment[] {
     else out.push(...primSegments(pk.id, pk.prims));
   }
   for (const p of plan.prims) {
-    if (p.kind === 'line' && !p.origin?.objectId) out.push({ id: 'vy', a: p.a, b: p.b, on: 'På linjen' });
+    if (p.kind === 'line' && !p.origin?.objectId) out.push({ id: 'vy', a: p.a, b: p.b, on: p.origin?.part === 'mark' ? 'På marken' : 'På linjen' });
+    // Marklinjen (0.10.22.1): den färdiga och den befintliga marken, som en kurva (på linjen, inga ändar i varje rutnätssteg).
+    else if (p.kind === 'polyline' && !p.origin?.objectId && p.origin?.part && GROUND_PARTS.has(p.origin.part))
+      for (let i = 0; i + 1 < p.points.length; i++) out.push({ id: 'mark', a: p.points[i], b: p.points[i + 1], on: 'På marken', curve: true });
     if (p.kind === 'region') for (const ring of p.rings) for (let i = 0; i < ring.length; i++) out.push({ id: p.origin?.objectId ?? 'snitt', a: ring[i], b: ring[(i + 1) % ring.length], on: 'På linjen' });
   }
   return out;

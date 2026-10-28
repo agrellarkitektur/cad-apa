@@ -281,7 +281,7 @@ export class ArrangeTool implements ViewTool {
     if (el && segs?.length) return { id: el.id, segs };
     let best: { d: number; s: SnapSegment } | null = null;
     for (const s of nearSegments(this.host.snapSegments(), at, tol)) {
-      if (skip.has(s.id)) continue;
+      if (skip.has(s.id) || s.wandOnly) continue;
       const d = distToSegment(at, s.a, s.b);
       if (d <= tol && (!best || d < best.d)) best = { d, s };
     }
@@ -298,7 +298,7 @@ export class ArrangeTool implements ViewTool {
     const skip = new Set(this.ctx.ids);
     let best: { d: number; s: SnapSegment } | null = null;
     for (const s of nearSegments(this.host.snapSegments(), at, tol)) {
-      if (skip.has(s.id) || dist(s.a, s.b) < 1) continue;
+      if (skip.has(s.id) || s.wandOnly || dist(s.a, s.b) < 1) continue;
       const d = distToSegment(at, s.a, s.b);
       if (d <= tol && (!best || d < best.d)) best = { d, s };
     }

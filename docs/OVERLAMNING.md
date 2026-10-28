@@ -3,12 +3,33 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 28 oktober 2026 (eftermiddag), efter 0.10.22 Snäpp och smartspöt.
+Senast: 28 oktober 2026 (eftermiddag), efter granskningen 0.10.22.1.
 
 ## Läget
 
-- **Nästa session:** en **granskning** (efter 0.10.20.1, 0.10.20.2 och
-  0.10.22), sedan **0.10.23 Smartspöt del 2**. Se *Nästa session*.
+- **Nästa session:** **0.10.23 Smartspöt del 2** (mellanstor; bågar ur
+  kedjor efter svar E, bjälklag, tak, markyta och ramp, 2D-linje,
+  littera, mått). Se *Nästa session*.
+- **Granskningen efter 0.10.22 är klar** som **0.10.22.1** på `main`
+  (samma format, 21), gjord 28 oktober (eftermiddag) på "Kör". Carl
+  Augusts svar om 0.10.22 (15.02): A spöet stängs vid byte av verktyg, B
+  rätt, C inget snäpp mot höjdkurvorna i planen men mot marken i sektion
+  och fasad (gjort), D vi testar 35°, E riktiga bågar (0.10.23). Gjort:
+  höjdkurvorna i planen är `wandOnly` i snäppets lista (spöet följer dem,
+  snäppet inte); marklinjen i sektion och fasad snäpps (*På marken*);
+  Tab i spöet fungerar direkt efter ett klick; litterans punkt tar greppet
+  före knäcken när de ligger på varandra; `faceAround` söker skärningar
+  med `BoxIndex` (81 → 17 ms med 1040 höjdkurvebitar); `commandLine.ts`
+  623 → 542 (`shellList.ts`, `shellMenus.ts`) och `planView.ts` 591 → 403
+  (`planInput.ts`, `zoomHistory.ts`). Klickjämförelsen: 539 steg (43 nya
+  för litteran, det generella littrat och spöet); med snäppet oförändrat
+  skiljer bara de 11 steg som rättelserna gäller. Mätt på 1,2 miljoner
+  noder: 105 000 kurvbitar, 10–40 ms att bygga. Testerna: 650 på ca 17 s.
+  Se PLAN.md och UTVECKLING.md.
+- **Märks i hans ritningar efter 0.10.22.1:** markören dras inte längre
+  till höjdkurvorna i planen; i sektioner och fasader dras den till
+  marklinjen; litterans punkt flyttas när man drar i en littera vars
+  ledare är rak (förut knäcken).
 - **0.10.22 Snäpp och smartspöt är klar** på `main` (samma format, 21),
   byggd 28 oktober (eftermiddag) på "Kör", efter Carl Augusts svar: A, B,
   C och E om 0.10.20.2 bra; D en inställning för litterans vridning;
@@ -283,7 +304,7 @@ Senast: 28 oktober 2026 (eftermiddag), efter 0.10.22 Snäpp och smartspöt.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.22` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.22.1` i `engine.ts`, `package.json` och
   `package-lock.json`; Smartspöt del 2 blir `0.10.23`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
 - **0.10.8–0.10.22, 0.10.20.1 och 0.10.20.2 är inte provade fullt ut** av Carl August; han har
@@ -347,10 +368,10 @@ vid varje överlämning.
   Situationsplanens beteckningar~~ (klara)
 - ~~0.10.21 Lutande väggar~~, ~~Granskning efter 0.10.21 (0.10.21.1)~~,
   ~~0.10.20.1 Litteran~~, ~~0.10.20.2 Generell littera~~, ~~0.10.22
-  Snäpp och smartspöt~~ (klara)
-- **Granskning** efter 0.10.20.1, 0.10.20.2 och 0.10.22
-- **0.10.23 Smartspöt del 2** (mellanstor: bjälklag, tak, markyta och
-  ramp, 2D-linje, littera, mått)
+  Snäpp och smartspöt~~, ~~Granskning efter 0.10.22 (0.10.22.1)~~ (klara)
+- **0.10.23 Smartspöt del 2** (mellanstor: bågar ur kedjor, bjälklag,
+  tak, markyta och ramp, 2D-linje, littera, mått)
+- **Granskning** efter ungefär tre versioner till
 - **Utredning: material i stället för fyllningar** (egen session, rör
   formatet)
 - **Ortofotot på marken** (liten undersökning med terrängappen, när det
@@ -371,30 +392,18 @@ vid varje överlämning.
 
 ## Nästa session
 
-Kör en **granskning** (efter 0.10.20.1, 0.10.20.2 och 0.10.22) om Carl
-August inte säger annat: klicksteg för litteran, det generella littrat och
-smartspöt (Q, hovra, Tab, klick, Shift); mät snäppets sträckor på en stor
-plats (höjdkurvorna ur ett rutnät på 1,2 miljoner noder) och spöets hover
-(`faceAround` i 2D); dela `commandLine.ts` och `planView.ts` om det går.
-Sedan **0.10.23 Smartspöt del 2**. Läs `cad-apa-synpunkter.md` först och
-ställ frågorna för 0.10.22 (fem åt gången), om han inte redan svarat.
+Bygg **0.10.23 Smartspöt del 2** om Carl August inte säger annat (se
+PLAN.md: bågar ur kedjor efter svar E, G bjälklag, H tak, I markyta och
+ramp, K 2D-linje, L littera, M mått; en fil per funktion i `src/ui/wand/`,
+`apply` med verktygens egna metoder). Läs `cad-apa-synpunkter.md` först.
+Frågorna om 0.10.22 är besvarade; ställ inga andra förrän han ber om det.
+Lägg klicksteg för 0.10.23 i nästa granskning.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
-
-**0.10.22 efter provning** (Claudes val, se PLAN.md)
-- Smartspöt stängs när man byter verktyg. Ska det i stället ligga kvar
-  på (som Snäpp) tills man stänger det?
-- Väggar runt en kontur: hela konturen först, sidan efter Tab; med *Ute*
-  innanför konturen. Rätt ordning och sida?
-- Snäppet drar nu till höjdkurvorna (på linjen, inga ändar). För
-  klistrigt på situationsplanen, eller bra?
-- En sida slutar där kedjan viker mer än 35°. Lagom?
-- Bågar följs som korta raka bitar (många små väggar eller murpunkter).
-  Ska spöet känna igen bågar och lägga dem som bågar?
 
 **0.10.20 efter provning** (Claudes val, se PLAN.md)
 - Markhöjden räknar marken som oförändrad när ny och befintlig skiljer
@@ -580,18 +589,19 @@ fråga.
 
 ## Öppna frågor och kända begränsningar
 
-- **Stora filer efter 0.10.21:** `commandLine.ts` (623 rader, en sluten
-  helhet med eget läge) och `planView.ts` (591) är störst; de lämnades i
-  granskningen efter 0.10.21 också. `groundRamp.ts` är delad i
-  0.10.21.1 (`rampProfile.ts`, `rampEdits.ts`); `arrangeTool.ts` (527) och
-  `app.ts` (566) är näst störst. Stilmallens fönster har tre kolumner från 1180 px; under
+- **Stora filer efter 0.10.22.1:** `app.ts` (570), `commandLine.ts`
+  (542, en sluten helhet med eget läge; listan och menyerna är utdelade)
+  och `arrangeTool.ts` (529) är störst; `planView.ts` är 403 efter
+  delningen (pekaren i `planInput.ts`, förra zoomen i `zoomHistory.ts`). Stilmallens fönster har tre kolumner från 1180 px; under
   det ligger delarna under varandra som förut.
 
-- **Smartspöt (0.10.22):** `find` körs vid varje musrörelse; kedjan,
-  den slutna ytan och Markeras svar sparas, men `faceAround` med många
-  linjer (upp till 1500, kvadratiskt) är inte mätt på ett stort underlag.
-  `snapSegments` med alla höjdkurvor räknas om när planen ändras (1590
-  sträckor i `groundProject` på under 1 ms; inte mätt med en stor plats).
+- **Smartspöt (0.10.22, mätt i 0.10.22.1):** `find` körs vid varje
+  musrörelse; kedjan, den slutna ytan och Markeras svar sparas.
+  `faceAround` med 1040 höjdkurvebitar tar 17 ms (skärningarna ur en
+  `BoxIndex`; de 1500 närmaste av 3000 korta linjer 30 ms). `snapSegments`
+  räknas om när planen ändras: 105 000 kurvbitar på 10–40 ms med 1,2
+  miljoner noder, och `nearSegments` bygger sitt rutnät på 40 ms första
+  gången. Höjdkurvorna i planen är bara för spöet (`wandOnly`).
   Bågar följs som raka bitar. 2D-formen runt en yta med hål får bara
   ytterkonturen. Spöet fungerar inte i 3D eller på ritningsbladen.
 - **Generell littera (0.10.20.2):** ritas utan `planReads`, så alla
@@ -789,7 +799,13 @@ fråga.
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (496 steg sedan granskningen efter 0.10.21, som lade till 39 steg sist
+  (539 steg sedan granskningen efter 0.10.22, som lade till 43 steg sist
+  för litteran, det generella littrat och smartspöt: greppen dras med
+  `grip_center('circle.grip')`, `path.grip` och `rect.side-grip`, Shift
+  hålls under dragningen men inte vid nedtryckningen (`shift_drag`), spöet
+  slås på med knappen eller `q` efter en `mouse.move` över ritytan, och
+  hovringen görs med `mouse.move` före Tab och klick; Visa-menyn stängs
+  med ett klick på knappen, inte Esc; 496 steg efter granskningen efter 0.10.21, som lade till 39 steg
   för 0.10.19–0.10.21: Böj på rampens referenslinje, mjuka övergångar och
   en skarp punkt, en ramp till med Båge i verktyget Mark och Foga ihop,
   markhöjd, låglinje, murens littera, minsta sidolutning, decimalerna och

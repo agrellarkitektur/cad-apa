@@ -1247,6 +1247,46 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Granskning efter 0.10.22 (0.10.22.1, format 21)
+
+Carl Augusts svar C om 0.10.22, tre småsaker som klickjämförelsen och
+mätningen visade, och två filer delade. De som använder det flyttade
+importerar de nya filerna.
+
+| Fil | Innehåll |
+| --- | --- |
+| `src/ui/app/commandLine.ts` | Smartshells fält, kommandon, punkter och händelser (623 → 542 rader) |
+| `src/ui/app/shellList.ts` | Ny: listan med kommandon — `createShellList` (`clear`, `openAll`, `update`, `render`, `close`, `step`, `fill`; `matches`, `picked`, `showAll`, `open`) |
+| `src/ui/app/shellMenus.ts` | Ny: `createShellMenus` — `recentItems`, `promptItems`, `shellMenu`, med `ShellMenuContext` |
+| `src/view2d/planView.ts` | Lagren, kameran, ritningen och rutnätet (591 → 403 rader); `events`, `local`, `pointer` och `changed` är nu publika för pekaren |
+| `src/view2d/planInput.ts` | Ny: `bindPlanInput(view)` — mus, penna, fingrar, mittenknappen, mellanslag + dra, nypning och hjulet; svarar med `updateCursor` |
+| `src/view2d/zoomHistory.ts` | Ny: `ZoomHistory` (`note`, `previous`) — förra zoomen (0.7.1) |
+
+- **Höjdkurvorna i planen (svar C)**: `SnapSegment.wandOnly` (`snap.ts`)
+  säger att sträckan bara är för smartspöt. `drawnSegments` sätter den på
+  `CURVE_PARTS`; `snap` filtrerar bort dem efter `nearSegments`, och
+  `segAt` i `markerTools.ts` och `arrangeTool.ts` hoppar över dem. Spöets
+  `trace.ts` och `shapeAround.ts` använder listan som förut, så en
+  stödmur längs en höjdkurva går fortfarande.
+- **Marklinjen i sektionen och fasaden**: `sectionSnapSegments` lägger
+  polylinjerna med `part` i `GROUND_PARTS` (*färdig mark*, *befintlig
+  mark*) som kurvbitar med id `mark` och texten *På marken*, och den
+  platta linjen utan terräng (*mark*) får samma text.
+- **Tab efter ett klick**: `WandTool.cycle` räknar om förslagen med den
+  senaste pekaren (`last`) när `hits` tömts av `up`, så att Tab fungerar
+  utan att musen flyttats.
+- **Litterans grepp**: `tagGripAt` ger knäcken ett tillägg på `tol / 4`
+  (texten har `tol / 2`), så att punkten vinner när de ligger på varandra.
+- **`faceAround`**: skärningarna söks med en `BoxIndex` vars ruta är
+  sträckornas medianlängd (100–5000 mm) i stället för alla mot alla:
+  1040 höjdkurvebitar 81 → 17 ms, 3000 korta linjer 67 → 30 ms.
+- **Mätt på en stor plats** (600 × 400 m, 0,5 m, 1,2 miljoner noder,
+  skript utan webbläsare): `drawnSegments` ger 105 000 kurvbitar på
+  10–40 ms och `nearSegments` bygger sitt rutnät på 40 ms första gången
+  (sedan under 0,1 ms per fråga); allt sparas per plan.
+- Tester: `tests/v010221.test.ts` (höjdkurvorna bara för spöet, marklinjen
+  i sektionen). Klickjämförelsen: 43 nya steg sist.
+
 ## Snäpp och smartspöt (0.10.22, format 21)
 
 - **Snäppet läser allt som ritas.** `snapSegments` (`src/ui/app/snapping.ts`)
