@@ -34,6 +34,16 @@ export function renderHighlight(
     // Ett element med mycket grafik, t.ex. ett stort DXF-underlag, markeras
     // med sin omslutande ram i stället för varje linje (0.8.3).
     if (item.prims.length > MANY_PRIMS) {
+      // Ett markobjekt med många höjdkurvebitar och släntstreck (t.ex. en
+      // ramp med bågar och mjuka övergångar) markeras med sin kontur, inte
+      // med ramen (28 oktober 2026).
+      if (item.regions.length) {
+        for (const rings of item.regions) {
+          const d = rings.map((r) => path(cam, r, true)).join('');
+          out.push(`<path d="${d}" fill-rule="evenodd" class="${cls}-fill"/><path d="${d}" fill="none" class="${cls}-line"/>`);
+        }
+        return;
+      }
       const b = boundsOf(item.prims);
       if (b) {
         const ring: Vec2[] = [[b.minX, b.minY], [b.maxX, b.minY], [b.maxX, b.maxY], [b.minX, b.maxY]];
