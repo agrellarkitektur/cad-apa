@@ -23,7 +23,7 @@ Senast: 28 oktober 2026 (morgon), efter 0.10.20 Situationsplanens beteckningar.
   markeringen av en ramp med många linjer blev en ram (gränsen 300
   primitiver från 0.8.3); objekt med kontur markeras nu alltid med
   konturen. Koden i UTVECKLING.md under *Situationsplanens beteckningar*;
-  Claudes val i PLAN.md. Testerna: 611 på ca 14 s. Klickjämförelsen
+  Claudes val i PLAN.md. Testerna: 610 på ca 14 s. Klickjämförelsen
   kördes **inte** (ingen tid); kör den i granskningen och lägg till steg
   för 0.10.19–0.10.20.
 - **Märks i hans ritningar efter 0.10.20:** markobjektens höjder skrivs

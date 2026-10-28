@@ -2704,7 +2704,7 @@ Carl Augusts bilder 27 oktober; som landskapsarkitekter redovisar.
 *Byggd 28 oktober (morgon), samma format (20), tillsammans med rättningen
 av markeringen (ramen för objekt med många linjer, 0.10.19.1 blev en del
 av den här). Carl August bad att den byggdes utan frågor först. Testerna:
-590 → 611 på ca 14 s. Claudes val: **markhöjden** är en egen sort
+590 → 610 på ca 14 s. Claudes val: **markhöjden** är en egen sort
 (`level`) under *Beteckning* i Mark: ett kors och texten till höger;
 höjderna läses ur marken (den färdiga i förslaget) och marken räknas som
 oförändrad när de skiljer mindre än 5 cm; en egen ny höjd i egenskaperna
