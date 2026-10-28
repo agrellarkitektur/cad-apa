@@ -7,7 +7,9 @@ import { wallFrame } from '../geometry/wallFrame';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { litteraTag, showLittera } from './littera';
 import type { ElementType, PlanContext, PlanItem } from './registry';
-import { holeWidth, openingRings, wallShapesFor, wallZone, type OpeningParams, type WallParams } from './wallBodies';
+import { holeWidth, openingRings, openingSpan, planWallParams, shiftedParams, wallShapesFor, wallShear, wallZone, type OpeningParams, type WallParams } from './wallBodies';
+import { planCutHeight } from './planCut';
+import { levelOf } from '../repr/solids';
 import { wallModel3d } from './wall3d';
 import { INSIDE } from './wallSides';
 
@@ -23,10 +25,15 @@ export {
   HOLE_EXTRA,
   holeWidth,
   JOIN_TOLERANCE,
+  leanedShape,
+  MAX_LEAN,
   openingRings,
   openingSpan,
   openingZoneInPlan,
+  planWallParams,
   sagittaOver,
+  shiftedParams,
+  wallShear,
   wallZone,
   wallShapesFor,
   wallsWithOpenings,
@@ -50,7 +57,7 @@ export function openingMarks(
 ): Primitive[] {
   const action = ctx.actionOf(el);
   if (ctx.actionOf(host) !== 'existing') return [];
-  const f = wallFrame(ctx.params<WallParams>(host));
+  const f = wallFrame(planWallParams(ctx, host));
   const s1 = p.at - holeWidth(p) / 2;
   const s2 = p.at + holeWidth(p) / 2;
   const rect = (a: number, b: number): Vec2[] => [...f.trace(a, b, -f.half), ...f.trace(b, a, f.half)];
@@ -77,7 +84,7 @@ export function openingMarks(
  * där ingen öppning är i vägen.
  */
 function wallTag(ctx: PlanContext, el: Element): Primitive[] {
-  const f = wallFrame(ctx.params<WallParams>(el));
+  const f = wallFrame(planWallParams(ctx, el));
   const room = ctx.scale * 8;
   if (f.length < room * 1.5) return [];
   const openings = ctx.openingsIn(el.id).map((o) => ctx.params<OpeningParams>(o));
@@ -97,7 +104,7 @@ function uncutWalls(ctx: PlanContext, items: readonly PlanItem[], shapes: Map<st
   const out: Primitive[] = [];
   const zoned = items.filter(({ el }) => zoneOf(el) !== 'cut');
   if (!zoned.length) return out;
-  const cut = ctx.memo('walls-cut', () => union(ctx.visible('Wall').filter((w) => zoneOf(w) === 'cut' && !ctx.hiddenByView(w)).flatMap((w) => shapes.get(w.id) ?? [])));
+  const cut = cutWallUnion(ctx, shapes, zoneOf);
   for (const zone of ['below', 'above'] as const) {
     const these = zoned.filter(({ el }) => zoneOf(el) === zone);
     if (!these.length) continue;
@@ -112,6 +119,53 @@ function uncutWalls(ctx: PlanContext, items: readonly PlanItem[], shapes: Map<st
       if (o.id) out.push({ kind: 'polyline', points: o.points, closed: o.closed, pen, origin: { objectId: o.id, objectType: 'Wall', part: zone === 'above' ? ABOVE_PART : 'vy' } });
   }
   return out;
+}
+
+/** De snittade väggarnas ytor sammanslagna, utan det som döljs i vyn. */
+function cutWallUnion(ctx: PlanContext, shapes: Map<string, Rings[]>, zoneOf: (el: Element) => CutZone): Rings[] {
+  return ctx.memo('walls-cut', () => union(ctx.visible('Wall').filter((w) => zoneOf(w) === 'cut' && !ctx.hiddenByView(w)).flatMap((w) => shapes.get(w.id) ?? [])));
+}
+
+/**
+ * Lutande väggar genom snittet (0.10.21): snittytan ligger där snittet
+ * skär väggen; foten ritas som vy och toppen streckprickad, där de sticker
+ * ut utanför det snittade. Väggens egen rektangel, utan skarvar och hål.
+ */
+function leaningOutlines(ctx: PlanContext, items: readonly PlanItem[], shapes: Map<string, Rings[]>, zoneOf: (el: Element) => CutZone): Primitive[] {
+  const out: Primitive[] = [];
+  const leaning = items.filter(({ el }) => zoneOf(el) === 'cut' && wallShear(ctx.params<WallParams>(el)));
+  if (!leaning.length) return out;
+  const cut = cutWallUnion(ctx, shapes, zoneOf);
+  const rectOf = (p: WallParams, dz: number): Rings => {
+    const f = wallFrame(shiftedParams(p, dz));
+    return [[f.at(0, -f.half), f.at(f.length, -f.half), f.at(f.length, f.half), f.at(0, f.half)]];
+  };
+  for (const { el } of leaning) {
+    const p = ctx.params<WallParams>(el);
+    const base = levelOf(p);
+    const cutAt = Math.max(0, Math.min(p.height, (planCutHeight(ctx) ?? 0) - base));
+    // Snittytan utan hål, så att konturen inte går in i dörrhålet vid snittet.
+    const hide = union([...cut, rectOf(p, cutAt)]);
+    const openings = ctx.openingsIn(el.id).map((o) => ({ span: openingSpan(p, ctx.params(o)), rings: openingRings(wallFrame(p), ctx.params<OpeningParams>(o), 1)[0] as unknown as Rings }));
+    for (const [dz, zone] of [
+      [0, 'below'],
+      [p.height, 'above'],
+    ] as const) {
+      // Hålen som når foten (dörrar) eller toppen bryter konturen där.
+      const holes = openings.filter(({ span }) => (dz === 0 ? span[0] <= base + 1 : span[1] >= base + p.height - 1)).map(({ rings }) => shiftRings(rings, dz, p));
+      const pen = planCutPen(ctx.style, 'Wall', zone);
+      for (const rings of difference(rectOf(p, dz), [...hide, ...holes]))
+        for (const ring of rings) out.push({ kind: 'polyline', points: ring, closed: true, pen, origin: { objectId: el.id, objectType: 'Wall', part: zone === 'above' ? ABOVE_PART : 'vy' } });
+    }
+  }
+  return out;
+}
+
+/** Ringar flyttade dit väggen står på höjden dz över foten. */
+function shiftRings(rings: Rings, dz: number, p: WallParams): Rings {
+  const sh = wallShear(p);
+  if (!sh) return rings;
+  return rings.map((r) => r.map((q): Vec2 => [q[0] + sh[0] * dz, q[1] + sh[1] * dz]));
 }
 
 export const wallType: ElementType<WallParams> = {
@@ -169,7 +223,7 @@ export const wallType: ElementType<WallParams> = {
       for (const o of ownedOutlines(regions, own, owned))
         out.push({ kind: 'polyline', points: o.points, closed: o.closed, pen: { weight: 0.35 }, asOutline: true, origin: { ...(o.id ? { objectId: o.id } : {}), objectType: 'Wall', part: 'kontur' } });
     }
-    out.push(...uncutWalls(ctx, items, shapes, zoneOf));
+    out.push(...uncutWalls(ctx, items, shapes, zoneOf), ...leaningOutlines(ctx, items, shapes, zoneOf));
     if (showLittera(ctx, 'Wall') && action !== 'demolished') {
       for (const { el } of cutItems) out.push(...wallTag(ctx, el));
     }

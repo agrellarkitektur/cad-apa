@@ -2736,17 +2736,91 @@ Playwright mot `dist/`. Inte gjort: markhöjden har ingen egen
 textvridning eller förskjutning; låglinjens pilar går inte att glesa;
 ledarens läge går inte att dra.*
 
-### 0.10.21 Lutande väggar (förslag, mellanstor till stor)
+### 0.10.21 Lutande väggar ✓
 
-Carl August 27 oktober, i svaret om snittet i planen.
+Carl August 27 oktober, i svaret om snittet i planen; 28 oktober bad han
+att den byggdes före piloten ("kör nästa version").
 
 - En vägg kan luta: en vinkel (eller ett mått i toppen) åt ena sidan, och
   väggen ritas som en lutande kropp i 3D, fasader och sektioner
 - I planen följer den snittet: snittytan där väggen skär snitthöjden,
   foten som vy och det som lutar ut över snittet streckprickat
 - Öppningarna följer lutningen; skarvarna mot andra väggar och tak prövas
-- Fråga först: före eller efter piloten, och om lutningen ska kunna vara
-  olika i ändarna (vriden vägg)
+
+*Byggd 28 oktober (förmiddag), samma format (20). Testerna: 610 → 616 på
+ca 14 s. Claudes val: **lutningen** sparas som en vinkel i grader
+(`lean`), positiv åt vänster som bågen, samma i båda ändarna (Carl August
+hoppade över frågan om olika i ändarna; en vriden vägg får vänta); fältet
+*Toppen i sidled* i mm räknas om till vinkeln ur höjden, så att vinkeln
+håller när höjden ändras (en vägg upp till taket). Foten ligger kvar på
+referenslinjen. Bågväggar lutar inte. **3D-formatet** fick `shear` i
+stället för en egen kropp: ytorna är plana också lutade, så fasadernas
+dolda linjer och kanter behövde inget nytt, och sektionen är exakt (en
+affin avbildning av konturen, också under sneda tak). **Tak och bjälklag**
+räknas i väggens oförskjutna koordinater; takets yta i plan flyttas
+tillbaka så långt som väggen lutar ut vid sin höjd, en förenkling som
+syns bara där takets kant går diagonalt över en lutande vägg. **Skarvarna**
+mot andra väggar räknas vid foten i 3D (en lutande vägg som möter en
+lodrät får en glipa eller går in i den högre upp; det prövas inte) och
+vid snitthöjden i planen (dörrar, fönster, hål och skarvar hamnar där
+snittet skär väggen). **Foten och toppen** i planen är väggens egen
+rektangel utan skarvar, med fotens kontur bruten av dörrarna och toppens
+av hål som når toppen. Rummen, bjälklag ur väggarna, väggsidorna,
+automåtten, greppen och snäppningen utgår från foten; ett klick på
+snittytan markerar väggen, men greppen ligger på referenslinjen vid
+foten, en bit ifrån. Inte gjort: olika lutning i ändarna; lutande
+bågväggar; ytterväggarnas insida som dold linje i fasaden ritas lodrät;
+ingen lutning i väggverktyget (sätts i panelen efteråt).*
+
+### Granskning efter 0.10.21
+
+Utan nya funktioner. Klickjämförelsen får steg för 0.10.19–0.10.21,
+`groundRamp.ts` delas, testerna gås igenom. Småfelen ur Inkorgen 28
+oktober (Carl August godkände Claudes förslag A–H samma morgon):
+
+- Slänternas fyllning fungerar inte (inget händer oavsett inställning)
+- Släntstrecken dubbelt så glest (5 mm på papperet), som en inställning
+  under Platsen
+- 3D-perspektivet återställs när man växlar mellan Båda och 3D; det ska
+  ligga kvar
+
+### 0.10.20.1 Litteran (liten)
+
+Inkorgen 28 oktober. Litteran ska gå att flytta för hand på alla objekt
+som har en. Där den har en ledare (stödmuren) flyttas både punkten ledaren
+pekar på och texten; ledarens sida byter av sig själv när texten flyttas
+över mittlinjen.
+
+### Snäpp i marken (mellanstor, före piloten)
+
+Inkorgen 28 oktober.
+
+- Snäpp mot fastighetsgränser och befintliga byggnader från Höjdkurvor och
+  mot markobjekten, t.ex. när en stödmur ritas längs en ramp
+- "Trollstav": med stödmursverktyget valt klickar man längs sidan av en
+  ramp (eller vilket objekt som helst), och en stödmur skapas längs den.
+  Liten när snäppet finns
+
+### Situationsplanen som modellflik (stor, efter 0.12.1, före piloten)
+
+Inkorgen 28 oktober, ihop med *Koordinater, SWEREF och sol*. En egen
+modellflik (som våningsplanen) för situationsplan, markplaneringsritning
+och illustrationsplan (färglagd, mindre abstrakt och mer detaljerad): de
+skiljer sig så mycket från andra planer, utan snitthöjd, allt sett
+ovanifrån. Situationsplanen koordinatsätts ofta i SWEREF och exporter från
+den ska vara i SWEREF. Husets kontur på situationsplanen (parkerat) hör
+dit. Lokal nollpunkt, SWEREF-zon och sann nord enligt *Koordinater,
+SWEREF och sol* (sol och skugga kan ligga kvar efter piloten).
+
+### Utredning: material i stället för fyllningar (egen session)
+
+Inkorgen 28 oktober. Bör vi gå ifrån fyllningar för alla objekt och i
+stället arbeta med material som har olika representation i olika vyer?
+Då hänger 2D och 3D ihop av sig själva, och markplaneringsritningen kan
+känna igen markmaterialen och sammanställa en förklaring. Baksidan: inte
+många olika objekt med olika inställningar som alla ska vara grus. Rör
+formatet; avgörs i en egen session före fler fyllningsfunktioner och
+före formatfrysen.
 
 ### Ortofotot på marken (undersökning, liten)
 

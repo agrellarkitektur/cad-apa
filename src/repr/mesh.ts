@@ -68,6 +68,16 @@ export function solidTriangles(s: Solid): number[] {
       if (c.z1 < z1 - EPS) pushPolygon(out, poly, (p) => [p[0], p[1], c.z1]);
     }
   }
+  // En lutande kropp (0.10.21): varje hörn flyttas i sidled efter sin höjd
+  // över foten. Ytorna är plana också efteråt (parallellogram).
+  if (s.shear && (s.shear[0] || s.shear[1])) {
+    const [sx, sy] = s.shear;
+    for (let i = 0; i < out.length; i += 3) {
+      const dz = out[i + 2] - z0;
+      out[i] += sx * dz;
+      out[i + 1] += sy * dz;
+    }
+  }
   return out;
 }
 

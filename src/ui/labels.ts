@@ -17,6 +17,7 @@ export const PARAM_LABELS: Record<string, string> = {
   thickness: 'Tjocklek',
   width: 'Bredd',
   height: 'Höjd',
+  lean: 'Lutning',
   sill: 'Bröstning',
   at: 'Läge längs vägg',
   slope: 'Lutning',

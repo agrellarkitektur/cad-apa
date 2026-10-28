@@ -5,7 +5,7 @@ import type { Primitive, Vec2 } from '../repr/primitives';
 import { FRAME_DEFAULTS, openingZone, uncutOpening, type FrameParams } from './opening';
 import { litteraTag, showLittera } from './littera';
 import type { ElementType } from './registry';
-import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, openingZoneInPlan, wallFrame, type OpeningParams, type WallParams } from './wall';
+import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, leanedShape, openingZoneInPlan, planWallParams, wallFrame, type OpeningParams, type WallParams } from './wall';
 import { doorModel } from './openingModel';
 import { levelOf, liftShape } from '../repr/solids';
 
@@ -37,7 +37,7 @@ export const doorType: ElementType<DoorParams> = {
   defaults: () => ({ at: 1000, width: 900, height: 2100, swing: 1, hinge: 'start', glazed: false, ...FRAME_DEFAULTS }),
   pickShape(el, ctx) {
     const host = el.host ? ctx.doc.elements[el.host] : undefined;
-    return host ? openingRings(wallFrame(ctx.params<WallParams>(host)), ctx.params<DoorParams>(el)) : [];
+    return host ? openingRings(wallFrame(planWallParams(ctx, host)), ctx.params<DoorParams>(el)) : [];
   },
   model3d(el, ctx) {
     const host = el.host ? ctx.doc.elements[el.host] : undefined;
@@ -45,7 +45,8 @@ export const doorType: ElementType<DoorParams> = {
     const p = ctx.params<DoorParams>(el);
     const z = openingZone(ctx, host, p);
     // Dörren sitter i väggens fot (0.10.13).
-    const lift = levelOf(ctx.params<WallParams>(host));
+    const wp = ctx.params<WallParams>(host);
+    const lift = levelOf(wp);
     return doorModel(
       el.id,
       {
@@ -67,7 +68,7 @@ export const doorType: ElementType<DoorParams> = {
         showSwing: !ctx.view.hide?.includes('swing'),
       },
       detailOf(ctx.view, 'model'),
-    ).map((s) => liftShape(s, lift));
+    ).map((s) => leanedShape(liftShape(s, lift), wp));
   },
   plan(el, ctx) {
     const host = el.host ? ctx.doc.elements[el.host] : undefined;
@@ -88,7 +89,7 @@ export const doorType: ElementType<DoorParams> = {
 
     // Skiss: bladet från väggens liv över hela hålet. Normal: karmar och blad
     // från karmens liv. Detalj: karmar med falsar och blad med tjocklek.
-    const z = openingZone(ctx, host, p);
+    const z = openingZone(ctx, host, p, true);
     const { f, s1, s2, h1, h2, lo, hi } = z;
     const fw = sketch ? 0 : p.frameWidth;
     const a1 = sketch ? h1 : s1;

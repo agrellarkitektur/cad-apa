@@ -296,10 +296,11 @@ export function reversedWall(doc: ProjectDoc, wall: Element, keepBody: boolean):
   const p = wall.params as { start: [number, number]; end: [number, number]; justification?: string };
   const j = p.justification ?? 'center';
   const swapped = j === 'left' ? 'right' : j === 'right' ? 'left' : j;
-  const bulge = (wall.params as { bulge?: number }).bulge;
+  const { bulge, lean } = wall.params as { bulge?: number; lean?: number };
+  // Vänster sida byter plats: pilhöjden och lutningen (0.10.21) byter tecken.
   const reversed: Element = {
     ...wall,
-    params: { ...wall.params, start: p.end, end: p.start, justification: keepBody ? swapped : j, ...(bulge ? { bulge: -bulge } : {}) },
+    params: { ...wall.params, start: p.end, end: p.start, justification: keepBody ? swapped : j, ...(bulge ? { bulge: -bulge } : {}), ...(lean ? { lean: -lean } : {}) },
   };
   const out: Element[] = [reversed];
   const f0 = wallFrame(geometryOf(doc, wall));

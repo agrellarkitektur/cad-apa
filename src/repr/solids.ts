@@ -39,7 +39,17 @@ export interface Solid {
    * Formen byggs då som en hel kropp med hål, se solidTriangles.
    */
   cuts?: Cut3D[];
+  /**
+   * Lutande kropp (0.10.21): en punkt på höjden z ligger förskjuten
+   * `shear · (z − z0)` i planet, mm i sidled per mm höjd. Konturen och
+   * urtagen gäller vid z0; de sneda planen räknas i den oförskjutna
+   * punkten. Utelämnad = lodrät.
+   */
+  shear?: Shear;
 }
+
+/** Sidledes förskjutning per höjd (mm/mm), för lutande kroppar. */
+export type Shear = readonly [number, number];
 
 export interface Cut3D {
   rings: Vec2[][];
@@ -91,4 +101,26 @@ export function liftShape(s: Shape3D, dz: number): Shape3D {
  */
 export function levelOf(p: { level?: unknown }): number {
   return typeof p.level === 'number' && Number.isFinite(p.level) ? p.level : 0;
+}
+
+/**
+ * En 3D-form som lutar som en vägg (0.10.21): varje punkt flyttas `shear`
+ * gånger höjden över `base` (väggens fot). En kropp får sin kontur och sina
+ * urtag flyttade till sin egen fot och lutar sedan själv; kantlinjer flyttas
+ * punkt för punkt.
+ */
+export function shearShape(s: Shape3D, shear: Shear, base: number): Shape3D {
+  if (!shear[0] && !shear[1]) return s;
+  const move = (p: Vec2, dz: number): Vec2 => [p[0] + shear[0] * dz, p[1] + shear[1] * dz];
+  if (s.kind === 'edges') {
+    return { ...s, segments: s.segments.map(([x1, y1, z1, x2, y2, z2]) => [...move([x1, y1], z1 - base), z1, ...move([x2, y2], z2 - base), z2] as Edges3D['segments'][number]) };
+  }
+  const dz = s.z0 - base;
+  const own: Shear = [shear[0] + (s.shear?.[0] ?? 0), shear[1] + (s.shear?.[1] ?? 0)];
+  return {
+    ...s,
+    rings: s.rings.map((r) => r.map((p) => move(p, dz))),
+    ...(s.cuts ? { cuts: s.cuts.map((c) => ({ ...c, rings: c.rings.map((r) => r.map((p) => move(p, dz))) })) } : {}),
+    shear: own,
+  };
 }

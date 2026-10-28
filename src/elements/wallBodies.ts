@@ -5,9 +5,10 @@ import { wallFrame, type WallFrame } from '../geometry/wallFrame';
 import { add, cross, dist, dot, intersectLines, scale, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import type { PlanContext } from './registry';
-import { zoneInPlan } from './planCut';
+import { planCutHeight, zoneInPlan } from './planCut';
+import type { Element } from '../core/model';
 import type { CutZone } from '../repr/planCutPens';
-import { levelOf } from '../repr/solids';
+import { levelOf, shearShape, type Shape3D, type Shear } from '../repr/solids';
 
 /*
  * Väggarnas kroppar i plan (ur wall.ts i 0.10.1): parametrarna, öppningarnas
@@ -31,6 +32,68 @@ export interface WallParams {
   toRoof?: boolean;
   /** Väggens fot mot våningens golv, mm (0.10.13); höjden räknas därifrån. Utelämnad = 0. */
   level?: number;
+  /**
+   * Lutning från lodlinjen i grader (0.10.21), positiv åt vänster sett från
+   * start mot slut, samma i båda ändarna. Foten ligger kvar på
+   * referenslinjen; toppen flyttas height · tan(lean). Bara raka väggar.
+   * Utelämnad eller 0 = lodrät.
+   */
+  lean?: number;
+  /**
+   * Bara i beräkningen, sparas aldrig: var väggens ändar möter andra väggar
+   * när konturen är flyttad (en lutande vägg vid snitthöjden, 0.10.21).
+   * Skarvarna söks där, så att de andra väggarna når fram till den
+   * flyttade konturen.
+   */
+  joinRefs?: readonly [readonly [number, number], readonly [number, number]];
+}
+
+/** Största lutning, grader. */
+export const MAX_LEAN = 80;
+
+/**
+ * Väggens lutning som förskjutning i sidled per mm höjd (0.10.21), eller null
+ * för en lodrät vägg. Bågväggar lutar inte (lutningen lämnas utan verkan).
+ */
+export function wallShear(p: WallParams): Shear | null {
+  if (!p.lean || !Number.isFinite(p.lean) || p.bulge) return null;
+  const f = wallFrame(p);
+  const t = Math.tan((Math.max(-MAX_LEAN, Math.min(MAX_LEAN, p.lean)) * Math.PI) / 180);
+  return [f.n[0] * t, f.n[1] * t];
+}
+
+/** En 3D-form (dörr, fönster) som följer väggens lutning (0.10.21). */
+export function leanedShape(s: Shape3D, wall: WallParams): Shape3D {
+  const sh = wallShear(wall);
+  return sh ? shearShape(s, sh, levelOf(wall)) : s;
+}
+
+/**
+ * Väggen som planen ritar den (0.10.21): en lutande vägg som går genom
+ * snittet flyttad dit den står vid snitthöjden, så att snittytan, hålen
+ * och dörrarna hamnar där snittet skär väggen. Lodräta väggar, och väggar
+ * helt över eller under snittet, som de är.
+ */
+export function planWallParams(ctx: Pick<PlanContext, 'doc' | 'storey' | 'params'>, el: Element): WallParams {
+  const p = ctx.params<WallParams>(el);
+  if (!p.lean || p.bulge) return p;
+  const cut = planCutHeight(ctx);
+  if (cut === undefined || wallZone(ctx, p) !== 'cut') return p;
+  const dz = Math.max(0, Math.min(p.height, cut - levelOf(p)));
+  const hit = shiftedCache.get(p);
+  if (hit && hit.dz === dz) return hit.out;
+  const out = shiftedParams(p, dz);
+  shiftedCache.set(p, { dz, out });
+  return out;
+}
+const shiftedCache = new WeakMap<WallParams, { dz: number; out: WallParams }>();
+
+/** Konturen flyttad som väggen lutar: så långt som den höjden över foten ger. */
+export function shiftedParams(p: WallParams, dz: number): WallParams {
+  const sh = wallShear(p);
+  if (!sh || !dz) return p;
+  const d: Vec2 = [sh[0] * dz, sh[1] * dz];
+  return { ...p, start: [p.start[0] + d[0], p.start[1] + d[1]], end: [p.end[0] + d[0], p.end[1] + d[1]], joinRefs: [p.start, p.end] };
 }
 
 /**
@@ -109,6 +172,8 @@ export function computeWallShapes(
   cache?: WallShapeCache,
 ): Map<string, Rings[]> {
   const frames = new Map(walls.map((w) => [w.id, wallFrame(w.p)]));
+  // Var skarvarna söks: vid foten för en flyttad (lutande) vägg (0.10.21).
+  const joinFrames = new Map(walls.map((w) => [w.id, w.p.joinRefs ? wallFrame({ ...w.p, start: w.p.joinRefs[0], end: w.p.joinRefs[1] }) : frames.get(w.id)!]));
 
   // Vilka väggändar möts i samma punkt? Det avgörs av referenslinjerna, som
   // är det man ritar och snäpper till; formen räknas från mittlinjerna.
@@ -116,7 +181,8 @@ export function computeWallShapes(
   const ends: End[] = [];
   for (const w of walls) {
     const f = frames.get(w.id)!;
-    ends.push({ id: w.id, end: 'start', point: f.a, ref: w.p.start }, { id: w.id, end: 'end', point: f.b, ref: w.p.end });
+    const [rs, re] = w.p.joinRefs ?? [w.p.start, w.p.end];
+    ends.push({ id: w.id, end: 'start', point: f.a, ref: rs as Vec2 }, { id: w.id, end: 'end', point: f.b, ref: re as Vec2 });
   }
   // Ändar och väggar i ett rutnät, så att varje ände bara prövas mot det som
   // ligger nära (0.8.1). Ordningen är densamma som i listorna.
@@ -125,7 +191,7 @@ export function computeWallShapes(
   ends.forEach((e, i) => endIndex.add(i, [e.ref[0] - reach, e.ref[1] - reach, e.ref[0] + reach, e.ref[1] + reach]));
   const wallIndex = new BoxIndex(2000);
   walls.forEach((w, i) => {
-    const g = frames.get(w.id)!;
+    const g = joinFrames.get(w.id)!;
     const pad = g.half + reach;
     // En båge kan bukta ut utanför ändarnas rektangel; den prövas alltid.
     wallIndex.add(i, g.arc ? null : [Math.min(g.a[0], g.b[0]) - pad, Math.min(g.a[1], g.b[1]) - pad, Math.max(g.a[0], g.b[0]) + pad, Math.max(g.a[1], g.b[1]) + pad]);
@@ -157,10 +223,11 @@ export function computeWallShapes(
     for (const i of wallIndex.at(e.ref)) {
       const w = walls[i];
       if (w.id === e.id) continue;
-      const g = frames.get(w.id)!;
+      const g = joinFrames.get(w.id)!;
       const [s, o] = g.project(e.ref);
       if (s < 1 || s > g.length - 1 || Math.abs(o) > g.half + JOIN_TOLERANCE) continue;
-      const loc = g.local(s);
+      // Livet där väggen står (flyttat för en lutande vägg).
+      const loc = frames.get(w.id)!.local(s);
       // Det liv väggen kommer ifrån: den sida dit väggen pekar bort från skarven.
       const side = dot(A.dir, loc.n) >= 0 ? 1 : -1;
       if (Math.abs(dot(A.dir, loc.u)) > 0.999) continue; // parallella
@@ -276,7 +343,7 @@ const savedUnions = lastResults<Rings[]>();
 export function wallShapesFor(ctx: PlanContext): Map<string, Rings[]> {
   return ctx.memo('wall-shapes', () =>
     computeWallShapes(
-      ctx.visible('Wall').map((el) => ({ id: el.id, p: ctx.params<WallParams>(el) })),
+      ctx.visible('Wall').map((el) => ({ id: el.id, p: planWallParams(ctx, el) })),
       // Bara öppningar som går genom snittet tar upp hål i planen (0.10.16):
       // förbi ett högt fönster går väggen obruten.
       (id) => {

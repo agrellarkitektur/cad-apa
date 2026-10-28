@@ -4,11 +4,11 @@ import { BoxIndex } from '../geometry/boxIndex';
 import { cross, dist, distToSegment, dot, pointInRings, sub } from '../geometry/vec';
 import { edgeOwners } from '../repr/outlineOwners';
 import type { Vec2 } from '../repr/primitives';
-import { levelOf, zOn, type Edges3D, type Plane, type Shape3D } from '../repr/solids';
+import { levelOf, zOn, type Edges3D, type Plane, type Shape3D, type Shear } from '../repr/solids';
 import type { PlanContext, PlanItem, SlabAbove } from './registry';
 import { openingLift } from './opening';
-import { halfPlaneBelow, planeRange, roofPlanesAround, trimToRoofs } from './roof';
-import { bareWallShapes, HOLE_EXTRA, holeWidth, sagittaOver, type OpeningParams, type WallParams } from './wallBodies';
+import { halfPlaneBelow, planeRange, roofPlanesAround, trimToRoofs, type RoofPlane } from './roof';
+import { bareWallShapes, HOLE_EXTRA, holeWidth, sagittaOver, wallShear, type OpeningParams, type WallParams } from './wallBodies';
 
 /*
  * Väggarnas 3D (ur wall.ts i 0.10.1): kropparna kapade av taken och
@@ -24,6 +24,39 @@ interface WallPiece {
   height: number;
   /** Väggens fot över våningens golv (0.10.13). */
   base: number;
+  /** Lutningen (0.10.21), null för en lodrät vägg. */
+  shear: Shear | null;
+}
+
+/**
+ * Ett plan i de oförskjutna koordinaterna för en lutande vägg (0.10.21):
+ * höjden z där en punkt på konturen (vid foten, z0) når planet när den
+ * lutar ut med `shear`. z = a·(x + sx·(z − z0)) + … ger z·(1 − k) = a·x + b·y
+ * + c − k·z0 med k = a·sx + b·sy.
+ */
+function unshearPlane(pl: Plane, shear: Shear, z0: number): Plane {
+  const k = pl[0] * shear[0] + pl[1] * shear[1];
+  const d = Math.abs(1 - k) < 1e-6 ? 1e-6 : 1 - k;
+  return [pl[0] / d, pl[1] / d, (pl[2] - k * z0) / d];
+}
+
+function shiftRings(rings: Rings, dx: number, dy: number): Rings {
+  return rings.map((r) => r.map((q): Vec2 => [q[0] + dx, q[1] + dy]));
+}
+
+/**
+ * Taken sedda från en lutande vägg: planen i väggens oförskjutna
+ * koordinater, och takets yta i plan flyttad tillbaka så långt som väggen
+ * lutar ut vid sin höjd (en förenkling: takets kant mot en lutande vägg
+ * räknas vid toppen).
+ */
+function roofsFor(roofs: readonly RoofPlane[], shear: Shear, base: number, height: number): RoofPlane[] {
+  return roofs.map((rp) => ({ ...rp, rings: shiftRings(rp.rings, -shear[0] * height, -shear[1] * height), under: unshearPlane(rp.under, shear, base), top: unshearPlane(rp.top, shear, base) }));
+}
+
+/** Bjälklagen sedda från en lutande vägg: flyttade tillbaka så långt som väggen lutar ut vid bjälklagets undersida. */
+function slabsFor(slabs: readonly SlabCut[], shear: Shear, base: number): SlabCut[] {
+  return slabCuts(slabs.map((sc) => ({ ...sc, rings: shiftRings(sc.rings, -shear[0] * (sc.under - base), -shear[1] * (sc.under - base)) })));
 }
 
 /** Väggarna med en åtgärd i 3D, för `model3dBatch` på väggtypen. */
@@ -59,9 +92,13 @@ export function wallModel3d(items: PlanItem[], ctx: PlanContext): Shape3D[] {
   for (const { el, action, p } of walls) {
     const base = levelOf(p);
     const top = base + p.height;
+    // En lutande vägg (0.10.21) räknas i sina egna, oförskjutna koordinater.
+    const shear = wallShear(p);
+    const myRoofs = shear && roofs.length ? roofsFor(roofs, shear, base, p.height) : roofs;
+    const mySlabs = shear && slabs.length ? slabsFor(slabs, shear, base) : slabs;
     for (const piece of own.get(el.id) ?? []) {
-      for (const t of trimToRoofs(piece, top, !!p.toRoof, roofs)) {
-        for (const s of underSlabs(t.rings, t.top ?? null, top, slabs, base)) pieces.push({ id: el.id, action, base, ...s });
+      for (const t of trimToRoofs(piece, top, !!p.toRoof, myRoofs)) {
+        for (const s of underSlabs(t.rings, t.top ?? null, top, mySlabs, base)) pieces.push({ id: el.id, action, base, shear, ...s });
       }
     }
   }
@@ -79,6 +116,7 @@ export function wallModel3d(items: PlanItem[], ctx: PlanContext): Shape3D[] {
     const material = action === 'new' ? 'wall-new' : 'wall';
     const base = levelOf(p);
     const wallTop = base + p.height;
+    const shear = wallShear(p);
     // Öppningarna i höjdled: dörrar från väggens fot, fönster från bröstningen.
     const openings = ctx.openingsIn(el.id).map((o) => {
       const op = ctx.params<OpeningParams & { height: number; sill?: number; sillFromWall?: boolean }>(o);
@@ -100,7 +138,7 @@ export function wallModel3d(items: PlanItem[], ctx: PlanContext): Shape3D[] {
       const z1 = piece.top ? planeRange(piece.top, piece.rings)[1] : piece.height;
       // Under ett bjälklag slutar urtagen vid väggens ovansida.
       const mine = z1 < wallTop ? cuts.map((c) => ({ ...c, z1: Math.min(c.z1, z1) })).filter((c) => c.z1 > c.z0) : cuts;
-      solids.push({ id: el.id, rings: piece.rings, z0: base, z1, ...(piece.top ? { top: piece.top } : {}), material, noEdges: true, cuts: mine });
+      solids.push({ id: el.id, rings: piece.rings, z0: base, z1, ...(piece.top ? { top: piece.top } : {}), ...(shear ? { shear } : {}), material, noEdges: true, cuts: mine });
     }
     for (const o of openings) {
       // Öppningens omfattning på båda sidor och djupet i smygen.
@@ -129,7 +167,8 @@ export function wallModel3d(items: PlanItem[], ctx: PlanContext): Shape3D[] {
             q = [ray[0] + dir[0] * t, ray[1] + dir[1] * t];
           }
         }
-        return [q[0], q[1], z];
+        // Öppningen följer väggens lutning (0.10.21).
+        return shear ? [q[0] + shear[0] * (z - base), q[1] + shear[1] * (z - base), z] : [q[0], q[1], z];
       };
       for (const side of [-h, h]) {
         seg.segments.push([...pt(s1, side, o.z0), ...pt(s1, side, o.z1)], [...pt(s2, side, o.z0), ...pt(s2, side, o.z1)]);
@@ -297,14 +336,15 @@ const BEND = Math.sin((9 * Math.PI) / 180);
  */
 function wallEdges(pieces: WallPiece[]): Edges3D[] {
   const topKey = (pc: WallPiece) => (pc.top ? pc.top.map((v) => v.toFixed(6)).join(',') : `h${pc.height}`);
-  const groups = new Map<string, { id: string; base: number; zTop: (q: Vec2) => number; pieces: WallPiece[] }>();
+  const groups = new Map<string, { id: string; base: number; shear: Shear | null; zTop: (q: Vec2) => number; pieces: WallPiece[] }>();
   for (const pc of pieces) {
-    const key = `${pc.action}|${topKey(pc)}|${pc.base}`;
+    // Lutande väggar (0.10.21) är egna grupper: deras kanter flyttas med höjden.
+    const key = `${pc.action}|${topKey(pc)}|${pc.base}|${pc.shear ? pc.shear.join(',') : ''}`;
     let g = groups.get(key);
     if (!g) {
       const top = pc.top;
       const h = pc.height;
-      g = { id: pc.id, base: pc.base, zTop: top ? (q) => zOn(top, q[0], q[1]) : () => h, pieces: [] };
+      g = { id: pc.id, base: pc.base, shear: pc.shear, zTop: top ? (q) => zOn(top, q[0], q[1]) : () => h, pieces: [] };
       groups.set(key, g);
     }
     g.pieces.push(pc);
@@ -336,6 +376,8 @@ function wallEdges(pieces: WallPiece[]): Edges3D[] {
     // En grupp med en enda vägg behöver inte delas efter ägare.
     const one = g.pieces.every((pc) => pc.id === g.id);
     const owners = one ? null : edgeOwners(g.pieces);
+    // Punkten på höjden z, flyttad som väggen lutar.
+    const at = (q: Vec2, z: number): [number, number, number] => (g.shear ? [q[0] + g.shear[0] * (z - g.base), q[1] + g.shear[1] * (z - g.base), z] : [q[0], q[1], z]);
     for (const poly of g.polys) {
       for (const raw of poly) {
         const ring = owners ? raw.flatMap((q, i) => owners.split(q, raw[(i + 1) % raw.length]).slice(0, -1)) : raw;
@@ -343,13 +385,13 @@ function wallEdges(pieces: WallPiece[]): Edges3D[] {
           const a = ring[i];
           const b = ring[(i + 1) % ring.length];
           const e = edgesOf(owners?.ownerOf(a, b) ?? g.id);
-          e.segments.push([a[0], a[1], g.base, b[0], b[1], g.base], [a[0], a[1], g.zTop(a), b[0], b[1], g.zTop(b)]);
+          e.segments.push([...at(a, g.base), ...at(b, g.base)], [...at(a, g.zTop(a)), ...at(b, g.zTop(b))]);
           if (!bends(ring, i)) continue;
           const top = g.zTop(a);
-          if (isCorner(a)) e.segments.push([a[0], a[1], g.base, a[0], a[1], top]);
+          if (isCorner(a)) e.segments.push([...at(a, g.base), ...at(a, top)]);
           else {
             const from = Math.max(g.base, otherTop(g, a));
-            if (top - from > 1) e.segments.push([a[0], a[1], from, a[0], a[1], top]);
+            if (top - from > 1) e.segments.push([...at(a, from), ...at(a, top)]);
           }
         }
       }

@@ -3,13 +3,40 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 28 oktober 2026 (morgon), efter 0.10.20 Situationsplanens beteckningar.
+Senast: 28 oktober 2026 (förmiddag), efter 0.10.21 Lutande väggar.
 
 ## Läget
 
-- **Nästa session:** fråga om **0.10.21 Lutande väggar** ska byggas före
-  eller efter piloten; annars **Granskning efter 0.10.21** (eller efter
-  0.10.20, om 0.10.21 skjuts upp). Se *Nästa session*.
+- **Nästa session:** **Granskning efter 0.10.21** (småfelen ur Inkorgen,
+  klickjämförelsen med steg för 0.10.19–0.10.21, `groundRamp.ts` delad)
+  eller **0.10.20.1 Litteran**, det Carl August vill först. Se *Nästa
+  session*.
+- **0.10.21 Lutande väggar är klar** på `main` (samma format, 20), byggd
+  28 oktober (förmiddag) på Carl Augusts "kör nästa version"; han hoppade
+  över frågan om olika lutning i ändarna (samma i båda). Byggt: *Lutning*
+  (grader, positiv åt vänster) och *Toppen i sidled* (mm) i väggens
+  egenskaper; `Solid.shear` i 3D-formatet, så att väggen, kantlinjerna,
+  hålen, dörrarna och fönstren lutar i 3D, fasader och sektioner (snittet
+  exakt, `cutSheared`); tak och bjälklag i väggens oförskjutna
+  koordinater; i planen snittytan vid snitthöjden (`planWallParams`, med
+  skarvarna sökta vid foten genom `joinRefs`), foten som vy och toppen
+  streckprickad (`leaningOutlines`). Koden i UTVECKLING.md under *Lutande
+  väggar*; Claudes val och det som inte gjordes i PLAN.md. Testerna: 616
+  på ca 14 s. Provat i Playwright mot `dist/` (exempelvillan med
+  gavelväggarna lutade 15° och −10°: plan, 3D, sektion, fasad).
+  Klickjämförelsen kördes **inte**; kör den i granskningen med steg för
+  0.10.19–0.10.21.
+- **Märks i hans ritningar efter 0.10.21:** inget, så länge ingen vägg
+  har en lutning (lodräta väggar räknas som förut; väggarnas skarvar
+  söks nu med `joinRefs`, som bara flyttade väggar har).
+- **Inkorgen sorterad 28 oktober (morgon)**, Claudes förslag A–H
+  godkända: slänternas fyllning (fel), glesare släntstreck och
+  3D-perspektivet vid växling i **Granskning efter 0.10.21**; **0.10.20.1
+  Litteran** (flytta litteran för hand, ledarens två grepp); **Snäpp i
+  marken** (gränser, byggnader, markobjekt; trollstaven); **Situationsplanen
+  som modellflik** (stor, ihop med SWEREF, efter 0.12.1, före piloten);
+  **Utredning: material i stället för fyllningar** (egen session). Allt i
+  PLAN.md och i synpunktsfilens *Planerat*.
 - **0.10.20 Situationsplanens beteckningar är klar** på `main` (samma
   format, 20), byggd på Carl Augusts begäran utan frågor först (28 oktober,
   morgon). Byggt: *Markhöjd* och *Låglinje* under *Beteckning* i Mark
@@ -159,22 +186,23 @@ Senast: 28 oktober 2026 (morgon), efter 0.10.20 Situationsplanens beteckningar.
   *Fot mot våningen* ligger kvar mot våningens golv (i 0.10.13 följde de
   foten); fyllningens opacitet följer inte längre linjens.
 - **Versionerna efter 27 oktober:** 0.10.17 Linjerna i 2D-formen, 0.10.18
-  Rampens referenslinje, 0.10.19 Markobjektens bågar (förut 0.10.18
-  Markobjektens linjer), 0.10.20 Situationsplanens beteckningar och
-  0.10.21 Lutande väggar (förslag; fråga om före eller efter piloten). Ortofotot på marken är en egen liten
-  undersökning. Förteckningen över markförändringarna hör till 0.12
-  Export. Nästa granskning efter ungefär tre versioner (efter 0.10.21).
+  Rampens referenslinje, 0.10.19 Markobjektens bågar, 0.10.20
+  Situationsplanens beteckningar och 0.10.21 Lutande väggar (alla klara).
+  Ortofotot på marken är en egen liten undersökning. Förteckningen över
+  markförändringarna hör till 0.12 Export. Nästa granskning: efter
+  0.10.21 (nu).
 - **0.10.13 Höjder i förhållande till våningen**: se PLAN.md.
 - **Granskningen efter 0.10.12** och **0.10.12 Småjusteringar**: se
   PLAN.md.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.20` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.21` i `engine.ts`, `package.json` och
   `package-lock.json` (npm godtar fyra delar i ett privat paket); nästa
-  version är `0.10.21`. En granskning höjer inte numret, eller får en
+  version är `0.10.20.1` (Litteran) eller `0.10.21.1` (granskningen, om
+  något ändras som syns). En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.20 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.21 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -233,10 +261,14 @@ vid varje överlämning.
   Linjerna i 2D-formen~~, ~~0.10.18 Rampens referenslinje~~, ~~Granskning
   efter 0.10.18 (0.10.18.1)~~, ~~0.10.19 Markobjektens bågar~~, ~~0.10.20
   Situationsplanens beteckningar~~ (klara)
-- **0.10.21 Lutande väggar** (förslag, mellanstor till stor; fråga om
-  före eller efter piloten)
-- **Granskning efter 0.10.21** (klickjämförelsen får steg för
-  0.10.19–0.10.20; `groundRamp.ts` delas)
+- ~~0.10.21 Lutande väggar~~ (klar)
+- **Granskning efter 0.10.21** (småfelen ur Inkorgen 28 oktober;
+  klickjämförelsen får steg för 0.10.19–0.10.21; `groundRamp.ts` delas)
+- **0.10.20.1 Litteran** (liten: flytta litteran för hand, ledarens grepp)
+- **Snäpp i marken** (mellanstor: gränser, byggnader, markobjekt;
+  trollstaven för stödmur längs ett objekt)
+- **Utredning: material i stället för fyllningar** (egen session, rör
+  formatet)
 - **Ortofotot på marken** (liten undersökning med terrängappen, när det
   passar)
 - **0.11 Trappor** (nytt format)
@@ -246,6 +278,8 @@ vid varje överlämning.
   markförändringarna
 - **0.12.1 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
   trädens status i planen)
+- **Situationsplanen som modellflik** (stor, ihop med SWEREF; före
+  piloten)
 - **0.13 Pilotprojektet**: Carl August ritar själv ett hus
 - **Inbjuden alfa**, sedan **öppen beta och formatfrys**
 - Efter piloten: se *Efter pilotprojektet* i PLAN.md. **1.0**
@@ -253,16 +287,18 @@ vid varje överlämning.
 
 ## Nästa session
 
-Fråga först om **0.10.21 Lutande väggar** (se PLAN.md) ska byggas före
-eller efter piloten, och om lutningen ska kunna vara olika i ändarna.
-Byggs den: en vägg med lutning, som lutande kropp i 3D, fasader och
-sektioner, och i planen efter snittet (snittytan där den skär snitthöjden,
-foten som vy, det som lutar ut över snittet streckprickat); öppningarna
-följer lutningen. Mellanstor till stor; kan behöva två sessioner (3D och
-sektioner först, planen och öppningarna sedan). Skjuts den upp: kör
-**Granskning efter 0.10.20** i stället (klickjämförelsen med steg för
-0.10.19–0.10.20, `groundRamp.ts` delad, testerna genomgångna). Läs
-`cad-apa-synpunkter.md` först och ställ frågorna för 0.10.20 (fem åt
+Kör **Granskning efter 0.10.21** om Carl August inte säger annat: rätta
+slänternas fyllning (prova med `groundProject` och `slopeFill`), gör
+släntstrecken dubbelt så glesa som en inställning under Platsen (5 mm som
+förval), låt 3D-perspektivet ligga kvar när man växlar mellan Båda och 3D
+(`pane3d.ts`/`setMode`), dela `groundRamp.ts` (`rampProfile`,
+`fusedRamp`/`reversedRamp`), gå igenom testerna, och kör klickjämförelsen
+mot 0.10.21 med nya steg för 0.10.19–0.10.21 (bågar på rampen, mjuka
+övergångar, Foga ihop, markhöjd, låglinje, murens ledare, en lutande vägg
+i planen och 3D). Vill han hellre ha **0.10.20.1 Litteran** först: grepp
+för litteran på alla objekt (`littera.ts`), två för ledaren (punkten och
+texten), sidan byter när texten korsar mittlinjen. Läs
+`cad-apa-synpunkter.md` först och ställ frågorna för 0.10.21 (fem åt
 gången).
 
 ## Att fråga Carl August om
@@ -271,13 +307,24 @@ Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
 
+**0.10.21 efter provning** (Claudes val, se PLAN.md)
+- Lutningen är positiv åt vänster (som bågen). Hellre "ut" och "in" för
+  ytterväggar, eller räcker tecknet?
+- Skarvarna i 3D räknas vid foten: en lutande vägg som möter en lodrät
+  får en glipa eller går in i den högre upp. Behövs en riktig skarv
+  (mellanstor)?
+- I planen ligger greppen på referenslinjen vid foten, en bit från
+  snittytan. Störande, eller rätt?
+- Fotens kontur (vy) och toppens (streckprickad) ritas utan skarvar mot
+  grannväggarna. Räcker det?
+- Ska väggverktyget få lutningen som ett val, eller sätts den i panelen
+  efteråt som nu?
+
 **0.10.20 efter provning** (Claudes val, se PLAN.md)
 - Markhöjden räknar marken som oförändrad när ny och befintlig skiljer
   mindre än 5 cm (då bara den befintliga, understruken). Lagom gräns?
 - Markobjektens höjder skrivs nu med två decimaler (nivåmarkörerna har
   kvar tre). Ska nivåmarkörerna också följa inställningen?
-- Murens ledare går ut åt höger från mitten, 7 mm, med ett vågrätt streck
-  11 mm. Ska den gå att dra till ett annat läge (en egen liten version)?
 - Konturen runt slänterna är alltid på (0,13). Ska den vara ett val, eller
   få en egen penna i stilmallen?
 - De branta slänterna är grå (muted) och följer fallinjen; strecken bryts
@@ -457,13 +504,23 @@ fråga.
 
 ## Öppna frågor och kända begränsningar
 
-- **Stora filer efter 0.10.20:** `commandLine.ts` (623 rader, en sluten
+- **Stora filer efter 0.10.21:** `commandLine.ts` (623 rader, en sluten
   helhet med eget läge) och `planView.ts` (591) är störst; de lämnades i
   granskningen. `groundRamp.ts` växte till ca 480 rader (profilen,
   dockningen); dela den i nästa granskning (`rampProfile` och
   `fusedRamp`/`reversedRamp` kan bli egna filer). Stilmallens fönster har tre kolumner från 1180 px; under
   det ligger delarna under varandra som förut.
 
+- **Lutande väggar (0.10.21):** samma lutning i båda ändarna; bågväggar
+  lutar inte; skarvarna i 3D vid foten (glipa eller överlapp mot lodräta
+  grannar högre upp, inte prövat); takets yta i plan flyttas tillbaka med
+  väggens hela höjd när taket kapar en lutande vägg (fel där takkanten går
+  diagonalt över väggen); ytterväggarnas insida som dold linje i fasaden
+  ritas lodrät (`innerFaceEdges`); bågväggars konturlinjer
+  (`wallSilhouettes`) räknas vid foten. `cutSheared` klipper med
+  polygon-clipping mot stora halvplan (1e7 mm), inte mätt på ett stort
+  projekt (exempelvillan med två lutande väggar: fasader 30–145 ms,
+  sektionen 60 ms, som förut).
 - **Beteckningarna (0.10.20):** markhöjden har ingen egen textvridning
   eller förskjutning, och ledarens läge går inte att dra. Konturen runt
   slänterna räknas ur strecken ytterändar var 1,25 mm på papperet, så den
@@ -635,8 +692,8 @@ fråga.
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (457 steg sedan granskningen efter 0.10.18; 0.10.19 kördes mot
-  0.10.18.1 utan nya steg, med `--bilder`, eftersom 3D-bildernas hashar
+  (457 steg sedan granskningen efter 0.10.18; 0.10.19–0.10.21 har inga
+  steg än; 0.10.19 kördes mot 0.10.18.1 utan nya steg, med `--bilder`, eftersom 3D-bildernas hashar
   kan skilja utan att en pixel gör det, som lade till 0.10.16–0.10.18
   efter `allra sist`: snittet i planen, rita vidare, Förskjut alla kanter,
   Foga ihop, ett takfall med båge (Båge slås av före sista hörnet; den är

@@ -9,7 +9,7 @@ import { resolveParams } from '../elements/registry';
 import { markerFrame, type MarkerHeights, type MarkerParams } from '../elements/markers';
 import { markerHeights } from '../repr/sectionLevels';
 import { buildingHeight } from '../repr/buildingHeight';
-import type { WallParams } from '../elements/wall';
+import { MAX_LEAN, type WallParams } from '../elements/wall';
 import { bulgeForRadius } from '../geometry/arc';
 import { add, norm, scale, sub } from '../geometry/vec';
 import { PARAM_LABELS } from './labels';
@@ -315,6 +315,18 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
         const largest = polys.map((p) => p[0]).sort((a, b) => Math.abs(ringArea(b)) - Math.abs(ringArea(a)))[0] ?? [];
         tx.putElement({ ...el, params: { ...el.params, fromWalls: false, outline: largest.map((q) => [Math.round(q[0]), Math.round(q[1])]) } });
       }
+    });
+    return true;
+  }
+  if (scope === 'wall' && (name === 'lean' || name === 'topOffset')) {
+    // Lutande vägg (0.10.21): vinkeln från lodlinjen, eller toppens förskjutning i sidled (räknas om till vinkeln).
+    const v = Number(input.value.replace(',', '.').replace('−', '-'));
+    if (!Number.isFinite(v)) return false;
+    patchEach(store, ids, 'Ändra lutning', (_, el) => {
+      const p = resolveParams<WallParams>(doc, el);
+      const deg = name === 'lean' ? v : p.height > 0 ? (Math.atan2(v, p.height) * 180) / Math.PI : 0;
+      const lean = Math.round(Math.max(-MAX_LEAN, Math.min(MAX_LEAN, deg)) * 100) / 100;
+      return { lean: lean ? lean : undefined };
     });
     return true;
   }

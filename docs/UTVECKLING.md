@@ -1247,6 +1247,64 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Lutande väggar (0.10.21, format 20)
+
+Inga nya format: `WallParams.lean` är frivillig (grader från lodlinjen,
+positiv åt vänster sett från start mot slut, samma i båda ändarna, högst
+`MAX_LEAN` = 80). Foten ligger kvar på referenslinjen.
+
+- **Lutningen** räknas som en förskjutning i sidled per mm höjd
+  (`Shear`, mm/mm): `wallShear(p)` i `wallBodies.ts` ger normalen gånger
+  tangens, null för lodräta väggar och bågväggar (de lutar inte;
+  lutningen lämnas utan verkan). `shiftedParams(p, dz)` är väggen flyttad
+  dit den står på höjden dz över foten.
+- **3D-formatet** (`src/repr/solids.ts`): `Solid.shear`. Konturen och
+  urtagen gäller vid z0; en punkt på höjden z ligger `shear · (z − z0)`
+  förskjuten. De sneda planen (`top`, `bottom`) räknas i den oförskjutna
+  punkten. `solidTriangles` (`mesh.ts`) flyttar alla hörn sist; ytorna
+  är plana också efteråt. `extrude` i `view3d/geometry3d.ts` går den vägen
+  för lutande kroppar. `liftShape` behåller lutningen; `shearShape(s,
+  shear, base)` ger en kropp (dörr, fönster) lutningen med konturen
+  flyttad till sin egen fot, och flyttar kantlinjer punkt för punkt
+  (`leanedShape(s, wall)` i `wallBodies.ts` tar väggens).
+- **Snittet** (`cutSheared` i `sectionCut.ts`): punkten (u, z) i
+  snittplanet ligger i kroppen när den oförskjutna punkten Q = O + r·u −
+  shear·(z − z0) ligger i konturen, en affin avbildning av (u, z). Snittet
+  är därför konturen avbildad baklänges (`toUZ`), klippt mellan
+  under- och ovansidan; ett snett plan blir ett halvplan i (u, z)
+  (`planeClip`), och urtagen avbildas likadant och dras ifrån. Lutar
+  kroppen längs linjen (determinanten noll) förskjuts intervallen längs
+  linjen med höjden i stället, som en parallellogramremsa. Fasadernas
+  linjer och dolda ytor följer trianglarna (`featureEdges`), så de
+  behöver inget eget.
+- **Väggen i 3D** (`wall3d.ts`): `WallPiece.shear`. Taken och bjälklagen
+  räknas i väggens oförskjutna koordinater: `unshearPlane` ger planet där
+  en punkt på konturen når det när den lutar ut (z·(1 − k) = a·x + b·y + c
+  − k·z0, k = a·sx + b·sy), `roofsFor` flyttar takets yta i plan tillbaka
+  så långt som väggen lutar ut vid sin höjd (en förenkling) och `slabsFor`
+  bjälklagets yta vid dess undersida. Kropparna får `shear`; öppningarnas
+  kanter (`pt`) och `wallEdges` flyttar punkterna med höjden, och lutande
+  väggar är egna grupper i `wallEdges` (nyckeln har lutningen). Skarvarna
+  mot andra väggar (`own`) räknas vid foten.
+- **Dörrar och fönster** i 3D: `leanedShape` efter `liftShape` i
+  `door.ts` och `window.ts`.
+- **Planen**: `planWallParams(ctx, el)` är väggen flyttad dit den står
+  vid snitthöjden när den går genom snittet (sparad per parametrar i
+  `shiftedCache`, så att `wallsWithOpenings` kan återanvända ytan);
+  `wallShapesFor` räknar skarvar och hål med den, och dörrar, fönster,
+  litteran, öppningsmarkeringarna och rummens dörrar använder den
+  (`openingZone(ctx, host, p, true)` i planen; 3D anropar utan).
+  `leaningOutlines` i `wall.ts` ritar foten (`vy`) och toppen
+  (`över`, streckprickad) som väggens egen rektangel minus det snittade
+  (och den egna snittytan utan hål) och minus hålen som når foten (dörrar)
+  eller toppen. Rummen, bjälklag ur väggarna, väggsidorna, automåtten och
+  snäppningen räknar med foten.
+- **Panelen**: `wall:lean` (grader, två decimaler) och `wall:topOffset`
+  (mm, räknas om till vinkeln ur höjden) i `selectionEdits.ts`; 0 tar bort
+  parametern. `reversedWall` byter tecken på lutningen som på pilhöjden;
+  Spegla byter riktning och behåller tecknet.
+- Tester: `tests/v01021.test.ts`.
+
 ## Situationsplanens beteckningar (0.10.20, format 20)
 
 Inget nytt format: sorterna `level` (markhöjd) och `drain` (låglinje) i

@@ -5,7 +5,7 @@ import type { Vec2 } from '../repr/primitives';
 import { shapePoints, type FillPattern, type Shape2DParams } from './drawing2d';
 import type { PlanContext } from './registry';
 import { lastResults } from '../repr/reuse';
-import { bareWallUnion, wallFrame, type OpeningParams, type WallParams } from './wall';
+import { bareWallUnion, planWallParams, wallFrame, type OpeningParams, type WallParams } from './wall';
 
 /**
  * Rummens konturer ur väggarna: väggarna slås ihop (utan öppningar), och
@@ -239,7 +239,7 @@ function computeOrder(ctx: PlanContext, spaces: Element[]): { rooms: Id[]; doors
     if (ctx.actionOf(d) === 'demolished') continue;
     const host = d.host ? ctx.doc.elements[d.host] : undefined;
     if (!host) continue;
-    const f = wallFrame(ctx.params<WallParams>(host));
+    const f = wallFrame(planWallParams(ctx, host));
     const p = ctx.params<OpeningParams & { mainEntrance?: boolean }>(d);
     const probe = f.half + 150;
     const a = roomAt(f.at(p.at, probe));

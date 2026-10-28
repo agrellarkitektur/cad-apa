@@ -1,6 +1,6 @@
 import type { Element } from '../core/model';
 import type { PlanContext } from './registry';
-import { FRAME_LESS, HOLE_EXTRA, wallFrame, type OpeningParams, type WallFrame, type WallParams } from './wall';
+import { FRAME_LESS, HOLE_EXTRA, planWallParams, wallFrame, type OpeningParams, type WallFrame, type WallParams } from './wall';
 import { outsideSide } from './wallSides';
 import { levelOf } from '../repr/solids';
 import { ABOVE_PART, planCutPen } from '../repr/planCutPens';
@@ -51,9 +51,11 @@ export function openingZone(
   ctx: PlanContext,
   host: Element,
   p: OpeningParams & Partial<FrameParams> & { swing?: 1 | -1 },
+  /** I planen: en lutande vägg där snittet skär den (0.10.21); i 3D vid foten. */
+  inPlan = false,
 ): OpeningZone {
   // I bågväggar sitter dörrar och fönster raka, längs tangenten.
-  const f = wallFrame(ctx.params<WallParams>(host)).local(p.at);
+  const f = wallFrame(inPlan ? planWallParams(ctx, host) : ctx.params<WallParams>(host)).local(p.at);
   const depth = Math.min(p.frameDepth ?? FRAME_DEFAULTS.frameDepth, f.half * 2);
   const out = ctx.memo(`outside:${host.id}`, () => outsideSide(ctx.doc, host));
   let face: 1 | -1 | 0;
@@ -106,7 +108,7 @@ export function openingLift(wall: { level?: unknown }, op: { sill?: number; sill
  * snittet med vyns penna. Litteran står kvar.
  */
 export function uncutOpening(ctx: PlanContext, el: Element<any>, host: Element<any>, p: OpeningParams & FrameParams, zone: 'above' | 'below', glass: boolean): Primitive[] {
-  const z = openingZone(ctx, host, p);
+  const z = openingZone(ctx, host, p, true);
   const { f, h1, h2, lo, hi } = z;
   const pen = planCutPen(ctx.style, 'Opening', zone);
   const origin = { objectId: el.id, objectType: el.type, part: zone === 'above' ? ABOVE_PART : 'vy' };

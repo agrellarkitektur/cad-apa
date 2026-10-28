@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.20** (alfa); nästa är **0.10.21, lutande väggar** (förslag).
+**0.10.21** (alfa); nästa är **granskningen efter 0.10.21**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,28 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.21, lutande väggar (samma filformat, 20):
+- **Lutning** i väggens egenskaper: vinkeln från lodlinjen i grader,
+  positiv åt vänster sett från början mot slutet (som bågen), samma i
+  båda ändarna. **Toppen i sidled** är samma sak i mm (höjden gånger
+  tangens) och räknas om till vinkeln. Foten ligger kvar på
+  referenslinjen; högst 80°. Bågväggar lutar inte. *Vänd väggen* byter
+  tecken
+- **I 3D, fasader och sektioner** lutar väggen som en kropp: ovansidan,
+  kantlinjerna, dörrhålen och fönsterhålen flyttas med höjden, och
+  dörrar och fönster sitter i den lutande väggen. Tak kapar en lutande
+  vägg där väggens topp når taket, och bjälklag där väggen står vid
+  bjälklagets undersida
+- **Sektionen** genom en lutande vägg är exakt: tvärs väggen en
+  parallellogram, längs väggen en snittyta som slutar där väggen lutat ut
+  ur snittplanet, också under ett snett tak
+- **I planen** följer en lutande vägg snittet (0.10.16): snittytan ligger
+  där snitthöjden skär väggen (dörrar, fönster, hål och skarvar räknas
+  där), foten ritas som vy där den sticker ut utanför det snittade, och
+  toppen streckprickad, med pennorna under *Snittet i planen* i
+  stilmallen. Dörrar bryter fotens kontur. Rummen, bjälklag ur väggarna
+  och snäppningen utgår som förut från foten
 
 Version 0.10.20, situationsplanens beteckningar (samma filformat, 20):
 - **Markhöjder**: *Markhöjd* under *Beteckning* i verktyget Mark lägger ett

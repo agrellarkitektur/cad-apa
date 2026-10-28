@@ -162,7 +162,7 @@ export function clearGroup(g: THREE.Group): void {
 
 /** En plan form med hål, extruderad från z0 till z1 (mm). */
 export function extrude(s: Solid): THREE.BufferGeometry | null {
-  if (s.cuts || s.top || s.bottom) {
+  if (s.cuts || s.top || s.bottom || s.shear) {
     const tris = solidTriangles(s);
     if (!tris.length) return null;
     const geom = new THREE.BufferGeometry();

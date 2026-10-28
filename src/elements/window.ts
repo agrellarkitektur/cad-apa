@@ -6,7 +6,7 @@ import { litteraTag, showLittera } from './littera';
 import { windowModel } from './openingModel';
 import { liftShape } from '../repr/solids';
 import type { ElementType } from './registry';
-import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, openingZoneInPlan, wallFrame, type OpeningParams, type WallParams } from './wall';
+import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, leanedShape, openingZoneInPlan, planWallParams, wallFrame, type OpeningParams, type WallParams } from './wall';
 
 export interface WindowParams extends OpeningParams, FrameParams {
   height: number;
@@ -32,7 +32,7 @@ export const windowType: ElementType<WindowParams> = {
   defaults: () => ({ at: 1000, width: 1200, height: 1200, sill: 900, ...FRAME_DEFAULTS }),
   pickShape(el, ctx) {
     const host = el.host ? ctx.doc.elements[el.host] : undefined;
-    return host ? openingRings(wallFrame(ctx.params<WallParams>(host)), ctx.params<WindowParams>(el)) : [];
+    return host ? openingRings(wallFrame(planWallParams(ctx, host)), ctx.params<WindowParams>(el)) : [];
   },
   model3d(el, ctx) {
     const host = el.host ? ctx.doc.elements[el.host] : undefined;
@@ -40,7 +40,8 @@ export const windowType: ElementType<WindowParams> = {
     const p = ctx.params<WindowParams>(el);
     const z = openingZone(ctx, host, p);
     // Bröstningen räknas från våningens golv, eller från väggens fot (0.10.14).
-    const lift = openingLift(ctx.params<WallParams>(host), p);
+    const wp = ctx.params<WallParams>(host);
+    const lift = openingLift(wp, p);
     // Hålet går från bröstningen och är 10 mm högre än modulmåttet; karmen sitter mitt i.
     return windowModel(
       el.id,
@@ -60,7 +61,7 @@ export const windowType: ElementType<WindowParams> = {
         outside: z.insetFrom === 'utsidan' ? (z.face as 1 | -1) : 0,
       },
       detailOf(ctx.view, 'model'),
-    ).map((s) => liftShape(s, lift));
+    ).map((s) => leanedShape(liftShape(s, lift), wp));
   },
   plan(el, ctx) {
     const host = el.host ? ctx.doc.elements[el.host] : undefined;
@@ -70,14 +71,14 @@ export const windowType: ElementType<WindowParams> = {
     // Ett fönster över eller under planens snitt (0.10.16): väggen går obruten förbi.
     const zone = openingZoneInPlan(ctx, ctx.params<WallParams>(host), p);
     if (zone !== 'cut') {
-      const face = openingZone(ctx, host, p).face;
-      return [...uncutOpening(ctx, el, host, p, zone, true), ...(showLittera(ctx, 'Window') ? litteraTag(ctx, el, wallFrame(ctx.params<WallParams>(host)), p.at, face === 0 ? 1 : face === 1 ? -1 : 1) : [])];
+      const face = openingZone(ctx, host, p, true).face;
+      return [...uncutOpening(ctx, el, host, p, zone, true), ...(showLittera(ctx, 'Window') ? litteraTag(ctx, el, wallFrame(planWallParams(ctx, host)), p.at, face === 0 ? 1 : face === 1 ? -1 : 1) : [])];
     }
     const origin = { objectId: el.id, objectType: 'Window', part: 'glas' };
     // Pennorna för karmen och bågarna ur stilmallen (0.8.33).
     const pens = openingPens(ctx.style);
     const marks = openingMarks(el, host, p, ctx, { infillWhenRemoved: false });
-    const z = openingZone(ctx, host, p);
+    const z = openingZone(ctx, host, p, true);
     const { f, s1, s2, h1, h2, lo, hi } = z;
     const line = (a: number, oa: number, b: number, ob: number, pen: Pen, part = origin.part): Primitive => ({ kind: 'line', a: f.at(a, oa), b: f.at(b, ob), pen, origin: { ...origin, part } });
     const rect = (a: number, b: number, o0: number, o1: number, part: string, pen: Pen): Primitive => ({

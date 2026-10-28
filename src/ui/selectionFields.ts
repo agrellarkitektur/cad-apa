@@ -3,7 +3,7 @@ import type { Element, ProjectDoc } from '../core/model';
 import type { ViewStates } from '../core/states';
 import { createContext } from '../repr/context';
 import { allTypes, resolveParams, typeOf } from '../elements/registry';
-import type { WallParams } from '../elements/wall';
+import { MAX_LEAN, type WallParams } from '../elements/wall';
 import { dist } from '../geometry/vec';
 import { isFixed, type FurnitureParams } from '../elements/furniture';
 import { EXTERIOR_INSET, FRAME_DEFAULTS } from '../elements/opening';
@@ -109,11 +109,14 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         .map((c) => `<button data-action="justify" data-value="${c.face}" aria-pressed="${c.face === current}">${c.label}</button>`)
         .join('');
       const arc = p.bulge && Math.abs(p.bulge) >= 0.5 ? radiusOf(p.start, p.end, p.bulge) : 0;
-      return `<div class="fields">${numberField('wall:length', arc ? 'Korda' : 'Längd', length, 'mm')}${numberField('param:height', 'Höjd', p.height, 'mm')}${numberField('level:level', 'Fot mot våningen', levelOf(p), 'mm')}${arc ? numberField('wall:radius', 'Radie', arc, 'mm') : ''}</div>
+      // Lutande vägg (0.10.21): vinkeln och toppens förskjutning, positiv åt vänster; bågväggar lutar inte.
+      const lean = arc ? 0 : (p.lean ?? 0);
+      const topOffset = Math.round(p.height * Math.tan((Math.max(-MAX_LEAN, Math.min(MAX_LEAN, lean)) * Math.PI) / 180));
+      return `<div class="fields">${numberField('wall:length', arc ? 'Korda' : 'Längd', length, 'mm')}${numberField('param:height', 'Höjd', p.height, 'mm')}${numberField('level:level', 'Fot mot våningen', levelOf(p), 'mm')}${arc ? numberField('wall:radius', 'Radie', arc, 'mm') : `${numberField('wall:lean', 'Lutning', lean, '°', 2)}${numberField('wall:topOffset', 'Toppen i sidled', topOffset, 'mm')}`}</div>
         <label class="check" title="Utan egen höjd följer väggen våningshöjden"><input type="checkbox" data-key="wall:storeyHeight"${typeof el.params.height === 'number' ? '' : ' checked'}> Våningshöjd</label>
         <label class="check"><input type="checkbox" data-key="param:toRoof"${p.toRoof ? ' checked' : ''}> Upp till taket (gavlar)</label>
         <div class="field-label">Referenslinje</div><div class="segmented wide" role="group">${just}</div>
-        <p class="note">Fot mot våningen flyttar bara foten; toppen ligger kvar. Flytta i höjd (Modifiera) flyttar hela väggen.</p>`;
+        <p class="note">Fot mot våningen flyttar bara foten; toppen ligger kvar. Flytta i höjd (Modifiera) flyttar hela väggen.${arc ? '' : ' Lutningen är positiv åt vänster sett från början mot slutet; foten ligger kvar på referenslinjen.'}</p>`;
     }
     case 'Roof': {
       const p = resolveParams<RoofParams>(doc, el);
