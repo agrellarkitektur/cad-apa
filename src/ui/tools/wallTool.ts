@@ -169,6 +169,32 @@ export class WallTool implements ViewTool, PointTaker {
   }
 
   /**
+   * Väggar längs en färdig linje (smartspöt, 0.10.22), i ett steg att ångra.
+   * Punkterna antas gå medurs runt en sluten kontur, som när man ritar;
+   * väggar som ändå vetter fel vänds efteråt.
+   */
+  createAlong(points: readonly [number, number][], closed: boolean): Id[] {
+    const n = points.length;
+    const pairs: [[number, number], [number, number]][] = [];
+    for (let i = 0; i + 1 < n + (closed ? 1 : 0); i++) {
+      const a = points[i];
+      const b = points[(i + 1) % n];
+      if (dist(a, b) >= 1) pairs.push([a, b]);
+    }
+    if (!pairs.length) return [];
+    const els = addElements(
+      this.host.store,
+      pairs.map(([a, b]) => ({ type: 'Wall', storey: this.host.storey(), tags: [], definition: this.options.definition ?? undefined, params: this.instanceParams(a, b), props: {} })),
+      this.host.activeState(),
+      'Väggar med smartspöt',
+    );
+    this.created = els.map((e) => e.id);
+    this.fixFaces();
+    this.created = [];
+    return els.map((e) => e.id);
+  }
+
+  /**
    * Ut- och insida går att avgöra först när väggarna finns. Ytterväggar som
    * ritats moturs vänds, så att insidan vetter in i huset och referenslinjen
    * ligger kvar i det liv man valt. Det ångras i samma steg som väggen.

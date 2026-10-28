@@ -2914,15 +2914,64 @@ lika långt från väggens nya början), ledare till punkter i 3D,
 förteckningen (0.12 Export). Klickjämförelsen kördes inte; nya steg i
 nästa granskning.
 
-### Snäpp i marken (mellanstor, före piloten)
+### 0.10.22 Snäpp och smartspöt ✓
 
-Inkorgen 28 oktober.
+Inkorgen 28 oktober (*Snäpp i marken*), utvidgad av Carl August samma dag
+(14.15): snäppet och liknande funktioner ska fungera för allt som är
+rimligt, inte bara de fall han listat; trollstaven ska heta något med
+smart, vara anpassad efter verktyget man står i (i Markera utan verktyg)
+och vara lätt att bygga ut. Claudes förslag E, F, J och N i den här
+versionen, G, H, I, K, L och M i 0.10.23; *kör*. Hans svar om 0.10.20.2:
+A, B, C och E bra som de är; D en inställning för vridningen. Samma format
+(21).
 
-- Snäpp mot fastighetsgränser och befintliga byggnader från Höjdkurvor och
-  mot markobjekten, t.ex. när en stödmur ritas längs en ramp
-- "Trollstav": med stödmursverktyget valt klickar man längs sidan av en
-  ramp (eller vilket objekt som helst), och en stödmur skapas längs den.
-  Liten när snäppet finns
+- **Snäpp mot allt som ritas**: markobjekt, bjälklag, tak, rum, grannhus,
+  fastighetsgränser och vägar från Höjdkurvor, träd, markörer, mått och
+  allt nytt, ur primitiverna; höjdkurvorna som kurvor (på linjen, inga
+  ändar)
+- **Smartspöt** (Q, eller knappen i statusraden), med register och en fil
+  per funktion; förhandsvisning vid hovring, Tab växlar, Shift samlar
+- **E Vägg**: väggar runt en kontur eller längs en kant (bjälklag,
+  markobjekt, 2D-form, underlag, fastighetsgräns …)
+- **F Mark**: stödmur, brytlinje, låglinje eller väg längs en sida eller
+  runt en kontur (rampens sida, markytans kant, höjdkurva …)
+- **J 2D**: en sluten 2D-form runt en snittyta, ett objekts kontur eller
+  den minsta slutna ytan mellan linjer
+- **N Markera**: allt som hänger ihop med objektet, Tab för allt av samma
+  sort i vyn
+- **D Litterans vridning**: Horisontell, Vertikal och egna grader i
+  verktyget och egenskaperna; förvalet i stilmallen (*Vridning* för
+  Littera under Ledarna)
+
+*Claudes val:* spöet slås av när man byter verktyg och med Esc eller Q
+(det ligger inte kvar mellan verktygen). Väggar runt en kontur ritas med
+verktygets referenslinje och medurs, så att *Ute* lägger väggarna
+innanför konturen och *Inne* utanför. Hela konturen kommer först för
+väggar, sidan först för markens linjer. En sida slutar där kedjan viker
+mer än 35°. Stödmuren läggs utanför objektet när insidan är känd, annars
+med linjen i mitten. Väggarnas liv följs inte i väggverktyget. En båge
+följs som korta raka bitar (bågar i väggar och markobjekt blir många
+korta delar). Spöet fungerar inte i 3D eller på ritningsbladen.
+`setLabelAngle` sparar också 0, så att en vågrät littera inte vrids när
+förvalet ändras.
+
+*Gjordes inte:* bågar ur kedjor (de följs som raka bitar), spöet på
+ritningsbladen och i 3D, ett skrivet avstånd från kanten (förskjutning),
+hål i 2D-formen runt en yta med hål. Klickjämförelsen kördes inte; nya
+steg i granskningen.
+
+### 0.10.23 Smartspöt del 2 (mellanstor)
+
+Claudes förslag 28 oktober, godkända med *kör* för 0.10.22.
+
+- **G Bjälklag**: innanför väggarna (klick i rummet), ur takets eller en
+  2D-forms kontur
+- **H Tak**: takfall över väggarna eller bjälklaget, med takfoten utanför
+- **I Markyta och ramp**: runt huset med ett avstånd, ur en 2D-form, inom
+  fastighetsgränsen
+- **K 2D-linje**: följer en kant eller kedja av kanter (öppen)
+- **L Littera**: klick på ett objekt ger en littera med typens smarttext
+- **M Mått**: en måttkedja över väggens öppningar och anslutande väggar
 
 ### Situationsplanen som modellflik (stor, efter 0.12.1, före piloten)
 

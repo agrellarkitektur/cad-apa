@@ -171,6 +171,8 @@ export interface LeaderStyle {
   stub: number;
   /** Från sidan eller understruken (0.10.20.2). */
   attach: LeaderAttach;
+  /** Textens vridning i grader moturs som förval (0.10.22); bara det generella littrat, utelämnad = vågrät. */
+  angle?: number;
 }
 
 const LEADER_END_KEYS: readonly LeaderEnd[] = ['auto', 'none', 'arrow', 'filled', 'dot', 'slash', 'ring'];
@@ -338,6 +340,7 @@ function normalizeLabels(l: any): LabelStyle {
             end: LEADER_END_KEYS.includes(v?.end) ? v.end : d.leaders[k].end,
             stub: Number(v?.stub) >= 0 && v?.stub !== null && v?.stub !== '' && v?.stub !== undefined ? Number(v.stub) : d.leaders[k].stub,
             attach: v?.attach === 'side' || v?.attach === 'underline' ? v.attach : d.leaders[k].attach,
+            ...(Number.isFinite(Number(v?.angle)) && v?.angle !== null && v?.angle !== '' && Number(v.angle) % 360 !== 0 ? { angle: ((Number(v.angle) % 360) + 360) % 360 } : {}),
           },
         ];
       }),

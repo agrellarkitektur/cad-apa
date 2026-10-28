@@ -35,7 +35,11 @@ export function labelSection(style: StyleSheet): string {
           (k) => `<div class="style-row labels-row"><b>${LEADER_NAMES[k]}</b>
           <label><span>Ände</span><select data-lab="le:${k}">${LEADER_ENDS.map(([v, n]) => `<option value="${v}"${l.leaders[k].end === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
           <label><span>Stammens längd</span><span class="input-unit"><input type="text" data-expr data-step="0.5" inputmode="decimal" autocomplete="off" data-lab="ls:${k}" value="${l.leaders[k].stub}"><i>mm</i></span></label>
-          <label><span>Mot texten</span><select data-lab="la:${k}">${LEADER_ATTACH.map(([v, n]) => `<option value="${v}"${l.leaders[k].attach === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label></div>`,
+          <label><span>Mot texten</span><select data-lab="la:${k}">${LEADER_ATTACH.map(([v, n]) => `<option value="${v}"${l.leaders[k].attach === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label>${
+            k === 'Label'
+              ? `<label title="Det generella litterats vridning som förval: 0 vågrät, 90 lodrät. En littera med egen vridning behåller den."><span>Vridning</span><span class="input-unit"><input type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" data-lab="lr:${k}" value="${l.leaders[k].angle ?? 0}"><i>°</i></span></label>`
+              : ''
+          }</div>`,
         )
         .join('')}
       <p class="note">Ledaren går vinkelrätt ut från texten (stammen) och viker sedan av mot punkten. <i>Understruken</i>: ett streck under hela texten, och stammen fortsätter från dess ände. <i>Automatiskt</i> ger pil mot en kant och prick inne i en yta. Varje littera kan få egna värden under Littera i egenskaperna.</p>
@@ -52,6 +56,10 @@ export function applyLabelField(style: StyleSheet, input: HTMLInputElement | HTM
   if (kind === 'room') style.labels.room = input.value;
   if (kind === 'le' && LEADER_ENDS.some(([v]) => v === input.value)) style.labels.leaders[a as LeaderKind].end = input.value as LeaderEnd;
   if (kind === 'ls' && Number(input.value.replace(',', '.')) >= 0) style.labels.leaders[a as LeaderKind].stub = Math.round(Number(input.value.replace(',', '.')) * 2) / 2;
+  if (kind === 'lr' && Number.isFinite(Number(input.value.replace(',', '.').replace('°', '')))) {
+    const v = ((Math.round(Number(input.value.replace(',', '.').replace('°', '')) * 10) / 10) % 360 + 360) % 360;
+    style.labels.leaders[a as LeaderKind].angle = v || undefined;
+  }
   if (kind === 'la' && LEADER_ATTACH.some(([v]) => v === input.value)) style.labels.leaders[a as LeaderKind].attach = input.value as LeaderAttach;
   return 'Ändra texter';
 }

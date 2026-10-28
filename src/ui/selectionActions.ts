@@ -1,4 +1,4 @@
-import { dropLeader } from './labelSection';
+import { dropLeader, setLabelAngle } from './labelSection';
 import { resetTags } from './litteraSection';
 import { createDefinition, deleteDefinition, deleteElements, flipWalls, setInState, setSkewOk, updateParams } from '../core/commands';
 import { copyElements, mirrorElements, rotateElements } from '../core/transforms';
@@ -90,6 +90,9 @@ export function selectionAction({ panel, store, selection, getView, body }: Acti
       return;
     case 'label-add':
       if (ids[0]) panel.onAddLeader?.(ids[0]);
+      return;
+    case 'label-angle':
+      setLabelAngle(store, ids, b.dataset.angle === '' ? null : Number(b.dataset.angle));
       return;
     case 'label-drop':
       if (ids[0]) dropLeader(store, ids[0], Number(b.dataset.index));

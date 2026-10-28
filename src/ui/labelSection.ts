@@ -2,7 +2,7 @@ import { updateParams } from '../core/commands';
 import type { Element, ProjectDoc } from '../core/model';
 import { litteraText } from '../core/site';
 import type { DocStore } from '../core/store';
-import { LABEL_FRAMES, labelNumbers, labelSorts, type LabelFrame, type LabelParams } from '../elements/label';
+import { LABEL_FRAMES, labelAngle, labelNumbers, labelSorts, type LabelFrame, type LabelParams } from '../elements/label';
 import { resolveParams } from '../elements/registry';
 import { numberField } from './fieldMarkup';
 import { escapeHtml, labelOf } from './labels';
@@ -20,6 +20,7 @@ export function labelFields(doc: ProjectDoc, el: Element): string {
   const sorts = labelSorts(doc);
   const frame = p.frame ?? 'none';
   const height = p.height && p.height > 0 ? p.height : doc.graphics.labels.heights.littera;
+  const angle = labelAngle(doc.graphics.labels.leaders.Label, p);
   const leaders = (p.targets ?? [])
     .map((t, i) => {
       const target = t.id ? doc.elements[t.id] : undefined;
@@ -33,9 +34,13 @@ export function labelFields(doc: ProjectDoc, el: Element): string {
       <label class="field" for="f-label-sort"><span>Sort</span><input id="f-label-sort" data-key="label:sort" value="${escapeHtml(p.sort ?? '')}" placeholder="Ingen" list="label-sorts"><datalist id="label-sorts">${sorts.map((s) => `<option value="${escapeHtml(s)}">`).join('')}</datalist></label>
       <label class="field" for="f-label-number"><span>Löpnummer</span><input id="f-label-number" data-key="label:number" value="${escapeHtml(p.number ?? '')}" placeholder="${escapeHtml(counted)}"></label>
       <label class="field"><span>Ram</span><select data-key="label:frame">${LABEL_FRAMES.map(([k, l]) => `<option value="${k}"${k === frame ? ' selected' : ''}>${l}</option>`).join('')}</select></label>
-      ${numberField('label:height', 'Texthöjd på papper', height, 'mm', 2)}${numberField('label:angle', 'Vridning', p.angle ?? 0, '°')}
+      ${numberField('label:height', 'Texthöjd på papper', height, 'mm', 2)}${numberField('label:angle', 'Vridning', angle, '°')}
       ${numberField('label:slant', 'Flera ledares vinkel', p.slant ?? 45, '°')}
     </div>
+    <div class="row"><div class="segmented" role="group" aria-label="Textens vridning">
+      <button data-action="label-angle" data-angle="0" aria-pressed="${angle === 0}" title="Vågrät text">Horisontell</button>
+      <button data-action="label-angle" data-angle="90" aria-pressed="${angle === 90}" title="Lodrät text, läses nedifrån">Vertikal</button>
+    </div>${p.angle === undefined ? '<span class="note">Stilmallens förval</span>' : '<button class="link" data-action="label-angle" data-angle="" title="Följ stilmallens förval">Som stilmallen</button>'}</div>
     <label class="check"><input type="checkbox" data-key="label:list"${p.list ? ' checked' : ''}> Olika värden som en lista (annars <i>varierar</i>)</label>
     <h3>Ledarna</h3>
     ${leaders ? `<ul class="label-leaders">${leaders}</ul>` : '<p class="note">Ingen ledare.</p>'}
@@ -67,7 +72,7 @@ export function applyLabelField(store: DocStore, ids: string[], name: string, in
       return true;
     case 'angle':
       if (!Number.isFinite(num)) return false;
-      updateParams(store, ids, { angle: ((Math.round(num * 10) / 10) % 360) || undefined }, 'Vrid litteran');
+      setLabelAngle(store, ids, num);
       return true;
     case 'slant':
       if (!(num >= 0 && num < 90)) return false;
@@ -78,6 +83,16 @@ export function applyLabelField(store: DocStore, ids: string[], name: string, in
       return true;
   }
   return false;
+}
+
+/**
+ * Litterans vridning (0.10.22): ett tal i grader, eller null för att följa
+ * stilmallens förval. Samma vinkel som förvalet sparas ändå, så att litteran
+ * inte vrids om när stilmallen ändras.
+ */
+export function setLabelAngle(store: DocStore, ids: string[], deg: number | null): void {
+  const v = deg === null ? undefined : ((((Math.round(deg * 10) / 10) % 360) + 360) % 360);
+  updateParams(store, ids, { angle: v }, 'Vrid litteran');
 }
 
 /** Ta bort ledare nummer `i` från litteran. */

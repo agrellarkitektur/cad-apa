@@ -20,6 +20,8 @@ export interface SnapSegment {
   point?: 'endpoint' | 'midpoint' | 'center' | 'quadrant' | 'division';
   /** Texten när man ligger på sträckan; annars "På vägg". */
   on?: string;
+  /** Väggens referenslinje (0.10.22): snäpps mot, men smartspöt följer bara livet. */
+  ref?: boolean;
 }
 
 export type SnapKind = 'division' | 'endpoint' | 'midpoint' | 'center' | 'quadrant' | 'start' | 'perpendicular' | 'intersection' | 'on-wall' | 'parallel' | 'track' | 'angle' | 'free';

@@ -133,6 +133,11 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
 
     switch (e.key) {
       case 'Tab':
+        // Smartspöt (0.10.22): nästa förslag.
+        if (app.wand.active) {
+          if (app.wand.cycle(e.shiftKey)) e.preventDefault();
+          break;
+        }
         // Tab växlar mellan objekt som ligger på varandra under markören (0.8.4).
         if (app.ui.tool === 'select' && !app.ui.layout && !app.modifier.busy && app.selectTool.cycle(e.shiftKey)) e.preventDefault();
         // Måttbandet: Tab går till objektet vid sista punkten, för att flytta det.
@@ -156,12 +161,17 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
           break;
         }
         if (shell?.cancelPending()) break;
+        if (app.wand.active) {
+          app.wand.set(false);
+          break;
+        }
         if (app.modifier.busy) app.modifier.cancel();
         else if (app.ui.tool !== 'select') app.cancelCommand();
         else app.selection.clear();
         app.closeMenu();
         break;
       case 'Enter':
+        if (app.wand.flush()) break;
         // Enter utan att något kommando är igång öppnar smartshell (0.8.20).
         if (shell) shell.key('enter');
         else enterInTool();
@@ -235,6 +245,10 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
       case 'i':
       case 'I':
         app.setTool('draw2d');
+        break;
+      case 'q':
+      case 'Q':
+        app.wand.toggle();
         break;
       case 'f':
       case 'F':

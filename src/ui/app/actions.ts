@@ -298,6 +298,9 @@ export function installActions(app: AppContext, parts: ActionParts) {
         showMenu.closeScalePop();
         app.settingsDialog.open();
         break;
+      case 'wand':
+        app.wand.toggle();
+        break;
       case 'snap': {
         const on = !isSnapEnabled();
         setSnapEnabled(on);

@@ -20,6 +20,8 @@ export class LabelTool implements ViewTool {
   cursor = 'crosshair';
   text = '{typ}';
   sort = '';
+  /** Textens vridning i grader (0.10.22), eller null: stilmallens förval. */
+  angle: number | null = null;
   /** En befintlig littera som får fler ledare. */
   addTo: Id | null = null;
   onChange?: () => void;
@@ -88,7 +90,7 @@ export class LabelTool implements ViewTool {
       this.onChange?.();
       return;
     }
-    const params: LabelParams = { pos: roundMm(p.model), text: this.text, targets: this.targets, ...(this.sort.trim() ? { sort: this.sort.trim() } : {}) };
+    const params: LabelParams = { pos: roundMm(p.model), text: this.text, targets: this.targets, ...(this.sort.trim() ? { sort: this.sort.trim() } : {}), ...(this.angle !== null ? { angle: this.angle } : {}) };
     const [el] = addElements(
       this.host.store,
       [{ type: 'Label', storey: this.host.storey(), ...(this.host.space?.() ? { space: this.host.space!() } : {}), tags: [], params: params as unknown as Record<string, unknown>, props: {} }],

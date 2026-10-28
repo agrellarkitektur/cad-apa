@@ -195,6 +195,7 @@ export function shellMarkup(brand: Brand): string {
         </span>
         <button class="status-btn status-toggle hide-narrow" data-action="grid" aria-pressed="true" title="Rutnätet av eller på (G)"><span class="label">Rutnät</span><span class="value" data-out="grid">—</span></button>
         <button class="status-btn status-toggle" data-action="snap" aria-pressed="true" title="Snäppning av eller på (S)"><span class="label">Snäpp</span><span class="value" data-out="snap">På</span></button>
+        <button class="status-btn status-toggle hide-narrow" data-action="wand" aria-pressed="false" title="Smartspöt (Q): förslag utifrån verktyget man står i"><span class="label">Smartspöt</span><span class="value" data-out="wand">Av</span></button>
         <button class="status-btn status-toggle hide-narrow" data-action="line-weights" title="${LINE_WEIGHT_TITLE}"><span class="label">Linjer</span><span class="value" data-out="line-weights">Skärm</span></button>
         <span data-out="save" class="save-status"></span>
         <span class="engine hide-narrow">${ENGINE.name} ${ENGINE.version}</span>

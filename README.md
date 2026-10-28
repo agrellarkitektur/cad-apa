@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.20.2** (alfa); nästa är **Snäpp i marken**.
+**0.10.22** (alfa); nästa är en **granskning**, sedan **0.10.23 Smartspöt del 2**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,33 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.22, snäpp och smartspöt (samma filformat, 21):
+- **Snäpp mot allt som ritas**: markobjekt (rampens sidor, markytans kant,
+  stödmurar), bjälklag, tak, rum, grannhus, fastighetsgränser och vägar
+  från Höjdkurvor, träd, markörer och mått, utöver väggar, möbler,
+  2D-former och underlag. Höjdkurvorna snäpps på (*På höjdkurvan*) men
+  ger inga ändpunkter. Nya objekttyper följer med av sig själva
+- **Smartspöt** (**Q**, eller *Smartspöt* i statusraden): ett förslag
+  utifrån verktyget man står i, som visas när man pekar. **Tab** växlar
+  mellan förslagen, klick utför, **Shift**+klick samlar fler som utförs
+  med nästa klick (eller Enter). Esc, Q eller ett annat verktyg stänger
+  det
+  - **Vägg**: väggar runt konturen av det man pekar på (bjälklag,
+    markobjekt, 2D-form, underlag, fastighetsgräns …), eller längs bara
+    sidan. Väggarna får verktygets typ, höjd och referenslinje; med *Ute*
+    hamnar de innanför konturen
+  - **Mark** (Stödmur, Brytlinje, Låglinje eller Ramp/väg): längs sidan av
+    en ramp, en markytas kant, en höjdkurva, ett grannhus …, eller runt
+    hela konturen. Stödmuren läggs utanför objektet
+  - **2D**: en sluten form runt en snittyta i sektionen eller fasaden,
+    runt ett objekts kontur, eller runt den minsta slutna ytan mellan
+    linjerna, med verktygets penna och fyllning
+  - **Markera**: allt av samma sort som hänger ihop med objektet (en
+    väggkedja, linjer som möts); Tab för allt av samma sort i vyn
+- **Litterans vridning**: *Horisontell*, *Vertikal* eller egna grader i
+  verktyget Littera och i egenskaperna; förvalet för nya litteror i
+  stilmallen (*Vridning* för Littera under Ledarna)
 
 Version 0.10.20.2, generell littera (nytt filformat, 21):
 - **Littera** (verktyget, **K**, eller `littera` i kommandoraden): klicka

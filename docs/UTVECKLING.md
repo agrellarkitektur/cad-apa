@@ -1247,6 +1247,55 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Snäpp och smartspöt (0.10.22, format 21)
+
+- **Snäppet läser allt som ritas.** `snapSegments` (`src/ui/app/snapping.ts`)
+  har som förut väggarnas referenslinjer (nu med `ref: true`), väggarnas och
+  möblernas liv, underlagen och 2D-formerna, och dessutom `drawnSegments`:
+  linjer, polylinjer, ytornas kanter och bågar ur planens primitiver för
+  alla andra typer, med objektets id. En ny objekttyp snäpps alltså mot
+  utan att något läggs till. Undantag: texter och bilder, typerna i
+  `NO_SNAP_TYPES` (text, littera, stämplar, skalstock, norrpil) och
+  delarna i `NO_SNAP_PARTS` (släntstreck, fallpilar, lutningar, littera,
+  fyllningar …): en ny beteckning som inte ska snäppas får sin `part` där.
+  Höjdkurvorna (`CURVE_PARTS`) är `noPick` men snäpps på som kurvor, utan
+  ändpunkter och mittpunkter. `on` ger texten vid markören per typ eller
+  del (*På fastighetsgränsen*, *På höjdkurvan* …).
+- **Kedjor och ytor** (`src/geometry/chains.ts`): `chainThrough` följer
+  sträckor ände mot ände (inom 0,5 mm) så länge vägen är entydig;
+  `simplify` tar bort raka mellanpunkter; `sideOf` ger delen mellan två
+  hörn som viker mer än 35°; `faceAround` delar linjerna i skärningarna
+  och går runt den minsta ytan till vänster från kanten närmast till höger
+  om punkten (högst 1500 sträckor, de närmaste).
+- **Smartspöt** (`src/ui/wand/`): `wand.ts` har registret (`WandAction`
+  med `tools`, `find(ctx)` som ger förslag, `WandHit` med `label`, `what`,
+  `preview` och `apply(more)`). `WandTool` ligger i vyn i stället för
+  verktyget när spöet är på (`installWand` i `src/ui/app/wand.ts`): hover
+  frågar alla funktioner för `ui.tool`, Tab växlar (`cycle`), klick utför,
+  Shift samlar (Enter eller klick utan Shift utför). Byte av verktyg slår
+  av spöet (`dropped` i `changeTool`). `trace.ts` hittar kanten närmast
+  markören bland snäppets sträckor (inte referenslinjer och punkter),
+  kedjan genom den (sparad per kant och lista) och sidan, och vänder dem så
+  att insidan ligger till höger (medurs) när den är känd: en sluten kedja
+  efter arean, en öppen genom att pröva objektets yta (`pickables`) 2 mm åt
+  sidorna.
+- **En ny funktion**: en fil i `src/ui/wand/` som exporterar en
+  `WandAction`, och en rad i `src/ui/wand/index.ts`. `find` ska vara snabb
+  (den körs vid varje musrörelse) eller spara sitt svar; `apply` skapar med
+  verktygets egna metoder, så att typ, penna och höjder blir verktygets:
+  `WallTool.createAlong`, `GroundTool.createLine`, `Draw2DTool.createPolyline`.
+  Funktionerna nu: `selectConnected` (Markera: `connected` prövar om en
+  punkt i ett objekt ligger på en kant i ett annat, bara grannar i en
+  `BoxIndex`), `wallAlong`, `groundAlong` (stödmuren med `refSide: 'right'`
+  när insidan är känd, så att den hamnar utanför objektet) och
+  `shapeAround` (ytor ur primitiverna, objektens konturer och
+  `faceAround`, den minsta först; den slutna ytan sparas medan markören är
+  kvar i den).
+- **Litterans vridning**: `LabelParams.angle` utelämnad följer stilmallens
+  `labels.leaders.Label.angle` (`labelAngle`), annars vågrätt;
+  `setLabelAngle` sparar också 0, så att en vågrät littera inte vrids när
+  förvalet ändras. Verktyget har `angle` (null = förvalet).
+
 ## Generell littera (0.10.20.2, format 21)
 
 Formatet höjdes eftersom `tag.at` bytte betydelse: textens förskjutning

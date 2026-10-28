@@ -226,6 +226,8 @@ export function installTools(app: AppContext, host: ToolHost) {
     }
     // Linjen man kände på för parallellt och vinkelrätt gäller bara verktyget (0.8.16).
     if (app.ui.tool !== id) forgetInferred();
+    // Smartspöt gäller verktyget det slogs på i (0.10.22).
+    if (app.wand.active) app.wand.dropped();
     app.ui.tool = id;
     app.view.setTool(toolFor(id));
     toolsEl.querySelectorAll<HTMLElement>('[data-tool]').forEach((b) => {

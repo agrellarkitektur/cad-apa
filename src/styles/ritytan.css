@@ -461,3 +461,29 @@
 .grip.hollow {
   stroke-dasharray: 3 2;
 }
+
+/* Smartspöt (0.10.22): förslaget, de samlade och spöet vid markören. */
+.wand-line {
+  fill: color-mix(in srgb, var(--accent) 10%, transparent);
+  stroke: var(--accent);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  opacity: 0.85;
+}
+
+.wand-line.wand-pending {
+  stroke-dasharray: 6 4;
+  opacity: 0.6;
+}
+
+.wand-cursor {
+  stroke: var(--accent);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+}
+
+.wand-spark {
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}

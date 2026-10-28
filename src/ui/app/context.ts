@@ -1,3 +1,4 @@
+import type { installWand } from './wand';
 import type { ViewDef } from '../../core/model';
 import type { ViewStates } from '../../core/states';
 import type { DocStore } from '../../core/store';
@@ -116,6 +117,8 @@ export interface AppContext {
   readonly segmentPoints: SegmentPoints;
   /** Smartshell, kommandoraden (0.8.20). Saknas tills den är installerad. */
   readonly commandLine?: CommandLine;
+  /** Smartspöt (0.10.22): på eller av över verktyget, Tab och Enter. */
+  readonly wand: ReturnType<typeof installWand>;
   /** Vyerna: gå till en plats, vyknappen och historiken. */
   readonly views: ReturnType<typeof installViews>;
 

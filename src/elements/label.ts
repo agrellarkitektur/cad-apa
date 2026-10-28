@@ -47,7 +47,7 @@ export interface LabelParams {
   sort?: string;
   /** Texthöjd på papperet, mm; utelämnad = stilmallens littera. */
   height?: number;
-  /** Vridning i grader moturs. */
+  /** Vridning i grader moturs; utelämnad = stilmallens förval (0.10.22), annars vågrät. */
   angle?: number;
   frame?: LabelFrame;
   targets: LabelTarget[];
@@ -170,7 +170,7 @@ function layout(ctx: PlanContext, el: Element<any>): Layout {
   const h = p.height && p.height > 0 ? p.height : ctx.style.labels.heights.littera;
   const lines = labelLines(ctx, el);
   const shown = lines.length ? lines : ['…'];
-  const a = ((p.angle ?? 0) * Math.PI) / 180;
+  const a = (labelAngle(ctx.style.labels.leaders.Label, p) * Math.PI) / 180;
   const along: Vec2 = [Math.cos(a), Math.sin(a)];
   const up: Vec2 = [-Math.sin(a), Math.cos(a)];
   const step = 1.45 * h * s;
@@ -205,6 +205,11 @@ function layout(ctx: PlanContext, el: Element<any>): Layout {
   const under = (p.tag?.attach ?? style.attach) === 'underline' && (p.targets?.length ?? 0) > 0;
   const underline: [Vec2, Vec2] | null = frame === 'underline' && !under ? [at(-hw - 0.5 * s, -hh - 0.5 * s), at(hw + 0.5 * s, -hh - 0.5 * s)] : null;
   return { rows, box, frame: ring, underline, height: h, align: left ? 'start' : 'middle', angle: a };
+}
+
+/** Textens vridning i grader (0.10.22): litterans egen, annars stilmallens förval, annars vågrät. */
+export function labelAngle(style: { angle?: number } | undefined, p: Pick<LabelParams, 'angle'>): number {
+  return p.angle ?? style?.angle ?? 0;
 }
 
 /** Sorten är släckt under Visa, eller all littera i en äldre vy. */

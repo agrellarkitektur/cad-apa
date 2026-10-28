@@ -237,6 +237,22 @@ export class GroundTool implements ViewTool, PointTaker {
     else this.create({ kind: 'path', outline: [], line, height: h0, endHeight: h1, ...arcs });
   }
 
+  /**
+   * Ett linjeobjekt längs en färdig linje (smartspöt, 0.10.22): det sätt
+   * verktyget står i, eller `mode`, med samma höjder som när linjen ritas.
+   */
+  createLine(line: Vec2[], extra: Partial<GroundParams> = {}, mode: GroundMode = this.options.mode): boolean {
+    if (!this.hasTerrain() || line.length < 2 || !isLineMode(mode)) return false;
+    const pts = line.map((q) => [Math.round(q[0]), Math.round(q[1])] as [number, number]);
+    if (mode === 'wall' || mode === 'drain') this.create({ kind: mode, outline: [], line: pts, ...extra });
+    else {
+      const h0 = Math.round(this.groundHeight(pts[0]) / 10) * 10;
+      const h1 = Math.round(this.groundHeight(pts[pts.length - 1]) / 10) * 10;
+      this.create({ kind: mode === 'breakline' ? 'breakline' : 'path', outline: [], line: pts, height: h0, endHeight: h1, ...extra });
+    }
+    return true;
+  }
+
   /** Rampen med de nya punkterna (0.10.18); lutningen fortsätter, och den gamla änden behåller sin höjd. Med bågar (0.10.19). */
   private extend(base: { id: Id; atStart: boolean }, added: Vec2[], bulges?: number[]): void {
     const el = this.host.store.doc.elements[base.id];

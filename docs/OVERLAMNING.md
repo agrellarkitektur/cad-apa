@@ -3,12 +3,38 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 28 oktober 2026 (eftermiddag), efter 0.10.20.2 Generell littera.
+Senast: 28 oktober 2026 (eftermiddag), efter 0.10.22 Snäpp och smartspöt.
 
 ## Läget
 
-- **Nästa session:** **Snäpp i marken** om Carl August inte säger annat
-  (mellanstor). Därefter en granskning. Se *Nästa session*.
+- **Nästa session:** en **granskning** (efter 0.10.20.1, 0.10.20.2 och
+  0.10.22), sedan **0.10.23 Smartspöt del 2**. Se *Nästa session*.
+- **0.10.22 Snäpp och smartspöt är klar** på `main` (samma format, 21),
+  byggd 28 oktober (eftermiddag) på "Kör", efter Carl Augusts svar: A, B,
+  C och E om 0.10.20.2 bra; D en inställning för litterans vridning;
+  snäpp och trollstav ska fungera för allt rimligt, trollstaven ska heta
+  något med smart, vara anpassad efter verktyget (Markera utan verktyg)
+  och lätt att bygga ut. Claudes förslag E, F, J, N här; G, H, I, K, L, M
+  i 0.10.23. Byggt: snäppet läser allt som ritas (`drawnSegments` i
+  `src/ui/app/snapping.ts`, höjdkurvorna som kurvor); kedjor och slutna
+  ytor (`src/geometry/chains.ts`); **smartspöt** (`src/ui/wand/`, register
+  i `wand.ts`, en fil per funktion, `WandTool`, `installWand` i
+  `src/ui/app/wand.ts`; Q eller statusraden, Tab, Shift, Enter, Esc):
+  väggar runt kontur eller längs sida (`wallAlong`), stödmur, brytlinje,
+  låglinje eller väg längs sida eller runt kontur (`groundAlong`), sluten
+  2D-form runt snittyta, kontur eller sluten yta (`shapeAround`), markera
+  sammanhängande eller allt av sorten (`selectConnected`); litterans
+  vridning (D) i verktyget, egenskaperna och stilmallen
+  (`labels.leaders.Label.angle`, `labelAngle`, `setLabelAngle`). Koden i
+  UTVECKLING.md under *Snäpp och smartspöt*; Claudes val i PLAN.md.
+  Testerna: 648 på ca 17 s. Provat i Playwright mot `dist/` (väggar runt
+  ett bjälklag med Tab till sidan, Markera sammanhängande väggar,
+  stödmur längs rampens sida i `groundProject` och en höjdkurva vid
+  hovring, 2D-form i sektionen, littera med Vertikal). Klickjämförelsen
+  kördes **inte**; nya steg i granskningen.
+- **Märks i hans ritningar efter 0.10.22:** inget ritas annorlunda. Snäppet
+  drar nu också till markobjekt, bjälklag, tak, rum, kartans linjer, träd
+  och höjdkurvor (det kan kännas klistrigare på situationsplanen).
 - **0.10.20.2 Generell littera är klar** på `main` (**nytt format, 21**),
   byggd 28 oktober (eftermiddag) på "Kör 0.10.20.2", med hans svar på
   frågorna om 0.10.20.1 (A pappersmått, B och C bra, D synligt grepp på
@@ -257,11 +283,10 @@ Senast: 28 oktober 2026 (eftermiddag), efter 0.10.20.2 Generell littera.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.20.2` i `engine.ts`, `package.json` och
-  `package-lock.json` (npm godtar fyra delar i ett privat paket); Snäpp i
-  marken får nästa lediga nummer (förslag `0.10.22`). En granskning höjer inte numret, eller får en
+- **Versionsnumret** är `0.10.22` i `engine.ts`, `package.json` och
+  `package-lock.json`; Smartspöt del 2 blir `0.10.23`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.21, 0.10.20.1 och 0.10.20.2 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.22, 0.10.20.1 och 0.10.20.2 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -321,10 +346,11 @@ vid varje överlämning.
   efter 0.10.18 (0.10.18.1)~~, ~~0.10.19 Markobjektens bågar~~, ~~0.10.20
   Situationsplanens beteckningar~~ (klara)
 - ~~0.10.21 Lutande väggar~~, ~~Granskning efter 0.10.21 (0.10.21.1)~~,
-  ~~0.10.20.1 Litteran~~, ~~0.10.20.2 Generell littera~~ (klara)
-- **Snäpp i marken** (mellanstor: gränser, byggnader, markobjekt;
-  trollstaven för stödmur längs ett objekt), sedan **Granskning** efter
-  0.10.20.1, 0.10.20.2 och snäppet
+  ~~0.10.20.1 Litteran~~, ~~0.10.20.2 Generell littera~~, ~~0.10.22
+  Snäpp och smartspöt~~ (klara)
+- **Granskning** efter 0.10.20.1, 0.10.20.2 och 0.10.22
+- **0.10.23 Smartspöt del 2** (mellanstor: bjälklag, tak, markyta och
+  ramp, 2D-linje, littera, mått)
 - **Utredning: material i stället för fyllningar** (egen session, rör
   formatet)
 - **Ortofotot på marken** (liten undersökning med terrängappen, när det
@@ -345,12 +371,13 @@ vid varje överlämning.
 
 ## Nästa session
 
-Kör **Snäpp i marken** om Carl August inte säger annat (mellanstor):
-snäpp mot fastighetsgränser och befintliga byggnader från Höjdkurvor och
-mot markobjekten, och trollstaven för en stödmur längs ett objekt. Sedan
-en **granskning** (efter 0.10.20.1, 0.10.20.2 och snäppet), med klicksteg
-för litteran och det generella littrat. Läs `cad-apa-synpunkter.md` först
-och ställ frågorna för 0.10.20.2 (fem åt gången), om han inte redan svarat.
+Kör en **granskning** (efter 0.10.20.1, 0.10.20.2 och 0.10.22) om Carl
+August inte säger annat: klicksteg för litteran, det generella littrat och
+smartspöt (Q, hovra, Tab, klick, Shift); mät snäppets sträckor på en stor
+plats (höjdkurvorna ur ett rutnät på 1,2 miljoner noder) och spöets hover
+(`faceAround` i 2D); dela `commandLine.ts` och `planView.ts` om det går.
+Sedan **0.10.23 Smartspöt del 2**. Läs `cad-apa-synpunkter.md` först och
+ställ frågorna för 0.10.22 (fem åt gången), om han inte redan svarat.
 
 ## Att fråga Carl August om
 
@@ -358,15 +385,16 @@ Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
 
-**0.10.20.2 efter provning** (Claudes val, se PLAN.md)
-- Löpnumren räknas per sort över hela projektet i den ordning litterorna
-  skapats. Behövs numrering efter läget (vänster till höger, uppifrån)?
-- Flera ledare är parallella i 45° mot stammen. Rätt vinkel som förval?
-- En punkt som släpps på ett annat objekt fastnar i det, på tomma ytan blir
-  den fri. Rätt, eller ska den alltid sitta kvar i sitt objekt?
-- Texten står kvar upprätt när litteran vrids med Vrid. Rätt?
-- Understruken: understrykningen går en bit utanför texten på båda
-  sidor. Ser stödmuren rätt ut nu?
+**0.10.22 efter provning** (Claudes val, se PLAN.md)
+- Smartspöt stängs när man byter verktyg. Ska det i stället ligga kvar
+  på (som Snäpp) tills man stänger det?
+- Väggar runt en kontur: hela konturen först, sidan efter Tab; med *Ute*
+  innanför konturen. Rätt ordning och sida?
+- Snäppet drar nu till höjdkurvorna (på linjen, inga ändar). För
+  klistrigt på situationsplanen, eller bra?
+- En sida slutar där kedjan viker mer än 35°. Lagom?
+- Bågar följs som korta raka bitar (många små väggar eller murpunkter).
+  Ska spöet känna igen bågar och lägga dem som bågar?
 
 **0.10.20 efter provning** (Claudes val, se PLAN.md)
 - Markhöjden räknar marken som oförändrad när ny och befintlig skiljer
@@ -559,6 +587,13 @@ fråga.
   `app.ts` (566) är näst störst. Stilmallens fönster har tre kolumner från 1180 px; under
   det ligger delarna under varandra som förut.
 
+- **Smartspöt (0.10.22):** `find` körs vid varje musrörelse; kedjan,
+  den slutna ytan och Markeras svar sparas, men `faceAround` med många
+  linjer (upp till 1500, kvadratiskt) är inte mätt på ett stort underlag.
+  `snapSegments` med alla höjdkurvor räknas om när planen ändras (1590
+  sträckor i `groundProject` på under 1 ms; inte mätt med en stor plats).
+  Bågar följs som raka bitar. 2D-formen runt en yta med hål får bara
+  ytterkonturen. Spöet fungerar inte i 3D eller på ritningsbladen.
 - **Generell littera (0.10.20.2):** ritas utan `planReads`, så alla
   litteror räknas om vid varje ändring (få i ett projekt; inte mätt med
   hundratals). Spegling flyttar en punkt på en vägg till samma avstånd från

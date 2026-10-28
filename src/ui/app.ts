@@ -59,6 +59,7 @@ import { installSheets } from './app/sheets';
 import { installPlot } from './app/plot';
 import { installRender } from './app/render';
 import { installTools } from './app/tools';
+import { installWand } from './app/wand';
 import { installCommandLine, type CommandLine } from './app/commandLine';
 
 /**
@@ -515,10 +516,12 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     site: () => site,
     segmentPoints: () => segmentPoints,
     views: () => views,
+    wand: () => wand,
     commandLine: () => commandLine,
   });
   const segmentPoints = installSegmentPoints(app);
   const render = installRender(app, { chips, compareToggle, compareLabel, computing });
+  const wand = installWand(app);
   const tools = installTools(app, host);
   const panes = installPanes(app);
   const pane3d = installPane3d(app);
@@ -542,7 +545,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const actions = installActions(app, { brand, feedbackDialog, about, files, menus, panes, plot, sheets, showMenu, views });
 
   // För felsökning i webbläsarens konsol.
-  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifier, smartMenu, setTool: tools.setTool, goTo: views.goTo, setMode: pane3d.setMode, get sheets() { return sheets; }, filterSelect, sections: render.sectionQueue, get plot() { return plot; }, get plan() { return render.plan; }, get view3d() { return pane3d.view3d; } };
+  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifier, smartMenu, setTool: tools.setTool, wand, goTo: views.goTo, setMode: pane3d.setMode, get sheets() { return sheets; }, filterSelect, sections: render.sectionQueue, get plot() { return plot; }, get plan() { return render.plan; }, get view3d() { return pane3d.view3d; } };
 
   appEl.dataset.mode = ui.mode;
   appEl.dataset.sheet = ui.sheet;
