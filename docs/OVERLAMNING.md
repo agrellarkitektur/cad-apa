@@ -23,8 +23,8 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   runt huset på Platsen, Mark från Plan 1, kalkeringen, trädet och
   menyn, en markplaneringsritning, 3D och sektionen). Klickjämförelsen
   kördes **inte**. Se PLAN.md och UTVECKLING.md.
-- **Om pushen:** se *Nästa session*; kontrollera att `main` har 0.10.25
-  (`git log origin/main -1`) och att publiceringen gick igenom.
+- **Publicerad:** pushad till `main` 28 oktober (kväll), efter att
+  skrivrätten godkänts i andra försöket.
 - **Märks i hans ritningar efter 0.10.25:** projekt från 0.10.24 öppnas
   inte (nytt format). Markobjekten syns inte längre på Plan 1 utan på
   Platsen, och dialogen Platsen nås från Platsen i projektträdet.
@@ -118,8 +118,7 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-Om 0.10.25 inte ligger på `main` (se *Om pushen* ovan): pusha den först.
-Claudes förslag är sedan en **granskning** innan materialen: fem versioner
+Claudes förslag är en **granskning** innan materialen: fem versioner
 sedan 0.10.22.1, och klickjämförelsen har inte körts för 0.10.23–0.10.25
 (nya steg: spöet i Takfall, Mått och Littera; bjälklag med båge och Böj på
 konturen; markyta som polygon; Platsen med Mark, kalkeringen, menyn och en
