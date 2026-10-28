@@ -22,10 +22,10 @@ import { roundMm, snap, type SnapResult } from './snap';
  * eller stödmur; eller en höjdpunkt. Platå och urgrävning är sedan 0.10.7
  * samma markyta, och ramp, gångväg och infart samma väg.
  */
-export type GroundMode = 'area' | 'slab' | 'path' | 'point' | 'breakline' | 'wall';
+export type GroundMode = 'area' | 'slab' | 'path' | 'point' | 'breakline' | 'wall' | 'level' | 'drain';
 
 /** Sätten som ritas som en linje, avslutad med dubbelklick, Enter eller Klar. */
-const LINE_MODES: readonly GroundMode[] = ['path', 'breakline', 'wall'];
+const LINE_MODES: readonly GroundMode[] = ['path', 'breakline', 'wall', 'drain'];
 export const isLineMode = (m: GroundMode): boolean => LINE_MODES.includes(m);
 
 /**
@@ -173,6 +173,11 @@ export class GroundTool implements ViewTool, PointTaker {
       this.create({ kind: 'point', outline: [], line: [[pt[0], pt[1]]], height: Math.round(h / 10) * 10 });
       return;
     }
+    // Markhöjden (0.10.20): höjderna läses ur marken när den ritas.
+    if (this.options.mode === 'level') {
+      this.create({ kind: 'level', outline: [], line: [[pt[0], pt[1]]] });
+      return;
+    }
     if (isLineMode(this.options.mode)) {
       // Linjen sluts aldrig: ett klick på första punkten är bara en punkt till.
       this.chain.click(pt, -1);
@@ -222,8 +227,8 @@ export class GroundTool implements ViewTool, PointTaker {
     }
     if (line.length < 2 || !isLineMode(mode)) return;
     const arcs = bulges ? { bulges } : {};
-    if (mode === 'wall') {
-      this.create({ kind: 'wall', outline: [], line, ...arcs });
+    if (mode === 'wall' || mode === 'drain') {
+      this.create({ kind: mode, outline: [], line, ...arcs });
       return;
     }
     const h0 = Math.round(this.groundHeight(line[0]) / 10) * 10;
@@ -326,8 +331,9 @@ export class GroundTool implements ViewTool, PointTaker {
     const m = this.options.mode;
     if (m === 'slab') return 'Klicka i ett bjälklag: urgrävningen följer det, med arbetsutrymme runt om.';
     if (m === 'point') return 'Klicka där höjdpunkten ska ligga; höjden tas ur marken och ändras i egenskaperna.';
+    if (m === 'level') return 'Klicka där markhöjden ska stå; den befintliga och den nya höjden läses ur marken.';
     if (isLineMode(m)) {
-      const what = { path: 'vägens referenslinje (mitten från början)', breakline: 'brytlinjen', wall: 'stödmurens linje' }[m as 'path'];
+      const what = { path: 'vägens referenslinje (mitten från början)', breakline: 'brytlinjen', wall: 'stödmurens linje', drain: 'låglinjen, från det högsta mot det lägsta' }[m as 'path'];
       if (this.chain.waiting) return 'Klicka en punkt på bågen.';
       if (this.chain.arc && this.pts.length) return 'Klicka var bågen slutar.';
       if (this.base) return 'Klicka nästa punkt av förlängningen. Dubbelklick, Enter eller Klar avslutar; lutningen fortsätter.';

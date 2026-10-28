@@ -1247,6 +1247,62 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Situationsplanens beteckningar (0.10.20, format 20)
+
+Inget nytt format: sorterna `level` (markhöjd) och `drain` (låglinje) i
+`GroundKind`, `minCross` och `name` på stödmuren i `GroundParams`, och
+`steepSlope`, `litteraDigits` och `levelDecimals` i `GroundDefaults` är
+frivilliga.
+
+- **Beteckningarna** ligger i `src/elements/groundMarks.ts`: `markText`
+  (en text, understruken med en linje under baslinjen lika lång som
+  texten enligt `textWidth` i `drawingFont.ts`, så att PDF:en och skärmen
+  stämmer), `arrow` (flyttad från `groundPlan.ts`), `levelStatus` och
+  `levelMark` (markhöjden: den befintliga markens höjd ur `terrainOf`, den
+  nya ur `finishedTerrain` i ett förslag eller `height` i objektet; skiljer
+  de mindre än `SAME_LEVEL` 50 mm är marken oförändrad), `drainLine`
+  (polylinjen och pilspetsar var `DRAIN_ARROW_STEP` 10 mm på papperet),
+  `wallLittera` (`name`, annars *M* och numret bland vyns stödmurar i
+  `groundObjects`-ordning, `litteraText` i `core/site.ts`), `wallLeader`
+  (vinkelrätt ut åt höger från murens mitt, ett vågrätt streck, littera
+  över och *MK* under; `crestAtS` i mitten, eller lägsta–högsta) och
+  `minCrossText`. `groundLevelText` i `core/site.ts` skriver höjden med
+  projektets decimaler; `hText` i `groundPlan.ts` använder den för alla
+  markobjektens höjder (nivåmarkörerna har kvar `levelText` med tre)
+- **Markhöjden och låglinjen** formar inte marken: `lineGeometry` ger dem
+  `shape: null` (en ruta 1 × 1 m att klicka på, eller en remsa 0,4 m), och
+  `finishedTerrain` räknar bara med geometrier som har `shape` eller
+  `barriers`, så att en flyttad markhöjd inte räknar om marken.
+  `isMarkKind` i `groundGeometry.ts`; `groundLines3d` hoppar över dem.
+  `GroundTool` har sätten `level` (ett klick) och `drain` (en linje som
+  stödmuren), i verktygsraden under *Beteckning* och i smartshell (J, D)
+- **Konturen runt slänterna**: `slopeOutline` i `groundSlopes.ts` går
+  runt konturen med halva streckavståndet (som `slopeArea`), tar
+  strålarnas ytterändar, jämnar dem med medianen av tre grannar och
+  fogar dem till polylinjer, brutna där ingen slänt börjar eller kanten
+  är stödmur (`walkSlope` fick ett `skipped`-anrop); en kontur där alla
+  strålar når sluts. `slopeReach` förfinar slutet med fyra halveringar
+  (så att konturen inte blir trappstegad av rutnätet) och bryter där
+  den färdiga marken avviker mer än 100 mm + 25 % från släntens egen
+  linje från kantens höjd (strålen har gått in i ett annat objekts slänt)
+- **Branta slänter i den befintliga marken**: `src/elements/terrainSlopes.ts`:
+  `slopeField` (lutningen per nod, central differens), `steepMarks`
+  (gränsen mellan brant och flackt som nollnivån i lutning − gräns med
+  `contours` och ett enda steg, sedan längs gränsen var 2,5 mm: där
+  nedför går in i det branta börjar ett streck som följer fallinjen med
+  `groundAt`-gradienten tills lutningen blir flackare eller `MARK_REACH`
+  20 m; sparat per `t.z`, gräns och skala) och `steepSlopePrims` (långa
+  och korta om vartannat, `muted` 0,13, `skip` för rutor markobjekten
+  ändrat via `changedCells`). Ritas av `terrainType.plan` i `site.ts` när
+  vyn har `+steepSlopes` (`STEEP_SLOPES_KEY`, släckt från början i
+  `OFF_BY_DEFAULT`), med `groundDefaults(site).steepSlope`
+- **Visa**: `littera:Ground` (ledaren) i gruppen Littera, `steepSlopes`
+  under Platsen. **Platsen**: tre fält till i `groundSettings`
+- **Markeringen** (`highlight.ts`): ett objekt med fler än `MANY_PRIMS`
+  primitiver markeras med sina `regions` när det har några, annars med
+  ramen som förut (underlag)
+- Tester: `tests/v01020.test.ts`, `tests/v010191.test.ts` (markeringen)
+
 ## Granskning efter 0.10.18 (0.10.18.1, format 20)
 
 Tre småfel ur Inkorgen och stora filer delade. Det som flyttats exporteras

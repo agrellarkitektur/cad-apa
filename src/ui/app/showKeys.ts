@@ -36,6 +36,7 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
       ['littera:Wall', 'Väggar'],
       ['littera:Door', 'Dörrar'],
       ['littera:Window', 'Fönster'],
+      ['littera:Ground', 'Stödmurar (ledaren med M-littera)'],
     ],
   },
   {
@@ -66,6 +67,7 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
       ['Ground', 'Markobjekt (konturerna)'],
       ['ground3d', 'Markobjektens linjer i 3D-vyn'],
       ['slopes3d', 'Släntmarkeringar i 3D-vyn'],
+      ['steepSlopes', 'Branta slänter i den befintliga marken (gränsen under Platsen)'],
       ['SiteBuilding', 'Grannhus'],
       ['Tree', 'Träd'],
       ['SiteMap', 'Fastighetsgränser, vägar och punkter'],
@@ -102,7 +104,7 @@ export function traceStoreyOptions(trace: string | null | undefined): string {
  * i vyns `hide`, så att äldre vyer inte får det. Tak på andra våningar och
  * de dolda linjerna i fasader (0.10.10) likaså.
  */
-export const OFF_BY_DEFAULT: ReadonlySet<string> = new Set(['footprint', 'roofsAround', 'hiddenSlabs', 'hiddenWalls', 'ground3d', 'slopes3d']);
+export const OFF_BY_DEFAULT: ReadonlySet<string> = new Set(['footprint', 'roofsAround', 'hiddenSlabs', 'hiddenWalls', 'ground3d', 'slopes3d', 'steepSlopes']);
 
 /** Om det som nyckeln står för syns i vyn. */
 export function isShown(ui: Pick<UiState, 'hide' | 'hideDemolished'>, key: string): boolean {

@@ -81,18 +81,34 @@ function slopeReach(ctx: PlanContext, g: GroundGeometry): ((q: Vec2, n: Vec2) =>
     const d0 = diff(q[0] + n[0] * 60, q[1] + n[1] * 60);
     if (d0 === null || Math.abs(d0) < 30) return null;
     // Gå ut längs normalen så länge marken är ändrad och lutar som en slänt.
+    // Slänten följer sin lutning från kantens höjd (0.10.20); där den färdiga marken
+    // avviker mer än så har strålen gått in i ett annat objekts slänt eller yta.
+    const zEdge = groundAt(f.terrain, q[0], q[1]);
+    const dir = d0 < 0 ? 1 : -1;
+    const still = (from: number, to: number, zFrom: number): number | null => {
+      const z = groundAt(f.terrain, q[0] + n[0] * to, q[1] + n[1] * to);
+      const dz = diff(q[0] + n[0] * to, q[1] + n[1] * to);
+      if (z === null || dz === null || Math.abs(dz) < 15 || Math.abs(z - zFrom) / (to - from) < steep) return null;
+      if (zEdge !== null && Math.abs(z - (zEdge + (dir * to) / sh.slope!)) > 100 + (0.25 * to) / sh.slope!) return null;
+      return z;
+    };
     let d = 60;
     let prev = groundAt(f.terrain, q[0] + n[0] * d, q[1] + n[1] * d)!;
     while (d < MARK_REACH) {
-      const x = q[0] + n[0] * (d + step);
-      const y = q[1] + n[1] * (d + step);
-      const z = groundAt(f.terrain, x, y);
-      const dz = diff(x, y);
-      if (z === null || dz === null || Math.abs(dz) < 15 || Math.abs(z - prev) / step < steep) break;
+      const z = still(d, d + step, prev);
+      if (z === null) break;
       prev = z;
       d += step;
     }
-    return { d, cut: d0 < 0 };
+    // Slutet närmare än steget (0.10.20), så att konturen runt slänten inte blir trappstegad.
+    let lo = d;
+    let hi = d + step;
+    for (let k = 0; k < 4; k++) {
+      const m = (lo + hi) / 2;
+      if (still(d, m, prev) === null) hi = m;
+      else lo = m;
+    }
+    return { d: lo, cut: d0 < 0 };
   };
 }
 
@@ -101,7 +117,7 @@ function slopeReach(ctx: PlanContext, g: GroundGeometry): ((q: Vec2, n: Vec2) =>
  * punkten på kanten och normalen ut; i utåtgående hörn i en solfjäder.
  * Med `ends` också i kanternas ändar (för slänternas yta, som ska vara hel).
  */
-function walkSlope(g: GroundGeometry, spacing: number, ends: boolean, at: (q: Vec2, n: Vec2, ring: number) => void): void {
+function walkSlope(g: GroundGeometry, spacing: number, ends: boolean, at: (q: Vec2, n: Vec2, ring: number) => void, skipped?: (ring: number) => void): void {
   for (let r = 0; r < g.rings.length; r++) {
     const ring = g.rings[r][0];
     const ccw = signedArea(ring) >= 0;
@@ -110,7 +126,10 @@ function walkSlope(g: GroundGeometry, spacing: number, ends: boolean, at: (q: Ve
       const b = ring[(i + 1) % ring.length];
       const n = outward(ring, a, b);
       // Rampens sidor som är stödmur (0.10.18) har ingen slänt.
-      if (!n || (r === 0 && g.edgeWall?.[i])) continue;
+      if (!n || (r === 0 && g.edgeWall?.[i])) {
+        skipped?.(r);
+        continue;
+      }
       const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
       if (ends) at(a, n, r);
       for (let s = spacing / 2; s < len; s += spacing) at([a[0] + ((b[0] - a[0]) * s) / len, a[1] + ((b[1] - a[1]) * s) / len], n, r);
@@ -133,6 +152,66 @@ function walkSlope(g: GroundGeometry, spacing: number, ends: boolean, at: (q: Ve
       }
     }
   }
+}
+
+/**
+ * Konturen runt släntmarkeringarna (0.10.20): slänternas fot (i fyll) eller
+ * krön (i schakt), som linjer genom strecken ytterändar, kända tätare än
+ * strecken. Där ingen slänt börjar bryts linjen; går slänten runt hela
+ * konturen sluts den. Tunn (0,13).
+ */
+export function slopeOutline(ctx: PlanContext, g: GroundGeometry, origin: Primitive['origin']): Primitive[] {
+  const reach = slopeReach(ctx, g);
+  if (!reach) return [];
+  const minLen = 0.8 * ctx.scale;
+  const pen = { weight: 0.13 };
+  // Strålarna per kontur: punkten på kanten, normalen och hur långt slänten når (null där den inte börjar).
+  const rays: { q: Vec2; n: Vec2; d: number | null }[][] = g.rings.map(() => []);
+  const broken: boolean[] = g.rings.map(() => false);
+  walkSlope(
+    g,
+    (MARK_SPACING * ctx.scale) / 2,
+    true,
+    (q, n, ring) => {
+      const r = reach(q, n);
+      rays[ring].push({ q, n, d: r && r.d >= minLen ? r.d : null });
+    },
+    (ring) => {
+      // En kant som är stödmur bryter konturen.
+      rays[ring].push({ q: [0, 0], n: [0, 0], d: null });
+      broken[ring] = true;
+    },
+  );
+  const out: Primitive[] = [];
+  for (let r = 0; r < rays.length; r++) {
+    const list = rays[r];
+    const m = list.length;
+    // Medianen av tre grannar jämnar ut enstaka strålar som når mycket längre eller kortare.
+    const smooth = list.map((ray, i) => {
+      if (ray.d === null) return null;
+      const a = list[(i - 1 + m) % m].d;
+      const b = list[(i + 1) % m].d;
+      if (a === null || b === null) return ray.d;
+      return [a, ray.d, b].sort((x, y) => x - y)[1];
+    });
+    const whole = !broken[r] && smooth.every((d) => d !== null);
+    let chain: Vec2[] = [];
+    const flush = (closed: boolean) => {
+      if (chain.length >= (closed ? 3 : 2)) out.push({ kind: 'polyline', points: chain, closed, pen, origin });
+      chain = [];
+    };
+    for (let i = 0; i < m; i++) {
+      const d = smooth[i];
+      if (d === null) {
+        flush(false);
+        continue;
+      }
+      const ray = list[i];
+      chain.push([ray.q[0] + ray.n[0] * d, ray.q[1] + ray.n[1] * d]);
+    }
+    flush(whole);
+  }
+  return out;
 }
 
 const savedSlopeArea = new WeakMap<GroundGeometry, { inputs: unknown[]; out: Rings[] }>();

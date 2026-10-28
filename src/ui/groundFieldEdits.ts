@@ -137,9 +137,9 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
     updateParams(store, ids, { crossFall: v }, 'Ändra tvärfallet');
     return true;
   }
-  // Stödmurens ÖK i ändarna: tomt följer marken.
-  if (raw === '' && (name === 'height' || name === 'endHeight') && ids.every((id) => doc.elements[id]?.params.kind === 'wall')) {
-    updateParams(store, ids, { [name]: undefined }, 'Krönet följer marken');
+  // Stödmurens MK i ändarna: tomt följer marken. Markhöjdens egna höjd (0.10.20): tomt följer den färdiga marken.
+  if (raw === '' && (name === 'height' || name === 'endHeight') && ids.every((id) => doc.elements[id]?.params.kind === 'wall' || doc.elements[id]?.params.kind === 'level')) {
+    updateParams(store, ids, { [name]: undefined }, ids.every((id) => doc.elements[id]?.params.kind === 'level') ? 'Höjden ur den färdiga marken' : 'Krönet följer marken');
     return true;
   }
   if (raw === '' && name !== 'height' && name !== 'endHeight') {
@@ -162,7 +162,7 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
     return true;
   }
   if (v < 0 || (v === 0 && name !== 'fall' && name !== 'distance' && name !== 'margin' && name !== 'sockel' && name !== 'above' && name !== 'endAbove')) return false;
-  const labels: Record<string, string> = { maxSlope: 'Ändra gränsen', width: 'Ändra bredden', radius: 'Ändra radien', easeRadius: 'Ändra övergångarnas radie', thickness: 'Ändra tjockleken', above: 'Ändra krönet', endAbove: 'Ändra krönet', fall: 'Ändra fallet', slope: 'Ändra slänten', distance: 'Ändra avståndet', sockel: 'Ändra sockeln', fallLength: 'Ändra fallets längd', margin: 'Ändra arbetsutrymmet' };
+  const labels: Record<string, string> = { minCross: 'Ändra sidolutningen', maxSlope: 'Ändra gränsen', width: 'Ändra bredden', radius: 'Ändra radien', easeRadius: 'Ändra övergångarnas radie', thickness: 'Ändra tjockleken', above: 'Ändra krönet', endAbove: 'Ändra krönet', fall: 'Ändra fallet', slope: 'Ändra slänten', distance: 'Ändra avståndet', sockel: 'Ändra sockeln', fallLength: 'Ändra fallets längd', margin: 'Ändra arbetsutrymmet' };
   updateParams(store, ids, { [name]: v }, labels[name] ?? 'Ändra');
   return true;
 }

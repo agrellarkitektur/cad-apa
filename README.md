@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.19** (alfa); nästa är **0.10.20, situationsplanens beteckningar**.
+**0.10.20** (alfa); nästa är **0.10.21, lutande väggar** (förslag).
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,35 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.20, situationsplanens beteckningar (samma filformat, 20):
+- **Markhöjder**: *Markhöjd* under *Beteckning* i verktyget Mark lägger ett
+  litet kors med höjden: den befintliga understruken där marken inte
+  ändras, annars den nya höjden utan understrykning och den befintliga som
+  utgår inom parentes på raden under. Höjderna läses ur marken (den färdiga
+  i förslaget); en egen ny höjd kan skrivas i egenskaperna
+- **Låglinje** för dagvattnets avrinning: en linje med pilar i linjens
+  riktning, var tionde millimeter på papperet. Ändras som de andra
+  linjerna, med bågar
+- **Murens ledare**: stödmuren får en ledare från mitten med littera
+  (*M01*, numrerad i ritordningen; ett eget littera skrivs i egenskaperna)
+  och *MK* (murkrön) med krönets höjd på raden under, lägsta–högsta när
+  krönet varierar. *ÖK* i ändarna och vid höjdpunkterna heter nu *MK*.
+  Ledaren släcks under Visa, Littera, Stödmurar
+- **Minsta sidolutning** i procent, understruken, för markytan (under
+  höjden) och rampen/vägen (över namnet), när den är ifylld i egenskaperna
+- **Markhöjdernas decimaler** (två som förval, *+22,20*) och **antalet
+  siffror i littera** (två, *M01*) ställs under *Platsen*
+- **Kontur runt släntmarkeringarna**: en tunn linje längs slänternas fot
+  (eller krön i schakt), bruten där ingen slänt börjar. Släntstrecken
+  slutar nu där den färdiga marken lämnar släntens egen lutning, så att de
+  inte går in över ett grannobjekts slänt
+- **Branta slänter i den befintliga marken**: *Branta slänter* under Visa,
+  Platsen, ritar släntstreck längs fallinjerna där den befintliga marken
+  lutar brantare än gränsen under *Platsen* (1:3 som förval), inte där
+  markobjekten ändrat marken. Släckt från början
+- Markeringen av ett objekt med många linjer (en ramp med bågar och mjuka
+  övergångar) följer konturen i stället för att bli en ram
 
 Version 0.10.19, markobjektens bågar (samma filformat, 20):
 - **Bågar på markobjektens linjer**: rampens referenslinje och sidor,

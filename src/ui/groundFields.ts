@@ -5,6 +5,7 @@ import { finishedTerrain, groundGeometry, groundLabel, isLineKind, m3, wallProfi
 import { massBalance } from '../elements/groundGeometry';
 import { lineLength, PATH_WIDTH } from '../elements/groundLines';
 import { easeRadiusAt, rampProfile, rampWarnings, refPoints, sideEdge } from '../elements/groundRamp';
+import { groundText, levelStatus, wallLittera } from '../elements/groundMarks';
 import { fillFields } from './shapeFields';
 import type { FillParams } from '../elements/drawing2d';
 import { resolveParams } from '../elements/registry';
@@ -34,6 +35,7 @@ export function groundFieldsMarkup(doc: ProjectDoc, el: Element, view: ViewState
     rows.push(site ? field('height', 'Höjd (RH 2000)', 'm', Math.round(toRh(site, h) * 1000) / 1000) : field('height', 'Höjd', 'mm', h));
     rows.push(field('fall', 'Fall', '1:N', p.fall || undefined, undefined, 'Tomt = plan'));
     if (p.fall) rows.push(field('fallDir', 'Faller åt', '°', p.fallDir ?? 0, undefined, 'Grader moturs från planens x-axel'));
+    rows.push(field('minCross', 'Minsta sidolutning', '%', p.minCross, undefined, 'Skrivs ut understruken under höjden (0.10.20); tomt = skrivs inte'));
   }
   if (p.around) {
     rows.push(field('distance', 'Ut från fasaden', 'mm', p.distance, def.distance));
@@ -127,6 +129,7 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
       rows.push(field('ratio' as keyof GroundParams, 'Lutning', '1:N', Number.isFinite(n) ? Math.round(n * 10) / 10 : undefined, undefined, 'Ändrar höjden i slutet; tomt = plan'));
     }
     rows.push(field('maxSlope', 'Varna brantare än', '1:N', p.maxSlope, def.rampMax, 'Tomt = projektets förval under Platsen'));
+    rows.push(field('minCross', 'Minsta sidolutning', '%', p.minCross, undefined, 'Skrivs ut understruken över namnet (0.10.20); tomt = skrivs inte'));
     // Mjuka övergångar (0.10.19): en vertikal kurva i början, slutet och punkterna med höjd, i stället för en skarp brytning.
     rows.push(
       `<label class="field" title="Skarpa: höjden bryts i punkterna, som ett vilplan i en betongramp. Mjuka: en vertikal kurva med radien, som en gångväg; rampen börjar och slutar plant"><span>Övergångarna</span><select data-key="ground:ease"><option value="">Skarpa</option><option value="soft"${p.ease ? ' selected' : ''}>Mjuka</option></select></label>`,
@@ -155,23 +158,38 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
     rows.push(rh('height', 'Höjd', h0));
     rows.push(field('radius', 'Tonas inom', 'mm', p.radius, def.blend));
     notes.push('Låser marken i punkten; marken runt omkring tonas mot den.');
+  } else if (p.kind === 'level') {
+    // Markhöjden (0.10.20): en egen ny höjd, annars den färdiga markens.
+    rows.push(rh('height', 'Ny höjd', p.height, 'Tomt = den färdiga markens höjd i punkten'));
+    const st = levelStatus(ctx, p, pts[0] ?? [0, 0]);
+    notes.push(
+      st.existing === null
+        ? 'Ingen mark i punkten.'
+        : st.proposed === null
+          ? `Befintlig mark ${escapeHtml(groundText(ctx, st.existing))}, oförändrad: skrivs understruken.`
+          : `Ny höjd ${escapeHtml(groundText(ctx, st.proposed))}; den befintliga ${escapeHtml(groundText(ctx, st.existing))} utgår och skrivs inom parentes.`,
+    );
+    notes.push('Markhöjden ändrar inte marken. Befintlig höjd skrivs understruken, ny höjd utan understrykning. Decimalerna ställs under Platsen.');
+  } else if (p.kind === 'drain') {
+    notes.push('Låglinje för dagvattnets avrinning: pilarna pekar i linjens riktning, från det högsta mot det lägsta. Ändrar inte marken. Ändra linjen med punkterna i Modifiera.');
   } else if (p.kind === 'breakline') {
     rows.push(rh('height', 'Höjd i början', h0));
     rows.push(rh('endHeight', 'Höjd i slutet', h1));
     rows.push(field('radius', 'Tonas inom', 'mm', p.radius, def.blend));
     notes.push('Låser marken längs linjen (höjden rakt mellan ändarna); marken runt omkring tonas mot den.');
   } else {
-    // Stödmuren (0.10.5; referenslinjen, ändarna, höjdpunkterna och rakt krön 0.10.9).
+    // Stödmuren (0.10.5; referenslinjen, ändarna, höjdpunkterna och rakt krön 0.10.9; littera 0.10.20).
+    rows.push(`<label class="field" title="Tomt = numrerad i ritordningen, med antalet siffror under Platsen"><span>Littera</span><input type="text" autocomplete="off" data-key="ground:name" value="${escapeHtml(p.name ?? '')}" placeholder="${escapeHtml(wallLittera(ctx, el))}"></label>`);
     rows.push(field('thickness', 'Tjocklek', 'mm', p.thickness, def.wallThickness));
     rows.push(refRows(p));
     const prof = wallProfile(ctx, el);
     const lvl = (h: number) => (site ? `+${toRh(site, h).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}` : `${Math.round(h)} mm`);
     rows.push(`<label class="field"><span>Krönet</span><select data-key="ground:straight"><option value="">Följer marken</option><option value="1"${p.straight ? ' selected' : ''}>Rakt</option></select></label>`);
     rows.push(`<label class="field" title="Sidan vars mark Över marken och krönet längs muren mäts mot"><span>Över marken mot</span><select data-key="ground:aboveSide"><option value="">Den högre sidan</option><option value="low"${p.aboveSide === 'low' ? ' selected' : ''}>Den lägre sidan</option></select></label>`);
-    rows.push(field('above', 'Över marken i början', 'mm', p.above, 0, `Krönet över den ${p.aboveSide === 'low' ? 'lägre' : 'högre'} sidans mark; gäller när ÖK i början är tom`));
-    rows.push(field('endAbove', 'Över marken i slutet', 'mm', p.endAbove, p.above ?? 0, 'Tomt = som i början; gäller när ÖK i slutet är tom'));
-    rows.push(rh('height', 'ÖK i början', p.height, 'Tomt = över marken'));
-    rows.push(rh('endHeight', 'ÖK i slutet', p.endHeight, 'Tomt = över marken'));
+    rows.push(field('above', 'Över marken i början', 'mm', p.above, 0, `Krönet över den ${p.aboveSide === 'low' ? 'lägre' : 'högre'} sidans mark; gäller när MK i början är tom`));
+    rows.push(field('endAbove', 'Över marken i slutet', 'mm', p.endAbove, p.above ?? 0, 'Tomt = som i början; gäller när MK i slutet är tom'));
+    rows.push(rh('height', 'MK i början', p.height, 'Murkrönet; tomt = över marken'));
+    rows.push(rh('endHeight', 'MK i slutet', p.endHeight, 'Murkrönet; tomt = över marken'));
     (p.crest ?? []).forEach((c, i) => {
       const at = prof?.pins.find((q) => Math.hypot(q.at[0] - c.at[0], q.at[1] - c.at[1]) < 2000);
       const label = `Höjdpunkt ${i + 1}${at ? ` (${(Math.round(at.s / 100) / 10).toLocaleString('sv-SE')} m)` : ''}`;
@@ -180,7 +198,7 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
     });
     if (prof) notes.push(`Krönet ${lvl(prof.start)} i början och ${lvl(prof.end)} i slutet, högst ${lvl(prof.top)}; foten lägst ${lvl(prof.bottom)} (300 under den lägre sidan).`);
     notes.push('Höjdpunkter läggs till med <em>Höjdpunkt på krönet</em> i Modifiera: klicka på referenslinjen och skriv höjden. Dra romben för att flytta punkten längs muren; ett tomt fält tar bort den. Krönet går genom dem. Referenslinjen syns när muren är markerad.');
-    notes.push('Slänterna från markobjekten går inte över muren: marken bakom den är orörd.');
+    notes.push('Slänterna från markobjekten går inte över muren: marken bakom den är orörd. Ledaren med littera och MK (murkrön) ritas på högra sidan om murens mitt; den släcks under Visa, Littera.');
   }
   return `<div class="field-label">${escapeHtml(groundLabel(p))}</div>
     <div class="fields">${rows.join('')}</div>

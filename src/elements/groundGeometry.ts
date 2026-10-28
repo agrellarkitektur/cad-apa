@@ -39,17 +39,22 @@ import type { SlabParams } from './slab';
  *   går över. Referenslinjen i mitten eller på en kant (0.10.9); krönet
  *   följer den högre sidans mark utjämnad, eller går rakt, mellan ändarna
  *   och höjdpunkterna (se `groundWall.ts`).
+ * - **Markhöjd** (`level`, 0.10.20) och **låglinje** (`drain`, 0.10.20):
+ *   beteckningar som inte ändrar marken. Markhöjden skriver den befintliga
+ *   och den nya höjden i punkten, låglinjen är dagvattnets väg som pilar.
  *
  * Höjderna är i mm från ±0, som allt annat i modellen. Det som saknas tas ur
  * projektets förval (`site.ground`), så att ett ändrat förval gäller alla
  * objekt som inte har ett eget värde.
  */
 
-export type GroundKind = 'area' | 'path' | 'point' | 'breakline' | 'wall';
+export type GroundKind = 'area' | 'path' | 'point' | 'breakline' | 'wall' | 'level' | 'drain';
 
 /** Sorterna som ritas som en linje (eller en punkt) i stället för en kontur. */
-export const LINE_KINDS: readonly GroundKind[] = ['path', 'point', 'breakline', 'wall'];
+export const LINE_KINDS: readonly GroundKind[] = ['path', 'point', 'breakline', 'wall', 'level', 'drain'];
 export const isLineKind = (k: GroundKind | undefined): boolean => !!k && LINE_KINDS.includes(k);
+/** Beteckningarna (0.10.20): markhöjd och låglinje ändrar inte marken. */
+export const isMarkKind = (k: GroundKind | undefined): boolean => k === 'level' || k === 'drain';
 
 export interface GroundParams extends Partial<FillParams> {
   kind: GroundKind;
@@ -80,8 +85,10 @@ export interface GroundParams extends Partial<FillParams> {
   line?: [number, number][];
   /** Linjens bågar (0.10.19): pilhöjd per kant, som 2D-formens `bulges`. */
   bulges?: number[];
-  /** Vägens namn (0.10.7), t.ex. *Ramp* eller *Infart*; tomt = *Ramp/väg*. */
+  /** Vägens namn (0.10.7), t.ex. *Ramp* eller *Infart*; tomt = *Ramp/väg*. Stödmurens eget littera (0.10.20); tomt = numrerad, *M01*. */
   name?: string;
+  /** Minsta sidolutning i procent (0.10.20), skrivs ut understruken; utelämnad = skrivs inte. Markytan och vägen. */
+  minCross?: number;
   /** Vägens bredd, mm. */
   width?: number;
   /** Var referenslinjen ligger på vägen och hur långt den är förskjuten, mm (0.10.7). */
@@ -151,6 +158,10 @@ export function groundLabel(p: Pick<GroundParams, 'kind' | 'around' | 'slab' | '
       return 'Brytlinje';
     case 'wall':
       return 'Stödmur';
+    case 'level':
+      return 'Markhöjd';
+    case 'drain':
+      return 'Låglinje';
     default:
       return 'Markyta';
   }
@@ -306,15 +317,21 @@ function lineGeometry(el: Element<any>, p: GroundParams, def: ReturnType<typeof 
   const pts = flatPoints(p.line, p.bulges);
   const h0 = p.height ?? 0;
   const h1 = p.endHeight ?? h0;
-  if (p.kind === 'point') {
+  if (p.kind === 'point' || p.kind === 'level') {
     if (!pts.length) return null;
     const r = 500;
     const c = pts[0];
     const ring: Vec2[] = [[c[0] - r, c[1] - r], [c[0] + r, c[1] - r], [c[0] + r, c[1] + r], [c[0] - r, c[1] + r]];
-    return { rings: [[ring]], holes: [], shape: lockShape(el.id, [c], h0, h0, Math.max(1, p.radius ?? def.blend)), label: { at: c, height: h0 } };
+    // Markhöjden (0.10.20) är en beteckning och ändrar inte marken.
+    const shape = p.kind === 'level' ? null : lockShape(el.id, [c], h0, h0, Math.max(1, p.radius ?? def.blend));
+    return { rings: [[ring]], holes: [], shape, label: { at: c, height: h0 } };
   }
   if (pts.length < 2 || lineLength(pts) < 1) return null;
   const mid = along(pts, ...midPoint(pts));
+  if (p.kind === 'drain') {
+    // Låglinjen (0.10.20): en beteckning, klickbar i en smal remsa.
+    return { rings: [[stripRing(pts, 400)]], holes: [], shape: null, center: pts, label: { at: mid.at, height: h0 } };
+  }
   if (p.kind === 'breakline') {
     const ring = stripRing(pts, 400);
     return { rings: [[ring]], holes: [], shape: lockShape(el.id, pts, h0, h1, Math.max(1, p.radius ?? def.blend)), label: { at: mid.at, height: h0 } };
@@ -386,7 +403,8 @@ export function finishedTerrain(ctx: PlanContext): Finished | null {
     if (!t) return null;
     const els = groundObjects(ctx);
     if (!els.length) return null;
-    const geoms = els.map((e) => groundGeometry(ctx, e));
+    // Beteckningarna (markhöjder och låglinjer, 0.10.20) formar inte marken och räknar inte om den.
+    const geoms = els.map((e) => groundGeometry(ctx, e)).filter((g) => !!g?.shape || !!g?.barriers?.length);
     const { site: s, grid: g } = t;
     const inputs = [t.z, g.x0, g.y1, g.s, g.W, g.H, s.origin[0], s.origin[1], s.rotation, s.datum, ...geoms];
     const hit = last.find((x) => sameItems(x.inputs, inputs));

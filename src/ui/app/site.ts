@@ -320,8 +320,9 @@ function groundSettings(own: Partial<GroundDefaults> | undefined, meanOnExisting
         ${field('distance', 'Markyta runt huset ut', 'mm')}${field('sockel', 'Sockel', 'mm')}${field('margin', 'Arbetsutrymme', 'mm')}
         ${field('rampMax', 'Brantaste ramp/väg', '1:N')}${field('walkMax', 'Vilplan brantare än', '1:N')}${field('landingRise', 'Vilplan var', 'mm höjd')}
         ${field('blend', 'Höjdpunkt och brytlinje tonas', 'mm')}${field('wallThickness', 'Stödmurens tjocklek', 'mm')}${field('easeRadius', 'Rampens mjuka övergångar, radie', 'mm')}
+        ${field('steepSlope', 'Branta slänter i befintlig mark från', '1:N')}${field('litteraDigits', 'Siffror i littera (M01)', 'st')}${field('levelDecimals', 'Decimaler i markhöjder', 'st')}
       </div>
-      <p class="site-note">Ramp 1:12 och gångväg 1:20 med vilplan var 0,5 m höjd är förval efter Boverkets regler om tillgänglighet (ALM och BBR); kontrollera mot det som gäller i projektet.</p>
+      <p class="site-note">Ramp 1:12 och gångväg 1:20 med vilplan var 0,5 m höjd är förval efter Boverkets regler om tillgänglighet (ALM och BBR); kontrollera mot det som gäller i projektet. De branta slänterna tänds per vy under Visa, Platsen.</p>
       <label class="site-field"><span>Medelmarknivån mot</span><select data-site="mean"><option value="finished">Färdig mark</option><option value="existing"${meanOnExisting ? ' selected' : ''}>Befintlig mark</option></select></label>
       <label class="site-field"><span>Jord under marklinjen i sektionerna</span><select data-site="earth">${(
         [

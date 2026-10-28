@@ -2687,7 +2687,7 @@ smartmenyn skiljer där det nya syns. Inte gjort: markytans kontur har
 inga bågar (den ändras med takets konturverktyg); stödmurens sidor i 3D
 följer bågen som bitar på 0,5 m som förut.*
 
-### 0.10.20 Situationsplanens beteckningar (förslag, mellanstor)
+### 0.10.20 Situationsplanens beteckningar ✓
 
 Carl Augusts bilder 27 oktober; som landskapsarkitekter redovisar.
 
@@ -2700,6 +2700,41 @@ Carl Augusts bilder 27 oktober; som landskapsarkitekter redovisar.
   ett gränsvärde (inställning, 1:3 som förval). Annan grafik ur
   topografin (lågpunkter, avrinning, punkthöjder, lutningsfärger) efter
   piloten
+
+*Byggd 28 oktober (morgon), samma format (20), tillsammans med rättningen
+av markeringen (ramen för objekt med många linjer, 0.10.19.1 blev en del
+av den här). Carl August bad att den byggdes utan frågor först. Testerna:
+590 → 611 på ca 14 s. Claudes val: **markhöjden** är en egen sort
+(`level`) under *Beteckning* i Mark: ett kors och texten till höger;
+höjderna läses ur marken (den färdiga i förslaget) och marken räknas som
+oförändrad när de skiljer mindre än 5 cm; en egen ny höjd i egenskaperna
+går före. Befintlig understruken, ny utan, utgående inom parentes utan
+understrykning (Stockholms ritningsmanual). **Låglinjen** (`drain`) ritas
+i flödets riktning med pilar var 10 mm på papperet och minst en.
+**Murens ledare** går vinkelrätt ut åt höger (i linjens riktning) från
+murens mitt, 7 mm, med ett vågrätt streck 11 mm och texten på det:
+litterat över och *MK* med krönets höjd under; varierar krönet står
+lägsta–högsta. Litterat numreras i ritordningen bland vyns stödmurar
+(*M01*); fältet *Littera* i egenskaperna ger ett eget. *ÖK* heter *MK*
+överallt (ändarna, höjdpunkterna, fälten). Ledaren släcks under Visa,
+Littera, *Stödmurar*. **Decimalerna** i markobjektens höjder är en
+inställning under Platsen, två som förval (nivåmarkörerna har kvar tre);
+**antalet siffror** i littera likaså. **Minsta sidolutning** är ett fält
+i procent på markytan och rampen, utskrivet understruket (under höjden
+respektive över namnet) bara när det är ifyllt; det är en anteckning,
+inget som räknas. **Konturen runt slänterna** följer strecken ytterändar
+(medianen av tre grannar), tunn 0,13, bruten där ingen slänt börjar;
+strecken bryts nu där den färdiga marken lämnar släntens egen lutning,
+vilket också kortar strecken som förut gick in över ett grannobjekts
+slänt. **De branta slänterna** är en vyinställning under Visa, Platsen,
+släckt från början, med gränsen under Platsen (1:3): gränsen mellan brant
+och flackt räknas som en höjdkurva i lutningens fält, och strecken följer
+fallinjen från krönet, grå, inte där markobjekten ändrat marken. Provat
+med en ritning av `groundProject` till SVG (planen, markhöjderna,
+låglinjen, ledaren och de branta slänterna med gränsen 1:8) och i
+Playwright mot `dist/`. Inte gjort: markhöjden har ingen egen
+textvridning eller förskjutning; låglinjens pilar går inte att glesa;
+ledarens läge går inte att dra.*
 
 ### 0.10.21 Lutande väggar (förslag, mellanstor till stor)
 

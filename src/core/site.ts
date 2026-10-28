@@ -87,9 +87,15 @@ export interface GroundDefaults {
   wallThickness: number;
   /** Rampens mjuka övergångar (0.10.19): den vertikala radien, mm. */
   easeRadius: number;
+  /** Branta slänter i den befintliga marken (0.10.20): brantare än 1:N ritas med släntstreck när de är tända under Visa. */
+  steepSlope: number;
+  /** Antalet siffror i markobjektens littera (0.10.20): M01 med två. */
+  litteraDigits: number;
+  /** Decimaler i markhöjderna i planen (0.10.20): +22,20 med två. */
+  levelDecimals: number;
 }
 
-export const GROUND_DEFAULTS: GroundDefaults = { slope: 2, fall: 20, fallLength: 3000, distance: 3000, sockel: 200, margin: 500, rampMax: 12, walkMax: 20, landingRise: 500, blend: 5000, wallThickness: 200, easeRadius: 20000 };
+export const GROUND_DEFAULTS: GroundDefaults = { slope: 2, fall: 20, fallLength: 3000, distance: 3000, sockel: 200, margin: 500, rampMax: 12, walkMax: 20, landingRise: 500, blend: 5000, wallThickness: 200, easeRadius: 20000, steepSlope: 3, litteraDigits: 2, levelDecimals: 2 };
 
 /** Projektets förval för markobjekten. */
 export function groundDefaults(site: Pick<Site, 'ground'> | undefined): GroundDefaults {
@@ -138,6 +144,24 @@ export function levelText(site: Pick<Site, 'datum'> | undefined, zMm: number): s
   const m = site ? site.datum + zMm / 1000 : zMm / 1000;
   const r = Math.round(m * 1000) / 1000;
   return `${r === 0 ? '±' : r > 0 ? '+' : '−'}${Math.abs(r).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
+}
+
+/**
+ * En markhöjd i planen (0.10.20): som `levelText`, men med så många
+ * decimaler som projektet valt under Platsen (två som förval, som
+ * landskapsarkitekterna skriver: *+22,20*).
+ */
+export function groundLevelText(site: Pick<Site, 'datum' | 'ground'> | undefined, zMm: number): string {
+  const d = Math.max(0, Math.min(3, Math.round(groundDefaults(site).levelDecimals)));
+  const m = site ? site.datum + zMm / 1000 : zMm / 1000;
+  const f = 10 ** d;
+  const r = Math.round(m * f) / f;
+  return `${r === 0 ? '±' : r > 0 ? '+' : '−'}${Math.abs(r).toLocaleString('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d })}`;
+}
+
+/** Ett littera med nummer (0.10.20): bokstaven och numret med minst så många siffror som projektet valt (*M01*). */
+export function litteraText(site: Pick<Site, 'ground'> | undefined, letter: string, n: number): string {
+  return `${letter}${String(n).padStart(Math.max(1, Math.min(4, Math.round(groundDefaults(site).litteraDigits))), '0')}`;
 }
 
 /** En höjd i RH 2000 (m) i modellen (mm från ±0). */

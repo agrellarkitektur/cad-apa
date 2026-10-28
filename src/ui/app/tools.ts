@@ -129,6 +129,8 @@ export function installTools(app: AppContext, host: ToolHost) {
       breakline: 'Brytlinjen är lagd med höjderna ur marken i ändarna. Ändra dem och radien i egenskaperna.',
       point: 'Höjdpunkten är lagd med markens höjd. Ändra den och radien i egenskaperna.',
       wall: 'Stödmuren är lagd; krönet följer den högre sidans mark. Ändra det i egenskaperna, linjen med punkterna.',
+      level: 'Markhöjden är lagd: befintlig höjd understruken, ny höjd utan och den som utgår inom parentes. En egen ny höjd sätts i egenskaperna.',
+      drain: 'Låglinjen är lagd, med pilarna i linjens riktning. Ändra linjen med punkterna.',
     };
     app.hint(text[String(kind)] ?? 'Markobjektet är lagt. Ändra höjd, fall och slänt i egenskaperna, konturen med hörnen och kanterna.', 5000);
   };

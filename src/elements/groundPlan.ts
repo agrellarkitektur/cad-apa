@@ -1,5 +1,5 @@
 import type { Element } from '../core/model';
-import { groundDefaults, levelText } from '../core/site';
+import { groundDefaults } from '../core/site';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { fillPrims, type FillParams } from './drawing2d';
 import { difference, union, type Rings } from '../geometry/boolean';
@@ -8,7 +8,9 @@ import { planCutHeight } from './planCut';
 import type { WallProfile } from './groundWall';
 import { groundLabel, isLineKind, storeyElevation, wallProfile, type GroundGeometry, type GroundParams } from './groundGeometry';
 import { flatPoints, lineLength } from './groundLines';
-import { outward, slopeArea, slopeMarks } from './groundSlopes';
+import { arrow, drainLine, groundText, levelMark, minCrossText, wallLeader } from './groundMarks';
+import { showLittera } from './littera';
+import { outward, slopeArea, slopeMarks, slopeOutline } from './groundSlopes';
 import { middleAt, rampProfile, rampWarnings, sideEdge, steepest } from './groundRamp';
 import type { PlanContext } from './registry';
 
@@ -26,8 +28,10 @@ export function groundPlan(ctx: PlanContext, el: Element<any>, g: GroundGeometry
   // Konturen: tunn, eller tjock där kanten är en stödmur. Urgrävningen under bjälklaget streckad.
   const pen = p.edge === 'wall' ? { weight: 0.5 } : p.slab ? { weight: 0.18, dash: [4, 1.5] } : { weight: 0.25 };
   for (const poly of g.rings) for (const ring of poly) out.push({ kind: 'polyline', points: ring, closed: true, pen, origin: { ...origin, part: 'kontur' } });
-  const text = `${groundLabel(p)} ${levelText(ctx.doc.site, g.label.height)}${g.label.fall ? ` · 1:${g.label.fall.toLocaleString('sv-SE')}` : ''}`;
+  const text = `${groundLabel(p)} ${hText(ctx, g.label.height)}${g.label.fall ? ` · 1:${g.label.fall.toLocaleString('sv-SE')}` : ''}`;
   out.push({ kind: 'text', at: g.label.at, text, height: 2, align: 'middle', pen: { weight: 0.18 }, origin: { ...origin, part: 'höjd' } });
+  // Minsta sidolutning (0.10.20) under höjden, understruken.
+  out.push(...minCrossText(ctx, el, p, [g.label.at[0], g.label.at[1] - (g.label.fall && !p.around ? 6 : 3.5) * ctx.scale]));
   // Fallets riktning: runt huset en pil ut från varje fasad (0.10.8), annars en från mitten.
   if (g.label.fall && p.around) out.push(...aroundArrows(ctx, g, p.distance ?? groundDefaults(ctx.doc.site).distance, { ...origin, part: 'fall' }));
   if (g.label.fall && !p.around) {
@@ -38,7 +42,7 @@ export function groundPlan(ctx: PlanContext, el: Element<any>, g: GroundGeometry
   }
   // Slänternas fyllning (0.10.14) bakom objektets egen.
   if (p.slopeFill?.fill) out.unshift(...fillOf(ctx, el, p.slopeFill, slopeArea(ctx, g), 'släntens fyllning'));
-  out.push(...slopeMarks(ctx, g, { ...origin, part: 'slänt' }));
+  out.push(...slopeMarks(ctx, g, { ...origin, part: 'slänt' }), ...slopeOutline(ctx, g, { ...origin, part: 'släntkontur' }));
   return out;
 }
 
@@ -77,20 +81,8 @@ function fillOf(ctx: PlanContext, el: Element<any>, p: Partial<FillParams>, poly
   return polys.flatMap((rings) => fillPrims(rings, p as FillParams, { objectId: el.id, objectType: 'Ground' }, true, ctx.style, ctx.scale)).map((q) => (part && q.origin ? { ...q, origin: { ...q.origin, part } } : q));
 }
 
-/** En pil från `a` till `b` med öppen spets, i ritningens skala. */
-function arrow(ctx: PlanContext, a: Vec2, b: Vec2, origin: Primitive['origin']): Primitive[] {
-  const ang = Math.atan2(b[1] - a[1], b[0] - a[0]);
-  const h = 1.5 * ctx.scale;
-  const pen = { weight: 0.18 };
-  return [
-    { kind: 'line', a, b, pen, origin },
-    { kind: 'line', a: b, b: [b[0] - Math.cos(ang - 0.4) * h, b[1] - Math.sin(ang - 0.4) * h], pen, origin },
-    { kind: 'line', a: b, b: [b[0] - Math.cos(ang + 0.4) * h, b[1] - Math.sin(ang + 0.4) * h], pen, origin },
-  ];
-}
-
-/** Höjden som text, i RH 2000 när projektet har en plats. */
-const hText = (ctx: PlanContext, h: number) => levelText(ctx.doc.site, h);
+/** Höjden som text, i RH 2000 när projektet har en plats, med projektets decimaler (0.10.20). */
+const hText = groundText;
 
 /** Normalen åt vänster längs polylinjen vid sträckan `s` mm. */
 function normalAt(pts: readonly Vec2[], s: number): Vec2 {
@@ -118,6 +110,8 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
   const h1 = p.endHeight ?? h0;
   const th = 2;
   const text = (at: Vec2, t: string, part: string, extra: Partial<Primitive> = {}) => out.push({ kind: 'text', at, text: t, height: th, align: 'middle', pen: { weight: 0.18 }, origin: { ...origin, part }, ...extra } as Primitive);
+  if (p.kind === 'level') return levelMark(ctx, el, p, g);
+  if (p.kind === 'drain') return drainLine(ctx, el, p);
   if (p.kind === 'point') {
     const c = pts[0];
     const r = 1.2 * ctx.scale;
@@ -147,14 +141,16 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
           for (const ring of rings) out.push({ kind: 'polyline', points: ring, closed: true, pen, origin: { ...origin, part: zone === 'above' ? ABOVE_PART : 'mur' } });
       }
     }
-    // Krönet (0.10.9): ÖK i ändarna och vid höjdpunkterna, som får ett streck tvärs över muren.
+    // Krönet (0.10.9): MK i ändarna och vid höjdpunkterna, som får ett streck tvärs över muren
+    // (*ÖK* före 0.10.20). Ledaren med littera och murkrön (0.10.20) på högra sidan om mitten.
     if (!prof) return out;
+    if (showLittera(ctx, 'Ground')) out.push(...wallLeader(ctx, el, prof));
     const st = prof.stations;
     const half = Math.hypot(st[0].left[0] - st[0].at[0], st[0].left[1] - st[0].at[1]);
     const beside = (at: Vec2, s: number, h: number, side: 1 | -1) => {
       const n = normalAt(prof.center, s);
       const d = half + 3 * ctx.scale;
-      text([at[0] + n[0] * d * side, at[1] + n[1] * d * side - 0.7 * ctx.scale], `ÖK ${hText(ctx, h)}`, 'höjd');
+      text([at[0] + n[0] * d * side, at[1] + n[1] * d * side - 0.7 * ctx.scale], `MK ${hText(ctx, h)}`, 'höjd');
     };
     beside(st[0].at, 0, prof.start, 1);
     beside(st[st.length - 1].at, st[st.length - 1].s, prof.end, 1);
@@ -199,7 +195,9 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
   const ratio = runs.length > 1 ? '' : Number.isFinite(n) ? ` ${ratioText(n)}` : ' Plan';
   const mid = middleAt(center, sides, total / 2);
   text([mid[0], mid[1] + 2 * ctx.scale], `${groundLabel(p)}${ratio}${warn.length ? ' !' : ''}`, 'lutning', warn.length ? { pen: { weight: 0.18, color: 'accent' } } : {});
-  out.push(...slopeMarks(ctx, g, { ...origin, part: 'slänt' }));
+  // Minsta sidolutning (0.10.20) över namnet, understruken.
+  out.push(...minCrossText(ctx, el, p, [mid[0], mid[1] + 5.5 * ctx.scale]));
+  out.push(...slopeMarks(ctx, g, { ...origin, part: 'slänt' }), ...slopeOutline(ctx, g, { ...origin, part: 'släntkontur' }));
   // Höjderna i ändarna (i slutet bara när den skiljer sig från början) och i punkterna däremellan som har en höjd.
   // Ändarnas höjd står mitt på tvärlinjen, som förut; de andra vid punkten.
   const last = (p.line ?? []).length - 1;

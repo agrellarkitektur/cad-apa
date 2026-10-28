@@ -21,6 +21,7 @@ export {
   groundLabel,
   groundObjects,
   isLineKind,
+  isMarkKind,
   LINE_KINDS,
   m3,
   showsProposal,

@@ -3,12 +3,35 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 28 oktober 2026 (natt), efter 0.10.19 Markobjektens bågar.
+Senast: 28 oktober 2026 (morgon), efter 0.10.20 Situationsplanens beteckningar.
 
 ## Läget
 
-- **Nästa session:** **0.10.20 Situationsplanens beteckningar** (se
-  *Nästa session*).
+- **Nästa session:** fråga om **0.10.21 Lutande väggar** ska byggas före
+  eller efter piloten; annars **Granskning efter 0.10.21** (eller efter
+  0.10.20, om 0.10.21 skjuts upp). Se *Nästa session*.
+- **0.10.20 Situationsplanens beteckningar är klar** på `main` (samma
+  format, 20), byggd på Carl Augusts begäran utan frågor först (28 oktober,
+  morgon). Byggt: *Markhöjd* och *Låglinje* under *Beteckning* i Mark
+  (sorterna `level` och `drain`, formar inte marken); murens ledare med
+  littera (*M01*, numrerat i ritordningen, eget i fältet *Littera*) och
+  *MK* (ÖK heter MK överallt); *Minsta sidolutning* i procent understruken
+  på markyta och ramp; decimaler i markhöjder (2) och siffror i littera (2)
+  under Platsen; kontur runt släntmarkeringarna; *Branta slänter i den
+  befintliga marken* under Visa, Platsen (släckt från början; gränsen 1:3
+  under Platsen). Rättat på vägen (Carl Augusts bild 28 oktober):
+  markeringen av en ramp med många linjer blev en ram (gränsen 300
+  primitiver från 0.8.3); objekt med kontur markeras nu alltid med
+  konturen. Koden i UTVECKLING.md under *Situationsplanens beteckningar*;
+  Claudes val i PLAN.md. Testerna: 611 på ca 14 s. Klickjämförelsen
+  kördes **inte** (ingen tid); kör den i granskningen och lägg till steg
+  för 0.10.19–0.10.20.
+- **Märks i hans ritningar efter 0.10.20:** markobjektens höjder skrivs
+  med två decimaler (*+62,70*, förut tre; ställbart under Platsen);
+  stödmurens *ÖK* heter *MK* och muren får en ledare med *M01* och *MK*;
+  en tunn kontur runt alla släntmarkeringar; släntstrecken slutar där den
+  färdiga marken lämnar släntens egen lutning (kortare streck där två
+  objekts slänter möts, och ändarna är förfinade inom rutnätets steg).
 - **0.10.19 Markobjektens bågar är klar** på `main` (samma format, 20).
   Carl August svarade i början (28 oktober): dockningen med Foga ihop,
   samma verktyg för stödmur och brytlinje, bågar på sidorna ändrar bara
@@ -147,11 +170,11 @@ Senast: 28 oktober 2026 (natt), efter 0.10.19 Markobjektens bågar.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.19` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.20` i `engine.ts`, `package.json` och
   `package-lock.json` (npm godtar fyra delar i ett privat paket); nästa
-  version är `0.10.20`. En granskning höjer inte numret, eller får en
+  version är `0.10.21`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.19 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.20 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -208,13 +231,12 @@ vid varje överlämning.
   Fyllningar och opacitet~~, ~~0.10.15 Visa och dölja~~, ~~Granskning
   efter 0.10.15 (0.10.15.1)~~, ~~0.10.16 Snittet i planen~~, ~~0.10.17
   Linjerna i 2D-formen~~, ~~0.10.18 Rampens referenslinje~~, ~~Granskning
-  efter 0.10.18 (0.10.18.1)~~, ~~0.10.19 Markobjektens bågar~~ (klara)
-- **0.10.20 Situationsplanens beteckningar** (förslag: murens ledare,
-  markhöjder med status, sidolutning, låglinje, kontur runt slänterna,
-  slänter ur den befintliga marken)
+  efter 0.10.18 (0.10.18.1)~~, ~~0.10.19 Markobjektens bågar~~, ~~0.10.20
+  Situationsplanens beteckningar~~ (klara)
 - **0.10.21 Lutande väggar** (förslag, mellanstor till stor; fråga om
   före eller efter piloten)
-- **Granskning efter 0.10.21** (klickjämförelsen får steg för 0.10.19)
+- **Granskning efter 0.10.21** (klickjämförelsen får steg för
+  0.10.19–0.10.20; `groundRamp.ts` delas)
 - **Ortofotot på marken** (liten undersökning med terrängappen, när det
   passar)
 - **0.11 Trappor** (nytt format)
@@ -231,22 +253,35 @@ vid varje överlämning.
 
 ## Nästa session
 
-**0.10.20 Situationsplanens beteckningar** (se PLAN.md och
-`cad-apa-synpunkter.md`): murens ledare (*M* + littera, *MK +22.20*),
-markhöjder med status (befintlig understruken, utgår inom parentes, ny
-utan), minsta sidolutning i procent, låglinje för dagvatten som pilar,
-littera med inställbart antal siffror, en kontur runt släntmarkeringarna
-och slänter på den befintliga marken där den är brantare än ett gränsvärde
-(1:3). Mellanstor. Läs `cad-apa-synpunkter.md` först och ställ frågorna
-för 0.10.19 (efter provning) och de för 0.10.20 som behövs före bygget
-(fem åt gången). Fråga också om 0.10.21 Lutande väggar ska byggas före
-eller efter piloten.
+Fråga först om **0.10.21 Lutande väggar** (se PLAN.md) ska byggas före
+eller efter piloten, och om lutningen ska kunna vara olika i ändarna.
+Byggs den: en vägg med lutning, som lutande kropp i 3D, fasader och
+sektioner, och i planen efter snittet (snittytan där den skär snitthöjden,
+foten som vy, det som lutar ut över snittet streckprickat); öppningarna
+följer lutningen. Mellanstor till stor; kan behöva två sessioner (3D och
+sektioner först, planen och öppningarna sedan). Skjuts den upp: kör
+**Granskning efter 0.10.20** i stället (klickjämförelsen med steg för
+0.10.19–0.10.20, `groundRamp.ts` delad, testerna genomgångna). Läs
+`cad-apa-synpunkter.md` först och ställ frågorna för 0.10.20 (fem åt
+gången).
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
+
+**0.10.20 efter provning** (Claudes val, se PLAN.md)
+- Markhöjden räknar marken som oförändrad när ny och befintlig skiljer
+  mindre än 5 cm (då bara den befintliga, understruken). Lagom gräns?
+- Markobjektens höjder skrivs nu med två decimaler (nivåmarkörerna har
+  kvar tre). Ska nivåmarkörerna också följa inställningen?
+- Murens ledare går ut åt höger från mitten, 7 mm, med ett vågrätt streck
+  11 mm. Ska den gå att dra till ett annat läge (en egen liten version)?
+- Konturen runt slänterna är alltid på (0,13). Ska den vara ett val, eller
+  få en egen penna i stilmallen?
+- De branta slänterna är grå (muted) och följer fallinjen; strecken bryts
+  där markobjekten ändrat marken. Rätt färg och gräns (1:3)?
 
 **0.10.19 efter provning** (Claudes val, se PLAN.md)
 - Övergångarnas förval är 20 m radie (en ramp 1:12 jämnas av över ca
@@ -422,13 +457,21 @@ fråga.
 
 ## Öppna frågor och kända begränsningar
 
-- **Stora filer efter 0.10.19:** `commandLine.ts` (623 rader, en sluten
+- **Stora filer efter 0.10.20:** `commandLine.ts` (623 rader, en sluten
   helhet med eget läge) och `planView.ts` (591) är störst; de lämnades i
   granskningen. `groundRamp.ts` växte till ca 480 rader (profilen,
   dockningen); dela den i nästa granskning (`rampProfile` och
   `fusedRamp`/`reversedRamp` kan bli egna filer). Stilmallens fönster har tre kolumner från 1180 px; under
   det ligger delarna under varandra som förut.
 
+- **Beteckningarna (0.10.20):** markhöjden har ingen egen textvridning
+  eller förskjutning, och ledarens läge går inte att dra. Konturen runt
+  slänterna räknas ur strecken ytterändar var 1,25 mm på papperet, så den
+  blir lite kantig i tvära hörn; de branta slänterna räknas för hela
+  rutnätet en gång per gräns och skala (på 1,2 miljoner noder inte mätt;
+  lutningens fält och en höjdkurva på en nivå, bör gå på under en sekund).
+  Släntstrecken kortas nu av släntens egen lutning (100 mm + 25 %), så en
+  slänt som tonas av en höjdpunkt i närheten får kortare streck än förut.
 - **Bågarna (0.10.19):** all räkning mot marken görs på linjen med
   bågarna som korta raka bitar (högst 4° per bit), så en liten båge kan
   ge många punkter i rampens kontur; inte mätt på en stor plats. Avrunda

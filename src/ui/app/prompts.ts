@@ -161,6 +161,8 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
         { key: 'L', label: 'Brytlinje', run: mode('breakline'), on: r.options.mode === 'breakline' },
         { key: 'M', label: 'Stödmur', run: mode('wall'), on: r.options.mode === 'wall' },
         { key: 'K', label: 'Höjdpunkt', run: mode('point'), on: r.options.mode === 'point' },
+        { key: 'J', label: 'Markhöjd', run: mode('level'), on: r.options.mode === 'level' },
+        { key: 'D', label: 'Låglinje', run: mode('drain'), on: r.options.mode === 'drain' },
       ];
       // Bågar i linjen direkt (0.10.19), som takets kontur.
       if (isLineMode(r.options.mode))

@@ -123,6 +123,9 @@ export function installToolOptions(app: AppContext) {
         <div class="opt"><span>Linje</span><div class="segmented" role="group" aria-label="Linje">
           ${b('path', 'Ramp/väg')}${b('breakline', 'Brytlinje', 'Låser marken längs linjen och tonar den runt omkring')}${b('wall', 'Stödmur')}${b('point', 'Höjdpunkt', 'Låser marken i en punkt och tonar den runt omkring')}
         </div></div>
+        <div class="opt"><span>Beteckning</span><div class="segmented" role="group" aria-label="Beteckning">
+          ${b('level', 'Markhöjd', 'Befintlig höjd understruken, ny höjd utan och den som utgår inom parentes; ändrar inte marken')}${b('drain', 'Låglinje', 'Dagvattnets väg som pilar; ändrar inte marken')}
+        </div></div>
         ${isLineMode(m) ? `<button class="btn" data-action="ground-arc" aria-pressed="${app.groundTool.arc}" title="Nästa kant i linjen blir en båge: klicka var den slutar och sedan en punkt på den (G)">Båge</button>` : ''}
         ${app.groundTool.started && isLineMode(m) ? '<button class="btn" data-action="ground-done">Klar</button>' : ''}
         <span class="opt-hint">${app.groundTool.hintText()}</span>`;

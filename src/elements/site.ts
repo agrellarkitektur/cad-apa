@@ -7,6 +7,11 @@ import type { Solid } from '../repr/solids';
 import type { ElementType, PlanContext } from './registry';
 import { contourPen } from '../repr/contourPens';
 import { withWeight } from '../repr/markerPens';
+import { groundDefaults } from '../core/site';
+import { steepSlopePrims } from './terrainSlopes';
+
+/** Visa-nyckeln för de branta slänterna i den befintliga marken (0.10.20), släckt från början. */
+export const STEEP_SLOPES_KEY = 'steepSlopes';
 
 /**
  * Platsen ur Höjdkurvor (0.10.3): den befintliga marken som höjdkurvor,
@@ -225,10 +230,17 @@ export const terrainType: ElementType<TerrainParams> = {
     // Pennorna ur stilmallen (granskningen efter 0.10.18) hör till nyckeln.
     const pens = { major: contourPen(ctx.style, 'contour'), minor: contourPen(ctx.style, 'contourMinor'), old: contourPen(ctx.style, 'contourOld') };
     const key = `${el.id}|${ctx.scale}|${JSON.stringify(pens)}`;
-    return [
+    const out = [
       ...contourPrims(solid, key, () => contourLines(solid, { objectId: el.id, objectType: 'Terrain', part: 'höjdkurva' }, ctx.scale, pens, false)),
       ...contourPrims(old, key, () => contourLines(old, { objectId: el.id, objectType: 'Terrain', part: 'befintlig mark' }, ctx.scale, pens, true)),
     ];
+    // Branta slänter i den befintliga marken (0.10.20), när de är tända under Visa; inte där markobjekten ändrat marken.
+    if (ctx.view.hide?.includes(`+${STEEP_SLOPES_KEY}`)) {
+      const t = terrainOf(ctx.doc)!;
+      const skip = f ? changedCells(f, t) : undefined;
+      out.push(...steepSlopePrims(t, groundDefaults(ctx.doc.site).steepSlope, ctx.scale, { objectId: el.id, objectType: 'Terrain', part: 'brant slänt' }, skip));
+    }
+    return out;
   },
 };
 

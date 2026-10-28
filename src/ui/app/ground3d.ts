@@ -1,7 +1,7 @@
 import type { ProjectDoc } from '../../core/model';
 import { groundAt, terrainOf } from '../../core/site';
 import type { ViewStates } from '../../core/states';
-import { groundObjects, type GroundParams } from '../../elements/ground';
+import { groundObjects, isMarkKind, type GroundParams } from '../../elements/ground';
 import { typeOf } from '../../elements/registry';
 import { pointInRings } from '../../geometry/vec';
 import { createContext } from '../../repr/context';
@@ -78,7 +78,10 @@ export function groundLines3d(doc: ProjectDoc, view: ViewStates, want: { outline
   const outlines: number[] = [];
   const slopes: number[] = [];
   for (const el of groundObjects(ctx)) {
-    const isPath = ctx.params<GroundParams>(el).kind === 'path';
+    const kind = ctx.params<GroundParams>(el).kind;
+    // Beteckningarna (0.10.20) hör till planen.
+    if (isMarkKind(kind)) continue;
+    const isPath = kind === 'path';
     const plan = want.slopes || (want.outlines && isPath) ? (type?.plan?.(el, ctx) ?? []) : [];
     if (want.outlines) {
       // Vägens kanter och tvärlinjer som i planen, så att en avslagen tvärlinje inte syns i 3D heller (0.10.15.1).
