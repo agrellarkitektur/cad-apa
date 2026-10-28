@@ -240,6 +240,8 @@ export function movePatch(doc: ProjectDoc, el: Element, d: [number, number]): Re
     }
     return { points: p.points.map((q: any) => (Array.isArray(q) ? add(q as [number, number]) : { ...q, at: add(q.at) })) };
   }
+  // Det generella littrat (0.10.20.2): texten och de fria punkterna; punkterna i objekt följer objekten.
+  if (el.type === 'Label' && p.pos) return { pos: add(p.pos), targets: (p.targets ?? []).map((t: { at: [number, number]; id?: string }) => (t.id ? t : { ...t, at: add(t.at) })) };
   if (p.pos) return { pos: add(p.pos) };
   if (el.host && typeof p.at === 'number') {
     const hostEl = doc.elements[el.host];

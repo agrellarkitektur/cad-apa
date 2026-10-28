@@ -448,6 +448,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     roomTool: () => tools.roomTool,
     dimensionTool: () => tools.dimensionTool,
     textTool: () => tools.textTool,
+    labelTool: () => tools.labelTool,
     draw2dTool: () => tools.draw2dTool,
     measureTool: () => tools.measureTool,
     roofTool: () => tools.roofTool,

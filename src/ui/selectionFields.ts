@@ -1,3 +1,4 @@
+import { labelFields } from './labelSection';
 import { groundFieldsMarkup } from './groundFields';
 import type { Element, ProjectDoc } from '../core/model';
 import type { ViewStates } from '../core/states';
@@ -199,6 +200,8 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         ${fillFields('room-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 }, (k) => `data-key="d2:${k}"`, doc.graphics)}
 `;
     }
+    case 'Label':
+      return labelFields(doc, el);
     case 'Dimension':
     case 'Text':
     case 'ScaleBar':

@@ -31,7 +31,8 @@ export function moveEach(store: DocStore, moves: ReadonlyMap<Id, readonly [numbe
     for (const [id, d] of moves) {
       const el = tx.doc.elements[id];
       if (!el || (el.host && set.has(el.host)) || Math.hypot(d[0], d[1]) < 0.5) continue;
-      const patch = movePatch(tx.doc, el, [d[0], d[1]]);
+      // Litterorna flyttas utan sina punkter: de pekar kvar på samma ställe (0.10.20.2).
+      const patch = el.type === 'Label' ? { pos: [Math.round((el.params.pos as P)[0] + d[0]), Math.round((el.params.pos as P)[1] + d[1])] } : movePatch(tx.doc, el, [d[0], d[1]]);
       if (!patch) continue;
       tx.putElement({ ...el, params: { ...el.params, ...patch } });
       followJoins(tx, before, new Set([id]), [d[0], d[1]], set);

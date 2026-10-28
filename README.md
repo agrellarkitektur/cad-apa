@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.20.1** (alfa, efter 0.10.21.1); nästa är **0.10.20.2 Generell littera**.
+**0.10.20.2** (alfa); nästa är **Snäpp i marken**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,37 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.20.2, generell littera (nytt filformat, 21):
+- **Littera** (verktyget, **K**, eller `littera` i kommandoraden): klicka
+  på det litteran ska peka på, sedan där texten ska stå. Med **Shift**
+  läggs fler punkter till innan texten placeras; ledarna delar stammen och
+  blir parallella (vinkeln mot stammen i egenskaperna, 0 = fria)
+- **Fritext och smarttext**: fält inom klammer hämtas ur objekten
+  ledarna pekar på, t.ex. `{typ}`, `{id}`, `{namn}`, `{nummer}`,
+  `{area}`, `{bredd}`, `{höjd}`, `{längd}` och egna egenskaper som
+  `{brandklass}`. Har objekten olika värden skrivs *varierar*, eller en
+  lista om man väljer det
+- **Ledarna sitter fast i objekten** och följer dem när de flyttas, vrids
+  eller ändras; ett borttaget objekt gör ledaren röd. Dra en punkt till
+  ett annat objekt för att flytta den dit. *Lägg till ledare* och *Ta
+  bort* under Ledarna i egenskaperna
+- **Sort och löpnummer**: litteror av samma sort numreras i den ordning de
+  ritats (`{löpnummer}`, med projektets antal siffror), och ett eget
+  nummer går före. Varje sort kan släckas under Visa, Littera
+- **Ram**: ingen, understrykning, rektangel, cirkel eller sexhörning;
+  texthöjd och vridning i egenskaperna
+- **Rikta och fördela** (Justera och Fördela i Modifiera) flyttar
+  litterorna utan deras punkter
+- **Understruken ledare**: ett streck under hela texten, och stammen
+  fortsätter från dess ände. Ett val per sort i stilmallen (*Mot texten*
+  under Ledarna) och per littera under Littera. Stödmurens text är
+  understruken som förval (förut ett streck mellan raderna)
+- **Litteran står lika långt från objektet på papperet** i alla skalor:
+  förskjutningen sparas i mm på papperet (förut i modellen)
+- **Ett synligt grepp där ledaren lämnar texten** (en romb) när litteran
+  är markerad; texten går fortfarande att dra i själv
+- Filer från 0.10.21.1 och äldre öppnas inte (nytt format)
 
 Version 0.10.20.1, litteran (samma filformat, 20):
 - **En gemensam ledare** för alla littera: rummets stämpel, väggarnas,

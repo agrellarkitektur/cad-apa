@@ -125,6 +125,10 @@ function transformedParams(doc: ProjectDoc, el: Element, t: PlanTransform, movin
     const bulges = t.mirror && Array.isArray(p.bulges) ? { bulges: (p.bulges as number[]).map((b) => -b) } : {};
     return [{ ...el, params: { ...el.params, points, angle: t.angle(p.angle ?? 0), offset: t.mirror ? -(p.offset ?? 0) : p.offset, ...bulges } }];
   }
+  if (el.type === 'Label' && p.pos) {
+    // Det generella littrat (0.10.20.2): texten står kvar upprätt; punkterna i objekt följer objekten.
+    return [{ ...el, params: { ...el.params, pos: t.map(p.pos), targets: (p.targets ?? []).map((q: { at: Pt }) => ({ ...q, at: t.map(q.at) })) } }];
+  }
   if (p.pos) {
     return [{ ...el, params: { ...el.params, pos: t.map(p.pos), angle: t.mirror ? p.angle : t.angle(p.angle ?? 0) } }];
   }

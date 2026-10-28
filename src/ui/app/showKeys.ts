@@ -1,3 +1,5 @@
+import type { ProjectDoc } from '../../core/model';
+import { labelSorts, sortKey } from '../../elements/label';
 import { TRACE_ABOVE, TRACE_BELOW } from '../../core/storeys';
 import type { UiState } from './shell';
 
@@ -37,6 +39,8 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
       ['littera:Door', 'Dörrar'],
       ['littera:Window', 'Fönster'],
       ['littera:Ground', 'Stödmurar (ledaren med M-littera)'],
+      // Det generella littrat (0.10.20.2), och dess sorter var för sig (`showGroupsFor`).
+      ['Label', 'Generell littera'],
     ],
   },
   {
@@ -88,6 +92,15 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
     ],
   },
 ];
+
+type ShowGroup = (typeof SHOW_GROUPS)[number];
+
+/** Grupperna med det generella litterats sorter under Littera (0.10.20.2). */
+export function showGroupsFor(doc: ProjectDoc): readonly ShowGroup[] {
+  const sorts = labelSorts(doc);
+  if (!sorts.length) return SHOW_GROUPS;
+  return SHOW_GROUPS.map((g) => (g.id === 'littera' ? { ...g, items: [...g.items, ...sorts.map((s): readonly [string, string] => [sortKey(s), `– ${s}`])] } : g));
+}
 
 /** Våningen under och över (0.9) först bland det som går att kalkera. */
 export function traceStoreyOptions(trace: string | null | undefined): string {

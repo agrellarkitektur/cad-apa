@@ -102,7 +102,7 @@ describe('littera på väggar och dörrar', () => {
   it('ger dörren en ledare när litteran flyttats, och tar bort den med Litteran tillbaka', () => {
     const s = withDoor();
     expect(lines(litteraOf(s, 'd'))).toHaveLength(0);
-    updateParams(s, ['d'], { tag: { at: [0, 1500] } });
+    updateParams(s, ['d'], { tag: { at: [0, 15] } });
     const moved = litteraOf(s, 'd');
     expect(lines(moved).length).toBeGreaterThan(0);
     // Förvalet för dörrar är automatiskt: prick i dörrens mitt på väggen.
@@ -132,7 +132,7 @@ describe('littera på väggar och dörrar', () => {
 
   it('ändrar stammens längd med knäcken', () => {
     const s = withDoor();
-    updateParams(s, ['a'], { tag: { at: [2000, 1000] } });
+    updateParams(s, ['a'], { tag: { at: [20, 10] } });
     const host = toolHost(s, ['a']);
     const knee = tagGripsShown(host).find((g) => g.kind === 'knee')!;
     const h = knee.handles;
@@ -152,8 +152,8 @@ describe('rummets och stilmallens ledare', () => {
 
   it('har förval per sort i stilmallen och rättar ogiltiga värden', () => {
     const st = normalizeStyle({ format: 'bacchus-style', labels: { leaders: { Door: { end: 'konstig', stub: -1 }, Space: { end: 'dot', stub: 4 } } } });
-    expect(st.labels.leaders.Door).toEqual({ end: 'auto', stub: 3 });
-    expect(st.labels.leaders.Space).toEqual({ end: 'dot', stub: 4 });
+    expect(st.labels.leaders.Door).toEqual({ end: 'auto', stub: 3, attach: 'side' });
+    expect(st.labels.leaders.Space).toEqual({ end: 'dot', stub: 4, attach: 'side' });
     expect(st.labels.leaders.Wall.end).toBe('none');
   });
 });

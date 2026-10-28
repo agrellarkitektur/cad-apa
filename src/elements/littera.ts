@@ -61,7 +61,7 @@ export function ownProp(sets: (Element['props'] | undefined)[], name: string): s
 }
 
 /** Värdet för ett fält i en litteramall, eller tom text. */
-function field(ctx: PlanContext, el: Element<any>, name: string): string {
+export function litteraField(ctx: PlanContext, el: Element<any>, name: string): string {
   const def = el.definition ? ctx.doc.definitions[el.definition] : undefined;
   const p = ctx.params<Record<string, unknown>>(el);
   const w = Number(p.width);
@@ -96,7 +96,7 @@ export function litteraLines(ctx: PlanContext, el: Element<any>): string[] {
   const templates = ctx.style.labels.templates[el.type as 'Wall' | 'Door' | 'Window'];
   if (!templates) return [];
   const tpl = detailOf(ctx.view, 'label') === 'detail' ? templates.detail : templates.normal;
-  return fillTemplate(tpl, (name) => field(ctx, el, name)).map((r) => r.text);
+  return fillTemplate(tpl, (name) => litteraField(ctx, el, name)).map((r) => r.text);
 }
 
 /**
@@ -105,7 +105,7 @@ export function litteraLines(ctx: PlanContext, el: Element<any>): string[] {
  * justeras enligt stilmallen. Väggar får en ledare från texten in till
  * väggens mitt; dörrar och fönster får en när litteran flyttats (0.10.20.1).
  * Texten och punkten kan flyttas (`tag` i objektets parametrar), i textens
- * egna axlar så att de följer väggen.
+ * egna axlar så att de följer väggen; texten i mm på papperet (0.10.20.2).
  */
 export function litteraTag(ctx: PlanContext, el: Element<any>, f: WallFrame, s: number, side: 1 | -1, opts: { leader?: boolean } = {}): Primitive[] {
   const lines = litteraLines(ctx, el);
@@ -129,7 +129,8 @@ export function litteraTag(ctx: PlanContext, el: Element<any>, f: WallFrame, s: 
   const width = Math.max(...lines.map((l) => l.length)) * paper(height) * 0.62;
   const base = f.at(s, side * f.half);
   const outward: Vec2 = [f.n[0] * side, f.n[1] * side];
-  const shift = fromFrame(tag.at, frame);
+  // Textens förskjutning står i mm på papperet (0.10.20.2).
+  const shift = fromFrame(tag.at, frame, ctx.scale);
   const at = (d: number, x: number): Vec2 => [base[0] + outward[0] * d + along[0] * x + shift[0], base[1] + outward[1] * d + along[1] * x + shift[1]];
   const left = labels.align === 'left';
   const rows = lines.map((text, k) => ({ text, at: at(onUpSide ? gap + (n - 1 - k) * step : gap + paper(height) + k * step, left ? -width / 2 : 0) }));
@@ -143,7 +144,7 @@ export function litteraTag(ctx: PlanContext, el: Element<any>, f: WallFrame, s: 
   const target = show ? add(f.at(s, 0), fromFrame(tag.to, frame)) : null;
   const style = labels.leaders[el.type as LeaderKind] ?? labels.leaders.Wall;
   const geo = target
-    ? leaderOf(box, [{ at: target, inside: true }], { side: tag.side, end: tag.end ?? style.end, stub: tag.stub ?? style.stub, gap: 0.5, scale: ctx.scale, pen: markerPen(ctx.style, 'litteraLeader') })
+    ? leaderOf(box, [{ at: target, inside: true }], { side: tag.side, end: tag.end ?? style.end, attach: tag.attach ?? style.attach, stub: tag.stub ?? style.stub, gap: 0.5, scale: ctx.scale, pen: markerPen(ctx.style, 'litteraLeader') })
     : null;
   const origin = { objectId: el.id, objectType: el.type, part: 'littera', tag: { param: 'tag' as const, text: box.center, target, stubStart: geo?.start ?? null, stubEnd: geo?.stubEnd ?? null, dir: geo?.dir ?? null, frame } };
   const out: Primitive[] = rows.map((r) => ({

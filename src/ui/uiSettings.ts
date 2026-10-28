@@ -288,6 +288,7 @@ export const SHORTCUTS: [string, string][] = [
   ['R', 'Rum: klicka i ett utrymme'],
   ['M', 'Mått: klicka punkter, dubbelklicka, placera linjen'],
   ['T', 'Text'],
+  ['K', 'Littera: klicka på det den pekar på, sedan där texten ska stå (Shift+klick: fler ledare)'],
   ['L', 'Måttband: mät avstånd, vinklar och ytor utan att rita'],
   ['Esc', 'Avbryt kommandot, sedan verktyget; i Markera avmarkerar den'],
   ['Enter', 'Avsluta väggen, eller bekräfta ett inskrivet mått'],

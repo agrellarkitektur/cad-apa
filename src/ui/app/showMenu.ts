@@ -6,7 +6,7 @@ import { hiddenObjects, HIDDEN_OBJECT } from '../../core/visibility';
 import type { AppContext } from './context';
 import { ANNOTATION_SCALES } from './helpers';
 import { installScalePop } from './scalePop';
-import { isShown, OFF_BY_DEFAULT, setShown, SHOW_GROUPS, traceStoreyOptions } from './showKeys';
+import { isShown, OFF_BY_DEFAULT, setShown, showGroupsFor, traceStoreyOptions } from './showKeys';
 
 /** Visa-menyn med kalkeringen (och skärmskalan i statusraden, `scalePop.ts`). */
 export function installShowMenu(app: AppContext) {
@@ -105,7 +105,7 @@ export function installShowMenu(app: AppContext) {
         .join('')}</div>` +
       settingsMarkup() +
       `</div><div class="show-col show-groups">` +
-      SHOW_GROUPS.filter((g) => g.id !== 'site' || !!store.doc.site).map((g) => {
+      showGroupsFor(store.doc).filter((g) => g.id !== 'site' || !!store.doc.site).map((g) => {
         const shown = g.items.filter(([k]) => isShown(ui, k)).length;
         return `<div class="show-group" role="group" aria-label="${g.label}">
           <label class="check show-group-head"><input type="checkbox" data-show-group="${g.id}"${shown === g.items.length ? ' checked' : ''}> ${g.label}</label>
@@ -162,7 +162,7 @@ export function installShowMenu(app: AppContext) {
     if (!(e.target as Element).closest('.show-btn')) return;
     const ui = app.ui;
     const before = JSON.stringify([ui.hide, ui.hideDemolished]);
-    for (const g of SHOW_GROUPS) for (const [k] of g.items) if (!OFF_BY_DEFAULT.has(k)) setShown(ui, k, true);
+    for (const g of showGroupsFor(app.store.doc)) for (const [k] of g.items) if (!OFF_BY_DEFAULT.has(k)) setShown(ui, k, true);
     ui.hide = ui.hide.filter((h) => !h.startsWith(HIDDEN_OBJECT));
     closeShowMenu();
     if (JSON.stringify([ui.hide, ui.hideDemolished]) === before) {
@@ -190,7 +190,7 @@ export function installShowMenu(app: AppContext) {
 
   /** Kategoriernas kryssrutor: ikryssad när allt syns, halvt när en del syns. */
   function syncGroups(): void {
-    for (const g of SHOW_GROUPS) {
+    for (const g of showGroupsFor(app.store.doc)) {
       const box = app.$<HTMLElement>('.show-menu').querySelector<HTMLInputElement>(`[data-show-group="${g.id}"]`);
       if (!box) continue;
       const shown = g.items.filter(([k]) => isShown(app.ui, k)).length;
@@ -202,7 +202,7 @@ export function installShowMenu(app: AppContext) {
   /** En kryssruta i Visa-menyn: en sak, eller en hel kategori på en gång. */
   function toggleShowItem(input: HTMLInputElement): void {
     const ui = app.ui;
-    const group = SHOW_GROUPS.find((g) => g.id === input.dataset.showGroup);
+    const group = showGroupsFor(app.store.doc).find((g) => g.id === input.dataset.showGroup);
     const key = input.dataset.show!;
     if (group) {
       // Syns allt släcks allt, annars tänds allt.

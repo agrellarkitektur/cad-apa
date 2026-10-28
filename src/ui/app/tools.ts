@@ -6,6 +6,7 @@ import type { Id } from '../../core/model';
 import type { ViewTool } from '../../view2d/planView';
 import type { ModifyContext } from '../modify/ops';
 import { DimensionTool, TextTool } from '../tools/annotationTools';
+import { LabelTool } from '../tools/labelTool';
 import { Draw2DTool } from '../tools/draw2dTool';
 import type { ToolHost } from '../tools/host';
 import { AlignTool, MarkerTool } from '../tools/markerTools';
@@ -79,6 +80,15 @@ export function installTools(app: AppContext, host: ToolHost) {
   const dimensionTool = new DimensionTool(host);
   dimensionTool.onChange = () => app.toolOpts.renderToolOptions();
   const textTool = new TextTool(host);
+  const labelTool = new LabelTool(host);
+  labelTool.onChange = () => {
+    app.toolOpts.renderToolOptions();
+    app.view.requestRender();
+  };
+  labelTool.onCreated = (id) => {
+    app.selection.set([id]);
+    app.hint('Litteran är lagd. Ändra texten, sorten och ramen i egenskaperna; fälten inom klammer hämtas ur det ledarna pekar på.', 5000);
+  };
   const draw2dTool = new Draw2DTool(host);
   draw2dTool.onChange = () => app.toolOpts.renderToolOptions();
   const measureTool = new MeasureTool(host);
@@ -165,6 +175,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     room: roomTool,
     dimension: dimensionTool,
     text: textTool,
+    label: labelTool,
     draw2d: draw2dTool,
     roof: roofTool,
     slab: slabTool,
@@ -204,6 +215,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     if (app.ui.tool === 'draw2d' && id !== 'draw2d') draw2dTool.finish(false);
     if (app.ui.tool === 'roof' && id !== 'roof') roofTool.reset();
     if (app.ui.tool === 'slab' && id !== 'slab') slabTool.reset();
+    if (app.ui.tool === 'label' && id !== 'label') labelTool.reset();
     if (app.ui.tool === 'ground' && id !== 'ground') groundTool.finish();
     if (app.ui.tool === 'ground' && id !== 'ground') groundTool.reset();
     if (app.ui.tool === 'section' && id !== 'section') sectionTool.reset();
@@ -219,7 +231,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     toolsEl.querySelectorAll<HTMLElement>('[data-tool]').forEach((b) => {
       if (!b.hasAttribute('aria-disabled')) b.setAttribute('aria-pressed', String(b.dataset.tool === id));
     });
-    if (PLAN_TOOLS.includes(id) && id !== 'room' && id !== 'text' && !keep) {
+    if (PLAN_TOOLS.includes(id) && id !== 'room' && id !== 'text' && id !== 'label' && !keep) {
       app.selection.clear();
       if (window.innerWidth <= 960) app.setPanel(false);
     }
@@ -295,6 +307,14 @@ export function installTools(app: AppContext, host: ToolHost) {
     else if (app.ui.tool === 'draw2d' && draw2dTool.count > 0) draw2dTool.reset();
     else if (app.ui.tool === 'roof' && roofTool.started) roofTool.reset();
     else if (app.ui.tool === 'slab' && slabTool.started) slabTool.reset();
+    else if (app.ui.tool === 'label' && (labelTool.count > 0 || labelTool.addTo)) {
+      const done = labelTool.addTo;
+      labelTool.reset();
+      if (done) {
+        setTool('select');
+        app.selection.set([done]);
+      }
+    }
     else if (app.ui.tool === 'ground' && groundTool.started) groundTool.reset();
     else if (app.ui.tool === 'ground' && groundTool.started) groundTool.reset();
     else if (app.ui.tool === 'section' && sectionTool.step > 0) sectionTool.reset();
@@ -316,6 +336,13 @@ export function installTools(app: AppContext, host: ToolHost) {
   alignTool.onDone = (ok) => {
     endAlign();
     if (!ok) app.hint('Ingen vägg eller linje där. Tryck på Rikta efter objekt och försök igen.');
+  };
+  app.panel.onAddLeader = (id) => {
+    setTool('label');
+    labelTool.addTo = id;
+    app.selection.set([id]);
+    labelTool.onChange?.();
+    app.hint('Klicka på det ledaren ska peka på. Esc när du är klar.', 4000);
   };
   app.panel.onAlignMarker = (id) => {
     if (app.ui.marker) app.goTo({ kind: 'storey', id: app.ui.storey });
@@ -371,6 +398,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     roomTool,
     dimensionTool,
     textTool,
+    labelTool,
     draw2dTool,
     measureTool,
     roofTool,

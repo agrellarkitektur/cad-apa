@@ -187,6 +187,15 @@ export function installToolOptions(app: AppContext) {
         <label class="opt opt-check"><input type="checkbox" id="text-bold"${t.bold ? ' checked' : ''}><span>Fet</span></label>
         <span class="opt-hint">${app.ui.layout ? 'Klicka på bladet där texten ska stå.' : 'Klicka där texten ska stå.'}</span>`;
       app.toolOptions.hidden = false;
+    } else if (app.ui.tool === 'label') {
+      // Det generella littrat (0.10.20.2): texten med fält och sorten.
+      const t = app.labelTool;
+      app.toolOptions.innerHTML = `
+        <label class="opt"><span>Text</span><input id="label-text" value="${escapeHtml(t.text)}" aria-label="Litterans text" style="width:180px" title="Fält inom klammer hämtas ur det ledarna pekar på: {typ}, {id}, {nummer}, {area}, {bredd}, {höjd}, {löpnummer} och egna egenskaper, t.ex. {brandklass}"></label>
+        <label class="opt"><span>Sort</span><input id="label-sort" value="${escapeHtml(t.sort)}" aria-label="Sort" placeholder="Ingen" style="width:110px" title="Litteror av samma sort numreras i följd ({löpnummer}) och kan släckas under Visa"></label>
+        ${t.count > 1 ? `<span class="opt-hint">${t.count} ledare</span>` : ''}
+        <span class="opt-hint">${t.hintText()}</span>`;
+      app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'select' && !app.uiSettings.smartMenu && app.modifier.busy) {
       // Utan smartmeny visas Modifiera-valets värde och tips här (0.8.5).
       app.toolOptions.innerHTML = app.modifier.detailMarkup();
@@ -297,6 +306,8 @@ export function installToolOptions(app: AppContext) {
     const t = e.target as HTMLInputElement;
     if (t.id === 'room-name') app.roomTool.name = t.value || 'Rum';
     if (t.id === 'text-value') app.textTool.text = t.value;
+    if (t.id === 'label-text') app.labelTool.text = t.value;
+    if (t.id === 'label-sort') app.labelTool.sort = t.value;
     if (t.id === 'measure-move') app.measureTool.setPreview(evaluate(t.value, null, 'mm'));
     if (t.id === 'wall-angle') {
       const v = parseFloat(t.value.replace(',', '.'));

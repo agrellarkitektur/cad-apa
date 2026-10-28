@@ -3,13 +3,34 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 28 oktober 2026 (förmiddag), efter 0.10.20.1 Litteran.
+Senast: 28 oktober 2026 (eftermiddag), efter 0.10.20.2 Generell littera.
 
 ## Läget
 
-- **Nästa session:** **0.10.20.2 Generell littera** om Carl August inte
-  säger annat (mellanstor till stor, troligen nytt format). Se *Nästa
-  session*.
+- **Nästa session:** **Snäpp i marken** om Carl August inte säger annat
+  (mellanstor). Därefter en granskning. Se *Nästa session*.
+- **0.10.20.2 Generell littera är klar** på `main` (**nytt format, 21**),
+  byggd 28 oktober (eftermiddag) på "Kör 0.10.20.2", med hans svar på
+  frågorna om 0.10.20.1 (A pappersmått, B och C bra, D synligt grepp på
+  ansatsen, E understruken som generell inställning). Byggt: objekttypen
+  `Label` (`src/elements/label.ts`) med fritext och smarttext ur objekten
+  (*varierar* eller lista), flera ledare parallella på en stam (vinkel 45°,
+  0 = fria), punkterna fasta i objekten (`src/elements/anchor.ts`), röd
+  ledare när objektet tagits bort, sort och löpnummer, Visa per sort, ram
+  (ingen, understrykning, rektangel, cirkel, sexhörning), Justera och
+  Fördela utan punkterna; verktyget *Littera* (K, `src/ui/tools/labelTool.ts`),
+  panelen `src/ui/labelSection.ts`. Svaren: `attach: 'underline'` i
+  `leaderOf` (*Mot texten* per sort i stilmallen och per littera; stödmuren
+  understruken som förval), `tag.at` i mm på papperet (därav formatet),
+  textens grepp som en romb på ansatsen. Koden i UTVECKLING.md under
+  *Generell littera*; Claudes val och det som inte gjordes i PLAN.md.
+  Testerna: 639 på ca 14 s. Provat i Playwright mot `dist/` (två ledare
+  till väggarna i exempelvillan, ram, understruken, väggens romb, Visa).
+  Klickjämförelsen kördes **inte**; nya steg i granskningen.
+- **Märks i hans ritningar efter 0.10.20.2:** filer från 0.10.21.1 och
+  äldre öppnas inte (format 21); stödmurens text är understruken som
+  helhet i stället för strecket mellan raderna; en flyttad littera står
+  nu på samma ställe på papperet i alla skalor.
 - **0.10.20.1 Litteran är klar** på `main` (samma format, 20), byggd 28
   oktober (förmiddag). Carl August utvidgade den i samtalet: alla littera
   med ledare ska kunna flyttas (också rummets), ledaren går vinkelrätt ut
@@ -236,11 +257,11 @@ Senast: 28 oktober 2026 (förmiddag), efter 0.10.20.1 Litteran.
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.20.1` i `engine.ts`, `package.json` och
-  `package-lock.json` (npm godtar fyra delar i ett privat paket); nästa
-  version är `0.10.20.2` (Generell littera). En granskning höjer inte numret, eller får en
+- **Versionsnumret** är `0.10.20.2` i `engine.ts`, `package.json` och
+  `package-lock.json` (npm godtar fyra delar i ett privat paket); Snäpp i
+  marken får nästa lediga nummer (förslag `0.10.22`). En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.21 och 0.10.20.1 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.21, 0.10.20.1 och 0.10.20.2 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -300,11 +321,10 @@ vid varje överlämning.
   efter 0.10.18 (0.10.18.1)~~, ~~0.10.19 Markobjektens bågar~~, ~~0.10.20
   Situationsplanens beteckningar~~ (klara)
 - ~~0.10.21 Lutande väggar~~, ~~Granskning efter 0.10.21 (0.10.21.1)~~,
-  ~~0.10.20.1 Litteran~~ (klara)
-- **0.10.20.2 Generell littera** (mellanstor till stor, troligen nytt
-  format: fritext och smarttext ur det man pekar på, flera ledare)
+  ~~0.10.20.1 Litteran~~, ~~0.10.20.2 Generell littera~~ (klara)
 - **Snäpp i marken** (mellanstor: gränser, byggnader, markobjekt;
-  trollstaven för stödmur längs ett objekt)
+  trollstaven för stödmur längs ett objekt), sedan **Granskning** efter
+  0.10.20.1, 0.10.20.2 och snäppet
 - **Utredning: material i stället för fyllningar** (egen session, rör
   formatet)
 - **Ortofotot på marken** (liten undersökning med terrängappen, när det
@@ -325,17 +345,12 @@ vid varje överlämning.
 
 ## Nästa session
 
-Kör **0.10.20.2 Generell littera** om Carl August inte säger annat
-(mellanstor till stor, troligen nytt format eftersom det är en ny
-objekttyp; kan ta mer än en session, säg det). Förslagen står i PLAN.md:
-fritext och smarttext ur objektet ledaren pekar på, flera ledare på
-stammen (parallella med `angle` i `leaderOf`, eller fria), ledare som
-sitter fast i objekten, rikta och fördela, löpnummer, Visa per sort, ram.
-Bygg på `leader.ts`, `tagGrips.ts` och `litteraSection.ts`. Sedan **Snäpp
-i marken** (mellanstor). Därefter är det dags för en granskning (efter
-0.10.20.1, 0.10.20.2 och Snäpp i marken), med klicksteg för litteran.
-Läs `cad-apa-synpunkter.md` först och ställ frågorna för 0.10.20.1 (fem
-åt gången), om han inte redan svarat.
+Kör **Snäpp i marken** om Carl August inte säger annat (mellanstor):
+snäpp mot fastighetsgränser och befintliga byggnader från Höjdkurvor och
+mot markobjekten, och trollstaven för en stödmur längs ett objekt. Sedan
+en **granskning** (efter 0.10.20.1, 0.10.20.2 och snäppet), med klicksteg
+för litteran och det generella littrat. Läs `cad-apa-synpunkter.md` först
+och ställ frågorna för 0.10.20.2 (fem åt gången), om han inte redan svarat.
 
 ## Att fråga Carl August om
 
@@ -343,18 +358,15 @@ Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
 
-**0.10.20.1 efter provning** (Claudes val, se PLAN.md)
-- Förskjutningarna sparas i mm i modellen, så litteran står lika långt
-  från objektet i verkligheten i alla skalor. Hellre på papperet (lika
-  långt på papperet i 1:50 och 1:100)?
-- Sidan byter mellan höger och vänster vid textens mittlinje, och blir
-  uppåt eller nedåt när punkten ligger rakt under textens mittersta halva.
-  Lagom?
-- Förvalen ritar som förut: väggens och murens streck utan ände, rummets
-  öppna pil, dörrar och fönster prick (Automatiskt). Rätt?
-- Texten har inget synligt grepp (man drar i texten). Svårt att hitta?
-- Stödmurens text har strecket mellan raderna, och stammen fortsätter det.
-  Ser det rätt ut?
+**0.10.20.2 efter provning** (Claudes val, se PLAN.md)
+- Löpnumren räknas per sort över hela projektet i den ordning litterorna
+  skapats. Behövs numrering efter läget (vänster till höger, uppifrån)?
+- Flera ledare är parallella i 45° mot stammen. Rätt vinkel som förval?
+- En punkt som släpps på ett annat objekt fastnar i det, på tomma ytan blir
+  den fri. Rätt, eller ska den alltid sitta kvar i sitt objekt?
+- Texten står kvar upprätt när litteran vrids med Vrid. Rätt?
+- Understruken: understrykningen går en bit utanför texten på båda
+  sidor. Ser stödmuren rätt ut nu?
 
 **0.10.20 efter provning** (Claudes val, se PLAN.md)
 - Markhöjden räknar marken som oförändrad när ny och befintlig skiljer
@@ -547,6 +559,12 @@ fråga.
   `app.ts` (566) är näst störst. Stilmallens fönster har tre kolumner från 1180 px; under
   det ligger delarna under varandra som förut.
 
+- **Generell littera (0.10.20.2):** ritas utan `planReads`, så alla
+  litteror räknas om vid varje ändring (få i ett projekt; inte mätt med
+  hundratals). Spegling flyttar en punkt på en vägg till samma avstånd från
+  väggens nya början. Bara i planen (inte fasader och sektioner); ingen
+  dubbelklicksredigering av texten; verktygsraden har ett enradigt fält.
+  En punkt bakom stammens början blir inte parallell med de andra.
 - **Litteran (0.10.20.1):** markhöjdens och markbeteckningarnas text och
   nivåmarkörernas har ingen ledare och går inte att flytta. Textens ruta
   räknas ur antalet tecken (0,62 × höjden per tecken för väggar, dörrar,

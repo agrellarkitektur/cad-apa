@@ -228,6 +228,10 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
       case 'T':
         app.setTool('text');
         break;
+      case 'k':
+      case 'K':
+        app.setTool('label');
+        break;
       case 'i':
       case 'I':
         app.setTool('draw2d');

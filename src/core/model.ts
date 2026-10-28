@@ -330,7 +330,7 @@ export interface OwnPen extends OwnPenPart {
 
 export const FORMAT = 'bacchus-project';
 /** 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionsmarkörernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
-export const FORMAT_VERSION = 20;
+export const FORMAT_VERSION = 21;
 
 export interface ProjectDoc {
   format: typeof FORMAT;

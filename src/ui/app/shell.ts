@@ -6,10 +6,10 @@ import { THEMES } from '../theme';
 import type { UiSettings } from '../uiSettings';
 import { defaultState } from './helpers';
 
-export type ToolId = 'pan' | 'select' | 'measure' | 'wall' | 'door' | 'window' | 'slab' | 'roof' | 'ground' | 'room' | 'dimension' | 'text' | 'draw2d' | 'section' | 'elevation';
+export type ToolId = 'pan' | 'select' | 'measure' | 'wall' | 'door' | 'window' | 'slab' | 'roof' | 'ground' | 'room' | 'dimension' | 'text' | 'label' | 'draw2d' | 'section' | 'elevation';
 
 /** Verktyg som ritar i planen och därför byter till planvyn. */
-export const PLAN_TOOLS: ToolId[] = ['wall', 'door', 'window', 'slab', 'roof', 'ground', 'room', 'dimension', 'text', 'draw2d', 'section', 'elevation'];
+export const PLAN_TOOLS: ToolId[] = ['wall', 'door', 'window', 'slab', 'roof', 'ground', 'room', 'dimension', 'text', 'label', 'draw2d', 'section', 'elevation'];
 /** Verktyg som också ritar i fasader och sektioner (0.8). */
 export const SPACE_TOOLS: ToolId[] = ['dimension', 'text', 'draw2d'];
 /** Ritverktygen som ritar på ett ritningsblad (0.8.9), i mm på papperet. */
@@ -40,6 +40,7 @@ export const TOOLS: ToolDef[] = [
   { id: 'room', label: 'Rum', icon: 'room', key: 'R', group: 'annotera' },
   { id: 'dimension', label: 'Mått', icon: 'dimension', key: 'M', group: 'annotera' },
   { id: 'text', label: 'Text', icon: 'text', key: 'T', group: 'annotera' },
+  { id: 'label', label: 'Littera', icon: 'label', key: 'K', group: 'annotera' },
   { id: 'draw2d', label: '2D', icon: 'draw2d', key: 'I', group: 'annotera' },
   { id: 'section', label: 'Sektion', icon: 'section', group: 'annotera' },
   { id: 'elevation', label: 'Fasad', icon: 'elevation', group: 'annotera' },

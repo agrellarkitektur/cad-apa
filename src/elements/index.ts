@@ -3,6 +3,7 @@ import { basisFacadeType } from './basisFacade';
 import { doorType } from './door';
 import { shape2dType } from './drawing2d';
 import { furnitureType } from './furniture';
+import { labelType } from './label';
 import { registerType } from './registry';
 import { placement } from '../core/commands';
 import { elevationType, markerFrame, northType, sectionType } from './markers';
@@ -28,6 +29,7 @@ export function registerBuiltInTypes(): void {
   registerType(spaceType);
   registerType(dimensionType);
   registerType(textType);
+  registerType(labelType);
   registerType(roofType);
   registerType(northType);
   registerType(elevationType);

@@ -1247,6 +1247,54 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Generell littera (0.10.20.2, format 21)
+
+Formatet höjdes eftersom `tag.at` bytte betydelse: textens förskjutning
+står nu i mm på papperet (`fromFrame(tag.at, frame, ctx.scale)`; greppet
+delar med skalan i `tagPatch`). `tag.to` står kvar i modellen.
+
+- **Objekttypen `Label`** (`src/elements/label.ts`): `pos` (textens mitt),
+  `text`, `sort`, `height`, `angle`, `frame`, `targets`, `tag` (sida, ände,
+  anslutning och stam, samma `TagParams` som de andra litterorna, så att
+  `litteraSection` och `resetTags` fungerar), `slant`, `list` och `number`.
+  `labelLines` fyller i fälten (`objectField`, sedan `litteraField` ur
+  `littera.ts`); `labelNumbers` räknar löpnumren per sort i
+  `doc.elements` ordning. `planReads` saknas, eftersom texten och
+  punkterna läser andra objekt.
+- **Punkterna** (`LabelTarget`): `at` i planen, och när punkten sitter i
+  ett objekt `id` och `local`, objektets axlar ur `anchorOf` i
+  `src/elements/anchor.ts` (väggar längs väggen, öppningar längs väggen
+  från öppningens mitt, annars första punkten och riktningen mot den
+  andra). `targetAt` gör en punkt, `targetPoint` läser den (`lost` när
+  objektet är borta). En ny objekttyp utan någon av parametrarna
+  `start`/`end`, `origin`, `line`, `outline`, `points`, `pos` eller
+  `seed` ger fria punkter.
+- **Ledaren** (`leaderOf`): `attach: 'underline'` ritar strecket under
+  rutan och börjar stammen i dess ände (alltid åt sidan); `LeaderTarget.pen`
+  ger en egen penna för den sneda delen och änden; `owner` säger vilken
+  punkt varje primitiv hör till. Stilmallens `labels.leaders` har
+  `attach` och sorten `Label`.
+- **Greppen**: litterans primitiver har en `TagHandles` per punkt
+  (`param: 'label'`, `index`); texten och knäcken hör till den första.
+  Textens grepp sitter på `stubStart` (ansatsen) och ritas som en romb;
+  `tagPatch` räknar förflyttningen från greppets läge. `labelPatch` i
+  `tagGrips.ts` flyttar `pos`, sätter om en punkt med `objectAt` (det som
+  ligger under punkten, inte litteror) och ändrar stammen.
+- **Flytta, vrida, spegla**: `movePatch` flyttar `pos` och de fria
+  punkterna; `moveEach` (Justera och Fördela) bara `pos`;
+  `transformedParams` vrider `pos` och punkternas `at` men inte texten.
+  `outlinePoints` i `arrangeTool.ts` tar bara litterans ruta.
+- **Verktyget**: `src/ui/tools/labelTool.ts` (`LabelTool`, `addTo` för
+  *Lägg till ledare*), `ToolId` `label`, tangenten K.
+- **Panelen**: `src/ui/labelSection.ts` (`labelFields`, `applyLabelField`
+  med nycklarna `label:…`, `dropLeader`); knapparna `label-add` och
+  `label-drop` i `selectionActions.ts` (`onAddLeader` i panelen).
+- **Visa**: `Label` under Littera släcker alla; `showGroupsFor(doc)` i
+  `showKeys.ts` lägger till en rad per sort (`labelsort:<sort>` i vyns
+  `hide`, med gemener).
+- Tester: `tests/v010202.test.ts`. Referensritningen `mark-plan.txt`
+  ändrades: stödmurens text är understruken.
+
 ## Litteran (0.10.20.1, format 20)
 
 Inga nya format: `tag` (`TagParams` i `src/elements/leader.ts`) är en

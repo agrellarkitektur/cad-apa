@@ -777,3 +777,8 @@
   gap: 8px;
   padding: 2px 0;
 }
+
+/* Det generella litterats ledare (0.10.20.2). */
+.label-leaders { list-style: none; margin: 0 0 8px; padding: 0; }
+.label-leaders li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--rule); font-size: 13px; }
+.label-leaders .warn { color: #d9480f; }

@@ -47,7 +47,10 @@ export interface Origin {
  * vilka axlar förskjutningarna står (textens för littera längs en vägg).
  */
 export interface TagHandles {
-  param: 'labelAt' | 'tag';
+  /** `label`: det generella littrat (0.10.20.2), som sparar texten i `pos` och punkterna i `targets`. */
+  param: 'labelAt' | 'tag' | 'label';
+  /** Ledarens nummer bland det generella litterats punkter (0.10.20.2); texten och knäcken hör till den första. */
+  index?: number;
   text: Vec2;
   target: Vec2 | null;
   stubStart: Vec2 | null;

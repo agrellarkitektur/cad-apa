@@ -411,11 +411,11 @@ polylinje -14000,-8000 -14000,6000 [w0.25 ink d6/1.5/1/1.5] @m-bryt/linje
 text "+60,30" -14000,-7800 h2 middle [w0.18] @m-bryt/höjd
 text "+61,20" -14000,6200 h2 middle [w0.18] @m-bryt/höjd
 polylinje sluten 14000,375 20000,375 20000,625 14000,625 [w0.25 ink] @m-stod/mur
-linje 17400,-325 18970.6,-325 [w0.18 ink] @m-stod/littera
+linje 19070.6,-325 17300,-325 [w0.18 ink] @m-stod/littera
 linje 17300,-325 17000,-325 [w0.18 ink] @m-stod/littera
 linje 17000,-325 17000,375 [w0.18 ink] @m-stod/littera
-text "M01" 17450,-265 h2 start [w0.18] @m-stod/littera
-text "MK +62,68–+63,19" 17450,-585 h2 start [w0.18] @m-stod/littera
+text "M01" 17450,45 h2 start [w0.18] @m-stod/littera
+text "MK +62,68–+63,19" 17450,-245 h2 start [w0.18] @m-stod/littera
 text "MK +62,68" 14000,855 h2 middle [w0.18] @m-stod/höjd
 text "MK +63,19" 20000,855 h2 middle [w0.18] @m-stod/höjd
 yta fylld paper [w0.35 ink] 0,0 1995,0 1995,400 400,400 400,2395 0,2395 @/snitt

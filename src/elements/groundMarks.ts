@@ -162,8 +162,9 @@ export function wallLittera(ctx: PlanContext, el: Element<any>): string {
 /**
  * Murens ledare (0.10.20, med den gemensamma ledaren från 0.10.20.1): från
  * murens kant vid mitten, vinkelrätt ut åt höger (i linjens riktning) till
- * knäcken och sedan en vågrät stam in till texten, som har ett streck mellan
- * raderna: littera på raden över, *MK* och krönets höjd på raden under.
+ * knäcken och sedan en vågrät stam in till texten: littera på raden över,
+ * *MK* och krönets höjd på raden under, understrukna som helhet (0.10.20.2)
+ * eller med strecket mellan raderna (*Från sidan*, stilmallen under Ledarna).
  * Varierar krönet skrivs lägsta–högsta. Texten och punkten kan flyttas
  * (`tag`, i planens axlar).
  */
@@ -190,20 +191,35 @@ export function wallLeader(ctx: PlanContext, el: Element<any>, prof: WallProfile
   const littera = wallLittera(ctx, el);
   const w = Math.max(textWidth(littera, MARK_TEXT), textWidth(mk, MARK_TEXT)) * s;
   const halfW = w / 2 + 0.5 * s;
-  const halfH = Math.max(0.6 + MARK_TEXT, 2.6 + 0.35 * MARK_TEXT) * s;
-  // Texten står så att stammen når knäcken rakt ut från muren, om den inte flyttats.
+  const attach = tag.attach ?? style.attach;
+  const under = attach === 'underline';
   const gap = 1;
-  const c: Vec2 = [elbow[0] + right * ((stub + gap) * s + halfW) + (tag.at?.[0] ?? 0), elbow[1] + (tag.at?.[1] ?? 0)];
+  // Från sidan: strecket mellan raderna och stammen i dess linje, rutan kring
+  // strecket. Understruken (0.10.20.2): strecket under båda raderna, och
+  // rutan över det.
+  const halfH = under ? ((1.45 * MARK_TEXT + MARK_TEXT - 0.2) * s) / 2 : Math.max(0.6 + MARK_TEXT, 2.6 + 0.35 * MARK_TEXT) * s;
+  const lift = under ? halfH + gap * s : 0;
+  // Texten står så att stammen når knäcken rakt ut från muren, om den inte
+  // flyttats; förskjutningen i mm på papperet (0.10.20.2).
+  const reach = (stub + gap) * s + halfW;
+  const c: Vec2 = [elbow[0] + right * reach + (tag.at?.[0] ?? 0) * s, elbow[1] + lift + (tag.at?.[1] ?? 0) * s];
   const target: Vec2 = [from[0] + (tag.to?.[0] ?? 0), from[1] + (tag.to?.[1] ?? 0)];
   const box: TextBox = { center: c, halfW, halfH, along: [1, 0], up: [0, 1] };
   const pen = markerPen(ctx.style, 'litteraLeader');
-  const geo = leaderOf(box, [{ at: target }], { side: tag.side, end: tag.end ?? style.end, stub, gap, scale: s, pen });
+  const geo = leaderOf(box, [{ at: target }], { side: tag.side, end: tag.end ?? style.end, attach, stub, gap, scale: s, pen });
   const origin = { objectId: el.id, objectType: 'Ground', part: 'littera', tag: { param: 'tag' as const, text: c, target, stubStart: geo?.start ?? null, stubEnd: geo?.stubEnd ?? null, dir: geo?.dir ?? null } };
   const x = c[0] - halfW + 0.5 * s;
-  const out: Primitive[] = [{ kind: 'line', a: [c[0] - halfW, c[1]], b: [c[0] + halfW, c[1]], pen: { weight: 0.18 }, origin }];
+  const out: Primitive[] = under ? [] : [{ kind: 'line', a: [c[0] - halfW, c[1]], b: [c[0] + halfW, c[1]], pen: { weight: 0.18 }, origin }];
   for (const q of geo?.prims ?? []) out.push({ ...q, origin });
-  out.push(...markText(ctx, [x, c[1] + 0.6 * s], littera, origin));
-  out.push(...markText(ctx, [x, c[1] - 2.6 * s], mk, origin));
+  if (under) {
+    // Understrykningen ligger `gap` under rutan; raderna står på den.
+    const base = c[1] - halfH - gap * s;
+    out.push(...markText(ctx, [x, base + (0.8 + 1.45 * MARK_TEXT) * s], littera, origin));
+    out.push(...markText(ctx, [x, base + 0.8 * s], mk, origin));
+  } else {
+    out.push(...markText(ctx, [x, c[1] + 0.6 * s], littera, origin));
+    out.push(...markText(ctx, [x, c[1] - 2.6 * s], mk, origin));
+  }
   return out;
 }
 

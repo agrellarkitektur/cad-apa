@@ -1,3 +1,4 @@
+import { dropLeader } from './labelSection';
 import { resetTags } from './litteraSection';
 import { createDefinition, deleteDefinition, deleteElements, flipWalls, setInState, setSkewOk, updateParams } from '../core/commands';
 import { copyElements, mirrorElements, rotateElements } from '../core/transforms';
@@ -33,6 +34,8 @@ export interface ActionPanel {
   angleWarn: () => number;
   /** Rikta en sektions- eller fasadmarkör efter något man klickar på i planen. */
   onAlignMarker?: (id: string) => void;
+  /** Fler ledare till det generella littrat (0.10.20.2): Littera-verktyget lägger till dem. */
+  onAddLeader?: (id: string) => void;
   /** Kalibrera eller rikta ett underlag (0.8 del 2). */
   onUnderlayTool?: (id: string, mode: 'calibrate' | 'align') => void;
   /** Bildens egna proportioner igen (0.8.16). */
@@ -84,6 +87,12 @@ export function selectionAction({ panel, store, selection, getView, body }: Acti
       return;
     case 'align-marker':
       if (ids[0]) panel.onAlignMarker?.(ids[0]);
+      return;
+    case 'label-add':
+      if (ids[0]) panel.onAddLeader?.(ids[0]);
+      return;
+    case 'label-drop':
+      if (ids[0]) dropLeader(store, ids[0], Number(b.dataset.index));
       return;
     case 'tag-reset':
       resetTags(store, ids);

@@ -78,6 +78,7 @@ export const COMMANDS: CommandDef[] = [
   T('room', 'Rum', ['rum'], ['room', 'space']),
   T('dimension', 'Mått', ['mått', 'må'], ['dim', 'dli', 'dimlinear']),
   T('text', 'Text', ['text', 'tx'], ['mtext', 'mt', 't', 'dtext', 'dt']),
+  T('label', 'Littera', ['littera', 'lit'], ['mleader', 'mld', 'label']),
   T('draw2d', '2D-form', ['2d', '2dform'], ['draw'], 'med det sätt att rita som är valt'),
   // Linje och polylinje är samma verktyg (0.8.22).
   S('polyline', 'Linje', ['linje', 'li', 'polylinje', 'pl'], ['line', 'l', 'pline', 'polyline']),

@@ -46,6 +46,8 @@ export function outlinePoints(item: Pickable): Vec2[] {
     for (const q of pts) out.push(q);
   };
   for (const rings of item.regions) for (const r of rings) all(r);
+  // Litterans ruta räcker (0.10.20.2): ledarna ska inte räknas när litteror riktas.
+  if (item.prims[0]?.origin?.objectType === 'Label' && out.length) return out;
   for (const q of item.prims) {
     if (q.kind === 'line') out.push(q.a, q.b);
     else if (q.kind === 'polyline') all(q.points);

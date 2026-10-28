@@ -109,7 +109,7 @@ describe('Visa-menyn i kategorier (0.8.11)', () => {
     setShown(ui, 'littera:Door', true);
     expect(isShown(ui, 'littera:Door')).toBe(true);
     expect(isShown(ui, 'littera:Wall')).toBe(false);
-    expect(ui.hide.sort()).toEqual(['littera:Ground', 'littera:Wall', 'littera:Window']);
+    expect(ui.hide.sort()).toEqual(['Label', 'littera:Ground', 'littera:Wall', 'littera:Window']);
     setShown(ui, 'demolished', false);
     expect(ui.hideDemolished).toBe(true);
   });

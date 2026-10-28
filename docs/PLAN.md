@@ -2863,25 +2863,56 @@ nivåmarkörernas text, ett grepp för ramens storlek, en egen penna per
 littera (stilmallens *Litterans streck* och *Rumsstämpelns pil* gäller).
 Klickjämförelsen kördes inte; nya steg i nästa granskning.
 
-### 0.10.20.2 Generell littera (mellanstor till stor, troligen nytt format)
+### 0.10.20.2 Generell littera ✓
 
-Carl August 28 oktober, i samtalet om litteran. Ett littera som ritas för
-sig med fritext eller smarttext ur det det pekar på, med flera ledare, på
-den gemensamma ledaren från 0.10.20.1. Claudes förslag (godkända):
+Carl August 28 oktober, i samtalet om litteran, och hans svar på frågorna
+om 0.10.20.1 samma dag (13.33): A *testa pappersstorlek* (förskjutningen
+på papperet), B och C som de var, D *bara det finns som en visuell
+kontrollpunkt om man markerar litterat, kan vara på ledarens ansats*, E
+*testa att ha strecket under litterat som helhet; borde vara en generell
+inställning om litterats ledare ska ansluta till sidan eller
+understryka litterat*. Format 21.
 
-- Fritext och smarttext ur objektet ledaren pekar på: `{brandklass}`,
-  `{id}`, `{area}`, `{bredd}`, `{typ}`, `{löpnummer}` och egna egenskaper.
-  Pekar ledarna på objekt med olika värden visas *varierar* (eller en
-  lista om man väljer det)
-- Flera ledare som delar stammen och viker av från den, parallella med en
-  gemensam vinkel som förval (`angle` i `leaderOf`), fria som val
-- Ledarna sitter fast i objekten och följer dem; ett borttaget objekt gör
-  ledaren röd
-- Rikta och fördela flera markerade litteror i rad
-- Löpnummer per sort, i ritordning eller efter läget
-- Visa och dölj per sort under Visa
-- Ramen: ingen, understrykning, rektangel, cirkel, sexhörning
-- (Förteckningen ur samma smarttext hör till 0.12 Export)
+- **Littera-verktyget** (K, `littera`): klick på det litteran pekar på,
+  Shift+klick för fler, sedan där texten står. *Lägg till ledare* i
+  egenskaperna använder samma verktyg
+- **Objekttypen `Label`** (`src/elements/label.ts`): fritext och
+  smarttext ur objekten (`{typ}`, `{id}`, `{namn}`, `{nummer}`, `{area}`,
+  `{bredd}`, `{höjd}`, `{längd}`, litteramallarnas fält och egna
+  egenskaper); *varierar* eller en lista
+- **Flera ledare på stammen**, parallella med en gemensam vinkel (45° som
+  förval, 0 = fria)
+- **Punkterna sitter fast i objekten** (objektets axlar,
+  `src/elements/anchor.ts`) och följer dem; röd ledare när objektet tagits
+  bort; en punkt som dras fastnar i objektet den släpps på
+- **Sort och löpnummer** i ritordning, eget nummer går före; Visa per sort
+- **Ram**: ingen, understrykning, rektangel, cirkel, sexhörning
+- **Rikta och fördela**: Justera och Fördela flyttar litteran utan punkterna
+- **Understruken ledare** (E) för alla littera: *Mot texten* per sort i
+  stilmallen och per littera under Littera; stödmuren understruken som
+  förval
+- **Förskjutningen på papperet** (A): `tag.at` i mm på papperet
+- **Grepp på ansatsen** (D): en romb där ledaren lämnar texten
+
+*Claudes val:* löpnumren räknas över hela projektet per sort (inte per
+våning), i den ordning litterorna skapats; sorten jämförs utan skiftläge.
+Vinkeln gäller bara när ledarna är flera, så att en ensam ledare beter sig
+som de andra litterornas (stammens längd). En punkt som ligger bakom
+stammens början får knäcken vid stammens minsta längd och blir inte
+parallell. Rummets stämpel står kvar i modellen (`labelAt`); det är bara
+de förskjutna litterorna (väggar, dörrar, fönster, stödmurar) som står på
+papperet. Det generella littrat står i modellen (`pos`), som en text.
+Texten vrids inte med Vrid (den står kvar upprätt). Littera i Skiss visas
+(det generella littrat är en anteckning, som text). En ensam radbrytning
+går inte att skriva i verktygsraden, bara i egenskaperna. Formatet höjdes
+eftersom `tag.at` bytte betydelse.
+
+*Gjordes inte:* löpnummer efter läget (bara ritordning), litteran i
+fasader och sektioner (verktyget ritar i planen), dubbelklick för att
+skriva i texten, spegling som håller punkten exakt på en vägg (den hamnar
+lika långt från väggens nya början), ledare till punkter i 3D,
+förteckningen (0.12 Export). Klickjämförelsen kördes inte; nya steg i
+nästa granskning.
 
 ### Snäpp i marken (mellanstor, före piloten)
 

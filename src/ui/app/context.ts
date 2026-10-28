@@ -26,6 +26,7 @@ import type { ViewTool } from '../../view2d/planView';
 import type { StyleDialog } from '../styleDialog';
 import type { Draw2DTool } from '../tools/draw2dTool';
 import type { DimensionTool, TextTool } from '../tools/annotationTools';
+import type { LabelTool } from '../tools/labelTool';
 import type { MarkerTool } from '../tools/markerTools';
 import type { RoofTool } from '../tools/roofTool';
 import type { SlabTool } from '../tools/slabTool';
@@ -77,6 +78,7 @@ export interface AppContext {
   readonly roomTool: RoomTool;
   readonly dimensionTool: DimensionTool;
   readonly textTool: TextTool;
+  readonly labelTool: LabelTool;
   readonly draw2dTool: Draw2DTool;
   readonly measureTool: MeasureTool;
   readonly roofTool: RoofTool;

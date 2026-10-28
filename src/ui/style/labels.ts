@@ -1,9 +1,9 @@
 import type { StyleSheet } from '../../core/graphics';
 import type { LeaderKind } from '../../core/graphics';
-import { LEADER_ENDS, type LeaderEnd } from '../../elements/leader';
+import { LEADER_ATTACH, LEADER_ENDS, type LeaderAttach, type LeaderEnd } from '../../elements/leader';
 import { escapeHtml } from '../labels';
 
-const LEADER_NAMES: Record<LeaderKind, string> = { Wall: 'Väggar', Door: 'Dörrar', Window: 'Fönster', Space: 'Rum', Ground: 'Stödmurar' };
+const LEADER_NAMES: Record<LeaderKind, string> = { Wall: 'Väggar', Door: 'Dörrar', Window: 'Fönster', Space: 'Rum', Ground: 'Stödmurar', Label: 'Generell littera' };
 
 /** Stilmallens texter och littera: justering, texthöjder och mallarna. */
 export function labelSection(style: StyleSheet): string {
@@ -34,10 +34,11 @@ export function labelSection(style: StyleSheet): string {
         .map(
           (k) => `<div class="style-row labels-row"><b>${LEADER_NAMES[k]}</b>
           <label><span>Ände</span><select data-lab="le:${k}">${LEADER_ENDS.map(([v, n]) => `<option value="${v}"${l.leaders[k].end === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label>
-          <label><span>Stammens längd</span><span class="input-unit"><input type="text" data-expr data-step="0.5" inputmode="decimal" autocomplete="off" data-lab="ls:${k}" value="${l.leaders[k].stub}"><i>mm</i></span></label></div>`,
+          <label><span>Stammens längd</span><span class="input-unit"><input type="text" data-expr data-step="0.5" inputmode="decimal" autocomplete="off" data-lab="ls:${k}" value="${l.leaders[k].stub}"><i>mm</i></span></label>
+          <label><span>Mot texten</span><select data-lab="la:${k}">${LEADER_ATTACH.map(([v, n]) => `<option value="${v}"${l.leaders[k].attach === v ? ' selected' : ''}>${n}</option>`).join('')}</select></label></div>`,
         )
         .join('')}
-      <p class="note">Ledaren går vinkelrätt ut från texten (stammen) och viker sedan av mot punkten. <i>Automatiskt</i> ger pil mot en kant och prick inne i en yta. Varje littera kan få egna värden under Littera i egenskaperna.</p>
+      <p class="note">Ledaren går vinkelrätt ut från texten (stammen) och viker sedan av mot punkten. <i>Understruken</i>: ett streck under hela texten, och stammen fortsätter från dess ände. <i>Automatiskt</i> ger pil mot en kant och prick inne i en yta. Varje littera kan få egna värden under Littera i egenskaperna.</p>
     </section>`;
 }
 
@@ -51,5 +52,6 @@ export function applyLabelField(style: StyleSheet, input: HTMLInputElement | HTM
   if (kind === 'room') style.labels.room = input.value;
   if (kind === 'le' && LEADER_ENDS.some(([v]) => v === input.value)) style.labels.leaders[a as LeaderKind].end = input.value as LeaderEnd;
   if (kind === 'ls' && Number(input.value.replace(',', '.')) >= 0) style.labels.leaders[a as LeaderKind].stub = Math.round(Number(input.value.replace(',', '.')) * 2) / 2;
+  if (kind === 'la' && LEADER_ATTACH.some(([v]) => v === input.value)) style.labels.leaders[a as LeaderKind].attach = input.value as LeaderAttach;
   return 'Ändra texter';
 }

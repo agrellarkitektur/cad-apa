@@ -1,4 +1,4 @@
-import type { LeaderEnd } from '../elements/leader';
+import type { LeaderAttach, LeaderEnd } from '../elements/leader';
 import { normalizeFillTypes, type CustomFillType, type HatchLine } from './fillTypes';
 import { normalizeLineTypes, type CustomLineType } from './lineTypes';
 /**
@@ -163,12 +163,14 @@ export interface LabelStyle {
   leaders: Record<LeaderKind, LeaderStyle>;
 }
 
-/** Littera-sorterna som har en ledare (0.10.20.1); `Ground` är stödmurens. */
-export type LeaderKind = 'Wall' | 'Door' | 'Window' | 'Space' | 'Ground';
+/** Littera-sorterna som har en ledare (0.10.20.1); `Ground` är stödmurens, `Label` det generella littrat (0.10.20.2). */
+export type LeaderKind = 'Wall' | 'Door' | 'Window' | 'Space' | 'Ground' | 'Label';
 
 export interface LeaderStyle {
   end: LeaderEnd;
   stub: number;
+  /** Från sidan eller understruken (0.10.20.2). */
+  attach: LeaderAttach;
 }
 
 const LEADER_END_KEYS: readonly LeaderEnd[] = ['auto', 'none', 'arrow', 'filled', 'dot', 'slash', 'ring'];
@@ -184,11 +186,13 @@ export const DEFAULT_LABELS: LabelStyle = {
   room: '{namn}\n{nummer}\n{area}\nTH {takhöjd}',
   // Förvalen ritar som före 0.10.20.1: väggens och murens streck utan ände, rummets öppna pil.
   leaders: {
-    Wall: { end: 'none', stub: 3 },
-    Door: { end: 'auto', stub: 3 },
-    Window: { end: 'auto', stub: 3 },
-    Space: { end: 'arrow', stub: 3 },
-    Ground: { end: 'none', stub: 3 },
+    Wall: { end: 'none', stub: 3, attach: 'side' },
+    Door: { end: 'auto', stub: 3, attach: 'side' },
+    Window: { end: 'auto', stub: 3, attach: 'side' },
+    Space: { end: 'arrow', stub: 3, attach: 'side' },
+    // Stödmurens text understruken som helhet (0.10.20.2, förut ett streck mellan raderna).
+    Ground: { end: 'none', stub: 3, attach: 'underline' },
+    Label: { end: 'auto', stub: 3, attach: 'side' },
   },
 };
 
@@ -328,7 +332,14 @@ function normalizeLabels(l: any): LabelStyle {
     leaders: Object.fromEntries(
       (Object.keys(d.leaders) as LeaderKind[]).map((k) => {
         const v = l?.leaders?.[k];
-        return [k, { end: LEADER_END_KEYS.includes(v?.end) ? v.end : d.leaders[k].end, stub: Number(v?.stub) >= 0 && v?.stub !== null && v?.stub !== '' && v?.stub !== undefined ? Number(v.stub) : d.leaders[k].stub }];
+        return [
+          k,
+          {
+            end: LEADER_END_KEYS.includes(v?.end) ? v.end : d.leaders[k].end,
+            stub: Number(v?.stub) >= 0 && v?.stub !== null && v?.stub !== '' && v?.stub !== undefined ? Number(v.stub) : d.leaders[k].stub,
+            attach: v?.attach === 'side' || v?.attach === 'underline' ? v.attach : d.leaders[k].attach,
+          },
+        ];
       }),
     ) as Record<LeaderKind, LeaderStyle>,
   };

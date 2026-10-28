@@ -68,6 +68,7 @@ export class PropertiesPanel implements ActionPanel {
   angleWarn: () => number = () => 5;
   /** Rikta en sektions- eller fasadmarkör efter något man klickar på i planen. */
   onAlignMarker?: (id: string) => void;
+  onAddLeader?: (id: string) => void;
   /** Kalibrera eller rikta ett underlag (0.8 del 2). */
   onUnderlayTool?: (id: string, mode: 'calibrate' | 'align') => void;
   /** Bildens egna proportioner igen (0.8.16). */

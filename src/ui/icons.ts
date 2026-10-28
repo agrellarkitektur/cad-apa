@@ -20,6 +20,7 @@ export const icons = {
   measure: svg('<rect x="3" y="7" width="14" height="10" rx="5"/><circle cx="10" cy="12" r="2"/><path d="M17 15h4M6 7v2.2M9.5 7v1.6M13 7v2.2"/>'),
   dimension: svg('<path d="M4 15h16M4 12v6M20 12v6M4 15l2.5-1.6M4 15l2.5 1.6M20 15l-2.5-1.6M20 15l-2.5 1.6M9 9h6"/>'),
   text: svg('<path d="M6 6h12M12 6v13M9.5 19h5"/>'),
+  label: svg('<path d="M3.5 20.5l5-5h5"/><path d="M13.5 15.5V8.5h7v7h-7"/><circle cx="3.5" cy="20.5" r="1"/>'),
   draw2d: svg('<path d="M4 18L9 8l5 6 6-9"/><circle cx="4" cy="18" r="1.3"/><circle cx="20" cy="5" r="1.3"/>'),
   lock: svg('<rect x="5.5" y="10.5" width="13" height="9.5" rx="1.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>'),
   unlock: svg('<rect x="5.5" y="10.5" width="13" height="9.5" rx="1.5"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 6.8-1.2"/>'),

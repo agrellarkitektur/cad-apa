@@ -1,7 +1,7 @@
 import type { LeaderKind } from '../core/graphics';
 import type { Element, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
-import { LEADER_ENDS, LEADER_SIDES, type LeaderEnd, type LeaderSide, type TagParams } from '../elements/leader';
+import { LEADER_ATTACH, LEADER_ENDS, LEADER_SIDES, type LeaderAttach, type LeaderEnd, type LeaderSide, type TagParams } from '../elements/leader';
 import { escapeHtml } from './labels';
 
 /**
@@ -14,10 +14,11 @@ import { escapeHtml } from './labels';
 export function leaderKindOf(el: Element): LeaderKind | null {
   if (el.type === 'Wall' || el.type === 'Door' || el.type === 'Window' || el.type === 'Space') return el.type;
   if (el.type === 'Ground' && el.params.kind === 'wall') return 'Ground';
+  if (el.type === 'Label') return 'Label';
   return null;
 }
 
-const KIND_LABEL: Record<LeaderKind, string> = { Wall: 'väggar', Door: 'dörrar', Window: 'fönster', Space: 'rum', Ground: 'stödmurar' };
+const KIND_LABEL: Record<LeaderKind, string> = { Wall: 'väggar', Door: 'dörrar', Window: 'fönster', Space: 'rum', Ground: 'stödmurar', Label: 'generell littera' };
 
 export function litteraSection(doc: ProjectDoc, els: Element[]): string {
   const kinds = els.map(leaderKindOf);
@@ -28,6 +29,8 @@ export function litteraSection(doc: ProjectDoc, els: Element[]): string {
   const endName = LEADER_ENDS.find(([k]) => k === style.end)?.[1] ?? '';
   const side = LEADER_SIDES.map(([k, l]) => `<option value="${k}"${(tag.side ?? 'auto') === k ? ' selected' : ''}>${l}</option>`).join('');
   const end = [`<option value=""${tag.end ? '' : ' selected'}>Som stilmallen (${escapeHtml(endName.toLowerCase())})</option>`, ...LEADER_ENDS.map(([k, l]) => `<option value="${k}"${tag.end === k ? ' selected' : ''}>${l}</option>`)].join('');
+  const attachName = LEADER_ATTACH.find(([k]) => k === style.attach)?.[1] ?? '';
+  const attach = [`<option value=""${tag.attach ? '' : ' selected'}>Som stilmallen (${escapeHtml(attachName.toLowerCase())})</option>`, ...LEADER_ATTACH.map(([k, l]) => `<option value="${k}"${tag.attach === k ? ' selected' : ''}>${l}</option>`)].join('');
   const moved = els.some((e) => {
     const t = (e.params as { tag?: TagParams }).tag;
     return !!(t && Object.keys(t).length) || (e.type === 'Space' && !!e.params.labelAt);
@@ -38,10 +41,11 @@ export function litteraSection(doc: ProjectDoc, els: Element[]): string {
     <div class="fields">
       <label class="field"><span>Stammens sida</span><select data-key="tag:side">${side}</select></label>
       <label class="field"><span>Ände</span><select data-key="tag:end">${sameKind ? end : end.replace(/Som stilmallen \([^)]*\)/, 'Som stilmallen')}</select></label>
+      <label class="field"><span>Mot texten</span><select data-key="tag:attach">${sameKind ? attach : attach.replace(/Som stilmallen \([^)]*\)/, 'Som stilmallen')}</select></label>
       <label class="field" for="f-tag-stub"><span>Stammens längd</span><span class="input-unit"><input type="text" data-expr data-step="0.5" inputmode="decimal" autocomplete="off" id="f-tag-stub" data-key="tag:stub" value="${tag.stub ?? ''}" placeholder="${sameKind ? style.stub : ''}"><i>mm</i></span></label>
     </div>
     <div class="row"><button class="btn" data-action="tag-reset"${moved ? '' : ' disabled'} title="Litteran, punkten och stammen tillbaka till förvalet">Litteran tillbaka</button></div>
-    <p class="note">Dra i texten för att flytta litteran, i den runda punkten för att flytta vad ledaren pekar på och i fyrkanten för stammens längd. Shift håller den sneda delen i steg om 15°. Stammens längd är på papperet; förvalen för ${KIND_LABEL[kind]} står i stilmallen under Texter och littera.</p>
+    <p class="note">Dra i texten eller romben där ledaren lämnar texten för att flytta litteran (den står lika långt från objektet på papperet i alla skalor), i den runda punkten för att flytta vad ledaren pekar på och i fyrkanten för stammens längd. Shift håller den sneda delen i steg om 15°. Stammens längd är på papperet; förvalen för ${KIND_LABEL[kind]} står i stilmallen under Texter och littera.</p>
   </section>`;
 }
 
@@ -72,6 +76,11 @@ export function applyTagField(store: DocStore, ids: string[], name: string, valu
   if (name === 'end') {
     const v = LEADER_ENDS.some(([k]) => k === value) ? (value as LeaderEnd) : undefined;
     patchEach(store, ids, 'Ledarens ände', (p) => set(p, 'end', v));
+    return true;
+  }
+  if (name === 'attach') {
+    const v = LEADER_ATTACH.some(([k]) => k === value) ? (value as LeaderAttach) : undefined;
+    patchEach(store, ids, 'Ledaren mot texten', (p) => set(p, 'attach', v));
     return true;
   }
   if (name === 'stub') {

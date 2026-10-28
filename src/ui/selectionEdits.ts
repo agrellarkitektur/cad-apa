@@ -1,3 +1,4 @@
+import { applyLabelField } from './labelSection';
 import { applyTagField } from './litteraSection';
 import { applyGroundField } from './groundFieldEdits';
 import { setLevel } from '../core/levels';
@@ -183,6 +184,7 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
   const [scope, name] = key.split(':');
   if (scope === 'ground') return applyGroundField(store, ids, name, input);
   if (scope === 'tag') return applyTagField(store, ids, name, input.value);
+  if (scope === 'label') return applyLabelField(store, ids, name, input);
   if (scope === 'name') {
     renameElement(store, ids[0], input.value);
     return true;
