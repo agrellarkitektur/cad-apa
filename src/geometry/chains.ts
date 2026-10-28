@@ -263,3 +263,28 @@ export function faceAround(segs: readonly Seg[], p: Vec2, max = 1500): Vec2[] | 
   }
   return inside ? simplify({ points: ring, closed: true }).points : null;
 }
+
+/**
+ * En sluten kontur förskjuten `d` mm åt vänster (negativt åt höger) med
+ * gering i hörnen (högst fyra gånger, som ett spetsigt hörn), 0.10.23. För
+ * en kontur medurs är vänster utåt: takfoten utanför väggarna.
+ */
+export function offsetRing(pts: readonly Vec2[], d: number): Vec2[] {
+  const n = pts.length;
+  const normal = (i: number): Vec2 => {
+    const a = pts[i];
+    const b = pts[(i + 1) % n];
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+    return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
+  };
+  return pts.map((p, i) => {
+    const a = normal((i - 1 + n) % n);
+    const b = normal(i);
+    const sx = a[0] + b[0];
+    const sy = a[1] + b[1];
+    const l = Math.hypot(sx, sy);
+    const m: Vec2 = l < 1e-6 ? a : [sx / l, sy / l];
+    const k = Math.min(4, 1 / Math.max(0.25, m[0] * a[0] + m[1] * a[1]));
+    return [p[0] + m[0] * d * k, p[1] + m[1] * d * k];
+  });
+}

@@ -193,12 +193,25 @@ export class GroundTool implements ViewTool, PointTaker {
       this.host.hint('Markytan måste vara minst 500 mm åt båda hållen.');
       return;
     }
-    const outline = rect(this.a, pt);
-    const c: Vec2 = [(this.a[0] + pt[0]) / 2, (this.a[1] + pt[1]) / 2];
-    const t = terrainOf(this.host.store.doc);
-    const g = (t && groundAt(t, c[0], c[1])) ?? 0;
-    this.create({ kind: 'area', outline, height: Math.round(g / 50) * 50 });
+    this.createArea(rect(this.a, pt));
     this.reset();
+  }
+
+  /**
+   * En markyta med konturen (också smartspöt, 0.10.23). Höjden föreslås ur
+   * den befintliga marken i konturens mitt (rektangelns), avrundad till 50 mm.
+   */
+  createArea(outline: [number, number][]): boolean {
+    if (!this.hasTerrain() || outline.length < 3) return false;
+    let x = 0;
+    let y = 0;
+    for (const q of outline) {
+      x += q[0] / outline.length;
+      y += q[1] / outline.length;
+    }
+    const g = this.groundHeight([x, y]);
+    this.create({ kind: 'area', outline, height: Math.round(g / 50) * 50 });
+    return true;
   }
 
   /** Den befintliga markens höjd (mm från ±0) i en punkt, eller 0. */

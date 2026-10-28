@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.22** (alfa); nästa är en **granskning**, sedan **0.10.23 Smartspöt del 2**.
+**0.10.23** (alfa); nästa är en **granskning** efter ungefär tre versioner till.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,32 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.23, smartspöt del 2 (samma filformat, 21):
+- **Bågar**: följer spöet en båge (ritad som korta raka bitar) blir den en
+  riktig båge i det som läggs: bågväggar, bågar i markobjektens linjer,
+  2D-formerna, takfallen och håltagningarna (bjälklagets och markytans
+  konturer har inga bågar, där blir den korta raka bitar som förut)
+- **Bjälklag**: klick i ett rum ger ett bjälklag innanför väggarna; i ett
+  tak, en 2D-form eller en annan sluten yta ett bjälklag med dess kontur;
+  Tab till sist ett bjälklag innanför ytterväggarna. Med *Håltagning* blir
+  ytan ett hål i bjälklaget man pekar i
+- **Tak**: klick i huset eller i ett bjälklag. *Takfall* ger ett takfall
+  över hela konturen med takfoten utanför (takfotssprånget), takfoten
+  vid kanten närmast markören; *Pulpet*, *Sadel* och *Valm* lägger
+  snabbvalet över konturens omslutande rektangel
+- **Markyta** (Mark med *Markyta*): i huset en markyta runt huset; i en
+  2D-form, ett bjälklag eller mellan linjer (till exempel inom
+  fastighetsgränsen) en markyta med den konturen, höjden ur marken
+- **2D-linje**: pekar man på en kant blir det en linje längs sidan (Tab:
+  hela kedjan, runt en kontur sluten); i en yta som förut en form runt den
+- **Littera**: klick på ett objekt ger en littera som sitter i det, med
+  verktygets text (förval *{typ}*), snett upp till höger
+- **Mått**: klick på en vägg ger en måttkedja över hela väggen, dess
+  öppningar och de anslutande väggarnas liv, på den sida man pekar (Tab:
+  andra sidan); punkterna sitter i väggarna och följer med
+- Höjdkurvorna stänger inga ytor för spöet längre (ytan mellan linjerna
+  på situationsplanen)
 
 Version 0.10.22.1, granskning (samma filformat, 21):
 - **Höjdkurvorna snäpps inte längre mot i planen**; smartspöt följer dem

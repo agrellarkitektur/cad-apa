@@ -1,5 +1,5 @@
 import { addElements } from '../../core/commands';
-import type { Element } from '../../core/model';
+import type { Element, Id } from '../../core/model';
 import { dimensionPrims, pointAt, type DimensionParams, type DimPoint } from '../../elements/annotation';
 import { refsAt } from '../../elements/features';
 import { resolveParams } from '../../elements/registry';
@@ -208,11 +208,15 @@ export class DimensionTool implements ViewTool, PointTaker {
     const preview = this.preview();
     // Spara punkterna med sina kopplingar till modellen.
     const d = preview ? { ...preview, points: this.points } : null;
-    if (d && d.points.length >= 2) {
-      const space = this.host.space?.();
-      addElements(this.host.store, [{ type: 'Dimension', storey: this.host.storey(), ...(space ? { space } : {}), tags: [], params: { ...d }, props: {} }], this.host.activeState(), 'Måttsätt');
-    }
+    if (d && d.points.length >= 2) this.create(d);
     this.reset();
+  }
+
+  /** Ett mått (också smartspöt, 0.10.23). */
+  create(d: DimensionParams): Id {
+    const space = this.host.space?.();
+    const [el] = addElements(this.host.store, [{ type: 'Dimension', storey: this.host.storey(), ...(space ? { space } : {}), tags: [], params: { ...d }, props: {} }], this.host.activeState(), 'Måttsätt');
+    return el.id;
   }
 
   overlay(cam: Camera): string {

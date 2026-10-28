@@ -61,7 +61,8 @@ export class RoomTool implements ViewTool {
     return holes;
   }
 
-  private holeAt(pt: Vec2): Vec2[] | null {
+  /** Rummet (utrymmet väggarna omsluter) där punkten ligger, eller null. Också för smartspöt (0.10.23). */
+  holeAt(pt: Vec2): Vec2[] | null {
     return holeAt(this.holes(), pt);
   }
 

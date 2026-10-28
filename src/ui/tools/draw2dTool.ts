@@ -256,15 +256,20 @@ export class Draw2DTool implements ViewTool, PointTaker {
     return { ...chainFrom(o.kind, pts, closed), weight: o.weight, linetype: o.linetype, ...fill };
   }
 
-  /** En linje genom färdiga punkter (smartspöt, 0.10.22), med verktygets penna och fyllning. */
-  createPolyline(pts: Vec2[], closed: boolean): void {
+  /**
+   * En linje genom färdiga punkter (smartspöt, 0.10.22), med verktygets
+   * penna; sluten också med verktygets fyllning. `bulges` (0.10.23) ger bågar.
+   */
+  createPolyline(pts: Vec2[], closed: boolean, bulges: readonly number[] = []): Id {
     const o = this.options;
-    const fill = o.fill ? { fill: o.fill, ...(o.fill === 'type' && o.fillType ? { fillType: o.fillType } : {}), ...(hasBackground(o.fill) && o.fillBackground ? { fillBackground: o.fillBackground } : {}) } : {};
+    const fill = closed && o.fill ? { fill: o.fill, ...(o.fill === 'type' && o.fillType ? { fillType: o.fillType } : {}), ...(hasBackground(o.fill) && o.fillBackground ? { fillBackground: o.fillBackground } : {}) } : {};
     const at = (v: Vec2): [number, number] => [Math.round(v[0]), Math.round(v[1])];
-    const params = { ...chainFrom('polyline', pts.map(at), closed), weight: o.weight, linetype: o.linetype, ...fill };
+    const arcs = bulges.some((b) => Math.abs(b) >= STRAIGHT) ? { bulges: [...bulges] } : {};
+    const params = { ...chainFrom('polyline', pts.map(at), closed), ...arcs, weight: o.weight, linetype: o.linetype, ...fill };
     const space = this.host.space?.();
     const [el] = addElements(this.host.store, [{ type: 'Shape2D', storey: this.host.storey(), ...(space ? { space } : {}), tags: [], params, props: {} }], this.host.activeState(), '2D-form med smartspöt');
     this.host.selection.set([el.id]);
+    return el.id;
   }
 
   private create(pts: Vec2[], closed: boolean): void {

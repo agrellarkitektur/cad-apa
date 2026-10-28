@@ -90,16 +90,33 @@ export class LabelTool implements ViewTool {
       this.onChange?.();
       return;
     }
-    const params: LabelParams = { pos: roundMm(p.model), text: this.text, targets: this.targets, ...(this.sort.trim() ? { sort: this.sort.trim() } : {}), ...(this.angle !== null ? { angle: this.angle } : {}) };
+    const id = this.create(this.targets, p.model);
+    this.targets = [];
+    this.onChange?.();
+    this.onCreated?.(id);
+  }
+
+  /** En littera med punkterna och texten i `pos`, med verktygets text, sort och vridning. */
+  private create(targets: LabelTarget[], pos: Vec2): Id {
+    const params: LabelParams = { pos: roundMm(pos), text: this.text, targets, ...(this.sort.trim() ? { sort: this.sort.trim() } : {}), ...(this.angle !== null ? { angle: this.angle } : {}) };
     const [el] = addElements(
       this.host.store,
       [{ type: 'Label', storey: this.host.storey(), ...(this.host.space?.() ? { space: this.host.space!() } : {}), tags: [], params: params as unknown as Record<string, unknown>, props: {} }],
       this.host.activeState(),
       'Littera',
     );
-    this.targets = [];
-    this.onChange?.();
-    this.onCreated?.(el.id);
+    return el.id;
+  }
+
+  /**
+   * En littera som pekar på punkten `at` (fast i objektet där) med texten i
+   * `pos` (smartspöt, 0.10.23).
+   */
+  createFor(at: Vec2, pos: Vec2): Id {
+    const doc = this.host.store.doc;
+    const id = this.create([targetAt(doc, roundMm(at), objectAt(this.host, at))], pos);
+    this.onCreated?.(id);
+    return id;
   }
 
   overlay(cam: Camera): string {

@@ -1,3 +1,4 @@
+import { fitArcs, hasBulges } from '../../geometry/arcFit';
 import { isLineMode } from '../tools/groundTool';
 import type { Vec2 } from '../../repr/primitives';
 import { sameChain, traceAt } from './trace';
@@ -28,10 +29,12 @@ export const groundAlong: WandAction = {
       preview: { lines: [c] },
       apply: () => {
         // En sluten kontur blir en linje som går runt och slutar där den började.
-        const line: Vec2[] = c.closed ? [...c.points, c.points[0]] : c.points;
+        const a = fitArcs(c);
+        const line: Vec2[] = a.closed ? [...a.points, a.points[0]] : a.points;
+        const arcs = hasBulges(a.bulges) ? { bulges: a.bulges } : {};
         // Insidan till höger: muren till vänster om linjen, utanför objektet.
         const extra = mode === 'wall' && (t.inside || c.closed) ? { refSide: 'right' as const } : {};
-        ctx.app.groundTool.createLine(line, extra);
+        ctx.app.groundTool.createLine(line, { ...extra, ...arcs });
       },
     });
     const name = WHAT[mode] ?? 'Linje';

@@ -219,6 +219,372 @@ nytt fält eller formatnummer. En jämförelse med en fryst kopia av gammal
 kod (klick och snäpp i `v0823` och `v083`) behöver några hundra punkter,
 inte tusentals.
 
+## Arbeta i sandlådan
+
+Hur Claude bygger, provar och jämför i sessionernas sandlåda (flyttat hit
+ur överlämningen i 0.10.23).
+
+- Repot är `agrellarkitektur/cad-apa`. Bygga och testa: se CLAUDE.md.
+  Commit avslutas med raderna som sessionen anger (Co-Authored-By och, om
+  sessionen har en, Claude-Session), sedan `git fetch origin main` och
+  `git push origin HEAD:main`. Pushen publicerar på webbhotellet; följ
+  körningen med `gh run list` (loggarna går inte att läsa härifrån, men
+  status syns). Releaser (zip) gör Carl August själv om han vill.
+- En egen gren i den grunda klonen: `git push -u origin <gren>`, och
+  sedan `git config --add remote.origin.fetch
+  +refs/heads/<gren>:refs/remotes/origin/<gren>` och `git fetch origin
+  <gren>`, så att grenen spåras.
+- Titta på resultatet: `npm run build`, servera `dist/` med
+  `python3 -m http.server 8765` och styr med Playwright (Python). Det är
+  samma bygge som hamnar på webbhotellet. `window.bacchus` har `store`,
+  `view`, `selection`, `ui`, `modifier`, `smartMenu`, `view3d`, `plan`, `sheets`,
+  `plot`, `setTool`, `setMode` och `goTo` (t.ex.
+  `goTo({kind:'marker', id:'sektion-a'})`, `goTo({kind:'sheet', id})`).
+  `bacchus.sheets.pick({kind:'viewport', id})` markerar en vy på bladet
+  (`selection`), `pick({kind:'sheet', id})` visar bladet i panelen;
+  `bacchus.sheets.drawing()` har `views` med ytorna på papperet och
+  `pickables`; `pickedViewport()`, `place(bladId, vy, skala)`,
+  `newSheet()`, `newMaster()` och `resetCrop(id)` finns också. Det ritade
+  på bladet är vanliga element med `space` = bladets id. Ett mallblad öppnas med `goTo({kind:'worksheet', id:'mall-a3'})`. Ramens
+  grepp dras med musen på den valda vyns kanter (`views[i].frame`). Filer läggs in med `page.expect_file_chooser()` runt ett
+  klick på *Lägg in underlag…*; ett projekt öppnas med
+  `[data-action="open-file"]:visible` och `showOpenFilePicker = undefined`. Ritningen ligger i
+  `.plan-drawing .content` (0.8.3), markeringen i `svg.plan .highlight`.
+  `bacchus.view.redraw()` ritar om ritningen. Egenskapspanelen är
+  `aside.panel[aria-label="Egenskaper"]` (projektträdet har också en
+  `.panel-body`).
+- Plot/export i Playwright: sätt `window.showSaveFilePicker = undefined` med
+  `add_init_script`, så sparas zipfilen som en nedladdning
+  (`page.expect_download()`). Kontrollera PDF:erna med `qpdf --check` och
+  `pdftoppm -png`; `pdffonts` ska visa Osifont inbäddad (0.8.18). Ett
+  blad blir snabbast PDF i ett tillfälligt vitest-test med `buildSheet` och
+  `writePdf(..., { deflate: browserDeflate() })`.
+- osifont görs om med `scripts/osifont.py` (kräver fonttools och brotli).
+- **Jämföra Modifiera före och efter** (0.8.15): servera det gamla och det
+  nya bygget på var sin port, ladda samma projekt i båda med
+  `store.load`, och kör förlopp som `selection.set`, klick på ett
+  modellläge (`view.camera.toScreen` plus `svg.plan`:s läge),
+  `modifier.choose(op)`, `hover`, klick och `modifier.applyValue(v)`; spara
+  efter varje steg hashar av `store.doc`, markeringen, `svg.plan .overlay`,
+  `.highlight`, `.plan-drawing .content`, panelen och smartmenyns text.
+  Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
+  arbetskopiorna, med fasta id.
+- **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
+  (539 steg sedan granskningen efter 0.10.22, som lade till 43 steg sist
+  för litteran, det generella littrat och smartspöt: greppen dras med
+  `grip_center('circle.grip')`, `path.grip` och `rect.side-grip`, Shift
+  hålls under dragningen men inte vid nedtryckningen (`shift_drag`), spöet
+  slås på med knappen eller `q` efter en `mouse.move` över ritytan, och
+  hovringen görs med `mouse.move` före Tab och klick; Visa-menyn stängs
+  med ett klick på knappen, inte Esc; 496 steg efter granskningen efter 0.10.21, som lade till 39 steg
+  för 0.10.19–0.10.21: Böj på rampens referenslinje, mjuka övergångar och
+  en skarp punkt, en ramp till med Båge i verktyget Mark och Foga ihop,
+  markhöjd, låglinje, murens littera, minsta sidolutning, decimalerna och
+  siffrorna under Platsen, branta slänter under Visa, och en lutande vägg
+  i planen och 3D; 457 efter granskningen efter 0.10.18, kör den med
+  `--bilder`, eftersom 3D-bildernas hashar
+  kan skilja utan att en pixel gör det, som lade till 0.10.16–0.10.18
+  efter `allra sist`: snittet i planen, rita vidare, Förskjut alla kanter,
+  Foga ihop, ett takfall med båge (Båge slås av före sista hörnet; den är
+  kvar tills den slås av), bjälklag med cirkelhål som vrids och speglas,
+  rampens punkt med höjd, sidor och förlängning; och sist det nya i
+  0.10.18.1. Stegen före de sista går att jämföra med 0.10.18. Koordinater
+  längst ned i ritytan hamnar under verktygsraden; ta dem högre upp.
+  396 steg efter granskningen efter 0.10.15, som lade till 0.10.13–0.10.15
+  sist: höjderna mot våningen, greppen som dras med ett steg mitt i varje
+  dragning (`press_drag(..., release=False)` och sedan `release`),
+  fyllningens panel, Dölj i vyn och linjerna i 3D; smartmenyn döljs med en
+  stilregel där. Kryssrutorna under Visa klickas med `__click`, eftersom
+  menyn lyssnar på `click`; `__set` ändrar bara rutan. 347 steg efter
+  granskningen efter 0.10.12: stilmallen med linjetyper,
+  pennor och fyllningstyper, snabbraden, den egna pennan, rummets
+  fyllning, 2D-formens fält med mask, bakgrund och fyllningstyp,
+  ritordning, Visas i, underlag, detaljnivåerna, Filtrera och markera,
+  våningar, bjälklag, kalkering, platsen och markobjekten, fasader,
+  sektion och nivåer till och med `slut`; efter den våningens meny,
+  Visa-menyn, snäpp mot kalkeringen, låst mot borttagning, delen
+  *Markör*, *Över marken mot*, bjälklag bakom snittet och 3D-vyn med en
+  bild per steg, `v3d`). Mot ett bygge äldre än 0.10.12 jämförs bara
+  stegen till och med `slut`. 3D-stegen räknar ut skärmpunkten med
+  `bacchus.view3d.project` och vyns läge (`at3d`), greppen med
+  `bacchus.view3d.editor.handles()`, och höjden i marken med
+  `bacchus.view3d.ground.height`.
+  Platsen släpps på planen som en fil (`PLATS`, samma mark som
+  `groundProject`), och dialogen väljs med `pg.click` (flera `.dialog`
+  finns i sidan; dialogen *Platsen* har klassen `site-dialog`). Väggarna
+  är vridna när marken prövas, så plattan ur väggarna har ingen kontur:
+  urgrävningen läggs under ett ritat bjälklag. Den fasta följden i
+  `crypto.getRandomValues` tar de höga bitarna sedan 0.10.6 (med de låga
+  upprepades id efter några hundra). Kommandon skrivs i smartshell
+  (`#ss-input`, Enter), och en meny (som *Kopiera till våning*) väljs i
+  `.ctx-menu`. Kör den mot två byggen på var sin port och sedan med
+  `--jamfor`; lägg till steg för det som granskas. Med `--bilder` sparas
+  en bild av ritytan efter varje steg, och när markupen skiljer sig
+  jämförs bilderna (så gjordes 0.8.38, där skrafferingen ritas med ny
+  kod). Inget steg felar sedan 0.9.3; kör den gamla versionen två gånger
+  mot sig själv om något skiljer, så syns det som inte är bestämt. En
+  rad om att en bild är inlagd kan skilja i steget efter att Visa
+  öppnats (meddelandet tonas ut olika fort).
+  Verktygets klassnamn minifieras olika i två byggen; jämförelsen kräver
+  bara att namnen motsvarar varandra. Vänta på
+  `!bacchus.sections.pending` och tryck *Zooma till allt* innan en fasad
+  jämförs (annars beror kameran på hur fort den räknats), och räkna inte
+  `blob:`-adresser. En klick i modellen måste hamna inne i objektet, inte
+  på takets streckade kontur.
+- **Jämföra före och efter** (så gjordes granskningen): bygg den gamla
+  versionen i en egen arbetskopia (`git worktree add <mapp> <commit>`, länka
+  in `node_modules`, `npx vite build --outDir <mapp>`), kör samma klick i
+  båda byggena och jämför läget efter varje steg. Byt
+  `crypto.getRandomValues` mot en fast följd i `add_init_script`, så att nya
+  id blir desamma. Skript utan webbläsare buntas snabbast med
+  `npx rolldown skript.mts --dir ut --format esm --platform node` (med
+  `--file` vägrar den när koden delas i flera delar) och körs med `node
+  ut/skript.js` (tsx lägger till `__name` som syns i profiler). Skriptet kan
+  importera `tests/projekt.ts` (`roomGrid`, `shapesProject` …).
+- **Testerna** (0.8.32): de vanliga delar process (`isolate: false`), så
+  ett test får inte lämna något ändrat för de andra; prova en ny fil med
+  `npx vitest run --sequence.shuffle --sequence.seed=1` (och 2, 3).
+  `npx tsc --noEmit` kontrollerar också `tests/`. Hjälpfunktionerna och
+  testprojekten ligger i `tests/projekt.ts`; spara-och-läs prövas en gång,
+  i `core.test.ts`. Ett hus med två våningar och fasta id är
+  `twoStoreys` (0.9.3). Se *Tester* i UTVECKLING.md.
+- Demon bara på begäran: `npm run preview:artifact`, läs artefakten
+  (https://claude.ai/artifact/2m7gq5gkkgSP2wFZ7fLGNJ, Artifact `read`) och
+  publicera `artifact/cad-apa.html` till samma URL.
+- Stoppa servern med `ps -eo pid,args | grep "[p]ython3 -m http.server"`
+  och `kill <pid>`, inte `pkill -f` eller `pgrep -f` i samma kommando (de
+  träffar också skalet, som stängs).
+- Testfiler att lägga in går snabbt att göra med reportlab (PDF), PIL
+  (bild) och några rader text (DXF). Riktiga DXF med skraffering, block och
+  bågar gör ezdxf (`pip install --break-system-packages ezdxf`), som också
+  ger facit för konturerna (`ezdxf.path.from_hatch_boundary_path`) och
+  mönstrens streck (`ezdxf.render.hatching.hatch_entity(h,
+  jiggle_origin=False)`; utan det flyttas mönstret slumpvis några mm).
+- Mäta hur fort Chrome målar en SVG (0.8.38): lägg markupen i en tom
+  sida med `set_content`, sätt `innerHTML` och vänta två
+  `requestAnimationFrame`; jämför varianter (utan fyllning, ett mönster,
+  …). Bilderna jämförs med PIL (`ImageChops.difference`, pixlar som
+  skiljer mer än 64).
+- Mäta i webbläsaren: hela bildrutan, från `page.mouse.move` till två
+  `requestAnimationFrame`, jämfört med ett tomt varv; att bara mäta
+  JavaScript missar webbläsarens målning, som var det dyra vid panorering.
+- En profil (`node --cpu-prof`) sammanfattas snabbast med några rader
+  Python som summerar `timeDeltas` per `callFrame` i `.cpuprofile`, och
+  inklusive tid genom att gå upp till föräldrarna (så mättes 0.10.1).
+  Polygon-clippings egna funktioner heter `split`, `compare` och `run`.
+- **Marken utan webbläsare** (0.10.6): ett skript som importerar
+  `tests/projekt.ts` (`groundProject`, `slopeSite`, `planCtx`) och byter
+  platsen mot ett större rutnät med `applySitePackage` (t.ex. 200 × 150 m
+  med 0,5 m och en brant sluttning), buntat med rolldown; mät
+  `finishedTerrain(planCtx(store))` och `buildPlan` efter `updateParams`.
+  Jämför med en färsk `finishedGround` utan `prev` för att se att svaret
+  är detsamma.
+- Fasader, sektioner och blad utan webbläsare: ett skript med
+  `registerBuiltInTypes()` från `src/elements` först, sedan `buildSection`
+  eller `buildSheet` och `writePdf`. Stora projekt att mäta på: `wallGrid`
+  och `roomGrid` i `tests/prestanda.test.ts`. Profilera med
+  `node --cpu-prof skript.mjs`.
+- Playwright: verktygsraden (`.tool-options`) ligger över nedre delen av
+  ritytan; klicka högre upp. 2D-verktyget behöver en `mouse.move` före
+  klicket. Verktyget som är aktivt är `bacchus.view.currentTool` (t.ex.
+  dess `points` och `current`).
+- Jämföra före och efter en uppdelning: bygg båda, kör samma klick och
+  spara `store.doc`, markeringen, `.plan-drawing .content`, panelens text
+  och smartmenyn som hashar per steg (så gjordes 0.8.1 och 0.8.11).
+- Playwright: dra med flera `mouse.move` i steg (två steg räcker inte för
+  att vyn ska räkna det som en dragning). Modifiera Flytta utgår från
+  punkten där man klickade på det markerade, så ett klick efter valet är
+  målet. Filvalet för underlag öppnas pålitligast med ett riktigt klick på
+  menyn (inte `element.click()` i JavaScript).
+- Underlag i Playwright (0.8.16): en fil läggs snabbast in genom att
+  skicka `dragover` och `drop` med en `DataTransfer` till `.pane-2d`; det
+  nya underlaget är markerat. Snäppningen i ett ritverktyg syns i
+  `bacchus.view.currentTool.current` (`kind`, `label`, `point`). Exempelprojektet
+  har huset kring origo, så flytta underlaget bort (X i egenskaperna) innan
+  snäpp prövas.
+- Playwright och Modifiera (0.8.14): smartmenyn ligger ofta över det man
+  vill klicka på i ritningen; dölj den med en stilregel
+  (`.smart-menu{display:none!important}`) eller klicka utanför den.
+  `bacchus.modifier` har `choose(op)`, `chooseRail(id)`, `applyValue(v)`,
+  `setValue(v)`, `active` och `detailMarkup()`; Shift + bokstav fungerar
+  efter en `mouse.move` över ritytan.
+
+## Kända begränsningar
+
+Det som är känt men lämnat, per version (flyttat hit ur överlämningen i
+0.10.23). Ta bort en rad när den är åtgärdad.
+
+- **Smartspöt del 2 (0.10.23):** `fitArcs` körs bara när ett förslag
+  utförs (prövar de längsta bågarna från början, O(n²) för en lång jämn
+  kurva). Bågväggar måttsätts inte; en båge av två bitar är ett hörn;
+  bjälklagets och markytans konturer har inga bågar (korta raka bitar).
+  Takfallet runt en kontur med inåtgående hörn får geringen ur
+  `offsetRing` (högst fyra gånger språnget i spetsiga hörn). Snabbvalen
+  ignorerar konturens form (omslutande rektangel). Måttkedjan i hörnen
+  tar med väggtjockleken.
+
+- **Stora filer efter 0.10.22.1:** `app.ts` (570), `commandLine.ts`
+  (542, en sluten helhet med eget läge; listan och menyerna är utdelade)
+  och `arrangeTool.ts` (529) är störst; `planView.ts` är 403 efter
+  delningen (pekaren i `planInput.ts`, förra zoomen i `zoomHistory.ts`). Stilmallens fönster har tre kolumner från 1180 px; under
+  det ligger delarna under varandra som förut.
+
+- **Smartspöt (0.10.22, mätt i 0.10.22.1):** `find` körs vid varje
+  musrörelse; kedjan, den slutna ytan och Markeras svar sparas.
+  `faceAround` med 1040 höjdkurvebitar tar 17 ms (skärningarna ur en
+  `BoxIndex`; de 1500 närmaste av 3000 korta linjer 30 ms). `snapSegments`
+  räknas om när planen ändras: 105 000 kurvbitar på 10–40 ms med 1,2
+  miljoner noder, och `nearSegments` bygger sitt rutnät på 40 ms första
+  gången. Höjdkurvorna i planen är bara för spöet (`wandOnly`).
+  Bågar följs som raka bitar. 2D-formen runt en yta med hål får bara
+  ytterkonturen. Spöet fungerar inte i 3D eller på ritningsbladen.
+- **Generell littera (0.10.20.2):** ritas utan `planReads`, så alla
+  litteror räknas om vid varje ändring (få i ett projekt; inte mätt med
+  hundratals). Spegling flyttar en punkt på en vägg till samma avstånd från
+  väggens nya början. Bara i planen (inte fasader och sektioner); ingen
+  dubbelklicksredigering av texten; verktygsraden har ett enradigt fält.
+  En punkt bakom stammens början blir inte parallell med de andra.
+- **Litteran (0.10.20.1):** markhöjdens och markbeteckningarnas text och
+  nivåmarkörernas har ingen ledare och går inte att flytta. Textens ruta
+  räknas ur antalet tecken (0,62 × höjden per tecken för väggar, dörrar,
+  fönster och rum, som förut), så stammen kan börja en bit från en smal
+  text. Väggarnas förskjutningar står i textens axlar; en speglad vägg
+  vänder textens riktning, så en flyttad littera kan hamna på andra sidan
+  (inte prövat). Litterans grepp söks i hela ritningen en gång per plan
+  (`WeakMap` på `plan.prims`); inte mätt på ett stort projekt.
+- **Lutande väggar (0.10.21):** samma lutning i båda ändarna; bågväggar
+  lutar inte; skarvarna i 3D vid foten (glipa eller överlapp mot lodräta
+  grannar högre upp, inte prövat); takets yta i plan flyttas tillbaka med
+  väggens hela höjd när taket kapar en lutande vägg (fel där takkanten går
+  diagonalt över väggen); ytterväggarnas insida som dold linje i fasaden
+  ritas lodrät (`innerFaceEdges`); bågväggars konturlinjer
+  (`wallSilhouettes`) räknas vid foten. `cutSheared` klipper med
+  polygon-clipping mot stora halvplan (1e7 mm), inte mätt på ett stort
+  projekt (exempelvillan med två lutande väggar: fasader 30–145 ms,
+  sektionen 60 ms, som förut).
+- **Beteckningarna (0.10.20):** markhöjden har ingen egen textvridning
+  eller förskjutning, och ledarens läge går inte att dra. Konturen runt
+  slänterna räknas ur strecken ytterändar var 1,25 mm på papperet, så den
+  blir lite kantig i tvära hörn; de branta slänterna räknas för hela
+  rutnätet en gång per gräns och skala (på 1,2 miljoner noder inte mätt;
+  lutningens fält och en höjdkurva på en nivå, bör gå på under en sekund).
+  Släntstrecken kortas nu av släntens egen lutning (100 mm + 25 %), så en
+  slänt som tonas av en höjdpunkt i närheten får kortare streck än förut.
+- **Bågarna (0.10.19):** all räkning mot marken görs på linjen med
+  bågarna som korta raka bitar (högst 4° per bit), så en liten båge kan
+  ge många punkter i rampens kontur; inte mätt på en stor plats. Avrunda
+  och Fasa kräver som förut två raka kanter i hörnet. Markytans kontur
+  har inga bågar. Stödmurens sidor i 3D följer bågen som bitar på 0,5 m.
+  En övergång i en ände kortas om radien inte ryms (S² < 2·R·Δh) utan
+  att säga till; panelen visar bara den raka delens lutning. Dockningen
+  tar inte hänsyn till att sidorna kan korsa varandra i skarven när
+  ramperna möts i vinkel (självskärande kontur, prövas inte).
+- **Rampen (0.10.18):** en sida som är stödmur har ingen kropp i 3D och
+  ingen höjd (som `edge: 'wall'` förut). Där referenslinjen ligger på en kant träffar ett klick på
+  den sidan referenslinjen (den går först); sidan följer då med så länge
+  den inte är ritad. För att ändra den sidan för sig: gör sidorna ritade
+  och flytta referenslinjen, eller lägg den i mitten. Sidor som korsar varandra eller referenslinjen ger en
+  självskärande kontur; det prövas inte.
+
+- **Linjerna (0.10.17):** Foga ihop fogar inte linjer med splines, och
+  inte linjer på olika ytor. Förskjut med flera kanter räknar hörn mellan
+  en båge och en rak kant med bågens tangent, vilket är exakt bara där de
+  möts tangentiellt (annars hamnar hörnet lite fel). Ett klick inne i ett
+  hål markerar inte hålet; man klickar på hålets kant eller hörn. Bågar i
+  bjälklagets kontur finns inte (formatet har inga); takfall och
+  håltagningar har dem.
+
+- **Snittet i planen (0.10.16):** en vägg räknas efter sin fot och höjd;
+  en vägg som kapas av ett tak under snitthöjden (en knävägg utan egen låg
+  höjd) räknas ändå som snittad. Ett bjälklag på våningen ovanför syns
+  inte (bara våningens egna). Fasader och sektioner påverkas inte.
+  Klickjämförelsen har inga egna steg för 0.10.16 än (läggs till i
+  granskningen).
+- **Dolt (0.10.15):** det dolda gäller vyn, så 3D-vyn följer planen. *Markera
+  alla …* tar inte med det dolda; Filtrera och markera är inte prövat med
+  dolda objekt. Linjerna i 3D räknas om vid
+  varje ändring i projektet när de är tända (släntstrecken ur planen).
+- **Fyllningar (0.10.14):** slänternas yta räknas om när den färdiga
+  marken ändras (ca 100 ms första gången i 1:50 på den sneda platsen,
+  sedan sparad). De sparade fyllningarna finns inte i stilmallens dialog.
+  2D-verktygets fyllningsval i verktygsraden är det gamla (bara
+  mönstret).
+
+- **Låst (0.10.12):** låset hindrar flytt, grepp och borttagning, men inte
+  Riv, *Finns i* eller ändrade värden i egenskaperna. En våning som tas
+  bort tar med sina låsta objekt.
+- **Dolda linjer (0.10.10):** ytterväggarnas insida syns inte genom ett
+  fönster (bara de skymda delarna ritas). De dolda linjerna tonas inte
+  bortom *Tonat från* (de är redan tunna). Ett bjälklag under
+  marken ritas streckat där marken skymmer det.
+- **Stödmuren (0.10.9):** bitarna (högst 0,5 m) syns svagt som strimmor i
+  3D-vyn; där en fasads djup slutar mitt i muren ritas ingen kant vid
+  gränsen (`mark-fasad-2`); murens ändar möter inte marken med slänt.
+- **Marken efter 0.10.6** (mätt men lämnat, mätt igen i granskningen
+  efter 0.10.12): fasader och sektioner byggs om helt vid varje ändring i
+  projektet, också av ett markobjekt (11–25 ms per vy i exempelvillan på
+  den kuperade platsen när koden är varm, lika med och utan mark; nyckeln
+  är hela projektet i `modelShapes`, och efter ett ändrat markobjekt är
+  ingen av 3D-formerna samma objekt, så linjerna i `sectionLines` kan inte
+  sparas förrän formerna för oförändrade objekt blir desamma). På en brant plats ändrar ett objekt stora
+  ytor (40 000 noder för urgrävningen under plattan på 0,5 m) och varje
+  ändrad nod kostar 1–3 µs i `probe` (närmaste kant); den färdiga markens
+  höjdkurvor räknas för hela området som alla markobjekt ändrat (ca
+  70–100 ms på en brant plats). 3D-vyn i Chromium utan grafikkort ritar
+  en stor mark på ca 1 s; inte mätt på en riktig dator.
+- **Marken (0.10.3):** höjdkurvorna för ett stort, brusigt rutnät (1,2
+  miljoner noder, 0,5 m) tar ca 2 s första gången (sedan sparade);
+  `contours` har en `Map` per nivå som går att byta mot typade listor om
+  det behövs. Platsens objekt läggs på våningen närmast ±0 och syns inte i
+  de andra planerna. Beskärningen tar bort kartobjekt utan någon punkt i
+  rutan (en gräns som bara korsar den försvinner). Licenstexten kommer
+  med på bladen bara där `{licens}` står i en text (0.10.8).
+- **Synpunkter på webbhotellet:** formuläret skickar (sedan 0.8.2) och
+  breven kommer fram till webbposten hos Loopia, men nådde inte Gmail.
+  0.8.6 sätter kuvertavsändaren; se *Att fråga Carl August om*.
+- **Följ sektionen** klipper 3D, men caps (snittytorna) saknas medan en stor
+  sektion räknas i tråden.
+- **2D på arbetsblad följer tillstånden** som 2D i planen (mallblad gör det
+  inte, sedan 0.8.8). Fråga om arbetsblad ska vara oberoende av tillstånd.
+- På ett mallblad finns Visa-menyns skala för texter och mått kvar, fast
+  allt ritas i 1:1; den gör ingenting där.
+- På ett blad och ett mallblad visar statusraden fortfarande skärmskalan
+  (Rutnät är grått sedan 0.8.11). Underlagens formulär säger *Bredd i
+  modellen* också på papper, och tipset om att kalibrera skalan kommer
+  också där.
+- Markeringen på ett blad markerar inte mallens grafik (bara bladets egen),
+  som väntat; men det ritade på bladet och mallen ligger på samma papper,
+  så det kan vara svårt att se vad som är vad.
+- Konens bitar syns svagt i 3D-vyns skuggning (64 bitar per varv, plan
+  skuggning).
+- Två takfall som möts ritar samma linje två gånger i fasaden (nocken och
+  takfoten bakom), utan att det syns.
+- Takfotens snitt (0.10.2): där två snittade kanter möts i ett konvext
+  hörn av samma takfall tar den första kantens snitt hörnet (ingen
+  gering). En kon snittas bit för bit; en boolesk operation som inte går
+  att räkna ger lodrätt snitt för den biten.
+- Spegla vänder inte bilden i ett underlag, bara läget.
+- DXF: skraffering med solid fyllning ritas som en ton (färgerna i DXF läses inte). Bilder och externa
+  referenser efter pilotprojektet. Vektorsnäpp mot PDF avvaktar.
+- **Att markera många väggar** (840) tar ca 0,15 s, nästan allt i
+  webbläsarens ritning av markeringen (mätt i 0.8.15, lämnat).
+- **En flyttad vägg** räknar fortfarande om sammanslagningen av alla
+  väggytor på våningen, två gånger: med öppningar för ritningen (`union` i
+  väggarnas `planBatch`) och utan för rummen och utsidan (`bareWallUnion`,
+  en gång sedan 0.8.32 när vyn visar alla väggar); `polygon-clipping`
+  står för det mesta, ca 0,06 s för 312 väggar. Ett nytt rumsnamn räknar
+  om rum och dörrar (0,08 s).
+- Under en zoom med hjulet syns ritningen skalad i 140 ms innan den ritas
+  om; texter som var för små att ritas dyker upp först då.
+- **Visas i** räknar vyer utan att bry sig om tillstånd.
+- Modellvyerna har inga vy-taggar, så ett element med taggar syns inte där
+  (inte heller på ett blad via modellvyn); *Visa dolda 2D-element* visar
+  dem tonade.
+- En borttagen taklutning är dold för gott i den fasaden; bara ångra tar
+  tillbaka den automatiska.
+- Spårlinjerna kan kännas för klistriga (`TRACK_REACH` i
+  `src/ui/tools/snap.ts`).
+
 ## Rum och anteckningar
 
 Rum som skapats med rumsverktyget sparar punkten man klickade i (`seed`).
@@ -1286,6 +1652,34 @@ importerar de nya filerna.
   (sedan under 0,1 ms per fråga); allt sparas per plan.
 - Tester: `tests/v010221.test.ts` (höjdkurvorna bara för spöet, marklinjen
   i sektionen). Klickjämförelsen: 43 nya steg sist.
+
+## Smartspöt del 2 (0.10.23, format 21)
+
+- **Bågar ur kedjor**: `fitArcs` i `src/geometry/arcFit.ts` ger punkter
+  och en pilhöjd per kant (`ArcChain`), som 2D-formens `bulges`. Bågarna
+  hittas efter `simplify` och anropas bara i `apply` (inte vid hovring),
+  eftersom de längsta bågarna prövas från början av kedjan. `hasBulges`
+  säger om någon kant blev en båge. Verktygens metoder tar bågarna:
+  `WallTool.createAlong(points, closed, bulges)` (väggens `bulge`),
+  `Draw2DTool.createPolyline(pts, closed, bulges)` (fyllningen bara när
+  formen är sluten), `GroundTool.createLine(line, { bulges })`,
+  `RoofTool.createFace({ points, bulges }, ref)` och `SlabTool.addHole`.
+- **Ytorna**: `ringsAt(ctx, opts)` i `src/ui/wand/rings.ts` (utbrutet ur
+  `shapeAround`) ger de slutna ytorna runt markören, medurs och den minsta
+  först, med `kind` (`region`, `outline`, `face`), `id`, `what` och `area`;
+  `skip` hoppar över objekt. Höjdkurvorna (`wandOnly`) stänger inga ytor.
+  `houseAt(ctx)` ger husets kontur (`buildingFootprint`) där markören står,
+  sparad per projekt och tillstånd. `offsetRing` i `chains.ts` förskjuter
+  en sluten kontur (medurs är vänster utåt).
+- **Funktionerna**: `slabFrom` (Bjälklag; `RoomTool.holeAt` är publik),
+  `roofOver` (Tak), `groundArea` (Mark med *Markyta*;
+  `GroundTool.createArea`), `lineAlong` (2D, före `shapeAround` i
+  registret), `labelOn` (Littera; `LabelTool.createFor`) och `dimWall`
+  (Mått; `wallChain` räknar kedjan, `DimensionTool.create`). Ordningen i
+  `src/ui/wand/index.ts` avgör vilket förslag som kommer först när flera
+  funktioner svarar för samma verktyg.
+- Tester: `tests/v01023.test.ts` (med en egen `fakeApp` som har alla
+  verktygen).
 
 ## Snäpp och smartspöt (0.10.22, format 21)
 

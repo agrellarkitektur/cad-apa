@@ -2998,18 +2998,50 @@ hoppar också över dem. Marklinjen snäpps som en kurva (inga ändpunkter
 och mittpunkter i varje steg, som höjdkurvorna i 0.10.22). Punkten går
 före knäcken bara när de ligger inom samma tolerans.
 
-### 0.10.23 Smartspöt del 2 (mellanstor)
+### 0.10.23 Smartspöt del 2 ✓
 
-Claudes förslag 28 oktober, godkända med *kör* för 0.10.22.
+Claudes förslag 28 oktober, godkända med *kör* för 0.10.22, och svar E om
+0.10.22 (riktiga bågar). Byggd 28 oktober (eftermiddag) på *Kör*, samma
+format (21).
 
-- **G Bjälklag**: innanför väggarna (klick i rummet), ur takets eller en
-  2D-forms kontur
-- **H Tak**: takfall över väggarna eller bjälklaget, med takfoten utanför
-- **I Markyta och ramp**: runt huset med ett avstånd, ur en 2D-form, inom
-  fastighetsgränsen
-- **K 2D-linje**: följer en kant eller kedja av kanter (öppen)
-- **L Littera**: klick på ett objekt ger en littera med typens smarttext
-- **M Mått**: en måttkedja över väggens öppningar och anslutande väggar
+- **E Bågar ur kedjor** (`fitArcs`): minst tre korta bitar som viker
+  lika åt samma håll och ligger på en cirkel blir en båge; i väggar,
+  markobjektens linjer, 2D-former, takfall och håltagningar
+- **G Bjälklag**: innanför väggarna (klick i rummet), ur takets, en
+  2D-forms eller en sluten ytas kontur, innanför ytterväggarna; med
+  *Håltagning* ett hål ur konturen
+- **H Tak**: takfall över väggarna (husets kontur) eller bjälklaget, med
+  takfoten utanför; snabbvalen över den omslutande rektangeln
+- **I Markyta och ramp**: runt huset, ur en 2D-form eller ett objekt,
+  mellan linjer (inom fastighetsgränsen); ramp och väg längs en sida fanns
+  redan (0.10.22) och får nu bågar
+- **K 2D-linje**: längs en kant eller kedja (öppen; runt en kontur sluten)
+- **L Littera**: klick på ett objekt ger en littera med verktygets text
+- **M Mått**: en måttkedja över väggen, öppningarna och de anslutande
+  väggarnas liv
+
+*Claudes val:* en båge kräver minst tre bitar, högst 25° per bit, bitar
+högst tre gånger så långa som den kortaste och 1 mm (plus 0,1 promille av
+radien) från cirkeln; en sluten kedja utan hörn på en cirkel blir två
+halvcirklar. Bjälklagets och markytans konturer har inga bågar, så där
+blir bågen korta raka bitar. Takfallet har takfoten vid kanten närmast
+markören och stiger inåt; takfotens kontur är husets kontur förskjuten
+med takfotssprånget (gering i hörnen). Snabbvalen läggs över den
+omslutande rektangeln också när konturen inte är en rektangel. Litteran
+hamnar 8 mm (papper) snett upp till höger, med verktygets text, sort och
+vridning; Shift samlar flera objekt som får var sin littera (inte en
+littera med flera ledare). Måttkedjan ligger 8 mm (papper) utanför livet
+och tar med båda liven på varje anslutande vägg (också i hörnen, där det
+blir väggtjockleken); mått som hamnar inne i en anslutande vägg (insidan
+i ett hörn) tas bort i ändarna. En öppning måttsätts med sin vägg.
+Höjdkurvorna stänger inga ytor för spöet (de korsar allt på
+situationsplanen). I 2D kommer kanten före ytan när båda finns.
+
+*Gjordes inte:* bågväggar måttsätts inte, och väggar runt en bågvägg
+följer den som förut; en båge av två bitar räknas som ett hörn; bågar i
+bjälklagets och markytans kontur; spöet på ritningsbladen och i 3D; ett
+skrivet avstånd från kanten. Klickjämförelsen kördes inte; nya steg i
+granskningen.
 
 ### Situationsplanen som modellflik (stor, efter 0.12.1, före piloten)
 

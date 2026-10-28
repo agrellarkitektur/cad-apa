@@ -231,7 +231,8 @@ export class SlabTool implements ViewTool, PointTaker {
     this.onCreated?.(el.id);
   }
 
-  private addHole(id: Id, hole: SlabHole): void {
+  /** En håltagning i bjälklaget `id` (också smartspöt, 0.10.23). */
+  addHole(id: Id, hole: SlabHole): void {
     const el = this.host.store.doc.elements[id];
     if (!el) return;
     const holes = resolveParams<SlabParams>(this.host.store.doc, el).holes ?? [];

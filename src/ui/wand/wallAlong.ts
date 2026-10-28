@@ -1,3 +1,4 @@
+import { fitArcs } from '../../geometry/arcFit';
 import { mm, sameChain, traceAt } from './trace';
 import type { WandAction, WandHit } from './wand';
 
@@ -7,6 +8,7 @@ import type { WandAction, WandHit } from './wand';
  * kalkeringen … Väggarna läggs med verktygets typ, höjd och referenslinje;
  * runt en kontur med *Ute* hamnar väggarna innanför den, med *Inne* utanför.
  * Tab växlar mellan hela konturen och kanten (sidan mellan två hörn).
+ * Bågar i det man följer blir bågväggar (0.10.23).
  */
 export const wallAlong: WandAction = {
   id: 'wall-along',
@@ -21,7 +23,8 @@ export const wallAlong: WandAction = {
       what: t.what,
       preview: { lines: [c] },
       apply: () => {
-        const ids = tool.createAlong(c.points.map(mm), c.closed);
+        const a = fitArcs(c);
+        const ids = tool.createAlong(a.points.map(mm), a.closed, a.bulges);
         if (ids.length) ctx.app.hint(`${ids.length} ${ids.length === 1 ? 'vägg' : 'väggar'} lagda längs ${t.what.toLowerCase()}. Ändra typen och höjden i egenskaperna.`, 4000);
       },
     });

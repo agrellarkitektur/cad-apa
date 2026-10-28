@@ -171,20 +171,21 @@ export class WallTool implements ViewTool, PointTaker {
   /**
    * Väggar längs en färdig linje (smartspöt, 0.10.22), i ett steg att ångra.
    * Punkterna antas gå medurs runt en sluten kontur, som när man ritar;
-   * väggar som ändå vetter fel vänds efteråt.
+   * väggar som ändå vetter fel vänds efteråt. `bulges` (0.10.23) ger
+   * bågväggar: pilhöjden per kant.
    */
-  createAlong(points: readonly [number, number][], closed: boolean): Id[] {
+  createAlong(points: readonly [number, number][], closed: boolean, bulges: readonly number[] = []): Id[] {
     const n = points.length;
-    const pairs: [[number, number], [number, number]][] = [];
+    const pairs: { a: [number, number]; b: [number, number]; bulge: number }[] = [];
     for (let i = 0; i + 1 < n + (closed ? 1 : 0); i++) {
       const a = points[i];
       const b = points[(i + 1) % n];
-      if (dist(a, b) >= 1) pairs.push([a, b]);
+      if (dist(a, b) >= 1) pairs.push({ a, b, bulge: Math.abs(bulges[i] ?? 0) >= 0.5 ? bulges[i] : 0 });
     }
     if (!pairs.length) return [];
     const els = addElements(
       this.host.store,
-      pairs.map(([a, b]) => ({ type: 'Wall', storey: this.host.storey(), tags: [], definition: this.options.definition ?? undefined, params: this.instanceParams(a, b), props: {} })),
+      pairs.map(({ a, b, bulge }) => ({ type: 'Wall', storey: this.host.storey(), tags: [], definition: this.options.definition ?? undefined, params: { ...this.instanceParams(a, b), ...(bulge ? { bulge } : {}) }, props: {} })),
       this.host.activeState(),
       'Väggar med smartspöt',
     );
