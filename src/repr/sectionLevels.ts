@@ -1,5 +1,5 @@
 import type { StyleSheet } from '../core/graphics';
-import type { Element, ProjectDoc } from '../core/model';
+import { buildingStoreys, type Element, type ProjectDoc } from '../core/model';
 import type { ViewStates } from '../core/states';
 import { dimensionPrims } from '../elements/annotation';
 import type { PlanContext } from '../elements/registry';
@@ -44,12 +44,13 @@ export function levelPrims(
   const mmn = view.hide?.includes('Terrain') ? null : meanGround(ctx);
   const mmnOld = shows.mmnOld && mmn !== null ? meanGround(ctx, true) : null;
   if (!view.hide?.includes('level')) {
-    const levels = new Map<number, string>(doc.storeys.map((s) => [s.elevation, 'FG']));
+    const storeys = buildingStoreys(doc);
+    const levels = new Map<number, string>(storeys.map((s) => [s.elevation, 'FG']));
     for (const sl of at.cutSlabs) {
       const z = Math.round(sl.z0);
       if (!levels.has(z)) levels.set(z, 'UK bjl');
     }
-    const floor = Math.min(...doc.storeys.map((s) => s.elevation));
+    const floor = Math.min(...storeys.map((s) => s.elevation));
     for (const { el, elevation } of at.roofs) {
       // Takets lägsta undersida, med takfotens snitt och språnget (0.10.2).
       const eave = Math.round(elevation + lowestUnder(ctx, ctx.params<RoofParams>(el)));

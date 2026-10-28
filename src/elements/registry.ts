@@ -97,6 +97,11 @@ export interface ElementType<P extends object = Record<string, unknown>> {
    */
   everyStorey?: boolean;
   /**
+   * Hör till Platsen (0.10.25): marken, markobjekten, grannhusen, träden och
+   * kartan. De ritas på Platsen och flyttas inte till husets våningar.
+   */
+  onSite?: boolean;
+  /**
    * Ritas också i planen för en annan våning än sin egen (0.10.2): ett tak i
    * planen för en våning som det går upp i. Bara planen, inte 3D. `hide`
    * är vyns Visa-val (0.10.10: tak på andra våningar).

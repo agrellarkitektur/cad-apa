@@ -32,9 +32,9 @@ const at = (model: [number, number]) => ({ model, pointerType: 'mouse' }) as unk
 
 /** Värden för verktyg och Modifiera, med planen i Förslag A där markobjekten ligger. */
 function host(store: DocStore, selected: string[] = []) {
-  const h = toolHost(store, selected);
+  const h = toolHost(store, selected, 'platsen');
   const list = h.selection.list.bind(h.selection);
-  return { ...h, selection: { ...h.selection, list, has: (id: string) => list().includes(id) } as never, plan: () => buildPlan(store.doc, store.doc.storeys[0].id, { state: 'st-a' }) };
+  return { ...h, selection: { ...h.selection, list, has: (id: string) => list().includes(id) } as never, plan: () => buildPlan(store.doc, 'platsen', { state: 'st-a' }) };
 }
 
 /** En ramp längs x med en punkt i mitten: 2 000 → 2 500 på 6 m, sedan plan i 6 m. */
@@ -188,7 +188,7 @@ describe('Modifiera och förlängning (0.10.18)', () => {
 describe('Granskningen efter 0.10.18', () => {
   it('höjdkurvorna ritas med stilmallens pennor, med förvalen som förut utom streckningen', () => {
     const store = new DocStore(groundProject());
-    const prims = (part: string) => buildPlan(store.doc, store.doc.storeys[0].id, { state: 'st-a' }).prims.filter((q) => q.origin?.part === part);
+    const prims = (part: string) => buildPlan(store.doc, 'platsen', { state: 'st-a' }).prims.filter((q) => q.origin?.part === part);
     const lines = (part: string) => prims(part).filter((q) => q.kind === 'polyline');
     // Förvalen: hela meter 0,25, däremellan 0,13; den ändrade markens grå och streckad.
     expect(new Set(lines('höjdkurva').map((q) => q.pen.weight))).toEqual(new Set([0.25, 0.13]));

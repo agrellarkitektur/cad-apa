@@ -42,7 +42,7 @@ export function storeWithShapes(shapes: Record<string, Partial<Shape2DParams> & 
 }
 
 /** Planen för första våningen i det sista tillståndet, utan jämförelse. */
-export const planOf = (store: DocStore) => buildPlan(store.doc, store.doc.storeys[0].id, { state: store.doc.states.at(-1)!.id });
+export const planOf = (store: DocStore, storey = store.doc.storeys[0].id) => buildPlan(store.doc, storey, { state: store.doc.states.at(-1)!.id });
 
 /**
  * Ett tomt projekt med väggar (200 mm), 2D-linjer och andra objekt på
@@ -75,7 +75,8 @@ export const wallEnds = (store: DocStore, id: string) => {
  * Det ritverktygen behöver av appen, utan webbläsare (0.8.21). Tipsen
  * samlas i `hints`; planen är den riktiga.
  */
-export function toolHost(store: DocStore, selected: string[] = []): ToolHost & { hints: string[] } {
+/** Det verktygen behöver, på första våningen eller (0.10.25) en annan, t.ex. `'platsen'`. */
+export function toolHost(store: DocStore, selected: string[] = [], storey?: string): ToolHost & { hints: string[] } {
   let sel = [...selected];
   const hints: string[] = [];
   return {
@@ -83,9 +84,9 @@ export function toolHost(store: DocStore, selected: string[] = []): ToolHost & {
     hints,
     selection: { set: (ids: string[]) => (sel = [...ids]), list: () => sel } as never,
     view: { requestRender: () => {}, camera: { scale: 1 }, drawingScale: 100 } as never,
-    plan: () => planOf(store),
+    plan: () => planOf(store, storey),
     activeState: () => store.doc.states[0].id,
-    storey: () => store.doc.storeys[0].id,
+    storey: () => storey ?? store.doc.storeys[0].id,
     snapSegments: () => [],
     hint: (t: string) => hints.push(t),
   };
@@ -259,9 +260,9 @@ export function onSlope(): DocStore {
   return store;
 }
 
-/** Ett markobjekt i Förslag A; svarar med id:t. */
+/** Ett markobjekt i Förslag A, på Platsen (0.10.25); svarar med id:t. */
 export function addGround(store: DocStore, params: GroundParams): string {
-  const [el] = addElements(store, [{ type: 'Ground', storey: store.doc.storeys[0].id, tags: [], params: params as unknown as Record<string, unknown>, props: {}, states: ['st-a'] }], 'st-a', 'Markobjekt');
+  const [el] = addElements(store, [{ type: 'Ground', storey: 'platsen', tags: [], params: params as unknown as Record<string, unknown>, props: {}, states: ['st-a'] }], 'st-a', 'Markobjekt');
   return el.id;
 }
 
@@ -303,7 +304,7 @@ export function groundProject(): ProjectDoc {
   doc.assets = { 'mark-1': { ...doc.assets[asset], id: 'mark-1' } };
   doc.site = { ...doc.site!, grid: { ...doc.site!.grid!, asset: 'mark-1' }, earthHatch: true };
   const ground = (id: string, params: GroundParams) => {
-    doc.elements[id] = { id, type: 'Ground', storey: 'pl-1', states: ['st-a'], tags: [], props: {}, params } as unknown as Element;
+    doc.elements[id] = { id, type: 'Ground', storey: 'platsen', states: ['st-a'], tags: [], props: {}, params } as unknown as Element;
   };
   const rect = (x: number, y: number, w: number, h: number): [number, number][] => [[x, y], [x + w, y], [x + w, y + h], [x, y + h]];
   ground('m-runt', { kind: 'area', outline: [], around: true });

@@ -31,7 +31,9 @@ function fakeApp(store: DocStore, tool: string, state = store.doc.states.at(-1)!
   const hints: string[] = [];
   let sel: string[] = [];
   const vs = { state };
-  const host = { ...toolHost(store), activeState: () => state, snapSegments: () => snapSegments(app as never), selection: { set: (ids: string[]) => (sel = [...ids]), list: () => sel } } as never;
+  // Mark ritar på Platsen (0.10.25).
+  const storey = tool === 'ground' ? 'platsen' : store.doc.storeys[0].id;
+  const host = { ...toolHost(store, [], storey), activeState: () => state, snapSegments: () => snapSegments(app as never), selection: { set: (ids: string[]) => (sel = [...ids]), list: () => sel } } as never;
   const app = {
     store,
     hints,
@@ -39,10 +41,10 @@ function fakeApp(store: DocStore, tool: string, state = store.doc.states.at(-1)!
       return sel;
     },
     get plan() {
-      return buildPlan(store.doc, store.doc.storeys[0].id, vs);
+      return buildPlan(store.doc, storey, vs);
     },
     host,
-    ui: { storey: store.doc.storeys[0].id, marker: null, worksheet: null, tool },
+    ui: { storey, marker: null, worksheet: null, tool },
     uiSettings: { snapTrace: false },
     view: { underlayPrimitives: [], drawingScale: 100, requestRender: () => {} },
     viewStates: () => vs,
@@ -108,8 +110,9 @@ describe('kedjor och slutna ytor', () => {
 describe('snäppet läser allt som ritas', () => {
   it('bjälklag, markobjekt, grannhus, fastighetsgräns och höjdkurvor ger sträckor; texter och släntstreck inte', () => {
     const store = new DocStore(groundProject());
-    const plan = buildPlan(store.doc, store.doc.storeys[0].id, { state: 'st-a' });
-    const segs = drawnSegments(plan.prims);
+    // Bjälklaget på Plan 1, marken på Platsen (0.10.25).
+    const plan = buildPlan(store.doc, 'platsen', { state: 'st-a' });
+    const segs = [...drawnSegments(buildPlan(store.doc, store.doc.storeys[0].id, { state: 'st-a' }).prims), ...drawnSegments(plan.prims)];
     const types = new Set(segs.map((s) => store.doc.elements[s.id]?.type));
     for (const t of ['Slab', 'Ground', 'SiteBuilding', 'Terrain']) expect(types.has(t)).toBe(true);
     expect(segs.some((s) => s.on === 'På höjdkurvan' && s.curve)).toBe(true);

@@ -1,4 +1,4 @@
-import type { Element, Id, ProjectDoc, RoomNumbering } from '../core/model';
+import { buildingStoreys, type Element, type Id, type ProjectDoc, type RoomNumbering } from '../core/model';
 import { boxOf, union, type Box, type Rings } from '../geometry/boolean';
 import { pointInRings } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
@@ -170,7 +170,7 @@ export function doorNumbersFor(ctx: PlanContext): Map<Id, string> {
 
 function prefixFor(ctx: PlanContext): string {
   const numbering = numberingOf(ctx.doc);
-  const storeys = [...ctx.doc.storeys].sort((a, b) => a.elevation - b.elevation);
+  const storeys = buildingStoreys(ctx.doc).sort((a, b) => a.elevation - b.elevation);
   const any = ctx.visible()[0];
   const plan = String(Math.max(0, storeys.findIndex((s) => s.id === any?.storey)) + 1);
   return numbering.digits === 4 ? `${numbering.building}${plan}` : plan;

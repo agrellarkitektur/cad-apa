@@ -1,4 +1,5 @@
 import { PRESETS } from '../../core/graphics';
+import { isSite } from '../../core/model';
 import { DETAIL_LABELS, DETAIL_LEVELS } from '../../core/states';
 import { saveUiSettings } from '../uiSettings';
 import { escapeHtml } from '../labels';
@@ -105,7 +106,7 @@ export function installShowMenu(app: AppContext) {
         .join('')}</div>` +
       settingsMarkup() +
       `</div><div class="show-col show-groups">` +
-      showGroupsFor(store.doc).filter((g) => g.id !== 'site' || !!store.doc.site).map((g) => {
+      showGroupsFor(store.doc).filter((g) => g.id !== 'site' || !!store.doc.site || isSite(app.ui.storey)).map((g) => {
         const shown = g.items.filter(([k]) => isShown(ui, k)).length;
         return `<div class="show-group" role="group" aria-label="${g.label}">
           <label class="check show-group-head"><input type="checkbox" data-show-group="${g.id}"${shown === g.items.length ? ' checked' : ''}> ${g.label}</label>
@@ -179,7 +180,7 @@ export function installShowMenu(app: AppContext) {
     return (
       `<label class="field"><span>Skala för texter och mått</span><select data-show-scale>${ANNOTATION_SCALES.map((n) => `<option value="${n}"${n === ui.scale ? ' selected' : ''}>1:${n}</option>`).join('')}${ANNOTATION_SCALES.includes(ui.scale) ? '' : `<option value="${ui.scale}" selected>1:${ui.scale}</option>`}</select></label>` +
       `<label class="field"><span>Stilmall i vyn</span><select data-show-style><option value="">Projektets (${escapeHtml(store.doc.graphics.name)})</option>${PRESETS.map((p) => `<option value="${escapeHtml(p.name)}"${ui.styleName === p.name ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}</select></label>` +
-      `<label class="field"><span>Kalkera en annan vy</span><select data-show-trace><option value="">Ingen</option>${traceStoreyOptions(ui.trace)}${store.doc.views
+      `<label class="field"><span>Kalkera en annan vy</span><select data-show-trace><option value="">Ingen</option>${traceStoreyOptions(ui.trace, isSite(ui.storey))}${store.doc.views
         .filter((v) => v.id !== ui.activeView)
         .map((v) => `<option value="${v.id}"${ui.trace === v.id ? ' selected' : ''}>${escapeHtml(v.name)}</option>`)
         .join('')}</select></label>` +

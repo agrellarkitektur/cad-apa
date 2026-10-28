@@ -545,7 +545,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const actions = installActions(app, { brand, feedbackDialog, about, files, menus, panes, plot, sheets, showMenu, views });
 
   // För felsökning i webbläsarens konsol.
-  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifier, smartMenu, setTool: tools.setTool, wand, goTo: views.goTo, setMode: pane3d.setMode, get sheets() { return sheets; }, filterSelect, sections: render.sectionQueue, get plot() { return plot; }, get plan() { return render.plan; }, get view3d() { return pane3d.view3d; } };
+  (window as unknown as { bacchus: unknown }).bacchus = { store, view, selection, ui, modifier, smartMenu, setTool: tools.setTool, wand, goTo: views.goTo, setMode: pane3d.setMode, site, get sheets() { return sheets; }, filterSelect, sections: render.sectionQueue, get plot() { return plot; }, get plan() { return render.plan; }, get view3d() { return pane3d.view3d; } };
 
   appEl.dataset.mode = ui.mode;
   appEl.dataset.sheet = ui.sheet;

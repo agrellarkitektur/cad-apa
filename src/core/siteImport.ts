@@ -1,5 +1,5 @@
 import { newId } from './ids';
-import type { Asset, Element, Id, ProjectDoc } from './model';
+import { SITE_STOREY, withSiteLast, type Asset, type Element, type ProjectDoc } from './model';
 import { cropGrid, decodeGrid, encodeGrid, heightAtZone, northOf, terrainOf, zoneToLocal, type Site } from './site';
 import type { DocStore, TxBuilder } from './store';
 
@@ -81,11 +81,6 @@ export function siteProjectName(pkg: Platspaket): string {
   return pkg.projekt?.namn?.trim() || (pkg.projekt?.kommun ? `Plats i ${pkg.projekt.kommun}` : 'Ny plats');
 }
 
-/** Våningen som platsen ritas på: den vars golv ligger närmast ±0. */
-export function groundStorey(doc: ProjectDoc): Id {
-  return doc.storeys.reduce((a, s) => (Math.abs(s.elevation) < Math.abs(a.elevation) ? s : a)).id;
-}
-
 /**
  * Lägg in platsen i projektet i en transaktion. Har projektet redan en
  * plats i samma koordinatsystem behålls dess nollpunkt, vridning och ±0,
@@ -146,7 +141,9 @@ function putSite(tx: TxBuilder, pkg: Platspaket): void {
   };
   tx.setField('site', site);
 
-  const storey = groundStorey(doc);
+  // Platsens objekt hör till Platsen (0.10.25).
+  if (!doc.storeys.some((s) => s.site)) tx.setStoreys(withSiteLast(doc.storeys));
+  const storey = SITE_STOREY;
   const L = (p: readonly number[]): XY => {
     const q = zoneToLocal(site, p[0], p[1]);
     return [Math.round(q[0]), Math.round(q[1])];

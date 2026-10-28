@@ -22,7 +22,7 @@ import { addGround, onSlope, planCtx, slopeSite, toolHost } from './projekt';
 
 beforeAll(() => registerBuiltInTypes());
 
-const prims = (store: DocStore, hide: string[] = []): Primitive[] => buildPlan(store.doc, store.doc.storeys[0].id, { state: 'st-a', hide }).prims;
+const prims = (store: DocStore, hide: string[] = []): Primitive[] => buildPlan(store.doc, 'platsen', { state: 'st-a', hide }).prims;
 const texts = (ps: Primitive[], id?: string): string[] => ps.filter((p): p is Extract<Primitive, { kind: 'text' }> => p.kind === 'text' && (!id || p.origin?.objectId === id)).map((p) => p.text);
 const ofPart = (ps: Primitive[], id: string, part: string): Primitive[] => ps.filter((p) => p.origin?.objectId === id && p.origin.part === part);
 

@@ -84,8 +84,7 @@ function model(shapes: readonly Shape3D[]): string {
 
 const file = (name: string) => `./referens/${name}.txt`;
 
-function referenceSet(name: string, doc: ProjectDoc) {
-  const storey = doc.storeys[0].id;
+function referenceSet(name: string, doc: ProjectDoc, storey = doc.storeys[0].id) {
   const ex = doc.states.find((s) => s.kind === 'existing');
   const proposal = doc.states.find((s) => s.kind !== 'existing')!;
   const compare = { state: proposal.id, compareTo: ex?.id };
@@ -117,7 +116,8 @@ function referenceSet(name: string, doc: ProjectDoc) {
 referenceSet('exempel', sampleProject());
 referenceSet('rumsrutnat', roomGrid(3));
 referenceSet('former', shapesProject());
-referenceSet('mark', groundProject());
+// Marken ritas på Platsen (0.10.25).
+referenceSet('mark', groundProject(), 'platsen');
 
 /**
  * Den färdiga marken som siffror (0.10.6): höjderna (mm från ±0) i rutorna

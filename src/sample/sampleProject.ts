@@ -1,6 +1,6 @@
 import { SWEDISH_STANDARD } from '../core/graphics';
 import { exampleMaster } from '../core/exampleMaster';
-import { drawingMarkers, emptyTree, FORMAT, FORMAT_VERSION, PROJECT_DEFAULT_FIELDS, type ViewDef, type Definition, type Element, type Id, type ProjectDoc } from '../core/model';
+import { drawingMarkers, emptyTree, siteStorey, FORMAT, FORMAT_VERSION, PROJECT_DEFAULT_FIELDS, type ViewDef, type Definition, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { DoorParams } from '../elements/door';
 import type { FurnitureParams } from '../elements/furniture';
 import type { SlabParams } from '../elements/slab';
@@ -192,7 +192,7 @@ export function sampleProject(): ProjectDoc {
       { id: A, name: 'Förslag A', kind: 'proposal' },
       { id: B, name: 'Förslag B', kind: 'proposal' },
     ],
-    storeys: [{ id: STOREY, name: 'Plan 1', elevation: 0, height: 2700 }],
+    storeys: [{ id: STOREY, name: 'Plan 1', elevation: 0, height: 2700 }, siteStorey()],
     definitions,
     elements: { ...elements, ...master.elements },
     graphics: SWEDISH_STANDARD,

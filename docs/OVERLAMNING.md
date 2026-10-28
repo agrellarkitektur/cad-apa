@@ -4,37 +4,39 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 28 oktober 2026 (kväll), efter
-0.10.24.
+**Kända begränsningar**. Senast: 28 oktober 2026 (kväll), efter 0.10.25.
 
 ## Läget
 
-- **0.10.24 Bågar i bjälklagets och markytans kontur är klar** på `main`
-  (samma format, 21), byggd 28 oktober (kväll) på "kör". `bulges` på
-  bjälklagets och markytans kontur som på håltagningen; konturerna
-  ändras som 2D-former (Böj, Räta ut, Avrunda, Fasa, Förskjut, dragbara
-  punkter), den gamla raka vägen i Modifiera (`roof*`, `roofId`,
-  `hasEditableOutline`) är borttagen. *Båge* i bjälklagets polygon för
-  konturen, markytan som *Polygon* med *Båge* och *Klar med konturen*.
-  Spöet ger riktiga bågar i Bjälklag och Markyta; *Ur väggarna* urbockat
-  ger bågar ur bågväggarna. Cirkelhål av två punkter dras nu ifrån (var
-  en bugg). Testerna: 668 på ca 16 s. Provat i Playwright mot `dist/`
-  (bjälklag som polygon med båge, smartmenyn på bågen och den raka
-  kanten, Böj, dra ett hörn, 3D). Klickjämförelsen kördes **inte**; nya
-  steg i granskningen. Se PLAN.md och UTVECKLING.md.
-- **Märks i hans ritningar efter 0.10.24:** inget ritas annorlunda.
-  Äldre bjälklag och markytor behåller sina korta raka bitar; nya ur
-  spöet får bågar. Markytans verktygsrad har fått *Form*.
-- **Tidigare i dag:** 0.10.23 Smartspöt del 2, 0.10.22 Snäpp och
-  smartspöt och granskningen 0.10.22.1, 0.10.20.1 Litteran och 0.10.20.2
-  Generell littera (format 21), 0.10.21 Lutande väggar och 0.10.21.1. Se
+- **0.10.25 Platsen som modellflik är klar** (nytt format, **22**), byggd
+  28 oktober (kväll) på "kör". Platsen ligger i våningslistan
+  (`site: true`, id `platsen`, sist, vid ±0) men räknas inte bland husets
+  våningar (`buildingStoreys`, `storeysUp`). Marken, platsens objekt och
+  markobjekten hör till den; verktyget Mark öppnar den. Planen har ingen
+  snitthöjd: taken ovanifrån och husets kontur (heldragen utanför taken,
+  streckad under), stödmurarna snittade. I våningsplanerna visas marken
+  som kalkering (*Visa → Kalkera → Platsen*). Platsens meny har
+  *Inställningar…* (dialogen, borta ur huvudmenyn), *Egenskaper* och *Ny
+  vy* med förinställningarna Situationsplan (1:400), Markplaneringsritning
+  (1:200) och Illustrationsplan (1:200); vyn har en vykategori. Testerna:
+  676 på ca 16 s. Provat i Playwright mot `dist/` (släppt plats, marken
+  runt huset på Platsen, Mark från Plan 1, kalkeringen, trädet och
+  menyn, en markplaneringsritning, 3D och sektionen). Klickjämförelsen
+  kördes **inte**. Se PLAN.md och UTVECKLING.md.
+- **Om pushen:** se *Nästa session*; kontrollera att `main` har 0.10.25
+  (`git log origin/main -1`) och att publiceringen gick igenom.
+- **Märks i hans ritningar efter 0.10.25:** projekt från 0.10.24 öppnas
+  inte (nytt format). Markobjekten syns inte längre på Plan 1 utan på
+  Platsen, och dialogen Platsen nås från Platsen i projektträdet.
+- **Tidigare i dag:** 0.10.24 Bågar i bjälklagets och markytans kontur,
+  materialutredningen (planeringssession), 0.10.23 Smartspöt del 2,
+  0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.24` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.25` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.24 är inte provade fullt ut** av Carl August; han har
-  svarat på frågor om flera av dem utifrån beskrivningarna (0.10.23
-  provade han spöet mot en bågvägg, vilket gav 0.10.24).
+- **0.10.8–0.10.25 är inte provade fullt ut** av Carl August; han har
+  svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
   åt gången**. En fråga han hoppar över räknas som "bra som det är" och
@@ -45,7 +47,8 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR` =
   `/agrellarkitektur.se/public_html/cad-apa/`). Se efter med `gh run list`.
   Halvfärdigt arbete kan läggas på en egen gren, så att det inte
-  publiceras.
+  publiceras. Skrivrätten till repot kan behöva godkännas i sessionen
+  (28 oktober nekades den först av behörighetskontrollen).
 - **Färdplan** (Carl August 22 oktober): 0.13 är hans egen provning (han
   ritar ett hus), sedan en inbjuden **alfa** för arkitektvänner, sedan en
   **öppen beta**. **Formatfrysen kommer med den öppna betan.** Inget av
@@ -54,7 +57,8 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   **smartmeny**. Symboler i ritningen heter **-markör**: *nivåmarkör*,
   *sektionsmarkör*, *fasadmarkör*. Säg inte nivåkota, sektionslinje eller
   fasadlinje. Vyn heter *Sektion* och *Fasad*. **Littera** skrivs med två
-  siffror som förval (T01, M01). Spöet heter **smartspöt**.
+  siffror som förval (T01, M01). Spöet heter **smartspöt**. Fliken för
+  situationsplanen heter **Platsen**; inga engelska ord i appen.
 - **Versionsnamn:** inga b-versioner; nästa lediga nummer i stället.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen. Höj
   `FORMAT_VERSION` när formatet ändras; äldre filer får ett meddelande
@@ -70,6 +74,12 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   Parkerat och Avfärdat. Läs den vid sessionsstart (Projects-verktyget,
   `project_read`). Sortera Inkorgen tillsammans med honom, kort, med
   Claudes förslag per punkt (bokstäver, så att chatten inte numrerar om).
+- **Läs projektfilen på nytt strax före varje skrivning** (Carl August
+  28 oktober). Flera chattar kan arbeta mot `cad-apa-synpunkter.md` och
+  överlämningen samma dag, och `project_write` ersätter hela filen: skriv
+  aldrig från en kopia som lästes tidigare i sessionen. Gör
+  `project_read`, för in ändringen i det som kom tillbaka och skriv
+  direkt.
 - **Svar med nummer:** chatten gör om "17. Ok / 20. 1100" till en
   numrerad lista som börjar på 17. Läs numren i texten han skickat, och be
   honom gärna skriva "17:".
@@ -83,21 +93,24 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 - ~~0.8.8 Mallblad~~ … ~~0.10.22 Snäpp och smartspöt~~, ~~Granskning
   efter 0.10.22 (0.10.22.1)~~, ~~0.10.23 Smartspöt del 2~~, ~~0.10.24
-  Bågar i bjälklagets och markytans kontur~~ (klara)
-- **Utredning: material i stället för fyllningar** (egen session, rör
-  formatet; före fler fyllningsfunktioner och formatfrysen)
+  Bågar i bjälklagets och markytans kontur~~, ~~Utredning: material i
+  stället för fyllningar~~, ~~0.10.25 Platsen som modellflik~~ (klara)
+- **Granskning** efter 0.10.22.1 (fem versioner sedan; klickstegen för
+  0.10.23–0.10.25)
+- **0.10.26 Material, mark först** (mellanstor till stor, nytt format)
+- **0.10.27 Teckenförklaring** (liten till mellanstor)
+- **0.10.28 Texturer i 3D** (mellanstor)
 - **Ortofotot på marken** (liten undersökning med terrängappen, när det
-  passar)
+  passar; hör ihop med texturerna)
 - **0.11 Trappor** (nytt format)
-- **Granskning** efter ungefär tre versioner (efter 0.10.22.1)
 - **0.11.1 Profilverktyget** (stor) och **0.11.2 Dörrar och fönster**
   (stor)
 - **0.12 Export**: IFC4, DXF, areor för bygglov, förteckning över
   markförändringarna
 - **0.12.1 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
   trädens status i planen)
-- **Situationsplanen som modellflik** (stor, ihop med SWEREF; före
-  piloten)
+- **Koordinater, SWEREF och sol** (stor; före piloten; SWEREF på
+  situationsplanen och i exporten därifrån)
 - **0.13 Pilotprojektet**: Carl August ritar själv ett hus
 - **Inbjuden alfa**, sedan **öppen beta och formatfrys**
 - Efter piloten: se *Efter pilotprojektet* i PLAN.md. **1.0**
@@ -105,19 +118,38 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-Fråga Carl August vad som är nästa: Claudes förslag är **Utredning:
-material i stället för fyllningar** (den rör formatet och ska avgöras före
-fler fyllningsfunktioner), annars **0.11 Trappor**. Läs
+Om 0.10.25 inte ligger på `main` (se *Om pushen* ovan): pusha den först.
+Claudes förslag är sedan en **granskning** innan materialen: fem versioner
+sedan 0.10.22.1, och klickjämförelsen har inte körts för 0.10.23–0.10.25
+(nya steg: spöet i Takfall, Mått och Littera; bjälklag med båge och Böj på
+konturen; markyta som polygon; Platsen med Mark, kalkeringen, menyn och en
+vy efter en förinställning). Skriptet öppnar dialogen Platsen med
+`bacchus.site` sedan 0.10.25, och efter *släpp platsen* öppnas Platsen, så
+stegen därefter skiljer mot äldre byggen. Därefter **0.10.26 Material,
+mark först** enligt beslutet i `cad-apa-synpunkter.md` och PLAN.md. Läs
 `cad-apa-synpunkter.md` först och sortera Inkorgen om den har något.
-Frågorna om 0.10.23 och 0.10.24 (nedan) kan ställas när han provat. Lägg
-klicksteg för 0.10.23 och 0.10.24 i nästa granskning (som nu är efter
-fyra versioner sedan 0.10.22.1: en granskning är nära).
+Frågorna om 0.10.25, 0.10.24 och 0.10.23 (nedan) kan ställas när han
+provat.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
+
+**0.10.25 efter provning** (Claudes val, se PLAN.md)
+- Stödmurarna ritas snittade (fyllda) hela vägen på Platsen, också låga.
+  Rätt för situationsplanen och markplaneringsritningen?
+- Husets kontur på Platsen är 0,35 heldragen utanför taken och streckad
+  under dem. Rätt, eller ska taket vara streckat och fasadlivet
+  heldraget? Behövs en egen penna i stilmallen?
+- Marken i våningsplanerna är en kalkering (tonad, inte klickbar, i
+  stället för annan kalkering). Räcker det, eller ska den vara ett eget
+  val under Visa, så att våningen under kan kalkeras samtidigt?
+- Förinställningarnas skalor och innehåll (Situationsplan 1:400 utan
+  markörer; Markplaneringsritning 1:200 med branta slänter;
+  Illustrationsplan 1:200 utan höjdkurvor, mått och littera). Lagom?
+- Ska *Bara den här våningen* i 3D heta något annat på Platsen?
 
 **0.10.24 efter provning** (Claudes val, se PLAN.md)
 - Äldre bjälklag och markytor behåller sina korta raka bitar. Behövs en
@@ -191,8 +223,6 @@ fråga.
   mitt?
 
 **0.10.16 efter provning** (Claudes val, se PLAN.md)
-- En låg stödmur (krönet under snitthöjden) ritas som kontur. Rätt på
-  situationsplanen, eller ska murar alltid vara snittade?
 - Ett fönster helt över eller under snittet ritas som hålets två kanter
   och glaset. Räcker det, eller ska karmen synas?
 - En möbel som går genom snittet (t.ex. ett högskåp) ritas som förut, som
@@ -243,7 +273,6 @@ fråga.
 - Hovring i 3D tonar objektet ljust i markeringsfärgen. Lagom tydligt?
 - Markobjekten markeras med ett klick i marken, och konturen ritas på
   marken. Ska hörnen också gå att dra i 3D?
-
 
 **0.10.8 efter provning** (Claudes val, se PLAN.md)
 - Höjdkurvorna: hela meter 0,25 och halvmeter 0,13 heldragna; den gamla

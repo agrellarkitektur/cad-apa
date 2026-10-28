@@ -1,5 +1,5 @@
 import { finishedGround, nearestEdge, withHeights, type Barrier, type FinishedGround, type GroundShape } from '../core/ground';
-import type { Element, Id } from '../core/model';
+import { groundStorey, isSite, type Element, type Id } from '../core/model';
 import { groundAt, groundDefaults, terrainOf, type Terrain } from '../core/site';
 import type { Rings } from '../geometry/boolean';
 import { bufferRings } from '../geometry/offset';
@@ -206,6 +206,12 @@ export interface GroundGeometry {
 
 export const storeyElevation = (ctx: PlanContext, id: Id): number => ctx.doc.storeys.find((s) => s.id === id)?.elevation ?? 0;
 
+/**
+ * Golvet som marken runt huset utgår från: våningen närmast ±0 när
+ * markobjektet ligger på Platsen (0.10.25), annars dess egen våning.
+ */
+const aroundFloor = (ctx: PlanContext, el: Element<any>): number => (isSite(el.storey) ? groundStorey(ctx.doc).elevation : storeyElevation(ctx, el.storey));
+
 function boxOfRings(polys: readonly Rings[]): [number, number, number, number] {
   const b: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
   for (const poly of polys)
@@ -235,7 +241,7 @@ export function groundGeometry(ctx: PlanContext, el: Element<any>): GroundGeomet
   const slabP = slabEl ? resolveParams<SlabParams>(doc, slabEl) : undefined;
   const needsFootprint = !!p.around || !!slabP?.fromWalls;
   const footprint = needsFootprint ? buildingFootprint(ctx) : null;
-  const inputs = [doc.site?.ground, storeyElevation(ctx, el.storey), footprint, slabP?.fromWalls, slabP?.outline, slabP?.bulges, slabP?.thickness, slabEl && storeyElevation(ctx, slabEl.storey)];
+  const inputs = [doc.site?.ground, aroundFloor(ctx, el), footprint, slabP?.fromWalls, slabP?.outline, slabP?.bulges, slabP?.thickness, slabEl && storeyElevation(ctx, slabEl.storey)];
   const hit = savedGeometry.get(el);
   if (hit && sameItems(hit.inputs, inputs)) return hit.out;
   const out = computeGeometry(ctx, el, p, footprint, slabEl, slabP);
@@ -253,7 +259,7 @@ function computeGeometry(ctx: PlanContext, el: Element<any>, p: GroundParams, fo
     const distance = Math.max(0, p.distance ?? def.distance);
     const fall = p.fall ?? def.fall;
     const fallLength = Math.max(0, p.fallLength ?? def.fallLength);
-    const h0 = storeyElevation(ctx, el.storey) - (p.sockel ?? def.sockel);
+    const h0 = aroundFloor(ctx, el) - (p.sockel ?? def.sockel);
     const drop = (d: number) => (fall > 0 ? Math.min(d, fallLength) / fall : 0);
     const rings = bufferRings(footprint, distance);
     const box = boxOfRings(rings);

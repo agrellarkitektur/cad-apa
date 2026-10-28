@@ -130,9 +130,10 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
   if (p.kind === 'wall') {
     const prof = wallProfile(ctx, el);
     // Snittet i planen (0.10.16): där krönet ligger under snitthöjden ritas
-    // muren som vy, där foten ligger över streckprickad.
+    // muren som vy, där foten ligger över streckprickad. På Platsen (0.10.25),
+    // utan snitthöjd, ritas muren snittad hela vägen.
     const h = planCutHeight(ctx);
-    const parts = prof && h !== undefined ? wallCutParts(prof, storeyElevation(ctx, el.storey) + h) : null;
+    const parts = prof && h !== undefined && Number.isFinite(h) ? wallCutParts(prof, storeyElevation(ctx, el.storey) + h) : null;
     if (!parts) for (const ring of g.rings[0]) out.push({ kind: 'region', role: 'cut', rings: [ring], fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'mur' } } as Primitive);
     else {
       for (const rings of parts.cut) out.push({ kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'mur' } });

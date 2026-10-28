@@ -1,4 +1,4 @@
-import { emptyProject } from '../../core/model';
+import { emptyProject, SITE_STOREY } from '../../core/model';
 import { CONTOUR_STEPS, DEFAULT_CONTOURS, GROUND_DEFAULTS, groundAt, groundDefaults, terrainOf, toRh, type GroundDefaults } from '../../core/site';
 import { finishedTerrain, groundObjects, m3, showsProposal } from '../../elements/ground';
 import { applySitePackage, cropSite, parseSitePackage, removeSite, sameSite, siteProjectName, SitePackageError, updateSite, type Platspaket } from '../../core/siteImport';
@@ -76,14 +76,18 @@ export function installSite(app: AppContext) {
       applySitePackage(fresh, pkg);
       forgetProjectFile();
       app.ui.state = defaultState(fresh.doc);
-      app.ui.storey = fresh.doc.storeys[0].id;
+      // Platsen öppnas (0.10.25), med det som kom ur Höjdkurvor.
+      app.ui.storey = SITE_STOREY;
       app.store.load(fresh.doc);
-    } else applySitePackage(app.store, pkg);
+    } else {
+      applySitePackage(app.store, pkg);
+      app.goTo({ kind: 'storey', id: SITE_STOREY });
+    }
     app.view.zoomToFit();
     const t = terrainOf(app.store.doc);
     const parts = [
       `Platsen är inlagd${t ? `, marken ${mf(t.min, 1)}–${mf(t.max, 1)} i RH 2000` : ' utan markmodell'}.`,
-      `±0 är ${mf(app.store.doc.site!.datum)}; ändra under Platsen i menyn.`,
+      `±0 är ${mf(app.store.doc.site!.datum)}; ändra i Platsens inställningar (högerklicka på Platsen i projektträdet).`,
       pkg.fastigheter?.varning ? 'Fastighetsgränserna är inte inmätta och kan avvika flera meter.' : '',
     ];
     app.hint(parts.filter(Boolean).join(' '), 8000);

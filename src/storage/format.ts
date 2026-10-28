@@ -1,5 +1,5 @@
 import { SWEDISH_STANDARD, normalizeStyle } from '../core/graphics';
-import { DEFAULT_VIEW_TAGS, FORMAT, FORMAT_VERSION, type ProjectDoc } from '../core/model';
+import { DEFAULT_VIEW_TAGS, FORMAT, FORMAT_VERSION, withSiteLast, type ProjectDoc } from '../core/model';
 
 /**
  * Projektfilens format. Varje gång formatet ändras höjs FORMAT_VERSION.
@@ -71,7 +71,8 @@ function normalize(d: any): ProjectDoc {
     },
     views: Array.isArray(d.views) ? d.views : [],
     states: Array.isArray(d.states) && d.states.length ? d.states : [{ id: 'st-ny', name: 'Förslag', kind: 'proposal' }],
-    storeys: Array.isArray(d.storeys) && d.storeys.length ? d.storeys : [{ id: 'pl-1', name: 'Plan 1', elevation: 0, height: 2700 }],
+    // Platsen (0.10.25) sist, också i handskrivna filer.
+    storeys: withSiteLast(Array.isArray(d.storeys) && d.storeys.some((s: any) => !s?.site) ? d.storeys : [{ id: 'pl-1', name: 'Plan 1', elevation: 0, height: 2700 }]),
     definitions: d.definitions ?? {},
     elements: {},
     graphics: safeStyle(d.graphics),

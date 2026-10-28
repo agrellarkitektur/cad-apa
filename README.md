@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.24** (alfa); nästa är en **granskning** efter ungefär tre versioner till.
+**0.10.25** (alfa); nästa är en **granskning** (fyra versioner sedan den senaste), sedan **0.10.26 Material, mark först**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,30 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.25, Platsen som modellflik (nytt filformat, 22; projekt från 0.10.24 öppnas inte):
+- **Platsen** står i projektträdet (Modell) ovanför våningarna: situationsplanen,
+  markplaneringen och illustrationsplanen ritas där. Allt ses ovanifrån,
+  utan snitthöjd: taken från alla våningar och husets kontur (heldragen
+  där inget tak ligger över, streckad under taken; den går att snäppa
+  mot). Stödmurarna ritas snittade hela vägen
+- **Marken hör till Platsen**: markmodellen, grannhusen, träden, gränserna och
+  vägarna ur Höjdkurvor och alla markobjekt. Verktyget **Mark** öppnar
+  Platsen. En urgrävning läggs under bjälklaget på den lägsta våningen som
+  har ett där man klickar, och marken runt huset utgår från våningen
+  närmast ±0. Markobjekten går inte att flytta till en våning; annat (2D,
+  text) går att flytta och kopiera till Platsen
+- **I våningsplanerna** syns marken med *Visa → Kalkera en annan vy →
+  Platsen (marken)*, tonad som den andra kalkeringen
+- **Platsens meny** (högerklick eller ⋯): *Inställningar…* är dialogen
+  Platsen (som låg i huvudmenyn), och *Ny vy* ger en sparad vy efter en av
+  tre förinställningar: **Situationsplan** (1:400), **Markplaneringsritning**
+  (1:200, med de branta slänterna) och **Illustrationsplan** (1:200, utan
+  höjdkurvor, mått och littera). Samma knappar finns i Platsens egenskaper
+- **Vykategorin** (situationsplan, markplaneringsritning eller
+  illustrationsplan) står i vyns inställningar; materialen i 0.10.26 ritas
+  efter den
+- Efter *Lägg in platsfil* öppnas Platsen
 
 Version 0.10.24, bågar i bjälklagets och markytans kontur (samma filformat, 21):
 - **Riktiga bågar i konturen**: bjälklagets ritade kontur och markytans

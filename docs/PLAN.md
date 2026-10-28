@@ -3079,26 +3079,95 @@ väggarna och ritas som väggarna ger dem). Klickjämförelsen kördes inte;
 nya steg i granskningen (bjälklag med båge i verktyget, Böj på konturen,
 markyta som polygon).
 
-### Situationsplanen som modellflik (stor, efter 0.12.1, före piloten)
+### 0.10.25 Platsen som modellflik ✓ · *nytt format (22)*
 
-Inkorgen 28 oktober, ihop med *Koordinater, SWEREF och sol*. En egen
-modellflik (som våningsplanen) för situationsplan, markplaneringsritning
-och illustrationsplan (färglagd, mindre abstrakt och mer detaljerad): de
-skiljer sig så mycket från andra planer, utan snitthöjd, allt sett
-ovanifrån. Situationsplanen koordinatsätts ofta i SWEREF och exporter från
-den ska vara i SWEREF. Husets kontur på situationsplanen (parkerat) hör
-dit. Lokal nollpunkt, SWEREF-zon och sann nord enligt *Koordinater,
-SWEREF och sol* (sol och skugga kan ligga kvar efter piloten).
+Beslutat 28 oktober i materialutredningen (planeringssession), i den här
+ordningen före materialen så att illustrationsplanen finns när de får sin
+färg. Byggd 28 oktober (kväll) på *Kör*, format 22.
 
-### Utredning: material i stället för fyllningar (egen session)
+- **Platsen** som modellflik bredvid våningarna, för situationsplan,
+  markplaneringsritning och illustrationsplan; allt ses ovanifrån, utan
+  snitthöjd. Platsens meny tar över dialogen Platsen (*Inställningar…*)
+- **Markobjekten** och det som kommer ur Höjdkurvor hör till Platsen, inte
+  till våningen närmast ±0; i våningsplanerna visas marken som kalkering
+  (*Visa → Kalkera → Platsen*)
+- **Vyer** av Platsen med tre förinställningar: *Situationsplan*,
+  *Markplaneringsritning* och *Illustrationsplan*, och vykategorin på
+  vyn (materialen i 0.10.26 ritas efter den)
+- **Husets kontur** på situationsplanen (parkerat 26 oktober) och taken
+  från alla våningar
 
-Inkorgen 28 oktober. Bör vi gå ifrån fyllningar för alla objekt och i
-stället arbeta med material som har olika representation i olika vyer?
-Då hänger 2D och 3D ihop av sig själva, och markplaneringsritningen kan
-känna igen markmaterialen och sammanställa en förklaring. Baksidan: inte
-många olika objekt med olika inställningar som alla ska vara grus. Rör
-formatet; avgörs i en egen session före fler fyllningsfunktioner och
-före formatfrysen.
+*Claudes val:* Platsen ligger i våningslistan (`site: true`, id
+`platsen`, sist, golvet vid ±0), så att vyer, verktyg, urklipp, blad och
+markering fungerar som på en våning; `buildingStoreys` och `storeysUp`
+räknar bara husets våningar (nya våningar, nivåmarkörer, rumsnummer, Page
+Up och Page Down, tak på andra våningar). Snitthöjden är oändlig, så taken
+ritas som sedda ovanifrån och väggar på Platsen som vy, men
+**stödmurarna ritas snittade** (fyllda) hela vägen, som på en
+markplaneringsritning (rör frågan om 0.10.16). Husets kontur är
+ytterväggarnas utsida på alla våningar, 0,35 heldragen utanför taken och
+0,18 streckad under dem (inte en penna i stilmallen än); släcks med *Husets
+kontur (på Platsen)* under Visa. Marken i våningsplanerna är en
+kalkering, inte ett eget val: den tonas, går inte att klicka på och
+ersätter annan kalkering medan den visas. Verktyget Mark öppnar Platsen
+och lägger alltid markobjekten där; urgrävningen tar bjälklaget på den
+lägsta våningen som har ett där man klickar, och marken runt huset
+utgår från våningen närmast ±0 (`groundStorey`). Markobjekten och
+platsens objekt (`onSite` på typen) går inte att flytta till en våning;
+annat går att flytta och kopiera till Platsen. Platsen har inget namn,
+golv eller höjd att ändra och går inte att ta bort. Förinställningarna:
+Situationsplan 1:400 utan markörer och stödmurarnas littera,
+Markplaneringsritning 1:200 med de branta slänterna, Illustrationsplan
+1:200 utan höjdkurvor, mått, generell littera, stödmurarnas littera och
+markörer; alla i förslaget som visas från början, utan jämförelse. En
+vy som sparas om behåller sin kategori. Efter *Lägg in platsfil* öppnas
+Platsen.
+
+*Gjordes inte:* koordinaterna i SWEREF på situationsplanen och i
+exporten (hör till *Koordinater, SWEREF och sol*); kategorin ändrar inget
+i ritningen än (materialen i 0.10.26); en egen penna för husets kontur;
+*Bara den här våningen* i 3D heter så också på Platsen och visar då bara
+platsens objekt. Klickjämförelsen kördes inte (skriptet öppnar dialogen
+Platsen med `bacchus.site`, och efter *släpp platsen* öppnas Platsen, så
+stegen därefter skiljer mot äldre byggen); nya steg i granskningen.
+
+### Utredning: material i stället för fyllningar ✓
+
+Gjord 28 oktober (planeringssession). Beslutet står i
+`cad-apa-synpunkter.md` och i de fyra versionerna 0.10.25–0.10.28: ett
+material bor i stilmallen med en representation per vykategori, objektet
+pekar på ett material eller har *Eget*, och teckenförklaringen läser
+materialen ur bladets vyer.
+
+### 0.10.26 Material, mark först · *nytt format*
+
+Beslutat 28 oktober (svaren A–E). Mellanstor till stor.
+
+- Ett material i stilmallen: namn, kategori (mark först) och representation
+  per vykategori: planen (fyllning, konturpenna, opacitet), snittet i
+  sektion och fasad, vyn i fasad, illustrationsplanen (färg, opacitet) och
+  3D (kulör; textur i 0.10.28)
+- Objektet pekar på ett material eller har *Eget*; *Fyllning* blir
+  *Material*; opaciteten går att överstyra per objekt. Mönstrets
+  utgångspunkt och vridning och status är objektets
+- Fyllningspanelen blir redigeraren för planrepresentationen; förslagen
+  och de sparade fyllningarna blir material
+- Först markyta, slänter, ramp, stödmur och brytlinje; sedan bjälklag och
+  tak. Väggar med lager i 0.11.1
+
+### 0.10.27 Teckenförklaring
+
+Beslutat 28 oktober. Liten till mellanstor. Ett automatobjekt på bladet som
+läser materialen hos synliga objekt i bladets vyer och ritar en ruta med
+mönstret i vyns skala och namnet; kategorier, ordning, rutans storlek,
+egna och bortvalda rader, och *Eget* som "Eget" eller inte alls.
+
+### 0.10.28 Texturer i 3D
+
+Beslutat 28 oktober (svar E: före piloten). Mellanstor. En bild i
+materialets 3D-representation, sparad i filen och upprepad i meter på
+markobjekten; kulören där texturen saknas. Hör ihop med ortofotot och
+trädens detaljnivåer.
 
 ### Ortofotot på marken (undersökning, liten)
 

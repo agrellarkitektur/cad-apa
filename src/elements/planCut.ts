@@ -5,7 +5,8 @@ import type { PlanContext } from './registry';
 /** Snitthöjden över golvet när våningen inte har någon egen. */
 export const DEFAULT_CUT_HEIGHT = 1100;
 
-export const cutHeightOf = (s: Pick<Storey, 'cutHeight'>): number => s.cutHeight ?? DEFAULT_CUT_HEIGHT;
+/** Våningens snitthöjd; Platsen (0.10.25) har ingen, allt ses ovanifrån. */
+export const cutHeightOf = (s: Pick<Storey, 'cutHeight' | 'site'>): number => (s.site ? Infinity : (s.cutHeight ?? DEFAULT_CUT_HEIGHT));
 
 /**
  * Planens snitthöjd över golvet på våningen som ritas (0.10.16), eller

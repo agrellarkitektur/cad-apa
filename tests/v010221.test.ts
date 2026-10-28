@@ -36,7 +36,7 @@ function fakeApp(store: DocStore, marker: string | null) {
 describe('höjdkurvorna och marklinjen (svar C)', () => {
   it('höjdkurvorna i planen är bara för spöet: snäppet drar inte till dem', () => {
     const store = new DocStore(groundProject());
-    const plan = buildPlan(store.doc, store.doc.storeys[0].id, { state: 'st-a' });
+    const plan = buildPlan(store.doc, 'platsen', { state: 'st-a' });
     const curves = drawnSegments(plan.prims).filter((s) => s.on === 'På höjdkurvan');
     expect(curves.length).toBeGreaterThan(0);
     expect(curves.every((s) => s.curve && s.wandOnly)).toBe(true);

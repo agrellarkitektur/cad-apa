@@ -66,7 +66,7 @@ describe('Våningar (0.9)', () => {
     const two = addStorey(s, 'pl-1', 'above')!;
     const n = Object.keys(s.doc.elements).length;
     expect(deleteStorey(s, 'pl-1')).toBe(true);
-    expect(s.doc.storeys.map((x) => x.id)).toEqual([two]);
+    expect(s.doc.storeys.map((x) => x.id)).toEqual([two, 'platsen']);
     expect(Object.values(s.doc.elements).some((e) => e.type === 'Wall')).toBe(false);
     expect(s.doc.elements['fasad-1'].storey).toBe(two);
     expect(s.doc.views.some((v) => v.storey === 'pl-1')).toBe(false);

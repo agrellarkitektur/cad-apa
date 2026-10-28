@@ -1,7 +1,8 @@
-import type { Id } from '../../core/model';
+import { buildingStoreys, groundStorey, isSite, SITE_CATEGORIES, type Id, type Storey } from '../../core/model';
 import { addStorey, deleteStorey, neighbourStorey, storeyContents, storeysUp, toStorey } from '../../core/storeys';
 import { typeOf } from '../../elements/registry';
 import { askConfirm, askText } from '../ask';
+import { addSiteView } from '../../core/siteViews';
 import { saveStorey } from '../../core/treeCommands';
 import type { MenuItem } from '../contextMenu';
 import type { AppContext } from './context';
@@ -22,6 +23,11 @@ export function installStoreys(app: AppContext) {
   }
 
   function create(where: 'above' | 'below', from = app.ui.storey): Id | null {
+    // Från Platsen (0.10.25): ovanför den översta våningen eller under den nedersta.
+    if (isSite(from)) {
+      const up = storeysUp(doc());
+      from = (where === 'above' ? up[up.length - 1] : up[0]).id;
+    }
     const id = addStorey(app.store, from, where);
     if (!id) return null;
     open(id);
@@ -31,7 +37,8 @@ export function installStoreys(app: AppContext) {
 
   /** Våningen ovanför (1) eller under (-1) den som visas. */
   function step(dir: 1 | -1): boolean {
-    const next = neighbourStorey(doc(), app.ui.storey, dir);
+    // Från Platsen till våningen närmast ±0 (0.10.25).
+    const next = isSite(app.ui.storey) ? groundStorey(doc()) : neighbourStorey(doc(), app.ui.storey, dir);
     if (!next) {
       app.hint(dir > 0 ? 'Det finns ingen våning ovanför.' : 'Det finns ingen våning under.');
       return false;
@@ -44,7 +51,11 @@ export function installStoreys(app: AppContext) {
   async function remove(id: Id): Promise<boolean> {
     const s = doc().storeys.find((x) => x.id === id);
     if (!s) return false;
-    if (doc().storeys.length < 2) {
+    if (s.site) {
+      app.hint('Platsen går inte att ta bort.');
+      return false;
+    }
+    if (buildingStoreys(doc()).length < 2) {
       app.hint('Den sista våningen går inte att ta bort.');
       return false;
     }
@@ -71,12 +82,13 @@ export function installStoreys(app: AppContext) {
     app.hint(`${ids.length === 1 ? 'Ett objekt' : `${ids.length} objekt`} ${copy ? 'kopierat' : 'flyttat'} till ${nameOf(target)}.`, 3000);
   }
 
+  /** Våningarna att flytta eller kopiera till, uppifrån, och Platsen sist (0.10.25). */
+  const targets = (): Storey[] => [...storeysUp(doc()).reverse(), ...doc().storeys.filter((s) => s.site)].filter((s) => s.id !== app.ui.storey);
+
   /** Menyn för det markerade: Flytta och Kopiera till varje annan våning. */
   function menuItems(): MenuItem[] {
     const els = app.selection.list().map((id) => doc().elements[id]).filter(Boolean);
-    const others = storeysUp(doc())
-      .reverse()
-      .filter((s) => s.id !== app.ui.storey);
+    const others = targets();
     if (!others.length || !els.some((e) => !e.space && !typeOf(e.type)?.everyStorey)) return [];
     return [
       { kind: 'sep' },
@@ -90,9 +102,7 @@ export function installStoreys(app: AppContext) {
 
   /** Smartshell: välj våningen att flytta eller kopiera till i en meny mitt på ritytan. */
   function chooseTarget(copy: boolean): void {
-    const others = storeysUp(doc())
-      .reverse()
-      .filter((s) => s.id !== app.ui.storey);
+    const others = targets();
     if (!others.length) {
       app.hint('Det finns ingen annan våning. Skapa en med Ny våning ovanför eller under.');
       return;
@@ -119,6 +129,7 @@ export function installStoreys(app: AppContext) {
   function openMenu(id: Id, x: number, y: number): void {
     const s = doc().storeys.find((v) => v.id === id);
     if (!s) return;
+    if (s.site) return openSiteMenu(s, x, y);
     app.ctxMenu.open(
       x,
       y,
@@ -135,7 +146,33 @@ export function installStoreys(app: AppContext) {
         { label: 'Ny våning ovanför', run: () => void create('above', id) },
         { label: 'Ny våning under', run: () => void create('below', id) },
         { kind: 'sep' },
-        { label: 'Ta bort…', danger: true, disabled: doc().storeys.length < 2, run: () => void remove(id) },
+        { label: 'Ta bort…', danger: true, disabled: buildingStoreys(doc()).length < 2, run: () => void remove(id) },
+      ],
+      s.name,
+    );
+  }
+
+  /**
+   * Platsens meny (0.10.25): visa, inställningarna (dialogen Platsen, som
+   * tidigare låg i huvudmenyn), egenskaperna och en ny vy efter någon av
+   * förinställningarna.
+   */
+  function openSiteMenu(s: Storey, x: number, y: number): void {
+    app.ctxMenu.open(
+      x,
+      y,
+      [
+        { kind: 'header', label: s.name, sub: doc().site ? 'Situationsplan, markplanering och illustrationsplan' : 'Ingen plats ur Höjdkurvor' },
+        { label: 'Visa', disabled: app.ui.storey === s.id && !app.ui.marker && !app.ui.layout && !app.ui.worksheet, run: () => open(s.id) },
+        { label: 'Inställningar…', run: () => void app.site.showDialog() },
+        { label: 'Egenskaper', run: () => {
+          app.selection.clear();
+          app.panel.showTreeItem({ kind: 'storey', id: s.id });
+          if (app.ui.navOpen) app.navigator.render();
+        } },
+        { kind: 'sep' },
+        { kind: 'header', label: 'Ny vy' },
+        ...SITE_CATEGORIES.map((c): MenuItem => ({ label: c.name, run: () => app.views.applyView(addSiteView(app.store, c.id)) })),
       ],
       s.name,
     );

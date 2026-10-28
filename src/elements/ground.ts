@@ -35,6 +35,7 @@ export {
 
 export const groundType: ElementType<GroundParams> = {
   type: 'Ground',
+  onSite: true,
   label: 'Markobjekt',
   labelPlural: 'Markobjekt',
   drawOrder: 4.5,

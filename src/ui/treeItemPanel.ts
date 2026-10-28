@@ -1,7 +1,7 @@
 import { cutHeightOf, DEFAULT_CUT_HEIGHT } from '../elements/roofPlan';
 import { traceStoreyOptions } from './app/showKeys';
 import { PRESETS } from '../core/graphics';
-import { isMaster, type Id, type ProjectDoc, type TreeTab } from '../core/model';
+import { buildingStoreys, isMaster, isSite, SITE_CATEGORIES, type Id, type ProjectDoc, type SiteCategory, type Storey, type TreeTab } from '../core/model';
 import type { DocStore } from '../core/store';
 import { DETAIL_LABELS, DETAIL_LEVELS } from '../core/states';
 import { PAPER_SIZES, saveMaster, setDefaultMaster, stampUsers } from '../core/sheets';
@@ -63,6 +63,30 @@ function folderOptions(doc: ProjectDoc, tab: TreeTab, current: Id | null, exclud
 
 const field = (label: string, input: string) => `<label class="field"><span>${label}</span>${input}</label>`;
 
+/**
+ * Platsen i egenskaperna (0.10.25): inställningarna (dialogen Platsen) och
+ * nya vyer efter förinställningarna. Den har inget golv, ingen höjd och
+ * ingen snitthöjd att ändra.
+ */
+function siteMarkup(doc: ProjectDoc, s: Storey, folderField: string, actions: string): string {
+  const views = doc.views.filter((v) => v.storey === s.id).length;
+  return `<form class="tree-form" data-tree-kind="storey" data-tree-id="${s.id}">
+      <header class="sel-head"><h2>${esc(s.name)}</h2><p>Platsen · ${views ? `${views} ${views === 1 ? 'vy' : 'vyer'}` : 'ingen sparad vy'}</p></header>
+      <section>
+        <div class="fields">${folderField}</div>
+        <p class="note">Situationsplanen, markplaneringen och illustrationsplanen ritas här: marken, markobjekten, gränserna, grannhusen och träden. Allt ses ovanifrån, utan snitthöjd; husets kontur och taken syns. I en våningsplan visas marken med Visa → Kalkera → Platsen.</p>
+        <div class="nav-actions">
+          <button type="button" class="btn" data-action="site">Inställningar…</button>
+        </div>
+        <h3>Ny vy</h3>
+        <div class="nav-actions">
+          ${SITE_CATEGORIES.map((c) => `<button type="button" class="btn" data-action="site-view" data-category="${c.id}">${c.name}</button>`).join('')}
+        </div>
+      </section>
+      ${actions}
+    </form>`;
+}
+
 /** Formuläret, eller tomt om det valda inte finns. */
 export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
   const folder = doc.tree[item.id] ?? null;
@@ -84,7 +108,8 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('2D-symboler', levelSelect('detail', v.detail))}
           ${field('3D och fasader', levelSelect('modelDetail', v.modelDetail ?? v.detail))}
           ${field('Stilmall', `<select name="style"><option value="">Projektets</option>${PRESETS.map((p) => `<option${p.name === v.style ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`)}
-          ${field('Kalkera', `<select name="trace"><option value="">Ingen</option>${traceStoreyOptions(v.trace)}${doc.views.filter((x) => x.id !== v.id).map((x) => `<option value="${x.id}"${x.id === v.trace ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`)}
+          ${isSite(v.storey) ? field('Vykategori', `<select name="category">${SITE_CATEGORIES.map((c) => `<option value="${c.id}"${c.id === (v.category ?? 'situation') ? ' selected' : ''}>${c.name}</option>`).join('')}</select>`) : ''}
+          ${field('Kalkera', `<select name="trace"><option value="">Ingen</option>${traceStoreyOptions(v.trace, isSite(v.storey))}${doc.views.filter((x) => x.id !== v.id).map((x) => `<option value="${x.id}"${x.id === v.trace ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`)}
           ${field('Skala', `<span class="input-unit scale-unit"><i>1:</i><input name="scale" type="text" inputmode="numeric" value="${v.scale ?? ''}" placeholder="100"></span>`)}
         </div>
         <label class="check"><input type="checkbox" name="compare"${v.compare ? ' checked' : ''}> Jämför med befintligt</label>
@@ -175,6 +200,7 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
   if (item.kind === 'storey') {
     const s = doc.storeys.find((x) => x.id === item.id);
     if (!s) return '';
+    if (s.site) return siteMarkup(doc, s, field('Mapp', `<select name="folder">${folderOptions(doc, 'modell', folder)}</select>`), actions());
     return `<form class="tree-form" data-tree-kind="storey" data-tree-id="${s.id}">
       <header class="sel-head"><h2>${esc(s.name)}</h2><p>Våning</p></header>
       <section>
@@ -185,14 +211,14 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('Våningshöjd', `<span class="input-unit"><input name="height" type="text" inputmode="decimal" value="${s.height}"><i>mm</i></span>`)}
           ${field('Snitthöjd', `<span class="input-unit"><input name="cutHeight" type="text" inputmode="decimal" value="${cutHeightOf(s)}"><i>mm</i></span>`)}
         </div>
-        ${doc.site ? `<p class="note">Golvet ligger på +${(doc.site.datum + s.elevation / 1000).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })} i RH 2000 (±0 = +${doc.site.datum.toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}, ändras under Platsen i menyn).</p>` : ''}
+        ${doc.site ? `<p class="note">Golvet ligger på +${(doc.site.datum + s.elevation / 1000).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })} i RH 2000 (±0 = +${doc.site.datum.toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}, ändras i Platsens inställningar).</p>` : ''}
         <p class="note">Golvnivån räknas från plan 1:s nolla. Våningshöjden är golv till golv; ändras den flyttas våningarna ovanför lika mycket. Väggar utan egen höjd följer våningshöjden. Planen är ett snitt i snitthöjden över golvet: det som ligger helt ovanför ritas streckprickat, det som ligger helt under som vy.</p>
         <div class="nav-actions">
           <button type="button" class="btn" data-action="new-storey-above">Ny våning ovanför</button>
           <button type="button" class="btn" data-action="new-storey-below">Ny våning under</button>
         </div>
       </section>
-      ${actions(doc.storeys.length > 1 ? `<button type="button" class="btn btn-danger" data-action="delete-storey" data-id="${s.id}">Ta bort…</button>` : '')}
+      ${actions(buildingStoreys(doc).length > 1 ? `<button type="button" class="btn btn-danger" data-action="delete-storey" data-id="${s.id}">Ta bort…</button>` : '')}
     </form>`;
   }
   const f = doc.folders.find((x) => x.id === item.id);
@@ -284,6 +310,8 @@ export function bindTreeForm(root: HTMLElement, store: DocStore, onSaved: (item:
           hideDemolished: d.has('hideDemolished'),
           tags: d.getAll('tag').map(String),
           scale: scale > 0 ? scale : undefined,
+          // Vykategorin för en vy av Platsen (0.10.25).
+          ...(d.has('category') ? { category: (str('category') || undefined) as SiteCategory | undefined } : {}),
         },
         folder,
       );

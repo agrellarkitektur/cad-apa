@@ -77,7 +77,22 @@ export interface ViewDef {
   tags?: string[];
   /** Skalan vyn ritas i på ett blad, nämnaren (format 5). Texthöjder räknas efter den. */
   scale?: number;
+  /**
+   * Vykategorin för en vy av Platsen (0.10.25, format 22): situationsplan,
+   * markplaneringsritning eller illustrationsplan. Materialen (0.10.26)
+   * ritas efter den. Utelämnad = situationsplan.
+   */
+  category?: SiteCategory;
 }
+
+/** Vykategorierna för Platsen (0.10.25). */
+export type SiteCategory = 'situation' | 'grading' | 'illustration';
+
+export const SITE_CATEGORIES: readonly { id: SiteCategory; name: string }[] = [
+  { id: 'situation', name: 'Situationsplan' },
+  { id: 'grading', name: 'Markplaneringsritning' },
+  { id: 'illustration', name: 'Illustrationsplan' },
+];
 
 /**
  * Var ett 2D-element, en text eller ett mått syns (format 5). Utelämnad:
@@ -227,6 +242,51 @@ export interface Storey {
   height: number;
   /** Planens snitthöjd över golvet i mm (0.10.2): det som ligger ovanför ritas punktstreckat. Utelämnad = 1100 (1200 före 0.10.11). */
   cutHeight?: number;
+  /**
+   * Platsen (0.10.25, format 22): modellfliken för situationsplanen,
+   * markplaneringen och illustrationsplanen. Den ligger i listan som en
+   * våning (sist, id `platsen`, golvet vid ±0) så att vyer, verktyg och
+   * urklipp fungerar som på en våning, men den har ingen snitthöjd och
+   * räknas inte bland husets våningar (`buildingStoreys`).
+   */
+  site?: true;
+}
+
+/** Platsens id (0.10.25). */
+export const SITE_STOREY: Id = 'platsen';
+
+/** Platsen i våningslistan: sist, vid ±0. */
+export function siteStorey(): Storey {
+  return { id: SITE_STOREY, name: 'Platsen', elevation: 0, height: 2700, site: true };
+}
+
+/** Om id:t (eller våningen) är Platsen. */
+export function isSite(s: Id | Pick<Storey, 'site'> | undefined | null): boolean {
+  return typeof s === 'string' ? s === SITE_STOREY : !!s?.site;
+}
+
+/** Husets våningar, utan Platsen, i listans ordning. */
+export function buildingStoreys(doc: Pick<ProjectDoc, 'storeys'>): Storey[] {
+  return doc.storeys.filter((s) => !s.site);
+}
+
+/** Husets våningar nerifrån och upp (som `storeysUp` i storeys.ts, för lagren som inte når den). */
+export function storeysUpFrom(doc: Pick<ProjectDoc, 'storeys'>): Storey[] {
+  return buildingStoreys(doc).sort((a, b) => a.elevation - b.elevation);
+}
+
+/**
+ * Våningen vars golv ligger närmast ±0 (utan Platsen): den som markobjekten
+ * runt huset utgår från, och som platsen ritades på före 0.10.25.
+ */
+export function groundStorey(doc: Pick<ProjectDoc, 'storeys'>): Storey {
+  return buildingStoreys(doc).reduce((a, s) => (Math.abs(s.elevation) < Math.abs(a.elevation) || (Math.abs(s.elevation) === Math.abs(a.elevation) && s.elevation > a.elevation) ? s : a));
+}
+
+/** Våningslistan med Platsen sist (och med den, om den saknas). */
+export function withSiteLast(list: readonly Storey[]): Storey[] {
+  const site = list.find((s) => s.site) ?? siteStorey();
+  return [...list.filter((s) => !s.site), site];
 }
 
 /**
@@ -330,7 +390,7 @@ export interface OwnPen extends OwnPenPart {
 
 export const FORMAT = 'bacchus-project';
 /** 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionsmarkörernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
-export const FORMAT_VERSION = 21;
+export const FORMAT_VERSION = 22;
 
 export interface ProjectDoc {
   format: typeof FORMAT;
@@ -385,7 +445,7 @@ export function emptyProject(name: string, kind: ProjectKind, fields: Record<str
     formatVersion: FORMAT_VERSION,
     project: { name, kind, fields: { ...Object.fromEntries(PROJECT_DEFAULT_FIELDS.map((k) => [k, ''])), ...fields }, master: master.worksheet.id },
     states,
-    storeys: [{ id: 'pl-1', name: 'Plan 1', elevation: 0, height: 2700 }],
+    storeys: [{ id: 'pl-1', name: 'Plan 1', elevation: 0, height: 2700 }, siteStorey()],
     definitions: {
       't-yv01': { id: 't-yv01', origin: 'component', name: 'YV01', elementType: 'Wall', params: { thickness: 400 }, props: {}, description: 'Yttervägg' },
       't-iv01': { id: 't-iv01', origin: 'component', name: 'IV01', elementType: 'Wall', params: { thickness: 120 }, props: {}, description: 'Lätt innervägg' },

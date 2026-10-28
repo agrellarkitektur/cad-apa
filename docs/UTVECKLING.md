@@ -1610,6 +1610,62 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Platsen som modellflik (0.10.25, format 22)
+
+- **Platsen i våningslistan**: `Storey.site` (`true`), id `SITE_STOREY`
+  (`'platsen'`), golvet vid ±0, sist i `doc.storeys`. `siteStorey()`,
+  `isSite(id | våning)`, `buildingStoreys(doc)` (husets våningar),
+  `storeysUpFrom` (= `storeysUp` i `core/storeys.ts`), `groundStorey`
+  (våningen närmast ±0, utan Platsen) och `withSiteLast` ligger i
+  `src/core/model.ts`. `emptyProject` och exemplet har den; `parse` lägger
+  till den sist om den saknas (`withSiteLast`), så handskrivna filer får
+  den. Kod som räknar med *husets* våningar använder `buildingStoreys` eller
+  `storeysUp`; kod som slår upp en vy, en yta eller ett element på en
+  våning behöver inget (Platsen är en våning där). `doc.storeys[0]` är
+  alltid en av husets våningar, eftersom `addStorey` och `deleteStorey`
+  håller Platsen sist och den inte går att ta bort.
+- **Våningskommandona** (`core/storeys.ts`): `addStorey` bygger inte från
+  Platsen och flyttar den inte; `storeyPatch` ändrar inte Platsen och
+  flyttar den inte när en våningshöjd ändras; `deleteStorey` tar inte bort
+  den och kräver två av husets våningar. `toStorey` flyttar inte typer med
+  `onSite` (Terrain, SiteBuilding, Tree, SiteMap, Ground) till en våning.
+  `TRACE_SITE` (`'våning:platsen'`) kalkerar Platsen under en våningsplan
+  (`tracedStorey`, `traceStoreyOptions(trace, onSite)`).
+- **Ritningen**: `cutHeightOf` är `Infinity` på Platsen, så `planCutHeight`
+  ger allt som vy (väggar som sedda, taken ovanifrån utan snittyta);
+  stödmuren i `groundPlan.ts` ritas snittad när snitthöjden inte är ändlig.
+  `roofShownOn` visar alla tak på Platsen. `houseOnSite` i `roofPlan.ts`
+  ritar husets kontur (`buildingFootprint`) med `clipToRings` (utanför
+  taken heldragen, under dem streckad, utom när *Husets kontur genom
+  taket* är tänd och taket ritar den själv); `buildPlan` lägger till den
+  för Platsen när `house` inte är släckt (`HOUSE_KEY`). Konturen har
+  `objectId` `husets-kontur` och `objectType` `House`, så snäppet läser
+  den. `modelShapes` bygger Platsen som en våning vid ±0 (stödmurarna,
+  grannhusen och träden i 3D och sektionerna); `sectionLevels` och
+  rumsnumren räknar bara husets våningar.
+- **Marken**: `applySitePackage` lägger platsens objekt på `SITE_STOREY`.
+  Marken runt huset utgår från `groundStorey` när markobjektet ligger på
+  Platsen (`aroundFloor` i `groundGeometry.ts`). `GroundTool` lägger
+  markobjekt på Platsen och letar bjälklaget för en urgrävning nerifrån
+  bland husets våningar; `changeTool` i `tools.ts` öppnar Platsen när Mark
+  väljs på en våning.
+- **Vyerna**: `ViewDef.category` (`SiteCategory`: `situation`, `grading`,
+  `illustration`, namnen i `SITE_CATEGORIES`). Förinställningarna i
+  `src/core/siteViews.ts` (`siteViewPreset`, `addSiteView`); fältet
+  *Vykategori* i vyns inställningar (`treeItemPanel.ts`) och
+  `currentViewDef` i `views.ts` behåller den öppna vyns kategori.
+- **Gränssnittet**: rubriken *Platsen* i projektträdet (`navigator.ts`),
+  Platsens meny `openSiteMenu` i `src/ui/app/storeys.ts` (Visa,
+  Inställningar…, Egenskaper, Ny vy), Platsens egenskaper `siteMarkup` i
+  `treeItemPanel.ts` (knapparna `data-action="site"` och
+  `data-action="site-view"` med `data-category`, i `actions.ts`).
+  Huvudmenyns *Platsen…* är borta; `window.bacchus.site` har
+  `showDialog` (klickjämförelsen använder den).
+- **Testerna**: `tests/v01025.test.ts`. `toolHost(store, selected, storey)`
+  och `planOf(store, storey)` tar en våning; markens tester ritar och
+  klickar på `'platsen'`, och referensritningen `mark-plan` är Platsens
+  plan (taken, husets kontur, stödmuren snittad, utan väggarna).
+
 ## Bågar i bjälklagets och markytans kontur (0.10.24, format 21)
 
 Inget nytt format: `bulges` på `SlabParams` och på `GroundParams` för
@@ -2765,7 +2821,7 @@ handskakningen med finns i `test/cad-apa-mock.html` där.
   Float32 little-endian i base64 som i paketet). Fasadernas och
   sektionernas tråd får den filen men inga andra (`docForWorker`).
 - **Objekten ur platsen** är `global` (alla tillstånd, åtgärd `plain`),
-  låsta och ligger på våningen närmast ±0. `applySitePackage` och
+  låsta och ligger på Platsen (på våningen närmast ±0 före 0.10.25). `applySitePackage` och
   `removeSite` känner igen dem på typen (`SITE_ELEMENT_TYPES` i kärnan,
   samma som `SITE_TYPES` i `elements/site.ts`).
 - **`only3dView`** (ny i `ElementType`): grannhus och träd har 3D-former

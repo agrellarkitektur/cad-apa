@@ -1,12 +1,13 @@
 import type { Brand } from '../../brand';
 import { createProposal } from '../../core/commands';
 import { existingState } from '../../core/states';
+import { addSiteView } from '../../core/siteViews';
 import { createFolder, createWorksheet } from '../../core/treeCommands';
 import type { FeedbackDialog } from '../feedbackDialog';
 import type { NavTab } from '../navigator';
 import { isNarrow } from '../sheet';
 import { applyTheme, type ThemeId } from '../theme';
-import { onPaper } from '../../core/model';
+import { onPaper, type SiteCategory } from '../../core/model';
 import { isSnapEnabled, setSnapEnabled } from '../tools/snap';
 import { saveUiSettings } from '../uiSettings';
 import type { AppContext } from './context';
@@ -249,6 +250,14 @@ export function installActions(app: AppContext, parts: ActionParts) {
         closeMenu();
         void app.site.showDialog();
         break;
+      case 'site-view': {
+        // En ny vy av Platsen efter förinställningen (0.10.25), öppnad.
+        const category = target.closest<HTMLElement>('[data-category]')?.dataset.category as SiteCategory | undefined;
+        if (!category) break;
+        closeMenu();
+        views.applyView(addSiteView(store, category));
+        break;
+      }
       case 'delete-storey': {
         const id = target.closest<HTMLElement>('[data-id]')?.dataset.id;
         if (id) void app.storeys.remove(id);

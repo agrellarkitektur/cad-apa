@@ -1,6 +1,6 @@
 import type { ProjectDoc } from '../../core/model';
 import { labelSorts, sortKey } from '../../elements/label';
-import { TRACE_ABOVE, TRACE_BELOW } from '../../core/storeys';
+import { TRACE_ABOVE, TRACE_BELOW, TRACE_SITE } from '../../core/storeys';
 import type { UiState } from './shell';
 
 /**
@@ -62,7 +62,7 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
     ],
   },
   {
-    // Platsen ur Höjdkurvor (0.10.3); gruppen visas bara när projektet har en plats.
+    // Platsen ur Höjdkurvor (0.10.3); gruppen visas när projektet har en plats, och på Platsen (0.10.25).
     id: 'site',
     label: 'Platsen',
     items: [
@@ -75,6 +75,8 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
       ['SiteBuilding', 'Grannhus'],
       ['Tree', 'Träd'],
       ['SiteMap', 'Fastighetsgränser, vägar och punkter'],
+      // Husets kontur på Platsen (0.10.25), heldragen utanför taken och streckad under dem.
+      ['house', 'Husets kontur (på Platsen)'],
     ],
   },
   {
@@ -102,11 +104,16 @@ export function showGroupsFor(doc: ProjectDoc): readonly ShowGroup[] {
   return SHOW_GROUPS.map((g) => (g.id === 'littera' ? { ...g, items: [...g.items, ...sorts.map((s): readonly [string, string] => [sortKey(s), `– ${s}`])] } : g));
 }
 
-/** Våningen under och över (0.9) först bland det som går att kalkera. */
-export function traceStoreyOptions(trace: string | null | undefined): string {
+/**
+ * Våningen under och över (0.9) först bland det som går att kalkera, och
+ * Platsen (0.10.25), marken under en våningsplan. På Platsen finns inget av dem.
+ */
+export function traceStoreyOptions(trace: string | null | undefined, onSite = false): string {
+  if (onSite) return '';
   return [
     [TRACE_BELOW, 'Våningen under'],
     [TRACE_ABOVE, 'Våningen över'],
+    [TRACE_SITE, 'Platsen (marken)'],
   ]
     .map(([v, label]) => `<option value="${v}"${trace === v ? ' selected' : ''}>${label}</option>`)
     .join('');

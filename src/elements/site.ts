@@ -214,6 +214,7 @@ export function contourSegments3d(doc: ProjectDoc, f: Finished | null, lift = 40
 
 export const terrainType: ElementType<TerrainParams> = {
   type: 'Terrain',
+  onSite: true,
   label: 'Befintlig mark',
   labelPlural: 'Befintlig mark',
   drawOrder: 1,
@@ -326,6 +327,7 @@ const DEFAULT_BUILDING_HEIGHT = 6;
 
 export const siteBuildingType: ElementType<SiteBuildingParams> = {
   type: 'SiteBuilding',
+  onSite: true,
   label: 'Grannhus',
   labelPlural: 'Grannhus',
   drawOrder: 2,
@@ -384,6 +386,7 @@ function circle(c: Vec2, r: number, n: number): Vec2[] {
 
 export const treeType: ElementType<TreeParams> = {
   type: 'Tree',
+  onSite: true,
   label: 'Träd',
   labelPlural: 'Träd',
   drawOrder: 3,
@@ -439,6 +442,7 @@ export interface SiteMapParams {
 
 export const siteMapType: ElementType<SiteMapParams> = {
   type: 'SiteMap',
+  onSite: true,
   label: 'Kartobjekt',
   labelPlural: 'Kartobjekt',
   drawOrder: 4,

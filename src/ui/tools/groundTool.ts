@@ -1,5 +1,5 @@
 import { addElements, updateParams } from '../../core/commands';
-import type { Element, Id } from '../../core/model';
+import { isSite, SITE_STOREY, storeysUpFrom, type Element, type Id } from '../../core/model';
 import { groundAt, terrainOf } from '../../core/site';
 import type { GroundParams } from '../../elements/ground';
 import { extendRamp } from '../../elements/rampEdits';
@@ -171,7 +171,7 @@ export class GroundTool implements ViewTool, PointTaker {
   /** Om projektet har en markmodell; annars ett tips. */
   private hasTerrain(): boolean {
     if (terrainOf(this.host.store.doc)) return true;
-    this.host.hint('Markobjekt behöver en markmodell. Lägg in platsen ur Höjdkurvor (Platsen i menyn).', 5000);
+    this.host.hint('Markobjekt behöver en markmodell. Lägg in platsen ur Höjdkurvor (högerklicka på Platsen i projektträdet, Inställningar).', 5000);
     return false;
   }
 
@@ -319,9 +319,12 @@ export class GroundTool implements ViewTool, PointTaker {
   /** En urgrävning under bjälklaget där man klickade. Finns den redan markeras den. */
   private underSlab(pt: Vec2): void {
     const doc = this.host.store.doc;
-    const slab = slabAt(doc, this.host.storey(), this.host.activeState(), pt);
+    // På Platsen (0.10.25): bjälklaget på den lägsta våningen som har ett där.
+    const storeys = isSite(this.host.storey()) ? storeysUpFrom(doc).map((s) => s.id) : [this.host.storey()];
+    let slab: Id | null = null;
+    for (const s of storeys) if (!slab) slab = slabAt(doc, s, this.host.activeState(), pt);
     if (!slab) {
-      this.host.hint('Klicka inne i ett bjälklag på den här våningen.');
+      this.host.hint(isSite(this.host.storey()) ? 'Klicka inne i ett bjälklag under huset.' : 'Klicka inne i ett bjälklag på den här våningen.');
       return;
     }
     const old = this.existing((e) => e.params.slab === slab);
@@ -364,12 +367,15 @@ export class GroundTool implements ViewTool, PointTaker {
   }
 
   private create(params: GroundParams): void {
+    const doc = this.host.store.doc;
     const states = this.states();
     if (!states.length) {
       this.host.hint('Projektet har inget förslag att lägga markobjektet i.');
       return;
     }
-    const [el] = addElements(this.host.store, [{ type: 'Ground', storey: this.host.storey(), tags: [], params: params as unknown as Record<string, unknown>, props: {}, states }], this.host.activeState(), 'Lägg till markobjekt');
+    // Markobjekten hör till Platsen (0.10.25).
+    const storey = doc.storeys.some((s) => s.site) ? SITE_STOREY : this.host.storey();
+    const [el] = addElements(this.host.store, [{ type: 'Ground', storey, tags: [], params: params as unknown as Record<string, unknown>, props: {}, states }], this.host.activeState(), 'Lägg till markobjekt');
     if (states[0] !== this.host.activeState()) this.host.hint('Markobjekt hör till förslaget och är lagt i förslagen; den färdiga marken syns där.', 5000);
     this.onCreated?.(el.id);
   }

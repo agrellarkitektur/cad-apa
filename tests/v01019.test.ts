@@ -32,9 +32,9 @@ const params = (store: DocStore, id: string) => store.doc.elements[id].params as
 const at = (model: [number, number]) => ({ model, pointerType: 'mouse' }) as unknown as ViewPointer;
 
 function host(store: DocStore, selected: string[] = []) {
-  const h = toolHost(store, selected);
+  const h = toolHost(store, selected, 'platsen');
   const list = h.selection.list.bind(h.selection);
-  return { ...h, selection: { ...h.selection, list, has: (id: string) => list().includes(id) } as never, plan: () => buildPlan(store.doc, store.doc.storeys[0].id, { state: 'st-a' }) };
+  return { ...h, selection: { ...h.selection, list, has: (id: string) => list().includes(id) } as never, plan: () => buildPlan(store.doc, 'platsen', { state: 'st-a' }) };
 }
 
 describe('Linjer med bågar (0.10.19)', () => {

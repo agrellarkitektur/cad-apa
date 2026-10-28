@@ -2,7 +2,7 @@ import { resolveParams } from '../../elements/registry';
 import { markerName } from '../../elements/markers';
 import { ringArea } from '../../elements/slab';
 import { bareWallUnion, type WallParams } from '../../elements/wall';
-import type { Id } from '../../core/model';
+import { isSite, SITE_STOREY, type Id } from '../../core/model';
 import type { ViewTool } from '../../view2d/planView';
 import type { ModifyContext } from '../modify/ops';
 import { DimensionTool, TextTool } from '../tools/annotationTools';
@@ -210,6 +210,11 @@ export function installTools(app: AppContext, host: ToolHost) {
     }
     if (app.ui.layout && id !== 'select' && id !== 'pan' && !SHEET_TOOLS.includes(id)) app.goTo({ kind: 'storey', id: app.ui.storey });
     if (PLAN_TOOLS.includes(id) && app.ui.mode === '3d') void app.setMode('2d');
+    // Markobjekten hör till Platsen (0.10.25): Mark öppnar den.
+    if (id === 'ground' && !app.ui.layout && !app.ui.marker && !app.ui.worksheet && !isSite(app.ui.storey) && app.store.doc.storeys.some((s) => s.site)) {
+      app.goTo({ kind: 'storey', id: SITE_STOREY });
+      app.hint('Markobjekten ritas på Platsen.', 3000);
+    }
     if (app.ui.tool === 'wall' && id !== 'wall') wallTool.finish();
     if (app.ui.tool === 'dimension' && id !== 'dimension') dimensionTool.reset();
     if (app.ui.tool === 'draw2d' && id !== 'draw2d') draw2dTool.finish(false);

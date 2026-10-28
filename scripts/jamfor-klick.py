@@ -122,6 +122,9 @@ def _plats():
 
 PLATS = _plats()
 
+# Dialogen Platsen: i huvudmenyn före 0.10.25, sedan i Platsens meny i projektträdet (`bacchus.site`).
+SITE_DIALOG = "bacchus.site ? void bacchus.site.showDialog() : __click('[data-action=\"site\"]')"
+
 INIT = r"""
 (() => {
   let n = 1;
@@ -573,7 +576,7 @@ def main():
         step('ångra brytlinjen', "__click('[data-action=\"undo\"]')")
         step('lås brytlinjen', f"__set('[data-key=\"lock:\"]', true, '{panel}')")
         step('avmarkera mark', "bacchus.selection.clear()")
-        step('öppna Platsen', "__click('[data-action=\"site\"]')", fn=lambda: pg.wait_for_selector('.dialog [data-ground=\"slope\"]', timeout=5000))
+        step('öppna Platsen', SITE_DIALOG, fn=lambda: pg.wait_for_selector('.dialog [data-ground=\"slope\"]', timeout=5000))
         step('slänten i förvalen', "__set('[data-ground=\"slope\"]', '2,5', '.site-dialog')")
         step('jord i sektionerna', "__set('[data-site=\"earth\"]', true, '.site-dialog')")
         step('höjdkurvor var', "__set('[data-site=\"contours\"]', '250', '.site-dialog')")
@@ -954,7 +957,7 @@ def main():
         step('murens littera', f"__set('[data-key=\"ground:name\"]', 'M07', '{panel}')")
         step('markera rampen för sidolutningen', f"bacchus.selection.set({ramp_ids})")
         step('minsta sidolutning', f"__set('[data-key=\"ground:minCross\"]', '2', '{panel}')")
-        step('öppna Platsen för decimalerna', "bacchus.selection.clear(); __click('[data-action=\"site\"]')", fn=lambda: pg.wait_for_selector('.dialog [data-ground=\"levelDecimals\"]', timeout=5000))
+        step('öppna Platsen för decimalerna', "bacchus.selection.clear(); " + SITE_DIALOG, fn=lambda: pg.wait_for_selector('.dialog [data-ground=\"levelDecimals\"]', timeout=5000))
         step('en decimal i markhöjderna', "__set('[data-ground=\"levelDecimals\"]', '1', '.site-dialog')")
         step('tre siffror i littera', "__set('[data-ground=\"litteraDigits\"]', '3', '.site-dialog')")
         step('spara Platsen igen', "__click('[type=\"submit\"]', '.site-dialog')")

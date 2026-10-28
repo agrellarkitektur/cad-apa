@@ -1,7 +1,7 @@
 import { copyPayload, pasteClip } from './clipboard';
 import { pruneAssets } from './commands';
 import { newId } from './ids';
-import type { Element, Id, ProjectDoc, Storey } from './model';
+import { buildingStoreys, isSite, storeysUpFrom, withSiteLast, type Element, type Id, type ProjectDoc, type Storey } from './model';
 import type { DocStore } from './store';
 import { typeOf } from '../elements/registry';
 
@@ -11,10 +11,8 @@ import { typeOf } from '../elements/registry';
  * våning som flyttas i höjd tar med sig allt på den.
  */
 
-/** Våningarna nerifrån och upp. */
-export function storeysUp(doc: Pick<ProjectDoc, 'storeys'>): Storey[] {
-  return [...doc.storeys].sort((a, b) => a.elevation - b.elevation);
-}
+/** Husets våningar nerifrån och upp (utan Platsen, 0.10.25). */
+export const storeysUp = storeysUpFrom;
 
 /** Våningen närmast över (`1`) eller under (`-1`), om det finns någon. */
 export function neighbourStorey(doc: Pick<ProjectDoc, 'storeys'>, id: Id, dir: 1 | -1): Storey | undefined {
@@ -26,20 +24,24 @@ export function neighbourStorey(doc: Pick<ProjectDoc, 'storeys'>, id: Id, dir: 1
 /** Kalkera våningen under eller över (0.9), som värde för vyns `trace` i stället för en vy. */
 export const TRACE_BELOW = 'våning:under';
 export const TRACE_ABOVE = 'våning:över';
+/** Kalkera Platsen (0.10.25): marken under en våningsplan. */
+export const TRACE_SITE = 'våning:platsen';
 
-/** Våningen som kalkeras, om `trace` är våningen under eller över. */
+/** Våningen som kalkeras, om `trace` är våningen under eller över eller Platsen. */
 export function tracedStorey(doc: Pick<ProjectDoc, 'storeys'>, storey: Id, trace: Id | null | undefined): Storey | undefined {
   if (trace === TRACE_BELOW) return neighbourStorey(doc, storey, -1);
   if (trace === TRACE_ABOVE) return neighbourStorey(doc, storey, 1);
+  if (trace === TRACE_SITE && !isSite(storey)) return doc.storeys.find((s) => s.site);
   return undefined;
 }
+
 
 /** Ett namn för en ny våning: Plan 2, Plan 3 … uppåt, Källarplan nedåt. */
 function newStoreyName(doc: Pick<ProjectDoc, 'storeys'>, where: 'above' | 'below'): string {
   const names = new Set(doc.storeys.map((s) => s.name));
   if (where === 'above') {
     const nums = doc.storeys.map((s) => /^Plan (\d+)$/.exec(s.name)).filter(Boolean).map((m) => Number(m![1]));
-    let n = nums.length ? Math.max(...nums) + 1 : doc.storeys.length + 1;
+    let n = nums.length ? Math.max(...nums) + 1 : buildingStoreys(doc).length + 1;
     while (names.has(`Plan ${n}`)) n++;
     return `Plan ${n}`;
   }
@@ -56,16 +58,17 @@ function newStoreyName(doc: Pick<ProjectDoc, 'storeys'>, where: 'above' | 'below
  */
 export function addStorey(store: DocStore, from: Id, where: 'above' | 'below'): Id | null {
   const s = store.doc.storeys.find((x) => x.id === from);
-  if (!s) return null;
+  if (!s || s.site) return null;
   const id = newId('pl');
   const name = newStoreyName(store.doc, where);
   const height = s.height;
   const elevation = where === 'above' ? s.elevation + s.height : s.elevation - height;
   store.transact(`Ny våning ${name}`, (tx) => {
+    // Platsen står kvar vid ±0 och sist i listan (0.10.25).
     const moved = tx.doc.storeys.map((x) =>
-      where === 'above' && x.elevation > s.elevation ? { ...x, elevation: x.elevation + height } : where === 'below' && x.elevation < s.elevation ? { ...x, elevation: x.elevation - height } : x,
+      x.site ? x : where === 'above' && x.elevation > s.elevation ? { ...x, elevation: x.elevation + height } : where === 'below' && x.elevation < s.elevation ? { ...x, elevation: x.elevation - height } : x,
     );
-    tx.setStoreys([...moved, { id, name, elevation, height }]);
+    tx.setStoreys(withSiteLast([...moved, { id, name, elevation, height }]));
   });
   return id;
 }
@@ -77,8 +80,10 @@ export function addStorey(store: DocStore, from: Id, where: 'above' | 'below'): 
 export function storeyPatch(doc: Pick<ProjectDoc, 'storeys'>, id: Id, patch: Partial<Omit<Storey, 'id'>>): Storey[] {
   const s = doc.storeys.find((x) => x.id === id);
   if (!s) return doc.storeys;
+  // Platsen har bara sitt namn att ändra; den ligger vid ±0 och flyttas inte med husets våningar (0.10.25).
+  if (s.site) return doc.storeys;
   const dh = patch.height !== undefined ? patch.height - s.height : 0;
-  return doc.storeys.map((x) => (x.id === id ? { ...x, ...patch } : dh && x.elevation > s.elevation ? { ...x, elevation: x.elevation + dh } : x));
+  return doc.storeys.map((x) => (x.id === id ? { ...x, ...patch } : dh && !x.site && x.elevation > s.elevation ? { ...x, elevation: x.elevation + dh } : x));
 }
 
 /** Det som tas bort med en våning: objekten på dess plan och vyerna av planen. */
@@ -93,12 +98,12 @@ export function storeyContents(doc: ProjectDoc, id: Id): { elements: Element[]; 
  * Ta bort en våning med allt som är ritat på den och vyerna av den. Det som
  * hör till projektet (fasader, sektioner, norrpilen) och det som är ritat i
  * fasader, sektioner och på blad flyttas till grannvåningen. Den sista
- * våningen går inte att ta bort.
+ * våningen och Platsen går inte att ta bort.
  */
 export function deleteStorey(store: DocStore, id: Id): boolean {
   const doc = store.doc;
   const s = doc.storeys.find((x) => x.id === id);
-  if (!s || doc.storeys.length < 2) return false;
+  if (!s || s.site || buildingStoreys(doc).length < 2) return false;
   const other = (neighbourStorey(doc, id, -1) ?? neighbourStorey(doc, id, 1))!.id;
   const { elements, views } = storeyContents(doc, id);
   const gone = new Set<Id>([...views, `modell:${id}`]);
@@ -122,9 +127,14 @@ export function deleteStorey(store: DocStore, id: Id): boolean {
   return true;
 }
 
-/** Det som kan flyttas mellan våningar: modellen och planens ritning, inte det som hör till projektet eller ritats i en fasad eller på ett blad. */
-function movable(doc: ProjectDoc, ids: readonly Id[]): Element[] {
-  const pick = new Set(ids.filter((id) => doc.elements[id] && !doc.elements[id].space && !typeOf(doc.elements[id].type)?.everyStorey));
+/**
+ * Det som kan flyttas mellan våningar: modellen och planens ritning, inte det
+ * som hör till projektet eller ritats i en fasad eller på ett blad. Marken
+ * och platsens objekt (`onSite`) stannar på Platsen (0.10.25).
+ */
+function movable(doc: ProjectDoc, ids: readonly Id[], target: Id): Element[] {
+  const stays = (id: Id) => !isSite(target) && !!typeOf(doc.elements[id].type)?.onSite;
+  const pick = new Set(ids.filter((id) => doc.elements[id] && !doc.elements[id].space && !typeOf(doc.elements[id].type)?.everyStorey && !stays(id)));
   for (const id of [...pick]) if (doc.elements[id].host && !pick.has(doc.elements[id].host!)) pick.delete(id);
   // Dörrar och fönster följer sin vägg.
   for (const e of Object.values(doc.elements)) if (e.host && pick.has(e.host)) pick.add(e.id);
@@ -140,7 +150,7 @@ export function toStorey(store: DocStore, ids: readonly Id[], target: Id, copy: 
   const doc = store.doc;
   const t = doc.storeys.find((s) => s.id === target);
   if (!t) return [];
-  const els = movable(doc, ids).filter((e) => e.storey !== target);
+  const els = movable(doc, ids, target).filter((e) => e.storey !== target);
   if (!els.length) return [];
   if (copy) {
     const clip = copyPayload(doc, els.map((e) => e.id), els[0].storey);

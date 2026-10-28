@@ -1,6 +1,6 @@
 import { deleteElements, renameElement, updateParams } from '../../core/commands';
 import { newId } from '../../core/ids';
-import { onPaper, type Id, type ViewDef } from '../../core/model';
+import { isSite, onPaper, type Id, type ViewDef } from '../../core/model';
 import { markerFrame, markerName } from '../../elements/markers';
 import type { Vec2 } from '../../repr/primitives';
 import { askConfirm, askText } from '../ask';
@@ -48,6 +48,8 @@ export function installViews(app: AppContext) {
 
   /** Vyns inställningar som de är just nu. */
   function currentViewDef(id: Id, name: string): ViewDef {
+    const active = app.ui.activeView ? app.store.doc.views.find((v) => v.id === app.ui.activeView) : undefined;
+    const category = isSite(app.ui.storey) && active?.storey === app.ui.storey ? active.category : undefined;
     return {
       id,
       name,
@@ -65,6 +67,8 @@ export function installViews(app: AppContext) {
       ...(app.ui.marker ? { marker: app.ui.marker } : {}),
       ...(app.ui.worksheet ? { worksheet: app.ui.worksheet } : {}),
       ...(app.ui.scale !== 100 ? { scale: app.ui.scale } : {}),
+      // Vykategorin (0.10.25) följer den öppna vyn av Platsen; den ändras i vyns inställningar.
+      ...(category ? { category } : {}),
     };
   }
 

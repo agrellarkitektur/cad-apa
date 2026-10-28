@@ -1,4 +1,4 @@
-import { isMaster, isStamp, onPaper, type Folder, type Id, type ProjectDoc, type TreeTab, type ViewDef } from '../core/model';
+import { buildingStoreys, isMaster, isSite, isStamp, onPaper, type Folder, type Id, type ProjectDoc, type TreeTab, type ViewDef } from '../core/model';
 import { markerName } from '../elements/markers';
 import { UNDERLAY_KIND_LABEL, type UnderlayParams } from '../elements/underlay';
 import { icons } from './icons';
@@ -229,7 +229,9 @@ export class Navigator {
     const doc = this.host.doc();
     const marker = this.host.marker();
     const current = marker || this.host.worksheet() ? null : this.host.storey();
-    const storeys = [...doc.storeys].sort((a, b) => b.elevation - a.elevation);
+    const storeys = doc.storeys.filter((s) => !s.site).sort((a, b) => b.elevation - a.elevation);
+    // Platsen (0.10.25) har en egen rubrik ovanför våningarna.
+    const site = doc.storeys.find((s) => s.site);
     const markers = (type: string) =>
       Object.values(doc.elements)
         .filter((e) => e.type === type)
@@ -239,6 +241,8 @@ export class Navigator {
     const markerRow = (id: Id, name: string, locked: boolean) =>
       `<div class="view-row${id === marker ? ' active' : ''}${id === picked ? ' picked' : ''}"><button class="view-apply" data-marker-pick="${id}" title="Öppna, och visa inställningarna i egenskaperna. Högerklicka (håll in på telefonen) för fler val">${esc(name)}${locked ? `<span class="row-lock" title="Låst">${icons.lock}</span>` : ''}</button><button class="icon-mini view-more" data-marker-menu="${id}" aria-label="Fler val för ${esc(name)}" title="Fler val">${icons.more}</button></div>`;
     const rowsById = new Map<Id, string>();
+    if (site)
+      rowsById.set(site.id, `<div class="view-row${site.id === current ? ' active' : ''}${site.id === picked ? ' picked' : ''}"><button class="view-apply" data-storey-pick="${site.id}" title="Öppna Platsen: situationsplanen, markplaneringen och illustrationsplanen. Högerklicka för inställningarna och nya vyer">${esc(site.name)}<small>${doc.site ? 'markmodell' : 'plan mark'}</small></button><button class="icon-mini view-more" data-storey-menu="${site.id}" aria-label="Fler val för ${esc(site.name)}" title="Fler val">${icons.more}</button></div>`);
     for (const s of storeys)
       rowsById.set(s.id, `<div class="view-row${s.id === current ? ' active' : ''}${s.id === picked ? ' picked' : ''}"><button class="view-apply" data-storey-pick="${s.id}" title="Öppna planen, och visa inställningarna i egenskaperna. Högerklicka (håll in på telefonen) för fler val">${esc(s.name)}<small>${fmtLevel(s.elevation)}</small></button><button class="icon-mini view-more" data-storey-menu="${s.id}" aria-label="Fler val för ${esc(s.name)}" title="Fler val">${icons.more}</button></div>`);
     const elevations = markers('Elevation');
@@ -256,7 +260,10 @@ export class Navigator {
       const html = this.unfiled(rowsById, ids);
       return html ? `<div class="nav-list">${html}</div>` : ids.length ? '' : `<p class="note">${empty}</p>`;
     };
-    return `${this.folders('modell', rowsById)}<section>
+    return `${this.folders('modell', rowsById)}${site ? `<section>
+      <h2>Platsen</h2>
+      ${list([site.id], '')}
+    </section>` : ''}<section>
       <h2>Våningar</h2>
       ${list(storeys.map((s) => s.id), '')}
       <div class="nav-actions">
@@ -292,7 +299,7 @@ export class Navigator {
     const rowsById = new Map<Id, string>();
     for (const v of doc.views) {
       const mod = v.id === activeId && this.host.viewModified(v) ? ' *' : '';
-      const info = [doc.storeys.length > 1 ? storeyName(v.storey) : '', this.host.describeView(v)].filter(Boolean).join(' · ');
+      const info = [buildingStoreys(doc).length > 1 || isSite(v.storey) ? storeyName(v.storey) : '', this.host.describeView(v)].filter(Boolean).join(' · ');
       const traced = this.host.trace() === v.id ? '<span class="trace-tag">kalkeras</span> ' : '';
       const tags = v.tags?.length ? ` · ${v.tags.map(esc).join(', ')}` : '';
       rowsById.set(

@@ -1,9 +1,10 @@
 import { resolveFill } from '../core/fillTypes';
 import type { ActionStyle, StyleSheet } from '../core/graphics';
-import type { Element, Id, ProjectDoc } from '../core/model';
+import { isSite, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { Action, ViewStates } from '../core/states';
 import { allTypes, typeOf, type ElementType, type PlanContext, type PlanItem } from '../elements/registry';
 import { autoDimensions } from '../elements/autoDims';
+import { HOUSE_KEY, houseOnSite } from '../elements/roofPlan';
 import { sortByOrder } from '../core/drawOrder';
 import { createContext } from './context';
 import { coverLines } from './cover';
@@ -99,6 +100,8 @@ export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: 
     for (const p of group.pickables) pickables.push(p);
   }
   if (view.autoDims && view.compareTo && !view.place && !view.hide?.includes('Dimension')) prims.push(...autoDimensions(ctx));
+  // Husets kontur på Platsen (0.10.25).
+  if (ctx.storey && isSite(storey) && !view.place && !view.hide?.includes(HOUSE_KEY)) prims.push(...houseOnSite(ctx));
   saved.groups = groupsNow;
   saved.singles = singlesNow;
   saved.elements = doc.elements;
