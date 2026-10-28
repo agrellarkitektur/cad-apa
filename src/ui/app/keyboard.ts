@@ -129,6 +129,7 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
       if (app.ui.tool === 'draw2d') app.draw2dTool.finish(false);
       if (app.ui.tool === 'roof') app.roofTool.closeContour();
       if (app.ui.tool === 'slab') app.slabTool.closePolygon();
+      if (app.ui.tool === 'ground') app.groundTool.finish();
     }
 
     switch (e.key) {

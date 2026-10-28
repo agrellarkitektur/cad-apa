@@ -6,7 +6,7 @@ import { registerBuiltInTypes } from '../src/elements';
 import { outlineRing, roofFrame, roofPlanes, roofRange, trimToRoofs, type RoofParams } from '../src/elements/roof';
 import { dragRoofGrip, roofGripsInView } from '../src/elements/roofGrips';
 import { quickRoofs, trimRoof } from '../src/elements/roofMaker';
-import { roofShape, shapePatch } from '../src/elements/shapeEdit';
+import { outlineShape, shapePatch } from '../src/elements/shapeEdit';
 import { buildModel3d } from '../src/repr/model3d';
 import { zOn, type Edges3D, type Solid } from '../src/repr/solids';
 import { sampleProject } from '../src/sample/sampleProject';
@@ -149,7 +149,7 @@ describe('takfallet i Modifiera, egenskaperna och greppen (0.10)', () => {
   it('konturen ändras som en 2D-form, med bågar', () => {
     const doc = sampleProject();
     const el = doc.elements['tak'];
-    const shape = roofShape(el);
+    const shape = outlineShape(el);
     expect(shape.params.points).toEqual(el.params.outline);
     expect(shapePatch(doc, 'tak', undefined, { points: [[0, 0], [1, 0], [1, 1]], bulges: [0, 300] })).toEqual({ outline: [[0, 0], [1, 0], [1, 1]], bulges: [0, 300] });
   });

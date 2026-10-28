@@ -11,7 +11,7 @@ import { along, barriersOf, flatPoints, lineLength, lockShape, stripRing, type R
 import { rampShape, rampSides, type EasePoint } from './groundRamp';
 import { computeProfile, wallCenter, wallThickness, type CrestPoint, type WallProfile } from './groundWall';
 import { resolveParams, type PlanContext } from './registry';
-import type { SlabParams } from './slab';
+import { slabOutline, type SlabParams } from './slab';
 
 /**
  * Markobjekten som de räknas (0.10.4–0.10.5, för sig sedan 0.10.6):
@@ -83,7 +83,7 @@ export interface GroundParams extends Partial<FillParams> {
   margin?: number;
   /** Vägens referenslinje, brytlinjen, murens linje eller höjdpunkten (en punkt), mm (0.10.5). */
   line?: [number, number][];
-  /** Linjens bågar (0.10.19): pilhöjd per kant, som 2D-formens `bulges`. */
+  /** Linjens bågar (0.10.19), eller markytans konturs (0.10.24): pilhöjd per kant, som 2D-formens `bulges`. */
   bulges?: number[];
   /** Vägens namn (0.10.7), t.ex. *Ramp* eller *Infart*; tomt = *Ramp/väg*. Stödmurens eget littera (0.10.20); tomt = numrerad, *M01*. */
   name?: string;
@@ -143,6 +143,11 @@ export interface GroundParams extends Partial<FillParams> {
    * ytan som släntmarkeringarna täcker. Utelämnad = ingen.
    */
   slopeFill?: FillParams;
+}
+
+/** Markytans ritade kontur med bågarna som korta raka bitar (0.10.24); tom med färre än tre punkter. */
+export function areaOutline(p: Pick<GroundParams, 'outline' | 'bulges'>): Vec2[] {
+  return slabOutline(p);
 }
 
 /** Namnet på objektets sort, som i egenskaperna. */
@@ -230,7 +235,7 @@ export function groundGeometry(ctx: PlanContext, el: Element<any>): GroundGeomet
   const slabP = slabEl ? resolveParams<SlabParams>(doc, slabEl) : undefined;
   const needsFootprint = !!p.around || !!slabP?.fromWalls;
   const footprint = needsFootprint ? buildingFootprint(ctx) : null;
-  const inputs = [doc.site?.ground, storeyElevation(ctx, el.storey), footprint, slabP?.fromWalls, slabP?.outline, slabP?.thickness, slabEl && storeyElevation(ctx, slabEl.storey)];
+  const inputs = [doc.site?.ground, storeyElevation(ctx, el.storey), footprint, slabP?.fromWalls, slabP?.outline, slabP?.bulges, slabP?.thickness, slabEl && storeyElevation(ctx, slabEl.storey)];
   const hit = savedGeometry.get(el);
   if (hit && sameItems(hit.inputs, inputs)) return hit.out;
   const out = computeGeometry(ctx, el, p, footprint, slabEl, slabP);
@@ -278,13 +283,16 @@ function computeGeometry(ctx: PlanContext, el: Element<any>, p: GroundParams, fo
   let fall = 0;
   if (p.slab) {
     if (!slabEl || !slabP) return null;
-    const base: Rings[] = slabP.fromWalls ? (footprint ?? []).map((poly) => [poly[0]]) : slabP.outline.length >= 3 ? [[slabP.outline.map((q): Vec2 => [q[0], q[1]])]] : [];
+    const ring = slabP.fromWalls ? [] : slabOutline(slabP);
+    const base: Rings[] = slabP.fromWalls ? (footprint ?? []).map((poly) => [poly[0]]) : ring.length ? [[ring]] : [];
     if (!base.length) return null;
     polys = bufferRings(base, Math.max(0, p.margin ?? def.margin));
     height = storeyElevation(ctx, slabEl.storey) - Math.max(0, slabP.thickness);
   } else {
-    if (p.outline.length < 3) return null;
-    polys = [[p.outline.map((q): Vec2 => [q[0], q[1]])]];
+    // Konturen med bågarna som korta raka bitar (0.10.24).
+    const ring = areaOutline(p);
+    if (!ring.length) return null;
+    polys = [[ring]];
     height = p.height ?? 0;
     fall = p.fall ?? 0;
   }

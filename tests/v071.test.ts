@@ -8,7 +8,7 @@ import { buildPlan } from '../src/repr/plan';
 import { DocStore } from '../src/core/store';
 import { FORMAT_VERSION, type ProjectDoc } from '../src/core/model';
 import { skewOf, skewWarnings } from '../src/elements/angleCheck';
-import { insertNode, moveNode, offsetEdge, orientation, removeNode } from '../src/core/roofEdit';
+import { offsetEdge } from '../src/core/roofEdit';
 import { copyPayload, originalsHere, parsePayload, pasteClip } from '../src/core/clipboard';
 import { openingsInCorner, roundCorner } from '../src/core/wallEdit';
 import { readableAngle } from '../src/elements/markers';
@@ -142,7 +142,6 @@ describe('takets kontur (0.7.1)', () => {
   ];
   it('förskjut en kant: grannarna följer med', () => {
     // Moturs: åt vänster längs kanten är inåt, så −300 är utåt.
-    expect(orientation(sq)).toBe(1);
     expect(offsetEdge(sq, 0, -300)).toEqual([
       [0, -300],
       [4000, -300],
@@ -151,14 +150,6 @@ describe('takets kontur (0.7.1)', () => {
     ]);
     expect(offsetEdge(sq, 0, 3000)).toBeNull();
     expect(offsetEdge(sq, 0, 4000)).toBeNull();
-  });
-  it('lägg till, flytta och ta bort punkter', () => {
-    const five = insertNode(sq, 1, [4500, 1500]);
-    expect(five).toHaveLength(5);
-    expect(five[2]).toEqual([4500, 1500]);
-    expect(moveNode(five, 2, [4200, 1500])[2]).toEqual([4200, 1500]);
-    expect(removeNode(five, 2)).toEqual(sq);
-    expect(removeNode(sq.slice(0, 3), 0)).toBeNull();
   });
 });
 

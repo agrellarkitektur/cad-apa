@@ -1,5 +1,5 @@
 import { slabAt } from '../../elements/slab';
-import { fitArcs, hasBulges } from '../../geometry/arcFit';
+import { fitArcs, hasBulges, reversedChain, type ArcChain } from '../../geometry/arcFit';
 import { signedArea, simplify } from '../../geometry/chains';
 import type { Vec2 } from '../../repr/primitives';
 import { ringsAt } from './rings';
@@ -14,7 +14,7 @@ const NOT_FROM = new Set(['Wall', 'Slab', 'Label', 'Dimension']);
  * väggarna; i ett tak, en 2D-form eller en annan sluten yta ett bjälklag
  * med dess kontur. Sist ett bjälklag innanför ytterväggarna (som *Ur
  * väggarna*). Med *Håltagning* blir ytan i stället ett hål i bjälklaget
- * man pekar i, med bågarna kvar.
+ * man pekar i. Bågarna följer med (konturens sedan 0.10.24).
  */
 export const slabFrom: WandAction = {
   id: 'slab-from',
@@ -44,8 +44,10 @@ export const slabFrom: WandAction = {
       label,
       what,
       preview: { lines: [{ points, closed: true }] },
-      // Bjälklagets kontur har inga bågar: de följs som korta raka bitar.
-      apply: () => tool.create(ccw(points).map(mm)),
+      apply: () => {
+        const a = ccw(points, fitArcs({ points, closed: true }));
+        tool.create(a.points.map(mm), hasBulges(a.bulges) ? a.bulges : undefined);
+      },
     });
     const room = app.roomTool.holeAt(ctx.at);
     const roomPts = room ? simplify({ points: room, closed: true }).points : null;
@@ -65,5 +67,5 @@ export const slabFrom: WandAction = {
   },
 };
 
-/** Moturs, som bjälklagens konturer ritas. */
-const ccw = (pts: Vec2[]): Vec2[] => (signedArea(pts) < 0 ? [...pts].reverse() : pts);
+/** Moturs, som bjälklagens konturer ritas: kedjan vänd när ytan går medurs. */
+export const ccw = (ring: readonly Vec2[], chain: ArcChain): ArcChain => (signedArea(ring) < 0 ? reversedChain(chain) : chain);

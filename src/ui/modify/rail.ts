@@ -56,7 +56,7 @@ export const RAIL: RailDef[][] = [
     { id: 'multiply', label: 'Kopiera i rad', icon: 'multiply', ops: ['multiply'], key: 'U' },
   ],
   [
-    { id: 'offset', label: 'Förskjut', icon: 'offset', ops: ['offset', 'roofOffset', 'shapeOffset'], ask: 'Klicka på referenslinjen eller kanten som ska förskjutas.', key: 'O' },
+    { id: 'offset', label: 'Förskjut', icon: 'offset', ops: ['offset', 'shapeOffset'], ask: 'Klicka på referenslinjen eller kanten som ska förskjutas.', key: 'O' },
     { id: 'parallel', label: 'Parallell kopia', icon: 'parallelCopy', ops: ['parallel'], ask: 'Klicka på referenslinjen för väggen som ska kopieras.', key: 'P' },
     { id: 'offsetAll', label: 'Förskjut alla kanter', icon: 'offsetAll', ops: ['offsetAll'], key: 'A' },
   ],
@@ -69,9 +69,9 @@ export const RAIL: RailDef[][] = [
     { id: 'fuse', label: 'Foga ihop', icon: 'fuse', ops: ['shapeFuse'], key: 'V' },
   ],
   [
-    { id: 'insert', label: 'Lägg till punkt', icon: 'insertNode', ops: ['insert', 'roofInsert', 'shapeInsert'], ask: 'Klicka på referenslinjen eller kanten där punkten ska läggas till.', key: 'I' },
-    { id: 'pointMove', label: 'Flytta punkt', icon: 'movePoint', ops: ['roofMove', 'shapeMove'], ask: 'Klicka på punkten som ska flyttas.', key: 'K' },
-    { id: 'remove', label: 'Ta bort punkt', icon: 'merge', ops: ['merge', 'roofRemove', 'shapeRemove'], ask: 'Klicka på hörnet eller punkten som ska tas bort.', key: 'Q' },
+    { id: 'insert', label: 'Lägg till punkt', icon: 'insertNode', ops: ['insert', 'shapeInsert'], ask: 'Klicka på referenslinjen eller kanten där punkten ska läggas till.', key: 'I' },
+    { id: 'pointMove', label: 'Flytta punkt', icon: 'movePoint', ops: ['shapeMove'], ask: 'Klicka på punkten som ska flyttas.', key: 'K' },
+    { id: 'remove', label: 'Ta bort punkt', icon: 'merge', ops: ['merge', 'shapeRemove'], ask: 'Klicka på hörnet eller punkten som ska tas bort.', key: 'Q' },
     { id: 'split', label: 'Dela', icon: 'split', ops: ['split'], key: 'D' },
   ],
   [

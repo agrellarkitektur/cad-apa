@@ -101,10 +101,10 @@ export function installToolOptions(app: AppContext) {
         </div></div>
         <div class="opt"><span>Form</span><div class="segmented" role="group" aria-label="Form">
           <button data-slab-shape="rect" aria-pressed="${t.shape === 'rect'}" title="Två motsatta hörn">Rektangel</button>
-          <button data-slab-shape="polygon" aria-pressed="${t.shape === 'polygon'}" title="Hörn för hörn${hole ? ', med bågar' : ''}">Polygon</button>
+          <button data-slab-shape="polygon" aria-pressed="${t.shape === 'polygon'}" title="Hörn för hörn, med bågar">Polygon</button>
           ${hole ? `<button data-slab-shape="circle" aria-pressed="${t.shape === 'circle'}" title="Centrum och en punkt på cirkeln">Cirkel</button>` : ''}
         </div></div>
-        ${hole && t.shape === 'polygon' ? `<button class="btn" data-action="slab-arc" aria-pressed="${t.arc}" title="Nästa kant blir en båge: klicka var den slutar och sedan en punkt på den (G)">Båge</button>` : ''}
+        ${t.shape === 'polygon' ? `<button class="btn" data-action="slab-arc" aria-pressed="${t.arc}" title="Nästa kant blir en båge: klicka var den slutar och sedan en punkt på den (G)">Båge</button>` : ''}
         ${t.canClose ? '<button class="btn btn-primary" data-action="slab-close">Klar med konturen</button>' : ''}
         ${hole ? '' : `<label class="opt"><span>Typ</span><select id="slab-def" aria-label="Bjälklagstyp">${opts}</select></label>
         <button class="btn" data-action="slab-walls" title="Ett bjälklag innanför ytterväggarna, som följer dem när de flyttas">Ur väggarna</button>`}
@@ -120,14 +120,18 @@ export function installToolOptions(app: AppContext) {
           ${b('area', 'Markyta', 'Schakt där marken ligger högre, fyll där den ligger lägre')}${b('slab', 'Under bjälklag', 'Klicka i ett bjälklag: urgrävningen följer det')}
         </div></div>
         <button class="btn" data-action="ground-around" title="En markyta som följer husets kontur, med fall från fasaden">Runt huset</button>
+        ${m === 'area' ? `<div class="opt"><span>Form</span><div class="segmented" role="group" aria-label="Form">
+          <button data-ground-shape="rect" aria-pressed="${app.groundTool.options.shape === 'rect'}" title="Två motsatta hörn">Rektangel</button>
+          <button data-ground-shape="polygon" aria-pressed="${app.groundTool.options.shape === 'polygon'}" title="Hörn för hörn, med bågar">Polygon</button>
+        </div></div>` : ''}
         <div class="opt"><span>Linje</span><div class="segmented" role="group" aria-label="Linje">
           ${b('path', 'Ramp/väg')}${b('breakline', 'Brytlinje', 'Låser marken längs linjen och tonar den runt omkring')}${b('wall', 'Stödmur')}${b('point', 'Höjdpunkt', 'Låser marken i en punkt och tonar den runt omkring')}
         </div></div>
         <div class="opt"><span>Beteckning</span><div class="segmented" role="group" aria-label="Beteckning">
           ${b('level', 'Markhöjd', 'Befintlig höjd understruken, ny höjd utan och den som utgår inom parentes; ändrar inte marken')}${b('drain', 'Låglinje', 'Dagvattnets väg som pilar; ändrar inte marken')}
         </div></div>
-        ${isLineMode(m) ? `<button class="btn" data-action="ground-arc" aria-pressed="${app.groundTool.arc}" title="Nästa kant i linjen blir en båge: klicka var den slutar och sedan en punkt på den (G)">Båge</button>` : ''}
-        ${app.groundTool.started && isLineMode(m) ? '<button class="btn" data-action="ground-done">Klar</button>' : ''}
+        ${isLineMode(m) || app.groundTool.polygon ? `<button class="btn" data-action="ground-arc" aria-pressed="${app.groundTool.arc}" title="Nästa kant blir en båge: klicka var den slutar och sedan en punkt på den (G)">Båge</button>` : ''}
+        ${(app.groundTool.started && isLineMode(m)) || app.groundTool.canClose ? `<button class="btn${app.groundTool.canClose ? ' btn-primary' : ''}" data-action="ground-done">${app.groundTool.polygon ? 'Klar med konturen' : 'Klar'}</button>` : ''}
         <span class="opt-hint">${app.groundTool.hintText()}</span>`;
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'section' || app.ui.tool === 'elevation') {
@@ -426,6 +430,10 @@ export function installToolOptions(app: AppContext) {
       app.groundTool.reset();
     }
     if (b.dataset.action === 'ground-around') app.groundTool.aroundHouse();
+    if (b.dataset.groundShape) {
+      app.groundTool.options.shape = b.dataset.groundShape as 'rect' | 'polygon';
+      app.groundTool.reset();
+    }
     if (b.dataset.elevBasis) {
       app.elevationTool.basis = b.dataset.elevBasis === '1';
       app.elevationTool.reset();

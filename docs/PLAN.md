@@ -3043,6 +3043,42 @@ bjälklagets och markytans kontur; spöet på ritningsbladen och i 3D; ett
 skrivet avstånd från kanten. Klickjämförelsen kördes inte; nya steg i
 granskningen.
 
+### 0.10.24 Bågar i bjälklagets och markytans kontur ✓
+
+Carl August 28 oktober (kväll): han provade spöet mot en bågformad
+yttervägg och konturen följde den; skillnaden mot en riktig båge syns
+först när konturen ändras. "Gör det som är bäst för framtiden, kör."
+Byggd samma kväll, samma format (21): `bulges` är frivilligt på
+bjälklaget och markytan, som på håltagningen och markobjektens linjer.
+
+- **Formatet**: `bulges` (pilhöjd per kant, 2D-formens regel) på
+  `SlabParams` och på `GroundParams` för markytan (samma fält som linjens
+  bågar; en markyta har ingen linje). En kontur av två punkter med bågar
+  är en cirkel, som håltagningen
+- **Ytorna**: konturen går via `shapePoints` där den blir en yta (planen,
+  3D, klick i ytan, urgrävningen under bjälklaget, litterans area)
+- **Verktygen**: *Båge* i bjälklagets polygon också för konturen;
+  markytan som *Polygon* med *Båge* och *Klar med konturen* (Enter,
+  dubbelklick, första hörnet)
+- **Spöet**: `fitArcs` på konturen i Bjälklag och Markyta (moturs med
+  bågarna vända när ytan går medurs); *Ur väggarna* urbockat ger bågar
+- **Modifiera**: bjälklagets och markytans kontur går genom 2D-formens
+  väg (`shapeOf`, `shapePatch`), så Böj, Räta ut, Avrunda, Fasa, Förskjut
+  med flera kanter och dragbara punkter följer med; den gamla raka vägen
+  (`hasEditableOutline`, valen `roof*`, `roofId`) är borttagen
+
+*Claudes val:* ingen ny formatversion (frivilligt fält, som 0.10.19).
+Äldre bjälklag och markytor behåller sina korta raka bitar; det finns
+ingen knapp som gör om dem till bågar (rita om med spöet, eller Räta ut
+och Böj). Spegling vänder pilhöjderna som för hålen. Markytans polygon
+sluts på tool-byte som linjerna avslutas (skapas om den går att sluta).
+
+*Gjordes inte:* bågar i rummets sparade kontur (`Space.outline`, ur
+väggarna som förut) och i `insideWalls` (bjälklag ur väggarna följer
+väggarna och ritas som väggarna ger dem). Klickjämförelsen kördes inte;
+nya steg i granskningen (bjälklag med båge i verktyget, Böj på konturen,
+markyta som polygon).
+
 ### Situationsplanen som modellflik (stor, efter 0.12.1, före piloten)
 
 Inkorgen 28 oktober, ihop med *Koordinater, SWEREF och sol*. En egen

@@ -100,6 +100,8 @@ function transformedParams(doc: ProjectDoc, el: Element, t: PlanTransform, movin
   if (Array.isArray(p.outline)) {
     // Bjälklagets håltagningar (0.9.1) följer med; speglade bågar buktar åt andra hållet (0.9.4).
     const holes = Array.isArray(p.holes) ? { holes: p.holes.map((h: any) => ({ ...h, points: h.points.map(t.map), ...(t.mirror && h.bulges ? { bulges: h.bulges.map((b: number) => -b) } : {}) })) } : {};
+    // Speglade bågar buktar åt andra hållet: markobjektens linje (0.10.19), bjälklagets och markytans kontur (0.10.24).
+    const bulges = t.mirror && Array.isArray(p.bulges) ? { bulges: (p.bulges as number[]).map((b) => (b ? -b : 0)) } : {};
     // Markobjektens linje (0.10.5) följer med; speglat faller infarten åt andra sidan.
     // Markobjekt längs en linje (0.10.5): spegling byter vänster och höger (tvärfall, referenslinjens sida); stödmurens höjdpunkter följer med (0.10.9).
     const mirrorSide = t.mirror && (p.refSide === 'left' || p.refSide === 'right') ? { refSide: p.refSide === 'left' ? 'right' : 'left' } : {};
@@ -107,8 +109,6 @@ function transformedParams(doc: ProjectDoc, el: Element, t: PlanTransform, movin
     const line = Array.isArray(p.line)
       ? {
           line: p.line.map(t.map),
-          // Speglade bågar buktar åt andra hållet (0.10.19).
-          ...(t.mirror && Array.isArray(p.bulges) ? { bulges: (p.bulges as number[]).map((b) => -b) } : {}),
           ...(t.mirror && typeof p.crossFall === 'number' ? { crossFall: -p.crossFall } : {}),
           ...mirrorSide,
           ...mirrorOffset,
@@ -117,12 +117,12 @@ function transformedParams(doc: ProjectDoc, el: Element, t: PlanTransform, movin
           ...rampSides(p, t),
         }
       : {};
-    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...holes, ...line } }];
+    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...bulges, ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...holes, ...line } }];
   }
   if (Array.isArray(p.points)) {
     const points = p.points.map((q: any) => (Array.isArray(q) ? t.map(q as Pt) : { ...q, at: t.map(q.at) }));
     // Speglade bågar buktar åt andra hållet (2D-formernas pilhöjder, 0.8.24).
-    const bulges = t.mirror && Array.isArray(p.bulges) ? { bulges: (p.bulges as number[]).map((b) => -b) } : {};
+    const bulges = t.mirror && Array.isArray(p.bulges) ? { bulges: (p.bulges as number[]).map((b) => (b ? -b : 0)) } : {};
     return [{ ...el, params: { ...el.params, points, angle: t.angle(p.angle ?? 0), offset: t.mirror ? -(p.offset ?? 0) : p.offset, ...bulges } }];
   }
   if (el.type === 'Label' && p.pos) {

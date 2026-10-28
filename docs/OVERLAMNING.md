@@ -4,38 +4,37 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 28 oktober 2026 (eftermiddag), efter
-0.10.23.
+**Kända begränsningar**. Senast: 28 oktober 2026 (kväll), efter
+0.10.24.
 
 ## Läget
 
-- **0.10.23 Smartspöt del 2 är klar** på `main` (samma format, 21), byggd
-  28 oktober (eftermiddag) på "Kör". Bågar ur kedjor (svar E, `fitArcs`)
-  i väggar, markobjektens linjer, 2D-former, takfall och håltagningar;
-  spöet i **Bjälklag** (rummet, en kontur, ytterväggarna, håltagning),
-  **Tak** (takfall över väggarna eller bjälklaget med takfoten utanför,
-  snabbvalen över den omslutande rektangeln), **Mark** med *Markyta*
-  (runt huset, ur en kontur, mellan linjer), **2D** (linje längs en kant,
-  före formen runt ytan), **Littera** (klick på ett objekt) och **Mått**
-  (måttkedja över väggen, öppningarna och de anslutande väggarna, Tab för
-  andra sidan). Testerna: 660 på ca 20 s. Provat i Playwright mot `dist/`
-  i exempelvillan (bjälklag i allrummet, måttkedja, littera på väggen,
-  2D-linje längs takets kant, sadeltak). Klickjämförelsen kördes **inte**;
-  nya steg i granskningen. Se PLAN.md och UTVECKLING.md (*Smartspöt del
-  2*).
-- **Märks i hans ritningar efter 0.10.23:** inget ritas annorlunda. I
-  2D ger spöet en linje längs kanten när man pekar på en kant (förut
-  formen runt ytan), och en form som läggs öppen får ingen fyllning.
-  Höjdkurvorna stänger inga ytor för spöet längre.
-- **Tidigare i dag:** 0.10.22 Snäpp och smartspöt och granskningen
-  0.10.22.1 (höjdkurvorna bara för spöet, marklinjen snäpps i sektion
-  och fasad), 0.10.20.1 Litteran och 0.10.20.2 Generell littera (format
-  21), 0.10.21 Lutande väggar och 0.10.21.1. Se PLAN.md.
-- **Versionsnumret** är `0.10.23` i `engine.ts`, `package.json` och
+- **0.10.24 Bågar i bjälklagets och markytans kontur är klar** på `main`
+  (samma format, 21), byggd 28 oktober (kväll) på "kör". `bulges` på
+  bjälklagets och markytans kontur som på håltagningen; konturerna
+  ändras som 2D-former (Böj, Räta ut, Avrunda, Fasa, Förskjut, dragbara
+  punkter), den gamla raka vägen i Modifiera (`roof*`, `roofId`,
+  `hasEditableOutline`) är borttagen. *Båge* i bjälklagets polygon för
+  konturen, markytan som *Polygon* med *Båge* och *Klar med konturen*.
+  Spöet ger riktiga bågar i Bjälklag och Markyta; *Ur väggarna* urbockat
+  ger bågar ur bågväggarna. Cirkelhål av två punkter dras nu ifrån (var
+  en bugg). Testerna: 668 på ca 16 s. Provat i Playwright mot `dist/`
+  (bjälklag som polygon med båge, smartmenyn på bågen och den raka
+  kanten, Böj, dra ett hörn, 3D). Klickjämförelsen kördes **inte**; nya
+  steg i granskningen. Se PLAN.md och UTVECKLING.md.
+- **Märks i hans ritningar efter 0.10.24:** inget ritas annorlunda.
+  Äldre bjälklag och markytor behåller sina korta raka bitar; nya ur
+  spöet får bågar. Markytans verktygsrad har fått *Form*.
+- **Tidigare i dag:** 0.10.23 Smartspöt del 2, 0.10.22 Snäpp och
+  smartspöt och granskningen 0.10.22.1, 0.10.20.1 Litteran och 0.10.20.2
+  Generell littera (format 21), 0.10.21 Lutande väggar och 0.10.21.1. Se
+  PLAN.md.
+- **Versionsnumret** är `0.10.24` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.23 är inte provade fullt ut** av Carl August; han har
-  svarat på frågor om flera av dem utifrån beskrivningarna.
+- **0.10.8–0.10.24 är inte provade fullt ut** av Carl August; han har
+  svarat på frågor om flera av dem utifrån beskrivningarna (0.10.23
+  provade han spöet mot en bågvägg, vilket gav 0.10.24).
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
   åt gången**. En fråga han hoppar över räknas som "bra som det är" och
@@ -83,7 +82,8 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 - ~~0.8.8 Mallblad~~ … ~~0.10.22 Snäpp och smartspöt~~, ~~Granskning
-  efter 0.10.22 (0.10.22.1)~~, ~~0.10.23 Smartspöt del 2~~ (klara)
+  efter 0.10.22 (0.10.22.1)~~, ~~0.10.23 Smartspöt del 2~~, ~~0.10.24
+  Bågar i bjälklagets och markytans kontur~~ (klara)
 - **Utredning: material i stället för fyllningar** (egen session, rör
   formatet; före fler fyllningsfunktioner och formatfrysen)
 - **Ortofotot på marken** (liten undersökning med terrängappen, när det
@@ -109,14 +109,22 @@ Fråga Carl August vad som är nästa: Claudes förslag är **Utredning:
 material i stället för fyllningar** (den rör formatet och ska avgöras före
 fler fyllningsfunktioner), annars **0.11 Trappor**. Läs
 `cad-apa-synpunkter.md` först och sortera Inkorgen om den har något.
-Frågorna om 0.10.23 (nedan) kan ställas när han provat. Lägg klicksteg
-för 0.10.23 i nästa granskning.
+Frågorna om 0.10.23 och 0.10.24 (nedan) kan ställas när han provat. Lägg
+klicksteg för 0.10.23 och 0.10.24 i nästa granskning (som nu är efter
+fyra versioner sedan 0.10.22.1: en granskning är nära).
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
+
+**0.10.24 efter provning** (Claudes val, se PLAN.md)
+- Äldre bjälklag och markytor behåller sina korta raka bitar. Behövs en
+  knapp som gör om en sådan kontur till bågar (som *Ur väggarna* urbockat
+  gör), eller räcker det att rita om med spöet?
+- Markytans polygon sluts när man byter verktyg (som linjerna avslutas).
+  Rätt, eller ska den kastas som bjälklagets?
 
 **0.10.23 efter provning** (Claudes val, se PLAN.md)
 - Takfallet med spöet täcker hela husets kontur, med takfoten vid kanten
@@ -128,8 +136,6 @@ fråga.
   (väggtjockleken). Rätt, eller bara innerväggarna?
 - Littera med Shift: var sin littera på varje objekt. Hellre en littera
   med en ledare till varje?
-- Bjälklagets och markytans konturer har inga bågar, så en båge blir korta
-  raka bitar där. Behövs bågar i dem (ny formatändring)?
 
 **0.10.20 efter provning** (Claudes val, se PLAN.md)
 - Markhöjden räknar marken som oförändrad när ny och befintlig skiljer
@@ -150,8 +156,6 @@ fråga.
 - Dockningen: ändar inom rampens bredd räknas som samma, skarven får den
   första rampens sluthöjd och den andra rampens starthöjd faller bort.
   Rätt?
-- Markytans kontur har fortfarande inga bågar (bara linjerna fick dem).
-  Behövs de där (en egen liten version)?
 - *Båge* i verktyget Mark fungerar som i takets kontur. Bra, eller
   räcker Böj i Modifiera?
 

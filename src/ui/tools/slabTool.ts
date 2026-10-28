@@ -12,16 +12,18 @@ import { roundMm, snap, type SnapResult } from './snap';
 import { ChainInput } from './chainInput';
 import { dist } from '../../geometry/vec';
 import { shapePoints } from '../../elements/drawing2d';
+import { hasArcs, tidyBulges } from '../../elements/groundLines';
 
 /** Vad verktyget ritar: ett bjälklag eller en håltagning i ett. */
 export type SlabMode = 'slab' | 'hole';
-/** Hur konturen ritas (0.10.17): rektangel, polygon (håltagningen med bågar) eller cirkel (bara håltagningen). */
+/** Hur konturen ritas (0.10.17): rektangel, polygon med bågar (konturens sedan 0.10.24) eller cirkel (bara håltagningen). */
 export type SlabShape = 'rect' | 'polygon' | 'circle';
 
 /**
- * Bjälklag (0.9.1): dra upp en rektangel med två klick, eller lägg ett
+ * Bjälklag (0.9.1): dra upp en rektangel med två klick, rita en polygon
+ * med bågar (0.10.17; konturen med bågar sedan 0.10.24), eller lägg ett
  * bjälklag innanför ytterväggarna (*Ur väggarna*). Med *Håltagning* blir
- * rektangeln ett hål i bjälklaget där första hörnet klickas. Konturen ändras
+ * formen ett hål i bjälklaget där första hörnet klickas. Konturen ändras
  * sedan i Modifiera, som takets.
  */
 export class SlabTool implements ViewTool, PointTaker {
@@ -52,13 +54,13 @@ export class SlabTool implements ViewTool, PointTaker {
     return this.options.shape === 'circle' && this.options.mode !== 'hole' ? 'rect' : this.options.shape;
   }
 
-  /** Nästa kant i polygonen blir en båge (bara i håltagningar; bjälklagets kontur har inga bågar). */
+  /** Nästa kant i polygonen blir en båge. */
   get arc(): boolean {
     return this.chain.arc;
   }
 
   setArc(on: boolean): void {
-    this.chain.arc = on && this.options.mode === 'hole';
+    this.chain.arc = on;
     this.onChange?.();
     this.host.view.requestRender();
   }
@@ -169,7 +171,7 @@ export class SlabTool implements ViewTool, PointTaker {
     const c = this.chain.result();
     if (this.options.mode === 'hole') {
       if (this.target) this.addHole(this.target, c);
-    } else this.create(c.points);
+    } else this.create(c.points, c.bulges);
     this.reset();
   }
 
@@ -218,9 +220,9 @@ export class SlabTool implements ViewTool, PointTaker {
     this.onChange?.();
   }
 
-  /** Ett nytt bjälklag med en ritad kontur, eller innanför ytterväggarna (`outline` utelämnad). */
-  create(outline?: [number, number][]): void {
-    const params: SlabParams = outline ? { thickness: 300, outline } : { thickness: 300, outline: [], fromWalls: true };
+  /** Ett nytt bjälklag med en ritad kontur (med bågar, 0.10.24), eller innanför ytterväggarna (`outline` utelämnad). */
+  create(outline?: [number, number][], bulges?: number[]): void {
+    const params: SlabParams = outline ? { thickness: 300, outline, ...(hasArcs(bulges) ? { bulges: tidyBulges(bulges, outline.length + 1) } : {}) } : { thickness: 300, outline: [], fromWalls: true };
     const { thickness: _t, ...own } = params;
     const def = this.options.definition && this.host.store.doc.definitions[this.options.definition] ? this.options.definition : undefined;
     const el = addElement(

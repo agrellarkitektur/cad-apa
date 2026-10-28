@@ -1,5 +1,4 @@
 import { updateParams } from '../../core/commands';
-import { insertNode, moveNode, offsetEdge, orientation, setOutline } from '../../core/roofEdit';
 import { bendShapeEdge, edgeIsArc, edgeRun, editedShape, insertShapeNode, moveShapeNode, offsetShapeEdge, offsetShapeEdges, previewShape, roundShapeCorner, shapeNodes, shapePatch, type ShapeLike } from '../../elements/shapeEdit';
 import { bulgeForRadius, bulgeThrough } from '../../geometry/arc';
 import { dist } from '../../geometry/vec';
@@ -12,36 +11,10 @@ import type { ModifyState } from './state';
 
 /**
  * Punkter och kanter i Modifiera (0.8.15, ur tool.ts): lägg till, flytta och
- * förskjut på 2D-element, bjälklagens håltagningar (0.9.4) och takets kontur.
+ * förskjut på 2D-element, bjälklagens håltagningar (0.9.4) och konturerna
+ * (takfall 0.10; bjälklag och markyta som 2D-former sedan 0.10.24).
  */
-export const OUTLINE_OPS = new Set<OpId>(['shapeInsert', 'shapeMove', 'shapeOffset', 'shapeBend', 'shapeFillet', 'shapeChamfer', 'holeMove', 'holeRotate', 'holeMirror', 'roofInsert', 'roofMove', 'roofOffset']);
-
-/** Takets kontur. */
-function roofOutline(s: ModifyState): [number, number][] | null {
-  const el = s.ctx.roofId ? s.host.store.doc.elements[s.ctx.roofId] : undefined;
-  return (el?.params.outline as [number, number][] | undefined) ?? null;
-}
-
-/** Avståndet utåt från takets kant till en punkt (negativt inåt). */
-function roofOut(s: ModifyState, at: Vec2): number {
-  const o = roofOutline(s)!;
-  const i = s.ctx.index!;
-  const a = o[i];
-  const b = o[(i + 1) % o.length];
-  const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
-  const n: Vec2 = [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
-  return -orientation(o) * ((at[0] - a[0]) * n[0] + (at[1] - a[1]) * n[1]);
-}
-
-/** Takets (bjälklagets, markobjektets) kontur efter förskjutningen, eller null. Med fler kanter (0.10.17) som 2D-formens. */
-function roofOffsetPreview(s: ModifyState, out: number): [number, number][] | null {
-  const o = roofOutline(s);
-  if (!o) return null;
-  if (s.edges === 1) return offsetEdge(o, s.ctx.index!, -orientation(o) * out);
-  const shape: ShapeLike = { type: 'Shape2D', params: { shape: 'polyline', points: o, closed: true } };
-  const r = offsetShapeEdges(shape, edgeRun(shape, s.ctx.index!, s.edges), -orientation(o) * out);
-  return (r?.points as [number, number][] | undefined) ?? null;
-}
+export const OUTLINE_OPS = new Set<OpId>(['shapeInsert', 'shapeMove', 'shapeOffset', 'shapeBend', 'shapeFillet', 'shapeChamfer', 'holeMove', 'holeRotate', 'holeMirror']);
 
 /** 2D-formens kanter förskjutna d mm åt vänster om den klickade: en kant som förut, eller flera (0.10.17). */
 function shapeOffsetPatch(s: ModifyState, el: ShapeLike, d: number): Record<string, unknown> | null {
@@ -150,7 +123,6 @@ function bendPatch(s: ModifyState, at: Vec2 | null, typed: number | null): Recor
 
 /** Utför valet; svarar true när verktyget är klart, false när det väntar kvar. */
 export function commitOutline(s: ModifyState, base: Vec2, at: Vec2 | null, typed: number | null): boolean {
-  const store = s.host.store;
   const ctx = s.ctx;
   switch (s.op) {
     case 'shapeInsert':
@@ -215,26 +187,6 @@ export function commitOutline(s: ModifyState, base: Vec2, at: Vec2 | null, typed
       applyShape(s, patch, 'Böj');
       return true;
     }
-    case 'roofInsert':
-    case 'roofMove': {
-      const o = roofOutline(s);
-      const to = at ?? base;
-      if (!o || !ctx.roofId) return true;
-      if (s.op === 'roofInsert') setOutline(store, ctx.roofId, insertNode(o, ctx.index!, to), 'Lägg till punkt');
-      else if (dist(to, base) >= 1) setOutline(store, ctx.roofId, moveNode(o, ctx.index!, to), 'Flytta punkt');
-      return true;
-    }
-    case 'roofOffset': {
-      const d = typed !== null ? typed : at ? Math.round(roofOut(s, at)) : 0;
-      if (Math.abs(d) < 1 || !ctx.roofId) return false;
-      const next = roofOffsetPreview(s, d);
-      if (!next) {
-        s.host.hint('Kanten kan inte förskjutas så långt.');
-        return false;
-      }
-      setOutline(store, ctx.roofId, next, s.edges === 1 ? 'Förskjut kant' : 'Förskjut kanter');
-      return true;
-    }
     default:
       return true;
   }
@@ -242,7 +194,6 @@ export function commitOutline(s: ModifyState, base: Vec2, at: Vec2 | null, typed
 
 /** Förhandsvisningen med markören vid `at`. */
 export function overlayOutline(s: ModifyState, cam: Camera, base: Vec2, at: Vec2 | null, out: string[]): void {
-  const roof = roofOutline(s);
   const shp = shapeOf(s);
   const line = (pts: readonly Vec2[]) => svgLine(cam, pts);
   const shapeGhost = (patch: Record<string, unknown> | null) => {
@@ -294,23 +245,6 @@ export function overlayOutline(s: ModifyState, cam: Camera, base: Vec2, at: Vec2
         const u: Vec2 = [(at[0] - base[0]) / len, (at[1] - base[1]) / len];
         out.push(svgLine(cam, [[base[0] - u[0] * 20000, base[1] - u[1] * 20000], [base[0] + u[0] * 20000, base[1] + u[1] * 20000]], 'snap-guide'));
         shapeGhost(mirroredHole(s, base, at));
-      }
-      break;
-    case 'roofInsert':
-      if (roof && at) out.push(line([roof[s.ctx.index!], at, roof[(s.ctx.index! + 1) % roof.length]]));
-      break;
-    case 'roofMove':
-      if (roof && at) {
-        const i = s.ctx.index!;
-        out.push(line([roof[(i - 1 + roof.length) % roof.length], at, roof[(i + 1) % roof.length]]));
-      }
-      break;
-    case 'roofOffset':
-      if (roof && at) {
-        const d = Math.round(roofOut(s, at));
-        const next = roofOffsetPreview(s, d);
-        if (next) out.push(line([...next, next[0]]));
-        out.push(lengthLabel(cam, base, at, `${d.toLocaleString('sv-SE')} mm`));
       }
       break;
     default:

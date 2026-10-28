@@ -4,6 +4,7 @@ import { textWidth } from '../formats/drawingFont';
 import { markerPen } from '../repr/markerPens';
 import type { Pen, Primitive, TagHandles, Vec2 } from '../repr/primitives';
 import { anchorOf } from './anchor';
+import { isClosed, shapePoints } from './drawing2d';
 import { leaderOf, type TagParams, type TextBox } from './leader';
 import { fillTemplate, litteraField } from './littera';
 import type { ElementType, PlanContext } from './registry';
@@ -119,8 +120,9 @@ function objectField(ctx: PlanContext, el: Element<any>, name: string): string {
       if (el.type === 'Space') return p.number ?? roomNumbersFor(ctx).get(el.id) ?? '';
       break;
     case 'area': {
-      const ring = Array.isArray(p.outline) ? (p.outline as Vec2[]) : null;
-      return ring && ring.length > 2 ? formatArea(areaOf(ring)) : '';
+      // Konturen med bågarna som korta raka bitar (takfall, bjälklag, markyta).
+      const shape = Array.isArray(p.outline) ? { shape: 'polyline' as const, points: p.outline as [number, number][], bulges: p.bulges as number[] | undefined, closed: true } : null;
+      return shape && isClosed(shape) ? formatArea(areaOf(shapePoints(shape).points)) : '';
     }
     case 'bredd':
       return mm(p.width ?? p.thickness);

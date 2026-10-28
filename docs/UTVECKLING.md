@@ -416,8 +416,7 @@ Det som är känt men lämnat, per version (flyttat hit ur överlämningen i
 
 - **Smartspöt del 2 (0.10.23):** `fitArcs` körs bara när ett förslag
   utförs (prövar de längsta bågarna från början, O(n²) för en lång jämn
-  kurva). Bågväggar måttsätts inte; en båge av två bitar är ett hörn;
-  bjälklagets och markytans konturer har inga bågar (korta raka bitar).
+  kurva). Bågväggar måttsätts inte; en båge av två bitar är ett hörn.
   Takfallet runt en kontur med inåtgående hörn får geringen ur
   `offsetRing` (högst fyra gånger språnget i spetsiga hörn). Snabbvalen
   ignorerar konturens form (omslutande rektangel). Måttkedjan i hörnen
@@ -490,9 +489,7 @@ Det som är känt men lämnat, per version (flyttat hit ur överlämningen i
   inte linjer på olika ytor. Förskjut med flera kanter räknar hörn mellan
   en båge och en rak kant med bågens tangent, vilket är exakt bara där de
   möts tangentiellt (annars hamnar hörnet lite fel). Ett klick inne i ett
-  hål markerar inte hålet; man klickar på hålets kant eller hörn. Bågar i
-  bjälklagets kontur finns inte (formatet har inga); takfall och
-  håltagningar har dem.
+  hål markerar inte hålet; man klickar på hålets kant eller hörn.
 
 - **Snittet i planen (0.10.16):** en vägg räknas efter sin fot och höjd;
   en vägg som kapas av ett tak under snitthöjden (en knävägg utan egen låg
@@ -1600,10 +1597,10 @@ projekt i 1 982 jämförelser.
   sektionen via `POCHE` i `section.ts` och snittets lock i `pane3d.ts`).
   Formen går från `−thickness` till 0 och lyfts till golvnivån av
   `modelShapes` som allt annat.
-- **Konturen i Modifiera**: `hasEditableOutline` i `src/core/roofEdit.ts`
-  (tak, och bjälklag utan `fromWalls`) används av greppen
-  (`highlight.ts`) och valen (`ops.ts`); valen heter fortfarande
-  `roof*` och `roofId`. `transformed` och `movePatch` flyttar `holes`.
+- **Konturen i Modifiera**: sedan 0.10.24 som en 2D-form (`shapeOf` och
+  `hasOutlineShape` i `shapeEdit.ts`); den gamla vägen
+  (`hasEditableOutline`, `roof*`, `roofId`) är borta. `transformed` och
+  `movePatch` flyttar `holes`.
 - **Verktyget** `SlabTool` i `src/ui/tools/slabTool.ts` (`mode`
   `slab`/`hole`), *Ur väggarna* i `slabFromWalls` (`tools.ts`),
   verktygsraden i `toolOptions.ts`, smartshell i `prompts.ts` och
@@ -1612,6 +1609,50 @@ projekt i 1 982 jämförelser.
   `propertiesPanel.ts`.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
+
+## Bågar i bjälklagets och markytans kontur (0.10.24, format 21)
+
+Inget nytt format: `bulges` på `SlabParams` och på `GroundParams` för
+markytan (samma fält som linjens; en markyta har ingen `line`) är
+frivilliga. Regeln är 2D-formens: pilhöjd per kant, kant i från punkt i
+till i + 1, den sista tillbaka till den första, raka sist utelämnade.
+
+- **Ytorna**: `slabOutline(p)` i `slab.ts` ger den ritade konturen med
+  bågarna som korta raka bitar (tom när den inte sluter sig; två punkter
+  med bågar räcker, som `holeRing`, som nu också tar cirkelhål av två
+  punkter). `slabBase`, `slabAt` och `groundGeometry` (urgrävningen under
+  bjälklaget, med `slabP.bulges` i cachens `inputs`) går via den;
+  `areaOutline(p)` i `groundGeometry.ts` är samma sak för markytan.
+  `outlineEdges(h, pen, origin, under)` ritar en konturs kanter som
+  linjer och bågar som polylinjer, för konturen och hålen. Litterans
+  fält *area* räknar konturen med bågarna (`label.ts`).
+- **Modifiera**: `hasOutlineShape(el)` (takfall; bjälklag utan
+  `fromWalls`; markyta med ritad kontur, inte `around` eller `slab`) och
+  `outlineShape(el)` (hette `roofShape`) i `shapeEdit.ts`; `shapeOf`
+  och `shapePatch` (skriver `outline` och `bulges`) tar dem. Den gamla
+  vägen är borttagen: `hasEditableOutline`, `insertNode`, `moveNode`,
+  `removeNode`, `setOutline` och `orientation` i `roofEdit.ts` (kvar:
+  `offsetEdge`), valen `roofInsert`, `roofMove`, `roofRemove`,
+  `roofOffset` och `ModifyContext.roofId`. Greppen i `highlight.ts` ritas
+  för `Slab` och `Ground` med `hasOutlineShape`; `shapeNodeAt` tar
+  underformerna (hålen) också när elementet har en egen form. `railFor`
+  räknar hålen tillsammans med den egna formen. Spegling vänder
+  `bulges` för alla element med `outline` (`transforms.ts`).
+- **Verktygen**: `SlabTool.create(outline, bulges)` (`tidyBulges` med
+  `n + 1`, så att den slutande kanten är med); `setArc` gäller alla
+  polygoner. `GroundTool.options.shape` (`rect`/`polygon`), `polygon`,
+  `canClose`, `finishArea` och `createArea(outline, bulges)`; `finish`
+  sluter polygonen med en rak kant (Enter, Klar, dubbelklick, byte av
+  verktyg), `click` sluter den på första hörnet. `data-ground-shape`,
+  `ground-arc` och `ground-done` i `toolOptions.ts`; *Polygon* (P) i
+  `prompts.ts`. `keyboard.ts` fick `groundTool.finish()` på Enter (som
+  `commandLine.ts` hade).
+- **Spöet**: `reversedChain(c)` i `arcFit.ts` vänder en kedja med
+  bågarna (en sluten behåller sin första punkt); `ccw(ring, chain)` i
+  `slabFrom.ts` (också för `groundArea`). *Ur väggarna* urbockat kör
+  `fitArcs` på väggarnas kontur (`selectionEdits.ts`).
+- Tester: `tests/v01024.test.ts`. `v071` (de borttagna funktionerna),
+  `mark` och `v085` (vallistan) justerade.
 
 ## Granskning efter 0.10.22 (0.10.22.1, format 21)
 
@@ -2777,9 +2818,9 @@ handskakningen med finns i `test/cad-apa-mock.html` där.
   smartshell i `prompts.ts`, *Över hela huset* i `roofOverHouse`
   (`tools.ts`, med `bareWallUnion`).
 - **Modifiera**: konturen går genom 2D-formens väg: `shapeOf(el)` och
-  `roofShape` i `shapeEdit.ts`, `editedShape` och `shapePatch` (som skriver
-  `outline` och `bulges`). `hasEditableOutline` och valen `roof*` gäller
-  nu bara bjälklag. `roofTrim` (Kapa mot tak) i `src/ui/modify/roofOps.ts`.
+  `outlineShape` (hette `roofShape` till 0.10.24) i `shapeEdit.ts`,
+  `editedShape` och `shapePatch` (som skriver `outline` och `bulges`).
+  Bjälklag och markyta går samma väg sedan 0.10.24. `roofTrim` (Kapa mot tak) i `src/ui/modify/roofOps.ts`.
   Referenslinjens ändar är `EndGrip` med `kind: 'roofRef'`
   (`selectGrips.ts`, `selectTool.ts`); linjen och pilen ritas i
   `highlight.ts`. Flytta, vrid och spegla i `movePatch` och `transformed`

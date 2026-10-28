@@ -1,31 +1,11 @@
-import type { Id } from './model';
-import type { DocStore } from './store';
-
 type P = [number, number];
 
 /**
- * Ändra en kontur (0.7.1, takets till 0.10, nu bjälklagets): lägg till,
- * flytta och ta bort hörn, och förskjut en kant. Konturen är en sluten polygon; kant i går från hörn i
- * till hörn i + 1.
+ * Förskjut en kant i en sluten polygon (0.7.1). Konturerna (takfall,
+ * bjälklag, markyta) ändras sedan 0.10.24 helt som 2D-former
+ * (`src/elements/shapeEdit.ts`); det här är den raka kantens förskjutning
+ * som `offsetShapeEdge` använder. Kant i går från hörn i till hörn i + 1.
  */
-
-/** En ny punkt på kant i. */
-export function insertNode(outline: readonly P[], edge: number, at: readonly [number, number]): P[] {
-  const out = outline.map((q) => [q[0], q[1]] as P);
-  out.splice(edge + 1, 0, [Math.round(at[0]), Math.round(at[1])]);
-  return out;
-}
-
-/** Hörn i flyttat. */
-export function moveNode(outline: readonly P[], i: number, to: readonly [number, number]): P[] {
-  return outline.map((q, k) => (k === i ? ([Math.round(to[0]), Math.round(to[1])] as P) : ([q[0], q[1]] as P)));
-}
-
-/** Hörn i borttaget; null om bara tre finns kvar. */
-export function removeNode(outline: readonly P[], i: number): P[] | null {
-  if (outline.length <= 3) return null;
-  return outline.filter((_, k) => k !== i).map((q) => [q[0], q[1]] as P);
-}
 
 /**
  * Kant i förskjuten d mm åt vänster sett längs kanten (utåt för en kontur
@@ -76,27 +56,4 @@ function signedArea(outline: readonly P[]): number {
     a += p[0] * q[1] - q[0] * p[1];
   }
   return a / 2;
-}
-
-/** Konturens riktning: 1 moturs, -1 medurs. */
-export function orientation(outline: readonly P[]): 1 | -1 {
-  return signedArea(outline) >= 0 ? 1 : -1;
-}
-
-export function setOutline(store: DocStore, id: Id, outline: P[], label: string): void {
-  const el = store.doc.elements[id];
-  if (!el) return;
-  store.transact(label, (tx) => tx.putElement({ ...el, params: { ...el.params, outline } }));
-}
-
-/**
- * Element med en kontur som ändras med punkter och kanter i Modifiera:
- * bjälklag med ritad kontur (0.9.1; ett bjälklag ur väggarna följer
- * väggarna) och markobjekt (0.10.4). Takfallets kontur ändras sedan 0.10 som en 2D-form (`shapeOf`).
- */
-export function hasEditableOutline(el: { type: string; params: Record<string, unknown> } | undefined): boolean {
-  if (!el || !Array.isArray(el.params.outline)) return false;
-  // Markobjekt (0.10.4) med ritad kontur; platån runt huset och urgrävningen under ett bjälklag följer dem.
-  if (el.type === 'Ground') return !el.params.around && !el.params.slab && (el.params.kind === 'area');
-  return el.type === 'Slab' && !el.params.fromWalls;
 }

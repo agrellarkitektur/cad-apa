@@ -1,6 +1,6 @@
 import { difference, union, type Rings } from '../geometry/boolean';
 import { pointInRings } from '../geometry/vec';
-import type { Primitive, Vec2 } from '../repr/primitives';
+import type { Origin, Pen, Primitive, Vec2 } from '../repr/primitives';
 import { lastResults } from '../repr/reuse';
 import { levelOf, type Shape3D } from '../repr/solids';
 import { ABOVE_PART, planCutPen } from '../repr/planCutPens';
@@ -8,7 +8,7 @@ import { zoneInPlan } from './planCut';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
 import { bareWallShapes, bareWallUnion, wallFrame, type WallParams } from './wall';
 import type { Element, Id, ProjectDoc } from '../core/model';
-import { segmentArc, segmentCount, shapePoints } from './drawing2d';
+import { isClosed, segmentArc, segmentCount, shapePoints } from './drawing2d';
 
 /**
  * Bjälklag (0.9.1, format 15). Golvet i en våning: ovansidan ligger i
@@ -21,7 +21,8 @@ import { segmentArc, segmentCount, shapePoints } from './drawing2d';
  * bjälklaget. Konturen räknas om vid varje ritning, som rummens, och följer
  * alltså väggarna när de flyttas. Håltagningar dras ifrån och ritas med
  * kryss i planen. En håltagning är en sluten form av punkter och bågar,
- * som en 2D-form (format 16), och ändras i Modifiera som en.
+ * som en 2D-form (format 16), och ändras i Modifiera som en; den ritade
+ * konturen likadant (bågar sedan 0.10.24).
  */
 
 /** En håltagning (format 16): punkterna, och pilhöjden för de kanter som är bågar. */
@@ -35,6 +36,8 @@ export interface SlabParams {
   thickness: number;
   /** Den ritade konturen, mm. Tom när konturen tas ur väggarna. */
   outline: [number, number][];
+  /** Konturens bågar (0.10.24): pilhöjd per kant, som håltagningens; utelämnad = raka. */
+  bulges?: number[];
   /** Konturen följer ytterväggarnas insida. */
   fromWalls?: boolean;
   /** Håltagningarna. */
@@ -70,19 +73,41 @@ export function insideWalls(walls: { id: string; p: WallParams }[]): Rings[] {
 }
 const savedInside = lastResults<Rings[]>();
 
-/** Håltagningens kontur, med bågarna som korta raka bitar. */
+/** Håltagningens kontur, med bågarna som korta raka bitar; tom när den inte sluter sig (två punkter räcker med en båge, som en cirkel). */
 export function holeRing(h: SlabHole): Vec2[] {
-  return shapePoints({ shape: 'polyline', points: h.points, bulges: h.bulges, closed: true }).points;
+  const shape = { shape: 'polyline' as const, points: h.points, bulges: h.bulges, closed: true };
+  return isClosed(shape) ? shapePoints(shape).points : [];
+}
+
+/** Den ritade konturen med bågarna som korta raka bitar (0.10.24); tom när den tas ur väggarna eller inte sluter sig. */
+export function slabOutline(p: Pick<SlabParams, 'outline' | 'bulges'>): Vec2[] {
+  return holeRing({ points: p.outline, bulges: p.bulges });
 }
 
 /** Om håltagningen har några bågar. */
 const hasArcs = (h: SlabHole) => !!h.bulges?.some((b) => Math.abs(b) >= 0.5);
 
+/**
+ * En sluten konturs kanter som linjer, bågarna som korta raka bitar i en
+ * polylinje (0.9.4 för hålen, 0.10.24 för konturen).
+ */
+export function outlineEdges(h: SlabHole, pen: Pen, origin: Origin, under = false): Primitive[] {
+  const out: Primitive[] = [];
+  const n = h.points.length;
+  for (let i = 0; i < segmentCount(n, true); i++) {
+    const a = h.points[i];
+    const b = h.points[(i + 1) % n];
+    if (!segmentArc(h, i)) out.push({ kind: 'line', a, b, pen, ...(under ? { under: true } : {}), origin });
+    else out.push({ kind: 'polyline', points: shapePoints({ shape: 'polyline', points: [a, b], bulges: [h.bulges![i]] }).points, closed: false, pen, ...(under ? { under: true } : {}), origin });
+  }
+  return out;
+}
+
 /** Bjälklagets ytor i vyn: konturen (ritad eller ur väggarna) utan håltagningarna. */
 export function slabRings(ctx: PlanContext, el: Element<any>): Rings[] {
   const p = ctx.params<SlabParams>(el);
   const base = slabBase(ctx, p);
-  const holes = (p.holes ?? []).filter((h) => h.points.length >= 3).map((h): Rings => [holeRing(h)]);
+  const holes = (p.holes ?? []).map(holeRing).filter((r) => r.length >= 3).map((r): Rings => [r]);
   if (!holes.length) return base;
   return base.flatMap((poly) => difference(poly, holes));
 }
@@ -90,7 +115,8 @@ export function slabRings(ctx: PlanContext, el: Element<any>): Rings[] {
 /** Konturen utan håltagningarna: den ritade, eller ytan innanför ytterväggarna. */
 export function slabBase(ctx: PlanContext, p: SlabParams): Rings[] {
   if (p.fromWalls) return ctx.memo('slab-inside-walls', () => insideWalls(ctx.visible('Wall').map((w) => ({ id: w.id, p: ctx.params<WallParams>(w) }))));
-  return p.outline.length >= 3 ? [[p.outline.map((q): Vec2 => [q[0], q[1]])]] : [];
+  const ring = slabOutline(p);
+  return ring.length ? [[ring]] : [];
 }
 
 /**
@@ -104,7 +130,8 @@ export function slabAt(doc: ProjectDoc, storey: Id, state: Id, pt: Vec2): Id | n
   for (const el of here) {
     if (el.type !== 'Slab') continue;
     const p = resolveParams<SlabParams>(doc, el);
-    const base = p.fromWalls ? insideWalls(walls) : p.outline.length >= 3 ? [[p.outline as Vec2[]]] : [];
+    const ring = p.fromWalls ? [] : slabOutline(p);
+    const base = p.fromWalls ? insideWalls(walls) : ring.length ? [[ring]] : [];
     for (const poly of base) {
       if (!pointInRings(pt, poly)) continue;
       const area = Math.abs(ringArea(poly[0]));
@@ -223,20 +250,15 @@ export const slabType: ElementType<SlabParams> = {
     // Som linjer, inte en sluten form, så att ett klick i ett rum inte träffar bjälklaget.
     const pen = planCutPen(ctx.style, 'Slab', zone);
     const above = zone === 'above';
-    const edges = (ring: readonly Vec2[], part: string, under: boolean) => {
-      for (let i = 0; i < ring.length; i++) out.push({ kind: 'line', a: ring[i], b: ring[(i + 1) % ring.length], pen, ...(under ? { under: true } : {}), origin: { ...origin, part } });
-    };
-    for (const poly of slabBase(ctx, p)) for (const ring of poly) edges(ring, above ? ABOVE_PART : 'kontur', !above);
+    const part = { ...origin, part: above ? ABOVE_PART : 'kontur' };
+    // Den ritade konturen med sina bågar (0.10.24); den ur väggarna som väggarna ger den.
+    if (p.fromWalls) for (const poly of slabBase(ctx, p)) for (const ring of poly) out.push(...outlineEdges({ points: ring as [number, number][] }, pen, part, !above));
+    else if (slabOutline(p).length) out.push(...outlineEdges({ points: p.outline, bulges: p.bulges }, pen, part, !above));
     // Håltagningarna, med kryss under snittet. Raka kanter är linjer, bågar korta raka bitar (0.9.4).
     for (const h of p.holes ?? []) {
-      if (h.points.length < 3) continue;
+      if (!holeRing(h).length) continue;
       const part = { ...origin, part: above ? ABOVE_PART : 'hål' };
-      for (let i = 0; i < segmentCount(h.points.length, true); i++) {
-        const a = h.points[i];
-        const b = h.points[(i + 1) % h.points.length];
-        if (!segmentArc(h, i)) out.push({ kind: 'line', a, b, pen, origin: part });
-        else out.push({ kind: 'polyline', points: shapePoints({ shape: 'polyline', points: [a, b], bulges: [h.bulges![i]] }).points, closed: false, pen, origin: part });
-      }
+      out.push(...outlineEdges(h, pen, part));
       if (!above) for (const [a, b] of holeCross(h)) out.push({ kind: 'line', a, b, pen, origin: part });
     }
     return out;

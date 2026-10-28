@@ -129,10 +129,10 @@ export function shapeNodeAt(host: ToolHost, pt: Vec2, touch: boolean): { id: str
     const el = doc.elements[id];
     if (!shown.has(id) || (ro && !host.canEdit?.(id))) continue;
     const own = shapeOf(el);
-    // Takfallens kontur (0.10) och håltagningarna finns bara i planen.
+    // Konturerna (takfall 0.10, bjälklag och markyta 0.10.24) och håltagningarna finns bara i planen.
     if (own && (el.type === 'Shape2D' || !ro)) take(id, undefined, shapeNodes(own));
-    // Håltagningarna och rampens sidor (0.10.18); referenslinjens punkter går före.
-    if (!ro && (!own || el.type === 'Ground')) for (const { hole, shape } of subShapes(el)) take(id, hole, shapeNodes(shape));
+    // Håltagningarna och rampens sidor (0.10.18); konturens och referenslinjens punkter går före.
+    if (!ro) for (const { hole, shape } of subShapes(el)) take(id, hole, shapeNodes(shape));
   }
   return best;
 }

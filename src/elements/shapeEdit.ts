@@ -53,13 +53,26 @@ export function holeShape(h: SlabHole): ShapeLike {
   return { type: 'Shape2D', params: { shape: 'polyline', points: h.points, ...(h.bulges ? { bulges: h.bulges } : {}), closed: true } };
 }
 
-/** Takfallets kontur (0.10) som en sluten 2D-form, så att samma grepp och val gäller. */
-export function roofShape(el: ShapeLike): ShapeLike {
+/**
+ * Elementets kontur (`outline` och `bulges`) som en sluten 2D-form, så att
+ * samma grepp och val gäller: takfallet (0.10), bjälklaget med ritad kontur
+ * och markytan (0.10.24; förut bara raka kanter).
+ */
+export function outlineShape(el: ShapeLike): ShapeLike {
   const bulges = el.params.bulges as number[] | undefined;
-  return { type: 'Shape2D', params: { shape: 'polyline', points: el.params.outline, ...(bulges ? { bulges } : {}), closed: true } };
+  return { type: 'Shape2D', params: { shape: 'polyline', points: el.params.outline, ...(hasArcs(bulges) ? { bulges } : {}), closed: true } };
 }
 
-/** Formen som Modifiera och greppen ändrar för ett element: 2D-formen själv, eller takfallets kontur. */
+/** Om elementet har en kontur som ändras som en 2D-form: takfall, bjälklag med ritad kontur, markyta med ritad kontur. */
+export function hasOutlineShape(el: ShapeLike | undefined): boolean {
+  if (!el || !Array.isArray(el.params.outline)) return false;
+  if (el.type === 'Roof') return true;
+  if (el.type === 'Slab') return !el.params.fromWalls;
+  // Markytan runt huset och urgrävningen under ett bjälklag följer dem.
+  return el.type === 'Ground' && el.params.kind === 'area' && !el.params.around && !el.params.slab;
+}
+
+/** Formen som Modifiera och greppen ändrar för ett element: 2D-formen själv, eller en kontur. */
 export function shapeOf(el: ShapeLike | undefined): ShapeLike | undefined {
   if (!el) return undefined;
   if (el.type === 'Shape2D') return el;
@@ -68,7 +81,7 @@ export function shapeOf(el: ShapeLike | undefined): ShapeLike | undefined {
     const bulges = el.params.bulges as number[] | undefined;
     return { type: 'Shape2D', params: { shape: 'polyline', points: el.params.line, ...(hasArcs(bulges) ? { bulges } : {}), closed: false } };
   }
-  return el.type === 'Roof' && Array.isArray(el.params.outline) ? roofShape(el) : undefined;
+  return hasOutlineShape(el) ? outlineShape(el) : undefined;
 }
 
 /** Om elementet är en ramp/väg med sidor som kan ritas om (0.10.18). */
@@ -119,11 +132,11 @@ export function editedShape(doc: ProjectDoc, id: Id | undefined, hole?: number):
  * ändrade på sin plats.
  */
 export function shapePatch(doc: ProjectDoc, id: Id, hole: number | undefined, patch: Record<string, unknown>): Record<string, unknown> {
-  if (hole === undefined && doc.elements[id]?.type === 'Roof') {
-    // Takfallets kontur (0.10): punkterna och bågarna.
+  const el = doc.elements[id];
+  if (hole === undefined && hasOutlineShape(el)) {
+    // Takfallets (0.10), bjälklagets och markytans (0.10.24) kontur: punkterna och bågarna.
     return { ...('points' in patch ? { outline: patch.points } : {}), ...('bulges' in patch ? { bulges: patch.bulges } : {}) };
   }
-  const el = doc.elements[id];
   // Rampens sidor (0.10.18): den ändrade sidan blir ritad och lever sitt eget liv, med sina bågar (0.10.19).
   if (hole !== undefined && isRamp(el)) {
     const side = hole === 0 ? 'left' : 'right';

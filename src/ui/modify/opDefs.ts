@@ -24,10 +24,6 @@ export type OpId =
   | 'rotate'
   | 'mirror'
   | 'multiply'
-  | 'roofInsert'
-  | 'roofMove'
-  | 'roofRemove'
-  | 'roofOffset'
   | 'shapeInsert'
   | 'shapeMove'
   | 'shapeRemove'
@@ -95,10 +91,6 @@ export const OPS: Record<OpId, OpDef> = {
   rotate: { label: 'Vrid', short: 'Vrid', icon: 'rotate', value: { label: 'Vinkel', unit: '°', initial: 90 }, hint: 'Klicka en riktning att vrida från och sedan dit, eller skriv vinkeln.' },
   mirror: { label: 'Spegla', short: 'Spegla', icon: 'mirror', hint: 'Speglingslinjen går genom punkten du klickade; klicka linjens riktning.' },
   multiply: { label: 'Kopiera i rad', short: 'I rad', icon: 'multiply', value: { label: 'Antal', unit: 'st', initial: 3 }, hint: 'Klicka avståndet mellan kopiorna.' },
-  roofInsert: { label: 'Lägg till punkt', short: 'Ny punkt', icon: 'insertNode', hint: 'Klicka där den nya punkten i takets kontur ska ligga.' },
-  roofMove: { label: 'Flytta punkt', short: 'Flytta', icon: 'move', hint: 'Klicka var hörnet ska hamna.' },
-  roofRemove: { label: 'Ta bort punkt', short: 'Ta bort', icon: 'merge', instant: true, hint: 'Hörnet tas bort; grannarna binds ihop med en rak kant.' },
-  roofOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 300 }, hint: 'Kanten flyttas vinkelrätt, utåt med plus; grannkanterna följer med. Med fler kanter flyttas också grannarna på var sida, eller alla.' },
   shapeInsert: { label: 'Lägg till punkt', short: 'Ny punkt', icon: 'insertNode', hint: 'Klicka där den nya punkten ska ligga.' },
   shapeMove: { label: 'Flytta punkt', short: 'Flytta', icon: 'move', hint: 'Klicka var punkten ska hamna. (Det går också att dra i den.)' },
   shapeRemove: { label: 'Ta bort punkt', short: 'Ta bort', icon: 'merge', instant: true, hint: 'Punkten tas bort; grannarna binds ihop.' },

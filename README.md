@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.23** (alfa); nästa är en **granskning** efter ungefär tre versioner till.
+**0.10.24** (alfa); nästa är en **granskning** efter ungefär tre versioner till.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,27 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.24, bågar i bjälklagets och markytans kontur (samma filformat, 21):
+- **Riktiga bågar i konturen**: bjälklagets ritade kontur och markytans
+  kontur kan ha bågar, som håltagningarna och takfallen: ett grepp i var
+  ände, radien bevaras när ett hörn dras, och konturen ritas och räknas
+  som en båge i planen, i 3D och i arean. En kontur av två punkter med
+  bågar är en cirkel
+- **Rita med bågar**: *Båge* (G) finns i bjälklagsverktygets polygon
+  också för bjälklaget (förut bara håltagningen). Markytan kan ritas som
+  *Polygon* (hörn för hörn, med *Båge*; *Klar med konturen*, Enter,
+  dubbelklick eller klick på första hörnet sluter den), utöver
+  rektangeln
+- **Modifiera**: konturerna ändras som 2D-former: Böj, Räta ut, Avrunda,
+  Fasa, Förskjut (också bågar och flera kanter), lägg till, flytta och ta
+  bort punkter, och punkterna dras direkt i ritningen. Spegla vänder
+  bågarna
+- **Smartspöt**: följer spöet en båge blir den en riktig båge också i
+  bjälklaget och markytan (inte korta raka bitar). Bockar man ur *Ur
+  väggarna* blir bågväggarnas insida bågar i konturen
+- Äldre bjälklag och markytor behåller sina korta raka bitar tills de
+  ritas om
 
 Version 0.10.23, smartspöt del 2 (samma filformat, 21):
 - **Bågar**: följer spöet en båge (ritad som korta raka bitar) blir den en

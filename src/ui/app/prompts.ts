@@ -132,7 +132,7 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
       };
       options.push({ key: 'R', label: 'Rektangel', run: shape('rect'), on: r.shape === 'rect' }, { key: 'P', label: 'Polygon', run: shape('polygon'), on: r.shape === 'polygon' });
       if (r.options.mode === 'hole') options.push({ key: 'C', label: 'Cirkel', run: shape('circle'), on: r.shape === 'circle' });
-      if (r.options.mode === 'hole' && r.shape === 'polygon')
+      if (r.shape === 'polygon')
         options.push({
           key: 'G',
           label: 'Båge',
@@ -164,8 +164,20 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
         { key: 'J', label: 'Markhöjd', run: mode('level'), on: r.options.mode === 'level' },
         { key: 'D', label: 'Låglinje', run: mode('drain'), on: r.options.mode === 'drain' },
       ];
-      // Bågar i linjen direkt (0.10.19), som takets kontur.
-      if (isLineMode(r.options.mode))
+      // Markytan som polygon (0.10.24).
+      if (r.options.mode === 'area')
+        options.push({
+          key: 'P',
+          label: 'Polygon',
+          run: () => {
+            r.options.shape = r.options.shape === 'polygon' ? 'rect' : 'polygon';
+            r.reset();
+            redraw();
+          },
+          on: r.polygon,
+        });
+      // Bågar i linjen direkt (0.10.19), som takets kontur; i markytans polygon (0.10.24).
+      if (isLineMode(r.options.mode) || r.polygon)
         options.push({
           key: 'G',
           label: 'Båge',
@@ -175,7 +187,7 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
           },
           on: r.arc,
         });
-      if (r.started && isLineMode(r.options.mode)) options.push({ key: 'A', label: 'Avsluta', run: () => r.finish() });
+      if ((r.started && isLineMode(r.options.mode)) || r.canClose) options.push({ key: 'A', label: r.polygon ? 'Klar' : 'Avsluta', run: () => r.finish() });
       if (!r.started) options.push({ key: 'H', label: 'Runt huset', run: () => r.aroundHouse() });
       if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.undoPoint() });
       return { head, text: r.hintText(), options };

@@ -266,12 +266,8 @@ export class Modifier {
         : ctx.kind === 'edge'
           ? 'Kanten'
           : 'Punkten'
-      : ctx.roofId
-        ? ctx.kind === 'edge'
-          ? 'Kanten'
-          : 'Hörnet'
-        : { edge: 'Referenslinjen', point: 'Änden', corner: 'Hörnet', body: '' }[ctx.kind];
-    const one = ctx.shapeId ?? ctx.roofId ?? (ctx.kind !== 'body' ? ctx.wallId : undefined) ?? (ctx.ids.length === 1 ? ctx.ids[0] : undefined);
+      : { edge: 'Referenslinjen', point: 'Änden', corner: 'Hörnet', body: '' }[ctx.kind];
+    const one = ctx.shapeId ?? (ctx.kind !== 'body' ? ctx.wallId : undefined) ?? (ctx.ids.length === 1 ? ctx.ids[0] : undefined);
     const what = one ? labelOf(doc, doc.elements[one]) : `${ctx.ids.length} objekt`;
     return { where, what };
   }
@@ -311,7 +307,7 @@ export class Modifier {
         : '';
     // Förskjut (0.10.17): en kant, flera symmetriskt kring den eller alla.
     const edges =
-      op === 'shapeOffset' || op === 'roofOffset'
+      op === 'shapeOffset'
         ? `<label class="sm-value"><span>Kanter</span><select data-modify-edges>${EDGE_CHOICES.map(([n, l]) => `<option value="${n}"${n === this.edges ? ' selected' : ''}>${l}</option>`).join('')}</select></label>`
         : '';
     return `<div class="sm-detail"><b>${escapeHtml(def.label)}</b>${value}${edges}${align}<span class="sm-hint">${escapeHtml(hint)}</span></div>`;
@@ -376,9 +372,9 @@ const EDGE_CHOICES: [number, string][] = [
   [0, 'Alla'],
 ];
 
-/** En kant i en 2D-form, ett takfalls eller bjälklags kontur, en håltagning eller ett markobjekts linje (inte en vägg). */
+/** En kant i en 2D-form, en kontur (takfall, bjälklag, markyta), en håltagning eller ett markobjekts linje (inte en vägg). */
 function isLineEdge(ctx: ModifyContext): boolean {
-  return ctx.kind === 'edge' && (!!ctx.shapeId || !!ctx.roofId);
+  return ctx.kind === 'edge' && !!ctx.shapeId;
 }
 
 /** Ikonerna för Justera och Fördela. */

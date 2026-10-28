@@ -1,5 +1,5 @@
-import { hasEditableOutline } from '../core/roofEdit';
 import { rampSideLines, refPoints } from '../elements/groundRamp';
+import { hasOutlineShape } from '../elements/shapeEdit';
 import { rampLevels } from '../elements/rampProfile';
 import { resolveParams } from '../elements/registry';
 import type { ProjectDoc } from '../core/model';
@@ -187,10 +187,10 @@ export function renderHighlight(
     const m = [b[0] - u[0] * 4, b[1] - u[1] * 4];
     out.push(`<path d="M${m[0] - u[0] * 9 - u[1] * 5} ${m[1] - u[1] * 9 + u[0] * 5}L${m[0]} ${m[1]}L${m[0] - u[0] * 9 + u[1] * 5} ${m[1] - u[1] * 9 - u[0] * 5}" class="ref-line"/>`);
   }
-  // Hörnen i markerade bjälklags kontur.
+  // Punkterna i markerade bjälklags och markytors ritade kontur (som 2D-formens sedan 0.10.24).
   for (const id of selected) {
     const el = doc.elements[id];
-    if (!hasEditableOutline(el)) continue;
+    if ((el?.type !== 'Slab' && el?.type !== 'Ground') || !byId.has(id) || !hasOutlineShape(el)) continue;
     for (const pt of el.params.outline as Vec2[]) {
       const s = cam.toScreen(pt);
       out.push(`<rect x="${s[0] - 4.5}" y="${s[1] - 4.5}" width="9" height="9" class="grip"/>`);

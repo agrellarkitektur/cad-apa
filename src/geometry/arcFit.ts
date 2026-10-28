@@ -136,3 +136,11 @@ export function fitArcs(c: Chain, tol = 1): ArcChain {
 
 /** Om kedjan fick någon båge. */
 export const hasBulges = (b: readonly number[]): boolean => b.some((x) => Math.abs(x) >= STRAIGHT);
+
+/** Kedjan baklänges: punkterna i omvänd ordning och bågarna åt andra hållet (en sluten kedja behåller sin första punkt). */
+export function reversedChain(c: ArcChain): ArcChain {
+  if (!c.closed) return { points: [...c.points].reverse(), bulges: [...c.bulges].reverse().map((b) => (b ? -b : 0)), closed: false };
+  const n = c.points.length;
+  // Kant k i den vända går från punkt n − k till n − k − 1: den gamla kanten n − k − 1 baklänges.
+  return { points: c.points.map((_, k) => c.points[(n - k) % n]), bulges: c.bulges.map((_, k) => c.bulges[(2 * n - k - 1) % n] ? -c.bulges[(2 * n - k - 1) % n] : 0), closed: true };
+}

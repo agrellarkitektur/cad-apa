@@ -3,7 +3,8 @@ import type { Element, Id } from '../../core/model';
 import { groundAt, terrainOf } from '../../core/site';
 import type { GroundParams } from '../../elements/ground';
 import { extendRamp } from '../../elements/rampEdits';
-import { tidyBulges } from '../../elements/groundLines';
+import { hasArcs, tidyBulges } from '../../elements/groundLines';
+import { areaOutline } from '../../elements/groundGeometry';
 import { ChainInput } from './chainInput';
 import { resolveParams } from '../../elements/registry';
 import { dist } from '../../geometry/vec';
@@ -29,10 +30,11 @@ const LINE_MODES: readonly GroundMode[] = ['path', 'breakline', 'wall', 'drain']
 export const isLineMode = (m: GroundMode): boolean => LINE_MODES.includes(m);
 
 /**
- * Mark (0.10.4): dra upp en markyta med två klick, lägg en markyta runt
- * huset, eller klicka i ett bjälklag för en urgrävning under det. Konturen
- * ändras sedan i Modifiera, som bjälklagets. Höjden föreslås ur den
- * befintliga marken i rektangelns mitt, avrundad till 50 mm.
+ * Mark (0.10.4): dra upp en markyta med två klick eller rita den som en
+ * polygon med bågar (0.10.24), lägg en markyta runt huset, eller klicka i
+ * ett bjälklag för en urgrävning under det. Konturen ändras sedan i
+ * Modifiera, som bjälklagets. Höjden föreslås ur den befintliga marken i
+ * konturens mitt, avrundad till 50 mm.
  *
  * Markobjekten hör till förslaget: ritas de i Befintligt läggs de i alla
  * förslag i stället.
@@ -41,11 +43,12 @@ export class GroundTool implements ViewTool, PointTaker {
   cursor = 'crosshair';
   private host: ToolHost;
   private a: Vec2 | null = null;
-  /** Linjens punkter (ramp, brytlinje, stödmur …), med bågar (0.10.19) som takets kontur. */
+  /** Linjens punkter (ramp, brytlinje, stödmur …), med bågar (0.10.19) som takets kontur; markytans polygon (0.10.24). */
   readonly chain = new ChainInput();
   private lastUp = { t: 0, at: [0, 0] as Vec2 };
   private current: SnapResult | null = null;
-  options: { mode: GroundMode } = { mode: 'area' };
+  /** Sättet, och hur markytan ritas (0.10.24): rektangel med två klick eller polygon hörn för hörn. */
+  options: { mode: GroundMode; shape: 'rect' | 'polygon' } = { mode: 'area', shape: 'rect' };
   /**
    * Rampen som förlängs (0.10.18): ett klick på änden av en ramp ritar
    * vidare på den, som 2D-formens linje. `pts` börjar då i änden.
@@ -66,6 +69,16 @@ export class GroundTool implements ViewTool, PointTaker {
   /** Linjens punkter hittills. */
   private get pts(): Vec2[] {
     return this.chain.points;
+  }
+
+  /** Markytan ritas som en polygon (0.10.24). */
+  get polygon(): boolean {
+    return this.options.mode === 'area' && this.options.shape === 'polygon';
+  }
+
+  /** Polygonen kan slutas (Klar, Enter). */
+  get canClose(): boolean {
+    return this.polygon && this.chain.canClose;
   }
 
   /** Nästa kant blir en båge (0.10.19). */
@@ -100,8 +113,8 @@ export class GroundTool implements ViewTool, PointTaker {
     const now = performance.now();
     const double = now - this.lastUp.t < 350 && dist(p.screen, this.lastUp.at) < 8;
     this.lastUp = { t: now, at: p.screen };
-    // Dubbelklick avslutar linjen (andra klicket lade redan samma punkt).
-    if (double && isLineMode(this.options.mode) && this.pts.length >= 2 && !this.chain.waiting) {
+    // Dubbelklick avslutar linjen (andra klicket lade redan samma punkt), eller sluter polygonen.
+    if (double && ((isLineMode(this.options.mode) && this.pts.length >= 2 && !this.chain.waiting) || this.canClose)) {
       this.finish();
       return;
     }
@@ -184,6 +197,12 @@ export class GroundTool implements ViewTool, PointTaker {
       this.onChange?.();
       return;
     }
+    if (this.polygon) {
+      // Ett klick på första hörnet sluter konturen (0.10.24), som bjälklagets.
+      if (this.chain.click(pt, pxToMm(this.host, 10)) === 'closed') this.finishArea();
+      else this.onChange?.();
+      return;
+    }
     if (!this.a) {
       this.a = pt;
       this.onChange?.();
@@ -197,20 +216,29 @@ export class GroundTool implements ViewTool, PointTaker {
     this.reset();
   }
 
+  /** Polygonen är sluten: en markyta med den, med bågarna (0.10.24). */
+  private finishArea(): void {
+    const c = this.chain.result();
+    this.reset();
+    this.createArea(c.points, c.bulges);
+  }
+
   /**
-   * En markyta med konturen (också smartspöt, 0.10.23). Höjden föreslås ur
-   * den befintliga marken i konturens mitt (rektangelns), avrundad till 50 mm.
+   * En markyta med konturen (också smartspöt, 0.10.23), med bågar (0.10.24).
+   * Höjden föreslås ur den befintliga marken i konturens mitt, avrundad till 50 mm.
    */
-  createArea(outline: [number, number][]): boolean {
-    if (!this.hasTerrain() || outline.length < 3) return false;
+  createArea(outline: [number, number][], bulges?: number[]): boolean {
+    const arcs = hasArcs(bulges) ? { bulges: tidyBulges(bulges, outline.length + 1) } : {};
+    const ring = areaOutline({ outline, ...arcs });
+    if (!this.hasTerrain() || ring.length < 3) return false;
     let x = 0;
     let y = 0;
-    for (const q of outline) {
-      x += q[0] / outline.length;
-      y += q[1] / outline.length;
+    for (const q of ring) {
+      x += q[0] / ring.length;
+      y += q[1] / ring.length;
     }
     const g = this.groundHeight([x, y]);
-    this.create({ kind: 'area', outline, height: Math.round(g / 50) * 50 });
+    this.create({ kind: 'area', outline, ...arcs, height: Math.round(g / 50) * 50 });
     return true;
   }
 
@@ -227,6 +255,11 @@ export class GroundTool implements ViewTool, PointTaker {
   finish(): void {
     // En båge som väntar på sin mittpunkt blir inte av.
     if (this.chain.waiting) this.chain.undo();
+    // Markytans polygon sluts med en rak sista kant (0.10.24).
+    if (this.polygon) {
+      if (this.canClose && this.chain.close()) this.finishArea();
+      return;
+    }
     const { points: line, bulges: raw } = this.chain.result();
     const bulges = tidyBulges(raw, line.length);
     const mode = this.options.mode;
@@ -367,6 +400,11 @@ export class GroundTool implements ViewTool, PointTaker {
       if (this.chain.arc && this.pts.length) return 'Klicka var bågen slutar.';
       if (this.base) return 'Klicka nästa punkt av förlängningen. Dubbelklick, Enter eller Klar avslutar; lutningen fortsätter.';
       return this.pts.length ? 'Klicka nästa punkt. Dubbelklick, Enter eller Klar avslutar. Med Båge blir nästa kant en båge.' : `Klicka första punkten av ${what}${m === 'path' ? ', eller änden av en ramp för att förlänga den' : ''}.`;
+    }
+    if (this.polygon) {
+      if (this.chain.waiting) return 'Klicka en punkt på bågen.';
+      if (!this.chain.count) return 'Klicka första hörnet av markytan, eller välj Runt huset.';
+      return `Klicka nästa hörn${this.chain.arc ? ' (bågens slut)' : ''}. Klicka på första hörnet, dubbelklicka eller tryck Enter när konturen är klar.`;
     }
     return this.a ? 'Klicka det motsatta hörnet.' : 'Klicka ett hörn av markytan, eller välj Runt huset.';
   }

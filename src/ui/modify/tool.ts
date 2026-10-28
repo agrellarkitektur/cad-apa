@@ -2,7 +2,6 @@ import { updateParams } from '../../core/commands';
 import { moveVertically } from '../../core/levels';
 import { fuseLines } from '../../core/joinLines';
 import type { Id } from '../../core/model';
-import { removeNode, setOutline } from '../../core/roofEdit';
 import { mergeAtCorner, reshapeWall } from '../../core/wallEdit';
 import { bendShapeEdge, editedShape, holesOf, removeShapeNode, shapePatch } from '../../elements/shapeEdit';
 import { resolveParams } from '../../elements/registry';
@@ -74,13 +73,6 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
   // Takfotens snitt för en kant (0.10.2).
   if (op === 'roofCutPerp' || op === 'roofCutPlumb' || op === 'roofCutAuto') {
     setEdgeCut(host, ctx, op === 'roofCutPerp' ? 'perp' : op === 'roofCutPlumb' ? 'plumb' : undefined);
-    return;
-  }
-  if (op === 'roofRemove') {
-    const roof = ctx.roofId ? doc.elements[ctx.roofId] : undefined;
-    const next = roof && removeNode(roof.params.outline as [number, number][], ctx.index!);
-    if (next) setOutline(host.store, roof.id, next, 'Ta bort punkt');
-    else host.hint('Konturen måste ha minst tre hörn.');
     return;
   }
   const el = ctx.wallId ? doc.elements[ctx.wallId] : undefined;

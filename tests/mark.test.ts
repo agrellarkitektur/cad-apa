@@ -1,7 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { moveElements, updateParams } from '../src/core/commands';
 import { finishedGround, type GroundShape } from '../src/core/ground';
-import { hasEditableOutline } from '../src/core/roofEdit';
 import { GROUND_DEFAULTS, groundAt, terrainOf } from '../src/core/site';
 import { updateSite } from '../src/core/siteImport';
 import { DocStore } from '../src/core/store';
@@ -197,7 +196,6 @@ describe('Ramp/väg (0.10.5, en sort sedan 0.10.7)', () => {
     const store = onSlope();
     const id = addGround(store, { kind: 'path', outline: [], line: [[0, 20000], [5000, 20000]], height: 0 });
     const el = store.doc.elements[id];
-    expect(hasEditableOutline(el)).toBe(false);
     expect(shapeOf(el)?.params.closed).toBe(false);
     expect(allowsArcs(shapeOf(el)!)).toBe(true);
     expect(shapeCan(shapeOf(el)!).bend).toBe(true);

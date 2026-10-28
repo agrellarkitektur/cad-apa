@@ -45,7 +45,7 @@ describe('smartmenyn och Modifiera-raden (0.8.5)', () => {
     expect(on.has('offsetAll')).toBe(false);
     // Varje val hör till en knapp i raden, så att inget val saknas där.
     const inRail = new Set(RAIL_ITEMS.flatMap((r) => r.ops));
-    const all = ['wallOn', 'insert', 'curve', 'tangent', 'straighten', 'offset', 'parallel', 'offsetAll', 'stretch', 'extend', 'fillet', 'chamfer', 'merge', 'move', 'rotate', 'mirror', 'multiply', 'roofInsert', 'roofMove', 'roofRemove', 'roofOffset', 'shapeInsert', 'shapeMove', 'shapeRemove', 'shapeOffset'];
+    const all = ['wallOn', 'insert', 'curve', 'tangent', 'straighten', 'offset', 'parallel', 'offsetAll', 'stretch', 'extend', 'fillet', 'chamfer', 'merge', 'move', 'rotate', 'mirror', 'multiply', 'shapeInsert', 'shapeMove', 'shapeRemove', 'shapeOffset'];
     expect(all.filter((op) => !inRail.has(op as never))).toEqual([]);
   });
 

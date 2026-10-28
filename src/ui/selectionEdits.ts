@@ -13,6 +13,7 @@ import { markerHeights } from '../repr/sectionLevels';
 import { buildingHeight } from '../repr/buildingHeight';
 import { MAX_LEAN, type WallParams } from '../elements/wall';
 import { bulgeForRadius } from '../geometry/arc';
+import { fitArcs, hasBulges } from '../geometry/arcFit';
 import { add, norm, scale, sub } from '../geometry/vec';
 import { PARAM_LABELS } from './labels';
 import { PROPS } from './selectionFields';
@@ -311,13 +312,15 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
         const el = tx.doc.elements[id];
         if (el?.type !== 'Slab') continue;
         if (on) {
-          tx.putElement({ ...el, params: { ...el.params, fromWalls: true, outline: [] } });
+          tx.putElement({ ...el, params: { ...el.params, fromWalls: true, outline: [], bulges: undefined } });
           continue;
         }
         const { ctx } = createContext(doc, el.storey, view, doc.graphics, () => true);
         const polys = slabBase(ctx, { ...resolveParams<SlabParams>(doc, el), fromWalls: true });
         const largest = polys.map((p) => p[0]).sort((a, b) => Math.abs(ringArea(b)) - Math.abs(ringArea(a)))[0] ?? [];
-        tx.putElement({ ...el, params: { ...el.params, fromWalls: false, outline: largest.map((q) => [Math.round(q[0]), Math.round(q[1])]) } });
+        // Bågväggarnas korta raka bitar blir bågar i konturen (0.10.24).
+        const arcs = fitArcs({ points: largest, closed: true });
+        tx.putElement({ ...el, params: { ...el.params, fromWalls: false, outline: arcs.points.map((q) => [Math.round(q[0]), Math.round(q[1])]), bulges: hasBulges(arcs.bulges) ? arcs.bulges : undefined } });
       }
     });
     return true;
