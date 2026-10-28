@@ -6,7 +6,7 @@ import { movesVertically } from '../../core/levels';
 import { canJoin, canTrim } from '../../core/trimEdit';
 import { canFuse } from '../../core/joinLines';
 import { cornerPartner, cornersAmong, refFrame } from '../../core/wallEdit';
-import { hasOwnLevel, rampPoint } from './rampOps';
+import { hasLevel, hasOwnEase, hasOwnLevel, rampPoint } from './rampOps';
 import { allowsArcs, canRoundCorner, edgeIsArc, editedShape, holeShape, holesOf, shapeCan, shapeEdgeAt, shapeNodes, shapeOf, subShapes, type ShapeLike } from '../../elements/shapeEdit';
 import { dist, sub } from '../../geometry/vec';
 import { resolveParams } from '../../elements/registry';
@@ -112,6 +112,11 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
       own.push('pathLevel');
       if (hasOwnLevel(doc, ctx)) own.push('pathLevelClear');
       if (rp.end && host.startRampFrom) own.push('pathExtend');
+      // Övergången i en punkt med höjd (0.10.19).
+      if (hasLevel(doc, ctx)) {
+        own.push('pathEase', 'pathEaseSharp');
+        if (hasOwnEase(doc, ctx)) own.push('pathEaseClear');
+      }
     }
     // En håltagning (0.9.4) flyttas och tas bort för sig; det allmänna gäller hela bjälklaget.
     // Vrida och spegla hålet för sig (0.10.17).

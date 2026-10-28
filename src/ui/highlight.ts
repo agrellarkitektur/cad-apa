@@ -1,5 +1,5 @@
 import { hasEditableOutline } from '../core/roofEdit';
-import { rampLevels, rampSides } from '../elements/groundRamp';
+import { rampLevels, rampSideLines, refPoints } from '../elements/groundRamp';
 import { resolveParams } from '../elements/registry';
 import type { ProjectDoc } from '../core/model';
 import type { WallParams } from '../elements/wall';
@@ -148,14 +148,15 @@ export function renderHighlight(
   for (const id of selected) {
     const el = doc.elements[id];
     if (el?.type !== 'Ground' || (el.params.kind !== 'path' && el.params.kind !== 'wall') || !byId.has(id)) continue;
-    const pts = (resolveParams<GroundParams>(doc, el).line ?? []) as Vec2[];
-    if (pts.length < 2) continue;
-    out.push(`<path d="${path(cam, pts, false)}" class="ref-line"/>`);
     const gp = resolveParams<GroundParams>(doc, el);
+    const pts = (gp.line ?? []) as Vec2[];
+    if (pts.length < 2) continue;
+    // Linjen ritas med bågarna (0.10.19); punkterna är de ritade.
+    out.push(`<path d="${path(cam, refPoints(gp), false)}" class="ref-line"/>`);
     // Rampens sidor (0.10.18): punkterna som styr utbredningen, tunnare.
     if (gp.kind === 'path')
-      for (const side of Object.values(rampSides(gp)))
-        for (const pt of side) {
+      for (const side of Object.values(rampSideLines(gp)))
+        for (const pt of side.points) {
           const s = cam.toScreen(pt);
           out.push(`<rect x="${s[0] - 3.5}" y="${s[1] - 3.5}" width="7" height="7" class="grip side"/>`);
         }
@@ -166,8 +167,9 @@ export function renderHighlight(
       const s = cam.toScreen(pt);
       out.push(level.has(i) ? `<circle cx="${s[0]}" cy="${s[1]}" r="6" class="grip level"/>` : `<rect x="${s[0] - 4.5}" y="${s[1] - 4.5}" width="9" height="9" class="grip"/>`);
     });
-    const a = cam.toScreen(pts[pts.length - 2]);
-    const b = cam.toScreen(pts[pts.length - 1]);
+    const flat = refPoints(gp);
+    const a = cam.toScreen(flat[flat.length - 2]);
+    const b = cam.toScreen(flat[flat.length - 1]);
     const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
     if (l < 12) continue;
     const u = [(b[0] - a[0]) / l, (b[1] - a[1]) / l];

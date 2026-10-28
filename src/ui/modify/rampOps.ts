@@ -1,8 +1,9 @@
 import { updateParams } from '../../core/commands';
 import type { Element, ProjectDoc } from '../../core/model';
-import { fromRh, toRh } from '../../core/site';
+import { fromRh, groundDefaults, toRh } from '../../core/site';
 import type { GroundParams } from '../../elements/ground';
-import { heightAtS, rampLevels, tidyLevels } from '../../elements/groundRamp';
+import { along } from '../../elements/groundLines';
+import { easeRadiusAt, rampProfile, refPoints, tidyEases, tidyLevels } from '../../elements/groundRamp';
 import { resolveParams } from '../../elements/registry';
 import { isRamp } from '../../elements/shapeEdit';
 import type { ToolHost } from '../tools/host';
@@ -11,7 +12,8 @@ import type { ModifyContext } from './ops';
 /**
  * Rampens referenslinje i Modifiera (0.10.18): höjden i en punkt (ändarna
  * och punkterna däremellan, som då styr lutningen), ta bort höjden i en
- * punkt mellan ändarna, och förläng rampen från en ände.
+ * punkt mellan ändarna, och förläng rampen från en ände. Övergången i en
+ * punkt med höjd (0.10.19): mjuk med en radie, skarp, eller som rampen.
  */
 
 /** Rampen och referenslinjens punkt som klicket gäller, eller null. */
@@ -39,12 +41,12 @@ export function levelSuggestion(host: ToolHost, ctx: ModifyContext): { value: nu
   const doc = host.store.doc;
   const r = rampPoint(doc, ctx);
   if (!r) return null;
-  const levels = rampLevels(r.p);
-  const own = levels.find((l) => l.i === r.i);
-  let s = 0;
-  const pts = r.p.line ?? [];
-  for (let k = 1; k <= r.i; k++) s += Math.hypot(pts[k][0] - pts[k - 1][0], pts[k][1] - pts[k - 1][1]);
-  const h = own ? own.h : Math.round(heightAtS(levels, s) / 5) * 5;
+  const prof = rampProfile(r.p, groundDefaults(doc.site));
+  const own = prof.levels.find((l) => l.i === r.i);
+  // Sträckan dit längs referenslinjen, med bågarna (0.10.19).
+  const pt = r.p.line![r.i];
+  const s = along(refPoints(r.p), pt[0], pt[1]).s;
+  const h = own ? own.h : Math.round(prof.hAt(s) / 5) * 5;
   return doc.site ? { value: Math.round(toRh(doc.site, h) * 1000) / 1000, unit: 'm', h } : { value: h, unit: 'mm', h };
 }
 
@@ -77,4 +79,45 @@ export function clearRampLevel(host: ToolHost, ctx: ModifyContext): void {
   const levels = [...(r.p.levels ?? [])];
   levels[r.i] = null;
   updateParams(host.store, [r.el.id], { levels: tidyLevels(levels) }, 'Ta bort höjden');
+}
+
+/** Om punkten har en höjd (ändarna, eller en egen), så att övergången gäller den. */
+export function hasLevel(doc: ProjectDoc, ctx: ModifyContext): boolean {
+  const r = rampPoint(doc, ctx);
+  return !!r && (r.end || typeof r.p.levels?.[r.i] === 'number');
+}
+
+/** Om punkten har en egen övergång (inte rampens). */
+export function hasOwnEase(doc: ProjectDoc, ctx: ModifyContext): boolean {
+  const r = rampPoint(doc, ctx);
+  return !!r && !!r.p.eases?.[r.i];
+}
+
+/** Övergångens radie i punkten som förslag (mm): dess egen, eller rampens. */
+export function easeSuggestion(host: ToolHost, ctx: ModifyContext): number {
+  const doc = host.store.doc;
+  const r = rampPoint(doc, ctx);
+  if (!r) return groundDefaults(doc.site).easeRadius;
+  const def = groundDefaults(doc.site);
+  return easeRadiusAt(r.p, r.i, def) || Math.max(100, r.p.easeRadius ?? def.easeRadius);
+}
+
+/**
+ * Övergången i punkten: mjuk med radien `radius` (utan radie när den är
+ * rampens), skarp, eller som rampen (`kind` 'clear').
+ */
+export function setRampEase(host: ToolHost, ctx: ModifyContext, kind: 'soft' | 'sharp' | 'clear', radius?: number | null): void {
+  const doc = host.store.doc;
+  const r = rampPoint(doc, ctx);
+  if (!r) return;
+  if (r.el.locked) {
+    host.hint('Låst. Lås upp i egenskaperna för att ändra.', 3000);
+    return;
+  }
+  const eases = [...(r.p.eases ?? [])];
+  while (eases.length <= r.i) eases.push(null);
+  const base = Math.max(100, r.p.easeRadius ?? groundDefaults(doc.site).easeRadius);
+  const rad = radius !== null && radius !== undefined && Number.isFinite(radius) && radius > 0 ? Math.round(radius) : base;
+  eases[r.i] = kind === 'clear' ? null : kind === 'sharp' ? { ease: false } : { ease: true, ...(rad !== base ? { radius: rad } : {}) };
+  updateParams(host.store, [r.el.id], { eases: tidyEases(eases) }, kind === 'clear' ? 'Övergång som rampen' : kind === 'sharp' ? 'Skarp övergång' : 'Mjuk övergång');
 }

@@ -85,9 +85,11 @@ export interface GroundDefaults {
   blend: number;
   /** Stödmurens tjocklek, mm. */
   wallThickness: number;
+  /** Rampens mjuka övergångar (0.10.19): den vertikala radien, mm. */
+  easeRadius: number;
 }
 
-export const GROUND_DEFAULTS: GroundDefaults = { slope: 2, fall: 20, fallLength: 3000, distance: 3000, sockel: 200, margin: 500, rampMax: 12, walkMax: 20, landingRise: 500, blend: 5000, wallThickness: 200 };
+export const GROUND_DEFAULTS: GroundDefaults = { slope: 2, fall: 20, fallLength: 3000, distance: 3000, sockel: 200, margin: 500, rampMax: 12, walkMax: 20, landingRise: 500, blend: 5000, wallThickness: 200, easeRadius: 20000 };
 
 /** Projektets förval för markobjekten. */
 export function groundDefaults(site: Pick<Site, 'ground'> | undefined): GroundDefaults {

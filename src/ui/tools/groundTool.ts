@@ -3,6 +3,8 @@ import type { Element, Id } from '../../core/model';
 import { groundAt, terrainOf } from '../../core/site';
 import type { GroundParams } from '../../elements/ground';
 import { extendRamp } from '../../elements/groundRamp';
+import { tidyBulges } from '../../elements/groundLines';
+import { ChainInput } from './chainInput';
 import { resolveParams } from '../../elements/registry';
 import { dist } from '../../geometry/vec';
 import { slabAt } from '../../elements/slab';
@@ -39,8 +41,8 @@ export class GroundTool implements ViewTool, PointTaker {
   cursor = 'crosshair';
   private host: ToolHost;
   private a: Vec2 | null = null;
-  /** Linjens punkter (ramp, brytlinje, stödmur …). */
-  private pts: Vec2[] = [];
+  /** Linjens punkter (ramp, brytlinje, stödmur …), med bågar (0.10.19) som takets kontur. */
+  readonly chain = new ChainInput();
   private lastUp = { t: 0, at: [0, 0] as Vec2 };
   private current: SnapResult | null = null;
   options: { mode: GroundMode } = { mode: 'area' };
@@ -58,7 +60,23 @@ export class GroundTool implements ViewTool, PointTaker {
   }
 
   get started(): boolean {
-    return !!this.a || this.pts.length > 0;
+    return !!this.a || this.chain.count > 0;
+  }
+
+  /** Linjens punkter hittills. */
+  private get pts(): Vec2[] {
+    return this.chain.points;
+  }
+
+  /** Nästa kant blir en båge (0.10.19). */
+  get arc(): boolean {
+    return this.chain.arc;
+  }
+
+  setArc(on: boolean): void {
+    this.chain.arc = on;
+    this.onChange?.();
+    this.host.view.requestRender();
   }
 
   down(): 'capture' {
@@ -83,7 +101,7 @@ export class GroundTool implements ViewTool, PointTaker {
     const double = now - this.lastUp.t < 350 && dist(p.screen, this.lastUp.at) < 8;
     this.lastUp = { t: now, at: p.screen };
     // Dubbelklick avslutar linjen (andra klicket lade redan samma punkt).
-    if (double && isLineMode(this.options.mode) && this.pts.length >= 2) {
+    if (double && isLineMode(this.options.mode) && this.pts.length >= 2 && !this.chain.waiting) {
       this.finish();
       return;
     }
@@ -130,7 +148,8 @@ export class GroundTool implements ViewTool, PointTaker {
     this.a = null;
     this.base = { id, atStart };
     const end = atStart ? line[0] : line[line.length - 1];
-    this.pts = [[end[0], end[1]]];
+    this.chain.reset();
+    this.chain.points.push([end[0], end[1]]);
     this.onChange?.();
     this.host.view.requestRender();
     return true;
@@ -155,8 +174,8 @@ export class GroundTool implements ViewTool, PointTaker {
       return;
     }
     if (isLineMode(this.options.mode)) {
-      const last = this.pts[this.pts.length - 1];
-      if (!last || dist(last, pt) >= 1) this.pts.push(pt);
+      // Linjen sluts aldrig: ett klick på första punkten är bara en punkt till.
+      this.chain.click(pt, -1);
       this.onChange?.();
       return;
     }
@@ -188,35 +207,46 @@ export class GroundTool implements ViewTool, PointTaker {
    * likadant, en stödmur med krönet efter marken.
    */
   finish(): void {
-    const pts = this.pts;
+    // En båge som väntar på sin mittpunkt blir inte av.
+    if (this.chain.waiting) this.chain.undo();
+    const { points: line, bulges: raw } = this.chain.result();
+    const bulges = tidyBulges(raw, line.length);
     const mode = this.options.mode;
     const base = this.base;
-    this.pts = [];
+    this.chain.reset();
     this.base = null;
     this.onChange?.();
     if (base) {
-      this.extend(base, pts.slice(1));
+      this.extend(base, line.slice(1), bulges);
       return;
     }
-    if (pts.length < 2 || !isLineMode(mode)) return;
-    const line = pts.map((q): [number, number] => [q[0], q[1]]);
+    if (line.length < 2 || !isLineMode(mode)) return;
+    const arcs = bulges ? { bulges } : {};
     if (mode === 'wall') {
-      this.create({ kind: 'wall', outline: [], line });
+      this.create({ kind: 'wall', outline: [], line, ...arcs });
       return;
     }
-    const h0 = Math.round(this.groundHeight(pts[0]) / 10) * 10;
-    const h1 = Math.round(this.groundHeight(pts[pts.length - 1]) / 10) * 10;
-    if (mode === 'breakline') this.create({ kind: 'breakline', outline: [], line, height: h0, endHeight: h1 });
-    else this.create({ kind: 'path', outline: [], line, height: h0, endHeight: h1 });
+    const h0 = Math.round(this.groundHeight(line[0]) / 10) * 10;
+    const h1 = Math.round(this.groundHeight(line[line.length - 1]) / 10) * 10;
+    if (mode === 'breakline') this.create({ kind: 'breakline', outline: [], line, height: h0, endHeight: h1, ...arcs });
+    else this.create({ kind: 'path', outline: [], line, height: h0, endHeight: h1, ...arcs });
   }
 
-  /** Rampen med de nya punkterna (0.10.18); lutningen fortsätter, och den gamla änden behåller sin höjd. */
-  private extend(base: { id: Id; atStart: boolean }, added: Vec2[]): void {
+  /** Rampen med de nya punkterna (0.10.18); lutningen fortsätter, och den gamla änden behåller sin höjd. Med bågar (0.10.19). */
+  private extend(base: { id: Id; atStart: boolean }, added: Vec2[], bulges?: number[]): void {
     const el = this.host.store.doc.elements[base.id];
     if (!el || !added.length) return;
-    const patch = extendRamp(resolveParams<GroundParams>(this.host.store.doc, el), base.atStart, added);
+    const patch = extendRamp(resolveParams<GroundParams>(this.host.store.doc, el), base.atStart, added, bulges);
     updateParams(this.host.store, [base.id], patch as Record<string, unknown>, 'Förläng rampen');
     this.host.selection.set([base.id]);
+  }
+
+  /** Ta bort det senaste klicket på linjen, eller börja om. */
+  undoPoint(): void {
+    if (this.chain.count) this.chain.undo();
+    else this.reset();
+    this.onChange?.();
+    this.host.view.requestRender();
   }
 
   /** En urgrävning under bjälklaget där man klickade. Finns den redan markeras den. */
@@ -278,7 +308,7 @@ export class GroundTool implements ViewTool, PointTaker {
   }
 
   lastPoint(): Vec2 | undefined {
-    return this.a ?? this.pts[this.pts.length - 1];
+    return this.a ?? this.chain.last();
   }
 
   cursorPoint(): Vec2 | undefined {
@@ -298,8 +328,10 @@ export class GroundTool implements ViewTool, PointTaker {
     if (m === 'point') return 'Klicka där höjdpunkten ska ligga; höjden tas ur marken och ändras i egenskaperna.';
     if (isLineMode(m)) {
       const what = { path: 'vägens referenslinje (mitten från början)', breakline: 'brytlinjen', wall: 'stödmurens linje' }[m as 'path'];
+      if (this.chain.waiting) return 'Klicka en punkt på bågen.';
+      if (this.chain.arc && this.pts.length) return 'Klicka var bågen slutar.';
       if (this.base) return 'Klicka nästa punkt av förlängningen. Dubbelklick, Enter eller Klar avslutar; lutningen fortsätter.';
-      return this.pts.length ? 'Klicka nästa punkt. Dubbelklick, Enter eller Klar avslutar.' : `Klicka första punkten av ${what}${m === 'path' ? ', eller änden av en ramp för att förlänga den' : ''}.`;
+      return this.pts.length ? 'Klicka nästa punkt. Dubbelklick, Enter eller Klar avslutar. Med Båge blir nästa kant en båge.' : `Klicka första punkten av ${what}${m === 'path' ? ', eller änden av en ramp för att förlänga den' : ''}.`;
     }
     return this.a ? 'Klicka det motsatta hörnet.' : 'Klicka ett hörn av markytan, eller välj Runt huset.';
   }
@@ -308,7 +340,7 @@ export class GroundTool implements ViewTool, PointTaker {
 
   reset(): void {
     this.a = null;
-    this.pts = [];
+    this.chain.reset();
     this.base = null;
     this.lockAngle = null;
     this.onChange?.();
@@ -321,8 +353,8 @@ export class GroundTool implements ViewTool, PointTaker {
       out.push(`<path d="M${pts.map((q) => q.join(' ')).join('L')}Z" class="rubber"/>`);
     }
     if (this.pts.length) {
-      const pts = [...this.pts, ...(this.current ? [this.current.point] : [])].map((q) => cam.toScreen(q));
-      out.push(`<path d="M${pts.map((q) => q.join(' ')).join('L')}" class="rubber"/>`);
+      const pts = this.chain.preview(this.current?.point).map((q) => cam.toScreen(q));
+      if (pts.length >= 2) out.push(`<path d="M${pts.map((q) => q.join(' ')).join('L')}" class="rubber"/>`);
     }
     if (this.current) out.push(snapMarker(cam, this.current));
     return out.join('');

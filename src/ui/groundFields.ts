@@ -4,7 +4,7 @@ import type { ViewStates } from '../core/states';
 import { finishedTerrain, groundGeometry, groundLabel, isLineKind, m3, wallProfile, type GroundParams } from '../elements/ground';
 import { massBalance } from '../elements/groundGeometry';
 import { lineLength, PATH_WIDTH } from '../elements/groundLines';
-import { rampLevels, rampRuns, rampWarnings, sideEdge } from '../elements/groundRamp';
+import { easeRadiusAt, rampProfile, rampWarnings, refPoints, sideEdge } from '../elements/groundRamp';
 import { fillFields } from './shapeFields';
 import type { FillParams } from '../elements/drawing2d';
 import { resolveParams } from '../elements/registry';
@@ -101,8 +101,7 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
   const h1 = p.endHeight ?? h0;
   if (p.kind === 'path') {
     // Rampen (0.10.18): referenslinjen styr lutningen, sidorna utbredningen, var sida för sig mot marken.
-    const levels = rampLevels(p);
-    const runs = rampRuns(levels);
+    const { levels, runs } = rampProfile(p, def);
     const drawn = !!(p.left || p.right);
     const derived = !(p.left && p.right);
     rows.push(`<label class="field"><span>Namn</span><input type="text" autocomplete="off" data-key="ground:name" value="${escapeHtml(p.name ?? '')}" placeholder="Ramp/väg"></label>`);
@@ -128,6 +127,11 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
       rows.push(field('ratio' as keyof GroundParams, 'Lutning', '1:N', Number.isFinite(n) ? Math.round(n * 10) / 10 : undefined, undefined, 'Ändrar höjden i slutet; tomt = plan'));
     }
     rows.push(field('maxSlope', 'Varna brantare än', '1:N', p.maxSlope, def.rampMax, 'Tomt = projektets förval under Platsen'));
+    // Mjuka övergångar (0.10.19): en vertikal kurva i början, slutet och punkterna med höjd, i stället för en skarp brytning.
+    rows.push(
+      `<label class="field" title="Skarpa: höjden bryts i punkterna, som ett vilplan i en betongramp. Mjuka: en vertikal kurva med radien, som en gångväg; rampen börjar och slutar plant"><span>Övergångarna</span><select data-key="ground:ease"><option value="">Skarpa</option><option value="soft"${p.ease ? ' selected' : ''}>Mjuka</option></select></label>`,
+    );
+    if (p.ease || p.eases?.some((e) => e?.ease)) rows.push(field('easeRadius', 'Övergångarnas radie', 'mm', p.easeRadius, def.easeRadius, 'Den vertikala kurvans radie; tomt = projektets förval under Platsen'));
     rows.push(field('crossFall', 'Tvärfall', '1:N', p.crossFall, undefined, 'Kring referenslinjen. Positivt faller åt höger i linjens riktning, negativt åt vänster; tomt = inget'));
     const sel = (key: string, label: string, v: 'slope' | 'wall', title: string) =>
       `<label class="field" title="${title}"><span>${label}</span><select data-key="ground:${key}"><option value="slope">Slänt</option><option value="wall"${v === 'wall' ? ' selected' : ''}>Stödmur</option></select></label>`;
@@ -139,11 +143,13 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
     notes.push(`<span class="row">${check('startLine', 'Tvärlinje i början')} ${check('endLine', 'Tvärlinje i slutet')}</span>`);
     const ratioText = (n: number) => (Number.isFinite(n) ? `1:${(Math.round(n * 10) / 10).toLocaleString('sv-SE')}` : 'plan');
     notes.push(
-      `Längd ${(Math.round(lineLength(pts)) / 1000).toLocaleString('sv-SE')} m, höjdskillnad ${(Math.round(Math.abs(h1 - h0)) / 1000).toLocaleString('sv-SE')} m${runs.length > 1 ? `; lutningen ${runs.map((r) => ratioText(r.ratio)).join(', ')}` : ''}.`,
+      `Längd ${(Math.round(lineLength(refPoints(p))) / 1000).toLocaleString('sv-SE')} m, höjdskillnad ${(Math.round(Math.abs(h1 - h0)) / 1000).toLocaleString('sv-SE')} m${runs.length > 1 ? `; lutningen ${runs.map((r) => ratioText(r.ratio)).join(', ')}` : ''}${runs.some((r) => r.la || r.lb) ? ' (den raka delen, mellan övergångarna)' : ''}.`,
     );
-    for (const w of rampWarnings(levels, p.maxSlope ?? def.rampMax, def)) notes.push(`<strong>${escapeHtml(w)}.</strong>`);
+    const own = (p.eases ?? []).map((e, i) => (e ? `punkt ${i + 1} ${e.ease ? `mjuk${easeRadiusAt(p, i, def) !== Math.max(100, p.easeRadius ?? def.easeRadius) ? ` (radie ${(easeRadiusAt(p, i, def) / 1000).toLocaleString('sv-SE')} m)` : ''}` : 'skarp'}` : '')).filter(Boolean);
+    if (own.length) notes.push(`Egen övergång i ${own.join(', ')} (<em>Övergång i punkten</em> i Modifiera).`);
+    for (const w of rampWarnings(levels, p.maxSlope ?? def.rampMax, def, p)) notes.push(`<strong>${escapeHtml(w)}.</strong>`);
     notes.push(
-      'Referenslinjen styr lutningen: punkterna med höjd (orange) ändras med <em>Höjd i punkten</em> i Modifiera, och mellan dem går rampen rakt. Sidorna ändras med sina punkter och lever sedan sitt eget liv. Klicka på en ände med verktyget Mark (Ramp/väg), eller <em>Förläng</em> i Modifiera, för att förlänga rampen. Vilplanets gränser står under Platsen.',
+      'Referenslinjen styr lutningen: punkterna med höjd (orange) ändras med <em>Höjd i punkten</em> i Modifiera, och mellan dem går rampen rakt, med skarp eller mjuk övergång i punkterna (<em>Övergångarna</em>, och per punkt med <em>Mjuk övergång</em> och <em>Skarp övergång</em> i Modifiera). Referenslinjen och sidorna kan få bågar med Böj och Avrunda. Sidorna ändras med sina punkter och lever sedan sitt eget liv. Klicka på en ände med verktyget Mark (Ramp/väg), eller <em>Förläng</em> i Modifiera, för att förlänga rampen; två ramper vars ändar möts dockas med <em>Foga ihop</em>. Vilplanets gränser står under Platsen.',
     );
   } else if (p.kind === 'point') {
     rows.push(rh('height', 'Höjd', h0));

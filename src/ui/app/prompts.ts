@@ -162,9 +162,20 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
         { key: 'M', label: 'Stödmur', run: mode('wall'), on: r.options.mode === 'wall' },
         { key: 'K', label: 'Höjdpunkt', run: mode('point'), on: r.options.mode === 'point' },
       ];
+      // Bågar i linjen direkt (0.10.19), som takets kontur.
+      if (isLineMode(r.options.mode))
+        options.push({
+          key: 'G',
+          label: 'Båge',
+          run: () => {
+            r.setArc(!r.arc);
+            redraw();
+          },
+          on: r.arc,
+        });
       if (r.started && isLineMode(r.options.mode)) options.push({ key: 'A', label: 'Avsluta', run: () => r.finish() });
       if (!r.started) options.push({ key: 'H', label: 'Runt huset', run: () => r.aroundHouse() });
-      if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.reset() });
+      if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.undoPoint() });
       return { head, text: r.hintText(), options };
     }
     case 'section':

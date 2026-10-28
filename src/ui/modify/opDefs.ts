@@ -43,6 +43,9 @@ export type OpId =
   | 'pathLevel'
   | 'pathLevelClear'
   | 'pathExtend'
+  | 'pathEase'
+  | 'pathEaseSharp'
+  | 'pathEaseClear'
   | 'holeRemove'
   | 'roofTrim'
   | 'roofCutPerp'
@@ -126,6 +129,9 @@ export const OPS: Record<OpId, OpDef> = {
   pathLevel: { label: 'Höjd i punkten', short: 'Höjd', icon: 'moveZ', value: { label: 'Höjd', unit: 'mm', initial: 0 }, hint: 'Skriv höjden i punkten och tryck Enter (förslaget är höjden där nu), eller klicka för att använda den. Punkterna med höjd styr rampens lutning; mellan dem går den rakt.' },
   pathLevelClear: { label: 'Ta bort höjden', short: 'Utan höjd', icon: 'trash', instant: true, hint: 'Punkten följer lutningen mellan grannarna igen.' },
   pathExtend: { label: 'Förläng rampen', short: 'Förläng', icon: 'extend', hint: 'Klicka nya punkter från änden. Dubbelklick, Enter eller Klar avslutar; lutningen fortsätter.' },
+  pathEase: { label: 'Mjuk övergång', short: 'Mjuk', icon: 'curveEdge', value: { label: 'Radie', unit: 'mm', initial: 20000 }, hint: 'Höjden går över i en vertikal kurva med radien i punkten, som på en gångväg. Skriv radien och tryck Enter, eller klicka för att använda den (förslaget är rampens).' },
+  pathEaseSharp: { label: 'Skarp övergång', short: 'Skarp', icon: 'straighten', instant: true, hint: 'Höjden bryts skarpt i punkten, som ett vilplan i en betong- eller stenramp.' },
+  pathEaseClear: { label: 'Övergång som rampen', short: 'Som rampen', icon: 'trash', instant: true, hint: 'Punkten följer rampens inställning för övergångarna igen.' },
   moveZ: { label: 'Flytta i höjd', short: 'I höjd', icon: 'moveZ', value: { label: 'Höjd', unit: 'mm', initial: 100 }, hint: 'Skriv hur mycket upp (minus för ned) och tryck Enter. Hela objektet flyttas: väggens fot och topp, bjälklaget, möbeln eller taket.' },
   shapeFuse: { label: 'Foga ihop', short: 'Foga ihop', icon: 'fuse', instant: true, hint: 'De markerade linjerna som delar en ändpunkt blir en lång linje. Den första behåller sin penna.' },
   holeRemove: { label: 'Ta bort hålet', short: 'Ta bort hål', icon: 'trash', instant: true, hint: 'Håltagningen tas bort ur bjälklaget.' },

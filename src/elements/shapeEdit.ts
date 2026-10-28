@@ -5,7 +5,8 @@ import { dist, dot, left, norm, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import { catmullRom, isClosed, segmentArc, segmentCount, shapePoints, type Shape2DParams, type ShapePath } from './drawing2d';
 import type { SlabHole } from './slab';
-import { rampSides, remapLevels, type RampParams } from './groundRamp';
+import { rampSideLines, remapEases, remapLevels, type EasePoint, type RampParams } from './groundRamp';
+import { hasArcs } from './groundLines';
 
 /**
  * Punkter och kanter i 2D-former (0.8 del 2, 0.8.19, 0.8.24): greppen som
@@ -61,9 +62,11 @@ export function roofShape(el: ShapeLike): ShapeLike {
 export function shapeOf(el: ShapeLike | undefined): ShapeLike | undefined {
   if (!el) return undefined;
   if (el.type === 'Shape2D') return el;
-  // Markobjekt längs en linje (0.10.5): linjen som en öppen 2D-form, utan bågar.
-  // Utan bågar (`noArcs`): Böj och Avrunda finns inte förrän markobjekten kan ha bågar.
-  if (el.type === 'Ground' && Array.isArray(el.params.line) && (el.params.line as unknown[]).length >= 2) return { type: 'Shape2D', params: { shape: 'polyline', points: el.params.line, closed: false, noArcs: true } };
+  // Markobjekt längs en linje (0.10.5): linjen som en öppen 2D-form, med bågar sedan 0.10.19.
+  if (el.type === 'Ground' && Array.isArray(el.params.line) && (el.params.line as unknown[]).length >= 2) {
+    const bulges = el.params.bulges as number[] | undefined;
+    return { type: 'Shape2D', params: { shape: 'polyline', points: el.params.line, ...(hasArcs(bulges) ? { bulges } : {}), closed: false } };
+  }
   return el.type === 'Roof' && Array.isArray(el.params.outline) ? roofShape(el) : undefined;
 }
 
@@ -72,10 +75,11 @@ export function isRamp(el: ShapeLike | undefined): boolean {
   return el?.type === 'Ground' && el.params.kind === 'path' && Array.isArray(el.params.line) && (el.params.line as unknown[]).length >= 2;
 }
 
-/** Rampens sida som en öppen 2D-form utan bågar (0.10.18): `hole` 0 är vänster sida, 1 höger. */
+/** Rampens sida som en öppen 2D-form (0.10.18, med bågar 0.10.19): `hole` 0 är vänster sida, 1 höger. */
 export function rampSideShape(el: ShapeLike, hole: number): ShapeLike | undefined {
-  const pts = rampSides(el.params as RampParams)[hole === 0 ? 'left' : 'right'];
-  return pts.length >= 2 ? { type: 'Shape2D', params: { shape: 'polyline', points: pts.map((q) => [Math.round(q[0]), Math.round(q[1])]), closed: false, noArcs: true } } : undefined;
+  const side = rampSideLines(el.params as RampParams)[hole === 0 ? 'left' : 'right'];
+  const pts = side.points;
+  return pts.length >= 2 ? { type: 'Shape2D', params: { shape: 'polyline', points: pts.map((q) => [Math.round(q[0]), Math.round(q[1])]), ...(hasArcs(side.bulges) ? { bulges: side.bulges } : {}), closed: false } } : undefined;
 }
 
 /**
@@ -119,14 +123,27 @@ export function shapePatch(doc: ProjectDoc, id: Id, hole: number | undefined, pa
     return { ...('points' in patch ? { outline: patch.points } : {}), ...('bulges' in patch ? { bulges: patch.bulges } : {}) };
   }
   const el = doc.elements[id];
-  // Rampens sidor (0.10.18): den ändrade sidan blir ritad och lever sitt eget liv.
-  if (hole !== undefined && isRamp(el)) return 'points' in patch ? { [hole === 0 ? 'left' : 'right']: patch.points } : {};
+  // Rampens sidor (0.10.18): den ändrade sidan blir ritad och lever sitt eget liv, med sina bågar (0.10.19).
+  if (hole !== undefined && isRamp(el)) {
+    const side = hole === 0 ? 'left' : 'right';
+    const key = hole === 0 ? 'leftBulges' : 'rightBulges';
+    const shape = rampSideShape(el!, hole);
+    const out: Record<string, unknown> = { [side]: 'points' in patch ? patch.points : shape?.params.points };
+    if ('bulges' in patch) out[key] = patch.bulges;
+    else if (!(el!.params as RampParams)[side] && shape?.params.bulges) out[key] = shape.params.bulges;
+    return out;
+  }
   if (hole === undefined && el?.type === 'Ground') {
-    if (!('points' in patch)) return {};
-    // Rampens höjder i punkterna följer punkterna (0.10.18).
+    const out: Record<string, unknown> = {};
+    if ('bulges' in patch) out.bulges = patch.bulges;
+    if (!('points' in patch)) return out;
+    // Rampens höjder i punkterna och övergångar följer punkterna (0.10.18, 0.10.19).
     const before = (el.params.line as [number, number][] | undefined) ?? [];
     const after = patch.points as [number, number][];
-    return isRamp(el) && Array.isArray(el.params.levels) ? { line: after, levels: remapLevels(before, after, el.params.levels as (number | null)[]) } : { line: after };
+    out.line = after;
+    if (isRamp(el) && Array.isArray(el.params.levels)) out.levels = remapLevels(before, after, el.params.levels as (number | null)[]);
+    if (isRamp(el) && Array.isArray(el.params.eases)) out.eases = remapEases(before, after, el.params.eases as (EasePoint | null)[]);
+    return out;
   }
   if (hole === undefined) return patch;
   const holes = [...holesOf(doc.elements[id])];
@@ -235,7 +252,7 @@ export function shapeCan(s: ShapeLike): { insert: boolean; remove: boolean; offs
   };
 }
 
-/** Om formen kan ha bågar (Böj, Avrunda). Markobjektens linjer kan det inte än (0.10.7). */
+/** Om formen kan ha bågar (Böj, Avrunda). Markobjektens linjer kan det sedan 0.10.19; `noArcs` finns kvar för former som inte ska. */
 export function allowsArcs(s: ShapeLike): boolean {
   return !s.params.noArcs;
 }

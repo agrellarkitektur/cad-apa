@@ -3,11 +3,32 @@
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning; historiken finns i git (äldre versioners läge och frågor står
 i tidigare versioner av den här filen, och Claudes val i PLAN.md).
-Senast: 27 oktober 2026 (kväll), efter granskningen efter 0.10.18 (0.10.18.1).
+Senast: 28 oktober 2026 (natt), efter 0.10.19 Markobjektens bågar.
 
 ## Läget
 
-- **Nästa session:** **0.10.19 Markobjektens bågar** (se *Nästa session*).
+- **Nästa session:** **0.10.20 Situationsplanens beteckningar** (se
+  *Nästa session*).
+- **0.10.19 Markobjektens bågar är klar** på `main` (samma format, 20).
+  Carl August svarade i början (28 oktober): dockningen med Foga ihop,
+  samma verktyg för stödmur och brytlinje, bågar på sidorna ändrar bara
+  bredden; och bad om en inställning för mjuka (ease-in) eller skarpa
+  övergångar i höjd, med radie, i början, slutet och vid egna höjdpunkter,
+  också per punkt. Byggt: bågar (pilhöjder som 2D-formens) på
+  referenslinjen, sidorna, stödmuren och brytlinjen, med Böj, Avrunda och
+  Fasa i Modifiera och *Båge* (G) i verktyget Mark; höjden räknas längs
+  bågen, sidorna följer koncentriskt; *Övergångarna* (Skarpa/Mjuka) med
+  radie (förval 20 m under Platsen) och per punkt (*Mjuk övergång*,
+  *Skarp övergång*, *Som rampen* i Modifiera); Foga ihop dockar två
+  ramper vars ändar ligger inom rampens bredd, med en punkt med höjd i
+  skarven. Koden i UTVECKLING.md under *Markobjektens bågar*; Claudes val
+  i PLAN.md. Testerna: 588 på ca 14 s. Klickjämförelsen mot 0.10.18.1:
+  samma `doc` och ritning i alla 457 steg (panelen, Platsen och
+  smartmenyn skiljer där det nya syns). Inga nya steg för 0.10.19 än
+  (läggs till i nästa granskning).
+- **Märks i hans ritningar efter 0.10.19:** inget, så länge rampen har
+  skarpa övergångar (förvalet) och inga bågar; sidorna utan bågar räknas
+  precis som förut.
 - **Granskningen efter 0.10.18 är klar** som **0.10.18.1** på `main`
   (samma format, 20). Småfelen ur Inkorgen: *Mer* i smartmenyn (och *Alla
   inställningar här* i högerklicksmenyn) bara när det utfällda har något
@@ -126,11 +147,11 @@ Senast: 27 oktober 2026 (kväll), efter granskningen efter 0.10.18 (0.10.18.1).
 - **0.10.11 Småsaker**, **0.10.10 Dolda linjer och vyns djup**, **0.10.9
   Stödmur del 2** och **0.10.8b Höjderna i fasaden** (nytt format, 20):
   se PLAN.md.
-- **Versionsnumret** är `0.10.18.1` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.19` i `engine.ts`, `package.json` och
   `package-lock.json` (npm godtar fyra delar i ett privat paket); nästa
-  version är `0.10.19`. En granskning höjer inte numret, eller får en
+  version är `0.10.20`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.18.1 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.19 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om 0.10.9–0.10.13 utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -187,13 +208,13 @@ vid varje överlämning.
   Fyllningar och opacitet~~, ~~0.10.15 Visa och dölja~~, ~~Granskning
   efter 0.10.15 (0.10.15.1)~~, ~~0.10.16 Snittet i planen~~, ~~0.10.17
   Linjerna i 2D-formen~~, ~~0.10.18 Rampens referenslinje~~, ~~Granskning
-  efter 0.10.18 (0.10.18.1)~~ (klara)
-- **0.10.19 Markobjektens bågar** (stor: bågar, Avrunda, docka ramper)
+  efter 0.10.18 (0.10.18.1)~~, ~~0.10.19 Markobjektens bågar~~ (klara)
 - **0.10.20 Situationsplanens beteckningar** (förslag: murens ledare,
   markhöjder med status, sidolutning, låglinje, kontur runt slänterna,
   slänter ur den befintliga marken)
 - **0.10.21 Lutande väggar** (förslag, mellanstor till stor; fråga om
   före eller efter piloten)
+- **Granskning efter 0.10.21** (klickjämförelsen får steg för 0.10.19)
 - **Ortofotot på marken** (liten undersökning med terrängappen, när det
   passar)
 - **0.11 Trappor** (nytt format)
@@ -210,13 +231,16 @@ vid varje överlämning.
 
 ## Nästa session
 
-**0.10.19 Markobjektens bågar** (se PLAN.md): 2D-formens redigering för
-markobjekten (Böj, Avrunda med riktiga bågar, Fasa), bågar på vägens
-referenslinje och på kanterna (kanterna ändrar bara bredden), och att
-docka ihop två ramper med olika lutning. Stor: säg i början att den kan
-behöva två sessioner och föreslå i så fall att dockningen blir en egen
-liten version. Läs `cad-apa-synpunkter.md` först och ställ frågorna för
-0.10.19 nedan (fem åt gången).
+**0.10.20 Situationsplanens beteckningar** (se PLAN.md och
+`cad-apa-synpunkter.md`): murens ledare (*M* + littera, *MK +22.20*),
+markhöjder med status (befintlig understruken, utgår inom parentes, ny
+utan), minsta sidolutning i procent, låglinje för dagvatten som pilar,
+littera med inställbart antal siffror, en kontur runt släntmarkeringarna
+och slänter på den befintliga marken där den är brantare än ett gränsvärde
+(1:3). Mellanstor. Läs `cad-apa-synpunkter.md` först och ställ frågorna
+för 0.10.19 (efter provning) och de för 0.10.20 som behövs före bygget
+(fem åt gången). Fråga också om 0.10.21 Lutande väggar ska byggas före
+eller efter piloten.
 
 ## Att fråga Carl August om
 
@@ -224,16 +248,19 @@ Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
 
-**0.10.19 före bygget** (Claudes val)
-- Dockningen: två markerade ramper fogas ihop med *Foga ihop* (Shift+V),
-  som linjerna, när en ände ligger nära den andras; där de möts blir en
-  punkt med höjd (lutningen bryts där, ingen avrundning i höjd). Eller
-  ska ändarna dras ihop med greppet och fogas av sig själva?
-- Bågar på referenslinjen: lutningen räknas längs bågen, och sidorna
-  följer den med bredden. Gäller samma verktyg (Böj, Avrunda, Fasa) också
-  stödmurens och brytlinjens linjer?
-- En båge på en sida (när sidorna är ritade) ändrar bara bredden; höjden
-  tas som förut från referenslinjen. Rätt?
+**0.10.19 efter provning** (Claudes val, se PLAN.md)
+- Övergångarnas förval är 20 m radie (en ramp 1:12 jämnas av över ca
+  1,7 m, under Platsen). Lagom för en gångväg?
+- I ändarna börjar och slutar rampen plant med ändens höjd, och den raka
+  delen blir brantare (visas som lutningen). Hellre att lutningen hålls
+  och höjden i änden blir en annan?
+- Dockningen: ändar inom rampens bredd räknas som samma, skarven får den
+  första rampens sluthöjd och den andra rampens starthöjd faller bort.
+  Rätt?
+- Markytans kontur har fortfarande inga bågar (bara linjerna fick dem).
+  Behövs de där (en egen liten version)?
+- *Båge* i verktyget Mark fungerar som i takets kontur. Bra, eller
+  räcker Böj i Modifiera?
 
 **0.10.18.1 efter provning** (Claudes val, se PLAN.md)
 - Stilmallens fönster i tre kolumner efter sorts inställning (åtgärder och
@@ -395,14 +422,24 @@ fråga.
 
 ## Öppna frågor och kända begränsningar
 
-- **Stora filer efter 0.10.18.1:** `commandLine.ts` (623 rader, en sluten
+- **Stora filer efter 0.10.19:** `commandLine.ts` (623 rader, en sluten
   helhet med eget läge) och `planView.ts` (591) är störst; de lämnades i
-  granskningen. Stilmallens fönster har tre kolumner från 1180 px; under
+  granskningen. `groundRamp.ts` växte till ca 480 rader (profilen,
+  dockningen); dela den i nästa granskning (`rampProfile` och
+  `fusedRamp`/`reversedRamp` kan bli egna filer). Stilmallens fönster har tre kolumner från 1180 px; under
   det ligger delarna under varandra som förut.
 
+- **Bågarna (0.10.19):** all räkning mot marken görs på linjen med
+  bågarna som korta raka bitar (högst 4° per bit), så en liten båge kan
+  ge många punkter i rampens kontur; inte mätt på en stor plats. Avrunda
+  och Fasa kräver som förut två raka kanter i hörnet. Markytans kontur
+  har inga bågar. Stödmurens sidor i 3D följer bågen som bitar på 0,5 m.
+  En övergång i en ände kortas om radien inte ryms (S² < 2·R·Δh) utan
+  att säga till; panelen visar bara den raka delens lutning. Dockningen
+  tar inte hänsyn till att sidorna kan korsa varandra i skarven när
+  ramperna möts i vinkel (självskärande kontur, prövas inte).
 - **Rampen (0.10.18):** en sida som är stödmur har ingen kropp i 3D och
-  ingen höjd (som `edge: 'wall'` förut). Ritade sidor får inga bågar
-  (0.10.19). Där referenslinjen ligger på en kant träffar ett klick på
+  ingen höjd (som `edge: 'wall'` förut). Där referenslinjen ligger på en kant träffar ett klick på
   den sidan referenslinjen (den går först); sidan följer då med så länge
   den inte är ritad. För att ändra den sidan för sig: gör sidorna ritade
   och flytta referenslinjen, eller lägg den i mitten. Sidor som korsar varandra eller referenslinjen ger en
@@ -555,7 +592,9 @@ fråga.
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (457 steg sedan granskningen efter 0.10.18, som lade till 0.10.16–0.10.18
+  (457 steg sedan granskningen efter 0.10.18; 0.10.19 kördes mot
+  0.10.18.1 utan nya steg, med `--bilder`, eftersom 3D-bildernas hashar
+  kan skilja utan att en pixel gör det, som lade till 0.10.16–0.10.18
   efter `allra sist`: snittet i planen, rita vidare, Förskjut alla kanter,
   Foga ihop, ett takfall med båge (Båge slås av före sista hörnet; den är
   kvar tills den slås av), bjälklag med cirkelhål som vrids och speglas,

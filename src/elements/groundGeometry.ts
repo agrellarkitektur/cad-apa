@@ -7,8 +7,8 @@ import type { Vec2 } from '../repr/primitives';
 import { sameItems } from '../repr/reuse';
 import { buildingFootprint } from './footprint';
 import type { FillParams } from './drawing2d';
-import { along, barriersOf, lineLength, lockShape, stripRing, type RefSide } from './groundLines';
-import { rampShape, rampSides } from './groundRamp';
+import { along, barriersOf, flatPoints, lineLength, lockShape, stripRing, type RefSide } from './groundLines';
+import { rampShape, rampSides, type EasePoint } from './groundRamp';
 import { computeProfile, wallCenter, wallThickness, type CrestPoint, type WallProfile } from './groundWall';
 import { resolveParams, type PlanContext } from './registry';
 import type { SlabParams } from './slab';
@@ -78,6 +78,8 @@ export interface GroundParams extends Partial<FillParams> {
   margin?: number;
   /** Vägens referenslinje, brytlinjen, murens linje eller höjdpunkten (en punkt), mm (0.10.5). */
   line?: [number, number][];
+  /** Linjens bågar (0.10.19): pilhöjd per kant, som 2D-formens `bulges`. */
+  bulges?: number[];
   /** Vägens namn (0.10.7), t.ex. *Ramp* eller *Infart*; tomt = *Ramp/väg*. */
   name?: string;
   /** Vägens bredd, mm. */
@@ -99,9 +101,15 @@ export interface GroundParams extends Partial<FillParams> {
    * punkt; null eller utelämnad = punkten har ingen höjd (bara läge).
    */
   levels?: (number | null)[];
-  /** Rampens ritade sidor (0.10.18); utelämnade följer referenslinjen med bredden. */
+  /** Rampens ritade sidor (0.10.18); utelämnade följer referenslinjen med bredden. Med bågar (0.10.19). */
   left?: [number, number][];
   right?: [number, number][];
+  leftBulges?: number[];
+  rightBulges?: number[];
+  /** Rampens mjuka övergångar i höjd (0.10.19): för hela rampen, radien, och per punkt. */
+  ease?: boolean;
+  easeRadius?: number;
+  eases?: (EasePoint | null)[];
   /** Rampens sidor var för sig (0.10.18): slänt eller stödmur; utelämnad = som `edge`. */
   leftEdge?: 'slope' | 'wall';
   rightEdge?: 'slope' | 'wall';
@@ -294,7 +302,8 @@ function computeGeometry(ctx: PlanContext, el: Element<any>, p: GroundParams, fo
 }
 
 function lineGeometry(el: Element<any>, p: GroundParams, def: ReturnType<typeof groundDefaults>): GroundGeometry | null {
-  const pts = (p.line ?? []).map((q): Vec2 => [q[0], q[1]]);
+  // Linjen med bågarna som raka bitar (0.10.19).
+  const pts = flatPoints(p.line, p.bulges);
   const h0 = p.height ?? 0;
   const h1 = p.endHeight ?? h0;
   if (p.kind === 'point') {
@@ -318,7 +327,7 @@ function lineGeometry(el: Element<any>, p: GroundParams, def: ReturnType<typeof 
   // Rampen (0.10.18): höjden längs referenslinjen, sidorna för sig.
   const sides = rampSides(p);
   if (sides.left.length < 2 || sides.right.length < 2) return null;
-  const { shape, ring, wall } = rampShape(el.id, p, Math.max(0.1, p.slope ?? def.slope), sides);
+  const { shape, ring, wall } = rampShape(el.id, p, Math.max(0.1, p.slope ?? def.slope), sides, def);
   return { rings: [[ring]], holes: [], shape, center: pts, sides, edgeWall: wall, label: { at: mid.at, height: h0 } };
 }
 
@@ -407,7 +416,7 @@ export function showsProposal(ctx: PlanContext): boolean {
 export function wallProfile(ctx: PlanContext, el: Element<any>): WallProfile | null {
   return ctx.memo(`wall-profile:${el.id}`, () => {
     const p = ctx.params<GroundParams>(el);
-    const ref = (p.line ?? []).map((q): Vec2 => [q[0], q[1]]);
+    const ref = flatPoints(p.line, p.bulges);
     if (ref.length < 2) return null;
     const t = finishedTerrain(ctx)?.terrain ?? terrainOf(ctx.doc);
     if (!t) return null;

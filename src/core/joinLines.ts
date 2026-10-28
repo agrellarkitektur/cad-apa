@@ -1,4 +1,6 @@
 import { isClosed, type Shape2DParams } from '../elements/drawing2d';
+import { PATH_WIDTH } from '../elements/groundLines';
+import { fusedRamp, reversedRamp, type RampParams } from '../elements/groundRamp';
 import { resolveParams } from '../elements/registry';
 import type { Element, Id, ProjectDoc } from './model';
 import type { DocStore } from './store';
@@ -8,6 +10,11 @@ import type { DocStore } from './store';
  * linje. Linjer och splines fogas var för sig. Den första linjen i en kedja
  * (i markeringens ordning) behåller sin penna, fyllning och sitt id; de
  * andra tas bort. Slutar kedjan där den började blir linjen sluten.
+ *
+ * Ramper (0.10.19): två ramper vars ändar ligger nära varandra (inom den
+ * bredaste rampens bredd) dockas till en, med en punkt med höjd där de
+ * möts, så att lutningen bryts där (skarpt eller mjukt efter rampens
+ * övergångar). Den första behåller sina inställningar.
  */
 
 type P = [number, number];
@@ -15,11 +22,65 @@ type P = [number, number];
 /** Ändar närmare än så räknas som samma punkt (mm). */
 const SAME = 1;
 
-/** En öppen linje eller spline som kan fogas. */
+/** En öppen linje eller spline som kan fogas, eller en ramp (0.10.19). */
 export function canFuse(doc: ProjectDoc, el: Element | undefined): boolean {
-  if (el?.type !== 'Shape2D' || el.locked) return false;
+  if (!el || el.locked) return false;
+  if (el.type === 'Ground') return isRampEl(doc, el);
+  if (el.type !== 'Shape2D') return false;
   const q = resolveParams<Shape2DParams>(doc, el);
   return (q.shape === 'polyline' || q.shape === 'spline') && q.points.length >= 2 && !isClosed(q);
+}
+
+const isRampEl = (doc: ProjectDoc, el: Element): boolean => el.type === 'Ground' && el.params.kind === 'path' && ((resolveParams<RampParams>(doc, el).line ?? []).length ?? 0) >= 2;
+
+/** Ramperna i markeringen fogade i kedjor: den första och de som hängs på, med parametrarna för resultatet. */
+export function fuseRampChains(doc: ProjectDoc, ids: readonly Id[]): { ids: Id[]; params: RampParams }[] {
+  const out: { ids: Id[]; params: RampParams }[] = [];
+  const left = ids.map((id) => doc.elements[id]).filter((el): el is Element => !!el && canFuse(doc, el) && el.type === 'Ground');
+  const ends = (p: RampParams) => {
+    const l = p.line ?? [];
+    return { a: l[0], z: l[l.length - 1] };
+  };
+  const near = (a: P, b: P, tol: number) => Math.hypot(a[0] - b[0], a[1] - b[1]) <= tol;
+  while (left.length) {
+    const first = left.shift()!;
+    let p = { ...resolveParams<RampParams>(doc, first) };
+    const chain = [first.id];
+    for (let grew = true; grew; ) {
+      grew = false;
+      for (let k = 0; k < left.length; k++) {
+        const o = resolveParams<RampParams>(doc, left[k]);
+        const tol = Math.max(p.width ?? PATH_WIDTH, o.width ?? PATH_WIDTH);
+        const c = ends(p);
+        const e = ends(o);
+        let next: RampParams | null = null;
+        if (near(c.z, e.a, tol)) next = fusedRamp(p, o);
+        else if (near(c.z, e.z, tol)) next = fusedRamp(p, reversedRamp(o));
+        else if (near(c.a, e.z, tol)) next = fusedRamp(o, p);
+        else if (near(c.a, e.a, tol)) next = fusedRamp(reversedRamp(o), p);
+        if (next) {
+          // Den första behåller sina inställningar, också när den andra hängs på före.
+          p = { ...next, ...settingsOf(p) };
+          chain.push(left[k].id);
+          left.splice(k, 1);
+          grew = true;
+          break;
+        }
+      }
+    }
+    if (chain.length >= 2) out.push({ ids: chain, params: p });
+  }
+  return out;
+}
+
+/** Rampens parametrar som dockningen skriver (det andra i elementet lämnas). */
+const RAMP_KEYS = ['line', 'bulges', 'height', 'endHeight', 'levels', 'width', 'refSide', 'refOffset', 'left', 'right', 'leftBulges', 'rightBulges', 'edge', 'leftEdge', 'rightEdge', 'crossFall', 'ease', 'easeRadius', 'eases'] as const satisfies readonly (keyof RampParams)[];
+
+/** Rampens inställningar som inte hör till linjen: kanterna, tvärfallet, övergångarna, bredden. */
+function settingsOf(p: RampParams): Partial<RampParams> {
+  const out: Partial<RampParams> = {};
+  for (const k of ['edge', 'leftEdge', 'rightEdge', 'crossFall', 'ease', 'easeRadius', 'width', 'refSide', 'refOffset'] as const) if (p[k] !== undefined) (out as Record<string, unknown>)[k] = p[k];
+  return out;
 }
 
 interface Chain {
@@ -51,7 +112,7 @@ function append(a: Chain, b: Chain): Chain {
 /** Kedjorna som linjerna bildar, i markeringens ordning; bara kedjor av minst två linjer. */
 export function fuseChains(doc: ProjectDoc, ids: readonly Id[]): Chain[] {
   const out: Chain[] = [];
-  const left = ids.map((id) => doc.elements[id]).filter((el) => canFuse(doc, el));
+  const left = ids.map((id) => doc.elements[id]).filter((el) => el?.type === 'Shape2D' && canFuse(doc, el));
   while (left.length) {
     const first = left.shift()!;
     const kind = resolveParams<Shape2DParams>(doc, first).shape;
@@ -93,9 +154,24 @@ export function fuseChains(doc: ProjectDoc, ids: readonly Id[]): Chain[] {
 export function fuseLines(store: DocStore, ids: readonly Id[]): Id[] | null {
   const doc = store.doc;
   const chains = fuseChains(doc, ids);
-  if (!chains.length) return null;
+  const ramps = fuseRampChains(doc, ids);
+  if (!chains.length && !ramps.length) return null;
   const kept: Id[] = [];
-  store.transact(chains.reduce((n, c) => n + c.ids.length, 0) > 2 ? 'Foga ihop linjer' : 'Foga ihop två linjer', (tx) => {
+  const count = chains.reduce((n, c) => n + c.ids.length, 0) + ramps.reduce((n, c) => n + c.ids.length, 0);
+  store.transact(ramps.length && !chains.length ? (count > 2 ? 'Docka ramper' : 'Docka två ramper') : count > 2 ? 'Foga ihop linjer' : 'Foga ihop två linjer', (tx) => {
+    // Ramperna (0.10.19): den första får den dockade linjen, de andra tas bort.
+    for (const c of ramps) {
+      const el = tx.doc.elements[c.ids[0]];
+      if (!el) continue;
+      const params: Record<string, unknown> = { ...el.params };
+      for (const k of RAMP_KEYS) {
+        if (c.params[k] === undefined) delete params[k];
+        else params[k] = c.params[k];
+      }
+      tx.putElement({ ...el, params });
+      for (const id of c.ids.slice(1)) tx.removeElement(id);
+      kept.push(el.id);
+    }
     for (const c of chains) {
       const el = tx.doc.elements[c.ids[0]];
       if (!el) continue;

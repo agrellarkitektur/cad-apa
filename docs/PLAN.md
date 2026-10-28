@@ -2638,7 +2638,7 @@ kvadraten. **Klickjämförelsen** har 457 steg (61 nya): mot 0.10.18 samma
 markens streckning (från att platsen läggs in) och stilmallens fönster i
 sin markup.*
 
-### 0.10.19 Markobjektens bågar
+### 0.10.19 Markobjektens bågar ✓
 
 Carl Augusts synpunkter 26 oktober (förut 0.10.18). Stor; efter 0.10.17,
 som har samma verktyg.
@@ -2648,6 +2648,44 @@ som har samma verktyg.
 - Bågar på vägens referenslinje och på kanterna (kanterna ändrar bara
   bredden)
 - Docka ihop två ramper med olika lutning
+- Mjuka eller skarpa övergångar i höjd (Carl August 28 oktober): en
+  gångväg jämnas av i övergångarna, en betong- eller stenramp har skarpa
+  brytningar mot vilplanen; en inställning för rampen (med radie) i
+  början, slutet och punkterna med höjd, och per punkt
+
+*Byggd 28 oktober (natt), samma format (20): bågarna, övergångarna och
+dockningen är frivilliga parametrar. Carl August svarade i början: Foga
+ihop för dockningen, samma verktyg för stödmur och brytlinje, bågar på
+sidorna ändrar bara bredden. Testerna: 572 → 588 på ca 14 s. Claudes
+val: **bågarna** är pilhöjder per kant som 2D-formens (`bulges`, och
+`leftBulges`/`rightBulges` på ritade sidor); all räkning mot marken görs
+på linjen med bågarna som korta raka bitar, så sträckan längs
+referenslinjen (höjderna) går längs bågen; sidorna som följer
+referenslinjen är koncentriska med den (samma vinkel, större eller mindre
+radie), och utan bågar räknas de precis som förut. Avrunda och Fasa kräver
+som förut två raka kanter i hörnet; ett avrundat hörn med höjd ger sin
+höjd till den nya punkten närmast. Verktyget Mark fick *Båge* (G) för
+linjerna, som takets kontur i 0.10.17, och *Ångra* tar bort senaste
+klicket. **Övergångarna** är parabler med en vertikal radie (förval 20 m
+under Platsen, *Rampens mjuka övergångar*): i en punkt däremellan ersätter
+kurvan brytningen lika långt åt båda håll (längden R·|Δlutning|, kortad
+om den inte ryms på de raka delarna intill); i ändarna börjar och slutar
+rampen plant med ändens höjd, så den raka delen riktas om och blir
+brantare (h = g·S − R·g²/2; ryms radien inte kortas den). Lutningen i
+planen, panelen och varningarna gäller den raka delen; fältet *Lutning*
+sätter den raka delens lutning. En punkt utan höjd kan inte ha en
+övergång (den styr bara läget). **Dockningen** med Foga ihop: ändar inom
+den bredaste rampens bredd räknas som samma; den andra rampen hängs på
+(vänd om det behövs: *reversedRamp* byter början och slut, sidor,
+tvärfall och referenslinjens sida), skarven blir en punkt med den förstas
+sluthöjd, den förstas inställningar gäller, och sidorna blir ritade om
+någon var det eller bredderna skiljer. Provat med Playwright mot `dist/`:
+en ramp med båge ur verktyget, Avrunda på referenslinjen, Böj på en sida,
+övergångarna i panelen och Modifiera, dockning, 3D. Klickjämförelsen mot
+0.10.18.1: samma `doc` och ritning i alla 457 steg; panelen, Platsen och
+smartmenyn skiljer där det nya syns. Inte gjort: markytans kontur har
+inga bågar (den ändras med takets konturverktyg); stödmurens sidor i 3D
+följer bågen som bitar på 0,5 m som förut.*
 
 ### 0.10.20 Situationsplanens beteckningar (förslag, mellanstor)
 

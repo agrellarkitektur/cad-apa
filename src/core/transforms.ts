@@ -90,6 +90,8 @@ export function transformed(doc: ProjectDoc, el: Element, t: PlanTransform, movi
     const line = Array.isArray(p.line)
       ? {
           line: p.line.map(t.map),
+          // Speglade bågar buktar åt andra hållet (0.10.19).
+          ...(t.mirror && Array.isArray(p.bulges) ? { bulges: (p.bulges as number[]).map((b) => -b) } : {}),
           ...(t.mirror && typeof p.crossFall === 'number' ? { crossFall: -p.crossFall } : {}),
           ...mirrorSide,
           ...mirrorOffset,
@@ -162,5 +164,7 @@ function rampSides(p: Record<string, any>, t: { map: (q: Pt) => Pt; mirror: bool
   if (!Array.isArray(p.left) && !Array.isArray(p.right) && p.leftEdge === undefined && p.rightEdge === undefined) return {};
   const m = (q: unknown) => (Array.isArray(q) ? (q as Pt[]).map(t.map) : undefined);
   if (!t.mirror) return { left: m(p.left), right: m(p.right) };
-  return { left: m(p.right), right: m(p.left), leftEdge: p.rightEdge, rightEdge: p.leftEdge };
+  // Sidornas bågar (0.10.19) byter sida och buktar åt andra hållet.
+  const b = (q: unknown) => (Array.isArray(q) ? (q as number[]).map((v) => -v) : undefined);
+  return { left: m(p.right), right: m(p.left), leftBulges: b(p.rightBulges), rightBulges: b(p.leftBulges), leftEdge: p.rightEdge, rightEdge: p.leftEdge };
 }

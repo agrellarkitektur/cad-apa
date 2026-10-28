@@ -2,13 +2,14 @@ import { levelOf } from '../../repr/solids';
 import { moveElements, moveWallEnd } from '../../core/commands';
 import type { Id } from '../../core/model';
 import { markerFrame } from '../../elements/markers';
-import { heightAtS, rampLevels } from '../../elements/groundRamp';
+import { rampProfile, refPoints } from '../../elements/groundRamp';
 import { resolveParams } from '../../elements/registry';
 import type { WallParams } from '../../elements/wall';
 import { wallProfile, type GroundParams } from '../../elements/ground';
 import { crestAtS } from '../../elements/groundWall';
 import { createContext } from '../../repr/context';
-import { along } from '../../elements/groundLines';
+import { along, flatPoints } from '../../elements/groundLines';
+import { groundDefaults, type GroundDefaults } from '../../core/site';
 import type { Vec2 } from '../../repr/primitives';
 import { buildModel3d } from '../../repr/model3d';
 import { finishedForView, terrainMesh } from '../../repr/terrain';
@@ -109,14 +110,15 @@ export function installPane3d(app: AppContext) {
           return { a: p.start, b: p.end, z: levelOf(p) + p.height + floorOf() };
         });
       // Vägens referenslinje (0.10.7), strax över ytan, med höjden rakt mellan ändarna.
-      const paths = els.filter((el) => el?.type === 'Ground' && el.params.kind === 'path').flatMap((el) => groundRefLine(resolveParams<GroundParams>(app.store.doc, el)));
+      const paths = els.filter((el) => el?.type === 'Ground' && el.params.kind === 'path').flatMap((el) => groundRefLine(resolveParams<GroundParams>(app.store.doc, el), groundDefaults(app.store.doc.site)));
       // Stödmurens referenslinje (0.10.9) strax över krönet.
       const retaining = els
         .filter((el) => el?.type === 'Ground' && el.params.kind === 'wall')
         .flatMap((el) => {
           const { ctx } = createContext(app.store.doc, el.storey, app.viewStates(), app.store.doc.graphics, () => true);
           const prof = wallProfile(ctx, el);
-          const pts = (resolveParams<GroundParams>(app.store.doc, el).line ?? []) as Vec2[];
+          const gp = resolveParams<GroundParams>(app.store.doc, el);
+          const pts = flatPoints(gp.line, gp.bulges);
           if (!prof) return [];
           const z = (q: Vec2) => crestAtS(prof, along(prof.center, q[0], q[1]).s) + 30;
           return pts.slice(1).map((b, i) => ({ a: pts[i], b, z: z(pts[i]), zb: z(b) }));
@@ -295,15 +297,27 @@ function installSplitGrip(app: AppContext): void {
   });
 }
 
-/** Vägens referenslinje i 3D (0.10.7): segmenten med höjden längs linjen (mellan punkterna med höjd sedan 0.10.18), mm från ±0, 30 mm över ytan. */
-function groundRefLine(p: GroundParams): { a: Vec2; b: Vec2; z: number; zb: number }[] {
-  const pts = p.line ?? [];
-  const levels = rampLevels(p);
+/**
+ * Vägens referenslinje i 3D (0.10.7): segmenten med höjden längs linjen
+ * (mellan punkterna med höjd sedan 0.10.18, med bågarna som raka bitar och
+ * de mjuka övergångarna sedan 0.10.19), mm från ±0, 30 mm över ytan. Långa
+ * raka bitar delas, så att en mjuk övergång syns.
+ */
+function groundRefLine(p: GroundParams, def: GroundDefaults): { a: Vec2; b: Vec2; z: number; zb: number }[] {
+  const pts = refPoints(p);
+  const prof = rampProfile(p, def);
   const out: { a: Vec2; b: Vec2; z: number; zb: number }[] = [];
   let s = 0;
   for (let i = 1; i < pts.length; i++) {
     const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
-    out.push({ a: [pts[i - 1][0], pts[i - 1][1]], b: [pts[i][0], pts[i][1]], z: heightAtS(levels, s) + 30, zb: heightAtS(levels, s + l) + 30 });
+    const n = Math.max(1, Math.ceil(l / 500));
+    for (let k = 0; k < n; k++) {
+      const t0 = k / n;
+      const t1 = (k + 1) / n;
+      const a: Vec2 = [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * t0, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t0];
+      const b: Vec2 = [pts[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * t1, pts[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * t1];
+      out.push({ a, b, z: prof.hAt(s + l * t0) + 30, zb: prof.hAt(s + l * t1) + 30 });
+    }
     s += l;
   }
   return out;

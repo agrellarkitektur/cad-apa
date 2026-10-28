@@ -1,9 +1,9 @@
 import { updateParams } from '../core/commands';
-import { fromRh } from '../core/site';
+import { fromRh, groundDefaults } from '../core/site';
 import type { DocStore } from '../core/store';
 import type { GroundParams } from '../elements/ground';
 import { lineLength } from '../elements/groundLines';
-import { rampSides, tidyLevels } from '../elements/groundRamp';
+import { easeRadiusAt, rampSideLines, refPoints, tidyLevels } from '../elements/groundRamp';
 import { resolveParams } from '../elements/registry';
 
 /*
@@ -48,6 +48,11 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
     }
     return true;
   }
+  // Mjuka övergångar (0.10.19) för hela rampen.
+  if (name === 'ease') {
+    updateParams(store, ids, { ease: input.value === 'soft' ? true : undefined }, input.value === 'soft' ? 'Mjuka övergångar' : 'Skarpa övergångar');
+    return true;
+  }
   if (name === 'startLine' || name === 'endLine') {
     const on = (input as HTMLInputElement).checked;
     updateParams(store, ids, { [name]: on ? undefined : false }, on ? 'Tvärlinje' : 'Ingen tvärlinje');
@@ -72,8 +77,16 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
     for (const id of ids) {
       const p = resolveParams<GroundParams>(doc, doc.elements[id]);
       const r = (q: readonly (readonly [number, number])[]) => q.map((v): [number, number] => [Math.round(v[0]), Math.round(v[1])]);
-      const sides = rampSides(p);
-      updateParams(store, [id], input.value === 'drawn' ? { left: r(sides.left), right: r(sides.right) } : { left: undefined, right: undefined }, input.value === 'drawn' ? 'Ritade sidor' : 'Sidorna följer referenslinjen');
+      // Med sina bågar (0.10.19).
+      const sides = rampSideLines(p);
+      updateParams(
+        store,
+        [id],
+        input.value === 'drawn'
+          ? { left: r(sides.left.points), right: r(sides.right.points), leftBulges: sides.left.bulges, rightBulges: sides.right.bulges }
+          : { left: undefined, right: undefined, leftBulges: undefined, rightBulges: undefined },
+        input.value === 'drawn' ? 'Ritade sidor' : 'Sidorna följer referenslinjen',
+      );
     }
     return true;
   }
@@ -102,7 +115,12 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
       const n = raw === '' ? Infinity : Number(raw);
       if (!(n > 0)) return false;
       // Längs referenslinjen, som styr lutningen (0.10.18; mittlinjen före det).
-      const rise = Number.isFinite(n) ? lineLength(p.line ?? []) / n : 0;
+      // Med mjuka övergångar i ändarna (0.10.19) gäller lutningen den raka delen: h = g·S − R·g²/2.
+      const S = lineLength(refPoints(p));
+      const g = Number.isFinite(n) ? 1 / n : 0;
+      const def = groundDefaults(doc.site);
+      const R = easeRadiusAt(p, 0, def) + easeRadiusAt(p, (p.line ?? []).length - 1, def);
+      const rise = Math.max(0, g * S - (R * g * g) / 2);
       updateParams(store, [id], { endHeight: Math.round(h0 + (up ? rise : -rise)) }, 'Ändra lutningen');
     }
     return true;
@@ -144,7 +162,7 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
     return true;
   }
   if (v < 0 || (v === 0 && name !== 'fall' && name !== 'distance' && name !== 'margin' && name !== 'sockel' && name !== 'above' && name !== 'endAbove')) return false;
-  const labels: Record<string, string> = { maxSlope: 'Ändra gränsen', width: 'Ändra bredden', radius: 'Ändra radien', thickness: 'Ändra tjockleken', above: 'Ändra krönet', endAbove: 'Ändra krönet', fall: 'Ändra fallet', slope: 'Ändra slänten', distance: 'Ändra avståndet', sockel: 'Ändra sockeln', fallLength: 'Ändra fallets längd', margin: 'Ändra arbetsutrymmet' };
+  const labels: Record<string, string> = { maxSlope: 'Ändra gränsen', width: 'Ändra bredden', radius: 'Ändra radien', easeRadius: 'Ändra övergångarnas radie', thickness: 'Ändra tjockleken', above: 'Ändra krönet', endAbove: 'Ändra krönet', fall: 'Ändra fallet', slope: 'Ändra slänten', distance: 'Ändra avståndet', sockel: 'Ändra sockeln', fallLength: 'Ändra fallets längd', margin: 'Ändra arbetsutrymmet' };
   updateParams(store, ids, { [name]: v }, labels[name] ?? 'Ändra');
   return true;
 }

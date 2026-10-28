@@ -3,7 +3,7 @@ import { OPS, opsFor, RAIL_ITEMS, railOf, type ModifyContext, type ModifyHost, t
 import { ALIGN_BUTTONS, ArrangeTool, type AlignKind } from './arrangeTool';
 import { icons } from '../icons';
 import { crestSuggestion, ModifyTool, runInstant } from './tool';
-import { levelSuggestion } from './rampOps';
+import { easeSuggestion, levelSuggestion } from './rampOps';
 
 /**
  * Det som pågår i Modifiera (0.8.5): vad valen gäller (det markerade, eller
@@ -139,7 +139,14 @@ export class Modifier {
     this.active = op;
     const Tool = ArrangeTool.handles(op) ? ArrangeTool : ModifyTool;
     // Höjdpunkten (0.10.13) föreslår krönets höjd där man klickade.
-    const start = op === 'crestPoint' ? (crestSuggestion(this.host, ctx)?.value ?? 0) : op === 'pathLevel' ? (levelSuggestion(this.host, ctx)?.value ?? 0) : (this.remembered.get(op) ?? def.value?.initial ?? 0);
+    const start =
+      op === 'crestPoint'
+        ? (crestSuggestion(this.host, ctx)?.value ?? 0)
+        : op === 'pathLevel'
+          ? (levelSuggestion(this.host, ctx)?.value ?? 0)
+          : op === 'pathEase'
+            ? easeSuggestion(this.host, ctx)
+            : (this.remembered.get(op) ?? def.value?.initial ?? 0);
     this.tool = new Tool(this.host, op, ctx, start, () => this.finish(), () => this.changed());
     if (this.tool instanceof ModifyTool) this.tool.edges = this.edges;
     this.host.startModify(this.tool);
@@ -281,7 +288,14 @@ export class Modifier {
     const op = this.active;
     if (!op) return '';
     const def = OPS[op];
-    const crest = op === 'crestPoint' && this.ctx ? crestSuggestion(this.host, this.ctx) : op === 'pathLevel' && this.ctx ? levelSuggestion(this.host, this.ctx) : null;
+    const crest =
+      op === 'crestPoint' && this.ctx
+        ? crestSuggestion(this.host, this.ctx)
+        : op === 'pathLevel' && this.ctx
+          ? levelSuggestion(this.host, this.ctx)
+          : op === 'pathEase' && this.ctx
+            ? { value: easeSuggestion(this.host, this.ctx), unit: 'mm' as const }
+            : null;
     const v = def.value && crest ? { ...def.value, unit: crest.unit } : def.value;
     const initial = crest
       ? String(crest.value).replace('.', ',')

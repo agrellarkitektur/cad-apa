@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.18.1** (alfa); nästa är **0.10.19, markobjektens bågar**.
+**0.10.19** (alfa); nästa är **0.10.20, situationsplanens beteckningar**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,26 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.19, markobjektens bågar (samma filformat, 20):
+- **Bågar på markobjektens linjer**: rampens referenslinje och sidor,
+  stödmuren och brytlinjen ändras som 2D-former, med Böj, Avrunda och
+  Fasa i Modifiera. Verktyget Mark ritar bågar direkt med *Båge* (G),
+  som takets kontur. Höjden räknas längs bågen, och sidorna följer
+  referenslinjen koncentriskt tills de ritas om; en båge på en sida ändrar
+  bara bredden
+- **Mjuka övergångar**: *Övergångarna* i rampens egenskaper väljer
+  skarpa brytningar i höjd (som ett vilplan i en betong- eller stenramp)
+  eller mjuka, en vertikal kurva med en radie (som en gångväg) i början,
+  slutet och punkterna med höjd. I ändarna börjar och slutar rampen då
+  plant, och den raka delen blir lite brantare. Radien står i
+  egenskaperna, med förvalet under *Platsen* (20 m). En enskild punkt får
+  en egen övergång med *Mjuk övergång* (med radie) och *Skarp övergång*
+  i Modifiera, och *Som rampen* tar bort den
+- **Docka ramper**: två ramper vars ändar ligger nära varandra (inom
+  rampens bredd) fogas till en med *Foga ihop* (Shift+V). Där de möts blir
+  en punkt med höjd, så att lutningen bryts där (skarpt eller mjukt). Den
+  första behåller sina inställningar; sidorna ritas om bredderna skiljer
 
 Version 0.10.18.1, granskning (samma filformat, 20):
 - **Mer** i smartmenyn (och *Alla inställningar här* i högerklicksmenyn)

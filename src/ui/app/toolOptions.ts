@@ -123,6 +123,7 @@ export function installToolOptions(app: AppContext) {
         <div class="opt"><span>Linje</span><div class="segmented" role="group" aria-label="Linje">
           ${b('path', 'Ramp/väg')}${b('breakline', 'Brytlinje', 'Låser marken längs linjen och tonar den runt omkring')}${b('wall', 'Stödmur')}${b('point', 'Höjdpunkt', 'Låser marken i en punkt och tonar den runt omkring')}
         </div></div>
+        ${isLineMode(m) ? `<button class="btn" data-action="ground-arc" aria-pressed="${app.groundTool.arc}" title="Nästa kant i linjen blir en båge: klicka var den slutar och sedan en punkt på den (G)">Båge</button>` : ''}
         ${app.groundTool.started && isLineMode(m) ? '<button class="btn" data-action="ground-done">Klar</button>' : ''}
         <span class="opt-hint">${app.groundTool.hintText()}</span>`;
       app.toolOptions.hidden = false;
@@ -402,6 +403,10 @@ export function installToolOptions(app: AppContext) {
       renderToolOptions();
     }
     if (b.dataset.action === 'ground-done') app.groundTool.finish();
+    if (b.dataset.action === 'ground-arc') {
+      app.groundTool.setArc(!app.groundTool.arc);
+      renderToolOptions();
+    }
     if (b.dataset.action === 'dim-done') app.dimensionTool.donePoints();
     if (b.dataset.action === 'd2-done') app.draw2dTool.finish(false);
   });

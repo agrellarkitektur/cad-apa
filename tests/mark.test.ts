@@ -192,14 +192,14 @@ describe('Ramp/väg (0.10.5, en sort sedan 0.10.7)', () => {
     expect(store.doc.elements[id].params.crossFall).toBe(-50);
   });
 
-  it('referenslinjen ändras som en öppen 2D-form utan bågar, och flyttas med objektet', () => {
+  it('referenslinjen ändras som en öppen 2D-form (med bågar sedan 0.10.19), och flyttas med objektet', () => {
     const store = onSlope();
     const id = addGround(store, { kind: 'path', outline: [], line: [[0, 20000], [5000, 20000]], height: 0 });
     const el = store.doc.elements[id];
     expect(hasEditableOutline(el)).toBe(false);
     expect(shapeOf(el)?.params.closed).toBe(false);
-    expect(allowsArcs(shapeOf(el)!)).toBe(false);
-    expect(shapeCan(shapeOf(el)!).bend).toBe(false);
+    expect(allowsArcs(shapeOf(el)!)).toBe(true);
+    expect(shapeCan(shapeOf(el)!).bend).toBe(true);
     expect(shapePatch(store.doc, id, undefined, { points: [[0, 20000], [6000, 20000]] })).toEqual({ line: [[0, 20000], [6000, 20000]] });
     // Höjdpunkten och linjerna följde inte med när de flyttades (före 0.10.7).
     moveElements(store, [id], [1000, -500]);

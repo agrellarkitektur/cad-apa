@@ -7,9 +7,9 @@ import { ABOVE_PART, cutZone, planCutPen, type CutZone } from '../repr/planCutPe
 import { planCutHeight } from './planCut';
 import type { WallProfile } from './groundWall';
 import { groundLabel, isLineKind, storeyElevation, wallProfile, type GroundGeometry, type GroundParams } from './groundGeometry';
-import { lineLength } from './groundLines';
+import { flatPoints, lineLength } from './groundLines';
 import { outward, slopeArea, slopeMarks } from './groundSlopes';
-import { middleAt, rampLevels, rampRuns, rampWarnings, sideEdge, steepest } from './groundRamp';
+import { middleAt, rampProfile, rampWarnings, sideEdge, steepest } from './groundRamp';
 import type { PlanContext } from './registry';
 
 /**
@@ -112,7 +112,8 @@ function normalAt(pts: readonly Vec2[], s: number): Vec2 {
 function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: GroundGeometry): Primitive[] {
   const origin = { objectId: el.id, objectType: 'Ground' };
   const out: Primitive[] = [];
-  const pts = (p.line ?? []).map((q): Vec2 => [q[0], q[1]]);
+  // Linjen med bågarna som raka bitar (0.10.19).
+  const pts = flatPoints(p.line, p.bulges);
   const h0 = p.height ?? 0;
   const h1 = p.endHeight ?? h0;
   const th = 2;
@@ -176,11 +177,10 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
   if (p.endLine !== false) edge([sides.right[sides.right.length - 1], sides.left[sides.left.length - 1]], 'slutet', ends);
   // Lutningen längs referenslinjen: en pil nedför och 1:N för varje sträcka mellan punkter med höjd (0.10.18).
   const center = g.center ?? pts;
-  const levels = rampLevels(p);
-  const runs = rampRuns(levels);
   const def = groundDefaults(ctx.doc.site);
+  const { levels, runs } = rampProfile(p, def);
   const max = p.maxSlope ?? def.rampMax;
-  const warn = rampWarnings(levels, max, def);
+  const warn = rampWarnings(levels, max, def, p);
   const total = lineLength(center);
   const ratioText = (n: number) => `1:${(Math.round(n * 10) / 10).toLocaleString('sv-SE')}`;
   for (const r of runs) {
@@ -195,14 +195,14 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
       text([at[0], at[1] - 3.5 * ctx.scale], `${ratioText(r.ratio)}${steep ? ' !' : ''}`, 'lutning', steep ? { pen: { weight: 0.18, color: 'accent' } } : {});
     }
   }
-  const n = steepest(levels);
+  const n = steepest(runs);
   const ratio = runs.length > 1 ? '' : Number.isFinite(n) ? ` ${ratioText(n)}` : ' Plan';
   const mid = middleAt(center, sides, total / 2);
   text([mid[0], mid[1] + 2 * ctx.scale], `${groundLabel(p)}${ratio}${warn.length ? ' !' : ''}`, 'lutning', warn.length ? { pen: { weight: 0.18, color: 'accent' } } : {});
   out.push(...slopeMarks(ctx, g, { ...origin, part: 'slänt' }));
   // Höjderna i ändarna (i slutet bara när den skiljer sig från början) och i punkterna däremellan som har en höjd.
   // Ändarnas höjd står mitt på tvärlinjen, som förut; de andra vid punkten.
-  const last = center.length - 1;
+  const last = (p.line ?? []).length - 1;
   const midOf = (a: Vec2, b: Vec2): Vec2 => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
   for (const l of levels) {
     if (levels.length === 2 && l.i === last && Math.abs(l.h - h0) < 1) continue;

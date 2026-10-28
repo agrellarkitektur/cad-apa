@@ -8,7 +8,7 @@ import { bendShapeEdge, editedShape, holesOf, removeShapeNode, shapePatch } from
 import { resolveParams } from '../../elements/registry';
 import type { RoofParams } from '../../elements/roof';
 import { wallProfile, type GroundParams } from '../../elements/ground';
-import { clearRampLevel, setRampLevel } from './rampOps';
+import { clearRampLevel, setRampEase, setRampLevel } from './rampOps';
 import { crestAtS } from '../../elements/groundWall';
 import { fromRh, toRh } from '../../core/site';
 import { along } from '../../elements/groundLines';
@@ -51,12 +51,17 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
   if (op === 'shapeFuse') {
     const kept = fuseLines(host.store, ctx.ids);
     if (kept) host.selection.set(kept);
-    else host.hint('Linjerna har ingen gemensam ändpunkt (linjer och splines fogas var för sig).', 3500);
+    else host.hint('Linjerna har ingen gemensam ändpunkt (linjer och splines fogas var för sig; två ramper dockas när ändarna ligger inom rampens bredd).', 4000);
     return;
   }
   // Rampens punkt utan egen höjd (0.10.18).
   if (op === 'pathLevelClear') {
     clearRampLevel(host, ctx);
+    return;
+  }
+  // Övergången i punkten (0.10.19).
+  if (op === 'pathEaseSharp' || op === 'pathEaseClear') {
+    setRampEase(host, ctx, op === 'pathEaseSharp' ? 'sharp' : 'clear');
     return;
   }
   // Håltagningen ur bjälklaget (0.9.4).
@@ -139,7 +144,7 @@ export function setEdgeCut(host: ToolHost, ctx: ModifyContext, cut?: EdgeCut): v
 }
 
 /** Val som inte visar snäppmarkören. */
-const NO_MARKER = new Set<OpId>(['roofCutAngle', 'fillet', 'chamfer', 'filletAll', 'chamferAll', 'shapeFillet', 'shapeChamfer', 'trim', 'join', 'roofTrim', 'moveZ', 'crestPoint', 'pathLevel']);
+const NO_MARKER = new Set<OpId>(['roofCutAngle', 'fillet', 'chamfer', 'filletAll', 'chamferAll', 'shapeFillet', 'shapeChamfer', 'trim', 'join', 'roofTrim', 'moveZ', 'crestPoint', 'pathLevel', 'pathEase']);
 
 /**
  * Verktyget som kör ett val: förhandsvisar med markören och utför vid
@@ -362,7 +367,9 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
               ? (addCrestPoint(this.host, this.ctx, typed ?? this.value), true)
               : this.op === 'pathLevel'
                 ? (setRampLevel(this.host, this.ctx, typed ?? this.value), true)
-                : true;
+                : this.op === 'pathEase'
+                  ? (setRampEase(this.host, this.ctx, 'soft', typed ?? this.value), true)
+                  : true;
     if (finished) this.done();
   }
 

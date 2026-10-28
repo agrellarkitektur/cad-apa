@@ -7,7 +7,7 @@ import type { UnderlayParams } from '../../elements/underlay';
 import { hasImageGrips, underlayGrips, type UnderlayGrip } from '../../elements/underlayEdit';
 import { resolveParams } from '../../elements/registry';
 import type { GroundParams } from '../../elements/ground';
-import { along, lineLength } from '../../elements/groundLines';
+import { along, flatPoints, lineLength } from '../../elements/groundLines';
 import { markerFrame } from '../../elements/markers';
 import { pickableById } from '../../repr/plan';
 import type { Primitive, Vec2 } from '../../repr/primitives';
@@ -203,7 +203,7 @@ export function crestGripsShown(host: ToolHost): CrestGrip[] {
     const el = doc.elements[id];
     if (el?.type !== 'Ground' || el.params.kind !== 'wall') continue;
     const p = resolveParams<GroundParams>(doc, el);
-    const line = (p.line ?? []) as Vec2[];
+    const line = flatPoints(p.line, p.bulges);
     if (line.length < 2) continue;
     // Greppet på referenslinjen, rakt ut från punkten där den klickades.
     (p.crest ?? []).forEach((c, index) => out.push({ id, index, at: along(line, c.at[0], c.at[1]).at as Vec2 }));
@@ -226,7 +226,8 @@ export function crestGripAt(host: ToolHost, pt: Vec2, touch: boolean): CrestGrip
 export function crestDragTo(host: ToolHost, id: string, pt: Vec2): Vec2 | null {
   const el = host.store.doc.elements[id];
   if (!el) return null;
-  const line = (resolveParams<GroundParams>(host.store.doc, el).line ?? []) as Vec2[];
+  const gp = resolveParams<GroundParams>(host.store.doc, el);
+  const line = flatPoints(gp.line, gp.bulges);
   if (line.length < 2) return null;
   const a = along(line, pt[0], pt[1]);
   const total = lineLength(line);

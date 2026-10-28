@@ -1306,6 +1306,52 @@ de som använder det den nya filen (testerna också).
   och 347 ms (24 × 24), alltså linjärt. Inget nytt som växer med
   kvadraten; rita vidare prövar de öppna linjerna i vyn bara vid klick.
 
+## Markobjektens bågar (0.10.19, format 20)
+
+Inget nytt format: `bulges`, `leftBulges`, `rightBulges`, `ease`,
+`easeRadius` och `eases` i `GroundParams` är frivilliga, liksom
+`easeRadius` i `GroundDefaults`.
+
+- **Linjer med bågar**: `src/elements/groundLines.ts` har `ArcLine`
+  (punkter och pilhöjder), `hasArcs`, `tidyBulges`, `reversedBulges`,
+  `flatLine` (bågarna som raka bitar med `at[i]` = var ritad punkt i
+  hamnar), `flatPoints` och `offsetArcLine` (`offsetLine` med tangenterna
+  i hörnen; koncentriska bågar, pilhöjden följer kordan; utan bågar samma
+  som `offsetLine`). All räkning mot marken (`lineGeometry`,
+  `wallProfile`, `rampShape`, slänterna, snäppet) görs på de utplattade
+  punkterna; `GroundGeometry.center` och `sides` är utplattade. Modifiera
+  och greppen ser bågarna: `shapeOf` för Ground ger linjen med `bulges`
+  (utan `noArcs`), `rampSideShape` sidorna ur `rampSideLines` (de ritade,
+  eller de som följer referenslinjen koncentriskt), och `shapePatch`
+  skriver `bulges`/`leftBulges`/`rightBulges` och flyttar höjder och
+  övergångar med `remapLevels`/`remapEases` (en punkt som försvann ger sitt
+  till den nya punkten närmast). `rampSides` är fortfarande punkter
+  (utplattade). `refPoints(p)` är referenslinjen utplattad; `rampLevels`
+  räknar `s` längs den. `extendRamp` tar pilhöjder för de nya kanterna
+  (`joinedBulges`) och förlänger ritade sidor med `offsetArcLine`.
+  Spegling vänder pilhöjderna (`transforms.ts`). `GroundTool` ritar linjen
+  med `ChainInput` (som taket), aldrig sluten (`click(pt, -1)`), med
+  *Båge* (`ground-arc`, G) och `undoPoint`
+- **Mjuka övergångar**: `rampProfile(p, def)` i `groundRamp.ts` ger
+  `levels`, `runs` (med `grade`, `la`, `lb`: parablernas längd i
+  sträckans ändar), `curves` (kurvans längd i varje punkt däremellan) och
+  `hAt(s)`. `rampRuns(levels, p?, def?)` räknar den raka delens lutning
+  med ändarnas radier (`easeRadiusAt`: punktens egen i `eases[i]`, annars
+  rampens `ease`/`easeRadius`, annars `def.easeRadius`); `rampWarnings`
+  och `steepest(runs)` följer den. `heightAtS` finns kvar för det raka
+  fallet. `rampShape` tar `def` och använder profilen; `groundRefLine` i
+  `pane3d.ts` delar raka bitar i 0,5 m så att kurvan syns. Valen
+  `pathEase` (radie, förslaget ur `easeSuggestion`), `pathEaseSharp` och
+  `pathEaseClear` i `rampOps.ts` (`setRampEase`), bara på punkter med höjd
+  (`hasLevel`). Panelen: *Övergångarna* (`ground:ease`) och
+  *Övergångarnas radie*; fältet *Lutning* räknar med radierna i ändarna
+- **Dockning**: `reversedRamp` och `fusedRamp` i `groundRamp.ts`;
+  `canFuse` godtar ramper, `fuseRampChains` och `fuseLines` i
+  `src/core/joinLines.ts` (skriver bara `RAMP_KEYS`, så pennan och det
+  andra i elementet lämnas; `settingsOf` gör att den första rampens
+  inställningar gäller också när den andra hängs på före)
+- Tester: `tests/v01019.test.ts`
+
 ## Rampens referenslinje (0.10.18, format 20)
 
 Inget nytt format: de nya parametrarna i `GroundParams` är frivilliga.
