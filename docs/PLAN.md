@@ -3314,16 +3314,40 @@ panoreras vyn igen).
 *Gjordes inte:* ingen redigerare för planens mönster i listan.
 Klickjämförelsen kördes inte (inget i husets verktyg ändrades).
 
-### 0.10.28.2 Material på bjälklag och tak
+### 0.10.28.2 Material på bjälklag och tak ✓ · *samma format (24)*
 
-Delad ur 0.10.28 (29 oktober). Mellanstor.
+Delad ur 0.10.28 (29 oktober). Mellanstor. Byggd 29 oktober.
 
 - Materialet på bjälklagen och taken (kulören i 3D, fyllningen i planen),
-  ur byggnadsmaterialen i listan (`useOf` ger redan 'building' för
-  bjälklag och tak)
-- Snittet i sektion och fasad (snittfyllning) och vyn i fasad (ytfyllning,
-  kan vara tom) i materialet
+  ur byggnadsmaterialen i listan
+- Snittet i sektion (snittfyllning) och vyn i fasad (ytfyllning, kan vara
+  tom) i materialet
 - Materialets konturpenna i planen
+
+*Claudes val:* inget nytt format: snittet, ytan och pennan är valfria fält
+i materialet, och fyllningen och `material` ligger i bjälklagets och
+takets parametrar som i rummen. Panelen *Material* för bjälklag och tak
+visar byggnadens material; under materialet *Sektion, fasad och kontur*
+med tre listor (snittet: *Som stilmallen*, hel färg, skraffering, kors
+eller en fyllningstyp; ytan likadant men *Ingen* som förval; konturen:
+*Stilmallens* eller en tjocklek) och färgerna. Samma fält i
+materiallistan för material med *Byggnad*. Bjälklaget fylls i planen
+under snittet (golvet sett uppifrån; det kan bli mycket mönster, men så
+gör ArchiCAD), taket där det ligger helt under snittet och hela taket på
+Platsen; fyllningen går inte att klicka på, så att ett klick i ett rum
+inte markerar bjälklaget. Snittet ersätter stilmallens fyllning för det
+som är kvar och nytt, med papperet under och konturen 0,35, men inte för
+det som rivs. Ytan gäller fasader, inte sektionernas vy bortom snittet,
+och räknas exakt mot det som ligger framför (trianglarna klipps mot ytans
+plan, som de dolda linjerna). Mönstret utgår från en punkt per objekt,
+så att bitarna av en yta ser likadana ut. Pennan gäller konturen under
+snittet; över snittet streckprickat som förut. Nya material: Takpannor
+(linjer var 350 mm) och Plåt (falsar var 600 mm), med ytan i fasaden; Betong och
+Tegel har sina mönster som snitt, Aluminium grått.
+
+*Gjordes inte:* ytan i sektionernas vy bortom snittet. Materialets penna
+för markobjekten. Mönstrets mått (vinkel, avstånd, skala) för snittet och
+ytan går inte att ändra; förvalen gäller. Klickjämförelsen kördes inte (husets verktyg ändrades inte).
 
 ### Granskning efter 0.10.28.2
 

@@ -45,11 +45,14 @@ export function sectionLines(
   sv: SectionView,
   hidden: { slabs: boolean; walls: boolean },
   actionOfId: (id: string) => Action,
+  /** Formerna vars ytor fylls i fasaden (0.10.28.2): deras trianglar kommer med i svaret. */
+  surfaced?: (s: Solid) => boolean,
 ) {
   const { O, r, v, uMax, depthMax, tone, toView } = sv;
   const hiddenSlabs = hidden.slabs;
   const hiddenWalls = hidden.walls;
   const occluders: number[][] = [];
+  const faces: { s: Solid; tris: number[] }[] = [];
   const segs: Seg<EdgeKey>[] = [];
   const hiddenSegs: Seg<EdgeKey>[] = [];
   const pushSeg = (a: V3, b: V3, key: EdgeKey, list = segs) => {
@@ -121,6 +124,7 @@ export function sectionLines(
       for (let k = 1; k + 1 < poly.length; k++) clipped.push(...poly[0], ...poly[k], ...poly[k + 1]);
     }
     occluders.push(clipped);
+    if (surfaced?.(s)) faces.push({ s, tris: clipped });
   }
 
   // Konturer av böjda väggar: där väggmassans kontur i plan vänder sig bort
@@ -131,7 +135,7 @@ export function sectionLines(
   const visibleLines = visibleSegments(segs, occluders);
   if (hiddenWalls) for (const { id, seg: q } of innerFaceEdges(doc, shapes)) pushSeg(toView(q[0], q[1], q[2]), toView(q[3], q[4], q[5]), { id, action: actionOfId(id) }, hiddenSegs);
   const hiddenLines = hiddenSegs.length ? mergeCollinear(visibleSegments(hiddenSegs, occluders, undefined, true), (k) => doc.elements[k.id]?.type ?? '') : [];
-  return { visibleLines, hiddenLines, minZ, maxZ };
+  return { visibleLines, hiddenLines, minZ, maxZ, occluders, faces };
 }
 
 /** Lodräta konturlinjer för väggmassan sedd i riktningen v. */

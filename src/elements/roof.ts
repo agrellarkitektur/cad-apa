@@ -9,6 +9,8 @@ import { bodyEdges, roofBody, type EdgeCut, type EdgeCutOverride } from './roofB
 import { buildingFootprint } from './footprint';
 import { roofPlanPrims, roofShownOn } from './roofPlan';
 import type { ElementType, PlanContext } from './registry';
+import type { FillParams } from './fill2d';
+import { buildingMaterialOf, materialSolid } from './buildingMaterial';
 
 /**
  * Tak (0.10, format 17): ett takfall. Konturen är takets utbredning i plan,
@@ -25,7 +27,7 @@ import type { ElementType, PlanContext } from './registry';
  * Höjderna räknas från våningens golv. `height` gäller takets undersida vid
  * referenslinjen, eller med `heightAt: 'top'` ovansidan.
  */
-export interface RoofParams {
+export interface RoofParams extends Partial<FillParams> {
   /** Konturen i plan, mm. */
   outline: [number, number][];
   /** Pilhöjd för kant i (från punkt i till i + 1), som 2D-formens. */
@@ -424,10 +426,12 @@ export const roofType: ElementType<RoofParams> = {
     const out: Shape3D[] = [];
     const body = roofBodyOf(ctx, p);
     if (!body.length) return out;
+    // Materialets kulör (0.10.28.2).
+    const mat = materialSolid(buildingMaterialOf(p, ctx.style));
     for (const pc of body) {
       const [z0] = planeRange(pc.under, pc.rings);
       const [, z1] = planeRange(pc.top, pc.rings);
-      out.push({ id: el.id, rings: pc.rings, z0, z1, bottom: pc.under, top: pc.top, material: 'roof', noEdges: true });
+      out.push({ id: el.id, rings: pc.rings, z0, z1, bottom: pc.under, top: pc.top, material: 'roof', noEdges: true, ...mat });
     }
     // Egna kantlinjer: konturen på ovansidan, undersidan med språnget och
     // takfotens snitt, och de lodräta hörnen, utom skarvar mot ett annat

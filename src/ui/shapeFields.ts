@@ -9,6 +9,7 @@ import { lineTypeOptions } from './lineTypePick';
 import { FILL_KEYS, fillOpacityOf, fillPanel, fillPatch, MATERIAL_3D_COLOR, withPatch, type FillPanelContext } from './fillPanel';
 import { fillFieldsOf, fillOfElement, linkMaterial, materialUses, overrideMaterial, updateMaterial, withFill } from '../core/materials';
 import { weightPicker } from './weightPick';
+import { BUILDING_KEYS, buildingChange } from './materialBuilding';
 
 /**
  * 2D-formens fält (0.8.19–0.8.24): penna, linjetyp, färg, ändar, fyllning
@@ -48,13 +49,19 @@ export function fillChange(store: DocStore, ids: Id[], name: string, input: HTML
     linkMaterial(store, ids, input.value || null, nested);
     return true;
   }
-  if (!FILL_KEYS.has(name) && !MATERIAL_KEYS.has(name)) return false;
+  if (!FILL_KEYS.has(name) && !MATERIAL_KEYS.has(name) && !BUILDING_KEYS.has(name)) return false;
   const doc = store.doc;
   const first = ids.map((id) => doc.elements[id]).find(Boolean);
   if (!first) return true;
   const m = materialOf(fillOfElement(first, nested), doc.graphics);
   if (MATERIAL_KEYS.has(name)) {
     if (m) materialFieldChange(store, ids, m, name, input.value, nested);
+    return true;
+  }
+  // Byggnadens snitt, yta och penna (0.10.28.2).
+  if (BUILDING_KEYS.has(name)) {
+    const change = m && buildingChange(m, name, input.value);
+    if (change) updateMaterial(store, m!.id, change.label, change.fn);
     return true;
   }
   if (m) {

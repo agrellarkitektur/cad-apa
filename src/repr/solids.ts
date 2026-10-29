@@ -31,6 +31,8 @@ export interface Solid {
   material: Material3D;
   /** En egen kulör som #rrggbb (0.10.28, materialets i 3D) i stället för materialsortens. */
   color?: string;
+  /** Stilmallens material (0.10.28.2): snittet i sektioner och ytan i fasader. */
+  matId?: string;
   /**
    * Rita inga kantlinjer för formen. Väggar sätter det och levererar egna
    * kantlinjer, så att skarvar mellan bitarna runt öppningar inte syns.

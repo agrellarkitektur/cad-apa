@@ -113,6 +113,29 @@ export function effectiveFill<P extends Partial<FillParams>>(p: P, style: StyleS
   return out as P;
 }
 
+/**
+ * Materialets snitt (0.10.28.2) som en fyllning, eller undefined när det
+ * inte har något eller objektet rivs: då gäller stilmallens snitt.
+ */
+export function materialCutFill(m: Material | undefined, action?: string): FillParams | undefined {
+  if (!m?.cut || action === 'demolished') return undefined;
+  return { fillAngle: 45, fillSpacing: 2, ...(m.cut as Partial<FillParams>) } as FillParams;
+}
+
+/** Materialets yta i fasad (0.10.28.2) som en fyllning, eller undefined. */
+export function materialSurfaceFill(m: Material | undefined): FillParams | undefined {
+  return m?.surface ? ({ fillAngle: 45, fillSpacing: 2, ...(m.surface as Partial<FillParams>) } as FillParams) : undefined;
+}
+
+/**
+ * Snittytan med materialets snitt (0.10.28.2): papperet under, konturen
+ * som stilmallens snitt (0,35) och mönstret ovanpå.
+ */
+export function materialCutPrims(rings: readonly (readonly Vec2[])[], cut: FillParams, origin: Primitive['origin'], style: StyleSheet | undefined, scale: number, under = false): Primitive[] {
+  const base: Primitive = { kind: 'region', role: 'cut', rings: rings as Vec2[][], fill: { kind: 'solid', color: 'paper' }, outline: { weight: 0.35 }, ownFill: true, ...(under ? { under: true } : {}), origin };
+  return [base, ...fillPrims(rings, cut, origin, under, style, scale).map((q) => ({ ...q, origin }))];
+}
+
 /** Mönstrets penna när varken objektet eller fyllningstypen har en egen, mm på papper. */
 export const FILL_WEIGHT = 0.13;
 
@@ -131,7 +154,7 @@ export const BACKGROUND_COLOR = '#ffffff';
  * Fyllningens ytor för konturen `rings` (0.8.25): en hel fyllning eller en
  * eller två skrafferingar. `under` = bakom väggarna.
  */
-export function fillPrims(rings: readonly (readonly Vec2[])[], own: FillParams, origin: Primitive['origin'] | undefined, under: boolean, style?: StyleSheet, scale = 1, category?: FillCategory): Primitive[] {
+export function fillPrims(rings: readonly (readonly Vec2[])[], own: FillParams, origin: Primitive['origin'] | undefined, under: boolean, style?: StyleSheet, scale = 1, category?: FillCategory, anchorAt?: Vec2): Primitive[] {
   const p = effectiveFill(own, style, category);
   if (!p.fill) return [];
   const fills: FillDef[] = [];
@@ -146,7 +169,8 @@ export function fillPrims(rings: readonly (readonly Vec2[])[], own: FillParams, 
     const spacing = p.fillSpacing > 0 ? p.fillSpacing : 2;
     const weight = p.fillWeight !== undefined && p.fillWeight > 0 ? p.fillWeight : undefined;
     // Mönstret utgår från objektets första hörn (0.10.14), så att det följer med när objektet flyttas.
-    const at = rings[0]?.[0];
+    // En egen utgångspunkt (0.10.28.2), så att bitarna av en yta får samma mönster.
+    const at = anchorAt ?? rings[0]?.[0];
     const anchor = (lines: HatchLine[]): HatchLine[] => (at ? anchorLines(lines, at, scale) : lines);
     // Skrafferingens avstånd i verkliga mått (0.10.14) i stället för på papper.
     const paperSpacing = p.fillModel ? spacing / (scale || 1) : spacing;

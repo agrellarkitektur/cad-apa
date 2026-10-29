@@ -24,6 +24,8 @@ import { sectionLines } from './sectionLines';
 import { LINE_TYPES } from '../core/lineTypes';
 import type { Pen, Primitive, Vec2 } from './primitives';
 import { zOn, type EdgePart, type Solid } from './solids';
+import { materialCutFill, materialCutPrims, type FillParams } from '../elements/fill2d';
+import { surfacePrims } from './sectionSurfaces';
 
 /**
  * Fasader och sektioner (0.7). Vyn räknas fram ur samma 3D-former som
@@ -115,10 +117,13 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   const hiddenSlabs = isSection ? !view.hide?.includes(HIDDEN_SLABS_SECTION) : !!view.hide?.includes(`+${HIDDEN_SLABS}`);
   const hiddenWalls = !isSection && !!view.hide?.includes(`+${HIDDEN_WALLS}`);
 
-  const { visibleLines, hiddenLines, minZ, maxZ } = sectionLines(doc, shapes, { O, r, v, uMax, depthMax, tone, toView }, { slabs: hiddenSlabs, walls: hiddenWalls }, actionOfId);
+  // Ytorna i fasaden (0.10.28.2): formerna vars material har en yta.
+  const surfaced = isSection || view.hide?.includes('fill') ? new Set<string>() : new Set((style.materials ?? []).filter((m) => m.surface).map((m) => m.id));
+  const { visibleLines, hiddenLines, minZ, maxZ, occluders, faces } = sectionLines(doc, shapes, { O, r, v, uMax, depthMax, tone, toView }, { slabs: hiddenSlabs, walls: hiddenWalls }, actionOfId, surfaced.size ? (s) => !!s.matId && surfaced.has(s.matId) && actionOfId(s.id) !== 'demolished' : undefined);
 
   // Snittytor där linjen skär formerna.
-  const cuts = new Map<string, { action: Action; poche: boolean; ids: Set<string>; rings: Rings[] }>();
+  const cuts = new Map<string, { action: Action; poche: boolean; ids: Set<string>; rings: Rings[]; cut?: FillParams }>();
+  const materialById = new Map((style.materials ?? []).map((m) => [m.id, m]));
   const cutFaces: { material: string; rings: Rings }[] = [];
   // Varje objekts egen snittyta, för markering. Snitten ritas sammanslagna
   // (väggar och tak i ett), men den sammanslagna ytan får inte göra att ett
@@ -135,15 +140,18 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
       ownCuts.set(s.id, mine);
       const action = actionOfId(s.id);
       const poche = POCHE_MATERIALS.has(s.material);
-      const k = `${action}|${poche ? 'p' : 'o'}|${poche ? '' : s.id}`;
+      // Materialets snitt (0.10.28.2): ett material slås ihop med sig självt.
+      const cut = poche && s.matId ? materialCutFill(materialById.get(s.matId), action) : undefined;
+      const k = `${action}|${poche ? 'p' : 'o'}|${poche ? (cut ? `m:${s.matId}` : '') : s.id}`;
       let g = cuts.get(k);
-      if (!g) cuts.set(k, (g = { action, poche, ids: new Set(), rings: [] }));
+      if (!g) cuts.set(k, (g = { action, poche, ids: new Set(), rings: [], ...(cut ? { cut } : {}) }));
       g.ids.add(s.id);
       g.rings.push(...polys);
     }
   }
 
-  const prims: Primitive[] = [];
+  // Ytornas fyllning först, under linjerna.
+  const prims: Primitive[] = faces.length ? surfacePrims(faces, occluders, style, ctx.scale, (id) => doc.elements[id]?.type) : [];
   const byId = new Map<string, Primitive[]>();
   const own = (id: string, p: Primitive) => {
     const list = byId.get(id) ?? [];
@@ -181,6 +189,16 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     const owned = new Set([...g.ids].filter((id) => doc.elements[id] && effectivePen(doc, doc.elements[id])));
     const split = owned.size ? { outline: null, noOutline: true } : {};
     for (const rings of merged) {
+      if (g.cut) {
+        // Med egna pennor ritas konturen per objekt nedan; papperet först, utan kontur.
+        const mp = materialCutPrims(rings, g.cut, { objectId: first, part: 'snitt' }, style, ctx.scale);
+        prims.push(...(owned.size ? mp.map((q, i) => (i === 0 && q.kind === 'region' ? { ...q, outline: null, noOutline: true } : q)) : mp));
+        for (const ring of rings) for (const q of ring) {
+          minU = Math.min(minU, q[0]);
+          maxU = Math.max(maxU, q[0]);
+        }
+        continue;
+      }
       const raw: Primitive = g.poche
         ? { kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { objectId: first, part: 'snitt' }, ...split }
         : { kind: 'region', role: 'cut', rings, fill: { kind: 'none' }, outline: { weight: 0.25 }, ownFill: true, origin: { objectId: first, part: 'snitt' }, ...split };

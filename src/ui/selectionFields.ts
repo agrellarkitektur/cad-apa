@@ -1,4 +1,5 @@
 import { materialUses } from '../core/materials';
+import type { FillParams } from '../elements/fill2d';
 import { labelFields } from './labelSection';
 import { groundFieldsMarkup } from './groundFields';
 import type { Element, ProjectDoc } from '../core/model';
@@ -139,7 +140,8 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
           .map(([v, label]) => `<option value="${v}"${(typeof p.eaveCut === 'number' ? 'angle' : (p.eaveCut ?? 'perp')) === v ? ' selected' : ''}>${label}</option>`)
           .join('')}</select></label>
         <p class="note">Språnget är delen utanför ytterväggarnas utsida; ovansidan är densamma. Takfoten är kanterna som vetter nedåt i lutningen; nock, grat och gavel snittas lodrätt. En kant kan få ett eget snitt i Modifiera.${p.edgeCuts?.length ? ` ${p.edgeCuts.length === 1 ? 'En kant har' : `${p.edgeCuts.length} kanter har`} ett eget snitt.` : ''}</p>
-        <p class="note">Höjden gäller vid referenslinjen, och taket stiger åt pilens håll. Dra i referenslinjens ändar för att flytta den; konturen ändras som en 2D-form. Radie gör referenslinjen till en båge och taket till en kon (0 = rak). Väggar under taket kapas; kryssa i Upp till taket på gavlarna.</p>`;
+        <p class="note">Höjden gäller vid referenslinjen, och taket stiger åt pilens håll. Dra i referenslinjens ändar för att flytta den; konturen ändras som en 2D-form. Radie gör referenslinjen till en båge och taket till en kon (0 = rak). Väggar under taket kapas; kryssa i Upp till taket på gavlarna.</p>
+        ${buildingFill(doc, 'roof-pattern-panel', p)}`;
     }
     case 'Slab': {
       const p = resolveParams<SlabParams>(doc, el);
@@ -156,7 +158,8 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         <label class="check" title="Konturen följer ytterväggarnas insida och flyttas med dem"><input type="checkbox" data-key="slab:fromWalls"${p.fromWalls ? ' checked' : ''}> Ur väggarna</label>
         <div class="field-label">Håltagningar</div>
         ${holes ? `<ul class="slab-holes">${holes}</ul><p class="note">Klicka på ett håls hörn eller kant för att ändra det, som en 2D-form, eller dra i hörnen.</p>` : '<p class="note">Inga. Välj Håltagning i bjälklagsverktyget och dra upp ett hål.</p>'}
-        <p class="note">${p.fromWalls ? 'Bjälklaget slutar vid ytterväggarnas insida; innerväggarna står på det. Bocka ur för att ändra konturen själv.' : 'Konturen ändras med hörnen och kanterna, som takets.'} Ovansidan ligger på nivån mot våningens golv (0 = golvet), tjockleken går nedåt.</p>`;
+        <p class="note">${p.fromWalls ? 'Bjälklaget slutar vid ytterväggarnas insida; innerväggarna står på det. Bocka ur för att ändra konturen själv.' : 'Konturen ändras med hörnen och kanterna, som takets.'} Ovansidan ligger på nivån mot våningens golv (0 = golvet), tjockleken går nedåt.</p>
+        ${buildingFill(doc, 'slab-pattern-panel', p)}`;
     }
     case 'Ground':
       return groundFieldsMarkup(doc, el, view);
@@ -272,4 +275,12 @@ export function summarizeTypes(els: Element[]): string {
       return `${n} ${(n === 1 ? t?.label : t?.labelPlural)?.toLowerCase() ?? type}`;
     })
     .join(', ');
+}
+
+/**
+ * Materialet på bjälklag och tak (0.10.28.2): fyllningens panel med
+ * byggnadens material, som rummens (nycklarna `d2:…`).
+ */
+function buildingFill(doc: ProjectDoc, name: string, p: Partial<FillParams>): string {
+  return fillFields(name, { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 } as FillParams, (k) => `data-key="d2:${k}"`, doc.graphics, 'Material', { use: 'building', uses: p.material ? materialUses(doc, p.material) : 0 });
 }

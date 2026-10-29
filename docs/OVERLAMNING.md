@@ -4,26 +4,29 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.28.1.
+**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.28.2.
 
 ## Läget
 
-- **0.10.28.1 Materiallistan är klar** (**nytt format, 24**: kategorin
-  blev kryssrutorna `ground` och `building`): listan i stilmallens dialog
-  (namn, ordning, Ta bort, Mark/Byggnad, färgerna i planen,
-  illustrationsplanen och 3D, Nytt material), nio nya material och fyra
-  nya fyllningstyper, markobjektens lista bara med *Mark*, stödmurarna
-  ovanifrån med ytfyllning på Platsen, marken i 3D i alla Platsens vyer,
-  Shift i valfri ordning under ett 3D-drag. Testerna: 696 på ca 18 s.
-  Provat i Playwright mot `dist/`. Den nya ordningen från
-  planeringssessionen står nu i PLAN.md. Se PLAN.md och UTVECKLING.md.
-- **0.10.28 Material, mark först**, **0.10.27 Styrningen i 3D**,
+- **0.10.28.2 Material på bjälklag och tak är klar** (**samma format,
+  24**: snittet, ytan och pennan är valfria fält i materialet): bjälklag
+  och tak har *Material* med byggnadens material, fyllningen i planen,
+  kulören i 3D, materialets snitt i sektion (och i planen där det skärs),
+  ytan i fasad (exakt mot det som ligger framför, `sectionSurfaces.ts`)
+  och konturens penna i planen; fälten också i materiallistan. Nya
+  material Takpannor och Plåt. Testerna: 703 på ca 16 s. Provat i
+  Playwright mot `dist/` (panelen, planen, fasaden, sektionen, Platsen,
+  3D). Se PLAN.md och UTVECKLING.md.
+- **0.10.28.1 Materiallistan**, **0.10.28 Material, mark först**, **0.10.27 Styrningen i 3D**,
   **0.10.26 Rampen och stödmuren**, **0.10.25.1** (granskning) och
   **0.10.25 Platsen som modellflik**: se PLAN.md.
-- **Publicerad:** 0.10.28.1 pushad till `main` 29 oktober (se git och
-  `gh run list`). Skrivrätten (`add_repo` med push) nekades först av
-  behörighetskontrollen och behövde Carl Augusts godkännande; läsningen
-  (klonen) och `npm install` gick direkt.
+- **Publicerad:** 0.10.28.2 pushad till `main` 29 oktober (se git och
+  `gh run list`). `add_repo` med push gick direkt den här gången (Carl
+  August skrev "push godkänd" i första meddelandet).
+- **Märks i hans ritningar efter 0.10.28.2:** inget i befintliga projekt
+  (bjälklag och tak har inget material förrän man väljer ett). Nya
+  projekt har Takpannor och Plåt, och Betong och Tegel har mönster i
+  snittet.
 - **Märks i hans ritningar efter 0.10.28.1:** projekt från 0.10.28
   öppnas inte (nytt format). Stödmurarna på Platsen ritas ovanifrån (inte
   längre svarta utan material).
@@ -33,14 +36,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare i dag:** 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare i dag:** 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.28.1` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.28.2` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.28.1 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.28.2 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -106,9 +109,9 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   stället för fyllningar~~, ~~0.10.25 Platsen som modellflik~~,
   ~~Granskning efter 0.10.25 (0.10.25.1)~~, ~~0.10.26 Rampen och
   stödmuren~~, ~~0.10.27 Styrningen i 3D~~, ~~0.10.28 Material, mark
-  först~~, ~~0.10.28.1 Materiallistan~~ (klara)
-- **0.10.28.2 Material på bjälklag och tak** (mellanstor; på tur)
-- **Granskning efter 0.10.28.2** (mellanstor; rampens höjder ur den
+  först~~, ~~0.10.28.1 Materiallistan~~, ~~0.10.28.2 Material på
+  bjälklag och tak~~ (klara)
+- **Granskning efter 0.10.28.2** (mellanstor; på tur; rampens höjder ur den
   färdiga marken, stödmurens krön och fot, förtätad markmodell,
   markobjekten och våningshöjden)
 - **0.10.29 Ritandet** (liten till mellanstor; Shift låser vinkeln,
@@ -134,13 +137,13 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.28.2 Material på bjälklag och tak** (mellanstor; se
-`cad-apa-synpunkter.md` och PLAN.md). Läs synpunkterna först och sortera
-Inkorgen om den har något. `useOf` ger redan `'building'` för bjälklag och
-tak, och panelens `FillPanelContext.use` filtrerar listan. Snittet i
-sektion och fasad och vyn i fasad behöver nya fält i materialet, så
-versionen ger troligen ett nytt format; säg det. Därefter granskningen i
-en egen session.
+**Granskning efter 0.10.28.2** (mellanstor; se `cad-apa-synpunkter.md`
+och PLAN.md). Läs synpunkterna först och sortera Inkorgen om den har
+något. Fyra punkter: rampens höjder ur den färdiga marken, stödmurens krön
+jämnt med rampens kant, förtätad markmodell där markobjekt ritas (foten i
+tänder) och markobjekten som inte ska flytta när en våningshöjd ändras.
+Utöver dem som vanligt: städa, dela upp stora filer, gå igenom testerna.
+Därefter 0.10.29 Ritandet.
 
 Utredningen om stilinställningarna startas av Carl August i en egen chatt
 med en färdig text; den behöver inte föreslås.
@@ -149,10 +152,26 @@ med en färdig text; den behöver inte föreslås.
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
-fråga. Frågorna om 0.10.28.1 hör till 0.10.28.2 (samma lista); de om
-0.10.27–0.10.23 när han provat.
+fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
+om 0.10.27–0.10.23 likaså.
 
-**0.10.28.1 efter provning** (Claudes val, se PLAN.md; hör till 0.10.28.2)
+**0.10.28.2 efter provning** (Claudes val, se PLAN.md)
+- Bjälklaget fylls i planen under snittet med materialets mönster (Betong
+  ger betongmönster över hela golvet, under rummen). Rätt, eller ska
+  bjälklagen bara få materialet i snitt och 3D och planen vara tom som
+  förut?
+- Materialets snitt gäller det som är kvar och nytt, och ersätter
+  stilmallens fyllning (t.ex. skrafferingen för nytt); det som rivs ritas
+  som förut. Rätt, eller ska stilmallens fyllning för nytt gå före?
+- Ytan syns bara i fasader, inte i sektionernas vy bortom snittet. Ska
+  den synas där också?
+- Takpannor (linjer var 350 mm) och Plåt (falsar var 600 mm) är nya. Ser
+  de rätt ut i fasaden och på Platsen? Saknas något byggnadsmaterial?
+- Mönstrets vinkel, avstånd och skala för snittet och ytan går inte att
+  ändra (förvalen gäller; Takpannor och Plåt har sina). Räcker det, eller
+  behövs en redigerare som för planen?
+
+**0.10.28.1 efter provning** (Claudes val, se PLAN.md)
 - Listan har tre färger per material (planen, illustrationsplanen, 3D),
   men mönstret i planen ändras bara i panelen för ett objekt med
   materialet. Räcker det, eller ska mönstret också gå att välja i listan?

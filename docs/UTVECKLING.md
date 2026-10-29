@@ -436,11 +436,12 @@ Det som är känt men lämnat, per version (flyttat hit ur överlämningen i
 
 - **Material (0.10.28):** kulörerna i 3D följer trianglarnas mitt, så
   slänternas yttre kant (och markytor som inte skär marken) blir taggiga
-  per ruta. Snittet och vyn i sektion och fasad har inga fält i materialet
-  än (0.10.28.2, med bjälklag och tak); marken i sektionerna ritas som
-  förut. Materialen går inte att ordna eller redigera i stilmallens
-  dialog, bara i panelen. En markering med olika material ändras efter
-  det första objektets material.
+  per ruta. Snittet och ytan (0.10.28.2) gäller bjälklag och tak; marken
+  och väggarna i sektionerna ritas som förut, och ytan syns bara i
+  fasader, inte i sektionernas vy. Mönstrets mått för snittet och ytan går
+  inte att ändra i listan. En markering med olika material ändras efter
+  det första objektets material. Ytan i fasaden räknas med polygonklippning;
+  går den inte ihop för en bit blir ytan lite för stor där.
 
 - **Smartspöt del 2 (0.10.23):** `fitArcs` körs bara när ett förslag
   utförs (prövar de längsta bågarna från början, O(n²) för en lång jämn
@@ -1638,6 +1639,51 @@ projekt i 1 982 jämförelser.
   `propertiesPanel.ts`.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
+
+## Material på bjälklag och tak (0.10.28.2, format 24)
+
+- **Materialet** (`graphics.ts`) har de valfria fälten `cut` och `surface`
+  (fyllningar som `plan`) och `pen` (`{ weight, color? }`);
+  `normalizeMaterials` läser dem. `DEFAULT_MATERIALS`: Betong och Tegel
+  med `cut`, Aluminium grått, nya Takpannor och Plåt med `surface`
+  (`lines(vinkel, avstånd, färg)`, skraffering i verkliga mått).
+- **`fill2d.ts`**: `materialCutFill(m, action)` (undefined utan `cut` eller
+  när objektet rivs), `materialSurfaceFill(m)` och `materialCutPrims(rings,
+  cut, origin, style, scale, under)`: en region med papperet och konturen
+  0,35 (`ownFill`), och mönstret ovanpå. `fillPrims` tar en egen
+  utgångspunkt för mönstret (`anchorAt`).
+- **`elements/buildingMaterial.ts`**: `buildingMaterialOf`, `materialPen(m,
+  pen)` och `materialSolid(m)` (`color`, `matId`). `SlabParams` och
+  `RoofParams` ärver `Partial<FillParams>`; fyllningen och materialet
+  ligger i parametrarna som i rummen, så `linkMaterial`, `updateMaterial`
+  och panelen fungerar som förut.
+- **Planen**: `slabType.plan` fyller `slabRings` under snittet
+  (`fillPrims`, `noPick`), snittet med materialets snitt, konturen med
+  `materialPen`. `roofPlanPrims` fyller delen helt under snittet
+  (`halfPlaneBelow(rp.top, h)`, hela taket på Platsen), snittytan med
+  materialets snitt.
+- **3D**: `Solid.matId` (stilmallens material) och `color` på bjälklag och tak.
+- **Sektionen** (`section.ts`): snitten grupperas per material
+  (`m:<id>` i nyckeln) och ritas med `materialCutPrims`; med egna pennor
+  utan kontur på papperet.
+- **Fasaden** (`repr/sectionSurfaces.ts`): `sectionLines` tar `surfaced(s)`
+  och svarar med `occluders` och `faces` (formernas klippta trianglar).
+  `visibleFaces(tris, occluders)` grupperar trianglarna per plan, slår ihop
+  dem och drar av alla trianglar framför planet (`clipPlane` mot ytans
+  djup minus 1,5 mm). Punkterna avrundas till 0,1 mm, och går klippningen
+  inte ihop slås bitarna ihop och dras av en i taget (`safeUnion`,
+  `without`). `surfacePrims` ritar ytorna först, under linjerna, `noPick`.
+  Släckt med `fill` under Visa.
+- **Panelen**: `ui/materialBuilding.ts` (`buildingFields`, `buildingChange`,
+  `BUILDING_KEYS`: `matCut`, `matCutColor`, `matSurface`,
+  `matSurfaceColor`, `matPen`, `matPenColor`). I `fillPanel` under
+  materialet när det har *Byggnad*; `fillChange` skickar nycklarna till
+  `updateMaterial`. Bjälklagets och takets panel (`buildingFill` i
+  `selectionFields.ts`) med `use: 'building'` och nycklarna `d2:…`.
+  Materiallistan har samma fält (`data-material="<id>:matCut"` …) och
+  `materialFieldChange` tar dem.
+- Tester: `tests/v010282.test.ts`. Provat i Playwright mot `dist/`
+  (panelen, planen, fasaden, sektionen, Platsen, 3D).
 
 ## Materiallistan (0.10.28.1, format 24)
 

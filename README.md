@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.28.1** (alfa); nästa är **0.10.28.2 Material på bjälklag och tak**.
+**0.10.28.2** (alfa); nästa är **granskningen efter 0.10.28.2**.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,26 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.28.2, material på bjälklag och tak (samma filformat, 24):
+- **Material på bjälklag och tak**: panelen har *Material* som rummen och
+  markobjekten, med byggnadens material (de med *Byggnad*) och *Eget*
+- **Fyllningen i planen**: bjälklaget fylls under snittet (golvet sett
+  uppifrån), taket där det ligger helt under snittet och hela taket på
+  Platsen. Fyllningen går inte att klicka på och släcks med *Fyllningar*
+  under Visa
+- **Kulören i 3D** är materialets
+- **Snittet i sektion**: materialets snitt (t.ex. Betong och Tegel) i
+  stället för stilmallens, med papperet under och konturen som förut; det
+  som rivs ritas som förut. Utan snitt i materialet gäller stilmallen.
+  Samma i planen där ett bjälklag eller tak skärs
+- **Ytan i fasad**: materialets yta fylls där bjälklaget eller taket syns,
+  inte bakom det som ligger framför. Takpannor och Plåt är nya material
+  med ytan som linjer i verkliga mått
+- **Konturen i planen** med materialets penna (tjocklek och färg), annars
+  stilmallens
+- Snittet, ytan och pennan väljs under *Material* i panelen och i
+  materiallistan i stilmallen
 
 Version 0.10.28, material, mark först (nytt filformat, 23; projekt från 0.10.27 öppnas inte):
 - **Material i stället för fyllningar**: ett material bor i stilmallen

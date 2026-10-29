@@ -8,6 +8,8 @@ import { buildingFootprint } from './footprint';
 import { cutHeightOf } from './planCut';
 import { ABOVE_PART, planCutPen } from '../repr/planCutPens';
 import { resolveParams, type PlanContext } from './registry';
+import { fillPrims, materialCutFill, materialCutPrims, type FillParams } from './fill2d';
+import { buildingMaterialOf, materialPen } from './buildingMaterial';
 import { halfPlaneBelow, outlineEdges, outlineRing, roofFrame, roofPlanes, roofRange, type RoofParams } from './roof';
 
 /**
@@ -78,7 +80,9 @@ export function roofPlanPrims(el: Element<any>, ctx: PlanContext): Primitive[] {
   const f = roofFrame(p);
   // Pennorna ur stilmallen (0.10.16).
   const ABOVE = planCutPen(ctx.style, 'Roof', 'above');
-  const SEEN = planCutPen(ctx.style, 'Roof', 'below');
+  // Materialets penna (0.10.28.2) för det som syns uppifrån.
+  const m = buildingMaterialOf(p, ctx.style);
+  const SEEN = materialPen(m, planCutPen(ctx.style, 'Roof', 'below'));
   const zone = (q: Vec2): Zone => (f.under(q) > h + 0.5 ? 'above' : f.top(q) < floor - 0.5 ? 'under' : f.top(q) < h - 0.5 ? 'below' : 'cut');
 
   // Konturen, delad där undersidan och ovansidan går genom snitthöjden.
@@ -131,7 +135,29 @@ export function roofPlanPrims(el: Element<any>, ctx: PlanContext): Primitive[] {
       for (const r of intersection(rp.rings, [lower])) parts.push(...(below ? difference(r, [below]) : [r]));
     }
     const merged = parts.length > 1 ? union(parts) : parts;
-    for (const rings of merged) if (rings[0]?.length >= 3 && Math.abs(signedArea(rings[0])) > 100) out.push({ kind: 'region', rings, role: 'cut', fill: { kind: 'none' }, outline: null, origin, under: true });
+    const cut = materialCutFill(m, ctx.actionOf(el));
+    for (const rings of merged) {
+      if (!(rings[0]?.length >= 3 && Math.abs(signedArea(rings[0])) > 100)) continue;
+      // Materialets snitt (0.10.28.2), annars stilmallens.
+      if (cut) out.push(...materialCutPrims(rings, cut, origin, ctx.style, ctx.scale, true));
+      else out.push({ kind: 'region', rings, role: 'cut', fill: { kind: 'none' }, outline: null, origin, under: true });
+    }
+  }
+
+  // Fyllningen i planen (0.10.28.2): det av taket som ligger helt under
+  // snittet, sett uppifrån (på Platsen hela taket). Går inte att klicka på.
+  if (p.fill && !ctx.view.hide?.includes('fill')) {
+    const seen: Rings[] = [];
+    for (const rp of roofPlanes(p)) {
+      if (!Number.isFinite(h)) {
+        seen.push(rp.rings);
+        continue;
+      }
+      const below = halfPlaneBelow(rp.top, h);
+      if (below) seen.push(...intersection(rp.rings, [below]));
+    }
+    const merged = seen.length > 1 ? union(seen) : seen;
+    for (const rings of merged) if (rings[0]?.length >= 3) out.push(...fillPrims(rings, p as unknown as FillParams, origin, true, ctx.style, ctx.scale, ctx.view.category).map((q) => ({ ...q, noPick: true })));
   }
 
   // Husets kontur streckad genom taket (vyinställning).

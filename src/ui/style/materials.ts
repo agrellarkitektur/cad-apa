@@ -1,6 +1,7 @@
 import type { Material, StyleSheet } from '../../core/graphics';
 import { escapeHtml } from '../labels';
 import { MATERIAL_3D_COLOR, savedSwatch } from '../fillPanel';
+import { BUILDING_KEYS, buildingChange, buildingFields } from '../materialBuilding';
 
 /**
  * Materiallistan i stilmallen (0.10.28.1): ett material per rad med namnet,
@@ -33,12 +34,13 @@ export function materialSection(style: StyleSheet, uses: ReadonlyMap<string, num
           ${color('c3d', '3D', m.color3d ?? MATERIAL_3D_COLOR)}
           <span class="material-uses">${n ? `${n} objekt` : ''}</span>
         </div>
+        ${m.building ? `<div class="material-building">${buildingFields(m, (k) => `data-material="${id}:${k}"`, style)}</div>` : ''}
       </div>`;
     })
     .join('');
   return `<section class="style-labels style-materials">
     <h3>Material</h3>
-    <p class="note">Materialen väljs i objektens panel under <i>Material</i>. <b>Mark</b> och <b>Byggnad</b> styr var de finns att välja (2D-former och rum ser alla). Ändras ett material här ändras alla objekt med det. Mönstret i planen ändras i panelen för ett objekt med materialet.</p>
+    <p class="note">Materialen väljs i objektens panel under <i>Material</i>. <b>Mark</b> och <b>Byggnad</b> styr var de finns att välja (2D-former och rum ser alla). Ändras ett material här ändras alla objekt med det. Mönstret i planen ändras i panelen för ett objekt med materialet. Byggnadens material har också snittet i sektion, ytan i fasad och konturens penna i planen.</p>
     ${rows || '<p class="note">Inga material.</p>'}
     <button class="btn" data-action="material-add">Nytt material</button>
   </section>`;
@@ -64,6 +66,11 @@ export function materialFieldChange(style: StyleSheet, input: HTMLInputElement |
   if (field === 'ground' || field === 'building') {
     const on = (input as HTMLInputElement).checked;
     return { id, label: `${m.name}: ${field === 'ground' ? 'Mark' : 'Byggnad'}`, fn: (q) => ({ ...q, [field]: on }) };
+  }
+  // Byggnadens snitt, yta och penna (0.10.28.2).
+  if (BUILDING_KEYS.has(field)) {
+    const change = buildingChange(m, field, input.value);
+    return change ? { id, ...change } : null;
   }
   const c = input.value;
   if (!/^#[0-9a-f]{6}$/i.test(c)) return null;

@@ -4,6 +4,7 @@ import { effectiveFill, FILL_BACKGROUND, FILL_COLOR, BACKGROUND_COLOR, FILL_WEIG
 import { escapeHtml } from './labels';
 import { fillTypeSwatch, patternSwatch } from './patternPick';
 import { weightPicker } from './weightPick';
+import { buildingFields } from './materialBuilding';
 
 /**
  * Fyllningens panel (0.10.14): samma för 2D-former, rum, markobjekt och
@@ -131,14 +132,16 @@ function materialRow(name: string, p: FillParams, attrs: (key: string) => string
 }
 
 /** Materialets illustrationsplan och 3D (0.10.28), och objektets egen opacitet och vridning. */
-function materialParts(name: string, m: Material, p: FillParams, attrs: (key: string) => string): string {
+function materialParts(name: string, m: Material, p: FillParams, attrs: (key: string) => string, style?: StyleSheet): string {
   const ill = m.illustration;
   const illKind = `<label class="field"><span>Illustrationsplanen</span><select ${attrs('matIllKind')}><option value="plan"${ill ? '' : ' selected'}>Som planen</option><option value="color"${ill ? ' selected' : ''}>Egen färg</option></select></label>`;
   const illColor = ill ? `<label class="field"><span>Färg</span><input type="color" ${attrs('matIllColor')} value="${escapeHtml(ill.color)}"></label>` : '';
   const c3 = `<label class="field"><span>Kulör i 3D</span><input type="color" ${attrs('matColor3d')} value="${escapeHtml(m.color3d ?? MATERIAL_3D_COLOR)}"></label>`;
   const planOp = Number((m.plan as Record<string, unknown>).fillOpacity ?? 100);
   const own = `<div class="field-label">Bara det här objektet</div><div class="fields">${numberInput('materialOpacity', 'Opacitet', p.materialOpacity ?? NaN, '%', attrs, ` data-unit="" data-step="10" placeholder="${planOp} (materialets)"`)}${numberInput('materialAngle', 'Vridning', p.materialAngle ?? NaN, '°', attrs, ' data-unit="deg" placeholder="0"')}</div>`;
-  return `<div class="field-label">Illustrationsplan och 3D</div><div class="fields">${illKind}${illColor}${c3}</div>${ill ? opacitySteps(`${name}-illop`, 'matIllOpacity', 'Opacitet i illustrationsplanen', ill.opacity ?? 100, attrs) : ''}${own}`;
+  // Byggnadens material (0.10.28.2): snittet i sektion, ytan i fasad och konturens penna.
+  const building = m.building ? `<div class="field-label">Sektion, fasad och kontur</div>${buildingFields(m, attrs, style)}` : '';
+  return `<div class="field-label">Illustrationsplan och 3D</div><div class="fields">${illKind}${illColor}${c3}</div>${ill ? opacitySteps(`${name}-illop`, 'matIllOpacity', 'Opacitet i illustrationsplanen', ill.opacity ?? 100, attrs) : ''}${building}${own}`;
 }
 
 /** Kulören i 3D när materialet inte har någon: markens. */
@@ -218,7 +221,7 @@ export function fillPanel(name: string, raw: FillParams, attrs: (key: string) =>
       ${back === 'none' ? '' : opacitySteps(`${name}-bop`, 'fillBackgroundOpacity', 'Bakgrundens opacitet', backOp, attrs)}
       <p class="note">Mönstret utgår från objektets första hörn och följer med när objektet flyttas.</p>`;
   }
-  return `<div class="fill-panel"><div class="field-label">${escapeHtml(title)}</div>${materialRow(name, raw, attrs, style, ctx)}${m ? '<div class="field-label">I planen</div>' : ''}<div class="pattern-pick fill-seg" role="radiogroup" aria-label="${escapeHtml(title)}">${seg}</div>${body}${kind === 'none' ? '' : chips(name, kind, attrs)}${m ? materialParts(name, m, raw, attrs) : ''}</div>`;
+  return `<div class="fill-panel"><div class="field-label">${escapeHtml(title)}</div>${materialRow(name, raw, attrs, style, ctx)}${m ? '<div class="field-label">I planen</div>' : ''}<div class="pattern-pick fill-seg" role="radiogroup" aria-label="${escapeHtml(title)}">${seg}</div>${body}${kind === 'none' ? '' : chips(name, kind, attrs)}${m ? materialParts(name, m, raw, attrs, style) : ''}</div>`;
 }
 
 /** Procent 0–100, eller null om det inte är ett tal. */

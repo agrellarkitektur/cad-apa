@@ -136,6 +136,11 @@ export const MATERIAL_USES: readonly { id: MaterialUse; name: string }[] = [
  *   med samma fält som 2D-formens fyllning (`FillParams`).
  * - `illustration`: en färg med opacitet i illustrationsplanen; utelämnad = som planen.
  * - `color3d`: kulören i 3D som #rrggbb; utelämnad = markens.
+ * - `cut` (0.10.28.2): snittets fyllning i sektion (och i planen där ett
+ *   bjälklag eller tak skärs), som `plan`; utelämnad = stilmallens snitt.
+ * - `surface` (0.10.28.2): ytans fyllning i fasad, som `plan`; utelämnad = ingen.
+ * - `pen` (0.10.28.2): konturens penna i planen (mm, färg som #rrggbb);
+ *   utelämnad = stilmallens penna för objekttypen.
  */
 export interface Material {
   id: string;
@@ -145,6 +150,9 @@ export interface Material {
   plan: Record<string, unknown>;
   illustration?: { color: string; opacity?: number };
   color3d?: string;
+  cut?: Record<string, unknown>;
+  surface?: Record<string, unknown>;
+  pen?: { weight: number; color?: string };
 }
 
 const mat = (id: string, name: string, use: 'g' | 'b' | 'gb', plan: Record<string, unknown>, ill: string, illOp: number, c3: string): Material => ({
@@ -158,6 +166,8 @@ const mat = (id: string, name: string, use: 'g' | 'b' | 'gb', plan: Record<strin
 });
 const solid = (c: string, op: number) => ({ fill: 'solid', fillColor: c, fillOpacity: op });
 const typed = (t: string, c: string) => ({ fill: 'type', fillType: t, fillColor: c, fillOpacity: 100 });
+/** Linjer i verkliga mått (0.10.28.2): falsar, pannor. */
+const lines = (angle: number, spacing: number, c: string) => ({ fill: 'hatch', fillAngle: angle, fillSpacing: spacing, fillModel: true, fillColor: c, fillOpacity: 100 });
 
 /**
  * Materialen som ett nytt projekt har (0.10.28; fler i 0.10.28.1), i
@@ -176,11 +186,14 @@ export const DEFAULT_MATERIALS: readonly Material[] = [
   mat('plattor', 'Plattor 300', 'g', typed('plattor300', '#9aa0a6'), '#d9d5cd', 90, '#cfc9bf'),
   mat('gatsten', 'Gatsten', 'g', typed('gatsten', '#9aa0a6'), '#b9b4ab', 90, '#a39e95'),
   mat('stenmur', 'Stenmur', 'g', typed('stenmur', '#1d2328'), '#a7a29a', 100, '#8f8a82'),
-  mat('tegel', 'Tegel', 'gb', typed('tegel', '#1d2328'), '#c98f74', 90, '#b97a60'),
-  mat('betong', 'Betong', 'gb', typed('betong', '#1d2328'), '#cfcfcb', 100, '#c4c4bf'),
+  { ...mat('tegel', 'Tegel', 'gb', typed('tegel', '#1d2328'), '#c98f74', 90, '#b97a60'), cut: typed('tegel', '#1d2328') },
+  { ...mat('betong', 'Betong', 'gb', typed('betong', '#1d2328'), '#cfcfcb', 100, '#c4c4bf'), cut: typed('betong', '#1d2328') },
   mat('trall', 'Trall', 'gb', typed('trall', '#9aa0a6'), '#c9a77f', 90, '#b08c64'),
   mat('vatten', 'Vatten', 'g', solid('#a9cbe6', 70), '#9fc6e6', 90, '#8fb6d6'),
-  mat('aluminium', 'Aluminium', 'b', solid('#c3c7cb', 80), '#c8ccd0', 100, '#b5babf'),
+  // Byggnadens (0.10.28.2): taken har ytans fyllning i fasaden.
+  { ...mat('takpannor', 'Takpannor', 'b', lines(0, 350, '#9aa0a6'), '#9c5a45', 100, '#8a4b3a'), surface: lines(0, 350, '#1d2328') },
+  { ...mat('plat', 'Plåt', 'b', lines(90, 600, '#9aa0a6'), '#5d6368', 100, '#4f555a'), surface: lines(90, 600, '#1d2328') },
+  { ...mat('aluminium', 'Aluminium', 'b', solid('#c3c7cb', 80), '#c8ccd0', 100, '#b5babf'), cut: solid('#9aa0a6', 100) },
 ];
 
 /** En rad i penntabellen. */
@@ -373,6 +386,12 @@ export function normalizeMaterials(v: unknown): Material[] | null {
     if (!m || typeof m !== 'object' || typeof m.id !== 'string' || !m.id || out.some((o) => o.id === m.id)) continue;
     const plan = m.plan && typeof m.plan === 'object' && typeof m.plan.fill === 'string' ? { ...m.plan } : null;
     if (!plan) continue;
+    // Snittet och ytan (0.10.28.2) som planen: ett mönster, annars inget.
+    const fillOf = (f: unknown) => (f && typeof f === 'object' && typeof (f as { fill?: unknown }).fill === 'string' ? { ...(f as Record<string, unknown>) } : undefined);
+    const cut = fillOf(m.cut);
+    const surface = fillOf(m.surface);
+    const pw = Number(m.pen?.weight);
+    const pen = pw > 0 ? { weight: pw, ...(hex(m.pen.color) ? { color: hex(m.pen.color) } : {}) } : undefined;
     const ill = m.illustration && hex(m.illustration.color) ? { color: hex(m.illustration.color)!, ...(Number.isFinite(m.illustration.opacity) ? { opacity: Math.max(0, Math.min(100, Number(m.illustration.opacity))) } : {}) } : undefined;
     out.push({
       id: m.id,
@@ -382,6 +401,9 @@ export function normalizeMaterials(v: unknown): Material[] | null {
       plan,
       ...(ill ? { illustration: ill } : {}),
       ...(hex(m.color3d) ? { color3d: hex(m.color3d) } : {}),
+      ...(cut ? { cut } : {}),
+      ...(surface ? { surface } : {}),
+      ...(pen ? { pen } : {}),
     });
   }
   return out.length ? out : null;

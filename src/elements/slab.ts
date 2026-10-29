@@ -10,6 +10,8 @@ import { resolveParams, type ElementType, type PlanContext } from './registry';
 import { bareWallShapes, bareWallUnion, wallFrame, type WallParams } from './wall';
 import type { Element, Id, ProjectDoc } from '../core/model';
 import { isClosed, segmentArc, segmentCount, shapePoints } from './drawing2d';
+import { fillPrims, materialCutFill, materialCutPrims, type FillParams } from './fill2d';
+import { buildingMaterialOf, materialPen, materialSolid } from './buildingMaterial';
 
 /**
  * Bjälklag (0.9.1, format 15). Golvet i en våning: ovansidan ligger i
@@ -32,7 +34,11 @@ export interface SlabHole {
   /** Pilhöjd per kant, mm (kant i går från punkt i till i + 1, den sista tillbaka till den första); utelämnad = raka. */
   bulges?: number[];
 }
-export interface SlabParams {
+/**
+ * Bjälklagets parametrar. Fyllningens fält och `material` (0.10.28.2) som
+ * rummens: fyllningen i planen, och materialets kulör, snitt och penna.
+ */
+export interface SlabParams extends Partial<FillParams> {
   /** Tjockleken nedåt från golvnivån, mm (typens). */
   thickness: number;
   /** Den ritade konturen, mm. Tom när konturen tas ur väggarna. */
@@ -237,13 +243,22 @@ export const slabType: ElementType<SlabParams> = {
     // under snittet: tunna linjer, under väggarna.
     const lv = levelOf(p);
     const zone = zoneInPlan(ctx, lv - Math.max(1, p.thickness), lv);
+    const m = buildingMaterialOf(p, ctx.style);
     if (zone === 'cut') {
-      for (const rings of slabRings(ctx, el)) out.push({ kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'snitt' } });
+      // Materialets snitt (0.10.28.2), annars stilmallens.
+      const cut = materialCutFill(m, ctx.actionOf(el));
+      for (const rings of slabRings(ctx, el))
+        out.push(...(cut ? materialCutPrims(rings, cut, { ...origin, part: 'snitt' }, ctx.style, ctx.scale) : [{ kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'snitt' } } as Primitive]));
       return out;
     }
-    // Som linjer, inte en sluten form, så att ett klick i ett rum inte träffar bjälklaget.
-    const pen = planCutPen(ctx.style, 'Slab', zone);
     const above = zone === 'above';
+    // Fyllningen i planen (0.10.28.2), under snittet: golvet sett uppifrån.
+    // Den går inte att klicka på, så att ett klick i ett rum inte träffar bjälklaget.
+    if (!above && p.fill && !ctx.view.hide?.includes('fill'))
+      for (const rings of slabRings(ctx, el)) out.push(...fillPrims(rings, p as FillParams, origin, true, ctx.style, ctx.scale, ctx.view.category).map((q) => ({ ...q, noPick: true })));
+    // Som linjer, inte en sluten form, så att ett klick i ett rum inte träffar bjälklaget.
+    // Under snittet med materialets penna (0.10.28.2), om det har en.
+    const pen = above ? planCutPen(ctx.style, 'Slab', zone) : materialPen(m, planCutPen(ctx.style, 'Slab', zone));
     const part = { ...origin, part: above ? ABOVE_PART : 'kontur' };
     // Den ritade konturen med sina bågar (0.10.24); den ur väggarna som väggarna ger den.
     if (p.fromWalls) for (const poly of slabBase(ctx, p)) for (const ring of poly) out.push(...outlineEdges({ points: ring as [number, number][] }, pen, part, !above));
@@ -263,6 +278,7 @@ export const slabType: ElementType<SlabParams> = {
     const t = Math.max(1, p.thickness);
     // Ovansidan på bjälklagets nivå mot våningen (0.10.13).
     const lv = levelOf(p);
-    return slabRings(ctx, el).map((rings): Shape3D => ({ id: el.id, rings, z0: lv - t, z1: lv, material: 'slab' }));
+    const mat = materialSolid(buildingMaterialOf(p, ctx.style));
+    return slabRings(ctx, el).map((rings): Shape3D => ({ id: el.id, rings, z0: lv - t, z1: lv, material: 'slab', ...mat }));
   },
 };
