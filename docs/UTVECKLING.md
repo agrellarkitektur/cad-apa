@@ -1640,6 +1640,37 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Granskning efter 0.10.28.2 (0.10.28.3, format 24)
+
+Inga nya funktioner; det som ändrades i koden:
+
+- **Rampens höjder** (`ui/tools/groundTool.ts`): `groundHeight` läser
+  `finishedTerrain` i ett sammanhang för verktygets våning och tillstånd
+  (`createContext`), annars `terrainOf`. Gäller ramper, gångvägar,
+  brytlinjer, höjdpunkter och markytornas förslag
+- **`wallProfile` och `wallCrest`** ligger i `elements/wallProfile.ts`
+  (ur `groundGeometry.ts`), eftersom de läser `crispHeight` ur
+  `repr/crispGround.ts`, som i sin tur läser `groundGeometry`. Profilen
+  räknas mot de skarpa kanterna, så att en punkt inne på en ramp får
+  rampens höjd. I `computeProfile` (`groundWall.ts`) krymper
+  utjämningens fönster symmetriskt nära ändarna (`win`)
+- **Stödmuren som skarp form** (`crispGround.ts`): `crispShapes` ger en
+  `Crisp` per stödmur med `ring` = remsan kring mittlinjen
+  (`stripRing`), `wall` falskt för alla kanter (inga lodytor; muren själv
+  är kroppen), `top` = `groundBeside` och `below` = rutnätet.
+  `groundBeside(t, line, x, y)` tolkar rutan som `heightAtZone` men bara
+  med noderna på samma sida om linjen som punkten (`along(...).lat`): fyra
+  noder bilinjärt, tre som planet genom dem, annars viktat med inversa
+  kvadratavståndet; null utan nod på samma sida. Därmed delas 3D-nätet
+  längs murens båda kanter och marklinjen i sektionen får ett steg vid
+  muren
+- **`view3d/navigation.ts`**: `setupNavigation(controls, canvas,
+  frameAll)` med mellanslag, Shift mitt i draget och dubbelklick med
+  mittenknappen; `View3D.nav.spaceDown()` för `Edit3D`
+- Tester: `tests/v010283.test.ts`. Referensritningarna för markprojektet
+  (`mark-plan`, `mark-fasad-2`, `mark-3d`, `mark-siffror`): stödmurens
+  krön och fot
+
 ## Material på bjälklag och tak (0.10.28.2, format 24)
 
 - **Materialet** (`graphics.ts`) har de valfria fälten `cut` och `surface`

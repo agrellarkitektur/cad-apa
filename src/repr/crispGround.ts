@@ -1,8 +1,10 @@
 import earcut from 'earcut';
 import { withHeights, type Step } from '../core/ground';
-import { groundAt, type Terrain } from '../core/site';
+import { groundAt, localToZone, zoneToLocal, type Terrain } from '../core/site';
 import { difference, intersection, type Rings } from '../geometry/boolean';
 import { groundGeometry, groundObjects, type Finished, type GroundParams } from '../elements/groundGeometry';
+import { along, stripRing } from '../elements/groundLines';
+import { wallThickness } from '../elements/groundWall';
 import type { PlanContext } from '../elements/registry';
 import type { Vec2 } from './primitives';
 
@@ -15,8 +17,13 @@ import type { Vec2 } from './primitives';
  * stödmurskant ligger marken som den var utan objektet, med en lodrät yta
  * emellan. Utanför en slänt börjar slänten vid kanten, så där möts de.
  *
- * Gäller 3D-vyn, marken under markobjektens linjer i 3D och marklinjen i
- * sektionerna; planens höjdkurvor räknas som förut på rutnätet.
+ * En fristående stödmur (0.10.28.3) skär också nätet, längs sina båda
+ * kanter: där tolkas marken bara ur noderna på samma sida om muren
+ * (`groundBeside`), så att marken inte tonar genom muren i tänder.
+ *
+ * Gäller 3D-vyn, marken under markobjektens linjer i 3D, marklinjen i
+ * sektionerna och stödmurens krön; planens höjdkurvor räknas som förut på
+ * rutnätet.
  */
 
 export interface Crisp {
@@ -40,6 +47,21 @@ export function crispShapes(ctx: PlanContext, f: Finished): Crisp[] {
     const out: Crisp[] = [];
     for (const el of groundObjects(ctx)) {
       const p = ctx.params<GroundParams>(el);
+      if (p.kind === 'wall') {
+        const g = groundGeometry(ctx, el);
+        const center = g?.center;
+        if (!g || !center || center.length < 2) continue;
+        const ring = stripRing(center, wallThickness(ctx, p));
+        out.push({
+          id: el.id,
+          ring,
+          wall: ring.map(() => false),
+          box: boxOf(ring),
+          top: (x, y) => groundBeside(f.terrain, center, x, y) ?? groundAt(f.terrain, x, y) ?? 0,
+          below: (x, y) => groundAt(f.terrain, x, y),
+        });
+        continue;
+      }
       if (p.around || p.slab || (p.kind !== 'path' && p.kind !== 'area')) continue;
       const g = groundGeometry(ctx, el);
       const sh = g?.shape;
@@ -72,6 +94,63 @@ export function crispShapes(ctx: PlanContext, f: Finished): Crisp[] {
     }
     return out;
   });
+}
+
+function boxOf(ring: readonly Vec2[]): [number, number, number, number] {
+  const b: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
+  for (const q of ring) {
+    b[0] = Math.min(b[0], q[0]);
+    b[1] = Math.min(b[1], q[1]);
+    b[2] = Math.max(b[2], q[0]);
+    b[3] = Math.max(b[3], q[1]);
+  }
+  return b;
+}
+
+/**
+ * Marken i en punkt (mm från ±0) tolkad bara ur rutnätets noder på samma
+ * sida om linjen som punkten (0.10.28.3): med alla fyra noderna i rutan som
+ * vanligt, med tre planet genom dem, annars viktat efter avståndet. Null
+ * utanför markmodellen eller utan nod på samma sida.
+ */
+export function groundBeside(t: Terrain, line: readonly Vec2[], x: number, y: number): number | null {
+  const { x0, y1, s, W, H } = t.grid;
+  const [X, Y] = localToZone(t.site, x, y);
+  const fi = (X - x0) / s;
+  const fj = (y1 - Y) / s;
+  if (fi < 0 || fj < 0 || fi > W - 1 || fj > H - 1) return null;
+  const i = Math.min(Math.floor(fi), W - 2);
+  const j = Math.min(Math.floor(fj), H - 2);
+  const u = fi - i;
+  const w = fj - j;
+  const sideOf = (px: number, py: number): number => Math.sign(along(line, px, py).lat);
+  const mine = sideOf(x, y);
+  const corners: { u: number; w: number; z: number }[] = [];
+  for (const [du, dw] of [[0, 0], [1, 0], [0, 1], [1, 1]] as const) {
+    const z = t.z[(j + dw) * W + i + du];
+    if (z !== z) continue;
+    const [nx, ny] = zoneToLocal(t.site, x0 + (i + du) * s, y1 - (j + dw) * s);
+    const sd = sideOf(nx, ny);
+    if (sd === 0 || sd === mine) corners.push({ u: du, w: dw, z });
+  }
+  const mm = (v: number) => (v - t.site.datum) * 1000;
+  if (corners.length === 4) return mm((corners[0].z * (1 - u) + corners[1].z * u) * (1 - w) + (corners[2].z * (1 - u) + corners[3].z * u) * w);
+  if (corners.length === 3) {
+    // Planet genom de tre: hörnet som delar kant med båda de andra är utgångspunkten.
+    const o = corners.find((c) => corners.some((d) => d !== c && d.u === c.u) && corners.some((d) => d !== c && d.w === c.w))!;
+    const cu = corners.find((c) => c !== o && c.w === o.w)!;
+    const cw = corners.find((c) => c !== o && c.u === o.u)!;
+    return mm(o.z + ((cu.z - o.z) * (u - o.u)) / (cu.u - o.u) + ((cw.z - o.z) * (w - o.w)) / (cw.w - o.w));
+  }
+  if (!corners.length) return null;
+  let sum = 0;
+  let wt = 0;
+  for (const c of corners) {
+    const k = 1 / Math.max(1e-6, (c.u - u) ** 2 + (c.w - w) ** 2);
+    sum += c.z * k;
+    wt += k;
+  }
+  return mm(sum / wt);
 }
 
 /** Närmaste kant i ringen: om punkten ligger inuti, avståndet och kantens nummer. */

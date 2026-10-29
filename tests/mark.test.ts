@@ -291,9 +291,9 @@ describe('Stödmur del 2 (0.10.9)', () => {
     const prof = computeProfile(ref, 200, { above: 700, endAbove: 900 }, slope)!;
     // Utjämningen (±1 m) kortar inte av en jämn lutning mitt på muren.
     expect(crestAtS(prof, 5000)).toBeCloseTo(500 + 800, 0);
-    // I ändarna ligger medelvärdet en halv meter in: 50 mm högre i början, lägre i slutet.
-    expect(prof.start).toBeCloseTo(50 + 700, 0);
-    expect(prof.end).toBeCloseTo(950 + 900, 0);
+    // I ändarna är fönstret symmetriskt (0.10.28.3): krönet ligger *Över marken* just där, inte en halv meter in.
+    expect(prof.start).toBeCloseTo(700, 0);
+    expect(prof.end).toBeCloseTo(1000 + 900, 0);
     // Foten 300 under den lägsta marken inom en meter.
     expect(prof.stations[0].bottom).toBeCloseTo(-300, 0);
   });

@@ -3349,7 +3349,7 @@ Tegel har sina mönster som snitt, Aluminium grått.
 för markobjekten. Mönstrets mått (vinkel, avstånd, skala) för snittet och
 ytan går inte att ändra; förvalen gäller. Klickjämförelsen kördes inte (husets verktyg ändrades inte).
 
-### Granskning efter 0.10.28.2
+### Granskning efter 0.10.28.2 ✓ (0.10.28.3)
 
 Mellanstor. Inga nya funktioner utöver dessa:
 
@@ -3358,9 +3358,40 @@ Mellanstor. Inga nya funktioner utöver dessa:
 - Markmodellen förtätas där markobjekt ritas (foten i tänder)
 - Markobjekten flyttar inte när en våningshöjd ändras
 
+*Gjord 29 oktober, samma format (24). Det syns, så den heter 0.10.28.3.
+Testerna: 707, ca 13 s. **Rampens höjder**: verktyget Mark läser den
+färdiga marken (`finishedTerrain` i tillståndet som ritas i) för ramper,
+gångvägar, brytlinjer och markytornas förslag; utan markobjekt den
+befintliga som förut. **Krönet**: `wallProfile` (nu i
+`elements/wallProfile.ts`, för att inte dra en cirkel mellan
+`groundGeometry` och `crispGround`) läser marken genom `crispHeight`, de
+skarpa kanterna från 0.10.26, så att en punkt 0,7 m in på rampen får
+rampens exakta höjd i stället för rutnätets tolkning mellan en nod på
+rampen och en utanför; det var det som gjorde avståndet till kanten
+ojämnt. Utjämningens fönster (±1 m) krymper symmetriskt nära ändarna, så
+att krönet inte ligger 50 mm fel i början och slutet av en mur på 1:10.
+**Tänderna**: i stället för att förtäta rutnätet (det hade gett mindre
+tänder, inte inga) skärs marknätet längs stödmurens båda kanter som längs
+rampernas (`crispShapes` får en form per stödmur, utan lodytor), och
+höjden på kanten tolkas ur noderna på samma sida om muren
+(`groundBeside`: alla fyra noder som vanligt, tre som ett plan, annars
+viktat efter avståndet). Marken utanför muren blir då en jämn yta fram
+till muren, och marklinjen i sektionen får ett steg vid muren. Provat i
+Playwright mot `dist/` i 3D: foten och krönet raka längs en ramp med
+stödmur. **Våningshöjden**: markobjekten på Platsen har sina höjder från
+±0 och Platsen flyttas inte (`storeyPatch` sedan 0.10.25); ett test låser
+det. Platån runt huset följer golvet som den ska. Om Carl August sett
+något flytta behövs en skärmbild. **Städat**: kamerastyrningen i 3D
+(mellanslag, Shift mitt i draget, dubbelklick med mittenknappen) ligger i
+`view3d/navigation.ts` (`view3d.ts` 621 → 564 rader). Referensbilderna
+för markprojektet uppdaterade (stödmurens krön och fot).*
+
+*Gjordes inte:* klickjämförelsen (inget husverktyg ändrat). Höjdkurvorna i
+planen räknas som förut på rutnätet.
+
 ### 0.10.29 Ritandet
 
-Liten till mellanstor. Shift låser vinkeln man står i; Förskjut med
+På tur. Liten till mellanstor. Shift låser vinkeln man står i; Förskjut med
 skrivet värde och avståndet grafiskt vid objektet; verklig och lokal höjd
 i våningslistan.
 

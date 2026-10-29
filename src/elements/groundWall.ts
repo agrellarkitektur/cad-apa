@@ -10,7 +10,7 @@ import type { PlanContext } from './registry';
  *
  * - i ändarna *Över marken* (början och slutet), eller en egen ÖK;
  * - längs muren följer det den högre sidans mark (eller den lägre, 0.10.12), utjämnad med ett
- *   glidande medelvärde (±1 m), med tillägget rakt mellan ändarna; eller,
+ *   glidande medelvärde (±1 m, kortare och symmetriskt nära ändarna), med tillägget rakt mellan ändarna; eller,
  *   med *Rakt krön*, en rät linje mellan ändarna och höjdpunkterna;
  * - höjdpunkter på muren (en punkt på referenslinjen och en ÖK) låser
  *   krönet, och korrigeringen fördelas rakt mot grannpunkterna.
@@ -153,8 +153,11 @@ export function computeProfile(ref: readonly Vec2[], th: number, p: WallParams, 
     let sum = 0;
     let n = 0;
     let low = Infinity;
+    // Nära ändarna krymper fönstret så att det är lika långt åt båda håll (0.10.28.3):
+    // annars drar den ena sidan krönet nedåt i början av en stigande mur.
+    const win = Math.max(STEP / 2, Math.min(SMOOTH, raw[k].s, total - raw[k].s));
     for (let j = 0; j < raw.length; j++) {
-      if (Math.abs(raw[j].s - raw[k].s) > SMOOTH) continue;
+      if (Math.abs(raw[j].s - raw[k].s) > win) continue;
       const h = side[j];
       if (h !== null) {
         sum += h;

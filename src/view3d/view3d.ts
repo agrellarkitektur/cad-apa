@@ -4,6 +4,7 @@ import type { Vec2 } from '../repr/primitives';
 import type { Material3D, Shape3D } from '../repr/solids';
 import { Edit3D, type Edit3DHost, type ScreenRect } from './edit3d';
 import { capObjects, clearGroup, clipPlanes, extrude, groundHit, resolveColor, shown, type Cap3D, type Clip3D } from './geometry3d';
+import { setupNavigation, type Navigation } from './navigation';
 
 export type { Edit3DHost, Handle3D } from './edit3d';
 
@@ -84,8 +85,8 @@ export class View3D {
   private selected = new Set<string>();
   private framed = false;
   private frame = 0;
-  /** Mellanslaget hålls ned: vänsterknappen panorerar (0.10.27). */
-  private spaceDown = false;
+  /** Mus och tangenter för kameran (0.10.27), och om mellanslaget hålls ned. */
+  private nav: Navigation;
 
   /** Anropas med elementets id när man klickar på något, eller null för tomt. */
   onPick?: (id: string | null, additive: boolean) => void;
@@ -122,7 +123,7 @@ export class View3D {
       hitAt: (e) => this.hitAt(e),
       pick: (e) => this.pick(e),
       pickBox: (r, mode, additive) => this.onBoxPick?.(this.idsInRect(r, mode), additive),
-      panning: () => this.spaceDown,
+      panning: () => this.nav.spaceDown(),
       hover: (e) => this.queueHover(e),
       render: () => this.requestRender(),
     });
@@ -136,65 +137,7 @@ export class View3D {
     canvas.addEventListener('pointerleave', () => this.setHover(null));
 
     this.controls = new OrbitControls(this.camera, canvas);
-    this.controls.enableDamping = false;
-    this.controls.screenSpacePanning = true;
-    // Kameran får gå under marken, så att man ser undersidor. Strax före
-    // rakt nedifrån stannar den, annars vänder sig bilden.
-    this.controls.maxPolarAngle = Math.PI * 0.98;
-    this.controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
-    // Som i ArchiCAD (0.10.27): mittenknappen panorerar och Shift +
-    // mittenknappen orbitar (kamerastyrningen byter själv med Shift).
-    // Vänsterknappen markerar och högerknappen öppnar menyn. Mellanslag +
-    // vänsterknappen gör samma sak som mittenknappen, utan mus.
-    this.controls.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.PAN, RIGHT: null };
-    const typing = (t: EventTarget | null) => t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLElement && t.isContentEditable);
-    window.addEventListener('keydown', (e) => {
-      if (e.code !== 'Space' || typing(e.target) || this.spaceDown) return;
-      this.spaceDown = true;
-      this.controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
-      canvas.style.cursor = 'grab';
-    });
-    window.addEventListener('keyup', (e) => {
-      if (e.code !== 'Space') return;
-      this.spaceDown = false;
-      this.controls.mouseButtons.LEFT = null;
-      canvas.style.cursor = '';
-    });
-    window.addEventListener('blur', () => {
-      this.spaceDown = false;
-      this.controls.mouseButtons.LEFT = null;
-      canvas.style.cursor = '';
-    });
-    // Shift i valfri ordning (0.10.28.1): trycks eller släpps Shift mitt i ett
-    // drag byter kamerastyrningen mellan att panorera och att snurra från
-    // där pekaren står (OrbitControls läser annars Shift bara när knappen
-    // trycks ned).
-    let last: { clientX: number; clientY: number } | null = null;
-    canvas.addEventListener('pointermove', (e) => (last = { clientX: e.clientX, clientY: e.clientY }));
-    const shiftSwitch = (shift: boolean) => {
-      const c = this.controls as unknown as { state: number; _handleMouseDownRotate(e: object): void; _handleMouseDownPan(e: object): void };
-      if (!last || (c.state !== 0 && c.state !== 2)) return;
-      if (shift && c.state === 2) {
-        c._handleMouseDownRotate(last);
-        c.state = 0;
-      } else if (!shift && c.state === 0) {
-        c._handleMouseDownPan(last);
-        c.state = 2;
-      }
-    };
-    window.addEventListener('keydown', (e) => e.key === 'Shift' && !e.repeat && shiftSwitch(true));
-    window.addEventListener('keyup', (e) => e.key === 'Shift' && shiftSwitch(false));
-    // Dubbelklick med mittenknappen visar hela modellen, som i planen.
-    let lastMiddle = 0;
-    canvas.addEventListener('pointerdown', (e) => {
-      if (e.pointerType !== 'mouse' || e.button !== 1) return;
-      e.preventDefault();
-      const now = performance.now();
-      if (now - lastMiddle < 350) {
-        lastMiddle = 0;
-        this.frameAll();
-      } else lastMiddle = now;
-    });
+    this.nav = setupNavigation(this.controls, canvas, () => this.frameAll());
     this.controls.addEventListener('change', () => {
       this.requestRender();
       this.onCameraChange?.();

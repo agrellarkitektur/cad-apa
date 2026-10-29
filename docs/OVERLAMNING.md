@@ -4,10 +4,19 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.28.2.
+**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.28.3.
 
 ## Läget
 
+- **0.10.28.3 Granskningen efter 0.10.28.2 är klar** (samma format, 24):
+  rampens, gångvägens, brytlinjens och markytans höjder läses ur den
+  färdiga marken när de ritas; stödmurens krön läser de skarpa kanterna
+  (följer rampens kant) och utjämnas symmetriskt i ändarna; marknätet
+  delas längs stödmurens kanter med marken tolkad från var sida
+  (`groundBeside` i `crispGround.ts`), så foten möter marken rakt;
+  markobjekten på Platsen ligger kvar vid ändrad våningshöjd (test);
+  kamerastyrningen i 3D i `view3d/navigation.ts`. Testerna: 707 på ca
+  13 s. Provat i Playwright mot `dist/` i 3D. Se PLAN.md och UTVECKLING.md.
 - **0.10.28.2 Material på bjälklag och tak är klar** (**samma format,
   24**: snittet, ytan och pennan är valfria fält i materialet): bjälklag
   och tak har *Material* med byggnadens material, fyllningen i planen,
@@ -20,9 +29,12 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **0.10.28.1 Materiallistan**, **0.10.28 Material, mark först**, **0.10.27 Styrningen i 3D**,
   **0.10.26 Rampen och stödmuren**, **0.10.25.1** (granskning) och
   **0.10.25 Platsen som modellflik**: se PLAN.md.
-- **Publicerad:** 0.10.28.2 pushad till `main` 29 oktober (se git och
-  `gh run list`). `add_repo` med push gick direkt den här gången (Carl
-  August skrev "push godkänd" i första meddelandet).
+- **Publicerad:** 0.10.28.3 pushad till `main` 29 oktober (se git och
+  `gh run list`). `add_repo` med push går direkt när Carl August skriver
+  "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.10.28.3:** stödmurars krön och fot kan
+  ligga några cm annorlunda (de läser marken exakt vid kanten nu), och
+  marken i 3D möter en stödmur i en rak linje.
 - **Märks i hans ritningar efter 0.10.28.2:** inget i befintliga projekt
   (bjälklag och tak har inget material förrän man väljer ett). Nya
   projekt har Takpannor och Plåt, och Betong och Tegel har mönster i
@@ -36,14 +48,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare i dag:** 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare i dag:** 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.28.2` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.28.3` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.28.2 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.28.3 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -110,11 +122,8 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   ~~Granskning efter 0.10.25 (0.10.25.1)~~, ~~0.10.26 Rampen och
   stödmuren~~, ~~0.10.27 Styrningen i 3D~~, ~~0.10.28 Material, mark
   först~~, ~~0.10.28.1 Materiallistan~~, ~~0.10.28.2 Material på
-  bjälklag och tak~~ (klara)
-- **Granskning efter 0.10.28.2** (mellanstor; på tur; rampens höjder ur den
-  färdiga marken, stödmurens krön och fot, förtätad markmodell,
-  markobjekten och våningshöjden)
-- **0.10.29 Ritandet** (liten till mellanstor; Shift låser vinkeln,
+  bjälklag och tak~~, ~~Granskning efter 0.10.28.2 (0.10.28.3)~~ (klara)
+- **0.10.29 Ritandet** (liten till mellanstor; på tur; Shift låser vinkeln,
   Förskjut med skrivet värde, verklig och lokal höjd i våningslistan)
 - **0.10.30 Teckenförklaring** (liten till mellanstor)
 - **0.10.31 Texturer i 3D och ortofotot på marken** (mellanstor)
@@ -137,13 +146,14 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**Granskning efter 0.10.28.2** (mellanstor; se `cad-apa-synpunkter.md`
+**0.10.29 Ritandet** (liten till mellanstor; se `cad-apa-synpunkter.md`
 och PLAN.md). Läs synpunkterna först och sortera Inkorgen om den har
-något. Fyra punkter: rampens höjder ur den färdiga marken, stödmurens krön
-jämnt med rampens kant, förtätad markmodell där markobjekt ritas (foten i
-tänder) och markobjekten som inte ska flytta när en våningshöjd ändras.
-Utöver dem som vanligt: städa, dela upp stora filer, gå igenom testerna.
-Därefter 0.10.29 Ritandet.
+något. Tre punkter: Shift under ritandet låser vinkeln man står i;
+Förskjut med avståndet grafiskt vid objektet och skrivet värde + Enter;
+våningslistan med verklig och lokal höjd (förutsätter ±0:s verkliga höjd
+i projektet, annars till Koordinater och SWEREF). Fråga 0.10.17 om
+*Kanter* i Förskjut (skrivet antal) hör hit. Därefter 0.10.30
+Teckenförklaring.
 
 Utredningen om stilinställningarna startas av Carl August i en egen chatt
 med en färdig text; den behöver inte föreslås.
@@ -154,6 +164,13 @@ Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
 om 0.10.27–0.10.23 likaså.
+
+**0.10.28.3 efter provning** (Claudes val, se PLAN.md)
+- Markytans höjd föreslås nu också ur den färdiga marken (inte bara
+  rampens). Rätt?
+- Markobjekten på Platsen hänger på ±0 och flyttar inte när en
+  våningshöjd ändras (testat); platån runt huset följer golvet. Såg du
+  något annat flytta? Då behövs en skärmbild.
 
 **0.10.28.2 efter provning** (Claudes val, se PLAN.md)
 - Bjälklaget fylls i planen under snittet med materialets mönster (Betong

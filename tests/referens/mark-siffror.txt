@@ -43,4 +43,4 @@ m-punkt schakt 0.00 fyll 29.77
 m-bryt schakt 84.44 fyll 1.79
 medelmarknivå -199.8, befintlig 96.9
 byggnadshöjd 3236.5, fasaden 0,0 12000,0
-stödmuren 1093–-276.1
+stödmuren 1133.2–-276.1

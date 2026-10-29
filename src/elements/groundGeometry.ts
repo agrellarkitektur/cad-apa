@@ -1,6 +1,6 @@
 import { finishedGround, nearestEdge, withHeights, type Barrier, type FinishedGround, type GroundShape } from '../core/ground';
 import { groundStorey, isSite, type Element, type Id } from '../core/model';
-import { groundAt, groundDefaults, terrainOf, type Terrain } from '../core/site';
+import { groundDefaults, terrainOf, type Terrain } from '../core/site';
 import type { Rings } from '../geometry/boolean';
 import { bufferRings } from '../geometry/offset';
 import type { Vec2 } from '../repr/primitives';
@@ -9,7 +9,7 @@ import { buildingFootprint } from './footprint';
 import type { FillParams } from './drawing2d';
 import { along, barriersOf, flatPoints, lineLength, lockShape, stripRing, type RefSide } from './groundLines';
 import { rampShape, rampSides, type EasePoint } from './groundRamp';
-import { computeProfile, wallCenter, wallThickness, type CrestPoint, type WallProfile } from './groundWall';
+import { wallCenter, type CrestPoint } from './groundWall';
 import { resolveParams, type PlanContext } from './registry';
 import { slabOutline, type SlabParams } from './slab';
 
@@ -437,25 +437,4 @@ export function finishedTerrain(ctx: PlanContext): Finished | null {
 /** Om vyn visar ett förslag (inte Befintligt): då ritas den färdiga marken tjock. */
 export function showsProposal(ctx: PlanContext): boolean {
   return ctx.doc.states.find((s) => s.id === ctx.view.state)?.kind !== 'existing';
-}
-
-/**
- * Stödmurens profil (0.10.9): punkterna längs mittlinjen med krön och fot,
- * mot den färdiga marken. Null utan markmodell eller med för kort linje.
- */
-export function wallProfile(ctx: PlanContext, el: Element<any>): WallProfile | null {
-  return ctx.memo(`wall-profile:${el.id}`, () => {
-    const p = ctx.params<GroundParams>(el);
-    const ref = flatPoints(p.line, p.bulges);
-    if (ref.length < 2) return null;
-    const t = finishedTerrain(ctx)?.terrain ?? terrainOf(ctx.doc);
-    if (!t) return null;
-    return computeProfile(ref, wallThickness(ctx, p), p, (x, y) => groundAt(t, x, y));
-  });
-}
-
-/** Stödmurens högsta krön och lägsta fot (mm från ±0). Null utan markmodell. */
-export function wallCrest(ctx: PlanContext, el: Element<any>): { top: number; bottom: number } | null {
-  const prof = wallProfile(ctx, el);
-  return prof ? { top: prof.top, bottom: prof.bottom } : null;
 }

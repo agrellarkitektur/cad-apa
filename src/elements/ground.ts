@@ -1,6 +1,7 @@
 import type { Shape3D } from '../repr/solids';
 import type { Vec2 } from '../repr/primitives';
-import { groundGeometry, storeyElevation, wallProfile, type GroundParams } from './groundGeometry';
+import { groundGeometry, storeyElevation, type GroundParams } from './groundGeometry';
+import { wallCrest, wallProfile } from './wallProfile';
 import { wallSolids } from './groundWall';
 import { groundPlan } from './groundPlan';
 import type { ElementType } from './registry';
@@ -26,13 +27,12 @@ export {
   LINE_KINDS,
   m3,
   showsProposal,
-  wallCrest,
-  wallProfile,
   type Finished,
   type GroundGeometry,
   type GroundKind,
   type GroundParams,
 } from './groundGeometry';
+export { wallCrest, wallProfile };
 
 export const groundType: ElementType<GroundParams> = {
   type: 'Ground',

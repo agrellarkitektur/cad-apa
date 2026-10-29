@@ -1,13 +1,14 @@
 import { addElements, updateParams } from '../../core/commands';
 import { isSite, SITE_STOREY, storeysUpFrom, type Element, type Id } from '../../core/model';
 import { groundAt, terrainOf } from '../../core/site';
-import type { GroundParams } from '../../elements/ground';
+import { finishedTerrain, type GroundParams } from '../../elements/ground';
 import { extendRamp } from '../../elements/rampEdits';
 import { hasArcs, tidyBulges } from '../../elements/groundLines';
 import { ChainInput } from './chainInput';
 import { resolveParams } from '../../elements/registry';
 import { dist } from '../../geometry/vec';
 import { slabAt, slabOutline } from '../../elements/slab';
+import { createContext } from '../../repr/context';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
@@ -224,7 +225,7 @@ export class GroundTool implements ViewTool, PointTaker {
 
   /**
    * En markyta med konturen (också smartspöt, 0.10.23), med bågar (0.10.24).
-   * Höjden föreslås ur den befintliga marken i konturens mitt, avrundad till 50 mm.
+   * Höjden föreslås ur den färdiga marken i konturens mitt, avrundad till 50 mm.
    */
   createArea(outline: [number, number][], bulges?: number[]): boolean {
     const arcs = hasArcs(bulges) ? { bulges: tidyBulges(bulges, outline.length + 1) } : {};
@@ -241,9 +242,16 @@ export class GroundTool implements ViewTool, PointTaker {
     return true;
   }
 
-  /** Den befintliga markens höjd (mm från ±0) i en punkt, eller 0. */
+  /**
+   * Den färdiga markens höjd (mm från ±0) i en punkt, eller 0: marken
+   * efter markobjekten i tillståndet som ritas i, så att en ramp som dras
+   * upp på en upphöjd markyta slutar på ytans nivå (0.10.28.3); utan
+   * markobjekt den befintliga marken.
+   */
   private groundHeight(pt: Vec2): number {
-    const t = terrainOf(this.host.store.doc);
+    const doc = this.host.store.doc;
+    const { ctx } = createContext(doc, this.host.storey(), { state: this.host.activeState() }, doc.graphics, () => true);
+    const t = finishedTerrain(ctx)?.terrain ?? terrainOf(doc);
     return (t && groundAt(t, pt[0], pt[1])) ?? 0;
   }
 

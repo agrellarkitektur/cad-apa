@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.28.2** (alfa); nästa är **granskningen efter 0.10.28.2**.
+**0.10.28.3** (alfa); nästa är **0.10.29 Ritandet**.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,22 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.28.3, granskning (samma filformat, 24):
+- **Rampens höjder ur den färdiga marken**: när en ramp, gångväg,
+  brytlinje eller markyta ritas läses höjderna ur marken efter de andra
+  markobjekten i tillståndet som ritas i, så att en ramp som dras upp på
+  en upphöjd markyta slutar på ytans nivå
+- **Stödmurens krön följer rampens kant**: krönet läser marken med de
+  skarpa kanterna från 0.10.26 (rampens höjd ända ut till kanten), inte
+  rutnätet mellan noderna, och utjämningen är symmetrisk i ändarna, så
+  att krönet inte dras ned i början av en stigande mur
+- **Marknätet delas längs stödmuren** i 3D och i sektionernas marklinje:
+  på var sida tolkas marken bara ur rutnätets noder på samma sida, så att
+  foten möter marken i en rak linje i stället för tänder
+- Markobjekten på Platsen ligger kvar när en våningshöjd eller golvnivå
+  ändras (platån runt huset följer husets golv, som förut); kamerastyrningen
+  i 3D i en egen fil
 
 Version 0.10.28.2, material på bjälklag och tak (samma filformat, 24):
 - **Material på bjälklag och tak**: panelen har *Material* som rummen och
