@@ -221,6 +221,23 @@ export class Modifier {
     if (this.tool instanceof ModifyTool) this.tool.setEdges(n);
   }
 
+  /**
+   * En tangent medan ett val med värdet vid objektet pågår (Förskjut,
+   * 0.10.29): siffrorna skrivs i måttet vid objektet och Enter utför. Svarar
+   * true om tangenten togs om hand.
+   */
+  typeKey(key: string): boolean {
+    const t = this.tool;
+    if (!(t instanceof ModifyTool) || !this.active || !OPS[this.active].atObject) return false;
+    if (key === 'Enter') {
+      const v = t.typed;
+      if (v === null) return false;
+      this.applyValue(v);
+      return true;
+    }
+    return t.typeKey(key);
+  }
+
   applyValue(v: number): void {
     if (!this.active || !this.tool) return;
     this.remembered.set(this.active, v);
@@ -296,7 +313,8 @@ export class Modifier {
     const initial = crest
       ? String(crest.value).replace('.', ',')
       : (this.remembered.get(op) ?? (op === 'stretch' ? Math.round(this.tool?.currentLength() ?? 0) : (v?.initial ?? 0)));
-    const value = v
+    const value =
+      v && !def.atObject
       ? `<label class="sm-value"><span>${v.label}</span><input type="text" data-modify-value data-expr ${v.unit === '°' ? 'data-unit="deg"' : v.unit === 'st' || v.unit === '×' || v.unit === 'm' ? 'data-unit=""' : ''} inputmode="decimal" autocomplete="off" value="${initial}"><i>${v.unit}</i></label>`
       : '';
     const hint = this.tool?.prompt() ?? def.hint;
@@ -308,7 +326,7 @@ export class Modifier {
     // Förskjut (0.10.17): en kant, flera symmetriskt kring den eller alla.
     const edges =
       op === 'shapeOffset'
-        ? `<label class="sm-value"><span>Kanter</span><select data-modify-edges>${EDGE_CHOICES.map(([n, l]) => `<option value="${n}"${n === this.edges ? ' selected' : ''}>${l}</option>`).join('')}</select></label>`
+        ? `<label class="sm-value" title="Hur många kanter som förskjuts, kring den du klickade. 0 eller tomt = alla"><span>Kanter</span><input type="text" data-modify-edges inputmode="numeric" autocomplete="off" size="3" value="${this.edges || 'Alla'}"></label>`
         : '';
     return `<div class="sm-detail"><b>${escapeHtml(def.label)}</b>${value}${edges}${align}<span class="sm-hint">${escapeHtml(hint)}</span></div>`;
   }
@@ -327,6 +345,13 @@ export class Modifier {
     });
     el.addEventListener('keydown', (e) => {
       const input = e.target as HTMLInputElement;
+      // Kanter (0.10.29): Enter lämnar fältet, så att siffrorna sedan går till avståndet.
+      if (input.matches('input[data-modify-edges]') && (e.key === 'Enter' || e.key === 'Escape')) {
+        e.preventDefault();
+        e.stopPropagation();
+        input.blur();
+        return;
+      }
       if (!input.matches('input[data-modify-value]')) return;
       if (e.key === 'Enter') {
         e.preventDefault();
@@ -338,12 +363,13 @@ export class Modifier {
         this.cancel();
       }
     });
-    el.addEventListener('change', (e) => {
-      const sel = e.target as HTMLSelectElement;
-      if (sel.matches('select[data-modify-edges]')) this.setEdges(Number(sel.value));
-    });
     el.addEventListener('input', (e) => {
       const input = e.target as HTMLInputElement;
+      if (input.matches('input[data-modify-edges]')) {
+        const n = parseEdges(input.value);
+        if (n !== null) this.setEdges(n);
+        return;
+      }
       if (!input.matches('input[data-modify-value]')) return;
       const v = Number(input.value);
       if (Number.isFinite(v)) this.setValue(v);
@@ -364,13 +390,13 @@ export class Modifier {
   }
 }
 
-/** Valen för hur många kanter Förskjut flyttar (0.10.17). */
-const EDGE_CHOICES: [number, string][] = [
-  [1, '1'],
-  [3, '3'],
-  [5, '5'],
-  [0, 'Alla'],
-];
+/** Antalet kanter för Förskjut som det skrivs (0.10.29): ett heltal, 0, tomt eller "alla" = alla; null om det inte går att läsa. */
+export function parseEdges(text: string): number | null {
+  const t = text.trim().toLowerCase();
+  if (!t || t === 'alla') return 0;
+  const n = Number(t);
+  return Number.isInteger(n) && n >= 0 ? n : null;
+}
 
 /** En kant i en 2D-form, en kontur (takfall, bjälklag, markyta), en håltagning eller ett markobjekts linje (inte en vägg). */
 function isLineEdge(ctx: ModifyContext): boolean {

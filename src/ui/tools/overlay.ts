@@ -59,6 +59,20 @@ export function snapMarker(cam: Camera, s: SnapResult): string {
   return out.join('');
 }
 
+/**
+ * Förskjut (0.10.29): avståndet som ett mått vid objektet, från `a` på
+ * kanten till `b` där den hamnar, med snedstreck i ändarna. Det som skrivs
+ * (`typing`) visas i måttet, markerat, tills Enter utför.
+ */
+export function offsetDimension(cam: Camera, a: readonly [number, number], b: readonly [number, number], mm: number, typing: string | null): string {
+  const pa = cam.toScreen(a);
+  const pb = cam.toScreen(b);
+  const tick = (p: readonly number[]) => `M${p[0] - 5} ${p[1] + 5}L${p[0] + 5} ${p[1] - 5}`;
+  const text = typing !== null ? `${typing.replace('.', ',')}| mm` : `${Math.round(Math.abs(mm)).toLocaleString('sv-SE')} mm`;
+  const label = lengthLabel(cam, a, b, text);
+  return `<path d="M${pa[0]} ${pa[1]}L${pb[0]} ${pb[1]}${tick(pa)}${tick(pb)}" class="offset-dim"/>${typing !== null ? label.replace('class="len-label"', 'class="len-label typing"') : label}`;
+}
+
 /** Måttetikett längs en linje, t.ex. längden på väggen man ritar. */
 export function lengthLabel(cam: Camera, a: readonly [number, number], b: readonly [number, number], text: string): string {
   const pa = cam.toScreen(a);

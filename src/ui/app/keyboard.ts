@@ -28,6 +28,12 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
       return;
     }
     if (app.ctxMenu.isOpen) return;
+    // Förskjut (0.10.29): siffrorna skrivs i måttet vid objektet, Enter utför.
+    if (!typing && !mod && !e.altKey && app.modifier.typeKey(e.key)) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
     // Smartshell (0.8.20, 0.8.21): i verktyg som ritar med punkter och i
     // Modifiera går siffror och @ # < till raden som en punkt. @ skrivs med AltGr, därför före Ctrl/Alt.
     const shell = app.commandLine;

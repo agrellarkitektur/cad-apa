@@ -403,12 +403,14 @@ export function previewShape(s: ShapeLike, patch: Record<string, unknown>): { po
  * `count` är 0 eller minst så många som formen har. I en sluten form går
  * följden runt; i en öppen slutar den vid ändarna.
  */
-export function edgeRun(s: ShapeLike, i: number, count: number): number[] {
+export function edgeRun(s: ShapeLike, i: number, count: number, toward: 1 | -1 = 1): number[] {
   const segs = segmentCount(pointsOf(s).length, closedOf(s));
   if (count <= 0 || count >= segs) return Array.from({ length: segs }, (_, k) => k);
-  const half = Math.floor(count / 2);
+  // Ett jämnt antal (0.10.29): den extra kanten på den sida `toward` pekar
+  // (1 = mot kantens slut, -1 = mot början).
+  const before = count % 2 ? (count - 1) / 2 : toward > 0 ? count / 2 - 1 : count / 2;
   const out = new Set<number>();
-  for (let k = i - half; k <= i + half; k++) {
+  for (let k = i - before; k < i - before + count; k++) {
     if (closedOf(s)) out.add(((k % segs) + segs) % segs);
     else if (k >= 0 && k < segs) out.add(k);
   }

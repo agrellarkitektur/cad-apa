@@ -31,6 +31,12 @@
   color: var(--muted);
 }
 
+/* Våningens höjd på samma rad som namnet (0.10.29). */
+.storey-level {
+  font-weight: 500;
+  color: var(--muted);
+}
+
 .show-menu .field {
   display: grid;
   gap: 4px;

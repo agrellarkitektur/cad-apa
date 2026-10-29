@@ -70,6 +70,11 @@ export interface OpDef {
   value?: { label: string; unit: 'mm' | 'm' | '°' | 'st' | '×'; initial: number };
   /** Utförs direkt när man väljer det, utan att klicka i ritningen. */
   instant?: boolean;
+  /**
+   * Värdet skrivs vid objektet (0.10.29), inte i ett fält i menyn: siffrorna
+   * syns i måttet vid objektet, och Enter utför.
+   */
+  atObject?: boolean;
   hint: string;
 }
 
@@ -79,9 +84,9 @@ export const OPS: Record<OpId, OpDef> = {
   curve: { label: 'Böj', short: 'Böj', icon: 'curveEdge', value: { label: 'Radie', unit: 'mm', initial: 3000 }, hint: 'Klicka en punkt som bågen ska gå igenom, eller skriv radien.' },
   tangent: { label: 'Båge med tangent', short: 'Tangent', icon: 'tangentArc', hint: 'Bågen fortsätter i grannväggens riktning. Klicka var änden ska hamna.' },
   straighten: { label: 'Räta ut', short: 'Räta ut', icon: 'straighten', instant: true, hint: 'Bågen blir rak igen.' },
-  offset: { label: 'Förskjut', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'Väggen flyttas vinkelrätt; anslutna väggar följer med.' },
-  parallel: { label: 'Parallell kopia', short: 'Parallell', icon: 'parallelCopy', value: { label: 'Avstånd', unit: 'mm', initial: 1000 }, hint: 'En kopia på avståndet, åt det håll du pekar.' },
-  offsetAll: { label: 'Förskjut alla kanter', short: 'Alla kanter', icon: 'offsetAll', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'De markerade väggarna flyttas ut (eller in med minus); hörnen räknas om.' },
+  offset: { label: 'Förskjut', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, atObject: true, hint: 'Klicka dit väggen ska, eller skriv avståndet och tryck Enter; anslutna väggar följer med.' },
+  parallel: { label: 'Parallell kopia', short: 'Parallell', icon: 'parallelCopy', value: { label: 'Avstånd', unit: 'mm', initial: 1000 }, atObject: true, hint: 'Klicka var kopian ska ligga, eller skriv avståndet och tryck Enter (åt det håll du pekar).' },
+  offsetAll: { label: 'Förskjut alla kanter', short: 'Alla kanter', icon: 'offsetAll', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, atObject: true, hint: 'Klicka, eller skriv avståndet och tryck Enter: ut, eller in med minus; hörnen räknas om.' },
   stretch: { label: 'Sträck', short: 'Sträck', icon: 'stretch', value: { label: 'Längd', unit: 'mm', initial: 0 }, hint: 'Klicka var änden ska hamna, eller skriv en ny längd.' },
   extend: { label: 'Förläng till', short: 'Förläng', icon: 'extend', hint: 'Klicka på väggen som änden ska gå fram till.' },
   fillet: { label: 'Avrunda hörn', short: 'Avrunda', icon: 'fillet', value: { label: 'Radie', unit: 'mm', initial: 1000 }, hint: 'Skriv radien och tryck Enter, eller klicka för att använda den.' },
@@ -110,7 +115,7 @@ export const OPS: Record<OpId, OpDef> = {
   trimAll: { label: 'Trimma mot gräns', short: 'Mot gräns', icon: 'trim', hint: 'Klicka på gränsen, sedan på den sida av den som ska bort.' },
   shapeBend: { label: 'Böj', short: 'Böj', icon: 'curveEdge', value: { label: 'Radie', unit: 'mm', initial: 1000 }, hint: 'Klicka en punkt som bågen ska gå igenom, eller skriv radien.' },
   shapeStraighten: { label: 'Räta ut', short: 'Räta ut', icon: 'straighten', instant: true, hint: 'Bågen blir rak igen.' },
-  shapeOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, hint: 'Kanten flyttas vinkelrätt dit du klickar, eller skriv avståndet; grannkanterna följer med. Med fler kanter flyttas också grannarna på var sida, eller alla.' },
+  shapeOffset: { label: 'Förskjut kant', short: 'Förskjut', icon: 'offset', value: { label: 'Avstånd', unit: 'mm', initial: 100 }, atObject: true, hint: 'Klicka dit kanten ska, eller skriv avståndet och tryck Enter; grannkanterna följer med. Med fler kanter flyttas grannarna på var sida (ett jämnt antal: en till mot markören), 0 = alla.' },
   shapeFillet: { label: 'Avrunda hörn', short: 'Avrunda', icon: 'fillet', value: { label: 'Radie', unit: 'mm', initial: 500 }, hint: 'Skriv radien och tryck Enter, eller klicka för att använda den. Bågen tangerar båda kanterna.' },
   shapeChamfer: { label: 'Fasa hörn', short: 'Fasa', icon: 'chamfer', value: { label: 'Avstånd', unit: 'mm', initial: 500 }, hint: 'Skriv avståndet från hörnet och tryck Enter, eller klicka för att använda det.' },
   holeMove: { label: 'Flytta hålet', short: 'Flytta hål', icon: 'move', hint: 'Klicka var hålet ska hamna, räknat från punkten du klickade på. Bjälklaget ligger kvar.' },

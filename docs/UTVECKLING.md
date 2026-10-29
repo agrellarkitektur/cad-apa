@@ -1640,6 +1640,29 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Ritandet (0.10.29, format 24)
+
+- **Shift-låset** ligger i `snap()` (`src/ui/tools/snap.ts`): `ortho` i
+  `SnapInput` betyder nu "lås det man står i". Första anropet med `ortho`
+  från en punkt `from` tar riktningen ur en snäppning utan `ortho`
+  (`heldDirection`) och sparar den i `held`; den gäller så länge `from` är
+  densamma. Ett anrop utan `ortho` och `forgetInferred` glömmer den.
+  `along` vänder riktningen när markören är bakom `from`. Verktygen skickar
+  `ortho: p.shift` som förut och behöver inget eget.
+- **Värdet vid objektet**: `OpDef.atObject` (`opDefs.ts`) tar bort
+  värdefältet ur `detailMarkup`. `installKeyboard` skickar tangenterna till
+  `Modifier.typeKey` före smartshell; `ModifyTool.typeKey` skriver i
+  `typing` (siffror, ett komma, minus först, Backsteg, Esc), `typed` är
+  talet. `ModifyState` har `typed` och `typing`, och förhandsvisningarna i
+  `wallOps.ts` och `outlineOps.ts` ritar `offsetDimension`
+  (`tools/overlay.ts`). Enter utför med `applyValue`; ett klick tar
+  `typed` i `commit` när valet har `atObject`.
+- **Kanter**: fältet `data-modify-edges` är ett textfält (`parseEdges`).
+  `edgeRun(s, i, count, toward)` lägger den extra kanten för ett jämnt
+  antal mot `toward`; `shapeOffsetPatch` räknar `toward` ur markören
+  (`towardEnd`).
+- **Våningslistan**: `storeyLevels(mm, datum?)` i `navigator.ts`.
+
 ## Granskning efter 0.10.28.2 (0.10.28.3, format 24)
 
 Inga nya funktioner; det som ändrades i koden:

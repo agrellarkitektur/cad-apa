@@ -113,7 +113,7 @@ describe('snäpp i DXF-underlag (0.8.16)', () => {
     expect(p.label).toBe('Vinkelrätt mot linjen');
     const w = [p.point[0] - from[0], p.point[1] - from[1]];
     expect(Math.abs(w[0] * dir[0] + w[1] * dir[1])).toBeLessThan(1e-6);
-    // Med Shift gäller 45° som förut.
+    // Med Shift låses det man står i (0.10.29), här parallellt med linjen.
     expect(snap({ cursor: cur, from, segments: [edge], tol: 10, ortho: true }).kind).not.toBe('parallel');
     forgetInferred();
     expect(snap({ cursor: cur, from, segments: [edge], tol: 10 }).kind).not.toBe('parallel');

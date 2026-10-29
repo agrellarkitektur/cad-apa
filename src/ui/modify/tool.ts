@@ -23,7 +23,7 @@ import type { PointTaker } from '../pointInput';
 import { roundMm, snap, type SnapResult, type SnapSegment } from '../tools/snap';
 import { CUT_OPS, clickCut, firstOfJoin, overlayCut } from './cutOps';
 import { clickRoofTrim, roofAt } from './roofOps';
-import type { ModifyContext, OpId } from './ops';
+import { OPS, type ModifyContext, type OpId } from './ops';
 import { OUTLINE_OPS, commitOutline, overlayOutline } from './outlineOps';
 import type { ModifyState } from './state';
 import { BASE_OPS, commitTransform, overlayTransform } from './transformOps';
@@ -154,6 +154,8 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
   value: number;
   /** Förskjut (0.10.17): antalet kanter, 0 = alla. Sätts av Modifier. */
   edges = 1;
+  /** Förskjut (0.10.29): det som skrivits vid objektet, eller null. */
+  typing: string | null = null;
   private done: () => void;
   private cursorAt: SnapResult | null = null;
   ref: Vec2 | null = null;
@@ -205,6 +207,28 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
   setValue(v: number): void {
     this.value = v;
     this.host.view.requestRender();
+  }
+
+  /** Det skrivna värdet vid objektet som tal (komma eller punkt), eller null. */
+  get typed(): number | null {
+    if (!this.typing) return null;
+    const v = Number(this.typing.replace(',', '.'));
+    return Number.isFinite(v) && this.typing !== '-' ? v : null;
+  }
+
+  /**
+   * En tangent medan ett val med värdet vid objektet pågår (0.10.29):
+   * siffror, komma och minus skrivs, Backsteg tar bort, Esc tömmer. Svarar
+   * true om tangenten togs om hand. Enter sköter `Modifier`.
+   */
+  typeKey(key: string): boolean {
+    const t = this.typing ?? '';
+    if (/^[0-9]$/.test(key) || ((key === ',' || key === '.') && !/[.,]/.test(t)) || (key === '-' && !t)) this.typing = t + key;
+    else if (key === 'Backspace' && this.typing !== null) this.typing = t.length > 1 ? t.slice(0, -1) : null;
+    else if (key === 'Escape' && this.typing !== null) this.typing = null;
+    else return false;
+    this.host.view.requestRender();
+    return true;
   }
 
   /** Hur många kanter Förskjut flyttar (0.10.17); 0 = alla. */
@@ -345,6 +369,8 @@ export class ModifyTool implements ViewTool, ModifyState, PointTaker {
   }
 
   private commit(at: Vec2 | null, typed: number | null): void {
+    // Ett klick medan ett värde står skrivet vid objektet: värdet åt det håll man klickar (0.10.29).
+    if (typed === null && OPS[this.op].atObject) typed = this.typed;
     const base = BASE_OPS.has(this.op) ? this.base : this.ctx.at;
     if (!base) return;
     const finished = BASE_OPS.has(this.op)

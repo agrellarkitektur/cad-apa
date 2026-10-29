@@ -4,7 +4,7 @@ import { bulgeForRadius, bulgeThrough } from '../../geometry/arc';
 import { dist } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
-import { lengthLabel } from '../tools/overlay';
+import { lengthLabel, offsetDimension } from '../tools/overlay';
 import { svgLine } from './draw';
 import type { OpId } from './ops';
 import type { ModifyState } from './state';
@@ -16,11 +16,34 @@ import type { ModifyState } from './state';
  */
 export const OUTLINE_OPS = new Set<OpId>(['shapeInsert', 'shapeMove', 'shapeOffset', 'shapeBend', 'shapeFillet', 'shapeChamfer', 'holeMove', 'holeRotate', 'holeMirror']);
 
-/** 2D-formens kanter förskjutna d mm åt vänster om den klickade: en kant som förut, eller flera (0.10.17). */
-function shapeOffsetPatch(s: ModifyState, el: ShapeLike, d: number): Record<string, unknown> | null {
+/**
+ * 2D-formens kanter förskjutna d mm åt vänster om den klickade: en kant som
+ * förut, eller flera (0.10.17). Ett jämnt antal får den extra kanten på den
+ * sida av kantens mitt där markören `at` är (0.10.29).
+ */
+function shapeOffsetPatch(s: ModifyState, el: ShapeLike, d: number, at: Vec2 | null): Record<string, unknown> | null {
   const i = s.ctx.index!;
   if (s.edges === 1 && !edgeIsArc(el, i)) return offsetShapeEdge(el, i, d);
-  return offsetShapeEdges(el, edgeRun(el, i, s.edges), d);
+  return offsetShapeEdges(el, edgeRun(el, i, s.edges, towardEnd(s, el, at ?? s.hoverAt)), d);
+}
+
+/** Om punkten ligger mot den klickade kantens slut (1) eller början (-1), sett längs kanten. */
+function towardEnd(s: ModifyState, el: ShapeLike, at: Vec2 | null): 1 | -1 {
+  if (!at) return 1;
+  const pts = shapeNodes(el);
+  const a = pts[s.ctx.index!];
+  const b = pts[(s.ctx.index! + 1) % pts.length];
+  const m: Vec2 = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  return (at[0] - m[0]) * (b[0] - a[0]) + (at[1] - m[1]) * (b[1] - a[1]) >= 0 ? 1 : -1;
+}
+
+/** Normalen åt vänster om den klickade kanten. */
+function shapeNormal(s: ModifyState, el: ShapeLike): Vec2 {
+  const pts = shapeNodes(el);
+  const a = pts[s.ctx.index!];
+  const b = pts[(s.ctx.index! + 1) % pts.length];
+  const l = dist(a, b) || 1;
+  return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
 }
 
 /** 2D-elementet eller håltagningen som ändras, om det är en. */
@@ -170,7 +193,7 @@ export function commitOutline(s: ModifyState, base: Vec2, at: Vec2 | null, typed
       const sd = at ? shapeSide(s, at) : 1;
       const d = typed !== null ? Math.abs(typed) * (sd >= 0 ? 1 : -1) : Math.round(sd);
       if (Math.abs(d) < 1) return false;
-      const patch = shapeOffsetPatch(s, el, d);
+      const patch = shapeOffsetPatch(s, el, d, at);
       if (!patch) {
         s.host.hint(s.edges === 1 ? 'Kanten kan inte förskjutas så långt.' : 'Kanterna kan inte förskjutas så långt.');
         return false;
@@ -210,9 +233,11 @@ export function overlayOutline(s: ModifyState, cam: Camera, base: Vec2, at: Vec2
       break;
     case 'shapeOffset':
       if (shp && at) {
-        const d = Math.round(shapeSide(s, at));
-        shapeGhost(shapeOffsetPatch(s, shp, d));
-        out.push(lengthLabel(cam, base, at, `${Math.abs(d).toLocaleString('sv-SE')} mm`));
+        const side = shapeSide(s, at);
+        const d = s.typed !== null ? Math.abs(s.typed) * (side >= 0 ? 1 : -1) : Math.round(side);
+        shapeGhost(shapeOffsetPatch(s, shp, d, at));
+        const n = shapeNormal(s, shp);
+        out.push(offsetDimension(cam, base, [base[0] + n[0] * d, base[1] + n[1] * d], d, s.typing));
       }
       break;
     case 'shapeBend':

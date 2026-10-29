@@ -21,6 +21,10 @@ export interface ModifyState {
   readonly value: number;
   /** Förskjut (0.10.17): hur många kanter, symmetriskt kring den klickade; 0 = alla. */
   readonly edges: number;
+  /** Förskjut (0.10.29): det som skrivits vid objektet, som tal, eller null. */
+  readonly typed: number | null;
+  /** Förskjut (0.10.29): det som skrivits vid objektet, som text, eller null. */
+  readonly typing: string | null;
   /** Vrid: riktningen man vrider från, när den klickats. */
   readonly ref: Vec2 | null;
   /** Hörnskarv: den första väggen eller linjen och var man klickade på den. */

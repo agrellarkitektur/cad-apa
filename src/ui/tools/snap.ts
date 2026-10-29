@@ -52,7 +52,10 @@ export interface SnapInput {
   segments: SnapSegment[];
   /** Tolerans i mm (räknas om från pixlar av anroparen). */
   tol: number;
-  /** Lås vinkeln till 45° steg (Shift). */
+  /**
+   * Shift (0.10.29): lås vinkeln man står i när Shift trycks, från `from`,
+   * tills Shift släpps eller kedjan får en ny punkt.
+   */
   ortho?: boolean;
   /** Väggar som inte ska snäppas till, t.ex. den man flyttar. */
   exclude?: Set<string>;
@@ -79,11 +82,12 @@ export function isSnapEnabled(): boolean {
 }
 
 export function snap(input: SnapInput): SnapResult {
+  if (!input.ortho) held = null;
   if (!snapEnabled) {
-    if (input.ortho && input.from && dist(input.from, input.cursor) > 1) {
-      const raw = angleDeg(sub(input.cursor, input.from));
-      const dir = fromAngleDeg(Math.round(raw / 45) * 45);
-      return { point: add(input.from, scale(dir, Math.max(0, dot(sub(input.cursor, input.from), dir)))), kind: 'angle', label: '' };
+    const lock = input.ortho && input.from && dist(input.from, input.cursor) > 1 ? heldDirection(input) : null;
+    if (lock && input.from) {
+      const { dir, label } = along(lock, input.from, input.cursor);
+      return { point: add(input.from, scale(dir, Math.max(0, dot(sub(input.cursor, input.from), dir)))), kind: 'angle', label };
     }
     return { point: input.cursor, kind: 'free', label: '' };
   }
@@ -141,14 +145,15 @@ export function snap(input: SnapInput): SnapResult {
   let edgeGuide: [Vec2, Vec2] | null = null;
   if (from && dist(from, cursor) > 1) {
     const raw = angleDeg(sub(cursor, from));
-    const step = input.ortho ? 45 : ANGLE_STEP;
-    const target = Math.round(raw / step) * step;
+    const target = Math.round(raw / ANGLE_STEP) * ANGLE_STEP;
+    const lockDir = input.ortho ? heldDirection(input) : null;
+    const lock = lockDir ? along(lockDir, from, cursor) : null;
     const edge = input.ortho ? null : edgeLock(raw);
-    if (edge || input.ortho || Math.abs(raw - target) <= ANGLE_PULL_DEG) {
-      const dir = edge ? edge.dir : fromAngleDeg(target);
+    if (lock || edge || (!input.ortho && Math.abs(raw - target) <= ANGLE_PULL_DEG)) {
+      const dir = lock ? lock.dir : edge ? edge.dir : fromAngleDeg(target);
       const len = dot(sub(cursor, from), dir);
       angled = add(from, scale(dir, Math.max(0, len)));
-      angleLabel = edge ? edge.label : `${((target % 360) + 360) % 360}°`;
+      angleLabel = lock ? lock.label : edge ? edge.label : `${((target % 360) + 360) % 360}°`;
       edgeGuide = edge ? [inferred!.a, inferred!.b] : null;
       for (const s of lines) {
         const hit = intersectLines(from, dir, s.a, sub(s.b, s.a));
@@ -216,6 +221,35 @@ let inferred: { a: Vec2; b: Vec2; u: Vec2 } | null = null;
 /** Glöm linjen man kände på, t.ex. när ett nytt verktyg väljs. */
 export function forgetInferred(): void {
   inferred = null;
+  held = null;
+}
+
+/**
+ * Shift-låset (0.10.29): riktningen från `from` när Shift trycktes. Den tas
+ * ur det man står i då: ett vinkellås (15°-steg, parallellt eller
+ * vinkelrätt mot en linje) eller en punkt man snäpper till ger exakt den
+ * riktningen; fritt avrundas vinkeln till hela grader.
+ */
+let held: { from: Vec2; dir: Vec2; named?: string } | null = null;
+
+function heldDirection(input: SnapInput): { dir: Vec2; named?: string } | null {
+  const from = input.from;
+  if (!from) return null;
+  if (held && dist(held.from, from) < 1e-6) return held;
+  const free = snapEnabled ? snap({ ...input, ortho: false }) : { point: input.cursor, kind: 'free' as SnapKind, label: '' };
+  const v = sub(free.point, from);
+  if (Math.hypot(v[0], v[1]) < 1) return null;
+  const dir = free.kind === 'free' || free.kind === 'on-wall' ? fromAngleDeg(Math.round(angleDeg(v))) : norm(v);
+  held = { from, dir, ...(free.kind === 'parallel' ? { named: free.label } : {}) };
+  return held;
+}
+
+/** Låset åt det håll markören ligger (bakåt längs linjen vänder riktningen), med vinkeln som text. */
+function along(lock: { dir: Vec2; named?: string }, from: Vec2, cursor: Vec2): { dir: Vec2; label: string } {
+  const dir = dot(sub(cursor, from), lock.dir) < 0 ? scale(lock.dir, -1) : lock.dir;
+  if (lock.named) return { dir, label: lock.named };
+  const deg = Math.round(((((angleDeg(dir) % 360) + 360) % 360) * 10)) / 10;
+  return { dir, label: `${(deg % 360).toLocaleString('sv-SE')}°` };
 }
 
 /** Den raka linje som ligger närmast markören inom `tol`, om någon. */

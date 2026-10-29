@@ -3389,11 +3389,41 @@ för markprojektet uppdaterade (stödmurens krön och fot).*
 *Gjordes inte:* klickjämförelsen (inget husverktyg ändrat). Höjdkurvorna i
 planen räknas som förut på rutnätet.
 
-### 0.10.29 Ritandet
+### 0.10.29 Ritandet ✓
 
-På tur. Liten till mellanstor. Shift låser vinkeln man står i; Förskjut med
+Liten till mellanstor. Shift låser vinkeln man står i; Förskjut med
 skrivet värde och avståndet grafiskt vid objektet; verklig och lokal höjd
-i våningslistan.
+i våningslistan; Kanter i Förskjut som skrivet antal (fråga 0.10.17,
+Carl August 29 oktober: ja).
+
+*Gjord 29 oktober, samma format (24). Testerna: 712, ca 20 s. **Shift**:
+`snap()` fångar riktningen när Shift trycks (`held` i `snap.ts`, ur en
+snäppning utan Shift) och håller den tills Shift släpps, kedjan får en ny
+punkt eller verktyget byts. Claudes val: ett vinkellås (15°-steg,
+parallellt eller vinkelrätt mot linjen man känt på) eller en punkt man
+snäpper till ger exakt den riktningen, fritt avrundas till hela grader;
+markören får gå bakåt längs linjen (riktningen vänds); skärningar och
+spårlinjer längs låset snäpps som förut. Gäller alla ritverktyg, Flytta,
+greppen och 3D (samma `snap`). **Förskjut**: valen med `atObject` i
+`opDefs.ts` (Förskjut, Förskjut kant, Parallell kopia, Förskjut alla
+kanter; Claudes val att Parallell kopia och Förskjut alla kanter följer
+med) har inget värdefält i smartmenyn. Siffrorna går genom
+`Modifier.typeKey` till `ModifyTool.typing` och visas i måttet vid objektet
+(`offsetDimension` i `tools/overlay.ts`: en linje med snedstreck från
+klicket på kanten till där kanten hamnar, etiketten i accentfärg medan man
+skriver). Enter utför åt markörens sida; ett klick med något skrivet
+använder värdet åt klickets sida. **Kanter**: ett textfält (`parseEdges`:
+heltal, tomt, 0 eller *Alla* = alla); `edgeRun` tar `toward`, och ett
+jämnt antal får den extra kanten mot den sida av kantens mitt där
+markören är. **Våningslistan**: `storeyLevels` i `navigator.ts`, "Plan 1
+– +63,525 / 0,000" med plats, "Plan 2 – 3,000" utan (Carl August: med
+tankstreck, så att våningen inte blandas ihop med höjden), på samma rad
+som namnet. Provat i Playwright mot `dist/`: Förskjut med 1200 + Enter,
+måttet vid väggen, våningslistan.*
+
+*Gjordes inte:* klickjämförelsen (Shift-låset ändrar inget klick utan
+Shift). Platsens rad i listan har kvar *markmodell* / *plan mark* utan
+tankstreck.
 
 ### 0.10.30 Teckenförklaring
 

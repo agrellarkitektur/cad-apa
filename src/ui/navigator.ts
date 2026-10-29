@@ -244,7 +244,7 @@ export class Navigator {
     if (site)
       rowsById.set(site.id, `<div class="view-row${site.id === current ? ' active' : ''}${site.id === picked ? ' picked' : ''}"><button class="view-apply" data-storey-pick="${site.id}" title="Öppna Platsen: situationsplanen, markplaneringen och illustrationsplanen. Högerklicka för inställningarna och nya vyer">${esc(site.name)}<small>${doc.site ? 'markmodell' : 'plan mark'}</small></button><button class="icon-mini view-more" data-storey-menu="${site.id}" aria-label="Fler val för ${esc(site.name)}" title="Fler val">${icons.more}</button></div>`);
     for (const s of storeys)
-      rowsById.set(s.id, `<div class="view-row${s.id === current ? ' active' : ''}${s.id === picked ? ' picked' : ''}"><button class="view-apply" data-storey-pick="${s.id}" title="Öppna planen, och visa inställningarna i egenskaperna. Högerklicka (håll in på telefonen) för fler val">${esc(s.name)}<small>${fmtLevel(s.elevation)}</small></button><button class="icon-mini view-more" data-storey-menu="${s.id}" aria-label="Fler val för ${esc(s.name)}" title="Fler val">${icons.more}</button></div>`);
+      rowsById.set(s.id, `<div class="view-row${s.id === current ? ' active' : ''}${s.id === picked ? ' picked' : ''}"><button class="view-apply" data-storey-pick="${s.id}" title="Öppna planen, och visa inställningarna i egenskaperna. Högerklicka (håll in på telefonen) för fler val"><span>${esc(s.name)}<span class="storey-level"> – ${storeyLevels(s.elevation, doc.site?.datum)}</span></span></button><button class="icon-mini view-more" data-storey-menu="${s.id}" aria-label="Fler val för ${esc(s.name)}" title="Fler val">${icons.more}</button></div>`);
     const elevations = markers('Elevation');
     const sections = markers('Section');
     for (const { e, name } of [...elevations, ...sections]) rowsById.set(e.id, markerRow(e.id, name, !!e.locked));
@@ -384,9 +384,19 @@ export class Navigator {
   }
 }
 
-function fmtLevel(mm: number): string {
-  // Med eget tecken: sv-SE skriver minus som U+2212, så "+-" gick inte att byta (0.9).
-  return `${mm < 0 ? '−' : '+'}${(Math.abs(mm) / 1000).toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+/**
+ * Våningens höjd i listan (0.10.29): den verkliga i RH 2000 och den lokala
+ * från ±0, "+63,525 / 3,000", eller bara den lokala utan plats. Tre
+ * decimaler, i meter.
+ */
+export function storeyLevels(mm: number, datum?: number): string {
+  const m3 = (v: number) => Math.abs(v).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  // Med eget tecken: sv-SE skriver minus som U+2212 (0.9). Avrundat först, så att −0,0004 blir 0,000.
+  const local = Math.round(mm) / 1000;
+  const loc = `${local < 0 ? '−' : ''}${m3(local)}`;
+  if (datum === undefined) return loc;
+  const real = Math.round((datum + mm / 1000) * 1000) / 1000;
+  return `${real < 0 ? '−' : '+'}${m3(real)} / ${loc}`;
 }
 
 function esc(s: string): string {

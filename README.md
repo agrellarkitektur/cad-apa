@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.28.3** (alfa); nästa är **0.10.29 Ritandet**.
+**0.10.29** (alfa); nästa är **0.10.30 Teckenförklaring**.
 
 ## Vad som fungerar
 
@@ -31,7 +31,7 @@ Version 0.2, kärnan:
 Version 0.3, väggverktyget:
 - Rita väggar punkt för punkt (**W**), med mus eller finger
 - Snäpp till ändpunkter, mittpunkter, vinkelrätt, skärningar, på vägg och 15°-vinklar
-  (**Shift** låser till 45°)
+  (**Shift** låser vinkeln man står i, sedan 0.10.29; förut 45°)
 - Skriv in längd och tryck Enter; avsluta med Esc, dubbelklick, Klar eller startpunkten
 - Referenslinje vänster, mitt eller höger
 - Väggskarvar: gering i hörn, rena T- och korsskarvar, öppningar utskurna
@@ -1148,6 +1148,28 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.29, ritandet (samma filformat, 24):
+- **Shift låser vinkeln man står i** när man ritar eller drar (väggar,
+  linjer, konturer, Flytta och greppen): det vinkellås eller den punkt man
+  snäpper till när Shift trycks ger exakt den riktningen (15°-steg,
+  parallellt eller vinkelrätt mot en linje man känt på, mot en ändpunkt);
+  fritt avrundas vinkeln till hela grader. Låset gäller tills Shift släpps
+  eller nästa punkt klickas, och markören kan gå bakåt längs linjen. Förut
+  låste Shift till 45°-steg
+- **Förskjut med avståndet vid objektet**: Förskjut, Förskjut kant,
+  Parallell kopia och Förskjut alla kanter visar avståndet som ett mått
+  från kanten till där den hamnar, i stället för ett fält i smartmenyn.
+  Skriv avståndet (siffrorna syns i måttet, Backsteg rättar, Esc tömmer)
+  och tryck Enter; det läggs åt den sida markören är. Ett klick med ett
+  skrivet värde använder värdet åt det håll man klickar
+- **Kanter som skrivet antal** i Förskjut kant: vilket antal som helst
+  (0, tomt eller *Alla* = alla); ett jämnt antal får den extra kanten på
+  den sida av den klickade kantens mitt där markören är. Enter i fältet
+  lämnar det, så att siffrorna sedan går till avståndet
+- **Våningslistan med verklig och lokal höjd**: "Plan 1 – +63,525 /
+  0,000" med RH 2000 och ±0 när projektet har en plats, annars "Plan 2 –
+  3,000"; tre decimaler, på samma rad som namnet
 
 Version 0.10.28.3, granskning (samma filformat, 24):
 - **Rampens höjder ur den färdiga marken**: när en ramp, gångväg,

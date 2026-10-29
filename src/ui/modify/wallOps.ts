@@ -22,7 +22,7 @@ import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import { labelOf } from '../labels';
 import type { ToolHost } from '../tools/host';
-import { lengthLabel } from '../tools/overlay';
+import { lengthLabel, offsetDimension } from '../tools/overlay';
 import { roundMm } from '../tools/snap';
 import { arcPoints, ghostOf, svgLine } from './draw';
 import type { OpId } from './ops';
@@ -245,17 +245,18 @@ export function overlayWall(s: ModifyState, cam: Camera, base: Vec2, at: Vec2 | 
     case 'parallel':
       if (p && at) {
         const sd = side(s, at);
-        const v: Vec2 = [sd.n[0] * sd.d, sd.n[1] * sd.d];
+        const d = s.typed !== null ? Math.abs(s.typed) * (sd.d >= 0 ? 1 : -1) : sd.d;
+        const v: Vec2 = [sd.n[0] * d, sd.n[1] * d];
         out.push(ghostOf(s.host, [el!.id], (q) => [q[0] + v[0], q[1] + v[1]], cam));
-        out.push(lengthLabel(cam, base, [base[0] + v[0], base[1] + v[1]], `${Math.round(Math.abs(sd.d)).toLocaleString('sv-SE')} mm`));
+        out.push(offsetDimension(cam, base, [base[0] + v[0], base[1] + v[1]], d, s.typing));
       }
       break;
     case 'offsetAll':
       if (el && at) {
         const n = outward(s);
-        const d = Math.round((at[0] - base[0]) * n[0] + (at[1] - base[1]) * n[1]);
+        const d = s.typed ?? Math.round((at[0] - base[0]) * n[0] + (at[1] - base[1]) * n[1]);
         for (const g of offsetGeometry(doc, s.ctx.ids, d).values()) out.push(line([g.start, g.end]));
-        out.push(lengthLabel(cam, base, [base[0] + n[0] * d, base[1] + n[1] * d], `${d.toLocaleString('sv-SE')} mm`));
+        out.push(offsetDimension(cam, base, [base[0] + n[0] * d, base[1] + n[1] * d], d, s.typing));
       }
       break;
     case 'stretch': {

@@ -293,7 +293,7 @@ export const SHORTCUTS: [string, string][] = [
   ['Esc', 'Avbryt kommandot, sedan verktyget; i Markera avmarkerar den'],
   ['Enter', 'Avsluta väggen, eller bekräfta ett inskrivet mått'],
   ['Siffror', 'Skriv en längd medan du ritar en vägg'],
-  ['Shift', 'Lås vinkeln till 45° när du ritar eller drar; lägg till i markeringen'],
+  ['Shift', 'Lås vinkeln du står i när du ritar eller drar; lägg till i markeringen'],
   ['Delete', 'Ta bort det markerade'],
   ['Ctrl+C / Ctrl+V', 'Kopiera och klistra in, även mellan projekt (typerna följer med)'],
   ['Ctrl + dra', 'Dra en kopia av det markerade'],

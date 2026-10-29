@@ -146,14 +146,13 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.29 Ritandet** (liten till mellanstor; se `cad-apa-synpunkter.md`
-och PLAN.md). Läs synpunkterna först och sortera Inkorgen om den har
-något. Tre punkter: Shift under ritandet låser vinkeln man står i;
-Förskjut med avståndet grafiskt vid objektet och skrivet värde + Enter;
-våningslistan med verklig och lokal höjd (förutsätter ±0:s verkliga höjd
-i projektet, annars till Koordinater och SWEREF). Fråga 0.10.17 om
-*Kanter* i Förskjut (skrivet antal) hör hit. Därefter 0.10.30
-Teckenförklaring.
+**0.10.30 Teckenförklaring** (liten till mellanstor; se
+`cad-apa-synpunkter.md` och PLAN.md). Läs synpunkterna först och sortera
+Inkorgen om den har något. Ett automatobjekt på bladet som läser
+materialen hos synliga objekt i bladets vyer och ritar en ruta med
+mönstret i vyns skala och namnet; kategorier, ordning, rutans storlek,
+egna och bortvalda rader, och *Eget* som "Eget" eller inte alls. Därefter
+0.10.31 Texturer i 3D och ortofotot på marken.
 
 Utredningen om stilinställningarna startas av Carl August i en egen chatt
 med en färdig text; den behöver inte föreslås.
@@ -164,6 +163,15 @@ Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
 om 0.10.27–0.10.23 likaså.
+
+**0.10.29 efter provning** (Claudes val, se PLAN.md)
+- Shift fritt avrundar vinkeln till hela grader; står man i ett vinkellås
+  eller på en punkt gäller exakt den riktningen. Rätt, eller ska fritt
+  också vara exakt (t.ex. 37,28°)?
+- Parallell kopia och Förskjut alla kanter skrivs också vid objektet, som
+  Förskjut. Rätt?
+- Platsens rad i våningslistan har kvar *markmodell* / *plan mark* under
+  namnet. Ska den också få tankstreck och en höjd (t.ex. ±0 i RH 2000)?
 
 **0.10.28.3 efter provning** (Claudes val, se PLAN.md)
 - Markytans höjd föreslås nu också ur den färdiga marken (inte bara
@@ -299,8 +307,6 @@ om 0.10.27–0.10.23 likaså.
   när man vill börja en ny linje där (Ctrl+klick)?
 - Ett klick mitt på en kant startar det senast använda valet på en kant.
   Var det så du menade, eller ville du bli av med något sådant?
-- *Kanter* i Förskjut: 1, 3, 5 eller Alla. Räcker det, eller behövs ett
-  skrivet antal (och jämna antal)? (Hör till 0.10.29 Ritandet.)
 - Bågar direkt i takets kontur och håltagningen (*Båge*, G). Ska 2D-
   verktygets linje få samma (fråga 59)?
 - Vrid och spegla hålet kring punkten man klickade på. Hellre kring hålets
