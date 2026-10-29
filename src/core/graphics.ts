@@ -117,16 +117,21 @@ export interface StyleSheet {
   materials?: Material[];
 }
 
-/** Materialens kategorier (0.10.28): mark först; bjälklag och tak i 0.10.28.1, väggar med lager i 0.11.1. */
-export type MaterialCategory = 'ground' | 'other';
+/**
+ * Var ett material kan användas (0.10.28.1, förut en kategori): på mark,
+ * på byggnaden (bjälklag och tak i 0.10.28.2) eller båda. Panelens lista
+ * för ett objekt visar de material som passar det; 2D-former och rum ser alla.
+ */
+export type MaterialUse = 'ground' | 'building';
 
-export const MATERIAL_CATEGORIES: readonly { id: MaterialCategory; name: string }[] = [
+export const MATERIAL_USES: readonly { id: MaterialUse; name: string }[] = [
   { id: 'ground', name: 'Mark' },
-  { id: 'other', name: 'Övrigt' },
+  { id: 'building', name: 'Byggnad' },
 ];
 
 /**
  * Ett material (0.10.28): representationen per vykategori.
+ * - `ground`, `building` (0.10.28.1): kryssrutorna *Mark* och *Byggnad*.
  * - `plan`: fyllningen i planen, situationsplanen och markplaneringsritningen,
  *   med samma fält som 2D-formens fyllning (`FillParams`).
  * - `illustration`: en färg med opacitet i illustrationsplanen; utelämnad = som planen.
@@ -135,22 +140,47 @@ export const MATERIAL_CATEGORIES: readonly { id: MaterialCategory; name: string 
 export interface Material {
   id: string;
   name: string;
-  category: MaterialCategory;
+  ground: boolean;
+  building: boolean;
   plan: Record<string, unknown>;
   illustration?: { color: string; opacity?: number };
   color3d?: string;
 }
 
-/** Materialen som ett nytt projekt har (0.10.28): förslagen från 0.10.14, nu som material. */
+const mat = (id: string, name: string, use: 'g' | 'b' | 'gb', plan: Record<string, unknown>, ill: string, illOp: number, c3: string): Material => ({
+  id,
+  name,
+  ground: use.includes('g'),
+  building: use.includes('b'),
+  plan,
+  illustration: { color: ill, opacity: illOp },
+  color3d: c3,
+});
+const solid = (c: string, op: number) => ({ fill: 'solid', fillColor: c, fillOpacity: op });
+const typed = (t: string, c: string) => ({ fill: 'type', fillType: t, fillColor: c, fillOpacity: 100 });
+
+/**
+ * Materialen som ett nytt projekt har (0.10.28; fler i 0.10.28.1), i
+ * listans ordning: växtytorna, de lösa, de hårda och sist byggnadens.
+ */
 export const DEFAULT_MATERIALS: readonly Material[] = [
-  { id: 'gras', name: 'Gräs', category: 'ground', plan: { fill: 'solid', fillColor: '#b4d39b', fillOpacity: 70 }, illustration: { color: '#a8cf8a', opacity: 80 }, color3d: '#9fbf7e' },
-  { id: 'grus', name: 'Grus', category: 'ground', plan: { fill: 'solid', fillColor: '#ddd3bc', fillOpacity: 80 }, illustration: { color: '#e2d6ba', opacity: 50 }, color3d: '#d6cbb2' },
-  { id: 'asfalt', name: 'Asfalt', category: 'ground', plan: { fill: 'solid', fillColor: '#c9c6bf', fillOpacity: 80 }, illustration: { color: '#a9a8a4', opacity: 80 }, color3d: '#8f8e8a' },
-  { id: 'plattor', name: 'Plattor 300', category: 'ground', plan: { fill: 'type', fillType: 'plattor300', fillColor: '#9aa0a6', fillOpacity: 100 }, illustration: { color: '#d9d5cd', opacity: 90 }, color3d: '#cfc9bf' },
-  { id: 'tegel', name: 'Tegel', category: 'ground', plan: { fill: 'type', fillType: 'tegel', fillColor: '#1d2328', fillOpacity: 100 }, illustration: { color: '#c98f74', opacity: 90 }, color3d: '#b97a60' },
-  { id: 'vatten', name: 'Vatten', category: 'ground', plan: { fill: 'solid', fillColor: '#a9cbe6', fillOpacity: 70 }, illustration: { color: '#9fc6e6', opacity: 90 }, color3d: '#8fb6d6' },
-  { id: 'betong', name: 'Betong', category: 'ground', plan: { fill: 'type', fillType: 'betong', fillColor: '#1d2328', fillOpacity: 100 }, illustration: { color: '#cfcfcb', opacity: 100 }, color3d: '#c4c4bf' },
-  { id: 'mark', name: 'Mark', category: 'ground', plan: { fill: 'type', fillType: 'mark', fillColor: '#9aa0a6', fillOpacity: 100 }, illustration: { color: '#d8cfb8', opacity: 60 }, color3d: '#cfd3bf' },
+  mat('gras', 'Gräs', 'g', solid('#b4d39b', 70), '#a8cf8a', 80, '#9fbf7e'),
+  mat('plantering', 'Planteringsyta', 'g', solid('#c3cf9f', 80), '#93ad70', 85, '#7f9a5e'),
+  mat('tackbark', 'Täckbark', 'g', solid('#b39a82', 80), '#8a6b52', 85, '#6e5442'),
+  mat('jord', 'Jord', 'g', solid('#c7b39a', 70), '#a88a68', 80, '#8a6f52'),
+  mat('mark', 'Mark', 'g', typed('mark', '#9aa0a6'), '#d8cfb8', 60, '#cfd3bf'),
+  mat('grus', 'Grus', 'g', solid('#ddd3bc', 80), '#e2d6ba', 50, '#d6cbb2'),
+  mat('singel', 'Singel', 'g', typed('singel', '#9aa0a6'), '#d9d6ce', 70, '#c9c5bc'),
+  mat('stenmjol', 'Stenmjöl', 'g', solid('#e6e1d6', 80), '#ebe4d3', 70, '#d9d3c4'),
+  mat('asfalt', 'Asfalt', 'g', solid('#c9c6bf', 80), '#a9a8a4', 80, '#8f8e8a'),
+  mat('plattor', 'Plattor 300', 'g', typed('plattor300', '#9aa0a6'), '#d9d5cd', 90, '#cfc9bf'),
+  mat('gatsten', 'Gatsten', 'g', typed('gatsten', '#9aa0a6'), '#b9b4ab', 90, '#a39e95'),
+  mat('stenmur', 'Stenmur', 'g', typed('stenmur', '#1d2328'), '#a7a29a', 100, '#8f8a82'),
+  mat('tegel', 'Tegel', 'gb', typed('tegel', '#1d2328'), '#c98f74', 90, '#b97a60'),
+  mat('betong', 'Betong', 'gb', typed('betong', '#1d2328'), '#cfcfcb', 100, '#c4c4bf'),
+  mat('trall', 'Trall', 'gb', typed('trall', '#9aa0a6'), '#c9a77f', 90, '#b08c64'),
+  mat('vatten', 'Vatten', 'g', solid('#a9cbe6', 70), '#9fc6e6', 90, '#8fb6d6'),
+  mat('aluminium', 'Aluminium', 'b', solid('#c3c7cb', 80), '#c8ccd0', 100, '#b5babf'),
 ];
 
 /** En rad i penntabellen. */
@@ -347,7 +377,8 @@ export function normalizeMaterials(v: unknown): Material[] | null {
     out.push({
       id: m.id,
       name: typeof m.name === 'string' && m.name.trim() ? m.name.trim() : m.id,
-      category: MATERIAL_CATEGORIES.some((c) => c.id === m.category) ? m.category : 'other',
+      ground: m.ground === true,
+      building: m.building === true,
       plan,
       ...(ill ? { illustration: ill } : {}),
       ...(hex(m.color3d) ? { color3d: hex(m.color3d) } : {}),

@@ -75,7 +75,7 @@ export function groundFieldsMarkup(doc: ProjectDoc, el: Element, view: ViewState
  * marken med slänt.
  */
 function groundFill(doc: ProjectDoc, p: GroundParams): string {
-  const ctx = (q: { material?: string } | undefined) => ({ category: 'ground' as const, uses: q?.material ? materialUses(doc, q.material) : 0 });
+  const ctx = (q: { material?: string } | undefined) => ({ use: 'ground' as const, uses: q?.material ? materialUses(doc, q.material) : 0 });
   const own = fillFields('ground-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 } as FillParams, (k) => `data-key="d2:${k}"`, doc.graphics, 'Material', ctx(p));
   const sf = p.slopeFill;
   const slopes =

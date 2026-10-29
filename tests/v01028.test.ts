@@ -37,9 +37,8 @@ describe('Materialen i stilmallen (0.10.28)', () => {
   it('ett nytt projekt har markmaterialen; de läses från fil och följer med en förinställd stilmall', () => {
     const doc = newProject();
     expect(doc.graphics.materials!.map((m) => m.name)).toEqual(DEFAULT_MATERIALS.map((m) => m.name));
-    expect(doc.graphics.materials!.every((m) => m.category === 'ground')).toBe(true);
-    expect(normalizeMaterials([{ id: 'a', name: ' A ', category: 'x', plan: { fill: 'solid' }, illustration: { color: 'röd' }, color3d: '#112233' }, { id: 'a', plan: { fill: 'solid' } }, { id: 'b' }])).toEqual([
-      { id: 'a', name: 'A', category: 'other', plan: { fill: 'solid' }, color3d: '#112233' },
+    expect(normalizeMaterials([{ id: 'a', name: ' A ', ground: 'ja', plan: { fill: 'solid' }, illustration: { color: 'röd' }, color3d: '#112233' }, { id: 'a', plan: { fill: 'solid' } }, { id: 'b' }])).toEqual([
+      { id: 'a', name: 'A', ground: false, building: false, plan: { fill: 'solid' }, color3d: '#112233' },
     ]);
     const style = normalizeStyle({ format: 'bacchus-style', materials: [...DEFAULT_MATERIALS] });
     expect(style.materials).toHaveLength(DEFAULT_MATERIALS.length);
@@ -120,22 +119,25 @@ describe('Markobjektens material (0.10.28)', () => {
     expect(fillPanel('x', shapes.doc.elements.s.params as unknown as FillParams, attrs, shapes.doc.graphics)).toContain('Gräs');
   });
 
-  it('en egen fyllning sparad som material får objektets kategori', () => {
+  it('en egen fyllning sparad som material passar objektet (Mark)', () => {
     const store = onSlope();
     const a = area(store);
     fillChange(store, [a], 'fillKind', input('solid'));
     const id = saveMaterial(store, [a], 'Kullersten')!;
-    expect(store.doc.graphics.materials!.find((m) => m.id === id)).toMatchObject({ name: 'Kullersten', category: 'ground', plan: { fill: 'solid' } });
+    expect(store.doc.graphics.materials!.find((m) => m.id === id)).toMatchObject({ name: 'Kullersten', ground: true, building: false, plan: { fill: 'solid' } });
     expect(params(store, a).material).toBe(id);
   });
 
-  it('stödmuren ritas snittad med materialets fyllning och får dess kulör i 3D', () => {
+  it('stödmuren ritas ovanifrån på Platsen med materialets ytfyllning (0.10.28.1) och får dess kulör i 3D', () => {
     const store = onSlope();
     const w = addGround(store, { kind: 'wall', outline: [], line: [[20000, 0], [26000, 0]], height: 3000, width: 300 } as GroundParams);
-    const cut = () => (groundType.plan!(store.doc.elements[w] as never, siteCtx(store)) as RegionPrim[]).filter((q) => q.kind === 'region');
-    expect(cut()[0].fill).toEqual({ kind: 'solid', color: 'ink' });
+    const prims = () => groundType.plan!(store.doc.elements[w] as never, siteCtx(store)) as RegionPrim[];
+    const cut = () => prims().filter((q) => q.kind === 'region');
+    expect(cut()).toEqual([]);
+    expect(prims().some((q) => (q as { kind: string }).kind === 'polyline' && q.origin?.part === 'mur')).toBe(true);
     linkMaterial(store, [w], 'betong');
     expect(cut()[0].fill.kind).toBe('pattern');
+    expect((cut()[0] as { under?: boolean }).under).toBe(true);
     const solids = groundType.model3d!(store.doc.elements[w] as never, siteCtx(store)).filter((s) => s.kind !== 'edges');
     expect(solids.length).toBeGreaterThan(0);
     expect(solids.every((s) => (s as { color?: string }).color === '#c4c4bf')).toBe(true);

@@ -165,6 +165,25 @@ export class View3D {
       this.controls.mouseButtons.LEFT = null;
       canvas.style.cursor = '';
     });
+    // Shift i valfri ordning (0.10.28.1): trycks eller släpps Shift mitt i ett
+    // drag byter kamerastyrningen mellan att panorera och att snurra från
+    // där pekaren står (OrbitControls läser annars Shift bara när knappen
+    // trycks ned).
+    let last: { clientX: number; clientY: number } | null = null;
+    canvas.addEventListener('pointermove', (e) => (last = { clientX: e.clientX, clientY: e.clientY }));
+    const shiftSwitch = (shift: boolean) => {
+      const c = this.controls as unknown as { state: number; _handleMouseDownRotate(e: object): void; _handleMouseDownPan(e: object): void };
+      if (!last || (c.state !== 0 && c.state !== 2)) return;
+      if (shift && c.state === 2) {
+        c._handleMouseDownRotate(last);
+        c.state = 0;
+      } else if (!shift && c.state === 0) {
+        c._handleMouseDownPan(last);
+        c.state = 2;
+      }
+    };
+    window.addEventListener('keydown', (e) => e.key === 'Shift' && !e.repeat && shiftSwitch(true));
+    window.addEventListener('keyup', (e) => e.key === 'Shift' && shiftSwitch(false));
     // Dubbelklick med mittenknappen visar hela modellen, som i planen.
     let lastMiddle = 0;
     canvas.addEventListener('pointerdown', (e) => {

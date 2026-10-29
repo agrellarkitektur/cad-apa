@@ -88,6 +88,11 @@ export const FILL_TYPES: Record<string, FillTypeDef> = {
       fam(90, 3.175, 3.175, [3.175, 3.175], 2.78, 2.78),
     ],
   },
+  // Markens material (0.10.28.1): gatsten 100 i förband, stenmur i stora block, trallens brädor och singelns prickar.
+  gatsten: { name: 'Gatsten 100', model: true, families: [fam(0, 100), fam(90, 50, 100, [100, 100])] },
+  stenmur: { name: 'Stenmur', model: true, families: [fam(0, 250), fam(90, 200, 250, [250, 250]), fam(90, 600, 0, [250, 750], 100)] },
+  trall: { name: 'Trall', model: true, families: [fam(0, 145)] },
+  singel: { name: 'Singel', families: [fam(0, 1.5, 0.75, [0, 1.5]), fam(0, 1.5, 0.75, [0, 1.5], 0.4, 0.75)] },
   // Sicksack 2 mm hög och 2 mm per tand, med 2 mm mellan raderna: uppåt- och nedåtstrecken som två familjer.
   sicksack: { name: 'Sicksack', families: [fam(ZIG_ANGLE, (2 * 2) / ZIG, -2 / ZIG, [ZIG, ZIG]), fam(-ZIG_ANGLE, (2 * 2) / ZIG, 2 / ZIG, [ZIG, ZIG], 1, 2)] },
 };

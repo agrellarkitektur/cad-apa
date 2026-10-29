@@ -11,6 +11,8 @@ import { formatPat } from '../core/patFile';
 import { saveBlobFile } from '../storage/projectFile';
 import { applyPenField, penSection, resetPen } from './style/pens';
 import { resolveParams } from '../elements/registry';
+import { materialFieldChange, materialSection } from './style/materials';
+import { addMaterial, deleteMaterial, materialUses, moveMaterial, updateMaterial } from '../core/materials';
 
 /**
  * Stilmallen: hur väggar och linjer ritas för varje åtgärd. Ändringar syns
@@ -58,8 +60,8 @@ export class StyleDialog {
 
   /**
    * Dialogen i tre kolumner, en per sorts inställning (granskningen efter
-   * 0.10.18): åtgärderna och texterna, pennorna, och linjetyperna och
-   * fyllningstyperna. På en bred skärm har varje kolumn sin egen
+   * 0.10.18): åtgärderna och texterna, pennorna, och materialen
+   * (0.10.28.1), linjetyperna och fyllningstyperna. På en bred skärm har varje kolumn sin egen
    * rullning; på en smal ligger de under varandra. Rullningen och fältet
    * med fokus är kvar när dialogen ritas om efter en ändring (förut
    * hoppade den till början).
@@ -89,7 +91,8 @@ export class StyleDialog {
             ${labelSection(style)}
           </div>
           <div class="style-col" role="group" aria-label="Pennor">${penSection(style)}</div>
-          <div class="style-col" role="group" aria-label="Linjetyper och fyllningstyper">
+          <div class="style-col" role="group" aria-label="Material, linjetyper och fyllningstyper">
+            ${materialSection(style, this.materialUses())}
             ${lineTypeSection(style, this.lineTypeUses())}
             ${fillTypeSection(style, this.fillTypeUses())}
           </div>
@@ -116,6 +119,12 @@ export class StyleDialog {
     return uses;
   }
 
+  /** Hur många objekt och slänter som har varje material (0.10.28.1). */
+  private materialUses(): Map<string, number> {
+    const doc = this.store.doc;
+    return new Map((doc.graphics.materials ?? []).map((m) => [m.id, materialUses(doc, m.id)]));
+  }
+
   /** Hur många former, rum och snittfyllningar som har varje fyllningstyp (0.8.36). */
   private fillTypeUses(): Map<string, number> {
     const doc = this.store.doc;
@@ -133,6 +142,16 @@ export class StyleDialog {
   private onClick(e: Event): void {
     const action = (e.target as HTMLElement).closest<HTMLElement>('[data-action]')?.dataset.action;
     if (action === 'close') this.close();
+    // Materialen (0.10.28.1).
+    if (action?.startsWith('material-')) {
+      const id = (e.target as HTMLElement).closest<HTMLElement>('[data-material-id]')?.dataset.materialId ?? '';
+      if (action === 'material-add') {
+        const nid = addMaterial(this.store);
+        this.el.querySelector<HTMLInputElement>(`[data-material="${CSS.escape(nid)}:name"]`)?.select();
+      } else if (action === 'material-up' || action === 'material-down') moveMaterial(this.store, id, action === 'material-up' ? -1 : 1);
+      else if (action === 'material-remove') deleteMaterial(this.store, id);
+      return;
+    }
     if (action === 'linetype-add' || action === 'linetype-remove') {
       const style: StyleSheet = structuredClone(this.store.doc.graphics);
       const id = (e.target as HTMLElement).closest<HTMLElement>('[data-linetype-id]')?.dataset.linetypeId;
@@ -227,6 +246,13 @@ export class StyleDialog {
       setGraphics(this.store, structuredClone({ ...withProjectParts(PRESETS[Number(input.value)], g), labels: PRESETS[Number(input.value)].labels }));
       return;
     }
+    // Ett material (0.10.28.1) ändras med objekten som har det.
+    const mat = materialFieldChange(this.store.doc.graphics, input);
+    if (mat) {
+      updateMaterial(this.store, mat.id, mat.label, mat.fn);
+      return;
+    }
+    if (input.dataset.material) return;
     const style: StyleSheet = structuredClone(this.store.doc.graphics);
     // Varje del av stilmallen svarar för sina egna fält.
     const label = applyPenField(style, input) ?? applyLineTypeField(style, input) ?? applyFillTypeField(style, input) ?? applyLabelField(style, input) ?? applyActionField(style, input);
@@ -242,7 +268,7 @@ export class StyleDialog {
 function focusSelector(el: Element | null, root: HTMLElement): string | null {
   if (!(el instanceof HTMLElement) || !root.contains(el)) return null;
   if (el.id) return `#${CSS.escape(el.id)}`;
-  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family'];
+  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family'];
   const parts = attrs.filter((a) => el.hasAttribute(a)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a)!)}"]`);
   if (!parts.length) return null;
   const v = el instanceof HTMLInputElement && el.type === 'radio' ? `[value="${CSS.escape(el.value)}"]` : '';

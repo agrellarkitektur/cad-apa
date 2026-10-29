@@ -406,7 +406,7 @@ text "+63,00" -6000,12200 h2 middle [w0.18] @m-punkt/höjd
 polylinje -14000,-8000 -14000,6000 [w0.25 ink d6/1.5/1/1.5] @m-bryt/linje
 text "+60,30" -14000,-7800 h2 middle [w0.18] @m-bryt/höjd
 text "+61,20" -14000,6200 h2 middle [w0.18] @m-bryt/höjd
-yta hatch ink 45° a0.6 w0.18 [w0.35 ink] 14000,375 20000,375 20000,625 14000,625 @m-stod/mur
+polylinje sluten 14000,375 20000,375 20000,625 14000,625 [w0.25 ink] @m-stod/mur
 linje 19070.6,-325 17300,-325 [w0.18 ink] @m-stod/littera
 linje 17300,-325 17000,-325 [w0.18 ink] @m-stod/littera
 linje 17000,-325 17000,375 [w0.18 ink] @m-stod/littera

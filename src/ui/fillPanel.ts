@@ -1,4 +1,4 @@
-import type { Material, MaterialCategory, StyleSheet } from '../core/graphics';
+import type { Material, MaterialUse, StyleSheet } from '../core/graphics';
 import { FILL_TYPES, fillTypeList, fillTypeOf } from '../core/fillTypes';
 import { effectiveFill, FILL_BACKGROUND, FILL_COLOR, BACKGROUND_COLOR, FILL_WEIGHT, materialOf, type FillParams, type FillPattern } from '../elements/drawing2d';
 import { escapeHtml } from './labels';
@@ -98,21 +98,21 @@ function presetSwatch(f: FillPreset): string {
   return '';
 }
 
-/** Var panelen står (0.10.28): materialens kategori och hur många objekt som har det kopplade. */
+/** Var panelen står (0.10.28): vilka material som passar (0.10.28.1) och hur många objekt som har det kopplade. */
 export interface FillPanelContext {
-  category?: MaterialCategory;
+  use?: MaterialUse;
   uses?: number;
 }
 
 /**
  * Materialen (0.10.28, sparade fyllningar 0.10.14): bubblor som kopplar
  * objektet till ett, eller *Eget*, med knappar för att spara, byta namn och
- * ta bort. Bara materialen i objektets kategori (och de utan) visas.
+ * ta bort. Bara de material som passar objektet visas (*Mark*, *Byggnad*).
  */
 function materialRow(name: string, p: FillParams, attrs: (key: string) => string, style: StyleSheet | undefined, ctx: FillPanelContext): string {
   const all = style?.materials ?? [];
   const linked = materialOf(p, style);
-  const list = all.filter((m) => !ctx.category || ctx.category === 'other' || m.category === ctx.category || m.id === linked?.id);
+  const list = all.filter((m) => !ctx.use || m[ctx.use] || m.id === linked?.id);
   const scope = /data-key="([^:"]+):/.exec(attrs('x'))?.[1] ?? 'd2';
   const chipsHtml = list.length
     ? `<div class="fill-chips fill-saved" role="radiogroup" aria-label="Material"><label${linked ? '' : ' class="is-on"'}><input type="radio" name="${escapeHtml(name)}-saved" value="" ${attrs('material')}${linked ? '' : ' checked'}><span>Eget</span></label>${list
@@ -145,7 +145,7 @@ function materialParts(name: string, m: Material, p: FillParams, attrs: (key: st
 export const MATERIAL_3D_COLOR = '#cfd3bf';
 
 /** Materialets ruta i bubblan: planens fyllning. */
-function savedSwatch(f: { [k: string]: unknown }, style?: StyleSheet): string {
+export function savedSwatch(f: { [k: string]: unknown }, style?: StyleSheet): string {
   const color = typeof f.fillColor === 'string' ? f.fillColor : FILL_COLOR;
   if (f.fill === 'solid') return `<i class="fill-dot" style="background:${escapeHtml(color)}"></i>`;
   if (f.fill === 'type') {

@@ -3243,7 +3243,7 @@ gången i en session.
 
 Beslutat 28 oktober (svaren A–E). Byggd 29 oktober på "kör nästa
 version", delad som överlämningen föreslog: marken nu, bjälklag och tak i
-0.10.28.1. Format 23 (projekt från 0.10.27 öppnas inte).
+0.10.28.2 (förut 0.10.28.1). Format 23 (projekt från 0.10.27 öppnas inte).
 
 - Ett material i stilmallen: namn, kategori (mark först) och representation
   per vykategori: planen (fyllningen, med opaciteten), illustrationsplanen
@@ -3272,42 +3272,101 @@ sina slänter. Illustrationsplanens förinställning döljer marken (sedan
 
 *Gjordes inte:* brytlinjen har ingen yta och fick inget material. Snittet
 och vyn i sektion och fasad (fälten i materialet kommer med bjälklag och
-tak i 0.10.28.1; marken i sektionerna är jorden, som förut). Ingen lista
+tak i 0.10.28.2; marken i sektionerna är jorden, som förut). Ingen lista
 över materialen i stilmallens dialog (frågan om 0.10.14). Slänternas
 yttre kant i 3D följer rutnätet. Klickjämförelsen kördes inte.
 
-### 0.10.28.1 Material på bjälklag och tak
+### 0.10.28.1 Materiallistan ✓ · *nytt format (24)*
+
+Svaren 29 oktober på frågorna om 0.10.28 (planeringssessionen på
+eftermiddagen, som också satte ordningen nedan). Byggd 29 oktober. Format 24
+(projekt från 0.10.28 öppnas inte): kategorin blev två kryssrutor.
+
+- En gemensam materiallista i stilmallens dialog: byta namn, ta bort, ordna
+  och lägga till; kryssrutorna *Mark* och *Byggnad*, och listan i panelen
+  visar de material som passar objektet
+- Fler material i ett nytt projekt: Jord, Stenmur, Singel, Täckbark, Trall,
+  Planteringsyta, Stenmjöl, Gatsten och Aluminium. Betong, Tegel och Trall
+  båda; Aluminium byggnad
+- Panelen som i 0.10.28: en ändring ändrar materialet för alla, om man inte
+  väljer *Eget*
+- Stödmurarna ritas ovanifrån utan snitt i Platsens vyer, med materialets
+  ytfyllning
+- Marken i 3D i alla Platsens vyer, också illustrationsplanen
+- Orbit med Shift och mittenknappen i valfri ordning
+
+*Claudes val:* listan står först i stilmallens tredje kolumn (Material,
+linjetyper och fyllningstyper), en rad per material med namnet, pilarna
+och *Ta bort* överst och kryssrutorna och tre färger under: planens
+färg (fyllningens, eller mönstrets linjer), illustrationsplanens och
+kulören i 3D. Mönstret i planen ändras i objektets panel, som i 0.10.28;
+listan har ingen egen redigerare för det. Ett nytt material är grått,
+helt och för marken; ett material som sparas ur en 2D-form får inga
+kryssrutor (bara 2D-former och rum ser det tills man kryssar). Fyra nya
+inbyggda fyllningstyper för de nya materialen: Gatsten 100 (i förband),
+Stenmur (stora block), Trall (brädor 145) och Singel (prickar på
+papper). Stödmuren utan material på Platsen är bara konturen (förut
+svart). På Platsen tänds marken i 3D fast *Höjdkurvor* är släckt under
+Visa; kurvorna i 3D släcks då. Shift mitt i ett drag byter mellan
+panorera och snurra från där pekaren står, åt båda hållen (släpps Shift
+panoreras vyn igen).
+
+*Gjordes inte:* ingen redigerare för planens mönster i listan.
+Klickjämförelsen kördes inte (inget i husets verktyg ändrades).
+
+### 0.10.28.2 Material på bjälklag och tak
 
 Delad ur 0.10.28 (29 oktober). Mellanstor.
 
-- Kategorierna bjälklag och tak, och materialet på bjälklagen och taken
+- Materialet på bjälklagen och taken (kulören i 3D, fyllningen i planen),
+  ur byggnadsmaterialen i listan (`useOf` ger redan 'building' för
+  bjälklag och tak)
 - Snittet i sektion och fasad (snittfyllning) och vyn i fasad (ytfyllning,
   kan vara tom) i materialet
-- Kulören i 3D för bjälklag och tak
+- Materialets konturpenna i planen
 
-### 0.10.29 Teckenförklaring
+### Granskning efter 0.10.28.2
+
+Mellanstor. Inga nya funktioner utöver dessa:
+
+- Rampens start- och sluthöjd läser den färdiga marken under klicket
+- Stödmurens krön ligger jämnt med rampens kant
+- Markmodellen förtätas där markobjekt ritas (foten i tänder)
+- Markobjekten flyttar inte när en våningshöjd ändras
+
+### 0.10.29 Ritandet
+
+Liten till mellanstor. Shift låser vinkeln man står i; Förskjut med
+skrivet värde och avståndet grafiskt vid objektet; verklig och lokal höjd
+i våningslistan.
+
+### 0.10.30 Teckenförklaring
 
 Beslutat 28 oktober. Liten till mellanstor. Ett automatobjekt på bladet som
 läser materialen hos synliga objekt i bladets vyer och ritar en ruta med
 mönstret i vyns skala och namnet; kategorier, ordning, rutans storlek,
 egna och bortvalda rader, och *Eget* som "Eget" eller inte alls.
 
-### 0.10.30 Texturer i 3D
+### 0.10.31 Texturer i 3D och ortofotot på marken
 
 Beslutat 28 oktober (svar E: före piloten). Mellanstor. En bild i
 materialets 3D-representation, sparad i filen och upprepad i meter på
-markobjekten; kulören där texturen saknas. Hör ihop med ortofotot och
-trädens detaljnivåer.
+markobjekten; kulören där texturen saknas. Ortofotot draperat på marken,
+också den ändrade; först undersöks om det inte följer med från Höjdkurvor
+eller tappas här. Hör ihop med trädens detaljnivåer.
 
-### Ortofotot på marken (undersökning, liten)
+### Utredning: stilinställningar per vytyp och underlag i vyn
 
-Inkorgen 27 oktober. Ortofotot syns inte draperat på marken och bör också
-ligga på den ändrade marken. En session med repot och terrängappen tar
-reda på om det inte följer med från Höjdkurvor eller tappas här. Efter
-0.10.13, när det passar.
+Planeringssession före 0.11 (Carl August startar den). Stilinställningarna
+en flik per vytyp med förinställningar, underlag som del av en vy, om
+marken syns i 2D och 3D som inställning, och penn- och linjesystemet.
+Ändringen stor, troligen nytt format.
 
 ### 0.11 Trappor · *nytt format*
 
+- *Syns också på* per objekt: objektet hör till Platsen eller en våning och
+  ritas som vy i det andra (trappan och rampen vid entrén i både
+  våningens ritning och markplaneringsritningen) (29 oktober)
 - Rak trappa och trappa med vilplan eller sväng (L och U), med steghöjd och
   stegdjup som räknas ut från våningshöjden
 - Trappan i plan med snittlinje och gångriktning, i sektion och i 3D

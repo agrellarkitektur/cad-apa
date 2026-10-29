@@ -4,40 +4,43 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.28.
+**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.28.1.
 
 ## Läget
 
-- **0.10.28 Material, mark först är klar** (**nytt format, 23**), byggd
-  29 oktober på "kör nästa version", delad som föreslaget (bjälklag och
-  tak i 0.10.28.1): materialen i stilmallen (`graphics.materials`, plan,
-  illustrationsplan, 3D-kulör), markytor, ramper, slänter och stödmurar
-  pekar på ett material eller *Eget*, panelen ändrar materialet,
-  opacitet och vridning per objekt, illustrationsplanen ritar
-  materialens färg, 3D-marken färgas per material. Testerna: 692 på ca
-  16 s. Provat i Playwright mot `dist/` (panelen, planen, en
-  illustrationsplan, 3D). Se PLAN.md och UTVECKLING.md.
-- **0.10.27 Styrningen i 3D**, **0.10.26 Rampen och stödmuren**,
-  **0.10.25.1** (granskning) och **0.10.25 Platsen som modellflik**: se
-  PLAN.md.
-- **Publicerad:** 0.10.28 pushad till `main` 29 oktober. Skrivrätten
-  (`add_repo` med push) och `npm install` gick igenom direkt när Carl
-  August godkänt dem i första meddelandet.
-- **Märks i hans ritningar efter 0.10.28:** projekt från 0.10.27 öppnas
-  inte (nytt format). Fältet *Fyllning* heter *Material* på
-  markobjekten, och en ändring där ändrar materialet för alla objekt med
-  det.
-- **Märks i hans ritningar efter 0.10.25:** projekt från 0.10.24 öppnas
-  inte (nytt format). Markobjekten syns inte längre på Plan 1 utan på
-  Platsen, och dialogen Platsen nås från Platsen i projektträdet.
-- **Tidigare i dag:** 0.10.27 Styrningen i 3D, 0.10.26 Rampen och stödmuren, 0.10.25.1, 0.10.25, 0.10.24 Bågar i bjälklagets och markytans kontur,
-  materialutredningen (planeringssession), 0.10.23 Smartspöt del 2,
+- **0.10.28.1 Materiallistan är klar** (**nytt format, 24**: kategorin
+  blev kryssrutorna `ground` och `building`): listan i stilmallens dialog
+  (namn, ordning, Ta bort, Mark/Byggnad, färgerna i planen,
+  illustrationsplanen och 3D, Nytt material), nio nya material och fyra
+  nya fyllningstyper, markobjektens lista bara med *Mark*, stödmurarna
+  ovanifrån med ytfyllning på Platsen, marken i 3D i alla Platsens vyer,
+  Shift i valfri ordning under ett 3D-drag. Testerna: 696 på ca 18 s.
+  Provat i Playwright mot `dist/`. Den nya ordningen från
+  planeringssessionen står nu i PLAN.md. Se PLAN.md och UTVECKLING.md.
+- **0.10.28 Material, mark först**, **0.10.27 Styrningen i 3D**,
+  **0.10.26 Rampen och stödmuren**, **0.10.25.1** (granskning) och
+  **0.10.25 Platsen som modellflik**: se PLAN.md.
+- **Publicerad:** 0.10.28.1 pushad till `main` 29 oktober (se git och
+  `gh run list`). Skrivrätten (`add_repo` med push) nekades först av
+  behörighetskontrollen och behövde Carl Augusts godkännande; läsningen
+  (klonen) och `npm install` gick direkt.
+- **Märks i hans ritningar efter 0.10.28.1:** projekt från 0.10.28
+  öppnas inte (nytt format). Stödmurarna på Platsen ritas ovanifrån (inte
+  längre svarta utan material).
+- **Märks i hans ritningar efter 0.10.28:** fältet *Fyllning* heter
+  *Material* på markobjekten, och en ändring där ändrar materialet för
+  alla objekt med det.
+- **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
+  på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
+  projektträdet.
+- **Tidigare i dag:** 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+  0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.28` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.28.1` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.28 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.28.1 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -50,7 +53,7 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   `/agrellarkitektur.se/public_html/cad-apa/`). Se efter med `gh run list`.
   Halvfärdigt arbete kan läggas på en egen gren, så att det inte
   publiceras. Skrivrätten till repot kan behöva godkännas i sessionen
-  (28 oktober nekades den först av behörighetskontrollen).
+  (nekades först 28 och 29 oktober).
 - **Färdplan** (Carl August 22 oktober): 0.13 är hans egen provning (han
   ritar ett hus), sedan en inbjuden **alfa** för arkitektvänner, sedan en
   **öppen beta**. **Formatfrysen kommer med den öppna betan.** Inget av
@@ -76,15 +79,19 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   Parkerat och Avfärdat. Läs den vid sessionsstart (Projects-verktyget,
   `project_read`). Sortera Inkorgen tillsammans med honom, kort, med
   Claudes förslag per punkt (bokstäver, så att chatten inte numrerar om).
+  Han bifogar gärna skärmbilder; be om en när en synpunkt gäller något
+  som syns.
 - **Läs projektfilen på nytt strax före varje skrivning** (Carl August
   28 oktober). Flera chattar kan arbeta mot `cad-apa-synpunkter.md` och
   överlämningen samma dag, och `project_write` ersätter hela filen: skriv
   aldrig från en kopia som lästes tidigare i sessionen. Gör
   `project_read`, för in ändringen i det som kom tillbaka och skriv
-  direkt.
+  direkt. `project_write` med `local_path` kräver en fil i
+  arbetskatalogen (t.ex. `.proj/` i repot, undantagen i
+  `.git/info/exclude`).
 - **Svar med nummer:** chatten gör om "17. Ok / 20. 1100" till en
   numrerad lista som börjar på 17. Läs numren i texten han skickat, och be
-  honom gärna skriva "17:".
+  honom gärna skriva "17:". Bokstäver med kolon ("A: ok") fungerar.
 - **Överlämningen hålls kort** (Carl August 28 oktober): skriv bara läget
   för de senaste versionerna; det som hör till koden går till
   UTVECKLING.md, Claudes val till PLAN.md.
@@ -99,15 +106,19 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   stället för fyllningar~~, ~~0.10.25 Platsen som modellflik~~,
   ~~Granskning efter 0.10.25 (0.10.25.1)~~, ~~0.10.26 Rampen och
   stödmuren~~, ~~0.10.27 Styrningen i 3D~~, ~~0.10.28 Material, mark
-  först~~ (klara)
-- **0.10.28.1 Material på bjälklag och tak** (mellanstor; snitt och vy i
-  sektion och fasad i materialet)
-- **Granskning efter 0.10.28.1** (på tur; den senaste var 0.10.25.1)
-- **0.10.29 Teckenförklaring** (liten till mellanstor)
-- **0.10.30 Texturer i 3D** (mellanstor)
-- **Ortofotot på marken** (liten undersökning med terrängappen, när det
-  passar; hör ihop med texturerna)
-- **0.11 Trappor** (nytt format)
+  först~~, ~~0.10.28.1 Materiallistan~~ (klara)
+- **0.10.28.2 Material på bjälklag och tak** (mellanstor; på tur)
+- **Granskning efter 0.10.28.2** (mellanstor; rampens höjder ur den
+  färdiga marken, stödmurens krön och fot, förtätad markmodell,
+  markobjekten och våningshöjden)
+- **0.10.29 Ritandet** (liten till mellanstor; Shift låser vinkeln,
+  Förskjut med skrivet värde, verklig och lokal höjd i våningslistan)
+- **0.10.30 Teckenförklaring** (liten till mellanstor)
+- **0.10.31 Texturer i 3D och ortofotot på marken** (mellanstor)
+- **Utredning: stilinställningar per vytyp och underlag i vyn**
+  (planeringssession; ändringen stor, troligen nytt format; med penn- och
+  linjesystemet)
+- **0.11 Trappor** (nytt format; med *Syns också på*)
 - **0.11.1 Profilverktyget** (stor) och **0.11.2 Dörrar och fönster**
   (stor)
 - **0.12 Export**: IFC4, DXF, areor för bygglov, förteckning över
@@ -123,36 +134,36 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.28.1 Material på bjälklag och tak** (mellanstor; se PLAN.md):
-kategorierna bjälklag och tak, snittet i sektion och fasad och vyn i
-fasad i materialet, kulören i 3D. Säg hur stor den är. En
-granskningssession är på tur efter den (den senaste var 0.10.25.1);
-föreslå den. Läs `cad-apa-synpunkter.md` först och sortera Inkorgen om
-den har något. Frågorna om 0.10.28 (nedan) hör till nästa version och
-kan ställas först; de om 0.10.27–0.10.23 när han provat.
+**0.10.28.2 Material på bjälklag och tak** (mellanstor; se
+`cad-apa-synpunkter.md` och PLAN.md). Läs synpunkterna först och sortera
+Inkorgen om den har något. `useOf` ger redan `'building'` för bjälklag och
+tak, och panelens `FillPanelContext.use` filtrerar listan. Snittet i
+sektion och fasad och vyn i fasad behöver nya fält i materialet, så
+versionen ger troligen ett nytt format; säg det. Därefter granskningen i
+en egen session.
+
+Utredningen om stilinställningarna startas av Carl August i en egen chatt
+med en färdig text; den behöver inte föreslås.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
-fråga.
+fråga. Frågorna om 0.10.28.1 hör till 0.10.28.2 (samma lista); de om
+0.10.27–0.10.23 när han provat.
 
-**0.10.28 efter provning** (Claudes val, se PLAN.md; hör till 0.10.28.1)
-- En ändring i panelen för ett objekt med material ändrar materialet och
-  alla objekt med det (*Eget* för att ändra bara objektet). Rätt, eller
-  ska en ändring göra fyllningen objektets egen, som med de sparade
-  fyllningarna?
-- Åtta markmaterial i ett nytt projekt: Gräs, Grus, Asfalt (förut
-  Hårdgjort), Plattor 300, Tegel, Vatten, Betong och Mark, med färger för
-  illustrationsplanen och 3D. Rätt sorter och färger? Vilka saknas?
-- Stödmuren ritas snittad med materialets fyllning (svart utan material).
-  Rätt i situationsplanen, eller ska den alltid vara svart i planen och
-  materialet bara gälla 3D?
-- Materialen ändras bara i panelen. Behövs en lista i stilmallens dialog
-  (byta namn, ta bort, ordna; ersätter frågan om de sparade fyllningarna
-  från 0.10.14)?
-- Illustrationsplanens förinställning döljer marken (0.10.25), så 3D
-  visar ingen mark i den vyn. Ska marken synas i 3D där?
+**0.10.28.1 efter provning** (Claudes val, se PLAN.md; hör till 0.10.28.2)
+- Listan har tre färger per material (planen, illustrationsplanen, 3D),
+  men mönstret i planen ändras bara i panelen för ett objekt med
+  materialet. Räcker det, eller ska mönstret också gå att välja i listan?
+- En stödmur utan material på Platsen är bara konturen (förut svart).
+  Rätt, eller ska den få en ton?
+- Ett material som sparas ur en 2D-form får varken *Mark* eller
+  *Byggnad* (markobjekten ser det inte förrän man kryssar). Rätt?
+- De nya fyllningstyperna: Gatsten 100 i förband, Stenmur i stora block,
+  Trall med brädor 145 och Singel som prickar på papper. Ser de rätt ut?
+- Shift som släpps mitt i ett drag panorerar igen. Ska vyn hellre
+  fortsätta snurra tills knappen släpps?
 
 **0.10.27 efter provning** (Claudes val, se PLAN.md)
 - Mellanslag + dra panorerar och Mellanslag + Shift + dra snurrar (du sa
@@ -176,8 +187,6 @@ fråga.
   objekten hamnar då på Platsen, inte i huset (klickjämförelsen visade
   det). Ska de spärras där, eller öppna en våning, som Mark öppnar
   Platsen?
-- Stödmurarna ritas snittade (fyllda) hela vägen på Platsen, också låga.
-  Rätt för situationsplanen och markplaneringsritningen?
 - Husets kontur på Platsen är 0,35 heldragen utanför taken och streckad
   under dem. Rätt, eller ska taket vara streckat och fasadlivet
   heldraget? Behövs en egen penna i stilmallen?
@@ -232,7 +241,8 @@ fråga.
 **0.10.18.1 efter provning** (Claudes val, se PLAN.md)
 - Stilmallens fönster i tre kolumner efter sorts inställning (åtgärder och
   texter, pennor, linjetyper och fyllningstyper). Menade du så, eller
-  grupperat efter objekttyp (väggar, dörrar och fönster, mark …)?
+  grupperat efter objekttyp (väggar, dörrar och fönster, mark …)? (Kan
+  falla bort i utredningen om stilinställningar per vytyp.)
 - Höjdkurvornas färg gäller planen och bladen; 3D-vyns kurvor har sin
   egen. Ska de följa stilmallen också?
 
@@ -254,7 +264,7 @@ fråga.
 - Ett klick mitt på en kant startar det senast använda valet på en kant.
   Var det så du menade, eller ville du bli av med något sådant?
 - *Kanter* i Förskjut: 1, 3, 5 eller Alla. Räcker det, eller behövs ett
-  skrivet antal (och jämna antal)?
+  skrivet antal (och jämna antal)? (Hör till 0.10.29 Ritandet.)
 - Bågar direkt i takets kontur och håltagningen (*Båge*, G). Ska 2D-
   verktygets linje få samma (fråga 59)?
 - Vrid och spegla hålet kring punkten man klickade på. Hellre kring hålets

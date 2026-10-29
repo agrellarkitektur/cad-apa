@@ -347,3 +347,67 @@
     grid-template-columns: repeat(5, minmax(0, 1fr)) minmax(0, 1.6fr) 32px;
   }
 }
+
+/* Materiallistan (0.10.28.1): rutan, namnet, ordningen och Ta bort; under dem kryssrutorna och färgerna. */
+.material-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  gap: 6px 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-top: 1px solid var(--rule);
+}
+
+.material-row input[type='text'] {
+  min-width: 0;
+}
+
+.material-swatch {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.material-order {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.material-order .btn {
+  min-width: 28px;
+  padding-inline: 6px;
+}
+
+.material-props {
+  grid-column: 2 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  align-items: center;
+  font-size: 0.92em;
+}
+
+.material-check,
+.material-color {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.material-color input[type='color'] {
+  width: 28px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--rule);
+}
+
+.material-uses {
+  color: var(--muted);
+  margin-left: auto;
+}
+
+.style-materials > .btn {
+  justify-self: start;
+  width: auto;
+  margin-top: 8px;
+}

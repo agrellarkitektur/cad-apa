@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.28** (alfa); nästa är **0.10.28.1 Material på bjälklag och tak**.
+**0.10.28.1** (alfa); nästa är **0.10.28.2 Material på bjälklag och tak**.
 
 ## Vad som fungerar
 
@@ -1124,6 +1124,31 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
 
+Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öppnas inte):
+- **Materialen i stilmallens dialog**: en lista i kolumnen med linjetyper
+  och fyllningstyper. Varje material har namn, kryssrutorna *Mark* och
+  *Byggnad*, färgen i planen, i illustrationsplanen och kulören i 3D,
+  pilar för ordningen och *Ta bort* (objekten med det behåller hur de ser
+  ut och får egen fyllning). *Nytt material* lägger till ett sist.
+  Ändringar i listan gäller alla objekt med materialet. Mönstret i planen
+  ändras som förut i panelen för ett objekt med materialet
+- **Mark och Byggnad** i stället för kategorin: markobjektens lista visar
+  materialen med *Mark*; 2D-former och rum ser alla. Byggnadens material
+  används av bjälklag och tak i 0.10.28.2
+- **Fler material** i ett nytt projekt: Planteringsyta, Täckbark, Jord,
+  Singel, Stenmjöl, Gatsten, Stenmur, Trall och Aluminium, utöver de åtta
+  från 0.10.28. Tegel, Betong och Trall är både mark och byggnad,
+  Aluminium bara byggnad. Fyllningstyperna Gatsten 100, Stenmur, Trall
+  och Singel är nya
+- **Stödmuren ovanifrån på Platsen**: utan snitt, med materialets
+  ytfyllning (som markytorna) och konturen som vy. I våningsplanerna
+  snittas den som förut
+- **Marken i 3D i alla Platsens vyer**, också illustrationsplanen (där
+  höjdkurvorna är släckta; kurvorna i 3D följer dem)
+- **Shift i valfri ordning**: trycks Shift mitt i ett drag med
+  mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
+  panoreras den igen
+
 Version 0.10.28, material, mark först (nytt filformat, 23; projekt från 0.10.27 öppnas inte):
 - **Material i stället för fyllningar**: ett material bor i stilmallen
   och har ett namn, en kategori (Mark) och hur det ritas i varje
@@ -1978,7 +2003,7 @@ Version 0.8.28, rättelser i 2D-formen (samma filformat, 13):
 
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer, i dag 23 (sedan 0.10.28). Fram till
+Projektfilerna har ett formatnummer, i dag 24 (sedan 0.10.28.1). Fram till
 den öppna betan uppgraderas inte projekt från äldre alfa- och betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp

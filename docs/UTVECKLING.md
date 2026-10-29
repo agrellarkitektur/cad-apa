@@ -437,7 +437,7 @@ Det som är känt men lämnat, per version (flyttat hit ur överlämningen i
 - **Material (0.10.28):** kulörerna i 3D följer trianglarnas mitt, så
   slänternas yttre kant (och markytor som inte skär marken) blir taggiga
   per ruta. Snittet och vyn i sektion och fasad har inga fält i materialet
-  än (0.10.28.1, med bjälklag och tak); marken i sektionerna ritas som
+  än (0.10.28.2, med bjälklag och tak); marken i sektionerna ritas som
   förut. Materialen går inte att ordna eller redigera i stilmallens
   dialog, bara i panelen. En markering med olika material ändras efter
   det första objektets material.
@@ -1639,10 +1639,47 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Materiallistan (0.10.28.1, format 24)
+
+- **Materialet** har `ground` och `building` (booleska, `MaterialUse`,
+  `MATERIAL_USES`) i stället för `category`. `normalizeMaterials` läser
+  dem (allt annat än `true` är falskt). `DEFAULT_MATERIALS` byggs med
+  `mat(id, namn, 'g' | 'b' | 'gb', plan, illFärg, illOpacitet, 3D)`;
+  fyllningstyperna `gatsten`, `stenmur`, `trall` och `singel` är nya i
+  `FILL_TYPES`.
+- **Vilka material som passar** (`materials.ts`): `useOf(el)` ger
+  `'ground'` för markobjekten, `'building'` för `Slab` och `Roof` (används
+  i 0.10.28.2) och `undefined` för resten (alla passar);
+  `materialFits(m, use)`. Panelens `FillPanelContext.use` ersätter
+  `category`. `saveMaterial` kryssar i det som passar objektet.
+  `addMaterial(store)` och `moveMaterial(store, id, ±1)` för listan.
+- **Listan i dialogen**: `src/ui/style/materials.ts` (`materialSection`,
+  `materialFieldChange`). Fälten har `data-material="<id>:<fält>"`
+  (`name`, `ground`, `building`, `plan`, `ill`, `c3d`), knapparna
+  `material-add`, `material-up`, `material-down`, `material-remove` med
+  `data-material-id`. `StyleDialog.onChange` skickar materialets fält
+  till `updateMaterial`, så att objektens kopior av planens fyllning följer
+  med; `material-remove` går till `deleteMaterial`. Stilen i
+  `stilmallen.css` (`.material-row`).
+- **Stödmuren på Platsen** (`linePlan` i `groundPlan.ts`): utan snitthöjd
+  ritas den ovanifrån, `fillPrims(…, under = true)` med materialets
+  fyllning och konturen `planCutPen(style, 'Ground', 'below')`.
+- **Marken i 3D på Platsen** (`update3d` i `pane3d.ts`): på Platsen tas
+  `Terrain` bort ur vyns `hide` för marken, markobjekten och deras linjer
+  i 3D (`ground`); höjdkurvorna i 3D släcks ändå när `Terrain` är släckt.
+- **Shift mitt i ett drag** (`view3d.ts`): `keydown`/`keyup` för Shift
+  anropar OrbitControls interna `_handleMouseDownRotate` eller
+  `_handleMouseDownPan` med pekarens senaste läge och sätter `state` (0
+  snurra, 2 panorera). Bygger på three 0.170:s interna namn; byts three
+  ska det provas.
+- Tester: `tests/v010281.test.ts`. Provat i Playwright mot `dist/`
+  (listan, Nytt material, Platsens situations- och illustrationsplan,
+  illustrationsplanen i 3D, Shift under ett mittendrag).
+
 ## Material, mark först (0.10.28, format 23)
 
 - **Materialet** (`Material` i `graphics.ts`): `id`, `name`, `category`
-  (`'ground'` eller `'other'`; bjälklag och tak i 0.10.28.1), `plan`
+  (`'ground'` eller `'other'`; kryssrutorna `ground` och `building` sedan 0.10.28.1), `plan`
   (fyllningens fält som i `FillParams`), `illustration` (`{ color,
   opacity }`, utelämnad = som planen) och `color3d`. `StyleSheet.materials`
   ersätter `fills` (`SavedFill` borta); `normalizeMaterials` läser dem,

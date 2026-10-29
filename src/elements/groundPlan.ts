@@ -131,7 +131,8 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
     const prof = wallProfile(ctx, el);
     // Snittet i planen (0.10.16): där krönet ligger under snitthöjden ritas
     // muren som vy, där foten ligger över streckprickad. På Platsen (0.10.25),
-    // utan snitthöjd, ritas muren snittad hela vägen.
+    // utan snitthöjd, ritas muren ovanifrån (0.10.28.1; snittad före det):
+    // materialets ytfyllning, som markytorna, och konturen som vy.
     const h = planCutHeight(ctx);
     const parts = prof && h !== undefined && Number.isFinite(h) ? wallCutParts(prof, storeyElevation(ctx, el.storey) + h) : null;
     // Det snittade svart, eller med materialets fyllning (0.10.28) och konturen 0,35.
@@ -143,8 +144,13 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
       out.push(...fillPrims(rings, p as unknown as FillParams, origin, false, ctx.style, ctx.scale, ctx.view.category).map((q) => ({ ...q, origin: { ...origin, part: 'mur' } })));
       for (const ring of rings) out.push({ kind: 'polyline', points: ring, closed: true, pen: { weight: 0.35 }, origin: { ...origin, part: 'mur' } });
     };
-    if (!parts) for (const ring of g.rings[0]) cut([ring]);
-    else {
+    if (!parts) {
+      const pen = planCutPen(ctx.style, 'Ground', 'below');
+      for (const ring of g.rings[0]) {
+        if (p.fill && !ctx.view.hide?.includes('fill')) out.push(...fillPrims([ring], p as unknown as FillParams, origin, true, ctx.style, ctx.scale, ctx.view.category).map((q) => ({ ...q, origin: { ...origin, part: 'mur' } })));
+        out.push({ kind: 'polyline', points: ring, closed: true, pen, origin: { ...origin, part: 'mur' } });
+      }
+    } else {
       for (const rings of parts.cut) cut(rings);
       for (const zone of ['below', 'above'] as const) {
         const pen = planCutPen(ctx.style, 'Ground', zone);

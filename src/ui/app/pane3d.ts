@@ -1,7 +1,7 @@
 import { colorGroups, colorShapes } from '../../repr/groundColors';
 import { levelOf } from '../../repr/solids';
 import { moveElements, moveWallEnd } from '../../core/commands';
-import { buildingStoreys, type Id } from '../../core/model';
+import { buildingStoreys, isSite, type Id } from '../../core/model';
 import { markerFrame } from '../../elements/markers';
 import { refPoints } from '../../elements/groundRamp';
 import { rampProfile } from '../../elements/rampProfile';
@@ -160,27 +160,32 @@ export function installPane3d(app: AppContext) {
     view3d.setSolids(buildModel3d(store.doc, app.viewStates(), several && app.uiSettings.storeyOnly3d ? ui.storey : undefined));
     // Marken (0.10.3): byggs om bara när platsen eller den färdiga marken
     // (0.10.4, i ett förslag med markobjekt) ändras.
-    const site = app.ui.hide.includes('Terrain') ? undefined : store.doc.site;
-    const finished = site ? finishedForView(store.doc, app.viewStates()) : null;
+    // På Platsen syns marken i 3D i alla vyer (0.10.28.1), också när
+    // höjdkurvorna är släckta (illustrationsplanen); kurvorna i 3D följer dem.
+    const onSite = isSite(ui.storey);
+    const states = app.viewStates();
+    const ground = onSite && states.hide?.includes('Terrain') ? { ...states, hide: states.hide.filter((h) => h !== 'Terrain') } : states;
+    const site = app.ui.hide.includes('Terrain') && !onSite ? undefined : store.doc.site;
+    const finished = site ? finishedForView(store.doc, ground) : null;
     // Höjdkurvorna på marken (0.10.8), om de inte släckts under Visa.
-    const lines = !!site && isShown(app.ui, 'contours3d');
+    const lines = !!site && isShown(app.ui, 'contours3d') && !app.ui.hide.includes('Terrain');
     // Materialens kulörer (0.10.28): när materialen eller markobjektens material ändras.
-    const shapes = site ? colorShapes(store.doc, app.viewStates()) : [];
+    const shapes = site ? colorShapes(store.doc, ground) : [];
     const colorKey = shapes.map((s) => `${s.color}:${s.box.map(Math.round).join(',')}:${s.rings.reduce((n, r) => n + r.length, 0)}`).join(';');
     const shown = [finished ?? site, site?.contours, lines, colorKey];
     if (shown.some((v, i) => v !== shownSite[i])) {
       shownSite = shown;
-      const mesh = site ? terrainMesh3d(store.doc, app.viewStates(), finished) : null;
-      view3d.setTerrain(mesh, lines ? contourSegments3d(store.doc, finished, undefined, finished ? (heightForView(store.doc, app.viewStates()) ?? undefined) : undefined) : null, mesh ? colorGroups(mesh, shapes) : null);
+      const mesh = site ? terrainMesh3d(store.doc, ground, finished) : null;
+      view3d.setTerrain(mesh, lines ? contourSegments3d(store.doc, finished, undefined, finished ? (heightForView(store.doc, ground) ?? undefined) : undefined) : null, mesh ? colorGroups(mesh, shapes) : null);
     }
     // Markobjekten går att hovra och markera på marken (0.10.11).
-    view3d.ground = ground3dHost(store.doc, app.viewStates());
+    view3d.ground = ground3dHost(store.doc, ground);
     // Och deras linjer ritas på marken, om de tänts under Visa (0.10.15).
     const want = { outlines: !!site && isShown(app.ui, 'ground3d'), slopes: !!site && isShown(app.ui, 'slopes3d') };
-    const linesKey = [store.doc, finished, want.outlines, want.slopes, JSON.stringify(app.viewStates())];
+    const linesKey = [store.doc, finished, want.outlines, want.slopes, JSON.stringify(ground)];
     if (linesKey.some((v, i) => v !== shownLines[i])) {
       shownLines = linesKey;
-      const l = groundLines3d(store.doc, app.viewStates(), want);
+      const l = groundLines3d(store.doc, ground, want);
       view3d.setGroundLines(l.outlines, l.slopes);
     }
     view3d.setSelection(app.selection.list());

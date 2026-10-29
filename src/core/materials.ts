@@ -1,4 +1,4 @@
-import type { Material, MaterialCategory, StyleSheet } from './graphics';
+import type { Material, MaterialUse, StyleSheet } from './graphics';
 import type { Element, Id } from './model';
 import type { DocStore } from './store';
 import { effectiveFill, FILL_FIELDS, type FillParams } from '../elements/drawing2d';
@@ -89,9 +89,19 @@ export function materialUses(doc: { elements: Record<Id, Element> }, id: string)
   return n;
 }
 
-/** Kategorin för ett objekts material: markobjekten Mark, resten Övrigt. */
-export function categoryOf(el: Pick<Element, 'type'> | undefined): MaterialCategory {
-  return el?.type === 'Ground' ? 'ground' : 'other';
+/**
+ * Vilka material som passar objektet (0.10.28.1): markobjekten markens,
+ * bjälklag och tak byggnadens; 2D-former och rum alla (`undefined`).
+ */
+export function useOf(el: Pick<Element, 'type'> | undefined): MaterialUse | undefined {
+  if (el?.type === 'Ground') return 'ground';
+  if (el?.type === 'Slab' || el?.type === 'Roof') return 'building';
+  return undefined;
+}
+
+/** Om materialet passar `use` (alla passar när `use` saknas). */
+export function materialFits(m: Material, use: MaterialUse | undefined): boolean {
+  return !use || m[use];
 }
 
 /** Objektet kopplat till materialet `m`: en kopia av planens fyllning, objektets överstyrningar kvar. */
@@ -127,7 +137,7 @@ export function saveMaterial(store: DocStore, ids: Id[], name: string, nested?: 
   const plan = { ...fillFieldsOf(now), fillOpacity: now.fillOpacity ?? now.opacity ?? 100 };
   if (!plan.fill) return null;
   const old = (style.materials ?? []).find((m) => m.name.toLowerCase() === name.trim().toLowerCase());
-  const m: Material = old ? { ...old, plan } : { id: newId(style, name.trim()), name: name.trim(), category: categoryOf(first), plan };
+  const m: Material = old ? { ...old, plan } : { id: newId(style, name.trim()), name: name.trim(), ground: useOf(first) === 'ground', building: useOf(first) === 'building', plan };
   store.transact(old ? `Uppdatera material: ${m.name}` : `Nytt material: ${m.name}`, (tx) => {
     tx.setGraphics({ ...style, materials: old ? style.materials!.map((q) => (q.id === m.id ? m : q)) : [...(style.materials ?? []), m] });
     for (const el of eachLinked(tx.doc, m.id, (e, n) => linkTo(e, m, n))) tx.putElement(el);
@@ -196,4 +206,28 @@ export function overrideMaterial(store: DocStore, ids: Id[], key: 'materialOpaci
       tx.putElement(withFill(el, next as Partial<FillParams>, nested));
     }
   });
+}
+
+/**
+ * Ett nytt material i stilmallen (0.10.28.1): grått och helt, för marken.
+ * Svarar med nyckeln.
+ */
+export function addMaterial(store: DocStore, name = 'Nytt material'): string {
+  const style = store.doc.graphics;
+  let n = name;
+  for (let i = 2; (style.materials ?? []).some((m) => m.name.toLowerCase() === n.toLowerCase()); i++) n = `${name} ${i}`;
+  const m: Material = { id: newId(style, n), name: n, ground: true, building: false, plan: { fill: 'solid', fillColor: '#c9c6bf', fillOpacity: 80 }, color3d: '#bdbab3' };
+  store.transact(`Nytt material: ${n}`, (tx) => tx.setGraphics({ ...style, materials: [...(style.materials ?? []), m] }));
+  return m.id;
+}
+
+/** Flytta materialet ett steg i listan (`-1` upp, `1` ned); listorna i panelen följer ordningen. */
+export function moveMaterial(store: DocStore, id: string, step: -1 | 1): void {
+  const style = store.doc.graphics;
+  const list = [...(style.materials ?? [])];
+  const i = list.findIndex((m) => m.id === id);
+  const j = i + step;
+  if (i < 0 || j < 0 || j >= list.length) return;
+  [list[i], list[j]] = [list[j], list[i]];
+  store.transact(`Flytta material: ${list[j].name}`, (tx) => tx.setGraphics({ ...style, materials: list }));
 }
