@@ -46,8 +46,20 @@ export interface EditView {
   ray(e: Pick<PointerEvent, 'clientX' | 'clientY'>): THREE.Raycaster;
   hitAt(e: Pick<PointerEvent, 'clientX' | 'clientY'>): THREE.Intersection | undefined;
   pick(e: PointerEvent): void;
+  /** Markera det som ryms i (window) eller nuddar (crossing) en ruta i fönstrets pixlar (0.10.27). */
+  pickBox(r: ScreenRect, mode: 'window' | 'crossing', additive: boolean): void;
+  /** Mellanslaget hålls ned: draget panorerar i stället. */
+  panning(): boolean;
   hover(e: PointerEvent): void;
   render(): void;
+}
+
+/** En ruta i fönstrets pixlar (clientX, clientY). */
+export interface ScreenRect {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
 }
 
 type Drag =
@@ -64,6 +76,9 @@ export class Edit3D {
   private handleMaterial = new THREE.MeshBasicMaterial({ color: 0xa86b12, depthTest: false });
   private down: { x: number; y: number } | null = null;
   private drag: Drag | null = null;
+  /** Markeringsrutan (0.10.27): ett vänsterdrag som inte börjar i ett grepp eller på det markerade. */
+  private box: { x: number; y: number; id: number; on: boolean } | null = null;
+  private boxEl: HTMLElement;
   private label: HTMLElement;
   private view: EditView;
 
@@ -73,6 +88,10 @@ export class Edit3D {
     this.label.className = 'label3d';
     this.label.hidden = true;
     view.el.appendChild(this.label);
+    this.boxEl = document.createElement('div');
+    this.boxEl.className = 'sel-box3d';
+    this.boxEl.hidden = true;
+    view.el.appendChild(this.boxEl);
   }
 
   /** Samma färg som referenslinjerna i planen. */
@@ -118,9 +137,16 @@ export class Edit3D {
   }
 
   onDown(e: PointerEvent): void {
+    // Mitten- och högerknappen markerar inget, och Mellanslag + dra
+    // panorerar (kamerastyrningen tar båda).
+    this.down = null;
+    if ((e.pointerType === 'mouse' && e.button !== 0) || this.view.panning()) return;
     this.down = { x: e.clientX, y: e.clientY };
     const editor = this.view.editor();
-    if (!editor || (e.pointerType === 'mouse' && e.button !== 0)) return;
+    if (!editor) {
+      this.startBox(e);
+      return;
+    }
     // Greppen träffas på avstånd i skärmen, så att de är lätta att ta med fingret.
     const el = this.view.el;
     const rect = el.getBoundingClientRect();
@@ -142,7 +168,10 @@ export class Edit3D {
     } else {
       const hit = this.view.hitAt(e);
       const id = hit ? (hit.object.userData as { id: string }).id : null;
-      if (!hit || !id || !editor.isSelected(id)) return;
+      if (!hit || !id || !editor.isSelected(id)) {
+        this.startBox(e);
+        return;
+      }
       const z = hit.point.y * 1000;
       const base: Vec2 = [hit.point.x * 1000, -hit.point.z * 1000];
       this.drag = { kind: 'move', ids: editor.selectedIds(), plane: horizontalPlane(z), base, point: base, label: '' };
@@ -153,7 +182,34 @@ export class Edit3D {
     this.view.canvas.setPointerCapture(e.pointerId);
   }
 
+  /** Med musen blir ett vänsterdrag en markeringsruta; med fingret snurrar vyn som förut. */
+  private startBox(e: PointerEvent): void {
+    if (e.pointerType !== 'mouse' && e.pointerType !== 'pen') return;
+    this.box = { x: e.clientX, y: e.clientY, id: e.pointerId, on: false };
+    e.stopImmediatePropagation();
+    this.view.orbit(false);
+    this.view.canvas.setPointerCapture(e.pointerId);
+  }
+
+  private boxRect(e: Pick<PointerEvent, 'clientX' | 'clientY'>): ScreenRect {
+    const b = this.box!;
+    return { minX: Math.min(b.x, e.clientX), minY: Math.min(b.y, e.clientY), maxX: Math.max(b.x, e.clientX), maxY: Math.max(b.y, e.clientY) };
+  }
+
   onMove(e: PointerEvent): void {
+    const b = this.box;
+    if (b) {
+      e.stopImmediatePropagation();
+      if (!b.on && Math.hypot(e.clientX - b.x, e.clientY - b.y) <= 5) return;
+      b.on = true;
+      // Som i planen: heldragen åt höger (helt innanför), streckad åt vänster (allt som nuddas).
+      const r = this.boxRect(e);
+      const host = this.view.el.getBoundingClientRect();
+      Object.assign(this.boxEl.style, { left: `${r.minX - host.left}px`, top: `${r.minY - host.top}px`, width: `${r.maxX - r.minX}px`, height: `${r.maxY - r.minY}px` });
+      this.boxEl.classList.toggle('crossing', e.clientX < b.x);
+      this.boxEl.hidden = false;
+      return;
+    }
     const d = this.drag;
     if (!d) this.view.hover(e);
     const editor = this.view.editor();
@@ -188,7 +244,19 @@ export class Edit3D {
   }
 
   onUp(e: PointerEvent): void {
+    const b = this.box;
+    if (b) {
+      e.stopImmediatePropagation();
+      const r = this.boxRect(e);
+      this.endBox();
+      this.down = null;
+      if (b.on) this.view.pickBox(r, e.clientX >= b.x ? 'window' : 'crossing', e.shiftKey || e.ctrlKey || e.metaKey);
+      else this.view.pick(e);
+      return;
+    }
     const d = this.drag;
+    // Ett drag med Mellanslag (panorering) eller en annan knapp markerar inget.
+    if (!d && !this.down) return;
     const moved = this.down ? Math.hypot(e.clientX - this.down.x, e.clientY - this.down.y) > 5 : false;
     this.down = null;
     if (d) {
@@ -207,10 +275,17 @@ export class Edit3D {
   }
 
   cancelDrag(): void {
+    if (this.box) this.endBox();
     if (!this.drag) return;
     this.endDrag();
     for (const m of this.view.meshes()) m.position.set(0, 0, 0);
     this.updateHandles();
+  }
+
+  private endBox(): void {
+    this.box = null;
+    this.boxEl.hidden = true;
+    this.view.orbit(true);
   }
 
   private endDrag(): void {

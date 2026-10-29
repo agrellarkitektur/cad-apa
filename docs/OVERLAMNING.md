@@ -4,36 +4,35 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.26.
+**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.27.
 
 ## Läget
 
-- **0.10.26 Rampen och stödmuren är klar** (samma format, 22), byggd
-  29 oktober på "Ta rampen och stödmuren först … Kör" ur Inkorgen (A–C):
-  slänt per sida på rampen (`leftSlope`, `rightSlope`); skarpa kanter på
-  den färdiga marken i 3D, i sektionerna och för linjerna på marken
-  (`src/repr/crispGround.ts`: nätet skärs längs rampers och markytors
-  konturer, lodyta längs stödmurskanterna, marken utanför som utan
-  objektet); stödmurens kantlinjer i 3D bara i ändarna och i hörn över
-  20°. Testerna: 683 på ca 15 s. Provat i Playwright mot `dist/` (en
-  böjd ramp med stödmur på höger sida högt över marken, en stödmur i
-  båge, panelen med *Slänt vänster sida*). Se PLAN.md och UTVECKLING.md.
-- **0.10.25.1** (granskning) och **0.10.25 Platsen som modellflik** (nytt
-  format, **22**): se PLAN.md.
-- **Publicerad:** 0.10.26 pushad till `main` 29 oktober (efter att
-  skrivrätten godkänts; `add_repo` med push nekades först, läsning
-  fungerar alltid med `git clone --depth 1`).
+- **0.10.27 Styrningen i 3D är klar** (samma format, 22), byggd
+  29 oktober på "Kör" (Mellanslag + dra enligt Claudes förslag, frågan
+  obesvarad): mittenknappen panorerar, Shift + mittenknappen snurrar,
+  Mellanslag + dra panorerar och Mellanslag + Shift + dra snurrar;
+  vänsterdrag är en markeringsruta som i planen (`View3D.idsInRect`);
+  högerklick öppnar menyn; dubbelklick med mittenknappen visar allt; en
+  tipsrad när 3D öppnas. Testerna: 683 på ca 20 s. Provat i Playwright
+  mot `dist/` (alla knappar och rutor). Se PLAN.md och UTVECKLING.md.
+- **0.10.26 Rampen och stödmuren**, **0.10.25.1** (granskning) och
+  **0.10.25 Platsen som modellflik** (nytt format, **22**): se PLAN.md.
+- **Publicerad:** 0.10.27 pushad till `main` 29 oktober. Skrivrätten
+  (`add_repo` med push) och `npm install` nekades först av
+  behörighetskontrollen och gick igenom när Carl August godkänt dem i
+  chatten; be om det i första meddelandet.
 - **Märks i hans ritningar efter 0.10.25:** projekt från 0.10.24 öppnas
   inte (nytt format). Markobjekten syns inte längre på Plan 1 utan på
   Platsen, och dialogen Platsen nås från Platsen i projektträdet.
-- **Tidigare i dag:** 0.10.24 Bågar i bjälklagets och markytans kontur,
+- **Tidigare i dag:** 0.10.26 Rampen och stödmuren, 0.10.25.1, 0.10.25, 0.10.24 Bågar i bjälklagets och markytans kontur,
   materialutredningen (planeringssession), 0.10.23 Smartspöt del 2,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.26` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.27` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.26 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.27 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -94,8 +93,7 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   Bågar i bjälklagets och markytans kontur~~, ~~Utredning: material i
   stället för fyllningar~~, ~~0.10.25 Platsen som modellflik~~,
   ~~Granskning efter 0.10.25 (0.10.25.1)~~, ~~0.10.26 Rampen och
-  stödmuren~~ (klara)
-- **0.10.27 Styrningen i 3D** (mellanstor; som i ArchiCAD)
+  stödmuren~~, ~~0.10.27 Styrningen i 3D~~ (klara)
 - **0.10.28 Material, mark först** (mellanstor till stor, nytt format)
 - **0.10.29 Teckenförklaring** (liten till mellanstor)
 - **0.10.30 Texturer i 3D** (mellanstor)
@@ -117,23 +115,29 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.27 Styrningen i 3D** (Carl August 29 oktober, ordningen han valde:
-rampen och stödmuren, styrningen, materialen): panorera med
-mittenknappen, orbit med Shift + mittenknappen, vänsterklick markerar,
-dra-markering som i 2D (vänster till höger: helt innanför; höger till
-vänster: allt som nuddas), högerklick för menyn. Mellanstor; det mesta
-ligger i dra-markeringen. Fråga först om ett sätt utan mittenknapp
-(Claudes förslag: Mellanslag + dra). Läs `cad-apa-synpunkter.md` först
-och sortera Inkorgen om den har något. Därefter **0.10.28 Material, mark
-först** (det som stod som 0.10.26; föreslå en delning, mark först, sedan
-bjälklag och tak i 0.10.28.1). Frågorna om 0.10.26–0.10.23 (nedan) kan
-ställas när han provat.
+**0.10.28 Material, mark först** (mellanstor till stor, nytt format; se
+PLAN.md och `cad-apa-synpunkter.md`). Föreslå en delning först: marken
+(markyta, slänter, ramp, stödmur, brytlinje) i 0.10.28, bjälklag och tak i
+0.10.28.1. Säg att den kan behöva mer än en session. Läs
+`cad-apa-synpunkter.md` först och sortera Inkorgen om den har något. En
+granskningssession är snart på tur (den senaste var 0.10.25.1); föreslå
+den efter 0.10.28. Frågorna om 0.10.27–0.10.23 (nedan) kan ställas när
+han provat.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
+
+**0.10.27 efter provning** (Claudes val, se PLAN.md)
+- Mellanslag + dra panorerar och Mellanslag + Shift + dra snurrar (du sa
+  "kör" utan att svara på frågan). Bra, eller hellre något annat?
+- Rutan tar det vars omslutande rektangel på skärmen ryms i eller nuddar
+  rutan, som i planen. Snett sett kan en vägg tas från höger till vänster
+  fast rutan bara går nära den. Störande?
+- Ett drag som börjar på det markerade flyttar det, som förut. Ska ett
+  drag alltid vara en ruta (flytt bara med Flytta och greppen)?
 
 **0.10.26 efter provning** (Claudes val, se PLAN.md)
 - Ser rampens kant med stödmur rätt ut nu? Lodytan har markens kulör;

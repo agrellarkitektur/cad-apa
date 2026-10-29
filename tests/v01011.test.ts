@@ -53,8 +53,11 @@ describe('Småsaker (0.10.11)', () => {
     // Konturen ligger på marken, lite över den.
     expect(line[2]).toBeCloseTo(host.height([line[0], line[1]])! + 60, 0);
     expect(host.outline('inget')).toBeNull();
+    // Markeringsrutan i 3D (0.10.27) går igenom alla markobjekt med en kontur.
+    expect(host.ids()).toContain(area.id);
     // Släckt mark: inga markobjekt att träffa.
     expect(ground3dHost(doc, { state: 'st-a', hide: ['Terrain'] })).toBeNull();
     expect(ground3dHost(doc, { state: 'st-a', hide: ['Ground'] })!.pick(mid)).toBeNull();
+    expect(ground3dHost(doc, { state: 'st-a', hide: ['Ground'] })!.ids()).toEqual([]);
   });
 });

@@ -3212,15 +3212,32 @@ lodytan har ingen egen kulör (markens). Ingen knapp som gör om en
 stödmur ritad med många punkter till bågar (frågan om 0.10.24 gäller
 också den). Klickjämförelsen kördes inte.
 
-### 0.10.27 Styrningen i 3D
+### 0.10.27 Styrningen i 3D ✓
 
-Inkorgen 29 oktober. Mellanstor. Som i ArchiCAD: panorera med
-mittenknappen, orbit med Shift + mittenknappen, vänsterklick markerar,
-dra-markering som i 2D (från vänster till höger det som ryms helt, från
-höger till vänster allt som nuddas), högerklick öppnar menyn. Det mesta
-arbetet ligger i dra-markeringen (objekten projiceras till skärmen).
-Öppet: ett sätt utan mittenknapp (Claudes förslag: Mellanslag + dra för
-att panorera).
+Inkorgen 29 oktober. Byggd samma dag, samma format (22). Som i ArchiCAD:
+
+- **Mittenknappen panorerar**, Shift + mittenknappen snurrar (orbit)
+- **Vänsterklick markerar**, och ett vänsterdrag är en markeringsruta som
+  i planen: från vänster till höger det som ryms helt, från höger till
+  vänster allt som nuddas
+- **Högerklick öppnar menyn** (högerdrag panorerade förut)
+- **Utan mittenknapp**: Mellanslag + dra panorerar och Mellanslag +
+  Shift + dra snurrar (Carl August sa "kör" på Claudes förslag)
+
+*Claudes val:* rutan jämför objektets omslutande rektangel på skärmen
+(hörnen räknade till skärmen), som planen gör med sina rektanglar; ett
+objekt som delvis ligger bakom kameran ryms aldrig helt, och det en
+sektion klipper bort räknas inte. Markobjekten tas med sina konturer på
+marken, rummens golv inte (som med ett klick). Shift eller Ctrl lägger
+till, som i planen. Ett drag som börjar på något markerat flyttar det som
+förut, och greppen dras som förut. Dubbelklick med mittenknappen visar
+hela modellen, som i planen. Ctrl + mittenknappen snurrar också
+(kamerastyrningen gör så). Med fingret snurrar vyn som förut (telefonen
+är inget mål). En tipsrad om styrningen visas när 3D-vyn öppnas första
+gången i en session.
+
+*Gjordes inte:* ingen förhandsvisning av vad rutan tar medan den dras
+(planen har ingen heller). Ingen inställning för knapparna.
 
 ### 0.10.28 Material, mark först · *nytt format*
 

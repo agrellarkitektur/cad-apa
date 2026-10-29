@@ -34,6 +34,7 @@ export function ground3dHost(doc: ProjectDoc, view: ViewStates): Ground3DHost | 
     .filter((s) => s.polys.length)
     .reverse();
   return {
+    ids: () => shapes.map((s) => s.id),
     height,
     pick: (p) => shapes.find((s) => s.polys.some((rings) => pointInRings(p, rings)))?.id ?? null,
     outline(id) {

@@ -220,6 +220,11 @@ export function installPane3d(app: AppContext) {
           else if (additive) app.selection.toggle(id);
           else app.selection.set([id]);
         };
+        // Markeringsrutan (0.10.27), som i planen.
+        view3d.onBoxPick = (ids, additive) => {
+          if (additive) app.selection.add(ids);
+          else app.selection.set(ids);
+        };
       });
       try {
         await loading3d;
@@ -229,7 +234,11 @@ export function installPane3d(app: AppContext) {
       }
     }
     update3d();
-    if (mode !== '2d' && fresh) setTimeout(() => view3d?.frameAll(), 60);
+    if (mode !== '2d' && fresh) {
+      setTimeout(() => view3d?.frameAll(), 60);
+      // Styrningen som i ArchiCAD (0.10.27); vänsterdraget snurrar inte längre.
+      app.hint('3D: mittenknappen panorerar, Shift + mittenknappen snurrar. Utan mus: Mellanslag + dra. Dra med vänsterknappen för att markera.', 6000);
+    }
   }
 
   return {

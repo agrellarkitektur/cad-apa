@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.26** (alfa); nästa är **0.10.27 Styrningen i 3D**.
+**0.10.27** (alfa); nästa är **0.10.28 Material, mark först**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,18 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.27, styrningen i 3D (samma filformat, 22):
+- **Som i ArchiCAD**: mittenknappen panorerar och Shift + mittenknappen
+  snurrar vyn; hjulet zoomar som förut, och dubbelklick med mittenknappen
+  visar hela modellen, som i planen. Utan mus: Mellanslag + dra
+  panorerar, Mellanslag + Shift + dra snurrar
+- **Vänsterknappen markerar**: ett klick som förut, och ett drag ritar en
+  markeringsruta som i planen. Från vänster till höger (heldragen) tas det
+  som ryms helt i rutan, från höger till vänster (streckad) allt som rutan
+  nuddar; Shift eller Ctrl lägger till. Ett drag som börjar på det
+  markerade flyttar det, som förut
+- **Högerknappen öppnar menyn** och panorerar inte längre
 
 Version 0.10.26, rampen och stödmuren (samma filformat, 22):
 - **Slänt per sida** på rampen: *Slänt vänster sida* och *Slänt höger

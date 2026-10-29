@@ -213,16 +213,9 @@ export function installMenus(app: AppContext) {
     planContext(x, y);
   });
 
-  // 3D: högerklick utan drag öppnar menyn; högerdrag panorerar som förut.
-  let rightDown: { x: number; y: number } | null = null;
-  app.pane3d.addEventListener('pointerdown', (e) => {
-    if (e.button === 2) rightDown = { x: e.clientX, y: e.clientY };
-  }, { capture: true });
+  // 3D: högerklick öppnar menyn (högerdrag panorerar inte längre, 0.10.27).
   app.pane3d.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    const d = rightDown;
-    rightDown = null;
-    if (d && Math.hypot(e.clientX - d.x, e.clientY - d.y) > 5) return;
     const id = app.view3d?.idAt(e.clientX, e.clientY) ?? null;
     if (id && !app.selection.has(id)) app.selection.set([id]);
     openObjectMenu(e.clientX, e.clientY);

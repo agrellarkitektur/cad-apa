@@ -1630,6 +1630,36 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Styrningen i 3D (0.10.27, format 22)
+
+- **Knapparna** (`view3d.ts`): `controls.mouseButtons = { LEFT: null,
+  MIDDLE: PAN, RIGHT: null }`; OrbitControls byter själv PAN mot ROTATE
+  med Shift, Ctrl eller Meta. Mellanslaget (`spaceDown`) sätter `LEFT`
+  till PAN medan det hålls ned (och nollställs vid `blur`), och
+  `Edit3D.onDown` lämnar då draget till kamerastyrningen
+  (`EditView.panning()`). Dubbelklick med mittenknappen kör `frameAll`.
+  Högerdraget panorerar inte, så `menus.ts` öppnar menyn vid varje
+  `contextmenu` i 3D
+- **Markeringsrutan** (`edit3d.ts`): ett vänsterdrag med mus eller penna
+  som inte börjar i ett grepp eller på det markerade blir `box`; efter
+  5 px ritas `.sel-box3d` (streckad åt vänster, `vyer.css`), och när
+  knappen släpps anropas `EditView.pickBox(rect, 'window' | 'crossing',
+  additive)`. Ett klick utan drag går till `pick` som förut. Bara
+  vänsterknappen sätter `down`, så ett mitten- eller högerklick markerar
+  inget
+- **Vad rutan tar** (`View3D.idsInRect`): hörnen i varje kropps geometri
+  (`matrixWorld`) räknas till fönstrets pixlar och samlas i en rektangel
+  per id; hörn som en sektion klipper bort (`shown`) hoppas över, och ett
+  hörn bakom kameran gör att objektet inte ryms helt. Markobjekten med
+  sina konturer (`Ground3DHost.ids()` och `outline(id)` i `ground3d.ts`).
+  Rummens golv (`floor`) tas inte. Sedan samma jämförelse som
+  `pickInRect` i planen. `onBoxPick(ids, additive)` i `pane3d.ts` sätter
+  eller lägger till markeringen
+- Tester: `tests/v01011.test.ts` (markobjektens `ids`). Resten provat i
+  Playwright mot `dist/` (rutor åt båda hållen, Shift-ruta, mitten, Shift
+  + mitten, Mellanslag, Mellanslag + Shift, högerdrag, dubbelklick,
+  menyn); musen behöver WebGL och provas inte i vitest
+
 ## Rampen och stödmuren (0.10.26, format 22)
 
 Inget nytt format: `leftSlope` och `rightSlope` i `GroundParams` och

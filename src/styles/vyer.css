@@ -307,3 +307,16 @@ table.keys td:first-child {
 .filter-select .filter-count {
   font-weight: 600;
 }
+
+/* Markeringsrutan i 3D (0.10.27), som i planen: streckad åt vänster. */
+.sel-box3d {
+  position: absolute;
+  z-index: 3;
+  border: 1px solid var(--accent);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  pointer-events: none;
+}
+
+.sel-box3d.crossing {
+  border-style: dashed;
+}

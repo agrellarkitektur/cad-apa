@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Vec2 } from '../repr/primitives';
 import type { Material3D, Shape3D } from '../repr/solids';
-import { Edit3D, type Edit3DHost } from './edit3d';
+import { Edit3D, type Edit3DHost, type ScreenRect } from './edit3d';
 import { capObjects, clearGroup, clipPlanes, extrude, groundHit, resolveColor, shown, type Cap3D, type Clip3D } from './geometry3d';
 
 export type { Edit3DHost, Handle3D } from './edit3d';
@@ -29,6 +29,8 @@ const MATERIAL_COLORS: Record<Material3D, string> = {
  * vyn träffar marken och frågar appen vilket objekt som ligger där.
  */
 export interface Ground3DHost {
+  /** Alla markobjekt som går att markera. */
+  ids(): string[];
   /** Den färdiga markens höjd i en punkt, mm från ±0, eller null utanför markmodellen. */
   height(p: Vec2): number | null;
   /** Markobjektet i en punkt i planen, eller null. */
@@ -82,9 +84,13 @@ export class View3D {
   private selected = new Set<string>();
   private framed = false;
   private frame = 0;
+  /** Mellanslaget hålls ned: vänsterknappen panorerar (0.10.27). */
+  private spaceDown = false;
 
   /** Anropas med elementets id när man klickar på något, eller null för tomt. */
   onPick?: (id: string | null, additive: boolean) => void;
+  /** Anropas med det som markeringsrutan tog (0.10.27); Shift eller Ctrl lägger till. */
+  onBoxPick?: (ids: string[], additive: boolean) => void;
   /** Koppling till appen för att ändra modellen. Utan den går 3D bara att titta i. */
   editor?: Edit3DHost;
   /** Markobjekten på marken (0.10.11), eller null utan markmodell. */
@@ -115,6 +121,8 @@ export class View3D {
       ray: (e) => this.ray(e),
       hitAt: (e) => this.hitAt(e),
       pick: (e) => this.pick(e),
+      pickBox: (r, mode, additive) => this.onBoxPick?.(this.idsInRect(r, mode), additive),
+      panning: () => this.spaceDown,
       hover: (e) => this.queueHover(e),
       render: () => this.requestRender(),
     });
@@ -134,6 +142,40 @@ export class View3D {
     // rakt nedifrån stannar den, annars vänder sig bilden.
     this.controls.maxPolarAngle = Math.PI * 0.98;
     this.controls.touches = { ONE: THREE.TOUCH.ROTATE, TWO: THREE.TOUCH.DOLLY_PAN };
+    // Som i ArchiCAD (0.10.27): mittenknappen panorerar och Shift +
+    // mittenknappen orbitar (kamerastyrningen byter själv med Shift).
+    // Vänsterknappen markerar och högerknappen öppnar menyn. Mellanslag +
+    // vänsterknappen gör samma sak som mittenknappen, utan mus.
+    this.controls.mouseButtons = { LEFT: null, MIDDLE: THREE.MOUSE.PAN, RIGHT: null };
+    const typing = (t: EventTarget | null) => t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement || (t instanceof HTMLElement && t.isContentEditable);
+    window.addEventListener('keydown', (e) => {
+      if (e.code !== 'Space' || typing(e.target) || this.spaceDown) return;
+      this.spaceDown = true;
+      this.controls.mouseButtons.LEFT = THREE.MOUSE.PAN;
+      canvas.style.cursor = 'grab';
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.code !== 'Space') return;
+      this.spaceDown = false;
+      this.controls.mouseButtons.LEFT = null;
+      canvas.style.cursor = '';
+    });
+    window.addEventListener('blur', () => {
+      this.spaceDown = false;
+      this.controls.mouseButtons.LEFT = null;
+      canvas.style.cursor = '';
+    });
+    // Dubbelklick med mittenknappen visar hela modellen, som i planen.
+    let lastMiddle = 0;
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse' || e.button !== 1) return;
+      e.preventDefault();
+      const now = performance.now();
+      if (now - lastMiddle < 350) {
+        lastMiddle = 0;
+        this.frameAll();
+      } else lastMiddle = now;
+    });
     this.controls.addEventListener('change', () => {
       this.requestRender();
       this.onCameraChange?.();
@@ -474,6 +516,62 @@ export class View3D {
     return this.ray(e)
       .intersectObjects(this.meshes, false)
       .find((h) => (h.object.userData as { material: Material3D }).material !== 'floor' && shown(this.clipPlanes, h.point));
+  }
+
+  /**
+   * Det som en ruta i fönstret tar (0.10.27), som i planen: "window" det som
+   * syns helt inom rutan, "crossing" allt som nuddar den. Objekten jämförs
+   * med sina hörn räknade till skärmen, utom det som en sektion klipper
+   * bort; ett objekt som delvis ligger bakom kameran ryms aldrig helt.
+   * Rummens golv tas inte, som med ett klick.
+   */
+  idsInRect(r: ScreenRect, mode: 'window' | 'crossing'): string[] {
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const boxes = new Map<string, { minX: number; minY: number; maxX: number; maxY: number; behind: boolean }>();
+    const v = new THREE.Vector3();
+    const add = (id: string, x: number, y: number, z: number) => {
+      v.set(x, y, z);
+      if (!shown(this.clipPlanes, v)) return;
+      let b = boxes.get(id);
+      if (!b) boxes.set(id, (b = { minX: Infinity, minY: Infinity, maxX: -Infinity, maxY: -Infinity, behind: false }));
+      v.project(this.camera);
+      if (v.z > 1 || v.z < -1) {
+        b.behind = true;
+        return;
+      }
+      const sx = rect.left + ((v.x + 1) / 2) * rect.width;
+      const sy = rect.top + ((1 - v.y) / 2) * rect.height;
+      b.minX = Math.min(b.minX, sx);
+      b.maxX = Math.max(b.maxX, sx);
+      b.minY = Math.min(b.minY, sy);
+      b.maxY = Math.max(b.maxY, sy);
+    };
+    this.root.updateMatrixWorld();
+    for (const m of this.meshes) {
+      const { id, material } = m.userData as { id: string; material: Material3D };
+      if (material === 'floor' || !m.visible) continue;
+      const pos = m.geometry.getAttribute('position');
+      const w = new THREE.Vector3();
+      for (let i = 0; i < pos.count; i++) {
+        w.fromBufferAttribute(pos, i).applyMatrix4(m.matrixWorld);
+        add(id, w.x, w.y, w.z);
+      }
+    }
+    // Markobjekten med sina konturer på marken (mm, z uppåt).
+    const g = this.ground;
+    if (g)
+      for (const id of g.ids()) {
+        const o = g.outline(id);
+        if (o) for (let i = 0; i < o.length; i += 3) add(id, o[i] / 1000, o[i + 2] / 1000, -o[i + 1] / 1000);
+      }
+    const ids: string[] = [];
+    for (const [id, b] of boxes) {
+      if (b.minX > b.maxX) continue;
+      const inside = !b.behind && b.minX >= r.minX && b.maxX <= r.maxX && b.minY >= r.minY && b.maxY <= r.maxY;
+      const touches = b.maxX >= r.minX && b.minX <= r.maxX && b.maxY >= r.minY && b.minY <= r.maxY;
+      if (mode === 'window' ? inside : touches) ids.push(id);
+    }
+    return ids;
   }
 
   private pick(e: PointerEvent): void {
