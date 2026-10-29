@@ -2,6 +2,7 @@ import { newId } from './ids';
 import { SITE_STOREY, withSiteLast, type Asset, type Element, type ProjectDoc } from './model';
 import { cropGrid, decodeGrid, encodeGrid, heightAtZone, northOf, terrainOf, zoneToLocal, type Site } from './site';
 import type { DocStore, TxBuilder } from './store';
+import { orthoFromPackage, orthoTouchesSite, type PaketOrtofoto } from './siteOrtho';
 
 /**
  * Platspaketet ur Höjdkurvor (0.10.3), version 1: läsa, kontrollera och
@@ -39,6 +40,8 @@ export interface Platspaket {
     ytor?: { beteckning?: string; etikett?: string; ankare?: XY | null }[];
     varning?: string;
   };
+  /** Ortofotot (0.10.31), om Höjdkurvor skickar det. */
+  ortofoto?: PaketOrtofoto;
   lankar?: { projekt?: string };
   licens?: string;
 }
@@ -139,6 +142,16 @@ function putSite(tx: TxBuilder, pkg: Platspaket): void {
     ...(pkg.licens ? { licence: pkg.licens } : {}),
     ...(pkg.fastigheter?.varning ? { boundaryWarning: pkg.fastigheter.varning } : {}),
   };
+  // Ortofotot (0.10.31): paketets, annars det som fanns om platsen ligger kvar på samma ställe.
+  const ortho = orthoFromPackage(pkg.ortofoto, siteProjectName(pkg));
+  if (ortho && orthoTouchesSite(ortho.ortho, site)) {
+    tx.putAsset(ortho.asset);
+    site.ortho = { ...ortho.ortho, asset: ortho.asset.id, ...(old?.ortho?.show ? { show: old.ortho.show } : {}) };
+    if (old?.ortho) tx.removeAsset(old.ortho.asset);
+  } else if (old?.ortho) {
+    if (keep && orthoTouchesSite(old.ortho, site)) site.ortho = old.ortho;
+    else tx.removeAsset(old.ortho.asset);
+  }
   tx.setField('site', site);
 
   // Platsens objekt hör till Platsen (0.10.25).
@@ -176,7 +189,7 @@ function putSite(tx: TxBuilder, pkg: Platspaket): void {
 const SITE_ELEMENT_TYPES: ReadonlySet<string> = new Set(['Terrain', 'SiteBuilding', 'Tree', 'SiteMap']);
 
 /** Ändra platsens ±0, höjdkurvornas avstånd eller annat i huvudet. */
-export function updateSite(store: DocStore, patch: Partial<Pick<Site, 'datum' | 'contours' | 'ground' | 'meanOnExisting' | 'earthHatch' | 'earthWhite'>>, label = 'Ändra platsen'): void {
+export function updateSite(store: DocStore, patch: Partial<Pick<Site, 'datum' | 'contours' | 'ground' | 'meanOnExisting' | 'earthHatch' | 'earthWhite' | 'ortho'>>, label = 'Ändra platsen'): void {
   const site = store.doc.site;
   if (!site) return;
   store.transact(label, (tx) => tx.setField('site', { ...site, ...patch }));
@@ -189,6 +202,7 @@ export function removeSite(store: DocStore): void {
   store.transact('Ta bort platsen', (tx) => {
     for (const el of Object.values(tx.doc.elements)) if (SITE_ELEMENT_TYPES.has(el.type)) tx.removeElement(el.id);
     if (site.grid) tx.removeAsset(site.grid.asset);
+    if (site.ortho) tx.removeAsset(site.ortho.asset);
     tx.setField('site', undefined);
   });
 }

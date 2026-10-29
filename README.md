@@ -6,7 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.30** (alfa); nästa är **0.10.31 Texturer i 3D och ortofotot på marken**.
+**0.10.31** (alfa); nästa är **utredningen om stilinställningar per vytyp**,
+sedan **0.11 Trappor**.
 
 ## Vad som fungerar
 
@@ -1148,6 +1149,25 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.31, texturer i 3D och ortofotot på marken (samma filformat, 24):
+- **Ortofotot på marken i 3D**: i Platsens inställningar (högerklicka på
+  Platsen i projektträdet) läggs ett ortofoto in med *Lägg in…*: välj
+  bilden och dess världsfil (`.jgw`) samtidigt, t.ex. ur mappen
+  `ortofoto` i Höjdkurvors zip (`_sweref.jgw` eller `_lokal.jgw`). Det
+  draperas på den färdiga marken, också där markobjekten ändrat den. Under
+  *Ortofotot i 3D*: *Där marken saknar material* (förval; markytor,
+  ramper och slänter med material har sitt), *Över hela marken* eller
+  *Av*. Bilden sparas i projektet och skalas ned till högst 4096 pixlar
+- **Ortofotot ur platspaketet**: skickar Höjdkurvor med ortofotot
+  (fältet `ortofoto`) läggs det in med platsen; en uppdatering utan det
+  behåller det gamla
+- **Textur i 3D per material**: under *Textur i 3D* i panelen för ett
+  objekt med material, och på materialets rad i stilmallen, väljs en bild
+  (JPG eller PNG) och *Bildens sida* i mm (förval 1 000). Bilden upprepas
+  på markytor, ramper och slänter, och på stödmurar, bjälklag och tak med
+  materialet; kulören i 3D gäller där texturen saknas. En ny bild behåller
+  storleken, och bilden tas bort ur projektet med materialet
 
 Version 0.10.30, teckenförklaring (samma filformat, 24):
 - **Teckenförklaring på bladet**: högerklicka på ett blad (*Lägg på

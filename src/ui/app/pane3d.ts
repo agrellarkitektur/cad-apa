@@ -1,4 +1,5 @@
-import { colorGroups, colorShapes } from '../../repr/groundColors';
+import { colorGroups, colorShapes, lookKey } from '../../repr/groundColors';
+import { orthoShowOf, orthoUvMatrix } from '../../core/siteOrtho';
 import { levelOf } from '../../repr/solids';
 import { moveElements, moveWallEnd } from '../../core/commands';
 import { buildingStoreys, isSite, type Id } from '../../core/model';
@@ -171,12 +172,15 @@ export function installPane3d(app: AppContext) {
     const lines = !!site && isShown(app.ui, 'contours3d') && !app.ui.hide.includes('Terrain');
     // Materialens kulörer (0.10.28): när materialen eller markobjektens material ändras.
     const shapes = site ? colorShapes(store.doc, ground) : [];
-    const colorKey = shapes.map((s) => `${s.color}:${s.box.map(Math.round).join(',')}:${s.rings.reduce((n, r) => n + r.length, 0)}`).join(';');
-    const shown = [finished ?? site, site?.contours, lines, colorKey];
+    const colorKey = shapes.map((s) => `${lookKey(s)}:${s.box.map(Math.round).join(',')}:${s.rings.reduce((n, r) => n + r.length, 0)}`).join(';');
+    // Ortofotot på marken (0.10.31).
+    const show = orthoShowOf(site);
+    const ortho = site?.ortho && show !== 'off' && store.doc.assets[site.ortho.asset] ? { asset: site.ortho.asset, matrix: orthoUvMatrix(site, site.ortho), mode: show } : null;
+    const shown = [finished ?? site, site?.contours, lines, colorKey, ortho && `${ortho.asset}:${ortho.mode}:${ortho.matrix.join(',')}`];
     if (shown.some((v, i) => v !== shownSite[i])) {
       shownSite = shown;
       const mesh = site ? terrainMesh3d(store.doc, ground, finished) : null;
-      view3d.setTerrain(mesh, lines ? contourSegments3d(store.doc, finished, undefined, finished ? (heightForView(store.doc, ground) ?? undefined) : undefined) : null, mesh ? colorGroups(mesh, shapes) : null);
+      view3d.setTerrain(mesh, lines ? contourSegments3d(store.doc, finished, undefined, finished ? (heightForView(store.doc, ground) ?? undefined) : undefined) : null, mesh ? colorGroups(mesh, shapes) : null, ortho);
     }
     // Markobjekten går att hovra och markera på marken (0.10.11).
     view3d.ground = ground3dHost(store.doc, ground);
@@ -221,6 +225,11 @@ export function installPane3d(app: AppContext) {
     if (mode !== '2d' && !view3d) {
       loading3d ??= import('../../view3d/view3d').then(({ View3D }) => {
         view3d = new View3D(app.pane3d);
+        // Projektets bilder för texturerna och ortofotot (0.10.31).
+        view3d.assetUrl = (id) => {
+          const a = app.store.doc.assets[id];
+          return a ? `data:${a.mime};base64,${a.data}` : null;
+        };
         view3d.editor = edit3d;
         view3d.onCameraChange = () => {
           if (app.ui.mode === '3d') app.positionMeasureBox();

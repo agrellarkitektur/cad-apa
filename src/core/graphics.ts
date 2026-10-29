@@ -153,6 +153,15 @@ export interface Material {
   cut?: Record<string, unknown>;
   surface?: Record<string, unknown>;
   pen?: { weight: number; color?: string };
+  /** Texturen i 3D (0.10.31): en bild i projektets filer, upprepad med sidan `size` mm. */
+  texture?: MaterialTexture;
+}
+
+/** Materialets textur i 3D (0.10.31). */
+export interface MaterialTexture {
+  asset: string;
+  /** Bildens sida i verkligheten, mm. */
+  size: number;
 }
 
 const mat = (id: string, name: string, use: 'g' | 'b' | 'gb', plan: Record<string, unknown>, ill: string, illOp: number, c3: string): Material => ({
@@ -404,6 +413,7 @@ export function normalizeMaterials(v: unknown): Material[] | null {
       ...(cut ? { cut } : {}),
       ...(surface ? { surface } : {}),
       ...(pen ? { pen } : {}),
+      ...(m.texture && typeof m.texture.asset === 'string' && Number(m.texture.size) > 0 ? { texture: { asset: m.texture.asset, size: Number(m.texture.size) } } : {}),
     });
   }
   return out.length ? out : null;

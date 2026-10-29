@@ -80,6 +80,9 @@ export function deleteElements(store: DocStore, ids: Id[]): DeleteResult {
 /** Ta bort filer som inget element längre använder (bland `candidates`). */
 export function pruneAssets(tx: TxBuilder, candidates: Iterable<Id>): void {
   const used = new Set<unknown>(Object.values(tx.doc.elements).map((e) => e.params.asset));
+  // Materialens texturer och ortofotot (0.10.31) räknas också.
+  for (const m of tx.doc.graphics.materials ?? []) if (m.texture) used.add(m.texture.asset);
+  if (tx.doc.site?.ortho) used.add(tx.doc.site.ortho.asset);
   for (const a of candidates) if (!used.has(a)) tx.removeAsset(a);
 }
 

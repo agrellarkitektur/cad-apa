@@ -59,6 +59,28 @@ export interface Site {
   earthHatch?: boolean;
   /** Vit jord under marklinjen i sektionerna, när den inte är skrafferad (0.10.8). */
   earthWhite?: boolean;
+  /** Ortofotot (0.10.31), draperat på marken i 3D. */
+  ortho?: SiteOrtho;
+}
+
+/**
+ * Ortofotot (0.10.31): en bild i en fil (`asset`) med läget i zonens
+ * koordinater (m), som markmodellens rutnät. Bilden är parallell med zonens
+ * axlar (Höjdkurvor ritar om den så).
+ */
+export interface SiteOrtho {
+  asset: Id;
+  /** Bildens västra och norra kant (inte pixelns mitt, som i en världsfil). */
+  x0: number;
+  y1: number;
+  /** Pixelns storlek, m. */
+  s: number;
+  W: number;
+  H: number;
+  /** Flygåret, om det är känt. */
+  year?: number;
+  /** Var det syns i 3D: där marken saknar material (förval), över hela marken, eller inte alls. */
+  show?: 'base' | 'all' | 'off';
 }
 
 /** Förvalen för markobjekten (0.10.4), i mm och som 1:N. */

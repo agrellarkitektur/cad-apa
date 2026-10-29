@@ -52,9 +52,11 @@ export const groundType: ElementType<GroundParams> = {
     const prof = wallProfile(ctx, el);
     if (!prof) return [];
     // Materialets kulör (0.10.28).
-    const color = materialOf(p as Partial<FillParams>, ctx.style)?.color3d;
+    const m = materialOf(p as Partial<FillParams>, ctx.style);
     const solids = wallSolids(el.id, prof, storeyElevation(ctx, el.storey));
-    return color ? solids.map((s) => (s.kind === 'edges' ? s : { ...s, color })) : solids;
+    // Och texturen (0.10.31).
+    const look = { ...(m?.color3d ? { color: m.color3d } : {}), ...(m?.texture ? { texture: m.texture } : {}) };
+    return Object.keys(look).length ? solids.map((s) => (s.kind === 'edges' ? s : { ...s, ...look })) : solids;
   },
   pickShape(el, ctx) {
     const g = groundGeometry(ctx, el);

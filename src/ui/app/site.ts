@@ -13,6 +13,8 @@ import { askChoice, askConfirm, dialog } from '../ask';
 import { escapeHtml } from '../labels';
 import type { AppContext } from './context';
 import { defaultState } from './helpers';
+import { orthoFromWorld, orthoShowOf, orthoTouchesSite, parseWorldFile, setSiteOrtho } from '../../core/siteOrtho';
+import { imageAsset, ORTHO_MAX_PX, pickFiles } from './imageFile';
 
 /**
  * Platsen ur Höjdkurvor (0.10.3): ta emot platspaketet (fil, dra och släpp
@@ -167,11 +169,17 @@ export function installSite(app: AppContext) {
           ${row('Markmodell', t ? `${t.grid.W} × ${t.grid.H} punkter, ${mf(t.grid.s, 2)} m mellan, ${mf(t.min, 2)}–${mf(t.max, 2)} m` : 'Ingen (skapa underlaget i Höjdkurvor)')}
           ${row('Medelmarknivå', m.z !== null ? `+${mf(toRh(site, m.z))} längs husets kontur (${m.z >= 0 ? '+' : '−'}${mf(Math.abs(m.z) / 1000)} från ±0)${m.finished !== null && m.existing !== null ? `; färdig mark +${mf(toRh(site, m.finished))}, befintlig +${mf(toRh(site, m.existing))}` : ''}` : m.house ? 'Ingen mark under huset' : 'Rita huset först')}
           ${m.bh && m.bh.height !== null ? row('Byggnadshöjd', `${mf(m.bh.height / 1000, 2)} m enligt PBF utan språng, på fasaden mot ${compass(m.bh.main.out, northOf(site))} (${m.bh.basis ? 'den beräkningsgrundande' : 'den längsta; rita en beräkningsgrundande fasad med verktyget Fasad'}), +${mf(toRh(site, m.bh.main.z))}. Nockhöjd ${mf((m.bh.ridge - (m.z ?? 0)) / 1000, 2)} m. Undantagen (kupor, allmän plats närmare än 6 m) bedöms för hand.`) : ''}
+          ${row('Ortofoto', site.ortho ? `${site.ortho.year ? `Flygår ${site.ortho.year}, ` : ''}${mf(site.ortho.s, 2)} m per pixel, ${mf((site.ortho.W * site.ortho.s), 0)} × ${mf(site.ortho.H * site.ortho.s, 0)} m` : 'Inget')}
           ${m.volumes ? row('Schakt och fyll', `${m3(m.volumes.cut)} schakt, ${m3(m.volumes.fill)} fyll (${m.objects} markobjekt i tillståndet som visas)`) : ''}
         </dl>
         <label class="site-field"><span>±0, plan 1:s golv, i RH 2000 (m)</span><span class="site-datum"><input class="ask-input" data-site="datum" inputmode="decimal" value="${mf(over?.datum ?? site.datum)}">${t ? `<button type="button" class="btn" data-site-action="pick" title="Klicka på marken i planen; höjden där blir ±0, avrundad till centimeter. Den kan ändras här efteråt.">Klicka i planen</button>` : ''}${mmnButtons(m)}</span></label>
         ${t ? `<label class="site-field"><span>Höjdkurvor var</span><select data-site="contours">${CONTOUR_STEPS.map((c) => `<option value="${c}"${c === interval ? ' selected' : ''}>${mf(c / 1000, 2)} m</option>`).join('')}</select></label>` : ''}
         ${t ? `<div class="site-field site-crop"><span>Beskär markmodellen till</span><input class="ask-input" data-site="crop" inputmode="decimal" value="30"><span>m runt huset</span><button type="button" class="btn" data-site-action="crop"${m.house ? '' : ' disabled title="Rita huset först"'}>Beskär</button></div>` : ''}
+        <div class="site-field site-ortho"><span>Ortofotot i 3D</span>${
+          site.ortho
+            ? `<select data-site="ortho"><option value="base"${orthoShowOf(site) === 'base' ? ' selected' : ''}>Där marken saknar material</option><option value="all"${orthoShowOf(site) === 'all' ? ' selected' : ''}>Över hela marken</option><option value="off"${orthoShowOf(site) === 'off' ? ' selected' : ''}>Av</option></select><button type="button" class="btn" data-site-action="ortho-remove">Ta bort</button>`
+            : ''
+        }<button type="button" class="btn" data-site-action="ortho" title="Bilden (JPG eller PNG) och dess världsfil (.jgw), t.ex. ur mappen ortofoto i Höjdkurvors zip. Välj båda filerna samtidigt.">${site.ortho ? 'Byt…' : 'Lägg in…'}</button></div>
         ${t ? groundSettings(site.ground, site.meanOnExisting, site.earthHatch ? 'hatch' : site.earthWhite ? 'white' : 'none') : ''}
         ${site.boundaryWarning ? `<p class="site-note">${escapeHtml(site.boundaryWarning)}</p>` : ''}
         ${site.licence ? `<p class="site-note">${escapeHtml(site.licence)} Skriv <code>{licens}</code> i en text på bladet eller mallbladet för att få med den.</p>` : ''}
@@ -203,6 +211,14 @@ export function installSite(app: AppContext) {
           patch.earthHatch = earth === 'hatch' || undefined;
           patch.earthWhite = earth === 'white' || undefined;
         }
+        // Ortofotot i 3D (0.10.31).
+        const ortho = form.querySelector<HTMLSelectElement>('[data-site="ortho"]')?.value as 'base' | 'all' | 'off' | undefined;
+        if (site.ortho && ortho && ortho !== orthoShowOf(site)) {
+          const o = { ...site.ortho };
+          if (ortho === 'base') delete o.show;
+          else o.show = ortho;
+          patch.ortho = o;
+        }
         const changed = (Object.keys(patch) as (keyof typeof patch)[]).some((k) => JSON.stringify(patch[k]) !== JSON.stringify(site[k]));
         if (changed) updateSite(app.store, patch);
         done('saved');
@@ -226,6 +242,8 @@ export function installSite(app: AppContext) {
     if (r === 'remove') {
       if (await askConfirm('Ta bort platsen', 'Markmodellen, grannhusen, träden och fastighetsgränserna tas bort. Huset och norrpilen står kvar.')) removeSite(app.store);
     } else if (r === 'file') chooseFile();
+    else if (r === 'ortho') await chooseOrtho();
+    else if (r === 'ortho-remove') setSiteOrtho(app.store, null);
     else if (r === 'pick') pickDatum();
     else if (r?.startsWith('crop:')) {
       const margin = Number(r.slice(5));
@@ -241,6 +259,41 @@ export function installSite(app: AppContext) {
       };
       const ok = await askConfirm('Beskär markmodellen', `Markmodellen och det som kom med platsen beskärs till ${mf(margin / 1000, 0)} m runt huset. Det går att ångra, men inte att få tillbaka efter att projektet sparats utan att lägga in platsen igen.`, 'Beskär');
       if (ok && !cropSite(app.store, box)) app.hint('Rutan täcker inte markmodellen.', 4000);
+    }
+  }
+
+  /**
+   * Ortofotot för hand (0.10.31): bilden och världsfilen, valda samtidigt.
+   * Världsfilen kan vara i zonens koordinater eller lokal (Höjdkurvors
+   * `_lokal.jgw`, meter från nollpunkten).
+   */
+  async function chooseOrtho(): Promise<void> {
+    const site = app.store.doc.site;
+    if (!site) return;
+    const files = await pickFiles('.jpg,.jpeg,.png,.jgw,.pgw,.wld,image/jpeg,image/png', true);
+    if (!files.length) return;
+    const image = files.find((f) => /\.(jpe?g|png)$/i.test(f.name) || f.type.startsWith('image/'));
+    const world = files.find((f) => /\.(jgw|pgw|jpgw|pngw|wld)$/i.test(f.name));
+    if (!image || !world) {
+      app.hint('Välj både bilden och dess världsfil (.jgw) samtidigt, t.ex. ur mappen ortofoto i Höjdkurvors zip.', 6000);
+      return;
+    }
+    const w = parseWorldFile(await world.text());
+    if (!w) {
+      app.hint(`${world.name} gick inte att läsa som världsfil, eller bilden är vriden.`, 5000);
+      return;
+    }
+    try {
+      const img = await imageAsset(image, ORTHO_MAX_PX, 'orto', `${site.source.name ?? 'Platsen'} – ortofoto`);
+      const ortho = orthoFromWorld(w, img.width, img.height, site);
+      if (!orthoTouchesSite(ortho, site)) {
+        app.hint('Ortofotot ligger inte över platsen. Är världsfilen för samma koordinatsystem?', 6000);
+        return;
+      }
+      setSiteOrtho(app.store, { asset: img.asset, ortho });
+      app.hint('Ortofotot är inlagt och syns på marken i 3D.', 4000);
+    } catch (e) {
+      app.hint(`${image.name}: ${(e as Error).message}`, 5000);
     }
   }
 

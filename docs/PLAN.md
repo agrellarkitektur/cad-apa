@@ -3460,13 +3460,47 @@ hör till utredningen om stilinställningar per vytyp, eftersom en kategori
 är en förinställning; *Undertak* (spegelvänd plan sedd underifrån) kräver
 en egen ritning och läggs där som egen punkt.
 
-### 0.10.31 Texturer i 3D och ortofotot på marken
+### 0.10.31 Texturer i 3D och ortofotot på marken ✓
 
 Beslutat 28 oktober (svar E: före piloten). Mellanstor. En bild i
 materialets 3D-representation, sparad i filen och upprepad i meter på
 markobjekten; kulören där texturen saknas. Ortofotot draperat på marken,
 också den ändrade; först undersöks om det inte följer med från Höjdkurvor
 eller tappas här. Hör ihop med trädens detaljnivåer.
+
+*Gjord 29 oktober, samma format (24; valfria fält). Testerna: 724.
+**Undersökningen:** ortofotot tappades inte här. Höjdkurvor skickar det
+aldrig: platspaketet (`Utbyte.platspaket`) har inget fält för det, och
+Höjdkurvors överlämning har "ortofotot som underlag i cad-apa" bland
+obeslutade idéer. Ortofotot finns i Höjdkurvors zip (`ortofoto/…jpg` med
+`_sweref.jgw` och `_lokal.jgw`) och i `senaste.ortofoto` (`bild` som
+data-URL, `x0`/`y1` pixelns mitt, `s`, `W`, `H`, `ar`). **Här:**
+platspaketets valfria fält `ortofoto` med just de fälten
+(`PaketOrtofoto` i `core/siteOrtho.ts`), och för hand bilden med
+världsfil i Platsens dialog. `site.ortho` har bildens kanter i zonens
+koordinater; `orthoUvMatrix` ger 3D-vyn en affin avbildning från planens
+mm till bilden, så att den fungerar med vridning. **Texturen:**
+`material.texture` = `{ asset, size }` (mm), en fil i projektet som
+underlagen. Marknätets grupper (`colorGroups`) skiljer på kulör och
+textur (`lookKey`); kropparna (stödmur, bjälklag, tak) får `texture` och
+UV i 3D-vyn (`boxUv`: liggande ytor planens x och y, stående längs ytan
+och höjden). Claudes val: ortofotot *Där marken saknar material* som
+förval (materialen går före), högst 4096 px för ortofotot och 1024 px för
+en textur (nedskalade vid inläsning), bildens sida 1 000 mm som förval
+och i mm som andra mått, en världsfil med små tal läses som Höjdkurvors
+lokala (meter från nollpunkten, utan vridning) när zonens inte hamnar
+över platsen, och en ny bild behåller storleken. Provat i Playwright mot
+`dist/` (ortofotot och tegeltexturen på rätt ställe uppifrån, dialogerna,
+bildvalet).*
+
+*Gjordes inte:* Höjdkurvors sida (två rader: `ortofoto: s && s.ortofoto`
+till `Utbyte.platspaket` i `app.js`, och fältet i `platspaket` i
+`utbyte.js` med licensen) hör till Höjdkurvor och görs i en session där;
+till dess läggs ortofotot in ur zipen. Ortofotot i 2D (illustrationsplan
+på flygfoto) hör till utredningen om underlag i vyn. Texturer på väggar,
+rum och andra objekt kommer när materialen utökas till alla objekttyper.
+Stilmallen som fil tar inte med texturerna (bilderna bor i projektet).
+Trädens detaljnivåer i 0.12.1.
 
 ### Utredning: stilinställningar per vytyp och underlag i vyn
 

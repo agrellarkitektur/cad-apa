@@ -1640,6 +1640,36 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Texturer och ortofoto (0.10.31, format 24)
+
+- **Ortofotot** är `site.ortho` (`SiteOrtho` i `core/site.ts`): bildens
+  fil (`asset`), västra och norra kanten i zonens koordinater (`x0`, `y1`,
+  inte pixelns mitt), pixelstorleken `s`, `W` × `H` pixlar, `year` och
+  `show` (`base` utan fält, `all`, `off`). Allt om det i
+  `core/siteOrtho.ts`: `parseWorldFile`, `orthoFromWorld` (zonens
+  koordinater, annars lokala från nollpunkten), `orthoFromPackage`
+  (platspaketets `ortofoto`: `bild` som data-URL och pixelns mitt, som en
+  världsfil och som Höjdkurvors `senaste.ortofoto`), `putOrtho`,
+  `setSiteOrtho` och `orthoUvMatrix`. `putSite` behåller det gamla när
+  paketet saknar ortofoto och platsen ligger kvar; `removeSite` tar bort
+  bilden.
+- **Texturen** är `material.texture` = `{ asset, size }` (bildens sida i
+  mm). `setMaterialTexture` byter eller tar bort bilden i en transaktion
+  och tar bort den gamla filen om inget material använder den;
+  `deleteMaterial` likaså. `pruneAssets` räknar materialens texturer och
+  ortofotot som använda.
+- **3D-vyn**: `view3d.assetUrl` (satt i `pane3d.ts`) ger en fil som
+  data-URL; `image()` laddar varje fil en gång och delar bilden mellan
+  materialen (`clone` delar källan). Marknätet får UV = planens x och y i
+  mm; en textur har `repeat` 1/size, ortofotot en egen `matrix`
+  (`matrixAutoUpdate = false`). `setTerrain` tar ortofotot som fjärde
+  argument. Kroppar med `texture` får UV med `boxUv` (`geometry3d.ts`).
+  Grupperna i `colorGroups` har `color` (eller null) och `texture`;
+  `lookKey` skiljer dem åt.
+- Bilderna läses i `ui/app/imageFile.ts` (`imageAsset` skalar ned med en
+  canvas; `pickTexture`, `chooseTexture`). Ortofotot väljs i
+  `chooseOrtho` i `ui/app/site.ts`.
+
 ## Teckenförklaring (0.10.30, format 24)
 
 - **`Legend`** (`src/elements/legend.ts`) ligger på bladet (`space` =

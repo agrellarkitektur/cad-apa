@@ -20,6 +20,6 @@ export function materialPen(m: Material | undefined, pen: Pen): Pen {
 }
 
 /** Formens fält i 3D för materialet: kulören och materialets nyckel (för snittet och ytan i sektioner och fasader). */
-export function materialSolid(m: Material | undefined): { color?: string; matId?: string } {
-  return m ? { ...(m.color3d ? { color: m.color3d } : {}), matId: m.id } : {};
+export function materialSolid(m: Material | undefined): { color?: string; matId?: string; texture?: { asset: string; size: number } } {
+  return m ? { ...(m.color3d ? { color: m.color3d } : {}), matId: m.id, ...(m.texture ? { texture: m.texture } : {}) } : {};
 }

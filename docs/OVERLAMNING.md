@@ -4,10 +4,19 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.30.
+**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.31.
 
 ## Läget
 
+- **0.10.31 Texturer i 3D och ortofotot på marken är klar** (samma
+  format, 24; valfria fält): ortofotot tappades inte här, Höjdkurvor
+  skickar det aldrig. `site.ortho` läggs in ur platspaketets nya valfria
+  fält `ortofoto` (samma fält som Höjdkurvors `senaste.ortofoto`) eller för
+  hand med bild + `.jgw` i Platsens dialog, och draperas på den färdiga
+  marken i 3D (`orthoUvMatrix`). `material.texture` = `{ asset, size }`
+  på marknätet och kropparna (`boxUv`). Testerna: 724 på ca 12 s. Provat i
+  Playwright mot `dist/`. **Höjdkurvors del återstår** (två rader, se
+  PLAN.md); den görs i en Höjdkurvor-session.
 - **0.10.30 Teckenförklaring är klar** (samma format, 24): elementtypen
   `Legend` på bladet läser materialen i bladets vyer (`legendSources` i
   `buildSheet`, `ViewStates.legend`) och ritar rutor i vyns skala; plus
@@ -26,9 +35,11 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   **0.10.28.1 Materiallistan**, **0.10.28 Material, mark först**, **0.10.27 Styrningen i 3D**,
   **0.10.26 Rampen och stödmuren**, **0.10.25.1** (granskning) och
   **0.10.25 Platsen som modellflik**: se PLAN.md.
-- **Publicerad:** 0.10.30 pushad till `main` 29 oktober (se git och
+- **Publicerad:** 0.10.31 pushad till `main` 29 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.10.31:** inget i befintliga projekt
+  (inget ortofoto och inga texturer förrän man lägger in dem).
 - **Märks i hans ritningar efter 0.10.30:** inget i befintliga projekt.
   Högerklick utanför programmets menyer ger inte längre webbläsarens meny.
 - **Märks i hans ritningar efter 0.10.29:** inget i befintliga projekt.
@@ -50,14 +61,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare i dag:** 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare i dag:** 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.30` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.31` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.30 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.31 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -125,10 +136,12 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   stödmuren~~, ~~0.10.27 Styrningen i 3D~~, ~~0.10.28 Material, mark
   först~~, ~~0.10.28.1 Materiallistan~~, ~~0.10.28.2 Material på
   bjälklag och tak~~, ~~Granskning efter 0.10.28.2 (0.10.28.3)~~,
-  ~~0.10.29 Ritandet~~, ~~0.10.30 Teckenförklaring~~ (klara)
-- **0.10.31 Texturer i 3D och ortofotot på marken** (mellanstor; på tur)
+  ~~0.10.29 Ritandet~~, ~~0.10.30 Teckenförklaring~~, ~~0.10.31 Texturer
+  i 3D och ortofotot på marken~~ (klara)
+- **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
+  och session)
 - **Utredning: stilinställningar per vytyp och underlag i vyn**
-  (planeringssession; ändringen stor, troligen nytt format; med penn- och
+  (planeringssession; på tur; ändringen stor, troligen nytt format; med penn- och
   linjesystemet och vykategorierna för planer, fasader och sektioner)
 - **0.11 Trappor** (nytt format; med *Syns också på*)
 - **0.11.1 Profilverktyget** (stor) och **0.11.2 Dörrar och fönster**
@@ -146,16 +159,15 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.31 Texturer i 3D och ortofotot på marken** (mellanstor; se
-`cad-apa-synpunkter.md` och PLAN.md). Läs synpunkterna först och sortera
-Inkorgen om den har något. Börja med att undersöka ortofotot: följer det
-inte med från Höjdkurvor, eller tappas det här? Sedan en bild i
-materialets 3D-representation, sparad i filen och upprepad i meter på
-markobjekten (troligen nytt format). Ny chatt: den förra körde 0.10.29
-och 0.10.30.
+**Utredningen om stilinställningar per vytyp och underlag i vyn**
+(planeringssession). Carl August startar den i en egen chatt med en färdig
+text; den behöver inte föreslås. Läs synpunkterna först och sortera
+Inkorgen om den har något. Ortofotot i 2D (illustrationsplan på flygfoto)
+hör dit, som *underlag i vyn*.
 
-Utredningen om stilinställningarna startas av Carl August i en egen chatt
-med en färdig text; den behöver inte föreslås.
+Höjdkurvors del av ortofotot (två rader i `js/app.js` och `js/utbyte.js`,
+plus raden i `docs/UTBYTE-CAD-APA.md` där) görs i en session i
+Höjdkurvors repo; fälten står i PLAN.md under 0.10.31.
 
 ## Att fråga Carl August om
 
@@ -163,6 +175,14 @@ Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
 om 0.10.27–0.10.23 likaså.
+
+**0.10.31 efter provning** (Claudes val, se PLAN.md)
+- Ortofotot ligger som förval där marken saknar material (markytor och
+  ramper med material har sitt). Rätt förval, eller hellre över hela
+  marken?
+- Bildens sida skrivs i mm (förval 1 000), som andra mått. Hellre i meter?
+- Ska ortofotot och texturerna ljusas upp eller tonas (de skuggas som
+  kulörerna nu), eller ser de rätt ut?
 
 **0.10.30 efter provning** (Claudes val, se PLAN.md)
 - Teckenförklaringens rutor 10 × 6 mm, text 2,5 mm och rubriken 3,5 mm

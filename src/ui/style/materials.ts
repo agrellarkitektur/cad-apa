@@ -32,6 +32,7 @@ export function materialSection(style: StyleSheet, uses: ReadonlyMap<string, num
           ${color('plan', 'Planen', planColor)}
           ${color('ill', 'Illustration', m.illustration?.color ?? planColor)}
           ${color('c3d', '3D', m.color3d ?? MATERIAL_3D_COLOR)}
+          ${textureFields(m)}
           <span class="material-uses">${n ? `${n} objekt` : ''}</span>
         </div>
         ${m.building ? `<div class="material-building">${buildingFields(m, (k) => `data-material="${id}:${k}"`, style)}</div>` : ''}
@@ -44,6 +45,17 @@ export function materialSection(style: StyleSheet, uses: ReadonlyMap<string, num
     ${rows || '<p class="note">Inga material.</p>'}
     <button class="btn" data-action="material-add">Nytt material</button>
   </section>`;
+}
+
+/** Texturen i 3D (0.10.31): välj eller byt bilden, bildens sida i mm och ta bort. */
+function textureFields(m: Material): string {
+  const id = escapeHtml(m.id);
+  const t = m.texture;
+  return `<span class="material-texture"><span>Textur</span><button class="btn" data-action="material-texture" data-material-id="${id}" title="En bild (JPG eller PNG) som upprepas på ytan i 3D. Den sparas i projektet.">${t ? 'Byt…' : 'Välj…'}</button>${
+    t
+      ? `<label title="Bildens sida i verkligheten"><input type="text" data-expr inputmode="decimal" data-material="${id}:tsize" value="${t.size}" aria-label="Bildens sida"><i>mm</i></label><button class="btn btn-ghost" data-action="material-texture-remove" data-material-id="${id}" title="Ta bort texturen" aria-label="Ta bort texturen">×</button>`
+      : ''
+  }</span>`;
 }
 
 /**
@@ -71,6 +83,12 @@ export function materialFieldChange(style: StyleSheet, input: HTMLInputElement |
   if (BUILDING_KEYS.has(field)) {
     const change = buildingChange(m, field, input.value);
     return change ? { id, ...change } : null;
+  }
+  // Texturens storlek (0.10.31).
+  if (field === 'tsize') {
+    const size = Math.round(Number(input.value.replace(',', '.')));
+    if (!(size > 0) || !m.texture || size === m.texture.size) return null;
+    return { id, label: `Ändra texturens storlek: ${m.name}`, fn: (q) => (q.texture ? { ...q, texture: { ...q.texture, size } } : q) };
   }
   const c = input.value;
   if (!/^#[0-9a-f]{6}$/i.test(c)) return null;

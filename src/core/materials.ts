@@ -1,5 +1,5 @@
 import type { Material, MaterialUse, StyleSheet } from './graphics';
-import type { Element, Id } from './model';
+import type { Asset, Element, Id } from './model';
 import type { DocStore } from './store';
 import { effectiveFill, FILL_FIELDS, type FillParams } from '../elements/drawing2d';
 
@@ -189,7 +189,36 @@ export function deleteMaterial(store: DocStore, id: string): void {
     if (rest.length) next.materials = rest;
     else delete next.materials;
     tx.setGraphics(next);
+    if (m.texture) dropTexture(tx, m.texture.asset);
   });
+}
+
+/** Förvalet för texturens storlek (0.10.31): en meter. */
+export const TEXTURE_SIZE = 1000;
+
+/**
+ * Ge materialet en textur i 3D (0.10.31), eller ta bort den (`null`).
+ * Bilden blir en fil i projektet; en bild som inget annat material
+ * använder tas bort. Storleken behålls när bilden byts.
+ */
+export function setMaterialTexture(store: DocStore, id: string, asset: Asset | null): void {
+  const style = store.doc.graphics;
+  const m = style.materials?.find((q) => q.id === id);
+  if (!m || (!asset && !m.texture)) return;
+  const next: Material = { ...m };
+  if (asset) next.texture = { asset: asset.id, size: m.texture?.size ?? TEXTURE_SIZE };
+  else delete next.texture;
+  store.transact(asset ? `Textur: ${m.name}` : `Ta bort texturen: ${m.name}`, (tx) => {
+    if (asset) tx.putAsset(asset);
+    tx.setGraphics({ ...style, materials: style.materials!.map((q) => (q.id === id ? next : q)) });
+    if (m.texture) dropTexture(tx, m.texture.asset);
+  });
+}
+
+/** Ta bort bilden om inget material längre använder den. */
+function dropTexture(tx: { doc: { graphics: StyleSheet; assets: Record<Id, Asset> }; removeAsset(id: Id): void }, asset: Id): void {
+  if (!tx.doc.assets[asset] || (tx.doc.graphics.materials ?? []).some((q) => q.texture?.asset === asset)) return;
+  tx.removeAsset(asset);
 }
 
 /** Överstyr objektens opacitet eller vridning (0.10.28); `undefined` följer materialet igen. */

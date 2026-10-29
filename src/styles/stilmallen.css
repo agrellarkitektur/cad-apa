@@ -411,6 +411,28 @@
   border: 1px solid var(--rule);
 }
 
+/* Texturen i 3D (0.10.31): knappen, bildens sida och ta bort. */
+.material-texture,
+.material-texture label {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.material-texture .btn {
+  width: auto;
+  padding: 1px 8px;
+}
+
+.material-texture input[type='text'] {
+  width: 4.5em;
+}
+
+.material-texture i {
+  color: var(--muted);
+  font-style: normal;
+}
+
 .material-uses {
   color: var(--muted);
   margin-left: auto;

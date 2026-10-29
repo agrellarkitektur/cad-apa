@@ -33,6 +33,8 @@ export interface Solid {
   color?: string;
   /** Stilmallens material (0.10.28.2): snittet i sektioner och ytan i fasader. */
   matId?: string;
+  /** Materialets textur i 3D (0.10.31). */
+  texture?: { asset: string; size: number };
   /**
    * Rita inga kantlinjer för formen. Väggar sätter det och levererar egna
    * kantlinjer, så att skarvar mellan bitarna runt öppningar inte syns.

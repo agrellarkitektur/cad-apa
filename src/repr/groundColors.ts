@@ -18,15 +18,28 @@ import type { Vec2 } from './primitives';
 export interface ColorGroup {
   start: number;
   count: number;
-  /** #rrggbb, eller null för markens egen kulör. */
+  /** #rrggbb, eller null för markens egen kulör (och ortofotot, 0.10.31). */
   color: string | null;
+  /** Materialets textur (0.10.31). */
+  texture?: { asset: string; size: number };
 }
 
 interface Shape {
   rings: Vec2[][];
   box: [number, number, number, number];
+  /** Kulören, eller tom när bara texturen finns. */
   color: string;
+  texture?: { asset: string; size: number };
 }
+
+/** Materialets utseende i 3D: kulören och texturen (0.10.31), eller inget. */
+function lookOf(m: { color3d?: string; texture?: { asset: string; size: number } } | undefined): { color: string; texture?: { asset: string; size: number } } | undefined {
+  if (!m || (!m.color3d && !m.texture)) return undefined;
+  return { color: m.color3d ?? '', ...(m.texture ? { texture: m.texture } : {}) };
+}
+
+/** Nyckeln som skiljer två utseenden åt. */
+export const lookKey = (s: { color: string | null; texture?: { asset: string; size: number } }) => `${s.color ?? ''}|${s.texture ? `${s.texture.asset}@${s.texture.size}` : ''}`;
 
 /** Ytorna med en kulör i 3D, i ritordning: slänterna under sitt objekt. */
 export function colorShapes(doc: ProjectDoc, view: ViewStates): Shape[] {
@@ -34,8 +47,8 @@ export function colorShapes(doc: ProjectDoc, view: ViewStates): Shape[] {
   if (!storey || !doc.site || !doc.graphics.materials?.length) return [];
   const { ctx } = createContext(doc, storey, view, doc.graphics, () => true);
   const out: Shape[] = [];
-  const push = (rings: Vec2[][], color: string | undefined) => {
-    if (!color || !rings.length) return;
+  const push = (rings: Vec2[][], look: ReturnType<typeof lookOf>) => {
+    if (!look || !rings.length) return;
     const box: [number, number, number, number] = [Infinity, Infinity, -Infinity, -Infinity];
     for (const r of rings)
       for (const q of r) {
@@ -44,13 +57,13 @@ export function colorShapes(doc: ProjectDoc, view: ViewStates): Shape[] {
         box[2] = Math.max(box[2], q[0]);
         box[3] = Math.max(box[3], q[1]);
       }
-    out.push({ rings, box, color });
+    out.push({ rings, box, ...look });
   };
   for (const el of groundObjects(ctx)) {
     const p = ctx.params<GroundParams>(el);
     if (p.kind !== 'area' && p.kind !== 'path') continue;
-    const own = materialOf(p as Partial<FillParams>, doc.graphics)?.color3d;
-    const slope = materialOf((p.slopeFill ?? {}) as Partial<FillParams>, doc.graphics)?.color3d;
+    const own = lookOf(materialOf(p as Partial<FillParams>, doc.graphics));
+    const slope = lookOf(materialOf((p.slopeFill ?? {}) as Partial<FillParams>, doc.graphics));
     if (!own && !slope) continue;
     const g = groundGeometry(ctx, el);
     if (!g) continue;
@@ -87,7 +100,8 @@ export function colorGroups(mesh: { positions: Float32Array; indices: Uint32Arra
     all[2] = Math.max(all[2], s.box[2]);
     all[3] = Math.max(all[3], s.box[3]);
   }
-  const colors = [...new Set(shapes.map((s) => s.color))];
+  const keys = [...new Set(shapes.map(lookKey))];
+  const firstOf = keys.map((k) => shapes.find((s) => lookKey(s) === k)!);
   const which = new Int32Array(I.length / 3).fill(-1);
   let any = false;
   for (let t = 0; t < which.length; t++) {
@@ -101,7 +115,7 @@ export function colorGroups(mesh: { positions: Float32Array; indices: Uint32Arra
     for (let k = shapes.length - 1; k >= 0; k--) {
       const s = shapes[k];
       if (x < s.box[0] || x > s.box[2] || y < s.box[1] || y > s.box[3] || !inside(s.rings, x, y)) continue;
-      which[t] = colors.indexOf(s.color);
+      which[t] = keys.indexOf(lookKey(s));
       any = true;
       break;
     }
@@ -110,7 +124,7 @@ export function colorGroups(mesh: { positions: Float32Array; indices: Uint32Arra
   const indices = new Uint32Array(I.length);
   const groups: ColorGroup[] = [];
   let n = 0;
-  for (let c = -1; c < colors.length; c++) {
+  for (let c = -1; c < keys.length; c++) {
     const start = n;
     for (let t = 0; t < which.length; t++) {
       if (which[t] !== c) continue;
@@ -118,7 +132,9 @@ export function colorGroups(mesh: { positions: Float32Array; indices: Uint32Arra
       indices[n++] = I[t * 3 + 1];
       indices[n++] = I[t * 3 + 2];
     }
-    if (n > start) groups.push({ start, count: n - start, color: c < 0 ? null : colors[c] });
+    if (n <= start) continue;
+    const f = c < 0 ? null : firstOf[c];
+    groups.push({ start, count: n - start, color: f?.color || null, ...(f?.texture ? { texture: f.texture } : {}) });
   }
   return { indices, groups };
 }

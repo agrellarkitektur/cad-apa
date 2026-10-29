@@ -8,7 +8,8 @@ import { icons } from './icons';
 import { escapeHtml } from './labels';
 import { fillChange, shapeChange, shapeFields } from './shapeFields';
 import { askText } from './ask';
-import { deleteMaterial, saveMaterial, updateMaterial } from '../core/materials';
+import { deleteMaterial, saveMaterial, setMaterialTexture, updateMaterial } from '../core/materials';
+import { chooseTexture } from './app/imageFile';
 import { showChange, showClick } from './showFields';
 import { underlayChange, underlayFields } from './underlayFields';
 
@@ -92,6 +93,15 @@ export function drawingClick(store: DocStore, ids: Id[], b: HTMLElement, root: H
       const n = name?.trim();
       if (n && n !== b.dataset.name) updateMaterial(store, id, `Byt namn på material: ${n}`, (m) => ({ ...m, name: n }));
     });
+    return true;
+  }
+  // Materialets textur i 3D (0.10.31).
+  if (b.dataset.action === 'material-texture' && b.dataset.id) {
+    void chooseTexture(store, b.dataset.id);
+    return true;
+  }
+  if (b.dataset.action === 'material-texture-remove' && b.dataset.id) {
+    setMaterialTexture(store, b.dataset.id, null);
     return true;
   }
   if (b.dataset.action === 'fill-unsave' && b.dataset.id) {

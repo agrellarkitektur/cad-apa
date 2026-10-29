@@ -35,7 +35,7 @@ export function fillFields(
 }
 
 /** Nycklarna för materialets illustrationsplan och 3D och objektets överstyrningar (0.10.28). */
-const MATERIAL_KEYS: ReadonlySet<string> = new Set(['matIllKind', 'matIllColor', 'matIllOpacity', 'matColor3d', 'materialOpacity', 'materialAngle']);
+const MATERIAL_KEYS: ReadonlySet<string> = new Set(['matIllKind', 'matIllColor', 'matIllOpacity', 'matColor3d', 'matTextureSize', 'materialOpacity', 'materialAngle']);
 
 /**
  * En ändring i fyllningens panel för objekten `ids`. Med `nested` gäller
@@ -110,6 +110,8 @@ function materialFieldChange(store: DocStore, ids: Id[], m: Material, name: stri
   else if (name === 'matIllColor') edit('Ändra färgen i illustrationsplanen', (q) => ({ ...q, illustration: { ...q.illustration, color: value } }));
   else if (name === 'matIllOpacity' && Number.isFinite(num)) edit('Ändra opaciteten i illustrationsplanen', (q) => ({ ...q, illustration: { color: q.illustration?.color ?? MATERIAL_3D_COLOR, opacity: pct(num) } }));
   else if (name === 'matColor3d') edit('Ändra kulören i 3D', (q) => ({ ...q, color3d: value }));
+  // Texturens storlek (0.10.31), mm.
+  else if (name === 'matTextureSize' && num > 0 && m.texture) edit('Ändra texturens storlek', (q) => (q.texture ? { ...q, texture: { ...q.texture, size: Math.round(num) } } : q));
 }
 
 /** En egen fyllningstyps vridning och skala (0.8.36). Null = olika i markeringen. */

@@ -178,3 +178,40 @@ export function extrude(s: Solid): THREE.BufferGeometry | null {
   geom.translate(0, 0, s.z0);
   return geom;
 }
+
+/**
+ * Texturens koordinater (0.10.31) i mm, så att en textur med sidan `size`
+ * mm får `repeat` 1/size. Liggande ytor får planens x och y; stående och
+ * sneda längs ytan i plan (vinkelrätt mot normalen) och höjden, så att en
+ * vägg i vilken riktning som helst får texturen orörd. Geometrin görs
+ * oindexerad, så att varje triangel har sina egna hörn.
+ */
+export function boxUv(geom: THREE.BufferGeometry): THREE.BufferGeometry {
+  const g = geom.index ? geom.toNonIndexed() : geom;
+  const p = g.getAttribute('position');
+  const uv = new Float32Array(p.count * 2);
+  const a = new THREE.Vector3();
+  const b = new THREE.Vector3();
+  const c = new THREE.Vector3();
+  for (let i = 0; i + 2 < p.count; i += 3) {
+    a.fromBufferAttribute(p, i);
+    b.fromBufferAttribute(p, i + 1);
+    c.fromBufferAttribute(p, i + 2);
+    const n = new THREE.Vector3().subVectors(b, a).cross(new THREE.Vector3().subVectors(c, a));
+    const len = n.length() || 1;
+    const flat = Math.abs(n.z) / len > 0.7;
+    // Riktningen längs ytan i plan.
+    const h = Math.hypot(n.x, n.y) || 1;
+    const tx = -n.y / h;
+    const ty = n.x / h;
+    for (let k = 0; k < 3; k++) {
+      const x = p.getX(i + k);
+      const y = p.getY(i + k);
+      const z = p.getZ(i + k);
+      uv[(i + k) * 2] = flat ? x : x * tx + y * ty;
+      uv[(i + k) * 2 + 1] = flat ? y : z;
+    }
+  }
+  g.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
+  return g;
+}

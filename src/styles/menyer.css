@@ -767,6 +767,17 @@ input[type='range'] {
   gap: 8px;
 }
 
+/* Ortofotot (0.10.31): var det syns, ta bort och byt. */
+.site-ortho {
+  grid-template-columns: max-content minmax(0, 1fr) max-content max-content;
+  align-items: center;
+  gap: 8px;
+}
+
+.site-ortho > .btn:only-of-type:last-child {
+  justify-self: start;
+}
+
 .site-datum {
   display: grid;
   grid-template-columns: 1fr max-content;

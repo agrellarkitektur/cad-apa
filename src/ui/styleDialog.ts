@@ -12,7 +12,8 @@ import { saveBlobFile } from '../storage/projectFile';
 import { applyPenField, penSection, resetPen } from './style/pens';
 import { resolveParams } from '../elements/registry';
 import { materialFieldChange, materialSection } from './style/materials';
-import { addMaterial, deleteMaterial, materialUses, moveMaterial, updateMaterial } from '../core/materials';
+import { addMaterial, deleteMaterial, materialUses, moveMaterial, setMaterialTexture, updateMaterial } from '../core/materials';
+import { chooseTexture } from './app/imageFile';
 
 /**
  * Stilmallen: hur väggar och linjer ritas för varje åtgärd. Ändringar syns
@@ -150,6 +151,9 @@ export class StyleDialog {
         this.el.querySelector<HTMLInputElement>(`[data-material="${CSS.escape(nid)}:name"]`)?.select();
       } else if (action === 'material-up' || action === 'material-down') moveMaterial(this.store, id, action === 'material-up' ? -1 : 1);
       else if (action === 'material-remove') deleteMaterial(this.store, id);
+      // Texturen i 3D (0.10.31).
+      else if (action === 'material-texture') void chooseTexture(this.store, id);
+      else if (action === 'material-texture-remove') setMaterialTexture(this.store, id, null);
       return;
     }
     if (action === 'linetype-add' || action === 'linetype-remove') {

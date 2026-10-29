@@ -137,11 +137,15 @@ function materialParts(name: string, m: Material, p: FillParams, attrs: (key: st
   const illKind = `<label class="field"><span>Illustrationsplanen</span><select ${attrs('matIllKind')}><option value="plan"${ill ? '' : ' selected'}>Som planen</option><option value="color"${ill ? ' selected' : ''}>Egen färg</option></select></label>`;
   const illColor = ill ? `<label class="field"><span>Färg</span><input type="color" ${attrs('matIllColor')} value="${escapeHtml(ill.color)}"></label>` : '';
   const c3 = `<label class="field"><span>Kulör i 3D</span><input type="color" ${attrs('matColor3d')} value="${escapeHtml(m.color3d ?? MATERIAL_3D_COLOR)}"></label>`;
+  // Texturen i 3D (0.10.31): en bild, upprepad med sin storlek i verkligheten.
+  const tex = m.texture;
+  const id = escapeHtml(m.id);
+  const texture = `<div class="field-label">Textur i 3D</div><div class="fields">${tex ? numberInput('matTextureSize', 'Bildens sida', tex.size, 'mm', attrs) : ''}<div class="row"><button class="btn" data-action="material-texture" data-id="${id}" title="En bild (JPG eller PNG) som upprepas på ytan i 3D. Den sparas i projektet.">${tex ? 'Byt bild…' : 'Välj bild…'}</button>${tex ? `<button class="btn btn-ghost" data-action="material-texture-remove" data-id="${id}">Ta bort texturen</button>` : ''}</div></div>`;
   const planOp = Number((m.plan as Record<string, unknown>).fillOpacity ?? 100);
   const own = `<div class="field-label">Bara det här objektet</div><div class="fields">${numberInput('materialOpacity', 'Opacitet', p.materialOpacity ?? NaN, '%', attrs, ` data-unit="" data-step="10" placeholder="${planOp} (materialets)"`)}${numberInput('materialAngle', 'Vridning', p.materialAngle ?? NaN, '°', attrs, ' data-unit="deg" placeholder="0"')}</div>`;
   // Byggnadens material (0.10.28.2): snittet i sektion, ytan i fasad och konturens penna.
   const building = m.building ? `<div class="field-label">Sektion, fasad och kontur</div>${buildingFields(m, attrs, style)}` : '';
-  return `<div class="field-label">Illustrationsplan och 3D</div><div class="fields">${illKind}${illColor}${c3}</div>${ill ? opacitySteps(`${name}-illop`, 'matIllOpacity', 'Opacitet i illustrationsplanen', ill.opacity ?? 100, attrs) : ''}${building}${own}`;
+  return `<div class="field-label">Illustrationsplan och 3D</div><div class="fields">${illKind}${illColor}${c3}</div>${ill ? opacitySteps(`${name}-illop`, 'matIllOpacity', 'Opacitet i illustrationsplanen', ill.opacity ?? 100, attrs) : ''}${texture}${building}${own}`;
 }
 
 /** Kulören i 3D när materialet inte har någon: markens. */
