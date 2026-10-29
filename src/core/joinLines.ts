@@ -75,12 +75,12 @@ export function fuseRampChains(doc: ProjectDoc, ids: readonly Id[]): { ids: Id[]
 }
 
 /** Rampens parametrar som dockningen skriver (det andra i elementet lämnas). */
-const RAMP_KEYS = ['line', 'bulges', 'height', 'endHeight', 'levels', 'width', 'refSide', 'refOffset', 'left', 'right', 'leftBulges', 'rightBulges', 'edge', 'leftEdge', 'rightEdge', 'crossFall', 'ease', 'easeRadius', 'eases'] as const satisfies readonly (keyof RampParams)[];
+const RAMP_KEYS = ['line', 'bulges', 'height', 'endHeight', 'levels', 'width', 'refSide', 'refOffset', 'left', 'right', 'leftBulges', 'rightBulges', 'edge', 'leftEdge', 'rightEdge', 'leftSlope', 'rightSlope', 'crossFall', 'ease', 'easeRadius', 'eases'] as const satisfies readonly (keyof RampParams)[];
 
 /** Rampens inställningar som inte hör till linjen: kanterna, tvärfallet, övergångarna, bredden. */
 function settingsOf(p: RampParams): Partial<RampParams> {
   const out: Partial<RampParams> = {};
-  for (const k of ['edge', 'leftEdge', 'rightEdge', 'crossFall', 'ease', 'easeRadius', 'width', 'refSide', 'refOffset'] as const) if (p[k] !== undefined) (out as Record<string, unknown>)[k] = p[k];
+  for (const k of ['edge', 'leftEdge', 'rightEdge', 'leftSlope', 'rightSlope', 'crossFall', 'ease', 'easeRadius', 'width', 'refSide', 'refOffset'] as const) if (p[k] !== undefined) (out as Record<string, unknown>)[k] = p[k];
   return out;
 }
 

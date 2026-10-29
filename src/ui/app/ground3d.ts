@@ -1,12 +1,12 @@
 import type { ProjectDoc } from '../../core/model';
-import { groundAt, terrainOf } from '../../core/site';
+import { terrainOf } from '../../core/site';
 import type { ViewStates } from '../../core/states';
 import { groundObjects, isMarkKind, type GroundParams } from '../../elements/ground';
 import { typeOf } from '../../elements/registry';
 import { pointInRings } from '../../geometry/vec';
 import { createContext } from '../../repr/context';
 import type { Vec2 } from '../../repr/primitives';
-import { finishedForView } from '../../repr/terrain';
+import { heightForView } from '../../repr/terrain';
 import type { Ground3DHost } from '../../view3d/view3d';
 
 /** Hur långt över marken konturen ritas, mm, så att den inte försvinner i den. */
@@ -24,8 +24,8 @@ export function ground3dHost(doc: ProjectDoc, view: ViewStates): Ground3DHost | 
   const base = terrainOf(doc);
   const storey = doc.storeys[0]?.id;
   if (!base || !storey || view.hide?.includes('Terrain')) return null;
-  const finished = finishedForView(doc, view);
-  const t = finished?.terrain ?? base;
+  // Med rampernas och markytornas skarpa kanter, som marken i 3D (0.10.26).
+  const height = heightForView(doc, view)!;
   const { ctx } = createContext(doc, storey, view, doc.graphics, () => true);
   const type = typeOf('Ground');
   // Det som ritas sist ligger överst, och går före när två överlappar.
@@ -33,7 +33,6 @@ export function ground3dHost(doc: ProjectDoc, view: ViewStates): Ground3DHost | 
     .map((el) => ({ id: el.id, polys: type?.pickShape?.(el, ctx) ?? [] }))
     .filter((s) => s.polys.length)
     .reverse();
-  const height = (p: Vec2) => groundAt(t, p[0], p[1]);
   return {
     height,
     pick: (p) => shapes.find((s) => s.polys.some((rings) => pointInRings(p, rings)))?.id ?? null,
@@ -71,8 +70,7 @@ export function groundLines3d(doc: ProjectDoc, view: ViewStates, want: { outline
   const base = terrainOf(doc);
   const storey = doc.storeys[0]?.id;
   if (!base || !storey || view.hide?.includes('Terrain') || view.hide?.includes('Ground') || !(want.outlines || want.slopes)) return none;
-  const t = finishedForView(doc, view)?.terrain ?? base;
-  const height = (p: Vec2) => groundAt(t, p[0], p[1]);
+  const height = heightForView(doc, view)!;
   const { ctx } = createContext(doc, storey, view, doc.graphics, () => true);
   const type = typeOf('Ground');
   const outlines: number[] = [];

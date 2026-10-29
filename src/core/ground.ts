@@ -43,8 +43,10 @@ export interface GroundShape {
    * `skip`: punkten hör inte till objektet alls (huset inne i platån runt det).
    * `cell` är rutnätets maskvidd (mm). `wall` (0.10.18): närmaste kant är
    * en stödmur, så marken utanför den är orörd (rampens sidor var för sig).
+   * `slope` (0.10.26): närmaste kantens egen slänt, som inte får vara
+   * flackare än formens `slope` (den räknar hur långt slänten når).
    */
-  probe(x: number, y: number, cell: number): { inside: boolean; d: number; h: number; skip?: boolean; at?: readonly [number, number]; wall?: boolean };
+  probe(x: number, y: number, cell: number): { inside: boolean; d: number; h: number; skip?: boolean; at?: readonly [number, number]; wall?: boolean; slope?: number };
   /**
    * Utjämning (0.10.5): radien (mm) inom vilken marken tonas mot objektets
    * höjd, i stället för slänt. `slope` gäller då inte.
@@ -77,10 +79,12 @@ export interface FinishedGround {
 }
 
 /** Ett objekts ändringar (0.10.6): nodernas index och nya höjder, och läget efter objektet. */
-interface Step {
+export interface Step {
   shape: GroundShape;
   idx: Int32Array;
   val: Float32Array;
+  /** Höjderna före objektet (0.10.26), för marken utanför en stödmurskant i 3D. */
+  old: Float32Array;
   vol: CutFill;
   changed: FinishedGround['changed'];
   min: number;
@@ -128,6 +132,7 @@ export function finishedGround(t: Terrain, shapes: readonly GroundShape[], barri
     volumes.set(sh.id, vol);
     const idx: number[] = [];
     const val: number[] = [];
+    const was: number[] = [];
     const lo = Math.min(sh.hMin, (t.min - datum) * 1000);
     const hi = Math.max(sh.hMax, (t.max - datum) * 1000);
     const blend = sh.blend ?? 0;
@@ -199,7 +204,7 @@ export function finishedGround(t: Terrain, shapes: readonly GroundShape[], barri
           if (sh.cut && cur > p.h) next = p.h;
           if (sh.fill && cur < p.h) next = p.h;
         } else if (sh.slope !== null && p.d <= reach) {
-          const band = p.d / sh.slope;
+          const band = p.d / Math.min(sh.slope, p.slope ?? sh.slope);
           if (sh.cut && cur > p.h + band) next = p.h + band;
           if (sh.fill && cur < p.h - band) next = p.h - band;
         }
@@ -211,6 +216,7 @@ export function finishedGround(t: Terrain, shapes: readonly GroundShape[], barri
         z[n] = h;
         idx.push(n);
         val.push(h);
+        was.push(old);
         if (h < min) min = h;
         if (h > max) max = h;
         if (!changed) changed = { i0: i, i1: i, j0: j, j1: j };
@@ -218,7 +224,7 @@ export function finishedGround(t: Terrain, shapes: readonly GroundShape[], barri
           changed = { i0: Math.min(i, changed.i0), i1: Math.max(i, changed.i1), j0: Math.min(j, changed.j0), j1: Math.max(j, changed.j1) };
       }
     }
-    steps.push({ shape: sh, idx: Int32Array.from(idx), val: Float32Array.from(val), vol, changed, min, max });
+    steps.push({ shape: sh, idx: Int32Array.from(idx), val: Float32Array.from(val), old: Float32Array.from(was), vol, changed, min, max });
   }
   return { z, changed, volumes, min, max, steps, base };
 }

@@ -3179,14 +3179,57 @@ moturs (testet för 0.10.17 låste den gamla ordningen utan skäl).
 `dimWall.nearWall` använder samma räckvidd som kedjans eget test, så
 resultatet är detsamma.
 
-### 0.10.26 Material, mark först · *nytt format*
+### 0.10.26 Rampen och stödmuren ✓
+
+Inkorgen 29 oktober, före materialen på Carl Augusts begäran ("Ta rampen
+och stödmuren först, sen 3D-kontroller och sen material"). Byggd samma
+dag, samma format (22): de nya fälten är frivilliga.
+
+- **Slänt per sida** på rampen (`leftSlope`, `rightSlope`); tomt följer
+  rampens `slope`, som också gäller ändarna
+- **Marken längs en stödmurskant** följer rampens kontur skarpt och går
+  rakt ned till befintlig mark (den var vågig: rutnätets trianglar tonade
+  över kanten)
+- **Stödmurens skarvar**: kantlinjerna i 3D bara i ändarna och i riktiga
+  hörn
+
+*Claudes val:* de skarpa kanterna gäller alla ramper och markytor (inte
+runt huset och under bjälklag), också slänternas kanter, där slänten nu
+börjar vid kanten i stället för en ruta in. De räknas inte in i den
+färdiga marken (rutnätet) utan läggs på där den ritas: 3D-nätet skärs
+längs konturen, marklinjen i sektionerna och linjerna på marken i 3D
+läser höjden med kanterna. Utanför en stödmurskant ligger marken som den
+var utan objektet (de andra objektens ändringar kvar). Planens
+höjdkurvor, slänternas markeringar och volymerna räknas som förut på
+rutnätet. Ett hörn på stödmuren får en kantlinje när muren viker mer än
+20°. En stödmur kunde redan ha riktiga bågar (*Båge* i verktyget Mark och
+Böj i Modifiera, sedan 0.10.19); det som syntes var kantlinjerna i varje
+utplattad punkt.
+
+*Gjordes inte:* höjdkurvorna i planen vid en stödmurskant (de följer
+rutnätet och kan ligga en ruta fel; i 3D tas de bort där), och
+lodytan har ingen egen kulör (markens). Ingen knapp som gör om en
+stödmur ritad med många punkter till bågar (frågan om 0.10.24 gäller
+också den). Klickjämförelsen kördes inte.
+
+### 0.10.27 Styrningen i 3D
+
+Inkorgen 29 oktober. Mellanstor. Som i ArchiCAD: panorera med
+mittenknappen, orbit med Shift + mittenknappen, vänsterklick markerar,
+dra-markering som i 2D (från vänster till höger det som ryms helt, från
+höger till vänster allt som nuddas), högerklick öppnar menyn. Det mesta
+arbetet ligger i dra-markeringen (objekten projiceras till skärmen).
+Öppet: ett sätt utan mittenknapp (Claudes förslag: Mellanslag + dra för
+att panorera).
+
+### 0.10.28 Material, mark först · *nytt format*
 
 Beslutat 28 oktober (svaren A–E). Mellanstor till stor.
 
 - Ett material i stilmallen: namn, kategori (mark först) och representation
   per vykategori: planen (fyllning, konturpenna, opacitet), snittet i
   sektion och fasad, vyn i fasad, illustrationsplanen (färg, opacitet) och
-  3D (kulör; textur i 0.10.28)
+  3D (kulör; textur i 0.10.30)
 - Objektet pekar på ett material eller har *Eget*; *Fyllning* blir
   *Material*; opaciteten går att överstyra per objekt. Mönstrets
   utgångspunkt och vridning och status är objektets
@@ -3195,14 +3238,14 @@ Beslutat 28 oktober (svaren A–E). Mellanstor till stor.
 - Först markyta, slänter, ramp, stödmur och brytlinje; sedan bjälklag och
   tak. Väggar med lager i 0.11.1
 
-### 0.10.27 Teckenförklaring
+### 0.10.29 Teckenförklaring
 
 Beslutat 28 oktober. Liten till mellanstor. Ett automatobjekt på bladet som
 läser materialen hos synliga objekt i bladets vyer och ritar en ruta med
 mönstret i vyns skala och namnet; kategorier, ordning, rutans storlek,
 egna och bortvalda rader, och *Eget* som "Eget" eller inte alls.
 
-### 0.10.28 Texturer i 3D
+### 0.10.30 Texturer i 3D
 
 Beslutat 28 oktober (svar E: före piloten). Mellanstor. En bild i
 materialets 3D-representation, sparad i filen och upprepad i meter på

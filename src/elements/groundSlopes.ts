@@ -67,13 +67,15 @@ function slopeReach(ctx: PlanContext, g: GroundGeometry): ((q: Vec2, n: Vec2) =>
   const t = terrainOf(ctx.doc);
   if (!f || !t) return null;
   const step = Math.max(100, (t.grid.s * 1000) / 3);
-  const steep = 0.5 / sh.slope;
   const diff = (x: number, y: number): number | null => {
     const a = groundAt(f.terrain, x, y);
     const b = groundAt(t, x, y);
     return a === null || b === null ? null : a - b;
   };
   return (q, n) => {
+    // Kantens egen slänt (rampens sidor, 0.10.26), annars formens.
+    const slope = Math.min(sh.slope!, sh.probe(q[0] + n[0] * 60, q[1] + n[1] * 60, t.grid.s * 1000).slope ?? sh.slope!);
+    const steep = 0.5 / slope;
     const d0 = diff(q[0] + n[0] * 60, q[1] + n[1] * 60);
     if (d0 === null || Math.abs(d0) < 30) return null;
     // Gå ut längs normalen så länge marken är ändrad och lutar som en slänt.
@@ -85,7 +87,7 @@ function slopeReach(ctx: PlanContext, g: GroundGeometry): ((q: Vec2, n: Vec2) =>
       const z = groundAt(f.terrain, q[0] + n[0] * to, q[1] + n[1] * to);
       const dz = diff(q[0] + n[0] * to, q[1] + n[1] * to);
       if (z === null || dz === null || Math.abs(dz) < 15 || Math.abs(z - zFrom) / (to - from) < steep) return null;
-      if (zEdge !== null && Math.abs(z - (zEdge + (dir * to) / sh.slope!)) > 100 + (0.25 * to) / sh.slope!) return null;
+      if (zEdge !== null && Math.abs(z - (zEdge + (dir * to) / slope)) > 100 + (0.25 * to) / slope) return null;
       return z;
     };
     let d = 60;

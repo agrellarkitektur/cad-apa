@@ -164,7 +164,7 @@ export function applyGroundField(store: DocStore, ids: string[], name: string, i
     return true;
   }
   if (v < 0 || (v === 0 && name !== 'fall' && name !== 'distance' && name !== 'margin' && name !== 'sockel' && name !== 'above' && name !== 'endAbove')) return false;
-  const labels: Record<string, string> = { minCross: 'Ändra sidolutningen', maxSlope: 'Ändra gränsen', width: 'Ändra bredden', radius: 'Ändra radien', easeRadius: 'Ändra övergångarnas radie', thickness: 'Ändra tjockleken', above: 'Ändra krönet', endAbove: 'Ändra krönet', fall: 'Ändra fallet', slope: 'Ändra slänten', distance: 'Ändra avståndet', sockel: 'Ändra sockeln', fallLength: 'Ändra fallets längd', margin: 'Ändra arbetsutrymmet' };
+  const labels: Record<string, string> = { minCross: 'Ändra sidolutningen', maxSlope: 'Ändra gränsen', width: 'Ändra bredden', radius: 'Ändra radien', easeRadius: 'Ändra övergångarnas radie', thickness: 'Ändra tjockleken', above: 'Ändra krönet', endAbove: 'Ändra krönet', fall: 'Ändra fallet', slope: 'Ändra slänten', leftSlope: 'Ändra slänten', rightSlope: 'Ändra slänten', distance: 'Ändra avståndet', sockel: 'Ändra sockeln', fallLength: 'Ändra fallets längd', margin: 'Ändra arbetsutrymmet' };
   updateParams(store, ids, { [name]: v }, labels[name] ?? 'Ändra');
   return true;
 }

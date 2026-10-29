@@ -13,7 +13,7 @@ import { along, flatPoints } from '../../elements/groundLines';
 import { groundDefaults, type GroundDefaults } from '../../core/site';
 import type { Vec2 } from '../../repr/primitives';
 import { buildModel3d } from '../../repr/model3d';
-import { finishedForView, terrainMesh } from '../../repr/terrain';
+import { finishedForView, heightForView, terrainMesh3d } from '../../repr/terrain';
 import { contourSegments3d } from '../../elements/site';
 import { isShown } from './showKeys';
 import { ground3dHost, groundLines3d } from './ground3d';
@@ -166,7 +166,7 @@ export function installPane3d(app: AppContext) {
     const shown = [finished ?? site, site?.contours, lines];
     if (shown.some((v, i) => v !== shownSite[i])) {
       shownSite = shown;
-      view3d.setTerrain(site ? terrainMesh(store.doc, undefined, finished?.z) : null, lines ? contourSegments3d(store.doc, finished) : null);
+      view3d.setTerrain(site ? terrainMesh3d(store.doc, app.viewStates(), finished) : null, lines ? contourSegments3d(store.doc, finished, undefined, finished ? (heightForView(store.doc, app.viewStates()) ?? undefined) : undefined) : null);
     }
     // Markobjekten går att hovra och markera på marken (0.10.11).
     view3d.ground = ground3dHost(store.doc, app.viewStates());

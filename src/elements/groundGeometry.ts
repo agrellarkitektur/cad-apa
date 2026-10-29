@@ -120,6 +120,9 @@ export interface GroundParams extends Partial<FillParams> {
   /** Rampens sidor var för sig (0.10.18): slänt eller stödmur; utelämnad = som `edge`. */
   leftEdge?: 'slope' | 'wall';
   rightEdge?: 'slope' | 'wall';
+  /** Rampens sidor var för sig (0.10.26): slänt 1:N; utelämnad = som `slope`. */
+  leftSlope?: number;
+  rightSlope?: number;
   /** Höjdpunkt och brytlinje: hur långt marken tonas, mm. */
   radius?: number;
   /**

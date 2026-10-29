@@ -1630,6 +1630,50 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Rampen och stödmuren (0.10.26, format 22)
+
+Inget nytt format: `leftSlope` och `rightSlope` i `GroundParams` och
+`RampParams` är frivilliga.
+
+- **Slänt per sida**: `rampRing` ger också `side` per kant ('left',
+  'right', 'end'), `sideSlope(p, side, slope)` sidans slänt. `rampShape`
+  sätter formens `slope` till den flackaste öppna kanten (den räknar hur
+  långt slänten når) och `probe` svarar med kantens egen `slope`;
+  `finishedGround` tar `min(sh.slope, p.slope)` i bandet. Slänternas
+  markeringar (`slopeReach` i `groundSlopes.ts`) frågar kanten. Fälten
+  `leftSlope`/`rightSlope` i `groundFields.ts` (allmänna sifferfält i
+  `groundFieldEdits.ts`). Vänd (`reversedRamp`), spegla (`rampSides` i
+  `transforms.ts`) och dockningen (`RAMP_KEYS`, `settingsOf`) byter dem
+- **Skarpa kanter** (`src/repr/crispGround.ts`): `crispShapes(ctx, f)`
+  (ramper och markytor, inte runt huset och under bjälklag, som ändrar
+  marken) med `ring`, `wall` per kant, `top(x, y)` (formens `probe`) och
+  `below(x, y)`: marken utan objektet, den färdiga med objektets steg
+  tillbakalagt (`Step.old` i `core/ground.ts`, höjderna före objektet;
+  `belowOf` sparar terrängen per steg). `crispHeight(crisps, t)` ger
+  höjden i en punkt: på ytan eller kanten `top`, inom två rutor utanför en
+  stödmurskant `below`, annars rutnätet. `crispMesh(mesh, crisps)` skär
+  3D-nätet: trianglar som en kontur går genom (kanterna i rutor om 2 m,
+  `touches`) delas längs kanternas linjer när konturen går tvärs över
+  triangeln (konvexa bitar, solfjäder), annars skärs de mot konturen med
+  polygon-clipping (earcut); nya hörn på konturen får `top` innanför och
+  `below` utanför en stödmurskant, hörn från rutnätet behåller sin höjd.
+  Lodytan längs stödmurskanterna i bitar om 0,5 m, åt båda hållen, med
+  egna hörn. Ca 30–60 ms för exemplets sex objekt (bara när marken ändras;
+  `savedCrisp` i `terrain.ts`)
+- **Var det används**: `terrainMesh3d(doc, view, finished)` i
+  `repr/terrain.ts` (3D-vyn, `pane3d.ts`), `heightForView(doc, view)`
+  (linjerna på marken i `ground3d.ts`, och `contourSegments3d` med
+  `height`, som tar bort kurvbitar mer än 80 mm från den skarpa marken),
+  och `groundLines` i sektioner och fasader (`terrainProfile` med `height`
+  och `extra`: i sektionen en punkt 2 mm på var sida om varje kant,
+  `crossings`). Planens höjdkurvor, slänterna och volymerna läser
+  rutnätet som förut
+- **Stödmurens hörn**: `wallSolids` lägger lodräta kantlinjer bara i
+  ändarna och där mittlinjen viker mer än `CORNER` (20°, `turnAt`)
+- Tester: `tests/v01026.test.ts`. Referensritningarna `mark-fasad-2`,
+  `mark-fasad-4` och `mark-sektion-a` ändrades (platån med stödmur: språnget
+  vid kanten)
+
 ## Granskning efter 0.10.25 (0.10.25.1, format 22)
 
 Utan nya funktioner: det Platsen (0.10.25) glömde på några ställen,

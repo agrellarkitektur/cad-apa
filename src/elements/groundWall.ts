@@ -210,6 +210,18 @@ export function computeProfile(ref: readonly Vec2[], th: number, p: WallParams, 
   };
 }
 
+/** Hur mycket muren ska vika för att hörnet ska få en kantlinje i 3D (0.10.26), radianer (20°). */
+const CORNER = (20 * Math.PI) / 180;
+
+/** Hur mycket linjen viker i punkt `i` (där segment i börjar), radianer. */
+function turnAt(c: readonly Vec2[], i: number): number {
+  if (i <= 0 || i >= c.length - 1) return Math.PI;
+  const a = Math.atan2(c[i][1] - c[i - 1][1], c[i][0] - c[i - 1][0]);
+  const b = Math.atan2(c[i + 1][1] - c[i][1], c[i + 1][0] - c[i][0]);
+  const d = Math.abs(b - a) % (2 * Math.PI);
+  return d > Math.PI ? 2 * Math.PI - d : d;
+}
+
 /** Hur långt krönet och foten får avvika när punkter slås ihop, mm. */
 const SIMPLIFY = 5;
 
@@ -316,8 +328,10 @@ export function wallSolids(id: string, prof: WallProfile, base: number): Shape3D
       seg.segments.push([...p3(a[side], a.bottom), ...p3(b[side], b.bottom)]);
     }
   }
+  // Bara de riktiga hörnen (0.10.26): där muren viker mer än CORNER. En båge,
+  // eller en linje ritad med många punkter längs en kurva, ger inga skarvar.
   const corners = new Set<number>([0, st.length - 1]);
-  for (let i = 1; i < st.length - 1; i++) if (st[i].seg !== st[i - 1].seg) corners.add(i);
+  for (let i = 1; i < st.length - 1; i++) if (st[i].seg !== st[i - 1].seg && turnAt(prof.center, st[i].seg) > CORNER) corners.add(i);
   for (const i of corners) {
     const s = st[i];
     for (const side of ['right', 'left'] as const) seg.segments.push([...p3(s[side], s.bottom), ...p3(s[side], s.top)]);

@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.25.1** (alfa, granskning); nästa är **0.10.26 Material, mark först**.
+**0.10.26** (alfa); nästa är **0.10.27 Styrningen i 3D**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,20 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.26, rampen och stödmuren (samma filformat, 22):
+- **Slänt per sida** på rampen: *Slänt vänster sida* och *Slänt höger
+  sida* under sidornas val, när sidan är slänt. Tomt följer rampens
+  *Slänt*, som också gäller ändarna
+- **Skarpa kanter på marken**: en ramp eller markyta har sin höjd ända ut
+  till kanten i 3D, och vid en sida som är stödmur går marken rakt ned
+  (eller upp) till marken utanför, som inte rörs. Förut tonades kanten
+  över en ruta i markmodellen och blev vågig. Marklinjen i sektionerna
+  och markobjektens linjer på marken i 3D följer med; höjdkurvorna som
+  hamnade i luften vid kanten tas bort i 3D
+- **Stödmuren utan skarvar**: i 3D syns kantlinjer bara i murens ändar
+  och i hörn där den viker mer än 20°, inte längs en båge eller en linje
+  ritad med många punkter
 
 Version 0.10.25.1, granskning (samma filformat, 22):
 - **Platsen räknas inte som våning** där det glömdes: *Alla våningar* i

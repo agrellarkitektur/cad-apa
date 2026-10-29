@@ -182,10 +182,10 @@ export function copyElements(store: DocStore, ids: Id[]): Id[] {
 
 /** Rampens ritade sidor och sidornas kant efter en transformation (0.10.18): speglat byter vänster och höger plats. */
 function rampSides(p: Record<string, any>, t: { map: (q: Pt) => Pt; mirror: boolean }): Record<string, unknown> {
-  if (!Array.isArray(p.left) && !Array.isArray(p.right) && p.leftEdge === undefined && p.rightEdge === undefined) return {};
+  if (!Array.isArray(p.left) && !Array.isArray(p.right) && p.leftEdge === undefined && p.rightEdge === undefined && p.leftSlope === undefined && p.rightSlope === undefined) return {};
   const m = (q: unknown) => (Array.isArray(q) ? (q as Pt[]).map(t.map) : undefined);
   if (!t.mirror) return { left: m(p.left), right: m(p.right) };
   // Sidornas bågar (0.10.19) byter sida och buktar åt andra hållet.
   const b = (q: unknown) => (Array.isArray(q) ? (q as number[]).map((v) => -v) : undefined);
-  return { left: m(p.right), right: m(p.left), leftBulges: b(p.rightBulges), rightBulges: b(p.leftBulges), leftEdge: p.rightEdge, rightEdge: p.leftEdge };
+  return { left: m(p.right), right: m(p.left), leftBulges: b(p.rightBulges), rightBulges: b(p.leftBulges), leftEdge: p.rightEdge, rightEdge: p.leftEdge, leftSlope: p.rightSlope, rightSlope: p.leftSlope };
 }

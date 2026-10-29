@@ -171,6 +171,8 @@ export function reversedRamp(p: RampParams): RampParams {
     rightBulges: p.left ? reversedBulges(p.leftBulges, p.left.length) : undefined,
     leftEdge: p.rightEdge,
     rightEdge: p.leftEdge,
+    leftSlope: p.rightSlope,
+    rightSlope: p.leftSlope,
     crossFall: typeof p.crossFall === 'number' ? -p.crossFall : undefined,
     refSide: p.refSide === 'left' ? 'right' : p.refSide === 'right' ? 'left' : p.refSide,
     refOffset: (p.refSide ?? 'center') === 'center' && typeof p.refOffset === 'number' ? -p.refOffset : p.refOffset,

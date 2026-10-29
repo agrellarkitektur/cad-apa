@@ -140,9 +140,15 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
     const sel = (key: string, label: string, v: 'slope' | 'wall', title: string) =>
       `<label class="field" title="${title}"><span>${label}</span><select data-key="ground:${key}"><option value="slope">Slänt</option><option value="wall"${v === 'wall' ? ' selected' : ''}>Stödmur</option></select></label>`;
     rows.push(sel('edge', 'Kanterna', p.edge ?? 'slope', 'Alla kanter: sidorna och ändarna. Sidorna kan sedan ändras för sig.'));
-    rows.push(sel('leftEdge', 'Vänster sida', sideEdge(p, 'left'), 'Sett i linjens riktning'));
-    rows.push(sel('rightEdge', 'Höger sida', sideEdge(p, 'right'), 'Sett i linjens riktning'));
-    if ([sideEdge(p, 'left'), sideEdge(p, 'right'), p.edge ?? 'slope'].includes('slope')) rows.push(field('slope', 'Slänt', '1:N', p.slope, def.slope));
+    if ([sideEdge(p, 'left'), sideEdge(p, 'right'), p.edge ?? 'slope'].includes('slope')) rows.push(field('slope', 'Slänt', '1:N', p.slope, def.slope, 'Ändarna, och sidorna utan egen slänt'));
+    // Sidorna var för sig, med egen slänt (0.10.26).
+    for (const [s, label] of [
+      ['left', 'Vänster sida'],
+      ['right', 'Höger sida'],
+    ] as const) {
+      rows.push(sel(`${s}Edge`, label, sideEdge(p, s), 'Sett i linjens riktning'));
+      if (sideEdge(p, s) === 'slope') rows.push(field(`${s}Slope`, `Slänt ${label.toLowerCase()}`, '1:N', p[`${s}Slope`], p.slope ?? def.slope, 'Tomt = som rampens slänt'));
+    }
     const check = (key: 'startLine' | 'endLine', label: string) => `<label class="check"><input type="checkbox" data-key="ground:${key}"${p[key] !== false ? ' checked' : ''}> ${label}</label>`;
     notes.push(`<span class="row">${check('startLine', 'Tvärlinje i början')} ${check('endLine', 'Tvärlinje i slutet')}</span>`);
     const ratioText = (n: number) => (Number.isFinite(n) ? `1:${(Math.round(n * 10) / 10).toLocaleString('sv-SE')}` : 'plan');

@@ -186,7 +186,7 @@ export function groundContours(doc: ProjectDoc, f: Finished | null): GroundConto
  * Höjdkurvorna för 3D-vyn (0.10.8): sträckor (x, y, z i mm från ±0, två
  * punkter per sträcka), en bit över marken så att de syns.
  */
-export function contourSegments3d(doc: ProjectDoc, f: Finished | null, lift = 40): Float32Array | null {
+export function contourSegments3d(doc: ProjectDoc, f: Finished | null, lift = 40, height?: (p: Vec2) => number | null): Float32Array | null {
   const t = terrainOf(doc);
   if (!t) return null;
   const { solid } = groundContours(doc, f);
@@ -194,6 +194,13 @@ export function contourSegments3d(doc: ProjectDoc, f: Finished | null, lift = 40
   for (const c of solid) n += c.closed ? c.pts.length : c.pts.length - 1;
   const out = new Float32Array(n * 6);
   let k = 0;
+  // Med de skarpa kanterna (0.10.26): kurvorna räknas på rutnätet, så de som hamnar i luften
+  // eller i lodytan vid en stödmurskant (där rutnätet tonar) tas bort.
+  const off = (a: Vec2, b: Vec2, z: number) => {
+    if (!height) return false;
+    const h = height([(a[0] + b[0]) / 2, (a[1] + b[1]) / 2]);
+    return h !== null && Math.abs(h - z) > 80;
+  };
   for (const c of solid) {
     const z = fromRh(t.site, c.z) + lift;
     const m = c.pts.length;
@@ -201,6 +208,7 @@ export function contourSegments3d(doc: ProjectDoc, f: Finished | null, lift = 40
     for (let i = 0; i < segs; i++) {
       const a = c.pts[i];
       const b = c.pts[(i + 1) % m];
+      if (off(a, b, z - lift)) continue;
       out[k++] = a[0];
       out[k++] = a[1];
       out[k++] = z;
@@ -209,7 +217,7 @@ export function contourSegments3d(doc: ProjectDoc, f: Finished | null, lift = 40
       out[k++] = z;
     }
   }
-  return out;
+  return out.slice(0, k);
 }
 
 export const terrainType: ElementType<TerrainParams> = {

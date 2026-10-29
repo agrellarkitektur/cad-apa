@@ -8,6 +8,7 @@ import { finishedTerrain, showsProposal, type Finished } from '../elements/groun
 import { resolveFill } from '../core/fillTypes';
 import type { Primitive, Vec2 } from './primitives';
 import { lastResults } from './reuse';
+import { crispHeight, crispMesh, crispShapes } from './crispGround';
 
 /**
  * Den befintliga marken i fasader, sektioner och 3D-vyn (0.10.3). Marken är
@@ -23,6 +24,10 @@ export function terrainProfile(
   /** I en fasad: marken vid husets kontur närmast betraktaren (annars linjen själv). */
   footprint: readonly (readonly Vec2[])[] | null,
   step = 250,
+  /** Höjden i en punkt (0.10.26: med de skarpa kanterna); förval rutnätets. */
+  height: (p: Vec2) => number | null = (p) => groundAt(t, p[0], p[1]),
+  /** Fler punkter längs linjen (u), t.ex. på var sida om en stödmurskant. */
+  extra: readonly number[] = [],
 ): Vec2[][] {
   const O = frame.start;
   const r = frame.right;
@@ -56,10 +61,15 @@ export function terrainProfile(
   const parts: Vec2[][] = [];
   let cur: Vec2[] = [];
   const n = Math.max(1, Math.ceil((u1 - u0) / step));
-  for (let i = 0; i <= n; i++) {
-    const u = u0 + ((u1 - u0) * i) / n;
+  const us: number[] = [];
+  for (let i = 0; i <= n; i++) us.push(u0 + ((u1 - u0) * i) / n);
+  if (extra.length) {
+    us.push(...extra.filter((u) => u > u0 && u < u1));
+    us.sort((a, b) => a - b);
+  }
+  for (const u of us) {
     const d = edges.length ? depthAt(u) : 0;
-    const z = groundAt(t, O[0] + r[0] * u + v[0] * d, O[1] + r[1] * u + v[1] * d);
+    const z = height([O[0] + r[0] * u + v[0] * d, O[1] + r[1] * u + v[1] * d]);
     if (z === null) {
       if (cur.length >= 2) parts.push(cur);
       cur = [];
@@ -67,6 +77,20 @@ export function terrainProfile(
   }
   if (cur.length >= 2) parts.push(cur);
   return parts;
+}
+
+/** Var linjen (u längs `frame`) korsar ringens kanter. */
+function crossings(ring: readonly Vec2[], frame: { start: Vec2; right: Vec2; view: Vec2 }): number[] {
+  const O = frame.start;
+  const out: number[] = [];
+  const q = ring.map((p): Vec2 => [(p[0] - O[0]) * frame.right[0] + (p[1] - O[1]) * frame.right[1], (p[0] - O[0]) * frame.view[0] + (p[1] - O[1]) * frame.view[1]]);
+  for (let i = 0; i < q.length; i++) {
+    const a = q[i];
+    const b = q[(i + 1) % q.length];
+    if ((a[1] > 0) === (b[1] > 0) || a[1] === b[1]) continue;
+    out.push(a[0] + ((b[0] - a[0]) * a[1]) / (a[1] - b[1]));
+  }
+  return out;
 }
 
 /** Jordskrafferingens djup under marklinjen, mm. */
@@ -93,7 +117,13 @@ export function groundLines(
   const existing = terrainProfile(t, frame, u0, u1, footprint);
   const dashed = (pts: Vec2[]): Primitive => ({ kind: 'polyline', points: pts, closed: false, pen: { weight: 0.18, dash: [3, 1.5] }, origin: { part: 'befintlig mark' } });
   const f = showsProposal(ctx) ? finishedTerrain(ctx) : null;
-  const finished = f ? terrainProfile(f.terrain, frame, u0, u1, footprint) : existing;
+  // Med rampernas och markytornas skarpa kanter (0.10.26), och i sektionen en punkt på var sida om varje kant.
+  let finished = existing;
+  if (f) {
+    const crisps = crispShapes(ctx, f);
+    const extra = footprint ? [] : crisps.flatMap((c) => crossings(c.ring, frame).flatMap((u) => [u - 2, u + 2]));
+    finished = terrainProfile(f.terrain, frame, u0, u1, footprint, 250, crispHeight(crisps, f.terrain), extra);
+  }
   const site = ctx.doc.site;
   if (isSection && (site?.earthHatch || site?.earthWhite)) {
     const fill = site.earthHatch ? resolveFill({ kind: 'type', type: 'mark', color: 'ink', weight: 0.13 }, ctx.style, ctx.scale) : { kind: 'solid' as const, color: 'paper' as const };
@@ -223,8 +253,30 @@ function meshGrid(t: Terrain, k: number): { positions: Float32Array; valid: Uint
 
 /** Den färdiga marken i en vy av projektet (för 3D-vyn), eller null i Befintligt och utan markobjekt. */
 export function finishedForView(doc: ProjectDoc, view: ViewStates): Finished | null {
+  const ctx = viewContext(doc, view);
+  return ctx && showsProposal(ctx) ? finishedTerrain(ctx) : null;
+}
+
+function viewContext(doc: ProjectDoc, view: ViewStates): PlanContext | null {
   const storey = doc.storeys[0]?.id;
   if (!storey || !doc.site) return null;
-  const { ctx } = createContext(doc, storey, view, doc.graphics, () => true);
-  return showsProposal(ctx) ? finishedTerrain(ctx) : null;
+  return createContext(doc, storey, view, doc.graphics, () => true).ctx;
+}
+
+/** Marken i 3D-vyn (0.10.26): nätet med den färdiga marken, skuret skarpt längs markytornas och rampernas kanter. */
+export function terrainMesh3d(doc: ProjectDoc, view: ViewStates, finished: Finished | null): { positions: Float32Array; indices: Uint32Array } | null {
+  const mesh = terrainMesh(doc, undefined, finished?.z);
+  const ctx = finished && viewContext(doc, view);
+  return mesh && ctx ? savedCrisp([mesh.positions.length, finished, ...crispShapes(ctx, finished).map((c) => c.ring)], () => crispMesh(mesh, crispShapes(ctx, finished))) : mesh;
+}
+const savedCrisp = lastResults<{ positions: Float32Array; indices: Uint32Array }>(2);
+
+/** Den färdiga markens höjd i en punkt i vyn (mm från ±0), med de skarpa kanterna (0.10.26); den befintliga i Befintligt. */
+export function heightForView(doc: ProjectDoc, view: ViewStates): ((p: Vec2) => number | null) | null {
+  const base = terrainOf(doc);
+  if (!base) return null;
+  const f = finishedForView(doc, view);
+  const ctx = f && viewContext(doc, view);
+  if (!f || !ctx) return (p) => groundAt(base, p[0], p[1]);
+  return crispHeight(crispShapes(ctx, f), f.terrain);
 }

@@ -56,6 +56,9 @@ export interface RampParams {
   edge?: 'slope' | 'wall';
   leftEdge?: 'slope' | 'wall';
   rightEdge?: 'slope' | 'wall';
+  /** Sidornas egen slänt 1:N (0.10.26); utelämnad = rampens `slope`. */
+  leftSlope?: number;
+  rightSlope?: number;
   crossFall?: number;
   /** Mjuka övergångar i höjd (0.10.19) i början, slutet och punkterna med höjd; utelämnad = skarpa. */
   ease?: boolean;
@@ -132,14 +135,19 @@ export function rampSides(p: RampParams): { left: Vec2[]; right: Vec2[] } {
  * vänster sida bakåt och början; `wall` för varje kant i ringen (kant i går
  * från punkt i till nästa) om den är en stödmur.
  */
-export function rampRing(p: RampParams, sides = rampSides(p)): { ring: Vec2[]; wall: boolean[] } {
+export function rampRing(p: RampParams, sides = rampSides(p)): { ring: Vec2[]; wall: boolean[]; side: ('left' | 'right' | 'end')[] } {
   const { left, right } = sides;
   const ring = [...right, ...[...left].reverse()];
-  const lw = sideEdge(p, 'left') === 'wall';
-  const rw = sideEdge(p, 'right') === 'wall';
+  const side = ring.map((_, i): 'left' | 'right' | 'end' => (i < right.length - 1 ? 'right' : i === right.length - 1 ? 'end' : i < ring.length - 1 ? 'left' : 'end'));
   const ew = (p.edge ?? 'slope') === 'wall';
-  const wall = ring.map((_, i) => (i < right.length - 1 ? rw : i === right.length - 1 ? ew : i < ring.length - 1 ? lw : ew));
-  return { ring, wall };
+  const wall = side.map((s) => (s === 'end' ? ew : sideEdge(p, s) === 'wall'));
+  return { ring, wall, side };
+}
+
+/** Sidans slänt 1:N (0.10.26): sidans egen, annars rampens (`slope`, redan med förvalet). */
+export function sideSlope(p: RampParams, side: 'left' | 'right' | 'end', slope: number): number {
+  const own = side === 'left' ? p.leftSlope : side === 'right' ? p.rightSlope : undefined;
+  return typeof own === 'number' && own > 0 ? Math.max(0.1, own) : slope;
 }
 
 /**
@@ -150,7 +158,8 @@ export function rampRing(p: RampParams, sides = rampSides(p)): { ring: Vec2[]; w
 export function rampShape(id: string, p: RampParams, slope: number, sides = rampSides(p), def?: Pick<GroundDefaults, 'easeRadius'>): { shape: GroundShape; ring: Vec2[]; wall: boolean[] } {
   const ref = refPoints(p);
   const prof = rampProfile(p, def);
-  const { ring, wall } = rampRing(p, sides);
+  const { ring, wall, side: sideOf } = rampRing(p, sides);
+  const slopes = sideOf.map((s) => sideSlope(p, s, slope));
   const tilt = p.crossFall ? 1 / p.crossFall : 0;
   const hAt = (x: number, y: number) => {
     const a = along(ref, x, y);
@@ -167,19 +176,20 @@ export function rampShape(id: string, p: RampParams, slope: number, sides = ramp
     box[2] = Math.max(box[2], q[0]);
     box[3] = Math.max(box[3], q[1]);
   }
-  const allWall = wall.every(Boolean);
+  // Den flackaste slänten avgör hur långt marken kan påverkas; varje kant svarar med sin egen.
+  const open = slopes.filter((_, i) => !wall[i]);
   const shape: GroundShape = {
     id,
     cut: true,
     fill: true,
-    slope: allWall ? null : slope,
+    slope: open.length ? Math.max(...open) : null,
     box,
     hMin: Math.min(...hs) - side,
     hMax: Math.max(...hs) + side,
     probe(x, y) {
       const e = nearestRingEdge(ring, x, y);
       if (e.inside) return { inside: true, d: 0, h: hAt(x, y) };
-      return { inside: false, d: e.d, h: hAt(e.at[0], e.at[1]), at: e.at, ...(wall[e.edge] ? { wall: true } : {}) };
+      return { inside: false, d: e.d, h: hAt(e.at[0], e.at[1]), at: e.at, ...(wall[e.edge] ? { wall: true } : { slope: slopes[e.edge] }) };
     },
   };
   return { shape, ring, wall };
