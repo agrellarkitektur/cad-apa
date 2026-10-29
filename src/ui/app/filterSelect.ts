@@ -1,5 +1,5 @@
 import { combine, emptyCriteria, filterScope, matches, propertyNames, type FilterCriteria } from '../../core/filterSelect';
-import type { Element, Id } from '../../core/model';
+import { buildingStoreys, type Element, type Id } from '../../core/model';
 import type { Action, ViewStates } from '../../core/states';
 import { typeOf } from '../../elements/registry';
 import { escapeHtml } from '../labels';
@@ -51,7 +51,7 @@ export function installFilterSelect(app: AppContext) {
       .filter(Boolean)
       .sort((a, b) => a.name.localeCompare(b.name, 'sv', { numeric: true }));
     const props = propertyNames(doc, scope);
-    const storeys = onStorey() && doc.storeys.length > 1 ? box('all', '1', 'Alla våningar', c.allStoreys) : '';
+    const storeys = onStorey() && buildingStoreys(doc).length > 1 ? box('all', '1', 'Alla våningar', c.allStoreys) : '';
     el.innerHTML = `<div class="dialog filter-select" role="dialog" aria-modal="true" aria-labelledby="filter-title">
       <header><h2 id="filter-title">Filtrera och markera</h2>
         <button class="icon-mini" data-action="filter-close" aria-label="Stäng">×</button></header>

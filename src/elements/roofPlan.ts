@@ -1,6 +1,7 @@
+import { signedArea } from '../geometry/chains';
 import type { Element, Id, ProjectDoc, Storey } from '../core/model';
 import { LINE_TYPES } from '../core/lineTypes';
-import { difference, intersection, union, type Rings } from '../geometry/boolean';
+import { boxesTouch, boxOf, difference, intersection, union, type Rings } from '../geometry/boolean';
 import { dist, pointInRings } from '../geometry/vec';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import { buildingFootprint } from './footprint';
@@ -143,15 +144,6 @@ export function roofPlanPrims(el: Element<any>, ctx: PlanContext): Primitive[] {
   return out;
 }
 
-function signedArea(r: readonly Vec2[]): number {
-  let a = 0;
-  for (let i = 0; i < r.length; i++) {
-    const p = r[i];
-    const q = r[(i + 1) % r.length];
-    a += p[0] * q[1] - q[0] * p[1];
-  }
-  return a / 2;
-}
 
 /** Bitarna av den slutna linjen som ligger innanför ringen (husets kontur genom taket). */
 export function clipToRing(line: readonly Vec2[], ring: readonly Vec2[]): [Vec2, Vec2][] {
@@ -213,15 +205,19 @@ export function houseOnSite(ctx: PlanContext): Primitive[] {
   const under: Pen = { weight: 0.18, dash: LINE_TYPES.dashed.dash };
   // Under taken ritar taket den streckade konturen självt när den är tänd.
   const roofDraws = ctx.view.hide?.includes(`+${FOOTPRINT_KEY}`);
+  const boxes = roofs.map((r) => boxOf([r]));
   const out: Primitive[] = [];
   for (const poly of buildingFootprint(ctx)) {
     const ring = poly[0];
-    if (!roofs.length) {
+    // Bara taken vars ruta rör konturen prövas kant mot kant.
+    const box = boxOf([ring]);
+    const near = roofs.filter((_, i) => boxesTouch(box, boxes[i]));
+    if (!near.length) {
       out.push({ kind: 'polyline', points: ring, closed: true, pen: seen, origin });
       continue;
     }
-    for (const [a, b] of clipToRings(ring, roofs, false)) out.push({ kind: 'line', a, b, pen: seen, origin });
-    if (!roofDraws) for (const [a, b] of clipToRings(ring, roofs, true)) out.push({ kind: 'line', a, b, pen: under, origin, noPick: true });
+    for (const [a, b] of clipToRings(ring, near, false)) out.push({ kind: 'line', a, b, pen: seen, origin });
+    if (!roofDraws) for (const [a, b] of clipToRings(ring, near, true)) out.push({ kind: 'line', a, b, pen: under, origin, noPick: true });
   }
   return out;
 }

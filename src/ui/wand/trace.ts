@@ -1,5 +1,5 @@
 import { typeOf } from '../../elements/registry';
-import { chainThrough, sideOf, signedArea, simplify, type Chain } from '../../geometry/chains';
+import { chainThrough, nearestEdge, sideOf, signedArea, simplify, type Chain } from '../../geometry/chains';
 import { closestOnSegment, dist, norm, pointInRings, sub } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
 import { nearSegments, type SnapSegment } from '../tools/snap';
@@ -62,21 +62,6 @@ export function traceAt(ctx: WandContext, keep: (s: SnapSegment) => boolean = ()
 }
 
 let chains: { all: readonly SnapSegment[]; hit: SnapSegment; whole: Chain } | null = null;
-
-/** Den sträcka i kedjan som ligger närmast punkten: index till dess första punkt. */
-function nearestEdge(c: Chain, p: Vec2): number {
-  const n = c.points.length;
-  let best = 0;
-  let bd = Infinity;
-  for (let i = 0; i + 1 < n + (c.closed ? 1 : 0); i++) {
-    const d = dist(closestOnSegment(p, c.points[i], c.points[(i + 1) % n]).point, p);
-    if (d < bd) {
-      bd = d;
-      best = i;
-    }
-  }
-  return best;
-}
 
 /**
  * Vänd kedjan så att insidan ligger till höger (medurs runt en sluten

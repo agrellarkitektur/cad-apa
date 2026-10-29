@@ -1,5 +1,5 @@
 import { SWEDISH_STANDARD, normalizeStyle } from '../core/graphics';
-import { DEFAULT_VIEW_TAGS, FORMAT, FORMAT_VERSION, withSiteLast, type ProjectDoc } from '../core/model';
+import { DEFAULT_VIEW_TAGS, FORMAT, FORMAT_VERSION, SITE_STOREY, withSiteLast, type ProjectDoc } from '../core/model';
 
 /**
  * Projektfilens format. Varje gång formatet ändras höjs FORMAT_VERSION.
@@ -84,8 +84,13 @@ function normalize(d: any): ProjectDoc {
     assets: d.assets && typeof d.assets === 'object' ? d.assets : {},
     ...(d.site && typeof d.site === 'object' && Array.isArray(d.site.origin) ? { site: d.site } : {}),
   };
+  // Platsen känns igen på sitt id (`SITE_STOREY`) lika väl som på flaggan: en handskriven fil
+  // med ett annat id får objekten flyttade dit (granskningen efter 0.10.25).
+  const site = doc.storeys[doc.storeys.length - 1];
+  const oldSite = site.id === SITE_STOREY ? null : site.id;
+  if (oldSite) doc.storeys[doc.storeys.length - 1] = { ...site, id: SITE_STOREY };
   for (const [id, el] of Object.entries<any>(d.elements ?? {})) {
-    doc.elements[id] = { ...el, id, states: el.states ?? [], tags: el.tags ?? [], params: el.params ?? {}, props: el.props ?? {} };
+    doc.elements[id] = { ...el, id, storey: el.storey === oldSite ? SITE_STOREY : el.storey, states: el.states ?? [], tags: el.tags ?? [], params: el.params ?? {}, props: el.props ?? {} };
   }
   return doc;
 }

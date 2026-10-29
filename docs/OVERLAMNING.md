@@ -4,10 +4,21 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 28 oktober 2026 (kväll), efter 0.10.25.
+**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.25.1.
 
 ## Läget
 
+- **0.10.25.1 Granskningen efter 0.10.25 är klar** (samma format, 22),
+  gjord 29 oktober på "kör granskning" (påbörjad av en session 28 oktober
+  sent, som lämnade koden okommitterad i sandlådan). Platsen räknas inte
+  som våning i Filtrera och markera, 3D och låsta nummer; verktyget Rum
+  tar våningen i sin cache; dubbletter ihopslagna (`signedArea`,
+  `nearestEdge`, `ccw`, `offsetEdge`); husets kontur på Platsen och
+  måttkedjan med spöet prövar bara grannar; Zooma till allt och *Följ
+  byggnaden* når runt bågar. Testerna: 676 på ca 12–16 s.
+  Klickjämförelsen: 582 steg (43 nya för 0.10.23–0.10.25), körd mot
+  0.10.25 och 0.10.22.1; inget fel i koden, tre rättelser i skriptet. Se
+  PLAN.md och UTVECKLING.md.
 - **0.10.25 Platsen som modellflik är klar** (nytt format, **22**), byggd
   28 oktober (kväll) på "kör". Platsen ligger i våningslistan
   (`site: true`, id `platsen`, sist, vid ±0) men räknas inte bland husets
@@ -21,10 +32,10 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   (1:200) och Illustrationsplan (1:200); vyn har en vykategori. Testerna:
   676 på ca 16 s. Provat i Playwright mot `dist/` (släppt plats, marken
   runt huset på Platsen, Mark från Plan 1, kalkeringen, trädet och
-  menyn, en markplaneringsritning, 3D och sektionen). Klickjämförelsen
-  kördes **inte**. Se PLAN.md och UTVECKLING.md.
-- **Publicerad:** pushad till `main` 28 oktober (kväll), efter att
-  skrivrätten godkänts i andra försöket.
+  menyn, en markplaneringsritning, 3D och sektionen). Se PLAN.md och
+  UTVECKLING.md.
+- **Publicerad:** 0.10.25.1 pushad till `main` 29 oktober. Skrivrätten
+  kan behöva godkännas i sessionen (28 oktober nekades den först).
 - **Märks i hans ritningar efter 0.10.25:** projekt från 0.10.24 öppnas
   inte (nytt format). Markobjekten syns inte längre på Plan 1 utan på
   Platsen, och dialogen Platsen nås från Platsen i projektträdet.
@@ -32,10 +43,10 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   materialutredningen (planeringssession), 0.10.23 Smartspöt del 2,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.25` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.25.1` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.25 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.25.1 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -94,9 +105,8 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 - ~~0.8.8 Mallblad~~ … ~~0.10.22 Snäpp och smartspöt~~, ~~Granskning
   efter 0.10.22 (0.10.22.1)~~, ~~0.10.23 Smartspöt del 2~~, ~~0.10.24
   Bågar i bjälklagets och markytans kontur~~, ~~Utredning: material i
-  stället för fyllningar~~, ~~0.10.25 Platsen som modellflik~~ (klara)
-- **Granskning** efter 0.10.22.1 (fem versioner sedan; klickstegen för
-  0.10.23–0.10.25)
+  stället för fyllningar~~, ~~0.10.25 Platsen som modellflik~~,
+  ~~Granskning efter 0.10.25 (0.10.25.1)~~ (klara)
 - **0.10.26 Material, mark först** (mellanstor till stor, nytt format)
 - **0.10.27 Teckenförklaring** (liten till mellanstor)
 - **0.10.28 Texturer i 3D** (mellanstor)
@@ -118,17 +128,16 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-Claudes förslag är en **granskning** innan materialen: fem versioner
-sedan 0.10.22.1, och klickjämförelsen har inte körts för 0.10.23–0.10.25
-(nya steg: spöet i Takfall, Mått och Littera; bjälklag med båge och Böj på
-konturen; markyta som polygon; Platsen med Mark, kalkeringen, menyn och en
-vy efter en förinställning). Skriptet öppnar dialogen Platsen med
-`bacchus.site` sedan 0.10.25, och efter *släpp platsen* öppnas Platsen, så
-stegen därefter skiljer mot äldre byggen. Därefter **0.10.26 Material,
-mark först** enligt beslutet i `cad-apa-synpunkter.md` och PLAN.md. Läs
-`cad-apa-synpunkter.md` först och sortera Inkorgen om den har något.
-Frågorna om 0.10.25, 0.10.24 och 0.10.23 (nedan) kan ställas när han
-provat.
+**0.10.26 Material, mark först** enligt beslutet i `cad-apa-synpunkter.md`
+(svaren A–E) och PLAN.md: materialet i stilmallen med en representation
+per vykategori, objektet pekar på ett material eller har *Eget*, först
+markyta, slänter, ramp, stödmur och brytlinje. Nytt format.
+Mellanstor till stor: säg hur mycket som ryms i en session och föreslå
+hellre en delning (mark först, sedan bjälklag och tak i 0.10.26.1) än att
+krama in allt. Läs `cad-apa-synpunkter.md` först och sortera Inkorgen om
+den har något. Frågorna om 0.10.25, 0.10.24 och 0.10.23 (nedan) kan
+ställas när han provat; granskningen lade till en (husets verktyg på
+Platsen).
 
 ## Att fråga Carl August om
 
@@ -137,6 +146,10 @@ Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga.
 
 **0.10.25 efter provning** (Claudes val, se PLAN.md)
+- Husets verktyg (vägg, tak, bjälklag …) går att använda på Platsen, och
+  objekten hamnar då på Platsen, inte i huset (klickjämförelsen visade
+  det). Ska de spärras där, eller öppna en våning, som Mark öppnar
+  Platsen?
 - Stödmurarna ritas snittade (fyllda) hela vägen på Platsen, också låga.
   Rätt för situationsplanen och markplaneringsritningen?
 - Husets kontur på Platsen är 0,35 heldragen utanför taken och streckad

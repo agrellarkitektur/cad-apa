@@ -1,6 +1,7 @@
 import { addElements } from '../../core/commands';
 import type { RoofParams } from '../../elements/roof';
 import { quickRoofs, type QuickKind } from '../../elements/roofMaker';
+import { ccw, hasBulges } from '../../geometry/arcFit';
 import { dist, left, norm, sub } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
@@ -211,19 +212,10 @@ export class RoofTool implements ViewTool, PointTaker {
    */
   createFace(contour: Vec2[] | { points: [number, number][]; bulges?: number[] }, ref: [Vec2, Vec2]): void {
     const c = Array.isArray(contour) ? { points: contour.map((q): [number, number] => [q[0], q[1]]) } : contour;
-    const n = c.points.length;
     const ring = shapePoints({ shape: 'polyline', points: c.points, bulges: c.bulges, closed: true }).points;
-    let a = 0;
-    for (let i = 0; i < ring.length; i++) {
-      const p = ring[i];
-      const q = ring[(i + 1) % ring.length];
-      a += p[0] * q[1] - q[0] * p[1];
-    }
-    const flip = a < 0;
-    const outline = (flip ? [...c.points].reverse() : c.points).map((q): [number, number] => [q[0], q[1]]);
-    // Kant k i den vända konturen är kant n − 2 − k baklänges (den sista är den slutande).
-    const bulges = c.bulges && (flip ? c.points.map((_, k) => -(c.bulges![(n - 2 - k + n) % n] ?? 0) || 0) : c.bulges);
-    this.add([{ outline, ...(bulges?.some((b) => b) ? { bulges } : {}), ref: [[ref[0][0], ref[0][1]], [ref[1][0], ref[1][1]]], ...this.base() }]);
+    const a = ccw(ring, { points: c.points, bulges: c.bulges ?? c.points.map(() => 0), closed: true });
+    const outline = a.points.map((q): [number, number] => [q[0], q[1]]);
+    this.add([{ outline, ...(hasBulges(a.bulges) ? { bulges: a.bulges } : {}), ref: [[ref[0][0], ref[0][1]], [ref[1][0], ref[1][1]]], ...this.base() }]);
   }
 
   /** Snabbvalet över rektangeln mellan a och b (husets ytterliv). */

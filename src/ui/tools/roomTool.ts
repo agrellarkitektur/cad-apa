@@ -47,17 +47,18 @@ export class RoomTool implements ViewTool {
     this.place(p.model);
   }
 
-  private cache: { key: object; state: string; holes: Vec2[][] } | null = null;
+  private cache: { key: object; state: string; storey: string; holes: Vec2[][] } | null = null;
 
   private holes(): Vec2[][] {
     const doc = this.host.store.doc;
     const view = { state: this.host.activeState() };
-    if (this.cache && this.cache.key === doc.elements && this.cache.state === view.state) return this.cache.holes;
-    const here = Object.values(doc.elements).filter((e) => e.storey === this.host.storey() && actionOf(e, view) !== 'absent');
+    const storey = this.host.storey();
+    if (this.cache && this.cache.key === doc.elements && this.cache.state === view.state && this.cache.storey === storey) return this.cache.holes;
+    const here = Object.values(doc.elements).filter((e) => e.storey === storey && actionOf(e, view) !== 'absent');
     const walls = here.filter((e) => e.type === 'Wall').map((e) => ({ id: e.id, p: resolveParams<WallParams>(doc, e) }));
     const bounds = here.filter(isRoomBoundary).map((e) => ({ id: e.id, p: resolveParams<Shape2DParams>(doc, e) }));
     const holes = roomHoles(walls, bounds);
-    this.cache = { key: doc.elements, state: view.state, holes };
+    this.cache = { key: doc.elements, state: view.state, storey, holes };
     return holes;
   }
 

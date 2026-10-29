@@ -3,7 +3,7 @@ import { applyTagField } from './litteraSection';
 import { applyGroundField } from './groundFieldEdits';
 import { setLevel } from '../core/levels';
 import { moveElements, moveWallEnd, renameElement, updateDefinition, updateParams } from '../core/commands';
-import type { Element, ProjectDoc } from '../core/model';
+import { buildingStoreys, type Element, type ProjectDoc } from '../core/model';
 import type { ViewStates } from '../core/states';
 import type { DocStore } from '../core/store';
 import { reshapeWall } from '../core/wallEdit';
@@ -64,7 +64,7 @@ export function lockDoorNumbers(store: DocStore, view: ViewStates, locked: boole
   const doc = store.doc;
   store.transact(locked ? 'Lås dörrnumren' : 'Lås upp dörrnumren', (tx) => {
     if (locked) {
-      for (const storey of doc.storeys) {
+      for (const storey of buildingStoreys(doc)) {
         const { ctx } = createContext(doc, storey.id, view, doc.graphics, () => true);
         for (const [id, number] of doorNumbersFor(ctx)) {
           const el = tx.doc.elements[id];
@@ -90,7 +90,7 @@ export function setNumbering(store: DocStore, view: ViewStates, name: string, in
   store.transact(next.locked && !current.locked ? 'Lås rumsnumrering' : 'Ändra rumsnumrering', (tx) => {
     if (next.locked && !current.locked) {
       // Spara numren som de ser ut nu, plan för plan.
-      for (const storey of doc.storeys) {
+      for (const storey of buildingStoreys(doc)) {
         const { ctx } = createContext(doc, storey.id, view, doc.graphics, () => true);
         for (const [id, number] of roomNumbersFor(ctx)) {
           const el = tx.doc.elements[id];

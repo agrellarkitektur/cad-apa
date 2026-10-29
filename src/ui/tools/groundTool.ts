@@ -4,11 +4,10 @@ import { groundAt, terrainOf } from '../../core/site';
 import type { GroundParams } from '../../elements/ground';
 import { extendRamp } from '../../elements/rampEdits';
 import { hasArcs, tidyBulges } from '../../elements/groundLines';
-import { areaOutline } from '../../elements/groundGeometry';
 import { ChainInput } from './chainInput';
 import { resolveParams } from '../../elements/registry';
 import { dist } from '../../geometry/vec';
-import { slabAt } from '../../elements/slab';
+import { slabAt, slabOutline } from '../../elements/slab';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
@@ -229,7 +228,7 @@ export class GroundTool implements ViewTool, PointTaker {
    */
   createArea(outline: [number, number][], bulges?: number[]): boolean {
     const arcs = hasArcs(bulges) ? { bulges: tidyBulges(bulges, outline.length + 1) } : {};
-    const ring = areaOutline({ outline, ...arcs });
+    const ring = slabOutline({ outline, ...arcs });
     if (!this.hasTerrain() || ring.length < 3) return false;
     let x = 0;
     let y = 0;

@@ -3139,6 +3139,46 @@ material bor i stilmallen med en representation per vykategori, objektet
 pekar på ett material eller har *Eget*, och teckenförklaringen läser
 materialen ur bladets vyer.
 
+### Granskning efter 0.10.25 ✓ (0.10.25.1)
+
+Utan nya funktioner: det Platsen glömde på några ställen, dubbletter,
+grannkoll där allt prövades mot allt, och klicksteg för 0.10.23–0.10.25.
+
+*Påbörjad 28 oktober (sent) och gjord 29 oktober, samma format (22).
+Det syns, så den heter 0.10.25.1. Testerna: 676, ca 12–16 s.
+**Platsen räknas inte som våning** i Filtrera och markera (*Alla
+våningar* bara med flera husvåningar), 3D (*Bara den här våningen* göms
+med en våning) och låsta rums- och dörrnummer; `storeysUp` borttagen
+(`storeysUpFrom`). **Verktyget Rum** räknade hålen per dokument och
+tillstånd men inte per våning, så ett byte av våning utan ändring gav
+förra våningens rum: cachen tar våningen med. **`parse`** känner igen
+Platsen på id:t också. **Dubbletter**: skosnöresformeln fanns på ett
+tiotal ställen, nu `signedArea`; `nearestEdge`, `ccw` och `offsetEdge`
+samlade i `geometry/` (`core/roofEdit.ts` borta). **Grannkoll**: husets
+kontur på Platsen prövas bara mot taken vars ruta rör den, och måttkedjan
+med spöet bara mot väggarna som når fram. **Zooma till allt** och
+fasadmarkörens *Följ byggnaden* räknar med bågarnas buktning.
+**Klickjämförelsen** fick 43 steg för 0.10.23–0.10.25 (spöet i Takfall,
+Mått och Littera, bjälklag med båge och Böj, markyta som polygon med
+båge på Platsen, 3D, kalkeringen, Platsens meny med en situationsplan och
+Egenskaper) och anpassades till Platsen (markobjekten markeras där, samma
+utsnitt efter varje byte, dokumenten jämförs utan Platsen mot äldre
+byggen). Den visade inget fel i koden; tre saker i skriptet rättades
+(*Båge* i Mark ligger kvar från rampen, så den sätts i stället för
+växlas; zoomen efter bytet från 3D; klicket på det vridna hålet låg
+utanför hålet och snäppte till bjälklagets kant, så *Spegla* vände hela
+bjälklaget kring kanten — rätt beteende, fel klick; och stegen för
+0.10.23 ritade takfallet på Platsen, dit stödmuren fört vyn — husets
+verktyg spärras inte där, en fråga till Carl August). Mot 0.10.25 skiljer bara de
+avsiktliga stegen (dialogen Filtrera, fasadmarkören runt bågen); mot
+0.10.22.1 skiljer bilderna från *släpp platsen*, eftersom markobjekten
+inte längre ritas på Plan 1, men dokumenten är lika.*
+
+*Claudes val:* `reversedChain` behåller första hörnet när en kontur vänds
+moturs (testet för 0.10.17 låste den gamla ordningen utan skäl).
+`dimWall.nearWall` använder samma räckvidd som kedjans eget test, så
+resultatet är detsamma.
+
 ### 0.10.26 Material, mark först · *nytt format*
 
 Beslutat 28 oktober (svaren A–E). Mellanstor till stor.

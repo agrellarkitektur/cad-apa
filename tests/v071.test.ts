@@ -8,7 +8,7 @@ import { buildPlan } from '../src/repr/plan';
 import { DocStore } from '../src/core/store';
 import { FORMAT_VERSION, type ProjectDoc } from '../src/core/model';
 import { skewOf, skewWarnings } from '../src/elements/angleCheck';
-import { offsetEdge } from '../src/core/roofEdit';
+import { offsetEdge } from '../src/geometry/offsetEdge';
 import { copyPayload, originalsHere, parsePayload, pasteClip } from '../src/core/clipboard';
 import { openingsInCorner, roundCorner } from '../src/core/wallEdit';
 import { readableAngle } from '../src/elements/markers';

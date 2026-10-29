@@ -1,6 +1,5 @@
 import { fitArcs, hasBulges } from '../../geometry/arcFit';
-import { offsetRing } from '../../geometry/chains';
-import { closestOnSegment, dist } from '../../geometry/vec';
+import { nearestEdge, offsetRing } from '../../geometry/chains';
 import type { Vec2 } from '../../repr/primitives';
 import { houseAt, ringsAt } from './rings';
 import { mm } from './trace';
@@ -30,7 +29,7 @@ export const roofOver: WandAction = {
     const out: WandHit[] = [];
     for (const r of rings) {
       if (o.mode === 'face') {
-        const i = nearestEdge(r.points, ctx.at);
+        const i = nearestEdge({ points: r.points, closed: true }, ctx.at);
         // Medurs är vänster utåt: takfoten utanför konturen.
         const contour = offsetRing(r.points, o.eave);
         const n = contour.length;
@@ -65,16 +64,3 @@ export const roofOver: WandAction = {
   },
 };
 
-/** Kanten i en sluten kontur närmast punkten: index till dess första hörn. */
-function nearestEdge(pts: readonly Vec2[], p: Vec2): number {
-  let best = 0;
-  let bd = Infinity;
-  for (let i = 0; i < pts.length; i++) {
-    const d = dist(closestOnSegment(p, pts[i], pts[(i + 1) % pts.length]).point, p);
-    if (d < bd) {
-      bd = d;
-      best = i;
-    }
-  }
-  return best;
-}

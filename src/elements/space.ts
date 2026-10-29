@@ -3,6 +3,7 @@ import { markerPen } from '../repr/markerPens';
 import { effectivePen, withOwnPen } from '../repr/ownPen';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import type { ElementType } from './registry';
+import { signedArea } from '../geometry/chains';
 import { closestOnSegment, pointInRings } from '../geometry/vec';
 import { centroidOf, roomNumbersFor, spaceOutline, type SpaceParams } from './rooms';
 import { fillTemplate, ownProp } from './littera';
@@ -124,13 +125,7 @@ function nearestOnOutline(pts: readonly Vec2[], at: Vec2): Vec2 {
 
 /** Area i m² ur en kontur i mm (skosnöresformeln). */
 export function areaOf(pts: readonly Vec2[]): number {
-  let a = 0;
-  for (let i = 0; i < pts.length; i++) {
-    const [x1, y1] = pts[i];
-    const [x2, y2] = pts[(i + 1) % pts.length];
-    a += x1 * y2 - x2 * y1;
-  }
-  return Math.abs(a) / 2 / 1e6;
+  return Math.abs(signedArea(pts)) / 1e6;
 }
 
 // Ett talformat att återanvända: toLocaleString skapar ett nytt för varje anrop.

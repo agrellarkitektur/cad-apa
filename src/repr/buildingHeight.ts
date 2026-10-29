@@ -1,3 +1,4 @@
+import { signedArea } from '../geometry/chains';
 import { intersection, type Rings } from '../geometry/boolean';
 import type { Vec2 } from './primitives';
 import { zOn } from './solids';
@@ -157,15 +158,6 @@ function basisFacade(doc: PlanContext['doc'], facades: readonly FacadeHeight[]):
   return best?.f ?? null;
 }
 
-function signedArea(r: readonly Vec2[]): number {
-  let s = 0;
-  for (let i = 0; i < r.length; i++) {
-    const p = r[i];
-    const q = r[(i + 1) % r.length];
-    s += p[0] * q[1] - q[0] * p[1];
-  }
-  return s / 2;
-}
 
 /** Ringen utan hörn där kanten fortsätter rakt (väggar som möts i samma liv). */
 function straight(r: readonly Vec2[]): Vec2[] {

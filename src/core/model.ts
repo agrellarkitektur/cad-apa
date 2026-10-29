@@ -270,7 +270,7 @@ export function buildingStoreys(doc: Pick<ProjectDoc, 'storeys'>): Storey[] {
   return doc.storeys.filter((s) => !s.site);
 }
 
-/** Husets våningar nerifrån och upp (som `storeysUp` i storeys.ts, för lagren som inte når den). */
+/** Husets våningar nerifrån och upp (utan Platsen, 0.10.25). */
 export function storeysUpFrom(doc: Pick<ProjectDoc, 'storeys'>): Storey[] {
   return buildingStoreys(doc).sort((a, b) => a.elevation - b.elevation);
 }

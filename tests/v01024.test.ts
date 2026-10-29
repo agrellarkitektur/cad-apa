@@ -3,7 +3,7 @@ import { addElements, moveElements } from '../src/core/commands';
 import { DocStore } from '../src/core/store';
 import { mirrorAbout } from '../src/core/wallEdit';
 import { registerBuiltInTypes } from '../src/elements';
-import { areaOutline, groundGeometry } from '../src/elements/groundGeometry';
+import { groundGeometry } from '../src/elements/groundGeometry';
 import { shapePoints } from '../src/elements/drawing2d';
 import { hasOutlineShape, shapeCan, shapeOf, shapePatch } from '../src/elements/shapeEdit';
 import { slabOutline, type SlabParams } from '../src/elements/slab';
@@ -126,7 +126,7 @@ describe('markytans kontur med bågar', () => {
     const id = addGround(store, { kind: 'area', outline: [[0, 20000], [4000, 20000], [4000, 23000], [0, 23000]], bulges: [0, -1000], height: 1000 });
     const el = store.doc.elements[id];
     const p = el.params as unknown as { outline: P[]; bulges?: number[] };
-    expect(areaOutline(p).length).toBeGreaterThan(8);
+    expect(slabOutline(p).length).toBeGreaterThan(8);
     const g = groundGeometry(planCtx(store), el)!;
     expect(pointInRings([4800, 21500], g.rings[0])).toBe(true);
     expect(pointInRings([5200, 21500], g.rings[0])).toBe(false);

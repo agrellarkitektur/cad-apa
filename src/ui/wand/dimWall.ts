@@ -33,7 +33,7 @@ export const dimWall: WandAction = {
     const f = wallFrame(resolveParams<WallParams>(doc, el));
     if (f.arc) return [];
     const near: 1 | -1 = f.project(ctx.at)[1] >= 0 ? 1 : -1;
-    const here = sameStorey(doc, el, app.host.activeState());
+    const here = nearWall(doc, el, f, app.host.activeState());
     const d = OUT * app.view.drawingScale;
     const out: WandHit[] = [];
     for (const side of [near, -near as 1 | -1]) {
@@ -50,9 +50,32 @@ export const dimWall: WandAction = {
   },
 };
 
-/** Väggarna, dörrarna och fönstren på väggens våning i tillståndet, som måtten knyts till. */
-function sameStorey(doc: ProjectDoc, wall: Element, state: Id): Element[] {
-  return Object.values(doc.elements).filter((e) => e.storey === wall.storey && !e.space && e.states.includes(state) && (e.type === 'Wall' || e.type === 'Door' || e.type === 'Window'));
+/**
+ * Det måtten kan knytas till: väggens öppningar och de väggar på samma
+ * våning (i tillståndet) som når fram till den; de andra väggarna är inte
+ * med, så kedjan och `refsAt` räknar bara med grannarna (granskningen efter
+ * 0.10.25). `f` är väggens ram.
+ */
+function nearWall(doc: ProjectDoc, wall: Element, f: ReturnType<typeof wallFrame>, state: Id): Element[] {
+  const out: Element[] = [];
+  for (const id in doc.elements) {
+    const e = doc.elements[id];
+    if (e.storey !== wall.storey || e.space || !e.states.includes(state)) continue;
+    if (e.type === 'Door' || e.type === 'Window') {
+      if (e.host === wall.id) out.push(e);
+      continue;
+    }
+    if (e.type !== 'Wall') continue;
+    if (e.id === wall.id) {
+      out.push(e);
+      continue;
+    }
+    const g = wallFrame(resolveParams<WallParams>(doc, e));
+    const reach = f.half + 2 * g.half + 5;
+    const ends = [g.at(0, 0), g.at(g.length, 0)];
+    if (ends.some((q) => { const [s, off] = f.project(q); return s >= -reach && s <= f.length + reach && Math.abs(off) <= reach; })) out.push(e);
+  }
+  return out;
 }
 
 /**

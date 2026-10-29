@@ -3,7 +3,7 @@ import { left, norm, sub } from '../geometry/vec';
 import { markerPen, penFill, solidPen, withWeight } from '../repr/markerPens';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
-import type { RoofParams } from './roof';
+import { outlineRing, type RoofParams } from './roof';
 
 /**
  * Norrpil, fasader och sektioner (format 4). De hör till ritningen, inte
@@ -88,7 +88,9 @@ export function modelBounds(doc: ProjectDoc, storey?: string): { minX: number; m
         add(q[0] + h, q[1] + h);
       }
     } else if (el.type === 'Roof' || el.type === 'Slab') {
-      for (const q of resolveParams<RoofParams>(doc, el).outline) add(q[0], q[1]);
+      // Med bågarna (0.10.24): en utåtbuktande kant går utanför hörnen.
+      const p = resolveParams<RoofParams>(doc, el);
+      for (const q of p.bulges?.some((b) => b) ? outlineRing(p) : p.outline) add(q[0], q[1]);
     }
   }
   if (!n) return null;

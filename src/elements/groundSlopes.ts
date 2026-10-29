@@ -1,3 +1,4 @@
+import { signedArea } from '../geometry/chains';
 import { groundAt, groundDefaults, terrainOf } from '../core/site';
 import { union, type Rings } from '../geometry/boolean';
 import type { Primitive, Vec2 } from '../repr/primitives';
@@ -11,16 +12,6 @@ import type { PlanContext } from './registry';
  * granskningen efter 0.10.18.
  */
 
-/** Ytan som ringen omsluter, positiv moturs. */
-export function signedArea(ring: readonly Vec2[]): number {
-  let a = 0;
-  for (let i = 0; i < ring.length; i++) {
-    const p = ring[i];
-    const q = ring[(i + 1) % ring.length];
-    a += p[0] * q[1] - q[0] * p[1];
-  }
-  return a / 2;
-}
 
 /** Normalen ut från ringen längs kanten `a`–`b`, eller null för en kant utan längd. */
 export function outward(ring: readonly Vec2[], a: Vec2, b: Vec2): Vec2 | null {

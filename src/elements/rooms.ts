@@ -1,3 +1,4 @@
+import { signedArea } from '../geometry/chains';
 import { buildingStoreys, type Element, type Id, type ProjectDoc, type RoomNumbering } from '../core/model';
 import { boxOf, union, type Box, type Rings } from '../geometry/boolean';
 import { pointInRings } from '../geometry/vec';
@@ -309,15 +310,6 @@ function computeOrder(ctx: PlanContext, spaces: Element[]): { rooms: Id[]; doors
   return { rooms: order, doors: doorOrder };
 }
 
-export function signedArea(ring: readonly Vec2[]): number {
-  let a = 0;
-  for (let i = 0; i < ring.length; i++) {
-    const [x1, y1] = ring[i];
-    const [x2, y2] = ring[(i + 1) % ring.length];
-    a += x1 * y2 - x2 * y1;
-  }
-  return a / 2;
-}
 
 function perimeterOf(ring: readonly Vec2[]): number {
   let l = 0;

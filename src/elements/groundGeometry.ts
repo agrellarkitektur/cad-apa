@@ -145,11 +145,6 @@ export interface GroundParams extends Partial<FillParams> {
   slopeFill?: FillParams;
 }
 
-/** Markytans ritade kontur med bågarna som korta raka bitar (0.10.24); tom med färre än tre punkter. */
-export function areaOutline(p: Pick<GroundParams, 'outline' | 'bulges'>): Vec2[] {
-  return slabOutline(p);
-}
-
 /** Namnet på objektets sort, som i egenskaperna. */
 export function groundLabel(p: Pick<GroundParams, 'kind' | 'around' | 'slab' | 'name'>): string {
   if (p.around) return 'Markyta runt huset';
@@ -296,7 +291,7 @@ function computeGeometry(ctx: PlanContext, el: Element<any>, p: GroundParams, fo
     height = storeyElevation(ctx, slabEl.storey) - Math.max(0, slabP.thickness);
   } else {
     // Konturen med bågarna som korta raka bitar (0.10.24).
-    const ring = areaOutline(p);
+    const ring = slabOutline(p);
     if (!ring.length) return null;
     polys = [[ring]];
     height = p.height ?? 0;

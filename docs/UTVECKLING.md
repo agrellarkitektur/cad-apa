@@ -270,7 +270,27 @@ ur överlämningen i 0.10.23).
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (539 steg sedan granskningen efter 0.10.22, som lade till 43 steg sist
+  (582 steg sedan granskningen efter 0.10.25, som lade till 43 steg sist
+  för 0.10.23–0.10.25: spöet i Takfall, Mått (Tab: andra sidan) och
+  Littera, ett bjälklag med Båge i polygonen och Böj på en kant, Mark som
+  öppnar Platsen med en markyta som polygon med båge, Platsen i 3D,
+  kalkeringen av Platsen i planen, Platsens meny med *Ny vy →
+  Situationsplan* och *Egenskaper*. Sedan 0.10.25 ligger markobjekten
+  på Platsen: stegen som markerar dem går dit med `ON_SITE` och tillbaka
+  med `ON_PLAN`, varje byte av våning zoomar till samma utsnitt (`FIT`,
+  eftersom *Zooma till allt* ger olika i planen med och utan platsen),
+  snäppet slås av i de steg där platsens objekt förut snäppte i planen,
+  och mot ett äldre bygge jämförs dokumenten utan Platsen (`norm_doc`:
+  markobjekten räknas som på första våningen). Bilderna skiljer mot
+  byggen före 0.10.25 från *släpp platsen* och framåt, eftersom
+  markobjekten inte längre ritas på Plan 1; då är dokumentet det som
+  jämförs. *Båge* i Mark sätts med `ground_arc(on)`, inte växlas: den
+  ligger kvar från rampen i stegen för 0.10.19. Klicket på det vridna
+  hålet (0.10.17-stegen) ligger mitt i hålet, så att det inte snäpper
+  till bjälklagets kant (då speglades hela bjälklaget). Husets verktyg
+  spärras inte på Platsen, så stegen går till Plan 1 före takfallet.
+  539 steg efter
+  granskningen efter 0.10.22, som lade till 43 steg sist
   för litteran, det generella littrat och smartspöt: greppen dras med
   `grip_center('circle.grip')`, `path.grip` och `rect.side-grip`, Shift
   hålls under dragningen men inte vid nedtryckningen (`shift_drag`), spöet
@@ -1610,12 +1630,46 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Granskning efter 0.10.25 (0.10.25.1, format 22)
+
+Utan nya funktioner: det Platsen (0.10.25) glömde på några ställen,
+dubbletter ihopslagna, och klicksteg för 0.10.23–0.10.25.
+
+- **Platsen räknas inte som våning** i `filterSelect.ts` (*Alla
+  våningar* bara med flera husvåningar), `pane3d.ts` (*Bara den här
+  våningen* göms med en våning), `selectionEdits.ts` (låsta rums- och
+  dörrnummer går igenom husets våningar) och `roomTool.ts` (hålen i
+  cachen per våning, så att ett byte av våning med samma dokument inte ger
+  förra våningens hål). `storeysUp` i `core/storeys.ts` är borta; använd
+  `storeysUpFrom` i `core/model.ts`.
+- **`parse`** känner igen Platsen på id:t också: en handskriven fil med
+  ett annat id på den sista våningen med `site` får id `platsen`, och
+  objekten flyttas dit.
+- **Dubbletter**: skosnöresformeln fanns på ett tiotal ställen; nu bara
+  `signedArea` i `geometry/chains.ts` (`ringArea` i `slab.ts` är samma
+  funktion). `nearestEdge(kedja, punkt)` bor i `chains.ts` (var i
+  `trace.ts` och `roofOver.ts`), `ccw(ring, kedja)` i `arcFit.ts` (var i
+  `slabFrom.ts`; `roofTool.createFace` vänder konturen med den, så den
+  vända behåller sitt första hörn). `areaOutline` i `groundGeometry.ts`
+  är borta (= `slabOutline`). `offsetEdge` ligger i `geometry/offsetEdge.ts`;
+  `core/roofEdit.ts` är borttagen (resten gick redan i 0.10.24).
+  `draw2dTool.fillParams()` bygger fyllningens parametrar på ett ställe.
+- **Snabbare**: `houseOnSite` prövar husets kontur bara mot taken vars
+  ruta rör den (`boxesTouch`); `dimWall.nearWall` ger `wallChain` bara
+  väggens öppningar och de väggar som når fram till den (samma räckvidd
+  som kedjans eget test), i stället för alla på våningen.
+- **`modelBounds`** räknar med bågarnas buktning (`outlineRing`) för tak
+  och bjälklag, så *Zooma till allt* får med en utåtbuktande kant.
+- Klickjämförelsen: se *Arbeta i sandlådan*; `norm_doc` jämför dokumenten
+  utan Platsen mot äldre byggen, och *Båge* i verktyget Mark sätts (inte
+  växlas), eftersom den ligger kvar från rampen i stegen för 0.10.19.
+
 ## Platsen som modellflik (0.10.25, format 22)
 
 - **Platsen i våningslistan**: `Storey.site` (`true`), id `SITE_STOREY`
   (`'platsen'`), golvet vid ±0, sist i `doc.storeys`. `siteStorey()`,
   `isSite(id | våning)`, `buildingStoreys(doc)` (husets våningar),
-  `storeysUpFrom` (= `storeysUp` i `core/storeys.ts`), `groundStorey`
+  `storeysUpFrom` (`storeysUp` i `core/storeys.ts` togs bort i granskningen efter 0.10.25), `groundStorey`
   (våningen närmast ±0, utan Platsen) och `withSiteLast` ligger i
   `src/core/model.ts`. `emptyProject` och exemplet har den; `parse` lägger
   till den sist om den saknas (`withSiteLast`), så handskrivna filer får

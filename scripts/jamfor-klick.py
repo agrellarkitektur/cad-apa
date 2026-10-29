@@ -55,6 +55,9 @@ def compare(a_path, b_path, till_slut=False):
     pics = [p[:-5] + '-bilder' for p in (a_path, b_path)]
     for i, (x, y) in enumerate(zip(a, b)):
         d = [k for k in keys if x[k] != y[k]]
+        # Platsen (0.10.25) ligger i våningslistan och markobjekten på den: jämför dokumenten utan det.
+        if 'doc' in d and norm_doc(x['_raw']['doc']) == norm_doc(y['_raw']['doc']):
+            d.remove('doc')
         # Samma bild trots olika markup räknas som lika (0.8.38).
         if 'content' in d and all(os.path.exists(f'{q}/{i}.png') for q in pics):
             n = pixel_diff(*(f'{q}/{i}.png' for q in pics))
@@ -73,6 +76,18 @@ def compare(a_path, b_path, till_slut=False):
         if d or x['err'] != y['err']:
             print(f"{x['step']:28} {'OLIKA ' + ','.join(d) if d else ''} {x['err'][:60]} | {y['err'][:60]}")
     print(f'{len(a)} steg, {bad} olika')
+
+
+def norm_doc(s):
+    """Dokumentet utan formatnumret och Platsen (0.10.25): markobjekten räknas som på första våningen."""
+    doc = json.loads(s)
+    doc.pop('formatVersion', None)
+    first = doc['storeys'][0]['id']
+    doc['storeys'] = [st for st in doc['storeys'] if not st.get('site')]
+    for e in doc.get('elements', {}).values():
+        if e.get('storey') == 'platsen':
+            e['storey'] = first
+    return json.dumps(doc, sort_keys=True)
 
 
 def pixel_diff(a, b):
@@ -512,17 +527,30 @@ def main():
             return f"Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Ground' && ({test})).map((e) => e.id)"
 
         panel = 'aside.panel .panel-body'
-        step('planen igen', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(300))
+        # Sedan 0.10.25 bor markobjekten på Platsen: de markeras där (före 0.10.25 på första våningen).
+        # Samma utsnitt efter bytet i båda byggena (Zooma till allt ger olika, eftersom platsen
+        # inte längre ligger i planen), så att klicken inte hamnar under verktygsraden eller panelen.
+        FIT = "bacchus.view.zoomToBounds({minX: -32000, minY: -26000, maxX: 32000, maxY: 26000}); "
+        ON_SITE = "bacchus.goTo({kind: 'storey', id: (bacchus.store.doc.storeys.find((s) => s.site) ?? bacchus.store.doc.storeys[0]).id}); " + FIT
+        ON_PLAN = "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id}); " + FIT
+        step('planen igen', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id}); " + FIT + "", fn=lambda: pg.wait_for_timeout(300))
         step('släpp platsen', fn=drop_site)
         step('i det öppna projektet', fn=lambda: (pg.click('[data-choice="here"]'), pg.wait_for_timeout(500)))
         step('zooma till platsen', "__click('[data-action=\"fit\"]')", fn=lambda: pg.wait_for_timeout(400))
+        # Sedan 0.10.25 öppnas Platsen när platsen släppts, och Mark öppnar den från en våning:
+        # tillbaka till Plan 1 så att bjälklaget hamnar där (som före 0.10.25).
+        step('planen efter släppet', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id}); " + FIT + "", fn=lambda: pg.wait_for_timeout(300))
         step('markverktyget', "bacchus.setTool('ground')")
         step('runt huset', "__click('[data-action=\"ground-around\"]')")
         # Väggarna är vridna ovan, så plattan ur väggarna har ingen kontur: ett bjälklag till på plan 1.
-        step('bjälklag på plan 1', "bacchus.selection.clear(); bacchus.setTool('slab')")
+        step('bjälklag på plan 1', "bacchus.selection.clear(); bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id}); bacchus.setTool('slab')", fn=lambda: pg.wait_for_timeout(300))
+        # Utan snäpp: sedan 0.10.25 ligger platsens objekt på Platsen, så planen snäpper mot annat.
+        step('snäpp av för bjälklaget', "__click('[data-action=\"snap\"]')")
         step('bjälklagets första hörn', fn=lambda: click_model(-7000, -4000))
         step('bjälklagets andra hörn', fn=lambda: click_model(-3000, -1000))
-        step('markverktyget igen', "bacchus.setTool('ground')")
+        step('snäpp på igen', "__click('[data-action=\"snap\"]')")
+        # Utan snäpp medan markobjekten ritas: Platsen (0.10.25) har annat att snäppa mot än planen.
+        step('markverktyget igen', "bacchus.setTool('ground'); __click('[data-action=\"snap\"]')")
         step('under bjälklag', "bacchus.selection.clear(); __click('[data-ground-mode=\"slab\"]')")
         step('klicka i bjälklaget', fn=lambda: click_model(-5000, -2500))
         step('markyta', "bacchus.selection.clear(); __click('[data-ground-mode=\"area\"]')")
@@ -545,7 +573,7 @@ def main():
         step('brytlinjen klar', "__click('[data-action=\"ground-done\"]')")
         step('höjdpunkt', "bacchus.selection.clear(); __click('[data-ground-mode=\"point\"]')")
         step('höjdpunkten', fn=lambda: click_model(-10000, 16000))
-        step('esc mark', fn=lambda: pg.keyboard.press('Escape'))
+        step('esc mark', "__click('[data-action=\"snap\"]')", fn=lambda: pg.keyboard.press('Escape'))
         step('markera platån', f"bacchus.selection.set({ground_ids("e.params.kind === 'area' && e.params.outline.length").replace('.map(', '.slice(0, 1).map(')})")
         step('platåns höjd', f"__set('[data-key=\"ground:height\"]', '62,4', '{panel}')")
         step('platåns fall', f"__set('[data-key=\"ground:fall\"]', '40', '{panel}')")
@@ -600,7 +628,7 @@ def main():
         step('släck höjdmåtten', "__click('[data-show=\"heightDims\"]', '.show-menu')", fn=lambda: pg.wait_for_function('!bacchus.sections.pending', timeout=20000))
         step('nivåerna igen', "__click('[data-show=\"level\"]', '.show-menu')", fn=lambda: pg.wait_for_function('!bacchus.sections.pending', timeout=20000))
         step('stäng Visa i sektionen', "__click('[data-action=\"show-menu\"]')")
-        step('tillbaka till planen', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(500))
+        step('tillbaka till planen', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id}); " + FIT + "", fn=lambda: pg.wait_for_timeout(500))
         step('markera fasadmarkör', "bacchus.selection.set(['fasad-1'])")
         step('vänd blicken', "__click('[data-action=\"flip-side\"]', 'aside.panel .panel-body')")
         step('följ byggnaden', "__click('[data-action=\"follow-building\"]', 'aside.panel .panel-body')")
@@ -638,7 +666,7 @@ def main():
         step('väggverktyget igen', "bacchus.setTool('wall')")
         step('nära linjen utan snäpp', fn=hover_model(13500, -1950))
         step('snäpp mot kalkeringen på', fn=plan_menu('Snäpp mot kalkeringen'))
-        step('markera på plan 1', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(300))
+        step('markera på plan 1', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id}); " + FIT + "", fn=lambda: pg.wait_for_timeout(300))
         # Låst betyder låst (0.10.12).
         step('markera innerväggen', "bacchus.selection.set(['iv-2'])")
         step('lås väggen', f"__set('[data-key=\"lock:\"]', true, '{panel}')")
@@ -655,15 +683,15 @@ def main():
         step('markörens färg', f"__set('[data-pen=\"sectionLine:color\"]', '#aa3300', '{panel}')")
         step('markörens linjetyp', f"__set('[data-pen=\"sectionLine:linetype\"]', 'dashed', '{panel}')")
         # Stödmurens Över marken mot (0.10.12).
-        step('markera stödmuren igen', f"bacchus.selection.set({ground_ids("e.params.kind === 'wall'")})")
+        step('markera stödmuren igen', ON_SITE + f"bacchus.selection.set({ground_ids("e.params.kind === 'wall'")})")
         step('över marken mot den lägre', f"__set('[data-key=\"ground:aboveSide\"]', 'low', '{panel}')")
-        step('avmarkera muren', "bacchus.selection.clear()")
+        step('avmarkera muren', ON_PLAN + "bacchus.selection.clear()")
         # Bjälklag bakom snittet (0.10.12).
         step('öppna sektionen igen', fn=lambda: open_marker('sektion-a'))
         step('Visa i sektionen igen', "__click('[data-action=\"show-menu\"]')")
         step('släck bjälklag bakom snittet', "__click('[data-show=\"hiddenSlabsSection\"]', '.show-menu')", fn=lambda: pg.wait_for_function('!bacchus.sections.pending', timeout=20000))
         step('stäng Visa igen', "__click('[data-action=\"show-menu\"]')")
-        step('planen en sista gång', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(500))
+        step('planen en sista gång', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id}); " + FIT + "", fn=lambda: pg.wait_for_timeout(500))
 
         # ---------- 3D-vyn (steg från granskningen efter 0.10.12) ----------
         def at3d(js):
@@ -731,8 +759,8 @@ def main():
         step('sektionen bredvid 3D', fn=lambda: (open_marker('sektion-a'), pg.evaluate("bacchus.setMode('split')"), pg.wait_for_timeout(1200)), shot3d=True)
         step('följ sektionen', fn=lambda: (pg.click('button.follow-section:has-text("Följ sektionen")'), pg.wait_for_timeout(1500)), shot3d=True)
         step('klicka i den klippta 3D-vyn', fn=click3d('[9000, 200, 1500]'), shot3d=True)
-        step('tillbaka till 2D', "bacchus.setMode('2d')", fn=lambda: pg.wait_for_timeout(500))
-        step('planen till sist', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(500))
+        step('tillbaka till 2D', "bacchus.setMode('2d')", fn=lambda: (pg.wait_for_timeout(300), pg.evaluate(FIT), pg.wait_for_timeout(500)))
+        step('planen till sist', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id}); " + FIT + "", fn=lambda: pg.wait_for_timeout(500))
 
         # ---------- 0.10.13–0.10.15 (steg från granskningen efter 0.10.15) ----------
         # Smartmenyn ligger annars ibland över greppen som dras.
@@ -790,18 +818,19 @@ def main():
               bacchus.store.transact('höjdpunkt', (tx) => tx.putElement({ ...w, params: { ...w.params, crest: [{ at: [22000, 5000], h: 62500 }] } }));
               bacchus.selection.set([w.id]);
             }""")
-        step('höjdpunkt på muren', fn=add_crest)
+        step('höjdpunkt på muren', ON_SITE, fn=add_crest)
         step('dra höjdpunkten (mitt i)', fn=press_drag(model_pt(22000, 5000), model_pt(23200, 5300), release=False))
         step('släpp höjdpunkten', fn=release)
-        step('avmarkera höjdpunkten', "bacchus.selection.clear()")
+        step('avmarkera höjdpunkten', ON_PLAN + "bacchus.selection.clear()")
         # En 2D-forms punkt och bildens hörn (greppen som delades ut ur selectTool.ts).
         step('markera formen för punkten', "bacchus.selection.set(['tf-1'])")
         step('dra punkten (mitt i)', fn=press_drag(model_pt(12000, 0), model_pt(11400, -500), release=False))
         step('släpp punkten', fn=release)
-        step('markera bilden', "bacchus.selection.set([Object.values(bacchus.store.doc.elements).find((e) => e.type === 'Underlay').id])")
+        # Utan snäpp: platsens objekt snäppte förut i planen (de ligger på Platsen sedan 0.10.25).
+        step('markera bilden', "__click('[data-action=\"snap\"]'); bacchus.selection.set([Object.values(bacchus.store.doc.elements).find((e) => e.type === 'Underlay').id])")
         step('dra bildens hörn (mitt i)', fn=press_drag(grip_center('rect.grip'), grip_center('rect.grip') + '.map((v) => v + 40)', release=False))
         step('släpp bildens hörn', fn=release)
-        step('avmarkera bilden', "bacchus.selection.clear()")
+        step('avmarkera bilden', "__click('[data-action=\"snap\"]'); bacchus.selection.clear()")
         # Fyllningens panel (0.10.14).
         step('formen för fyllningen', "bacchus.selection.set(['tf-1'])")
         step('fyllning solid', f"__set('[data-key=\"d2:fillKind\"]', 'solid', '{panel}')")
@@ -814,10 +843,10 @@ def main():
         step('mönstrets penna', f"__set('[data-key=\"d2:fillWeight\"]', '0.25', '{panel}')")
         step('spara fyllningen', "__click('[data-action=\"fill-save\"]', 'aside.panel .panel-body')", fn=lambda: (pg.wait_for_selector('.ask-input', timeout=5000), pg.fill('.ask-input', 'Tegelyta'), pg.keyboard.press('Enter'), pg.wait_for_timeout(300)))
         step('formen och kopian kopplas', "bacchus.selection.set(['tf-3'])", fn=lambda: pg.evaluate(f"__set('[data-key=\"d2:fillStyle\"]', bacchus.store.doc.graphics.fills?.[0]?.id ?? '', '{panel}')"))
-        step('markera gropen för slänten', f"bacchus.selection.set({ground_ids("e.params.kind === 'area' && e.params.outline.length").replace('.map(', '.slice(1, 2).map(')})")
+        step('markera gropen för slänten', ON_SITE + f"bacchus.selection.set({ground_ids("e.params.kind === 'area' && e.params.outline.length").replace('.map(', '.slice(1, 2).map(')})")
         step('slänternas fyllning', f"__set('[data-key=\"sf:fillKind\"]', 'solid', '{panel}')")
         step('slänternas förslag', f"__set('[data-key=\"sf:fillPreset\"]', 'grus', '{panel}')")
-        step('avmarkera fyllningen', "bacchus.selection.clear()")
+        step('avmarkera fyllningen', ON_PLAN + "bacchus.selection.clear()")
         # Dölja i vyn (0.10.15).
         step('dölj innerväggen', fn=ctx_on('iv-2', 'Dölj i vyn'))
         step('dölj alla möbler', fn=ctx_on('m02', 'Dölj alla möbler i vyn'))
@@ -841,11 +870,11 @@ def main():
         step('fasaden med höjdmåtten', fn=open_with_heights)
         step('dra höjdmåttet (mitt i)', fn=press_drag(grip_center('rect.side-grip'), grip_center('rect.side-grip') + '.map((v, i) => i ? v : v - 60)', release=False))
         step('släpp höjdmåttet', fn=release)
-        step('planen efter fasaden', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id})", fn=lambda: pg.wait_for_timeout(500))
+        step('planen efter fasaden', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id}); " + FIT + "", fn=lambda: pg.wait_for_timeout(500))
         # Markobjektens linjer i 3D, rampen utan tvärlinje i början (0.10.15, 0.10.15.1).
         step('3D med linjerna', fn=show3d, shot3d=True)
         step('zooma till allt med linjerna', "__click('[data-action=\"fit\"]')", fn=lambda: pg.wait_for_timeout(500), shot3d=True)
-        step('2D efter linjerna', "bacchus.setMode('2d')", fn=lambda: pg.wait_for_timeout(500))
+        step('2D efter linjerna', "bacchus.setMode('2d')", fn=lambda: (pg.wait_for_timeout(300), pg.evaluate(FIT), pg.wait_for_timeout(500)))
         step('allra sist', "bacchus.selection.clear()")
 
         # ---------- 0.10.16–0.10.18 (steg från granskningen efter 0.10.18) ----------
@@ -881,7 +910,8 @@ def main():
         step('foga ihop', "bacchus.selection.set(['tf-2', 'tf-4']); bacchus.modifier.chooseRail('fuse')")
         step('avmarkera linjerna', "bacchus.selection.clear()")
         # Takets kontur med en båge (0.10.17).
-        step('takverktyget', "bacchus.setTool('roof'); __click('[data-roof-mode=\"face\"]')")
+        # Utan snäpp (platsens objekt snäppte i planen före 0.10.25) tills hålet är ritat.
+        step('takverktyget', "__click('[data-action=\"snap\"]'); bacchus.setTool('roof'); __click('[data-roof-mode=\"face\"]')")
         step('takets första hörn', fn=lambda: click_model(-16000, -20000))
         step('takets andra hörn', fn=lambda: click_model(-10000, -20000))
         step('båge i konturen', "__click('[data-action=\"roof-arc\"]')")
@@ -898,15 +928,16 @@ def main():
         step('bjälklaget klart', "__click('[data-action=\"slab-close\"]')")
         step('cirkelhål', "__click('[data-slab-mode=\"hole\"]'); __click('[data-slab-shape=\"circle\"]')")
         step('hålets centrum och radie', fn=lambda: (click_model(32000, -9000), click_model(33000, -9000)))
-        step('markera det nya bjälklaget', "bacchus.setTool('select'); bacchus.selection.set([Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Slab').at(-1).id])")
+        step('markera det nya bjälklaget', "__click('[data-action=\"snap\"]'); bacchus.setTool('select'); bacchus.selection.set([Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Slab').at(-1).id])")
         step('klicka på hålet', fn=lambda: click_model(33000, -9000))
         step('vrid hålet', "bacchus.modifier.chooseRail('rotate'); bacchus.modifier.applyValue(45)")
-        step('klicka på hålet igen', fn=lambda: click_model(31000, -9000))
+        # Hålet har vridits 45° kring (33000, −9000): mitt i det, så att klicket inte snäpper till bjälklagets kant (rättat i granskningen efter 0.10.25).
+        step('klicka på hålet igen', fn=lambda: click_model(32300, -9700))
         step('spegla hålet', "bacchus.modifier.chooseRail('mirror')", fn=lambda: click_model(31000, -6000))
         step('avmarkera bjälklaget', "bacchus.selection.clear()")
         # Rampens referenslinje (0.10.18): en punkt med höjd, ritade sidor, slänt på ena sidan och förlängning.
         ramp_ids = ground_ids("e.params.kind === 'path'")
-        step('markera rampen för punkterna', f"bacchus.setTool('select'); bacchus.selection.set({ramp_ids})")
+        step('markera rampen för punkterna', ON_SITE + f"bacchus.setTool('select'); bacchus.selection.set({ramp_ids})")
         step('klicka på referenslinjen', fn=lambda: click_model(5000, -8000))
         step('ny punkt på referenslinjen', "bacchus.modifier.chooseRail('insert')", fn=lambda: click_model(5000, -8000))
         step('klicka på den nya punkten', fn=lambda: click_model(5000, -8000))
@@ -922,14 +953,14 @@ def main():
         step('höjdkurvornas färg', "__set('[data-pen=\"contour:color\"]', '#aa5500', '.dialog')")
         step('den ändrade markens linjetyp', "__set('[data-pen=\"contourOld:linetype\"]', 'dotted', '.dialog')")
         step('stäng stilmallen sist', "__click('[data-action=\"close\"]', '.dialog')")
-        step('marken utan Mer', f"bacchus.selection.set(Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Terrain').map((e) => e.id)); bacchus.smartMenu.show(400, 400)")
+        step('marken utan Mer', ON_SITE + f"bacchus.selection.set(Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Terrain').map((e) => e.id)); bacchus.smartMenu.show(400, 400)")
         step('ett träd med Mer', f"bacchus.selection.set(Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Tree').map((e) => e.id)); bacchus.smartMenu.show(400, 400)")
-        step('sist av allt', "bacchus.selection.clear()")
+        step('sist av allt', ON_PLAN + "bacchus.selection.clear()")
 
         # ---------- 0.10.19–0.10.21 (granskningen efter 0.10.21) ----------
         # Bågar och mjuka övergångar på rampen (0.10.19): Böj på referenslinjen, Mjuka i panelen,
         # Skarp i en punkt, en ramp till med Båge i verktyget och Foga ihop.
-        step('markera rampen för bågen', f"bacchus.setTool('select'); bacchus.selection.set({ramp_ids})")
+        step('markera rampen för bågen', ON_SITE + f"bacchus.setTool('select'); bacchus.selection.set({ramp_ids})")
         step('klicka på referenslinjens första kant', fn=lambda: click_model(3500, -8000))
         step('böj kanten', "bacchus.modifier.chooseRail('curve')", fn=lambda: pg.evaluate('bacchus.modifier.applyValue(6000)'))
         step('mjuka övergångar', f"__set('[data-key=\"ground:ease\"]', 'soft', '{panel}')")
@@ -964,11 +995,11 @@ def main():
         step('visa branta slänter', "__click('[data-action=\"show-menu\"]')", fn=lambda: pg.evaluate('''__click('[data-show="steepSlopes"]', '.show-menu')'''))
         step('stäng Visa efter slänterna', "__click('[data-action=\"show-menu\"]')")
         # Lutande väggar (0.10.21): lutningen och toppen i sidled på en yttervägg, i planen och i 3D.
-        step('markera gavelväggen', "bacchus.selection.set(['yv-o'])")
+        step('markera gavelväggen', ON_PLAN + "bacchus.selection.set(['yv-o'])")
         step('väggens lutning', f"__set('[data-key=\"wall:lean\"]', '15', '{panel}')")
         step('toppen i sidled', f"__set('[data-key=\"wall:topOffset\"]', '300', '{panel}')")
         step('den lutande väggen i 3D', fn=show3d, shot3d=True)
-        step('tillbaka till planen', "bacchus.setMode('2d')", fn=lambda: pg.wait_for_timeout(300))
+        step('tillbaka till planen', "bacchus.setMode('2d')", fn=lambda: (pg.wait_for_timeout(300), pg.evaluate(FIT), pg.wait_for_timeout(300)))
         step('lutningen tillbaka', f"__set('[data-key=\"wall:lean\"]', '0', '{panel}')")
         step('allra sist', "bacchus.selection.clear()")
 
@@ -1048,6 +1079,57 @@ def main():
         step('hovra i bjälklaget', fn=hover_model(35000, -7000))
         step('2d-form runt bjälklaget', fn=lambda: click_model(35000, -7000))
         step('sist efter spöet', "bacchus.setTool('select'); bacchus.selection.clear()")
+
+        # ---------- 0.10.23–0.10.25 (granskningen efter 0.10.25) ----------
+        # Spöet i Takfall, Mått och Littera (0.10.23): takfall över väggarna runt bjälklaget,
+        # en måttkedja över en yttervägg (Tab: andra sidan), en littera på en vägg.
+        # Tillbaka till Plan 1 (stödmuren ovan öppnade Platsen; husets verktyg spärras inte där).
+        step('takfall med spöet', ON_PLAN + "bacchus.setTool('roof'); __click('[data-roof-mode=\"face\"]')", fn=lambda: (pg.keyboard.press('q'), pg.wait_for_timeout(200)))
+        step('hovra väggarna runt bjälklaget', fn=hover_model(33500, -12000))
+        step('takfall över väggarna', fn=lambda: click_model(33500, -12000))
+        step('mått med spöet', "bacchus.setTool('dimension')", fn=lambda: (pg.keyboard.press('q'), pg.wait_for_timeout(200)))
+        step('hovra ytterväggen för måttet', fn=hover_model(6000, 200))
+        step('tab till andra sidan', fn=lambda: (pg.keyboard.press('Tab'), pg.wait_for_timeout(200)))
+        step('måttkedja över väggen', fn=lambda: click_model(6000, 200))
+        step('littera med spöet', "bacchus.setTool('label')", fn=lambda: (pg.keyboard.press('q'), pg.wait_for_timeout(200)))
+        step('hovra väggen för litteran', fn=hover_model(11800, 4000))
+        step('littera på väggen', fn=lambda: click_model(11800, 4000))
+        step('spöet av efter litteran', fn=lambda: (pg.keyboard.press('Escape'), pg.wait_for_timeout(200)))
+        # Bågar i bjälklagets kontur (0.10.24): polygon med Båge, sedan Böj på en rak kant.
+        step('bjälklag med båge', "bacchus.setTool('slab'); __click('[data-slab-mode=\"slab\"]'); __click('[data-slab-shape=\"polygon\"]')")
+        step('bågbjälklagets två hörn', fn=lambda: (click_model(42000, -12000), click_model(49000, -12000)))
+        step('båge i bjälklaget', "__click('[data-action=\"slab-arc\"]')")
+        step('bjälklagets båge slut', fn=lambda: click_model(49000, -5000))
+        step('punkt på bjälklagets båge', fn=lambda: click_model(50500, -8500))
+        step('bjälklagets båge av', "__click('[data-action=\"slab-arc\"]')")
+        step('bågbjälklagets sista hörn', fn=lambda: click_model(42000, -5000))
+        step('bågbjälklaget klart', "__click('[data-action=\"slab-close\"]')")
+        step('markera bågbjälklaget', "bacchus.setTool('select'); bacchus.selection.set([Object.values(bacchus.store.doc.elements).filter((e) => e.type === 'Slab').at(-1).id])")
+        step('klicka på bjälklagets raka kant', fn=lambda: click_model(45500, -5000))
+        step('böj bjälklagets kant', "bacchus.modifier.chooseRail('curve')", fn=lambda: pg.evaluate('bacchus.modifier.applyValue(1500)'))
+        step('avmarkera bågbjälklaget', "bacchus.selection.clear()")
+        # Platsen (0.10.25): Mark öppnar Platsen, en markyta som polygon med båge (0.10.24) där,
+        # kalkeringen i planen, Platsens meny och en vy efter förinställningen Situationsplan.
+        step('mark öppnar platsen', "bacchus.setTool('ground')", fn=lambda: pg.wait_for_timeout(300))
+        step('markyta som polygon', "__click('[data-ground-mode=\"area\"]'); __click('[data-ground-shape=\"polygon\"]')")
+        step('markytans två hörn', fn=lambda: (click_model(-20000, -2000), click_model(-14000, -2000)))
+        # Båge ligger kvar tills den slås av (här sedan rampen i stegen för 0.10.19): sätt läget, växla inte.
+        ground_arc = lambda on: f"(() => {{ const b = document.querySelector('[data-action=\"ground-arc\"]'); if ((b.getAttribute('aria-pressed') === 'true') !== {str(on).lower()}) b.click(); }})()"
+        step('båge i markytan', ground_arc(True))
+        step('markytans båge slut', fn=lambda: click_model(-14000, 3000))
+        step('punkt på markytans båge', fn=lambda: click_model(-12500, 500))
+        step('markytans båge av', ground_arc(False))
+        step('markytans sista hörn', fn=lambda: click_model(-20000, 3000))
+        step('markytan klar', "__click('[data-action=\"ground-done\"]')")
+        step('platsen i 3D', fn=show3d, shot3d=True)
+        # Ritytan får sin storlek efter bytet till 2D: zooma först därefter (annars skiljer zoomen mellan körningar).
+        step('planen efter platsen', "bacchus.setMode('2d'); bacchus.setTool('select')", fn=lambda: (pg.wait_for_timeout(300), pg.evaluate(ON_PLAN), pg.wait_for_timeout(300)))
+        step('kalkera platsen', "__click('[data-action=\"show-menu\"]')", fn=lambda: pg.evaluate('''__set('[data-show-trace]', 'våning:platsen', '.show-menu')'''))
+        step('stäng Visa efter kalkeringen', "__click('[data-action=\"show-menu\"]')")
+        step('platsens meny', "__click('[data-storey-menu=\"platsen\"]')")
+        step('ny situationsplan', "[...document.querySelectorAll('.ctx-menu [data-i]')].find((b) => b.textContent.includes('Situationsplan')).click()", fn=lambda: pg.wait_for_timeout(300))
+        step('platsens egenskaper', "__click('[data-storey-menu=\"platsen\"]')", fn=lambda: pg.evaluate("[...document.querySelectorAll('.ctx-menu [data-i]')].find((b) => b.textContent.includes('Egenskaper')).click()"))
+        step('sist efter platsen', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id}); bacchus.selection.clear()")
         b.close()
     json.dump(rows, open(OUT, 'w'), ensure_ascii=False)
 

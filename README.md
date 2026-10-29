@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.25** (alfa); nästa är en **granskning** (fyra versioner sedan den senaste), sedan **0.10.26 Material, mark först**.
+**0.10.25.1** (alfa, granskning); nästa är **0.10.26 Material, mark först**.
 
 ## Vad som fungerar
 
@@ -1123,6 +1123,20 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
 - **Medelmarknivån** under *Platsen* sätter ±0 ur den nya marken, med
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
+
+Version 0.10.25.1, granskning (samma filformat, 22):
+- **Platsen räknas inte som våning** där det glömdes: *Alla våningar* i
+  Filtrera och markera visas bara med flera husvåningar, *Bara den här
+  våningen* i 3D göms med en våning, och låsta rums- och dörrnummer
+  sparas för husets våningar
+- **Verktyget Rum** visar rätt rum när man bytt våning utan att ändra
+  något (hålen räknades om först vid en ändring)
+- **Zooma till allt** får med en utåtbuktande båge i ett tak eller
+  bjälklag
+- Inget annat ändrat: ett tiotal kopior av samma geometri slagna ihop,
+  husets kontur på Platsen och måttkedjan med smartspöt prövar bara
+  grannarna, klicksteg för 0.10.23–0.10.25; samma klick ger samma
+  resultat som i 0.10.25
 
 Version 0.10.25, Platsen som modellflik (nytt filformat, 22; projekt från 0.10.24 öppnas inte):
 - **Platsen** står i projektträdet (Modell) ovanför våningarna: situationsplanen,

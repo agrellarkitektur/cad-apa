@@ -1,10 +1,14 @@
-type P = [number, number];
+import type { Vec2 } from '../repr/primitives';
+import { signedArea } from './chains';
+
+type P = Vec2;
 
 /**
  * Förskjut en kant i en sluten polygon (0.7.1). Konturerna (takfall,
  * bjälklag, markyta) ändras sedan 0.10.24 helt som 2D-former
  * (`src/elements/shapeEdit.ts`); det här är den raka kantens förskjutning
- * som `offsetShapeEdge` använder. Kant i går från hörn i till hörn i + 1.
+ * som `offsetShapeEdge` använder (flyttad hit ur `core/roofEdit.ts` i
+ * granskningen efter 0.10.25). Kant i går från hörn i till hörn i + 1.
  */
 
 /**
@@ -46,14 +50,4 @@ export function offsetEdge(outline: readonly P[], i: number, d: number): P[] | n
   // Konturen får inte klappa ihop eller vända sig ut och in.
   if (signedArea(out) * signedArea(outline) <= 0 || Math.abs(signedArea(out)) < 1e4) return null;
   return out;
-}
-
-function signedArea(outline: readonly P[]): number {
-  let a = 0;
-  for (let i = 0; i < outline.length; i++) {
-    const p = outline[i];
-    const q = outline[(i + 1) % outline.length];
-    a += p[0] * q[1] - q[0] * p[1];
-  }
-  return a / 2;
 }

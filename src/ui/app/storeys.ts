@@ -1,5 +1,5 @@
-import { buildingStoreys, groundStorey, isSite, SITE_CATEGORIES, type Id, type Storey } from '../../core/model';
-import { addStorey, deleteStorey, neighbourStorey, storeyContents, storeysUp, toStorey } from '../../core/storeys';
+import { buildingStoreys, groundStorey, isSite, SITE_CATEGORIES, storeysUpFrom, type Id, type Storey } from '../../core/model';
+import { addStorey, deleteStorey, neighbourStorey, storeyContents, toStorey } from '../../core/storeys';
 import { typeOf } from '../../elements/registry';
 import { askConfirm, askText } from '../ask';
 import { addSiteView } from '../../core/siteViews';
@@ -25,7 +25,7 @@ export function installStoreys(app: AppContext) {
   function create(where: 'above' | 'below', from = app.ui.storey): Id | null {
     // Från Platsen (0.10.25): ovanför den översta våningen eller under den nedersta.
     if (isSite(from)) {
-      const up = storeysUp(doc());
+      const up = storeysUpFrom(doc());
       from = (where === 'above' ? up[up.length - 1] : up[0]).id;
     }
     const id = addStorey(app.store, from, where);
@@ -83,7 +83,7 @@ export function installStoreys(app: AppContext) {
   }
 
   /** Våningarna att flytta eller kopiera till, uppifrån, och Platsen sist (0.10.25). */
-  const targets = (): Storey[] => [...storeysUp(doc()).reverse(), ...doc().storeys.filter((s) => s.site)].filter((s) => s.id !== app.ui.storey);
+  const targets = (): Storey[] => [...storeysUpFrom(doc()).reverse(), ...doc().storeys.filter((s) => s.site)].filter((s) => s.id !== app.ui.storey);
 
   /** Menyn för det markerade: Flytta och Kopiera till varje annan våning. */
   function menuItems(): MenuItem[] {

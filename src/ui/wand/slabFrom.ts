@@ -1,5 +1,5 @@
 import { slabAt } from '../../elements/slab';
-import { fitArcs, hasBulges, reversedChain, type ArcChain } from '../../geometry/arcFit';
+import { ccw, fitArcs, hasBulges } from '../../geometry/arcFit';
 import { signedArea, simplify } from '../../geometry/chains';
 import type { Vec2 } from '../../repr/primitives';
 import { ringsAt } from './rings';
@@ -67,5 +67,3 @@ export const slabFrom: WandAction = {
   },
 };
 
-/** Moturs, som bjälklagens konturer ritas: kedjan vänd när ytan går medurs. */
-export const ccw = (ring: readonly Vec2[], chain: ArcChain): ArcChain => (signedArea(ring) < 0 ? reversedChain(chain) : chain);

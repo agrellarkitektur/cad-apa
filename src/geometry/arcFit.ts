@@ -1,6 +1,6 @@
 import type { Vec2 } from '../repr/primitives';
 import { bulgeThrough, STRAIGHT } from './arc';
-import type { Chain } from './chains';
+import { signedArea, type Chain } from './chains';
 import { cross, dist, dot, sub } from './vec';
 
 /**
@@ -144,3 +144,6 @@ export function reversedChain(c: ArcChain): ArcChain {
   // Kant k i den vända går från punkt n − k till n − k − 1: den gamla kanten n − k − 1 baklänges.
   return { points: c.points.map((_, k) => c.points[(n - k) % n]), bulges: c.bulges.map((_, k) => c.bulges[(2 * n - k - 1) % n] ? -c.bulges[(2 * n - k - 1) % n] : 0), closed: true };
 }
+
+/** Kedjan moturs: vänd om ringen (kedjans punkter utan bågar) går medurs. */
+export const ccw = (ring: readonly Vec2[], chain: ArcChain): ArcChain => (signedArea(ring) < 0 ? reversedChain(chain) : chain);

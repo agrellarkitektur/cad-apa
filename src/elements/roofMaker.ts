@@ -1,4 +1,5 @@
 import { difference, intersection, union, type Rings } from '../geometry/boolean';
+import { signedArea } from '../geometry/chains';
 import { dist } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import type { Plane } from '../repr/solids';
@@ -50,13 +51,7 @@ function clean(ring: readonly (readonly number[])[]): P[] {
 
 /** Moturs. */
 function ccw(ring: P[]): P[] {
-  let a = 0;
-  for (let i = 0; i < ring.length; i++) {
-    const p = ring[i];
-    const q = ring[(i + 1) % ring.length];
-    a += p[0] * q[1] - q[0] * p[1];
-  }
-  return a < 0 ? [...ring].reverse() : ring;
+  return signedArea(ring) < 0 ? [...ring].reverse() : ring;
 }
 
 /**
@@ -123,15 +118,8 @@ export function quickRoofs(a: Vec2, b: Vec2, o: QuickOptions): RoofParams[] {
   });
 }
 
-function area(ring: readonly (readonly number[])[] | undefined): number {
-  if (!ring) return 0;
-  let a = 0;
-  for (let i = 0; i < ring.length; i++) {
-    const p = ring[i];
-    const q = ring[(i + 1) % ring.length];
-    a += p[0] * q[1] - q[0] * p[1];
-  }
-  return Math.abs(a / 2);
+function area(ring: readonly Vec2[] | undefined): number {
+  return ring ? Math.abs(signedArea(ring)) : 0;
 }
 
 /**

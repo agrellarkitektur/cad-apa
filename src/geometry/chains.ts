@@ -288,3 +288,18 @@ export function offsetRing(pts: readonly Vec2[], d: number): Vec2[] {
     return [p[0] + m[0] * d * k, p[1] + m[1] * d * k];
   });
 }
+
+/** Den kant i kedjan som ligger närmast punkten: index till dess första punkt. */
+export function nearestEdge(c: Chain, p: Vec2): number {
+  const n = c.points.length;
+  let best = 0;
+  let bd = Infinity;
+  for (let i = 0; i + 1 < n + (c.closed ? 1 : 0); i++) {
+    const d = dist(closestOnSegment(p, c.points[i], c.points[(i + 1) % n]).point, p);
+    if (d < bd) {
+      bd = d;
+      best = i;
+    }
+  }
+  return best;
+}

@@ -1,6 +1,6 @@
 import { levelOf } from '../../repr/solids';
 import { moveElements, moveWallEnd } from '../../core/commands';
-import type { Id } from '../../core/model';
+import { buildingStoreys, type Id } from '../../core/model';
 import { markerFrame } from '../../elements/markers';
 import { refPoints } from '../../elements/groundRamp';
 import { rampProfile } from '../../elements/rampProfile';
@@ -152,7 +152,8 @@ export function installPane3d(app: AppContext) {
   function update3d(): void {
     const { ui, store } = app;
     if (!view3d || ui.mode === '2d') return;
-    const several = store.doc.storeys.length > 1;
+    // Platsen räknas inte (0.10.25): med en våning finns inget att välja bort.
+    const several = buildingStoreys(store.doc).length > 1;
     onlyBtn.hidden = !several;
     onlyBtn.setAttribute('aria-pressed', String(app.uiSettings.storeyOnly3d));
     view3d.setSolids(buildModel3d(store.doc, app.viewStates(), several && app.uiSettings.storeyOnly3d ? ui.storey : undefined));

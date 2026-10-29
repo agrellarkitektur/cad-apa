@@ -11,12 +11,9 @@ import { typeOf } from '../elements/registry';
  * våning som flyttas i höjd tar med sig allt på den.
  */
 
-/** Husets våningar nerifrån och upp (utan Platsen, 0.10.25). */
-export const storeysUp = storeysUpFrom;
-
 /** Våningen närmast över (`1`) eller under (`-1`), om det finns någon. */
 export function neighbourStorey(doc: Pick<ProjectDoc, 'storeys'>, id: Id, dir: 1 | -1): Storey | undefined {
-  const up = storeysUp(doc);
+  const up = storeysUpFrom(doc);
   const i = up.findIndex((s) => s.id === id);
   return i < 0 ? undefined : up[i + dir];
 }
@@ -80,7 +77,7 @@ export function addStorey(store: DocStore, from: Id, where: 'above' | 'below'): 
 export function storeyPatch(doc: Pick<ProjectDoc, 'storeys'>, id: Id, patch: Partial<Omit<Storey, 'id'>>): Storey[] {
   const s = doc.storeys.find((x) => x.id === id);
   if (!s) return doc.storeys;
-  // Platsen har bara sitt namn att ändra; den ligger vid ±0 och flyttas inte med husets våningar (0.10.25).
+  // Platsen ändras inte: den heter Platsen, ligger vid ±0 och flyttas inte med husets våningar (0.10.25).
   if (s.site) return doc.storeys;
   const dh = patch.height !== undefined ? patch.height - s.height : 0;
   return doc.storeys.map((x) => (x.id === id ? { ...x, ...patch } : dh && !x.site && x.elevation > s.elevation ? { ...x, elevation: x.elevation + dh } : x));

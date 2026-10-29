@@ -126,9 +126,10 @@ describe('Konturer med bågar direkt (0.10.17)', () => {
     tool.takePoint([3000, 2000]);
     const roof = Object.values(s.doc.elements).find((e) => e.type === 'Roof' && !['tak', 'tak-n'].includes(e.id))!;
     const p = roof.params as unknown as RoofParams;
-    expect(p.outline).toEqual([[6000, 0], [6000, 4000], [0, 4000], [0, 0]]);
-    // Bågen gick från (6000, 4000) till (6000, 0) med pilhöjden +500 (åt vänster); vänd blir den kant 0 med −500.
-    expect(p.bulges).toEqual([-500, 0, 0, 0]);
+    // Vänd moturs med första hörnet kvar (`ccw`/`reversedChain`, granskningen efter 0.10.25).
+    expect(p.outline).toEqual([[0, 0], [6000, 0], [6000, 4000], [0, 4000]]);
+    // Bågen gick från (6000, 4000) till (6000, 0) med pilhöjden +500 (åt vänster); vänd blir den kant 1 med −500.
+    expect(p.bulges).toEqual([0, -500, 0, 0]);
   });
 
   it('bjälklagets håltagning som en cirkel och som en polygon med en båge', () => {

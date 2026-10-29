@@ -1,11 +1,10 @@
-import { fitArcs, hasBulges } from '../../geometry/arcFit';
+import { ccw, fitArcs, hasBulges } from '../../geometry/arcFit';
 import { houseAt, ringsAt } from './rings';
-import { ccw } from './slabFrom';
 import { mm } from './trace';
 import type { WandAction, WandHit } from './wand';
 
 /** Det som inte ger en markyta: väggarna (huset tar dem), markytorna själva och beteckningarna. */
-const NOT_FROM = new Set(['Wall', 'Label', 'Dimension']);
+const NOT_FROM = new Set(['Wall', 'Ground', 'Label', 'Dimension']);
 
 /**
  * Markyta (0.10.23): i huset en markyta runt huset (som *Runt huset*, med

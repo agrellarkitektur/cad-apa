@@ -1,4 +1,5 @@
 import { difference, union, type Rings } from '../geometry/boolean';
+import { signedArea } from '../geometry/chains';
 import { pointInRings } from '../geometry/vec';
 import type { Origin, Pen, Primitive, Vec2 } from '../repr/primitives';
 import { lastResults } from '../repr/reuse';
@@ -141,15 +142,8 @@ export function slabAt(doc: ProjectDoc, storey: Id, state: Id, pt: Vec2): Id | n
   return best?.id ?? null;
 }
 
-export function ringArea(r: readonly Vec2[]): number {
-  let a = 0;
-  for (let i = 0; i < r.length; i++) {
-    const p = r[i];
-    const q = r[(i + 1) % r.length];
-    a += p[0] * q[1] - q[0] * p[1];
-  }
-  return a / 2;
-}
+/** Ringens tecknade yta (positiv moturs); samma som `signedArea`. */
+export const ringArea = signedArea;
 
 /** Ytorna för alla bjälklag på våningen, sammanslagna (för rummens golvskiva). */
 export function slabsOn(ctx: PlanContext): Rings[] {

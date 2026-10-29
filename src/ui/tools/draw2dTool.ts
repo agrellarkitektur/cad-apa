@@ -252,8 +252,13 @@ export class Draw2DTool implements ViewTool, PointTaker {
   /** Parametrarna för formen genom punkterna. */
   private params(pts: Vec2[], closed: boolean): Record<string, unknown> {
     const o = this.options;
-    const fill = o.fill ? { fill: o.fill, ...(o.fill === 'type' && o.fillType ? { fillType: o.fillType } : {}), ...(hasBackground(o.fill) && o.fillBackground ? { fillBackground: o.fillBackground } : {}) } : {};
-    return { ...chainFrom(o.kind, pts, closed), weight: o.weight, linetype: o.linetype, ...fill };
+    return { ...chainFrom(o.kind, pts, closed), weight: o.weight, linetype: o.linetype, ...this.fillParams() };
+  }
+
+  /** Verktygets fyllning, med typ och bakgrund när de hör till. */
+  private fillParams(): Record<string, unknown> {
+    const o = this.options;
+    return o.fill ? { fill: o.fill, ...(o.fill === 'type' && o.fillType ? { fillType: o.fillType } : {}), ...(hasBackground(o.fill) && o.fillBackground ? { fillBackground: o.fillBackground } : {}) } : {};
   }
 
   /**
@@ -262,7 +267,7 @@ export class Draw2DTool implements ViewTool, PointTaker {
    */
   createPolyline(pts: Vec2[], closed: boolean, bulges: readonly number[] = []): Id {
     const o = this.options;
-    const fill = closed && o.fill ? { fill: o.fill, ...(o.fill === 'type' && o.fillType ? { fillType: o.fillType } : {}), ...(hasBackground(o.fill) && o.fillBackground ? { fillBackground: o.fillBackground } : {}) } : {};
+    const fill = closed ? this.fillParams() : {};
     const at = (v: Vec2): [number, number] => [Math.round(v[0]), Math.round(v[1])];
     const arcs = bulges.some((b) => Math.abs(b) >= STRAIGHT) ? { bulges: [...bulges] } : {};
     const params = { ...chainFrom('polyline', pts.map(at), closed), ...arcs, weight: o.weight, linetype: o.linetype, ...fill };

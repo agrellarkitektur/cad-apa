@@ -1,5 +1,5 @@
 import type { Id, ProjectDoc } from '../core/model';
-import { offsetEdge } from '../core/roofEdit';
+import { offsetEdge } from '../geometry/offsetEdge';
 import { arcFromBulge, bulgeTangent, STRAIGHT } from '../geometry/arc';
 import { dist, dot, left, norm, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';

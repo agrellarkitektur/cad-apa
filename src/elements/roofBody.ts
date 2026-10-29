@@ -1,4 +1,5 @@
 import { boxesTouch, boxOf, difference, intersection, type Box, type Rings } from '../geometry/boolean';
+import { signedArea } from '../geometry/chains';
 import { dist, left, norm, pointInRings, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import { zOn, type Plane } from '../repr/solids';
@@ -54,13 +55,7 @@ export function withOwnCut(p: Pick<RoofParams, 'outline' | 'edgeCuts'>, i: numbe
 
 /** Konturens orientering: 1 när den går moturs (insidan till vänster), annars -1. */
 function sideOf(ring: readonly Vec2[]): 1 | -1 {
-  let a = 0;
-  for (let i = 0; i < ring.length; i++) {
-    const p = ring[i];
-    const q = ring[(i + 1) % ring.length];
-    a += p[0] * q[1] - q[0] * p[1];
-  }
-  return a >= 0 ? 1 : -1;
+  return signedArea(ring) >= 0 ? 1 : -1;
 }
 
 /** En bit av konturen: två punkter, kanten den hör till och normalen in mot taket. */
@@ -199,7 +194,7 @@ function buildBody(p: RoofParams, fp: Rings[] | null): BodyPiece[] {
     }
     pieces = next;
   }
-  return pieces.filter((pc) => pc.rings.length && pc.rings[0].length >= 3 && Math.abs(area(pc.rings[0])) > 1);
+  return pieces.filter((pc) => pc.rings.length && pc.rings[0].length >= 3 && Math.abs(signedArea(pc.rings[0])) > 1);
 }
 
 /** Remsan av en bit där snittet längs kanten ligger över bitens undersida. */
@@ -219,18 +214,8 @@ function stripOf(pc: BodyPiece, bit: EdgeBit, cut: EdgeCut): { rings: Rings; und
   if (!above) return [];
   return intersection(pc.rings, [quad])
     .flatMap((r) => intersection(r, [above]))
-    .filter((r) => r.length && r[0].length >= 3 && Math.abs(area(r[0])) > 1)
+    .filter((r) => r.length && r[0].length >= 3 && Math.abs(signedArea(r[0])) > 1)
     .map((rings) => ({ rings, under: pl }));
-}
-
-function area(r: readonly Vec2[]): number {
-  let a = 0;
-  for (let i = 0; i < r.length; i++) {
-    const p = r[i];
-    const q = r[(i + 1) % r.length];
-    a += p[0] * q[1] - q[0] * p[1];
-  }
-  return a / 2;
 }
 
 type Seg = [number, number, number, number, number, number];
