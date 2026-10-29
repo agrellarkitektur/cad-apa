@@ -209,6 +209,7 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
     case 'Dimension':
     case 'Text':
     case 'ScaleBar':
+    case 'Legend':
     case 'Stamp':
       return annotationFields(doc, el);
     default:

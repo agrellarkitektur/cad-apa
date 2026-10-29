@@ -23,12 +23,18 @@ export const TRACE_BELOW = 'våning:under';
 export const TRACE_ABOVE = 'våning:över';
 /** Kalkera Platsen (0.10.25): marken under en våningsplan. */
 export const TRACE_SITE = 'våning:platsen';
+/** Kalkera en viss våning (0.10.30), från högerklick i projektträdet: `våning:id:` och våningens id. */
+export const TRACE_STOREY = 'våning:id:';
 
 /** Våningen som kalkeras, om `trace` är våningen under eller över eller Platsen. */
 export function tracedStorey(doc: Pick<ProjectDoc, 'storeys'>, storey: Id, trace: Id | null | undefined): Storey | undefined {
   if (trace === TRACE_BELOW) return neighbourStorey(doc, storey, -1);
   if (trace === TRACE_ABOVE) return neighbourStorey(doc, storey, 1);
   if (trace === TRACE_SITE && !isSite(storey)) return doc.storeys.find((s) => s.site);
+  if (trace?.startsWith(TRACE_STOREY)) {
+    const id = trace.slice(TRACE_STOREY.length);
+    return id === storey ? undefined : doc.storeys.find((s) => s.id === id);
+  }
   return undefined;
 }
 

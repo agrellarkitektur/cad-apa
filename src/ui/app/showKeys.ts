@@ -1,6 +1,6 @@
 import type { ProjectDoc } from '../../core/model';
 import { labelSorts, sortKey } from '../../elements/label';
-import { TRACE_ABOVE, TRACE_BELOW, TRACE_SITE } from '../../core/storeys';
+import { TRACE_ABOVE, TRACE_BELOW, TRACE_SITE, TRACE_STOREY } from '../../core/storeys';
 import type { UiState } from './shell';
 
 /**
@@ -108,16 +108,14 @@ export function showGroupsFor(doc: ProjectDoc): readonly ShowGroup[] {
  * Våningen under och över (0.9) först bland det som går att kalkera, och
  * Platsen (0.10.25), marken under en våningsplan. På Platsen finns inget av dem.
  */
-export function traceStoreyOptions(trace: string | null | undefined, onSite = false): string {
-  if (onSite) return '';
-  return [
-    [TRACE_BELOW, 'Våningen under'],
-    [TRACE_ABOVE, 'Våningen över'],
-    [TRACE_SITE, 'Platsen (marken)'],
-  ]
-    .map(([v, label]) => `<option value="${v}"${trace === v ? ' selected' : ''}>${label}</option>`)
-    .join('');
+export function traceStoreyOptions(trace: string | null | undefined, onSite = false, doc?: Pick<ProjectDoc, 'storeys'>, current?: string): string {
+  // Varje våning för sig (0.10.30), också från Platsen; Platsen har sin egen rad.
+  const each = (doc?.storeys ?? []).filter((s) => !s.site && s.id !== current).map((s): [string, string] => [TRACE_STOREY + s.id, s.name]);
+  const rows: [string, string][] = onSite ? each : [[TRACE_BELOW, 'Våningen under'], [TRACE_ABOVE, 'Våningen över'], [TRACE_SITE, 'Platsen (marken)'], ...each];
+  return rows.map(([v, label]) => `<option value="${v}"${trace === v ? ' selected' : ''}>${esc(label)}</option>`).join('');
 }
+
+const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
 /**
  * Det som är släckt från början (0.10.2): det tänds med nyckeln och ett plus

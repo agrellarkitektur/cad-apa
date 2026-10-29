@@ -87,7 +87,7 @@ function planSnapSegments(app: AppContext): SnapSegment[] {
 /** Typerna som snäpps mot ovan, ur sina former och parametrar. */
 const OWN_SNAPS = new Set(['Wall', 'Furniture', 'Underlay', 'Shape2D']);
 /** Typer utan något att snäppa mot: texter och beteckningar. */
-const NO_SNAP_TYPES = new Set(['Text', 'Label', 'Stamp', 'ScaleBar', 'North']);
+const NO_SNAP_TYPES = new Set(['Text', 'Label', 'Stamp', 'ScaleBar', 'Legend', 'North']);
 /**
  * Delar av objekten som är beteckningar, inte form (0.10.22): släntstreck,
  * fallpilar, lutningar, litteror, texter och fyllningar. De snäpps inte.

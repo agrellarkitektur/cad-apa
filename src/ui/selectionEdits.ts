@@ -203,6 +203,7 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
     updateParams(store, ids, { scale: v, view: undefined }, 'Ändra skalstockens skala');
     return true;
   }
+  if (scope === 'legend') return applyLegendField(store, ids, key.slice('legend:'.length), input);
   if (scope === 'stamp') {
     if (!input.value) return false;
     updateParams(store, ids, { stamp: input.value }, 'Byt stämpel');
@@ -410,5 +411,31 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
     const end = add(p.start, scale(norm(sub(p.end, p.start)), v));
     moveWallEnd(store, el.id, 'end', [Math.round(end[0]), Math.round(end[1])], { label: 'Ändra längd' });
   }
+  return true;
+}
+
+/** Teckenförklaringens fält (0.10.30). */
+function applyLegendField(store: DocStore, ids: string[], name: string, input: HTMLInputElement | HTMLSelectElement): boolean {
+  const el = store.doc.elements[ids[0]];
+  if (!el) return false;
+  const p = el.params as { box?: [number, number]; extra?: string[]; removed?: string[] };
+  if (name === 'title') updateParams(store, ids, { title: input.value.trim() }, 'Teckenförklaringens rubrik');
+  else if (name === 'view') updateParams(store, ids, { view: input.value || undefined }, 'Teckenförklaringens vyer');
+  else if (name === 'categories' || name === 'order') updateParams(store, ids, { [name]: input.value }, 'Ändra teckenförklaringen');
+  else if (name === 'own') updateParams(store, ids, { own: (input as HTMLInputElement).checked }, 'Ändra teckenförklaringen');
+  else if (name === 'boxW' || name === 'boxH') {
+    const v = Number(input.value.replace(',', '.'));
+    if (!(v >= 1 && v <= 100)) return false;
+    const box: [number, number] = [...(p.box ?? [10, 6])];
+    box[name === 'boxW' ? 0 : 1] = v;
+    updateParams(store, ids, { box }, 'Teckenförklaringens rutor');
+  } else if (name.startsWith('row.')) {
+    const id = name.slice(4);
+    const extra = (p.extra ?? []).filter((m) => m !== id);
+    const removed = (p.removed ?? []).filter((m) => m !== id);
+    if (input.value === 'always') extra.push(id);
+    if (input.value === 'never') removed.push(id);
+    updateParams(store, ids, { extra, removed }, 'Teckenförklaringens rader');
+  } else return false;
   return true;
 }

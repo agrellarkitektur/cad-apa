@@ -1,6 +1,6 @@
 import { deleteElements } from '../../core/commands';
 import type { Id, Sheet } from '../../core/model';
-import { addScaleBar, addViewport, createMaster, createSheet, createStamp, FRAME_MARGIN, mastersOf, paperSize, placeStamp, setViewportCrop, stampsOf, today } from '../../core/sheets';
+import { addLegend, addScaleBar, addViewport, createMaster, createSheet, createStamp, FRAME_MARGIN, mastersOf, paperSize, placeStamp, setViewportCrop, stampsOf, today } from '../../core/sheets';
 import { buildSheet, cachedViewPrims, contentBounds, VIEWPORT_PAD, viewSource, type PlacedView, type SheetDrawing } from '../../repr/sheet';
 import { boundsOf, type Bounds, type Vec2 } from '../../repr/primitives';
 import { pickAt } from '../../view2d/pick';
@@ -262,6 +262,14 @@ export function installSheets(app: AppContext) {
     app.hint('Skalstocken följer bladets första vy. Välj en annan vy eller en egen skala i egenskaperna, och dra den dit den ska.', 5000);
   }
 
+  /** Lägg en teckenförklaring på bladet och markera den (0.10.30). */
+  function addLegendTo(sheetId: Id, at?: Vec2): void {
+    const id = addLegend(app.store, sheetId, at ? [Math.round(at[0]), Math.round(at[1])] : undefined);
+    if (!id) return;
+    if (app.ui.layout === sheetId) app.selection.set([id]);
+    app.hint('Teckenförklaringen visar materialen i bladets vyer. Rader, ordning och rutornas storlek ändras i egenskaperna; dra den dit den ska.', 5000);
+  }
+
   /** Lägg en stämpel på bladet och markera den (0.8.12). Utan läge hamnar den nere till vänster innanför ramen. */
   function placeStampOn(sheetId: Id, stamp: Id, at?: Vec2): void {
     const id = placeStamp(app.store, sheetId, stamp, at ? [at[0], at[1]] : [FRAME_MARGIN.left + 15, FRAME_MARGIN.bottom + 15]);
@@ -272,6 +280,7 @@ export function installSheets(app: AppContext) {
 
   const host: SheetFormHost = {
     addScaleBar: (sheetId) => addScaleBarTo(sheetId),
+    addLegend: (sheetId) => addLegendTo(sheetId),
     placeStamp: (sheetId, stamp) => placeStampOn(sheetId, stamp),
     newStamp,
     pick,
@@ -331,6 +340,7 @@ export function installSheets(app: AppContext) {
           { label: 'Skriv text på bladet', hint: 'T', run: () => host.startText() },
           { label: 'Rita linjer och ytor på bladet', run: () => host.startDraw() },
           { label: 'Lägg på skalstock här', run: () => addScaleBarTo(sheet.id, app.view.camera.toModel(screen)) },
+          { label: 'Lägg på teckenförklaring här', run: () => addLegendTo(sheet.id, app.view.camera.toModel(screen)) },
           ...stampsOf(app.store.doc).map((w) => ({ label: `Lägg på stämpeln ${w.name} här`, run: () => placeStampOn(sheet.id, w.id, app.view.camera.toModel(screen)) })),
           { label: 'Plot/export…', run: () => app.root.querySelector<HTMLElement>('.nav-plot [data-action="plot"], .main-menu [data-action="plot"]')?.click() },
         ],

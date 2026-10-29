@@ -109,7 +109,7 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('3D och fasader', levelSelect('modelDetail', v.modelDetail ?? v.detail))}
           ${field('Stilmall', `<select name="style"><option value="">Projektets</option>${PRESETS.map((p) => `<option${p.name === v.style ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`)}
           ${isSite(v.storey) ? field('Vykategori', `<select name="category">${SITE_CATEGORIES.map((c) => `<option value="${c.id}"${c.id === (v.category ?? 'situation') ? ' selected' : ''}>${c.name}</option>`).join('')}</select>`) : ''}
-          ${field('Kalkera', `<select name="trace"><option value="">Ingen</option>${traceStoreyOptions(v.trace, isSite(v.storey))}${doc.views.filter((x) => x.id !== v.id).map((x) => `<option value="${x.id}"${x.id === v.trace ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`)}
+          ${field('Kalkera', `<select name="trace"><option value="">Ingen</option>${traceStoreyOptions(v.trace, isSite(v.storey), doc, v.storey)}${doc.views.filter((x) => x.id !== v.id).map((x) => `<option value="${x.id}"${x.id === v.trace ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`)}
           ${field('Skala', `<span class="input-unit scale-unit"><i>1:</i><input name="scale" type="text" inputmode="numeric" value="${v.scale ?? ''}" placeholder="100"></span>`)}
         </div>
         <label class="check"><input type="checkbox" name="compare"${v.compare ? ' checked' : ''}> Jämför med befintligt</label>

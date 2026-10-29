@@ -1,7 +1,8 @@
 import { PRESETS, withProjectParts, type StyleSheet } from '../core/graphics';
 import { isSite, onPaper, modelViewId, type Element, type Id, type ProjectDoc, type Sheet, type ViewDef, type Viewport, type Worksheet } from '../core/model';
 import { FRAME_MARGIN, masterOf, paperSize } from '../core/sheets';
-import { defaultState, existingState, type ViewStates } from '../core/states';
+import { defaultState, existingState, type LegendSource, type ViewStates } from '../core/states';
+import { FILL_FIELDS } from '../elements/fill2d';
 import { markerName } from '../elements/markers';
 import { textWidth } from '../formats/drawingFont';
 import { clipPrims } from '../geometry/clipRect';
@@ -412,11 +413,50 @@ export function buildSheet(doc: ProjectDoc, sheet: Sheet, opt: { autoDims?: bool
   const frame: Bounds = { minX: FRAME_MARGIN.left, minY: FRAME_MARGIN.bottom, maxX: w - FRAME_MARGIN.right, maxY: h - FRAME_MARGIN.top };
   const master = masterOf(doc, sheet);
   const views = sheet.viewports.map((vp) => placeView(doc, vp, opt));
-  const drawn = buildPlan(doc, doc.storeys[0].id, sheetViewStates(doc, sheet, opt.today));
+  // Teckenförklaringen (0.10.30) läser det som syns i vyerna, bara när bladet har en.
+  const hasLegend = Object.values(doc.elements).some((e) => e.type === 'Legend' && e.space === sheet.id);
+  const legend = hasLegend ? legendSources(doc, views) : undefined;
+  const drawn = buildPlan(doc, doc.storeys[0].id, { ...sheetViewStates(doc, sheet, opt.today), ...(legend ? { legend } : {}) });
   const under = drawn.prims.filter((q) => q.origin?.objectType === 'Underlay');
   const over = drawn.prims.filter((q) => q.origin?.objectType !== 'Underlay');
   const prims: Primitive[] = [paperPrim(w, h), ...(master ? masterPrims(doc, master, sheet, opt.today) : []), ...under, ...views.flatMap((v) => v.prims), ...over];
   return { size: [w, h], prims, views, pickables: [...views.map(viewportPickable), ...drawn.pickables], frame };
+}
+
+/**
+ * Det teckenförklaringen behöver ur bladets vyer (0.10.30): materialen hos
+ * det som är ritat i varje vy (dolt och bortklippt räknas inte, eftersom det
+ * inte är ritat) och de egna fyllningarna hos objekt utan material.
+ */
+export function legendSources(doc: ProjectDoc, views: readonly PlacedView[]): LegendSource[] {
+  const out: LegendSource[] = [];
+  for (const v of views) {
+    if (v.missing) continue;
+    const seen = new Set<Id>();
+    const materials: string[] = [];
+    const own: Record<string, unknown>[] = [];
+    const ownKeys = new Set<string>();
+    for (const q of v.prims) {
+      const id = q.origin?.objectId;
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      const p = doc.elements[id]?.params as Record<string, unknown> | undefined;
+      if (!p) continue;
+      if (typeof p.material === 'string' && p.material) {
+        if (!materials.includes(p.material)) materials.push(p.material);
+      } else if (p.fill) {
+        const f = Object.fromEntries(FILL_FIELDS.filter((k) => p[k] !== undefined).map((k) => [k, p[k]]));
+        const key = JSON.stringify(f);
+        if (!ownKeys.has(key)) {
+          ownKeys.add(key);
+          own.push(f);
+        }
+      }
+    }
+    const category = viewSource(doc, v.view)?.def.category;
+    out.push({ viewport: v.id, scale: v.scale, ...(category ? { category } : {}), materials, own });
+  }
+  return out;
 }
 
 /** En vy ensam på ett papper som är precis så stort som den, för export av vyer. */

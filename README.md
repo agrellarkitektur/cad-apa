@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.29** (alfa); nästa är **0.10.30 Teckenförklaring**.
+**0.10.30** (alfa); nästa är **0.10.31 Texturer i 3D och ortofotot på marken**.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,26 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.30, teckenförklaring (samma filformat, 24):
+- **Teckenförklaring på bladet**: högerklicka på ett blad (*Lägg på
+  teckenförklaring här*) eller använd knappen i bladets inställningar. Den
+  läser materialen hos det som syns i bladets vyer (dolt och bortklippt
+  räknas inte), ritar en ruta per material med mönstret i vyns skala och
+  skriver namnet. I egenskaperna: rubriken, vilka vyer, alla material
+  eller bara markens eller byggnadens (ett blad med bara Platsen tar
+  markens), stilmallens ordning eller efter namn, rutans bredd och höjd,
+  objekt med egen fyllning som "Eget", och per material *När det syns*,
+  *Alltid* eller *Aldrig*. Den flyttas som skalstocken
+- **Kalkera en våning från projektträdet**: högerklicka på en våning eller
+  på Platsen och välj *Kalkera …*, utan att någon vy behöver finnas. Under
+  Visa går varje våning också att välja för sig, och från Platsen kan en
+  våning kalkeras
+- **Ny vy…** i menyn för en våning, en fasad och en sektion: en vy med det
+  som visas nu, för det stället
+- **Webbläsarens egen meny** visas bara i textfält, på länkar och på
+  markerad text; annars gör ett högerklick ingenting där programmet inte
+  har en meny
 
 Version 0.10.29, ritandet (samma filformat, 24):
 - **Shift låser vinkeln man står i** när man ritar eller drar (väggar,

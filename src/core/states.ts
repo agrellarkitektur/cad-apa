@@ -68,6 +68,25 @@ export interface ViewStates {
    * för, så att de får rätt höjd på papper. Utelämnad = 1:100.
    */
   scale?: number;
+  /**
+   * Teckenförklaringen (0.10.30): materialen och de egna fyllningarna i
+   * bladets vyer, en post per vy. Sätts på ritningsblad.
+   */
+  legend?: readonly LegendSource[];
+}
+
+/** Det som syns i en vy på ett blad, för teckenförklaringen (0.10.30). */
+export interface LegendSource {
+  /** Vyns id på bladet. */
+  viewport: Id;
+  /** Vyns skala (nämnaren): mönstret ritas i den. */
+  scale: number;
+  /** Vykategorin (illustrationsplanen ritar materialens färg). */
+  category?: SiteCategory;
+  /** Materialen hos synliga objekt, i den ordning de hittades. */
+  materials: readonly string[];
+  /** Synliga objekt utan material men med egen fyllning: fyllningens fält. */
+  own: readonly Record<string, unknown>[];
 }
 
 export function actionOf(el: Pick<Element, 'states'>, view: ViewStates): Action {

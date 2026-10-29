@@ -242,6 +242,7 @@ export function installViews(app: AppContext) {
           run: () => setMarkerAuto(id, !p.auto),
         },
         { label: 'Vänd blickriktningen', disabled: !!p.auto, run: () => updateParams(app.store, [id], { side: -(p.side ?? 1) }, 'Vänd blickriktningen') },
+        { label: 'Ny vy…', sub: 'Med det som visas nu', run: () => void newViewOf({ marker: id }) },
         { kind: 'sep' },
         { label: 'Ta bort…', danger: true, disabled: !!el.locked, sub: el.locked ? 'Låst' : undefined, run: () => void deleteMarker(id) },
       ],
@@ -360,10 +361,30 @@ export function installViews(app: AppContext) {
     app.store.transact(`Ta bort vyn ${v.name}`, (tx) => tx.setViews(tx.doc.views.filter((x) => x.id !== id)));
   }
 
+  /**
+   * Ny vy av en våning eller en fasad/sektion, från högerklick i
+   * projektträdet (0.10.30): det som visas nu (tillstånd, detaljnivå, Visa)
+   * för det stället, med ett namn man skriver. Vyn öppnas.
+   */
+  async function newViewOf(place: { storey: Id } | { marker: Id }): Promise<void> {
+    const doc = app.store.doc;
+    const m = 'marker' in place ? doc.elements[place.marker] : undefined;
+    const storey = m ? m.storey : 'storey' in place ? place.storey : app.ui.storey;
+    const where = m ? markerName(doc, m) : (doc.storeys.find((s) => s.id === storey)?.name ?? '');
+    const st = doc.states.find((x) => x.id === app.ui.state)?.name ?? '';
+    const name = (await askText('Ny vy', st ? `${where} – ${st}` : where))?.trim();
+    if (!name) return;
+    const base = currentViewDef(newId('vy'), name);
+    const { marker: _m, worksheet: _w, category: _c, ...rest } = base;
+    const v: ViewDef = { ...rest, storey, ...(m ? { marker: m.id, trace: null } : {}) };
+    app.store.transact(`Ny vy: ${name}`, (tx) => tx.setViews([...tx.doc.views, v]));
+    applyView(app.store.doc.views.find((x) => x.id === v.id)!);
+  }
+
   function setTrace(id: Id | null): void {
     app.ui.trace = id;
     app.renderAll();
-    if (id) app.hint('Vyn kalkeras. Utseendet ställs in under Visa.');
+    if (id) app.hint('Kalkeras. Utseendet ställs in under Visa.');
   }
-  return { applyView, currentViewDef, goTo, openHistoryMenu, openMarkerMenu, openViewMenu, renderViewButton, saveViewAsNew, syncDetailSwitch, updateActiveView, viewHistory, viewModified, visit };
+  return { applyView, currentViewDef, goTo, newViewOf, openHistoryMenu, openMarkerMenu, openViewMenu, renderViewButton, saveViewAsNew, setTrace, syncDetailSwitch, updateActiveView, viewHistory, viewModified, visit };
 }

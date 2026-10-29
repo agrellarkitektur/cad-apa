@@ -1,6 +1,6 @@
 import { pruneAssets } from './commands';
 import { newId } from './ids';
-import { isMaster, isStamp, type Element, type Id, type PaperSize, type ProjectDoc, type Sheet, type Viewport, type Worksheet } from './model';
+import { isMaster, isSite, isStamp, type Element, type Id, type PaperSize, type ProjectDoc, type Sheet, type Viewport, type Worksheet } from './model';
 import { applyFieldChangesTx, type FieldChanges } from './sheetFields';
 import type { DocStore, TxBuilder } from './store';
 
@@ -205,7 +205,7 @@ export function duplicateSheet(store: DocStore, id: Id): Id | null {
       const c = { ...structuredClone(el), id: newId('el'), space: copy.id };
       // En skalstock följer kopian av sin vy (0.8.12).
       const view = c.params.view;
-      if (c.type === 'ScaleBar' && typeof view === 'string' && ids.has(view)) c.params = { ...c.params, view: ids.get(view) };
+      if ((c.type === 'ScaleBar' || c.type === 'Legend') && typeof view === 'string' && ids.has(view)) c.params = { ...c.params, view: ids.get(view) };
       tx.putElement(c);
     }
     if (tx.doc.tree[id]) placeIn(tx, copy.id, tx.doc.tree[id]);
@@ -341,6 +341,32 @@ export function addScaleBar(store: DocStore, sheetId: Id, at?: [number, number])
   return id;
 }
 
+/**
+ * Lägg en teckenförklaring på ett blad (0.10.30). Visar bladet bara vyer av
+ * Platsen tas bara markens material med. Svarar med dess id.
+ */
+export function addLegend(store: DocStore, sheetId: Id, at?: [number, number]): Id | null {
+  const doc = store.doc;
+  const s = doc.sheets.find((x) => x.id === sheetId);
+  if (!s) return null;
+  const onSite = (ref: Id) => (ref.startsWith('modell:') ? isSite(ref.slice('modell:'.length)) : isSite(doc.views.find((v) => v.id === ref)?.storey));
+  const ground = s.viewports.length > 0 && s.viewports.every((v) => onSite(v.view));
+  const [w] = paperSize(s);
+  const id = newId('el');
+  const el: Element = {
+    id,
+    type: 'Legend',
+    storey: doc.storeys[0].id,
+    states: [],
+    tags: [],
+    space: sheetId,
+    params: { pos: at ?? [Math.max(FRAME_MARGIN.left + 5, w - 230), 120], title: 'TECKENFÖRKLARING', categories: ground ? 'ground' : 'all', order: 'list', box: [10, 6], extra: [], removed: [], own: false },
+    props: {},
+  };
+  store.transact('Lägg på teckenförklaring', (tx) => tx.putElement(el));
+  return id;
+}
+
 /** Skapa en stämpel (0.8.12), eventuellt i en mapp i Ritningar. Svarar med dess id. */
 export function createStamp(store: DocStore, name: string, folder: Id | null = null): Id {
   const id = newId('stampel');
@@ -385,5 +411,5 @@ export function placeStamp(store: DocStore, sheetId: Id, stamp: Id, at: [number,
 /** Saker på bladet som bara går att flytta (0.8.12): vyer, skalstockar och stämplar. */
 export function moveOnly(doc: Pick<ProjectDoc, 'elements' | 'sheets'>, id: Id): boolean {
   const el = doc.elements[id];
-  return el ? el.type === 'ScaleBar' || el.type === 'Stamp' : isViewportId(doc, id);
+  return el ? el.type === 'ScaleBar' || el.type === 'Stamp' || el.type === 'Legend' : isViewportId(doc, id);
 }

@@ -14,6 +14,15 @@ import { hideMenuItems, unhideMenuItems } from './hideObjects';
 
 /** Högerklick och långt tryck: menyn för det markerade eller för planen, i plan, 3D och projektträdet. */
 export function installMenus(app: AppContext) {
+  // Webbläsarens egen meny (0.10.30) bara där den gör något: i textfält,
+  // på länkar och på markerad text. Annars ingenting, så att högerklick
+  // alltid hör till programmet. Lyssnarna nedan öppnar programmets menyer.
+  document.addEventListener('contextmenu', (e) => {
+    const t = e.target as HTMLElement | null;
+    if (t?.closest?.('input, textarea, select, [contenteditable=""], [contenteditable="true"], a[href]')) return;
+    if (String(window.getSelection?.() ?? '').trim()) return;
+    e.preventDefault();
+  });
   const viewBtn = app.$<HTMLElement>('.view-btn');
   const viewBtnLongPressed = onLongPress(viewBtn, (x, y) => app.openHistoryMenu(x, y), 450, true);
   viewBtn.addEventListener('contextmenu', (e) => {

@@ -1,5 +1,5 @@
 import { buildingStoreys, groundStorey, isSite, SITE_CATEGORIES, storeysUpFrom, type Id, type Storey } from '../../core/model';
-import { addStorey, deleteStorey, neighbourStorey, storeyContents, toStorey } from '../../core/storeys';
+import { addStorey, deleteStorey, neighbourStorey, storeyContents, toStorey, TRACE_SITE, TRACE_STOREY } from '../../core/storeys';
 import { typeOf } from '../../elements/registry';
 import { askConfirm, askText } from '../ask';
 import { addSiteView } from '../../core/siteViews';
@@ -142,6 +142,8 @@ export function installStoreys(app: AppContext) {
           if (app.ui.navOpen) app.navigator.render();
         } },
         { label: 'Byt namn…', run: () => void rename(id) },
+        traceItem(id, TRACE_STOREY + id, s.name),
+        { label: 'Ny vy…', sub: 'Med det som visas nu', run: () => void app.views.newViewOf({ storey: id }) },
         { kind: 'sep' },
         { label: 'Ny våning ovanför', run: () => void create('above', id) },
         { label: 'Ny våning under', run: () => void create('below', id) },
@@ -150,6 +152,23 @@ export function installStoreys(app: AppContext) {
       ],
       s.name,
     );
+  }
+
+  /**
+   * Kalkera våningen i vyn som visas (0.10.30), utan att någon vy av den
+   * behöver finnas. Inte våningen som visas, och inte i fasader, sektioner
+   * och blad, där inget kalkeras.
+   */
+  function traceItem(id: Id, key: string, name: string): MenuItem {
+    const on = app.ui.trace === key;
+    const here = app.ui.storey === id || !!app.ui.marker || !!app.ui.layout || !!app.ui.worksheet;
+    return {
+      label: on ? `Sluta kalkera ${name}` : `Kalkera ${name}`,
+      checked: on,
+      disabled: here && !on,
+      ...(here && !on ? { sub: app.ui.storey === id ? 'Visas redan' : 'Bara i en våningsplan' } : {}),
+      run: () => app.views.setTrace(on ? null : key),
+    };
   }
 
   /**
@@ -170,6 +189,7 @@ export function installStoreys(app: AppContext) {
           app.panel.showTreeItem({ kind: 'storey', id: s.id });
           if (app.ui.navOpen) app.navigator.render();
         } },
+        traceItem(s.id, TRACE_SITE, s.name),
         { kind: 'sep' },
         { kind: 'header', label: 'Ny vy' },
         ...SITE_CATEGORIES.map((c): MenuItem => ({ label: c.name, run: () => app.views.applyView(addSiteView(app.store, c.id)) })),

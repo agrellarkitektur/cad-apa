@@ -47,6 +47,8 @@ export interface SheetFormHost {
   openMaster(id: Id): void;
   /** Lägg en skalstock på bladet (0.8.12). */
   addScaleBar(sheetId: Id): void;
+  /** Lägg en teckenförklaring på bladet (0.10.30). */
+  addLegend(sheetId: Id): void;
   /** Lägg en stämpel på bladet (0.8.12). */
   placeStamp(sheetId: Id, stamp: Id): void;
   /** Gör en ny stämpel och öppna den (0.8.12). */
@@ -249,9 +251,9 @@ export function sheetFormMarkup(doc: ProjectDoc, item: SheetFormItem): string {
       <div class="row"><button type="button" class="btn" data-sheet="start-text">${icons.text}<span>Skriv text</span></button><button type="button" class="btn" data-sheet="start-draw">${icons.draw2d}<span>Linjer och ytor</span></button></div>
     </section>
     <section>
-      <h3>Skalstock och stämplar</h3>
-      <p class="note">En skalstock följer en vy på bladet eller en egen skala. En stämpel (logga, BYGGLOVSHANDLING, orienteringspil, tilläggshuvud …) ritas en gång under Ritningar och kan läggas på flera blad. Båda går att flytta när som helst.</p>
-      <div class="row"><button type="button" class="btn" data-sheet="add-scalebar">${icons.plus}<span>Lägg på skalstock</span></button></div>
+      <h3>Skalstock, teckenförklaring och stämplar</h3>
+      <p class="note">En skalstock följer en vy på bladet eller en egen skala. En teckenförklaring visar materialen i bladets vyer. En stämpel (logga, BYGGLOVSHANDLING, orienteringspil, tilläggshuvud …) ritas en gång under Ritningar och kan läggas på flera blad. Båda går att flytta när som helst.</p>
+      <div class="row"><button type="button" class="btn" data-sheet="add-scalebar">${icons.plus}<span>Lägg på skalstock</span></button><button type="button" class="btn" data-sheet="add-legend">${icons.plus}<span>Lägg på teckenförklaring</span></button></div>
       ${
         stamps.length
           ? `<div class="fields">${field('Stämpel', `<select data-sheet-stamp>${stamps.map((w) => `<option value="${w.id}">${esc(w.name)}</option>`).join('')}</select>`)}</div>
@@ -330,6 +332,9 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
       }
       case 'add-scalebar':
         host.addScaleBar(sheet.id);
+        break;
+      case 'add-legend':
+        host.addLegend(sheet.id);
         break;
       case 'place-stamp': {
         const stamp = form.querySelector<HTMLSelectElement>('[data-sheet-stamp]')?.value;

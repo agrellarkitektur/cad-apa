@@ -2,6 +2,7 @@ import type { Element, ProjectDoc } from '../core/model';
 import { resolveParams } from '../elements/registry';
 import { dimensionSegments, type DimensionParams, type TextParams } from '../elements/annotation';
 import type { ScaleBarParams } from '../elements/scaleBar';
+import { LEGEND_DEFAULTS, type LegendParams } from '../elements/legend';
 import type { StampParams } from '../elements/stamp';
 import { stampsOf } from '../core/sheets';
 import { viewSource } from '../repr/sheet';
@@ -46,6 +47,28 @@ export function annotationFields(doc: ProjectDoc, el: Element): string {
       return `<label class="field"><span>Skala från</span><select data-key="scalebar:view">${vps.map((vp) => opt(vp.id, vpName(vp))).join('')}${opt('', 'Egen skala')}</select></label>
         ${current ? '' : `<div class="fields">${numberField('scalebar:scale', 'Skala 1:', p.scale, '')}</div>`}
         <p class="note">${current ? 'Skalstocken följer vyns skala, också när den ändras.' : 'Skriv skalans nämnare, t.ex. 100 för 1:100.'} Skalstocken är 100 mm lång och delas in som Agrell Arkitekturs skalstockar. Dra den dit den ska; den går att flytta när som helst.</p>`;
+    }
+    case 'Legend': {
+      // Teckenförklaringen (0.10.30).
+      const p = { ...LEGEND_DEFAULTS, ...resolveParams<LegendParams>(doc, el) };
+      const sheet = doc.sheets.find((s) => s.id === el.space);
+      const vps = sheet?.viewports ?? [];
+      const sel = (key: string, cur: string, options: [string, string][]) =>
+        `<select data-key="legend:${key}">${options.map(([v, l]) => `<option value="${escapeHtml(v)}"${v === cur ? ' selected' : ''}>${escapeHtml(l)}</option>`).join('')}</select>`;
+      const vpName = (vp: (typeof vps)[number]) => `${vp.title?.trim() || viewSource(doc, vp.view)?.name || 'Vyn'} · 1:${vp.scale}`;
+      const mats = doc.graphics.materials ?? [];
+      const rowOf = (id: string) => ((p.extra ?? []).includes(id) ? 'always' : (p.removed ?? []).includes(id) ? 'never' : 'auto');
+      return `<label class="field"><span>Rubrik</span><input type="text" data-key="legend:title" value="${escapeHtml(p.title)}" placeholder="Ingen rubrik"></label>
+        <div class="fields">
+          <label class="field"><span>Vyer</span>${sel('view', p.view && vps.some((v) => v.id === p.view) ? p.view : '', [['', 'Alla vyer på bladet'], ...vps.map((vp): [string, string] => [vp.id, vpName(vp)])])}</label>
+          <label class="field"><span>Material</span>${sel('categories', p.categories, [['all', 'Alla'], ['ground', 'Markens'], ['building', 'Byggnadens']])}</label>
+          <label class="field"><span>Ordning</span>${sel('order', p.order, [['list', 'Som i stilmallen'], ['name', 'Efter namn']])}</label>
+          ${numberField('legend:boxW', 'Rutans bredd', p.box[0], 'mm', 1)}${numberField('legend:boxH', 'Rutans höjd', p.box[1], 'mm', 1)}
+        </div>
+        <label class="check"><input type="checkbox" data-key="legend:own"${p.own ? ' checked' : ''}> Objekt med egen fyllning som "Eget"</label>
+        <h3>Rader</h3>
+        <div class="fields">${mats.map((m) => `<label class="field"><span>${escapeHtml(m.name)}</span>${sel(`row.${m.id}`, rowOf(m.id), [['auto', 'När det syns'], ['always', 'Alltid'], ['never', 'Aldrig']])}</label>`).join('')}</div>
+        <p class="note">Teckenförklaringen läser materialen hos det som syns i bladets vyer (dolda objekt räknas inte) och ritar mönstret i vyns skala. <i>Alltid</i> lägger till en rad, <i>Aldrig</i> tar bort en. Dra den dit den ska.</p>`;
     }
     case 'Stamp': {
       const p = resolveParams<StampParams>(doc, el);

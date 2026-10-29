@@ -4,34 +4,36 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.28.3.
+**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.30.
 
 ## Läget
 
-- **0.10.28.3 Granskningen efter 0.10.28.2 är klar** (samma format, 24):
-  rampens, gångvägens, brytlinjens och markytans höjder läses ur den
-  färdiga marken när de ritas; stödmurens krön läser de skarpa kanterna
-  (följer rampens kant) och utjämnas symmetriskt i ändarna; marknätet
-  delas längs stödmurens kanter med marken tolkad från var sida
-  (`groundBeside` i `crispGround.ts`), så foten möter marken rakt;
-  markobjekten på Platsen ligger kvar vid ändrad våningshöjd (test);
-  kamerastyrningen i 3D i `view3d/navigation.ts`. Testerna: 707 på ca
-  13 s. Provat i Playwright mot `dist/` i 3D. Se PLAN.md och UTVECKLING.md.
-- **0.10.28.2 Material på bjälklag och tak är klar** (**samma format,
-  24**: snittet, ytan och pennan är valfria fält i materialet): bjälklag
-  och tak har *Material* med byggnadens material, fyllningen i planen,
-  kulören i 3D, materialets snitt i sektion (och i planen där det skärs),
-  ytan i fasad (exakt mot det som ligger framför, `sectionSurfaces.ts`)
-  och konturens penna i planen; fälten också i materiallistan. Nya
-  material Takpannor och Plåt. Testerna: 703 på ca 16 s. Provat i
-  Playwright mot `dist/` (panelen, planen, fasaden, sektionen, Platsen,
-  3D). Se PLAN.md och UTVECKLING.md.
-- **0.10.28.1 Materiallistan**, **0.10.28 Material, mark först**, **0.10.27 Styrningen i 3D**,
+- **0.10.30 Teckenförklaring är klar** (samma format, 24): elementtypen
+  `Legend` på bladet läser materialen i bladets vyer (`legendSources` i
+  `buildSheet`, `ViewStates.legend`) och ritar rutor i vyns skala; plus
+  kalkera en våning från projektträdet (`TRACE_STOREY`), *Ny vy…* för
+  våning, fasad och sektion, och webbläsarens meny bort där högerklick
+  inte gör något. Testerna: 716 på ca 16 s. Provat i Playwright mot
+  `dist/`. Vykategorier för planer, fasader och sektioner (Carl Augusts
+  önskan 29 oktober) gick till utredningen om stilinställningar.
+- **0.10.29 Ritandet är klar** (samma format, 24): Shift låser vinkeln
+  man står i (`held` i `snap.ts`); Förskjut, Förskjut kant, Parallell kopia
+  och Förskjut alla kanter visar avståndet som ett mått vid objektet och
+  tar ett skrivet värde + Enter (`atObject`, `Modifier.typeKey`,
+  `offsetDimension`); *Kanter* är ett skrivet antal; våningslistan "Plan 1
+  – +63,525 / 0,000" (`storeyLevels`). Testerna: 712.
+- **0.10.28.3 Granskningen**, **0.10.28.2 Material på bjälklag och tak**,
+  **0.10.28.1 Materiallistan**, **0.10.28 Material, mark först**, **0.10.27 Styrningen i 3D**,
   **0.10.26 Rampen och stödmuren**, **0.10.25.1** (granskning) och
   **0.10.25 Platsen som modellflik**: se PLAN.md.
-- **Publicerad:** 0.10.28.3 pushad till `main` 29 oktober (se git och
+- **Publicerad:** 0.10.30 pushad till `main` 29 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.10.30:** inget i befintliga projekt.
+  Högerklick utanför programmets menyer ger inte längre webbläsarens meny.
+- **Märks i hans ritningar efter 0.10.29:** inget i befintliga projekt.
+  Shift låser inte längre till 45° utan till vinkeln man står i, och
+  Förskjut har inget värdefält i smartmenyn (siffrorna skrivs direkt).
 - **Märks i hans ritningar efter 0.10.28.3:** stödmurars krön och fot kan
   ligga några cm annorlunda (de läser marken exakt vid kanten nu), och
   marken i 3D möter en stödmur i en rak linje.
@@ -48,14 +50,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare i dag:** 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare i dag:** 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.28.3` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.30` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.28.3 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.30 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -122,14 +124,12 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   ~~Granskning efter 0.10.25 (0.10.25.1)~~, ~~0.10.26 Rampen och
   stödmuren~~, ~~0.10.27 Styrningen i 3D~~, ~~0.10.28 Material, mark
   först~~, ~~0.10.28.1 Materiallistan~~, ~~0.10.28.2 Material på
-  bjälklag och tak~~, ~~Granskning efter 0.10.28.2 (0.10.28.3)~~ (klara)
-- **0.10.29 Ritandet** (liten till mellanstor; på tur; Shift låser vinkeln,
-  Förskjut med skrivet värde, verklig och lokal höjd i våningslistan)
-- **0.10.30 Teckenförklaring** (liten till mellanstor)
-- **0.10.31 Texturer i 3D och ortofotot på marken** (mellanstor)
+  bjälklag och tak~~, ~~Granskning efter 0.10.28.2 (0.10.28.3)~~,
+  ~~0.10.29 Ritandet~~, ~~0.10.30 Teckenförklaring~~ (klara)
+- **0.10.31 Texturer i 3D och ortofotot på marken** (mellanstor; på tur)
 - **Utredning: stilinställningar per vytyp och underlag i vyn**
   (planeringssession; ändringen stor, troligen nytt format; med penn- och
-  linjesystemet)
+  linjesystemet och vykategorierna för planer, fasader och sektioner)
 - **0.11 Trappor** (nytt format; med *Syns också på*)
 - **0.11.1 Profilverktyget** (stor) och **0.11.2 Dörrar och fönster**
   (stor)
@@ -146,13 +146,13 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.30 Teckenförklaring** (liten till mellanstor; se
+**0.10.31 Texturer i 3D och ortofotot på marken** (mellanstor; se
 `cad-apa-synpunkter.md` och PLAN.md). Läs synpunkterna först och sortera
-Inkorgen om den har något. Ett automatobjekt på bladet som läser
-materialen hos synliga objekt i bladets vyer och ritar en ruta med
-mönstret i vyns skala och namnet; kategorier, ordning, rutans storlek,
-egna och bortvalda rader, och *Eget* som "Eget" eller inte alls. Därefter
-0.10.31 Texturer i 3D och ortofotot på marken.
+Inkorgen om den har något. Börja med att undersöka ortofotot: följer det
+inte med från Höjdkurvor, eller tappas det här? Sedan en bild i
+materialets 3D-representation, sparad i filen och upprepad i meter på
+markobjekten (troligen nytt format). Ny chatt: den förra körde 0.10.29
+och 0.10.30.
 
 Utredningen om stilinställningarna startas av Carl August i en egen chatt
 med en färdig text; den behöver inte föreslås.
@@ -163,6 +163,14 @@ Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
 om 0.10.27–0.10.23 likaså.
+
+**0.10.30 efter provning** (Claudes val, se PLAN.md)
+- Teckenförklaringens rutor 10 × 6 mm, text 2,5 mm och rubriken 3,5 mm
+  fet. Lagom, eller som i dina mallar?
+- Rader läggs till och tas bort per material (*När det syns*, *Alltid*,
+  *Aldrig*). Behövs fria rader med egen text och eget mönster?
+- Objekt med egen fyllning blir en rad "Eget" per olika fyllning. Rätt,
+  eller en enda rad?
 
 **0.10.29 efter provning** (Claudes val, se PLAN.md)
 - Shift fritt avrundar vinkeln till hela grader; står man i ett vinkellås

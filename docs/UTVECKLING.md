@@ -1640,6 +1640,29 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Teckenförklaring (0.10.30, format 24)
+
+- **`Legend`** (`src/elements/legend.ts`) ligger på bladet (`space` =
+  bladets id) som `ScaleBar`, i mm på papperet, och flyttas med `pos`
+  (`moveOnly` i `core/sheets.ts`; kopieras med bladet och följer kopians
+  vy). `addLegend` lägger den. Raderna räknas av `legendRows(p, sources,
+  style)`; rutan ritas med `fillPrims` i vyns skala (`scale` = vyns
+  nämnare, och mönstret förankras i rutans hörn genom att hörnet ges
+  gånger skalan).
+- **Det som syns** kommer från `legendSources` i `repr/sheet.ts`: id:n
+  bakom vyernas ritade primitiver (`origin.objectId`), deras `material`
+  eller egna fyllning (`FILL_FIELDS`). `buildSheet` lägger dem i
+  `ViewStates.legend` (typen `LegendSource` i `core/states.ts`) bara när
+  bladet har en teckenförklaring; nyckeln i planens cache tar med dem.
+- **Egenskaperna** i `annotationFields.ts`, ändringarna i
+  `applyLegendField` (`selectionEdits.ts`, nycklarna `legend:*`).
+- **Kalkera en våning**: `TRACE_STOREY` (`core/storeys.ts`) + id;
+  `traceStoreyOptions(trace, onSite, doc, current)` listar varje våning.
+  `traceItem` i `storeys.ts` och `newViewOf` och `setTrace` i `views.ts`.
+- **Webbläsarens meny** stoppas av en lyssnare på `document` i
+  `installMenus`; den går sist, så programmets egna lyssnare öppnar sina
+  menyer som förut.
+
 ## Ritandet (0.10.29, format 24)
 
 - **Shift-låset** ligger i `snap()` (`src/ui/tools/snap.ts`): `ortho` i

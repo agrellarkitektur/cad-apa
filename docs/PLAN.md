@@ -3425,12 +3425,40 @@ måttet vid väggen, våningslistan.*
 Shift). Platsens rad i listan har kvar *markmodell* / *plan mark* utan
 tankstreck.
 
-### 0.10.30 Teckenförklaring
+### 0.10.30 Teckenförklaring ✓
 
 Beslutat 28 oktober. Liten till mellanstor. Ett automatobjekt på bladet som
 läser materialen hos synliga objekt i bladets vyer och ritar en ruta med
 mönstret i vyns skala och namnet; kategorier, ordning, rutans storlek,
-egna och bortvalda rader, och *Eget* som "Eget" eller inte alls.
+egna och bortvalda rader, och *Eget* som "Eget" eller inte alls. Med tre
+småfixar från Carl August 29 oktober: kalkera en våning från
+projektträdet utan vy, *Ny vy* från en modellflik, och webbläsarens meny
+bort där högerklick inte gör något.
+
+*Gjord 29 oktober, samma format (24; en ny elementtyp med egna fält
+behöver inget nytt format). Testerna: 716, ca 16 s. **Teckenförklaringen**
+är elementtypen `Legend` (`elements/legend.ts`), på bladet som
+skalstocken. `buildSheet` räknar `legendSources` ur vyernas ritade
+primitiver (objekten bakom dem, så att dolt och bortklippt inte räknas)
+och skickar dem i `ViewStates.legend`, bara när bladet har en
+teckenförklaring. Claudes val: rutan 10 × 6 mm, text 2,5 och rubriken
+TECKENFÖRKLARING 3,5 fet; mönstret i den första vyns skala där materialet
+syns, med vykategorin (en illustrationsplan ger materialets färg);
+*Alltid* och *Aldrig* per material i stället för fria rader; egna
+fyllningar som en rad "Eget" per olika fyllning; ett blad med bara Platsen
+får *Markens*. **Kalkera**: `TRACE_STOREY` + våningens id i `trace`
+(`tracedStorey`), i våningens och Platsens meny och under Visa (varje
+våning, också från Platsen). Fasader och sektioner kalkeras inte (inget
+kalkeras i dem). **Ny vy…**: `newViewOf` i `views.ts`, det som visas nu
+för våningen eller markören. **Webbläsarens meny**: en lyssnare på
+`document` i `menus.ts` som stoppar den utom i textfält, på länkar och på
+markerad text. Provat i Playwright mot `dist/`.*
+
+*Gjordes inte:* vykategorier för planer, fasader och sektioner (Mått och
+littera, Undertak, Golvplan/ytskikt) med egna och omdöpta kategorier: de
+hör till utredningen om stilinställningar per vytyp, eftersom en kategori
+är en förinställning; *Undertak* (spegelvänd plan sedd underifrån) kräver
+en egen ritning och läggs där som egen punkt.
 
 ### 0.10.31 Texturer i 3D och ortofotot på marken
 

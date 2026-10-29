@@ -180,7 +180,7 @@ export function installShowMenu(app: AppContext) {
     return (
       `<label class="field"><span>Skala för texter och mått</span><select data-show-scale>${ANNOTATION_SCALES.map((n) => `<option value="${n}"${n === ui.scale ? ' selected' : ''}>1:${n}</option>`).join('')}${ANNOTATION_SCALES.includes(ui.scale) ? '' : `<option value="${ui.scale}" selected>1:${ui.scale}</option>`}</select></label>` +
       `<label class="field"><span>Stilmall i vyn</span><select data-show-style><option value="">Projektets (${escapeHtml(store.doc.graphics.name)})</option>${PRESETS.map((p) => `<option value="${escapeHtml(p.name)}"${ui.styleName === p.name ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}</select></label>` +
-      `<label class="field"><span>Kalkera en annan vy</span><select data-show-trace><option value="">Ingen</option>${traceStoreyOptions(ui.trace, isSite(ui.storey))}${store.doc.views
+      `<label class="field"><span>Kalkera en annan vy</span><select data-show-trace><option value="">Ingen</option>${traceStoreyOptions(ui.trace, isSite(ui.storey), store.doc, ui.storey)}${store.doc.views
         .filter((v) => v.id !== ui.activeView)
         .map((v) => `<option value="${v.id}"${ui.trace === v.id ? ' selected' : ''}>${escapeHtml(v.name)}</option>`)
         .join('')}</select></label>` +

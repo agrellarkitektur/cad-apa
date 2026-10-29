@@ -4,6 +4,7 @@ import { doorType } from './door';
 import { shape2dType } from './drawing2d';
 import { furnitureType } from './furniture';
 import { labelType } from './label';
+import { legendType } from './legend';
 import { registerType } from './registry';
 import { placement } from '../core/commands';
 import { elevationType, markerFrame, northType, sectionType } from './markers';
@@ -38,6 +39,7 @@ export function registerBuiltInTypes(): void {
   registerType(roofSlopeType);
   registerType(underlayType);
   registerType(scaleBarType);
+  registerType(legendType);
   registerType(stampType);
   registerType(terrainType);
   registerType(siteBuildingType);
