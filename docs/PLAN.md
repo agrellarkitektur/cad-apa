@@ -3239,21 +3239,51 @@ gången i en session.
 *Gjordes inte:* ingen förhandsvisning av vad rutan tar medan den dras
 (planen har ingen heller). Ingen inställning för knapparna.
 
-### 0.10.28 Material, mark först · *nytt format*
+### 0.10.28 Material, mark först ✓ · *nytt format*
 
-Beslutat 28 oktober (svaren A–E). Mellanstor till stor.
+Beslutat 28 oktober (svaren A–E). Byggd 29 oktober på "kör nästa
+version", delad som överlämningen föreslog: marken nu, bjälklag och tak i
+0.10.28.1. Format 23 (projekt från 0.10.27 öppnas inte).
 
 - Ett material i stilmallen: namn, kategori (mark först) och representation
-  per vykategori: planen (fyllning, konturpenna, opacitet), snittet i
-  sektion och fasad, vyn i fasad, illustrationsplanen (färg, opacitet) och
-  3D (kulör; textur i 0.10.30)
-- Objektet pekar på ett material eller har *Eget*; *Fyllning* blir
-  *Material*; opaciteten går att överstyra per objekt. Mönstrets
-  utgångspunkt och vridning och status är objektets
-- Fyllningspanelen blir redigeraren för planrepresentationen; förslagen
-  och de sparade fyllningarna blir material
-- Först markyta, slänter, ramp, stödmur och brytlinje; sedan bjälklag och
-  tak. Väggar med lager i 0.11.1
+  per vykategori: planen (fyllningen, med opaciteten), illustrationsplanen
+  (färg, opacitet) och 3D (kulör)
+- Objektet pekar på ett material eller har *Eget*; *Fyllning* heter
+  *Material* för markobjekten; opaciteten och vridningen går att överstyra
+  per objekt. Mönstrets utgångspunkt (första hörnet) och status är objektets
+- Fyllningspanelen är redigeraren för planrepresentationen; förslagen Gräs,
+  Grus, Hårdgjort och Vatten och de sparade fyllningarna blev material
+- Markyta, slänter, ramp och stödmur. Väggar med lager i 0.11.1
+
+*Claudes val:* objektet behåller en kopia av planens fyllning (som de
+sparade fyllningarna), så att ett borttaget material lämnar det som
+syntes. Det man ändrar i panelen för ett objekt med material ändrar
+materialet (alla objekt med det); vill man ändra bara ett objekt väljer
+man *Eget*. Ett nytt projekt har åtta markmaterial: Gräs, Grus, Asfalt
+(förut Hårdgjort), Plattor 300, Tegel, Vatten, Betong och Mark, med
+färger för illustrationsplanen och 3D. Tegel, Betong, Plattor 300 och
+Mark finns kvar som förslag för egen fyllning (för detaljer i 2D).
+Materialen visas för alla objekt med fyllning (2D-former och rum ser
+alla), men markobjekten ser bara markens. Stödmuren ritas snittad med
+materialets fyllning och konturen 0,35, och svart utan material. I 3D
+färgas marknätets trianglar efter sin mitt, markytor och ramper ovanpå
+sina slänter. Illustrationsplanens förinställning döljer marken (sedan
+0.10.25), så 3D visar ingen mark i den vyn.
+
+*Gjordes inte:* brytlinjen har ingen yta och fick inget material. Snittet
+och vyn i sektion och fasad (fälten i materialet kommer med bjälklag och
+tak i 0.10.28.1; marken i sektionerna är jorden, som förut). Ingen lista
+över materialen i stilmallens dialog (frågan om 0.10.14). Slänternas
+yttre kant i 3D följer rutnätet. Klickjämförelsen kördes inte.
+
+### 0.10.28.1 Material på bjälklag och tak
+
+Delad ur 0.10.28 (29 oktober). Mellanstor.
+
+- Kategorierna bjälklag och tak, och materialet på bjälklagen och taken
+- Snittet i sektion och fasad (snittfyllning) och vyn i fasad (ytfyllning,
+  kan vara tom) i materialet
+- Kulören i 3D för bjälklag och tak
 
 ### 0.10.29 Teckenförklaring
 

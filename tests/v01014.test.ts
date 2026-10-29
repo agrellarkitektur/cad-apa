@@ -13,7 +13,6 @@ import { sampleProject } from '../src/sample/sampleProject';
 import { fillChange, shapeChange } from '../src/ui/shapeFields';
 import { fillPanel, fillPatch, FILL_PRESETS } from '../src/ui/fillPanel';
 import { moveZValue } from '../src/ui/app/commandLine';
-import { deleteSavedFill, saveFill } from '../src/core/savedFills';
 import { anchorLines } from '../src/elements/drawing2d';
 import { hatchStrokes } from '../src/core/hatchStrokes';
 import { addGround, onSlope, planCtx, storeWithShapes, square } from './projekt';
@@ -52,8 +51,8 @@ describe('Fyllningar och opacitet (0.10.14)', () => {
     expect(fillPatch('fillWeight', '0', p)!.patch).toEqual({ fillWeight: undefined });
     expect(fillPatch('fillBackgroundKind', 'color', p)!.patch).toEqual({ fillBackground: '#ffffff' });
     expect(fillPatch('fillBackgroundKind', 'none', { ...p, fillBackground: 'paper' })!.patch).toEqual({ fillBackground: undefined, fillBackgroundOpacity: undefined });
-    const grass = FILL_PRESETS.find((f) => f.id === 'grasyta')!;
-    expect(fillPatch('fillPreset', 'grasyta', p)!.patch).toBe(grass.patch);
+    const white = FILL_PRESETS.find((f) => f.id === 'vit')!;
+    expect(fillPatch('fillPreset', 'vit', p)!.patch).toBe(white.patch);
   });
 
   it('mönstrets penna; linjens opacitet ändrar inte längre fyllningens', () => {
@@ -67,8 +66,8 @@ describe('Fyllningar och opacitet (0.10.14)', () => {
     shapeChange(store, ['a'], 'opacity', input('30'));
     expect(store.doc.elements.a.params).toMatchObject({ opacity: 30, fillOpacity: 60 });
     // Ett förslag i panelen sätter alla fält på en gång, med ett steg att ångra.
-    fillChange(store, ['a'], 'fillPreset', input('grus'));
-    expect(store.doc.elements.a.params).toMatchObject({ fill: 'solid', fillColor: '#ddd3bc', fillOpacity: 80 });
+    fillChange(store, ['a'], 'fillPreset', input('gra'));
+    expect(store.doc.elements.a.params).toMatchObject({ fill: 'solid', fillColor: '#9aa0a6', fillOpacity: 50 });
   });
 
   it('slänternas fyllning: ytan släntmarkeringarna täcker, bakom objektets egen', () => {
@@ -136,26 +135,6 @@ describe('Mönstrets mått och utgångspunkt, sparade fyllningar (0.10.14)', () 
     expect(tile()).toBe(6);
     expect(tile(false)).toBe(300);
     expect(fillPatch('fillModel', 'model', { fill: 'hatch', fillAngle: 45, fillSpacing: 2 })!.patch).toEqual({ fillModel: true, fillSpacing: 100 });
-  });
-
-  it('en sparad fyllning: kopplade objekt följer den, en ändring gör fyllningen egen', () => {
-    const store = storeWithShapes({ a: { points: square(0, 0), closed: true, fill: 'solid', fillColor: '#ff0000', fillOpacity: 50 }, b: { points: square(2000, 0), closed: true } });
-    const id = saveFill(store, ['a'], 'Klinker')!;
-    expect(store.doc.graphics.fills).toMatchObject([{ id, name: 'Klinker', fill: 'solid', fillColor: '#ff0000', fillOpacity: 50 }]);
-    fillChange(store, ['b'], 'fillStyle', input(id));
-    expect(store.doc.elements.b.params).toMatchObject({ fillStyle: id, fill: 'solid', fillColor: '#ff0000' });
-    // Samma namn skriver över den sparade, och båda följer med.
-    fillChange(store, ['a'], 'fillColor', input('#00ff00'));
-    expect(store.doc.elements.a.params.fillStyle).toBeUndefined();
-    saveFill(store, ['a'], 'klinker');
-    expect(store.doc.graphics.fills).toHaveLength(1);
-    expect(store.doc.elements.b.params).toMatchObject({ fillStyle: id, fillColor: '#00ff00' });
-    expect(store.doc.elements.a.params.fillStyle).toBe(id);
-    // Borttagen ur stilmallen: objekten ser likadana ut, utan koppling.
-    deleteSavedFill(store, id);
-    expect(store.doc.graphics.fills).toBeUndefined();
-    expect(store.doc.elements.b.params).toMatchObject({ fill: 'solid', fillColor: '#00ff00' });
-    expect(store.doc.elements.b.params.fillStyle).toBeUndefined();
   });
 });
 

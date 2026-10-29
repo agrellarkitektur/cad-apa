@@ -1,6 +1,6 @@
-import type { StyleSheet } from '../core/graphics';
+import type { Material, MaterialCategory, StyleSheet } from '../core/graphics';
 import { FILL_TYPES, fillTypeList, fillTypeOf } from '../core/fillTypes';
-import { FILL_BACKGROUND, FILL_COLOR, BACKGROUND_COLOR, FILL_WEIGHT, type FillParams, type FillPattern } from '../elements/drawing2d';
+import { effectiveFill, FILL_BACKGROUND, FILL_COLOR, BACKGROUND_COLOR, FILL_WEIGHT, materialOf, type FillParams, type FillPattern } from '../elements/drawing2d';
 import { escapeHtml } from './labels';
 import { fillTypeSwatch, patternSwatch } from './patternPick';
 import { weightPicker } from './weightPick';
@@ -43,16 +43,13 @@ export interface FillPreset {
 
 /**
  * Förslagen under varje läge. Ett förslag sätter alla fält som hör till
- * läget, så att det ser likadant ut vad som än var valt förut.
+ * läget, så att det ser likadant ut vad som än var valt förut. Gräs, Grus,
+ * Hårdgjort och Vatten är material sedan 0.10.28 (`DEFAULT_MATERIALS`).
  */
 export const FILL_PRESETS: FillPreset[] = [
   { id: 'vit', label: 'Vit', kind: 'solid', patch: { fill: 'solid', fillColor: '#ffffff', fillOpacity: 100 } },
   { id: 'ljusgra', label: 'Ljusgrå', kind: 'solid', patch: { fill: 'solid', fillColor: '#e3e5e6', fillOpacity: 100 } },
   { id: 'gra', label: 'Grå 50 %', kind: 'solid', patch: { fill: 'solid', fillColor: '#9aa0a6', fillOpacity: 50 } },
-  { id: 'grasyta', label: 'Gräs', kind: 'solid', patch: { fill: 'solid', fillColor: '#b4d39b', fillOpacity: 70 } },
-  { id: 'grus', label: 'Grus', kind: 'solid', patch: { fill: 'solid', fillColor: '#ddd3bc', fillOpacity: 80 } },
-  { id: 'hardgjort', label: 'Hårdgjort', kind: 'solid', patch: { fill: 'solid', fillColor: '#c9c6bf', fillOpacity: 80 } },
-  { id: 'vatten', label: 'Vatten', kind: 'solid', patch: { fill: 'solid', fillColor: '#a9cbe6', fillOpacity: 70 } },
   { id: 'mask', label: 'Hel mask', kind: 'mask', patch: { fill: 'mask', fillOpacity: 100 } },
   { id: 'halvmask', label: 'Halv mask', kind: 'mask', patch: { fill: 'mask', fillOpacity: 50 } },
   { id: 'skraffering', label: 'Skraffering', kind: 'pattern', patch: { fill: 'hatch', fillAngle: 45, fillSpacing: 2, fillColor: FILL_COLOR, fillOpacity: 100, fillWeight: undefined, fillModel: undefined } },
@@ -69,7 +66,9 @@ const comma = (n: number) => n.toLocaleString('sv-SE');
 /** Ett fält med enhet och uttryck; tomt med *Olika* när värdet saknas (NaN). */
 function numberInput(key: string, label: string, v: number, unit: string, attrs: (key: string) => string, extra = ''): string {
   const ok = Number.isFinite(v);
-  return `<label class="field"><span>${label}</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" ${attrs(key)} value="${ok ? comma(Math.round(v * 100) / 100) : ''}"${ok ? '' : ' placeholder="Olika"'}${extra}><i>${unit}</i></span></label>`;
+  // Ett eget platshållarvärde (0.10.28) i stället för *Olika*.
+  const holder = ok || extra.includes('placeholder=') ? '' : ' placeholder="Olika"';
+  return `<label class="field"><span>${label}</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" ${attrs(key)} value="${ok ? comma(Math.round(v * 100) / 100) : ''}"${holder}${extra}><i>${unit}</i></span></label>`;
 }
 
 /** Opaciteten i tio steg (knappar) och skriven. */
@@ -99,26 +98,53 @@ function presetSwatch(f: FillPreset): string {
   return '';
 }
 
-/**
- * Sparade fyllningar (0.10.14): bubblor som kopplar objektet till en, och
- * vilken det är kopplat till, med knappar för att spara och ta bort.
- */
-function savedRow(name: string, p: FillParams, attrs: (key: string) => string, style?: StyleSheet): string {
-  const saved = style?.fills ?? [];
-  const linked = p.fillStyle ? saved.find((f) => f.id === p.fillStyle) : undefined;
-  const scope = /data-key="([^:"]+):/.exec(attrs('x'))?.[1] ?? 'd2';
-  const list = saved.length
-    ? `<div class="fill-chips fill-saved" role="radiogroup" aria-label="Sparade fyllningar"><span class="fill-chips-label">Sparade</span><label${linked ? '' : ' class="is-on"'}><input type="radio" name="${escapeHtml(name)}-saved" value="" ${attrs('fillStyle')}${linked ? '' : ' checked'}><span>Egen</span></label>${saved
-        .map((f) => `<label${f.id === linked?.id ? ' class="is-on"' : ''}><input type="radio" name="${escapeHtml(name)}-saved" value="${escapeHtml(f.id)}" ${attrs('fillStyle')}${f.id === linked?.id ? ' checked' : ''}>${savedSwatch(f, style)}<span>${escapeHtml(f.name)}</span></label>`)
-        .join('')}</div>`
-    : '';
-  const buttons = p.fill
-    ? `<div class="row"><button class="btn" data-action="fill-save" data-scope="${scope}" data-name="${escapeHtml(linked?.name ?? '')}" title="Sparar fyllningen med ett namn i stilmallen. Samma namn som en sparad skriver över den, och alla objekt som är kopplade till den ändras.">Spara i stilmallen…</button>${linked ? `<button class="btn btn-ghost" data-action="fill-unsave" data-id="${escapeHtml(linked.id)}" title="Objekten som är kopplade till den behåller hur de ser ut">Ta bort ur stilmallen</button>` : ''}</div>`
-    : '';
-  const note = linked ? `<p class="note">Kopplad till <b>${escapeHtml(linked.name)}</b> i stilmallen. Ändrar du ett fält blir fyllningen objektets egen.</p>` : '';
-  return list + note + buttons;
+/** Var panelen står (0.10.28): materialens kategori och hur många objekt som har det kopplade. */
+export interface FillPanelContext {
+  category?: MaterialCategory;
+  uses?: number;
 }
 
+/**
+ * Materialen (0.10.28, sparade fyllningar 0.10.14): bubblor som kopplar
+ * objektet till ett, eller *Eget*, med knappar för att spara, byta namn och
+ * ta bort. Bara materialen i objektets kategori (och de utan) visas.
+ */
+function materialRow(name: string, p: FillParams, attrs: (key: string) => string, style: StyleSheet | undefined, ctx: FillPanelContext): string {
+  const all = style?.materials ?? [];
+  const linked = materialOf(p, style);
+  const list = all.filter((m) => !ctx.category || ctx.category === 'other' || m.category === ctx.category || m.id === linked?.id);
+  const scope = /data-key="([^:"]+):/.exec(attrs('x'))?.[1] ?? 'd2';
+  const chipsHtml = list.length
+    ? `<div class="fill-chips fill-saved" role="radiogroup" aria-label="Material"><label${linked ? '' : ' class="is-on"'}><input type="radio" name="${escapeHtml(name)}-saved" value="" ${attrs('material')}${linked ? '' : ' checked'}><span>Eget</span></label>${list
+        .map((m) => `<label${m.id === linked?.id ? ' class="is-on"' : ''}><input type="radio" name="${escapeHtml(name)}-saved" value="${escapeHtml(m.id)}" ${attrs('material')}${m.id === linked?.id ? ' checked' : ''}>${savedSwatch(m.plan, style)}<span>${escapeHtml(m.name)}</span></label>`)
+        .join('')}</div>`
+    : '';
+  if (linked) {
+    const n = ctx.uses ?? 1;
+    return `${chipsHtml}<p class="note">Materialet <b>${escapeHtml(linked.name)}</b> i stilmallen${n > 1 ? `, på ${n} objekt` : ''}. Det du ändrar nedan gäller materialet och alla objekt med det; opaciteten och vridningen längst ned gäller bara objektet.</p>
+      <div class="row"><button class="btn" data-action="material-rename" data-scope="${scope}" data-id="${escapeHtml(linked.id)}" data-name="${escapeHtml(linked.name)}">Byt namn…</button><button class="btn btn-ghost" data-action="fill-unsave" data-id="${escapeHtml(linked.id)}" title="Objekten med det behåller hur de ser ut i planen och får egen fyllning">Ta bort ur stilmallen</button></div>`;
+  }
+  const buttons = p.fill
+    ? `<div class="row"><button class="btn" data-action="fill-save" data-scope="${scope}" data-name="" title="Sparar fyllningen som ett material i stilmallen. Samma namn som ett annat material skriver över dess fyllning i planen, och alla objekt med det ändras.">Spara som material…</button></div>`
+    : '';
+  return chipsHtml + buttons;
+}
+
+/** Materialets illustrationsplan och 3D (0.10.28), och objektets egen opacitet och vridning. */
+function materialParts(name: string, m: Material, p: FillParams, attrs: (key: string) => string): string {
+  const ill = m.illustration;
+  const illKind = `<label class="field"><span>Illustrationsplanen</span><select ${attrs('matIllKind')}><option value="plan"${ill ? '' : ' selected'}>Som planen</option><option value="color"${ill ? ' selected' : ''}>Egen färg</option></select></label>`;
+  const illColor = ill ? `<label class="field"><span>Färg</span><input type="color" ${attrs('matIllColor')} value="${escapeHtml(ill.color)}"></label>` : '';
+  const c3 = `<label class="field"><span>Kulör i 3D</span><input type="color" ${attrs('matColor3d')} value="${escapeHtml(m.color3d ?? MATERIAL_3D_COLOR)}"></label>`;
+  const planOp = Number((m.plan as Record<string, unknown>).fillOpacity ?? 100);
+  const own = `<div class="field-label">Bara det här objektet</div><div class="fields">${numberInput('materialOpacity', 'Opacitet', p.materialOpacity ?? NaN, '%', attrs, ` data-unit="" data-step="10" placeholder="${planOp} (materialets)"`)}${numberInput('materialAngle', 'Vridning', p.materialAngle ?? NaN, '°', attrs, ' data-unit="deg" placeholder="0"')}</div>`;
+  return `<div class="field-label">Illustrationsplan och 3D</div><div class="fields">${illKind}${illColor}${c3}</div>${ill ? opacitySteps(`${name}-illop`, 'matIllOpacity', 'Opacitet i illustrationsplanen', ill.opacity ?? 100, attrs) : ''}${own}`;
+}
+
+/** Kulören i 3D när materialet inte har någon: markens. */
+export const MATERIAL_3D_COLOR = '#cfd3bf';
+
+/** Materialets ruta i bubblan: planens fyllning. */
 function savedSwatch(f: { [k: string]: unknown }, style?: StyleSheet): string {
   const color = typeof f.fillColor === 'string' ? f.fillColor : FILL_COLOR;
   if (f.fill === 'solid') return `<i class="fill-dot" style="background:${escapeHtml(color)}"></i>`;
@@ -151,7 +177,10 @@ export function backgroundKindOf(b: string | undefined): 'none' | 'mask' | 'colo
  * Fyllningens panel. `name` skiljer radioknapparnas grupper åt när flera
  * paneler står i samma formulär; `attrs` ger varje fält dess nyckel.
  */
-export function fillPanel(name: string, p: FillParams, attrs: (key: string) => string, style?: StyleSheet, title = 'Fyllning'): string {
+export function fillPanel(name: string, raw: FillParams, attrs: (key: string) => string, style?: StyleSheet, title = 'Fyllning', ctx: FillPanelContext = {}): string {
+  // Ett kopplat material (0.10.28): panelen visar och ändrar materialets fyllning i planen.
+  const m = materialOf(raw, style);
+  const p = m ? ({ ...effectiveFill({ ...raw, materialOpacity: undefined, materialAngle: undefined }, style) } as FillParams) : raw;
   const kind = fillKindOf(p.fill);
   const seg = (Object.keys(FILL_KIND_LABELS) as FillKind[])
     .map((k) => `<label><input type="radio" name="${escapeHtml(name)}-kind" value="${k}" ${attrs('fillKind')}${k === kind ? ' checked' : ''}><span>${FILL_KIND_LABELS[k]}</span></label>`)
@@ -189,7 +218,7 @@ export function fillPanel(name: string, p: FillParams, attrs: (key: string) => s
       ${back === 'none' ? '' : opacitySteps(`${name}-bop`, 'fillBackgroundOpacity', 'Bakgrundens opacitet', backOp, attrs)}
       <p class="note">Mönstret utgår från objektets första hörn och följer med när objektet flyttas.</p>`;
   }
-  return `<div class="fill-panel"><div class="field-label">${escapeHtml(title)}</div><div class="pattern-pick fill-seg" role="radiogroup" aria-label="${escapeHtml(title)}">${seg}</div>${savedRow(name, p, attrs, style)}${body}${kind === 'none' ? '' : chips(name, kind, attrs)}</div>`;
+  return `<div class="fill-panel"><div class="field-label">${escapeHtml(title)}</div>${materialRow(name, raw, attrs, style, ctx)}${m ? '<div class="field-label">I planen</div>' : ''}<div class="pattern-pick fill-seg" role="radiogroup" aria-label="${escapeHtml(title)}">${seg}</div>${body}${kind === 'none' ? '' : chips(name, kind, attrs)}${m ? materialParts(name, m, raw, attrs) : ''}</div>`;
 }
 
 /** Procent 0–100, eller null om det inte är ett tal. */

@@ -1,5 +1,5 @@
 import { exampleMaster } from './exampleMaster';
-import { SWEDISH_STANDARD, type StyleSheet } from './graphics';
+import { DEFAULT_MATERIALS, SWEDISH_STANDARD, type StyleSheet } from './graphics';
 import type { Site } from './site';
 
 /**
@@ -389,8 +389,8 @@ export interface OwnPen extends OwnPenPart {
 }
 
 export const FORMAT = 'bacchus-project';
-/** 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionsmarkörernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
-export const FORMAT_VERSION = 22;
+/** 23 (0.10.28): materialen i stilmallen (`graphics.materials`, i stället för `fills`) och objektens `material`, `materialOpacity` och `materialAngle` (i stället för `fillStyle`). 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionsmarkörernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
+export const FORMAT_VERSION = 23;
 
 export interface ProjectDoc {
   format: typeof FORMAT;
@@ -454,7 +454,7 @@ export function emptyProject(name: string, kind: ProjectKind, fields: Record<str
       't-bj01': { id: 't-bj01', origin: 'component', name: 'BJ01', elementType: 'Slab', params: { thickness: 300 }, props: {}, description: 'Bjälklag' },
     },
     elements: { ...drawingMarkers('pl-1'), ...master.elements },
-    graphics: structuredClone(SWEDISH_STANDARD),
+    graphics: { ...structuredClone(SWEDISH_STANDARD), materials: structuredClone([...DEFAULT_MATERIALS]) },
     views: [],
     ...emptyTree(),
     worksheets: [master.worksheet],

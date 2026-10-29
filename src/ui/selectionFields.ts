@@ -1,3 +1,4 @@
+import { materialUses } from '../core/materials';
 import { labelFields } from './labelSection';
 import { groundFieldsMarkup } from './groundFields';
 import type { Element, ProjectDoc } from '../core/model';
@@ -197,7 +198,7 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
       return `<div class="fields">${textField('name', 'Namn', el.name ?? '')}${numberField}
           <label class="field" for="f-param-ceilingHeight"><span>Takhöjd (TH)</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" id="f-param-ceilingHeight" data-key="param:ceilingHeight" value="${p.ceilingHeight ?? ''}" placeholder="Visas inte"><i>mm</i></span></label></div>
         <p class="note">Dra i rumsstämpeln för att flytta den. Utanför rummet får den en ledare till rummets kant (se Littera).</p>
-        ${fillFields('room-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 }, (k) => `data-key="d2:${k}"`, doc.graphics)}
+        ${fillFields('room-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 }, (k) => `data-key="d2:${k}"`, doc.graphics, undefined, { uses: p.material ? materialUses(doc, p.material) : 0 })}
 `;
     }
     case 'Label':

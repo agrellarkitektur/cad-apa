@@ -1,5 +1,5 @@
 import { setGraphics } from '../core/commands';
-import { normalizeStyle, PRESETS, type StyleSheet } from '../core/graphics';
+import { normalizeStyle, PRESETS, withProjectParts, type StyleSheet } from '../core/graphics';
 import type { DocStore } from '../core/store';
 import { escapeHtml } from './labels';
 import { actionRows, applyActionField } from './style/actions';
@@ -222,8 +222,9 @@ export class StyleDialog {
     const input = e.target as HTMLInputElement | HTMLSelectElement;
     if (input.id === 'style-preset') {
       // Projektets egna linjetyper är kvar (0.8.30): formerna och pennorna använder dem.
-      const { lineTypes: own, fillTypes: fills } = this.store.doc.graphics;
-      setGraphics(this.store, { ...structuredClone(PRESETS[Number(input.value)]), ...(own ? { lineTypes: structuredClone(own) } : {}), ...(fills ? { fillTypes: structuredClone(fills) } : {}) });
+      // Materialen (0.10.28) likaså, med texterna som förut ersattes.
+      const g = this.store.doc.graphics;
+      setGraphics(this.store, structuredClone({ ...withProjectParts(PRESETS[Number(input.value)], g), labels: PRESETS[Number(input.value)].labels }));
       return;
     }
     const style: StyleSheet = structuredClone(this.store.doc.graphics);

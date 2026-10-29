@@ -1,4 +1,4 @@
-import { SWEDISH_STANDARD } from '../core/graphics';
+import { DEFAULT_MATERIALS, SWEDISH_STANDARD } from '../core/graphics';
 import { exampleMaster } from '../core/exampleMaster';
 import { drawingMarkers, emptyTree, siteStorey, FORMAT, FORMAT_VERSION, PROJECT_DEFAULT_FIELDS, type ViewDef, type Definition, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { DoorParams } from '../elements/door';
@@ -195,7 +195,7 @@ export function sampleProject(): ProjectDoc {
     storeys: [{ id: STOREY, name: 'Plan 1', elevation: 0, height: 2700 }, siteStorey()],
     definitions,
     elements: { ...elements, ...master.elements },
-    graphics: SWEDISH_STANDARD,
+    graphics: { ...SWEDISH_STANDARD, materials: [...DEFAULT_MATERIALS] },
     views,
     ...emptyTree(),
     worksheets: [master.worksheet],

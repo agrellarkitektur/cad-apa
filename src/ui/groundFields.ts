@@ -8,6 +8,7 @@ import { rampWarnings, refPoints, sideEdge } from '../elements/groundRamp';
 import { easeRadiusAt, rampProfile } from '../elements/rampProfile';
 import { groundText, levelStatus, wallLittera } from '../elements/groundMarks';
 import { fillFields } from './shapeFields';
+import { materialUses } from '../core/materials';
 import type { FillParams } from '../elements/drawing2d';
 import { resolveParams } from '../elements/registry';
 import { createContext } from '../repr/context';
@@ -69,17 +70,20 @@ export function groundFieldsMarkup(doc: ProjectDoc, el: Element, view: ViewState
 }
 
 /**
- * Fyllningen för en markyta eller väg (0.10.7), med 2D-formens panel, och
- * slänternas egen (0.10.14) när kanterna möter marken med slänt.
+ * Materialet för en markyta, ramp eller stödmur (0.10.28; fyllningen 0.10.7),
+ * med fyllningens panel, och slänternas eget (0.10.14) när kanterna möter
+ * marken med slänt.
  */
 function groundFill(doc: ProjectDoc, p: GroundParams): string {
-  const own = fillFields('ground-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 } as FillParams, (k) => `data-key="d2:${k}"`, doc.graphics);
+  const ctx = (q: { material?: string } | undefined) => ({ category: 'ground' as const, uses: q?.material ? materialUses(doc, q.material) : 0 });
+  const own = fillFields('ground-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 } as FillParams, (k) => `data-key="d2:${k}"`, doc.graphics, 'Material', ctx(p));
   const sf = p.slopeFill;
   const slopes =
-    p.edge === 'wall'
+    p.edge === 'wall' || p.kind === 'wall'
       ? ''
-      : fillFields('ground-slope-panel', { ...sf, fillAngle: sf?.fillAngle ?? 45, fillSpacing: sf?.fillSpacing ?? 2 } as FillParams, (k) => `data-key="sf:${k}"`, doc.graphics, 'Slänternas fyllning');
-  return `<div class="ground-fill">${own}</div>${slopes ? `<div class="ground-fill">${slopes}<p class="note">Ytan som släntmarkeringarna täcker, bakom objektets egen fyllning.</p></div>` : ''}`;
+      : fillFields('ground-slope-panel', { ...sf, fillAngle: sf?.fillAngle ?? 45, fillSpacing: sf?.fillSpacing ?? 2 } as FillParams, (k) => `data-key="sf:${k}"`, doc.graphics, 'Slänternas material', ctx(sf));
+  const wallNote = p.kind === 'wall' ? '<p class="note">Muren ritas snittad med materialets fyllning i planen; utan material svart, som förut.</p>' : '';
+  return `<div class="ground-fill">${own}${wallNote}</div>${slopes ? `<div class="ground-fill">${slopes}<p class="note">Ytan som släntmarkeringarna täcker, bakom objektets eget material.</p></div>` : ''}`;
 }
 
 type Field = (key: keyof GroundParams, label: string, unit: string, own: number | undefined, fallback?: number, title?: string) => string;
@@ -210,5 +214,5 @@ function lineFields(doc: ProjectDoc, el: Element, p: GroundParams, ctx: ReturnTy
   return `<div class="field-label">${escapeHtml(groundLabel(p))}</div>
     <div class="fields">${rows.join('')}</div>
     ${notes.map((n) => `<p class="note">${n}</p>`).join('')}
-    ${p.kind === 'path' ? groundFill(doc, p) : ''}`;
+    ${p.kind === 'path' || p.kind === 'wall' ? groundFill(doc, p) : ''}`;
 }

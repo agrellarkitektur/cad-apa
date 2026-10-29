@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.27** (alfa); nästa är **0.10.28 Material, mark först**.
+**0.10.28** (alfa); nästa är **0.10.28.1 Material på bjälklag och tak**.
 
 ## Vad som fungerar
 
@@ -1124,6 +1124,28 @@ Version 0.10.8b, höjderna i fasaden (nytt filformat, 20; projekt från 0.10.8 �
   markobjekten; *Befintlig* bredvid tar den befintliga markens. Raden
   *Byggnadshöjd* säger vilken fasad som gäller och nockhöjden
 
+Version 0.10.28, material, mark först (nytt filformat, 23; projekt från 0.10.27 öppnas inte):
+- **Material i stället för fyllningar**: ett material bor i stilmallen
+  och har ett namn, en kategori (Mark) och hur det ritas i varje
+  vykategori: fyllningen i planen (som förut), en egen färg med opacitet
+  i illustrationsplanen (eller *Som planen*) och kulören i 3D. Ett nytt
+  projekt har Gräs, Grus, Asfalt, Plattor 300, Tegel, Vatten, Betong och
+  Mark. De sparade fyllningarna från 0.10.14 är material nu
+- **Markobjekten får material**: fältet *Fyllning* heter *Material* för
+  markytor, ramper och slänterna, och stödmuren har det också. Välj ett
+  material eller *Eget* (en egen fyllning, som förut). Det du ändrar i
+  panelen för ett objekt med material ändrar materialet och alla objekt
+  med det; *Byt namn…* och *Ta bort ur stilmallen* finns där. Under *Bara
+  det här objektet* kan opaciteten och mönstrets vridning överstyras.
+  *Spara som material…* gör en egen fyllning till ett material
+- **Illustrationsplanen** (vyer av Platsen med vykategorin
+  Illustrationsplan) ritar materialens färg i stället för fyllningen
+- **Kulörerna i 3D**: markytor, ramper och slänter med material färgar
+  marken i 3D, stödmuren likaså. Materialen visas för alla objekt med
+  fyllning (2D-former och rum också), men bara markens för markobjekten
+- **Stödmuren** ritas snittad med materialets fyllning i planen, och svart
+  utan material som förut
+
 Version 0.10.27, styrningen i 3D (samma filformat, 22):
 - **Som i ArchiCAD**: mittenknappen panorerar och Shift + mittenknappen
   snurrar vyn; hjulet zoomar som förut, och dubbelklick med mittenknappen
@@ -1956,7 +1978,7 @@ Version 0.8.28, rättelser i 2D-formen (samma filformat, 13):
 
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer, i dag 19 (sedan 0.10.7). Fram till
+Projektfilerna har ett formatnummer, i dag 23 (sedan 0.10.28). Fram till
 den öppna betan uppgraderas inte projekt från äldre alfa- och betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp

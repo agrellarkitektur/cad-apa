@@ -109,19 +109,49 @@ export interface StyleSheet {
   /** Projektets egna fyllningstyper (0.8.36). */
   fillTypes?: CustomFillType[];
   /**
-   * Sparade fyllningar (0.10.14): en fyllning med alla inställningar och ett
-   * namn, som objekt kopplas till (`fillStyle`). Ändras den sparade ändras
-   * alla objekt som är kopplade till den.
+   * Materialen (0.10.28, ersätter de sparade fyllningarna från 0.10.14): ett
+   * namn, en kategori och hur materialet ritas i varje vykategori. Objekt
+   * kopplas till ett material med `material`; ändras materialet ändras alla
+   * objekt med det.
    */
-  fills?: SavedFill[];
+  materials?: Material[];
 }
 
-/** En sparad fyllning: fyllningens parametrar som i 2D-formen (`FillParams`), med nyckel och namn. */
-export interface SavedFill {
+/** Materialens kategorier (0.10.28): mark först; bjälklag och tak i 0.10.28.1, väggar med lager i 0.11.1. */
+export type MaterialCategory = 'ground' | 'other';
+
+export const MATERIAL_CATEGORIES: readonly { id: MaterialCategory; name: string }[] = [
+  { id: 'ground', name: 'Mark' },
+  { id: 'other', name: 'Övrigt' },
+];
+
+/**
+ * Ett material (0.10.28): representationen per vykategori.
+ * - `plan`: fyllningen i planen, situationsplanen och markplaneringsritningen,
+ *   med samma fält som 2D-formens fyllning (`FillParams`).
+ * - `illustration`: en färg med opacitet i illustrationsplanen; utelämnad = som planen.
+ * - `color3d`: kulören i 3D som #rrggbb; utelämnad = markens.
+ */
+export interface Material {
   id: string;
   name: string;
-  [key: string]: unknown;
+  category: MaterialCategory;
+  plan: Record<string, unknown>;
+  illustration?: { color: string; opacity?: number };
+  color3d?: string;
 }
+
+/** Materialen som ett nytt projekt har (0.10.28): förslagen från 0.10.14, nu som material. */
+export const DEFAULT_MATERIALS: readonly Material[] = [
+  { id: 'gras', name: 'Gräs', category: 'ground', plan: { fill: 'solid', fillColor: '#b4d39b', fillOpacity: 70 }, illustration: { color: '#a8cf8a', opacity: 80 }, color3d: '#9fbf7e' },
+  { id: 'grus', name: 'Grus', category: 'ground', plan: { fill: 'solid', fillColor: '#ddd3bc', fillOpacity: 80 }, illustration: { color: '#e2d6ba', opacity: 50 }, color3d: '#d6cbb2' },
+  { id: 'asfalt', name: 'Asfalt', category: 'ground', plan: { fill: 'solid', fillColor: '#c9c6bf', fillOpacity: 80 }, illustration: { color: '#a9a8a4', opacity: 80 }, color3d: '#8f8e8a' },
+  { id: 'plattor', name: 'Plattor 300', category: 'ground', plan: { fill: 'type', fillType: 'plattor300', fillColor: '#9aa0a6', fillOpacity: 100 }, illustration: { color: '#d9d5cd', opacity: 90 }, color3d: '#cfc9bf' },
+  { id: 'tegel', name: 'Tegel', category: 'ground', plan: { fill: 'type', fillType: 'tegel', fillColor: '#1d2328', fillOpacity: 100 }, illustration: { color: '#c98f74', opacity: 90 }, color3d: '#b97a60' },
+  { id: 'vatten', name: 'Vatten', category: 'ground', plan: { fill: 'solid', fillColor: '#a9cbe6', fillOpacity: 70 }, illustration: { color: '#9fc6e6', opacity: 90 }, color3d: '#8fb6d6' },
+  { id: 'betong', name: 'Betong', category: 'ground', plan: { fill: 'type', fillType: 'betong', fillColor: '#1d2328', fillOpacity: 100 }, illustration: { color: '#cfcfcb', opacity: 100 }, color3d: '#c4c4bf' },
+  { id: 'mark', name: 'Mark', category: 'ground', plan: { fill: 'type', fillType: 'mark', fillColor: '#9aa0a6', fillOpacity: 100 }, illustration: { color: '#d8cfb8', opacity: 60 }, color3d: '#cfd3bf' },
+];
 
 /** En rad i penntabellen. */
 export interface PenDef {
@@ -292,17 +322,36 @@ export function normalizeStyle(data: any): StyleSheet {
     ...(typeof data.font === 'string' && data.font.trim() ? { font: data.font.trim() } : {}),
     ...(normalizeLineTypes(data.lineTypes) ? { lineTypes: normalizeLineTypes(data.lineTypes)! } : {}),
     ...(normalizeFillTypes(data.fillTypes) ? { fillTypes: normalizeFillTypes(data.fillTypes)! } : {}),
-    ...(normalizeSavedFills(data.fills) ? { fills: normalizeSavedFills(data.fills)! } : {}),
+    ...(normalizeMaterials(data.materials) ? { materials: normalizeMaterials(data.materials)! } : {}),
   };
 }
 
-/** Sparade fyllningar från fil; de utan nyckel eller fyllning hoppas över. */
-function normalizeSavedFills(v: unknown): SavedFill[] | null {
+/**
+ * En förinställd stilmall med det som hör till projektet: texterna, de egna
+ * linje- och fyllningstyperna (0.8.30, 0.8.36) och materialen (0.10.28).
+ */
+export function withProjectParts(preset: StyleSheet, g: StyleSheet): StyleSheet {
+  return { ...preset, labels: g.labels, ...(g.lineTypes ? { lineTypes: g.lineTypes } : {}), ...(g.fillTypes ? { fillTypes: g.fillTypes } : {}), ...(g.materials ? { materials: g.materials } : {}) };
+}
+
+/** Material från fil (0.10.28); de utan nyckel eller planens fyllning hoppas över. */
+export function normalizeMaterials(v: unknown): Material[] | null {
   if (!Array.isArray(v)) return null;
-  const out: SavedFill[] = [];
-  for (const f of v) {
-    if (!f || typeof f !== 'object' || typeof f.id !== 'string' || !f.id || typeof f.fill !== 'string' || out.some((o) => o.id === f.id)) continue;
-    out.push({ ...f, name: typeof f.name === 'string' && f.name.trim() ? f.name.trim() : f.id });
+  const out: Material[] = [];
+  const hex = (c: unknown) => (typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c) ? c : undefined);
+  for (const m of v) {
+    if (!m || typeof m !== 'object' || typeof m.id !== 'string' || !m.id || out.some((o) => o.id === m.id)) continue;
+    const plan = m.plan && typeof m.plan === 'object' && typeof m.plan.fill === 'string' ? { ...m.plan } : null;
+    if (!plan) continue;
+    const ill = m.illustration && hex(m.illustration.color) ? { color: hex(m.illustration.color)!, ...(Number.isFinite(m.illustration.opacity) ? { opacity: Math.max(0, Math.min(100, Number(m.illustration.opacity))) } : {}) } : undefined;
+    out.push({
+      id: m.id,
+      name: typeof m.name === 'string' && m.name.trim() ? m.name.trim() : m.id,
+      category: MATERIAL_CATEGORIES.some((c) => c.id === m.category) ? m.category : 'other',
+      plan,
+      ...(ill ? { illustration: ill } : {}),
+      ...(hex(m.color3d) ? { color3d: hex(m.color3d) } : {}),
+    });
   }
   return out.length ? out : null;
 }

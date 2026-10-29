@@ -79,7 +79,7 @@ function aroundArrows(ctx: PlanContext, g: GroundGeometry, distance: number, ori
 /** Fyllningen (0.10.7), som 2D-formens, bakom väggarna. */
 function fillOf(ctx: PlanContext, el: Element<any>, p: Partial<FillParams>, polys: Vec2[][][], part?: string): Primitive[] {
   if (!p.fill || ctx.view.hide?.includes('fill')) return [];
-  return polys.flatMap((rings) => fillPrims(rings, p as FillParams, { objectId: el.id, objectType: 'Ground' }, true, ctx.style, ctx.scale)).map((q) => (part && q.origin ? { ...q, origin: { ...q.origin, part } } : q));
+  return polys.flatMap((rings) => fillPrims(rings, p as FillParams, { objectId: el.id, objectType: 'Ground' }, true, ctx.style, ctx.scale, ctx.view.category)).map((q) => (part && q.origin ? { ...q, origin: { ...q.origin, part } } : q));
 }
 
 /** Höjden som text, i RH 2000 när projektet har en plats, med projektets decimaler (0.10.20). */
@@ -134,9 +134,18 @@ function linePlan(ctx: PlanContext, el: Element<any>, p: GroundParams, g: Ground
     // utan snitthöjd, ritas muren snittad hela vägen.
     const h = planCutHeight(ctx);
     const parts = prof && h !== undefined && Number.isFinite(h) ? wallCutParts(prof, storeyElevation(ctx, el.storey) + h) : null;
-    if (!parts) for (const ring of g.rings[0]) out.push({ kind: 'region', role: 'cut', rings: [ring], fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'mur' } } as Primitive);
+    // Det snittade svart, eller med materialets fyllning (0.10.28) och konturen 0,35.
+    const cut = (rings: Vec2[][]) => {
+      if (!p.fill || ctx.view.hide?.includes('fill')) {
+        out.push({ kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'mur' } } as Primitive);
+        return;
+      }
+      out.push(...fillPrims(rings, p as unknown as FillParams, origin, false, ctx.style, ctx.scale, ctx.view.category).map((q) => ({ ...q, origin: { ...origin, part: 'mur' } })));
+      for (const ring of rings) out.push({ kind: 'polyline', points: ring, closed: true, pen: { weight: 0.35 }, origin: { ...origin, part: 'mur' } });
+    };
+    if (!parts) for (const ring of g.rings[0]) cut([ring]);
     else {
-      for (const rings of parts.cut) out.push({ kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'mur' } });
+      for (const rings of parts.cut) cut(rings);
       for (const zone of ['below', 'above'] as const) {
         const pen = planCutPen(ctx.style, 'Ground', zone);
         for (const rings of parts[zone])

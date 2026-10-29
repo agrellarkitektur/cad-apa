@@ -1,4 +1,4 @@
-import type { Element, Id, ProjectDoc, State } from './model';
+import type { Element, Id, ProjectDoc, SiteCategory, State } from './model';
 
 /** Skiss, normal eller detalj (0.8.37 delad i littera, 2D och 3D). */
 export type DetailLevel = 'sketch' | 'normal' | 'detail';
@@ -57,6 +57,8 @@ export interface ViewStates {
   smart?: Readonly<Record<string, string>>;
   /** Vyns vy-taggar (format 5). */
   viewTags?: readonly string[];
+  /** Vykategorin för en vy av Platsen (0.10.25); materialen ritas efter den (0.10.28). Utelämnad = planen. */
+  category?: SiteCategory;
   /** Visa 2D-element som inte syns i vyn, tonade, för att hitta dem. */
   showHidden?: boolean;
   /** Bjälklagens yta går att klicka i (0.9.4, en inställning i Gränssnitt), inte bara kanterna. Ändrar inte ritningen. */

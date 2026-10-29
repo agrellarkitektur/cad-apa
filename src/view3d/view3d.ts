@@ -241,8 +241,8 @@ export class View3D {
       }
       const geom = extrude(s);
       if (!geom) continue;
-      const mesh = new THREE.Mesh(geom, this.materialFor(s.id, s.material));
-      mesh.userData = { id: s.id, material: s.material };
+      const mesh = new THREE.Mesh(geom, this.materialFor(s.id, s.material, s.color));
+      mesh.userData = { id: s.id, material: s.material, color: s.color };
       mesh.castShadow = s.material !== 'glass' && s.material !== 'floor';
       mesh.receiveShadow = true;
       if (s.material !== 'glass' && !s.noEdges) mesh.add(new THREE.LineSegments(new THREE.EdgesGeometry(geom, 25), this.edgeMaterial));
@@ -268,15 +268,23 @@ export class View3D {
    * från ±0), och höjdkurvorna som sträckor (0.10.8, sex tal per sträcka),
    * eller null. Med mark tas skuggplanet vid ±0 bort.
    */
-  setTerrain(mesh: { positions: Float32Array; indices: Uint32Array } | null, contours: Float32Array | null = null): void {
+  setTerrain(mesh: { positions: Float32Array; indices: Uint32Array } | null, contours: Float32Array | null = null, colors: { indices: Uint32Array; groups: readonly { start: number; count: number; color: string | null }[] } | null = null): void {
     clearGroup(this.terrainGroup);
     this.shadowPlane.visible = !mesh;
     if (mesh && mesh.indices.length) {
       const geom = new THREE.BufferGeometry();
       geom.setAttribute('position', new THREE.BufferAttribute(mesh.positions, 3));
-      geom.setIndex(new THREE.BufferAttribute(mesh.indices, 1));
+      geom.setIndex(new THREE.BufferAttribute(colors?.indices ?? mesh.indices, 1));
       geom.computeVertexNormals();
-      const m = new THREE.Mesh(geom, this.material('ground'));
+      // Materialens kulörer (0.10.28): en grupp trianglar per kulör.
+      let mats: THREE.Material | THREE.Material[] = this.material('ground');
+      if (colors) {
+        mats = colors.groups.map((g, i) => {
+          geom.addGroup(g.start, g.count, i);
+          return g.color ? this.colorMaterial(g.color) : this.material('ground');
+        });
+      }
+      const m = new THREE.Mesh(geom, mats);
       m.receiveShadow = true;
       this.terrainGroup.add(m);
       if (contours?.length) {
@@ -309,15 +317,15 @@ export class View3D {
     this.edit.updateHandles();
   }
 
-  private materialFor(id: string, material: Material3D): THREE.Material {
-    return this.selected.has(id) ? this.highlightMaterial : id === this.hovered ? this.hoverMaterial : this.material(material);
+  private materialFor(id: string, material: Material3D, color?: string): THREE.Material {
+    return this.selected.has(id) ? this.highlightMaterial : id === this.hovered ? this.hoverMaterial : color ? this.colorMaterial(color) : this.material(material);
   }
 
   /** Färga det markerade och det som hovras, och rita markobjektens konturer (0.10.11). */
   private paint(): void {
     for (const m of this.meshes) {
-      const { id, material } = m.userData as { id: string; material: Material3D };
-      m.material = this.materialFor(id, material);
+      const { id, material, color } = m.userData as { id: string; material: Material3D; color?: string };
+      m.material = this.materialFor(id, material, color);
     }
     clearGroup(this.marksGroup);
     const g = this.ground;
@@ -431,6 +439,19 @@ export class View3D {
     const d = this.camera.position.distanceTo(new THREE.Vector3(p[0] / 1000, z / 1000, -p[1] / 1000));
     const h = this.el.clientHeight || 1;
     return ((2 * Math.tan((this.camera.fov * Math.PI) / 360) * d) / h) * 1000;
+  }
+
+  /** Ett material med en egen kulör (0.10.28), för markens material och stödmurarna. */
+  private colorMaterial(color: string): THREE.Material {
+    const key = `kulör:${color}`;
+    let m = this.materials.get(key);
+    if (!m) {
+      m = new THREE.MeshStandardMaterial({ color, roughness: 0.92, side: THREE.DoubleSide });
+      m.clippingPlanes = this.clipPlanes;
+      m.clipShadows = true;
+      this.materials.set(key, m);
+    }
+    return m;
   }
 
   private material(kind: Material3D): THREE.Material {

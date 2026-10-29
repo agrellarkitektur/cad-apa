@@ -8,7 +8,7 @@ import { icons } from './icons';
 import { escapeHtml } from './labels';
 import { fillChange, shapeChange, shapeFields } from './shapeFields';
 import { askText } from './ask';
-import { deleteSavedFill, saveFill } from '../core/savedFills';
+import { deleteMaterial, saveMaterial, updateMaterial } from '../core/materials';
 import { showChange, showClick } from './showFields';
 import { underlayChange, underlayFields } from './underlayFields';
 
@@ -78,16 +78,24 @@ export function drawingChange(store: DocStore, ids: Id[], key: string, input: HT
 
 /** Klick på knappar i Visas i. Svarar true om klicket hanterades. */
 export function drawingClick(store: DocStore, ids: Id[], b: HTMLElement, root: HTMLElement): boolean {
-  // Sparade fyllningar (0.10.14).
+  // Materialen (0.10.28, sparade fyllningar 0.10.14).
   if (b.dataset.action === 'fill-save') {
     const nested = b.dataset.scope === 'sf' ? 'slopeFill' : undefined;
-    void askText('Spara fyllningen i stilmallen som', b.dataset.name ?? '').then((name) => {
-      if (name?.trim()) saveFill(store, ids, name, nested);
+    void askText('Spara fyllningen som material med namnet', b.dataset.name ?? '').then((name) => {
+      if (name?.trim()) saveMaterial(store, ids, name, nested);
+    });
+    return true;
+  }
+  if (b.dataset.action === 'material-rename' && b.dataset.id) {
+    const id = b.dataset.id;
+    void askText('Materialets nya namn', b.dataset.name ?? '').then((name) => {
+      const n = name?.trim();
+      if (n && n !== b.dataset.name) updateMaterial(store, id, `Byt namn på material: ${n}`, (m) => ({ ...m, name: n }));
     });
     return true;
   }
   if (b.dataset.action === 'fill-unsave' && b.dataset.id) {
-    deleteSavedFill(store, b.dataset.id);
+    deleteMaterial(store, b.dataset.id);
     return true;
   }
   return showClick(store, ids, b, root);

@@ -1,10 +1,10 @@
-import type { Color, FillDef, StyleSheet } from '../core/graphics';
+import type { Color, FillDef, Material, StyleSheet } from '../core/graphics';
 import { fillTypeOf, hatchAsLines, patternLines, resolveFill, type HatchLine } from '../core/fillTypes';
 import type { Primitive, Vec2 } from '../repr/primitives';
 
 /**
  * Fyllningen (ur `drawing2d.ts` i granskningen efter 0.10.15): parametrarna,
- * den sparade fyllningen och primitiverna, gemensamma för 2D-former, rum,
+ * materialet och primitiverna, gemensamma för 2D-former, rum,
  * markobjekt och slänter. Allt exporteras vidare från `drawing2d.ts`.
  */
 
@@ -59,30 +59,57 @@ export interface FillParams {
    */
   fillModel?: boolean;
   /**
-   * Kopplad till en sparad fyllning i stilmallen (0.10.14): dess nyckel.
-   * Fyllningens fält i objektet gäller inte då; en sparad fyllning som inte
-   * finns längre ger objektets egna.
+   * Materialet (0.10.28, ersätter den sparade fyllningen från 0.10.14): dess
+   * nyckel i stilmallen. Fyllningens fält i objektet är en kopia av
+   * materialets plan, så att det ser likadant ut om materialet tas bort.
    */
-  fillStyle?: string;
+  material?: string;
+  /** Opaciteten överstyrd för objektet (0.10.28), procent; utelämnad = materialets. */
+  materialOpacity?: number;
+  /** Mönstret vridet för objektet (0.10.28), grader utöver materialets; utelämnad = 0. */
+  materialAngle?: number;
 }
 
-/** Fyllningens fält, utom kopplingen: det en sparad fyllning bestämmer (0.10.14). */
+/** Fyllningens fält, utom kopplingen: det ett material bestämmer i planen (0.10.14, 0.10.28). */
 export const FILL_FIELDS = ['fill', 'fillType', 'fillTypeAngle', 'fillTypeScale', 'fillColor', 'fillAngle', 'fillSpacing', 'fillOpacity', 'fillBackground', 'fillBackgroundOpacity', 'fillWeight', 'fillModel'] as const;
 
+/** Vykategorin som ett material ritas efter (0.10.28): Platsens kategorier; utelämnad = planen. */
+export type FillCategory = 'situation' | 'grading' | 'illustration' | undefined;
+
+/** Materialet som objektet är kopplat till, eller undefined när det inte finns i stilmallen. */
+export function materialOf(p: Pick<FillParams, 'material'>, style: StyleSheet | undefined): Material | undefined {
+  return p.material ? style?.materials?.find((m) => m.id === p.material) : undefined;
+}
+
 /**
- * Fyllningen som den gäller: den sparade när objektet är kopplat till en
- * som finns i stilmallen (0.10.14), annars objektets egen. Linjens
- * opacitet följer inte med en sparad fyllning.
+ * Materialets fyllning i vykategorin (0.10.28): i illustrationsplanen dess
+ * färg (när den har en), annars planens fyllning.
  */
-export function effectiveFill<P extends Partial<FillParams>>(p: P, style: StyleSheet | undefined): P {
-  const saved = p.fillStyle ? style?.fills?.find((f) => f.id === p.fillStyle) : undefined;
-  if (!saved) return p;
+export function materialFill(m: Material, category?: FillCategory): Partial<FillParams> {
+  if (category === 'illustration' && m.illustration) return { fill: 'solid', fillColor: m.illustration.color, fillOpacity: m.illustration.opacity ?? 100 };
+  return m.plan as Partial<FillParams>;
+}
+
+/**
+ * Fyllningen som den gäller: materialets i vykategorin när objektet är
+ * kopplat till ett som finns i stilmallen (0.10.28), med objektets egen
+ * opacitet och vridning, annars objektets egen. Linjens opacitet följer
+ * inte med materialet.
+ */
+export function effectiveFill<P extends Partial<FillParams>>(p: P, style: StyleSheet | undefined, category?: FillCategory): P {
+  const m = materialOf(p, style);
+  if (!m) return p;
+  const rep = materialFill(m, category) as Record<string, unknown>;
   const out = { ...p } as Record<string, unknown>;
   for (const k of FILL_FIELDS) {
-    if (saved[k] === undefined) delete out[k];
-    else out[k] = saved[k];
+    if (rep[k] === undefined) delete out[k];
+    else out[k] = rep[k];
   }
   if (out.fillOpacity === undefined) out.fillOpacity = 100;
+  if (p.materialOpacity !== undefined && Number.isFinite(p.materialOpacity)) out.fillOpacity = p.materialOpacity;
+  const turn = p.materialAngle ?? 0;
+  if (turn && out.fill === 'type') out.fillTypeAngle = (Number(out.fillTypeAngle) || 0) + turn;
+  else if (turn && (out.fill === 'hatch' || out.fill === 'cross')) out.fillAngle = (Number.isFinite(out.fillAngle) ? Number(out.fillAngle) : 45) + turn;
   return out as P;
 }
 
@@ -104,8 +131,8 @@ export const BACKGROUND_COLOR = '#ffffff';
  * Fyllningens ytor för konturen `rings` (0.8.25): en hel fyllning eller en
  * eller två skrafferingar. `under` = bakom väggarna.
  */
-export function fillPrims(rings: readonly (readonly Vec2[])[], own: FillParams, origin: Primitive['origin'] | undefined, under: boolean, style?: StyleSheet, scale = 1): Primitive[] {
-  const p = effectiveFill(own, style);
+export function fillPrims(rings: readonly (readonly Vec2[])[], own: FillParams, origin: Primitive['origin'] | undefined, under: boolean, style?: StyleSheet, scale = 1, category?: FillCategory): Primitive[] {
+  const p = effectiveFill(own, style, category);
   if (!p.fill) return [];
   const fills: FillDef[] = [];
   // Bakgrunden under skrafferingen (0.8.29), med egen opacitet.

@@ -4,6 +4,7 @@ import { groundGeometry, storeyElevation, wallProfile, type GroundParams } from 
 import { wallSolids } from './groundWall';
 import { groundPlan } from './groundPlan';
 import type { ElementType } from './registry';
+import { materialOf, type FillParams } from './fill2d';
 
 /**
  * Markobjekt (0.10.4–0.10.5): platåer, urgrävningar, vägar, höjdpunkter,
@@ -49,7 +50,11 @@ export const groundType: ElementType<GroundParams> = {
     const p = ctx.params<GroundParams>(el);
     if (p.kind !== 'wall') return [];
     const prof = wallProfile(ctx, el);
-    return prof ? wallSolids(el.id, prof, storeyElevation(ctx, el.storey)) : [];
+    if (!prof) return [];
+    // Materialets kulör (0.10.28).
+    const color = materialOf(p as Partial<FillParams>, ctx.style)?.color3d;
+    const solids = wallSolids(el.id, prof, storeyElevation(ctx, el.storey));
+    return color ? solids.map((s) => (s.kind === 'edges' ? s : { ...s, color })) : solids;
   },
   pickShape(el, ctx) {
     const g = groundGeometry(ctx, el);

@@ -1,13 +1,13 @@
 import { updateParams } from '../core/commands';
 import type { Element, Id, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
-import { CAP_LABELS, CAP_SIZE, FILL_BACKGROUND, FILL_COLOR, hasBackground, PATH_LABELS, segmentCount, type CapKind, effectiveFill, type FillParams, type Shape2DParams } from '../elements/drawing2d';
-import type { StyleSheet } from '../core/graphics';
+import { CAP_LABELS, CAP_SIZE, FILL_BACKGROUND, FILL_COLOR, hasBackground, PATH_LABELS, segmentCount, type CapKind, effectiveFill, materialOf, type FillParams, type Shape2DParams } from '../elements/drawing2d';
+import type { Material, StyleSheet } from '../core/graphics';
 import { resolveParams } from '../elements/registry';
 import { STRAIGHT } from '../geometry/arc';
 import { lineTypeOptions } from './lineTypePick';
-import { FILL_KEYS, fillOpacityOf, fillPanel, fillPatch, withPatch } from './fillPanel';
-import { fillFieldsOf, fillOfElement, linkFill, withFill } from '../core/savedFills';
+import { FILL_KEYS, fillOpacityOf, fillPanel, fillPatch, MATERIAL_3D_COLOR, withPatch, type FillPanelContext } from './fillPanel';
+import { fillFieldsOf, fillOfElement, linkMaterial, materialUses, overrideMaterial, updateMaterial, withFill } from '../core/materials';
 import { weightPicker } from './weightPick';
 
 /**
@@ -28,37 +28,81 @@ export function fillFields(
   attrs: (key: string) => string,
   style?: StyleSheet,
   title?: string,
+  ctx?: FillPanelContext,
 ): string {
-  return fillPanel(name, effectiveFill(p, style), attrs, style, title);
+  return fillPanel(name, p, attrs, style, title, ctx);
 }
+
+/** Nycklarna för materialets illustrationsplan och 3D och objektets överstyrningar (0.10.28). */
+const MATERIAL_KEYS: ReadonlySet<string> = new Set(['matIllKind', 'matIllColor', 'matIllOpacity', 'matColor3d', 'materialOpacity', 'materialAngle']);
 
 /**
  * En ändring i fyllningens panel för objekten `ids`. Med `nested` gäller
  * den en fyllning som ligger i en egen parameter (slänternas, `slopeFill`).
- * Svarar false när nyckeln inte hör till fyllningen.
+ * Är det första objektet kopplat till ett material (0.10.28) ändras
+ * materialet, och alla objekt med det. Svarar false när nyckeln inte hör
+ * till fyllningen.
  */
 export function fillChange(store: DocStore, ids: Id[], name: string, input: HTMLInputElement | HTMLSelectElement, nested?: string): boolean {
-  if (name === 'fillStyle') {
-    // En sparad fyllning (0.10.14), eller Egen.
-    linkFill(store, ids, input.value || null, nested);
+  if (name === 'material') {
+    linkMaterial(store, ids, input.value || null, nested);
     return true;
   }
-  if (!FILL_KEYS.has(name)) return false;
+  if (!FILL_KEYS.has(name) && !MATERIAL_KEYS.has(name)) return false;
   const doc = store.doc;
   const first = ids.map((id) => doc.elements[id]).find(Boolean);
   if (!first) return true;
-  const own = (el: Element): FillParams => effectiveFill(fillOfElement(el, nested) as FillParams, doc.graphics);
+  const m = materialOf(fillOfElement(first, nested), doc.graphics);
+  if (MATERIAL_KEYS.has(name)) {
+    if (m) materialFieldChange(store, ids, m, name, input.value, nested);
+    return true;
+  }
+  if (m) {
+    // Materialets fyllning i planen; objekten med det följer med.
+    const change = fillPatch(name, input.value, m.plan as unknown as FillParams);
+    if (change) updateMaterial(store, m.id, `${change.label} (${m.name})`, (q) => ({ ...q, plan: withPatch({ ...q.plan }, change.patch) }));
+    return true;
+  }
+  const own = (el: Element): FillParams => fillOfElement(el, nested) as FillParams;
   const change = fillPatch(name, input.value, own(first));
   if (!change) return true;
   store.transact(change.label, (tx) => {
     for (const id of ids) {
       const el = tx.doc.elements[id];
       if (!el) continue;
-      // En ändring i en kopplad fyllning gör den till objektets egen.
-      tx.putElement(withFill(el, withPatch({ ...fillFieldsOf(own(el)) }, change.patch), nested));
+      const now = own(el);
+      // Ett objekt i markeringen med ett material får den ändrade fyllningen som sin egen.
+      const base = now.material ? fillFieldsOf(effectiveFill(now, doc.graphics)) : fillFieldsOf(now);
+      const rest = nested ? Object.fromEntries(Object.entries(now).filter(([k]) => !k.startsWith('fill') && !k.startsWith('material'))) : {};
+      tx.putElement(withFill(el, { ...rest, ...withPatch({ ...base }, change.patch) }, nested));
     }
   });
   return true;
+}
+
+/** Materialets illustrationsplan och kulör i 3D, och objektets egen opacitet och vridning (0.10.28). */
+function materialFieldChange(store: DocStore, ids: Id[], m: Material, name: string, value: string, nested?: string): void {
+  const num = Number(value.replace(',', '.').replace(/[^\d.+-]/g, ''));
+  const pct = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  if (name === 'materialOpacity' || name === 'materialAngle') {
+    const empty = value.trim() === '';
+    if (!empty && !Number.isFinite(num)) return;
+    overrideMaterial(store, ids, name, empty ? undefined : name === 'materialOpacity' ? pct(num) : num || undefined, nested);
+    return;
+  }
+  const edit = (label: string, fn: (q: Material) => Material) => updateMaterial(store, m.id, `${label} (${m.name})`, fn);
+  if (name === 'matIllKind')
+    edit(value === 'color' ? 'Egen färg i illustrationsplanen' : 'Illustrationsplanen som planen', (q) => {
+      if (value !== 'color') {
+        delete q.illustration;
+        return q;
+      }
+      const c = q.plan.fill === 'solid' && typeof q.plan.fillColor === 'string' ? q.plan.fillColor : (q.color3d ?? MATERIAL_3D_COLOR);
+      return { ...q, illustration: q.illustration ?? { color: c, opacity: Number(q.plan.fillOpacity ?? 100) } };
+    });
+  else if (name === 'matIllColor') edit('Ändra färgen i illustrationsplanen', (q) => ({ ...q, illustration: { ...q.illustration, color: value } }));
+  else if (name === 'matIllOpacity' && Number.isFinite(num)) edit('Ändra opaciteten i illustrationsplanen', (q) => ({ ...q, illustration: { color: q.illustration?.color ?? MATERIAL_3D_COLOR, opacity: pct(num) } }));
+  else if (name === 'matColor3d') edit('Ändra kulören i 3D', (q) => ({ ...q, color3d: value }));
 }
 
 /** En egen fyllningstyps vridning och skala (0.8.36). Null = olika i markeringen. */
@@ -186,7 +230,7 @@ export function shapeFields(doc: ProjectDoc, el: Element): string {
       <label class="check"><input type="checkbox" data-key="d2:closed"${p.closed ? ' checked' : ''}> Sluten</label>
       ${el.space ? '' : boundsField(!!p.boundsRooms, (k) => `data-key="d2:${k}"`)}
       ${!p.closed && p.weight ? capFields(p, (k) => `data-key="d2:${k}"`) : ''}
-      ${fillFields('d2-pattern-panel', p, (k) => `data-key="d2:${k}"`, doc.graphics)}
+      ${fillFields('d2-pattern-panel', p, (k) => `data-key="d2:${k}"`, doc.graphics, undefined, { uses: p.material ? materialUses(doc, p.material) : 0 })}
       ${p.weight === 0 && !p.fill ? '<p class="note">Formen har varken linje eller fyllning och syns inte, men går att klicka på längs linjen.</p>' : ''}
       ${p.shape === 'polyline' ? '<p class="note">Böj eller räta ut en kant med Modifiera: klicka på kanten när formen är markerad.</p>' : ''}`;
 }

@@ -1,5 +1,5 @@
-import { PRESETS, type StyleSheet } from '../core/graphics';
-import { onPaper, modelViewId, type Element, type Id, type ProjectDoc, type Sheet, type ViewDef, type Viewport, type Worksheet } from '../core/model';
+import { PRESETS, withProjectParts, type StyleSheet } from '../core/graphics';
+import { isSite, onPaper, modelViewId, type Element, type Id, type ProjectDoc, type Sheet, type ViewDef, type Viewport, type Worksheet } from '../core/model';
 import { FRAME_MARGIN, masterOf, paperSize } from '../core/sheets';
 import { defaultState, existingState, type ViewStates } from '../core/states';
 import { markerName } from '../elements/markers';
@@ -96,7 +96,7 @@ export interface ViewPrimOptions {
 function styleOf(doc: ProjectDoc, name: string | undefined): StyleSheet {
   const preset = name ? PRESETS.find((p) => p.name === name) : undefined;
   const g = doc.graphics;
-  return preset ? { ...preset, labels: g.labels, ...(g.lineTypes ? { lineTypes: g.lineTypes } : {}), ...(g.fillTypes ? { fillTypes: g.fillTypes } : {}) } : g;
+  return preset ? withProjectParts(preset, g) : g;
 }
 
 /**
@@ -126,6 +126,7 @@ export function viewStatesFor(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions)
     autoDims: opt.autoDims,
     viewId: v.id,
     viewTags: v.tags ?? [],
+    ...(v.category && isSite(v.storey) ? { category: v.category } : {}),
     scale: opt.scale,
   };
 }

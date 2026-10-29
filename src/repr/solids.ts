@@ -29,6 +29,8 @@ export interface Solid {
   /** Sned undersida i stället för z0. z0 är då formens lägsta punkt. */
   bottom?: Plane;
   material: Material3D;
+  /** En egen kulör som #rrggbb (0.10.28, materialets i 3D) i stället för materialsortens. */
+  color?: string;
   /**
    * Rita inga kantlinjer för formen. Väggar sätter det och levererar egna
    * kantlinjer, så att skarvar mellan bitarna runt öppningar inte syns.

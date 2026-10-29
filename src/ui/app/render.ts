@@ -1,7 +1,7 @@
 import { tracedStorey } from '../../core/storeys';
 import { addElements } from '../../core/commands';
-import { modelViewId, onPaper, type ViewDef } from '../../core/model';
-import { PRESETS, type StyleSheet } from '../../core/graphics';
+import { isSite, modelViewId, onPaper, type ViewDef } from '../../core/model';
+import { PRESETS, withProjectParts, type StyleSheet } from '../../core/graphics';
 import { paperSize } from '../../core/sheets';
 import { existingState } from '../../core/states';
 import { skewText, skewWarnings } from '../../elements/angleCheck';
@@ -66,15 +66,16 @@ export function installRender(app: AppContext, parts: RenderParts) {
   // Samma förinställda stilmall ger samma objekt, så att planens cache träffar (0.8.3).
   // Projektets egna linjetyper följer med (0.8.30), så att formerna ritas likadant.
   // Fyllningstyperna likaså (0.8.36).
-  const presetStyles = new Map<string, { labels: StyleSheet['labels']; lineTypes: StyleSheet['lineTypes']; fillTypes: StyleSheet['fillTypes']; sheet: StyleSheet }>();
+  // Materialen (0.10.28) också: de hör till projektet.
+  const presetStyles = new Map<string, { labels: StyleSheet['labels']; lineTypes: StyleSheet['lineTypes']; fillTypes: StyleSheet['fillTypes']; materials: StyleSheet['materials']; sheet: StyleSheet }>();
   function styleFor(name: string | null): StyleSheet {
     const g = app.store.doc.graphics;
     const preset = name ? PRESETS.find((p) => p.name === name) : undefined;
     if (!preset) return g;
     const hit = presetStyles.get(preset.name);
-    if (hit && hit.labels === g.labels && hit.lineTypes === g.lineTypes && hit.fillTypes === g.fillTypes) return hit.sheet;
-    const sheet = { ...preset, labels: g.labels, ...(g.lineTypes ? { lineTypes: g.lineTypes } : {}), ...(g.fillTypes ? { fillTypes: g.fillTypes } : {}) };
-    presetStyles.set(preset.name, { labels: g.labels, lineTypes: g.lineTypes, fillTypes: g.fillTypes, sheet });
+    if (hit && hit.labels === g.labels && hit.lineTypes === g.lineTypes && hit.fillTypes === g.fillTypes && hit.materials === g.materials) return hit.sheet;
+    const sheet = withProjectParts(preset, g);
+    presetStyles.set(preset.name, { labels: g.labels, lineTypes: g.lineTypes, fillTypes: g.fillTypes, materials: g.materials, sheet });
     return sheet;
   }
 
@@ -91,6 +92,7 @@ export function installRender(app: AppContext, parts: RenderParts) {
       autoDims: app.uiSettings.autoDims,
       viewId: v.id,
       viewTags: v.tags ?? [],
+      ...(v.category && isSite(v.storey) ? { category: v.category } : {}),
       scale: v.scale ?? 100,
     };
   }
@@ -119,6 +121,8 @@ export function installRender(app: AppContext, parts: RenderParts) {
       autoDims: app.uiSettings.autoDims,
       viewId,
       viewTags: v?.tags ?? [],
+      // Vykategorin (0.10.28) när den öppna vyn är en vy av Platsen.
+      ...(v?.category && isSite(v.storey) && v.storey === app.ui.storey ? { category: v.category } : {}),
       showHidden: app.ui.showHidden,
       ...(app.uiSettings.slabArea ? { slabArea: true } : {}),
       scale: shownMaster() ? 1 : app.ui.scale,

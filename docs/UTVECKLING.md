@@ -434,6 +434,14 @@ ur överlämningen i 0.10.23).
 Det som är känt men lämnat, per version (flyttat hit ur överlämningen i
 0.10.23). Ta bort en rad när den är åtgärdad.
 
+- **Material (0.10.28):** kulörerna i 3D följer trianglarnas mitt, så
+  slänternas yttre kant (och markytor som inte skär marken) blir taggiga
+  per ruta. Snittet och vyn i sektion och fasad har inga fält i materialet
+  än (0.10.28.1, med bjälklag och tak); marken i sektionerna ritas som
+  förut. Materialen går inte att ordna eller redigera i stilmallens
+  dialog, bara i panelen. En markering med olika material ändras efter
+  det första objektets material.
+
 - **Smartspöt del 2 (0.10.23):** `fitArcs` körs bara när ett förslag
   utförs (prövar de längsta bågarna från början, O(n²) för en lång jämn
   kurva). Bågväggar måttsätts inte; en båge av två bitar är ett hörn.
@@ -523,7 +531,8 @@ Det som är känt men lämnat, per version (flyttat hit ur överlämningen i
   varje ändring i projektet när de är tända (släntstrecken ur planen).
 - **Fyllningar (0.10.14):** slänternas yta räknas om när den färdiga
   marken ändras (ca 100 ms första gången i 1:50 på den sneda platsen,
-  sedan sparad). De sparade fyllningarna finns inte i stilmallens dialog.
+  sedan sparad). Materialen (0.10.28) finns inte i stilmallens dialog,
+  bara i panelen.
   2D-verktygets fyllningsval i verktygsraden är det gamla (bara
   mönstret).
 
@@ -1630,6 +1639,53 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Material, mark först (0.10.28, format 23)
+
+- **Materialet** (`Material` i `graphics.ts`): `id`, `name`, `category`
+  (`'ground'` eller `'other'`; bjälklag och tak i 0.10.28.1), `plan`
+  (fyllningens fält som i `FillParams`), `illustration` (`{ color,
+  opacity }`, utelämnad = som planen) och `color3d`. `StyleSheet.materials`
+  ersätter `fills` (`SavedFill` borta); `normalizeMaterials` läser dem,
+  `DEFAULT_MATERIALS` är ett nytt projekts (och exempelprojektets).
+  `withProjectParts(preset, g)` ger en förinställd stilmall med projektets
+  texter, linje- och fyllningstyper och material (vyernas stilmall, bladen
+  och valet i stilmallens dialog).
+- **Objektet** (`FillParams`): `material` ersätter `fillStyle`;
+  `materialOpacity` och `materialAngle` överstyr opaciteten och vrider
+  mönstret (grader utöver materialets: `fillTypeAngle` för egna typer,
+  `fillAngle` för skraffering och kors). Som förut har objektet en kopia
+  av planens fyllning, så att `p.fill` är satt där rum och markobjekt
+  frågar och det ser likadant ut när materialet tas bort.
+- **Vykategorin** (`ViewStates.category`, satt för vyer av Platsen i
+  `viewStatesOf`, `viewStates` och `viewStatesFor`) går till
+  `effectiveFill(p, style, category)` och `fillPrims(…, category)`:
+  `materialFill(m, category)` ger illustrationsplanens färg som en hel
+  fyllning, annars planens.
+- **`src/core/materials.ts`** (förut `savedFills.ts`): `saveMaterial`
+  (samma namn skriver över planens fyllning), `linkMaterial` (eller *Eget*:
+  det som syntes i planen blir objektets eget), `updateMaterial(store, id,
+  label, fn)` (materialet och kopiorna i alla objekt med det, i en
+  transaktion), `deleteMaterial`, `overrideMaterial` och `materialUses`.
+  Slänternas material ligger i `slopeFill`, som förut.
+- **Panelen** (`fillPanel.ts`): `fillPanel(name, raw, attrs, style,
+  title, { category, uses })` tar objektets egna parametrar; med ett
+  material visas och ändras materialets plan (`fillChange` i
+  `shapeFields.ts` skickar ändringen till `updateMaterial`), och
+  `materialParts` har illustrationsplanen (`matIllKind`, `matIllColor`,
+  `matIllOpacity`), kulören i 3D (`matColor3d`) och objektets
+  `materialOpacity` och `materialAngle`. Knapparna `fill-save`,
+  `material-rename` och `fill-unsave` i `drawingPanel.ts`. Förslagen Gräs,
+  Grus, Hårdgjort och Vatten är borta ur `FILL_PRESETS` (de är material).
+- **3D**: `repr/groundColors.ts` (`colorShapes`, `colorGroups`) sorterar
+  marknätets trianglar per kulör efter triangelns mitt (markytor och
+  ramper ovanpå sina slänter, i ritordning); `View3D.setTerrain` tar
+  grupperna och gör en `THREE`-grupp per kulör. `Solid.color` ger en egen
+  kulör (stödmuren), `colorMaterial(color)` i `view3d.ts`.
+- **Stödmuren** i planen: med en fyllning (materialets) ritas det snittade
+  med `fillPrims` och konturen 0,35, annars svart som förut.
+- Tester: `tests/v01028.test.ts`. Provat i Playwright mot `dist/`
+  (materialet i panelen, planen, en illustrationsplan, 3D).
+
 ## Styrningen i 3D (0.10.27, format 22)
 
 - **Knapparna** (`view3d.ts`): `controls.mouseButtons = { LEFT: null,
@@ -2512,7 +2568,8 @@ stilmallens `pens`).
 - **Nya parametrar** i `FillParams` (`drawing2d.ts`): `fillWeight`
   (mönstrets penna, förval `FILL_WEIGHT` = 0,13 eller typens), `fillModel`
   (mönstrets mått i verkligheten; förval typens `model`, skrafferingen på
-  papper) och `fillStyle` (kopplingen till en sparad fyllning).
+  papper) och `fillStyle` (kopplingen till en sparad fyllning; sedan
+  0.10.28 `material`).
   `FILL_FIELDS` är fyllningens fält utan kopplingen.
 - **Mönstren** i `fillPrims` ritas nu alla som `kind: 'pattern'` (också
   skraffering och kors, med `hatchAsLines`), och `anchorLines(lines, at,
@@ -2521,7 +2578,7 @@ stilmallens `pens`).
   streckperiod, så att lika placerade objekt delar SVG-mönster.
   Referensritningarna `former` och `mark` och `blad-former` ändrades bara
   i fyllningarnas rader (`hatch` → `mönster` med fas).
-- **Sparade fyllningar**: `StyleSheet.fills` (`SavedFill`, läses av
+- **Sparade fyllningar** (material sedan 0.10.28, se där): `StyleSheet.fills` (`SavedFill`, läses av
   `normalizeSavedFills` i `graphics.ts`). `src/core/savedFills.ts` har
   `saveFill` (samma namn skriver över och uppdaterar alla kopplade),
   `linkFill` (koppla eller koppla loss) och `deleteSavedFill`. Ett kopplat
