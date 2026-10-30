@@ -1,8 +1,395 @@
-# Så byggs programmet ut, arkiv: 0.10–0.10.31
+# Så byggs programmet ut, arkiv: 0.10–0.10.40.1
 
 Avsnitt om koden, flyttade hit ur [UTVECKLING.md](../UTVECKLING.md) 30 oktober
 2026 (efter 0.10.40.1). Innehållet är oförändrat; det som har ändrats senare
 står i nyare avsnitt (här eller i UTVECKLING.md).
+
+
+## Granskning efter 0.10.40 (0.10.40.1, format 25)
+
+Inga nya funktioner.
+
+- **`ui/styleDialog.ts`** (1 083 → 516 rader) ritar ramen (vänsterkanten,
+  rubrikraden med sök och *Vanliga/Alla*), markerar avvikelser
+  (`markRows`), filtrerar (`applyFilter`), håller `place`, `chosen`,
+  `viewId` och `pp`, och skickar klick och fält vidare. Den exponerar
+  `store`, `book`, `chosen`, `pp`, `scope`, `commit`, `set`, `render`,
+  `placeKind`, `goToPens` och `goToPlace` för delarna (som
+  `CategoryHost`, `ResourceHost` och `PlacesHost`). Nya filer i
+  `ui/style/`: **`categoryTab.ts`** (`categoryTabMarkup`: flikarna,
+  verktygen, visningen, innehållet, underlagen, åtgärderna och pennorna;
+  `StyleScope`), **`categoryEdits.ts`** (`viewAction`, `categoryAction`,
+  `underlayClick`, `categoryChange`), **`placesPanel.ts`** (`placesClick`,
+  `placesChange`), **`resourceEdits.ts`** (`resourceClick`,
+  `resourceChange`, `pickFile`, `lineTypeUses`, `materialUsesMap`,
+  `fillTypeUses`) och **`bookFile.ts`** (`askPaper`, `exportBookFile`,
+  `templateDialog`, `importBookFile`).
+- **`core/materials.ts`**: `materialObjectsByMaterial(doc)` går igenom
+  elementen en gång och ger `Map<material, objekt[]>`; `materialObjects`
+  och `materialUses` läser ur den. `placeRows` (materialen) och
+  `materialUsesMap` använder den direkt. `extraFieldsOf(now, nested)` för
+  släntens egna fält.
+- **`core/ids.ts`**: `slugId(name, taken, fallback)`, nyckeln ur ett namn;
+  `freshId` (kategorier) och `newId` (material) bygger på den.
+- **`repr/penPlaces.ts`**: `frozenPens(doc, places?)` tar ställena om de
+  redan är räknade; `applyEdit` i `placeEdits.ts` får `all` (projektets
+  ställen) och `setPlaces`/`editPen` räknar dem en gång. `plainPen`,
+  `objectTypeName` (registrets `label`), `COLOR_RANK` exporterad (places.ts
+  sorterar med `penOrder`). `viewKeys` jämför med `sameValue`.
+- **`repr/penRows.ts`**: `putPen(style, key, fn)` ändrar en rad i
+  penntabellen utan att spara förvalet; `applyPenField` (stilboken) och
+  `editPlaces` (ställena) använder den.
+- **`ui/style/deviations.ts`**: `changedRows` tar stilens rader ur
+  `styleDiff` (utom `openingMark`, som inte har någon rad).
+- Borttaget: `placeRowExists`, `penRowShown`, `MATERIAL_USES`, `PRESETS`,
+  `updateCategory`. `tests/v01032.test.ts` använder `putCategory`.
+
+## Stilboken ut och in (0.10.40, format 25)
+
+- **`core/styleBookFile.ts`**: `StyleBookFile` = `StyleBook` + `assets`
+  (bilderna, `bookAssetIds`: logotypen och texturerna, plus bilderna på
+  papperet) + `paper` (`PaperPart`: `worksheets`, `elements` med `space`
+  i dem, `master` = projektets förvalda om det är med). `exportBook(doc,
+  { masters, stamps })`; stämplar som ligger på det som tas med följer
+  med. `readBookFile(data, base?, styleTo?)` ger `ReadBook` (`book` via
+  `normalizeBook`, `assets`, `paper`); `paperInFile` räknar.
+  `importBook(store, read, choice, label, replaceMaster?)` i en
+  transaktion: `putAssets` (samma innehåll återanvänds, upptaget id får
+  nytt), `remap` byter id:n djupt (bilder, arbetsblad, element), elementen
+  får `storey = doc.storeys[0]`, `relinkLogos` och `pruneAssets` på
+  stilbokens gamla bilder. `applyTemplate` = import med allt och
+  `replaceMaster` (exemplets mallblad tas bort om inget blad använder det).
+- **`core/office.ts`**: `relinkLogos(tx, logo)` (ur `setOfficeLogo`).
+  `pruneAssets` räknar kontorets logotyp som använd.
+- **Mallen**: `saveTemplate`, `loadTemplate`, `clearTemplate` i
+  `storage/localStore.ts` (nyckeln `stilboksmall` i samma IndexedDB som
+  autosparet; `TemplateRecord` = `text`, `name`, `savedAt`).
+- **UI**: stilbokens rubrikrad (`.sb-file`: `save-style`, `open-style`,
+  `template-style`), `askPaper` och `template` i `StyleDialog`, `askChecks`
+  i `ui/ask.ts` (kryssrutor och en extra knapp). `NewProjectDialog.open`
+  är asynkron (läser mallen); gruppen `book` (`template`, `standard`,
+  `file`). Höjdkurvors *Nytt projekt* (`ui/app/site.ts`) tar mallen.
+- Tester: `tests/v01040.test.ts`.
+
+## Projektet › Allmänt (0.10.39, format 25)
+
+- **`core/general.ts`**: `OfficeInfo` (`StyleResources.office`: fälten i
+  `OFFICE_TAGS` med taggarna, `logo` = `{ asset, width, height }`, egna
+  `tags`) och `GeneralSettings` (`StyleResources.general`: `textSize`,
+  `heightSystem`, `levelDecimals`, `groundDecimals`, `litteraDigits`,
+  `lengthUnit`, `areaDecimals`, `weights`). `generalOf(book, site)` ger
+  det som gäller: stilbokens, annars Platsens gamla `ground.levelDecimals`,
+  `ground.litteraDigits` och `crs.height`, annars `GENERAL_DEFAULTS`;
+  `docGeneral(doc)` är samma för ett dokument. `normalizeOffice` och
+  `normalizeGeneral` i `normalizeStyle`. Talen: `lengthText`, `areaText`,
+  `signedLevel`.
+- **Läsarna**: `dimensionPrims` (`style.general.lengthUnit`),
+  `formatArea(m2, decimals)` i rummen och litterat, `levelText` i
+  `repr/terrain.ts` (nivåmarkörerna), `groundLevelText(doc, z)` och
+  `litteraText(doc, …)` i `core/site.ts` (tar nu dokumentet, inte
+  platsen), `TextTool.height` (null = stilbokens), `weightPicker` och
+  listorna via `setWeightSource` / `currentWeights` i `ui/weightPick.ts`
+  (sätts i `app.ts`).
+- **Smarttexten**: `smartVars` lägger `officeVars(doc.graphics.office)`
+  under bladets och projektets fält; ett kontorsfält som de lämnat tomt
+  tar kontorets värde. Nya inbyggda: `projektnummer` (fältet
+  `uppdragsnummer`) och `höjdsystem`. `fieldsOf` hoppar över kontorets
+  taggar (`officeTagKeys`) som projektet inte har som fält.
+- **`core/office.ts`**: `setOfficeLogo` (bilden som fil; logotyperna på
+  papperet får den nya bilden lika bred, den gamla filen tas bort om inget
+  använder den), `setProjectField`, `removeProjectField`,
+  `setProjectPhase` (via `applyFieldChanges` med `shared`) och
+  `placeLogo` (ett `Underlay` med `logo: true`).
+- **Dialogen**: `ui/style/general.ts` (`generalMarkup`, `generalChange`,
+  `generalClick`; fälten `data-gen`, knapparna `data-gen-action`).
+  Stilbokens ändringar går genom dialogens `set` (med `withFrozenPens`).
+  Menyraden *Lägg in logotypen här* i `ui/app/logo.ts` (bladets meny i
+  `sheets.ts`, mallbladens och stämplarnas i `menus.ts`).
+- Tester: `tests/v01039.test.ts`.
+
+## Snitt- och konturlinjer i fasader och sektioner (0.10.38, format 25)
+
+- **Raderna** (`repr/facadePens.ts`): `FACADE_PENS` har nycklar per
+  objekt (`wallElev`, `wallHoleElev`, `doorFrameElev` …, `slabElev`,
+  `otherElev`) med `group` (planens grupper) och `part` (delen i 3D).
+  `facadeRowOf(part, objectType)` ger raden: dörrens delar dörrens rader,
+  andra öppningars fönstrets, linjer utan del bjälklagets eller Övrigt.
+  `facadePen(style, key)` läser raden.
+- **Rader per vytyp** (`repr/penRows.ts`): `PenRow.types` (valfri);
+  `penGroupsFor(type)` filtrerar raderna och tar bort tomma grupper, och
+  `penRowShown(key, type)` ersätter gruppkollen i `placeRowExists`.
+  `objectRows(group)` ger planens rader (snittlinjerna `storey` och
+  `section`, resten `storey`) och fasadens (`facade`, `section`).
+- **Snittet i sektionen** (`section.ts`): grupperna har nyckeln
+  `åtgärd|p|material|snittlinje` (`cutRowPen` som JSON), och
+  `objectType` på `origin` för regionerna och `asOutline`-linjerna, så att
+  `applyStyle` hittar raden. `materialCutPrims(…, false, true)` och
+  `asOutline`-linjerna genom `applyStyle`; med egna pennor tas de bort och
+  ritas per objekt som förut.
+- **`applyStyle(p, s, action, sheet, scale)`** har ingen `plan`-flagga:
+  snittlinjen och jämförelsens färg gäller i alla vyer. Åtgärdens
+  `cutOutline.weight` läses inte längre (kvar i formatet).
+- **Ställena**: `outline.<åtgärd>` har ingen `pen` (bara `linetype`), och
+  `setPenEdit` har ingen gren för dem.
+- Tester: `tests/v01038.test.ts`. Referensritningarna ändrades inte.
+
+## Snitt- och konturlinjer i planen (0.10.37, format 25)
+
+- **Raderna** (`repr/objectPens.ts`): `OBJECT_PENS` (nyckel, grupp,
+  förval, taggar) ersätter `OPENING_PENS` (`openingPens.ts` är borta);
+  `objectPen(style, key)` läser raden med förvalets färg
+  (`defaultedPen`), `cutRowOf(objectType)` och `cutRowPen(style, type)`
+  ger snittlinjen, och `SYMBOL_PARTS` ligger här. Grupperna `walls`,
+  `doors`, `windows` och `objects` i `PEN_GROUPS` (rummens rad,
+  `roomOutline`, står i `objects`). Dörrar och fönster läser sina rader i
+  `door.ts` och `window.ts`; möblerna `furniture`/`furnitureFixed`.
+- **Snittlinjen**: `applyStyle(p, s, action, sheet, scale, plan)`; planen
+  skickar `plan = true` (sektionerna inte, tills 0.10.38). Med `plan` ger
+  `cutPen` en region eller en `asOutline`-linje radens tjocklek, och färg
+  och streckning efter jämförelsen; åtgärdens färg går före en färgad
+  rad på övriga linjer när jämförelsen är på (`compared`).
+  `materialCutPrims(…, plan)` ritar i planen konturen som `asOutline`
+  efter mönstret.
+- **Under fönstret**: linjerna har `origin` = värdväggen (`objectType`
+  `Wall`, delen `under`), så att `ownPenOf` ger väggens penna.
+- **Den egna pennans symbol**: `applyOwnPen` tar `{ ...pen, ...pen.symbol }`
+  för `SYMBOL_PARTS`; fälten säger *Snittets* när den övre har fältet.
+- **Egna pennor som ställen** (`penPlaces.ts`): `PlaceWhere` har `def` och
+  `object`; nycklarna `own.<main|symbol|above>` och `mpen` (materialets
+  kontur). `stylePlaces` tar `PlacesDoc` (med `definitions` och `storeys`
+  om de finns). `editPlaces` svarar också med `definitions` och
+  `elements`, som `applyEdit` lägger i transaktionen; `PlaceEdit.own`
+  ändrar en del (`setPenEdit`, `setLineTypeEdit`). *Gå dit*
+  (`goToObject(ids)`) tar ett id eller flera.
+- Tester: `tests/v01037.test.ts`. Referensritningarna ändrades av linjerna
+  under fönstren (väggens id) och en dörr med egen färg (slagbågen följer).
+
+## Pennor och ställen (0.10.36, format 25)
+
+- **Pennraderna** (`repr/penRows.ts`): `PEN_GROUPS` samlar penntabellens
+  rader i grupper med `types` (vytyperna där gruppen visas), `rare`
+  (*Vanliga*) och `tags` per rad; `penGroupsFor(type)`, `penRowOf(key)`
+  och `penDefault(key)` (förut `defaultPen` i `ui/style/pens.ts`). En ny
+  rad i penntabellen läggs i sin lista (`MARKER_PENS`, `FACADE_PENS` …)
+  och får taggar här. `penSection(style, type, info)` ritar gruppen för
+  vytypen; `info` ger pennans nummer framför raden.
+- **Fasadernas linjer** (`repr/facadePens.ts`): `FACADE_PENS` (förut
+  `PART_PEN` i `section.ts`); per objekt sedan 0.10.38 (se där).
+- **Pennlistan** är `StyleResources.penList` (`NumberedPen`: `no`,
+  `weight`, `color`; svart utan färg), läst med `normalizePenList`.
+  Ställena har kvar sina värden; ett ställe hör till pennan med samma
+  `penKey` (tjocklek och färg).
+- **Ställena** (`repr/penPlaces.ts`): `stylePlaces(doc)` ger
+  `StylePlace` (`id` = `var|nyckel`, `where` = kategori, vy eller
+  material, `key` = `pens.<k>`, `outline.<åtgärd>`, `fill.<åtgärd>` eller
+  `mfill.<plan|cut|surface>`, `viewTags`, `tags`, `pen`, `linetype`,
+  `fillType`). En vy ger bara de nycklar den verkligen avviker på
+  (`viewKeys`). `penTable(book, places)` ger pennorna med sina ställen:
+  de sparade först, sedan de som saknas, numrerade efter `penOrder`.
+  `withFrozenPens(doc)` sparar listan; `StyleDialog.set` och `commit` gör
+  det vid varje ändring. `editPlaces(doc, places, edit)` ändrar varje
+  kategori och vy en gång (vyns avvikelser räknas om med
+  `overridesFrom`) och materialen; `setPenEdit`, `setLineTypeEdit` och
+  `setFillTypeEdit` är ändringarna. Penntabellens förval sparas inte
+  (`putPenRow`, som `applyPenField`).
+- **Gränssnittet**: `ui/style/places.ts` (`penListMarkup`,
+  `placesMarkup`, `placesSection`, `placeRows`, `rowMatches`; materialens
+  rader är objekten, `materialObjects` i `core/materials.ts`) och
+  `ui/style/placeEdits.ts` (`setPlaces`, `editPen`, `addPen`,
+  `removePens`; objekten med ett ändrat material får fyllningen med
+  `relinked`). I `StyleDialog`: resursen `pens`, `placesClick`,
+  `placesChange`, `goToPlace` (sätter `flash`, raden som rullas fram och
+  blinkar efter omritningen) och `goToObject` (sätts i `installViews`).
+  Listornas egna listor har `rc-native` (ingen radkontroll).
+- **Sorteringen** (`ui/tableSort.ts`, `installTableSort` i `main.ts`):
+  ett klick på en `thead th` med text sorterar tabellen efter cellernas
+  `data-sort` eller text (`compareCells`); sorteringen sparas per
+  `data-table` (annars klassen) och läggs på igen av en
+  `MutationObserver` när tabellen ritas om. En ny tabell behöver inget
+  mer; ge den `data-table` om flera tabeller har samma klass.
+- Stilarna i `styles/pennor.css`. Tester: `tests/v01036.test.ts`.
+
+## Underlag i vyn (0.10.35, format 25)
+
+- **Modellen** (`core/viewUnderlays.ts`): `ViewUnderlay` = `source`,
+  `above`, `look` (`tinted` utelämnat, `gray`, `outline`, `color`),
+  `color`, `opacity` (procent, utelämnad = 40). `CategoryShow.underlays`
+  (valfritt); vyns avvikelse `underlays` är hela listan (`resolveShow`,
+  `showOverrides`, jämförd med `sameValue`). `normalizeUnderlays` läser
+  från fil; `toggleUnderlay` lägger till eller tar bort en källa
+  (Kalkera). Vyns gamla `trace` läses som `overrides.underlays` i
+  `storage/format.ts` (`traceAsUnderlay`); `ViewDef.trace` finns inte längre.
+- **Källorna** (`core/underlaySources.ts`): `source` är en vys id,
+  `arbetsblad:<id>`, `ortofoto` eller kalkeringens våningsvärden
+  (`våning:under`, `våning:över`, `våning:platsen`, `våning:id:<id>`).
+  `resolveSource(doc, host, source)` med `UnderlayHost` (`storey`, `plan`,
+  `viewId`) ger vad det är, eller null (finns inte, eller inte här: inga
+  våningar och inget ortofoto i fasader, sektioner och arbetsblad, och
+  vyn själv aldrig). `sourceName` ger namnet.
+- **Ritningen** (`repr/viewUnderlays.ts`): `viewUnderlayPrims(doc, list,
+  base)` ger `{ under, over }`; `sourcePrims` ritar källan (en våning med
+  `buildPlan` och vyns inställningar utan markörer och norrpil, ett
+  arbetsblad med `place`, en vy med `base.viewPrims` utan dess egna
+  underlag, ortofotot som en `ImagePrim` från `orthoPrim`). `lookPrims`
+  ger utseendet: täckningen multipliceras in i pennor, fyllningar,
+  bakgrunder och bilder, `grayOf` för gråskala, `outline` tar bort
+  fyllningarna, `above` tar bort vita fyllningar och bakgrunder. Ursprunget
+  blir `{ objectType: 'ViewUnderlay', part: 'under' | 'över' }`, utan
+  objektets id (de är inte bland det som går att markera, men snäppningen läser dem).
+- **Bladet** (`repr/sheet.ts`): `buildViewPrims(doc, v, opt, bare)` lägger
+  vyns underlag runt det ritade (inte när `bare`); `cachedViewPrims` har
+  `bare` i nyckeln. `isBackdrop` (filunderlag och underlag i vyn) räknas
+  inte i `contentBounds`, och `layered` i `placeView` och `buildViewPage`
+  klipper dem mot ramen: underlagen under, det ritade, och de som ligger
+  över. `legendSources` ser dem inte (inget objektets id).
+- **Appen**: `ui.underlays` är listan under Visa (`applyShow` och
+  `currentShow` i `render.ts`, så att *Spara i vyn*, ändrad vy och
+  stilbokens följning går som för den andra visningen). `renderAll`
+  ritar dem med `viewUnderlayPrims` (vyer med `cachedViewPrims(..., true)`)
+  och lämnar dem till `PlanView.setUnderlay(under, over)`, som ritar två
+  egna grupper (`.underlay` och `.underlay.above`) och ger dem till
+  snäppningen (`underlayPrimitives`). `setUnderlayLook` och
+  `uiSettings.trace` finns inte längre.
+- **Raderna** (`ui/underlayRows.ts`): `underlayRowsMarkup` (fälten har
+  `data-ul` och `data-ul-field`), `editUnderlays(list, el)`,
+  `underlaySourceItems` (menyns rader) och `underlayAddSelect` (samma som
+  en lista, i stilboken). Visa-menyn (`showMenu.ts`) öppnar menyn vid
+  `[data-ul-add]` och ritar om Visa efter klicket (`setTimeout`, eftersom
+  ett klick utanför `.show-wrap` stänger den). Klicket på en kryssruta
+  under Visa gäller bara `[data-show]` och `[data-show-group]`.
+  Stilboken (`underlayMarkup` i `styleDialog.ts`) har raden
+  `underlays` i `changedRows`/`resetRow` (`[data-cat-underlays]`).
+- **Kalkera** (`views.toggleUnderlaySource`): vyns meny i projektträdet
+  och våningens och Platsens *Kalkera …* (`traceItem` i `storeys.ts`).
+  Projektträdet visar *underlag* vid en vy som ligger som underlag
+  (`host.traced`).
+- **Marken i 3D**: Innehållets nyckel `terrain3d` (Platsens grupp);
+  `pane3d.ts` ritar ingen mark när den är dold.
+- Tester: `tests/v01035.test.ts`.
+
+## Radkontrollerna (0.10.34, format 25)
+
+- **`ui/style/rowControls.ts`**: `enhanceRowControls(root, opts)` körs i
+  `StyleDialog.render` efter `markRows`. Den döljer fälten (`.rc-src`,
+  `hidden`) och lägger en knapp `.rc-val` efter dem: `select` → textval
+  (`.rc-text`), eller linjetyp (`.rc-line`) när något val har `data-dash`
+  (`lineTypeOptions` sätter det); `input[type=color]` → `.rc-color`;
+  `details.weight-pick` → `.rc-weight`. En lista med klassen `rc-native`
+  får ingen knapp. Knappen skriver i fältet och skickar `change`
+  (`commit`), så `onChange` och `apply…Field` är som förut. Ett eget
+  värde i tjockleken blir en radioknapp till med samma attribut.
+- **Opacitet** i färgpanelen: ett `input.rc-alpha` (dolt) i samma förälder
+  som färgfältet; panelen skickar `change` på det för sig. Åtgärdernas
+  fyllning och bakgrund har det (`opacity`, `bgOpacity`).
+- **Panelen** (`Popover`, en åt gången, skapas först när den behövs)
+  ligger i `body` och hittar sitt fält med en nyckel ur fältets
+  data-attribut (`keyOf`), så att färgpanelen kan vara kvar när dialogen
+  ritas om efter en ändring (`reattach`); de andra stängs. Ett drag i
+  färgfältet förhandsvisar och sätter färgen när knappen släpps.
+  `hexToHsv` och `hsvToHex` i `ui/style/colors.ts`.
+- **Favoritseten** är `StyleResources.colorSets` (`ColorSet`: `name`,
+  `colors` som `#rrggbb`), läst med `normalizeColorSets` i
+  `normalizeStyle`. Dialogen ger panelen `colorSets`, `setColorSets` och
+  `addLineType` (`RowControlOptions`).
+- **Innehåll**: `label.check.sb-tog` med kryssrutan dold och symbolen ur
+  `contentIcon(key, group)` (`ui/style/contentIcons.ts`).
+- **Sök och Vanliga/Alla**: `StyleDialog.applyFilter` sätter `.sb-miss` på
+  raderna (`FILTER_ROWS`) och delarna som inte träffar, och `.sb-common` på
+  `.sb-main`; under den döljer CSS `.sb-rare` som inte har `.sb-changed`.
+  Sällan ändrat: `RARE_CONTENT` och delen *Snittet i planen* i `pens.ts`.
+- Stilarna i `styles/radkontroller.css` (sist i `app.css`).
+- Tester: `tests/v01034.test.ts`.
+
+## Avvikelser och kategorier i vyn (0.10.33, format 25)
+
+- **En vys stil** är `effectiveCategory(cat, v.overrides)`: kategorin med
+  vyns visning och stil. Det som ändras räknas om till avvikelser med
+  `overridesFrom(cat, cur)` (`showOverrides` och `styleDiff`, som jämför
+  åtgärderna och pennorna med `sameValue`, JSON med nycklarna sorterade).
+  `deviationCount(doc, v)` räknar de rader vyn verkligen avviker på (en
+  sparad avvikelse som kategorin hunnit få räknas inte); den ger punkten i
+  projektträdet och listan i stilboken.
+- `viewToCategoryDefault(doc, id)` och `viewToNewCategory(doc, id, name)`
+  svarar med stilboken och vyerna; `resetViewOverrides(views, id)` tar bort
+  en vys avvikelser. `categoryDefault(c)` är kategorins förval (samma som
+  `resetCategory`). `editStyle(book, style, fn)` ändrar en stil och
+  resurserna med en stilmallsfunktion (`editCategory` använder den);
+  `putCategory` byter en kategori efter nyckel och vytyp.
+- **Raderna** (`ui/style/deviations.ts`): `changedRows(ref, cur, extra,
+  withCategoryRows)` ger radnycklarna `show:<k>`, `item:<k>` (kryssen
+  under Innehåll, jämförda med `isShown`), `actions.<k>`, `pens.<k>`,
+  `scale`, `kind`; `resetRow` lägger tillbaka en rad, `rowSelector` hittar
+  fältet. Dialogen (`StyleDialog.markRows`) sätter `.sb-changed` och
+  `.sb-mark` på raden efter varje omritning; `.only-changed` på `.sb-main`
+  döljer resten med CSS (`:has`).
+- **Dialogen** har `viewId` (vyläge, `open({ view })`) och `scope(type)`:
+  `{ cat, ref, cur, view? }`. Alla fält går genom `commit(type, cur,
+  label, book?)`, som skriver kategorin (`putCategory`) eller vyns
+  avvikelser i samma transaktion som resurserna. `goToView` sätts i
+  `installViews`.
+- **Appen**: `syncOpenView` i `render.ts` följer den öppna vyn när den
+  ändras utan att man går dit: ny kategori ger dess visning, och ändrade
+  rader i visningens avvikelser läggs i Visa (de andra raderna, ändrade
+  under Visa men inte sparade, är kvar). `newViewItems(place)` i
+  `views.ts` ger *Ny vy*-raderna i våningens, fasadens och sektionens meny;
+  `newViewOf(place, category?)`.
+- **Ortofoto** bland markobjektens material: `ORTHO_CHOICE`
+  (`'@ortofoto'`) i `fillPanel.ts` (`ctx.ortho`), `linkOrtho` i
+  `core/materials.ts` sätter `ortho3d: true` (i `LINK_FIELDS`, så att ett
+  material eller *Eget* tar bort det); `colorShapes` ger ytan markens
+  utseende (`color: ''`), som blir ortofotot.
+- Tester: `tests/v01033.test.ts`.
+
+## Stilboken: tre nivåer med arv (0.10.32, format 25)
+
+- **`ProjectDoc.graphics` är en `StyleBook`** (`format: 'bacchus-stylebook'`):
+  resurserna (`StyleResources`: `name`, `labels`, `font`, `lineTypes`,
+  `fillTypes`, `materials`) och `categories` (`ViewCategory[]` i
+  `core/viewCategories.ts`). `StyleSheet` finns kvar som det en vy ritas
+  med (resurserna plus `CategoryStyle`: `actions`, `openingMark`, `pens`),
+  så renderarna (`ctx.style`) är som förut. Funktioner som bara läser
+  resurserna tar `StyleResources` (material, fyllningar, linjetyper,
+  panelernas listor), så att `doc.graphics` går att skicka direkt.
+- **En kategori** har `id` (unik inom vytypen), `name`, `type` (`site`,
+  `storey`, `facade`, `section`, `worksheet`), `kind` (Platsens: hur
+  materialen ritas, det som förut var vyns `category`), `scale` (för nya
+  vyer), `show` (`CategoryShow`: `compare`, de tre detaljnivåerna, `hide`,
+  `hideDemolished`) och `style`. `defaultCategories()` är ett nytt
+  projekts; exempelvillan har också *Skiss* (Poché).
+- **Vyn** har `category` (nyckeln; saknas eller fel vytyp = vytypens
+  första, `categoryOf`) och `overrides` (`ViewOverrides`), en platt
+  tabell med en rad per avvikelse: `compare`, `detail`, `labelDetail`,
+  `modelDetail`, `hideDemolished`, `hide:<nyckel>` (sant/falskt),
+  `actions.<åtgärd>`, `openingMark`, `pens.<nyckel>` (null = förvalet).
+  `compare`, `detail`, `hide` …, `style` på vyn finns inte längre.
+  `viewSettings(doc, v)` ger `cat`, `show` (`resolveShow`), `kind`,
+  `style` (`sheetFor`) och `type` (`viewTypeOf`: arbetsblad, fasad eller
+  sektion efter markören, Platsen, annars våning).
+- **`sheetFor(book, cat, overrides)`** är cachad per stilbok, kategori och
+  stilens avvikelser, så att planens cache träffar. `defaultSheet(book,
+  type)` är vytypens första kategoris, för det som ritas utan vy
+  (panelernas förhandsvisningar, 3D-marken, `buildPlan` utan stil).
+- **I appen** ersätter `ui.category` (null = vytypens första) och
+  `ui.viewType` stilmallsnamnet. `render.ts` har `currentCategory`,
+  `currentStyle`, `currentShow`, `applyShow`, `openView` och `viewType`
+  (i `app.place`). `syncCategory` i `renderAll`: byts vytypen utan att en
+  vy öppnas får Visa kategorins visning; ändras kategorin i stilboken
+  följer visningen med och det som ändrats under Visa är kvar
+  (`showOverrides` mot den gamla, `resolveShow` mot den nya). *Spara i
+  vyn* sparar kategorin och det som avviker (`withShow`, stilens rader
+  kvar). Visa-menyns *Vykategori* byter kategori och visning.
+- **Dialogen** (`ui/styleDialog.ts`): vänsterkanten (`VIEW_TYPES`, tonade
+  vytyper utan `type`), flikarna och verktygen (`newCategory`,
+  `duplicateCategory`, `renameCategory`, `copyCategoryFrom`,
+  `resetCategory`, `moveCategory`, `deleteCategory` som också tar
+  kategorin från vyerna). Stilens fält går genom `editCategory(book, cat,
+  fn)`, som ger `fn` kategorins stilmall och skriver tillbaka stilen och
+  resurserna; delarna i `ui/style/` är oförändrade. Markörernas penna i
+  egenskaperna ändras i alla kategorier (`editAllCategories`).
+  `bookWithSheet` lägger en stilmall i alla kategorier (proven).
+- **Fil**: `normalizeBook` läser en stilbok, och en stilmall från före
+  0.10.32 (resurserna, och stilen till den valda kategorin).
+- Tester: `tests/v01032.test.ts`.
 
 ## Texturer och ortofoto (0.10.31, format 24)
 

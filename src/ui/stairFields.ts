@@ -1,0 +1,193 @@
+import type { Element, Id, ProjectDoc } from '../core/model';
+import type { DocStore } from '../core/store';
+import { geometryOfStair, stairHoleIn, stairParams, storeyAbove } from '../elements/stair';
+import { minGoing, RISER_TARGET, stairWarnings, STAIR_THICKNESS, TREAD_LENGTH, WALK_LINE, HEADROOM, type StairParams } from '../elements/stairGeometry';
+import { STRAIGHT } from '../geometry/arc';
+import { levelOf } from '../repr/solids';
+import { resolveParams } from '../elements/registry';
+import { escapeHtml } from './labels';
+import { numberField } from './fieldMarkup';
+
+/**
+ * Trappans fält i egenskaperna (0.11): bredd, stigning, steg, gånglinje,
+ * början och slut, svängar och vilplan, uppbyggnad och hålet. Varningarna
+ * (BBR 8:232 och stegformeln) står överst; de spärrar aldrig.
+ */
+
+const mm = (v: number) => Math.round(v).toLocaleString('sv-SE');
+
+function select(key: string, label: string, value: string, options: [string, string][], disabled: string[] = []): string {
+  return `<label class="field"><span>${label}</span><select data-key="${key}">${options.map(([v, l]) => `<option value="${v}"${v === value ? ' selected' : ''}${disabled.includes(v) ? ' disabled' : ''}>${escapeHtml(l)}</option>`).join('')}</select></label>`;
+}
+
+export function stairFieldsMarkup(doc: ProjectDoc, el: Element): string {
+  const p = stairParams(doc, el);
+  const g = geometryOfStair(p);
+  const own = typeof el.params.rise === 'number';
+  const above = storeyAbove(doc, el.storey);
+  const warnings = g ? stairWarnings(p, g) : ['Referenslinjen är för kort för en trappa.'];
+  const warn = warnings.length ? `<div class="stair-warnings" role="note">${warnings.map((w) => `<p class="skew-note"><b>!</b> ${escapeHtml(w)}</p>`).join('')}</div>` : '';
+  const h = g?.riserHeight ?? 0;
+  const going = g ? minGoing(g) : 0;
+  const summary = g
+    ? `${g.risers.length} sättsteg à ${h.toLocaleString('sv-SE', { maximumFractionDigits: 1 })} mm, stegdjup ${mm(going)} mm i gånglinjen (2 × steghöjd + stegdjup = ${mm(2 * h + going)} mm)${g.landings.length ? `, ${g.landings.length === 1 ? 'ett vilplan' : `${g.landings.length} vilplan`}` : ''}.`
+    : '';
+  // Svängarna och sträckorna i referenslinjen.
+  const line = (p.line ?? []) as [number, number][];
+  const landings = new Set(p.landings ?? []);
+  const turns = new Set(p.turnLandings ?? []);
+  const rows: string[] = [];
+  for (let i = 0; i < line.length - 1; i++) {
+    rows.push(`<li><span>Sträcka ${i + 1}</span><div class="segmented" role="group"><button data-action="stair-edge" data-index="${i}" data-value="0" aria-pressed="${!landings.has(i)}">Steg</button><button data-action="stair-edge" data-index="${i}" data-value="1" aria-pressed="${landings.has(i)}" title="Vilplan härifrån: hela sträckan är plan, med svängarna i dess ändar">Vilplan</button></div></li>`);
+    if (i + 1 < line.length - 1) {
+      const arcSide = Math.abs(Number(p.bulges?.[i]) || 0) >= STRAIGHT || Math.abs(Number(p.bulges?.[i + 1]) || 0) >= STRAIGHT;
+      const flatBy = landings.has(i) || landings.has(i + 1);
+      rows.push(`<li><span>Sväng ${i + 1}</span><div class="segmented" role="group"${flatBy ? ' title="Vilplan, eftersom en sträcka intill är det"' : ''}><button data-action="stair-turn" data-index="${i + 1}" data-value="0" aria-pressed="${!turns.has(i + 1) && !flatBy}"${flatBy ? ' disabled' : ''}>Kilsteg</button><button data-action="stair-turn" data-index="${i + 1}" data-value="1" aria-pressed="${turns.has(i + 1) || flatBy}"${flatBy ? ' disabled' : ''}>Vilplan</button></div>${arcSide ? '' : ''}</li>`);
+    }
+  }
+  const holeNote = above ? `i bjälklaget på ${escapeHtml(above.name)}` : 'i bjälklaget ovanför (det finns ingen våning ovanför)';
+  return `${warn}
+    <div class="fields">${numberField('stair:width', 'Bredd', p.width, 'mm')}${numberField('stair:rise', 'Stigning', p.rise, 'mm')}${numberField('stair:risers', 'Antal sättsteg', g?.risers.length ?? 0, 'st')}${numberField('stair:riserHeight', 'Steghöjd', h, 'mm', 1)}${numberField('stair:going', 'Stegdjup', going, 'mm')}${numberField('level:level', 'Fot mot våningen', levelOf(p), 'mm')}</div>
+    <label class="check" title="Stigningen följer våningshöjden, så att trappan går till golvet ovanför"><input type="checkbox" data-key="stair:toStorey"${own ? '' : ' checked'}> Till våningen ovanför</label>
+    <p class="note">${escapeHtml(summary)} Ändras stegdjupet förlängs eller kortas trappans sista sträcka; antal sättsteg och steghöjden följer varandra (förval ${RISER_TARGET} mm).</p>
+    <div class="fields">${numberField('stair:walkLine', 'Gånglinjen', p.walkLine ?? WALK_LINE, 'mm')}</div>
+    ${select('stair:walkSide', 'Gånglinjen från', p.walkSide ?? '', [['', 'Utsidan (svängarnas)'], ['left', 'Vänster sida'], ['right', 'Höger sida']])}
+    ${select('stair:refSide', 'Referenslinjen', p.refSide ?? 'center', [['left', 'Vänster kant'], ['center', 'Mitten'], ['right', 'Höger kant']])}
+    <div class="fields">${select('stair:start', 'Början', p.start ?? 'riser', [['riser', 'Sättsteg'], ['tread', 'Plansteg']])}${p.start === 'tread' ? numberField('stair:startTread', 'Första plansteget', p.startTread ?? TREAD_LENGTH, 'mm') : ''}</div>
+    <div class="fields">${select('stair:end', 'Slut', p.end ?? 'riser', [['riser', 'Sättsteg'], ['tread', 'Plansteg']])}${p.end === 'tread' ? numberField('stair:endTread', 'Sista plansteget', p.endTread ?? TREAD_LENGTH, 'mm') : ''}</div>
+    <div class="field-label">Sträckor och svängar</div>
+    <ul class="stair-turns">${rows.join('')}</ul>
+    <div class="fields">${select('stair:build', 'Uppbyggnad', p.build ?? 'monolithic', [['monolithic', 'Monolitisk'], ['built', 'Byggd (0.11.2)']], ['built'])}${numberField('stair:thickness', 'Tjocklek', p.thickness ?? STAIR_THICKNESS, 'mm')}</div>
+    ${select('stair:hole', 'Hålet', p.hole ?? 'auto', [['auto', 'Automatiskt'], ['none', 'Inget']])}
+    <div class="fields">${numberField('stair:headroom', 'Fri höjd', p.headroom ?? HEADROOM, 'mm')}</div>
+    <div class="row"><button class="btn" data-action="stair-own-hole" title="Hålet blir en vanlig håltagning i bjälklaget, som ritas om med bjälklagets grepp; trappan tar då inget eget">Gör till eget hål</button></div>
+    <p class="note">Hålet ${holeNote} följer trappan och räknas ur den fria höjden över stegen. Referenslinjen går i gångriktningen, uppåt; dra i punkterna för att ändra den, eller böj en kant till en båge i Modifiera.</p>`;
+}
+
+/** Patch där undefined tar bort nyckeln (så att förvalet och våningens värde gäller). */
+function patchStair(store: DocStore, ids: Id[], label: string, fn: (p: StairParams, el: Element) => Record<string, unknown> | null): boolean {
+  const doc = store.doc;
+  const patches: [Id, Record<string, unknown>][] = [];
+  for (const id of ids) {
+    const el = doc.elements[id];
+    if (el?.type !== 'Stair') continue;
+    const patch = fn(stairParams(doc, el), el);
+    if (!patch) return false;
+    patches.push([id, patch]);
+  }
+  store.transact(label, (tx) => {
+    for (const [id, patch] of patches) {
+      const el = tx.doc.elements[id];
+      if (!el) continue;
+      const params: Record<string, unknown> = { ...el.params };
+      for (const [k, v] of Object.entries(patch)) {
+        if (v === undefined) delete params[k];
+        else params[k] = v;
+      }
+      tx.putElement({ ...el, params });
+    }
+  });
+  return true;
+}
+
+/** Ett ändrat fält med nyckeln `stair:namn`. Ger false när värdet inte gick att använda. */
+export function applyStairField(store: DocStore, ids: Id[], name: string, input: HTMLInputElement | HTMLSelectElement): boolean {
+  const raw = input.value;
+  const num = Number(raw.replace(',', '.').replace('−', '-'));
+  const pos = (min: number) => Number.isFinite(num) && num >= min;
+  switch (name) {
+    case 'width':
+      return pos(300) && patchStair(store, ids, 'Trappans bredd', () => ({ width: Math.round(num) }));
+    case 'rise':
+      return pos(100) && patchStair(store, ids, 'Trappans stigning', () => ({ rise: Math.round(num) }));
+    case 'toStorey': {
+      const on = (input as HTMLInputElement).checked;
+      return patchStair(store, ids, on ? 'Till våningen ovanför' : 'Egen stigning', (p) => ({ rise: on ? undefined : Math.round(p.rise) }));
+    }
+    case 'risers':
+      return pos(2) && patchStair(store, ids, 'Antal sättsteg', () => ({ risers: Math.round(num) }));
+    case 'riserHeight':
+      return pos(50) && patchStair(store, ids, 'Steghöjd', (p) => ({ risers: Math.max(2, Math.round(p.rise / num)) }));
+    case 'going':
+      return pos(100) && patchStair(store, ids, 'Stegdjup', (p) => goingPatch(p, num));
+    case 'walkLine':
+      return pos(0) && patchStair(store, ids, 'Gånglinjen', () => ({ walkLine: Math.round(num) === WALK_LINE ? undefined : Math.round(num) }));
+    case 'walkSide':
+      return patchStair(store, ids, 'Gånglinjens sida', () => ({ walkSide: raw === 'left' || raw === 'right' ? raw : undefined }));
+    case 'refSide':
+      return patchStair(store, ids, 'Referenslinjen', () => ({ refSide: raw === 'left' || raw === 'right' ? raw : undefined }));
+    case 'start':
+      return patchStair(store, ids, 'Trappans början', () => ({ start: raw === 'tread' ? 'tread' : undefined }));
+    case 'end':
+      return patchStair(store, ids, 'Trappans slut', () => ({ end: raw === 'tread' ? 'tread' : undefined }));
+    case 'startTread':
+      return pos(50) && patchStair(store, ids, 'Första plansteget', () => ({ startTread: Math.round(num) }));
+    case 'endTread':
+      return pos(50) && patchStair(store, ids, 'Sista plansteget', () => ({ endTread: Math.round(num) }));
+    case 'build':
+      return patchStair(store, ids, 'Uppbyggnad', () => ({ build: raw === 'built' ? 'built' : undefined }));
+    case 'thickness':
+      return pos(20) && patchStair(store, ids, 'Trappans tjocklek', () => ({ thickness: Math.round(num) === STAIR_THICKNESS ? undefined : Math.round(num) }));
+    case 'hole':
+      return patchStair(store, ids, raw === 'none' ? 'Inget hål' : 'Automatiskt hål', () => ({ hole: raw === 'none' ? 'none' : undefined }));
+    case 'headroom':
+      return pos(1000) && patchStair(store, ids, 'Fri höjd för hålet', () => ({ headroom: Math.round(num) === HEADROOM ? undefined : Math.round(num) }));
+  }
+  return false;
+}
+
+/**
+ * Stegdjupet: den sista sträckan förlängs eller kortas så att det sista
+ * loppets steg får djupet (när den är rak). Annars null.
+ */
+function goingPatch(p: StairParams, going: number): Record<string, unknown> | null {
+  const g = geometryOfStair(p);
+  const line = (p.line ?? []) as [number, number][];
+  const n = line.length;
+  if (!g || n < 2 || !g.runs.length) return null;
+  if (Math.abs(Number(p.bulges?.[n - 2]) || 0) >= STRAIGHT) return null;
+  const run = g.runs[g.runs.length - 1];
+  const delta = (going - run.going) * run.treads;
+  const a = line[n - 2];
+  const b = line[n - 1];
+  const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  if (l + delta < 100) return null;
+  const k = (l + delta) / l;
+  const end: [number, number] = [Math.round(a[0] + (b[0] - a[0]) * k), Math.round(a[1] + (b[1] - a[1]) * k)];
+  return { line: [...line.slice(0, -1), end] };
+}
+
+/** Knapparna: kilsteg eller vilplan i en sväng, steg eller vilplan på en sträcka, och hålet som eget. */
+export function stairAction(store: DocStore, ids: Id[], action: string, b: HTMLElement): boolean {
+  const i = Number(b.dataset.index);
+  const on = b.dataset.value === '1';
+  if (action === 'stair-turn' || action === 'stair-edge') {
+    const key = action === 'stair-turn' ? 'turnLandings' : 'landings';
+    return patchStair(store, ids, on ? 'Vilplan' : action === 'stair-turn' ? 'Kilsteg' : 'Steg', (p) => {
+      const set = new Set(p[key] ?? []);
+      if (on) set.add(i);
+      else set.delete(i);
+      const list = [...set].sort((x, y) => x - y);
+      return { [key]: list.length ? list : undefined };
+    });
+  }
+  if (action === 'stair-own-hole') {
+    const doc = store.doc;
+    const el = doc.elements[ids[0]];
+    const above = el ? storeyAbove(doc, el.storey) : undefined;
+    if (!el || !above) return false;
+    const slabs = Object.values(doc.elements).filter((s) => s.type === 'Slab' && s.storey === above.id && !s.space && s.states.some((st) => el.states.includes(st)));
+    store.transact('Gör till eget hål', (tx) => {
+      for (const s of slabs) {
+        const sp = resolveParams<{ thickness: number; level?: number; holes?: { points: [number, number][] }[] }>(doc, s);
+        const ring = stairHoleIn(doc, el, above.id, levelOf(sp), Math.max(1, sp.thickness), true);
+        if (!ring) continue;
+        const points = ring.map((q): [number, number] => [Math.round(q[0]), Math.round(q[1])]);
+        tx.putElement({ ...s, params: { ...s.params, holes: [...(sp.holes ?? []), { points }] } });
+      }
+      tx.putElement({ ...el, params: { ...el.params, hole: 'none' } });
+    });
+    return true;
+  }
+  return false;
+}

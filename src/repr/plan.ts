@@ -1,7 +1,7 @@
 import { defaultSheet } from '../core/viewCategories';
 import { resolveFill } from '../core/fillTypes';
 import type { ActionStyle, LineDef, StyleSheet } from '../core/graphics';
-import { isSite, type Element, type Id, type ProjectDoc } from '../core/model';
+import { isSite, seenFrom, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { Action, ViewStates } from '../core/states';
 import { allTypes, typeOf, type ElementType, type PlanContext, type PlanItem } from '../elements/registry';
 import { autoDimensions } from '../elements/autoDims';
@@ -10,7 +10,7 @@ import { sortByOrder } from '../core/drawOrder';
 import { createContext } from './context';
 import { coverLines } from './cover';
 import { applyOwnPen, ownPenOf } from './ownPen';
-import { cutRowPen } from './objectPens';
+import { cutRowPen, objectPen } from './objectPens';
 import { sameItems } from './reuse';
 import type { Pen, Primitive, Vec2 } from './primitives';
 
@@ -52,7 +52,8 @@ export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: 
   // Rita i typernas ordning; rivet sist så att de streckade linjerna syns.
   const groups = new Map<string, PlanItem[]>();
   for (const item of visible) {
-    const key = `${typeOf(item.el.type)!.drawOrder + (item.action === 'demolished' ? 1000 : 0)}|${item.el.type}|${item.action}|${ctx.hiddenInView(item.el) ? 'dold' : ''}`;
+    // Det som syns från en annan våning (0.11) ritas för sig, som kontur.
+    const key = `${typeOf(item.el.type)!.drawOrder + (item.action === 'demolished' ? 1000 : 0)}|${item.el.type}|${item.action}|${ctx.hiddenInView(item.el) ? 'dold' : ''}|${seenFrom(item.el, storey) && !typeOf(item.el.type)!.alsoOnStorey?.(item.el, doc, storey, view.hide) ? 'syns' : ''}`;
     const list = groups.get(key) ?? [];
     list.push(item);
     groups.set(key, list);
@@ -88,7 +89,7 @@ export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: 
     const inputs = [...items.map((i) => i.el), ...readsOf(t)];
     let group = saved.groups.get(key);
     if (!group || !sameItems(group.inputs, inputs)) {
-      group = drawGroup(t, items, ctx, style, saved.singles, singlesNow);
+      group = key.endsWith('|syns') ? drawSeen(t, items, ctx, style) : drawGroup(t, items, ctx, style, saved.singles, singlesNow);
       group.inputs = inputs;
     } else if (!t.planBatch && t.planReads?.length === 0) {
       for (const { el } of items) {
@@ -119,6 +120,24 @@ interface SavedGroup {
   inputs: unknown[];
   prims: Primitive[];
   pickables: Pickable[];
+}
+
+/**
+ * Objekt som syns från en annan våning eller från Platsen (*Syns också på*,
+ * 0.11): ritade som vy, med stilbokens penna *Från annan våning* för alla
+ * linjer och konturerna av snitten, utan fyllningar och text. De går inte
+ * att klicka på här.
+ */
+function drawSeen(t: ElementType, items: PlanItem[], ctx: PlanContext, style: StyleSheet): SavedGroup {
+  const pen = objectPen(style, 'seenContour');
+  const out: Primitive[] = [];
+  for (const { el } of items) {
+    for (const p of t.plan ? t.plan(el, ctx) : []) {
+      if (p.kind === 'line' || p.kind === 'polyline' || p.kind === 'arc') out.push({ ...p, pen, noPick: true });
+      else if (p.kind === 'region') for (const ring of p.rings) out.push({ kind: 'polyline', points: ring, closed: true, pen, origin: p.origin, noPick: true });
+    }
+  }
+  return { inputs: [], prims: out, pickables: [] };
 }
 
 /** Ett element som bara ritar sig självt (`planReads: []`), ritat och med stil. */

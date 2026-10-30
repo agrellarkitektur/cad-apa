@@ -1,7 +1,7 @@
 import { editAllCategories } from '../core/viewCategories';
 import { litteraSection } from './litteraSection';
 import { setDefinition, setGraphics, updateDefinition } from '../core/commands';
-import { onPaper as paperSpace, type Element, type ProjectDoc } from '../core/model';
+import { onPaper as paperSpace, SEEN_ON_TYPES, type Element, type ProjectDoc } from '../core/model';
 import { isViewportId } from '../core/sheets';
 import type { Action, ViewStates } from '../core/states';
 import { actionOf } from '../core/states';
@@ -315,6 +315,18 @@ export class PropertiesPanel implements ActionPanel {
       <div class="state-chips">${chips}</div>
       <p class="note">I ${escapeHtml(viewed)}${compared ? ` jämfört med ${escapeHtml(compared)}` : ''}: ${result}</p>
     </section>`);
+
+    // Syns också på (0.11): trappor, ramper, markytor, stödmurar och bjälklag på en annan våning eller Platsen.
+    if (els.every((e) => SEEN_ON_TYPES.has(e.type) && !e.space)) {
+      const boxes = doc.storeys
+        .filter((s) => !els.every((e) => e.storey === s.id))
+        .map((s) => {
+          const n = els.filter((e) => e.seenOn?.includes(s.id)).length;
+          return `<label class="check"><input type="checkbox" data-action="seen-on" data-storey="${s.id}"${n === els.length ? ' checked' : ''}${n && n < els.length ? ' data-mixed="1"' : ''}> ${escapeHtml(s.name)}</label>`;
+        })
+        .join('');
+      if (boxes) sections.push(`<section><h3>Syns också på</h3>${boxes}<p class="note">Objektet ritas som vy (kontur, utan snitt) också där, med pennan under Från annan våning i stilboken.</p></section>`);
+    }
 
     // Typ (littera).
     if (sameType && t?.typeParams?.length) {

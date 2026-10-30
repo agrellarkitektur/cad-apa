@@ -5,6 +5,7 @@ import { defaultFacadePen, FACADE_PENS } from './facadePens';
 import { defaultMarkerPen, MARKER_PENS, ROOM_PENS, type MarkerPenKey } from './markerPens';
 import { defaultObjectPen, OBJECT_PENS } from './objectPens';
 import { defaultPlanCutPen, PLAN_CUT_PENS } from './planCutPens';
+import { defaultStairPen, STAIR_PENS } from './stairPens';
 
 /**
  * Pennraderna i en vykategori (0.10.36), i grupper: varje rad är ett
@@ -93,6 +94,20 @@ export const PEN_GROUPS: readonly PenGroup[] = [
     rows: [...objectRows('others'), ...ROOM_PENS.map((r) => ({ key: r.key, label: 'Rum: konturlinje', hint: r.hint, tags: ['rum', 'kontur', 'konturlinje'], types: PLAN }))],
   },
   {
+    id: 'seen',
+    title: 'Från annan våning',
+    note: 'Trappor, ramper, markytor, stödmurar och bjälklag som valts att synas också här (Syns också på, i objektets egenskaper) ritas som vy, utan snitt, fyllning och text.',
+    types: ['site', 'storey'],
+    rows: OBJECT_PENS.filter((r) => r.group === 'seen').map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: r.tags })),
+  },
+  {
+    id: 'stairs',
+    title: 'Trappor',
+    note: 'Det under planens snitt heldraget, det ovanför streckprickat med snittlinjen snett över; i våningen ovanför ritas trappan hel. Gångriktningen går från ringen till pilen. Stegnosen ritas i Detalj. Snittlinjen gäller också trappans snitt i sektionerna.',
+    types: PLAN_AND_SECTION,
+    rows: STAIR_PENS.map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: r.tags, ...(r.key === 'stairCut' ? {} : { types: PLAN }) })),
+  },
+  {
     id: 'cut',
     title: 'Snittet i planen',
     note: 'Det som ligger helt under planens snitthöjd ritas som vy, det som ligger helt över streckprickat där det sticker ut utanför det snittade. Snitthöjden ställs in per våning (1100 från början). Ett objekt eller en typ kan få en egen penna för det som ligger över.',
@@ -129,7 +144,7 @@ export const penRowOf = (key: string) => ROW_OF.get(key);
 
 /** Förvalet för en rad i penntabellen: objekten, snittet, höjdkurvorna, fasaderna eller en markör. */
 export function penDefault(key: string): PenDef {
-  return defaultObjectPen(key) ?? defaultPlanCutPen(key) ?? defaultContourPen(key) ?? defaultFacadePen(key) ?? defaultMarkerPen(key as MarkerPenKey);
+  return defaultObjectPen(key) ?? defaultStairPen(key) ?? defaultPlanCutPen(key) ?? defaultContourPen(key) ?? defaultFacadePen(key) ?? defaultMarkerPen(key as MarkerPenKey);
 }
 
 /**

@@ -11,7 +11,7 @@ import type { DocStore } from './store';
  */
 
 /** Typer som har en nivå mot våningen. */
-const WITH_LEVEL = new Set(['Wall', 'Slab', 'Furniture']);
+const WITH_LEVEL = new Set(['Wall', 'Slab', 'Furniture', 'Stair']);
 
 /** Om objektet har en nivå mot våningen. */
 export function hasLevel(el: Element | undefined): boolean {

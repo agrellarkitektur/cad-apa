@@ -170,6 +170,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.10.39 | Projektet › Allmänt |
 | 0.10.40 | Stilboken ut och in |
 | 0.10.40.1 | Granskning efter 0.10.40 |
+| 0.11 | Trappan (format 26): referenslinje med bågar, kilsteg och vilplan, gånglinje, plansteg, varningar, plan/sektion/3D, hålet, *Syns också på* |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
 val och det som *inte gjordes*. De ligger i arkivet:
@@ -215,17 +216,111 @@ byggs vidare i takt med resten:
 - Fönster- och dörrsymboler i fasad efter typ (med smartobjekten, efter pilotprojektet)
 - Skuggor och djup i fasader
 
-### 0.11 Trappor · *nytt format*
+### 0.11 Trappan ✓ · *nytt format (26)*
 
-- *Syns också på* per objekt: objektet hör till Platsen eller en våning och
-  ritas som vy i det andra (trappan och rampen vid entrén i både
-  våningens ritning och markplaneringsritningen) (29 oktober)
-- Rak trappa och trappa med vilplan eller sväng (L och U), med steghöjd och
-  stegdjup som räknas ut från våningshöjden
-- Trappan i plan med snittlinje och gångriktning, i sektion och i 3D
-- Håltagning i bjälklaget och enkelt räcke
+Planerat 30 oktober 2026 (beslut i `cad-apa-synpunkter.md`, *Trappan och
+räcket: 0.11–0.11.3*). Grundtanken (Carl August): bygg för flexibilitet från
+början i stället för "rak trappa och enkelt räcke först". Trappan och räcket
+hålls isär. Facit för planen: Carl Augusts *Trappskiss bygglov 1:50*
+(L-trappa med kilsteg; det under snittet heldraget, det ovanför
+streckprickat med snittlinjen snett över, gångriktning från ring till pil;
+i varianten med plansteg är första/sista plansteget i golvnivå streckat; i
+våningen ovanför ritas trappan hel upp till sista steget). Bara 0.11 ger
+nytt format: fälten för 0.11.1–0.11.3 läggs in som valfria från början.
+Stor, kan behöva mer än en session (då på en gren).
 
-### 0.11.1 Profilverktyget · *nytt format*
+- **Referenslinjen ritas i trappverktyget** (raka sträckor och bågar);
+  smartspöt längs en linje eller kurva är ett alternativ. Ingen formväljare
+  (rak, L, U): formen är linjen. Bredd och vilken sida gånglinjen räknas
+  från är inställningar.
+- **Svängar** får kilsteg som förval; en sträcka blir **vilplan** med
+  *Vilplan härifrån* per punkt i smartmenyn, eller med en växel per sväng
+  (kilsteg/vilplan).
+- **Gånglinjen**, där stegdjupet räknas: ställbart avstånd, alltid från
+  utsidan, förval 300 mm (BBR: gånglinjen 0,30–0,45 m från det yttre
+  vangstyckets utsida eller stegänden).
+- **Stigningen** förvalt *till våningen ovanför*, annars egen höjd. Antal
+  steg ur förvald steghöjd; ändras antal, steghöjd eller stegdjup följer
+  resten.
+- **Varningar, aldrig spärrar:** stegformeln och BBR:s mått ger röd varning
+  i panelen, men trappan går att rita.
+- **Början och slut** med sättsteg eller plansteg; första och sista
+  plansteget med egen längd, och de räknas som en del av trappan. Plansteg
+  i golvnivå ritas med egen linjetyp (streckad).
+- **Uppbyggnad** i formatet: *Monolitisk* eller *Byggd* (vangstycken,
+  plansteg och sättsteg). 0.11 ritar den monolitiska.
+- **Planen:** stilboksgrupp *Trappor* med ställena snittlinje,
+  konturlinje, steg under snittet, steg över snittet (streckprickad),
+  plansteg i golvnivå, stegnos, gångriktning. I våningen ovanför ritas
+  trappan hel.
+- **Sektion och 3D:** trappkroppen (sågtandsprofil och undersida).
+- **Hålet i bjälklaget ovanför:** automatiskt ur fri höjd 2,1 m; *Rita
+  eget* ger en kopplad kontur som kan låsas upp.
+- ***Syns också på*** per objekt: trappor, ramper, markytor, stödmurar och
+  bjälklag ritas som vy (kontur) på Platsen eller en annan våning, med en
+  egen grupp av ställen (*Från annan våning*).
+- **Spiraltrappan** förbereds i formatet (byggs i 0.11.3).
+- Trappan sparar sina kanter så att räcket har något att haka i.
+
+**BBR och vägledningen** (uppslaget 30 oktober 2026, inte ur minnet):
+stegdjupet i gånglinjen bör vara minst 0,25 m inomhus och 0,30 m utomhus
+(BBR 8:232); BBR anger ingen steghöjd, utan hänvisar till lutning, längd och
+förhållandet steghöjd/stegdjup; stegformeln 2 × steghöjd + stegdjup =
+600–650 mm (lämplig steghöjd i bostäder 180–200); fri höjd minst 2,0 m över
+stegnosen; bredd i bostäder vanligen 900 mm fri bredd (SS 914221). Trapplan
+bör ha minst trappans bredd.
+
+**Claudes val (0.11):**
+
+- Referenslinjen ligger i mitten som förval (som rampens); vänster eller
+  höger kant väljs i verktygsraden och i egenskaperna.
+- Gånglinjen i en rak trappa ligger i mitten (där finns ingen utsida); med
+  svängar 300 från utsidan av svängarna sammantaget (den första svängens
+  utsida när de tar ut varandra).
+- Kilstegen strålar från det inre hörnet (stegen blir spetsiga där); i en
+  båge radiella. En sträcka med *Vilplan härifrån* tar svängarna i sina
+  ändar med sig, så att en U-trappa får ett helt vilplan med en knapp.
+- Stegdjupet är lika i varje lopp mellan vilplanen, inte i hela trappan;
+  stegen fördelas efter loppens längd. Ändras stegdjupet förlängs den
+  sista sträckan (bara när den är rak).
+- Hålet börjar vid det första steg där stegets ovansida plus den fria
+  höjden (2 100) når bjälklagets undersida, och går till trappans slut. Det
+  ritas som kant (utan kryss) i planen ovanför, så att trappan syns.
+- *Rita eget* hål är *Gör till eget hål*: automathålet blir en vanlig
+  håltagning i bjälklaget och trappan tar inget eget. Det kopplade hålet
+  som följer trappan vid flytt väntar.
+- Snittlinjen i planen (0,25) är samma ställe som trappans snitt i
+  sektionerna. Stegnosen ritas bara i Detalj.
+- *Syns också på* ritar med en penna (*Från annan våning: konturlinje*,
+  0,18 grå), utan text och fyllning; objektet går inte att klicka på där.
+- Varningar: stegdjup under 250 (300 utomhus finns i koden men trappan vet
+  inte om den står ute), stegformeln 600–650, steghöjd över 200, bredd
+  under 900, vilplan kortare än bredden.
+
+**Inte gjort i 0.11:** det kopplade egna hålet (följer trappan, kan låsas
+upp), trappans littera och egna penna, utomhustrappa (300 mm), den
+byggda trappan (0.11.2) och spiraltrappan (0.11.3; fälten finns).
+
+### 0.11.1 Räcket
+
+Egen utredning först (mockup i Claude Design, ett par tavlor, med all
+önskad funktionalitet från början), sedan bygge. Eget objekt, fristående
+från trappan: smartspöas dit längs trappans kant, eller ritas med egna
+referenslinjer; punkter flyttas manuellt i X, Y och Z. Följer med trappan
+vid flytt. Ska kunna byggas ut.
+
+### 0.11.2 Byggd trappa
+
+Vangstycken, plan- och sättsteg som delar med egna inställningar, stegnos,
+kontrastmarkering, synliga vangstycken i planen, bygghandlingsgrafiken.
+
+### 0.11.3 Spiraltrappan
+
+Numeriskt läge (inner- och ytterdiameter, grader också över 360,
+varvriktning; referenslinjen en genererad helix); planen med snittet rätt
+också när den snurrar mer än ett varv.
+
+### 0.11.4 Profilverktyget · *nytt format*
 
 Carl August 22 oktober; före piloten (24 oktober). Stor.
 
@@ -241,7 +336,7 @@ Carl August 22 oktober; före piloten (24 oktober). Stor.
   en definition). Linjerna måste gå vågrätt, lodrätt eller genom rutans
   hörn för att upprepas; bågar blir raka bitar
 
-### 0.11.2 Dörrar och fönster
+### 0.11.5 Dörrar och fönster
 
 Carl August 22 oktober. Stor; delas om det behövs.
 

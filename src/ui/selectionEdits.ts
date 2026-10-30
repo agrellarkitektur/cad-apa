@@ -1,3 +1,4 @@
+import { applyStairField } from './stairFields';
 import { defaultSheet } from '../core/viewCategories';
 import { applyLabelField } from './labelSection';
 import { applyTagField } from './litteraSection';
@@ -185,6 +186,7 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
   const doc = store.doc;
   const [scope, name] = key.split(':');
   if (scope === 'ground') return applyGroundField(store, ids, name, input);
+  if (scope === 'stair') return applyStairField(store, ids, name, input);
   if (scope === 'tag') return applyTagField(store, ids, name, input.value);
   if (scope === 'label') return applyLabelField(store, ids, name, input);
   if (scope === 'name') {

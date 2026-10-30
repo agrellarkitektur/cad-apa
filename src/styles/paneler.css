@@ -782,3 +782,21 @@
 .label-leaders { list-style: none; margin: 0 0 8px; padding: 0; }
 .label-leaders li { display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-bottom: 1px solid var(--rule); font-size: 13px; }
 .label-leaders .warn { color: #d9480f; }
+
+/* Trappans sträckor och svängar (0.11). */
+.stair-turns {
+  list-style: none;
+  margin: 0 0 8px;
+  padding: 0;
+}
+.stair-turns li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 2px 0;
+  font-size: 12px;
+}
+.stair-warnings .skew-note {
+  margin: 0 0 6px;
+}

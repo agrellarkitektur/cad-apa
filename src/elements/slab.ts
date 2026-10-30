@@ -12,6 +12,7 @@ import type { Element, Id, ProjectDoc } from '../core/model';
 import { isClosed, segmentArc, segmentCount, shapePoints } from './drawing2d';
 import { fillPrims, materialCutFill, materialCutPrims, type FillParams } from './fill2d';
 import { buildingMaterialOf, materialPen, materialSolid } from './buildingMaterial';
+import { stairHoles } from './stair';
 
 /**
  * Bjälklag (0.9.1, format 15). Golvet i en våning: ovansidan ligger i
@@ -115,6 +116,8 @@ export function slabRings(ctx: PlanContext, el: Element<any>): Rings[] {
   const p = ctx.params<SlabParams>(el);
   const base = slabBase(ctx, p);
   const holes = (p.holes ?? []).map(holeRing).filter((r) => r.length >= 3).map((r): Rings => [r]);
+  // Trapporna på våningen under (0.11) tar sina hål.
+  for (const r of stairHoles(ctx, el, levelOf(p), Math.max(1, p.thickness))) holes.push([r]);
   if (!holes.length) return base;
   return base.flatMap((poly) => difference(poly, holes));
 }
@@ -219,7 +222,7 @@ function clipToRing(a: Vec2, b: Vec2, ring: readonly Vec2[]): [Vec2, Vec2][] {
 
 export const slabType: ElementType<SlabParams> = {
   type: 'Slab',
-  planReads: ['Wall'],
+  planReads: ['Wall', 'Stair'],
   label: 'Bjälklag',
   labelPlural: 'Bjälklag',
   litteraPrefix: 'BJ',
@@ -270,6 +273,8 @@ export const slabType: ElementType<SlabParams> = {
       out.push(...outlineEdges(h, pen, part));
       if (!above) for (const [a, b] of holeCross(h)) out.push({ kind: 'line', a, b, pen, origin: part });
     }
+    // Trappornas hål (0.11): bara kanten; trappan syns genom hålet.
+    for (const ring of stairHoles(ctx, el, lv, Math.max(1, p.thickness))) out.push(...outlineEdges({ points: ring.map((q): [number, number] => [q[0], q[1]]) }, pen, { ...origin, part: above ? ABOVE_PART : 'hål' }));
     return out;
   },
 

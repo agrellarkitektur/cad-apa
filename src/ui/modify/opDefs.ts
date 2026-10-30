@@ -41,6 +41,10 @@ export type OpId =
   | 'pathExtend'
   | 'pathEase'
   | 'pathEaseSharp'
+  | 'stairLanding'
+  | 'stairSteps'
+  | 'stairTurnLanding'
+  | 'stairWinders'
   | 'pathEaseClear'
   | 'holeRemove'
   | 'roofTrim'
@@ -128,6 +132,10 @@ export const OPS: Record<OpId, OpDef> = {
   pathExtend: { label: 'Förläng rampen', short: 'Förläng', icon: 'extend', hint: 'Klicka nya punkter från änden. Dubbelklick, Enter eller Klar avslutar; lutningen fortsätter.' },
   pathEase: { label: 'Mjuk övergång', short: 'Mjuk', icon: 'curveEdge', value: { label: 'Radie', unit: 'mm', initial: 20000 }, hint: 'Höjden går över i en vertikal kurva med radien i punkten, som på en gångväg. Skriv radien och tryck Enter, eller klicka för att använda den (förslaget är rampens).' },
   pathEaseSharp: { label: 'Skarp övergång', short: 'Skarp', icon: 'straighten', instant: true, hint: 'Höjden bryts skarpt i punkten, som ett vilplan i en betong- eller stenramp.' },
+  stairLanding: { label: 'Vilplan härifrån', short: 'Vilplan härifrån', icon: 'slab', instant: true, hint: 'Sträckan från punkten är ett vilplan, med svängarna i dess ändar.' },
+  stairSteps: { label: 'Steg härifrån', short: 'Steg härifrån', icon: 'stair', instant: true, hint: 'Sträckan från punkten har steg igen.' },
+  stairTurnLanding: { label: 'Vilplan i svängen', short: 'Vilplan i svängen', icon: 'slab', instant: true, hint: 'Svängen i punkten blir ett vilplan i stället för kilsteg.' },
+  stairWinders: { label: 'Kilsteg i svängen', short: 'Kilsteg i svängen', icon: 'stair', instant: true, hint: 'Svängen i punkten får kilsteg igen.' },
   pathEaseClear: { label: 'Övergång som rampen', short: 'Som rampen', icon: 'trash', instant: true, hint: 'Punkten följer rampens inställning för övergångarna igen.' },
   moveZ: { label: 'Flytta i höjd', short: 'I höjd', icon: 'moveZ', value: { label: 'Höjd', unit: 'mm', initial: 100 }, hint: 'Skriv hur mycket upp (minus för ned) och tryck Enter. Hela objektet flyttas: väggens fot och topp, bjälklaget, möbeln eller taket.' },
   shapeFuse: { label: 'Foga ihop', short: 'Foga ihop', icon: 'fuse', instant: true, hint: 'De markerade linjerna som delar en ändpunkt blir en lång linje. Den första behåller sin penna.' },

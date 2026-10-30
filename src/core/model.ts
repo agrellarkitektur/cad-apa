@@ -348,6 +348,13 @@ export interface Element<P extends object = Record<string, unknown>> {
    * i planen, fasaderna och sektionerna, inte fyllningar och text.
    */
   pen?: OwnPen;
+  /**
+   * Syns också på (format 26): våningar eller Platsen där objektet också
+   * ritas som vy (kontur, utan snitt), t.ex. trappan och rampen vid entrén
+   * i både våningens ritning och markplaneringsritningen. Utelämnad = bara
+   * på sin egen.
+   */
+  seenOn?: Id[];
   params: P;
   props: PropertySets;
 }
@@ -373,9 +380,15 @@ export interface OwnPen extends OwnPenPart {
   above?: OwnPenPart;
 }
 
+/** Typerna som kan synas också på en annan våning eller Platsen (*Syns också på*, 0.11). */
+export const SEEN_ON_TYPES: ReadonlySet<string> = new Set(['Stair', 'Ground', 'Slab']);
+
+/** Om elementet ritas på `place` för att det valts under *Syns också på* (0.11), och inte hör hemma där. */
+export const seenFrom = (el: Pick<Element, 'storey' | 'space' | 'seenOn' | 'type'>, place: Id): boolean => !el.space && el.storey !== place && !!el.seenOn?.includes(place) && SEEN_ON_TYPES.has(el.type);
+
 export const FORMAT = 'bacchus-project';
-/** 25 (0.10.32): stilboken med vykategorier (`graphics.categories`); vyns `category` är kategorins nyckel och dess avvikelser står i `overrides` (i stället för `compare`, `detail`, `hide` …, `style`). 24 (0.10.28.1): materialens kryssrutor `ground` och `building` i stället för `category`. 23 (0.10.28): materialen i stilmallen (`graphics.materials`, i stället för `fills`) och objektens `material`, `materialOpacity` och `materialAngle` (i stället för `fillStyle`). 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionsmarkörernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
-export const FORMAT_VERSION = 25;
+/** 26 (0.11): trappan (`Stair`, referenslinjen `line`, med fälten för räcket, den byggda trappan och spiraltrappan valfria) och objektens `seenOn` (*Syns också på*). 25 (0.10.32): stilboken med vykategorier (`graphics.categories`); vyns `category` är kategorins nyckel och dess avvikelser står i `overrides` (i stället för `compare`, `detail`, `hide` …, `style`). 24 (0.10.28.1): materialens kryssrutor `ground` och `building` i stället för `category`. 23 (0.10.28): materialen i stilmallen (`graphics.materials`, i stället för `fills`) och objektens `material`, `materialOpacity` och `materialAngle` (i stället för `fillStyle`). 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionsmarkörernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
+export const FORMAT_VERSION = 26;
 
 export interface ProjectDoc {
   format: typeof FORMAT;

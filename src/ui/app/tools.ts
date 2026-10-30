@@ -2,7 +2,7 @@ import { resolveParams } from '../../elements/registry';
 import { markerName } from '../../elements/markers';
 import { ringArea } from '../../elements/slab';
 import { bareWallUnion, type WallParams } from '../../elements/wall';
-import { isSite, SITE_STOREY, type Id } from '../../core/model';
+import { isSite, SITE_STOREY, storeysUpFrom, type Id } from '../../core/model';
 import type { ViewTool } from '../../view2d/planView';
 import type { ModifyContext } from '../modify/ops';
 import { DimensionTool, TextTool } from '../tools/annotationTools';
@@ -17,6 +17,8 @@ import { RoomTool } from '../tools/roomTool';
 import { SelectTool } from '../tools/selectTool';
 import { SlabTool } from '../tools/slabTool';
 import { GroundTool } from '../tools/groundTool';
+import { StairTool } from '../tools/stairTool';
+import { storeyAbove } from '../../elements/stair';
 import { forgetInferred } from '../tools/snap';
 import { WallTool, type WallToolOptions } from '../tools/wallTool';
 import { icons } from '../icons';
@@ -145,6 +147,14 @@ export function installTools(app: AppContext, host: ToolHost) {
     app.hint(text[String(kind)] ?? 'Markobjektet är lagt. Ändra höjd, fall och slänt i egenskaperna, konturen med hörnen och kanterna.', 5000);
   };
   groundTool.onChange = () => app.toolOpts.renderToolOptions();
+  const stairTool = new StairTool(host);
+  stairTool.onCreated = (id) => {
+    app.selection.set([id]);
+    const el = app.store.doc.elements[id];
+    const above = el ? storeyAbove(app.store.doc, el.storey) : undefined;
+    app.hint(`Trappan är lagd, med stigningen ${above ? `till ${above.name} och hålet i bjälklaget där` : 'lika med våningshöjden'}. Ändra bredd, steg, plansteg och vilplan i egenskaperna, linjen med punkterna; klicka på en punkt för Vilplan härifrån.`, 6000);
+  };
+  stairTool.onChange = () => app.toolOpts.renderToolOptions();
   const sectionTool = new MarkerTool(host, 'Section');
   const elevationTool = new MarkerTool(host, 'Elevation');
   const created = (id: Id) => {
@@ -180,6 +190,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     roof: roofTool,
     slab: slabTool,
     ground: groundTool,
+    stair: stairTool,
     section: sectionTool,
     elevation: elevationTool,
     measure: measureTool,
@@ -215,6 +226,11 @@ export function installTools(app: AppContext, host: ToolHost) {
       app.goTo({ kind: 'storey', id: SITE_STOREY });
       app.hint('Markobjekten ritas på Platsen.', 3000);
     }
+    // Trappor ritas på en våning (0.11): från Platsen går man till den närmast ±0.
+    if (id === 'stair' && !app.ui.layout && !app.ui.marker && !app.ui.worksheet && isSite(app.ui.storey)) {
+      const first = storeysUpFrom(app.store.doc).find((s) => s.elevation >= 0) ?? storeysUpFrom(app.store.doc)[0];
+      if (first) app.goTo({ kind: 'storey', id: first.id });
+    }
     if (app.ui.tool === 'wall' && id !== 'wall') wallTool.finish();
     if (app.ui.tool === 'dimension' && id !== 'dimension') dimensionTool.reset();
     if (app.ui.tool === 'draw2d' && id !== 'draw2d') draw2dTool.finish(false);
@@ -223,6 +239,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     if (app.ui.tool === 'label' && id !== 'label') labelTool.reset();
     if (app.ui.tool === 'ground' && id !== 'ground') groundTool.finish();
     if (app.ui.tool === 'ground' && id !== 'ground') groundTool.reset();
+    if (app.ui.tool === 'stair' && id !== 'stair') stairTool.finish();
     if (app.ui.tool === 'section' && id !== 'section') sectionTool.reset();
     if (app.ui.tool === 'elevation' && id !== 'elevation') elevationTool.reset();
     if (!keep) {
@@ -323,7 +340,7 @@ export function installTools(app: AppContext, host: ToolHost) {
       }
     }
     else if (app.ui.tool === 'ground' && groundTool.started) groundTool.reset();
-    else if (app.ui.tool === 'ground' && groundTool.started) groundTool.reset();
+    else if (app.ui.tool === 'stair' && stairTool.started) stairTool.reset();
     else if (app.ui.tool === 'section' && sectionTool.step > 0) sectionTool.reset();
     else if (app.ui.tool === 'elevation' && elevationTool.step > 0) elevationTool.reset();
     else if (app.ui.tool === 'measure' && measureTool.measurement().points > 0) measureTool.reset();
@@ -411,6 +428,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     roofTool,
     slabTool,
     groundTool,
+    stairTool,
     sectionTool,
     elevationTool,
     get aligning() {

@@ -6,9 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.40.1** (alfa); nästa är **0.11 Trappor**, efter
-stilinställningarna och pennorna (0.10.32–0.10.40) och granskningen av dem
-(0.10.40.1).
+**0.11** (alfa), Trappan; nästa är **0.11.1 Räcket** (en utredning med
+mockup först).
 
 ## Vad som fungerar
 
@@ -1150,6 +1149,49 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11, Trappan (**nytt filformat, 26**; projekt från 0.10.32–0.10.40.1 öppnas inte):
+- **Verktyget Trappa** (under Rita): klicka referenslinjen i gångriktningen,
+  uppåt, punkt för punkt; **Båge** (G) gör nästa kant till en båge.
+  Dubbelklick, Enter eller **Klar** avslutar. Formen är linjen: två punkter
+  är en rak trappa, tre en L-trappa, fyra en U-trappa, och en båge en
+  svängd trappa. Medan du ritar syns trappan med stegen. Bredd och var
+  referenslinjen ligger (vänster kant, mitten, höger kant) väljs i
+  verktygsraden. Smartspöt lägger en trappa längs en vägg, linje eller
+  kurva
+- **Stigningen** går till våningen ovanför (följer våningshöjden), eller är
+  en egen. Antal sättsteg räknas ur steghöjden 180 och stegen fördelas lika
+  längs gånglinjen; ändrar du antal sättsteg eller steghöjd följer det
+  andra, och ändrar du stegdjupet förlängs eller kortas den sista sträckan
+- **Svängarna** får kilsteg (strålar från det inre hörnet; i en båge
+  radiella steg). En sväng blir vilplan med **Vilplan i svängen**, och en
+  sträcka med **Vilplan härifrån** (med svängarna i dess ändar), i
+  smartmenyn när du klickar på en punkt i trappans linje, eller under
+  *Sträckor och svängar* i egenskaperna
+- **Gånglinjen**, där stegdjupet mäts, ligger 300 mm från utsidan av
+  svängarna (i en rak trappa i mitten); avståndet och sidan går att ändra
+- **Början och slut** med sättsteg eller plansteg; plansteget har en egen
+  längd och räknas till trappan (det första ligger i golvet och ritas
+  streckat)
+- **Varningar, aldrig spärrar**: stegdjup under 250 mm i gånglinjen (BBR
+  8:232; 300 utomhus), stegformeln 2 × steghöjd + stegdjup utanför
+  600–650 mm, steghöjd över 200 mm, bredd under 900 mm och vilplan
+  kortare än trappans bredd står överst i egenskaperna
+- **I planen**: det under snittet heldraget, det ovanför streckprickat med
+  snittlinjen snett över, gångriktningen från ring till pil och stegnosen
+  (i Detalj). I våningen ovanför ritas trappan hel, med det sista plansteget
+  streckat. Pennorna ställs in i stilboken under **Trappor**
+- **I sektioner och 3D**: en monolitisk kropp med steg och sned undersida,
+  snittad när sektionen går genom den. *Tjocklek* i egenskaperna;
+  *Uppbyggnad Byggd* (vangstycken, plan- och sättsteg) kommer i 0.11.2
+- **Hålet i bjälklaget ovanför** tas automatiskt, från det första steg där
+  den fria höjden (2 100 mm) inte räcker. *Hålet: Inget* tar bort det, och
+  **Gör till eget hål** gör det till en vanlig håltagning i bjälklaget som
+  ändras med bjälklagets grepp
+- **Syns också på**: trappor, ramper, markytor, stödmurar och bjälklag kan
+  kryssas för en annan våning eller Platsen i egenskaperna. De ritas där
+  som vy (kontur, utan snitt och text) med pennan under **Från annan
+  våning** i stilboken, och går inte att klicka på där
 
 Version 0.10.40.1, Granskning efter 0.10.40 (samma filformat, 25):
 - Inga nya funktioner. Stilbokens kod är uppdelad (dialogen 1 080 → 520
@@ -2353,7 +2395,7 @@ Version 0.8.28, rättelser i 2D-formen (samma filformat, 13):
 
 ## Versioner och gamla projekt
 
-Projektfilerna har ett formatnummer, i dag 24 (sedan 0.10.28.1). Fram till
+Projektfilerna har ett formatnummer, i dag 26 (sedan 0.11). Fram till
 den öppna betan uppgraderas inte projekt från äldre alfa- och betaversioner när
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp

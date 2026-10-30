@@ -1,5 +1,5 @@
 import type { ActionKey, StyleSheet } from '../core/graphics';
-import { onPaper, modelViewId, type Element, type Id, type ProjectDoc } from '../core/model';
+import { onPaper, modelViewId, seenFrom, type Element, type Id, type ProjectDoc } from '../core/model';
 import { actionOf, existingState, type Action, type ViewStates } from '../core/states';
 import { hiddenBy, hiddenObjects, homeOf, shownIn, type ViewIdentity } from '../core/visibility';
 import { isRoomBoundary } from '../elements/rooms';
@@ -29,7 +29,7 @@ export function createContext(
       homeOf(e) === place ||
       (isPlan && !e.space && typeOf(e.type)?.everyStorey) ||
       (e.show?.kind === 'views' && e.show.views.includes(identity.id)) ||
-      (otherStoreys && isPlan && !e.space && !!typeOf(e.type)?.alsoOnStorey?.(e, doc, place, view.hide)),
+      (otherStoreys && isPlan && !e.space && (!!typeOf(e.type)?.alsoOnStorey?.(e, doc, place, view.hide) || seenFrom(e, place))),
   );
   const hiddenHere = new Set<Id>();
   // Ett mallblad (0.8.8) och ett ritningsblad (0.8.9) följer inte tillstånden: allt på dem syns alltid.

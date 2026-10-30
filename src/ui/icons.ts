@@ -66,6 +66,7 @@ export const icons = {
   layerAbove: svg('<path d="M4 9 12 5l8 4-8 4z" fill="currentColor" fill-opacity=".35"/><path d="M4 15l8 4 8-4-8-4z"/>'),
   storeys: svg('<path d="M4 8.5 12 4l8 4.5-8 4.5z"/><path d="M4 12.5 12 17l8-4.5M4 16 12 20.5 20 16"/>'),
   elevation: svg('<circle cx="12" cy="12" r="5"/><path d="M12 3l3 4H9z" fill="currentColor"/><path d="M3 20h18" stroke-dasharray="2 2"/>'),
+  stair: svg('<path d="M4 20h4v-4h4v-4h4V8h4V4"/><path d="M4 20V16"/>'),
   ground: svg('<path d="M3 17c3-1 4-4 7-4h4c3 0 4 3 7 4"/><path d="M9 13l1-4h4l1 4"/><path d="M3 20h18"/>'),
   slab: svg('<path d="M3 10l5-4h13l-5 4z"/><path d="M3 10v3h13l5-4V6"/><path d="M16 10v3"/>'),
   roof: svg('<path d="M3 13l9-7 9 7"/><path d="M5 11.5V19h14v-7.5"/><path d="M3 13l1.5 1.2M21 13l-1.5 1.2"/>'),

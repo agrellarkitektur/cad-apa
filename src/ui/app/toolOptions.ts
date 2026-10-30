@@ -110,6 +110,17 @@ export function installToolOptions(app: AppContext) {
         <button class="btn" data-action="slab-walls" title="Ett bjälklag innanför ytterväggarna, som följer dem när de flyttas">Ur väggarna</button>`}
         <span class="opt-hint">${t.hintText()}</span>`;
       app.toolOptions.hidden = false;
+    } else if (app.ui.tool === 'stair') {
+      // Trappan (0.11): bredden, referenslinjens läge, bågar och Klar.
+      const t = app.stairTool;
+      const side = (v: string, label: string) => `<button data-stair-side="${v}" aria-pressed="${t.options.refSide === v}">${label}</button>`;
+      app.toolOptions.innerHTML = `
+        <label class="opt"><span>Bredd</span><span class="input-unit"><input type="text" id="stair-width" inputmode="decimal" value="${t.options.width}" aria-label="Trappans bredd"><i>mm</i></span></label>
+        <div class="opt"><span>Referenslinje</span><div class="segmented" role="group" aria-label="Referenslinje">${side('left', 'Vänster kant')}${side('center', 'Mitten')}${side('right', 'Höger kant')}</div></div>
+        <button class="btn" data-action="stair-arc" aria-pressed="${t.arc}" title="Nästa kant blir en båge: klicka var den slutar och sedan en punkt på den (G)">Båge</button>
+        ${t.chain.count >= 2 ? '<button class="btn btn-primary" data-action="stair-done">Klar</button>' : ''}
+        <span class="opt-hint">${t.hintText()}</span>`;
+      app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'ground') {
       // Mark (0.10.4): markyta, under ett bjälklag, eller markytan runt huset.
       // Längs en linje (0.10.5): ramp/väg, brytlinje, stödmur; och höjdpunkten.
@@ -281,6 +292,10 @@ export function installToolOptions(app: AppContext) {
     if (t.id === 'roof-gable' && Number.isFinite(num)) app.roofTool.options.gable = Math.max(0, Math.round(num));
     if (t.id === 'wall-def') app.wallTool.options.definition = t.value;
     if (t.id === 'slab-def') app.slabTool.options.definition = t.value;
+    if (t.id === 'stair-width' && num >= 300) {
+      app.stairTool.options.width = Math.round(num);
+      app.view.requestRender();
+    }
     if (t.id === 'opening-def') (app.ui.tool === 'door' ? app.doorTool : app.windowTool).options.definition = t.value;
     if (t.id === 'd2-kind') app.draw2dTool.setKind(t.value as ShapeKind);
     if ((t as unknown as HTMLInputElement).name === 'd2-weight' && num >= 0) {
@@ -440,6 +455,16 @@ export function installToolOptions(app: AppContext) {
       renderToolOptions();
     }
     if (b.dataset.action === 'ground-done') app.groundTool.finish();
+    if (b.dataset.stairSide) {
+      app.stairTool.options.refSide = b.dataset.stairSide as 'left' | 'center' | 'right';
+      renderToolOptions();
+      app.view.requestRender();
+    }
+    if (b.dataset.action === 'stair-done') app.stairTool.finish();
+    if (b.dataset.action === 'stair-arc') {
+      app.stairTool.setArc(!app.stairTool.arc);
+      renderToolOptions();
+    }
     if (b.dataset.action === 'ground-arc') {
       app.groundTool.setArc(!app.groundTool.arc);
       renderToolOptions();

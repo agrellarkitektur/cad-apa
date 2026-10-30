@@ -2,6 +2,7 @@ import type { PenDef, StyleSheet } from '../core/graphics';
 import { lineTypeDash } from '../core/lineTypes';
 import { defaultedPen } from './markerPens';
 import type { Pen } from './primitives';
+import { defaultStairPen } from './stairPens';
 
 /**
  * Snitt- och konturlinjer i planen (0.10.37, ersätter dörrarnas och
@@ -26,6 +27,7 @@ export const OBJECT_PENS = [
   { key: 'roofCut', group: 'others', label: 'Tak: snittlinje', hint: 'Taket där snitthöjden går genom det', weight: 0.35, tags: ['tak', 'snitt', 'snittlinje'] },
   { key: 'groundCut', group: 'others', label: 'Stödmur: snittlinje', hint: 'Stödmurar som går genom snittet', weight: 0.35, tags: ['stödmur', 'snitt', 'snittlinje'] },
   { key: 'furnitureFixed', group: 'others', label: 'Fast inredning: konturlinje', hint: 'Kök, bad och skåp', weight: 0.25, tags: ['möbel', 'fast inredning', 'kontur', 'konturlinje'] },
+  { key: 'seenContour', group: 'seen', label: 'Från annan våning: konturlinje', hint: 'Objekt som syns också här (Syns också på): trappor, ramper, markytor, stödmurar och bjälklag från en annan våning eller Platsen', weight: 0.18, color: 'muted', tags: ['annan våning', 'kontur', 'konturlinje', 'syns också på'] },
   { key: 'furniture', group: 'others', label: 'Möbel: konturlinje', hint: 'Lösa möbler', weight: 0.18, color: 'muted', tags: ['möbel', 'kontur', 'konturlinje'] },
 ] as const satisfies readonly { key: string; group: string; label: string; hint: string; weight: number; color?: string; tags: readonly string[] }[];
 
@@ -46,14 +48,15 @@ export function objectPen(style: StyleSheet | undefined, key: ObjectPenKey): Pen
 }
 
 /** Snittlinjens ställe för en objekttyp; igensatta hål och öppningsmarkeringar är väggens. */
-export function cutRowOf(objectType: string | undefined): ObjectPenKey {
+export function cutRowOf(objectType: string | undefined): ObjectPenKey | 'stairCut' {
+  if (objectType === 'Stair') return 'stairCut';
   return objectType === 'Slab' ? 'slabCut' : objectType === 'Roof' ? 'roofCut' : objectType === 'Ground' ? 'groundCut' : 'wallCut';
 }
 
 /** Snittlinjens tjocklek, färg och linjetyp (streckning) för en objekttyp. */
 export function cutRowPen(style: StyleSheet, objectType: string | undefined): { weight: number; color?: string; dash?: number[] } {
   const key = cutRowOf(objectType);
-  const row: PenDef = { ...defaultObjectPen(key)!, ...style.pens?.[key] };
+  const row: PenDef = { ...(defaultObjectPen(key) ?? defaultStairPen(key))!, ...style.pens?.[key] };
   const dash = lineTypeDash(style, row.linetype);
   return { weight: row.weight, ...(row.color && row.color !== 'ink' ? { color: row.color } : {}), ...(dash ? { dash } : {}) };
 }

@@ -28,7 +28,7 @@ export function remapEases(before: readonly P[], after: readonly P[], eases: (Ea
   return tidyEases(remapPerPoint(before, after, eases, Boolean, true));
 }
 
-function remapPerPoint<T>(before: readonly P[], after: readonly P[], values: readonly (T | null)[], has: (v: T | null | undefined) => boolean, ends = false): (T | null)[] {
+export function remapPerPoint<T>(before: readonly P[], after: readonly P[], values: readonly (T | null)[], has: (v: T | null | undefined) => boolean, ends = false): (T | null)[] {
   const out: (T | null)[] = after.map(() => null);
   const inner = (i: number, n: number) => ends || (i > 0 && i < n - 1);
   if (before.length === after.length) {

@@ -1,3 +1,4 @@
+import { stairFieldsMarkup } from './stairFields';
 import { defaultSheet } from '../core/viewCategories';
 import { materialUses } from '../core/materials';
 import type { FillParams } from '../elements/fill2d';
@@ -164,6 +165,8 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
     }
     case 'Ground':
       return groundFieldsMarkup(doc, el, view);
+    case 'Stair':
+      return stairFieldsMarkup(doc, el);
     case 'North':
     case 'BasisFacade':
     case 'Section':

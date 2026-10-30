@@ -27,10 +27,10 @@ const placeIn = (doc: Parameters<typeof stylePlaces>[0], id: string) => stylePla
 describe('pennraderna per vytyp', () => {
   it('varje vytyp visar sina grupper', () => {
     const ids = (t: Parameters<typeof penGroupsFor>[0]) => penGroupsFor(t).map((g) => g.id);
-    expect(ids('storey')).toEqual(['walls', 'doors', 'windows', 'objects', 'cut', 'contours', 'markers']);
+    expect(ids('storey')).toEqual(['walls', 'doors', 'windows', 'objects', 'seen', 'stairs', 'cut', 'contours', 'markers']);
     expect(ids('facade')).toEqual(['walls', 'doors', 'windows', 'objects', 'markers']);
-    expect(ids('section')).toEqual(['walls', 'doors', 'windows', 'objects', 'markers']);
-    expect(ids('site')).toEqual(['contours', 'markers']);
+    expect(ids('section')).toEqual(['walls', 'doors', 'windows', 'objects', 'stairs', 'markers']);
+    expect(ids('site')).toEqual(['seen', 'contours', 'markers']);
     expect(ids('worksheet')).toEqual(['markers']);
     const book = emptyProject('Prov', 'ombyggnad').graphics;
     const html = penSection(defaultSheet(book, 'facade'), 'facade');

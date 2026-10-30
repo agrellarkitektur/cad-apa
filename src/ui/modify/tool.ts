@@ -54,6 +54,26 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
     else host.hint('Linjerna har ingen gemensam ändpunkt (linjer och splines fogas var för sig; två ramper dockas när ändarna ligger inom rampens bredd).', 4000);
     return;
   }
+  // Trappans vilplan och svängar (0.11).
+  if (op === 'stairLanding' || op === 'stairSteps' || op === 'stairTurnLanding' || op === 'stairWinders') {
+    const el = ctx.shapeId ? doc.elements[ctx.shapeId] : undefined;
+    if (!el || ctx.index === undefined) return;
+    const key = op === 'stairLanding' || op === 'stairSteps' ? 'landings' : 'turnLandings';
+    const on = op === 'stairLanding' || op === 'stairTurnLanding';
+    const set = new Set((el.params[key] as number[] | undefined) ?? []);
+    if (on) set.add(ctx.index);
+    else set.delete(ctx.index);
+    const list = [...set].sort((a, b) => a - b);
+    host.store.transact(OPS[op].label, (tx) => {
+      const cur = tx.doc.elements[el.id];
+      if (!cur) return;
+      const params: Record<string, unknown> = { ...cur.params };
+      if (list.length) params[key] = list;
+      else delete params[key];
+      tx.putElement({ ...cur, params });
+    });
+    return;
+  }
   // Rampens punkt utan egen höjd (0.10.18).
   if (op === 'pathLevelClear') {
     clearRampLevel(host, ctx);

@@ -6,7 +6,7 @@ import type { Vec2 } from '../repr/primitives';
 import { catmullRom, isClosed, segmentArc, segmentCount, shapePoints, type Shape2DParams, type ShapePath } from './drawing2d';
 import type { SlabHole } from './slab';
 import { rampSideLines, type EasePoint, type RampParams } from './groundRamp';
-import { remapEases, remapLevels } from './rampEdits';
+import { remapEases, remapLevels, remapPerPoint } from './rampEdits';
 import { hasArcs } from './groundLines';
 
 /**
@@ -77,7 +77,8 @@ export function shapeOf(el: ShapeLike | undefined): ShapeLike | undefined {
   if (!el) return undefined;
   if (el.type === 'Shape2D') return el;
   // Markobjekt längs en linje (0.10.5): linjen som en öppen 2D-form, med bågar sedan 0.10.19.
-  if (el.type === 'Ground' && Array.isArray(el.params.line) && (el.params.line as unknown[]).length >= 2) {
+  // Trappans referenslinje (0.11), likadant.
+  if ((el.type === 'Ground' || el.type === 'Stair') && Array.isArray(el.params.line) && (el.params.line as unknown[]).length >= 2) {
     const bulges = el.params.bulges as number[] | undefined;
     return { type: 'Shape2D', params: { shape: 'polyline', points: el.params.line, ...(hasArcs(bulges) ? { bulges } : {}), closed: false } };
   }
@@ -145,6 +146,23 @@ export function shapePatch(doc: ProjectDoc, id: Id, hole: number | undefined, pa
     const out: Record<string, unknown> = { [side]: 'points' in patch ? patch.points : shape?.params.points };
     if ('bulges' in patch) out[key] = patch.bulges;
     else if (!(el!.params as RampParams)[side] && shape?.params.bulges) out[key] = shape.params.bulges;
+    return out;
+  }
+  if (hole === undefined && el?.type === 'Stair') {
+    // Trappans referenslinje (0.11): vilplanen följer punkterna.
+    const out: Record<string, unknown> = {};
+    if ('bulges' in patch) out.bulges = patch.bulges;
+    if (!('points' in patch)) return out;
+    const before = (el.params.line as [number, number][] | undefined) ?? [];
+    const after = patch.points as [number, number][];
+    out.line = after;
+    for (const key of ['landings', 'turnLandings'] as const) {
+      const list = el.params[key] as number[] | undefined;
+      if (!list?.length) continue;
+      const flags = remapPerPoint(before, after, before.map((_, i) => (list.includes(i) ? 1 : null)), Boolean, true);
+      const next = flags.flatMap((v, i) => (v ? [i] : []));
+      out[key] = next.length ? next : undefined;
+    }
     return out;
   }
   if (hole === undefined && el?.type === 'Ground') {

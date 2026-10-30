@@ -88,6 +88,22 @@ function transformedParams(doc: ProjectDoc, el: Element, t: PlanTransform, movin
     }
     return [{ ...el, params: { ...el.params, origin: t.map(p.origin), rotation: t.angle(p.rotation ?? 0) } }];
   }
+  if (el.type === 'Stair' && Array.isArray(p.line)) {
+    // Trappan (0.11): referenslinjen; speglad byter vänster och höger, och bågarna buktar åt andra hållet.
+    const swap = (v: unknown) => (v === 'left' ? 'right' : v === 'right' ? 'left' : v);
+    return [
+      {
+        ...el,
+        params: {
+          ...el.params,
+          line: p.line.map(t.map),
+          ...(t.mirror && Array.isArray(p.bulges) ? { bulges: (p.bulges as number[]).map((b) => (b ? -b : 0)) } : {}),
+          ...(t.mirror && p.refSide ? { refSide: swap(p.refSide) } : {}),
+          ...(t.mirror && p.walkSide ? { walkSide: swap(p.walkSide) } : {}),
+        },
+      },
+    ];
+  }
   if (Array.isArray(p.outline) && Array.isArray(p.ref)) {
     // Takfallet (0.10): konturen och referenslinjen. Speglingen byter
     // linjens riktning så att taket stiger åt samma håll; bågarnas pilhöjd

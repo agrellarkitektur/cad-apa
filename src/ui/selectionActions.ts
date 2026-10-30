@@ -1,3 +1,4 @@
+import { stairAction } from './stairFields';
 import { dropLeader, setLabelAngle } from './labelSection';
 import { resetTags } from './litteraSection';
 import { createDefinition, deleteDefinition, deleteElements, flipWalls, setInState, setSkewOk, updateParams } from '../core/commands';
@@ -112,6 +113,28 @@ export function selectionAction({ panel, store, selection, getView, body }: Acti
     }
     case 'follow-building':
       updateParams(store, ids, { auto: true }, 'Följ byggnaden');
+      return;
+    case 'seen-on': {
+      // Syns också på (0.11): kryssad läggs våningen till på alla markerade, annars tas den bort.
+      const storey = b.dataset.storey!;
+      const on = (b as HTMLInputElement).checked;
+      store.transact(on ? 'Syns också på' : 'Syns inte på', (tx) => {
+        for (const id of ids) {
+          const el = tx.doc.elements[id];
+          if (!el || el.storey === storey) continue;
+          const list = new Set(el.seenOn ?? []);
+          if (on) list.add(storey);
+          else list.delete(storey);
+          const { seenOn: _, ...rest } = el;
+          tx.putElement(list.size ? { ...rest, seenOn: [...list] } : rest);
+        }
+      });
+      return;
+    }
+    case 'stair-turn':
+    case 'stair-edge':
+    case 'stair-own-hole':
+      stairAction(store, ids, b.dataset.action, b);
       return;
     case 'slab-hole-remove': {
       const el = doc.elements[ids[0]];

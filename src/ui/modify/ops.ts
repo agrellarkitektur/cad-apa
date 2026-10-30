@@ -103,6 +103,14 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
     // Stödmurens höjdpunkter (0.10.9) på referenslinjen.
     const host0 = doc.elements[ctx.shapeId];
     if (host0?.type === 'Ground' && host0.params.kind === 'wall') own.push('crestPoint');
+    // Trappans referenslinje (0.11): vilplan härifrån, och kilsteg eller vilplan i en sväng.
+    if (host0?.type === 'Stair' && ctx.kind !== 'edge' && ctx.index !== undefined) {
+      const n = ((host0.params.line as unknown[]) ?? []).length;
+      const flat = ((host0.params.landings as number[] | undefined) ?? []).includes(ctx.index);
+      const turn = ((host0.params.turnLandings as number[] | undefined) ?? []).includes(ctx.index);
+      if (ctx.index < n - 1) own.push(flat ? 'stairSteps' : 'stairLanding');
+      if (ctx.index > 0 && ctx.index < n - 1) own.push(turn ? 'stairWinders' : 'stairTurnLanding');
+    }
     // Rampens referenslinje (0.10.18): höjden i punkten, och förläng från en ände.
     const rp = rampPoint(doc, ctx);
     if (rp) {

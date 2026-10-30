@@ -74,6 +74,7 @@ export const COMMANDS: CommandDef[] = [
   T('window', 'Fönster', ['fönster', 'fö'], ['window', 'win']),
   T('slab', 'Bjälklag', ['bjälklag', 'bj'], ['slab', 'sl']),
   T('roof', 'Tak', ['tak'], ['roof', 'rf']),
+  T('stair', 'Trappa', ['trappa', 'trappor', 'trp'], ['stair', 'stairs']),
   T('ground', 'Mark', ['mark', 'markobjekt', 'platå'], ['grading', 'terrain', 'grd']),
   T('room', 'Rum', ['rum'], ['room', 'space']),
   T('dimension', 'Mått', ['mått', 'må'], ['dim', 'dli', 'dimlinear']),

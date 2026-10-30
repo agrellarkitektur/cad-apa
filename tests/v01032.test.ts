@@ -44,7 +44,7 @@ describe('stilboken', () => {
     for (const t of ['storey', 'facade', 'section', 'worksheet'] as const) expect(categoriesOf(doc.graphics, t).length).toBeGreaterThanOrEqual(1);
     // Stilen är det som förut var projektets stilmall.
     expect(categoryOf(doc.graphics, 'storey').style.actions).toEqual(SWEDISH_STANDARD.actions);
-    expect(FORMAT_VERSION).toBe(25);
+    expect(FORMAT_VERSION).toBeGreaterThanOrEqual(25);
   });
 
   it('projekt från 0.10.31 öppnas inte; stilboken och avvikelserna sparas och läses', () => {

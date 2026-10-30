@@ -13,6 +13,7 @@ import { roofSlopeType } from './roofSlope';
 import { scaleBarType } from './scaleBar';
 import { stampType } from './stamp';
 import { slabType } from './slab';
+import { stairType } from './stair';
 import { groundType } from './ground';
 import { siteBuildingType, siteMapType, terrainType, treeType } from './site';
 import { spaceType } from './space';
@@ -24,6 +25,7 @@ import { windowType } from './window';
 export function registerBuiltInTypes(): void {
   registerType(wallType);
   registerType(slabType);
+  registerType(stairType);
   registerType(doorType);
   registerType(windowType);
   registerType(furnitureType);
