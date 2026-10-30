@@ -133,7 +133,7 @@ function drawGroup(t: ElementType, items: PlanItem[], ctx: PlanContext, style: S
   const s = style.actions[ctx.styleKeyOf(action)];
   const hidden = ctx.hiddenInView(items[0].el);
   // Objektets egen penna (0.8.31) efter stilmallens; ett dolt element ritas tonat som förut.
-  const styled = (p: Primitive) => (hidden ? ghost(applyStyle(p, s, action, style, ctx.scale, true)) : applyOwnPen(applyStyle(p, s, action, style, ctx.scale, true), ownPenOf(ctx.doc, p), style));
+  const styled = (p: Primitive) => (hidden ? ghost(applyStyle(p, s, action, style, ctx.scale)) : applyOwnPen(applyStyle(p, s, action, style, ctx.scale), ownPenOf(ctx.doc, p), style));
   const pickable = (el: Element, own: Primitive[]): Pickable => ({
     id: el.id,
     priority: t.drawOrder,
@@ -208,17 +208,16 @@ function ghost(p: Primitive): Primitive {
 /**
  * Lägg på stilmallens färger, fyllningar och streckning för åtgärden.
  * `scale` är modellens mm per mm på papper, för fyllningstyper med mått i
- * modellen (0.8.36). I planen (`plan`, 0.10.37) ger objekttypens snittlinje
- * tjockleken på snittets kontur, och när jämförelsen är på ger åtgärden
- * färg och streckning (före radernas färg); utan jämförelse gäller
- * snittlinjens färg och linjetyp. Fasaderna och sektionerna har kvar
- * åtgärdens kontur tills 0.10.38.
+ * modellen (0.8.36). Objekttypens snittlinje ger tjockleken på snittets
+ * kontur (i planen sedan 0.10.37, i sektionerna sedan 0.10.38), och när
+ * jämförelsen är på ger åtgärden färg och streckning (före radernas färg);
+ * utan jämförelse gäller snittlinjens färg och linjetyp. Åtgärdens kontur
+ * har ingen tjocklek längre.
  */
-export function applyStyle(p: Primitive, s: ActionStyle, action: Action, sheet: StyleSheet, scale = 1, plan = false): Primitive {
+export function applyStyle(p: Primitive, s: ActionStyle, action: Action, sheet: StyleSheet, scale = 1): Primitive {
   if (p.kind === 'text' || p.kind === 'image') return p;
-  const compared = plan && action !== 'plain';
+  const compared = action !== 'plain';
   const cutPen = (o: LineDef, objectType: string | undefined): Pen => {
-    if (!plan) return { weight: o.weight, color: o.color, ...(o.dash?.length ? { dash: o.dash } : {}) };
     const row = cutRowPen(sheet, objectType);
     const color = (compared || !row.color ? o.color : row.color) as Pen['color'];
     const dash = compared || o.dash?.length ? o.dash : row.dash;

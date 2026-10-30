@@ -1,8 +1,8 @@
-import type { ActionKey, CategoryStyle, LineDef, Material, NumberedPen, PenDef, StyleBook, StyleResources } from '../core/graphics';
+import type { ActionKey, CategoryStyle, Material, NumberedPen, PenDef, StyleBook, StyleResources } from '../core/graphics';
 import { LINE_TYPES, lineTypeDash, lineTypeList } from '../core/lineTypes';
 import { isSite, type Definition, type Element, type Id, type OwnPen, type OwnPenPart, type ProjectDoc, type ViewDef } from '../core/model';
 import { categoryOf, effectiveCategory, overridesFrom, putCategory, resetViewOverrides, VIEW_TYPES, viewTypeOf, type ViewCategory, type ViewType } from '../core/viewCategories';
-import { penDefault, penGroupsFor, penRowOf } from './penRows';
+import { penDefault, penGroupsFor, penRowShown } from './penRows';
 
 /**
  * Ställena (0.10.36): ett ställe är en rad i en vykategori, eller i en vy
@@ -89,9 +89,10 @@ function placesOfStyle(res: StyleResources, c: ViewCategory, style: CategoryStyl
   if (CUT_TYPES.includes(c.type)) {
     for (const a of ACTIONS) {
       const act = style.actions[a];
+      // Åtgärdens kontur har bara färg och streckning (0.10.38): ett ställe för linjetypen, inte för en penna.
       if (act.cutOutline) {
         const o = act.cutOutline;
-        add({ key: `outline.${a}`, label: `Snittets kontur, ${ACTION_NAMES[a].toLowerCase()}`, group: 'Åtgärder', tags: ['vägg', 'bjälklag', 'snitt', 'kontur', ACTION_NAMES[a].toLowerCase()], pen: { weight: o.weight, ...(colorKey(o.color) !== 'ink' ? { color: o.color } : {}) }, linetype: lineTypeOfDash(res, o.dash) });
+        add({ key: `outline.${a}`, label: `Snittets kontur, ${ACTION_NAMES[a].toLowerCase()}`, group: 'Åtgärder', tags: ['vägg', 'bjälklag', 'snitt', 'kontur', ACTION_NAMES[a].toLowerCase()], linetype: lineTypeOfDash(res, o.dash) });
       }
       if (act.cutFill.kind === 'type') add({ key: `fill.${a}`, label: `Snittets fyllning, ${ACTION_NAMES[a].toLowerCase()}`, group: 'Åtgärder', tags: ['vägg', 'bjälklag', 'snitt', 'fyllning', ACTION_NAMES[a].toLowerCase()], fillType: act.cutFill.type });
     }
@@ -335,12 +336,6 @@ export const setPenEdit = (pen: { weight: number; color?: string }): PlaceEdit =
   },
   style: (style, key) => {
     if (key.startsWith('pens.')) putPenRow(style, key.slice(5), (p, d) => ((p.weight = pen.weight), setColor(p, d, pen.color)));
-    else if (key.startsWith('outline.')) {
-      const a = style.actions[key.slice(8) as ActionKey];
-      const color = (colorKey(pen.color) === 'ink' ? 'ink' : pen.color) as LineDef['color'];
-      if (a.cutOutline) a.cutOutline = { ...a.cutOutline, weight: pen.weight, color };
-      a.lines = { ...a.lines, color };
-    }
   },
 });
 
@@ -386,4 +381,4 @@ export const setFillTypeEdit = (type: string): PlaceEdit => ({
 export const lineTypeName = (res: StyleResources, id: string) => (id ? (LINE_TYPES[id]?.name ?? res.lineTypes?.find((t) => t.id === id)?.name ?? 'Borttagen linjetyp') : 'Egen streckning');
 
 /** Raden för en nyckel i en kategori finns (gruppen visas i vytypen). */
-export const placeRowExists = (type: ViewType, key: string) => !key.startsWith('pens.') || !!penRowOf(key.slice(5))?.group.types.includes(type);
+export const placeRowExists = (type: ViewType, key: string) => !key.startsWith('pens.') || penRowShown(key.slice(5), type);

@@ -17,6 +17,8 @@ export interface PenRow {
   label: string;
   hint: string;
   tags: readonly string[];
+  /** Vytyperna där raden visas, om inte alla gruppens (0.10.38: planens och fasadernas rader i samma grupp). */
+  types?: readonly ViewType[];
 }
 
 export interface PenGroup {
@@ -42,7 +44,18 @@ const MARKER_TAGS: Record<string, string[]> = {
   litteraLeader: ['littera', 'vägg'],
 };
 
-const objectRows = (group: string): PenRow[] => OBJECT_PENS.filter((r) => r.group === group).map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: r.tags }));
+const PLAN: readonly ViewType[] = ['storey'];
+const PLAN_AND_SECTION: readonly ViewType[] = ['storey', 'section'];
+const ELEVATION: readonly ViewType[] = ['facade', 'section'];
+/** Snittlinjerna gäller också sektionernas snitt (0.10.38). */
+const SECTION_CUT = new Set(['wallCut', 'slabCut', 'roofCut', 'groundCut']);
+
+/** Gruppens rader: planens (snittlinjerna också i sektionerna) och sedan fasadernas och sektionernas konturlinjer. */
+const objectRows = (group: string): PenRow[] => [
+  ...OBJECT_PENS.filter((r) => r.group === group).map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: r.tags, types: SECTION_CUT.has(r.key) ? PLAN_AND_SECTION : PLAN })),
+  ...FACADE_PENS.filter((r) => r.group === group).map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: r.tags, types: ELEVATION })),
+];
+const ALL_MODEL: readonly ViewType[] = ['storey', 'facade', 'section'];
 
 /** Snittets nycklar heter t.ex. `aboveWall`: läget och objekttypen. */
 function cutTags(key: string): string[] {
@@ -54,37 +67,30 @@ export const PEN_GROUPS: readonly PenGroup[] = [
   {
     id: 'walls',
     title: 'Väggar',
-    note: 'Snittlinjen är väggens kontur där planens snitt går genom den, konturlinjen det oskurna (vägghålets kanter under fönstren). Snittlinjen ger tjockleken; när jämförelsen är på ger åtgärden (under Åtgärder) färg och streckning. Ett objekt eller en typ kan ha en egen penna.',
-    types: ['storey'],
+    note: 'Snittlinjen är väggens kontur där snittet går genom den, konturlinjen det oskurna (i planen vägghålets kanter under fönstren, i fasaden väggens kanter). Snittlinjen ger tjockleken; när jämförelsen är på ger åtgärden (under Åtgärder) färg och streckning. Ett objekt eller en typ kan ha en egen penna.',
+    types: ALL_MODEL,
     rows: objectRows('walls'),
   },
   {
     id: 'doors',
     title: 'Dörrar',
-    note: 'Gäller alla dörrar utan egen penna, på typen eller objektet. Hålets kanter i väggen följer väggens pennor.',
-    types: ['storey'],
+    note: 'Gäller alla dörrar utan egen penna, på typen eller objektet. Hålets kanter i väggen följer väggens pennor. Planens och fasadens rader är var sin.',
+    types: ALL_MODEL,
     rows: objectRows('doors'),
   },
   {
     id: 'windows',
     title: 'Fönster',
-    note: 'Gäller alla fönster utan egen penna, på typen eller objektet. Hålets kanter i väggen följer väggens pennor.',
-    types: ['storey'],
+    note: 'Gäller alla fönster utan egen penna, på typen eller objektet. Hålets kanter i väggen följer väggens pennor. Planens och fasadens rader är var sin.',
+    types: ALL_MODEL,
     rows: objectRows('windows'),
   },
   {
     id: 'objects',
     title: 'Bjälklag, tak, stödmurar, möbler och rum',
-    note: 'Snittlinjerna ger tjockleken, och åtgärden färg och streckning när jämförelsen är på. Det som ligger helt under eller över snittet har sina pennor under Snittet i planen. Rummens kontur ligger under väggarna och har ingen linje från början.',
-    types: ['storey'],
-    rows: [...objectRows('others'), ...ROOM_PENS.map((r) => ({ key: r.key, label: 'Rum: konturlinje', hint: r.hint, tags: ['rum', 'kontur', 'konturlinje'] }))],
-  },
-  {
-    id: 'facade',
-    title: 'Linjer i fasader och sektioner',
-    note: 'Det som syns bortom snittet, efter vad linjen är. Vägghålet är tjockare än karm, båge och dörrblad. Snittets kontur ställs in under Åtgärder; det tonade djupet och de dolda linjerna ritas alltid tunna.',
-    types: ['facade', 'section'],
-    rows: FACADE_PENS.map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: r.tags })),
+    note: 'Snittlinjerna ger tjockleken, och åtgärden färg och streckning när jämförelsen är på. I planen har det som ligger helt under eller över snittet sina pennor under Snittet i planen, och rummens kontur ligger under väggarna och har ingen linje från början. I fasader och sektioner ritas det tonade djupet och de dolda linjerna alltid tunna.',
+    types: ALL_MODEL,
+    rows: [...objectRows('others'), ...ROOM_PENS.map((r) => ({ key: r.key, label: 'Rum: konturlinje', hint: r.hint, tags: ['rum', 'kontur', 'konturlinje'], types: PLAN }))],
   },
   {
     id: 'cut',
@@ -111,7 +117,16 @@ export const PEN_GROUPS: readonly PenGroup[] = [
 ];
 
 /** Grupperna som visas i en vytyp. */
-export const penGroupsFor = (type: ViewType): PenGroup[] => PEN_GROUPS.filter((g) => g.types.includes(type));
+export const penGroupsFor = (type: ViewType): PenGroup[] =>
+  PEN_GROUPS.filter((g) => g.types.includes(type))
+    .map((g) => (g.rows.some((r) => r.types) ? { ...g, rows: g.rows.filter((r) => !r.types || r.types.includes(type)) } : g))
+    .filter((g) => g.rows.length);
+
+/** Raden visas i vytypen: gruppen gör det, och raden själv. */
+export const penRowShown = (key: string, type: ViewType) => {
+  const r = ROW_OF.get(key);
+  return !!r && r.group.types.includes(type) && (!r.row.types || r.row.types.includes(type));
+};
 
 const ROW_OF = new Map(PEN_GROUPS.flatMap((g) => g.rows.map((r) => [r.key, { row: r, group: g }] as const)));
 

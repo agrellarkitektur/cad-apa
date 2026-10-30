@@ -1640,6 +1640,32 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Snitt- och konturlinjer i fasader och sektioner (0.10.38, format 25)
+
+- **Raderna** (`repr/facadePens.ts`): `FACADE_PENS` har nycklar per
+  objekt (`wallElev`, `wallHoleElev`, `doorFrameElev` …, `slabElev`,
+  `otherElev`) med `group` (planens grupper) och `part` (delen i 3D).
+  `facadeRowOf(part, objectType)` ger raden: dörrens delar dörrens rader,
+  andra öppningars fönstrets, linjer utan del bjälklagets eller Övrigt.
+  `facadePen(style, key)` läser raden.
+- **Rader per vytyp** (`repr/penRows.ts`): `PenRow.types` (valfri);
+  `penGroupsFor(type)` filtrerar raderna och tar bort tomma grupper, och
+  `penRowShown(key, type)` ersätter gruppkollen i `placeRowExists`.
+  `objectRows(group)` ger planens rader (snittlinjerna `storey` och
+  `section`, resten `storey`) och fasadens (`facade`, `section`).
+- **Snittet i sektionen** (`section.ts`): grupperna har nyckeln
+  `åtgärd|p|material|snittlinje` (`cutRowPen` som JSON), och
+  `objectType` på `origin` för regionerna och `asOutline`-linjerna, så att
+  `applyStyle` hittar raden. `materialCutPrims(…, false, true)` och
+  `asOutline`-linjerna genom `applyStyle`; med egna pennor tas de bort och
+  ritas per objekt som förut.
+- **`applyStyle(p, s, action, sheet, scale)`** har ingen `plan`-flagga:
+  snittlinjen och jämförelsens färg gäller i alla vyer. Åtgärdens
+  `cutOutline.weight` läses inte längre (kvar i formatet).
+- **Ställena**: `outline.<åtgärd>` har ingen `pen` (bara `linetype`), och
+  `setPenEdit` har ingen gren för dem.
+- Tester: `tests/v01038.test.ts`. Referensritningarna ändrades inte.
+
 ## Snitt- och konturlinjer i planen (0.10.37, format 25)
 
 - **Raderna** (`repr/objectPens.ts`): `OBJECT_PENS` (nyckel, grupp,
@@ -1681,9 +1707,7 @@ projekt i 1 982 jämförelser.
   och får taggar här. `penSection(style, type, info)` ritar gruppen för
   vytypen; `info` ger pennans nummer framför raden.
 - **Fasadernas linjer** (`repr/facadePens.ts`): `FACADE_PENS` (förut
-  `PART_PEN` i `section.ts`) och `facadePen(style, part)`, som läser
-  tjocklek, färg och linjetyp ur `pens[part]` (öppningssättet med
-  symbolpennan under).
+  `PART_PEN` i `section.ts`); per objekt sedan 0.10.38 (se där).
 - **Pennlistan** är `StyleResources.penList` (`NumberedPen`: `no`,
   `weight`, `color`; svart utan färg), läst med `normalizePenList`.
   Ställena har kvar sina värden; ett ställe hör till pennan med samma

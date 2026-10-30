@@ -3528,7 +3528,7 @@ in var som helst efter A, och bara A ger nytt format:
 
 Före F och G (Carl August 30 oktober, svaren på frågorna om 0.10.36):
 **0.10.37 Snitt- och konturlinjer i planen** ✓ och **0.10.38 Snitt- och
-konturlinjer i fasader och sektioner**, se nedan.
+konturlinjer i fasader och sektioner** ✓, se nedan.
 
 ### 0.10.32 Tre nivåer med arv ✓ · *nytt format (25)*
 
@@ -3808,11 +3808,40 @@ i pennlistan och *Gå dit*).*
 karm i kontur och fönstrets bleck i planen, taklinjerna i snittzonen
 (de har takets penna under snittet som förut).
 
-### 0.10.38 Snitt- och konturlinjer i fasader och sektioner
+### 0.10.38 Snitt- och konturlinjer i fasader och sektioner ✓
 
 Mellanstor, samma format. Fasadernas och sektionernas linjer
 (`FACADE_PENS`) läggs ihop med objektens snitt- och konturlinjer från
-0.10.37.
+0.10.37. Carl August 30 oktober: planens och fasadens rad för samma del
+(t.ex. karmen) är två ställen, så att de ställs in var för sig.
+
+*Gjord 30 oktober, i en session. Samma format (25); raderna är nya
+nycklar i penntabellen. Testerna: 777. Se UTVECKLING.md, *Snitt- och
+konturlinjer i fasader och sektioner*. Claudes val: **grupperna är
+planens** (*Väggar*, *Dörrar*, *Fönster*, *Bjälklag, tak, stödmurar,
+möbler och rum*) och visas i våningar, fasader och sektioner, men raderna
+per vytyp: planens i våningar, fasadens (`…Elev`, egna förval) i fasader
+och sektioner, och snittlinjerna (vägg, bjälklag, tak, stödmur) i
+våningar och sektioner. Gruppen *Linjer i fasader och sektioner* är borta.
+**Dörrar och fönster har var sina rader** för karm, glas, foder, skarvar
+och öppningssätt (förut gemensamma); handtaget är dörrens, båge och bleck
+fönstrets. *Skarvar* är karmens och bågarnas hörn och falsen (förvalets
+text om skarven mellan befintligt och nytt stämde inte). **Linjer utan
+del** (bjälklagens och andra formers kanter, förut 0,18 utan rad) har
+*Bjälklag: konturlinje* och *Övrigt: konturlinje*, båda 0,18. Alla förval
+är som förut, så ritningarna ändras inte. **Sektionernas snitt**:
+`applyStyle` har ingen `plan`-flagga längre (snittlinjen gäller överallt);
+snitten slås ihop per åtgärd, material och snittlinje, så väggar, bjälklag
+och tak blir en yta så länge deras snittlinjer är lika (förvalen) och
+delas när en av dem ändras. Materialets snitt ritar konturen som
+snittlinje efter mönstret, som i planen. **Jämförelsen** ger åtgärdens
+färg före radernas också i fasader och sektioner (förut bara planen).
+**Åtgärdernas kontur** är ingen penna bland ställena längre (bara
+linjetypen, under Linjetyper); färgen ändras under Åtgärder. Provat i
+Playwright mot `dist/` (Fasader och Sektioner i stilboken).*
+
+*Gjordes inte:* egna gruppnamn per vytyp (fasaden säger *möbler och rum*
+fast rummen inte har någon rad där), en rad för taklinjerna i snittzonen.
 
 ### 0.11 Trappor · *nytt format*
 

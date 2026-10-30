@@ -42,7 +42,7 @@ describe('ställena per objekttyp', () => {
     for (const r of OBJECT_PENS) expect(html).toContain(r.label);
     expect(html).not.toContain('Pennor för dörrar och fönster');
     // Fasadernas öppningssätt har sin egen rad, utan symbolpennan under.
-    expect(facadePen(SWEDISH_STANDARD, 'swing')).toEqual({ weight: 0.13, dash: [3, 1.5] });
+    expect(facadePen(SWEDISH_STANDARD, 'doorSwingElev')).toEqual({ weight: 0.13, dash: [3, 1.5] });
   });
 
   it('väggens snittlinje ger tjockleken och, utan jämförelse, färgen och linjetypen', () => {
@@ -62,15 +62,15 @@ describe('ställena per objekttyp', () => {
     for (const p of r) expect(p.outline).toMatchObject({ weight: 0.5, color: 'ink' });
     // Det som rivs: streckat i åtgärdens färg, snittlinjens tjocklek.
     const sheet = { ...SWEDISH_STANDARD, pens: { wallCut: { weight: 0.5, color: '#2f6db5' } } };
-    const gone = applyStyle({ kind: 'region', role: 'cut', rings: [], fill: { kind: 'none' }, outline: null, origin: { objectType: 'Wall' } }, sheet.actions.demolished, 'demolished', sheet, 1, true);
+    const gone = applyStyle({ kind: 'region', role: 'cut', rings: [], fill: { kind: 'none' }, outline: null, origin: { objectType: 'Wall' } }, sheet.actions.demolished, 'demolished', sheet, 1);
     expect(gone.kind === 'region' && gone.outline).toEqual({ weight: 0.5, color: 'ink', dash: [2, 1] });
     // Färgmarkerad: det nya rött, också dörrblad med en blå rad.
-    const s = applyStyle({ kind: 'line', a: [0, 0], b: [1, 0], pen: { weight: 0.18, color: '#0000ff' } }, COLOUR_CODED.actions.new, 'new', COLOUR_CODED, 1, true);
+    const s = applyStyle({ kind: 'line', a: [0, 0], b: [1, 0], pen: { weight: 0.18, color: '#0000ff' } }, COLOUR_CODED.actions.new, 'new', COLOUR_CODED, 1);
     expect(s.kind === 'line' && s.pen.color).toBe('#c2372c');
-    const plain = applyStyle({ kind: 'line', a: [0, 0], b: [1, 0], pen: { weight: 0.18, color: '#0000ff' } }, COLOUR_CODED.actions.plain, 'plain', COLOUR_CODED, 1, true);
+    const plain = applyStyle({ kind: 'line', a: [0, 0], b: [1, 0], pen: { weight: 0.18, color: '#0000ff' } }, COLOUR_CODED.actions.plain, 'plain', COLOUR_CODED, 1);
     expect(plain.kind === 'line' && plain.pen.color).toBe('#0000ff');
     // Utan kontur i åtgärden ritas ingen snittlinje.
-    const none = applyStyle({ kind: 'region', role: 'cut', rings: [], fill: { kind: 'none' }, outline: null, origin: { objectType: 'Wall' } }, COLOUR_CODED.actions.new, 'new', COLOUR_CODED, 1, true);
+    const none = applyStyle({ kind: 'region', role: 'cut', rings: [], fill: { kind: 'none' }, outline: null, origin: { objectType: 'Wall' } }, COLOUR_CODED.actions.new, 'new', COLOUR_CODED, 1);
     expect(none.kind === 'region' && none.outline).toBeNull();
   });
 

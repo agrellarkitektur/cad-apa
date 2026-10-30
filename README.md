@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.37** (alfa); nästa är **0.10.38 Snitt- och konturlinjer i fasader och sektioner**,
+**0.10.38** (alfa); nästa är **0.10.39 Projektet › Allmänt**,
 och efter stilinställningarna och pennorna (0.10.32–0.10.40) **0.11 Trappor**.
 
 ## Vad som fungerar
@@ -1149,6 +1149,33 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.38, snitt- och konturlinjer i fasader och sektioner (samma filformat, 25):
+- **Konturlinjer per objekt i fasader och sektioner**: grupperna *Väggar*,
+  *Dörrar*, *Fönster* och *Bjälklag, tak, stödmurar, möbler och rum*
+  finns nu också i kategorierna för fasader och sektioner, med fasadens
+  egna rader: *Vägg: konturlinje* och *hålets kant*, dörrens *karm
+  (kontur)*, *blad*, *foder*, *handtag*, *glas*, *skarvar* och
+  *öppningssätt*, fönstrets *karm (kontur)*, *båge*, *glas*, *bleck*,
+  *foder*, *skarvar* och *öppningssätt*, *Tak* och *Bjälklag: konturlinje*
+  och *Övrigt: konturlinje* (stödmurar, ramper, möbler …). De ersätter
+  gruppen *Linjer i fasader och sektioner*; ändrade sådana pennor faller
+  bort (förvalen ritar som förut). Dörrar och fönster har nu var sina
+  rader för karm, glas, foder, skarvar och öppningssätt
+- **Fasadens och planens rader är var sina ställen**: en rad med samma
+  namn i planen och i fasaden (t.ex. *Fönster: karm (kontur)*) ställs in
+  för sig, eftersom fasaden oftast vill ha tjockare linjer
+- **Sektionernas snitt som planens**: väggarnas, bjälklagens, takens och
+  stödmurarnas snittlinjer (samma rader som i planen, i sektionens
+  kategori) ger tjockleken på konturen i snittet, och åtgärden färg och
+  streckning när jämförelsen är på. Materialets snitt får sin kontur som
+  snittlinje efter mönstret, som i planen
+- **Åtgärdens färg i fasaderna**: med jämförelsen på går åtgärdens färg
+  före en rad med egen färg också i fasader och sektioner (i Färgmarkerad
+  blir glaset rött där det är nytt)
+- **Åtgärdernas kontur har ingen tjocklek längre**: under Resurser ›
+  *Pennor* står den inte bland ställena; dess linjetyp finns under
+  *Linjetyper*, och färgen ändras under Åtgärder
 
 Version 0.10.37, snitt- och konturlinjer i planen (samma filformat, 25):
 - **Ställen per objekttyp**: i en vykategori för våningar har väggar,

@@ -28,23 +28,25 @@ describe('pennraderna per vytyp', () => {
   it('varje vytyp visar sina grupper', () => {
     const ids = (t: Parameters<typeof penGroupsFor>[0]) => penGroupsFor(t).map((g) => g.id);
     expect(ids('storey')).toEqual(['walls', 'doors', 'windows', 'objects', 'cut', 'contours', 'markers']);
-    expect(ids('facade')).toEqual(['facade', 'markers']);
+    expect(ids('facade')).toEqual(['walls', 'doors', 'windows', 'objects', 'markers']);
+    expect(ids('section')).toEqual(['walls', 'doors', 'windows', 'objects', 'markers']);
     expect(ids('site')).toEqual(['contours', 'markers']);
     expect(ids('worksheet')).toEqual(['markers']);
     const book = emptyProject('Prov', 'ombyggnad').graphics;
     const html = penSection(defaultSheet(book, 'facade'), 'facade');
-    expect(html).toContain('Linjer i fasader och sektioner');
-    expect(html).not.toContain('Snittet i planen');
+    expect(html).toContain('Vägg: hålets kant');
+    expect(html).not.toContain('<h3>Snittet i planen');
+    expect(html).not.toContain('Vägg: snittlinje');
   });
 
   it('fasadens linjer läser linjetypen ur stilboken', () => {
     const style = structuredClone(defaultSheet(emptyProject('Prov', 'ombyggnad').graphics, 'facade'));
-    expect(facadePen(style, 'swing').dash).toEqual([3, 1.5]);
-    expect(facadePen(style, 'glass')).toMatchObject({ weight: 0.13, color: 'muted' });
-    style.pens = { glass: { weight: 0.18, color: 'ink' }, wall: { weight: 0.25, linetype: 'dotted' }, swing: { weight: 0.13, linetype: 'solid' } };
-    expect(facadePen(style, 'glass')).toMatchObject({ weight: 0.18, color: 'ink' });
-    expect(facadePen(style, 'wall').dash).toEqual([0.3, 1]);
-    expect(facadePen(style, 'swing').dash).toBeUndefined();
+    expect(facadePen(style, 'windowSwingElev').dash).toEqual([3, 1.5]);
+    expect(facadePen(style, 'windowGlassElev')).toMatchObject({ weight: 0.13, color: 'muted' });
+    style.pens = { windowGlassElev: { weight: 0.18, color: 'ink' }, wallElev: { weight: 0.25, linetype: 'dotted' }, windowSwingElev: { weight: 0.13, linetype: 'solid' } };
+    expect(facadePen(style, 'windowGlassElev')).toMatchObject({ weight: 0.18, color: 'ink' });
+    expect(facadePen(style, 'wallElev').dash).toEqual([0.3, 1]);
+    expect(facadePen(style, 'windowSwingElev').dash).toBeUndefined();
   });
 });
 
@@ -52,7 +54,7 @@ describe('ställena och pennlistan', () => {
   it('pennorna numreras efter färg och tjocklek, och ett ställe hör till pennan med samma värden', () => {
     const doc = emptyProject('Prov', 'ombyggnad');
     const places = stylePlaces(doc);
-    expect(places.some((p) => p.id === 'cat:facade:fasad|pens.hole' && p.pen?.weight === 0.35)).toBe(true);
+    expect(places.some((p) => p.id === 'cat:facade:fasad|pens.wallHoleElev' && p.pen?.weight === 0.35)).toBe(true);
     expect(places.some((p) => p.id === 'cat:storey:plan|outline.new' && p.tags.includes('snitt'))).toBe(true);
     // Fyllningstypernas ställen: materialens fyllningar (tegel i planen och snittet).
     expect(places.some((p) => p.id === 'mat:tegel|mfill.cut' && p.fillType === 'tegel')).toBe(true);
@@ -60,7 +62,7 @@ describe('ställena och pennlistan', () => {
     expect(table.map((r) => r.pen.no)).toEqual(table.map((_, i) => i + 1));
     expect(table[0].pen).toEqual({ no: 1, weight: 0 });
     expect(table.slice(0, 6).every((r) => !r.pen.color)).toBe(true);
-    expect(table.slice(6).map((r) => r.pen.color)).toEqual(['muted', 'muted', '#c99700']);
+    expect(table.slice(6).map((r) => r.pen.color)).toEqual(['muted', 'muted']);
     expect(table.reduce((n, r) => n + r.places.length, 0)).toBe(places.filter((p) => p.pen).length);
     // Taggarna: vytypen och objektet.
     const ill = places.find((p) => p.where.kind === 'cat' && p.where.cat === 'illustration')!;
@@ -100,7 +102,7 @@ describe('byt och flytta', () => {
     const before = penTable(withFrozenPens(store.doc), stylePlaces(store.doc));
     const p025 = before.find((r) => penKey(r.pen) === '0.25|ink')!;
     const p018 = before.find((r) => penKey(r.pen) === '0.18|ink')!;
-    const ids = ['cat:storey:plan|pens.doorFrameCut', 'cat:facade:fasad|pens.wall'];
+    const ids = ['cat:storey:plan|pens.doorFrameCut', 'cat:facade:fasad|pens.wallElev'];
     setPlaces(store, 'pen', ids, String(p018.pen.no));
     const after = penTable(store.doc.graphics, stylePlaces(store.doc));
     expect(after.find((r) => r.pen.no === p025.pen.no)!.places.length).toBe(p025.places.length - 2);
@@ -121,9 +123,8 @@ describe('byt och flytta', () => {
     const red = now.find((r) => r.pen.no === p035.pen.no)!;
     expect(red.pen).toEqual({ no: p035.pen.no, weight: 0.35, color: '#c2372c' });
     expect(red.places.length).toBe(p035.places.length);
-    // Konturen i åtgärderna följer med, och linjerna får samma färg.
-    expect(categoryOf(store.doc.graphics, 'storey', 'plan').style.actions.new.cutOutline).toMatchObject({ weight: 0.35, color: '#c2372c' });
-    expect(categoryOf(store.doc.graphics, 'storey', 'plan').style.actions.new.lines.color).toBe('#c2372c');
+    // Åtgärdernas kontur är ingen penna längre (0.10.38): den följer inte med.
+    expect(categoryOf(store.doc.graphics, 'storey', 'plan').style.actions.new.lines.color).not.toBe('#c2372c');
     const p018 = now.find((r) => penKey(r.pen) === '0.18|ink')!;
     expect(editPen(store, p018.pen.no, { weight: 0.35, color: '#c2372c' })).toContain(`Penna ${p035.pen.no}`);
   });

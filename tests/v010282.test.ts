@@ -86,7 +86,11 @@ describe('Byggnadens material (0.10.28.2)', () => {
     expect(cutRegions().some((p) => p.kind === 'region' && p.ownFill)).toBe(false);
     linkMaterial(s, ['bj'], 'betong');
     const mat = cutRegions();
-    expect(mat.some((p) => p.kind === 'region' && p.fill.kind === 'solid' && p.fill.color === 'paper' && !!p.outline)).toBe(true);
+    expect(mat.some((p) => p.kind === 'region' && p.fill.kind === 'solid' && p.fill.color === 'paper')).toBe(true);
+    // Konturen som snittlinje efter mönstret (0.10.38): bjälklagets rad ger tjockleken.
+    const outlines = buildSection(s.doc, 'sek', { state: s.doc.states.at(-1)!.id })!.prims.filter((p) => p.kind === 'polyline' && p.asOutline && p.origin?.objectId === 'bj');
+    expect(outlines.length).toBeGreaterThan(0);
+    expect(outlines.every((p) => p.kind === 'polyline' && p.pen.weight === 0.35)).toBe(true);
     expect(mat.some((p) => p.kind === 'region' && p.fill.kind === 'pattern')).toBe(true);
   });
 

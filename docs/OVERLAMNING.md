@@ -4,10 +4,22 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.37.
+**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.38.
 
 ## Läget
 
+- **0.10.38 Snitt- och konturlinjer i fasader och sektioner är klar**
+  (samma format, 25; nya nycklar i penntabellen). Våningarnas grupper
+  (*Väggar*, *Dörrar*, *Fönster*, *Bjälklag, tak …*) visas också i
+  fasader och sektioner, med fasadens egna rader (`…Elev`; planens och
+  fasadens rad för samma del är två ställen, som Carl August bekräftade).
+  Dörrar och fönster har var sina rader för karm, glas, foder, skarvar och
+  öppningssätt; *Bjälklag* och *Övrigt: konturlinje* för linjer utan del.
+  Sektionernas snitt har snittlinjerna (tjockleken), med åtgärdens färg
+  och streckning vid jämförelse; materialets snitt får konturen som
+  snittlinje. Åtgärdernas kontur är ingen penna längre (bara linjetyp).
+  Förvalen ritar som förut. Testerna: 777 på ca 17 s. Provat i
+  Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes val i PLAN.md.
 - **0.10.37 Snitt- och konturlinjer i planen är klar** (samma format,
   25; nya nycklar i penntabellen). Våningarnas kategorier har grupperna
   *Väggar*, *Dörrar*, *Fönster* och *Bjälklag, tak, stödmurar, möbler och
@@ -78,9 +90,16 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **0.10.30**, **0.10.29**, **0.10.28.3**, **0.10.28.2**, **0.10.28.1**,
   **0.10.28**, **0.10.27**, **0.10.26**, **0.10.25.1** och **0.10.25**: se
   PLAN.md.
-- **Publicerad:** 0.10.37 pushad till `main` 30 oktober (se git och
+- **Publicerad:** 0.10.38 pushad till `main` 30 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.10.38:** ändrade pennor under *Linjer i
+  fasader och sektioner* faller bort (förvalen ritar som förut). Med
+  jämförelsen på får fasadernas och sektionernas linjer åtgärdens färg
+  också där raden har en egen (i Färgmarkerad blir nytt glas rött), och
+  materialets snitt i sektionen följer åtgärdens kontur (ingen kontur i
+  Färgmarkerad). Ändras bjälklagets eller takets snittlinje delas snittet
+  från väggarnas. Annars inget.
 - **Märks i hans ritningar efter 0.10.37:** ändrade pennor för dörrarnas
   och fönstrens *Snitt*, *Vy* och *Symbol* faller bort (förvalen ritar som
   förut). En dörr eller ett fönster med egen penna utan *Symbol* får
@@ -136,14 +155,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare:** 0.10.37, 0.10.36, 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare:** 0.10.38, 0.10.37, 0.10.36, 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.37` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.38` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.37 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.38 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -218,13 +237,12 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   ~~0.10.32 Tre nivåer med arv~~, ~~0.10.33 Avvikelser och kategorier i
   vyn~~, ~~0.10.34 Radkontrollerna~~, ~~0.10.35 Underlag i vyn~~,
   ~~0.10.36 Pennor och ställen~~, ~~0.10.37 Snitt- och konturlinjer i
-  planen~~ (klara)
+  planen~~, ~~0.10.38 Snitt- och konturlinjer i fasader och sektioner~~
+  (klara)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **Penn- och linjesystemet** (Carl August 30 oktober): **0.10.38 Snitt-
-  och konturlinjer i fasader och sektioner** (mellanstor, på tur)
 - **Stilinställningarna, resten**: **0.10.39 Projektet › Allmänt**
-  (mellanstor), **0.10.40 Stilboken ut och in** (mellanstor; två öppna
+  (mellanstor, på tur), **0.10.40 Stilboken ut och in** (mellanstor; två öppna
   frågor)
 - **0.11 Trappor** (nytt format; med *Syns också på*)
 - **0.11.1 Profilverktyget** (stor) och **0.11.2 Dörrar och fönster**
@@ -242,31 +260,27 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.38 Snitt- och konturlinjer i fasader och sektioner** (mellanstor,
-samma format). Läs synpunkterna först och sortera Inkorgen om den har
-något.
+**0.10.39 Projektet › Allmänt** (mellanstor, samma format; valfria fält).
+Läs synpunkterna först och sortera Inkorgen om den har något. Innehållet
+står under F i `cad-apa-synpunkter.md`: företagsnamn, logotyp, ansvarig,
+projektnamn och -nummer, fastighet, skede, typsnitt och textstorlek som
+förval, höjdsystem och decimaler, enheter, litterats sifferantal,
+tjocklekstabellen, smarttext-taggarna med värden och egna taggar.
 
-- **Snittet i sektionerna** som i planen: `applyStyle(…, plan = true)`
-  också i `section.ts` (snittets region och `asOutline`), så att
-  objekttypens snittlinje ger tjockleken och åtgärden färg och
-  streckning; `materialCutPrims(…, true)` där också. Sektionernas
-  snittkontur saknar i dag `origin.objectType` (bara `objectId`): sätt
-  den.
-- **Fasadernas linjer** (`FACADE_PENS`) blir objektens konturlinjer:
-  *Vägg: konturlinje* i fasad (`wall`), *Tak: konturlinje* (`roof`),
-  karm, båge, dörrblad, bleck, foder, handtag och glas som delar av
-  *Dörr* och *Fönster* (med *Fönster: bleck* och *Dörr: karm (kontur)*,
-  som saknas i planen). Vägghålet (`hole`) är väggens (svar B), och
-  öppningssättet (`swing`) symbolen. Fråga: ska fasadens rad och planens
-  rad för samma del vara samma ställe (en penna för båda) eller två
-  (grupperna visas per vytyp)? Claudes förslag: två ställen med samma
-  namn, i var sin vytyp, eftersom fasaden oftast vill ha tjockare linjer.
-- Åtgärdernas kontur (tjocklek) faller då bort helt; ändra `outline.<åtgärd>`
-  i ställena till bara färg och linjetyp.
-- **Märks i hans ritningar:** ändrade fasadlinjer faller bort om nycklarna
-  byts. Inget nytt format.
+- Stilbokens *Allmänt* (`place.kind === 'general'` i `ui/styleDialog.ts`)
+  har i dag bara namnet. Samla det som redan finns utspritt (bladens
+  fält i `core/sheetFields.ts` och `core/sheets.ts`, höjdernas decimaler
+  i `labels.heights`, littera, `PEN_WEIGHTS` i `elements/drawing2d.ts`)
+  och låt stämplarna läsa taggarna därifrån.
+- Fråga först, kort: ska projektuppgifterna (namn, nummer, fastighet,
+  skede) höra till stilboken (följer med exporten och mallen i 0.10.40)
+  eller till projektet (bara visas i *Allmänt*)? Claudes förslag:
+  projektuppgifterna i projektet, kontorets (företagsnamn, logotyp,
+  ansvarig, typsnitt, tjocklekar) i stilboken.
+- Blir den för stor: kontorets och projektets uppgifter och taggarna
+  först, enheterna och tjocklekstabellen sist.
 
-Därefter 0.10.39 Projektet › Allmänt och 0.10.40 Stilboken ut och in.
+Därefter 0.10.40 Stilboken ut och in.
 
 Höjdkurvors del av ortofotot (två rader i `js/app.js` och `js/utbyte.js`,
 plus raden i `docs/UTBYTE-CAD-APA.md` där) görs i en session i
@@ -287,6 +301,15 @@ och 0.10.33 när han provat.
 som kategorier, gjort i 0.10.33). 0.10.31: ortofotot där marken saknar
 material, plus valet *Ortofoto* (gjort i 0.10.33); bildens sida i mm.
 0.10.30: rutornas mått lagom så länge; en rad "Eget" per fyllning (prova).
+
+**0.10.38 efter provning** (Claudes val, se PLAN.md)
+- Dörrar och fönster har nu var sina rader i fasaden för karm, glas, foder,
+  skarvar och öppningssätt (förut gemensamma). Bra, eller hellre
+  gemensamma rader för öppningarna?
+- Väggar, bjälklag och tak slås ihop i sektionens snitt så länge deras
+  snittlinjer är lika; ändras en blir det en skarv mellan dem. Rätt?
+- Gruppen heter *Bjälklag, tak, stödmurar, möbler och rum* också i
+  fasaden, där rummen inte har någon rad. Störande?
 
 **0.10.37 efter provning** (Claudes val, se PLAN.md)
 - Med jämförelsen på går åtgärdens färg före en rad med egen färg (i

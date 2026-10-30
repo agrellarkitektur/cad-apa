@@ -18,7 +18,8 @@ import { modelShapes, WITH_DEMOLISHED } from './storeyShapes';
 import { markerPen } from './markerPens';
 import { applyOwnPen, effectivePen, ownPenOf } from './ownPen';
 import { ownedOutlines } from './outlineOwners';
-import { facadePen } from './facadePens';
+import { facadePen, facadeRowOf } from './facadePens';
+import { cutRowPen } from './objectPens';
 import { applyStyle, type Pickable } from './plan';
 import { HIDDEN_SLABS, HIDDEN_SLABS_SECTION, HIDDEN_WALLS } from './sectionHidden';
 import { sectionLines } from './sectionLines';
@@ -104,7 +105,15 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   const { visibleLines, hiddenLines, minZ, maxZ, occluders, faces } = sectionLines(doc, shapes, { O, r, v, uMax, depthMax, tone, toView }, { slabs: hiddenSlabs, walls: hiddenWalls }, actionOfId, surfaced.size ? (s) => !!s.matId && surfaced.has(s.matId) && actionOfId(s.id) !== 'demolished' : undefined);
 
   // Snittytor där linjen skär formerna.
-  const cuts = new Map<string, { action: Action; poche: boolean; ids: Set<string>; rings: Rings[]; cut?: FillParams }>();
+  const cuts = new Map<string, { action: Action; poche: boolean; ids: Set<string>; rings: Rings[]; cut?: FillParams; objectType?: string }>();
+  // Snittlinjerna (0.10.38): väggar, bjälklag och tak slås ihop så länge deras snittlinjer är lika.
+  const cutRowKey = new Map<string, string>();
+  const rowKeyOf = (type: string | undefined) => {
+    const t = type ?? '';
+    let k = cutRowKey.get(t);
+    if (k === undefined) cutRowKey.set(t, (k = JSON.stringify(cutRowPen(style, type))));
+    return k;
+  };
   const materialById = new Map((style.materials ?? []).map((m) => [m.id, m]));
   const cutFaces: { material: string; rings: Rings }[] = [];
   // Varje objekts egen snittyta, för markering. Snitten ritas sammanslagna
@@ -124,9 +133,10 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
       const poche = POCHE_MATERIALS.has(s.material);
       // Materialets snitt (0.10.28.2): ett material slås ihop med sig självt.
       const cut = poche && s.matId ? materialCutFill(materialById.get(s.matId), action) : undefined;
-      const k = `${action}|${poche ? 'p' : 'o'}|${poche ? (cut ? `m:${s.matId}` : '') : s.id}`;
+      const objectType = doc.elements[s.id]?.type;
+      const k = `${action}|${poche ? 'p' : 'o'}|${poche ? `${cut ? `m:${s.matId}` : ''}|${rowKeyOf(objectType)}` : s.id}`;
       let g = cuts.get(k);
-      if (!g) cuts.set(k, (g = { action, poche, ids: new Set(), rings: [], ...(cut ? { cut } : {}) }));
+      if (!g) cuts.set(k, (g = { action, poche, ids: new Set(), rings: [], ...(cut ? { cut } : {}), ...(objectType ? { objectType } : {}) }));
       g.ids.add(s.id);
       g.rings.push(...polys);
     }
@@ -144,12 +154,10 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   let maxU = -Infinity;
   const slopes: Record<string, RoofSlopeParams> = {};
   for (const l of visibleLines) {
-    // Öppningssättet har sin rad i stilboken (förut symbolpennan under), streckat om den inte har en egen linjetyp.
-    const part = l.key.part;
-    const pen: Pen = part
-      ? { ...facadePen(style, part), ...(l.key.dash ? { dash: l.key.dash } : {}) }
-      : { weight: 0.18 };
-    const raw: Primitive = { kind: 'line', a: l.a, b: l.b, pen, origin: { objectId: l.key.id, objectType: doc.elements[l.key.id]?.type, part: l.key.part ?? 'vy' } };
+    // Konturlinjerna per objekt (0.10.38): delen och objekttypen ger raden.
+    const objectType = doc.elements[l.key.id]?.type;
+    const pen: Pen = { ...facadePen(style, facadeRowOf(l.key.part, objectType)), ...(l.key.dash ? { dash: l.key.dash } : {}) };
+    const raw: Primitive = { kind: 'line', a: l.a, b: l.b, pen, origin: { objectId: l.key.id, objectType, part: l.key.part ?? 'vy' } };
     // Objektets egen penna (0.8.31) efter stilmallens.
     const styled = applyOwnPen(applyStyle(raw, style.actions[ctx.styleKeyOf(l.key.action)], l.key.action, style, ctx.scale), ownPenOf(doc, raw), style);
     // Det tonade (0.10.10): tunt och grått, oavsett penna.
@@ -173,8 +181,9 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     for (const rings of merged) {
       if (g.cut) {
         // Med egna pennor ritas konturen per objekt nedan; papperet först, utan kontur.
-        const mp = materialCutPrims(rings, g.cut, { objectId: first, part: 'snitt' }, style, ctx.scale);
-        prims.push(...(owned.size ? mp.map((q, i) => (i === 0 && q.kind === 'region' ? { ...q, outline: null, noOutline: true } : q)) : mp));
+        // Konturen som snittlinje efter mönstret (0.10.38, som i planen); med egna pennor per objekt nedan.
+        const mp = materialCutPrims(rings, g.cut, { objectId: first, objectType: g.objectType, part: 'snitt' }, style, ctx.scale, false, true);
+        prims.push(...mp.filter((q) => !(owned.size && q.kind === 'polyline' && q.asOutline)).map((q) => (q.kind === 'polyline' && q.asOutline ? applyStyle(q, style.actions[ctx.styleKeyOf(g.action)], g.action, style, ctx.scale) : q)));
         for (const ring of rings) for (const q of ring) {
           minU = Math.min(minU, q[0]);
           maxU = Math.max(maxU, q[0]);
@@ -182,8 +191,8 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
         continue;
       }
       const raw: Primitive = g.poche
-        ? { kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { objectId: first, part: 'snitt' }, ...split }
-        : { kind: 'region', role: 'cut', rings, fill: { kind: 'none' }, outline: { weight: 0.25 }, ownFill: true, origin: { objectId: first, part: 'snitt' }, ...split };
+        ? { kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { objectId: first, objectType: g.objectType, part: 'snitt' }, ...split }
+        : { kind: 'region', role: 'cut', rings, fill: { kind: 'none' }, outline: { weight: 0.25 }, ownFill: true, origin: { objectId: first, objectType: g.objectType, part: 'snitt' }, ...split };
       const p = applyStyle(raw, style.actions[ctx.styleKeyOf(g.action)], g.action, style, ctx.scale);
       prims.push(p);
       for (const ring of rings) for (const q of ring) {
@@ -195,7 +204,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
       const pieces = [...g.ids].flatMap((id) => (ownCuts.get(id) ?? []).map((r) => ({ id, rings: r })));
       for (const o of ownedOutlines(merged, pieces, owned)) {
         const id = o.id ?? first;
-        const raw: Primitive = { kind: 'polyline', points: o.points, closed: o.closed, pen: { weight: g.poche ? 0.35 : 0.25 }, ...(g.poche ? { asOutline: true } : {}), origin: { objectId: id, part: 'snitt' } };
+        const raw: Primitive = { kind: 'polyline', points: o.points, closed: o.closed, pen: { weight: g.poche ? 0.35 : 0.25 }, ...(g.poche ? { asOutline: true } : {}), origin: { objectId: id, objectType: doc.elements[id]?.type ?? g.objectType, part: 'snitt' } };
         const styled = g.poche ? applyStyle(raw, style.actions[ctx.styleKeyOf(g.action)], g.action, style, ctx.scale) : raw;
         const p = applyOwnPen(styled, o.id && doc.elements[o.id] ? effectivePen(doc, doc.elements[o.id]) : undefined, style);
         prims.push(p);
