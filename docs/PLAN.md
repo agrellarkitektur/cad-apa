@@ -3521,9 +3521,14 @@ in var som helst efter A, och bara A ger nytt format:
   2D, ett arbetsblad, en annan vy, DXF/bild; marken i 2D och 3D per kategori ✓
 - **E. 0.10.36 Pennor och ställen** (tavla 3; mellanstor; med penn- och
   linjesystemet) ✓
-- **F. 0.10.37 Projektet › Allmänt** (mellanstor)
-- **G. 0.10.38 Stilboken ut och in** (mellanstor; två öppna frågor: var
-  mallen för nya projekt ligger, och om bladmallar och stämplar följer med)
+- **F. 0.10.39 Projektet › Allmänt** (mellanstor; förut 0.10.37)
+- **G. 0.10.40 Stilboken ut och in** (mellanstor; två öppna frågor: var
+  mallen för nya projekt ligger, och om bladmallar och stämplar följer med;
+  förut 0.10.38)
+
+Före F och G (Carl August 30 oktober, svaren på frågorna om 0.10.36):
+**0.10.37 Snitt- och konturlinjer i planen** och **0.10.38 Snitt- och
+konturlinjer i fasader och sektioner**, se nedan.
 
 ### 0.10.32 Tre nivåer med arv ✓ · *nytt format (25)*
 
@@ -3743,6 +3748,28 @@ väggen, om *Symbol* följer *Snitt*) är inte ändrat; det är frågor till
 Carl August i överlämningen. Pennor har inget eget namn (siffror, som
 beslutat). Fyllningstypernas ställen tar inte med former och rum med
 egen fyllning (de räknas i listan ovanför). Sorteringen sparas inte.
+
+### 0.10.37 Snitt- och konturlinjer i planen
+
+Carl August 30 oktober (svar A–H på frågorna om 0.10.36). Stor, samma
+format. Ställen per objekttyp i stället för dörrarnas och fönstrens
+klasser *Snitt*, *Vy* och *Symbol*: snittlinje och konturlinje (det
+oskurna) för vägg, dörr, fönster, bjälklag, tak, stödmur, möbel och rum,
+och sammansatta objekt med flera (fönstrets karm i snitt och kontur, båge,
+glas, bleck; dörrens karm, blad, slagbåge). Snittlinjen ger tjockleken,
+åtgärden färg och streckning när jämförelsen är på. Öppningarnas oskurna
+linjer (vägghålet) tar väggens penna. Den egna pennans *Symbol* följer
+*Snitt* när den inte är satt. Över- och undersnitten är kvar som egna
+ställen. Pennlistan får också materialens konturpenna, typernas och
+objektens egna pennor som ställen (*Gå dit* till objektet). Linjetypen
+hör till stället. Ändrade *Snitt*, *Vy* och *Symbol* faller bort (inga
+migreringar). Blir den för lång: väggar, dörrar och fönster först.
+
+### 0.10.38 Snitt- och konturlinjer i fasader och sektioner
+
+Mellanstor, samma format. Fasadernas och sektionernas linjer
+(`FACADE_PENS`) läggs ihop med objektens snitt- och konturlinjer från
+0.10.37.
 
 ### 0.11 Trappor · *nytt format*
 

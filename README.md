@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.36** (alfa); nästa är **0.10.37 Projektet › Allmänt**,
-och efter stilinställningarna (0.10.32–0.10.38) **0.11 Trappor**.
+**0.10.36** (alfa); nästa är **0.10.37 Snitt- och konturlinjer i planen**,
+och efter stilinställningarna och pennorna (0.10.32–0.10.40) **0.11 Trappor**.
 
 ## Vad som fungerar
 
