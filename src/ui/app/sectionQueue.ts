@@ -127,7 +127,7 @@ export function createSectionQueue(onReady: () => void, opt: SectionQueueOptions
     /**
      * Fasaden eller sektionen för det här projektet och vyläget: färdig,
      * eller den förra medan den nya räknas. `styleKey` ska ändras när
-     * stilmallen ändras på annat sätt än genom projektet.
+     * stilboken ändras på annat sätt än genom projektet.
      */
     get(doc: ProjectDoc, markerId: Id, view: ViewStates, style: StyleSheet, styleKey: string): SectionResult | null {
       const version = versionOf(doc);

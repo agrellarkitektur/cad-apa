@@ -2,7 +2,7 @@ import { updateParams } from '../core/commands';
 import type { Element, Id, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
 import { CAP_LABELS, CAP_SIZE, FILL_BACKGROUND, FILL_COLOR, hasBackground, PATH_LABELS, segmentCount, type CapKind, effectiveFill, materialOf, type FillParams, type Shape2DParams } from '../elements/drawing2d';
-import type { Material, StyleSheet } from '../core/graphics';
+import type { Material, StyleResources } from '../core/graphics';
 import { resolveParams } from '../elements/registry';
 import { STRAIGHT } from '../geometry/arc';
 import { lineTypeOptions } from './lineTypePick';
@@ -27,7 +27,7 @@ export function fillFields(
   name: string,
   p: FillParams,
   attrs: (key: string) => string,
-  style?: StyleSheet,
+  style?: StyleResources,
   title?: string,
   ctx?: FillPanelContext,
 ): string {

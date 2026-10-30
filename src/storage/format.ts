@@ -1,4 +1,4 @@
-import { SWEDISH_STANDARD, normalizeStyle } from '../core/graphics';
+import { newStyleBook, normalizeBook } from '../core/graphics';
 import { DEFAULT_VIEW_TAGS, FORMAT, FORMAT_VERSION, SITE_STOREY, withSiteLast, type ProjectDoc } from '../core/model';
 
 /**
@@ -49,9 +49,9 @@ export function parse(text: string): ProjectDoc {
 
 function safeStyle(g: any) {
   try {
-    return normalizeStyle(g);
+    return normalizeBook(g);
   } catch {
-    return structuredClone(SWEDISH_STANDARD);
+    return newStyleBook();
   }
 }
 

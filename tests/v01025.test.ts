@@ -1,3 +1,5 @@
+import { categoryOf } from '../src/core/viewCategories';
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { addElements } from '../src/core/commands';
 import { buildingStoreys, emptyProject, groundStorey, SITE_STOREY } from '../src/core/model';
@@ -84,7 +86,7 @@ describe('Marken hör till Platsen', () => {
     const store = onSlope();
     const id = addGround(store, { kind: 'area', outline: [], around: true, sockel: 200 });
     store.transact('golv', (tx) => tx.setStoreys(tx.doc.storeys.map((s) => (s.id === 'pl-1' ? { ...s, elevation: 300 } : s))));
-    const ctx = createContext(store.doc, SITE_STOREY, { state: 'st-a' }, store.doc.graphics, () => true).ctx;
+    const ctx = createContext(store.doc, SITE_STOREY, { state: 'st-a' }, defaultSheet(store.doc.graphics), () => true).ctx;
     expect(groundGeometry(ctx, store.doc.elements[id])!.label.height).toBe(100);
   });
 });
@@ -119,9 +121,9 @@ describe('Vyer av Platsen', () => {
     expect([a.name, b.name]).toEqual(['Situationsplan', 'Situationsplan 2']);
     expect(a).toMatchObject({ storey: SITE_STOREY, category: 'situation', scale: 400 });
     const g = siteViewPreset(store.doc, 'grading');
-    expect(g.hide).toContain('+steepSlopes');
+    expect(categoryOf(store.doc.graphics, 'site', g.category).show.hide).toContain('+steepSlopes');
     const i = siteViewPreset(store.doc, 'illustration');
-    expect(i.hide).toContain('Terrain');
+    expect(categoryOf(store.doc.graphics, 'site', i.category).show.hide).toContain('Terrain');
     expect(i.name).toBe('Illustrationsplan');
   });
 });

@@ -1,3 +1,4 @@
+import { defaultSheet } from '../../core/viewCategories';
 import { addElements, updateParams } from '../../core/commands';
 import { isSite, SITE_STOREY, storeysUpFrom, type Element, type Id } from '../../core/model';
 import { groundAt, terrainOf } from '../../core/site';
@@ -250,7 +251,7 @@ export class GroundTool implements ViewTool, PointTaker {
    */
   private groundHeight(pt: Vec2): number {
     const doc = this.host.store.doc;
-    const { ctx } = createContext(doc, this.host.storey(), { state: this.host.activeState() }, doc.graphics, () => true);
+    const { ctx } = createContext(doc, this.host.storey(), { state: this.host.activeState() }, defaultSheet(doc.graphics), () => true);
     const t = finishedTerrain(ctx)?.terrain ?? terrainOf(doc);
     return (t && groundAt(t, pt[0], pt[1])) ?? 0;
   }

@@ -232,7 +232,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     selected: () => new Set(selection.list()),
     trace: () => ui.trace,
     viewModified: (v) => views.viewModified(v),
-    describeView,
+    describeView: (v) => describeView(store.doc, v),
     treeItem: () => panel.treeItem?.id ?? null,
     treeItems: () => new Set(panel.treeItem ? [panel.treeItem.id, ...(panel.treeItem.also ?? [])] : []),
     layout: () => ui.layout,
@@ -260,8 +260,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
         hint('Förhandsvisningen kan inte spara filer. Det fungerar i versionen på webbhotellet.', 4000);
         return;
       }
-      const r = await saveTextFile(JSON.stringify(style, null, 1), style.name, 'json', 'Stilmall');
-      if (r !== 'cancelled') hint('Stilmallen sparades.');
+      const r = await saveTextFile(JSON.stringify(style, null, 1), style.name, 'json', 'Stilbok');
+      if (r !== 'cancelled') hint('Stilboken sparades.');
     },
     (msg) => hint(msg, 4000),
   );
@@ -387,7 +387,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       ui.worksheet = null;
       ui.layout = null;
       ui.trace = null;
-      ui.styleName = null;
+      ui.category = null;
+      ui.viewType = null;
       ui.scale = 100;
       views.viewHistory.splice(0, views.viewHistory.length, { kind: 'storey', id: ui.storey });
       selection.clear();
@@ -469,6 +470,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     styleDialog: () => styleDialog,
     ctxMenu: () => ctxMenu,
     hint: () => hint,
+    place: () => render,
     renderAll: () => render.renderAll,
     viewStates: () => render.viewStates,
     setTool: () => tools.setTool,

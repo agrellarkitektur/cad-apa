@@ -1,3 +1,4 @@
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { reversedWall } from '../src/core/commands';
@@ -25,7 +26,7 @@ function leaning(extra: Record<string, { type: string; params: Record<string, un
   });
   return s;
 }
-const shapesOf = (s: DocStore) => modelShapes(s.doc, { state: s.doc.states.at(-1)!.id }, s.doc.graphics, WITHOUT_DEMOLISHED).shapes.map((x) => x.s);
+const shapesOf = (s: DocStore) => modelShapes(s.doc, { state: s.doc.states.at(-1)!.id }, defaultSheet(s.doc.graphics), WITHOUT_DEMOLISHED).shapes.map((x) => x.s);
 const wallOf = (s: DocStore) => shapesOf(s).find((x): x is Solid => x.kind !== 'edges' && x.id === 'a')!;
 
 describe('Lutande väggar (0.10.21)', () => {

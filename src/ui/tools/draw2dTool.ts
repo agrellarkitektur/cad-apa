@@ -1,3 +1,4 @@
+import { defaultSheet } from '../../core/viewCategories';
 import { addElements, updateParams } from '../../core/commands';
 import type { Element, Id } from '../../core/model';
 import { hasBackground, isClosed, segmentCount, shapePrims, type FillPattern, type LineType, type Shape2DParams, type ShapeKind } from '../../elements/drawing2d';
@@ -320,10 +321,10 @@ export class Draw2DTool implements ViewTool, PointTaker {
       const own = resolveParams<Shape2DParams>(this.host.store.doc, el);
       const bulges = own.shape === 'spline' ? undefined : [...this.base.bulges, ...pts.slice(this.base.n).map(() => 0)];
       const caps = this.base.reversed ? { startCap: own.endCap, endCap: own.startCap } : {};
-      return shapePrims({ ...own, ...caps, points: pts as [number, number][], bulges, closed: false, weight: own.weight || 0.13 }, undefined, false, this.host.view.drawingScale, this.host.store.doc.graphics);
+      return shapePrims({ ...own, ...caps, points: pts as [number, number][], bulges, closed: false, weight: own.weight || 0.13 }, undefined, false, this.host.view.drawingScale, defaultSheet(this.host.store.doc.graphics));
     }
     const p = { fillAngle: 45, fillSpacing: 2, ...this.params(pts, false) } as unknown as Shape2DParams;
-    return shapePrims({ ...p, weight: p.weight || 0.13 }, undefined, false, this.host.view.drawingScale, this.host.store.doc.graphics);
+    return shapePrims({ ...p, weight: p.weight || 0.13 }, undefined, false, this.host.view.drawingScale, defaultSheet(this.host.store.doc.graphics));
   }
 
   hintText(): string {

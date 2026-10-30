@@ -1,4 +1,4 @@
-import type { Material, MaterialUse, StyleSheet } from './graphics';
+import type { Material, MaterialUse, StyleResources } from './graphics';
 import type { Asset, Element, Id } from './model';
 import type { DocStore } from './store';
 import { effectiveFill, FILL_FIELDS, type FillParams } from '../elements/drawing2d';
@@ -52,7 +52,7 @@ function linkedFieldsOf(p: Partial<FillParams>): Partial<FillParams> {
 }
 
 /** En ny nyckel som inte krockar med något annat material. */
-function newId(style: StyleSheet, name: string): string {
+function newId(style: StyleResources, name: string): string {
   const used = new Set((style.materials ?? []).map((m) => m.id));
   const base =
     name
@@ -117,7 +117,7 @@ function linkTo(el: Element, m: Material, nested?: string): Element {
 }
 
 /** Objektet utan materialet: det som syntes i planen, som objektets egen fyllning. */
-function unlink(el: Element, style: StyleSheet, nested?: string): Element {
+function unlink(el: Element, style: StyleResources, nested?: string): Element {
   const now = fillOfElement(el, nested);
   const rest = nested ? Object.fromEntries(Object.entries(now).filter(([k]) => !(FILL_FIELDS as readonly string[]).includes(k) && !(LINK_FIELDS as readonly string[]).includes(k))) : {};
   return withFill(el, { ...rest, ...fillFieldsOf(effectiveFill(now as FillParams, style)) } as Partial<FillParams>, nested);
@@ -216,7 +216,7 @@ export function setMaterialTexture(store: DocStore, id: string, asset: Asset | n
 }
 
 /** Ta bort bilden om inget material längre använder den. */
-function dropTexture(tx: { doc: { graphics: StyleSheet; assets: Record<Id, Asset> }; removeAsset(id: Id): void }, asset: Id): void {
+function dropTexture(tx: { doc: { graphics: StyleResources; assets: Record<Id, Asset> }; removeAsset(id: Id): void }, asset: Id): void {
   if (!tx.doc.assets[asset] || (tx.doc.graphics.materials ?? []).some((q) => q.texture?.asset === asset)) return;
   tx.removeAsset(asset);
 }

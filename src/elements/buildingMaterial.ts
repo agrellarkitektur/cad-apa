@@ -1,4 +1,4 @@
-import type { Material, StyleSheet } from '../core/graphics';
+import type { Material, StyleResources } from '../core/graphics';
 import type { Pen } from '../repr/primitives';
 import { materialOf, type FillParams } from './fill2d';
 
@@ -10,7 +10,7 @@ import { materialOf, type FillParams } from './fill2d';
  */
 
 /** Materialet som objektet är kopplat till, om det finns i stilmallen. */
-export function buildingMaterialOf(p: Partial<FillParams>, style: StyleSheet | undefined): Material | undefined {
+export function buildingMaterialOf(p: Partial<FillParams>, style: StyleResources | undefined): Material | undefined {
   return materialOf(p, style);
 }
 

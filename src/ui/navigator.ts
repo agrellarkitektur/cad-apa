@@ -316,7 +316,7 @@ export class Navigator {
         <button class="btn" data-action="view-save-new">Spara som ny vy…</button>
         ${this.newFolderButton('vyer')}
       </div>
-      <p class="note">En vy sparar tillstånd, jämförelse, detaljnivå, vad som visas, stilmall, kalkering och vy-taggar. Klicka på en vy för att öppna den och se dess inställningar i egenskaperna.</p>
+      <p class="note">En vy sparar tillstånd, jämförelse, detaljnivå, vykategori, det som avviker från den, kalkering och vy-taggar. Klicka på en vy för att öppna den och se dess inställningar i egenskaperna.</p>
       <p class="note soon">Export av modellen (IFC) från en vy kommer i 0.12.</p>
     </section>`;
   }

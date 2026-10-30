@@ -112,8 +112,7 @@ export function saveView(store: DocStore, id: Id, patch: Partial<Omit<ViewDef, '
     const next: ViewDef = { ...v, ...patch };
     if (!next.tags?.length) delete next.tags;
     if (!next.scale) delete next.scale;
-    if (!next.labelDetail || next.labelDetail === next.detail) delete next.labelDetail;
-    if (!next.modelDetail || next.modelDetail === next.detail) delete next.modelDetail;
+    if (!next.overrides || !Object.keys(next.overrides).length) delete next.overrides;
     tx.setViews(tx.doc.views.map((x) => (x.id === id ? next : x)));
     // Nya vy-taggar läggs till i projektets lista i samma steg.
     const fresh = (next.tags ?? []).filter((t) => !tx.doc.viewTags.includes(t));

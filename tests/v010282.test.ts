@@ -1,3 +1,4 @@
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DEFAULT_MATERIALS, normalizeMaterials } from '../src/core/graphics';
 import { linkMaterial, updateMaterial, useOf } from '../src/core/materials';
@@ -73,7 +74,7 @@ describe('Byggnadens material (0.10.28.2)', () => {
     updateMaterial(s, m.id, pen.label, pen.fn);
     expect(prims().filter((p) => p.kind === 'line').every((p) => p.kind === 'line' && p.pen.weight === 0.5)).toBe(true);
     // 3D: materialets kulör och nyckel.
-    const { shapes } = modelShapes(s.doc, { state: s.doc.states.at(-1)!.id }, s.doc.graphics, WITHOUT_DEMOLISHED);
+    const { shapes } = modelShapes(s.doc, { state: s.doc.states.at(-1)!.id }, defaultSheet(s.doc.graphics), WITHOUT_DEMOLISHED);
     const slab = shapes.find(({ s: q }) => q.id === 'bj')!.s as Solid;
     expect(slab).toMatchObject({ color: m.color3d, matId: 'betong' });
   });

@@ -1,4 +1,4 @@
-import type { Material, StyleSheet } from '../core/graphics';
+import type { Material, StyleResources } from '../core/graphics';
 import type { Id } from '../core/model';
 import type { LegendSource } from '../core/states';
 import type { Primitive, Vec2 } from '../repr/primitives';
@@ -51,7 +51,7 @@ const GAP = 2;
 export const LEGEND_DEFAULTS: LegendParams = { pos: [20, 100], title: 'TECKENFÖRKLARING', categories: 'all', order: 'list', box: [10, 6], extra: [], removed: [], own: false };
 
 /** Raderna: materialen i vyerna och de egna, efter inställningarna. */
-export function legendRows(p: LegendParams, sources: readonly LegendSource[], style: Pick<StyleSheet, 'materials'>): LegendRow[] {
+export function legendRows(p: LegendParams, sources: readonly LegendSource[], style: Pick<StyleResources, 'materials'>): LegendRow[] {
   const list = style.materials ?? [];
   const from = sources.filter((s) => !p.view || s.viewport === p.view);
   const fallback = from[0] ?? sources[0];

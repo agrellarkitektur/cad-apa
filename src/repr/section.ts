@@ -1,3 +1,4 @@
+import { defaultSheet } from '../core/viewCategories';
 import type { StyleSheet } from '../core/graphics';
 import type { Element, Id, ProjectDoc } from '../core/model';
 import type { Action, ViewStates } from '../core/states';
@@ -83,7 +84,7 @@ const HIDDEN_PEN: Pen = { weight: 0.13, dash: LINE_TYPES.dashed.dash };
 /** Material som fylls i snitt som väggar; resten ritas med kontur (också snittets lock i 3D). */
 export const POCHE_MATERIALS: ReadonlySet<string> = new Set(['wall', 'wall-new', 'roof', 'floor', 'slab']);
 
-export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, style: StyleSheet = doc.graphics): SectionResult | null {
+export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, style: StyleSheet = defaultSheet(doc.graphics, doc.elements[markerId]?.type === 'Section' ? 'section' : 'facade')): SectionResult | null {
   const t0 = performance.now();
   const marker = doc.elements[markerId];
   if (!marker || (marker.type !== 'Section' && marker.type !== 'Elevation')) return null;

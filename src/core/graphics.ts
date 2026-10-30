@@ -1,6 +1,7 @@
 import type { LeaderAttach, LeaderEnd } from '../elements/leader';
 import { normalizeFillTypes, type CustomFillType, type HatchLine } from './fillTypes';
 import { normalizeLineTypes, type CustomLineType } from './lineTypes';
+import { defaultCategories, normalizeCategories, styleOfPreset, type ViewCategory } from './viewCategories';
 /**
  * Stilmallen bestämmer hur ritningen ser ut för varje åtgärd: vanlig vy,
  * befintligt, rivs och nytt. Den är ren data, sparas i projektet och kan
@@ -84,24 +85,30 @@ export interface ActionStyle {
 
 export type ActionKey = 'plain' | 'existing' | 'demolished' | 'new';
 
-export interface StyleSheet {
-  format: 'bacchus-style';
-  version: 1;
-  name: string;
+/**
+ * Stilen i en vykategori (0.10.32): åtgärderna, öppningsmarkeringen och
+ * penntabellen. Förut gällde den hela projektet.
+ */
+export interface CategoryStyle {
   actions: Record<ActionKey, ActionStyle>;
   /**
    * Nya öppningar i befintliga väggar markeras med en skrafferad zon på var
    * sida om öppningen, så här bred i mm. 0 stänger av markeringen.
    */
   openingMark: number;
-  /** Texter i planen: justering, höjder och littera. */
-  labels: LabelStyle;
   /**
    * Penntabellen (0.8): linjetjocklek i mm och färg per sorts linje i fasader
    * och sektioner (hål, karm, båge, glas, marklinje …). Det som saknas har
    * programmets förval.
    */
   pens?: Record<string, PenDef>;
+}
+
+/** Projektets resurser (0.10.32): det som gäller alla vyer. */
+export interface StyleResources {
+  name: string;
+  /** Texter i planen: justering, höjder och littera. */
+  labels: LabelStyle;
   /** Typsnittet för hela projektet (0.8). Utelämnat = programmets tekniska typsnitt. */
   font?: string;
   /** Projektets egna linjetyper (0.8.30), utöver de inbyggda (`LINE_TYPES`). */
@@ -115,6 +122,26 @@ export interface StyleSheet {
    * objekt med det.
    */
   materials?: Material[];
+}
+
+/**
+ * Stilmallen som en vy ritas med: resurserna och kategorins stil (med
+ * vyns avvikelser), se `sheetFor` i `viewCategories.ts`. De förinställda
+ * (Svensk standard, Poché, Färgmarkerad) är också stilmallar.
+ */
+export interface StyleSheet extends StyleResources, CategoryStyle {
+  format: 'bacchus-style';
+  version: 1;
+}
+
+/**
+ * Stilboken (0.10.32): projektets resurser och vykategorierna. Det är den
+ * som sparas i projektet (`ProjectDoc.graphics`) och som fil.
+ */
+export interface StyleBook extends StyleResources {
+  format: 'bacchus-stylebook';
+  version: 1;
+  categories: ViewCategory[];
 }
 
 /**
@@ -378,12 +405,30 @@ export function normalizeStyle(data: any): StyleSheet {
   };
 }
 
+/** Stilboken i ett nytt projekt: Svensk standard, materialen och kategorierna. */
+export function newStyleBook(): StyleBook {
+  return { format: 'bacchus-stylebook', version: 1, name: SWEDISH_STANDARD.name, labels: structuredClone(DEFAULT_LABELS), materials: structuredClone([...DEFAULT_MATERIALS]), categories: defaultCategories() };
+}
+
 /**
- * En förinställd stilmall med det som hör till projektet: texterna, de egna
- * linje- och fyllningstyperna (0.8.30, 0.8.36) och materialen (0.10.28).
+ * Kontrollera och komplettera en stilbok från fil. En stilmall från före
+ * 0.10.32 (`bacchus-style`) ger resurserna och, med `styleTo`, stilen för
+ * den kategorin; kategorierna är annars förvalen.
  */
-export function withProjectParts(preset: StyleSheet, g: StyleSheet): StyleSheet {
-  return { ...preset, labels: g.labels, ...(g.lineTypes ? { lineTypes: g.lineTypes } : {}), ...(g.fillTypes ? { fillTypes: g.fillTypes } : {}), ...(g.materials ? { materials: g.materials } : {}) };
+export function normalizeBook(data: any, base?: StyleBook, styleTo?: ViewCategory): StyleBook {
+  if (data?.format === 'bacchus-style') {
+    const old = normalizeStyle(data);
+    const book = base ? structuredClone(base) : newStyleBook();
+    const { actions: _a, openingMark: _o, pens: _p, format: _f, version: _v, ...res } = old;
+    const style = styleOfPreset(old);
+    return { ...book, ...res, categories: book.categories.map((c) => (styleTo && c.id === styleTo.id && c.type === styleTo.type ? { ...c, style } : c)) };
+  }
+  if (data?.format !== 'bacchus-stylebook') throw new Error('Filen är inte en stilbok.');
+  const res = normalizeStyle({ ...data, format: 'bacchus-style' });
+  const { actions: _a, openingMark: _o, pens: _p, format: _f, version: _v, ...rest } = res;
+  const fallback = styleOfPreset(SWEDISH_STANDARD);
+  const categories = normalizeCategories(data.categories, fallback).map((c) => ({ ...c, style: styleOfPreset(normalizeStyle({ ...c.style, format: 'bacchus-style' })) }));
+  return { format: 'bacchus-stylebook', version: 1, ...rest, categories };
 }
 
 /** Material från fil (0.10.28); de utan nyckel eller planens fyllning hoppas över. */

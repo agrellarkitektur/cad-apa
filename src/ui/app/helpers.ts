@@ -1,5 +1,5 @@
 import type { Id, ProjectDoc, ViewDef } from '../../core/model';
-import { DETAIL_LABELS } from '../../core/states';
+import { viewSettings } from '../../core/viewCategories';
 
 export const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 export const tf = new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2-digit' });
@@ -7,14 +7,10 @@ export const tf = new Intl.DateTimeFormat('sv-SE', { hour: '2-digit', minute: '2
 /** Vanliga skalor för vyer och annotering (0.8 del 3). */
 export const ANNOTATION_SCALES = [1, 2, 5, 10, 20, 25, 50, 100, 200, 400, 500, 1000, 2000, 2500, 4000, 5000];
 
-/** Kort beskrivning av en vy i vylistan. */
-export function describeView(v: ViewDef): string {
-  const names = DETAIL_LABELS;
-  const lab = v.labelDetail ?? v.detail;
-  const mod = v.modelDetail ?? v.detail;
-  // Olika nivåer (0.8.37): littera, 2D och 3D i den ordningen.
-  const detail = lab === v.detail && mod === v.detail ? names[v.detail] : `${names[lab]}/${names[v.detail]}/${names[mod]}`;
-  return [`1:${v.scale ?? 100}`, detail, v.compare ? 'jämför' : '', v.hideDemolished ? 'utan rivet' : '', v.style ?? ''].filter(Boolean).join(' · ');
+/** Kort beskrivning av en vy i vylistan: skalan, kategorin (0.10.32) och hur många rader som avviker. */
+export function describeView(doc: Pick<ProjectDoc, 'graphics' | 'elements'>, v: ViewDef): string {
+  const n = Object.keys(v.overrides ?? {}).length;
+  return [`1:${v.scale ?? 100}`, viewSettings(doc, v).cat.name, n ? `${n} ändrad${n > 1 ? 'e' : ''}` : ''].filter(Boolean).join(' · ');
 }
 
 export { defaultState } from '../../core/states';

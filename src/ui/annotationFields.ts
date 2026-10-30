@@ -62,7 +62,7 @@ export function annotationFields(doc: ProjectDoc, el: Element): string {
         <div class="fields">
           <label class="field"><span>Vyer</span>${sel('view', p.view && vps.some((v) => v.id === p.view) ? p.view : '', [['', 'Alla vyer på bladet'], ...vps.map((vp): [string, string] => [vp.id, vpName(vp)])])}</label>
           <label class="field"><span>Material</span>${sel('categories', p.categories, [['all', 'Alla'], ['ground', 'Markens'], ['building', 'Byggnadens']])}</label>
-          <label class="field"><span>Ordning</span>${sel('order', p.order, [['list', 'Som i stilmallen'], ['name', 'Efter namn']])}</label>
+          <label class="field"><span>Ordning</span>${sel('order', p.order, [['list', 'Som i stilboken'], ['name', 'Efter namn']])}</label>
           ${numberField('legend:boxW', 'Rutans bredd', p.box[0], 'mm', 1)}${numberField('legend:boxH', 'Rutans höjd', p.box[1], 'mm', 1)}
         </div>
         <label class="check"><input type="checkbox" data-key="legend:own"${p.own ? ' checked' : ''}> Objekt med egen fyllning som "Eget"</label>

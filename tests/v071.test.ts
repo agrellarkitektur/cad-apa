@@ -1,3 +1,4 @@
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { typeOf } from '../src/elements/registry';
@@ -22,7 +23,7 @@ const view = (detail: 'sketch' | 'normal' | 'detail', hide: string[] = []) => ({
 
 function model(doc: ProjectDoc, id: string, detail: 'sketch' | 'normal' | 'detail'): Shape3D[] {
   const el = doc.elements[id];
-  const { ctx } = createContext(doc, el.storey, view(detail), doc.graphics, () => true);
+  const { ctx } = createContext(doc, el.storey, view(detail), defaultSheet(doc.graphics), () => true);
   return typeOf(el.type)!.model3d!(el, ctx);
 }
 
@@ -53,7 +54,7 @@ describe('detaljnivå i fasad och sektion (0.7.1)', () => {
   it('öppningssättet kan stängas av', () => {
     const doc = sampleProject();
     const el = doc.elements['d01'];
-    const { ctx } = createContext(doc, el.storey, view('normal', ['swing']), doc.graphics, () => true);
+    const { ctx } = createContext(doc, el.storey, view('normal', ['swing']), defaultSheet(doc.graphics), () => true);
     const edges = typeOf('Door')!.model3d!(el, ctx).filter((s): s is Edges3D => s.kind === 'edges');
     expect(edges.some((e) => e.part === 'swing')).toBe(false);
   });

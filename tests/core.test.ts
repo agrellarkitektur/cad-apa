@@ -1,3 +1,4 @@
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { FORMAT_VERSION } from '../src/core/model';
 import {
@@ -440,7 +441,7 @@ describe('ut- och insida, karmar och kant i kant', () => {
     const { createContext } = await import('../src/repr/context');
     const { openingZone } = await import('../src/elements/opening');
     const doc = sampleProject();
-    const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef' }, doc.graphics, () => true);
+    const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef' }, defaultSheet(doc.graphics), () => true);
     // Yttervägg 400 tjock med utsidan till vänster (o = 200): karmen 100 djup från o = 150 till 50.
     const ext = openingZone(ctx, doc.elements['yv-s'], ctx.params(doc.elements['f01']));
     expect([ext.lo, ext.hi]).toEqual([50, 150]);
@@ -484,7 +485,7 @@ describe('rum och anteckningar', () => {
     const { createContext } = await import('../src/repr/context');
     const { roomNumbersFor } = await import('../src/elements/rooms');
     const doc = sampleProject();
-    const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef' }, doc.graphics, () => true);
+    const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef' }, defaultSheet(doc.graphics), () => true);
     const n = roomNumbersFor(ctx);
     expect(n.get('r01')).toBe('1101'); // allrummet innanför entrén
     expect(new Set(n.values()).size).toBe(n.size);
@@ -496,7 +497,7 @@ describe('rum och anteckningar', () => {
     const { spaceOutline } = await import('../src/elements/rooms');
     const store = new DocStore(sampleProject());
     moveElements(store, ['iv-1'], [500, 0]);
-    const { ctx } = createContext(store.doc, 'pl-1', { state: 'st-bef' }, store.doc.graphics, () => true);
+    const { ctx } = createContext(store.doc, 'pl-1', { state: 'st-bef' }, defaultSheet(store.doc.graphics), () => true);
     const xs = spaceOutline(ctx, store.doc.elements['r01'] as never).map((q) => q[0]);
     expect(Math.max(...xs)).toBe(5440); // innerväggens vänstra liv har flyttat 500 mm
   });
@@ -566,10 +567,10 @@ describe('version 0.6', () => {
     const { doorNumbersFor } = await import('../src/elements/rooms');
     const { litteraLines } = await import('../src/elements/littera');
     const doc = sampleProject();
-    const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef', detail: 'detail' }, doc.graphics, () => true);
+    const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef', detail: 'detail' }, defaultSheet(doc.graphics), () => true);
     expect(doorNumbersFor(ctx).get('d01')).toBe('D1101');
     expect(litteraLines(ctx, doc.elements['d02'])).toEqual([doorNumbersFor(ctx).get('d02'), '910×2110']);
-    const normal = createContext(doc, 'pl-1', { state: 'st-bef' }, doc.graphics, () => true).ctx;
+    const normal = createContext(doc, 'pl-1', { state: 'st-bef' }, defaultSheet(doc.graphics), () => true).ctx;
     expect(litteraLines(normal, doc.elements['d02'])).toEqual(['D1']);
     expect(buildPlan(doc, 'pl-1', { state: 'st-bef', detail: 'sketch' }).prims.some((p) => p.origin?.part === 'littera')).toBe(false);
   });
@@ -579,7 +580,7 @@ describe('version 0.6', () => {
     const { litteraLines } = await import('../src/elements/littera');
     const doc = sampleProject();
     doc.elements['d02'].props = { Egenskaper: { Brandklass: 'EI30' } };
-    const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef', detail: 'detail' }, doc.graphics, () => true);
+    const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef', detail: 'detail' }, defaultSheet(doc.graphics), () => true);
     expect(litteraLines(ctx, doc.elements['d02'])).toContain('EI30');
   });
 
@@ -652,7 +653,7 @@ describe('version 0.6.2', () => {
     const { createContext } = await import('../src/repr/context');
     const doc = sampleProject();
     const angle = (state: string, compareTo: string | undefined, id: string) =>
-      createContext(doc, 'pl-1', { state, compareTo }, doc.graphics, () => true).ctx.doorAngleOf(doc.elements[id]);
+      createContext(doc, 'pl-1', { state, compareTo }, defaultSheet(doc.graphics), () => true).ctx.doorAngleOf(doc.elements[id]);
     for (const compareTo of ['st-bef', undefined]) {
       // d04 finns i Befintligt: 30° även i förslaget och utan jämförelse.
       expect(angle('st-a', compareTo, 'd04')).toBe(30);

@@ -28,9 +28,9 @@ export function litteraSection(doc: ProjectDoc, els: Element[]): string {
   const style = doc.graphics.labels.leaders[kind];
   const endName = LEADER_ENDS.find(([k]) => k === style.end)?.[1] ?? '';
   const side = LEADER_SIDES.map(([k, l]) => `<option value="${k}"${(tag.side ?? 'auto') === k ? ' selected' : ''}>${l}</option>`).join('');
-  const end = [`<option value=""${tag.end ? '' : ' selected'}>Som stilmallen (${escapeHtml(endName.toLowerCase())})</option>`, ...LEADER_ENDS.map(([k, l]) => `<option value="${k}"${tag.end === k ? ' selected' : ''}>${l}</option>`)].join('');
+  const end = [`<option value=""${tag.end ? '' : ' selected'}>Som stilboken (${escapeHtml(endName.toLowerCase())})</option>`, ...LEADER_ENDS.map(([k, l]) => `<option value="${k}"${tag.end === k ? ' selected' : ''}>${l}</option>`)].join('');
   const attachName = LEADER_ATTACH.find(([k]) => k === style.attach)?.[1] ?? '';
-  const attach = [`<option value=""${tag.attach ? '' : ' selected'}>Som stilmallen (${escapeHtml(attachName.toLowerCase())})</option>`, ...LEADER_ATTACH.map(([k, l]) => `<option value="${k}"${tag.attach === k ? ' selected' : ''}>${l}</option>`)].join('');
+  const attach = [`<option value=""${tag.attach ? '' : ' selected'}>Som stilboken (${escapeHtml(attachName.toLowerCase())})</option>`, ...LEADER_ATTACH.map(([k, l]) => `<option value="${k}"${tag.attach === k ? ' selected' : ''}>${l}</option>`)].join('');
   const moved = els.some((e) => {
     const t = (e.params as { tag?: TagParams }).tag;
     return !!(t && Object.keys(t).length) || (e.type === 'Space' && !!e.params.labelAt);
@@ -40,12 +40,12 @@ export function litteraSection(doc: ProjectDoc, els: Element[]): string {
     <h3>Littera</h3>
     <div class="fields">
       <label class="field"><span>Stammens sida</span><select data-key="tag:side">${side}</select></label>
-      <label class="field"><span>Ände</span><select data-key="tag:end">${sameKind ? end : end.replace(/Som stilmallen \([^)]*\)/, 'Som stilmallen')}</select></label>
-      <label class="field"><span>Mot texten</span><select data-key="tag:attach">${sameKind ? attach : attach.replace(/Som stilmallen \([^)]*\)/, 'Som stilmallen')}</select></label>
+      <label class="field"><span>Ände</span><select data-key="tag:end">${sameKind ? end : end.replace(/Som stilboken \([^)]*\)/, 'Som stilboken')}</select></label>
+      <label class="field"><span>Mot texten</span><select data-key="tag:attach">${sameKind ? attach : attach.replace(/Som stilboken \([^)]*\)/, 'Som stilboken')}</select></label>
       <label class="field" for="f-tag-stub"><span>Stammens längd</span><span class="input-unit"><input type="text" data-expr data-step="0.5" inputmode="decimal" autocomplete="off" id="f-tag-stub" data-key="tag:stub" value="${tag.stub ?? ''}" placeholder="${sameKind ? style.stub : ''}"><i>mm</i></span></label>
     </div>
     <div class="row"><button class="btn" data-action="tag-reset"${moved ? '' : ' disabled'} title="Litteran, punkten och stammen tillbaka till förvalet">Litteran tillbaka</button></div>
-    <p class="note">Dra i texten eller romben där ledaren lämnar texten för att flytta litteran (den står lika långt från objektet på papperet i alla skalor), i den runda punkten för att flytta vad ledaren pekar på och i fyrkanten för stammens längd. Shift håller den sneda delen i steg om 15°. Stammens längd är på papperet; förvalen för ${KIND_LABEL[kind]} står i stilmallen under Texter och littera.</p>
+    <p class="note">Dra i texten eller romben där ledaren lämnar texten för att flytta litteran (den står lika långt från objektet på papperet i alla skalor), i den runda punkten för att flytta vad ledaren pekar på och i fyrkanten för stammens längd. Shift håller den sneda delen i steg om 15°. Stammens längd är på papperet; förvalen för ${KIND_LABEL[kind]} står i stilboken under Texter och littera.</p>
   </section>`;
 }
 

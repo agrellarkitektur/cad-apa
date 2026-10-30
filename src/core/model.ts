@@ -1,5 +1,6 @@
 import { exampleMaster } from './exampleMaster';
-import { DEFAULT_MATERIALS, SWEDISH_STANDARD, type StyleSheet } from './graphics';
+import { newStyleBook, type StyleBook } from './graphics';
+import type { ViewOverrides } from './viewCategories';
 import type { Site } from './site';
 
 /**
@@ -52,21 +53,6 @@ export interface ViewDef {
   name: string;
   storey: Id;
   state: Id;
-  /** Jämför med befintligt. */
-  compare: boolean;
-  /** Detaljnivå för 2D-symbolerna (och litteran och 3D när de saknas). */
-  detail: 'sketch' | 'normal' | 'detail';
-  /**
-   * Detaljnivå för litteran och för 3D-objekten (0.8.37), när de skiljer sig
-   * från 2D-symbolernas. Utelämnade = som `detail`.
-   */
-  labelDetail?: 'sketch' | 'normal' | 'detail';
-  modelDetail?: 'sketch' | 'normal' | 'detail';
-  /** Dolda kategorier: elementtyper och "littera". */
-  hide: string[];
-  hideDemolished: boolean;
-  /** En förinställd stilmall (namn), annars projektets. */
-  style?: string;
   /** En annan vy som visas tonad under, att rita mot. */
   trace?: Id | null;
   /** Vyn visar en fasad eller sektion (elementets id) i stället för planen. (Format 4.) */
@@ -78,11 +64,12 @@ export interface ViewDef {
   /** Skalan vyn ritas i på ett blad, nämnaren (format 5). Texthöjder räknas efter den. */
   scale?: number;
   /**
-   * Vykategorin för en vy av Platsen (0.10.25, format 22): situationsplan,
-   * markplaneringsritning eller illustrationsplan. Materialen (0.10.26)
-   * ritas efter den. Utelämnad = situationsplan.
+   * Vykategorin (0.10.32): nyckeln till en kategori av vyns vytyp i
+   * stilboken. Utelämnad, eller en som inte finns = vytypens första.
    */
-  category?: SiteCategory;
+  category?: string;
+  /** Vyns avvikelser från kategorin, rad för rad (0.10.32, `ViewOverrides`). */
+  overrides?: ViewOverrides;
 }
 
 /** Vykategorierna för Platsen (0.10.25). */
@@ -389,8 +376,8 @@ export interface OwnPen extends OwnPenPart {
 }
 
 export const FORMAT = 'bacchus-project';
-/** 24 (0.10.28.1): materialens kryssrutor `ground` och `building` i stället för `category`. 23 (0.10.28): materialen i stilmallen (`graphics.materials`, i stället för `fills`) och objektens `material`, `materialOpacity` och `materialAngle` (i stället för `fillStyle`). 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionsmarkörernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
-export const FORMAT_VERSION = 24;
+/** 25 (0.10.32): stilboken med vykategorier (`graphics.categories`); vyns `category` är kategorins nyckel och dess avvikelser står i `overrides` (i stället för `compare`, `detail`, `hide` …, `style`). 24 (0.10.28.1): materialens kryssrutor `ground` och `building` i stället för `category`. 23 (0.10.28): materialen i stilmallen (`graphics.materials`, i stället för `fills`) och objektens `material`, `materialOpacity` och `materialAngle` (i stället för `fillStyle`). 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionsmarkörernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
+export const FORMAT_VERSION = 25;
 
 export interface ProjectDoc {
   format: typeof FORMAT;
@@ -400,8 +387,8 @@ export interface ProjectDoc {
   storeys: Storey[];
   definitions: Record<Id, Definition>;
   elements: Record<Id, Element>;
-  /** Stilmallen för ritningsgrafiken (befintligt, rivs, nytt). */
-  graphics: StyleSheet;
+  /** Stilboken (0.10.32): resurserna och vykategorierna. */
+  graphics: StyleBook;
   /** Sparade vyer. */
   views: ViewDef[];
   /** Mappar i projektträdet (format 5). */
@@ -454,7 +441,7 @@ export function emptyProject(name: string, kind: ProjectKind, fields: Record<str
       't-bj01': { id: 't-bj01', origin: 'component', name: 'BJ01', elementType: 'Slab', params: { thickness: 300 }, props: {}, description: 'Bjälklag' },
     },
     elements: { ...drawingMarkers('pl-1'), ...master.elements },
-    graphics: { ...structuredClone(SWEDISH_STANDARD), materials: structuredClone([...DEFAULT_MATERIALS]) },
+    graphics: newStyleBook(),
     views: [],
     ...emptyTree(),
     worksheets: [master.worksheet],

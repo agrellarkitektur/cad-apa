@@ -8,7 +8,7 @@ import { lineTypeOptions } from './lineTypePick';
  * Egen penna för ett objekt (0.8.31) eller en typ (0.8.33): tjocklek, färg
  * och linjetyp var för sig. Dörrar och fönster har två delar (0.8.33):
  * *Snitt* (karmar, dörrblad, bågar och glas) och *Symbol* (slagbågen,
- * öppningssättet). Objektets egen går före typens, som går före stilmallens.
+ * öppningssättet). Objektets egen går före typens, som går före stilbokens.
  */
 
 /** Sorterna som kan få en egen penna. 2D-formen har redan sin egen. Markobjekten sedan 0.10.7. */
@@ -62,7 +62,7 @@ function partFields(doc: ProjectDoc, scope: string, pens: readonly (OwnPen | und
 function penParts(doc: ProjectDoc, scope: string, type: string, pens: readonly (OwnPen | undefined)[], inherited: (part: Part, k: Field) => string): string {
   const above = ABOVE_TYPES.has(type);
   if (!SYMBOL_TYPES.has(type) && !above) return partFields(doc, scope, pens, 'main', (k) => inherited('main', k));
-  // Över snittet (0.10.16): det som saknas tas från den övre delen, sedan stilmallens penna för snittet.
+  // Över snittet (0.10.16): det som saknas tas från den övre delen, sedan stilbokens penna för snittet.
   return `<h4>${SYMBOL_TYPES.has(type) ? 'Snitt' : 'Snitt och vy'}</h4>
     ${partFields(doc, scope, pens, 'main', (k) => inherited('main', k))}
     ${SYMBOL_TYPES.has(type) ? `<h4>Symbol</h4>${partFields(doc, scope, pens, 'symbol', (k) => inherited('symbol', k))}` : ''}
@@ -74,19 +74,19 @@ export function ownPenSection(doc: ProjectDoc, els: readonly Element[]): string 
   if (!els.length || !els.every((e) => OWN_PEN_TYPES.has(e.type) && !e.space)) return '';
   const type = els.every((e) => e.type === els[0].type) ? els[0].type : '';
   const defs = els.map((e) => (e.definition ? doc.definitions[e.definition]?.pen : undefined));
-  // Det som gäller utan egen: typens om någon av typerna har fältet, annars stilmallens.
-  const inherited = (part: Part, k: Field) => (defs.some((d) => partOf(d, part)?.[k] !== undefined) ? 'Typens' : 'Stilmallens');
+  // Det som gäller utan egen: typens om någon av typerna har fältet, annars stilbokens.
+  const inherited = (part: Part, k: Field) => (defs.some((d) => partOf(d, part)?.[k] !== undefined) ? 'Typens' : 'Stilbokens');
   const any = els.some((e) => e.pen);
   const note = type === 'Space'
-    ? 'Stilmallens penna för rummens kontur gäller från början (ingen linje). En egen ger rummet en kontur i planen, under väggarna; inte fyllningen och rumsstämpeln.'
+    ? 'Stilbokens penna för rummens kontur gäller från början (ingen linje). En egen ger rummet en kontur i planen, under väggarna; inte fyllningen och rumsstämpeln.'
     : SYMBOL_TYPES.has(type)
-    ? 'Typens eller stilmallens penna gäller från början. <i>Snitt</i> gäller karmar, dörrblad, bågar och glas, <i>Symbol</i> slagbågen och öppningssättet; inte fyllningar och text.'
-    : 'Typens eller stilmallens penna gäller från början. En egen gäller objektets linjer och konturer i planen, fasaderna och sektionerna, men inte fyllningar och text.';
+    ? 'Typens eller stilbokens penna gäller från början. <i>Snitt</i> gäller karmar, dörrblad, bågar och glas, <i>Symbol</i> slagbågen och öppningssättet; inte fyllningar och text.'
+    : 'Typens eller stilbokens penna gäller från början. En egen gäller objektets linjer och konturer i planen, fasaderna och sektionerna, men inte fyllningar och text.';
   return `<section class="own-pen">
     <h3>Penna</h3>
     ${penParts(doc, 'pen', type, els.map((e) => e.pen), inherited)}
     <p class="note">${note}</p>
-    ${any ? `<div class="row"><button class="btn" data-action="own-pen-reset">${defs.some(Boolean) ? 'Typens' : 'Stilmallens'} penna</button></div>` : ''}
+    ${any ? `<div class="row"><button class="btn" data-action="own-pen-reset">${defs.some(Boolean) ? 'Typens' : 'Stilbokens'} penna</button></div>` : ''}
   </section>`;
 }
 
@@ -95,8 +95,8 @@ export function typePenFields(doc: ProjectDoc, def: Definition): string {
   if (!OWN_PEN_TYPES.has(def.elementType)) return '';
   return `<div class="own-pen type-pen">
       <div class="shared-head">Typens penna <span>för dem utan egen</span></div>
-      ${penParts(doc, 'defpen', def.elementType, [def.pen], () => 'Stilmallens')}
-      ${def.pen ? `<div class="row"><button class="btn" data-action="type-pen-reset" data-def="${escapeHtml(def.id)}">Stilmallens penna</button></div>` : ''}
+      ${penParts(doc, 'defpen', def.elementType, [def.pen], () => 'Stilbokens')}
+      ${def.pen ? `<div class="row"><button class="btn" data-action="type-pen-reset" data-def="${escapeHtml(def.id)}">Stilbokens penna</button></div>` : ''}
     </div>`;
 }
 
@@ -166,7 +166,7 @@ function withPen<T extends { pen?: OwnPen }>(o: T, pen: OwnPen | undefined): T {
   return next;
 }
 
-/** Knappen Typens (eller Stilmallens) penna: objektens egna tas bort. */
+/** Knappen Typens (eller Stilbokens) penna: objektens egna tas bort. */
 export function resetOwnPen(store: DocStore, ids: readonly Id[]): void {
   store.transact('Ta bort egen penna', (tx) => {
     for (const id of ids) {
@@ -176,8 +176,8 @@ export function resetOwnPen(store: DocStore, ids: readonly Id[]): void {
   });
 }
 
-/** Knappen Stilmallens penna under typen: typens egen tas bort. */
+/** Knappen Stilbokens penna under typen: typens egen tas bort. */
 export function resetTypePen(store: DocStore, defId: Id): void {
   const def = store.doc.definitions[defId];
-  if (def?.pen) store.transact(`Stilmallens penna för ${def.name}`, (tx) => tx.putDefinition(withPen(def, undefined)));
+  if (def?.pen) store.transact(`Stilbokens penna för ${def.name}`, (tx) => tx.putDefinition(withPen(def, undefined)));
 }

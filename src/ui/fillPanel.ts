@@ -1,4 +1,4 @@
-import type { Material, MaterialUse, StyleSheet } from '../core/graphics';
+import type { Material, MaterialUse, StyleResources } from '../core/graphics';
 import { FILL_TYPES, fillTypeList, fillTypeOf } from '../core/fillTypes';
 import { effectiveFill, FILL_BACKGROUND, FILL_COLOR, BACKGROUND_COLOR, FILL_WEIGHT, materialOf, type FillParams, type FillPattern } from '../elements/drawing2d';
 import { escapeHtml } from './labels';
@@ -110,7 +110,7 @@ export interface FillPanelContext {
  * objektet till ett, eller *Eget*, med knappar för att spara, byta namn och
  * ta bort. Bara de material som passar objektet visas (*Mark*, *Byggnad*).
  */
-function materialRow(name: string, p: FillParams, attrs: (key: string) => string, style: StyleSheet | undefined, ctx: FillPanelContext): string {
+function materialRow(name: string, p: FillParams, attrs: (key: string) => string, style: StyleResources | undefined, ctx: FillPanelContext): string {
   const all = style?.materials ?? [];
   const linked = materialOf(p, style);
   const list = all.filter((m) => !ctx.use || m[ctx.use] || m.id === linked?.id);
@@ -122,17 +122,17 @@ function materialRow(name: string, p: FillParams, attrs: (key: string) => string
     : '';
   if (linked) {
     const n = ctx.uses ?? 1;
-    return `${chipsHtml}<p class="note">Materialet <b>${escapeHtml(linked.name)}</b> i stilmallen${n > 1 ? `, på ${n} objekt` : ''}. Det du ändrar nedan gäller materialet och alla objekt med det; opaciteten och vridningen längst ned gäller bara objektet.</p>
-      <div class="row"><button class="btn" data-action="material-rename" data-scope="${scope}" data-id="${escapeHtml(linked.id)}" data-name="${escapeHtml(linked.name)}">Byt namn…</button><button class="btn btn-ghost" data-action="fill-unsave" data-id="${escapeHtml(linked.id)}" title="Objekten med det behåller hur de ser ut i planen och får egen fyllning">Ta bort ur stilmallen</button></div>`;
+    return `${chipsHtml}<p class="note">Materialet <b>${escapeHtml(linked.name)}</b> i stilboken${n > 1 ? `, på ${n} objekt` : ''}. Det du ändrar nedan gäller materialet och alla objekt med det; opaciteten och vridningen längst ned gäller bara objektet.</p>
+      <div class="row"><button class="btn" data-action="material-rename" data-scope="${scope}" data-id="${escapeHtml(linked.id)}" data-name="${escapeHtml(linked.name)}">Byt namn…</button><button class="btn btn-ghost" data-action="fill-unsave" data-id="${escapeHtml(linked.id)}" title="Objekten med det behåller hur de ser ut i planen och får egen fyllning">Ta bort ur stilboken</button></div>`;
   }
   const buttons = p.fill
-    ? `<div class="row"><button class="btn" data-action="fill-save" data-scope="${scope}" data-name="" title="Sparar fyllningen som ett material i stilmallen. Samma namn som ett annat material skriver över dess fyllning i planen, och alla objekt med det ändras.">Spara som material…</button></div>`
+    ? `<div class="row"><button class="btn" data-action="fill-save" data-scope="${scope}" data-name="" title="Sparar fyllningen som ett material i stilboken. Samma namn som ett annat material skriver över dess fyllning i planen, och alla objekt med det ändras.">Spara som material…</button></div>`
     : '';
   return chipsHtml + buttons;
 }
 
 /** Materialets illustrationsplan och 3D (0.10.28), och objektets egen opacitet och vridning. */
-function materialParts(name: string, m: Material, p: FillParams, attrs: (key: string) => string, style?: StyleSheet): string {
+function materialParts(name: string, m: Material, p: FillParams, attrs: (key: string) => string, style?: StyleResources): string {
   const ill = m.illustration;
   const illKind = `<label class="field"><span>Illustrationsplanen</span><select ${attrs('matIllKind')}><option value="plan"${ill ? '' : ' selected'}>Som planen</option><option value="color"${ill ? ' selected' : ''}>Egen färg</option></select></label>`;
   const illColor = ill ? `<label class="field"><span>Färg</span><input type="color" ${attrs('matIllColor')} value="${escapeHtml(ill.color)}"></label>` : '';
@@ -152,7 +152,7 @@ function materialParts(name: string, m: Material, p: FillParams, attrs: (key: st
 export const MATERIAL_3D_COLOR = '#cfd3bf';
 
 /** Materialets ruta i bubblan: planens fyllning. */
-export function savedSwatch(f: { [k: string]: unknown }, style?: StyleSheet): string {
+export function savedSwatch(f: { [k: string]: unknown }, style?: StyleResources): string {
   const color = typeof f.fillColor === 'string' ? f.fillColor : FILL_COLOR;
   if (f.fill === 'solid') return `<i class="fill-dot" style="background:${escapeHtml(color)}"></i>`;
   if (f.fill === 'type') {
@@ -163,8 +163,8 @@ export function savedSwatch(f: { [k: string]: unknown }, style?: StyleSheet): st
   return '';
 }
 
-/** Mönstren: skraffering, kors och fyllningstyperna (inbyggda och stilmallens egna). */
-function patternList(name: string, p: FillParams, attrs: (key: string) => string, style?: StyleSheet): string {
+/** Mönstren: skraffering, kors och fyllningstyperna (inbyggda och stilbokens egna). */
+function patternList(name: string, p: FillParams, attrs: (key: string) => string, style?: StyleResources): string {
   const color = p.fillColor ?? FILL_COLOR;
   const own = (['hatch', 'cross'] as const).map(
     (k) => `<label title="${k === 'hatch' ? 'Skraffering' : 'Korsskraffering'}"><input type="radio" name="${escapeHtml(name)}" value="${k}" ${attrs('pattern')}${p.fill === k ? ' checked' : ''}>${patternSwatch(k, color, p.fillAngle)}<span>${k === 'hatch' ? 'Skraffering' : 'Kors'}</span></label>`,
@@ -184,7 +184,7 @@ export function backgroundKindOf(b: string | undefined): 'none' | 'mask' | 'colo
  * Fyllningens panel. `name` skiljer radioknapparnas grupper åt när flera
  * paneler står i samma formulär; `attrs` ger varje fält dess nyckel.
  */
-export function fillPanel(name: string, raw: FillParams, attrs: (key: string) => string, style?: StyleSheet, title = 'Fyllning', ctx: FillPanelContext = {}): string {
+export function fillPanel(name: string, raw: FillParams, attrs: (key: string) => string, style?: StyleResources, title = 'Fyllning', ctx: FillPanelContext = {}): string {
   // Ett kopplat material (0.10.28): panelen visar och ändrar materialets fyllning i planen.
   const m = materialOf(raw, style);
   const p = m ? ({ ...effectiveFill({ ...raw, materialOpacity: undefined, materialAngle: undefined }, style) } as FillParams) : raw;
@@ -203,7 +203,7 @@ export function fillPanel(name: string, raw: FillParams, attrs: (key: string) =>
       <p class="note">Masken döljer det som ligger under och syns som ritningens bakgrund (papperet i PDF:en).</p>`;
   else if (kind === 'pattern') {
     const own = p.fill === 'type';
-    const gone = own && !fillTypeOf(style, p.fillType) ? '<p class="note">Fyllningstypen finns inte längre i stilmallen och ritas som en skraffering.</p>' : '';
+    const gone = own && !fillTypeOf(style, p.fillType) ? '<p class="note">Fyllningstypen finns inte längre i stilboken och ritas som en skraffering.</p>' : '';
     const typeWeight = own ? fillTypeOf(style, p.fillType)?.weight : undefined;
     const weight = p.fillWeight ?? typeWeight ?? FILL_WEIGHT;
     // Måtten på papper eller i verkligheten (0.10.14); förvalet från typen, skrafferingen på papper.

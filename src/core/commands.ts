@@ -1,4 +1,4 @@
-import type { StyleSheet } from './graphics';
+import type { StyleBook } from './graphics';
 import { newId } from './ids';
 import type { Asset, Definition, Element, Id, ShowIn, State, Value } from './model';
 import { isViewportId, removeViewportsTx } from './sheets';
@@ -278,7 +278,7 @@ export function deleteState(store: DocStore, id: Id): void {
 
 // ---------- Stilmall ----------
 
-export function setGraphics(store: DocStore, style: StyleSheet, label = `Stilmall: ${style.name}`): void {
+export function setGraphics(store: DocStore, style: StyleBook, label = `Stilbok: ${style.name}`): void {
   store.transact(label, (tx) => tx.setGraphics(style));
 }
 

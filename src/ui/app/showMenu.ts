@@ -1,4 +1,4 @@
-import { PRESETS } from '../../core/graphics';
+import { categoriesOf } from '../../core/viewCategories';
 import { isSite } from '../../core/model';
 import { DETAIL_LABELS, DETAIL_LEVELS } from '../../core/states';
 import { saveUiSettings } from '../uiSettings';
@@ -39,9 +39,13 @@ export function installShowMenu(app: AppContext) {
       // Annoteringsskalan (0.8 del 3): texter och mått får rätt höjd på papper i den skalan.
       app.ui.scale = Number(t.value) || 100;
       app.renderAll();
-    } else if (t.matches('[data-show-style]')) {
-      app.ui.styleName = t.value || null;
+    } else if (t.matches('[data-show-category]')) {
+      // En annan kategori (0.10.32): visningen blir kategorins.
+      app.ui.category = t.value || null;
+      app.place.applyShow(app.place.currentCategory().show);
+      app.views.syncDetailSwitch();
       app.renderAll();
+      refreshShowMenu();
     } else if (t.matches('[data-show-trace]')) {
       app.ui.trace = t.value || null;
       app.renderAll();
@@ -78,7 +82,7 @@ export function installShowMenu(app: AppContext) {
     app.$<HTMLElement>('.show-btn').setAttribute('aria-expanded', 'false');
   }
 
-  /** Visa-menyn: detaljnivå, vad som visas, skala, stilmall och kalkering. */
+  /** Visa-menyn: detaljnivå, vad som visas, skala, vykategori och kalkering. */
   function toggleShowMenu(): void {
     const m = app.$<HTMLElement>('.show-menu');
     if (!m.hidden) {
@@ -174,18 +178,18 @@ export function installShowMenu(app: AppContext) {
     app.hint('Allt i vyn visas');
   });
 
-  /** Visa-menyns inställningar: skala, stilmall och kalkering. */
+  /** Visa-menyns inställningar: skala, vykategori och kalkering. */
   function settingsMarkup(): string {
     const { ui, store } = app;
     return (
       `<label class="field"><span>Skala för texter och mått</span><select data-show-scale>${ANNOTATION_SCALES.map((n) => `<option value="${n}"${n === ui.scale ? ' selected' : ''}>1:${n}</option>`).join('')}${ANNOTATION_SCALES.includes(ui.scale) ? '' : `<option value="${ui.scale}" selected>1:${ui.scale}</option>`}</select></label>` +
-      `<label class="field"><span>Stilmall i vyn</span><select data-show-style><option value="">Projektets (${escapeHtml(store.doc.graphics.name)})</option>${PRESETS.map((p) => `<option value="${escapeHtml(p.name)}"${ui.styleName === p.name ? ' selected' : ''}>${escapeHtml(p.name)}</option>`).join('')}</select></label>` +
+      `<label class="field"><span>Vykategori</span><select data-show-category>${categoriesOf(store.doc.graphics, app.place.viewType()).map((c) => `<option value="${escapeHtml(c.id)}"${c === app.place.currentCategory() ? ' selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}</select></label>` +
       `<label class="field"><span>Kalkera en annan vy</span><select data-show-trace><option value="">Ingen</option>${traceStoreyOptions(ui.trace, isSite(ui.storey), store.doc, ui.storey)}${store.doc.views
         .filter((v) => v.id !== ui.activeView)
         .map((v) => `<option value="${v.id}"${ui.trace === v.id ? ' selected' : ''}>${escapeHtml(v.name)}</option>`)
         .join('')}</select></label>` +
       traceLookMarkup() +
-      `<button class="btn show-style-link" data-action="style">Stilmall och ritningsgrafik…</button>`
+      `<button class="btn show-style-link" data-action="style">Stilboken…</button>`
     );
   }
 

@@ -1,3 +1,4 @@
+import { defaultSheet } from '../../core/viewCategories';
 import { updateParams } from '../../core/commands';
 import { moveVertically } from '../../core/levels';
 import { fuseLines } from '../../core/joinLines';
@@ -91,7 +92,7 @@ export function crestSuggestion(host: ToolHost, ctx: ModifyContext): { value: nu
   const doc = host.store.doc;
   const el = ctx.shapeId ? doc.elements[ctx.shapeId] : undefined;
   if (el?.type !== 'Ground' || el.params.kind !== 'wall') return null;
-  const { ctx: pc } = createContext(doc, el.storey, { state: host.activeState() }, doc.graphics, () => true);
+  const { ctx: pc } = createContext(doc, el.storey, { state: host.activeState() }, defaultSheet(doc.graphics), () => true);
   const prof = wallProfile(pc, el);
   if (!prof) return null;
   const a = along(prof.center, ctx.at[0], ctx.at[1]);
@@ -114,7 +115,7 @@ export function addCrestPoint(host: ToolHost, ctx: ModifyContext, typed?: number
   }
   const sug = crestSuggestion(host, ctx);
   if (!sug) {
-    host.hint(wallProfile(createContext(doc, el.storey, { state: host.activeState() }, doc.graphics, () => true).ctx, el) ? 'Ändarnas höjd ändras i egenskaperna (ÖK i början och slutet).' : 'Krönet följer marken; lägg in en markmodell under Platsen först.');
+    host.hint(wallProfile(createContext(doc, el.storey, { state: host.activeState() }, defaultSheet(doc.graphics), () => true).ctx, el) ? 'Ändarnas höjd ändras i egenskaperna (ÖK i början och slutet).' : 'Krönet följer marken; lägg in en markmodell under Platsen först.');
     return;
   }
   const h = typed === null || typed === undefined || !Number.isFinite(typed) ? sug.h : doc.site ? Math.round(fromRh(doc.site, typed)) : Math.round(typed);

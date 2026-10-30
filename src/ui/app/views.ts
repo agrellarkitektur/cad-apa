@@ -1,12 +1,15 @@
 import { deleteElements, renameElement, updateParams } from '../../core/commands';
 import { newId } from '../../core/ids';
-import { isSite, onPaper, type Id, type ViewDef } from '../../core/model';
+import { onPaper, type Id, type ViewDef } from '../../core/model';
 import { markerFrame, markerName } from '../../elements/markers';
 import type { Vec2 } from '../../repr/primitives';
 import { askConfirm, askText } from '../ask';
 import { type MenuItem } from '../contextMenu';
 import type { AppContext } from './context';
 import { describeView } from './helpers';
+import { categoryOf, viewSettings, viewTypeAt, viewTypeOf, withShow, type ViewOverrides } from '../../core/viewCategories';
+
+const sorted = (o: ViewOverrides | undefined) => Object.fromEntries(Object.entries(o ?? {}).sort(([a], [b]) => a.localeCompare(b)));
 import { SHEET_TOOLS, SPACE_TOOLS } from './shell';
 
 /** Ett ställe man varit på: en sparad vy, ett våningsplan i modellen, eller en fasad eller sektion. */
@@ -28,7 +31,7 @@ export function installViews(app: AppContext) {
   function placeLabel(p: Place): { name: string; sub: string } | null {
     if (p.kind === 'view') {
       const v = app.store.doc.views.find((x) => x.id === p.id);
-      return v ? { name: v.name, sub: `Vy · ${describeView(v)}` } : null;
+      return v ? { name: v.name, sub: `Vy · ${describeView(app.store.doc, v)}` } : null;
     }
     if (p.kind === 'marker') {
       const el = app.store.doc.elements[p.id];
@@ -46,44 +49,36 @@ export function installViews(app: AppContext) {
     return s ? { name: s.name, sub: 'Modell' } : null;
   }
 
-  /** Vyns inställningar som de är just nu. */
+  /**
+   * Vyns inställningar som de är just nu (0.10.32): kategorin där man är och
+   * det i Visa-menyn som avviker från den. Den öppna vyns avvikelser i stilen
+   * är kvar.
+   */
   function currentViewDef(id: Id, name: string): ViewDef {
-    const active = app.ui.activeView ? app.store.doc.views.find((v) => v.id === app.ui.activeView) : undefined;
-    const category = isSite(app.ui.storey) && active?.storey === app.ui.storey ? active.category : undefined;
+    const cat = app.place.currentCategory();
+    const overrides = withShow(cat, app.place.openView()?.overrides, app.place.currentShow());
     return {
       id,
       name,
       storey: app.ui.storey,
       state: app.ui.state,
-      compare: app.ui.compare,
-      detail: app.ui.detail,
-      // Littera och 3D sparas bara när de skiljer sig från 2D (0.8.37).
-      ...(app.ui.labelDetail !== app.ui.detail ? { labelDetail: app.ui.labelDetail } : {}),
-      ...(app.ui.modelDetail !== app.ui.detail ? { modelDetail: app.ui.modelDetail } : {}),
-      hide: [...app.ui.hide],
-      hideDemolished: app.ui.hideDemolished,
-      ...(app.ui.styleName ? { style: app.ui.styleName } : {}),
+      category: cat.id,
+      ...(overrides ? { overrides } : {}),
       trace: app.ui.trace,
       ...(app.ui.marker ? { marker: app.ui.marker } : {}),
       ...(app.ui.worksheet ? { worksheet: app.ui.worksheet } : {}),
       ...(app.ui.scale !== 100 ? { scale: app.ui.scale } : {}),
-      // Vykategorin (0.10.25) följer den öppna vyn av Platsen; den ändras i vyns inställningar.
-      ...(category ? { category } : {}),
     };
   }
 
   function viewModified(v: ViewDef): boolean {
     const c = currentViewDef(v.id, v.name);
+    const doc = app.store.doc;
     return (
       c.storey !== v.storey ||
       c.state !== v.state ||
-      c.compare !== v.compare ||
-      c.detail !== v.detail ||
-      (c.labelDetail ?? c.detail) !== (v.labelDetail ?? v.detail) ||
-      (c.modelDetail ?? c.detail) !== (v.modelDetail ?? v.detail) ||
-      c.hideDemolished !== v.hideDemolished ||
-      [...c.hide].sort().join() !== [...v.hide].sort().join() ||
-      (c.style ?? null) !== (v.style ?? null) ||
+      categoryOf(doc.graphics, viewTypeOf(doc, c), c.category) !== categoryOf(doc.graphics, viewTypeOf(doc, v), v.category) ||
+      JSON.stringify(sorted(c.overrides)) !== JSON.stringify(sorted(v.overrides)) ||
       (c.trace ?? null) !== (v.trace ?? null) ||
       (c.marker ?? null) !== (v.marker ?? null) ||
       (c.worksheet ?? null) !== (v.worksheet ?? null) ||
@@ -92,19 +87,17 @@ export function installViews(app: AppContext) {
   }
 
   function applyView(v: ViewDef): void {
+    const doc = app.store.doc;
+    const { cat, show, type } = viewSettings(doc, v);
     app.ui.activeView = v.id;
     app.ui.storey = v.storey;
     app.ui.state = v.state;
-    app.ui.compare = v.compare;
-    app.ui.detail = v.detail;
-    app.ui.labelDetail = v.labelDetail ?? v.detail;
-    app.ui.modelDetail = v.modelDetail ?? v.detail;
-    app.ui.hide = [...v.hide];
-    app.ui.hideDemolished = v.hideDemolished;
-    app.ui.styleName = v.style ?? null;
+    app.ui.category = cat.id;
+    app.ui.viewType = type;
+    app.place.applyShow(show);
     app.ui.trace = v.trace ?? null;
-    app.ui.marker = v.marker && app.store.doc.elements[v.marker] ? v.marker : null;
-    app.ui.worksheet = v.worksheet && app.store.doc.worksheets.some((w) => w.id === v.worksheet) ? v.worksheet : null;
+    app.ui.marker = v.marker && doc.elements[v.marker] ? v.marker : null;
+    app.ui.worksheet = v.worksheet && doc.worksheets.some((w) => w.id === v.worksheet) ? v.worksheet : null;
     app.ui.layout = null;
     app.ui.scale = v.scale ?? 100;
     visit({ kind: 'view', id: v.id });
@@ -304,7 +297,7 @@ export function installViews(app: AppContext) {
       x,
       y,
       [
-        { kind: 'header', label: v.name, sub: describeView(v) },
+        { kind: 'header', label: v.name, sub: describeView(app.store.doc, v) },
         { label: 'Visa vyn', run: () => applyView(v), disabled: app.ui.activeView === id && !viewModified(v) },
         { label: traced ? 'Sluta kalkera vyn' : 'Kalkera den här vyn', checked: traced, disabled: app.ui.activeView === id, run: () => setTrace(traced ? null : id) },
         ...(app.ui.activeView === id ? [{ label: 'Spara nuvarande inställningar i vyn', disabled: !viewModified(v), run: () => void updateActiveView() }] : []),
@@ -375,8 +368,10 @@ export function installViews(app: AppContext) {
     const name = (await askText('Ny vy', st ? `${where} – ${st}` : where))?.trim();
     if (!name) return;
     const base = currentViewDef(newId('vy'), name);
-    const { marker: _m, worksheet: _w, category: _c, ...rest } = base;
-    const v: ViewDef = { ...rest, storey, ...(m ? { marker: m.id, trace: null } : {}) };
+    // Samma vytyp som där man är: kategorin och avvikelserna följer med; annars vytypens första kategori (0.10.32).
+    const same = viewTypeAt(doc, storey, m?.id) === app.place.viewType();
+    const { marker: _m, worksheet: _w, category, overrides, ...rest } = base;
+    const v: ViewDef = { ...rest, storey, ...(same ? { category, ...(overrides ? { overrides } : {}) } : { scale: categoryOf(doc.graphics, viewTypeAt(doc, storey, m?.id)).scale }), ...(m ? { marker: m.id, trace: null } : {}) };
     app.store.transact(`Ny vy: ${name}`, (tx) => tx.setViews([...tx.doc.views, v]));
     applyView(app.store.doc.views.find((x) => x.id === v.id)!);
   }

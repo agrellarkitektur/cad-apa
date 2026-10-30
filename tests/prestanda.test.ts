@@ -1,3 +1,4 @@
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { moveEach, extendAllTo } from '../src/core/arrange';
@@ -43,7 +44,7 @@ describe('prestanda', () => {
     const model3dMs = ms(() => buildModel3d(doc, view));
     let numbers = new Map<string, string>();
     const numbersMs = ms(() => {
-      const { ctx } = createContext(doc, storey, view, doc.graphics, () => true);
+      const { ctx } = createContext(doc, storey, view, defaultSheet(doc.graphics), () => true);
       numbers = roomNumbersFor(ctx);
       doorNumbersFor(ctx);
     });

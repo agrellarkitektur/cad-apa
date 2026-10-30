@@ -1,11 +1,11 @@
-import type { Material, StyleSheet } from '../core/graphics';
+import type { Material, StyleResources } from '../core/graphics';
 import { fillTypeList } from '../core/fillTypes';
 import { FILL_COLOR, PEN_WEIGHTS } from '../elements/drawing2d';
 import { escapeHtml } from './labels';
 
 /**
  * Byggnadsmaterialens snitt, yta och penna (0.10.28.2), i objektets panel
- * (Material, för bjälklag och tak) och i materiallistan i stilmallen.
+ * (Material, för bjälklag och tak) och i materiallistan i stilboken.
  * Mönstret väljs i en lista; dess övriga mått (vinkel, avstånd, skala)
  * behålls när mönstret byts. Nycklarna: `matCut`, `matCutColor`,
  * `matSurface`, `matSurfaceColor`, `matPen` och `matPenColor`.
@@ -19,20 +19,20 @@ function patternValue(f: Record<string, unknown> | undefined): string {
   return f.fill === 'type' ? `type:${String(f.fillType ?? '')}` : String(f.fill);
 }
 
-function patternOptions(value: string, none: string, style: StyleSheet | undefined): string {
+function patternOptions(value: string, none: string, style: StyleResources | undefined): string {
   const opt = (v: string, l: string) => `<option value="${escapeHtml(v)}"${v === value ? ' selected' : ''}>${escapeHtml(l)}</option>`;
   return [opt('', none), opt('solid', 'Hel färg'), opt('hatch', 'Skraffering'), opt('cross', 'Kors'), ...fillTypeList(style).map((t) => opt(`type:${t.id}`, t.name))].join('');
 }
 
 /** Fälten för materialets snitt, yta och penna. `attrs` ger varje fält dess nyckel. */
-export function buildingFields(m: Material, attrs: (key: string) => string, style: StyleSheet | undefined): string {
+export function buildingFields(m: Material, attrs: (key: string) => string, style: StyleResources | undefined): string {
   const cut = patternValue(m.cut);
   const surface = patternValue(m.surface);
   const color = (key: string, f: Record<string, unknown> | undefined) => `<label class="field"><span>Färg</span><input type="color" ${attrs(key)} value="${escapeHtml(typeof f?.fillColor === 'string' ? f.fillColor : FILL_COLOR)}"></label>`;
   const pen = m.pen?.weight ?? 0;
-  const penOpts = [`<option value=""${pen ? '' : ' selected'}>Stilmallens</option>`, ...PEN_WEIGHTS.filter((w) => w > 0).map((w) => `<option value="${w}"${w === pen ? ' selected' : ''}>${w.toLocaleString('sv-SE')} mm</option>`)].join('');
+  const penOpts = [`<option value=""${pen ? '' : ' selected'}>Stilbokens</option>`, ...PEN_WEIGHTS.filter((w) => w > 0).map((w) => `<option value="${w}"${w === pen ? ' selected' : ''}>${w.toLocaleString('sv-SE')} mm</option>`)].join('');
   return `<div class="fields">
-    <label class="field"><span>Snittet i sektion</span><select ${attrs('matCut')}>${patternOptions(cut, 'Som stilmallen', style)}</select></label>${cut ? color('matCutColor', m.cut) : ''}
+    <label class="field"><span>Snittet i sektion</span><select ${attrs('matCut')}>${patternOptions(cut, 'Som stilboken', style)}</select></label>${cut ? color('matCutColor', m.cut) : ''}
     <label class="field"><span>Ytan i fasad</span><select ${attrs('matSurface')}>${patternOptions(surface, 'Ingen', style)}</select></label>${surface ? color('matSurfaceColor', m.surface) : ''}
     <label class="field"><span>Konturen i planen</span><select ${attrs('matPen')}>${penOpts}</select></label>${pen ? `<label class="field"><span>Konturens färg</span><input type="color" ${attrs('matPenColor')} value="${escapeHtml(m.pen?.color ?? '#1d2328')}"></label>` : ''}
   </div>`;

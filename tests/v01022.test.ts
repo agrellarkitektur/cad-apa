@@ -199,7 +199,7 @@ describe('smartspöt', () => {
 
 describe('litterans vridning (D)', () => {
   it('egen vridning, annars stilmallens förval, och förvalet sparas i stilmallen', async () => {
-    const { normalizeStyle } = await import('../src/core/graphics');
+    const { normalizeBook } = await import('../src/core/graphics');
     const store = wallsProject({});
     const st = store.doc.states.at(-1)!.id;
     const label = (id: string, angle?: number) => ({ id, type: 'Label', storey: store.doc.storeys[0].id, states: [st], tags: [], props: {}, params: { pos: [0, 0], text: 'A', targets: [], ...(angle !== undefined ? { angle } : {}) } });
@@ -216,7 +216,7 @@ describe('litterans vridning (D)', () => {
     });
     expect((textAngle('L1') as { angle?: number }).angle).toBeCloseTo(Math.PI / 2);
     expect((textAngle('L2') as { angle?: number }).angle ?? 0).toBe(0);
-    const style = normalizeStyle({ ...store.doc.graphics, labels: { ...store.doc.graphics.labels, leaders: { Label: { end: 'auto', stub: 3, attach: 'side', angle: 90 } } } });
+    const style = normalizeBook({ ...store.doc.graphics, labels: { ...store.doc.graphics.labels, leaders: { Label: { end: 'auto', stub: 3, attach: 'side', angle: 90 } } } });
     expect(style.labels.leaders.Label.angle).toBe(90);
     expect(style.labels.leaders.Wall.angle).toBeUndefined();
   });

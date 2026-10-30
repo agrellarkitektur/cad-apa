@@ -1640,6 +1640,57 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Stilboken: tre nivåer med arv (0.10.32, format 25)
+
+- **`ProjectDoc.graphics` är en `StyleBook`** (`format: 'bacchus-stylebook'`):
+  resurserna (`StyleResources`: `name`, `labels`, `font`, `lineTypes`,
+  `fillTypes`, `materials`) och `categories` (`ViewCategory[]` i
+  `core/viewCategories.ts`). `StyleSheet` finns kvar som det en vy ritas
+  med (resurserna plus `CategoryStyle`: `actions`, `openingMark`, `pens`),
+  så renderarna (`ctx.style`) är som förut. Funktioner som bara läser
+  resurserna tar `StyleResources` (material, fyllningar, linjetyper,
+  panelernas listor), så att `doc.graphics` går att skicka direkt.
+- **En kategori** har `id` (unik inom vytypen), `name`, `type` (`site`,
+  `storey`, `facade`, `section`, `worksheet`), `kind` (Platsens: hur
+  materialen ritas, det som förut var vyns `category`), `scale` (för nya
+  vyer), `show` (`CategoryShow`: `compare`, de tre detaljnivåerna, `hide`,
+  `hideDemolished`) och `style`. `defaultCategories()` är ett nytt
+  projekts; exempelvillan har också *Skiss* (Poché).
+- **Vyn** har `category` (nyckeln; saknas eller fel vytyp = vytypens
+  första, `categoryOf`) och `overrides` (`ViewOverrides`), en platt
+  tabell med en rad per avvikelse: `compare`, `detail`, `labelDetail`,
+  `modelDetail`, `hideDemolished`, `hide:<nyckel>` (sant/falskt),
+  `actions.<åtgärd>`, `openingMark`, `pens.<nyckel>` (null = förvalet).
+  `compare`, `detail`, `hide` …, `style` på vyn finns inte längre.
+  `viewSettings(doc, v)` ger `cat`, `show` (`resolveShow`), `kind`,
+  `style` (`sheetFor`) och `type` (`viewTypeOf`: arbetsblad, fasad eller
+  sektion efter markören, Platsen, annars våning).
+- **`sheetFor(book, cat, overrides)`** är cachad per stilbok, kategori och
+  stilens avvikelser, så att planens cache träffar. `defaultSheet(book,
+  type)` är vytypens första kategoris, för det som ritas utan vy
+  (panelernas förhandsvisningar, 3D-marken, `buildPlan` utan stil).
+- **I appen** ersätter `ui.category` (null = vytypens första) och
+  `ui.viewType` stilmallsnamnet. `render.ts` har `currentCategory`,
+  `currentStyle`, `currentShow`, `applyShow`, `openView` och `viewType`
+  (i `app.place`). `syncCategory` i `renderAll`: byts vytypen utan att en
+  vy öppnas får Visa kategorins visning; ändras kategorin i stilboken
+  följer visningen med och det som ändrats under Visa är kvar
+  (`showOverrides` mot den gamla, `resolveShow` mot den nya). *Spara i
+  vyn* sparar kategorin och det som avviker (`withShow`, stilens rader
+  kvar). Visa-menyns *Vykategori* byter kategori och visning.
+- **Dialogen** (`ui/styleDialog.ts`): vänsterkanten (`VIEW_TYPES`, tonade
+  vytyper utan `type`), flikarna och verktygen (`newCategory`,
+  `duplicateCategory`, `renameCategory`, `copyCategoryFrom`,
+  `resetCategory`, `moveCategory`, `deleteCategory` som också tar
+  kategorin från vyerna). Stilens fält går genom `editCategory(book, cat,
+  fn)`, som ger `fn` kategorins stilmall och skriver tillbaka stilen och
+  resurserna; delarna i `ui/style/` är oförändrade. Markörernas penna i
+  egenskaperna ändras i alla kategorier (`editAllCategories`).
+  `bookWithSheet` lägger en stilmall i alla kategorier (proven).
+- **Fil**: `normalizeBook` läser en stilbok, och en stilmall från före
+  0.10.32 (resurserna, och stilen till den valda kategorin).
+- Tester: `tests/v01032.test.ts`.
+
 ## Texturer och ortofoto (0.10.31, format 24)
 
 - **Ortofotot** är `site.ortho` (`SiteOrtho` i `core/site.ts`): bildens
@@ -1837,9 +1888,7 @@ Inga nya funktioner; det som ändrades i koden:
   opacity }`, utelämnad = som planen) och `color3d`. `StyleSheet.materials`
   ersätter `fills` (`SavedFill` borta); `normalizeMaterials` läser dem,
   `DEFAULT_MATERIALS` är ett nytt projekts (och exempelprojektets).
-  `withProjectParts(preset, g)` ger en förinställd stilmall med projektets
-  texter, linje- och fyllningstyper och material (vyernas stilmall, bladen
-  och valet i stilmallens dialog).
+  (`withProjectParts` togs bort i 0.10.32: stilboken, se *Stilboken*.)
 - **Objektet** (`FillParams`): `material` ersätter `fillStyle`;
   `materialOpacity` och `materialAngle` överstyr opaciteten och vrider
   mönstret (grader utöver materialets: `fillTypeAngle` för egna typer,

@@ -1,3 +1,5 @@
+import { bookWithSheet } from '../src/core/viewCategories';
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { SWEDISH_STANDARD, type StyleSheet } from '../src/core/graphics';
@@ -34,8 +36,8 @@ describe('pennor för pilar och markörer (0.8.26)', () => {
     expect(markerPen(undefined, 'dimensionTick')).toEqual({ weight: 0.35 });
     for (const m of MARKER_PENS) expect(defaultMarkerPen(m.key).weight).toBeGreaterThan(0);
     const doc = sampleProject();
-    expect(weights(primsOf(doc, 'Section', doc.graphics))).toEqual(new Set([0.5]));
-    expect(weights(primsOf(doc, 'North', doc.graphics))).toEqual(new Set([0.18]));
+    expect(weights(primsOf(doc, 'Section', defaultSheet(doc.graphics)))).toEqual(new Set([0.5]));
+    expect(weights(primsOf(doc, 'North', defaultSheet(doc.graphics)))).toEqual(new Set([0.18]));
   });
 
   it('ger sektionsmarkören egen tjocklek och färg, också pilen och bokstaven', () => {
@@ -89,7 +91,7 @@ describe('pennor för pilar och markörer (0.8.26)', () => {
   it('ger nivåmarkörerna i en sektion sin penna', () => {
     const doc = sampleProject();
     const sec = Object.values(doc.elements).find((e) => e.type === 'Section')!;
-    doc.graphics = styled({ level: { weight: 0.25, color: RED } });
+    doc.graphics = bookWithSheet(doc.graphics, styled({ level: { weight: 0.25, color: RED } }));
     const res = buildSection(doc, sec.id, viewOf(doc))!;
     const level = res.prims.filter((p) => p.origin?.part === 'nivå');
     expect(level.length).toBeGreaterThan(0);

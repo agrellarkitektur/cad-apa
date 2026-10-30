@@ -40,7 +40,7 @@ export function labelFields(doc: ProjectDoc, el: Element): string {
     <div class="row"><div class="segmented" role="group" aria-label="Textens vridning">
       <button data-action="label-angle" data-angle="0" aria-pressed="${angle === 0}" title="Vågrät text">Horisontell</button>
       <button data-action="label-angle" data-angle="90" aria-pressed="${angle === 90}" title="Lodrät text, läses nedifrån">Vertikal</button>
-    </div>${p.angle === undefined ? '<span class="note">Stilmallens förval</span>' : '<button class="link" data-action="label-angle" data-angle="" title="Följ stilmallens förval">Som stilmallen</button>'}</div>
+    </div>${p.angle === undefined ? '<span class="note">Stilbokens förval</span>' : '<button class="link" data-action="label-angle" data-angle="" title="Följ stilbokens förval">Som stilboken</button>'}</div>
     <label class="check"><input type="checkbox" data-key="label:list"${p.list ? ' checked' : ''}> Olika värden som en lista (annars <i>varierar</i>)</label>
     <h3>Ledarna</h3>
     ${leaders ? `<ul class="label-leaders">${leaders}</ul>` : '<p class="note">Ingen ledare.</p>'}
@@ -87,8 +87,8 @@ export function applyLabelField(store: DocStore, ids: string[], name: string, in
 
 /**
  * Litterans vridning (0.10.22): ett tal i grader, eller null för att följa
- * stilmallens förval. Samma vinkel som förvalet sparas ändå, så att litteran
- * inte vrids om när stilmallen ändras.
+ * stilbokens förval. Samma vinkel som förvalet sparas ändå, så att litteran
+ * inte vrids om när stilboken ändras.
  */
 export function setLabelAngle(store: DocStore, ids: string[], deg: number | null): void {
   const v = deg === null ? undefined : ((((Math.round(deg * 10) / 10) % 360) + 360) % 360);

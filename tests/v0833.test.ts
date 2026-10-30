@@ -1,3 +1,5 @@
+import { bookWithSheet } from '../src/core/viewCategories';
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ProjectDoc } from '../src/core/model';
 import { DocStore } from '../src/core/store';
@@ -28,11 +30,11 @@ describe('Pennor per typ och symbollinjer (0.8.33)', () => {
     expect(part(lines, 'dörrblad')[0].weight).toBe(0.18);
     expect(part(lines, 'slagbåge')[0].weight).toBe(0.13);
 
-    const style = structuredClone(doc.graphics);
+    const style = structuredClone(defaultSheet(doc.graphics));
     expect(applyPenField(style, { dataset: { pen: 'openingSymbol:weight' }, value: '0.25' } as unknown as HTMLInputElement)).toBe('Ändra pennor');
     applyPenField(style, { dataset: { pen: 'openingView:color' }, value: '#0000ff' } as unknown as HTMLInputElement);
     expect(penSection(style)).toContain('Pennor för dörrar och fönster');
-    const after = linesOf(plan({ ...doc, graphics: style }).prims, door.id);
+    const after = linesOf(plan({ ...doc, graphics: bookWithSheet(doc.graphics, style) }).prims, door.id);
     expect(part(after, 'slagbåge')[0].weight).toBe(0.25);
     expect(part(after, 'dörrblad')[0].color).toBe('#0000ff');
     expect(part(after, 'karm')[0]).toMatchObject({ weight: 0.25 });

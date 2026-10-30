@@ -4,7 +4,7 @@ import { escapeHtml } from '../labels';
 import { fillTypeList, fillTypeOf } from '../../core/fillTypes';
 
 /**
- * Stilmallens första del: hur väggar och linjer ritas för varje åtgärd
+ * Stilbokens första del: hur väggar och linjer ritas för varje åtgärd
  * (fyllning, kontur och dörrarnas öppning).
  */
 
@@ -94,7 +94,7 @@ export function applyActionField(style: StyleSheet, input: HTMLInputElement | HT
       a.doorAngle = Math.max(0, Math.min(90, Number(input.value) || 0));
       break;
   }
-  return 'Ändra stilmall';
+  return 'Ändra stilboken';
 }
 
 function makeFill(kind: string, color: Color): FillDef {

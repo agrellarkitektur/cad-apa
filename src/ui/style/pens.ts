@@ -10,7 +10,7 @@ import { weightPicker } from '../weightPick';
 import { fromHex, toHex } from './colors';
 
 /**
- * Pennor i stilmallen: dörrarnas och fönstrens tre klasser (0.8.33) och
+ * Pennor i stilboken: dörrarnas och fönstrens tre klasser (0.8.33) och
  * pilar och markörer (0.8.26): linjetjocklek, färg och (0.8.30)
  * linjetyp per sorts
  * markör, för hela projektet. Färgen gäller också markörens text och fyllda
@@ -62,7 +62,7 @@ export function penSection(style: StyleSheet): string {
   </section>`;
 }
 
-/** Förvalet för en penna i stilmallen: snittet, höjdkurvorna, markör eller dörrarnas och fönstrens klass. */
+/** Förvalet för en penna i stilboken: snittet, höjdkurvorna, markör eller dörrarnas och fönstrens klass. */
 function defaultPen(key: string): PenDef {
   const cut = defaultPlanCutPen(key) ?? defaultContourPen(key);
   if (cut) return cut;

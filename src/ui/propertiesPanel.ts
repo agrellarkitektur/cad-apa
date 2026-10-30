@@ -1,3 +1,4 @@
+import { editAllCategories } from '../core/viewCategories';
 import { litteraSection } from './litteraSection';
 import { setDefinition, setGraphics, updateDefinition } from '../core/commands';
 import { onPaper as paperSpace, type Element, type ProjectDoc } from '../core/model';
@@ -451,11 +452,10 @@ export class PropertiesPanel implements ActionPanel {
       return;
     }
 
-    // Markörens penna (0.10.12): stilmallens, för alla markörer av samma sort.
+    // Markörens penna (0.10.12): för alla markörer av samma sort, i alla kategorier (0.10.32).
     if (input.dataset.pen) {
-      const style = structuredClone(doc.graphics);
-      const label = applyPenField(style, input);
-      if (label) setGraphics(this.store, { ...style, name: 'Egen stilmall' }, label);
+      const { book, result: label } = editAllCategories(doc.graphics, (s) => applyPenField(s, input));
+      if (label) setGraphics(this.store, book, label);
       return;
     }
     const key = input.dataset.key;

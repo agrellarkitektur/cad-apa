@@ -443,3 +443,223 @@
   width: auto;
   margin-top: 8px;
 }
+
+/* ---------- Stilboken (0.10.32) ----------
+   Vänsterkanten med Projektet, vytyperna och resurserna; till höger
+   kategoriflikarna och inställningarna. Kanten och innehållet rullar var
+   för sig. Appens tema: Archivo, siffror i IBM Plex Mono, ockra accent. */
+
+.stylebook {
+  width: min(1240px, 100%);
+  height: calc(100dvh - 32px);
+}
+
+.stylebook > header .sb-head-actions {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.stylebook > footer .note {
+  margin: 0 auto 0 0;
+}
+
+.sb-body {
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  min-height: 0;
+  flex: 1;
+  border-top: 1px solid var(--rule);
+  border-bottom: 1px solid var(--rule);
+}
+
+.sb-rail {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+  padding: 10px 8px;
+  overflow: auto;
+  border-right: 1px solid var(--rule);
+}
+
+.sb-rail h4 {
+  margin: 10px 8px 4px;
+  font-size: 10.5px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.sb-rail h4:first-child {
+  margin-top: 2px;
+}
+
+.sb-rail-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sb-rail-item svg {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.sb-rail-item:hover:not(:disabled) {
+  background: var(--accent-soft);
+}
+
+.sb-rail-item.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.sb-rail-item:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sb-main {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 12px 18px 18px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.sb-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.sb-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 12px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.sb-tab[aria-selected='true'] {
+  color: var(--ink);
+  font-weight: 600;
+  border-bottom-color: var(--accent);
+}
+
+.sb-tab:hover {
+  color: var(--ink);
+}
+
+.sb-tab-add svg {
+  width: 14px;
+  height: 14px;
+}
+
+.sb-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+
+.sb-toolbar .sb-tool svg {
+  width: 18px;
+  height: 18px;
+}
+
+.sb-toolbar [data-action='cat-left'] svg {
+  transform: rotate(90deg);
+}
+
+.sb-toolbar [data-action='cat-right'] svg {
+  transform: rotate(-90deg);
+}
+
+.sb-toolbar .sb-tool:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.sb-copy {
+  max-width: 200px;
+  margin: 0 4px;
+}
+
+.sb-uses {
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.sb-groups {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 10px 18px;
+}
+
+.sb-groups fieldset {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.sb-groups legend {
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.sb-show .fields {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
+.sb-main input[data-cat-scale] {
+  font-family: var(--font-data);
+}
+
+@media (max-width: 720px) {
+  .sb-body {
+    grid-template-columns: 1fr;
+  }
+
+  .sb-rail {
+    grid-auto-flow: column;
+    grid-auto-columns: max-content;
+    border-right: 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .sb-rail h4 {
+    display: none;
+  }
+}
+
+.sb-groups {
+  align-items: start;
+}
+
+.sb-groups fieldset {
+  align-content: start;
+}

@@ -1,4 +1,4 @@
-import type { Color, FillDef, Material, StyleSheet } from '../core/graphics';
+import type { Color, FillDef, Material, StyleResources } from '../core/graphics';
 import { fillTypeOf, hatchAsLines, patternLines, resolveFill, type HatchLine } from '../core/fillTypes';
 import type { Primitive, Vec2 } from '../repr/primitives';
 
@@ -77,7 +77,7 @@ export const FILL_FIELDS = ['fill', 'fillType', 'fillTypeAngle', 'fillTypeScale'
 export type FillCategory = 'situation' | 'grading' | 'illustration' | undefined;
 
 /** Materialet som objektet är kopplat till, eller undefined när det inte finns i stilmallen. */
-export function materialOf(p: Pick<FillParams, 'material'>, style: StyleSheet | undefined): Material | undefined {
+export function materialOf(p: Pick<FillParams, 'material'>, style: StyleResources | undefined): Material | undefined {
   return p.material ? style?.materials?.find((m) => m.id === p.material) : undefined;
 }
 
@@ -96,7 +96,7 @@ export function materialFill(m: Material, category?: FillCategory): Partial<Fill
  * opacitet och vridning, annars objektets egen. Linjens opacitet följer
  * inte med materialet.
  */
-export function effectiveFill<P extends Partial<FillParams>>(p: P, style: StyleSheet | undefined, category?: FillCategory): P {
+export function effectiveFill<P extends Partial<FillParams>>(p: P, style: StyleResources | undefined, category?: FillCategory): P {
   const m = materialOf(p, style);
   if (!m) return p;
   const rep = materialFill(m, category) as Record<string, unknown>;
@@ -131,7 +131,7 @@ export function materialSurfaceFill(m: Material | undefined): FillParams | undef
  * Snittytan med materialets snitt (0.10.28.2): papperet under, konturen
  * som stilmallens snitt (0,35) och mönstret ovanpå.
  */
-export function materialCutPrims(rings: readonly (readonly Vec2[])[], cut: FillParams, origin: Primitive['origin'], style: StyleSheet | undefined, scale: number, under = false): Primitive[] {
+export function materialCutPrims(rings: readonly (readonly Vec2[])[], cut: FillParams, origin: Primitive['origin'], style: StyleResources | undefined, scale: number, under = false): Primitive[] {
   const base: Primitive = { kind: 'region', role: 'cut', rings: rings as Vec2[][], fill: { kind: 'solid', color: 'paper' }, outline: { weight: 0.35 }, ownFill: true, ...(under ? { under: true } : {}), origin };
   return [base, ...fillPrims(rings, cut, origin, under, style, scale).map((q) => ({ ...q, origin }))];
 }
@@ -154,7 +154,7 @@ export const BACKGROUND_COLOR = '#ffffff';
  * Fyllningens ytor för konturen `rings` (0.8.25): en hel fyllning eller en
  * eller två skrafferingar. `under` = bakom väggarna.
  */
-export function fillPrims(rings: readonly (readonly Vec2[])[], own: FillParams, origin: Primitive['origin'] | undefined, under: boolean, style?: StyleSheet, scale = 1, category?: FillCategory, anchorAt?: Vec2): Primitive[] {
+export function fillPrims(rings: readonly (readonly Vec2[])[], own: FillParams, origin: Primitive['origin'] | undefined, under: boolean, style?: StyleResources, scale = 1, category?: FillCategory, anchorAt?: Vec2): Primitive[] {
   const p = effectiveFill(own, style, category);
   if (!p.fill) return [];
   const fills: FillDef[] = [];

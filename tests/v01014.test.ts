@@ -1,3 +1,4 @@
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DocStore } from '../src/core/store';
 import { updateSite } from '../src/core/siteImport';
@@ -139,7 +140,7 @@ describe('Mönstrets mått och utgångspunkt, sparade fyllningar (0.10.14)', () 
 });
 
 const solidsOf = (s: DocStore, id: string): Solid[] =>
-  modelShapes(s.doc, { state: s.doc.states.at(-1)!.id }, s.doc.graphics, WITHOUT_DEMOLISHED).shapes.map((x) => x.s).filter((x): x is Solid => x.kind !== 'edges' && x.id === id);
+  modelShapes(s.doc, { state: s.doc.states.at(-1)!.id }, defaultSheet(s.doc.graphics), WITHOUT_DEMOLISHED).shapes.map((x) => x.s).filter((x): x is Solid => x.kind !== 'edges' && x.id === id);
 
 describe('Svaren 27 oktober (0.10.14)', () => {
   it('fönstrets bröstning från våningens golv, eller från väggens fot', () => {

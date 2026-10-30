@@ -1,8 +1,8 @@
-import type { StyleSheet } from './graphics';
+import type { StyleResources } from './graphics';
 
 /**
  * Linjetyperna (0.8.30): de inbyggda och projektets egna i stilmallen
- * (`StyleSheet.lineTypes`). Ett mönster är streck och mellanrum på papper i
+ * (`StyleResources.lineTypes`). Ett mönster är streck och mellanrum på papper i
  * mm, omväxlande, och börjar med ett streck. Ett streck kortare än 0,5 mm
  * ritas som en punkt (med rund ände). Tomt mönster = heldragen.
  *
@@ -33,7 +33,7 @@ export const LINE_TYPES: Record<string, LineTypeDef> = {
 };
 
 /** Alla linjetyper som går att välja: de inbyggda och stilmallens egna. */
-export function lineTypeList(style: StyleSheet | undefined): { id: string; name: string; dash: number[]; own: boolean }[] {
+export function lineTypeList(style: StyleResources | undefined): { id: string; name: string; dash: number[]; own: boolean }[] {
   return [
     ...Object.entries(LINE_TYPES).map(([id, t]) => ({ id, ...t, own: false })),
     ...(style?.lineTypes ?? []).map((t) => ({ ...t, own: true })),
@@ -41,7 +41,7 @@ export function lineTypeList(style: StyleSheet | undefined): { id: string; name:
 }
 
 /** Mönstret för nyckeln, eller undefined för heldragen (också för en okänd nyckel). */
-export function lineTypeDash(style: StyleSheet | undefined, key: string | undefined): number[] | undefined {
+export function lineTypeDash(style: StyleResources | undefined, key: string | undefined): number[] | undefined {
   if (!key || key === 'solid') return undefined;
   const dash = LINE_TYPES[key]?.dash ?? style?.lineTypes?.find((t) => t.id === key)?.dash;
   return dash?.length ? dash : undefined;
@@ -66,7 +66,7 @@ export function formatDash(dash: readonly number[]): string {
 }
 
 /** En ny nyckel för en egen linjetyp, som inte krockar med någon annan. */
-export function newLineTypeId(style: StyleSheet): string {
+export function newLineTypeId(style: StyleResources): string {
   const used = new Set([...Object.keys(LINE_TYPES), ...(style.lineTypes ?? []).map((t) => t.id)]);
   let i = 1;
   while (used.has(`egen-${i}`)) i++;

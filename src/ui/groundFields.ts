@@ -1,3 +1,4 @@
+import { defaultSheet } from '../core/viewCategories';
 import type { Element, ProjectDoc } from '../core/model';
 import { groundDefaults, toRh } from '../core/site';
 import type { ViewStates } from '../core/states';
@@ -23,7 +24,7 @@ export function groundFieldsMarkup(doc: ProjectDoc, el: Element, view: ViewState
   const p = resolveParams<GroundParams>(doc, el);
   const def = groundDefaults(doc.site);
   const site = doc.site;
-  const { ctx } = createContext(doc, el.storey, view, doc.graphics, () => true);
+  const { ctx } = createContext(doc, el.storey, view, defaultSheet(doc.graphics), () => true);
   const g = groundGeometry(ctx, el);
   const f = finishedTerrain(ctx);
   const vol = f?.volumes.get(el.id);

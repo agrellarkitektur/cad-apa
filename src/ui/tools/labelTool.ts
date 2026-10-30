@@ -20,7 +20,7 @@ export class LabelTool implements ViewTool {
   cursor = 'crosshair';
   text = '{typ}';
   sort = '';
-  /** Textens vridning i grader (0.10.22), eller null: stilmallens förval. */
+  /** Textens vridning i grader (0.10.22), eller null: stilbokens förval. */
   angle: number | null = null;
   /** En befintlig littera som får fler ledare. */
   addTo: Id | null = null;

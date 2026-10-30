@@ -1,3 +1,5 @@
+import { bookWithSheet } from '../src/core/viewCategories';
+import { defaultSheet } from '../src/core/viewCategories';
 import { addElements } from '../src/core/commands';
 import type { Element, ProjectDoc } from '../src/core/model';
 import { encodeGrid } from '../src/core/site';
@@ -193,14 +195,15 @@ export function twoStoreys(): ProjectDoc {
  */
 export function shapesProject(): ProjectDoc {
   const doc = sampleProject();
-  doc.graphics = {
-    ...doc.graphics,
+  const sheet = defaultSheet(doc.graphics);
+  doc.graphics = bookWithSheet(doc.graphics, {
+    ...sheet,
     lineTypes: [{ id: 'egen-1', name: 'Egen', dash: [4, 1, 0.5, 1] }],
     pens: { sectionLine: { weight: 0.5, linetype: 'dashdot' }, north: { weight: 0.25, color: '#c2372c' } },
     // Fyllningstyperna (0.8.36–0.8.37, i referensritningarna sedan 0.8.38): en egen typ och tegel som snittfyllning för nytt.
     fillTypes: [{ id: 'egen-fyll', name: 'Egen', weight: 0.25, families: [{ angle: 0, x: 0, y: 0, spacing: 3, shift: 1.5, dash: [2, 1] }, { angle: 60, x: 1, y: 0.5, spacing: 4, shift: 0, dash: [] }] }],
-    actions: { ...doc.graphics.actions, new: { ...doc.graphics.actions.new, cutFill: { kind: 'type', type: 'tegel', color: 'ink', weight: 0.18 } } },
-  };
+    actions: { ...sheet.actions, new: { ...sheet.actions.new, cutFill: { kind: 'type', type: 'tegel', color: 'ink', weight: 0.18 } } },
+  });
   const states = doc.states.map((s) => s.id);
   const base = { weight: 0.25, linetype: 'solid', fillAngle: 45, fillSpacing: 2 };
   const shape = (id: string, params: Record<string, unknown>, extra: Record<string, unknown> = {}) => {
@@ -267,7 +270,7 @@ export function addGround(store: DocStore, params: GroundParams): string {
 }
 
 /** Planens sammanhang för våning 1 i ett tillstånd (Förslag A från början). */
-export const planCtx = (store: DocStore, state = 'st-a') => createContext(store.doc, store.doc.storeys[0].id, { state }, store.doc.graphics, () => true).ctx;
+export const planCtx = (store: DocStore, state = 'st-a') => createContext(store.doc, store.doc.storeys[0].id, { state }, defaultSheet(store.doc.graphics), () => true).ctx;
 
 /**
  * Exempelvillan på en kuperad plats med alla sorters markobjekt (0.10.6):

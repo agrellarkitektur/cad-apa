@@ -1,7 +1,7 @@
 import { cutHeightOf, DEFAULT_CUT_HEIGHT } from '../elements/roofPlan';
 import { traceStoreyOptions } from './app/showKeys';
-import { PRESETS } from '../core/graphics';
-import { buildingStoreys, isMaster, isSite, SITE_CATEGORIES, type Id, type ProjectDoc, type SiteCategory, type Storey, type TreeTab } from '../core/model';
+import { categoriesOf, categoryOf, styleOverrides, viewSettings, withShow, type DetailLevel } from '../core/viewCategories';
+import { buildingStoreys, isMaster, isSite, type Id, type ProjectDoc, type Storey, type TreeTab } from '../core/model';
 import type { DocStore } from '../core/store';
 import { DETAIL_LABELS, DETAIL_LEVELS } from '../core/states';
 import { PAPER_SIZES, saveMaster, setDefaultMaster, stampUsers } from '../core/sheets';
@@ -80,7 +80,7 @@ function siteMarkup(doc: ProjectDoc, s: Storey, folderField: string, actions: st
         </div>
         <h3>Ny vy</h3>
         <div class="nav-actions">
-          ${SITE_CATEGORIES.map((c) => `<button type="button" class="btn" data-action="site-view" data-category="${c.id}">${c.name}</button>`).join('')}
+          ${categoriesOf(doc.graphics, 'site').map((c) => `<button type="button" class="btn" data-action="site-view" data-category="${esc(c.id)}">${esc(c.name)}</button>`).join('')}
         </div>
       </section>
       ${actions}
@@ -97,6 +97,7 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
     const sheet = v.worksheet ? doc.worksheets.find((w) => w.id === v.worksheet) : undefined;
     const shows = v.marker && doc.elements[v.marker] ? markerName(doc, doc.elements[v.marker]) : sheet ? sheet.name : (doc.storeys.find((s) => s.id === v.storey)?.name ?? '');
     const tags = [...new Set([...doc.viewTags, ...(v.tags ?? [])])];
+    const { cat, show, type } = viewSettings(doc, v);
     return `<form class="tree-form" data-tree-kind="view" data-tree-id="${v.id}">
       <header class="sel-head"><h2>${esc(v.name)}</h2><p>Vy · visar ${esc(shows)}</p></header>
       <section>
@@ -104,16 +105,16 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('Namn', `<input name="name" value="${esc(v.name)}">`)}
           ${field('Mapp', `<select name="folder">${folderOptions(doc, 'vyer', folder)}</select>`)}
           ${field('Tillstånd', `<select name="state">${doc.states.map((s) => `<option value="${s.id}"${s.id === v.state ? ' selected' : ''}>${esc(s.name)}</option>`).join('')}</select>`)}
-          ${field('Littera', levelSelect('labelDetail', v.labelDetail ?? v.detail))}
-          ${field('2D-symboler', levelSelect('detail', v.detail))}
-          ${field('3D och fasader', levelSelect('modelDetail', v.modelDetail ?? v.detail))}
-          ${field('Stilmall', `<select name="style"><option value="">Projektets</option>${PRESETS.map((p) => `<option${p.name === v.style ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select>`)}
-          ${isSite(v.storey) ? field('Vykategori', `<select name="category">${SITE_CATEGORIES.map((c) => `<option value="${c.id}"${c.id === (v.category ?? 'situation') ? ' selected' : ''}>${c.name}</option>`).join('')}</select>`) : ''}
+          ${field('Vykategori', `<select name="category">${categoriesOf(doc.graphics, type).map((c) => `<option value="${esc(c.id)}"${c === cat ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}</select>`)}
+          ${field('Littera', levelSelect('labelDetail', show.labelDetail))}
+          ${field('2D-symboler', levelSelect('detail', show.detail))}
+          ${field('3D och fasader', levelSelect('modelDetail', show.modelDetail))}
           ${field('Kalkera', `<select name="trace"><option value="">Ingen</option>${traceStoreyOptions(v.trace, isSite(v.storey), doc, v.storey)}${doc.views.filter((x) => x.id !== v.id).map((x) => `<option value="${x.id}"${x.id === v.trace ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`)}
           ${field('Skala', `<span class="input-unit scale-unit"><i>1:</i><input name="scale" type="text" inputmode="numeric" value="${v.scale ?? ''}" placeholder="100"></span>`)}
         </div>
-        <label class="check"><input type="checkbox" name="compare"${v.compare ? ' checked' : ''}> Jämför med befintligt</label>
-        <label class="check"><input type="checkbox" name="hideDemolished"${v.hideDemolished ? ' checked' : ''}> Dölj det som rivs</label>
+        <label class="check"><input type="checkbox" name="compare"${show.compare ? ' checked' : ''}> Jämför med befintligt</label>
+        <label class="check"><input type="checkbox" name="hideDemolished"${show.hideDemolished ? ' checked' : ''}> Dölj det som rivs</label>
+        <p class="note">Det som skiljer sig från kategorin sparas i vyn; resten följer kategorin i stilboken.</p>
       </section>
       <section>
         <h3>Vy-taggar</h3>
@@ -294,24 +295,30 @@ export function bindTreeForm(root: HTMLElement, store: DocStore, onSaved: (item:
     const folder = str('folder') || null;
     if (kind === 'view') {
       const scale = Math.round(num('scale'));
+      const v = store.doc.views.find((x) => x.id === id);
+      if (!v) return;
+      // Kategorin och det som avviker från den (0.10.32). En ny kategori tas som den är.
+      const was = viewSettings(store.doc, v);
+      const cat = categoryOf(store.doc.graphics, was.type, str('category'));
+      const level = (k: string) => str(k) as DetailLevel;
+      const overrides =
+        cat === was.cat
+          ? withShow(cat, v.overrides, { ...was.show, detail: level('detail'), labelDetail: level('labelDetail'), modelDetail: level('modelDetail'), compare: d.has('compare'), hideDemolished: d.has('hideDemolished') })
+          : (() => {
+              const so = styleOverrides(v.overrides);
+              return Object.keys(so).length ? so : undefined;
+            })();
       saveView(
         store,
         id,
         {
           ...(str('name').trim() ? { name: str('name').trim() } : {}),
           state: str('state'),
-          detail: str('detail') as 'sketch' | 'normal' | 'detail',
-          // Littera och 3D bara när de skiljer sig från 2D (0.8.37).
-          labelDetail: str('labelDetail') !== str('detail') ? (str('labelDetail') as 'sketch' | 'normal' | 'detail') : undefined,
-          modelDetail: str('modelDetail') !== str('detail') ? (str('modelDetail') as 'sketch' | 'normal' | 'detail') : undefined,
-          style: str('style') || undefined,
+          category: cat.id,
+          overrides,
           trace: str('trace') || null,
-          compare: d.has('compare'),
-          hideDemolished: d.has('hideDemolished'),
           tags: d.getAll('tag').map(String),
           scale: scale > 0 ? scale : undefined,
-          // Vykategorin för en vy av Platsen (0.10.25).
-          ...(d.has('category') ? { category: (str('category') || undefined) as SiteCategory | undefined } : {}),
         },
         folder,
       );

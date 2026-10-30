@@ -1,4 +1,5 @@
-import { DEFAULT_MATERIALS, SWEDISH_STANDARD } from '../core/graphics';
+import { newStyleBook, POCHE, type StyleBook } from '../core/graphics';
+import { styleOfPreset, type ViewCategory } from '../core/viewCategories';
 import { exampleMaster } from '../core/exampleMaster';
 import { drawingMarkers, emptyTree, siteStorey, FORMAT, FORMAT_VERSION, PROJECT_DEFAULT_FIELDS, type ViewDef, type Definition, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { DoorParams } from '../elements/door';
@@ -173,12 +174,29 @@ elements['sektion-a'] = {
 };
 
 const views: ViewDef[] = [
-  { id: 'vy-bef', name: 'Plan 1 – Befintligt', storey: STOREY, state: BEF, compare: false, detail: 'normal', hide: [], hideDemolished: false },
-  { id: 'vy-a', name: 'Plan 1 – Förslag A, jämförelse', storey: STOREY, state: A, compare: true, detail: 'normal', hide: [], hideDemolished: false },
-  { id: 'vy-a-bl', name: 'Plan 1 – Förslag A, bygglov', storey: STOREY, state: A, compare: true, detail: 'normal', hide: ['Dimension'], hideDemolished: true },
-  { id: 'vy-b-bh', name: 'Plan 1 – Förslag B, bygghandling', storey: STOREY, state: B, compare: true, detail: 'detail', hide: [], hideDemolished: false },
-  { id: 'vy-skiss', name: 'Plan 1 – Skiss', storey: STOREY, state: A, compare: false, detail: 'sketch', hide: ['Furniture'], hideDemolished: false, style: 'Poché' },
+  { id: 'vy-bef', name: 'Plan 1 – Befintligt', storey: STOREY, state: BEF, overrides: { compare: false } },
+  { id: 'vy-a', name: 'Plan 1 – Förslag A, jämförelse', storey: STOREY, state: A },
+  { id: 'vy-a-bl', name: 'Plan 1 – Förslag A, bygglov', storey: STOREY, state: A, overrides: { 'hide:Dimension': true, hideDemolished: true } },
+  { id: 'vy-b-bh', name: 'Plan 1 – Förslag B, bygghandling', storey: STOREY, state: B, overrides: { detail: 'detail', labelDetail: 'detail', modelDetail: 'detail' } },
+  // Kategorin Skiss (0.10.32) har Poché, skissnivå och inga möbler.
+  { id: 'vy-skiss', name: 'Plan 1 – Skiss', storey: STOREY, state: A, category: 'skiss' },
 ];
+
+/** Exemplets stilbok: förvalen och en kategori för skisser. */
+function sampleBook(): StyleBook {
+  const book = newStyleBook();
+  const at = book.categories.findIndex((c) => c.type === 'storey') + 1;
+  const skiss: ViewCategory = {
+    id: 'skiss',
+    name: 'Skiss',
+    type: 'storey',
+    scale: 100,
+    show: { compare: false, detail: 'sketch', labelDetail: 'sketch', modelDetail: 'sketch', hide: ['Furniture'], hideDemolished: false },
+    style: styleOfPreset(POCHE),
+  };
+  book.categories.splice(at, 0, skiss);
+  return book;
+}
 
 export function sampleProject(): ProjectDoc {
   const master = exampleMaster(STOREY, [BEF, A, B]);
@@ -195,7 +213,7 @@ export function sampleProject(): ProjectDoc {
     storeys: [{ id: STOREY, name: 'Plan 1', elevation: 0, height: 2700 }, siteStorey()],
     definitions,
     elements: { ...elements, ...master.elements },
-    graphics: { ...SWEDISH_STANDARD, materials: [...DEFAULT_MATERIALS] },
+    graphics: sampleBook(),
     views,
     ...emptyTree(),
     worksheets: [master.worksheet],

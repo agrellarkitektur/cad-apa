@@ -1,3 +1,4 @@
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import { normalizeMaterials } from '../src/core/graphics';
@@ -134,7 +135,7 @@ describe('Texturer i 3D (0.10.31)', () => {
     expect(g.count).toBeGreaterThan(0);
     const w = addGround(store, { kind: 'wall', outline: [], line: [[20000, -2000], [26000, -2000]], height: 3000, width: 300 } as GroundParams);
     linkMaterial(store, [w], 'asfalt');
-    const ctx = createContext(store.doc, 'platsen', { state: 'st-a' }, store.doc.graphics, () => true).ctx;
+    const ctx = createContext(store.doc, 'platsen', { state: 'st-a' }, defaultSheet(store.doc.graphics), () => true).ctx;
     const solids = groundType.model3d!(store.doc.elements[w] as never, ctx).filter((s) => s.kind !== 'edges');
     expect(solids.every((s) => (s as { texture?: unknown }).texture)).toBe(true);
   });

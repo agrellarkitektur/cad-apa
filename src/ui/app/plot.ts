@@ -59,7 +59,7 @@ export function installPlot(app: AppContext, exportImage: (src: { asset: string;
 
   function items(doc: ProjectDoc) {
     const sheets = doc.sheets.map((s) => ({ id: s.id, key: `sheet:${s.id}`, name: `${s.number} ${s.name}`, sub: describeSheet(s) }));
-    const views = doc.views.map((v) => ({ id: v.id, key: `view:${v.id}`, name: v.name, sub: describeView(v) }));
+    const views = doc.views.map((v) => ({ id: v.id, key: `view:${v.id}`, name: v.name, sub: describeView(app.store.doc, v) }));
     return { sheets, views };
   }
 

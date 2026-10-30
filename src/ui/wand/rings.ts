@@ -1,3 +1,4 @@
+import { defaultSheet } from '../../core/viewCategories';
 import { buildingFootprint } from '../../elements/footprint';
 import { typeOf } from '../../elements/registry';
 import { createContext } from '../../repr/context';
@@ -89,7 +90,7 @@ export function houseAt(ctx: WandContext): Vec2[] | null {
   const doc = ctx.app.store.doc;
   const view = ctx.app.viewStates();
   if (!house || house.elements !== doc.elements || house.state !== view.state) {
-    const { ctx: plan } = createContext(doc, ctx.app.ui.storey, view, doc.graphics, () => true);
+    const { ctx: plan } = createContext(doc, ctx.app.ui.storey, view, defaultSheet(doc.graphics), () => true);
     house = { elements: doc.elements, state: view.state, rings: buildingFootprint(plan).map((poly) => poly[0]).filter((r) => r && r.length >= 3) };
   }
   const r = house.rings.find((q) => pointInRings(ctx.at, [q]));

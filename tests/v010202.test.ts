@@ -1,3 +1,4 @@
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { deleteElements, moveElements, updateParams } from '../src/core/commands';
@@ -40,7 +41,7 @@ function project(): DocStore {
 }
 
 const planOf = (s: DocStore, scale = 100, extra: object = {}) => buildPlan(s.doc, s.doc.storeys[0].id, { state: s.doc.states.at(-1)!.id, scale, ...extra });
-const ctxOf = (s: DocStore) => createContext(s.doc, s.doc.storeys[0].id, { state: s.doc.states.at(-1)!.id } as never, s.doc.graphics, () => true).ctx;
+const ctxOf = (s: DocStore) => createContext(s.doc, s.doc.storeys[0].id, { state: s.doc.states.at(-1)!.id } as never, defaultSheet(s.doc.graphics), () => true).ctx;
 const of = (s: DocStore, id = 'L') => planOf(s).prims.filter((p) => p.origin?.objectId === id);
 
 describe('ledaren mot texten', () => {

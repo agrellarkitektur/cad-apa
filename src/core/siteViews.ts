@@ -1,30 +1,18 @@
 import { newId } from './ids';
-import { SITE_CATEGORIES, SITE_STOREY, type Id, type ProjectDoc, type SiteCategory, type ViewDef } from './model';
+import { SITE_STOREY, type Id, type ProjectDoc, type ViewDef } from './model';
+import { categoryOf } from './viewCategories';
 import { defaultState } from './states';
 import type { DocStore } from './store';
 
 /**
- * Vyer av Platsen (0.10.25): tre förinställningar att utgå från. De är
- * vanliga sparade vyer med vykategori, skala och det som visas; allt går att
- * ändra efteråt under Visa och i vyns inställningar. Materialen (0.10.26)
- * ritas efter kategorin.
+ * Vyer av Platsen (0.10.25): en ny vy med en av Platsens kategorier i
+ * stilboken (0.10.32), som ger det som visas och hur materialen ritas.
  */
 
-/** Det som släcks (eller med plus tänds) i varje kategori, som vyns `hide`. */
-const PRESET_HIDE: Record<SiteCategory, readonly string[]> = {
-  // Gränser, grannhus, träd, huset, höjdkurvorna och markobjektens höjder; inga markörer.
-  situation: ['Elevation', 'Section', 'BasisFacade', 'littera:Ground'],
-  // Allt om marken, också de branta slänterna och stödmurarnas littera.
-  grading: ['Elevation', 'Section', 'BasisFacade', '+steepSlopes'],
-  // Färglagd och mindre teknisk: utan höjdkurvor, mått, littera och markörer.
-  illustration: ['Terrain', 'Elevation', 'Section', 'BasisFacade', 'Dimension', 'Label', 'littera:Ground'],
-};
-
-const PRESET_SCALE: Record<SiteCategory, number> = { situation: 400, grading: 200, illustration: 200 };
-
 /** En ny vy av Platsen efter förinställningen; namnet får ett nummer om det redan finns. */
-export function siteViewPreset(doc: Pick<ProjectDoc, 'states' | 'views'>, category: SiteCategory, id: Id = newId('vy')): ViewDef {
-  const base = SITE_CATEGORIES.find((c) => c.id === category)!.name;
+export function siteViewPreset(doc: Pick<ProjectDoc, 'states' | 'views' | 'graphics'>, category: string, id: Id = newId('vy')): ViewDef {
+  const c = categoryOf(doc.graphics, 'site', category);
+  const base = c.name;
   const names = new Set(doc.views.map((v) => v.name));
   let name = base;
   for (let n = 2; names.has(name); n++) name = `${base} ${n}`;
@@ -33,18 +21,14 @@ export function siteViewPreset(doc: Pick<ProjectDoc, 'states' | 'views'>, catego
     name,
     storey: SITE_STOREY,
     state: defaultState(doc),
-    compare: false,
-    detail: 'normal',
-    hide: [...PRESET_HIDE[category]],
-    hideDemolished: false,
     trace: null,
-    scale: PRESET_SCALE[category],
-    category,
+    scale: c.scale,
+    category: c.id,
   };
 }
 
 /** Lägg till en vy av Platsen; svarar med vyn. */
-export function addSiteView(store: DocStore, category: SiteCategory): ViewDef {
+export function addSiteView(store: DocStore, category: string): ViewDef {
   const v = siteViewPreset(store.doc, category);
   store.transact(`Ny vy: ${v.name}`, (tx) => tx.setViews([...tx.doc.views, v]));
   return v;

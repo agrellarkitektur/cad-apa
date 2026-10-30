@@ -1,3 +1,4 @@
+import { defaultSheet } from '../core/viewCategories';
 import type { Element, ProjectDoc } from '../core/model';
 import type { ViewStates } from '../core/states';
 import { createContext } from '../repr/context';
@@ -46,7 +47,7 @@ export function markerViewFields(doc: ProjectDoc, el: Element, view: ViewStates)
 
 /**
  * Markören (0.10.12): beteckningen, läget och stilen, för sig från vyn.
- * Pennan är stilmallens för den sortens markör och gäller alla i projektet.
+ * Pennan är stilbokens för den sortens markör och gäller alla i projektet.
  */
 export function markerSection(doc: ProjectDoc, el: Element, lock: string): string {
   if (el.type !== 'Section' && el.type !== 'Elevation') return '';
@@ -56,7 +57,7 @@ export function markerSection(doc: ProjectDoc, el: Element, lock: string): strin
   const shown: MarkerParams = p.auto ? { ...p, start: [f.start[0], f.start[1]], end: [f.end[0], f.end[1]], side: 1 } : p;
   const isSection = el.type === 'Section';
   const key = isSection ? 'sectionLine' : 'elevationLine';
-  const own = doc.graphics.pens?.[key];
+  const own = defaultSheet(doc.graphics).pens?.[key];
   const weight = own?.weight ?? defaultMarkerPen(key).weight;
   return `<section><h3>Markör</h3>
     ${isSection ? `<div class="fields">${textField('text:label', 'Beteckning', p.label ?? 'A')}</div>` : ''}
@@ -66,7 +67,7 @@ export function markerSection(doc: ProjectDoc, el: Element, lock: string): strin
       <label class="field"><span>Färg</span><input type="color" data-pen="${key}:color" value="${toHex(own?.color ?? 'ink')}"></label>
       <label class="field"><span>Linjetyp</span><select data-pen="${key}:linetype">${lineTypeOptions(doc.graphics, own?.linetype)}</select></label>
     </div>
-    <p class="note">Pennan gäller alla ${isSection ? 'sektionsmarkörer' : 'fasadmarkörer'} i projektet (stilmallens pennor).</p>
+    <p class="note">Pennan gäller alla ${isSection ? 'sektionsmarkörer' : 'fasadmarkörer'} i projektet (stilbokens pennor, i alla kategorier).</p>
     ${lock}
   </section>`;
 }
@@ -86,7 +87,7 @@ function markerLineFields(p: MarkerParams): string {
  * förvalet ikryssat (byggnadshöjden i fasaden mot den beräkningsgrundande).
  */
 function markerHeightFields(doc: ProjectDoc, el: Element, view: ViewStates): string {
-  const { ctx } = createContext(doc, doc.storeys[0].id, view, doc.graphics, () => true);
+  const { ctx } = createContext(doc, doc.storeys[0].id, view, defaultSheet(doc.graphics), () => true);
   const bh = buildingHeight(ctx);
   const h = markerHeights(el, markerFrame(doc, el).view, bh);
   const box = (k: keyof MarkerHeights, label: string, title: string) =>

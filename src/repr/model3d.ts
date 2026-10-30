@@ -1,3 +1,4 @@
+import { defaultSheet } from '../core/viewCategories';
 import type { Id, ProjectDoc } from '../core/model';
 import type { ViewStates } from '../core/states';
 import type { Shape3D } from './solids';
@@ -9,5 +10,5 @@ import { modelShapes, WITHOUT_DEMOLISHED } from './storeyShapes';
  * jämför med ett annat tillstånd.
  */
 export function buildModel3d(doc: ProjectDoc, view: ViewStates, only?: Id): Shape3D[] {
-  return modelShapes(doc, view, doc.graphics, WITHOUT_DEMOLISHED, only).shapes.map((x) => x.s);
+  return modelShapes(doc, view, defaultSheet(doc.graphics), WITHOUT_DEMOLISHED, only).shapes.map((x) => x.s);
 }

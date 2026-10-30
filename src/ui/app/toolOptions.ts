@@ -198,7 +198,7 @@ export function installToolOptions(app: AppContext) {
         <label class="opt"><span>Text</span><input id="label-text" value="${escapeHtml(t.text)}" aria-label="Litterans text" style="width:180px" title="Fält inom klammer hämtas ur det ledarna pekar på: {typ}, {id}, {nummer}, {area}, {bredd}, {höjd}, {löpnummer} och egna egenskaper, t.ex. {brandklass}"></label>
         <label class="opt"><span>Sort</span><input id="label-sort" value="${escapeHtml(t.sort)}" aria-label="Sort" placeholder="Ingen" style="width:110px" title="Litteror av samma sort numreras i följd ({löpnummer}) och kan släckas under Visa"></label>
         <div class="opt"><span>Vridning</span><div class="segmented" role="group" aria-label="Textens vridning">
-          <button data-label-angle="" aria-pressed="${t.angle === null}" title="Stilmallens förval">Förval</button>
+          <button data-label-angle="" aria-pressed="${t.angle === null}" title="Stilbokens förval">Förval</button>
           <button data-label-angle="0" aria-pressed="${t.angle === 0}" title="Vågrät text">Horisontell</button>
           <button data-label-angle="90" aria-pressed="${t.angle === 90}" title="Lodrät text, läses nedifrån">Vertikal</button>
         </div></div>

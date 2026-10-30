@@ -1,3 +1,4 @@
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { wallCutParts } from '../src/elements/groundPlan';
@@ -67,7 +68,7 @@ describe('Snittet i planen (0.10.16)', () => {
     const s = wallsProject({}, {}, { m: { type: 'Furniture', params: { origin: [0, 0], rotation: 0, width: 800, depth: 300, symbol: 'counter', level: 1400 } } });
     expect(of(s, 'm').every((p) => p.kind === 'polyline' && p.origin?.part === 'över' && p.pen.weight === 0.13)).toBe(true);
     // Stilmallen: tjockleken för möbler över snittet.
-    const style = structuredClone(s.doc.graphics);
+    const style = structuredClone(defaultSheet(s.doc.graphics));
     applyPenField(style, { dataset: { pen: 'aboveFurniture:weight' }, value: '0.25' } as unknown as HTMLInputElement);
     expect(planCutPen(style, 'Furniture', 'above')).toMatchObject({ weight: 0.25, dash: expect.any(Array) });
     // Heldraget sparas, eftersom förvalet är punktstreckat.

@@ -1,3 +1,4 @@
+import type { ViewType } from '../../core/viewCategories';
 import type { Brand } from '../../brand';
 import { ENGINE } from '../../core/engine';
 import type { Id, ProjectDoc } from '../../core/model';
@@ -68,9 +69,12 @@ export function createUiState(initial: ProjectDoc, uiSettings: UiSettings, deskt
     /** Det som döljs i vyn (elementtyper och "littera"), och om rivet visas. */
     hide: [] as string[],
     hideDemolished: false,
-    /** Vyn man utgick från, och vyns stilmall och kalkerade vy. */
+    /** Vyn man utgick från, och dess kalkerade vy. */
     activeView: null as Id | null,
-    styleName: null as string | null,
+    /** Vykategorin (0.10.32) där man är; null = vytypens första. */
+    category: null as string | null,
+    /** Vytypen senast det ritades; byts den utan att en vy öppnas får visningen kategorins inställningar. */
+    viewType: null as ViewType | null,
     trace: null as Id | null,
     /** En fasad eller sektion som visas i stället för planen (0.7). */
     marker: null as Id | null,
@@ -116,7 +120,7 @@ export function shellMarkup(brand: Brand): string {
             <button role="menuitem" data-action="new-proposal">${icons.states}<span>Nytt förslag</span></button>
             <button role="menuitem" data-action="filter-select">${icons.select}<span>Filtrera och markera…</span><kbd>FM</kbd></button>
             <button role="menuitem" data-action="show-types">${icons.wall}<span>Typer och littera</span></button>
-            <button role="menuitem" data-action="style">${icons.dimension}<span>Stilmall…</span></button>
+            <button role="menuitem" data-action="style">${icons.dimension}<span>Stilbok…</span></button>
             <button role="menuitem" data-action="settings">${icons.properties}<span>Gränssnitt…</span></button>
             <div class="narrow-only menu-themes">
               <hr>

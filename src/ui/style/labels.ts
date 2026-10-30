@@ -1,17 +1,17 @@
-import type { StyleSheet } from '../../core/graphics';
+import type { StyleResources } from '../../core/graphics';
 import type { LeaderKind } from '../../core/graphics';
 import { LEADER_ATTACH, LEADER_ENDS, type LeaderAttach, type LeaderEnd } from '../../elements/leader';
 import { escapeHtml } from '../labels';
 
 const LEADER_NAMES: Record<LeaderKind, string> = { Wall: 'Väggar', Door: 'Dörrar', Window: 'Fönster', Space: 'Rum', Ground: 'Stödmurar', Label: 'Generell littera' };
 
-/** Stilmallens texter och littera: justering, texthöjder och mallarna. */
-export function labelSection(style: StyleSheet): string {
+/** Stilbokens texter och littera: justering, texthöjder och mallarna. */
+export function labelSection(style: StyleResources): string {
   const l = style.labels;
-  const h = (k: keyof StyleSheet['labels']['heights'], label: string) =>
+  const h = (k: keyof StyleResources['labels']['heights'], label: string) =>
     `<label><span>${label}</span><span class="input-unit"><input type="text" data-expr data-step="0.05" inputmode="decimal" autocomplete="off" data-lab="h:${k}" value="${Number(l.heights[k]).toFixed(2)}"><i>mm</i></span></label>`;
   const names: Record<string, string> = { Wall: 'Väggar', Door: 'Dörrar', Window: 'Fönster' };
-  const tpl = (Object.keys(l.templates) as (keyof StyleSheet['labels']['templates'])[])
+  const tpl = (Object.keys(l.templates) as (keyof StyleResources['labels']['templates'])[])
     .map(
       (k) => `<div class="tpl-row"><b>${names[k]}</b>
           <label><span>Normal</span><textarea rows="2" data-lab="t:${k}:normal">${escapeHtml(l.templates[k].normal)}</textarea></label>
@@ -47,12 +47,12 @@ export function labelSection(style: StyleSheet): string {
 }
 
 /** Ändra texterna i `style` (en kopia) efter fältet; null om fältet inte hör hit. */
-export function applyLabelField(style: StyleSheet, input: HTMLInputElement | HTMLSelectElement): string | null {
+export function applyLabelField(style: StyleResources, input: HTMLInputElement | HTMLSelectElement): string | null {
   if (!input.dataset.lab) return null;
   const [kind, a, b] = input.dataset.lab.split(':');
   if (kind === 'align') style.labels.align = input.value === 'center' ? 'center' : 'left';
-  if (kind === 'h' && Number(input.value) > 0) style.labels.heights[a as keyof StyleSheet['labels']['heights']] = Number(input.value);
-  if (kind === 't') style.labels.templates[a as keyof StyleSheet['labels']['templates']][b as 'normal' | 'detail'] = input.value;
+  if (kind === 'h' && Number(input.value) > 0) style.labels.heights[a as keyof StyleResources['labels']['heights']] = Number(input.value);
+  if (kind === 't') style.labels.templates[a as keyof StyleResources['labels']['templates']][b as 'normal' | 'detail'] = input.value;
   if (kind === 'room') style.labels.room = input.value;
   if (kind === 'le' && LEADER_ENDS.some(([v]) => v === input.value)) style.labels.leaders[a as LeaderKind].end = input.value as LeaderEnd;
   if (kind === 'ls' && Number(input.value.replace(',', '.')) >= 0) style.labels.leaders[a as LeaderKind].stub = Math.round(Number(input.value.replace(',', '.')) * 2) / 2;

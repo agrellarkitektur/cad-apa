@@ -7,7 +7,7 @@ import type { FeedbackDialog } from '../feedbackDialog';
 import type { NavTab } from '../navigator';
 import { isNarrow } from '../sheet';
 import { applyTheme, type ThemeId } from '../theme';
-import { onPaper, type SiteCategory } from '../../core/model';
+import { onPaper } from '../../core/model';
 import { isSnapEnabled, setSnapEnabled } from '../tools/snap';
 import { saveUiSettings } from '../uiSettings';
 import type { AppContext } from './context';
@@ -220,7 +220,8 @@ export function installActions(app: AppContext, parts: ActionParts) {
       case 'style':
         closeMenu();
         showMenu.closeShowMenu();
-        app.styleDialog.open();
+        // Vid vytypen och kategorin där man är (0.10.32).
+        app.styleDialog.open({ type: app.place.viewType(), category: app.place.currentCategory().id });
         break;
       case 'show-menu':
         showMenu.toggleShowMenu();
@@ -252,7 +253,7 @@ export function installActions(app: AppContext, parts: ActionParts) {
         break;
       case 'site-view': {
         // En ny vy av Platsen efter förinställningen (0.10.25), öppnad.
-        const category = target.closest<HTMLElement>('[data-category]')?.dataset.category as SiteCategory | undefined;
+        const category = target.closest<HTMLElement>('[data-category]')?.dataset.category;
         if (!category) break;
         closeMenu();
         views.applyView(addSiteView(store, category));
@@ -361,11 +362,11 @@ export function installActions(app: AppContext, parts: ActionParts) {
         app.hint('Klicka på den ände av linjen där den ska fortsätta.', 4000);
         break;
       case 'own-pen-reset':
-        // Egen penna (0.8.31) tillbaka till stilmallens.
+        // Egen penna (0.8.31) tillbaka till stilbokens.
         resetOwnPen(app.store, app.selection.list());
         break;
       case 'type-pen-reset': {
-        // Typens penna (0.8.33) tillbaka till stilmallens.
+        // Typens penna (0.8.33) tillbaka till stilbokens.
         const def = target.closest<HTMLElement>('[data-def]')?.dataset.def;
         if (def) resetTypePen(app.store, def);
         break;

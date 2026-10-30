@@ -1,3 +1,4 @@
+import { defaultSheet } from '../core/viewCategories';
 import type { ProjectDoc } from '../core/model';
 import type { ViewStates } from '../core/states';
 import { createContext } from './context';
@@ -45,7 +46,7 @@ export const lookKey = (s: { color: string | null; texture?: { asset: string; si
 export function colorShapes(doc: ProjectDoc, view: ViewStates): Shape[] {
   const storey = doc.storeys[0]?.id;
   if (!storey || !doc.site || !doc.graphics.materials?.length) return [];
-  const { ctx } = createContext(doc, storey, view, doc.graphics, () => true);
+  const { ctx } = createContext(doc, storey, view, defaultSheet(doc.graphics), () => true);
   const out: Shape[] = [];
   const push = (rings: Vec2[][], look: ReturnType<typeof lookOf>) => {
     if (!look || !rings.length) return;

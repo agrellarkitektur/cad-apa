@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.31** (alfa); nästa är **utredningen om stilinställningar per vytyp**,
-sedan **0.11 Trappor**.
+**0.10.32** (alfa); nästa är **0.10.33 Avvikelser och kategorier i vyn**,
+och efter stilinställningarna (0.10.32–0.10.38) **0.11 Trappor**.
 
 ## Vad som fungerar
 
@@ -1149,6 +1149,32 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.32, stilboken i tre nivåer med arv (**nytt filformat, 25**;
+projekt från 0.10.31 öppnas inte):
+- **Stilboken** (förut stilmallen, i huvudmenyn och under Visa): i
+  vänsterkanten *Projektet › Allmänt*, *Vytyper* (Platsen, Våningar,
+  Fasader, Sektioner och Arbetsblad; 3D-vyer, Uppställningar och
+  Förteckningar tonade tills de finns) och *Resurser* (material,
+  linjetyper, fyllningstyper, text och littera), som gäller alla vyer
+- **Vykategorier per vytyp**, som flikar överst: Platsens
+  Situationsplan, Markplaneringsritning och Illustrationsplan, och en
+  förvalskategori för var och en av de andra vytyperna. En kategori har
+  visningen (detaljnivåerna, jämförelsen, skalan för nya vyer och på
+  Platsen hur materialen ritas), innehållet (samma kryss som under Visa),
+  åtgärderna och pennorna. Verktygen: duplicera, byt namn, kopiera från en
+  annan kategori eller en förinställning (Svensk standard, Poché,
+  Färgmarkerad), återställ till förvalet, flytta, ta bort och *Ny kategori*;
+  raden visar hur många vyer som har kategorin
+- **Vyn följer sin kategori**: ändras kategorin ändras alla vyer med den,
+  utom på de rader en vy själv ändrat och sparat (*Spara i vyn*). Visa har
+  *Vykategori* i stället för *Stilmall i vyn*, och vyns egenskaper i
+  projektträdet likaså. Vylistan visar kategorin och hur många rader som
+  är ändrade. En fasad, sektion eller Platsen utan vy får sin vytyps
+  första kategori
+- **Importera… och Exportera…** i stilbokens rubrikrad sparar och läser
+  hela stilboken; en äldre stilmall ger sin stil till kategorin som är vald
+- Exempelvillan har kategorin *Skiss* (Poché, skissnivå, utan möbler)
 
 Version 0.10.31, texturer i 3D och ortofotot på marken (samma filformat, 24):
 - **Ortofotot på marken i 3D**: i Platsens inställningar (högerklicka på

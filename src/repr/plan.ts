@@ -1,3 +1,4 @@
+import { defaultSheet } from '../core/viewCategories';
 import { resolveFill } from '../core/fillTypes';
 import type { ActionStyle, StyleSheet } from '../core/graphics';
 import { isSite, type Element, type Id, type ProjectDoc } from '../core/model';
@@ -42,7 +43,7 @@ export interface PlanResult {
  * själva återanvänds ett och ett. Har inget ändrats alls ges samma svar
  * tillbaka, så att planvyn inte behöver rita om.
  */
-export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: StyleSheet = doc.graphics): PlanResult {
+export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: StyleSheet = defaultSheet(doc.graphics)): PlanResult {
   const saved = savedFor(doc, storey, view, style);
   if (saved.elements === doc.elements && saved.result) return saved.result;
   const { ctx, visible } = createContext(doc, storey, view, style, (t) => !!(t.plan || t.planBatch), true);

@@ -1,3 +1,4 @@
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { DocStore } from '../src/core/store';
@@ -19,7 +20,7 @@ const select = (value: string) => ({ value }) as HTMLSelectElement;
 
 describe('Egen penna (0.8.31)', () => {
   it('det som är satt ersätter stilmallens, en linjetyp också streckningen', () => {
-    const style = sampleProject().graphics;
+    const style = defaultSheet(sampleProject().graphics);
     expect(withOwnPen({ weight: 0.35, color: 'ink', dash: [2, 1] }, { linetype: 'solid' }, style)).toEqual({ weight: 0.35, color: 'ink' });
     expect(withOwnPen({ weight: 0.35 }, { weight: 0.7, color: '#ff0000', linetype: 'dashed' }, style)).toEqual({ weight: 0.7, color: '#ff0000', dash: [3, 1.5] });
   });
@@ -87,7 +88,7 @@ describe('Egen penna (0.8.31)', () => {
     const doc = sampleProject();
     const [a, b] = walls(doc);
     const store = new DocStore(doc);
-    expect(ownPenSection(store.doc, [a])).toContain('Stilmallens');
+    expect(ownPenSection(store.doc, [a])).toContain('Stilbokens');
     expect(ownPenSection(store.doc, Object.values(doc.elements).filter((e) => e.type === 'Section').slice(0, 1))).toBe('');
     ownPenChange(store, [a.id], 'colorOn', select('own'));
     expect(store.doc.elements[a.id].pen?.color).toMatch(/^#/);

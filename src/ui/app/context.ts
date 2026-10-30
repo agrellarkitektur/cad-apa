@@ -1,4 +1,5 @@
 import type { installWand } from './wand';
+import type { installRender } from './render';
 import type { ViewDef } from '../../core/model';
 import type { ViewStates } from '../../core/states';
 import type { DocStore } from '../../core/store';
@@ -121,6 +122,9 @@ export interface AppContext {
   readonly wand: ReturnType<typeof installWand>;
   /** Vyerna: gå till en plats, vyknappen och historiken. */
   readonly views: ReturnType<typeof installViews>;
+
+  /** Vykategorin, visningen och stilboken där man är (0.10.32). */
+  readonly place: Pick<ReturnType<typeof installRender>, 'currentStyle' | 'currentCategory' | 'currentShow' | 'applyShow' | 'openView' | 'viewType'>;
 
   hint(text: string, ms?: number): void;
   renderAll(): void;

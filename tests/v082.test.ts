@@ -1,3 +1,4 @@
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { sampleProject } from '../src/sample/sampleProject';
@@ -56,25 +57,25 @@ describe('fasader i bakgrundstråden (0.8.2)', () => {
     const q = createSectionQueue(() => ready++, { spawn: async () => w, syncBelowMs: -1 });
     const doc = sampleProject();
     const view = { state: 'st-a', compareTo: 'st-bef' };
-    expect(q.get(doc, 'fasad-1', view, doc.graphics, '')).toBeNull();
+    expect(q.get(doc, 'fasad-1', view, defaultSheet(doc.graphics), '')).toBeNull();
     while (!ready) await tick();
-    const got = q.get(doc, 'fasad-1', view, doc.graphics, '')!;
+    const got = q.get(doc, 'fasad-1', view, defaultSheet(doc.graphics), '')!;
     const direct = buildSection(doc, 'fasad-1', view)!;
     const strip = (r: typeof got) => JSON.stringify(r.prims);
     expect(strip(got)).toBe(strip(direct));
     expect(got.pickables.map((p) => p.id)).toEqual(direct.pickables.map((p) => p.id));
     // En annan fasad i samma projekt: projektet skickas inte igen.
-    q.get(doc, 'fasad-2', view, doc.graphics, '');
+    q.get(doc, 'fasad-2', view, defaultSheet(doc.graphics), '');
     while (ready < 2) await tick();
     expect(sent).toEqual([{ doc: true }, { doc: false }]);
     // Ett ändrat projekt skickas, och under tiden visas den förra fasaden.
     const doc2 = { ...doc, elements: { ...doc.elements } };
     delete doc2.elements['iv-2'];
-    expect(q.get(doc2, 'fasad-1', view, doc2.graphics, '')).toBe(got);
+    expect(q.get(doc2, 'fasad-1', view, defaultSheet(doc2.graphics), '')).toBe(got);
     expect(q.pending).toBe(true);
     while (ready < 3) await tick();
     expect(sent[2]).toEqual({ doc: true });
-    expect(q.get(doc2, 'fasad-1', view, doc2.graphics, '')).not.toBe(got);
+    expect(q.get(doc2, 'fasad-1', view, defaultSheet(doc2.graphics), '')).not.toBe(got);
   });
 
   it('bara det senaste av flera snabba ändringar räknas', async () => {
@@ -84,15 +85,15 @@ describe('fasader i bakgrundstråden (0.8.2)', () => {
     const q = createSectionQueue(() => ready++, { spawn: async () => w, syncBelowMs: -1 });
     const doc = sampleProject();
     const docs = [0, 1, 2, 3, 4].map(() => ({ ...doc }));
-    q.get(docs[0], 'fasad-1', { state: 'st-a' }, doc.graphics, '');
+    q.get(docs[0], 'fasad-1', { state: 'st-a' }, defaultSheet(doc.graphics), '');
     while (!ready) await tick();
-    for (const d of docs.slice(1)) q.get(d, 'fasad-1', { state: 'st-a' }, d.graphics, '');
+    for (const d of docs.slice(1)) q.get(d, 'fasad-1', { state: 'st-a' }, defaultSheet(d.graphics), '');
     while (q.pending) await tick();
     // Den första, sedan den som skickades medan tråden var ledig och den
     // sista; de två mellan hoppas över.
     expect(sent).toHaveLength(3);
     expect(ready).toBe(2);
-    expect(q.get(docs[4], 'fasad-1', { state: 'st-a' }, doc.graphics, '')).not.toBeNull();
+    expect(q.get(docs[4], 'fasad-1', { state: 'st-a' }, defaultSheet(doc.graphics), '')).not.toBeNull();
   });
 
   it('små vyer räknas direkt, utan tråd', async () => {
@@ -100,7 +101,7 @@ describe('fasader i bakgrundstråden (0.8.2)', () => {
     const { w, sent } = await fakeWorker();
     const q = createSectionQueue(() => {}, { spawn: async () => w });
     const doc = sampleProject();
-    expect(q.get(doc, 'fasad-1', { state: 'st-a' }, doc.graphics, '')).not.toBeNull();
+    expect(q.get(doc, 'fasad-1', { state: 'st-a' }, defaultSheet(doc.graphics), '')).not.toBeNull();
     expect(sent).toHaveLength(0);
   });
 
@@ -108,6 +109,6 @@ describe('fasader i bakgrundstråden (0.8.2)', () => {
     const { createSectionQueue } = await import('../src/ui/app/sectionQueue');
     const q = createSectionQueue(() => {}, { syncBelowMs: -1 });
     const doc = sampleProject();
-    expect(q.get(doc, 'sektion-a', { state: 'st-a' }, doc.graphics, '')?.prims.length).toBeGreaterThan(20);
+    expect(q.get(doc, 'sektion-a', { state: 'st-a' }, defaultSheet(doc.graphics), '')?.prims.length).toBeGreaterThan(20);
   });
 });

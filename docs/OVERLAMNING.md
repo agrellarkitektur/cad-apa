@@ -4,10 +4,24 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 29 oktober 2026, efter 0.10.31.
+**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.32.
 
 ## Läget
 
+- **0.10.32 Tre nivåer med arv är klar** (**nytt format, 25**; projekt
+  från 0.10.31 öppnas inte). `ProjectDoc.graphics` är en `StyleBook`
+  (resurserna och `categories`); vyn har `category` och `overrides` (en
+  rad per avvikelse) i stället för `compare`, detaljnivåerna, `hide` och
+  `style`. `viewSettings`/`sheetFor` i `core/viewCategories.ts` ger det
+  som gäller; renderarna får en `StyleSheet` som förut. Dialogen heter
+  *Stilbok* (vänsterkanten, flikarna, verktygen; radkontrollerna de gamla
+  tills 0.10.34). Ordet *stilmallen* i appen heter *stilboken*.
+  Testerna: 735 på ca 13 s. Provat i Playwright mot `dist/`. Utredningens
+  beslut och uppdelningen står nu också i PLAN.md.
+- **Utredningen om stilinställningar** (30 oktober, natt): besluten i
+  `cad-apa-synpunkter.md` (*Beslut 29–30 oktober*), mockupen i Claude
+  Design "Stilinställningar – mockup" (tavla 5 gäller). Två öppna frågor
+  till 0.10.38 (nedan).
 - **0.10.31 Texturer i 3D och ortofotot på marken är klar** (samma
   format, 24; valfria fält): ortofotot tappades inte här, Höjdkurvor
   skickar det aldrig. `site.ortho` läggs in ur platspaketets nya valfria
@@ -35,9 +49,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   **0.10.28.1 Materiallistan**, **0.10.28 Material, mark först**, **0.10.27 Styrningen i 3D**,
   **0.10.26 Rampen och stödmuren**, **0.10.25.1** (granskning) och
   **0.10.25 Platsen som modellflik**: se PLAN.md.
-- **Publicerad:** 0.10.31 pushad till `main` 29 oktober (se git och
+- **Publicerad:** 0.10.32 pushad till `main` 30 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.10.32:** projekt från 0.10.31 öppnas
+  inte (nytt format), och det autosparade i webbläsaren inte heller. En
+  fasad, sektion eller Platsen utan sparad vy får vytypens kategori under
+  Visa (förut följde Visa med från planen). *Stilmall i vyn* heter
+  *Vykategori*; Poché och Färgmarkerad nås med *Kopiera från* i stilboken.
 - **Märks i hans ritningar efter 0.10.31:** inget i befintliga projekt
   (inget ortofoto och inga texturer förrän man lägger in dem).
 - **Märks i hans ritningar efter 0.10.30:** inget i befintliga projekt.
@@ -61,14 +80,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare i dag:** 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare:** 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.31` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.32` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.31 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.32 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -92,6 +111,8 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   fasadlinje. Vyn heter *Sektion* och *Fasad*. **Littera** skrivs med två
   siffror som förval (T01, M01). Spöet heter **smartspöt**. Fliken för
   situationsplanen heter **Platsen**; inga engelska ord i appen.
+  Stilinställningarnas helhet heter **stilboken**; en rad i en vykategori
+  där en objekttyp och del får sin penna heter ett **ställe**.
 - **Versionsnamn:** inga b-versioner; nästa lediga nummer i stället.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen. Höj
   `FORMAT_VERSION` när formatet ändras; äldre filer får ett meddelande
@@ -137,12 +158,16 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   först~~, ~~0.10.28.1 Materiallistan~~, ~~0.10.28.2 Material på
   bjälklag och tak~~, ~~Granskning efter 0.10.28.2 (0.10.28.3)~~,
   ~~0.10.29 Ritandet~~, ~~0.10.30 Teckenförklaring~~, ~~0.10.31 Texturer
-  i 3D och ortofotot på marken~~ (klara)
+  i 3D och ortofotot på marken~~, ~~Utredning: stilinställningar~~,
+  ~~0.10.32 Tre nivåer med arv~~ (klara)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **Utredning: stilinställningar per vytyp och underlag i vyn**
-  (planeringssession; på tur; ändringen stor, troligen nytt format; med penn- och
-  linjesystemet och vykategorierna för planer, fasader och sektioner)
+- **Stilinställningarna, 0.10.33–0.10.38** (F kan skjutas in var som
+  helst): **0.10.33 Avvikelser och kategorier i vyn** (mellanstor, på
+  tur), **0.10.34 Radkontrollerna** (mellanstor), **0.10.35 Underlag i
+  vyn** (stor), **0.10.36 Pennor och ställen** (mellanstor), **0.10.37
+  Projektet › Allmänt** (mellanstor), **0.10.38 Stilboken ut och in**
+  (mellanstor; två öppna frågor)
 - **0.11 Trappor** (nytt format; med *Syns också på*)
 - **0.11.1 Profilverktyget** (stor) och **0.11.2 Dörrar och fönster**
   (stor)
@@ -159,11 +184,16 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**Utredningen om stilinställningar per vytyp och underlag i vyn**
-(planeringssession). Carl August startar den i en egen chatt med en färdig
-text; den behöver inte föreslås. Läs synpunkterna först och sortera
-Inkorgen om den har något. Ortofotot i 2D (illustrationsplan på flygfoto)
-hör dit, som *underlag i vyn*.
+**0.10.33 Avvikelser och kategorier i vyn** (mellanstor, samma format).
+Läs synpunkterna först (B under Planerat, *Beslut 29–30 oktober*) och
+sortera Inkorgen om den har något. Ockra prick på en ändrad rad med
+*Återställ*, *Visa bara avvikelser*, *Återställ till kategorin*, *Gör
+avvikelserna till kategorins förval*, *Spara som ny kategori*, punkt efter
+vynamnet i projektträdet, högerklick i vyn → *Stil för den här vyn…*
+(stilens avvikelser, `actions.*`/`pens.*`/`openingMark` i `overrides`,
+finns redan i datamodellen), listan *Vyer med den här kategorin*, och *Ny
+vy…* som föreslår kategorier för planer, fasader och sektioner. Ställ
+frågorna om 0.10.32 först (de hör till nästa version).
 
 Höjdkurvors del av ortofotot (två rader i `js/app.js` och `js/utbyte.js`,
 plus raden i `docs/UTBYTE-CAD-APA.md` där) görs i en session i
@@ -175,6 +205,23 @@ Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
 om 0.10.27–0.10.23 likaså.
+
+**0.10.32 efter provning** (Claudes val, se PLAN.md; hör till 0.10.33)
+- En fasad, sektion eller Platsen utan sparad vy får vytypens första
+  kategoris visning när du går dit (förut följde Visa med från planen).
+  Rätt, eller ska det du ändrat under Visa följa med?
+- En vy som byter kategori i sina egenskaper tar den nya som den är (det
+  den ändrat under Visa släpps). Rätt, eller ska ändringarna följa med?
+- Pennorna ligger per kategori tills 0.10.36; markörernas penna i
+  egenskaperna ändras i alla kategorier. Rätt så länge?
+- Poché och Färgmarkerad finns under *Kopiera från* (bara stilen). Saknas
+  de som egna kategorier i nya projekt?
+
+**Till 0.10.38 när den är på tur**
+- Ska *Mall för nya projekt* ligga i webbläsaren (försvinner vid rensning)
+  eller som en fil man pekar på vid *Nytt projekt*?
+- Ska bladmallar och stämplar följa med stilbokens export/import redan i
+  0.10.38 (parkerat sedan 20 oktober)?
 
 **0.10.31 efter provning** (Claudes val, se PLAN.md)
 - Ortofotot ligger som förval där marken saknar material (markytor och
@@ -311,10 +358,6 @@ om 0.10.27–0.10.23 likaså.
   räcker Böj i Modifiera?
 
 **0.10.18.1 efter provning** (Claudes val, se PLAN.md)
-- Stilmallens fönster i tre kolumner efter sorts inställning (åtgärder och
-  texter, pennor, linjetyper och fyllningstyper). Menade du så, eller
-  grupperat efter objekttyp (väggar, dörrar och fönster, mark …)? (Kan
-  falla bort i utredningen om stilinställningar per vytyp.)
 - Höjdkurvornas färg gäller planen och bladen; 3D-vyns kurvor har sin
   egen. Ska de följa stilmallen också?
 

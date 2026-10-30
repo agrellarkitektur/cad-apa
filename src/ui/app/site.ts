@@ -1,3 +1,4 @@
+import { defaultSheet } from '../../core/viewCategories';
 import { emptyProject, SITE_STOREY } from '../../core/model';
 import { CONTOUR_STEPS, DEFAULT_CONTOURS, GROUND_DEFAULTS, groundAt, groundDefaults, terrainOf, toRh, type GroundDefaults } from '../../core/site';
 import { finishedTerrain, groundObjects, m3, showsProposal } from '../../elements/ground';
@@ -115,7 +116,7 @@ export function installSite(app: AppContext) {
    */
   function mmn(): { z: number | null; existing: number | null; finished: number | null; house: boolean; volumes: { cut: number; fill: number } | null; objects: number; bh: ReturnType<typeof buildingHeight> } {
     const doc = app.store.doc;
-    const { ctx } = createContext(doc, doc.storeys[0].id, app.viewStates(), doc.graphics, () => true);
+    const { ctx } = createContext(doc, doc.storeys[0].id, app.viewStates(), defaultSheet(doc.graphics), () => true);
     const f = showsProposal(ctx) ? finishedTerrain(ctx) : null;
     const existing = meanGround(ctx, true);
     const finished = f ? meanGroundLevel(f.terrain, buildingFootprint(ctx).map((poly) => poly[0])) : null;
@@ -248,7 +249,7 @@ export function installSite(app: AppContext) {
     else if (r?.startsWith('crop:')) {
       const margin = Number(r.slice(5));
       const d = app.store.doc;
-      const { ctx } = createContext(d, d.storeys[0].id, app.viewStates(), d.graphics, () => true);
+      const { ctx } = createContext(d, d.storeys[0].id, app.viewStates(), defaultSheet(d.graphics), () => true);
       const pts = buildingFootprint(ctx).flatMap((poly) => poly[0]);
       if (!pts.length) return;
       const box = {

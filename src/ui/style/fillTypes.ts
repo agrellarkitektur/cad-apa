@@ -1,4 +1,4 @@
-import type { StyleSheet } from '../../core/graphics';
+import type { StyleResources } from '../../core/graphics';
 import { formatDash, parseDash } from '../../core/lineTypes';
 import { FILL_TYPES, newFillTypeId, type CustomFillType, type FillFamily, type FillTypeDef } from '../../core/fillTypes';
 import { parsePat } from '../../core/patFile';
@@ -6,13 +6,13 @@ import { escapeHtml } from '../labels';
 import { fillTypeSwatch } from '../patternPick';
 
 /**
- * Fyllningstyperna i stilmallen (0.8.36): projektets egna, med en rad per
+ * Fyllningstyperna i stilboken (0.8.36): projektets egna, med en rad per
  * linjefamilj (vinkel, baspunkt, avstånd, förskjutning och streckning), och
  * knappar för att läsa in och spara `.pat`-filer. `uses` är hur många former,
  * rum och snittfyllningar som har varje typ, så att det syns vad en
  * borttagning påverkar (de ritas då som en vanlig skraffering).
  */
-export function fillTypeSection(style: StyleSheet, uses: ReadonlyMap<string, number>): string {
+export function fillTypeSection(style: StyleResources, uses: ReadonlyMap<string, number>): string {
   const comma = (n: number) => String(Math.round(n * 10000) / 10000).replace('.', ',');
   const own = (style.fillTypes ?? [])
     .map((t) => {
@@ -54,7 +54,7 @@ export function fillTypeSection(style: StyleSheet, uses: ReadonlyMap<string, num
     .join('');
   return `<section class="style-labels style-filltypes">
     <h3>Fyllningstyper</h3>
-    <p class="note">Ett mönster av en eller flera linjefamiljer, som i AutoCADs och ArchiCADs .pat-filer. Typerna väljs bland fyllningarna för 2D-former, rum och snittytor, och de egna följer med stilmallen.</p>
+    <p class="note">Ett mönster av en eller flera linjefamiljer, som i AutoCADs och ArchiCADs .pat-filer. Typerna väljs bland fyllningarna för 2D-former, rum och snittytor, och de egna följer med stilboken.</p>
     ${GUIDE}
     <div class="filltype-builtins">${builtIn}</div>
     ${own}
@@ -97,7 +97,7 @@ const GUIDE = `<details class="filltype-guide"><summary>Så gör du en egen fyll
 </details>`;
 
 /** Ändra en fyllningstyp i `style` (en kopia) efter fältet; null om fältet inte hör hit, '' om värdet inte gick att läsa. */
-export function applyFillTypeField(style: StyleSheet, input: HTMLInputElement | HTMLSelectElement): string | null {
+export function applyFillTypeField(style: StyleResources, input: HTMLInputElement | HTMLSelectElement): string | null {
   const key = input.dataset.filltype;
   if (!key) return null;
   const parts = key.split(':');
@@ -148,7 +148,7 @@ export function applyFillTypeField(style: StyleSheet, input: HTMLInputElement | 
 }
 
 /** En ny fyllningstyp: en linjefamilj i 45°, 2 mm isär. */
-export function addFillType(style: StyleSheet, from?: FillTypeDef): CustomFillType {
+export function addFillType(style: StyleResources, from?: FillTypeDef): CustomFillType {
   const t: CustomFillType = from
     ? { ...structuredClone(from), id: newFillTypeId(style) }
     : { id: newFillTypeId(style), name: `Egen fyllning ${(style.fillTypes?.length ?? 0) + 1}`, families: [{ angle: 45, x: 0, y: 0, spacing: 2, shift: 0, dash: [] }] };
@@ -157,7 +157,7 @@ export function addFillType(style: StyleSheet, from?: FillTypeDef): CustomFillTy
 }
 
 /** Ta bort en fyllningstyp; snittfyllningar som hade den ritas som skraffering. False om den inte fanns. */
-export function removeFillType(style: StyleSheet, id: string): boolean {
+export function removeFillType(style: StyleResources, id: string): boolean {
   const i = style.fillTypes?.findIndex((t) => t.id === id) ?? -1;
   if (i < 0) return false;
   style.fillTypes!.splice(i, 1);
@@ -166,7 +166,7 @@ export function removeFillType(style: StyleSheet, id: string): boolean {
 }
 
 /** En ny linjefamilj i typen, vinkelrät mot den sista. */
-export function addFamily(style: StyleSheet, id: string): boolean {
+export function addFamily(style: StyleResources, id: string): boolean {
   const t = style.fillTypes?.find((x) => x.id === id);
   if (!t) return false;
   const last = t.families[t.families.length - 1];
@@ -174,7 +174,7 @@ export function addFamily(style: StyleSheet, id: string): boolean {
   return true;
 }
 
-export function removeFamily(style: StyleSheet, id: string, index: number): boolean {
+export function removeFamily(style: StyleResources, id: string, index: number): boolean {
   const t = style.fillTypes?.find((x) => x.id === id);
   if (!t || t.families.length < 2 || !t.families[index]) return false;
   t.families.splice(index, 1);
@@ -186,7 +186,7 @@ export function removeFamily(style: StyleSheet, id: string, index: number): bool
  * som finns byter ut dess linjer, så att en fil kan läsas in igen. Ger hur
  * många som lades till och byttes ut.
  */
-export function importPat(style: StyleSheet, text: string): { added: number; replaced: number } {
+export function importPat(style: StyleResources, text: string): { added: number; replaced: number } {
   let added = 0;
   let replaced = 0;
   for (const t of parsePat(text)) {

@@ -1,5 +1,5 @@
-import { PRESETS, withProjectParts, type StyleSheet } from '../core/graphics';
-import { isSite, onPaper, modelViewId, type Element, type Id, type ProjectDoc, type Sheet, type ViewDef, type Viewport, type Worksheet } from '../core/model';
+import { viewSettings } from '../core/viewCategories';
+import { onPaper, modelViewId, type Element, type Id, type ProjectDoc, type Sheet, type ViewDef, type Viewport, type Worksheet } from '../core/model';
 import { FRAME_MARGIN, masterOf, paperSize } from '../core/sheets';
 import { defaultState, existingState, type LegendSource, type ViewStates } from '../core/states';
 import { FILL_FIELDS } from '../elements/fill2d';
@@ -45,15 +45,8 @@ export function viewSource(doc: ProjectDoc, ref: Id): ViewSource | null {
   }
   if (!ref.startsWith('modell:')) return null;
   const place = ref.slice('modell:'.length);
-  const ex = existingState(doc);
-  const base = {
-    id: ref,
-    state: defaultState(doc),
-    compare: !!ex,
-    detail: 'normal' as const,
-    hide: [],
-    hideDemolished: false,
-  };
+  // Modellvyn ritas med vytypens första kategori (0.10.32).
+  const base = { id: ref, state: defaultState(doc) };
   const storey = doc.storeys.find((s) => s.id === place);
   if (storey) return { id: ref, name: storey.name, def: { ...base, name: storey.name, storey: storey.id } };
   const el = doc.elements[place];
@@ -94,11 +87,6 @@ export interface ViewPrimOptions {
   autoDims?: boolean;
 }
 
-function styleOf(doc: ProjectDoc, name: string | undefined): StyleSheet {
-  const preset = name ? PRESETS.find((p) => p.name === name) : undefined;
-  const g = doc.graphics;
-  return preset ? withProjectParts(preset, g) : g;
-}
 
 /**
  * Det som ritats i en fasad eller sektion, delat i det som ligger under
@@ -113,21 +101,22 @@ export function splitPlaced(prims: readonly Primitive[]): { under: Primitive[]; 
   return { under, over };
 }
 
-/** En vys inställningar som de gäller när den ritas. */
+/** En vys inställningar som de gäller när den ritas: kategorins med vyns avvikelser (0.10.32). */
 export function viewStatesFor(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions): ViewStates {
   const ex = existingState(doc);
+  const { show, kind } = viewSettings(doc, v);
   return {
     state: v.state,
-    compareTo: v.compare && ex && ex.id !== v.state ? ex.id : undefined,
-    detail: v.detail,
-    labelDetail: v.labelDetail,
-    modelDetail: v.modelDetail,
-    hide: v.hide,
-    hideDemolished: v.hideDemolished,
+    compareTo: show.compare && ex && ex.id !== v.state ? ex.id : undefined,
+    detail: show.detail,
+    labelDetail: show.labelDetail,
+    modelDetail: show.modelDetail,
+    hide: show.hide,
+    hideDemolished: show.hideDemolished,
     autoDims: opt.autoDims,
     viewId: v.id,
     viewTags: v.tags ?? [],
-    ...(v.category && isSite(v.storey) ? { category: v.category } : {}),
+    ...(kind ? { category: kind } : {}),
     scale: opt.scale,
   };
 }
@@ -135,7 +124,7 @@ export function viewStatesFor(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions)
 /** En vys primitiver i modellens (eller fasadens och sektionens) koordinater. */
 export function buildViewPrims(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions): Primitive[] {
   const vs = viewStatesFor(doc, v, opt);
-  const style = styleOf(doc, v.style);
+  const style = viewSettings(doc, v).style;
   if (v.marker) {
     const marker = doc.elements[v.marker];
     const section = marker ? buildSection(doc, marker.id, vs, style) : null;
@@ -453,7 +442,8 @@ export function legendSources(doc: ProjectDoc, views: readonly PlacedView[]): Le
         }
       }
     }
-    const category = viewSource(doc, v.view)?.def.category;
+    const src = viewSource(doc, v.view);
+    const category = src ? viewSettings(doc, src.def).kind : undefined;
     out.push({ viewport: v.id, scale: v.scale, ...(category ? { category } : {}), materials, own });
   }
   return out;

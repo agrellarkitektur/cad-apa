@@ -1,4 +1,4 @@
-import type { FillDef, StyleSheet } from './graphics';
+import type { FillDef, StyleResources } from './graphics';
 
 /**
  * Egna fyllningstyper (0.8.36): ett mönster av en eller flera linjefamiljer,
@@ -11,7 +11,7 @@ import type { FillDef, StyleSheet } from './graphics';
  * Måtten är på papper i mm, eller i modellen i mm (`model`) för mönster som
  * följer verkliga mått (tegel, plattor); de räknas då om med ritningens skala.
  *
- * Fyllningstyperna ligger i stilmallen (`StyleSheet.fillTypes`) och följer
+ * Fyllningstyperna ligger i stilmallen (`StyleResources.fillTypes`) och följer
  * med den. En 2D-form, ett rum eller en snittfyllning anger typen med dess
  * nyckel; en nyckel som inte finns ritas som en vanlig skraffering.
  *
@@ -98,18 +98,18 @@ export const FILL_TYPES: Record<string, FillTypeDef> = {
 };
 
 /** Alla fyllningstyper som går att välja: de inbyggda (`own: false`) och stilmallens egna. */
-export function fillTypeList(style: StyleSheet | undefined): (CustomFillType & { own: boolean })[] {
+export function fillTypeList(style: StyleResources | undefined): (CustomFillType & { own: boolean })[] {
   return [...Object.entries(FILL_TYPES).map(([id, t]) => ({ id, ...t, own: false })), ...(style?.fillTypes ?? []).map((t) => ({ ...t, own: true }))];
 }
 
 /** Typen för nyckeln: en inbyggd eller en av stilmallens egna. */
-export function fillTypeOf(style: StyleSheet | undefined, id: string | undefined): FillTypeDef | undefined {
+export function fillTypeOf(style: StyleResources | undefined, id: string | undefined): FillTypeDef | undefined {
   if (!id) return undefined;
   return FILL_TYPES[id] ?? style?.fillTypes?.find((t) => t.id === id);
 }
 
 /** En ny nyckel som inte krockar med någon annan. */
-export function newFillTypeId(style: StyleSheet): string {
+export function newFillTypeId(style: StyleResources): string {
   const used = new Set((style.fillTypes ?? []).map((t) => t.id));
   let i = 1;
   while (used.has(`fyllning-${i}`)) i++;
@@ -175,7 +175,7 @@ export function hatchAsPattern(fill: FillDef, min = 0): FillDef {
  * (`kind: 'pattern'`). En borttagen typ blir en vanlig skraffering. Övriga
  * fyllningar kommer tillbaka som de är.
  */
-export function resolveFill(fill: FillDef, style: StyleSheet | undefined, modelPerPaper = 1): FillDef {
+export function resolveFill(fill: FillDef, style: StyleResources | undefined, modelPerPaper = 1): FillDef {
   if (fill.kind !== 'type') return fill;
   const t = fillTypeOf(style, fill.type);
   const lines = t ? patternLines(t, fill.angle ?? 0, fill.scale ?? 1, modelPerPaper) : hatchAsLines(45 + (fill.angle ?? 0), 0.6 * (fill.scale ?? 1));

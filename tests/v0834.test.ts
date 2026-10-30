@@ -1,3 +1,4 @@
+import { bookWithSheet, defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { updateParams } from '../src/core/commands';
 import type { Element, ProjectDoc } from '../src/core/model';
@@ -78,7 +79,7 @@ describe('rummens kontur (0.8.34)', () => {
     store.transact('Utan', (tx) => {
       const { pen: _, ...rest } = store.doc.elements['rum'];
       tx.putElement(rest as Element);
-      tx.setGraphics({ ...store.doc.graphics, pens: { roomOutline: { weight: 0.18 } } });
+      tx.setGraphics(bookWithSheet(store.doc.graphics, { ...defaultSheet(store.doc.graphics), pens: { roomOutline: { weight: 0.18 } } }));
     });
     expect(outline(store)?.pen.weight).toBe(0.18);
   });

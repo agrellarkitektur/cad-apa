@@ -1,3 +1,5 @@
+import { sampleProject } from '../src/sample/sampleProject';
+import { bookWithSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { SWEDISH_STANDARD, type StyleSheet } from '../src/core/graphics';
@@ -115,7 +117,7 @@ describe('Linjetyper (0.8.30)', () => {
     expect(cap.outline?.dash).toBeUndefined();
     // I planen kommer stilmallen från projektet.
     const store = storeWith({ a: { points: [[0, 0], [1000, 0]], linetype: 'egen-1' } });
-    store.doc.graphics = style;
+    store.doc.graphics = bookWithSheet(store.doc.graphics, style);
     const own = plan(store).prims.find((q) => q.origin?.objectId === 'a' && q.kind === 'polyline') as PolylinePrim;
     expect(own.pen.dash).toEqual([4, 1]);
   });
@@ -140,10 +142,13 @@ describe('Linjetyper (0.8.30)', () => {
     // Ett mönster som inte går att läsa ändrar ingenting.
     expect(applyLineTypeField(style, { dataset: { linetype: `${id}:dash` }, value: 'x' } as unknown as HTMLInputElement)).toBe('');
     expect(style.lineTypes![0].dash).toEqual([6, 2]);
-    style.pens = { north: { weight: 0.18, linetype: id } };
-    expect(removeLineType(style, id)).toBe(true);
-    expect(style.lineTypes).toBeUndefined();
-    expect(style.pens.north.linetype).toBeUndefined();
+    // Pennorna i alla kategorier (0.10.32) blir heldragna.
+    const book = structuredClone(sampleProject().graphics);
+    book.lineTypes = style.lineTypes;
+    book.categories[0].style.pens = { north: { weight: 0.18, linetype: id } };
+    expect(removeLineType(book, id)).toBe(true);
+    expect(book.lineTypes).toBeUndefined();
+    expect(book.categories[0].style.pens.north.linetype).toBeUndefined();
   });
 });
 

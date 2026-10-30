@@ -1,3 +1,4 @@
+import { defaultSheet } from '../../core/viewCategories';
 import type { ProjectDoc } from '../../core/model';
 import { terrainOf } from '../../core/site';
 import type { ViewStates } from '../../core/states';
@@ -26,7 +27,7 @@ export function ground3dHost(doc: ProjectDoc, view: ViewStates): Ground3DHost | 
   if (!base || !storey || view.hide?.includes('Terrain')) return null;
   // Med rampernas och markytornas skarpa kanter, som marken i 3D (0.10.26).
   const height = heightForView(doc, view)!;
-  const { ctx } = createContext(doc, storey, view, doc.graphics, () => true);
+  const { ctx } = createContext(doc, storey, view, defaultSheet(doc.graphics), () => true);
   const type = typeOf('Ground');
   // Det som ritas sist ligger överst, och går före när två överlappar.
   const shapes = (view.hide?.includes('Ground') ? [] : groundObjects(ctx))
@@ -72,7 +73,7 @@ export function groundLines3d(doc: ProjectDoc, view: ViewStates, want: { outline
   const storey = doc.storeys[0]?.id;
   if (!base || !storey || view.hide?.includes('Terrain') || view.hide?.includes('Ground') || !(want.outlines || want.slopes)) return none;
   const height = heightForView(doc, view)!;
-  const { ctx } = createContext(doc, storey, view, doc.graphics, () => true);
+  const { ctx } = createContext(doc, storey, view, defaultSheet(doc.graphics), () => true);
   const type = typeOf('Ground');
   const outlines: number[] = [];
   const slopes: number[] = [];

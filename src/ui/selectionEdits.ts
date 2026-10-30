@@ -1,3 +1,4 @@
+import { defaultSheet } from '../core/viewCategories';
 import { applyLabelField } from './labelSection';
 import { applyTagField } from './litteraSection';
 import { applyGroundField } from './groundFieldEdits';
@@ -65,7 +66,7 @@ export function lockDoorNumbers(store: DocStore, view: ViewStates, locked: boole
   store.transact(locked ? 'Lås dörrnumren' : 'Lås upp dörrnumren', (tx) => {
     if (locked) {
       for (const storey of buildingStoreys(doc)) {
-        const { ctx } = createContext(doc, storey.id, view, doc.graphics, () => true);
+        const { ctx } = createContext(doc, storey.id, view, defaultSheet(doc.graphics), () => true);
         for (const [id, number] of doorNumbersFor(ctx)) {
           const el = tx.doc.elements[id];
           if (el) tx.putElement({ ...el, params: { ...el.params, number } });
@@ -91,7 +92,7 @@ export function setNumbering(store: DocStore, view: ViewStates, name: string, in
     if (next.locked && !current.locked) {
       // Spara numren som de ser ut nu, plan för plan.
       for (const storey of buildingStoreys(doc)) {
-        const { ctx } = createContext(doc, storey.id, view, doc.graphics, () => true);
+        const { ctx } = createContext(doc, storey.id, view, defaultSheet(doc.graphics), () => true);
         for (const [id, number] of roomNumbersFor(ctx)) {
           const el = tx.doc.elements[id];
           if (el) tx.putElement({ ...el, params: { ...el.params, number } });
@@ -276,7 +277,7 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
     } else if (name.startsWith('heights.')) {
       // Höjderna i fasaden eller sektionen (0.10.8b): alla fyra sparas, så att förvalet inte ändras under ens fötter.
       const k = name.slice(8) as keyof MarkerHeights;
-      const { ctx } = createContext(doc, doc.storeys[0].id, view, doc.graphics, () => true);
+      const { ctx } = createContext(doc, doc.storeys[0].id, view, defaultSheet(doc.graphics), () => true);
       const now = markerHeights(el, markerFrame(doc, el).view, buildingHeight(ctx));
       updateParams(store, [el.id], { heights: { ...now, [k]: (input as HTMLInputElement).checked } }, 'Höjder i vyn');
     } else if (name === 'depth' || name === 'toneDepth') {
@@ -316,7 +317,7 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
           tx.putElement({ ...el, params: { ...el.params, fromWalls: true, outline: [], bulges: undefined } });
           continue;
         }
-        const { ctx } = createContext(doc, el.storey, view, doc.graphics, () => true);
+        const { ctx } = createContext(doc, el.storey, view, defaultSheet(doc.graphics), () => true);
         const polys = slabBase(ctx, { ...resolveParams<SlabParams>(doc, el), fromWalls: true });
         const largest = polys.map((p) => p[0]).sort((a, b) => Math.abs(ringArea(b)) - Math.abs(ringArea(a)))[0] ?? [];
         // Bågväggarnas korta raka bitar blir bågar i konturen (0.10.24).

@@ -1,4 +1,5 @@
-import { buildingStoreys, groundStorey, isSite, SITE_CATEGORIES, storeysUpFrom, type Id, type Storey } from '../../core/model';
+import { buildingStoreys, groundStorey, isSite, storeysUpFrom, type Id, type Storey } from '../../core/model';
+import { categoriesOf } from '../../core/viewCategories';
 import { addStorey, deleteStorey, neighbourStorey, storeyContents, toStorey, TRACE_SITE, TRACE_STOREY } from '../../core/storeys';
 import { typeOf } from '../../elements/registry';
 import { askConfirm, askText } from '../ask';
@@ -192,7 +193,7 @@ export function installStoreys(app: AppContext) {
         traceItem(s.id, TRACE_SITE, s.name),
         { kind: 'sep' },
         { kind: 'header', label: 'Ny vy' },
-        ...SITE_CATEGORIES.map((c): MenuItem => ({ label: c.name, run: () => app.views.applyView(addSiteView(app.store, c.id)) })),
+        ...categoriesOf(app.store.doc.graphics, 'site').map((c): MenuItem => ({ label: c.name, run: () => app.views.applyView(addSiteView(app.store, c.id)) })),
       ],
       s.name,
     );

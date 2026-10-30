@@ -3502,12 +3502,61 @@ rum och andra objekt kommer när materialen utökas till alla objekttyper.
 Stilmallen som fil tar inte med texturerna (bilderna bor i projektet).
 Trädens detaljnivåer i 0.12.1.
 
-### Utredning: stilinställningar per vytyp och underlag i vyn
+### Utredning: stilinställningar per vytyp och underlag i vyn ✓
 
-Planeringssession före 0.11 (Carl August startar den). Stilinställningarna
-en flik per vytyp med förinställningar, underlag som del av en vy, om
-marken syns i 2D och 3D som inställning, och penn- och linjesystemet.
-Ändringen stor, troligen nytt format.
+Planeringssession 29–30 oktober (ingen kod). Besluten och mockupen står i
+synpunkterna (`cad-apa-synpunkter.md`, *Beslut 29–30 oktober*) och i
+Claude Design "Stilinställningar – mockup" (tavla 5 är utseendet som
+gäller). Uppdelningen i sju versioner, A–G, allt före 0.11; F kan skjutas
+in var som helst efter A, och bara A ger nytt format:
+
+- **A. 0.10.32 Tre nivåer med arv** (stor, nytt format)
+- **B. 0.10.33 Avvikelser och kategorier i vyn** (mellanstor): ockra
+  prick och *Återställ* per rad, *Visa bara avvikelser*, *Återställ till
+  kategorin*, *Gör avvikelserna till kategorins förval*, *Spara som ny
+  kategori*, punkt efter vynamnet, *Stil för den här vyn…*, *Vyer med den
+  här kategorin*, *Ny vy…* som föreslår kategorier
+- **C. 0.10.34 Radkontrollerna** (tavla 5; mellanstor; bara utseende)
+- **D. 0.10.35 Underlag i vyn** (stor): en våning, Platsen, ortofotot i
+  2D, ett arbetsblad, en annan vy, DXF/bild; marken i 2D och 3D per kategori
+- **E. 0.10.36 Pennor och ställen** (tavla 3; mellanstor; med penn- och
+  linjesystemet)
+- **F. 0.10.37 Projektet › Allmänt** (mellanstor)
+- **G. 0.10.38 Stilboken ut och in** (mellanstor; två öppna frågor: var
+  mallen för nya projekt ligger, och om bladmallar och stämplar följer med)
+
+### 0.10.32 Tre nivåer med arv ✓ · *nytt format (25)*
+
+Projektets resurser → vykategori per vytyp → enskild vy, med avvikelser
+rad för rad. Stilmallens dialog byggd om till vänsterkantens struktur och
+kategoriflikarna. Radkontrollerna är de gamla tills C.
+
+*Gjord 30 oktober. Testerna: 735. Stilboken (`StyleBook`) ersätter
+stilmallen i projektet: resurserna och `categories`. Vyn har `category`
+och `overrides` i stället för `compare`, detaljnivåerna, `hide`,
+`hideDemolished` och `style`; renderarna får en `StyleSheet` som förut
+(`sheetFor`). Se UTVECKLING.md, *Stilboken*. Claudes val: pennorna ligger
+i kategorierna tills E (de är i praktiken ställen med värden; markörernas
+penna i egenskaperna ändras i alla kategorier, som förut i hela
+projektet); vyns skala är vyns egen, kategorin har *Skala för nya vyer*;
+förinställningarna (Svensk standard, Poché, Färgmarkerad) finns under
+*Kopiera från* och ger bara stilen; en fasad, sektion, Platsen eller ett
+arbetsblad utan vy får vytypens första kategori och dess visning när man
+går dit (förut följde Visa med mellan alla ställen); ändras kategorin
+följer visningen med, och det som ändrats under Visa är kvar; en vy som
+byter kategori i egenskaperna tar den nya som den är (stilens avvikelser
+kvar); en borttagen kategoris vyer får vytypens första; *Importera…* och
+*Exportera…* i rubrikraden tar redan hela stilboken (G lägger till
+*Mall för nya projekt*), och en äldre stilmall ger sin stil till den valda
+kategorin. Ordet *stilmallen* i appen heter *stilboken*. Provat i
+Playwright mot `dist/` (dialogen, flikarna och verktygen, Visa,
+projektträdets formulär, bladet med Skiss och jämförelsen).*
+
+*Gjordes inte:* allt som hör till B–G (prickarna, *Stil för den här
+vyn…*, de nya radkontrollerna, underlagen, ställena, Allmänt med
+projektets uppgifter, mallen för nya projekt). *Allmänt* har bara
+stilbokens namn. Pennorna visas alla i varje vytyp (filtreras med
+ställena i E). Öppningsmarkeringens bredd har fortfarande inget fält.
 
 ### 0.11 Trappor · *nytt format*
 

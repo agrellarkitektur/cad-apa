@@ -1,3 +1,4 @@
+import { defaultSheet } from '../core/viewCategories';
 import { materialUses } from '../core/materials';
 import type { FillParams } from '../elements/fill2d';
 import { labelFields } from './labelSection';
@@ -193,7 +194,7 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
     case 'Space': {
       const p = resolveParams<SpaceParams>(doc, el);
       const numbering = numberingOf(doc);
-      const { ctx } = createContext(doc, el.storey, view, doc.graphics, () => true);
+      const { ctx } = createContext(doc, el.storey, view, defaultSheet(doc.graphics), () => true);
       const number = roomNumbersFor(ctx).get(el.id) ?? '';
       const numberField = numbering.locked
         ? `<label class="field" for="f-param-number"><span>Rumsnummer</span><input id="f-param-number" data-key="text:number" value="${escapeHtml(p.number ?? number)}"></label>`

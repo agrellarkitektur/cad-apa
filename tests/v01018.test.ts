@@ -1,3 +1,4 @@
+import { bookWithSheet, defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { moveElements, updateParams } from '../src/core/commands';
 import { GROUND_DEFAULTS, groundAt, terrainOf } from '../src/core/site';
@@ -193,9 +194,9 @@ describe('Granskningen efter 0.10.18', () => {
     // Förvalen: hela meter 0,25, däremellan 0,13; den ändrade markens grå och streckad.
     expect(new Set(lines('höjdkurva').map((q) => q.pen.weight))).toEqual(new Set([0.25, 0.13]));
     expect(lines('befintlig mark').every((q) => q.pen.color === 'muted' && q.pen.dash?.join() === '3,1.5')).toBe(true);
-    const style = structuredClone(store.doc.graphics);
+    const style = structuredClone(defaultSheet(store.doc.graphics, 'site'));
     style.pens = { ...style.pens, contour: { weight: 0.35, color: '#aa5500' }, contourOld: { weight: 0.25, color: 'ink', linetype: 'solid' } };
-    setGraphics(store, style);
+    setGraphics(store, bookWithSheet(store.doc.graphics, style));
     const major = lines('höjdkurva').filter((q) => q.pen.weight === 0.35);
     expect(major.length).toBeGreaterThan(0);
     expect(major.every((q) => q.pen.color === '#aa5500')).toBe(true);

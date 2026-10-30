@@ -1,16 +1,16 @@
-import type { Material, StyleSheet } from '../../core/graphics';
+import type { Material, StyleResources } from '../../core/graphics';
 import { escapeHtml } from '../labels';
 import { MATERIAL_3D_COLOR, savedSwatch } from '../fillPanel';
 import { BUILDING_KEYS, buildingChange, buildingFields } from '../materialBuilding';
 
 /**
- * Materiallistan i stilmallen (0.10.28.1): ett material per rad med namnet,
+ * Materiallistan i stilboken (0.10.28.1): ett material per rad med namnet,
  * kryssrutorna *Mark* och *Byggnad*, färgerna i planen, illustrationsplanen
  * och 3D, pilar för ordningen och Ta bort. Mönstret i planen ändras i
  * objektets panel (Material). `uses` är hur många objekt och slänter som
  * har varje material, så att det syns vad en borttagning påverkar.
  */
-export function materialSection(style: StyleSheet, uses: ReadonlyMap<string, number>): string {
+export function materialSection(style: StyleResources, uses: ReadonlyMap<string, number>): string {
   const list = style.materials ?? [];
   const rows = list
     .map((m, i) => {
@@ -62,7 +62,7 @@ function textureFields(m: Material): string {
  * Fältets ändring av materialet `m` (en kopia), eller null om fältet inte
  * hör hit. Svarar med materialets nyckel, ångra-texten och det nya.
  */
-export function materialFieldChange(style: StyleSheet, input: HTMLInputElement | HTMLSelectElement): { id: string; label: string; fn: (m: Material) => Material } | null {
+export function materialFieldChange(style: StyleResources, input: HTMLInputElement | HTMLSelectElement): { id: string; label: string; fn: (m: Material) => Material } | null {
   const key = input.dataset.material;
   if (!key) return null;
   const i = key.lastIndexOf(':');

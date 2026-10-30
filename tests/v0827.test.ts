@@ -109,7 +109,7 @@ describe('stilmallens delar (0.8.27)', () => {
 
   it('åtgärder och texter', () => {
     const s = fresh();
-    expect(applyActionField(s, field({ key: 'existing', field: 'fill' }, 'hatch'))).toBe('Ändra stilmall');
+    expect(applyActionField(s, field({ key: 'existing', field: 'fill' }, 'hatch'))).toBe('Ändra stilboken');
     expect(s.actions.existing.cutFill.kind).toBe('hatch');
     applyActionField(s, field({ key: 'new', field: 'door' }, '120'));
     expect(s.actions.new.doorAngle).toBe(90);

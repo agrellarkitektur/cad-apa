@@ -1,3 +1,4 @@
+import { bookWithSheet, defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { normalizeStyle, SWEDISH_STANDARD, type FillDef, type StyleSheet } from '../src/core/graphics';
@@ -88,9 +89,9 @@ describe('Ritade fyllningstyper (0.8.36)', () => {
 
   it('snittfyllningen i stilmallen kan vara en typ', () => {
     const store = storeWith({});
-    const g: StyleSheet = { ...structuredClone(store.doc.graphics), fillTypes: style.fillTypes };
+    const g: StyleSheet = { ...structuredClone(defaultSheet(store.doc.graphics)), fillTypes: style.fillTypes };
     g.actions.plain.cutFill = { kind: 'type', type: 'ar-b816', color: 'ink', weight: 0.18 };
-    setGraphics(store, g);
+    setGraphics(store, bookWithSheet(store.doc.graphics, g));
     const walls = plan(store).prims.filter((q): q is RegionPrim => q.kind === 'region' && q.origin?.objectType === 'Wall');
     expect(walls.length).toBeGreaterThan(0);
     expect(walls.every((w) => w.fill.kind === 'pattern')).toBe(true);

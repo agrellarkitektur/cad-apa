@@ -81,7 +81,7 @@ export async function pickTexture(): Promise<Asset | null> {
 
 /**
  * Välj en bild till materialet `id` (0.10.31), i panelen och i
- * stilmallen. Går bilden inte att läsa säger en ruta det.
+ * stilboken. Går bilden inte att läsa säger en ruta det.
  */
 export async function chooseTexture(store: DocStore, id: string): Promise<void> {
   try {

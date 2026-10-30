@@ -1,3 +1,4 @@
+import { defaultSheet } from '../../core/viewCategories';
 import { colorGroups, colorShapes, lookKey } from '../../repr/groundColors';
 import { orthoShowOf, orthoUvMatrix } from '../../core/siteOrtho';
 import { levelOf } from '../../repr/solids';
@@ -118,7 +119,7 @@ export function installPane3d(app: AppContext) {
       const retaining = els
         .filter((el) => el?.type === 'Ground' && el.params.kind === 'wall')
         .flatMap((el) => {
-          const { ctx } = createContext(app.store.doc, el.storey, app.viewStates(), app.store.doc.graphics, () => true);
+          const { ctx } = createContext(app.store.doc, el.storey, app.viewStates(), defaultSheet(app.store.doc.graphics), () => true);
           const prof = wallProfile(ctx, el);
           const gp = resolveParams<GroundParams>(app.store.doc, el);
           const pts = flatPoints(gp.line, gp.bulges);

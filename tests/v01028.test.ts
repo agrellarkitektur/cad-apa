@@ -1,3 +1,4 @@
+import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DEFAULT_MATERIALS, normalizeMaterials, normalizeStyle } from '../src/core/graphics';
 import { deleteMaterial, linkMaterial, materialUses, saveMaterial } from '../src/core/materials';
@@ -30,7 +31,7 @@ const attrs = (k: string) => `data-key="d2:${k}"`;
 const input = (value: string) => ({ value, checked: false }) as HTMLInputElement;
 const params = (store: DocStore, id: string) => store.doc.elements[id].params as unknown as GroundParams & FillParams;
 /** Platsens plan (0.10.25) i Förslag A, i en vykategori. */
-const siteCtx = (store: DocStore, category?: 'illustration') => createContext(store.doc, 'platsen', { state: 'st-a', ...(category ? { category } : {}) }, store.doc.graphics, () => true).ctx;
+const siteCtx = (store: DocStore, category?: 'illustration') => createContext(store.doc, 'platsen', { state: 'st-a', ...(category ? { category } : {}) }, defaultSheet(store.doc.graphics), () => true).ctx;
 const area = (store: DocStore, x = 20000) => addGround(store, { kind: 'area', outline: [[x, 0], [x + 6000, 0], [x + 6000, 4000], [x, 4000]], height: 2000 });
 
 describe('Materialen i stilmallen (0.10.28)', () => {

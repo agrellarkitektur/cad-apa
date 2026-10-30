@@ -1,7 +1,8 @@
 import { tracedStorey } from '../../core/storeys';
 import { addElements } from '../../core/commands';
-import { isSite, modelViewId, onPaper, type ViewDef } from '../../core/model';
-import { PRESETS, withProjectParts, type StyleSheet } from '../../core/graphics';
+import { modelViewId, onPaper, type ViewDef } from '../../core/model';
+import type { StyleSheet } from '../../core/graphics';
+import { categoryOf, resolveShow, sheetFor, showOverrides, styleOverrides, viewSettings, viewTypeAt, viewTypeOf, type CategoryShow, type ViewCategory, type ViewType } from '../../core/viewCategories';
 import { paperSize } from '../../core/sheets';
 import { existingState } from '../../core/states';
 import { skewText, skewWarnings } from '../../elements/angleCheck';
@@ -62,37 +63,83 @@ export function installRender(app: AppContext, parts: RenderParts) {
 
   // ---------- Vyn som visas ----------
 
-  /** Stilmallen för vyn: en förinställd mall med projektets texter, eller projektets egen. */
-  // Samma förinställda stilmall ger samma objekt, så att planens cache träffar (0.8.3).
-  // Projektets egna linjetyper följer med (0.8.30), så att formerna ritas likadant.
-  // Fyllningstyperna likaså (0.8.36).
-  // Materialen (0.10.28) också: de hör till projektet.
-  const presetStyles = new Map<string, { labels: StyleSheet['labels']; lineTypes: StyleSheet['lineTypes']; fillTypes: StyleSheet['fillTypes']; materials: StyleSheet['materials']; sheet: StyleSheet }>();
-  function styleFor(name: string | null): StyleSheet {
-    const g = app.store.doc.graphics;
-    const preset = name ? PRESETS.find((p) => p.name === name) : undefined;
-    if (!preset) return g;
-    const hit = presetStyles.get(preset.name);
-    if (hit && hit.labels === g.labels && hit.lineTypes === g.lineTypes && hit.fillTypes === g.fillTypes && hit.materials === g.materials) return hit.sheet;
-    const sheet = withProjectParts(preset, g);
-    presetStyles.set(preset.name, { labels: g.labels, lineTypes: g.lineTypes, fillTypes: g.fillTypes, materials: g.materials, sheet });
-    return sheet;
+  /** Vytypen där man är (0.10.32): Platsen, en våning, en fasad, en sektion eller ett arbetsblad. */
+  function viewType(): ViewType {
+    return viewTypeAt(app.store.doc, app.ui.storey, app.ui.marker, app.ui.worksheet);
+  }
+
+  /** Den öppna vyn, när den visar stället man är på. */
+  function openView(): ViewDef | undefined {
+    const v = app.ui.activeView ? app.store.doc.views.find((x) => x.id === app.ui.activeView) : undefined;
+    return v && viewTypeOf(app.store.doc, v) === viewType() ? v : undefined;
+  }
+
+  /** Vykategorin som gäller där man är: den valda, annars vytypens första. */
+  function currentCategory(): ViewCategory {
+    return categoryOf(app.store.doc.graphics, viewType(), app.ui.category);
+  }
+
+  /**
+   * Byts vytypen (en fasad efter en plan …) utan att en vy öppnas, får
+   * visningen vytypens första kategoris inställningar (0.10.32).
+   */
+  let lastCat: ViewCategory | null = null;
+  function syncCategory(): void {
+    const type = viewType();
+    if (app.ui.viewType !== type) {
+      app.ui.viewType = type;
+      if (!openView()) {
+        app.ui.category = null;
+        applyShow(currentCategory().show);
+        app.views.syncDetailSwitch();
+      }
+    } else {
+      // Kategorin har ändrats i stilboken (eller ångrats): visningen följer med, och det som ändrats under Visa är kvar.
+      const c = currentCategory();
+      if (lastCat && lastCat !== c && lastCat.id === c.id && lastCat.type === c.type) {
+        applyShow(resolveShow(c, showOverrides(lastCat, currentShow())));
+        app.views.syncDetailSwitch();
+      }
+    }
+    lastCat = currentCategory();
+  }
+
+  /** Lägg en visning i Visa-menyns val. */
+  function applyShow(show: CategoryShow): void {
+    app.ui.compare = show.compare;
+    app.ui.detail = show.detail;
+    app.ui.labelDetail = show.labelDetail;
+    app.ui.modelDetail = show.modelDetail;
+    app.ui.hide = [...show.hide];
+    app.ui.hideDemolished = show.hideDemolished;
+  }
+
+  /** Visningen i Visa-menyn som den är nu. */
+  function currentShow(): CategoryShow {
+    const u = app.ui;
+    return { compare: u.compare, detail: u.detail, labelDetail: u.labelDetail, modelDetail: u.modelDetail, hide: [...u.hide], hideDemolished: u.hideDemolished };
+  }
+
+  /** Stilboken där man är: kategorins, med den öppna vyns avvikelser i stilen. */
+  function currentStyle(): StyleSheet {
+    return sheetFor(app.store.doc.graphics, currentCategory(), openView()?.overrides);
   }
 
   function viewStatesOf(v: ViewDef) {
     const ex = existingState(app.store.doc);
+    const { show, kind } = viewSettings(app.store.doc, v);
     return {
       state: v.state,
-      compareTo: v.compare && ex && ex.id !== v.state ? ex.id : undefined,
-      detail: v.detail,
-      labelDetail: v.labelDetail,
-      modelDetail: v.modelDetail,
-      hide: v.hide,
-      hideDemolished: v.hideDemolished,
+      compareTo: show.compare && ex && ex.id !== v.state ? ex.id : undefined,
+      detail: show.detail,
+      labelDetail: show.labelDetail,
+      modelDetail: show.modelDetail,
+      hide: show.hide,
+      hideDemolished: show.hideDemolished,
       autoDims: app.uiSettings.autoDims,
       viewId: v.id,
       viewTags: v.tags ?? [],
-      ...(v.category && isSite(v.storey) ? { category: v.category } : {}),
+      ...(kind ? { category: kind } : {}),
       scale: v.scale ?? 100,
     };
   }
@@ -121,8 +168,8 @@ export function installRender(app: AppContext, parts: RenderParts) {
       autoDims: app.uiSettings.autoDims,
       viewId,
       viewTags: v?.tags ?? [],
-      // Vykategorin (0.10.28) när den öppna vyn är en vy av Platsen.
-      ...(v?.category && isSite(v.storey) && v.storey === app.ui.storey ? { category: v.category } : {}),
+      // Platsens kategorier (0.10.28) ritar materialen efter sin sort.
+      ...(currentCategory().kind ? { category: currentCategory().kind } : {}),
       showHidden: app.ui.showHidden,
       ...(app.uiSettings.slabArea ? { slabArea: true } : {}),
       scale: shownMaster() ? 1 : app.ui.scale,
@@ -145,7 +192,11 @@ export function installRender(app: AppContext, parts: RenderParts) {
     const doc = app.store.doc;
     if (!doc.states.some((s) => s.id === app.ui.state)) app.ui.state = defaultState(doc);
     if (!doc.storeys.some((s) => s.id === app.ui.storey)) app.ui.storey = doc.storeys[0].id;
+    if (app.ui.marker && !doc.elements[app.ui.marker]) app.ui.marker = null;
+    if (app.ui.worksheet && !doc.worksheets.some((w) => w.id === app.ui.worksheet)) app.ui.worksheet = null;
+    syncCategory();
     const vs = viewStates();
+    const style = currentStyle();
 
     app.out('project').textContent = doc.project.name;
     if (app.ui.marker && !doc.elements[app.ui.marker]) app.ui.marker = null;
@@ -180,26 +231,26 @@ export function installRender(app: AppContext, parts: RenderParts) {
     // som är ritat i den (mått, text, 2D, taklutningar) läggs ovanpå (0.8).
     // Stora fasader och sektioner räknas i en bakgrundstråd (0.8.2): medan
     // den räknar visas den förra versionen, och renderAll körs igen när den är klar.
-    const section = markerEl ? sectionQueue.get(doc, markerEl.id, vs, styleFor(app.ui.styleName), app.ui.styleName ?? '') : null;
+    const section = markerEl ? sectionQueue.get(doc, markerEl.id, vs, style, `${currentCategory().id}:${JSON.stringify(styleOverrides(openView()?.overrides))}`) : null;
     lastSection = section;
     computing.hidden = !(markerEl && sectionQueue.pending);
     const paper = layout ? app.sheets.drawing() : null;
     if (paper) {
       plan = { prims: paper.prims, pickables: paper.pickables };
     } else if (markerEl) {
-      const drawn = buildPlan(doc, markerEl.storey, { ...vs, place: markerEl.id }, styleFor(app.ui.styleName));
+      const drawn = buildPlan(doc, markerEl.storey, { ...vs, place: markerEl.id }, style);
       // Underlagen och det som ligger bakom (0.10.10) under fasaden eller sektionen; det andra som ritats i den ovanpå.
       // Första gången en stor vy räknas finns ingen fasad än, bara det ritade.
       const { under, over } = splitPlaced(drawn.prims);
       plan = { prims: [...under, ...(section?.prims ?? []), ...over], pickables: [...(section?.pickables ?? []), ...drawn.pickables] };
     } else if (sheet) {
       // Ett arbetsblad (0.8 del 2): bara det som är ritat på det. Ett mallblad (0.8.8) med papperet under.
-      plan = buildPlan(doc, app.ui.storey, { ...vs, place: sheet.id }, styleFor(app.ui.styleName));
+      plan = buildPlan(doc, app.ui.storey, { ...vs, place: sheet.id }, style);
       if (sheet.paper) {
         const [w, h] = paperSize(sheet.paper);
         plan = { prims: [paperPrim(w, h), ...plan.prims], pickables: plan.pickables };
       } else if (sheet.stamp) plan = { prims: [...stampOrigin(), ...plan.prims], pickables: plan.pickables };
-    } else plan = buildPlan(doc, app.ui.storey, vs, styleFor(app.ui.styleName));
+    } else plan = buildPlan(doc, app.ui.storey, vs, style);
     // Kalkerad vy: en annan vy tonad under, t.ex. möbleringen under en undertaksplan.
     // Våningen under eller över (0.9) kalkeras med vyns inställningar, utan fasad- och sektionsmarkörerna.
     const tracing = app.ui.trace && !section && !sheet && !layout;
@@ -207,9 +258,9 @@ export function installRender(app: AppContext, parts: RenderParts) {
     const nextTo = tracing ? tracedStorey(doc, app.ui.storey, app.ui.trace) : undefined;
     app.view.setUnderlay(
       nextTo
-        ? buildPlan(doc, nextTo.id, { ...vs, viewId: undefined, hide: [...(vs.hide ?? []), 'Section', 'Elevation', 'North'] }, styleFor(app.ui.styleName)).prims
+        ? buildPlan(doc, nextTo.id, { ...vs, viewId: undefined, hide: [...(vs.hide ?? []), 'Section', 'Elevation', 'North'] }, style).prims
         : traced
-          ? buildPlan(doc, traced.storey, viewStatesOf(traced), styleFor(traced.style ?? null)).prims
+          ? buildPlan(doc, traced.storey, viewStatesOf(traced), viewSettings(doc, traced).style).prims
           : [],
     );
     app.views.renderViewButton();
@@ -258,7 +309,12 @@ export function installRender(app: AppContext, parts: RenderParts) {
     sectionQueue,
     renderAll,
     viewStates,
-    styleFor,
+    currentStyle,
+    currentCategory,
+    currentShow,
+    applyShow,
+    openView,
+    viewType,
     skewMarks,
     materializeSlopes,
     zoomToSelection,

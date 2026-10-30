@@ -1,3 +1,4 @@
+import { defaultSheet } from '../core/viewCategories';
 import type { ProjectDoc } from '../core/model';
 import { fromRh, groundAt, levelText as siteLevelText, meanGroundLevel, terrainOf, type Terrain } from '../core/site';
 import { buildingFootprint } from '../elements/footprint';
@@ -260,7 +261,7 @@ export function finishedForView(doc: ProjectDoc, view: ViewStates): Finished | n
 function viewContext(doc: ProjectDoc, view: ViewStates): PlanContext | null {
   const storey = doc.storeys[0]?.id;
   if (!storey || !doc.site) return null;
-  return createContext(doc, storey, view, doc.graphics, () => true).ctx;
+  return createContext(doc, storey, view, defaultSheet(doc.graphics), () => true).ctx;
 }
 
 /** Marken i 3D-vyn (0.10.26): nätet med den färdiga marken, skuret skarpt längs markytornas och rampernas kanter. */
