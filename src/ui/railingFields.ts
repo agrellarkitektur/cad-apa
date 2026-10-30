@@ -16,7 +16,7 @@ import { escapeHtml } from './labels';
  * övergången, och räckets egna värden för de parametrar typen tillåter. Under
  * *Påverkar fler objekt* står typen (tavla 2 i utredningen): grupp, kryssen,
  * parametrarna med formler och kryss *per räcke*, och delarna. Editorn i
- * stilboken kommer i 0.11.2.
+ * stilboken (0.11.2) öppnas med *Öppna i räckestypeditorn…*.
  */
 
 const mm = (v: number) => Math.round(v).toLocaleString('sv-SE');
@@ -134,6 +134,7 @@ export function railingTypeMarkup(doc: ProjectDoc, defId: Id): string {
       <label class="check" title="Visas på våningarna"><input type="checkbox" data-key="${k('building')}"${m.building ? ' checked' : ''}> Byggnad</label>
       <label class="check" title="Varningarna för öppningar och klätterbarhet (BFS 2024:9, 2 kap. 11 §)"><input type="checkbox" data-key="${k('childSafe')}"${m.childSafe ? ' checked' : ''}> Barnsäkert</label>
     </div>
+    <div class="row"><button class="btn btn-small" data-action="style-railing-type" data-def="${defId}" title="Stilboken › Räckestyper: typlistan, förhandsvisningen och delarna">Öppna i räckestypeditorn…</button></div>
     <div class="field-label">Parametrar</div>
     <ul class="rail-params">${params}</ul>
     <div class="row"><button class="btn btn-small" data-action="railtype-param-add" data-def="${defId}">+ Parameter</button></div>
@@ -256,6 +257,22 @@ function applyTypeField(store: DocStore, defId: Id, path: string[], input: HTMLI
         if (!(v > 0)) return null;
         q.thickness = Math.round(v);
       } else if (field === 'material') q.material = raw || undefined;
+      // Räckestypeditorn (0.11.2): ändar, beteenden, ritningen och under mark.
+      else if (field === 'corners') q.corners = checked;
+      else if (field === 'stair') q.stair = raw === 'plumb' ? 'plumb' : undefined;
+      else if (field === 'slope') q.slope = raw === 'stepped' ? 'stepped' : undefined;
+      else if (field === 'gate') q.gate = raw === 'continue' ? 'continue' : raw === 'break' ? 'break' : undefined;
+      else if (field === 'finish') q.finish = raw === 'down' || raw === 'wall' || raw === 'straight' ? raw : undefined;
+      else if (field === 'detail') q.detail = raw === 'sketch' || raw === 'normal' || raw === 'detail' ? raw : undefined;
+      else if (field === 'pen') q.pen = raw || undefined;
+      else if (field === 'footing') q.below = { ...q.below, footing: checked || undefined };
+      else if (field === 'depth') {
+        const v = railNumOf(raw);
+        if (typeof v === 'string' && !Number.isFinite(railNum(v, railValues(m), NaN))) return null;
+        const below = { ...q.below, depth: v };
+        if (v === undefined) delete below.depth;
+        q.below = below.depth === undefined && !below.footing ? undefined : below;
+      }
       else if (field === 'z' || field === 'from' || field === 'to' || field === 'offset' || field === 'spacing' || field === 'extend') {
         const v = railNumOf(raw);
         // En formel som inte går att räkna avvisas.

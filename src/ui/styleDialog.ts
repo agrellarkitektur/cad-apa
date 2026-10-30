@@ -23,19 +23,21 @@ import { categoryAction, categoryChange, underlayClick, viewAction } from './sty
 import { fillTypeUses, lineTypeUses, materialUsesMap, resourceChange, resourceClick } from './style/resourceEdits';
 import { placesChange, placesClick } from './style/placesPanel';
 import { exportBookFile, importBookFile, templateDialog } from './style/bookFile';
+import { newRailEditorState, railEditorChange, railEditorClick, railEditorDrag, railEditorMarkup } from './style/railingTypes';
 
 /** Raderna som sök och *Vanliga/Alla* (0.10.34) visar eller döljer. */
 const FILTER_ROWS = '.style-row, .pen-row, .material-row, .linetype-row, .filltype, .filltype-builtin, .tpl-row, .sb-groups label.check, .sb-show label.field, .sb-show label.check, .sb-views li';
 
 /** Det som visas till höger: Allmänt, en vytyp eller en resurs. */
 type Place = { kind: 'general' } | { kind: 'type'; type: ViewType } | { kind: 'res'; res: Resource };
-type Resource = 'pens' | 'materials' | 'lineTypes' | 'fillTypes' | 'text';
+type Resource = 'pens' | 'materials' | 'lineTypes' | 'fillTypes' | 'railings' | 'text';
 
 const RESOURCES: readonly { res: Resource; name: string }[] = [
   { res: 'pens', name: 'Pennor' },
   { res: 'materials', name: 'Material' },
   { res: 'lineTypes', name: 'Linjetyper' },
   { res: 'fillTypes', name: 'Fyllningstyper' },
+  { res: 'railings', name: 'Räckestyper' },
   { res: 'text', name: 'Text och littera' },
 ];
 
@@ -97,6 +99,8 @@ export class StyleDialog {
   };
   /** Pennor och ställen (0.10.36): det som väljs och filtreras i listorna över ställen. */
   pp = newPlacesState();
+  /** Räckestypeditorn (0.11.2): vald typ, del och förhandsvisning. */
+  rt = newRailEditorState();
   /** Raden som visas och blinkar efter *Gå dit* till ett ställe (en väljare). */
   private flash: string | null = null;
   /** Öppna en vy i appen (*Gå dit* i listan över vyer med kategorin). */
@@ -116,6 +120,7 @@ export class StyleDialog {
       void this.onClick(e);
     });
     this.el.addEventListener('change', (e) => this.onChange(e));
+    for (const t of ['dragstart', 'dragover', 'dragleave', 'drop'] as const) this.el.addEventListener(t, (e) => railEditorDrag(this.store, e));
     this.el.addEventListener('input', (e) => {
       const t = e.target as HTMLElement;
       if (t.matches('[data-pp-search]')) {
@@ -133,8 +138,12 @@ export class StyleDialog {
   }
 
   /** Öppna stilboken, gärna vid en vytyp och kategori (den där man är), eller vid en vys stil (0.10.33). */
-  open(at?: { type: ViewType; category?: string } | { view: string }): void {
-    if (at && 'view' in at) this.showView(at.view);
+  open(at?: { type: ViewType; category?: string } | { view: string } | { railingType: string }): void {
+    if (at && 'railingType' in at) {
+      this.go({ kind: 'res', res: 'railings' });
+      this.rt.def = at.railingType;
+      this.rt.part = null;
+    } else if (at && 'view' in at) this.showView(at.view);
     else if (at) {
       this.viewId = null;
       this.place = { kind: 'type', type: at.type };
@@ -286,6 +295,7 @@ export class StyleDialog {
     if (p.res === 'pens') return penListMarkup(doc, this.pp);
     if (p.res === 'materials') return materialSection(this.book, materialUsesMap(doc)) + placesSection(doc, 'material', this.pp);
     if (p.res === 'lineTypes') return lineTypeSection(this.book, lineTypeUses(doc)) + placesSection(doc, 'linetype', this.pp);
+    if (p.res === 'railings') return railEditorMarkup(doc, this.rt);
     if (p.res === 'fillTypes') return fillTypeSection(this.book, fillTypeUses(doc)) + placesSection(doc, 'filltype', this.pp);
     return labelSection(this.book);
   }
@@ -424,6 +434,7 @@ export class StyleDialog {
       return;
     }
     if (placesClick(this, e, target)) return;
+    if (await railEditorClick(this.store, this.rt, target, () => this.render(), this.onError)) return;
     if (await generalClick(this.store, target, (book, label) => this.set(book, label))) return;
     const go = target.closest<HTMLElement>('[data-sb-go]')?.dataset.sbGo;
     if (go) {
@@ -494,6 +505,7 @@ export class StyleDialog {
       return;
     }
     if (generalChange(this.store, input, (book, label) => this.set(book, label))) return;
+    if (railEditorChange(this.store, input)) return;
     if (input.matches('[data-sb-name]')) {
       const name = input.value.trim();
       if (name && name !== this.book.name) this.set({ ...this.book, name }, `Stilbokens namn: ${name}`);
@@ -508,7 +520,7 @@ export class StyleDialog {
 function focusSelector(el: Element | null, root: HTMLElement): string | null {
   if (!(el instanceof HTMLElement) || !root.contains(el)) return null;
   if (el.id) return `#${CSS.escape(el.id)}`;
-  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview', 'data-ul', 'data-ul-field', 'data-ul-addsel', 'data-pp-search', 'data-pp-filter', 'data-pp-set', 'data-pp-check', 'data-pp-all', 'data-pp-move', 'data-penlist', 'data-pp-tag', 'data-pp-pick', 'data-gen', 'data-gen-action'];
+  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview', 'data-ul', 'data-ul-field', 'data-ul-addsel', 'data-pp-search', 'data-pp-filter', 'data-pp-set', 'data-pp-check', 'data-pp-all', 'data-pp-move', 'data-penlist', 'data-pp-tag', 'data-pp-pick', 'data-gen', 'data-gen-action', 'data-rt-mode', 'data-rt-act', 'data-rt-g', 'data-rt-p', 'data-rt-type'];
   const parts = attrs.filter((a) => el.hasAttribute(a)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a)!)}"]`);
   if (!parts.length) return null;
   const v = el instanceof HTMLInputElement && el.type === 'radio' ? `[value="${CSS.escape(el.value)}"]` : '';

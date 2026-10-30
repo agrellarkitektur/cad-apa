@@ -215,6 +215,12 @@ export function installActions(app: AppContext, parts: ActionParts) {
         // Vid vytypen och kategorin där man är (0.10.32).
         app.styleDialog.open({ type: app.place.viewType(), category: app.place.currentCategory().id });
         break;
+      case 'style-railing-type': {
+        // Typen i räckestypeditorn (0.11.2), från räckets panel.
+        const def = target.closest<HTMLElement>('[data-def]')?.dataset.def;
+        if (def) app.styleDialog.open({ railingType: def });
+        break;
+      }
       case 'show-menu':
         showMenu.toggleShowMenu();
         break;

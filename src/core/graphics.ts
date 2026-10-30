@@ -129,6 +129,12 @@ export interface StyleResources {
    */
   colorSets?: ColorSet[];
   /**
+   * Räckestypernas grupper i ordning (0.11.2), också tomma egna grupper.
+   * Utelämnade = Räcken, Ledstänger, Staket, Stängsel, Spaljéer, Grindar.
+   * En grupp som en typ har men som saknas här läggs sist.
+   */
+  railingGroups?: string[];
+  /**
    * Projektets pennor (0.10.36): en tjocklek och en färg med ett nummer som
    * namn. Ställena (en rad i en kategori eller en vy) har kvar sina värden;
    * ett ställe hör till pennan med samma tjocklek och färg. Utelämnade =
@@ -454,6 +460,7 @@ export function normalizeStyle(data: any): StyleSheet {
     ...(normalizeFillTypes(data.fillTypes) ? { fillTypes: normalizeFillTypes(data.fillTypes)! } : {}),
     ...(normalizeMaterials(data.materials) ? { materials: normalizeMaterials(data.materials)! } : {}),
     ...(normalizeColorSets(data.colorSets) ? { colorSets: normalizeColorSets(data.colorSets)! } : {}),
+    ...(Array.isArray(data.railingGroups) ? { railingGroups: [...new Set((data.railingGroups as unknown[]).filter((g): g is string => typeof g === 'string' && !!g.trim()).map((g) => g.trim()))] } : {}),
     ...(normalizePenList(data.penList) ? { penList: normalizePenList(data.penList)! } : {}),
     ...(normalizeOffice(data.office) ? { office: normalizeOffice(data.office)! } : {}),
     ...(normalizeGeneral(data.general) ? { general: normalizeGeneral(data.general)! } : {}),

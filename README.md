@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.1** (alfa), Räcket; nästa är **0.11.2 Räckestypeditorn**.
+**0.11.2** (alfa), Räckestypeditorn; nästa är **0.11.3 Staket och grindar**.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,34 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11.2, Räckestypeditorn (samma filformat, 26; projekt från 0.11 öppnas):
+- **Stilboken › Resurser › Räckestyper**: till vänster typlistan i
+  **grupper** (Räcken, Ledstänger, Staket, Stängsel, Spaljéer, Grindar och
+  egna). **Ny grupp…** lägger till en, pennan döper om den (typerna följer
+  med), pilarna flyttar den och papperskorgen tar bort en tom grupp. En
+  typ **dras** till en annan grupp. **Ny typ…** gör en typ med delar som
+  passar gruppen och nästa lediga littera (RÄ, ST för staket och
+  stängsel, SP för spaljéer, G för grindar); **Duplicera** gör en kopia
+  och **Ta bort** tar bort en typ som inget räcke har. Ett projekt utan
+  räckestyper får RÄ01–RÄ03 med en knapp
+- **I mitten** typens littera, beskrivning och kryssen *Mark*, *Byggnad*
+  och *Barnsäkert*, **förhandsvisningen** (*Rak*, *I trappa*, *På
+  sluttning*, *Grind*, *Planen* och *3D*) och **delarna** med **+ Lägg
+  till del…** (punkt, längsgående, upprepad, yta), pilar för ordningen och
+  ta bort. Klicka på en del i förhandsvisningen eller i listan för att
+  välja den
+- **Till höger** den valda delens egenskaper: profil och material, läge
+  (höjder, inåt, delning eller öppning), ändar (förlängning och avslut)
+  eller stolpar i hörnen, beteende i trappa, på sluttning och vid grind,
+  under mark (för staketen i 0.11.3) och ritningen (från vilken
+  detaljnivå delen syns i planen, och ställe). Under dem **typens
+  parametrar** med formler och kryss *per räcke*
+- Räckets egenskaper har **Öppna i räckestypeditorn…** under typen
+- **Shift går före snäppet**: medan Shift låser en riktning stannar
+  linjen på låset, och en punkt man snäpper till ger läget i linje med
+  den (rektangelns tredje sida blir lika lång som den första i stället
+  för att dras till startpunkten)
 
 Version 0.11.1, Räcket (samma filformat, 26; projekt från 0.11 öppnas):
 - **Verktyget Räcke** (under Rita) för räcken och ledstänger; samma objekt

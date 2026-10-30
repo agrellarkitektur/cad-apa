@@ -653,6 +653,40 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt. Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Räckestypeditorn (0.11.2, format 26)
+
+- **Kommandona** i `core/railings.ts`: `railingGroups(doc)` (stilbokens
+  `railingGroups`, eller förvalen `RAILING_GROUPS`, och sist grupper som
+  bara en typ har), `railingTypesIn`, `railingTypeUses`, `railingPrefix`
+  (RÄ, ST, SP, G), `newRailingModel(group)`, `addRailingType`,
+  `removeRailingType` (bara oanvända), `addRailingGroup`,
+  `renameRailingGroup` (typerna följer med i samma transaktion),
+  `moveRailingGroup`, `removeRailingGroup` (bara tomma),
+  `setRailingTypeGroup` och `moveRailingPart`. Gruppernas ordning är ett
+  valfritt fält i stilboken (`StyleResources.railingGroups`, normaliseras i
+  `normalizeStyle`); inget nytt format.
+- **Editorn** `ui/style/railingTypes.ts` (resursen `railings` i
+  `styleDialog.ts`): läget i `RailEditorState` (`def`, `part`, `mode`) på
+  dialogen (`rt`). Fälten har samma nycklar som typen i räckets panel
+  (`rail:type:<def>:…`) och går genom `applyRailingField` (nya fält:
+  `corners`, `stair`, `slope`, `gate`, `finish`, `detail`, `pen`, `depth`,
+  `footing`); delarnas knappar är `railtype-…` (`railingAction`), editorns
+  egna `data-rt-act`. Typerna dras med HTML5-drag (`railEditorDrag`, typen
+  `application/x-rt-type`). `StyleDialog.open({ railingType })` öppnar en
+  typ; panelens knapp är `style-railing-type` i `app/actions.ts`.
+- **Förhandsvisningen** `ui/style/railingPreview.ts`: `previewMarkup(model,
+  mode, vald)` bygger påhittade linjer med `freePath` och lägger delarna
+  med `railingBody`, samma som ritningen. Från sidan för *Rak*, *I
+  trappa* (åtta steg 300 × 168,75), *På sluttning* (600 på 3 600) och
+  *Grind* (öppning 1 000; delar med `gate: 'continue'` ritas hela);
+  ovanifrån för *Planen* (L-form, Detalj) och isometriskt för *3D*
+  (längst bort först). Varje del har `data-rt-part`.
+- **Shift före snäppet** (`ui/tools/snap.ts`, `lockedSnap`): med Shift tas
+  låset först, sedan snäppet utan lås (`held` sparas runt anropet), och
+  en punkt läggs på låsets linje (`track`, *i linje med*); en vägg ger
+  skärningen med låset.
+- **Tester**: `tests/v0112.test.ts`.
+
 ## Räcket (0.11.1, format 26)
 
 - **Typmodellen** (`core/railingTypes.ts`): en räckestyp bor i en

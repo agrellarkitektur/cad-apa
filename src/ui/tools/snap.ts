@@ -91,6 +91,11 @@ export function snap(input: SnapInput): SnapResult {
     }
     return { point: input.cursor, kind: 'free', label: '' };
   }
+  // Shift-låset går före snäppet (0.11.2): det som snäpps läggs på låsets linje.
+  if (input.ortho && input.from && dist(input.from, input.cursor) > 1) {
+    const lock = heldDirection(input);
+    if (lock) return lockedSnap(input, input.from, lock);
+  }
   const { cursor, from, tol } = input;
   // Allt nedan ligger inom spårlinjernas räckvidd från markören, så bara
   // sträckorna där prövas (0.8.3). De kommer i samma ordning som i listan.
@@ -242,6 +247,34 @@ function heldDirection(input: SnapInput): { dir: Vec2; named?: string } | null {
   const dir = free.kind === 'free' || free.kind === 'on-wall' ? fromAngleDeg(Math.round(angleDeg(v))) : norm(v);
   held = { from, dir, ...(free.kind === 'parallel' ? { named: free.label } : {}) };
   return held;
+}
+
+/**
+ * Snäpp med Shift-låset (0.11.2): punkten stannar alltid på låsets linje.
+ * En punkt man snäpper till (t.ex. startpunkten när den tredje sidan i en
+ * rektangel ritas) ger läget i linje med den; en vägg ger skärningen med
+ * låset. Förut vann punkten och linjen drogs till den.
+ */
+function lockedSnap(input: SnapInput, from: Vec2, lock: { dir: Vec2; named?: string }): SnapResult {
+  const keep = held;
+  const free = snap({ ...input, ortho: false });
+  held = keep;
+  const { dir, label } = along(lock, from, input.cursor);
+  const onLine = (p: Vec2) => add(from, scale(dir, Math.max(0, dot(sub(p, from), dir))));
+  const plain = onLine(input.cursor);
+  const far = (p: Vec2) => add(from, scale(dir, Math.max(dist(from, p) * 3, input.tol * 40)));
+  if (free.kind === 'on-wall' && free.guide) {
+    const [a, b] = free.guide;
+    const hit = intersectLines(from, dir, a, sub(b, a));
+    if (hit && dot(sub(hit, from), dir) > 0 && dist(hit, plain) <= input.tol) return { point: hit, kind: 'intersection', label: `Skärning ${label}`, guide: [from, hit] };
+  } else if (free.kind !== 'free' && free.kind !== 'angle' && free.kind !== 'parallel' && free.kind !== 'on-wall') {
+    const p = onLine(free.point);
+    if (dist(p, from) > 1) {
+      if (dist(p, free.point) < 0.5) return { point: p, kind: free.kind, label: `${free.label} ${label}`, guide: [from, far(p)] };
+      return { point: p, kind: 'track', label: `${label}, i linje med ${free.label.toLowerCase()}`, guide: [from, far(p)], guides: [[free.point, p]] };
+    }
+  }
+  return { point: plain, kind: 'angle', label, guide: [from, far(plain)] };
 }
 
 /** Låset åt det håll markören ligger (bakåt längs linjen vänder riktningen), med vinkeln som text. */

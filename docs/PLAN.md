@@ -171,6 +171,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.10.40 | Stilboken ut och in |
 | 0.10.40.1 | Granskning efter 0.10.40 |
 | 0.11 | Trappan (format 26): referenslinje med bågar, kilsteg och vilplan, gånglinje, plansteg, varningar, plan/sektion/3D, hålet, *Syns också på* |
+| 0.11.2 | Räckestypeditorn: stilboken › Resurser › *Räckestyper* med grupper, förhandsvisning i sex lägen, delträd och delens egenskaper; Shift går före snäppet |
 | 0.11.1 | Räcket: eget objekt med typmodellen (delar och parametrar med formler), längs trappans kant eller ritat, utjämnad eller hoppande vid kilstegen, plan/sektion/fasad/3D, stilboksgruppen *Räcken*, varningar ur BFS 2024:9 och praxis |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
@@ -404,7 +405,7 @@ formatet men inte i panelen), räcke på Platsen och andra kanter (0.11.3),
 *Flytta i höjd* för ett ritat räcke, egen profil (0.11.6). Klickjämförelsen
 är inte körd (granskningen efter 0.11.5).
 
-### 0.11.2 Räckestypeditorn
+### 0.11.2 Räckestypeditorn ✓
 
 Stilboken › Resurser › *Räckestyper* (tavla 4): typlistan i grupper
 (Räcken, Ledstänger, Staket, Stängsel, Spaljéer, Grindar; *Ny typ…*,
@@ -412,6 +413,43 @@ Stilboken › Resurser › *Räckestyper* (tavla 4): typlistan i grupper
 *+ Lägg till del…*, förhandsvisning (Rak, I trappa, På sluttning, Grind,
 Planen, 3D) där man klickar på en del, den valda delens egenskaper och
 typens parametrar. Egen profil när profilverktyget finns (0.11.6).
+Dessutom ur Inkorgen (Carl August 30 oktober, godkänt): Shift-låset går
+före snäppet.
+
+**Claudes val (0.11.2):**
+
+- Gruppernas ordning (och tomma egna grupper) ligger i stilboken
+  (`railingGroups`), typerna i projektets definitioner som förut. En
+  grupp tas bara bort när den är tom; döps den om följer typerna med.
+  Typerna i en grupp står i litteras ordning.
+- *Ny typ…* frågar efter littera (nästa lediga med gruppens bokstäver:
+  RÄ, ST för staket och stängsel, SP för spaljéer, G för grindar) och
+  ger delar som passar gruppen: stolpe, handledare eller överliggare och
+  spjälor; spaljén ett rutnät som yta, ledstången konsoler. Staket,
+  stängsel, spaljéer och grindar får *Mark*, räcken och ledstänger
+  *Byggnad*, räcken *Barnsäkert*. *Duplicera* tar nästa lediga littera
+  utan att fråga. *Ta bort* bara för en typ som inget räcke har.
+- Ett projekt utan räckestyper får RÄ01–RÄ03 med en knapp i editorn (inte
+  av sig själv när stilboken öppnas, så att det inte blir ett ångrasteg).
+- Förhandsvisningen ritas med typens förvalda värden (inte ett visst
+  räckes), med samma geometri som ritningen. *På sluttning* följer
+  marken; *Trappstegat* och stolpar under mark ritas från 0.11.3. *Grind*
+  visar vilka delar som avbryts (förval för alla delar) innan grindarna
+  finns. *3D* är en isometrisk teckning, inte 3D-vyn.
+- Delens egenskaper i grupper: profil och material, läge, ändar (eller
+  stolpar i hörnen), beteende, under mark (punkter) och ritningen
+  (detaljnivå och ställe ur gruppen *Räcken*). *I trappa* går att välja
+  för punkter och ytor (spjälorna står alltid lodrätt).
+- Typens fält i räckets panel finns kvar, med *Öppna i
+  räckestypeditorn…*.
+- Shift före snäppet: punkten läggs på låsets linje (ett *i linje med*),
+  en vägg ger skärningen med låset. Spårlinjer och vinkelrätt utan Shift
+  som förut.
+
+**Inte gjort i 0.11.2:** ledstångens avslut i 3D, *Trappstegat* och
+stolpar under mark (0.11.3), egna profiler (0.11.6), typerna i stilbokens
+export (de bor i projektet; grupperna följer med stilboken),
+förhandsvisningen med ett visst räckes egna värden.
 
 ### 0.11.3 Staket och grindar
 

@@ -6,33 +6,33 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 30 oktober 2026, efter 0.11.1.
+README. Senast: 30 oktober 2026, efter 0.11.2.
 
 ## Läget
 
-- **0.11.1 Räcket är klar** (samma format, 26; projekt från 0.11 öppnas).
-  Objektet `Railing` med hela typmodellen (delar av fyra slag, parametrar
-  med formler och kryss *per räcke*, fälten för 0.11.3) i
-  `Definition.railing`; förvalda typer RÄ01–RÄ03 läggs i projektet första
-  gången ett räcke läggs. Verktyget *Räcke* (*Längs kant* och *Ritat*),
-  smartspöt, *Räcke längs kanten* och *Räcken på båda sidor* i trappans
-  smartmeny och panel, *Utjämnad*/*Hoppande* vid kilstegen, krök/knäck,
-  läge mot kanten, *Lösgör*, plan (Skiss/Normal en linje, Detalj delarna,
-  över snittet streckprickat), sektion, fasad och 3D, stilboksgruppen
-  *Räcken*, varningarna ur BFS 2024:9 och *avviker från praxis* (också
-  trappans texter), ledstång på båda sidor på trappan med *Kvittera*.
-  Typerna ändras i räckets panel (tavla 2). Testerna: 814 på ca 20 s.
-  Provat i Playwright mot `dist/` (längs kant, båda sidor, smartmenyn,
-  ritat med höjden ur trappkanten, Detalj, panelen, 3D). Klickjämförelsen
-  inte körd. Koden i UTVECKLING.md, Claudes val och det som inte gjordes
-  i PLAN.md.
-- **Repot är uppdaterat** med utredningen: PLAN.md har 0.11.1–0.11.7 med
-  den nya numreringen.
+- **0.11.2 Räckestypeditorn är klar** (samma format, 26). Stilboken ›
+  Resurser › *Räckestyper*: typlistan i grupper (egna grupper, dra typer
+  mellan dem; ordningen i stilbokens `railingGroups`), *Ny typ…*,
+  *Duplicera*, *Ta bort*, förhandsvisningen i sex lägen där man klickar
+  på en del, delträdet med ordning och *+ Lägg till del…*, delens
+  egenskaper och typens parametrar. Räckets panel har *Öppna i
+  räckestypeditorn…*. Ur Inkorgen: Shift-låset går före snäppet
+  (rektangelns tredje sida). Testerna: 820 på ca 20 s. Provat i
+  Playwright mot `dist/` (alla lägen, klick i förhandsvisningen, fält,
+  dra mellan grupper, ny del, knappen i panelen). Koden i UTVECKLING.md,
+  Claudes val och det som inte gjordes i PLAN.md.
+- **0.11.1 Räcket** (samma format): objektet `Railing` med typmodellen,
+  verktyget *Räcke*, trappans smartmeny, plan, sektion, fasad, 3D och
+  varningarna ur BFS 2024:9. Klickjämförelsen inte körd (granskningen
+  efter 0.11.5).
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.11.1 pushad till `main` 30 oktober (se git och
+- **Publicerad:** 0.11.2 pushad till `main` 30 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.11.2:** inget i ritningarna. *Räckestyper*
+  under Resurser i stilboken; med Shift ritar linjen i låset också nära
+  en punkt.
 - **Märks i hans ritningar efter 0.11.1:** inget i befintliga ritningar,
   utom att trappans varningar har nya texter och att en trappa utan
   räcken varnar för ledstång på båda sidor (kvittera i trappans
@@ -41,10 +41,10 @@ README. Senast: 30 oktober 2026, efter 0.11.1.
   0.10.32–0.10.40.1 öppnas inte (nytt format). Verktyget *Trappa* under
   Rita, och i stilboken grupperna *Trappor* och *Från annan våning*. I
   egenskaperna för bjälklag, markobjekt och trappor finns *Syns också på*.
-- **Versionsnumret** är `0.11.1` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.11.2` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.11.1 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.11.2 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -117,12 +117,10 @@ README. Senast: 30 oktober 2026, efter 0.11.1.
 Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 - ~~0.8.8 Mallblad~~ … ~~0.10.40.1 Granskning efter 0.10.40~~,
-  ~~0.11 Trappan~~, ~~Utredning av räcket~~, ~~0.11.1 Räcket~~ (klara; se
+  ~~0.11 Trappan~~, ~~Utredning av räcket~~, ~~0.11.1 Räcket~~, ~~0.11.2 Räckestypeditorn~~ (klara; se
   tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.11.2 Räckestypeditorn** (stilboken › Resurser › *Räckestyper*,
-  tavla 4; mellanstor)
 - **0.11.3 Staket och grindar** (Platsen, andra kanter, grindar)
 - **0.11.4 Byggd trappa** (vangstycken, plan- och sättsteg, stegnos,
   kontrastmarkering, bygghandlingsgrafik) och **0.11.5 Spiraltrappan**
@@ -143,25 +141,34 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 ## Nästa session
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
-skrivrätt till repot ("push godkänd"). Bygg sedan **0.11.2
-Räckestypeditorn** (PLAN.md och `cad-apa-racket-utredning.md`, tavla 4 i
-mockupen "Räcket – utredning 0.11.1"): stilboken › Resurser ›
-*Räckestyper* med typlistan i grupper (egna grupper att skapa, döpa om,
-flytta och ta bort; typer dras mellan grupperna), delträdet med *+ Lägg
-till del…*, förhandsvisningen (Rak, I trappa, På sluttning, Grind,
-Planen, 3D) där man klickar på en del, delens egenskaper och typens
-parametrar. Typmodellen och kommandona finns (`core/railingTypes.ts`,
-`core/railings.ts`); panelens typfält (`ui/railingFields.ts`) kan
-återanvändas. Ställ frågorna om 0.11.1 (nedan) när Carl August provat
-räcket.
+skrivrätt till repot ("push godkänd"). Bygg sedan **0.11.3 Staket och
+grindar** (PLAN.md och `cad-apa-racket-utredning.md`, tavla 5 i mockupen
+"Räcket – utredning 0.11.1"): räcket på Platsen (höjden ur den färdiga
+marken, *Följer marken* eller *Trappstegat*, stolpar under mark), längs
+andra kanter (hål, bjälklag, ramp, stödmurens krön, vägg), typerna ST, SP
+och G, och grinden som en sträcka i räcket (*Gör till grind…*). Fälten
+`slope`, `gate` och `below` finns i typen och i editorn; förhandsvisningen
+*Grind* och *På sluttning* (`ui/style/railingPreview.ts`) ska rita det
+nya. Kan behöva två sessioner; dela då grindarna till en egen version.
+Ställ frågorna om 0.11.2 och 0.11.1 (nedan) när Carl August provat.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.1 och 0.11,
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.2, 0.11.1 och 0.11,
 sedan 0.10.35, 0.10.34 och 0.10.33 när han provat.
+
+**0.11.2 efter provning** (Claudes val, se PLAN.md)
+- En grupp tas bara bort när den är tom. Hellre att typerna flyttas till
+  gruppen ovanför?
+- *Ny typ…* ger delar efter gruppen (stolpe, handledare, spjälor; spaljén
+  ett rutnät). Hellre en kopia av den valda typen?
+- Förhandsvisningen ritar typens förvalda värden, inte det markerade
+  räckets. Räcker det?
+- Projekt utan räckestyper får RÄ01–RÄ03 med en knapp i editorn. Ska de
+  hellre finnas från början i nya projekt?
 
 **0.11.1 efter provning** (Claudes val, se PLAN.md)
 - RÄ01 har en rund ledstång 70 mm innanför handledaren, på *Skyddshöjd −
