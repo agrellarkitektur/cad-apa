@@ -478,8 +478,6 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 **0.10.20 efter provning** (Claudes val, se PLAN.md)
 - Markhöjden räknar marken som oförändrad när ny och befintlig skiljer
   mindre än 5 cm (då bara den befintliga, understruken). Lagom gräns?
-- Markobjektens höjder skrivs nu med två decimaler (nivåmarkörerna har
-  kvar tre). Ska nivåmarkörerna också följa inställningen?
 - Konturen runt slänterna är alltid på (0,13). Ska den vara ett val, eller
   få en egen penna i stilmallen?
 - De branta slänterna är grå (muted) och följer fallinjen; strecken bryts
@@ -619,12 +617,10 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 62. Kommandon direkt utan Enter (kortkommandon med en bokstav
     försvinner)? Fungerar `@` med AltGr?
 63. Rutnätet lagom tydligt? Segmentpunkterna per vy; Rensa rensar alla.
-64. Typsnitt per projekt?
 65. Autosparen kommer ihåg filen mellan sidladdningar (Chrome frågar)?
 66. Rumsstämpelns pil mot närmaste kant eller rummets mitt?
 67. X och Y nedre vänstra hörnet också för DXF, inte filens nollpunkt.
 68. Gruppen för en fil på flera ställen utfälld från början?
-69. Tjocklekstabell för linjer i stilmallen?
 70. Trimma avslutas efter ett klick: fortsätta tills Esc som i AutoCAD?
 
 **Blad och mallar (0.8.7–0.8.12)**
