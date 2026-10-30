@@ -3919,6 +3919,42 @@ hamnar överst i Ritningar), typerna (väggar, dörrar …) och vy-taggarna
 följer inte med mallen, och ingen förhandsvisning av en fil innan den
 importeras.
 
+### Granskning efter 0.10.40 ✓ (0.10.40.1)
+
+Liten till mellanstor. Inga nya funktioner; den senaste granskningen var
+0.10.28.3, och 0.10.29–0.10.40 lade mycket i stilboken.
+
+*Gjord 30 oktober, samma format (25). Inget syns i ritningarna; den
+heter 0.10.40.1 för att versionsnumret syns i appen. Testerna: 792, ca
+14 s (inga dubbla namn, inget test över 1,2 s; inget ändrat där).
+**Uppdelat**: `ui/styleDialog.ts` 1 083 → 516 rader; kategorifliken,
+pennlistan, resurserna och filhanteringen i `ui/style/` (se
+UTVECKLING.md). **Snabbare**: materialens objekt räknas i ett svep
+(`materialObjectsByMaterial`) i stället för ett per material (M × N vid
+varje omritning av fliken Material); en ändring av ett ställe räknar
+`stylePlaces` en gång i stället för fyra–fem; `editPlaces` grupperar utan
+att kopiera listan per ställe; våningsnamnen slås upp i en Map.
+**Dubbletter**: `slugId` i `core/ids.ts` för kategoriers och materials
+nycklar; `changedRows` räknar stilens rader med `styleDiff`;
+`viewKeys` och bladens jämförelse av vyinställningar använder `sameValue`
+(nyckelordning spelar ingen roll) i stället för `JSON.stringify`;
+`putPen` i `repr/penRows.ts` för både fältet i stilboken och ställena;
+`plainPen` i `penPlaces.ts`; objekttypernas namn ur registret i stället
+för en egen tabell; `extraFieldsOf` i `materials.ts`. **Borttaget**:
+`placeRowExists`, `penRowShown`, `MATERIAL_USES`, `PRESETS`,
+`updateCategory` (testet använder `putCategory`), en död ternär i
+`rowControls.ts`; `materialFits` används i materialpanelen i stället för
+samma villkor inline; ett tiotal `export` på sådant som bara den egna
+filen använder. Provat i Playwright mot `dist/`: avvikelser och
+återställ, innehållskryss, pennlistan med *Gå dit*, alla delar i
+vänsterkanten, duplicera kategori, sök, exportdialogen; inga fel i
+konsolen.*
+
+*Gjordes inte:* `docs/PLAN.md` och `UTVECKLING.md` är över 4 000 rader
+var; att flytta avsnitten före 0.10 till arkivfiler är ett förslag till
+Carl August (liten). Klickjämförelsen (inget husverktyg ändrat).
+Testerna rördes inte.
+
 ### 0.11 Trappor · *nytt format*
 
 - *Syns också på* per objekt: objektet hör till Platsen eller en våning och

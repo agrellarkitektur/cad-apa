@@ -12,13 +12,13 @@ import {
   editCategory,
   moveCategory,
   newCategory,
+  putCategory,
   renameCategory,
   resetCategory,
   resolveShow,
   sheetFor,
   showOverrides,
   stylePresets,
-  updateCategory,
   viewSettings,
   viewTypeOf,
   withShow,
@@ -79,7 +79,7 @@ describe('vyn följer sin kategori', () => {
     expect(viewSettings(doc, v).show).toMatchObject({ compare: true, hideDemolished: true, hide: ['Dimension'] });
     // Kategorin ändras: vyn följer med, utom på raderna den själv ändrat.
     const c = plan(doc);
-    doc.graphics = updateCategory(doc.graphics, c, { show: { ...c.show, detail: 'detail', hide: ['Furniture'], hideDemolished: false } });
+    doc.graphics = putCategory(doc.graphics, { ...c, show: { ...c.show, detail: 'detail', hide: ['Furniture'], hideDemolished: false } });
     expect(viewSettings(doc, v).show).toMatchObject({ detail: 'detail', hideDemolished: true });
     expect(viewSettings(doc, v).show.hide.sort()).toEqual(['Dimension', 'Furniture']);
   });

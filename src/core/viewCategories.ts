@@ -1,3 +1,4 @@
+import { slugId } from './ids';
 import { COLOUR_CODED, POCHE, SWEDISH_STANDARD, type ActionKey, type ActionStyle, type CategoryStyle, type PenDef, type StyleBook, type StyleSheet } from './graphics';
 import { isSite, type Id, type ProjectDoc, type SiteCategory, type ViewDef } from './model';
 import { normalizeUnderlays, type ViewUnderlay } from './viewUnderlays';
@@ -153,7 +154,7 @@ export function resolveShow(c: ViewCategory, ov: ViewOverrides | undefined): Cat
 }
 
 /** Underlagen i en visning, utan utelämnade. */
-export const underlaysOf = (s: Pick<CategoryShow, 'underlays'>): ViewUnderlay[] => s.underlays ?? [];
+const underlaysOf = (s: Pick<CategoryShow, 'underlays'>): ViewUnderlay[] => s.underlays ?? [];
 
 /** Avvikelserna i visningen: det i `show` som skiljer sig från kategorin, rad för rad. */
 export function showOverrides(c: ViewCategory, show: CategoryShow): ViewOverrides {
@@ -212,7 +213,7 @@ export function deviationCount(doc: Pick<ProjectDoc, 'graphics' | 'elements'>, v
 }
 
 /** Stilen som den gäller: kategorins med vyns avvikelser. */
-export function resolveStyle(c: ViewCategory, ov: ViewOverrides | undefined): CategoryStyle {
+function resolveStyle(c: ViewCategory, ov: ViewOverrides | undefined): CategoryStyle {
   const keys = Object.keys(ov ?? {}).filter(isStyleKey);
   if (!keys.length) return c.style;
   const s = structuredClone(c.style);
@@ -333,19 +334,7 @@ export function editAllCategories<T>(book: StyleBook, fn: (sheet: StyleSheet) =>
 const replaceCat = (book: StyleBook, c: ViewCategory, next: ViewCategory): StyleBook => ({ ...book, categories: book.categories.map((x) => (x === c ? next : x)) });
 
 /** En nyckel som inte finns bland vytypens kategorier, ur namnet. */
-function freshId(book: StyleBook, type: ViewType, name: string): string {
-  const base =
-    name
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '') || 'kategori';
-  const taken = new Set(categoriesOf(book, type).map((c) => c.id));
-  let id = base;
-  for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;
-  return id;
-}
+const freshId = (book: StyleBook, type: ViewType, name: string) => slugId(name, new Set(categoriesOf(book, type).map((c) => c.id)), 'kategori');
 
 /** Ett namn som inte finns bland vytypens kategorier. */
 function freshName(book: StyleBook, type: ViewType, name: string): string {
@@ -417,11 +406,6 @@ export function deleteCategory(doc: Pick<ProjectDoc, 'graphics' | 'views' | 'ele
     return rest;
   });
   return { book, views };
-}
-
-/** Ändra en kategoris visning, skala eller sort (Platsens). */
-export function updateCategory(book: StyleBook, c: ViewCategory, patch: Partial<Pick<ViewCategory, 'show' | 'scale' | 'kind'>>): StyleBook {
-  return replaceCat(book, c, { ...c, ...structuredClone(patch) });
 }
 
 /** Flytta en kategori ett steg bland vytypens. */

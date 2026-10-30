@@ -72,7 +72,7 @@ export interface GeneralSettings {
 /** Tjocklekarna som går att välja när stilboken inte har en egen tabell. */
 export const DEFAULT_WEIGHTS: readonly number[] = [0.13, 0.18, 0.25, 0.35, 0.5, 0.7, 1, 1.4];
 
-export const GENERAL_DEFAULTS: Required<GeneralSettings> = {
+const GENERAL_DEFAULTS: Required<GeneralSettings> = {
   textSize: 2.5,
   heightSystem: 'RH 2000',
   levelDecimals: 3,

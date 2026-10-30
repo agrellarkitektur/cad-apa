@@ -13,10 +13,13 @@ import { placeRows, type PlaceKind } from './places';
 
 type Doc = Pick<ProjectDoc, 'graphics' | 'views' | 'elements' | 'storeys'> & Partial<Pick<ProjectDoc, 'definitions'>>;
 
-/** Lägg ändringen av ställena i dokumentet, med pennlistan `pens` (eller den låsta efter ändringen). */
-function applyEdit(store: DocStore, label: string, places: readonly StylePlace[], edit: PlaceEdit, pens?: (doc: Doc) => NumberedPen[]): void {
+/**
+ * Lägg ändringen av ställena i dokumentet, med pennlistan `pens` (eller
+ * den låsta efter ändringen). `all` är projektets ställen, räknade en gång.
+ */
+function applyEdit(store: DocStore, label: string, all: readonly StylePlace[], places: readonly StylePlace[], edit: PlaceEdit, pens?: (doc: Doc) => NumberedPen[]): void {
   const doc = store.doc;
-  const before = frozenPens(doc);
+  const before = frozenPens(doc, all);
   const r = editPlaces({ ...doc, graphics: { ...doc.graphics, penList: before } }, places, edit);
   store.transact(label, (tx) => {
     const next = { ...tx.doc, graphics: r.book, views: r.views };
@@ -30,9 +33,9 @@ function applyEdit(store: DocStore, label: string, places: readonly StylePlace[]
 }
 
 /** Ställena med radernas nycklar (i listan för sorten). */
-export function placesOf(doc: Doc, kind: PlaceKind, ids: readonly string[]): StylePlace[] {
+function placesOf(doc: Doc, kind: PlaceKind, ids: readonly string[], all: readonly StylePlace[]): StylePlace[] {
   const want = new Set(ids);
-  return placeRows(doc, kind)
+  return placeRows(doc, kind, [...all])
     .filter((r) => want.has(r.id) && r.place)
     .map((r) => r.place!);
 }
@@ -50,15 +53,16 @@ export function setPlaces(store: DocStore, kind: PlaceKind, ids: readonly string
     if (slopes.length) linkMaterial(store, slopes, value, 'slopeFill');
     return;
   }
-  const places = placesOf(doc, kind, ids);
+  const all = stylePlaces(doc);
+  const places = placesOf(doc, kind, ids, all);
   if (!places.length) return;
   const n = places.length;
   const what = n === 1 ? places[0].label : `${n} ställen`;
   if (kind === 'pen') {
-    const pen = penTable({ penList: frozenPens(doc) }, stylePlaces(doc)).find((r) => String(r.pen.no) === value)?.pen;
-    if (pen) applyEdit(store, `Penna ${pen.no}: ${what}`, places, setPenEdit(pen));
-  } else if (kind === 'linetype') applyEdit(store, `Linjetyp: ${what}`, places, setLineTypeEdit(value));
-  else applyEdit(store, `Fyllningstyp: ${what}`, places, setFillTypeEdit(value));
+    const pen = penTable(doc.graphics, all).find((r) => String(r.pen.no) === value)?.pen;
+    if (pen) applyEdit(store, `Penna ${pen.no}: ${what}`, all, places, setPenEdit(pen));
+  } else if (kind === 'linetype') applyEdit(store, `Linjetyp: ${what}`, all, places, setLineTypeEdit(value));
+  else applyEdit(store, `Fyllningstyp: ${what}`, all, places, setFillTypeEdit(value));
 }
 
 /**
@@ -69,7 +73,7 @@ export function setPlaces(store: DocStore, kind: PlaceKind, ids: readonly string
 export function editPen(store: DocStore, no: number, patch: { weight?: number; color?: string | null }): string | null {
   const doc = store.doc;
   const places = stylePlaces(doc);
-  const table = penTable({ penList: frozenPens(doc) }, places);
+  const table = penTable(doc.graphics, places);
   const row = table.find((r) => r.pen.no === no);
   if (!row) return null;
   const next: NumberedPen = { no, weight: patch.weight ?? row.pen.weight };
@@ -79,7 +83,7 @@ export function editPen(store: DocStore, no: number, patch: { weight?: number; c
   const twin = table.find((r) => r.pen.no !== no && penKey(r.pen) === penKey(next));
   if (twin) return `Penna ${twin.pen.no} har redan den tjockleken och färgen. Flytta ställena dit i stället.`;
   const list = table.map((r) => (r.pen.no === no ? next : r.pen));
-  applyEdit(store, `Ändra penna ${no}`, row.places, setPenEdit(next), (d) => withList(list, d));
+  applyEdit(store, `Ändra penna ${no}`, places, row.places, setPenEdit(next), (d) => withList(list, d));
   return null;
 }
 
@@ -116,7 +120,7 @@ export function addPen(store: DocStore): number {
 /** Ta bort pennor utan ställen (en, eller alla utan ställen). */
 export function removePens(store: DocStore, no?: number): void {
   const doc = store.doc;
-  const table = penTable({ penList: frozenPens(doc) }, stylePlaces(doc));
+  const table = penTable(doc.graphics, stylePlaces(doc));
   const gone = table.filter((r) => !r.places.length && (no === undefined || r.pen.no === no));
   if (!gone.length) return;
   const rest = table.filter((r) => !gone.includes(r)).map((r) => r.pen);

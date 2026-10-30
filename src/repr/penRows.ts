@@ -122,12 +122,6 @@ export const penGroupsFor = (type: ViewType): PenGroup[] =>
     .map((g) => (g.rows.some((r) => r.types) ? { ...g, rows: g.rows.filter((r) => !r.types || r.types.includes(type)) } : g))
     .filter((g) => g.rows.length);
 
-/** Raden visas i vytypen: gruppen gör det, och raden själv. */
-export const penRowShown = (key: string, type: ViewType) => {
-  const r = ROW_OF.get(key);
-  return !!r && r.group.types.includes(type) && (!r.row.types || r.row.types.includes(type));
-};
-
 const ROW_OF = new Map(PEN_GROUPS.flatMap((g) => g.rows.map((r) => [r.key, { row: r, group: g }] as const)));
 
 /** Raden och gruppen för en nyckel i penntabellen. */
@@ -136,4 +130,20 @@ export const penRowOf = (key: string) => ROW_OF.get(key);
 /** Förvalet för en rad i penntabellen: objekten, snittet, höjdkurvorna, fasaderna eller en markör. */
 export function penDefault(key: string): PenDef {
   return defaultObjectPen(key) ?? defaultPlanCutPen(key) ?? defaultContourPen(key) ?? defaultFacadePen(key) ?? defaultMarkerPen(key as MarkerPenKey);
+}
+
+/**
+ * Ändra en rad i penntabellen: `fn` får raden med förvalet ifyllt och
+ * förvalet. Förvalet sparas inte, så att en senare ändring av förvalen
+ * slår igenom; en tom tabell tas bort.
+ */
+export function putPen(style: { pens?: Record<string, PenDef> }, key: string, fn: (pen: PenDef, def: PenDef) => void): void {
+  const d = penDefault(key);
+  const p: PenDef = { ...d, ...style.pens?.[key] };
+  fn(p, d);
+  const pens = { ...style.pens };
+  if (p.weight === d.weight && p.color === d.color && (p.linetype ?? undefined) === d.linetype) delete pens[key];
+  else pens[key] = p;
+  if (Object.keys(pens).length) style.pens = pens;
+  else delete style.pens;
 }

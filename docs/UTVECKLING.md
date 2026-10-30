@@ -1640,6 +1640,45 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Granskning efter 0.10.40 (0.10.40.1, format 25)
+
+Inga nya funktioner.
+
+- **`ui/styleDialog.ts`** (1 083 → 516 rader) ritar ramen (vänsterkanten,
+  rubrikraden med sök och *Vanliga/Alla*), markerar avvikelser
+  (`markRows`), filtrerar (`applyFilter`), håller `place`, `chosen`,
+  `viewId` och `pp`, och skickar klick och fält vidare. Den exponerar
+  `store`, `book`, `chosen`, `pp`, `scope`, `commit`, `set`, `render`,
+  `placeKind`, `goToPens` och `goToPlace` för delarna (som
+  `CategoryHost`, `ResourceHost` och `PlacesHost`). Nya filer i
+  `ui/style/`: **`categoryTab.ts`** (`categoryTabMarkup`: flikarna,
+  verktygen, visningen, innehållet, underlagen, åtgärderna och pennorna;
+  `StyleScope`), **`categoryEdits.ts`** (`viewAction`, `categoryAction`,
+  `underlayClick`, `categoryChange`), **`placesPanel.ts`** (`placesClick`,
+  `placesChange`), **`resourceEdits.ts`** (`resourceClick`,
+  `resourceChange`, `pickFile`, `lineTypeUses`, `materialUsesMap`,
+  `fillTypeUses`) och **`bookFile.ts`** (`askPaper`, `exportBookFile`,
+  `templateDialog`, `importBookFile`).
+- **`core/materials.ts`**: `materialObjectsByMaterial(doc)` går igenom
+  elementen en gång och ger `Map<material, objekt[]>`; `materialObjects`
+  och `materialUses` läser ur den. `placeRows` (materialen) och
+  `materialUsesMap` använder den direkt. `extraFieldsOf(now, nested)` för
+  släntens egna fält.
+- **`core/ids.ts`**: `slugId(name, taken, fallback)`, nyckeln ur ett namn;
+  `freshId` (kategorier) och `newId` (material) bygger på den.
+- **`repr/penPlaces.ts`**: `frozenPens(doc, places?)` tar ställena om de
+  redan är räknade; `applyEdit` i `placeEdits.ts` får `all` (projektets
+  ställen) och `setPlaces`/`editPen` räknar dem en gång. `plainPen`,
+  `objectTypeName` (registrets `label`), `COLOR_RANK` exporterad (places.ts
+  sorterar med `penOrder`). `viewKeys` jämför med `sameValue`.
+- **`repr/penRows.ts`**: `putPen(style, key, fn)` ändrar en rad i
+  penntabellen utan att spara förvalet; `applyPenField` (stilboken) och
+  `editPlaces` (ställena) använder den.
+- **`ui/style/deviations.ts`**: `changedRows` tar stilens rader ur
+  `styleDiff` (utom `openingMark`, som inte har någon rad).
+- Borttaget: `placeRowExists`, `penRowShown`, `MATERIAL_USES`, `PRESETS`,
+  `updateCategory`. `tests/v01032.test.ts` använder `putCategory`.
+
 ## Stilboken ut och in (0.10.40, format 25)
 
 - **`core/styleBookFile.ts`**: `StyleBookFile` = `StyleBook` + `assets`

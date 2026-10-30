@@ -6,8 +6,9 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.40** (alfa); nästa är **0.11 Trappor**, efter
-stilinställningarna och pennorna (0.10.32–0.10.40).
+**0.10.40.1** (alfa); nästa är **0.11 Trappor**, efter
+stilinställningarna och pennorna (0.10.32–0.10.40) och granskningen av dem
+(0.10.40.1).
 
 ## Vad som fungerar
 
@@ -1149,6 +1150,14 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.40.1, Granskning efter 0.10.40 (samma filformat, 25):
+- Inga nya funktioner. Stilbokens kod är uppdelad (dialogen 1 080 → 520
+  rader; kategorifliken, pennlistan, resurserna och filhanteringen i egna
+  filer), materialens ställen och användningar räknas i ett svep, en
+  ändring av ett ställe räknar ställena en gång i stället för fem,
+  dubbletter i pennornas och kategoriernas kod är ihopslagna, och
+  död kod borttagen. Ritningarna ritas som förut
 
 Version 0.10.40, Stilboken ut och in (samma filformat, 25):
 - **Exportera…** i stilbokens rubrikrad sparar hela stilboken som fil:

@@ -5,6 +5,7 @@ import { escapeHtml } from './labels';
 import { fillTypeSwatch, patternSwatch } from './patternPick';
 import { weightPicker } from './weightPick';
 import { buildingFields } from './materialBuilding';
+import { materialFits } from '../core/materials';
 
 /**
  * Fyllningens panel (0.10.14): samma för 2D-former, rum, markobjekt och
@@ -118,7 +119,7 @@ export const ORTHO_CHOICE = '@ortofoto';
 function materialRow(name: string, p: FillParams, attrs: (key: string) => string, style: StyleResources | undefined, ctx: FillPanelContext): string {
   const all = style?.materials ?? [];
   const linked = materialOf(p, style);
-  const list = all.filter((m) => !ctx.use || m[ctx.use] || m.id === linked?.id);
+  const list = all.filter((m) => materialFits(m, ctx.use) || m.id === linked?.id);
   const scope = /data-key="([^:"]+):/.exec(attrs('x'))?.[1] ?? 'd2';
   const ortho = !linked && !!ctx.ortho && !!p.ortho3d;
   const own = !linked && !ortho;

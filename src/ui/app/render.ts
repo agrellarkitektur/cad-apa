@@ -1,7 +1,7 @@
 import { addElements } from '../../core/commands';
 import { modelViewId, onPaper, type ViewDef } from '../../core/model';
 import type { StyleSheet } from '../../core/graphics';
-import { categoryOf, resolveShow, sheetFor, showOverrides, styleOverrides, viewTypeAt, viewTypeOf, type CategoryShow, type ViewCategory, type ViewOverrides, type ViewType } from '../../core/viewCategories';
+import { categoryOf, resolveShow, sameValue, sheetFor, showOverrides, styleOverrides, viewTypeAt, viewTypeOf, type CategoryShow, type ViewCategory, type ViewOverrides, type ViewType } from '../../core/viewCategories';
 import { paperSize } from '../../core/sheets';
 import { existingState } from '../../core/states';
 import { skewText, skewWarnings } from '../../elements/angleCheck';
@@ -132,7 +132,7 @@ export function installRender(app: AppContext, parts: RenderParts) {
       const keys = new Set([...Object.keys(before), ...Object.keys(after)].filter((k) => !styleOverrides({ [k]: 1 })[k]));
       let changed = false;
       for (const k of keys) {
-        if (JSON.stringify(before[k]) === JSON.stringify(after[k])) continue;
+        if (sameValue(before[k], after[k])) continue;
         changed = true;
         if (k in after) live[k] = after[k];
         else delete live[k];

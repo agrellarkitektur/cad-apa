@@ -3,9 +3,9 @@ import type { Element, Id, ProjectDoc } from '../../core/model';
 import { isSite } from '../../core/model';
 import { lineTypeList } from '../../core/lineTypes';
 import { fillTypeList } from '../../core/fillTypes';
-import { materialObjects } from '../../core/materials';
+import { materialObjectsByMaterial } from '../../core/materials';
 import { typeOf } from '../../elements/registry';
-import { colorKey, lineTypeName, penKey, penTable, stylePlaces, type StylePlace } from '../../repr/penPlaces';
+import { colorKey, lineTypeName, penKey, penOrder, penTable, stylePlaces, COLOR_RANK, type StylePlace } from '../../repr/penPlaces';
 import { escapeHtml } from '../labels';
 import { icons } from '../icons';
 import { weightPicker } from '../weightPick';
@@ -49,13 +49,11 @@ export const newPlacesState = (): PlacesState => ({ filter: {}, tags: new Set(),
 
 const comma = (n: number) => n.toLocaleString('sv-SE', { minimumFractionDigits: 2 });
 const COLOR_NAMES: Record<string, string> = { ink: 'Svart', muted: 'Grå', paper: 'Vit' };
-export const colorName = (c: string | undefined) => COLOR_NAMES[colorKey(c)] ?? colorKey(c);
+const colorName = (c: string | undefined) => COLOR_NAMES[colorKey(c)] ?? colorKey(c);
 /** Pennans namn i listorna: "3 · 0,25 svart". */
-export const penLabel = (p: NumberedPen) => `${p.no} · ${p.weight ? comma(p.weight) : 'ingen linje'} ${colorName(p.color).toLowerCase()}`;
-const sortColor = (c: string | undefined) => {
-  const k = colorKey(c);
-  return k === 'ink' ? '0' : k === 'muted' ? '1' : k === 'paper' ? '3' : `2${k}`;
-};
+const penLabel = (p: NumberedPen) => `${p.no} · ${p.weight ? comma(p.weight) : 'ingen linje'} ${colorName(p.color).toLowerCase()}`;
+/** Sorteringsnyckeln för färgkolumnen (`data-sort`): samma ordning som `penOrder`. */
+const sortColor = (c: string | undefined) => `${COLOR_RANK(colorKey(c))}${colorKey(c)}`;
 
 /** Ett prov av pennan: en linje i färgen med tjockleken. */
 function penSample(p: NumberedPen): string {
@@ -75,11 +73,13 @@ export function placeRows(doc: Pick<ProjectDoc, 'graphics' | 'views' | 'elements
   if (kind === 'linetype') return places.filter((p) => p.linetype !== undefined).map((p) => row(p, p.linetype!));
   if (kind === 'filltype') return places.filter((p) => p.fillType).map((p) => row(p, p.fillType!));
   const out: PlaceRow[] = [];
+  const byMaterial = materialObjectsByMaterial(doc);
+  const storeyName = new Map(doc.storeys.map((s) => [s.id, s.name]));
   for (const m of doc.graphics.materials ?? []) {
-    for (const o of materialObjects(doc, m.id)) {
+    for (const o of byMaterial.get(m.id) ?? []) {
       const el = doc.elements[o.id] as Element;
       const t = typeOf(el.type);
-      const storey = isSite(el.storey) ? 'Platsen' : (doc.storeys.find((s) => s.id === el.storey)?.name ?? '');
+      const storey = isSite(el.storey) ? 'Platsen' : (storeyName.get(el.storey) ?? '');
       const name = (t?.label ?? el.type) + (o.nested ? ', slänten' : '');
       out.push({ id: `obj:${o.id}:${o.nested ?? ''}`, label: name, sub: storey, whereName: storey, viewTags: [isSite(el.storey) ? 'platsen' : 'plan'], tags: [(t?.label ?? el.type).toLowerCase(), ...(o.nested ? ['slänt'] : [])], value: m.id, object: o });
     }
@@ -164,7 +164,7 @@ export function penListMarkup(doc: Pick<ProjectDoc, 'graphics' | 'views' | 'elem
   const places = stylePlaces(doc);
   const table = penTable(doc.graphics, places);
   // Förvalet: efter färg och sedan tjocklek (rubrikerna sorterar om).
-  const sorted = [...table].sort((a, b) => sortColor(a.pen.color).localeCompare(sortColor(b.pen.color)) || a.pen.weight - b.pen.weight);
+  const sorted = [...table].sort((a, b) => penOrder(a.pen, b.pen));
   const pick = state.filter.pen ?? '';
   const rows = sorted
     .map(({ pen, places: ps }) => {

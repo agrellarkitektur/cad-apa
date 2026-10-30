@@ -208,11 +208,6 @@ export interface StyleBook extends StyleResources {
  */
 export type MaterialUse = 'ground' | 'building';
 
-export const MATERIAL_USES: readonly { id: MaterialUse; name: string }[] = [
-  { id: 'ground', name: 'Mark' },
-  { id: 'building', name: 'Byggnad' },
-];
-
 /**
  * Ett material (0.10.28): representationen per vykategori.
  * - `ground`, `building` (0.10.28.1): kryssrutorna *Mark* och *Byggnad*.
@@ -430,7 +425,6 @@ export const POCHE: StyleSheet = {
   },
 };
 
-export const PRESETS: StyleSheet[] = [SWEDISH_STANDARD, POCHE, COLOUR_CODED];
 
 /** Kontrollera och komplettera en stilmall från fil. Saknade delar tas från svensk standard. */
 export function normalizeStyle(data: any): StyleSheet {

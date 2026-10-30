@@ -4,10 +4,19 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.40.
+**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.40.1.
 
 ## Läget
 
+- **0.10.40.1 Granskning efter 0.10.40 är klar** (samma format, 25; inga
+  nya funktioner). `ui/styleDialog.ts` 1 083 → 516 rader med
+  kategorifliken, pennlistan, resurserna och filhanteringen i `ui/style/`;
+  materialens objekt i ett svep; ställena räknade en gång per ändring;
+  dubbletter ihopslagna (`slugId`, `putPen`, `styleDiff` i `changedRows`,
+  `sameValue`); död kod borttagen. Testerna: 792 på ca 14 s, orörda.
+  Provat i Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes val i
+  PLAN.md. Förslag kvar: arkivera avsnitten före 0.10 i PLAN.md och
+  UTVECKLING.md (över 4 000 rader var) till egna filer.
 - **0.10.40 Stilboken ut och in är klar** (samma format, 25; filens
   `assets` och `paper` är valfria). *Exportera…*, *Importera…* och *Mall
   för nya projekt…* i stilbokens rubrikrad. Exporten bäddar in logotypen
@@ -90,9 +99,11 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **0.10.30**, **0.10.29**, **0.10.28.3**, **0.10.28.2**, **0.10.28.1**,
   **0.10.28**, **0.10.27**, **0.10.26**, **0.10.25.1** och **0.10.25**: se
   PLAN.md.
-- **Publicerad:** 0.10.40 pushad till `main` 30 oktober (se git och
+- **Publicerad:** 0.10.40.1 pushad till `main` 30 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.10.40.1:** inget; bara
+  versionsnumret.
 - **Märks i hans ritningar efter 0.10.40:** inget i befintliga
   projekt. *Nytt projekt* har gruppen *Stilbok*; utan sparad mall är
   Svensk standard förvalt som förut. En stilbok som exporterats före
@@ -166,14 +177,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare:** 0.10.40, 0.10.39, 0.10.38, 0.10.37, 0.10.36, 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare:** 0.10.40.1, 0.10.40, 0.10.39, 0.10.38, 0.10.37, 0.10.36, 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.40` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.40.1` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.40 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.40.1 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -249,11 +260,10 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   vyn~~, ~~0.10.34 Radkontrollerna~~, ~~0.10.35 Underlag i vyn~~,
   ~~0.10.36 Pennor och ställen~~, ~~0.10.37 Snitt- och konturlinjer i
   planen~~, ~~0.10.38 Snitt- och konturlinjer i fasader och sektioner~~,
-  ~~0.10.39 Projektet › Allmänt~~, ~~0.10.40 Stilboken ut och in~~
-  (klara)
+  ~~0.10.39 Projektet › Allmänt~~, ~~0.10.40 Stilboken ut och in~~,
+  ~~Granskning efter 0.10.40 (0.10.40.1)~~ (klara)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **Granskning efter 0.10.40** (förslag; den senaste var 0.10.28.3)
 - **0.11 Trappor** (nytt format; med *Syns också på*)
 - **0.11.1 Profilverktyget** (stor) och **0.11.2 Dörrar och fönster**
   (stor)
@@ -270,12 +280,10 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-Läs synpunkterna först och sortera Inkorgen om den har något. Föreslå
-sedan en **granskning efter 0.10.40** (0.10.40.1, inga nya funktioner):
-den senaste var 0.10.28.3, och 0.10.29–0.10.40 har lagt mycket i
-stilboken (`ui/styleDialog.ts` är ca 1 080 rader, `docs/PLAN.md` och
-`UTVECKLING.md` över 4 000). Säger Carl August nej: **0.11 Trappor** (nytt
-format; med *Syns också på*), se PLAN.md.
+Läs synpunkterna först och sortera Inkorgen om den har något. Sedan
+**0.11 Trappor** (nytt format; med *Syns också på*), se PLAN.md. Fråga
+gärna först om PLAN.md och UTVECKLING.md ska få arkivfiler för avsnitten
+före 0.10 (liten; de är över 4 000 rader var).
 
 Höjdkurvors del av ortofotot (två rader i `js/app.js` och `js/utbyte.js`,
 plus raden i `docs/UTBYTE-CAD-APA.md` där) görs i en session i

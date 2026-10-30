@@ -1,8 +1,9 @@
 import type { ActionKey, CategoryStyle, Material, NumberedPen, PenDef, StyleBook, StyleResources } from '../core/graphics';
 import { LINE_TYPES, lineTypeDash, lineTypeList } from '../core/lineTypes';
 import { isSite, type Definition, type Element, type Id, type OwnPen, type OwnPenPart, type ProjectDoc, type ViewDef } from '../core/model';
-import { categoryOf, effectiveCategory, overridesFrom, putCategory, resetViewOverrides, VIEW_TYPES, viewTypeOf, type ViewCategory, type ViewType } from '../core/viewCategories';
-import { penDefault, penGroupsFor, penRowShown } from './penRows';
+import { categoryOf, effectiveCategory, overridesFrom, putCategory, resetViewOverrides, sameValue, VIEW_TYPES, viewTypeOf, type ViewCategory, type ViewType } from '../core/viewCategories';
+import { penDefault, penGroupsFor, putPen } from './penRows';
+import { typeOf } from '../elements/registry';
 
 /**
  * Ställena (0.10.36): ett ställe är en rad i en vykategori, eller i en vy
@@ -48,7 +49,7 @@ export interface StylePlace {
   fillType?: string;
 }
 
-export const ACTION_NAMES: Record<ActionKey, string> = { plain: 'Nybyggnad', existing: 'Befintligt', demolished: 'Rivs', new: 'Planerat' };
+const ACTION_NAMES: Record<ActionKey, string> = { plain: 'Nybyggnad', existing: 'Befintligt', demolished: 'Rivs', new: 'Planerat' };
 const ACTIONS = Object.keys(ACTION_NAMES) as ActionKey[];
 const TYPE_TAG: Record<ViewType, string> = { site: 'platsen', storey: 'plan', facade: 'fasad', section: 'sektion', worksheet: 'arbetsblad' };
 const KIND_TAG: Record<string, string> = { situation: 'situationsplan', grading: 'markplanering', illustration: 'illustrationsplan' };
@@ -109,8 +110,8 @@ function viewKeys(c: ViewCategory, cur: CategoryStyle): Set<string> {
   for (const a of ACTIONS) {
     const x = c.style.actions[a];
     const y = cur.actions[a];
-    if (JSON.stringify(x.cutOutline) !== JSON.stringify(y.cutOutline)) keys.add(`outline.${a}`);
-    if (JSON.stringify(x.cutFill) !== JSON.stringify(y.cutFill)) keys.add(`fill.${a}`);
+    if (!sameValue(x.cutOutline, y.cutOutline)) keys.add(`outline.${a}`);
+    if (!sameValue(x.cutFill, y.cutFill)) keys.add(`fill.${a}`);
   }
   return keys;
 }
@@ -138,26 +139,29 @@ export function stylePlaces(doc: PlacesDoc): StylePlace[] {
     }
     // Materialets konturpenna i planen (0.10.37), när den är satt.
     if (m.pen?.weight) {
-      const pen = { weight: m.pen.weight, ...(colorKey(m.pen.color) !== 'ink' ? { color: m.pen.color } : {}) };
+      const pen = plainPen(m.pen.weight, m.pen.color);
       out.push({ id: `mat:${m.id}|mpen`, where: { kind: 'material', material: m.id }, key: 'mpen', label: 'Konturen i planen', group: 'Material', whereName: `Material ${m.name}`, viewTags: ['plan', 'platsen'], tags: ['material', m.name.toLowerCase(), 'kontur'], pen });
     }
   }
   // Typernas och objektens egna pennor (0.10.37).
   for (const d of Object.values(doc.definitions ?? {})) {
-    if (d.pen) out.push(...ownPlaces(d.pen, { kind: 'def', def: d.id }, `def:${d.id}`, `Typen ${d.name}`, [], [typeName2(d.elementType), 'typ']));
+    if (d.pen) out.push(...ownPlaces(d.pen, { kind: 'def', def: d.id }, `def:${d.id}`, `Typen ${d.name}`, [], [objectTypeName(d.elementType).toLowerCase(), 'typ']));
   }
+  const storeyName = new Map((doc.storeys ?? []).map((x) => [x.id, x.name]));
   for (const el of Object.values(doc.elements)) {
     if (!el.pen || el.type === 'Shape2D') continue;
-    const storey = isSite(el.storey) ? 'Platsen' : (doc.storeys?.find((x) => x.id === el.storey)?.name ?? '');
-    const name = `${OBJECT_NAMES[el.type] ?? el.type}${el.name ? ` ${el.name}` : ''}${storey ? `, ${storey}` : ''}`;
-    out.push(...ownPlaces(el.pen, { kind: 'object', id: el.id }, `obj:${el.id}`, name, [isSite(el.storey) ? 'platsen' : 'plan'], [typeName2(el.type), 'objekt']));
+    const storey = isSite(el.storey) ? 'Platsen' : (storeyName.get(el.storey) ?? '');
+    const name = `${objectTypeName(el.type)}${el.name ? ` ${el.name}` : ''}${storey ? `, ${storey}` : ''}`;
+    out.push(...ownPlaces(el.pen, { kind: 'object', id: el.id }, `obj:${el.id}`, name, [isSite(el.storey) ? 'platsen' : 'plan'], [objectTypeName(el.type).toLowerCase(), 'objekt']));
   }
   return out;
 }
 
-/** Objekttyperna som de heter i listorna. */
-const OBJECT_NAMES: Record<string, string> = { Wall: 'Vägg', Door: 'Dörr', Window: 'Fönster', Roof: 'Tak', Furniture: 'Möbel', Space: 'Rum', Ground: 'Markobjekt', Slab: 'Bjälklag' };
-const typeName2 = (t: string) => (OBJECT_NAMES[t] ?? t).toLowerCase();
+/** Objekttypen som den heter i listorna (registrets namn). */
+const objectTypeName = (t: string) => typeOf(t)?.label ?? t;
+
+/** En penna utan nummer: tjockleken, och färgen bara när den inte är bläck. */
+const plainPen = (weight: number, color: string | undefined): { weight: number; color?: string } => ({ weight, ...(colorKey(color) !== 'ink' ? { color } : {}) });
 const OWN_PARTS = { main: { label: 'Egen penna', tag: 'snitt' }, symbol: { label: 'Egen penna, symbol', tag: 'symbol' }, above: { label: 'Egen penna, över snittet', tag: 'över snittet' } } as const;
 type OwnPartKey = keyof typeof OWN_PARTS;
 const ownPart = (pen: OwnPen | undefined, k: OwnPartKey): OwnPenPart | undefined => (k === 'main' ? pen : pen?.[k]);
@@ -177,7 +181,7 @@ function ownPlaces(pen: OwnPen, where: PlaceWhere, wk: string, whereName: string
       whereName,
       viewTags,
       tags: [...tags, 'egen penna', OWN_PARTS[k].tag],
-      ...(part.weight ? { pen: { weight: part.weight, ...(colorKey(part.color) !== 'ink' ? { color: part.color } : {}) } } : {}),
+      ...(part.weight ? { pen: plainPen(part.weight, part.color) } : {}),
       ...(part.linetype !== undefined ? { linetype: part.linetype } : {}),
     });
   }
@@ -197,7 +201,8 @@ function editOwn(pen: OwnPen | undefined, key: string, fn: (p: OwnPenPart) => vo
   return next;
 }
 
-const COLOR_RANK = (c: string) => (c === 'ink' ? 0 : c === 'muted' ? 1 : c === 'paper' ? 3 : 2);
+/** Färgernas ordning i pennlistan: svart, grå, egna färger, vit. */
+export const COLOR_RANK = (c: string) => (c === 'ink' ? 0 : c === 'muted' ? 1 : c === 'paper' ? 3 : 2);
 
 /** Ordningen i pennlistan som förval (0.10.36): efter färg och sedan tjocklek. */
 export function penOrder(a: { weight: number; color?: string }, b: { weight: number; color?: string }): number {
@@ -221,7 +226,7 @@ export function penTable(book: Pick<StyleBook, 'penList'>, places: readonly Styl
     const k = penKey(p.pen);
     let r = byKey.get(k);
     if (!r) {
-      r = { pen: { no: 0, weight: p.pen.weight, ...(colorKey(p.pen.color) !== 'ink' ? { color: p.pen.color } : {}) }, places: [] };
+      r = { pen: { no: 0, ...plainPen(p.pen.weight, p.pen.color) }, places: [] };
       byKey.set(k, r);
       extra.push(r);
     }
@@ -233,8 +238,8 @@ export function penTable(book: Pick<StyleBook, 'penList'>, places: readonly Styl
 }
 
 /** Pennlistan som den sparas: varje tjocklek och färg som ett ställe har får ett nummer, sparade pennor är kvar. */
-export function frozenPens(doc: PlacesDoc): NumberedPen[] {
-  return penTable(doc.graphics, stylePlaces(doc)).map((r) => r.pen);
+export function frozenPens(doc: PlacesDoc, places: readonly StylePlace[] = stylePlaces(doc)): NumberedPen[] {
+  return penTable(doc.graphics, places).map((r) => r.pen);
 }
 
 /** Stilboken med pennlistan sparad (numren låses), om den ändrats. */
@@ -268,7 +273,9 @@ export function editPlaces(doc: PlacesDoc, places: readonly StylePlace[], edit: 
   const groups = new Map<string, StylePlace[]>();
   for (const p of places) {
     const k = p.id.slice(0, p.id.indexOf('|'));
-    groups.set(k, [...(groups.get(k) ?? []), p]);
+    const g = groups.get(k);
+    if (g) g.push(p);
+    else groups.set(k, [p]);
   }
   for (const list of groups.values()) {
     const w = list[0].where;
@@ -304,17 +311,6 @@ export function editPlaces(doc: PlacesDoc, places: readonly StylePlace[], edit: 
   return { book, views, materials, definitions, elements };
 }
 
-/** Penntabellens rad med nya värden; förvalet sparas inte (som `applyPenField`). */
-function putPenRow(style: CategoryStyle, k: string, fn: (p: PenDef, d: PenDef) => void): void {
-  const d = penDefault(k);
-  const p: PenDef = { ...d, ...style.pens?.[k] };
-  fn(p, d);
-  const pens = { ...style.pens };
-  if (p.weight === d.weight && p.color === d.color && (p.linetype ?? undefined) === d.linetype) delete pens[k];
-  else pens[k] = p;
-  if (Object.keys(pens).length) style.pens = pens;
-  else delete style.pens;
-}
 
 /** Färgen i penntabellen: svart utan färg, utom när förvalet har en (då sparas svart). */
 function setColor(p: PenDef, d: PenDef, color: string | undefined): void {
@@ -327,7 +323,7 @@ function setColor(p: PenDef, d: PenDef, color: string | undefined): void {
 /** Ställets penna: tjockleken och färgen (linjetypen är kvar). */
 export const setPenEdit = (pen: { weight: number; color?: string }): PlaceEdit => ({
   material: (m, key) => {
-    if (key === 'mpen') m.pen = { weight: pen.weight, ...(colorKey(pen.color) !== 'ink' ? { color: pen.color } : {}) };
+    if (key === 'mpen') m.pen = plainPen(pen.weight, pen.color);
   },
   own: (part) => {
     part.weight = pen.weight;
@@ -335,7 +331,7 @@ export const setPenEdit = (pen: { weight: number; color?: string }): PlaceEdit =
     else part.color = pen.color;
   },
   style: (style, key) => {
-    if (key.startsWith('pens.')) putPenRow(style, key.slice(5), (p, d) => ((p.weight = pen.weight), setColor(p, d, pen.color)));
+    if (key.startsWith('pens.')) putPen(style, key.slice(5), (p, d) => ((p.weight = pen.weight), setColor(p, d, pen.color)));
   },
 });
 
@@ -346,7 +342,7 @@ export const setLineTypeEdit = (lt: string): PlaceEdit => ({
   },
   style: (style, key, res) => {
     if (key.startsWith('pens.')) {
-      putPenRow(style, key.slice(5), (p, d) => {
+      putPen(style, key.slice(5), (p, d) => {
         if (lt === 'solid' && !d.linetype) delete p.linetype;
         else p.linetype = lt;
       });
@@ -379,6 +375,3 @@ export const setFillTypeEdit = (type: string): PlaceEdit => ({
 
 /** Namnet på en linjetyp, för listorna. */
 export const lineTypeName = (res: StyleResources, id: string) => (id ? (LINE_TYPES[id]?.name ?? res.lineTypes?.find((t) => t.id === id)?.name ?? 'Borttagen linjetyp') : 'Egen streckning');
-
-/** Raden för en nyckel i en kategori finns (gruppen visas i vytypen). */
-export const placeRowExists = (type: ViewType, key: string) => !key.startsWith('pens.') || penRowShown(key.slice(5), type);

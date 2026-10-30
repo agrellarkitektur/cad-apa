@@ -25,7 +25,7 @@ const PDF_MM_PER_PT = (25.4 / 72) * 100;
 /** En inskannad eller fotograferad ritning antas vara 150 dpi i 1:100. */
 const IMAGE_MM_PER_PX = (25.4 / 150) * 100;
 
-export const UNDERLAY_ACCEPT = '.pdf,.dxf,.png,.jpg,.jpeg,.webp,.gif,application/pdf,image/*';
+const UNDERLAY_ACCEPT = '.pdf,.dxf,.png,.jpg,.jpeg,.webp,.gif,application/pdf,image/*';
 
 export function base64Of(bytes: Uint8Array): string {
   let s = '';
@@ -33,7 +33,7 @@ export function base64Of(bytes: Uint8Array): string {
   return btoa(s);
 }
 
-export function bytesOf(data: string): Uint8Array {
+function bytesOf(data: string): Uint8Array {
   const bin = atob(data);
   const out = new Uint8Array(bin.length);
   for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);

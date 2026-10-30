@@ -37,7 +37,7 @@ export interface RowControlOptions {
 const BUTTON = new WeakMap<Element, HTMLButtonElement>();
 
 /** Förvalen i färgpanelen: svart och vitt följer temat (`ink`, `paper`), grått som det skrivs ut. */
-export const PRESET_COLORS: readonly { hex: string; name: string }[] = [
+const PRESET_COLORS: readonly { hex: string; name: string }[] = [
   { hex: '#000000', name: 'Svart' },
   { hex: '#8c8c8c', name: 'Grått' },
   { hex: '#d5dadd', name: 'Ljusgrått' },
@@ -227,7 +227,7 @@ class Popover {
     const p = this.el.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
-    let left = this.kind === 'weight' ? r.left : r.left;
+    let left = r.left;
     if (left + p.width > vw - 8) left = Math.max(8, r.right - p.width);
     let top = r.bottom + 4;
     if (top + p.height > vh - 8) top = Math.max(8, r.top - 4 - p.height);

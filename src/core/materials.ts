@@ -1,3 +1,4 @@
+import { slugId } from './ids';
 import type { Material, MaterialUse, StyleResources } from './graphics';
 import type { Asset, Element, Id } from './model';
 import type { DocStore } from './store';
@@ -52,19 +53,7 @@ function linkedFieldsOf(p: Partial<FillParams>): Partial<FillParams> {
 }
 
 /** En ny nyckel som inte krockar med något annat material. */
-function newId(style: StyleResources, name: string): string {
-  const used = new Set((style.materials ?? []).map((m) => m.id));
-  const base =
-    name
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[̀-ͯ]/g, '')
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-|-$/g, '') || 'material';
-  let id = base;
-  for (let i = 2; used.has(id); i++) id = `${base}-${i}`;
-  return id;
-}
+const newId = (style: StyleResources, name: string) => slugId(name, new Set((style.materials ?? []).map((m) => m.id)), 'material');
 
 /** Varje objekt (och slänterna) med materialet `id` får `fn` på fyllningen. */
 function eachLinked(doc: { elements: Record<Id, Element> }, id: string, fn: (el: Element, nested?: string) => Element): Element[] {
@@ -84,24 +73,31 @@ export function relinked(doc: { elements: Record<Id, Element> }, m: Material): E
   return eachLinked(doc, m.id, (e, n) => linkTo(e, m, n));
 }
 
-/** Objekten med materialet (0.10.36, materialets ställen): objektet och om det är slänten. */
-export function materialObjects(doc: { elements: Record<Id, Element> }, id: string): { id: Id; nested?: string }[] {
-  const out: { id: Id; nested?: string }[] = [];
+/** Objekten per material i ett svep (0.10.40.1): objektet och om det är slänten. */
+export function materialObjectsByMaterial(doc: { elements: Record<Id, Element> }): Map<string, { id: Id; nested?: string }[]> {
+  const out = new Map<string, { id: Id; nested?: string }[]>();
+  const add = (m: unknown, o: { id: Id; nested?: string }) => {
+    if (typeof m !== 'string') return;
+    const list = out.get(m);
+    if (list) list.push(o);
+    else out.set(m, [o]);
+  };
   for (const el of Object.values(doc.elements)) {
-    if ((el.params as Record<string, unknown>).material === id) out.push({ id: el.id });
-    if (((el.params as Record<string, unknown>).slopeFill as Partial<FillParams> | undefined)?.material === id) out.push({ id: el.id, nested: 'slopeFill' });
+    const p = el.params as Record<string, unknown>;
+    add(p.material, { id: el.id });
+    add((p.slopeFill as Partial<FillParams> | undefined)?.material, { id: el.id, nested: 'slopeFill' });
   }
   return out;
 }
 
+/** Objekten med materialet (0.10.36, materialets ställen). */
+export function materialObjects(doc: { elements: Record<Id, Element> }, id: string): { id: Id; nested?: string }[] {
+  return materialObjectsByMaterial(doc).get(id) ?? [];
+}
+
 /** Hur många objekt (och slänter) som har materialet. */
 export function materialUses(doc: { elements: Record<Id, Element> }, id: string): number {
-  let n = 0;
-  for (const el of Object.values(doc.elements)) {
-    if ((el.params as Record<string, unknown>).material === id) n++;
-    if (((el.params as Record<string, unknown>).slopeFill as Partial<FillParams> | undefined)?.material === id) n++;
-  }
-  return n;
+  return materialObjects(doc, id).length;
 }
 
 /**
@@ -119,6 +115,13 @@ export function materialFits(m: Material, use: MaterialUse | undefined): boolean
   return !use || m[use];
 }
 
+/** Släntens egna fält utöver fyllningen och kopplingen (en slänt har t.ex. sin lutning i samma objekt); tomt för planens fyllning. */
+function extraFieldsOf(now: Partial<FillParams>, nested?: string): Record<string, unknown> {
+  if (!nested) return {};
+  const skip = new Set<string>([...FILL_FIELDS, ...LINK_FIELDS]);
+  return Object.fromEntries(Object.entries(now).filter(([k]) => !skip.has(k)));
+}
+
 /** Objektet kopplat till materialet `m`: en kopia av planens fyllning, objektets överstyrningar kvar. */
 function linkTo(el: Element, m: Material, nested?: string): Element {
   const now = fillOfElement(el, nested);
@@ -127,14 +130,14 @@ function linkTo(el: Element, m: Material, nested?: string): Element {
     if (now.materialOpacity !== undefined) keep.materialOpacity = now.materialOpacity;
     if (now.materialAngle !== undefined) keep.materialAngle = now.materialAngle;
   }
-  const rest = nested ? Object.fromEntries(Object.entries(now).filter(([k]) => !(FILL_FIELDS as readonly string[]).includes(k) && !(LINK_FIELDS as readonly string[]).includes(k))) : {};
+  const rest = extraFieldsOf(now, nested);
   return withFill(el, { ...rest, ...fillFieldsOf(m.plan as Partial<FillParams>), material: m.id, ...keep } as Partial<FillParams>, nested);
 }
 
 /** Objektet utan materialet: det som syntes i planen, som objektets egen fyllning. */
 function unlink(el: Element, style: StyleResources, nested?: string): Element {
   const now = fillOfElement(el, nested);
-  const rest = nested ? Object.fromEntries(Object.entries(now).filter(([k]) => !(FILL_FIELDS as readonly string[]).includes(k) && !(LINK_FIELDS as readonly string[]).includes(k))) : {};
+  const rest = extraFieldsOf(now, nested);
   return withFill(el, { ...rest, ...fillFieldsOf(effectiveFill(now as FillParams, style)) } as Partial<FillParams>, nested);
 }
 
@@ -220,7 +223,7 @@ export function deleteMaterial(store: DocStore, id: string): void {
 }
 
 /** Förvalet för texturens storlek (0.10.31): en meter. */
-export const TEXTURE_SIZE = 1000;
+const TEXTURE_SIZE = 1000;
 
 /**
  * Ge materialet en textur i 3D (0.10.31), eller ta bort den (`null`).
@@ -255,7 +258,7 @@ export function overrideMaterial(store: DocStore, ids: Id[], key: 'materialOpaci
       if (!el) continue;
       const now = fillOfElement(el, nested);
       if (!now.material) continue;
-      const next = { ...linkedFieldsOf(now), ...(nested ? Object.fromEntries(Object.entries(now).filter(([k]) => !(FILL_FIELDS as readonly string[]).includes(k) && !(LINK_FIELDS as readonly string[]).includes(k))) : {}) } as Record<string, unknown>;
+      const next = { ...linkedFieldsOf(now), ...(extraFieldsOf(now, nested)) } as Record<string, unknown>;
       if (value === undefined) delete next[key];
       else next[key] = value;
       tx.putElement(withFill(el, next as Partial<FillParams>, nested));

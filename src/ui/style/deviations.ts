@@ -1,5 +1,5 @@
 import type { ActionKey } from '../../core/graphics';
-import { sameValue, type CategoryShow, type ViewCategory } from '../../core/viewCategories';
+import { sameValue, styleDiff, type CategoryShow, type ViewCategory } from '../../core/viewCategories';
 import { isShown, setShown, SHOW_GROUPS } from '../app/showKeys';
 
 /**
@@ -16,7 +16,7 @@ import { isShown, setShown, SHOW_GROUPS } from '../app/showKeys';
 const SHOW_ROWS = ['compare', 'detail', 'labelDetail', 'modelDetail'] as const;
 
 /** Kryssen under Innehåll, utan dubbletter. */
-export const contentKeys = (extra: readonly string[] = []): string[] => [...new Set([...SHOW_GROUPS.flatMap((g) => g.items.map(([k]) => k)), ...extra])];
+const contentKeys = (extra: readonly string[] = []): string[] => [...new Set([...SHOW_GROUPS.flatMap((g) => g.items.map(([k]) => k)), ...extra])];
 
 /** Raderna som skiljer `cur` från `ref`. `extra` är fler kryss (det generella litterats sorter). */
 export function changedRows(ref: ViewCategory, cur: ViewCategory, extra: readonly string[] = [], withCategoryRows = true): Set<string> {
@@ -24,8 +24,7 @@ export function changedRows(ref: ViewCategory, cur: ViewCategory, extra: readonl
   for (const k of SHOW_ROWS) if (ref.show[k] !== cur.show[k]) out.add(`show:${k}`);
   for (const k of contentKeys(extra)) if (isShown(ref.show, k) !== isShown(cur.show, k)) out.add(`item:${k}`);
   if (!sameValue(ref.show.underlays ?? [], cur.show.underlays ?? [])) out.add('underlays');
-  for (const k of Object.keys(cur.style.actions) as ActionKey[]) if (!sameValue(ref.style.actions[k], cur.style.actions[k])) out.add(`actions.${k}`);
-  for (const k of new Set([...Object.keys(ref.style.pens ?? {}), ...Object.keys(cur.style.pens ?? {})])) if (!sameValue(ref.style.pens?.[k] ?? null, cur.style.pens?.[k] ?? null)) out.add(`pens.${k}`);
+  for (const k of Object.keys(styleDiff(ref.style, cur.style))) if (k !== 'openingMark') out.add(k);
   if (withCategoryRows) {
     if (ref.scale !== cur.scale) out.add('scale');
     if ((ref.kind ?? null) !== (cur.kind ?? null)) out.add('kind');

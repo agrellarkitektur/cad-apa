@@ -1,6 +1,6 @@
 import type { StyleSheet } from '../../core/graphics';
 import type { ViewType } from '../../core/viewCategories';
-import { penDefault, penGroupsFor, type PenGroup } from '../../repr/penRows';
+import { penDefault, penGroupsFor, putPen, type PenGroup } from '../../repr/penRows';
 import { escapeHtml } from '../labels';
 import { lineTypeOptions } from '../lineTypePick';
 import { weightPicker } from '../weightPick';
@@ -50,33 +50,25 @@ export function penSection(style: StyleSheet, type: ViewType, list?: PenListInfo
 /** Pennans nummer för en tjocklek och färg (0.10.36), för numret framför raden. */
 export type PenListInfo = (weight: number, color: string | undefined) => number | undefined;
 
-const defaultPen = penDefault;
-
 /** Ändra en penna i `style` (en kopia) efter fältet; null om fältet inte hör hit. */
 export function applyPenField(style: StyleSheet, input: HTMLInputElement | HTMLSelectElement): string | null {
   if (!input.dataset.pen) return null;
   const [key, field] = input.dataset.pen.split(':') as [string, 'weight' | 'color' | 'linetype'];
-  const pens = (style.pens ??= {});
-  const pen = { ...defaultPen(key), ...pens[key] };
-  if (field === 'weight' && (Number(input.value) > 0 || defaultPen(key).weight === 0)) pen.weight = Number(input.value);
-  if (field === 'color') {
-    // Ett förval med färg (den ändrade markens grå) behåller den; annars är svart förvalet.
-    const c = fromHex(input.value);
-    const dc = defaultPen(key).color;
-    if (dc && input.value.toLowerCase() === toHex(dc)) pen.color = dc;
-    else if (!dc && (c === 'ink' || c === 'paper')) delete pen.color;
-    else pen.color = c;
-  }
-  if (field === 'linetype') {
-    // Heldraget sparas bara när förvalet är en annan linjetyp (snittets pennor, 0.10.16).
-    if (input.value === 'solid' && !defaultPen(key).linetype) delete pen.linetype;
-    else pen.linetype = input.value;
-  }
-  // Förvalet sparas inte, så att en senare ändring av förvalen slår igenom.
-  const d = defaultPen(key);
-  if (pen.weight === d.weight && pen.color === d.color && (pen.linetype ?? undefined) === d.linetype) delete pens[key];
-  else pens[key] = pen;
-  if (!Object.keys(pens).length) delete style.pens;
+  putPen(style, key, (pen, d) => {
+    if (field === 'weight' && (Number(input.value) > 0 || d.weight === 0)) pen.weight = Number(input.value);
+    if (field === 'color') {
+      // Ett förval med färg (den ändrade markens grå) behåller den; annars är svart förvalet.
+      const c = fromHex(input.value);
+      if (d.color && input.value.toLowerCase() === toHex(d.color)) pen.color = d.color;
+      else if (!d.color && (c === 'ink' || c === 'paper')) delete pen.color;
+      else pen.color = c;
+    }
+    if (field === 'linetype') {
+      // Heldraget sparas bara när förvalet är en annan linjetyp (snittets pennor, 0.10.16).
+      if (input.value === 'solid' && !d.linetype) delete pen.linetype;
+      else pen.linetype = input.value;
+    }
+  });
   return 'Ändra pennor';
 }
 

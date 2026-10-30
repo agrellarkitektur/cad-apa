@@ -37,7 +37,7 @@ export interface PaperChoice {
 }
 
 /** Bilderna stilboken använder: logotypen och materialens texturer. */
-export function bookAssetIds(book: StyleBook): Id[] {
+function bookAssetIds(book: StyleBook): Id[] {
   const ids = new Set<Id>();
   if (book.office?.logo) ids.add(book.office.logo.asset);
   for (const m of book.materials ?? []) if (m.texture) ids.add(m.texture.asset);
