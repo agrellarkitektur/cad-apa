@@ -101,7 +101,7 @@ text "D2" 248.8,146.8 h2 start [w0.18] @d01/littera
 polylinje sluten 301.2,201.1 301.2,202.1 299.2,202.1 299.2,201.1 [w0.25 #c2372c] @d02/karm
 polylinje sluten 301.2,218.9 301.2,217.9 299.2,217.9 299.2,218.9 [w0.25 #c2372c] @d02/karm
 linje 301.2,202.1 309.1,215.8 [w0.18 #c2372c] @d02/dörrblad
-båge 301.2,202.1 r15.8 60°–90° [w0.13 ink] @d02/slagbåge
+båge 301.2,202.1 r15.8 60°–90° [w0.13 #c2372c] @d02/slagbåge
 text "D1" 297.6,208.8 h2 90° start [w0.18] @d02/littera
 polylinje sluten 301.2,257.1 301.2,258.1 299.2,258.1 299.2,257.1 [w0.25 ink] @d03/karm
 polylinje sluten 301.2,274.9 301.2,273.9 299.2,273.9 299.2,274.9 [w0.25 ink] @d03/karm
@@ -118,48 +118,48 @@ polylinje sluten 324.1,153 323.1,153 323.1,151 324.1,151 [w0.13 ink] @f01/karm
 linje 345.9,153 324.1,153 [w0.13 ink] @f01/karm
 linje 345.9,151 324.1,151 [w0.13 ink] @f01/karm
 linje 345.9,152 324.1,152 [w0.13 ink] @f01/glas
-linje 347.1,158 322.9,158 [w0.13 ink] @f01/under
-linje 347.1,150 322.9,150 [w0.13 ink] @f01/under
+linje 347.1,158 322.9,158 [w0.13 ink] @yv-s/under
+linje 347.1,150 322.9,150 [w0.13 ink] @yv-s/under
 text "F1" 333.8,159.2 h2 start [w0.18] @f01/littera
 polylinje sluten 407.9,153 406.9,153 406.9,151 407.9,151 [w0.25 ink] @f02/karm
 polylinje sluten 397.1,153 396.1,153 396.1,151 397.1,151 [w0.25 ink] @f02/karm
 linje 406.9,153 397.1,153 [w0.18 ink] @f02/karm
 linje 406.9,151 397.1,151 [w0.18 ink] @f02/karm
 linje 406.9,152 397.1,152 [w0.18 ink] @f02/glas
-linje 408.1,158 395.9,158 [w0.13 ink] @f02/under
-linje 408.1,150 395.9,150 [w0.13 ink] @f02/under
+linje 408.1,158 395.9,158 [w0.13 ink] @yv-s/under
+linje 408.1,150 395.9,150 [w0.13 ink] @yv-s/under
 text "F2" 400.8,159.2 h2 start [w0.18] @f02/littera
 polylinje sluten 437,277.9 437,276.9 439,276.9 439,277.9 [w0.25 ink] @f03/karm
 polylinje sluten 437,255.1 437,254.1 439,254.1 439,255.1 [w0.25 ink] @f03/karm
 linje 437,276.9 437,255.1 [w0.18 ink] @f03/karm
 linje 439,276.9 439,255.1 [w0.18 ink] @f03/karm
 linje 438,276.9 438,255.1 [w0.18 ink] @f03/glas
-linje 432,278.1 432,253.9 [w0.13 ink] @f03/under
-linje 440,278.1 440,253.9 [w0.13 ink] @f03/under
+linje 432,278.1 432,253.9 [w0.13 ink] @yv-o/under
+linje 440,278.1 440,253.9 [w0.13 ink] @yv-o/under
 text "F1" 430.8,264.8 h2 90° start [w0.18] @f03/littera
 polylinje sluten 351.1,307 352.1,307 352.1,309 351.1,309 [w0.25 ink] @f04/karm
 polylinje sluten 379.9,307 380.9,307 380.9,309 379.9,309 [w0.25 ink] @f04/karm
 linje 352.1,307 379.9,307 [w0.18 ink] @f04/karm
 linje 352.1,309 379.9,309 [w0.18 ink] @f04/karm
 linje 352.1,308 379.9,308 [w0.18 ink] @f04/glas
-linje 350.9,302 381.1,302 [w0.13 ink] @f04/under
-linje 350.9,310 381.1,310 [w0.13 ink] @f04/under
+linje 350.9,302 381.1,302 [w0.13 ink] @yv-n/under
+linje 350.9,310 381.1,310 [w0.13 ink] @yv-n/under
 text "F3" 364.8,298.8 h2 start [w0.18] @f04/littera
 polylinje sluten 230.1,307 231.1,307 231.1,309 230.1,309 [w0.25 ink] @f05/karm
 polylinje sluten 276.9,307 277.9,307 277.9,309 276.9,309 [w0.25 ink] @f05/karm
 linje 231.1,307 276.9,307 [w0.18 ink] @f05/karm
 linje 231.1,309 276.9,309 [w0.18 ink] @f05/karm
 linje 231.1,308 276.9,308 [w0.18 ink] @f05/glas
-linje 229.9,302 278.1,302 [w0.13 ink] @f05/under
-linje 229.9,310 278.1,310 [w0.13 ink] @f05/under
+linje 229.9,302 278.1,302 [w0.13 ink] @yv-n/under
+linje 229.9,310 278.1,310 [w0.13 ink] @yv-n/under
 text "F4" 252.8,298.8 h2 start [w0.18] @f05/littera
 polylinje sluten 203,198.1 203,199.1 201,199.1 201,198.1 [w0.25 ink] @f06/karm
 polylinje sluten 203,220.9 203,221.9 201,221.9 201,220.9 [w0.25 ink] @f06/karm
 linje 203,199.1 203,220.9 [w0.18 ink] @f06/karm
 linje 201,199.1 201,220.9 [w0.18 ink] @f06/karm
 linje 202,199.1 202,220.9 [w0.18 ink] @f06/glas
-linje 208,197.9 208,222.1 [w0.13 ink] @f06/under
-linje 200,197.9 200,222.1 [w0.13 ink] @f06/under
+linje 208,197.9 208,222.1 [w0.13 ink] @yv-v/under
+linje 200,197.9 200,222.1 [w0.13 ink] @yv-v/under
 text "F1" 211.2,208.8 h2 90° start [w0.18] @f06/littera
 polylinje sluten 208,290 268,290 268,302 208,302 [w0.25 ink d0.3/1] @m01/symbol
 polylinje sluten 246,292 256,292 256,300 246,300 [w0.25 ink] @m02/symbol

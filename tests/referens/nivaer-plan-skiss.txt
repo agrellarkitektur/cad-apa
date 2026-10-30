@@ -45,48 +45,48 @@ linje 7355,400 7355,0 [w0.25 ink] @f01/sida
 linje 6145,400 6145,0 [w0.25 ink] @f01/sida
 linje 7355,230 6145,230 [w0.18 ink] @f01/glas
 linje 7355,170 6145,170 [w0.18 ink] @f01/glas
-linje 7355,400 6145,400 [w0.13 ink] @f01/under
-linje 7355,0 6145,0 [w0.13 ink] @f01/under
+linje 7355,400 6145,400 [w0.13 ink] @yv-s/under
+linje 7355,0 6145,0 [w0.13 ink] @yv-s/under
 text "F1" 6192,810 h2 start [w0.18] @f01/littera
 text "1210×1210" 6192,520 h2 start [w0.18] @f01/littera
 linje 10405,400 10405,0 [w0.25 ink] @f02/sida
 linje 9795,400 9795,0 [w0.25 ink] @f02/sida
 linje 10405,230 9795,230 [w0.18 ink] @f02/glas
 linje 10405,170 9795,170 [w0.18 ink] @f02/glas
-linje 10405,400 9795,400 [w0.13 ink] @f02/under
-linje 10405,0 9795,0 [w0.13 ink] @f02/under
+linje 10405,400 9795,400 [w0.13 ink] @yv-s/under
+linje 10405,0 9795,0 [w0.13 ink] @yv-s/under
 text "F2" 9666,810 h2 start [w0.18] @f02/littera
 text "610×610" 9666,520 h2 start [w0.18] @f02/littera
 linje 11600,6405 12000,6405 [w0.25 ink] @f03/sida
 linje 11600,5195 12000,5195 [w0.25 ink] @f03/sida
 linje 11770,6405 11770,5195 [w0.18 ink] @f03/glas
 linje 11830,6405 11830,5195 [w0.18 ink] @f03/glas
-linje 11600,6405 11600,5195 [w0.13 ink] @f03/under
-linje 12000,6405 12000,5195 [w0.13 ink] @f03/under
+linje 11600,6405 11600,5195 [w0.13 ink] @yv-o/under
+linje 12000,6405 12000,5195 [w0.13 ink] @yv-o/under
 text "F1" 11190,5242 h2 90° start [w0.18] @f03/littera
 text "1210×1210" 11480,5242 h2 90° start [w0.18] @f03/littera
 linje 7545,7600 7545,8000 [w0.25 ink] @f04/sida
 linje 9055,7600 9055,8000 [w0.25 ink] @f04/sida
 linje 7545,7770 9055,7770 [w0.18 ink] @f04/glas
 linje 7545,7830 9055,7830 [w0.18 ink] @f04/glas
-linje 7545,7600 9055,7600 [w0.13 ink] @f04/under
-linje 7545,8000 9055,8000 [w0.13 ink] @f04/under
+linje 7545,7600 9055,7600 [w0.13 ink] @yv-n/under
+linje 7545,8000 9055,8000 [w0.13 ink] @yv-n/under
 text "F3" 7742,7280 h2 start [w0.18] @f04/littera
 text "1510×1210" 7742,6990 h2 start [w0.18] @f04/littera
 linje 1495,7600 1495,8000 [w0.25 ink] @f05/sida
 linje 3905,7600 3905,8000 [w0.25 ink] @f05/sida
 linje 1495,7770 3905,7770 [w0.18 ink] @f05/glas
 linje 1495,7830 3905,7830 [w0.18 ink] @f05/glas
-linje 1495,7600 3905,7600 [w0.13 ink] @f05/under
-linje 1495,8000 3905,8000 [w0.13 ink] @f05/under
+linje 1495,7600 3905,7600 [w0.13 ink] @yv-n/under
+linje 1495,8000 3905,8000 [w0.13 ink] @yv-n/under
 text "F4" 2142,7280 h2 start [w0.18] @f05/littera
 text "2410×1210" 2142,6990 h2 start [w0.18] @f05/littera
 linje 400,2395 0,2395 [w0.25 ink] @f06/sida
 linje 400,3605 0,3605 [w0.25 ink] @f06/sida
 linje 230,2395 230,3605 [w0.18 ink] @f06/glas
 linje 170,2395 170,3605 [w0.18 ink] @f06/glas
-linje 400,2395 400,3605 [w0.13 ink] @f06/under
-linje 0,2395 0,3605 [w0.13 ink] @f06/under
+linje 400,2395 400,3605 [w0.13 ink] @yv-v/under
+linje 0,2395 0,3605 [w0.13 ink] @yv-v/under
 text "F1" 720,2442 h2 90° start [w0.18] @f06/littera
 text "1210×1210" 1010,2442 h2 90° start [w0.18] @f06/littera
 polylinje sluten 400,7000 3400,7000 3400,7600 400,7600 [w0.25 ink] @m01/symbol

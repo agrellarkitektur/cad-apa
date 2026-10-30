@@ -1,6 +1,5 @@
 import type { PenDef, StyleSheet } from '../core/graphics';
 import { lineTypeDash } from '../core/lineTypes';
-import { openingPen } from './openingPens';
 import type { Pen } from './primitives';
 import type { EdgePart } from './solids';
 
@@ -8,8 +7,7 @@ import type { EdgePart } from './solids';
  * Fasadernas och sektionernas linjer (0.8, i stilboken sedan 0.10.36):
  * en penna per del av det som syns bortom snittet (vägghål, karm, båge,
  * glas …), i samma tabell som markörerna (`pens`, nyckeln är delens namn).
- * Snittets kontur ställs in under Åtgärder. Öppningssättet följer
- * dörrarnas och fönstrens symbolpenna när det inte har en egen.
+ * Snittets kontur ställs in under Åtgärder.
  */
 export const FACADE_PENS: readonly { key: EdgePart; label: string; hint: string; weight: number; color?: string; linetype?: string; tags: readonly string[] }[] = [
   { key: 'hole', label: 'Vägghål', hint: 'Hålets kant, tjockare än karmen', weight: 0.35, tags: ['vägg', 'dörr', 'fönster', 'hål'] },
@@ -23,7 +21,7 @@ export const FACADE_PENS: readonly { key: EdgePart; label: string; hint: string;
   { key: 'handle', label: 'Handtag', hint: 'Dörrarnas handtag', weight: 0.18, tags: ['dörr', 'handtag'] },
   { key: 'joint', label: 'Skarvar', hint: 'Skarven mellan befintligt och nytt', weight: 0.13, color: 'muted', tags: ['vägg', 'skarv'] },
   { key: 'glass', label: 'Glas', hint: 'Glasets linjer', weight: 0.13, color: 'muted', tags: ['fönster', 'dörr', 'glas'] },
-  { key: 'swing', label: 'Öppningssätt', hint: 'Följer dörrarnas och fönstrens symbolpenna när den här inte är ändrad', weight: 0.13, linetype: 'dashed', tags: ['dörr', 'fönster', 'symbol'] },
+  { key: 'swing', label: 'Öppningssätt', hint: 'Dörrarnas och fönstrens öppningssätt', weight: 0.13, linetype: 'dashed', tags: ['dörr', 'fönster', 'symbol'] },
 ];
 
 const BY_KEY = new Map(FACADE_PENS.map((p) => [p.key as string, p]));
@@ -36,14 +34,13 @@ export function defaultFacadePen(key: string): PenDef | undefined {
 }
 
 /**
- * Pennan för en del i fasaden eller sektionen: förvalet, öppningssättet med
- * symbolpennan, och stilbokens rad ovanpå (med linjetypens streckning).
+ * Pennan för en del i fasaden eller sektionen: förvalet och stilbokens rad
+ * ovanpå (med linjetypens streckning).
  */
 export function facadePen(style: StyleSheet, part: EdgePart): Pen {
   const d = BY_KEY.get(part)!;
   const base: Pen = { weight: d.weight, ...(d.color ? { color: d.color as Pen['color'] } : {}), ...(d.linetype ? { dash: lineTypeDash(style, d.linetype) } : {}) };
-  const sym = part === 'swing' ? openingPen(style, 'symbol') : {};
-  const pen: Pen = { ...base, ...sym };
+  const pen: Pen = base;
   const own = style.pens?.[part];
   if (!own) return pen;
   const out: Pen = { ...pen, weight: own.weight };

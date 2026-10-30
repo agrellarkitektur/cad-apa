@@ -131,7 +131,7 @@ export class StyleDialog {
   /** Öppna en vy i appen (*Gå dit* i listan över vyer med kategorin). */
   goToView: (id: string) => void = () => {};
   /** Visa ett objekt i ritningen (*Gå dit* i materialens ställen, 0.10.36). */
-  goToObject: (id: string) => void = () => {};
+  goToObject: (id: string | string[]) => void = () => {};
 
   constructor(store: DocStore, onSaveFile: (book: StyleBook) => void, onError: (msg: string) => void) {
     this.store = store;
@@ -618,6 +618,14 @@ export class StyleDialog {
     if (!place) return;
     const w = place.where;
     const key = place.key;
+    // En typs eller ett objekts egen penna (0.10.37): objekten i ritningen.
+    if (w.kind === 'def' || w.kind === 'object') {
+      const ids = w.kind === 'object' ? [w.id] : Object.values(doc.elements).filter((e) => e.definition === w.def).map((e) => e.id);
+      if (!ids.length) return;
+      this.close();
+      this.goToObject(ids);
+      return;
+    }
     if (w.kind === 'material') {
       this.place = { kind: 'res', res: 'materials' };
       this.viewId = null;

@@ -7,10 +7,11 @@ import { placeRows, type PlaceKind } from './places';
 
 /**
  * Det pennornas och ställenas lista ändrar (0.10.36), i en transaktion:
- * stilboken (med pennlistan låst), vyerna och objekten med ett ändrat material.
+ * stilboken (med pennlistan låst), vyerna, objekten med ett ändrat material
+ * och typernas och objektens egna pennor (0.10.37).
  */
 
-type Doc = Pick<ProjectDoc, 'graphics' | 'views' | 'elements' | 'storeys'>;
+type Doc = Pick<ProjectDoc, 'graphics' | 'views' | 'elements' | 'storeys'> & Partial<Pick<ProjectDoc, 'definitions'>>;
 
 /** Lägg ändringen av ställena i dokumentet, med pennlistan `pens` (eller den låsta efter ändringen). */
 function applyEdit(store: DocStore, label: string, places: readonly StylePlace[], edit: PlaceEdit, pens?: (doc: Doc) => NumberedPen[]): void {
@@ -22,6 +23,9 @@ function applyEdit(store: DocStore, label: string, places: readonly StylePlace[]
     tx.setGraphics({ ...r.book, penList: pens ? pens(next) : frozenPens(next) });
     tx.setViews(r.views);
     for (const m of r.materials) for (const el of relinked(tx.doc, m)) tx.putElement(el);
+    // Typernas och objektens egna pennor (0.10.37).
+    for (const d of r.definitions) tx.putDefinition(d);
+    for (const el of r.elements) tx.putElement(el);
   });
 }
 

@@ -65,7 +65,7 @@ function penParts(doc: ProjectDoc, scope: string, type: string, pens: readonly (
   // Över snittet (0.10.16): det som saknas tas från den övre delen, sedan stilbokens penna för snittet.
   return `<h4>${SYMBOL_TYPES.has(type) ? 'Snitt' : 'Snitt och vy'}</h4>
     ${partFields(doc, scope, pens, 'main', (k) => inherited('main', k))}
-    ${SYMBOL_TYPES.has(type) ? `<h4>Symbol</h4>${partFields(doc, scope, pens, 'symbol', (k) => inherited('symbol', k))}` : ''}
+    ${SYMBOL_TYPES.has(type) ? `<h4>Symbol</h4>${partFields(doc, scope, pens, 'symbol', (k) => (pens.some((p) => p?.[k] !== undefined) ? 'Snittets' : inherited('symbol', k)))}` : ''}
     ${above ? `<h4>Över snittet i planen</h4>${partFields(doc, scope, pens, 'above', (k) => inherited('above', k))}` : ''}`;
 }
 
@@ -80,7 +80,7 @@ export function ownPenSection(doc: ProjectDoc, els: readonly Element[]): string 
   const note = type === 'Space'
     ? 'Stilbokens penna för rummens kontur gäller från början (ingen linje). En egen ger rummet en kontur i planen, under väggarna; inte fyllningen och rumsstämpeln.'
     : SYMBOL_TYPES.has(type)
-    ? 'Typens eller stilbokens penna gäller från början. <i>Snitt</i> gäller karmar, dörrblad, bågar och glas, <i>Symbol</i> slagbågen och öppningssättet; inte fyllningar och text.'
+    ? 'Typens eller stilbokens penna gäller från början. <i>Snitt</i> gäller karmar, dörrblad, bågar och glas, <i>Symbol</i> slagbågen och öppningssättet (det som inte är satt följer <i>Snitt</i>); inte fyllningar och text.'
     : 'Typens eller stilbokens penna gäller från början. En egen gäller objektets linjer och konturer i planen, fasaderna och sektionerna, men inte fyllningar och text.';
   return `<section class="own-pen">
     <h3>Penna</h3>

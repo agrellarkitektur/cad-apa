@@ -35,8 +35,8 @@ polylinje sluten 7295,130 7250,130 7250,70 7295,70 [w0.18 ink] @f01/b책ge
 polylinje sluten 6250,130 6205,130 6205,70 6250,70 [w0.18 ink] @f01/b책ge
 linje 7250,106 6250,106 [w0.18 ink] @f01/glas
 linje 7250,94 6250,94 [w0.18 ink] @f01/glas
-linje 7355,400 6145,400 [w0.13 ink] @f01/under
-linje 7355,0 6145,0 [w0.13 ink] @f01/under
+linje 7355,400 6145,400 [w0.13 ink] @yv-s/under
+linje 7355,0 6145,0 [w0.13 ink] @yv-s/under
 polylinje sluten 10395,150 10345,150 10345,50 10395,50 [w0.25 ink] @f02/karm
 polylinje sluten 9855,150 9805,150 9805,50 9855,50 [w0.25 ink] @f02/karm
 linje 10345,150 9855,150 [w0.18 ink] @f02/karm
@@ -45,8 +45,8 @@ polylinje sluten 10345,130 10300,130 10300,70 10345,70 [w0.18 ink] @f02/b책ge
 polylinje sluten 9900,130 9855,130 9855,70 9900,70 [w0.18 ink] @f02/b책ge
 linje 10300,106 9900,106 [w0.18 ink] @f02/glas
 linje 10300,94 9900,94 [w0.18 ink] @f02/glas
-linje 10405,400 9795,400 [w0.13 ink] @f02/under
-linje 10405,0 9795,0 [w0.13 ink] @f02/under
+linje 10405,400 9795,400 [w0.13 ink] @yv-s/under
+linje 10405,0 9795,0 [w0.13 ink] @yv-s/under
 polylinje sluten 11850,6395 11850,6345 11950,6345 11950,6395 [w0.25 ink] @f03/karm
 polylinje sluten 11850,5255 11850,5205 11950,5205 11950,5255 [w0.25 ink] @f03/karm
 linje 11850,6345 11850,5255 [w0.18 ink] @f03/karm
@@ -55,8 +55,8 @@ polylinje sluten 11870,6345 11870,6300 11930,6300 11930,6345 [w0.18 ink] @f03/b�
 polylinje sluten 11870,5300 11870,5255 11930,5255 11930,5300 [w0.18 ink] @f03/b책ge
 linje 11894,6300 11894,5300 [w0.18 ink] @f03/glas
 linje 11906,6300 11906,5300 [w0.18 ink] @f03/glas
-linje 11600,6405 11600,5195 [w0.13 ink] @f03/under
-linje 12000,6405 12000,5195 [w0.13 ink] @f03/under
+linje 11600,6405 11600,5195 [w0.13 ink] @yv-o/under
+linje 12000,6405 12000,5195 [w0.13 ink] @yv-o/under
 polylinje sluten 7555,7850 7605,7850 7605,7950 7555,7950 [w0.25 ink] @f04/karm
 polylinje sluten 8995,7850 9045,7850 9045,7950 8995,7950 [w0.25 ink] @f04/karm
 linje 7605,7850 8995,7850 [w0.18 ink] @f04/karm
@@ -69,8 +69,8 @@ linje 7650,7894 8255,7894 [w0.18 ink] @f04/glas
 linje 7650,7906 8255,7906 [w0.18 ink] @f04/glas
 linje 8345,7894 8950,7894 [w0.18 ink] @f04/glas
 linje 8345,7906 8950,7906 [w0.18 ink] @f04/glas
-linje 7545,7600 9055,7600 [w0.13 ink] @f04/under
-linje 7545,8000 9055,8000 [w0.13 ink] @f04/under
+linje 7545,7600 9055,7600 [w0.13 ink] @yv-n/under
+linje 7545,8000 9055,8000 [w0.13 ink] @yv-n/under
 polylinje sluten 1505,7850 1555,7850 1555,7950 1505,7950 [w0.25 ink] @f05/karm
 polylinje sluten 3845,7850 3895,7850 3895,7950 3845,7950 [w0.25 ink] @f05/karm
 linje 1555,7850 3845,7850 [w0.18 ink] @f05/karm
@@ -83,8 +83,8 @@ linje 1600,7894 2655,7894 [w0.18 ink] @f05/glas
 linje 1600,7906 2655,7906 [w0.18 ink] @f05/glas
 linje 2745,7894 3800,7894 [w0.18 ink] @f05/glas
 linje 2745,7906 3800,7906 [w0.18 ink] @f05/glas
-linje 1495,7600 3905,7600 [w0.13 ink] @f05/under
-linje 1495,8000 3905,8000 [w0.13 ink] @f05/under
+linje 1495,7600 3905,7600 [w0.13 ink] @yv-n/under
+linje 1495,8000 3905,8000 [w0.13 ink] @yv-n/under
 polylinje sluten 150,2405 150,2455 50,2455 50,2405 [w0.25 ink] @f06/karm
 polylinje sluten 150,3545 150,3595 50,3595 50,3545 [w0.25 ink] @f06/karm
 linje 150,2455 150,3545 [w0.18 ink] @f06/karm
@@ -93,8 +93,8 @@ polylinje sluten 130,2455 130,2500 70,2500 70,2455 [w0.18 ink] @f06/b책ge
 polylinje sluten 130,3500 130,3545 70,3545 70,3500 [w0.18 ink] @f06/b책ge
 linje 106,2500 106,3500 [w0.18 ink] @f06/glas
 linje 94,2500 94,3500 [w0.18 ink] @f06/glas
-linje 400,2395 400,3605 [w0.13 ink] @f06/under
-linje 0,2395 0,3605 [w0.13 ink] @f06/under
+linje 400,2395 400,3605 [w0.13 ink] @yv-v/under
+linje 0,2395 0,3605 [w0.13 ink] @yv-v/under
 polylinje sluten 400,7000 3400,7000 3400,7600 400,7600 [w0.25 ink] @m01/symbol
 polylinje sluten 2300,7100 2800,7100 2800,7500 2300,7500 [w0.25 ink] @m02/symbol
 polylinje sluten 2380,7180 2720,7180 2720,7380 2380,7380 [w0.25 ink] @m02/symbol

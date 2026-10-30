@@ -1640,6 +1640,37 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Snitt- och konturlinjer i planen (0.10.37, format 25)
+
+- **Raderna** (`repr/objectPens.ts`): `OBJECT_PENS` (nyckel, grupp,
+  förval, taggar) ersätter `OPENING_PENS` (`openingPens.ts` är borta);
+  `objectPen(style, key)` läser raden med förvalets färg
+  (`defaultedPen`), `cutRowOf(objectType)` och `cutRowPen(style, type)`
+  ger snittlinjen, och `SYMBOL_PARTS` ligger här. Grupperna `walls`,
+  `doors`, `windows` och `objects` i `PEN_GROUPS` (rummens rad,
+  `roomOutline`, står i `objects`). Dörrar och fönster läser sina rader i
+  `door.ts` och `window.ts`; möblerna `furniture`/`furnitureFixed`.
+- **Snittlinjen**: `applyStyle(p, s, action, sheet, scale, plan)`; planen
+  skickar `plan = true` (sektionerna inte, tills 0.10.38). Med `plan` ger
+  `cutPen` en region eller en `asOutline`-linje radens tjocklek, och färg
+  och streckning efter jämförelsen; åtgärdens färg går före en färgad
+  rad på övriga linjer när jämförelsen är på (`compared`).
+  `materialCutPrims(…, plan)` ritar i planen konturen som `asOutline`
+  efter mönstret.
+- **Under fönstret**: linjerna har `origin` = värdväggen (`objectType`
+  `Wall`, delen `under`), så att `ownPenOf` ger väggens penna.
+- **Den egna pennans symbol**: `applyOwnPen` tar `{ ...pen, ...pen.symbol }`
+  för `SYMBOL_PARTS`; fälten säger *Snittets* när den övre har fältet.
+- **Egna pennor som ställen** (`penPlaces.ts`): `PlaceWhere` har `def` och
+  `object`; nycklarna `own.<main|symbol|above>` och `mpen` (materialets
+  kontur). `stylePlaces` tar `PlacesDoc` (med `definitions` och `storeys`
+  om de finns). `editPlaces` svarar också med `definitions` och
+  `elements`, som `applyEdit` lägger i transaktionen; `PlaceEdit.own`
+  ändrar en del (`setPenEdit`, `setLineTypeEdit`). *Gå dit*
+  (`goToObject(ids)`) tar ett id eller flera.
+- Tester: `tests/v01037.test.ts`. Referensritningarna ändrades av linjerna
+  under fönstren (väggens id) och en dörr med egen färg (slagbågen följer).
+
 ## Pennor och ställen (0.10.36, format 25)
 
 - **Pennraderna** (`repr/penRows.ts`): `PEN_GROUPS` samlar penntabellens
@@ -3832,7 +3863,7 @@ Inga nya format: fälten är frivilliga.
 
 Inga nya format: fälten är frivilliga.
 
-- **Klasserna** står i `OPENING_PENS` i `src/repr/openingPens.ts`
+- **Klasserna** (ersatta av ställena i 0.10.37) stod i `OPENING_PENS` i `src/repr/openingPens.ts`
   (`openingCut`, `openingView`, `openingSymbol` i stilmallens `pens`).
   `openingPens(style)` ger alla tre; dörren och fönstret (`plan` i
   `door.ts` och `window.ts`) ritar karmar med `cut`, blad, bågar och glas

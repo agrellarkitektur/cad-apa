@@ -27,8 +27,8 @@ const placeIn = (doc: Parameters<typeof stylePlaces>[0], id: string) => stylePla
 describe('pennraderna per vytyp', () => {
   it('varje vytyp visar sina grupper', () => {
     const ids = (t: Parameters<typeof penGroupsFor>[0]) => penGroupsFor(t).map((g) => g.id);
-    expect(ids('storey')).toEqual(['openings', 'cut', 'room', 'contours', 'markers']);
-    expect(ids('facade')).toEqual(['openings', 'facade', 'markers']);
+    expect(ids('storey')).toEqual(['walls', 'doors', 'windows', 'objects', 'cut', 'contours', 'markers']);
+    expect(ids('facade')).toEqual(['facade', 'markers']);
     expect(ids('site')).toEqual(['contours', 'markers']);
     expect(ids('worksheet')).toEqual(['markers']);
     const book = emptyProject('Prov', 'ombyggnad').graphics;
@@ -100,16 +100,16 @@ describe('byt och flytta', () => {
     const before = penTable(withFrozenPens(store.doc), stylePlaces(store.doc));
     const p025 = before.find((r) => penKey(r.pen) === '0.25|ink')!;
     const p018 = before.find((r) => penKey(r.pen) === '0.18|ink')!;
-    const ids = ['cat:storey:plan|pens.openingCut', 'cat:facade:fasad|pens.wall'];
+    const ids = ['cat:storey:plan|pens.doorFrameCut', 'cat:facade:fasad|pens.wall'];
     setPlaces(store, 'pen', ids, String(p018.pen.no));
     const after = penTable(store.doc.graphics, stylePlaces(store.doc));
     expect(after.find((r) => r.pen.no === p025.pen.no)!.places.length).toBe(p025.places.length - 2);
     expect(after.find((r) => r.pen.no === p018.pen.no)!.places.length).toBe(p018.places.length + 2);
     expect(after.find((r) => r.pen.no === p025.pen.no)!.pen).toEqual(p025.pen);
-    expect(categoryOf(store.doc.graphics, 'storey', 'plan').style.pens?.openingCut).toEqual({ weight: 0.18 });
+    expect(categoryOf(store.doc.graphics, 'storey', 'plan').style.pens?.doorFrameCut).toEqual({ weight: 0.18 });
     // En ångring.
     store.undo();
-    expect(categoryOf(store.doc.graphics, 'storey', 'plan').style.pens?.openingCut).toBeUndefined();
+    expect(categoryOf(store.doc.graphics, 'storey', 'plan').style.pens?.doorFrameCut).toBeUndefined();
   });
 
   it('en ändrad penna ändrar alla sina ställen; en penna som redan finns går inte att få', () => {

@@ -3527,7 +3527,7 @@ in var som helst efter A, och bara A ger nytt format:
   förut 0.10.38)
 
 Före F och G (Carl August 30 oktober, svaren på frågorna om 0.10.36):
-**0.10.37 Snitt- och konturlinjer i planen** och **0.10.38 Snitt- och
+**0.10.37 Snitt- och konturlinjer i planen** ✓ och **0.10.38 Snitt- och
 konturlinjer i fasader och sektioner**, se nedan.
 
 ### 0.10.32 Tre nivåer med arv ✓ · *nytt format (25)*
@@ -3749,7 +3749,7 @@ Carl August i överlämningen. Pennor har inget eget namn (siffror, som
 beslutat). Fyllningstypernas ställen tar inte med former och rum med
 egen fyllning (de räknas i listan ovanför). Sorteringen sparas inte.
 
-### 0.10.37 Snitt- och konturlinjer i planen
+### 0.10.37 Snitt- och konturlinjer i planen ✓
 
 Carl August 30 oktober (svar A–H på frågorna om 0.10.36). Stor, samma
 format. Ställen per objekttyp i stället för dörrarnas och fönstrens
@@ -3764,6 +3764,49 @@ ställen. Pennlistan får också materialens konturpenna, typernas och
 objektens egna pennor som ställen (*Gå dit* till objektet). Linjetypen
 hör till stället. Ändrade *Snitt*, *Vy* och *Symbol* faller bort (inga
 migreringar). Blir den för lång: väggar, dörrar och fönster först.
+
+*Gjord 30 oktober, i en session. Samma format (25); raderna är nya
+nycklar i penntabellen. Testerna: 774. Se UTVECKLING.md, *Snitt- och
+konturlinjer i planen*. Claudes val: **raderna finns där linjen finns i
+planen**: väggens snittlinje (0,35) och konturlinje (0,13, linjerna
+under fönstren), dörrens karm (snitt), blad (med glasningen) och
+slagbåge, fönstrets karm (snitt), karm (kontur, under- och överkarmen
+sedda uppifrån), båge och glas, bjälklagets, takets och stödmurens
+snittlinjer, fast inredning (0,25) och lösa möbler (0,18 grå) som
+konturlinjer, och rummens kontur (förut en egen grupp). Dörrens karm
+(kontur) och fönstrets bleck ritas inte i planen och har ingen rad (de
+kommer med fasaderna i 0.10.38). **Bjälklagens, takens och stödmurarnas
+konturlinjer är *under snittet*-raderna** (svar H): det oskurna av dem
+är det som ligger under snittet, så de fick ingen rad till. Grupperna:
+*Väggar*, *Dörrar*, *Fönster* och *Bjälklag, tak, stödmurar, möbler och
+rum*, bara i våningar. **Snittlinjen**: `applyStyle` i planen tar
+tjockleken ur objekttypens rad (`cutRowOf`: bjälklag, tak, stödmur,
+annars väggens; igensatta hål är väggens); med jämförelsen på färg och
+streckning ur åtgärdens kontur, utan jämförelse radens färg (eller
+åtgärdens när raden är svart) och linjetyp (åtgärdens streckning går
+före). En åtgärd utan kontur ritar ingen snittlinje, som förut.
+**Åtgärdens färg går före radernas** när jämförelsen är på och åtgärden
+har en färg (Färgmarkerad), också på blad, glas och möbler (förut höll
+en färgad rad sin färg). Åtgärdernas kontur har ingen tjocklek i
+gränssnittet och är kvar som ställe (den gäller fasaderna och
+sektionerna tills 0.10.38). Materialets snitt i planen ritar konturen
+som snittets (efter mönstret, åtgärdens färg); i sektionerna som förut.
+**Hålets oskurna kanter** (under fönstren) hör till väggen i ritningen
+(`origin` = väggen), så att väggens egen penna gäller dem; hålets kanter
+över och under snittet (`uncutOpening`) har kvar *Dörrar och fönster
+över/under snittet*. **Symbolen** följer den egna pennans övre del fält
+för fält. **Fasadernas öppningssätt** läser bara sin rad (förvalet är
+detsamma). **Egna pennor som ställen**: materialets konturpenna när den
+är satt, och varje del (snitt, symbol, över snittet) av en typs eller ett
+objekts egna penna som har en tjocklek (penna) eller linjetyp; en del med
+bara en färg är inget ställe. *Gå dit* för en typ markerar typens objekt
+på den förstas våning. Provat i Playwright mot `dist/` (grupperna i
+Våningar › Plan, väggens snittlinje 0,7 i planen, ett objekts egna penna
+i pennlistan och *Gå dit*).*
+
+*Gjordes inte:* fasadernas och sektionernas linjer (0.10.38), dörrens
+karm i kontur och fönstrets bleck i planen, taklinjerna i snittzonen
+(de har takets penna under snittet som förut).
 
 ### 0.10.38 Snitt- och konturlinjer i fasader och sektioner
 

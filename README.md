@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.36** (alfa); nästa är **0.10.37 Snitt- och konturlinjer i planen**,
+**0.10.37** (alfa); nästa är **0.10.38 Snitt- och konturlinjer i fasader och sektioner**,
 och efter stilinställningarna och pennorna (0.10.32–0.10.40) **0.11 Trappor**.
 
 ## Vad som fungerar
@@ -1149,6 +1149,36 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.37, snitt- och konturlinjer i planen (samma filformat, 25):
+- **Ställen per objekttyp**: i en vykategori för våningar har väggar,
+  dörrar och fönster var sin grupp, och bjälklag, tak, stödmurar, möbler
+  och rum en gemensam. *Vägg: snittlinje* och *konturlinje*, *Dörr: karm
+  (snitt)*, *blad* och *slagbåge*, *Fönster: karm (snitt)*, *karm
+  (kontur)*, *båge* och *glas*, *Bjälklag*, *Tak* och *Stödmur:
+  snittlinje*, *Fast inredning* och *Möbel: konturlinje* och *Rum:
+  konturlinje*. De ersätter dörrarnas och fönstrens *Snitt*, *Vy* och
+  *Symbol*; ändrade sådana pennor faller bort (förvalen ritar som förut)
+- **Snittlinjen ger tjockleken, åtgärden färg och streckning**: väggarnas
+  (och bjälklagens, takens och stödmurarnas) kontur i snittet får
+  tjockleken från snittlinjen. När jämförelsen är på ger åtgärden färgen
+  och streckningen (det som rivs streckat, i Färgmarkerad det nya rött,
+  också på linjer med en egen färg i raden); utan jämförelse gäller
+  snittlinjens färg och linjetyp. *Ingen* kontur under Åtgärder ritar
+  ingen snittlinje
+- **Hålets oskurna kanter följer väggen**: linjerna under fönstren har
+  väggens konturlinje och väggens egen penna, inte fönstrets
+- **Symbolen följer snittet**: i en egen penna för en dörr eller ett
+  fönster följer *Symbol* (slagbågen, öppningssättet) *Snitt* där den
+  inte är satt, och fälten säger *Snittets*
+- **Alla pennor i pennlistan**: materialens konturpenna och typernas och
+  objektens egna pennor är ställen under Resurser › *Pennor* (och under
+  Linjetyper när de har en linjetyp). Byt eller flytta dem som de andra;
+  *Gå dit* visar objektet, eller typens objekt, i ritningen
+- Över- och undersnitten (*Väggar över snittet* …) är kvar som egna
+  ställen. Fasaderna och sektionerna ritas som förut; deras öppningssätt
+  har sin rad under *Linjer i fasader och sektioner* (utan symbolpennan
+  under)
 
 Version 0.10.36, pennor och ställen (samma filformat, 25):
 - **Pennor med nummer**: under Resurser › *Pennor* i stilboken står

@@ -56,48 +56,48 @@ polylinje sluten 6205,150 6155,150 6155,50 6205,50 [w0.25 ink] @f01-2/karm
 linje 7295,150 6205,150 [w0.18 ink] @f01-2/karm
 linje 7295,50 6205,50 [w0.18 ink] @f01-2/karm
 linje 7295,100 6205,100 [w0.18 ink] @f01-2/glas
-linje 7355,400 6145,400 [w0.13 ink] @f01-2/under
-linje 7355,0 6145,0 [w0.13 ink] @f01-2/under
+linje 7355,400 6145,400 [w0.13 ink] @yv-s-2/under
+linje 7355,0 6145,0 [w0.13 ink] @yv-s-2/under
 text "F1" 6626,520 h2 start [w0.18] @f01-2/littera
 polylinje sluten 10395,150 10345,150 10345,50 10395,50 [w0.25 ink] @f02-2/karm
 polylinje sluten 9855,150 9805,150 9805,50 9855,50 [w0.25 ink] @f02-2/karm
 linje 10345,150 9855,150 [w0.18 ink] @f02-2/karm
 linje 10345,50 9855,50 [w0.18 ink] @f02-2/karm
 linje 10345,100 9855,100 [w0.18 ink] @f02-2/glas
-linje 10405,400 9795,400 [w0.13 ink] @f02-2/under
-linje 10405,0 9795,0 [w0.13 ink] @f02-2/under
+linje 10405,400 9795,400 [w0.13 ink] @yv-s-2/under
+linje 10405,0 9795,0 [w0.13 ink] @yv-s-2/under
 text "F2" 9976,520 h2 start [w0.18] @f02-2/littera
 polylinje sluten 11850,6395 11850,6345 11950,6345 11950,6395 [w0.25 ink] @f03-2/karm
 polylinje sluten 11850,5255 11850,5205 11950,5205 11950,5255 [w0.25 ink] @f03-2/karm
 linje 11850,6345 11850,5255 [w0.18 ink] @f03-2/karm
 linje 11950,6345 11950,5255 [w0.18 ink] @f03-2/karm
 linje 11900,6345 11900,5255 [w0.18 ink] @f03-2/glas
-linje 11600,6405 11600,5195 [w0.13 ink] @f03-2/under
-linje 12000,6405 12000,5195 [w0.13 ink] @f03-2/under
+linje 11600,6405 11600,5195 [w0.13 ink] @yv-o-2/under
+linje 12000,6405 12000,5195 [w0.13 ink] @yv-o-2/under
 text "F1" 11480,5676 h2 90° start [w0.18] @f03-2/littera
 polylinje sluten 7555,7850 7605,7850 7605,7950 7555,7950 [w0.25 ink] @f04-2/karm
 polylinje sluten 8995,7850 9045,7850 9045,7950 8995,7950 [w0.25 ink] @f04-2/karm
 linje 7605,7850 8995,7850 [w0.18 ink] @f04-2/karm
 linje 7605,7950 8995,7950 [w0.18 ink] @f04-2/karm
 linje 7605,7900 8995,7900 [w0.18 ink] @f04-2/glas
-linje 7545,7600 9055,7600 [w0.13 ink] @f04-2/under
-linje 7545,8000 9055,8000 [w0.13 ink] @f04-2/under
+linje 7545,7600 9055,7600 [w0.13 ink] @yv-n-2/under
+linje 7545,8000 9055,8000 [w0.13 ink] @yv-n-2/under
 text "F3" 8176,7280 h2 start [w0.18] @f04-2/littera
 polylinje sluten 1505,7850 1555,7850 1555,7950 1505,7950 [w0.25 ink] @f05-2/karm
 polylinje sluten 3845,7850 3895,7850 3895,7950 3845,7950 [w0.25 ink] @f05-2/karm
 linje 1555,7850 3845,7850 [w0.18 ink] @f05-2/karm
 linje 1555,7950 3845,7950 [w0.18 ink] @f05-2/karm
 linje 1555,7900 3845,7900 [w0.18 ink] @f05-2/glas
-linje 1495,7600 3905,7600 [w0.13 ink] @f05-2/under
-linje 1495,8000 3905,8000 [w0.13 ink] @f05-2/under
+linje 1495,7600 3905,7600 [w0.13 ink] @yv-n-2/under
+linje 1495,8000 3905,8000 [w0.13 ink] @yv-n-2/under
 text "F4" 2576,7280 h2 start [w0.18] @f05-2/littera
 polylinje sluten 150,2405 150,2455 50,2455 50,2405 [w0.25 ink] @f06-2/karm
 polylinje sluten 150,3545 150,3595 50,3595 50,3545 [w0.25 ink] @f06-2/karm
 linje 150,2455 150,3545 [w0.18 ink] @f06-2/karm
 linje 50,2455 50,3545 [w0.18 ink] @f06-2/karm
 linje 100,2455 100,3545 [w0.18 ink] @f06-2/glas
-linje 400,2395 400,3605 [w0.13 ink] @f06-2/under
-linje 0,2395 0,3605 [w0.13 ink] @f06-2/under
+linje 400,2395 400,3605 [w0.13 ink] @yv-v-2/under
+linje 0,2395 0,3605 [w0.13 ink] @yv-v-2/under
 text "F1" 720,2876 h2 90° start [w0.18] @f06-2/littera
 text "ALLRUM" 2192.6,4290.7 h2.5 start fet [w0.18 ink] @r01-2/rumstext
 text "1201" 2192.6,3926.7 h2.2 start [w0.18 ink] @r01-2/rumstext

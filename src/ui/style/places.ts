@@ -182,7 +182,7 @@ export function penListMarkup(doc: Pick<ProjectDoc, 'graphics' | 'views' | 'elem
   const unused = table.filter((r) => !r.places.length).length;
   return `<section class="style-labels style-penlist">
     <h3>Pennor och ställen</h3>
-    <p class="note">En penna är en tjocklek och en färg med ett nummer. Ett ställe är en rad i en vykategori (eller i en vy som avviker) där en objekttyp och del får sin penna. Ändras en penna ändras alla dess ställen; <i>Flytta till pennan…</i> byter vilka ställen som pekar på en penna, inte pennan själv. Linjetypen hör till stället.</p>
+    <p class="note">En penna är en tjocklek och en färg med ett nummer. Ett ställe är en rad i en vykategori (eller i en vy som avviker) där en objekttyp och del får sin penna, ett materials kontur, eller en typs eller ett objekts egna penna (<i>Gå dit</i> visar objekten). Ändras en penna ändras alla dess ställen; <i>Flytta till pennan…</i> byter vilka ställen som pekar på en penna, inte pennan själv. Linjetypen hör till stället.</p>
     <div class="pp-split">
       <div class="pp-pens">
         <table class="pp-table pp-pentable" data-table="pens"><thead><tr><th>Nr</th><th>Prov</th><th>Tjocklek</th><th>Färg</th><th>Ställen</th><th></th></tr></thead><tbody>${rows}</tbody></table>
@@ -196,7 +196,7 @@ export function penListMarkup(doc: Pick<ProjectDoc, 'graphics' | 'views' | 'elem
 /** Listan över ställen under en resurs (linjetyper, fyllningstyper, material), i en egen del. */
 export function placesSection(doc: Pick<ProjectDoc, 'graphics' | 'views' | 'elements' | 'storeys'>, kind: Exclude<PlaceKind, 'pen'>, state: PlacesState): string {
   const intro: Record<typeof kind, string> = {
-    linetype: 'Pennraderna och snittens konturer i kategorierna och vyerna, med sin linjetyp. Byt linjetyp per ställe, eller markera flera och flytta dem.',
+    linetype: 'Pennraderna och snittens konturer i kategorierna och vyerna, och typernas och objektens egna pennor med en linjetyp. Byt linjetyp per ställe, eller markera flera och flytta dem.',
     filltype: 'Snittens fyllningar i kategorierna och vyerna och materialens fyllningar som har en fyllningstyp. Former och rum med egen fyllning räknas i listan ovan men står inte här.',
     material: 'Objekten (och slänterna) med varje material. Gå dit visar objektet i ritningen.',
   };

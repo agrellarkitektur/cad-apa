@@ -414,12 +414,14 @@ export function installViews(app: AppContext) {
     if (v) applyView(v);
   };
   // *Gå dit* i stilbokens lista över materialens ställen (0.10.36): objektets våning eller Platsen, markerat och i bild.
-  app.styleDialog.goToObject = (id) => {
-    const el = app.store.doc.elements[id];
+  // En typs egen penna (0.10.37) ger flera: de på den förstas våning markeras.
+  app.styleDialog.goToObject = (ids) => {
+    const list = typeof ids === 'string' ? [ids] : ids;
+    const el = app.store.doc.elements[list[0]];
     if (!el) return;
     if (app.ui.mode === '3d') void app.setMode('2d');
     goTo({ kind: 'storey', id: el.storey });
-    app.selection.set([id]);
+    app.selection.set(list.filter((id) => app.store.doc.elements[id]?.storey === el.storey));
     app.renderAll();
     requestAnimationFrame(() => app.zoomToSelection());
   };

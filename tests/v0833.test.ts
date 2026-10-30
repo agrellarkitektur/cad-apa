@@ -22,7 +22,7 @@ const part = (lines: Lined[], name: string) => lines.filter((p) => p.origin?.par
 const doorOf = (doc: ProjectDoc) => Object.values(doc.elements).find((e) => e.type === 'Door' && e.definition)!;
 
 describe('Pennor per typ och symbollinjer (0.8.33)', () => {
-  it('dörrens delar i tre klasser, symbolen tunnast, och stilmallen ändrar dem', () => {
+  it('dörrens delar, symbolen tunnast, och stilboken ändrar dem (ställena från 0.10.37)', () => {
     const doc = sampleProject();
     const door = doorOf(doc);
     const lines = linesOf(plan(doc).prims, door.id);
@@ -31,9 +31,9 @@ describe('Pennor per typ och symbollinjer (0.8.33)', () => {
     expect(part(lines, 'slagbåge')[0].weight).toBe(0.13);
 
     const style = structuredClone(defaultSheet(doc.graphics));
-    expect(applyPenField(style, { dataset: { pen: 'openingSymbol:weight' }, value: '0.25' } as unknown as HTMLInputElement)).toBe('Ändra pennor');
-    applyPenField(style, { dataset: { pen: 'openingView:color' }, value: '#0000ff' } as unknown as HTMLInputElement);
-    expect(penSection(style, 'storey')).toContain('Pennor för dörrar och fönster');
+    expect(applyPenField(style, { dataset: { pen: 'doorSwing:weight' }, value: '0.25' } as unknown as HTMLInputElement)).toBe('Ändra pennor');
+    applyPenField(style, { dataset: { pen: 'doorLeaf:color' }, value: '#0000ff' } as unknown as HTMLInputElement);
+    expect(penSection(style, 'storey')).toContain('Dörr: slagbåge');
     const after = linesOf(plan({ ...doc, graphics: bookWithSheet(doc.graphics, style) }).prims, door.id);
     expect(part(after, 'slagbåge')[0].weight).toBe(0.25);
     expect(part(after, 'dörrblad')[0].color).toBe('#0000ff');

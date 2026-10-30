@@ -4,10 +4,20 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.36.
+**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.37.
 
 ## Läget
 
+- **0.10.37 Snitt- och konturlinjer i planen är klar** (samma format,
+  25; nya nycklar i penntabellen). Våningarnas kategorier har grupperna
+  *Väggar*, *Dörrar*, *Fönster* och *Bjälklag, tak, stödmurar, möbler och
+  rum* med snitt- och konturlinjer per objekt (ersätter *Snitt*, *Vy*,
+  *Symbol*). Snittlinjen ger tjockleken, åtgärden färg och streckning med
+  jämförelsen på. Linjerna under fönstren hör till väggen. *Symbol* följer
+  *Snitt* i egna pennor. Materialens konturpenna och typernas och
+  objektens egna pennor är ställen i pennlistan, med *Gå dit*. Fasaderna
+  och sektionerna är orörda (0.10.38). Testerna: 774 på ca 19 s. Provat i
+  Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes val i PLAN.md.
 - **0.10.36 Pennor och ställen är klar** (samma format, 25; `penList` i
   stilbokens resurser är valfri). Resurser › *Pennor*: pennlistan (nummer,
   prov, tjocklek, färg, antal ställen; sorterad efter färg och tjocklek),
@@ -68,9 +78,16 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **0.10.30**, **0.10.29**, **0.10.28.3**, **0.10.28.2**, **0.10.28.1**,
   **0.10.28**, **0.10.27**, **0.10.26**, **0.10.25.1** och **0.10.25**: se
   PLAN.md.
-- **Publicerad:** 0.10.36 pushad till `main` 30 oktober (se git och
+- **Publicerad:** 0.10.37 pushad till `main` 30 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.10.37:** ändrade pennor för dörrarnas
+  och fönstrens *Snitt*, *Vy* och *Symbol* faller bort (förvalen ritar som
+  förut). En dörr eller ett fönster med egen penna utan *Symbol* får
+  slagbågen i den pennan. Med Färgmarkerad blir nytt rött också där en
+  rad har en egen färg. Materialets snitt i planen följer åtgärdens kontur
+  (ingen kontur i Färgmarkerad). Fasadernas öppningssätt följer inte
+  längre symbolpennan. Annars inget.
 - **Märks i hans ritningar efter 0.10.36:** inget i ritningarna, utom
   att fasadernas och sektionernas linjer nu följer en linjetyp om någon
   satt en (det gick inte att göra i appen förut). I stilboken visar en
@@ -119,14 +136,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare:** 0.10.36, 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare:** 0.10.37, 0.10.36, 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.36` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.37` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.36 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.37 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -200,12 +217,12 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   i 3D och ortofotot på marken~~, ~~Utredning: stilinställningar~~,
   ~~0.10.32 Tre nivåer med arv~~, ~~0.10.33 Avvikelser och kategorier i
   vyn~~, ~~0.10.34 Radkontrollerna~~, ~~0.10.35 Underlag i vyn~~,
-  ~~0.10.36 Pennor och ställen~~ (klara)
+  ~~0.10.36 Pennor och ställen~~, ~~0.10.37 Snitt- och konturlinjer i
+  planen~~ (klara)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **Penn- och linjesystemet** (Carl August 30 oktober): **0.10.37 Snitt-
-  och konturlinjer i planen** (stor, på tur), **0.10.38 Snitt- och
-  konturlinjer i fasader och sektioner** (mellanstor)
+- **Penn- och linjesystemet** (Carl August 30 oktober): **0.10.38 Snitt-
+  och konturlinjer i fasader och sektioner** (mellanstor, på tur)
 - **Stilinställningarna, resten**: **0.10.39 Projektet › Allmänt**
   (mellanstor), **0.10.40 Stilboken ut och in** (mellanstor; två öppna
   frågor)
@@ -225,40 +242,31 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.37 Snitt- och konturlinjer i planen** (stor, samma format; Carl
-August sa "kör" 30 oktober, svaren nedan). Läs synpunkterna först och
-sortera Inkorgen om den har något.
+**0.10.38 Snitt- och konturlinjer i fasader och sektioner** (mellanstor,
+samma format). Läs synpunkterna först och sortera Inkorgen om den har
+något.
 
-- **Ställen per objekttyp** i stället för dagens klasser (dörrarnas och
-  fönstrens *Snitt*, *Vy*, *Symbol*): varje objekttyp får *snittlinje*
-  och *konturlinje* (det oskurna), och sammansatta objekt fler, t.ex.
-  *Fönster: karm (snitt), karm (kontur), båge, glas, bleck*, *Dörr: karm
-  (snitt), karm (kontur), blad, slagbåge*; likadant vägg, bjälklag, tak,
-  stödmur, möbel och rum. Taggar för objekt och del (snitt, kontur …).
-- **Snittlinjen ger tjockleken; åtgärden ger färg och streckning** när
-  jämförelsen är på (befintligt, rivs, planerat, som åtgärdernas kontur
-  i dag). Svar F: ja.
-- **Öppningarnas oskurna linjer** (vägghålets kanter) tar **väggens**
-  penna, inte dörrens och fönstrets (svar B).
-- **Den egna pennans *Symbol* följer *Snitt*** när den inte är satt (svar C).
-- **Planens över- och undersnitt** (*Väggar över snittet* …) är kvar som
-  egna ställen; de gäller läget, inte objektet (svar H).
-- **Fler ställen i pennlistan** (svar E: man ska kunna söka på alla
-  pennor i projektet): materialens konturpenna, typernas egna pennor och
-  objektens egna pennor; *Gå dit* för ett objekt visar det i ritningen.
-- Linjetypen hör fortfarande till stället (svar D: ingen ändring).
-- **Märks i hans ritningar:** ändrade pennor *Snitt*, *Vy* och *Symbol*
-  för dörrar och fönster faller bort (förvalen gäller tills de nya
-  ställena ställs in). Inget nytt format; inga migreringar.
-- Risk: stor. Blir den för lång, gör väggar, dörrar och fönster först och
-  resten i 0.10.38 (som då tar fasaderna och sektionerna också, eller
-  delas). Säg till i tid.
+- **Snittet i sektionerna** som i planen: `applyStyle(…, plan = true)`
+  också i `section.ts` (snittets region och `asOutline`), så att
+  objekttypens snittlinje ger tjockleken och åtgärden färg och
+  streckning; `materialCutPrims(…, true)` där också. Sektionernas
+  snittkontur saknar i dag `origin.objectType` (bara `objectId`): sätt
+  den.
+- **Fasadernas linjer** (`FACADE_PENS`) blir objektens konturlinjer:
+  *Vägg: konturlinje* i fasad (`wall`), *Tak: konturlinje* (`roof`),
+  karm, båge, dörrblad, bleck, foder, handtag och glas som delar av
+  *Dörr* och *Fönster* (med *Fönster: bleck* och *Dörr: karm (kontur)*,
+  som saknas i planen). Vägghålet (`hole`) är väggens (svar B), och
+  öppningssättet (`swing`) symbolen. Fråga: ska fasadens rad och planens
+  rad för samma del vara samma ställe (en penna för båda) eller två
+  (grupperna visas per vytyp)? Claudes förslag: två ställen med samma
+  namn, i var sin vytyp, eftersom fasaden oftast vill ha tjockare linjer.
+- Åtgärdernas kontur (tjocklek) faller då bort helt; ändra `outline.<åtgärd>`
+  i ställena till bara färg och linjetyp.
+- **Märks i hans ritningar:** ändrade fasadlinjer faller bort om nycklarna
+  byts. Inget nytt format.
 
-**Sedan 0.10.38 Snitt- och konturlinjer i fasader och sektioner**
-(mellanstor): fasadernas linjer (`FACADE_PENS`: vägghål, karm, båge …)
-läggs ihop med objektens snitt- och konturlinjer. Därefter 0.10.39
-Projektet › Allmänt och 0.10.40 Stilboken ut och in (förut 0.10.37 och
-0.10.38).
+Därefter 0.10.39 Projektet › Allmänt och 0.10.40 Stilboken ut och in.
 
 Höjdkurvors del av ortofotot (två rader i `js/app.js` och `js/utbyte.js`,
 plus raden i `docs/UTBYTE-CAD-APA.md` där) görs i en session i
@@ -279,6 +287,16 @@ och 0.10.33 när han provat.
 som kategorier, gjort i 0.10.33). 0.10.31: ortofotot där marken saknar
 material, plus valet *Ortofoto* (gjort i 0.10.33); bildens sida i mm.
 0.10.30: rutornas mått lagom så länge; en rad "Eget" per fyllning (prova).
+
+**0.10.37 efter provning** (Claudes val, se PLAN.md)
+- Med jämförelsen på går åtgärdens färg före en rad med egen färg (i
+  Färgmarkerad blir allt nytt rött, också en blå glasrad). Rätt?
+- Bjälklag, tak och stödmurar har bara en snittlinje; deras oskurna
+  linjer är raderna *under snittet*. Räcker det?
+- Fönstrets bleck och dörrens karm i kontur ritas inte i planen och har
+  ingen rad där. Ska blecket synas i planen?
+- En egen penna med bara en färg (ingen tjocklek) står inte i
+  pennlistan. Rätt?
 
 **Besvarade 30 oktober (förmiddag), 0.10.36:** A snitt- och konturlinjer
 per objekt, sammansatta objekt med flera av varje (0.10.37); B väggens

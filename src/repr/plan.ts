@@ -1,6 +1,6 @@
 import { defaultSheet } from '../core/viewCategories';
 import { resolveFill } from '../core/fillTypes';
-import type { ActionStyle, StyleSheet } from '../core/graphics';
+import type { ActionStyle, LineDef, StyleSheet } from '../core/graphics';
 import { isSite, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { Action, ViewStates } from '../core/states';
 import { allTypes, typeOf, type ElementType, type PlanContext, type PlanItem } from '../elements/registry';
@@ -10,6 +10,7 @@ import { sortByOrder } from '../core/drawOrder';
 import { createContext } from './context';
 import { coverLines } from './cover';
 import { applyOwnPen, ownPenOf } from './ownPen';
+import { cutRowPen } from './objectPens';
 import { sameItems } from './reuse';
 import type { Pen, Primitive, Vec2 } from './primitives';
 
@@ -132,7 +133,7 @@ function drawGroup(t: ElementType, items: PlanItem[], ctx: PlanContext, style: S
   const s = style.actions[ctx.styleKeyOf(action)];
   const hidden = ctx.hiddenInView(items[0].el);
   // Objektets egen penna (0.8.31) efter stilmallens; ett dolt element ritas tonat som förut.
-  const styled = (p: Primitive) => (hidden ? ghost(applyStyle(p, s, action, style, ctx.scale)) : applyOwnPen(applyStyle(p, s, action, style, ctx.scale), ownPenOf(ctx.doc, p), style));
+  const styled = (p: Primitive) => (hidden ? ghost(applyStyle(p, s, action, style, ctx.scale, true)) : applyOwnPen(applyStyle(p, s, action, style, ctx.scale, true), ownPenOf(ctx.doc, p), style));
   const pickable = (el: Element, own: Primitive[]): Pickable => ({
     id: el.id,
     priority: t.drawOrder,
@@ -204,23 +205,38 @@ function ghost(p: Primitive): Primitive {
   return { ...p, pen } as Primitive;
 }
 
-/** Lägg på stilmallens färger, fyllningar och streckning för åtgärden. */
-/** `scale` är modellens mm per mm på papper, för fyllningstyper med mått i modellen (0.8.36). */
-export function applyStyle(p: Primitive, s: ActionStyle, action: Action, sheet: StyleSheet, scale = 1): Primitive {
+/**
+ * Lägg på stilmallens färger, fyllningar och streckning för åtgärden.
+ * `scale` är modellens mm per mm på papper, för fyllningstyper med mått i
+ * modellen (0.8.36). I planen (`plan`, 0.10.37) ger objekttypens snittlinje
+ * tjockleken på snittets kontur, och när jämförelsen är på ger åtgärden
+ * färg och streckning (före radernas färg); utan jämförelse gäller
+ * snittlinjens färg och linjetyp. Fasaderna och sektionerna har kvar
+ * åtgärdens kontur tills 0.10.38.
+ */
+export function applyStyle(p: Primitive, s: ActionStyle, action: Action, sheet: StyleSheet, scale = 1, plan = false): Primitive {
   if (p.kind === 'text' || p.kind === 'image') return p;
+  const compared = plan && action !== 'plain';
+  const cutPen = (o: LineDef, objectType: string | undefined): Pen => {
+    if (!plan) return { weight: o.weight, color: o.color, ...(o.dash?.length ? { dash: o.dash } : {}) };
+    const row = cutRowPen(sheet, objectType);
+    const color = (compared || !row.color ? o.color : row.color) as Pen['color'];
+    const dash = compared || o.dash?.length ? o.dash : row.dash;
+    return { weight: row.weight, color, ...(dash?.length ? { dash } : {}) };
+  };
   if (p.kind === 'region') {
     if (p.ownFill) return p;
     const rs = p.styleAs ? sheet.actions[p.styleAs] : s;
     const o = p.noOutline ? null : rs.cutOutline;
-    return { ...p, fill: resolveFill(rs.cutFill, sheet, scale), outline: o ? { weight: o.weight, color: o.color, dash: o.dash } : null };
+    return { ...p, fill: resolveFill(rs.cutFill, sheet, scale), outline: o ? cutPen(o, p.origin?.objectType) : null };
   }
   // En snittkontur ritad som linje (0.8.31) får snittkonturens penna; utan kontur i stilmallen ritas den inte.
   if (p.kind === 'polyline' && p.asOutline) {
     const o = s.cutOutline;
-    return { ...p, pen: o ? { weight: o.weight, color: o.color, ...(o.dash?.length ? { dash: o.dash } : {}) } : { weight: 0 } };
+    return { ...p, pen: o ? cutPen(o, p.origin?.objectType) : { weight: 0 } };
   }
   const pen: Pen = { ...p.pen };
-  if (!pen.color || pen.color === 'ink') pen.color = s.lines.color;
+  if (!pen.color || pen.color === 'ink' || (compared && s.lines.color !== 'ink')) pen.color = s.lines.color;
   if (s.lines.dash?.length) pen.dash = s.lines.dash;
   // Möbler och annan tunn grafik blir svart när den rivs, så att den syns.
   if (action === 'demolished' && pen.color === 'muted') pen.color = s.lines.color;

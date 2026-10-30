@@ -1,6 +1,6 @@
 import { detailOf } from '../core/states';
 import { add, scale, sub } from '../geometry/vec';
-import { openingPens } from '../repr/openingPens';
+import { objectPen } from '../repr/objectPens';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { FRAME_DEFAULTS, openingZone, uncutOpening, type FrameParams } from './opening';
 import { litteraTag, showLittera } from './littera';
@@ -83,8 +83,8 @@ export const doorType: ElementType<DoorParams> = {
     const sketch = level === 'sketch';
     const detail = level === 'detail';
     const origin = { objectId: el.id, objectType: 'Door' };
-    // Pennorna för karmen, bladet och slagbågen ur stilmallen (0.8.33).
-    const pens = openingPens(ctx.style);
+    // Pennorna för karmen, bladet och slagbågen ur stilboken (0.10.37).
+    const pens = { cut: objectPen(ctx.style, 'doorFrameCut'), view: objectPen(ctx.style, 'doorLeaf'), symbol: objectPen(ctx.style, 'doorSwing') };
     const prims: Primitive[] = [];
 
     // Skiss: bladet från väggens liv över hela hålet. Normal: karmar och blad

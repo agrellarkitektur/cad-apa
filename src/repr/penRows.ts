@@ -3,7 +3,7 @@ import type { ViewType } from '../core/viewCategories';
 import { CONTOUR_PENS, defaultContourPen } from './contourPens';
 import { defaultFacadePen, FACADE_PENS } from './facadePens';
 import { defaultMarkerPen, MARKER_PENS, ROOM_PENS, type MarkerPenKey } from './markerPens';
-import { defaultOpeningPen, OPENING_PENS, type OpeningPenKey } from './openingPens';
+import { defaultObjectPen, OBJECT_PENS } from './objectPens';
 import { defaultPlanCutPen, PLAN_CUT_PENS } from './planCutPens';
 
 /**
@@ -29,7 +29,6 @@ export interface PenGroup {
   rows: readonly PenRow[];
 }
 
-const OPENING_TAGS: Record<string, string[]> = { openingCut: ['dörr', 'fönster', 'snitt'], openingView: ['dörr', 'fönster', 'vy'], openingSymbol: ['dörr', 'fönster', 'symbol'] };
 const CUT_OBJECT: Record<string, string[]> = { Wall: ['vägg'], Opening: ['dörr', 'fönster'], Slab: ['bjälklag'], Furniture: ['möbel'], Roof: ['tak'], Ground: ['stödmur'] };
 const MARKER_TAGS: Record<string, string[]> = {
   sectionLine: ['markör', 'sektionsmarkör'],
@@ -43,6 +42,8 @@ const MARKER_TAGS: Record<string, string[]> = {
   litteraLeader: ['littera', 'vägg'],
 };
 
+const objectRows = (group: string): PenRow[] => OBJECT_PENS.filter((r) => r.group === group).map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: r.tags }));
+
 /** Snittets nycklar heter t.ex. `aboveWall`: läget och objekttypen. */
 function cutTags(key: string): string[] {
   const m = /^(above|below)(.+)$/.exec(key);
@@ -51,11 +52,32 @@ function cutTags(key: string): string[] {
 
 export const PEN_GROUPS: readonly PenGroup[] = [
   {
-    id: 'openings',
-    title: 'Pennor för dörrar och fönster',
-    note: 'Tre klasser för dörrarnas och fönstrens delar. Gäller alla dörrar och fönster utan egen penna, på typen eller objektet. Väggens kontur ställs in under Åtgärder. Symbolen gäller också öppningssättet i fasader och sektioner.',
-    types: ['storey', 'facade', 'section'],
-    rows: OPENING_PENS.map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: OPENING_TAGS[r.key] })),
+    id: 'walls',
+    title: 'Väggar',
+    note: 'Snittlinjen är väggens kontur där planens snitt går genom den, konturlinjen det oskurna (vägghålets kanter under fönstren). Snittlinjen ger tjockleken; när jämförelsen är på ger åtgärden (under Åtgärder) färg och streckning. Ett objekt eller en typ kan ha en egen penna.',
+    types: ['storey'],
+    rows: objectRows('walls'),
+  },
+  {
+    id: 'doors',
+    title: 'Dörrar',
+    note: 'Gäller alla dörrar utan egen penna, på typen eller objektet. Hålets kanter i väggen följer väggens pennor.',
+    types: ['storey'],
+    rows: objectRows('doors'),
+  },
+  {
+    id: 'windows',
+    title: 'Fönster',
+    note: 'Gäller alla fönster utan egen penna, på typen eller objektet. Hålets kanter i väggen följer väggens pennor.',
+    types: ['storey'],
+    rows: objectRows('windows'),
+  },
+  {
+    id: 'objects',
+    title: 'Bjälklag, tak, stödmurar, möbler och rum',
+    note: 'Snittlinjerna ger tjockleken, och åtgärden färg och streckning när jämförelsen är på. Det som ligger helt under eller över snittet har sina pennor under Snittet i planen. Rummens kontur ligger under väggarna och har ingen linje från början.',
+    types: ['storey'],
+    rows: [...objectRows('others'), ...ROOM_PENS.map((r) => ({ key: r.key, label: 'Rum: konturlinje', hint: r.hint, tags: ['rum', 'kontur', 'konturlinje'] }))],
   },
   {
     id: 'facade',
@@ -71,13 +93,6 @@ export const PEN_GROUPS: readonly PenGroup[] = [
     types: ['storey'],
     rare: true,
     rows: PLAN_CUT_PENS.map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: cutTags(r.key) })),
-  },
-  {
-    id: 'room',
-    title: 'Penna för rum',
-    note: 'Rummens kontur i planen, för alla rum utan egen penna på typen eller rummet. Konturen ligger under väggarna och syns mot öppningar och rumsgränser.',
-    types: ['storey'],
-    rows: ROOM_PENS.map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: ['rum', 'kontur'] })),
   },
   {
     id: 'contours',
@@ -103,9 +118,7 @@ const ROW_OF = new Map(PEN_GROUPS.flatMap((g) => g.rows.map((r) => [r.key, { row
 /** Raden och gruppen för en nyckel i penntabellen. */
 export const penRowOf = (key: string) => ROW_OF.get(key);
 
-/** Förvalet för en rad i penntabellen: snittet, höjdkurvorna, fasaderna, en markör eller dörrarnas och fönstrens klass. */
+/** Förvalet för en rad i penntabellen: objekten, snittet, höjdkurvorna, fasaderna eller en markör. */
 export function penDefault(key: string): PenDef {
-  const d = defaultPlanCutPen(key) ?? defaultContourPen(key) ?? defaultFacadePen(key);
-  if (d) return d;
-  return OPENING_PENS.some((o) => o.key === key) ? defaultOpeningPen(key as OpeningPenKey) : defaultMarkerPen(key as MarkerPenKey);
+  return defaultObjectPen(key) ?? defaultPlanCutPen(key) ?? defaultContourPen(key) ?? defaultFacadePen(key) ?? defaultMarkerPen(key as MarkerPenKey);
 }

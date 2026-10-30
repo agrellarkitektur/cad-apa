@@ -1,6 +1,6 @@
 import { detailOf } from '../core/states';
 import type { Pen, Primitive } from '../repr/primitives';
-import { openingPens } from '../repr/openingPens';
+import { objectPen } from '../repr/objectPens';
 import { FRAME_DEFAULTS, openingLift, openingZone, uncutOpening, type FrameParams } from './opening';
 import { litteraTag, showLittera } from './littera';
 import { windowModel } from './openingModel';
@@ -75,8 +75,8 @@ export const windowType: ElementType<WindowParams> = {
       return [...uncutOpening(ctx, el, host, p, zone, true), ...(showLittera(ctx, 'Window') ? litteraTag(ctx, el, wallFrame(planWallParams(ctx, host)), p.at, face === 0 ? 1 : face === 1 ? -1 : 1) : [])];
     }
     const origin = { objectId: el.id, objectType: 'Window', part: 'glas' };
-    // Pennorna för karmen och bågarna ur stilmallen (0.8.33).
-    const pens = openingPens(ctx.style);
+    // Pennorna för karmen, bågarna och glaset ur stilboken (0.10.37).
+    const pens = { cut: objectPen(ctx.style, 'windowFrameCut'), frame: objectPen(ctx.style, 'windowFrameContour'), sash: objectPen(ctx.style, 'windowSash'), glass: objectPen(ctx.style, 'windowGlass') };
     const marks = openingMarks(el, host, p, ctx, { infillWhenRemoved: false });
     const z = openingZone(ctx, host, p, true);
     const { f, s1, s2, h1, h2, lo, hi } = z;
@@ -88,9 +88,11 @@ export const windowType: ElementType<WindowParams> = {
       pen,
       origin: { ...origin, part },
     });
-    const thin: Pen = { weight: 0.13 };
-    // Väggen under fönstret syns nedanför snittet, över hela hålet.
-    const below: Primitive[] = [line(h1, -f.half, h2, -f.half, thin, 'under'), line(h1, f.half, h2, f.half, thin, 'under')];
+    // Väggen under fönstret syns nedanför snittet, över hela hålet: väggens konturlinje (0.10.37).
+    const thin: Pen = objectPen(ctx.style, 'wallContour');
+    // Linjerna hör till väggen, så att väggens egen penna gäller dem, inte fönstrets.
+    const wallOrigin = { objectId: host.id, objectType: 'Wall', part: 'under' };
+    const below: Primitive[] = [-f.half, f.half].map((o): Primitive => ({ kind: 'line', a: f.at(h1, o), b: f.at(h2, o), pen: thin, origin: wallOrigin }));
     // Littera på insidan.
     if (showLittera(ctx, 'Window')) below.push(...litteraTag(ctx, el, f, p.at, z.face === 0 ? 1 : z.face === 1 ? -1 : 1));
 
@@ -100,8 +102,8 @@ export const windowType: ElementType<WindowParams> = {
         ...marks,
         line(h1, -f.half, h1, f.half, pens.cut, 'sida'),
         line(h2, -f.half, h2, f.half, pens.cut, 'sida'),
-        line(h1, -30, h2, -30, pens.view),
-        line(h1, 30, h2, 30, pens.view),
+        line(h1, -30, h2, -30, pens.glass),
+        line(h1, 30, h2, 30, pens.glass),
         ...below,
       ];
     }
@@ -110,7 +112,7 @@ export const windowType: ElementType<WindowParams> = {
     const fw = p.frameWidth;
     const mid = (lo + hi) / 2;
     const prims: Primitive[] = [...marks, rect(s1, s1 + fw, lo, hi, 'karm', pens.cut), rect(s2 - fw, s2, lo, hi, 'karm', pens.cut)];
-    prims.push(line(s1 + fw, lo, s2 - fw, lo, pens.view, 'karm'), line(s1 + fw, hi, s2 - fw, hi, pens.view, 'karm'));
+    prims.push(line(s1 + fw, lo, s2 - fw, lo, pens.frame, 'karm'), line(s1 + fw, hi, s2 - fw, hi, pens.frame, 'karm'));
     if (level === 'detail') {
       // Detalj: bågarna innanför karmen, två bågar med mötespost i breda fönster,
       // och glaset som dubbla linjer.
@@ -129,16 +131,16 @@ export const windowType: ElementType<WindowParams> = {
             [b0, b0 + SASH],
             [b1 - SASH, b1],
           ];
-      for (const [x0, x1] of sashes) prims.push(rect(x0, x1, mid - SASH_DEPTH / 2, mid + SASH_DEPTH / 2, 'båge', pens.view));
+      for (const [x0, x1] of sashes) prims.push(rect(x0, x1, mid - SASH_DEPTH / 2, mid + SASH_DEPTH / 2, 'båge', pens.sash));
       const panes: [number, number][] = two
         ? [
             [b0 + SASH, c - SASH],
             [c + SASH, b1 - SASH],
           ]
         : [[b0 + SASH, b1 - SASH]];
-      for (const [x0, x1] of panes) prims.push(line(x0, mid - 6, x1, mid - 6, pens.view), line(x0, mid + 6, x1, mid + 6, pens.view));
+      for (const [x0, x1] of panes) prims.push(line(x0, mid - 6, x1, mid - 6, pens.glass), line(x0, mid + 6, x1, mid + 6, pens.glass));
     } else {
-      prims.push(line(s1 + fw, mid, s2 - fw, mid, pens.view));
+      prims.push(line(s1 + fw, mid, s2 - fw, mid, pens.glass));
     }
     return [...prims, ...below];
   },

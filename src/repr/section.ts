@@ -144,7 +144,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
   let maxU = -Infinity;
   const slopes: Record<string, RoofSlopeParams> = {};
   for (const l of visibleLines) {
-    // Öppningssättet följer stilmallens symbolpenna (0.8.33), streckat om den inte har en egen linjetyp.
+    // Öppningssättet har sin rad i stilboken (förut symbolpennan under), streckat om den inte har en egen linjetyp.
     const part = l.key.part;
     const pen: Pen = part
       ? { ...facadePen(style, part), ...(l.key.dash ? { dash: l.key.dash } : {}) }

@@ -248,7 +248,7 @@ export const slabType: ElementType<SlabParams> = {
       // Materialets snitt (0.10.28.2), annars stilmallens.
       const cut = materialCutFill(m, ctx.actionOf(el));
       for (const rings of slabRings(ctx, el))
-        out.push(...(cut ? materialCutPrims(rings, cut, { ...origin, part: 'snitt' }, ctx.style, ctx.scale) : [{ kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'snitt' } } as Primitive]));
+        out.push(...(cut ? materialCutPrims(rings, cut, { ...origin, part: 'snitt' }, ctx.style, ctx.scale, false, true) : [{ kind: 'region', role: 'cut', rings, fill: { kind: 'solid', color: 'ink' }, outline: { weight: 0.35 }, origin: { ...origin, part: 'snitt' } } as Primitive]));
       return out;
     }
     const above = zone === 'above';

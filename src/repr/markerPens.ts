@@ -45,7 +45,7 @@ export function markerPen(style: StyleSheet | undefined, key: MarkerPenKey): Pen
 /**
  * En rad i stilmallens penntabell (`pens`) som penna: tjockleken (eller
  * förvalet), färgen om den inte är svart, och linjetypens streckning.
- * Markörerna och dörrarnas och fönstrens klasser (0.8.33) läser så.
+ * Markörerna och objektens ställen (0.10.37) läser så.
  */
 export function stylePen(style: StyleSheet | undefined, key: string, weight: number): Pen {
   const own = style?.pens?.[key];

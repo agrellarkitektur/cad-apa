@@ -139,7 +139,7 @@ export function roofPlanPrims(el: Element<any>, ctx: PlanContext): Primitive[] {
     for (const rings of merged) {
       if (!(rings[0]?.length >= 3 && Math.abs(signedArea(rings[0])) > 100)) continue;
       // Materialets snitt (0.10.28.2), annars stilmallens.
-      if (cut) out.push(...materialCutPrims(rings, cut, origin, ctx.style, ctx.scale, true));
+      if (cut) out.push(...materialCutPrims(rings, cut, origin, ctx.style, ctx.scale, true, true));
       else out.push({ kind: 'region', rings, role: 'cut', fill: { kind: 'none' }, outline: null, origin, under: true });
     }
   }

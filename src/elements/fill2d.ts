@@ -131,11 +131,17 @@ export function materialSurfaceFill(m: Material | undefined): FillParams | undef
 
 /**
  * Snittytan med materialets snitt (0.10.28.2): papperet under, konturen
- * som stilmallens snitt (0,35) och mönstret ovanpå.
+ * som stilmallens snitt (0,35) och mönstret ovanpå. I planen (`plan`,
+ * 0.10.37) ritas konturen efter mönstret som snittets kontur (`asOutline`):
+ * objekttypens snittlinje och åtgärdens färg.
  */
-export function materialCutPrims(rings: readonly (readonly Vec2[])[], cut: FillParams, origin: Primitive['origin'], style: StyleResources | undefined, scale: number, under = false): Primitive[] {
-  const base: Primitive = { kind: 'region', role: 'cut', rings: rings as Vec2[][], fill: { kind: 'solid', color: 'paper' }, outline: { weight: 0.35 }, ownFill: true, ...(under ? { under: true } : {}), origin };
-  return [base, ...fillPrims(rings, cut, origin, under, style, scale).map((q) => ({ ...q, origin }))];
+export function materialCutPrims(rings: readonly (readonly Vec2[])[], cut: FillParams, origin: Primitive['origin'], style: StyleResources | undefined, scale: number, under = false, plan = false): Primitive[] {
+  const u = under ? { under: true } : {};
+  const base: Primitive = { kind: 'region', role: 'cut', rings: rings as Vec2[][], fill: { kind: 'solid', color: 'paper' }, ...(plan ? { outline: null, noOutline: true } : { outline: { weight: 0.35 } }), ownFill: true, ...u, origin };
+  const fills = fillPrims(rings, cut, origin, under, style, scale).map((q) => ({ ...q, origin }));
+  if (!plan) return [base, ...fills];
+  const outlines = rings.map((r): Primitive => ({ kind: 'polyline', points: r as Vec2[], closed: true, pen: { weight: 0.35 }, asOutline: true, ...u, origin }));
+  return [base, ...fills, ...outlines];
 }
 
 /** Mönstrets penna när varken objektet eller fyllningstypen har en egen, mm på papper. */
