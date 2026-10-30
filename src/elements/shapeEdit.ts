@@ -78,7 +78,7 @@ export function shapeOf(el: ShapeLike | undefined): ShapeLike | undefined {
   if (el.type === 'Shape2D') return el;
   // Markobjekt längs en linje (0.10.5): linjen som en öppen 2D-form, med bågar sedan 0.10.19.
   // Trappans referenslinje (0.11), likadant.
-  if ((el.type === 'Ground' || el.type === 'Stair') && Array.isArray(el.params.line) && (el.params.line as unknown[]).length >= 2) {
+  if ((el.type === 'Ground' || el.type === 'Stair' || (el.type === 'Railing' && !el.params.host)) && Array.isArray(el.params.line) && (el.params.line as unknown[]).length >= 2) {
     const bulges = el.params.bulges as number[] | undefined;
     return { type: 'Shape2D', params: { shape: 'polyline', points: el.params.line, ...(hasArcs(bulges) ? { bulges } : {}), closed: false } };
   }
@@ -162,6 +162,29 @@ export function shapePatch(doc: ProjectDoc, id: Id, hole: number | undefined, pa
       const flags = remapPerPoint(before, after, before.map((_, i) => (list.includes(i) ? 1 : null)), Boolean, true);
       const next = flags.flatMap((v, i) => (v ? [i] : []));
       out[key] = next.length ? next : undefined;
+    }
+    return out;
+  }
+  if (hole === undefined && el?.type === 'Railing') {
+    // Det ritade räckets linje (0.11.1): höjderna följer punkterna, nya punkter får höjden mellan grannarna.
+    const out: Record<string, unknown> = {};
+    if ('bulges' in patch) out.bulges = patch.bulges;
+    if (!('points' in patch)) return out;
+    const before = (el.params.line as [number, number][] | undefined) ?? [];
+    const after = patch.points as [number, number][];
+    out.line = after;
+    const z = el.params.z as number[] | undefined;
+    if (z?.some((v) => v)) {
+      const kept = remapPerPoint(before, after, before.map((_, i) => z[i] ?? 0), (v) => typeof v === 'number', true);
+      out.z = kept.map((v, i) => {
+        if (v !== null) return v;
+        const a = kept.slice(0, i).findLastIndex((x) => x !== null);
+        const b = kept.findIndex((x, j) => j > i && x !== null);
+        if (a < 0 || b < 0) return kept[a] ?? kept[b] ?? 0;
+        const da = Math.hypot(after[i][0] - after[a][0], after[i][1] - after[a][1]);
+        const db = Math.hypot(after[b][0] - after[i][0], after[b][1] - after[i][1]);
+        return Math.round((kept[a]! * db + kept[b]! * da) / Math.max(1e-6, da + db));
+      });
     }
     return out;
   }

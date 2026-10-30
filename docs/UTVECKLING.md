@@ -653,6 +653,69 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt. Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Räcket (0.11.1, format 26)
+
+- **Typmodellen** (`core/railingTypes.ts`): en räckestyp bor i en
+  definition (`Definition.railing`, valfritt fält, inget nytt format) med
+  `group`, kryssen `ground`, `building`, `childSafe`, parametrarna `params`
+  (`name`, `value` som tal eller formel, `perRailing`) och delarna `parts`
+  av slagen `point`, `along`, `repeat` och `surface`. Delarnas mått är tal
+  eller formler (`RailNum`); `railValues(model, own)` räknar parametrarna
+  (med räckets egna värden för dem som får ändras per räcke) och
+  `railNum` ett mått. Formlerna räknas med en egen liten räknare
+  (`evalFormula`, aldrig som kod). Fält för 0.11.3 finns redan (`slope`,
+  `gate`, `below`). De förvalda typerna (`defaultRailingTypes`, id
+  `t-ra01`–`t-ra03`) läggs i projektet av `ensureRailingTypes` i
+  `core/railings.ts` första gången ett räcke läggs (`addRailings`);
+  `updateRailingType` ändrar en typ.
+- **Elementet** `Railing` (`elements/railing.ts`, parametrarna i
+  `RailingParams` i `elements/railingGeometry.ts`): ritat med `line`,
+  `bulges` och `z` (höjden per punkt mot våningens golv), eller på en
+  trappa med elementets `host` (trappans id, så att räcket tas bort,
+  kopieras och flyttas med trappan som dörrarna med väggen) och
+  `params.host` (`side`, och `from`/`to` längs gånglinjen, utan
+  gränssnitt än). `place` och `inset` (läget mot kanten, 50 mm), `values`
+  (egna värden), `winder: 'stepped'`, `transition: 'knee'`. Ett räcke på en
+  trappa flyttas inte för sig (`movePatch` ger null); speglas trappan byter
+  räcket sida (`transforms.ts`).
+- **Geometrin** (`railingGeometry.ts`, ren räkning): `nosingLine(g)` är
+  stegnoslinjen längs gånglinjen (stegens framkanter, vilplanen plana till
+  där nästa lopps lutning möter dem, golvet ovanför sist). Längs en kant
+  blir den en profil i kantens sträcka (`ribAt(u).lp`/`rp`); *Utjämnad*
+  tar bort loppens inre stegnosar, så att lutningen blir rak genom loppet,
+  och `winderDeviation` är den största avvikelsen. Krökarna (R 150) är
+  korta raka bitar (`bendProfile`). `hostedPath` och `freePath` ger
+  `RailPath` (punkterna, höjden, sträckan och vilket håll som är inåt).
+  `railingBody` lägger delarna: stolparna jämnt med högst delningen i
+  varje rak bit (hörn över 15°), spjälorna med lika öppningar mellan
+  stolparna, ytorna i varje mellanrum och de längsgående delarna med sin
+  förlängning (`withExtension`).
+- **Planen** (`railingPlan`): linjen i Skiss och Normal (förlängningen i
+  Normal), de längsgående delarna som dubbla linjer och stolparna i
+  Detalj (`detail` per del, förval Detalj). Det som ligger över planens
+  snitt (höjden längs linjen, delad där den går genom snittet) ritas med
+  `railAbove`. Ställena i `repr/railingPens.ts`, gruppen *Räcken* i
+  `penRows.ts`; sektionernas snitt är `railCut` (`cutRowOf`) och
+  fasadernas linjer `railElev` (`facadeRowOf`). `alsoOnStorey` ritar ett
+  räcke på en trappa också i våningen ovanför; `planReads: ['Stair']`.
+- **3D** (`railingSolids`): liggarna som sneda kroppar per bit (`top` och
+  `bottom` som plan genom ändarnas höjder), stolpar och spjälor lodräta,
+  ytorna sneda mellan stolparna (`glass` utan material).
+- **Varningarna**: `railingWarnings` (BFS 2024:9, 2 kap. 11 och 13 §, och
+  *avviker från praxis*) och `stairHandrailWarning` (12 §, på trappan, kan
+  kvitteras med `ack: ['handrails']`). Trappans egna texter i
+  `stairWarnings` säger *avviker från praxis*.
+- **Gränssnittet**: verktyget `ui/tools/railingTool.ts` (*Längs kant* med
+  `stairEdgesAt`, *Ritat* med `ChainInput` och höjden ur trappkanten man
+  klickar på), verktygsraden i `toolOptions.ts`, frågan i `prompts.ts`,
+  smartspöt i `ui/wand/railingAlong.ts`, trappans smartmeny
+  (`stairRailing`, `stairRailings` i `opDefs.ts`, `ops.ts`, `tool.ts`).
+  Fälten och typen i `ui/railingFields.ts` (nyckeln `rail:…`, typens
+  `rail:type:<def>:…`); knapparna `rail-…` och `railtype-…` i
+  `selectionActions.ts`. Trappans panel har *Räcken* och kvitteringen
+  (`stairFields.ts`).
+- **Tester**: `tests/v0111.test.ts`.
+
 ## Trappan (0.11, format 26)
 
 - **Elementet** `Stair` (`elements/stair.ts`, `StairParams` i
@@ -664,8 +727,8 @@ förut; vid nästa huvudversion flyttas de klara till arkivet.
   (`riser` eller `tread`) med `startTread`/`endTread`, `landings` (punkter
   där sträckan efter är vilplan) och `turnLandings` (punkter där svängen
   är det), `thickness`, `hole` (`auto`/`none`), `headroom` (2100),
-  `material`. Valfria och olästa än: `build`/`built` (0.11.2) och `spiral`
-  (0.11.3). Elementets `seenOn` (*Syns också på*) gäller också ramper,
+  `material`. Valfria och olästa än: `build`/`built` (0.11.4) och `spiral`
+  (0.11.5). Elementets `seenOn` (*Syns också på*) gäller också ramper,
   markytor, stödmurar och bjälklag (`SEEN_ON_TYPES` i `core/model.ts`).
 - **Geometrin** (`stairGeometry`, ren räkning): referenslinjen görs platt
   (`flatLine`, bågarna som korta raka bitar), och bandet byggs i *zoner*:

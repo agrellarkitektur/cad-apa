@@ -1,4 +1,5 @@
 import { stairFieldsMarkup } from './stairFields';
+import { railingFieldsMarkup, railingTypeMarkup } from './railingFields';
 import { defaultSheet } from '../core/viewCategories';
 import { materialUses } from '../core/materials';
 import type { FillParams } from '../elements/fill2d';
@@ -65,6 +66,8 @@ export function sharedSection(doc: ProjectDoc, els: Element[]): string | null {
   const parts: string[] = [];
   const t = typeOf(els[0].type);
   const sameDef = els.every((e) => e.definition && e.definition === els[0].definition) ? els[0].definition : undefined;
+  // Räckestypen (0.11.1): delarna och parametrarna.
+  if (sameDef && els[0].type === 'Railing') parts.push(railingTypeMarkup(doc, sameDef));
   if (sameDef && t?.typeParams?.length) {
     const def = doc.definitions[sameDef];
     const users = Object.values(doc.elements).filter((e) => e.definition === sameDef).length;
@@ -167,6 +170,8 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
       return groundFieldsMarkup(doc, el, view);
     case 'Stair':
       return stairFieldsMarkup(doc, el);
+    case 'Railing':
+      return railingFieldsMarkup(doc, el);
     case 'North':
     case 'BasisFacade':
     case 'Section':

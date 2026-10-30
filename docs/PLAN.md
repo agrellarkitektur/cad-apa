@@ -171,6 +171,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.10.40 | Stilboken ut och in |
 | 0.10.40.1 | Granskning efter 0.10.40 |
 | 0.11 | Trappan (format 26): referenslinje med bågar, kilsteg och vilplan, gånglinje, plansteg, varningar, plan/sektion/3D, hålet, *Syns också på* |
+| 0.11.1 | Räcket: eget objekt med typmodellen (delar och parametrar med formler), längs trappans kant eller ritat, utjämnad eller hoppande vid kilstegen, plan/sektion/fasad/3D, stilboksgruppen *Räcken*, varningar ur BFS 2024:9 och praxis |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
 val och det som *inte gjordes*. De ligger i arkivet:
@@ -219,14 +220,14 @@ byggs vidare i takt med resten:
 ### 0.11 Trappan ✓ · *nytt format (26)*
 
 Planerat 30 oktober 2026 (beslut i `cad-apa-synpunkter.md`, *Trappan och
-räcket: 0.11–0.11.3*). Grundtanken (Carl August): bygg för flexibilitet från
+räcket: 0.11–0.11.5*). Grundtanken (Carl August): bygg för flexibilitet från
 början i stället för "rak trappa och enkelt räcke först". Trappan och räcket
 hålls isär. Facit för planen: Carl Augusts *Trappskiss bygglov 1:50*
 (L-trappa med kilsteg; det under snittet heldraget, det ovanför
 streckprickat med snittlinjen snett över, gångriktning från ring till pil;
 i varianten med plansteg är första/sista plansteget i golvnivå streckat; i
 våningen ovanför ritas trappan hel upp till sista steget). Bara 0.11 ger
-nytt format: fälten för 0.11.1–0.11.3 läggs in som valfria från början.
+nytt format: fälten för den byggda trappan och spiraltrappan läggs in som valfria från början.
 Stor, kan behöva mer än en session (då på en gren).
 
 - **Referenslinjen ritas i trappverktyget** (raka sträckor och bågar);
@@ -259,7 +260,7 @@ Stor, kan behöva mer än en session (då på en gren).
 - ***Syns också på*** per objekt: trappor, ramper, markytor, stödmurar och
   bjälklag ritas som vy (kontur) på Platsen eller en annan våning, med en
   egen grupp av ställen (*Från annan våning*).
-- **Spiraltrappan** förbereds i formatet (byggs i 0.11.3).
+- **Spiraltrappan** förbereds i formatet (byggs i 0.11.5).
 - Trappan sparar sina kanter så att räcket har något att haka i.
 
 **BBR och vägledningen** (uppslaget 30 oktober 2026, inte ur minnet):
@@ -299,28 +300,144 @@ bör ha minst trappans bredd.
 
 **Inte gjort i 0.11:** det kopplade egna hålet (följer trappan, kan låsas
 upp), trappans littera och egna penna, utomhustrappa (300 mm), den
-byggda trappan (0.11.2) och spiraltrappan (0.11.3; fälten finns).
+byggda trappan (0.11.4) och spiraltrappan (0.11.5; fälten finns).
 
-### 0.11.1 Räcket
+### 0.11.1 Räcket ✓
 
-Egen utredning först (mockup i Claude Design, ett par tavlor, med all
-önskad funktionalitet från början), sedan bygge. Eget objekt, fristående
-från trappan: smartspöas dit längs trappans kant, eller ritas med egna
-referenslinjer; punkter flyttas manuellt i X, Y och Z. Följer med trappan
-vid flytt. Ska kunna byggas ut.
+Utredningen klar och godkänd 30 oktober 2026 (mockup i Claude Design
+"Räcket – utredning 0.11.1", fem tavlor; specifikationen i
+`cad-apa-racket-utredning.md` i projektets kunskapsbas). Stor, kan behöva
+två sessioner.
 
-### 0.11.2 Byggd trappa
+**Besvarat 30 oktober:** A uppdelning i tre versioner; B ett objekt för
+räcke och ledstång, som också ritar staket, stängsel och spaljéer; C
+handledaren vid kilstegen *Utjämnad* (förval) eller *Hoppande*; D
+smartspöt plus *Räcke längs kanten* i trappans smartmeny; E BFS 2024:9 i
+varningarna där det är föreskrift, *avviker från praxis* för det
+vedertagna (räckeshöjder, stegdjup, stegformeln, bredd …), i alla
+varningar i appen; F 0.11.1 räcket, 0.11.2 editorn, 0.11.3 staket och
+grindar; G typen bestämmer vilka mått som får ändras per räcke (kryss
+*per räcke*, höjderna kryssade som förval); H grinden är en sträcka i
+räcket, redovisas oftast i en uppställning, förteckning valbar.
+Typlistan: grupper, egna grupper som kan skapas, döpas om, flyttas och
+tas bort, typer dras mellan grupperna.
+
+- **Eget objekt *Räcke*** under Rita, med typ och littera (RÄ; ST för
+  staket och stängsel, SP för spaljé, G för grind). Referenslinje med
+  punkter i X, Y och Z, raka sträckor och bågar (G).
+- **Två sätt att rita:** *Längs kant* (smartspöt; i 0.11.1 trappans
+  kanter) och *Ritat* (Z ur det man snäpper till). Läge mot kanten:
+  innanför, på kanten, utanpå.
+- **Kopplat till trappan:** räcket sparar sträckan längs kanten, så det
+  följer trappan. *Lösgör* gör räcket fritt.
+- **Höjden mäts lodrätt**, i trappan från stegnoslinjen, på en våning från
+  golvet. Övergången lutning–plan: krök (R 150) eller knäck.
+- **Typmodellen:** en typ är en lista med delar av fyra slag: *punkt*
+  (stolpe, konsol, plint), *längsgående* (handledare, liggare, bottenlist,
+  ledstång, spänntråd), *upprepad* (spjälor, ribbor) och *yta* (glas,
+  plåt, nät, spaljérutnät). Varje del har profil, material, läge, ändar,
+  beteende i trappa och vid kilsteg, ritningens nivå och ställe. Nya slags
+  delar utan nytt format.
+- **Typens parametrar** med formler (*Ledstångshöjd = Skyddshöjd − 40*),
+  egna parametrar och kryss för vilka som får ändras per räcke.
+- **Mönster:** modul (största delning, jämnt, förval högst 1 200); i
+  trappa följer lutningen.
+- **Ledstången:** förlängning i början och slutet (förval 300) och avslut
+  (böjd nedåt, mot vägg, rak).
+- **Ritningen:** stilboksgrupp *Räcken* (planen: konturlinje, över
+  snittet, stolpar, ledstång; fasader och sektioner: snittlinje,
+  konturlinje, fyllning). Skiss en linje, Bygglov plus ledstångens
+  förlängning, Detalj stolpar och avslut. 3D: delarna svepta längs linjen.
+- **Varningar, aldrig spärrar:** BFS 2024:9, 2 kap. 11 § (barnsäkert),
+  12 § (ledstång på båda sidor; står på trappan, kan kvitteras), 13 §
+  (kontinuerlig ledstång), och *avviker från praxis* för höjderna och
+  avvikelse vid kilstegen över 50 mm. Trappans varningstexter skrivs om.
+- I 0.11.1 ändras typerna i panelen (tavla 2); editorn kommer i 0.11.2.
+
+**Fynd** (uppslaget 30 oktober): Boverkets nya regler gäller sedan 1 juli
+2025, övergångstiden med BBR slutade 30 juni 2026. Räcken och ledstänger
+står i BFS 2024:9, 2 kap. 10–13 §, utan mått för steg, räckeshöjd eller
+ledstångshöjd (de var allmänna råd i BBR).
+
+**Claudes val (0.11.1):**
+
+- Typen bor i definitionen (`Definition.railing`), som väggarnas och
+  dörrarnas typer: littera, och alla räcken av typen ändras med den.
+  Inget nytt format. De förvalda typerna läggs i projektet första gången
+  ett räcke läggs: **RÄ01** räcke med stolpar (40, högst 1 200 mellan),
+  handledare 50 × 40 på Skyddshöjd 900, bottenliggare, spjälor 20 med
+  högst 90 öppning och en rund ledstång Ø 40 på *Skyddshöjd − 40*, 70 mm
+  innanför, förlängd 300; **RÄ02** glasräcke; **RÄ03** ledstång på
+  väggen med konsoler (grupp Ledstänger). Littera med två siffror.
+- Räcket på en trappa har trappan som elementets `host` (som dörren i
+  väggen): det tas bort, kopieras och flyttas med trappan. Det flyttas
+  inte för sig; *Lösgör från trappan* först. Läget är *Innanför* 50 mm
+  som förval på en trappa, *På kanten* när det ritas.
+- *Utjämnad*: rak lutning längs kanten från loppets första till sista
+  stegnos (planen och vilplanen som de är). Avvikelsen mäts i de inre
+  stegnosarna; i en vanlig L-trappa blir den över 50 mm på båda kanterna,
+  så varningen syns ofta.
+- Stegnoslinjen på ett vilplan är plan tills nästa lopps lutning möter
+  den (ett stegdjup före nästa sättsteg); på plansteget i golvet likadant.
+- Planen: det som står på trappsteg ovanför planens snitt (stegnoslinjen
+  över snitthöjden) är streckprickat, som trappans steg. I Detalj ritas
+  handledare, ledstång (dubbla linjer) och stolpar, inte spjälorna och
+  ytorna. Ledstångens förlängning syns från Normal.
+- Stolparna står jämnt i varje rak bit mellan hörn (över 15°); spjälorna
+  med lika öppningar mellan stolparna, mätta längs linjen. Ytorna delas
+  i linjens brytpunkter.
+- 3D: liggarna är raka kroppar per bit (runda som fyrkantiga), stolparna
+  åttahörningar när de är runda. Ledstångens avslut (*böjd nedåt*, *mot
+  vägg*) sparas i typen men ritas inte än.
+- Varningarna (aldrig spärrar): skyddshöjd under 900 i trappor och 1 100
+  för ett ritat räcke i gruppen Räcken; ledstång utanför 800–1 000 över
+  stegnosen; barnsäkert (11 §): öppningar över 100, ingen fyllning, glipan
+  under räcket över 50 över stegnosen (100 över golv), liggare mellan
+  150 och 800; 13 §: ledstången går inte hela trappan, förlängning under
+  300; den utjämnade handledaren mer än 50 från stegnoshöjden. 12 § står
+  på trappan och kvitteras där.
+
+**Inte gjort i 0.11.1:** räckestypeditorn (0.11.2; typerna ändras i
+panelen), grupperna som egen lista att döpa om och flytta, delarnas
+ordning, ledstångens avslut i 3D, delsträcka (`from`/`to` finns i
+formatet men inte i panelen), räcke på Platsen och andra kanter (0.11.3),
+*Flytta i höjd* för ett ritat räcke, egen profil (0.11.6). Klickjämförelsen
+är inte körd (granskningen efter 0.11.5).
+
+### 0.11.2 Räckestypeditorn
+
+Stilboken › Resurser › *Räckestyper* (tavla 4): typlistan i grupper
+(Räcken, Ledstänger, Staket, Stängsel, Spaljéer, Grindar; *Ny typ…*,
+*Duplicera*, *Ny grupp…*) med kryssen *Mark* och *Byggnad*, delträdet med
+*+ Lägg till del…*, förhandsvisning (Rak, I trappa, På sluttning, Grind,
+Planen, 3D) där man klickar på en del, den valda delens egenskaper och
+typens parametrar. Egen profil när profilverktyget finns (0.11.6).
+
+### 0.11.3 Staket och grindar
+
+Platsen (höjden ur den färdiga marken, sluttning *Följer marken* eller
+*Trappstegat*, stolpar under mark), andra kanter (hål, bjälklag, ramp,
+stödmurens krön, vägg), typerna ST, SP och G. **Grind** (tavla 5): en
+sträcka i räcket görs till grind (*Gör till grind…*), typ *Följer
+staketet*, en grindtyp eller *Eget här*; bredd (hålmått), hängning
+(vänster, höger, par, skjut), utåt/inåt, slagbåge i planen som dörrarna,
+grindstolpar, littera; längsgående delar avbryts vid grinden. På Platsen
+visas typerna med *Mark* först, på en våning de med *Byggnad*. *Flytta
+till våning* byter hemvist. IFC (0.12): IfcRailing, grindar som IfcDoor.
+
+### 0.11.4 Byggd trappa
 
 Vangstycken, plan- och sättsteg som delar med egna inställningar, stegnos,
 kontrastmarkering, synliga vangstycken i planen, bygghandlingsgrafiken.
 
-### 0.11.3 Spiraltrappan
+### 0.11.5 Spiraltrappan
 
 Numeriskt läge (inner- och ytterdiameter, grader också över 360,
 varvriktning; referenslinjen en genererad helix); planen med snittet rätt
-också när den snurrar mer än ett varv.
+också när den snurrar mer än ett varv. Därefter en granskning
+(klickjämförelsen med trappsteg och räcken).
 
-### 0.11.4 Profilverktyget · *nytt format*
+### 0.11.6 Profilverktyget · *nytt format*
 
 Carl August 22 oktober; före piloten (24 oktober). Stor.
 
@@ -335,8 +452,9 @@ Carl August 22 oktober; före piloten (24 oktober). Stor.
   linjefamiljer. Samma mekanism som profilen (rita 2D och gör det till
   en definition). Linjerna måste gå vågrätt, lodrätt eller genom rutans
   hörn för att upprepas; bågar blir raka bitar
+- Väggar med lager får material per lager; egna profiler i räckestyperna
 
-### 0.11.5 Dörrar och fönster
+### 0.11.7 Dörrar och fönster
 
 Carl August 22 oktober. Stor; delas om det behövs.
 
@@ -472,7 +590,7 @@ Vinklar:
 
 - Tak ur en kontur där varje kant är takfot eller gavel (valm och vinkelhus
   som ett objekt, med vinkelrännor); till dess byggs de av takfall (0.10)
-- Fler trappformer (spiraltrappa, fri form) och räcken som eget objekt
+- Fler trappformer (fri form); spiraltrappan och räcket finns i 0.11.1–0.11.5
 
 ### Sol och analys på platsen (stor, minst två sessioner)
 

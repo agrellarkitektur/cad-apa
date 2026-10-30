@@ -1,6 +1,8 @@
 import type { Element, Id, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
 import { geometryOfStair, stairHoleIn, stairParams, storeyAbove } from '../elements/stair';
+import { railingsOnStair, stairHandrailWarning } from '../elements/railing';
+import { addRailingsOnStair } from './railingFields';
 import { minGoing, RISER_TARGET, stairWarnings, STAIR_THICKNESS, TREAD_LENGTH, WALK_LINE, HEADROOM, type StairParams } from '../elements/stairGeometry';
 import { STRAIGHT } from '../geometry/arc';
 import { levelOf } from '../repr/solids';
@@ -11,7 +13,8 @@ import { numberField } from './fieldMarkup';
 /**
  * Trappans fält i egenskaperna (0.11): bredd, stigning, steg, gånglinje,
  * början och slut, svängar och vilplan, uppbyggnad och hålet. Varningarna
- * (BBR 8:232 och stegformeln) står överst; de spärrar aldrig.
+ * (praxis och BFS 2024:9, 2 kap. 12 § för ledstången) står överst; de spärrar
+ * aldrig.
  */
 
 const mm = (v: number) => Math.round(v).toLocaleString('sv-SE');
@@ -26,7 +29,17 @@ export function stairFieldsMarkup(doc: ProjectDoc, el: Element): string {
   const own = typeof el.params.rise === 'number';
   const above = storeyAbove(doc, el.storey);
   const warnings = g ? stairWarnings(p, g) : ['Referenslinjen är för kort för en trappa.'];
-  const warn = warnings.length ? `<div class="stair-warnings" role="note">${warnings.map((w) => `<p class="skew-note"><b>!</b> ${escapeHtml(w)}</p>`).join('')}</div>` : '';
+  // Ledstången på båda sidor (0.11.1, BFS 2024:9, 2 kap. 12 §): kan kvitteras.
+  const handrail = g ? stairHandrailWarning(doc, el) : null;
+  const acked = ((el.params.ack as string[] | undefined) ?? []).includes('handrails');
+  const warn =
+    warnings.length || handrail
+      ? `<div class="stair-warnings" role="note">${warnings.map((w) => `<p class="skew-note"><b>!</b> ${escapeHtml(w)}</p>`).join('')}${handrail ? `<p class="skew-note"><b>!</b> ${escapeHtml(handrail)} <button class="btn btn-small" data-action="stair-ack" data-value="1">Kvittera</button></p>` : ''}</div>`
+      : '';
+  const on = railingsOnStair(doc, el.id);
+  const railRow = `<div class="field-label">Räcken</div>
+    <div class="row wrap"><button class="btn" data-action="stair-railing" data-side="left"${on.left.length ? ' disabled' : ''}>Vänster sida</button><button class="btn" data-action="stair-railing" data-side="right"${on.right.length ? ' disabled' : ''}>Höger sida</button><button class="btn" data-action="stair-railing" data-side="both"${on.left.length && on.right.length ? ' disabled' : ''}>Båda sidor</button></div>
+    <p class="note">${on.left.length || on.right.length ? `Räcke på ${[on.left.length ? 'vänster' : '', on.right.length ? 'höger' : ''].filter(Boolean).join(' och ')} sida (sett uppåt).` : 'Inga räcken än.'} Räckena följer trappans kant; typen och höjderna ändras i räckets egenskaper.${acked ? ' Varningen för ledstång på båda sidor är kvitterad. <button class="btn btn-small" data-action="stair-ack" data-value="0">Ångra kvitteringen</button>' : ''}</p>`;
   const h = g?.riserHeight ?? 0;
   const going = g ? minGoing(g) : 0;
   const summary = g
@@ -55,9 +68,10 @@ export function stairFieldsMarkup(doc: ProjectDoc, el: Element): string {
     ${select('stair:refSide', 'Referenslinjen', p.refSide ?? 'center', [['left', 'Vänster kant'], ['center', 'Mitten'], ['right', 'Höger kant']])}
     <div class="fields">${select('stair:start', 'Början', p.start ?? 'riser', [['riser', 'Sättsteg'], ['tread', 'Plansteg']])}${p.start === 'tread' ? numberField('stair:startTread', 'Första plansteget', p.startTread ?? TREAD_LENGTH, 'mm') : ''}</div>
     <div class="fields">${select('stair:end', 'Slut', p.end ?? 'riser', [['riser', 'Sättsteg'], ['tread', 'Plansteg']])}${p.end === 'tread' ? numberField('stair:endTread', 'Sista plansteget', p.endTread ?? TREAD_LENGTH, 'mm') : ''}</div>
+    ${railRow}
     <div class="field-label">Sträckor och svängar</div>
     <ul class="stair-turns">${rows.join('')}</ul>
-    <div class="fields">${select('stair:build', 'Uppbyggnad', p.build ?? 'monolithic', [['monolithic', 'Monolitisk'], ['built', 'Byggd (0.11.2)']], ['built'])}${numberField('stair:thickness', 'Tjocklek', p.thickness ?? STAIR_THICKNESS, 'mm')}</div>
+    <div class="fields">${select('stair:build', 'Uppbyggnad', p.build ?? 'monolithic', [['monolithic', 'Monolitisk'], ['built', 'Byggd (0.11.4)']], ['built'])}${numberField('stair:thickness', 'Tjocklek', p.thickness ?? STAIR_THICKNESS, 'mm')}</div>
     ${select('stair:hole', 'Hålet', p.hole ?? 'auto', [['auto', 'Automatiskt'], ['none', 'Inget']])}
     <div class="fields">${numberField('stair:headroom', 'Fri höjd', p.headroom ?? HEADROOM, 'mm')}</div>
     <div class="row"><button class="btn" data-action="stair-own-hole" title="Hålet blir en vanlig håltagning i bjälklaget, som ritas om med bjälklagets grepp; trappan tar då inget eget">Gör till eget hål</button></div>
@@ -170,6 +184,19 @@ export function stairAction(store: DocStore, ids: Id[], action: string, b: HTMLE
       const list = [...set].sort((x, y) => x - y);
       return { [key]: list.length ? list : undefined };
     });
+  }
+  if (action === 'stair-ack') {
+    const on = b.dataset.value === '1';
+    return patchStair(store, ids, on ? 'Kvittera ledstången' : 'Ångra kvitteringen', (_, el) => {
+      const set = new Set((el.params.ack as string[] | undefined) ?? []);
+      if (on) set.add('handrails');
+      else set.delete('handrails');
+      return { ack: set.size ? [...set] : undefined };
+    });
+  }
+  if (action === 'stair-railing') {
+    const side = b.dataset.side as 'left' | 'right' | 'both';
+    return addRailingsOnStair(store, ids[0], side === 'both' ? ['left', 'right'] : [side]).length > 0;
   }
   if (action === 'stair-own-hole') {
     const doc = store.doc;

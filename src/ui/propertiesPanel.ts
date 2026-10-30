@@ -329,7 +329,7 @@ export class PropertiesPanel implements ActionPanel {
     }
 
     // Typ (littera).
-    if (sameType && t?.typeParams?.length) {
+    if (sameType && (t?.typeParams?.length || t?.type === 'Railing')) {
       const defs = Object.values(doc.definitions).filter((d) => d.elementType === t.type);
       const current = els.every((e) => e.definition === els[0].definition) ? els[0].definition : undefined;
       const options = defs

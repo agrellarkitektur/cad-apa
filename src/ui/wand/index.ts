@@ -1,6 +1,7 @@
 import { dimWall } from './dimWall';
 import { groundAlong } from './groundAlong';
 import { stairAlong } from './stairAlong';
+import { railingAlong } from './railingAlong';
 import { groundArea } from './groundArea';
 import { labelOn } from './labelOn';
 import { lineAlong } from './lineAlong';
@@ -21,6 +22,7 @@ export function registerWands(): void {
   registerWand(wallAlong);
   registerWand(groundAlong);
   registerWand(stairAlong);
+  registerWand(railingAlong);
   registerWand(groundArea);
   registerWand(lineAlong);
   registerWand(shapeAround);

@@ -6,8 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11** (alfa), Trappan; nästa är **0.11.1 Räcket** (en utredning med
-mockup först).
+**0.11.1** (alfa), Räcket; nästa är **0.11.2 Räckestypeditorn**.
 
 ## Vad som fungerar
 
@@ -1150,6 +1149,52 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
 
+Version 0.11.1, Räcket (samma filformat, 26; projekt från 0.11 öppnas):
+- **Verktyget Räcke** (under Rita) för räcken och ledstänger; samma objekt
+  ritar staket, stängsel och spaljéer från 0.11.3. Två sätt i
+  verktygsraden: **Längs kant** (förval) lägger räcket längs den trappkant
+  du klickar på, och **Ritat** klickar referenslinjen punkt för punkt med
+  bågar (**Båge**, G), där en punkt på en trappkant får stegnoslinjens
+  höjd och andra golvets. Typ och **läge mot kanten** (innanför, på
+  kanten, utanpå) väljs i verktygsraden. Smartspöt lägger räcket längs
+  trappans kant (Tab: båda sidor) eller längs en vägg eller linje
+- **Trappans smartmeny** har **Räcke längs kanten** (sidan närmast där du
+  klickade) och **Räcken på båda sidor**; trappans egenskaper har samma
+  knappar under *Räcken*
+- **Kopplat till trappan**: räcket följer trappan när den ändras, flyttas,
+  vrids, speglas, kopieras eller tas bort. **Lösgör från trappan** gör det
+  till ett ritat räcke. Höjden mäts lodrätt från stegnoslinjen; vid
+  kilstegen är handledaren **Utjämnad** (rak lutning genom loppet, förval)
+  eller **Hoppande** (exakt höjd över varje stegnos), och övergången
+  mellan lutning och plant är en **krök (R 150)** eller ett **knäck**
+- **Typerna** RÄ01 (räcke med spjälor, handledare och ledstång innanför),
+  RÄ02 (glasräcke) och RÄ03 (ledstång på väggen) läggs i projektet första
+  gången du lägger ett räcke. En typ är en lista med **delar** (punkt:
+  stolpar och konsoler; längsgående: handledare, liggare, ledstång;
+  upprepad: spjälor; yta: glas och fyllning) och **parametrar** med
+  formler, t.ex. *Ledstångshöjd = Skyddshöjd − 40*. Typen ändras under
+  *Påverkar fler objekt* i räckets egenskaper: littera, grupp, *Mark*,
+  *Byggnad*, *Barnsäkert*, parametrarna med kryss **per räcke**, och
+  delarnas profil, höjder, delning, förlängning, läge och material. **Ny
+  typ** gör en kopia. Under *Det här räcket* ändras de parametrar typen
+  tillåter (Skyddshöjd, Ledstångshöjd och Förlängning i de förvalda)
+- **I planen**: en linje i Skiss och Normal, med ledstångens förlängning
+  (300 mm) i Normal; handledare, ledstång och stolpar i Detalj. Det som
+  står på trappsteg ovanför planens snitt är streckprickat. I våningen
+  ovanför ritas räcket helt. **I 3D, sektioner och fasader**: delarna
+  längs linjen, liggarna lutande i trappan och spjälorna lodräta. Pennorna
+  står i stilboken under **Räcken**
+- **Varningar, aldrig spärrar**: BFS 2024:9 där det är föreskrift
+  (2 kap. 11 § barnsäkert, 12 § ledstång på båda sidor, 13 § kontinuerlig
+  ledstång med stöd före och efter), och *avviker från praxis* för de
+  vedertagna måtten: skyddshöjd under 900 mm i trappor och 1 100 mm vid
+  kanter, ledstång utanför 800–1 000 mm, öppningar över 100 mm, glipan
+  under räcket, liggare att klättra på, förlängning under 300 mm och
+  den utjämnade handledaren mer än 50 mm från stegnoshöjden vid kilstegen.
+  Trappan varnar tills båda sidor har räcke eller ledstång, och varningen
+  kan **kvitteras**. Trappans egna varningar säger nu också *avviker från
+  praxis* (BBR gäller inte längre för nya ansökningar)
+
 Version 0.11, Trappan (**nytt filformat, 26**; projekt från 0.10.32–0.10.40.1 öppnas inte):
 - **Verktyget Trappa** (under Rita): klicka referenslinjen i gångriktningen,
   uppåt, punkt för punkt; **Båge** (G) gör nästa kant till en båge.
@@ -1183,7 +1228,7 @@ Version 0.11, Trappan (**nytt filformat, 26**; projekt från 0.10.32–0.10.40.1
   streckat. Pennorna ställs in i stilboken under **Trappor**
 - **I sektioner och 3D**: en monolitisk kropp med steg och sned undersida,
   snittad när sektionen går genom den. *Tjocklek* i egenskaperna;
-  *Uppbyggnad Byggd* (vangstycken, plan- och sättsteg) kommer i 0.11.2
+  *Uppbyggnad Byggd* (vangstycken, plan- och sättsteg) kommer i 0.11.4
 - **Hålet i bjälklaget ovanför** tas automatiskt, från det första steg där
   den fria höjden (2 100 mm) inte räcker. *Hålet: Inget* tar bort det, och
   **Gör till eget hål** gör det till en vanlig håltagning i bjälklaget som

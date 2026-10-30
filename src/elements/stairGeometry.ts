@@ -50,13 +50,13 @@ export interface StairParams {
   landings?: number[];
   /** Punkterna där svängen är vilplan i stället för kilsteg. */
   turnLandings?: number[];
-  /** Uppbyggnad: monolitisk (en kropp, förval) eller byggd (0.11.2). */
+  /** Uppbyggnad: monolitisk (en kropp, förval) eller byggd (0.11.4). */
   build?: 'monolithic' | 'built';
   /** Den monolitiska kroppens tjocklek under stegen, mm. */
   thickness?: number;
-  /** Den byggda trappans delar (0.11.2; läses inte än). */
+  /** Den byggda trappans delar (0.11.4; läses inte än). */
   built?: { stringer?: { width?: number; height?: number; material?: string }; tread?: { thickness?: number; nosing?: number; material?: string }; riser?: { thickness?: number; material?: string } };
-  /** Spiraltrappa (0.11.3; läses inte än): referenslinjen blir en genererad helix. */
+  /** Spiraltrappa (0.11.5; läses inte än): referenslinjen blir en genererad helix. */
   spiral?: { inner: number; outer: number; sweep: number; dir?: 'cw' | 'ccw' };
   /** Hålet i bjälklaget ovanför: automatiskt ur den fria höjden (förval) eller inget. */
   hole?: 'auto' | 'none';
@@ -511,7 +511,9 @@ export function walkDir(g: StairGeometry, u: number): Vec2 {
 export const minGoing = (g: StairGeometry): number => (g.runs.length ? Math.min(...g.runs.map((r) => r.going)) : 0);
 
 /**
- * Varningarna (0.11): BBR 8:232 och vägledningens mått, uppslagna 30
+ * Varningarna (0.11, texterna 0.11.1): måtten är vedertagna men står inte i
+ * Boverkets föreskrifter (BFS 2024:9 har inga mått för steg och bredd; de
+ * var allmänna råd i BBR 8:232), så de *avviker från praxis*. Uppslaget 30
  * oktober 2026. Trappan går alltid att rita; varningarna står i panelen.
  */
 export function stairWarnings(p: StairParams, g: StairGeometry, outdoor = false): string[] {
@@ -521,21 +523,21 @@ export function stairWarnings(p: StairParams, g: StairGeometry, outdoor = false)
   const minG = outdoor ? 300 : 250;
   for (const r of g.runs) {
     if (r.going < minG - 0.5) {
-      out.push(`Stegdjupet i gånglinjen är ${mm(r.going)}; BBR: minst ${minG} mm${outdoor ? ' utomhus' : ' (300 utomhus)'}.`);
+      out.push(`Stegdjupet i gånglinjen är ${mm(r.going)}; avviker från praxis (minst ${minG} mm${outdoor ? ' utomhus' : ', 300 utomhus'}).`);
       break;
     }
   }
   for (const r of g.runs) {
     const f = 2 * h + r.going;
     if (f < 600 - 0.5 || f > 650 + 0.5) {
-      out.push(`Stegformeln 2 × steghöjd + stegdjup är ${mm(f)}; den bör ligga mellan 600 och 650 mm.`);
+      out.push(`Stegformeln 2 × steghöjd + stegdjup är ${mm(f)}; avviker från praxis (600–650 mm).`);
       break;
     }
   }
-  if (h > 200.5) out.push(`Steghöjden är ${mm(h)}; i bostäder brukar den vara 180–200 mm.`);
-  if (p.width < 900 - 0.5) out.push(`Bredden är ${mm(p.width)}; i bostäder bör den fria bredden vara minst 900 mm.`);
+  if (h > 200.5) out.push(`Steghöjden är ${mm(h)}; avviker från praxis (180–200 mm i bostäder).`);
+  if (p.width < 900 - 0.5) out.push(`Bredden är ${mm(p.width)}; avviker från praxis (minst 900 mm fri bredd i bostäder).`);
   for (const [s, e] of g.landings) if (e - s < g.width - 1) {
-    out.push(`Ett vilplan är ${mm(e - s)} i gånglinjen; trapplan bör vara minst lika djupa som trappan är bred (${mm(g.width)}).`);
+    out.push(`Ett vilplan är ${mm(e - s)} i gånglinjen; avviker från praxis (minst trappans bredd, ${mm(g.width)}).`);
     break;
   }
   const wanted = p.risers ?? Math.max(2, Math.round(p.rise / RISER_TARGET));

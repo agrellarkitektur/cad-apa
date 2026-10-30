@@ -800,3 +800,61 @@
 .stair-warnings .skew-note {
   margin: 0 0 6px;
 }
+
+/* Räcket och räckestypen i panelen (0.11.1). */
+.btn.btn-small {
+  padding: 2px 8px;
+  font-size: 11.5px;
+}
+.rail-own {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+.rail-own .field {
+  flex: 1;
+}
+.rail-params,
+.rail-parts {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+}
+.rail-param {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr auto auto;
+  gap: 4px;
+  align-items: center;
+  padding: 2px 0;
+}
+.rail-param input[type='text'] {
+  min-width: 0;
+}
+.rail-part {
+  border-top: 1px solid var(--rule);
+  padding: 6px 0 2px;
+}
+.rail-part-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.rail-part-head input {
+  flex: 1;
+  font-weight: 600;
+  min-width: 0;
+}
+.rail-part-head span {
+  font-size: 11px;
+  color: var(--muted);
+}
+.rail-type .icon-btn {
+  border: 0;
+  background: none;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 4px;
+}

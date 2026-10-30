@@ -137,6 +137,7 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
       if (app.ui.tool === 'slab') app.slabTool.closePolygon();
       if (app.ui.tool === 'ground') app.groundTool.finish();
       if (app.ui.tool === 'stair') app.stairTool.finish();
+      if (app.ui.tool === 'railing') app.railingTool.finish();
     }
 
     switch (e.key) {

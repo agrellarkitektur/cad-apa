@@ -13,6 +13,8 @@ import { crestAtS } from '../../elements/groundWall';
 import { fromRh, toRh } from '../../core/site';
 import { along } from '../../elements/groundLines';
 import { createContext } from '../../repr/context';
+import { railingsOnStair, stairEdgesAt } from '../../elements/railing';
+import { addRailingsOnStair } from '../railingFields';
 import { withOwnCut, type EdgeCut } from '../../elements/roofBody';
 import { dist } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
@@ -52,6 +54,25 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
     const kept = fuseLines(host.store, ctx.ids);
     if (kept) host.selection.set(kept);
     else host.hint('Linjerna har ingen gemensam ändpunkt (linjer och splines fogas var för sig; två ramper dockas när ändarna ligger inom rampens bredd).', 4000);
+    return;
+  }
+  // Räcket längs trappans kant (0.11.1): sidan närmast klicket, eller båda.
+  if (op === 'stairRailing' || op === 'stairRailings') {
+    const st = doc.elements[ctx.shapeId ?? ctx.ids[0]];
+    if (st?.type !== 'Stair') return;
+    const on = railingsOnStair(doc, st.id);
+    let sides: ('left' | 'right')[];
+    if (op === 'stairRailings') sides = (['left', 'right'] as const).filter((s) => !on[s].length);
+    else {
+      const near = stairEdgesAt(doc, st.storey, (e) => e.id === st.id, ctx.at, Infinity)[0];
+      sides = near ? [near.side] : ['left'];
+    }
+    if (!sides.length) {
+      host.hint('Trappan har redan räcken på båda sidor.');
+      return;
+    }
+    const ids = addRailingsOnStair(host.store, st.id, sides);
+    if (ids.length) host.selection.set(ids);
     return;
   }
   // Trappans vilplan och svängar (0.11).

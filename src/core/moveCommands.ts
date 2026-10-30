@@ -216,6 +216,8 @@ export function movePatch(doc: ProjectDoc, el: Element, d: [number, number]): Re
   if (p.origin) return { origin: add(p.origin) };
   // Trappans referenslinje (0.11).
   if (el.type === 'Stair' && Array.isArray(p.line)) return { line: p.line.map(add) };
+  // Räcket (0.11.1): den ritade linjen; ett räcke på en trappa följer trappan.
+  if (el.type === 'Railing') return Array.isArray(p.line) && !p.host ? { line: p.line.map(add) } : null;
   // Ett rum flyttar också sin punkt och sin flyttade rumsstämpel (0.8.17).
   if (Array.isArray(p.outline))
     return {

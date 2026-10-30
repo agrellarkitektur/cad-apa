@@ -71,12 +71,12 @@ describe('Trappans geometri (0.11)', () => {
     expect(sum).toBeCloseTo(area(stairOutline(g)), -3);
   });
 
-  it('varnar men spärrar inte (BBR 8:232 och stegformeln)', () => {
+  it('varnar men spärrar inte (avviker från praxis)', () => {
     const p = stair({ line: [[0, 0], [2000, 0]], width: 800 });
     const g = stairGeometry(p)!;
     const w = stairWarnings(p, g);
     expect(w.some((x) => x.startsWith('Stegdjupet'))).toBe(true);
-    expect(w.some((x) => x.startsWith('Bredden'))).toBe(true);
+    expect(w.some((x) => x.startsWith('Bredden') && x.includes('avviker från praxis'))).toBe(true);
     expect(stairWarnings(stair(), stairGeometry(stair())!)).toEqual([]);
   });
 });

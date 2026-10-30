@@ -111,6 +111,8 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
       if (ctx.index < n - 1) own.push(flat ? 'stairSteps' : 'stairLanding');
       if (ctx.index > 0 && ctx.index < n - 1) own.push(turn ? 'stairWinders' : 'stairTurnLanding');
     }
+    // Räcket längs trappans kant (0.11.1).
+    if (host0?.type === 'Stair' && ctx.ids.length === 1) own.push('stairRailing', 'stairRailings');
     // Rampens referenslinje (0.10.18): höjden i punkten, och förläng från en ände.
     const rp = rampPoint(doc, ctx);
     if (rp) {
@@ -153,6 +155,8 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
       const own: OpId[] = walls.length >= 2 ? ['offsetAll'] : [];
       if (walls.length >= 2 && cornersAmong(doc, walls).length) own.push('filletAll', 'chamferAll');
       if (ctx.ids.some((id) => doc.elements[id]?.type === 'Roof')) own.push('roofTrim');
+      // Räcket längs trappans kant (0.11.1).
+      if (ctx.ids.length === 1 && doc.elements[ctx.ids[0]]?.type === 'Stair') own.push('stairRailing', 'stairRailings');
       // Flytta i höjd (0.10.13) för väggar, bjälklag, möbler och tak.
       if (ctx.ids.some((id) => movesVertically(doc.elements[id]) && !doc.elements[id].locked)) own.push('moveZ');
       const groups = withCuts(own.length ? [own, COMMON] : [COMMON]);

@@ -110,6 +110,20 @@ export function installToolOptions(app: AppContext) {
         <button class="btn" data-action="slab-walls" title="Ett bjälklag innanför ytterväggarna, som följer dem när de flyttas">Ur väggarna</button>`}
         <span class="opt-hint">${t.hintText()}</span>`;
       app.toolOptions.hidden = false;
+    } else if (app.ui.tool === 'railing') {
+      // Räcket (0.11.1): längs kant eller ritat, typen, läget mot kanten, bågar och Klar.
+      const t = app.railingTool;
+      const mode = (v: string, label: string) => `<button data-rail-mode="${v}" aria-pressed="${t.options.mode === v}">${label}</button>`;
+      const place = (v: string, label: string) => `<button data-rail-place="${v}" aria-pressed="${t.options.place === v}">${label}</button>`;
+      const defs = Object.values(app.store.doc.definitions).filter((d) => d.elementType === 'Railing');
+      const typeSel = defs.length ? `<label class="opt"><span>Typ</span><select id="rail-def">${defs.map((d) => `<option value="${d.id}"${d.id === (t.options.def ?? 't-ra01') ? ' selected' : ''}>${escapeHtml(d.name)}${d.description ? ` – ${escapeHtml(d.description)}` : ''}</option>`).join('')}</select></label>` : '<span class="opt-hint">Typ RÄ01 (räcke med spjälor och ledstång)</span>';
+      app.toolOptions.innerHTML = `
+        <div class="opt"><div class="segmented" role="group" aria-label="Sätt">${mode('edge', 'Längs kant')}${mode('drawn', 'Ritat')}</div></div>
+        ${typeSel}
+        <div class="opt"><span>Läge</span><div class="segmented" role="group" aria-label="Läge mot kanten">${place('inside', 'Innanför')}${place('on', 'På kanten')}${place('outside', 'Utanpå')}</div></div>
+        ${t.options.mode === 'drawn' ? `<button class="btn" data-action="rail-arc" aria-pressed="${t.arc}" title="Nästa kant blir en båge (G)">Båge</button>${t.chain.count >= 2 ? '<button class="btn btn-primary" data-action="rail-done">Klar</button>' : ''}` : ''}
+        <span class="opt-hint">${t.hintText()}</span>`;
+      app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'stair') {
       // Trappan (0.11): bredden, referenslinjens läge, bågar och Klar.
       const t = app.stairTool;
@@ -292,6 +306,7 @@ export function installToolOptions(app: AppContext) {
     if (t.id === 'roof-gable' && Number.isFinite(num)) app.roofTool.options.gable = Math.max(0, Math.round(num));
     if (t.id === 'wall-def') app.wallTool.options.definition = t.value;
     if (t.id === 'slab-def') app.slabTool.options.definition = t.value;
+    if (t.id === 'rail-def') app.railingTool.options.def = t.value;
     if (t.id === 'stair-width' && num >= 300) {
       app.stairTool.options.width = Math.round(num);
       app.view.requestRender();
@@ -461,6 +476,16 @@ export function installToolOptions(app: AppContext) {
       app.view.requestRender();
     }
     if (b.dataset.action === 'stair-done') app.stairTool.finish();
+    if (b.dataset.railMode) app.railingTool.setMode(b.dataset.railMode === 'drawn' ? 'drawn' : 'edge');
+    if (b.dataset.railPlace) {
+      app.railingTool.options.place = b.dataset.railPlace as 'inside' | 'on' | 'outside';
+      renderToolOptions();
+    }
+    if (b.dataset.action === 'rail-done') app.railingTool.finish();
+    if (b.dataset.action === 'rail-arc') {
+      app.railingTool.setArc(!app.railingTool.arc);
+      renderToolOptions();
+    }
     if (b.dataset.action === 'stair-arc') {
       app.stairTool.setArc(!app.stairTool.arc);
       renderToolOptions();

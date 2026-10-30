@@ -34,6 +34,7 @@ import type { RoofTool } from '../tools/roofTool';
 import type { SlabTool } from '../tools/slabTool';
 import type { GroundTool } from '../tools/groundTool';
 import type { StairTool } from '../tools/stairTool';
+import type { RailingTool } from '../tools/railingTool';
 import type { MeasureTool } from '../tools/measureTool';
 import type { OpeningTool } from '../tools/openingTool';
 import type { RoomTool } from '../tools/roomTool';
@@ -88,6 +89,7 @@ export interface AppContext {
   readonly slabTool: SlabTool;
   readonly groundTool: GroundTool;
   readonly stairTool: StairTool;
+  readonly railingTool: RailingTool;
   readonly sectionTool: MarkerTool;
   readonly elevationTool: MarkerTool;
   /** Rikta efter objekt eller Zooma till område pågår. */

@@ -5,93 +5,46 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.11.
+**Kända begränsningar**. Vad varje version märks i ritningarna står i
+README. Senast: 30 oktober 2026, efter 0.11.1.
 
 ## Läget
 
-- **0.11 Trappan är klar** (**nytt format, 26**; projekt från
-  0.10.32–0.10.40.1 öppnas inte). Verktyget *Trappa* (referenslinje med
-  bågar, förhandsvisning med stegen, smartspöt), stigningen till våningen
-  ovanför, kilsteg och vilplan (smartmenyn på en punkt och *Sträckor och
-  svängar* i egenskaperna), gånglinjen 300 från utsidan, plansteg i början
-  och slutet, varningar ur BBR 8:232 och stegformeln (uppslagna, se
-  PLAN.md), planen med snittet och i våningen ovanför, stilboksgruppen
-  *Trappor*, monolitisk kropp i 3D och sektioner, hålet i bjälklaget
-  ovanför ur fri höjd 2 100 (*Gör till eget hål*), och *Syns också på* för
-  trappor, ramper, markytor, stödmurar och bjälklag (gruppen *Från annan
-  våning*). Formatet har fälten för 0.11.2 (`build`, `built`) och 0.11.3
-  (`spiral`). Testerna: 803 på ca 19 s. Provat i Playwright mot `dist/`
-  (ritad trappa, båge, vilplan i svängen, punkt dragen, våningen ovanför,
-  sektion, Platsen). Klickjämförelsen är inte körd (granskningen).
-  Koden i UTVECKLING.md, Claudes val och det som inte gjordes i PLAN.md.
-- **Arkivet:** 0.10.32–0.10.40.1 flyttade till `docs/arkiv/` (UTVECKLING;
-  PLAN var redan flyttad). Sök i hela `docs/`.
+- **0.11.1 Räcket är klar** (samma format, 26; projekt från 0.11 öppnas).
+  Objektet `Railing` med hela typmodellen (delar av fyra slag, parametrar
+  med formler och kryss *per räcke*, fälten för 0.11.3) i
+  `Definition.railing`; förvalda typer RÄ01–RÄ03 läggs i projektet första
+  gången ett räcke läggs. Verktyget *Räcke* (*Längs kant* och *Ritat*),
+  smartspöt, *Räcke längs kanten* och *Räcken på båda sidor* i trappans
+  smartmeny och panel, *Utjämnad*/*Hoppande* vid kilstegen, krök/knäck,
+  läge mot kanten, *Lösgör*, plan (Skiss/Normal en linje, Detalj delarna,
+  över snittet streckprickat), sektion, fasad och 3D, stilboksgruppen
+  *Räcken*, varningarna ur BFS 2024:9 och *avviker från praxis* (också
+  trappans texter), ledstång på båda sidor på trappan med *Kvittera*.
+  Typerna ändras i räckets panel (tavla 2). Testerna: 814 på ca 20 s.
+  Provat i Playwright mot `dist/` (längs kant, båda sidor, smartmenyn,
+  ritat med höjden ur trappkanten, Detalj, panelen, 3D). Klickjämförelsen
+  inte körd. Koden i UTVECKLING.md, Claudes val och det som inte gjordes
+  i PLAN.md.
+- **Repot är uppdaterat** med utredningen: PLAN.md har 0.11.1–0.11.7 med
+  den nya numreringen.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.11 pushad till `main` 30 oktober (se git och
+- **Publicerad:** 0.11.1 pushad till `main` 30 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.11.1:** inget i befintliga ritningar,
+  utom att trappans varningar har nya texter och att en trappa utan
+  räcken varnar för ledstång på båda sidor (kvittera i trappans
+  egenskaper). Verktyget *Räcke* under Rita, gruppen *Räcken* i stilboken.
 - **Märks i hans ritningar efter 0.11:** projekt och autospar från
   0.10.32–0.10.40.1 öppnas inte (nytt format). Verktyget *Trappa* under
   Rita, och i stilboken grupperna *Trappor* och *Från annan våning*. I
   egenskaperna för bjälklag, markobjekt och trappor finns *Syns också på*.
-  Annars inget.
-- **Märks i hans ritningar efter 0.10.40.1:** inget; bara
-  versionsnumret.
-- **Märks i hans ritningar efter 0.10.40:** inget i befintliga
-  projekt. *Nytt projekt* har gruppen *Stilbok*; utan sparad mall är
-  Svensk standard förvalt som förut. En stilbok som exporterats före
-  0.10.40 går att importera (utan bilder).
-- **Märks i hans ritningar efter 0.10.39:** inget i befintliga
-  ritningar (förvalen är som förut: mått i mm, areor med en decimal,
-  nivåmarkörer med tre). Markhöjdernas decimaler och litterats siffror
-  har flyttat från Platsens dialog till stilboken (det valda gäller tills
-  stilboken får ett eget värde). En text med `{företag}`, `{telefon}` …
-  på mallbladet blir tom tills kontoret är ifyllt; projektets *ansvarig*
-  tar kontorets när den är tom.
-- **Märks i hans ritningar efter 0.10.38:** ändrade pennor under *Linjer i
-  fasader och sektioner* faller bort (förvalen ritar som förut). Med
-  jämförelsen på får fasadernas och sektionernas linjer åtgärdens färg
-  också där raden har en egen (i Färgmarkerad blir nytt glas rött), och
-  materialets snitt i sektionen följer åtgärdens kontur (ingen kontur i
-  Färgmarkerad). Ändras bjälklagets eller takets snittlinje delas snittet
-  från väggarnas. Annars inget.
-- **Märks i hans ritningar efter 0.10.37:** ändrade pennor för dörrarnas
-  och fönstrens *Snitt*, *Vy* och *Symbol* faller bort (förvalen ritar som
-  förut). En dörr eller ett fönster med egen penna utan *Symbol* får
-  slagbågen i den pennan. Med Färgmarkerad blir nytt rött också där en
-  rad har en egen färg. Materialets snitt i planen följer åtgärdens kontur
-  (ingen kontur i Färgmarkerad). Fasadernas öppningssätt följer inte
-  längre symbolpennan. Annars inget.
-- **Märks i hans ritningar efter 0.10.36:** inget i ritningarna, utom
-  att fasadernas och sektionernas linjer nu följer en linjetyp om någon
-  satt en (det gick inte att göra i appen förut). I stilboken visar en
-  kategori bara sin vytyps pennor (planens snitt syns inte i fasaderna),
-  och första ändringen i stilboken sparar pennlistan i projektet.
-- **Märks i hans ritningar efter 0.10.35:** vyer som kalkerade något har
-  det nu som underlag (tonat 40 % i ritningens färger, förut 30 % med
-  användarens inställning) och **får det med till bladet**. *Kalkera en
-  annan vy* under Visa heter *Underlag i vyn*. Underlagen hör till Visa:
-  går man till en fasad, sektion eller Platsen och tillbaka (utan en
-  sparad vy) får planen kategorins underlag igen, som det andra under Visa
-  (förut låg kalkeringen kvar). Annars inget.
-- **Märks i hans ritningar efter 0.10.34:** inget i ritningarna; bara
-  stilbokens utseende. Under *Vanliga* (förvalet) döljs *Snittet i
-  planen* och några sällan ändrade kryss under Innehåll; *Alla* visar dem.
-- **Märks i hans ritningar efter 0.10.33:** inget i befintliga projekt
-  (de behåller sina kategorier; de nya finns i nya projekt). Vyer som
-  avviker från sin kategori får en ockra punkt i projektträdet. *Ny vy* på
-  en våning, fasad eller sektion är en grupp i menyn: *Med det som visas
-  nu…* och kategorierna.
-- **Märks i hans ritningar efter 0.10.32:** projekt från 0.10.31 öppnas
-  inte (nytt format), och det autosparade i webbläsaren inte heller. En
-  fasad, sektion eller Platsen utan sparad vy får vytypens kategori under
-  Visa (förut följde Visa med från planen). *Stilmall i vyn* heter
-  *Vykategori*.
-- **Versionsnumret** är `0.11` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.11.1` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.11 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.11.1 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -103,8 +56,7 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR` =
   `/agrellarkitektur.se/public_html/cad-apa/`). Se efter med `gh run list`.
   Halvfärdigt arbete kan läggas på en egen gren, så att det inte
-  publiceras. Skrivrätten till repot kan behöva godkännas i sessionen
-  (nekades först 28 och 29 oktober).
+  publiceras. Skrivrätten till repot kan behöva godkännas i sessionen.
 - **Färdplan** (Carl August 22 oktober): 0.13 är hans egen provning (han
   ritar ett hus), sedan en inbjuden **alfa** för arkitektvänner, sedan en
   **öppen beta**. **Formatfrysen kommer med den öppna betan.** Inget av
@@ -113,17 +65,26 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   **smartmeny**. Symboler i ritningen heter **-markör**: *nivåmarkör*,
   *sektionsmarkör*, *fasadmarkör*. Säg inte nivåkota, sektionslinje eller
   fasadlinje. Vyn heter *Sektion* och *Fasad*. **Littera** skrivs med två
-  siffror som förval (T01, M01). Spöet heter **smartspöt**. Fliken för
-  situationsplanen heter **Platsen**; inga engelska ord i appen.
+  siffror som förval (T01, M01, RÄ01). Spöet heter **smartspöt**. Fliken
+  för situationsplanen heter **Platsen**; inga engelska ord i appen.
   Stilinställningarnas helhet heter **stilboken**; en rad i en vykategori
   där en objekttyp och del får sin penna heter ett **ställe**. Trappans
   delar heter **plansteg**, **sättsteg**, **vangstycke**, **vilplan**,
-  **kilsteg**, **stegnos**, **gånglinje**.
+  **kilsteg**, **stegnos**, **gånglinje**. Räckets: objektet heter
+  **Räcke** (också staket, stängsel, spaljé), typen **räckestyp**, delarna
+  **stolpe**, **handledare**, **ledstång**, **liggare**, **spjälor**,
+  **fyllning**; en sträcka kan bli en **grind**. Vid kilstegen är
+  handledaren **Utjämnad** eller **Hoppande**.
+- **Varningar** (Carl August 30 oktober): hänvisa till BFS 2024:9 (Boverkets
+  nya regler; BBR gäller inte längre för nya ansökningar) där det är
+  föreskrift. Det som är vedertaget men inte står i föreskriften
+  (räckeshöjder, stegdjup, stegformeln, bredd …) får texten *avviker från
+  praxis*. Gäller alla varningar i appen (gjort i 0.11.1).
 - **Versionsnamn:** inga b-versioner; nästa lediga nummer i stället.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen. Höj
   `FORMAT_VERSION` när formatet ändras; äldre filer får ett meddelande
-  (`parse` i `src/storage/format.ts`). Valfria nya parametrar har inte
-  krävt ett nytt format.
+  (`parse` i `src/storage/format.ts`). Valfria nya parametrar och fält
+  har inte krävt ett nytt format (räcket i 0.11.1 inte heller).
 - **Telefonen är inget mål.** Testa på dator (Chrome).
 - **Arbetssätt:** Carl August testar varje version på webbhotellet. Ingen
   demo och ingen zip om han inte ber om det. Säg alltid hur stora
@@ -151,22 +112,22 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   för de senaste versionerna; det som hör till koden går till
   UTVECKLING.md, Claudes val till PLAN.md.
 
-
 ## Färdplan
 
 Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
-- ~~0.8.8 Mallblad~~ … ~~0.10.40 Stilboken ut och in~~, ~~Granskning
-  efter 0.10.40 (0.10.40.1)~~, ~~Planering av 0.11~~, ~~0.11 Trappan~~
-  (klara; se tabellen *Klart* i PLAN.md)
+- ~~0.8.8 Mallblad~~ … ~~0.10.40.1 Granskning efter 0.10.40~~,
+  ~~0.11 Trappan~~, ~~Utredning av räcket~~, ~~0.11.1 Räcket~~ (klara; se
+  tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.11.1 Räcket** (utredning med mockup i Claude Design först, sedan
-  bygge)
-- **0.11.2 Byggd trappa** (vangstycken, plan- och sättsteg, stegnos,
-  kontrastmarkering, bygghandlingsgrafik) och **0.11.3 Spiraltrappan**
-- **Granskning efter 0.11.3** (klickjämförelsen med trappsteg)
-- **0.11.4 Profilverktyget** (stor) och **0.11.5 Dörrar och fönster**
+- **0.11.2 Räckestypeditorn** (stilboken › Resurser › *Räckestyper*,
+  tavla 4; mellanstor)
+- **0.11.3 Staket och grindar** (Platsen, andra kanter, grindar)
+- **0.11.4 Byggd trappa** (vangstycken, plan- och sättsteg, stegnos,
+  kontrastmarkering, bygghandlingsgrafik) och **0.11.5 Spiraltrappan**
+- **Granskning efter 0.11.5** (klickjämförelsen med trappsteg och räcken)
+- **0.11.6 Profilverktyget** (stor) och **0.11.7 Dörrar och fönster**
   (stor)
 - **0.12 Export**: IFC4, DXF, areor för bygglov, förteckning över
   markförändringarna
@@ -181,22 +142,37 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-Läs synpunkterna först och sortera Inkorgen om den har något. Ställ
-frågorna om 0.11 (nedan) när Carl August provat trappan. Sedan **0.11.1
-Räcket**: en utredning med mockup i Claude Design (ett par tavlor, med all
-önskad funktionalitet från början), inget bygge förrän han godkänt den.
-Räcket är ett eget objekt som smartspöas längs trappans kant
-(`sideBetween` i `stairGeometry.ts` ger kanterna, `ribAt` stegen) eller
-ritas med egna referenslinjer, med punkter i X, Y och Z, och följer med
-trappan vid flytt.
+Läs synpunkterna först och sortera Inkorgen om den har något. Be om
+skrivrätt till repot ("push godkänd"). Bygg sedan **0.11.2
+Räckestypeditorn** (PLAN.md och `cad-apa-racket-utredning.md`, tavla 4 i
+mockupen "Räcket – utredning 0.11.1"): stilboken › Resurser ›
+*Räckestyper* med typlistan i grupper (egna grupper att skapa, döpa om,
+flytta och ta bort; typer dras mellan grupperna), delträdet med *+ Lägg
+till del…*, förhandsvisningen (Rak, I trappa, På sluttning, Grind,
+Planen, 3D) där man klickar på en del, delens egenskaper och typens
+parametrar. Typmodellen och kommandona finns (`core/railingTypes.ts`,
+`core/railings.ts`); panelens typfält (`ui/railingFields.ts`) kan
+återanvändas. Ställ frågorna om 0.11.1 (nedan) när Carl August provat
+räcket.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11, sedan 0.10.35,
-0.10.34 och 0.10.33 när han provat.
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.1 och 0.11,
+sedan 0.10.35, 0.10.34 och 0.10.33 när han provat.
+
+**0.11.1 efter provning** (Claudes val, se PLAN.md)
+- RÄ01 har en rund ledstång 70 mm innanför handledaren, på *Skyddshöjd −
+  40*. Rätt förval, eller ett räcke utan ledstång och RÄ03 bredvid?
+- Den utjämnade handledaren avviker mer än 50 mm vid kilstegen i de flesta
+  L-trappor, så varningen syns ofta. Lagom, eller ska gränsen gälla bara
+  den inre kanten?
+- I Detalj ritas handledare, ledstång och stolpar, inte spjälorna. Ska
+  spjälorna synas i planen?
+- Ett räcke på en trappa flyttas inte för sig (*Lösgör* först). Rätt?
+- Innanför 50 mm som förval på trappan. Lagom?
 
 **0.11 efter provning** (Claudes val, se PLAN.md)
 - Referenslinjen ligger i mitten som förval. Hellre en kant (oftast ritar
@@ -219,7 +195,7 @@ sträcka och per sväng; C gånglinjen ställbar, alltid från utsidan, förval
 300; D första/sista plansteget räknas som en del av trappan; E räcket får
 egen utredning med mockup. Dessutom: referenslinjen ritas i
 trappverktyget, smartspöt är ett alternativ. Allt gjort i 0.11 utom
-räcket.
+räcket (0.11.1). Räckets utredning: A–H besvarade (se PLAN.md).
 
 **Besvarade 30 oktober** (Claudes val gäller): 0.10.32 alla fyra
 (vytypens kategori när ingen vy är sparad; kategoribyte släpper vyns

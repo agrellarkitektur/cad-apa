@@ -6,6 +6,7 @@ import { defaultMarkerPen, MARKER_PENS, ROOM_PENS, type MarkerPenKey } from './m
 import { defaultObjectPen, OBJECT_PENS } from './objectPens';
 import { defaultPlanCutPen, PLAN_CUT_PENS } from './planCutPens';
 import { defaultStairPen, STAIR_PENS } from './stairPens';
+import { defaultRailPen, RAIL_PENS } from './railingPens';
 
 /**
  * Pennraderna i en vykategori (0.10.36), i grupper: varje rad är ett
@@ -96,7 +97,7 @@ export const PEN_GROUPS: readonly PenGroup[] = [
   {
     id: 'seen',
     title: 'Från annan våning',
-    note: 'Trappor, ramper, markytor, stödmurar och bjälklag som valts att synas också här (Syns också på, i objektets egenskaper) ritas som vy, utan snitt, fyllning och text.',
+    note: 'Trappor, räcken, ramper, markytor, stödmurar och bjälklag som valts att synas också här (Syns också på, i objektets egenskaper) ritas som vy, utan snitt, fyllning och text.',
     types: ['site', 'storey'],
     rows: OBJECT_PENS.filter((r) => r.group === 'seen').map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: r.tags })),
   },
@@ -106,6 +107,13 @@ export const PEN_GROUPS: readonly PenGroup[] = [
     note: 'Det under planens snitt heldraget, det ovanför streckprickat med snittlinjen snett över; i våningen ovanför ritas trappan hel. Gångriktningen går från ringen till pilen. Stegnosen ritas i Detalj. Snittlinjen gäller också trappans snitt i sektionerna.',
     types: PLAN_AND_SECTION,
     rows: STAIR_PENS.map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: r.tags, ...(r.key === 'stairCut' ? {} : { types: PLAN }) })),
+  },
+  {
+    id: 'railings',
+    title: 'Räcken',
+    note: 'Räcken, ledstänger, staket och spaljéer. I planen en linje i Skiss och Normal (med ledstångens förlängning i Normal), handledaren, ledstången och stolparna i Detalj; det som står på trappsteg ovanför snittet streckprickat. I fasader och sektioner snittlinjen och konturlinjen.',
+    types: ALL_MODEL,
+    rows: RAIL_PENS.map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: r.tags, types: r.view === 'plan' ? PLAN : r.key === 'railCut' ? ['section'] : ELEVATION })),
   },
   {
     id: 'cut',
@@ -144,7 +152,7 @@ export const penRowOf = (key: string) => ROW_OF.get(key);
 
 /** Förvalet för en rad i penntabellen: objekten, snittet, höjdkurvorna, fasaderna eller en markör. */
 export function penDefault(key: string): PenDef {
-  return defaultObjectPen(key) ?? defaultStairPen(key) ?? defaultPlanCutPen(key) ?? defaultContourPen(key) ?? defaultFacadePen(key) ?? defaultMarkerPen(key as MarkerPenKey);
+  return defaultObjectPen(key) ?? defaultStairPen(key) ?? defaultRailPen(key) ?? defaultPlanCutPen(key) ?? defaultContourPen(key) ?? defaultFacadePen(key) ?? defaultMarkerPen(key as MarkerPenKey);
 }
 
 /**

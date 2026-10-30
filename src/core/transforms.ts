@@ -104,6 +104,12 @@ function transformedParams(doc: ProjectDoc, el: Element, t: PlanTransform, movin
       },
     ];
   }
+  if (el.type === 'Railing') {
+    // Räcket (0.11.1): den ritade linjen, eller (på en trappa) kanten, som byter sida när trappan speglas.
+    if (p.host) return t.mirror && moving.has(el.host ?? '') ? [{ ...el, params: { ...el.params, host: { ...p.host, side: p.host.side === 'left' ? 'right' : 'left' } } }] : [];
+    if (!Array.isArray(p.line)) return [];
+    return [{ ...el, params: { ...el.params, line: p.line.map(t.map), ...(t.mirror && Array.isArray(p.bulges) ? { bulges: (p.bulges as number[]).map((b) => (b ? -b : 0)) } : {}) } }];
+  }
   if (Array.isArray(p.outline) && Array.isArray(p.ref)) {
     // Takfallet (0.10): konturen och referenslinjen. Speglingen byter
     // linjens riktning så att taket stiger åt samma håll; bågarnas pilhöjd

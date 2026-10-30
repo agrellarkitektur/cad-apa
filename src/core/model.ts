@@ -2,6 +2,7 @@ import { exampleMaster } from './exampleMaster';
 import { newStyleBook, type StyleBook } from './graphics';
 import type { ViewOverrides } from './viewCategories';
 import type { Site } from './site';
+import type { RailingTypeModel } from './railingTypes';
 
 /**
  * Bacchus datamodell. Ren data som kan sparas som JSON: inga klasser, inga
@@ -297,6 +298,8 @@ export interface Definition {
   /** Förval för instansernas parametrar. */
   params: Record<string, Value>;
   props: PropertySets;
+  /** Räckestypen (0.11.1): delarna och parametrarna, för `elementType` Railing. */
+  railing?: RailingTypeModel;
   /**
    * Typens penna (0.8.33), för alla instanser utan egen. Objektets egen går
    * före typens, som går före stilmallens; fält för fält.
@@ -381,7 +384,7 @@ export interface OwnPen extends OwnPenPart {
 }
 
 /** Typerna som kan synas också på en annan våning eller Platsen (*Syns också på*, 0.11). */
-export const SEEN_ON_TYPES: ReadonlySet<string> = new Set(['Stair', 'Ground', 'Slab']);
+export const SEEN_ON_TYPES: ReadonlySet<string> = new Set(['Stair', 'Ground', 'Slab', 'Railing']);
 
 /** Om elementet ritas på `place` för att det valts under *Syns också på* (0.11), och inte hör hemma där. */
 export const seenFrom = (el: Pick<Element, 'storey' | 'space' | 'seenOn' | 'type'>, place: Id): boolean => !el.space && el.storey !== place && !!el.seenOn?.includes(place) && SEEN_ON_TYPES.has(el.type);

@@ -1,4 +1,5 @@
 import { stairAction } from './stairFields';
+import { duplicateRailingType, railingAction } from './railingFields';
 import { dropLeader, setLabelAngle } from './labelSection';
 import { resetTags } from './litteraSection';
 import { createDefinition, deleteDefinition, deleteElements, flipWalls, setInState, setSkewOk, updateParams } from '../core/commands';
@@ -131,9 +132,21 @@ export function selectionAction({ panel, store, selection, getView, body }: Acti
       });
       return;
     }
+    case 'rail-winder':
+    case 'rail-transition':
+    case 'rail-reset':
+    case 'rail-detach':
+    case 'railtype-param-add':
+    case 'railtype-param-remove':
+    case 'railtype-part-add':
+    case 'railtype-part-remove':
+      railingAction(store, ids, b.dataset.action, b);
+      return;
     case 'stair-turn':
     case 'stair-edge':
     case 'stair-own-hole':
+    case 'stair-ack':
+    case 'stair-railing':
       stairAction(store, ids, b.dataset.action, b);
       return;
     case 'slab-hole-remove': {
@@ -163,6 +176,11 @@ export function selectionAction({ panel, store, selection, getView, body }: Acti
     case 'new-def': {
       const el = doc.elements[ids[0]];
       const t = typeOf(el.type)!;
+      // Räckestypen (0.11.1): en kopia av den markerade.
+      if (el.type === 'Railing') {
+        duplicateRailingType(store, ids, nextLittera(doc, el.type, t.litteraPrefix ?? 'T'));
+        break;
+      }
       const p = resolveParams<Record<string, number>>(doc, el);
       const params = Object.fromEntries(t.typeParams!.map((k) => [k, Number(p[k] ?? 0)]));
       createDefinition(store, el.type, nextLittera(doc, el.type, t.litteraPrefix ?? 'T'), params, ids);

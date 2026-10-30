@@ -33,7 +33,7 @@ export function escapeHtml(s: string): string {
 /** Nästa lediga littera med ett prefix: IV01, IV02 … eller F1, F2 … */
 export function nextLittera(doc: ProjectDoc, elementType: string, prefix: string): string {
   const used = new Set(Object.values(doc.definitions).filter((d) => d.elementType === elementType).map((d) => d.name));
-  const pad = elementType === 'Wall';
+  const pad = elementType === 'Wall' || elementType === 'Railing';
   for (let i = 1; i < 1000; i++) {
     const name = `${prefix}${pad ? String(i).padStart(2, '0') : i}`;
     if (!used.has(name)) return name;

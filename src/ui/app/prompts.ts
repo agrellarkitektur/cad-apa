@@ -147,6 +147,16 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
       if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.undoPoint() });
       return { head, text: r.hintText(), options };
     }
+    case 'railing': {
+      const r = app.railingTool;
+      const options: PromptOption[] = [{ key: 'L', label: r.options.mode === 'edge' ? 'Ritat' : 'Längs kant', run: () => r.setMode(r.options.mode === 'edge' ? 'drawn' : 'edge') }];
+      if (r.options.mode === 'drawn') {
+        options.push({ key: 'G', label: 'Båge', run: () => { r.setArc(!r.arc); redraw(); }, on: r.arc });
+        if (r.chain.count >= 2) options.push({ key: 'K', label: 'Klar', run: () => r.finish() });
+        if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.undoPoint() });
+      }
+      return { head, text: r.hintText(), options };
+    }
     case 'stair': {
       const r = app.stairTool;
       const options: PromptOption[] = [
