@@ -172,6 +172,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.10.40.1 | Granskning efter 0.10.40 |
 | 0.11 | Trappan (format 26): referenslinje med bågar, kilsteg och vilplan, gånglinje, plansteg, varningar, plan/sektion/3D, hålet, *Syns också på* |
 | 0.11.2 | Räckestypeditorn: stilboken › Resurser › *Räckestyper* med grupper, förhandsvisning i sex lägen, delträd och delens egenskaper; Shift går före snäppet |
+| 0.11.3 | Staket och grindar: räcket på Platsen med höjden ur den färdiga marken, Trappstegat, stolpar under mark och i plint, Längs kant för hål, bjälklag, väggar, ramper och stödmurens krön, ST01–ST03, SP01 och G01, grinden som en sträcka i räcket; räckestypeditorn som tavla 4 |
 | 0.11.1 | Räcket: eget objekt med typmodellen (delar och parametrar med formler), längs trappans kant eller ritat, utjämnad eller hoppande vid kilstegen, plan/sektion/fasad/3D, stilboksgruppen *Räcken*, varningar ur BFS 2024:9 och praxis |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
@@ -451,7 +452,7 @@ stolpar under mark (0.11.3), egna profiler (0.11.6), typerna i stilbokens
 export (de bor i projektet; grupperna följer med stilboken),
 förhandsvisningen med ett visst räckes egna värden.
 
-### 0.11.3 Staket och grindar
+### 0.11.3 Staket och grindar ✓
 
 Platsen (höjden ur den färdiga marken, sluttning *Följer marken* eller
 *Trappstegat*, stolpar under mark), andra kanter (hål, bjälklag, ramp,
@@ -462,6 +463,77 @@ staketet*, en grindtyp eller *Eget här*; bredd (hålmått), hängning
 grindstolpar, littera; längsgående delar avbryts vid grinden. På Platsen
 visas typerna med *Mark* först, på en våning de med *Byggnad*. *Flytta
 till våning* byter hemvist. IFC (0.12): IfcRailing, grindar som IfcDoor.
+Dessutom (Carl August 30 oktober): räckestypeditorn ska i stort följa
+tavla 4.
+
+**Claudes val (0.11.3):**
+
+- På Platsen är punkternas `z` höjden **över den färdiga marken** (0 som
+  förval), och linjen får en punkt var 250 mm med marken under
+  (`RailPath.base`). Marken är den färdiga i förslaget som ritas, med
+  stödmurarnas skarpa kanter (som stödmurens profil), annars den
+  befintliga. *Höjden från: Fast höjd* (`heightFrom: 'fixed'`) tar `z`
+  mot ±0 som ett ritat räcke på en våning.
+- *Trappstegat* gäller per del och bara på marken: varje fack mellan
+  stolparna ligger vågrätt på fackets **högsta** punkt, så att inget går
+  ned i marken; stolparna når det högre facket. I editorn sätter
+  *Mönster › På sluttning* alla delar (visar *Blandat* när de skiljer).
+- *Nedgrävd* drar stolpen så långt under marken; *I plint* ger en
+  åttakantig plint (minst 250, tre gånger stolpen) från 600 under marken
+  till 50 över, och stolpen står 100 ned i den.
+- De förvalda staketen (fasta id `t-st01`, `t-st02`, `t-st03`, `t-sp01`,
+  `t-g01`) läggs in första gången ett räcke läggs på Platsen och ingen
+  typ har *Mark*; RÄ01–RÄ03 som förut när projektet saknar räckestyper.
+  *Lägg in förvalda typer* i editorn lägger in de som saknas. ST01 har
+  stolpar 70 × 70 nedgrävda 600, två liggare 45 × 70 och spjälor 22 × 70
+  med 30 fritt, trappstegat; ST02 sex ribbor 22 × 95; ST03 stolpar Ø 48
+  c/c 2 500 i plint, tre spänntrådar och nätet som yta; SP01 stolpar
+  90 × 90 och ram 45 × 45 med rutnätet som yta (*Mark* och *Byggnad*);
+  G01 sidstycken, liggare och spjälor. Trä är materialet *Trall* tills
+  vidare.
+- **Längs kant** prövar trappans kanter först (inte på Platsen), sedan
+  allt man kan snäppa mot utom räcken och trappor: kedjan genom kanten
+  och sidan mellan två hörn som i smartspöt; Shift+klick tar hela. Det
+  blir ett ritat räcke (kopierad linje, följer inte objektet). Längs en
+  stödmur på Platsen får punkterna krönets höjd (närmaste station i
+  murens profil) och *Fast höjd*.
+- **Grinden** (`RailingParams.gates`): `at` och `width` längs räckets
+  linje (hålmåttet). *Gör till grind…* tar facket mellan de två stolparna
+  där man klickade (mellan stolparnas sidor). Grindstolparna (förval 100)
+  står med centrum en halv stolpe utanför hålet, i stället för stolparna
+  närmare än en tredjedel av delningen (minst 300); de får stolpens
+  material och under mark. Liggarna avbryts vid hålet, spjälor och ytor i
+  grindens fack, om inte delen har *Vid grind: Fortsätter*.
+- **Bladet**: grindtypens delar, eller staketets (*Följer staketet*: de
+  delar som avbryts, med stolparna som sidstycken högst 45 breda; *Eget
+  här* likadant med egen höjd på typens första parameter). Punktdelarna
+  står bara i ändarna. Bladet är vågrätt på den högre änden av hålet, 10
+  mm från stolparna (par: två blad med 10 emellan). Typens *Grindtyp*
+  (`gateType`) är den nya grindar får; utan den följer de staketet och
+  får en egen littera, nästa lediga G med två siffror efter typerna (G02
+  när G01 är en typ).
+- **Planen**: räckets linje avbryts vid grinden; bladet ritas öppet med
+  vinkeln (90°) från gångjärnet (vänster: början av hålet i linjens
+  riktning, höger: slutet, par: båda) och slagbågen streckad, åt sidan
+  bort från insidan (utåt) eller mot den (inåt). Skjut: bladet 80 mm
+  utanför hålet och en streckad linje lika lång bortom dess slut.
+  Litteran 260 mm innanför. Grindstolparna syns från Normal; stolparna i
+  ST-typerna också (de andra delarna i Detalj).
+- **Editorn som tavla 4**: fyra kolumner (typlistan, typen, förhandsvisningen
+  med parametrarna, delens egenskaper). Gruppernas knappar (döp om,
+  flytta, ta bort) syns när musen är över gruppen, i stället för
+  högerklick. Parametrarna som tabell: ett fast värde skrivs i *Värde*,
+  en formel i *Formel* (töms den blir det räknade värdet fast). *Ändar*
+  är en sammanfattning, inte fält. *I räckets egenskaper* (tavla 4) är
+  kryssen *Per räcke* i tabellen.
+
+**Inte gjort i 0.11.3:** räcket följer inte kanten det lades längs (hål,
+bjälklag, ramp …; bara trappor), grindarna har ingen förteckning
+(0.12, med uppställningarna), spaljéns rutnät och nätet är släta ytor i
+3D (inget mönster), grinden ritas inte i fasad och sektion som öppen,
+*Dela sträckan här*, *Fyllning för sträckan…* och *Höjd för sträckan…*
+(tavla 5), grindens lås och stopp är bara text. Klickjämförelsen är inte
+körd (granskningen efter 0.11.5).
 
 ### 0.11.4 Byggd trappa
 

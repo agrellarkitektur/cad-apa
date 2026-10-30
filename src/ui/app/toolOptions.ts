@@ -14,6 +14,8 @@ import { evaluate } from '../expr';
 import type { AppContext } from './context';
 import { defaultWallType, nf } from './helpers';
 import { SHEET_TEXT_HEIGHTS } from '../../core/sheets';
+import { isSite } from '../../core/model';
+import { defaultRailingDef, railingTypesFor } from '../../core/railings';
 
 /** Verktygsraden under ritytan: inställningar för det verktyg som är valt, och måttbandets värden. */
 export function installToolOptions(app: AppContext) {
@@ -115,8 +117,11 @@ export function installToolOptions(app: AppContext) {
       const t = app.railingTool;
       const mode = (v: string, label: string) => `<button data-rail-mode="${v}" aria-pressed="${t.options.mode === v}">${label}</button>`;
       const place = (v: string, label: string) => `<button data-rail-place="${v}" aria-pressed="${t.options.place === v}">${label}</button>`;
-      const defs = Object.values(app.store.doc.definitions).filter((d) => d.elementType === 'Railing');
-      const typeSel = defs.length ? `<label class="opt"><span>Typ</span><select id="rail-def">${defs.map((d) => `<option value="${d.id}"${d.id === (t.options.def ?? 't-ra01') ? ' selected' : ''}>${escapeHtml(d.name)}${d.description ? ` – ${escapeHtml(d.description)}` : ''}</option>`).join('')}</select></label>` : '<span class="opt-hint">Typ RÄ01 (räcke med spjälor och ledstång)</span>';
+      // Typerna: på Platsen de med Mark först, på en våning de med Byggnad (0.11.3).
+      const site = isSite(app.ui.storey);
+      const defs = railingTypesFor(app.store.doc, site);
+      const cur = t.defFor(app.ui.storey) ?? defaultRailingDef(app.store.doc, undefined, site);
+      const typeSel = defs.length ? `<label class="opt"><span>Typ</span><select id="rail-def">${defs.map((d) => `<option value="${d.id}"${d.id === cur ? ' selected' : ''}>${escapeHtml(d.name)}${d.description ? ` – ${escapeHtml(d.description)}` : ''}</option>`).join('')}</select></label>` : `<span class="opt-hint">${site ? 'Typ ST01 (spjälstaket); staketen läggs in med det första' : 'Typ RÄ01 (räcke med spjälor och ledstång)'}</span>`;
       app.toolOptions.innerHTML = `
         <div class="opt"><div class="segmented" role="group" aria-label="Sätt">${mode('edge', 'Längs kant')}${mode('drawn', 'Ritat')}</div></div>
         ${typeSel}

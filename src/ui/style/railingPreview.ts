@@ -1,6 +1,6 @@
 import type { Vec2 } from '../../repr/primitives';
 import { railValues, type RailingTypeModel, type RailPart } from '../../core/railingTypes';
-import { freePath, railingBody, withExtension, type RailingBody, type RailPath } from '../../elements/railingGeometry';
+import { freePath, railingBody, withExtension, type BodyOptions, type GroundFn, type RailingBody, type RailPath } from '../../elements/railingGeometry';
 import { escapeHtml } from '../labels';
 
 /**
@@ -65,11 +65,25 @@ function ground(c: Canvas, list: Vec2[], extra = ''): void {
 function elevation(c: Canvas, body: RailingBody, sel: string | null, only?: (p: RailPart) => boolean): void {
   const ok = (p: RailPart) => !only || only(p);
   for (const q of body.panels) if (ok(q.part)) poly(c, q.part, sel, [[q.a[0], -q.a0], [q.b[0], -q.b0], [q.b[0], -q.b1], [q.a[0], -q.a1]]);
+  for (const f of body.footings) {
+    if (!ok(f.part)) continue;
+    const x = f.at[0];
+    grow(c, [[x - f.w / 2, -f.z0], [x + f.w / 2, -f.z1]]);
+    c.out.push(`<polygon class="rtp-below" points="${pts([[x - f.w / 2, -f.z0], [x + f.w / 2, -f.z0], [x + f.w / 2, -f.z1], [x - f.w / 2, -f.z1]])}"/>`);
+  }
   for (const q of [...body.repeats, ...body.posts]) {
     if (!ok(q.part)) continue;
     const x = q.at[0];
-    poly(c, q.part, sel, [[x - q.w / 2, -q.z0], [x + q.w / 2, -q.z0], [x + q.w / 2, -q.z1], [x - q.w / 2, -q.z1]]);
+    // Under mark (0.11.3): streckat.
+    const g = q.ground !== undefined && q.z0 < q.ground - 1 ? q.ground : null;
+    if (g !== null) {
+      grow(c, [[x - q.w / 2, -q.z0]]);
+      c.out.push(`<polygon class="rtp-below" data-rt-part="${escapeHtml(q.part.id)}" points="${pts([[x - q.w / 2, -q.z0], [x + q.w / 2, -q.z0], [x + q.w / 2, -g], [x - q.w / 2, -g]])}"/>`);
+    }
+    const z0 = g ?? q.z0;
+    poly(c, q.part, sel, [[x - q.w / 2, -z0], [x + q.w / 2, -z0], [x + q.w / 2, -q.z1], [x - q.w / 2, -q.z1]]);
   }
+  for (const gp of body.gates) for (const leaf of gp.leaves) elevation(c, leaf.body, sel);
   for (const a of body.along) {
     if (!ok(a.part)) continue;
     const e = withExtension(a);
@@ -78,9 +92,9 @@ function elevation(c: Canvas, body: RailingBody, sel: string | null, only?: (p: 
   }
 }
 
-const bodyOf = (line: [number, number][], z: number[], model: RailingTypeModel, vals: ReadonlyMap<string, number>): { path: RailPath; body: RailingBody } | null => {
-  const path = freePath({ line, z });
-  return path ? { path, body: railingBody(path, model, vals) } : null;
+const bodyOf = (line: [number, number][], z: number[], model: RailingTypeModel, vals: ReadonlyMap<string, number>, ground?: GroundFn, opts?: BodyOptions): { path: RailPath; body: RailingBody } | null => {
+  const path = freePath({ line, z }, ground);
+  return path ? { path, body: railingBody(path, model, vals, opts) } : null;
 };
 
 /** Förhandsvisningen som SVG, med typens förvalda värden. */
@@ -110,26 +124,20 @@ export function previewMarkup(model: RailingTypeModel, mode: PreviewMode, sel: s
     return finish(c, mode, 'Höjderna mäts lodrätt från stegnoslinjen.');
   }
   if (mode === 'slope') {
-    const r = bodyOf([[0, 0], [3600, 0]], [0, 600], model, vals);
+    // Marken stiger 600 på 4 800; räcket mäts från den (som på Platsen).
+    const r = bodyOf([[0, 0], [4800, 0]], [0, 0], model, vals, (q) => q[0] / 8);
     if (!r) return '';
-    ground(c, [[-300, 50], [0, 0], [3600, -600], [3900, -650]], ' rtp-terrain');
+    ground(c, [[-300, 300 / 8], [0, 0], [4800, -600], [5100, -637.5]], ' rtp-terrain');
     elevation(c, r.body, sel);
-    return finish(c, mode, 'Räcket följer marken. <i>Trappstegat</i> och stolpar under mark ritas från 0.11.3.');
+    return finish(c, mode, 'På Platsen mäts höjden från den färdiga marken. Delar med <i>Trappstegat</i> ligger vågrätt i varje fack; det streckade är under mark.');
   }
   if (mode === 'gate') {
-    // Staket på var sida om en öppning 1 000; det som avbryts vid grinden ritas bara på sidorna.
-    const left = bodyOf([[0, 0], [1500, 0]], [0, 0], model, vals);
-    const right = bodyOf([[2500, 0], [4000, 0]], [0, 0], model, vals);
-    const all = bodyOf([[0, 0], [4000, 0]], [0, 0], model, vals);
-    if (!left || !right || !all) return '';
-    const breaks = (p: RailPart) => p.gate !== 'continue';
-    ground(c, [[-300, 0], [4300, 0]]);
-    elevation(c, left.body, sel, breaks);
-    elevation(c, right.body, sel, breaks);
-    elevation(c, all.body, sel, (p) => !breaks(p));
-    const top = Math.max(0, ...all.body.along.map((a) => Math.max(...a.top)), ...all.body.posts.map((q) => q.z1));
-    c.out.push(`<polyline class="rtp-gate" points="${pts([[1520, -40], [1520, -top], [2480, -top], [2480, -40], [1520, -40], [2480, -top / 2], [1520, -top]])}"/>`);
-    return finish(c, mode, 'Delar med <i>Vid grind: Avbryts</i> slutar vid grinden. Grindarna läggs i ritningen från 0.11.3.');
+    // Staket med en grind 1 000 i mitten (Följer staketet): det som avbryts slutar vid grindstolparna.
+    const r = bodyOf([[0, 0], [4200, 0]], [0, 0], model, vals, undefined, { gates: [{ id: 'g', at: 1600, width: 1000 }] });
+    if (!r) return '';
+    ground(c, [[-300, 0], [4500, 0]]);
+    elevation(c, r.body, sel);
+    return finish(c, mode, 'En grind som följer staketet. Delar med <i>Vid grind: Avbryts</i> slutar vid grindstolparna; bladet har staketets delar med smala sidstycken. Grindtyper (G01 …) har sina egna delar.');
   }
   if (mode === 'plan') {
     const r = bodyOf([[0, 0], [2400, 0], [2400, 1500]], [0, 0, 0], model, vals);

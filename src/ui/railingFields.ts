@@ -1,10 +1,10 @@
 import { addRailings, updateRailingType } from '../core/railings';
 import { newId } from '../core/ids';
-import type { Element, Id, ProjectDoc } from '../core/model';
+import { isSite, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
 import { newPart, PART_KIND_LABELS, RAILING_GROUPS, railingModel, railNum, railValues, type RailingTypeModel, type RailNum, type RailPart, type RailPartKind } from '../core/railingTypes';
-import { railingPath, railingStair, railingTypeOf, railingValues, railingWarnings } from '../elements/railing';
-import { hostedPath, RAIL_INSET, type RailingParams } from '../elements/railingGeometry';
+import { gateLittera, railingPath, railingStair, railingTypeOf, railingValues, railingWarnings } from '../elements/railing';
+import { GATE_POST, hostedPath, RAIL_INSET, type RailGate, type RailingParams } from '../elements/railingGeometry';
 import { geometryOfStair, stairParams } from '../elements/stair';
 import { levelOf } from '../repr/solids';
 import { numberField } from './fieldMarkup';
@@ -62,7 +62,17 @@ export function railingFieldsMarkup(doc: ProjectDoc, el: Element): string {
     ])}`);
   } else if (Array.isArray(p.line)) {
     const z = p.z ?? [];
-    out.push(`<div class="field-label">Punkternas höjd mot golvet</div><div class="fields">${p.line.map((_, i) => numberField(`rail:z:${i}`, `Punkt ${i + 1}`, Number(z[i]) || 0, 'mm')).join('')}</div>`);
+    // Var det hör till (0.11.3, tavla 5): Platsen eller en våning, och höjden från marken eller fast.
+    const site = isSite(el.storey);
+    const homes = doc.storeys.map((s) => `<button data-action="rail-home" data-value="${escapeHtml(s.id)}" aria-pressed="${s.id === el.storey}">${escapeHtml(s.name)}</button>`).join('');
+    out.push(`<div class="field-label">Hör till</div><div class="segmented wrap" role="group">${homes}</div>`);
+    if (site)
+      out.push(`<div class="field-label">Höjden från</div>${segmented('rail-height-from', p.heightFrom ?? 'ground', [
+        ['ground', 'Färdig mark'],
+        ['fixed', 'Fast höjd'],
+      ])}`);
+    const zLabel = !site ? 'Punkternas höjd mot golvet' : p.heightFrom === 'fixed' ? 'Punkternas höjd mot ±0' : 'Punkternas höjd över marken';
+    out.push(`<div class="field-label">${zLabel}</div><div class="fields">${p.line.map((_, i) => numberField(`rail:z:${i}`, `Punkt ${i + 1}`, Number(z[i]) || 0, 'mm')).join('')}</div>`);
   }
   out.push(`<div class="field-label">Övergång lutning–plant</div>${segmented('rail-transition', p.transition ?? 'bend', [
     ['bend', 'Krök (R 150)'],
@@ -79,7 +89,75 @@ export function railingFieldsMarkup(doc: ProjectDoc, el: Element): string {
     out.push(`<div class="field-label">Det här räcket</div><div class="fields">${fields}</div><p class="note">Typen bestämmer vilka mått som får ändras per räcke.</p>`);
   }
   if (stair && p.host) out.push(`<div class="row"><button class="btn" data-action="rail-detach" title="Räcket blir en ritad linje som inte längre följer trappan">Lösgör från trappan</button></div>`);
+  out.push(gatesMarkup(doc, p, path?.length ?? 0));
   return out.join('');
+}
+
+/** Grindarna i räcket (0.11.3, tavla 5). */
+function gatesMarkup(doc: ProjectDoc, p: RailingParams, length: number): string {
+  const gates = p.gates ?? [];
+  const types = Object.values(doc.definitions)
+    .filter((d) => d.railing?.group === 'Grindar')
+    .sort((a, b) => a.name.localeCompare(b.name, 'sv', { numeric: true }));
+  const rows = gates
+    .map((g, i) => {
+      const k = (f: string) => `rail:gate:${i}:${f}`;
+      const kind = g.own ? 'own' : g.type && doc.definitions[g.type] ? g.type : 'follow';
+      const opts: [string, string][] = [['follow', 'Följer staketet'], ...types.map((d): [string, string] => [d.id, `${d.name}${d.description ? ` ${d.description}` : ''}`]), ['own', 'Eget här']];
+      const seg = (action: string, value: string, options: [string, string][]) =>
+        `<div class="segmented" role="group">${options.map(([v, l]) => `<button data-action="${action}" data-index="${i}" data-value="${v}" aria-pressed="${v === value}">${escapeHtml(l)}</button>`).join('')}</div>`;
+      const lit = gateLittera(doc, g);
+      return `<li class="rail-gate">
+        <div class="rail-part-head"><b>Grind ${i + 1}${lit ? ` · ${escapeHtml(lit)}` : ''}</b><span>${mm(g.width)} mm</span><button class="icon-btn" data-action="rail-gate-remove" data-index="${i}" title="Ta bort grinden (räcket går obrutet igen)" aria-label="Ta bort">×</button></div>
+        <div class="fields">
+          <label class="field"><span>Typ</span><select data-key="${k('type')}">${opts.map(([v, l]) => `<option value="${escapeHtml(v)}"${v === kind ? ' selected' : ''}>${escapeHtml(l)}</option>`).join('')}</select></label>
+          ${numberField(k('width'), 'Bredd (hålmått)', g.width, 'mm')}
+          ${numberField(k('at'), 'Från början', Math.round(g.at), 'mm')}
+          ${g.own ? numberField(k('height'), 'Höjd', g.height ?? 0, 'mm') : ''}
+          ${numberField(k('post'), 'Grindstolpar', g.post ?? GATE_POST, 'mm')}
+          ${numberField(k('angle'), 'I planen', g.angle ?? 90, '°')}
+          ${kind === 'follow' || kind === 'own' ? text(k('littera'), 'Littera', g.littera) : ''}
+          ${text(k('lock'), 'Lås och stopp', g.lock)}
+        </div>
+        <div class="field-label">Hängning</div>${seg('rail-gate-hang', g.hang ?? 'left', [
+          ['left', 'Vänster'],
+          ['right', 'Höger'],
+          ['pair', 'Par'],
+          ['slide', 'Skjut'],
+        ])}
+        <div class="field-label">Öppnas</div>${seg('rail-gate-swing', g.swing ?? 'out', [
+          ['out', 'Utåt'],
+          ['in', 'Inåt'],
+        ])}
+      </li>`;
+    })
+    .join('');
+  const note = gates.length ? '' : '<p class="note">Klicka på räcket och välj <b>Gör till grind…</b> i smartmenyn: facket mellan stolparna där du klickade blir en grind.</p>';
+  return `<div class="field-label">Grindar</div>${rows ? `<ul class="rail-parts">${rows}</ul>` : ''}${note}${length && gates.some((g) => g.at + g.width > length + 1) ? '<p class="note">En grind går förbi räckets slut och kortas där.</p>' : ''}`;
+}
+
+/** Nästa lediga littera för en grind: G och två siffror, efter grindtyperna och grindarnas egna. */
+export function nextGateLittera(doc: ProjectDoc): string {
+  const used = new Set<string>();
+  for (const d of Object.values(doc.definitions)) if (d.elementType === 'Railing') used.add(d.name);
+  for (const e of Object.values(doc.elements)) for (const g of ((e.params as RailingParams).gates ?? []) as RailGate[]) if (g.littera) used.add(g.littera);
+  for (let n = 1; ; n++) {
+    const name = `G${String(n).padStart(2, '0')}`;
+    if (!used.has(name)) return name;
+  }
+}
+
+/** Gör ett fack till en grind (0.11.3). */
+export function addGate(store: DocStore, id: Id, span: { at: number; width: number }): number {
+  const el = store.doc.elements[id];
+  if (el?.type !== 'Railing') return -1;
+  const p = el.params as RailingParams;
+  const gt = railingTypeOf(store.doc, el).gateType;
+  const typed = gt && store.doc.definitions[gt]?.railing ? gt : undefined;
+  const gate: RailGate = { id: newId('g'), at: Math.round(span.at), width: Math.round(span.width), ...(typed ? { type: typed } : { littera: nextGateLittera(store.doc) }) };
+  const gates = [...(p.gates ?? []), gate].sort((a, b) => a.at - b.at);
+  patchRailings(store, [id], 'Gör till grind', () => ({ gates }));
+  return gates.findIndex((g) => Math.round(g.at) === Math.round(span.at));
 }
 
 /** Typen i *Påverkar fler objekt* (tavla 2): grupp, kryss, parametrar och delar. */
@@ -141,7 +219,7 @@ export function railingTypeMarkup(doc: ProjectDoc, defId: Id): string {
     <div class="field-label">Delar</div>
     <ul class="rail-parts">${parts}</ul>
     <div class="row wrap">${add}</div>
-    <p class="note">Måtten är mm eller formler med parametrarna, t.ex. <code>Skyddshöjd - 40</code>. Höjderna räknas från referenslinjen: stegnoslinjen i en trappa, golvet annars.</p>
+    <p class="note">Måtten är mm eller formler med parametrarna, t.ex. <code>Skyddshöjd - 40</code>. Höjderna räknas från referenslinjen: stegnoslinjen i en trappa, marken på Platsen, golvet annars.</p>
   </div>`;
 }
 
@@ -198,12 +276,44 @@ export function applyRailingField(store: DocStore, ids: Id[], rest: string, inpu
         return { z: z.some((v) => v) ? z : undefined };
       });
     }
+    case 'gate': {
+      const i = Number(more[0]);
+      const field = more[1];
+      return patchRailings(store, ids, 'Ändra grind', (p) => {
+        const list = [...(p.gates ?? [])];
+        const g: RailGate = { ...list[i] };
+        if (!list[i]) return null;
+        if (field === 'type') {
+          delete g.type;
+          delete g.own;
+          if (raw === 'own') g.own = true;
+          else if (raw !== 'follow') g.type = raw;
+        } else if (field === 'littera' || field === 'lock') {
+          const t = raw.trim();
+          if (t) g[field] = t;
+          else delete g[field];
+        } else if (field === 'width' || field === 'height' || field === 'post' || field === 'at' || field === 'angle') {
+          if (!Number.isFinite(n) || n < 0 || ((field === 'width' || field === 'post') && n <= 0)) return null;
+          const v = Math.round(n);
+          if ((field === 'post' && v === GATE_POST) || (field === 'angle' && v === 90) || (field === 'height' && !v)) delete g[field];
+          else g[field] = field === 'angle' ? Math.min(180, Math.max(1, v)) : v;
+        } else return null;
+        list[i] = g;
+        return { gates: list };
+      });
+    }
     case 'value': {
       const key = more.join(':');
       return Number.isFinite(n) && patchRailings(store, ids, key, (p) => ({ values: { ...p.values, [key]: Math.round(n) } }));
     }
   }
   return false;
+}
+
+/** Om formeln går att räkna med typens andra parametrar. */
+function evalFormulaOk(v: string, m: RailingTypeModel, self: string): boolean {
+  const vals = railValues({ ...m, params: m.params.filter((p) => p.name !== self) });
+  return Number.isFinite(railNum(v, vals, NaN));
 }
 
 /** Ett fält i typen (`rail:type:<def>:…`). */
@@ -225,6 +335,17 @@ function applyTypeField(store: DocStore, defId: Id, path: string[], input: HTMLI
   }
   return updateRailingType(store, defId, `Ändra typ ${def.name}`, (m) => {
     if (what === 'group') m.group = raw.trim() || m.group;
+    // Räckestypeditorn (0.11.3): På sluttning för alla delar, och grindtypen.
+    else if (what === 'slope') {
+      if (raw !== 'follow' && raw !== 'stepped') return null;
+      for (const part of m.parts) {
+        if (raw === 'stepped') part.slope = 'stepped';
+        else delete part.slope;
+      }
+    } else if (what === 'gateType') {
+      if (raw) m.gateType = raw;
+      else delete m.gateType;
+    }
     else if (what === 'ground' || what === 'building' || what === 'childSafe') m[what] = checked || undefined;
     else if (what === 'param') {
       const q = m.params[Number(idx)];
@@ -242,6 +363,15 @@ function applyTypeField(store: DocStore, defId: Id, path: string[], input: HTMLI
         const v = railNumOf(raw);
         if (v === undefined) return null;
         q.value = v;
+      } else if (field === 'formula') {
+        // En tom formel ger det räknade värdet som fast värde.
+        const t = raw.trim();
+        if (!t) q.value = Math.round(railValues(m).get(q.name) ?? 0);
+        else {
+          const v = railNumOf(t);
+          if (v === undefined || (typeof v === 'string' && evalFormulaOk(v, m, q.name) === false)) return null;
+          q.value = v;
+        }
       } else if (field === 'per') q.perRailing = checked || undefined;
     } else if (what === 'part') {
       const q = m.parts[Number(idx)];
@@ -292,6 +422,43 @@ export function railingAction(store: DocStore, ids: Id[], action: string, b: HTM
       return patchRailings(store, ids, b.dataset.value === 'stepped' ? 'Hoppande vid kilstegen' : 'Utjämnad vid kilstegen', () => ({ winder: b.dataset.value === 'stepped' ? 'stepped' : undefined }));
     case 'rail-transition':
       return patchRailings(store, ids, b.dataset.value === 'knee' ? 'Knäck' : 'Krök', () => ({ transition: b.dataset.value === 'knee' ? 'knee' : undefined }));
+    case 'rail-height-from':
+      return patchRailings(store, ids, b.dataset.value === 'fixed' ? 'Fast höjd' : 'Höjden från marken', () => ({ heightFrom: b.dataset.value === 'fixed' ? 'fixed' : undefined }));
+    case 'rail-home': {
+      const to = b.dataset.value!;
+      if (!store.doc.storeys.some((s) => s.id === to)) return false;
+      store.transact('Flytta till våning', (tx) => {
+        for (const id of ids) {
+          const el = tx.doc.elements[id];
+          if (el?.type !== 'Railing' || el.host || el.storey === to) continue;
+          const seen = (el.seenOn ?? []).filter((x) => x !== to);
+          const { seenOn: _, ...rest } = el;
+          tx.putElement({ ...rest, storey: to, ...(seen.length ? { seenOn: seen } : {}) });
+        }
+      });
+      return true;
+    }
+    case 'rail-gate-remove':
+    case 'rail-gate-hang':
+    case 'rail-gate-swing': {
+      const i = Number(b.dataset.index);
+      const v = b.dataset.value;
+      return patchRailings(store, ids, action === 'rail-gate-remove' ? 'Ta bort grind' : 'Ändra grind', (p) => {
+        const list = [...(p.gates ?? [])];
+        if (!list[i]) return null;
+        if (action === 'rail-gate-remove') list.splice(i, 1);
+        else {
+          const g: RailGate = { ...list[i] };
+          if (action === 'rail-gate-hang') {
+            if (v === 'right' || v === 'pair' || v === 'slide') g.hang = v;
+            else delete g.hang;
+          } else if (v === 'in') g.swing = 'in';
+          else delete g.swing;
+          list[i] = g;
+        }
+        return { gates: list.length ? list : undefined };
+      });
+    }
     case 'rail-reset': {
       const name = b.dataset.name!;
       return patchRailings(store, ids, `Typens ${name}`, (p) => {

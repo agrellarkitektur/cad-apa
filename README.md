@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.2** (alfa), Räckestypeditorn; nästa är **0.11.3 Staket och grindar**.
+**0.11.3** (alfa), Staket och grindar; nästa är **0.11.4 Byggd trappa**.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,45 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11.3, Staket och grindar (samma filformat, 26; projekt från 0.11 öppnas):
+- **Räcket på Platsen**: verktyget *Räcke* går att använda på Platsen, och
+  höjden mäts där från den **färdiga marken** (linjen följer marken med en
+  punkt var 250 mm). Det första staketet lägger in **ST01 Spjälstaket**,
+  **ST02 Ribbstaket**, **ST03 Flätverk 1 200**, **SP01 Spaljé, rutnät**
+  och **G01 Spjälgrind**; på Platsen står typerna med *Mark* först i
+  verktygsraden, på en våning de med *Byggnad*
+- **På sluttning**: delar med *Trappstegat* ligger vågrätt i varje fack,
+  på fackets högsta punkt (ST01), de andra **följer marken** (ST03, SP01).
+  Stolpar med *Nedgrävd* går ned i marken, och *I plint* ger en plint
+  (ST03). Förhandsvisningen *På sluttning* visar det, med det under mark
+  streckat
+- **Längs kant** tar också andra kanter: ett hål, ett bjälklag, en vägg,
+  en ramp, en markyta eller en linje (sidan mellan två hörn; **Shift+klick**
+  tar hela konturen). Längs en **stödmur** på Platsen får räcket krönets
+  höjd (*Fast höjd*). Smartspöt gör samma sak
+- **Hör till** och **Höjden från** i räckets egenskaper: Platsen eller en
+  våning (flyttar räcket), och på Platsen *Färdig mark* eller *Fast höjd*
+  (punkternas höjd mot ±0). Räcken har också *Syns också på*
+- **Grinden**: klicka på räcket och välj **Gör till grind…** i
+  smartmenyn: facket mellan stolparna blir en grind, med **grindstolpar**
+  (100 × 100) på var sida; delarna med *Vid grind: Avbryts* slutar där.
+  Under **Grindar** i egenskaperna: typ (*Följer staketet*, en grindtyp
+  som G01 eller *Eget här* med egen höjd), bredd (hålmått), var den
+  börjar, grindstolparnas mått, vinkeln i planen, littera (G02 …), lås
+  och stopp, **hängning** (vänster, höger, par, skjut) och **utåt** eller
+  **inåt**. I planen bladet öppet och **slagbågen** streckad som
+  dörrarnas (pennorna *Räcke: grind* och *Räcke: grindens slagbåge*), med
+  litteran; i 3D bladet stängt
+- **Räckestypeditorn som tavla 4**: fyra kolumner. Typlistan med **sök**
+  och M/B efter varje typ (gruppens knappar syns när musen är över den);
+  typen med littera och beskrivning, M, B och Barnsäkert, **Mönster**
+  (modul, i trappa, *På sluttning* för alla delar), delarna under
+  *Stolpar*, *Längsgående* och *Fyllning* med mått, **Ändar** och
+  **Grind** (grindtypen nya grindar får); förhandsvisningen med **typens
+  parametrar som tabell** (parameter, värde, formel, per räcke); den
+  valda delens egenskaper (form, läge, ändar och skarvar, under mark,
+  ritningen). *Lägg in förvalda typer* lägger in de som saknas
 
 Version 0.11.2, Räckestypeditorn (samma filformat, 26; projekt från 0.11 öppnas):
 - **Stilboken › Resurser › Räckestyper**: till vänster typlistan i

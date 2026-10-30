@@ -1,3 +1,4 @@
+import { isSite } from '../../core/model';
 import { railingsOnStair, stairEdgesAt } from '../../elements/railing';
 import { fitArcs, hasBulges } from '../../geometry/arcFit';
 import type { Vec2 } from '../../repr/primitives';
@@ -7,8 +8,9 @@ import type { WandAction, WandHit } from './wand';
 /**
  * Räcket (0.11.1): längs trappans kant man pekar på (kopplat till trappan),
  * räcken på båda sidor efter Tab, och annars ett ritat räcke längs en vägg,
- * en 2D-linje eller en kurva. Kanterna på hål, bjälklag, ramper och
- * stödmurar kommer med staketen i 0.11.3.
+ * en 2D-linje eller en kurva, och (0.11.3) hålets, bjälklagets, rampens
+ * eller markytans kant. På Platsen följer räcket marken; längs en stödmur
+ * får det krönets höjd.
  */
 export const railingAlong: WandAction = {
   id: 'railing-along',
@@ -18,7 +20,7 @@ export const railingAlong: WandAction = {
     const doc = app.store.doc;
     const state = app.host.activeState();
     const out: WandHit[] = [];
-    const edge = stairEdgesAt(doc, app.host.storey(), (el) => el.states.includes(state), ctx.at, Math.max(ctx.tol, 150))[0];
+    const edge = isSite(app.host.storey()) ? undefined : stairEdgesAt(doc, app.host.storey(), (el) => el.states.includes(state), ctx.at, Math.max(ctx.tol, 150))[0];
     if (edge) {
       out.push({ label: `Räcke längs trappans ${edge.side === 'left' ? 'vänstra' : 'högra'} kant`, what: 'Trappa', preview: { lines: [{ points: edge.pts, closed: false }] }, apply: () => void app.railingTool.createAlong(edge.stair.id, [edge.side]) });
       const on = railingsOnStair(doc, edge.stair.id);
@@ -38,7 +40,7 @@ export const railingAlong: WandAction = {
       apply: () => {
         const a = fitArcs(c);
         const line: Vec2[] = a.closed ? [...a.points, a.points[0]] : a.points;
-        app.railingTool.createLine(line, hasBulges(a.bulges) ? a.bulges : undefined, line.map(() => 0));
+        app.railingTool.createLine(line, hasBulges(a.bulges) ? a.bulges : undefined, line.map(() => 0), t.id);
       },
     });
     out.push(make(`Räcke längs ${t.side.points.length > 2 ? 'sidan' : 'kanten'}`, t.side));

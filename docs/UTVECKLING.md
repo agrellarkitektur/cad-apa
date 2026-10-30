@@ -653,6 +653,50 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt. Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Staket och grindar (0.11.3, format 26)
+
+- **Marken**: `railingGround(ctx)` i `elements/railing.ts` ger den färdiga
+  markens höjd (`crispHeight` som stödmurens profil, annars `groundAt`),
+  och `railingPath(doc, el, ground)` och `railingBodyOf(doc, el, ground)`
+  tar den när räcket är på Platsen; planen och 3D skickar den, andra
+  anrop (varningar, panelen, klick) inte. `freePath(p, ground)` lägger då
+  en punkt var `GROUND_STEP` (250) och sätter `RailPath.base` (marken i
+  varje punkt); `z` är marken plus punkternas höjd. `heightFrom: 'fixed'`
+  hoppar över marken.
+- **Delarna** (`railingBody(path, model, vals, { gates, gateModel })`):
+  med `path.base` gäller `slope: 'stepped'` (facken vågräta på
+  `maxZ`, `straightened` tar bort de täta punkterna) och `below` för
+  punktdelar (`PostPiece.ground`, `RailingBody.footings`). `AlongPiece` har
+  `z` (referenslinjens höjd, för planens snitt) och `ends` (vilka ändar
+  som förlängs). `withExtension` ger också `z`.
+- **Grindarna**: `RailGate` i `RailingParams.gates` (`at`, `width`,
+  `type`, `own`, `height`, `hang`, `swing`, `angle`, `post`, `lock`,
+  `littera`). I `railingBody` blir hålen (`gateHole`) grindstolpar
+  (`gatePostPart`, id `grindstolpe`) och `breaks`-delarna avbryts
+  (`openRuns`, `bayIsGate`); `gatePiece` ger `GatePiece` med bladen
+  (`railingBody` på en rak `freePath`) och normalen `out`. Planen:
+  `gatePlan` och `openPieces` i `railing.ts`, pennorna `railGate` och
+  `railGateSwing` i `repr/railingPens.ts`. `gateSpanAt` (facket vid en
+  punkt), `gateModelOf`, `gateLittera`. Panelen: `gatesMarkup`,
+  `addGate`, `nextGateLittera` i `ui/railingFields.ts` (fälten
+  `rail:gate:<i>:<fält>`, knapparna `rail-gate-…`); smartmenyn `railGate`
+  (`opDefs.ts`, `ops.ts`, `tool.ts`).
+- **Typerna**: `defaultGroundRailingTypes()` i `core/railingTypes.ts`,
+  `ensureRailingTypes(tx, ground)`, `addDefaultRailingTypes`,
+  `defaultRailingDef(doc, wanted, ground)` och `railingTypesFor(doc,
+  ground)` i `core/railings.ts`; `RailingTypeModel.gateType`.
+- **Verktyget**: `RailingTool` ritar på Platsen (`defFor` väljer en typ som
+  passar där), och *Längs kant* tar andra kanter med `otherAt` (kedjan ur
+  `snapSegments`, som spöets `traceAt`); `createLine(line, bulges, z,
+  from)` ger stödmurens krön (`crest`, ur `wallProfile`). Panelen: *Hör
+  till* (`rail-home`) och *Höjden från* (`rail-height-from`). `Railing` är
+  med i `SEEN_ON_TYPES` sedan 0.11.
+- **Editorn** (`ui/style/railingTypes.ts`) i fyra kolumner (`.rt-list`,
+  `.rt-typecol`, `.rt-center`, `.rt-side`); sökningen `data-rt-search`
+  (`railEditorSearch`, utan omritning), `partSummary`, parametertabellen
+  (`param:<i>:formula` i `applyTypeField`), typens `slope` och `gateType`.
+- **Tester**: `tests/v0113.test.ts`.
+
 ## Räckestypeditorn (0.11.2, format 26)
 
 - **Kommandona** i `core/railings.ts`: `railingGroups(doc)` (stilbokens

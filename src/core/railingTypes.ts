@@ -86,6 +86,8 @@ export interface RailingTypeModel {
   building?: boolean;
   /** Barnsäkert: varningarna för öppningar och klätterbarhet; på som förval, inte för staket. */
   childSafe?: boolean;
+  /** Grindtypen nya grindar i räcket får (0.11.3); utelämnad = följer staketet. */
+  gateType?: string;
   params: RailParam[];
   parts: RailPart[];
 }
@@ -270,6 +272,88 @@ export function defaultRailingTypes(): Definition[] {
       parts: [
         { id: 'ledstang', kind: 'along', name: 'Ledstång', profile: { shape: 'round', w: 40 }, z: 'Ledstångshöjd', offset: 60, extend: 'Förlängning', finish: 'wall', pen: 'railGrab' },
         { id: 'konsol', kind: 'point', name: 'Konsol', profile: { shape: 'round', w: 14 }, from: 'Ledstångshöjd - 90', to: 'Ledstångshöjd - 40', offset: 60, spacing: 'Konsoldelning', detail: 'detail', pen: 'railPost' },
+      ],
+    }),
+  ];
+}
+
+/**
+ * Staketen, spaljén och grinden (0.11.3, tavla 5), som läggs i projektet
+ * första gången ett räcke läggs på Platsen och med knappen i editorn.
+ */
+export function defaultGroundRailingTypes(): Definition[] {
+  const def = (id: Id, name: string, description: string, railing: RailingTypeModel): Definition => ({ id, origin: 'component', name, description, elementType: 'Railing', params: {}, props: {}, railing });
+  const buried = { depth: 600 };
+  return [
+    def('t-st01', 'ST01', 'Spjälstaket', {
+      group: 'Staket',
+      ground: true,
+      params: [
+        { name: 'Höjd', value: 1000, perRailing: true },
+        { name: 'Stolpdelning', value: 1800 },
+        { name: 'Spjälöppning', value: 30 },
+      ],
+      parts: [
+        { id: 'stolpe', kind: 'point', name: 'Stolpe', profile: { shape: 'rect', w: 70 }, material: 'trall', from: 0, to: 'Höjd', spacing: 'Stolpdelning', corners: true, slope: 'stepped', below: buried, detail: 'normal', pen: 'railPost' },
+        { id: 'overliggare', kind: 'along', name: 'Överliggare', profile: { shape: 'rect', w: 45, h: 70 }, material: 'trall', z: 'Höjd - 150', offset: -35, slope: 'stepped', pen: 'railHandrail' },
+        { id: 'underliggare', kind: 'along', name: 'Underliggare', profile: { shape: 'rect', w: 45, h: 70 }, material: 'trall', z: 320, offset: -35, slope: 'stepped', detail: 'detail' },
+        { id: 'spjalor', kind: 'repeat', name: 'Spjälor', profile: { shape: 'rect', w: 70, h: 22 }, material: 'trall', from: 100, to: 'Höjd', spacing: 'Spjälöppning', offset: -70, slope: 'stepped', detail: 'detail' },
+      ],
+    }),
+    def('t-st02', 'ST02', 'Ribbstaket', {
+      group: 'Staket',
+      ground: true,
+      params: [
+        { name: 'Höjd', value: 1000, perRailing: true },
+        { name: 'Stolpdelning', value: 1800 },
+      ],
+      parts: [
+        { id: 'stolpe', kind: 'point', name: 'Stolpe', profile: { shape: 'rect', w: 70 }, material: 'trall', from: 0, to: 'Höjd', spacing: 'Stolpdelning', corners: true, below: buried, detail: 'normal', pen: 'railPost' },
+        ...[0, 1, 2, 3, 4, 5].map((k): RailPart => ({ id: `ribba-${k + 1}`, kind: 'along', name: `Ribba ${k + 1}`, profile: { shape: 'rect', w: 22, h: 95 }, material: 'trall', z: k ? `Höjd - ${k * 150}` : 'Höjd', offset: -46, ...(k ? { detail: 'detail' as const } : { pen: 'railHandrail' }) })),
+      ],
+    }),
+    def('t-st03', 'ST03', 'Flätverk 1 200', {
+      group: 'Stängsel',
+      ground: true,
+      params: [
+        { name: 'Höjd', value: 1200, perRailing: true },
+        { name: 'Stolpdelning', value: 2500 },
+      ],
+      parts: [
+        { id: 'stolpe', kind: 'point', name: 'Stolpe', profile: { shape: 'round', w: 48 }, from: 0, to: 'Höjd', spacing: 'Stolpdelning', corners: true, below: { footing: true }, detail: 'normal', pen: 'railPost' },
+        { id: 'trad-1', kind: 'along', name: 'Spänntråd överst', profile: { shape: 'round', w: 4 }, z: 'Höjd', pen: 'railHandrail' },
+        { id: 'trad-2', kind: 'along', name: 'Spänntråd mitt', profile: { shape: 'round', w: 4 }, z: 'Höjd / 2', detail: 'detail' },
+        { id: 'trad-3', kind: 'along', name: 'Spänntråd nederst', profile: { shape: 'round', w: 4 }, z: 54, detail: 'detail' },
+        { id: 'nat', kind: 'surface', name: 'Nät (flätverk 50 × 50)', thickness: 3, material: 'aluminium', from: 50, to: 'Höjd', gate: 'break', detail: 'detail' },
+      ],
+    }),
+    def('t-sp01', 'SP01', 'Spaljé, rutnät', {
+      group: 'Spaljéer',
+      ground: true,
+      building: true,
+      params: [
+        { name: 'Höjd', value: 1800, perRailing: true },
+        { name: 'Stolpdelning', value: 2400 },
+      ],
+      parts: [
+        { id: 'stolpe', kind: 'point', name: 'Stolpe', profile: { shape: 'rect', w: 90 }, material: 'trall', from: 0, to: 'Höjd', spacing: 'Stolpdelning', corners: true, below: buried, detail: 'normal', pen: 'railPost' },
+        { id: 'ram-over', kind: 'along', name: 'Ram överst', profile: { shape: 'rect', w: 45, h: 45 }, material: 'trall', z: 'Höjd', pen: 'railHandrail' },
+        { id: 'ram-under', kind: 'along', name: 'Ram nederst', profile: { shape: 'rect', w: 45, h: 45 }, material: 'trall', z: 300, detail: 'detail' },
+        { id: 'rutnat', kind: 'surface', name: 'Ribbor 45°, c/c 150', thickness: 20, material: 'trall', from: 255, to: 'Höjd - 45', detail: 'detail' },
+      ],
+    }),
+    def('t-g01', 'G01', 'Spjälgrind', {
+      group: 'Grindar',
+      ground: true,
+      params: [
+        { name: 'Höjd', value: 1000, perRailing: true },
+        { name: 'Spjälöppning', value: 30 },
+      ],
+      parts: [
+        { id: 'sidstycke', kind: 'point', name: 'Sidstycke', profile: { shape: 'rect', w: 45, h: 70 }, material: 'trall', from: 50, to: 'Höjd', corners: false, detail: 'detail', pen: 'railPost' },
+        { id: 'overliggare', kind: 'along', name: 'Överliggare', profile: { shape: 'rect', w: 45, h: 70 }, material: 'trall', z: 'Höjd - 150', offset: -35 },
+        { id: 'underliggare', kind: 'along', name: 'Underliggare', profile: { shape: 'rect', w: 45, h: 70 }, material: 'trall', z: 320, offset: -35, detail: 'detail' },
+        { id: 'spjalor', kind: 'repeat', name: 'Spjälor', profile: { shape: 'rect', w: 70, h: 22 }, material: 'trall', from: 100, to: 'Höjd', spacing: 'Spjälöppning', offset: -70, detail: 'detail' },
       ],
     }),
   ];

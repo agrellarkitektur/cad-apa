@@ -23,7 +23,7 @@ import { categoryAction, categoryChange, underlayClick, viewAction } from './sty
 import { fillTypeUses, lineTypeUses, materialUsesMap, resourceChange, resourceClick } from './style/resourceEdits';
 import { placesChange, placesClick } from './style/placesPanel';
 import { exportBookFile, importBookFile, templateDialog } from './style/bookFile';
-import { newRailEditorState, railEditorChange, railEditorClick, railEditorDrag, railEditorMarkup } from './style/railingTypes';
+import { newRailEditorState, railEditorChange, railEditorClick, railEditorDrag, railEditorMarkup, railEditorSearch } from './style/railingTypes';
 
 /** Raderna som sök och *Vanliga/Alla* (0.10.34) visar eller döljer. */
 const FILTER_ROWS = '.style-row, .pen-row, .material-row, .linetype-row, .filltype, .filltype-builtin, .tpl-row, .sb-groups label.check, .sb-show label.field, .sb-show label.check, .sb-views li';
@@ -123,6 +123,10 @@ export class StyleDialog {
     for (const t of ['dragstart', 'dragover', 'dragleave', 'drop'] as const) this.el.addEventListener(t, (e) => railEditorDrag(this.store, e));
     this.el.addEventListener('input', (e) => {
       const t = e.target as HTMLElement;
+      if (t.matches('[data-rt-search]')) {
+        railEditorSearch(this.el, this.rt, (t as HTMLInputElement).value);
+        return;
+      }
       if (t.matches('[data-pp-search]')) {
         this.pp.query = (t as HTMLInputElement).value;
         this.render();

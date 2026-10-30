@@ -15,6 +15,8 @@ export const RAIL_PENS = [
   { key: 'railPost', label: 'Räcke: stolpar', hint: 'Stolpar och konsoler, i Detalj', weight: 0.18, view: 'plan', tags: ['räcke', 'stolpe', 'konsol'] },
   { key: 'railHandrail', label: 'Räcke: handledare', hint: 'Handledaren och liggarna, i Detalj', weight: 0.18, view: 'plan', tags: ['räcke', 'handledare', 'liggare'] },
   { key: 'railGrab', label: 'Räcke: ledstång', hint: 'Ledstången med förlängningen förbi trappan (från Normal)', weight: 0.18, view: 'plan', tags: ['räcke', 'ledstång'] },
+  { key: 'railGate', label: 'Räcke: grind', hint: 'Grindens blad i öppet läge, grindstolparna och litteran (0.11.3)', weight: 0.18, view: 'plan', tags: ['räcke', 'grind', 'blad'] },
+  { key: 'railGateSwing', label: 'Räcke: grindens slagbåge', hint: 'Slagbågen, som dörrarnas; skjutgrindens väg', weight: 0.13, linetype: 'dashed', view: 'plan', tags: ['räcke', 'grind', 'slagbåge', 'öppningssätt'] },
   { key: 'railCut', label: 'Räcke: snittlinje', hint: 'Räcket där en sektion går genom det', weight: 0.25, view: 'elev', tags: ['räcke', 'snitt', 'snittlinje'] },
   { key: 'railElev', label: 'Räcke: konturlinje (fasad och sektion)', hint: 'Räckets delar bortom snittet', weight: 0.13, view: 'elev', tags: ['räcke', 'kontur', 'konturlinje'] },
 ] as const satisfies readonly { key: string; label: string; hint: string; weight: number; linetype?: string; color?: string; view: 'plan' | 'elev'; tags: readonly string[] }[];

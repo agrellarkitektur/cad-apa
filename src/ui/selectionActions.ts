@@ -136,6 +136,11 @@ export function selectionAction({ panel, store, selection, getView, body }: Acti
     case 'rail-transition':
     case 'rail-reset':
     case 'rail-detach':
+    case 'rail-height-from':
+    case 'rail-home':
+    case 'rail-gate-remove':
+    case 'rail-gate-hang':
+    case 'rail-gate-swing':
     case 'railtype-param-add':
     case 'railtype-param-remove':
     case 'railtype-part-add':

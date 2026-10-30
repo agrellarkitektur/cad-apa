@@ -83,9 +83,9 @@ describe('Räckestyperna (0.11.2)', () => {
       expect(svg).toContain('data-rt-part="handledare"');
       expect(svg).toMatch(/rtp-part[^"]* on[ "]/);
     }
-    // Vid grinden avbryts handledaren: två bitar, men en hel om den fortsätter.
+    // Vid grinden avbryts handledaren: två bitar och bladets, men en hel om den fortsätter (då har bladet ingen, 0.11.3).
     const count = (svg: string) => (svg.match(/data-rt-part="handledare"/g) ?? []).length;
-    expect(count(previewMarkup(m, 'gate', null))).toBe(2);
+    expect(count(previewMarkup(m, 'gate', null))).toBe(3);
     const cont = { ...m, parts: m.parts.map((p) => (p.id === 'handledare' ? { ...p, gate: 'continue' as const } : p)) };
     expect(count(previewMarkup(cont, 'gate', null))).toBe(1);
   });

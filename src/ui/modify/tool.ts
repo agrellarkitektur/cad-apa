@@ -13,8 +13,8 @@ import { crestAtS } from '../../elements/groundWall';
 import { fromRh, toRh } from '../../core/site';
 import { along } from '../../elements/groundLines';
 import { createContext } from '../../repr/context';
-import { railingsOnStair, stairEdgesAt } from '../../elements/railing';
-import { addRailingsOnStair } from '../railingFields';
+import { gateSpanAt, railingsOnStair, stairEdgesAt } from '../../elements/railing';
+import { addGate, addRailingsOnStair } from '../railingFields';
 import { withOwnCut, type EdgeCut } from '../../elements/roofBody';
 import { dist } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
@@ -73,6 +73,15 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
     }
     const ids = addRailingsOnStair(host.store, st.id, sides);
     if (ids.length) host.selection.set(ids);
+    return;
+  }
+  // Grinden (0.11.3): facket där man klickade.
+  if (op === 'railGate') {
+    const el = doc.elements[ctx.shapeId ?? ctx.ids[0]];
+    if (el?.type !== 'Railing') return;
+    const span = gateSpanAt(doc, el, ctx.at);
+    if (!span) return;
+    if (addGate(host.store, el.id, span) >= 0) host.hint('Facket är en grind. Bredd, typ, hängning och öppning ställs in under Grindar i egenskaperna.', 4000);
     return;
   }
   // Trappans vilplan och svängar (0.11).

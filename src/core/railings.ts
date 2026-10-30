@@ -1,6 +1,7 @@
 import { newId } from './ids';
 import type { Definition, Element, Id } from './model';
-import { defaultRailingTypes, newPart, RAILING_GROUPS, type RailingTypeModel } from './railingTypes';
+import { defaultGroundRailingTypes, defaultRailingTypes, newPart, RAILING_GROUPS, type RailingTypeModel } from './railingTypes';
+import { isSite } from './model';
 import type { DocStore, TxBuilder } from './store';
 
 /**
@@ -8,17 +9,52 @@ import type { DocStore, TxBuilder } from './store';
  * första gången), och ändra en räckestyp.
  */
 
-/** De förvalda räckestyperna, om projektet saknar dem (äldre projekt och nya utan räcken). */
-export function ensureRailingTypes(tx: TxBuilder): void {
-  if (Object.values(tx.doc.definitions).some((d) => d.elementType === 'Railing')) return;
-  for (const d of defaultRailingTypes()) if (!tx.doc.definitions[d.id]) tx.putDefinition(d);
+/**
+ * De förvalda räckestyperna, om projektet saknar dem (äldre projekt och nya
+ * utan räcken): RÄ01–RÄ03, och på Platsen (0.11.3) staketen, spaljén och
+ * grinden när ingen typ har *Mark*.
+ */
+export function ensureRailingTypes(tx: TxBuilder, ground = false): void {
+  const defs = Object.values(tx.doc.definitions).filter((d) => d.elementType === 'Railing');
+  if (!defs.length) for (const d of defaultRailingTypes()) if (!tx.doc.definitions[d.id]) tx.putDefinition(d);
+  if (ground && !defs.some((d) => d.railing?.ground)) for (const d of defaultGroundRailingTypes()) if (!tx.doc.definitions[d.id]) tx.putDefinition(d);
 }
 
-/** Den typ ett nytt räcke får: den senast använda, annars RÄ01 (eller den första). */
-export function defaultRailingDef(doc: DocStore['doc'], wanted?: Id): Id {
-  if (wanted && doc.definitions[wanted]?.elementType === 'Railing') return wanted;
-  if (doc.definitions['t-ra01']?.elementType === 'Railing') return 't-ra01';
-  return Object.values(doc.definitions).find((d) => d.elementType === 'Railing')?.id ?? 't-ra01';
+/** Alla förvalda typer som saknas (knappen i räckestypeditorn). */
+export function addDefaultRailingTypes(tx: TxBuilder): number {
+  let n = 0;
+  for (const d of [...defaultRailingTypes(), ...defaultGroundRailingTypes()])
+    if (!tx.doc.definitions[d.id]) {
+      tx.putDefinition(d);
+      n++;
+    }
+  return n;
+}
+
+/**
+ * Den typ ett nytt räcke får: den senast använda, annars RÄ01 (på Platsen
+ * ST01 eller den första med *Mark*), annars den första. Grindtyperna
+ * väljs inte för ett räcke.
+ */
+export function defaultRailingDef(doc: DocStore['doc'], wanted?: Id, ground = false): Id {
+  const ok = (id: Id | undefined) => !!id && doc.definitions[id]?.elementType === 'Railing';
+  if (ok(wanted)) return wanted!;
+  const all = Object.values(doc.definitions).filter((d) => d.elementType === 'Railing' && d.railing?.group !== 'Grindar');
+  if (ground) {
+    if (ok('t-st01')) return 't-st01';
+    const g = all.find((d) => d.railing?.ground);
+    if (g) return g.id;
+  }
+  if (ok('t-ra01')) return 't-ra01';
+  return all[0]?.id ?? 't-ra01';
+}
+
+/** Räckestyperna i den ordning de visas i verktyget: på Platsen de med *Mark* först, på en våning de med *Byggnad*; grindtyperna sist. */
+export function railingTypesFor(doc: DocStore['doc'], ground: boolean): Definition[] {
+  const rank = (d: Definition) => (d.railing?.group === 'Grindar' ? 2 : (ground ? d.railing?.ground : d.railing?.building) ? 0 : 1);
+  return Object.values(doc.definitions)
+    .filter((d) => d.elementType === 'Railing')
+    .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'sv', { numeric: true }));
 }
 
 export type NewRailing = Omit<Element, 'id' | 'type' | 'states' | 'tags' | 'props'> & { states?: Id[] };
@@ -26,9 +62,10 @@ export type NewRailing = Omit<Element, 'id' | 'type' | 'states' | 'tags' | 'prop
 /** Lägg räcken, med de förvalda typerna om de saknas. */
 export function addRailings(store: DocStore, list: NewRailing[], states: Id[], label: string): Element[] {
   const made: Element[] = list.map((r) => ({ id: newId('el'), type: 'Railing', tags: [], props: {}, ...r, states: r.states ?? states }));
+  const ground = made.some((e) => isSite(e.storey));
   store.transact(label, (tx) => {
-    ensureRailingTypes(tx);
-    for (const e of made) tx.putElement({ ...e, definition: defaultRailingDef(tx.doc, e.definition) });
+    ensureRailingTypes(tx, ground);
+    for (const e of made) tx.putElement({ ...e, definition: defaultRailingDef(tx.doc, e.definition, isSite(e.storey)) });
   });
   return made.map((e) => store.doc.elements[e.id]).filter(Boolean);
 }

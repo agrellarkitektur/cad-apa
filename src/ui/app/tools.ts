@@ -237,8 +237,8 @@ export function installTools(app: AppContext, host: ToolHost) {
       app.goTo({ kind: 'storey', id: SITE_STOREY });
       app.hint('Markobjekten ritas på Platsen.', 3000);
     }
-    // Trappor ritas på en våning (0.11): från Platsen går man till den närmast ±0.
-    if ((id === 'stair' || id === 'railing') && !app.ui.layout && !app.ui.marker && !app.ui.worksheet && isSite(app.ui.storey)) {
+    // Trappor ritas på en våning (0.11): från Platsen går man till den närmast ±0. Räcken (staket) ritas också på Platsen (0.11.3).
+    if (id === 'stair' && !app.ui.layout && !app.ui.marker && !app.ui.worksheet && isSite(app.ui.storey)) {
       const first = storeysUpFrom(app.store.doc).find((s) => s.elevation >= 0) ?? storeysUpFrom(app.store.doc)[0];
       if (first) app.goTo({ kind: 'storey', id: first.id });
     }
