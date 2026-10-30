@@ -230,7 +230,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     marker: () => ui.marker,
     worksheet: () => ui.worksheet,
     selected: () => new Set(selection.list()),
-    trace: () => ui.trace,
+    traced: (id) => ui.underlays.some((u) => u.source === id),
     viewModified: (v) => views.viewModified(v),
     describeView: (v) => describeView(store.doc, v),
     treeItem: () => panel.treeItem?.id ?? null,
@@ -386,7 +386,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
       ui.marker = null;
       ui.worksheet = null;
       ui.layout = null;
-      ui.trace = null;
+      ui.underlays = [];
       ui.category = null;
       ui.viewType = null;
       ui.scale = 100;
@@ -552,7 +552,6 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   appEl.dataset.mode = ui.mode;
   appEl.dataset.sheet = ui.sheet;
   panes.applyPaneClasses();
-  showMenu.applyTraceLook();
   window.addEventListener('resize', () => panes.applyPaneClasses());
   render.renderAll();
   tools.setTool('select');

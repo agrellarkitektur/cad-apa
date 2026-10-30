@@ -1,5 +1,6 @@
 import { COLOUR_CODED, POCHE, SWEDISH_STANDARD, type ActionKey, type ActionStyle, type CategoryStyle, type PenDef, type StyleBook, type StyleSheet } from './graphics';
 import { isSite, type Id, type ProjectDoc, type SiteCategory, type ViewDef } from './model';
+import { normalizeUnderlays, type ViewUnderlay } from './viewUnderlays';
 
 /**
  * Stilboken i tre nivåer med arv (0.10.32): projektets resurser (pennor,
@@ -38,6 +39,8 @@ export interface CategoryShow {
   /** Det som döljs (eller med plus tänds), som förut i vyn. */
   hide: string[];
   hideDemolished: boolean;
+  /** Underlagen i vyn (0.10.35), nedifrån och upp. Utelämnade = inga. */
+  underlays?: ViewUnderlay[];
 }
 
 export interface ViewCategory {
@@ -56,6 +59,7 @@ export interface ViewCategory {
  * En vys avvikelser från kategorin, en rad per nyckel:
  * - `compare`, `detail`, `labelDetail`, `modelDetail`, `hideDemolished`: visningen.
  * - `hide:<nyckel>`: sant = döljs (eller tänds med `+`), falskt = som kategorin utan den.
+ * - `underlays`: hela listan med underlag (0.10.35), när den skiljer sig från kategorins.
  * - `actions.<åtgärd>`, `openingMark`, `pens.<nyckel>` (null = programmets förval): stilen.
  */
 export type ViewOverrides = Record<string, unknown>;
@@ -140,8 +144,16 @@ export function resolveShow(c: ViewCategory, ov: ViewOverrides | undefined): Cat
     const key = k.slice(5);
     s.hide = v ? (s.hide.includes(key) ? s.hide : [...s.hide, key]) : s.hide.filter((h) => h !== key);
   }
+  if ('underlays' in ov) {
+    const u = normalizeUnderlays(ov.underlays);
+    if (u.length) s.underlays = u;
+    else delete s.underlays;
+  }
   return s;
 }
+
+/** Underlagen i en visning, utan utelämnade. */
+export const underlaysOf = (s: Pick<CategoryShow, 'underlays'>): ViewUnderlay[] => s.underlays ?? [];
 
 /** Avvikelserna i visningen: det i `show` som skiljer sig från kategorin, rad för rad. */
 export function showOverrides(c: ViewCategory, show: CategoryShow): ViewOverrides {
@@ -149,6 +161,7 @@ export function showOverrides(c: ViewCategory, show: CategoryShow): ViewOverride
   for (const k of SHOW_KEYS) if (show[k] !== c.show[k]) ov[k] = show[k];
   for (const h of show.hide) if (!c.show.hide.includes(h)) ov[`hide:${h}`] = true;
   for (const h of c.show.hide) if (!show.hide.includes(h)) ov[`hide:${h}`] = false;
+  if (!sameValue(underlaysOf(show), underlaysOf(c.show))) ov.underlays = structuredClone(underlaysOf(show));
   return ov;
 }
 
@@ -252,6 +265,11 @@ export const viewsWithCategory = (doc: Pick<ProjectDoc, 'graphics' | 'elements' 
 /** Hur många vyer som har kategorin. */
 export const categoryUses = (doc: Pick<ProjectDoc, 'graphics' | 'elements' | 'views'>, c: ViewCategory) => viewsWithCategory(doc, c).length;
 
+const withUnderlays = (v: unknown) => {
+  const u = normalizeUnderlays(v);
+  return u.length ? { underlays: u } : {};
+};
+
 /** Kategorier från fil: de utan namn eller vytyp hoppas över, och varje vytyp får minst en. */
 export function normalizeCategories(v: unknown, fallbackStyle: CategoryStyle): ViewCategory[] {
   const types = new Set(VIEW_TYPES.map((t) => t.type).filter(Boolean));
@@ -267,7 +285,7 @@ export function normalizeCategories(v: unknown, fallbackStyle: CategoryStyle): V
       type: c.type,
       ...(c.type === 'site' && ['situation', 'grading', 'illustration'].includes(c.kind) ? { kind: c.kind } : {}),
       scale: Number(c.scale) > 0 ? Number(c.scale) : 100,
-      show: { compare: s.compare !== false, detail, labelDetail: level(s.labelDetail, detail), modelDetail: level(s.modelDetail, detail), hide: Array.isArray(s.hide) ? s.hide.map(String) : [], hideDemolished: s.hideDemolished === true },
+      show: { compare: s.compare !== false, detail, labelDetail: level(s.labelDetail, detail), modelDetail: level(s.modelDetail, detail), hide: Array.isArray(s.hide) ? s.hide.map(String) : [], hideDemolished: s.hideDemolished === true, ...withUnderlays(s.underlays) },
       style: c.style && typeof c.style === 'object' && c.style.actions ? c.style : structuredClone(fallbackStyle),
     });
   }

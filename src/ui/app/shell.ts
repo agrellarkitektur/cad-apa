@@ -2,6 +2,7 @@ import type { ViewType } from '../../core/viewCategories';
 import type { Brand } from '../../brand';
 import { ENGINE } from '../../core/engine';
 import type { Id, ProjectDoc } from '../../core/model';
+import type { ViewUnderlay } from '../../core/viewUnderlays';
 import { icons, type IconName } from '../icons';
 import { THEMES } from '../theme';
 import type { UiSettings } from '../uiSettings';
@@ -75,7 +76,8 @@ export function createUiState(initial: ProjectDoc, uiSettings: UiSettings, deskt
     category: null as string | null,
     /** Vytypen senast det ritades; byts den utan att en vy öppnas får visningen kategorins inställningar. */
     viewType: null as ViewType | null,
-    trace: null as Id | null,
+    /** Underlagen i vyn (0.10.35), som de är under Visa just nu. */
+    underlays: [] as ViewUnderlay[],
     /** En fasad eller sektion som visas i stället för planen (0.7). */
     marker: null as Id | null,
     /** Ett arbetsblad som visas i stället för planen (0.8 del 2). */

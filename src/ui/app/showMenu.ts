@@ -1,34 +1,70 @@
 import { categoriesOf } from '../../core/viewCategories';
 import { isSite } from '../../core/model';
 import { DETAIL_LABELS, DETAIL_LEVELS } from '../../core/states';
-import { saveUiSettings } from '../uiSettings';
 import { escapeHtml } from '../labels';
 import { hiddenObjects, HIDDEN_OBJECT } from '../../core/visibility';
 import type { AppContext } from './context';
 import { ANNOTATION_SCALES } from './helpers';
 import { installScalePop } from './scalePop';
-import { isShown, OFF_BY_DEFAULT, setShown, showGroupsFor, traceStoreyOptions } from './showKeys';
+import { isShown, OFF_BY_DEFAULT, setShown, showGroupsFor } from './showKeys';
+import { toggleUnderlay, type ViewUnderlay } from '../../core/viewUnderlays';
+import { editUnderlays, hostFor, underlayRowsMarkup, underlaySourceItems } from '../underlayRows';
 
-/** Visa-menyn med kalkeringen (och skärmskalan i statusraden, `scalePop.ts`). */
+/** Visa-menyn med underlagen (och skärmskalan i statusraden, `scalePop.ts`). */
 export function installShowMenu(app: AppContext) {
-  /** Hur den kalkerade vyn ritas, under Visa. Gäller för användaren, i alla projekt. */
-  function traceLookMarkup(): string {
-    if (!app.ui.trace) return '';
-    const t = app.uiSettings.trace;
-    return `<div class="trace-look">
-      <div class="segmented wide" role="group" aria-label="Kalkeringens läge">
-        <button data-trace-above="0" aria-pressed="${!t.above}">Under</button>
-        <button data-trace-above="1" aria-pressed="${t.above}">Över</button>
-      </div>
-      <label class="check"><input type="checkbox" data-trace-own${t.color ? '' : ' checked'}> Ritningens färger</label>
-      <label class="field inline"><span>Färg</span><input type="color" data-trace-color value="${t.color ?? '#c2372c'}"${t.color ? '' : ' disabled'}></label>
-      <label class="field"><span>Opacitet <b data-out="trace-opacity">${Math.round(t.opacity * 100)} %</b></span><input type="range" min="5" max="100" step="5" data-trace-opacity value="${Math.round(t.opacity * 100)}"></label>
-    </div>`;
+  /** Var underlagen står där man är (0.10.35). */
+  function host() {
+    const ui = app.ui;
+    return hostFor(ui.storey, { marker: ui.marker, worksheet: ui.worksheet, viewId: ui.activeView });
   }
 
-  function applyTraceLook(): void {
-    app.view.setUnderlayLook(app.uiSettings.trace);
+  /** Underlagen under Visa: raderna och *Lägg till underlag…*. Inte på ett blad. */
+  function underlayMarkup(): string {
+    if (app.ui.layout) return '';
+    return `<div class="show-underlays"><span class="show-sub">Underlag i vyn</span>${underlayRowsMarkup(app.store.doc, app.ui.underlays, host())}</div>`;
   }
+
+  /** Byt underlagen och rita om; menyn ritas om när raderna ändras. */
+  function setUnderlays(list: ViewUnderlay[], reopen = true): void {
+    app.ui.underlays = list;
+    app.renderAll();
+    // Efter klicket: knappen ritas bort, och ett klick utanför Visa stänger menyn.
+    if (reopen)
+      setTimeout(() => {
+        closeShowMenu();
+        toggleShowMenu();
+      });
+  }
+
+  /** Menyn *Lägg till underlag…* vid knappen. Visa-menyn öppnas igen efteråt. */
+  function openAddUnderlay(btn: HTMLElement): void {
+    const r = btn.getBoundingClientRect();
+    const items = underlaySourceItems(app.store.doc, host(), app.ui.underlays, (source) => {
+      setUnderlays(toggleUnderlay(app.ui.underlays, source), false);
+      // Efter klicket, som kan stänga Visa-menyn: den ritas om med det nya underlaget.
+      setTimeout(() => {
+        closeShowMenu();
+        toggleShowMenu();
+      });
+    });
+    items.push({ kind: 'sep' }, { label: 'Fil (DXF, PDF, bild)…', sub: 'Läggs in där du är, som förut', run: () => app.chooseUnderlayFiles() });
+    app.ctxMenu.open(r.left, r.bottom + 4, items, 'Lägg till underlag');
+  }
+
+  app.root.addEventListener('click', (e) => {
+    const t = e.target as Element;
+    if (!t.closest('.show-menu')) return;
+    const add = t.closest<HTMLElement>('[data-ul-add]');
+    if (add) {
+      e.stopPropagation();
+      openAddUnderlay(add);
+      return;
+    }
+    const btn = t.closest<HTMLElement>('button[data-ul-field]');
+    if (!btn) return;
+    const next = editUnderlays(app.ui.underlays, btn);
+    if (next) setUnderlays(next);
+  });
 
   const scale = installScalePop(app);
 
@@ -46,27 +82,11 @@ export function installShowMenu(app: AppContext) {
       app.views.syncDetailSwitch();
       app.renderAll();
       refreshShowMenu();
-    } else if (t.matches('[data-show-trace]')) {
-      app.ui.trace = t.value || null;
-      app.renderAll();
-      refreshShowMenu();
-    } else if (t.matches('[data-trace-own]')) {
-      app.uiSettings.trace.color = (t as unknown as HTMLInputElement).checked ? null : app.$<HTMLInputElement>('[data-trace-color]').value;
-      saveUiSettings(app.uiSettings);
-      applyTraceLook();
-      refreshShowMenu();
+    } else if (t.matches('.show-menu [data-ul-field]')) {
+      // Underlagens sätt, färg och procent (0.10.35); listan ritas om när sättet ändras (färgfältet kommer och går).
+      const next = editUnderlays(app.ui.underlays, t);
+      if (next) setUnderlays(next, t.dataset.ulField === 'look');
     }
-  });
-  // Kalkeringens färg och opacitet ändras medan man drar.
-  app.root.addEventListener('input', (e) => {
-    const t = e.target as HTMLInputElement;
-    if (t.matches('[data-trace-color]')) app.uiSettings.trace.color = t.value;
-    else if (t.matches('[data-trace-opacity]')) {
-      app.uiSettings.trace.opacity = Number(t.value) / 100;
-      app.out('trace-opacity').textContent = `${t.value} %`;
-    } else return;
-    saveUiSettings(app.uiSettings);
-    applyTraceLook();
   });
 
   /** Rita om Visa-menyn om den är öppen, t.ex. när kalkeringen slås på. */
@@ -178,17 +198,13 @@ export function installShowMenu(app: AppContext) {
     app.hint('Allt i vyn visas');
   });
 
-  /** Visa-menyns inställningar: skala, vykategori och kalkering. */
+  /** Visa-menyns inställningar: skala, vykategori och underlagen. */
   function settingsMarkup(): string {
     const { ui, store } = app;
     return (
       `<label class="field"><span>Skala för texter och mått</span><select data-show-scale>${ANNOTATION_SCALES.map((n) => `<option value="${n}"${n === ui.scale ? ' selected' : ''}>1:${n}</option>`).join('')}${ANNOTATION_SCALES.includes(ui.scale) ? '' : `<option value="${ui.scale}" selected>1:${ui.scale}</option>`}</select></label>` +
       `<label class="field"><span>Vykategori</span><select data-show-category>${categoriesOf(store.doc.graphics, app.place.viewType()).map((c) => `<option value="${escapeHtml(c.id)}"${c === app.place.currentCategory() ? ' selected' : ''}>${escapeHtml(c.name)}</option>`).join('')}</select></label>` +
-      `<label class="field"><span>Kalkera en annan vy</span><select data-show-trace><option value="">Ingen</option>${traceStoreyOptions(ui.trace, isSite(ui.storey), store.doc, ui.storey)}${store.doc.views
-        .filter((v) => v.id !== ui.activeView)
-        .map((v) => `<option value="${v.id}"${ui.trace === v.id ? ' selected' : ''}>${escapeHtml(v.name)}</option>`)
-        .join('')}</select></label>` +
-      traceLookMarkup() +
+      underlayMarkup() +
       `<button class="btn show-style-link" data-action="style">Stilboken…</button>`
     );
   }
@@ -223,5 +239,5 @@ export function installShowMenu(app: AppContext) {
     app.renderAll();
   }
 
-  return { ...scale, applyTraceLook, closeShowMenu, refreshShowMenu, toggleShowItem, toggleShowMenu };
+  return { ...scale, closeShowMenu, refreshShowMenu, toggleShowItem, toggleShowMenu };
 }

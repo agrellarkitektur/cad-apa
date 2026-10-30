@@ -32,7 +32,7 @@ export function installStoreys(app: AppContext) {
     const id = addStorey(app.store, from, where);
     if (!id) return null;
     open(id);
-    app.hint(`${nameOf(id)} på ${fmt(doc().storeys.find((s) => s.id === id)!.elevation)}. Våningen under visas tonad med Visa → Kalkera.`, 5000);
+    app.hint(`${nameOf(id)} på ${fmt(doc().storeys.find((s) => s.id === id)!.elevation)}. Våningen under läggs som underlag under Visa.`, 5000);
     return id;
   }
 
@@ -162,14 +162,14 @@ export function installStoreys(app: AppContext) {
    * och blad, där inget kalkeras.
    */
   function traceItem(id: Id, key: string, name: string): MenuItem {
-    const on = app.ui.trace === key;
+    const on = app.ui.underlays.some((u) => u.source === key);
     const here = app.ui.storey === id || !!app.ui.marker || !!app.ui.layout || !!app.ui.worksheet;
     return {
       label: on ? `Sluta kalkera ${name}` : `Kalkera ${name}`,
       checked: on,
       disabled: here && !on,
       ...(here && !on ? { sub: app.ui.storey === id ? 'Visas redan' : 'Bara i en våningsplan' } : {}),
-      run: () => app.views.setTrace(on ? null : key),
+      run: () => app.views.toggleUnderlaySource(key),
     };
   }
 

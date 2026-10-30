@@ -2,7 +2,9 @@ import { setGraphics } from '../core/commands';
 import { normalizeBook, type StyleBook } from '../core/graphics';
 import type { DocStore } from '../core/store';
 import { DETAIL_LABELS, DETAIL_LEVELS } from '../core/states';
-import { SITE_CATEGORIES, type SiteCategory } from '../core/model';
+import { SITE_CATEGORIES, SITE_STOREY, type SiteCategory } from '../core/model';
+import { toggleUnderlay, type ViewUnderlay } from '../core/viewUnderlays';
+import { editUnderlays, hostFor, underlayAddSelect, underlayRowsMarkup } from './underlayRows';
 import {
   categoriesOf,
   categoryDefault,
@@ -364,6 +366,7 @@ export class StyleDialog {
     const body = `<p class="note sb-none" hidden>Inga avvikelser: allt är som ${s.view ? `kategorin ${escapeHtml(c.name)}` : 'förvalet'}.</p>
       ${this.showMarkup(s.cur, !!s.view)}
       ${this.contentMarkup(s.cur)}
+      ${this.underlayMarkup(s.cur, s.view)}
       <section class="style-labels style-actions">
         <h3>Åtgärder</h3>
         <p class="note">Hur väggarnas snitt och linjerna ritas för det som finns kvar, rivs och planeras.</p>
@@ -454,6 +457,21 @@ export class StyleDialog {
     </section>`;
   }
 
+  /**
+   * Underlagen i vyn (0.10.35): samma rader som under Visa. En kategori har
+   * ingen våning, så *Våningen under* gäller där vyn står.
+   */
+  private underlayMarkup(c: ViewCategory, view?: ViewDef): string {
+    const doc = this.store.doc;
+    const list = c.show.underlays ?? [];
+    const host = view ? hostFor(view.storey, { ...view, viewId: view.id }) : { storey: c.type === 'site' ? SITE_STOREY : '', plan: c.type === 'storey' || c.type === 'site' };
+    return `<section class="style-labels sb-underlays"><h3>Underlag i vyn</h3>
+      <div class="style-row sb-ul-head" data-cat-underlays><span class="style-name">Underlagen, nedifrån och upp</span></div>
+      ${underlayRowsMarkup(doc, list, view ? host : null, underlayAddSelect(doc, host, list))}
+      <p class="note">Ritas tonade under eller över vyn och följer med till bladet: en våning, Platsen, ortofotot, ett arbetsblad eller en annan vy. Kalkera i projektträdet lägger ett underlag där du är.</p>
+    </section>`;
+  }
+
   /** Hur många former och pennor som har varje linjetyp (0.8.30). */
   private lineTypeUses(): Map<string, number> {
     const doc = this.store.doc;
@@ -518,6 +536,14 @@ export class StyleDialog {
       const type = this.place.type;
       const s = this.scope(type);
       this.commit(type, resetRow(s.cur, s.ref, row), s.view ? 'Återställ till kategorin' : 'Återställ till förvalet');
+      return;
+    }
+    const ulBtn = target.closest<HTMLElement>('button[data-ul-field]');
+    if (ulBtn && this.place.kind === 'type') {
+      const type = this.place.type;
+      const s = this.scope(type);
+      const next = editUnderlays(s.cur.show.underlays ?? [], ulBtn);
+      if (next) this.commit(type, { ...s.cur, show: withList(s.cur.show, next) }, `Ändra underlag: ${s.view ? `vyn ${s.view.name}` : s.cat.name}`);
       return;
     }
     const viewLink = target.closest<HTMLElement>('[data-sb-view]')?.dataset.sbView;
@@ -748,6 +774,16 @@ export class StyleDialog {
       else this.render();
       return;
     }
+    // Underlagen (0.10.35): lägg till ur listan, eller ändra en rad.
+    if (input.matches('[data-ul-addsel]')) {
+      if (input.value) this.commit(type, { ...cur, show: { ...structuredClone(cur.show), underlays: toggleUnderlay(cur.show.underlays, input.value) } }, `Lägg till underlag: ${what}`);
+      return;
+    }
+    if (input.matches('[data-ul-field]')) {
+      const next = editUnderlays(cur.show.underlays ?? [], input);
+      if (next) this.commit(type, { ...cur, show: withList(cur.show, next) }, `Ändra underlag: ${what}`);
+      return;
+    }
     const showKey = input.dataset.catShow as keyof CategoryShow | undefined;
     if (showKey) {
       const show: CategoryShow = structuredClone(cur.show);
@@ -779,11 +815,19 @@ export class StyleDialog {
   }
 }
 
+/** Visningen med en ny lista underlag (en tom tas bort). */
+function withList(show: CategoryShow, list: ViewUnderlay[]): CategoryShow {
+  const out = structuredClone(show);
+  if (list.length) out.underlays = list;
+  else delete out.underlays;
+  return out;
+}
+
 /** Fältets data-attribut och värde, så att samma fält hittas efter omritningen; null utanför dialogen. */
 function focusSelector(el: Element | null, root: HTMLElement): string | null {
   if (!(el instanceof HTMLElement) || !root.contains(el)) return null;
   if (el.id) return `#${CSS.escape(el.id)}`;
-  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview'];
+  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview', 'data-ul', 'data-ul-field', 'data-ul-addsel'];
   const parts = attrs.filter((a) => el.hasAttribute(a)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a)!)}"]`);
   if (!parts.length) return null;
   const v = el instanceof HTMLInputElement && el.type === 'radio' ? `[value="${CSS.escape(el.value)}"]` : '';

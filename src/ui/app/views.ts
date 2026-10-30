@@ -1,6 +1,7 @@
 import { deleteElements, renameElement, updateParams } from '../../core/commands';
 import { newId } from '../../core/ids';
 import { onPaper, type Id, type ViewDef } from '../../core/model';
+import { toggleUnderlay } from '../../core/viewUnderlays';
 import { markerFrame, markerName } from '../../elements/markers';
 import type { Vec2 } from '../../repr/primitives';
 import { askConfirm, askText } from '../ask';
@@ -64,7 +65,6 @@ export function installViews(app: AppContext) {
       state: app.ui.state,
       category: cat.id,
       ...(overrides ? { overrides } : {}),
-      trace: app.ui.trace,
       ...(app.ui.marker ? { marker: app.ui.marker } : {}),
       ...(app.ui.worksheet ? { worksheet: app.ui.worksheet } : {}),
       ...(app.ui.scale !== 100 ? { scale: app.ui.scale } : {}),
@@ -79,7 +79,6 @@ export function installViews(app: AppContext) {
       c.state !== v.state ||
       categoryOf(doc.graphics, viewTypeOf(doc, c), c.category) !== categoryOf(doc.graphics, viewTypeOf(doc, v), v.category) ||
       JSON.stringify(sorted(c.overrides)) !== JSON.stringify(sorted(v.overrides)) ||
-      (c.trace ?? null) !== (v.trace ?? null) ||
       (c.marker ?? null) !== (v.marker ?? null) ||
       (c.worksheet ?? null) !== (v.worksheet ?? null) ||
       (c.scale ?? 100) !== (v.scale ?? 100)
@@ -95,7 +94,6 @@ export function installViews(app: AppContext) {
     app.ui.category = cat.id;
     app.ui.viewType = type;
     app.place.applyShow(show);
-    app.ui.trace = v.trace ?? null;
     app.ui.marker = v.marker && doc.elements[v.marker] ? v.marker : null;
     app.ui.worksheet = v.worksheet && doc.worksheets.some((w) => w.id === v.worksheet) ? v.worksheet : null;
     app.ui.layout = null;
@@ -293,14 +291,14 @@ export function installViews(app: AppContext) {
   function openViewMenu(id: Id, x: number, y: number): void {
     const v = app.store.doc.views.find((q) => q.id === id);
     if (!v) return;
-    const traced = app.ui.trace === id;
+    const traced = app.ui.underlays.some((u) => u.source === id);
     app.ctxMenu.open(
       x,
       y,
       [
         { kind: 'header', label: v.name, sub: describeView(app.store.doc, v) },
         { label: 'Visa vyn', run: () => applyView(v), disabled: app.ui.activeView === id && !viewModified(v) },
-        { label: traced ? 'Sluta kalkera vyn' : 'Kalkera den här vyn', checked: traced, disabled: app.ui.activeView === id, run: () => setTrace(traced ? null : id) },
+        { label: traced ? 'Sluta kalkera vyn' : 'Kalkera den här vyn', sub: 'Som underlag där du är', checked: traced, disabled: app.ui.activeView === id || !!app.ui.layout, run: () => toggleUnderlaySource(id) },
         ...(app.ui.activeView === id ? [{ label: 'Spara nuvarande inställningar i vyn', disabled: !viewModified(v), run: () => void updateActiveView() }] : []),
         { label: 'Stil för vyn…', sub: 'Avvikelserna från kategorin', run: () => app.styleDialog.open({ view: id }) },
         { label: 'Byt namn…', run: () => void renameView(id) },
@@ -352,7 +350,7 @@ export function installViews(app: AppContext) {
     const v = app.store.doc.views.find((x) => x.id === id);
     if (!v || !(await askConfirm('Ta bort vyn?', `${v.name} tas bort. Det går att ångra.`))) return;
     if (app.ui.activeView === id) app.ui.activeView = null;
-    if (app.ui.trace === id) app.ui.trace = null;
+    app.ui.underlays = app.ui.underlays.filter((u) => u.source !== id);
     app.store.transact(`Ta bort vyn ${v.name}`, (tx) => tx.setViews(tx.doc.views.filter((x) => x.id !== id)));
   }
 
@@ -381,7 +379,7 @@ export function installViews(app: AppContext) {
       ...rest,
       storey,
       ...(cat ? { category: cat.id, scale: cat.scale } : same ? { category: here, ...(overrides ? { overrides } : {}) } : { scale: categoryOf(doc.graphics, type).scale }),
-      ...(m ? { marker: m.id, trace: null } : {}),
+      ...(m ? { marker: m.id } : {}),
     };
     if (cat && v.scale === 100) delete v.scale;
     app.store.transact(`Ny vy: ${name}`, (tx) => tx.setViews([...tx.doc.views, v]));
@@ -400,15 +398,20 @@ export function installViews(app: AppContext) {
     ];
   }
 
-  function setTrace(id: Id | null): void {
-    app.ui.trace = id;
+  /**
+   * Kalkera (0.10.35): en genväg som lägger källan som underlag där man är,
+   * eller tar bort den. Utseendet ställs in under Visa.
+   */
+  function toggleUnderlaySource(source: string): void {
+    const on = !app.ui.underlays.some((u) => u.source === source);
+    app.ui.underlays = toggleUnderlay(app.ui.underlays, source);
     app.renderAll();
-    if (id) app.hint('Kalkeras. Utseendet ställs in under Visa.');
+    if (on) app.hint('Ligger som underlag i vyn. Under Visa ställs det in, och Spara i vyn tar med det till bladet.', 5000);
   }
   // *Gå dit* i stilbokens lista över vyerna med en kategori (0.10.33).
   app.styleDialog.goToView = (id) => {
     const v = app.store.doc.views.find((x) => x.id === id);
     if (v) applyView(v);
   };
-  return { applyView, currentViewDef, goTo, newViewItems, newViewOf, openHistoryMenu, openMarkerMenu, openViewMenu, renderViewButton, saveViewAsNew, setTrace, syncDetailSwitch, updateActiveView, viewHistory, viewModified, visit };
+  return { applyView, currentViewDef, goTo, newViewItems, newViewOf, openHistoryMenu, openMarkerMenu, openViewMenu, renderViewButton, saveViewAsNew, syncDetailSwitch, toggleUnderlaySource, updateActiveView, viewHistory, viewModified, visit };
 }

@@ -10,6 +10,8 @@ import { buildPlan, type Pickable } from './plan';
 import { boundsOf, type Bounds, type Primitive, type Vec2 } from './primitives';
 import { buildSection } from './section';
 import { smartVars } from './smartText';
+import { isBackdrop, isOverUnderlay, underlayHostOf, viewUnderlayPrims } from './viewUnderlays';
+import type { StyleSheet } from '../core/graphics';
 
 /**
  * Ritningsblad (0.8 del 3): mallbladets grafik (0.8.8), vyerna ritade i sin
@@ -121,10 +123,21 @@ export function viewStatesFor(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions)
   };
 }
 
-/** En vys primitiver i modellens (eller fasadens och sektionens) koordinater. */
-export function buildViewPrims(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions): Primitive[] {
+/**
+ * En vys primitiver i modellens (eller fasadens och sektionens) koordinater,
+ * med underlagen i vyn (0.10.35) under och över. `bare` utan underlagen, när
+ * vyn själv är ett underlag.
+ */
+export function buildViewPrims(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions, bare = false): Primitive[] {
   const vs = viewStatesFor(doc, v, opt);
-  const style = viewSettings(doc, v).style;
+  const { style, show } = viewSettings(doc, v);
+  const prims = drawnView(doc, v, vs, style);
+  if (bare || !show.underlays?.length) return prims;
+  const u = viewUnderlayPrims(doc, show.underlays, { host: underlayHostOf(v), states: vs, style, viewPrims: (x) => cachedViewPrims(doc, x, opt, true) });
+  return [...u.under, ...prims, ...u.over];
+}
+
+function drawnView(doc: ProjectDoc, v: ViewDef, vs: ViewStates, style: StyleSheet): Primitive[] {
   if (v.marker) {
     const marker = doc.elements[v.marker];
     const section = marker ? buildSection(doc, marker.id, vs, style) : null;
@@ -167,19 +180,32 @@ function modelDoc(doc: ProjectDoc): ProjectDoc {
 }
 
 /** Som `buildViewPrims`, men sparad så länge det vyerna visar är detsamma. */
-export function cachedViewPrims(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions): Primitive[] {
+export function cachedViewPrims(doc: ProjectDoc, v: ViewDef, opt: ViewPrimOptions, bare = false): Primitive[] {
   const md = modelDoc(doc);
   let m = cache.get(md);
   if (!m) cache.set(md, (m = new Map()));
-  const key = JSON.stringify([v, opt.scale, !!opt.autoDims]);
+  const key = JSON.stringify([v, opt.scale, !!opt.autoDims, bare]);
   let hit = m.get(key);
-  if (!hit) m.set(key, (hit = buildViewPrims(md, v, opt)));
+  if (!hit) m.set(key, (hit = buildViewPrims(md, v, opt, bare)));
   return hit;
 }
 
 /** Ramen för det som är ritat (utan underlag), i modellens koordinater. Underlagen räknas bara om inget annat finns. */
 export function contentBounds(prims: readonly Primitive[]): Bounds | null {
-  return boundsOf(prims.filter((p) => p.origin?.objectType !== 'Underlay')) ?? boundsOf(prims);
+  return boundsOf(prims.filter((p) => !isBackdrop(p))) ?? boundsOf(prims);
+}
+
+/**
+ * Vyns primitiver på papperet ordnade: underlagen under (klippta mot ramen),
+ * det ritade, och underlagen i vyn som ligger över (0.10.35, också klippta).
+ */
+function layered(paper: readonly Primitive[], frame: Bounds): Primitive[] {
+  const under = clipPrims(
+    paper.filter((p) => isBackdrop(p) && !isOverUnderlay(p)),
+    frame,
+  );
+  const over = clipPrims(paper.filter(isOverUnderlay), frame);
+  return [...under, ...paper.filter((p) => !isBackdrop(p)), ...over];
 }
 
 /** Flytta och skala primitiver från modellen till papperet: p → at + p / scale. */
@@ -287,12 +313,7 @@ export function placeView(doc: ProjectDoc, vp: Viewport, opt: { autoDims?: boole
   }
   const frame = viewportFrame(contentBounds(model), vp.at, vp.scale) ?? { minX: vp.at[0] - 20, minY: vp.at[1] - 15, maxX: vp.at[0] + 20, maxY: vp.at[1] + 15 };
   // Underlagen klipps mot ramen; det som är ritat ligger redan inom den.
-  const under = clipPrims(
-    paper.filter((p) => p.origin?.objectType === 'Underlay'),
-    frame,
-  );
-  const rest = paper.filter((p) => p.origin?.objectType !== 'Underlay');
-  return { ...base, frame, prims: [...under, ...rest, ...title(frame)] };
+  return { ...base, frame, prims: [...layered(paper, frame), ...title(frame)] };
 }
 
 /** Vyns ram när den följer innehållet, i modellens koordinater (som `crop`), eller null om vyn är tom. */
@@ -461,10 +482,5 @@ export function buildViewPage(doc: ProjectDoc, ref: Id, opt: { scale?: number; a
   const at: Vec2 = [margin + VIEWPORT_PAD - b.minX / scale, margin + VIEWPORT_PAD - b.minY / scale];
   const frame = viewportFrame(b, at, scale)!;
   const paper = toPaper(model, at, scale);
-  const under = clipPrims(
-    paper.filter((p) => p.origin?.objectType === 'Underlay'),
-    frame,
-  );
-  const rest = paper.filter((p) => p.origin?.objectType !== 'Underlay');
-  return { size: [Math.ceil(frame.maxX + margin), Math.ceil(frame.maxY + margin)], prims: [...under, ...rest], name: src.name };
+  return { size: [Math.ceil(frame.maxX + margin), Math.ceil(frame.maxY + margin)], prims: layered(paper, frame), name: src.name };
 }

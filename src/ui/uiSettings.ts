@@ -114,8 +114,6 @@ export interface UiSettings {
   /** Projektträdet och egenskaperna på datorn: öppna, minimerade till ett band, eller stängda. */
   navMode: PaneMode;
   panelMode: PaneMode;
-  /** Hur en kalkerad vy ritas: ovanpå eller under, färg (null = tonad som ritningen) och opacitet. */
-  trace: TraceLook;
   /** Varna för vinklar som ligger så här många grader från 0°, 45° eller 90° utan att vara exakta; 0 = av. */
   angleWarn: number;
   /** Piltangenterna flyttar det markerade så här långt, och med Shift det större steget, mm. */
@@ -132,14 +130,6 @@ export interface UiSettings {
 export type PaneMode = 'open' | 'min' | 'closed';
 
 export type ShellDock = 'bottom' | 'top' | 'float';
-
-export interface TraceLook {
-  above: boolean;
-  color: string | null;
-  opacity: number;
-}
-
-export const DEFAULT_TRACE: TraceLook = { above: false, color: null, opacity: 0.3 };
 
 /** Läget Båda: planens andel av ritytan får ligga mellan de här. */
 export const SPLIT = { min: 0.15, max: 0.85 } as const;
@@ -169,7 +159,6 @@ export function defaultUiSettings(): UiSettings {
     screenInches: null,
     navMode: 'open',
     panelMode: 'open',
-    trace: { ...DEFAULT_TRACE },
     angleWarn: 5,
     nudge: 10,
     nudgeLarge: 100,
@@ -207,7 +196,6 @@ export function loadUiSettings(): UiSettings {
       screenInches: Number(raw.screenInches) >= 3 && Number(raw.screenInches) <= 120 ? Number(raw.screenInches) : null,
       navMode: paneMode(raw.navMode),
       panelMode: paneMode(raw.panelMode),
-      trace: traceLook(raw.trace),
       angleWarn: num(raw.angleWarn, 0, 20, d.angleWarn),
       nudge: num(raw.nudge, 1, 10000, d.nudge),
       nudgeLarge: num(raw.nudgeLarge, 1, 100000, d.nudgeLarge),
@@ -227,15 +215,6 @@ function num(v: unknown, min: number, max: number, fallback: number): number {
 
 function paneMode(v: unknown): PaneMode {
   return v === 'min' || v === 'closed' ? v : 'open';
-}
-
-function traceLook(v: any): TraceLook {
-  const o = Number(v?.opacity);
-  return {
-    above: v?.above === true,
-    color: typeof v?.color === 'string' && /^#[0-9a-f]{6}$/i.test(v.color) ? v.color : null,
-    opacity: Number.isFinite(o) && o >= 0.05 && o <= 1 ? o : DEFAULT_TRACE.opacity,
-  };
 }
 
 function width(v: unknown, fallback: number): number {

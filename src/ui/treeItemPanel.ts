@@ -1,7 +1,7 @@
 import { cutHeightOf, DEFAULT_CUT_HEIGHT } from '../elements/roofPlan';
-import { traceStoreyOptions } from './app/showKeys';
+import { sourceName } from '../core/underlaySources';
 import { categoriesOf, categoryOf, styleOverrides, viewSettings, withShow, type DetailLevel } from '../core/viewCategories';
-import { buildingStoreys, isMaster, isSite, type Id, type ProjectDoc, type Storey, type TreeTab } from '../core/model';
+import { buildingStoreys, isMaster, type Id, type ProjectDoc, type Storey, type TreeTab } from '../core/model';
 import type { DocStore } from '../core/store';
 import { DETAIL_LABELS, DETAIL_LEVELS } from '../core/states';
 import { PAPER_SIZES, saveMaster, setDefaultMaster, stampUsers } from '../core/sheets';
@@ -74,7 +74,7 @@ function siteMarkup(doc: ProjectDoc, s: Storey, folderField: string, actions: st
       <header class="sel-head"><h2>${esc(s.name)}</h2><p>Platsen · ${views ? `${views} ${views === 1 ? 'vy' : 'vyer'}` : 'ingen sparad vy'}</p></header>
       <section>
         <div class="fields">${folderField}</div>
-        <p class="note">Situationsplanen, markplaneringen och illustrationsplanen ritas här: marken, markobjekten, gränserna, grannhusen och träden. Allt ses ovanifrån, utan snitthöjd; husets kontur och taken syns. I en våningsplan visas marken med Visa → Kalkera → Platsen.</p>
+        <p class="note">Situationsplanen, markplaneringen och illustrationsplanen ritas här: marken, markobjekten, gränserna, grannhusen och träden. Allt ses ovanifrån, utan snitthöjd; husets kontur och taken syns. I en våningsplan visas marken som underlag: Visa → Lägg till underlag… → Platsen.</p>
         <div class="nav-actions">
           <button type="button" class="btn" data-action="site">Inställningar…</button>
         </div>
@@ -109,12 +109,12 @@ export function treeItemMarkup(doc: ProjectDoc, item: TreeItem): string {
           ${field('Littera', levelSelect('labelDetail', show.labelDetail))}
           ${field('2D-symboler', levelSelect('detail', show.detail))}
           ${field('3D och fasader', levelSelect('modelDetail', show.modelDetail))}
-          ${field('Kalkera', `<select name="trace"><option value="">Ingen</option>${traceStoreyOptions(v.trace, isSite(v.storey), doc, v.storey)}${doc.views.filter((x) => x.id !== v.id).map((x) => `<option value="${x.id}"${x.id === v.trace ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`)}
+          ${field('Underlag', `<span class="tree-underlays">${show.underlays?.length ? esc(show.underlays.map((u) => sourceName(doc, u.source, v.storey)).join(', ')) : 'Inga'}</span>`)}
           ${field('Skala', `<span class="input-unit scale-unit"><i>1:</i><input name="scale" type="text" inputmode="numeric" value="${v.scale ?? ''}" placeholder="100"></span>`)}
         </div>
         <label class="check"><input type="checkbox" name="compare"${show.compare ? ' checked' : ''}> Jämför med befintligt</label>
         <label class="check"><input type="checkbox" name="hideDemolished"${show.hideDemolished ? ' checked' : ''}> Dölj det som rivs</label>
-        <p class="note">Det som skiljer sig från kategorin sparas i vyn; resten följer kategorin i stilboken.</p>
+        <p class="note">Det som skiljer sig från kategorin sparas i vyn; resten följer kategorin i stilboken. Underlagen ställs in under Visa när vyn är öppen, eller i vyns stil i stilboken.</p>
       </section>
       <section>
         <h3>Vy-taggar</h3>
@@ -316,7 +316,6 @@ export function bindTreeForm(root: HTMLElement, store: DocStore, onSaved: (item:
           state: str('state'),
           category: cat.id,
           overrides,
-          trace: str('trace') || null,
           tags: d.getAll('tag').map(String),
           scale: scale > 0 ? scale : undefined,
         },

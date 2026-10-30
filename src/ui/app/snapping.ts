@@ -175,11 +175,11 @@ function tracedSegments(prims: readonly Primitive[]): SnapSegment[] {
   const out: SnapSegment[] = [];
   for (const p of prims) {
     if (p.noPick) continue;
-    if (p.kind === 'line') out.push({ id: 'kalkering', a: p.a, b: p.b, on: 'På kalkeringen' });
+    if (p.kind === 'line') out.push({ id: 'kalkering', a: p.a, b: p.b, on: 'På underlaget' });
     else if (p.kind === 'polyline') {
       const n = p.points.length;
-      for (let i = 0; i + 1 < n + (p.closed ? 1 : 0); i++) out.push({ id: 'kalkering', a: p.points[i], b: p.points[(i + 1) % n], on: 'På kalkeringen' });
-    } else if (p.kind === 'region') for (const ring of p.rings) for (let i = 0; i < ring.length; i++) out.push({ id: 'kalkering', a: ring[i], b: ring[(i + 1) % ring.length], on: 'På kalkeringen' });
+      for (let i = 0; i + 1 < n + (p.closed ? 1 : 0); i++) out.push({ id: 'kalkering', a: p.points[i], b: p.points[(i + 1) % n], on: 'På underlaget' });
+    } else if (p.kind === 'region') for (const ring of p.rings) for (let i = 0; i < ring.length; i++) out.push({ id: 'kalkering', a: ring[i], b: ring[(i + 1) % ring.length], on: 'På underlaget' });
   }
   return out;
 }

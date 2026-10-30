@@ -3518,7 +3518,7 @@ in var som helst efter A, och bara A ger nytt format:
   här kategorin*, *Ny vy…* som föreslår kategorier
 - **C. 0.10.34 Radkontrollerna** (tavla 5; mellanstor; bara utseende) ✓
 - **D. 0.10.35 Underlag i vyn** (stor): en våning, Platsen, ortofotot i
-  2D, ett arbetsblad, en annan vy, DXF/bild; marken i 2D och 3D per kategori
+  2D, ett arbetsblad, en annan vy, DXF/bild; marken i 2D och 3D per kategori ✓
 - **E. 0.10.36 Pennor och ställen** (tavla 3; mellanstor; med penn- och
   linjesystemet)
 - **F. 0.10.37 Projektet › Allmänt** (mellanstor)
@@ -3642,6 +3642,54 @@ rubrikraden (G), förhandsvisningen och *Jämför med* (efter piloten). Visa-
 menyn har kvar sina kryssrutor utan symboler (samma nycklar som
 knapparna). Panelerna för objekt (egenskaper, smartmenyn) har kvar sina
 listor och färgfält.
+
+### 0.10.35 Underlag i vyn ✓
+
+Underlag som del av vyn: en våning, Platsen, ortofotot i 2D, ett
+arbetsblad, en annan vy, DXF/bild; under/över, tonad/gråskala/konturer,
+procent, *Lägg till underlag…*; följer med till bladet. Dagens Kalkera
+blir en genväg som lägger ett underlag. Marken i 2D och 3D per kategori.
+Provet: illustrationsplanen på flygfoto.
+
+*Gjord 30 oktober, i en session. Samma format (25); underlagen är det
+valfria fältet `underlays` i kategorins visning, och vyns avvikelse
+`underlays`. Testerna: 755. Underlagen ritas av `repr/viewUnderlays.ts`
+(källans primitiver med underlagets utseende, ursprunget `ViewUnderlay`
+utan objektets id); `buildViewPrims` lägger dem under och över vyn, och
+`placeView` klipper dem mot ramen. Se UTVECKLING.md, *Underlag i vyn*.
+Claudes val: underlagen ligger i **kategorins visning** (en kategori som
+Illustrationsplan kan ha ortofotot i alla sina vyer), och en vy avviker
+med hela listan som en rad (pricken i stilboken, *Spara i vyn*);
+källorna är våningen under och över (relativt där vyn står), varje
+våning, Platsen, ortofotot (bara i planer och på Platsen), arbetsbladen
+och de andra vyerna; en vy som är underlag ritas **utan sina egna
+underlag** (ingen rundgång), och en våning med vyns tillstånd, detaljnivå
+och dolda, utan markörer och norrpil (som kalkeringen); **DXF/bild** är
+ingen egen källa: *Fil (DXF, PDF, bild)…* i menyn lägger in filen där
+man är, som förut (filunderlagen syns i stället och på bladet redan); fyra
+sätt: *Tonad* (förval), *Gråskala*, *Bara konturer* och *I en färg*
+(kalkeringens egna färg, rött som förval); täckningen 40 % som förval
+(kalkeringen hade 30 %) i steg om 5; över ritningen tas vita fyllningar
+bort; bilder (ortofotot) blir grå i alla sätt utom *Tonad*; listan ritas
+nedifrån och upp i den ordning underlagen lades till (ingen flyttknapp);
+krysset *Underlag* under Visa gäller fortfarande bara filunderlagen;
+**kalkeringen** i äldre vyer (`trace`) läses som ett underlag (inget nytt
+format), och kalkeringens utseende i användarinställningarna är borta;
+*Kalkera* i projektträdet lägger och tar bort källan där man är; på ett
+blad och ett mallblad finns inga underlag under Visa (bladets vyer har
+sina); underlagen hör till Visa, så att ett byte av vytyp utan sparad vy ger
+kategorins underlag (förut låg kalkeringen kvar överallt). **Marken i 3D-vyn** är ett eget kryss (`terrain3d`, Platsens grupp);
+*Marken* (`Terrain`) släcker höjdkurvorna och marklinjerna, och i en
+våningsplan också marken i 3D, som förut. Snäpp mot underlagen är
+kalkeringens inställning, med det nya namnet. Provat i Playwright mot
+`dist/` (Visa med *Lägg till underlag…*, sättet, över och procent,
+*Spara i vyn*, stilboken med ortofotot i Illustrationsplan, ortofotot på
+Platsen i 2D) och klickjämförelsen mot 0.10.34.*
+
+*Gjordes inte:* en flyttknapp för underlagens ordning, DXF/bild som egen
+källa (en fil som bara hör till vyn), undertaket spegelvänt (efter
+piloten). Illustrationsplanen har inget ortofoto som förval i nya
+projekt; det läggs till i stilboken.
 
 ### 0.11 Trappor · *nytt format*
 

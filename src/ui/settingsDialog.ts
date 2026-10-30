@@ -169,7 +169,7 @@ export class SettingsDialog {
           <label class="check"><input type="checkbox" data-setting="smart"${s.smartMenu ? ' checked' : ''}> Smartmeny intill det markerade, med Modifiera-valen och snabbknapparna</label>
           <label class="check"><input type="checkbox" data-setting="rail"${s.modifyRail ? ' checked' : ''}> Modifiera-raden innanför ritverktygen</label>
           <label class="check"><input type="checkbox" data-setting="smartshell"${s.smartshell ? ' checked' : ''}> Smartshell, kommandoraden under ritytan <span class="muted">(Enter)</span></label>
-          <label class="check"><input type="checkbox" data-setting="snaptrace"${s.snapTrace ? ' checked' : ''}> Snäpp mot kalkeringen, linjerna i den kalkerade vyn eller våningen</label>
+          <label class="check"><input type="checkbox" data-setting="snaptrace"${s.snapTrace ? ' checked' : ''}> Snäpp mot underlagen i vyn: linjerna i en kalkerad vy, våning eller ett arbetsblad</label>
           <label class="check"><input type="checkbox" data-setting="autodims"${s.autoDims ? ' checked' : ''}> Måttsätt nya väggar och öppningar automatiskt när man jämför med befintligt</label>
           <label class="check" title="Annars bara kanterna. Ett klick i ett rum markerar då bjälklaget; rummet markeras med rumsstämpeln eller Tab."><input type="checkbox" data-setting="slabarea"${s.slabArea ? ' checked' : ''}> Bjälklagens yta går att klicka i, inte bara kanterna</label>
           <label class="check"><input type="checkbox" data-setting="autosavefile"${s.autosaveFile ? ' checked' : ''}> Autospara till projektfilen (när den sparats eller öppnats här, i Chrome och Edge)</label>

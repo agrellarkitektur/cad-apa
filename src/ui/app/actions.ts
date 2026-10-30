@@ -108,21 +108,13 @@ export function installActions(app: AppContext, parts: ActionParts) {
       closeMenu();
       return;
     }
-    const showItem = target.closest<HTMLInputElement>('.show-menu input');
+    const showItem = target.closest<HTMLInputElement>('.show-menu input:is([data-show], [data-show-group])');
     if (showItem) {
       showMenu.toggleShowItem(showItem);
       return;
     }
     if (!target.closest('.show-wrap')) showMenu.closeShowMenu();
-    const traceAbove = target.closest<HTMLElement>('[data-trace-above]');
-    if (traceAbove) {
-      uiSettings.trace.above = traceAbove.dataset.traceAbove === '1';
-      saveUiSettings(uiSettings);
-      showMenu.applyTraceLook();
-      showMenu.refreshShowMenu();
-      return;
-    }
-    const styleSel = target.closest<HTMLSelectElement>('[data-show-style], [data-show-trace]');
+    const styleSel = target.closest<HTMLSelectElement>('[data-show-style]');
     if (styleSel) return;
     const detailBtn = target.closest<HTMLElement>('[data-detail]');
     if (detailBtn) {

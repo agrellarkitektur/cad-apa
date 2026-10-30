@@ -21,7 +21,6 @@ export function siteViewPreset(doc: Pick<ProjectDoc, 'states' | 'views' | 'graph
     name,
     storey: SITE_STOREY,
     state: defaultState(doc),
-    trace: null,
     scale: c.scale,
     category: c.id,
   };

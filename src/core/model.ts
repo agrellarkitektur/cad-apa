@@ -53,8 +53,6 @@ export interface ViewDef {
   name: string;
   storey: Id;
   state: Id;
-  /** En annan vy som visas tonad under, att rita mot. */
-  trace?: Id | null;
   /** Vyn visar en fasad eller sektion (elementets id) i stället för planen. (Format 4.) */
   marker?: Id | null;
   /** Vyn visar ett arbetsblad (format 5). */

@@ -365,31 +365,120 @@
   }
 }
 
-.trace-look {
+/* Underlagen i vyn (0.10.35), under Visa och i stilboken. */
+.show-underlays {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   padding: 8px 0 2px;
   border-top: 1px solid var(--rule);
 }
 
-.trace-look .field.inline {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.show-sub {
+  font: 600 11px var(--font-ui);
+  letter-spacing: 0.04em;
+  color: var(--muted);
 }
 
-.trace-look input[type='color'] {
-  width: 44px;
-  height: 26px;
+.ul-list {
+  display: grid;
+  gap: 4px;
+}
+
+.ul-row {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 4px 0;
+}
+
+.ul-row + .ul-row {
+  border-top: 1px dashed var(--rule);
+}
+
+.ul-top,
+.ul-ctl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.ul-ctl {
+  flex-wrap: wrap;
+}
+
+.ul-name {
+  flex: 1 1 auto;
+  min-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 500 12px var(--font-ui);
+}
+
+.ul-missing .ul-name {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.ul-row .segmented {
+  margin-left: 0;
+}
+
+.ul-row .segmented button {
+  padding: 2px 4px;
+  line-height: 0;
+}
+
+.ul-row .segmented svg,
+.ul-row .icon-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ul-row select {
+  flex: 1 1 90px;
+  min-width: 0;
+  max-width: 140px;
+}
+
+.ul-row input[type='color'] {
+  width: 30px;
+  height: 24px;
   padding: 1px;
   border: 1px solid var(--rule);
   border-radius: 5px;
   background: var(--paper);
 }
 
-.trace-look input[type='range'] {
-  width: 100%;
-  accent-color: var(--accent);
+.ul-pct {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font: 12px var(--font-data);
+  white-space: nowrap;
+}
+
+.ul-pct input {
+  width: 46px;
+}
+
+.ul-row .icon-btn {
+  width: 26px;
+  height: 26px;
+}
+
+.ul-empty {
+  margin: 0;
+}
+
+.ul-add {
+  justify-self: start;
+}
+
+.ul-addsel {
+  justify-self: start;
+  max-width: 260px;
 }
 
 .trace-tag {

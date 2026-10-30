@@ -489,9 +489,10 @@ def main():
         step('våningshöjden igen', "__set('[data-key=\"wall:storeyHeight\"]', true, 'aside.panel .panel-body')")
         step('avmarkera på plan 2', "bacchus.selection.clear()")
         step('öppna Visa på plan 2', "__click('[data-action=\"show-menu\"]')")
-        step('kalkera våningen under', "__set('[data-show-trace]', 'våning:under', '.show-menu')")
-        step('kalkera över', "__click('[data-trace-above=\"1\"]', '.show-menu')")
-        step('kalkera under igen', "__click('[data-trace-above=\"0\"]', '.show-menu')")
+        # Underlagen i vyn (0.10.35) i stället för kalkeringen: före 0.10.35 skiljer stegen.
+        step('kalkera våningen under', "__click('[data-ul-add]', '.show-menu')", fn=lambda: (pg.wait_for_timeout(200), ctx_item('Våningen under'), pg.wait_for_timeout(300)))
+        step('kalkera över', "__click('[data-ul-field=\"above\"][data-v=\"1\"]', '.show-menu')", fn=lambda: pg.wait_for_timeout(300))
+        step('kalkera under igen', "__click('[data-ul-field=\"above\"][data-v=\"0\"]', '.show-menu')", fn=lambda: pg.wait_for_timeout(300))
         step('stäng Visa på plan 2', "__click('[data-action=\"show-menu\"]')")
         step('bjälklagsverktyget', "bacchus.setTool('slab')")
         step('ur väggarna finns', "__click('[data-action=\"slab-walls\"]')")
@@ -662,10 +663,10 @@ def main():
             return run
         step('väggverktyget på plan 2', f"bacchus.goTo({{kind: 'storey', id: {plan2}}}); bacchus.setTool('wall')", fn=lambda: pg.wait_for_timeout(300))
         step('nära den kalkerade linjen', fn=hover_model(13500, -1950))
-        step('snäpp mot kalkeringen av', fn=plan_menu('Snäpp mot kalkeringen'))
+        step('snäpp mot kalkeringen av', fn=plan_menu('Snäpp mot underlagen i vyn'))
         step('väggverktyget igen', "bacchus.setTool('wall')")
         step('nära linjen utan snäpp', fn=hover_model(13500, -1950))
-        step('snäpp mot kalkeringen på', fn=plan_menu('Snäpp mot kalkeringen'))
+        step('snäpp mot kalkeringen på', fn=plan_menu('Snäpp mot underlagen i vyn'))
         step('markera på plan 1', "bacchus.goTo({kind: 'storey', id: bacchus.store.doc.storeys[0].id}); " + FIT + "", fn=lambda: pg.wait_for_timeout(300))
         # Låst betyder låst (0.10.12).
         step('markera innerväggen', "bacchus.selection.set(['iv-2'])")
@@ -1124,7 +1125,7 @@ def main():
         step('platsen i 3D', fn=show3d, shot3d=True)
         # Ritytan får sin storlek efter bytet till 2D: zooma först därefter (annars skiljer zoomen mellan körningar).
         step('planen efter platsen', "bacchus.setMode('2d'); bacchus.setTool('select')", fn=lambda: (pg.wait_for_timeout(300), pg.evaluate(ON_PLAN), pg.wait_for_timeout(300)))
-        step('kalkera platsen', "__click('[data-action=\"show-menu\"]')", fn=lambda: pg.evaluate('''__set('[data-show-trace]', 'våning:platsen', '.show-menu')'''))
+        step('kalkera platsen', "__click('[data-action=\"show-menu\"]')", fn=lambda: (pg.evaluate("__click('[data-ul-add]', '.show-menu')"), pg.wait_for_timeout(200), ctx_item('Platsen (marken)'), pg.wait_for_timeout(300)))
         step('stäng Visa efter kalkeringen', "__click('[data-action=\"show-menu\"]')")
         step('platsens meny', "__click('[data-storey-menu=\"platsen\"]')")
         step('ny situationsplan', "[...document.querySelectorAll('.ctx-menu [data-i]')].find((b) => b.textContent.includes('Situationsplan')).click()", fn=lambda: pg.wait_for_timeout(300))

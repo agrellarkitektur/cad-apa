@@ -167,7 +167,8 @@ export function installPane3d(app: AppContext) {
     const onSite = isSite(ui.storey);
     const states = app.viewStates();
     const ground = onSite && states.hide?.includes('Terrain') ? { ...states, hide: states.hide.filter((h) => h !== 'Terrain') } : states;
-    const site = app.ui.hide.includes('Terrain') && !onSite ? undefined : store.doc.site;
+    // Marken i 3D-vyn är ett eget kryss (0.10.35), per kategori; i en våningsplan släcker Marken också 3D, som förut.
+    const site = app.ui.hide.includes('terrain3d') || (app.ui.hide.includes('Terrain') && !onSite) ? undefined : store.doc.site;
     const finished = site ? finishedForView(store.doc, ground) : null;
     // Höjdkurvorna på marken (0.10.8), om de inte släckts under Visa.
     const lines = !!site && isShown(app.ui, 'contours3d') && !app.ui.hide.includes('Terrain');

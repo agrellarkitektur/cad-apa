@@ -4,10 +4,23 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.34.
+**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.35.
 
 ## Läget
 
+- **0.10.35 Underlag i vyn är klar** (samma format, 25; `underlays` i
+  kategorins visning och i vyns avvikelser är valfria). *Underlag i vyn*
+  under Visa och i stilboken: våningen under/över, en våning, Platsen,
+  ortofotot, ett arbetsblad eller en annan vy, under eller över, *Tonad*,
+  *Gråskala*, *Bara konturer* eller *I en färg*, procent. Följer med vyn
+  till bladet. Kalkera i projektträdet är en genväg; äldre vyers
+  kalkering läses som ett underlag. *Marken i 3D-vyn* är ett eget kryss.
+  Testerna: 755 på ca 25 s. Provat i Playwright mot `dist/`, och
+  klickjämförelsen mot 0.10.34: det som skiljer är stilboken (nya rader),
+  snäppet mot kalkeringen efter fasaderna (underlagen följer Visa), Platsens
+  nya vy (utan `trace`) och två bilder som skiljer i tid (sektionen bredvid
+  3D, rampen i 3D). Koden i
+  UTVECKLING.md, Claudes val i PLAN.md.
 - **0.10.34 Radkontrollerna är klar** (samma format, 25; favoritseten
   `colorSets` i stilboken är valfria). Runda knappar för tjocklek,
   linjetyp och färg, tjockleksraden med *Eget*, den sökbara
@@ -42,9 +55,16 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **0.10.30**, **0.10.29**, **0.10.28.3**, **0.10.28.2**, **0.10.28.1**,
   **0.10.28**, **0.10.27**, **0.10.26**, **0.10.25.1** och **0.10.25**: se
   PLAN.md.
-- **Publicerad:** 0.10.34 pushad till `main` 30 oktober (se git och
+- **Publicerad:** 0.10.35 pushad till `main` 30 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.10.35:** vyer som kalkerade något har
+  det nu som underlag (tonat 40 % i ritningens färger, förut 30 % med
+  användarens inställning) och **får det med till bladet**. *Kalkera en
+  annan vy* under Visa heter *Underlag i vyn*. Underlagen hör till Visa:
+  går man till en fasad, sektion eller Platsen och tillbaka (utan en
+  sparad vy) får planen kategorins underlag igen, som det andra under Visa
+  (förut låg kalkeringen kvar). Annars inget.
 - **Märks i hans ritningar efter 0.10.34:** inget i ritningarna; bara
   stilbokens utseende. Under *Vanliga* (förvalet) döljs *Snittet i
   planen* och några sällan ändrade kryss under Innehåll; *Alla* visar dem.
@@ -81,14 +101,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare:** 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare:** 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.34` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.35` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.34 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.35 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -161,12 +181,11 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   ~~0.10.29 Ritandet~~, ~~0.10.30 Teckenförklaring~~, ~~0.10.31 Texturer
   i 3D och ortofotot på marken~~, ~~Utredning: stilinställningar~~,
   ~~0.10.32 Tre nivåer med arv~~, ~~0.10.33 Avvikelser och kategorier i
-  vyn~~, ~~0.10.34 Radkontrollerna~~ (klara)
+  vyn~~, ~~0.10.34 Radkontrollerna~~, ~~0.10.35 Underlag i vyn~~ (klara)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **Stilinställningarna, 0.10.35–0.10.38** (F kan skjutas in var som
-  helst): **0.10.35 Underlag i vyn** (stor, på tur; risk för två
-  sessioner), **0.10.36 Pennor och ställen** (mellanstor), **0.10.37
+- **Stilinställningarna, 0.10.36–0.10.38** (F kan skjutas in var som
+  helst): **0.10.36 Pennor och ställen** (mellanstor, på tur), **0.10.37
   Projektet › Allmänt** (mellanstor), **0.10.38 Stilboken ut och in**
   (mellanstor; två öppna frågor)
 - **0.11 Trappor** (nytt format; med *Syns också på*)
@@ -185,28 +204,28 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.35 Underlag i vyn** (stor, samma format; valfritt fält på vyn;
-risk för två sessioner, dela då upp den). Läs synpunkterna först (D under
-Planerat, *Beslut 29–30 oktober*, *Underlag i vyn*) och sortera Inkorgen
-om den har något. Underlag som del av vyn: en våning, Platsen, ortofotot
-i 2D, ett arbetsblad, en annan vy, DXF/bild; under/över, tonad/gråskala/
-konturer, procent, *Lägg till underlag…*; följer med till bladet. Dagens
-Kalkera blir en genväg som lägger ett underlag. Här också om marken syns
-i 2D och 3D per kategori. Provet: illustrationsplanen på flygfoto. Raderna
-i stilboken använder radkontrollerna från 0.10.34 (`rowControls.ts`: en
-lista blir en textknapp av sig själv). Ställ frågorna om 0.10.34 och
-0.10.33 först, när han provat.
+**0.10.36 Pennor och ställen** (tavla 3; mellanstor, samma format). Läs
+synpunkterna först (E under Planerat, *Beslut 29–30 oktober*, *Pennor och
+ställen*) och sortera Inkorgen om den har något. Pennlistan med antal
+ställen och sortering per rubrik (gäller alla tabeller), ställena med sök
+och automatiska taggar vytyp/objekt, byt penna per ställe, *Gå dit*,
+*Flytta till pennan…*, ta bort penna med 0 ställen; samma par av listor för
+linjetyper, fyllningstyper och material. Här också de parkerade frågorna om
+penn- och linjesystemet (snittlinje/konturlinje per objekt, öppningarnas
+oskurna linjer, om *Symbol* följer *Snitt*). Ställ frågorna om 0.10.35,
+0.10.34 och 0.10.33 först, när han provat.
 
 Höjdkurvors del av ortofotot (två rader i `js/app.js` och `js/utbyte.js`,
 plus raden i `docs/UTBYTE-CAD-APA.md` där) görs i en session i
-Höjdkurvors repo; fälten står i PLAN.md under 0.10.31.
+Höjdkurvors repo; fälten står i PLAN.md under 0.10.31. När ortofotot
+kommer med platsen kan det läggas som underlag direkt.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.10.34 och 0.10.33.
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.10.35, 0.10.34 och 0.10.33.
 
 **Besvarade 30 oktober** (Claudes val gäller): 0.10.32 alla fyra
 (vytypens kategori när ingen vy är sparad; kategoribyte släpper vyns
@@ -214,6 +233,17 @@ om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.10.34 och 0.10.33.
 som kategorier, gjort i 0.10.33). 0.10.31: ortofotot där marken saknar
 material, plus valet *Ortofoto* (gjort i 0.10.33); bildens sida i mm.
 0.10.30: rutornas mått lagom så länge; en rad "Eget" per fyllning (prova).
+
+**0.10.35 efter provning** (Claudes val, se PLAN.md)
+- Underlagen ligger i kategorin (Illustrationsplan kan ha ortofotot i alla
+  sina vyer). Ska ett nytt projekts Illustrationsplan ha ortofotot under
+  sig från början, när platsen har ett?
+- DXF/bild är ingen egen källa: *Fil…* lägger in filen där du är, som
+  förut. Behövs en fil som bara hör till vyn?
+- Krysset *Underlag* under Visa gäller bara filunderlagen. Ska det också
+  släcka underlagen i vyn?
+- Underlagen ritas i den ordning de lades till, utan flyttknapp. Räcker
+  det? Och 40 % som förval?
 
 **0.10.34 efter provning** (Claudes val, se PLAN.md)
 - *Vanliga* är förvalet och döljer *Snittet i planen* och sällan ändrade

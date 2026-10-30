@@ -1,15 +1,15 @@
-import { tracedStorey } from '../../core/storeys';
 import { addElements } from '../../core/commands';
 import { modelViewId, onPaper, type ViewDef } from '../../core/model';
 import type { StyleSheet } from '../../core/graphics';
-import { categoryOf, resolveShow, sheetFor, showOverrides, styleOverrides, viewSettings, viewTypeAt, viewTypeOf, type CategoryShow, type ViewCategory, type ViewOverrides, type ViewType } from '../../core/viewCategories';
+import { categoryOf, resolveShow, sheetFor, showOverrides, styleOverrides, viewTypeAt, viewTypeOf, type CategoryShow, type ViewCategory, type ViewOverrides, type ViewType } from '../../core/viewCategories';
 import { paperSize } from '../../core/sheets';
 import { existingState } from '../../core/states';
 import { skewText, skewWarnings } from '../../elements/angleCheck';
 import { markerName } from '../../elements/markers';
 import { buildPlan, type PlanResult } from '../../repr/plan';
 import type { SectionResult } from '../../repr/section';
-import { paperPrim, splitPlaced, stampOrigin } from '../../repr/sheet';
+import { cachedViewPrims, paperPrim, splitPlaced, stampOrigin } from '../../repr/sheet';
+import { viewUnderlayPrims } from '../../repr/viewUnderlays';
 import type { Camera } from '../../view2d/camera';
 import { icons } from '../icons';
 import { escapeHtml } from '../labels';
@@ -153,12 +153,13 @@ export function installRender(app: AppContext, parts: RenderParts) {
     app.ui.modelDetail = show.modelDetail;
     app.ui.hide = [...show.hide];
     app.ui.hideDemolished = show.hideDemolished;
+    app.ui.underlays = structuredClone(show.underlays ?? []);
   }
 
   /** Visningen i Visa-menyn som den är nu. */
   function currentShow(): CategoryShow {
     const u = app.ui;
-    return { compare: u.compare, detail: u.detail, labelDetail: u.labelDetail, modelDetail: u.modelDetail, hide: [...u.hide], hideDemolished: u.hideDemolished };
+    return { compare: u.compare, detail: u.detail, labelDetail: u.labelDetail, modelDetail: u.modelDetail, hide: [...u.hide], hideDemolished: u.hideDemolished, ...(u.underlays.length ? { underlays: structuredClone(u.underlays) } : {}) };
   }
 
   /** Stilboken där man är: kategorins, med den öppna vyns avvikelser i stilen. */
@@ -166,24 +167,6 @@ export function installRender(app: AppContext, parts: RenderParts) {
     return sheetFor(app.store.doc.graphics, currentCategory(), openView()?.overrides);
   }
 
-  function viewStatesOf(v: ViewDef) {
-    const ex = existingState(app.store.doc);
-    const { show, kind } = viewSettings(app.store.doc, v);
-    return {
-      state: v.state,
-      compareTo: show.compare && ex && ex.id !== v.state ? ex.id : undefined,
-      detail: show.detail,
-      labelDetail: show.labelDetail,
-      modelDetail: show.modelDetail,
-      hide: show.hide,
-      hideDemolished: show.hideDemolished,
-      autoDims: app.uiSettings.autoDims,
-      viewId: v.id,
-      viewTags: v.tags ?? [],
-      ...(kind ? { category: kind } : {}),
-      scale: v.scale ?? 100,
-    };
-  }
 
   /** Mallbladet som visas (0.8.8), ritat i mm på papperet i skala 1:1. */
   function shownMaster() {
@@ -292,18 +275,18 @@ export function installRender(app: AppContext, parts: RenderParts) {
         plan = { prims: [paperPrim(w, h), ...plan.prims], pickables: plan.pickables };
       } else if (sheet.stamp) plan = { prims: [...stampOrigin(), ...plan.prims], pickables: plan.pickables };
     } else plan = buildPlan(doc, app.ui.storey, vs, style);
-    // Kalkerad vy: en annan vy tonad under, t.ex. möbleringen under en undertaksplan.
-    // Våningen under eller över (0.9) kalkeras med vyns inställningar, utan fasad- och sektionsmarkörerna.
-    const tracing = app.ui.trace && !section && !sheet && !layout;
-    const traced = tracing ? doc.views.find((v) => v.id === app.ui.trace) : undefined;
-    const nextTo = tracing ? tracedStorey(doc, app.ui.storey, app.ui.trace) : undefined;
-    app.view.setUnderlay(
-      nextTo
-        ? buildPlan(doc, nextTo.id, { ...vs, viewId: undefined, hide: [...(vs.hide ?? []), 'Section', 'Elevation', 'North'] }, style).prims
-        : traced
-          ? buildPlan(doc, traced.storey, viewStatesOf(traced), viewSettings(doc, traced).style).prims
-          : [],
-    );
+    // Underlagen i vyn (0.10.35): en våning, Platsen, ortofotot, ett arbetsblad eller en annan vy, tonade under eller över.
+    // På ett ritningsblad och ett mallblad finns inga; där är det bladets vyer som har dem.
+    const ul =
+      layout || master || !app.ui.underlays.length
+        ? { under: [], over: [] }
+        : viewUnderlayPrims(doc, app.ui.underlays, {
+            host: { storey: app.ui.storey, plan: !markerEl && !sheet, viewId: app.ui.activeView ?? undefined },
+            states: vs,
+            style,
+            viewPrims: (v) => cachedViewPrims(doc, v, { scale: app.ui.scale, autoDims: app.uiSettings.autoDims }, true),
+          });
+    app.view.setUnderlay(ul.under, ul.over);
     app.views.renderViewButton();
     if (app.ui.navOpen) app.navigator.render();
     positionMeasureBox();

@@ -558,3 +558,30 @@
 .pen-row.sb-changed [data-action='pen-reset'] {
   visibility: hidden;
 }
+
+/* Underlagen i vyn i stilboken (0.10.35). */
+.sb-underlays .sb-ul-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 0;
+  padding: 0;
+  grid-template-columns: none;
+}
+
+.sb-underlays .sb-ul-head .style-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.sb-underlays .ul-list > :is(select, .rc-val) {
+  justify-self: start;
+  width: auto;
+}
+
+.sb-underlays .ul-row {
+  max-width: 520px;
+}

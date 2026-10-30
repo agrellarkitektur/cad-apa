@@ -1640,6 +1640,64 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Underlag i vyn (0.10.35, format 25)
+
+- **Modellen** (`core/viewUnderlays.ts`): `ViewUnderlay` = `source`,
+  `above`, `look` (`tinted` utelämnat, `gray`, `outline`, `color`),
+  `color`, `opacity` (procent, utelämnad = 40). `CategoryShow.underlays`
+  (valfritt); vyns avvikelse `underlays` är hela listan (`resolveShow`,
+  `showOverrides`, jämförd med `sameValue`). `normalizeUnderlays` läser
+  från fil; `toggleUnderlay` lägger till eller tar bort en källa
+  (Kalkera). Vyns gamla `trace` läses som `overrides.underlays` i
+  `storage/format.ts` (`traceAsUnderlay`); `ViewDef.trace` finns inte längre.
+- **Källorna** (`core/underlaySources.ts`): `source` är en vys id,
+  `arbetsblad:<id>`, `ortofoto` eller kalkeringens våningsvärden
+  (`våning:under`, `våning:över`, `våning:platsen`, `våning:id:<id>`).
+  `resolveSource(doc, host, source)` med `UnderlayHost` (`storey`, `plan`,
+  `viewId`) ger vad det är, eller null (finns inte, eller inte här: inga
+  våningar och inget ortofoto i fasader, sektioner och arbetsblad, och
+  vyn själv aldrig). `sourceName` ger namnet.
+- **Ritningen** (`repr/viewUnderlays.ts`): `viewUnderlayPrims(doc, list,
+  base)` ger `{ under, over }`; `sourcePrims` ritar källan (en våning med
+  `buildPlan` och vyns inställningar utan markörer och norrpil, ett
+  arbetsblad med `place`, en vy med `base.viewPrims` utan dess egna
+  underlag, ortofotot som en `ImagePrim` från `orthoPrim`). `lookPrims`
+  ger utseendet: täckningen multipliceras in i pennor, fyllningar,
+  bakgrunder och bilder, `grayOf` för gråskala, `outline` tar bort
+  fyllningarna, `above` tar bort vita fyllningar och bakgrunder. Ursprunget
+  blir `{ objectType: 'ViewUnderlay', part: 'under' | 'över' }`, utan
+  objektets id (de är inte bland det som går att markera, men snäppningen läser dem).
+- **Bladet** (`repr/sheet.ts`): `buildViewPrims(doc, v, opt, bare)` lägger
+  vyns underlag runt det ritade (inte när `bare`); `cachedViewPrims` har
+  `bare` i nyckeln. `isBackdrop` (filunderlag och underlag i vyn) räknas
+  inte i `contentBounds`, och `layered` i `placeView` och `buildViewPage`
+  klipper dem mot ramen: underlagen under, det ritade, och de som ligger
+  över. `legendSources` ser dem inte (inget objektets id).
+- **Appen**: `ui.underlays` är listan under Visa (`applyShow` och
+  `currentShow` i `render.ts`, så att *Spara i vyn*, ändrad vy och
+  stilbokens följning går som för den andra visningen). `renderAll`
+  ritar dem med `viewUnderlayPrims` (vyer med `cachedViewPrims(..., true)`)
+  och lämnar dem till `PlanView.setUnderlay(under, over)`, som ritar två
+  egna grupper (`.underlay` och `.underlay.above`) och ger dem till
+  snäppningen (`underlayPrimitives`). `setUnderlayLook` och
+  `uiSettings.trace` finns inte längre.
+- **Raderna** (`ui/underlayRows.ts`): `underlayRowsMarkup` (fälten har
+  `data-ul` och `data-ul-field`), `editUnderlays(list, el)`,
+  `underlaySourceItems` (menyns rader) och `underlayAddSelect` (samma som
+  en lista, i stilboken). Visa-menyn (`showMenu.ts`) öppnar menyn vid
+  `[data-ul-add]` och ritar om Visa efter klicket (`setTimeout`, eftersom
+  ett klick utanför `.show-wrap` stänger den). Klicket på en kryssruta
+  under Visa gäller bara `[data-show]` och `[data-show-group]`.
+  Stilboken (`underlayMarkup` i `styleDialog.ts`) har raden
+  `underlays` i `changedRows`/`resetRow` (`[data-cat-underlays]`).
+- **Kalkera** (`views.toggleUnderlaySource`): vyns meny i projektträdet
+  och våningens och Platsens *Kalkera …* (`traceItem` i `storeys.ts`).
+  Projektträdet visar *underlag* vid en vy som ligger som underlag
+  (`host.traced`).
+- **Marken i 3D**: Innehållets nyckel `terrain3d` (Platsens grupp);
+  `pane3d.ts` ritar ingen mark när den är dold.
+- Tester: `tests/v01035.test.ts`.
+
 ## Radkontrollerna (0.10.34, format 25)
 
 - **`ui/style/rowControls.ts`**: `enhanceRowControls(root, opts)` körs i
@@ -1889,7 +1947,7 @@ Inga nya funktioner; det som ändrades i koden:
   ligger i parametrarna som i rummen, så `linkMaterial`, `updateMaterial`
   och panelen fungerar som förut.
 - **Planen**: `slabType.plan` fyller `slabRings` under snittet
-  (`fillPrims`, `noPick`), snittet med materialets snitt, konturen med
+  (`fillPrims`), snittet med materialets snitt, konturen med
   `materialPen`. `roofPlanPrims` fyller delen helt under snittet
   (`halfPlaneBelow(rp.top, h)`, hela taket på Platsen), snittytan med
   materialets snitt.
@@ -1903,7 +1961,7 @@ Inga nya funktioner; det som ändrades i koden:
   dem och drar av alla trianglar framför planet (`clipPlane` mot ytans
   djup minus 1,5 mm). Punkterna avrundas till 0,1 mm, och går klippningen
   inte ihop slås bitarna ihop och dras av en i taget (`safeUnion`,
-  `without`). `surfacePrims` ritar ytorna först, under linjerna, `noPick`.
+  `without`). `surfacePrims` ritar ytorna först, under linjerna.
   Släckt med `fill` under Visa.
 - **Panelen**: `ui/materialBuilding.ts` (`buildingFields`, `buildingChange`,
   `BUILDING_KEYS`: `matCut`, `matCutColor`, `matSurface`,
@@ -3085,7 +3143,7 @@ finns kvar där (exporteras vidare), så att inget annat behövde ändras.
 | --- | --- |
 | `src/geometry/hiddenLine.ts` | `visibleSegments(..., hiddenOnly)` ger de skymda delarna i stället (`hiddenParts`) |
 | `src/repr/sectionHidden.ts` | Ny: `HIDDEN_SLABS`, `HIDDEN_WALLS`, `innerFaceEdges(doc, shapes)` (ytterväggarnas insida som lodräta kanter, per våning) och `mergeCollinear` (linjer som ligger på varandra blir en) |
-| `src/repr/section.ts` | `pushSeg` delar kanterna vid `fr.tone` (`far` i `EdgeKey`, ritas med `FAR_PEN`); de dolda linjerna (`hiddenSegs`, `HIDDEN_PEN`, part `dold`, `noPick`) bara i fasader |
+| `src/repr/section.ts` | `pushSeg` delar kanterna vid `fr.tone` (`far` i `EdgeKey`, ritas med `FAR_PEN`); de dolda linjerna (`hiddenSegs`, `HIDDEN_PEN`, part `dold`) bara i fasader |
 | `src/elements/markers.ts` | `MarkerParams.toneDepth`, `MarkerFrame.tone` |
 | `src/elements/roofPlan.ts` | `ROOFS_AROUND_KEY`; `roofShownOn` får vyns `hide`; zonen `under` (under våningens golv, streckad) |
 | `src/elements/registry.ts`, `src/repr/context.ts` | `alsoOnStorey(el, doc, storey, hide)` |

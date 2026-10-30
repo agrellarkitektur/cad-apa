@@ -181,13 +181,7 @@
   display: none;
 }
 
-/* Kalkerad vy under (eller över) ritningen. Opacitet och färg sätts i Visa. */
+/* Underlagen i vyn (0.10.35) under och över ritningen. Utseendet ligger i primitiverna. */
 .plan-drawing .underlay {
-  opacity: 0.3;
-  filter: saturate(0.4);
   pointer-events: none;
-}
-
-.plan-drawing .underlay.tinted {
-  filter: none;
 }

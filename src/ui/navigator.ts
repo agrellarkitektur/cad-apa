@@ -30,7 +30,8 @@ export interface NavigatorHost {
   selected(): ReadonlySet<Id>;
   viewModified(v: ViewDef): boolean;
   /** Vyn som kalkeras under ritningen, om någon. */
-  trace(): Id | null;
+  /** Om vyn ligger som underlag där man är (0.10.35). */
+  traced(id: Id): boolean;
   describeView(v: ViewDef): string;
   /** Det i trädet vars inställningar visas i egenskapspanelen (0.8). */
   treeItem(): Id | null;
@@ -301,7 +302,7 @@ export class Navigator {
     for (const v of doc.views) {
       const mod = (v.id === activeId && this.host.viewModified(v) ? ' *' : '') + (deviationCount(doc, v) ? `<i class="view-dev" title="Avviker från sin kategori (Stil för vyn…)"></i>` : '');
       const info = [buildingStoreys(doc).length > 1 || isSite(v.storey) ? storeyName(v.storey) : '', this.host.describeView(v)].filter(Boolean).join(' · ');
-      const traced = this.host.trace() === v.id ? '<span class="trace-tag">kalkeras</span> ' : '';
+      const traced = this.host.traced(v.id) ? '<span class="trace-tag">underlag</span> ' : '';
       const tags = v.tags?.length ? ` · ${v.tags.map(esc).join(', ')}` : '';
       rowsById.set(
         v.id,
@@ -317,7 +318,7 @@ export class Navigator {
         <button class="btn" data-action="view-save-new">Spara som ny vy…</button>
         ${this.newFolderButton('vyer')}
       </div>
-      <p class="note">En vy sparar tillstånd, jämförelse, detaljnivå, vykategori, det som avviker från den, kalkering och vy-taggar. Klicka på en vy för att öppna den och se dess inställningar i egenskaperna.</p>
+      <p class="note">En vy sparar tillstånd, jämförelse, detaljnivå, vykategori, det som avviker från den, underlagen och vy-taggar. Klicka på en vy för att öppna den och se dess inställningar i egenskaperna.</p>
       <p class="note soon">Export av modellen (IFC) från en vy kommer i 0.12.</p>
     </section>`;
   }

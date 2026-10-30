@@ -1,6 +1,5 @@
 import type { ProjectDoc } from '../../core/model';
 import { labelSorts, sortKey } from '../../elements/label';
-import { TRACE_ABOVE, TRACE_BELOW, TRACE_SITE, TRACE_STOREY } from '../../core/storeys';
 import type { UiState } from './shell';
 
 /**
@@ -66,7 +65,9 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
     id: 'site',
     label: 'Platsen',
     items: [
-      ['Terrain', 'Marken (höjdkurvor, 3D, marklinjer)'],
+      ['Terrain', 'Marken (höjdkurvor och marklinjer)'],
+      // Marken i 3D för sig (0.10.35), så att en kategori kan ha marken i 2D men inte i 3D, eller tvärtom.
+      ['terrain3d', 'Marken i 3D-vyn'],
       ['contours3d', 'Höjdkurvor i 3D-vyn'],
       ['Ground', 'Markobjekt (konturerna)'],
       ['ground3d', 'Markobjektens linjer i 3D-vyn'],
@@ -104,18 +105,6 @@ export function showGroupsFor(doc: ProjectDoc): readonly ShowGroup[] {
   return SHOW_GROUPS.map((g) => (g.id === 'littera' ? { ...g, items: [...g.items, ...sorts.map((s): readonly [string, string] => [sortKey(s), `– ${s}`])] } : g));
 }
 
-/**
- * Våningen under och över (0.9) först bland det som går att kalkera, och
- * Platsen (0.10.25), marken under en våningsplan. På Platsen finns inget av dem.
- */
-export function traceStoreyOptions(trace: string | null | undefined, onSite = false, doc?: Pick<ProjectDoc, 'storeys'>, current?: string): string {
-  // Varje våning för sig (0.10.30), också från Platsen; Platsen har sin egen rad.
-  const each = (doc?.storeys ?? []).filter((s) => !s.site && s.id !== current).map((s): [string, string] => [TRACE_STOREY + s.id, s.name]);
-  const rows: [string, string][] = onSite ? each : [[TRACE_BELOW, 'Våningen under'], [TRACE_ABOVE, 'Våningen över'], [TRACE_SITE, 'Platsen (marken)'], ...each];
-  return rows.map(([v, label]) => `<option value="${v}"${trace === v ? ' selected' : ''}>${esc(label)}</option>`).join('');
-}
-
-const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 
 /**
  * Det som är släckt från början (0.10.2): det tänds med nyckeln och ett plus

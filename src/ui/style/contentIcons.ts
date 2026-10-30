@@ -26,6 +26,7 @@ const BY_KEY: Record<string, keyof typeof icons> = {
   Shape2D: 'draw2d',
   fill: 'grid',
   Terrain: 'ground',
+  terrain3d: 'ground',
   contours3d: 'multi',
   Ground: 'ground',
   ground3d: 'multi',

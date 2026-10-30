@@ -27,7 +27,7 @@ const traceable = (s: SnapSegment): boolean => !s.ref && !s.point;
 
 /** Vad det följda heter, för texten vid markören. */
 export function whatOf(ctx: WandContext, id: string, seg?: SnapSegment): string {
-  if (id === 'kalkering') return 'Kalkeringen';
+  if (id === 'kalkering') return 'Underlaget';
   if (id === 'vy' || id === 'snitt') return 'Linjen';
   const el = ctx.app.store.doc.elements[id];
   if (el?.type === 'SiteMap' && el.params.kind === 'boundary') return 'Fastighetsgräns';

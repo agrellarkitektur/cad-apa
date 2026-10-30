@@ -9,6 +9,7 @@ import { isShown, setShown, SHOW_GROUPS } from '../app/showKeys';
  * - `show:<nyckel>`: jämförelsen och detaljnivåerna,
  * - `item:<nyckel>`: ett kryss under Innehåll (samma nycklar som under Visa),
  * - `actions.<åtgärd>`, `pens.<nyckel>`: en åtgärds rad och en penna,
+ * - `underlays`: underlagen i vyn (0.10.35), hela listan som en rad,
  * - `scale`, `kind`: kategorins skala för nya vyer och Platsens sort.
  */
 
@@ -22,6 +23,7 @@ export function changedRows(ref: ViewCategory, cur: ViewCategory, extra: readonl
   const out = new Set<string>();
   for (const k of SHOW_ROWS) if (ref.show[k] !== cur.show[k]) out.add(`show:${k}`);
   for (const k of contentKeys(extra)) if (isShown(ref.show, k) !== isShown(cur.show, k)) out.add(`item:${k}`);
+  if (!sameValue(ref.show.underlays ?? [], cur.show.underlays ?? [])) out.add('underlays');
   for (const k of Object.keys(cur.style.actions) as ActionKey[]) if (!sameValue(ref.style.actions[k], cur.style.actions[k])) out.add(`actions.${k}`);
   for (const k of new Set([...Object.keys(ref.style.pens ?? {}), ...Object.keys(cur.style.pens ?? {})])) if (!sameValue(ref.style.pens?.[k] ?? null, cur.style.pens?.[k] ?? null)) out.add(`pens.${k}`);
   if (withCategoryRows) {
@@ -51,6 +53,9 @@ export function resetRow(cur: ViewCategory, ref: ViewCategory, row: string): Vie
     else delete pens[k];
     if (Object.keys(pens).length) next.style.pens = pens;
     else delete next.style.pens;
+  } else if (row === 'underlays') {
+    if (ref.show.underlays?.length) next.show.underlays = structuredClone(ref.show.underlays);
+    else delete next.show.underlays;
   } else if (row === 'scale') next.scale = ref.scale;
   else if (row === 'kind') {
     if (ref.kind) next.kind = ref.kind;
@@ -65,6 +70,7 @@ export function rowSelector(row: string): string {
   if (row.startsWith('item:')) return `[data-cat-hide="${CSS.escape(row.slice(5))}"]`;
   if (row.startsWith('actions.')) return `[data-key="${CSS.escape(row.slice(8))}"]`;
   if (row.startsWith('pens.')) return `[data-pen^="${CSS.escape(row.slice(5))}:"]`;
+  if (row === 'underlays') return '[data-cat-underlays]';
   if (row === 'scale') return '[data-cat-scale]';
   return '[data-cat-kind]';
 }

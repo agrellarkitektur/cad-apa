@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.34** (alfa); nästa är **0.10.35 Underlag i vyn**,
+**0.10.35** (alfa); nästa är **0.10.36 Pennor och ställen**,
 och efter stilinställningarna (0.10.32–0.10.38) **0.11 Trappor**.
 
 ## Vad som fungerar
@@ -1149,6 +1149,33 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.35, underlag i vyn (samma filformat, 25):
+- **Underlag som del av vyn**: under Visa finns *Underlag i vyn* med
+  *Lägg till underlag…*: våningen under eller över, en annan våning,
+  Platsen (marken), **ortofotot** (i planer och på Platsen), ett arbetsblad
+  eller en annan vy. *Fil (DXF, PDF, bild)…* lägger in en fil där du är,
+  som förut
+- **Varje underlag har en rad**: under eller över ritningen (två
+  lagerikoner), sättet (*Tonad*, *Gråskala*, *Bara konturer* eller *I en
+  färg*), täckningen i procent och ta bort. Över ritningen tas de vita
+  fyllningarna bort, så att ritningen syns igenom
+- **Följer med vyn till bladet**: *Spara i vyn* tar med underlagen, och på
+  bladet ritas de under (eller över) vyn, klippta mot vyns ram. De räknas
+  inte i ramens storlek eller i teckenförklaringen. Provet: en
+  illustrationsplan på flygfoto
+- **I stilboken**: kategorin har *Underlag i vyn* med samma rader, så att
+  t.ex. Illustrationsplan kan ha ortofotot under sig i alla vyer; en vy
+  som ändrar dem får en ockra prick på raden
+- **Kalkera är en genväg**: *Kalkera den här vyn* och *Kalkera …* på en
+  våning eller Platsen i projektträdet lägger källan som underlag där du
+  är (och tar bort den igen). Äldre vyer med en kalkering får den som
+  underlag. Kalkeringens utseende i inställningarna är borta; det ligger
+  i varje underlag
+- **Marken i 3D-vyn** är ett eget kryss under Visa och i stilboken
+  (Platsen), så att en kategori kan ha marken i 2D men inte i 3D, eller
+  tvärtom. *Marken* släcker höjdkurvorna och marklinjerna (och i en
+  våningsplan också marken i 3D, som förut)
 
 Version 0.10.34, radkontrollerna i stilboken (samma filformat, 25):
 - **Tjocklek, linjetyp och färg som runda knappar** på pennornas rader,

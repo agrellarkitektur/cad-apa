@@ -71,6 +71,8 @@ export class PlanView {
   private gridLevels: SVGGElement;
   private gridAxes: SVGPathElement;
   private underlay: SVGGElement;
+  /** Underlagen i vyn som ligger över ritningen (0.10.35). */
+  private underlayAbove: SVGGElement;
   private content: SVGGElement;
   private highlight: SVGGElement;
   private overlay: SVGGElement;
@@ -80,6 +82,7 @@ export class PlanView {
   readonly events: PlanViewEvents;
   private prims: readonly Primitive[] = [];
   private underlayPrims: readonly Primitive[] = [];
+  private overlayPrims: readonly Primitive[] = [];
   private frame = 0;
   private gridVisible = true;
   /** Kameran som rutnätet senast ritades för; samma kamera ger samma rutnät (0.8.23). */
@@ -161,6 +164,7 @@ export class PlanView {
     this.gridAxes = path(grid, 'grid-axes');
     this.underlay = g('underlay', this.drawingSvg);
     this.content = g('content', this.drawingSvg);
+    this.underlayAbove = g('underlay above', this.drawingSvg);
     this.highlight = g('highlight');
     this.overlay = g('overlay');
     this.chrome = g('chrome');
@@ -177,15 +181,20 @@ export class PlanView {
     this.redraw();
   }
 
-  /** En annan vy som visas tonad under ritningen, att rita mot (kalkering). */
-  /** Det kalkerade under ritningen (0.10.11: snäppningen läser det). */
+  /** Underlagen i vyn (0.10.35), under och över; snäppningen läser dem (0.10.11). */
   get underlayPrimitives(): readonly Primitive[] {
-    return this.underlayPrims;
+    return this.overlayPrims.length ? [...this.underlayPrims, ...this.overlayPrims] : this.underlayPrims;
   }
 
-  setUnderlay(prims: readonly Primitive[]): void {
-    if (prims === this.underlayPrims || (!prims.length && !this.underlayPrims.length)) return;
-    this.underlayPrims = prims;
+  /**
+   * Underlagen i vyn (0.10.35), redan med sitt utseende: under och över
+   * ritningen, i egna grupper så att ritningen inte ritas om när de ändras.
+   */
+  setUnderlay(under: readonly Primitive[], over: readonly Primitive[] = []): void {
+    const same = (a: readonly Primitive[], b: readonly Primitive[]) => a === b || (!a.length && !b.length);
+    if (same(under, this.underlayPrims) && same(over, this.overlayPrims)) return;
+    this.underlayPrims = under;
+    this.overlayPrims = over;
     this.redraw();
   }
 
@@ -196,26 +205,6 @@ export class PlanView {
   redraw(): void {
     this.contentDirty = true;
     this.requestRender();
-  }
-
-  /**
-   * Hur den kalkerade vyn ritas: under eller över ritningen, i ritningens
-   * färger (tonade) eller i en egen färg, och med vilken opacitet.
-   */
-  setUnderlayLook(look: { above: boolean; color: string | null; opacity: number }): void {
-    const g = this.underlay;
-    if (look.above) this.drawingSvg.appendChild(g);
-    else this.drawingSvg.insertBefore(g, this.content);
-    g.classList.toggle('above', look.above);
-    g.classList.toggle('tinted', !!look.color);
-    g.style.opacity = String(look.opacity);
-    for (const v of ['--ink', '--muted', '--poche', '--poche-existing', '--new', '--new-fill', '--demolished']) {
-      if (look.color) g.style.setProperty(v, look.color);
-      else g.style.removeProperty(v);
-    }
-    // Ovanpå ritningen får kalkeringen inga vita fyllningar som döljer den.
-    if (look.above) g.style.setProperty('--paper', 'transparent');
-    else g.style.removeProperty('--paper');
   }
 
   /** Verktyget som tar emot pekarhändelserna just nu. */
@@ -364,11 +353,12 @@ export class PlanView {
     this.drawingSvg.style.transform = '';
     this.setGroupTransform(null);
     this.underlay.innerHTML = this.underlayPrims.length ? renderPrimitives(this.underlayPrims, cam, { drawingScale: this.drawingScale, idPrefix: 'u', imageHref: this.imageHref, lineWeights: this.weights }) : '';
+    this.underlayAbove.innerHTML = this.overlayPrims.length ? renderPrimitives(this.overlayPrims, cam, { drawingScale: this.drawingScale, idPrefix: 'o', imageHref: this.imageHref, lineWeights: this.weights }) : '';
     this.content.innerHTML = renderPrimitives(this.prims, cam, { drawingScale: this.drawingScale, imageHref: this.imageHref, lineWeights: this.weights });
   }
 
   private setGroupTransform(t: string | null): void {
-    for (const g of [this.content, this.underlay]) {
+    for (const g of [this.content, this.underlay, this.underlayAbove]) {
       if (t) g.setAttribute('transform', t);
       else g.removeAttribute('transform');
     }

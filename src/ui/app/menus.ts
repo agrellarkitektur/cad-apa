@@ -110,12 +110,12 @@ export function installMenus(app: AppContext) {
           ...unhideMenuItems(app),
           { label: 'Snäppning', checked: isSnapEnabled(), run: () => app.$<HTMLElement>('[data-action="snap"]').click() },
           {
-            label: 'Snäpp mot kalkeringen',
+            label: 'Snäpp mot underlagen i vyn',
             checked: app.uiSettings.snapTrace,
             run: () => {
               app.uiSettings.snapTrace = !app.uiSettings.snapTrace;
               saveUiSettings(app.uiSettings);
-              app.hint(app.uiSettings.snapTrace ? 'Snäpper mot kalkeringen' : 'Snäpper inte mot kalkeringen');
+              app.hint(app.uiSettings.snapTrace ? 'Snäpper mot underlagen i vyn' : 'Snäpper inte mot underlagen i vyn');
             },
           },
           { label: 'Rutnät', hint: 'G', checked: app.uiSettings.grid, run: () => app.toggleGrid() },
