@@ -4,59 +4,48 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.32.
+**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.33.
 
 ## Läget
 
-- **0.10.32 Tre nivåer med arv är klar** (**nytt format, 25**; projekt
-  från 0.10.31 öppnas inte). `ProjectDoc.graphics` är en `StyleBook`
-  (resurserna och `categories`); vyn har `category` och `overrides` (en
-  rad per avvikelse) i stället för `compare`, detaljnivåerna, `hide` och
-  `style`. `viewSettings`/`sheetFor` i `core/viewCategories.ts` ger det
-  som gäller; renderarna får en `StyleSheet` som förut. Dialogen heter
-  *Stilbok* (vänsterkanten, flikarna, verktygen; radkontrollerna de gamla
-  tills 0.10.34). Ordet *stilmallen* i appen heter *stilboken*.
-  Testerna: 735 på ca 13 s. Provat i Playwright mot `dist/`. Utredningens
-  beslut och uppdelningen står nu också i PLAN.md.
-- **Utredningen om stilinställningar** (30 oktober, natt): besluten i
-  `cad-apa-synpunkter.md` (*Beslut 29–30 oktober*), mockupen i Claude
-  Design "Stilinställningar – mockup" (tavla 5 gäller). Två öppna frågor
-  till 0.10.38 (nedan).
-- **0.10.31 Texturer i 3D och ortofotot på marken är klar** (samma
-  format, 24; valfria fält): ortofotot tappades inte här, Höjdkurvor
-  skickar det aldrig. `site.ortho` läggs in ur platspaketets nya valfria
-  fält `ortofoto` (samma fält som Höjdkurvors `senaste.ortofoto`) eller för
-  hand med bild + `.jgw` i Platsens dialog, och draperas på den färdiga
-  marken i 3D (`orthoUvMatrix`). `material.texture` = `{ asset, size }`
-  på marknätet och kropparna (`boxUv`). Testerna: 724 på ca 12 s. Provat i
-  Playwright mot `dist/`. **Höjdkurvors del återstår** (två rader, se
-  PLAN.md); den görs i en Höjdkurvor-session.
-- **0.10.30 Teckenförklaring är klar** (samma format, 24): elementtypen
-  `Legend` på bladet läser materialen i bladets vyer (`legendSources` i
-  `buildSheet`, `ViewStates.legend`) och ritar rutor i vyns skala; plus
-  kalkera en våning från projektträdet (`TRACE_STOREY`), *Ny vy…* för
-  våning, fasad och sektion, och webbläsarens meny bort där högerklick
-  inte gör något. Testerna: 716 på ca 16 s. Provat i Playwright mot
-  `dist/`. Vykategorier för planer, fasader och sektioner (Carl Augusts
-  önskan 29 oktober) gick till utredningen om stilinställningar.
-- **0.10.29 Ritandet är klar** (samma format, 24): Shift låser vinkeln
-  man står i (`held` i `snap.ts`); Förskjut, Förskjut kant, Parallell kopia
-  och Förskjut alla kanter visar avståndet som ett mått vid objektet och
-  tar ett skrivet värde + Enter (`atObject`, `Modifier.typeKey`,
-  `offsetDimension`); *Kanter* är ett skrivet antal; våningslistan "Plan 1
-  – +63,525 / 0,000" (`storeyLevels`). Testerna: 712.
-- **0.10.28.3 Granskningen**, **0.10.28.2 Material på bjälklag och tak**,
-  **0.10.28.1 Materiallistan**, **0.10.28 Material, mark först**, **0.10.27 Styrningen i 3D**,
-  **0.10.26 Rampen och stödmuren**, **0.10.25.1** (granskning) och
-  **0.10.25 Platsen som modellflik**: se PLAN.md.
-- **Publicerad:** 0.10.32 pushad till `main` 30 oktober (se git och
+- **0.10.33 Avvikelser och kategorier i vyn är klar** (samma format, 25;
+  `ortho3d` på markobjekten är valfritt). Ockra prick och *Återställ* på
+  ändrade rader (en kategori mot förvalet, en vy mot kategorin), *Visa
+  bara avvikelser*, *Stil för den här vyn…* (högerklick i vyn, och *Stil
+  för vyn…* i projektträdet) med *Återställ till kategorin*, *Gör
+  avvikelserna till kategorins förval* och *Spara som ny kategori…*,
+  listan *Vyer med den här kategorin*, punkt efter vynamnet, *Ny vy* med
+  vytypens kategorier, nya kategorier (Mått och littera, Undertak,
+  Golvplan, Poché, Färgmarkerad) och *Ortofoto* bland markobjektens
+  material. Testerna: 744 på ca 13 s. Provat i Playwright mot `dist/`.
+  Koden i UTVECKLING.md, Claudes val i PLAN.md.
+- **Frågesessionen 30 oktober (natt):** tio frågor besvarade; de två
+  tilläggen (Poché och Färgmarkerad som kategorier, *Ortofoto* bland
+  materialen) gjordes i 0.10.33. Färgmarkerad är statusen i färg (kvar
+  grått, nytt rött, rivs gult streckat); förklarat i README.
+- **0.10.32 Tre nivåer med arv** (**nytt format, 25**): `ProjectDoc.graphics`
+  är en `StyleBook`; vyn har `category` och `overrides`. Se PLAN.md och
+  UTVECKLING.md. Utredningens beslut i `cad-apa-synpunkter.md` (*Beslut
+  29–30 oktober*), mockupen i Claude Design "Stilinställningar – mockup"
+  (tavla 5 gäller).
+- **0.10.31 Texturer i 3D och ortofotot på marken**: **Höjdkurvors del
+  återstår** (två rader, se PLAN.md); den görs i en Höjdkurvor-session.
+- **0.10.30**, **0.10.29**, **0.10.28.3**, **0.10.28.2**, **0.10.28.1**,
+  **0.10.28**, **0.10.27**, **0.10.26**, **0.10.25.1** och **0.10.25**: se
+  PLAN.md.
+- **Publicerad:** 0.10.33 pushad till `main` 30 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.10.33:** inget i befintliga projekt
+  (de behåller sina kategorier; de nya finns i nya projekt). Vyer som
+  avviker från sin kategori får en ockra punkt i projektträdet. *Ny vy* på
+  en våning, fasad eller sektion är en grupp i menyn: *Med det som visas
+  nu…* och kategorierna.
 - **Märks i hans ritningar efter 0.10.32:** projekt från 0.10.31 öppnas
   inte (nytt format), och det autosparade i webbläsaren inte heller. En
   fasad, sektion eller Platsen utan sparad vy får vytypens kategori under
   Visa (förut följde Visa med från planen). *Stilmall i vyn* heter
-  *Vykategori*; Poché och Färgmarkerad nås med *Kopiera från* i stilboken.
+  *Vykategori*.
 - **Märks i hans ritningar efter 0.10.31:** inget i befintliga projekt
   (inget ortofoto och inga texturer förrän man lägger in dem).
 - **Märks i hans ritningar efter 0.10.30:** inget i befintliga projekt.
@@ -80,14 +69,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare:** 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare:** 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.32` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.33` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.32 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.33 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -159,12 +148,12 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   bjälklag och tak~~, ~~Granskning efter 0.10.28.2 (0.10.28.3)~~,
   ~~0.10.29 Ritandet~~, ~~0.10.30 Teckenförklaring~~, ~~0.10.31 Texturer
   i 3D och ortofotot på marken~~, ~~Utredning: stilinställningar~~,
-  ~~0.10.32 Tre nivåer med arv~~ (klara)
+  ~~0.10.32 Tre nivåer med arv~~, ~~0.10.33 Avvikelser och kategorier i
+  vyn~~ (klara)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **Stilinställningarna, 0.10.33–0.10.38** (F kan skjutas in var som
-  helst): **0.10.33 Avvikelser och kategorier i vyn** (mellanstor, på
-  tur), **0.10.34 Radkontrollerna** (mellanstor), **0.10.35 Underlag i
+- **Stilinställningarna, 0.10.34–0.10.38** (F kan skjutas in var som
+  helst): **0.10.34 Radkontrollerna** (mellanstor, på tur), **0.10.35 Underlag i
   vyn** (stor), **0.10.36 Pennor och ställen** (mellanstor), **0.10.37
   Projektet › Allmänt** (mellanstor), **0.10.38 Stilboken ut och in**
   (mellanstor; två öppna frågor)
@@ -184,16 +173,16 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.33 Avvikelser och kategorier i vyn** (mellanstor, samma format).
-Läs synpunkterna först (B under Planerat, *Beslut 29–30 oktober*) och
-sortera Inkorgen om den har något. Ockra prick på en ändrad rad med
-*Återställ*, *Visa bara avvikelser*, *Återställ till kategorin*, *Gör
-avvikelserna till kategorins förval*, *Spara som ny kategori*, punkt efter
-vynamnet i projektträdet, högerklick i vyn → *Stil för den här vyn…*
-(stilens avvikelser, `actions.*`/`pens.*`/`openingMark` i `overrides`,
-finns redan i datamodellen), listan *Vyer med den här kategorin*, och *Ny
-vy…* som föreslår kategorier för planer, fasader och sektioner. Ställ
-frågorna om 0.10.32 först (de hör till nästa version).
+**0.10.34 Radkontrollerna** (tavla 5; mellanstor, samma format; favoritset
+som valfritt fält). Läs synpunkterna först (C under Planerat, *Beslut
+29–30 oktober*, *Radkontrollerna*) och sortera Inkorgen om den har något.
+De runda knapparna för tjocklek, linjetyp och färg utan rullgardinspil,
+tjockleksraden med eget värde, den sökbara linjetypslistan med *Lägg till
+egen…*, färgpanelen med förval, favoriter i set, färgfält, hex och
+opacitet, textvalsknapparna, ikonknappar för återställ och ta bort, sök
+och *Vanliga/Alla* i panelen. Bara utseende. Prickarna från 0.10.33
+(`.sb-mark` i `markRows`) ska sitta kvar på raderna. Ställ frågorna om
+0.10.33 först, när han provat.
 
 Höjdkurvors del av ortofotot (två rader i `js/app.js` och `js/utbyte.js`,
 plus raden i `docs/UTBYTE-CAD-APA.md` där) görs i en session i
@@ -204,18 +193,25 @@ Höjdkurvors repo; fälten står i PLAN.md under 0.10.31.
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså.
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.10.33.
 
-**0.10.32 efter provning** (Claudes val, se PLAN.md; hör till 0.10.33)
-- En fasad, sektion eller Platsen utan sparad vy får vytypens första
-  kategoris visning när du går dit (förut följde Visa med från planen).
-  Rätt, eller ska det du ändrat under Visa följa med?
-- En vy som byter kategori i sina egenskaper tar den nya som den är (det
-  den ändrat under Visa släpps). Rätt, eller ska ändringarna följa med?
-- Pennorna ligger per kategori tills 0.10.36; markörernas penna i
-  egenskaperna ändras i alla kategorier. Rätt så länge?
-- Poché och Färgmarkerad finns under *Kopiera från* (bara stilen). Saknas
-  de som egna kategorier i nya projekt?
+**Besvarade 30 oktober** (Claudes val gäller): 0.10.32 alla fyra
+(vytypens kategori när ingen vy är sparad; kategoribyte släpper vyns
+ändringar; pennorna per kategori tills 0.10.36; Poché och Färgmarkerad
+som kategorier, gjort i 0.10.33). 0.10.31: ortofotot där marken saknar
+material, plus valet *Ortofoto* (gjort i 0.10.33); bildens sida i mm.
+0.10.30: rutornas mått lagom så länge; en rad "Eget" per fyllning (prova).
+
+**0.10.33 efter provning** (Claudes val, se PLAN.md)
+- *Återställ* på en ändrad rad syns när musen är över raden (pricken
+  syns alltid). Hellre alltid synlig?
+- En kategori får prickar mot sitt förval (t.ex. Skiss mot Plan), inte
+  bara en vy mot sin kategori. Hjälper det, eller stör det?
+- Undertak och Golvplan i 1:50 utan möbler, öppningssätt och littera
+  (undertaket också utan mått); Mått och littera utan möbler. Rätt
+  innehåll? Undertaket ritas inte spegelvänt än.
+- *Ny vy → en kategori* tar kategorin som den är, inte det som visas nu
+  (det gör *Med det som visas nu…*). Rätt?
 
 **Till 0.10.38 när den är på tur**
 - Ska *Mall för nya projekt* ligga i webbläsaren (försvinner vid rensning)
@@ -224,20 +220,13 @@ om 0.10.27–0.10.23 likaså.
   0.10.38 (parkerat sedan 20 oktober)?
 
 **0.10.31 efter provning** (Claudes val, se PLAN.md)
-- Ortofotot ligger som förval där marken saknar material (markytor och
-  ramper med material har sitt). Rätt förval, eller hellre över hela
-  marken?
-- Bildens sida skrivs i mm (förval 1 000), som andra mått. Hellre i meter?
-- Ska ortofotot och texturerna ljusas upp eller tonas (de skuggas som
-  kulörerna nu), eller ser de rätt ut?
+- Ortofotot och texturerna skuggas som kulörerna; Carl August vill att
+  allt skuggas men har inte sett det än. Ser det rätt ut?
 
 **0.10.30 efter provning** (Claudes val, se PLAN.md)
-- Teckenförklaringens rutor 10 × 6 mm, text 2,5 mm och rubriken 3,5 mm
-  fet. Lagom, eller som i dina mallar?
 - Rader läggs till och tas bort per material (*När det syns*, *Alltid*,
-  *Aldrig*). Behövs fria rader med egen text och eget mönster?
-- Objekt med egen fyllning blir en rad "Eget" per olika fyllning. Rätt,
-  eller en enda rad?
+  *Aldrig*). Behövs fria rader med egen text och eget mönster? (Oklart
+  för honom innan han testat; fråga efter provning.)
 
 **0.10.29 efter provning** (Claudes val, se PLAN.md)
 - Shift fritt avrundar vinkeln till hela grader; står man i ett vinkellås

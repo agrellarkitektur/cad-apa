@@ -106,6 +106,7 @@ export function installMenus(app: AppContext) {
           { label: 'Text', hint: 'T', run: () => app.setTool('text') },
           { kind: 'sep' },
           { label: 'Visa…', run: () => app.$<HTMLElement>('.show-btn').click() },
+          styleItem(),
           ...unhideMenuItems(app),
           { label: 'Snäppning', checked: isSnapEnabled(), run: () => app.$<HTMLElement>('[data-action="snap"]').click() },
           {
@@ -184,6 +185,18 @@ export function installMenus(app: AppContext) {
       items.push({ label: s.name, checked: all, run: () => setInState(app.store, els.map((e) => e.id), s.id, !all) });
     }
     app.ctxMenu.open(x, y, items, 'Det markerade');
+  }
+
+  /**
+   * *Stil för den här vyn…* (0.10.33): den öppna vyns stil och avvikelser i
+   * stilboken. Utan sparad vy: kategorin där man är.
+   */
+  function styleItem(): MenuItem {
+    const v = app.place.openView();
+    const c = app.place.currentCategory();
+    return v
+      ? { label: 'Stil för den här vyn…', sub: `${v.name} · ${c.name}`, run: () => app.styleDialog.open({ view: v.id }) }
+      : { label: 'Stil för den här vyn…', sub: `Ingen sparad vy: kategorin ${c.name}`, run: () => app.styleDialog.open({ type: app.place.viewType(), category: c.id }) };
   }
 
   function selectAllOfType(type: string): void {

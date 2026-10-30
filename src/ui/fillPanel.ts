@@ -103,7 +103,12 @@ function presetSwatch(f: FillPreset): string {
 export interface FillPanelContext {
   use?: MaterialUse;
   uses?: number;
+  /** Valet *Ortofoto* bredvid *Eget* (0.10.33): markytor och ramper när platsen har ett ortofoto. */
+  ortho?: boolean;
 }
+
+/** Värdet för valet *Ortofoto* bland materialen (0.10.33). */
+export const ORTHO_CHOICE = '@ortofoto';
 
 /**
  * Materialen (0.10.28, sparade fyllningar 0.10.14): bubblor som kopplar
@@ -115,8 +120,11 @@ function materialRow(name: string, p: FillParams, attrs: (key: string) => string
   const linked = materialOf(p, style);
   const list = all.filter((m) => !ctx.use || m[ctx.use] || m.id === linked?.id);
   const scope = /data-key="([^:"]+):/.exec(attrs('x'))?.[1] ?? 'd2';
-  const chipsHtml = list.length
-    ? `<div class="fill-chips fill-saved" role="radiogroup" aria-label="Material"><label${linked ? '' : ' class="is-on"'}><input type="radio" name="${escapeHtml(name)}-saved" value="" ${attrs('material')}${linked ? '' : ' checked'}><span>Eget</span></label>${list
+  const ortho = !linked && !!ctx.ortho && !!p.ortho3d;
+  const own = !linked && !ortho;
+  const orthoChip = ctx.ortho ? `<label${ortho ? ' class="is-on"' : ''} title="Ortofotot i 3D; i planen den egna fyllningen"><input type="radio" name="${escapeHtml(name)}-saved" value="${ORTHO_CHOICE}" ${attrs('material')}${ortho ? ' checked' : ''}><span>Ortofoto</span></label>` : '';
+  const chipsHtml = list.length || ctx.ortho
+    ? `<div class="fill-chips fill-saved" role="radiogroup" aria-label="Material"><label${own ? ' class="is-on"' : ''}><input type="radio" name="${escapeHtml(name)}-saved" value="" ${attrs('material')}${own ? ' checked' : ''}><span>Eget</span></label>${orthoChip}${list
         .map((m) => `<label${m.id === linked?.id ? ' class="is-on"' : ''}><input type="radio" name="${escapeHtml(name)}-saved" value="${escapeHtml(m.id)}" ${attrs('material')}${m.id === linked?.id ? ' checked' : ''}>${savedSwatch(m.plan, style)}<span>${escapeHtml(m.name)}</span></label>`)
         .join('')}</div>`
     : '';
@@ -125,10 +133,11 @@ function materialRow(name: string, p: FillParams, attrs: (key: string) => string
     return `${chipsHtml}<p class="note">Materialet <b>${escapeHtml(linked.name)}</b> i stilboken${n > 1 ? `, på ${n} objekt` : ''}. Det du ändrar nedan gäller materialet och alla objekt med det; opaciteten och vridningen längst ned gäller bara objektet.</p>
       <div class="row"><button class="btn" data-action="material-rename" data-scope="${scope}" data-id="${escapeHtml(linked.id)}" data-name="${escapeHtml(linked.name)}">Byt namn…</button><button class="btn btn-ghost" data-action="fill-unsave" data-id="${escapeHtml(linked.id)}" title="Objekten med det behåller hur de ser ut i planen och får egen fyllning">Ta bort ur stilboken</button></div>`;
   }
+  const orthoNote = ortho ? '<p class="note">I 3D syns ortofotot här, också över ett material under (när <i>Ortofotot i 3D</i> under Platsen inte är <i>Av</i>). I planen ritas fyllningen nedan.</p>' : '';
   const buttons = p.fill
-    ? `<div class="row"><button class="btn" data-action="fill-save" data-scope="${scope}" data-name="" title="Sparar fyllningen som ett material i stilboken. Samma namn som ett annat material skriver över dess fyllning i planen, och alla objekt med det ändras.">Spara som material…</button></div>`
+    ? `${orthoNote}<div class="row"><button class="btn" data-action="fill-save" data-scope="${scope}" data-name="" title="Sparar fyllningen som ett material i stilboken. Samma namn som ett annat material skriver över dess fyllning i planen, och alla objekt med det ändras.">Spara som material…</button></div>`
     : '';
-  return chipsHtml + buttons;
+  return chipsHtml + (p.fill ? '' : orthoNote) + buttons;
 }
 
 /** Materialets illustrationsplan och 3D (0.10.28), och objektets egen opacitet och vridning. */

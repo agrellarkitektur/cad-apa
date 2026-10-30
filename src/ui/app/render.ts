@@ -2,7 +2,7 @@ import { tracedStorey } from '../../core/storeys';
 import { addElements } from '../../core/commands';
 import { modelViewId, onPaper, type ViewDef } from '../../core/model';
 import type { StyleSheet } from '../../core/graphics';
-import { categoryOf, resolveShow, sheetFor, showOverrides, styleOverrides, viewSettings, viewTypeAt, viewTypeOf, type CategoryShow, type ViewCategory, type ViewType } from '../../core/viewCategories';
+import { categoryOf, resolveShow, sheetFor, showOverrides, styleOverrides, viewSettings, viewTypeAt, viewTypeOf, type CategoryShow, type ViewCategory, type ViewOverrides, type ViewType } from '../../core/viewCategories';
 import { paperSize } from '../../core/sheets';
 import { existingState } from '../../core/states';
 import { skewText, skewWarnings } from '../../elements/angleCheck';
@@ -102,6 +102,47 @@ export function installRender(app: AppContext, parts: RenderParts) {
       }
     }
     lastCat = currentCategory();
+    syncOpenView();
+  }
+
+  /**
+   * Den öppna vyn har ändrats utan att man gått dit (0.10.33: stilboken med
+   * *Stil för den här vyn…*, ångra): en ny kategori ger dess visning, och
+   * ändrade avvikelser i visningen läggs i Visa. Det som ändrats under Visa
+   * och inte sparats är kvar på de andra raderna.
+   */
+  let lastView: { id: string; category: string; overrides: ViewOverrides | undefined } | null = null;
+  function syncOpenView(): void {
+    const v = openView();
+    if (!v) {
+      lastView = null;
+      return;
+    }
+    const doc = app.store.doc;
+    const c = categoryOf(doc.graphics, viewType(), v.category);
+    if (lastView?.id === v.id && lastView.category !== c.id) {
+      app.ui.category = c.id;
+      applyShow(resolveShow(c, v.overrides));
+      app.views.syncDetailSwitch();
+      lastCat = c;
+    } else if (lastView?.id === v.id && lastView.overrides !== v.overrides) {
+      const live = showOverrides(c, currentShow());
+      const before = lastView.overrides ?? {};
+      const after = v.overrides ?? {};
+      const keys = new Set([...Object.keys(before), ...Object.keys(after)].filter((k) => !styleOverrides({ [k]: 1 })[k]));
+      let changed = false;
+      for (const k of keys) {
+        if (JSON.stringify(before[k]) === JSON.stringify(after[k])) continue;
+        changed = true;
+        if (k in after) live[k] = after[k];
+        else delete live[k];
+      }
+      if (changed) {
+        applyShow(resolveShow(c, live));
+        app.views.syncDetailSwitch();
+      }
+    }
+    lastView = { id: v.id, category: c.id, overrides: v.overrides };
   }
 
   /** Lägg en visning i Visa-menyns val. */

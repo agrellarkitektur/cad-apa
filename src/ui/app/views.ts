@@ -7,7 +7,7 @@ import { askConfirm, askText } from '../ask';
 import { type MenuItem } from '../contextMenu';
 import type { AppContext } from './context';
 import { describeView } from './helpers';
-import { categoryOf, viewSettings, viewTypeAt, viewTypeOf, withShow, type ViewOverrides } from '../../core/viewCategories';
+import { categoriesOf, categoryOf, viewSettings, viewTypeAt, viewTypeOf, withShow, type ViewOverrides } from '../../core/viewCategories';
 
 const sorted = (o: ViewOverrides | undefined) => Object.fromEntries(Object.entries(o ?? {}).sort(([a], [b]) => a.localeCompare(b)));
 import { SHEET_TOOLS, SPACE_TOOLS } from './shell';
@@ -235,7 +235,8 @@ export function installViews(app: AppContext) {
           run: () => setMarkerAuto(id, !p.auto),
         },
         { label: 'Vänd blickriktningen', disabled: !!p.auto, run: () => updateParams(app.store, [id], { side: -(p.side ?? 1) }, 'Vänd blickriktningen') },
-        { label: 'Ny vy…', sub: 'Med det som visas nu', run: () => void newViewOf({ marker: id }) },
+        { kind: 'sep' },
+        ...newViewItems({ marker: id }),
         { kind: 'sep' },
         { label: 'Ta bort…', danger: true, disabled: !!el.locked, sub: el.locked ? 'Låst' : undefined, run: () => void deleteMarker(id) },
       ],
@@ -301,6 +302,7 @@ export function installViews(app: AppContext) {
         { label: 'Visa vyn', run: () => applyView(v), disabled: app.ui.activeView === id && !viewModified(v) },
         { label: traced ? 'Sluta kalkera vyn' : 'Kalkera den här vyn', checked: traced, disabled: app.ui.activeView === id, run: () => setTrace(traced ? null : id) },
         ...(app.ui.activeView === id ? [{ label: 'Spara nuvarande inställningar i vyn', disabled: !viewModified(v), run: () => void updateActiveView() }] : []),
+        { label: 'Stil för vyn…', sub: 'Avvikelserna från kategorin', run: () => app.styleDialog.open({ view: id }) },
         { label: 'Byt namn…', run: () => void renameView(id) },
         { label: 'Duplicera', run: () => duplicateView(id) },
         { kind: 'sep' },
@@ -357,23 +359,45 @@ export function installViews(app: AppContext) {
   /**
    * Ny vy av en våning eller en fasad/sektion, från högerklick i
    * projektträdet (0.10.30): det som visas nu (tillstånd, detaljnivå, Visa)
-   * för det stället, med ett namn man skriver. Vyn öppnas.
+   * för det stället, eller (0.10.33) en av vytypens kategorier som den är,
+   * med ett namn man skriver. Vyn öppnas.
    */
-  async function newViewOf(place: { storey: Id } | { marker: Id }): Promise<void> {
+  async function newViewOf(place: { storey: Id } | { marker: Id }, category?: string): Promise<void> {
     const doc = app.store.doc;
     const m = 'marker' in place ? doc.elements[place.marker] : undefined;
     const storey = m ? m.storey : 'storey' in place ? place.storey : app.ui.storey;
+    const type = viewTypeAt(doc, storey, m?.id);
     const where = m ? markerName(doc, m) : (doc.storeys.find((s) => s.id === storey)?.name ?? '');
+    const cat = category !== undefined ? categoryOf(doc.graphics, type, category) : undefined;
     const st = doc.states.find((x) => x.id === app.ui.state)?.name ?? '';
-    const name = (await askText('Ny vy', st ? `${where} – ${st}` : where))?.trim();
+    const suffix = cat ? cat.name : st;
+    const name = (await askText('Ny vy', suffix ? `${where} – ${suffix}` : where))?.trim();
     if (!name) return;
     const base = currentViewDef(newId('vy'), name);
-    // Samma vytyp som där man är: kategorin och avvikelserna följer med; annars vytypens första kategori (0.10.32).
-    const same = viewTypeAt(doc, storey, m?.id) === app.place.viewType();
-    const { marker: _m, worksheet: _w, category, overrides, ...rest } = base;
-    const v: ViewDef = { ...rest, storey, ...(same ? { category, ...(overrides ? { overrides } : {}) } : { scale: categoryOf(doc.graphics, viewTypeAt(doc, storey, m?.id)).scale }), ...(m ? { marker: m.id, trace: null } : {}) };
+    // Samma vytyp som där man är: kategorin och avvikelserna följer med; annars vytypens första kategori (0.10.32). En vald kategori som den är (0.10.33).
+    const same = !cat && type === app.place.viewType();
+    const { marker: _m, worksheet: _w, category: here, overrides, ...rest } = base;
+    const v: ViewDef = {
+      ...rest,
+      storey,
+      ...(cat ? { category: cat.id, scale: cat.scale } : same ? { category: here, ...(overrides ? { overrides } : {}) } : { scale: categoryOf(doc.graphics, type).scale }),
+      ...(m ? { marker: m.id, trace: null } : {}),
+    };
+    if (cat && v.scale === 100) delete v.scale;
     app.store.transact(`Ny vy: ${name}`, (tx) => tx.setViews([...tx.doc.views, v]));
     applyView(app.store.doc.views.find((x) => x.id === v.id)!);
+  }
+
+  /** Menyns rader för en ny vy (0.10.33): det som visas nu, och vytypens kategorier. */
+  function newViewItems(place: { storey: Id } | { marker: Id }): MenuItem[] {
+    const doc = app.store.doc;
+    const m = 'marker' in place ? doc.elements[place.marker] : undefined;
+    const type = viewTypeAt(doc, m ? m.storey : 'storey' in place ? place.storey : app.ui.storey, m?.id);
+    return [
+      { kind: 'header', label: 'Ny vy' },
+      { label: 'Med det som visas nu…', run: () => void newViewOf(place) },
+      ...categoriesOf(doc.graphics, type).map((c): MenuItem => ({ label: `${c.name}…`, sub: `1:${c.scale}`, run: () => void newViewOf(place, c.id) })),
+    ];
   }
 
   function setTrace(id: Id | null): void {
@@ -381,5 +405,10 @@ export function installViews(app: AppContext) {
     app.renderAll();
     if (id) app.hint('Kalkeras. Utseendet ställs in under Visa.');
   }
-  return { applyView, currentViewDef, goTo, newViewOf, openHistoryMenu, openMarkerMenu, openViewMenu, renderViewButton, saveViewAsNew, setTrace, syncDetailSwitch, updateActiveView, viewHistory, viewModified, visit };
+  // *Gå dit* i stilbokens lista över vyerna med en kategori (0.10.33).
+  app.styleDialog.goToView = (id) => {
+    const v = app.store.doc.views.find((x) => x.id === id);
+    if (v) applyView(v);
+  };
+  return { applyView, currentViewDef, goTo, newViewItems, newViewOf, openHistoryMenu, openMarkerMenu, openViewMenu, renderViewButton, saveViewAsNew, setTrace, syncDetailSwitch, updateActiveView, viewHistory, viewModified, visit };
 }

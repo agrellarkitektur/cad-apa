@@ -71,15 +71,18 @@ export const stylePresets = (): { id: string; name: string; style: CategoryStyle
 
 const SHOW: CategoryShow = { compare: true, detail: 'normal', labelDetail: 'normal', modelDetail: 'normal', hide: [], hideDemolished: false };
 
-const cat = (id: string, name: string, type: ViewType, scale: number, show: Partial<CategoryShow> = {}, kind?: SiteCategory): ViewCategory => ({
+const cat = (id: string, name: string, type: ViewType, scale: number, show: Partial<CategoryShow> = {}, kind?: SiteCategory, preset: StyleSheet = SWEDISH_STANDARD): ViewCategory => ({
   id,
   name,
   type,
   ...(kind ? { kind } : {}),
   scale,
   show: { ...structuredClone(SHOW), ...structuredClone(show) },
-  style: styleOfPreset(SWEDISH_STANDARD),
+  style: styleOfPreset(preset),
 });
+
+/** Det som döljs i planer utan inredning (0.10.33): möbler, dörrarnas öppningssätt och öppningarnas littera. */
+const BARE = ['Furniture', 'swing', 'littera:Door', 'littera:Window'];
 
 /**
  * Kategorierna i ett nytt projekt: Platsens tre förinställningar (0.10.25)
@@ -95,8 +98,18 @@ export function defaultCategories(): ViewCategory[] {
     // Färglagd och mindre teknisk: utan höjdkurvor, mått, littera och markörer.
     cat('illustration', 'Illustrationsplan', 'site', 200, { compare: false, hide: ['Terrain', 'Elevation', 'Section', 'BasisFacade', 'Dimension', 'Label', 'littera:Ground'] }, 'illustration'),
     cat('plan', 'Plan', 'storey', 100),
+    // Förslagen i Ny vy… (0.10.33): planen med mått och littera utan möbler, undertaket och golvet.
+    cat('matt', 'Mått och littera', 'storey', 100, { hide: ['Furniture'] }),
+    cat('undertak', 'Undertak', 'storey', 50, { hide: [...BARE, 'littera:Wall', 'Dimension'] }),
+    cat('golv', 'Golvplan', 'storey', 50, { hide: [...BARE, 'littera:Wall'] }),
+    // Förinställningarna som egna kategorier (0.10.33): svart poché, och statusen i färg.
+    cat('poche', 'Poché', 'storey', 100, {}, undefined, POCHE),
+    cat('farg', 'Färgmarkerad', 'storey', 100, {}, undefined, COLOUR_CODED),
     cat('fasad', 'Fasad', 'facade', 100),
+    cat('fasad-farg', 'Färgmarkerad', 'facade', 100, {}, undefined, COLOUR_CODED),
     cat('sektion', 'Sektion', 'section', 100),
+    cat('sektion-poche', 'Poché', 'section', 100, {}, undefined, POCHE),
+    cat('sektion-farg', 'Färgmarkerad', 'section', 100, {}, undefined, COLOUR_CODED),
     cat('arbetsblad', 'Arbetsblad', 'worksheet', 100),
   ];
 }
@@ -148,6 +161,43 @@ export function withShow(c: ViewCategory, ov: ViewOverrides | undefined, show: C
   return Object.keys(out).length ? out : undefined;
 }
 
+/** JSON med nycklarna i ordning, så att två lika värden jämförs lika oavsett ordningen. */
+const canon = (v: unknown): string => JSON.stringify(v, (_k, x) => (x && typeof x === 'object' && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => a.localeCompare(b))) : x));
+export const sameValue = (a: unknown, b: unknown) => canon(a) === canon(b);
+
+/** Stilens avvikelser (0.10.33): det i `style` som skiljer sig från `base`, rad för rad. */
+export function styleDiff(base: CategoryStyle, style: CategoryStyle): ViewOverrides {
+  const ov: ViewOverrides = {};
+  for (const k of Object.keys(style.actions) as ActionKey[]) if (!sameValue(style.actions[k], base.actions[k])) ov[`actions.${k}`] = structuredClone(style.actions[k]);
+  if ((style.openingMark ?? 0) !== (base.openingMark ?? 0)) ov.openingMark = style.openingMark;
+  for (const k of new Set([...Object.keys(base.pens ?? {}), ...Object.keys(style.pens ?? {})])) {
+    const a = base.pens?.[k];
+    const b = style.pens?.[k];
+    if (!sameValue(a ?? null, b ?? null)) ov[`pens.${k}`] = b ? structuredClone(b) : null;
+  }
+  return ov;
+}
+
+/**
+ * Kategorin som vyn ser ut med (0.10.33): kategorins visning och stil med
+ * vyns avvikelser. Den ändras i stilboken när en vy är vald, och
+ * avvikelserna räknas fram igen med `overridesFrom`.
+ */
+export const effectiveCategory = (c: ViewCategory, ov: ViewOverrides | undefined): ViewCategory => ({ ...c, show: resolveShow(c, ov), style: resolveStyle(c, ov) });
+
+/** Avvikelserna som gör `c` till `cur`, eller undefined när de är lika. Det som inte avviker längre försvinner. */
+export function overridesFrom(c: ViewCategory, cur: ViewCategory): ViewOverrides | undefined {
+  const ov = { ...showOverrides(c, cur.show), ...styleDiff(c.style, cur.style) };
+  return Object.keys(ov).length ? ov : undefined;
+}
+
+/** Hur många rader vyn verkligen avviker på (en sparad avvikelse som kategorin hunnit få räknas inte). */
+export function deviationCount(doc: Pick<ProjectDoc, 'graphics' | 'elements'>, v: ViewDef): number {
+  if (!v.overrides) return 0;
+  const c = categoryOf(doc.graphics, viewTypeOf(doc, v), v.category);
+  return Object.keys(overridesFrom(c, effectiveCategory(c, v.overrides)) ?? {}).length;
+}
+
 /** Stilen som den gäller: kategorins med vyns avvikelser. */
 export function resolveStyle(c: ViewCategory, ov: ViewOverrides | undefined): CategoryStyle {
   const keys = Object.keys(ov ?? {}).filter(isStyleKey);
@@ -196,8 +246,11 @@ export function viewSettings(doc: Pick<ProjectDoc, 'graphics' | 'elements'>, v: 
   return { cat: c, type, show: resolveShow(c, v.overrides), ...(c.kind ? { kind: c.kind } : {}), style: sheetFor(doc.graphics, c, v.overrides) };
 }
 
+/** Vyerna som har kategorin (0.10.33), i projektets ordning. */
+export const viewsWithCategory = (doc: Pick<ProjectDoc, 'graphics' | 'elements' | 'views'>, c: ViewCategory) => doc.views.filter((v) => viewTypeOf(doc, v) === c.type && categoryOf(doc.graphics, c.type, v.category) === c);
+
 /** Hur många vyer som har kategorin. */
-export const categoryUses = (doc: Pick<ProjectDoc, 'graphics' | 'elements' | 'views'>, c: ViewCategory) => doc.views.filter((v) => viewTypeOf(doc, v) === c.type && categoryOf(doc.graphics, c.type, v.category) === c).length;
+export const categoryUses = (doc: Pick<ProjectDoc, 'graphics' | 'elements' | 'views'>, c: ViewCategory) => viewsWithCategory(doc, c).length;
 
 /** Kategorier från fil: de utan namn eller vytyp hoppas över, och varje vytyp får minst en. */
 export function normalizeCategories(v: unknown, fallbackStyle: CategoryStyle): ViewCategory[] {
@@ -228,11 +281,21 @@ export function normalizeCategories(v: unknown, fallbackStyle: CategoryStyle): V
  * stilboken och funktionens svar; ingen ändring = null.
  */
 export function editCategory<T>(book: StyleBook, c: ViewCategory, fn: (sheet: StyleSheet) => T): { book: StyleBook; result: T } {
-  const sheet = structuredClone(sheetFor(book, c));
+  const r = editStyle(book, c.style, fn);
+  return { book: { ...r.book, categories: book.categories.map((x) => (x === c ? { ...x, style: r.style } : x)) }, result: r.result };
+}
+
+/**
+ * Ändra en stil (en kategoris eller den en vy ser ut med) och resurserna
+ * med en funktion som ändrar en stilmall. Svarar med stilboken med de nya
+ * resurserna (kategorierna orörda), den nya stilen och funktionens svar.
+ */
+export function editStyle<T>(book: StyleBook, style: CategoryStyle, fn: (sheet: StyleSheet) => T): { book: StyleBook; style: CategoryStyle; result: T } {
+  const { categories: _c, format: _bf, version: _bv, ...resources } = book;
+  const sheet: StyleSheet = { ...structuredClone(resources), ...structuredClone(style), format: 'bacchus-style', version: 1 };
   const result = fn(sheet);
   const { actions, openingMark, pens, format: _f, version: _v, ...res } = sheet;
-  const style: CategoryStyle = { actions, openingMark, ...(pens && Object.keys(pens).length ? { pens } : {}) };
-  return { book: { ...book, ...res, categories: book.categories.map((x) => (x === c ? { ...x, style } : x)) }, result };
+  return { book: { ...book, ...res }, style: { actions, openingMark, ...(pens && Object.keys(pens).length ? { pens } : {}) }, result };
 }
 
 /** Samma ändring i alla kategoriers stil (markörernas penna, som gäller hela projektet). */
@@ -315,10 +378,15 @@ export function copyCategoryFrom(book: StyleBook, c: ViewCategory, from: ViewCat
   return replaceCat(book, c, { ...c, style: structuredClone(from.style) });
 }
 
-/** Tillbaka till förvalet: förvalskategorin med samma nyckel, annars vytypens första. Namnet är kvar. */
-export function resetCategory(book: StyleBook, c: ViewCategory): StyleBook {
+/** Kategorins förval: förvalskategorin med samma nyckel, annars vytypens första, med kategorins nyckel och namn. */
+export function categoryDefault(c: Pick<ViewCategory, 'id' | 'name' | 'type'>): ViewCategory {
   const d = defaultCategories().find((x) => x.type === c.type && x.id === c.id) ?? defaultCategories().find((x) => x.type === c.type)!;
-  return replaceCat(book, c, { ...d, id: c.id, name: c.name });
+  return { ...d, id: c.id, name: c.name };
+}
+
+/** Tillbaka till förvalet. Namnet är kvar. */
+export function resetCategory(book: StyleBook, c: ViewCategory): StyleBook {
+  return replaceCat(book, c, categoryDefault(c));
 }
 
 /** Ta bort en kategori; den sista av en vytyp går inte att ta bort. Vyerna med den får vytypens första. */
@@ -351,3 +419,40 @@ export function moveCategory(book: StyleBook, c: ViewCategory, dir: -1 | 1): Sty
 
 /** En stilmall i alla kategorier, med resurserna (prov, och förinställningar för hela projektet). */
 export const bookWithSheet = (book: StyleBook, sheet: StyleSheet): StyleBook => editAllCategories(book, (s) => void Object.assign(s, structuredClone(sheet))).book;
+
+/** Lägg `next` i stället för kategorin med samma nyckel och vytyp. */
+export const putCategory = (book: StyleBook, next: ViewCategory): StyleBook => ({ ...book, categories: book.categories.map((x) => (x.id === next.id && x.type === next.type ? next : x)) });
+
+// ---------- En vy och dess kategori (0.10.33) ----------
+
+const withoutOverrides = (v: ViewDef): ViewDef => {
+  const { overrides: _o, ...rest } = v;
+  return rest;
+};
+
+/** Vyerna med vyn `id` utan avvikelser: tillbaka till kategorin. */
+export const resetViewOverrides = (views: readonly ViewDef[], id: string): ViewDef[] => views.map((v) => (v.id === id ? withoutOverrides(v) : v));
+
+/**
+ * Gör vyns avvikelser till kategorins förval: kategorin får det vyn ser ut
+ * med, och vyn följer den utan avvikelser. Andra vyer med kategorin följer
+ * med, med sina egna avvikelser kvar.
+ */
+export function viewToCategoryDefault(doc: Pick<ProjectDoc, 'graphics' | 'elements' | 'views'>, id: string): { book: StyleBook; views: ViewDef[] } | null {
+  const v = doc.views.find((x) => x.id === id);
+  if (!v) return null;
+  const c = categoryOf(doc.graphics, viewTypeOf(doc, v), v.category);
+  const cur = effectiveCategory(c, v.overrides);
+  return { book: replaceCat(doc.graphics, c, { ...c, show: cur.show, style: cur.style }), views: resetViewOverrides(doc.views, id) };
+}
+
+/** Spara vyns utseende som en ny kategori direkt efter dess, och låt vyn följa den nya utan avvikelser. */
+export function viewToNewCategory(doc: Pick<ProjectDoc, 'graphics' | 'elements' | 'views'>, id: string, name: string): { book: StyleBook; views: ViewDef[]; cat: ViewCategory } | null {
+  const v = doc.views.find((x) => x.id === id);
+  if (!v || !name.trim()) return null;
+  const c = categoryOf(doc.graphics, viewTypeOf(doc, v), v.category);
+  const cur = effectiveCategory(c, v.overrides);
+  const n = freshName(doc.graphics, c.type, name.trim());
+  const next: ViewCategory = { ...structuredClone(cur), id: freshId(doc.graphics, c.type, n), name: n };
+  return { book: insertAfter(doc.graphics, next, c), views: doc.views.map((x) => (x.id === id ? { ...withoutOverrides(x), category: next.id } : x)), cat: next };
+}

@@ -6,8 +6,8 @@ import type { Material, StyleResources } from '../core/graphics';
 import { resolveParams } from '../elements/registry';
 import { STRAIGHT } from '../geometry/arc';
 import { lineTypeOptions } from './lineTypePick';
-import { FILL_KEYS, fillOpacityOf, fillPanel, fillPatch, MATERIAL_3D_COLOR, withPatch, type FillPanelContext } from './fillPanel';
-import { fillFieldsOf, fillOfElement, linkMaterial, materialUses, overrideMaterial, updateMaterial, withFill } from '../core/materials';
+import { FILL_KEYS, fillOpacityOf, fillPanel, fillPatch, MATERIAL_3D_COLOR, ORTHO_CHOICE, withPatch, type FillPanelContext } from './fillPanel';
+import { fillFieldsOf, fillOfElement, linkMaterial, linkOrtho, materialUses, overrideMaterial, updateMaterial, withFill } from '../core/materials';
 import { weightPicker } from './weightPick';
 import { BUILDING_KEYS, buildingChange } from './materialBuilding';
 
@@ -46,7 +46,8 @@ const MATERIAL_KEYS: ReadonlySet<string> = new Set(['matIllKind', 'matIllColor',
  */
 export function fillChange(store: DocStore, ids: Id[], name: string, input: HTMLInputElement | HTMLSelectElement, nested?: string): boolean {
   if (name === 'material') {
-    linkMaterial(store, ids, input.value || null, nested);
+    if (input.value === ORTHO_CHOICE && !nested) linkOrtho(store, ids);
+    else linkMaterial(store, ids, input.value || null, nested);
     return true;
   }
   if (!FILL_KEYS.has(name) && !MATERIAL_KEYS.has(name) && !BUILDING_KEYS.has(name)) return false;

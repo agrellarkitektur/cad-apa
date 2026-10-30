@@ -2,6 +2,7 @@ import { buildingStoreys, isMaster, isSite, isStamp, onPaper, type Folder, type 
 import { markerName } from '../elements/markers';
 import { UNDERLAY_KIND_LABEL, type UnderlayParams } from '../elements/underlay';
 import { icons } from './icons';
+import { deviationCount } from '../core/viewCategories';
 
 export type NavTab = TreeTab;
 
@@ -298,7 +299,7 @@ export class Navigator {
     const picked = this.host.treeItem();
     const rowsById = new Map<Id, string>();
     for (const v of doc.views) {
-      const mod = v.id === activeId && this.host.viewModified(v) ? ' *' : '';
+      const mod = (v.id === activeId && this.host.viewModified(v) ? ' *' : '') + (deviationCount(doc, v) ? `<i class="view-dev" title="Avviker från sin kategori (Stil för vyn…)"></i>` : '');
       const info = [buildingStoreys(doc).length > 1 || isSite(v.storey) ? storeyName(v.storey) : '', this.host.describeView(v)].filter(Boolean).join(' · ');
       const traced = this.host.trace() === v.id ? '<span class="trace-tag">kalkeras</span> ' : '';
       const tags = v.tags?.length ? ` · ${v.tags.map(esc).join(', ')}` : '';

@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.32** (alfa); nästa är **0.10.33 Avvikelser och kategorier i vyn**,
+**0.10.33** (alfa); nästa är **0.10.34 Radkontrollerna**,
 och efter stilinställningarna (0.10.32–0.10.38) **0.11 Trappor**.
 
 ## Vad som fungerar
@@ -1149,6 +1149,31 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.33, avvikelser och kategorier i vyn (samma filformat, 25):
+- **Ockra prick på ändrade rader** i stilboken: i en kategori det som
+  skiljer från förvalet, i en vy det som skiljer från kategorin. Håll
+  musen över raden för *Återställ*. *Visa bara avvikelser* döljer resten
+- **Stil för den här vyn…** (högerklick i vyn, eller *Stil för vyn…* på
+  en vy i projektträdet) visar vyns stil i stilboken: det som ändras där
+  gäller bara vyn. *Återställ till kategorin*, *Gör avvikelserna till
+  kategorins förval* (de andra vyerna med kategorin följer med) och *Spara
+  som ny kategori…* (vyn följer den nya). Utan sparad vy öppnas kategorin
+- **Vyer med den här kategorin** under kategorins verktyg: varje vy med
+  hur många rader den avviker på, en länk till dess stil och *Gå dit*
+- **En punkt efter vynamnet** i projektträdet när vyn avviker från sin
+  kategori
+- **Ny vy** på en våning, fasad eller sektion i projektträdet föreslår
+  vytypens kategorier (med skalan), förutom *Med det som visas nu…*
+- **Nya kategorier i ett nytt projekt**: för planer *Mått och littera*
+  (utan möbler), *Undertak* och *Golvplan* (1:50, utan möbler,
+  öppningssätt och littera; undertaket också utan mått), och Poché och
+  Färgmarkerad som egna kategorier för planer och sektioner (Färgmarkerad
+  också för fasader). Färgmarkerad visar statusen i färg: det som finns
+  kvar grått, det nya rött och det som rivs gult streckat
+- **Ortofoto bland markobjektens material** (när platsen har ett
+  ortofoto): en markyta eller ramp kan visa ortofotot i 3D, också ovanpå
+  ett material under; i planen har den sin egen fyllning
 
 Version 0.10.32, stilboken i tre nivåer med arv (**nytt filformat, 25**;
 projekt från 0.10.31 öppnas inte):

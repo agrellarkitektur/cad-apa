@@ -63,7 +63,8 @@ export function colorShapes(doc: ProjectDoc, view: ViewStates): Shape[] {
   for (const el of groundObjects(ctx)) {
     const p = ctx.params<GroundParams>(el);
     if (p.kind !== 'area' && p.kind !== 'path') continue;
-    const own = lookOf(materialOf(p as Partial<FillParams>, doc.graphics));
+    // Valet Ortofoto (0.10.33): ortofotot (markens eget utseende) också över ett material under.
+    const own = (p as Partial<FillParams>).ortho3d && doc.site.ortho ? { color: '' } : lookOf(materialOf(p as Partial<FillParams>, doc.graphics));
     const slope = lookOf(materialOf((p.slopeFill ?? {}) as Partial<FillParams>, doc.graphics));
     if (!own && !slope) continue;
     const g = groundGeometry(ctx, el);

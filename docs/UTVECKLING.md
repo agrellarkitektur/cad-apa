@@ -1640,6 +1640,46 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Avvikelser och kategorier i vyn (0.10.33, format 25)
+
+- **En vys stil** är `effectiveCategory(cat, v.overrides)`: kategorin med
+  vyns visning och stil. Det som ändras räknas om till avvikelser med
+  `overridesFrom(cat, cur)` (`showOverrides` och `styleDiff`, som jämför
+  åtgärderna och pennorna med `sameValue`, JSON med nycklarna sorterade).
+  `deviationCount(doc, v)` räknar de rader vyn verkligen avviker på (en
+  sparad avvikelse som kategorin hunnit få räknas inte); den ger punkten i
+  projektträdet och listan i stilboken.
+- `viewToCategoryDefault(doc, id)` och `viewToNewCategory(doc, id, name)`
+  svarar med stilboken och vyerna; `resetViewOverrides(views, id)` tar bort
+  en vys avvikelser. `categoryDefault(c)` är kategorins förval (samma som
+  `resetCategory`). `editStyle(book, style, fn)` ändrar en stil och
+  resurserna med en stilmallsfunktion (`editCategory` använder den);
+  `putCategory` byter en kategori efter nyckel och vytyp.
+- **Raderna** (`ui/style/deviations.ts`): `changedRows(ref, cur, extra,
+  withCategoryRows)` ger radnycklarna `show:<k>`, `item:<k>` (kryssen
+  under Innehåll, jämförda med `isShown`), `actions.<k>`, `pens.<k>`,
+  `scale`, `kind`; `resetRow` lägger tillbaka en rad, `rowSelector` hittar
+  fältet. Dialogen (`StyleDialog.markRows`) sätter `.sb-changed` och
+  `.sb-mark` på raden efter varje omritning; `.only-changed` på `.sb-main`
+  döljer resten med CSS (`:has`).
+- **Dialogen** har `viewId` (vyläge, `open({ view })`) och `scope(type)`:
+  `{ cat, ref, cur, view? }`. Alla fält går genom `commit(type, cur,
+  label, book?)`, som skriver kategorin (`putCategory`) eller vyns
+  avvikelser i samma transaktion som resurserna. `goToView` sätts i
+  `installViews`.
+- **Appen**: `syncOpenView` i `render.ts` följer den öppna vyn när den
+  ändras utan att man går dit: ny kategori ger dess visning, och ändrade
+  rader i visningens avvikelser läggs i Visa (de andra raderna, ändrade
+  under Visa men inte sparade, är kvar). `newViewItems(place)` i
+  `views.ts` ger *Ny vy*-raderna i våningens, fasadens och sektionens meny;
+  `newViewOf(place, category?)`.
+- **Ortofoto** bland markobjektens material: `ORTHO_CHOICE`
+  (`'@ortofoto'`) i `fillPanel.ts` (`ctx.ortho`), `linkOrtho` i
+  `core/materials.ts` sätter `ortho3d: true` (i `LINK_FIELDS`, så att ett
+  material eller *Eget* tar bort det); `colorShapes` ger ytan markens
+  utseende (`color: ''`), som blir ortofotot.
+- Tester: `tests/v01033.test.ts`.
+
 ## Stilboken: tre nivåer med arv (0.10.32, format 25)
 
 - **`ProjectDoc.graphics` är en `StyleBook`** (`format: 'bacchus-stylebook'`):

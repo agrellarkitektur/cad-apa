@@ -663,3 +663,139 @@
 .sb-groups fieldset {
   align-content: start;
 }
+
+/* Avvikelserna (0.10.33): ockra prick och Återställ på en ändrad rad. */
+.sb-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.sb-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+.sb-row-reset {
+  padding: 0 5px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 12px;
+  line-height: 18px;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.sb-changed:hover .sb-row-reset,
+.sb-row-reset:focus-visible {
+  opacity: 1;
+}
+
+.sb-row-reset:hover {
+  border-color: var(--accent);
+}
+
+.sb-only {
+  margin-left: 10px;
+  font-size: 12.5px;
+}
+
+.sb-uses + .sb-only {
+  margin-left: 12px;
+}
+
+.only-changed .style-row:not(.sb-changed),
+.only-changed .pen-row:not(.sb-changed),
+.only-changed .sb-groups label.check:not(.sb-changed),
+.only-changed .sb-groups fieldset:not(:has(.sb-changed)),
+.only-changed .sb-show label:not(.sb-changed),
+.only-changed .sb-show .fields:not(:has(.sb-changed)),
+.only-changed .style-labels:not(:has(.sb-changed)),
+.only-changed .style-labels > .note {
+  display: none;
+}
+
+.sb-views summary {
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.sb-views ul {
+  display: grid;
+  gap: 2px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sb-views li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.sb-view-link {
+  padding: 2px 4px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: var(--rule);
+  cursor: pointer;
+}
+
+.sb-view-link:hover {
+  text-decoration-color: currentColor;
+}
+
+.sb-dev {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--muted);
+  font-family: var(--font-data);
+  font-size: 12px;
+}
+
+.sb-viewhead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sb-back svg {
+  width: 14px;
+  height: 14px;
+  transform: rotate(90deg);
+}
+
+.sb-viewname {
+  display: grid;
+}
+
+.sb-viewname span {
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+/* Vyn avviker från sin kategori: en punkt efter namnet i projektträdet (0.10.33). */
+.view-dev {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-left: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: middle;
+}

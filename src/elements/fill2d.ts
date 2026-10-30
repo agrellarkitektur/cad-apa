@@ -68,6 +68,8 @@ export interface FillParams {
   materialOpacity?: number;
   /** Mönstret vridet för objektet (0.10.28), grader utöver materialets; utelämnad = 0. */
   materialAngle?: number;
+  /** Markobjektets val *Ortofoto* (0.10.33): ortofotot i 3D i stället för ett material; planen har den egna fyllningen. */
+  ortho3d?: boolean;
 }
 
 /** Fyllningens fält, utom kopplingen: det ett material bestämmer i planen (0.10.14, 0.10.28). */

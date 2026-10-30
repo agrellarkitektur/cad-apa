@@ -40,7 +40,8 @@ describe('stilboken', () => {
     const doc = emptyProject('Prov', 'ombyggnad');
     expect(doc.graphics.format).toBe('bacchus-stylebook');
     expect(categoriesOf(doc.graphics, 'site').map((c) => c.name)).toEqual(['Situationsplan', 'Markplaneringsritning', 'Illustrationsplan']);
-    for (const t of ['storey', 'facade', 'section', 'worksheet'] as const) expect(categoriesOf(doc.graphics, t)).toHaveLength(1);
+    // Förslagen och förinställningarna som kategorier sedan 0.10.33 (tests/v01033.test.ts).
+    for (const t of ['storey', 'facade', 'section', 'worksheet'] as const) expect(categoriesOf(doc.graphics, t).length).toBeGreaterThanOrEqual(1);
     // Stilen är det som förut var projektets stilmall.
     expect(categoryOf(doc.graphics, 'storey').style.actions).toEqual(SWEDISH_STANDARD.actions);
     expect(FORMAT_VERSION).toBe(25);
@@ -144,13 +145,13 @@ describe('vyn följer sin kategori', () => {
 describe('kategorierna', () => {
   it('ny, duplicera, byt namn, flytta och återställ', () => {
     let book = sampleProject().graphics;
-    const n = newCategory(book, 'storey', 'Mått och littera');
+    const n = newCategory(book, 'storey', 'Bygglov');
     book = n.book;
-    expect(n.cat).toMatchObject({ id: 'matt-och-littera', type: 'storey' });
+    expect(n.cat).toMatchObject({ id: 'bygglov', type: 'storey' });
     const d = duplicateCategory(book, n.cat);
     book = d.book;
-    expect(d.cat.name).toBe('Mått och littera (kopia)');
-    expect(categoriesOf(book, 'storey').map((c) => c.id)).toEqual(['plan', 'skiss', 'matt-och-littera', 'matt-och-littera-kopia']);
+    expect(d.cat.name).toBe('Bygglov (kopia)');
+    expect(categoriesOf(book, 'storey').map((c) => c.id).slice(-2)).toEqual(['bygglov', 'bygglov-kopia']);
     book = renameCategory(book, d.cat, 'Undertak');
     expect(categoryOf(book, 'storey', d.cat.id).name).toBe('Undertak');
     book = moveCategory(book, categoryOf(book, 'storey', 'plan'), 1);
@@ -187,6 +188,6 @@ describe('kategorierna', () => {
     const v = store.doc.views.find((x) => x.id === 'vy-skiss')!;
     expect(v.category).toBeUndefined();
     expect(viewSettings(store.doc, v).cat.id).toBe('plan');
-    expect(deleteCategory(store.doc, categoryOf(store.doc.graphics, 'storey'))).toBeNull();
+    expect(deleteCategory(store.doc, categoryOf(store.doc.graphics, 'worksheet'))).toBeNull();
   });
 });

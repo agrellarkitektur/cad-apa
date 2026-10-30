@@ -14,7 +14,7 @@ import { effectiveFill, FILL_FIELDS, type FillParams } from '../elements/drawing
  */
 
 /** Kopplingens fält: materialet och objektets egna överstyrningar. */
-const LINK_FIELDS = ['material', 'materialOpacity', 'materialAngle'] as const;
+const LINK_FIELDS = ['material', 'materialOpacity', 'materialAngle', 'ortho3d'] as const;
 
 /** Objektets fyllning: direkt i parametrarna eller i parametern `nested`. */
 export function fillOfElement(el: Element, nested?: string): Partial<FillParams> {
@@ -147,6 +147,17 @@ export function saveMaterial(store: DocStore, ids: Id[], name: string, nested?: 
     }
   });
   return m.id;
+}
+
+/** Valet *Ortofoto* i markobjektens *Material* (0.10.33): objekten får sin egen fyllning i planen och ortofotot i 3D. */
+export function linkOrtho(store: DocStore, ids: Id[]): void {
+  const style = store.doc.graphics;
+  store.transact('Ortofoto', (tx) => {
+    for (const eid of ids) {
+      const el = tx.doc.elements[eid];
+      if (el) tx.putElement(withFill(el, { ...fillFieldsOf(effectiveFill(fillOfElement(el) as FillParams, style)), ortho3d: true }));
+    }
+  });
 }
 
 /** Koppla objekten till materialet `id`, eller koppla loss dem (`null`, *Eget*). */

@@ -3558,6 +3558,51 @@ projektets uppgifter, mallen för nya projekt). *Allmänt* har bara
 stilbokens namn. Pennorna visas alla i varje vytyp (filtreras med
 ställena i E). Öppningsmarkeringens bredd har fortfarande inget fält.
 
+### 0.10.33 Avvikelser och kategorier i vyn ✓
+
+Ockra prick och *Återställ* per rad, *Visa bara avvikelser*, *Stil för
+den här vyn…*, *Återställ till kategorin*, *Gör avvikelserna till
+kategorins förval*, *Spara som ny kategori*, punkt efter vynamnet, *Vyer
+med den här kategorin*, *Ny vy…* med kategorierna, Poché och Färgmarkerad
+som egna kategorier och *Ortofoto* bland markobjektens material.
+
+*Gjord 30 oktober. Testerna: 744. Samma format (25); `ortho3d` på
+markobjekten är ett valfritt fält. En vys stil i stilboken är kategorin
+som vyn ser ut med (`effectiveCategory`); det man ändrar där räknas om
+till avvikelser (`overridesFrom`), så att det som inte längre avviker
+försvinner. Se UTVECKLING.md, *Avvikelser och kategorier i vyn*. Claudes
+val: en kategori jämförs med sitt förval (förvalskategorin med samma
+nyckel, annars vytypens första; samma som *Återställ till förvalet*), en
+vy med sin kategori. Pricken sitter på raderna som har ett fält:
+visningens fält, kryssen under Innehåll, en åtgärds rad och en penna
+(öppningsmarkeringens bredd har inget fält än). *Återställ* syns när
+musen är över raden. I en vys stil finns inte kategorins skala, Platsens
+sort och *Kopiera från*. *Gör avvikelserna till kategorins förval* frågar
+när fler vyer har kategorin. *Spara som ny kategori…* lägger den direkt
+efter kategorin. Ändras den öppna vyn i stilboken följer Visa med på de
+rader som ändrades; det som ändrats under Visa och inte sparats är kvar på
+de andra. *Ny vy* på en våning, fasad eller sektion: *Med det som visas
+nu…* (som förut) och vytypens kategorier som de är, med kategorins skala;
+namnet föreslås som "Plan 1 – Undertak". Nya kategorier i ett nytt
+projekt: för planer *Mått och littera* (utan möbler), *Undertak* (1:50,
+utan möbler, öppningssätt, littera och mått) och *Golvplan* (1:50, utan
+möbler, öppningssätt och littera); Poché för planer och sektioner,
+Färgmarkerad för planer, fasader och sektioner (Färgmarkerad är statusen i
+färg: kvar grått, nytt rött, rivs gult streckat). Planens förval är kvar
+först. *Ortofoto* visas bland materialen bara på markytor och ramper och
+bara när platsen har ett ortofoto; objektet får det som syntes i planen
+som egen fyllning, och i 3D ortofotot (markens eget utseende när
+ortofotot är *Av*). Provat i Playwright mot `dist/` (prickarna i en vy och
+en kategori, *Visa bara avvikelser*, *Återställ* på en rad med Visa som
+följer med, *Spara som ny kategori*, listan, punkterna i projektträdet,
+*Ny vy → Undertak…*).*
+
+*Gjordes inte:* Undertaket ritas inte spegelvänt (ser uppåt); kategorin
+har bara sitt innehåll. *Jämför med*, förhandsvisningen och de nya
+radkontrollerna (C) väntar. Prickarna i vytypens rad i vänsterkanten och
+på flikarna ("N ändrade" per flik) gjordes inte; antalet står i
+verktygsraden och i listan.
+
 ### 0.11 Trappor · *nytt format*
 
 - *Syns också på* per objekt: objektet hör till Platsen eller en våning och

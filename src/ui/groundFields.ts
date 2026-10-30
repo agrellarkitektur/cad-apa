@@ -77,7 +77,9 @@ export function groundFieldsMarkup(doc: ProjectDoc, el: Element, view: ViewState
  */
 function groundFill(doc: ProjectDoc, p: GroundParams): string {
   const ctx = (q: { material?: string } | undefined) => ({ use: 'ground' as const, uses: q?.material ? materialUses(doc, q.material) : 0 });
-  const own = fillFields('ground-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 } as FillParams, (k) => `data-key="d2:${k}"`, doc.graphics, 'Material', ctx(p));
+  // Ortofotot som val (0.10.33) på markytor och ramper, när platsen har ett.
+  const ortho = !!doc.site?.ortho && (p.kind === 'area' || p.kind === 'path');
+  const own = fillFields('ground-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 } as FillParams, (k) => `data-key="d2:${k}"`, doc.graphics, 'Material', { ...ctx(p), ortho });
   const sf = p.slopeFill;
   const slopes =
     p.edge === 'wall' || p.kind === 'wall'
