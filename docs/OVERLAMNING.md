@@ -272,11 +272,14 @@ tjocklekstabellen, smarttext-taggarna med värden och egna taggar.
   fält i `core/sheetFields.ts` och `core/sheets.ts`, höjdernas decimaler
   i `labels.heights`, littera, `PEN_WEIGHTS` i `elements/drawing2d.ts`)
   och låt stämplarna läsa taggarna därifrån.
-- Fråga först, kort: ska projektuppgifterna (namn, nummer, fastighet,
-  skede) höra till stilboken (följer med exporten och mallen i 0.10.40)
-  eller till projektet (bara visas i *Allmänt*)? Claudes förslag:
-  projektuppgifterna i projektet, kontorets (företagsnamn, logotyp,
-  ansvarig, typsnitt, tjocklekar) i stilboken.
+- **Besvarat (Carl August 30 oktober):** stilboken är det som återanvänds
+  mellan projekt: kontorets uppgifter (företagsnamn, logotyp,
+  kontaktuppgifter, ansvarig), typsnitt och textstorlek, höjdsystem och
+  decimaler, enheter, litterats sifferantal och tjocklekstabellen. Det som
+  hör till ett projekt (projektnamn och -nummer, fastighetsbeteckning,
+  skede) ligger i projektet, inte i stilboken; det visas gärna under
+  *Allmänt* men följer inte med stilbokens export eller mallen (0.10.40).
+  Smarttext-taggarna läser från båda.
 - Blir den för stor: kontorets och projektets uppgifter och taggarna
   först, enheterna och tjocklekstabellen sist.
 
