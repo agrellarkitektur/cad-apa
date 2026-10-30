@@ -2,7 +2,8 @@
 
 Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
-som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
+som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
+UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.40.1.
 
@@ -15,8 +16,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   dubbletter ihopslagna (`slugId`, `putPen`, `styleDiff` i `changedRows`,
   `sameValue`); död kod borttagen. Testerna: 792 på ca 14 s, orörda.
   Provat i Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes val i
-  PLAN.md. Förslag kvar: arkivera avsnitten före 0.10 i PLAN.md och
-  UTVECKLING.md (över 4 000 rader var) till egna filer.
+  arkivet.
+- **Arkivet (30 oktober, efter 0.10.40.1):** klara versioner ligger i
+  `docs/arkiv/` (`PLAN-0.8-0.9.md`, `PLAN-0.10.md`,
+  `UTVECKLING-0.6-0.9.md`, `UTVECKLING-0.10.md`); PLAN.md (420 rader) har
+  inriktningen, tabellen *Klart* och det som står kvar, UTVECKLING.md
+  (1 030 rader) de allmänna reglerna och format 25 (0.10.32–). Sök i hela
+  `docs/` när något ska slås upp. Vid nästa huvudversion (0.11) flyttas
+  0.10.32–0.10.40.1 dit på samma sätt. Inget i appen ändrat.
 - **0.10.40 Stilboken ut och in är klar** (samma format, 25; filens
   `assets` och `paper` är valfria). *Exportera…*, *Importera…* och *Mall
   för nya projekt…* i stilbokens rubrikrad. Exporten bäddar in logotypen
@@ -26,7 +33,7 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   projekt* väljer mallen, Svensk standard eller en fil, och mallens
   förvalda mallblad ersätter exemplets. Svaren 30 oktober: webbläsaren +
   fil, mallblad och stämplar som val. Testerna: 792 på ca 15 s. Provat i
-  Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes val i PLAN.md.
+  Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes val i arkivet.
 - **0.10.39 Projektet › Allmänt är klar** (samma format, 25; `office` och
   `general` i stilboken och `logo` på underlag är valfria). *Allmänt* har
   Kontoret (företagsnamn, adress, telefon, e-post, webb, ansvarig,
@@ -36,7 +43,7 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   med egna taggar i kontoret eller projektet. *Lägg in logotypen här* i
   högerklicksmenyn på blad, mallblad och stämplar. Testerna: 785 på ca
   27 s. Provat i Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes
-  val i PLAN.md.
+  val i arkivet.
 - **0.10.38 Snitt- och konturlinjer i fasader och sektioner är klar**
   (samma format, 25; nya nycklar i penntabellen). Våningarnas grupper
   (*Väggar*, *Dörrar*, *Fönster*, *Bjälklag, tak …*) visas också i
@@ -48,7 +55,7 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   och streckning vid jämförelse; materialets snitt får konturen som
   snittlinje. Åtgärdernas kontur är ingen penna längre (bara linjetyp).
   Förvalen ritar som förut. Testerna: 777 på ca 17 s. Provat i
-  Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes val i PLAN.md.
+  Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes val i arkivet.
 - **0.10.37 Snitt- och konturlinjer i planen är klar** (samma format,
   25; nya nycklar i penntabellen). Våningarnas kategorier har grupperna
   *Väggar*, *Dörrar*, *Fönster* och *Bjälklag, tak, stödmurar, möbler och
@@ -58,7 +65,7 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   *Snitt* i egna pennor. Materialens konturpenna och typernas och
   objektens egna pennor är ställen i pennlistan, med *Gå dit*. Fasaderna
   och sektionerna är orörda (0.10.38). Testerna: 774 på ca 19 s. Provat i
-  Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes val i PLAN.md.
+  Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes val i arkivet.
 - **0.10.36 Pennor och ställen är klar** (samma format, 25; `penList` i
   stilbokens resurser är valfri). Resurser › *Pennor*: pennlistan (nummer,
   prov, tjocklek, färg, antal ställen; sorterad efter färg och tjocklek),
@@ -71,7 +78,7 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   gruppen *Linjer i fasader och sektioner* (förut utan rader). Sortering
   per rubrik i alla tabeller. Penn- och linjesystemet i övrigt är inte
   ändrat (svaren nedan, görs i 0.10.37–0.10.38). Testerna: 768 på ca 25 s. Provat i Playwright mot
-  `dist/`. Koden i UTVECKLING.md, Claudes val i PLAN.md.
+  `dist/`. Koden i UTVECKLING.md, Claudes val i arkivet.
 - **0.10.35 Underlag i vyn är klar** (samma format, 25; `underlays` i
   kategorins visning och i vyns avvikelser är valfria). *Underlag i vyn*
   under Visa och i stilboken: våningen under/över, en våning, Platsen,
@@ -84,21 +91,21 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   snäppet mot kalkeringen efter fasaderna (underlagen följer Visa), Platsens
   nya vy (utan `trace`) och två bilder som skiljer i tid (sektionen bredvid
   3D, rampen i 3D). Koden i
-  UTVECKLING.md, Claudes val i PLAN.md.
+  UTVECKLING.md, Claudes val i arkivet.
 - **Frågesessionen 30 oktober (natt):** tio frågor besvarade; de två
   tilläggen (Poché och Färgmarkerad som kategorier, *Ortofoto* bland
   materialen) gjordes i 0.10.33. Färgmarkerad är statusen i färg (kvar
   grått, nytt rött, rivs gult streckat); förklarat i README.
 - **0.10.32 Tre nivåer med arv** (**nytt format, 25**): `ProjectDoc.graphics`
-  är en `StyleBook`; vyn har `category` och `overrides`. Se PLAN.md och
+  är en `StyleBook`; vyn har `category` och `overrides`. Se `docs/arkiv/PLAN-0.10.md` och
   UTVECKLING.md. Utredningens beslut i `cad-apa-synpunkter.md` (*Beslut
   29–30 oktober*), mockupen i Claude Design "Stilinställningar – mockup"
   (tavla 5 gäller).
 - **0.10.31 Texturer i 3D och ortofotot på marken**: **Höjdkurvors del
-  återstår** (två rader, se PLAN.md); den görs i en Höjdkurvor-session.
+  återstår** (två rader, se `docs/arkiv/PLAN-0.10.md`); den görs i en Höjdkurvor-session.
 - **0.10.30**, **0.10.29**, **0.10.28.3**, **0.10.28.2**, **0.10.28.1**,
   **0.10.28**, **0.10.27**, **0.10.26**, **0.10.25.1** och **0.10.25**: se
-  PLAN.md.
+  `docs/arkiv/PLAN-0.10.md`.
 - **Publicerad:** 0.10.40.1 pushad till `main` 30 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
@@ -180,7 +187,7 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Tidigare:** 0.10.40.1, 0.10.40, 0.10.39, 0.10.38, 0.10.37, 0.10.36, 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
-  PLAN.md.
+  `docs/arkiv/`.
 - **Versionsnumret** är `0.10.40.1` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
@@ -281,13 +288,11 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 ## Nästa session
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Sedan
-**0.11 Trappor** (nytt format; med *Syns också på*), se PLAN.md. Fråga
-gärna först om PLAN.md och UTVECKLING.md ska få arkivfiler för avsnitten
-före 0.10 (liten; de är över 4 000 rader var).
+**0.11 Trappor** (nytt format; med *Syns också på*), se PLAN.md.
 
 Höjdkurvors del av ortofotot (två rader i `js/app.js` och `js/utbyte.js`,
 plus raden i `docs/UTBYTE-CAD-APA.md` där) görs i en session i
-Höjdkurvors repo; fälten står i PLAN.md under 0.10.31. När ortofotot
+Höjdkurvors repo; fälten står i `docs/arkiv/PLAN-0.10.md` under 0.10.31. När ortofotot
 kommer med platsen kan det läggas som underlag direkt.
 
 ## Att fråga Carl August om
@@ -305,7 +310,7 @@ som kategorier, gjort i 0.10.33). 0.10.31: ortofotot där marken saknar
 material, plus valet *Ortofoto* (gjort i 0.10.33); bildens sida i mm.
 0.10.30: rutornas mått lagom så länge; en rad "Eget" per fyllning (prova).
 
-**0.10.40 efter provning** (Claudes val, se PLAN.md)
+**0.10.40 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Mallbladen och stämplarna är ikryssade som förval vid export, import
   och mallen. Rätt, eller hellre okryssade vid import (så att samma
   mallblad inte läggs in två gånger)?
@@ -313,7 +318,7 @@ material, plus valet *Ortofoto* (gjort i 0.10.33); bildens sida i mm.
   Ritningar). Störande?
 - Typerna (YV01, D1 …) och vy-taggarna följer inte med mallen. Ska de?
 
-**0.10.39 efter provning** (Claudes val, se PLAN.md)
+**0.10.39 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Kontorets taggar (`{företag}`, `{telefon}` …) är inga fält på bladen;
   de fylls bara i under Allmänt. Rätt, eller ska ett blad kunna skriva
   över dem?
@@ -324,7 +329,7 @@ material, plus valet *Ortofoto* (gjort i 0.10.33); bildens sida i mm.
 - Logotypen läggs 40 mm bred med nedre vänstra hörnet där man klickar.
   Lagom, eller hellre i ramens hörn?
 
-**0.10.38 efter provning** (Claudes val, se PLAN.md)
+**0.10.38 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Dörrar och fönster har nu var sina rader i fasaden för karm, glas, foder,
   skarvar och öppningssätt (förut gemensamma). Bra, eller hellre
   gemensamma rader för öppningarna?
@@ -333,7 +338,7 @@ material, plus valet *Ortofoto* (gjort i 0.10.33); bildens sida i mm.
 - Gruppen heter *Bjälklag, tak, stödmurar, möbler och rum* också i
   fasaden, där rummen inte har någon rad. Störande?
 
-**0.10.37 efter provning** (Claudes val, se PLAN.md)
+**0.10.37 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Med jämförelsen på går åtgärdens färg före en rad med egen färg (i
   Färgmarkerad blir allt nytt rött, också en blå glasrad). Rätt?
 - Bjälklag, tak och stödmurar har bara en snittlinje; deras oskurna
@@ -353,7 +358,7 @@ undersnitt kvar som egna ställen. Kvar efter provning: sparas sorteringen
 per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 är öppen?
 
-**0.10.35 efter provning** (Claudes val, se PLAN.md)
+**0.10.35 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Underlagen ligger i kategorin (Illustrationsplan kan ha ortofotot i alla
   sina vyer). Ska ett nytt projekts Illustrationsplan ha ortofotot under
   sig från början, när platsen har ett?
@@ -364,7 +369,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - Underlagen ritas i den ordning de lades till, utan flyttknapp. Räcker
   det? Och 40 % som förval?
 
-**0.10.34 efter provning** (Claudes val, se PLAN.md)
+**0.10.34 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - *Vanliga* är förvalet och döljer *Snittet i planen* och sällan ändrade
   kryss under Innehåll (det ändrade syns alltid). Rätt urval, eller ska
   *Alla* vara förvalet?
@@ -375,7 +380,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - Visa-menyn har kvar sina kryssrutor. Ska den också få knappar med
   symbol, som Innehåll?
 
-**0.10.33 efter provning** (Claudes val, se PLAN.md)
+**0.10.33 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - *Återställ* på en ändrad rad syns när musen är över raden (pricken
   syns alltid). Hellre alltid synlig?
 - En kategori får prickar mot sitt förval (t.ex. Skiss mot Plan), inte
@@ -386,16 +391,16 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - *Ny vy → en kategori* tar kategorin som den är, inte det som visas nu
   (det gör *Med det som visas nu…*). Rätt?
 
-**0.10.31 efter provning** (Claudes val, se PLAN.md)
+**0.10.31 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Ortofotot och texturerna skuggas som kulörerna; Carl August vill att
   allt skuggas men har inte sett det än. Ser det rätt ut?
 
-**0.10.30 efter provning** (Claudes val, se PLAN.md)
+**0.10.30 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Rader läggs till och tas bort per material (*När det syns*, *Alltid*,
   *Aldrig*). Behövs fria rader med egen text och eget mönster? (Oklart
   för honom innan han testat; fråga efter provning.)
 
-**0.10.29 efter provning** (Claudes val, se PLAN.md)
+**0.10.29 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Shift fritt avrundar vinkeln till hela grader; står man i ett vinkellås
   eller på en punkt gäller exakt den riktningen. Rätt, eller ska fritt
   också vara exakt (t.ex. 37,28°)?
@@ -404,14 +409,14 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - Platsens rad i våningslistan har kvar *markmodell* / *plan mark* under
   namnet. Ska den också få tankstreck och en höjd (t.ex. ±0 i RH 2000)?
 
-**0.10.28.3 efter provning** (Claudes val, se PLAN.md)
+**0.10.28.3 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Markytans höjd föreslås nu också ur den färdiga marken (inte bara
   rampens). Rätt?
 - Markobjekten på Platsen hänger på ±0 och flyttar inte när en
   våningshöjd ändras (testat); platån runt huset följer golvet. Såg du
   något annat flytta? Då behövs en skärmbild.
 
-**0.10.28.2 efter provning** (Claudes val, se PLAN.md)
+**0.10.28.2 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Bjälklaget fylls i planen under snittet med materialets mönster (Betong
   ger betongmönster över hela golvet, under rummen). Rätt, eller ska
   bjälklagen bara få materialet i snitt och 3D och planen vara tom som
@@ -427,7 +432,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
   ändra (förvalen gäller; Takpannor och Plåt har sina). Räcker det, eller
   behövs en redigerare som för planen?
 
-**0.10.28.1 efter provning** (Claudes val, se PLAN.md)
+**0.10.28.1 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Listan har tre färger per material (planen, illustrationsplanen, 3D),
   men mönstret i planen ändras bara i panelen för ett objekt med
   materialet. Räcker det, eller ska mönstret också gå att välja i listan?
@@ -440,7 +445,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - Shift som släpps mitt i ett drag panorerar igen. Ska vyn hellre
   fortsätta snurra tills knappen släpps?
 
-**0.10.27 efter provning** (Claudes val, se PLAN.md)
+**0.10.27 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Mellanslag + dra panorerar och Mellanslag + Shift + dra snurrar (du sa
   "kör" utan att svara på frågan). Bra, eller hellre något annat?
 - Rutan tar det vars omslutande rektangel på skärmen ryms i eller nuddar
@@ -449,7 +454,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - Ett drag som börjar på det markerade flyttar det, som förut. Ska ett
   drag alltid vara en ruta (flytt bara med Flytta och greppen)?
 
-**0.10.26 efter provning** (Claudes val, se PLAN.md)
+**0.10.26 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Ser rampens kant med stödmur rätt ut nu? Lodytan har markens kulör;
   ska den se ut som en mur (eller ska sidan bli en riktig stödmur med
   krön, frågan om 0.10.18)?
@@ -457,7 +462,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
   ruta fel vid en stödmurskant (i 3D tas de bort där). Störande?
 - Stödmuren har kantlinjer i hörn som viker mer än 20°. Lagom gräns?
 
-**0.10.25 efter provning** (Claudes val, se PLAN.md)
+**0.10.25 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Husets verktyg (vägg, tak, bjälklag …) går att använda på Platsen, och
   objekten hamnar då på Platsen, inte i huset (klickjämförelsen visade
   det). Ska de spärras där, eller öppna en våning, som Mark öppnar
@@ -473,14 +478,14 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
   Illustrationsplan 1:200 utan höjdkurvor, mått och littera). Lagom?
 - Ska *Bara den här våningen* i 3D heta något annat på Platsen?
 
-**0.10.24 efter provning** (Claudes val, se PLAN.md)
+**0.10.24 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Äldre bjälklag och markytor behåller sina korta raka bitar. Behövs en
   knapp som gör om en sådan kontur till bågar (som *Ur väggarna* urbockat
   gör), eller räcker det att rita om med spöet?
 - Markytans polygon sluts när man byter verktyg (som linjerna avslutas).
   Rätt, eller ska den kastas som bjälklagets?
 
-**0.10.23 efter provning** (Claudes val, se PLAN.md)
+**0.10.23 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Takfallet med spöet täcker hela husets kontur, med takfoten vid kanten
   närmast och taket stigande inåt (ett pulpettak över huset). Rätt, eller
   ska spöet i *Takfall* ge ett takfall per sida?
@@ -491,7 +496,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - Littera med Shift: var sin littera på varje objekt. Hellre en littera
   med en ledare till varje?
 
-**0.10.20 efter provning** (Claudes val, se PLAN.md)
+**0.10.20 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Markhöjden räknar marken som oförändrad när ny och befintlig skiljer
   mindre än 5 cm (då bara den befintliga, understruken). Lagom gräns?
 - Konturen runt slänterna är alltid på (0,13). Ska den vara ett val, eller
@@ -499,7 +504,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - De branta slänterna är grå (muted) och följer fallinjen; strecken bryts
   där markobjekten ändrat marken. Rätt färg och gräns (1:3)?
 
-**0.10.19 efter provning** (Claudes val, se PLAN.md)
+**0.10.19 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Övergångarnas förval är 20 m radie (en ramp 1:12 jämnas av över ca
   1,7 m, under Platsen). Lagom för en gångväg?
 - I ändarna börjar och slutar rampen plant med ändens höjd, och den raka
@@ -511,11 +516,11 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - *Båge* i verktyget Mark fungerar som i takets kontur. Bra, eller
   räcker Böj i Modifiera?
 
-**0.10.18.1 efter provning** (Claudes val, se PLAN.md)
+**0.10.18.1 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Höjdkurvornas färg gäller planen och bladen; 3D-vyns kurvor har sin
   egen. Ska de följa stilmallen också?
 
-**0.10.18 efter provning** (Claudes val, se PLAN.md)
+**0.10.18 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Tvärfallet vrider kring referenslinjen, också när den ligger på en
   kant. Rätt, eller ska det vrida kring rampens mitt?
 - En ritad sida ligger kvar när referenslinjen flyttas. Ska den hellre
@@ -527,7 +532,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - Förlängd ramp: lutningen fortsätter. Hellre plan (vilplan) eller
   höjden ur marken i den nya änden?
 
-**0.10.17 efter provning** (Claudes val, se PLAN.md)
+**0.10.17 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Ett klick på änden av en omarkerad linje ritar vidare på den. Störande
   när man vill börja en ny linje där (Ctrl+klick)?
 - Ett klick mitt på en kant startar det senast använda valet på en kant.
@@ -537,7 +542,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - Vrid och spegla hålet kring punkten man klickade på. Hellre kring hålets
   mitt?
 
-**0.10.16 efter provning** (Claudes val, se PLAN.md)
+**0.10.16 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Ett fönster helt över eller under snittet ritas som hålets två kanter
   och glaset. Räcker det, eller ska karmen synas?
 - En möbel som går genom snittet (t.ex. ett högskåp) ritas som förut, som
@@ -547,7 +552,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - Dubbelklick på Visa tänder inte det som är släckt från början (husets
   kontur genom taket, linjerna i 3D). Rätt?
 
-**0.10.15 efter provning** (Claudes val, se PLAN.md)
+**0.10.15 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Det dolda räknas med i väggarnas skarvar och rummen. Rätt, eller ska en
   dold vägg också försvinna ur rummens konturer?
 - De dolda objekten tas fram alla på en gång. Behövs en lista att ta fram
@@ -556,13 +561,13 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
   mitten (fyrkant). Lätt att hitta?
 - Ska högerklick i 3D-vyn dölja bara i 3D, eller gälla vyn som nu?
 
-**0.10.14 efter provning** (Claudes val, se PLAN.md)
+**0.10.14 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Slänternas fyllning täcker ytan som släntstrecken går över. Rätt yta,
   också där två markobjekt möts?
 - Mönstret utgår från objektets första hörn. Behövs ett grepp för att
   flytta utgångspunkten?
 
-**0.10.12 efter provning** (Claudes val, se PLAN.md)
+**0.10.12 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Riv och *Finns i* fungerar på låsta objekt (de ändrar status, inte
   läget). Ska låset hindra dem också?
 - Markörens penna i delen *Markör* är stilmallens och gäller alla
@@ -576,7 +581,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - Trädens status (till 0.12.1): ska texten "Träd skyddas under
   byggtiden" stå i en förteckning, eller skriver man den själv?
 
-**0.10.11 efter provning** (Claudes val, se PLAN.md)
+**0.10.11 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Våningens meny: Visa, Inställningar, Byt namn, Ny våning ovanför och
   under (den högerklickade våningen), Ta bort. Saknas något? Ska
   arbetsbladen få en meny också?
@@ -586,7 +591,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
 - Markobjekten markeras med ett klick i marken, och konturen ritas på
   marken. Ska hörnen också gå att dra i 3D?
 
-**0.10.8 efter provning** (Claudes val, se PLAN.md)
+**0.10.8 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
 - Höjdkurvorna: hela meter 0,25 och halvmeter 0,13 heldragna; den gamla
   marken grå streckad. Lagom?
 - Släntstrecken var 2,5 mm på papperet, korta 40 %, solfjäder i

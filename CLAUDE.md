@@ -5,7 +5,9 @@ cad-apa är ett tillfälligt varumärke. Öppen källkod (GPL-3.0 eller senare).
 Läs `README.md` (vad som finns, version för version), `docs/PLAN.md` (vad som
 byggs i vilken version), `docs/ARKITEKTUR.md` (idé och principer) och
 `docs/UTVECKLING.md` (filformat, hur man lägger till objekttyper) innan du
-ändrar något. Planen räknas i versioner, aldrig i steg. Läs också
+ändrar något. Planen räknas i versioner, aldrig i steg. Klara versioner
+(vad som bestämdes, Claudes val, koden) ligger i `docs/arkiv/`; sök i hela
+`docs/` när något ska slås upp. Läs också
 `docs/OVERLAMNING.md`: där står läget just nu och vad nästa session ska göra.
 
 ## Arbetssätt med Carl August
