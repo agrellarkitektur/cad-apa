@@ -127,6 +127,35 @@ export interface StyleResources {
    * stilbokens rader visar dem och sparar den aktuella färgen i ett set.
    */
   colorSets?: ColorSet[];
+  /**
+   * Projektets pennor (0.10.36): en tjocklek och en färg med ett nummer som
+   * namn. Ställena (en rad i en kategori eller en vy) har kvar sina värden;
+   * ett ställe hör till pennan med samma tjocklek och färg. Utelämnade =
+   * numreras efter ställena (`penTable`).
+   */
+  penList?: NumberedPen[];
+}
+
+/** En penna i projektets lista (0.10.36): färgen som i penntabellen ("ink", "muted" eller #rrggbb; utelämnad = svart). */
+export interface NumberedPen {
+  no: number;
+  weight: number;
+  color?: string;
+}
+
+/** Pennlistan från fil: heltal över noll, tjocklek noll eller mer, ingen dubblett av nummer eller tjocklek och färg. */
+export function normalizePenList(v: unknown): NumberedPen[] | null {
+  if (!Array.isArray(v)) return null;
+  const out: NumberedPen[] = [];
+  for (const p of v) {
+    const no = Number(p?.no);
+    const w = Number(p?.weight);
+    if (!Number.isInteger(no) || no < 1 || !(w >= 0) || out.some((o) => o.no === no)) continue;
+    const color = typeof p.color === 'string' && p.color && p.color !== 'ink' ? p.color : undefined;
+    if (out.some((o) => o.weight === w && (o.color ?? 'ink') === (color ?? 'ink'))) continue;
+    out.push({ no, weight: w, ...(color ? { color } : {}) });
+  }
+  return out.length ? out.sort((a, b) => a.no - b.no) : null;
 }
 
 /** Ett namngivet set med favoritfärger (0.10.34), färgerna som `#rrggbb`. */
@@ -426,6 +455,7 @@ export function normalizeStyle(data: any): StyleSheet {
     ...(normalizeFillTypes(data.fillTypes) ? { fillTypes: normalizeFillTypes(data.fillTypes)! } : {}),
     ...(normalizeMaterials(data.materials) ? { materials: normalizeMaterials(data.materials)! } : {}),
     ...(normalizeColorSets(data.colorSets) ? { colorSets: normalizeColorSets(data.colorSets)! } : {}),
+    ...(normalizePenList(data.penList) ? { penList: normalizePenList(data.penList)! } : {}),
   };
 }
 

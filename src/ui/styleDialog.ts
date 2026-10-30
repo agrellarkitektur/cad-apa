@@ -55,15 +55,20 @@ import { changedRows, resetRow, rowSelector } from './style/deviations';
 import type { ViewDef } from '../core/model';
 import { closeRowControl, enhanceRowControls, type RowControlOptions } from './style/rowControls';
 import { contentIcon, RARE_CONTENT } from './style/contentIcons';
+import { newPlacesState, penListMarkup, placesSection, type PlaceKind } from './style/places';
+import { addPen, editPen, objectOf, removePens, setPlaces } from './style/placeEdits';
+import { penKey, penTable, stylePlaces, withFrozenPens } from '../repr/penPlaces';
+import { fromHex, toHex } from './style/colors';
 
 /** Raderna som sök och *Vanliga/Alla* (0.10.34) visar eller döljer. */
 const FILTER_ROWS = '.style-row, .pen-row, .material-row, .linetype-row, .filltype, .filltype-builtin, .tpl-row, .sb-groups label.check, .sb-show label.field, .sb-show label.check, .sb-views li';
 
 /** Det som visas till höger: Allmänt, en vytyp eller en resurs. */
 type Place = { kind: 'general' } | { kind: 'type'; type: ViewType } | { kind: 'res'; res: Resource };
-type Resource = 'materials' | 'lineTypes' | 'fillTypes' | 'text';
+type Resource = 'pens' | 'materials' | 'lineTypes' | 'fillTypes' | 'text';
 
 const RESOURCES: readonly { res: Resource; name: string }[] = [
+  { res: 'pens', name: 'Pennor' },
   { res: 'materials', name: 'Material' },
   { res: 'lineTypes', name: 'Linjetyper' },
   { res: 'fillTypes', name: 'Fyllningstyper' },
@@ -119,8 +124,14 @@ export class StyleDialog {
       own[own.length - 1]?.select();
     },
   };
+  /** Pennor och ställen (0.10.36): det som väljs och filtreras i listorna över ställen. */
+  private pp = newPlacesState();
+  /** Raden som visas och blinkar efter *Gå dit* till ett ställe (en väljare). */
+  private flash: string | null = null;
   /** Öppna en vy i appen (*Gå dit* i listan över vyer med kategorin). */
   goToView: (id: string) => void = () => {};
+  /** Visa ett objekt i ritningen (*Gå dit* i materialens ställen, 0.10.36). */
+  goToObject: (id: string) => void = () => {};
 
   constructor(store: DocStore, onSaveFile: (book: StyleBook) => void, onError: (msg: string) => void) {
     this.store = store;
@@ -136,6 +147,11 @@ export class StyleDialog {
     this.el.addEventListener('change', (e) => this.onChange(e));
     this.el.addEventListener('input', (e) => {
       const t = e.target as HTMLElement;
+      if (t.matches('[data-pp-search]')) {
+        this.pp.query = (t as HTMLInputElement).value;
+        this.render();
+        return;
+      }
       if (!t.matches('[data-sb-search]')) return;
       this.query = (t as HTMLInputElement).value;
       this.applyFilter();
@@ -217,8 +233,10 @@ export class StyleDialog {
     const id = s.view.id;
     const ov = overridesFrom(categoryOf(book, type, s.view.category), cur);
     this.store.transact(`${label} (${s.view.name})`, (tx) => {
-      if (book !== this.book) tx.setGraphics(book);
-      tx.setViews(ov ? tx.doc.views.map((v) => (v.id === id ? { ...v, overrides: ov } : v)) : resetViewOverrides(tx.doc.views, id));
+      const views = ov ? tx.doc.views.map((v) => (v.id === id ? { ...v, overrides: ov } : v)) : resetViewOverrides(tx.doc.views, id);
+      const next = withFrozenPens({ ...tx.doc, graphics: book, views });
+      if (next !== this.book) tx.setGraphics(next);
+      tx.setViews(views);
     });
   }
 
@@ -261,7 +279,20 @@ export class StyleDialog {
     if (main) enhanceRowControls(main, this.controls);
     this.applyFilter();
     this.el.querySelectorAll<HTMLElement>('.sb-main, .sb-rail').forEach((e, i) => (e.scrollTop = scrolled[i] ?? 0));
-    if (focus) this.el.querySelector<HTMLElement>(focus)?.focus({ preventScroll: true });
+    if (focus) {
+      const f = this.el.querySelector<HTMLElement>(focus);
+      f?.focus({ preventScroll: true });
+      if (f instanceof HTMLInputElement && f.type === 'search') f.setSelectionRange(f.value.length, f.value.length);
+    }
+    // *Gå dit* till ett ställe (0.10.36): raden rullas fram och blinkar.
+    if (this.flash) {
+      const row = this.el.querySelector(this.flash)?.closest<HTMLElement>('.pen-row, .style-row, .material-row');
+      this.flash = null;
+      if (row) {
+        row.scrollIntoView({ block: 'center' });
+        row.classList.add('sb-flash');
+      }
+    }
   }
 
   private railMarkup(): string {
@@ -347,9 +378,11 @@ export class StyleDialog {
     }
     if (p.kind === 'res') {
       const sheet = this.book;
-      if (p.res === 'materials') return materialSection(sheet, this.materialUses());
-      if (p.res === 'lineTypes') return lineTypeSection(sheet, this.lineTypeUses());
-      if (p.res === 'fillTypes') return fillTypeSection(sheet, this.fillTypeUses());
+      const doc = this.store.doc;
+      if (p.res === 'pens') return penListMarkup(doc, this.pp);
+      if (p.res === 'materials') return materialSection(sheet, this.materialUses()) + placesSection(doc, 'material', this.pp);
+      if (p.res === 'lineTypes') return lineTypeSection(sheet, this.lineTypeUses()) + placesSection(doc, 'linetype', this.pp);
+      if (p.res === 'fillTypes') return fillTypeSection(sheet, this.fillTypeUses()) + placesSection(doc, 'filltype', this.pp);
       return labelSection(sheet);
     }
     return this.typeMarkup(p.type);
@@ -372,7 +405,7 @@ export class StyleDialog {
         <p class="note">Hur väggarnas snitt och linjerna ritas för det som finns kvar, rivs och planeras.</p>
         ${actionRows(sheet)}
       </section>
-      ${penSection(sheet)}`;
+      ${penSection(sheet, type, this.penNumbers())}`;
     if (s.view) {
       const n = deviationCount(doc, s.view);
       return `<div class="sb-viewhead">
@@ -472,6 +505,12 @@ export class StyleDialog {
     </section>`;
   }
 
+  /** Pennans nummer för en tjocklek och färg (0.10.36), för numret framför pennraderna. */
+  private penNumbers(): (weight: number, color: string | undefined) => number | undefined {
+    const no = new Map(penTable(this.book, stylePlaces(this.store.doc)).map((r) => [penKey(r.pen), r.pen.no]));
+    return (weight, color) => no.get(penKey({ weight, color }));
+  }
+
   /** Hur många former och pennor som har varje linjetyp (0.8.30). */
   private lineTypeUses(): Map<string, number> {
     const doc = this.store.doc;
@@ -502,8 +541,163 @@ export class StyleDialog {
     return uses;
   }
 
+  /** Sorten av ställen som visas: pennor, linjetyper, fyllningstyper eller material. */
+  private placeKind(): PlaceKind | null {
+    const p = this.place;
+    if (p.kind !== 'res') return null;
+    return p.res === 'pens' ? 'pen' : p.res === 'lineTypes' ? 'linetype' : p.res === 'fillTypes' ? 'filltype' : p.res === 'materials' ? 'material' : null;
+  }
+
+  /** Klicken i pennlistan och listorna över ställen (0.10.36). Sant om klicket hörde hit. */
+  private async placesClick(e: Event, target: HTMLElement): Promise<boolean> {
+    // Numret framför en pennrad i en kategori: pennan och dess ställen.
+    const penGo = target.closest<HTMLElement>('[data-pen-goto]')?.dataset.penGoto;
+    if (penGo) {
+      e.preventDefault();
+      this.goToPens(penGo);
+      return true;
+    }
+    const kind = this.placeKind();
+    if (!kind) return false;
+    const pick = target.closest<HTMLElement>('[data-pp-pick]')?.dataset.ppPick;
+    if (pick) {
+      this.pp.filter.pen = this.pp.filter.pen === pick ? '' : pick;
+      this.pp.checked.clear();
+      this.render();
+      return true;
+    }
+    const tag = target.closest<HTMLElement>('[data-pp-tag]')?.dataset.ppTag;
+    if (tag) {
+      if (this.pp.tags.has(tag)) this.pp.tags.delete(tag);
+      else this.pp.tags.add(tag);
+      this.render();
+      return true;
+    }
+    const goto = target.closest<HTMLElement>('[data-pp-goto]')?.dataset.ppGoto;
+    if (goto) {
+      this.goToPlace(kind, goto);
+      return true;
+    }
+    const action = target.closest<HTMLElement>('[data-action]')?.dataset.action;
+    if (action === 'pen-add') {
+      this.pp.filter.pen = String(addPen(this.store));
+      this.render();
+      return true;
+    }
+    if (action === 'pen-remove' || action === 'pen-remove-unused') {
+      const no = Number(target.closest<HTMLElement>('[data-pen-no]')?.dataset.penNo);
+      removePens(this.store, action === 'pen-remove' ? no : undefined);
+      if (action === 'pen-remove' && this.pp.filter.pen === String(no)) this.pp.filter.pen = '';
+      return true;
+    }
+    return false;
+  }
+
+  /** Pennlistan med pennan vald (numret i en kategori leder hit). */
+  private goToPens(no: string): void {
+    this.place = { kind: 'res', res: 'pens' };
+    this.viewId = null;
+    this.pp.filter.pen = no;
+    this.pp.checked.clear();
+    this.pp.tags.clear();
+    this.pp.query = '';
+    this.render();
+  }
+
+  /** *Gå dit* för ett ställe: kategorins eller vyns rad i stilboken, materialet, eller objektet i ritningen. */
+  private goToPlace(kind: PlaceKind, id: string): void {
+    const doc = this.store.doc;
+    if (kind === 'material') {
+      const obj = objectOf(doc, id);
+      if (!obj) return;
+      this.close();
+      this.goToObject(obj);
+      return;
+    }
+    const place = stylePlaces(doc).find((p) => p.id === id);
+    if (!place) return;
+    const w = place.where;
+    const key = place.key;
+    if (w.kind === 'material') {
+      this.place = { kind: 'res', res: 'materials' };
+      this.viewId = null;
+      this.flash = `[data-material="${CSS.escape(w.material)}:name"]`;
+    } else {
+      if (w.kind === 'view') this.showView(w.view);
+      else {
+        this.viewId = null;
+        this.place = { kind: 'type', type: w.type };
+        this.chosen[w.type] = w.cat;
+      }
+      this.onlyChanged = false;
+      this.common = false;
+      this.query = '';
+      const k = key.slice(key.indexOf('.') + 1);
+      this.flash = key.startsWith('pens.') ? `[data-pen="${CSS.escape(k)}:weight"]` : `[data-key="${CSS.escape(k)}"][data-field="fill"]`;
+    }
+    this.render();
+  }
+
+  /** Fälten i pennlistan och listorna över ställen (0.10.36). Sant om fältet hörde hit. */
+  private placesChange(input: HTMLInputElement | HTMLSelectElement): boolean {
+    const kind = this.placeKind();
+    if (!kind) return false;
+    const pp = this.pp;
+    if (input.matches('[data-pp-filter]')) {
+      pp.filter[kind] = input.value;
+      pp.checked.clear();
+      this.render();
+      return true;
+    }
+    if (input.matches('[data-pp-check]')) {
+      const id = input.dataset.ppCheck!;
+      if ((input as HTMLInputElement).checked) pp.checked.add(id);
+      else pp.checked.delete(id);
+      this.render();
+      return true;
+    }
+    if (input.matches('[data-pp-all]')) {
+      const ids = [...this.el.querySelectorAll<HTMLInputElement>('[data-pp-check]')].map((x) => x.dataset.ppCheck!);
+      for (const id of ids) {
+        if ((input as HTMLInputElement).checked) pp.checked.add(id);
+        else pp.checked.delete(id);
+      }
+      this.render();
+      return true;
+    }
+    if (input.matches('[data-pp-set]')) {
+      setPlaces(this.store, kind, [input.dataset.ppSet!], input.value);
+      return true;
+    }
+    if (input.matches('[data-pp-move]')) {
+      const ids = [...this.el.querySelectorAll<HTMLInputElement>('[data-pp-check]:checked')].map((x) => x.dataset.ppCheck!);
+      if (input.value && ids.length) {
+        // Ställenas nycklar är kvar efter flytten (materialens rader byter material), så markeringen är kvar där de hamnar.
+        pp.checked.clear();
+        setPlaces(this.store, kind, ids, input.value);
+      } else this.render();
+      return true;
+    }
+    const field = input.dataset.penlist;
+    if (field) {
+      const [no, what] = field.split(':');
+      const pen = penTable(this.book, stylePlaces(this.store.doc)).find((r) => String(r.pen.no) === no)?.pen;
+      if (!pen) return true;
+      let err: string | null = null;
+      if (what === 'weight') err = editPen(this.store, Number(no), { weight: Number(input.value) });
+      else if (input.value.toLowerCase() !== toHex(pen.color ?? 'ink')) err = editPen(this.store, Number(no), { color: fromHex(input.value) });
+      if (err) {
+        this.onError(err);
+        this.render();
+      }
+      return true;
+    }
+    return false;
+  }
+
+  /** Lägg stilboken; pennlistan låses (0.10.36), så att pennornas nummer inte flyttar när ställena ändras. */
   private set(book: StyleBook, label: string): void {
-    setGraphics(this.store, book, label);
+    setGraphics(this.store, withFrozenPens({ ...this.store.doc, graphics: book }), label);
   }
 
   private async onClick(e: Event): Promise<void> {
@@ -514,9 +708,13 @@ export class StyleDialog {
       this.render();
       return;
     }
+    if (await this.placesClick(e, target)) return;
     const go = target.closest<HTMLElement>('[data-sb-go]')?.dataset.sbGo;
     if (go) {
       const [kind, what] = go.split(':');
+      this.pp.checked.clear();
+      this.pp.tags.clear();
+      this.pp.query = '';
       this.place = kind === 'general' ? { kind: 'general' } : kind === 'type' ? { kind: 'type', type: what as ViewType } : { kind: 'res', res: what as Resource };
       this.viewId = null;
       this.render();
@@ -735,7 +933,8 @@ export class StyleDialog {
 
   private onChange(e: Event): void {
     const input = e.target as HTMLInputElement | HTMLSelectElement;
-    if (input.matches('[data-sb-search]')) return;
+    if (input.matches('[data-sb-search], [data-pp-search]')) return;
+    if (this.placesChange(input)) return;
     if (input.matches('[data-sb-only]')) {
       this.onlyChanged = (input as HTMLInputElement).checked;
       this.render();
@@ -827,7 +1026,7 @@ function withList(show: CategoryShow, list: ViewUnderlay[]): CategoryShow {
 function focusSelector(el: Element | null, root: HTMLElement): string | null {
   if (!(el instanceof HTMLElement) || !root.contains(el)) return null;
   if (el.id) return `#${CSS.escape(el.id)}`;
-  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview', 'data-ul', 'data-ul-field', 'data-ul-addsel'];
+  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview', 'data-ul', 'data-ul-field', 'data-ul-addsel', 'data-pp-search', 'data-pp-filter', 'data-pp-set', 'data-pp-check', 'data-pp-all', 'data-pp-move', 'data-penlist', 'data-pp-tag', 'data-pp-pick'];
   const parts = attrs.filter((a) => el.hasAttribute(a)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a)!)}"]`);
   if (!parts.length) return null;
   const v = el instanceof HTMLInputElement && el.type === 'radio' ? `[value="${CSS.escape(el.value)}"]` : '';

@@ -18,13 +18,13 @@ import { modelShapes, WITH_DEMOLISHED } from './storeyShapes';
 import { markerPen } from './markerPens';
 import { applyOwnPen, effectivePen, ownPenOf } from './ownPen';
 import { ownedOutlines } from './outlineOwners';
-import { openingPen } from './openingPens';
+import { facadePen } from './facadePens';
 import { applyStyle, type Pickable } from './plan';
 import { HIDDEN_SLABS, HIDDEN_SLABS_SECTION, HIDDEN_WALLS } from './sectionHidden';
 import { sectionLines } from './sectionLines';
 import { LINE_TYPES } from '../core/lineTypes';
 import type { Pen, Primitive, Vec2 } from './primitives';
-import { zOn, type EdgePart, type Solid } from './solids';
+import { zOn, type Solid } from './solids';
 import { materialCutFill, materialCutPrims, type FillParams } from '../elements/fill2d';
 import { surfacePrims } from './sectionSurfaces';
 
@@ -55,26 +55,7 @@ export function autoSlopeId(roof: Id, face: number): string {
   return `slope:${roof}:${face}`;
 }
 
-/**
- * Linjetjocklekar i fasader och sektioner (mm på papper), efter vad linjen
- * är. Hålens omfattning tjockast, karm och båge tunnare, foder och handtag
- * tunna, sammanfogningar och glasmarkering tunnast och grå. Ställs in i
- * penntabellen i 0.8; tills dess gäller de här.
- */
-const PART_PEN: Record<EdgePart, Pen> = {
-  hole: { weight: 0.35 },
-  wall: { weight: 0.25 },
-  roof: { weight: 0.25 },
-  frame: { weight: 0.25 },
-  sash: { weight: 0.25 },
-  leaf: { weight: 0.25 },
-  sill: { weight: 0.25 },
-  lining: { weight: 0.18 },
-  handle: { weight: 0.18 },
-  joint: { weight: 0.13, color: 'muted' },
-  glass: { weight: 0.13, color: 'muted' },
-  swing: { weight: 0.13, dash: [3, 1.5] },
-};
+// Linjerna i fasader och sektioner efter vad linjen är: `FACADE_PENS` (0.10.36).
 
 /** Det tonade djupet (0.10.10). */
 const FAR_PEN = { weight: 0.13, color: 'muted' } as const;
@@ -166,7 +147,7 @@ export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, st
     // Öppningssättet följer stilmallens symbolpenna (0.8.33), streckat om den inte har en egen linjetyp.
     const part = l.key.part;
     const pen: Pen = part
-      ? { ...PART_PEN[part], ...(part === 'swing' ? openingPen(style, 'symbol') : {}), ...(style.pens?.[part] as Pen | undefined), ...(l.key.dash ? { dash: l.key.dash } : {}) }
+      ? { ...facadePen(style, part), ...(l.key.dash ? { dash: l.key.dash } : {}) }
       : { weight: 0.18 };
     const raw: Primitive = { kind: 'line', a: l.a, b: l.b, pen, origin: { objectId: l.key.id, objectType: doc.elements[l.key.id]?.type, part: l.key.part ?? 'vy' } };
     // Objektets egen penna (0.8.31) efter stilmallens.

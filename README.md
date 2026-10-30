@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.35** (alfa); nästa är **0.10.36 Pennor och ställen**,
+**0.10.36** (alfa); nästa är **0.10.37 Projektet › Allmänt**,
 och efter stilinställningarna (0.10.32–0.10.38) **0.11 Trappor**.
 
 ## Vad som fungerar
@@ -1149,6 +1149,36 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.36, pennor och ställen (samma filformat, 25):
+- **Pennor med nummer**: under Resurser › *Pennor* i stilboken står
+  projektets pennor, en tjocklek och en färg med ett nummer, med prov och
+  hur många ställen som har pennan. Ändras en pennas tjocklek eller färg
+  ändras alla dess ställen. *Ny penna* lägger till en, och en penna utan
+  ställen kan tas bort
+- **Ställena**: ett ställe är en rad i en vykategori (eller i en vy som
+  avviker) där en objekttyp och del får sin penna, t.ex. *Väggar* i
+  Fasader › Fasad eller *Snittets kontur, planerat* i Våningar › Plan.
+  Klicka på en penna för att se dess ställen. Sök, och filtrera med de
+  **automatiska taggarna** för vytyp (plan, fasad, illustrationsplan …) och
+  objekt (vägg, dörr, mått, snitt …). Varje ställe byter penna direkt och
+  har *Gå dit*; markerade ställen flyttas med *Flytta till pennan…*.
+  Pennorna ändras inte av en flytt, bara vilka ställen som pekar på dem
+- **Samma lista för linjetyper, fyllningstyper och material**: under
+  linjetyperna ställena med sin linjetyp, under fyllningstyperna snittens
+  och materialens fyllningar, och under materialen objekten med varje
+  material (*Gå dit* visar objektet i ritningen)
+- **Pennornas nummer i kategorierna**: varje pennrad har pennans nummer
+  först; ett klick visar pennan och dess ställen
+- **Bara det som hör till vytypen**: en kategori visar de pennor som
+  ritas i dess vytyp (planens snitt bara i våningar, höjdkurvorna i
+  våningar och på Platsen). Fasader och sektioner har en ny grupp,
+  *Linjer i fasader och sektioner*: vägghål, väggar, tak, karmar, bågar,
+  dörrblad, bleck, foder, handtag, skarvar, glas och öppningssätt (förut
+  gick de inte att ställa in). Deras linjetyp gäller nu också
+- **Sortering per rubrik i alla tabeller**: ett klick på en rubrik
+  sorterar, ett till vänder ordningen. Pennlistan sorteras efter färg och
+  sedan tjocklek från början
 
 Version 0.10.35, underlag i vyn (samma filformat, 25):
 - **Underlag som del av vyn**: under Visa finns *Underlag i vyn* med

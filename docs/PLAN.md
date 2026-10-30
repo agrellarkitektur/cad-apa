@@ -3520,7 +3520,7 @@ in var som helst efter A, och bara A ger nytt format:
 - **D. 0.10.35 Underlag i vyn** (stor): en våning, Platsen, ortofotot i
   2D, ett arbetsblad, en annan vy, DXF/bild; marken i 2D och 3D per kategori ✓
 - **E. 0.10.36 Pennor och ställen** (tavla 3; mellanstor; med penn- och
-  linjesystemet)
+  linjesystemet) ✓
 - **F. 0.10.37 Projektet › Allmänt** (mellanstor)
 - **G. 0.10.38 Stilboken ut och in** (mellanstor; två öppna frågor: var
   mallen för nya projekt ligger, och om bladmallar och stämplar följer med)
@@ -3690,6 +3690,59 @@ Platsen i 2D) och klickjämförelsen mot 0.10.34.*
 källa (en fil som bara hör till vyn), undertaket spegelvänt (efter
 piloten). Illustrationsplanen har inget ortofoto som förval i nya
 projekt; det läggs till i stilboken.
+
+### 0.10.36 Pennor och ställen ✓
+
+Tavla 3 i mockupen: pennlistan med nummer, prov och antal ställen,
+sortering per rubrik (alla tabeller), ställena med sök och automatiska
+taggar för vytyp och objekt, byt penna per ställe, *Gå dit*, *Flytta till
+pennan…*, ta bort penna utan ställen; samma lista över ställen för
+linjetyper, fyllningstyper och material.
+
+*Gjord 30 oktober. Samma format (25); pennlistan är det valfria fältet
+`penList` i stilbokens resurser. Testerna: 768. Se UTVECKLING.md,
+*Pennor och ställen*. Claudes val: **en penna är en tjocklek och en
+färg** med ett nummer; linjetypen hör till stället (den har en egen lista
+under Linjetyper). **Ställena behåller sina värden** (kategoriernas och
+vyernas penntabell och åtgärdernas kontur, som förut), och ett ställe hör
+till pennan med samma tjocklek och färg; så ritas allt som förut, och
+inget nytt format behövs. Pennor som ställena har men listan saknar
+numreras efter de sparade, efter färg och tjocklek, och listan **låses**
+vid varje ändring i stilboken, så att numren inte flyttar. En penna som
+ändras tar med alla sina ställen; en ändring till en tjocklek och färg som
+en annan penna redan har nekas (med ett meddelande om att flytta ställena
+dit). En flytt ändrar inte pennorna (0,25: 59 → 57, 0,18: 169 → 171 i
+provet). En penna utan ställen tas bort med papperskorgen, eller alla med
+*Ta bort pennor utan ställen*. **Ställena** är kategoriernas pennrader
+(de grupper som visas i vytypen) och snittets kontur per åtgärd
+(våningar, fasader och sektioner), och i en vy de rader den verkligen
+avviker på. Materialens konturpenna och objektens egna pennor är inte
+ställen (de är objektens). **Taggarna**: vytypen (plan, platsen, fasad,
+sektion, arbetsblad, och Platsens situationsplan, markplanering och
+illustrationsplan; *vy* för en vy) och objektet och delen (vägg, dörr,
+fönster, snitt, över snittet, mått, markör …); flera taggar ska alla
+stämma. *Gå dit* går till raden i kategorin eller vyn i stilboken, som
+blinkar (*Alla* slås på, så att *Snittet i planen* syns); i materialens
+lista till objektet i ritningen. **Pennraderna per vytyp**: planens snitt
+och rummen bara i våningar, höjdkurvorna i våningar och på Platsen,
+dörrar och fönster i våningar, fasader och sektioner, markörerna
+överallt. **Fasadernas och sektionernas linjer** (`FACADE_PENS`, förut
+`PART_PEN` utan rader i stilboken) är en egen grupp, och deras linjetyp
+läses nu (förut lästes bara tjocklek och färg). Pennans nummer står först
+på varje pennrad i kategorierna och leder till pennlistan.
+**Sorteringen** gäller varje tabell med rubrikrad (pennlistan, ställena,
+typerna i panelen, bladets fält) och kommer ihåg sig per tabell under
+sessionen, inte i filen; tal sorteras som tal. Provat i Playwright mot
+`dist/` (pennlistan, en penna med taggen fasad, flytt av två ställen,
+sortering på Ställen, *Gå dit*, linjetypernas ställen, färgen på en penna
+som ändrar sektionsmarkören i alla kategorier).*
+
+*Gjordes inte:* penn- och linjesystemet i ArchiCAD:s mening (snittlinje
+och konturlinje per objekt, öppningarnas oskurna linjer styrda av
+väggen, om *Symbol* följer *Snitt*) är inte ändrat; det är frågor till
+Carl August i överlämningen. Pennor har inget eget namn (siffror, som
+beslutat). Fyllningstypernas ställen tar inte med former och rum med
+egen fyllning (de räknas i listan ovanför). Sorteringen sparas inte.
 
 ### 0.11 Trappor · *nytt format*
 

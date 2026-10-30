@@ -1640,6 +1640,53 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Pennor och ställen (0.10.36, format 25)
+
+- **Pennraderna** (`repr/penRows.ts`): `PEN_GROUPS` samlar penntabellens
+  rader i grupper med `types` (vytyperna där gruppen visas), `rare`
+  (*Vanliga*) och `tags` per rad; `penGroupsFor(type)`, `penRowOf(key)`
+  och `penDefault(key)` (förut `defaultPen` i `ui/style/pens.ts`). En ny
+  rad i penntabellen läggs i sin lista (`MARKER_PENS`, `FACADE_PENS` …)
+  och får taggar här. `penSection(style, type, info)` ritar gruppen för
+  vytypen; `info` ger pennans nummer framför raden.
+- **Fasadernas linjer** (`repr/facadePens.ts`): `FACADE_PENS` (förut
+  `PART_PEN` i `section.ts`) och `facadePen(style, part)`, som läser
+  tjocklek, färg och linjetyp ur `pens[part]` (öppningssättet med
+  symbolpennan under).
+- **Pennlistan** är `StyleResources.penList` (`NumberedPen`: `no`,
+  `weight`, `color`; svart utan färg), läst med `normalizePenList`.
+  Ställena har kvar sina värden; ett ställe hör till pennan med samma
+  `penKey` (tjocklek och färg).
+- **Ställena** (`repr/penPlaces.ts`): `stylePlaces(doc)` ger
+  `StylePlace` (`id` = `var|nyckel`, `where` = kategori, vy eller
+  material, `key` = `pens.<k>`, `outline.<åtgärd>`, `fill.<åtgärd>` eller
+  `mfill.<plan|cut|surface>`, `viewTags`, `tags`, `pen`, `linetype`,
+  `fillType`). En vy ger bara de nycklar den verkligen avviker på
+  (`viewKeys`). `penTable(book, places)` ger pennorna med sina ställen:
+  de sparade först, sedan de som saknas, numrerade efter `penOrder`.
+  `withFrozenPens(doc)` sparar listan; `StyleDialog.set` och `commit` gör
+  det vid varje ändring. `editPlaces(doc, places, edit)` ändrar varje
+  kategori och vy en gång (vyns avvikelser räknas om med
+  `overridesFrom`) och materialen; `setPenEdit`, `setLineTypeEdit` och
+  `setFillTypeEdit` är ändringarna. Penntabellens förval sparas inte
+  (`putPenRow`, som `applyPenField`).
+- **Gränssnittet**: `ui/style/places.ts` (`penListMarkup`,
+  `placesMarkup`, `placesSection`, `placeRows`, `rowMatches`; materialens
+  rader är objekten, `materialObjects` i `core/materials.ts`) och
+  `ui/style/placeEdits.ts` (`setPlaces`, `editPen`, `addPen`,
+  `removePens`; objekten med ett ändrat material får fyllningen med
+  `relinked`). I `StyleDialog`: resursen `pens`, `placesClick`,
+  `placesChange`, `goToPlace` (sätter `flash`, raden som rullas fram och
+  blinkar efter omritningen) och `goToObject` (sätts i `installViews`).
+  Listornas egna listor har `rc-native` (ingen radkontroll).
+- **Sorteringen** (`ui/tableSort.ts`, `installTableSort` i `main.ts`):
+  ett klick på en `thead th` med text sorterar tabellen efter cellernas
+  `data-sort` eller text (`compareCells`); sorteringen sparas per
+  `data-table` (annars klassen) och läggs på igen av en
+  `MutationObserver` när tabellen ritas om. En ny tabell behöver inget
+  mer; ge den `data-table` om flera tabeller har samma klass.
+- Stilarna i `styles/pennor.css`. Tester: `tests/v01036.test.ts`.
+
 ## Underlag i vyn (0.10.35, format 25)
 
 - **Modellen** (`core/viewUnderlays.ts`): `ViewUnderlay` = `source`,

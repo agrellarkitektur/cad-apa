@@ -1,0 +1,232 @@
+/* Pennor och ställen i stilboken (0.10.36, tavla 3), och sorteringen per rubrik i alla tabeller. */
+
+.pp-split {
+  display: grid;
+  grid-template-columns: minmax(330px, 0.9fr) minmax(0, 1.4fr);
+  gap: 18px;
+  align-items: start;
+}
+
+@media (max-width: 1100px) {
+  .pp-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12.5px;
+}
+
+.pp-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--panel-bg, var(--chrome));
+  text-align: left;
+  font-weight: 600;
+  font-size: 11.5px;
+  color: var(--muted);
+  padding: 5px 6px;
+  border-bottom: 1px solid var(--rule);
+  white-space: nowrap;
+}
+
+.pp-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--rule);
+  vertical-align: middle;
+}
+
+.pp-table td b {
+  display: block;
+  font-weight: 600;
+}
+
+.pp-sub {
+  display: block;
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.pp-pen.on td {
+  background: var(--accent-soft);
+}
+
+.pp-sample {
+  display: block;
+}
+
+.pp-cname {
+  color: var(--muted);
+  font-size: 11.5px;
+}
+
+.pen-no {
+  min-width: 28px;
+  height: 24px;
+  padding: 0 6px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--chrome);
+  color: var(--ink);
+  font: 600 12px var(--font-data);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+
+.pen-no:hover,
+.pp-pen.on .pen-no {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.pp-count {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  min-width: 34px;
+}
+
+.pp-penbtns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.pp-places {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pp-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pp-head h4 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.pp-head h4 span {
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.pp-head select {
+  margin-left: auto;
+}
+
+.pp-search input {
+  width: 100%;
+}
+
+.pp-tagrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+}
+
+.pp-tagrow > span {
+  width: 52px;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+
+.pp-tag {
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--chrome);
+  color: var(--ink);
+  font: 500 11.5px var(--font-ui);
+  cursor: pointer;
+}
+
+.pp-tag:hover {
+  border-color: var(--muted);
+}
+
+.pp-tag.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.pp-move {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.pp-move .note {
+  margin: 0;
+}
+
+.pp-tags-cell span {
+  display: inline-block;
+  margin: 1px 3px 1px 0;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
+
+.pp-set {
+  max-width: 190px;
+}
+
+.style-places .pp-places {
+  margin-top: 4px;
+}
+
+/* *Gå dit* till ett ställe: raden blinkar i accentfärgen. */
+.sb-flash {
+  animation: sb-flash 1.6s ease-out;
+}
+
+@keyframes sb-flash {
+  0%,
+  30% {
+    background: var(--accent-soft);
+    box-shadow: inset 3px 0 0 var(--accent);
+  }
+  100% {
+    background: transparent;
+    box-shadow: none;
+  }
+}
+
+/* Sorteringen per rubrik (alla tabeller). */
+table thead th[aria-sort] {
+  color: var(--accent);
+}
+
+table thead th[aria-sort='ascending']::after {
+  content: ' ▲';
+  font-size: 0.75em;
+}
+
+table thead th[aria-sort='descending']::after {
+  content: ' ▼';
+  font-size: 0.75em;
+}
+
+table thead th {
+  cursor: default;
+}
+
+table thead th:not(:empty) {
+  cursor: pointer;
+}

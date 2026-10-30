@@ -33,7 +33,7 @@ describe('Pennor per typ och symbollinjer (0.8.33)', () => {
     const style = structuredClone(defaultSheet(doc.graphics));
     expect(applyPenField(style, { dataset: { pen: 'openingSymbol:weight' }, value: '0.25' } as unknown as HTMLInputElement)).toBe('Ändra pennor');
     applyPenField(style, { dataset: { pen: 'openingView:color' }, value: '#0000ff' } as unknown as HTMLInputElement);
-    expect(penSection(style)).toContain('Pennor för dörrar och fönster');
+    expect(penSection(style, 'storey')).toContain('Pennor för dörrar och fönster');
     const after = linesOf(plan({ ...doc, graphics: bookWithSheet(doc.graphics, style) }).prims, door.id);
     expect(part(after, 'slagbåge')[0].weight).toBe(0.25);
     expect(part(after, 'dörrblad')[0].color).toBe('#0000ff');

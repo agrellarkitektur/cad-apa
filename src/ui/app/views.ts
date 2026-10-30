@@ -413,5 +413,15 @@ export function installViews(app: AppContext) {
     const v = app.store.doc.views.find((x) => x.id === id);
     if (v) applyView(v);
   };
+  // *Gå dit* i stilbokens lista över materialens ställen (0.10.36): objektets våning eller Platsen, markerat och i bild.
+  app.styleDialog.goToObject = (id) => {
+    const el = app.store.doc.elements[id];
+    if (!el) return;
+    if (app.ui.mode === '3d') void app.setMode('2d');
+    goTo({ kind: 'storey', id: el.storey });
+    app.selection.set([id]);
+    app.renderAll();
+    requestAnimationFrame(() => app.zoomToSelection());
+  };
   return { applyView, currentViewDef, goTo, newViewItems, newViewOf, openHistoryMenu, openMarkerMenu, openViewMenu, renderViewButton, saveViewAsNew, syncDetailSwitch, toggleUnderlaySource, updateActiveView, viewHistory, viewModified, visit };
 }

@@ -79,6 +79,21 @@ function eachLinked(doc: { elements: Record<Id, Element> }, id: string, fn: (el:
   return out;
 }
 
+/** Objekten (och slänterna) med materialet, med den nya planens fyllning (0.10.36: när stilboken ändrar materialet). */
+export function relinked(doc: { elements: Record<Id, Element> }, m: Material): Element[] {
+  return eachLinked(doc, m.id, (e, n) => linkTo(e, m, n));
+}
+
+/** Objekten med materialet (0.10.36, materialets ställen): objektet och om det är slänten. */
+export function materialObjects(doc: { elements: Record<Id, Element> }, id: string): { id: Id; nested?: string }[] {
+  const out: { id: Id; nested?: string }[] = [];
+  for (const el of Object.values(doc.elements)) {
+    if ((el.params as Record<string, unknown>).material === id) out.push({ id: el.id });
+    if (((el.params as Record<string, unknown>).slopeFill as Partial<FillParams> | undefined)?.material === id) out.push({ id: el.id, nested: 'slopeFill' });
+  }
+  return out;
+}
+
 /** Hur många objekt (och slänter) som har materialet. */
 export function materialUses(doc: { elements: Record<Id, Element> }, id: string): number {
   let n = 0;

@@ -3,11 +3,14 @@ import { resolveBrand } from './brand';
 import { registerBuiltInTypes } from './elements';
 import { mountApp } from './ui/app';
 import { installExpressionFields } from './ui/expr';
+import { installTableSort } from './ui/tableSort';
 
 registerBuiltInTypes();
 // Formler i sifferfält. Kopplas före appen, så att uträkningen hinner före
 // programmets egna lyssnare.
 installExpressionFields();
+// Sortering per rubrik i alla tabeller (0.10.36).
+installTableSort();
 
 const brand = resolveBrand(import.meta.env.VITE_BRAND);
 void mountApp(document.getElementById('app')!, brand);

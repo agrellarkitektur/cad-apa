@@ -4,10 +4,23 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.35.
+**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.36.
 
 ## Läget
 
+- **0.10.36 Pennor och ställen är klar** (samma format, 25; `penList` i
+  stilbokens resurser är valfri). Resurser › *Pennor*: pennlistan (nummer,
+  prov, tjocklek, färg, antal ställen; sorterad efter färg och tjocklek),
+  ställena med sök, taggar för vytyp och objekt, byt per ställe, *Gå dit*,
+  *Flytta till pennan…*, *Ny penna*, ta bort utan ställen. Samma lista
+  över ställen under Linjetyper, Fyllningstyper och Material (där är
+  ställena objekten). En penna = tjocklek + färg; ställena behåller sina
+  värden, listan låses vid varje ändring. Kategorierna visar bara sin
+  vytyps pennor, med pennans nummer först; fasader och sektioner har
+  gruppen *Linjer i fasader och sektioner* (förut utan rader). Sortering
+  per rubrik i alla tabeller. Penn- och linjesystemet i övrigt är inte
+  ändrat (frågor nedan). Testerna: 768 på ca 25 s. Provat i Playwright mot
+  `dist/`. Koden i UTVECKLING.md, Claudes val i PLAN.md.
 - **0.10.35 Underlag i vyn är klar** (samma format, 25; `underlays` i
   kategorins visning och i vyns avvikelser är valfria). *Underlag i vyn*
   under Visa och i stilboken: våningen under/över, en våning, Platsen,
@@ -55,9 +68,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **0.10.30**, **0.10.29**, **0.10.28.3**, **0.10.28.2**, **0.10.28.1**,
   **0.10.28**, **0.10.27**, **0.10.26**, **0.10.25.1** och **0.10.25**: se
   PLAN.md.
-- **Publicerad:** 0.10.35 pushad till `main` 30 oktober (se git och
+- **Publicerad:** 0.10.36 pushad till `main` 30 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.10.36:** inget i ritningarna, utom
+  att fasadernas och sektionernas linjer nu följer en linjetyp om någon
+  satt en (det gick inte att göra i appen förut). I stilboken visar en
+  kategori bara sin vytyps pennor (planens snitt syns inte i fasaderna),
+  och första ändringen i stilboken sparar pennlistan i projektet.
 - **Märks i hans ritningar efter 0.10.35:** vyer som kalkerade något har
   det nu som underlag (tonat 40 % i ritningens färger, förut 30 % med
   användarens inställning) och **får det med till bladet**. *Kalkera en
@@ -101,14 +119,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare:** 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare:** 0.10.36, 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.35` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.36` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.35 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.36 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -181,12 +199,12 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   ~~0.10.29 Ritandet~~, ~~0.10.30 Teckenförklaring~~, ~~0.10.31 Texturer
   i 3D och ortofotot på marken~~, ~~Utredning: stilinställningar~~,
   ~~0.10.32 Tre nivåer med arv~~, ~~0.10.33 Avvikelser och kategorier i
-  vyn~~, ~~0.10.34 Radkontrollerna~~, ~~0.10.35 Underlag i vyn~~ (klara)
+  vyn~~, ~~0.10.34 Radkontrollerna~~, ~~0.10.35 Underlag i vyn~~,
+  ~~0.10.36 Pennor och ställen~~ (klara)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **Stilinställningarna, 0.10.36–0.10.38** (F kan skjutas in var som
-  helst): **0.10.36 Pennor och ställen** (mellanstor, på tur), **0.10.37
-  Projektet › Allmänt** (mellanstor), **0.10.38 Stilboken ut och in**
+- **Stilinställningarna, 0.10.37–0.10.38**: **0.10.37 Projektet ›
+  Allmänt** (mellanstor, på tur), **0.10.38 Stilboken ut och in**
   (mellanstor; två öppna frågor)
 - **0.11 Trappor** (nytt format; med *Syns också på*)
 - **0.11.1 Profilverktyget** (stor) och **0.11.2 Dörrar och fönster**
@@ -204,16 +222,16 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.36 Pennor och ställen** (tavla 3; mellanstor, samma format). Läs
-synpunkterna först (E under Planerat, *Beslut 29–30 oktober*, *Pennor och
-ställen*) och sortera Inkorgen om den har något. Pennlistan med antal
-ställen och sortering per rubrik (gäller alla tabeller), ställena med sök
-och automatiska taggar vytyp/objekt, byt penna per ställe, *Gå dit*,
-*Flytta till pennan…*, ta bort penna med 0 ställen; samma par av listor för
-linjetyper, fyllningstyper och material. Här också de parkerade frågorna om
-penn- och linjesystemet (snittlinje/konturlinje per objekt, öppningarnas
-oskurna linjer, om *Symbol* följer *Snitt*). Ställ frågorna om 0.10.35,
-0.10.34 och 0.10.33 först, när han provat.
+**0.10.37 Projektet › Allmänt** (mellanstor, samma format; valfria fält).
+Läs synpunkterna först (F under Planerat, *Beslut 29–30 oktober*) och
+sortera Inkorgen om den har något. Företagsnamn, logotyp, ansvarig,
+projektnamn och -nummer, fastighet, skede, typsnitt och textstorlek som
+förval, höjdsystem och decimaler, enheter, litterats sifferantal,
+tjocklekstabellen, smarttext-taggarna med värden och egna taggar. Det som
+redan finns utspritt (typsnittet i resurserna, bladens projektfält,
+decimalerna, litterans siffror) samlas här, och stämplarna läser
+taggarna därifrån. Ställ först frågorna om 0.10.36 (de hör till penn-
+och linjesystemet), och om 0.10.35–0.10.33 när han provat.
 
 Höjdkurvors del av ortofotot (två rader i `js/app.js` och `js/utbyte.js`,
 plus raden i `docs/UTBYTE-CAD-APA.md` där) görs i en session i
@@ -225,7 +243,8 @@ kommer med platsen kan det läggas som underlag direkt.
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.10.35, 0.10.34 och 0.10.33.
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.10.36, och sedan
+0.10.35, 0.10.34 och 0.10.33 när han provat.
 
 **Besvarade 30 oktober** (Claudes val gäller): 0.10.32 alla fyra
 (vytypens kategori när ingen vy är sparad; kategoribyte släpper vyns
@@ -233,6 +252,23 @@ om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.10.35, 0.10.34 och 0.
 som kategorier, gjort i 0.10.33). 0.10.31: ortofotot där marken saknar
 material, plus valet *Ortofoto* (gjort i 0.10.33); bildens sida i mm.
 0.10.30: rutornas mått lagom så länge; en rad "Eget" per fyllning (prova).
+
+**0.10.36 Pennor och ställen** (Claudes val, se PLAN.md; de tre första
+är de parkerade frågorna om penn- och linjesystemet)
+- Som i ArchiCAD: ska varje objekt ha en *snittlinje* och en
+  *konturlinje* (det oskurna) som egna ställen, i stället för dagens
+  klasser (Snitt, Vy, Symbol för dörrar och fönster; åtgärdernas kontur
+  för väggarnas snitt)? Det blir fler ställen men tydligare.
+- Ska öppningarnas oskurna linjer (vägghålet i fasaden, hålets kanter i
+  planen) styras av väggens penna i stället för fönstrets och dörrens?
+- Ska den egna pennans *Symbol* följa *Snitt* när den inte är satt
+  (parkerat sedan 25 oktober)? Nu följer den objektets övre del.
+- En penna är tjocklek och färg; linjetypen hör till stället. Rätt, eller
+  ska linjetypen ingå i pennan?
+- Materialens konturpenna och objektens egna pennor räknas inte som
+  ställen. Ska de stå i listan också?
+- Sorteringen per rubrik kommer ihåg sig medan sidan är öppen, inte i
+  filen. Räcker det?
 
 **0.10.35 efter provning** (Claudes val, se PLAN.md)
 - Underlagen ligger i kategorin (Illustrationsplan kan ha ortofotot i alla
