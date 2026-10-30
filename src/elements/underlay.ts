@@ -38,6 +38,8 @@ export interface UnderlayParams {
   gray?: boolean;
   /** DXF: lager som är släckta. */
   layersOff?: string[];
+  /** Kontorets logotyp (0.10.39): får den nya bilden när logotypen byts i stilboken. */
+  logo?: boolean;
 }
 
 export const UNDERLAY_KIND_LABEL: Record<UnderlayParams['kind'], string> = { image: 'Bild', pdf: 'PDF', dxf: 'DXF' };

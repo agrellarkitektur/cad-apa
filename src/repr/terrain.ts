@@ -1,5 +1,6 @@
 import { defaultSheet } from '../core/viewCategories';
 import type { ProjectDoc } from '../core/model';
+import { docGeneral } from '../core/general';
 import { fromRh, groundAt, levelText as siteLevelText, meanGroundLevel, terrainOf, type Terrain } from '../core/site';
 import { buildingFootprint } from '../elements/footprint';
 import type { PlanContext } from '../elements/registry';
@@ -176,9 +177,9 @@ export function meanGround(ctx: PlanContext, existing = false): number | null {
   return meanGroundLevel(f ? f.terrain : t, rings);
 }
 
-/** En höjd (mm från ±0) som nivåmarkör: RH 2000 när projektet har en plats, annars från ±0. */
-export function levelText(doc: Pick<ProjectDoc, 'site'>, zMm: number): string {
-  return siteLevelText(doc.site, zMm);
+/** En höjd (mm från ±0) som nivåmarkör: RH 2000 när projektet har en plats, annars från ±0, med stilbokens decimaler (0.10.39). */
+export function levelText(doc: Pick<ProjectDoc, 'site'> & Partial<Pick<ProjectDoc, 'graphics'>>, zMm: number): string {
+  return siteLevelText(doc.site, zMm, docGeneral(doc).levelDecimals);
 }
 
 /**

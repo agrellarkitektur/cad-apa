@@ -59,6 +59,7 @@ import { newPlacesState, penListMarkup, placesSection, type PlaceKind } from './
 import { addPen, editPen, objectOf, removePens, setPlaces } from './style/placeEdits';
 import { penKey, penTable, stylePlaces, withFrozenPens } from '../repr/penPlaces';
 import { fromHex, toHex } from './style/colors';
+import { generalChange, generalClick, generalMarkup } from './style/general';
 
 /** Raderna som sök och *Vanliga/Alla* (0.10.34) visar eller döljer. */
 const FILTER_ROWS = '.style-row, .pen-row, .material-row, .linetype-row, .filltype, .filltype-builtin, .tpl-row, .sb-groups label.check, .sb-show label.field, .sb-show label.check, .sb-views li';
@@ -371,11 +372,7 @@ export class StyleDialog {
 
   private mainMarkup(): string {
     const p = this.place;
-    if (p.kind === 'general') {
-      return `<section class="style-labels"><h3>Allmänt</h3>
-        <div class="fields"><label class="field"><span>Stilbokens namn</span><input data-sb-name value="${escapeHtml(this.book.name)}"></label></div>
-        <p class="note">Här samlas projektets uppgifter i 0.10.37: företagsnamn, logotyp, ansvarig, projektnamn och -nummer, fastighet, skede, typsnitt och textstorlek, höjdsystem och decimaler, enheter, litterats sifferantal och smarttextens taggar.</p></section>`;
-    }
+    if (p.kind === 'general') return generalMarkup(this.store.doc);
     if (p.kind === 'res') {
       const sheet = this.book;
       const doc = this.store.doc;
@@ -717,6 +714,7 @@ export class StyleDialog {
       return;
     }
     if (await this.placesClick(e, target)) return;
+    if (await generalClick(this.store, target, (book, label) => this.set(book, label))) return;
     const go = target.closest<HTMLElement>('[data-sb-go]')?.dataset.sbGo;
     if (go) {
       const [kind, what] = go.split(':');
@@ -948,6 +946,7 @@ export class StyleDialog {
       this.render();
       return;
     }
+    if (generalChange(this.store, input, (book, label) => this.set(book, label))) return;
     if (input.matches('[data-sb-name]')) {
       const name = input.value.trim();
       if (name && name !== this.book.name) this.set({ ...this.book, name }, `Stilbokens namn: ${name}`);
@@ -1034,7 +1033,7 @@ function withList(show: CategoryShow, list: ViewUnderlay[]): CategoryShow {
 function focusSelector(el: Element | null, root: HTMLElement): string | null {
   if (!(el instanceof HTMLElement) || !root.contains(el)) return null;
   if (el.id) return `#${CSS.escape(el.id)}`;
-  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview', 'data-ul', 'data-ul-field', 'data-ul-addsel', 'data-pp-search', 'data-pp-filter', 'data-pp-set', 'data-pp-check', 'data-pp-all', 'data-pp-move', 'data-penlist', 'data-pp-tag', 'data-pp-pick'];
+  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview', 'data-ul', 'data-ul-field', 'data-ul-addsel', 'data-pp-search', 'data-pp-filter', 'data-pp-set', 'data-pp-check', 'data-pp-all', 'data-pp-move', 'data-penlist', 'data-pp-tag', 'data-pp-pick', 'data-gen', 'data-gen-action'];
   const parts = attrs.filter((a) => el.hasAttribute(a)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a)!)}"]`);
   if (!parts.length) return null;
   const v = el instanceof HTMLInputElement && el.type === 'radio' ? `[value="${CSS.escape(el.value)}"]` : '';

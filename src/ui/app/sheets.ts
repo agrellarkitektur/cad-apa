@@ -1,4 +1,5 @@
 import { deleteElements } from '../../core/commands';
+import { logoItems } from './logo';
 import type { Id, Sheet } from '../../core/model';
 import { addLegend, addScaleBar, addViewport, createMaster, createSheet, createStamp, FRAME_MARGIN, mastersOf, paperSize, placeStamp, setViewportCrop, stampsOf, today } from '../../core/sheets';
 import { buildSheet, cachedViewPrims, contentBounds, VIEWPORT_PAD, viewSource, type PlacedView, type SheetDrawing } from '../../repr/sheet';
@@ -341,6 +342,7 @@ export function installSheets(app: AppContext) {
           { label: 'Rita linjer och ytor på bladet', run: () => host.startDraw() },
           { label: 'Lägg på skalstock här', run: () => addScaleBarTo(sheet.id, app.view.camera.toModel(screen)) },
           { label: 'Lägg på teckenförklaring här', run: () => addLegendTo(sheet.id, app.view.camera.toModel(screen)) },
+          ...logoItems(app, sheet.id, app.view.camera.toModel(screen)),
           ...stampsOf(app.store.doc).map((w) => ({ label: `Lägg på stämpeln ${w.name} här`, run: () => placeStampOn(sheet.id, w.id, app.view.camera.toModel(screen)) })),
           { label: 'Plot/export…', run: () => app.root.querySelector<HTMLElement>('.nav-plot [data-action="plot"], .main-menu [data-action="plot"]')?.click() },
         ],

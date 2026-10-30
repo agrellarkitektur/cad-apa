@@ -1640,6 +1640,42 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Projektet › Allmänt (0.10.39, format 25)
+
+- **`core/general.ts`**: `OfficeInfo` (`StyleResources.office`: fälten i
+  `OFFICE_TAGS` med taggarna, `logo` = `{ asset, width, height }`, egna
+  `tags`) och `GeneralSettings` (`StyleResources.general`: `textSize`,
+  `heightSystem`, `levelDecimals`, `groundDecimals`, `litteraDigits`,
+  `lengthUnit`, `areaDecimals`, `weights`). `generalOf(book, site)` ger
+  det som gäller: stilbokens, annars Platsens gamla `ground.levelDecimals`,
+  `ground.litteraDigits` och `crs.height`, annars `GENERAL_DEFAULTS`;
+  `docGeneral(doc)` är samma för ett dokument. `normalizeOffice` och
+  `normalizeGeneral` i `normalizeStyle`. Talen: `lengthText`, `areaText`,
+  `signedLevel`.
+- **Läsarna**: `dimensionPrims` (`style.general.lengthUnit`),
+  `formatArea(m2, decimals)` i rummen och litterat, `levelText` i
+  `repr/terrain.ts` (nivåmarkörerna), `groundLevelText(doc, z)` och
+  `litteraText(doc, …)` i `core/site.ts` (tar nu dokumentet, inte
+  platsen), `TextTool.height` (null = stilbokens), `weightPicker` och
+  listorna via `setWeightSource` / `currentWeights` i `ui/weightPick.ts`
+  (sätts i `app.ts`).
+- **Smarttexten**: `smartVars` lägger `officeVars(doc.graphics.office)`
+  under bladets och projektets fält; ett kontorsfält som de lämnat tomt
+  tar kontorets värde. Nya inbyggda: `projektnummer` (fältet
+  `uppdragsnummer`) och `höjdsystem`. `fieldsOf` hoppar över kontorets
+  taggar (`officeTagKeys`) som projektet inte har som fält.
+- **`core/office.ts`**: `setOfficeLogo` (bilden som fil; logotyperna på
+  papperet får den nya bilden lika bred, den gamla filen tas bort om inget
+  använder den), `setProjectField`, `removeProjectField`,
+  `setProjectPhase` (via `applyFieldChanges` med `shared`) och
+  `placeLogo` (ett `Underlay` med `logo: true`).
+- **Dialogen**: `ui/style/general.ts` (`generalMarkup`, `generalChange`,
+  `generalClick`; fälten `data-gen`, knapparna `data-gen-action`).
+  Stilbokens ändringar går genom dialogens `set` (med `withFrozenPens`).
+  Menyraden *Lägg in logotypen här* i `ui/app/logo.ts` (bladets meny i
+  `sheets.ts`, mallbladens och stämplarnas i `menus.ts`).
+- Tester: `tests/v01039.test.ts`.
+
 ## Snitt- och konturlinjer i fasader och sektioner (0.10.38, format 25)
 
 - **Raderna** (`repr/facadePens.ts`): `FACADE_PENS` har nycklar per

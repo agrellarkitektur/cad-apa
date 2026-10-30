@@ -1,4 +1,5 @@
 import { onPaper as paperSpace } from '../../core/model';
+import { paperLogoItems } from './logo';
 import { setInState } from '../../core/commands';
 import { actionOf } from '../../core/states';
 import { hiddenBy } from '../../core/visibility';
@@ -96,6 +97,7 @@ export function installMenus(app: AppContext) {
           { label: 'Klistra in', hint: 'Ctrl+V', run: () => void app.pasteFromMenu() },
           { label: 'Filtrera och markera…', hint: 'FM', run: () => app.filterSelect.open() },
           { label: 'Lägg in underlag…', run: () => app.chooseUnderlayFiles() },
+          ...paperLogoItems(app, x, y),
           ...(app.segmentPoints.count ? [{ label: 'Rensa segmentpunkter', run: () => app.toolOpts.clearSegmentPoints() }] : []),
           { kind: 'sep' },
           { label: 'Rita vägg', hint: 'W', run: () => app.setTool('wall') },

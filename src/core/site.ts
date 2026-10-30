@@ -1,3 +1,4 @@
+import { docGeneral, signedLevel, type GeneralSettings } from './general';
 import type { Asset, Id, ProjectDoc } from './model';
 
 /**
@@ -163,29 +164,26 @@ export function toRh(site: Pick<Site, 'datum'>, zMm: number): number {
   return site.datum + zMm / 1000;
 }
 
-/** En höjd (mm från ±0) som nivåmarkör: RH 2000 när projektet har en plats, annars från ±0 (*+62,400*). */
-export function levelText(site: Pick<Site, 'datum'> | undefined, zMm: number): string {
-  const m = site ? site.datum + zMm / 1000 : zMm / 1000;
-  const r = Math.round(m * 1000) / 1000;
-  return `${r === 0 ? '±' : r > 0 ? '+' : '−'}${Math.abs(r).toLocaleString('sv-SE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}`;
+/** En höjd (mm från ±0) som nivåmarkör: RH 2000 när projektet har en plats, annars från ±0 (*+62,400*), med `decimals` (0.10.39). */
+export function levelText(site: Pick<Site, 'datum'> | undefined, zMm: number, decimals = 3): string {
+  return signedLevel(site ? site.datum + zMm / 1000 : zMm / 1000, decimals);
 }
+
+/** Det i projektet som höjderna och litterat läser (0.10.39): Platsen och stilbokens allmänna inställningar. */
+type GeneralDoc = { site?: Pick<Site, 'datum' | 'ground' | 'crs'>; graphics?: { general?: GeneralSettings } };
 
 /**
  * En markhöjd i planen (0.10.20): som `levelText`, men med så många
- * decimaler som projektet valt under Platsen (två som förval, som
- * landskapsarkitekterna skriver: *+22,20*).
+ * decimaler som valts i stilboken (förut under Platsen; två som förval,
+ * som landskapsarkitekterna skriver: *+22,20*).
  */
-export function groundLevelText(site: Pick<Site, 'datum' | 'ground'> | undefined, zMm: number): string {
-  const d = Math.max(0, Math.min(3, Math.round(groundDefaults(site).levelDecimals)));
-  const m = site ? site.datum + zMm / 1000 : zMm / 1000;
-  const f = 10 ** d;
-  const r = Math.round(m * f) / f;
-  return `${r === 0 ? '±' : r > 0 ? '+' : '−'}${Math.abs(r).toLocaleString('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d })}`;
+export function groundLevelText(doc: GeneralDoc, zMm: number): string {
+  return levelText(doc.site, zMm, docGeneral(doc).groundDecimals);
 }
 
-/** Ett littera med nummer (0.10.20): bokstaven och numret med minst så många siffror som projektet valt (*M01*). */
-export function litteraText(site: Pick<Site, 'ground'> | undefined, letter: string, n: number): string {
-  return `${letter}${String(n).padStart(Math.max(1, Math.min(4, Math.round(groundDefaults(site).litteraDigits))), '0')}`;
+/** Ett littera med nummer (0.10.20): bokstaven och numret med minst så många siffror som valts i stilboken (*M01*). */
+export function litteraText(doc: GeneralDoc, letter: string, n: number): string {
+  return `${letter}${String(n).padStart(Math.max(1, Math.min(4, Math.round(docGeneral(doc).litteraDigits))), '0')}`;
 }
 
 /** En höjd i RH 2000 (m) i modellen (mm från ±0). */

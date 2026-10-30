@@ -16,7 +16,7 @@ import { escapeHtml, labelOf } from './labels';
 export function labelFields(doc: ProjectDoc, el: Element): string {
   const p = resolveParams<LabelParams>(doc, el);
   const n = labelNumbers(doc).get(el.id);
-  const counted = n ? litteraText(doc.site, '', n) : '';
+  const counted = n ? litteraText(doc, '', n) : '';
   const sorts = labelSorts(doc);
   const frame = p.frame ?? 'none';
   const height = p.height && p.height > 0 ? p.height : doc.graphics.labels.heights.littera;

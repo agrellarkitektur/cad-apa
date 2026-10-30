@@ -1,4 +1,6 @@
 import { eraseSelection } from './app/erase';
+import { setWeightSource } from './weightPick';
+import { generalOf } from '../core/general';
 import type { Brand } from '../brand';
 import type { ProjectDoc } from '../core/model';
 import { DocStore } from '../core/store';
@@ -266,6 +268,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     (msg) => hint(msg, 4000),
   );
   root.appendChild(styleDialog.el);
+  // Tjocklekarna i listorna (0.10.39) är stilbokens.
+  setWeightSource(() => generalOf(store.doc.graphics).weights);
 
   view.showGrid = uiSettings.grid;
   panel.quickFor = (type) => uiSettings.quick[type] ?? [];

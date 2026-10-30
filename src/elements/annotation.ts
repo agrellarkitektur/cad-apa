@@ -1,5 +1,6 @@
 import { add, left, norm, scale, sub } from '../geometry/vec';
 import type { StyleSheet } from '../core/graphics';
+import { lengthText } from '../core/general';
 import { markerPen, withWeight } from '../repr/markerPens';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import type { ProjectDoc } from '../core/model';
@@ -7,7 +8,6 @@ import { resolvePoint, type FeatureRef } from './features';
 import { expandSmartText, layoutText, textPoint, type TextAlign, type TextAnchor, type TextLayout } from './textLayout';
 import type { ElementType } from './registry';
 
-const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0, useGrouping: false });
 
 /**
  * Måttkedja: punkterna mäts längs en riktning, och måttlinjen ligger
@@ -102,7 +102,7 @@ export function dimensionPrims(p: DimensionParams, drawingScale: number, origin?
     out.push({
       kind: 'text',
       at: on(mid, above * paper(0.9)),
-      text: nf.format(ts[i + 1] - ts[i]),
+      text: lengthText(ts[i + 1] - ts[i], style?.general?.lengthUnit),
       height: textHeight,
       align: 'middle',
       angle: a,

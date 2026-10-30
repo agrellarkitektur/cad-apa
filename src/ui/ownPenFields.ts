@@ -1,6 +1,6 @@
 import type { Definition, Element, Id, OwnPen, OwnPenPart, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
-import { PEN_WEIGHTS } from '../elements/drawing2d';
+import { currentWeights } from './weightPick';
 import { escapeHtml } from './labels';
 import { lineTypeOptions } from './lineTypePick';
 
@@ -42,7 +42,7 @@ function partFields(doc: ProjectDoc, scope: string, pens: readonly (OwnPen | und
   const pre = part === 'main' ? '' : `${part}.`;
   const mixed = '<option selected disabled>Olika</option>';
   const weight = same(pens, part, 'weight');
-  const weights = `<select data-key="${scope}:${pre}weight" aria-label="Tjocklek">${weight === null ? mixed : ''}<option value="style"${weight === undefined ? ' selected' : ''}>${inherited('weight')}</option>${PEN_WEIGHTS.filter((w) => w > 0)
+  const weights = `<select data-key="${scope}:${pre}weight" aria-label="Tjocklek">${weight === null ? mixed : ''}<option value="style"${weight === undefined ? ' selected' : ''}>${inherited('weight')}</option>${currentWeights()
     .map((w) => `<option value="${w}"${w === weight ? ' selected' : ''}>${comma(w)} mm</option>`)
     .join('')}</select>`;
   const color = same(pens, part, 'color');

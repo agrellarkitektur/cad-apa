@@ -1,6 +1,7 @@
 import { PAPER } from '../core/sheets';
 import { BUILT_IN, folderName } from '../core/sheetFields';
 import type { ProjectDoc, Sheet } from '../core/model';
+import { generalOf, officeVars } from '../core/general';
 
 /**
  * Smarttext (0.8 del 3): text som fylls i av sig själv, t.ex. `{skala}`
@@ -26,15 +27,21 @@ function a3Factor(sheet: Pick<Sheet, 'size'>): number {
 }
 
 /**
- * Värdena för smarttexten på ett blad: bladets fält, projektets fält och
- * den inbyggda smarttexten. Skalorna kan skrivas över med bladets fält.
+ * Värdena för smarttexten på ett blad: kontorets uppgifter ur stilboken
+ * (0.10.39), bladets fält, projektets fält och den inbyggda smarttexten.
+ * Ett kontorsfält som bladet eller projektet lämnat tomt (t.ex. ansvarig)
+ * tar kontorets värde. Skalorna kan skrivas över med bladets fält.
  */
-export function smartVars(doc: Pick<ProjectDoc, 'project' | 'folders' | 'tree'> & Partial<Pick<ProjectDoc, 'site'>>, sheet: Sheet, todayText: string): Record<string, string> {
+export function smartVars(doc: Pick<ProjectDoc, 'project' | 'folders' | 'tree'> & Partial<Pick<ProjectDoc, 'site' | 'graphics'>>, sheet: Sheet, todayText: string): Record<string, string> {
   const own = (k: string) => sheet.fields[k]?.trim();
+  const office = officeVars(doc.graphics?.office);
+  const vars: Record<string, string> = { ...office, ...sheet.fields, ...doc.project.fields };
+  for (const [k, v] of Object.entries(office)) if (!vars[k]?.trim()) vars[k] = v;
   return {
-    ...sheet.fields,
-    ...doc.project.fields,
+    ...vars,
     projekt: doc.project.name,
+    projektnummer: vars.projektnummer?.trim() || vars.uppdragsnummer || '',
+    höjdsystem: generalOf(doc.graphics, doc.site).heightSystem,
     ritningsnummer: sheet.number,
     innehåll: sheet.name,
     mapp: folderName(doc, sheet.id),

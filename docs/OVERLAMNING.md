@@ -4,10 +4,20 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.38.
+**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.39.
 
 ## Läget
 
+- **0.10.39 Projektet › Allmänt är klar** (samma format, 25; `office` och
+  `general` i stilboken och `logo` på underlag är valfria). *Allmänt* har
+  Kontoret (företagsnamn, adress, telefon, e-post, webb, ansvarig,
+  logotyp; följer med stilboken), Projektet (namn, projektnummer =
+  fältet uppdragsnummer, fastighet, skede; stannar i projektet), Text,
+  höjder och enheter, Tjocklekar och en tabell över smarttextens taggar
+  med egna taggar i kontoret eller projektet. *Lägg in logotypen här* i
+  högerklicksmenyn på blad, mallblad och stämplar. Testerna: 785 på ca
+  27 s. Provat i Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes
+  val i PLAN.md.
 - **0.10.38 Snitt- och konturlinjer i fasader och sektioner är klar**
   (samma format, 25; nya nycklar i penntabellen). Våningarnas grupper
   (*Väggar*, *Dörrar*, *Fönster*, *Bjälklag, tak …*) visas också i
@@ -56,26 +66,6 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
   nya vy (utan `trace`) och två bilder som skiljer i tid (sektionen bredvid
   3D, rampen i 3D). Koden i
   UTVECKLING.md, Claudes val i PLAN.md.
-- **0.10.34 Radkontrollerna är klar** (samma format, 25; favoritseten
-  `colorSets` i stilboken är valfria). Runda knappar för tjocklek,
-  linjetyp och färg, tjockleksraden med *Eget*, den sökbara
-  linjetypslistan med *Lägg till egen…*, färgpanelen (förval, favoriter i
-  set, färgfält, hex, opacitet där det finns), textvalsknappar,
-  ikonknappar för återställ och ta bort, Innehåll som knappar med symbol,
-  sök och *Vanliga/Alla*. Bara i stilboken. Testerna: 747 på ca 17 s.
-  Provat i Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes val i
-  PLAN.md.
-- **0.10.33 Avvikelser och kategorier i vyn är klar** (samma format, 25;
-  `ortho3d` på markobjekten är valfritt). Ockra prick och *Återställ* på
-  ändrade rader (en kategori mot förvalet, en vy mot kategorin), *Visa
-  bara avvikelser*, *Stil för den här vyn…* (högerklick i vyn, och *Stil
-  för vyn…* i projektträdet) med *Återställ till kategorin*, *Gör
-  avvikelserna till kategorins förval* och *Spara som ny kategori…*,
-  listan *Vyer med den här kategorin*, punkt efter vynamnet, *Ny vy* med
-  vytypens kategorier, nya kategorier (Mått och littera, Undertak,
-  Golvplan, Poché, Färgmarkerad) och *Ortofoto* bland markobjektens
-  material. Testerna: 744 på ca 13 s. Provat i Playwright mot `dist/`.
-  Koden i UTVECKLING.md, Claudes val i PLAN.md.
 - **Frågesessionen 30 oktober (natt):** tio frågor besvarade; de två
   tilläggen (Poché och Färgmarkerad som kategorier, *Ortofoto* bland
   materialen) gjordes i 0.10.33. Färgmarkerad är statusen i färg (kvar
@@ -90,9 +80,16 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **0.10.30**, **0.10.29**, **0.10.28.3**, **0.10.28.2**, **0.10.28.1**,
   **0.10.28**, **0.10.27**, **0.10.26**, **0.10.25.1** och **0.10.25**: se
   PLAN.md.
-- **Publicerad:** 0.10.38 pushad till `main` 30 oktober (se git och
+- **Publicerad:** 0.10.39 pushad till `main` 30 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.10.39:** inget i befintliga
+  ritningar (förvalen är som förut: mått i mm, areor med en decimal,
+  nivåmarkörer med tre). Markhöjdernas decimaler och litterats siffror
+  har flyttat från Platsens dialog till stilboken (det valda gäller tills
+  stilboken får ett eget värde). En text med `{företag}`, `{telefon}` …
+  på mallbladet blir tom tills kontoret är ifyllt; projektets *ansvarig*
+  tar kontorets när den är tom.
 - **Märks i hans ritningar efter 0.10.38:** ändrade pennor under *Linjer i
   fasader och sektioner* faller bort (förvalen ritar som förut). Med
   jämförelsen på får fasadernas och sektionernas linjer åtgärdens färg
@@ -155,14 +152,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare:** 0.10.38, 0.10.37, 0.10.36, 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare:** 0.10.39, 0.10.38, 0.10.37, 0.10.36, 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.38` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.39` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.38 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.39 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -237,13 +234,12 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   ~~0.10.32 Tre nivåer med arv~~, ~~0.10.33 Avvikelser och kategorier i
   vyn~~, ~~0.10.34 Radkontrollerna~~, ~~0.10.35 Underlag i vyn~~,
   ~~0.10.36 Pennor och ställen~~, ~~0.10.37 Snitt- och konturlinjer i
-  planen~~, ~~0.10.38 Snitt- och konturlinjer i fasader och sektioner~~
-  (klara)
+  planen~~, ~~0.10.38 Snitt- och konturlinjer i fasader och sektioner~~,
+  ~~0.10.39 Projektet › Allmänt~~ (klara)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **Stilinställningarna, resten**: **0.10.39 Projektet › Allmänt**
-  (mellanstor, på tur), **0.10.40 Stilboken ut och in** (mellanstor; två öppna
-  frågor)
+- **Stilinställningarna, resten**: **0.10.40 Stilboken ut och in**
+  (mellanstor, på tur; två öppna frågor)
 - **0.11 Trappor** (nytt format; med *Syns också på*)
 - **0.11.1 Profilverktyget** (stor) och **0.11.2 Dörrar och fönster**
   (stor)
@@ -260,30 +256,20 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.39 Projektet › Allmänt** (mellanstor, samma format; valfria fält).
-Läs synpunkterna först och sortera Inkorgen om den har något. Innehållet
-står under F i `cad-apa-synpunkter.md`: företagsnamn, logotyp, ansvarig,
-projektnamn och -nummer, fastighet, skede, typsnitt och textstorlek som
-förval, höjdsystem och decimaler, enheter, litterats sifferantal,
-tjocklekstabellen, smarttext-taggarna med värden och egna taggar.
+**0.10.40 Stilboken ut och in** (mellanstor, samma format). Läs
+synpunkterna först och sortera Inkorgen om den har något. *Exportera…*,
+*Importera…* (finns sedan 0.10.32) och *Mall för nya projekt* i
+rubrikraden; hela stilboken (Allmänt, vytyperna med kategorier,
+resurserna). Projektets uppgifter (namn, nummer, fastighet, skede och
+projektets fält) följer inte med (Carl August 30 oktober).
 
-- Stilbokens *Allmänt* (`place.kind === 'general'` i `ui/styleDialog.ts`)
-  har i dag bara namnet. Samla det som redan finns utspritt (bladens
-  fält i `core/sheetFields.ts` och `core/sheets.ts`, höjdernas decimaler
-  i `labels.heights`, littera, `PEN_WEIGHTS` i `elements/drawing2d.ts`)
-  och låt stämplarna läsa taggarna därifrån.
-- **Besvarat (Carl August 30 oktober):** stilboken är det som återanvänds
-  mellan projekt: kontorets uppgifter (företagsnamn, logotyp,
-  kontaktuppgifter, ansvarig), typsnitt och textstorlek, höjdsystem och
-  decimaler, enheter, litterats sifferantal och tjocklekstabellen. Det som
-  hör till ett projekt (projektnamn och -nummer, fastighetsbeteckning,
-  skede) ligger i projektet, inte i stilboken; det visas gärna under
-  *Allmänt* men följer inte med stilbokens export eller mallen (0.10.40).
-  Smarttext-taggarna läser från båda.
-- Blir den för stor: kontorets och projektets uppgifter och taggarna
-  först, enheterna och tjocklekstabellen sist.
+- Ställ först de två frågorna under *Till 0.10.40* nedan (var mallen
+  ligger; om bladmallar och stämplar följer med).
+- Bilderna bor i projektet: logotypen (`office.logo`) och materialens
+  texturer kommer inte med i dag. Exporten behöver bädda in dem (base64,
+  som `assets`) och importen lägga in dem som filer.
 
-Därefter 0.10.40 Stilboken ut och in.
+Därefter 0.11 Trappor.
 
 Höjdkurvors del av ortofotot (två rader i `js/app.js` och `js/utbyte.js`,
 plus raden i `docs/UTBYTE-CAD-APA.md` där) görs i en session i
@@ -304,6 +290,17 @@ och 0.10.33 när han provat.
 som kategorier, gjort i 0.10.33). 0.10.31: ortofotot där marken saknar
 material, plus valet *Ortofoto* (gjort i 0.10.33); bildens sida i mm.
 0.10.30: rutornas mått lagom så länge; en rad "Eget" per fyllning (prova).
+
+**0.10.39 efter provning** (Claudes val, se PLAN.md)
+- Kontorets taggar (`{företag}`, `{telefon}` …) är inga fält på bladen;
+  de fylls bara i under Allmänt. Rätt, eller ska ett blad kunna skriva
+  över dem?
+- Ett ifyllt skede under Allmänt gäller alla blad (bladens egna försvinner
+  och kommer inte tillbaka när det töms). Rätt?
+- Måtten i m skrivs med två–tre decimaler (3,45 och 3,455), i cm med en
+  (345,5). Lagom?
+- Logotypen läggs 40 mm bred med nedre vänstra hörnet där man klickar.
+  Lagom, eller hellre i ramens hörn?
 
 **0.10.38 efter provning** (Claudes val, se PLAN.md)
 - Dörrar och fönster har nu var sina rader i fasaden för karm, glas, foder,

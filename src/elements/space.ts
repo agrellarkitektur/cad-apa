@@ -1,3 +1,4 @@
+import { areaText } from '../core/general';
 import type { Element } from '../core/model';
 import { markerPen } from '../repr/markerPens';
 import { effectivePen, withOwnPen } from '../repr/ownPen';
@@ -60,7 +61,7 @@ export const spaceType: ElementType<SpaceParams> = {
         case 'nummer':
           return roomNumbersFor(ctx).get(el.id) ?? '';
         case 'area':
-          return formatArea(areaOf(pts));
+          return formatArea(areaOf(pts), ctx.style.general?.areaDecimals);
         case 'takhöjd':
         case 'th':
           return p.ceilingHeight ? p.ceilingHeight.toLocaleString('sv-SE') : '';
@@ -128,9 +129,7 @@ export function areaOf(pts: readonly Vec2[]): number {
   return Math.abs(signedArea(pts)) / 1e6;
 }
 
-// Ett talformat att återanvända: toLocaleString skapar ett nytt för varje anrop.
-const AREA = new Intl.NumberFormat('sv-SE', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
-
-export function formatArea(m2: number): string {
-  return `${AREA.format(m2)} m²`;
+/** En area med stilbokens decimaler (0.10.39; en som förval). */
+export function formatArea(m2: number, decimals = 1): string {
+  return areaText(m2, decimals);
 }

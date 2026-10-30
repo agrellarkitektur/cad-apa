@@ -23,7 +23,7 @@ export const MARK_TEXT = 2;
 const SAME_LEVEL = 50;
 
 /** Höjden som text, med projektets decimaler. */
-export const groundText = (ctx: PlanContext, h: number): string => groundLevelText(ctx.doc.site, h);
+export const groundText = (ctx: PlanContext, h: number): string => groundLevelText(ctx.doc, h);
 
 /**
  * En text, understruken när `underline` är satt: strecket ligger strax
@@ -156,7 +156,7 @@ export function wallLittera(ctx: PlanContext, el: Element<any>): string {
   const p = ctx.params<GroundParams>(el);
   if (p.name?.trim()) return p.name.trim();
   const walls = ctx.memo('ground-walls', () => groundObjects(ctx).filter((e) => ctx.params<GroundParams>(e).kind === 'wall').map((e) => e.id));
-  return litteraText(ctx.doc.site, 'M', Math.max(1, walls.indexOf(el.id) + 1));
+  return litteraText(ctx.doc, 'M', Math.max(1, walls.indexOf(el.id) + 1));
 }
 
 /**

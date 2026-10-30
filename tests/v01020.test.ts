@@ -28,17 +28,19 @@ const ofPart = (ps: Primitive[], id: string, part: string): Primitive[] => ps.fi
 
 describe('markhöjdernas text och littera', () => {
   it('skrivs med två decimaler som förval, och tre när projektet vill', () => {
-    const site = { datum: 65, ground: {} };
-    expect(groundLevelText(site, 1234)).toBe('+66,23');
-    expect(groundLevelText({ datum: 65, ground: { levelDecimals: 3 } }, 1234)).toBe('+66,234');
-    expect(groundLevelText(undefined, -500)).toBe('−0,50');
-    expect(groundLevelText(site, -65000)).toBe('±0,00');
+    const site = { datum: 65, ground: {} } as never;
+    expect(groundLevelText({ site }, 1234)).toBe('+66,23');
+    // Platsens gamla val gäller tills stilboken har ett (0.10.39).
+    expect(groundLevelText({ site: { datum: 65, ground: { levelDecimals: 3 } } as never }, 1234)).toBe('+66,234');
+    expect(groundLevelText({ site, graphics: { general: { groundDecimals: 1 } } }, 1234)).toBe('+66,2');
+    expect(groundLevelText({}, -500)).toBe('−0,50');
+    expect(groundLevelText({ site }, -65000)).toBe('±0,00');
   });
 
   it('litterat får projektets antal siffror', () => {
-    expect(litteraText(undefined, 'M', 1)).toBe('M01');
-    expect(litteraText({ ground: { litteraDigits: 3 } }, 'M', 12)).toBe('M012');
-    expect(litteraText({ ground: { litteraDigits: 1 } }, 'T', 7)).toBe('T7');
+    expect(litteraText({}, 'M', 1)).toBe('M01');
+    expect(litteraText({ site: { ground: { litteraDigits: 3 } } as never }, 'M', 12)).toBe('M012');
+    expect(litteraText({ graphics: { general: { litteraDigits: 1 } } }, 'T', 7)).toBe('T7');
   });
 });
 

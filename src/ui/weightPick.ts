@@ -1,5 +1,16 @@
-import { PEN_COLORS, PEN_WEIGHTS } from '../elements/drawing2d';
+import { PEN_COLORS } from '../elements/drawing2d';
+import { DEFAULT_WEIGHTS } from '../core/general';
 import { escapeHtml } from './labels';
+
+let source: () => readonly number[] = () => DEFAULT_WEIGHTS;
+
+/** Var tjocklekstabellen kommer ifrån (0.10.39): stilbokens *Allmänt*. Sätts när appen startar. */
+export function setWeightSource(fn: () => readonly number[]): void {
+  source = fn;
+}
+
+/** Tjocklekarna som går att välja (utan 0, *Ingen linje*). */
+export const currentWeights = (): readonly number[] => source();
 
 /**
  * Val av linjetjocklek som en tabell (0.8.14): en rad per tjocklek med
@@ -11,7 +22,8 @@ import { escapeHtml } from './labels';
 export function weightPicker(name: string, current: number, attrs: string, unit = ''): string {
   const comma = (n: number) => n.toLocaleString('sv-SE', { minimumFractionDigits: 2 });
   const sw = (w: number) => `<i class="wp-swatch" style="background:${PEN_COLORS[w]?.color ?? 'transparent'}"></i>`;
-  const weights = PEN_WEIGHTS.includes(current) ? PEN_WEIGHTS : [...PEN_WEIGHTS, current].sort((a, b) => a - b);
+  const table = [0, ...source()];
+  const weights = table.includes(current) ? table : [...table, current].sort((a, b) => a - b);
   const rows = weights
     .map(
       (w) =>

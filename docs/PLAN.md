@@ -3521,7 +3521,7 @@ in var som helst efter A, och bara A ger nytt format:
   2D, ett arbetsblad, en annan vy, DXF/bild; marken i 2D och 3D per kategori ✓
 - **E. 0.10.36 Pennor och ställen** (tavla 3; mellanstor; med penn- och
   linjesystemet) ✓
-- **F. 0.10.39 Projektet › Allmänt** (mellanstor; förut 0.10.37)
+- **F. 0.10.39 Projektet › Allmänt** (mellanstor; förut 0.10.37) ✓
 - **G. 0.10.40 Stilboken ut och in** (mellanstor; två öppna frågor: var
   mallen för nya projekt ligger, och om bladmallar och stämplar följer med;
   förut 0.10.38)
@@ -3842,6 +3842,50 @@ Playwright mot `dist/` (Fasader och Sektioner i stilboken).*
 
 *Gjordes inte:* egna gruppnamn per vytyp (fasaden säger *möbler och rum*
 fast rummen inte har någon rad där), en rad för taklinjerna i snittzonen.
+
+### 0.10.39 Projektet › Allmänt ✓
+
+Mellanstor, samma format (valfria fält). Carl August 30 oktober: stilboken
+är det som återanvänds mellan projekt (kontorets uppgifter, typsnitt och
+textstorlek, höjdsystem och decimaler, enheter, litterats siffror,
+tjocklekstabellen); projektets uppgifter (namn, nummer, fastighet, skede)
+ligger i projektet och visas under *Allmänt* men följer inte med
+stilboken. Smarttext-taggarna läser från båda.
+
+*Gjord 30 oktober, i en session. Samma format (25); `office` och
+`general` i stilbokens resurser och `logo` på underlagen är valfria.
+Testerna: 785. Se UTVECKLING.md, *Projektet › Allmänt*. Claudes val:
+**kontorets taggar** heter `{företag}`, `{kontorsadress}`, `{telefon}`,
+`{e-post}`, `{webb}` och `{ansvarig}`, plus egna; de är inga fält på
+bladen (syns inte i bladets fälttabell), utom när projektet har ett fält
+med samma namn, som går före när det är ifyllt (projektets *ansvarig*
+finns som tomt förval sedan 0.8.10, så kontorets gäller tills man fyller i
+den). **Projektnummer** är det gamla fältet *uppdragsnummer*, med den nya
+inbyggda taggen `{projektnummer}`. **Skedet** under Allmänt gäller alla
+blad när det är ifyllt (som kryss i *Projekt*); tomt har bladen sina egna,
+och de som fanns före är borta (som när ett fält slutar gälla hela
+projektet). **Logotypen** är en bild i projektets filer (högst 1 024 px);
+*Lägg in logotypen här* i högerklicksmenyn på ett blad, mallblad eller en
+stämpel lägger ett underlag med `logo: true`, 40 mm brett, som får den nya
+bilden (lika bred) när logotypen byts; tas logotypen bort har de kvar
+bilden. **Markhöjdernas decimaler och litterats siffror** flyttade från
+Platsens dialog till stilboken; Platsens gamla värden gäller tills
+stilboken har egna, och höjdsystemet tar Platsens (ur Höjdkurvor) som
+förval. **Nivåmarkörernas decimaler** (tre som förut) är ett eget val.
+**Enheter**: måttens enhet (mm 3450, cm 345, m 3,45 med två–tre
+decimaler) och areornas decimaler (0–2, en som förut). **Textstorleken**
+är textverktygets förval tills man väljer en annan höjd i verktygsraden.
+**Typsnittet** är bara osifont (fler kräver inbäddning i PDF:en).
+**Tjocklekstabellen** skrivs som tal med mellanslag och gäller listorna i
+stilboken, panelerna och verktygen; en tjocklek som redan används syns
+ändå där. Provat i Playwright mot `dist/` (fälten, logotypen, skedet, en
+text med `{företag} · {skede}` och logotypen på ett blad).*
+
+*Gjordes inte:* logotypens bild följer inte med stilbokens export (bilderna
+bor i projektet; hör till 0.10.40, som texturerna), *RH 2000* i appens
+egna texter (Platsens dialog, panelerna) följer inte höjdsystemet (bara
+`{höjdsystem}` gör det), fler typsnitt, och panelens rubrik säger
+*Underlag* också för logotypen.
 
 ### 0.11 Trappor · *nytt format*
 

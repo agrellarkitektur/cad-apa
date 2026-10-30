@@ -1,5 +1,6 @@
 import { isMaster, type Id, type ProjectDoc, type Sheet } from './model';
 import type { DocStore, TxBuilder } from './store';
+import { officeTagKeys } from './general';
 
 /**
  * Smarta fält (0.8.10, format 10). Allt inom klamrar i en text på ett
@@ -20,6 +21,8 @@ export function fieldKey(name: string): string {
 /** Inbyggd smarttext, som räknas fram av sig själv, och vad den betyder. */
 export const BUILT_IN: [string, string][] = [
   ['projekt', 'Projektets namn'],
+  ['projektnummer', 'Projektets nummer (fältet uppdragsnummer)'],
+  ['höjdsystem', 'Höjdsystemet ur stilboken, t.ex. RH 2000'],
   ['ritningsnummer', 'Bladets ritningsnummer'],
   ['innehåll', 'Bladets namn'],
   ['mapp', 'Mappen bladet ligger i, t.ex. BYGGLOV'],
@@ -83,11 +86,14 @@ const label = (name: string) => name.charAt(0).toUpperCase() + name.slice(1);
  * bladen men inte används längre. Inbyggd smarttext är inga fält, utom
  * skalan som går att skriva över.
  */
-export function fieldsOf(doc: Pick<ProjectDoc, 'elements' | 'worksheets' | 'project'>, sheets: readonly Sheet[]): FieldInfo[] {
+export function fieldsOf(doc: Pick<ProjectDoc, 'elements' | 'worksheets' | 'project'> & Partial<Pick<ProjectDoc, 'graphics'>>, sheets: readonly Sheet[]): FieldInfo[] {
+  const office = officeTagKeys(doc.graphics?.office);
   const found = new Map<string, FieldInfo>();
   const add = (name: string, used: boolean) => {
     const key = fieldKey(name);
     if (BUILT_IN_KEYS.has(key) && !OVERRIDABLE.has(key)) return;
+    // Kontorets taggar (0.10.39) kommer ur stilboken, om projektet inte har fältet.
+    if (office.has(key) && !(key in doc.project.fields)) return;
     const f = found.get(key);
     if (f) f.used ||= used;
     else found.set(key, { key, label: label(used ? name.trim() : key), shared: key in doc.project.fields, used });

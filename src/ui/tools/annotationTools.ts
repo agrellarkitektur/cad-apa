@@ -1,4 +1,5 @@
 import { defaultSheet } from '../../core/viewCategories';
+import { docGeneral } from '../../core/general';
 import { addElements } from '../../core/commands';
 import type { Element, Id } from '../../core/model';
 import { dimensionPrims, pointAt, type DimensionParams, type DimPoint } from '../../elements/annotation';
@@ -239,7 +240,14 @@ export class TextTool implements ViewTool {
   private host: ToolHost;
   private at: Vec2 | null = null;
   text = 'TEXT';
-  height = 2.5;
+  /** Höjden som valts i verktygsraden; null = stilbokens textstorlek (0.10.39). */
+  private chosenHeight: number | null = null;
+  get height(): number {
+    return this.chosenHeight ?? docGeneral(this.host.store.doc).textSize;
+  }
+  set height(h: number) {
+    this.chosenHeight = h;
+  }
   /** Fet stil (på blad sedan 0.8.7, överallt sedan 0.8.8). */
   bold = false;
 

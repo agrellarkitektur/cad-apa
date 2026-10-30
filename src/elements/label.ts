@@ -103,7 +103,7 @@ export function labelNumber(ctx: Pick<PlanContext, 'doc' | 'memo'>, el: Element<
   const own = (el.params as Partial<LabelParams>).number?.trim();
   if (own) return own;
   const n = ctx.memo('label-numbers', () => labelNumbers(ctx.doc)).get(el.id);
-  return n ? litteraText(ctx.doc.site, '', n) : '';
+  return n ? litteraText(ctx.doc, '', n) : '';
 }
 
 /** Ett fält ur ett objekt som ledaren pekar på. */
@@ -122,7 +122,7 @@ function objectField(ctx: PlanContext, el: Element<any>, name: string): string {
     case 'area': {
       // Konturen med bågarna som korta raka bitar (takfall, bjälklag, markyta).
       const shape = Array.isArray(p.outline) ? { shape: 'polyline' as const, points: p.outline as [number, number][], bulges: p.bulges as number[] | undefined, closed: true } : null;
-      return shape && isClosed(shape) ? formatArea(areaOf(shapePoints(shape).points)) : '';
+      return shape && isClosed(shape) ? formatArea(areaOf(shapePoints(shape).points), ctx.style.general?.areaDecimals) : '';
     }
     case 'bredd':
       return mm(p.width ?? p.thickness);

@@ -1,3 +1,4 @@
+import { normalizeGeneral, normalizeOffice, type GeneralSettings, type OfficeInfo } from './general';
 import type { LeaderAttach, LeaderEnd } from '../elements/leader';
 import { normalizeFillTypes, type CustomFillType, type HatchLine } from './fillTypes';
 import { normalizeLineTypes, type CustomLineType } from './lineTypes';
@@ -134,6 +135,10 @@ export interface StyleResources {
    * numreras efter ställena (`penTable`).
    */
   penList?: NumberedPen[];
+  /** Kontorets uppgifter (0.10.39): företagsnamn, logotyp, kontaktuppgifter, ansvarig och egna taggar. */
+  office?: OfficeInfo;
+  /** Allmänna inställningar (0.10.39): textstorlek, höjdsystem och decimaler, enheter, litterats siffror, tjocklekar. */
+  general?: GeneralSettings;
 }
 
 /** En penna i projektets lista (0.10.36): färgen som i penntabellen ("ink", "muted" eller #rrggbb; utelämnad = svart). */
@@ -456,6 +461,8 @@ export function normalizeStyle(data: any): StyleSheet {
     ...(normalizeMaterials(data.materials) ? { materials: normalizeMaterials(data.materials)! } : {}),
     ...(normalizeColorSets(data.colorSets) ? { colorSets: normalizeColorSets(data.colorSets)! } : {}),
     ...(normalizePenList(data.penList) ? { penList: normalizePenList(data.penList)! } : {}),
+    ...(normalizeOffice(data.office) ? { office: normalizeOffice(data.office)! } : {}),
+    ...(normalizeGeneral(data.general) ? { general: normalizeGeneral(data.general)! } : {}),
   };
 }
 

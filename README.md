@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.38** (alfa); nästa är **0.10.39 Projektet › Allmänt**,
+**0.10.39** (alfa); nästa är **0.10.40 Stilboken ut och in**,
 och efter stilinställningarna och pennorna (0.10.32–0.10.40) **0.11 Trappor**.
 
 ## Vad som fungerar
@@ -1149,6 +1149,39 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.39, Projektet › Allmänt (samma filformat, 25):
+- **Kontoret i stilboken**: under *Allmänt* står företagsnamn, adress,
+  telefon, e-post, webbplats, ansvarig och logotyp. De följer med
+  stilboken till andra projekt (*Exportera…*; logotypens bild stannar i
+  projektet tills 0.10.40)
+- **Projektet**: projektnamn, projektnummer (fältet uppdragsnummer),
+  fastighet och skede står på samma sida men hör till projektet och följer
+  inte med stilboken. Ett ifyllt skede gäller alla blad; tomt har bladen
+  sina egna
+- **Smarttext**: en tabell med alla taggar och deras värden: kontorets
+  (`{företag}`, `{kontorsadress}`, `{telefon}`, `{e-post}`, `{webb}`,
+  `{ansvarig}` och egna, t.ex. `{org.nr}`), projektets (`{projekt}`,
+  `{projektnummer}`, `{fastighet}`, `{skede}` och projektets fält) och de
+  inbyggda (nya: `{projektnummer}` och `{höjdsystem}`). *Ny tagg i
+  kontoret…* och *Ny tagg i projektet…* lägger till egna. Ett projektfält
+  med samma namn som en kontorstagg går före när det är ifyllt (projektets
+  *ansvarig* är tom som förval, så kontorets gäller). Mallblad, blad och
+  stämplar läser taggarna som förut
+- **Logotypen på papperet**: högerklicka på ett blad, ett mallblad eller en
+  stämpel och välj *Lägg in logotypen här*. Den är en bild som de andra
+  underlagen, 40 mm bred; byts logotypen i stilboken byts den överallt
+- **Text, höjder och enheter**: texthöjd för ny text (textverktygets
+  förval), höjdsystem (`{höjdsystem}`; förval Platsens, annars RH 2000),
+  decimaler i nivåmarkörerna (tre som förut) och i markhöjderna, siffror i
+  littera, måttens enhet (mm, cm eller m) och decimaler i areorna (en som
+  förut). Markhöjdernas decimaler och litterats siffror låg förut under
+  Platsens inställningar; det som är valt där gäller tills stilboken får
+  ett eget värde. Typsnittet är osifont (fler kräver att PDF-exporten
+  bäddar in dem)
+- **Tjocklekstabellen**: tjocklekarna som listorna visar (stilboken,
+  pennorna, 2D-formerna, markörerna), skrivna med mellanslag mellan.
+  *Återställ* ger förvalen 0,13–1,4
 
 Version 0.10.38, snitt- och konturlinjer i fasader och sektioner (samma filformat, 25):
 - **Konturlinjer per objekt i fasader och sektioner**: grupperna *Väggar*,

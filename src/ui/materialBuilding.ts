@@ -1,6 +1,7 @@
 import type { Material, StyleResources } from '../core/graphics';
 import { fillTypeList } from '../core/fillTypes';
-import { FILL_COLOR, PEN_WEIGHTS } from '../elements/drawing2d';
+import { FILL_COLOR } from '../elements/drawing2d';
+import { currentWeights } from './weightPick';
 import { escapeHtml } from './labels';
 
 /**
@@ -30,7 +31,7 @@ export function buildingFields(m: Material, attrs: (key: string) => string, styl
   const surface = patternValue(m.surface);
   const color = (key: string, f: Record<string, unknown> | undefined) => `<label class="field"><span>Färg</span><input type="color" ${attrs(key)} value="${escapeHtml(typeof f?.fillColor === 'string' ? f.fillColor : FILL_COLOR)}"></label>`;
   const pen = m.pen?.weight ?? 0;
-  const penOpts = [`<option value=""${pen ? '' : ' selected'}>Stilbokens</option>`, ...PEN_WEIGHTS.filter((w) => w > 0).map((w) => `<option value="${w}"${w === pen ? ' selected' : ''}>${w.toLocaleString('sv-SE')} mm</option>`)].join('');
+  const penOpts = [`<option value=""${pen ? '' : ' selected'}>Stilbokens</option>`, ...currentWeights().map((w) => `<option value="${w}"${w === pen ? ' selected' : ''}>${w.toLocaleString('sv-SE')} mm</option>`)].join('');
   return `<div class="fields">
     <label class="field"><span>Snittet i sektion</span><select ${attrs('matCut')}>${patternOptions(cut, 'Som stilboken', style)}</select></label>${cut ? color('matCutColor', m.cut) : ''}
     <label class="field"><span>Ytan i fasad</span><select ${attrs('matSurface')}>${patternOptions(surface, 'Ingen', style)}</select></label>${surface ? color('matSurfaceColor', m.surface) : ''}
