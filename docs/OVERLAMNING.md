@@ -4,10 +4,19 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.33.
+**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.34.
 
 ## Läget
 
+- **0.10.34 Radkontrollerna är klar** (samma format, 25; favoritseten
+  `colorSets` i stilboken är valfria). Runda knappar för tjocklek,
+  linjetyp och färg, tjockleksraden med *Eget*, den sökbara
+  linjetypslistan med *Lägg till egen…*, färgpanelen (förval, favoriter i
+  set, färgfält, hex, opacitet där det finns), textvalsknappar,
+  ikonknappar för återställ och ta bort, Innehåll som knappar med symbol,
+  sök och *Vanliga/Alla*. Bara i stilboken. Testerna: 747 på ca 17 s.
+  Provat i Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes val i
+  PLAN.md.
 - **0.10.33 Avvikelser och kategorier i vyn är klar** (samma format, 25;
   `ortho3d` på markobjekten är valfritt). Ockra prick och *Återställ* på
   ändrade rader (en kategori mot förvalet, en vy mot kategorin), *Visa
@@ -33,9 +42,12 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **0.10.30**, **0.10.29**, **0.10.28.3**, **0.10.28.2**, **0.10.28.1**,
   **0.10.28**, **0.10.27**, **0.10.26**, **0.10.25.1** och **0.10.25**: se
   PLAN.md.
-- **Publicerad:** 0.10.33 pushad till `main` 30 oktober (se git och
+- **Publicerad:** 0.10.34 pushad till `main` 30 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.10.34:** inget i ritningarna; bara
+  stilbokens utseende. Under *Vanliga* (förvalet) döljs *Snittet i
+  planen* och några sällan ändrade kryss under Innehåll; *Alla* visar dem.
 - **Märks i hans ritningar efter 0.10.33:** inget i befintliga projekt
   (de behåller sina kategorier; de nya finns i nya projekt). Vyer som
   avviker från sin kategori får en ockra punkt i projektträdet. *Ny vy* på
@@ -69,14 +81,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare:** 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare:** 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.33` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.34` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.33 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.34 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -149,12 +161,12 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   ~~0.10.29 Ritandet~~, ~~0.10.30 Teckenförklaring~~, ~~0.10.31 Texturer
   i 3D och ortofotot på marken~~, ~~Utredning: stilinställningar~~,
   ~~0.10.32 Tre nivåer med arv~~, ~~0.10.33 Avvikelser och kategorier i
-  vyn~~ (klara)
+  vyn~~, ~~0.10.34 Radkontrollerna~~ (klara)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **Stilinställningarna, 0.10.34–0.10.38** (F kan skjutas in var som
-  helst): **0.10.34 Radkontrollerna** (mellanstor, på tur), **0.10.35 Underlag i
-  vyn** (stor), **0.10.36 Pennor och ställen** (mellanstor), **0.10.37
+- **Stilinställningarna, 0.10.35–0.10.38** (F kan skjutas in var som
+  helst): **0.10.35 Underlag i vyn** (stor, på tur; risk för två
+  sessioner), **0.10.36 Pennor och ställen** (mellanstor), **0.10.37
   Projektet › Allmänt** (mellanstor), **0.10.38 Stilboken ut och in**
   (mellanstor; två öppna frågor)
 - **0.11 Trappor** (nytt format; med *Syns också på*)
@@ -173,15 +185,16 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.34 Radkontrollerna** (tavla 5; mellanstor, samma format; favoritset
-som valfritt fält). Läs synpunkterna först (C under Planerat, *Beslut
-29–30 oktober*, *Radkontrollerna*) och sortera Inkorgen om den har något.
-De runda knapparna för tjocklek, linjetyp och färg utan rullgardinspil,
-tjockleksraden med eget värde, den sökbara linjetypslistan med *Lägg till
-egen…*, färgpanelen med förval, favoriter i set, färgfält, hex och
-opacitet, textvalsknapparna, ikonknappar för återställ och ta bort, sök
-och *Vanliga/Alla* i panelen. Bara utseende. Prickarna från 0.10.33
-(`.sb-mark` i `markRows`) ska sitta kvar på raderna. Ställ frågorna om
+**0.10.35 Underlag i vyn** (stor, samma format; valfritt fält på vyn;
+risk för två sessioner, dela då upp den). Läs synpunkterna först (D under
+Planerat, *Beslut 29–30 oktober*, *Underlag i vyn*) och sortera Inkorgen
+om den har något. Underlag som del av vyn: en våning, Platsen, ortofotot
+i 2D, ett arbetsblad, en annan vy, DXF/bild; under/över, tonad/gråskala/
+konturer, procent, *Lägg till underlag…*; följer med till bladet. Dagens
+Kalkera blir en genväg som lägger ett underlag. Här också om marken syns
+i 2D och 3D per kategori. Provet: illustrationsplanen på flygfoto. Raderna
+i stilboken använder radkontrollerna från 0.10.34 (`rowControls.ts`: en
+lista blir en textknapp av sig själv). Ställ frågorna om 0.10.34 och
 0.10.33 först, när han provat.
 
 Höjdkurvors del av ortofotot (två rader i `js/app.js` och `js/utbyte.js`,
@@ -193,7 +206,7 @@ Höjdkurvors repo; fälten står i PLAN.md under 0.10.31.
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.10.33.
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.10.34 och 0.10.33.
 
 **Besvarade 30 oktober** (Claudes val gäller): 0.10.32 alla fyra
 (vytypens kategori när ingen vy är sparad; kategoribyte släpper vyns
@@ -201,6 +214,17 @@ om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.10.33.
 som kategorier, gjort i 0.10.33). 0.10.31: ortofotot där marken saknar
 material, plus valet *Ortofoto* (gjort i 0.10.33); bildens sida i mm.
 0.10.30: rutornas mått lagom så länge; en rad "Eget" per fyllning (prova).
+
+**0.10.34 efter provning** (Claudes val, se PLAN.md)
+- *Vanliga* är förvalet och döljer *Snittet i planen* och sällan ändrade
+  kryss under Innehåll (det ändrade syns alltid). Rätt urval, eller ska
+  *Alla* vara förvalet?
+- Favoriterna: plus sparar i det valda setet, högerklick tar bort en.
+  Räcker det, eller behövs en tydligare knapp för att ta bort?
+- Pennorna har ingen opacitet (bara åtgärdernas fyllning och bakgrund).
+  Behövs det?
+- Visa-menyn har kvar sina kryssrutor. Ska den också få knappar med
+  symbol, som Innehåll?
 
 **0.10.33 efter provning** (Claudes val, se PLAN.md)
 - *Återställ* på en ändrad rad syns när musen är över raden (pricken

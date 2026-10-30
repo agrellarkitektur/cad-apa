@@ -1,5 +1,6 @@
 import type { Material, StyleResources } from '../../core/graphics';
 import { escapeHtml } from '../labels';
+import { icons } from '../icons';
 import { MATERIAL_3D_COLOR, savedSwatch } from '../fillPanel';
 import { BUILDING_KEYS, buildingChange, buildingFields } from '../materialBuilding';
 
@@ -26,7 +27,7 @@ export function materialSection(style: StyleResources, uses: ReadonlyMap<string,
           <button class="btn" data-action="material-up" data-material-id="${id}"${i ? '' : ' disabled'} title="Flytta upp" aria-label="Flytta upp">↑</button>
           <button class="btn" data-action="material-down" data-material-id="${id}"${i < list.length - 1 ? '' : ' disabled'} title="Flytta ned" aria-label="Flytta ned">↓</button>
         </span>
-        <button class="btn" data-action="material-remove" data-material-id="${id}" title="${n ? `Används av ${n}; de behåller hur de ser ut i planen och får egen fyllning` : 'Används inte'}">Ta bort</button>
+        <button class="icon-btn rc-icon" data-action="material-remove" data-material-id="${id}" title="Ta bort. ${n ? `Används av ${n}; de behåller hur de ser ut i planen och får egen fyllning` : 'Används inte'}" aria-label="Ta bort">${icons.trash}</button>
         <div class="material-props">
           ${check('ground', 'Mark')}${check('building', 'Byggnad')}
           ${color('plan', 'Planen', planColor)}

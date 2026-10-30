@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.33** (alfa); nästa är **0.10.34 Radkontrollerna**,
+**0.10.34** (alfa); nästa är **0.10.35 Underlag i vyn**,
 och efter stilinställningarna (0.10.32–0.10.38) **0.11 Trappor**.
 
 ## Vad som fungerar
@@ -1149,6 +1149,30 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.10.34, radkontrollerna i stilboken (samma filformat, 25):
+- **Tjocklek, linjetyp och färg som runda knappar** på pennornas rader,
+  som bara visar det som gäller. Tjockleken öppnar en rad åt sidan med
+  tjocklekarna och *Eget* (skriv ett värde i mm och tryck Enter).
+  Linjetypen öppnar en sökbar lista med symbol och namn, och *Lägg till
+  egen…* (en ny linjetyp under Resurser)
+- **Färgpanelen**: förval (svart, grått, ljusgrått, vitt, rött, ockra,
+  blått), **favoriter i set** (t.ex. "Bygglov"; plus sparar den aktuella
+  färgen, högerklick tar bort en, och setet byts, döps om eller tas bort i
+  listan bredvid), ett färgfält med tonskala, hexkod och, där det finns,
+  opacitet (åtgärdernas fyllning och bakgrund). Favoriterna följer med
+  stilboken
+- **Textval** (detaljnivåer, fyllning, kontur, ledarnas ände …) är samma
+  sorts knapp, som öppnar listan
+- **Återställ och ta bort är ikonknappar** (pennor, material, linjetyper,
+  fyllningstyper och radens Återställ)
+- **Innehåll** är knappar med symbol och text, i rader; samma kryss som
+  under Visa i vyn
+- **Sök och Vanliga/Alla** i stilbokens rubrikrad. Sök döljer raderna som
+  inte innehåller ordet (en rubrik som träffar visar hela delen). Under
+  *Vanliga* döljs det som sällan ändras (snittets pennor i planen och
+  några kryss under Innehåll, t.ex. 3D-vyns linjer och de streckade
+  dolda linjerna i fasad), utom det som är ändrat
 
 Version 0.10.33, avvikelser och kategorier i vyn (samma filformat, 25):
 - **Ockra prick på ändrade rader** i stilboken: i en kategori det som

@@ -122,6 +122,29 @@ export interface StyleResources {
    * objekt med det.
    */
   materials?: Material[];
+  /**
+   * Favoritfärger i set (0.10.34), t.ex. "Bygglov": färgpanelen i
+   * stilbokens rader visar dem och sparar den aktuella färgen i ett set.
+   */
+  colorSets?: ColorSet[];
+}
+
+/** Ett namngivet set med favoritfärger (0.10.34), färgerna som `#rrggbb`. */
+export interface ColorSet {
+  name: string;
+  colors: string[];
+}
+
+/** Favoritseten från fil; set utan namn hoppas över, och färger som inte är `#rrggbb`. */
+export function normalizeColorSets(v: unknown): ColorSet[] | null {
+  if (!Array.isArray(v)) return null;
+  const out: ColorSet[] = [];
+  for (const s of v) {
+    if (!s || typeof s !== 'object' || typeof s.name !== 'string' || !s.name.trim()) continue;
+    const colors = Array.isArray(s.colors) ? [...new Set((s.colors as unknown[]).filter((c): c is string => typeof c === 'string' && /^#[0-9a-f]{6}$/i.test(c)).map((c) => c.toLowerCase()))] : [];
+    out.push({ name: s.name.trim(), colors });
+  }
+  return out.length ? out : null;
 }
 
 /**
@@ -402,6 +425,7 @@ export function normalizeStyle(data: any): StyleSheet {
     ...(normalizeLineTypes(data.lineTypes) ? { lineTypes: normalizeLineTypes(data.lineTypes)! } : {}),
     ...(normalizeFillTypes(data.fillTypes) ? { fillTypes: normalizeFillTypes(data.fillTypes)! } : {}),
     ...(normalizeMaterials(data.materials) ? { materials: normalizeMaterials(data.materials)! } : {}),
+    ...(normalizeColorSets(data.colorSets) ? { colorSets: normalizeColorSets(data.colorSets)! } : {}),
   };
 }
 

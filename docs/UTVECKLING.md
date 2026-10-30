@@ -1640,6 +1640,39 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Radkontrollerna (0.10.34, format 25)
+
+- **`ui/style/rowControls.ts`**: `enhanceRowControls(root, opts)` körs i
+  `StyleDialog.render` efter `markRows`. Den döljer fälten (`.rc-src`,
+  `hidden`) och lägger en knapp `.rc-val` efter dem: `select` → textval
+  (`.rc-text`), eller linjetyp (`.rc-line`) när något val har `data-dash`
+  (`lineTypeOptions` sätter det); `input[type=color]` → `.rc-color`;
+  `details.weight-pick` → `.rc-weight`. En lista med klassen `rc-native`
+  får ingen knapp. Knappen skriver i fältet och skickar `change`
+  (`commit`), så `onChange` och `apply…Field` är som förut. Ett eget
+  värde i tjockleken blir en radioknapp till med samma attribut.
+- **Opacitet** i färgpanelen: ett `input.rc-alpha` (dolt) i samma förälder
+  som färgfältet; panelen skickar `change` på det för sig. Åtgärdernas
+  fyllning och bakgrund har det (`opacity`, `bgOpacity`).
+- **Panelen** (`Popover`, en åt gången, skapas först när den behövs)
+  ligger i `body` och hittar sitt fält med en nyckel ur fältets
+  data-attribut (`keyOf`), så att färgpanelen kan vara kvar när dialogen
+  ritas om efter en ändring (`reattach`); de andra stängs. Ett drag i
+  färgfältet förhandsvisar och sätter färgen när knappen släpps.
+  `hexToHsv` och `hsvToHex` i `ui/style/colors.ts`.
+- **Favoritseten** är `StyleResources.colorSets` (`ColorSet`: `name`,
+  `colors` som `#rrggbb`), läst med `normalizeColorSets` i
+  `normalizeStyle`. Dialogen ger panelen `colorSets`, `setColorSets` och
+  `addLineType` (`RowControlOptions`).
+- **Innehåll**: `label.check.sb-tog` med kryssrutan dold och symbolen ur
+  `contentIcon(key, group)` (`ui/style/contentIcons.ts`).
+- **Sök och Vanliga/Alla**: `StyleDialog.applyFilter` sätter `.sb-miss` på
+  raderna (`FILTER_ROWS`) och delarna som inte träffar, och `.sb-common` på
+  `.sb-main`; under den döljer CSS `.sb-rare` som inte har `.sb-changed`.
+  Sällan ändrat: `RARE_CONTENT` och delen *Snittet i planen* i `pens.ts`.
+- Stilarna i `styles/radkontroller.css` (sist i `app.css`).
+- Tester: `tests/v01034.test.ts`.
+
 ## Avvikelser och kategorier i vyn (0.10.33, format 25)
 
 - **En vys stil** är `effectiveCategory(cat, v.overrides)`: kategorin med

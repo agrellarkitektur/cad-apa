@@ -1,6 +1,7 @@
 import type { StyleBook, StyleResources } from '../../core/graphics';
 import { formatDash, LINE_TYPES, newLineTypeId, parseDash } from '../../core/lineTypes';
 import { escapeHtml } from '../labels';
+import { icons } from '../icons';
 import { lineTypeSwatch } from '../lineTypePick';
 
 /**
@@ -20,7 +21,7 @@ export function lineTypeSection(style: StyleResources, uses: ReadonlyMap<string,
       <input type="text" data-linetype="${escapeHtml(t.id)}:name" value="${escapeHtml(t.name)}" aria-label="Namn">
       ${lineTypeSwatch(t.dash)}
       <input type="text" data-linetype="${escapeHtml(t.id)}:dash" value="${formatDash(t.dash)}" aria-label="Mönster" inputmode="decimal" autocomplete="off">
-      <button class="btn" data-action="linetype-remove" data-linetype-id="${escapeHtml(t.id)}" title="${n ? `Används av ${n}; de ritas heldragna` : 'Används inte'}">Ta bort</button>
+      <button class="icon-btn rc-icon" data-action="linetype-remove" data-linetype-id="${escapeHtml(t.id)}" title="Ta bort. ${n ? `Används av ${n}; de ritas heldragna` : 'Används inte'}" aria-label="Ta bort">${icons.trash}</button>
     </div>`;
     })
     .join('');

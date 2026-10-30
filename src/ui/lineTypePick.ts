@@ -13,7 +13,9 @@ export function lineTypeOptions(style: StyleResources | undefined, selected: str
   const key = selected ?? (first ? first.value : 'solid');
   const missing = selected && !list.some((t) => t.id === selected) ? `<option value="${escapeHtml(selected)}" selected>Saknas (heldragen)</option>` : '';
   const mixed = selected === null ? '<option selected disabled>Olika</option>' : '';
-  const opt = (t: { id: string; name: string }) => `<option value="${escapeHtml(t.id)}"${selected !== null && t.id === key ? ' selected' : ''}>${escapeHtml(t.name)}</option>`;
+  // Mönstret i `data-dash`, så att stilbokens linjetypsknapp kan visa symbolen (0.10.34).
+  const opt = (t: { id: string; name: string; dash?: readonly number[] }) =>
+    `<option value="${escapeHtml(t.id)}"${t.dash ? ` data-dash="${t.dash.join(' ')}"` : ''}${selected !== null && t.id === key ? ' selected' : ''}>${escapeHtml(t.name)}</option>`;
   const own = list.filter((t) => t.own);
   return `${mixed}${missing}${first ? opt({ id: first.value, name: first.label }) : ''}${list.filter((t) => !t.own).map(opt).join('')}${own.length ? `<optgroup label="Egna">${own.map(opt).join('')}</optgroup>` : ''}`;
 }

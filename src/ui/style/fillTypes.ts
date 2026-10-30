@@ -3,6 +3,7 @@ import { formatDash, parseDash } from '../../core/lineTypes';
 import { FILL_TYPES, newFillTypeId, type CustomFillType, type FillFamily, type FillTypeDef } from '../../core/fillTypes';
 import { parsePat } from '../../core/patFile';
 import { escapeHtml } from '../labels';
+import { icons } from '../icons';
 import { fillTypeSwatch } from '../patternPick';
 
 /**
@@ -40,7 +41,7 @@ export function fillTypeSection(style: StyleResources, uses: ReadonlyMap<string,
           <label><span>Linjer</span><select data-filltype="${id}:weight">${weightOptions(t.weight)}</select></label>
           <label><span>Måtten</span><select data-filltype="${id}:units"><option value="paper"${t.model ? '' : ' selected'}>På papper</option><option value="model"${t.model ? ' selected' : ''}>I verkligheten</option></select></label>
           <button class="btn" data-action="filltype-family-add" data-filltype-id="${id}">Ny linjefamilj</button>
-          <button class="btn" data-action="filltype-remove" data-filltype-id="${id}" title="${n ? `Används av ${n}; de ritas som skraffering` : 'Används inte'}">Ta bort</button>
+          <button class="icon-btn rc-icon" data-action="filltype-remove" data-filltype-id="${id}" title="Ta bort. ${n ? `Används av ${n}; de ritas som skraffering` : 'Används inte'}" aria-label="Ta bort">${icons.trash}</button>
         </div>
         ${rows}
       </div>`;

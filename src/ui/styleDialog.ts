@@ -51,6 +51,11 @@ import { chooseTexture } from './app/imageFile';
 import { isShown, OFF_BY_DEFAULT, setShown, showGroupsFor } from './app/showKeys';
 import { changedRows, resetRow, rowSelector } from './style/deviations';
 import type { ViewDef } from '../core/model';
+import { closeRowControl, enhanceRowControls, type RowControlOptions } from './style/rowControls';
+import { contentIcon, RARE_CONTENT } from './style/contentIcons';
+
+/** Raderna som sök och *Vanliga/Alla* (0.10.34) visar eller döljer. */
+const FILTER_ROWS = '.style-row, .pen-row, .material-row, .linetype-row, .filltype, .filltype-builtin, .tpl-row, .sb-groups label.check, .sb-show label.field, .sb-show label.check, .sb-views li';
 
 /** Det som visas till höger: Allmänt, en vytyp eller en resurs. */
 type Place = { kind: 'general' } | { kind: 'type'; type: ViewType } | { kind: 'res'; res: Resource };
@@ -88,6 +93,30 @@ export class StyleDialog {
   private viewId: string | null = null;
   /** *Visa bara avvikelser* (0.10.33). */
   private onlyChanged = false;
+  /** Sökningen i panelen (0.10.34). */
+  private query = '';
+  /** *Vanliga* (sant) eller *Alla* (0.10.34): det sällan ändrade döljs under Vanliga, utom det som är ändrat. */
+  private common = true;
+  /** Radkontrollernas koppling till stilboken (0.10.34). */
+  private controls: RowControlOptions = {
+    colorSets: () => this.book.colorSets ?? [],
+    setColorSets: (sets) => {
+      const book = { ...this.book };
+      if (sets.length) book.colorSets = sets;
+      else delete book.colorSets;
+      this.set(book, 'Ändra favoritfärger');
+    },
+    addLineType: () => {
+      const book = structuredClone(this.book);
+      addLineType(book);
+      this.place = { kind: 'res', res: 'lineTypes' };
+      this.viewId = null;
+      this.set(book, 'Ny linjetyp');
+      this.render();
+      const own = this.el.querySelectorAll<HTMLInputElement>('[data-linetype$=":name"]');
+      own[own.length - 1]?.select();
+    },
+  };
   /** Öppna en vy i appen (*Gå dit* i listan över vyer med kategorin). */
   goToView: (id: string) => void = () => {};
 
@@ -103,6 +132,12 @@ export class StyleDialog {
       void this.onClick(e);
     });
     this.el.addEventListener('change', (e) => this.onChange(e));
+    this.el.addEventListener('input', (e) => {
+      const t = e.target as HTMLElement;
+      if (!t.matches('[data-sb-search]')) return;
+      this.query = (t as HTMLInputElement).value;
+      this.applyFilter();
+    });
     store.subscribe(() => {
       if (!this.el.hidden) this.render();
     });
@@ -121,6 +156,7 @@ export class StyleDialog {
   }
 
   close(): void {
+    closeRowControl();
     this.el.hidden = true;
   }
 
@@ -197,6 +233,11 @@ export class StyleDialog {
       <header>
         <h2 id="style-title">Stilbok</h2>
         <div class="sb-head-actions">
+          <label class="sb-search">${icons.zoomIn}<input type="search" data-sb-search placeholder="Sök" aria-label="Sök inställning" value="${escapeHtml(this.query)}"></label>
+          <span class="sb-seg" role="group" aria-label="Vanliga eller alla inställningar">
+            <button class="${this.common ? 'on' : ''}" data-sb-common="1" aria-pressed="${this.common}" title="Vanliga: det som sällan ändras döljs, utom det som är ändrat">Vanliga</button>
+            <button class="${this.common ? '' : 'on'}" data-sb-common="0" aria-pressed="${!this.common}" title="Alla inställningar">Alla</button>
+          </span>
           <button class="btn" data-action="open-style" title="Läs in en stilbok (eller en äldre stilmall) från fil">Importera…</button>
           <button class="btn" data-action="save-style" title="Spara hela stilboken som fil">Exportera…</button>
         </div>
@@ -204,7 +245,7 @@ export class StyleDialog {
       </header>
       <div class="sb-body">
         <nav class="sb-rail" aria-label="Stilboken">${this.railMarkup()}</nav>
-        <div class="sb-main">${this.mainMarkup()}</div>
+        <div class="sb-main">${this.mainMarkup()}<p class="note sb-nohit" hidden>Inget i den här delen matchar sökningen.</p><p class="note sb-more" hidden>Det som sällan ändras visas under <button class="btn btn-ghost" data-sb-common="0">Alla</button>.</p></div>
       </div>
       <footer>
         <p class="note">Svart visas ljust på mörk skärm och vitt följer bakgrunden. På papper blir de svart och vitt.</p>
@@ -214,6 +255,9 @@ export class StyleDialog {
     if (guideOpen) this.el.querySelector<HTMLDetailsElement>('.filltype-guide')?.setAttribute('open', '');
     if (viewsOpen) this.el.querySelector<HTMLDetailsElement>('.sb-views')?.setAttribute('open', '');
     this.markRows();
+    const main = this.el.querySelector<HTMLElement>('.sb-main');
+    if (main) enhanceRowControls(main, this.controls);
+    this.applyFilter();
     this.el.querySelectorAll<HTMLElement>('.sb-main, .sb-rail').forEach((e, i) => (e.scrollTop = scrolled[i] ?? 0));
     if (focus) this.el.querySelector<HTMLElement>(focus)?.focus({ preventScroll: true });
   }
@@ -247,13 +291,49 @@ export class StyleDialog {
       host.classList.add('sb-changed');
       const mark = document.createElement('span');
       mark.className = 'sb-mark';
-      mark.innerHTML = `<i class="sb-dot" aria-hidden="true"></i><button type="button" class="sb-row-reset" data-sb-reset="${escapeHtml(row)}" title="Ändrad mot ${escapeHtml(above)}. Tillbaka till dess värde.">Återställ</button>`;
+      mark.innerHTML = `<i class="sb-dot" aria-hidden="true"></i><button type="button" class="sb-row-reset" data-sb-reset="${escapeHtml(row)}" title="Ändrad mot ${escapeHtml(above)}. Återställ till dess värde." aria-label="Återställ">${icons.restore}</button>`;
       const at = host.matches('.style-row, .pen-row') ? host.querySelector('.style-name') : host.matches('label.field') ? host.firstElementChild : host;
       (at ?? host).append(mark);
     }
     main.classList.toggle('only-changed', this.onlyChanged);
     const none = main.querySelector<HTMLElement>('.sb-none');
     if (none) none.hidden = !this.onlyChanged || rows.size > 0;
+  }
+
+  /**
+   * Sök och *Vanliga/Alla* (0.10.34): raderna som inte innehåller det sökta
+   * döljs (en rubrik som träffar visar hela delen), och under Vanliga det som
+   * sällan ändras (`.sb-rare`) utom det som är ändrat.
+   */
+  private applyFilter(): void {
+    const main = this.el.querySelector<HTMLElement>('.sb-main');
+    if (!main) return;
+    const q = this.query.trim().toLowerCase();
+    main.classList.toggle('sb-common', this.common && !q);
+    const text = (el: Element) => {
+      let t = el.textContent ?? '';
+      el.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>('input[type="text"], textarea, select, [aria-label]').forEach((f) => {
+        t += ` ${f.getAttribute('aria-label') ?? ''}`;
+        if (f instanceof HTMLSelectElement) t += ` ${f.selectedOptions[0]?.textContent ?? ''}`;
+        else if (!(f instanceof HTMLButtonElement)) t += ` ${f.value}`;
+      });
+      return t.toLowerCase();
+    };
+    for (const sec of main.querySelectorAll<HTMLElement>('.style-labels')) {
+      const head = q && (sec.querySelector('h3')?.textContent ?? '').toLowerCase().includes(q);
+      let any = false;
+      for (const row of sec.querySelectorAll<HTMLElement>(FILTER_ROWS)) {
+        const miss = !!q && !head && !text(row).includes(q);
+        row.classList.toggle('sb-miss', miss);
+        if (!miss) any = true;
+      }
+      for (const fs of sec.querySelectorAll<HTMLElement>('.sb-groups fieldset')) fs.classList.toggle('sb-miss', !!q && !fs.querySelector('label.check:not(.sb-miss)'));
+      sec.classList.toggle('sb-miss', !!q && !head && !any);
+    }
+    const note = main.querySelector<HTMLElement>('.sb-more');
+    if (note) note.hidden = !(this.common && !q && main.querySelector('.sb-rare:not(.sb-changed):not(:has(.sb-changed))'));
+    const empty = main.querySelector<HTMLElement>('.sb-nohit');
+    if (empty) empty.hidden = !q || !!main.querySelector('.style-labels:not(.sb-miss)');
   }
 
   private mainMarkup(): string {
@@ -364,7 +444,10 @@ export class StyleDialog {
       <div class="sb-groups">${groups
         .map(
           (g) => `<fieldset><legend>${escapeHtml(g.label)}</legend>${g.items
-            .map(([k, label]) => `<label class="check${OFF_BY_DEFAULT.has(k) ? ' off-default' : ''}"><input type="checkbox" data-cat-hide="${escapeHtml(k)}"${isShown(c.show, k) ? ' checked' : ''}> ${escapeHtml(label)}</label>`)
+            .map(
+              ([k, label]) =>
+                `<label class="check sb-tog${OFF_BY_DEFAULT.has(k) ? ' off-default' : ''}${RARE_CONTENT.has(k) ? ' sb-rare' : ''}"><input type="checkbox" data-cat-hide="${escapeHtml(k)}"${isShown(c.show, k) ? ' checked' : ''}>${contentIcon(k, g.id)}<span>${escapeHtml(label)}</span></label>`,
+            )
             .join('')}</fieldset>`,
         )
         .join('')}</div>
@@ -407,6 +490,12 @@ export class StyleDialog {
 
   private async onClick(e: Event): Promise<void> {
     const target = e.target as HTMLElement;
+    const common = target.closest<HTMLElement>('[data-sb-common]')?.dataset.sbCommon;
+    if (common !== undefined) {
+      this.common = common === '1';
+      this.render();
+      return;
+    }
     const go = target.closest<HTMLElement>('[data-sb-go]')?.dataset.sbGo;
     if (go) {
       const [kind, what] = go.split(':');
@@ -620,6 +709,7 @@ export class StyleDialog {
 
   private onChange(e: Event): void {
     const input = e.target as HTMLInputElement | HTMLSelectElement;
+    if (input.matches('[data-sb-search]')) return;
     if (input.matches('[data-sb-only]')) {
       this.onlyChanged = (input as HTMLInputElement).checked;
       this.render();
@@ -693,7 +783,7 @@ export class StyleDialog {
 function focusSelector(el: Element | null, root: HTMLElement): string | null {
   if (!(el instanceof HTMLElement) || !root.contains(el)) return null;
   if (el.id) return `#${CSS.escape(el.id)}`;
-  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-reset', 'data-sb-view', 'data-sb-goview'];
+  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview'];
   const parts = attrs.filter((a) => el.hasAttribute(a)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a)!)}"]`);
   if (!parts.length) return null;
   const v = el instanceof HTMLInputElement && el.type === 'radio' ? `[value="${CSS.escape(el.value)}"]` : '';

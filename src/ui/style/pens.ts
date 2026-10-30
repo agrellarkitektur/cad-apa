@@ -8,6 +8,10 @@ import { CONTOUR_PENS, defaultContourPen } from '../../repr/contourPens';
 import { lineTypeOptions } from '../lineTypePick';
 import { weightPicker } from '../weightPick';
 import { fromHex, toHex } from './colors';
+import { icons } from '../icons';
+
+/** Kolumnernas namn i rubriken, i knapparnas ordning. */
+const COLS = '<span class="sb-cols">tjocklek · linjetyp · färg</span>';
 
 /**
  * Pennor i stilboken: dörrarnas och fönstrens tre klasser (0.8.33) och
@@ -24,39 +28,38 @@ export function penSection(style: StyleSheet): string {
         const weight = own?.weight ?? defaultPen(key).weight;
         const linetype = own?.linetype ?? defaultPen(key).linetype;
         const reset = own
-          ? `<button class="btn" data-action="pen-reset" data-pen-key="${key}" title="Tillbaka till förvalet">Förval</button>`
+          ? `<button class="icon-btn rc-icon" data-action="pen-reset" data-pen-key="${key}" title="Tillbaka till förvalet" aria-label="Tillbaka till förvalet">${icons.restore}</button>`
           : '<span aria-hidden="true"></span>';
+        // Radkontrollerna (0.10.34): tjocklek, linjetyp och färg som runda knappar (`rowControls.ts`).
         return `<div class="pen-row">
       <div class="style-name"><b>${escapeHtml(label)}</b><span>${escapeHtml(hint)}</span></div>
-      <div class="pen-weight"><span>Tjocklek</span>${weightPicker(`pen-${key}`, weight, `data-pen="${key}:weight"`, ' mm')}</div>
-      <label><span>Färg</span><input type="color" data-pen="${key}:color" value="${toHex(own?.color ?? defaultPen(key).color ?? 'ink')}"></label>
-      <label><span>Linjetyp</span><select data-pen="${key}:linetype">${lineTypeOptions(style, linetype)}</select></label>
+      <div class="rc-ctls">${weightPicker(`pen-${key}`, weight, `data-pen="${key}:weight"`, ' mm')}<select data-pen="${key}:linetype" aria-label="Linjetyp">${lineTypeOptions(style, linetype)}</select><input type="color" data-pen="${key}:color" aria-label="Färg" value="${toHex(own?.color ?? defaultPen(key).color ?? 'ink')}"></div>
       ${reset}
     </div>`;
       })
       .join('');
   return `<section class="style-labels style-pens">
-    <h3>Pennor för dörrar och fönster</h3>
+    <h3>Pennor för dörrar och fönster${COLS}</h3>
     <p class="note">Tre klasser för dörrarnas och fönstrens delar. Gäller alla dörrar och fönster utan egen penna, på typen eller objektet. Väggens kontur ställs in under Åtgärder.</p>
     ${rows(OPENING_PENS)}
   </section>
-  <section class="style-labels style-pens">
-    <h3>Snittet i planen</h3>
+  <section class="style-labels style-pens sb-rare">
+    <h3>Snittet i planen${COLS}</h3>
     <p class="note">Det som ligger helt under planens snitthöjd ritas som vy, det som ligger helt över streckprickat där det sticker ut utanför det snittade. Snitthöjden ställs in per våning (1100 från början). Ett objekt eller en typ kan få en egen penna för det som ligger över.</p>
     ${rows(PLAN_CUT_PENS)}
   </section>
   <section class="style-labels style-pens">
-    <h3>Penna för rum</h3>
+    <h3>Penna för rum${COLS}</h3>
     <p class="note">Rummens kontur i planen, för alla rum utan egen penna på typen eller rummet. Konturen ligger under väggarna och syns mot öppningar och rumsgränser.</p>
     ${rows(ROOM_PENS)}
   </section>
   <section class="style-labels style-pens">
-    <h3>Höjdkurvor</h3>
+    <h3>Höjdkurvor${COLS}</h3>
     <p class="note">Den befintliga marken ur Höjdkurvor och marken som den blir med markobjekten, i planen och på bladen. Höjden på hela meter har kurvans färg. Grått följer skärmens tema; 3D-vyn har sina egna linjer.</p>
     ${rows(CONTOUR_PENS)}
   </section>
   <section class="style-labels style-pens">
-    <h3>Pennor för pilar och markörer</h3>
+    <h3>Pennor för pilar och markörer${COLS}</h3>
     <p class="note">Gäller hela projektet, i planen, fasaderna, sektionerna och på bladen. Färgen gäller också markörens text. Svart följer skärmens tema. Linjetypen gäller linjerna; pilspetsar och trianglar är heldragna.</p>
     ${rows(MARKER_PENS)}
   </section>`;

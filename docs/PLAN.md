@@ -3516,7 +3516,7 @@ in var som helst efter A, och bara A ger nytt format:
   kategorin*, *Gör avvikelserna till kategorins förval*, *Spara som ny
   kategori*, punkt efter vynamnet, *Stil för den här vyn…*, *Vyer med den
   här kategorin*, *Ny vy…* som föreslår kategorier
-- **C. 0.10.34 Radkontrollerna** (tavla 5; mellanstor; bara utseende)
+- **C. 0.10.34 Radkontrollerna** (tavla 5; mellanstor; bara utseende) ✓
 - **D. 0.10.35 Underlag i vyn** (stor): en våning, Platsen, ortofotot i
   2D, ett arbetsblad, en annan vy, DXF/bild; marken i 2D och 3D per kategori
 - **E. 0.10.36 Pennor och ställen** (tavla 3; mellanstor; med penn- och
@@ -3602,6 +3602,46 @@ har bara sitt innehåll. *Jämför med*, förhandsvisningen och de nya
 radkontrollerna (C) väntar. Prickarna i vytypens rad i vänsterkanten och
 på flikarna ("N ändrade" per flik) gjordes inte; antalet står i
 verktygsraden och i listan.
+
+### 0.10.34 Radkontrollerna ✓
+
+Tavla 5 i mockupen: tjocklek, linjetyp och färg som runda knappar utan
+rullgardinspil, tjockleksraden med eget värde, den sökbara
+linjetypslistan med *Lägg till egen…*, färgpanelen med förval, favoriter
+i set, färgfält, hex och opacitet, textvalsknapparna, ikonknappar för
+återställ och ta bort, sök och *Vanliga/Alla* i panelen. Bara utseende.
+
+*Gjord 30 oktober. Samma format (25); favoritseten är det valfria fältet
+`colorSets` i stilbokens resurser. Testerna: 747. Knapparna läggs på de
+vanliga fälten efter varje omritning (`ui/style/rowControls.ts`); fälten
+finns kvar dolda och får `change`, så dialogens hantering är densamma.
+Se UTVECKLING.md, *Radkontrollerna*. Claudes val: knapparna gäller hela
+stilboken (pennor, åtgärder, visning, material, fyllningstyper, texter),
+inte panelerna för objekt; tjocklekens rad har de vanliga tjocklekarna
+(0,13–1,40 och Ingen där den finns) och *Eget* med Enter; färgpanelens
+förval är svart, grått, ljusgrått, vitt, rött, ockra och blått; plus
+lägger färgen i det valda setet (det första heter *Favoriter* om inget
+finns), högerklick tar bort en favorit, och setet byts, döps om och tas
+bort i listan i panelen; ett drag i färgfältet sätter färgen när knappen
+släpps (en ångring per drag); opacitet finns bara där fältet har en
+(åtgärdernas fyllning och bakgrund; pennorna har ingen); *Lägg till
+egen…* lägger en linjetyp under Resurser och går dit; sök gäller raderna
+i den del som visas; *Vanliga* är förvalet och döljer *Snittet i planen*
+och några kryss under Innehåll (husets kontur genom taket, tak på andra
+våningar, de streckade dolda linjerna, 3D-vyns linjer och slänter, branta
+slänter, beräkningsgrundande fasad, höjdmått, byggnadshöjd, taklutning,
+underlag), men aldrig det som är ändrat; resurserna har ingen *Vanliga*.
+Pennans egen återställningsknapp (till programmets förval) döljs när
+raden har prickens *Återställ*. Provat i Playwright mot `dist/` (alla
+tre panelerna på en penna, färgpanelen kvar efter en ändring, favoriter,
+draget i färgfältet, textval i åtgärderna, sök, *Lägg till egen…*,
+mörkt tema).*
+
+*Gjordes inte:* mockupens ikonknappar för export, import och mall i
+rubrikraden (G), förhandsvisningen och *Jämför med* (efter piloten). Visa-
+menyn har kvar sina kryssrutor utan symboler (samma nycklar som
+knapparna). Panelerna för objekt (egenskaper, smartmenyn) har kvar sina
+listor och färgfält.
 
 ### 0.11 Trappor · *nytt format*
 

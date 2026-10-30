@@ -1,0 +1,560 @@
+/* Radkontrollerna i stilboken (0.10.34, tavla 5): runda knappar som visar det som gäller, panelerna de öppnar, Innehållets knappar, sök och Vanliga/Alla. Panelerna ligger i body, utanför dialogen. */
+
+.rc-src[hidden] {
+  display: none !important;
+}
+
+.rc-ctls {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.rc-val {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 28px;
+  min-width: 44px;
+  padding: 0 10px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--chrome);
+  color: var(--ink);
+  font: 500 12.5px var(--font-data);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+  max-width: 100%;
+}
+
+.rc-val.rc-text {
+  font-family: var(--font-ui);
+  justify-content: flex-start;
+}
+
+.rc-val > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rc-val:hover:not(:disabled) {
+  border-color: var(--muted);
+}
+
+.rc-val.open {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.rc-val:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.rc-val .linetype-swatch {
+  width: 40px;
+  height: 8px;
+}
+
+.rc-sw {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 25%, transparent);
+  flex: none;
+}
+
+.rc-op {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.rc-val.rc-color {
+  min-width: 0;
+  padding: 0 7px;
+}
+
+/* Ikonknapparna för återställ och ta bort. */
+.icon-btn.rc-icon {
+  width: 28px;
+  height: 28px;
+  color: var(--muted);
+}
+
+.icon-btn.rc-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.icon-btn.rc-icon:hover {
+  color: var(--ink);
+}
+
+.icon-btn.rc-icon[data-action$='-remove']:hover {
+  color: var(--demolished, #c2372c);
+}
+
+.sb-row-reset {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+}
+
+.sb-row-reset svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Pennornas rader: namnet, de tre knapparna och återställ. */
+.pen-row {
+  grid-template-columns: minmax(150px, 1fr) auto 28px;
+  align-items: center;
+  padding: 6px 0;
+}
+
+.pen-row .rc-ctls {
+  flex-wrap: nowrap;
+}
+
+.sb-cols {
+  float: right;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.style-actions .style-row {
+  grid-template-columns: minmax(130px, 1.2fr) repeat(5, minmax(0, 1fr)) 80px;
+  align-items: end;
+}
+
+.style-actions .style-row .rc-val,
+.style-materials .rc-val {
+  justify-self: start;
+}
+
+.style-row .bg-pick.rc-ctls {
+  flex-wrap: nowrap;
+}
+
+.style-row .bg-pick input[type='checkbox'] {
+  margin: 0;
+}
+
+/* Listorna i Visning, materialens byggnad och texterna: knappen fyller fältet. */
+.sb-show .rc-val.rc-text,
+.labels-row .rc-val.rc-text,
+.style-row label .rc-val.rc-text {
+  width: 100%;
+}
+
+/* Panelerna. */
+.rc-pop {
+  position: fixed;
+  z-index: 1000;
+  padding: 8px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--panel-bg, var(--paper));
+  color: var(--ink);
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.2);
+  font: 12.5px var(--font-ui);
+}
+
+.rc-pop h5 {
+  margin: 4px 2px 6px;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.rc-pop-weight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.rc-chip {
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--chrome);
+  color: var(--ink);
+  font: 500 12px var(--font-data);
+  cursor: pointer;
+}
+
+.rc-chip:hover {
+  border-color: var(--muted);
+}
+
+.rc-chip.on {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.rc-sep {
+  width: 1px;
+  height: 20px;
+  margin: 0 2px;
+  background: var(--rule);
+}
+
+.rc-own {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.rc-own input,
+.rc-hexrow input {
+  height: 26px;
+  padding: 0 7px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--chrome);
+  color: var(--ink);
+  font: 500 12.5px var(--font-data);
+}
+
+.rc-own input {
+  width: 56px;
+  text-align: right;
+}
+
+.rc-pop-text,
+.rc-pop-line {
+  display: grid;
+  gap: 2px;
+  min-width: 180px;
+  max-width: 320px;
+  max-height: min(420px, 70vh);
+  overflow: auto;
+}
+
+.rc-pop-line {
+  width: 260px;
+}
+
+.rc-items {
+  display: grid;
+  gap: 1px;
+}
+
+.rc-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rc-item:hover:not(:disabled),
+.rc-item:focus-visible {
+  background: var(--chrome);
+  outline: none;
+}
+
+.rc-item.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.rc-item:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.rc-item .linetype-swatch {
+  width: 40px;
+  flex: none;
+}
+
+.rc-search {
+  width: 100%;
+  height: 28px;
+  margin-bottom: 6px;
+  padding: 0 8px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--chrome);
+  color: var(--ink);
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.rc-foot {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--rule);
+}
+
+.rc-foot .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.rc-foot .btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.rc-pop-color {
+  width: 284px;
+}
+
+.rc-sqs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.rc-sq {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.rc-sq.on {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.rc-sq-add {
+  display: inline-grid;
+  place-items: center;
+  background: var(--chrome);
+  color: var(--muted);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.rc-favhead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.rc-favhead h5 {
+  margin: 0;
+}
+
+.rc-set {
+  height: 24px;
+  max-width: 170px;
+  font-size: 11.5px;
+}
+
+.rc-field {
+  display: flex;
+  gap: 8px;
+  height: 110px;
+}
+
+.rc-sv {
+  position: relative;
+  flex: 1;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background-image: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent);
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.rc-hue {
+  position: relative;
+  width: 14px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: linear-gradient(to bottom, #f00, #ff0, #0f0, #0ff, #00f, #f0f, #f00);
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.rc-knob {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.5);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.rc-hue .rc-knob {
+  left: 50%;
+  width: 18px;
+  height: 6px;
+  border-radius: 3px;
+  background: transparent;
+}
+
+.rc-hexrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.rc-hex {
+  width: 84px;
+  text-transform: uppercase;
+}
+
+.rc-alpha-in {
+  width: 48px;
+  text-align: right;
+}
+
+/* Innehållet: knappar med symbol och text (samma kryss som under Visa). */
+.sb-groups label.sb-tog {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 9px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sb-groups label.sb-tog > input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sb-groups label.sb-tog > svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+
+.sb-groups label.sb-tog:has(input:checked) {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.sb-groups label.sb-tog:has(input:focus-visible) {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.sb-groups label.sb-tog .sb-mark {
+  margin-left: auto;
+}
+
+.sb-groups fieldset {
+  gap: 4px;
+}
+
+/* Sök och Vanliga/Alla i rubrikraden. */
+.sb-search {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+
+.sb-search svg {
+  width: 16px;
+  height: 16px;
+}
+
+.sb-search input {
+  width: 160px;
+  height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--chrome);
+  color: var(--ink);
+  font: inherit;
+}
+
+.sb-seg {
+  display: inline-flex;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.sb-seg button {
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  background: var(--chrome);
+  color: var(--ink);
+  font: 500 12px var(--font-ui);
+  cursor: pointer;
+}
+
+.sb-seg button + button {
+  border-left: 1px solid var(--rule);
+}
+
+.sb-seg button.on {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.sb-miss {
+  display: none !important;
+}
+
+.sb-common .sb-rare:not(.sb-changed):not(:has(.sb-changed)) {
+  display: none;
+}
+
+.sb-more .btn {
+  padding: 0 4px;
+  vertical-align: baseline;
+}
+
+/* Innehållets knappar i rader, så breda som texten. */
+.sb-groups fieldset {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: start;
+  gap: 5px;
+}
+
+/* En ändrad penna har radens Återställ (mot nivån ovanför); förvalets knapp behövs då inte. */
+.pen-row.sb-changed [data-action='pen-reset'] {
+  visibility: hidden;
+}
