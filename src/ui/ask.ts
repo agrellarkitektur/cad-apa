@@ -91,3 +91,36 @@ export function askChoice(title: string, text: string, choices: { value: string;
     },
   );
 }
+
+/** En kryssruta i `askChecks`. */
+export interface CheckOption {
+  key: string;
+  label: string;
+  checked?: boolean;
+  disabled?: boolean;
+}
+
+/**
+ * Kryssa i vad som ska med (0.10.40), t.ex. mallblad och stämplar till en
+ * stilbok. Svarar med kryssen, eller null om man avbryter. `extra` är en
+ * knapp till vänster (t.ex. *Ta bort mallen*), som svarar med `extra: true`.
+ */
+export function askChecks(title: string, text: string, checks: readonly CheckOption[], ok: string, extra?: string): Promise<Record<string, boolean> | null> {
+  return dialog(
+    `<header><h2>${escapeHtml(title)}</h2></header>
+     <div class="dialog-body"><p>${escapeHtml(text)}</p>${checks
+       .map((c) => `<label class="check"><input type="checkbox" name="${escapeHtml(c.key)}"${c.checked ? ' checked' : ''}${c.disabled ? ' disabled' : ''}> ${escapeHtml(c.label)}</label>`)
+       .join('')}</div>
+     <footer>${extra ? `<button type="button" class="btn btn-ghost" data-extra>${escapeHtml(extra)}</button>` : ''}<div class="spacer"></div><button type="button" class="btn" data-cancel>Avbryt</button><button type="submit" class="btn btn-primary">${escapeHtml(ok)}</button></footer>`,
+    (form, done) => {
+      const read = (more: Record<string, boolean> = {}) =>
+        JSON.stringify({ ...Object.fromEntries(checks.map((c) => [c.key, !!form.querySelector<HTMLInputElement>(`input[name="${CSS.escape(c.key)}"]`)?.checked && !c.disabled])), ...more });
+      form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        done(read());
+      });
+      form.querySelector('[data-extra]')?.addEventListener('click', () => done(read({ extra: true })));
+      requestAnimationFrame(() => form.querySelector<HTMLButtonElement>('[type=submit]')?.focus());
+    },
+  ).then((v) => (v ? (JSON.parse(v) as Record<string, boolean>) : null));
+}

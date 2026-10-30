@@ -885,3 +885,9 @@
 .gen-weights input {
   width: min(360px, 100%);
 }
+
+/* Stilboken som fil (0.10.40): Exportera, Importera och Mall för nya projekt som en grupp. */
+.stylebook > header .sb-file {
+  display: inline-flex;
+  gap: 6px;
+}

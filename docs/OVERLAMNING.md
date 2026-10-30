@@ -4,10 +4,20 @@ Läget när en session slutar, så att nästa kan ta vid. Skrivs om vid varje
 överlämning och hålls kort: historiken finns i git, Claudes val och det
 som inte gjordes i PLAN.md, koden i UTVECKLING.md, och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
-**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.39.
+**Kända begränsningar**. Senast: 30 oktober 2026, efter 0.10.40.
 
 ## Läget
 
+- **0.10.40 Stilboken ut och in är klar** (samma format, 25; filens
+  `assets` och `paper` är valfria). *Exportera…*, *Importera…* och *Mall
+  för nya projekt…* i stilbokens rubrikrad. Exporten bäddar in logotypen
+  och texturerna, och med kryss mallbladen (med det ritade och stämplarna
+  på dem) och stämplarna. Importen ersätter stilboken och lägger papperet
+  bredvid det befintliga. Mallen ligger i webbläsaren (IndexedDB); *Nytt
+  projekt* väljer mallen, Svensk standard eller en fil, och mallens
+  förvalda mallblad ersätter exemplets. Svaren 30 oktober: webbläsaren +
+  fil, mallblad och stämplar som val. Testerna: 792 på ca 15 s. Provat i
+  Playwright mot `dist/`. Koden i UTVECKLING.md, Claudes val i PLAN.md.
 - **0.10.39 Projektet › Allmänt är klar** (samma format, 25; `office` och
   `general` i stilboken och `logo` på underlag är valfria). *Allmänt* har
   Kontoret (företagsnamn, adress, telefon, e-post, webb, ansvarig,
@@ -80,9 +90,13 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **0.10.30**, **0.10.29**, **0.10.28.3**, **0.10.28.2**, **0.10.28.1**,
   **0.10.28**, **0.10.27**, **0.10.26**, **0.10.25.1** och **0.10.25**: se
   PLAN.md.
-- **Publicerad:** 0.10.39 pushad till `main` 30 oktober (se git och
+- **Publicerad:** 0.10.40 pushad till `main` 30 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.10.40:** inget i befintliga
+  projekt. *Nytt projekt* har gruppen *Stilbok*; utan sparad mall är
+  Svensk standard förvalt som förut. En stilbok som exporterats före
+  0.10.40 går att importera (utan bilder).
 - **Märks i hans ritningar efter 0.10.39:** inget i befintliga
   ritningar (förvalen är som förut: mått i mm, areor med en decimal,
   nivåmarkörer med tre). Markhöjdernas decimaler och litterats siffror
@@ -152,14 +166,14 @@ i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 - **Märks i hans ritningar efter 0.10.25:** markobjekten syns inte längre
   på Plan 1 utan på Platsen, och dialogen Platsen nås från Platsen i
   projektträdet.
-- **Tidigare:** 0.10.39, 0.10.38, 0.10.37, 0.10.36, 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
+- **Tidigare:** 0.10.40, 0.10.39, 0.10.38, 0.10.37, 0.10.36, 0.10.35, 0.10.34, 0.10.33, frågesessionen 30 oktober, 0.10.32, utredningen om stilinställningar, 0.10.31, 0.10.30, 0.10.29, 0.10.28.3, 0.10.28.2, 0.10.28.1, planeringssessionen, 0.10.28, 0.10.27,
   0.10.26, 0.10.25.1, 0.10.25, 0.10.24, materialutredningen, 0.10.23,
   0.10.22 och 0.10.22.1, 0.10.20.1, 0.10.20.2, 0.10.21 och 0.10.21.1. Se
   PLAN.md.
-- **Versionsnumret** är `0.10.39` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.10.40` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.10.39 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.10.40 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -235,11 +249,11 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   vyn~~, ~~0.10.34 Radkontrollerna~~, ~~0.10.35 Underlag i vyn~~,
   ~~0.10.36 Pennor och ställen~~, ~~0.10.37 Snitt- och konturlinjer i
   planen~~, ~~0.10.38 Snitt- och konturlinjer i fasader och sektioner~~,
-  ~~0.10.39 Projektet › Allmänt~~ (klara)
+  ~~0.10.39 Projektet › Allmänt~~, ~~0.10.40 Stilboken ut och in~~
+  (klara)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **Stilinställningarna, resten**: **0.10.40 Stilboken ut och in**
-  (mellanstor, på tur; två öppna frågor)
+- **Granskning efter 0.10.40** (förslag; den senaste var 0.10.28.3)
 - **0.11 Trappor** (nytt format; med *Syns också på*)
 - **0.11.1 Profilverktyget** (stor) och **0.11.2 Dörrar och fönster**
   (stor)
@@ -256,20 +270,12 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-**0.10.40 Stilboken ut och in** (mellanstor, samma format). Läs
-synpunkterna först och sortera Inkorgen om den har något. *Exportera…*,
-*Importera…* (finns sedan 0.10.32) och *Mall för nya projekt* i
-rubrikraden; hela stilboken (Allmänt, vytyperna med kategorier,
-resurserna). Projektets uppgifter (namn, nummer, fastighet, skede och
-projektets fält) följer inte med (Carl August 30 oktober).
-
-- Ställ först de två frågorna under *Till 0.10.40* nedan (var mallen
-  ligger; om bladmallar och stämplar följer med).
-- Bilderna bor i projektet: logotypen (`office.logo`) och materialens
-  texturer kommer inte med i dag. Exporten behöver bädda in dem (base64,
-  som `assets`) och importen lägga in dem som filer.
-
-Därefter 0.11 Trappor.
+Läs synpunkterna först och sortera Inkorgen om den har något. Föreslå
+sedan en **granskning efter 0.10.40** (0.10.40.1, inga nya funktioner):
+den senaste var 0.10.28.3, och 0.10.29–0.10.40 har lagt mycket i
+stilboken (`ui/styleDialog.ts` är ca 1 080 rader, `docs/PLAN.md` och
+`UTVECKLING.md` över 4 000). Säger Carl August nej: **0.11 Trappor** (nytt
+format; med *Syns också på*), se PLAN.md.
 
 Höjdkurvors del av ortofotot (två rader i `js/app.js` och `js/utbyte.js`,
 plus raden i `docs/UTBYTE-CAD-APA.md` där) görs i en session i
@@ -290,6 +296,14 @@ och 0.10.33 när han provat.
 som kategorier, gjort i 0.10.33). 0.10.31: ortofotot där marken saknar
 material, plus valet *Ortofoto* (gjort i 0.10.33); bildens sida i mm.
 0.10.30: rutornas mått lagom så länge; en rad "Eget" per fyllning (prova).
+
+**0.10.40 efter provning** (Claudes val, se PLAN.md)
+- Mallbladen och stämplarna är ikryssade som förval vid export, import
+  och mallen. Rätt, eller hellre okryssade vid import (så att samma
+  mallblad inte läggs in två gånger)?
+- Mallbladens mappar i projektträdet följer inte med (de hamnar överst i
+  Ritningar). Störande?
+- Typerna (YV01, D1 …) och vy-taggarna följer inte med mallen. Ska de?
 
 **0.10.39 efter provning** (Claudes val, se PLAN.md)
 - Kontorets taggar (`{företag}`, `{telefon}` …) är inga fält på bladen;
@@ -363,12 +377,6 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
   innehåll? Undertaket ritas inte spegelvänt än.
 - *Ny vy → en kategori* tar kategorin som den är, inte det som visas nu
   (det gör *Med det som visas nu…*). Rätt?
-
-**Till 0.10.40 (Stilboken ut och in) när den är på tur**
-- Ska *Mall för nya projekt* ligga i webbläsaren (försvinner vid rensning)
-  eller som en fil man pekar på vid *Nytt projekt*?
-- Ska bladmallar och stämplar följa med stilbokens export/import redan i
-  0.10.40 (parkerat sedan 20 oktober)?
 
 **0.10.31 efter provning** (Claudes val, se PLAN.md)
 - Ortofotot och texturerna skuggas som kulörerna; Carl August vill att

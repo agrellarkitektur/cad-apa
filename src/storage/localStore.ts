@@ -123,3 +123,58 @@ export async function keepUnreadable(rec: LocalRecord): Promise<void> {
     /* Ingen lagring: inget att skydda. */
   }
 }
+
+/**
+ * Mall för nya projekt (0.10.40): en stilboksfil i webbläsaren, under en
+ * egen nyckel bredvid autosparet. Försvinner när webbläsarens data rensas;
+ * den kan också sparas som fil (*Exportera…*) och väljas vid *Nytt projekt*.
+ */
+export interface TemplateRecord {
+  text: string;
+  name: string;
+  savedAt: number;
+}
+
+const TEMPLATE_KEY = 'stilboksmall';
+
+async function withStore<T>(mode: IDBTransactionMode, run: (os: IDBObjectStore) => IDBRequest | null): Promise<T | undefined> {
+  const db = await open();
+  try {
+    return await new Promise<T | undefined>((resolve, reject) => {
+      const tx = db.transaction(STORE, mode);
+      const req = run(tx.objectStore(STORE));
+      tx.oncomplete = () => resolve(req?.result as T | undefined);
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error);
+    });
+  } finally {
+    db.close();
+  }
+}
+
+/** Spara mallen. Svarar false om webbläsaren inte sparar något (privat fönster, för stor). */
+export async function saveTemplate(text: string, name: string): Promise<boolean> {
+  try {
+    await withStore('readwrite', (os) => os.put({ text, name, savedAt: Date.now() } satisfies TemplateRecord, TEMPLATE_KEY));
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function loadTemplate(): Promise<TemplateRecord | null> {
+  try {
+    const r = await withStore<TemplateRecord>('readonly', (os) => os.get(TEMPLATE_KEY));
+    return r && typeof r.text === 'string' ? r : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function clearTemplate(): Promise<void> {
+  try {
+    await withStore('readwrite', (os) => os.delete(TEMPLATE_KEY));
+  } catch {
+    /* Ingen lagring: ingen mall. */
+  }
+}

@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.10.39** (alfa); nästa är **0.10.40 Stilboken ut och in**,
-och efter stilinställningarna och pennorna (0.10.32–0.10.40) **0.11 Trappor**.
+**0.10.40** (alfa); nästa är **0.11 Trappor**, efter
+stilinställningarna och pennorna (0.10.32–0.10.40).
 
 ## Vad som fungerar
 
@@ -1150,6 +1150,26 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
 
+Version 0.10.40, Stilboken ut och in (samma filformat, 25):
+- **Exportera…** i stilbokens rubrikrad sparar hela stilboken som fil:
+  Allmänt (kontoret), vytyperna med kategorierna och resurserna, med
+  **logotypen och materialens texturer inbäddade**. Har projektet mallblad
+  eller stämplar kryssar du om de ska med; mallbladen tar med det som är
+  ritat på dem och stämplarna som ligger där. Projektets uppgifter (namn,
+  nummer, fastighet, skede, projektets fält) följer inte med
+- **Importera…** läser en sådan fil (eller en äldre stilbok eller
+  stilmall). Stilboken ersätter projektets, bilderna läggs in (en bild som
+  redan finns används igen) och logotyperna på bladen får den nya bilden.
+  Har filen mallblad eller stämplar kryssar du vilka som ska med; de läggs
+  till bredvid de som finns (*(importerat)* efter namnet om det är upptaget)
+- **Mall för nya projekt…** sparar stilboken (och, om du vill, mallbladen
+  och stämplarna) i webbläsaren. *Nytt projekt* har nu valet *Stilbok*:
+  mallen (förval när det finns en), Svensk standard eller en stilboksfil.
+  Mallens förvalda mallblad ersätter exemplets. Ett projekt ur Höjdkurvor
+  får också mallen. Mallen försvinner om webbläsarens data rensas;
+  exportera den som fil för att ha den kvar, och *Ta bort mallen* finns i
+  samma dialog
+
 Version 0.10.39, Projektet › Allmänt (samma filformat, 25):
 - **Kontoret i stilboken**: under *Allmänt* står företagsnamn, adress,
   telefon, e-post, webbplats, ansvarig och logotyp. De följer med
@@ -1182,6 +1202,7 @@ Version 0.10.39, Projektet › Allmänt (samma filformat, 25):
 - **Tjocklekstabellen**: tjocklekarna som listorna visar (stilboken,
   pennorna, 2D-formerna, markörerna), skrivna med mellanslag mellan.
   *Återställ* ger förvalen 0,13–1,4
+
 
 Version 0.10.38, snitt- och konturlinjer i fasader och sektioner (samma filformat, 25):
 - **Konturlinjer per objekt i fasader och sektioner**: grupperna *Väggar*,

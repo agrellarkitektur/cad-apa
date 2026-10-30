@@ -24,7 +24,7 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
     }
     if (mod && e.altKey && e.key.toLowerCase() === 'n') {
       e.preventDefault();
-      app.newProjectDialog.open();
+      void app.newProjectDialog.open();
       return;
     }
     if (app.ctxMenu.isOpen) return;

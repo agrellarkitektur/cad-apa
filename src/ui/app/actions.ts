@@ -371,7 +371,7 @@ export function installActions(app: AppContext, parts: ActionParts) {
       }
       case 'new-project':
         closeMenu();
-        files.newProjectDialog.open();
+        void files.newProjectDialog.open();
         break;
       case 'new-proposal': {
         closeMenu();

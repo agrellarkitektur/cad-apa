@@ -1,8 +1,8 @@
 import { newId } from './ids';
-import type { OfficeInfo } from './general';
+import type { OfficeInfo, OfficeLogo } from './general';
 import type { Asset, Element, Id } from './model';
 import { applyFieldChanges } from './sheetFields';
-import type { DocStore } from './store';
+import type { DocStore, TxBuilder } from './store';
 
 /**
  * Det som ändras under Projektet › Allmänt (0.10.39) och inte bara är ett
@@ -25,16 +25,19 @@ export function setOfficeLogo(store: DocStore, logo: { asset: Asset; width: numb
     if (Object.keys(office).length) next.office = office;
     else delete next.office;
     tx.setGraphics(next);
-    // Logotyperna på bladen (`logo: true`) får den nya bilden, lika breda som förut.
-    if (logo)
-      for (const el of Object.values(tx.doc.elements)) {
-        if (el.type !== 'Underlay' || !el.params.logo) continue;
-        const size = el.params.size as [number, number];
-        const wide = size[0] * (el.params.scale as number);
-        tx.putElement({ ...el, params: { ...el.params, asset: logo.asset.id, size: [logo.width, logo.height], scale: wide / logo.width } });
-      }
+    if (logo) relinkLogos(tx, office.logo!);
     if (old && !Object.values(tx.doc.elements).some((el) => el.params.asset === old.asset)) tx.removeAsset(old.asset);
   });
+}
+
+/** Logotyperna på bladen (`logo: true`) får bilden `logo`, lika breda som förut. */
+export function relinkLogos(tx: TxBuilder, logo: OfficeLogo): void {
+  for (const el of Object.values(tx.doc.elements)) {
+    if (el.type !== 'Underlay' || !el.params.logo || (el.params.asset === logo.asset && (el.params.size as number[])[0] === logo.width)) continue;
+    const size = el.params.size as [number, number];
+    const wide = size[0] * (el.params.scale as number);
+    tx.putElement({ ...el, params: { ...el.params, asset: logo.asset, size: [logo.width, logo.height], scale: wide / logo.width } });
+  }
 }
 
 /** Projektets fält (gäller alla blad): ett nytt värde, eller ett nytt fält. */

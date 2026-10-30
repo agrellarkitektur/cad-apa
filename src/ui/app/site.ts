@@ -1,3 +1,5 @@
+import { applyTemplate, readBookFile } from '../../core/styleBookFile';
+import { loadTemplate } from '../../storage/localStore';
 import { defaultSheet } from '../../core/viewCategories';
 import { emptyProject, SITE_STOREY } from '../../core/model';
 import { CONTOUR_STEPS, DEFAULT_CONTOURS, GROUND_DEFAULTS, groundAt, groundDefaults, terrainOf, toRh, type GroundDefaults } from '../../core/site';
@@ -76,6 +78,14 @@ export function installSite(app: AppContext) {
     if (choice === 'new') {
       const fields: Record<string, string> = {};
       const fresh = new DocStore(emptyProject(name, 'nybyggnad', fields));
+      // Mallen för nya projekt (0.10.40) gäller också här.
+      const tpl = await loadTemplate();
+      if (tpl)
+        try {
+          applyTemplate(fresh, readBookFile(JSON.parse(tpl.text)));
+        } catch {
+          /* En mall som inte går att läsa: Svensk standard. */
+        }
       applySitePackage(fresh, pkg);
       forgetProjectFile();
       app.ui.state = defaultState(fresh.doc);

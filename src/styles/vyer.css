@@ -320,3 +320,9 @@ table.keys td:first-child {
 .sel-box3d.crossing {
   border-style: dashed;
 }
+
+/* Stilboken vid Nytt projekt (0.10.40). */
+.book-pick input[type='file'] {
+  margin-top: 4px;
+  font-size: 12px;
+}

@@ -3522,9 +3522,7 @@ in var som helst efter A, och bara A ger nytt format:
 - **E. 0.10.36 Pennor och ställen** (tavla 3; mellanstor; med penn- och
   linjesystemet) ✓
 - **F. 0.10.39 Projektet › Allmänt** (mellanstor; förut 0.10.37) ✓
-- **G. 0.10.40 Stilboken ut och in** (mellanstor; två öppna frågor: var
-  mallen för nya projekt ligger, och om bladmallar och stämplar följer med;
-  förut 0.10.38)
+- **G. 0.10.40 Stilboken ut och in** (mellanstor; förut 0.10.38) ✓
 
 Före F och G (Carl August 30 oktober, svaren på frågorna om 0.10.36):
 **0.10.37 Snitt- och konturlinjer i planen** ✓ och **0.10.38 Snitt- och
@@ -3886,6 +3884,40 @@ bor i projektet; hör till 0.10.40, som texturerna), *RH 2000* i appens
 egna texter (Platsens dialog, panelerna) följer inte höjdsystemet (bara
 `{höjdsystem}` gör det), fler typsnitt, och panelens rubrik säger
 *Underlag* också för logotypen.
+
+### 0.10.40 Stilboken ut och in ✓
+
+Mellanstor, samma format. *Exportera…*, *Importera…* och *Mall för nya
+projekt* i rubrikraden; hela stilboken (Allmänt, vytyperna med kategorier,
+resurserna). Projektets uppgifter följer inte med (Carl August 30
+oktober). Svaren på de två frågorna (30 oktober): mallen ligger **i
+webbläsaren, och en fil kan väljas vid *Nytt projekt***; mallbladen och
+stämplarna **följer med som val** (förut parkerat).
+
+*Gjord 30 oktober, i en session. Samma format (25); filens `assets` och
+`paper` är valfria, och en äldre stilbok utan dem läses som förut.
+Testerna: 792. Se UTVECKLING.md, *Stilboken ut och in*. Claudes val:
+**bilderna** (logotypen, texturerna, bilderna på mallbladen) bäddas in i
+filen som projektets filer (base64); vid import används en bild med samma
+innehåll igen, andra får nytt id om deras är upptaget. **Kryssen**
+(*Mallbladen*, *Stämplarna*) är ikryssade som förval och visas bara när
+det finns något att kryssa; mallbladen tar alltid med stämplarna som ligger
+på dem. **Import** ersätter stilboken som förut (projektets egna linjetyper
+och fyllningstyper som filen saknar är kvar, pennlistan låses) och lägger
+mallbladen och stämplarna bredvid de befintliga, med *(importerat)* efter
+ett upptaget namn; logotyperna på bladen får filens logotyp, och bilder som
+inget längre använder tas bort. **Mallen** ligger i webbläsarens IndexedDB
+(samma databas som autosparet, egen nyckel), sparas med samma kryss och
+har *Ta bort mallen*. **Nytt projekt** har en grupp *Stilbok*: mallen
+(förval när den finns), Svensk standard och *Från fil*; mallens förvalda
+mallblad ersätter exemplets (som tas bort), och ett projekt ur Höjdkurvor
+får också mallen. Provat i Playwright mot `dist/` (export, mallen, nytt
+projekt ur mallen, import med mallblad).*
+
+*Gjordes inte:* mallbladens mappar i projektträdet följer inte med (de
+hamnar överst i Ritningar), typerna (väggar, dörrar …) och vy-taggarna
+följer inte med mallen, och ingen förhandsvisning av en fil innan den
+importeras.
 
 ### 0.11 Trappor · *nytt format*
 

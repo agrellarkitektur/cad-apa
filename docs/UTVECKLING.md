@@ -1640,6 +1640,33 @@ projekt i 1 982 jämförelser.
 - Tester: `tests/v091.test.ts`. Referensritningarna ändrades av plattan i
   exempelvillan.
 
+## Stilboken ut och in (0.10.40, format 25)
+
+- **`core/styleBookFile.ts`**: `StyleBookFile` = `StyleBook` + `assets`
+  (bilderna, `bookAssetIds`: logotypen och texturerna, plus bilderna på
+  papperet) + `paper` (`PaperPart`: `worksheets`, `elements` med `space`
+  i dem, `master` = projektets förvalda om det är med). `exportBook(doc,
+  { masters, stamps })`; stämplar som ligger på det som tas med följer
+  med. `readBookFile(data, base?, styleTo?)` ger `ReadBook` (`book` via
+  `normalizeBook`, `assets`, `paper`); `paperInFile` räknar.
+  `importBook(store, read, choice, label, replaceMaster?)` i en
+  transaktion: `putAssets` (samma innehåll återanvänds, upptaget id får
+  nytt), `remap` byter id:n djupt (bilder, arbetsblad, element), elementen
+  får `storey = doc.storeys[0]`, `relinkLogos` och `pruneAssets` på
+  stilbokens gamla bilder. `applyTemplate` = import med allt och
+  `replaceMaster` (exemplets mallblad tas bort om inget blad använder det).
+- **`core/office.ts`**: `relinkLogos(tx, logo)` (ur `setOfficeLogo`).
+  `pruneAssets` räknar kontorets logotyp som använd.
+- **Mallen**: `saveTemplate`, `loadTemplate`, `clearTemplate` i
+  `storage/localStore.ts` (nyckeln `stilboksmall` i samma IndexedDB som
+  autosparet; `TemplateRecord` = `text`, `name`, `savedAt`).
+- **UI**: stilbokens rubrikrad (`.sb-file`: `save-style`, `open-style`,
+  `template-style`), `askPaper` och `template` i `StyleDialog`, `askChecks`
+  i `ui/ask.ts` (kryssrutor och en extra knapp). `NewProjectDialog.open`
+  är asynkron (läser mallen); gruppen `book` (`template`, `standard`,
+  `file`). Höjdkurvors *Nytt projekt* (`ui/app/site.ts`) tar mallen.
+- Tester: `tests/v01040.test.ts`.
+
 ## Projektet › Allmänt (0.10.39, format 25)
 
 - **`core/general.ts`**: `OfficeInfo` (`StyleResources.office`: fälten i

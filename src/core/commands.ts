@@ -83,6 +83,8 @@ export function pruneAssets(tx: TxBuilder, candidates: Iterable<Id>): void {
   // Materialens texturer och ortofotot (0.10.31) räknas också.
   for (const m of tx.doc.graphics.materials ?? []) if (m.texture) used.add(m.texture.asset);
   if (tx.doc.site?.ortho) used.add(tx.doc.site.ortho.asset);
+  // Kontorets logotyp (0.10.39) också, när den inte ligger på något blad.
+  if (tx.doc.graphics.office?.logo) used.add(tx.doc.graphics.office.logo.asset);
   for (const a of candidates) if (!used.has(a)) tx.removeAsset(a);
 }
 

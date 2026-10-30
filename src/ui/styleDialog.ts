@@ -1,5 +1,7 @@
 import { setGraphics } from '../core/commands';
-import { normalizeBook, type StyleBook } from '../core/graphics';
+import type { StyleBook } from '../core/graphics';
+import { exportBook, importBook, paperCounts, paperInFile, readBookFile, type PaperChoice, type StyleBookFile } from '../core/styleBookFile';
+import { clearTemplate, loadTemplate, saveTemplate } from '../storage/localStore';
 import type { DocStore } from '../core/store';
 import { DETAIL_LABELS, DETAIL_LEVELS } from '../core/states';
 import { SITE_CATEGORIES, SITE_STOREY, type SiteCategory } from '../core/model';
@@ -36,7 +38,7 @@ import {
   type ViewType,
 } from '../core/viewCategories';
 import { escapeHtml } from './labels';
-import { askConfirm, askText } from './ask';
+import { askChecks, askConfirm, askText } from './ask';
 import { icons } from './icons';
 import { actionRows, applyActionField } from './style/actions';
 import { applyLabelField, labelSection } from './style/labels';
@@ -92,7 +94,7 @@ const RAIL_ICON: Record<string, string> = { site: icons.ground, storey: icons.st
 export class StyleDialog {
   readonly el: HTMLElement;
   private store: DocStore;
-  private onSaveFile: (book: StyleBook) => void;
+  private onSaveFile: (file: StyleBookFile) => void;
   private onError: (msg: string) => void;
   private place: Place = { kind: 'type', type: 'storey' };
   /** Den valda kategorin per vytyp. */
@@ -134,7 +136,7 @@ export class StyleDialog {
   /** Visa ett objekt i ritningen (*Gå dit* i materialens ställen, 0.10.36). */
   goToObject: (id: string | string[]) => void = () => {};
 
-  constructor(store: DocStore, onSaveFile: (book: StyleBook) => void, onError: (msg: string) => void) {
+  constructor(store: DocStore, onSaveFile: (file: StyleBookFile) => void, onError: (msg: string) => void) {
     this.store = store;
     this.onSaveFile = onSaveFile;
     this.onError = onError;
@@ -259,8 +261,11 @@ export class StyleDialog {
             <button class="${this.common ? 'on' : ''}" data-sb-common="1" aria-pressed="${this.common}" title="Vanliga: det som sällan ändras döljs, utom det som är ändrat">Vanliga</button>
             <button class="${this.common ? '' : 'on'}" data-sb-common="0" aria-pressed="${!this.common}" title="Alla inställningar">Alla</button>
           </span>
-          <button class="btn" data-action="open-style" title="Läs in en stilbok (eller en äldre stilmall) från fil">Importera…</button>
-          <button class="btn" data-action="save-style" title="Spara hela stilboken som fil">Exportera…</button>
+          <span class="sb-file" role="group" aria-label="Stilboken som fil">
+            <button class="btn" data-action="save-style" title="Spara hela stilboken som fil, med logotypen, texturerna och (om du vill) mallbladen och stämplarna">Exportera…</button>
+            <button class="btn" data-action="open-style" title="Läs in en stilbok (eller en äldre stilmall) från fil">Importera…</button>
+            <button class="btn" data-action="template-style" title="Spara stilboken i webbläsaren som mall för nya projekt">Mall för nya projekt…</button>
+          </span>
         </div>
         <button class="icon-btn" data-action="close" aria-label="Stäng">×</button>
       </header>
@@ -845,8 +850,12 @@ export class StyleDialog {
       const r = editStyle(this.book, cur.style, (s) => resetPen(s, key));
       if (r.result) this.commit(type, { ...cur, style: r.style }, 'Ändra pennor', r.book);
     }
-    if (action === 'save-style') this.onSaveFile(this.book);
+    if (action === 'save-style') {
+      const choice = await this.askPaper('Exportera stilboken', 'Hela stilboken sparas som fil, med logotypen och materialens texturer. Projektets uppgifter (namn, nummer, fastighet, skede) följer inte med.', 'Exportera');
+      if (choice) this.onSaveFile(exportBook(this.store.doc, choice));
+    }
     if (action === 'open-style') this.importFile();
+    if (action === 'template-style') await this.template();
   }
 
   /** En vys stil (0.10.33): återställ till kategorin, gör avvikelserna till kategorins förval, spara som ny kategori. */
@@ -913,6 +922,38 @@ export class StyleDialog {
     }
   }
 
+  /**
+   * Fråga om mallbladen och stämplarna ska med (0.10.40). Har projektet
+   * inga svaras direkt utan dem; null om man avbryter.
+   */
+  private async askPaper(title: string, text: string, ok: string, extra?: string, counts = paperCounts(this.store.doc)): Promise<(PaperChoice & { extra?: boolean }) | null> {
+    if (!counts.masters && !counts.stamps && !extra) return { masters: false, stamps: false };
+    const checks = [
+      ...(counts.masters ? [{ key: 'masters', label: `Mallbladen (${counts.masters}), med det som är ritat på dem`, checked: true }] : []),
+      ...(counts.stamps ? [{ key: 'stamps', label: `Stämplarna (${counts.stamps})`, checked: true }] : []),
+    ];
+    const r = await askChecks(title, text, checks, ok, extra);
+    return r ? { masters: !!r.masters, stamps: !!r.stamps, ...(r.extra ? { extra: true } : {}) } : null;
+  }
+
+  /** *Mall för nya projekt* (0.10.40): stilboken i webbläsaren, som nya projekt får. */
+  private async template(): Promise<void> {
+    const had = await loadTemplate();
+    const when = had ? new Intl.DateTimeFormat('sv-SE', { dateStyle: 'short', timeStyle: 'short' }).format(had.savedAt) : '';
+    const text = had
+      ? `Mallen i webbläsaren är ${had.name}, sparad ${when}. Den ersätts med den här stilboken. Nya projekt får mallen; under Nytt projekt kan du också välja Svensk standard eller en stilboksfil.`
+      : 'Nya projekt får den här stilboken i stället för Svensk standard. Mallen sparas i webbläsaren och försvinner om webbläsarens data rensas: exportera stilboken också som fil, så kan du välja filen under Nytt projekt.';
+    const choice = await this.askPaper('Mall för nya projekt', text, 'Spara som mall', had ? 'Ta bort mallen' : undefined);
+    if (!choice) return;
+    if (choice.extra) {
+      await clearTemplate();
+      this.onError('Mallen är borttagen. Nya projekt får Svensk standard.');
+      return;
+    }
+    const ok = await saveTemplate(JSON.stringify(exportBook(this.store.doc, choice)), this.book.name);
+    this.onError(ok ? `${this.book.name} är mall för nya projekt.` : 'Webbläsaren sparade inte mallen (privat fönster eller blockerad webbplatsdata). Exportera stilboken som fil i stället.');
+  }
+
   private importFile(): void {
     const input = document.createElement('input');
     input.type = 'file';
@@ -923,13 +964,14 @@ export class StyleDialog {
       try {
         // En äldre stilmall ger stilen till kategorin som är vald.
         const at = this.place.kind === 'type' ? this.cat(this.place.type) : undefined;
-        const read = normalizeBook(JSON.parse(await file.text()), this.book, at);
-        // Projektets egna linjetyper och fyllningstyper som filen saknar är kvar (0.8.30, 0.8.36), så att formerna ritas som förut.
-        const keep = (this.book.lineTypes ?? []).filter((t) => !read.lineTypes?.some((r) => r.id === t.id));
-        if (keep.length) read.lineTypes = [...(read.lineTypes ?? []), ...keep];
-        const keepFills = (this.book.fillTypes ?? []).filter((t) => !read.fillTypes?.some((r) => r.id === t.id));
-        if (keepFills.length) read.fillTypes = [...(read.fillTypes ?? []), ...keepFills];
-        this.set(read, `Importera stilbok: ${read.name}`);
+        const read = readBookFile(JSON.parse(await file.text()), this.book, at);
+        const choice = read.paper
+          ? await this.askPaper('Importera stilboken', `Stilboken i ${file.name} ersätter projektets. Filen har också mallblad eller stämplar; de du kryssar läggs till bredvid de som finns.`, 'Importera', undefined, paperInFile(read))
+          : { masters: false, stamps: false };
+        if (!choice) return;
+        // Pennlistan låses (0.10.36), som vid andra ändringar.
+        read.book = withFrozenPens({ ...this.store.doc, graphics: read.book });
+        importBook(this.store, read, choice, `Importera stilbok: ${read.book.name}`);
       } catch (err) {
         this.onError(err instanceof SyntaxError ? 'Filen gick inte att läsa som stilbok.' : (err as Error).message);
       }
