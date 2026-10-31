@@ -65,6 +65,11 @@ export function addRailings(store: DocStore, list: NewRailing[], states: Id[], l
   const ground = made.some((e) => isSite(e.storey));
   store.transact(label, (tx) => {
     ensureRailingTypes(tx, ground);
+    // En förvald typ som valts i kommandoraden (ST01, SP01 …) och saknas läggs in (0.11.7.3).
+    for (const e of made) {
+      const d = e.definition && !tx.doc.definitions[e.definition] ? [...defaultRailingTypes(), ...defaultGroundRailingTypes()].find((x) => x.id === e.definition) : undefined;
+      if (d) tx.putDefinition(d);
+    }
     for (const e of made) tx.putElement({ ...e, definition: defaultRailingDef(tx.doc, e.definition, isSite(e.storey)) });
   });
   return made.map((e) => store.doc.elements[e.id]).filter(Boolean);

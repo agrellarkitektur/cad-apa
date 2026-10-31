@@ -1,7 +1,7 @@
 import type { Definition, Id } from '../../core/model';
 import { profileTypesFor } from '../../core/profiles';
 import { canUseAs, defaultProfileTypes } from '../../core/profileTypes';
-import { defaultRailingTypes } from '../../core/railingTypes';
+import { defaultGroundRailingTypes, defaultRailingTypes } from '../../core/railingTypes';
 import type { DocStore } from '../../core/store';
 
 /**
@@ -23,7 +23,7 @@ function candidates(doc: DocStore['doc'], tool: TypedTool): Definition[] {
   }
   const own = Object.values(doc.definitions).filter((d) => d.elementType === 'Railing' && d.railing?.group !== 'Grindar');
   const ids = new Set(own.map((d) => d.id));
-  return [...own, ...defaultRailingTypes().filter((d) => d.railing?.group !== 'Grindar' && !ids.has(d.id) && !doc.definitions[d.id])];
+  return [...own, ...[...defaultRailingTypes(), ...defaultGroundRailingTypes()].filter((d) => d.railing?.group !== 'Grindar' && !ids.has(d.id) && !doc.definitions[d.id])];
 }
 
 /** Typen vars littera (eller littera och beskrivning) är texten; null om ingen. */

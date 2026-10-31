@@ -5,6 +5,7 @@ import type { Rings } from '../geometry/boolean';
 import { dist, dot, norm, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import { partRegions, placePoint, type EndSpec } from './profileBody';
+import { endAxis } from './endProfile';
 import { freePath, GATE_POST, pathPoint, pathZ, shift, type RailGate, type RailPath } from './railingGeometry';
 
 /**
@@ -30,7 +31,7 @@ export interface PartSection {
 /** Profiltyperna för delar med `profile` (0.11.7): typen och avslutet uträknat (ändprofilen). */
 export interface RailProfiles {
   model(id: Id): ProfileTypeModel | undefined;
-  end(e: EndSpec, section: ProfileSection, yShift: number, yRange: [number, number]): EndSpec;
+  end(e: EndSpec, section: ProfileSection, yShift: number, yRange: [number, number], axis?: Vec2): EndSpec;
 }
 
 /** En längsgående del: mittlinjen med överkantens höjd och förlängningen i ändarna. */
@@ -155,6 +156,8 @@ interface Placed {
   regions: { polys: Rings[]; follows: boolean; extend: number; material?: string }[];
   box: Box2;
   anchor: PPoint;
+  /** Vridningen kring ankaret, grader (för ändprofilen). */
+  rotate: number;
 }
 
 function placedSection(part: RailPart, vals: ReadonlyMap<string, number>, profiles: RailProfiles | undefined): Placed | null {
@@ -174,7 +177,7 @@ function placedSection(part: RailPart, vals: ReadonlyMap<string, number>, profil
   }));
   const box = boxOfPoints(regions.flatMap((r) => r.polys.flatMap((poly) => poly[0] as PPoint[])));
   if (box.maxX - box.minX < 0.5 || box.maxY - box.minY < 0.5) return null;
-  return { model, section, regions, box, anchor };
+  return { model, section, regions, box, anchor, rotate: place.rotate };
 }
 
 const mapRegions = (regions: Placed['regions'], f: (q: Vec2) => Vec2): Placed['regions'] => regions.map((r) => ({ ...r, polys: r.polys.map((poly) => poly.map((ring) => ring.map(f))) }));
@@ -341,10 +344,14 @@ export function railingBody(path: RailPath, model: RailingTypeModel, vals: Reado
         lateral = off - cx;
         zTop += b.maxY;
         const regions = mapRegions(placed.regions, (q) => [sgn * (q[0] - cx), q[1] - b.maxY]);
-        const yr: [number, number] = [b.minY - b.maxY, 0];
+        // Ändprofilens y följer den vridna och speglade y-axeln (0.11.7.3); förskjutningen är (−sgn·cx, −maxY).
+        const axis = endAxis(placed.rotate, sgn < 0);
+        const ys = regions.flatMap((r) => r.polys.flatMap((poly) => poly.flatMap((ring) => ring.map((q) => q[0] * axis[0] + q[1] * axis[1]))));
+        const yr: [number, number] = [Math.min(...ys), Math.max(...ys)];
+        const yShift = placed.anchor[1] - (-sgn * cx * axis[0] - b.maxY * axis[1]);
         // Avslutet i en verklig ände: typens (en ändprofil), annars vinkelrätt; i en grind eller ett trappsteg vinkelrätt.
         const kind = placed.model.ends ?? 'square';
-        const endAt = (real: boolean): EndSpec => (real && kind === 'profile' && opts.profiles ? opts.profiles.end({ kind, beyond: true, ...(placed.model.endProfile ? { profile: placed.model.endProfile } : {}) }, placed.section, placed.anchor[1] + b.maxY, yr) : { kind: real && kind !== 'profile' ? kind : 'square' });
+        const endAt = (real: boolean): EndSpec => (real && kind === 'profile' && opts.profiles ? opts.profiles.end({ kind, beyond: true, ...(placed.model.endProfile ? { profile: placed.model.endProfile } : {}) }, placed.section, yShift, yr, axis) : { kind: real && kind !== 'profile' ? kind : 'square' });
         sec = (e) => ({ regions, start: endAt(e[0]), end: endAt(e[1]) });
       }
       // Tillbaka till linjen (mot väggen); en del som ligger på linjen går 60 mm utåt.

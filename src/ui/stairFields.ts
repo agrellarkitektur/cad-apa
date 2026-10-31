@@ -1,12 +1,13 @@
 import type { Element, Id, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
-import { geometryOfStair, stairHoleIn, stairParams, storeyAbove } from '../elements/stair';
+import { geometryOfStair, stairHoleIn, stairLittera, stairParams, storeyAbove } from '../elements/stair';
 import { railingsOnStair } from '../elements/railing';
 import { stairHandrailWarning } from '../elements/railingWarnings';
 import { addRailingsOnStair } from './railingFields';
 import { minGoing, spiralDims, RISER_TARGET, stairWarnings, STAIR_THICKNESS, TREAD_LENGTH, WALK_LINE, HEADROOM, type StairParams } from '../elements/stairGeometry';
 import { STRAIGHT } from '../geometry/arc';
 import { levelOf } from '../repr/solids';
+import { isSite } from '../core/model';
 import { resolveParams } from '../elements/registry';
 import { escapeHtml } from './labels';
 import { numberField } from './fieldMarkup';
@@ -33,7 +34,8 @@ export function stairFieldsMarkup(doc: ProjectDoc, el: Element): string {
   const g = geometryOfStair(p);
   const own = typeof el.params.rise === 'number';
   const above = storeyAbove(doc, el.storey);
-  const warnings = g ? stairWarnings(p, g) : ['Referenslinjen är för kort för en trappa.'];
+  const outdoor = p.outdoor ?? isSite(el.storey);
+  const warnings = g ? stairWarnings(p, g, outdoor) : ['Referenslinjen är för kort för en trappa.'];
   // Ledstången på båda sidor (0.11.1, BFS 2024:9, 2 kap. 12 §): kan kvitteras.
   const handrail = g ? stairHandrailWarning(doc, el) : null;
   const acked = ((el.params.ack as string[] | undefined) ?? []).includes('handrails');
@@ -74,9 +76,11 @@ export function stairFieldsMarkup(doc: ProjectDoc, el: Element): string {
     : '';
   const holeNote = above ? `i bjälklaget på ${escapeHtml(above.name)}` : 'i bjälklaget ovanför (det finns ingen våning ovanför)';
   return `${warn}
+    <div class="fields"><label class="field" title="Tomt = TR01, TR02 … i trappornas ordning. Står framför trappans början i planen; Visa › Littera › Trappor släcker den."><span>Littera</span><input type="text" autocomplete="off" data-key="name:littera" value="${escapeHtml(el.name ?? '')}" placeholder="${escapeHtml(stairLittera(doc, { ...el, name: undefined }))}"></label></div>
     ${shape}
     <div class="fields">${sp ? '' : numberField('stair:width', 'Bredd', p.width, 'mm')}${numberField('stair:rise', 'Stigning', p.rise, 'mm')}${numberField('stair:risers', 'Antal sättsteg', g?.risers.length ?? 0, 'st')}${numberField('stair:riserHeight', 'Steghöjd', h, 'mm', 1)}${numberField('stair:going', 'Stegdjup', going, 'mm')}${numberField('level:level', 'Fot mot våningen', levelOf(p), 'mm')}</div>
     <label class="check" title="Stigningen följer våningshöjden, så att trappan går till golvet ovanför"><input type="checkbox" data-key="stair:toStorey"${own ? '' : ' checked'}> Till våningen ovanför</label>
+    <label class="check" title="En utomhustrappa varnar när stegdjupet är under 300 mm (praxis), en inomhustrappa under 250. På Platsen är trappan utomhus från början."><input type="checkbox" data-key="stair:outdoor"${outdoor ? ' checked' : ''}> Utomhus</label>
     <p class="note">${escapeHtml(summary)} Ändras stegdjupet ${p.spiral ? 'ändras graderna' : 'förlängs eller kortas trappans sista sträcka'}; antal sättsteg och steghöjden följer varandra (förval ${RISER_TARGET} mm).</p>
     <div class="fields">${numberField('stair:walkLine', 'Gånglinjen', p.walkLine ?? WALK_LINE, 'mm')}</div>
     ${select('stair:walkSide', 'Gånglinjen från', p.walkSide ?? '', [['', 'Utsidan (svängarnas)'], ['left', 'Vänster sida'], ['right', 'Höger sida']])}
@@ -88,7 +92,7 @@ export function stairFieldsMarkup(doc: ProjectDoc, el: Element): string {
     <ul class="stair-turns">${rows.join('')}</ul>`}
     <div class="fields">${select('stair:build', 'Uppbyggnad', p.build ?? 'monolithic', [['monolithic', 'Monolitisk'], ['built', 'Byggd']])}${p.build === 'built' ? '' : numberField('stair:thickness', 'Tjocklek', p.thickness ?? STAIR_THICKNESS, 'mm')}</div>
     ${p.build === 'built' ? builtFields(doc, p) : ''}
-    <div class="fields">${select('stair:contrast', 'Kontrastmarkering', p.contrast ?? 'none', [['none', 'Ingen'], ['ends', 'Första och sista'], ['all', 'Alla steg']])}${p.contrast && p.contrast !== 'none' ? numberField('stair:contrastWidth', 'Bredd', p.contrastWidth ?? BUILT.contrastWidth, 'mm') : ''}</div>
+    <div class="fields">${select('stair:contrast', 'Kontrastmarkering', p.contrast ?? 'none', [['none', 'Ingen'], ['ends', 'Första och sista'], ['all', 'Alla steg']])}${p.contrast && p.contrast !== 'none' ? numberField('stair:contrastWidth', 'Bredd', p.contrastWidth ?? BUILT.contrastWidth, 'mm') + select('stair:contrastMaterial', 'Material', p.contrastMaterial ?? '', [['', 'Mörk'], ...(doc.graphics.materials ?? []).filter((x) => x.building).map((x): [string, string] => [x.id, x.name])]) : ''}</div>
     ${select('stair:hole', 'Hålet', p.hole ?? 'auto', [['auto', 'Automatiskt'], ['none', 'Inget']])}
     <div class="fields">${numberField('stair:headroom', 'Fri höjd', p.headroom ?? HEADROOM, 'mm')}</div>
     <div class="row"><button class="btn" data-action="stair-own-hole" title="Hålet blir en vanlig håltagning i bjälklaget, som ritas om med bjälklagets grepp; trappan tar då inget eget">Gör till eget hål</button></div>
@@ -225,6 +229,12 @@ export function applyStairField(store: DocStore, ids: Id[], name: string, input:
       return patchStair(store, ids, 'Kontrastmarkering', () => ({ contrast: raw === 'ends' || raw === 'all' ? raw : undefined }));
     case 'contrastWidth':
       return pos(10) && patchStair(store, ids, 'Kontrastmarkeringens bredd', () => ({ contrastWidth: Math.round(num) === BUILT.contrastWidth ? undefined : Math.round(num) }));
+    case 'contrastMaterial':
+      return patchStair(store, ids, 'Kontrastmarkeringens material', () => ({ contrastMaterial: raw || undefined }));
+    case 'outdoor': {
+      const on = (input as HTMLInputElement).checked;
+      return patchStair(store, ids, on ? 'Utomhustrappa' : 'Inomhustrappa', (_p, el) => ({ outdoor: on === isSite(el.storey) ? undefined : on }));
+    }
     case 'thickness':
       return pos(20) && patchStair(store, ids, 'Trappans tjocklek', () => ({ thickness: Math.round(num) === STAIR_THICKNESS ? undefined : Math.round(num) }));
     case 'hole':

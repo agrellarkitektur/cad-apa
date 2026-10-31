@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.7.2** (alfa), Räckets avslut och spiraltrappan; nästa är **0.11.8
+**0.11.7.3** (alfa), Trappan och räcket, det som inte hanns med; nästa är **0.11.8
 Dörrar och fönster**.
 
 ## Vad som fungerar
@@ -1149,6 +1149,30 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11.7.3, Trappan och räcket, det som inte hanns med (samma
+filformat, 27; projekt från 0.11.6 öppnas):
+- **Utomhustrappa**: krysset *Utomhus* i trappans egenskaper; en trappa på
+  Platsen är utomhus från början. Stegdjupet varnar då under 300 mm i
+  stället för 250 (*avviker från praxis*)
+- **Kontrastmarkeringens material**: under *Kontrastmarkering* väljs ett
+  av stilbokens material för remsan i 3D (förval mörk)
+- **Trappans littera i planen** (TR01, TR02 … i trappornas ordning, eller
+  det som skrivs under *Littera* i egenskaperna): längs gångriktningen,
+  framför trappans början. Inte i Skiss och inte för det som rivs; *Visa ›
+  Littera › Trappor* släcker den
+- **Ändprofilen följer vridningen**: en profil vriden kring ankaret (eller
+  speglad) skärs av ändprofilen i sin egen riktning, i profilobjekt och i
+  räckesdelar med en profiltyp
+- **Ytor med mönster**: en yta i räckestypen (räckestypeditorn eller
+  panelen) har *Mönster*: *Slät*, *Rutnät* eller *Diagonalt*, med *Delning*
+  och *Ribbans bredd*. Ribborna syns i 3D, sektioner, fasader och
+  förhandsvisningen. De förvalda ST03 (nät 50 × 50) och SP01 (ribbor 45°,
+  c/c 150) har mönster; i projekt där typerna redan finns väljs mönstret
+  i editorn
+- **ST01, SP01 och de andra staketen i kommandoraden** (`RÄCKE SP01`, eller
+  `SP01` med Räcke igång) läggs in med räcket när projektet saknar dem
+  (förut blev det RÄ01)
 
 Version 0.11.7.2, Räckets avslut och spiraltrappan (samma filformat, 27;
 projekt från 0.11.6 öppnas):

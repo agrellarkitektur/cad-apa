@@ -11,6 +11,7 @@ import { resolveEnd } from './endProfile';
 import { solidsOf, sweep, type Vec3 } from './profileBody';
 import { buildingMaterialOf, materialSolid } from './buildingMaterial';
 import { stripRing } from './groundLines';
+import { patternBars } from './railingPattern';
 import { alongFinishes, postStations, railingBody, withExtension, type PanelPiece, type RailingBody, type RailProfiles } from './railingBody';
 import { dedupe, freePath, hostedPath, pathZ, type GroundFn, type RailGate, type RailingParams, type RailPath } from './railingGeometry';
 import { postRegions, postRing, railingPlan } from './railingPlan';
@@ -109,7 +110,7 @@ export function railingBodyOf(doc: ProjectDoc, el: Element<any>, ground?: Ground
 export function railProfiles(doc: ProjectDoc): RailProfiles {
   return {
     model: (id) => profileModel(doc.definitions[id]),
-    end: (e, section, yShift, yr) => resolveEnd(doc, e, section, yShift, yr).spec,
+    end: (e, section, yShift, yr, axis) => resolveEnd(doc, e, section, yShift, yr, axis).spec,
   };
 }
 
@@ -155,6 +156,13 @@ function stripAlong(a: Vec2, b: Vec2, w: number, e = 0): Vec2[] {
 }
 
 /** En sned kropp mellan a och b: undersidan och ovansidan räta plan genom höjderna i ändarna. */
+/** Ytans ribbor som kroppar (0.11.7.3). */
+function patternSolids(id: string, p: PanelPiece, mat: Partial<Solid>): Solid[] {
+  const L = dist(p.a, p.b);
+  const at = (s: number): Vec2 => [p.a[0] + ((p.b[0] - p.a[0]) * s) / L, p.a[1] + ((p.b[1] - p.a[1]) * s) / L];
+  return patternBars(p).map((b) => slantSolid(id, stripAlong(at(b.s0), at(b.s1), p.t), at(b.s0), at(b.s1), b.bottom, b.top, mat, 'frame'));
+}
+
 function slantSolid(id: string, ring: Vec2[], a: Vec2, b: Vec2, bottom: [number, number], top: [number, number], mat: Partial<Solid>, material: Material3D): Solid {
   const tp = planeAlong(a, b, top[0], top[1]);
   const bp = planeAlong(a, b, bottom[0], bottom[1]);
@@ -208,6 +216,10 @@ export function railingSolids(id: string, body: RailingBody, matOf: (part: RailP
     out.push({ id, rings: [postRing(q)], z0: q.z0, z1: q.z1, material: 'frame', ...matOf(q.part) });
   }
   for (const p of body.panels as PanelPiece[]) {
+    if (p.part.pattern) {
+      out.push(...patternSolids(id, p, matOf(p.part)));
+      continue;
+    }
     const ring = stripAlong(p.a, p.b, p.t);
     out.push(slantSolid(id, ring, p.a, p.b, [p.a0, p.b0], [p.a1, p.b1], matOf(p.part), p.part.material ? 'frame' : 'glass'));
   }

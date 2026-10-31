@@ -14,8 +14,19 @@ import { merged, stripCells, type EndShape, type EndSpec } from './profileBody';
  * speglas den av sig själv (u går alltid ut från änden).
  */
 
-/** Ändprofilens kontur i en ände, och dess höjder i tvärsnittet (för varningen). */
-export function endShapeOf(pa: ProfileTypeModel, section: ProfileSection, yShift: number, e: EndSpec): { shape: EndShape; y0: number; y1: number } | null {
+/**
+ * Tvärsnittets y-axel efter placeringen (0.11.7.3): vridningen kring ankaret
+ * (grader moturs) och speglingen, som `placePoint`. Ändprofilens y följer
+ * den, så att en vriden profil skärs i sin egen riktning.
+ */
+export function endAxis(rotate = 0, mirror = false): Vec2 {
+  const r = (rotate * Math.PI) / 180;
+  const d: Vec2 = [-Math.sin(r), Math.cos(r)];
+  return mirror ? [-d[0], d[1]] : d;
+}
+
+/** Ändprofilens kontur i en ände, och dess höjder i tvärsnittet (för varningen). `axis` är tvärsnittets y-axel efter placeringen (`endAxis`). */
+export function endShapeOf(pa: ProfileTypeModel, section: ProfileSection, yShift: number, e: EndSpec, axis: Vec2 = [0, 1]): { shape: EndShape; y0: number; y1: number } | null {
   const h = section.deltas.filter((d) => d.zone.axis === 'height');
   const rings = pa.parts.map((p) => flatContour(p.contour).map((q) => stretchPoint(q, h))).filter((r) => r.length >= 3);
   if (!rings.length) return null;
@@ -26,7 +37,8 @@ export function endShapeOf(pa: ProfileTypeModel, section: ProfileSection, yShift
   const polys = merged(rings.map((r) => r.map((q): Vec2 => [q[0] + base, q[1] - yShift])));
   const cells = stripCells(polys);
   if (!cells.length) return null;
-  return { shape: { cells, rings: polys, minU: box.minX + base, maxU: box.maxX + base }, y0: box.minY - yShift, y1: box.maxY - yShift };
+  const turned = Math.abs(axis[0]) > 1e-9 || axis[1] < 1 - 1e-9;
+  return { shape: { cells, rings: polys, minU: box.minX + base, maxU: box.maxX + base, ...(turned ? { axis } : {}) }, y0: box.minY - yShift, y1: box.maxY - yShift };
 }
 
 /** Ändprofilens typ för ett avslut, eller undefined. */
@@ -36,11 +48,11 @@ export function endProfileModel(doc: ProjectDoc, e: EndSpec): ProfileTypeModel |
 }
 
 /** Ett avslut med ändprofilens kontur uträknad; utan ändprofil (eller en som saknas) ett vinkelrätt. `fit` är en varning när höjderna inte stämmer. */
-export function resolveEnd(doc: ProjectDoc, e: EndSpec, section: ProfileSection, yShift: number, sectionY: [number, number]): { spec: EndSpec; fit?: string } {
+export function resolveEnd(doc: ProjectDoc, e: EndSpec, section: ProfileSection, yShift: number, sectionY: [number, number], axis: Vec2 = [0, 1]): { spec: EndSpec; fit?: string } {
   if (e.kind !== 'profile') return { spec: e };
   const pa = endProfileModel(doc, e);
   const name = e.profile ? doc.definitions[e.profile]?.name : undefined;
-  const r = pa ? endShapeOf(pa, section, yShift, e) : null;
+  const r = pa ? endShapeOf(pa, section, yShift, e, axis) : null;
   if (!r) return { spec: { kind: 'square', ...(e.shift ? { shift: e.shift } : {}), ...(e.beyond ? { beyond: true } : {}) }, fit: pa ? `Ändprofilen ${name ?? ''} saknar yta; änden är vinkelrät.` : 'Ändprofilen saknas; änden är vinkelrät.' };
   const off = Math.max(Math.abs(r.y0 - sectionY[0]), Math.abs(r.y1 - sectionY[1]));
   const fit = off > 1 ? `Ändprofilen ${name ?? ''} är ritad ${Math.round(r.y1 - r.y0)} mm hög och tvärsnittet är ${Math.round(sectionY[1] - sectionY[0])} mm: den sträcks bara med en sträckzon för höjden.` : undefined;

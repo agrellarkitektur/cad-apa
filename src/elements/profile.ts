@@ -9,7 +9,7 @@ import { materialCutFill, materialCutPrims } from './fill2d';
 import { flatLine } from './groundLines';
 import { planCutHeight } from './planCut';
 import { showLittera } from './littera';
-import { resolveEnd } from './endProfile';
+import { endAxis, resolveEnd } from './endProfile';
 import { endReach, hull, merged, partRegions, placePoint, sliceAt, solidsOf, sweep, type EndSpec, type SweepResult, type Vec3 } from './profileBody';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
 
@@ -145,11 +145,13 @@ export function profileBodyOf(doc: ProjectDoc, el: Element<any>): ProfileBody | 
     }));
     const plumb = p.path === 'plumb';
     const up = plumb ? 'plumb' : (p.up ?? model.up ?? 'plumb');
-    const ys = regions.flatMap((r) => r.polys.flatMap((poly) => poly.flatMap((ring) => ring.map((q) => q[1]))));
-    const yShift = place.anchor[1] - (p.offset?.[1] ?? 0);
+    // Ändprofilens y följer tvärsnittets y-axel efter vridningen och speglingen (0.11.7.3).
+    const axis = endAxis(p.rotate, p.mirror);
+    const ys = regions.flatMap((r) => r.polys.flatMap((poly) => poly.flatMap((ring) => ring.map((q) => q[0] * axis[0] + q[1] * axis[1]))));
+    const yShift = place.anchor[1] - ((p.offset?.[0] ?? 0) * axis[0] + (p.offset?.[1] ?? 0) * axis[1]);
     const endFit: string[] = [];
     const resolve = (e: EndSpec): EndSpec => {
-      const r = resolveEnd(doc, e, section, yShift, [Math.min(...ys), Math.max(...ys)]);
+      const r = resolveEnd(doc, e, section, yShift, [Math.min(...ys), Math.max(...ys)], axis);
       if (r.fit) endFit.push(r.fit);
       return r.spec;
     };

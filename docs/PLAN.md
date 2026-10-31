@@ -182,6 +182,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.7 | Ändprofiler och profilen som del: ändprofilerna PA (sidovyn, Inom/Utöver, förskjutning, sträckning med höjdzonen), profiltyper som delar i räckestyper (ankare, vridning) och som vangstycke, PR06–PR08 och PA01 |
 | 0.11.7.1 | Profilen, det som inte hanns med: typen i kommandoraden (PROFIL PR03, RÄCKE RÄ02), smartspöt för profilen, Hör till, profilens littera och delprofilernas inre linjer i planen, typerna i stilbokens fil, profildelarna från sidan i räckestypeditorn |
 | 0.11.7.2 | Räckets avslut och spiraltrappan: Böjd nedåt och Mot vägg ritade, varningen för fri höjd under nästa varv, mittpelarens material, stegnumren under Visa |
+| 0.11.7.3 | Trappan och räcket, det som inte hanns med: utomhustrappa, kontrastmarkeringens material, trappans littera i planen, ändprofilen med vridningen kring ankaret, ytor med mönster (rutnät, diagonalt), staketens typer i kommandoraden |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
 val och det som *inte gjordes*. De ligger i arkivet:
@@ -958,6 +959,58 @@ per objekt i profileditorn. Från 0.11–0.11.5 kvar: det kopplade egna
 hålet, trappans littera och egna penna, räcket som följer andra kanter än
 trappans, grindens fasad, att göra om en vanlig trappa till spiral.
 Klickjämförelsen körs i granskningen efter 0.11.8.
+
+### 0.11.7.3 Trappan och räcket, det som inte hanns med ✓
+
+Carl August 31 oktober: "Kör saker som inte hunnits med i PLAN.md som ny
+version 0.11.7.3". Claude valde fem små ur *Inte gjort* (A–E), plus ett fel
+som provningen hittade (F), byggt i samma session. Samma filformat (27):
+`outdoor` och `contrastMaterial` på trappan och `pattern` på en räckesdel
+är valfria fält.
+
+**Claudes val (0.11.7.3):**
+
+- **Urvalet**: A utomhustrappan (300 mm, från 0.11), B kontrastremsans
+  material (0.11.4), C trappans littera i planen (0.11; den egna pennan
+  väntar), D ändprofilen med vridningen kring ankaret (0.11.7), E
+  spaljéns rutnät och nätet i 3D (0.11.3). Profilen som följer kanten,
+  måtten per objekt, det kopplade hålet och räcket som följer andra kanter
+  är större och väntar; flyttbar littera, spiral av en vanlig trappa och
+  ett räcke runt det runda hålet väntar på Carl Augusts svar.
+- **Utomhus**: utelämnat följer Platsen (ja där, nej på en våning); krysset
+  sparas bara när det avviker. Bara stegdjupets varning ändras (300 i
+  stället för 250); ingen egen gräns för steghöjden utomhus.
+- **Kontrastremsan**: stilbokens byggnadsmaterial (kulören eller texturen i
+  3D); planens bakkant har sin penna som förut.
+- **Trappans littera**: det egna namnet (fältet *Littera*, `el.name`),
+  annars `TR` och löpnummer i dokumentets ordning bland trapporna, med
+  stilbokens antal siffror (som stödmurarnas M01). Texten står längs
+  gångriktningen (uppåt läsbar) och slutar 1,5 mm före trappans början,
+  mitt för den, utan ledare och grepp; bara i trappans eget våningsplan.
+  `littera:Stair` under *Visa › Littera*.
+- **Ändprofilen och vridningen**: ändprofilens y följer tvärsnittets
+  y-axel efter vridningen och speglingen (`endAxis`); skärningen och
+  kantlinjerna räknas i en ram med den axeln (`endFrame`). Gäller
+  profilobjekt och räckesdelar med en profiltyp. Prövat med volymen:
+  vriden 30° eller 90°, och speglad, är lika stor som ovriden.
+- **Mönster**: `pattern` med *Rutnät* (lodräta och vågräta ribbor) eller
+  *Diagonalt* (±45°), centrumavstånd vinkelrätt mot ribborna och ribbans
+  bredd; tjockleken är ytans. Höjderna räknas från ytans underkant, så att
+  mönstret följer lutningen; ribborna klipps mot ytan med raka ändar.
+  `railingPattern.ts`. Planen ritar ytan som förut. ST03 fick nät 50 med
+  tråd 3, SP01 ribbor 34 c/c 150.
+- **F**: `RÄCKE SP01` och `SP01` i kommandoraden hittade inte staketens
+  förvalda typer, och verktyget föll tillbaka till RÄ01 när typen saknades
+  i projektet. Nu söks båda listorna, och typen läggs in med räcket.
+
+**Inte gjort i 0.11.7.3:** trappans egen penna, mönster i planen och
+förhandsvisningens plan, utomhustrappans egen steghöjd. Kvar från tidigare
+(se 0.11.7.2): en profil som följer kanten den lades längs, ändprofilen
+som skär in förbi knäcken, profilens littera som går att flytta, måtten
+per objekt, det kopplade egna hålet, räcket som följer andra kanter än
+trappans, grindens fasad, att göra om en vanlig trappa till spiral,
+spiraltrappans stegdjup vid innerkanten, avslut på stolpar och spjälor
+med en profiltyp. Klickjämförelsen körs i granskningen efter 0.11.8.
 
 ### 0.11.8 Dörrar och fönster
 

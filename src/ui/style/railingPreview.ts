@@ -2,6 +2,7 @@ import type { Vec2 } from '../../repr/primitives';
 import { railValues, type RailingTypeModel, type RailPart } from '../../core/railingTypes';
 import { alongFinishes, railingBody, withExtension, type AlongPiece, type BodyOptions, type PostPiece, type RailingBody, type RailProfiles } from '../../elements/railingBody';
 import { postRing } from '../../elements/railingPlan';
+import { patternBars } from '../../elements/railingPattern';
 import { freePath, type GroundFn, type RailPath } from '../../elements/railingGeometry';
 import { escapeHtml } from '../labels';
 
@@ -66,7 +67,13 @@ function ground(c: Canvas, list: Vec2[], extra = ''): void {
 /** Delarna sedda från sidan (x längs linjen, y = −höjd). `only` begränsar till vissa delar. */
 function elevation(c: Canvas, body: RailingBody, sel: string | null, only?: (p: RailPart) => boolean): void {
   const ok = (p: RailPart) => !only || only(p);
-  for (const q of body.panels) if (ok(q.part)) poly(c, q.part, sel, [[q.a[0], -q.a0], [q.b[0], -q.b0], [q.b[0], -q.b1], [q.a[0], -q.a1]]);
+  for (const q of body.panels) {
+    if (!ok(q.part)) continue;
+    // En yta med mönster (0.11.7.3): ribborna, längs x från a.
+    const bars = patternBars(q);
+    if (bars.length) for (const b of bars) poly(c, q.part, sel, [[q.a[0] + b.s0, -b.bottom[0]], [q.a[0] + b.s1, -b.bottom[1]], [q.a[0] + b.s1, -b.top[1]], [q.a[0] + b.s0, -b.top[0]]]);
+    else poly(c, q.part, sel, [[q.a[0], -q.a0], [q.b[0], -q.b0], [q.b[0], -q.b1], [q.a[0], -q.a1]]);
+  }
   for (const f of body.footings) {
     if (!ok(f.part)) continue;
     const x = f.at[0];
@@ -267,7 +274,16 @@ export function previewMarkup(model: RailingTypeModel, mode: PreviewMode, sel: s
   const items: { d: number; svg: () => void }[] = [];
   ground(c, r.path.pts.map((p) => iso(p[0], p[1], 0)), ' rtp-ref');
   for (const q of r.body.panels) {
-    items.push({ d: (q.a[0] - q.a[1] + q.b[0] - q.b[1]) / 2, svg: () => poly(c, q.part, sel, [iso(q.a[0], q.a[1], q.a0), iso(q.b[0], q.b[1], q.b0), iso(q.b[0], q.b[1], q.b1), iso(q.a[0], q.a[1], q.a1)]) });
+    const bars = patternBars(q);
+    const L = Math.hypot(q.b[0] - q.a[0], q.b[1] - q.a[1]) || 1;
+    const at = (s: number, z: number) => iso(q.a[0] + ((q.b[0] - q.a[0]) * s) / L, q.a[1] + ((q.b[1] - q.a[1]) * s) / L, z);
+    items.push({
+      d: (q.a[0] - q.a[1] + q.b[0] - q.b[1]) / 2,
+      svg: () => {
+        if (bars.length) for (const b of bars) poly(c, q.part, sel, [at(b.s0, b.bottom[0]), at(b.s1, b.bottom[1]), at(b.s1, b.top[1]), at(b.s0, b.top[0])]);
+        else poly(c, q.part, sel, [iso(q.a[0], q.a[1], q.a0), iso(q.b[0], q.b[1], q.b0), iso(q.b[0], q.b[1], q.b1), iso(q.a[0], q.a[1], q.a1)]);
+      },
+    });
   }
   for (const q of [...r.body.repeats, ...r.body.posts]) {
     items.push({

@@ -69,6 +69,10 @@ export interface StairParams {
   contrast?: 'none' | 'ends' | 'all';
   /** Kontrastmarkeringens bredd från framkanten, mm (50 från början). */
   contrastWidth?: number;
+  /** Kontrastmarkeringens material ur stilboken (0.11.7.3; utelämnat mörk). */
+  contrastMaterial?: string;
+  /** Utomhustrappa (0.11.7.3): stegdjupet varnar under 300. Utelämnat: ja på Platsen, annars nej. */
+  outdoor?: boolean;
   /**
    * Spiraltrappa (0.11.5): `line` är då mitten och en punkt i den riktning
    * trappan börjar; referenslinjen räknas fram som en båge (helix) runt

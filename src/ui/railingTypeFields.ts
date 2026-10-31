@@ -218,6 +218,13 @@ export function applyTypeField(store: DocStore, defId: Id, path: string[], input
         const v = num(raw);
         if (!(v > 0)) return null;
         q.profile = { ...(q.profile ?? { shape: 'rect', w: 40 }), [field]: Math.round(v) };
+      } else if (field === 'pattern') {
+        q.pattern = raw === 'grid' || raw === 'diagonal' ? { ...q.pattern, kind: raw } : undefined;
+        if (!q.pattern) delete q.pattern;
+      } else if (field === 'patternSpacing' || field === 'patternWidth') {
+        const v = num(raw);
+        if (!(v > 0) || !q.pattern) return null;
+        q.pattern = { ...q.pattern, [field === 'patternSpacing' ? 'spacing' : 'width']: Math.round(v) };
       } else if (field === 'thickness') {
         const v = num(raw);
         if (!(v > 0)) return null;

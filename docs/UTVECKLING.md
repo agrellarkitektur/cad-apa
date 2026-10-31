@@ -670,6 +670,35 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Trappan och räcket, det som inte hanns med (0.11.7.3, format 27)
+
+- **Utomhus**: `outdoor` i `StairParams`; `stairFieldsMarkup` räknar
+  `p.outdoor ?? isSite(el.storey)` och ger det till `stairWarnings`.
+  Fältet `stair:outdoor` sparar bara en avvikelse från Platsen.
+- **Kontrastremsan**: `contrastMaterial`; `contrastSolids(id, p, g, mat)`
+  i `stairBuilt.ts` tar materialet (`materialSolid`) från `stair.ts`.
+- **Littera**: `stairLittera(doc, el)` i `stair.ts` (namnet eller `TR` med
+  `litteraText`), `stairLitteraPlan` sist i `stairPlan` (del `littera`),
+  `showLittera(ctx, 'Stair')`; fältet *Littera* är `name:littera` som
+  profilens.
+- **Ändprofilen och vridningen**: `endAxis(rotate, mirror)` i
+  `endProfile.ts` ger tvärsnittets y-axel; `resolveEnd` och `endShapeOf`
+  tar den och lägger den i `EndShape.axis` när den inte är (0, 1).
+  `yShift` = ankarets y − förskjutningen · axeln. I `profileBody.ts` ger
+  `endFrame(f, shape)` ramen (Y längs axeln) för `endCut`, `uyHalf` och
+  `endShapeEdges`, och `endPoints` tvärsnittets punkter i den. Räckets
+  delar: `Placed.rotate`, och `RailProfiles.end` tar axeln.
+- **Mönster**: `RailPart.pattern` (`grid`/`diagonal`, `spacing`, `width`);
+  `patternBars(panel)` i `elements/railingPattern.ts` ger ribborna (s längs
+  ytan, under- och överkant i ändarna); `railingSolids` gör dem till
+  `slantSolid` och `railingPreview` till polygoner. Fälten `pattern`,
+  `patternSpacing` och `patternWidth` i `applyTypeField` i
+  `railingTypeFields.ts` (editorn och panelen delar den).
+- **Staketen i kommandoraden**: `candidates` i `shellTypes.ts` och
+  `RailingTool.defFor` söker också `defaultGroundRailingTypes`;
+  `addRailings` lägger in en förvald typ som saknas.
+- **Tester**: `tests/v01173.test.ts`.
+
 ## Räckets avslut och spiraltrappan (0.11.7.2, format 27)
 
 - **Avsluten**: `alongFinishes(a)` i `elements/railingBody.ts` ger

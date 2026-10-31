@@ -197,7 +197,13 @@ function partMarkup(doc: ProjectDoc, def: Id, m: RailingTypeModel, q: RailPart):
   const group = (title: string, body: string) => (body ? `<div class="field-label">${title}</div><div class="fields">${body}</div>` : '');
   const profile =
     q.kind === 'surface'
-      ? text('thickness', 'Tjocklek', q.thickness ?? 10)
+      ? text('thickness', 'Tjocklek', q.thickness ?? 10) +
+        select('pattern', 'Mönster', q.pattern?.kind ?? '', [
+          ['', 'Slät'],
+          ['grid', 'Rutnät'],
+          ['diagonal', 'Diagonalt'],
+        ], 'I 3D, sektioner och fasader: en slät yta (glas, plåt) eller ribbor i ytans plan') +
+        (q.pattern ? `${text('patternSpacing', 'Delning', q.pattern.spacing ?? 100, 'Centrumavstånd vinkelrätt mot ribborna')}${text('patternWidth', 'Ribbans bredd', q.pattern.width ?? 20)}` : '')
       : `<label class="field" title="Rektangel, rund eller en profiltyp (stilboken › Typer › Profiler)"><span>Profil</span><select data-key="${k('shape')}">${railProfileOptions(doc, q)}</select></label>${
           q.profile?.shape === 'profile'
             ? railProfileFields(doc, q, k)

@@ -10,6 +10,8 @@ import { resolveParams, type ElementType, type PlanContext } from './registry';
 import { bandBetween, HEADROOM, spiralDims, sideBetween, stairGeometry, stairOutline, STAIR_THICKNESS, STAIR_WIDTH, walkBetween, walkDir, type StairGeometry, type StairParams } from './stairGeometry';
 import { BUILT, builtDims, builtSolids, contrastItems, contrastSolids, insetRib, stringerInsets, stringerLine } from './stairBuilt';
 import { liftShape } from '../repr/solids';
+import { litteraText } from '../core/site';
+import { showLittera } from './littera';
 
 /**
  * Trappan (0.11, format 26). Ett band längs en referenslinje som ritas i
@@ -207,7 +209,40 @@ function stairPlan(el: Element<any>, ctx: PlanContext, p: StairParams, g: StairG
     const back: Vec2 = [-(dir1[0] * Math.cos(ang) - dir1[1] * Math.sin(ang)), -(dir1[0] * Math.sin(ang) + dir1[1] * Math.cos(ang))];
     out.push(line(tip, [tip[0] + back[0] * head, tip[1] + back[1] * head], walk, o('gånglinje')));
   }
+  out.push(...stairLitteraPlan(el, ctx, g, hid, own));
   return out;
+}
+
+/**
+ * Trappans littera (0.11.7.3): det egna namnet, annars TR01, TR02 … i
+ * dokumentets ordning bland trapporna (som stödmurarnas M01).
+ */
+export function stairLittera(doc: ProjectDoc, el: Element<any>): string {
+  if (el.name?.trim()) return el.name.trim();
+  const stairs = Object.values(doc.elements).filter((e) => e.type === 'Stair');
+  return litteraText(doc, 'TR', Math.max(1, stairs.findIndex((e) => e.id === el.id) + 1));
+}
+
+/**
+ * Litteran i planen (0.11.7.3): längs gångriktningen, framför trappans
+ * början (där man går upp), utan ledare. Bara i trappans eget våningsplan, inte i Skiss,
+ * inte för det som rivs; *Visa › Littera › Trappor* släcker den.
+ */
+function stairLitteraPlan(el: Element<any>, ctx: PlanContext, g: StairGeometry, hid: number, own: boolean): Primitive[] {
+  if (!own || !showLittera(ctx, 'Stair') || ctx.actionOf(el) === 'demolished') return [];
+  const text = ctx.memo(`stair-littera:${el.id}`, () => stairLittera(ctx.doc, el));
+  const height = ctx.style.labels.heights.littera;
+  const rib = g.ribAt(hid);
+  const d = walkDir(g, hid);
+  // Längs gångriktningen, slutar 1,5 mm (papperet) före trappans början, mitt för den.
+  const gap = 1.5 * ctx.scale;
+  const mid: Vec2 = [(rib.L[0] + rib.R[0]) / 2 - d[0] * gap, (rib.L[1] + rib.R[1]) / 2 - d[1] * gap];
+  const a0 = Math.atan2(d[1], d[0]);
+  const flip = Math.cos(a0) < -1e-6;
+  const angle = flip ? a0 + Math.PI : a0;
+  const h = height * ctx.scale;
+  const at: Vec2 = [mid[0] + Math.sin(angle) * (h / 2), mid[1] - Math.cos(angle) * (h / 2)];
+  return [{ kind: 'text', at, text, height, align: flip ? 'start' : 'end', angle, pen: { weight: 0.18 }, origin: { objectId: el.id, objectType: 'Stair', part: 'littera' } }];
 }
 
 /** Spiraltrappans mittpelare (0.11.5): mitten och radien, när innerdiametern är minst 50 mm. */
@@ -333,7 +368,7 @@ export const stairType: ElementType<StairParams> = {
     // Mittpelaren (0.11.7.2): eget material ur stilboken, annars målad (byggd) eller som trappan.
     const poleMat: Partial<Solid> = p.spiral?.pole ? materialSolid(buildingMaterialOf({ material: p.spiral.pole } as never, ctx.style)) : p.build === 'built' ? { color: '#ece8df' } : mat;
     const extra: Shape3D[] = edges.length ? [{ kind: 'edges', id: el.id, segments: edges }] : [];
-    return [...body, ...poleSolid(el.id, p, g, poleMat), ...contrastSolids(el.id, p, g), ...extra].map((s): Shape3D => liftShape(s, lv));
+    return [...body, ...poleSolid(el.id, p, g, poleMat), ...contrastSolids(el.id, p, g, p.contrastMaterial ? materialSolid(buildingMaterialOf({ material: p.contrastMaterial } as never, ctx.style)) : undefined), ...extra].map((s): Shape3D => liftShape(s, lv));
   },
 };
 

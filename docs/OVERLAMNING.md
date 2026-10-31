@@ -6,10 +6,21 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 31 oktober 2026, efter 0.11.7.2.
+README. Senast: 31 oktober 2026, efter 0.11.7.3.
 
 ## Läget
 
+- **0.11.7.3 Trappan och räcket, det som inte hanns med är klar** (samma
+  format, 27; valfria fält `outdoor`, `contrastMaterial` och `pattern`),
+  byggd i en session (Carl August: "Kör saker som inte hunnits med i
+  PLAN.md som ny version 0.11.7.3"; Claude valde A–E, F är ett fel som
+  provningen hittade): utomhustrappan (300 mm), kontrastremsans material,
+  trappans littera i planen (TR01), ändprofilen med vridningen kring
+  ankaret, ytor med mönster (spaljéns ribbor och nätet i 3D), och
+  staketens förvalda typer i kommandoraden. Testerna: 889 på ca 18 s.
+  Provat i Playwright mot `dist/` (trappans littera och Utomhus i panelen,
+  `SP01` i kommandoraden och spaljén i 3D). Koden i UTVECKLING.md, Claudes
+  val och det som inte gjordes i PLAN.md.
 - **0.11.7.2 Räckets avslut och spiraltrappan är klar** (samma format,
   27; valfritt fält `spiral.pole`), byggd i en session (Carl August: "Kör
   saker som inte hunnits med i PLAN.md som ny version 0.11.7.2"; Claude
@@ -38,9 +49,15 @@ README. Senast: 31 oktober 2026, efter 0.11.7.2.
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.11.7.2 pushad till `main` 31 oktober (se git och `gh run
+- **Publicerad:** 0.11.7.3 pushad till `main` 31 oktober (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.11.7.3:** trapporna får littera i
+  planen (TR01 …, utom i Skiss; *Visa › Littera › Trappor*), och trappor på
+  Platsen varnar för stegdjup under 300 mm. Nytt: *Utomhus* och
+  *Littera* i trappans egenskaper, *Material* för kontrastmarkeringen,
+  *Mönster* för ytor i räckestyperna (ST03 och SP01 som läggs in nu har
+  det; befintliga typer är släta tills mönstret väljs).
 - **Märks i hans ritningar efter 0.11.7.2:** ledstänger med avslutet
   *Böjd nedåt* (RÄ01) eller *Mot vägg* (RÄ03) får dem i 3D, sektioner och
   fasader (*Mot vägg* också i planen). Nytt: varningen för fri höjd i
@@ -69,10 +86,10 @@ README. Senast: 31 oktober 2026, efter 0.11.7.2.
   konturen* och *Pelare här*.
 - **Märks i hans ritningar efter 0.11.5:** inget i befintliga ritningar.
   *Spiral* i trappverktygets rad.
-- **Versionsnumret** är `0.11.7.2` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.11.7.3` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.11.7.2 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.11.7.3 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -155,7 +172,8 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   ~~0.11 Trappan~~ … ~~0.11.5 Spiraltrappan~~, ~~Granskning efter
   0.11.5~~, ~~Utredning av profilverktyget~~, ~~0.11.6 Profilen~~, ~~0.11.6.1 Profileditorn, resten~~, ~~0.11.7 Ändprofiler och profilen
   som del~~, ~~0.11.7.1 Profilen, det som inte hanns med~~, ~~0.11.7.2 Räckets
-  avslut och spiraltrappan~~ (klara;
+  avslut och spiraltrappan~~, ~~0.11.7.3 Trappan och räcket, det som inte
+  hanns med~~ (klara;
   se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
@@ -179,7 +197,7 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
 skrivrätt till repot ("push godkänd"). Fråga Carl August om han provat
-0.11.6–0.11.7.2 och ställ frågorna om dem (nedan) först, högst fem åt
+0.11.6–0.11.7.3 och ställ frågorna om dem (nedan) först, högst fem åt
 gången. Nästa version är **0.11.8 Dörrar och fönster** (stor; foder,
 tröskel, bleck m.m. som profiler). Den bör utredas med en mockup i Claude
 Design i en egen chatt först (som räcket och profilen), och troligen
@@ -191,9 +209,17 @@ delas i två versioner; föreslå delningen. Ställ frågorna om 0.11.5–0.11.1
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4,
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.7.3, 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4,
 0.11.3, 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
+
+**0.11.7.3 efter provning** (Claudes val, se PLAN.md)
+- Trappans littera står längs gångriktningen framför början, utan ledare.
+  Rätt plats, eller hellre vid gånglinjens pil eller vågrätt?
+- En trappa på Platsen är utomhus av sig själv (300 mm). Rätt, och behövs
+  en egen steghöjd utomhus (t.ex. högst 170)?
+- Spaljén SP01 fick ribbor 34 mm c/c 150 i ±45°. Ser det rätt ut? Ska
+  mönstret också synas i planen (Detalj)?
 
 **0.11.7.2 efter provning** (Claudes val, se PLAN.md)
 - *Böjd nedåt* går 100 mm ned under ledstången, utan böjradie. Lagom, och

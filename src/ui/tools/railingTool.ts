@@ -1,3 +1,4 @@
+import { defaultGroundRailingTypes, defaultRailingTypes } from '../../core/railingTypes';
 import { addRailings } from '../../core/railings';
 import { defaultSheet } from '../../core/viewCategories';
 import { isSite, type Id } from '../../core/model';
@@ -188,7 +189,9 @@ export class RailingTool implements ViewTool, PointTaker {
    * typ med *Mark*, på en våning en med *Byggnad*), annars förvalet där.
    */
   defFor(storey: Id): Id | undefined {
-    const m = this.options.def ? this.host.store.doc.definitions[this.options.def]?.railing : undefined;
+    // En förvald typ som projektet saknar (vald i kommandoraden) läggs in med räcket (0.11.7.3).
+    const id = this.options.def;
+    const m = id ? (this.host.store.doc.definitions[id] ?? [...defaultRailingTypes(), ...defaultGroundRailingTypes()].find((d) => d.id === id))?.railing : undefined;
     if (!m) return undefined;
     const site = isSite(storey);
     return (site ? m.ground : m.building || !m.ground) ? this.options.def : undefined;

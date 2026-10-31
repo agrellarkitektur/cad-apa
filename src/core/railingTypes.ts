@@ -50,6 +50,13 @@ export interface RailPart {
   profile?: RailProfile;
   /** Ytans tjocklek, mm. */
   thickness?: number;
+  /**
+   * Ytans mönster i 3D, sektioner och fasader (0.11.7.3): utelämnat en slät
+   * yta (glas, plåt); *Rutnät* lodräta och vågräta ribbor, *Diagonalt* ribbor
+   * i ±45°. `spacing` är centrumavståndet vinkelrätt mot ribborna och `width`
+   * ribbans bredd i ytans plan; tjockleken är ytans.
+   */
+  pattern?: { kind: 'grid' | 'diagonal'; spacing?: number; width?: number };
   /** Stilbokens material; utelämnat = metall (glas för ytor). */
   material?: string;
   /** Längsgående: överkantens höjd över referenslinjen. */
@@ -334,7 +341,7 @@ export function defaultGroundRailingTypes(): Definition[] {
         { id: 'trad-1', kind: 'along', name: 'Spänntråd överst', profile: { shape: 'round', w: 4 }, z: 'Höjd', pen: 'railHandrail' },
         { id: 'trad-2', kind: 'along', name: 'Spänntråd mitt', profile: { shape: 'round', w: 4 }, z: 'Höjd / 2', detail: 'detail' },
         { id: 'trad-3', kind: 'along', name: 'Spänntråd nederst', profile: { shape: 'round', w: 4 }, z: 54, detail: 'detail' },
-        { id: 'nat', kind: 'surface', name: 'Nät (flätverk 50 × 50)', thickness: 3, material: 'aluminium', from: 50, to: 'Höjd', gate: 'break', detail: 'detail' },
+        { id: 'nat', kind: 'surface', name: 'Nät (flätverk 50 × 50)', thickness: 3, pattern: { kind: 'grid', spacing: 50, width: 3 }, material: 'aluminium', from: 50, to: 'Höjd', gate: 'break', detail: 'detail' },
       ],
     }),
     def('t-sp01', 'SP01', 'Spaljé, rutnät', {
@@ -349,7 +356,7 @@ export function defaultGroundRailingTypes(): Definition[] {
         { id: 'stolpe', kind: 'point', name: 'Stolpe', profile: { shape: 'rect', w: 90 }, material: 'trall', from: 0, to: 'Höjd', spacing: 'Stolpdelning', corners: true, below: buried, detail: 'normal', pen: 'railPost' },
         { id: 'ram-over', kind: 'along', name: 'Ram överst', profile: { shape: 'rect', w: 45, h: 45 }, material: 'trall', z: 'Höjd', pen: 'railHandrail' },
         { id: 'ram-under', kind: 'along', name: 'Ram nederst', profile: { shape: 'rect', w: 45, h: 45 }, material: 'trall', z: 300, detail: 'detail' },
-        { id: 'rutnat', kind: 'surface', name: 'Ribbor 45°, c/c 150', thickness: 20, material: 'trall', from: 255, to: 'Höjd - 45', detail: 'detail' },
+        { id: 'rutnat', kind: 'surface', name: 'Ribbor 45°, c/c 150', thickness: 20, pattern: { kind: 'diagonal', spacing: 150, width: 34 }, material: 'trall', from: 255, to: 'Höjd - 45', detail: 'detail' },
       ],
     }),
     def('t-g01', 'G01', 'Spjälgrind', {

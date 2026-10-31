@@ -311,7 +311,7 @@ function stringerProfileSolids(id: string, g: StairGeometry, side: 'left' | 'rig
 }
 
 /** Kontrastmarkeringen i 3D: en tunn remsa på stegets framkant (ovanpå plansteget). */
-export function contrastSolids(id: string, p: StairParams, g: StairGeometry): Solid[] {
+export function contrastSolids(id: string, p: StairParams, g: StairGeometry, mat?: Partial<Solid>): Solid[] {
   const items = contrastItems(g, p.contrast);
   if (!items.length) return [];
   const w = num(p.contrastWidth, BUILT.contrastWidth, 10);
@@ -321,7 +321,7 @@ export function contrastSolids(id: string, p: StairParams, g: StairGeometry): So
   for (const it of items) {
     const ring = bandExt(g, it.u0, Math.min(it.u1, it.u0 + w));
     if (ring.length < 3) continue;
-    for (const poly of intersection([ring], [[inner]])) if (poly[0]?.length >= 3) out.push({ id, rings: [poly[0]], z0: it.z, z1: it.z + 2, material: 'floor', color: COLOR.contrast });
+    for (const poly of intersection([ring], [[inner]])) if (poly[0]?.length >= 3) out.push({ id, rings: [poly[0]], z0: it.z, z1: it.z + 2, material: 'floor', color: COLOR.contrast, ...mat });
   }
   return out;
 }

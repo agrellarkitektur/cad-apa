@@ -321,6 +321,24 @@ export interface EndShape {
   rings: Rings[];
   minU: number;
   maxU: number;
+  /**
+   * Tvärsnittets y-axel i banans tvärsnitt (x, y) när profilen är vriden
+   * kring ankaret eller speglad (0.11.7.3); utelämnad är den ramens Y.
+   */
+  axis?: Vec2;
+}
+
+/** Ramen för en ände med ändprofil: Y längs ändprofilens axel (en vriden profil), X vinkelrätt mot den. */
+function endFrame(f: Frame, sh: EndShape | undefined): Frame {
+  const d = sh?.axis;
+  if (!d) return f;
+  return { t: f.t, X: v3.add(v3.mul(f.X, d[1]), v3.mul(f.Y, -d[0])), Y: v3.add(v3.mul(f.X, d[0]), v3.mul(f.Y, d[1])) };
+}
+
+/** Tvärsnittets punkter i ändens ram (`endFrame`). */
+function endPoints(pts: readonly PPoint[], sh: EndShape | undefined): PPoint[] {
+  const d = sh?.axis;
+  return d ? pts.map((q): PPoint => [q[0] * d[1] - q[1] * d[0], q[0] * d[0] + q[1] * d[1]]) : [...pts];
 }
 
 /** Ett avslut i en ände. */
@@ -454,7 +472,7 @@ function endShapeEdges(p: Vec3, tOut: Vec3, f: Frame, sh: EndShape, own: readonl
  */
 export function endHalfSpace(p: Vec3, tOut: Vec3, f: Frame, pts: readonly PPoint[], e: EndSpec, extra = 0): HalfSpace {
   // En ändprofil: kroppen går till konturens yttersta punkt och skärs sedan med konturen (`endCut`).
-  if (e.shape) return uyHalf(p, tOut, f, 1, 0, e.shape.maxU + extra);
+  if (e.shape) return uyHalf(p, tOut, endFrame(f, e.shape), 1, 0, e.shape.maxU + extra);
   const n = endNormal(e.kind, tOut, e.angle);
   const nt = v3.dot(n, tOut);
   const k = Math.abs(nt) > 1e-6 ? nt : 1;
@@ -601,15 +619,15 @@ export function sweep(regions: readonly { polys: Rings[]; follows: boolean; exte
         if (poly.length) poly = clipPoly(poly, hi);
         if (!poly.length) continue;
         let polys = [poly];
-        if (shapeLo) polys = polys.flatMap((q) => endCut(q, a, tLo, s.f, shapeLo, reg.extend));
-        if (shapeHi) polys = polys.flatMap((q) => endCut(q, b, s.f.t, s.f, shapeHi, reg.extend));
+        if (shapeLo) polys = polys.flatMap((q) => endCut(q, a, tLo, endFrame(s.f, shapeLo), shapeLo, reg.extend));
+        if (shapeHi) polys = polys.flatMap((q) => endCut(q, b, s.f.t, endFrame(s.f, shapeHi), shapeHi, reg.extend));
         for (const q of polys) out.pieces.push({ part: ri, segment: s.i, poly: q });
       }
       // Kantlinjerna i en ände med ändprofil slutar där konturen börjar.
-      const loE = shapeLo ? uyHalf(a, tLo, s.f, 1, 0, shapeLo.minU + reg.extend) : lo;
-      const hiE = shapeHi ? uyHalf(b, s.f.t, s.f, 1, 0, shapeHi.minU + reg.extend) : hi;
-      if (shapeLo) out.edges.push(...endShapeEdges(a, tLo, s.f, shapeLo, own, reg.extend));
-      if (shapeHi) out.edges.push(...endShapeEdges(b, s.f.t, s.f, shapeHi, own, reg.extend));
+      const loE = shapeLo ? uyHalf(a, tLo, endFrame(s.f, shapeLo), 1, 0, shapeLo.minU + reg.extend) : lo;
+      const hiE = shapeHi ? uyHalf(b, s.f.t, endFrame(s.f, shapeHi), 1, 0, shapeHi.minU + reg.extend) : hi;
+      if (shapeLo) out.edges.push(...endShapeEdges(a, tLo, endFrame(s.f, shapeLo), shapeLo, endPoints(own, shapeLo), reg.extend));
+      if (shapeHi) out.edges.push(...endShapeEdges(b, s.f.t, endFrame(s.f, shapeHi), shapeHi, endPoints(own, shapeHi), reg.extend));
       // Kantlinjerna: hörnen längs biten, och konturen i början (och i slutet på den sista biten).
       for (const poly of reg.polys)
         for (const ring of poly) {
