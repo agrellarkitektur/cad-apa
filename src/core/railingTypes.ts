@@ -24,13 +24,23 @@ export type RailPartKind = 'point' | 'along' | 'repeat' | 'surface';
 
 export const PART_KIND_LABELS: Record<RailPartKind, string> = { point: 'Punkt', along: 'Längsgående', repeat: 'Upprepad', surface: 'Yta' };
 
-/** Profilen för en stolpe, en liggare eller en spjäla: rektangel (bredd × höjd) eller rund (diameter). */
+/**
+ * Profilen för en stolpe, en liggare eller en spjäla: rektangel (bredd ×
+ * höjd), rund (diameter) eller en profiltyp (0.11.7) med ankare och
+ * vridning kring ankaret.
+ */
 export interface RailProfile {
-  shape: 'rect' | 'round';
-  /** Bredd eller diameter, mm. */
+  shape: 'rect' | 'round' | 'profile';
+  /** Bredd eller diameter, mm (för en profiltyp: det senast kända måttet, som reserv). */
   w: number;
   /** Höjd (rektangel), mm; utelämnad = som bredden. */
   h?: number;
+  /** Profiltypen (en PR-typs id) för `profile`. */
+  type?: Id;
+  /** Profiltypens ankare (nummer); utelämnat = typens förval. */
+  anchor?: number;
+  /** Vridning kring ankaret, grader moturs: tal eller formel med typens parametrar. */
+  rotate?: RailNum;
 }
 
 export interface RailPart {

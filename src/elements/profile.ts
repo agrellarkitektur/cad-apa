@@ -8,6 +8,7 @@ import { buildingMaterialOf, materialSolid } from './buildingMaterial';
 import { materialCutFill, materialCutPrims } from './fill2d';
 import { flatLine } from './groundLines';
 import { planCutHeight } from './planCut';
+import { resolveEnd } from './endProfile';
 import { endReach, hull, merged, partRegions, placePoint, sliceAt, solidsOf, sweep, type EndSpec, type SweepResult, type Vec3 } from './profileBody';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
 
@@ -104,21 +105,32 @@ export interface ProfileBody {
   plumb: boolean;
   /** Hur långt avsluten skär in längs banan (0.11.6.1); null för en pelare. */
   reach: ReturnType<typeof endReach>;
+  /** Varningar för ändprofilerna (0.11.7): saknas, eller ritade för en annan höjd. */
+  endFit: string[];
 }
 
 const saved = new WeakMap<object, { key: unknown[]; body: ProfileBody | null }>();
 
 /** Avslutet i en ände: objektets, annars typens. */
-export const endOf = (model: ProfileTypeModel, e: Partial<EndSpec> | undefined): EndSpec => ({ kind: e?.kind ?? defaultEnd(model), ...(e?.angle !== undefined ? { angle: e.angle } : {}), ...(e?.beyond ? { beyond: true } : {}), ...(e?.shift ? { shift: e.shift } : {}) });
+export const endOf = (model: ProfileTypeModel, e: Partial<EndSpec> | undefined): EndSpec => {
+  const kind = e?.kind ?? defaultEnd(model);
+  // En ändprofil ligger Utöver som förval (utredningen, G); typens ändprofil om objektet inte valt en.
+  const beyond = e?.beyond ?? kind === 'profile';
+  const profile = kind === 'profile' ? (e?.profile ?? model.endProfile) : undefined;
+  return { kind, ...(e?.angle !== undefined ? { angle: e.angle } : {}), ...(beyond ? { beyond: true } : {}), ...(e?.shift ? { shift: e.shift } : {}), ...(profile ? { profile } : {}) };
+};
 
 /** Profilen svept längs banan. */
 export function profileBodyOf(doc: ProjectDoc, el: Element<any>): ProfileBody | null {
   const p = resolveParams<ProfileParams>(doc, el);
   const def = el.definition ? doc.definitions[el.definition] : undefined;
-  const key = [p, def];
+  const model0 = profileTypeOf(doc, el);
+  // Ändprofilernas typer hör till nyckeln: ändras en PA-typ ritas profilen om.
+  const pas = [endOf(model0, p.start).profile, endOf(model0, p.end).profile].map((id) => (id ? doc.definitions[id] : undefined));
+  const key = [p, def, ...pas];
   const hit = saved.get(el);
   if (hit && hit.key.every((k, i) => k === key[i])) return hit.body;
-  const model = profileTypeOf(doc, el);
+  const model = model0;
   const path = profilePath3d(p);
   let body: ProfileBody | null = null;
   if (path.length >= 2) {
@@ -132,10 +144,18 @@ export function profileBodyOf(doc: ProjectDoc, el: Element<any>): ProfileBody | 
     }));
     const plumb = p.path === 'plumb';
     const up = plumb ? 'plumb' : (p.up ?? model.up ?? 'plumb');
-    const start: EndSpec = plumb ? { kind: 'square' } : endOf(model, p.start);
-    const end: EndSpec = plumb ? { kind: 'square' } : endOf(model, p.end);
+    const ys = regions.flatMap((r) => r.polys.flatMap((poly) => poly.flatMap((ring) => ring.map((q) => q[1]))));
+    const yShift = place.anchor[1] - (p.offset?.[1] ?? 0);
+    const endFit: string[] = [];
+    const resolve = (e: EndSpec): EndSpec => {
+      const r = resolveEnd(doc, e, section, yShift, [Math.min(...ys), Math.max(...ys)]);
+      if (r.fit) endFit.push(r.fit);
+      return r.spec;
+    };
+    const start: EndSpec = plumb ? { kind: 'square' } : resolve(endOf(model, p.start));
+    const end: EndSpec = plumb ? { kind: 'square' } : resolve(endOf(model, p.end));
     const res = sweep(regions, path, up, start, end);
-    body = { model, parts: section.parts.map((x) => x.part), sweep: res, path, regions, plumb, reach: plumb ? null : endReach(regions, path, up, start, end) };
+    body = { model, parts: section.parts.map((x) => x.part), sweep: res, path, regions, plumb, reach: plumb ? null : endReach(regions, path, up, start, end), endFit: [...new Set(endFit)] };
   }
   saved.set(el, { key, body });
   return body;

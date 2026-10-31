@@ -5,6 +5,8 @@ import { newPart, PART_KIND_LABELS, RAILING_GROUPS, railingModel, railNum, railV
 import { updateRailingType } from '../core/railings';
 import { railingTypeOf } from '../elements/railing';
 import { escapeHtml } from './labels';
+import { canUseAs, defaultProfileTypes, profileModel, type ProfileUse } from '../core/profileTypes';
+import { ensureDefaultProfileType } from '../core/profiles';
 
 /**
  * Räckestypen i egenskaperna (0.11.1, bruten ur `railingFields.ts` i
@@ -26,6 +28,38 @@ const railNumOf = (raw: string): RailNum | undefined => {
   const n = num(t);
   return Number.isFinite(n) ? n : t;
 };
+
+/**
+ * Delens profil (0.11.7): Rektangel, Rund eller en profiltyp som får
+ * användas som räckesdel (gruppen *Profiltyper*). De förvalda typerna som
+ * saknas i projektet (PR06) står med och läggs in när de väljs. Värdet för
+ * en profiltyp är `p:<typ>`.
+ */
+export function railProfileOptions(doc: ProjectDoc, q: RailPart, use: ProfileUse = 'railing'): string {
+  const cur = q.profile?.shape === 'profile' ? `p:${q.profile.type ?? ''}` : (q.profile?.shape ?? 'rect');
+  const o = (v: string, label: string) => `<option value="${escapeHtml(v)}"${v === cur ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+  return `${o('rect', 'Rektangel')}${o('round', 'Rund')}${profileTypeOptions(doc, use, cur, o)}`;
+}
+
+/** Profiltyperna som får användas som `use`, i en grupp i listan; förvalda typer som saknas står med *(läggs in)*. */
+export function profileTypeOptions(doc: ProjectDoc, use: ProfileUse, cur: string, o: (v: string, label: string) => string): string {
+  const own = Object.values(doc.definitions).filter((d) => canUseAs(d.profile, use));
+  const missing = defaultProfileTypes().filter((d) => !doc.definitions[d.id] && canUseAs(d.profile, use));
+  const rows = [...own, ...missing].sort((a, b) => a.name.localeCompare(b.name, 'sv', { numeric: true }));
+  const gone = cur.startsWith('p:') && !rows.some((d) => `p:${d.id}` === cur) ? o(cur, 'Profiltypen saknas') : '';
+  return rows.length || gone ? `<optgroup label="Profiltyper">${gone}${rows.map((d) => o(`p:${d.id}`, `${d.name} ${d.description ?? ''}${doc.definitions[d.id] ? '' : ' (läggs in)'}`)).join('')}</optgroup>` : '';
+}
+
+/** Ankaret och vridningen för en del med en profiltyp (0.11.7). */
+export function railProfileFields(doc: ProjectDoc, q: RailPart, key: (field: string) => string): string {
+  if (q.profile?.shape !== 'profile') return '';
+  const m = profileModel(q.profile.type ? doc.definitions[q.profile.type] : undefined);
+  if (!m) return '<p class="note">Profiltypen saknas i projektet; delen ritas som en rektangel.</p>';
+  const cur = q.profile.anchor ?? m.anchor;
+  const anchors = m.anchors.map((a) => `<option value="${a.no}"${a.no === cur ? ' selected' : ''}>${a.no} ${escapeHtml(a.name)}</option>`).join('');
+  const rot = q.profile.rotate;
+  return `<label class="field" title="Insättningspunkten: ${q.kind === 'along' ? 'den ligger på överkantens höjd' : 'den står på linjen'}"><span>Ankare</span><select data-key="${escapeHtml(key('anchor'))}">${anchors}</select></label>${text(key('rotate'), 'Vridning (°)', rot, 'Kring ankaret, moturs: grader eller en formel med typens parametrar')}`;
+}
 
 /** Typen i *Påverkar fler objekt* (tavla 2): grupp, kryss, parametrar och delar. */
 export function railingTypeMarkup(doc: ProjectDoc, defId: Id): string {
@@ -49,7 +83,8 @@ export function railingTypeMarkup(doc: ProjectDoc, defId: Id): string {
   const materials = (doc.graphics.materials ?? []).filter((x) => x.building);
   const partFields = (q: RailPart, i: number): string => {
     const f = (field: string, label: string, v: RailNum | undefined, title = '') => text(k(`part:${i}:${field}`), label, v, title);
-    const shape = q.kind !== 'surface' ? `<label class="field"><span>Profil</span><select data-key="${k(`part:${i}:shape`)}"><option value="rect"${q.profile?.shape !== 'round' ? ' selected' : ''}>Rektangel</option><option value="round"${q.profile?.shape === 'round' ? ' selected' : ''}>Rund</option></select></label>${f('w', q.profile?.shape === 'round' ? 'Diameter' : 'Bredd', q.profile?.w ?? 40)}${q.profile?.shape === 'round' ? '' : f('h', 'Höjd', q.profile?.h ?? q.profile?.w ?? 40)}` : f('thickness', 'Tjocklek', q.thickness ?? 10);
+    const typed = q.profile?.shape === 'profile';
+    const shape = q.kind !== 'surface' ? `<label class="field"><span>Profil</span><select data-key="${k(`part:${i}:shape`)}">${railProfileOptions(doc, q)}</select></label>${typed ? railProfileFields(doc, q, (fl) => k(`part:${i}:${fl}`)) : `${f('w', q.profile?.shape === 'round' ? 'Diameter' : 'Bredd', q.profile?.w ?? 40)}${q.profile?.shape === 'round' ? '' : f('h', 'Höjd', q.profile?.h ?? q.profile?.w ?? 40)}`}` : f('thickness', 'Tjocklek', q.thickness ?? 10);
     const heights = q.kind === 'along' ? f('z', 'Överkant', q.z, 'Höjden över referenslinjen: mm eller en formel') : `${f('from', 'Underkant', q.from)}${f('to', 'Överkant', q.to)}`;
     const spacing = q.kind === 'point' ? f('spacing', 'Största delning', q.spacing) : q.kind === 'repeat' ? f('spacing', 'Största öppning', q.spacing) : '';
     const ext = q.kind === 'along' ? f('extend', 'Förlängning', q.extend, 'Förbi början och slutet, vågrätt') : '';
@@ -113,6 +148,8 @@ export function applyTypeField(store: DocStore, defId: Id, path: string[], input
     store.transact(`Ändra typ ${def.name}`, (tx) => tx.putDefinition({ ...def, description: raw.trim() || undefined }));
     return true;
   }
+  // En förvald profiltyp (PR06 …) som väljs som del läggs in i projektet först (0.11.7).
+  if (what === 'part' && field === 'shape' && raw.startsWith('p:') && !store.doc.definitions[raw.slice(2)]) store.transact('Lägg in profiltyp', (tx) => ensureDefaultProfileType(tx, raw.slice(2)));
   return updateRailingType(store, defId, `Ändra typ ${def.name}`, (m) => {
     if (what === 'group') m.group = raw.trim() || m.group;
     // Räckestypeditorn (0.11.3): På sluttning för alla delar, och grindtypen.
@@ -157,7 +194,26 @@ export function applyTypeField(store: DocStore, defId: Id, path: string[], input
       const q = m.parts[Number(idx)];
       if (!q) return null;
       if (field === 'name') q.name = raw.trim() || q.name;
-      else if (field === 'shape') q.profile = { ...(q.profile ?? { w: 40 }), shape: raw === 'round' ? 'round' : 'rect' };
+      else if (field === 'shape') {
+        if (raw.startsWith('p:')) {
+          const type = raw.slice(2);
+          if (!type) return null;
+          // Ankaret och vridningen hör till typen; en ny typ börjar med dess förval.
+          const same = q.profile?.shape === 'profile' && q.profile.type === type;
+          q.profile = { w: q.profile?.w ?? 40, ...(q.profile?.h ? { h: q.profile.h } : {}), shape: 'profile', type, ...(same && q.profile?.anchor ? { anchor: q.profile.anchor } : {}), ...(same && q.profile?.rotate !== undefined ? { rotate: q.profile.rotate } : {}) };
+        } else q.profile = { w: q.profile?.w ?? 40, ...(q.profile?.h ? { h: q.profile.h } : {}), shape: raw === 'round' ? 'round' : 'rect' };
+      } else if (field === 'anchor') {
+        if (q.profile?.shape !== 'profile') return null;
+        const v = Number(raw);
+        q.profile = { ...q.profile, anchor: Number.isFinite(v) && v > 0 ? v : undefined };
+        if (q.profile.anchor === undefined) delete q.profile.anchor;
+      } else if (field === 'rotate') {
+        if (q.profile?.shape !== 'profile') return null;
+        const v = railNumOf(raw);
+        if (typeof v === 'string' && !Number.isFinite(railNum(v, railValues(m), NaN))) return null;
+        q.profile = { ...q.profile, rotate: v };
+        if (v === undefined || v === 0) delete q.profile.rotate;
+      }
       else if (field === 'w' || field === 'h') {
         const v = num(raw);
         if (!(v > 0)) return null;

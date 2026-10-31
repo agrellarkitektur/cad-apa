@@ -1,6 +1,7 @@
 import type { Vec2 } from '../../repr/primitives';
 import { railValues, type RailingTypeModel, type RailPart } from '../../core/railingTypes';
-import { railingBody, withExtension, type BodyOptions, type RailingBody } from '../../elements/railingBody';
+import { railingBody, withExtension, type BodyOptions, type RailingBody, type RailProfiles } from '../../elements/railingBody';
+import { postRing } from '../../elements/railingPlan';
 import { freePath, type GroundFn, type RailPath } from '../../elements/railingGeometry';
 import { escapeHtml } from '../labels';
 
@@ -93,14 +94,16 @@ function elevation(c: Canvas, body: RailingBody, sel: string | null, only?: (p: 
   }
 }
 
-const bodyOf = (line: [number, number][], z: number[], model: RailingTypeModel, vals: ReadonlyMap<string, number>, ground?: GroundFn, opts?: BodyOptions): { path: RailPath; body: RailingBody } | null => {
+const bodyOf0 = (line: [number, number][], z: number[], model: RailingTypeModel, vals: ReadonlyMap<string, number>, ground?: GroundFn, opts?: BodyOptions): { path: RailPath; body: RailingBody } | null => {
   const path = freePath({ line, z }, ground);
   return path ? { path, body: railingBody(path, model, vals, opts) } : null;
 };
 
 /** Förhandsvisningen som SVG, med typens förvalda värden. */
-export function previewMarkup(model: RailingTypeModel, mode: PreviewMode, sel: string | null): string {
+export function previewMarkup(model: RailingTypeModel, mode: PreviewMode, sel: string | null, profiles?: RailProfiles): string {
   const vals = railValues(model);
+  // Delar med en profiltyp (0.11.7) räknas med typens mått.
+  const bodyOf = (line: [number, number][], z: number[], m: RailingTypeModel, v: ReadonlyMap<string, number>, ground?: GroundFn, opts?: BodyOptions) => bodyOf0(line, z, m, v, ground, { ...opts, ...(profiles ? { profiles } : {}) });
   const c = canvas();
   if (mode === 'straight') {
     const r = bodyOf([[0, 0], [3000, 0]], [0, 0], model, vals);
@@ -157,6 +160,10 @@ export function previewMarkup(model: RailingTypeModel, mode: PreviewMode, sel: s
     }
     for (const q of [...r.body.repeats, ...r.body.posts]) {
       const [x, y] = P(q.at);
+      if (q.sec) {
+        poly(c, q.part, sel, postRing(q).map(P));
+        continue;
+      }
       if (q.round) {
         grow(c, [[x - q.w / 2, y - q.w / 2], [x + q.w / 2, y + q.w / 2]]);
         c.out.push(`<circle ${cls(q.part, sel)} cx="${f(x)}" cy="${f(y)}" r="${f(q.w / 2)}"><title>${escapeHtml(q.part.name)}</title></circle>`);

@@ -670,6 +670,44 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Ändprofiler och profilen som del (0.11.7, format 27)
+
+- **Ändprofilen** är en profiltyp i gruppen `END_GROUP` (Ändprofiler;
+  `isEndProfile`, `canUseAs(m, use)` i `core/profileTypes.ts`). Avslutet
+  `EndKind` `profile` med `EndSpec.profile` (typens id) och typens
+  `endProfile` som förval; `endOf` i `elements/profile.ts` ger Utöver som
+  förval för den. `elements/endProfile.ts`: `endShapeOf` (konturen platt,
+  sträckt med profilens höjdzoner, u ut från änden med Inom/Utöver och
+  förskjutning, y efter ankaret; `merged` och `stripCells`) och
+  `resolveEnd(doc, e, section, yShift, yRange)` (spec med `shape`, och
+  `fit`-varningen). `ProfileBody.endFit` till panelens varningar.
+- **Svepningen** (`profileBody.ts`): `EndShape` (`cells`, `rings`, `minU`,
+  `maxU`); `uyHalf(p, tOut, f, a, b, c)` ger ett halvrum `a·u + b·y ≤ c` i
+  sidovyn (planet innehåller ramens X); `endHalfSpace` kapar vid `maxU`
+  och `endCut` delar kroppen i det före konturen och kroppen skuren med
+  varje cell; `endShapeEdges` för kantlinjerna; `cutDepth` räknar `-minU`.
+  `clipPoly` behåller en sida i planet som lock.
+- **Editorn**: `ProfileEditorState.mode` `end` (stilbokens `pa`, resursen
+  `endProfiles`, `peNow` i `styleDialog.ts`); `groupsFor`, vyn `end`
+  (`endPreviewMarkup`, `isoMarkup(m, { doc, start, end }, note)`), fälten
+  `ptype:<typ>:endProfile`. `profileTypeUsage(doc, id)` i
+  `core/profiles.ts` räknar objekt, avslut, typer, räckestyper och trappor.
+  `ensureDefaultProfileType(tx, id)` lägger in en förvald typ.
+- **Räcket**: `RailProfile` `shape: 'profile'` med `type`, `anchor`,
+  `rotate` (RailNum). `railingBody(…, { profiles })` (`RailProfiles`:
+  `model(id)`, `end(e, section, yShift, yr)`; `railProfiles(doc)` i
+  `railing.ts`) ger `AlongPiece.sec` och `PostPiece.sec` (`PartSection`:
+  ytorna placerade, avsluten). `railingSolids(…, edges)` sveper `sec`,
+  `postRegions(q)` och `postRing` i `railingPlan.ts`. Fälten
+  `rail:type:<def>:part:<i>:shape` (`p:<typ>`), `:anchor`, `:rotate`;
+  listan i `railProfileOptions`/`profileTypeOptions`, fälten i
+  `railProfileFields` (`ui/railingTypeFields.ts`), också i
+  räckestypeditorn. `previewMarkup(…, profiles)`.
+- **Vangstycket**: `built.stringer.profile`; `builtSolids(…, profileOf,
+  edges)` och `stringerProfileSolids` i `stairBuilt.ts`; fältet
+  `stair:stringerProfile` i `ui/stairFields.ts`.
+- **Tester**: `tests/v0117.test.ts`.
+
 ## Profilen (0.11.6, format 27)
 
 - **Typen** (`core/profileTypes.ts`): `Definition.profile` (`ProfileTypeModel`,

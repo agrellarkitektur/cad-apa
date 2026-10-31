@@ -60,7 +60,8 @@ export interface StairParams {
    * trappa), var och en med stilbokens material. Förvalen i `stairBuilt.ts`.
    */
   built?: {
-    stringer?: { sides?: 'both' | 'left' | 'right' | 'none'; width?: number; height?: number; material?: string };
+    /** `profile`: en profiltyp (0.11.7) i stället för rektangeln, sträckt till bredden och höjden. */
+    stringer?: { sides?: 'both' | 'left' | 'right' | 'none'; width?: number; height?: number; material?: string; profile?: string };
     tread?: { thickness?: number; nosing?: number; material?: string };
     riser?: { thickness?: number; material?: string };
   };

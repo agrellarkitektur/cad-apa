@@ -1,5 +1,5 @@
 import type { EndKind, PPoint, ProfileSection, SubProfile } from '../core/profileTypes';
-import { difference, union, type Rings } from '../geometry/boolean';
+import { difference, intersection, union, type Rings } from '../geometry/boolean';
 import type { Vec2 } from '../repr/primitives';
 import type { Edges3D, Plane, Solid } from '../repr/solids';
 
@@ -138,11 +138,20 @@ function orderOnPlane(pts: Vec3[], n: Vec3): Vec3[] {
 export function clipPoly(poly: Poly3, h: HalfSpace): Poly3 {
   const onPlane: Vec3[] = [];
   const faces: Poly3 = [];
+  // En sida som redan ligger i planet är locket (0.11.7: ändprofilens kanter kan sammanfalla med tvärsnittets).
+  let hasCap = false;
   for (const f of poly) {
+    if (f.every((p) => Math.abs(v3.dot(h.n, p) - h.d) <= 1e-6)) {
+      if (v3.dot(faceNormal(f, centroid(poly)), h.n) > 0) {
+        faces.push(f);
+        hasCap = true;
+      }
+      continue;
+    }
     const c = clipFace(f, h, onPlane);
     if (c.length >= 3) faces.push(c);
   }
-  const cap = orderOnPlane(onPlane, h.n);
+  const cap = hasCap ? [] : orderOnPlane(onPlane, h.n);
   if (cap.length >= 3 && faces.length) faces.push(cap);
   return faces.length >= 4 ? faces : [];
 }
@@ -300,9 +309,27 @@ export function placePoint(p: PPoint, pl: Placement): PPoint {
   return [x + (pl.offset?.[0] ?? 0), y + (pl.offset?.[1] ?? 0)];
 }
 
+/**
+ * En ändprofils kontur i en ände (0.11.7), uträknad: i sidovyn med u ut från
+ * referenslinjens ände (Inom/Utöver och förskjutningen inräknade) och y som
+ * tvärsnittets y efter placeringen. Allt bortom `minU` som inte ligger i
+ * konturen tas bort; `cells` är konturen i konvexa celler, `rings` dess
+ * ytterlinjer (för kantlinjerna).
+ */
+export interface EndShape {
+  cells: PPoint[][];
+  rings: Rings[];
+  minU: number;
+  maxU: number;
+}
+
 /** Ett avslut i en ände. */
 export interface EndSpec {
   kind: EndKind;
+  /** Ändprofilens typ (en PA-typs id) för `profile`. */
+  profile?: string;
+  /** Ändprofilens kontur, uträknad (sparas inte). */
+  shape?: EndShape;
   /** Vinkeln i planen för `angle`, grader från vinkelrätt. */
   angle?: number;
   /** Utöver referenslinjens längd (i stället för inom). */
@@ -346,11 +373,88 @@ function endNormal(kind: EndKind, tOut: Vec3, angle = 0): Vec3 {
 }
 
 /**
+ * Ett halvrum ur sidovyn i en ände (0.11.7): `a·u + b·y ≤ c`, där u går ut
+ * längs banan från punkten p och y längs ramens Y. Planet innehåller alltid
+ * ramens X (tvärs banan), så att ändprofilen skär rakt igenom tvärsnittet.
+ */
+export function uyHalf(p: Vec3, tOut: Vec3, f: Frame, a: number, b: number, c: number): HalfSpace {
+  const g = v3.dot(tOut, f.Y);
+  const det = 1 - g * g || 1;
+  let n = v3.add(v3.mul(tOut, (a - b * g) / det), v3.mul(f.Y, (b - a * g) / det));
+  const l = v3.len(n) || 1;
+  n = v3.mul(n, 1 / l);
+  return { n, d: c / l + v3.dot(n, p) };
+}
+
+/**
+ * En konvex kropp i en ände med ändprofil: det före konturen (u ≤ minU) och
+ * kroppen skuren med var och en av konturens konvexa celler.
+ */
+function endCut(poly: Poly3, p: Vec3, tOut: Vec3, f: Frame, sh: EndShape, extra: number): Poly3[] {
+  const out: Poly3[] = [];
+  const before = clipPoly(poly, uyHalf(p, tOut, f, 1, 0, sh.minU + extra));
+  if (before.length) out.push(before);
+  for (const cell of sh.cells) {
+    let q = poly;
+    for (let i = 0; i < cell.length && q.length; i++) {
+      const A = cell[i];
+      const B = cell[(i + 1) % cell.length];
+      const eu = B[0] - A[0];
+      const ey = B[1] - A[1];
+      // Moturs cell: insidan till vänster om kanten.
+      q = clipPoly(q, uyHalf(p, tOut, f, ey, -eu, ey * (A[0] + extra) - eu * A[1]));
+    }
+    if (q.length) out.push(q);
+  }
+  return out;
+}
+
+/**
+ * Kantlinjerna för en ände med ändprofil: konturen (inom tvärsnittets höjd)
+ * på tvärsnittets båda sidor och linjer tvärs över i konturens hörn.
+ */
+function endShapeEdges(p: Vec3, tOut: Vec3, f: Frame, sh: EndShape, own: readonly PPoint[], extra: number): Edges3D['segments'] {
+  const xs = own.map((q) => q[0]);
+  const ys = own.map((q) => q[1]);
+  const x0 = Math.min(...xs);
+  const x1 = Math.max(...xs);
+  const y0 = Math.min(...ys);
+  const y1 = Math.max(...ys);
+  const band: Rings = [[[sh.minU, y0], [sh.maxU + 1, y0], [sh.maxU + 1, y1], [sh.minU, y1]]];
+  let rings: Rings[];
+  try {
+    rings = sh.rings.flatMap((poly) => intersection(poly, [band]));
+  } catch {
+    rings = sh.rings;
+  }
+  const at = (u: number, x: number, y: number): Vec3 => v3.add(v3.add(p, v3.mul(tOut, u + extra)), v3.add(v3.mul(f.X, x), v3.mul(f.Y, y)));
+  const out: Edges3D['segments'] = [];
+  const onJoint = (q: Vec2) => Math.abs(q[0] - sh.minU) < 0.5;
+  for (const poly of rings)
+    for (const ring of poly)
+      for (let i = 0; i < ring.length; i++) {
+        const a = ring[i];
+        const b = ring[(i + 1) % ring.length];
+        if (!(onJoint(a) && onJoint(b))) for (const x of [x0, x1]) out.push([...at(a[0], x, a[1]), ...at(b[0], x, b[1])]);
+        // Tvärs över bara i skarpa hörn (inte i bågarnas korta bitar).
+        const z = ring[(i + ring.length - 1) % ring.length];
+        const t1 = Math.atan2(a[1] - z[1], a[0] - z[0]);
+        const t2 = Math.atan2(b[1] - a[1], b[0] - a[0]);
+        let turn = Math.abs(t2 - t1);
+        if (turn > Math.PI) turn = 2 * Math.PI - turn;
+        if (!onJoint(a) && turn > (20 * Math.PI) / 180) out.push([...at(a[0], x0, a[1]), ...at(a[0], x1, a[1])]);
+      }
+  return out;
+}
+
+/**
  * Avslutets halvrum i en ände (0.11.6, beslut G): planet läggs så att hela
  * tvärsnittet ryms inom referenslinjen (*Inom*) eller så att det sticker ut
  * utöver den (*Utöver*), och flyttas sedan förskjutningen (plus ut).
  */
 export function endHalfSpace(p: Vec3, tOut: Vec3, f: Frame, pts: readonly PPoint[], e: EndSpec, extra = 0): HalfSpace {
+  // En ändprofil: kroppen går till konturens yttersta punkt och skärs sedan med konturen (`endCut`).
+  if (e.shape) return uyHalf(p, tOut, f, 1, 0, e.shape.maxU + extra);
   const n = endNormal(e.kind, tOut, e.angle);
   const nt = v3.dot(n, tOut);
   const k = Math.abs(nt) > 1e-6 ? nt : 1;
@@ -361,6 +465,7 @@ export function endHalfSpace(p: Vec3, tOut: Vec3, f: Frame, pts: readonly PPoint
 
 /** Hur långt avslutets plan når in längs banan från referenslinjens ände (mm), samma räkning som `endHalfSpace`. */
 function cutDepth(tOut: Vec3, f: Frame, pts: readonly PPoint[], e: EndSpec, extra = 0): number {
+  if (e.shape) return Math.max(0, -(e.shape.minU + extra));
   const n = endNormal(e.kind, tOut, e.angle);
   const nt = v3.dot(n, tOut);
   if (Math.abs(nt) < 1e-6 || !pts.length) return 0;
@@ -468,7 +573,8 @@ export function sweep(regions: readonly { polys: Rings[]; follows: boolean; exte
   const last = segs[segs.length - 1];
   // En sluten bana (början i slutet, minst tre bitar) geras också där den börjar.
   const closed = segs.length >= 3 && v3.len(v3.sub(pts[0], pts[pts.length - 1])) < 1e-3;
-  const margin = 10 * Math.max(1, ...all.map((q) => Math.hypot(q[0], q[1])));
+  const reachOut = Math.max(0, ...[start, end].map((e) => (e.shape ? Math.abs(e.shape.maxU) + Math.abs(e.shape.minU) : 0)));
+  const margin = 10 * Math.max(1, ...all.map((q) => Math.hypot(q[0], q[1]))) + reachOut;
   regions.forEach((reg, ri) => {
     const own = reg.polys.flatMap((p) => p.flat()) as PPoint[];
     if (!own.length) return;
@@ -482,6 +588,10 @@ export function sweep(regions: readonly { polys: Rings[]; follows: boolean; exte
       const L = v3.len(v3.sub(b, a));
       const lo = k === 0 ? (closed ? miter(a, v3.mul(last.f.t, -1), v3.mul(s.f.t, -1)) : s0) : miter(a, v3.mul(segs[k - 1].f.t, -1), v3.mul(s.f.t, -1));
       const hi = k === segs.length - 1 ? (closed ? miter(b, s.f.t, first.f.t) : s1) : miter(b, s.f.t, segs[k + 1].f.t);
+      // Ändprofilerna (0.11.7) i den första och den sista biten, för delprofiler som följer avslutet.
+      const shapeLo = k === 0 && !closed && reg.follows ? start.shape : undefined;
+      const shapeHi = k === segs.length - 1 && !closed && reg.follows ? end.shape : undefined;
+      const tLo = v3.mul(s.f.t, -1);
       for (const cell of cells) {
         let poly = prism(
           cell.map((q) => world(a, s.f, q, -margin)),
@@ -489,20 +599,29 @@ export function sweep(regions: readonly { polys: Rings[]; follows: boolean; exte
         );
         poly = clipPoly(poly, lo);
         if (poly.length) poly = clipPoly(poly, hi);
-        if (poly.length) out.pieces.push({ part: ri, segment: s.i, poly });
+        if (!poly.length) continue;
+        let polys = [poly];
+        if (shapeLo) polys = polys.flatMap((q) => endCut(q, a, tLo, s.f, shapeLo, reg.extend));
+        if (shapeHi) polys = polys.flatMap((q) => endCut(q, b, s.f.t, s.f, shapeHi, reg.extend));
+        for (const q of polys) out.pieces.push({ part: ri, segment: s.i, poly: q });
       }
+      // Kantlinjerna i en ände med ändprofil slutar där konturen börjar.
+      const loE = shapeLo ? uyHalf(a, tLo, s.f, 1, 0, shapeLo.minU + reg.extend) : lo;
+      const hiE = shapeHi ? uyHalf(b, s.f.t, s.f, 1, 0, shapeHi.minU + reg.extend) : hi;
+      if (shapeLo) out.edges.push(...endShapeEdges(a, tLo, s.f, shapeLo, own, reg.extend));
+      if (shapeHi) out.edges.push(...endShapeEdges(b, s.f.t, s.f, shapeHi, own, reg.extend));
       // Kantlinjerna: hörnen längs biten, och konturen i början (och i slutet på den sista biten).
       for (const poly of reg.polys)
         for (const ring of poly) {
           for (const c of edgeCorners(ring)) {
-            const p0 = hitPlane(a, s.f, ring[c] as PPoint, lo);
-            const p1 = hitPlane(a, s.f, ring[c] as PPoint, hi);
+            const p0 = hitPlane(a, s.f, ring[c] as PPoint, loE);
+            const p1 = hitPlane(a, s.f, ring[c] as PPoint, hiE);
             if (p0 && p1) out.edges.push([...p0, ...p1]);
           }
           // Konturen i en knäck bara där banan viker mer än 8° (inte i bågarnas korta bitar).
           const prev = k ? segs[k - 1] : closed ? last : null;
           const kink = !prev || v3.dot(prev.f.t, s.f.t) < Math.cos((8 * Math.PI) / 180);
-          for (const h of [...(kink ? [lo] : []), ...(k === segs.length - 1 && !closed ? [hi] : [])]) {
+          for (const h of [...(kink && !shapeLo ? [lo] : []), ...(k === segs.length - 1 && !closed && !shapeHi ? [hi] : [])]) {
             const ps = ring.map((q) => hitPlane(a, s.f, q as PPoint, h));
             for (let j = 0; j < ps.length; j++) {
               const p = ps[j];

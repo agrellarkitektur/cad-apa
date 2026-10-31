@@ -1,6 +1,10 @@
+import type { Id } from '../core/model';
+import { anchorPoint, boxOfPoints, profileSection, profileValues, type Box2, type PPoint, type ProfileSection, type ProfileTypeModel } from '../core/profileTypes';
 import { railNum, type RailingTypeModel, type RailPart } from '../core/railingTypes';
+import type { Rings } from '../geometry/boolean';
 import { dist, dot, norm, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
+import { partRegions, placePoint, type EndSpec } from './profileBody';
 import { freePath, GATE_POST, pathPoint, pathZ, shift, type RailGate, type RailPath } from './railingGeometry';
 
 /**
@@ -9,6 +13,25 @@ import { freePath, GATE_POST, pathPoint, pathZ, shift, type RailGate, type RailP
  * sina stationer, längsgående delar med förlängning, upprepade delar, ytor,
  * plintar (0.11.3) och grindarna som egna kroppar i hålen.
  */
+
+/**
+ * En del med en profiltyp (0.11.7): delprofilernas ytor i delens tvärsnitt.
+ * För en längsgående del i banans ram (x åt höger om linjen, y uppåt) med
+ * origo i tvärsnittets mitt i sidled och i överkanten; för en stolpe eller
+ * spjäla i planet med x längs linjen och y utåt, origo i ankaret.
+ */
+export interface PartSection {
+  regions: { polys: Rings[]; follows: boolean; extend: number; material?: string }[];
+  /** Avsluten i början och slutet (en längsgående del), uträknade. */
+  start?: EndSpec;
+  end?: EndSpec;
+}
+
+/** Profiltyperna för delar med `profile` (0.11.7): typen och avslutet uträknat (ändprofilen). */
+export interface RailProfiles {
+  model(id: Id): ProfileTypeModel | undefined;
+  end(e: EndSpec, section: ProfileSection, yShift: number, yRange: [number, number]): EndSpec;
+}
 
 /** En längsgående del: mittlinjen med överkantens höjd och förlängningen i ändarna. */
 export interface AlongPiece {
@@ -24,6 +47,8 @@ export interface AlongPiece {
   ext: number;
   /** Vilka ändar som förlängs (utelämnad = båda): en bit som slutar vid en grind eller ett trappsteg förlängs inte där. */
   ends?: [boolean, boolean];
+  /** Profiltypens tvärsnitt (0.11.7). */
+  sec?: PartSection;
 }
 
 /** En stolpe, en konsol eller en spjäla. */
@@ -38,6 +63,8 @@ export interface PostPiece {
   round: boolean;
   /** Markens höjd vid stolpen (0.11.3); det under ritas streckat. */
   ground?: number;
+  /** Profiltypens tvärsnitt i planet (0.11.7). */
+  sec?: PartSection;
 }
 
 /** En yta mellan två punkter längs linjen. */
@@ -119,6 +146,37 @@ const profileOf = (part: RailPart) => {
   return { w, h: Math.max(1, part.profile?.shape === 'round' ? w : part.profile?.h ?? w), round: part.profile?.shape === 'round' };
 };
 
+/** En dels profiltyp placerad: ankaret i origo, vridningen kring det; ytorna, rektangeln och tvärsnittet. */
+interface Placed {
+  model: ProfileTypeModel;
+  section: ProfileSection;
+  regions: { polys: Rings[]; follows: boolean; extend: number; material?: string }[];
+  box: Box2;
+  anchor: PPoint;
+}
+
+function placedSection(part: RailPart, vals: ReadonlyMap<string, number>, profiles: RailProfiles | undefined): Placed | null {
+  const pr = part.profile;
+  if (pr?.shape !== 'profile' || !pr.type || !profiles) return null;
+  const model = profiles.model(pr.type);
+  if (!model) return null;
+  const section = profileSection(model, profileValues(model));
+  const a = model.anchors.find((x) => x.no === (pr.anchor ?? model.anchor)) ?? model.anchors[0];
+  const anchor = anchorPoint(a, section.box, section.deltas);
+  const place = { anchor, rotate: railNum(pr.rotate, vals, 0) };
+  const regions = partRegions(section).map((r) => ({
+    polys: r.polys.map((poly) => poly.map((ring) => ring.map((q) => placePoint([q[0], q[1]], place) as Vec2))) as Rings[],
+    follows: r.part.followsEnd !== false,
+    extend: r.part.extend ?? 0,
+    ...(r.part.material ? { material: r.part.material } : {}),
+  }));
+  const box = boxOfPoints(regions.flatMap((r) => r.polys.flatMap((poly) => poly[0] as PPoint[])));
+  if (box.maxX - box.minX < 0.5 || box.maxY - box.minY < 0.5) return null;
+  return { model, section, regions, box, anchor };
+}
+
+const mapRegions = (regions: Placed['regions'], f: (q: Vec2) => Vec2): Placed['regions'] => regions.map((r) => ({ ...r, polys: r.polys.map((poly) => poly.map((ring) => ring.map(f))) }));
+
 /** Markens höjd längs linjen vid sträckan s (linjens egen höjd utan mark). */
 function pathBase(path: RailPath, s: number): number {
   return path.base ? pathZ({ ...path, z: path.base }, s) : pathZ(path, s);
@@ -181,6 +239,8 @@ export function gateHole(g: RailGate, length: number): [number, number] | null {
 const gatePostPart = (w: number): RailPart => ({ id: 'grindstolpe', kind: 'point', name: 'Grindstolpe', profile: { shape: 'rect', w }, detail: 'normal', pen: 'railPost' });
 
 export interface BodyOptions {
+  /** Profiltyperna för delar med en profiltyp (0.11.7). */
+  profiles?: RailProfiles;
   /** Grindarna längs linjen. */
   gates?: readonly RailGate[];
   /** Grindtypens modell och värden; null = följer staketet. */
@@ -238,8 +298,10 @@ export function railingBody(path: RailPath, model: RailingTypeModel, vals: Reado
     const q = pathPoint(path, s);
     return { c: shift([q.at, [q.at[0] + q.dir[0], q.at[1] + q.dir[1]]], off, path.inward)[0], dir: q.dir };
   };
+  /** En stolpe eller spjäla med en profiltyp (0.11.7): tvärsnittet i planet, x längs linjen och y utåt. */
+  const postSec = (placed: Placed | null): PartSection | undefined => (placed ? { regions: mapRegions(placed.regions, (q) => [q[0], q[1] * (path.inward === 1 ? -1 : 1)]) } : undefined);
   /** En stolpe (eller konsol) vid s, med det under mark och plinten. */
-  const post = (part: RailPart, s: number, w: number, h: number, round: boolean, off: number, top?: number) => {
+  const post = (part: RailPart, s: number, w: number, h: number, round: boolean, off: number, top?: number, sec?: PartSection) => {
     const { c, dir } = at3(s, off);
     const z = pathZ(path, s);
     const from = num(part.from);
@@ -247,22 +309,42 @@ export function railingBody(path: RailPath, model: RailingTypeModel, vals: Reado
     // Ett trappstegat fack: stolpen når det högre facket.
     const z1 = stepped(part) ? Math.max(level[Math.max(0, bayOf(s - 1))], level[bayOf(s + 1)] ?? -Infinity) + to : z + to;
     if (!onGround) {
-      body.posts.push({ part, at: c, dir, z0: z + from, z1, w, d: h, round });
+      body.posts.push({ part, at: c, dir, z0: z + from, z1, w, d: h, round, ...(sec ? { sec } : {}) });
       return;
     }
     const g = pathBase(path, s);
     const depth = Math.max(0, num(part.below?.depth));
     const footing = !!part.below?.footing;
     const z0 = depth > 0 || footing ? g - (depth || (footing ? 100 : 0)) : z + from;
-    body.posts.push({ part, at: c, dir, z0, z1, w, d: h, round, ground: g });
+    body.posts.push({ part, at: c, dir, z0, z1, w, d: h, round, ground: g, ...(sec ? { sec } : {}) });
     if (footing) body.footings.push({ part, at: c, z0: g - Math.max(600, depth + 100), z1: g + 50, w: Math.max(250, 3 * w) });
   };
   for (const part of model.parts) {
     const off = num(part.offset);
+    // En profiltyp (0.11.7): måtten ur tvärsnittet; en längsgående del läggs med ankaret på överkantens höjd.
+    const placed = part.kind !== 'surface' ? placedSection(part, vals, opts.profiles) : null;
     if (part.kind === 'along') {
-      const { w, h, round } = profileOf(part);
-      const zTop = num(part.z, 900);
+      let { w, h, round } = profileOf(part);
+      let zTop = num(part.z, 900);
       const ext = Math.max(0, num(part.extend));
+      let lateral = off;
+      let sec: ((ends: [boolean, boolean]) => PartSection) | undefined;
+      if (placed) {
+        const b = placed.box;
+        const cx = (b.minX + b.maxX) / 2;
+        const sgn = path.inward === 1 ? 1 : -1;
+        w = b.maxX - b.minX;
+        h = b.maxY - b.minY;
+        round = false;
+        lateral = off - cx;
+        zTop += b.maxY;
+        const regions = mapRegions(placed.regions, (q) => [sgn * (q[0] - cx), q[1] - b.maxY]);
+        const yr: [number, number] = [b.minY - b.maxY, 0];
+        // Avslutet i en verklig ände: typens (en ändprofil), annars vinkelrätt; i en grind eller ett trappsteg vinkelrätt.
+        const kind = placed.model.ends ?? 'square';
+        const endAt = (real: boolean): EndSpec => (real && kind === 'profile' && opts.profiles ? opts.profiles.end({ kind, beyond: true, ...(placed.model.endProfile ? { profile: placed.model.endProfile } : {}) }, placed.section, placed.anchor[1] + b.maxY, yr) : { kind: real && kind !== 'profile' ? kind : 'square' });
+        sec = (e) => ({ regions, start: endAt(e[0]), end: endAt(e[1]) });
+      }
       const runs = breaks(part) ? openRuns(path.length, holes) : [[0, path.length] as [number, number]];
       for (const [r0, r1] of runs) {
         if (stepped(part)) {
@@ -273,32 +355,36 @@ export function railingBody(path: RailPath, model: RailingTypeModel, vals: Reado
             const b = Math.min(r1, stations[k + 1]);
             if (b - a < 1) continue;
             const line = straightened(subLine(path, a, b));
-            body.along.push({ part, pts: shift(line.pts, off, path.inward), top: line.pts.map(() => level[k] + zTop), z: line.pts.map(() => level[k]), w, h, round, ext, ends: [a < 1, b > path.length - 1] });
+            const ends: [boolean, boolean] = [a < 1, b > path.length - 1];
+            body.along.push({ part, pts: shift(line.pts, lateral, path.inward), top: line.pts.map(() => level[k] + zTop), z: line.pts.map(() => level[k]), w, h, round, ext, ends, ...(sec ? { sec: sec(ends) } : {}) });
           }
           continue;
         }
         const line = r0 < 1 && r1 > path.length - 1 ? { pts: path.pts, z: path.z } : subLine(path, r0, r1);
-        body.along.push({ part, pts: shift(line.pts, off, path.inward), top: line.z.map((z) => z + zTop), z: line.z, w, h, round, ext, ...(r0 > 1 || r1 < path.length - 1 ? { ends: [r0 < 1, r1 > path.length - 1] as [boolean, boolean] } : {}) });
+        const ends: [boolean, boolean] = [r0 < 1, r1 > path.length - 1];
+        body.along.push({ part, pts: shift(line.pts, lateral, path.inward), top: line.z.map((z) => z + zTop), z: line.z, w, h, round, ext, ...(r0 > 1 || r1 < path.length - 1 ? { ends } : {}), ...(sec ? { sec: sec(ends) } : {}) });
       }
       continue;
     }
     if (part.kind === 'point') {
-      const { w, h, round } = profileOf(part);
+      const { w, h, round } = placed ? { w: placed.box.maxX - placed.box.minX, h: placed.box.maxY - placed.box.minY, round: false } : profileOf(part);
+      const sec = postSec(placed);
       if (part === main) {
         for (const s of stations) {
           const gw = widthAt.get(s);
           if (gw) post({ ...gatePostPart(gw), ...(part.material ? { material: part.material } : {}), ...(part.below ? { below: part.below } : {}) }, s, gw, gw, false, off, num(part.to, 900));
-          else post(part, s, w, h, round, off);
+          else post(part, s, w, h, round, off, undefined, sec);
         }
         continue;
       }
-      for (const s of postStations(path, num(part.spacing, 1200), part.corners !== false)) if (!inHole(s)) post(part, s, w, h, round, off);
+      for (const s of postStations(path, num(part.spacing, 1200), part.corners !== false)) if (!inHole(s)) post(part, s, w, h, round, off, undefined, sec);
       continue;
     }
     const from = num(part.from);
     const to = num(part.to, 900);
     if (part.kind === 'repeat') {
-      const { w, h, round } = profileOf(part);
+      const { w, h, round } = placed ? { w: placed.box.maxX - placed.box.minX, h: placed.box.maxY - placed.box.minY, round: false } : profileOf(part);
+      const sec = postSec(placed);
       const gap = Math.max(10, num(part.spacing, 100));
       for (let k = 0; k < stations.length - 1; k++) {
         if (breaks(part) && bayIsGate(k)) continue;
@@ -314,7 +400,7 @@ export function railingBody(path: RailPath, model: RailingTypeModel, vals: Reado
           const { c, dir } = at3(s, off);
           // Spjälorna står lodrätt; höjden mäts mitt på spjälan.
           const z = zFor(part, s);
-          body.repeats.push({ part, at: c, dir, z0: z + from, z1: z + to, w, d: h, round });
+          body.repeats.push({ part, at: c, dir, z0: z + from, z1: z + to, w, d: h, round, ...(sec ? { sec } : {}) });
         }
       }
       continue;
@@ -374,7 +460,7 @@ function gatePiece(path: RailPath, fence: RailingTypeModel, fenceVals: ReadonlyM
       const la: Vec2 = [a[0] + d[0] * s0, a[1] + d[1] * s0];
       const lb: Vec2 = [a[0] + d[0] * s1, a[1] + d[1] * s1];
       const lp = freePath({ line: [[la[0], la[1]], [lb[0], lb[1]]], z: [z, z] });
-      return { a: la, b: lb, body: lp ? railingBody(lp, model, vals) : emptyBody() };
+      return { a: la, b: lb, body: lp ? railingBody(lp, model, vals, opts.profiles ? { profiles: opts.profiles } : {}) : emptyBody() };
     });
   let top = z;
   for (const l of leaves) for (const q of [...l.body.posts, ...l.body.repeats]) top = Math.max(top, q.z1);

@@ -1,6 +1,6 @@
 import { newId } from './ids';
 import type { Definition, Element, Id } from './model';
-import { defaultProfileTypes, profileObjectPrefix, PROFILE_GROUPS, type ProfileTypeModel } from './profileTypes';
+import { canUseAs, defaultProfileTypes, isEndProfile, profileObjectPrefix, PROFILE_GROUPS, type ProfileTypeModel } from './profileTypes';
 import type { DocStore, TxBuilder } from './store';
 
 /**
@@ -28,17 +28,17 @@ export function addDefaultProfileTypes(tx: TxBuilder): number {
 
 /** Den typ ett nytt profilobjekt får: den valda, annars PR01, annars den första (inte ändprofilerna). */
 export function defaultProfileDef(doc: DocStore['doc'], wanted?: Id): Id {
-  const ok = (id: Id | undefined) => !!id && doc.definitions[id]?.elementType === 'Profile';
+  const ok = (id: Id | undefined) => !!id && doc.definitions[id]?.elementType === 'Profile' && !isEndProfile(doc.definitions[id].profile);
   if (ok(wanted)) return wanted!;
   if (ok('t-pr01')) return 't-pr01';
   return Object.values(doc.definitions).find((d) => d.elementType === 'Profile' && d.profile?.group !== 'Ändprofiler')?.id ?? 't-pr01';
 }
 
-/** Profiltyperna i den ordning de visas i verktyget: gruppernas ordning, sedan litteran; ändprofilerna inte (0.11.7). */
+/** Profiltyperna i den ordning de visas i verktyget: gruppernas ordning, sedan litteran; bara de som får vara fria profilobjekt (inte ändprofilerna, 0.11.7). */
 export function profileTypesFor(doc: DocStore['doc']): Definition[] {
   const groups = profileGroups(doc);
   return Object.values(doc.definitions)
-    .filter((d) => d.elementType === 'Profile' && d.profile?.group !== 'Ändprofiler')
+    .filter((d) => d.elementType === 'Profile' && canUseAs(d.profile, 'free'))
     .sort((a, b) => groups.indexOf(a.profile!.group) - groups.indexOf(b.profile!.group) || a.name.localeCompare(b.name, 'sv', { numeric: true }));
 }
 
@@ -97,6 +97,45 @@ export function profileTypesIn(doc: DocStore['doc'], group: string): Definition[
 /** Hur många objekt som har typen. */
 export const profileTypeUses = (doc: DocStore['doc'], defId: Id): number => Object.values(doc.elements).filter((e) => e.definition === defId).length;
 
+/**
+ * Var en profiltyp används (0.11.7): profilobjekt med typen, avslut med den
+ * som ändprofil, profiltyper med den som förvald ändprofil, räckestyper med
+ * den som del och trappor med den som vangstycke. `ids` är objekten.
+ */
+export function profileTypeUsage(doc: DocStore['doc'], defId: Id): { objects: number; ends: number; types: number; railings: number; stairs: number; total: number; ids: Id[] } {
+  const out = { objects: 0, ends: 0, types: 0, railings: 0, stairs: 0, total: 0, ids: [] as Id[] };
+  const railTypes = new Set<Id>();
+  for (const d of Object.values(doc.definitions)) {
+    if (d.profile?.endProfile === defId) out.types++;
+    if (d.railing?.parts.some((q) => q.profile?.shape === 'profile' && q.profile.type === defId)) {
+      out.railings++;
+      railTypes.add(d.id);
+    }
+  }
+  for (const e of Object.values(doc.elements)) {
+    const p = e.params as { start?: { profile?: Id }; end?: { profile?: Id }; built?: { stringer?: { profile?: Id } } };
+    if (e.definition === defId) {
+      out.objects++;
+      out.ids.push(e.id);
+    } else if (e.type === 'Profile' && (p.start?.profile === defId || p.end?.profile === defId)) {
+      out.ends++;
+      out.ids.push(e.id);
+    } else if (e.type === 'Stair' && p.built?.stringer?.profile === defId) {
+      out.stairs++;
+      out.ids.push(e.id);
+    } else if (e.type === 'Railing' && e.definition && railTypes.has(e.definition)) out.ids.push(e.id);
+  }
+  out.total = out.objects + out.ends + out.types + out.railings + out.stairs;
+  return out;
+}
+
+/** Lägg till en förvald profiltyp (PR06 …) om den saknas, i en transaktion. */
+export function ensureDefaultProfileType(tx: TxBuilder, id: Id): void {
+  if (tx.doc.definitions[id]) return;
+  const d = defaultProfileTypes().find((x) => x.id === id);
+  if (d) tx.putDefinition(d);
+}
+
 /** Lägg till en profiltyp och svara med dess id. */
 export function addProfileType(store: DocStore, name: string, model: ProfileTypeModel, description?: string): Id {
   const id = newId('t');
@@ -107,7 +146,7 @@ export function addProfileType(store: DocStore, name: string, model: ProfileType
 /** Ta bort en typ som inga objekt har. */
 export function removeProfileType(store: DocStore, defId: Id): boolean {
   const def = store.doc.definitions[defId];
-  if (!def?.profile || profileTypeUses(store.doc, defId)) return false;
+  if (!def?.profile || profileTypeUsage(store.doc, defId).total) return false;
   store.transact(`Ta bort typ ${def.name}`, (tx) => tx.removeDefinition(defId));
   return true;
 }

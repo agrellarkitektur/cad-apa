@@ -179,6 +179,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | – | Granskning efter 0.11.5 (31 oktober): räckets filer delade, klickjämförelsen med trappor och räcken; ingen ny version |
 | 0.11.6 | Profilen (format 27): profiltypen med delprofiler, ankare och sträckzoner, verktyget *Profil* (linje, lodrät, längs kant), avsluten med inom/utöver och förskjutning, gering, vridning, plan/sektion/fasad/3D, profileditorn, stilbokens flikar Stil/Typer/Allmänt |
 | 0.11.6.1 | Profileditorn, resten: Förskjut (kant eller hela konturen), Runda hörn, Mått i ritytan som kan peka på parametrar, Läge som snäpphjälp, provmått i Sträckt, varningen för avslut som skär in |
+| 0.11.7 | Ändprofiler och profilen som del: ändprofilerna PA (sidovyn, Inom/Utöver, förskjutning, sträckning med höjdzonen), profiltyper som delar i räckestyper (ankare, vridning) och som vangstycke, PR06–PR08 och PA01 |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
 val och det som *inte gjordes*. De ligger i arkivet:
@@ -789,12 +790,74 @@ panelen, profilens littera och delprofilernas inre linjer i planen, och
 profiltyperna i stilbokens export. Klickjämförelsen körs i granskningen
 efter 0.11.8.
 
-### 0.11.7 Ändprofiler och profilen som del
+### 0.11.7 Ändprofiler och profilen som del ✓
 
 Ur utredningen (31 oktober, beslut A): ändprofilerna PA01 … (kontur i
 sidovyn som skär änden, Inom/Utöver och förskjutning som de enkla
 avsluten), profiltyper som delar i räckestyper (med ankare och vridning
-kring ankaret) och i den byggda trappans vangstycke. Mellanstor–stor.
+kring ankaret) och i den byggda trappans vangstycke. Byggd i en session 31
+oktober (Carl August: "Kör 0.11.7"). Samma filformat (27): allt nytt är
+valfria fält (`EndSpec.profile`, `ProfileTypeModel.endProfile`,
+`RailProfile.type/anchor/rotate`, `built.stringer.profile`).
+
+**Claudes val (0.11.7):**
+
+- **Ändprofilen är en profiltyp i gruppen Ändprofiler** (som tidigare
+  förberett), ritad i samma editor men under en egen post i stilboken
+  (Typer › Ändprofiler) med flikarna Sidovyn och 3D; ankare, sträckzoner,
+  ändar, uppåt, parametrar och delprofilernas material och avslut visas
+  inte där. Gruppen styr: en typ som dras till en annan grupp blir en
+  vanlig profiltyp.
+- **Konturen behåller det som ligger i den**: allt bortom konturens
+  början (u > minU) som inte ligger i konturen tas bort; före den är
+  profilen hel. Skärningen görs med konturens konvexa celler (samma
+  `stripCells` som tvärsnittet), extruderade tvärs banan, så att kroppen
+  förblir konvexa bitar. Konturens y är tvärsnittets y efter ankaret och
+  förskjutningen i höjd (vridningen räknas inte in).
+- **Utöver är förval för ändprofilen** (utredningen G); Inom sparas
+  uttryckligen (`beyond: false`). Förskjutningen flyttar konturen.
+- **Höjden**: ändprofilen sträcks med profilens sträckzoner för höjden
+  (ritad för profilens ritade höjd). Skiljer höjderna mer än 1 mm efter
+  det står en varning; ingen ändprofil, eller en utan yta, ger en
+  vinkelrät ände och en varning.
+- **Kantlinjerna** i en ände med ändprofil: hörnen längs banan slutar där
+  konturen börjar; konturen (inom tvärsnittets höjd) ritas på
+  tvärsnittets båda sidor, med linjer tvärs över i skarpa hörn.
+- **En del i ett räcke med en profiltyp**: listan visar typerna som får
+  användas som *Del i räcke* (PR06 som förval). En längsgående del ligger
+  med ankaret på överkantens höjd (fältet heter fortfarande Överkant) och
+  sveps vinkelrätt mot linjen (beslut E: räckesdelar vinkelrätt),
+  tvärsnittets x utåt från räcket och mitten i sidled där *Inåt* säger;
+  ändarna är typens förvalda avslut (en ändprofil kommer med) och
+  vinkelräta vid grindar och trappsteg. Stolpar och spjälor står som
+  tvärsnittet med x längs linjen och y utåt. Delprofilernas material
+  gäller när delen inte har ett eget. Förhandsvisningarna i
+  räckestypeditorn ritar delarna med typens mått (sidovyn som rektanglar).
+- **En förvald typ som väljs som del eller vangstycke läggs in** i
+  projektet (ett eget ångra-steg före ändringen).
+- **Vangstycket**: tvärsnittets övre yttre hörn på linjen 50 över
+  stegnosarna, x inåt, lodrätt uppåt och lodräta ändar; Höjd och Bredd
+  sätts till vangstyckets mått (sträcks i zonerna). En typ utan sträckzon
+  ger vangstycket typens mått när den väljs. Planen ritar som förut
+  vangstyckets insida ur bredden.
+- **Verktyget Profil** visar bara typer som får vara fria profilobjekt
+  (PR06 och PR07 inte, om man inte kryssar). *Ta bort* i editorn är
+  spärrad för en typ som används som ändprofil, del eller vangstycke.
+- `clipPoly` behåller en sida som redan ligger i det kapande planet i
+  stället för att lägga ett lock till (ändprofilens kanter kan sammanfalla
+  med tvärsnittets; annars dubbla ytor).
+
+**Inte gjort i 0.11.7:** ändprofilen räknar inte med vridningen kring
+ankaret; en ändprofil som når förbi banans första eller sista raka bit
+skär inte in i nästa (varningen *skär in förbi knäcken* gäller); stolpar
+och spjälor med en profiltyp har inga avslut (vågräta); räckets avslut
+*Böjd nedåt* och *Mot vägg* ritas fortfarande inte; sidovyerna i
+räckestypeditorn ritar profildelarna som rektanglar. Foder, trösklar och
+bleck som profiler i 0.11.8; socklar och taklister i ytskikten senare.
+Kvar från 0.11.6: smartspöt för profilen, `PROFIL PR03` i kommandoraden,
+en profil som följer kanten den lades längs, *Hör till* i panelen,
+profilens littera och inre linjer i planen, och profiltyperna i
+stilbokens export. Klickjämförelsen körs i granskningen efter 0.11.8.
 
 ### 0.11.8 Dörrar och fönster
 

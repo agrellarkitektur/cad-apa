@@ -24,6 +24,7 @@ import { fillTypeUses, lineTypeUses, materialUsesMap, resourceChange, resourceCl
 import { placesChange, placesClick } from './style/placesPanel';
 import { exportBookFile, importBookFile, templateDialog } from './style/bookFile';
 import { newRailEditorState, railEditorChange, railEditorClick, railEditorDrag, railEditorMarkup, railEditorSearch } from './style/railingTypes';
+import { END_GROUP } from '../core/profileTypes';
 import { newProfileEditorState, profileCanvasPointer, profileEditorChange, profileEditorClick, profileEditorDrag, profileEditorMarkup, profileEditorSearch } from './style/profileTypes';
 
 /** Raderna som sök och *Vanliga/Alla* (0.10.34) visar eller döljer. */
@@ -31,7 +32,7 @@ const FILTER_ROWS = '.style-row, .pen-row, .material-row, .linetype-row, .fillty
 
 /** Det som visas till höger: Allmänt, en vytyp eller en resurs. */
 type Place = { kind: 'general' } | { kind: 'type'; type: ViewType } | { kind: 'res'; res: Resource };
-type Resource = 'pens' | 'materials' | 'lineTypes' | 'fillTypes' | 'railings' | 'profiles' | 'text';
+type Resource = 'pens' | 'materials' | 'lineTypes' | 'fillTypes' | 'railings' | 'profiles' | 'endProfiles' | 'text';
 
 /** Stilbokens flikar (0.11.6, beslut D och H): Stil, Typer och Allmänt. */
 export type BookTab = 'style' | 'types' | 'general';
@@ -54,12 +55,12 @@ const RESOURCES: readonly { res: Resource; name: string }[] = [
 const TYPES: readonly { res: Resource | null; name: string; later?: string }[] = [
   { res: 'materials', name: 'Material' },
   { res: 'profiles', name: 'Profiler' },
-  { res: null, name: 'Ändprofiler', later: 'Kommer i 0.11.7' },
+  { res: 'endProfiles', name: 'Ändprofiler' },
   { res: 'railings', name: 'Räckestyper' },
   { res: null, name: 'Dörr- och fönstertyper', later: 'Kommer i 0.11.8' },
 ];
 
-const TYPE_RES: ReadonlySet<Resource> = new Set(['materials', 'profiles', 'railings']);
+const TYPE_RES: ReadonlySet<Resource> = new Set(['materials', 'profiles', 'endProfiles', 'railings']);
 
 const RAIL_ICON: Record<string, string> = { site: icons.ground, storey: icons.storeys, elevation: icons.elevation, section: icons.section, cube: icons.multi, worksheet: icons.draw2d, sheet: icons.sheet, list: icons.states };
 
@@ -123,6 +124,12 @@ export class StyleDialog {
   rt = newRailEditorState();
   /** Profileditorn (0.11.6): vald typ, delprofil, verktyg och det som ritas. */
   pe = newProfileEditorState();
+  /** Ändprofilerna (0.11.7): samma editor, med bara gruppen Ändprofiler och sidovyn. */
+  pa = { ...newProfileEditorState(), mode: 'end' as const };
+  /** Profileditorns läge på sidan som visas: profilerna eller ändprofilerna. */
+  private get peNow() {
+    return this.place.kind === 'res' && this.place.res === 'endProfiles' ? this.pa : this.pe;
+  }
   /** Det som senast visades under varje flik. */
   private lastIn: Partial<Record<BookTab, Place>> = {};
   /** Raden som visas och blinkar efter *Gå dit* till ett ställe (en väljare). */
@@ -150,11 +157,11 @@ export class StyleDialog {
         profileEditorDrag(this.store, e);
       });
     // Profileditorns rityta (0.11.6): rita, välj och dra punkter.
-    for (const t of ['pointerdown', 'pointermove', 'pointerup'] as const) this.el.addEventListener(t, (e) => void profileCanvasPointer(this.store, this.pe, e, () => this.render()));
+    for (const t of ['pointerdown', 'pointermove', 'pointerup'] as const) this.el.addEventListener(t, (e) => void profileCanvasPointer(this.store, this.peNow, e, () => this.render()));
     this.el.addEventListener('input', (e) => {
       const t = e.target as HTMLElement;
       if (t.matches('[data-pe-search]')) {
-        profileEditorSearch(this.el, this.pe, (t as HTMLInputElement).value);
+        profileEditorSearch(this.el, this.peNow, (t as HTMLInputElement).value);
         return;
       }
       if (t.matches('[data-rt-search]')) {
@@ -179,11 +186,13 @@ export class StyleDialog {
   open(at?: { type: ViewType; category?: string } | { view: string } | { railingType: string } | { profileType?: string; tab?: BookTab }): void {
     if (at && 'tab' in at && at.tab) this.showTab(at.tab);
     else if (at && 'profileType' in at) {
-      this.go({ kind: 'res', res: 'profiles' });
+      const end = !!at.profileType && this.store.doc.definitions[at.profileType]?.profile?.group === END_GROUP;
+      this.go({ kind: 'res', res: end ? 'endProfiles' : 'profiles' });
       if (at.profileType) {
-        this.pe.def = at.profileType;
-        this.pe.part = null;
-        this.pe.pending = [];
+        const st = end ? this.pa : this.pe;
+        st.def = at.profileType;
+        st.part = null;
+        st.pending = [];
       }
     } else if (at && 'railingType' in at) {
       this.go({ kind: 'res', res: 'railings' });
@@ -356,7 +365,7 @@ export class StyleDialog {
     if (p.res === 'materials') return materialSection(this.book, materialUsesMap(doc)) + placesSection(doc, 'material', this.pp);
     if (p.res === 'lineTypes') return lineTypeSection(this.book, lineTypeUses(doc)) + placesSection(doc, 'linetype', this.pp);
     if (p.res === 'railings') return railEditorMarkup(doc, this.rt);
-    if (p.res === 'profiles') return profileEditorMarkup(doc, this.pe);
+    if (p.res === 'profiles' || p.res === 'endProfiles') return profileEditorMarkup(doc, this.peNow);
     if (p.res === 'fillTypes') return fillTypeSection(this.book, fillTypeUses(doc)) + placesSection(doc, 'filltype', this.pp);
     return labelSection(this.book);
   }
@@ -503,7 +512,7 @@ export class StyleDialog {
     }
     if (placesClick(this, e, target)) return;
     if (
-      await profileEditorClick(this.store, this.pe, target, () => this.render(), this.onError, (ids) => {
+      await profileEditorClick(this.store, this.peNow, target, () => this.render(), this.onError, (ids) => {
         if (!ids.length) return;
         this.close();
         this.goToObject(ids);
@@ -582,7 +591,7 @@ export class StyleDialog {
     }
     if (generalChange(this.store, input, (book, label) => this.set(book, label))) return;
     if (railEditorChange(this.store, input)) return;
-    if (profileEditorChange(this.store, this.pe, input, () => this.render())) return;
+    if (profileEditorChange(this.store, this.peNow, input, () => this.render())) return;
     if (input.matches('[data-sb-name]')) {
       const name = input.value.trim();
       if (name && name !== this.book.name) this.set({ ...this.book, name }, `Stilbokens namn: ${name}`);

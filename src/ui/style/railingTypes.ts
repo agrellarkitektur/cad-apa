@@ -4,9 +4,11 @@ import { defaultGroundRailingTypes, defaultRailingTypes, PART_KIND_LABELS, railN
 import { addDefaultRailingTypes, addRailingGroup, addRailingType, moveRailingGroup, moveRailingPart, newRailingModel, railingGroups, railingPrefix, railingTypesIn, railingTypeUses, removeRailingGroup, removeRailingType, renameRailingGroup, setRailingTypeGroup } from '../../core/railings';
 import { RAIL_PENS } from '../../repr/railingPens';
 import { applyRailingField, railingAction } from '../railingFields';
+import { railProfileFields, railProfileOptions } from '../railingTypeFields';
 import { askConfirm, askText } from '../ask';
 import { escapeHtml, nextLittera } from '../labels';
 import { icons } from '../icons';
+import { railProfiles } from '../../elements/railing';
 import { previewMarkup, PREVIEW_MODES, type PreviewMode } from './railingPreview';
 
 /**
@@ -121,7 +123,7 @@ export function railEditorMarkup(doc: ProjectDoc, st: RailEditorState): string {
   const partRow = (q: RailPart) => {
     const i = model.parts.indexOf(q);
     return `<li class="rt-part${q.id === part?.id ? ' on' : ''}" data-rt-part="${escapeHtml(q.id)}">
-        <span class="rt-chip">${CHIP[q.kind]}</span><b>${escapeHtml(q.name)}</b><span class="rt-sum">${escapeHtml(partSummary(q, vals))}</span>
+        <span class="rt-chip">${CHIP[q.kind]}</span><b>${escapeHtml(q.name)}</b><span class="rt-sum">${escapeHtml(partSummary(q, vals, doc))}</span>
         <span class="rt-part-acts">
         <button class="icon-btn" data-rt-act="part-up" data-rt-p="${escapeHtml(q.id)}"${i ? '' : ' disabled'} title="Flytta upp (ordningen i 3D och planen)" aria-label="Flytta upp">↑</button>
         <button class="icon-btn" data-rt-act="part-down" data-rt-p="${escapeHtml(q.id)}"${i < model.parts.length - 1 ? '' : ' disabled'} title="Flytta ned" aria-label="Flytta ned">↓</button>
@@ -153,7 +155,7 @@ export function railEditorMarkup(doc: ProjectDoc, st: RailEditorState): string {
       : `<div class="rt-sec">Grind</div>${row('Grindtyp', `<select class="rt-val" data-key="${k('gateType')}" aria-label="Grindtyp" title="Typen nya grindar i räcket får (Gör till grind…)">${opt('', 'Följer staketet', model.gateType ?? '')}${gateTypes.map((x) => opt(x.id, `${x.name} ${x.description ?? ''}`.trim(), model.gateType)).join('')}</select>`)}`;
   const typeCol = `<div class="rt-typecol">${head}${pattern}${tree}${ends}${gate}${add}</div>`;
   const tabs = `<div class="rt-tabs" role="tablist">${PREVIEW_MODES.map(([m, l]) => `<button role="tab" data-rt-mode="${m}" aria-selected="${m === st.mode}" class="${m === st.mode ? 'on' : ''}">${l}</button>`).join('')}</div>`;
-  const preview = `<div class="rt-preview">${tabs}<div class="rt-canvas"><p class="note rt-canvas-hint">Klicka på en del i bilden eller i listan</p>${previewMarkup(model, st.mode, part?.id ?? null)}</div></div>`;
+  const preview = `<div class="rt-preview">${tabs}<div class="rt-canvas"><p class="note rt-canvas-hint">Klicka på en del i bilden eller i listan</p>${previewMarkup(model, st.mode, part?.id ?? null, railProfiles(doc))}</div></div>`;
   const center = `<div class="rt-center">${preview}${paramsMarkup(def, model)}</div>`;
   const side = `<div class="rt-side">${part ? partMarkup(doc, def, model, part) : '<p class="note">Typen har inga delar.</p>'}</div>`;
   return section(`${listCol}${typeCol}${center}${side}`);
@@ -162,9 +164,9 @@ export function railEditorMarkup(doc: ProjectDoc, st: RailEditorState): string {
 const CHIP: Record<RailPartKind, string> = { point: 'punkt', along: 'längs', repeat: 'upprepas', surface: 'yta' };
 
 /** En rad om delen i typens lista: profilen och det viktigaste måttet. */
-function partSummary(q: RailPart, vals: ReadonlyMap<string, number>): string {
+function partSummary(q: RailPart, vals: ReadonlyMap<string, number>, doc: ProjectDoc): string {
   const show = (v: RailNum | undefined, f = 0) => (typeof v === 'string' ? v : mm(railNum(v, vals, f)));
-  const prof = q.kind === 'surface' ? `t ${mm(q.thickness ?? 10)}` : q.profile?.shape === 'round' ? `Ø ${mm(q.profile.w)}` : `${mm(q.profile?.w ?? 40)} × ${mm(q.profile?.h ?? q.profile?.w ?? 40)}`;
+  const prof = q.profile?.shape === 'profile' ? (doc.definitions[q.profile.type ?? '']?.name ?? 'profiltyp saknas') : q.kind === 'surface' ? `t ${mm(q.thickness ?? 10)}` : q.profile?.shape === 'round' ? `Ø ${mm(q.profile.w)}` : `${mm(q.profile?.w ?? 40)} × ${mm(q.profile?.h ?? q.profile?.w ?? 40)}`;
   if (q.kind === 'point') return [prof, q.spacing !== undefined && railNum(q.spacing, vals, 0) < 1e6 ? `c/c ≤ ${show(q.spacing)}` : '', q.below?.footing ? 'i plint' : q.below?.depth ? `nedgrävd ${show(q.below.depth)}` : ''].filter(Boolean).join(' · ');
   if (q.kind === 'along') return `${prof} · ${show(q.z, 900)}`;
   if (q.kind === 'repeat') return `${prof} · fritt ${show(q.spacing, 100)}`;
@@ -196,10 +198,11 @@ function partMarkup(doc: ProjectDoc, def: Id, m: RailingTypeModel, q: RailPart):
   const profile =
     q.kind === 'surface'
       ? text('thickness', 'Tjocklek', q.thickness ?? 10)
-      : `${select('shape', 'Profil', q.profile?.shape ?? 'rect', [
-          ['rect', 'Rektangel'],
-          ['round', 'Rund'],
-        ])}${text('w', q.profile?.shape === 'round' ? 'Diameter' : 'Bredd', q.profile?.w ?? 40)}${q.profile?.shape === 'round' ? '' : text('h', q.kind === 'along' ? 'Höjd' : 'Djup', q.profile?.h ?? q.profile?.w ?? 40, q.kind === 'along' ? '' : 'Tvärs linjen')}`;
+      : `<label class="field" title="Rektangel, rund eller en profiltyp (stilboken › Typer › Profiler)"><span>Profil</span><select data-key="${k('shape')}">${railProfileOptions(doc, q)}</select></label>${
+          q.profile?.shape === 'profile'
+            ? railProfileFields(doc, q, k)
+            : `${text('w', q.profile?.shape === 'round' ? 'Diameter' : 'Bredd', q.profile?.w ?? 40)}${q.profile?.shape === 'round' ? '' : text('h', q.kind === 'along' ? 'Höjd' : 'Djup', q.profile?.h ?? q.profile?.w ?? 40, q.kind === 'along' ? '' : 'Tvärs linjen')}`
+        }`;
   const mat = `<label class="field"><span>Material</span><select data-key="${k('material')}"><option value="">${q.kind === 'surface' ? 'Glas' : 'Metall'}</option>${materials.map((x) => opt(x.id, x.name, q.material)).join('')}</select></label>`;
   const place =
     (q.kind === 'along' ? text('z', 'Överkant', q.z, 'Höjden över referenslinjen') : `${text('from', 'Underkant', q.from)}${text('to', 'Överkant', q.to)}`) +

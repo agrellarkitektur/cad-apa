@@ -1,5 +1,5 @@
 import { defaultProfileDef, profileTypesFor } from '../../core/profiles';
-import { defaultProfileTypes, profileModel } from '../../core/profileTypes';
+import { canUseAs, defaultProfileTypes, profileModel } from '../../core/profileTypes';
 import { escapeHtml } from '../labels';
 import type { AppContext } from './context';
 
@@ -15,7 +15,7 @@ export function profileOptionsMarkup(app: AppContext): string {
   const mode = (v: string, label: string, title: string) => `<button data-profile-mode="${v}" aria-pressed="${o.mode === v}" title="${title}">${label}</button>`;
   // Utan profiltyper i projektet visas de förvalda; de läggs in med den första profilen.
   const own = profileTypesFor(doc);
-  const defs = own.length ? own : defaultProfileTypes();
+  const defs = own.length ? own : defaultProfileTypes().filter((d) => canUseAs(d.profile, 'free'));
   const cur = own.length ? defaultProfileDef(doc, o.def) : (o.def ?? 't-pr01');
   const typeSel = `<label class="opt"><span>Typ</span><select id="profile-def">${defs.map((d) => `<option value="${d.id}"${d.id === cur ? ' selected' : ''}>${escapeHtml(d.name)}${d.description ? ` – ${escapeHtml(d.description)}` : ''}</option>`).join('')}</select></label>`;
   const m = profileModel(defs.find((d) => d.id === cur));

@@ -1,7 +1,8 @@
 import { storeysUpFrom, type Element, type Id, type ProjectDoc, type Storey } from '../core/model';
 import { dot } from '../geometry/vec';
 import type { Origin, Pen, Primitive, Vec2 } from '../repr/primitives';
-import { levelOf, type Plane, type Shape3D, type Solid } from '../repr/solids';
+import { levelOf, type Edges3D, type Plane, type Shape3D, type Solid } from '../repr/solids';
+import { profileModel } from '../core/profileTypes';
 import { stairPen, type StairPenKey } from '../repr/stairPens';
 import { buildingMaterialOf, materialSolid } from './buildingMaterial';
 import { planCutHeight } from './planCut';
@@ -326,9 +327,11 @@ export const stairType: ElementType<StairParams> = {
     if (!g) return [];
     const lv = levelOf(p);
     const mat = materialSolid(buildingMaterialOf(p as never, ctx.style));
-    const body = p.build === 'built' ? builtSolids(el.id, p, g, ctx.style) : stairSolids(el.id, p, g, mat);
+    const edges: Edges3D['segments'] = [];
+    const body = p.build === 'built' ? builtSolids(el.id, p, g, ctx.style, (id) => profileModel(ctx.doc.definitions[id]), edges) : stairSolids(el.id, p, g, mat);
     const poleMat: Partial<Solid> = p.build === 'built' ? { color: '#ece8df' } : mat;
-    return [...body, ...poleSolid(el.id, p, g, poleMat), ...contrastSolids(el.id, p, g)].map((s): Shape3D => liftShape(s, lv));
+    const extra: Shape3D[] = edges.length ? [{ kind: 'edges', id: el.id, segments: edges }] : [];
+    return [...body, ...poleSolid(el.id, p, g, poleMat), ...contrastSolids(el.id, p, g), ...extra].map((s): Shape3D => liftShape(s, lv));
   },
 };
 

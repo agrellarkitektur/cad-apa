@@ -89,10 +89,19 @@ export const PROFILE_USE_LABELS: Record<ProfileUse, string> = {
   skirting: 'Sockel, taklist',
 };
 
-/** Avslutets sort i en ände: lodrät, vågrät, vinkelrät mot banan eller lodrät i en vinkel i planen. */
-export type EndKind = 'plumb' | 'level' | 'square' | 'angle';
+/** Avslutets sort i en ände: lodrät, vågrät, vinkelrät mot banan, lodrät i en vinkel i planen, eller en ändprofil (0.11.7). */
+export type EndKind = 'plumb' | 'level' | 'square' | 'angle' | 'profile';
 
-export const END_KIND_LABELS: Record<EndKind, string> = { plumb: 'Lodrät', level: 'Vågrät', square: 'Vinkelrät', angle: 'Vinkel…' };
+export const END_KIND_LABELS: Record<EndKind, string> = { plumb: 'Lodrät', level: 'Vågrät', square: 'Vinkelrät', angle: 'Vinkel…', profile: 'Ändprofil' };
+
+/** Gruppen för ändprofilerna (PA01 …): konturer ritade i sidovyn, inga profilobjekt. */
+export const END_GROUP = 'Ändprofiler';
+
+/** En ändprofil (0.11.7): typen ligger i gruppen Ändprofiler. */
+export const isEndProfile = (m: ProfileTypeModel | undefined): boolean => m?.group === END_GROUP;
+
+/** Får typen användas som …: typens kryss; utan kryss bara som fritt profilobjekt (ändprofilerna aldrig). */
+export const canUseAs = (m: ProfileTypeModel | undefined, use: ProfileUse): boolean => !!m && !isEndProfile(m) && (m.uses ?? ['free']).includes(use);
 
 export interface ProfileTypeModel {
   group: string;
@@ -112,11 +121,13 @@ export interface ProfileTypeModel {
   up?: 'plumb' | 'normal';
   /** Avslutet nya objekt får i ändarna; utelämnat = efter gruppen. */
   ends?: EndKind;
+  /** Ändprofilen (en PA-typs id) när `ends` är `profile` (0.11.7). */
+  endProfile?: Id;
   /** Måtten i editorns rityta (0.11.6.1); ett mått kan peka på en parameter. */
   dims?: ProfileDim[];
 }
 
-export const PROFILE_GROUPS = ['Pelare och balkar', 'Lister och gesimser', 'Takdetaljer', 'Räckesdelar', 'Dörr- och fönsterdelar', 'Ytskiktslister', 'Ändprofiler'] as const;
+export const PROFILE_GROUPS = ['Pelare och balkar', 'Lister och gesimser', 'Takdetaljer', 'Räckesdelar', 'Trappdelar', 'Dörr- och fönsterdelar', 'Ytskiktslister', 'Ändprofiler'] as const;
 
 /** Profiltypen i en definition, eller undefined. */
 export const profileModel = (def: Definition | undefined): ProfileTypeModel | undefined => (def?.elementType === 'Profile' ? def.profile : undefined);
@@ -346,6 +357,61 @@ export function defaultProfileTypes(): Definition[] {
       zones: [{ axis: 'height', from: 0, to: 60 }],
       params: sizeParams(70, null),
     }),
+    // 0.11.7: en handledare och ett vangstycke att använda som delar, en taktass med ändprofil, och ändprofilen.
+    def('t-pr06', 'PR06', 'Handledare 56 × 45, rundad', {
+      group: 'Räckesdelar',
+      building: true,
+      ground: true,
+      uses: ['railing'],
+      parts: [part('A', 'Handledare', { pts: [[0, 0], [56, 0], [56, 30], [41, 45], [15, 45], [0, 30]], bulges: [0, 0, -4.4, 0, -4.4, 0] }, 'trall')],
+      anchors: [
+        { no: 1, name: 'Överkant mitt', pos: 't' },
+        { no: 2, name: 'Mitten', pos: 'c' },
+      ],
+      anchor: 1,
+      zones: [],
+      params: [],
+    }),
+    def('t-pr07', 'PR07', 'Vangstycke med fas', {
+      group: 'Trappdelar',
+      building: true,
+      uses: ['stringer'],
+      parts: [part('A', 'Vangstycke', { pts: [[0, 0], [50, 0], [50, 290], [40, 300], [0, 300]] }, 'trall')],
+      anchors: [{ no: 1, name: 'Övre bakkant', pos: 'tl' }],
+      anchor: 1,
+      zones: [
+        { axis: 'height', from: 0, to: 280 },
+        { axis: 'width', from: 0, to: 40 },
+      ],
+      params: sizeParams(300, 50),
+    }),
+    def('t-pr08', 'PR08', 'Taktass 45 × 170', {
+      group: 'Takdetaljer',
+      building: true,
+      up: 'normal',
+      ends: 'profile',
+      endProfile: 't-pa01',
+      parts: [part('A', 'Taktass', rect(0, 0, 45, 170), 'trall')],
+      anchors: [
+        { no: 1, name: 'Underkant mitt', pos: 'b' },
+        { no: 2, name: 'Överkant mitt', pos: 't' },
+      ],
+      anchor: 2,
+      zones: [
+        { axis: 'height', from: 0, to: 170 },
+        { axis: 'width', from: 0, to: 45 },
+      ],
+      params: sizeParams(170, 45),
+    }),
+    def('t-pa01', 'PA01', 'Takfotstass, svängd undersida', {
+      group: END_GROUP,
+      building: true,
+      parts: [part('A', 'Tass', { pts: [[0, 0], [300, 90], [300, 170], [0, 170]], bulges: [35, 0, 0, 0] })],
+      anchors: [{ no: 1, name: 'Nedre bakkant', pos: 'bl' }],
+      anchor: 1,
+      zones: [],
+      params: [],
+    }),
   ];
 }
 
@@ -361,6 +427,8 @@ export function nextPartLetter(model: ProfileTypeModel): string {
 
 /** En ny typ i gruppen: en rektangel A, ankaret i nedre bakkanten (pelare: mitten) och sträckzonerna Höjd och Bredd. */
 export function newProfileModel(group: string): ProfileTypeModel {
+  // En ändprofil ritas i sidovyn: en sned ände på en profil 170 hög.
+  if (group === END_GROUP) return { group, building: true, parts: [{ id: 'a', letter: 'A', name: 'Del A', contour: { pts: [[0, 0], [200, 0], [200, 170], [0, 170]] } }], anchors: [{ no: 1, name: 'Nedre bakkant', pos: 'bl' }], anchor: 1, zones: [], params: [] };
   const column = group === 'Pelare och balkar';
   const [w, h] = column ? [140, 140] : group === 'Ytskiktslister' ? [12, 70] : [45, 95];
   return {

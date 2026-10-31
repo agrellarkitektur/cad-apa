@@ -2,10 +2,12 @@ import type { Material, StyleResources } from '../core/graphics';
 import { intersection } from '../geometry/boolean';
 import { dist, norm, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
-import type { Plane, Solid } from '../repr/solids';
+import type { Edges3D, Plane, Solid } from '../repr/solids';
+import { profileSection, profileValues, ZONE_PARAM, type ProfileTypeModel } from '../core/profileTypes';
+import { clipPoly, partRegions, solidsOf, sweep, type Vec3 } from './profileBody';
 import { materialSolid } from './buildingMaterial';
 import { offsetLine } from './groundLines';
-import { bandBetween, walkDir, type Rib, type StairGeometry, type StairItem, type StairParams } from './stairGeometry';
+import { bandBetween, sideBetween, walkDir, type Rib, type StairGeometry, type StairItem, type StairParams } from './stairGeometry';
 
 /**
  * Den byggda trappan (0.11.4): vangstycken längs sidorna, plansteg med
@@ -194,7 +196,7 @@ function partMat(id: string | undefined, style: StyleResources | undefined, fall
  * vilplan och det sista plansteget), sättsteg och vangstycken. Det första
  * plansteget i golvnivå är golvet och ritas inte.
  */
-export function builtSolids(id: string, p: StairParams, g: StairGeometry, style: StyleResources | undefined): Solid[] {
+export function builtSolids(id: string, p: StairParams, g: StairGeometry, style: StyleResources | undefined, profileOf?: (id: string) => ProfileTypeModel | undefined, edges?: Edges3D['segments']): Solid[] {
   const d = builtDims(p);
   const ins = stringerInsets(d);
   const st = strips(g, ins);
@@ -235,9 +237,14 @@ export function builtSolids(id: string, p: StairParams, g: StairGeometry, style:
   const a = g.items[0]?.kind === 'startTread' ? g.items[0].u1 : 0;
   const b = g.items.at(-1)?.kind === 'endTread' ? g.items.at(-1)!.u0 : L;
   const H = d.stringerHeight;
+  const typed = p.built?.stringer?.profile ? profileOf?.(p.built.stringer.profile) : undefined;
   for (const side of ['left', 'right'] as const) {
     const strip = st[side];
     if (!strip) continue;
+    if (typed) {
+      out.push(...stringerProfileSolids(id, g, side, typed, d, a, b, items, stringer, edges));
+      continue;
+    }
     const cuts = [a, ...items.map((i) => i.u0).filter((u) => u > a + 1 && u < b - 1), ...items.map((i) => i.u1).filter((u) => u > a + 1 && u < b - 1), b]
       .sort((x, y) => x - y)
       .filter((u, i, arr) => i === 0 || u - arr[i - 1] > 1);
@@ -262,6 +269,44 @@ export function builtSolids(id: string, p: StairParams, g: StairGeometry, style:
       }
     }
   }
+  return out;
+}
+
+/**
+ * Ett vangstycke med en profiltyp (0.11.7): tvärsnittet (sträckt till
+ * vangstyckets bredd och höjd när typen har sträckzoner) svept längs
+ * trappans sida, med den övre yttre kanten på linjen 50 över stegnosarna,
+ * lodrätt uppåt och lodräta ändar, och kapat vid golvet.
+ */
+function stringerProfileSolids(id: string, g: StairGeometry, side: 'left' | 'right', m: ProfileTypeModel, d: BuiltDims, a: number, b: number, items: StairItem[], mat: Mat, edges?: Edges3D['segments']): Solid[] {
+  const sec = profileSection(m, profileValues(m, { [ZONE_PARAM.height]: d.stringerHeight, [ZONE_PARAM.width]: d.stringerWidth }));
+  const box = sec.box;
+  // x inåt från sidan (vänster sida: höger om gångriktningen), y nedåt från överkanten.
+  const sx = side === 'left' ? 1 : -1;
+  const regions = partRegions(sec).map((r) => ({ polys: r.polys.map((poly) => poly.map((ring) => ring.map((q): Vec2 => [sx * (q[0] - box.minX), q[1] - box.maxY]))), follows: true, extend: 0 }));
+  const cuts = [a, ...items.flatMap((i) => [i.u0, i.u1]).filter((u) => u > a + 1 && u < b - 1), b].sort((x, y) => x - y).filter((u, i, arr) => i === 0 || u - arr[i - 1] > 1);
+  const path: Vec3[] = [];
+  for (let k = 0; k < cuts.length - 1; k++) {
+    const pts = sideBetween(g, side, cuts[k], cuts[k + 1]);
+    const z0 = nosingZ(g, cuts[k] + 1e-3) + BUILT.stringerAbove;
+    const z1 = nosingZ(g, cuts[k + 1] - 1e-3) + BUILT.stringerAbove;
+    let total = 0;
+    for (let i = 1; i < pts.length; i++) total += dist(pts[i - 1], pts[i]);
+    let acc = 0;
+    pts.forEach((q, i) => {
+      if (i) acc += dist(pts[i - 1], q);
+      if (k && !i) return;
+      path.push([q[0], q[1], z0 + (total > 0 ? ((z1 - z0) * acc) / total : 0)]);
+    });
+  }
+  const res = sweep(regions, path, 'plumb', { kind: 'plumb' }, { kind: 'plumb' });
+  const floor = { n: [0, 0, -1] as Vec3, d: 0 };
+  const out: Solid[] = [];
+  for (const pc of res.pieces) {
+    const poly = clipPoly(pc.poly, floor);
+    if (poly.length) out.push(...solidsOf(id, poly, { material: 'floor', ...mat }));
+  }
+  if (edges) edges.push(...res.edges.filter((e) => e[2] > -1 || e[5] > -1));
   return out;
 }
 

@@ -11,6 +11,9 @@ import { resolveParams } from '../elements/registry';
 import { escapeHtml } from './labels';
 import { numberField } from './fieldMarkup';
 import { BUILT, builtDims } from '../elements/stairBuilt';
+import { profileBox, profileModel } from '../core/profileTypes';
+import { ensureDefaultProfileType } from '../core/profiles';
+import { profileTypeOptions } from './railingTypeFields';
 
 /**
  * Trappans fält i egenskaperna (0.11): bredd, stigning, steg, gånglinje,
@@ -91,6 +94,13 @@ export function stairFieldsMarkup(doc: ProjectDoc, el: Element): string {
     <p class="note">Hålet ${holeNote} följer trappan och räknas ur den fria höjden över stegen${sp ? '; går det ett helt varv blir det runt, med ytterdiametern' : ''}.${sp ? '' : ' Referenslinjen går i gångriktningen, uppåt; dra i punkterna för att ändra den, eller böj en kant till en båge i Modifiera.'}</p>`;
 }
 
+/** Vangstyckets profil (0.11.7): Rektangel eller en profiltyp som får användas som vangstycke. */
+function stringerProfileField(doc: ProjectDoc, p: StairParams): string {
+  const cur = p.built?.stringer?.profile ? `p:${p.built.stringer.profile}` : 'rect';
+  const o = (v: string, label: string) => `<option value="${escapeHtml(v)}"${v === cur ? ' selected' : ''}>${escapeHtml(label)}</option>`;
+  return `<label class="field" title="Rektangel, eller en profiltyp (stilboken › Typer › Profiler, Får användas som Vangstycke); den sträcks till bredden och höjden"><span>Profil</span><select data-key="stair:stringerProfile">${o('rect', 'Rektangel')}${profileTypeOptions(doc, 'stringer', cur, o)}</select></label>`;
+}
+
 /** Den byggda trappans delar: vangstycken, plansteg och sättsteg med mått och material (0.11.4). */
 function builtFields(doc: ProjectDoc, p: StairParams): string {
   const d = builtDims(p);
@@ -98,12 +108,12 @@ function builtFields(doc: ProjectDoc, p: StairParams): string {
   const mat = (key: string, value: string | undefined, none: string) =>
     `<label class="field"><span>Material</span><select data-key="stair:${key}"><option value="">${none}</option>${materials.map((x) => `<option value="${escapeHtml(x.id)}"${x.id === value ? ' selected' : ''}>${escapeHtml(x.name)}</option>`).join('')}</select></label>`;
   return `<div class="field-label">Vangstycken</div>
-    <div class="fields">${select('stair:stringerSides', 'Sidor', d.sides, [['both', 'Båda'], ['left', 'Vänster'], ['right', 'Höger'], ['none', 'Inga']])}${numberField('stair:stringerWidth', 'Bredd', d.stringerWidth, 'mm')}${numberField('stair:stringerHeight', 'Höjd', d.stringerHeight, 'mm')}${mat('stringerMaterial', d.stringerMaterial, 'Målat')}</div>
+    <div class="fields">${select('stair:stringerSides', 'Sidor', d.sides, [['both', 'Båda'], ['left', 'Vänster'], ['right', 'Höger'], ['none', 'Inga']])}${stringerProfileField(doc, p)}${numberField('stair:stringerWidth', 'Bredd', d.stringerWidth, 'mm')}${numberField('stair:stringerHeight', 'Höjd', d.stringerHeight, 'mm')}${mat('stringerMaterial', d.stringerMaterial, 'Målat')}</div>
     <div class="field-label">Plansteg</div>
     <div class="fields">${numberField('stair:treadThickness', 'Tjocklek', d.treadThickness, 'mm')}${numberField('stair:nosing', 'Stegnos', d.nosing, 'mm')}${mat('treadMaterial', d.treadMaterial, 'Trä')}</div>
     <div class="field-label">Sättsteg</div>
     <div class="fields">${numberField('stair:riserThickness', 'Tjocklek', d.riserThickness, 'mm')}${mat('riserMaterial', d.riserMaterial, 'Målat')}</div>
-    <p class="note">Vangstyckena står innanför trappans bredd, med överkanten ${BUILT.stringerAbove} mm över stegnoslinjen; höjden mäts lodrätt. Sättsteg 0 mm ger en öppen trappa (utan stegnos). I planen syns vangstyckenas insida i Normal och Detalj, och stegnosen, kontrastmarkeringen och stegens nummer i Detalj.</p>`;
+    <p class="note">Vangstyckena står innanför trappans bredd, med överkanten ${BUILT.stringerAbove} mm över stegnoslinjen; höjden mäts lodrätt. En profiltyp sträcks till bredden och höjden när den har sträckzoner, annars får vangstycket typens mått. Sättsteg 0 mm ger en öppen trappa (utan stegnos). I planen syns vangstyckenas insida i Normal och Detalj, och stegnosen, kontrastmarkeringen och stegens nummer i Detalj.</p>`;
 }
 
 /** Patch där undefined tar bort nyckeln (så att förvalet och våningens värde gäller). */
@@ -180,6 +190,22 @@ export function applyStairField(store: DocStore, ids: Id[], name: string, input:
       return pos(10) && patchStair(store, ids, 'Vangstyckenas bredd', (p) => builtPatch(p, 'stringer', 'width', Math.round(num) === BUILT.stringerWidth ? undefined : Math.round(num)));
     case 'stringerHeight':
       return pos(50) && patchStair(store, ids, 'Vangstyckenas höjd', (p) => builtPatch(p, 'stringer', 'height', Math.round(num) === BUILT.stringerHeight ? undefined : Math.round(num)));
+    case 'stringerProfile': {
+      // En profiltyp (0.11.7): en förvald som saknas läggs in; utan sträckzon får vangstycket typens mått.
+      const id = raw.startsWith('p:') ? raw.slice(2) : '';
+      if (id && !store.doc.definitions[id]) store.transact('Lägg in profiltyp', (tx) => ensureDefaultProfileType(tx, id));
+      const m = id ? profileModel(store.doc.definitions[id]) : undefined;
+      if (id && !m) return false;
+      return patchStair(store, ids, 'Vangstyckets profil', (p) => {
+        let built = builtPatch({ ...p }, 'stringer', 'profile', id || undefined);
+        if (m) {
+          const b = profileBox(m);
+          if (!m.zones.some((z) => z.axis === 'width')) built = builtPatch({ ...p, ...built } as StairParams, 'stringer', 'width', Math.round(b.maxX - b.minX));
+          if (!m.zones.some((z) => z.axis === 'height')) built = builtPatch({ ...p, ...built } as StairParams, 'stringer', 'height', Math.round(b.maxY - b.minY));
+        }
+        return built;
+      });
+    }
     case 'stringerMaterial':
       return patchStair(store, ids, 'Vangstyckenas material', (p) => builtPatch(p, 'stringer', 'material', raw || undefined));
     case 'treadThickness':

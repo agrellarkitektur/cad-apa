@@ -2,7 +2,9 @@ import type { RailPart } from '../core/railingTypes';
 import { dist, norm, sub } from '../geometry/vec';
 import { railPen, type RailPenKey } from '../repr/railingPens';
 import type { Origin, Pen, Primitive, Vec2 } from '../repr/primitives';
+import type { Rings } from '../geometry/boolean';
 import { offsetLine } from './groundLines';
+import { hull, merged } from './profileBody';
 import { planCutHeight } from './planCut';
 import { gateHole, withExtension, type AlongPiece, type GatePiece, type PostPiece, type RailingBody } from './railingBody';
 import { dedupe, dedupeZ, pathPoint, pathZ, type RailGate, type RailPath } from './railingGeometry';
@@ -49,7 +51,21 @@ function splitAbove(pts: readonly Vec2[], zs: readonly number[], cut: number | u
 }
 
 /** En stolpe eller spjäla ovanifrån: rektangeln i linjens riktning, eller en åttahörning. */
+/** En stolpes eller spjälas profiltyp i planet (0.11.7): ytorna per delprofil, x längs linjen och y åt vänster. */
+export function postRegions(q: PostPiece): { polys: Rings[]; material?: string }[] {
+  const d = q.dir;
+  const n: Vec2 = [-d[1], d[0]];
+  return (q.sec?.regions ?? []).map((r) => ({ ...(r.material ? { material: r.material } : {}), polys: r.polys.map((poly) => poly.map((ring) => ring.map((p): Vec2 => [q.at[0] + d[0] * p[0] + n[0] * p[1], q.at[1] + d[1] * p[0] + n[1] * p[1]]))) }));
+}
+
 export function postRing(q: PostPiece): Vec2[] {
+  if (q.sec) {
+    // En profiltyp (0.11.7): ytorna ihop; ett tvärsnitt i flera bitar ritas som höljet.
+    const polys = merged(postRegions(q).flatMap((r) => r.polys.map((poly) => poly[0])));
+    if (polys.length === 1) return polys[0][0];
+    const h = hull(polys.flatMap((poly) => poly[0]));
+    if (h) return h;
+  }
   if (q.round) {
     const r = q.w / 2;
     return Array.from({ length: 8 }, (_, k): Vec2 => [q.at[0] + r * Math.cos((k * Math.PI) / 4), q.at[1] + r * Math.sin((k * Math.PI) / 4)]);

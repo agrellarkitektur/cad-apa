@@ -1,7 +1,7 @@
 import type { DocStore } from '../../core/store';
 import type { Id, ProjectDoc } from '../../core/model';
-import { addDefaultProfileTypes, addProfileGroup, addProfileType, moveProfileGroup, profileGroups, updateProfileType, profileTypesIn, profileTypeUses, removeProfileGroup, removeProfileType, renameProfileGroup, setProfileTypeGroup } from '../../core/profiles';
-import { anchorPoint, ANCHOR_POS_LABELS, boxOfPoints, circleContour, defaultProfileTypes, END_KIND_LABELS, flatContour, newProfileModel, PROFILE_USE_LABELS, profileSection, profileValues, ZONE_PARAM, type AnchorPos, type EndKind, type PPoint, type ProfileTypeModel, type ProfileUse, type SubProfile } from '../../core/profileTypes';
+import { addDefaultProfileTypes, addProfileGroup, addProfileType, moveProfileGroup, profileGroups, updateProfileType, profileTypesIn, profileTypeUsage, profileTypeUses, removeProfileGroup, removeProfileType, renameProfileGroup, setProfileTypeGroup } from '../../core/profiles';
+import { anchorPoint, ANCHOR_POS_LABELS, boxOfPoints, circleContour, defaultProfileTypes, END_GROUP, END_KIND_LABELS, isEndProfile, flatContour, newProfileModel, PROFILE_USE_LABELS, profileSection, profileValues, ZONE_PARAM, type AnchorPos, type EndKind, type PPoint, type ProfileTypeModel, type ProfileUse, type SubProfile } from '../../core/profileTypes';
 import { parseDxf } from '../../formats/dxf';
 import { askConfirm, askText } from '../ask';
 import { escapeHtml, nextLittera } from '../labels';
@@ -21,7 +21,7 @@ import { closestOnRing, edgeDistance, insideRing, offsetContour } from '../../co
 
 export type PeTool = 'select' | 'line' | 'rect' | 'circle' | 'offset' | 'fillet' | 'dim' | 'anchor' | 'zoneH' | 'zoneW';
 export type PePlace = 'edge' | 'over' | 'free';
-export type PeView = 'section' | 'stretched' | '3d';
+export type PeView = 'section' | 'stretched' | 'end' | '3d';
 
 export interface ProfileEditorState {
   def: Id | null;
@@ -43,6 +43,8 @@ export interface ProfileEditorState {
   note?: string;
   /** Provmåtten i Sträckt (Höjd och Bredd); utelämnade = 1,5 gånger det ritade. */
   trial?: { height?: number; width?: number };
+  /** Ändprofilerna (0.11.7): bara gruppen Ändprofiler, ritad i sidovyn. */
+  mode?: 'end';
 }
 
 export const newProfileEditorState = (): ProfileEditorState => ({ def: null, part: null, tool: 'select', view: 'section', pending: [] });
@@ -72,9 +74,13 @@ export function profileEditorSearch(root: HTMLElement, st: ProfileEditorState, v
 const opt = (v: string, label: string, cur: string | undefined) => `<option value="${escapeHtml(v)}"${(cur ?? '') === v ? ' selected' : ''}>${escapeHtml(label)}</option>`;
 const n1 = (v: number) => (Math.round(v * 10) / 10).toLocaleString('sv-SE');
 
+/** Grupperna editorn visar: ändprofilernas, eller alla andra. */
+const groupsFor = (doc: ProjectDoc, st: ProfileEditorState): string[] => profileGroups(doc).filter((g) => (g === END_GROUP) === (st.mode === 'end'));
+
 function chosen(doc: ProjectDoc, st: ProfileEditorState): { def: Id | null; model: ProfileTypeModel | null; part: SubProfile | null } {
-  let def = st.def && doc.definitions[st.def]?.profile ? st.def : null;
-  if (!def) def = profileGroups(doc).flatMap((g) => profileTypesIn(doc, g))[0]?.id ?? null;
+  const groups = groupsFor(doc, st);
+  let def = st.def && doc.definitions[st.def]?.profile && groups.includes(doc.definitions[st.def].profile!.group) ? st.def : null;
+  if (!def) def = groups.flatMap((g) => profileTypesIn(doc, g))[0]?.id ?? null;
   if (def !== st.def) {
     st.pending = [];
     st.drag = null;
@@ -172,7 +178,8 @@ function edgePoints(part: SubProfile, i: number): PPoint[] {
 
 export function profileEditorMarkup(doc: ProjectDoc, st: ProfileEditorState): string {
   const { def, model, part } = chosen(doc, st);
-  const groups = profileGroups(doc);
+  const end = st.mode === 'end';
+  const groups = groupsFor(doc, st);
   const q = (st.query ?? '').trim().toLowerCase();
   const list = groups
     .map((g, gi) => {
@@ -185,9 +192,8 @@ export function profileEditorMarkup(doc: ProjectDoc, st: ProfileEditorState): st
         })
         .join('');
       const g_ = escapeHtml(g);
-      const later = g === 'Ändprofiler';
       return `<div class="rt-group" data-pe-group="${g_}">
-        <div class="rt-group-head"><span>${g_}${later ? ' <i class="pe-later">0.11.7</i>' : ''}</span>
+        <div class="rt-group-head"><span>${g_}</span>
           <button class="icon-btn" data-pe-act="group-rename" data-pe-g="${g_}" title="Byt namn på gruppen" aria-label="Byt namn">✎</button>
           <button class="icon-btn" data-pe-act="group-up" data-pe-g="${g_}"${gi ? '' : ' disabled'} title="Flytta upp" aria-label="Flytta upp">↑</button>
           <button class="icon-btn" data-pe-act="group-down" data-pe-g="${g_}"${gi < groups.length - 1 ? '' : ' disabled'} title="Flytta ned" aria-label="Flytta ned">↓</button>
@@ -197,7 +203,7 @@ export function profileEditorMarkup(doc: ProjectDoc, st: ProfileEditorState): st
       </div>`;
     })
     .join('');
-  const used = def ? profileTypeUses(doc, def) : 0;
+  const used = def ? profileTypeUsage(doc, def).total : 0;
   const missing = defaultProfileTypes().filter((d) => !doc.definitions[d.id]).length;
   const listCol = `<div class="rt-list">
     <label class="field rt-search"><span>Sök</span><input type="search" data-pe-search placeholder="typ eller littera" value="${escapeHtml(st.query ?? '')}" autocomplete="off"></label>
@@ -205,18 +211,18 @@ export function profileEditorMarkup(doc: ProjectDoc, st: ProfileEditorState): st
     <div class="rt-list-actions">
       <button class="btn btn-small" data-pe-act="type-new">Ny typ…</button>
       <button class="btn btn-small" data-pe-act="type-dup"${def ? '' : ' disabled'}>Duplicera</button>
-      <button class="btn btn-small" data-pe-act="type-remove"${def && !used ? '' : ` disabled title="${def ? `Används av ${used} objekt` : ''}"`}>Ta bort</button>
+      <button class="btn btn-small" data-pe-act="type-remove"${def && !used ? '' : ` disabled title="${def ? 'Typen används' : ''}"`}>Ta bort</button>
       <button class="btn btn-small" data-pe-act="group-new">Ny grupp…</button>
-      ${missing ? '<button class="btn btn-small" data-pe-act="types-default" title="PR01–PR05: de som saknas i projektet">Lägg in förvalda typer</button>' : ''}
+      ${missing ? '<button class="btn btn-small" data-pe-act="types-default" title="PR01–PR08 och PA01: de som saknas i projektet">Lägg in förvalda typer</button>' : ''}
     </div>
     <p class="note">M = Mark (Platsen) · B = Byggnad.</p>
   </div>`;
-  if (!def || !model) return wrap(`${listCol}<div class="rt-typecol"><p class="note">Inga profiltyper än. <b>Ny typ…</b> lägger till en, och de förvalda (PR01–PR05) kommer med den första profilen.</p><div class="row"><button class="btn" data-pe-act="types-default">Lägg in förvalda typer</button></div></div>`);
+  if (!def || !model) return wrap(`${listCol}<div class="rt-typecol"><p class="note">${end ? 'Inga ändprofiler än. <b>Ny typ…</b> lägger till en, och <b>Lägg in förvalda typer</b> lägger in PA01 (takfotstass).' : 'Inga profiltyper än. <b>Ny typ…</b> lägger till en, och de förvalda (PR01–PR08) kommer med den första profilen.'}</p><div class="row"><button class="btn" data-pe-act="types-default">Lägg in förvalda typer</button></div></div>`, end);
   const d = doc.definitions[def];
   const k = (rest: string) => `ptype:${def}:${rest}`;
   const groupsSel = groups.map((g) => opt(g, g, model.group)).join('');
   const uses = (Object.keys(PROFILE_USE_LABELS) as ProfileUse[])
-    .map((u) => `<label class="check"><input type="checkbox" data-key="${k(`use:${u}`)}"${(model.uses ?? ['free']).includes(u) ? ' checked' : ''}> ${PROFILE_USE_LABELS[u]}${u === 'free' ? '' : ' <i class="pe-later">0.11.7–0.11.8</i>'}</label>`)
+    .map((u) => `<label class="check"><input type="checkbox" data-key="${k(`use:${u}`)}"${(model.uses ?? ['free']).includes(u) ? ' checked' : ''}> ${PROFILE_USE_LABELS[u]}${u === 'lining' ? ' <i class="pe-later">0.11.8</i>' : u === 'skirting' ? ' <i class="pe-later">senare</i>' : ''}</label>`)
     .join('');
   const partRows = model.parts
     .map((p, i) => `<li class="rt-part${p.id === part?.id ? ' on' : ''}" data-pe-part-row="${escapeHtml(p.id)}">
@@ -250,20 +256,29 @@ export function profileEditorMarkup(doc: ProjectDoc, st: ProfileEditorState): st
     <div class="rt-sec">Mått</div>${dimRows(model, k)}
     <div class="rt-sec">Ändar</div>
     <div class="rt-row"><span>Avslut som förval</span><select class="rt-val" data-key="${k('ends')}">${opt('', model.group === 'Pelare och balkar' ? 'Efter gruppen (lodrät)' : 'Efter gruppen (vinkelrät)', model.ends)}${(Object.keys(END_KIND_LABELS) as EndKind[]).filter((e) => e !== 'angle').map((e) => opt(e, END_KIND_LABELS[e], model.ends)).join('')}</select></div>
+    ${model.ends === 'profile' ? `<div class="rt-row"><span>Ändprofil</span><select class="rt-val" data-key="${k('endProfile')}">${model.endProfile && profileTypesIn(doc, END_GROUP).some((x) => x.id === model.endProfile) ? '' : opt('', 'Välj …', '')}${profileTypesIn(doc, END_GROUP).map((x) => opt(x.id, `${x.name} ${x.description ?? ''}`, model.endProfile)).join('')}</select></div>` : ''}
     <div class="rt-row"><span>Uppåt</span><select class="rt-val" data-key="${k('up')}">${opt('plumb', 'Lodrätt', model.up ?? 'plumb')}${opt('normal', 'Vinkelrätt mot banan', model.up ?? 'plumb')}</select></div>
     <div class="rt-sec">Får användas som</div><div class="pe-uses">${uses}</div>
-    <div class="rt-sec">Används i</div><p class="note">${used ? `${used} ${used === 1 ? 'profilobjekt' : 'profilobjekt'}. <button class="link-btn" data-pe-act="goto">Gå dit</button>` : 'Inga objekt.'}</p>
+    <div class="rt-sec">Används i</div><p class="note">${usedText(doc, def)}</p>
   </div>`;
-  const tools = TOOLS.map(([t, label, title]) => `<button data-pe-tool="${t}" aria-pressed="${st.tool === t}" title="${escapeHtml(title)}">${label}</button>`).join('');
-  const views: [PeView, string][] = [['section', 'Tvärsnittet'], ['stretched', 'Sträckt'], ['3d', '3D']];
+  const endCol = `<div class="rt-typecol">
+    <div class="rt-title"><input type="text" class="rt-littera" aria-label="Littera" data-key="${k('name')}" value="${escapeHtml(d.name)}"><input type="text" class="rt-desc" aria-label="Beskrivning" data-key="${k('description')}" value="${escapeHtml(d.description ?? '')}" placeholder="Beskrivning"></div>
+    <div class="rt-sec">Delprofiler</div><ul class="rt-tree">${partRows}</ul>
+    <div class="rt-sec">Mått</div>${dimRows(model, k)}
+    <div class="rt-sec">Används i</div><p class="note">${usedText(doc, def)}</p>
+    <p class="note">Ritad i sidovyn: x längs banan ut från änden (x = 0 är änden), y uppåt som i tvärsnittet. Det som inte ligger i konturen tas bort. Ritar du den lika hög som profilen passar den; en annan höjd sträcks med profilens sträckzon för höjden.</p>
+  </div>`;
+  const tools = TOOLS.filter(([t]) => !end || (t !== 'anchor' && t !== 'zoneH' && t !== 'zoneW')).map(([t, label, title]) => `<button data-pe-tool="${t}" aria-pressed="${st.tool === t}" title="${escapeHtml(title)}">${label}</button>`).join('');
+  const views: [PeView, string][] = end ? [['section', 'Sidovyn'], ['end', '3D']] : [['section', 'Tvärsnittet'], ['end', 'Ändprofilen'], ['stretched', 'Sträckt'], ['3d', '3D']];
+  if (!views.some(([v]) => v === st.view)) st.view = 'section';
   const center = `<div class="rt-center pe-center">
-    <div class="segmented rt-tabs" role="group" aria-label="Visa">${views.map(([v, l]) => `<button data-pe-view="${v}" aria-pressed="${st.view === v}">${l}</button>`).join('')}<button disabled title="Ändprofilerna kommer i 0.11.7">Ändprofilen</button></div>
+    <div class="segmented rt-tabs" role="group" aria-label="Visa">${views.map(([v, l]) => `<button data-pe-view="${v}" aria-pressed="${st.view === v}">${l}</button>`).join('')}</div>
     ${st.view === 'section' ? `<div class="segmented pe-tools" role="group" aria-label="Verktyg">${tools}</div>
     <div class="pe-tool-acts">${toolOptions(st, part)}${st.tool === 'line' && st.pending.length >= 3 ? '<button class="btn btn-small btn-primary" data-pe-act="line-close">Sluta konturen</button>' : ''}${st.pending.length || st.offset ? '<button class="btn btn-small" data-pe-act="pending-cancel">Avbryt</button>' : ''}<button class="btn btn-small" data-pe-act="part-mirror"${part ? '' : ' disabled'} title="Spegla den valda delprofilen i sidled">Spegla</button><button class="btn btn-small" data-pe-act="dxf" title="Läs slutna konturer ur en DXF-fil som nya delprofiler (mm)">Ur DXF…</button></div>
     ${canvasMarkup(model, part, st)}
-    <p class="note rt-canvas-hint">${hintFor(st)}</p>` : st.view === 'stretched' ? stretchedMarkup(model, st.trial) : isoMarkup(model)}
+    <p class="note rt-canvas-hint">${hintFor(st)}</p>` : st.view === 'stretched' ? stretchedMarkup(model, st.trial) : st.view === 'end' ? endPreviewMarkup(doc, def, model) : isoMarkup(model)}
   </div>`;
-  return wrap(`${listCol}${typeCol}${center}<div class="rt-side">${part ? partProps(doc, def, part) : ''}${paramsMarkup(def, model)}</div>`);
+  return wrap(`${listCol}${end ? endCol : typeCol}${center}<div class="rt-side">${part ? partProps(doc, def, part) : ''}${end ? '' : paramsMarkup(def, model)}</div>`, end);
 }
 
 /** Verktygets val ovanför ritytan: läget för nya delprofiler, radien, avståndet att förskjuta. */
@@ -295,7 +310,29 @@ function dimRows(m: ProfileTypeModel, k: (rest: string) => string): string {
   return `<ul class="pe-list">${rows}</ul><p class="note">Ett nytt värde sträcker ritningen (det övre eller högra flyttas), också när parametern ändras. Per objekt kommer senare.</p>`;
 }
 
-const wrap = (inner: string) => `<section class="style-labels pe-editor"><h3>Profiler</h3><p class="note">Ändras en typ här ändras alla profilobjekt med den. Tvärsnittets x går bort från väggen (till höger om banan), y uppåt, mm. En senare delprofil som ligger ovanpå en tidigare tar sin yta ur den.</p><div class="rt-grid">${inner}</div></section>`;
+const wrap = (inner: string, end = false) =>
+  end
+    ? `<section class="style-labels pe-editor"><h3>Ändprofiler</h3><p class="note">En ändprofil (PA01 …) skär änden på en profil med sin kontur, ritad i sidovyn: x längs banan ut från änden, y uppåt, mm. Välj den som avslut i profilens egenskaper, eller som förval under Ändar i profiltypen. Med Utöver ligger konturen efter referenslinjens ände, med Inom ryms den i linjen.</p><div class="rt-grid">${inner}</div></section>`
+    : `<section class="style-labels pe-editor"><h3>Profiler</h3><p class="note">Ändras en typ här ändras alla profilobjekt med den. Tvärsnittets x går bort från väggen (till höger om banan), y uppåt, mm. En senare delprofil som ligger ovanpå en tidigare tar sin yta ur den.</p><div class="rt-grid">${inner}</div></section>`;
+
+/** Var typen används: profilobjekt, och (0.11.7) som ändprofil, del i räckestyper och vangstycken. */
+function usedText(doc: ProjectDoc, def: Id): string {
+  const u = profileTypeUsage(doc, def);
+  const bits = [u.objects ? `${u.objects} profilobjekt` : '', u.ends ? `${u.ends} ${u.ends === 1 ? 'avslut' : 'avslut'}` : '', u.types ? `${u.types} ${u.types === 1 ? 'typ' : 'typer'}` : '', u.railings ? `${u.railings} ${u.railings === 1 ? 'räckestyp' : 'räckestyper'}` : '', u.stairs ? `${u.stairs} ${u.stairs === 1 ? 'trappa' : 'trappor'}` : ''].filter(Boolean);
+  return bits.length ? `${bits.join(', ')}.${u.ids.length ? ' <button class="link-btn" data-pe-act="goto">Gå dit</button>' : ''}` : 'Inga objekt.';
+}
+
+/** Fliken Ändprofilen: typen svept med sin ändprofil i slutet; för en ändprofil en provbit lika hög som konturen. */
+function endPreviewMarkup(doc: ProjectDoc, def: Id, model: ProfileTypeModel): string {
+  if (isEndProfile(model)) {
+    const b = boxOfPoints(model.parts.flatMap((p) => flatContour(p.contour)));
+    const h = Math.max(10, b.maxY - b.minY);
+    const sample: ProfileTypeModel = { group: '', parts: [{ id: 'a', letter: 'A', name: 'Prov', contour: { pts: [[0, b.minY], [45, b.minY], [45, b.minY + h], [0, b.minY + h]] } }], anchors: [{ no: 1, name: '', pos: 'bl' }], anchor: 1, zones: [], params: [] };
+    return isoMarkup(sample, { doc, end: { kind: 'profile', profile: def, beyond: true } }, `En provbit 45 × ${Math.round(h)} mm med ändprofilen Utöver i slutet.`);
+  }
+  if (model.ends !== 'profile' || !model.endProfile) return '<p class="note">Typen har ingen ändprofil som förval. Välj <b>Ändprofil</b> under Ändar till vänster; ett objekt kan också välja en i sina egenskaper.</p>';
+  return isoMarkup(model, { doc, end: { kind: 'profile', profile: model.endProfile, beyond: true } }, `Typen med ändprofilen ${escapeHtml(doc.definitions[model.endProfile]?.name ?? '')} Utöver i slutet.`);
+}
 
 function hintFor(st: ProfileEditorState): string {
   if (st.note) return escapeHtml(st.note);
@@ -324,6 +361,8 @@ function hintFor(st: ProfileEditorState): string {
 }
 
 function partProps(doc: ProjectDoc, def: Id, p: SubProfile): string {
+  // En ändprofils delar är bara konturer (0.11.7): inget material, inget avslut, ingen plan.
+  const end = isEndProfile(doc.definitions[def]?.profile);
   const k = (rest: string) => `ptype:${def}:part:${p.id}:${rest}`;
   const mats = (doc.graphics.materials ?? []).filter((x) => x.building || x.id === p.material);
   const pts = p.contour.pts
@@ -335,14 +374,14 @@ function partProps(doc: ProjectDoc, def: Id, p: SubProfile): string {
     .join('');
   return `<div class="rt-partprops">
     <div class="rt-part-name"><input type="text" class="pe-letter-in" aria-label="Bokstav" data-key="${k('letter')}" value="${escapeHtml(p.letter)}"><input type="text" aria-label="Namn" data-key="${k('name')}" value="${escapeHtml(p.name)}"></div>
-    <div class="fields">
+    ${end ? `<div class="fields"><label class="field" title="Styr snäppet när du drar i punkterna"><span>Läge</span><select data-key="${k('place')}">${opt('edge', 'Kant i kant', p.place ?? 'edge')}${opt('over', 'Ovanpå', p.place ?? 'edge')}${opt('free', 'Fritt', p.place ?? 'edge')}</select></label></div>` : `<div class="fields">
       <label class="field"><span>Material</span><select data-key="${k('material')}">${opt('', 'Inget', p.material)}${mats.map((x) => opt(x.id, x.name, p.material)).join('')}</select></label>
       <label class="check"><input type="checkbox" data-key="${k('perObject')}"${p.perObject !== false ? ' checked' : ''}> Får bytas per objekt</label>
       <label class="field" title="Styr snäppet när du drar i punkterna: Kant i kant håller dem utanför de andra delprofilerna, Ovanpå snäpper till dem, Fritt bara till de egna"><span>Läge</span><select data-key="${k('place')}">${opt('edge', 'Kant i kant', p.place ?? 'edge')}${opt('over', 'Ovanpå', p.place ?? 'edge')}${opt('free', 'Fritt', p.place ?? 'edge')}</select></label>
       <label class="check" title="Avslutet i ändarna gäller delprofilen; annars kapas den vinkelrätt"><input type="checkbox" data-key="${k('followsEnd')}"${p.followsEnd !== false ? ' checked' : ''}> Följer avslutet</label>
       <label class="field" title="Hur långt delprofilen går utöver referenslinjens ände, t.ex. en avtäckning"><span>Förlängning</span><span class="input-unit"><input type="text" data-key="${k('extend')}" value="${p.extend ?? 0}"><i>mm</i></span></label>
       <label class="field"><span>Syns i planen från</span><select data-key="${k('detail')}">${opt('', 'Alla nivåer', p.detail)}${opt('normal', 'Normal', p.detail)}${opt('detail', 'Detalj', p.detail)}</select></label>
-    </div>
+    </div>`}
     <div class="rt-sec">Punkter</div>
     <table class="rt-ptable pe-pts"><thead><tr><th>#</th><th>x</th><th>y</th><th>Båge</th><th></th></tr></thead><tbody>${pts}</tbody></table>
   </div>`;
@@ -694,8 +733,8 @@ async function doAction(store: DocStore, st: ProfileEditorState, el: HTMLElement
       removeProfileGroup(store, g);
       return;
     case 'type-new': {
-      const group = def?.profile?.group ?? profileGroups(doc)[0] ?? 'Pelare och balkar';
-      const name = (await askText(`Ny typ i ${group}`, nextLittera(doc, 'Profile', group === 'Ändprofiler' ? 'PA' : 'PR'), 'Lägg till'))?.trim();
+      const group = st.mode === 'end' ? END_GROUP : (def?.profile?.group ?? profileGroups(doc).find((g) => g !== END_GROUP) ?? 'Pelare och balkar');
+      const name = (await askText(`Ny typ i ${group}`, nextLittera(doc, 'Profile', group === END_GROUP ? 'PA' : 'PR'), 'Lägg till'))?.trim();
       if (!name) return;
       st.def = addProfileType(store, name, newProfileModel(group));
       st.part = null;
@@ -703,11 +742,12 @@ async function doAction(store: DocStore, st: ProfileEditorState, el: HTMLElement
     }
     case 'type-dup': {
       if (!def?.profile) return;
-      st.def = addProfileType(store, nextLittera(doc, 'Profile', 'PR'), structuredClone(def.profile), def.description ? `${def.description} (kopia)` : undefined);
+      st.def = addProfileType(store, nextLittera(doc, 'Profile', isEndProfile(def.profile) ? 'PA' : 'PR'), structuredClone(def.profile), def.description ? `${def.description} (kopia)` : undefined);
       return;
     }
     case 'type-remove': {
       if (!def || profileTypeUses(doc, def.id)) return;
+      if (profileTypeUsage(doc, def.id).total) return void onError(`${def.name} används av andra typer eller objekt.`);
       if (!(await askConfirm(`Ta bort ${def.name}?`, 'Typen används inte av något objekt.'))) return;
       removeProfileType(store, def.id);
       st.def = null;
@@ -716,10 +756,10 @@ async function doAction(store: DocStore, st: ProfileEditorState, el: HTMLElement
     }
     case 'types-default':
       store.transact('Lägg in förvalda profiltyper', (tx) => void addDefaultProfileTypes(tx));
-      if (!st.def) st.def = 't-pr01';
+      if (!st.def) st.def = st.mode === 'end' ? 't-pa01' : 't-pr01';
       return;
     case 'goto':
-      if (def) goTo(Object.values(doc.elements).filter((e) => e.definition === def.id).map((e) => e.id));
+      if (def) goTo(profileTypeUsage(doc, def.id).ids);
       return;
     case 'line-close':
       if (st.def && st.pending.length >= 3) {

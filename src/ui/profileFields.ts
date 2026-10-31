@@ -1,6 +1,7 @@
 import { newId } from '../core/ids';
 import type { Element, Id, ProjectDoc } from '../core/model';
-import { ANCHOR_POS_LABELS, END_KIND_LABELS, PROFILE_USE_LABELS, ZONE_PARAM, type EndKind, type ProfileTypeModel } from '../core/profileTypes';
+import { ANCHOR_POS_LABELS, END_GROUP, END_KIND_LABELS, PROFILE_USE_LABELS, ZONE_PARAM, type EndKind, type ProfileTypeModel } from '../core/profileTypes';
+import { profileTypesIn } from '../core/profiles';
 import { profileValues } from '../core/profileTypes';
 import type { DocStore } from '../core/store';
 import { columnHeight, endOf, partMaterial, profileBodyOf, profileTypeOf, type ProfileBody, type ProfileParams } from '../elements/profile';
@@ -82,14 +83,23 @@ export function profileFieldsMarkup(doc: ProjectDoc, el: Element): string {
       out.push(`<div class="field-label">Avslut i ${end === 'start' ? 'början' : 'slutet'}</div><div class="fields">
         <label class="field"><span>Avslut</span><select data-key="prof:end:${end}:kind">${kinds}</select></label>
         ${e.kind === 'angle' ? numberField(`prof:end:${end}:angle`, 'Vinkel', e.angle ?? 0, '°', 1) : ''}
+        ${e.kind === 'profile' ? endProfileSelect(doc, `prof:end:${end}:profile`, e.profile) : ''}
         ${numberField(`prof:end:${end}:shift`, 'Förskjutning (+ ut)', e.shift ?? 0, 'mm')}
       </div>${segmented('prof-end-beyond', e.beyond ? 'beyond' : 'inside', [['inside', 'Inom'], ['beyond', 'Utöver']], ` data-end="${end}"`)}`);
     }
-  if (!plumb) out.push('<p class="note">I knäckarna geras profilen, i plan och höjd. Ändprofiler (PA01 …) kommer i 0.11.7.</p>');
+  if (!plumb) out.push('<p class="note">I knäckarna geras profilen, i plan och höjd. En ändprofil (PA01 …) skär änden med sin kontur, ritad i sidovyn; Utöver lägger den efter referenslinjens ände.</p>');
   return out.join('');
 }
 
 const mm = (v: number) => Math.round(v).toLocaleString('sv-SE');
+
+/** Listan med ändprofilerna (PA01 …) i projektet, för ett avslut. */
+export function endProfileSelect(doc: ProjectDoc, key: string, cur: Id | undefined, label = 'Ändprofil'): string {
+  const pas = profileTypesIn(doc, END_GROUP);
+  const opts = pas.map((d) => `<option value="${escapeHtml(d.id)}"${d.id === cur ? ' selected' : ''}>${escapeHtml(d.name)} ${escapeHtml(d.description ?? '')}</option>`).join('');
+  const missing = cur && !doc.definitions[cur] ? `<option value="" selected>Saknas</option>` : !cur ? '<option value="" selected>Välj …</option>' : '';
+  return `<label class="field"><span>${escapeHtml(label)}</span><select data-key="${escapeHtml(key)}">${missing}${opts}</select></label>${pas.length ? '' : '<p class="note">Projektet har inga ändprofiler. Lägg in PA01 med <b>Lägg in förvalda typer</b> i profileditorn, eller rita en i gruppen Ändprofiler.</p>'}`;
+}
 
 /**
  * Varningarna överst i panelen (0.11.6.1): en bana utan kropp, ett avslut
@@ -99,6 +109,7 @@ const mm = (v: number) => Math.round(v).toLocaleString('sv-SE');
 export function profileWarnings(body: ProfileBody | null): string[] {
   if (!body?.sweep.pieces.length) return ['Banan är för kort, eller tvärsnittet saknar yta.'];
   const out: string[] = [];
+  out.push(...body.endFit);
   const r = body.reach;
   if (r) {
     if (r.single && r.start + r.end > r.first + 1) out.push(`Avsluten skär in i varandra: de når ${mm(r.start)} och ${mm(r.end)} mm in, men profilen är ${mm(r.first)} mm. Förläng banan, välj ett annat avslut eller Utöver.`);
@@ -163,10 +174,14 @@ const parse = (raw: string) => Number(raw.replace(/\s/g, '').replace(',', '.').r
 /** Ett avslut med en ändring, utan det som är förval. */
 function endPatch(model: ProfileTypeModel, e: Partial<EndSpec> | undefined, change: Partial<EndSpec>): Partial<EndSpec> | undefined {
   const next: Partial<EndSpec> = { ...e, ...change };
+  // Ett nytt slag av avslut tar slagets förval för Inom/Utöver (ändprofilen Utöver).
+  if (change.kind && change.kind !== e?.kind && change.beyond === undefined) delete next.beyond;
   if (next.kind === undefined || next.kind === endOf(model, undefined).kind) delete next.kind;
+  const kind = next.kind ?? endOf(model, undefined).kind;
   if (!next.shift) delete next.shift;
-  if (!next.beyond) delete next.beyond;
-  if (next.kind !== 'angle') delete next.angle;
+  if (next.beyond !== undefined && next.beyond === (kind === 'profile')) delete next.beyond;
+  if (kind !== 'angle') delete next.angle;
+  if (kind !== 'profile' || next.profile === model.endProfile) delete next.profile;
   return Object.keys(next).length ? next : undefined;
 }
 
@@ -224,6 +239,7 @@ export function applyProfileField(store: DocStore, ids: Id[], rest: string, inpu
       return patchProfiles(store, ids, `Avslut i ${end === 'start' ? 'början' : 'slutet'}`, (p, el) => {
         const model = profileTypeOf(store.doc, el);
         if (field === 'kind') return { [end]: endPatch(model, p[end], { kind: raw as EndKind }) };
+        if (field === 'profile') return { [end]: endPatch(model, p[end], { kind: 'profile', profile: raw || undefined }) };
         if (!ok) return null;
         if (field === 'shift') return { [end]: endPatch(model, p[end], { shift: Math.round(n) }) };
         if (field === 'angle') return { [end]: endPatch(model, p[end], { kind: 'angle', angle: Math.max(-80, Math.min(80, n)) }) };

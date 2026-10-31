@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.6.1** (alfa), Profileditorn, resten; nästa är **0.11.7
-Ändprofiler och profilen som del**.
+**0.11.7** (alfa), Ändprofiler och profilen som del; nästa är **0.11.8
+Dörrar och fönster**.
 
 ## Vad som fungerar
 
@@ -1149,6 +1149,40 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11.7, Ändprofiler och profilen som del (samma filformat, 27;
+projekt från 0.11.6 öppnas):
+- **Ändprofiler** (PA01 …) under stilboken › Typer › **Ändprofiler**: en
+  kontur ritad i **sidovyn** (x längs banan ut från änden, y uppåt som i
+  tvärsnittet) med samma verktyg som profileditorn. Den skär änden: det
+  som inte ligger i konturen tas bort. Fliken **3D** visar en provbit med
+  ändprofilen
+- I profilens egenskaper är **Ändprofil** ett avslut i början och slutet,
+  med listan över ändprofilerna; **Utöver** (förval) lägger konturen efter
+  referenslinjens ände, **Inom** ryms den i linjen, och förskjutningen
+  flyttar den. I början speglas den av sig själv. En profil med en annan
+  höjd än ändprofilen sträcks med sin sträckzon för höjden, annars står en
+  varning överst (också när ändprofilen saknas)
+- I profiltypen: **Ändprofil** som *Avslut som förval* under Ändar, och
+  vilken; fliken **Ändprofilen** visar typen med den i slutet. *Används i*
+  räknar också avslut, typer, räckestyper och trappor som använder typen,
+  och en typ som används kan inte tas bort
+- **Profiltyperna som delar i räckestyper**: under *Profil* för en del
+  finns gruppen **Profiltyper** (de som *Får användas som* Del i räcke),
+  med **Ankare** och **Vridning** kring ankaret (grader eller en formel med
+  typens parametrar). En längsgående del ligger med ankaret på överkantens
+  höjd och sveps längs räcket, vinkelrätt mot det (en ändprofil som typens
+  förval kommer med i ändarna); en stolpe eller spjäla står som sitt
+  tvärsnitt, med x längs räcket. Gäller i panelen och i räckestypeditorn
+- **Vangstycket** i den byggda trappan: *Profil* Rektangel eller en
+  profiltyp som får användas som Vangstycke; den sträcks till vangstyckets
+  bredd och höjd (utan sträckzon får vangstycket typens mått) och sveps
+  längs trappans sida, kapad vid golvet
+- Nya förvalda typer (läggs in med *Lägg in förvalda typer*, eller när de
+  väljs som del): **PR06** handledare 56 × 45 rundad (räckesdel), **PR07**
+  vangstycke med fas (gruppen Trappdelar), **PR08** taktass 45 × 170 med
+  **PA01** takfotstass som förvalt avslut. Verktyget Profil visar bara
+  typerna som får vara fria profilobjekt
 
 Version 0.11.6.1, Profileditorn, resten (samma filformat, 27; projekt från
 0.11.6 öppnas):

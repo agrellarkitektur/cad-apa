@@ -1,6 +1,6 @@
 import type { Id } from '../../core/model';
 import { updateProfileType } from '../../core/profiles';
-import { boxOfPoints, flatContour, nextPartLetter, ringArea, ZONE_PARAM, type AnchorPos, type EndKind, type PPoint, type ProfileContour, type ProfileTypeModel, type ProfileUse, type SubProfile } from '../../core/profileTypes';
+import { boxOfPoints, flatContour, isEndProfile, nextPartLetter, ringArea, ZONE_PARAM, type AnchorPos, type EndKind, type PPoint, type ProfileContour, type ProfileTypeModel, type ProfileUse, type SubProfile } from '../../core/profileTypes';
 import type { DocStore } from '../../core/store';
 import { filletContour, offsetContour, setDim, syncDims } from '../../core/profileContour';
 
@@ -170,6 +170,16 @@ export function applyProfileTypeField(store: DocStore, defId: Id, rest: string[]
       case 'ends':
         if (raw) m.ends = raw as EndKind;
         else delete m.ends;
+        // En ändprofil som förval: den första i projektet tills en annan väljs.
+        if (m.ends === 'profile' && !m.endProfile) {
+          const first = Object.values(store.doc.definitions).find((d) => isEndProfile(d.profile));
+          if (first) m.endProfile = first.id;
+        }
+        if (m.ends !== 'profile') delete m.endProfile;
+        return m;
+      case 'endProfile':
+        if (raw) m.endProfile = raw;
+        else delete m.endProfile;
         return m;
       case 'part': {
         const p = m.parts.find((x) => x.id === a);

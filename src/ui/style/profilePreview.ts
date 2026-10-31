@@ -1,6 +1,8 @@
 import type { ProfileDim } from '../../core/profileContour';
 import { anchorPoint, boxOfPoints, profileSection, profileValues, stretchPoint, ZONE_PARAM, type PPoint, type ProfileTypeModel } from '../../core/profileTypes';
-import { partRegions, placePoint, sweep, type Vec3 } from '../../elements/profileBody';
+import type { ProjectDoc } from '../../core/model';
+import { resolveEnd } from '../../elements/endProfile';
+import { partRegions, placePoint, sweep, type EndSpec, type Vec3 } from '../../elements/profileBody';
 import type { Vec2 } from '../../repr/primitives';
 
 /**
@@ -62,14 +64,21 @@ export function stretchedMarkup(m: ProfileTypeModel, trial: { height?: number; w
   return `${fields ? `<div class="fields pe-trial">${fields}</div>` : ''}<svg class="pe-canvas pe-static" viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet">${polys}${dims}</svg><p class="note">${note}</p>`;
 }
 
-/** En bit av profilen svept 1 000 mm, isometriskt sedd snett framifrån och ovanifrån. */
-export function isoMarkup(m: ProfileTypeModel): string {
+/**
+ * En bit av profilen svept 1 000 mm, isometriskt sedd snett framifrån och
+ * ovanifrån. Med `ends` (0.11.7) får biten avsluten, t.ex. en ändprofil i
+ * slutet.
+ */
+export function isoMarkup(m: ProfileTypeModel, ends?: { doc: ProjectDoc; start?: EndSpec; end?: EndSpec }, note?: string): string {
   const s = profileSection(m, profileValues(m));
   const a = m.anchors.find((x) => x.no === m.anchor) ?? m.anchors[0];
   const pl = { anchor: anchorPoint(a, s.box, s.deltas) };
-  const regions = partRegions(s).map((r) => ({ polys: r.polys.map((poly) => poly.map((ring) => ring.map((q) => placePoint([q[0], q[1]], pl) as Vec2))), follows: true, extend: 0 }));
+  const regions = partRegions(s).map((r) => ({ polys: r.polys.map((poly) => poly.map((ring) => ring.map((q) => placePoint([q[0], q[1]], pl) as Vec2))), follows: r.part.followsEnd !== false, extend: r.part.extend ?? 0 }));
   const L = Math.max(600, 3 * Math.max(s.box.maxX - s.box.minX, s.box.maxY - s.box.minY));
-  const res = sweep(regions, [[0, 0, 0], [L, 0, 0]], 'plumb', { kind: 'square' }, { kind: 'square' });
+  const ysec = regions.flatMap((r) => r.polys.flatMap((poly) => poly.flatMap((ring) => ring.map((q) => q[1]))));
+  const yr: [number, number] = [Math.min(...ysec), Math.max(...ysec)];
+  const res0 = (e: EndSpec | undefined): EndSpec => (e && ends ? resolveEnd(ends.doc, e, s, pl.anchor[1], yr).spec : { kind: 'square' });
+  const res = sweep(regions, [[0, 0, 0], [L, 0, 0]], 'plumb', res0(ends?.start), res0(ends?.end));
   const proj = (p: Vec3): Vec2 => [(p[0] - p[1]) * 0.866, -p[2] - (p[0] + p[1]) * 0.5];
   const faces: { pts: Vec2[]; depth: number; shade: number; part: number }[] = [];
   const light = [-0.35, -0.55, 0.76];
@@ -103,5 +112,5 @@ export function isoMarkup(m: ProfileTypeModel): string {
       return `<polygon points="${f.pts.map((q) => `${q[0].toFixed(1)},${q[1].toFixed(1)}`).join(' ')}" fill="${partColor(idx < 0 ? f.part : idx)}" style="filter:brightness(${f.shade.toFixed(2)})" stroke="currentColor" stroke-opacity=".35" stroke-width=".6" vector-effect="non-scaling-stroke"/>`;
     })
     .join('');
-  return `<svg class="pe-canvas pe-static" viewBox="${vb.map((v) => v.toFixed(1)).join(' ')}" preserveAspectRatio="xMidYMid meet">${body}</svg><p class="note">${Math.round(L)} mm av profilen, svept som i ritningen, sedd snett framifrån.</p>`;
+  return `<svg class="pe-canvas pe-static" viewBox="${vb.map((v) => v.toFixed(1)).join(' ')}" preserveAspectRatio="xMidYMid meet">${body}</svg><p class="note">${note ?? `${Math.round(L)} mm av profilen, svept som i ritningen, sedd snett framifrån.`}</p>`;
 }

@@ -5,12 +5,15 @@ import { finishedTerrain, showsProposal } from './groundGeometry';
 import { defaultRailingTypes, railingModel, railNum, railValues, type RailingTypeModel, type RailPart } from '../core/railingTypes';
 import { closestOnSegment, dist, norm, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
-import { levelOf, type Material3D, type Plane, type Shape3D, type Solid } from '../repr/solids';
+import { levelOf, type Edges3D, type Material3D, type Plane, type Shape3D, type Solid } from '../repr/solids';
+import { profileModel } from '../core/profileTypes';
+import { resolveEnd } from './endProfile';
+import { solidsOf, sweep, type Vec3 } from './profileBody';
 import { buildingMaterialOf, materialSolid } from './buildingMaterial';
 import { stripRing } from './groundLines';
-import { postStations, railingBody, withExtension, type PanelPiece, type RailingBody } from './railingBody';
+import { postStations, railingBody, withExtension, type PanelPiece, type RailingBody, type RailProfiles } from './railingBody';
 import { dedupe, freePath, hostedPath, pathZ, type GroundFn, type RailGate, type RailingParams, type RailPath } from './railingGeometry';
-import { postRing, railingPlan } from './railingPlan';
+import { postRegions, postRing, railingPlan } from './railingPlan';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
 import { geometryOfStair, stairParams, storeyAbove } from './stair';
 
@@ -99,7 +102,15 @@ export function railingBodyOf(doc: ProjectDoc, el: Element<any>, ground?: Ground
   const path = railingPath(doc, el, ground);
   if (!path) return null;
   const gates = (el.params as RailingParams).gates;
-  return { path, body: railingBody(path, railingTypeOf(doc, el), railingValues(doc, el), gates?.length ? { gates, gateModel: (g) => gateModelOf(doc, g) } : {}) };
+  return { path, body: railingBody(path, railingTypeOf(doc, el), railingValues(doc, el), { profiles: railProfiles(doc), ...(gates?.length ? { gates, gateModel: (g) => gateModelOf(doc, g) } : {}) }) };
+}
+
+/** Profiltyperna för räckets delar (0.11.7): typen, och ändprofilen uträknad. */
+export function railProfiles(doc: ProjectDoc): RailProfiles {
+  return {
+    model: (id) => profileModel(doc.definitions[id]),
+    end: (e, section, yShift, yr) => resolveEnd(doc, e, section, yShift, yr).spec,
+  };
 }
 
 /** Grindens littera: grindtypens, annars den egna. */
@@ -159,11 +170,24 @@ function slantSolid(id: string, ring: Vec2[], a: Vec2, b: Vec2, bottom: [number,
   };
 }
 
-/** Räckets delar i 3D: liggarna som sneda kroppar per bit, stolpar och spjälor lodräta, ytorna mellan stolparna. */
-export function railingSolids(id: string, body: RailingBody, matOf: (part: RailPart) => Partial<Solid>): Solid[] {
+/**
+ * Räckets delar i 3D: liggarna som sneda kroppar per bit, stolpar och
+ * spjälor lodräta, ytorna mellan stolparna. En del med en profiltyp (0.11.7)
+ * sveps längs linjen (vinkelrätt mot den uppåt) eller står som sitt
+ * tvärsnitt; dess kantlinjer läggs i `edges`.
+ */
+export function railingSolids(id: string, body: RailingBody, matOf: (part: RailPart) => Partial<Solid>, edges: Edges3D['segments'] = []): Solid[] {
   const out: Solid[] = [];
+  const regionMat = (part: RailPart, material: string | undefined) => matOf(material && !part.material ? { ...part, material } : part);
   for (const a of body.along) {
     const ext = withExtension(a);
+    if (a.sec) {
+      const path: Vec3[] = ext.pts.map((q, i) => [q[0], q[1], ext.top[i]]);
+      const res = sweep(a.sec.regions, path, 'normal', a.sec.start ?? { kind: 'square' }, a.sec.end ?? { kind: 'square' });
+      for (const pc of res.pieces) out.push(...solidsOf(id, pc.poly, { material: 'frame', ...regionMat(a.part, a.sec.regions[pc.part]?.material) }));
+      edges.push(...res.edges);
+      continue;
+    }
     const mat = matOf(a.part);
     for (let i = 1; i < ext.pts.length; i++) {
       const p0 = ext.pts[i - 1];
@@ -175,6 +199,10 @@ export function railingSolids(id: string, body: RailingBody, matOf: (part: RailP
   }
   for (const q of [...body.posts, ...body.repeats]) {
     if (q.z1 - q.z0 < 1) continue;
+    if (q.sec) {
+      for (const r of postRegions(q)) for (const poly of r.polys) out.push({ id, rings: poly, z0: q.z0, z1: q.z1, material: 'frame', ...regionMat(q.part, r.material) } as Solid);
+      continue;
+    }
     out.push({ id, rings: [postRing(q)], z0: q.z0, z1: q.z1, material: 'frame', ...matOf(q.part) });
   }
   for (const p of body.panels as PanelPiece[]) {
@@ -186,7 +214,7 @@ export function railingSolids(id: string, body: RailingBody, matOf: (part: RailP
     const r = f.w / 2;
     out.push({ id, rings: [Array.from({ length: 8 }, (_, k): Vec2 => [f.at[0] + r * Math.cos((k * Math.PI) / 4 + Math.PI / 8), f.at[1] + r * Math.sin((k * Math.PI) / 4 + Math.PI / 8)])], z0: f.z0, z1: f.z1, material: 'frame', color: '#b9b5ad' } as Solid);
   }
-  for (const g of body.gates) for (const leaf of g.leaves) out.push(...railingSolids(id, leaf.body, matOf));
+  for (const g of body.gates) for (const leaf of g.leaves) out.push(...railingSolids(id, leaf.body, matOf, edges));
   return out;
 }
 
@@ -222,7 +250,10 @@ export const railingType: ElementType<RailingParams> = {
       if (!cache.has(key)) cache.set(key, part.material ? materialSolid(buildingMaterialOf({ material: part.material } as never, ctx.style)) : {});
       return cache.get(key)!;
     };
-    return railingSolids(el.id, r.body, matOf) as Shape3D[];
+    const edges: Edges3D['segments'] = [];
+    const out: Shape3D[] = railingSolids(el.id, r.body, matOf, edges);
+    if (edges.length) out.push({ kind: 'edges', id: el.id, segments: edges });
+    return out;
   },
 };
 
