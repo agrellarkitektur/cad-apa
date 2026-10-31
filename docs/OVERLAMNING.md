@@ -233,7 +233,11 @@ provat.
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
-fråga.
+fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.8, 0.11.7.3,
+0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4, 0.11.3,
+0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
+provat.
 
 **0.11.8 efter provning** (Claudes val, se PLAN.md)
 - Hålet är nu modulmåttet (10 × 13 → 1 000 × 1 300) och karmen 980 ×
@@ -246,10 +250,7 @@ fråga.
 - Litterans nummer sparas för varje kombination första gången den
   dyker upp; ett nytt fönster får nästa lediga nummer även om det sitter
   först i fasaden. Bra, eller ska numren följa ordningen tills man låser?
-- Pardörrens passiva blad är det högra sett utifrån. Rätt förval? Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.7.3, 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4,
-0.11.3, 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
-provat.
+- Pardörrens passiva blad är det högra sett utifrån. Rätt förval?
 
 **0.11.7.3 efter provning** (Claudes val, se PLAN.md)
 - Trappans littera står längs gångriktningen framför början, utan ledare.
