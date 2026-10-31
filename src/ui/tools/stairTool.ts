@@ -1,7 +1,7 @@
 import { addElements } from '../../core/commands';
 import { isSite } from '../../core/model';
 import { tidyBulges } from '../../elements/groundLines';
-import { stairGeometry, STAIR_WIDTH, stairOutline, type StairParams, type StairRefSide } from '../../elements/stairGeometry';
+import { bandBetween as bandBetweenPreview, SPIRAL, stairGeometry, STAIR_WIDTH, stairOutline, type StairParams, type StairRefSide } from '../../elements/stairGeometry';
 import { storeyAbove } from '../../elements/stair';
 import { dist } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
@@ -18,7 +18,18 @@ import { roundMm, snap, type SnapResult } from './snap';
  * som rampens. Formen är linjen: en rak trappa är två punkter, en L-trappa
  * tre. Dubbelklick, Enter eller Klar avslutar. Under ritandet syns trappan
  * med sina steg, räknade ur stigningen till våningen ovanför.
+ *
+ * Spiraltrappan (0.11.5) ritas numeriskt: inner- och ytterdiameter, grader
+ * och varvriktning i verktygsraden, sedan två klick, mitten och riktningen
+ * där trappan börjar.
  */
+export interface SpiralOptions {
+  inner: number;
+  outer: number;
+  sweep: number;
+  dir: 'ccw' | 'cw';
+}
+
 export class StairTool implements ViewTool, PointTaker {
   cursor = 'crosshair';
   private host: ToolHost;
@@ -26,7 +37,14 @@ export class StairTool implements ViewTool, PointTaker {
   private lastUp = { t: 0, at: [0, 0] as Vec2 };
   private current: SnapResult | null = null;
   /** Bredden och var referenslinjen ligger. */
-  options: { width: number; refSide: StairRefSide } = { width: STAIR_WIDTH, refSide: 'center' };
+  options: { width: number; refSide: StairRefSide; form: 'line' | 'spiral'; spiral: SpiralOptions } = {
+    width: STAIR_WIDTH,
+    refSide: 'center',
+    form: 'line',
+    spiral: { ...SPIRAL, dir: 'ccw' },
+  };
+  /** Spiraltrappans mitt, när den är klickad. */
+  private centre: Vec2 | null = null;
   lockAngle: number | null = null;
   onCreated?: (id: string) => void;
   onChange?: () => void;
@@ -36,7 +54,15 @@ export class StairTool implements ViewTool, PointTaker {
   }
 
   get started(): boolean {
-    return this.chain.count > 0;
+    return this.chain.count > 0 || !!this.centre;
+  }
+
+  /** Byt mellan linje och spiral. */
+  setForm(form: 'line' | 'spiral'): void {
+    this.reset();
+    this.options.form = form;
+    this.onChange?.();
+    this.host.view.requestRender();
   }
 
   get arc(): boolean {
@@ -70,7 +96,7 @@ export class StairTool implements ViewTool, PointTaker {
     const now = performance.now();
     const double = now - this.lastUp.t < 350 && dist(p.screen, this.lastUp.at) < 8;
     this.lastUp = { t: now, at: p.screen };
-    if (double && this.chain.count >= 2 && !this.chain.waiting) {
+    if (this.options.form === 'line' && double && this.chain.count >= 2 && !this.chain.waiting) {
       this.finish();
       return;
     }
@@ -82,8 +108,40 @@ export class StairTool implements ViewTool, PointTaker {
       this.host.hint('Trappor ritas på en våning. Öppna en våning i projektträdet.');
       return;
     }
+    if (this.options.form === 'spiral') {
+      if (!this.centre) this.centre = pt;
+      else if (dist(pt, this.centre) > 1) {
+        const c = this.centre;
+        this.centre = null;
+        this.createSpiral(c, pt);
+      }
+      this.onChange?.();
+      return;
+    }
     this.chain.click(pt, -1);
     this.onChange?.();
+  }
+
+  /** Spiraltrappans parametrar med mitten och en punkt i startriktningen. */
+  private spiralParams(c: Vec2, at: Vec2): Record<string, unknown> {
+    const o = this.options.spiral;
+    const r = Math.max(1, (o.inner + o.outer) / 4);
+    const d = Math.hypot(at[0] - c[0], at[1] - c[1]) || 1;
+    const start: [number, number] = [Math.round(c[0] + ((at[0] - c[0]) / d) * r), Math.round(c[1] + ((at[1] - c[1]) / d) * r)];
+    return {
+      line: [[Math.round(c[0]), Math.round(c[1])], start],
+      width: Math.round((o.outer - o.inner) / 2),
+      spiral: { inner: o.inner, outer: o.outer, sweep: o.sweep, ...(o.dir === 'cw' ? { dir: 'cw' } : {}) },
+    };
+  }
+
+  /** En spiraltrappa runt mitten `c`, som börjar i riktningen mot `at`. */
+  createSpiral(c: Vec2, at: Vec2): boolean {
+    if (isSite(this.host.storey())) return false;
+    const params = this.spiralParams(c, at);
+    const [el] = addElements(this.host.store, [{ type: 'Stair', storey: this.host.storey(), tags: [], params, props: {} }], this.host.activeState(), 'Lägg till spiraltrappa');
+    this.onCreated?.(el.id);
+    return true;
   }
 
   /** Stigningen till våningen ovanför, eller våningshöjden. */
@@ -115,12 +173,14 @@ export class StairTool implements ViewTool, PointTaker {
   }
 
   undoPoint(): void {
-    this.chain.undo();
+    if (this.centre) this.centre = null;
+    else this.chain.undo();
     this.onChange?.();
     this.host.view.requestRender();
   }
 
   lastPoint(): Vec2 | undefined {
+    if (this.options.form === 'spiral') return this.centre ?? undefined;
     return this.chain.last();
   }
 
@@ -134,6 +194,11 @@ export class StairTool implements ViewTool, PointTaker {
   }
 
   hintText(): string {
+    if (this.options.form === 'spiral') {
+      const o = this.options.spiral;
+      const turn = o.dir === 'cw' ? 'medurs' : 'moturs';
+      return this.centre ? `Klicka i riktningen där trappan börjar. Den går ${o.sweep}° ${turn} uppåt.` : 'Klicka spiraltrappans mitt.';
+    }
     if (this.chain.waiting) return 'Klicka en punkt på bågen.';
     if (this.chain.arc && this.chain.count) return 'Klicka var bågen slutar.';
     if (!this.chain.count) return 'Klicka trappans början. Referenslinjen går i gångriktningen, uppåt; en sväng blir kilsteg.';
@@ -145,12 +210,43 @@ export class StairTool implements ViewTool, PointTaker {
 
   reset(): void {
     this.chain.reset();
+    this.centre = null;
     this.lockAngle = null;
     this.onChange?.();
   }
 
+  /** Trappan som den blir, med stegen. */
+  private previewStair(cam: Camera, p: StairParams): string[] {
+    const out: string[] = [];
+    const g = stairGeometry(p);
+    if (!g) return out;
+    const n = g.turn ? Math.max(1, Math.ceil((g.length / g.turn) * 2)) : 1;
+    for (let i = 0; i < n; i++) {
+      const ring = (n === 1 ? stairOutline(g) : bandBetweenPreview(g, (g.length * i) / n, (g.length * (i + 1)) / n)).map((q) => cam.toScreen(q));
+      out.push(`<path d="M${ring.map((q) => q.join(' ')).join('L')}Z" class="rubber"/>`);
+    }
+    for (const u of g.risers) {
+      const r = g.ribAt(u);
+      const a = cam.toScreen(r.L);
+      const b = cam.toScreen(r.R);
+      out.push(`<path d="M${a.join(' ')}L${b.join(' ')}" class="rubber"/>`);
+    }
+    return out;
+  }
+
   overlay(cam: Camera): string {
     const out: string[] = [];
+    if (this.options.form === 'spiral') {
+      const c = this.centre;
+      const at = this.current?.point;
+      if (c && at && dist(c, at) > 1) out.push(...this.previewStair(cam, { ...(this.spiralParams(c, at) as unknown as StairParams), rise: this.rise() }));
+      if (c) {
+        const q = cam.toScreen(c);
+        out.push(`<path d="M${q[0] - 6} ${q[1]}L${q[0] + 6} ${q[1]}M${q[0]} ${q[1] - 6}L${q[0]} ${q[1] + 6}" class="rubber"/>`);
+      }
+      if (this.current) out.push(snapMarker(cam, this.current));
+      return out.join('');
+    }
     if (this.chain.count) {
       const raw = this.chain.preview(this.current?.point);
       const pts = raw.map((q) => cam.toScreen(q));
@@ -158,17 +254,7 @@ export class StairTool implements ViewTool, PointTaker {
       // Trappan med stegen, som den blir.
       if (raw.length >= 2) {
         const p: StairParams = { line: raw.map((q) => [q[0], q[1]]), width: this.options.width, refSide: this.options.refSide, rise: this.rise() };
-        const g = stairGeometry(p);
-        if (g) {
-          const ring = stairOutline(g).map((q) => cam.toScreen(q));
-          out.push(`<path d="M${ring.map((q) => q.join(' ')).join('L')}Z" class="rubber"/>`);
-          for (const u of g.risers) {
-            const r = g.ribAt(u);
-            const a = cam.toScreen(r.L);
-            const b = cam.toScreen(r.R);
-            out.push(`<path d="M${a.join(' ')}L${b.join(' ')}" class="rubber"/>`);
-          }
-        }
+        out.push(...this.previewStair(cam, p));
       }
     }
     if (this.current) out.push(snapMarker(cam, this.current));

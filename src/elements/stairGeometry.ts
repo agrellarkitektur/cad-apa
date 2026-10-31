@@ -68,7 +68,13 @@ export interface StairParams {
   contrast?: 'none' | 'ends' | 'all';
   /** Kontrastmarkeringens bredd från framkanten, mm (50 från början). */
   contrastWidth?: number;
-  /** Spiraltrappa (0.11.5; läses inte än): referenslinjen blir en genererad helix. */
+  /**
+   * Spiraltrappa (0.11.5): `line` är då mitten och en punkt i den riktning
+   * trappan börjar; referenslinjen räknas fram som en båge (helix) runt
+   * mitten. `inner` och `outer` är inner- och ytterdiametern (mm), `sweep`
+   * graderna (också över 360) och `dir` varvriktningen sett uppifrån
+   * (utelämnad = moturs). Bredden är skillnaden mellan radierna.
+   */
   spiral?: { inner: number; outer: number; sweep: number; dir?: 'cw' | 'ccw' };
   /** Hålet i bjälklaget ovanför: automatiskt ur den fria höjden (förval) eller inget. */
   hole?: 'auto' | 'none';
@@ -85,6 +91,40 @@ export const RISER_TARGET = 180;
 export const TREAD_LENGTH = 300;
 export const STAIR_THICKNESS = 180;
 export const HEADROOM = 2100;
+/** Spiraltrappans förval (0.11.5): diametrarna och graderna. */
+export const SPIRAL = { inner: 200, outer: 1800, sweep: 360 };
+
+/** Spiraltrappans mått, rimliga: ytterdiametern minst 600, innerdiametern mindre, graderna 30–1 080. */
+export function spiralDims(s: NonNullable<StairParams['spiral']>): { inner: number; outer: number; sweep: number; ccw: boolean } {
+  const outer = Math.max(600, Number(s.outer) || SPIRAL.outer);
+  const inner = Math.max(0, Math.min(outer - 300, Number(s.inner) || 0));
+  const sweep = Math.max(30, Math.min(1080, Math.abs(Number(s.sweep) || SPIRAL.sweep)));
+  return { inner, outer, sweep, ccw: s.dir !== 'cw' };
+}
+
+/**
+ * Spiraltrappans referenslinje (0.11.5): en båge med radien mitt emellan
+ * inner- och ytterradien, i bitar om högst 90°, från riktningen mot
+ * `line[1]` och `sweep` grader i varvriktningen. Bredden blir skillnaden
+ * mellan radierna och referenslinjen ligger i mitten. Andra trappor
+ * svarar med sig själva.
+ */
+export function spiralLine(p: StairParams): StairParams {
+  const line = p.line ?? [];
+  if (!p.spiral || line.length < 2) return p;
+  const d = spiralDims(p.spiral);
+  const c = line[0];
+  const a0 = Math.atan2(line[1][1] - c[1], line[1][0] - c[0]) || 0;
+  const r = (d.inner + d.outer) / 4;
+  const m = Math.max(1, Math.ceil(d.sweep / 90 - 1e-9));
+  const step = ((d.sweep / m) * Math.PI) / 180;
+  const s = d.ccw ? 1 : -1;
+  const pts: [number, number][] = [];
+  for (let k = 0; k <= m; k++) pts.push([c[0] + r * Math.cos(a0 + s * k * step), c[1] + r * Math.sin(a0 + s * k * step)]);
+  // Pilhöjden är positiv när bågen buktar åt vänster om kordan, alltså medurs.
+  const bulge = -s * r * (1 - Math.cos(step / 2));
+  return { ...p, line: pts, bulges: pts.slice(1).map(() => bulge), width: (d.outer - d.inner) / 2, refSide: 'center', landings: undefined, turnLandings: undefined };
+}
 
 /** Ett revben: stegets framkant över trappan, med var den möter kanterna och gånglinjen. */
 export interface Rib {
@@ -169,6 +209,11 @@ export interface StairGeometry {
   rise: number;
   /** Vilplanen längs gånglinjen. */
   landings: [number, number][];
+  /** Spiraltrappan (0.11.5): sträckan längs gånglinjen för ett helt varv, och mitten. */
+  turn?: number;
+  centre?: Vec2;
+  /** Spiraltrappan: ytterradien. */
+  outerRadius?: number;
 }
 
 /** Hur mycket en punkt svänger (radianer, positivt åt vänster) mellan två riktningar. */
@@ -381,7 +426,8 @@ function ribIn(z: Zone, u: number, walkFromLeft: number, W: number): Rib {
  * stigningen genom 180, och stegen fördelas lika i varje lopp mellan
  * vilplanen. Svarar null när referenslinjen är för kort.
  */
-export function stairGeometry(p: StairParams): StairGeometry | null {
+export function stairGeometry(p0: StairParams): StairGeometry | null {
+  const p = spiralLine(p0);
   const built = buildZones(p);
   if (!built) return null;
   const { zones, left, right, walk, walkFromLeft } = built;
@@ -472,6 +518,7 @@ export function stairGeometry(p: StairParams): StairGeometry | null {
     riserHeight: h,
     rise,
     landings: flats,
+    ...(p0.spiral && p !== p0 ? { turn: (L * 360) / spiralDims(p0.spiral).sweep, centre: [p0.line[0][0], p0.line[0][1]] as Vec2, outerRadius: spiralDims(p0.spiral).outer / 2 } : {}),
   };
 }
 
@@ -547,7 +594,7 @@ export function stairWarnings(p: StairParams, g: StairGeometry, outdoor = false)
     }
   }
   if (h > 200.5) out.push(`Steghöjden är ${mm(h)}; avviker från praxis (180–200 mm i bostäder).`);
-  if (p.width < 900 - 0.5) out.push(`Bredden är ${mm(p.width)}; avviker från praxis (minst 900 mm fri bredd i bostäder).`);
+  if (g.width < 900 - 0.5) out.push(`Bredden är ${mm(g.width)}; avviker från praxis (minst 900 mm fri bredd i bostäder).`);
   for (const [s, e] of g.landings) if (e - s < g.width - 1) {
     out.push(`Ett vilplan är ${mm(e - s)} i gånglinjen; avviker från praxis (minst trappans bredd, ${mm(g.width)}).`);
     break;

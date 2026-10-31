@@ -133,7 +133,21 @@ export function installToolOptions(app: AppContext) {
       // Trappan (0.11): bredden, referenslinjens läge, bågar och Klar.
       const t = app.stairTool;
       const side = (v: string, label: string) => `<button data-stair-side="${v}" aria-pressed="${t.options.refSide === v}">${label}</button>`;
-      app.toolOptions.innerHTML = `
+      const form = (v: string, label: string, title: string) => `<button data-stair-form="${v}" aria-pressed="${t.options.form === v}" title="${title}">${label}</button>`;
+      const forms = `<div class="opt"><div class="segmented" role="group" aria-label="Form">${form('line', 'Linje', 'Rita referenslinjen punkt för punkt: rak, L, U eller med bågar')}${form('spiral', 'Spiral', 'Spiraltrappa med inner- och ytterdiameter och grader')}</div></div>`;
+      if (t.options.form === 'spiral') {
+        // Spiraltrappan (0.11.5): numeriskt läge.
+        const o = t.options.spiral;
+        const dir = (v: string, label: string) => `<button data-stair-dir="${v}" aria-pressed="${o.dir === v}">${label}</button>`;
+        const num = (id: string, label: string, v: number, unit: string, aria: string) => `<label class="opt"><span>${label}</span><span class="input-unit"><input type="text" id="${id}" inputmode="decimal" value="${v}" aria-label="${aria}"><i>${unit}</i></span></label>`;
+        app.toolOptions.innerHTML = `${forms}
+        ${num('stair-inner', 'Innerdiameter', o.inner, 'mm', 'Spiraltrappans innerdiameter')}${num('stair-outer', 'Ytterdiameter', o.outer, 'mm', 'Spiraltrappans ytterdiameter')}${num('stair-sweep', 'Grader', o.sweep, '°', 'Hur många grader trappan går')}
+        <div class="opt"><span>Uppåt</span><div class="segmented" role="group" aria-label="Varvriktning">${dir('ccw', 'Moturs')}${dir('cw', 'Medurs')}</div></div>
+        <span class="opt-hint">${t.hintText()}</span>`;
+        app.toolOptions.hidden = false;
+        return;
+      }
+      app.toolOptions.innerHTML = `${forms}
         <label class="opt"><span>Bredd</span><span class="input-unit"><input type="text" id="stair-width" inputmode="decimal" value="${t.options.width}" aria-label="Trappans bredd"><i>mm</i></span></label>
         <div class="opt"><span>Referenslinje</span><div class="segmented" role="group" aria-label="Referenslinje">${side('left', 'Vänster kant')}${side('center', 'Mitten')}${side('right', 'Höger kant')}</div></div>
         <button class="btn" data-action="stair-arc" aria-pressed="${t.arc}" title="Nästa kant blir en båge: klicka var den slutar och sedan en punkt på den (G)">Båge</button>
@@ -312,6 +326,19 @@ export function installToolOptions(app: AppContext) {
     if (t.id === 'wall-def') app.wallTool.options.definition = t.value;
     if (t.id === 'slab-def') app.slabTool.options.definition = t.value;
     if (t.id === 'rail-def') app.railingTool.options.def = t.value;
+    if (t.id === 'stair-inner' || t.id === 'stair-outer' || t.id === 'stair-sweep') {
+      // Spiraltrappan (0.11.5): ytterdiametern minst 600 och 300 större än innerdiametern, 30–1 080°.
+      const o = app.stairTool.options.spiral;
+      const v = Number(t.value.replace(',', '.'));
+      if (Number.isFinite(v)) {
+        if (t.id === 'stair-inner') o.inner = Math.max(0, Math.round(v));
+        if (t.id === 'stair-outer') o.outer = Math.max(600, Math.round(v));
+        if (t.id === 'stair-sweep') o.sweep = Math.max(30, Math.min(1080, Math.round(v)));
+        o.inner = Math.min(o.inner, o.outer - 300);
+      }
+      renderToolOptions();
+      app.view.requestRender();
+    }
     if (t.id === 'stair-width' && num >= 300) {
       app.stairTool.options.width = Math.round(num);
       app.view.requestRender();
@@ -481,6 +508,12 @@ export function installToolOptions(app: AppContext) {
       app.view.requestRender();
     }
     if (b.dataset.action === 'stair-done') app.stairTool.finish();
+    if (b.dataset.stairForm) app.stairTool.setForm(b.dataset.stairForm === 'spiral' ? 'spiral' : 'line');
+    if (b.dataset.stairDir) {
+      app.stairTool.options.spiral.dir = b.dataset.stairDir === 'cw' ? 'cw' : 'ccw';
+      renderToolOptions();
+      app.view.requestRender();
+    }
     if (b.dataset.railMode) app.railingTool.setMode(b.dataset.railMode === 'drawn' ? 'drawn' : 'edge');
     if (b.dataset.railPlace) {
       app.railingTool.options.place = b.dataset.railPlace as 'inside' | 'on' | 'outside';

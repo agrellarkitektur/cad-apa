@@ -100,6 +100,8 @@ function transformedParams(doc: ProjectDoc, el: Element, t: PlanTransform, movin
           ...(t.mirror && Array.isArray(p.bulges) ? { bulges: (p.bulges as number[]).map((b) => (b ? -b : 0)) } : {}),
           ...(t.mirror && p.refSide ? { refSide: swap(p.refSide) } : {}),
           ...(t.mirror && p.walkSide ? { walkSide: swap(p.walkSide) } : {}),
+          // Spiraltrappan (0.11.5): speglad byter varvriktning.
+          ...(t.mirror && p.spiral ? { spiral: { ...p.spiral, dir: p.spiral.dir === 'cw' ? 'ccw' : 'cw' } } : {}),
         },
       },
     ];

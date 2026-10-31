@@ -159,7 +159,15 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
     }
     case 'stair': {
       const r = app.stairTool;
+      const spiral = r.options.form === 'spiral';
+      const form: PromptOption = { key: 'S', label: spiral ? 'Linje' : 'Spiral', run: () => r.setForm(spiral ? 'line' : 'spiral') };
+      if (spiral) {
+        const options: PromptOption[] = [form];
+        if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.undoPoint() });
+        return { head, text: r.hintText(), options };
+      }
       const options: PromptOption[] = [
+        form,
         {
           key: 'G',
           label: 'Båge',

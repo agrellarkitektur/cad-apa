@@ -88,7 +88,9 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
   const withCuts = (groups: OpId[][]): OpId[][] => (cuts.length ? [...groups.slice(0, -1), cuts, groups[groups.length - 1]] : groups);
   if (ctx.shapeId) {
     const el = editedShape(doc, ctx.shapeId, ctx.hole);
-    const can = el ? shapeCan(el) : { insert: false, remove: false, offset: false, bend: false };
+    // Spiraltrappans linje (0.11.5) är bara mitten och början: punkterna flyttas, inget mer.
+    const spiral = !!doc.elements[ctx.shapeId]?.params.spiral;
+    const can = el && !spiral ? shapeCan(el) : { insert: false, remove: false, offset: false, bend: false };
     const arc = !!el && ctx.kind === 'edge' && edgeIsArc(el, ctx.index!);
     const own: OpId[] =
       ctx.kind === 'edge'
@@ -104,7 +106,7 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
     const host0 = doc.elements[ctx.shapeId];
     if (host0?.type === 'Ground' && host0.params.kind === 'wall') own.push('crestPoint');
     // Trappans referenslinje (0.11): vilplan härifrån, och kilsteg eller vilplan i en sväng.
-    if (host0?.type === 'Stair' && ctx.kind !== 'edge' && ctx.index !== undefined) {
+    if (host0?.type === 'Stair' && !spiral && ctx.kind !== 'edge' && ctx.index !== undefined) {
       const n = ((host0.params.line as unknown[]) ?? []).length;
       const flat = ((host0.params.landings as number[] | undefined) ?? []).includes(ctx.index);
       const turn = ((host0.params.turnLandings as number[] | undefined) ?? []).includes(ctx.index);

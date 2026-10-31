@@ -6,10 +6,19 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 31 oktober 2026, efter 0.11.4.
+README. Senast: 31 oktober 2026, efter 0.11.5.
 
 ## Läget
 
+- **0.11.5 Spiraltrappan är klar** (samma format, 26), byggd i en session
+  (Carl August: "kör"). *Spiral* i trappverktyget: inner- och
+  ytterdiameter, grader (också över 360) och varvriktning, två klick (mitt
+  och startriktning). Referenslinjen genereras som en båge; `line` är
+  mitten och startpunkten. Mittpelaren, planen som döljer det som ligger
+  mer än ett varv under, det sista varvet i våningen ovanför, runt hål.
+  Testerna: 843 på ca 14 s. Provat i Playwright mot `dist/` (verktyget,
+  förhandsvisningen, 450° i plan Normal och Detalj, 3D, panelen). Koden i
+  UTVECKLING.md (*Spiraltrappan*), Claudes val i PLAN.md.
 - **0.11.4 Byggd trappa är klar** (samma format, 26), byggd i en session
   (Carl August: "kör"; ingen utredning eller mockup före, så Claudes val
   står i PLAN.md och frågorna nedan). *Uppbyggnad: Byggd* ger vangstycken,
@@ -40,9 +49,11 @@ README. Senast: 31 oktober 2026, efter 0.11.4.
   efter 0.11.5).
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.11.4 pushad till `main` 31 oktober (se git och
+- **Publicerad:** 0.11.5 pushad till `main` 31 oktober (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.11.5:** inget i befintliga ritningar.
+  *Spiral* i trappverktygets rad.
 - **Märks i hans ritningar efter 0.11.4:** inget i befintliga ritningar
   utom att trappans plan i Detalj nu har stegens nummer och texten med
   antal, steghöjd och stegdjup. *Byggd* går att välja under *Uppbyggnad*.
@@ -60,10 +71,10 @@ README. Senast: 31 oktober 2026, efter 0.11.4.
   0.10.32–0.10.40.1 öppnas inte (nytt format). Verktyget *Trappa* under
   Rita, och i stilboken grupperna *Trappor* och *Från annan våning*. I
   egenskaperna för bjälklag, markobjekt och trappor finns *Syns också på*.
-- **Versionsnumret** är `0.11.4` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.11.5` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.11.4 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.11.5 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -136,12 +147,10 @@ README. Senast: 31 oktober 2026, efter 0.11.4.
 Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 - ~~0.8.8 Mallblad~~ … ~~0.10.40.1 Granskning efter 0.10.40~~,
-  ~~0.11 Trappan~~, ~~Utredning av räcket~~, ~~0.11.1 Räcket~~, ~~0.11.2 Räckestypeditorn~~, ~~0.11.3 Staket och grindar~~, ~~0.11.4 Byggd trappa~~ (klara; se
+  ~~0.11 Trappan~~, ~~Utredning av räcket~~, ~~0.11.1 Räcket~~, ~~0.11.2 Räckestypeditorn~~, ~~0.11.3 Staket och grindar~~, ~~0.11.4 Byggd trappa~~, ~~0.11.5 Spiraltrappan~~ (klara; se
   tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.11.5 Spiraltrappan** (numeriskt läge, helix, planen med snittet
-  också över ett varv)
 - **Granskning efter 0.11.5** (klickjämförelsen med trappsteg och räcken)
 - **0.11.6 Profilverktyget** (stor) och **0.11.7 Dörrar och fönster**
   (stor)
@@ -159,21 +168,32 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 ## Nästa session
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
-skrivrätt till repot ("push godkänd"). Bygg sedan **0.11.5
-Spiraltrappan** (PLAN.md): numeriskt läge med inner- och ytterdiameter,
-grader (också över 360) och varvriktning; referenslinjen en genererad
-helix; planen med snittet rätt också när den snurrar mer än ett varv.
-Fältet `spiral` finns valfritt i format 26. Därefter granskningen efter
-0.11.5 (klickjämförelsen). Ställ frågorna om 0.11.4, 0.11.3, 0.11.2 och
-0.11.1 (nedan) när Carl August provat.
+skrivrätt till repot ("push godkänd"). Kör sedan **granskningen efter
+0.11.5** (ingen ny funktion): klickjämförelsen (`scripts/jamfor-klick.py`,
+se UTVECKLING.md) med trappor (rak, L, spiral över ett varv) och räcken,
+städa och dela stora filer (`railingGeometry.ts`, `railing.ts`,
+`railingFields.ts` är 540–760 rader), gå igenom testerna. Ställ frågorna
+om 0.11.5–0.11.1 (nedan) när Carl August provat.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.4, 0.11.3, 0.11.2, 0.11.1
-och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han provat.
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.5, 0.11.4, 0.11.3,
+0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han provat.
+
+**0.11.5 efter provning** (Claudes val, se PLAN.md)
+- Förvalen 200/1 800 mm, 360° och moturs uppåt. Rimliga, eller hellre
+  medurs?
+- Gånglinjen ligger 300 från ytterkanten, som i andra trappor. Rätt för
+  en spiraltrappa, eller ska den ligga i mitten?
+- Ett nytt stegdjup ändrar graderna (inte diametrarna). Rätt?
+- Det ovanför snittet ritas streckprickat också ovanpå det heldragna när
+  trappan går mer än ett varv. Rätt, eller bara det som inte ligger över
+  något heldraget?
+- Behövs en knapp för att göra om en vanlig trappa till spiral (och
+  tillbaka)?
 
 **0.11.4 efter provning** (Claudes val, se PLAN.md)
 - Vangstyckena står innanför trappans bredd (bredden är yttermåttet).

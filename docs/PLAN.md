@@ -173,6 +173,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11 | Trappan (format 26): referenslinje med bågar, kilsteg och vilplan, gånglinje, plansteg, varningar, plan/sektion/3D, hålet, *Syns också på* |
 | 0.11.2 | Räckestypeditorn: stilboken › Resurser › *Räckestyper* med grupper, förhandsvisning i sex lägen, delträd och delens egenskaper; Shift går före snäppet |
 | 0.11.4 | Byggd trappa: vangstycken, plansteg med stegnos och sättsteg som delar med egna mått och material, öppen trappa, kontrastmarkering, vangstyckena i planen, stegnummer och stegtext i Detalj |
+| 0.11.5 | Spiraltrappan: numeriskt läge (inner- och ytterdiameter, grader också över ett varv, varvriktning), referenslinjen en genererad helix, mittpelaren, planen med snittet och det dolda över ett varv, runt hål |
 | 0.11.3 | Staket och grindar: räcket på Platsen med höjden ur den färdiga marken, Trappstegat, stolpar under mark och i plint, Längs kant för hål, bjälklag, väggar, ramper och stödmurens krön, ST01–ST03, SP01 och G01, grinden som en sträcka i räcket; räckestypeditorn som tavla 4 |
 | 0.11.1 | Räcket: eget objekt med typmodellen (delar och parametrar med formler), längs trappans kant eller ritat, utjämnad eller hoppande vid kilstegen, plan/sektion/fasad/3D, stilboksgruppen *Räcken*, varningar ur BFS 2024:9 och praxis |
 
@@ -582,12 +583,48 @@ vangstycket, spår), en egen kulör eller material för kontrastremsan,
 pinnar/vangstycke under stegen (mittvange), stegnummer som går att släcka
 utan att byta penna, och klickjämförelsen (granskningen efter 0.11.5).
 
-### 0.11.5 Spiraltrappan
+### 0.11.5 Spiraltrappan ✓
 
 Numeriskt läge (inner- och ytterdiameter, grader också över 360,
 varvriktning; referenslinjen en genererad helix); planen med snittet rätt
-också när den snurrar mer än ett varv. Därefter en granskning
-(klickjämförelsen med trappsteg och räcken).
+också när den snurrar mer än ett varv. Byggd i en session 31 oktober 2026
+(Carl August: "kör"), utan nytt format: fältet `spiral` fanns valfritt
+sedan 0.11.
+
+**Claudes val (0.11.5):**
+
+- `inner` och `outer` är **diametrar** (som Carl August skrev), inte
+  radier. Förval 200 och 1 800 (bredd 800), 360°, **moturs** uppåt.
+  Gränser: ytterdiametern minst 600, innerdiametern minst 300 mindre,
+  30–1 080°.
+- `line` sparar **mitten och en punkt i startriktningen**; referenslinjen
+  räknas fram vid varje ritning (inte sparad), så att diametrar och grader
+  kan ändras i panelen. Radien är mitt emellan inner- och ytterradien och
+  referenslinjen ligger i mitten; gånglinjen följer trappans regel (300
+  från utsidan). Sträckor, svängar och vilplan finns inte för spiralen
+  (sista plansteget i slutet går att få med *Slut: Plansteg*).
+- I verktyget två klick: mitten, sedan riktningen. Ingen formväljare i
+  panelen för att göra om en vanlig trappa till spiral eller tvärtom.
+- Ett nytt stegdjup ändrar **graderna** (inte diametrarna).
+- **Mittpelaren** ritas när innerdiametern är minst 50 mm, i planen med
+  trappans konturlinje och i 3D från golvet till trappans topp (målad i den
+  byggda trappan, trappans material i den monolitiska). Ingen egen
+  pelardel med eget material.
+- **Planen över ett varv**: det som ligger mer än ett varv under det
+  högsta som syns ritas inte (ovanifrån täcker stegen ovanför). Det
+  ovanför snittet ritas alltid streckprickat, också ovanpå det heldragna.
+  I våningen ovanför ritas bara det sista varvet. Stegnummer ett varv upp
+  står på andra sidan gånglinjen; texten *N st à h/d* utanför ytterkanten.
+- **Hålet** är runt med ytterdiametern när det som går genom bjälklaget
+  är ett helt varv eller mer (97 %); annars bandet.
+- Varningen för bredden (900) gäller också spiraltrappan; den räknas ur
+  diametrarna.
+
+**Inte gjort i 0.11.5:** spiraltrappans egna varningar (stegdjup vid
+innerkanten, fri höjd under nästa varv), pelaren med eget material och
+egen penna, att göra om en vanlig trappa till spiral (eller tvärtom), och
+ett räcke kring hålet i bjälklaget som följer cirkeln (det går att rita).
+Klickjämförelsen (granskningen efter 0.11.5).
 
 ### 0.11.6 Profilverktyget · *nytt format*
 

@@ -153,6 +153,10 @@ export function installTools(app: AppContext, host: ToolHost) {
     app.selection.set([id]);
     const el = app.store.doc.elements[id];
     const above = el ? storeyAbove(app.store.doc, el.storey) : undefined;
+    if (el?.params.spiral) {
+      app.hint('Spiraltrappan är lagd. Ändra diametrarna, graderna och varvriktningen i egenskaperna; dra i mitten eller startpunkten för att flytta eller vrida den.', 6000);
+      return;
+    }
     app.hint(`Trappan är lagd, med stigningen ${above ? `till ${above.name} och hålet i bjälklaget där` : 'lika med våningshöjden'}. Ändra bredd, steg, plansteg och vilplan i egenskaperna, linjen med punkterna; klicka på en punkt för Vilplan härifrån.`, 6000);
   };
   stairTool.onChange = () => app.toolOpts.renderToolOptions();

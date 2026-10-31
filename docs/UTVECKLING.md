@@ -653,6 +653,39 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt. Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Spiraltrappan (0.11.5, format 26)
+
+- **Parametrarna**: `spiral: { inner, outer, sweep, dir? }` i `StairParams`
+  (diametrar i mm, grader, `dir` `'cw'` eller utelämnad = moturs). `line`
+  är då `[mitten, en punkt i startriktningen]`; avståndet till punkten
+  betyder inget. `width` skrivs med (halva skillnaden mellan diametrarna)
+  men läses inte. `spiralDims` gör måtten rimliga (ytter minst 600, inner
+  högst ytter − 300, 30–1 080°).
+- **Geometrin**: `stairGeometry` börjar med `spiralLine(p)`, som byter
+  `line`/`bulges` mot en båge i bitar om högst 90° med radien (inner +
+  ytter)/4, `refSide` mitten och inga vilplan. Allt efter det (zonerna,
+  revbenen, räckenas `sideBetween`, 3D) är som för en trappa med bågar.
+  `StairGeometry` får `turn` (gånglinjens längd för 360°), `centre` och
+  `outerRadius`.
+- **Planen** (`stairPlan`): `hid` är sträckan dit allt är dolt, `uCut −
+  turn` på våningen och `L − turn` i våningen ovanför; `shown(u)` tar bort
+  revben, stegnos, kontrast och nummer där (det över snittet ritas alltid).
+  Mittpelaren är delen `pelare` (`poleOf`, en båge med stället
+  *konturlinje*), i 3D `poleSolid`. `pickShape` delar konturen i halva varv.
+  Stegnumren ett varv upp står på andra sidan gånglinjen; `stegtext`
+  utanför ytterkanten och vänd så att den går att läsa (`upright`).
+- **Hålet** (`stairHoleIn`): en cirkel med 64 punkter när det som går
+  genom bjälklaget är minst 97 % av ett varv.
+- **Verktyget**: `StairTool.options.form` (`line`/`spiral`) och
+  `options.spiral`; två klick (`centre`, sedan riktningen), `createSpiral`.
+  Verktygsraden i `ui/app/toolOptions.ts` (`data-stair-form`,
+  `data-stair-dir`, fälten `stair-inner`, `stair-outer`, `stair-sweep`).
+- **Panelen**: nycklarna `stair:inner`, `stair:outer`, `stair:sweep`,
+  `stair:dir` (`spiralPatch`); `goingPatch` ändrar `sweep`. Modifiera
+  (`ui/modify/ops.ts`) ger spiralens linje bara *Flytta punkt*.
+  `transforms.ts` byter `dir` vid spegling.
+- **Tester**: `tests/v0115.test.ts`.
+
 ## Byggd trappa (0.11.4, format 26)
 
 - **Parametrarna** i `StairParams`: `build: 'built'`, `built.stringer`
@@ -831,8 +864,8 @@ förut; vid nästa huvudversion flyttas de klara till arkivet.
   (`riser` eller `tread`) med `startTread`/`endTread`, `landings` (punkter
   där sträckan efter är vilplan) och `turnLandings` (punkter där svängen
   är det), `thickness`, `hole` (`auto`/`none`), `headroom` (2100),
-  `material`. `build`/`built` läses sedan 0.11.4 (se *Byggd trappa*); valfritt och oläst än: `spiral`
-  (0.11.5). Elementets `seenOn` (*Syns också på*) gäller också ramper,
+  `material`. `build`/`built` läses sedan 0.11.4 (se *Byggd trappa*), `spiral` sedan
+  0.11.5 (se *Spiraltrappan*). Elementets `seenOn` (*Syns också på*) gäller också ramper,
   markytor, stödmurar och bjälklag (`SEEN_ON_TYPES` i `core/model.ts`).
 - **Geometrin** (`stairGeometry`, ren räkning): referenslinjen görs platt
   (`flatLine`, bågarna som korta raka bitar), och bandet byggs i *zoner*:

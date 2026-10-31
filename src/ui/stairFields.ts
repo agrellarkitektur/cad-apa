@@ -3,7 +3,7 @@ import type { DocStore } from '../core/store';
 import { geometryOfStair, stairHoleIn, stairParams, storeyAbove } from '../elements/stair';
 import { railingsOnStair, stairHandrailWarning } from '../elements/railing';
 import { addRailingsOnStair } from './railingFields';
-import { minGoing, RISER_TARGET, stairWarnings, STAIR_THICKNESS, TREAD_LENGTH, WALK_LINE, HEADROOM, type StairParams } from '../elements/stairGeometry';
+import { minGoing, spiralDims, RISER_TARGET, stairWarnings, STAIR_THICKNESS, TREAD_LENGTH, WALK_LINE, HEADROOM, type StairParams } from '../elements/stairGeometry';
 import { STRAIGHT } from '../geometry/arc';
 import { levelOf } from '../repr/solids';
 import { resolveParams } from '../elements/registry';
@@ -44,7 +44,7 @@ export function stairFieldsMarkup(doc: ProjectDoc, el: Element): string {
   const h = g?.riserHeight ?? 0;
   const going = g ? minGoing(g) : 0;
   const summary = g
-    ? `${g.risers.length} sättsteg à ${h.toLocaleString('sv-SE', { maximumFractionDigits: 1 })} mm, stegdjup ${mm(going)} mm i gånglinjen (2 × steghöjd + stegdjup = ${mm(2 * h + going)} mm)${g.landings.length ? `, ${g.landings.length === 1 ? 'ett vilplan' : `${g.landings.length} vilplan`}` : ''}.`
+    ? `${p.spiral ? 'Spiraltrappa, ' : ''}${g.risers.length} sättsteg à ${h.toLocaleString('sv-SE', { maximumFractionDigits: 1 })} mm, stegdjup ${mm(going)} mm i gånglinjen (2 × steghöjd + stegdjup = ${mm(2 * h + going)} mm)${g.landings.length ? `, ${g.landings.length === 1 ? 'ett vilplan' : `${g.landings.length} vilplan`}` : ''}.`
     : '';
   // Svängarna och sträckorna i referenslinjen.
   const line = (p.line ?? []) as [number, number][];
@@ -59,26 +59,35 @@ export function stairFieldsMarkup(doc: ProjectDoc, el: Element): string {
       rows.push(`<li><span>Sväng ${i + 1}</span><div class="segmented" role="group"${flatBy ? ' title="Vilplan, eftersom en sträcka intill är det"' : ''}><button data-action="stair-turn" data-index="${i + 1}" data-value="0" aria-pressed="${!turns.has(i + 1) && !flatBy}"${flatBy ? ' disabled' : ''}>Kilsteg</button><button data-action="stair-turn" data-index="${i + 1}" data-value="1" aria-pressed="${turns.has(i + 1) || flatBy}"${flatBy ? ' disabled' : ''}>Vilplan</button></div>${arcSide ? '' : ''}</li>`);
     }
   }
+  // Spiraltrappan (0.11.5): diametrarna, graderna och varvriktningen i stället för bredden och linjen.
+  const sp = p.spiral ? spiralDims(p.spiral) : null;
+  const shape = sp
+    ? `<div class="field-label">Spiraltrappa</div>
+    <div class="fields">${numberField('stair:inner', 'Innerdiameter', sp.inner, 'mm')}${numberField('stair:outer', 'Ytterdiameter', sp.outer, 'mm')}${numberField('stair:sweep', 'Grader', sp.sweep, '°')}</div>
+    ${select('stair:dir', 'Uppåt', sp.ccw ? 'ccw' : 'cw', [['ccw', 'Moturs'], ['cw', 'Medurs']])}
+    <p class="note">Bredden är ${mm((sp.outer - sp.inner) / 2)} mm (halva skillnaden mellan diametrarna)${sp.inner >= 50 ? ', och mittpelaren har innerdiametern' : ''}. Dra i mitten för att flytta trappan och i startpunkten för att vrida den.</p>`
+    : '';
   const holeNote = above ? `i bjälklaget på ${escapeHtml(above.name)}` : 'i bjälklaget ovanför (det finns ingen våning ovanför)';
   return `${warn}
-    <div class="fields">${numberField('stair:width', 'Bredd', p.width, 'mm')}${numberField('stair:rise', 'Stigning', p.rise, 'mm')}${numberField('stair:risers', 'Antal sättsteg', g?.risers.length ?? 0, 'st')}${numberField('stair:riserHeight', 'Steghöjd', h, 'mm', 1)}${numberField('stair:going', 'Stegdjup', going, 'mm')}${numberField('level:level', 'Fot mot våningen', levelOf(p), 'mm')}</div>
+    ${shape}
+    <div class="fields">${sp ? '' : numberField('stair:width', 'Bredd', p.width, 'mm')}${numberField('stair:rise', 'Stigning', p.rise, 'mm')}${numberField('stair:risers', 'Antal sättsteg', g?.risers.length ?? 0, 'st')}${numberField('stair:riserHeight', 'Steghöjd', h, 'mm', 1)}${numberField('stair:going', 'Stegdjup', going, 'mm')}${numberField('level:level', 'Fot mot våningen', levelOf(p), 'mm')}</div>
     <label class="check" title="Stigningen följer våningshöjden, så att trappan går till golvet ovanför"><input type="checkbox" data-key="stair:toStorey"${own ? '' : ' checked'}> Till våningen ovanför</label>
-    <p class="note">${escapeHtml(summary)} Ändras stegdjupet förlängs eller kortas trappans sista sträcka; antal sättsteg och steghöjden följer varandra (förval ${RISER_TARGET} mm).</p>
+    <p class="note">${escapeHtml(summary)} Ändras stegdjupet ${p.spiral ? 'ändras graderna' : 'förlängs eller kortas trappans sista sträcka'}; antal sättsteg och steghöjden följer varandra (förval ${RISER_TARGET} mm).</p>
     <div class="fields">${numberField('stair:walkLine', 'Gånglinjen', p.walkLine ?? WALK_LINE, 'mm')}</div>
     ${select('stair:walkSide', 'Gånglinjen från', p.walkSide ?? '', [['', 'Utsidan (svängarnas)'], ['left', 'Vänster sida'], ['right', 'Höger sida']])}
-    ${select('stair:refSide', 'Referenslinjen', p.refSide ?? 'center', [['left', 'Vänster kant'], ['center', 'Mitten'], ['right', 'Höger kant']])}
+    ${sp ? '' : select('stair:refSide', 'Referenslinjen', p.refSide ?? 'center', [['left', 'Vänster kant'], ['center', 'Mitten'], ['right', 'Höger kant']])}
     <div class="fields">${select('stair:start', 'Början', p.start ?? 'riser', [['riser', 'Sättsteg'], ['tread', 'Plansteg']])}${p.start === 'tread' ? numberField('stair:startTread', 'Första plansteget', p.startTread ?? TREAD_LENGTH, 'mm') : ''}</div>
     <div class="fields">${select('stair:end', 'Slut', p.end ?? 'riser', [['riser', 'Sättsteg'], ['tread', 'Plansteg']])}${p.end === 'tread' ? numberField('stair:endTread', 'Sista plansteget', p.endTread ?? TREAD_LENGTH, 'mm') : ''}</div>
     ${railRow}
-    <div class="field-label">Sträckor och svängar</div>
-    <ul class="stair-turns">${rows.join('')}</ul>
+    ${sp ? '' : `<div class="field-label">Sträckor och svängar</div>
+    <ul class="stair-turns">${rows.join('')}</ul>`}
     <div class="fields">${select('stair:build', 'Uppbyggnad', p.build ?? 'monolithic', [['monolithic', 'Monolitisk'], ['built', 'Byggd']])}${p.build === 'built' ? '' : numberField('stair:thickness', 'Tjocklek', p.thickness ?? STAIR_THICKNESS, 'mm')}</div>
     ${p.build === 'built' ? builtFields(doc, p) : ''}
     <div class="fields">${select('stair:contrast', 'Kontrastmarkering', p.contrast ?? 'none', [['none', 'Ingen'], ['ends', 'Första och sista'], ['all', 'Alla steg']])}${p.contrast && p.contrast !== 'none' ? numberField('stair:contrastWidth', 'Bredd', p.contrastWidth ?? BUILT.contrastWidth, 'mm') : ''}</div>
     ${select('stair:hole', 'Hålet', p.hole ?? 'auto', [['auto', 'Automatiskt'], ['none', 'Inget']])}
     <div class="fields">${numberField('stair:headroom', 'Fri höjd', p.headroom ?? HEADROOM, 'mm')}</div>
     <div class="row"><button class="btn" data-action="stair-own-hole" title="Hålet blir en vanlig håltagning i bjälklaget, som ritas om med bjälklagets grepp; trappan tar då inget eget">Gör till eget hål</button></div>
-    <p class="note">Hålet ${holeNote} följer trappan och räknas ur den fria höjden över stegen. Referenslinjen går i gångriktningen, uppåt; dra i punkterna för att ändra den, eller böj en kant till en båge i Modifiera.</p>`;
+    <p class="note">Hålet ${holeNote} följer trappan och räknas ur den fria höjden över stegen${sp ? '; går det ett helt varv blir det runt, med ytterdiametern' : ''}.${sp ? '' : ' Referenslinjen går i gångriktningen, uppåt; dra i punkterna för att ändra den, eller böj en kant till en båge i Modifiera.'}</p>`;
 }
 
 /** Den byggda trappans delar: vangstycken, plansteg och sättsteg med mått och material (0.11.4). */
@@ -128,6 +137,12 @@ export function applyStairField(store: DocStore, ids: Id[], name: string, input:
   const num = Number(raw.replace(',', '.').replace('−', '-'));
   const pos = (min: number) => Number.isFinite(num) && num >= min;
   switch (name) {
+    case 'inner':
+    case 'outer':
+    case 'sweep':
+      return pos(0) && patchStair(store, ids, name === 'sweep' ? 'Spiraltrappans grader' : 'Spiraltrappans diameter', (p) => spiralPatch(p, { [name]: Math.round(num) }));
+    case 'dir':
+      return patchStair(store, ids, 'Varvriktning', (p) => spiralPatch(p, { dir: raw === 'cw' ? 'cw' : undefined }));
     case 'width':
       return pos(300) && patchStair(store, ids, 'Trappans bredd', () => ({ width: Math.round(num) }));
     case 'rise':
@@ -201,12 +216,27 @@ function builtPatch(p: StairParams, part: 'stringer' | 'tread' | 'riser', key: s
   return { built: Object.keys(built).length ? built : undefined };
 }
 
+/** Spiraltrappans mått (0.11.5), rimliga, med bredden som följer diametrarna. Null för andra trappor. */
+function spiralPatch(p: StairParams, change: Record<string, unknown>): Record<string, unknown> | null {
+  if (!p.spiral) return null;
+  const merged = { ...p.spiral, ...change };
+  if (change.inner !== undefined && Number(change.inner) > merged.outer - 300) merged.outer = Number(change.inner) + 300;
+  const d = spiralDims(merged);
+  return { spiral: { inner: d.inner, outer: d.outer, sweep: d.sweep, ...(d.ccw ? {} : { dir: 'cw' }) }, width: Math.round((d.outer - d.inner) / 2) };
+}
+
 /**
  * Stegdjupet: den sista sträckan förlängs eller kortas så att det sista
  * loppets steg får djupet (när den är rak). Annars null.
  */
 function goingPatch(p: StairParams, going: number): Record<string, unknown> | null {
   const g = geometryOfStair(p);
+  // Spiraltrappan (0.11.5): graderna ändras så att loppets steg får djupet.
+  if (p.spiral && g?.turn && g.runs.length) {
+    const run = g.runs[g.runs.length - 1];
+    const L = g.length + (going - run.going) * run.treads;
+    return spiralPatch(p, { sweep: Math.round((L / g.turn) * 360) });
+  }
   const line = (p.line ?? []) as [number, number][];
   const n = line.length;
   if (!g || n < 2 || !g.runs.length) return null;

@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.4** (alfa), Byggd trappa; nästa är **0.11.5 Spiraltrappan**.
+**0.11.5** (alfa), Spiraltrappan; nästa är **granskningen efter 0.11.5**.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,31 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11.5, Spiraltrappan (samma filformat, 26; projekt från 0.11 öppnas):
+- **Spiral** i trappverktygets rad (*Linje* är den vanliga trappan):
+  **Innerdiameter** (200), **Ytterdiameter** (1 800), **Grader** (360, också
+  över ett varv, högst 1 080) och **Uppåt** *Moturs* eller *Medurs*. Klicka
+  mitten och sedan riktningen där trappan börjar; under ritandet syns trappan
+  med stegen. I kommandoraden byter **S** mellan linje och spiral
+- Referenslinjen är en **genererad helix** med radien mitt emellan inner-
+  och ytterradien; bredden är halva skillnaden mellan diametrarna och
+  gånglinjen ligger som förut 300 från utsidan. Stegen blir radiella
+- I **egenskaperna** står diametrarna, graderna och varvriktningen i
+  stället för bredden, referenslinjen och sträckorna. Ändras stegdjupet
+  ändras graderna. Mitten och startpunkten är punkterna i linjen: dra i
+  mitten för att flytta trappan och i startpunkten för att vrida den.
+  Spegling byter varvriktning
+- **Mittpelaren** (innerdiametern, från 50 mm) ritas som en cirkel i planen
+  och en pelare i 3D
+- **Planen med snittet över ett varv**: det under snittet heldraget, det
+  ovanför streckprickat, som förut; det som ligger mer än ett varv under
+  det som syns (stegen ovanför täcker det) ritas inte, och i våningen ovanför
+  bara det sista varvet. I Detalj står stegnumren ett varv upp på andra
+  sidan gånglinjen och texten *N st à h/d* utanför ytterkanten
+- **Hålet** i bjälklaget ovanför är runt med ytterdiametern när trappan
+  under det går ett helt varv eller mer; annars bandet som förut
+- Räcken längs kanterna (*Räcken på båda sidor*) följer helixen
 
 Version 0.11.4, Byggd trappa (samma filformat, 26; projekt från 0.11 öppnas):
 - **Uppbyggnad: Byggd** i trappans egenskaper (förut gråad). Trappan
