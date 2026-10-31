@@ -670,6 +670,23 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Räckets avslut och spiraltrappan (0.11.7.2, format 27)
+
+- **Avsluten**: `alongFinishes(a)` i `elements/railingBody.ts` ger
+  `FinishPiece` (`down` eller `wall`, ringen ovanifrån, överkant och
+  undersida) i delens verkliga ändar efter `withExtension`. `AlongPiece`
+  har fältet `back` (förskjutningen tillbaka till linjen, med
+  `offsetLine`s tecken); konstanterna `DROP` (100) och `RETURN` (60).
+  Används i `railingSolids` (3D), `railingPlan` (Mot vägg) och
+  `railingPreview` (sidovyn). Grindarnas blad får `finish: undefined`.
+- **Spiraltrappan**: varningen i `stairWarnings` (`SPIRAL_HEADROOM`);
+  `spiral.pole` (materialets id) i `StairParams`, fältet `stair:pole` i
+  `ui/stairFields.ts` (`spiralPatch` behåller det), och `poleMat` i
+  `stair.ts`.
+- **Stegnumren**: nyckeln `stairNumbers` i `showKeys.ts`; `stairPlan`
+  hoppar över numren och texten när vyns `hide` har den.
+- **Tester**: `tests/v01172.test.ts`.
+
 ## Profilen, det som inte hanns med (0.11.7.1, format 27)
 
 - **Typen i kommandoraden**: `ui/app/shellTypes.ts` (`splitArgument`,

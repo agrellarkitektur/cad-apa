@@ -214,7 +214,7 @@ function partMarkup(doc: ProjectDoc, def: Id, m: RailingTypeModel, q: RailPart):
           ['straight', 'Rak'],
           ['down', 'Böjd nedåt'],
           ['wall', 'Mot vägg'],
-        ], 'Sparas i typen; ritas i 3D senare')}`
+        ], 'I delens verkliga ändar (inte vid grindar): Böjd nedåt 100 mm ned under delen, Mot vägg tillbaka till räckets linje (60 mm utåt när delen ligger på linjen)')}`
       : q.kind === 'point'
         ? check('corners', 'Också i hörnen', q.corners !== false, 'En stolpe där linjen viker mer än 15°')
         : '';

@@ -49,6 +49,8 @@ export interface AlongPiece {
   ends?: [boolean, boolean];
   /** Profiltypens tvärsnitt (0.11.7). */
   sec?: PartSection;
+  /** Förskjutningen tillbaka till räckets linje (0.11.7.2), med `offsetLine`s tecken: avslutet *Mot vägg* går dit. */
+  back?: number;
 }
 
 /** En stolpe, en konsol eller en spjäla. */
@@ -345,6 +347,8 @@ export function railingBody(path: RailPath, model: RailingTypeModel, vals: Reado
         const endAt = (real: boolean): EndSpec => (real && kind === 'profile' && opts.profiles ? opts.profiles.end({ kind, beyond: true, ...(placed.model.endProfile ? { profile: placed.model.endProfile } : {}) }, placed.section, placed.anchor[1] + b.maxY, yr) : { kind: real && kind !== 'profile' ? kind : 'square' });
         sec = (e) => ({ regions, start: endAt(e[0]), end: endAt(e[1]) });
       }
+      // Tillbaka till linjen (mot väggen); en del som ligger på linjen går 60 mm utåt.
+      const back = lateral ? -lateral * path.inward : -RETURN * path.inward;
       const runs = breaks(part) ? openRuns(path.length, holes) : [[0, path.length] as [number, number]];
       for (const [r0, r1] of runs) {
         if (stepped(part)) {
@@ -356,13 +360,13 @@ export function railingBody(path: RailPath, model: RailingTypeModel, vals: Reado
             if (b - a < 1) continue;
             const line = straightened(subLine(path, a, b));
             const ends: [boolean, boolean] = [a < 1, b > path.length - 1];
-            body.along.push({ part, pts: shift(line.pts, lateral, path.inward), top: line.pts.map(() => level[k] + zTop), z: line.pts.map(() => level[k]), w, h, round, ext, ends, ...(sec ? { sec: sec(ends) } : {}) });
+            body.along.push({ part, pts: shift(line.pts, lateral, path.inward), top: line.pts.map(() => level[k] + zTop), z: line.pts.map(() => level[k]), w, h, round, ext, ends, back, ...(sec ? { sec: sec(ends) } : {}) });
           }
           continue;
         }
         const line = r0 < 1 && r1 > path.length - 1 ? { pts: path.pts, z: path.z } : subLine(path, r0, r1);
         const ends: [boolean, boolean] = [r0 < 1, r1 > path.length - 1];
-        body.along.push({ part, pts: shift(line.pts, lateral, path.inward), top: line.z.map((z) => z + zTop), z: line.z, w, h, round, ext, ...(r0 > 1 || r1 < path.length - 1 ? { ends } : {}), ...(sec ? { sec: sec(ends) } : {}) });
+        body.along.push({ part, pts: shift(line.pts, lateral, path.inward), top: line.z.map((z) => z + zTop), z: line.z, w, h, round, ext, back, ...(r0 > 1 || r1 < path.length - 1 ? { ends } : {}), ...(sec ? { sec: sec(ends) } : {}) });
       }
       continue;
     }
@@ -446,11 +450,11 @@ function gatePiece(path: RailPath, fence: RailingTypeModel, fenceVals: ReadonlyM
     vals = typed.vals;
   } else {
     // Följer staketet: staketets delar som avbryts vid grinden, med smala sidstycken i stället för stolparna.
-    model = { ...fence, parts: fence.parts.filter((p) => p.kind === 'point' || p.gate !== 'continue').map((p) => (p.kind === 'point' ? { ...p, profile: { shape: 'rect' as const, w: Math.min(45, p.profile?.w ?? 45) }, below: undefined, spacing: 1e9, corners: false } : p.kind === 'along' ? { ...p, extend: 0 } : p)) };
+    model = { ...fence, parts: fence.parts.filter((p) => p.kind === 'point' || p.gate !== 'continue').map((p) => (p.kind === 'point' ? { ...p, profile: { shape: 'rect' as const, w: Math.min(45, p.profile?.w ?? 45) }, below: undefined, spacing: 1e9, corners: false } : p.kind === 'along' ? { ...p, extend: 0, finish: undefined } : p)) };
     vals = fenceVals;
     if (g.own && g.height && fence.params[0]) vals = new Map([...fenceVals, [fence.params[0].name, g.height]]);
   }
-  if (typed) model = { ...model, parts: model.parts.map((p) => (p.kind === 'point' ? { ...p, spacing: 1e9, corners: false, below: undefined } : p.kind === 'along' ? { ...p, extend: 0 } : p)) };
+  if (typed) model = { ...model, parts: model.parts.map((p) => (p.kind === 'point' ? { ...p, spacing: 1e9, corners: false, below: undefined } : p.kind === 'along' ? { ...p, extend: 0, finish: undefined } : p)) };
   const gap = 10;
   const len = dist(a, b);
   const spans: [number, number][] = g.hang === 'pair' ? [[gap, len / 2 - gap / 2], [len / 2 + gap / 2, len - gap]] : [[gap, len - gap]];
@@ -484,4 +488,80 @@ export function withExtension(a: AlongPiece): { pts: Vec2[]; top: number[]; z: n
   const end: Vec2 = [a.pts[n - 1][0] + d1[0] * a.ext, a.pts[n - 1][1] + d1[1] * a.ext];
   const wrap = (v: number[]) => [...(e0 ? [v[0]] : []), ...v, ...(e1 ? [v[n - 1]] : [])];
   return { pts: [...(e0 ? [start] : []), ...a.pts, ...(e1 ? [end] : [])], top: wrap(a.top), z: wrap(a.z) };
+}
+
+/** Avslutet *Böjd nedåt* går så långt ned under delen, och *Mot vägg* så långt utåt när delen ligger på linjen (mm). */
+export const DROP = 100;
+export const RETURN = 60;
+
+/**
+ * Ett avslut på en längsgående del (0.11.7.2): *Böjd nedåt* lodrätt ned
+ * från änden, *Mot vägg* vågrätt tillbaka till räckets linje. `ring` är
+ * avslutet ovanifrån (för *Mot vägg* en rektangel från änden till linjen,
+ * för *Böjd nedåt* delens tvärsnitt i änden), `top` överkantens höjd i
+ * änden och `z0` avslutets undersida.
+ */
+export interface FinishPiece {
+  kind: 'down' | 'wall';
+  at: Vec2;
+  to: Vec2;
+  ring: Vec2[];
+  top: number;
+  z0: number;
+  /** Referenslinjens höjd i änden (för planens snitt). */
+  z: number;
+}
+
+/** Avsluten i delens verkliga ändar (inte vid grindar och trappsteg); en del med en profiltyp har sina egna avslut. */
+export function alongFinishes(a: AlongPiece): FinishPiece[] {
+  const kind = a.part.finish;
+  if (a.sec || (kind !== 'down' && kind !== 'wall')) return [];
+  const ext = withExtension(a);
+  const pts = ext.pts;
+  const n = pts.length;
+  if (n < 2) return [];
+  const [e0, e1] = a.ends ?? [true, true];
+  const out: FinishPiece[] = [];
+  const at = (i: number, j: number) => {
+    const p = pts[i];
+    // Framåt längs linjen (offsetLine räknar normalen så), och utåt från änden.
+    const f = i === 0 ? norm(sub(pts[j], p)) : norm(sub(p, pts[j]));
+    const outward: Vec2 = i === 0 ? [-f[0], -f[1]] : f;
+    if (!Number.isFinite(f[0]) || (f[0] === 0 && f[1] === 0)) return;
+    const top = ext.top[i];
+    const half = a.w / 2;
+    if (kind === 'down') {
+      const ring: Vec2[] = a.round
+        ? Array.from({ length: 8 }, (_, k): Vec2 => [p[0] + half * Math.cos((k * Math.PI) / 4 + Math.PI / 8), p[1] + half * Math.sin((k * Math.PI) / 4 + Math.PI / 8)])
+        : [
+            [p[0] - f[0] * half - f[1] * half, p[1] - f[1] * half + f[0] * half],
+            [p[0] + f[0] * half - f[1] * half, p[1] + f[1] * half + f[0] * half],
+            [p[0] + f[0] * half + f[1] * half, p[1] + f[1] * half - f[0] * half],
+            [p[0] - f[0] * half + f[1] * half, p[1] - f[1] * half - f[0] * half],
+          ];
+      out.push({ kind, at: p, to: p, ring, top, z0: top - a.h - DROP, z: ext.z[i] });
+      return;
+    }
+    const back = a.back ?? 0;
+    if (Math.abs(back) < half + 1) return;
+    const nrm: Vec2 = [-f[1], f[0]];
+    const to: Vec2 = [p[0] + nrm[0] * back, p[1] + nrm[1] * back];
+    // Rektangeln från delens mitt (bakåt längs linjen ett halvt tvärsnitt, så att hörnet täcks) till linjen.
+    const s = Math.sign(back);
+    const a0: Vec2 = [p[0] - outward[0] * half - nrm[0] * s * half, p[1] - outward[1] * half - nrm[1] * s * half];
+    const a1: Vec2 = [p[0] + outward[0] * half - nrm[0] * s * half, p[1] + outward[1] * half - nrm[1] * s * half];
+    const ring: Vec2[] = [a0, a1, [a1[0] + nrm[0] * (back + s * half), a1[1] + nrm[1] * (back + s * half)], [a0[0] + nrm[0] * (back + s * half), a0[1] + nrm[1] * (back + s * half)]];
+    out.push({ kind, at: p, to, ring, top, z0: top - a.h, z: ext.z[i] });
+  };
+  if (e0) {
+    let j = 1;
+    while (j < n - 1 && dist(pts[0], pts[j]) < 1e-6) j++;
+    at(0, j);
+  }
+  if (e1) {
+    let j = n - 2;
+    while (j > 0 && dist(pts[n - 1], pts[j]) < 1e-6) j--;
+    at(n - 1, j);
+  }
+  return out;
 }

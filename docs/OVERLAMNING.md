@@ -6,10 +6,19 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 31 oktober 2026, efter 0.11.7.1.
+README. Senast: 31 oktober 2026, efter 0.11.7.2.
 
 ## Läget
 
+- **0.11.7.2 Räckets avslut och spiraltrappan är klar** (samma format,
+  27; valfritt fält `spiral.pole`), byggd i en session (Carl August: "Kör
+  saker som inte hunnits med i PLAN.md som ny version 0.11.7.2"; Claude
+  valde A–D): räckets avslut *Böjd nedåt* och *Mot vägg* ritade (3D,
+  planen, sidovyn), spiraltrappans varning för fri höjd under nästa varv,
+  mittpelarens material och stegnumren under *Visa › Modell*. Testerna: 882
+  på ca 21 s. Provat i Playwright mot `dist/` (spiraltrappa 540° med
+  varningen och mittpelaren i tegel i panelen). Koden i UTVECKLING.md,
+  Claudes val och det som inte gjordes i PLAN.md.
 - **0.11.7.1 Profilen, det som inte hanns med är klar** (samma format,
   27), byggd i en session (Carl August: "Kör saker som inte hunnits med i
   PLAN.md som ny version 0.11.7.1"; Claude valde A–F ur profilens
@@ -22,31 +31,21 @@ README. Senast: 31 oktober 2026, efter 0.11.7.1.
   `dist/` (kommandoraden, smartspöt längs en vägg och i en smyg, Hör till,
   litteran i planen). Koden i UTVECKLING.md, Claudes val och det som inte
   gjordes i PLAN.md.
-- **0.11.7 Ändprofiler och profilen som del är klar** (samma format, 27),
-  byggd i en session (Carl August: "Kör 0.11.7"): ändprofilerna PA (egen
-  post Typer › Ändprofiler, ritade i sidovyn; avslutet *Ändprofil* i
-  profilens egenskaper och som typens förval, Utöver som förval, Inom,
-  förskjutning, sträckt med höjdzonen, varning vid annan höjd), profiltyper
-  som delar i räckestyper (ankare, vridning som tal eller formel; längs
-  räcket svept vinkelrätt, stolpar och spjälor som tvärsnittet) och som
-  vangstycke i den byggda trappan, *Används i* som räknar allt, och PR06
-  handledare, PR07 vangstycke, PR08 taktass med PA01. Testerna: 868 på ca
-  20 s. Provat i Playwright mot `dist/` (ändprofilernas editor och 3D,
-  PR08 med PA01 i panelen och 3D, RÄ01 med handledaren PR06 i editorn och
-  i 3D, en byggd trappa med PR07). Koden i UTVECKLING.md (*Ändprofiler och
-  profilen som del*), Claudes val och det som inte gjordes i PLAN.md.
-  Synpunkternas *är klar*-avsnitt för 0.10.25–0.11.3 ligger nu i
-  `cad-apa-synpunkter-arkiv.md` i projektet.
-- **0.11.6 Profilen** (nytt format 27) och **0.11.6.1 Profileditorn,
-  resten**: se PLAN.md och UTVECKLING.md.
+- **0.11.6 Profilen** (nytt format 27), **0.11.6.1 Profileditorn,
+  resten** och **0.11.7 Ändprofiler och profilen som del**: se PLAN.md och UTVECKLING.md.
 - **Granskningen efter 0.11.5** och **0.11.1–0.11.5** (räcket, editorn,
   staket och grindar, byggd trappa, spiraltrappan): se PLAN.md och
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.11.7.1 pushad till `main` 31 oktober (se git och `gh run
+- **Publicerad:** 0.11.7.2 pushad till `main` 31 oktober (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.11.7.2:** ledstänger med avslutet
+  *Böjd nedåt* (RÄ01) eller *Mot vägg* (RÄ03) får dem i 3D, sektioner och
+  fasader (*Mot vägg* också i planen). Nytt: varningen för fri höjd i
+  spiraltrappor över ett varv, *Mittpelaren* i egenskaperna, *Visa ›
+  Modell › Stegnummer och trappans text*.
 - **Märks i hans ritningar efter 0.11.7.1:** profilobjekt med littera får
   den i planen (utom i Skiss), och gesimser och andra profiler med flera
   delprofiler får inre linjer i Normal och Detalj. Nytt: typen i
@@ -70,10 +69,10 @@ README. Senast: 31 oktober 2026, efter 0.11.7.1.
   konturen* och *Pelare här*.
 - **Märks i hans ritningar efter 0.11.5:** inget i befintliga ritningar.
   *Spiral* i trappverktygets rad.
-- **Versionsnumret** är `0.11.7.1` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.11.7.2` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.11.7.1 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.11.7.2 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -155,7 +154,8 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 - ~~0.8.8 Mallblad~~ … ~~0.10.40.1 Granskning efter 0.10.40~~,
   ~~0.11 Trappan~~ … ~~0.11.5 Spiraltrappan~~, ~~Granskning efter
   0.11.5~~, ~~Utredning av profilverktyget~~, ~~0.11.6 Profilen~~, ~~0.11.6.1 Profileditorn, resten~~, ~~0.11.7 Ändprofiler och profilen
-  som del~~, ~~0.11.7.1 Profilen, det som inte hanns med~~ (klara;
+  som del~~, ~~0.11.7.1 Profilen, det som inte hanns med~~, ~~0.11.7.2 Räckets
+  avslut och spiraltrappan~~ (klara;
   se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
@@ -179,7 +179,7 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
 skrivrätt till repot ("push godkänd"). Fråga Carl August om han provat
-0.11.6–0.11.7.1 och ställ frågorna om dem (nedan) först, högst fem åt
+0.11.6–0.11.7.2 och ställ frågorna om dem (nedan) först, högst fem åt
 gången. Nästa version är **0.11.8 Dörrar och fönster** (stor; foder,
 tröskel, bleck m.m. som profiler). Den bör utredas med en mockup i Claude
 Design i en egen chatt först (som räcket och profilen), och troligen
@@ -191,9 +191,17 @@ delas i två versioner; föreslå delningen. Ställ frågorna om 0.11.5–0.11.1
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4,
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4,
 0.11.3, 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
+
+**0.11.7.2 efter provning** (Claudes val, se PLAN.md)
+- *Böjd nedåt* går 100 mm ned under ledstången, utan böjradie. Lagom, och
+  behövs en radie?
+- *Mot vägg* går tillbaka till räckets linje (60 mm utåt när ledstången
+  ligger på linjen). Rätt, eller ska den gå till en vägg den hittar?
+- Varningen för fri höjd räknar med 2 000 mm och stegets tjocklek. Rätt
+  gräns för spiraltrappor i bostäder?
 
 **0.11.7.1 efter provning** (Claudes val, se PLAN.md)
 - Litteran står utan ledare och går inte att flytta (som räckets grindar).
@@ -257,8 +265,6 @@ provat.
 - Kontrastmarkeringen: ingen som förval, 50 mm, mörk remsa. Ska *Första
   och sista* vara förval, och ska en varning hänvisa till BFS 2024:9 (inte
   uppslaget än)?
-- Stegnummer och *15 st à 180/260* syns i Detalj för alla trappor. Rätt
-  nivå, eller ska de vara ett eget val under Visa?
 
 **0.11.3 efter provning** (Claudes val, se PLAN.md)
 - Ett trappstegat fack ligger på sin högsta punkt, så att glipan under

@@ -1,6 +1,6 @@
 import type { Vec2 } from '../../repr/primitives';
 import { railValues, type RailingTypeModel, type RailPart } from '../../core/railingTypes';
-import { railingBody, withExtension, type AlongPiece, type BodyOptions, type PostPiece, type RailingBody, type RailProfiles } from '../../elements/railingBody';
+import { alongFinishes, railingBody, withExtension, type AlongPiece, type BodyOptions, type PostPiece, type RailingBody, type RailProfiles } from '../../elements/railingBody';
 import { postRing } from '../../elements/railingPlan';
 import { freePath, type GroundFn, type RailPath } from '../../elements/railingGeometry';
 import { escapeHtml } from '../labels';
@@ -99,6 +99,8 @@ function elevation(c: Canvas, body: RailingBody, sel: string | null, only?: (p: 
       continue;
     }
     poly(c, a.part, sel, [...top, ...top.map(([x, y]): Vec2 => [x, y + a.h]).reverse()]);
+    // Avslutet böjt nedåt (0.11.7.2) från sidan.
+    for (const f of alongFinishes(a)) if (f.kind === 'down') poly(c, a.part, sel, [[f.at[0] - a.w / 2, -f.top], [f.at[0] + a.w / 2, -f.top], [f.at[0] + a.w / 2, -f.z0], [f.at[0] - a.w / 2, -f.z0]]);
   }
 }
 

@@ -150,7 +150,8 @@ function stairPlan(el: Element<any>, ctx: PlanContext, p: StairParams, g: StairG
     }
     // Bygghandlingsgrafiken: stegens nummer nerifrån och texten med antal, steghöjd och stegdjup.
     const text = pen('stairText');
-    const numbered = g.items.filter((i) => i.kind !== 'startTread');
+    // Visa kan släcka numren och texten (0.11.7.2), utan att byta penna.
+    const numbered = ctx.view.hide?.includes('stairNumbers') ? [] : g.items.filter((i) => i.kind !== 'startTread');
     numbered.forEach((it, k) => {
       if (!shown(it.u0)) return;
       const rib = g.ribAt((it.u0 + it.u1) / 2);
@@ -160,7 +161,7 @@ function stairPlan(el: Element<any>, ctx: PlanContext, p: StairParams, g: StairG
       const at: Vec2 = [rib.w[0] + (far[0] - rib.w[0]) * k2, rib.w[1] + (far[1] - rib.w[1]) * k2];
       out.push({ kind: 'text', at, text: String(k + 1), height: 1.8, align: 'middle', pen: text, origin: o('stegnummer') });
     });
-    const run = g.runs[0];
+    const run = ctx.view.hide?.includes('stairNumbers') ? undefined : g.runs[0];
     if (run) {
       const going = Math.min(...g.runs.map((x) => x.going));
       const h = g.riserHeight;
@@ -329,7 +330,8 @@ export const stairType: ElementType<StairParams> = {
     const mat = materialSolid(buildingMaterialOf(p as never, ctx.style));
     const edges: Edges3D['segments'] = [];
     const body = p.build === 'built' ? builtSolids(el.id, p, g, ctx.style, (id) => profileModel(ctx.doc.definitions[id]), edges) : stairSolids(el.id, p, g, mat);
-    const poleMat: Partial<Solid> = p.build === 'built' ? { color: '#ece8df' } : mat;
+    // Mittpelaren (0.11.7.2): eget material ur stilboken, annars målad (byggd) eller som trappan.
+    const poleMat: Partial<Solid> = p.spiral?.pole ? materialSolid(buildingMaterialOf({ material: p.spiral.pole } as never, ctx.style)) : p.build === 'built' ? { color: '#ece8df' } : mat;
     const extra: Shape3D[] = edges.length ? [{ kind: 'edges', id: el.id, segments: edges }] : [];
     return [...body, ...poleSolid(el.id, p, g, poleMat), ...contrastSolids(el.id, p, g), ...extra].map((s): Shape3D => liftShape(s, lv));
   },

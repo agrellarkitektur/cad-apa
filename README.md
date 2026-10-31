@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.7.1** (alfa), Profilen, det som inte hanns med; nästa är **0.11.8
+**0.11.7.2** (alfa), Räckets avslut och spiraltrappan; nästa är **0.11.8
 Dörrar och fönster**.
 
 ## Vad som fungerar
@@ -1149,6 +1149,24 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11.7.2, Räckets avslut och spiraltrappan (samma filformat, 27;
+projekt från 0.11.6 öppnas):
+- **Räckets avslut ritas**: en längsgående del (ledstången) med *Avslut*
+  **Böjd nedåt** går 100 mm ned under delen i ändarna, och **Mot vägg**
+  går vågrätt tillbaka till räckets linje (60 mm utåt om delen ligger på
+  linjen). Gäller de verkliga ändarna efter förlängningen, inte vid
+  grindar. Syns i 3D, sektioner och fasader; *Mot vägg* också i planen, och
+  *Böjd nedåt* i räckestypeditorns sidovy. RÄ01 har Böjd nedåt och RÄ03 Mot
+  vägg som förut
+- **Spiraltrappans fria höjd**: går trappan mer än ett varv varnar
+  egenskaperna när höjden under nästa varv (steg per varv × steghöjd −
+  stegets tjocklek) är under 2 000 mm (*avviker från praxis*)
+- **Mittpelarens material**: under Spiraltrappa i egenskaperna väljs
+  *Mittpelaren* ur stilbokens material (förval som trappan, eller målad i
+  en byggd trappa)
+- **Stegnummer och trappans text** (*15 st à 180/260*) går att släcka under
+  *Visa › Modell* (och i stilbokens kategorier), utan att byta penna
 
 Version 0.11.7.1, Profilen, det som inte hanns med (samma filformat, 27;
 projekt från 0.11.6 öppnas):

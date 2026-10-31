@@ -27,6 +27,8 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
       ['hiddenSlabsSection', 'Bjälklag bakom snittet streckade i sektion'],
       ['Furniture', 'Möbler och inredning'],
       ['swing', 'Öppningssätt (dörrar)'],
+      // Trappans stegnummer och texten *15 st à 180/260* i Detalj (0.11.7.2).
+      ['stairNumbers', 'Stegnummer och trappans text'],
       ['Underlay', 'Underlag'],
     ],
   },

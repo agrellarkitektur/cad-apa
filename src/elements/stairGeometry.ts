@@ -74,9 +74,10 @@ export interface StairParams {
    * trappan börjar; referenslinjen räknas fram som en båge (helix) runt
    * mitten. `inner` och `outer` är inner- och ytterdiametern (mm), `sweep`
    * graderna (också över 360) och `dir` varvriktningen sett uppifrån
-   * (utelämnad = moturs). Bredden är skillnaden mellan radierna.
+   * (utelämnad = moturs). Bredden är skillnaden mellan radierna. `pole` är
+   * mittpelarens material ur stilboken (0.11.7.2; utelämnat som trappan).
    */
-  spiral?: { inner: number; outer: number; sweep: number; dir?: 'cw' | 'ccw' };
+  spiral?: { inner: number; outer: number; sweep: number; dir?: 'cw' | 'ccw'; pole?: string };
   /** Hålet i bjälklaget ovanför: automatiskt ur den fria höjden (förval) eller inget. */
   hole?: 'auto' | 'none';
   /** Den fria höjden som hålet räknas ur, mm (2100 från början). */
@@ -92,6 +93,8 @@ export const RISER_TARGET = 180;
 export const TREAD_LENGTH = 300;
 export const STAIR_THICKNESS = 180;
 export const HEADROOM = 2100;
+/** Den fria höjden under spiraltrappans nästa varv som varningen räknar med (0.11.7.2). */
+export const SPIRAL_HEADROOM = 2000;
 /** Spiraltrappans förval (0.11.5): diametrarna och graderna. */
 export const SPIRAL = { inner: 200, outer: 1800, sweep: 360 };
 
@@ -599,6 +602,12 @@ export function stairWarnings(p: StairParams, g: StairGeometry, outdoor = false)
   for (const [s, e] of g.landings) if (e - s < g.width - 1) {
     out.push(`Ett vilplan är ${mm(e - s)} i gånglinjen; avviker från praxis (minst trappans bredd, ${mm(g.width)}).`);
     break;
+  }
+  // Spiraltrappan (0.11.7.2): den fria höjden under nästa varv, (steg per varv × steghöjd) − stegets tjocklek.
+  if (g.turn && g.length > g.turn + 1 && g.runs[0]?.going > 0) {
+    const t = p.build === 'built' ? Math.max(0, p.built?.tread?.thickness ?? 40) : Math.max(20, p.thickness ?? STAIR_THICKNESS);
+    const free = (g.turn / g.runs[0].going) * h - t;
+    if (free < SPIRAL_HEADROOM - 0.5) out.push(`Den fria höjden under nästa varv är ${mm(free)}; avviker från praxis (minst ${mm(SPIRAL_HEADROOM)}). Minska stegdjupet, eller öka steghöjden eller ytterdiametern.`);
   }
   const wanted = p.risers ?? Math.max(2, Math.round(p.rise / RISER_TARGET));
   const actual = g.risers.length;

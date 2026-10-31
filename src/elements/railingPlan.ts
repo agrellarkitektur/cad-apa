@@ -6,7 +6,7 @@ import type { Rings } from '../geometry/boolean';
 import { offsetLine } from './groundLines';
 import { hull, merged } from './profileBody';
 import { planCutHeight } from './planCut';
-import { gateHole, withExtension, type AlongPiece, type GatePiece, type PostPiece, type RailingBody } from './railingBody';
+import { alongFinishes, gateHole, withExtension, type AlongPiece, type GatePiece, type PostPiece, type RailingBody } from './railingBody';
 import { dedupe, dedupeZ, pathPoint, pathZ, type RailGate, type RailPath } from './railingGeometry';
 import type { Element } from '../core/model';
 import type { PlanContext } from './registry';
@@ -115,11 +115,14 @@ export function railingPlan(el: Element<any>, ctx: PlanContext, own: boolean, r:
           const n: Vec2 = [-d[1] * (a.w / 2), d[0] * (a.w / 2)];
           out.push({ kind: 'line', a: [q[0] + n[0], q[1] + n[1]], b: [q[0] - n[0], q[1] - n[1]], pen: cut !== undefined && zs[i] > cut + 0.5 ? above : p, origin: o(a.part.id) });
         }
+      // Avslutet mot vägg (0.11.7.2) ovanifrån; böjd nedåt syns inte i planen.
+      for (const f of alongFinishes(a)) if (f.kind === 'wall') out.push({ kind: 'polyline', points: f.ring, closed: true, pen: cut !== undefined && f.z > cut + 0.5 ? above : p, origin: o(a.part.id) });
     } else if (detail >= RANK.normal && a.ext > 0 && ext.pts.length > a.pts.length) {
       // Ledstångens förlängning förbi trappan.
       const n = ext.pts.length;
       draw([ext.pts[0], ext.pts[1]], [zs[0], zs[1]], pen(a.part.pen, 'railGrab'), a.part.id);
       draw([ext.pts[n - 2], ext.pts[n - 1]], [zs[n - 2], zs[n - 1]], pen(a.part.pen, 'railGrab'), a.part.id);
+      for (const f of alongFinishes(a)) if (f.kind === 'wall') draw([f.at, f.to], [f.z, f.z], pen(a.part.pen, 'railGrab'), a.part.id);
     }
   }
   for (const g of body.gates) out.push(...gatePlan(el, g, o('grind'), railPen(ctx.style, 'railGate'), railPen(ctx.style, 'railGateSwing'), littera(g.gate)));

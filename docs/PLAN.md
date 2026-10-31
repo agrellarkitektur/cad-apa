@@ -181,6 +181,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.6.1 | Profileditorn, resten: Förskjut (kant eller hela konturen), Runda hörn, Mått i ritytan som kan peka på parametrar, Läge som snäpphjälp, provmått i Sträckt, varningen för avslut som skär in |
 | 0.11.7 | Ändprofiler och profilen som del: ändprofilerna PA (sidovyn, Inom/Utöver, förskjutning, sträckning med höjdzonen), profiltyper som delar i räckestyper (ankare, vridning) och som vangstycke, PR06–PR08 och PA01 |
 | 0.11.7.1 | Profilen, det som inte hanns med: typen i kommandoraden (PROFIL PR03, RÄCKE RÄ02), smartspöt för profilen, Hör till, profilens littera och delprofilernas inre linjer i planen, typerna i stilbokens fil, profildelarna från sidan i räckestypeditorn |
+| 0.11.7.2 | Räckets avslut och spiraltrappan: Böjd nedåt och Mot vägg ritade, varningen för fri höjd under nästa varv, mittpelarens material, stegnumren under Visa |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
 val och det som *inte gjordes*. De ligger i arkivet:
@@ -912,6 +913,50 @@ går att flytta (med ledare), och måtten per objekt i profileditorn. Från
 tidigare versioner kvar (0.11–0.11.5, se deras *Inte gjort*): det kopplade
 egna hålet, trappans littera och egna penna, räcket som följer andra
 kanter än trappans, grindens fasad, spiraltrappans egna varningar m.m.
+Klickjämförelsen körs i granskningen efter 0.11.8.
+
+### 0.11.7.2 Räckets avslut och spiraltrappan ✓
+
+Carl August 31 oktober: "Kör saker som inte hunnits med i PLAN.md som ny
+version 0.11.7.2". Claude valde fyra små ur *Inte gjort* (A–D), byggt i
+samma session. Samma filformat (27): mittpelarens material är det valfria
+fältet `spiral.pole`.
+
+**Claudes val (0.11.7.2):**
+
+- **Urvalet**: A räckets avslut *Böjd nedåt* och *Mot vägg* (stod som
+  *ritas i 3D senare* sedan 0.11.1), B spiraltrappans varning för den fria
+  höjden under nästa varv, C mittpelarens material, D stegnumren under
+  Visa (frågan om 0.11.4). Profilen som följer kanten, ändprofilen med
+  vridning, flyttbar littera och måtten per objekt är större och väntar.
+- **Böjd nedåt**: en lodrät bit med delens tvärsnitt (rund som åttahörning)
+  från överkanten till 100 mm under delens underkant, i änden efter
+  förlängningen. Ingen böjradie. Syns inte i planen (lodrät).
+- **Mot vägg**: en vågrät bit från änden tillbaka till räckets linje
+  (förskjutningen *Inåt* bakåt), med delens bredd och höjd; ligger delen på
+  linjen går den 60 mm utåt (bort från trappan). Planen ritar den i Detalj
+  som en kontur och i Normal som en linje med förlängningen.
+- Bara i delens **verkliga ändar** (inte vid grindar och trappsteg), och
+  inte för delar med en profiltyp (de har typens avslut) eller i grindens
+  blad.
+- **Den fria höjden** = varvets längd i gånglinjen / stegdjupet ×
+  steghöjden − stegets tjocklek (plansteget i en byggd trappa, annars
+  trappans tjocklek). Gränsen 2 000 mm är praxis (den fria höjden 2,0 m i
+  BBR; den gamla tillverkarformeln F = (N − n)h − t utan vilplan). Varnar
+  bara när trappan går mer än ett varv.
+- **Mittpelaren**: *Som trappan* (eller *Målad* i en byggd) som förval,
+  annars stilbokens byggnadsmaterial i 3D. Planen ritar den som förut.
+- **Stegnumren**: `stairNumbers` under *Visa › Modell* släcker numren och
+  texten *15 st à 180/260*; stegnosen och kontrastmarkeringen står kvar.
+
+**Inte gjort i 0.11.7.2:** spiraltrappans stegdjup vid innerkanten (ingen
+säker praxis hittad), avslutens böjradie, avslut på stolpar och spjälor med
+en profiltyp. Kvar från 0.11.7.1: en profil som följer kanten den lades
+längs, ändprofilen med vridningen kring ankaret, ändprofilen som skär in
+förbi knäcken, profilens littera som går att flytta (med ledare), måtten
+per objekt i profileditorn. Från 0.11–0.11.5 kvar: det kopplade egna
+hålet, trappans littera och egna penna, räcket som följer andra kanter än
+trappans, grindens fasad, att göra om en vanlig trappa till spiral.
 Klickjämförelsen körs i granskningen efter 0.11.8.
 
 ### 0.11.8 Dörrar och fönster

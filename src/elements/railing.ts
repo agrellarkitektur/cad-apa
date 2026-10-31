@@ -11,7 +11,7 @@ import { resolveEnd } from './endProfile';
 import { solidsOf, sweep, type Vec3 } from './profileBody';
 import { buildingMaterialOf, materialSolid } from './buildingMaterial';
 import { stripRing } from './groundLines';
-import { postStations, railingBody, withExtension, type PanelPiece, type RailingBody, type RailProfiles } from './railingBody';
+import { alongFinishes, postStations, railingBody, withExtension, type PanelPiece, type RailingBody, type RailProfiles } from './railingBody';
 import { dedupe, freePath, hostedPath, pathZ, type GroundFn, type RailGate, type RailingParams, type RailPath } from './railingGeometry';
 import { postRegions, postRing, railingPlan } from './railingPlan';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
@@ -196,6 +196,8 @@ export function railingSolids(id: string, body: RailingBody, matOf: (part: RailP
       const ring = stripAlong(p0, p1, a.w, a.w / 2);
       out.push(slantSolid(id, ring, p0, p1, [ext.top[i - 1] - a.h, ext.top[i] - a.h], [ext.top[i - 1], ext.top[i]], mat, 'frame'));
     }
+    // Avsluten (0.11.7.2): böjd nedåt och mot vägg.
+    for (const f of alongFinishes(a)) out.push({ id, rings: [f.ring], z0: f.z0, z1: f.top, material: 'frame', ...mat } as Solid);
   }
   for (const q of [...body.posts, ...body.repeats]) {
     if (q.z1 - q.z0 < 1) continue;

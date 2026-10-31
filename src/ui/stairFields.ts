@@ -69,6 +69,7 @@ export function stairFieldsMarkup(doc: ProjectDoc, el: Element): string {
     ? `<div class="field-label">Spiraltrappa</div>
     <div class="fields">${numberField('stair:inner', 'Innerdiameter', sp.inner, 'mm')}${numberField('stair:outer', 'Ytterdiameter', sp.outer, 'mm')}${numberField('stair:sweep', 'Grader', sp.sweep, '°')}</div>
     ${select('stair:dir', 'Uppåt', sp.ccw ? 'ccw' : 'cw', [['ccw', 'Moturs'], ['cw', 'Medurs']])}
+    ${sp.inner >= 50 ? select('stair:pole', 'Mittpelaren', p.spiral?.pole ?? '', [['', p.build === 'built' ? 'Målad' : 'Som trappan'], ...(doc.graphics.materials ?? []).filter((x) => x.building).map((x): [string, string] => [x.id, x.name])]) : ''}
     <p class="note">Bredden är ${mm((sp.outer - sp.inner) / 2)} mm (halva skillnaden mellan diametrarna)${sp.inner >= 50 ? ', och mittpelaren har innerdiametern' : ''}. Dra i mitten för att flytta trappan och i startpunkten för att vrida den.</p>`
     : '';
   const holeNote = above ? `i bjälklaget på ${escapeHtml(above.name)}` : 'i bjälklaget ovanför (det finns ingen våning ovanför)';
@@ -152,6 +153,8 @@ export function applyStairField(store: DocStore, ids: Id[], name: string, input:
     case 'outer':
     case 'sweep':
       return pos(0) && patchStair(store, ids, name === 'sweep' ? 'Spiraltrappans grader' : 'Spiraltrappans diameter', (p) => spiralPatch(p, { [name]: Math.round(num) }));
+    case 'pole':
+      return patchStair(store, ids, 'Mittpelarens material', (p) => spiralPatch(p, { pole: raw || undefined }));
     case 'dir':
       return patchStair(store, ids, 'Varvriktning', (p) => spiralPatch(p, { dir: raw === 'cw' ? 'cw' : undefined }));
     case 'width':
@@ -249,7 +252,7 @@ function spiralPatch(p: StairParams, change: Record<string, unknown>): Record<st
   const merged = { ...p.spiral, ...change };
   if (change.inner !== undefined && Number(change.inner) > merged.outer - 300) merged.outer = Number(change.inner) + 300;
   const d = spiralDims(merged);
-  return { spiral: { inner: d.inner, outer: d.outer, sweep: d.sweep, ...(d.ccw ? {} : { dir: 'cw' }) }, width: Math.round((d.outer - d.inner) / 2) };
+  return { spiral: { inner: d.inner, outer: d.outer, sweep: d.sweep, ...(d.ccw ? {} : { dir: 'cw' }), ...(merged.pole ? { pole: merged.pole } : {}) }, width: Math.round((d.outer - d.inner) / 2) };
 }
 
 /**
