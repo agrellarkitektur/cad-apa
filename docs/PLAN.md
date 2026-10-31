@@ -681,6 +681,14 @@ Carl August 22 oktober. Stor; delas om det behövs.
 - Om det ryms (annars efter piloten): dörr- och fönsterhandtag, flera
   bågar och luft i höjd och sida, spröjs
 
+### Granskning efter 0.11.7
+
+Inga nya funktioner. Det som inte gjordes i granskningen efter 0.11.5:
+stilmallsstegen i `scripts/jamfor-klick.py` (0.8.27–0.8.38) skrivs om mot
+stilbokens selektorer, så att stilboken jämförs igen; `stairGeometry.ts`
+och `view3d.ts` delas när 0.11.7 visat hur de växer; klickjämförelsen körs
+med profiler, dörrar och fönster.
+
 ### 0.12 Export: IFC och DXF
 
 - IFC4-export med egen skrivare: våningsplan, väggar, öppningar, dörrar,

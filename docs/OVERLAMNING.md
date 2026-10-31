@@ -159,6 +159,8 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   och session)
 - **0.11.6 Profilverktyget** (stor) och **0.11.7 Dörrar och fönster**
   (stor)
+- **Granskning efter 0.11.7**: stilmallsstegen i klickjämförelsen
+  omskrivna mot stilboken, `stairGeometry.ts` och `view3d.ts` delade
 - **0.12 Export**: IFC4, DXF, areor för bygglov, förteckning över
   markförändringarna
 - **0.12.1 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
