@@ -32,7 +32,7 @@ export function installWand(app: AppContext) {
         return;
       }
       if (!wandSupports(app.ui.tool)) {
-        app.hint('Smartspöt har inget att göra i det här verktyget än. Det finns i Markera, Vägg, Bjälklag, Tak, Mark, 2D, Littera och Mått.', 4000);
+        app.hint('Smartspöt har inget att göra i det här verktyget än. Det finns i Markera, Vägg, Bjälklag, Tak, Mark, Trappa, Räcke, Profil, 2D, Littera och Mått.', 4000);
         return;
       }
       app.modifier.cancel();
@@ -76,5 +76,6 @@ const HINTS: Record<string, string> = {
   slab: 'Smartspöt: klicka i ett rum för ett bjälklag innanför väggarna, eller i ett tak eller en form för ett bjälklag med dess kontur. Tab växlar.',
   roof: 'Smartspöt: klicka i huset eller ett bjälklag för ett tak över det, med takfoten utanför. Takfallets takfot hamnar vid kanten närmast.',
   label: 'Smartspöt: klicka på ett objekt för en littera med verktygets text. Shift samlar fler.',
+  profile: 'Smartspöt: peka på en kant (vägg, bjälklag, takfot, linje …) för en profil längs sidan; Tab för hela konturen. Nära ett hörn: en pelare där.',
   dimension: 'Smartspöt: klicka på en vägg för en måttkedja över öppningarna och de anslutande väggarna; Tab för andra sidan.',
 };

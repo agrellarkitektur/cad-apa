@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.7** (alfa), Ändprofiler och profilen som del; nästa är **0.11.8
+**0.11.7.1** (alfa), Profilen, det som inte hanns med; nästa är **0.11.8
 Dörrar och fönster**.
 
 ## Vad som fungerar
@@ -1149,6 +1149,32 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11.7.1, Profilen, det som inte hanns med (samma filformat, 27;
+projekt från 0.11.6 öppnas):
+- **Typen i kommandoraden**: `PROFIL PR03` väljer Profil med PR03 och
+  `RÄCKE RÄ02` Räcke med RÄ02; medan verktyget är igång räcker litteran
+  (`PR03`). En förvald typ som projektet saknar går också att välja
+- **Smartspöt i Profil**: peka på en kant (vägg, bjälklag, takfot, linje,
+  underlag …) för en profil längs sidan, Tab för hela konturen; nära ett
+  hörn kommer **Pelare i hörnet** först. Verktygets typ, ankare, höjd,
+  vridning och spegling gäller
+- **Hör till** i profilens egenskaper: Platsen eller en våning (flyttar
+  profilen dit). På Platsen mäts höjderna från ±0
+- **Profilens littera i planen** (P01, B01, L01 …): bredvid pelaren, eller
+  längs banans längsta raka bit på tvärsnittets sida. Inte i Skiss och inte
+  för det som rivs; *Visa › Littera › Profiler* släcker den (släckt i nya
+  projekts Undertak och Golvplan)
+- **Delprofilernas inre linjer** i planen i Normal och Detalj: varje
+  delprofil ritas ovanifrån för sig, så att gränsen mellan dem syns (t.ex.
+  gesimsens plåt)
+- **Typerna följer med stilboken**: *Exportera…*, *Importera…* och *Mall
+  för nya projekt…* tar med profiltyperna, ändprofilerna och räckestyperna.
+  En typ i filen ersätter samma typ i projektet; en ny typ vars littera är
+  upptagen får *(importerat)* efter sig
+- **Räckestypeditorns sidovyer** ritar profildelarna med tvärsnittets
+  höjd (en handledare) eller bredd (en stolpe, också vriden) och de
+  kantlinjer man ser från sidan, i stället för en rektangel
 
 Version 0.11.7, Ändprofiler och profilen som del (samma filformat, 27;
 projekt från 0.11.6 öppnas):

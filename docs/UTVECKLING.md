@@ -670,6 +670,31 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Profilen, det som inte hanns med (0.11.7.1, format 27)
+
+- **Typen i kommandoraden**: `ui/app/shellTypes.ts` (`splitArgument`,
+  `typeByName(doc, 'profile' | 'railing', text)`: projektets fria typer
+  först, sedan de förvalda som saknas). `commandLine.ts`: `typedTarget`
+  och `enterType` före kommandouppslaget i `submit`, raden under i
+  `renderHint`, och `taken` i listan.
+- **Smartspöt**: `ui/wand/profileAlong.ts` (`traceAt` utan profilerna,
+  `profileTool.createLine` och `createColumn`), registrerad i
+  `wand/index.ts`; texten i `HINTS` i `app/wand.ts`.
+- **Hör till**: knapparna `prof-home` i `profileFields.ts`, som räckets
+  `rail-home`.
+- **Planen** (`elements/profile.ts`): de inre linjerna är `planShapes` per
+  delprofil (origin-delen `inre`); `profileLittera` ritar `el.name` som
+  text (origin-delen `littera`, inget `tag`), styrd av `showLittera(ctx,
+  'Profile')` och nyckeln `littera:Profile` i `showKeys.ts` (och `BARE` i
+  `viewCategories.ts`).
+- **Stilboksfilen** (`core/styleBookFile.ts`): `StyleBookFile.types` och
+  `ReadBook.types` (valfria), `BOOK_TYPES` och `bookTypes`; `importBook`
+  lägger in dem med `putDefinition` (bilderna mappas som stilbokens).
+- **Sidovyerna** (`ui/style/railingPreview.ts`): `alongSide` och
+  `postSide` för delar med `sec`, `edgeLines` för kantlinjerna (klassen
+  `rtp-edge`).
+- **Tester**: `tests/v01171.test.ts`.
+
 ## Ändprofiler och profilen som del (0.11.7, format 27)
 
 - **Ändprofilen** är en profiltyp i gruppen `END_GROUP` (Ändprofiler;

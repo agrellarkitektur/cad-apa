@@ -1,7 +1,7 @@
 import { pruneAssets } from './commands';
 import { normalizeBook, type StyleBook } from './graphics';
 import { newId } from './ids';
-import { isMaster, isStamp, type Asset, type Element, type Id, type ProjectDoc, type Worksheet } from './model';
+import { isMaster, isStamp, type Asset, type Definition, type Element, type Id, type ProjectDoc, type Worksheet } from './model';
 import { relinkLogos } from './office';
 import type { DocStore, TxBuilder } from './store';
 import type { ViewCategory } from './viewCategories';
@@ -21,13 +21,15 @@ export interface PaperPart {
   master?: Id;
 }
 
-/** En stilbok som fil: stilboken med bilderna och (valfritt) papperet. */
-export type StyleBookFile = StyleBook & { assets?: Asset[]; paper?: PaperPart };
+/** En stilbok som fil: stilboken med bilderna, typerna (0.11.7.1) och (valfritt) papperet. */
+export type StyleBookFile = StyleBook & { assets?: Asset[]; paper?: PaperPart; types?: Definition[] };
 
 /** Det som lästs ur en fil: stilboken, dess bilder och papperet, om det finns. */
 export interface ReadBook {
   book: StyleBook;
   assets: Asset[];
+  /** Profiltyperna, ändprofilerna och räckestyperna (0.11.7.1). */
+  types?: Definition[];
   paper?: PaperPart;
 }
 
@@ -42,6 +44,17 @@ function bookAssetIds(book: StyleBook): Id[] {
   if (book.office?.logo) ids.add(book.office.logo.asset);
   for (const m of book.materials ?? []) if (m.texture) ids.add(m.texture.asset);
   return [...ids];
+}
+
+/**
+ * Typerna under stilbokens flik Typer som bor i projektets definitioner
+ * (0.11.7.1): profiltyperna (med ändprofilerna) och räckestyperna. Deras
+ * grupper står redan i stilboken.
+ */
+export const BOOK_TYPES: readonly string[] = ['Profile', 'Railing'];
+
+export function bookTypes(doc: Pick<ProjectDoc, 'definitions'>): Definition[] {
+  return Object.values(doc.definitions).filter((d) => BOOK_TYPES.includes(d.elementType));
 }
 
 /** Hur många mallblad och stämplar projektet har. */
@@ -76,6 +89,8 @@ export function exportBook(doc: ProjectDoc, choice: PaperChoice = { masters: fal
   }
   const assets = [...assetIds].map((id) => doc.assets[id]).filter(Boolean).map((a) => structuredClone(a));
   if (assets.length) book.assets = assets;
+  const types = bookTypes(doc).map((d) => structuredClone(d));
+  if (types.length) book.types = types;
   return book;
 }
 
@@ -87,12 +102,15 @@ export function readBookFile(data: any, base?: StyleBook, styleTo?: ViewCategory
   const assets = Array.isArray(data?.assets) ? data.assets.filter(isAsset).map((a: Asset) => ({ id: a.id, name: String(a.name ?? a.id), mime: a.mime, data: a.data })) : [];
   delete (book as StyleBookFile).assets;
   delete (book as StyleBookFile).paper;
+  delete (book as StyleBookFile).types;
+  const types: Definition[] = Array.isArray(data?.types) ? data.types.filter((d: any) => d && typeof d.id === 'string' && typeof d.name === 'string' && BOOK_TYPES.includes(d.elementType)) : [];
+  const withTypes = types.length ? { types } : {};
   const p = data?.paper;
   const worksheets: Worksheet[] = Array.isArray(p?.worksheets) ? p.worksheets.filter((w: any) => w && typeof w.id === 'string' && (isMaster(w) || isStamp(w))) : [];
-  if (!worksheets.length) return { book, assets };
+  if (!worksheets.length) return { book, assets, ...withTypes };
   const ids = new Set(worksheets.map((w) => w.id));
   const elements: Element[] = Array.isArray(p.elements) ? p.elements.filter((e: any) => e && typeof e.id === 'string' && typeof e.type === 'string' && ids.has(e.space)) : [];
-  return { book, assets, paper: { worksheets, elements, ...(typeof p.master === 'string' && ids.has(p.master) ? { master: p.master } : {}) } };
+  return { book, assets, ...withTypes, paper: { worksheets, elements, ...(typeof p.master === 'string' && ids.has(p.master) ? { master: p.master } : {}) } };
 }
 
 /** Hur många mallblad och stämplar en läst fil har. */
@@ -146,6 +164,13 @@ export function importBook(store: DocStore, read: ReadBook, choice: PaperChoice,
     const keepFills = (tx.doc.graphics.fillTypes ?? []).filter((t) => !book.fillTypes?.some((r) => r.id === t.id));
     if (keepFills.length) book.fillTypes = [...(book.fillTypes ?? []), ...keepFills];
     tx.setGraphics(book);
+    // Typerna (0.11.7.1): filens ersätter projektets med samma id (objekten
+    // med typen följer med), och projektets andra typer är kvar.
+    // En ny typ vars littera redan är upptagen får *(importerat)* efter sig, som mallbladen.
+    for (const d of read.types ?? []) {
+      const taken = !tx.doc.definitions[d.id] && Object.values(tx.doc.definitions).some((x) => x.elementType === d.elementType && x.name === d.name);
+      tx.putDefinition({ ...(remap(structuredClone(d), files) as Definition), ...(taken ? { name: `${d.name} (importerat)` } : {}) });
+    }
     const paper = read.paper;
     const worksheets = (paper?.worksheets ?? []).filter((w) => (choice.masters && isMaster(w)) || (choice.stamps && isStamp(w)));
     if (worksheets.length) {

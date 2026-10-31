@@ -8,6 +8,7 @@ import { buildingMaterialOf, materialSolid } from './buildingMaterial';
 import { materialCutFill, materialCutPrims } from './fill2d';
 import { flatLine } from './groundLines';
 import { planCutHeight } from './planCut';
+import { showLittera } from './littera';
 import { resolveEnd } from './endProfile';
 import { endReach, hull, merged, partRegions, placePoint, sliceAt, solidsOf, sweep, type EndSpec, type SweepResult, type Vec3 } from './profileBody';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
@@ -241,7 +242,71 @@ function profilePlan(el: Element<any>, ctx: PlanContext): Primitive[] {
     }
   }
   outline(above, 'profileAbove', 'över');
+  // Delprofilernas inre linjer (0.11.7.1): i Normal och Detalj ritas varje
+  // delprofil ovanifrån för sig, så att gränserna mellan dem syns (t.ex.
+  // gesimsens plåt på listen, eller en pelare i två material).
+  if (detail >= RANK.normal && body.parts.length > 1)
+    body.parts.forEach((part, k) => {
+      if (part.detail && RANK[part.detail] > detail) return;
+      const own = planShapes(body, cutH, (i) => i === k);
+      outline(own.below, 'profileContour', 'inre');
+      outline(own.above, 'profileAbove', 'inre');
+    });
+  out.push(...profileLittera(el, ctx, body));
   return out;
+}
+
+/**
+ * Profilobjektets littera i planen (0.11.7.1): P01, B01, L01 … bredvid
+ * pelaren (snett ovanför till höger) eller vid mitten av banans längsta
+ * raka bit, längs den och på tvärsnittets sida. Inte i Skiss, inte för det
+ * som rivs, och Visa kan släcka den (*Littera*, eller per typ).
+ */
+function profileLittera(el: Element<any>, ctx: PlanContext, body: ProfileBody): Primitive[] {
+  const text = el.name?.trim();
+  if (!text || !showLittera(ctx, 'Profile') || ctx.actionOf(el) === 'demolished') return [];
+  const height = ctx.style.labels.heights.littera;
+  const paper = (mm: number) => mm * ctx.scale;
+  const origin: Origin = { objectId: el.id, objectType: 'Profile', part: 'littera' };
+  const pen = { weight: 0.18 };
+  if (body.plumb) {
+    const pts = body.regions.flatMap((r) => r.polys.flatMap((poly) => poly[0]));
+    if (!pts.length) return [];
+    const [x, y] = body.path[0];
+    const right = x + Math.max(...pts.map((q) => q[0]));
+    const top = y + Math.max(...pts.map((q) => q[1]));
+    return [{ kind: 'text', at: [right + paper(1.2), top + paper(1.2)], text, height, align: 'start', pen, origin }];
+  }
+  let best: { a: Vec3; b: Vec3; l: number } | null = null;
+  for (let i = 1; i < body.path.length; i++) {
+    const a = body.path[i - 1];
+    const b = body.path[i];
+    const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (!best || l > best.l) best = { a, b, l };
+  }
+  if (!best || best.l < 1) return [];
+  let ang = Math.atan2(best.b[1] - best.a[1], best.b[0] - best.a[0]);
+  while (ang > Math.PI / 2 + 1e-6) ang -= Math.PI;
+  while (ang <= -Math.PI / 2 + 1e-6) ang += Math.PI;
+  const u: Vec2 = [Math.cos(ang), Math.sin(ang)];
+  const up: Vec2 = [-u[1], u[0]];
+  const mid: Vec2 = [(best.a[0] + best.b[0]) / 2, (best.a[1] + best.b[1]) / 2];
+  // Hur långt profilen når åt var sida om banan vid mitten, ur höljena ovanifrån.
+  const rings = planShapes(body, undefined, () => true);
+  let lo = 0;
+  let hi = 0;
+  for (const r of [...rings.below, ...rings.above])
+    for (const q of r) {
+      const along = (q[0] - mid[0]) * u[0] + (q[1] - mid[1]) * u[1];
+      if (Math.abs(along) > best.l / 2) continue;
+      const d = (q[0] - mid[0]) * up[0] + (q[1] - mid[1]) * up[1];
+      lo = Math.min(lo, d);
+      hi = Math.max(hi, d);
+    }
+  // Texten på den sida där profilen är bredast, så att den inte står på banans andra sida i onödan.
+  const above = hi >= -lo;
+  const d = above ? hi + paper(1.2) : lo - paper(1.2 + height);
+  return [{ kind: 'text', at: [mid[0] + up[0] * d, mid[1] + up[1] * d], text, height, align: 'middle', angle: ang, pen, origin }];
 }
 
 export const profileType: ElementType<ProfileParams> = {

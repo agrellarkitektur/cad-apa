@@ -14,6 +14,7 @@ import { nf, POINT_HELP, promptMarkup, xy } from './shellHint';
 import { createShellList } from './shellList';
 import { createShellLog } from './shellLog';
 import { createShellMenus } from './shellMenus';
+import { splitArgument, typeByName, type TypedTool } from './shellTypes';
 import { commandBusy, pointFor as pointOf, pointTaker, wantsPoint as modifierWantsPoint } from './shellPoints';
 
 /**
@@ -64,7 +65,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
   const log = createShellLog(el, logEl, listEl, (c) => run(c));
   /** Listan med kommandon: kompletteringen, pil upp och ned, Tab och alla kommandon. */
   const list = createShellList(input, listEl, {
-    taken: (text) => isPoint(text) || !!(prompt && matchOption(prompt.options, text)),
+    taken: (text) => isPoint(text) || !!(prompt && matchOption(prompt.options, text)) || !!typedTarget(text),
     renderLog: () => log.render(),
     renderHint: () => renderHint(),
   });
@@ -255,6 +256,51 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     return true;
   }
 
+  /** Typen ur kommandoraden (0.11.7.1): `PROFIL PR03`, `RÄCKE RÄ02`, eller bara `PR03` medan verktyget är igång. */
+  function typedTarget(text: string): { tool: TypedTool; def: string; label: string } | null {
+    const two = splitArgument(text);
+    const c = two ? findCommand(two.cmd) : null;
+    const tool: TypedTool | null = c?.tool === 'profile' || c?.tool === 'railing' ? c.tool : null;
+    if (two && tool) {
+      const def = typeByName(app.store.doc, tool, two.arg);
+      return def ? { tool, def, label: two.arg.trim().toUpperCase() } : null;
+    }
+    const cur = app.ui.tool;
+    if ((cur === 'profile' || cur === 'railing') && !findCommand(text)) {
+      const def = typeByName(app.store.doc, cur, text);
+      if (def) return { tool: cur, def, label: text.trim().toUpperCase() };
+    }
+    return null;
+  }
+
+  function enterType(text: string): boolean {
+    const t = typedTarget(text);
+    if (!t) {
+      const two = splitArgument(text);
+      const c = two ? findCommand(two.cmd) : null;
+      if (two && (c?.tool === 'profile' || c?.tool === 'railing')) {
+        app.hint(`Ingen ${c.tool === 'profile' ? 'profiltyp' : 'räckestyp'} heter ”${two.arg}”.`, 3000);
+        return true;
+      }
+      return false;
+    }
+    running = true;
+    try {
+      if (app.ui.tool !== t.tool) app.setTool(t.tool);
+      if (t.tool === 'profile') {
+        app.profileTool.options.def = t.def;
+        app.profileTool.options.anchor = undefined;
+      } else app.railingTool.options.def = t.def;
+      app.toolOpts.renderToolOptions();
+      app.view.requestRender();
+    } finally {
+      running = false;
+    }
+    remember(commandFor({ tool: t.tool }));
+    addLog({ text: t.label, kind: 'option' });
+    return true;
+  }
+
   // ---------- Fältet ----------
 
   function submit(): void {
@@ -284,6 +330,12 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     if (isPoint(text)) {
       enterPoint(text);
       clear();
+      refresh();
+      return;
+    }
+    if (enterType(text)) {
+      clear();
+      input.blur();
       refresh();
       return;
     }
@@ -322,6 +374,9 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
       } else if ('angle' in r) h = `Enter: låser riktningen till <b>${nf.format(r.angle)}°</b>; klicka eller skriv avståndet.`;
       else if ('value' in r) h = `Enter: ${escapeHtml(OPS[app.modifier.active!].value!.label.toLowerCase())} <b>${nf.format(r.value)}</b>.`;
       else h = `Enter: punkt i <b>${xy(r.p)}</b>${t.lastPoint() ? `, ${nf.format(Math.hypot(r.p[0] - t.lastPoint()![0], r.p[1] - t.lastPoint()![1]))} mm från förra` : ''}.`;
+    } else if (typedTarget(text)) {
+      const tt = typedTarget(text)!;
+      h = `Enter: <b>${tt.tool === 'profile' ? 'Profil' : 'Räcke'}</b> med typen <b>${escapeHtml(tt.label)}</b>.`;
     } else {
       const m = list.matches[list.picked];
       if (m) h = `Enter: <b>${escapeHtml(m.cmd.label)}</b>${m.cmd.note ? ` (${escapeHtml(m.cmd.note)})` : ''}.${list.matches.length > 1 ? ' Pil upp och ned väljer, Tab fyller i.' : ''}`;

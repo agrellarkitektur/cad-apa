@@ -38,6 +38,7 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
       ['littera:Door', 'Dörrar'],
       ['littera:Window', 'Fönster'],
       ['littera:Ground', 'Stödmurar (ledaren med M-littera)'],
+      ['littera:Profile', 'Profiler'],
       // Det generella littrat (0.10.20.2), och dess sorter var för sig (`showGroupsFor`).
       ['Label', 'Generell littera'],
     ],

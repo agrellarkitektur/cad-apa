@@ -1,6 +1,6 @@
 import type { Vec2 } from '../../repr/primitives';
 import { railValues, type RailingTypeModel, type RailPart } from '../../core/railingTypes';
-import { railingBody, withExtension, type BodyOptions, type RailingBody, type RailProfiles } from '../../elements/railingBody';
+import { railingBody, withExtension, type AlongPiece, type BodyOptions, type PostPiece, type RailingBody, type RailProfiles } from '../../elements/railingBody';
 import { postRing } from '../../elements/railingPlan';
 import { freePath, type GroundFn, type RailPath } from '../../elements/railingGeometry';
 import { escapeHtml } from '../labels';
@@ -75,6 +75,10 @@ function elevation(c: Canvas, body: RailingBody, sel: string | null, only?: (p: 
   }
   for (const q of [...body.repeats, ...body.posts]) {
     if (!ok(q.part)) continue;
+    if (q.sec) {
+      postSide(c, q, sel);
+      continue;
+    }
     const x = q.at[0];
     // Under mark (0.11.3): streckat.
     const g = q.ground !== undefined && q.z0 < q.ground - 1 ? q.ground : null;
@@ -90,8 +94,84 @@ function elevation(c: Canvas, body: RailingBody, sel: string | null, only?: (p: 
     if (!ok(a.part)) continue;
     const e = withExtension(a);
     const top: Vec2[] = e.pts.map((p, i) => [p[0], -e.top[i]]);
+    if (a.sec) {
+      alongSide(c, a, top, sel);
+      continue;
+    }
     poly(c, a.part, sel, [...top, ...top.map(([x, y]): Vec2 => [x, y + a.h]).reverse()]);
   }
+}
+
+/** Tvärsnittets ringar (delprofilernas yttre konturer), i tvärsnittets egna axlar. */
+const secRings = (sec: NonNullable<AlongPiece['sec']>): Vec2[][] => sec.regions.flatMap((r) => r.polys.map((poly) => poly[0] as Vec2[]));
+
+/**
+ * Lägena längs axeln `k` där tvärsnittet har en kant som är parallell med
+ * den andra axeln (en synlig kantlinje sedd från sidan), utom ytterlägena.
+ * En rund profil har inga; en fasad handledare får fasens kanter.
+ */
+function edgeLines(rings: Vec2[][], k: 0 | 1, lo: number, hi: number): number[] {
+  const out: number[] = [];
+  for (const r of rings)
+    for (let i = 0; i < r.length; i++) {
+      const a = r[i];
+      const b = r[(i + 1) % r.length];
+      if (Math.abs(a[k] - b[k]) > 0.5 || Math.hypot(b[0] - a[0], b[1] - a[1]) < 1) continue;
+      const v = (a[k] + b[k]) / 2;
+      if (v > lo + 0.5 && v < hi - 0.5 && !out.some((x) => Math.abs(x - v) < 0.5)) out.push(v);
+    }
+  return out;
+}
+
+/**
+ * En längsgående del med en profiltyp (0.11.7.1) sedd från sidan:
+ * tvärsnittets höjd (vinkelrätt mot linjen) och dess kantlinjer längs
+ * delen, i stället för en rektangel.
+ */
+function alongSide(c: Canvas, a: AlongPiece, top: Vec2[], sel: string | null): void {
+  const rings = secRings(a.sec!);
+  const ys = rings.flat().map((q) => q[1]);
+  if (!ys.length) return;
+  const lo = Math.min(...ys);
+  const hi = Math.max(...ys);
+  // Uppåt i bilden (−y) vinkelrätt mot linjen i varje punkt, med geringen i knäckarna.
+  const up = top.map((p, i) => {
+    const n = (q: Vec2, r: Vec2): Vec2 => {
+      const l = Math.hypot(r[0] - q[0], r[1] - q[1]) || 1;
+      return [(r[1] - q[1]) / l, -(r[0] - q[0]) / l];
+    };
+    const n0 = i > 0 ? n(top[i - 1], p) : null;
+    const n1 = i < top.length - 1 ? n(p, top[i + 1]) : null;
+    const m: Vec2 = n0 && n1 ? [n0[0] + n1[0], n0[1] + n1[1]] : (n0 ?? n1 ?? [0, -1]);
+    const l = Math.hypot(m[0], m[1]) || 1;
+    const u: Vec2 = [m[0] / l, m[1] / l];
+    const ref = n0 ?? n1 ?? [0, -1];
+    const k = Math.max(0.3, u[0] * ref[0] + u[1] * ref[1]);
+    // Normalen pekar uppåt (negativt y) när linjen går åt höger.
+    const s = u[1] > 0 ? -1 : 1;
+    return [(u[0] * s) / k, (u[1] * s) / k] as Vec2;
+  });
+  const at = (y: number): Vec2[] => top.map((p, i) => [p[0] + up[i][0] * y, p[1] + up[i][1] * y]);
+  poly(c, a.part, sel, [...at(hi), ...at(lo).reverse()]);
+  for (const y of edgeLines(rings, 1, lo, hi)) c.out.push(`<polyline class="rtp-edge" data-rt-part="${escapeHtml(a.part.id)}" points="${pts(at(y))}"/>`);
+}
+
+/** En stolpe eller spjäla med en profiltyp (0.11.7.1) sedd från sidan: tvärsnittets bredd längs linjen och dess lodräta kantlinjer. */
+function postSide(c: Canvas, q: PostPiece, sel: string | null): void {
+  const rings = secRings(q.sec!);
+  const xs = rings.flat().map((p) => p[0]);
+  if (!xs.length) return;
+  const lo = Math.min(...xs);
+  const hi = Math.max(...xs);
+  const x = q.at[0];
+  const g = q.ground !== undefined && q.z0 < q.ground - 1 ? q.ground : null;
+  if (g !== null) {
+    grow(c, [[x + lo, -q.z0]]);
+    c.out.push(`<polygon class="rtp-below" data-rt-part="${escapeHtml(q.part.id)}" points="${pts([[x + lo, -q.z0], [x + hi, -q.z0], [x + hi, -g], [x + lo, -g]])}"/>`);
+  }
+  const z0 = g ?? q.z0;
+  poly(c, q.part, sel, [[x + lo, -z0], [x + hi, -z0], [x + hi, -q.z1], [x + lo, -q.z1]]);
+  for (const v of edgeLines(rings, 0, lo, hi)) c.out.push(`<line class="rtp-edge" data-rt-part="${escapeHtml(q.part.id)}" x1="${f(x + v)}" y1="${f(-z0)}" x2="${f(x + v)}" y2="${f(-q.z1)}"/>`);
 }
 
 const bodyOf0 = (line: [number, number][], z: number[], model: RailingTypeModel, vals: ReadonlyMap<string, number>, ground?: GroundFn, opts?: BodyOptions): { path: RailPath; body: RailingBody } | null => {

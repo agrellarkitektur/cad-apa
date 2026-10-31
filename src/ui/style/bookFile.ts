@@ -29,7 +29,7 @@ export async function askPaper(doc: ProjectDoc, title: string, text: string, ok:
 
 /** *Exportera…*: hela stilboken som fil, med bilderna och (om man vill) papperet. */
 export async function exportBookFile(doc: ProjectDoc, save: (file: StyleBookFile) => void): Promise<void> {
-  const choice = await askPaper(doc, 'Exportera stilboken', 'Hela stilboken sparas som fil, med logotypen och materialens texturer. Projektets uppgifter (namn, nummer, fastighet, skede) följer inte med.', 'Exportera');
+  const choice = await askPaper(doc, 'Exportera stilboken', 'Hela stilboken sparas som fil, med logotypen, materialens texturer, profiltyperna, ändprofilerna och räckestyperna. Projektets uppgifter (namn, nummer, fastighet, skede) följer inte med.', 'Exportera');
   if (choice) save(exportBook(doc, choice));
 }
 
@@ -60,7 +60,7 @@ export function importBookFile(store: DocStore, at: ViewCategory | undefined, on
     try {
       const read = readBookFile(JSON.parse(await file.text()), store.doc.graphics, at);
       const choice = read.paper
-        ? await askPaper(store.doc, 'Importera stilboken', `Stilboken i ${file.name} ersätter projektets. Filen har också mallblad eller stämplar; de du kryssar läggs till bredvid de som finns.`, 'Importera', undefined, paperInFile(read))
+        ? await askPaper(store.doc, 'Importera stilboken', `Stilboken i ${file.name} ersätter projektets; typerna i filen ersätter samma typer i projektet, och projektets andra typer är kvar. Filen har också mallblad eller stämplar; de du kryssar läggs till bredvid de som finns.`, 'Importera', undefined, paperInFile(read))
         : { masters: false, stamps: false };
       if (!choice) return;
       // Pennlistan låses (0.10.36), som vid andra ändringar.

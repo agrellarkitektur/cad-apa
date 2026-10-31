@@ -6,10 +6,22 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 31 oktober 2026, efter 0.11.7.
+README. Senast: 31 oktober 2026, efter 0.11.7.1.
 
 ## Läget
 
+- **0.11.7.1 Profilen, det som inte hanns med är klar** (samma format,
+  27), byggd i en session (Carl August: "Kör saker som inte hunnits med i
+  PLAN.md som ny version 0.11.7.1"; Claude valde A–F ur profilens
+  *Inte gjort*): typen i kommandoraden (`PROFIL PR03`, `RÄCKE RÄ02`, eller
+  bara litteran i verktyget), smartspöt för profilen (längs sidan, Tab
+  hela konturen, *Pelare i hörnet*), *Hör till* i panelen, profilens
+  littera och delprofilernas inre linjer i planen, typerna i stilbokens
+  export, import och mall, och profildelarna sedda från sidan i
+  räckestypeditorn. Testerna: 877 på ca 18 s. Provat i Playwright mot
+  `dist/` (kommandoraden, smartspöt längs en vägg och i en smyg, Hör till,
+  litteran i planen). Koden i UTVECKLING.md, Claudes val och det som inte
+  gjordes i PLAN.md.
 - **0.11.7 Ändprofiler och profilen som del är klar** (samma format, 27),
   byggd i en session (Carl August: "Kör 0.11.7"): ändprofilerna PA (egen
   post Typer › Ändprofiler, ritade i sidovyn; avslutet *Ändprofil* i
@@ -25,44 +37,22 @@ README. Senast: 31 oktober 2026, efter 0.11.7.
   profilen som del*), Claudes val och det som inte gjordes i PLAN.md.
   Synpunkternas *är klar*-avsnitt för 0.10.25–0.11.3 ligger nu i
   `cad-apa-synpunkter-arkiv.md` i projektet.
-- **0.11.6.1 Profileditorn, resten är klar** (samma format, 27), byggd i
-  en session (Carl August: "Kör 0.11.6.1"): *Förskjut* (kant eller hela
-  konturen, klick eller skrivet avstånd), *Runda hörn* (radie ovanför
-  ritytan), *Mått* i ritytan (under *Mått* i typen; nytt värde sträcker
-  det bortre, kan peka på en egen parameter, per objekt senare), *Läge*
-  som snäpphjälp (Kant i kant / Ovanpå / Fritt), provmåtten Höjd och
-  Bredd i *Sträckt*, och varningen när ett avslut skär in förbi banans
-  första eller sista bit, när avsluten möts eller skär bort en delprofil.
-  Ren räkning i `core/profileContour.ts`, varningen i `endReach`
-  (`profileBody.ts`). Testerna: 860 på ca 12 s. Provat i Playwright mot
-  `dist/` (runda hörn, förskjut kant och kontur, mått med ny parameter,
-  Sträckt med provmått). Claudes val och det som inte gjordes i PLAN.md.
-- **0.11.6 Profilen är klar** (**nytt format, 27**), byggd i en session
-  (Carl August: "Bygg 0.11.6") efter utredningen (`cad-apa-profil-utredning.md`,
-  besluten A–H). Profiltypen (`Definition.profile`) med delprofiler,
-  ankare, sträckzoner och parametrar; svepningen (`elements/profileBody.ts`:
-  konvexa celler som sveps och kapas, görs om till vanliga 3D-former, så
-  att 3D, sektioner och fasader fungerar som förut); verktyget *Profil*
-  (Linje, Lodrät, Längs kant; Tab spegla), smartmenyns *Profil längs
-  kanten*, *längs hela konturen* och *Pelare här*; panelen med ankare,
-  förskjutning, vridning, uppåt, mått, material per delprofil och
-  avsluten (Inom/Utöver, förskjutning); gering i knäckarna och i en sluten
-  bana; stilbokens flikar **Stil / Typer / Allmänt** och profileditorn
-  (rityta med Välj, Linje, Rektangel, Cirkel, Ankare, Sträckzon, Spegla,
-  Ur DXF…; Tvärsnittet, Sträckt, 3D). PR01–PR05 som förval. Testerna: 852
-  på ca 15 s. Provat i Playwright mot `dist/` (pelare, balk, lutande balk
-  med vågräta ändar, gesims runt en vägg, sockellist med båge, plan, 3D,
-  fasad och sektion, panelen, editorn: rita, dra punkter, 3D och Sträckt).
-  Koden i UTVECKLING.md (*Profilen*), Claudes val och det som inte gjordes
-  i PLAN.md.
+- **0.11.6 Profilen** (nytt format 27) och **0.11.6.1 Profileditorn,
+  resten**: se PLAN.md och UTVECKLING.md.
 - **Granskningen efter 0.11.5** och **0.11.1–0.11.5** (räcket, editorn,
   staket och grindar, byggd trappa, spiraltrappan): se PLAN.md och
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.11.7 pushad till `main` 31 oktober (se git och `gh run
+- **Publicerad:** 0.11.7.1 pushad till `main` 31 oktober (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.11.7.1:** profilobjekt med littera får
+  den i planen (utom i Skiss), och gesimser och andra profiler med flera
+  delprofiler får inre linjer i Normal och Detalj. Nytt: typen i
+  kommandoraden, smartspöt i Profil, *Hör till* i profilens egenskaper,
+  *Visa › Littera › Profiler*, typerna i stilbokens fil, sidovyerna i
+  räckestypeditorn.
 - **Märks i hans ritningar efter 0.11.7:** inget i befintliga ritningar
   (projekt från 0.11.6 öppnas). Stilboken › Typer › *Ändprofiler*,
   *Ändprofil* bland avsluten, fliken *Ändprofilen* i profileditorn,
@@ -80,10 +70,10 @@ README. Senast: 31 oktober 2026, efter 0.11.7.
   konturen* och *Pelare här*.
 - **Märks i hans ritningar efter 0.11.5:** inget i befintliga ritningar.
   *Spiral* i trappverktygets rad.
-- **Versionsnumret** är `0.11.7` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.11.7.1` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.11.7 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.11.7.1 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -165,7 +155,7 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 - ~~0.8.8 Mallblad~~ … ~~0.10.40.1 Granskning efter 0.10.40~~,
   ~~0.11 Trappan~~ … ~~0.11.5 Spiraltrappan~~, ~~Granskning efter
   0.11.5~~, ~~Utredning av profilverktyget~~, ~~0.11.6 Profilen~~, ~~0.11.6.1 Profileditorn, resten~~, ~~0.11.7 Ändprofiler och profilen
-  som del~~ (klara;
+  som del~~, ~~0.11.7.1 Profilen, det som inte hanns med~~ (klara;
   se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
@@ -189,7 +179,7 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
 skrivrätt till repot ("push godkänd"). Fråga Carl August om han provat
-0.11.6–0.11.7 och ställ frågorna om dem (nedan) först, högst fem åt
+0.11.6–0.11.7.1 och ställ frågorna om dem (nedan) först, högst fem åt
 gången. Nästa version är **0.11.8 Dörrar och fönster** (stor; foder,
 tröskel, bleck m.m. som profiler). Den bör utredas med en mockup i Claude
 Design i en egen chatt först (som räcket och profilen), och troligen
@@ -201,9 +191,19 @@ delas i två versioner; föreslå delningen. Ställ frågorna om 0.11.5–0.11.1
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4,
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4,
 0.11.3, 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
+
+**0.11.7.1 efter provning** (Claudes val, se PLAN.md)
+- Litteran står utan ledare och går inte att flytta (som räckets grindar).
+  Behövs den flyttbara, med ledare, som väggarnas?
+- De inre linjerna ritas också för en delprofil som ligger dold under en
+  annan. Störande?
+- Stilbokens export tar alltid med alla profil- och räckestyper (inget
+  kryss). Rätt, eller ett kryss som för mallbladen?
+- *Pelare i hörnet* kommer först nära en sidas ände, också i en dörr- eller
+  fönstersmyg. Bra, eller bara i riktiga hörn?
 
 **0.11.7 efter provning** (Claudes val, se PLAN.md)
 - En ändprofil ligger Utöver som förval och sträcks bara med profilens
@@ -213,8 +213,6 @@ provat.
 - Bara typer kryssade *Del i räcke* (eller *Vangstycke*) står i listorna,
   så PR01 syns inte som stolpe förrän man kryssar. Rätt, eller alla?
 - Ändprofilen räknar inte med vridningen kring ankaret. Behövs det?
-- Sidovyerna i räckestypeditorn ritar profildelar som rektanglar (3D och
-  planen visar formen). Räcker det?
 
 **0.11.6.1 efter provning** (Claudes val, se PLAN.md)
 - Måtten pekar på parametrar bara i typen; ändrade per objekt sträcker

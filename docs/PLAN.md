@@ -180,6 +180,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.6 | Profilen (format 27): profiltypen med delprofiler, ankare och sträckzoner, verktyget *Profil* (linje, lodrät, längs kant), avsluten med inom/utöver och förskjutning, gering, vridning, plan/sektion/fasad/3D, profileditorn, stilbokens flikar Stil/Typer/Allmänt |
 | 0.11.6.1 | Profileditorn, resten: Förskjut (kant eller hela konturen), Runda hörn, Mått i ritytan som kan peka på parametrar, Läge som snäpphjälp, provmått i Sträckt, varningen för avslut som skär in |
 | 0.11.7 | Ändprofiler och profilen som del: ändprofilerna PA (sidovyn, Inom/Utöver, förskjutning, sträckning med höjdzonen), profiltyper som delar i räckestyper (ankare, vridning) och som vangstycke, PR06–PR08 och PA01 |
+| 0.11.7.1 | Profilen, det som inte hanns med: typen i kommandoraden (PROFIL PR03, RÄCKE RÄ02), smartspöt för profilen, Hör till, profilens littera och delprofilernas inre linjer i planen, typerna i stilbokens fil, profildelarna från sidan i räckestypeditorn |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
 val och det som *inte gjordes*. De ligger i arkivet:
@@ -858,6 +859,60 @@ Kvar från 0.11.6: smartspöt för profilen, `PROFIL PR03` i kommandoraden,
 en profil som följer kanten den lades längs, *Hör till* i panelen,
 profilens littera och inre linjer i planen, och profiltyperna i
 stilbokens export. Klickjämförelsen körs i granskningen efter 0.11.8.
+
+### 0.11.7.1 Profilen, det som inte hanns med ✓
+
+Carl August 31 oktober: "Kör saker som inte hunnits med i PLAN.md som ny
+version 0.11.7.1". Claude valde det som hör till profilen och är litet
+(A–F), byggt i samma session. Samma filformat (27): stilboksfilen fick
+det valfria fältet `types`.
+
+**Claudes val (0.11.7.1):**
+
+- **Urvalet**: A `PROFIL PR03`, B smartspöt, C *Hör till*, D littera och
+  inre linjer i planen, E typerna i stilbokens fil, F sidovyerna i
+  räckestypeditorn. Profilen som följer kanten, räckets avslut och
+  ändprofilen med vridning är större och väntar (nedan).
+- **Kommandoraden** tar typen också för Räcke (`RÄCKE RÄ02`), och
+  medan Profil eller Räcke är igång räcker litteran. Litteran jämförs
+  utan skiftläge och mellanslag; en förvald typ som projektet saknar
+  väljs och läggs in med det första objektet. Ändprofiler och grindtyper
+  går inte att välja så.
+- **Smartspöt** följer allt spöet kan följa utom andra profiler: sidan
+  först, hela kedjan med Tab. *Pelare i hörnet* kommer först när
+  markören är inom 10 px från sidans ände (ett hörn, också en
+  dörrsmyg). Profilen ligger på verktygets höjd, som *Längs kant*.
+- **Hör till** flyttar profilen till Platsen eller en våning som räckets
+  (punkternas höjder ändras inte; på Platsen mäts de från ±0).
+- **Littera i planen** är en text 2,5 mm (stilbokens litterahöjd) utan
+  ledare och utan grepp: bredvid pelaren uppe till höger, eller vid mitten
+  av banans längsta raka bit, vriden längs den och på den sida där
+  tvärsnittet når längst. *Visa › Littera › Profiler* (`littera:Profile`);
+  släckt i nya projekts Undertak och Golvplan som dörrarnas och
+  fönstrens.
+- **Inre linjer**: i Normal och Detalj ritas varje delprofil ovanifrån
+  för sig (samma hölje per bit, pennan *kontur* eller *över snittet*),
+  ovanpå det sammanslagna. En delprofil som är dold under en annan ritas
+  ändå (planen räknar inte skymning).
+- **Typerna i stilboken**: alla profiltyper (med ändprofilerna) och
+  räckestyper följer med export, import och mallen, utan kryss. En typ
+  med samma id ersätts (objekten med den följer med), projektets andra
+  typer är kvar; en ny typ vars littera är upptagen får *(importerat)*.
+- **Sidovyerna**: en längsgående profildel ritas mellan tvärsnittets
+  lägsta och högsta y, vinkelrätt mot linjen (gerat i knäckarna); en
+  stolpe eller spjäla mellan tvärsnittets x längs linjen. Kantlinjerna är
+  tvärsnittets kanter parallella med sidovyns riktning (en rund profil har
+  inga).
+
+**Inte gjort i 0.11.7.1:** en profil som följer kanten den lades längs
+(*Längs kant/Lösgör*, mellanstor), ändprofilen med vridningen kring
+ankaret, ändprofilen som skär in förbi knäcken, stolpar och spjälor med
+avslut, räckets avslut *Böjd nedåt* och *Mot vägg*, profilens littera som
+går att flytta (med ledare), och måtten per objekt i profileditorn. Från
+tidigare versioner kvar (0.11–0.11.5, se deras *Inte gjort*): det kopplade
+egna hålet, trappans littera och egna penna, räcket som följer andra
+kanter än trappans, grindens fasad, spiraltrappans egna varningar m.m.
+Klickjämförelsen körs i granskningen efter 0.11.8.
 
 ### 0.11.8 Dörrar och fönster
 

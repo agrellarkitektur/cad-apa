@@ -1258,6 +1258,13 @@
   fill: none;
   stroke: var(--accent);
 }
+.rtp-edge {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 0.6px;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
 .rtp-ground,
 .rtp-gate {
   fill: none;

@@ -1,5 +1,5 @@
 import { newId } from '../core/ids';
-import type { Element, Id, ProjectDoc } from '../core/model';
+import { isSite, type Element, type Id, type ProjectDoc } from '../core/model';
 import { ANCHOR_POS_LABELS, END_GROUP, END_KIND_LABELS, PROFILE_USE_LABELS, ZONE_PARAM, type EndKind, type ProfileTypeModel } from '../core/profileTypes';
 import { profileTypesIn } from '../core/profiles';
 import { profileValues } from '../core/profileTypes';
@@ -32,12 +32,16 @@ export function profileFieldsMarkup(doc: ProjectDoc, el: Element): string {
   const warn = profileWarnings(body);
   if (warn.length) out.push(`<div class="stair-warnings" role="note">${warn.map((w) => `<p class="skew-note"><b>!</b> ${escapeHtml(w)}</p>`).join('')}</div>`);
   out.push(`<div class="fields"><label class="field"><span>Littera</span><input type="text" autocomplete="off" data-key="name:littera" value="${escapeHtml(el.name ?? '')}"></label></div>`);
+  // Var den hör till (0.11.7.1): Platsen eller en våning; avgör vad höjderna mäts från.
+  const homes = doc.storeys.map((s) => `<button data-action="prof-home" data-value="${escapeHtml(s.id)}" aria-pressed="${s.id === el.storey}">${escapeHtml(s.name)}</button>`).join('');
+  out.push(`<div class="field-label">Hör till</div><div class="segmented wrap" role="group">${homes}</div>`);
+  const floor = isSite(el.storey) ? '±0' : 'golvet';
   if (plumb) {
-    out.push(`<div class="field-label">Pelaren</div><div class="fields">${numberField('prof:level', 'Fot över golvet', p.level ?? 0, 'mm')}${numberField('prof:height', 'Höjd', columnHeight(p), 'mm')}</div>`);
+    out.push(`<div class="field-label">Pelaren</div><div class="fields">${numberField('prof:level', `Fot över ${floor}`, p.level ?? 0, 'mm')}${numberField('prof:height', 'Höjd', columnHeight(p), 'mm')}</div>`);
     if (p.height !== undefined) out.push('<div class="row"><button class="btn btn-small" data-action="prof-height-reset" title="Höjden följer våningen: till våningen ovanför">Till våningen ovanför</button></div>');
   } else {
     const z = p.z ?? [];
-    out.push(`<div class="field-label">Punkternas höjd mot golvet</div><div class="fields">${(p.line ?? []).map((_, i) => numberField(`prof:z:${i}`, `Punkt ${i + 1}`, Number(z[i]) || 0, 'mm')).join('')}</div>`);
+    out.push(`<div class="field-label">Punkternas höjd mot ${floor}</div><div class="fields">${(p.line ?? []).map((_, i) => numberField(`prof:z:${i}`, `Punkt ${i + 1}`, Number(z[i]) || 0, 'mm')).join('')}</div>`);
     if ((p.line?.length ?? 0) > 1) out.push(`<div class="row"><button class="btn btn-small" data-action="prof-z-all" title="Alla punkter får den första punktens höjd">Alla som punkt 1</button></div>`);
   }
   // Ankaret (beslut F), förskjutningen och vridningen kring det (beslut E).
@@ -268,6 +272,20 @@ export function profileAction(store: DocStore, ids: Id[], action: string, b: HTM
         const { [name]: _, ...rest } = p.values ?? {};
         return { values: Object.keys(rest).length ? rest : undefined };
       });
+    }
+    case 'prof-home': {
+      const to = b.dataset.value!;
+      if (!store.doc.storeys.some((s) => s.id === to)) return false;
+      store.transact('Flytta till våning', (tx) => {
+        for (const id of ids) {
+          const el = tx.doc.elements[id];
+          if (el?.type !== 'Profile' || el.storey === to) continue;
+          const seen = (el.seenOn ?? []).filter((x) => x !== to);
+          const { seenOn: _, ...rest } = el;
+          tx.putElement({ ...rest, storey: to, ...(seen.length ? { seenOn: seen } : {}) });
+        }
+      });
+      return true;
     }
     case 'prof-end-beyond': {
       const end = b.dataset.end === 'end' ? 'end' : 'start';

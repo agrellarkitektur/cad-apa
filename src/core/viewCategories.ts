@@ -87,7 +87,7 @@ const cat = (id: string, name: string, type: ViewType, scale: number, show: Part
 });
 
 /** Det som döljs i planer utan inredning (0.10.33): möbler, dörrarnas öppningssätt och öppningarnas littera. */
-const BARE = ['Furniture', 'swing', 'littera:Door', 'littera:Window'];
+const BARE = ['Furniture', 'swing', 'littera:Door', 'littera:Window', 'littera:Profile'];
 
 /**
  * Kategorierna i ett nytt projekt: Platsens tre förinställningar (0.10.25)
