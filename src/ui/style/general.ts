@@ -1,3 +1,5 @@
+import { openingSettingsOf, type OpeningRule, type OpeningSettings } from '../../core/general';
+import { renumberOpenings } from '../../elements/openingLittera';
 import type { StyleBook } from '../../core/graphics';
 import { DEFAULT_WEIGHTS, generalOf, OFFICE_TAGS, tagKey, weightList, type GeneralSettings, type LengthUnit, type OfficeInfo } from '../../core/general';
 import type { ProjectDoc } from '../../core/model';
@@ -6,7 +8,7 @@ import { BUILT_IN, isBuiltIn } from '../../core/sheetFields';
 import { renameProject, SHEET_TEXT_HEIGHTS } from '../../core/sheets';
 import type { DocStore } from '../../core/store';
 import { imageAsset, IMAGE_ACCEPT, pickFiles } from '../app/imageFile';
-import { askChoice, askConfirm, askText } from '../ask';
+import { askChecks, askChoice, askConfirm, askText } from '../ask';
 import { icons } from '../icons';
 import { escapeHtml as esc } from '../labels';
 
@@ -120,6 +122,7 @@ export function generalMarkup(doc: ProjectDoc): string {
         ${select('general:areaDecimals', 'Decimaler i areor', g.areaDecimals, range(0, 2, (n) => `${n} (${(12.5).toLocaleString('sv-SE', { minimumFractionDigits: n, maximumFractionDigits: n })} m²)`))}
       </div>
     </section>
+    ${openingsSection(doc)}
     <section class="style-labels gen-weights">
       <h3>Tjocklekar</h3>
       <p class="note">Tjocklekarna som listorna visar, i mm (alltid också <i>Ingen linje</i>). Skriv dem med mellanslag mellan; en tjocklek som redan används i ritningen visas ändå där den används.</p>
@@ -128,6 +131,34 @@ export function generalMarkup(doc: ProjectDoc): string {
       ${own.weights ? '<button type="button" class="btn btn-ghost" data-gen-action="weights-reset">Återställ</button>' : ''}</div>
     </section>
     ${tagTable(doc)}`;
+}
+
+/**
+ * Öppningarna (0.11.8, tavla 6): litteraregeln, formlerna, överkant karm,
+ * drevmånen och hängningen sedd från; *Numrera om*.
+ */
+function openingsSection(doc: ProjectDoc): string {
+  const o = openingSettingsOf(doc.graphics);
+  const rule = (v: OpeningRule, label: string, desc: string) =>
+    `<label class="check" title="${esc(desc)}"><input type="radio" name="gen-opening-rule" data-gen="opening:rule" value="${v}"${o.rule === v ? ' checked' : ''}> ${esc(label)} <span class="gen-desc">${esc(desc)}</span></label>`;
+  return `<section class="style-labels gen-openings">
+      <h3>Fönster och dörrar</h3>
+      <p class="note">Litteran hör till objektet och följer regeln; alla objekt räknas om när den byts, utom de låsta. Formeln som för annan littera, t.ex. <code>YD{nr:2}</code>.</p>
+      <div class="gen-rules">
+        ${rule('module', 'Bara bokstav och modulmått', 'F 12×13 · skiss, tidigt bygglov')}
+        ${rule('type', 'Typ och mått', 'F01, F02 … · förval')}
+        ${rule('hinge', 'Typ, mått och hängning', 'V och H var för sig · bygghandling')}
+      </div>
+      <div class="fields gen-grid">
+        ${text('opening:Window', 'Formel, fönster', o.formulas.Window, { ph: 'F{nr:2}' })}
+        ${text('opening:Door', 'Formel, dörrar', o.formulas.Door, { ph: 'D{nr:2}' })}
+        ${text('opening:WallHole', 'Formel, vägghål', o.formulas.WallHole, { ph: 'V{nr:2}' })}
+        ${text('opening:head', 'Överkant karm', String(o.head), { title: 'Förvalet för nya fönster, mm över golvet, så att dörrar och fönster linjerar' })}
+        ${text('opening:gap', 'Drevmån per sida', String(o.gap), { title: 'mm; modulmåttet räknar in den: 10 × 13 är 980 × 1 280' })}
+        ${select('opening:hingeFrom', 'Hängning sedd från', o.hingeFrom, [['outside', 'Utsidan'], ['inside', 'Insidan']])}
+      </div>
+      <div class="row"><button type="button" class="btn" data-gen-action="renumber-openings"${o.rule === 'module' ? ' disabled title="Regeln Bara bokstav och modulmått har inga nummer"' : ''}>Numrera om…</button></div>
+    </section>`;
 }
 
 /** Stilboken med ändrade allmänna inställningar (en tom tas bort). */
@@ -190,6 +221,24 @@ export function generalChange(store: DocStore, input: HTMLInputElement | HTMLSel
       }),
       'Tjocklekstabellen',
     );
+  } else if (kind === 'opening') {
+    setBook(
+      withGeneral(book, (g) => {
+        const o: OpeningSettings = { ...(g.openings ?? {}), ...(g.openings?.formulas ? { formulas: { ...g.openings.formulas } } : {}) };
+        if (name === 'rule') o.rule = v as OpeningRule;
+        else if (name === 'hingeFrom') o.hingeFrom = v === 'inside' ? 'inside' : 'outside';
+        else if (name === 'head' || name === 'gap') {
+          const n = Math.round(Number(v.replace(',', '.')));
+          if (Number.isFinite(n) && n >= 0) o[name] = n;
+        } else if (name === 'Window' || name === 'Door' || name === 'WallHole') {
+          o.formulas = { ...(o.formulas ?? {}) };
+          if (v) o.formulas[name] = v;
+          else delete o.formulas[name];
+        }
+        g.openings = o;
+      }),
+      `Allmänt: ${input.closest('label')?.querySelector('span')?.firstChild?.textContent?.trim() || 'litteraregeln'}`,
+    );
   } else if (kind === 'general') {
     const k = name as keyof GeneralSettings;
     setBook(
@@ -222,7 +271,8 @@ export async function generalClick(store: DocStore, target: HTMLElement, setBook
     }
   } else if (action === 'logo-remove') {
     if (await askConfirm('Ta bort logotypen?', 'Logotyperna som ligger på bladen har kvar bilden.', 'Ta bort')) setOfficeLogo(store, null);
-  } else if (action === 'weights-reset') setBook(withGeneral(book, (g) => delete g.weights), 'Återställ tjocklekstabellen');
+  } else if (action === 'renumber-openings') await renumberDialog(store);
+  else if (action === 'weights-reset') setBook(withGeneral(book, (g) => delete g.weights), 'Återställ tjocklekstabellen');
   else if (action === 'otag-add' || action === 'ptag-add') {
     const raw = await askText(action === 'otag-add' ? 'Ny tagg i kontoret' : 'Ny tagg i projektet', '', 'Lägg till');
     const k = raw ? tagKey(raw.replace(/[{}]/g, '')) : '';
@@ -239,4 +289,22 @@ export async function generalClick(store: DocStore, target: HTMLElement, setBook
     setBook(withOffice(book, (o) => delete o.tags?.[k]), `Ta bort taggen {${k}}`);
   } else if (action.startsWith('ptag-del:')) removeProjectField(store, action.slice('ptag-del:'.length));
   return true;
+}
+
+/** *Numrera om* (0.11.8): sorterna, förhandsvisningen och numreringen. */
+async function renumberDialog(store: DocStore): Promise<void> {
+  const checks = await askChecks(
+    'Numrera om',
+    'Sorteras efter våning, sedan fasad (N · Ö · S · V) och vänster till höger sett utifrån. Samma kombination får samma nummer; låsta hoppas över.',
+    [
+      { key: 'Window', label: 'Fönster', checked: true },
+      { key: 'Door', label: 'Dörrar', checked: true },
+      { key: 'WallHole', label: 'Vägghål', checked: false },
+    ],
+    'Numrera om',
+  );
+  if (!checks) return;
+  const types = Object.keys(checks).filter((k) => checks[k]);
+  const { numbers, changes } = renumberOpenings(store.doc, types);
+  store.transact(`Numrera om (${changes.length} ändras)`, (tx) => tx.setProject({ ...tx.doc.project, openingNumbers: numbers }));
 }

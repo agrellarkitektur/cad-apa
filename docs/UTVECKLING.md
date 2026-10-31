@@ -670,6 +670,63 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Dörrar och fönster: öppningstyperna (0.11.8, format 28)
+
+- **Typen** i `core/openingTypes.ts`: `OpeningTypeModel` (`kind` window,
+  door eller hole, `group`, `frame` {width, depth, bottom}, `size`
+  förvalt modulmått, `sill`, `cols`/`rows` som `Track` {size, unit mm|fr},
+  `mullion`, `transom`, `sash`, `sashDepth`, `leaf`, `cells`, `spec`,
+  `min`/`max`). En luft (`OpeningCell`) har `col`, `row`, spann, `fill`,
+  `op` (`OpKind`), `hinge` (sett utifrån), `leaf` och `inward`.
+  `layoutOpening(m, w, h)` ger karmens delar, posterna, tvärstyckena och
+  lufternas rutor (u från vänster sett utifrån, z uppåt från karmens
+  underkant); rutor utan luft blir fast glas. `frameFromModule` och
+  `holeFromFrame` räknar med drevmånen (`standsOnFloor`: dörrar och
+  `sill: 0`). `DEFAULT_OPENING_TYPES` har stabila id (`t-of-…`, `t-dd-…`);
+  `STARTER_OPENING_TYPES` kommer med nya projekt. `normalizeOpeningModel`
+  läses i `parse` (`normalizeDefinitions` i `storage/format.ts`).
+- **Kommandona** i `core/openings.ts` (lägg in förvalda, ny, duplicera, ta
+  bort, `updateOpeningType`, grupperna ur typerna).
+- **Inställningarna** i stilboken › Allmänt: `GeneralSettings.openings`
+  (`rule`, `formulas`, `gap`, `head`, `hingeFrom`), läses med
+  `openingSettingsOf` (`core/general.ts`).
+- **Objektet**: `OpeningObjParams` i `elements/openingSpec.ts`. Registret
+  har fått `derive(out, el, doc, def)`, som körs i `resolveParams` efter
+  sammanslagningen och räknar `frameW`, `frameH`, `holeW`, `holeH`, `gap`,
+  `floor`, karmens mått ur typen och bröstningen ur överkanten
+  (`deriveOpening`); cachen räknas om när `doc.graphics` byts.
+  `holeWidth` och `holeHeight` i `wallBodies.ts` läser `holeW`/`holeH`
+  (andra hål: modulmåttet). `uMapping` går från karmens u till läget längs
+  väggen och avgör speglingen ur `hinge`; `viewFace` ger sidan öppningen
+  ses ifrån; `hingeLetters` V/H.
+- **Ritningen** i `elements/openingPlan.ts`: `openingGeo` (allt planen och
+  3D behöver), `openingModel3dFor` och `openingPlanFor`, som `door.ts`,
+  `window.ts` och `wallHole.ts` använder. 3D i `openingModel3d`
+  (`openingModel.ts`): karm, poster, bågar, blad och glas ur rutnätet,
+  symbolen per luft (`symbol`) på båda sidor, heldragen från den sida
+  luften öppnas mot. I planen snittas karmen och posterna som korsar
+  snitthöjden (`cutInKarm`); dörrbladen i `leafPrims`.
+- **Litteran** i `elements/openingLittera.ts`: `openingLitteras(doc)`
+  (cache per `doc.elements`, `doc.graphics` och `doc.project`), nyckeln
+  typ|karmyttermått(|hängning), sorteringen våning, fasad (bäring mot
+  norrpilen) och läge sett utifrån. `missingOpeningNumbers` ger de nya
+  kombinationerna; `ui/app/openingNumbers.ts` sparar dem efter varje
+  ändring i samma ångra-steg (`merge`). `renumberOpenings` för *Numrera
+  om*. `litteraField` i `littera.ts` ger `{typ}`/`{littera}` ur regeln.
+- **Gränssnittet**: verktygsraden `ui/app/openingToolOptions.ts`
+  (`OpeningTool.options`: module, frame, heightRef, height, mirror, place,
+  inset; `preview()` ger det räknade), egenskaperna `ui/openingFields.ts`
+  (nycklar `open:…`, `applyOpeningField`), smartmenyns val
+  `ui/openingActions.ts` (`swap-type`, `swap-size`, `same-littera`,
+  `lock-littera`; `open-opening-type` i `app/actions.ts`), editorn
+  `ui/style/openingTypes.ts` (resursen `openings` i `styleDialog.ts`, läget
+  `ot`, fält `data-ot`, knappar `data-ot-act`) med förhandsvisningen
+  `ui/style/openingPreview.ts` (`data-ot-cell` per luft), Allmänt i
+  `ui/style/general.ts` (`opening:…`, *Numrera om* `renumber-openings`).
+- **Pennor**: nya ställen `windowMullion` och `windowSwing` i
+  `repr/objectPens.ts`.
+- **Tester**: `tests/v0118.test.ts`; referensritningarna är omskrivna.
+
 ## Trappan och räcket, det som inte hanns med (0.11.7.3, format 27)
 
 - **Utomhus**: `outdoor` i `StairParams`; `stairFieldsMarkup` räknar

@@ -113,6 +113,12 @@ export interface ElementType<P extends object = Record<string, unknown>> {
    */
   storeyParams?: (storey: Storey) => Record<string, unknown>;
   /**
+   * Värden som räknas fram ur de sammanslagna parametrarna, typen och
+   * stilboken (0.11.8): dörrarnas och fönstrens karmytter- och hålmått,
+   * bröstningen ur överkanten. `out` ändras på plats innan det fryses.
+   */
+  derive?: (out: Record<string, unknown>, el: Element<any>, doc: ProjectDoc, def: ProjectDoc['definitions'][string] | undefined) => void;
+  /**
    * Syns i 3D-vyn men inte i fasader och sektioner (0.10.3): grannhus och
    * träd ur platsen, som annars skulle fylla fasaderna med det som står långt bort.
    */
@@ -186,12 +192,15 @@ export function resolveParams<P>(doc: ProjectDoc, el: Element<any>): P {
   // Det som följer våningen (0.9), t.ex. väggens höjd; våningslistan byts ut när en våning ändras.
   const storey = t?.storeyParams ? doc.storeys.find((s) => s.id === el.storey) : undefined;
   const hit = resolved.get(el);
-  if (hit && hit.def === def && hit.storey === storey) return hit.out as P;
+  // Det som räknas ur stilboken (0.11.8) räknas om när stilboken byts.
+  const book = t?.derive ? doc.graphics : undefined;
+  if (hit && hit.def === def && hit.storey === storey && hit.book === book) return hit.out as P;
   const out: Record<string, unknown> = { ...(t?.defaults() ?? {}), ...(storey ? t!.storeyParams!(storey) : {}), ...(def?.params ?? {}), ...el.params };
   if (def && t?.typeParams) for (const k of t.typeParams) if (k in def.params) out[k] = def.params[k];
+  t?.derive?.(out, el, doc, def);
   if (import.meta.env?.DEV) Object.freeze(out);
-  resolved.set(el, { def, storey, out });
+  resolved.set(el, { def, storey, book, out });
   return out as P;
 }
 
-const resolved = new WeakMap<Element<any>, { def: unknown; storey: unknown; out: Record<string, unknown> }>();
+const resolved = new WeakMap<Element<any>, { def: unknown; storey: unknown; book: unknown; out: Record<string, unknown> }>();

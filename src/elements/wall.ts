@@ -23,6 +23,7 @@ export {
   computeWallShapes,
   FRAME_LESS,
   HOLE_EXTRA,
+  holeHeight,
   holeWidth,
   JOIN_TOLERANCE,
   leanedShape,

@@ -2,17 +2,31 @@ import { addElements } from '../../core/commands';
 import type { Element, Id } from '../../core/model';
 import { actionOf } from '../../core/states';
 import { resolveParams } from '../../elements/registry';
-import { wallFrame, type OpeningParams, type WallFrame, type WallParams } from '../../elements/wall';
+import { holeWidth, wallFrame, type OpeningParams, type WallFrame, type WallParams } from '../../elements/wall';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
 import { pxToMm, type ToolHost } from './host';
+import { openingModelOf, uMapping, viewFace, type OpeningObjParams } from '../../elements/openingSpec';
+import { outsideSide } from '../../elements/wallSides';
 
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 
 export interface OpeningToolOptions {
-  /** Typen (littera) som sätts in. */
+  /** Typen som sätts in. */
   definition: Id | null;
+  /** Modulmåttet (mm), eller null för typens förval. */
+  module?: [number, number] | null;
+  /** Eget karmyttermått (mm), när det inte följer modulen. */
+  frame?: [number, number] | null;
+  /** Höjdläget för fönster: överkant karm (förval) eller bröstning, med värdet; null = stilbokens/typens. */
+  heightRef?: 'head' | 'sill';
+  height?: number | null;
+  /** *Spegla* (S): hängningen spegelvänd mot typen (sedd utifrån). */
+  mirror?: boolean;
+  /** Karmens läge och avståndet. */
+  place?: 'out' | 'in' | 'mid' | null;
+  inset?: number | null;
 }
 
 interface Placement {
@@ -85,23 +99,56 @@ export class OpeningTool implements ViewTool {
       this.host.hint('Öppningen krockar med en annan öppning i väggen.');
       return;
     }
-    const params: Record<string, unknown> = { at: Math.round(pl.at) };
+    const o = this.options;
+    const doc = this.host.store.doc;
+    const params: Record<string, unknown> = { at: Math.round(pl.at), ...this.sizeParams() };
+    const m = openingModelOf(doc, { type: this.kind, definition: o.definition ?? undefined });
+    const outside = outsideSide(doc, pl.wall);
     if (this.kind === 'Door') {
       params.swing = pl.side;
-      params.hinge = pl.hinge;
+      // Gångjärnen närmast markören; *Spegla* byter.
+      params.hinge = o.mirror ? (pl.hinge === 'start' ? 'end' : 'start') : pl.hinge;
+    } else {
+      // Fönstret som typen är ritad, sett utifrån; *Spegla* byter.
+      const vf = viewFace(outside, 'window', undefined);
+      const natural = uMapping(m, vf, 'start', 0, 1).mirrored ? 'end' : 'start';
+      params.hinge = o.mirror ? (natural === 'start' ? 'end' : 'start') : natural;
+      if (o.height !== null && o.height !== undefined) {
+        if (o.heightRef === 'sill') params.sill = o.height;
+        else params.head = o.height;
+      }
+      if (o.heightRef) params.heightRef = o.heightRef;
     }
-    if (!this.options.definition) params.width = pl.width;
+    if (o.place) params.place = o.place;
+    if (o.inset !== null && o.inset !== undefined) params.inset = o.inset;
     addElements(
       this.host.store,
-      [{ type: this.kind, storey: this.host.storey(), tags: [], host: pl.wall.id, definition: this.options.definition ?? undefined, params, props: {} }],
+      [{ type: this.kind, storey: this.host.storey(), tags: [], host: pl.wall.id, definition: o.definition ?? undefined, params, props: {} }],
       this.host.activeState(),
       this.kind === 'Door' ? 'Sätt in dörr' : 'Sätt in fönster',
     );
   }
 
+  /** Måtten verktyget sätter: modulmåttet och ett eget karmyttermått. */
+  sizeParams(): Record<string, unknown> {
+    const o = this.options;
+    const out: Record<string, unknown> = {};
+    if (o.module) {
+      out.width = o.module[0];
+      out.height = o.module[1];
+    }
+    if (o.frame) out.frame = o.frame;
+    return out;
+  }
+
+  /** Det objektet skulle få, räknat som ett riktigt objekt (karmytter- och hålmått). */
+  preview(): OpeningObjParams {
+    const fake = { id: 'preview', type: this.kind, storey: '', states: [], tags: [], definition: this.options.definition ?? undefined, params: this.sizeParams(), props: {} };
+    return resolveParams<OpeningObjParams>(this.host.store.doc, fake);
+  }
+
   private width(): number {
-    const fake = { id: 'preview', type: this.kind, storey: '', states: [], tags: [], definition: this.options.definition ?? undefined, params: {}, props: {} };
-    return resolveParams<OpeningParams>(this.host.store.doc, fake).width;
+    return this.preview().holeW;
   }
 
   private track(p: ViewPointer): void {
@@ -138,7 +185,7 @@ export class OpeningTool implements ViewTool {
     const blocked = Object.values(doc.elements).some((o) => {
       if (o.host !== el.id || actionOf(o, view) === 'absent') return false;
       const op = resolveParams<OpeningParams>(doc, o);
-      return Math.abs(op.at - at) < (op.width + width) / 2 + 20;
+      return Math.abs(op.at - at) < (holeWidth(op) + width) / 2 + 20;
     });
     const left = at - width / 2;
     const right = f.length - (at + width / 2);

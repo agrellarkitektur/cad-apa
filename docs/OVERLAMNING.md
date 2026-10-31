@@ -6,10 +6,34 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 31 oktober 2026, efter 0.11.7.3.
+README. Senast: 31 oktober 2026, efter 0.11.8.
 
 ## Läget
 
+- **0.11.8 Dörrar och fönster: öppningstyperna är klar** (**nytt format
+  28**), byggd i en session efter mockupen (Carl August: "Kör 0.11.8
+  dörrar och fönster enligt mockup i föregående session"). Specifikationen
+  är `cad-apa-dorrar-fonster-utredning.md` i projektet och mockupen *Dörrar
+  och fönster – utredning 0.11.8* (Claude Design). Typen är en karm med
+  ett rutnät av lufter; förvalda typer med beskrivande namn; editorn under
+  stilboken › Typer › *Fönster och dörrar*; modulmått med drevmånen och
+  fritt karmyttermått; överkant karm; litteraregeln, formeln, sparade
+  nummer och *Numrera om* under Allmänt; verktygen, smartmenyn och
+  egenskaperna; plan, fasad, sektion och 3D ur typen; vägghål och
+  uppställningar i formatet. Testerna: 899 på ca 18 s (referensritningarna
+  omskrivna). Provat i Playwright mot `dist/` (verktygsraden, ett nytt
+  fönster med sparat nummer, egenskaperna, editorn med en vald luft,
+  Allmänt, fasad i Detalj, 3D). Koden i UTVECKLING.md, Claudes val och det
+  som inte gjordes i PLAN.md.
+- **Märks i hans ritningar efter 0.11.8:** projekt och autospar från
+  0.11.6–0.11.7.3 öppnas inte (nytt format). Hålet är modulmåttet (förut
+  + 10), karmen modulmåttet minus drevmånen; fönster sitter i liv ute
+  (förut 50 in) med överkant karm 2 100; ytterdörrar i liv på slagsidan.
+  Litteran för dörrar och fönster är F01, D01 … efter typ och mått (förut
+  typens namn D1, F1). Fönstren har slag i planen och
+  öppningssymbolen i fasaden. Nytt: *Fönster och dörrar* under stilboken
+  › Typer, *Fönster och dörrar* under Allmänt, verktygsraden, smartmenyns
+  val och egenskapernas avsnitt.
 - **0.11.7.3 Trappan och räcket, det som inte hanns med är klar** (samma
   format, 27; valfria fält `outdoor`, `contrastMaterial` och `pattern`),
   byggd i en session (Carl August: "Kör saker som inte hunnits med i
@@ -49,7 +73,7 @@ README. Senast: 31 oktober 2026, efter 0.11.7.3.
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.11.7.3 pushad till `main` 31 oktober (se git och `gh run
+- **Publicerad:** 0.11.8 pushad till `main` 31 oktober (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
 - **Märks i hans ritningar efter 0.11.7.3:** trapporna får littera i
@@ -86,10 +110,10 @@ README. Senast: 31 oktober 2026, efter 0.11.7.3.
   konturen* och *Pelare här*.
 - **Märks i hans ritningar efter 0.11.5:** inget i befintliga ritningar.
   *Spiral* i trappverktygets rad.
-- **Versionsnumret** är `0.11.7.3` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.11.8` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.11.7.3 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.11.8 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -173,12 +197,15 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   0.11.5~~, ~~Utredning av profilverktyget~~, ~~0.11.6 Profilen~~, ~~0.11.6.1 Profileditorn, resten~~, ~~0.11.7 Ändprofiler och profilen
   som del~~, ~~0.11.7.1 Profilen, det som inte hanns med~~, ~~0.11.7.2 Räckets
   avslut och spiraltrappan~~, ~~0.11.7.3 Trappan och räcket, det som inte
-  hanns med~~ (klara;
+  hanns med~~, ~~0.11.8 Dörrar och fönster: öppningstyperna~~ (klara;
   se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.11.8 Dörrar och fönster** (stor; foder, tröskel, bleck m.m. som
-  profiler)
+- **0.11.8.1 Detalj och beslag** (mellanstor; spröjs, beslag, bleck med
+  droppnäsa, foder, fönsterbänk, trösklar, varningarna,
+  tillgänglighetscirkeln; gärna det som inte hanns med i 0.11.8)
+- **0.11.8.2 Smart och vägghål** (mellanstor; fasaden som arbetsyta,
+  linjering, lika avstånd, dagsljus, vägghålen med verktyg och typer)
 - **Granskning efter 0.11.8**: stilmallsstegen i klickjämförelsen
   omskrivna mot stilboken, `stairGeometry.ts` och `view3d.ts` delade,
   klickjämförelsen med profiler, dörrar och fönster
@@ -197,18 +224,29 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
 skrivrätt till repot ("push godkänd"). Fråga Carl August om han provat
-0.11.6–0.11.7.3 och ställ frågorna om dem (nedan) först, högst fem åt
-gången. Nästa version är **0.11.8 Dörrar och fönster** (stor; foder,
-tröskel, bleck m.m. som profiler). Den bör utredas med en mockup i Claude
-Design i en egen chatt först (som räcket och profilen), och troligen
-delas i två versioner; föreslå delningen. Ställ frågorna om 0.11.5–0.11.1
-(nedan) när han provat.
+0.11.8 och ställ frågorna om den (nedan) först, högst fem åt gången.
+Nästa version är **0.11.8.1 Detalj och beslag** (mellanstor; se PLAN.md
+och utredningen i projektet). Ställ frågorna om 0.11.7.3–0.11 när han
+provat.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
-fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
+fråga.
+
+**0.11.8 efter provning** (Claudes val, se PLAN.md)
+- Hålet är nu modulmåttet (10 × 13 → 1 000 × 1 300) och karmen 980 ×
+  1 280, med drevmånen 10. Du har tidigare skrivit hål på 10 (1 010 ×
+  2 110). Ska drevmånen vara 15 som förval, eller är 10 rätt?
+- Ytterdörrar sitter i liv på den sida de slår mot, fönster i liv ute
+  (0). Rätt förval?
+- Fönstrens slag ritas i planen i Normal (bladlinje och streckad båge).
+  Lagom, eller bara i Detalj?
+- Litterans nummer sparas för varje kombination första gången den
+  dyker upp; ett nytt fönster får nästa lediga nummer även om det sitter
+  först i fasaden. Bra, eller ska numren följa ordningen tills man låser?
+- Pardörrens passiva blad är det högra sett utifrån. Rätt förval? Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
 om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.7.3, 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4,
 0.11.3, 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.

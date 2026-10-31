@@ -1,28 +1,10 @@
-import { detailOf } from '../core/states';
-import { add, scale, sub } from '../geometry/vec';
-import { objectPen } from '../repr/objectPens';
-import type { Primitive, Vec2 } from '../repr/primitives';
-import { FRAME_DEFAULTS, openingZone, uncutOpening, type FrameParams } from './opening';
-import { litteraTag, showLittera } from './littera';
 import type { ElementType } from './registry';
-import { FRAME_LESS, HOLE_EXTRA, openingMarks, openingRings, leanedShape, openingZoneInPlan, planWallParams, wallFrame, type OpeningParams, type WallParams } from './wall';
-import { doorModel } from './openingModel';
-import { levelOf, liftShape } from '../repr/solids';
+import { openingRings, planWallParams, wallFrame } from './wall';
+import { deriveOpening, type OpeningObjParams } from './openingSpec';
+import { openingModel3dFor, openingPlanFor } from './openingPlan';
 
-export interface DoorParams extends OpeningParams, FrameParams {
-  height: number;
-  /** Slagsida: 1 = vänster om väggens riktning, -1 = höger. */
-  swing: 1 | -1;
-  /** Vilken sida av öppningen gångjärnen sitter, sett längs väggens riktning. */
-  hinge: 'start' | 'end';
-  /** Glasad dörr: ritas med en glasningslinje i karmens mitt. */
-  glazed: boolean;
-}
-
-/** Dörrbladets tjocklek, mm. */
-const LEAF = 40;
-/** Falsens bredd i karmen, där bladet ligger an, mm. */
-const REBATE = 12;
+/** Dörrens parametrar (0.11.8): typen ger bladen och karmen, objektet mått, slagsida och hängning. */
+export type DoorParams = OpeningObjParams;
 
 export const doorType: ElementType<DoorParams> = {
   type: 'Door',
@@ -33,141 +15,12 @@ export const doorType: ElementType<DoorParams> = {
   drawOrder: 20,
   compares: true,
   hosted: true,
-  typeParams: ['width', 'height'],
-  defaults: () => ({ at: 1000, width: 900, height: 2100, swing: 1, hinge: 'start', glazed: false, ...FRAME_DEFAULTS }),
+  defaults: () => ({ at: 1000, swing: 1, hinge: 'start', inset: null }) as unknown as DoorParams,
+  derive: deriveOpening('door'),
   pickShape(el, ctx) {
     const host = el.host ? ctx.doc.elements[el.host] : undefined;
     return host ? openingRings(wallFrame(planWallParams(ctx, host)), ctx.params<DoorParams>(el)) : [];
   },
-  model3d(el, ctx) {
-    const host = el.host ? ctx.doc.elements[el.host] : undefined;
-    if (!host) return [];
-    const p = ctx.params<DoorParams>(el);
-    const z = openingZone(ctx, host, p);
-    // Dörren sitter i väggens fot (0.10.13).
-    const wp = ctx.params<WallParams>(host);
-    const lift = levelOf(wp);
-    return doorModel(
-      el.id,
-      {
-        f: z.f,
-        s1: z.s1,
-        s2: z.s2,
-        h1: z.h1,
-        h2: z.h2,
-        lo: z.lo,
-        hi: z.hi,
-        // Karmens höjd är modulmåttet minus 10 mm (21 M ger 2090), hålet plus 10.
-        height: p.height - FRAME_LESS,
-        holeTop: p.height + HOLE_EXTRA,
-        frameWidth: p.frameWidth,
-        swing: p.swing,
-        hinge: p.hinge,
-        glazed: !!p.glazed,
-        leaf: LEAF,
-        showSwing: !ctx.view.hide?.includes('swing'),
-      },
-      detailOf(ctx.view, 'model'),
-    ).map((s) => leanedShape(liftShape(s, lift), wp));
-  },
-  plan(el, ctx) {
-    const host = el.host ? ctx.doc.elements[el.host] : undefined;
-    if (!host) return [];
-    const p = ctx.params<DoorParams>(el);
-    // När rivet döljs syns bara igensättningen av en riven dörr.
-    if (ctx.actionOf(el) === 'demolished' && ctx.view.hideDemolished) return openingMarks(el, host, p, ctx, { infillWhenRemoved: true });
-    // En dörr över eller under planens snitt (0.10.16): väggen går obruten förbi.
-    const zone = openingZoneInPlan(ctx, ctx.params<WallParams>(host), p);
-    if (zone !== 'cut') return uncutOpening(ctx, el, host, p, zone, false);
-    const level = ctx.view.detail ?? 'normal';
-    const sketch = level === 'sketch';
-    const detail = level === 'detail';
-    const origin = { objectId: el.id, objectType: 'Door' };
-    // Pennorna för karmen, bladet och slagbågen ur stilboken (0.10.37).
-    const pens = { cut: objectPen(ctx.style, 'doorFrameCut'), view: objectPen(ctx.style, 'doorLeaf'), symbol: objectPen(ctx.style, 'doorSwing') };
-    const prims: Primitive[] = [];
-
-    // Skiss: bladet från väggens liv över hela hålet. Normal: karmar och blad
-    // från karmens liv. Detalj: karmar med falsar och blad med tjocklek.
-    const z = openingZone(ctx, host, p, true);
-    const { f, s1, s2, h1, h2, lo, hi } = z;
-    const fw = sketch ? 0 : p.frameWidth;
-    const a1 = sketch ? h1 : s1;
-    const a2 = sketch ? h2 : s2;
-    const leafO = sketch ? p.swing * f.half : p.swing === 1 ? hi : lo;
-    const rebate = detail ? REBATE : 0;
-    const sHinge = p.hinge === 'start' ? a1 + fw - rebate : a2 - fw + rebate;
-    const clear = a2 - a1 - 2 * fw;
-    const leafLen = clear + 2 * rebate;
-    const hinge = f.at(sHinge, leafO);
-
-    if (!sketch) {
-      const other = leafO === hi ? lo : hi;
-      const dd = Math.sign(other - leafO);
-      // Karmen i snitt; i Detalj med falsen där bladet ligger an.
-      const frame = (outer: number, inner: number): Primitive => {
-        const dir = Math.sign(inner - outer);
-        const pts: Vec2[] = detail
-          ? [
-              f.at(outer, other),
-              f.at(inner, other),
-              f.at(inner, leafO + dd * LEAF),
-              f.at(inner - dir * REBATE, leafO + dd * LEAF),
-              f.at(inner - dir * REBATE, leafO),
-              f.at(outer, leafO),
-            ]
-          : [f.at(outer, lo), f.at(inner, lo), f.at(inner, hi), f.at(outer, hi)];
-        return { kind: 'polyline', points: pts, closed: true, pen: pens.cut, origin: { ...origin, part: 'karm' } };
-      };
-      prims.push(frame(s1, s1 + fw), frame(s2, s2 - fw));
-    }
-
-    // Dörrar som finns i Befintligt ritas som befintliga (ofta 30°), andra
-    // som planerade (90°), oavsett vad vyn jämförs med.
-    const a = (ctx.doorAngleOf(el) * Math.PI) / 180;
-    const closed = scale(f.u, p.hinge === 'start' ? 1 : -1);
-    const out = scale(f.n, p.swing);
-    const leafDir = add(scale(closed, Math.cos(a)), scale(out, Math.sin(a)));
-    const tip = add(hinge, scale(leafDir, leafLen));
-    const free = add(hinge, scale(closed, leafLen));
-
-    const angle = (q: readonly [number, number]) => Math.atan2(q[1] - hinge[1], q[0] - hinge[0]);
-    const aLeaf = angle(tip);
-    const aFree = angle(free);
-    const ccw = normalize(aFree - aLeaf);
-    const [start, end] = ccw < Math.PI ? [aLeaf, aFree] : [aFree, aLeaf];
-    if (detail) {
-      // Bladet som en rektangel med sin tjocklek, åt det håll det stängs.
-      let perp: Vec2 = sub(closed, scale(leafDir, closed[0] * leafDir[0] + closed[1] * leafDir[1]));
-      const pl = Math.hypot(perp[0], perp[1]);
-      perp = pl > 1e-6 ? scale(perp, LEAF / pl) : scale(out, -LEAF);
-      prims.push({
-        kind: 'polyline',
-        points: [hinge, tip, add(tip, perp), add(hinge, perp)],
-        closed: true,
-        pen: pens.view,
-        origin: { ...origin, part: 'dörrblad' },
-      });
-    } else {
-      prims.push({ kind: 'line', a: hinge, b: tip, pen: pens.view, origin: { ...origin, part: 'dörrblad' } });
-    }
-    prims.push({ kind: 'arc', center: hinge, radius: leafLen, start, end, pen: pens.symbol, origin: { ...origin, part: 'slagbåge' } });
-
-    // Glasad dörr: en linje mitt i karmens djup, över ungefär 3/5 av den fria bredden.
-    if (p.glazed) {
-      const mid = sketch ? 0 : (lo + hi) / 2;
-      const half = clear * 0.3;
-      prims.push({ kind: 'line', a: f.at(p.at - half, mid), b: f.at(p.at + half, mid), pen: pens.view, origin: { ...origin, part: 'glasning' } });
-    }
-
-    // Littera på motsatt sida mot slaget, där bågen inte är i vägen.
-    if (showLittera(ctx, 'Door')) prims.push(...litteraTag(ctx, el, f, p.at, p.swing === 1 ? -1 : 1));
-    // Igensatt dörrhål eller ny öppning i befintlig vägg ritas under dörrbladet.
-    return [...openingMarks(el, host, p, ctx, { infillWhenRemoved: true }), ...prims];
-  },
+  model3d: (el, ctx) => openingModel3dFor(el, ctx, 'door'),
+  plan: (el, ctx) => openingPlanFor(el, ctx, 'door'),
 };
-
-function normalize(a: number): number {
-  const t = Math.PI * 2;
-  return ((a % t) + t) % t;
-}

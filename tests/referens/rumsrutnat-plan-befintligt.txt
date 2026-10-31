@@ -1,13 +1,13 @@
-yta fylld paper [w0.35 ink] -200,-200 995,-200 995,200 200,200 200,1395 -200,1395 @/snitt
-yta fylld paper [w0.35 ink] -200,2605 200,2605 200,3940 1045,3940 1045,4060 200,4060 200,5395 -200,5395 @/snitt
-yta fylld paper [w0.35 ink] -200,6605 200,6605 200,7940 1045,7940 1045,8060 200,8060 200,9395 -200,9395 @/snitt
-yta fylld paper [w0.35 ink] -200,10605 200,10605 200,11800 1395,11800 1395,12200 -200,12200 @/snitt
-yta fylld paper [w0.35 ink] 1955,3940 3940,3940 3940,200 2005,200 2005,-200 5395,-200 5395,200 4060,200 4060,3940 5045,3940 5045,4060 4060,4060 4060,7940 5045,7940 5045,8060 4060,8060 4060,11800 5395,11800 5395,12200 2605,12200 2605,11800 3940,11800 3940,8060 1955,8060 1955,7940 3940,7940 3940,4060 1955,4060 @/snitt
-yta fylld paper [w0.35 ink] 5955,3940 7940,3940 7940,200 6605,200 6605,-200 9395,-200 9395,200 8060,200 8060,3940 9045,3940 9045,4060 8060,4060 8060,7940 9045,7940 9045,8060 8060,8060 8060,11800 9395,11800 9395,12200 6605,12200 6605,11800 7940,11800 7940,8060 5955,8060 5955,7940 7940,7940 7940,4060 5955,4060 @/snitt
-yta fylld paper [w0.35 ink] 9955,3940 11800,3940 11800,2605 12200,2605 12200,5395 11800,5395 11800,4060 9955,4060 @/snitt
-yta fylld paper [w0.35 ink] 9955,7940 11800,7940 11800,6605 12200,6605 12200,9395 11800,9395 11800,8060 9955,8060 @/snitt
-yta fylld paper [w0.35 ink] 10605,-200 12200,-200 12200,1395 11800,1395 11800,200 10605,200 @/snitt
-yta fylld paper [w0.35 ink] 10605,11800 11800,11800 11800,10605 12200,10605 12200,12200 10605,12200 @/snitt
+yta fylld paper [w0.35 ink] -200,-200 1050,-200 1050,200 200,200 200,1500 -200,1500 @/snitt
+yta fylld paper [w0.35 ink] -200,2500 200,2500 200,3940 1050,3940 1050,4060 200,4060 200,5500 -200,5500 @/snitt
+yta fylld paper [w0.35 ink] -200,6500 200,6500 200,7940 1050,7940 1050,8060 200,8060 200,9500 -200,9500 @/snitt
+yta fylld paper [w0.35 ink] -200,10500 200,10500 200,11800 1500,11800 1500,12200 -200,12200 @/snitt
+yta fylld paper [w0.35 ink] 1950,-200 5500,-200 5500,200 4060,200 4060,3940 5050,3940 5050,4060 4060,4060 4060,7940 5050,7940 5050,8060 4060,8060 4060,11800 5500,11800 5500,12200 2500,12200 2500,11800 3940,11800 3940,8060 1950,8060 1950,7940 3940,7940 3940,4060 1950,4060 1950,3940 3940,3940 3940,200 1950,200 @/snitt
+yta fylld paper [w0.35 ink] 5950,3940 7940,3940 7940,200 6500,200 6500,-200 9500,-200 9500,200 8060,200 8060,3940 9050,3940 9050,4060 8060,4060 8060,7940 9050,7940 9050,8060 8060,8060 8060,11800 9500,11800 9500,12200 6500,12200 6500,11800 7940,11800 7940,8060 5950,8060 5950,7940 7940,7940 7940,4060 5950,4060 @/snitt
+yta fylld paper [w0.35 ink] 9950,3940 11800,3940 11800,2500 12200,2500 12200,5500 11800,5500 11800,4060 9950,4060 @/snitt
+yta fylld paper [w0.35 ink] 9950,7940 11800,7940 11800,6500 12200,6500 12200,9500 11800,9500 11800,8060 9950,8060 @/snitt
+yta fylld paper [w0.35 ink] 10500,-200 12200,-200 12200,1500 11800,1500 11800,200 10500,200 @/snitt
+yta fylld paper [w0.35 ink] 10500,11800 11800,11800 11800,10500 12200,10500 12200,12200 10500,12200 @/snitt
 text "YV01" 2352,-700 h2 start [w0.18] @rv-0/littera
 linje 2600,-450 2600,0 [w0.18 ink] @rv-0/littera
 text "YV01" 700,552 h2 90° start [w0.18] @rv-1/littera
@@ -56,129 +56,151 @@ text "YV01" 8552,11300 h2 start [w0.18] @rv-22/littera
 linje 8800,11550 8800,12000 [w0.18 ink] @rv-22/littera
 text "YV01" 12700,8552 h2 90° start [w0.18] @rv-23/littera
 linje 12450,8800 12000,8800 [w0.18 ink] @rv-23/littera
-polylinje sluten 1055,3960 1105,3960 1105,4060 1055,4060 [w0.25 ink] @d-rv-6/karm
-polylinje sluten 1945,3960 1895,3960 1895,4060 1945,4060 [w0.25 ink] @d-rv-6/karm
-linje 1105,4060 1789.2,4455 [w0.18 ink] @d-rv-6/dörrblad
-båge 1105,4060 r790 0°–30° [w0.13 ink] @d-rv-6/slagbåge
-text "D1" 1376,3620 h2 start [w0.18] @d-rv-6/littera
-polylinje sluten 5055,3960 5105,3960 5105,4060 5055,4060 [w0.25 ink] @d-rv-8/karm
-polylinje sluten 5945,3960 5895,3960 5895,4060 5945,4060 [w0.25 ink] @d-rv-8/karm
-linje 5105,4060 5789.2,4455 [w0.18 ink] @d-rv-8/dörrblad
-båge 5105,4060 r790 0°–30° [w0.13 ink] @d-rv-8/slagbåge
-text "D1" 5376,3620 h2 start [w0.18] @d-rv-8/littera
-polylinje sluten 9055,3960 9105,3960 9105,4060 9055,4060 [w0.25 ink] @d-rv-10/karm
-polylinje sluten 9945,3960 9895,3960 9895,4060 9945,4060 [w0.25 ink] @d-rv-10/karm
-linje 9105,4060 9789.2,4455 [w0.18 ink] @d-rv-10/dörrblad
-båge 9105,4060 r790 0°–30° [w0.13 ink] @d-rv-10/slagbåge
-text "D1" 9376,3620 h2 start [w0.18] @d-rv-10/littera
-polylinje sluten 1055,7960 1105,7960 1105,8060 1055,8060 [w0.25 ink] @d-rv-12/karm
-polylinje sluten 1945,7960 1895,7960 1895,8060 1945,8060 [w0.25 ink] @d-rv-12/karm
-linje 1105,8060 1789.2,8455 [w0.18 ink] @d-rv-12/dörrblad
-båge 1105,8060 r790 0°–30° [w0.13 ink] @d-rv-12/slagbåge
-text "D1" 1376,7620 h2 start [w0.18] @d-rv-12/littera
-polylinje sluten 5055,7960 5105,7960 5105,8060 5055,8060 [w0.25 ink] @d-rv-14/karm
-polylinje sluten 5945,7960 5895,7960 5895,8060 5945,8060 [w0.25 ink] @d-rv-14/karm
-linje 5105,8060 5789.2,8455 [w0.18 ink] @d-rv-14/dörrblad
-båge 5105,8060 r790 0°–30° [w0.13 ink] @d-rv-14/slagbåge
-text "D1" 5376,7620 h2 start [w0.18] @d-rv-14/littera
-polylinje sluten 9055,7960 9105,7960 9105,8060 9055,8060 [w0.25 ink] @d-rv-16/karm
-polylinje sluten 9945,7960 9895,7960 9895,8060 9945,8060 [w0.25 ink] @d-rv-16/karm
-linje 9105,8060 9789.2,8455 [w0.18 ink] @d-rv-16/dörrblad
-båge 9105,8060 r790 0°–30° [w0.13 ink] @d-rv-16/slagbåge
-text "D1" 9376,7620 h2 start [w0.18] @d-rv-16/littera
-polylinje sluten 1005,-150 1055,-150 1055,-50 1005,-50 [w0.25 ink] @entre/karm
-polylinje sluten 1995,-150 1945,-150 1945,-50 1995,-50 [w0.25 ink] @entre/karm
-linje 1055,-50 1825.8,395 [w0.18 ink] @entre/dörrblad
-båge 1055,-50 r890 0°–30° [w0.13 ink] @entre/slagbåge
-text "D2" 1376,-520 h2 start [w0.18] @entre/littera
-polylinje sluten -50,1405 -50,1455 -150,1455 -150,1405 [w0.25 ink] @f-rv-1/karm
-polylinje sluten -50,2545 -50,2595 -150,2595 -150,2545 [w0.25 ink] @f-rv-1/karm
-linje -50,1455 -50,2545 [w0.18 ink] @f-rv-1/karm
-linje -150,1455 -150,2545 [w0.18 ink] @f-rv-1/karm
-linje -100,1455 -100,2545 [w0.18 ink] @f-rv-1/glas
-linje 200,1395 200,2605 [w0.13 ink] @rv-1/under
-linje -200,1395 -200,2605 [w0.13 ink] @rv-1/under
-text "F1" 520,1876 h2 90° start [w0.18] @f-rv-1/littera
-polylinje sluten 5405,-150 5455,-150 5455,-50 5405,-50 [w0.25 ink] @f-rv-2/karm
-polylinje sluten 6545,-150 6595,-150 6595,-50 6545,-50 [w0.25 ink] @f-rv-2/karm
-linje 5455,-150 6545,-150 [w0.18 ink] @f-rv-2/karm
-linje 5455,-50 6545,-50 [w0.18 ink] @f-rv-2/karm
-linje 5455,-100 6545,-100 [w0.18 ink] @f-rv-2/glas
-linje 5395,-200 6605,-200 [w0.13 ink] @rv-2/under
-linje 5395,200 6605,200 [w0.13 ink] @rv-2/under
-text "F1" 5876,320 h2 start [w0.18] @f-rv-2/littera
-polylinje sluten -50,5405 -50,5455 -150,5455 -150,5405 [w0.25 ink] @f-rv-3/karm
-polylinje sluten -50,6545 -50,6595 -150,6595 -150,6545 [w0.25 ink] @f-rv-3/karm
-linje -50,5455 -50,6545 [w0.18 ink] @f-rv-3/karm
-linje -150,5455 -150,6545 [w0.18 ink] @f-rv-3/karm
-linje -100,5455 -100,6545 [w0.18 ink] @f-rv-3/glas
-linje 200,5395 200,6605 [w0.13 ink] @rv-3/under
-linje -200,5395 -200,6605 [w0.13 ink] @rv-3/under
-text "F1" 520,5876 h2 90° start [w0.18] @f-rv-3/littera
-polylinje sluten 9405,-150 9455,-150 9455,-50 9405,-50 [w0.25 ink] @f-rv-4/karm
-polylinje sluten 10545,-150 10595,-150 10595,-50 10545,-50 [w0.25 ink] @f-rv-4/karm
-linje 9455,-150 10545,-150 [w0.18 ink] @f-rv-4/karm
-linje 9455,-50 10545,-50 [w0.18 ink] @f-rv-4/karm
-linje 9455,-100 10545,-100 [w0.18 ink] @f-rv-4/glas
-linje 9395,-200 10605,-200 [w0.13 ink] @rv-4/under
-linje 9395,200 10605,200 [w0.13 ink] @rv-4/under
-text "F1" 9876,320 h2 start [w0.18] @f-rv-4/littera
-polylinje sluten -50,9405 -50,9455 -150,9455 -150,9405 [w0.25 ink] @f-rv-5/karm
-polylinje sluten -50,10545 -50,10595 -150,10595 -150,10545 [w0.25 ink] @f-rv-5/karm
-linje -50,9455 -50,10545 [w0.18 ink] @f-rv-5/karm
-linje -150,9455 -150,10545 [w0.18 ink] @f-rv-5/karm
-linje -100,9455 -100,10545 [w0.18 ink] @f-rv-5/glas
-linje 200,9395 200,10605 [w0.13 ink] @rv-5/under
-linje -200,9395 -200,10605 [w0.13 ink] @rv-5/under
-text "F1" 520,9876 h2 90° start [w0.18] @f-rv-5/littera
-polylinje sluten 1405,12050 1455,12050 1455,12150 1405,12150 [w0.25 ink] @f-rv-18/karm
-polylinje sluten 2545,12050 2595,12050 2595,12150 2545,12150 [w0.25 ink] @f-rv-18/karm
-linje 1455,12050 2545,12050 [w0.18 ink] @f-rv-18/karm
-linje 1455,12150 2545,12150 [w0.18 ink] @f-rv-18/karm
-linje 1455,12100 2545,12100 [w0.18 ink] @f-rv-18/glas
-linje 1395,11800 2605,11800 [w0.13 ink] @rv-18/under
-linje 1395,12200 2605,12200 [w0.13 ink] @rv-18/under
-text "F1" 1876,11480 h2 start [w0.18] @f-rv-18/littera
-polylinje sluten 12150,1405 12150,1455 12050,1455 12050,1405 [w0.25 ink] @f-rv-19/karm
-polylinje sluten 12150,2545 12150,2595 12050,2595 12050,2545 [w0.25 ink] @f-rv-19/karm
-linje 12150,1455 12150,2545 [w0.18 ink] @f-rv-19/karm
-linje 12050,1455 12050,2545 [w0.18 ink] @f-rv-19/karm
-linje 12100,1455 12100,2545 [w0.18 ink] @f-rv-19/glas
-linje 12200,1395 12200,2605 [w0.13 ink] @rv-19/under
-linje 11800,1395 11800,2605 [w0.13 ink] @rv-19/under
-text "F1" 11680,1876 h2 90° start [w0.18] @f-rv-19/littera
-polylinje sluten 5405,12050 5455,12050 5455,12150 5405,12150 [w0.25 ink] @f-rv-20/karm
-polylinje sluten 6545,12050 6595,12050 6595,12150 6545,12150 [w0.25 ink] @f-rv-20/karm
-linje 5455,12050 6545,12050 [w0.18 ink] @f-rv-20/karm
-linje 5455,12150 6545,12150 [w0.18 ink] @f-rv-20/karm
-linje 5455,12100 6545,12100 [w0.18 ink] @f-rv-20/glas
-linje 5395,11800 6605,11800 [w0.13 ink] @rv-20/under
-linje 5395,12200 6605,12200 [w0.13 ink] @rv-20/under
-text "F1" 5876,11480 h2 start [w0.18] @f-rv-20/littera
-polylinje sluten 12150,5405 12150,5455 12050,5455 12050,5405 [w0.25 ink] @f-rv-21/karm
-polylinje sluten 12150,6545 12150,6595 12050,6595 12050,6545 [w0.25 ink] @f-rv-21/karm
-linje 12150,5455 12150,6545 [w0.18 ink] @f-rv-21/karm
-linje 12050,5455 12050,6545 [w0.18 ink] @f-rv-21/karm
-linje 12100,5455 12100,6545 [w0.18 ink] @f-rv-21/glas
-linje 12200,5395 12200,6605 [w0.13 ink] @rv-21/under
-linje 11800,5395 11800,6605 [w0.13 ink] @rv-21/under
-text "F1" 11680,5876 h2 90° start [w0.18] @f-rv-21/littera
-polylinje sluten 9405,12050 9455,12050 9455,12150 9405,12150 [w0.25 ink] @f-rv-22/karm
-polylinje sluten 10545,12050 10595,12050 10595,12150 10545,12150 [w0.25 ink] @f-rv-22/karm
-linje 9455,12050 10545,12050 [w0.18 ink] @f-rv-22/karm
-linje 9455,12150 10545,12150 [w0.18 ink] @f-rv-22/karm
-linje 9455,12100 10545,12100 [w0.18 ink] @f-rv-22/glas
-linje 9395,11800 10605,11800 [w0.13 ink] @rv-22/under
-linje 9395,12200 10605,12200 [w0.13 ink] @rv-22/under
-text "F1" 9876,11480 h2 start [w0.18] @f-rv-22/littera
-polylinje sluten 12150,9405 12150,9455 12050,9455 12050,9405 [w0.25 ink] @f-rv-23/karm
-polylinje sluten 12150,10545 12150,10595 12050,10595 12050,10545 [w0.25 ink] @f-rv-23/karm
-linje 12150,9455 12150,10545 [w0.18 ink] @f-rv-23/karm
-linje 12050,9455 12050,10545 [w0.18 ink] @f-rv-23/karm
-linje 12100,9455 12100,10545 [w0.18 ink] @f-rv-23/glas
-linje 12200,9395 12200,10605 [w0.13 ink] @rv-23/under
-linje 11800,9395 11800,10605 [w0.13 ink] @rv-23/under
-text "F1" 11680,9876 h2 90° start [w0.18] @f-rv-23/littera
+polylinje sluten 1060,3960 1110,3960 1110,4060 1060,4060 [w0.25 ink] @d-rv-6/karm
+polylinje sluten 1890,3960 1940,3960 1940,4060 1890,4060 [w0.25 ink] @d-rv-6/karm
+linje 1110,4060 1785.5,4450 [w0.18 ink] @d-rv-6/dörrblad
+båge 1110,4060 r780 0°–30° [w0.13 ink] @d-rv-6/slagbåge
+text "D02" 1314,3620 h2 start [w0.18] @d-rv-6/littera
+polylinje sluten 5060,3960 5110,3960 5110,4060 5060,4060 [w0.25 ink] @d-rv-8/karm
+polylinje sluten 5890,3960 5940,3960 5940,4060 5890,4060 [w0.25 ink] @d-rv-8/karm
+linje 5110,4060 5785.5,4450 [w0.18 ink] @d-rv-8/dörrblad
+båge 5110,4060 r780 0°–30° [w0.13 ink] @d-rv-8/slagbåge
+text "D02" 5314,3620 h2 start [w0.18] @d-rv-8/littera
+polylinje sluten 9060,3960 9110,3960 9110,4060 9060,4060 [w0.25 ink] @d-rv-10/karm
+polylinje sluten 9890,3960 9940,3960 9940,4060 9890,4060 [w0.25 ink] @d-rv-10/karm
+linje 9110,4060 9785.5,4450 [w0.18 ink] @d-rv-10/dörrblad
+båge 9110,4060 r780 0°–30° [w0.13 ink] @d-rv-10/slagbåge
+text "D02" 9314,3620 h2 start [w0.18] @d-rv-10/littera
+polylinje sluten 1060,7960 1110,7960 1110,8060 1060,8060 [w0.25 ink] @d-rv-12/karm
+polylinje sluten 1890,7960 1940,7960 1940,8060 1890,8060 [w0.25 ink] @d-rv-12/karm
+linje 1110,8060 1785.5,8450 [w0.18 ink] @d-rv-12/dörrblad
+båge 1110,8060 r780 0°–30° [w0.13 ink] @d-rv-12/slagbåge
+text "D02" 1314,7620 h2 start [w0.18] @d-rv-12/littera
+polylinje sluten 5060,7960 5110,7960 5110,8060 5060,8060 [w0.25 ink] @d-rv-14/karm
+polylinje sluten 5890,7960 5940,7960 5940,8060 5890,8060 [w0.25 ink] @d-rv-14/karm
+linje 5110,8060 5785.5,8450 [w0.18 ink] @d-rv-14/dörrblad
+båge 5110,8060 r780 0°–30° [w0.13 ink] @d-rv-14/slagbåge
+text "D02" 5314,7620 h2 start [w0.18] @d-rv-14/littera
+polylinje sluten 9060,7960 9110,7960 9110,8060 9060,8060 [w0.25 ink] @d-rv-16/karm
+polylinje sluten 9890,7960 9940,7960 9940,8060 9890,8060 [w0.25 ink] @d-rv-16/karm
+linje 9110,8060 9785.5,8450 [w0.18 ink] @d-rv-16/dörrblad
+båge 9110,8060 r780 0°–30° [w0.13 ink] @d-rv-16/slagbåge
+text "D02" 9314,7620 h2 start [w0.18] @d-rv-16/littera
+polylinje sluten 1060,100 1110,100 1110,200 1060,200 [w0.25 ink] @entre/karm
+polylinje sluten 1890,100 1940,100 1940,200 1890,200 [w0.25 ink] @entre/karm
+linje 1110,200 1785.5,590 [w0.18 ink] @entre/dörrblad
+båge 1110,200 r780 0°–30° [w0.13 ink] @entre/slagbåge
+text "D01" 1314,-520 h2 start [w0.18] @entre/littera
+polylinje sluten -95,1510 -95,1555 -200,1555 -200,1510 [w0.25 ink] @f-rv-1/karm
+polylinje sluten -95,2445 -95,2490 -200,2490 -200,2445 [w0.25 ink] @f-rv-1/karm
+linje -95,1555 -95,2445 [w0.18 ink] @f-rv-1/karm
+linje -200,1555 -200,2445 [w0.18 ink] @f-rv-1/karm
+linje -147.5,1555 -147.5,2445 [w0.18 ink] @f-rv-1/glas
+linje -200,1555 -1090,1555 [w0.13 ink] @f-rv-1/slagbåge
+båge -200,1555 r890 90°–180° [w0.13 ink d2/1] @f-rv-1/slagbåge
+linje 200,1500 200,2500 [w0.13 ink] @rv-1/under
+linje -200,1500 -200,2500 [w0.13 ink] @rv-1/under
+text "F01" 520,1814 h2 90° start [w0.18] @f-rv-1/littera
+polylinje sluten 5510,-200 5555,-200 5555,-95 5510,-95 [w0.25 ink] @f-rv-2/karm
+polylinje sluten 6445,-200 6490,-200 6490,-95 6445,-95 [w0.25 ink] @f-rv-2/karm
+linje 5555,-200 6445,-200 [w0.18 ink] @f-rv-2/karm
+linje 5555,-95 6445,-95 [w0.18 ink] @f-rv-2/karm
+linje 5555,-147.5 6445,-147.5 [w0.18 ink] @f-rv-2/glas
+linje 5555,-200 5555,-1090 [w0.13 ink] @f-rv-2/slagbåge
+båge 5555,-200 r890 -90°–0° [w0.13 ink d2/1] @f-rv-2/slagbåge
+linje 5500,-200 6500,-200 [w0.13 ink] @rv-2/under
+linje 5500,200 6500,200 [w0.13 ink] @rv-2/under
+text "F01" 5814,320 h2 start [w0.18] @f-rv-2/littera
+polylinje sluten -95,5510 -95,5555 -200,5555 -200,5510 [w0.25 ink] @f-rv-3/karm
+polylinje sluten -95,6445 -95,6490 -200,6490 -200,6445 [w0.25 ink] @f-rv-3/karm
+linje -95,5555 -95,6445 [w0.18 ink] @f-rv-3/karm
+linje -200,5555 -200,6445 [w0.18 ink] @f-rv-3/karm
+linje -147.5,5555 -147.5,6445 [w0.18 ink] @f-rv-3/glas
+linje -200,5555 -1090,5555 [w0.13 ink] @f-rv-3/slagbåge
+båge -200,5555 r890 90°–180° [w0.13 ink d2/1] @f-rv-3/slagbåge
+linje 200,5500 200,6500 [w0.13 ink] @rv-3/under
+linje -200,5500 -200,6500 [w0.13 ink] @rv-3/under
+text "F01" 520,5814 h2 90° start [w0.18] @f-rv-3/littera
+polylinje sluten 9510,-200 9555,-200 9555,-95 9510,-95 [w0.25 ink] @f-rv-4/karm
+polylinje sluten 10445,-200 10490,-200 10490,-95 10445,-95 [w0.25 ink] @f-rv-4/karm
+linje 9555,-200 10445,-200 [w0.18 ink] @f-rv-4/karm
+linje 9555,-95 10445,-95 [w0.18 ink] @f-rv-4/karm
+linje 9555,-147.5 10445,-147.5 [w0.18 ink] @f-rv-4/glas
+linje 9555,-200 9555,-1090 [w0.13 ink] @f-rv-4/slagbåge
+båge 9555,-200 r890 -90°–0° [w0.13 ink d2/1] @f-rv-4/slagbåge
+linje 9500,-200 10500,-200 [w0.13 ink] @rv-4/under
+linje 9500,200 10500,200 [w0.13 ink] @rv-4/under
+text "F01" 9814,320 h2 start [w0.18] @f-rv-4/littera
+polylinje sluten -95,9510 -95,9555 -200,9555 -200,9510 [w0.25 ink] @f-rv-5/karm
+polylinje sluten -95,10445 -95,10490 -200,10490 -200,10445 [w0.25 ink] @f-rv-5/karm
+linje -95,9555 -95,10445 [w0.18 ink] @f-rv-5/karm
+linje -200,9555 -200,10445 [w0.18 ink] @f-rv-5/karm
+linje -147.5,9555 -147.5,10445 [w0.18 ink] @f-rv-5/glas
+linje -200,9555 -1090,9555 [w0.13 ink] @f-rv-5/slagbåge
+båge -200,9555 r890 90°–180° [w0.13 ink d2/1] @f-rv-5/slagbåge
+linje 200,9500 200,10500 [w0.13 ink] @rv-5/under
+linje -200,9500 -200,10500 [w0.13 ink] @rv-5/under
+text "F01" 520,9814 h2 90° start [w0.18] @f-rv-5/littera
+polylinje sluten 1510,12095 1555,12095 1555,12200 1510,12200 [w0.25 ink] @f-rv-18/karm
+polylinje sluten 2445,12095 2490,12095 2490,12200 2445,12200 [w0.25 ink] @f-rv-18/karm
+linje 1555,12095 2445,12095 [w0.18 ink] @f-rv-18/karm
+linje 1555,12200 2445,12200 [w0.18 ink] @f-rv-18/karm
+linje 1555,12147.5 2445,12147.5 [w0.18 ink] @f-rv-18/glas
+linje 1555,12200 1555,13090 [w0.13 ink] @f-rv-18/slagbåge
+båge 1555,12200 r890 0°–90° [w0.13 ink d2/1] @f-rv-18/slagbåge
+linje 1500,11800 2500,11800 [w0.13 ink] @rv-18/under
+linje 1500,12200 2500,12200 [w0.13 ink] @rv-18/under
+text "F01" 1814,11480 h2 start [w0.18] @f-rv-18/littera
+polylinje sluten 12200,1510 12200,1555 12095,1555 12095,1510 [w0.25 ink] @f-rv-19/karm
+polylinje sluten 12200,2445 12200,2490 12095,2490 12095,2445 [w0.25 ink] @f-rv-19/karm
+linje 12200,1555 12200,2445 [w0.18 ink] @f-rv-19/karm
+linje 12095,1555 12095,2445 [w0.18 ink] @f-rv-19/karm
+linje 12147.5,1555 12147.5,2445 [w0.18 ink] @f-rv-19/glas
+linje 12200,1555 13090,1555 [w0.13 ink] @f-rv-19/slagbåge
+båge 12200,1555 r890 0°–90° [w0.13 ink d2/1] @f-rv-19/slagbåge
+linje 12200,1500 12200,2500 [w0.13 ink] @rv-19/under
+linje 11800,1500 11800,2500 [w0.13 ink] @rv-19/under
+text "F01" 11680,1814 h2 90° start [w0.18] @f-rv-19/littera
+polylinje sluten 5510,12095 5555,12095 5555,12200 5510,12200 [w0.25 ink] @f-rv-20/karm
+polylinje sluten 6445,12095 6490,12095 6490,12200 6445,12200 [w0.25 ink] @f-rv-20/karm
+linje 5555,12095 6445,12095 [w0.18 ink] @f-rv-20/karm
+linje 5555,12200 6445,12200 [w0.18 ink] @f-rv-20/karm
+linje 5555,12147.5 6445,12147.5 [w0.18 ink] @f-rv-20/glas
+linje 5555,12200 5555,13090 [w0.13 ink] @f-rv-20/slagbåge
+båge 5555,12200 r890 0°–90° [w0.13 ink d2/1] @f-rv-20/slagbåge
+linje 5500,11800 6500,11800 [w0.13 ink] @rv-20/under
+linje 5500,12200 6500,12200 [w0.13 ink] @rv-20/under
+text "F01" 5814,11480 h2 start [w0.18] @f-rv-20/littera
+polylinje sluten 12200,5510 12200,5555 12095,5555 12095,5510 [w0.25 ink] @f-rv-21/karm
+polylinje sluten 12200,6445 12200,6490 12095,6490 12095,6445 [w0.25 ink] @f-rv-21/karm
+linje 12200,5555 12200,6445 [w0.18 ink] @f-rv-21/karm
+linje 12095,5555 12095,6445 [w0.18 ink] @f-rv-21/karm
+linje 12147.5,5555 12147.5,6445 [w0.18 ink] @f-rv-21/glas
+linje 12200,5555 13090,5555 [w0.13 ink] @f-rv-21/slagbåge
+båge 12200,5555 r890 0°–90° [w0.13 ink d2/1] @f-rv-21/slagbåge
+linje 12200,5500 12200,6500 [w0.13 ink] @rv-21/under
+linje 11800,5500 11800,6500 [w0.13 ink] @rv-21/under
+text "F01" 11680,5814 h2 90° start [w0.18] @f-rv-21/littera
+polylinje sluten 9510,12095 9555,12095 9555,12200 9510,12200 [w0.25 ink] @f-rv-22/karm
+polylinje sluten 10445,12095 10490,12095 10490,12200 10445,12200 [w0.25 ink] @f-rv-22/karm
+linje 9555,12095 10445,12095 [w0.18 ink] @f-rv-22/karm
+linje 9555,12200 10445,12200 [w0.18 ink] @f-rv-22/karm
+linje 9555,12147.5 10445,12147.5 [w0.18 ink] @f-rv-22/glas
+linje 9555,12200 9555,13090 [w0.13 ink] @f-rv-22/slagbåge
+båge 9555,12200 r890 0°–90° [w0.13 ink d2/1] @f-rv-22/slagbåge
+linje 9500,11800 10500,11800 [w0.13 ink] @rv-22/under
+linje 9500,12200 10500,12200 [w0.13 ink] @rv-22/under
+text "F01" 9814,11480 h2 start [w0.18] @f-rv-22/littera
+polylinje sluten 12200,9510 12200,9555 12095,9555 12095,9510 [w0.25 ink] @f-rv-23/karm
+polylinje sluten 12200,10445 12200,10490 12095,10490 12095,10445 [w0.25 ink] @f-rv-23/karm
+linje 12200,9555 12200,10445 [w0.18 ink] @f-rv-23/karm
+linje 12095,9555 12095,10445 [w0.18 ink] @f-rv-23/karm
+linje 12147.5,9555 12147.5,10445 [w0.18 ink] @f-rv-23/glas
+linje 12200,9555 13090,9555 [w0.13 ink] @f-rv-23/slagbåge
+båge 12200,9555 r890 0°–90° [w0.13 ink d2/1] @f-rv-23/slagbåge
+linje 12200,9500 12200,10500 [w0.13 ink] @rv-23/under
+linje 11800,9500 11800,10500 [w0.13 ink] @rv-23/under
+text "F01" 11680,9814 h2 90° start [w0.18] @f-rv-23/littera
 text "RUM" 1592.6,2360.7 h2.5 start fet [w0.18 ink] @r-0-0/rumstext
 text "1101" 1592.6,1996.7 h2.2 start [w0.18 ink] @r-0-0/rumstext
 text "14,0 m²" 1592.6,1622.7 h2.2 start [w0.18 ink] @r-0-0/rumstext

@@ -1,5 +1,5 @@
-linje 1250,0 1250,825.5 [w0.25 ink] @rv-19/wall
-linje 1250,2184.5 1250,2700 [w0.25 ink] @rv-19/wall
+linje 1250,0 1250,900 [w0.25 ink] @rv-19/wall
+linje 1250,2100.2 1250,2700 [w0.25 ink] @rv-19/wall
 linje 1250,0 5250,0 [w0.25 ink] @rv-22/wall
 linje 1250,2700 5250,2700 [w0.25 ink] @rv-22/wall
 linje 1250,0 1250,2700 [w0.25 ink] @rv-22/wall
@@ -16,123 +16,114 @@ linje 9510,2700 13650,2700 [w0.25 ink] @rv-18/wall
 linje 9390,0 9510,0 [w0.25 ink] @rv-11/wall
 linje 9390,2700 9510,2700 [w0.25 ink] @rv-11/wall
 linje 13650,0 13650,2700 [w0.25 ink] @rv-5/wall
-linje 8055,2109.9 8055,2090.1 [w0.18 ink] @f-rv-2/lining
-linje 4055,2109.9 4055,2090.1 [w0.18 ink] @f-rv-4/lining
-linje 13665,830 13665,2180 [w0.18 ink] @f-rv-5/lining
-linje 13650.1,2180 13665,2180 [w0.18 ink] @f-rv-5/lining
-linje 13650.1,830 13665,830 [w0.18 ink] @f-rv-5/lining
-linje 12045,910 10855,910 [w0.25 ink] @f-rv-18/frame
-linje 10855,910 10855,2100 [w0.25 ink] @f-rv-18/frame
-linje 10855,2100 12045,2100 [w0.25 ink] @f-rv-18/frame
-linje 12045,2100 12045,910 [w0.25 ink] @f-rv-18/frame
-linje 11995,960 10905,960 [w0.25 ink] @f-rv-18/frame
-linje 10905,960 10905,2050 [w0.25 ink] @f-rv-18/frame
-linje 10905,2050 11995,2050 [w0.25 ink] @f-rv-18/frame
-linje 11995,2050 11995,960 [w0.25 ink] @f-rv-18/frame
-linje 11950,1005 10950,1005 [w0.25 ink] @f-rv-18/sash
-linje 10950,1005 10950,2005 [w0.25 ink] @f-rv-18/sash
-linje 10950,2005 11950,2005 [w0.25 ink] @f-rv-18/sash
-linje 11950,2005 11950,1005 [w0.25 ink] @f-rv-18/sash
-linje 11525.8,1501.6 11446.6,1580.8 [w0.13 muted] @f-rv-18/glass
-linje 11506.6,1448.4 11393.4,1561.6 [w0.13 muted] @f-rv-18/glass
-linje 11453.4,1429.2 11374.2,1508.4 [w0.13 muted] @f-rv-18/glass
-linje 12125,830 10775,830 [w0.18 ink] @f-rv-18/lining
-linje 10775,830 10775,2180 [w0.18 ink] @f-rv-18/lining
-linje 10775,2180 12125,2180 [w0.18 ink] @f-rv-18/lining
-linje 12125,2180 12125,830 [w0.18 ink] @f-rv-18/lining
-linje 12055,900 10845,900 [w0.18 ink] @f-rv-18/lining
-linje 10845,900 10845,2110 [w0.18 ink] @f-rv-18/lining
-linje 10845,2110 12055,2110 [w0.18 ink] @f-rv-18/lining
-linje 12055,2110 12055,900 [w0.18 ink] @f-rv-18/lining
-linje 1235,2110 1235,900 [w0.18 ink] @f-rv-19/lining
-linje 8045,910 6855,910 [w0.25 ink] @f-rv-20/frame
-linje 6855,910 6855,2100 [w0.25 ink] @f-rv-20/frame
-linje 6855,2100 8045,2100 [w0.25 ink] @f-rv-20/frame
-linje 8045,2100 8045,910 [w0.25 ink] @f-rv-20/frame
-linje 7995,960 6905,960 [w0.25 ink] @f-rv-20/frame
-linje 6905,960 6905,2050 [w0.25 ink] @f-rv-20/frame
-linje 6905,2050 7995,2050 [w0.25 ink] @f-rv-20/frame
-linje 7995,2050 7995,960 [w0.25 ink] @f-rv-20/frame
-linje 7950,1005 6950,1005 [w0.25 ink] @f-rv-20/sash
-linje 6950,1005 6950,2005 [w0.25 ink] @f-rv-20/sash
-linje 6950,2005 7950,2005 [w0.25 ink] @f-rv-20/sash
-linje 7950,2005 7950,1005 [w0.25 ink] @f-rv-20/sash
-linje 7525.8,1501.6 7446.6,1580.8 [w0.13 muted] @f-rv-20/glass
-linje 7506.6,1448.4 7393.4,1561.6 [w0.13 muted] @f-rv-20/glass
-linje 7453.4,1429.2 7374.2,1508.4 [w0.13 muted] @f-rv-20/glass
-linje 8125,830 6775,830 [w0.18 ink] @f-rv-20/lining
-linje 6775,830 6775,2180 [w0.18 ink] @f-rv-20/lining
-linje 6775,2180 8125,2180 [w0.18 ink] @f-rv-20/lining
-linje 8125,2180 8125,830 [w0.18 ink] @f-rv-20/lining
-linje 8055,900 6845,900 [w0.18 ink] @f-rv-20/lining
-linje 6845,900 6845,2110 [w0.18 ink] @f-rv-20/lining
-linje 6845,2110 8055,2110 [w0.18 ink] @f-rv-20/lining
-linje 8055,2110 8055,900 [w0.18 ink] @f-rv-20/lining
-linje 1235,830 1235,2180 [w0.18 ink] @f-rv-21/lining
-linje 1235,2110 1235,900 [w0.18 ink] @f-rv-21/lining
-linje 4045,910 2855,910 [w0.25 ink] @f-rv-22/frame
-linje 2855,910 2855,2100 [w0.25 ink] @f-rv-22/frame
-linje 2855,2100 4045,2100 [w0.25 ink] @f-rv-22/frame
-linje 4045,2100 4045,910 [w0.25 ink] @f-rv-22/frame
-linje 3995,960 2905,960 [w0.25 ink] @f-rv-22/frame
-linje 2905,960 2905,2050 [w0.25 ink] @f-rv-22/frame
-linje 2905,2050 3995,2050 [w0.25 ink] @f-rv-22/frame
-linje 3995,2050 3995,960 [w0.25 ink] @f-rv-22/frame
-linje 3950,1005 2950,1005 [w0.25 ink] @f-rv-22/sash
-linje 2950,1005 2950,2005 [w0.25 ink] @f-rv-22/sash
-linje 2950,2005 3950,2005 [w0.25 ink] @f-rv-22/sash
-linje 3950,2005 3950,1005 [w0.25 ink] @f-rv-22/sash
-linje 3525.8,1501.6 3446.6,1580.8 [w0.13 muted] @f-rv-22/glass
-linje 3506.6,1448.4 3393.4,1561.6 [w0.13 muted] @f-rv-22/glass
-linje 3453.4,1429.2 3374.2,1508.4 [w0.13 muted] @f-rv-22/glass
-linje 4125,830 2775,830 [w0.18 ink] @f-rv-22/lining
-linje 2775,830 2775,2180 [w0.18 ink] @f-rv-22/lining
-linje 2775,2180 4125,2180 [w0.18 ink] @f-rv-22/lining
-linje 4125,2180 4125,830 [w0.18 ink] @f-rv-22/lining
-linje 4055,900 2845,900 [w0.18 ink] @f-rv-22/lining
-linje 2845,900 2845,2110 [w0.18 ink] @f-rv-22/lining
-linje 2845,2110 4055,2110 [w0.18 ink] @f-rv-22/lining
-linje 4055,2110 4055,900 [w0.18 ink] @f-rv-22/lining
-linje 1235,830 1235,2180 [w0.18 ink] @f-rv-23/lining
-linje 1249.9,2180 1235,2180 [w0.18 ink] @f-rv-23/lining
-linje 1249.9,830 1235,830 [w0.18 ink] @f-rv-23/lining
-linje 7505,910 7505,900.1 [w0.25 ink] @d-rv-8/frame
-linje 12055,2090 12045.1,2090 [w0.25 ink] @d-rv-12/frame
-linje 11505,910 11505,900.1 [w0.25 ink] @d-rv-12/frame
-linje 12055,2040 12045.1,2040 [w0.25 ink] @d-rv-12/frame
-linje 11555,910 11555,900.1 [w0.25 ink] @d-rv-12/frame
-linje 11555,900.1 11555,910 [w0.25 ink] @d-rv-12/leaf
-linje 12045.1,2040 12055,2040 [w0.25 ink] @d-rv-12/leaf
-linje 11425,2110 11425,2100.1 [w0.18 ink] @d-rv-12/lining
-linje 11425,910 11425,900.1 [w0.18 ink] @d-rv-12/lining
-linje 11495,2110 11495,2100.1 [w0.18 ink] @d-rv-12/lining
-linje 11495,910 11495,900.1 [w0.18 ink] @d-rv-12/lining
-linje 12055,1665.5 12045.1,1652.7 [w0.13 ink d3/1.5] @d-rv-12/swing
-linje 11647.9,900.1 11640.2,910 [w0.13 ink d3/1.5] @d-rv-12/swing
-linje 8055,2090 8045.1,2090 [w0.25 ink] @d-rv-14/frame
-linje 7505,910 7505,900.1 [w0.25 ink] @d-rv-14/frame
-linje 8055,2040 8045.1,2040 [w0.25 ink] @d-rv-14/frame
-linje 7555,910 7555,900.1 [w0.25 ink] @d-rv-14/frame
-linje 7555,900.1 7555,910 [w0.25 ink] @d-rv-14/leaf
-linje 8045.1,2040 8055,2040 [w0.25 ink] @d-rv-14/leaf
-linje 7425,2110 7425,2100.1 [w0.18 ink] @d-rv-14/lining
-linje 7425,910 7425,900.1 [w0.18 ink] @d-rv-14/lining
-linje 7495,2110 7495,2100.1 [w0.18 ink] @d-rv-14/lining
-linje 7495,910 7495,900.1 [w0.18 ink] @d-rv-14/lining
-linje 8055,1665.5 8045.1,1652.7 [w0.13 ink d3/1.5] @d-rv-14/swing
-linje 7647.9,900.1 7640.2,910 [w0.13 ink d3/1.5] @d-rv-14/swing
-linje 4055,2090 4045.1,2090 [w0.25 ink] @d-rv-16/frame
-linje 3505,910 3505,900.1 [w0.25 ink] @d-rv-16/frame
-linje 4055,2040 4045.1,2040 [w0.25 ink] @d-rv-16/frame
-linje 3555,910 3555,900.1 [w0.25 ink] @d-rv-16/frame
-linje 3555,900.1 3555,910 [w0.25 ink] @d-rv-16/leaf
-linje 4045.1,2040 4055,2040 [w0.25 ink] @d-rv-16/leaf
-linje 3425,2110 3425,2100.1 [w0.18 ink] @d-rv-16/lining
-linje 3425,910 3425,900.1 [w0.18 ink] @d-rv-16/lining
-linje 3495,2110 3495,2100.1 [w0.18 ink] @d-rv-16/lining
-linje 3495,910 3495,900.1 [w0.18 ink] @d-rv-16/lining
-linje 4055,1665.5 4045.1,1652.7 [w0.13 ink d3/1.5] @d-rv-16/swing
-linje 3647.9,900.1 3640.2,910 [w0.13 ink d3/1.5] @d-rv-16/swing
+linje 7950,2090.1 7950,2099.9 [w0.35 ink] @rv-2/hole
+linje 3950,2090.1 3950,2099.9 [w0.35 ink] @rv-4/hole
+linje 11500,900.1 11500,910 [w0.35 ink] @rv-12/hole
+linje 11500,2090.1 11500,2100 [w0.35 ink] @rv-12/hole
+linje 7500,900.1 7500,910 [w0.35 ink] @rv-14/hole
+linje 7500,2090.1 7500,2100 [w0.35 ink] @rv-14/hole
+linje 3500,900.1 3500,910 [w0.35 ink] @rv-16/hole
+linje 3500,2090.1 3500,2100 [w0.35 ink] @rv-16/hole
+linje 11950,900 11950,2100 [w0.35 ink] @rv-18/hole
+linje 10950,900 10950,2100 [w0.35 ink] @rv-18/hole
+linje 11950,2100 10950,2100 [w0.35 ink] @rv-18/hole
+linje 11950,900 10950,900 [w0.35 ink] @rv-18/hole
+linje 1250,900 1250,909.4 [w0.35 ink] @rv-19/hole
+linje 1250,2090.6 1250,2100 [w0.35 ink] @rv-19/hole
+linje 7950,900 7950,2100 [w0.35 ink] @rv-20/hole
+linje 6950,900 6950,2100 [w0.35 ink] @rv-20/hole
+linje 7950,2100 6950,2100 [w0.35 ink] @rv-20/hole
+linje 7950,900 6950,900 [w0.35 ink] @rv-20/hole
+linje 3950,900 3950,2100 [w0.35 ink] @rv-22/hole
+linje 2950,900 2950,2100 [w0.35 ink] @rv-22/hole
+linje 3950,2100 2950,2100 [w0.35 ink] @rv-22/hole
+linje 3950,900 2950,900 [w0.35 ink] @rv-22/hole
+linje 13651,955 13651,1500 [w0.13 ink d3/1.5] @f-rv-1/swing
+linje 13651,2045 13651,1500 [w0.13 ink d3/1.5] @f-rv-1/swing
+linje 13651,955 13651,1500 [w0.13 ink d3/1.5] @f-rv-3/swing
+linje 13651,2045 13651,1500 [w0.13 ink d3/1.5] @f-rv-3/swing
+linje 13651,955 13651,1500 [w0.13 ink d3/1.5] @f-rv-5/swing
+linje 13651,2045 13651,1500 [w0.13 ink d3/1.5] @f-rv-5/swing
+linje 11940,910 10960,910 [w0.25 ink] @f-rv-18/frame
+linje 10960,910 10960,2090 [w0.25 ink] @f-rv-18/frame
+linje 10960,2090 11940,2090 [w0.25 ink] @f-rv-18/frame
+linje 11940,2090 11940,910 [w0.25 ink] @f-rv-18/frame
+linje 11895,955 11005,955 [w0.25 ink] @f-rv-18/frame
+linje 11005,955 11005,2045 [w0.25 ink] @f-rv-18/frame
+linje 11005,2045 11895,2045 [w0.25 ink] @f-rv-18/frame
+linje 11895,2045 11895,955 [w0.25 ink] @f-rv-18/frame
+linje 11845,1005 11055,1005 [w0.25 ink] @f-rv-18/sash
+linje 11055,1005 11055,1995 [w0.25 ink] @f-rv-18/sash
+linje 11055,1995 11845,1995 [w0.25 ink] @f-rv-18/sash
+linje 11845,1995 11845,1005 [w0.25 ink] @f-rv-18/sash
+linje 11509.9,1497.3 11447.3,1559.9 [w0.13 muted] @f-rv-18/glass
+linje 11494.7,1455.3 11405.3,1544.7 [w0.13 muted] @f-rv-18/glass
+linje 11452.7,1440.1 11390.1,1502.7 [w0.13 muted] @f-rv-18/glass
+linje 11005,955 11895,1500 [w0.13 ink d3/1.5] @f-rv-18/swing
+linje 11005,2045 11895,1500 [w0.13 ink d3/1.5] @f-rv-18/swing
+linje 1250,2045 1250,955 [w0.25 ink] @f-rv-19/frame
+linje 1249,955 1249,1500 [w0.13 ink d3/1.5] @f-rv-19/swing
+linje 1249,2045 1249,1500 [w0.13 ink d3/1.5] @f-rv-19/swing
+linje 7940,910 6960,910 [w0.25 ink] @f-rv-20/frame
+linje 6960,910 6960,2090 [w0.25 ink] @f-rv-20/frame
+linje 6960,2090 7940,2090 [w0.25 ink] @f-rv-20/frame
+linje 7940,2090 7940,910 [w0.25 ink] @f-rv-20/frame
+linje 7895,955 7005,955 [w0.25 ink] @f-rv-20/frame
+linje 7005,955 7005,2045 [w0.25 ink] @f-rv-20/frame
+linje 7005,2045 7895,2045 [w0.25 ink] @f-rv-20/frame
+linje 7895,2045 7895,955 [w0.25 ink] @f-rv-20/frame
+linje 7845,1005 7055,1005 [w0.25 ink] @f-rv-20/sash
+linje 7055,1005 7055,1995 [w0.25 ink] @f-rv-20/sash
+linje 7055,1995 7845,1995 [w0.25 ink] @f-rv-20/sash
+linje 7845,1995 7845,1005 [w0.25 ink] @f-rv-20/sash
+linje 7509.9,1497.3 7447.3,1559.9 [w0.13 muted] @f-rv-20/glass
+linje 7494.7,1455.3 7405.3,1544.7 [w0.13 muted] @f-rv-20/glass
+linje 7452.7,1440.1 7390.1,1502.7 [w0.13 muted] @f-rv-20/glass
+linje 7005,955 7895,1500 [w0.13 ink d3/1.5] @f-rv-20/swing
+linje 7005,2045 7895,1500 [w0.13 ink d3/1.5] @f-rv-20/swing
+linje 1249,955 1249,1500 [w0.13 ink d3/1.5] @f-rv-21/swing
+linje 1249,2045 1249,1500 [w0.13 ink d3/1.5] @f-rv-21/swing
+linje 3940,910 2960,910 [w0.25 ink] @f-rv-22/frame
+linje 2960,910 2960,2090 [w0.25 ink] @f-rv-22/frame
+linje 2960,2090 3940,2090 [w0.25 ink] @f-rv-22/frame
+linje 3940,2090 3940,910 [w0.25 ink] @f-rv-22/frame
+linje 3895,955 3005,955 [w0.25 ink] @f-rv-22/frame
+linje 3005,955 3005,2045 [w0.25 ink] @f-rv-22/frame
+linje 3005,2045 3895,2045 [w0.25 ink] @f-rv-22/frame
+linje 3895,2045 3895,955 [w0.25 ink] @f-rv-22/frame
+linje 3845,1005 3055,1005 [w0.25 ink] @f-rv-22/sash
+linje 3055,1005 3055,1995 [w0.25 ink] @f-rv-22/sash
+linje 3055,1995 3845,1995 [w0.25 ink] @f-rv-22/sash
+linje 3845,1995 3845,1005 [w0.25 ink] @f-rv-22/sash
+linje 3509.9,1497.3 3447.3,1559.9 [w0.13 muted] @f-rv-22/glass
+linje 3494.7,1455.3 3405.3,1544.7 [w0.13 muted] @f-rv-22/glass
+linje 3452.7,1440.1 3390.1,1502.7 [w0.13 muted] @f-rv-22/glass
+linje 3005,955 3895,1500 [w0.13 ink d3/1.5] @f-rv-22/swing
+linje 3005,2045 3895,1500 [w0.13 ink d3/1.5] @f-rv-22/swing
+linje 1249,955 1249,1500 [w0.13 ink d3/1.5] @f-rv-23/swing
+linje 1249,2045 1249,1500 [w0.13 ink d3/1.5] @f-rv-23/swing
+linje 7510,900.1 7510,910 [w0.25 ink] @d-rv-8/frame
+linje 11510,900.1 11510,910 [w0.25 ink] @d-rv-12/frame
+linje 11940.1,2090 11950,2090 [w0.25 ink] @d-rv-12/frame
+linje 11560,900.1 11560,910 [w0.25 ink] @d-rv-12/frame
+linje 11940.1,2040 11950,2040 [w0.25 ink] @d-rv-12/frame
+linje 11560,900.1 11560,910 [w0.25 ink] @d-rv-12/leaf
+linje 11940.1,2040 11950,2040 [w0.25 ink] @d-rv-12/leaf
+linje 11940.1,1543 11950,1530.1 [w0.13 ink d3/1.5] @d-rv-12/swing
+linje 7510,900.1 7510,910 [w0.25 ink] @d-rv-14/frame
+linje 7940.1,2090 7950,2090 [w0.25 ink] @d-rv-14/frame
+linje 7560,900.1 7560,910 [w0.25 ink] @d-rv-14/frame
+linje 7940.1,2040 7950,2040 [w0.25 ink] @d-rv-14/frame
+linje 7560,900.1 7560,910 [w0.25 ink] @d-rv-14/leaf
+linje 7940.1,2040 7950,2040 [w0.25 ink] @d-rv-14/leaf
+linje 7940.1,1543 7950,1530.1 [w0.13 ink d3/1.5] @d-rv-14/swing
+linje 3510,900.1 3510,910 [w0.25 ink] @d-rv-16/frame
+linje 3940.1,2090 3950,2090 [w0.25 ink] @d-rv-16/frame
+linje 3560,900.1 3560,910 [w0.25 ink] @d-rv-16/frame
+linje 3940.1,2040 3950,2040 [w0.25 ink] @d-rv-16/frame
+linje 3560,900.1 3560,910 [w0.25 ink] @d-rv-16/leaf
+linje 3940.1,2040 3950,2040 [w0.25 ink] @d-rv-16/leaf
+linje 3940.1,1543 3950,1530.1 [w0.13 ink d3/1.5] @d-rv-16/swing
 linje 1650,-0.3 1650,-30 [w0.18 ink] @r-0-2/vy
 linje 5510,-1.1 5510,-30 [w0.18 ink] @r-1-1/vy
 linje 1650,-0.3 1650,-30 [w0.18 ink] @r-1-2/vy
@@ -146,10 +137,10 @@ linje 5390,-30 1650,-30 [w0.18 ink] @r-2-2/vy
 linje 5390,-1.1 5390,-30 [w0.18 ink] @r-2-2/vy
 linje 1650,0 1650,-30 [w0.18 ink] @r-2-2/vy
 linje 1650,-0.3 1650,-30 [w0.18 ink] @r-2-2/vy
-linje -265,-30 15165,-30 [w0.7] @/mark
-linje 14265,0 16265,0 [w0.18] @/nivå
-yta none [w0.18] 14865,0 14757,180 14973,180 @/nivå
-text "FG ±0,000" 15117,63 h2.2 [w0.18] @/nivå
-linje 14265,2700 16265,2700 [w0.18] @/nivå
-yta none [w0.18] 14865,2700 14757,2880 14973,2880 @/nivå
-text "+2,700" 15117,2763 h2.2 [w0.18] @/nivå
+linje -251,-30 15151,-30 [w0.7] @/mark
+linje 14251,0 16251,0 [w0.18] @/nivå
+yta none [w0.18] 14851,0 14743,180 14959,180 @/nivå
+text "FG ±0,000" 15103,63 h2.2 [w0.18] @/nivå
+linje 14251,2700 16251,2700 [w0.18] @/nivå
+yta none [w0.18] 14851,2700 14743,2880 14959,2880 @/nivå
+text "+2,700" 15103,2763 h2.2 [w0.18] @/nivå

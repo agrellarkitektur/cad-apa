@@ -25,6 +25,8 @@ export const OBJECT_PENS = [
   { key: 'windowFrameContour', group: 'windows', label: 'Fönster: karm (kontur)', hint: 'Under- och överkarmen sedda uppifrån', weight: 0.18, tags: ['fönster', 'karm', 'kontur', 'konturlinje'] },
   { key: 'windowSash', group: 'windows', label: 'Fönster: båge', hint: 'Bågarna (i Detalj)', weight: 0.18, tags: ['fönster', 'båge', 'kontur'] },
   { key: 'windowGlass', group: 'windows', label: 'Fönster: glas', hint: 'Glaset', weight: 0.18, tags: ['fönster', 'glas', 'kontur'] },
+  { key: 'windowMullion', group: 'windows', label: 'Fönster: post och tvärstycke', hint: 'Posterna i snittet (0.11.8)', weight: 0.18, tags: ['fönster', 'post', 'tvärstycke', 'snitt'] },
+  { key: 'windowSwing', group: 'windows', label: 'Fönster: slagbåge', hint: 'Bågarnas slag i planen, streckat (0.11.8)', weight: 0.13, tags: ['fönster', 'slagbåge', 'symbol'] },
   { key: 'slabCut', group: 'others', label: 'Bjälklag: snittlinje', hint: 'Bjälklag som går genom snittet, t.ex. i ett souterränghus', weight: 0.35, tags: ['bjälklag', 'snitt', 'snittlinje'] },
   { key: 'roofCut', group: 'others', label: 'Tak: snittlinje', hint: 'Taket där snitthöjden går genom det', weight: 0.35, tags: ['tak', 'snitt', 'snittlinje'] },
   { key: 'groundCut', group: 'others', label: 'Stödmur: snittlinje', hint: 'Stödmurar som går genom snittet', weight: 0.35, tags: ['stödmur', 'snitt', 'snittlinje'] },

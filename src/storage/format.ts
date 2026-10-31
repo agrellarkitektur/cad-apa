@@ -1,4 +1,5 @@
 import { newStyleBook, normalizeBook } from '../core/graphics';
+import { kindOfElementType, normalizeOpeningModel } from '../core/openingTypes';
 import { DEFAULT_VIEW_TAGS, FORMAT, FORMAT_VERSION, SITE_STOREY, withSiteLast, type ProjectDoc } from '../core/model';
 
 /**
@@ -66,6 +67,16 @@ function traceAsUnderlay(v: any): any {
   return { ...rest, overrides: { ...(rest.overrides ?? {}), underlays: [{ source: trace }] } };
 }
 
+/** Öppningstyperna (0.11.8) får förval för det som saknas. */
+function normalizeDefinitions(defs: any): ProjectDoc['definitions'] {
+  const out: ProjectDoc['definitions'] = {};
+  for (const [id, def] of Object.entries<any>(defs && typeof defs === 'object' ? defs : {})) {
+    const kind = kindOfElementType(def?.elementType);
+    out[id] = kind && def.opening ? { ...def, opening: normalizeOpeningModel(def.opening, kind) } : def;
+  }
+  return out;
+}
+
 /** Fyll i fält som kan saknas i handskrivna eller äldre filer. */
 function normalize(d: any): ProjectDoc {
   const doc: ProjectDoc = {
@@ -79,12 +90,14 @@ function normalize(d: any): ProjectDoc {
       ...(d.project?.doorNumbering ? { doorNumbering: d.project.doorNumbering } : {}),
       ...(Array.isArray(d.project?.angles) ? { angles: d.project.angles.map(Number).filter(Number.isFinite) } : {}),
       ...(typeof d.project?.master === 'string' ? { master: d.project.master } : {}),
+      ...(d.project?.openingNumbers && typeof d.project.openingNumbers === 'object' ? { openingNumbers: d.project.openingNumbers } : {}),
+      ...(d.project?.openingSchedule && typeof d.project.openingSchedule === 'object' ? { openingSchedule: d.project.openingSchedule } : {}),
     },
     views: Array.isArray(d.views) ? d.views.map(traceAsUnderlay) : [],
     states: Array.isArray(d.states) && d.states.length ? d.states : [{ id: 'st-ny', name: 'Förslag', kind: 'proposal' }],
     // Platsen (0.10.25) sist, också i handskrivna filer.
     storeys: withSiteLast(Array.isArray(d.storeys) && d.storeys.some((s: any) => !s?.site) ? d.storeys : [{ id: 'pl-1', name: 'Plan 1', elevation: 0, height: 2700 }]),
-    definitions: d.definitions ?? {},
+    definitions: normalizeDefinitions(d.definitions),
     elements: {},
     graphics: safeStyle(d.graphics),
     folders: Array.isArray(d.folders) ? d.folders : [],

@@ -1,3 +1,4 @@
+import { installOpeningNumbers } from './app/openingNumbers';
 import { eraseSelection } from './app/erase';
 import { setWeightSource } from './weightPick';
 import { generalOf } from '../core/general';
@@ -537,6 +538,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const textEdit = installTextEdit(app, textEditor!);
   const files = installFiles(app, brand, { saved, autosaveBlocked });
   const toolOpts = installToolOptions(app);
+  installOpeningNumbers(app);
   const modifyRail = installModifyRail(app);
   const views = installViews(app);
   const showMenu = installShowMenu(app);

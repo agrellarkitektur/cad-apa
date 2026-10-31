@@ -4,6 +4,7 @@ import type { ViewOverrides } from './viewCategories';
 import type { Site } from './site';
 import type { RailingTypeModel } from './railingTypes';
 import type { ProfileTypeModel } from './profileTypes';
+import { openingDefinition, DEFAULT_OPENING_TYPES, STARTER_OPENING_TYPES, type OpeningTypeModel } from './openingTypes';
 
 /**
  * Bacchus datamodell. Ren data som kan sparas som JSON: inga klasser, inga
@@ -43,6 +44,28 @@ export interface ProjectInfo {
   angles?: number[];
   /** Mallbladet som nya blad får (0.8.8, format 8). */
   master?: Id;
+  /**
+   * Öppningarnas löpnummer (0.11.8, format 28): per sort (`Window`, `Door`,
+   * `WallHole`) kombinationens nyckel (typ och karmyttermått, och hängning
+   * med den regeln) → numret i litteran. En ny kombination får nästa lediga
+   * nummer; *Numrera om* skriver om alla.
+   */
+  openingNumbers?: Record<string, Record<string, number>>;
+  /** Uppställningarna (0.11.8, format 28; vytypen i 0.12): fältmallen och värdena per littera. */
+  openingSchedule?: OpeningSchedule;
+}
+
+/**
+ * Uppställningen av fönster eller dörrar (0.11.8): fälten är rader och varje
+ * littera en kolumn. `fields` är fältmallen (ordning och namn kan ändras,
+ * nya fält läggas till); `values` är det som skrivs per littera (krav som
+ * U-värde, brandklass …), littera → fält → text. `notes` är projektets egna
+ * föreskrifter, som står till höger med typernas.
+ */
+export interface OpeningSchedule {
+  fields?: { Window?: string[]; Door?: string[]; WallHole?: string[] };
+  values?: Record<string, Record<string, string>>;
+  notes?: { Window?: string; Door?: string; WallHole?: string };
 }
 
 /**
@@ -303,6 +326,8 @@ export interface Definition {
   railing?: RailingTypeModel;
   /** Profiltypen (0.11.6, format 27): delprofilerna, ankarna, sträckzonerna och parametrarna, för `elementType` Profile. */
   profile?: ProfileTypeModel;
+  /** Öppningstypen (0.11.8, format 28): karmen och rutnätet av lufter, för `elementType` Window, Door och WallHole. */
+  opening?: OpeningTypeModel;
   /**
    * Typens penna (0.8.33), för alla instanser utan egen. Objektets egen går
    * före typens, som går före stilmallens; fält för fält.
@@ -393,8 +418,8 @@ export const SEEN_ON_TYPES: ReadonlySet<string> = new Set(['Stair', 'Ground', 'S
 export const seenFrom = (el: Pick<Element, 'storey' | 'space' | 'seenOn' | 'type'>, place: Id): boolean => !el.space && el.storey !== place && !!el.seenOn?.includes(place) && SEEN_ON_TYPES.has(el.type);
 
 export const FORMAT = 'bacchus-project';
-/** 27 (0.11.6): profiltyperna (`Definition.profile`), profilobjekten (`Profile`) och stilbokens `profileGroups`. 26 (0.11): trappan (`Stair`, referenslinjen `line`, med fälten för räcket, den byggda trappan och spiraltrappan valfria) och objektens `seenOn` (*Syns också på*). 25 (0.10.32): stilboken med vykategorier (`graphics.categories`); vyns `category` är kategorins nyckel och dess avvikelser står i `overrides` (i stället för `compare`, `detail`, `hide` …, `style`). 24 (0.10.28.1): materialens kryssrutor `ground` och `building` i stället för `category`. 23 (0.10.28): materialen i stilmallen (`graphics.materials`, i stället för `fills`) och objektens `material`, `materialOpacity` och `materialAngle` (i stället för `fillStyle`). 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionsmarkörernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
-export const FORMAT_VERSION = 27;
+/** 28 (0.11.8): öppningstyperna (`Definition.opening`), dörrarnas och fönstrens nya parametrar (karmyttermått, höjdläge, karmens läge, egen littera), projektets `openingNumbers` och `openingSchedule`, och vägghålen (`WallHole`). 27 (0.11.6): profiltyperna (`Definition.profile`), profilobjekten (`Profile`) och stilbokens `profileGroups`. 26 (0.11): trappan (`Stair`, referenslinjen `line`, med fälten för räcket, den byggda trappan och spiraltrappan valfria) och objektens `seenOn` (*Syns också på*). 25 (0.10.32): stilboken med vykategorier (`graphics.categories`); vyns `category` är kategorins nyckel och dess avvikelser står i `overrides` (i stället för `compare`, `detail`, `hide` …, `style`). 24 (0.10.28.1): materialens kryssrutor `ground` och `building` i stället för `category`. 23 (0.10.28): materialen i stilmallen (`graphics.materials`, i stället för `fills`) och objektens `material`, `materialOpacity` och `materialAngle` (i stället för `fillStyle`). 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionsmarkörernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
+export const FORMAT_VERSION = 28;
 
 export interface ProjectDoc {
   format: typeof FORMAT;
@@ -453,8 +478,7 @@ export function emptyProject(name: string, kind: ProjectKind, fields: Record<str
     definitions: {
       't-yv01': { id: 't-yv01', origin: 'component', name: 'YV01', elementType: 'Wall', params: { thickness: 400 }, props: {}, description: 'Yttervägg' },
       't-iv01': { id: 't-iv01', origin: 'component', name: 'IV01', elementType: 'Wall', params: { thickness: 120 }, props: {}, description: 'Lätt innervägg' },
-      't-d1': { id: 't-d1', origin: 'component', name: 'D1', elementType: 'Door', params: { width: 900, height: 2100 }, props: {}, description: 'Innerdörr M9×21' },
-      't-f1': { id: 't-f1', origin: 'component', name: 'F1', elementType: 'Window', params: { width: 1200, height: 1200 }, props: {} },
+      ...Object.fromEntries(DEFAULT_OPENING_TYPES.filter((t) => STARTER_OPENING_TYPES.includes(t.id)).map((t) => [t.id, openingDefinition(t)])),
       't-bj01': { id: 't-bj01', origin: 'component', name: 'BJ01', elementType: 'Slab', params: { thickness: 300 }, props: {}, description: 'Bjälklag' },
     },
     elements: { ...drawingMarkers('pl-1'), ...master.elements },

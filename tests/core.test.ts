@@ -359,8 +359,8 @@ describe('3D', () => {
     const south = shapes.filter((s) => s.id === 'yv-s' && s.kind !== 'edges');
     expect(south).toHaveLength(1);
     const cuts = (south[0] as Solid).cuts ?? [];
-    // Fönster från bröstningen 900 till 2100, dörren från golvet.
-    expect(cuts.some((c) => c.z0 === 900 && c.z1 === 2110)).toBe(true); // hålet är 10 mm större än modulmåttet
+    // Fönstret 12 × 13 med överkant karm 2 100 (0.11.8): karmen 1 280 hög, hålet 1 300 från 810 till 2 110; dörren från golvet.
+    expect(cuts.some((c) => c.z0 === 810 && c.z1 === 2110)).toBe(true);
     expect(cuts.some((c) => c.z0 === 0)).toBe(true);
   });
 
@@ -437,14 +437,14 @@ describe('ut- och insida, karmar och kant i kant', () => {
     expect(faceOf(store.doc, store.doc.elements['yv-s']).face).toBe('outside');
   });
 
-  it('karmen sitter 50 mm in från utsidan i yttervägg och i liv på öppningssidan i innervägg', async () => {
+  it('karmen sitter i liv ute i yttervägg (0.11.8) och i liv på öppningssidan i innervägg', async () => {
     const { createContext } = await import('../src/repr/context');
     const { openingZone } = await import('../src/elements/opening');
     const doc = sampleProject();
     const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef' }, defaultSheet(doc.graphics), () => true);
-    // Yttervägg 400 tjock med utsidan till vänster (o = 200): karmen 100 djup från o = 150 till 50.
+    // Yttervägg 400 tjock med utsidan till vänster (o = 200): karmen 105 djup (typen) från o = 200 till 95.
     const ext = openingZone(ctx, doc.elements['yv-s'], ctx.params(doc.elements['f01']));
-    expect([ext.lo, ext.hi]).toEqual([50, 150]);
+    expect([ext.lo, ext.hi]).toEqual([95, 200]);
     // Innervägg 120 tjock, dörren slår åt höger (-1): karmen i liv med o = -60.
     const int = openingZone(ctx, doc.elements['iv-1'], ctx.params(doc.elements['d02']));
     expect([int.lo, int.hi]).toEqual([-60, 40]);
@@ -457,10 +457,12 @@ describe('ut- och insida, karmar och kant i kant', () => {
     expect(karmar('normal')).toBeGreaterThan(10);
   });
 
-  it('en glasad dörr får en glasningslinje', () => {
-    const { prims } = buildPlan(sampleProject(), 'pl-1', { state: 'st-b' });
-    expect(prims.some((p) => p.origin?.objectId === 'd05' && p.origin.part === 'glasning')).toBe(true);
-    expect(prims.some((p) => p.origin?.objectId === 'd02' && p.origin.part === 'glasning')).toBe(false);
+  it('en glasad dörr har glas i bladet i fasaden, en slät inte (0.11.8)', async () => {
+    const { buildModel3d } = await import('../src/repr/model3d');
+    const shapes = buildModel3d(sampleProject(), { state: 'st-bef' });
+    const glass = (id: string) => shapes.some((s) => s.id === id && s.kind === 'edges' && s.part === 'glass');
+    expect(glass('d01')).toBe(true);
+    expect(glass('d02')).toBe(false);
   });
 
   it('kant i kant: en möbel nära en vägg läggs an mot den', async () => {
@@ -555,11 +557,11 @@ describe('version 0.6', () => {
     expect(store.doc.elements['m03'].params.rotation).toBe(0);
   });
 
-  it('modulmått: hålet är 10 mm större och karmen 10 mm mindre', async () => {
+  it('modulmått: hålet är modulmåttet, karmen drevmånen mindre runt om (0.11.8)', async () => {
     const { featuresOf } = await import('../src/elements/features');
     const doc = sampleProject();
     const [h1, h2] = featuresOf(doc, doc.elements['d02']);
-    expect(Math.abs(h2.a[1] - h1.a[1])).toBe(910);
+    expect(Math.abs(h2.a[1] - h1.a[1])).toBe(900);
   });
 
   it('dörrar får individuella nummer i vänstervarvet och litteramallen styr texten', async () => {
@@ -569,9 +571,10 @@ describe('version 0.6', () => {
     const doc = sampleProject();
     const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef', detail: 'detail' }, defaultSheet(doc.graphics), () => true);
     expect(doorNumbersFor(ctx).get('d01')).toBe('D1101');
-    expect(litteraLines(ctx, doc.elements['d02'])).toEqual([doorNumbersFor(ctx).get('d02'), '910×2110']);
+    expect(litteraLines(ctx, doc.elements['d02'])).toEqual([doorNumbersFor(ctx).get('d02'), '900×2100']);
     const normal = createContext(doc, 'pl-1', { state: 'st-bef' }, defaultSheet(doc.graphics), () => true).ctx;
-    expect(litteraLines(normal, doc.elements['d02'])).toEqual(['D1']);
+    // Litteraregeln (0.11.8): typ och mått, två siffror.
+    expect(litteraLines(normal, doc.elements['d02'])[0]).toMatch(/^D0\d$/);
     expect(buildPlan(doc, 'pl-1', { state: 'st-bef', detail: 'sketch' }).prims.some((p) => p.origin?.part === 'littera')).toBe(false);
   });
 

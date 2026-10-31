@@ -103,7 +103,17 @@ export function shiftedParams(p: WallParams, dz: number): WallParams {
  */
 export interface OpeningParams {
   at: number;
+  /** Modulmåttet, mm (1000 = 10M). */
   width: number;
+  height?: number;
+  /**
+   * Räknade ur typen och stilboken (0.11.8, `derive`): karmyttermåttet och
+   * hålmåttet. Utan dem (andra hål) gäller modulmåttet.
+   */
+  frameW?: number;
+  frameH?: number;
+  holeW?: number;
+  holeH?: number;
 }
 
 /**
@@ -117,31 +127,39 @@ export function sagittaOver(f: WallFrame, width: number): number {
   return r - Math.sqrt(r * r - h * h) + 1;
 }
 
-/** Hålet är 10 mm större än modulmåttet, karmen 10 mm mindre. */
-export const HOLE_EXTRA = 10;
-export const FRAME_LESS = 10;
+/**
+ * Före 0.11.8 var hålet 10 mm större än modulmåttet och karmen 10 mm
+ * mindre. Nu räknas båda ur drevmånen (`frameFromModule`), och hålet är
+ * modulmåttet; konstanterna gäller bara det som saknar räknade mått.
+ */
+export const HOLE_EXTRA = 0;
+export const FRAME_LESS = 20;
 
 /**
  * Hålets höjder från våningens golv (0.10.16): från bröstningen (ett
  * fönster) eller väggens fot (en dörr) och modulmåttet + 10 uppåt. Ett
  * fönsters bröstning räknas från golvet, om det inte följer väggens fot.
  */
-export function openingSpan(wall: { level?: unknown }, o: { height?: number; sill?: number; sillFromWall?: boolean }): [number, number] {
+export function openingSpan(wall: { level?: unknown }, o: { height?: number; holeH?: number; sill?: number; sillFromWall?: boolean }): [number, number] {
   const z0 = (o.sill === undefined || o.sillFromWall ? levelOf(wall) : 0) + (o.sill ?? 0);
-  return [z0, z0 + (o.height ?? 0) + HOLE_EXTRA];
+  return [z0, z0 + holeHeight(o)];
 }
 
 /** Var väggen och öppningen ligger mot planens snitt; utan snitt (fasader, 3D) `cut`. */
 export function wallZone(ctx: Pick<PlanContext, 'doc' | 'storey'>, p: WallParams): CutZone {
   return zoneInPlan(ctx, levelOf(p), levelOf(p) + p.height);
 }
-export function openingZoneInPlan(ctx: Pick<PlanContext, 'doc' | 'storey'>, wall: WallParams, o: { height?: number; sill?: number; sillFromWall?: boolean }): CutZone {
+export function openingZoneInPlan(ctx: Pick<PlanContext, 'doc' | 'storey'>, wall: WallParams, o: { height?: number; holeH?: number; sill?: number; sillFromWall?: boolean }): CutZone {
   const [z0, z1] = openingSpan(wall, o);
   return zoneInPlan(ctx, z0, z1);
 }
 
 export function holeWidth(o: OpeningParams): number {
-  return o.width + HOLE_EXTRA;
+  return o.holeW ?? o.width + HOLE_EXTRA;
+}
+
+export function holeHeight(o: { height?: number; holeH?: number }): number {
+  return o.holeH ?? (o.height ?? 0) + HOLE_EXTRA;
 }
 
 /** Öppningens rektangel genom väggen, för markering. */

@@ -8,7 +8,7 @@ import { levelOf, zOn, type Edges3D, type Plane, type Shape3D, type Shear } from
 import type { PlanContext, PlanItem, SlabAbove } from './registry';
 import { openingLift } from './opening';
 import { halfPlaneBelow, planeRange, roofPlanesAround, trimToRoofs, type RoofPlane } from './roof';
-import { bareWallShapes, HOLE_EXTRA, holeWidth, sagittaOver, wallShear, type OpeningParams, type WallParams } from './wallBodies';
+import { bareWallShapes, holeHeight, holeWidth, sagittaOver, wallShear, type OpeningParams, type WallParams } from './wallBodies';
 
 /*
  * Väggarnas 3D (ur wall.ts i 0.10.1): kropparna kapade av taken och
@@ -121,7 +121,7 @@ export function wallModel3d(items: PlanItem[], ctx: PlanContext): Shape3D[] {
     const openings = ctx.openingsIn(el.id).map((o) => {
       const op = ctx.params<OpeningParams & { height: number; sill?: number; sillFromWall?: boolean }>(o);
       const sill = openingLift(p, op) + (op.sill ?? 0);
-      return { at: op.at, width: holeWidth(op), z0: sill, z1: Math.min(wallTop, sill + op.height + HOLE_EXTRA) };
+      return { at: op.at, width: holeWidth(op), z0: sill, z1: Math.min(wallTop, sill + holeHeight(op)) };
     });
     // Varje vägg är en hel kropp med öppningarna som genomgående urtag,
     // så att ytan runt dörrar och fönster inte delas upp i bitar.

@@ -227,6 +227,12 @@ export function installActions(app: AppContext, parts: ActionParts) {
         app.styleDialog.open({ profileType: def });
         break;
       }
+      case 'open-opening-type': {
+        // Dörrens eller fönstrets typ i editorn (0.11.8), från panelen och smartmenyn.
+        const el = app.store.doc.elements[app.selection.list()[0]];
+        app.styleDialog.open({ openingType: el?.definition });
+        break;
+      }
       case 'style-railing-type': {
         // Typen i räckestypeditorn (0.11.2), från räckets panel.
         const def = target.closest<HTMLElement>('[data-def]')?.dataset.def;

@@ -1,6 +1,6 @@
 import type { Element } from '../core/model';
 import type { PlanContext } from './registry';
-import { FRAME_LESS, HOLE_EXTRA, planWallParams, wallFrame, type OpeningParams, type WallFrame, type WallParams } from './wall';
+import { FRAME_LESS, holeWidth, planWallParams, wallFrame, type OpeningParams, type WallFrame, type WallParams } from './wall';
 import { outsideSide } from './wallSides';
 import { levelOf } from '../repr/solids';
 import { ABOVE_PART, planCutPen } from '../repr/planCutPens';
@@ -21,8 +21,8 @@ export interface FrameParams {
 
 export const FRAME_DEFAULTS: FrameParams = { frameWidth: 50, frameDepth: 100, inset: null };
 
-/** Standardindrag från utsidan i ytterväggar. */
-export const EXTERIOR_INSET = 50;
+/** Standardindrag från utsidan i ytterväggar: karmen i liv ute (0.11.8; förut 50). */
+export const EXTERIOR_INSET = 0;
 
 export interface OpeningZone {
   f: WallFrame;
@@ -50,7 +50,7 @@ export interface OpeningZone {
 export function openingZone(
   ctx: PlanContext,
   host: Element,
-  p: OpeningParams & Partial<FrameParams> & { swing?: 1 | -1 },
+  p: OpeningParams & Partial<FrameParams> & { swing?: 1 | -1; place?: 'out' | 'in' | 'mid'; door?: boolean },
   /** I planen: en lutande vägg där snittet skär den (0.10.21); i 3D vid foten. */
   inPlan = false,
 ): OpeningZone {
@@ -61,9 +61,18 @@ export function openingZone(
   let face: 1 | -1 | 0;
   let insetFrom: OpeningZone['insetFrom'];
   let inset: number;
-  if (out !== null) {
-    face = out;
-    insetFrom = 'utsidan';
+  if (p.place === 'mid') {
+    face = 0;
+    insetFrom = 'mitten';
+    inset = 0;
+  } else if (out !== null && p.door && p.swing && !p.place) {
+    // En ytterdörr sitter i liv på den sida den slår mot (0.11.8), så att bladet går att öppna helt.
+    face = p.swing;
+    insetFrom = p.swing === out ? 'utsidan' : 'öppningssidan';
+    inset = p.inset ?? EXTERIOR_INSET;
+  } else if (out !== null) {
+    face = p.place === 'in' ? (-out as 1 | -1) : out;
+    insetFrom = p.place === 'in' ? 'öppningssidan' : 'utsidan';
     inset = p.inset ?? EXTERIOR_INSET;
   } else if (p.swing) {
     face = p.swing;
@@ -86,8 +95,8 @@ export function openingZone(
     lo = Math.min(outer, inner);
     hi = Math.max(outer, inner);
   }
-  const karm = p.width - FRAME_LESS;
-  const hole = p.width + HOLE_EXTRA;
+  const karm = p.frameW ?? p.width - FRAME_LESS;
+  const hole = holeWidth(p);
   return { f, lo, hi, face, inset, insetFrom, s1: p.at - karm / 2, s2: p.at + karm / 2, h1: p.at - hole / 2, h2: p.at + hole / 2 };
 }
 

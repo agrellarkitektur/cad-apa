@@ -1,3 +1,4 @@
+import { openingLitteras } from '../elements/openingLittera';
 import { markerName } from '../elements/markers';
 import type { Element, ProjectDoc } from '../core/model';
 import { typeOf } from '../elements/registry';
@@ -7,6 +8,12 @@ export function labelOf(doc: ProjectDoc, el: Element): string {
   if (el.type === 'Section' || el.type === 'Elevation') return markerName(doc, el);
   const t = typeOf(el.type);
   const typeName = t?.label ?? el.type;
+  // Dörrar och fönster (0.11.8): litteran ur regeln och typens namn, *F02 Fönster · Sidohängt 2-luft*.
+  if (el.type === 'Door' || el.type === 'Window' || el.type === 'WallHole') {
+    const lit = openingLitteras(doc).get(el.id);
+    const def = el.definition ? doc.definitions[el.definition]?.name : undefined;
+    return `${[lit, typeName].filter(Boolean).join(' ')}${def ? ` · ${def}` : ''}${el.name ? ` ${el.name}` : ''}`;
+  }
   const littera = el.definition ? doc.definitions[el.definition]?.name : undefined;
   const parts = [typeName, littera, el.name].filter(Boolean);
   return parts.join(' ');

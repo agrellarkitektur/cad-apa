@@ -1717,3 +1717,110 @@ table.pe-pts {
 .pe-pts input {
   min-width: 3.2em;
 }
+
+/* Dörr- och fönstereditorn (0.11.8): typen sedd utifrån, lufterna går att klicka på. */
+.ot-canvas {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper, #fff);
+  background-image: linear-gradient(var(--rule) 1px, transparent 1px), linear-gradient(90deg, var(--rule) 1px, transparent 1px);
+  background-size: 16px 16px;
+  padding: 6px;
+}
+.op-preview {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 420px;
+}
+.op-preview rect,
+.op-preview line {
+  vector-effect: non-scaling-stroke;
+  stroke: var(--ink);
+  stroke-width: 1;
+}
+.op-preview .op-frame {
+  fill: #fff;
+  stroke-width: 1.4;
+}
+.op-preview .op-sash {
+  fill: #fff;
+  cursor: pointer;
+}
+.op-preview .op-glass {
+  fill: #dbe9f3;
+  cursor: pointer;
+}
+.op-preview .op-panel,
+.op-preview .op-leaf {
+  fill: #ecebe6;
+  cursor: pointer;
+}
+.op-preview .op-open {
+  fill: transparent;
+  stroke-dasharray: 4 3;
+  cursor: pointer;
+}
+.op-preview .op-line {
+  fill: none;
+}
+.op-preview .op-symbol {
+  stroke: var(--muted);
+}
+.op-preview .op-symbol.inward {
+  stroke-dasharray: 5 3;
+}
+.op-preview .op-hinge {
+  fill: #888;
+  stroke: none;
+}
+.op-preview .op-handle {
+  fill: var(--ink);
+  stroke: none;
+}
+.op-preview .op-selected {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2.2;
+  stroke-dasharray: 6 3;
+  pointer-events: none;
+}
+.op-preview text {
+  fill: var(--muted);
+  font-family: var(--font-data);
+  pointer-events: none;
+}
+.op-preview .op-cell-label.on {
+  fill: var(--accent);
+  font-weight: 650;
+}
+.ot-tools {
+  gap: 4px;
+  align-items: center;
+}
+.ot-tools .rt-sec {
+  margin: 0 4px 0 0;
+}
+.ot-tools .btn.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.ot-track {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+.ot-track .ot-size {
+  width: 4.5em;
+}
+.op-preview .op-cell {
+  cursor: pointer;
+}
+.gen-rules {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0 10px;
+}
+.gen-rules .gen-desc {
+  margin-left: 6px;
+}

@@ -8,7 +8,11 @@ import type { LineWeights } from '../view2d/renderPrimitives';
 export type QuickId =
   | 'flip-swing'
   | 'flip-hinge'
-  | 'toggle-glazed'
+  | 'swap-type'
+  | 'swap-size'
+  | 'same-littera'
+  | 'lock-littera'
+  | 'open-type'
   | 'rotate-90'
   | 'cycle-ref'
   | 'flip-wall'
@@ -21,9 +25,13 @@ export type QuickId =
 
 /** Snabbknappar som kan väljas, och för vilka sorters objekt de finns. */
 export const QUICK_ACTIONS: { id: QuickId; label: string; types: string[] | 'all' }[] = [
+  { id: 'swap-type', label: 'Byt typ, behåll mått', types: ['Door', 'Window'] },
+  { id: 'swap-size', label: 'Byt mått, behåll typ', types: ['Door', 'Window'] },
+  { id: 'flip-hinge', label: 'Spegla hängning', types: ['Door', 'Window'] },
   { id: 'flip-swing', label: 'Vänd slag', types: ['Door'] },
-  { id: 'flip-hinge', label: 'Byt hängning', types: ['Door'] },
-  { id: 'toggle-glazed', label: 'Glasad', types: ['Door'] },
+  { id: 'same-littera', label: 'Samma littera som…', types: ['Door', 'Window'] },
+  { id: 'lock-littera', label: 'Lås litteran', types: ['Door', 'Window'] },
+  { id: 'open-type', label: 'Öppna i editorn', types: ['Door', 'Window'] },
   { id: 'cycle-ref', label: 'Referenslinje', types: ['Wall'] },
   { id: 'flip-wall', label: 'Vänd väggen', types: ['Wall'] },
   { id: 'rotate-90', label: 'Vrid 90°', types: ['Wall', 'Furniture', 'Text', 'Roof', 'Slab', 'North', 'Section', 'mixed'] },
@@ -58,8 +66,8 @@ export const QUICK_TYPES: { type: string; label: string }[] = [
 
 const QUICK_DEFAULTS: Record<string, QuickId[]> = {
   Wall: ['cycle-ref', 'flip-wall', 'copy', 'demolish', 'delete'],
-  Door: ['flip-swing', 'flip-hinge', 'toggle-glazed', 'demolish', 'delete'],
-  Window: ['demolish', 'delete'],
+  Door: ['swap-type', 'swap-size', 'flip-hinge', 'flip-swing', 'same-littera', 'lock-littera', 'open-type', 'demolish', 'delete'],
+  Window: ['swap-type', 'swap-size', 'flip-hinge', 'same-littera', 'lock-littera', 'open-type', 'demolish', 'delete'],
   Furniture: ['rotate-90', 'mirror', 'copy', 'demolish', 'delete'],
   Space: ['zoom-selection', 'delete'],
   Dimension: ['copy', 'delete'],
@@ -175,6 +183,9 @@ export function loadUiSettings(): UiSettings {
     if (!raw) return d;
     // Snabbknapparna fick nya val i version 2; äldre sparade listor ersätts.
     const quick = (raw as { v?: number }).v === 2 ? { ...d.quick, ...(raw.quick ?? {}) } : d.quick;
+    // Dörrar och fönster fick nya val i 0.11.8 (*Glasad* försvann): en sparad lista med det gamla valet ersätts.
+    for (const k of ['Door', 'Window'])
+      if (quick[k]?.some((id) => (id as string) === 'toggle-glazed') || (quick[k] && !quick[k].includes('swap-type'))) quick[k] = d.quick[k];
     return {
       grid: typeof raw.grid === 'boolean' ? raw.grid : d.grid,
       lineWeights: raw.lineWeights === 'thin' || raw.lineWeights === 'true' || raw.lineWeights === 'screen' ? raw.lineWeights : d.lineWeights,

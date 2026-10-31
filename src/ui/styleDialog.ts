@@ -25,6 +25,7 @@ import { placesChange, placesClick } from './style/placesPanel';
 import { exportBookFile, importBookFile, templateDialog } from './style/bookFile';
 import { newRailEditorState, railEditorChange, railEditorClick, railEditorDrag, railEditorMarkup, railEditorSearch } from './style/railingTypes';
 import { END_GROUP } from '../core/profileTypes';
+import { newOpeningEditorState, openingEditorChange, openingEditorClick, openingEditorMarkup, openingEditorSearch } from './style/openingTypes';
 import { newProfileEditorState, profileCanvasPointer, profileEditorChange, profileEditorClick, profileEditorDrag, profileEditorMarkup, profileEditorSearch } from './style/profileTypes';
 
 /** Raderna som sök och *Vanliga/Alla* (0.10.34) visar eller döljer. */
@@ -32,7 +33,7 @@ const FILTER_ROWS = '.style-row, .pen-row, .material-row, .linetype-row, .fillty
 
 /** Det som visas till höger: Allmänt, en vytyp eller en resurs. */
 type Place = { kind: 'general' } | { kind: 'type'; type: ViewType } | { kind: 'res'; res: Resource };
-type Resource = 'pens' | 'materials' | 'lineTypes' | 'fillTypes' | 'railings' | 'profiles' | 'endProfiles' | 'text';
+type Resource = 'pens' | 'materials' | 'lineTypes' | 'fillTypes' | 'railings' | 'profiles' | 'endProfiles' | 'openings' | 'text';
 
 /** Stilbokens flikar (0.11.6, beslut D och H): Stil, Typer och Allmänt. */
 export type BookTab = 'style' | 'types' | 'general';
@@ -57,10 +58,10 @@ const TYPES: readonly { res: Resource | null; name: string; later?: string }[] =
   { res: 'profiles', name: 'Profiler' },
   { res: 'endProfiles', name: 'Ändprofiler' },
   { res: 'railings', name: 'Räckestyper' },
-  { res: null, name: 'Dörr- och fönstertyper', later: 'Kommer i 0.11.8' },
+  { res: 'openings', name: 'Fönster och dörrar' },
 ];
 
-const TYPE_RES: ReadonlySet<Resource> = new Set(['materials', 'profiles', 'endProfiles', 'railings']);
+const TYPE_RES: ReadonlySet<Resource> = new Set(['materials', 'profiles', 'endProfiles', 'railings', 'openings']);
 
 const RAIL_ICON: Record<string, string> = { site: icons.ground, storey: icons.storeys, elevation: icons.elevation, section: icons.section, cube: icons.multi, worksheet: icons.draw2d, sheet: icons.sheet, list: icons.states };
 
@@ -122,6 +123,8 @@ export class StyleDialog {
   pp = newPlacesState();
   /** Räckestypeditorn (0.11.2): vald typ, del och förhandsvisning. */
   rt = newRailEditorState();
+  /** Dörr- och fönstereditorn (0.11.8): vald typ, luft och provat mått. */
+  ot = newOpeningEditorState();
   /** Profileditorn (0.11.6): vald typ, delprofil, verktyg och det som ritas. */
   pe = newProfileEditorState();
   /** Ändprofilerna (0.11.7): samma editor, med bara gruppen Ändprofiler och sidovyn. */
@@ -164,6 +167,10 @@ export class StyleDialog {
         profileEditorSearch(this.el, this.peNow, (t as HTMLInputElement).value);
         return;
       }
+      if (t.matches('[data-ot-search]')) {
+        openingEditorSearch(this.el, this.ot, (t as HTMLInputElement).value);
+        return;
+      }
       if (t.matches('[data-rt-search]')) {
         railEditorSearch(this.el, this.rt, (t as HTMLInputElement).value);
         return;
@@ -183,8 +190,16 @@ export class StyleDialog {
   }
 
   /** Öppna stilboken, gärna vid en vytyp och kategori (den där man är), eller vid en vys stil (0.10.33). */
-  open(at?: { type: ViewType; category?: string } | { view: string } | { railingType: string } | { profileType?: string; tab?: BookTab }): void {
+  open(at?: { type: ViewType; category?: string } | { view: string } | { railingType: string } | { openingType?: string } | { profileType?: string; tab?: BookTab }): void {
     if (at && 'tab' in at && at.tab) this.showTab(at.tab);
+    else if (at && 'openingType' in at) {
+      this.go({ kind: 'res', res: 'openings' });
+      if (at.openingType) {
+        this.ot.def = at.openingType;
+        this.ot.cell = null;
+        this.ot.tryMod = null;
+      }
+    }
     else if (at && 'profileType' in at) {
       const end = !!at.profileType && this.store.doc.definitions[at.profileType]?.profile?.group === END_GROUP;
       this.go({ kind: 'res', res: end ? 'endProfiles' : 'profiles' });
@@ -365,6 +380,7 @@ export class StyleDialog {
     if (p.res === 'materials') return materialSection(this.book, materialUsesMap(doc)) + placesSection(doc, 'material', this.pp);
     if (p.res === 'lineTypes') return lineTypeSection(this.book, lineTypeUses(doc)) + placesSection(doc, 'linetype', this.pp);
     if (p.res === 'railings') return railEditorMarkup(doc, this.rt);
+    if (p.res === 'openings') return openingEditorMarkup(doc, this.ot);
     if (p.res === 'profiles' || p.res === 'endProfiles') return profileEditorMarkup(doc, this.peNow);
     if (p.res === 'fillTypes') return fillTypeSection(this.book, fillTypeUses(doc)) + placesSection(doc, 'filltype', this.pp);
     return labelSection(this.book);
@@ -520,6 +536,7 @@ export class StyleDialog {
     )
       return;
     if (await railEditorClick(this.store, this.rt, target, () => this.render(), this.onError)) return;
+    if (await openingEditorClick(this.store, this.ot, target, () => this.render(), this.onError)) return;
     if (await generalClick(this.store, target, (book, label) => this.set(book, label))) return;
     const go = target.closest<HTMLElement>('[data-sb-go]')?.dataset.sbGo;
     if (go) {
@@ -591,6 +608,7 @@ export class StyleDialog {
     }
     if (generalChange(this.store, input, (book, label) => this.set(book, label))) return;
     if (railEditorChange(this.store, input)) return;
+    if (openingEditorChange(this.store, this.ot, input)) return;
     if (profileEditorChange(this.store, this.peNow, input, () => this.render())) return;
     if (input.matches('[data-sb-name]')) {
       const name = input.value.trim();
@@ -606,7 +624,7 @@ export class StyleDialog {
 function focusSelector(el: Element | null, root: HTMLElement): string | null {
   if (!(el instanceof HTMLElement) || !root.contains(el)) return null;
   if (el.id) return `#${CSS.escape(el.id)}`;
-  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview', 'data-ul', 'data-ul-field', 'data-ul-addsel', 'data-pp-search', 'data-pp-filter', 'data-pp-set', 'data-pp-check', 'data-pp-all', 'data-pp-move', 'data-penlist', 'data-pp-tag', 'data-pp-pick', 'data-gen', 'data-gen-action', 'data-rt-mode', 'data-rt-act', 'data-rt-g', 'data-rt-p', 'data-rt-type', 'data-sb-tab', 'data-pe-act', 'data-pe-tool', 'data-pe-view', 'data-pe-type', 'data-pe-search', 'data-pe-opt'];
+  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview', 'data-ul', 'data-ul-field', 'data-ul-addsel', 'data-pp-search', 'data-pp-filter', 'data-pp-set', 'data-pp-check', 'data-pp-all', 'data-pp-move', 'data-penlist', 'data-pp-tag', 'data-pp-pick', 'data-gen', 'data-gen-action', 'data-rt-mode', 'data-rt-act', 'data-rt-g', 'data-rt-p', 'data-rt-type', 'data-sb-tab', 'data-pe-act', 'data-pe-tool', 'data-pe-view', 'data-pe-type', 'data-pe-search', 'data-pe-opt', 'data-ot', 'data-ot-act', 'data-ot-type', 'data-ot-search'];
   const parts = attrs.filter((a) => el.hasAttribute(a)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a)!)}"]`);
   if (!parts.length) return null;
   const v = el instanceof HTMLInputElement && el.type === 'radio' ? `[value="${CSS.escape(el.value)}"]` : '';

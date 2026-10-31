@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.7.3** (alfa), Trappan och räcket, det som inte hanns med; nästa är **0.11.8
-Dörrar och fönster**.
+**0.11.8** (alfa), Dörrar och fönster: öppningstyperna; nästa är **0.11.8.1
+Detalj och beslag**.
 
 ## Vad som fungerar
 
@@ -1149,6 +1149,69 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11.8, Dörrar och fönster: öppningstyperna (**nytt filformat 28**;
+projekt från 0.11.6–0.11.7.3 öppnas inte):
+- **Typerna är fabrikens modeller** med beskrivande namn (*Sidohängt 2-luft*,
+  *Pardörr*), utan littera. En typ är en **karm med ett rutnät av lufter**:
+  kolumner och rader (fasta mm eller andelar) med poster och tvärstycken
+  mellan. Varje luft är fast (glas, panel eller öppen), öppningsbar
+  (sidohängd, under- eller överkantshängd, dreh-kipp, horisontell eller
+  vertikal pivå, skjut, vik) eller ett dörrblad (slag, skjutdörr utanpå
+  eller in i vägg, vikdörr, port; slätt, spegel eller glasat). Sidoljus
+  och överljus är lufter bredvid och ovanför bladet
+- **Förvalda typer**: Fast, Sidohängt 1-luft och 2-luft, Flaggfönster,
+  Underkantshängt, Överkantshängt, Horisontell och Vertikal pivå,
+  Dreh-kipp, Skjutfönster, Fönsterdörr; Innerdörr slät och spegel,
+  Ytterdörr glasad, Pardörr, Ytterdörr med sidoljus, Skjutdörr utanpå och
+  in i vägg, Vikdörr, Garageport. Nya projekt har fem; resten med *Lägg in
+  förvalda typer*
+- **Dörr- och fönstereditorn** under stilboken › Typer › *Fönster och
+  dörrar*: typlistan i grupper, typens struktur (karm, tröskel, post,
+  tvärstycke, kolumner och rader, lufterna, båge och blad, förvalt
+  modulmått, minsta och största mått, föreskrift), ritytan sedd utifrån
+  med *+ Kolumn*, *+ Rad* (överljus), *Slå ihop*, *Dela*, luftens
+  öppningssätt och *Prova mått*, och den valda luftens egenskaper
+  (öppningssätt, gångjärn, utåt eller inåt, fyllning, bladet)
+- **Måtten**: modulmåttet räknar in drevmånen (10 per sida, under
+  stilboken › Allmänt): 10 × 13 är karmyttermåttet 980 × 1 280 och hålet
+  1 000 × 1 300; en dörr 9 × 21 är 880 × 2 090. **Karmyttermåttet kan
+  skrivas fritt** (modulmåttet visas då som *eget*). Typen kan ha min- och
+  maxmått (en varning)
+- **Höjdläget**: *Överkant karm* som förval (2 100 under Allmänt), så att
+  dörrar och fönster linjerar; eller *Bröstning*
+- **Litteran** hör till objektet och följer projektets **litteraregel**
+  under Allmänt: *Bara bokstav och modulmått* (F 12×13), *Typ och mått*
+  (F01, F02 …; förval) eller *Typ, mått och hängning* (V och H var för
+  sig). Formeln per sort (`F{nr:2}`, `D{nr:2}`, `V{nr:2}`; egen t.ex.
+  `YD{nr:2}`). Numret för en kombination står kvar när andra tillkommer;
+  **Numrera om…** sorterar efter våning, fasad (N–Ö–S–V) och vänster till
+  höger sett utifrån. Litteran kan låsas eller skrivas över (*Samma
+  littera som …*)
+- **Verktygen Fönster och Dörr**: typ, modulmått, karmyttermått, höjdläge,
+  hängning (som typen eller speglad), karmens läge (liv ute, liv inne,
+  mitt) och avståndet
+- **Smartmenyn** på dörrar och fönster: *Byt typ…* (behåll mått), *Byt
+  mått…* (behåll typ), *Spegla hängning*, *Vänd slag*, *Samma littera
+  som…*, *Lås litteran*, *Öppna i editorn…*
+- **Egenskaperna**: typen, modulmått, karmyttermått och hålmått, höjdläget
+  med överkant och bröstning, läget i väggen, hängningen sedd utifrån och
+  litteran med *Låst*
+- **Ritningen ur typen**: i planen karmen och posterna i snitt, glaset,
+  fönstrens slag (bladlinje och streckad båge), dörrbladen med slagbåge
+  (det passiva bladet i en pardörr streckat), skjutdörren i öppet läge
+  streckad; Skiss är hålet och en linje (glaset eller bladet öppet). I 3D,
+  fasader och sektioner karmen, posterna, bågarna, bladen och glaset;
+  **öppningssymbolen** med spetsen mot gångjärnen, heldragen från den sida
+  luften öppnas mot och streckad från den andra. Foder och bleck i Detalj
+  (mer i 0.11.8.1)
+- **Karmens läge**: fönster i liv ute som förval (förut 50 mm in),
+  ytterdörrar i liv på den sida de slår mot
+- Nya ställen i stilboken: *Fönster: post och tvärstycke* och *Fönster:
+  slagbåge*
+- **Vägghålen** finns i formatet (sorten `WallHole`, littera V01 …);
+  verktyget och typerna kommer i 0.11.8.2. Uppställningarnas fältmall och
+  värden per littera finns i formatet; vytypen kommer i 0.12
 
 Version 0.11.7.3, Trappan och räcket, det som inte hanns med (samma
 filformat, 27; projekt från 0.11.6 öppnas):

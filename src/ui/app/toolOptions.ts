@@ -17,6 +17,7 @@ import { SHEET_TEXT_HEIGHTS } from '../../core/sheets';
 import { isSite } from '../../core/model';
 import { defaultRailingDef, railingTypesFor } from '../../core/railings';
 import { profileOptionChange, profileOptionClick, profileOptionsMarkup } from './profileToolOptions';
+import { openingOptionChange, openingOptionClick, openingOptionsMarkup } from './openingToolOptions';
 
 /** Verktygsraden under ritytan: inställningar för det verktyg som är valt, och måttbandets värden. */
 export function installToolOptions(app: AppContext) {
@@ -45,18 +46,8 @@ export function installToolOptions(app: AppContext) {
         <span class="opt-hint">${app.wallTool.drawing ? 'Klicka nästa punkt, eller skriv en längd och tryck Enter.' : 'Klicka eller tryck där väggen ska börja.'}</span>`;
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'door' || app.ui.tool === 'window') {
-      const t = app.ui.tool === 'door' ? app.doorTool : app.windowTool;
-      const type = app.ui.tool === 'door' ? 'Door' : 'Window';
-      const defs = Object.values(app.store.doc.definitions)
-        .filter((d) => d.elementType === type)
-        .sort((a, b) => a.name.localeCompare(b.name, 'sv', { numeric: true }));
-      if (t.options.definition && !app.store.doc.definitions[t.options.definition]) t.options.definition = defs[0]?.id ?? null;
-      const opts = defs
-        .map((d) => `<option value="${d.id}"${d.id === t.options.definition ? ' selected' : ''}>${escapeHtml(d.name)} · ${nf.format(Number(d.params.width))}×${nf.format(Number(d.params.height))}</option>`)
-        .join('');
-      app.toolOptions.innerHTML = `
-        <label class="opt"><span>Typ</span><select id="opening-def" aria-label="Typ">${opts}</select></label>
-        <span class="opt-hint">${app.ui.tool === 'door' ? 'Peka på en vägg och klicka. Sidan du pekar på blir öppningssidan, gångjärnen hamnar närmast markören.' : 'Peka på en vägg och klicka där fönstret ska sitta.'}</span>`;
+      // Dörrar och fönster (0.11.8): typ, mått, höjdläge, hängning och karmens läge.
+      app.toolOptions.innerHTML = openingOptionsMarkup(app.store, app.ui.tool === 'door' ? app.doorTool : app.windowTool);
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'room') {
       app.toolOptions.innerHTML = `
@@ -323,6 +314,11 @@ export function installToolOptions(app: AppContext) {
     const t = e.target as HTMLSelectElement;
     if (profileOptionChange(app, t)) return;
     const num = Number(t.value);
+    if ((app.ui.tool === 'door' || app.ui.tool === 'window') && openingOptionChange(app.store, app.ui.tool === 'door' ? app.doorTool : app.windowTool, t, Number(t.value.replace(',', '.')))) {
+      renderToolOptions();
+      app.view.requestRender();
+      return;
+    }
     if (t.id === 'roof-slope' && Number.isFinite(num)) app.roofTool.options.slope = Math.max(0, Math.min(75, num));
     if (t.id === 'roof-height' && Number.isFinite(num)) app.roofTool.options.height = Math.round(num);
     if (t.id === 'roof-height-at') app.roofTool.options.heightAt = t.value === 'top' ? 'top' : 'under';
@@ -348,7 +344,6 @@ export function installToolOptions(app: AppContext) {
       app.stairTool.options.width = Math.round(num);
       app.view.requestRender();
     }
-    if (t.id === 'opening-def') (app.ui.tool === 'door' ? app.doorTool : app.windowTool).options.definition = t.value;
     if (t.id === 'd2-kind') app.draw2dTool.setKind(t.value as ShapeKind);
     if ((t as unknown as HTMLInputElement).name === 'd2-weight' && num >= 0) {
       app.draw2dTool.options.weight = num;
@@ -448,6 +443,10 @@ export function installToolOptions(app: AppContext) {
     const b = (e.target as HTMLElement).closest<HTMLElement>('button');
     if (!b) return;
     if (profileOptionClick(app, b)) return;
+    if ((app.ui.tool === 'door' || app.ui.tool === 'window') && openingOptionClick(app.ui.tool === 'door' ? app.doorTool : app.windowTool, b)) {
+      renderToolOptions();
+      return;
+    }
     if (b.dataset.just) {
       app.wallTool.options.face = b.dataset.just as WallFace;
       renderToolOptions();

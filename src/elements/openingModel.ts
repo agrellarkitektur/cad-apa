@@ -1,14 +1,15 @@
 import type { WallFrame } from '../geometry/wallFrame';
 import type { Vec2 } from '../repr/primitives';
 import type { Edges3D, EdgePart, Shape3D, Solid } from '../repr/solids';
+import { hasSash, LEAF_OPS, type LaidCell, type OpeningLayout, type OpeningTypeModel, type Rect } from '../core/openingTypes';
 
 /**
- * Dörrar och fönster i 3D, och därmed i fasader och sektioner (0.7.1).
- * Detaljnivån styr vad som finns med:
+ * Dörrar och fönster i 3D, och därmed i fasader och sektioner (0.7.1; ur
+ * typens rutnät sedan 0.11.8). Detaljnivån styr vad som finns med:
  *
- * - Skiss: bara hålet (väggen ritar det).
- * - Normal: karm, båge, dörrblad, handtag och foder, som en bygglovsfasad.
- * - Detalj: dessutom sammanfogningar, falsar och fönsterbänk.
+ * - Skiss: karmens kontur och delningen.
+ * - Normal: karm, poster, bågar, blad, glas och öppningssymbolen.
+ * - Detalj: dessutom handtag, foder och fönsterbleck (mer i 0.11.8.1).
  *
  * Kropparna ritas utan egna kantlinjer; kanterna levereras här, med vilken
  * sorts linje de är, så att fasaden kan ge dem rätt tjocklek. Karmens delar
@@ -22,11 +23,6 @@ type P3 = [number, number, number];
 /** Fodrets bredd och tjocklek, mm. */
 export const LINING = 70;
 const LINING_T = 15;
-/** Bågens bredd i fasaden och djup, mm. */
-const SASH = 45;
-const SASH_DEPTH = 60;
-/** Falsens bredd, mm. */
-const REBATE = 12;
 
 class Builder {
   readonly solids: Solid[] = [];
@@ -141,151 +137,149 @@ function linings(b: Builder, h1: number, h2: number, zTop: number, zBottom: numb
   }
 }
 
-export interface DoorGeom {
+/** Öppningssymbolens streckning på papperet, mm. */
+const SWING_DASH = [3, 1.5] as const;
+
+export interface OpeningGeom {
   f: WallFrame;
-  s1: number;
-  s2: number;
-  h1: number;
-  h2: number;
+  /** Karmens djupzon (avstånd från väggens mittlinje). */
   lo: number;
   hi: number;
-  /** Karmens höjd (modulmått − 10). */
-  height: number;
+  /** Hålets ändar längs väggen och höjder. */
+  h1: number;
+  h2: number;
+  holeBottom: number;
   holeTop: number;
-  frameWidth: number;
+  /** Karmens underkant. */
+  z0: number;
+  layout: OpeningLayout;
+  model: OpeningTypeModel;
+  /** Från karmens u (vänster sett utifrån) till läget längs väggen. */
+  u: (u: number) => number;
+  /** Sidan öppningen ses ifrån (utsidan). */
+  vf: 1 | -1;
+  /** Dörrens slagsida. */
   swing: 1 | -1;
-  hinge: 'start' | 'end';
-  glazed: boolean;
-  leaf: number;
+  /** Ytterväggens utsida (för blecket), 0 i innerväggar. */
+  outside: 1 | -1 | 0;
   showSwing: boolean;
 }
 
-export function doorModel(id: string, g: DoorGeom, level: Level): Shape3D[] {
+/**
+ * Dörrar, fönster och vägghål i 3D, och därmed i fasader och sektioner
+ * (0.11.8): karmen, posterna och tvärstyckena ur typens rutnät, och varje
+ * luft för sig (glas i karmen, båge med glas, panel eller dörrblad).
+ * Öppningssymbolen (triangeln med spetsen mot gångjärnssidan) ritas på båda
+ * sidor: heldragen från den sida luften öppnas mot, streckad från den andra.
+ */
+export function openingModel3d(id: string, g: OpeningGeom, level: Level): Shape3D[] {
   const b = new Builder(id, g.f);
-  const { s1, s2, lo, hi, height: H } = g;
-  const fw = g.frameWidth;
-  const sHinge = g.hinge === 'start' ? s1 + fw : s2 - fw;
-  const sFree = g.hinge === 'start' ? s2 - fw : s1 + fw;
-  if (level === 'sketch') {
-    // Bara hålet; öppningssättet över hela hålet, i väggens båda liv.
-    if (g.showSwing) b.swing(g.hinge === 'start' ? g.h1 : g.h2, g.hinge === 'start' ? g.h2 : g.h1, 0, g.holeTop, [g.f.half + 1, -g.f.half - 1]);
-    // En skiva i karmens läge, så att man inte ser rakt in i huset.
-    b.box('door', g.h1, g.h2, (lo + hi) / 2 - 20, (lo + hi) / 2 + 20, 0, g.holeTop);
+  const L = g.layout;
+  const m = g.model;
+  const S = (u0: number, u1: number): [number, number] => {
+    const a = g.u(u0);
+    const c = g.u(u1);
+    return [Math.min(a, c), Math.max(a, c)];
+  };
+  const Z = (z: number) => g.z0 + z;
+  const mid = (g.lo + g.hi) / 2;
+  const P = (u: number, o: number, z: number) => b.pt(g.u(u), o, Z(z));
+  const rectU = (part: EdgePart, r: Rect, o: number, extra: Partial<Edges3D> = {}) => {
+    const c = [P(r.u0, o, r.z0), P(r.u1, o, r.z0), P(r.u1, o, r.z1), P(r.u0, o, r.z1)];
+    for (let i = 0; i < 4; i++) b.line(part, c[i], c[(i + 1) % 4], extra);
+  };
+  const box = (mat: Solid['material'], r: Rect, o0: number, o1: number) => {
+    const [a, c] = S(r.u0, r.u1);
+    if (c - a > 0.5 && r.z1 - r.z0 > 0.5) b.box(mat, a, c, Math.min(o0, o1), Math.max(o0, o1), Z(r.z0), Z(r.z1));
+  };
+  const whole: Rect = { u0: 0, u1: L.w, z0: 0, z1: L.h };
+
+  if (m.kind === 'hole') {
+    // Ett rent hål: väggen ritar hålet; här bara kanten i fasaden.
+    for (const o of [g.lo, g.hi]) rectU('hole', whole, o);
     return b.done();
   }
-  // Karmen: två sidor och ett överstycke.
-  b.box('frame', s1, s1 + fw, lo, hi, 0, H - fw);
-  b.box('frame', s2 - fw, s2, lo, hi, 0, H - fw);
-  b.box('frame', s1, s2, lo, hi, H - fw, H);
-  for (const o of [lo, hi]) b.ring('frame', s1, s2, 0, H, fw, o, true);
-  b.depth('frame', [[s1, H], [s2, H], [s1 + fw, H - fw], [s2 - fw, H - fw]], lo, hi);
-  // Dörrbladet i karmens liv på öppningssidan.
-  const face = g.swing === 1 ? hi : lo;
-  const back = face - g.swing * g.leaf;
-  const top = H - fw;
-  b.box('door', s1 + fw, s2 - fw, Math.min(face, back), Math.max(face, back), 0, top);
-  for (const o of [face, back]) b.rect('leaf', s1 + fw, s2 - fw, 0, top, o);
-  if (g.glazed) {
-    const gw = (s2 - s1 - 2 * fw) * 0.2;
-    for (const o of [face, back]) {
-      b.rect('leaf', s1 + fw + gw, s2 - fw - gw, 400, top - 250, o);
-      b.glassMark(s1 + fw + gw, s2 - fw - gw, 400, top - 250, o);
-    }
-  }
-  // Handtag på bladets båda sidor, på den fria sidan.
-  const hs = g.hinge === 'start' ? s2 - fw - 70 : s1 + fw + 70;
-  const dir = g.hinge === 'start' ? -1 : 1;
-  for (const o of [face, back]) {
-    const out = o === face ? g.swing : -g.swing;
-    const o0 = o;
-    const o1 = o + out * 55;
-    b.box('frame', Math.min(hs, hs + dir * 130), Math.max(hs, hs + dir * 130), Math.min(o0, o1), Math.max(o0, o1), 1000, 1020);
-    b.rect('handle', Math.min(hs, hs + dir * 130), Math.max(hs, hs + dir * 130), 1000, 1020, o1);
-  }
-  linings(b, g.h1, g.h2, g.holeTop, null, level);
-  if (level === 'detail') {
-    for (const o of [lo, hi]) b.joints(s1, s2, 0, H, fw, o, 'butt', true);
-    // Falsen: där bladet ligger an mot karmen.
-    for (const o of [lo, hi]) {
-      b.line('joint', b.pt(s1 + fw - REBATE, o, 0), b.pt(s1 + fw - REBATE, o, H - fw + REBATE));
-      b.line('joint', b.pt(s2 - fw + REBATE, o, 0), b.pt(s2 - fw + REBATE, o, H - fw + REBATE));
-      b.line('joint', b.pt(s1 + fw - REBATE, o, H - fw + REBATE), b.pt(s2 - fw + REBATE, o, H - fw + REBATE));
-    }
-  }
-  if (g.showSwing) b.swing(sHinge, sFree, 0, top, [face + g.swing * 1, back - g.swing * 1]);
-  return b.done();
-}
 
-export interface WindowGeom {
-  f: WallFrame;
-  s1: number;
-  s2: number;
-  h1: number;
-  h2: number;
-  lo: number;
-  hi: number;
-  /** Karmens under- och överkant. */
-  z0: number;
-  z1: number;
-  /** Hålets under- och överkant. */
-  holeBottom: number;
-  holeTop: number;
-  frameWidth: number;
-  /** Den sida (1 eller -1) som vetter ut, eller 0 för innerväggar. */
-  outside: 1 | -1 | 0;
-}
-
-export function windowModel(id: string, g: WindowGeom, level: Level): Shape3D[] {
-  const b = new Builder(id, g.f);
   if (level === 'sketch') {
-    // Bara hålet, med en ruta i karmens läge så att man inte ser in i huset.
-    b.box('glass', g.h1, g.h2, (g.lo + g.hi) / 2 - 6, (g.lo + g.hi) / 2 + 6, g.holeBottom, g.holeTop);
+    // Karmens yttre kontur och delningen, med en skiva i karmens läge så att man inte ser in i huset.
+    box(m.kind === 'door' ? 'door' : 'glass', whole, mid - 6, mid + 6);
+    for (const o of [g.lo, g.hi]) {
+      rectU('frame', whole, o);
+      for (const r of L.mullions) b.line('frame', P((r.u0 + r.u1) / 2, o, r.z0), P((r.u0 + r.u1) / 2, o, r.z1));
+      for (const r of L.transoms) b.line('frame', P(r.u0, o, (r.z0 + r.z1) / 2), P(r.u1, o, (r.z0 + r.z1) / 2));
+    }
     return b.done();
   }
-  const { s1, s2, lo, hi, z0, z1 } = g;
-  const fw = g.frameWidth;
-  // Karmen: fyra delar; över- och understycket går hela bredden.
-  b.box('frame', s1, s1 + fw, lo, hi, z0 + fw, z1 - fw);
-  b.box('frame', s2 - fw, s2, lo, hi, z0 + fw, z1 - fw);
-  b.box('frame', s1, s2, lo, hi, z0, z0 + fw);
-  b.box('frame', s1, s2, lo, hi, z1 - fw, z1);
-  for (const o of [lo, hi]) b.ring('frame', s1, s2, z0, z1, fw, o);
-  b.depth('frame', [[s1, z0], [s2, z0], [s1, z1], [s2, z1]], lo, hi);
-  // Bågar innanför karmen; breda fönster får två.
-  const b0 = s1 + fw;
-  const b1 = s2 - fw;
-  const two = b1 - b0 > 1100;
-  const c = (b0 + b1) / 2;
-  const mid = (lo + hi) / 2;
-  const so0 = mid - SASH_DEPTH / 2;
-  const so1 = mid + SASH_DEPTH / 2;
-  const sashes: [number, number][] = two
-    ? [
-        [b0, c],
-        [c, b1],
-      ]
-    : [[b0, b1]];
-  const sz0 = z0 + fw;
-  const sz1 = z1 - fw;
-  for (const [a, e] of sashes) {
-    b.box('frame', a, a + SASH, so0, so1, sz0 + SASH, sz1 - SASH);
-    b.box('frame', e - SASH, e, so0, so1, sz0 + SASH, sz1 - SASH);
-    b.box('frame', a, e, so0, so1, sz0, sz0 + SASH);
-    b.box('frame', a, e, so0, so1, sz1 - SASH, sz1);
-    b.box('glass', a + SASH, e - SASH, mid - 6, mid + 6, sz0 + SASH, sz1 - SASH);
-    for (const o of [so0, so1]) {
-      b.ring('sash', a, e, sz0, sz1, SASH, o);
-      if (level === 'detail') b.joints(a, e, sz0, sz1, SASH, o, 'mitre');
-    }
-    b.depth('sash', [[a, sz0], [e, sz0], [a, sz1], [e, sz1]], so0, so1);
-    // På glasets båda ytor, så att markeringen syns från båda hållen.
-    for (const o of [mid - 6, mid + 6]) b.glassMark(a + SASH, e - SASH, sz0 + SASH, sz1 - SASH, o);
+
+  // Karmen, posterna och tvärstyckena genom hela djupet.
+  for (const r of [...L.frame, ...L.mullions, ...L.transoms]) box('frame', r, g.lo, g.hi);
+  for (const o of [g.lo, g.hi]) {
+    rectU('frame', whole, o);
+    for (const c of L.cells) rectU('frame', c.rect, o);
   }
-  linings(b, g.h1, g.h2, g.holeTop, g.holeBottom, level);
+  for (const [u, z] of [[0, 0], [L.w, 0], [0, L.h], [L.w, L.h]] as const) b.line('frame', P(u, g.lo, z), P(u, g.hi, z));
+
+  const oOut = (g.vf === 1 ? g.hi : g.lo) + g.vf;
+  const oIn = (g.vf === 1 ? g.lo : g.hi) - g.vf;
+  const leafFace = g.swing === 1 ? g.hi : g.lo;
+  for (const c of L.cells) {
+    const r = c.rect;
+    if (c.fill === 'open' && !LEAF_OPS.has(c.op)) continue;
+    if (LEAF_OPS.has(c.op)) {
+      // Dörrbladet i karmens liv på slagsidan.
+      const back = leafFace - g.swing * m.leaf;
+      box('door', r, leafFace, back);
+      for (const o of [leafFace, back]) {
+        rectU('leaf', r, o);
+        const w = r.u1 - r.u0;
+        if (c.leaf === 'glazed') {
+          const gl: Rect = { u0: r.u0 + Math.min(150, w * 0.2), u1: r.u1 - Math.min(150, w * 0.2), z0: r.z0 + Math.min(400, (r.z1 - r.z0) * 0.25), z1: r.z1 - 150 };
+          rectU('leaf', gl, o);
+          glassMarkU(b, g, gl, o);
+        } else if (c.leaf === 'panel') {
+          // Spegeldörr: två speglar.
+          const inset = Math.min(120, w * 0.15);
+          const zMid = r.z0 + (r.z1 - r.z0) * 0.45;
+          rectU('leaf', { u0: r.u0 + inset, u1: r.u1 - inset, z0: r.z0 + inset * 1.5, z1: zMid - inset / 2 }, o);
+          rectU('leaf', { u0: r.u0 + inset, u1: r.u1 - inset, z0: zMid + inset / 2, z1: r.z1 - inset }, o);
+        }
+      }
+      if (level === 'detail' && c.op === 'leaf') handle(b, g, c, leafFace, back);
+    } else if (c.fill === 'panel') {
+      box('door', r, mid - 15, mid + 15);
+      for (const o of [mid - 15, mid + 15]) rectU('leaf', r, o);
+    } else if (hasSash(c)) {
+      const sd = Math.min(m.sashDepth, g.hi - g.lo);
+      const so0 = mid - sd / 2;
+      const so1 = mid + sd / 2;
+      const w = Math.min(m.sash, (r.u1 - r.u0) / 3, (r.z1 - r.z0) / 3);
+      const inner: Rect = { u0: r.u0 + w, u1: r.u1 - w, z0: r.z0 + w, z1: r.z1 - w };
+      box('frame', { u0: r.u0, u1: r.u0 + w, z0: r.z0 + w, z1: r.z1 - w }, so0, so1);
+      box('frame', { u0: r.u1 - w, u1: r.u1, z0: r.z0 + w, z1: r.z1 - w }, so0, so1);
+      box('frame', { u0: r.u0, u1: r.u1, z0: r.z0, z1: r.z0 + w }, so0, so1);
+      box('frame', { u0: r.u0, u1: r.u1, z0: r.z1 - w, z1: r.z1 }, so0, so1);
+      box('glass', inner, mid - 6, mid + 6);
+      for (const o of [so0, so1]) {
+        rectU('sash', r, o);
+        rectU('sash', inner, o);
+      }
+      for (const o of [mid - 6, mid + 6]) glassMarkU(b, g, inner, o);
+    } else {
+      box('glass', r, mid - 6, mid + 6);
+      for (const o of [mid - 6, mid + 6]) glassMarkU(b, g, r, o);
+    }
+    if (g.showSwing && c.op !== 'fixed') {
+      const outward = LEAF_OPS.has(c.op) ? g.swing === g.vf : !c.inward;
+      symbol(b, g, c, oOut, !outward);
+      symbol(b, g, c, oIn, outward);
+    }
+  }
+
   if (level === 'detail') {
-    for (const o of [lo, hi]) b.joints(s1, s2, z0, z1, fw, o, 'butt');
-    // Fönsterbänk av plåt på utsidan.
-    if (g.outside !== 0) {
+    const door = g.model.kind === 'door' || g.layout.frame.length < 4;
+    linings(b, g.h1, g.h2, g.holeTop, door ? null : g.holeBottom, level);
+    // Fönsterbleck av plåt på utsidan.
+    if (!door && g.outside !== 0) {
       const side = g.outside;
       const o0 = side * g.f.half;
       const o1 = side * (g.f.half + 60);
@@ -294,4 +288,102 @@ export function windowModel(id: string, g: WindowGeom, level: Level): Shape3D[] 
     }
   }
   return b.done();
+}
+
+/** Glasmarkeringen i en ruta (u, z). */
+function glassMarkU(b: Builder, g: OpeningGeom, r: Rect, o: number): void {
+  const [a, c] = [g.u(r.u0), g.u(r.u1)];
+  if (Math.abs(c - a) < 120 || r.z1 - r.z0 < 120) return;
+  b.glassMark(Math.min(a, c), Math.max(a, c), g.z0 + r.z0, g.z0 + r.z1, o);
+}
+
+/** Handtag på bladets båda sidor, på låssidan, 1 000 över golvet. */
+function handle(b: Builder, g: OpeningGeom, c: LaidCell, face: number, back: number): void {
+  const r = c.rect;
+  const right = c.hinge !== 'right';
+  const u = right ? r.u1 - 70 : r.u0 + 70;
+  const u2 = right ? u - 130 : u + 130;
+  const [a, e] = [Math.min(g.u(u), g.u(u2)), Math.max(g.u(u), g.u(u2))];
+  for (const o of [face, back]) {
+    const out = o === face ? g.swing : -g.swing;
+    const o1 = o + out * 55;
+    b.box('frame', a, e, Math.min(o, o1), Math.max(o, o1), 1000, 1020);
+    b.rect('handle', a, e, 1000, 1020, o1);
+  }
+}
+
+/** Öppningssymbolen för en luft: triangeln med spetsen mot gångjärnen, pilar för skjut, sicksack för vik. */
+function symbol(b: Builder, g: OpeningGeom, c: LaidCell, o: number, dashed: boolean): void {
+  const r = c.rect;
+  const extra: Partial<Edges3D> = { drawingOnly: true, ...(dashed ? { dash: SWING_DASH } : {}) };
+  const L = (u1: number, z1: number, u2: number, z2: number) => b.line('swing', b.pt(g.u(u1), o, g.z0 + z1), b.pt(g.u(u2), o, g.z0 + z2), extra);
+  const um = (r.u0 + r.u1) / 2;
+  const zm = (r.z0 + r.z1) / 2;
+  const side = (left: boolean) => {
+    const hu = left ? r.u0 : r.u1;
+    const fu = left ? r.u1 : r.u0;
+    L(fu, r.z0, hu, zm);
+    L(fu, r.z1, hu, zm);
+  };
+  const bottom = () => {
+    L(r.u0, r.z1, um, r.z0);
+    L(r.u1, r.z1, um, r.z0);
+  };
+  const top = () => {
+    L(r.u0, r.z0, um, r.z1);
+    L(r.u1, r.z0, um, r.z1);
+  };
+  const arrow = (toLeft: boolean, z: number) => {
+    const w = r.u1 - r.u0;
+    const a = toLeft ? r.u1 - w * 0.2 : r.u0 + w * 0.2;
+    const e = toLeft ? r.u0 + w * 0.2 : r.u1 - w * 0.2;
+    const k = Math.min(80, w * 0.1) * (toLeft ? 1 : -1);
+    L(a, z, e, z);
+    L(e, z, e + k, z + Math.abs(k) * 0.6);
+    L(e, z, e + k, z - Math.abs(k) * 0.6);
+  };
+  const left = c.hinge !== 'right';
+  switch (c.op) {
+    case 'side':
+    case 'leaf':
+      side(left);
+      break;
+    case 'tiltturn':
+      side(left);
+      bottom();
+      break;
+    case 'bottom':
+      bottom();
+      break;
+    case 'top':
+      top();
+      break;
+    case 'pivotH':
+      bottom();
+      top();
+      break;
+    case 'pivotV':
+      side(true);
+      side(false);
+      break;
+    case 'slide':
+    case 'slideLeaf':
+    case 'pocket':
+      arrow(left, zm);
+      break;
+    case 'fold':
+    case 'foldLeaf': {
+      const n = 4;
+      const w = (r.u1 - r.u0) / n;
+      for (let i = 0; i < n; i++) L(r.u0 + i * w, i % 2 ? r.z0 + 200 : zm, r.u0 + (i + 1) * w, i % 2 ? zm : r.z0 + 200);
+      break;
+    }
+    case 'garage': {
+      const k = Math.min(120, (r.u1 - r.u0) * 0.1);
+      L(um, r.z0 + (r.z1 - r.z0) * 0.25, um, r.z1 - (r.z1 - r.z0) * 0.25);
+      L(um, r.z1 - (r.z1 - r.z0) * 0.25, um - k, r.z1 - (r.z1 - r.z0) * 0.25 - k);
+      L(um, r.z1 - (r.z1 - r.z0) * 0.25, um + k, r.z1 - (r.z1 - r.z0) * 0.25 - k);
+      break;
+    }
+  }
 }

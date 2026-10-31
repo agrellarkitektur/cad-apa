@@ -1,6 +1,7 @@
 import { newStyleBook, POCHE, type StyleBook } from '../core/graphics';
 import { styleOfPreset, type ViewCategory } from '../core/viewCategories';
 import { exampleMaster } from '../core/exampleMaster';
+import { DEFAULT_OPENING_TYPES, openingDefinition } from '../core/openingTypes';
 import { drawingMarkers, emptyTree, siteStorey, FORMAT, FORMAT_VERSION, PROJECT_DEFAULT_FIELDS, type ViewDef, type Definition, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { DoorParams } from '../elements/door';
 import type { FurnitureParams } from '../elements/furniture';
@@ -35,13 +36,8 @@ function type(id: Id, elementType: string, name: string, params: Record<string, 
 // Typer med littera. Tjocklek och mått hör till typen och delas av alla av samma littera.
 type('t-yv01', 'Wall', 'YV01', { thickness: 400 }, 'Yttervägg, puts på lättbetong');
 type('t-iv01', 'Wall', 'IV01', { thickness: 120 }, 'Lätt innervägg, 70 regel + 2 × gips');
-type('t-d1', 'Door', 'D1', { width: 900, height: 2100 }, 'Innerdörr M9×21');
-type('t-d2', 'Door', 'D2', { width: 1000, height: 2100 }, 'Entrédörr M10×21');
-type('t-d3', 'Door', 'D3', { width: 800, height: 2100 }, 'Badrumsdörr M8×21');
-type('t-f1', 'Window', 'F1', { width: 1200, height: 1200 });
-type('t-f2', 'Window', 'F2', { width: 600, height: 600 });
-type('t-f3', 'Window', 'F3', { width: 1500, height: 1200 });
-type('t-f4', 'Window', 'F4', { width: 2400, height: 1200 });
+// Dörr- och fönstertyperna (0.11.8) har beskrivande namn; litteran räknas ur typ och mått.
+for (const t of DEFAULT_OPENING_TYPES) if (['t-dd-slat', 't-dd-spegel', 't-dd-glas', 't-of-sid2', 't-of-ok', 't-of-fast'].includes(t.id)) definitions[t.id] = openingDefinition(t);
 type('t-bj01', 'Slab', 'BJ01', { thickness: 400 }, 'Platta på mark, 100 betong på 300 cellplast');
 
 function add<P extends object>(id: Id, t: string, params: P, extra: Partial<Element> = {}): void {
@@ -51,16 +47,16 @@ function add<P extends object>(id: Id, t: string, params: P, extra: Partial<Elem
 const wall = (id: Id, def: Id, start: [number, number], end: [number, number], states = ALL) =>
   add<Omit<WallParams, 'thickness' | 'height'>>(id, 'Wall', { start, end, justification: 'center' }, { definition: def, states });
 
-const door = (id: Id, def: Id, host: Id, at: number, swing: 1 | -1, states = ALL, glazed = false) =>
-  add<Pick<DoorParams, 'at' | 'swing' | 'hinge' | 'glazed'>>(
+const door = (id: Id, def: Id, host: Id, at: number, swing: 1 | -1, states = ALL, width = 900) =>
+  add<Pick<DoorParams, 'at' | 'swing' | 'hinge' | 'width' | 'height'>>(
     id,
     'Door',
-    { at, swing, hinge: 'start', glazed },
+    { at, swing, hinge: 'start', width, height: 2100 },
     { definition: def, host, states, props: { Dörr: { öppningssätt: 'Slagdörr', brandklass: '', ljudklass: '' } } },
   );
 
-const win = (id: Id, def: Id, host: Id, at: number) =>
-  add<Pick<WindowParams, 'at' | 'sill'>>(id, 'Window', { at, sill: 900 }, { definition: def, host });
+const win = (id: Id, def: Id, host: Id, at: number, width: number, height: number) =>
+  add<Pick<WindowParams, 'at' | 'width' | 'height'>>(id, 'Window', { at, width, height }, { definition: def, host });
 
 const furn = (id: Id, name: string, symbol: FurnitureParams['symbol'], x: number, y: number, w: number, d: number, rotation = 0) =>
   add<FurnitureParams>(id, 'Furniture', { origin: [x, y], rotation, width: w, depth: d, symbol }, { name });
@@ -96,20 +92,20 @@ wall('iv-3', 't-iv01', [8500, 400], [8500, 4000], [BEF, B]);
 wall('iv-4', 't-iv01', [7300, 400], [7300, 4000], [A]);
 
 // Dörrar. Läget anges längs väggen från dess startpunkt.
-door('d01', 't-d2', 'yv-s', 2300, 1);
-door('d02', 't-d1', 'iv-1', 2600, -1);
-door('d03', 't-d1', 'iv-1', 5400, -1);
-door('d04', 't-d1', 'iv-2', 5100, -1, [BEF, A]);
-door('d05', 't-d1', 'iv-2', 1500, 1, [B], true);
-door('d06', 't-d3', 'iv-3', 2600, -1, [B]);
+door('d01', 't-dd-glas', 'yv-s', 2300, 1, ALL, 1000);
+door('d02', 't-dd-slat', 'iv-1', 2600, -1);
+door('d03', 't-dd-slat', 'iv-1', 5400, -1);
+door('d04', 't-dd-slat', 'iv-2', 5100, -1, [BEF, A]);
+door('d05', 't-dd-spegel', 'iv-2', 1500, 1, [B]);
+door('d06', 't-dd-slat', 'iv-3', 2600, -1, [B], 800);
 
 // Fönster.
-win('f01', 't-f1', 'yv-s', 6550);
-win('f02', 't-f2', 'yv-s', 9900);
-win('f03', 't-f1', 'yv-o', 5600);
-win('f04', 't-f3', 'yv-n', 3500);
-win('f05', 't-f4', 'yv-n', 9100);
-win('f06', 't-f1', 'yv-v', 4800);
+win('f01', 't-of-sid2', 'yv-s', 6550, 1200, 1300);
+win('f02', 't-of-ok', 'yv-s', 9900, 600, 600);
+win('f03', 't-of-sid2', 'yv-o', 5600, 1200, 1300);
+win('f04', 't-of-sid2', 'yv-n', 3500, 1500, 1300);
+win('f05', 't-of-fast', 'yv-n', 9100, 2400, 1300);
+win('f06', 't-of-sid2', 'yv-v', 4800, 1200, 1300);
 
 // Inredning.
 furn('m01', 'Köksbänk', 'counter', 400, 7000, 3000, 600);

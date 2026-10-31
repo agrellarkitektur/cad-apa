@@ -49,10 +49,10 @@ describe('Lutande väggar (0.10.21)', () => {
     const atTop = edges.filter((e) => e.id === 'a').flatMap((e) => e.segments.filter((q) => q[2] > 2699 && q[5] > 2699));
     expect(atTop.length).toBeGreaterThan(0);
     for (const q of atTop) expect(Math.abs(q[1] - 2700 * TAN10)).toBeLessThan(101);
-    // Dörrhålets överkant (2110) ligger förskjutet lika mycket.
-    const hole = edges.filter((e) => e.id === 'a' && e.part === 'hole').flatMap((e) => e.segments.filter((q) => Math.abs(q[2] - 2110) < 1 && Math.abs(q[5] - 2110) < 1));
+    // Dörrhålets överkant (2100, modulmåttet sedan 0.11.8) ligger förskjutet lika mycket.
+    const hole = edges.filter((e) => e.id === 'a' && e.part === 'hole').flatMap((e) => e.segments.filter((q) => Math.abs(q[2] - 2100) < 1 && Math.abs(q[5] - 2100) < 1));
     expect(hole.length).toBeGreaterThan(0);
-    for (const q of hole) expect(Math.abs(q[1] - 2110 * TAN10)).toBeLessThan(101);
+    for (const q of hole) expect(Math.abs(q[1] - 2100 * TAN10)).toBeLessThan(101);
     // Dörrens egna former (bladet) lutar med väggen.
     const leaf = shapesOf(leaning()).find((x): x is Solid => x.kind !== 'edges' && x.id === 'd' && x.material === 'door');
     expect(leaf?.shear?.[1]).toBeCloseTo(TAN10, 6);
@@ -71,8 +71,8 @@ describe('Lutande väggar (0.10.21)', () => {
     const top = Math.max(...along.flatMap((r) => r[0].map((q) => q[1])));
     expect(top).toBeCloseTo(100 / TAN10, 0);
     const xs = along.flatMap((r) => r[0].map((q) => Math.round(q[0])));
-    expect(xs).toContain(2545);
-    expect(xs).toContain(3455);
+    expect(xs).toContain(2550);
+    expect(xs).toContain(3450);
   });
 
   it('planen: snittytan där snittet skär väggen, foten som vy, toppen streckprickad, dörren på snittytan', () => {

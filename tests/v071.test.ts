@@ -30,15 +30,16 @@ function model(doc: ProjectDoc, id: string, detail: 'sketch' | 'normal' | 'detai
 const parts = (shapes: Shape3D[]) => new Set(shapes.filter((s): s is Edges3D => s.kind === 'edges').map((s) => s.part));
 
 describe('detaljnivå i fasad och sektion (0.7.1)', () => {
-  it('Skiss: bara hålet, med en ruta så att man inte ser in', () => {
+  it('Skiss: karmens kontur och delningen, med en ruta så att man inte ser in (0.11.8)', () => {
     const shapes = model(sampleProject(), 'f01', 'sketch');
-    expect(shapes.filter((s) => s.kind === 'edges')).toHaveLength(0);
+    expect(parts(shapes)).toEqual(new Set(['frame']));
     expect(shapes.some((s) => s.kind !== 'edges')).toBe(true);
   });
-  it('Normal: karm, båge, foder och glasmarkering, inga sammanfogningar', () => {
+  it('Normal: karm, båge, glasmarkering och öppningssymbol; foder och sammanfogningar i Detalj (0.11.8)', () => {
     const p = parts(model(sampleProject(), 'f01', 'normal'));
-    for (const k of ['frame', 'sash', 'lining', 'glass']) expect(p.has(k as any)).toBe(true);
+    for (const k of ['frame', 'sash', 'glass', 'swing']) expect(p.has(k as any)).toBe(true);
     expect(p.has('joint')).toBe(false);
+    expect(p.has('lining')).toBe(false);
   });
   it('Detalj: sammanfogningar och fönsterbänk', () => {
     const p = parts(model(sampleProject(), 'f01', 'detail'));
@@ -49,7 +50,10 @@ describe('detaljnivå i fasad och sektion (0.7.1)', () => {
     const edges = model(sampleProject(), 'd01', 'normal').filter((s): s is Edges3D => s.kind === 'edges');
     const swing = edges.filter((e) => e.part === 'swing');
     expect(swing.length).toBeGreaterThan(0);
-    expect(swing.every((e) => e.drawingOnly && e.dash)).toBe(true);
+    expect(swing.every((e) => e.drawingOnly)).toBe(true);
+    // Heldragen från den sida dörren slår mot, streckad från den andra (0.11.8).
+    expect(swing.some((e) => e.dash)).toBe(true);
+    expect(swing.some((e) => !e.dash)).toBe(true);
   });
   it('öppningssättet kan stängas av', () => {
     const doc = sampleProject();
@@ -195,8 +199,8 @@ describe('avrunda hörn med öppningar (0.7.1)', () => {
   it('stoppas om ett fönster skulle hamna utanför väggen', () => {
     const store = new DocStore(sampleProject());
     const doc = store.doc;
-    // Fönster F2 sitter nära östra änden av södra väggen.
-    const f02 = Object.values(doc.elements).find((e) => e.host === 'yv-s' && e.definition === 't-f2')!;
+    // Fönstret f02 sitter nära östra änden av södra väggen.
+    const f02 = doc.elements['f02'];
     const len = 11600;
     const at = f02.params.at as number;
     expect(openingsInCorner(doc, 'yv-s', 'end', len - at)).toContain(f02.id);

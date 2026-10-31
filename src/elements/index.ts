@@ -22,6 +22,7 @@ import { spaceType } from './space';
 import { underlayType } from './underlay';
 import { wallType } from './wall';
 import { windowType } from './window';
+import { wallHoleType } from './wallHole';
 
 /** Alla elementtyper som programmet känner till. En ny typ = en ny rad här. */
 export function registerBuiltInTypes(): void {
@@ -32,6 +33,7 @@ export function registerBuiltInTypes(): void {
   registerType(profileType);
   registerType(doorType);
   registerType(windowType);
+  registerType(wallHoleType);
   registerType(furnitureType);
   registerType(spaceType);
   registerType(dimensionType);

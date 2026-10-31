@@ -1,3 +1,5 @@
+import { openingTypeOptions } from './openingFields';
+import { kindOfElementType } from '../core/openingTypes';
 import { editAllCategories } from '../core/viewCategories';
 import { litteraSection } from './litteraSection';
 import { setDefinition, setGraphics, updateDefinition } from '../core/commands';
@@ -328,8 +330,17 @@ export class PropertiesPanel implements ActionPanel {
       if (boxes) sections.push(`<section><h3>Syns också på</h3>${boxes}<p class="note">Objektet ritas som vy (kontur, utan snitt) också där, med pennan under Från annan våning i stilboken.</p></section>`);
     }
 
-    // Typ (littera).
-    if (sameType && (t?.typeParams?.length || t?.type === 'Railing' || t?.type === 'Profile')) {
+    // Dörrens eller fönstrets typ (0.11.8): typerna i editorns grupper, och editorn.
+    const openingKind = sameType ? kindOfElementType(els[0].type) : null;
+    if (openingKind) {
+      const current = els.every((e) => e.definition === els[0].definition) ? els[0].definition : undefined;
+      const mixedOpt = current ? '' : `<option value="" selected disabled>${els.some((e) => e.definition) ? 'Blandade typer' : 'Ingen typ'}</option>`;
+      sections.push(`<section>
+        <h3>Typ</h3>
+        <div class="row"><select id="sel-def" data-action="set-def">${mixedOpt}${openingTypeOptions(doc, openingKind, current)}</select></div>
+        <button class="btn btn-ghost" data-action="open-opening-type">Öppna i ${openingKind === 'door' ? 'dörr' : 'fönster'}editorn…</button>
+      </section>`);
+    } else if (sameType && (t?.typeParams?.length || t?.type === 'Railing' || t?.type === 'Profile')) {
       const defs = Object.values(doc.definitions).filter((d) => d.elementType === t.type);
       const current = els.every((e) => e.definition === els[0].definition) ? els[0].definition : undefined;
       const options = defs

@@ -7,6 +7,7 @@ import { fromFrame, leaderOf, type TagParams, type TextBox } from './leader';
 import type { PlanContext } from './registry';
 import { doorNumbersFor } from './rooms';
 import { FRAME_LESS, HOLE_EXTRA, type WallFrame } from './wall';
+import { openingLitteras } from './openingLittera';
 
 /**
  * Om littera för en objekttyp ska ritas ut i vyn. I Skiss visas ingen
@@ -66,8 +67,14 @@ export function litteraField(ctx: PlanContext, el: Element<any>, name: string): 
   const p = ctx.params<Record<string, unknown>>(el);
   const w = Number(p.width);
   const h = Number(p.height);
+  const opening = el.type === 'Door' || el.type === 'Window' || el.type === 'WallHole';
   switch (name.toLowerCase()) {
     case 'typ':
+    case 'littera':
+      // Dörrar och fönster (0.11.8): litteraregeln; typen har ett beskrivande namn.
+      if (opening) return openingLitteras(ctx.doc).get(el.id) ?? '';
+      return def?.name ?? '';
+    case 'typnamn':
       return def?.name ?? '';
     case 'storlek':
       return Number.isFinite(w) && Number.isFinite(h) ? `${LETTER[el.type] ?? ''}${modules(w)}×${modules(h)}` : '';
@@ -76,8 +83,10 @@ export function litteraField(ctx: PlanContext, el: Element<any>, name: string): 
       return el.type === 'Door' ? doorNumbersFor(ctx).get(el.id) ?? '' : '';
     case 'hål':
     case 'hal':
+      if (opening && typeof p.holeW === 'number') return `${Math.round(p.holeW)}×${Math.round(Number(p.holeH))}`;
       return Number.isFinite(w) && Number.isFinite(h) ? `${w + HOLE_EXTRA}×${h + HOLE_EXTRA}` : '';
     case 'karm':
+      if (opening && typeof p.frameW === 'number') return `${Math.round(p.frameW)}×${Math.round(Number(p.frameH))}`;
       return Number.isFinite(w) && Number.isFinite(h) ? `${w - FRAME_LESS}×${h - FRAME_LESS}` : '';
     case 'tjocklek':
       return p.thickness !== undefined ? String(p.thickness) : '';

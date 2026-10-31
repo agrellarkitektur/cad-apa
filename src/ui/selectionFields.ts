@@ -1,3 +1,4 @@
+import { openingFieldsMarkup } from './openingFields';
 import { stairFieldsMarkup } from './stairFields';
 import { railingFieldsMarkup } from './railingFields';
 import { railingTypeMarkup } from './railingTypeFields';
@@ -14,9 +15,8 @@ import { allTypes, resolveParams, typeOf } from '../elements/registry';
 import { MAX_LEAN, type WallParams } from '../elements/wall';
 import { dist } from '../geometry/vec';
 import { isFixed, type FurnitureParams } from '../elements/furniture';
-import { EXTERIOR_INSET, FRAME_DEFAULTS } from '../elements/opening';
 import { numberingOf, roomNumbersFor, type SpaceParams } from '../elements/rooms';
-import { faceChoices, faceOf, outsideSide } from '../elements/wallSides';
+import { faceChoices, faceOf } from '../elements/wallSides';
 import { escapeHtml, PARAM_LABELS } from './labels';
 import { refArc, type RoofParams } from '../elements/roof';
 import { holeRing, type SlabParams } from '../elements/slab';
@@ -187,19 +187,9 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
     case 'RoofSlope':
     case 'Underlay':
       return drawingFields(doc, el);
-    case 'Door': {
-      const p = resolveParams<{ at: number; glazed?: boolean; mainEntrance?: boolean }>(doc, el);
-      return `<div class="fields">${numberField('param:at', 'Läge längs vägg', p.at, 'mm')}${textField('name', 'Nummer', el.name ?? '')}</div>
-        ${frameFields(doc, el, true)}
-        <label class="check"><input type="checkbox" data-key="param:glazed"${p.glazed ? ' checked' : ''}> Glasad dörr</label>
-        <label class="check"><input type="checkbox" data-key="param:mainEntrance"${p.mainEntrance ? ' checked' : ''}> Huvudentré (rum och dörrar numreras härifrån)</label>`;
-    }
-    case 'Window': {
-      const p = resolveParams<{ at: number; sill: number; sillFromWall?: boolean }>(doc, el);
-      return `<div class="fields">${numberField('param:at', 'Läge längs vägg', p.at, 'mm')}${numberField('param:sill', 'Bröstning', p.sill, 'mm')}${textField('name', 'Nummer', el.name ?? '')}</div>
-        <label class="check" title="Annars räknas bröstningen från våningens golv och fönstret ligger kvar när väggens fot flyttas"><input type="checkbox" data-key="param:sillFromWall"${p.sillFromWall ? ' checked' : ''}> Bröstningen från väggens fot</label>
-        ${frameFields(doc, el, false)}`;
-    }
+    case 'Door':
+    case 'Window':
+      return openingFieldsMarkup(doc, el);
     case 'Furniture': {
       const p = resolveParams<FurnitureParams>(doc, el);
       return `<div class="fields">${textField('name', 'Namn', el.name ?? '')}${numberField('level:level', 'Nivå mot våningen', levelOf(p), 'mm')}</div>
@@ -230,20 +220,6 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
     default:
       return '';
   }
-}
-
-/** Karmens mått och indraget. Tomt indrag betyder automatiskt. */
-function frameFields(doc: ProjectDoc, el: Element, isDoor: boolean): string {
-  const p = resolveParams<{ frameWidth: number; frameDepth: number; inset: number | null }>(doc, el);
-  const host = el.host ? doc.elements[el.host] : undefined;
-  const exterior = host ? outsideSide(doc, host) !== null : false;
-  const from = exterior ? 'från utsida' : isDoor ? 'från öppningssida' : '';
-  const auto = exterior ? EXTERIOR_INSET : 0;
-  const inset =
-    exterior || isDoor
-      ? `<label class="field" for="f-param-inset"><span>Indrag ${from}</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" id="f-param-inset" data-key="param:inset" value="${p.inset ?? ''}" placeholder="Auto ${auto}"><i>mm</i></span></label>`
-      : '';
-  return `<div class="fields">${numberField('param:frameWidth', 'Karmbredd', p.frameWidth ?? FRAME_DEFAULTS.frameWidth, 'mm')}${numberField('param:frameDepth', 'Karmdjup', p.frameDepth ?? FRAME_DEFAULTS.frameDepth, 'mm')}${inset}</div>`;
 }
 
 /** Fliken Typer: varje elementtyp med littera och typens gemensamma mått. */

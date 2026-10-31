@@ -67,12 +67,65 @@ export interface GeneralSettings {
   areaDecimals?: number;
   /** Tjocklekstabellen, mm (utan 0, som alltid finns: *Ingen linje*). */
   weights?: number[];
+  /** Dörrarna, fönstren och vägghålen (0.11.8): litteraregeln, formlerna och måtten. */
+  openings?: OpeningSettings;
+}
+
+/**
+ * Litteraregeln för öppningarna (0.11.8): *Bara bokstav och modulmått*
+ * (F 10×13), *Typ och mått* (F01, F02 …; förval) eller *Typ, mått och
+ * hängning* (V och H var för sig).
+ */
+export type OpeningRule = 'module' | 'type' | 'hinge';
+
+export interface OpeningSettings {
+  rule?: OpeningRule;
+  /** Formeln per sort, t.ex. `F{nr:2}` eller `YD{nr:2}`. */
+  formulas?: { Window?: string; Door?: string; WallHole?: string };
+  /** Drevmånen per sida, mm (förval 10): karmyttermåttet 980 är 10M. */
+  gap?: number;
+  /** Överkant karm som förval för nya fönster, mm över golvet. */
+  head?: number;
+  /** Hängningen (V/H) sedd från utsidan eller insidan. */
+  hingeFrom?: 'outside' | 'inside';
+}
+
+export const OPENING_DEFAULTS: Required<Omit<OpeningSettings, 'formulas'>> & { formulas: Required<NonNullable<OpeningSettings['formulas']>> } = {
+  rule: 'type',
+  formulas: { Window: 'F{nr:2}', Door: 'D{nr:2}', WallHole: 'V{nr:2}' },
+  gap: 10,
+  head: 2100,
+  hingeFrom: 'outside',
+};
+
+/** Öppningarnas inställningar som de gäller. */
+export function openingSettingsOf(book: { general?: GeneralSettings } | undefined): typeof OPENING_DEFAULTS {
+  const o = book?.general?.openings ?? {};
+  return { ...OPENING_DEFAULTS, ...o, formulas: { ...OPENING_DEFAULTS.formulas, ...(o.formulas ?? {}) } };
+}
+
+function normalizeOpenings(v: unknown): OpeningSettings | null {
+  if (!v || typeof v !== 'object') return null;
+  const o = v as Record<string, any>;
+  const out: OpeningSettings = {};
+  if (o.rule === 'module' || o.rule === 'type' || o.rule === 'hinge') out.rule = o.rule;
+  if (o.formulas && typeof o.formulas === 'object') {
+    const f: NonNullable<OpeningSettings['formulas']> = {};
+    for (const k of ['Window', 'Door', 'WallHole'] as const) if (typeof o.formulas[k] === 'string' && o.formulas[k].trim()) f[k] = o.formulas[k].trim();
+    if (Object.keys(f).length) out.formulas = f;
+  }
+  const gap = clampInt(o.gap, 0, 100);
+  if (gap !== undefined) out.gap = gap;
+  const head = clampInt(o.head, 0, 10000);
+  if (head !== undefined) out.head = head;
+  if (o.hingeFrom === 'outside' || o.hingeFrom === 'inside') out.hingeFrom = o.hingeFrom;
+  return Object.keys(out).length ? out : null;
 }
 
 /** Tjocklekarna som går att välja när stilboken inte har en egen tabell. */
 export const DEFAULT_WEIGHTS: readonly number[] = [0.13, 0.18, 0.25, 0.35, 0.5, 0.7, 1, 1.4];
 
-const GENERAL_DEFAULTS: Required<GeneralSettings> = {
+const GENERAL_DEFAULTS: Required<Omit<GeneralSettings, 'openings'>> & Pick<GeneralSettings, 'openings'> = {
   textSize: 2.5,
   heightSystem: 'RH 2000',
   levelDecimals: 3,
@@ -88,7 +141,7 @@ const GENERAL_DEFAULTS: Required<GeneralSettings> = {
  * Platsen, där decimalerna, litterats siffror och höjdsystemet låg före
  * 0.10.39, och annars förvalet.
  */
-export function generalOf(book: { general?: GeneralSettings } | undefined, site?: Pick<Site, 'ground' | 'crs'>): Required<GeneralSettings> {
+export function generalOf(book: { general?: GeneralSettings } | undefined, site?: Pick<Site, 'ground' | 'crs'>): typeof GENERAL_DEFAULTS {
   const g = book?.general ?? {};
   return {
     ...GENERAL_DEFAULTS,
@@ -149,6 +202,8 @@ export function normalizeGeneral(v: unknown): GeneralSettings | null {
     const w = weightList(g.weights);
     if (w.length) out.weights = w;
   }
+  const op = normalizeOpenings(g.openings);
+  if (op) out.openings = op;
   return Object.keys(out).length ? out : null;
 }
 

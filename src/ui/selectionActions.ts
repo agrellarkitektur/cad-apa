@@ -1,4 +1,5 @@
 import { stairAction } from './stairFields';
+import { openingAction } from './openingActions';
 import { railingAction } from './railingFields';
 import { duplicateRailingType } from './railingTypeFields';
 import { duplicateProfileType, profileAction } from './profileFields';
@@ -231,11 +232,12 @@ export function selectionAction({ panel, store, selection, getView, body }: Acti
       });
       break;
     }
-    case 'toggle-glazed': {
-      const on = ids.every((id) => resolveParams<{ glazed?: boolean }>(doc, doc.elements[id]).glazed);
-      patchEach(store, ids, on ? 'Ej glasad' : 'Glasad', () => ({ glazed: !on }));
+    case 'swap-type':
+    case 'swap-size':
+    case 'same-littera':
+    case 'lock-littera':
+      void openingAction(store, ids, b.dataset.action);
       break;
-    }
     case 'flip-swing':
       patchEach(store, ids, 'Vänd slag', (p) => ({ swing: -((p.swing as number | undefined) ?? 1) }));
       break;
