@@ -15,6 +15,7 @@ import { along } from '../../elements/groundLines';
 import { createContext } from '../../repr/context';
 import { gateSpanAt, railingsOnStair, stairEdgesAt } from '../../elements/railing';
 import { addGate, addRailingsOnStair } from '../railingFields';
+import { addColumnAt, addProfileAlong, profileEdgeAt } from '../tools/profileTool';
 import { withOwnCut, type EdgeCut } from '../../elements/roofBody';
 import { dist } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
@@ -72,6 +73,23 @@ export function runInstant(host: ToolHost, op: OpId, ctx: ModifyContext): void {
       return;
     }
     const ids = addRailingsOnStair(host.store, st.id, sides);
+    if (ids.length) host.selection.set(ids);
+    return;
+  }
+  // Profilen (0.11.6): längs kanten eller runt konturen (verktygets typ och höjd), eller en pelare i punkten.
+  if (op === 'profileAlong' || op === 'profileContour') {
+    const c = profileEdgeAt(host, ctx.at, Math.max(pxToMm(host, 12), 30));
+    if (!c) {
+      host.hint('Hittade ingen kant där du klickade.');
+      return;
+    }
+    const chain = op === 'profileContour' ? c.whole : c.side;
+    const ids = addProfileAlong(host, chain.closed ? [...chain.points, chain.points[0]] : chain.points);
+    if (ids.length) host.selection.set(ids);
+    return;
+  }
+  if (op === 'profileColumn') {
+    const ids = addColumnAt(host, roundMm(ctx.at));
     if (ids.length) host.selection.set(ids);
     return;
   }

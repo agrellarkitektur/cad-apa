@@ -1388,3 +1388,263 @@
   min-width: 0;
   overflow: hidden;
 }
+
+/* ---------- Stilbokens flikar (0.11.6, beslut D och H) ----------
+   Riktiga flikar: den valda hänger ihop med innehållet nedanför. */
+.stylebook > header {
+  flex-wrap: wrap;
+}
+.sb-tabs {
+  display: flex;
+  gap: 2px;
+  align-self: flex-end;
+  margin: 0 0 -13px 18px;
+}
+.sb-tab {
+  padding: 7px 16px 8px;
+  border: 1px solid var(--rule);
+  border-bottom: 0;
+  border-radius: 7px 7px 0 0;
+  background: var(--panel-2, transparent);
+  color: var(--muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  position: relative;
+}
+.sb-tab:hover {
+  color: var(--ink);
+}
+.sb-tab.on {
+  background: var(--panel, var(--paper));
+  color: var(--ink);
+  z-index: 1;
+  box-shadow: 0 1px 0 var(--panel, var(--paper));
+}
+.sb-tab.on::before {
+  content: '';
+  position: absolute;
+  inset: -1px -1px auto;
+  height: 2px;
+  border-radius: 7px 7px 0 0;
+  background: var(--accent);
+}
+
+/* ---------- Profileditorn (0.11.6, tavla 3) ---------- */
+.pe-center {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+}
+.pe-tools {
+  flex-wrap: wrap;
+}
+.pe-tools button {
+  white-space: nowrap;
+}
+.pe-tool-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.pe-canvas {
+  width: 100%;
+  aspect-ratio: 1;
+  max-height: 520px;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: var(--paper, #fff);
+  touch-action: none;
+  user-select: none;
+}
+.pe-canvas[data-tool='select'] {
+  cursor: default;
+}
+.pe-canvas:not([data-tool='select']) {
+  cursor: crosshair;
+}
+.pe-canvas.pe-static {
+  aspect-ratio: 4 / 3;
+}
+.pe-grid {
+  stroke: var(--rule);
+  stroke-width: 0.5;
+  vector-effect: non-scaling-stroke;
+  opacity: 0.6;
+}
+.pe-grid5 {
+  opacity: 1;
+}
+.pe-axis {
+  stroke: var(--muted);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.pe-zone {
+  fill: var(--accent);
+  fill-opacity: 0.12;
+  stroke: var(--accent);
+  stroke-dasharray: 4 3;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.pe-part {
+  fill-opacity: 0.5;
+  stroke: var(--ink);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+  cursor: pointer;
+}
+.pe-part.on {
+  fill-opacity: 0.75;
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.pe-letter,
+.pe-dim {
+  fill: var(--ink);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  font-family: var(--font-data);
+  pointer-events: none;
+}
+.pe-dim {
+  fill: var(--muted);
+}
+.pe-vertex {
+  fill: var(--paper, #fff);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  vector-effect: non-scaling-stroke;
+  cursor: move;
+}
+.pe-anchor path,
+.pe-anchor circle {
+  fill: none;
+  stroke: var(--muted);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+}
+.pe-anchor.on path,
+.pe-anchor.on circle {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+.pe-anchor text {
+  fill: var(--muted);
+  font-family: var(--font-data);
+}
+.pe-anchor.on text {
+  fill: var(--accent);
+}
+.pe-pending,
+.pe-rubber {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 3;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.pe-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  border: 1px solid var(--rule);
+}
+.pe-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+}
+.pe-anchor-row,
+.pe-zone-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+.pe-anchor-row input[type='text'] {
+  flex: 1;
+  min-width: 0;
+}
+.pe-anchor-row select {
+  max-width: 7.5em;
+}
+.pe-zone-row input {
+  width: 4.5em;
+  font-family: var(--font-data);
+}
+.pe-uses {
+  display: grid;
+  gap: 2px;
+  font-size: 12px;
+}
+.pe-later {
+  font-style: normal;
+  font-size: 10px;
+  color: var(--muted);
+}
+.pe-letter-in {
+  width: 2.6em;
+  font-weight: 650;
+}
+.pe-pts input {
+  width: 100%;
+  font-family: var(--font-data);
+}
+.pe-pts td:first-child {
+  color: var(--muted);
+  font-family: var(--font-data);
+}
+.pe-editor .rt-typecol,
+.pe-editor .rt-side,
+.pe-editor .pe-center {
+  grid-template-columns: minmax(0, 1fr);
+}
+.pe-editor .rt-row .rt-val {
+  min-width: 0;
+}
+.pe-anchor-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-areas: 'no name x' '. pos pos';
+  row-gap: 2px;
+}
+.pe-anchor-row > label {
+  grid-area: no;
+}
+.pe-anchor-row > input[type='text'] {
+  grid-area: name;
+}
+.pe-anchor-row > select {
+  grid-area: pos;
+  max-width: none;
+  width: 100%;
+}
+.pe-anchor-row > button {
+  grid-area: x;
+}
+.pe-zone-row input {
+  min-width: 0;
+}
+table.pe-pts {
+  table-layout: auto;
+}
+.pe-pts th,
+.pe-pts th:nth-child(1),
+.pe-pts th:nth-child(2),
+.pe-pts th:nth-child(5) {
+  width: auto;
+}
+.pe-pts td:last-child {
+  white-space: nowrap;
+}
+.pe-pts td:last-child .icon-btn {
+  display: inline-block;
+}
+.pe-pts input {
+  min-width: 3.2em;
+}

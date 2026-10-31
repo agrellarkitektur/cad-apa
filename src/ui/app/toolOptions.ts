@@ -16,6 +16,7 @@ import { defaultWallType, nf } from './helpers';
 import { SHEET_TEXT_HEIGHTS } from '../../core/sheets';
 import { isSite } from '../../core/model';
 import { defaultRailingDef, railingTypesFor } from '../../core/railings';
+import { profileOptionChange, profileOptionClick, profileOptionsMarkup } from './profileToolOptions';
 
 /** Verktygsraden under ritytan: inställningar för det verktyg som är valt, och måttbandets värden. */
 export function installToolOptions(app: AppContext) {
@@ -128,6 +129,9 @@ export function installToolOptions(app: AppContext) {
         <div class="opt"><span>Läge</span><div class="segmented" role="group" aria-label="Läge mot kanten">${place('inside', 'Innanför')}${place('on', 'På kanten')}${place('outside', 'Utanpå')}</div></div>
         ${t.options.mode === 'drawn' ? `<button class="btn" data-action="rail-arc" aria-pressed="${t.arc}" title="Nästa kant blir en båge (G)">Båge</button>${t.chain.count >= 2 ? '<button class="btn btn-primary" data-action="rail-done">Klar</button>' : ''}` : ''}
         <span class="opt-hint">${t.hintText()}</span>`;
+      app.toolOptions.hidden = false;
+    } else if (app.ui.tool === 'profile') {
+      app.toolOptions.innerHTML = profileOptionsMarkup(app);
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'stair') {
       // Trappan (0.11): bredden, referenslinjens läge, bågar och Klar.
@@ -317,6 +321,7 @@ export function installToolOptions(app: AppContext) {
 
   app.toolOptions.addEventListener('change', (e) => {
     const t = e.target as HTMLSelectElement;
+    if (profileOptionChange(app, t)) return;
     const num = Number(t.value);
     if (t.id === 'roof-slope' && Number.isFinite(num)) app.roofTool.options.slope = Math.max(0, Math.min(75, num));
     if (t.id === 'roof-height' && Number.isFinite(num)) app.roofTool.options.height = Math.round(num);
@@ -442,6 +447,7 @@ export function installToolOptions(app: AppContext) {
   app.toolOptions.addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest<HTMLElement>('button');
     if (!b) return;
+    if (profileOptionClick(app, b)) return;
     if (b.dataset.just) {
       app.wallTool.options.face = b.dataset.just as WallFace;
       renderToolOptions();

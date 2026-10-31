@@ -7,6 +7,7 @@ import { defaultObjectPen, OBJECT_PENS } from './objectPens';
 import { defaultPlanCutPen, PLAN_CUT_PENS } from './planCutPens';
 import { defaultStairPen, STAIR_PENS } from './stairPens';
 import { defaultRailPen, RAIL_PENS } from './railingPens';
+import { defaultProfilePen, PROFILE_PENS } from './profilePens';
 
 /**
  * Pennraderna i en vykategori (0.10.36), i grupper: varje rad är ett
@@ -116,6 +117,13 @@ export const PEN_GROUPS: readonly PenGroup[] = [
     rows: RAIL_PENS.map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: r.tags, types: r.view === 'plan' ? PLAN : r.key === 'railCut' ? ['section'] : ELEVATION })),
   },
   {
+    id: 'profiles',
+    title: 'Profiler',
+    note: 'Pelare, balkar, lister och gesimser (verktyget Profil). I planen snittas det som går genom planens snitt (med materialets snitt), det under snittet är en konturlinje och det över streckprickat. I fasader och sektioner snittlinjen och konturlinjen.',
+    types: ALL_MODEL,
+    rows: PROFILE_PENS.map((r) => ({ key: r.key, label: r.label, hint: r.hint, tags: r.tags, types: r.view === 'plan' ? PLAN : r.view === 'section' ? ['section'] : ELEVATION })),
+  },
+  {
     id: 'cut',
     title: 'Snittet i planen',
     note: 'Det som ligger helt under planens snitthöjd ritas som vy, det som ligger helt över streckprickat där det sticker ut utanför det snittade. Snitthöjden ställs in per våning (1100 från början). Ett objekt eller en typ kan få en egen penna för det som ligger över.',
@@ -152,7 +160,7 @@ export const penRowOf = (key: string) => ROW_OF.get(key);
 
 /** Förvalet för en rad i penntabellen: objekten, snittet, höjdkurvorna, fasaderna eller en markör. */
 export function penDefault(key: string): PenDef {
-  return defaultObjectPen(key) ?? defaultStairPen(key) ?? defaultRailPen(key) ?? defaultPlanCutPen(key) ?? defaultContourPen(key) ?? defaultFacadePen(key) ?? defaultMarkerPen(key as MarkerPenKey);
+  return defaultObjectPen(key) ?? defaultStairPen(key) ?? defaultRailPen(key) ?? defaultProfilePen(key) ?? defaultPlanCutPen(key) ?? defaultContourPen(key) ?? defaultFacadePen(key) ?? defaultMarkerPen(key as MarkerPenKey);
 }
 
 /**

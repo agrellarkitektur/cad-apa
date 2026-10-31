@@ -183,6 +183,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     else if (app.ui.tool === 'ground') app.groundTool.finish();
     else if (app.ui.tool === 'stair') app.stairTool.finish();
     else if (app.ui.tool === 'railing') app.railingTool.finish();
+    else if (app.ui.tool === 'profile') app.profileTool.finish();
     // Takets och bjälklagets kontur sluts med Enter (0.10.17).
     else if (app.ui.tool === 'roof') app.roofTool.closeContour();
     else if (app.ui.tool === 'slab') app.slabTool.closePolygon();

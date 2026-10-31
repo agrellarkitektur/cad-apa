@@ -4,6 +4,7 @@ import { defaultedPen } from './markerPens';
 import type { Pen } from './primitives';
 import { defaultStairPen } from './stairPens';
 import { defaultRailPen } from './railingPens';
+import { defaultProfilePen } from './profilePens';
 
 /**
  * Snitt- och konturlinjer i planen (0.10.37, ersätter dörrarnas och
@@ -49,8 +50,9 @@ export function objectPen(style: StyleSheet | undefined, key: ObjectPenKey): Pen
 }
 
 /** Snittlinjens ställe för en objekttyp; igensatta hål och öppningsmarkeringar är väggens. */
-export function cutRowOf(objectType: string | undefined): ObjectPenKey | 'stairCut' | 'railCut' {
+export function cutRowOf(objectType: string | undefined): ObjectPenKey | 'stairCut' | 'railCut' | 'profileSectionCut' {
   if (objectType === 'Stair') return 'stairCut';
+  if (objectType === 'Profile') return 'profileSectionCut';
   if (objectType === 'Railing') return 'railCut';
   return objectType === 'Slab' ? 'slabCut' : objectType === 'Roof' ? 'roofCut' : objectType === 'Ground' ? 'groundCut' : 'wallCut';
 }
@@ -58,7 +60,7 @@ export function cutRowOf(objectType: string | undefined): ObjectPenKey | 'stairC
 /** Snittlinjens tjocklek, färg och linjetyp (streckning) för en objekttyp. */
 export function cutRowPen(style: StyleSheet, objectType: string | undefined): { weight: number; color?: string; dash?: number[] } {
   const key = cutRowOf(objectType);
-  const row: PenDef = { ...(defaultObjectPen(key) ?? defaultStairPen(key) ?? defaultRailPen(key))!, ...style.pens?.[key] };
+  const row: PenDef = { ...(defaultObjectPen(key) ?? defaultStairPen(key) ?? defaultRailPen(key) ?? defaultProfilePen(key))!, ...style.pens?.[key] };
   const dash = lineTypeDash(style, row.linetype);
   return { weight: row.weight, ...(row.color && row.color !== 'ink' ? { color: row.color } : {}), ...(dash ? { dash } : {}) };
 }

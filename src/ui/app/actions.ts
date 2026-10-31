@@ -215,6 +215,18 @@ export function installActions(app: AppContext, parts: ActionParts) {
         // Vid vytypen och kategorin där man är (0.10.32).
         app.styleDialog.open({ type: app.place.viewType(), category: app.place.currentCategory().id });
         break;
+      case 'style-types':
+        // Stilbokens flik Typer (0.11.6): material, profiler och räckestyper.
+        closeMenu();
+        showMenu.closeShowMenu();
+        app.styleDialog.open({ tab: 'types' });
+        break;
+      case 'style-profile-type': {
+        // Typen i profileditorn (0.11.6), från profilens panel.
+        const def = target.closest<HTMLElement>('[data-def]')?.dataset.def;
+        app.styleDialog.open({ profileType: def });
+        break;
+      }
       case 'style-railing-type': {
         // Typen i räckestypeditorn (0.11.2), från räckets panel.
         const def = target.closest<HTMLElement>('[data-def]')?.dataset.def;

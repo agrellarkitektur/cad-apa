@@ -66,6 +66,8 @@ export const icons = {
   layerAbove: svg('<path d="M4 9 12 5l8 4-8 4z" fill="currentColor" fill-opacity=".35"/><path d="M4 15l8 4 8-4-8-4z"/>'),
   storeys: svg('<path d="M4 8.5 12 4l8 4.5-8 4.5z"/><path d="M4 12.5 12 17l8-4.5M4 16 12 20.5 20 16"/>'),
   elevation: svg('<circle cx="12" cy="12" r="5"/><path d="M12 3l3 4H9z" fill="currentColor"/><path d="M3 20h18" stroke-dasharray="2 2"/>'),
+  // Profilen (0.11.6): ett tvärsnitt med en gesims, svept.
+  profile: svg('<path d="M4 20V9h3V6h4V4h2"/><path d="M4 20l6-4V5"/><path d="M13 4l7 0v4l-6 4" stroke-dasharray="2 2"/>'),
   railing: svg('<path d="M3 8h18"/><path d="M3 19h18"/><path d="M4 8v11M20 8v11M8 8v11M12 8v11M16 8v11"/>'),
   stair: svg('<path d="M4 20h4v-4h4v-4h4V8h4V4"/><path d="M4 20V16"/>'),
   ground: svg('<path d="M3 17c3-1 4-4 7-4h4c3 0 4 3 7 4"/><path d="M9 13l1-4h4l1 4"/><path d="M3 20h18"/>'),

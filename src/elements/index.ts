@@ -15,6 +15,7 @@ import { stampType } from './stamp';
 import { slabType } from './slab';
 import { stairType } from './stair';
 import { railingType } from './railing';
+import { profileType } from './profile';
 import { groundType } from './ground';
 import { siteBuildingType, siteMapType, terrainType, treeType } from './site';
 import { spaceType } from './space';
@@ -28,6 +29,7 @@ export function registerBuiltInTypes(): void {
   registerType(slabType);
   registerType(stairType);
   registerType(railingType);
+  registerType(profileType);
   registerType(doorType);
   registerType(windowType);
   registerType(furnitureType);

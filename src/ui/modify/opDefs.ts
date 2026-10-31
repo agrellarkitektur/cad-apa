@@ -44,6 +44,9 @@ export type OpId =
   | 'stairRailing'
   | 'stairRailings'
   | 'railGate'
+  | 'profileAlong'
+  | 'profileContour'
+  | 'profileColumn'
   | 'stairLanding'
   | 'stairSteps'
   | 'stairTurnLanding'
@@ -137,6 +140,9 @@ export const OPS: Record<OpId, OpDef> = {
   pathEaseSharp: { label: 'Skarp övergång', short: 'Skarp', icon: 'straighten', instant: true, hint: 'Höjden bryts skarpt i punkten, som ett vilplan i en betong- eller stenramp.' },
   stairRailing: { label: 'Räcke längs kanten', short: 'Räcke längs kanten', icon: 'railing', instant: true, hint: 'Ett räcke längs trappans kant närmast där du klickade; det följer trappan.' },
   stairRailings: { label: 'Räcken på båda sidor', short: 'Räcken på båda sidor', icon: 'railing', instant: true, hint: 'Räcken längs båda trappans kanter (de sidor som saknar).' },
+  profileAlong: { label: 'Profil längs kanten', short: 'Profil längs kanten', icon: 'profile', instant: true, hint: 'En profil (verktygets typ och höjd) längs sidan där du klickade.' },
+  profileContour: { label: 'Profil längs hela konturen', short: 'Profil runt', icon: 'profile', instant: true, hint: 'En profil runt hela konturen, med gering i hörnen.' },
+  profileColumn: { label: 'Pelare här', short: 'Pelare här', icon: 'profile', instant: true, hint: 'En pelare (verktygets typ) i punkten.' },
   railGate: { label: 'Gör till grind…', short: 'Gör till grind', icon: 'railing', instant: true, hint: 'Facket mellan stolparna där du klickade blir en grind; bredd, typ och hängning ställs in i egenskaperna.' },
   stairLanding: { label: 'Vilplan härifrån', short: 'Vilplan härifrån', icon: 'slab', instant: true, hint: 'Sträckan från punkten är ett vilplan, med svängarna i dess ändar.' },
   stairSteps: { label: 'Steg härifrån', short: 'Steg härifrån', icon: 'stair', instant: true, hint: 'Sträckan från punkten har steg igen.' },

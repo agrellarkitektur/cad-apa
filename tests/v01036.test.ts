@@ -27,9 +27,9 @@ const placeIn = (doc: Parameters<typeof stylePlaces>[0], id: string) => stylePla
 describe('pennraderna per vytyp', () => {
   it('varje vytyp visar sina grupper', () => {
     const ids = (t: Parameters<typeof penGroupsFor>[0]) => penGroupsFor(t).map((g) => g.id);
-    expect(ids('storey')).toEqual(['walls', 'doors', 'windows', 'objects', 'seen', 'stairs', 'railings', 'cut', 'contours', 'markers']);
-    expect(ids('facade')).toEqual(['walls', 'doors', 'windows', 'objects', 'railings', 'markers']);
-    expect(ids('section')).toEqual(['walls', 'doors', 'windows', 'objects', 'stairs', 'railings', 'markers']);
+    expect(ids('storey')).toEqual(['walls', 'doors', 'windows', 'objects', 'seen', 'stairs', 'railings', 'profiles', 'cut', 'contours', 'markers']);
+    expect(ids('facade')).toEqual(['walls', 'doors', 'windows', 'objects', 'railings', 'profiles', 'markers']);
+    expect(ids('section')).toEqual(['walls', 'doors', 'windows', 'objects', 'stairs', 'railings', 'profiles', 'markers']);
     expect(ids('site')).toEqual(['seen', 'contours', 'markers']);
     expect(ids('worksheet')).toEqual(['markers']);
     const book = emptyProject('Prov', 'ombyggnad').graphics;

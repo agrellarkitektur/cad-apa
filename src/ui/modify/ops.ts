@@ -60,6 +60,9 @@ export interface ModifyContext {
 
 const COMMON: OpId[] = ['move', 'rotate', 'mirror', 'multiply'];
 
+/** Objekten vars kanter och punkter får *Profil längs kanten* och *Pelare här* (0.11.6). */
+const PROFILE_HOSTS: ReadonlySet<string> = new Set(['Slab', 'Shape2D', 'Roof', 'Ground']);
+
 /** Det som smartmenyn, Modifiera-raden och verktyget behöver från appen. */
 export interface ModifyHost extends ToolHost {
   /** Starta verktyget för ett val (det ersätter Markera tills det är klart). */
@@ -117,6 +120,8 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
     if (host0?.type === 'Stair' && ctx.ids.length === 1) own.push('stairRailing', 'stairRailings');
     // Grinden (0.11.3): facket där man klickade.
     if (host0?.type === 'Railing' && ctx.ids.length === 1 && ctx.kind === 'edge') own.push('railGate');
+    // Profilen (0.11.6): längs kanten, runt konturen, eller en pelare i punkten.
+    if (host0 && PROFILE_HOSTS.has(host0.type) && ctx.hole === undefined && ctx.ids.length === 1) own.push(...((ctx.kind === 'edge' ? ['profileAlong', 'profileContour'] : ['profileColumn']) as OpId[]));
     // Rampens referenslinje (0.10.18): höjden i punkten, och förläng från en ände.
     const rp = rampPoint(doc, ctx);
     if (rp) {
@@ -147,12 +152,14 @@ export function opsFor(host: ToolHost & Partial<Pick<ModifyHost, 'startWallFrom'
       if (arc) own.push('straighten');
       own.push('offset', 'parallel');
       if (walls.length >= 2) own.push('offsetAll');
+      // Profilen (0.11.6) längs väggens sida.
+      own.push('profileAlong', 'profileContour');
       return withCuts([own, COMMON]);
     }
     case 'point':
       return [[...(wall && host.startWallFrom ? (['wallOn'] as OpId[]) : []), 'stretch', 'extend'], COMMON];
     case 'corner':
-      return [[...(wall && host.startWallFrom ? (['wallOn'] as OpId[]) : []), 'stretch', 'fillet', 'chamfer', 'merge', ...(walls.length >= 2 ? (['offsetAll'] as OpId[]) : [])], COMMON];
+      return [[...(wall && host.startWallFrom ? (['wallOn'] as OpId[]) : []), 'stretch', 'fillet', 'chamfer', 'merge', ...(walls.length >= 2 ? (['offsetAll'] as OpId[]) : []), 'profileColumn'], COMMON];
     default: {
       // Flera väggar: förskjut alla kanter direkt från markeringen (0.8.5),
       // och avrunda eller fasa alla hörn mellan dem (0.8.13).

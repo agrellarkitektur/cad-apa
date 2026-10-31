@@ -38,6 +38,8 @@ export function pointTaker(app: AppContext, pending: CommandDef | null): PointTa
       return app.stairTool;
     case 'railing':
       return app.railingTool;
+    case 'profile':
+      return app.profileTool;
     case 'section':
       return app.sectionTool;
     case 'elevation':
@@ -69,6 +71,8 @@ export function commandBusy(app: AppContext, pending: CommandDef | null): boolea
       return app.stairTool.started;
     case 'railing':
       return app.railingTool.started;
+    case 'profile':
+      return app.profileTool.started;
     case 'section':
       return app.sectionTool.step > 0;
     case 'elevation':

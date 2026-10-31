@@ -138,6 +138,7 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
       if (app.ui.tool === 'ground') app.groundTool.finish();
       if (app.ui.tool === 'stair') app.stairTool.finish();
       if (app.ui.tool === 'railing') app.railingTool.finish();
+      if (app.ui.tool === 'profile') app.profileTool.finish();
     }
 
     switch (e.key) {
@@ -149,6 +150,11 @@ export function installKeyboard(app: AppContext, pressRail: (id: RailId) => void
         }
         // Tab växlar mellan objekt som ligger på varandra under markören (0.8.4).
         if (app.ui.tool === 'select' && !app.ui.layout && !app.modifier.busy && app.selectTool.cycle(e.shiftKey)) e.preventDefault();
+        // Profilen (0.11.6): Tab lägger tvärsnittet på andra sidan om banan.
+        if (app.ui.tool === 'profile') {
+          e.preventDefault();
+          app.profileTool.flip();
+        }
         // Måttbandet: Tab går till objektet vid sista punkten, för att flytta det.
         if (app.ui.tool === 'measure') {
           e.preventDefault();

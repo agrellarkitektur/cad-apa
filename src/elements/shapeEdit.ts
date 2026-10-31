@@ -78,7 +78,7 @@ export function shapeOf(el: ShapeLike | undefined): ShapeLike | undefined {
   if (el.type === 'Shape2D') return el;
   // Markobjekt längs en linje (0.10.5): linjen som en öppen 2D-form, med bågar sedan 0.10.19.
   // Trappans referenslinje (0.11), likadant.
-  if ((el.type === 'Ground' || el.type === 'Stair' || (el.type === 'Railing' && !el.params.host)) && Array.isArray(el.params.line) && (el.params.line as unknown[]).length >= 2) {
+  if ((el.type === 'Ground' || el.type === 'Stair' || (el.type === 'Railing' && !el.params.host) || (el.type === 'Profile' && el.params.path !== 'plumb')) && Array.isArray(el.params.line) && (el.params.line as unknown[]).length >= 2) {
     const bulges = el.params.bulges as number[] | undefined;
     return { type: 'Shape2D', params: { shape: 'polyline', points: el.params.line, ...(hasArcs(bulges) ? { bulges } : {}), closed: false } };
   }
@@ -165,7 +165,7 @@ export function shapePatch(doc: ProjectDoc, id: Id, hole: number | undefined, pa
     }
     return out;
   }
-  if (hole === undefined && el?.type === 'Railing') {
+  if (hole === undefined && (el?.type === 'Railing' || el?.type === 'Profile')) {
     // Det ritade räckets linje (0.11.1): höjderna följer punkterna, nya punkter får höjden mellan grannarna.
     const out: Record<string, unknown> = {};
     if ('bulges' in patch) out.bulges = patch.bulges;

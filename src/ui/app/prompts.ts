@@ -157,6 +157,17 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
       }
       return { head, text: r.hintText(), options };
     }
+    case 'profile': {
+      // Profilen (0.11.6): L lodrät (pelare), K längs kant, N linje; G båge.
+      const r = app.profileTool;
+      const mode = (key: string, m: 'line' | 'plumb' | 'edge', label: string): PromptOption => ({ key, label, run: () => r.setMode(m), on: r.options.mode === m });
+      const options: PromptOption[] = [mode('N', 'line', 'Linje'), mode('L', 'plumb', 'Lodrät'), mode('K', 'edge', 'Längs kant')];
+      if (r.options.mode === 'line') {
+        options.push({ key: 'G', label: 'Båge', run: () => { r.setArc(!r.arc); redraw(); }, on: r.arc });
+        if (r.started) options.push({ key: 'Å', label: 'Ångra', run: () => r.undoPoint() });
+      }
+      return { head, text: r.hintText(), options };
+    }
     case 'stair': {
       const r = app.stairTool;
       const spiral = r.options.form === 'spiral';

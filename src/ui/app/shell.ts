@@ -8,10 +8,10 @@ import { THEMES } from '../theme';
 import type { UiSettings } from '../uiSettings';
 import { defaultState } from './helpers';
 
-export type ToolId = 'pan' | 'select' | 'measure' | 'wall' | 'door' | 'window' | 'slab' | 'roof' | 'stair' | 'railing' | 'ground' | 'room' | 'dimension' | 'text' | 'label' | 'draw2d' | 'section' | 'elevation';
+export type ToolId = 'pan' | 'select' | 'measure' | 'wall' | 'door' | 'window' | 'slab' | 'roof' | 'stair' | 'railing' | 'profile' | 'ground' | 'room' | 'dimension' | 'text' | 'label' | 'draw2d' | 'section' | 'elevation';
 
 /** Verktyg som ritar i planen och därför byter till planvyn. */
-export const PLAN_TOOLS: ToolId[] = ['wall', 'door', 'window', 'slab', 'roof', 'stair', 'railing', 'ground', 'room', 'dimension', 'text', 'label', 'draw2d', 'section', 'elevation'];
+export const PLAN_TOOLS: ToolId[] = ['wall', 'door', 'window', 'slab', 'roof', 'stair', 'railing', 'profile', 'ground', 'room', 'dimension', 'text', 'label', 'draw2d', 'section', 'elevation'];
 /** Verktyg som också ritar i fasader och sektioner (0.8). */
 export const SPACE_TOOLS: ToolId[] = ['dimension', 'text', 'draw2d'];
 /** Ritverktygen som ritar på ett ritningsblad (0.8.9), i mm på papperet. */
@@ -39,6 +39,7 @@ export const TOOLS: ToolDef[] = [
   { id: 'roof', label: 'Tak', icon: 'roof', group: 'rita' },
   { id: 'stair', label: 'Trappa', icon: 'stair', group: 'rita' },
   { id: 'railing', label: 'Räcke', icon: 'railing', group: 'rita' },
+  { id: 'profile', label: 'Profil', icon: 'profile', group: 'rita' },
   { id: 'ground', label: 'Mark', icon: 'ground', group: 'rita' },
   { id: 'furniture', label: 'Möbel', icon: 'furniture', comesIn: '0.12', group: 'rita' },
   { id: 'room', label: 'Rum', icon: 'room', key: 'R', group: 'annotera' },
@@ -125,6 +126,7 @@ export function shellMarkup(brand: Brand): string {
             <button role="menuitem" data-action="filter-select">${icons.select}<span>Filtrera och markera…</span><kbd>FM</kbd></button>
             <button role="menuitem" data-action="show-types">${icons.wall}<span>Typer och littera</span></button>
             <button role="menuitem" data-action="style">${icons.dimension}<span>Stilbok…</span></button>
+            <button role="menuitem" data-action="style-types">${icons.profile}<span>Typer…</span></button>
             <button role="menuitem" data-action="settings">${icons.properties}<span>Gränssnitt…</span></button>
             <div class="narrow-only menu-themes">
               <hr>

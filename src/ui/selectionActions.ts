@@ -1,6 +1,7 @@
 import { stairAction } from './stairFields';
 import { railingAction } from './railingFields';
 import { duplicateRailingType } from './railingTypeFields';
+import { duplicateProfileType, profileAction } from './profileFields';
 import { dropLeader, setLabelAngle } from './labelSection';
 import { resetTags } from './litteraSection';
 import { createDefinition, deleteDefinition, deleteElements, flipWalls, setInState, setSkewOk, updateParams } from '../core/commands';
@@ -60,6 +61,11 @@ export interface ActionContext {
 export function selectionAction({ panel, store, selection, getView, body }: ActionContext, b: HTMLElement): void {
   const doc = store.doc;
   const ids = selection.list();
+  // Profilens knappar (0.11.6).
+  if (b.dataset.action?.startsWith('prof-')) {
+    profileAction(store, ids, b.dataset.action, b);
+    return;
+  }
   switch (b.dataset.action) {
     case 'ul-calibrate':
     case 'ul-align':
@@ -185,6 +191,10 @@ export function selectionAction({ panel, store, selection, getView, body }: Acti
       // Räckestypen (0.11.1): en kopia av den markerade.
       if (el.type === 'Railing') {
         duplicateRailingType(store, ids, nextLittera(doc, el.type, t.litteraPrefix ?? 'T'));
+        break;
+      }
+      if (el.type === 'Profile') {
+        duplicateProfileType(store, ids, nextLittera(doc, el.type, t.litteraPrefix ?? 'T'));
         break;
       }
       const p = resolveParams<Record<string, number>>(doc, el);

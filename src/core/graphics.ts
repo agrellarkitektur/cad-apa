@@ -134,6 +134,8 @@ export interface StyleResources {
    * En grupp som en typ har men som saknas här läggs sist.
    */
   railingGroups?: string[];
+  /** Profiltypernas grupper i ordning (0.11.6), som räckestypernas. Utelämnade = `PROFILE_GROUPS`. */
+  profileGroups?: string[];
   /**
    * Projektets pennor (0.10.36): en tjocklek och en färg med ett nummer som
    * namn. Ställena (en rad i en kategori eller en vy) har kvar sina värden;
@@ -461,6 +463,7 @@ export function normalizeStyle(data: any): StyleSheet {
     ...(normalizeMaterials(data.materials) ? { materials: normalizeMaterials(data.materials)! } : {}),
     ...(normalizeColorSets(data.colorSets) ? { colorSets: normalizeColorSets(data.colorSets)! } : {}),
     ...(Array.isArray(data.railingGroups) ? { railingGroups: [...new Set((data.railingGroups as unknown[]).filter((g): g is string => typeof g === 'string' && !!g.trim()).map((g) => g.trim()))] } : {}),
+    ...(Array.isArray(data.profileGroups) ? { profileGroups: [...new Set((data.profileGroups as unknown[]).filter((g): g is string => typeof g === 'string' && !!g.trim()).map((g) => g.trim()))] } : {}),
     ...(normalizePenList(data.penList) ? { penList: normalizePenList(data.penList)! } : {}),
     ...(normalizeOffice(data.office) ? { office: normalizeOffice(data.office)! } : {}),
     ...(normalizeGeneral(data.general) ? { general: normalizeGeneral(data.general)! } : {}),

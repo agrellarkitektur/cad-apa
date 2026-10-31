@@ -106,6 +106,13 @@ function transformedParams(doc: ProjectDoc, el: Element, t: PlanTransform, movin
       },
     ];
   }
+  if (el.type === 'Profile' && Array.isArray(p.line)) {
+    // Profilen (0.11.6): banan. Speglad hamnar tvärsnittet på andra sidan (spegling av tvärsnittet);
+    // en pelare vrids med objektet (tvärsnittets x följer planens x).
+    const deg = t.angle(0);
+    const rotate = p.path === 'plumb' && !t.mirror && deg ? { rotate: (((p.rotate ?? 0) + (p.mirror ? -deg : deg)) % 360 + 360) % 360 } : {};
+    return [{ ...el, params: { ...el.params, line: p.line.map(t.map), ...(t.mirror && Array.isArray(p.bulges) ? { bulges: (p.bulges as number[]).map((b) => (b ? -b : 0)) } : {}), ...(t.mirror ? { mirror: !p.mirror } : {}), ...rotate } }];
+  }
   if (el.type === 'Railing') {
     // Räcket (0.11.1): den ritade linjen, eller (på en trappa) kanten, som byter sida när trappan speglas.
     if (p.host) return t.mirror && moving.has(el.host ?? '') ? [{ ...el, params: { ...el.params, host: { ...p.host, side: p.host.side === 'left' ? 'right' : 'left' } } }] : [];

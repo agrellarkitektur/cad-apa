@@ -3,6 +3,7 @@ import { lineTypeDash } from '../core/lineTypes';
 import type { Pen } from './primitives';
 import type { EdgePart } from './solids';
 import { defaultRailPen } from './railingPens';
+import { defaultProfilePen } from './profilePens';
 
 /**
  * Fasadernas och sektionernas konturlinjer (0.8; i stilboken sedan 0.10.36,
@@ -47,9 +48,10 @@ const OPENING_ROW = new Map<string, FacadePenKey>(FACADE_PENS.filter((p) => p.gr
  * rad). Linjer utan del (bjälklagens och andra formers kanter) är
  * bjälklagets eller Övrigt.
  */
-export function facadeRowOf(part: EdgePart | undefined, objectType: string | undefined): FacadePenKey | 'railElev' {
-  // Räckenas delar (0.11.1) har en egen rad.
+export function facadeRowOf(part: EdgePart | undefined, objectType: string | undefined): FacadePenKey | 'railElev' | 'profileElev' {
+  // Räckenas delar (0.11.1) och profilerna (0.11.6) har egna rader.
   if (objectType === 'Railing') return 'railElev';
+  if (objectType === 'Profile') return 'profileElev';
   if (part === 'wall') return 'wallElev';
   if (part === 'hole') return 'wallHoleElev';
   if (part === 'roof') return 'roofElev';
@@ -69,8 +71,8 @@ export function defaultFacadePen(key: string): PenDef | undefined {
  * Pennan för en rad i fasaden eller sektionen: förvalet och stilbokens rad
  * ovanpå (med linjetypens streckning).
  */
-export function facadePen(style: StyleSheet, key: FacadePenKey | 'railElev'): Pen {
-  const row: PenDef = { ...(defaultFacadePen(key) ?? defaultRailPen(key))!, ...style.pens?.[key] };
+export function facadePen(style: StyleSheet, key: FacadePenKey | 'railElev' | 'profileElev'): Pen {
+  const row: PenDef = { ...(defaultFacadePen(key) ?? defaultRailPen(key) ?? defaultProfilePen(key))!, ...style.pens?.[key] };
   const dash = lineTypeDash(style, row.linetype);
   return { weight: row.weight, ...(row.color ? { color: row.color as Pen['color'] } : {}), ...(dash ? { dash } : {}) };
 }

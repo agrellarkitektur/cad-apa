@@ -3,6 +3,7 @@ import { newStyleBook, type StyleBook } from './graphics';
 import type { ViewOverrides } from './viewCategories';
 import type { Site } from './site';
 import type { RailingTypeModel } from './railingTypes';
+import type { ProfileTypeModel } from './profileTypes';
 
 /**
  * Bacchus datamodell. Ren data som kan sparas som JSON: inga klasser, inga
@@ -300,6 +301,8 @@ export interface Definition {
   props: PropertySets;
   /** Räckestypen (0.11.1): delarna och parametrarna, för `elementType` Railing. */
   railing?: RailingTypeModel;
+  /** Profiltypen (0.11.6, format 27): delprofilerna, ankarna, sträckzonerna och parametrarna, för `elementType` Profile. */
+  profile?: ProfileTypeModel;
   /**
    * Typens penna (0.8.33), för alla instanser utan egen. Objektets egen går
    * före typens, som går före stilmallens; fält för fält.
@@ -384,14 +387,14 @@ export interface OwnPen extends OwnPenPart {
 }
 
 /** Typerna som kan synas också på en annan våning eller Platsen (*Syns också på*, 0.11). */
-export const SEEN_ON_TYPES: ReadonlySet<string> = new Set(['Stair', 'Ground', 'Slab', 'Railing']);
+export const SEEN_ON_TYPES: ReadonlySet<string> = new Set(['Stair', 'Ground', 'Slab', 'Railing', 'Profile']);
 
 /** Om elementet ritas på `place` för att det valts under *Syns också på* (0.11), och inte hör hemma där. */
 export const seenFrom = (el: Pick<Element, 'storey' | 'space' | 'seenOn' | 'type'>, place: Id): boolean => !el.space && el.storey !== place && !!el.seenOn?.includes(place) && SEEN_ON_TYPES.has(el.type);
 
 export const FORMAT = 'bacchus-project';
-/** 26 (0.11): trappan (`Stair`, referenslinjen `line`, med fälten för räcket, den byggda trappan och spiraltrappan valfria) och objektens `seenOn` (*Syns också på*). 25 (0.10.32): stilboken med vykategorier (`graphics.categories`); vyns `category` är kategorins nyckel och dess avvikelser står i `overrides` (i stället för `compare`, `detail`, `hide` …, `style`). 24 (0.10.28.1): materialens kryssrutor `ground` och `building` i stället för `category`. 23 (0.10.28): materialen i stilmallen (`graphics.materials`, i stället för `fills`) och objektens `material`, `materialOpacity` och `materialAngle` (i stället för `fillStyle`). 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionsmarkörernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
-export const FORMAT_VERSION = 26;
+/** 27 (0.11.6): profiltyperna (`Definition.profile`), profilobjekten (`Profile`) och stilbokens `profileGroups`. 26 (0.11): trappan (`Stair`, referenslinjen `line`, med fälten för räcket, den byggda trappan och spiraltrappan valfria) och objektens `seenOn` (*Syns också på*). 25 (0.10.32): stilboken med vykategorier (`graphics.categories`); vyns `category` är kategorins nyckel och dess avvikelser står i `overrides` (i stället för `compare`, `detail`, `hide` …, `style`). 24 (0.10.28.1): materialens kryssrutor `ground` och `building` i stället för `category`. 23 (0.10.28): materialen i stilmallen (`graphics.materials`, i stället för `fills`) och objektens `material`, `materialOpacity` och `materialAngle` (i stället för `fillStyle`). 20 (0.10.8b): linjen `BasisFacade` (beräkningsgrundande fasad) och fasad- och sektionsmarkörernas `heights`. 19 (0.10.7): markobjektens sort `area` och vägen utan `path`. */
+export const FORMAT_VERSION = 27;
 
 export interface ProjectDoc {
   format: typeof FORMAT;
