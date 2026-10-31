@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.6** (alfa), Profilen; nästa är **0.11.6.1** (det som inte hanns
-med i profileditorn) och sedan **0.11.7 Ändprofiler och profilen som del**.
+**0.11.6.1** (alfa), Profileditorn, resten; nästa är **0.11.7
+Ändprofiler och profilen som del**.
 
 ## Vad som fungerar
 
@@ -1149,6 +1149,35 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11.6.1, Profileditorn, resten (samma filformat, 27; projekt från
+0.11.6 öppnas):
+- **Förskjut** i profileditorn: klicka på en kant av den valda delprofilen
+  (eller bredvid den för hela konturen), sedan dit den ska, eller skriv
+  avståndet ovanför ritytan och tryck Enter (plus utåt, minus inåt).
+  Grannkanterna förlängs eller kortas, bågarna behåller sin vinkel, och
+  förhandsvisningen följer pekaren
+- **Runda hörn**: skriv radien ovanför och klicka på ett hörn mellan två
+  raka kanter; radien minskas (med ett meddelande) när bågen inte ryms
+- **Mått** i ritytan: två punkter och var måttlinjen ska ligga. Måtten
+  står under **Mått** i typens struktur: ett nytt värde sträcker ritningen
+  (det övre eller högra flyttas, med ankare, zoner och andra mått), och
+  måttet kan peka på en **parameter** (eller *Ny parameter…*). Parametern
+  får måttets värde, och ett nytt värde i parametertabellen ändrar
+  ritningen. Per objekt kommer senare
+- **Läge** styr snäppet: *Kant i kant* och *Ovanpå* snäpper till de andra
+  delprofilernas punkter och kanter (längs en vågrät eller lodrät kant med
+  rutnätet), och *Kant i kant* håller punkten utanför dem; *Fritt* snäpper
+  bara till de egna punkterna och till 5 mm. Nya delprofiler får läget som
+  står ovanför ritytan för Linje, Rektangel och Cirkel; när du drar i
+  punkterna gäller delprofilens eget
+- **Sträckt** har fälten **Höjd** och **Bredd**: prova ett mått och se
+  tvärsnittet sträckas som ett objekt med det (typen ändras inte), med
+  måtten sträckta
+- En **varning** överst i profilens egenskaper när ett avslut skär in
+  förbi banans första eller sista raka bit, när de två avsluten möts på en
+  kort profil (t.ex. vågräta ändar på en brant balk), och när avsluten
+  skär bort en delprofil helt
 
 Version 0.11.6, Profilen (**nytt filformat, 27**; projekt och autospar från
 0.11–0.11.5 öppnas inte):

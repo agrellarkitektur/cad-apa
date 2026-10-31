@@ -1,4 +1,5 @@
 import type { Definition, Id } from './model';
+import type { ProfileDim } from './profileContour';
 import { railValues, type RailParam } from './railingTypes';
 
 /**
@@ -111,6 +112,8 @@ export interface ProfileTypeModel {
   up?: 'plumb' | 'normal';
   /** Avslutet nya objekt får i ändarna; utelämnat = efter gruppen. */
   ends?: EndKind;
+  /** Måtten i editorns rityta (0.11.6.1); ett mått kan peka på en parameter. */
+  dims?: ProfileDim[];
 }
 
 export const PROFILE_GROUPS = ['Pelare och balkar', 'Lister och gesimser', 'Takdetaljer', 'Räckesdelar', 'Dörr- och fönsterdelar', 'Ytskiktslister', 'Ändprofiler'] as const;

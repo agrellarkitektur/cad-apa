@@ -8,7 +8,7 @@ import { buildingMaterialOf, materialSolid } from './buildingMaterial';
 import { materialCutFill, materialCutPrims } from './fill2d';
 import { flatLine } from './groundLines';
 import { planCutHeight } from './planCut';
-import { hull, merged, partRegions, placePoint, sliceAt, solidsOf, sweep, type EndSpec, type SweepResult, type Vec3 } from './profileBody';
+import { endReach, hull, merged, partRegions, placePoint, sliceAt, solidsOf, sweep, type EndSpec, type SweepResult, type Vec3 } from './profileBody';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
 
 /**
@@ -102,6 +102,8 @@ export interface ProfileBody {
   /** Delprofilernas ytor i tvärsnittet, placerade (ankaret, vridningen, speglingen). */
   regions: { polys: Rings[] }[];
   plumb: boolean;
+  /** Hur långt avsluten skär in längs banan (0.11.6.1); null för en pelare. */
+  reach: ReturnType<typeof endReach>;
 }
 
 const saved = new WeakMap<object, { key: unknown[]; body: ProfileBody | null }>();
@@ -129,8 +131,11 @@ export function profileBodyOf(doc: ProjectDoc, el: Element<any>): ProfileBody | 
       extend: r.part.extend ?? 0,
     }));
     const plumb = p.path === 'plumb';
-    const res = sweep(regions, path, plumb ? 'plumb' : (p.up ?? model.up ?? 'plumb'), plumb ? { kind: 'square' } : endOf(model, p.start), plumb ? { kind: 'square' } : endOf(model, p.end));
-    body = { model, parts: section.parts.map((x) => x.part), sweep: res, path, regions, plumb };
+    const up = plumb ? 'plumb' : (p.up ?? model.up ?? 'plumb');
+    const start: EndSpec = plumb ? { kind: 'square' } : endOf(model, p.start);
+    const end: EndSpec = plumb ? { kind: 'square' } : endOf(model, p.end);
+    const res = sweep(regions, path, up, start, end);
+    body = { model, parts: section.parts.map((x) => x.part), sweep: res, path, regions, plumb, reach: plumb ? null : endReach(regions, path, up, start, end) };
   }
   saved.set(el, { key, body });
   return body;

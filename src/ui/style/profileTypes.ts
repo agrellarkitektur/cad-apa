@@ -1,13 +1,14 @@
 import type { DocStore } from '../../core/store';
 import type { Id, ProjectDoc } from '../../core/model';
 import { addDefaultProfileTypes, addProfileGroup, addProfileType, moveProfileGroup, profileGroups, updateProfileType, profileTypesIn, profileTypeUses, removeProfileGroup, removeProfileType, renameProfileGroup, setProfileTypeGroup } from '../../core/profiles';
-import { anchorPoint, ANCHOR_POS_LABELS, boxOfPoints, circleContour, defaultProfileTypes, END_KIND_LABELS, flatContour, newProfileModel, PROFILE_USE_LABELS, profileSection, profileValues, type AnchorPos, type EndKind, type PPoint, type ProfileTypeModel, type ProfileUse, type SubProfile } from '../../core/profileTypes';
+import { anchorPoint, ANCHOR_POS_LABELS, boxOfPoints, circleContour, defaultProfileTypes, END_KIND_LABELS, flatContour, newProfileModel, PROFILE_USE_LABELS, profileSection, profileValues, ZONE_PARAM, type AnchorPos, type EndKind, type PPoint, type ProfileTypeModel, type ProfileUse, type SubProfile } from '../../core/profileTypes';
 import { parseDxf } from '../../formats/dxf';
 import { askConfirm, askText } from '../ask';
 import { escapeHtml, nextLittera } from '../labels';
 import { icons } from '../icons';
-import { isoMarkup, partColor, stretchedMarkup } from './profilePreview';
-import { addAnchorAt, addPart, addZone, applyProfileTypeField, movePoint, profileTypeAction } from './profileTypeEdits';
+import { dimsSvg, isoMarkup, partColor, stretchedMarkup } from './profilePreview';
+import { addAnchorAt, addDim, addPart, addZone, applyProfileTypeField, filletPart, movePoint, offsetPart, profileTypeAction } from './profileTypeEdits';
+import { closestOnRing, edgeDistance, insideRing, offsetContour } from '../../core/profileContour';
 
 /**
  * Profileditorn (0.11.6, tavla 3 i utredningen): stilboken › Typer ›
@@ -18,7 +19,8 @@ import { addAnchorAt, addPart, addZone, applyProfileTypeField, movePoint, profil
  * punkter och typens parametrar. Fälten heter `ptype:<typ>:…`.
  */
 
-export type PeTool = 'select' | 'line' | 'rect' | 'circle' | 'anchor' | 'zoneH' | 'zoneW';
+export type PeTool = 'select' | 'line' | 'rect' | 'circle' | 'offset' | 'fillet' | 'dim' | 'anchor' | 'zoneH' | 'zoneW';
+export type PePlace = 'edge' | 'over' | 'free';
 export type PeView = 'section' | 'stretched' | '3d';
 
 export interface ProfileEditorState {
@@ -31,6 +33,16 @@ export interface ProfileEditorState {
   query?: string;
   /** Punkten som dras med Välj: delprofil och punkt. */
   drag?: { part: string; i: number } | null;
+  /** Läget nya delprofiler får (0.11.6.1); styr snäppet medan man ritar. */
+  place?: PePlace;
+  /** Radien för Runda hörn, mm. */
+  radius?: number;
+  /** Förskjut: kanten som valts (eller hela konturen) i den valda delprofilen. */
+  offset?: { part: string; edge?: number } | null;
+  /** Ett meddelande under ritytan efter det senaste klicket. */
+  note?: string;
+  /** Provmåtten i Sträckt (Höjd och Bredd); utelämnade = 1,5 gånger det ritade. */
+  trial?: { height?: number; width?: number };
 }
 
 export const newProfileEditorState = (): ProfileEditorState => ({ def: null, part: null, tool: 'select', view: 'section', pending: [] });
@@ -40,6 +52,9 @@ const TOOLS: [PeTool, string, string][] = [
   ['line', 'Linje', 'En sluten kontur punkt för punkt; klicka på första punkten för att sluta den'],
   ['rect', 'Rektangel', 'Två motsatta hörn'],
   ['circle', 'Cirkel', 'Mitten och en punkt på cirkeln'],
+  ['offset', 'Förskjut', 'Klicka på en kant av den valda delprofilen (eller bredvid den för hela konturen), sedan dit den ska, eller skriv avståndet'],
+  ['fillet', 'Runda hörn', 'Klicka på ett hörn i den valda delprofilen; radien skriver du ovanför'],
+  ['dim', 'Mått', 'Två punkter och var måttlinjen ska ligga; måttet kan peka på en parameter'],
   ['anchor', 'Ankare', 'Ett ankare i en egen punkt'],
   ['zoneH', 'Sträckzon höjd', 'Två klick: bandet där höjden sträcks'],
   ['zoneW', 'Sträckzon bredd', 'Två klick: bandet där bredden sträcks'],
@@ -63,6 +78,8 @@ function chosen(doc: ProjectDoc, st: ProfileEditorState): { def: Id | null; mode
   if (def !== st.def) {
     st.pending = [];
     st.drag = null;
+    st.offset = null;
+    st.trial = undefined;
   }
   st.def = def;
   const model = def ? (doc.definitions[def].profile ?? null) : null;
@@ -75,6 +92,7 @@ function chosen(doc: ProjectDoc, st: ProfileEditorState): { def: Id | null; mode
 function viewBox(m: ProfileTypeModel): [number, number, number, number] {
   const pts = m.parts.flatMap((p) => flatContour(p.contour));
   for (const a of m.anchors) if (a.at) pts.push(a.at);
+  for (const d of m.dims ?? []) pts.push(...((d.axis === 'height' ? [[d.at, d.from], [d.at, d.to]] : [[d.from, d.at], [d.to, d.at]]) as PPoint[]));
   const b = pts.length ? boxOfPoints(pts) : { minX: 0, minY: 0, maxX: 100, maxY: 100 };
   const size = Math.max(200, (b.maxX - b.minX) * 1.5, (b.maxY - b.minY) * 1.5);
   const cx = (b.minX + b.maxX) / 2;
@@ -111,7 +129,7 @@ function canvasMarkup(m: ProfileTypeModel, part: SubProfile | null, st: ProfileE
     })
     .join('');
   const r = w / 120;
-  const verts = part && st.tool === 'select' ? part.contour.pts.map((q, i) => `<circle class="pe-vertex" data-pe-vertex="${i}" cx="${q[0]}" cy="${-q[1]}" r="${r}"/>`).join('') : '';
+  const verts = part && (st.tool === 'select' || st.tool === 'fillet' || st.tool === 'offset') ? part.contour.pts.map((q, i) => `<circle class="pe-vertex" data-pe-vertex="${i}" cx="${q[0]}" cy="${-q[1]}" r="${r}"/>`).join('') : '';
   const anchors = m.anchors
     .map((a) => {
       const p = anchorPoint(a, s.box, s.deltas);
@@ -120,10 +138,36 @@ function canvasMarkup(m: ProfileTypeModel, part: SubProfile | null, st: ProfileE
     })
     .join('');
   const dims = m.parts.length ? `<text class="pe-dim" x="${(box.minX + box.maxX) / 2}" y="${-box.minY + w / 18}" font-size="${w / 30}">${n1(box.maxX - box.minX)} × ${n1(box.maxY - box.minY)}</text>` : '';
+  const dimLines = dimsSvg(m.dims ?? [], w / 26);
+  // Förskjut: den valda kanten (eller hela konturen) markerad.
+  let chosenEdge = '';
+  const off = st.tool === 'offset' && st.offset && part && st.offset.part === part.id ? st.offset : null;
+  if (off && part) {
+    const pts = off.edge === undefined ? flatContour(part.contour) : edgePoints(part, off.edge);
+    const d = pts.map((q) => `${q[0]} ${-q[1]}`).join('L');
+    chosenEdge = `<path class="pe-chosen" d="M${d}${off.edge === undefined ? 'Z' : ''}"/>`;
+  }
   const pending = st.pending.length ? `<path class="pe-pending" d="M${st.pending.map((q) => `${q[0]} ${-q[1]}`).join('L')}"/>${st.pending.map((q) => `<circle class="pe-vertex" cx="${q[0]}" cy="${-q[1]}" r="${r}"/>`).join('')}` : '';
   return `<svg class="pe-canvas" data-pe-canvas data-tool="${st.tool}" viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet">
-    <g class="pe-gridlines">${lines.join('')}</g>${zones}${polys}${letters}${dims}${anchors}${verts}${pending}<path class="pe-rubber" d=""/>
+    <g class="pe-gridlines">${lines.join('')}</g>${zones}${polys}${letters}${dims}${dimLines}${chosenEdge}${anchors}${verts}${pending}<path class="pe-rubber" d=""/>
   </svg>`;
+}
+
+/** En kant i delprofilen som punkter (en båge i korta bitar). */
+function edgePoints(part: SubProfile, i: number): PPoint[] {
+  const n = part.contour.pts.length;
+  const a = part.contour.pts[i];
+  const b = part.contour.pts[(i + 1) % n];
+  const bulge = Number(part.contour.bulges?.[i]) || 0;
+  if (!bulge) return [a, b];
+  // Två punkter med en båge och en rak väg tillbaka: bågens bitar är de från a till b.
+  const flat = flatContour({ pts: [a, b], bulges: [bulge, 0] });
+  const ia = flat.findIndex((q) => Math.hypot(q[0] - a[0], q[1] - a[1]) < 1e-6);
+  const ring = [...flat.slice(ia), ...flat.slice(0, ia)];
+  // Ringen är moturs; bågen går från a till b åt det håll som inte är den raka kanten.
+  const ib = ring.findIndex((q) => Math.hypot(q[0] - b[0], q[1] - b[1]) < 1e-6);
+  const fwd = ring.slice(0, ib + 1);
+  return fwd.length > 2 ? fwd : [...ring.slice(ib), ring[0]].reverse();
 }
 
 export function profileEditorMarkup(doc: ProjectDoc, st: ProfileEditorState): string {
@@ -203,6 +247,7 @@ export function profileEditorMarkup(doc: ProjectDoc, st: ProfileEditorState): st
     <div class="rt-sec">Ankare</div><ul class="pe-list">${anchorRows}</ul>
     <button class="link-btn" data-pe-act="anchor-new">+ Nytt ankare</button>
     <div class="rt-sec">Sträckzoner</div>${zoneRows ? `<ul class="pe-list">${zoneRows}</ul>` : '<p class="note">Inga: måtten är låsta. Rita en med verktygen Sträckzon.</p>'}
+    <div class="rt-sec">Mått</div>${dimRows(model, k)}
     <div class="rt-sec">Ändar</div>
     <div class="rt-row"><span>Avslut som förval</span><select class="rt-val" data-key="${k('ends')}">${opt('', model.group === 'Pelare och balkar' ? 'Efter gruppen (lodrät)' : 'Efter gruppen (vinkelrät)', model.ends)}${(Object.keys(END_KIND_LABELS) as EndKind[]).filter((e) => e !== 'angle').map((e) => opt(e, END_KIND_LABELS[e], model.ends)).join('')}</select></div>
     <div class="rt-row"><span>Uppåt</span><select class="rt-val" data-key="${k('up')}">${opt('plumb', 'Lodrätt', model.up ?? 'plumb')}${opt('normal', 'Vinkelrätt mot banan', model.up ?? 'plumb')}</select></div>
@@ -214,19 +259,55 @@ export function profileEditorMarkup(doc: ProjectDoc, st: ProfileEditorState): st
   const center = `<div class="rt-center pe-center">
     <div class="segmented rt-tabs" role="group" aria-label="Visa">${views.map(([v, l]) => `<button data-pe-view="${v}" aria-pressed="${st.view === v}">${l}</button>`).join('')}<button disabled title="Ändprofilerna kommer i 0.11.7">Ändprofilen</button></div>
     ${st.view === 'section' ? `<div class="segmented pe-tools" role="group" aria-label="Verktyg">${tools}</div>
-    <div class="pe-tool-acts">${st.tool === 'line' && st.pending.length >= 3 ? '<button class="btn btn-small btn-primary" data-pe-act="line-close">Sluta konturen</button>' : ''}${st.pending.length ? '<button class="btn btn-small" data-pe-act="pending-cancel">Avbryt</button>' : ''}<button class="btn btn-small" data-pe-act="part-mirror"${part ? '' : ' disabled'} title="Spegla den valda delprofilen i sidled">Spegla</button><button class="btn btn-small" data-pe-act="dxf" title="Läs slutna konturer ur en DXF-fil som nya delprofiler (mm)">Ur DXF…</button></div>
+    <div class="pe-tool-acts">${toolOptions(st, part)}${st.tool === 'line' && st.pending.length >= 3 ? '<button class="btn btn-small btn-primary" data-pe-act="line-close">Sluta konturen</button>' : ''}${st.pending.length || st.offset ? '<button class="btn btn-small" data-pe-act="pending-cancel">Avbryt</button>' : ''}<button class="btn btn-small" data-pe-act="part-mirror"${part ? '' : ' disabled'} title="Spegla den valda delprofilen i sidled">Spegla</button><button class="btn btn-small" data-pe-act="dxf" title="Läs slutna konturer ur en DXF-fil som nya delprofiler (mm)">Ur DXF…</button></div>
     ${canvasMarkup(model, part, st)}
-    <p class="note rt-canvas-hint">${hintFor(st)}</p>` : st.view === 'stretched' ? stretchedMarkup(model, 1.5) : isoMarkup(model)}
+    <p class="note rt-canvas-hint">${hintFor(st)}</p>` : st.view === 'stretched' ? stretchedMarkup(model, st.trial) : isoMarkup(model)}
   </div>`;
   return wrap(`${listCol}${typeCol}${center}<div class="rt-side">${part ? partProps(doc, def, part) : ''}${paramsMarkup(def, model)}</div>`);
+}
+
+/** Verktygets val ovanför ritytan: läget för nya delprofiler, radien, avståndet att förskjuta. */
+function toolOptions(st: ProfileEditorState, part: SubProfile | null): string {
+  const field = (opt: string, label: string, value: string, title: string) => `<label class="field pe-opt" title="${escapeHtml(title)}"><span>${label}</span><span class="input-unit"><input type="text" data-pe-opt="${opt}" value="${escapeHtml(value)}"><i>mm</i></span></label>`;
+  if (st.tool === 'line' || st.tool === 'rect' || st.tool === 'circle') {
+    const place = st.place ?? 'edge';
+    return `<label class="field pe-opt" title="Läget den nya delprofilen får: styr snäppet medan du ritar"><span>Läge</span><select data-pe-opt="place">${opt('edge', 'Kant i kant', place)}${opt('over', 'Ovanpå', place)}${opt('free', 'Fritt', place)}</select></label>`;
+  }
+  if (st.tool === 'fillet') return field('radius', 'Radie', n1(st.radius ?? 20), 'Radien för hörnen du klickar på; minskas om bågen inte ryms');
+  if (st.tool === 'offset' && st.offset && part && st.offset.part === part.id) return field('offset', st.offset.edge === undefined ? 'Hela konturen' : `Kant ${st.offset.edge + 1}`, '', 'Avståndet: plus utåt, minus inåt; Enter förskjuter');
+  return '';
+}
+
+/** Måtten i typens struktur: riktning, värde (ändras ritningen) och parametern det pekar på. */
+function dimRows(m: ProfileTypeModel, k: (rest: string) => string): string {
+  const dims = m.dims ?? [];
+  if (!dims.length) return '<p class="note">Inga. Rita ett med verktyget Mått.</p>';
+  const free = m.params.filter((q) => typeof q.value === 'number' && q.name !== ZONE_PARAM.height && q.name !== ZONE_PARAM.width);
+  const rows = dims
+    .map((d, i) => {
+      const params = `${opt('', 'Ingen parameter', d.param)}${free.map((q) => opt(q.name, q.name, d.param)).join('')}${opt('__new', 'Ny parameter…', d.param)}`;
+      return `<li class="pe-dim-row"><span>${d.axis === 'height' ? 'Lodrätt' : 'Vågrätt'}</span>
+        <input type="text" aria-label="Måttet" title="Ett nytt värde sträcker ritningen: det ${d.axis === 'height' ? 'övre' : 'högra'} flyttas" data-key="${k(`dim:${i}:value`)}" value="${n1(d.to - d.from)}">
+        <select aria-label="Parameter" data-key="${k(`dim:${i}:param`)}">${params}</select>
+        <button class="icon-btn" data-pe-act="dim-remove" data-pe-index="${i}" title="Ta bort måttet" aria-label="Ta bort">×</button></li>`;
+    })
+    .join('');
+  return `<ul class="pe-list">${rows}</ul><p class="note">Ett nytt värde sträcker ritningen (det övre eller högra flyttas), också när parametern ändras. Per objekt kommer senare.</p>`;
 }
 
 const wrap = (inner: string) => `<section class="style-labels pe-editor"><h3>Profiler</h3><p class="note">Ändras en typ här ändras alla profilobjekt med den. Tvärsnittets x går bort från väggen (till höger om banan), y uppåt, mm. En senare delprofil som ligger ovanpå en tidigare tar sin yta ur den.</p><div class="rt-grid">${inner}</div></section>`;
 
 function hintFor(st: ProfileEditorState): string {
+  if (st.note) return escapeHtml(st.note);
   switch (st.tool) {
+    case 'offset':
+      return st.offset ? 'Klicka dit kanten (eller konturen) ska, eller skriv avståndet ovanför och tryck Enter: plus utåt, minus inåt. Avbryt släpper.' : 'Klicka på en kant av den valda delprofilen, eller bredvid den för hela konturen.';
+    case 'fillet':
+      return 'Klicka på ett hörn i den valda delprofilen: hörnet byts mot en båge med radien ovanför.';
+    case 'dim':
+      return st.pending.length === 2 ? 'Klicka var måttlinjen ska ligga.' : st.pending.length ? 'Klicka måttets andra punkt.' : 'Klicka måttets första punkt. Måtten står under Mått till vänster, där de kan peka på en parameter.';
     case 'select':
-      return 'Klicka på en delprofil för att välja den; dra i dess punkter. Punkterna snäpper till varandra och till 5 mm.';
+      return 'Klicka på en delprofil för att välja den; dra i dess punkter. Läge styr snäppet: Kant i kant och Ovanpå snäpper till de andra delprofilernas punkter och kanter (Kant i kant håller punkten utanför dem), Fritt bara till de egna punkterna och till 5 mm.';
     case 'line':
       return st.pending.length ? 'Klicka nästa punkt; klicka på den första för att sluta konturen.' : 'Klicka konturens första punkt.';
     case 'rect':
@@ -257,7 +338,7 @@ function partProps(doc: ProjectDoc, def: Id, p: SubProfile): string {
     <div class="fields">
       <label class="field"><span>Material</span><select data-key="${k('material')}">${opt('', 'Inget', p.material)}${mats.map((x) => opt(x.id, x.name, p.material)).join('')}</select></label>
       <label class="check"><input type="checkbox" data-key="${k('perObject')}"${p.perObject !== false ? ' checked' : ''}> Får bytas per objekt</label>
-      <label class="field"><span>Läge</span><select data-key="${k('place')}">${opt('edge', 'Kant i kant', p.place ?? 'edge')}${opt('over', 'Ovanpå', p.place ?? 'edge')}${opt('free', 'Fritt', p.place ?? 'edge')}</select></label>
+      <label class="field" title="Styr snäppet när du drar i punkterna: Kant i kant håller dem utanför de andra delprofilerna, Ovanpå snäpper till dem, Fritt bara till de egna"><span>Läge</span><select data-key="${k('place')}">${opt('edge', 'Kant i kant', p.place ?? 'edge')}${opt('over', 'Ovanpå', p.place ?? 'edge')}${opt('free', 'Fritt', p.place ?? 'edge')}</select></label>
       <label class="check" title="Avslutet i ändarna gäller delprofilen; annars kapas den vinkelrätt"><input type="checkbox" data-key="${k('followsEnd')}"${p.followsEnd !== false ? ' checked' : ''}> Följer avslutet</label>
       <label class="field" title="Hur långt delprofilen går utöver referenslinjens ände, t.ex. en avtäckning"><span>Förlängning</span><span class="input-unit"><input type="text" data-key="${k('extend')}" value="${p.extend ?? 0}"><i>mm</i></span></label>
       <label class="field"><span>Syns i planen från</span><select data-key="${k('detail')}">${opt('', 'Alla nivåer', p.detail)}${opt('normal', 'Normal', p.detail)}${opt('detail', 'Detalj', p.detail)}</select></label>
@@ -299,27 +380,82 @@ function canvasPoint(svg: SVGSVGElement, e: PointerEvent): { at: PPoint; px: num
   return { at: [p.x, -p.y], px: 1 / Math.max(1e-9, ctm.a) };
 }
 
-/** Snäpp till en punkt i typen (inom 8 px), annars till rutnätet. */
-function snapped(m: ProfileTypeModel, at: PPoint, px: number, extra: readonly PPoint[] = [], skip?: { part: string; i: number }): PPoint {
+/**
+ * Snäpp (inom 8 px) efter läget (0.11.6.1): *Kant i kant* och *Ovanpå*
+ * snäpper till alla delprofilers punkter och sedan till de andras kanter
+ * (en vågrät eller lodrät kant med rutnätet längs kanten); *Kant i kant*
+ * skjuter dessutom ut en punkt som hamnat inuti en annan delprofil till
+ * dess kant. *Fritt* snäpper bara till den egna delprofilens punkter. Annars
+ * rutnätet, 5 mm.
+ */
+export function snapPoint(m: ProfileTypeModel, at: PPoint, px: number, o: { extra?: readonly PPoint[]; skip?: { part: string; i: number }; self?: string; place?: PePlace } = {}): PPoint {
+  const place = o.place ?? 'over';
+  const tol = 8 * px;
   let best: PPoint | null = null;
-  let bd = 8 * px;
-  for (const p of m.parts)
-    p.contour.pts.forEach((q, i) => {
-      if (skip && skip.part === p.id && skip.i === i) return;
-      const d = Math.hypot(q[0] - at[0], q[1] - at[1]);
-      if (d < bd) {
-        bd = d;
-        best = q;
-      }
-    });
-  for (const q of extra) {
+  let bd = tol;
+  const consider = (q: PPoint) => {
     const d = Math.hypot(q[0] - at[0], q[1] - at[1]);
     if (d < bd) {
       bd = d;
       best = q;
     }
+  };
+  for (const p of m.parts) {
+    if (place === 'free' && p.id !== o.self) continue;
+    p.contour.pts.forEach((q, i) => {
+      if (!(o.skip && o.skip.part === p.id && o.skip.i === i)) consider(q);
+    });
   }
-  return best ?? [Math.round(at[0] / GRID) * GRID, Math.round(at[1] / GRID) * GRID];
+  for (const q of o.extra ?? []) consider(q);
+  const others = place === 'free' ? [] : m.parts.filter((p) => p.id !== o.self).map((p) => flatContour(p.contour));
+  let res: PPoint | null = best;
+  if (!res) {
+    let edge: { at: PPoint; dist: number; a: PPoint; b: PPoint } | null = null;
+    for (const ring of others) {
+      const c = closestOnRing(ring, at);
+      if (c.dist < tol && (!edge || c.dist < edge.dist)) edge = { at: c.at, dist: c.dist, a: ring[c.edge], b: ring[(c.edge + 1) % ring.length] };
+    }
+    if (edge) {
+      const g = (v: number) => Math.round(v / GRID) * GRID;
+      if (Math.abs(edge.a[1] - edge.b[1]) < 1e-6) res = [Math.min(Math.max(g(edge.at[0]), Math.min(edge.a[0], edge.b[0])), Math.max(edge.a[0], edge.b[0])), edge.a[1]];
+      else if (Math.abs(edge.a[0] - edge.b[0]) < 1e-6) res = [edge.a[0], Math.min(Math.max(g(edge.at[1]), Math.min(edge.a[1], edge.b[1])), Math.max(edge.a[1], edge.b[1]))];
+      else res = edge.at;
+    }
+  }
+  res ??= [Math.round(at[0] / GRID) * GRID, Math.round(at[1] / GRID) * GRID];
+  if (place === 'edge')
+    for (const ring of others) {
+      if (!insideRing(ring, res)) continue;
+      const c = closestOnRing(ring, res);
+      if (c.dist > 0.05) res = c.at;
+    }
+  return res;
+}
+
+/** Den närmaste kanten i delprofilen (index i punkterna) och avståndet dit. */
+function nearestEdge(part: SubProfile, at: PPoint): { edge: number; dist: number } {
+  let best = { edge: 0, dist: Infinity };
+  for (let i = 0; i < part.contour.pts.length; i++) {
+    const pts = edgePoints(part, i);
+    for (let k = 0; k + 1 < pts.length; k++) {
+      const d = closestOnRing([pts[k], pts[k + 1]], at).dist;
+      if (d < best.dist) best = { edge: i, dist: d };
+    }
+  }
+  return best;
+}
+
+/** Hur långt Förskjut ska flytta till punkten: från kantens linje, eller från konturen (minus inuti). */
+function offsetDistance(part: SubProfile, edge: number | undefined, q: PPoint): number {
+  if (edge !== undefined) return Math.round(edgeDistance(part.contour, edge, q) * 10) / 10;
+  const ring = flatContour(part.contour);
+  const c = closestOnRing(ring, q);
+  return Math.round((insideRing(ring, q) ? -c.dist : c.dist) * 10) / 10;
+}
+
+/** Läget som styr snäppet för verktyget (det valda delprofilens när man drar, Läge för nya, annars Ovanpå). */
+function placeFor(st: ProfileEditorState): PePlace {
+  return st.tool === 'line' || st.tool === 'rect' || st.tool === 'circle' ? (st.place ?? 'edge') : 'over';
 }
 
 /** Pekaren i ritytan: rita, välj och dra. Sant om det hörde hit. */
@@ -333,9 +469,11 @@ export function profileCanvasPointer(store: DocStore, st: ProfileEditorState, e:
   if (!root) return false;
   const c = canvasPoint(root, e);
   if (!c) return false;
+  const sel = m.parts.find((p) => p.id === st.part) ?? null;
+  const dragSnap = (drag: { part: string; i: number }) => snapPoint(m, c.at, c.px, { skip: drag, self: drag.part, place: m.parts.find((p) => p.id === drag.part)?.place ?? 'edge' });
   if (e.type === 'pointermove') {
     if (st.drag) {
-      const at = snapped(m, c.at, c.px, [], st.drag);
+      const at = dragSnap(st.drag);
       const v = root.querySelector<SVGCircleElement>(`[data-pe-vertex="${st.drag.i}"]`);
       v?.setAttribute('cx', String(at[0]));
       v?.setAttribute('cy', String(-at[1]));
@@ -347,14 +485,14 @@ export function profileCanvasPointer(store: DocStore, st: ProfileEditorState, e:
       }
       return true;
     }
-    rubber(root, st, snapped(m, c.at, c.px, st.pending));
+    rubber(root, st, snapPoint(m, c.at, c.px, { extra: st.pending, place: placeFor(st) }), sel);
     return true;
   }
   if (e.type === 'pointerup') {
     if (!st.drag) return false;
     const drag = st.drag;
     st.drag = null;
-    const at = snapped(m, c.at, c.px, [], drag);
+    const at = dragSnap(drag);
     const part = m.parts.find((p) => p.id === drag.part);
     const was = part?.contour.pts[drag.i];
     if (was && (was[0] !== at[0] || was[1] !== at[1])) movePoint(store, def, drag.part, drag.i, at);
@@ -363,25 +501,26 @@ export function profileCanvasPointer(store: DocStore, st: ProfileEditorState, e:
   }
   if (e.type !== 'pointerdown' || e.button !== 0) return false;
   e.preventDefault();
+  st.note = undefined;
+  const pick = (e.target as Element).closest('[data-pe-pick]')?.getAttribute('data-pe-pick');
   if (st.tool === 'select') {
     const v = (e.target as Element).closest('[data-pe-vertex]')?.getAttribute('data-pe-vertex');
     if (v !== null && v !== undefined && st.part) {
       st.drag = { part: st.part, i: Number(v) };
       return true;
     }
-    const pick = (e.target as Element).closest('[data-pe-pick]')?.getAttribute('data-pe-pick');
     if (pick) {
       st.part = pick;
       render();
     }
     return true;
   }
-  const at = snapped(m, c.at, c.px, st.pending);
+  const at = snapPoint(m, c.at, c.px, { extra: st.pending, place: placeFor(st) });
   const close = (a: PPoint, b: PPoint) => Math.hypot(a[0] - b[0], a[1] - b[1]) < 8 * c.px;
   switch (st.tool) {
     case 'line':
       if (st.pending.length >= 3 && close(at, st.pending[0])) {
-        const id = addPart(store, def, { pts: st.pending });
+        const id = addPart(store, def, { pts: st.pending }, st.place ?? 'edge');
         st.pending = [];
         if (id) st.part = id;
       } else st.pending.push(at);
@@ -391,7 +530,7 @@ export function profileCanvasPointer(store: DocStore, st: ProfileEditorState, e:
       else {
         const [a] = st.pending;
         st.pending = [];
-        const id = addPart(store, def, { pts: [a, [at[0], a[1]], at, [a[0], at[1]]] });
+        const id = addPart(store, def, { pts: [a, [at[0], a[1]], at, [a[0], at[1]]] }, st.place ?? 'edge');
         if (id) st.part = id;
       }
       break;
@@ -401,8 +540,39 @@ export function profileCanvasPointer(store: DocStore, st: ProfileEditorState, e:
         const [a] = st.pending;
         st.pending = [];
         const r = Math.hypot(at[0] - a[0], at[1] - a[1]);
-        const id = r >= 1 ? addPart(store, def, circleContour(a[0], a[1], 2 * r)) : null;
+        const id = r >= 1 ? addPart(store, def, circleContour(a[0], a[1], 2 * r), st.place ?? 'edge') : null;
         if (id) st.part = id;
+      }
+      break;
+    case 'offset': {
+      if (st.offset && sel && st.offset.part === sel.id) {
+        const d = offsetDistance(sel, st.offset.edge, at);
+        if (!offsetPart(store, def, sel.id, d, st.offset.edge)) st.note = 'Det går inte att förskjuta så långt: konturen skulle vända sig.';
+        st.offset = null;
+        break;
+      }
+      const ne = sel ? nearestEdge(sel, c.at) : null;
+      if (ne && ne.dist < 8 * c.px) st.offset = { part: sel!.id, edge: ne.edge };
+      else if (pick && pick !== st.part) st.part = pick;
+      else if (sel) st.offset = { part: sel.id };
+      break;
+    }
+    case 'fillet': {
+      const i = sel ? sel.contour.pts.findIndex((q) => close(q, c.at)) : -1;
+      if (sel && i >= 0) {
+        const r = filletPart(store, def, sel.id, i, st.radius ?? 20);
+        if (r === null) st.note = 'Bara hörn mellan två raka kanter kan rundas.';
+        else if (r < (st.radius ?? 20) - 0.05) st.note = `Radien minskades till ${n1(r)} mm så att bågen ryms.`;
+      } else if (pick) st.part = pick;
+      break;
+    }
+    case 'dim':
+      if (st.pending.length < 2) st.pending.push(at);
+      else {
+        const [a, b] = st.pending;
+        st.pending = [];
+        const h = Math.abs(b[1] - a[1]) > Math.abs(b[0] - a[0]);
+        if (!addDim(store, def, h ? 'height' : 'width', h ? a[1] : a[0], h ? b[1] : b[0], h ? at[0] : at[1])) st.note = 'Måttet är kortare än 1 mm.';
       }
       break;
     case 'anchor':
@@ -423,8 +593,8 @@ export function profileCanvasPointer(store: DocStore, st: ProfileEditorState, e:
   return true;
 }
 
-/** Gummibandet från det klickade till pekaren. */
-function rubber(svg: SVGSVGElement, st: ProfileEditorState, at: PPoint): void {
+/** Gummibandet från det klickade till pekaren, och Förskjuts förhandsvisning. */
+function rubber(svg: SVGSVGElement, st: ProfileEditorState, at: PPoint, sel: SubProfile | null): void {
   const el = svg.querySelector<SVGPathElement>('.pe-rubber');
   if (!el) return;
   const p = st.pending;
@@ -438,6 +608,17 @@ function rubber(svg: SVGSVGElement, st: ProfileEditorState, at: PPoint): void {
   } else if ((st.tool === 'zoneH' || st.tool === 'zoneW') && p.length) {
     const vb = svg.viewBox.baseVal;
     d = st.tool === 'zoneH' ? `M${vb.x} ${-p[0][1]}H${vb.x + vb.width}M${vb.x} ${-at[1]}H${vb.x + vb.width}` : `M${p[0][0]} ${vb.y}V${vb.y + vb.height}M${at[0]} ${vb.y}V${vb.y + vb.height}`;
+  } else if (st.tool === 'dim' && p.length) {
+    if (p.length === 1) d = `M${P(p[0])}L${P(at)}`;
+    else {
+      const h = Math.abs(p[1][1] - p[0][1]) > Math.abs(p[1][0] - p[0][0]);
+      const a: PPoint = h ? [at[0], p[0][1]] : [p[0][0], at[1]];
+      const b: PPoint = h ? [at[0], p[1][1]] : [p[1][0], at[1]];
+      d = `M${P(p[0])}L${P(a)}M${P(p[1])}L${P(b)}M${P(a)}L${P(b)}`;
+    }
+  } else if (st.tool === 'offset' && st.offset && sel && st.offset.part === sel.id) {
+    const c = offsetContour(sel.contour, offsetDistance(sel, st.offset.edge, at), st.offset.edge);
+    if (c) d = `M${flatContour(c).map(P).join('L')}Z`;
   }
   el.setAttribute('d', d);
 }
@@ -452,6 +633,8 @@ export async function profileEditorClick(store: DocStore, st: ProfileEditorState
   if (tool) {
     st.tool = tool as PeTool;
     st.pending = [];
+    st.offset = null;
+    st.note = undefined;
     render();
     return true;
   }
@@ -547,6 +730,7 @@ async function doAction(store: DocStore, st: ProfileEditorState, el: HTMLElement
       return;
     case 'pending-cancel':
       st.pending = [];
+      st.offset = null;
       return;
     case 'part-mirror': {
       if (!st.def || !def?.profile) return;
@@ -600,8 +784,23 @@ async function readDxf(store: DocStore, st: ProfileEditorState, onError: (msg: s
   }
 }
 
-/** Ett ändrat fält i editorn (`ptype:…`); sant om det hörde hit. */
-export function profileEditorChange(store: DocStore, input: HTMLInputElement | HTMLSelectElement): boolean {
+/** Ett ändrat fält i editorn (`ptype:…`, och verktygens val `data-pe-opt`); sant om det hörde hit. */
+export function profileEditorChange(store: DocStore, st: ProfileEditorState, input: HTMLInputElement | HTMLSelectElement, render: () => void): boolean {
+  const o = input.dataset.peOpt;
+  if (o && input.closest('.pe-editor')) {
+    const n = Number(input.value.replace(/\s/g, '').replace(',', '.').replace('−', '-'));
+    const ok = input.value.trim() !== '' && Number.isFinite(n);
+    st.note = undefined;
+    if (o === 'place') {
+      st.place = input.value as PePlace;
+    } else if (o === 'radius' && ok && n > 0) st.radius = n;
+    else if (o === 'offset' && ok && st.def && st.offset) {
+      if (!offsetPart(store, st.def, st.offset.part, n, st.offset.edge)) st.note = 'Det går inte att förskjuta så långt: konturen skulle vända sig.';
+      st.offset = null;
+    } else if ((o === 'trial-height' || o === 'trial-width') && ok && n >= 1) st.trial = { ...st.trial, [o === 'trial-height' ? 'height' : 'width']: Math.round(n) };
+    render();
+    return true;
+  }
   const key = input.dataset.key;
   if (!key?.startsWith('ptype:') || !input.closest('.pe-editor')) return false;
   const [, def, ...rest] = key.split(':');

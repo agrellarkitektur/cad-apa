@@ -3,7 +3,7 @@ import type { Element, Id, ProjectDoc } from '../core/model';
 import { ANCHOR_POS_LABELS, END_KIND_LABELS, PROFILE_USE_LABELS, ZONE_PARAM, type EndKind, type ProfileTypeModel } from '../core/profileTypes';
 import { profileValues } from '../core/profileTypes';
 import type { DocStore } from '../core/store';
-import { columnHeight, endOf, partMaterial, profileBodyOf, profileTypeOf, type ProfileParams } from '../elements/profile';
+import { columnHeight, endOf, partMaterial, profileBodyOf, profileTypeOf, type ProfileBody, type ProfileParams } from '../elements/profile';
 import type { EndSpec } from '../elements/profileBody';
 import { resolveParams } from '../elements/registry';
 import { numberField } from './fieldMarkup';
@@ -28,7 +28,8 @@ export function profileFieldsMarkup(doc: ProjectDoc, el: Element): string {
   const plumb = p.path === 'plumb';
   const body = profileBodyOf(doc, el);
   const out: string[] = [];
-  if (!body?.sweep.pieces.length) out.push('<div class="stair-warnings" role="note"><p class="skew-note"><b>!</b> Banan är för kort, eller tvärsnittet saknar yta.</p></div>');
+  const warn = profileWarnings(body);
+  if (warn.length) out.push(`<div class="stair-warnings" role="note">${warn.map((w) => `<p class="skew-note"><b>!</b> ${escapeHtml(w)}</p>`).join('')}</div>`);
   out.push(`<div class="fields"><label class="field"><span>Littera</span><input type="text" autocomplete="off" data-key="name:littera" value="${escapeHtml(el.name ?? '')}"></label></div>`);
   if (plumb) {
     out.push(`<div class="field-label">Pelaren</div><div class="fields">${numberField('prof:level', 'Fot över golvet', p.level ?? 0, 'mm')}${numberField('prof:height', 'Höjd', columnHeight(p), 'mm')}</div>`);
@@ -86,6 +87,32 @@ export function profileFieldsMarkup(doc: ProjectDoc, el: Element): string {
     }
   if (!plumb) out.push('<p class="note">I knäckarna geras profilen, i plan och höjd. Ändprofiler (PA01 …) kommer i 0.11.7.</p>');
   return out.join('');
+}
+
+const mm = (v: number) => Math.round(v).toLocaleString('sv-SE');
+
+/**
+ * Varningarna överst i panelen (0.11.6.1): en bana utan kropp, ett avslut
+ * som skär in förbi banans första eller sista raka bit (eller i det andra
+ * avslutet), och en delprofil som avsluten skär bort helt.
+ */
+export function profileWarnings(body: ProfileBody | null): string[] {
+  if (!body?.sweep.pieces.length) return ['Banan är för kort, eller tvärsnittet saknar yta.'];
+  const out: string[] = [];
+  const r = body.reach;
+  if (r) {
+    if (r.single && r.start + r.end > r.first + 1) out.push(`Avsluten skär in i varandra: de når ${mm(r.start)} och ${mm(r.end)} mm in, men profilen är ${mm(r.first)} mm. Förläng banan, välj ett annat avslut eller Utöver.`);
+    else if (!r.single) {
+      if (r.start > r.first + 1) out.push(`Avslutet i början skär in förbi den första knäcken (${mm(r.start)} mm in, biten är ${mm(r.first)} mm).`);
+      if (r.end > r.last + 1) out.push(`Avslutet i slutet skär in förbi den sista knäcken (${mm(r.end)} mm in, biten är ${mm(r.last)} mm).`);
+    }
+  }
+  const has = new Set(body.sweep.pieces.map((x) => x.part));
+  body.regions.forEach((reg, i) => {
+    const part = body.parts[i];
+    if (part && reg.polys.length && !has.has(i)) out.push(`Delprofil ${part.letter} ${part.name} syns inte: avsluten skär bort den.`);
+  });
+  return out;
 }
 
 /** Typen i korthet under *Påverkar fler objekt*: grupp, delprofiler, ankare, sträckzoner, parametrar och editorn. */

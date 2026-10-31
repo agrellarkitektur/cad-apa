@@ -1546,6 +1546,68 @@
   vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
+.pe-dimline path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+.pe-dimline text {
+  fill: var(--ink);
+  font-family: var(--font-data);
+  dominant-baseline: auto;
+  pointer-events: none;
+}
+.pe-dimline.linked path {
+  stroke: var(--accent);
+}
+.pe-dimline.linked text {
+  fill: var(--accent);
+}
+.pe-chosen {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 3.5;
+  stroke-opacity: 0.6;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+.pe-opt {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0 6px 0 0;
+}
+.pe-opt input {
+  width: 5em;
+  font-family: var(--font-data);
+}
+.pe-trial {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.pe-trial input {
+  width: 6em;
+  font-family: var(--font-data);
+}
+.pe-dim-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+}
+.pe-dim-row > span {
+  width: 4.5em;
+}
+.pe-dim-row input {
+  width: 4.5em;
+  font-family: var(--font-data);
+}
+.pe-dim-row select {
+  flex: 1;
+  min-width: 0;
+}
 .pe-swatch {
   width: 10px;
   height: 10px;

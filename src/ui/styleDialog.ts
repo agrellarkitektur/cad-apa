@@ -582,7 +582,7 @@ export class StyleDialog {
     }
     if (generalChange(this.store, input, (book, label) => this.set(book, label))) return;
     if (railEditorChange(this.store, input)) return;
-    if (profileEditorChange(this.store, input)) return;
+    if (profileEditorChange(this.store, this.pe, input, () => this.render())) return;
     if (input.matches('[data-sb-name]')) {
       const name = input.value.trim();
       if (name && name !== this.book.name) this.set({ ...this.book, name }, `Stilbokens namn: ${name}`);
@@ -597,7 +597,7 @@ export class StyleDialog {
 function focusSelector(el: Element | null, root: HTMLElement): string | null {
   if (!(el instanceof HTMLElement) || !root.contains(el)) return null;
   if (el.id) return `#${CSS.escape(el.id)}`;
-  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview', 'data-ul', 'data-ul-field', 'data-ul-addsel', 'data-pp-search', 'data-pp-filter', 'data-pp-set', 'data-pp-check', 'data-pp-all', 'data-pp-move', 'data-penlist', 'data-pp-tag', 'data-pp-pick', 'data-gen', 'data-gen-action', 'data-rt-mode', 'data-rt-act', 'data-rt-g', 'data-rt-p', 'data-rt-type', 'data-sb-tab', 'data-pe-act', 'data-pe-tool', 'data-pe-view', 'data-pe-type', 'data-pe-search'];
+  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview', 'data-ul', 'data-ul-field', 'data-ul-addsel', 'data-pp-search', 'data-pp-filter', 'data-pp-set', 'data-pp-check', 'data-pp-all', 'data-pp-move', 'data-penlist', 'data-pp-tag', 'data-pp-pick', 'data-gen', 'data-gen-action', 'data-rt-mode', 'data-rt-act', 'data-rt-g', 'data-rt-p', 'data-rt-type', 'data-sb-tab', 'data-pe-act', 'data-pe-tool', 'data-pe-view', 'data-pe-type', 'data-pe-search', 'data-pe-opt'];
   const parts = attrs.filter((a) => el.hasAttribute(a)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a)!)}"]`);
   if (!parts.length) return null;
   const v = el instanceof HTMLInputElement && el.type === 'radio' ? `[value="${CSS.escape(el.value)}"]` : '';

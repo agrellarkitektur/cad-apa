@@ -735,6 +735,29 @@ förut; vid nästa huvudversion flyttas de klara till arkivet.
   följa det ritade); förhandsvisningarna i `profilePreview.ts`
   (`stretchedMarkup`, `isoMarkup` med samma `sweep`).
 - **Tester**: `tests/v0116.test.ts`.
+- **Editorns verktyg (0.11.6.1)**: ren räkning i `core/profileContour.ts`:
+  `contourArea` (med bågarnas segment), `offsetContour(c, d, edge?)`
+  (skärningen mellan grannkanternas linjer; bågarnas riktning i ändarna ur
+  pilhöjden, ny pilhöjd med samma vinkel), `filletContour(c, i, r)`
+  (radien minskas tills bågen ryms; `dedupe` tar bort en kant utan längd),
+  `closestOnRing`, `insideRing`, `edgeDistance`, och måtten:
+  `ProfileDim` (`axis`, `from`, `to`, `at`, `param`) i
+  `ProfileTypeModel.dims` (valfritt fält, inget nytt format),
+  `stretchModel(m, axis, at, delta)` (allt på eller bortom `at`),
+  `syncDims` (parametern får måttets värde) och `setDim`. Ändringarna i
+  `profileTypeEdits.ts`: `offsetPart`, `filletPart`, `addDim`, fälten
+  `dim:<i>:value|param` och en kopplad parameters värde (sträcker), namnbyte
+  och borttagning håller kopplingen. Editorn: verktygen `offset`, `fillet`,
+  `dim`; läget `place`, `radius`, `offset` (vald kant), `note` och `trial`
+  i `ProfileEditorState`; verktygens fält ovanför ritytan har
+  `data-pe-opt` (`place`, `radius`, `offset`, `trial-height`,
+  `trial-width`) och går till `profileEditorChange(store, st, input,
+  render)`. Snäppet i `snapPoint(m, at, px, { extra, skip, self, place })`
+  (exporterad för testerna). Måtten ritas med `dimsSvg` i
+  `profilePreview.ts` (också sträckta i *Sträckt*). Varningen:
+  `endReach` i `profileBody.ts` (samma räkning som `endHalfSpace`), sparad
+  som `ProfileBody.reach`, och texterna i `profileWarnings` i
+  `ui/profileFields.ts`. Tester: `tests/v01161.test.ts`.
 
 ## Spiraltrappan (0.11.5, format 26)
 

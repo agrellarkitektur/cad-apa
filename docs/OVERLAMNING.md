@@ -6,10 +6,22 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 31 oktober 2026, efter 0.11.6.
+README. Senast: 31 oktober 2026, efter 0.11.6.1.
 
 ## Läget
 
+- **0.11.6.1 Profileditorn, resten är klar** (samma format, 27), byggd i
+  en session (Carl August: "Kör 0.11.6.1"): *Förskjut* (kant eller hela
+  konturen, klick eller skrivet avstånd), *Runda hörn* (radie ovanför
+  ritytan), *Mått* i ritytan (under *Mått* i typen; nytt värde sträcker
+  det bortre, kan peka på en egen parameter, per objekt senare), *Läge*
+  som snäpphjälp (Kant i kant / Ovanpå / Fritt), provmåtten Höjd och
+  Bredd i *Sträckt*, och varningen när ett avslut skär in förbi banans
+  första eller sista bit, när avsluten möts eller skär bort en delprofil.
+  Ren räkning i `core/profileContour.ts`, varningen i `endReach`
+  (`profileBody.ts`). Testerna: 860 på ca 12 s. Provat i Playwright mot
+  `dist/` (runda hörn, förskjut kant och kontur, mått med ny parameter,
+  Sträckt med provmått). Claudes val och det som inte gjordes i PLAN.md.
 - **0.11.6 Profilen är klar** (**nytt format, 27**), byggd i en session
   (Carl August: "Bygg 0.11.6") efter utredningen (`cad-apa-profil-utredning.md`,
   besluten A–H). Profiltypen (`Definition.profile`) med delprofiler,
@@ -28,17 +40,18 @@ README. Senast: 31 oktober 2026, efter 0.11.6.
   fasad och sektion, panelen, editorn: rita, dra punkter, 3D och Sträckt).
   Koden i UTVECKLING.md (*Profilen*), Claudes val och det som inte gjordes
   i PLAN.md.
-- **0.11.6.1** är det som inte hanns med i editorn: Förskjut, Runda hörn
-  och Mått i ritytan, *Läge* som snäpphjälp, provmått i *Sträckt*,
-  varningen för avslut som skär in (liten–mellanstor). Se PLAN.md.
 - **Granskningen efter 0.11.5** och **0.11.1–0.11.5** (räcket, editorn,
   staket och grindar, byggd trappa, spiraltrappan): se PLAN.md och
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.11.6 pushad till `main` 31 oktober (se git och `gh run
+- **Publicerad:** 0.11.6.1 pushad till `main` 31 oktober (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.11.6.1:** inget i ritningarna (projekt
+  från 0.11.6 öppnas). I profileditorn verktygen *Förskjut*, *Runda hörn*
+  och *Mått*, *Läge* ovanför ritytan, *Mått* i typens struktur, fälten i
+  *Sträckt*; i profilens egenskaper nya varningar för avsluten.
 - **Märks i hans ritningar efter 0.11.6:** projekt och autospar från
   0.11–0.11.5 öppnas inte (nytt format). Verktyget *Profil* under Rita,
   *Typer…* i huvudmenyn, stilboken har flikar (resurserna är delade på
@@ -47,10 +60,10 @@ README. Senast: 31 oktober 2026, efter 0.11.6.
   konturen* och *Pelare här*.
 - **Märks i hans ritningar efter 0.11.5:** inget i befintliga ritningar.
   *Spiral* i trappverktygets rad.
-- **Versionsnumret** är `0.11.6` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.11.6.1` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.11.6 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.11.6.1 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -131,13 +144,10 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 - ~~0.8.8 Mallblad~~ … ~~0.10.40.1 Granskning efter 0.10.40~~,
   ~~0.11 Trappan~~ … ~~0.11.5 Spiraltrappan~~, ~~Granskning efter
-  0.11.5~~, ~~Utredning av profilverktyget~~, ~~0.11.6 Profilen~~ (klara;
+  0.11.5~~, ~~Utredning av profilverktyget~~, ~~0.11.6 Profilen~~, ~~0.11.6.1 Profileditorn, resten~~ (klara;
   se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.11.6.1 Profileditorn, resten** (liten–mellanstor): Förskjut, Runda
-  hörn och Mått i ritytan, Läge som snäpphjälp, provmått i Sträckt,
-  varningen för avslut som skär in
 - **0.11.7 Ändprofiler och profilen som del** (mellanstor–stor):
   ändprofilerna PA, profiltyper i räckestyper och i vangstycket
 - **0.11.8 Dörrar och fönster** (stor; foder, tröskel, bleck m.m. som
@@ -160,20 +170,30 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
 skrivrätt till repot ("push godkänd"). Fråga Carl August om han provat
-0.11.6 och ställ de fem frågorna om den (nedan) först. Nästa version är
-**0.11.6.1** (resten av profileditorn, se PLAN.md) eller, om han hellre
-väntar med den, **0.11.7 Ändprofiler och profilen som del** efter
-`cad-apa-profil-utredning.md`. Ställ frågorna om 0.11.5–0.11.1 (nedan)
-när han provat.
+0.11.6 och 0.11.6.1 och ställ frågorna om dem (nedan) först, högst fem
+åt gången. Nästa version är **0.11.7 Ändprofiler och profilen som del**
+efter `cad-apa-profil-utredning.md` (mellanstor–stor; kan behöva två
+sessioner, föreslå en delning om det behövs). Ställ frågorna om
+0.11.5–0.11.1 (nedan) när han provat.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.6, 0.11.5, 0.11.4,
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.6.1, 0.11.6, 0.11.5, 0.11.4,
 0.11.3, 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
+
+**0.11.6.1 efter provning** (Claudes val, se PLAN.md)
+- Måtten pekar på parametrar bara i typen; ändrade per objekt sträcker
+  de inte (beslut B: senare). Behövs det före piloten?
+- Ett mått sträcker det övre eller högra när värdet ändras. Rätt, eller
+  ska man kunna välja vilken ände som flyttas?
+- *Kant i kant* skjuter ut punkten ur en annan delprofil, men kanterna
+  mellan punkterna kan fortfarande skära in. Räcker det som hjälp?
+- Varningen för avslut räknar bågar i korta bitar, så ett snett avslut på
+  en bågformad bana varnar tidigt. Störande?
 
 **0.11.6 efter provning** (Claudes val, se PLAN.md)
 - Tvärsnittet läggs till höger om banan (Tab byter sida). Rätt förval,

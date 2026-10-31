@@ -2,6 +2,7 @@ import type { Id } from '../../core/model';
 import { updateProfileType } from '../../core/profiles';
 import { boxOfPoints, flatContour, nextPartLetter, ringArea, ZONE_PARAM, type AnchorPos, type EndKind, type PPoint, type ProfileContour, type ProfileTypeModel, type ProfileUse, type SubProfile } from '../../core/profileTypes';
 import type { DocStore } from '../../core/store';
+import { filletContour, offsetContour, setDim, syncDims } from '../../core/profileContour';
 
 /**
  * Ändringarna i profileditorn (0.11.6): fälten (`ptype:<typ>:…`) och det
@@ -31,7 +32,7 @@ function partId(m: ProfileTypeModel, letter: string): string {
 }
 
 /** Lägg till en delprofil med konturen; svarar med dess id. */
-export function addPart(store: DocStore, defId: Id, contour: ProfileContour): string | null {
+export function addPart(store: DocStore, defId: Id, contour: ProfileContour, place: 'edge' | 'over' | 'free' = 'edge'): string | null {
   let made: string | null = null;
   updateProfileType(store, defId, 'Ny delprofil', (m) => {
     const pts = contour.pts.map((q): PPoint => [r1(q[0]), r1(q[1])]);
@@ -40,7 +41,7 @@ export function addPart(store: DocStore, defId: Id, contour: ProfileContour): st
     const id = partId(m, letter);
     const flat = flatContour({ pts, ...(contour.bulges ? { bulges: contour.bulges } : {}) });
     if (Math.abs(ringArea(flat)) < 1) return null;
-    m.parts.push({ id, letter, name: `Del ${letter}`, contour: { pts, ...(contour.bulges?.some((b) => b) ? { bulges: contour.bulges } : {}) }, ...(m.parts.length ? { place: 'edge' as const } : {}) });
+    m.parts.push({ id, letter, name: `Del ${letter}`, contour: { pts, ...(contour.bulges?.some((b) => b) ? { bulges: contour.bulges } : {}) }, ...(m.parts.length ? { place } : {}) });
     made = id;
     return syncSize(m);
   });
@@ -54,6 +55,44 @@ export function movePoint(store: DocStore, defId: Id, part: string, i: number, t
     if (!p?.contour.pts[i]) return null;
     p.contour.pts[i] = [r1(to[0]), r1(to[1])];
     return syncSize(m);
+  });
+}
+
+const rounded = (c: ProfileContour): ProfileContour => ({ pts: c.pts.map((q): PPoint => [r1(q[0]), r1(q[1])]), ...(c.bulges ? { bulges: c.bulges.map(r1) } : {}) });
+
+/** Förskjut en delprofil `d` mm utåt (minus inåt): hela konturen eller kanten `edge` (verktyget Förskjut). */
+export function offsetPart(store: DocStore, defId: Id, part: string, d: number, edge?: number): boolean {
+  return updateProfileType(store, defId, edge === undefined ? 'Förskjut delprofil' : 'Förskjut kant', (m) => {
+    const p = m.parts.find((x) => x.id === part);
+    const c = p && Math.abs(d) >= 0.1 ? offsetContour(p.contour, d, edge) : null;
+    if (!p || !c) return null;
+    p.contour = rounded(c);
+    return syncSize(m);
+  });
+}
+
+/** Runda hörnet i punkten `i` (verktyget Runda hörn); svarar med radien som blev, eller null. */
+export function filletPart(store: DocStore, defId: Id, part: string, i: number, r: number): number | null {
+  let made: number | null = null;
+  updateProfileType(store, defId, 'Runda hörn', (m) => {
+    const p = m.parts.find((x) => x.id === part);
+    const res = p ? filletContour(p.contour, i, r) : null;
+    if (!p || !res) return null;
+    p.contour = rounded(res.contour);
+    made = res.r;
+    return syncSize(m);
+  });
+  return made;
+}
+
+/** Ett mått i ritytan mellan två värden på axeln, ritat vid `at` (verktyget Mått). */
+export function addDim(store: DocStore, defId: Id, axis: 'height' | 'width', a: number, b: number, at: number): boolean {
+  return updateProfileType(store, defId, 'Nytt mått', (m) => {
+    const from = r1(Math.min(a, b));
+    const to = r1(Math.max(a, b));
+    if (to - from < 1) return null;
+    (m.dims ??= []).push({ axis, from, to, at: r1(at) });
+    return m;
   });
 }
 
@@ -155,6 +194,27 @@ export function applyProfileTypeField(store: DocStore, defId: Id, rest: string[]
         }
         return m;
       }
+      case 'dim': {
+        const i = Number(a);
+        const dm = m.dims?.[i];
+        if (!dm) return null;
+        if (b === 'value') return ok && setDim(m, i, n) ? syncSize(m) : null;
+        if (b === 'param') {
+          if (raw === '__new') {
+            let k = 1;
+            while (m.params.some((q) => q.name === `Mått${k}`)) k++;
+            m.params.push({ name: `Mått${k}`, value: r1(dm.to - dm.from) });
+            dm.param = `Mått${k}`;
+          } else if (raw) {
+            const q = m.params.find((x) => x.name === raw);
+            if (!q || typeof q.value !== 'number') return null;
+            for (const other of m.dims ?? []) if (other !== dm && other.param === raw) delete other.param;
+            dm.param = raw;
+          } else delete dm.param;
+          return syncDims(m);
+        }
+        return null;
+      }
       case 'zone': {
         const z = m.zones[Number(a)];
         if (!z || !ok || (b !== 'from' && b !== 'to')) return null;
@@ -165,14 +225,21 @@ export function applyProfileTypeField(store: DocStore, defId: Id, rest: string[]
       case 'param': {
         const q = m.params[Number(a)];
         if (!q) return null;
+        const linked = (m.dims ?? []).findIndex((x) => x.param === q.name);
         if (b === 'name') {
           const v = raw.trim();
           if (!v || m.params.some((x) => x !== q && x.name === v)) return null;
+          for (const x of m.dims ?? []) if (x.param === q.name) x.param = v;
           q.name = v;
         } else if (b === 'value') {
           if (!ok) return null;
+          // En parameter som ett mått pekar på ändrar ritningen (det bortre sträcks).
+          if (linked >= 0) return setDim(m, linked, n) ? syncSize(m) : null;
           q.value = n;
-        } else if (b === 'formula') q.value = raw.trim() ? raw.trim() : 0;
+        } else if (b === 'formula') {
+          if (linked >= 0 && raw.trim()) return null;
+          q.value = raw.trim() ? raw.trim() : 0;
+        }
         else if (b === 'per') {
           if (checked) q.perRailing = true;
           else delete q.perRailing;
@@ -294,7 +361,13 @@ export function profileTypeAction(store: DocStore, defId: Id, act: string, el: H
       }
       case 'param-remove':
         if (!m.params[i]) return null;
+        for (const x of m.dims ?? []) if (x.param === m.params[i].name) delete x.param;
         m.params.splice(i, 1);
+        return m;
+      case 'dim-remove':
+        if (!m.dims?.[i]) return null;
+        m.dims.splice(i, 1);
+        if (!m.dims.length) delete m.dims;
         return m;
     }
     return null;

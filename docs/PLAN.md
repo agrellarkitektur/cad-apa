@@ -178,6 +178,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.5 | Spiraltrappan: numeriskt läge (inner- och ytterdiameter, grader också över ett varv, varvriktning), referenslinjen en genererad helix, mittpelaren, planen med snittet och det dolda över ett varv, runt hål |
 | – | Granskning efter 0.11.5 (31 oktober): räckets filer delade, klickjämförelsen med trappor och räcken; ingen ny version |
 | 0.11.6 | Profilen (format 27): profiltypen med delprofiler, ankare och sträckzoner, verktyget *Profil* (linje, lodrät, längs kant), avsluten med inom/utöver och förskjutning, gering, vridning, plan/sektion/fasad/3D, profileditorn, stilbokens flikar Stil/Typer/Allmänt |
+| 0.11.6.1 | Profileditorn, resten: Förskjut (kant eller hela konturen), Runda hörn, Mått i ritytan som kan peka på parametrar, Läge som snäpphjälp, provmått i Sträckt, varningen för avslut som skär in |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
 val och det som *inte gjordes*. De ligger i arkivet:
@@ -732,11 +733,61 @@ geringen mellan två olika lutningar är ett plan genom knäcken (exakt).
 Klickjämförelsen är inte körd (granskningen efter 0.11.8): smartmenyn på
 en väggs kant och hörn har nya val, så smartmenyns hash skiljer där.
 
-### 0.11.6.1 Profileditorn, resten
+### 0.11.6.1 Profileditorn, resten ✓
 
-Det som inte hanns med i 0.11.6 (se ovan): Förskjut, Runda hörn och Mått i
-ritytan, Läge som snäpphjälp, provmått i *Sträckt*, varningen för avslut
-som skär in. Liten–mellanstor.
+Det som inte hanns med i 0.11.6 (se ovan). Byggd i en session 31 oktober
+(Carl August: "Kör 0.11.6.1"). Samma filformat (27): måtten är ett valfritt
+fält i typen (`dims`).
+
+**Claudes val (0.11.6.1):**
+
+- **Förskjut**: ett klick på en kant (inom 8 px) väljer kanten, ett klick
+  bredvid väljer hela konturen; nästa klick ger avståndet (från kantens
+  linje, eller från konturen med minus inuti), eller så skrivs det ovanför
+  ritytan. En kant flyttas parallellt och grannkanterna förlängs eller
+  kortas (skärningen med deras linjer; en rak granne i samma riktning
+  flyttas med). Bågarna behåller sin vinkel, så en cirkel och en rundad
+  hörna förskjuts koncentriskt. En kontur som skulle vända sig ändras inte.
+- **Runda hörn**: bara mellan två raka kanter; radien minskas tills bågen
+  ryms på den kortare kanten, och går hela kanten åt blir hörnet och
+  grannpunkten en. Förvalet är 20 mm.
+- **Måtten** är lodräta eller vågräta (efter den största skillnaden mellan
+  de två punkterna) och sparas som från–till på axeln och måttlinjens
+  läge, inte som punkter, så de följer inte med när en punkt dras (bara
+  när ritningen sträcks vid ett mått). Ett nytt värde flyttar allt på
+  eller bortom måttets övre (högra) gräns: punkter, egna ankarpunkter,
+  zonernas och de andra måttens gränser. Ett mått kan peka på en egen
+  parameter med ett tal (inte Höjd och Bredd, som styr zonerna, och inte
+  en formel); parametern får måttets värde, och ett nytt värde på
+  parametern sträcker ritningen. **Per objekt** väntar (beslut B: fria
+  parametrar kopplade till mått senare); kryssen gör ännu inget för dem.
+- **Läge**: *Kant i kant* och *Ovanpå* snäpper till alla delprofilers
+  punkter och de andras kanter (längs en vågrät eller lodrät kant med
+  rutnätet 5 mm); *Kant i kant* skjuter dessutom ut en punkt som hamnat
+  inuti en annan delprofil till dess kant (bara punkten, inte kanterna
+  mellan punkterna). *Fritt* snäpper till de egna punkterna och rutnätet.
+  Linje, Rektangel och Cirkel har valet ovanför ritytan (det nya
+  delprofilens läge); Förskjut, Mått, Ankare och zonerna snäpper som
+  *Ovanpå*.
+- **Sträckt**: fälten Höjd och Bredd (förval 1,5 gånger det ritade, som
+  förut) hör till editorn, inte typen, och nollställs när en annan typ
+  väljs. Måtten ritas sträckta, med det sträckta värdet.
+- **Varningen** räknar hur långt avslutets plan når in längs banan från
+  referenslinjens ände (det största för någon delprofil, med *Inom/Utöver*,
+  förskjutningen och förlängningen): förbi den första eller sista raka
+  biten varnar, och på en rak profil när de två avsluten tillsammans är
+  längre än profilen. En delprofil utan kropp ger en egen varning. En
+  båge räknas i sina korta bitar, så ett snett avslut på en bågformad bana
+  varnar tidigt.
+
+**Inte gjort i 0.11.6.1:** måtten per objekt (en parameter kopplad till ett
+mått som sträcker objektet), mått som följer punkterna, sneda mått,
+*Förskjut* med flera kanter, och *Kant i kant* för hela kanter (bara
+punkterna). Från 0.11.6 kvar: smartspöt för profilen, `PROFIL PR03` i
+kommandoraden, en profil som följer kanten den lades längs, *Hör till* i
+panelen, profilens littera och delprofilernas inre linjer i planen, och
+profiltyperna i stilbokens export. Klickjämförelsen körs i granskningen
+efter 0.11.8.
 
 ### 0.11.7 Ändprofiler och profilen som del
 

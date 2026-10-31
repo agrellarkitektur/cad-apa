@@ -1,4 +1,5 @@
-import { anchorPoint, profileSection, profileValues, ZONE_PARAM, type ProfileTypeModel } from '../../core/profileTypes';
+import type { ProfileDim } from '../../core/profileContour';
+import { anchorPoint, boxOfPoints, profileSection, profileValues, stretchPoint, ZONE_PARAM, type PPoint, type ProfileTypeModel } from '../../core/profileTypes';
 import { partRegions, placePoint, sweep, type Vec3 } from '../../elements/profileBody';
 import type { Vec2 } from '../../repr/primitives';
 
@@ -11,20 +12,54 @@ import type { Vec2 } from '../../repr/primitives';
 /** Färgen för en delprofil (A, B, C …). */
 export const partColor = (i: number) => `hsl(${(28 + i * 67) % 360} 45% 62%)`;
 
-/** Tvärsnittet med Höjd och Bredd ändrade med `k`, som ritningen gör det. */
-export function stretchedMarkup(m: ProfileTypeModel, k: number): string {
+const n1 = (v: number) => (Math.round(v * 10) / 10).toLocaleString('sv-SE');
+
+/**
+ * Måtten i ritytan (0.11.6.1): måttlinje med snedstreck i ändarna och
+ * värdet, och parametern måttet pekar på. `map` lägger punkterna i en
+ * sträckt bild (Sträckt), så att värdet blir det sträckta.
+ */
+export function dimsSvg(dims: readonly ProfileDim[], fs: number, map: (p: PPoint) => PPoint = (p) => p): string {
+  return dims
+    .map((d, i) => {
+      const a = map(d.axis === 'height' ? [d.at, d.from] : [d.from, d.at]);
+      const b = map(d.axis === 'height' ? [d.at, d.to] : [d.to, d.at]);
+      const v = d.axis === 'height' ? b[1] - a[1] : b[0] - a[0];
+      const t = fs * 0.35;
+      const tick = (q: PPoint) => `M${q[0] - t} ${-q[1] + t}L${q[0] + t} ${-q[1] - t}`;
+      const mid: PPoint = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+      const label = `${n1(v)}${d.param ? ` ${d.param}` : ''}`;
+      const text =
+        d.axis === 'height'
+          ? `<text x="${mid[0] - fs * 0.4}" y="${-mid[1]}" font-size="${fs}" text-anchor="middle" transform="rotate(-90 ${mid[0] - fs * 0.4} ${-mid[1]})">${label}</text>`
+          : `<text x="${mid[0]}" y="${-mid[1] - fs * 0.4}" font-size="${fs}" text-anchor="middle">${label}</text>`;
+      return `<g class="pe-dimline${d.param ? ' linked' : ''}" data-pe-dim="${i}"><path d="M${a[0]} ${-a[1]}L${b[0]} ${-b[1]}${tick(a)}${tick(b)}"/>${text}</g>`;
+    })
+    .join('');
+}
+
+/** Tvärsnittet med Höjd och Bredd ändrade (provmåtten; utelämnade 1,5 gånger det ritade), som ritningen gör det. */
+export function stretchedMarkup(m: ProfileTypeModel, trial: { height?: number; width?: number } = {}): string {
   const base = profileSection(m, profileValues(m));
   const own: Record<string, number> = {};
   const h = base.box.maxY - base.box.minY;
   const w = base.box.maxX - base.box.minX;
-  if (m.zones.some((z) => z.axis === 'height')) own[ZONE_PARAM.height] = Math.round(h * k);
-  if (m.zones.some((z) => z.axis === 'width')) own[ZONE_PARAM.width] = Math.round(w * k);
+  if (m.zones.some((z) => z.axis === 'height')) own[ZONE_PARAM.height] = Math.round(trial.height ?? h * 1.5);
+  if (m.zones.some((z) => z.axis === 'width')) own[ZONE_PARAM.width] = Math.round(trial.width ?? w * 1.5);
   const s = profileSection(m, profileValues(m, own));
-  const pad = Math.max(20, 0.15 * Math.max(s.box.maxX - s.box.minX, s.box.maxY - s.box.minY));
-  const vb = [s.box.minX - pad, -s.box.maxY - pad, s.box.maxX - s.box.minX + 2 * pad, s.box.maxY - s.box.minY + 2 * pad];
+  const dimPts = (m.dims ?? []).flatMap((d): PPoint[] => (d.axis === 'height' ? [[d.at, d.from], [d.at, d.to]] : [[d.from, d.at], [d.to, d.at]]).map((q) => stretchPoint(q as PPoint, s.deltas)));
+  const bx = boxOfPoints([...s.parts.flatMap((p) => p.ring), ...dimPts]);
+  const pad = Math.max(20, 0.15 * Math.max(bx.maxX - bx.minX, bx.maxY - bx.minY));
+  const vb = [bx.minX - pad, -bx.maxY - pad, bx.maxX - bx.minX + 2 * pad, bx.maxY - bx.minY + 2 * pad];
   const polys = s.parts.map((p, i) => `<polygon points="${p.ring.map((q) => `${q[0]},${-q[1]}`).join(' ')}" fill="${partColor(m.parts.indexOf(p.part))}" fill-opacity=".55" stroke="currentColor" stroke-width="1.2" vector-effect="non-scaling-stroke"><title>${i}</title></polygon>`).join('');
-  const note = Object.keys(own).length ? `Höjd ${own[ZONE_PARAM.height] ?? Math.round(h)} · Bredd ${own[ZONE_PARAM.width] ?? Math.round(w)} mm (ritad ${Math.round(h)} × ${Math.round(w)})` : 'Typen har ingen sträckzon: måtten är låsta.';
-  return `<svg class="pe-canvas pe-static" viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet">${polys}</svg><p class="note">${note}</p>`;
+  const fields = (['height', 'width'] as const)
+    .filter((a) => own[ZONE_PARAM[a]] !== undefined)
+    .map((a) => `<label class="field"><span>${ZONE_PARAM[a]}</span><span class="input-unit"><input type="text" data-pe-opt="trial-${a}" value="${own[ZONE_PARAM[a]]}"><i>mm</i></span></label>`)
+    .join('');
+  const note = fields ? `Prova ett mått: tvärsnittet sträcks i zonerna som ett objekt med de måtten (ritad ${Math.round(h)} × ${Math.round(w)} mm). Typen ändras inte.` : 'Typen har ingen sträckzon: måtten är låsta.';
+  const fs = Math.max(vb[2], vb[3]) / 26;
+  const dims = dimsSvg(m.dims ?? [], fs, (q) => stretchPoint(q, s.deltas));
+  return `${fields ? `<div class="fields pe-trial">${fields}</div>` : ''}<svg class="pe-canvas pe-static" viewBox="${vb.join(' ')}" preserveAspectRatio="xMidYMid meet">${polys}${dims}</svg><p class="note">${note}</p>`;
 }
 
 /** En bit av profilen svept 1 000 mm, isometriskt sedd snett framifrån och ovanifrån. */

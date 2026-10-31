@@ -359,6 +359,45 @@ export function endHalfSpace(p: Vec3, tOut: Vec3, f: Frame, pts: readonly PPoint
   return halfAt(n, v3.add(p, v3.mul(tOut, s + (e.shift ?? 0) + extra)));
 }
 
+/** Hur långt avslutets plan når in längs banan från referenslinjens ände (mm), samma räkning som `endHalfSpace`. */
+function cutDepth(tOut: Vec3, f: Frame, pts: readonly PPoint[], e: EndSpec, extra = 0): number {
+  const n = endNormal(e.kind, tOut, e.angle);
+  const nt = v3.dot(n, tOut);
+  if (Math.abs(nt) < 1e-6 || !pts.length) return 0;
+  const a = pts.map((q) => (q[0] * v3.dot(n, f.X) + q[1] * v3.dot(n, f.Y)) / nt);
+  const s = e.beyond ? Math.max(...a) : Math.min(...a);
+  return Math.max(...a) - (s + (e.shift ?? 0) + extra);
+}
+
+/**
+ * Hur långt avsluten skär in (0.11.6.1): djupet i början och slutet (mm in
+ * från referenslinjens ände, det största för någon delprofil) och längden på
+ * banans första och sista raka bit. Når ett avslut förbi biten skär det in i
+ * nästa bit, eller i det andra avslutet, och kroppen blir fel där.
+ */
+export function endReach(regions: readonly { polys: Rings[]; follows: boolean; extend: number }[], path: readonly Vec3[], up: 'plumb' | 'normal', start: EndSpec, end: EndSpec): { start: number; end: number; first: number; last: number; single: boolean } | null {
+  const pts = path.filter((p, i) => !i || v3.len(v3.sub(p, path[i - 1])) > 1e-3);
+  const segs: { f: Frame; L: number }[] = [];
+  for (let i = 1; i < pts.length; i++) {
+    const f = frameOf(pts[i - 1], pts[i], up);
+    if (f) segs.push({ f, L: v3.len(v3.sub(pts[i], pts[i - 1])) });
+  }
+  if (!segs.length) return null;
+  const all = regions.flatMap((r) => r.polys.flatMap((p) => p.flat()) as PPoint[]);
+  const first = segs[0];
+  const last = segs[segs.length - 1];
+  let d0 = 0;
+  let d1 = 0;
+  for (const reg of regions) {
+    const own = reg.polys.flatMap((p) => p.flat()) as PPoint[];
+    if (!own.length) continue;
+    const sq: EndSpec = { kind: 'square' };
+    d0 = Math.max(d0, cutDepth(v3.mul(first.f.t, -1), first.f, reg.follows ? all : own, reg.follows ? start : { ...sq, shift: start.shift }, reg.extend));
+    d1 = Math.max(d1, cutDepth(last.f.t, last.f, reg.follows ? all : own, reg.follows ? end : { ...sq, shift: end.shift }, reg.extend));
+  }
+  return { start: d0, end: d1, first: first.L, last: last.L, single: segs.length === 1 };
+}
+
 /** Geringen i en knäck mellan riktningarna ta och tb: planet genom punkten med normalen längs medelriktningen. */
 function miter(p: Vec3, ta: Vec3, tb: Vec3): HalfSpace {
   let n = v3.norm(v3.add(ta, tb));
