@@ -230,8 +230,6 @@ provat.
 - *Längs kant* kopierar kanten; profilen följer inte väggen när den
   flyttas, och Shift tar bara det klickade objektets kontur (en väggs fyra
   sidor). Behövs en profil som följer väggen, eller hela husets kontur?
-- En balk över snittet ritas som en streckprickad kontur utan delprofilernas
-  inre linjer, och objektets littera (B01) står inte i planen. Räcker det?
 - Avsluten: lodrätt som förval för pelare och balkar, vinkelrätt för
   resten. Rätt?
 - Smartmenyn på en väggs kant har fått *Profil längs kanten* och *Profil
