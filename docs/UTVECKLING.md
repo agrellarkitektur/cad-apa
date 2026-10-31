@@ -270,7 +270,18 @@ ur överlämningen i 0.10.23).
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (582 steg sedan granskningen efter 0.10.25, som lade till 43 steg sist
+  (633 steg sedan granskningen efter 0.11.5, som lade till 51 steg sist
+  för 0.11–0.11.5: en rak trappa och en L-trappa med vilplan, sättsteg,
+  stegdjup, plansteg, byggd uppbyggnad, kontrast och hålet, räcken på båda
+  sidor med läget, kilstegen, övergången och Lösgör, ett ritat räcke med
+  *Gör till grind* (klick på kanten, sedan `chooseRail('railGate')`), en
+  spiraltrappa 450° medurs ändrad i panelen, Detalj via vyradens
+  `.detail-switch`, och 3D efter varje grupp. Mot 0.10.40.1 (16e2902)
+  skiljer bara `panel` och `dialog` i de gamla stegen: *Syns också på* i
+  panelerna och stilbokens nya grupper; dokument, ritning, smartmeny och
+  3D är lika i alla 582. Stilmallsstegen från 0.8.27–0.8.38 ger
+  `saknas`-fel i båda byggena sedan stilboken (0.10.32) och är kvar som
+  jämförbara fel. 582 steg sedan granskningen efter 0.10.25, som lade till 43 steg sist
   för 0.10.23–0.10.25: spöet i Takfall, Mått (Tab: andra sidan) och
   Littera, ett bjälklag med Båge i polygonen och Böj på en kant, Mark som
   öppnar Platsen med en markyta som polygon med båge, Platsen i 3D,
@@ -823,11 +834,14 @@ förut; vid nästa huvudversion flyttas de klara till arkivet.
   och `winderDeviation` är den största avvikelsen. Krökarna (R 150) är
   korta raka bitar (`bendProfile`). `hostedPath` och `freePath` ger
   `RailPath` (punkterna, höjden, sträckan och vilket håll som är inåt).
-  `railingBody` lägger delarna: stolparna jämnt med högst delningen i
-  varje rak bit (hörn över 15°), spjälorna med lika öppningar mellan
-  stolparna, ytorna i varje mellanrum och de längsgående delarna med sin
-  förlängning (`withExtension`).
-- **Planen** (`railingPlan`): linjen i Skiss och Normal (förlängningen i
+  `railingBody` (i `railingBody.ts` sedan granskningen efter 0.11.5)
+  lägger delarna: stolparna jämnt med högst delningen i varje rak bit
+  (hörn över 15°), spjälorna med lika öppningar mellan stolparna, ytorna i
+  varje mellanrum och de längsgående delarna med sin förlängning
+  (`withExtension`).
+- **Planen** (`railingPlan` i `railingPlan.ts`, med grindarnas `gatePlan`;
+  `railing.ts` ger den kroppen och grindens littera, så att filerna inte
+  importerar varandra): linjen i Skiss och Normal (förlängningen i
   Normal), de längsgående delarna som dubbla linjer och stolparna i
   Detalj (`detail` per del, förval Detalj). Det som ligger över planens
   snitt (höjden längs linjen, delad där den går genom snittet) ritas med
@@ -838,7 +852,7 @@ förut; vid nästa huvudversion flyttas de klara till arkivet.
 - **3D** (`railingSolids`): liggarna som sneda kroppar per bit (`top` och
   `bottom` som plan genom ändarnas höjder), stolpar och spjälor lodräta,
   ytorna sneda mellan stolparna (`glass` utan material).
-- **Varningarna**: `railingWarnings` (BFS 2024:9, 2 kap. 11 och 13 §, och
+- **Varningarna** (`railingWarnings.ts`): `railingWarnings` (BFS 2024:9, 2 kap. 11 och 13 §, och
   *avviker från praxis*) och `stairHandrailWarning` (12 §, på trappan, kan
   kvitteras med `ack: ['handrails']`). Trappans egna texter i
   `stairWarnings` säger *avviker från praxis*.
@@ -847,9 +861,10 @@ förut; vid nästa huvudversion flyttas de klara till arkivet.
   klickar på), verktygsraden i `toolOptions.ts`, frågan i `prompts.ts`,
   smartspöt i `ui/wand/railingAlong.ts`, trappans smartmeny
   (`stairRailing`, `stairRailings` i `opDefs.ts`, `ops.ts`, `tool.ts`).
-  Fälten och typen i `ui/railingFields.ts` (nyckeln `rail:…`, typens
-  `rail:type:<def>:…`); knapparna `rail-…` och `railtype-…` i
-  `selectionActions.ts`. Trappans panel har *Räcken* och kvitteringen
+  Fälten i `ui/railingFields.ts` (nyckeln `rail:…`, knapparna `rail-…`)
+  och typen i `ui/railingTypeFields.ts` (`rail:type:<def>:…`,
+  `railtype-…`, `duplicateRailingType`); båda nås från
+  `selectionActions.ts` och räckestypeditorn. Trappans panel har *Räcken* och kvitteringen
   (`stairFields.ts`).
 - **Tester**: `tests/v0111.test.ts`.
 

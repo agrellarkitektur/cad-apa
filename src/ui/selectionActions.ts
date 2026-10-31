@@ -1,5 +1,6 @@
 import { stairAction } from './stairFields';
-import { duplicateRailingType, railingAction } from './railingFields';
+import { railingAction } from './railingFields';
+import { duplicateRailingType } from './railingTypeFields';
 import { dropLeader, setLabelAngle } from './labelSection';
 import { resetTags } from './litteraSection';
 import { createDefinition, deleteDefinition, deleteElements, flipWalls, setInState, setSkewOk, updateParams } from '../core/commands';

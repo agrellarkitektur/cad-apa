@@ -363,7 +363,7 @@ export function defaultGroundRailingTypes(): Definition[] {
 export const railingModel = (def: Definition | undefined): RailingTypeModel | undefined => (def?.elementType === 'Railing' ? def.railing : undefined);
 
 /** Ett nytt id för en del, unikt i typen. */
-export function newPartId(model: RailingTypeModel, base: string): string {
+function newPartId(model: RailingTypeModel, base: string): string {
   const slug = base.toLowerCase().replace(/[åä]/g, 'a').replace(/ö/g, 'o').replace(/[^a-z0-9]+/g, '-') || 'del';
   const ids = new Set(model.parts.map((p) => p.id));
   let id = slug;

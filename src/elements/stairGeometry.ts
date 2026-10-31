@@ -109,7 +109,7 @@ export function spiralDims(s: NonNullable<StairParams['spiral']>): { inner: numb
  * mellan radierna och referenslinjen ligger i mitten. Andra trappor
  * svarar med sig själva.
  */
-export function spiralLine(p: StairParams): StairParams {
+function spiralLine(p: StairParams): StairParams {
   const line = p.line ?? [];
   if (!p.spiral || line.length < 2) return p;
   const d = spiralDims(p.spiral);
@@ -220,7 +220,7 @@ export interface StairGeometry {
 const turnOf = (a: Vec2, b: Vec2): number => Math.atan2(cross(a, b), dot(a, b));
 
 /** Var referenslinjen ligger: avståndet från den till vänster och höger kant. */
-export function sideOffsets(p: Pick<StairParams, 'width' | 'refSide'>): { left: number; right: number } {
+function sideOffsets(p: Pick<StairParams, 'width' | 'refSide'>): { left: number; right: number } {
   const w = Math.max(1, p.width);
   if (p.refSide === 'left') return { left: 0, right: w };
   if (p.refSide === 'right') return { left: w, right: 0 };

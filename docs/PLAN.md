@@ -171,11 +171,12 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.10.40 | Stilboken ut och in |
 | 0.10.40.1 | Granskning efter 0.10.40 |
 | 0.11 | Trappan (format 26): referenslinje med bågar, kilsteg och vilplan, gånglinje, plansteg, varningar, plan/sektion/3D, hålet, *Syns också på* |
+| 0.11.1 | Räcket: eget objekt med typmodellen (delar och parametrar med formler), längs trappans kant eller ritat, utjämnad eller hoppande vid kilstegen, plan/sektion/fasad/3D, stilboksgruppen *Räcken*, varningar ur BFS 2024:9 och praxis |
 | 0.11.2 | Räckestypeditorn: stilboken › Resurser › *Räckestyper* med grupper, förhandsvisning i sex lägen, delträd och delens egenskaper; Shift går före snäppet |
+| 0.11.3 | Staket och grindar: räcket på Platsen med höjden ur den färdiga marken, Trappstegat, stolpar under mark och i plint, Längs kant för hål, bjälklag, väggar, ramper och stödmurens krön, ST01–ST03, SP01 och G01, grinden som en sträcka i räcket; räckestypeditorn som tavla 4 |
 | 0.11.4 | Byggd trappa: vangstycken, plansteg med stegnos och sättsteg som delar med egna mått och material, öppen trappa, kontrastmarkering, vangstyckena i planen, stegnummer och stegtext i Detalj |
 | 0.11.5 | Spiraltrappan: numeriskt läge (inner- och ytterdiameter, grader också över ett varv, varvriktning), referenslinjen en genererad helix, mittpelaren, planen med snittet och det dolda över ett varv, runt hål |
-| 0.11.3 | Staket och grindar: räcket på Platsen med höjden ur den färdiga marken, Trappstegat, stolpar under mark och i plint, Längs kant för hål, bjälklag, väggar, ramper och stödmurens krön, ST01–ST03, SP01 och G01, grinden som en sträcka i räcket; räckestypeditorn som tavla 4 |
-| 0.11.1 | Räcket: eget objekt med typmodellen (delar och parametrar med formler), längs trappans kant eller ritat, utjämnad eller hoppande vid kilstegen, plan/sektion/fasad/3D, stilboksgruppen *Räcken*, varningar ur BFS 2024:9 och praxis |
+| – | Granskning efter 0.11.5 (31 oktober): räckets filer delade, klickjämförelsen med trappor och räcken; ingen ny version |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
 val och det som *inte gjordes*. De ligger i arkivet:
@@ -406,7 +407,7 @@ panelen), grupperna som egen lista att döpa om och flytta, delarnas
 ordning, ledstångens avslut i 3D, delsträcka (`from`/`to` finns i
 formatet men inte i panelen), räcke på Platsen och andra kanter (0.11.3),
 *Flytta i höjd* för ett ritat räcke, egen profil (0.11.6). Klickjämförelsen
-är inte körd (granskningen efter 0.11.5).
+körd i granskningen efter 0.11.5.
 
 ### 0.11.2 Räckestypeditorn ✓
 
@@ -534,8 +535,8 @@ bjälklag, ramp …; bara trappor), grindarna har ingen förteckning
 (0.12, med uppställningarna), spaljéns rutnät och nätet är släta ytor i
 3D (inget mönster), grinden ritas inte i fasad och sektion som öppen,
 *Dela sträckan här*, *Fyllning för sträckan…* och *Höjd för sträckan…*
-(tavla 5), grindens lås och stopp är bara text. Klickjämförelsen är inte
-körd (granskningen efter 0.11.5).
+(tavla 5), grindens lås och stopp är bara text. Klickjämförelsen körd i
+granskningen efter 0.11.5.
 
 ### 0.11.4 Byggd trappa ✓
 
@@ -581,7 +582,7 @@ nya valfria fält.
 **Inte gjort i 0.11.4:** detaljsnittet med profiler (plansteg infällda i
 vangstycket, spår), en egen kulör eller material för kontrastremsan,
 pinnar/vangstycke under stegen (mittvange), stegnummer som går att släcka
-utan att byta penna, och klickjämförelsen (granskningen efter 0.11.5).
+utan att byta penna. Klickjämförelsen körd i granskningen efter 0.11.5.
 
 ### 0.11.5 Spiraltrappan ✓
 
@@ -624,7 +625,33 @@ sedan 0.11.
 innerkanten, fri höjd under nästa varv), pelaren med eget material och
 egen penna, att göra om en vanlig trappa till spiral (eller tvärtom), och
 ett räcke kring hålet i bjälklaget som följer cirkeln (det går att rita).
-Klickjämförelsen (granskningen efter 0.11.5).
+Klickjämförelsen körd i granskningen efter 0.11.5.
+
+### Granskning efter 0.11.5 ✓
+
+31 oktober 2026, inga nya funktioner och ingen ny version (inget syns).
+
+- **Klickjämförelsen** med 51 nya steg för 0.11–0.11.5 (rak trappa,
+  L-trappa med vilplan och byggd uppbyggnad, räcken på trappan och ritat
+  med grind, spiraltrappa 450°) utan fel; mot 0.10.40.1 är dokument,
+  ritning, smartmeny och 3D lika i alla 582 gamla steg (bara panelerna
+  och stilboken skiljer, som väntat).
+- **Räckets filer delade:** `railingGeometry.ts` → linjen kvar, delarna i
+  `railingBody.ts`; `railing.ts` → planen i `railingPlan.ts` (får kroppen
+  och grindens littera som argument, så att filerna inte importerar
+  varandra) och varningarna i `railingWarnings.ts`; `railingFields.ts` →
+  typen i `railingTypeFields.ts`. Alla under 410 rader.
+- **Dubbletter:** planens `pointOn`/`zOn` och trappkanternas egen
+  höjdinterpolation ersatta med `pathPoint`/`pathZ`; `nearestOn` använder
+  `closestOnSegment`. Femton exporter som bara användes i sin egen fil är
+  inte exporter längre.
+- **Testerna** (843 på 22–29 s) gicks igenom utan ändring: 0.11–0.11.5 har
+  6–11 test var, utan dubbletter.
+
+**Inte gjort:** `stairGeometry.ts` (606 rader) och `view3d.ts` (663) är
+kvar odelade; de är de största filerna nu. Stilmallsstegen i
+klickjämförelsen från 0.8.27–0.8.38 ger `saknas`-fel sedan stilboken
+(0.10.32) och borde skrivas om mot stilbokens selektorer (liten).
 
 ### 0.11.6 Profilverktyget · *nytt format*
 

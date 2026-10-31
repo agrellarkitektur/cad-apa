@@ -1,6 +1,7 @@
 import type { Vec2 } from '../../repr/primitives';
 import { railValues, type RailingTypeModel, type RailPart } from '../../core/railingTypes';
-import { freePath, railingBody, withExtension, type BodyOptions, type GroundFn, type RailingBody, type RailPath } from '../../elements/railingGeometry';
+import { railingBody, withExtension, type BodyOptions, type RailingBody } from '../../elements/railingBody';
+import { freePath, type GroundFn, type RailPath } from '../../elements/railingGeometry';
 import { escapeHtml } from '../labels';
 
 /**

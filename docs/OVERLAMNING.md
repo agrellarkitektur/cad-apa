@@ -6,10 +6,17 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 31 oktober 2026, efter 0.11.5.
+README. Senast: 31 oktober 2026, efter granskningen efter 0.11.5.
 
 ## Läget
 
+- **Granskningen efter 0.11.5 är klar** (31 oktober; samma version 0.11.5,
+  inget som syns). Klickjämförelsen körd med 51 nya steg för trappor och
+  räcken (633 steg; inga fel i de nya, dokument och ritning lika mot
+  0.10.40.1 i de gamla), räckets filer delade (`railingBody.ts`,
+  `railingPlan.ts`, `railingWarnings.ts`, `railingTypeFields.ts`),
+  dubbletter ihopslagna, testerna genomgångna (843 på ca 25 s). Det som
+  inte gjordes står i PLAN.md (*Granskning efter 0.11.5*).
 - **0.11.5 Spiraltrappan är klar** (samma format, 26), byggd i en session
   (Carl August: "kör"). *Spiral* i trappverktyget: inner- och
   ytterdiameter, grader (också över 360) och varvriktning, två klick (mitt
@@ -45,11 +52,10 @@ README. Senast: 31 oktober 2026, efter 0.11.5.
   förhandsvisningen, delträdet; Shift-låset går före snäppet.
 - **0.11.1 Räcket** (samma format): objektet `Railing` med typmodellen,
   verktyget *Räcke*, trappans smartmeny, plan, sektion, fasad, 3D och
-  varningarna ur BFS 2024:9. Klickjämförelsen inte körd (granskningen
-  efter 0.11.5).
+  varningarna ur BFS 2024:9.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.11.5 pushad till `main` 31 oktober (se git och
+- **Publicerad:** granskningen pushad till `main` 31 oktober efter 0.11.5 (se git och
   `gh run list`). `add_repo` med push går direkt när Carl August skriver
   "push godkänd" i första meddelandet.
 - **Märks i hans ritningar efter 0.11.5:** inget i befintliga ritningar.
@@ -147,11 +153,10 @@ README. Senast: 31 oktober 2026, efter 0.11.5.
 Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 - ~~0.8.8 Mallblad~~ … ~~0.10.40.1 Granskning efter 0.10.40~~,
-  ~~0.11 Trappan~~, ~~Utredning av räcket~~, ~~0.11.1 Räcket~~, ~~0.11.2 Räckestypeditorn~~, ~~0.11.3 Staket och grindar~~, ~~0.11.4 Byggd trappa~~, ~~0.11.5 Spiraltrappan~~ (klara; se
+  ~~0.11 Trappan~~, ~~Utredning av räcket~~, ~~0.11.1 Räcket~~, ~~0.11.2 Räckestypeditorn~~, ~~0.11.3 Staket och grindar~~, ~~0.11.4 Byggd trappa~~, ~~0.11.5 Spiraltrappan~~, ~~Granskning efter 0.11.5~~ (klara; se
   tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **Granskning efter 0.11.5** (klickjämförelsen med trappsteg och räcken)
 - **0.11.6 Profilverktyget** (stor) och **0.11.7 Dörrar och fönster**
   (stor)
 - **0.12 Export**: IFC4, DXF, areor för bygglov, förteckning över
@@ -168,12 +173,11 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 ## Nästa session
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
-skrivrätt till repot ("push godkänd"). Kör sedan **granskningen efter
-0.11.5** (ingen ny funktion): klickjämförelsen (`scripts/jamfor-klick.py`,
-se UTVECKLING.md) med trappor (rak, L, spiral över ett varv) och räcken,
-städa och dela stora filer (`railingGeometry.ts`, `railing.ts`,
-`railingFields.ts` är 540–760 rader), gå igenom testerna. Ställ frågorna
-om 0.11.5–0.11.1 (nedan) när Carl August provat.
+skrivrätt till repot ("push godkänd"). Nästa version är **0.11.6
+Profilverktyget** (stor, nytt format; se PLAN.md): diskutera omfattningen
+med Carl August innan bygget, och föreslå en delning om den inte ryms i
+en session. Ställ frågorna om 0.11.5–0.11.1 (nedan) när Carl August
+provat.
 
 ## Att fråga Carl August om
 

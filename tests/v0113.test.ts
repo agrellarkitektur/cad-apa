@@ -4,7 +4,8 @@ import { defaultGroundRailingTypes, railValues } from '../src/core/railingTypes'
 import { defaultSheet } from '../src/core/viewCategories';
 import { registerBuiltInTypes } from '../src/elements';
 import { gateSpanAt, railingBodyOf, railingGround, railingPath, railingSolids } from '../src/elements/railing';
-import { freePath, railingBody, type RailingParams } from '../src/elements/railingGeometry';
+import { railingBody } from '../src/elements/railingBody';
+import { freePath, type RailingParams } from '../src/elements/railingGeometry';
 import { createContext } from '../src/repr/context';
 import { buildPlan } from '../src/repr/plan';
 import { addGate, railingAction } from '../src/ui/railingFields';

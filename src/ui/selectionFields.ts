@@ -1,5 +1,6 @@
 import { stairFieldsMarkup } from './stairFields';
-import { railingFieldsMarkup, railingTypeMarkup } from './railingFields';
+import { railingFieldsMarkup } from './railingFields';
+import { railingTypeMarkup } from './railingTypeFields';
 import { defaultSheet } from '../core/viewCategories';
 import { materialUses } from '../core/materials';
 import type { FillParams } from '../elements/fill2d';

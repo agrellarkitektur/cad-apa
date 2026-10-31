@@ -14,7 +14,7 @@ import type { DocStore, TxBuilder } from './store';
  * utan räcken): RÄ01–RÄ03, och på Platsen (0.11.3) staketen, spaljén och
  * grinden när ingen typ har *Mark*.
  */
-export function ensureRailingTypes(tx: TxBuilder, ground = false): void {
+function ensureRailingTypes(tx: TxBuilder, ground = false): void {
   const defs = Object.values(tx.doc.definitions).filter((d) => d.elementType === 'Railing');
   if (!defs.length) for (const d of defaultRailingTypes()) if (!tx.doc.definitions[d.id]) tx.putDefinition(d);
   if (ground && !defs.some((d) => d.railing?.ground)) for (const d of defaultGroundRailingTypes()) if (!tx.doc.definitions[d.id]) tx.putDefinition(d);

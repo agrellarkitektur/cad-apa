@@ -6,7 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.5** (alfa), Spiraltrappan; nästa är **granskningen efter 0.11.5**.
+**0.11.5** (alfa), Spiraltrappan, granskad 31 oktober; nästa är **0.11.6
+Profilverktyget**.
 
 ## Vad som fungerar
 
@@ -1148,6 +1149,15 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Granskningen efter 0.11.5 (31 oktober; samma version och filformat, inget
+som syns): räckets kod uppdelad (`railingGeometry.ts` 760 → 373 rader med
+delarna i `railingBody.ts`; `railing.ts` 581 → 300 med planen i
+`railingPlan.ts` och varningarna i `railingWarnings.ts`; `railingFields.ts`
+540 → 326 med typen i `railingTypeFields.ts`), dubbla hjälpfunktioner för
+punkt och höjd längs linjen ihopslagna, onödiga exporter borttagna, och
+klickjämförelsen körd med 51 nya steg för trappor och räcken utan fel och
+utan skillnad i dokument eller ritning mot 0.10.40.1.
 
 Version 0.11.5, Spiraltrappan (samma filformat, 26; projekt från 0.11 öppnas):
 - **Spiral** i trappverktygets rad (*Linje* är den vanliga trappan):

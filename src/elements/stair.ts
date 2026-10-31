@@ -30,7 +30,7 @@ export function storeyAbove(doc: Pick<ProjectDoc, 'storeys'>, id: Id): Storey | 
 }
 
 /** Våningen närmast under. */
-export function storeyBelow(doc: Pick<ProjectDoc, 'storeys'>, id: Id): Storey | undefined {
+function storeyBelow(doc: Pick<ProjectDoc, 'storeys'>, id: Id): Storey | undefined {
   const list = storeysUpFrom(doc);
   const i = list.findIndex((s) => s.id === id);
   return i > 0 ? list[i - 1] : undefined;
@@ -58,7 +58,7 @@ export function geometryOfStair(p: StairParams): StairGeometry | null {
 }
 
 /** Var planens snitt går över trappan (sträckan längs gånglinjen), eller längden när allt ligger under. */
-export function cutAlong(g: StairGeometry, lv: number, cut: number | undefined): number {
+function cutAlong(g: StairGeometry, lv: number, cut: number | undefined): number {
   if (cut === undefined) return g.length;
   const it = g.items.find((i) => i.kind !== 'startTread' && lv + i.z > cut + 0.5);
   return it ? it.u0 : g.length;
@@ -209,7 +209,7 @@ function stairPlan(el: Element<any>, ctx: PlanContext, p: StairParams, g: StairG
 }
 
 /** Spiraltrappans mittpelare (0.11.5): mitten och radien, när innerdiametern är minst 50 mm. */
-export function poleOf(p: StairParams, g: StairGeometry): { c: Vec2; r: number } | null {
+function poleOf(p: StairParams, g: StairGeometry): { c: Vec2; r: number } | null {
   if (!p.spiral || !g.centre) return null;
   const r = spiralDims(p.spiral).inner / 2;
   return r >= 25 ? { c: g.centre, r } : null;
@@ -224,7 +224,7 @@ function poleSolid(id: string, p: StairParams, g: StairGeometry, mat: Partial<So
 }
 
 /** Trappans kropp i 3D: ett block per steg med sned undersida, vilplan och sista plansteg som plattor. */
-export function stairSolids(id: string, p: StairParams, g: StairGeometry, mat: Partial<Solid> = {}): Solid[] {
+function stairSolids(id: string, p: StairParams, g: StairGeometry, mat: Partial<Solid> = {}): Solid[] {
   const t = Math.max(20, p.thickness ?? STAIR_THICKNESS);
   const h = g.riserHeight;
   const out: Solid[] = [];

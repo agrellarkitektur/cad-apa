@@ -1,7 +1,8 @@
 import type { Element, Id, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
 import { geometryOfStair, stairHoleIn, stairParams, storeyAbove } from '../elements/stair';
-import { railingsOnStair, stairHandrailWarning } from '../elements/railing';
+import { railingsOnStair } from '../elements/railing';
+import { stairHandrailWarning } from '../elements/railingWarnings';
 import { addRailingsOnStair } from './railingFields';
 import { minGoing, spiralDims, RISER_TARGET, stairWarnings, STAIR_THICKNESS, TREAD_LENGTH, WALK_LINE, HEADROOM, type StairParams } from '../elements/stairGeometry';
 import { STRAIGHT } from '../geometry/arc';
