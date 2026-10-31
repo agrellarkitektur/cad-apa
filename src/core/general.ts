@@ -82,18 +82,24 @@ export interface OpeningSettings {
   rule?: OpeningRule;
   /** Formeln per sort, t.ex. `F{nr:2}` eller `YD{nr:2}`. */
   formulas?: { Window?: string; Door?: string; WallHole?: string };
-  /** Drevmånen per sida, mm (förval 10): karmyttermåttet 980 är 10M. */
-  gap?: number;
+  /** Hålmåttet är modulmåttet plus detta, mm (förval 10: 10 × 21 → 1 010 × 2 110). */
+  holeAdd?: number;
+  /** Karmyttermåttet är modulmåttet minus detta, mm (förval 10; typen kan ha tillverkarens eget). */
+  frameLess?: number;
   /** Överkant karm som förval för nya fönster, mm över golvet. */
   head?: number;
+  /** Sidohängda fönsterbågar ritas så här många grader öppna i planen (förval 15). */
+  swingAngle?: number;
   /** Hängningen (V/H) sedd från utsidan eller insidan. */
   hingeFrom?: 'outside' | 'inside';
 }
 
 export const OPENING_DEFAULTS: Required<Omit<OpeningSettings, 'formulas'>> & { formulas: Required<NonNullable<OpeningSettings['formulas']>> } = {
   rule: 'type',
-  formulas: { Window: 'F{nr:2}', Door: 'D{nr:2}', WallHole: 'V{nr:2}' },
-  gap: 10,
+  formulas: { Window: 'F{nr:2}', Door: 'D{nr:2}', WallHole: 'VG{nr:2}' },
+  holeAdd: 10,
+  frameLess: 10,
+  swingAngle: 15,
   head: 2100,
   hingeFrom: 'outside',
 };
@@ -114,8 +120,12 @@ function normalizeOpenings(v: unknown): OpeningSettings | null {
     for (const k of ['Window', 'Door', 'WallHole'] as const) if (typeof o.formulas[k] === 'string' && o.formulas[k].trim()) f[k] = o.formulas[k].trim();
     if (Object.keys(f).length) out.formulas = f;
   }
-  const gap = clampInt(o.gap, 0, 100);
-  if (gap !== undefined) out.gap = gap;
+  const holeAdd = clampInt(o.holeAdd, 0, 100);
+  if (holeAdd !== undefined) out.holeAdd = holeAdd;
+  const frameLess = clampInt(o.frameLess, 0, 100);
+  if (frameLess !== undefined) out.frameLess = frameLess;
+  const swingAngle = clampInt(o.swingAngle, 0, 90);
+  if (swingAngle !== undefined) out.swingAngle = swingAngle;
   const head = clampInt(o.head, 0, 10000);
   if (head !== undefined) out.head = head;
   if (o.hingeFrom === 'outside' || o.hingeFrom === 'inside') out.hingeFrom = o.hingeFrom;

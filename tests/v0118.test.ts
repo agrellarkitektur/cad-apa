@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DocStore } from '../src/core/store';
 import { emptyProject, type Element, type ProjectDoc } from '../src/core/model';
-import { DEFAULT_OPENING_TYPES, layoutOpening, normalizeOpeningModel, openingDefinition, frameFromModule } from '../src/core/openingTypes';
+import { DEFAULT_OPENING_TYPES, layoutOpening, normalizeOpeningModel, openingDefinition, frameFromModule, holeFromModule } from '../src/core/openingTypes';
 import { registerBuiltInTypes } from '../src/elements';
 import { resolveParams } from '../src/elements/registry';
 import { openingLitteras, renumberOpenings, applyFormula, missingOpeningNumbers } from '../src/elements/openingLittera';
@@ -42,11 +42,11 @@ function house(openings: { id: string; type: 'Window' | 'Door'; def: string; at:
 }
 
 describe('öppningstypen (0.11.8)', () => {
-  it('modulmåttet räknar in drevmånen: 10 × 13 är 980 × 1 280, en dörr 9 × 21 är 880 × 2 090', () => {
-    expect(frameFromModule(T('t-of-sid1').model, [1000, 1300], 10)).toEqual([980, 1280]);
-    expect(frameFromModule(T('t-dd-slat').model, [900, 2100], 10)).toEqual([880, 2090]);
-    // Fönsterdörren står på golvet som en dörr.
-    expect(frameFromModule(T('t-of-fdorr').model, [900, 2100], 10)).toEqual([880, 2090]);
+  it('modulmåttet: hålet + 10 och karmen − 10 som förval (0.11.8.1); typen kan ha tillverkarens avdrag', () => {
+    const st = { holeAdd: 10, frameLess: 10 };
+    expect(frameFromModule(T('t-of-sid1').model, [1000, 1300], st)).toEqual([990, 1290]);
+    expect(holeFromModule(T('t-dd-slat').model, [900, 2100], st)).toEqual([910, 2110]);
+    expect(frameFromModule({ ...T('t-of-sid1').model, frameLess: 20 }, [1000, 1300], st)).toEqual([980, 1280]);
   });
 
   it('rutnätet: fasta mm först, andelarna fördelar resten; poster mellan lufterna', () => {
@@ -79,14 +79,15 @@ describe('öppningstypen (0.11.8)', () => {
       { id: 'b', type: 'Window', def: 't-of-sid1', at: 4000, params: { width: 1000, height: 600, heightRef: 'sill', sill: 1500 } },
     ]);
     const a = resolveParams<OpeningObjParams>(doc, doc.elements.a);
-    expect([a.frameW, a.frameH, a.holeW, a.holeH]).toEqual([980, 1280, 1000, 1300]);
+    expect([a.frameW, a.frameH, a.holeW, a.holeH]).toEqual([990, 1290, 1010, 1310]);
     expect(a.head).toBe(2100);
-    expect(a.sill).toBe(2100 - 1280 - 10);
+    expect(a.sill).toBe(2100 - 1290 - 10);
     const b = resolveParams<OpeningObjParams>(doc, doc.elements.b);
     expect(b.sill).toBe(1500);
-    // Ett eget karmyttermått går före modulen.
-    doc.elements.a = { ...doc.elements.a, params: { ...doc.elements.a.params, frame: [1175, 1280] } };
-    expect(resolveParams<OpeningObjParams>(doc, doc.elements.a).holeW).toBe(1195);
+    // Ett eget karmyttermått går före modulen; hålet följer modulmåttet.
+    doc.elements.a = { ...doc.elements.a, params: { ...doc.elements.a.params, frame: [975, 1280] } };
+    const a2 = resolveParams<OpeningObjParams>(doc, doc.elements.a);
+    expect([a2.frameW, a2.holeW]).toEqual([975, 1010]);
   });
 });
 
@@ -142,8 +143,10 @@ describe('litteran (0.11.8)', () => {
   });
 });
 
+const normAng = (a: number) => ((a % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+
 describe('ritningen ur typen (0.11.8)', () => {
-  it('planen: posten i snitt, fönstrens slag streckade, dörrens slagbåge heldragen', () => {
+  it('planen: posten i snitt, fönstrens slag 15° kring gångjärnen, dörrens slagbåge heldragen', () => {
     const doc = house([
       { id: 'f', type: 'Window', def: 't-of-flagg', at: 1500, params: { width: 1200, height: 1400 } },
       { id: 'd', type: 'Door', def: 't-dd-par', at: 4000, params: { swing: -1 } },
@@ -153,7 +156,15 @@ describe('ritningen ur typen (0.11.8)', () => {
     expect(of('f', 'post').length).toBeGreaterThan(0);
     const winArcs = of('f', 'slagbåge').filter((p) => p.kind === 'arc');
     expect(winArcs.length).toBe(2);
-    expect(winArcs.every((p) => p.kind === 'arc' && p.pen.dash)).toBe(true);
+    // Mitten i gångjärnet, radien bågens bredd, 15° (0.11.8.1, kommentar B).
+    for (const a of winArcs) if (a.kind === 'arc') expect(Math.abs(normAng(a.end - a.start) - Math.PI / 12)).toBeLessThan(1e-6);
+    // På alla nivåer, också Skiss; Visa › Slagbågar, fönster släcker dem (kommentar H).
+    const sketch = buildPlan(doc, 'pl-1', { state: 'st-ny', detail: 'sketch' }).prims;
+    expect(sketch.filter((p) => p.origin?.objectId === 'f' && p.origin.part === 'slagbåge' && p.kind === 'arc')).toHaveLength(2);
+    expect(sketch.filter((p) => p.origin?.objectId === 'd' && p.origin.part === 'slagbåge' && p.kind === 'arc')).toHaveLength(2);
+    const off = buildPlan(doc, 'pl-1', { state: 'st-ny', hide: ['swingWindow'] }).prims;
+    expect(off.some((p) => p.origin?.objectId === 'f' && p.origin.part === 'slagbåge')).toBe(false);
+    expect(off.some((p) => p.origin?.objectId === 'd' && p.origin.part === 'slagbåge')).toBe(true);
     // Pardörren: gångdörrens båge heldragen, den passiva streckad.
     const doorArcs = of('d', 'slagbåge').filter((p) => p.kind === 'arc');
     expect(doorArcs).toHaveLength(2);
@@ -163,9 +174,11 @@ describe('ritningen ur typen (0.11.8)', () => {
   it('3D och fasad: en luft per båge, symbolen per luft; Skiss bara konturen', () => {
     const doc = house([{ id: 'f', type: 'Window', def: 't-of-sid2', at: 3000, params: { width: 1200, height: 1300 } }]);
     const edges = buildModel3d(doc, { state: 'st-ny' }).filter((s): s is Edges3D => s.kind === 'edges' && s.id === 'f');
-    const swing = edges.filter((e) => e.part === 'swing').flatMap((e) => e.segments);
-    // Två lufter × två linjer × två sidor.
-    expect(swing).toHaveLength(8);
+    const near = edges.filter((e) => e.part === 'swing').flatMap((e) => e.segments);
+    const far = edges.filter((e) => e.part === 'swingFar').flatMap((e) => e.segments);
+    // Två lufter × två linjer på var sida.
+    expect(near).toHaveLength(4);
+    expect(far).toHaveLength(4);
     const sketch = buildModel3d(doc, { state: 'st-ny', detail: 'sketch' }).filter((s): s is Edges3D => s.kind === 'edges' && s.id === 'f');
     expect(new Set(sketch.map((e) => e.part))).toEqual(new Set(['frame']));
   });

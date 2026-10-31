@@ -1,5 +1,7 @@
 import type { Element } from '../core/model';
 import { layoutOpening, LEAF_OPS, SIDE_HUNG, hasSash, type LaidCell, type OpeningKind, type OpeningLayout, type OpeningTypeModel, type Rect } from '../core/openingTypes';
+import { openingSettingsOf } from '../core/general';
+import { buildingMaterialOf, materialSolid } from './buildingMaterial';
 import { detailOf } from '../core/states';
 import { add, scale, sub } from '../geometry/vec';
 import { objectPen } from '../repr/objectPens';
@@ -72,7 +74,8 @@ export function openingModel3dFor(el: Element<any>, ctx: PlanContext, kind: Open
       vf: g.vf,
       swing: g.swing,
       outside: g.outside ?? 0,
-      showSwing: !ctx.view.hide?.includes('swing'),
+      showSwing: !ctx.view.hide?.includes('openingSymbol'),
+      mat: (id) => materialSolid(buildingMaterialOf({ material: id } as never, ctx.style)),
     },
     detailOf(ctx.view, 'model'),
   ).map((s) => leanedShape(liftShape(s, g.lift), wp));
@@ -90,8 +93,9 @@ const crosses = (r: Rect, z: number) => r.z0 <= z && r.z1 >= z;
 /**
  * Dörren eller fönstret i planen (0.11.8): karmen och posterna i snitt, och
  * lufterna där snittet går: glaslinjen, bågarna (Detalj), fönstrens slag
- * streckat och dörrbladen med slagbåge (det passiva bladet i en pardörr
- * streckat). Skiss: hålet och en linje, glaset eller bladet i öppet läge.
+ * kring gångjärnet och dörrbladen med slagbåge (det passiva bladet i en
+ * pardörr streckat). Skiss: hålet och en linje, glaset eller bladet i öppet
+ * läge, och slagbågarna (släcks under Visa, dörrar och fönster var för sig).
  */
 export function openingPlanFor(el: Element<any>, ctx: PlanContext, kind: OpeningKind): Primitive[] {
   const host = el.host ? ctx.doc.elements[el.host] : undefined;
@@ -112,7 +116,6 @@ export function openingPlanFor(el: Element<any>, ctx: PlanContext, kind: Opening
   const pens = door
     ? { cut: objectPen(ctx.style, 'doorFrameCut'), mullion: objectPen(ctx.style, 'doorFrameCut'), frame: objectPen(ctx.style, 'doorLeaf'), sash: objectPen(ctx.style, 'doorLeaf'), glass: objectPen(ctx.style, 'doorLeaf'), leaf: objectPen(ctx.style, 'doorLeaf'), swing: objectPen(ctx.style, 'doorSwing'), winSwing: objectPen(ctx.style, 'doorSwing') }
     : { cut: objectPen(ctx.style, 'windowFrameCut'), mullion: objectPen(ctx.style, 'windowMullion'), frame: objectPen(ctx.style, 'windowFrameContour'), sash: objectPen(ctx.style, 'windowSash'), glass: objectPen(ctx.style, 'windowGlass'), leaf: objectPen(ctx.style, 'doorLeaf'), swing: objectPen(ctx.style, 'doorSwing'), winSwing: objectPen(ctx.style, 'windowSwing') };
-  const dashed = (pen: Pen): Pen => ({ ...pen, dash: pen.dash ?? [2, 1] });
   const at = (u: number, o: number): Vec2 => f.at(g.u(u), o);
   const line = (a: Vec2, b: Vec2, pen: Pen, part: string): Primitive => ({ kind: 'line', a, b, pen, origin: { ...origin, part } });
   const rect = (u0: number, u1: number, o0: number, o1: number, pen: Pen, part: string): Primitive => ({ kind: 'polyline', points: [at(u0, o0), at(u1, o0), at(u1, o1), at(u0, o1)], closed: true, pen, origin: { ...origin, part } });
@@ -128,10 +131,33 @@ export function openingPlanFor(el: Element<any>, ctx: PlanContext, kind: Opening
   const below = (): Primitive[] =>
     g.p.floor ? [] : [-f.half, f.half].map((o): Primitive => ({ kind: 'line', a: f.at(h1, o), b: f.at(h2, o), pen: objectPen(ctx.style, 'wallContour'), origin: { objectId: host.id, objectType: 'Wall', part: 'under' } }));
 
+  /**
+   * Sidohängda bågar (0.11.8.1, kommentar B): som en dörr men öppen bara
+   * stilbokens vinkel (förval 15°), bladlinjen från gångjärnet i öppet läge
+   * och slagbågen med mitten i gångjärnet, från stängt till öppet. En 2-luft
+   * får två, var och en kring sitt gångjärn.
+   */
+  const swingAngle = (openingSettingsOf(ctx.doc.graphics).swingAngle * Math.PI) / 180;
+  const windowSwing = (c: LaidCell): Primitive[] => {
+    if (!SIDE_HUNG.has(c.op) || ctx.view.hide?.includes('swingWindow') || swingAngle <= 0) return [];
+    const r = c.rect;
+    const side: 1 | -1 = c.inward ? (-g.vf as 1 | -1) : g.vf;
+    const o = oFace(side);
+    const hu = c.hinge === 'right' ? r.u1 : r.u0;
+    const fu = c.hinge === 'right' ? r.u0 : r.u1;
+    const hinge = at(hu, o);
+    const free = at(fu, o);
+    const closed = sub(free, hinge);
+    const len = Math.hypot(closed[0], closed[1]) || 1;
+    const cu = scale(closed, 1 / len);
+    const tip = add(hinge, scale(add(scale(cu, Math.cos(swingAngle)), scale(f.n, side * Math.sin(swingAngle))), len));
+    return [line(hinge, tip, pens.winSwing, 'slagbåge'), arcPrim(hinge, tip, free, len, pens.winSwing, { ...origin, part: 'slagbåge' })];
+  };
+
   if (level === 'sketch') {
-    // Hålets sidor och en linje: glaset mitt i väggen, eller dörrbladet i öppet läge.
+    // Hålets sidor och en linje: glaset mitt i väggen, eller dörrbladet i öppet läge; slagbågarna som på de andra nivåerna (kommentar H).
     const sides = [h1, h2].map((s) => line(f.at(s, -f.half), f.at(s, f.half), pens.cut, 'sida'));
-    if (!door) return [...out, ...sides, line(f.at(h1, 0), f.at(h2, 0), pens.glass, 'glas'), ...below(), ...tag()];
+    if (!door) return [...out, ...sides, line(f.at(h1, 0), f.at(h2, 0), pens.glass, 'glas'), ...cells.flatMap(windowSwing), ...below(), ...tag()];
     for (const c of cells.filter((x) => LEAF_OPS.has(x.op))) out.push(...leafPrims(ctx, el, g, c, g.swing * f.half, false, pens, origin, true));
     return [...out, ...sides, ...tag()];
   }
@@ -162,19 +188,7 @@ export function openingPlanFor(el: Element<any>, ctx: PlanContext, kind: Opening
     } else if (level === 'detail') {
       out.push(line(at(r.u0, mid - 6), at(r.u1, mid - 6), pens.glass, 'glas'), line(at(r.u0, mid + 6), at(r.u1, mid + 6), pens.glass, 'glas'));
     } else out.push(line(at(r.u0, mid), at(r.u1, mid), pens.glass, 'glas'));
-    // Sidohängda bågar slår ut (eller in): bladlinjen och en streckad båge.
-    if (SIDE_HUNG.has(c.op) && !ctx.view.hide?.includes('swing')) {
-      const side: 1 | -1 = c.inward ? (-g.vf as 1 | -1) : g.vf;
-      const o = oFace(side);
-      const hu = c.hinge === 'right' ? r.u1 : r.u0;
-      const fu = c.hinge === 'right' ? r.u0 : r.u1;
-      const hinge = at(hu, o);
-      const len = r.u1 - r.u0;
-      const tip = add(hinge, scale(f.n, side * len));
-      const free = at(fu, o);
-      out.push(line(hinge, tip, pens.winSwing, 'slagbåge'));
-      out.push(arcPrim(hinge, tip, free, len, dashed(pens.winSwing), { ...origin, part: 'slagbåge' }));
-    }
+    out.push(...windowSwing(c));
   }
   return [...out, ...(door ? [] : below()), ...tag()];
 }
@@ -252,7 +266,7 @@ function leafPrims(
         perp = pl > 1e-6 ? scale(perp, g.m.leaf / pl) : scale(outward, -g.m.leaf);
         out.push({ kind: 'polyline', points: [hinge, tip, add(tip, perp), add(hinge, perp)], closed: true, pen: lp, origin: { ...origin, part: 'dörrblad' } });
       } else out.push({ kind: 'line', a: hinge, b: tip, pen: lp, origin: { ...origin, part: 'dörrblad' } });
-      if (!sketch && !hideSwing) out.push(arcPrim(hinge, tip, free, len, passive ? dashed(pens.swing) : pens.swing, { ...origin, part: 'slagbåge' }));
+      if (!hideSwing) out.push(arcPrim(hinge, tip, free, len, passive ? dashed(pens.swing) : pens.swing, { ...origin, part: 'slagbåge' }));
       return out;
     }
     case 'slideLeaf': {

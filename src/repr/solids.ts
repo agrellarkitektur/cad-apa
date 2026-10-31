@@ -68,7 +68,7 @@ export interface Cut3D {
  * hålets omfattning ritas tjockast, karm och båge tunnare, sammanfogningar
  * och glasmarkering tunnast och grå.
  */
-export type EdgePart = 'wall' | 'hole' | 'roof' | 'frame' | 'sash' | 'leaf' | 'lining' | 'handle' | 'sill' | 'joint' | 'glass' | 'swing';
+export type EdgePart = 'wall' | 'hole' | 'roof' | 'frame' | 'sash' | 'leaf' | 'lining' | 'handle' | 'sill' | 'joint' | 'glass' | 'swing' | 'swingFar' | 'muntin';
 
 /** Kantlinjer i 3D: par av punkter (mm, z uppåt). */
 export interface Edges3D {

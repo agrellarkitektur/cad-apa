@@ -1,4 +1,5 @@
 import { applyOpeningField } from './openingFields';
+import { applyScheduleField } from './openingScheduleFields';
 import { applyStairField } from './stairFields';
 import { applyRailingField } from './railingFields';
 import { applyProfileField } from './profileFields';
@@ -193,6 +194,7 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
   if (scope === 'rail') return applyRailingField(store, ids, key.slice(5), input);
   if (scope === 'prof') return applyProfileField(store, ids, key.slice(5), input);
   if (scope === 'open') return applyOpeningField(store, ids, name, input);
+  if (scope === 'ofield') return applyScheduleField(store, ids, key.slice(7), input.value);
   if (scope === 'tag') return applyTagField(store, ids, name, input.value);
   if (scope === 'label') return applyLabelField(store, ids, name, input);
   if (scope === 'name') {

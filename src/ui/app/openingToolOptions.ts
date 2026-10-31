@@ -73,11 +73,11 @@ export function openingOptionChange(store: DocStore, t: OpeningTool, el: HTMLInp
       const p = t.preview();
       const fr: [number, number] = [p.frameW, p.frameH];
       fr[el.id === 'opening-fw' ? 0 : 1] = Math.round(value);
-      const gap = openingSettingsOf(store.doc.graphics).gap;
-      const mod: [number, number] = [Math.round((fr[0] + 2 * gap) / 100) * 100, Math.round((fr[1] + (p.floor ? gap : 2 * gap)) / 100) * 100];
+      const st = openingSettingsOf(store.doc.graphics);
+      const mod: [number, number] = [Math.round((fr[0] + p.frameLess) / 100) * 100, Math.round((fr[1] + p.frameLess) / 100) * 100];
       o.module = mod;
       const m = t.options.definition ? store.doc.definitions[t.options.definition]?.opening : undefined;
-      const onModule = m ? frameFromModule(m, mod, gap) : null;
+      const onModule = m ? frameFromModule(m, mod, st) : null;
       o.frame = onModule && onModule[0] === fr[0] && onModule[1] === fr[1] ? null : fr;
       return true;
     }

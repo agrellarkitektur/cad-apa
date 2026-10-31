@@ -68,4 +68,4 @@ export function cutRowPen(style: StyleSheet, objectType: string | undefined): { 
 }
 
 /** Delarna som är symboler: slagbågen i planen och öppningssättet i fasader. Den egna pennans *Symbol* gäller dem. */
-export const SYMBOL_PARTS: ReadonlySet<string> = new Set(['slagbåge', 'swing']);
+export const SYMBOL_PARTS: ReadonlySet<string> = new Set(['slagbåge', 'swing', 'swingFar']);

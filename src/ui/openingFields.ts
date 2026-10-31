@@ -33,13 +33,13 @@ export function parseModule(text: string): [number, number] | null {
 
 /** Modulmåttet som text: 12 × 13, eller *eget (≈ 12 × 13)* när karmyttermåttet är fritt. */
 export function moduleLabel(p: OpeningObjParams): string {
-  const w = Math.round((p.frameW + 2 * p.gap) / 100);
-  const h = Math.round((p.frameH + (p.floor ? p.gap : 2 * p.gap)) / 100);
+  const w = Math.round(p.width / 100);
+  const h = Math.round(p.height / 100);
   if (customFrame(p)) {
-    const exact = Math.abs(w * 100 - 2 * p.gap - p.frameW) < 0.5 && Math.abs(h * 100 - (p.floor ? p.gap : 2 * p.gap) - p.frameH) < 0.5;
+    const exact = Math.abs(w * 100 - p.frameLess - p.frameW) < 0.5 && Math.abs(h * 100 - p.frameLess - p.frameH) < 0.5;
     return exact ? `${w} × ${h}` : `eget (≈ ${w} × ${h})`;
   }
-  return `${Math.round(p.width / 100)} × ${Math.round(p.height / 100)}`;
+  return `${w} × ${h}`;
 }
 
 function select(key: string, label: string, value: string, options: [string, string][]): string {
@@ -108,7 +108,7 @@ export function openingFieldsMarkup(doc: ProjectDoc, el: Element): string {
       ${numberField('open:frameH', 'Karmyttermått höjd', p.frameH, 'mm')}
       <label class="field"><span>Hålmått</span><input value="${mm(p.holeW)} × ${mm(p.holeH)}" readonly></label>
     </div>
-    <p class="note">Drevmånen ${mm(p.gap)} per sida (stilboken › Allmänt).${customFrame(p) ? ' Karmyttermåttet är eget; skriv ett modulmått för att gå tillbaka.' : ''}</p>
+    <p class="note">Hålet modulmåttet + ${mm(p.holeW - p.width)}, karmen modulmåttet − ${mm(p.frameLess)} (stilboken › Allmänt${m.frameLess !== undefined ? ' och typen' : ''}).${customFrame(p) ? ' Karmyttermåttet är eget; skriv ett modulmått för att gå tillbaka.' : ''}</p>
     ${height}
     <div class="field-label">Läge i väggen</div>
     <div class="fields">
@@ -165,8 +165,8 @@ export function applyOpeningField(store: DocStore, ids: Id[], name: string, inpu
         const fr: [number, number] = [p.frameW, p.frameH];
         fr[name === 'frameW' ? 0 : 1] = Math.round(v);
         // Ligger det på modulen följer det modulen igen.
-        const w = (fr[0] + 2 * p.gap) / 100;
-        const h = (fr[1] + (p.floor ? p.gap : 2 * p.gap)) / 100;
+        const w = (fr[0] + p.frameLess) / 100;
+        const h = (fr[1] + p.frameLess) / 100;
         if (Number.isInteger(w) && Number.isInteger(h)) return { width: w * 100, height: h * 100, frame: undefined };
         return { frame: fr, width: Math.round(w) * 100, height: Math.round(h) * 100 };
       });

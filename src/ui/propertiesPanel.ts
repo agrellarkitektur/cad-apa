@@ -23,6 +23,7 @@ import { drawingChange, drawingClick, hereOf, lockField } from './drawingPanel';
 import { shapeSmartFields } from './shapeFields';
 import { resetShowList, showSection } from './showFields';
 import { underlayPlaceFields } from './underlayFields';
+import { scheduleFieldsSection } from './openingScheduleFields';
 import { instanceFields, markerSection, propsSection, sharedSection, summarizeTypes, typesMarkup } from './selectionFields';
 import { applyPenField } from './style/pens';
 import { applyField } from './selectionEdits';
@@ -370,6 +371,10 @@ export class PropertiesPanel implements ActionPanel {
     // Littera (0.10.20.1): stammens sida och längd, änden, tillbaka till förvalet.
     const tags = litteraSection(doc, els);
     if (tags) sections.push(tags);
+
+    // Uppställningens fält för fönster och dörrar (0.11.8.1).
+    const sched = scheduleFieldsSection(doc, els);
+    if (sched) sections.push(sched);
 
     // Ritordning (0.8.25): Längst bak … Främst, och 2D-formens lager mot väggarna.
     const order = orderSection(doc, els);

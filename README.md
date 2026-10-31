@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.8** (alfa), Dörrar och fönster: öppningstyperna; nästa är **0.11.8.1
-Detalj och beslag**.
+**0.11.8.1** (alfa), Dörrar och fönster: synpunkterna på mockupen; nästa är
+**0.11.8.2 Detalj och beslag**.
 
 ## Vad som fungerar
 
@@ -1149,6 +1149,51 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11.8.1, Dörrar och fönster: synpunkterna på mockupen (samma
+filformat, 28; projekt från 0.11.8 öppnas):
+- **Måtten**: hålmåttet är modulmåttet **+ 10** och karmyttermåttet
+  modulmåttet **− 10** som förval, på båda ledder (10 × 21 → hål 1 010 ×
+  2 110, karm 990 × 2 090). Båda ställs under stilboken › Allmänt ›
+  *Fönster och dörrar* (*Hålmått: modulmåttet +*, *Karmyttermått:
+  modulmåttet −*) i stället för drevmånen, och en typ kan ha tillverkarens
+  eget **Karmavdrag** i editorn. Hålet följer modulmåttet också när
+  karmyttermåttet skrivs fritt. Fönster med överkant karm 2 100 sitter
+  därför 10 mm lägre än i 0.11.8
+- **Öppningssymbolen i fasaden är vänd**: linjerna spretar mot
+  gångjärnssidan, från handtagssidans mitt ut till gångjärnssidans hörn
+  (dörrblad, sidohängda, under- och överkantshängda lufter, editorn).
+  Ett 2-luft V · H spretar mot karmsidorna. **Skjutdörrar och skjutfönster**
+  har bara pilen, åt det håll bladet skjuts
+- **Egna ställen för öppningssymbolen**: *Dörr/Fönster: öppningssätt*
+  (från den sida luften öppnas mot, heldragen som förval) och
+  *öppningssätt, bortre sidan* (streckad), med penna och linjetyp i
+  stilboken; dessutom *Fönster: spröjs*
+- **Fönstrens slag i planen ritas som dörrens**, öppna 15°: bladlinjen
+  från gångjärnet och slagbågen med mitten i gångjärnet, var och en kring
+  sitt gångjärn. Vinkeln under Allmänt (*Fönstrens slag i planen*)
+- **Slagbågarna på alla detaljnivåer**, också Skiss, och de kan släckas:
+  *Visa › Modell › Slagbågar, dörrar*, *Slagbågar, fönster* och
+  *Öppningssymboler i fasad och sektion* (förut ett kryss för allt)
+- **Spröjs per luft** i editorn: *Inga*, *Jämn* (antal lodräta och
+  vågräta, jämnt fördelade) eller *Special* (*Rita spröjs*: två klick i
+  glaset per referenslinje; punkterna snäpper till kanter, mitten,
+  tredjedelar, fjärdedelar och andra spröjs, nästan lodrätt eller vågrätt
+  blir rakt). Utförande (löstagbar 28, mellan glasen 26, fast 28) och
+  bredd. Spröjsen syns i fasader, sektioner och 3D
+- **Dörrbladets indelning** i editorn: bladet har ett eget rutnät där mm
+  står kvar (ramstyckena, avstånden till kanterna) och andelarna växer,
+  så att samma dörrtyp fungerar i alla storlekar. Klicka en ruta i bladet
+  för en ny fyllning; varje fyllning har **material** (*Som bladet*,
+  *Glas* eller stilbokens material) och kan breddas eller förlängas.
+  *Spegel* och *Glasat* är förval som går att ändra
+- **Vägghålen får VG01** (`VG{nr:2}`) som förval
+- **Uppställningens fält**: fältmallen för fönster och dörrar under
+  Allmänt › *Fönster och dörrar* (fälten ur förteckningarna, flytta, byt
+  namn, ta bort, *+ Nytt fält…*). Fälten som inte räknas fram (U-värde,
+  brandklass, låshus …) fylls i under egenskaperna, **Uppställningens
+  fält**; värdet hör till objektet, och skiljer sig de markerade står
+  *Olika* i rutan. Ett nytt namn följer med värdena
 
 Version 0.11.8, Dörrar och fönster: öppningstyperna (**nytt filformat 28**;
 projekt från 0.11.6–0.11.7.3 öppnas inte):

@@ -10,61 +10,63 @@ linje 9750,0 9750,2699.9 [w0.25 ink] @yv-o/wall
 linje 1751.5,0 1750,0 [w0.25 ink] @yv-o/wall
 linje 1750,0 5750,0 [w0.25 ink] @yv-o/wall
 linje 1750,0 1750,2699.9 [w0.25 ink] @yv-o/wall
-linje 8150,810 8150,2110 [w0.35 ink] @yv-o/hole
-linje 6950,810 6950,2110 [w0.35 ink] @yv-o/hole
-linje 8150,2110 6950,2110 [w0.35 ink] @yv-o/hole
-linje 8150,810 6950,810 [w0.35 ink] @yv-o/hole
-linje 7100,810.1 7100,820 [w0.35 ink] @iv-1/hole
-linje 8000,810.1 8000,820 [w0.35 ink] @iv-1/hole
-linje 7990,810.1 7990,820 [w0.25 ink] @d03/frame
-linje 7110,820 7110,810.1 [w0.25 ink] @d03/frame
-linje 7940,810.1 7940,820 [w0.25 ink] @d03/frame
-linje 7160,820 7160,810.1 [w0.25 ink] @d03/frame
-linje 7940,810.1 7940,820 [w0.25 ink] @d03/leaf
-linje 7160,820 7160,810.1 [w0.25 ink] @d03/leaf
-linje 7320.6,810.1 7313,820 [w0.13 ink d3/1.5] @d03/swing
-linje 1749,865 1749,1460 [w0.13 ink d3/1.5] @f01/swing
-linje 1749,2055 1749,1460 [w0.13 ink d3/1.5] @f01/swing
-linje 1749,865 1749,1460 [w0.13 ink d3/1.5] @f01/swing
-linje 1749,2055 1749,1460 [w0.13 ink d3/1.5] @f01/swing
-linje 1749,1565 1749,2055 [w0.13 ink d3/1.5] @f02/swing
-linje 1749,1565 1749,2055 [w0.13 ink d3/1.5] @f02/swing
-linje 8140,820 6960,820 [w0.25 ink] @f03/frame
-linje 6960,820 6960,2100 [w0.25 ink] @f03/frame
-linje 6960,2100 8140,2100 [w0.25 ink] @f03/frame
-linje 8140,2100 8140,820 [w0.25 ink] @f03/frame
-linje 8095,865 7550,865 [w0.25 ink] @f03/frame
-linje 7550,865 7550,2055 [w0.25 ink] @f03/frame
-linje 7550,2055 8095,2055 [w0.25 ink] @f03/frame
-linje 8095,2055 8095,865 [w0.25 ink] @f03/frame
-linje 7550,865 7005,865 [w0.25 ink] @f03/frame
-linje 7005,865 7005,2055 [w0.25 ink] @f03/frame
-linje 7005,2055 7550,2055 [w0.25 ink] @f03/frame
-linje 7550,2055 7550,865 [w0.25 ink] @f03/frame
-linje 7550,865.1 7550,2055 [w0.25 ink] @f03/sash
-linje 8045,915 7600,915 [w0.25 ink] @f03/sash
-linje 7600,915 7600,2005 [w0.25 ink] @f03/sash
-linje 7600,2005 8045,2005 [w0.25 ink] @f03/sash
-linje 8045,2005 8045,915 [w0.25 ink] @f03/sash
-linje 7550,2055 7550,865.1 [w0.25 ink] @f03/sash
-linje 7500,915 7055,915 [w0.25 ink] @f03/sash
-linje 7055,915 7055,2005 [w0.25 ink] @f03/sash
-linje 7055,2005 7500,2005 [w0.25 ink] @f03/sash
-linje 7500,2005 7500,915 [w0.25 ink] @f03/sash
-linje 7856.2,1458.5 7821,1493.7 [w0.13 muted] @f03/glass
-linje 7847.7,1434.8 7797.3,1485.2 [w0.13 muted] @f03/glass
-linje 7824,1426.3 7788.8,1461.5 [w0.13 muted] @f03/glass
-linje 7311.2,1458.5 7276,1493.7 [w0.13 muted] @f03/glass
-linje 7302.7,1434.8 7252.3,1485.2 [w0.13 muted] @f03/glass
-linje 7279,1426.3 7243.8,1461.5 [w0.13 muted] @f03/glass
-linje 7550,865 8095,1460 [w0.13 ink d3/1.5] @f03/swing
-linje 7550,2055 8095,1460 [w0.13 ink d3/1.5] @f03/swing
-linje 7550,865 7005,1460 [w0.13 ink d3/1.5] @f03/swing
-linje 7550,2055 7005,1460 [w0.13 ink d3/1.5] @f03/swing
-linje 9751,865 9751,1460 [w0.13 ink d3/1.5] @f04/swing
-linje 9751,2055 9751,1460 [w0.13 ink d3/1.5] @f04/swing
-linje 9751,865 9751,1460 [w0.13 ink d3/1.5] @f04/swing
-linje 9751,2055 9751,1460 [w0.13 ink d3/1.5] @f04/swing
+linje 8155,800 8155,2110 [w0.35 ink] @yv-o/hole
+linje 6945,800 6945,2110 [w0.35 ink] @yv-o/hole
+linje 8155,2110 6945,2110 [w0.35 ink] @yv-o/hole
+linje 8155,800 6945,800 [w0.35 ink] @yv-o/hole
+linje 7095,800.1 7095,810 [w0.35 ink] @iv-1/hole
+linje 7095,2100.1 7095,2110 [w0.35 ink] @iv-1/hole
+linje 8005,800.1 8005,810 [w0.35 ink] @iv-1/hole
+linje 8005,2100.1 8005,2110 [w0.35 ink] @iv-1/hole
+linje 7995,800.1 7995,810 [w0.25 ink] @d03/frame
+linje 7105,810 7105,800.1 [w0.25 ink] @d03/frame
+linje 7945,800.1 7945,810 [w0.25 ink] @d03/frame
+linje 7155,810 7155,800.1 [w0.25 ink] @d03/frame
+linje 7945,800.1 7945,810 [w0.25 ink] @d03/leaf
+linje 7155,810 7155,800.1 [w0.25 ink] @d03/leaf
+linje 7782.3,810 7774.6,800.1 [w0.13 ink] @d03/swing
+linje 1749,1455 1749,855 [w0.13 ink] @f01/swing
+linje 1749,1455 1749,2055 [w0.13 ink] @f01/swing
+linje 1749,1455 1749,855 [w0.13 ink] @f01/swing
+linje 1749,1455 1749,2055 [w0.13 ink] @f01/swing
+linje 1749,1555 1749,2055 [w0.13 ink] @f02/swing
+linje 1749,1555 1749,2055 [w0.13 ink] @f02/swing
+linje 8145,810 6955,810 [w0.25 ink] @f03/frame
+linje 6955,810 6955,2100 [w0.25 ink] @f03/frame
+linje 6955,2100 8145,2100 [w0.25 ink] @f03/frame
+linje 8145,2100 8145,810 [w0.25 ink] @f03/frame
+linje 8100,855 7550,855 [w0.25 ink] @f03/frame
+linje 7550,855 7550,2055 [w0.25 ink] @f03/frame
+linje 7550,2055 8100,2055 [w0.25 ink] @f03/frame
+linje 8100,2055 8100,855 [w0.25 ink] @f03/frame
+linje 7550,855 7000,855 [w0.25 ink] @f03/frame
+linje 7000,855 7000,2055 [w0.25 ink] @f03/frame
+linje 7000,2055 7550,2055 [w0.25 ink] @f03/frame
+linje 7550,2055 7550,855 [w0.25 ink] @f03/frame
+linje 7550,855.1 7550,2055 [w0.25 ink] @f03/sash
+linje 8050,905 7600,905 [w0.25 ink] @f03/sash
+linje 7600,905 7600,2005 [w0.25 ink] @f03/sash
+linje 7600,2005 8050,2005 [w0.25 ink] @f03/sash
+linje 8050,2005 8050,905 [w0.25 ink] @f03/sash
+linje 7550,2055 7550,855.1 [w0.25 ink] @f03/sash
+linje 7500,905 7050,905 [w0.25 ink] @f03/sash
+linje 7050,905 7050,2005 [w0.25 ink] @f03/sash
+linje 7050,2005 7500,2005 [w0.25 ink] @f03/sash
+linje 7500,2005 7500,905 [w0.25 ink] @f03/sash
+linje 7859.1,1453.5 7823.5,1489.1 [w0.13 muted] @f03/glass
+linje 7850.5,1429.5 7799.5,1480.5 [w0.13 muted] @f03/glass
+linje 7826.5,1420.9 7790.9,1456.5 [w0.13 muted] @f03/glass
+linje 7309.1,1453.5 7273.5,1489.1 [w0.13 muted] @f03/glass
+linje 7300.5,1429.5 7249.5,1480.5 [w0.13 muted] @f03/glass
+linje 7276.5,1420.9 7240.9,1456.5 [w0.13 muted] @f03/glass
+linje 7550,1455 8100,855 [w0.13 ink] @f03/swing
+linje 7550,1455 8100,2055 [w0.13 ink] @f03/swing
+linje 7550,1455 7000,855 [w0.13 ink] @f03/swing
+linje 7550,1455 7000,2055 [w0.13 ink] @f03/swing
+linje 9751,1455 9751,855 [w0.13 ink] @f04/swing
+linje 9751,1455 9751,2055 [w0.13 ink] @f04/swing
+linje 9751,1455 9751,855 [w0.13 ink] @f04/swing
+linje 9751,1455 9751,2055 [w0.13 ink] @f04/swing
 linje 9350,-400 2150,-400 [w0.18 ink] @bj1/vy
 linje 2150,0 2150,-400 [w0.18 ink] @bj1/vy
 linje 9350,0 9350,-400 [w0.18 ink] @bj1/vy

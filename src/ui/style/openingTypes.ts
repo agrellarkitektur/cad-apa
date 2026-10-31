@@ -1,6 +1,6 @@
 import type { Id, ProjectDoc } from '../../core/model';
 import { addDefaultOpeningTypes, duplicateOpeningType, missingDefaultOpeningTypes, newOpeningType, openingGroups, openingTypeUses, openingTypesOf, removeOpeningType, updateOpeningType } from '../../core/openings';
-import { DOOR_OPS, LEAF_OPS, SIDE_HUNG, WINDOW_OPS, frameFromModule, type CellFill, type LeafStyle, type OpeningCell, type OpeningKind, type OpeningTypeModel, type OpKind, type Track } from '../../core/openingTypes';
+import { DOOR_OPS, LEAF_OPS, MUNTIN_KINDS, SIDE_HUNG, WINDOW_OPS, frameFromModule, hasSash, layoutOpening, leafGridOf, muntinWidth, type LeafGrid, type MuntinKind, type CellFill, type LeafStyle, type OpeningCell, type OpeningKind, type OpeningTypeModel, type OpKind, type Track } from '../../core/openingTypes';
 import { openingSettingsOf } from '../../core/general';
 import type { DocStore } from '../../core/store';
 import { askText } from '../ask';
@@ -22,9 +22,13 @@ export interface OpeningEditorState {
   /** *Prova mått* (modulmått, mm), eller typens förval. */
   tryMod: [number, number] | null;
   query: string;
+  /** Den valda fyllningen i ett dörrblad (index i bladets `fills`). */
+  fill?: number | null;
+  /** *Rita spröjs* (special): den första punkten när en linje är påbörjad (andelar av glaset). */
+  draw?: { start: [number, number] | null } | null;
 }
 
-export const newOpeningEditorState = (): OpeningEditorState => ({ def: null, cell: null, tryMod: null, query: '' });
+export const newOpeningEditorState = (): OpeningEditorState => ({ def: null, cell: null, tryMod: null, query: '', fill: null, draw: null });
 
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 const opt = (v: string, label: string, cur: string) => `<option value="${v}"${v === cur ? ' selected' : ''}>${escapeHtml(label)}</option>`;
@@ -106,13 +110,13 @@ export function openingEditorMarkup(doc: ProjectDoc, st: OpeningEditorState): st
     <div class="rt-sec">Mått</div>
     ${row('Förvalt modulmått', `<input type="text" class="rt-val" data-ot="size" value="${Math.round(m.size[0] / 100)}×${Math.round(m.size[1] / 100)}">`)}
     ${door ? '' : row('Förvald bröstning', `<input type="text" class="rt-val" data-ot="sill" value="${m.sill ?? ''}" placeholder="Överkant karm" title="Tomt: fönstret placeras med överkant karm (stilboken › Allmänt); 0 för en fönsterdörr">`)}
+    ${m.kind !== 'hole' ? row('Karmavdrag', `<input type="text" class="rt-val" data-ot="frameLess" value="${m.frameLess ?? ''}" placeholder="${openingSettingsOf(doc.graphics).frameLess}" title="Tillverkarens: karmyttermåttet är modulmåttet minus detta, mm. Tomt = stilboken › Allmänt">`) : ''}
     ${row('Minsta', `<input type="text" class="rt-val" data-ot="min" value="${m.min ? `${m.min[0]}×${m.min[1]}` : ''}" placeholder="–" title="Karmyttermått, mm: en varning, ingen spärr">`)}
     ${row('Största', `<input type="text" class="rt-val" data-ot="max" value="${m.max ? `${m.max[0]}×${m.max[1]}` : ''}" placeholder="–">`)}
     <p class="note">${used ? `Används av ${used} objekt.` : 'Används inte.'}</p>
   </div>`;
-  const gap = openingSettingsOf(doc.graphics).gap;
   const mod = st.tryMod ?? m.size;
-  const [fw, fh] = frameFromModule(m, mod, gap);
+  const [fw, fh] = frameFromModule(m, mod, openingSettingsOf(doc.graphics));
   const ops = door ? [...DOOR_OPS, { op: 'fixed' as OpKind, label: 'Fast' }] : WINDOW_OPS;
   const cur = st.cell !== null ? m.cells[st.cell] : null;
   const tries: [number, number][] = door ? [[800, 2100], [m.size[0], m.size[1]], [1200, 2100]] : [[600, 600], [m.size[0], m.size[1]], [1800, 1500]];
@@ -124,13 +128,13 @@ export function openingEditorMarkup(doc: ProjectDoc, st: OpeningEditorState): st
     <div class="row wrap ot-tools"><span class="rt-sec">Luften</span>${ops.map((o) => `<button class="btn btn-small${cur?.op === o.op ? ' on' : ''}" data-ot-act="op" data-ot-op="${o.op}"${cur ? '' : ' disabled'} aria-pressed="${cur?.op === o.op}">${escapeHtml(o.label)}</button>`).join('')}</div>
     <div class="row wrap ot-tools"><span class="rt-sec">Prova mått</span>${tries.map(([a, b]) => `<button class="btn btn-small${a === mod[0] && b === mod[1] ? ' on' : ''}" data-ot-act="try" data-ot-w="${a}" data-ot-h="${b}">${Math.round(a / 100)} × ${Math.round(b / 100)}</button>`).join('')}</div>
     <p class="note rt-canvas-hint">Sedd utifrån. Klicka på en luft för att välja den.</p>
-    <div class="ot-canvas">${openingPreviewSvg(m, fw, fh, st.cell)}</div>
+    <div class="ot-canvas">${openingPreviewSvg(m, fw, fh, st.cell, { fill: st.fill ?? null, drawing: !!st.draw })}</div>
   </div>`;
-  const cellCol = cur ? cellMarkup(m, cur, st.cell!) : `<div class="rt-typecol"><p class="note">Välj en luft i ritytan eller i listan.</p></div>`;
+  const cellCol = cur ? cellMarkup(doc, m, cur, st.cell!, st) : `<div class="rt-typecol"><p class="note">Välj en luft i ritytan eller i listan.</p></div>`;
   return section(listCol + typeCol + canvas + cellCol);
 }
 
-function cellMarkup(m: OpeningTypeModel, c: OpeningCell, i: number): string {
+function cellMarkup(doc: ProjectDoc, m: OpeningTypeModel, c: OpeningCell, i: number, st: OpeningEditorState): string {
   const door = m.kind === 'door';
   const ops = door ? [...DOOR_OPS, { op: 'fixed' as OpKind, label: 'Fast' }] : WINDOW_OPS;
   const leaf = LEAF_OPS.has(c.op);
@@ -142,15 +146,86 @@ function cellMarkup(m: OpeningTypeModel, c: OpeningCell, i: number): string {
     ${SIDE_HUNG.has(c.op) || c.op === 'slide' || c.op === 'slideLeaf' || c.op === 'pocket' ? row(SIDE_HUNG.has(c.op) ? 'Gångjärn' : 'Skjuts åt', sel(`cell:${i}:hinge`, c.hinge ?? 'left', [['left', 'Vänster'], ['right', 'Höger']])) : ''}
     ${!leaf && c.op !== 'fixed' ? row('Öppnas', sel(`cell:${i}:inward`, c.inward ? 'in' : 'out', [['out', 'Utåt'], ['in', 'Inåt']])) : ''}
     ${leaf ? '' : row('Fyllning', sel(`cell:${i}:fill`, c.fill, [['glass', 'Glas'], ['panel', 'Panel'], ['open', 'Öppen']]))}
-    ${leaf ? row('Bladet', sel(`cell:${i}:leaf`, c.leaf ?? 'flat', [['flat', 'Slätt'], ['panel', 'Spegel'], ['glazed', 'Glasat']])) : ''}
+    ${leaf ? row('Bladet', sel(`cell:${i}:leaf`, c.leafGrid ? 'custom' : (c.leaf ?? 'flat'), [['flat', 'Slätt'], ['panel', 'Spegel'], ['glazed', 'Glasat'], ...(c.leafGrid ? ([['custom', 'Egen indelning']] as [string, string][]) : [])])) : ''}
     <p class="note">Sedd utifrån. ${SIDE_HUNG.has(c.op) ? 'Gångjärnen ritas som en markering av hängningen, alltid två, 100 från över- och underkant.' : ''} Dörrblad slår åt det håll objektet slår.</p>
     <div class="rt-sec">Mått i rutnätet</div>
     ${row('Bredd', `<i>${trackText(m.cols[c.col])}${(c.colSpan ?? 1) > 1 ? ` + ${(c.colSpan ?? 1) - 1}` : ''}</i>`)}
     ${row('Höjd', `<i>${m.rows.length === 1 ? 'hela' : trackText(m.rows[c.row])}${(c.rowSpan ?? 1) > 1 ? ` + ${(c.rowSpan ?? 1) - 1}` : ''}</i>`)}
-    <div class="rt-sec">Spröjs och beslag</div>
-    ${row('Spröjs', '<i>0.11.8.1</i>')}
+    ${leaf ? leafGridMarkup(doc, c, i, st) : c.fill === 'glass' ? muntinMarkup(c, i, st) : ''}
+    <div class="rt-sec">Beslag</div>
     ${row('Handtag', `<i>${SIDE_HUNG.has(c.op) ? 'låssidan, mitt' : '–'}</i>`)}
   </div>`;
+}
+
+const rowOf = (label: string, value: string) => `<div class="rt-row"><span>${label}</span>${value}</div>`;
+const selOf = (field: string, cur: string, options: [string, string][]) => `<select class="rt-val" data-ot="${field}">${options.map(([v, l]) => opt(v, l, cur)).join('')}</select>`;
+
+/** Spröjsen i en glasluft (0.11.8.1): inga, jämnt fördelade (antal lodräta och vågräta) eller special (ritade referenslinjer). */
+function muntinMarkup(c: OpeningCell, i: number, st: OpeningEditorState): string {
+  const mu = c.muntins;
+  const mode = !mu ? 'none' : mu.lines?.length || (st.draw && st.cell === i) ? 'special' : 'even';
+  const w = mu ? muntinWidth(mu) : 28;
+  const drawing = !!st.draw && st.cell === i;
+  return `<div class="rt-sec">Spröjs</div>
+    ${rowOf('Indelning', selOf(`cell:${i}:mmode`, mode, [['none', 'Inga'], ['even', 'Jämn'], ['special', 'Special']]))}
+    ${mode === 'even' ? rowOf('Lodräta', `<input type="text" class="rt-val" data-ot="cell:${i}:mv" value="${mu?.v ?? 0}">`) + rowOf('Vågräta', `<input type="text" class="rt-val" data-ot="cell:${i}:mh" value="${mu?.h ?? 0}">`) : ''}
+    ${mode === 'special' ? `<div class="row wrap ot-tools"><button class="btn btn-small${drawing ? ' on' : ''}" data-ot-act="mdraw" aria-pressed="${drawing}">${drawing ? 'Klar' : 'Rita spröjs'}</button><button class="btn btn-small" data-ot-act="mundo"${mu?.lines?.length ? '' : ' disabled'}>Ta bort senaste</button><button class="btn btn-small" data-ot-act="mclear"${mu?.lines?.length ? '' : ' disabled'}>Rensa</button></div>
+      <p class="note">Klicka två punkter i glaset för en referenslinje. Punkterna snäpper till kanterna, mitten, tredjedelar, fjärdedelar och andra spröjs; nästan lodrätt eller vågrätt blir rakt. <i>Klar</i> avslutar.</p>` : ''}
+    ${mu ? rowOf('Utförande', selOf(`cell:${i}:mkind`, mu.kind, MUNTIN_KINDS.map((k) => [k.kind, `${k.label} (${k.width})`]))) + rowOf('Bredd', `<input type="text" class="rt-val" data-ot="cell:${i}:mwidth" value="${mu.width ?? ''}" placeholder="${w}">`) : ''}`;
+}
+
+/** Dörrbladets indelning (0.11.8.1): spåren (mm står kvar, andelar växer) och den valda fyllningens material. */
+function leafGridMarkup(doc: ProjectDoc, c: OpeningCell, i: number, st: OpeningEditorState): string {
+  const g = leafGridOf(c);
+  if (!g) return '<div class="rt-sec">Indelning</div><p class="note">Slätt blad. Välj Spegel eller Glasat för en indelning att ändra.</p>';
+  const track = (axis: 'lcol' | 'lrow', j: number, t: Track, n: number) =>
+    `<div class="rt-row"><span>${axis === 'lcol' ? 'Kolumn' : 'Rad'} ${j + 1}</span><span class="ot-track"><input type="text" class="rt-val ot-size" data-ot="${axis}:${i}:${j}:size" value="${t.size}"><select data-ot="${axis}:${i}:${j}:unit">${opt('fr', 'andel', t.unit)}${opt('mm', 'mm', t.unit)}</select>${n > 1 ? `<button class="icon-btn" data-ot-act="${axis}-remove" data-ot-i="${j}" title="Ta bort" aria-label="Ta bort">×</button>` : ''}</span></div>`;
+  const f = st.fill !== null && st.fill !== undefined ? g.fills[st.fill] : undefined;
+  const mats = (doc.graphics.materials ?? []) as { id: string; name: string }[];
+  return `<div class="rt-sec">Indelning</div>
+    <p class="note">Bladets rutnät sett utifrån, uppifrån. Mått i mm står kvar (ramstyckena, avstånden till kanterna) och andelarna växer med bladet, så att samma typ fungerar i alla storlekar. Klicka en ruta i bladet för en ny fyllning, en fyllning för att välja den.</p>
+    ${g.cols.map((t, j) => track('lcol', j, t, g.cols.length)).join('')}
+    ${g.rows.map((t, j) => track('lrow', j, t, g.rows.length)).join('')}
+    <div class="row wrap ot-tools"><button class="btn btn-small" data-ot-act="lcol-add">+ Kolumn</button><button class="btn btn-small" data-ot-act="lrow-add">+ Rad</button></div>
+    <div class="rt-sec">${f ? `Fyllning ${st.fill! + 1}` : `Fyllningar (${g.fills.length})`}</div>
+    ${
+      f
+        ? rowOf('Material', selOf(`lfill:${i}:${st.fill}:material`, f.glass ? 'glass' : (f.material ?? ''), [['', 'Som bladet'], ['glass', 'Glas'], ...mats.map((m): [string, string] => [m.id, m.name])])) +
+          `<div class="row wrap ot-tools"><button class="btn btn-small" data-ot-act="lfill-wide"${f.col + (f.colSpan ?? 1) < g.cols.length ? '' : ' disabled'}>Bredda åt höger</button><button class="btn btn-small" data-ot-act="lfill-tall"${f.row + (f.rowSpan ?? 1) < g.rows.length ? '' : ' disabled'}>Förläng nedåt</button><button class="btn btn-small" data-ot-act="lfill-remove">Ta bort fyllningen</button></div>`
+        : '<p class="note">Ingen vald.</p>'
+    }`;
+}
+
+/** Bladets indelning att ändra: den egna, eller en kopia av förvalet (Spegel, Glasat). */
+function ownLeafGrid(c: OpeningCell): LeafGrid {
+  if (!c.leafGrid) c.leafGrid = structuredClone(leafGridOf(c) ?? { cols: [{ size: 1, unit: 'fr' }], rows: [{ size: 1, unit: 'fr' }], fills: [] });
+  return c.leafGrid;
+}
+
+/** En punkt i glaset (andelar), snäppt till kanter, delningar och andra spröjs. */
+export function snapMuntinPoint(p: [number, number], lines: readonly { a: [number, number]; b: [number, number] }[], start: [number, number] | null): [number, number] {
+  const T = [0, 1 / 4, 1 / 3, 1 / 2, 2 / 3, 3 / 4, 1];
+  const ends = lines.flatMap((l) => [l.a, l.b]);
+  const near = ends.find((e) => Math.hypot(e[0] - p[0], e[1] - p[1]) < 0.04);
+  if (near) return [near[0], near[1]];
+  const snap1 = (v: number, extra: number[]) => {
+    const all = [...T, ...extra];
+    const best = all.reduce((a, b) => (Math.abs(b - v) < Math.abs(a - v) ? b : a), all[0]);
+    // Kanterna drar lite längre än delningarna.
+    return Math.abs(best - v) < (best === 0 || best === 1 ? 0.06 : 0.035) ? best : v;
+  };
+  // Lodräta och vågräta spröjs: deras läge snäpper den andra axeln.
+  const vx = lines.filter((l) => Math.abs(l.a[0] - l.b[0]) < 1e-6).map((l) => l.a[0]);
+  const hz = lines.filter((l) => Math.abs(l.a[1] - l.b[1]) < 1e-6).map((l) => l.a[1]);
+  let q: [number, number] = [snap1(p[0], vx), snap1(p[1], hz)];
+  if (start) {
+    const dx = q[0] - start[0];
+    const dz = q[1] - start[1];
+    const ang = Math.abs((Math.atan2(dz, dx) * 180) / Math.PI);
+    if (ang < 8 || ang > 172) q = [q[0], start[1]];
+    else if (Math.abs(ang - 90) < 8) q = [start[0], q[1]];
+  }
+  return [Math.max(0, Math.min(1, q[0])), Math.max(0, Math.min(1, q[1]))];
 }
 
 const section = (inner: string) =>
@@ -215,6 +290,9 @@ export function openingEditorChange(store: DocStore, st: OpeningEditorState, inp
       if (p) up('förvalt modulmått', (m) => (m.size = p.map((x) => (x >= 100 ? Math.round(x) : Math.round(x * 100))) as [number, number]));
       return true;
     }
+    case 'frameLess':
+      up('karmavdrag', (m) => (raw.trim() === '' ? delete m.frameLess : nonneg ? (m.frameLess = Math.min(100, Math.round(v))) : 0));
+      return true;
     case 'sill':
       up('förvald bröstning', (m) => (raw.trim() === '' ? delete m.sill : nonneg ? (m.sill = Math.round(v)) : 0));
       return true;
@@ -244,7 +322,46 @@ export function openingEditorChange(store: DocStore, st: OpeningEditorState, inp
       else if (key === 'hinge') c.hinge = raw === 'right' ? 'right' : 'left';
       else if (key === 'inward') raw === 'in' ? (c.inward = true) : delete c.inward;
       else if (key === 'fill') c.fill = raw as CellFill;
-      else if (key === 'leaf') c.leaf = raw as LeafStyle;
+      else if (key === 'leaf') {
+        if (raw === 'custom') return;
+        c.leaf = raw as LeafStyle;
+        delete c.leafGrid;
+        st.fill = null;
+      } else if (key === 'mmode') {
+        if (raw === 'none') delete c.muntins;
+        else if (raw === 'even') c.muntins = { v: c.muntins?.v || 1, h: c.muntins?.h || 1, kind: c.muntins?.kind ?? 'loose', ...(c.muntins?.width ? { width: c.muntins.width } : {}) };
+        else c.muntins = { v: 0, h: 0, kind: c.muntins?.kind ?? 'loose', ...(c.muntins?.width ? { width: c.muntins.width } : {}), lines: c.muntins?.lines ?? [] };
+        st.draw = raw === 'special' ? { start: null } : null;
+      } else if (c.muntins && (key === 'mv' || key === 'mh')) {
+        if (Number.isFinite(v) && v >= 0) c.muntins[key === 'mv' ? 'v' : 'h'] = Math.min(20, Math.round(v));
+      } else if (c.muntins && key === 'mkind') c.muntins.kind = raw as MuntinKind;
+      else if (c.muntins && key === 'mwidth') raw.trim() === '' ? delete c.muntins.width : Number.isFinite(v) && v > 0 && (c.muntins.width = Math.round(v));
+    });
+    return true;
+  }
+  if (what === 'lcol' || what === 'lrow') {
+    const j = Number(key);
+    const k2 = field.split(':')[3];
+    up(what === 'lcol' ? 'bladets kolumn' : 'bladets rad', (m) => {
+      const c = m.cells[i];
+      if (!c) return;
+      const t = (what === 'lcol' ? ownLeafGrid(c).cols : ownLeafGrid(c).rows)[j];
+      if (!t) return;
+      if (k2 === 'unit') t.unit = raw === 'mm' ? 'mm' : 'fr';
+      else if (Number.isFinite(v) && v > 0) t.size = v;
+    });
+    return true;
+  }
+  if (what === 'lfill') {
+    const j = Number(key);
+    up('fyllningens material', (m) => {
+      const c = m.cells[i];
+      const f = c ? ownLeafGrid(c).fills[j] : undefined;
+      if (!f) return;
+      delete f.glass;
+      delete f.material;
+      if (raw === 'glass') f.glass = true;
+      else if (raw) f.material = raw;
     });
     return true;
   }
@@ -272,12 +389,70 @@ function fillGrid(m: OpeningTypeModel): void {
   m.cells.sort((a, b) => a.row - b.row || a.col - b.col);
 }
 
-export async function openingEditorClick(store: DocStore, st: OpeningEditorState, target: HTMLElement, rerender: () => void, onError: (msg: string) => void): Promise<boolean> {
+/** Den valda luftens glas (u, z i mm) i det mått ritytan visar. */
+function glassRectOf(doc: ProjectDoc, m: OpeningTypeModel, st: OpeningEditorState, i: number): { u0: number; u1: number; z0: number; z1: number; h: number } | null {
+  const [fw, fh] = frameFromModule(m, st.tryMod ?? m.size, openingSettingsOf(doc.graphics));
+  const c = m.cells[i];
+  const laid = c && layoutOpening(m, fw, fh).cells.find((x) => x.col === c.col && x.row === c.row);
+  if (!laid) return null;
+  const r = laid.rect;
+  const s = hasSash(laid) ? Math.min(m.sash, (r.u1 - r.u0) / 3, (r.z1 - r.z0) / 3) : 0;
+  return { u0: r.u0 + s, u1: r.u1 - s, z0: r.z0 + s, z1: r.z1 - s, h: fh };
+}
+
+export async function openingEditorClick(store: DocStore, st: OpeningEditorState, target: HTMLElement, rerender: () => void, onError: (msg: string) => void, ev?: MouseEvent): Promise<boolean> {
   const type = target.closest<HTMLElement>('[data-ot-type]')?.dataset.otType;
   if (type) {
     st.def = type;
     st.cell = null;
     st.tryMod = null;
+    st.fill = null;
+    st.draw = null;
+    rerender();
+    return true;
+  }
+  // Rita spröjs (special): två klick i den valda luftens glas ger en referenslinje.
+  const svg = target.closest<SVGSVGElement>('svg.op-preview');
+  if (svg && st.draw && st.def && st.cell !== null && ev) {
+    const m = store.doc.definitions[st.def]?.opening;
+    const gl = m && glassRectOf(store.doc, m, st, st.cell);
+    const ctm = svg.getScreenCTM();
+    if (!m || !gl || !ctm) return true;
+    const pt = new DOMPoint(ev.clientX, ev.clientY).matrixTransform(ctm.inverse());
+    const raw: [number, number] = [(pt.x - gl.u0) / (gl.u1 - gl.u0), (gl.h - pt.y - gl.z0) / (gl.z1 - gl.z0)];
+    if (raw[0] < -0.05 || raw[0] > 1.05 || raw[1] < -0.05 || raw[1] > 1.05) return true;
+    const lines = m.cells[st.cell].muntins?.lines ?? [];
+    const p = snapMuntinPoint(raw, lines, st.draw.start);
+    if (!st.draw.start) st.draw.start = p;
+    else {
+      const a = st.draw.start;
+      st.draw.start = null;
+      if (Math.hypot(p[0] - a[0], p[1] - a[1]) > 0.02)
+        updateOpeningType(store, st.def, 'Spröjs', (mm) => {
+          const c = mm.cells[st.cell!];
+          c.muntins = { ...(c.muntins ?? { v: 0, h: 0, kind: 'loose' }), lines: [...(c.muntins?.lines ?? []), { a, b: p }] };
+          return mm;
+        });
+    }
+    rerender();
+    return true;
+  }
+  // Dörrbladets indelning: en ruta blir en fyllning, en fyllning väljs.
+  const lcell = target.closest<SVGElement>('[data-ot-lcell]')?.dataset.otLcell;
+  if (lcell && st.def && st.cell !== null) {
+    const [col, row] = lcell.split(',').map(Number);
+    updateOpeningType(store, st.def, 'Ny fyllning', (mm) => {
+      const g = ownLeafGrid(mm.cells[st.cell!]);
+      g.fills.push({ col, row });
+      st.fill = g.fills.length - 1;
+      return mm;
+    });
+    rerender();
+    return true;
+  }
+  const fillAt = target.closest<SVGElement>('[data-ot-fill]')?.dataset.otFill;
+  if (fillAt !== undefined && st.cell !== null) {
+    st.fill = Number(fillAt);
     rerender();
     return true;
   }
@@ -294,6 +469,10 @@ export async function openingEditorClick(store: DocStore, st: OpeningEditorState
           return mm;
         });
         i = store.doc.definitions[st.def]!.opening!.cells.findIndex((c) => c.col === col && c.row === row);
+      }
+      if (st.cell !== i) {
+        st.fill = null;
+        st.draw = null;
       }
       st.cell = i >= 0 ? i : null;
       rerender();
@@ -340,7 +519,67 @@ export async function openingEditorClick(store: DocStore, st: OpeningEditorState
       break;
     }
     case 'cell':
+      if (st.cell !== ix) {
+        st.fill = null;
+        st.draw = null;
+      }
       st.cell = ix;
+      break;
+    case 'mdraw':
+      st.draw = st.draw ? null : { start: null };
+      break;
+    case 'mundo':
+    case 'mclear':
+      if (st.cell === null) return true;
+      up(act === 'mundo' ? 'ta bort spröjs' : 'rensa spröjs', (m) => {
+        const mu = m.cells[st.cell!]?.muntins;
+        if (mu?.lines) mu.lines = act === 'mundo' ? mu.lines.slice(0, -1) : [];
+      });
+      if (st.draw) st.draw.start = null;
+      break;
+    case 'lcol-add':
+    case 'lrow-add':
+      if (st.cell === null) return true;
+      up(act === 'lcol-add' ? 'bladets kolumn' : 'bladets rad', (m) => {
+        const g = ownLeafGrid(m.cells[st.cell!]);
+        (act === 'lcol-add' ? g.cols : g.rows).push({ size: 1, unit: 'fr' });
+      });
+      break;
+    case 'lcol-remove':
+    case 'lrow-remove':
+      if (st.cell === null) return true;
+      up('ta bort ur bladets indelning', (m) => {
+        const g = ownLeafGrid(m.cells[st.cell!]);
+        const col = act === 'lcol-remove';
+        (col ? g.cols : g.rows).splice(ix, 1);
+        g.fills = g.fills.filter((f) => !((col ? f.col : f.row) <= ix && (col ? f.col + (f.colSpan ?? 1) : f.row + (f.rowSpan ?? 1)) > ix));
+        for (const f of g.fills) {
+          if (col && f.col > ix) f.col--;
+          if (!col && f.row > ix) f.row--;
+        }
+      });
+      st.fill = null;
+      break;
+    case 'lfill-wide':
+    case 'lfill-tall':
+    case 'lfill-remove':
+      if (st.cell === null || st.fill === null || st.fill === undefined) return true;
+      up(act === 'lfill-remove' ? 'ta bort fyllningen' : 'större fyllning', (m) => {
+        const g = ownLeafGrid(m.cells[st.cell!]);
+        const f = g.fills[st.fill!];
+        if (!f) return;
+        if (act === 'lfill-remove') {
+          g.fills.splice(st.fill!, 1);
+          return;
+        }
+        if (act === 'lfill-wide') f.colSpan = (f.colSpan ?? 1) + 1;
+        else f.rowSpan = (f.rowSpan ?? 1) + 1;
+        // Fyllningar som nu täcks tas bort.
+        const c0 = f.col, c1 = f.col + (f.colSpan ?? 1), r0 = f.row, r1 = f.row + (f.rowSpan ?? 1);
+        g.fills = g.fills.filter((x) => x === f || x.col >= c1 || x.col + (x.colSpan ?? 1) <= c0 || x.row >= r1 || x.row + (x.rowSpan ?? 1) <= r0);
+        st.fill = g.fills.indexOf(f);
+      });
+      if (act === 'lfill-remove') st.fill = null;
       break;
     case 'try':
       st.tryMod = [Number(btn.dataset.otW), Number(btn.dataset.otH)];

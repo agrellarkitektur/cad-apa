@@ -184,6 +184,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.7.2 | Räckets avslut och spiraltrappan: Böjd nedåt och Mot vägg ritade, varningen för fri höjd under nästa varv, mittpelarens material, stegnumren under Visa |
 | 0.11.7.3 | Trappan och räcket, det som inte hanns med: utomhustrappa, kontrastmarkeringens material, trappans littera i planen, ändprofilen med vridningen kring ankaret, ytor med mönster (rutnät, diagonalt), staketens typer i kommandoraden |
 | 0.11.8 | Format 28: dörrar och fönster, öppningstyperna: karm med rutnät av lufter, förvalda typer med beskrivande namn, dörr- och fönstereditorn, modulmått och fritt karmyttermått med drevmånen, överkant karm, litteraregeln med formel, sparade nummer och Numrera om, verktygen, smartmenyn och egenskaperna, plan, fasad, sektion och 3D ur typen, vägghål och uppställningar i formatet |
+| 0.11.8.1 | Dörrar och fönster, synpunkterna på mockupen: hålet modulmåttet + 10 och karmen − 10 (typens karmavdrag), öppningssymbolen mot gångjärnssidan med egna ställen, skjutpilen, fönstrens slag 15° kring gångjärnet, slagbågarna på alla nivåer och egna kryss, spröjs jämnt eller ritade, dörrbladets indelning med material per fyllning, VG01, uppställningens fältmall och fälten på objekten |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
 val och det som *inte gjordes*. De ligger i arkivet:
@@ -1019,7 +1020,8 @@ Carl August 22 oktober; utredd 31 oktober med en mockup i Claude Design
 (*Dörrar och fönster – utredning 0.11.8*, sex tavlor) och
 `cad-apa-dorrar-fonster-utredning.md` i projektet, som är
 specifikationen. Delad i tre (beslut D): **0.11.8 Öppningstyperna**,
-**0.11.8.1 Detalj och beslag**, **0.11.8.2 Smart och vägghål**. Byggd 31
+**0.11.8.1 Detalj och beslag**, **0.11.8.2 Smart och vägghål** (blev
+0.11.8.2 och 0.11.8.3 när synpunkterna på mockupen blev 0.11.8.1). Byggd 31
 oktober (Carl August: "Kör 0.11.8 dörrar och fönster enligt mockup i
 föregående session"). **Nytt format 28**: `Definition.opening`, dörrarnas
 och fönstrens nya parametrar, projektets `openingNumbers` och
@@ -1085,21 +1087,78 @@ arbetsyta, linjering, dagsljus och vägghålen med verktyg och typer
 (0.11.8.2); uppställningen som vytyp (0.12). Klickjämförelsen körs i
 granskningen efter 0.11.8.
 
-### 0.11.8.1 Detalj och beslag
+### 0.11.8.1 Dörrar och fönster: synpunkterna på mockupen ✓
 
-Mellanstor (utredningen, delning D): spröjs (mönster per luft), beslag
-(handtag, gångjärn som markering, dörrstängare, brevinkast), bleck med
-droppnäsa, foder, fönsterbänk, trösklar i Detalj, öppningssymbolernas
-egna ställen, varningarna (BFS 2024:9 där det är föreskrift, *avviker
-från praxis* annars) och tillgänglighetscirkeln. Gärna också det som
-inte hanns med i 0.11.8.
+Carl August 1 november: "Arbeta in kommentarer från mockup som 0.11.8.1."
+Kommentarerna A–I på mockupen *Dörrar och fönster – utredning 0.11.8*
+(Inkorgen i `cad-apa-synpunkter.md`), plus måtten: **modulmåttet är
+alltid i decimeter, hålmåttet görs ofta 10 mm större på höjd och bredd
+(praxis, ingen regel), karmyttermåttet är tillverkarens och brukar vara
+10–20 mm mindre på vardera ledd** (det får variera). Samma format, 28
+(valfria fält). *Detalj och beslag* blev 0.11.8.2 och *Smart och vägghål*
+0.11.8.3.
 
-### 0.11.8.2 Smart och vägghål
+**Gjort:** måtten (hålet + 10, karmen − 10, under Allmänt; typens
+karmavdrag); A öppningssymbolen spretar mot gångjärnssidan, egna ställen
+(när och bortre sida) och kan släckas; B fönstrens slag 15° kring
+gångjärnet; C 2-luft V · H mot karmsidorna (följer av A och B); D spröjs
+jämnt eller special (ritade referenslinjer); E skjutpilen åt
+öppningshållet, ingen triangel; F dörrbladets indelning med mm och andelar
+och material per fyllning; G VG01; H slagbågarna på alla nivåer, egna
+kryss för dörrar och fönster; I fältmallen och fälten på objekten.
+
+**Claudes val (0.11.8.1):**
+
+- **Måtten**: `holeAdd` (10) och `frameLess` (10) under Allmänt ersätter
+  drevmånen; typen har `frameLess` (tillverkarens). Hålet räknas alltid
+  ur modulmåttet, också när karmyttermåttet är eget; karmen sitter mitt i
+  hålet i höjd, eller på golvet för det som står där.
+- **Symbolens ställen**: delen `swing` från den sida luften öppnas mot
+  (heldragen som förval) och `swingFar` från den andra (streckad), för
+  dörrar och fönster var för sig. Typens symbolpenna gäller båda.
+- **Kryssen under Visa**: `swing` (*Slagbågar, dörrar*, som förut),
+  `swingWindow` och `openingSymbol`. Kategorierna utan inredning släcker
+  båda slagbågarna (som förut dörrarnas).
+- **Fönstrets slag**: heldraget, med fönstrets slagbågspenna (förut
+  streckad båge); vinkeln `swingAngle` under Allmänt, 15° som förval.
+- **Spröjsens utförande**: löstagbar 28, mellan glasen 26, fast 28 mm.
+  Lister i 3D på glasets båda sidor (inte för mellan glasen), sneda
+  spröjs bara som linjer. Vågräta bryts vid lodräta i fasaden.
+- **Special**: referenslinjerna som andelar av glaset, så att de följer
+  måttet; snäppet till kanterna (0,06), delningarna ½, ⅓, ¼ (0,035), andra
+  spröjs ändar och lägen, rakt inom 8°.
+- **Dörrbladets indelning** är ett rutnät som typens (mm och andelar);
+  rutor utan fyllning är bladet. *Spegel* och *Glasat* är förval som blir
+  en egen indelning när de ändras. Fyllningarna sammanslås med *Bredda åt
+  höger* och *Förläng nedåt*. Glas ritas som glas, en skiva 16 mm i mitten
+  med materialets kulör.
+- **Fältmallen** ligger i projektet (`openingSchedule.fields`) men ändras
+  under stilboken › Allmänt, där litteraregeln står. Fält som räknas fram
+  eller kommer ur typen (antal, hängning, mått, poster, spröjs, karmdjup …)
+  är märkta *räknas* och har inget fält på objekten. Egenskaperna skriver
+  på de markerade; uppställningen (0.12) skriver på alla med samma littera
+  (`sameLittera`). Ett fält som tas bort ur mallen lämnar värdena kvar på
+  objekten.
+
+**Inte gjort i 0.11.8.1:** fyllningar med material i fönstrens lufter
+(panel under glas), sneda fyllningar i bladet, spröjs i planen (Detalj),
+en punkt som visar var en påbörjad spröjslinje började, spröjs som
+profiltyper, uppställningens vytyp (0.12), fälten i litterans smarttext.
+
+### 0.11.8.2 Detalj och beslag
+
+Mellanstor (utredningen, delning D): beslag (handtag, gångjärn som
+markering, dörrstängare, brevinkast), bleck med droppnäsa, foder,
+fönsterbänk, trösklar i Detalj, varningarna (BFS 2024:9 där det är
+föreskrift, *avviker från praxis* annars) och tillgänglighetscirkeln.
+Gärna också det som inte hanns med i 0.11.8 och 0.11.8.1.
+
+### 0.11.8.3 Smart och vägghål
 
 Mellanstor: fasaden som arbetsyta (flytta fönster där, också i höjd),
 *I liv med fönstret under*, *Lika avstånd*, dagsljus (glasarea mot
 golvarea, per fasad), vägghålen med verktyg och förvalda typer
-(ventgaller, nisch, genomföring, rent hål).
+(ventgaller, nisch, genomföring, rent hål; littera VG01).
 
 ### Granskning efter 0.11.8
 

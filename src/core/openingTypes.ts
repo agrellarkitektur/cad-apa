@@ -69,6 +69,28 @@ export interface Track {
 export type CellFill = 'glass' | 'panel' | 'open';
 export type LeafStyle = 'flat' | 'panel' | 'glazed';
 
+/** Spröjsens utförande: löstagbar (28 mm), mellan glasen (26) eller fast i bågen (28). */
+export type MuntinKind = 'loose' | 'between' | 'fixed';
+export const MUNTIN_KINDS: readonly { kind: MuntinKind; label: string; width: number }[] = [
+  { kind: 'loose', label: 'Löstagbar', width: 28 },
+  { kind: 'between', label: 'Mellan glasen', width: 26 },
+  { kind: 'fixed', label: 'Fast', width: 28 },
+];
+
+/**
+ * Spröjsen i en luft (0.11.8.1, kommentar D): fritt antal lodräta och
+ * vågräta, jämnt fördelade i glaset, eller **special**: referenslinjer
+ * ritade i editorn (ändarna som andelar 0–1 av glasets bredd och höjd, från
+ * nedre vänstra hörnet sett utifrån). Bredden och utförandet för sig.
+ */
+export interface Muntins {
+  v: number;
+  h: number;
+  kind: MuntinKind;
+  width?: number;
+  lines?: { a: [number, number]; b: [number, number] }[];
+}
+
 /** En luft i rutnätet. `col` och `row` räknas från vänster och uppifrån, sett utifrån. */
 export interface OpeningCell {
   col: number;
@@ -83,6 +105,10 @@ export interface OpeningCell {
   leaf?: LeafStyle;
   /** Fönsterluften öppnas inåt (förval utåt). Dörrar öppnas åt det håll objektet slår. */
   inward?: boolean;
+  /** Spröjsen i glaset (0.11.8.1). */
+  muntins?: Muntins;
+  /** Dörrbladets indelning (0.11.8.1). */
+  leafGrid?: LeafGrid;
 }
 
 export interface OpeningTypeModel {
@@ -107,6 +133,8 @@ export interface OpeningTypeModel {
   cells: OpeningCell[];
   /** Föreskriften, t.ex. *Träfönster typ Elitfönster EFS eller likvärdig*. */
   spec?: string;
+  /** Tillverkarens karmavdrag: karmyttermåttet är modulmåttet minus detta (tomt = stilboken › Allmänt). */
+  frameLess?: number;
   /** Typens min- och maxmått (karmyttermått), mm: en varning, ingen spärr. */
   min?: [number, number];
   max?: [number, number];
@@ -235,21 +263,35 @@ export function newOpeningModel(kind: OpeningKind, group: string): OpeningTypeMo
 
 /**
  * Om typen står på golvet (dörrar, fönsterdörren och porten): då finns
- * ingen drevmån under karmen, och karmyttermåttet i höjd är modulmåttet
- * minus en drevmån (21 → 2 090), annars minus två (13 → 1 280).
+ * ingen drevmån under karmen, och karmen står på golvet.
  */
 export const standsOnFloor = (m: Pick<OpeningTypeModel, 'kind' | 'sill'>): boolean => m.kind === 'door' || m.sill === 0;
 
-/** Karmyttermåttet ur modulmåttet: 1M = 100 mm med drevmånen inräknad (10 × 13 → 980 × 1 280). */
-export function frameFromModule(m: Pick<OpeningTypeModel, 'kind' | 'sill'>, mod: readonly [number, number], gap: number): [number, number] {
-  if (m.kind === 'hole') return [mod[0], mod[1]];
-  return [mod[0] - 2 * gap, mod[1] - (standsOnFloor(m) ? gap : 2 * gap)];
+/** Hur hålet och karmen räknas ur modulmåttet (stilboken › Allmänt). */
+export interface OpeningMeasure {
+  /** Hålmåttet är modulmåttet plus detta, på båda ledder (praxis 10). */
+  holeAdd: number;
+  /** Karmyttermåttet är modulmåttet minus detta, på båda ledder (tillverkarens, ofta 10–20). */
+  frameLess: number;
 }
 
-/** Hålmåttet ur karmyttermåttet. */
-export function holeFromFrame(m: Pick<OpeningTypeModel, 'kind' | 'sill'>, frame: readonly [number, number], gap: number): [number, number] {
-  if (m.kind === 'hole') return [frame[0], frame[1]];
-  return [frame[0] + 2 * gap, frame[1] + (standsOnFloor(m) ? gap : 2 * gap)];
+/** Karmavdraget för en typ: typens eget (tillverkarens) eller Allmänts. */
+export const frameLessOf = (m: Pick<OpeningTypeModel, 'frameLess'>, st: OpeningMeasure): number => m.frameLess ?? st.frameLess;
+
+/**
+ * Karmyttermåttet ur modulmåttet (0.11.8.1): modulmåttet i hela decimeter
+ * minus karmavdraget på båda ledder (10 × 13 → 990 × 1 290 med 10).
+ */
+export function frameFromModule(m: Pick<OpeningTypeModel, 'kind' | 'frameLess'>, mod: readonly [number, number], st: OpeningMeasure): [number, number] {
+  if (m.kind === 'hole') return [mod[0], mod[1]];
+  const d = frameLessOf(m, st);
+  return [mod[0] - d, mod[1] - d];
+}
+
+/** Hålmåttet ur modulmåttet: modulmåttet plus hålets tillägg (10 × 13 → 1 010 × 1 310 med 10). */
+export function holeFromModule(m: Pick<OpeningTypeModel, 'kind'>, mod: readonly [number, number], st: OpeningMeasure): [number, number] {
+  if (m.kind === 'hole') return [mod[0], mod[1]];
+  return [mod[0] + st.holeAdd, mod[1] + st.holeAdd];
 }
 
 // ---------------------------------------------------------------------------
@@ -287,6 +329,10 @@ export function normalizeOpeningModel(v: unknown, kindHint: OpeningKind = 'windo
       if (c.hinge === 'left' || c.hinge === 'right') out.hinge = c.hinge;
       if (c.inward === true) out.inward = true;
       if (c.leaf === 'flat' || c.leaf === 'panel' || c.leaf === 'glazed') out.leaf = c.leaf;
+      const mu = normalizeMuntins(c.muntins);
+      if (mu) out.muntins = mu;
+      const lg = normalizeLeafGrid(c.leafGrid);
+      if (lg) out.leafGrid = lg;
       return out;
     })
     .filter((c: OpeningCell | null): c is OpeningCell => !!c);
@@ -307,6 +353,7 @@ export function normalizeOpeningModel(v: unknown, kindHint: OpeningKind = 'windo
   };
   if (m.sill !== undefined && Number.isFinite(Number(m.sill))) out.sill = num(m.sill, 900, -5000, 10000);
   if (typeof m.spec === 'string' && m.spec.trim()) out.spec = m.spec.trim();
+  if (m.frameLess !== undefined && m.frameLess !== null && Number.isFinite(Number(m.frameLess))) out.frameLess = num(m.frameLess, 10, 0, 100);
   if (m.min) out.min = pair(m.min, [0, 0]);
   if (m.max) out.max = pair(m.max, [0, 0]);
   return out;
@@ -405,3 +452,169 @@ export function layoutOpening(m: OpeningTypeModel, w: number, h: number): Openin
 export const opens = (c: Pick<OpeningCell, 'op'>): boolean => c.op !== 'fixed';
 /** Om luften har en båge (öppningsbar glasluft) och inte bara glas i karmen. */
 export const hasSash = (c: Pick<OpeningCell, 'op' | 'fill'>): boolean => c.fill === 'glass' && c.op !== 'fixed' && !LEAF_OPS.has(c.op);
+
+// ---------------------------------------------------------------------------
+// Spröjs (0.11.8.1)
+
+const frac = (v: unknown): number => Math.max(0, Math.min(1, Number(v) || 0));
+
+export function normalizeMuntins(v: unknown): Muntins | null {
+  if (!v || typeof v !== 'object') return null;
+  const o = v as Record<string, any>;
+  const kind: MuntinKind = o.kind === 'between' || o.kind === 'fixed' ? o.kind : 'loose';
+  const out: Muntins = { v: Math.round(num(o.v, 0, 0, 20)), h: Math.round(num(o.h, 0, 0, 20)), kind };
+  if (o.width !== undefined && Number.isFinite(Number(o.width))) out.width = num(o.width, 28, 5, 200);
+  if (Array.isArray(o.lines)) {
+    const lines = o.lines
+      .filter((l: any) => Array.isArray(l?.a) && Array.isArray(l?.b))
+      .map((l: any) => ({ a: [frac(l.a[0]), frac(l.a[1])] as [number, number], b: [frac(l.b[0]), frac(l.b[1])] as [number, number] }))
+      .filter((l: { a: [number, number]; b: [number, number] }) => Math.hypot(l.b[0] - l.a[0], l.b[1] - l.a[1]) > 1e-3)
+      .slice(0, 60);
+    if (lines.length) out.lines = lines;
+  }
+  return out.v || out.h || out.lines ? out : null;
+}
+
+export const muntinWidth = (m: Muntins): number => m.width ?? MUNTIN_KINDS.find((k) => k.kind === m.kind)!.width;
+
+/** Spröjsens referenslinjer i glaset `g` (u, z i mm): special om det finns ritade linjer, annars jämnt fördelade. */
+export function muntinLines(m: Muntins, g: Rect): [number, number, number, number][] {
+  const W = g.u1 - g.u0;
+  const H = g.z1 - g.z0;
+  if (m.lines?.length) return m.lines.map((l) => [g.u0 + l.a[0] * W, g.z0 + l.a[1] * H, g.u0 + l.b[0] * W, g.z0 + l.b[1] * H]);
+  const out: [number, number, number, number][] = [];
+  for (let i = 1; i <= m.v; i++) {
+    const u = g.u0 + (W * i) / (m.v + 1);
+    out.push([u, g.z0, u, g.z1]);
+  }
+  for (let j = 1; j <= m.h; j++) {
+    const z = g.z0 + (H * j) / (m.h + 1);
+    out.push([g.u0, z, g.u1, z]);
+  }
+  return out;
+}
+
+/**
+ * Spröjsens kanter som linjer: varje referenslinje blir två parallella
+ * linjer en halv bredd ut. Vågräta spröjs bryts där en lodrät går igenom,
+ * så att korsen blir rena; sneda (special) ritas hela.
+ */
+export function muntinOutline(lines: readonly [number, number, number, number][], width: number): [number, number, number, number][] {
+  const w = width / 2;
+  const vert = lines.filter(([u1, , u2]) => Math.abs(u1 - u2) < 0.5);
+  const out: [number, number, number, number][] = [];
+  for (const l of lines) {
+    const [u1, z1, u2, z2] = l;
+    const len = Math.hypot(u2 - u1, z2 - z1);
+    if (len < 1) continue;
+    const nu = (-(z2 - z1) / len) * w;
+    const nz = ((u2 - u1) / len) * w;
+    const horizontal = Math.abs(z1 - z2) < 0.5;
+    if (horizontal) {
+      // Bitarna mellan de lodräta som korsar.
+      const a = Math.min(u1, u2);
+      const b = Math.max(u1, u2);
+      const cuts = vert.filter(([u, za, , zb]) => u > a + w && u < b - w && Math.min(za, zb) <= z1 + 0.5 && Math.max(za, zb) >= z1 - 0.5).map(([u]) => u).sort((x, y) => x - y);
+      let s = a;
+      for (const u of [...cuts, b + w]) {
+        const e = Math.min(b, u - w);
+        if (e > s) for (const o of [-w, w]) out.push([s, z1 + o, e, z1 + o]);
+        s = u + w;
+      }
+    } else for (const o of [-1, 1]) out.push([u1 + nu * o, z1 + nz * o, u2 + nu * o, z2 + nz * o]);
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Dörrbladets indelning (0.11.8.1)
+
+/** En fyllning (spegel) i bladet: ett eller flera fält i bladets rutnät, med material. */
+export interface LeafFill {
+  col: number;
+  row: number;
+  colSpan?: number;
+  rowSpan?: number;
+  /** Glas eller en skiva; materialet ur stilboken (glas, trä, plåt …). */
+  glass?: boolean;
+  material?: string;
+}
+
+/**
+ * Dörrbladets indelning (kommentar F): ett eget rutnät i bladet, uppifrån
+ * och från vänster sett utifrån. Spår i mm behåller sitt mått (ramstyckena,
+ * avstånden till kanterna) och andelarna växer med bladet, som sträckzonen
+ * i profileditorn, så att samma typ fungerar i alla storlekar. Rutorna med
+ * en fyllning är speglar; resten är bladet.
+ */
+export interface LeafGrid {
+  cols: Track[];
+  rows: Track[];
+  fills: LeafFill[];
+}
+
+export function normalizeLeafGrid(v: unknown): LeafGrid | null {
+  if (!v || typeof v !== 'object') return null;
+  const o = v as Record<string, any>;
+  const cols = tracks(o.cols);
+  const rows = tracks(o.rows);
+  const fills = (Array.isArray(o.fills) ? o.fills : [])
+    .map((f: any): LeafFill | null => {
+      const col = Math.round(num(f?.col, -1, -1, 99));
+      const row = Math.round(num(f?.row, -1, -1, 99));
+      if (col < 0 || row < 0 || col >= cols.length || row >= rows.length) return null;
+      const out: LeafFill = { col, row };
+      const cs = Math.round(num(f.colSpan, 1, 1, cols.length - col));
+      const rs = Math.round(num(f.rowSpan, 1, 1, rows.length - row));
+      if (cs > 1) out.colSpan = cs;
+      if (rs > 1) out.rowSpan = rs;
+      if (f.glass === true) out.glass = true;
+      if (typeof f.material === 'string' && f.material) out.material = f.material;
+      return out;
+    })
+    .filter((f: LeafFill | null): f is LeafFill => !!f);
+  return { cols, rows, fills };
+}
+
+/** Förvalen som motsvarar *Spegel* (två speglar) och *Glasat* (ett glas), så att de går att ändra. */
+export function leafGridPreset(style: LeafStyle): LeafGrid | null {
+  if (style === 'panel')
+    return { cols: [mm(120), fr(), mm(120)], rows: [mm(120), fr(1.2), mm(120), fr(), mm(180)], fills: [{ col: 1, row: 1 }, { col: 1, row: 3 }] };
+  if (style === 'glazed') return { cols: [mm(150), fr(), mm(150)], rows: [mm(150), fr(), mm(400)], fills: [{ col: 1, row: 1, glass: true }] };
+  return null;
+}
+
+/** Bladets indelning: egen, eller förvalet för utförandet (slätt har ingen). */
+export const leafGridOf = (c: Pick<OpeningCell, 'leaf' | 'leafGrid'>): LeafGrid | null => c.leafGrid ?? leafGridPreset(c.leaf ?? 'flat');
+
+export interface LaidLeaf {
+  /** Fyllningarna i bladet (u, z som luftens rutor). */
+  fills: (LeafFill & { rect: Rect })[];
+  /** Bladets rutor utan fyllning (ramstyckena), med sin plats i rutnätet. */
+  frame: (Rect & { col: number; row: number })[];
+}
+
+/** Bladets indelning i luftens ruta `r`. */
+export function layoutLeaf(g: LeafGrid, r: Rect): LaidLeaf {
+  const ws = trackSizes(g.cols, r.u1 - r.u0);
+  const hs = trackSizes(g.rows, r.z1 - r.z0);
+  const u: number[] = [r.u0];
+  for (const w of ws) u.push(u[u.length - 1] + w);
+  const z: number[] = [r.z1];
+  for (const h of hs) z.push(z[z.length - 1] - h);
+  const covered = new Set<string>();
+  const fills: LaidLeaf['fills'] = [];
+  for (const f of g.fills) {
+    const cs = f.colSpan ?? 1;
+    const rs = f.rowSpan ?? 1;
+    if (f.col + cs > ws.length || f.row + rs > hs.length) continue;
+    let taken = false;
+    for (let i = f.col; i < f.col + cs; i++) for (let j = f.row; j < f.row + rs; j++) taken ||= covered.has(`${i},${j}`);
+    if (taken) continue;
+    for (let i = f.col; i < f.col + cs; i++) for (let j = f.row; j < f.row + rs; j++) covered.add(`${i},${j}`);
+    fills.push({ ...f, rect: { u0: u[f.col], u1: u[f.col + cs], z0: z[f.row + rs], z1: z[f.row] } });
+  }
+  const frame: LaidLeaf['frame'] = [];
+  for (let j = 0; j < hs.length; j++) for (let i = 0; i < ws.length; i++) if (!covered.has(`${i},${j}`) && ws[i] > 0.5 && hs[j] > 0.5) frame.push({ u0: u[i], u1: u[i + 1], z0: z[j + 1], z1: z[j], col: i, row: j });
+  return { fills, frame };
+}

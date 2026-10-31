@@ -68,11 +68,10 @@ function infoOf(doc: ProjectDoc, el: Element, rule: OpeningRule, elevation: Map<
     const right: [number, number] = [-n[1], n[0]];
     along = pos[0] * right[0] + pos[1] * right[1];
   } else along = pos[0] + pos[1] * 1e-3;
-  const mod = (v: number) => Math.round((v + 2 * p.gap) / 100);
   return {
     key: `${el.definition ?? '-'}|${Math.round(p.frameW)}×${Math.round(p.frameH)}${rule === 'hinge' ? `|${hinge}` : ''}`,
     sort: [elevation.get(el.storey) ?? 0, facade, Math.round(along), el.id],
-    module: `${mod(p.frameW)}×${Math.round((p.frameH + (p.floor ? p.gap : 2 * p.gap)) / 100)}`,
+    module: `${Math.round(p.width / 100)}×${Math.round(p.height / 100)}`,
     hinge,
   };
 }

@@ -26,7 +26,10 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
       ['hiddenWalls', 'Ytterväggarnas insida streckad i fasad'],
       ['hiddenSlabsSection', 'Bjälklag bakom snittet streckade i sektion'],
       ['Furniture', 'Möbler och inredning'],
-      ['swing', 'Öppningssätt (dörrar)'],
+      // Slagbågarna i planen för dörrar och fönster var för sig, och öppningssymbolen i fasaden (0.11.8.1).
+      ['swing', 'Slagbågar, dörrar'],
+      ['swingWindow', 'Slagbågar, fönster'],
+      ['openingSymbol', 'Öppningssymboler i fasad och sektion'],
       // Trappans stegnummer och texten *15 st à 180/260* i Detalj (0.11.7.2).
       ['stairNumbers', 'Stegnummer och trappans text'],
       ['Underlay', 'Underlag'],

@@ -82,7 +82,7 @@ describe('Pennor per typ och symbollinjer (0.8.33)', () => {
     const swings = Object.values(doc.elements)
       .filter((e) => e.type === 'Elevation' || e.type === 'Section')
       .flatMap((m) => buildSection(store.doc, m.id, { state: doc.states.at(-1)!.id })!.prims)
-      .filter((p): p is Lined => p.kind === 'line' && p.origin?.part === 'swing' && others.some((o) => o.id === p.origin?.objectId));
+      .filter((p): p is Lined => p.kind === 'line' && (p.origin?.part === 'swing' || p.origin?.part === 'swingFar') && others.some((o) => o.id === p.origin?.objectId));
     expect(marker).toBeTruthy();
     expect(swings.length).toBeGreaterThan(0);
     for (const s of swings) expect(s.pen).toMatchObject({ weight: 0.25, dash: [3, 1.5] });

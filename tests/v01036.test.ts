@@ -41,7 +41,7 @@ describe('pennraderna per vytyp', () => {
 
   it('fasadens linjer läser linjetypen ur stilboken', () => {
     const style = structuredClone(defaultSheet(emptyProject('Prov', 'ombyggnad').graphics, 'facade'));
-    expect(facadePen(style, 'windowSwingElev').dash).toEqual([3, 1.5]);
+    expect(facadePen(style, 'windowSwingFarElev').dash).toEqual([3, 1.5]);
     expect(facadePen(style, 'windowGlassElev')).toMatchObject({ weight: 0.13, color: 'muted' });
     style.pens = { windowGlassElev: { weight: 0.18, color: 'ink' }, wallElev: { weight: 0.25, linetype: 'dotted' }, windowSwingElev: { weight: 0.13, linetype: 'solid' } };
     expect(facadePen(style, 'windowGlassElev')).toMatchObject({ weight: 0.18, color: 'ink' });

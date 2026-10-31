@@ -39,12 +39,12 @@ linje 205,123 205,195 [w0.13 ink] @bj1/kontur under
 linje 205,195 93,195 [w0.13 ink] @bj1/kontur under
 linje 93,195 93,123 [w0.13 ink] @bj1/kontur under
 yta fylld paper [w0.35 ink] 89,119 109,119 109,123 93,123 93,143 89,143 @/snitt
-yta fylld paper [w0.35 ink] 89,155 93,155 93,195 104,195 104,199 89,199 @/snitt
-yta fylld paper [w0.35 ink] 119,119 150.5,119 150.5,123 139.6,123 139.6,144.5 138.4,144.5 138.4,123 119,123 @/snitt
-yta fylld paper [w0.35 ink] 128,195 138.4,195 138.4,181.5 139.6,181.5 139.6,195 164.5,195 164.5,199 128,199 @/snitt
-yta fylld paper [w0.35 ink] 138.4,153.5 139.6,153.5 139.6,158.4 185.5,158.4 185.5,159.6 139.6,159.6 139.6,172.5 138.4,172.5 @/snitt
-yta fylld paper [w0.35 ink] 162.5,119 209,119 209,171 205,171 205,159.6 194.5,159.6 194.5,158.4 205,158.4 205,123 162.5,123 @/snitt
-yta fylld paper [w0.35 ink] 179.5,195 205,195 205,183 209,183 209,199 179.5,199 @/snitt
+yta fylld paper [w0.35 ink] 89,155.1 93,155.1 93,195 104,195 104,199 89,199 @/snitt
+yta fylld paper [w0.35 ink] 119.1,119 150.5,119 150.5,123 139.6,123 139.6,144.5 138.4,144.5 138.4,123 119.1,123 @/snitt
+yta fylld paper [w0.35 ink] 128.1,195 138.4,195 138.4,181.6 139.6,181.6 139.6,195 164.5,195 164.5,199 128.1,199 @/snitt
+yta fylld paper [w0.35 ink] 138.4,153.6 139.6,153.6 139.6,158.4 185.5,158.4 185.5,159.6 139.6,159.6 139.6,172.5 138.4,172.5 @/snitt
+yta fylld paper [w0.35 ink] 162.6,119 209,119 209,171 205,171 205,159.6 194.6,159.6 194.6,158.4 205,158.4 205,123 162.6,123 @/snitt
+yta fylld paper [w0.35 ink] 179.6,195 205,195 205,183.1 209,183.1 209,199 179.6,199 @/snitt
 text "YV01" 129.1,126 h2 start [w0.18] @yv-s/littera
 linje 131.6,124.9 131.6,121 [w0.18 ink] @yv-s/littera
 text "YV01" 202,156.5 h2 90° start [w0.18] @yv-o/littera
@@ -61,88 +61,88 @@ yta hatch ink 45° a0.6 w0.18 [w0.35 ink] 161.4,123 162.6,123 162.6,158.4 161.4,
 text "IV01" 167.6,138.5 h2 90° start [w0.18] @iv-4/littera
 linje 165.1,141 162,141 [w0.18 ink] @iv-4/littera
 polylinje sluten 109.1,123 109.6,123 109.6,122 109.1,122 [w0.25 ink] @d01/karm
-polylinje sluten 118.4,123 118.9,123 118.9,122 118.4,122 [w0.25 ink] @d01/karm
-linje 109.6,123 117.2,127.4 [w0.18 ink] @d01/dörrblad
-båge 109.6,123 r8.8 0°–30° [w0.13 ink] @d01/slagbåge
+polylinje sluten 118.5,123 119,123 119,122 118.5,122 [w0.25 ink] @d01/karm
+linje 109.6,123 117.3,127.5 [w0.18 ink] @d01/dörrblad
+båge 109.6,123 r8.9 0°–30° [w0.13 ink] @d01/slagbåge
 text "D01" 112.1,115.8 h2 start [w0.18] @d01/littera
 polylinje sluten 139.6,144.6 139.6,145.1 138.6,145.1 138.6,144.6 [w0.25 ink] @d02/karm
-polylinje sluten 139.6,152.9 139.6,153.4 138.6,153.4 138.6,152.9 [w0.25 ink] @d02/karm
-linje 139.6,145.1 143.5,151.9 [w0.18 ink] @d02/dörrblad
-båge 139.6,145.1 r7.8 60°–90° [w0.13 ink] @d02/slagbåge
+polylinje sluten 139.6,153 139.6,153.5 138.6,153.5 138.6,153 [w0.25 ink] @d02/karm
+linje 139.6,145.1 143.6,151.9 [w0.18 ink] @d02/dörrblad
+båge 139.6,145.1 r7.9 60°–90° [w0.13 ink] @d02/slagbåge
 text "D02" 137.2,147.1 h2 90° start [w0.18] @d02/littera
 polylinje sluten 139.6,172.6 139.6,173.1 138.6,173.1 138.6,172.6 [w0.25 ink] @d03/karm
-polylinje sluten 139.6,180.9 139.6,181.4 138.6,181.4 138.6,180.9 [w0.25 ink] @d03/karm
-linje 139.6,173.1 143.5,179.9 [w0.18 ink] @d03/dörrblad
-båge 139.6,173.1 r7.8 60°–90° [w0.13 ink] @d03/slagbåge
+polylinje sluten 139.6,181 139.6,181.5 138.6,181.5 138.6,181 [w0.25 ink] @d03/karm
+linje 139.6,173.1 143.6,179.9 [w0.18 ink] @d03/dörrblad
+båge 139.6,173.1 r7.9 60°–90° [w0.13 ink] @d03/slagbåge
 text "D02" 137.2,175.1 h2 90° start [w0.18] @d03/littera
 polylinje sluten 185.6,158.4 186.1,158.4 186.1,159.4 185.6,159.4 [w0.25 ink] @d04/karm
-polylinje sluten 193.9,158.4 194.4,158.4 194.4,159.4 193.9,159.4 [w0.25 ink] @d04/karm
+polylinje sluten 194,158.4 194.5,158.4 194.5,159.4 194,159.4 [w0.25 ink] @d04/karm
 linje 186.1,158.4 192.9,154.5 [w0.18 ink] @d04/dörrblad
-båge 186.1,158.4 r7.8 -30°–0° [w0.13 ink] @d04/slagbåge
+båge 186.1,158.4 r7.9 -30°–0° [w0.13 ink] @d04/slagbåge
 text "D02" 188.1,160.8 h2 start [w0.18] @d04/littera
-polylinje sluten 162.4,120.1 162,120.1 162,119 162.4,119 [w0.25 ink] @f01/karm
-polylinje sluten 151.1,120.1 150.6,120.1 150.6,119 151.1,119 [w0.25 ink] @f01/karm
-linje 162,120.1 151.1,120.1 [w0.18 ink] @f01/karm
-linje 162,119 151.1,119 [w0.18 ink] @f01/karm
+polylinje sluten 162.5,120.1 162,120.1 162,119 162.5,119 [w0.25 ink] @f01/karm
+polylinje sluten 151,120.1 150.6,120.1 150.6,119 151,119 [w0.25 ink] @f01/karm
+linje 162,120.1 151,120.1 [w0.18 ink] @f01/karm
+linje 162,119 151,119 [w0.18 ink] @f01/karm
 linje 162,119.5 156.5,119.5 [w0.18 ink] @f01/glas
-linje 162,119 162,113.6 [w0.13 ink] @f01/slagbåge
-båge 162,119 r5.5 180°–-90° [w0.13 ink d2/1] @f01/slagbåge
-linje 156.5,119.5 151.1,119.5 [w0.18 ink] @f01/glas
-linje 151.1,119 151.1,113.6 [w0.13 ink] @f01/slagbåge
-båge 151.1,119 r5.5 -90°–0° [w0.13 ink d2/1] @f01/slagbåge
-linje 162.5,123 150.5,123 [w0.13 ink] @yv-s/under
-linje 162.5,119 150.5,119 [w0.13 ink] @yv-s/under
+linje 162,119 156.7,117.6 [w0.13 ink] @f01/slagbåge
+båge 162,119 r5.5 180°–-165° [w0.13 ink] @f01/slagbåge
+linje 156.5,119.5 151,119.5 [w0.18 ink] @f01/glas
+linje 151,119 156.3,117.6 [w0.13 ink] @f01/slagbåge
+båge 151,119 r5.5 -15°–0° [w0.13 ink] @f01/slagbåge
+linje 162.6,123 150.5,123 [w0.13 ink] @yv-s/under
+linje 162.6,119 150.5,119 [w0.13 ink] @yv-s/under
 text "F03" 154.6,124.2 h2 start [w0.18] @f01/littera
-linje 193,123 193,119 [w0.13 ink d5/1/0.3/1] @f02/över
+linje 193.1,123 193.1,119 [w0.13 ink d5/1/0.3/1] @f02/över
 linje 187,123 187,119 [w0.13 ink d5/1/0.3/1] @f02/över
-linje 193,119.5 187,119.5 [w0.13 ink d5/1/0.3/1] @f02/över
+linje 193.1,119.5 187,119.5 [w0.13 ink d5/1/0.3/1] @f02/över
 text "F04" 188.1,124.2 h2 start [w0.18] @f02/littera
-polylinje sluten 208,182.9 208,182.5 209,182.5 209,182.9 [w0.25 ink] @f03/karm
-polylinje sluten 208,171.6 208,171.1 209,171.1 209,171.6 [w0.25 ink] @f03/karm
-linje 208,182.5 208,171.6 [w0.18 ink] @f03/karm
-linje 209,182.5 209,171.6 [w0.18 ink] @f03/karm
+polylinje sluten 208,183 208,182.5 209,182.5 209,183 [w0.25 ink] @f03/karm
+polylinje sluten 208,171.5 208,171.1 209,171.1 209,171.5 [w0.25 ink] @f03/karm
+linje 208,182.5 208,171.5 [w0.18 ink] @f03/karm
+linje 209,182.5 209,171.5 [w0.18 ink] @f03/karm
 linje 208.5,182.5 208.5,177 [w0.18 ink] @f03/glas
-linje 209,182.5 214.5,182.5 [w0.13 ink] @f03/slagbåge
-båge 209,182.5 r5.5 -90°–0° [w0.13 ink d2/1] @f03/slagbåge
-linje 208.5,177 208.5,171.6 [w0.18 ink] @f03/glas
-linje 209,171.6 214.5,171.6 [w0.13 ink] @f03/slagbåge
-båge 209,171.6 r5.5 0°–90° [w0.13 ink d2/1] @f03/slagbåge
-linje 205,183 205,171 [w0.13 ink] @yv-o/under
-linje 209,183 209,171 [w0.13 ink] @yv-o/under
+linje 209,182.5 210.4,177.2 [w0.13 ink] @f03/slagbåge
+båge 209,182.5 r5.5 -90°–-75° [w0.13 ink] @f03/slagbåge
+linje 208.5,177 208.5,171.5 [w0.18 ink] @f03/glas
+linje 209,171.5 210.4,176.8 [w0.13 ink] @f03/slagbåge
+båge 209,171.5 r5.5 75°–90° [w0.13 ink] @f03/slagbåge
+linje 205,183.1 205,171 [w0.13 ink] @yv-o/under
+linje 209,183.1 209,171 [w0.13 ink] @yv-o/under
 text "F03" 203.8,175.1 h2 90° start [w0.18] @f03/littera
-polylinje sluten 164.6,198 165.1,198 165.1,199 164.6,199 [w0.25 ink] @f04/karm
-polylinje sluten 179,198 179.4,198 179.4,199 179,199 [w0.25 ink] @f04/karm
-linje 165.1,198 179,198 [w0.18 ink] @f04/karm
-linje 165.1,199 179,199 [w0.18 ink] @f04/karm
-linje 165.1,198.5 172,198.5 [w0.18 ink] @f04/glas
-linje 165.1,199 165.1,206 [w0.13 ink] @f04/slagbåge
-båge 165.1,199 r7 0°–90° [w0.13 ink d2/1] @f04/slagbåge
+polylinje sluten 164.6,198 165,198 165,199 164.6,199 [w0.25 ink] @f04/karm
+polylinje sluten 179,198 179.5,198 179.5,199 179,199 [w0.25 ink] @f04/karm
+linje 165,198 179,198 [w0.18 ink] @f04/karm
+linje 165,199 179,199 [w0.18 ink] @f04/karm
+linje 165,198.5 172,198.5 [w0.18 ink] @f04/glas
+linje 165,199 171.8,200.8 [w0.13 ink] @f04/slagbåge
+båge 165,199 r7 0°–15° [w0.13 ink] @f04/slagbåge
 linje 172,198.5 179,198.5 [w0.18 ink] @f04/glas
-linje 179,199 179,206 [w0.13 ink] @f04/slagbåge
-båge 179,199 r7 90°–180° [w0.13 ink d2/1] @f04/slagbåge
-linje 164.5,195 179.5,195 [w0.13 ink] @yv-n/under
-linje 164.5,199 179.5,199 [w0.13 ink] @yv-n/under
+linje 179,199 172.2,200.8 [w0.13 ink] @f04/slagbåge
+båge 179,199 r7 165°–180° [w0.13 ink] @f04/slagbåge
+linje 164.5,195 179.6,195 [w0.13 ink] @yv-n/under
+linje 164.5,199 179.6,199 [w0.13 ink] @yv-n/under
 text "F01" 170.1,191.8 h2 start [w0.18] @f04/littera
-polylinje sluten 104.1,198 104.6,198 104.6,199 104.1,199 [w0.25 ink] @f05/karm
-polylinje sluten 127.5,198 127.9,198 127.9,199 127.5,199 [w0.25 ink] @f05/karm
-linje 104.6,198 127.5,198 [w0.18 ink] @f05/karm
-linje 104.6,199 127.5,199 [w0.18 ink] @f05/karm
-linje 104.6,198.5 127.5,198.5 [w0.18 ink] @f05/glas
-linje 104,195 128,195 [w0.13 ink] @yv-n/under
-linje 104,199 128,199 [w0.13 ink] @yv-n/under
+polylinje sluten 104.1,198 104.5,198 104.5,199 104.1,199 [w0.25 ink] @f05/karm
+polylinje sluten 127.5,198 128,198 128,199 127.5,199 [w0.25 ink] @f05/karm
+linje 104.5,198 127.5,198 [w0.18 ink] @f05/karm
+linje 104.5,199 127.5,199 [w0.18 ink] @f05/karm
+linje 104.5,198.5 127.5,198.5 [w0.18 ink] @f05/glas
+linje 104,195 128.1,195 [w0.13 ink] @yv-n/under
+linje 104,199 128.1,199 [w0.13 ink] @yv-n/under
 text "F02" 114.1,191.8 h2 start [w0.18] @f05/littera
-polylinje sluten 90.1,143.1 90.1,143.6 89,143.6 89,143.1 [w0.25 ink] @f06/karm
-polylinje sluten 90.1,154.5 90.1,154.9 89,154.9 89,154.5 [w0.25 ink] @f06/karm
-linje 90.1,143.6 90.1,154.5 [w0.18 ink] @f06/karm
-linje 89,143.6 89,154.5 [w0.18 ink] @f06/karm
-linje 89.5,143.6 89.5,149 [w0.18 ink] @f06/glas
-linje 89,143.6 83.6,143.6 [w0.13 ink] @f06/slagbåge
-båge 89,143.6 r5.5 90°–180° [w0.13 ink d2/1] @f06/slagbåge
+polylinje sluten 90.1,143.1 90.1,143.5 89,143.5 89,143.1 [w0.25 ink] @f06/karm
+polylinje sluten 90.1,154.5 90.1,155 89,155 89,154.5 [w0.25 ink] @f06/karm
+linje 90.1,143.5 90.1,154.5 [w0.18 ink] @f06/karm
+linje 89,143.5 89,154.5 [w0.18 ink] @f06/karm
+linje 89.5,143.5 89.5,149 [w0.18 ink] @f06/glas
+linje 89,143.5 87.6,148.8 [w0.13 ink] @f06/slagbåge
+båge 89,143.5 r5.5 90°–105° [w0.13 ink] @f06/slagbåge
 linje 89.5,149 89.5,154.5 [w0.18 ink] @f06/glas
-linje 89,154.5 83.6,154.5 [w0.13 ink] @f06/slagbåge
-båge 89,154.5 r5.5 180°–-90° [w0.13 ink d2/1] @f06/slagbåge
-linje 93,143 93,155 [w0.13 ink] @yv-v/under
-linje 89,143 89,155 [w0.13 ink] @yv-v/under
+linje 89,154.5 87.6,149.2 [w0.13 ink] @f06/slagbåge
+båge 89,154.5 r5.5 -105°–-90° [w0.13 ink] @f06/slagbåge
+linje 93,143 93,155.1 [w0.13 ink] @yv-v/under
+linje 89,143 89,155.1 [w0.13 ink] @yv-v/under
 text "F03" 96.2,147.1 h2 90° start [w0.18] @f06/littera
 polylinje sluten 93,189 123,189 123,195 93,195 [w0.25 ink] @m01/symbol
 polylinje sluten 112,190 117,190 117,194 112,194 [w0.25 ink] @m02/symbol
@@ -213,127 +213,126 @@ linje 180,152 420,152 [w0.25 ink] @yv-s/wall
 linje 180,152 180,202.3 [w0.25 ink] @yv-s/wall
 linje 420,152 420,152 [w0.25 ink] @yv-s/wall
 linje 420,152 420,202.3 [w0.25 ink] @yv-s/wall
-linje 240,152 239.8,152 [w0.25 ink] @yv-s/wall
-linje 220.2,152 220,152 [w0.25 ink] @yv-s/wall
+linje 240.1,152 239.9,152 [w0.25 ink] @yv-s/wall
+linje 220.1,152 219.9,152 [w0.25 ink] @yv-s/wall
 linje 180,152 180,152 [w0.25 ink] @yv-s/wall
 linje 180,152 180,202.3 [w0.25 ink] @yv-v/wall
 linje 180,152 180,152 [w0.25 ink] @yv-v/wall
 linje 180,152 180,202.3 [w0.25 ink] @yv-v/wall
 linje 420,152 420,152 [w0.25 ink] @yv-o/wall
 linje 420,152 420,202.3 [w0.25 ink] @yv-o/wall
-linje 324.8,168.2 324.8,168.4 [w0.25 ink] @iv-4/wall
+linje 324.8,168 324.8,168.2 [w0.25 ink] @iv-4/wall
 linje 324.8,194 324.8,194.2 [w0.25 ink] @iv-4/wall
-linje 324.8,168.2 324.8,168.4 [w0.25 ink] @iv-4/wall
+linje 324.8,168 324.8,168.2 [w0.25 ink] @iv-4/wall
 linje 324.8,194 324.8,194.2 [w0.25 ink] @iv-4/wall
-linje 240,152 240,194 [w0.35 ink] @yv-s/hole
-linje 220,152 220,194 [w0.35 ink] @yv-s/hole
-linje 240,194 220,194 [w0.35 ink] @yv-s/hole
-linje 327,168.2 327,194.2 [w0.35 ink] @yv-s/hole
-linje 303,168.2 303,194.2 [w0.35 ink] @yv-s/hole
-linje 327,194.2 303,194.2 [w0.35 ink] @yv-s/hole
-linje 327,168.2 303,168.2 [w0.35 ink] @yv-s/hole
-linje 388,182.2 388,194.2 [w0.35 ink] @yv-s/hole
-linje 376,182.2 376,194.2 [w0.35 ink] @yv-s/hole
-linje 388,194.2 376,194.2 [w0.35 ink] @yv-s/hole
-linje 388,182.2 376,182.2 [w0.35 ink] @yv-s/hole
-linje 180,168.2 180,194.2 [w0.35 ink] @yv-v/hole
-linje 180,168.2 180,168.4 [w0.35 ink] @yv-v/hole
+linje 240.1,152 240.1,194.2 [w0.35 ink] @yv-s/hole
+linje 219.9,152 219.9,194.2 [w0.35 ink] @yv-s/hole
+linje 240.1,194.2 219.9,194.2 [w0.35 ink] @yv-s/hole
+linje 327.1,168 327.1,194.2 [w0.35 ink] @yv-s/hole
+linje 302.9,168 302.9,194.2 [w0.35 ink] @yv-s/hole
+linje 327.1,194.2 302.9,194.2 [w0.35 ink] @yv-s/hole
+linje 327.1,168 302.9,168 [w0.35 ink] @yv-s/hole
+linje 388.1,182 388.1,194.2 [w0.35 ink] @yv-s/hole
+linje 375.9,182 375.9,194.2 [w0.35 ink] @yv-s/hole
+linje 388.1,194.2 375.9,194.2 [w0.35 ink] @yv-s/hole
+linje 388.1,182 375.9,182 [w0.35 ink] @yv-s/hole
+linje 180,168 180,194.2 [w0.35 ink] @yv-v/hole
+linje 180,168 180,168.2 [w0.35 ink] @yv-v/hole
 linje 180,194 180,194.2 [w0.35 ink] @yv-v/hole
-linje 376,194 376.2,194 [w0.35 ink] @iv-2/hole
-linje 387.8,194 388,194 [w0.35 ink] @iv-2/hole
-linje 220.2,152 239.8,152 [w0.25 ink] @d01/frame
-linje 239.8,152 239.8,193.8 [w0.25 ink] @d01/frame
-linje 239.8,193.8 220.2,193.8 [w0.25 ink] @d01/frame
-linje 220.2,193.8 220.2,152 [w0.25 ink] @d01/frame
-linje 221.2,152.8 238.8,152.8 [w0.25 ink] @d01/frame
-linje 238.8,152.8 238.8,192.8 [w0.25 ink] @d01/frame
-linje 238.8,192.8 221.2,192.8 [w0.25 ink] @d01/frame
-linje 221.2,192.8 221.2,152.8 [w0.25 ink] @d01/frame
-linje 224.2,160.8 235.8,160.8 [w0.25 ink] @d01/leaf
-linje 235.8,160.8 235.8,189.8 [w0.25 ink] @d01/leaf
-linje 235.8,189.8 224.2,189.8 [w0.25 ink] @d01/leaf
-linje 224.2,189.8 224.2,160.8 [w0.25 ink] @d01/leaf
+linje 220.1,152 239.9,152 [w0.25 ink] @d01/frame
+linje 239.9,152 239.9,193.8 [w0.25 ink] @d01/frame
+linje 239.9,193.8 220.1,193.8 [w0.25 ink] @d01/frame
+linje 220.1,193.8 220.1,152 [w0.25 ink] @d01/frame
+linje 221.1,152.8 238.9,152.8 [w0.25 ink] @d01/frame
+linje 238.9,152.8 238.9,192.8 [w0.25 ink] @d01/frame
+linje 238.9,192.8 221.1,192.8 [w0.25 ink] @d01/frame
+linje 221.1,192.8 221.1,152.8 [w0.25 ink] @d01/frame
+linje 224.1,160.8 235.9,160.8 [w0.25 ink] @d01/leaf
+linje 235.9,160.8 235.9,189.8 [w0.25 ink] @d01/leaf
+linje 235.9,189.8 224.1,189.8 [w0.25 ink] @d01/leaf
+linje 224.1,189.8 224.1,160.8 [w0.25 ink] @d01/leaf
 linje 230.9,175.3 230,176.2 [w0.13 muted] @d01/glass
 linje 230.7,174.7 229.3,176 [w0.13 muted] @d01/glass
 linje 230,174.4 229.1,175.4 [w0.13 muted] @d01/glass
-linje 238.8,152.8 221.2,172.8 [w0.13 ink d3/1.5] @d01/swing
-linje 238.8,192.8 221.2,172.8 [w0.13 ink d3/1.5] @d01/swing
-linje 388,193.8 387.8,193.8 [w0.25 ink] @d04/frame
-linje 376.2,193.8 376,193.8 [w0.25 ink] @d04/frame
-linje 388,192.8 387.8,192.8 [w0.25 ink] @d04/frame
-linje 376.2,192.8 376,192.8 [w0.25 ink] @d04/frame
-linje 388,192.8 387.8,192.8 [w0.25 ink] @d04/leaf
-linje 376.2,192.8 376,192.8 [w0.25 ink] @d04/leaf
-linje 388,190.4 387.8,190.2 [w0.13 ink d3/1.5] @d04/swing
-linje 381.8,182.4 381.7,182.2 [w0.13 ink d3/1.5] @d04/swing
-linje 326.8,168.4 303.2,168.4 [w0.25 ink] @f01/frame
-linje 303.2,168.4 303.2,194 [w0.25 ink] @f01/frame
-linje 303.2,194 326.8,194 [w0.25 ink] @f01/frame
-linje 326.8,194 326.8,168.4 [w0.25 ink] @f01/frame
-linje 325.9,169.3 315,169.3 [w0.25 ink] @f01/frame
-linje 315,169.3 315,193.1 [w0.25 ink] @f01/frame
-linje 315,193.1 325.9,193.1 [w0.25 ink] @f01/frame
-linje 325.9,193.1 325.9,169.3 [w0.25 ink] @f01/frame
-linje 315,169.3 304.1,169.3 [w0.25 ink] @f01/frame
-linje 304.1,169.3 304.1,193.1 [w0.25 ink] @f01/frame
-linje 304.1,193.1 315,193.1 [w0.25 ink] @f01/frame
-linje 315,193.1 315,169.3 [w0.25 ink] @f01/frame
-linje 315,169.3 315,193.1 [w0.25 ink] @f01/sash
-linje 324.9,170.3 316,170.3 [w0.25 ink] @f01/sash
-linje 316,170.3 316,192.1 [w0.25 ink] @f01/sash
-linje 316,192.1 324.9,192.1 [w0.25 ink] @f01/sash
-linje 324.9,192.1 324.9,170.3 [w0.25 ink] @f01/sash
-linje 315,193.1 315,169.3 [w0.25 ink] @f01/sash
-linje 314,170.3 305.1,170.3 [w0.25 ink] @f01/sash
-linje 305.1,170.3 305.1,192.1 [w0.25 ink] @f01/sash
-linje 305.1,192.1 314,192.1 [w0.25 ink] @f01/sash
-linje 314,192.1 314,170.3 [w0.25 ink] @f01/sash
-linje 321.1,181.2 320.4,181.9 [w0.13 muted] @f01/glass
-linje 321,180.7 319.9,181.7 [w0.13 muted] @f01/glass
-linje 320.5,180.5 319.8,181.2 [w0.13 muted] @f01/glass
-linje 310.2,181.2 309.5,181.9 [w0.13 muted] @f01/glass
-linje 310.1,180.7 309,181.7 [w0.13 muted] @f01/glass
-linje 309.6,180.5 308.9,181.2 [w0.13 muted] @f01/glass
-linje 315,169.3 325.9,181.2 [w0.13 ink d3/1.5] @f01/swing
-linje 315,193.1 325.9,181.2 [w0.13 ink d3/1.5] @f01/swing
-linje 315,169.3 304.1,181.2 [w0.13 ink d3/1.5] @f01/swing
-linje 315,193.1 304.1,181.2 [w0.13 ink d3/1.5] @f01/swing
-linje 387.8,182.4 376.2,182.4 [w0.25 ink] @f02/frame
-linje 376.2,182.4 376.2,194 [w0.25 ink] @f02/frame
-linje 376.2,194 387.8,194 [w0.25 ink] @f02/frame
-linje 387.8,194 387.8,182.4 [w0.25 ink] @f02/frame
-linje 386.9,183.3 377.1,183.3 [w0.25 ink] @f02/frame
-linje 377.1,183.3 377.1,193.1 [w0.25 ink] @f02/frame
-linje 377.1,193.1 386.9,193.1 [w0.25 ink] @f02/frame
-linje 386.9,193.1 386.9,183.3 [w0.25 ink] @f02/frame
-linje 385.9,184.3 378.1,184.3 [w0.25 ink] @f02/sash
-linje 378.1,184.3 378.1,192.1 [w0.25 ink] @f02/sash
-linje 378.1,192.1 385.9,192.1 [w0.25 ink] @f02/sash
-linje 385.9,192.1 385.9,184.3 [w0.25 ink] @f02/sash
-linje 382.6,188.2 382,188.8 [w0.13 muted] @f02/glass
-linje 382.4,187.8 381.6,188.6 [w0.13 muted] @f02/glass
-linje 382,187.6 381.4,188.2 [w0.13 muted] @f02/glass
-linje 386.9,183.3 382,193.1 [w0.13 ink d3/1.5] @f02/swing
-linje 377.1,183.3 382,193.1 [w0.13 ink d3/1.5] @f02/swing
-linje 420,169.3 420,181.2 [w0.13 ink d3/1.5] @f03/swing
-linje 420,193.1 420,181.2 [w0.13 ink d3/1.5] @f03/swing
-linje 420,169.3 420,181.2 [w0.13 ink d3/1.5] @f03/swing
-linje 420,193.1 420,181.2 [w0.13 ink d3/1.5] @f03/swing
-linje 240,193.1 239.8,193.1 [w0.25 ink] @f05/frame
-linje 220.2,193.1 220,193.1 [w0.25 ink] @f05/frame
-linje 180,169.3 180,193.1 [w0.25 ink] @f06/frame
-linje 180,169.3 180,193.1 [w0.25 ink] @f06/frame
-linje 180,193.1 180,169.3 [w0.25 ink] @f06/frame
-linje 180,169.3 180,181.2 [w0.13 ink d3/1.5] @f06/swing
-linje 180,193.1 180,181.2 [w0.13 ink d3/1.5] @f06/swing
-linje 180,169.3 180,181.2 [w0.13 ink d3/1.5] @f06/swing
-linje 180,193.1 180,181.2 [w0.13 ink d3/1.5] @f06/swing
-linje 220,170 220.2,170 [w0.18 ink] @m01/vy
-linje 239.8,170 240,170 [w0.18 ink] @m01/vy
-linje 239.8,166.8 240,166.8 [w0.18 ink] @m03/vy
-linje 239.8,166 240,166 [w0.18 ink] @m03/vy
-linje 220,152 220.2,152 [w0.18 ink] @bj1/vy
-linje 239.8,152 240,152 [w0.18 ink] @bj1/vy
+linje 238.9,172.8 221.1,152.8 [w0.13 ink d3/1.5] @d01/swingFar
+linje 238.9,172.8 221.1,192.8 [w0.13 ink d3/1.5] @d01/swingFar
+linje 388.1,193.8 387.9,193.8 [w0.25 ink] @d04/frame
+linje 376.1,193.8 375.9,193.8 [w0.25 ink] @d04/frame
+linje 388.1,192.8 387.9,192.8 [w0.25 ink] @d04/frame
+linje 376.1,192.8 375.9,192.8 [w0.25 ink] @d04/frame
+linje 388.1,192.8 387.9,192.8 [w0.25 ink] @d04/leaf
+linje 376.1,192.8 375.9,192.8 [w0.25 ink] @d04/leaf
+linje 382.5,182 382.3,182.2 [w0.13 ink] @d04/swing
+linje 376.1,190.2 375.9,190.5 [w0.13 ink] @d04/swing
+linje 326.9,168.2 303.1,168.2 [w0.25 ink] @f01/frame
+linje 303.1,168.2 303.1,194 [w0.25 ink] @f01/frame
+linje 303.1,194 326.9,194 [w0.25 ink] @f01/frame
+linje 326.9,194 326.9,168.2 [w0.25 ink] @f01/frame
+linje 326,169.1 315,169.1 [w0.25 ink] @f01/frame
+linje 315,169.1 315,193.1 [w0.25 ink] @f01/frame
+linje 315,193.1 326,193.1 [w0.25 ink] @f01/frame
+linje 326,193.1 326,169.1 [w0.25 ink] @f01/frame
+linje 315,169.1 304,169.1 [w0.25 ink] @f01/frame
+linje 304,169.1 304,193.1 [w0.25 ink] @f01/frame
+linje 304,193.1 315,193.1 [w0.25 ink] @f01/frame
+linje 315,193.1 315,169.1 [w0.25 ink] @f01/frame
+linje 315,169.1 315,193.1 [w0.25 ink] @f01/sash
+linje 325,170.1 316,170.1 [w0.25 ink] @f01/sash
+linje 316,170.1 316,192.1 [w0.25 ink] @f01/sash
+linje 316,192.1 325,192.1 [w0.25 ink] @f01/sash
+linje 325,192.1 325,170.1 [w0.25 ink] @f01/sash
+linje 315,193.1 315,169.1 [w0.25 ink] @f01/sash
+linje 314,170.1 305,170.1 [w0.25 ink] @f01/sash
+linje 305,170.1 305,192.1 [w0.25 ink] @f01/sash
+linje 305,192.1 314,192.1 [w0.25 ink] @f01/sash
+linje 314,192.1 314,170.1 [w0.25 ink] @f01/sash
+linje 321.2,181.1 320.5,181.8 [w0.13 muted] @f01/glass
+linje 321,180.6 320,181.6 [w0.13 muted] @f01/glass
+linje 320.5,180.4 319.8,181.1 [w0.13 muted] @f01/glass
+linje 310.2,181.1 309.5,181.8 [w0.13 muted] @f01/glass
+linje 310,180.6 309,181.6 [w0.13 muted] @f01/glass
+linje 309.5,180.4 308.8,181.1 [w0.13 muted] @f01/glass
+linje 315,181.1 326,169.1 [w0.13 ink] @f01/swing
+linje 315,181.1 326,193.1 [w0.13 ink] @f01/swing
+linje 315,181.1 304,169.1 [w0.13 ink] @f01/swing
+linje 315,181.1 304,193.1 [w0.13 ink] @f01/swing
+linje 387.9,182.2 376.1,182.2 [w0.25 ink] @f02/frame
+linje 376.1,182.2 376.1,194 [w0.25 ink] @f02/frame
+linje 376.1,194 387.9,194 [w0.25 ink] @f02/frame
+linje 387.9,194 387.9,182.2 [w0.25 ink] @f02/frame
+linje 387,183.1 377,183.1 [w0.25 ink] @f02/frame
+linje 377,183.1 377,193.1 [w0.25 ink] @f02/frame
+linje 377,193.1 387,193.1 [w0.25 ink] @f02/frame
+linje 387,193.1 387,183.1 [w0.25 ink] @f02/frame
+linje 386,184.1 378,184.1 [w0.25 ink] @f02/sash
+linje 378,184.1 378,192.1 [w0.25 ink] @f02/sash
+linje 378,192.1 386,192.1 [w0.25 ink] @f02/sash
+linje 386,192.1 386,184.1 [w0.25 ink] @f02/sash
+linje 382.6,188.1 382,188.7 [w0.13 muted] @f02/glass
+linje 382.5,187.6 381.5,188.6 [w0.13 muted] @f02/glass
+linje 382,187.5 381.4,188.1 [w0.13 muted] @f02/glass
+linje 382,183.1 387,193.1 [w0.13 ink] @f02/swing
+linje 382,183.1 377,193.1 [w0.13 ink] @f02/swing
+linje 420,181.1 420,169.1 [w0.13 ink] @f03/swing
+linje 420,181.1 420,193.1 [w0.13 ink] @f03/swing
+linje 420,181.1 420,169.1 [w0.13 ink] @f03/swing
+linje 420,181.1 420,193.1 [w0.13 ink] @f03/swing
+linje 240.1,194 219.9,194 [w0.25 ink] @f05/frame
+linje 240.1,193.1 239.9,193.1 [w0.25 ink] @f05/frame
+linje 220.1,193.1 219.9,193.1 [w0.25 ink] @f05/frame
+linje 180,169.1 180,193.1 [w0.25 ink] @f06/frame
+linje 180,169.1 180,193.1 [w0.25 ink] @f06/frame
+linje 180,193.1 180,169.1 [w0.25 ink] @f06/frame
+linje 180,181.1 180,169.1 [w0.13 ink] @f06/swing
+linje 180,181.1 180,193.1 [w0.13 ink] @f06/swing
+linje 180,181.1 180,169.1 [w0.13 ink] @f06/swing
+linje 180,181.1 180,193.1 [w0.13 ink] @f06/swing
+linje 219.9,170 220.1,170 [w0.18 ink] @m01/vy
+linje 239.9,170 240.1,170 [w0.18 ink] @m01/vy
+linje 239.9,166.8 240.1,166.8 [w0.18 ink] @m03/vy
+linje 239.9,166 240.1,166 [w0.18 ink] @m03/vy
+linje 219.9,152 220.1,152 [w0.18 ink] @bj1/vy
+linje 239.9,152 240.1,152 [w0.18 ink] @bj1/vy
 linje 188,144 412,144 [w0.18 ink] @bj1/vy
 linje 188,152 188,144 [w0.18 ink] @bj1/vy
 linje 412,152 412,144 [w0.18 ink] @bj1/vy

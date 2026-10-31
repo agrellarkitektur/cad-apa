@@ -1,5 +1,7 @@
 import { openingSettingsOf, type OpeningRule, type OpeningSettings } from '../../core/general';
 import { renumberOpenings } from '../../elements/openingLittera';
+import { scheduleFields, type ScheduleKind } from '../../core/openingSchedule';
+import { scheduleFieldAction, scheduleFieldRenamed, scheduleTemplateMarkup } from '../openingScheduleFields';
 import type { StyleBook } from '../../core/graphics';
 import { DEFAULT_WEIGHTS, generalOf, OFFICE_TAGS, tagKey, weightList, type GeneralSettings, type LengthUnit, type OfficeInfo } from '../../core/general';
 import type { ProjectDoc } from '../../core/model';
@@ -152,11 +154,14 @@ function openingsSection(doc: ProjectDoc): string {
       <div class="fields gen-grid">
         ${text('opening:Window', 'Formel, fönster', o.formulas.Window, { ph: 'F{nr:2}' })}
         ${text('opening:Door', 'Formel, dörrar', o.formulas.Door, { ph: 'D{nr:2}' })}
-        ${text('opening:WallHole', 'Formel, vägghål', o.formulas.WallHole, { ph: 'V{nr:2}' })}
+        ${text('opening:WallHole', 'Formel, vägghål', o.formulas.WallHole, { ph: 'VG{nr:2}' })}
         ${text('opening:head', 'Överkant karm', String(o.head), { title: 'Förvalet för nya fönster, mm över golvet, så att dörrar och fönster linjerar' })}
-        ${text('opening:gap', 'Drevmån per sida', String(o.gap), { title: 'mm; modulmåttet räknar in den: 10 × 13 är 980 × 1 280' })}
+        ${text('opening:holeAdd', 'Hålmått: modulmåttet +', String(o.holeAdd), { title: 'mm på båda ledder; praxis 10 (10 × 21 → 1 010 × 2 110)' })}
+        ${text('opening:frameLess', 'Karmyttermått: modulmåttet −', String(o.frameLess), { title: 'mm på båda ledder; tillverkarens, ofta 10–20. En typ kan ha sitt eget (editorn).' })}
+        ${text('opening:swingAngle', 'Fönstrens slag i planen', String(o.swingAngle), { title: 'Grader; sidohängda bågar ritas så mycket öppna, med slagbågen kring gångjärnet' })}
         ${select('opening:hingeFrom', 'Hängning sedd från', o.hingeFrom, [['outside', 'Utsidan'], ['inside', 'Insidan']])}
       </div>
+      ${scheduleTemplateMarkup(doc)}
       <div class="row"><button type="button" class="btn" data-gen-action="renumber-openings"${o.rule === 'module' ? ' disabled title="Regeln Bara bokstav och modulmått har inga nummer"' : ''}>Numrera om…</button></div>
     </section>`;
 }
@@ -206,6 +211,9 @@ export function generalChange(store: DocStore, input: HTMLInputElement | HTMLSel
   } else if (kind === 'project') {
     if (v) renameProject(store, v);
     else input.value = store.doc.project.name;
+  } else if (kind === 'sfield') {
+    const [k, i] = name.split(':');
+    if (!scheduleFieldRenamed(store, k as ScheduleKind, Number(i), input.value)) input.value = scheduleFields(store.doc, k as ScheduleKind)[Number(i)] ?? '';
   } else if (kind === 'pfield') setProjectField(store, name, v);
   else if (kind === 'phase') setProjectPhase(store, v);
   else if (kind === 'weights') {
@@ -227,9 +235,9 @@ export function generalChange(store: DocStore, input: HTMLInputElement | HTMLSel
         const o: OpeningSettings = { ...(g.openings ?? {}), ...(g.openings?.formulas ? { formulas: { ...g.openings.formulas } } : {}) };
         if (name === 'rule') o.rule = v as OpeningRule;
         else if (name === 'hingeFrom') o.hingeFrom = v === 'inside' ? 'inside' : 'outside';
-        else if (name === 'head' || name === 'gap') {
+        else if (name === 'head' || name === 'holeAdd' || name === 'frameLess' || name === 'swingAngle') {
           const n = Math.round(Number(v.replace(',', '.')));
-          if (Number.isFinite(n) && n >= 0) o[name] = n;
+          if (Number.isFinite(n) && n >= 0) o[name] = name === 'swingAngle' ? Math.min(90, n) : n;
         } else if (name === 'Window' || name === 'Door' || name === 'WallHole') {
           o.formulas = { ...(o.formulas ?? {}) };
           if (v) o.formulas[name] = v;
@@ -272,6 +280,7 @@ export async function generalClick(store: DocStore, target: HTMLElement, setBook
   } else if (action === 'logo-remove') {
     if (await askConfirm('Ta bort logotypen?', 'Logotyperna som ligger på bladen har kvar bilden.', 'Ta bort')) setOfficeLogo(store, null);
   } else if (action === 'renumber-openings') await renumberDialog(store);
+  else if (action.startsWith('sfield-')) await scheduleFieldAction(store, action, (t) => askText(t, '', 'Lägg till'));
   else if (action === 'weights-reset') setBook(withGeneral(book, (g) => delete g.weights), 'Återställ tjocklekstabellen');
   else if (action === 'otag-add' || action === 'ptag-add') {
     const raw = await askText(action === 'otag-add' ? 'Ny tagg i kontoret' : 'Ny tagg i projektet', '', 'Lägg till');

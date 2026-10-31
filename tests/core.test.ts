@@ -359,8 +359,8 @@ describe('3D', () => {
     const south = shapes.filter((s) => s.id === 'yv-s' && s.kind !== 'edges');
     expect(south).toHaveLength(1);
     const cuts = (south[0] as Solid).cuts ?? [];
-    // Fönstret 12 × 13 med överkant karm 2 100 (0.11.8): karmen 1 280 hög, hålet 1 300 från 810 till 2 110; dörren från golvet.
-    expect(cuts.some((c) => c.z0 === 810 && c.z1 === 2110)).toBe(true);
+    // Fönstret 12 × 13 med överkant karm 2 100 (0.11.8.1): karmen 1 290 hög, hålet 1 310 från 800 till 2 110; dörren från golvet.
+    expect(cuts.some((c) => c.z0 === 800 && c.z1 === 2110)).toBe(true);
     expect(cuts.some((c) => c.z0 === 0)).toBe(true);
   });
 
@@ -557,11 +557,11 @@ describe('version 0.6', () => {
     expect(store.doc.elements['m03'].params.rotation).toBe(0);
   });
 
-  it('modulmått: hålet är modulmåttet, karmen drevmånen mindre runt om (0.11.8)', async () => {
+  it('modulmått: hålet är modulmåttet + 10 (0.11.8.1)', async () => {
     const { featuresOf } = await import('../src/elements/features');
     const doc = sampleProject();
     const [h1, h2] = featuresOf(doc, doc.elements['d02']);
-    expect(Math.abs(h2.a[1] - h1.a[1])).toBe(900);
+    expect(Math.abs(h2.a[1] - h1.a[1])).toBe(910);
   });
 
   it('dörrar får individuella nummer i vänstervarvet och litteramallen styr texten', async () => {
@@ -571,7 +571,7 @@ describe('version 0.6', () => {
     const doc = sampleProject();
     const { ctx } = createContext(doc, 'pl-1', { state: 'st-bef', detail: 'detail' }, defaultSheet(doc.graphics), () => true);
     expect(doorNumbersFor(ctx).get('d01')).toBe('D1101');
-    expect(litteraLines(ctx, doc.elements['d02'])).toEqual([doorNumbersFor(ctx).get('d02'), '900×2100']);
+    expect(litteraLines(ctx, doc.elements['d02'])).toEqual([doorNumbersFor(ctx).get('d02'), '910×2110']);
     const normal = createContext(doc, 'pl-1', { state: 'st-bef' }, defaultSheet(doc.graphics), () => true).ctx;
     // Litteraregeln (0.11.8): typ och mått, två siffror.
     expect(litteraLines(normal, doc.elements['d02'])[0]).toMatch(/^D0\d$/);

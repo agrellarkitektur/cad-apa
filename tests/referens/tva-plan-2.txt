@@ -8,13 +8,13 @@ linje 7200,6500 6000,6500 [w0.13 ink] @bj1-2/hål
 linje 6000,6500 6000,5000 [w0.13 ink] @bj1-2/hål
 linje 6000,5000 7200,6500 [w0.13 ink] @bj1-2/hål
 linje 7200,5000 6000,6500 [w0.13 ink] @bj1-2/hål
-yta fylld paper [w0.35 ink] 0,0 2000,0 2000,400 400,400 400,2400 0,2400 @/snitt
-yta fylld paper [w0.35 ink] 0,3600 400,3600 400,7600 1500,7600 1500,8000 0,8000 @/snitt
-yta fylld paper [w0.35 ink] 3000,0 6150,0 6150,400 5060,400 5060,2550 4940,2550 4940,400 3000,400 @/snitt
-yta fylld paper [w0.35 ink] 3900,7600 4940,7600 4940,6250 5060,6250 5060,7600 7550,7600 7550,8000 3900,8000 @/snitt
-yta fylld paper [w0.35 ink] 4940,3450 5060,3450 5060,3940 9650,3940 9650,4060 5060,4060 5060,5350 4940,5350 @/snitt
-yta fylld paper [w0.35 ink] 7350,0 12000,0 12000,5200 11600,5200 11600,4060 10550,4060 10550,3940 11600,3940 11600,400 7350,400 @/snitt
-yta fylld paper [w0.35 ink] 9050,7600 11600,7600 11600,6400 12000,6400 12000,8000 9050,8000 @/snitt
+yta fylld paper [w0.35 ink] 0,0 1995,0 1995,400 400,400 400,2395 0,2395 @/snitt
+yta fylld paper [w0.35 ink] 0,3605 400,3605 400,7600 1495,7600 1495,8000 0,8000 @/snitt
+yta fylld paper [w0.35 ink] 3005,0 6145,0 6145,400 5060,400 5060,2545 4940,2545 4940,400 3005,400 @/snitt
+yta fylld paper [w0.35 ink] 3905,7600 4940,7600 4940,6255 5060,6255 5060,7600 7545,7600 7545,8000 3905,8000 @/snitt
+yta fylld paper [w0.35 ink] 4940,3455 5060,3455 5060,3940 9645,3940 9645,4060 5060,4060 5060,5345 4940,5345 @/snitt
+yta fylld paper [w0.35 ink] 7355,0 12000,0 12000,5195 11600,5195 11600,4060 10555,4060 10555,3940 11600,3940 11600,400 7355,400 @/snitt
+yta fylld paper [w0.35 ink] 9055,7600 11600,7600 11600,6405 12000,6405 12000,8000 9055,8000 @/snitt
 text "YV01" 4012,700 h2 start [w0.18] @yv-s-2/littera
 linje 4260,590 4260,200 [w0.18 ink] @yv-s-2/littera
 text "YV01" 11300,3752 h2 90° start [w0.18] @yv-o-2/littera
@@ -30,89 +30,89 @@ linje 8300,3690 8300,4000 [w0.18 ink] @iv-2-2/littera
 yta hatch ink 45° a0.6 w0.18 [w0.35 ink] 7240,400 7360,400 7360,3940 7240,3940 @/snitt
 text "IV01" 7860,1952 h2 90° start [w0.18] @iv-4-2/littera
 linje 7610,2200 7300,2200 [w0.18 ink] @iv-4-2/littera
-polylinje sluten 2010,400 2060,400 2060,295 2010,295 [w0.25 ink] @d01-2/karm
-polylinje sluten 2940,400 2990,400 2990,295 2940,295 [w0.25 ink] @d01-2/karm
-linje 2060,400 2822.1,840 [w0.18 ink] @d01-2/dörrblad
-båge 2060,400 r880 0°–30° [w0.13 ink] @d01-2/slagbåge
+polylinje sluten 2005,400 2055,400 2055,295 2005,295 [w0.25 ink] @d01-2/karm
+polylinje sluten 2945,400 2995,400 2995,295 2945,295 [w0.25 ink] @d01-2/karm
+linje 2055,400 2825.8,845 [w0.18 ink] @d01-2/dörrblad
+båge 2055,400 r890 0°–30° [w0.13 ink] @d01-2/slagbåge
 text "D01" 2314,-320 h2 start [w0.18] @d01-2/littera
-polylinje sluten 5060,2560 5060,2610 4960,2610 4960,2560 [w0.25 ink] @d02-2/karm
-polylinje sluten 5060,3390 5060,3440 4960,3440 4960,3390 [w0.25 ink] @d02-2/karm
-linje 5060,2610 5450,3285.5 [w0.18 ink] @d02-2/dörrblad
-båge 5060,2610 r780 60°–90° [w0.13 ink] @d02-2/slagbåge
+polylinje sluten 5060,2555 5060,2605 4960,2605 4960,2555 [w0.25 ink] @d02-2/karm
+polylinje sluten 5060,3395 5060,3445 4960,3445 4960,3395 [w0.25 ink] @d02-2/karm
+linje 5060,2605 5455,3289.2 [w0.18 ink] @d02-2/dörrblad
+båge 5060,2605 r790 60°–90° [w0.13 ink] @d02-2/slagbåge
 text "D02" 4820,2814 h2 90° start [w0.18] @d02-2/littera
-polylinje sluten 5060,5360 5060,5410 4960,5410 4960,5360 [w0.25 ink] @d03-2/karm
-polylinje sluten 5060,6190 5060,6240 4960,6240 4960,6190 [w0.25 ink] @d03-2/karm
-linje 5060,5410 5450,6085.5 [w0.18 ink] @d03-2/dörrblad
-båge 5060,5410 r780 60°–90° [w0.13 ink] @d03-2/slagbåge
+polylinje sluten 5060,5355 5060,5405 4960,5405 4960,5355 [w0.25 ink] @d03-2/karm
+polylinje sluten 5060,6195 5060,6245 4960,6245 4960,6195 [w0.25 ink] @d03-2/karm
+linje 5060,5405 5455,6089.2 [w0.18 ink] @d03-2/dörrblad
+båge 5060,5405 r790 60°–90° [w0.13 ink] @d03-2/slagbåge
 text "D02" 4820,5614 h2 90° start [w0.18] @d03-2/littera
-polylinje sluten 9660,3940 9710,3940 9710,4040 9660,4040 [w0.25 ink] @d04-2/karm
-polylinje sluten 10490,3940 10540,3940 10540,4040 10490,4040 [w0.25 ink] @d04-2/karm
-linje 9710,3940 10385.5,3550 [w0.18 ink] @d04-2/dörrblad
-båge 9710,3940 r780 -30°–0° [w0.13 ink] @d04-2/slagbåge
+polylinje sluten 9655,3940 9705,3940 9705,4040 9655,4040 [w0.25 ink] @d04-2/karm
+polylinje sluten 10495,3940 10545,3940 10545,4040 10495,4040 [w0.25 ink] @d04-2/karm
+linje 9705,3940 10389.2,3545 [w0.18 ink] @d04-2/dörrblad
+båge 9705,3940 r790 -30°–0° [w0.13 ink] @d04-2/slagbåge
 text "D02" 9914,4180 h2 start [w0.18] @d04-2/littera
-polylinje sluten 7340,105 7295,105 7295,0 7340,0 [w0.25 ink] @f01-2/karm
-polylinje sluten 6205,105 6160,105 6160,0 6205,0 [w0.25 ink] @f01-2/karm
-linje 7295,105 6205,105 [w0.18 ink] @f01-2/karm
-linje 7295,0 6205,0 [w0.18 ink] @f01-2/karm
-linje 7295,52.5 6750,52.5 [w0.18 ink] @f01-2/glas
-linje 7295,0 7295,-545 [w0.13 ink] @f01-2/slagbåge
-båge 7295,0 r545 180°–-90° [w0.13 ink d2/1] @f01-2/slagbåge
-linje 6750,52.5 6205,52.5 [w0.18 ink] @f01-2/glas
-linje 6205,0 6205,-545 [w0.13 ink] @f01-2/slagbåge
-båge 6205,0 r545 -90°–0° [w0.13 ink d2/1] @f01-2/slagbåge
-linje 7350,400 6150,400 [w0.13 ink] @yv-s-2/under
-linje 7350,0 6150,0 [w0.13 ink] @yv-s-2/under
+polylinje sluten 7345,105 7300,105 7300,0 7345,0 [w0.25 ink] @f01-2/karm
+polylinje sluten 6200,105 6155,105 6155,0 6200,0 [w0.25 ink] @f01-2/karm
+linje 7300,105 6200,105 [w0.18 ink] @f01-2/karm
+linje 7300,0 6200,0 [w0.18 ink] @f01-2/karm
+linje 7300,52.5 6750,52.5 [w0.18 ink] @f01-2/glas
+linje 7300,0 6768.7,-142.4 [w0.13 ink] @f01-2/slagbåge
+båge 7300,0 r550 180°–-165° [w0.13 ink] @f01-2/slagbåge
+linje 6750,52.5 6200,52.5 [w0.18 ink] @f01-2/glas
+linje 6200,0 6731.3,-142.4 [w0.13 ink] @f01-2/slagbåge
+båge 6200,0 r550 -15°–0° [w0.13 ink] @f01-2/slagbåge
+linje 7355,400 6145,400 [w0.13 ink] @yv-s-2/under
+linje 7355,0 6145,0 [w0.13 ink] @yv-s-2/under
 text "F03" 6564,520 h2 start [w0.18] @f01-2/littera
-linje 10400,400 10400,0 [w0.13 ink d5/1/0.3/1] @f02-2/över
-linje 9800,400 9800,0 [w0.13 ink d5/1/0.3/1] @f02-2/över
-linje 10400,52.5 9800,52.5 [w0.13 ink d5/1/0.3/1] @f02-2/över
+linje 10405,400 10405,0 [w0.13 ink d5/1/0.3/1] @f02-2/över
+linje 9795,400 9795,0 [w0.13 ink d5/1/0.3/1] @f02-2/över
+linje 10405,52.5 9795,52.5 [w0.13 ink d5/1/0.3/1] @f02-2/över
 text "F04" 9914,520 h2 start [w0.18] @f02-2/littera
-polylinje sluten 11895,6390 11895,6345 12000,6345 12000,6390 [w0.25 ink] @f03-2/karm
-polylinje sluten 11895,5255 11895,5210 12000,5210 12000,5255 [w0.25 ink] @f03-2/karm
-linje 11895,6345 11895,5255 [w0.18 ink] @f03-2/karm
-linje 12000,6345 12000,5255 [w0.18 ink] @f03-2/karm
-linje 11947.5,6345 11947.5,5800 [w0.18 ink] @f03-2/glas
-linje 12000,6345 12545,6345 [w0.13 ink] @f03-2/slagbåge
-båge 12000,6345 r545 -90°–0° [w0.13 ink d2/1] @f03-2/slagbåge
-linje 11947.5,5800 11947.5,5255 [w0.18 ink] @f03-2/glas
-linje 12000,5255 12545,5255 [w0.13 ink] @f03-2/slagbåge
-båge 12000,5255 r545 0°–90° [w0.13 ink d2/1] @f03-2/slagbåge
-linje 11600,6400 11600,5200 [w0.13 ink] @yv-o-2/under
-linje 12000,6400 12000,5200 [w0.13 ink] @yv-o-2/under
+polylinje sluten 11895,6395 11895,6350 12000,6350 12000,6395 [w0.25 ink] @f03-2/karm
+polylinje sluten 11895,5250 11895,5205 12000,5205 12000,5250 [w0.25 ink] @f03-2/karm
+linje 11895,6350 11895,5250 [w0.18 ink] @f03-2/karm
+linje 12000,6350 12000,5250 [w0.18 ink] @f03-2/karm
+linje 11947.5,6350 11947.5,5800 [w0.18 ink] @f03-2/glas
+linje 12000,6350 12142.4,5818.7 [w0.13 ink] @f03-2/slagbåge
+båge 12000,6350 r550 -90°–-75° [w0.13 ink] @f03-2/slagbåge
+linje 11947.5,5800 11947.5,5250 [w0.18 ink] @f03-2/glas
+linje 12000,5250 12142.4,5781.3 [w0.13 ink] @f03-2/slagbåge
+båge 12000,5250 r550 75°–90° [w0.13 ink] @f03-2/slagbåge
+linje 11600,6405 11600,5195 [w0.13 ink] @yv-o-2/under
+linje 12000,6405 12000,5195 [w0.13 ink] @yv-o-2/under
 text "F03" 11480,5614 h2 90° start [w0.18] @f03-2/littera
-polylinje sluten 7560,7895 7605,7895 7605,8000 7560,8000 [w0.25 ink] @f04-2/karm
-polylinje sluten 8995,7895 9040,7895 9040,8000 8995,8000 [w0.25 ink] @f04-2/karm
-linje 7605,7895 8995,7895 [w0.18 ink] @f04-2/karm
-linje 7605,8000 8995,8000 [w0.18 ink] @f04-2/karm
-linje 7605,7947.5 8300,7947.5 [w0.18 ink] @f04-2/glas
-linje 7605,8000 7605,8695 [w0.13 ink] @f04-2/slagbåge
-båge 7605,8000 r695 0°–90° [w0.13 ink d2/1] @f04-2/slagbåge
-linje 8300,7947.5 8995,7947.5 [w0.18 ink] @f04-2/glas
-linje 8995,8000 8995,8695 [w0.13 ink] @f04-2/slagbåge
-båge 8995,8000 r695 90°–180° [w0.13 ink d2/1] @f04-2/slagbåge
-linje 7550,7600 9050,7600 [w0.13 ink] @yv-n-2/under
-linje 7550,8000 9050,8000 [w0.13 ink] @yv-n-2/under
+polylinje sluten 7555,7895 7600,7895 7600,8000 7555,8000 [w0.25 ink] @f04-2/karm
+polylinje sluten 9000,7895 9045,7895 9045,8000 9000,8000 [w0.25 ink] @f04-2/karm
+linje 7600,7895 9000,7895 [w0.18 ink] @f04-2/karm
+linje 7600,8000 9000,8000 [w0.18 ink] @f04-2/karm
+linje 7600,7947.5 8300,7947.5 [w0.18 ink] @f04-2/glas
+linje 7600,8000 8276.1,8181.2 [w0.13 ink] @f04-2/slagbåge
+båge 7600,8000 r700 0°–15° [w0.13 ink] @f04-2/slagbåge
+linje 8300,7947.5 9000,7947.5 [w0.18 ink] @f04-2/glas
+linje 9000,8000 8323.9,8181.2 [w0.13 ink] @f04-2/slagbåge
+båge 9000,8000 r700 165°–180° [w0.13 ink] @f04-2/slagbåge
+linje 7545,7600 9055,7600 [w0.13 ink] @yv-n-2/under
+linje 7545,8000 9055,8000 [w0.13 ink] @yv-n-2/under
 text "F01" 8114,7280 h2 start [w0.18] @f04-2/littera
-polylinje sluten 1510,7895 1555,7895 1555,8000 1510,8000 [w0.25 ink] @f05-2/karm
-polylinje sluten 3845,7895 3890,7895 3890,8000 3845,8000 [w0.25 ink] @f05-2/karm
-linje 1555,7895 3845,7895 [w0.18 ink] @f05-2/karm
-linje 1555,8000 3845,8000 [w0.18 ink] @f05-2/karm
-linje 1555,7947.5 3845,7947.5 [w0.18 ink] @f05-2/glas
-linje 1500,7600 3900,7600 [w0.13 ink] @yv-n-2/under
-linje 1500,8000 3900,8000 [w0.13 ink] @yv-n-2/under
+polylinje sluten 1505,7895 1550,7895 1550,8000 1505,8000 [w0.25 ink] @f05-2/karm
+polylinje sluten 3850,7895 3895,7895 3895,8000 3850,8000 [w0.25 ink] @f05-2/karm
+linje 1550,7895 3850,7895 [w0.18 ink] @f05-2/karm
+linje 1550,8000 3850,8000 [w0.18 ink] @f05-2/karm
+linje 1550,7947.5 3850,7947.5 [w0.18 ink] @f05-2/glas
+linje 1495,7600 3905,7600 [w0.13 ink] @yv-n-2/under
+linje 1495,8000 3905,8000 [w0.13 ink] @yv-n-2/under
 text "F02" 2514,7280 h2 start [w0.18] @f05-2/littera
-polylinje sluten 105,2410 105,2455 0,2455 0,2410 [w0.25 ink] @f06-2/karm
-polylinje sluten 105,3545 105,3590 0,3590 0,3545 [w0.25 ink] @f06-2/karm
-linje 105,2455 105,3545 [w0.18 ink] @f06-2/karm
-linje 0,2455 0,3545 [w0.18 ink] @f06-2/karm
-linje 52.5,2455 52.5,3000 [w0.18 ink] @f06-2/glas
-linje 0,2455 -545,2455 [w0.13 ink] @f06-2/slagbåge
-båge 0,2455 r545 90°–180° [w0.13 ink d2/1] @f06-2/slagbåge
-linje 52.5,3000 52.5,3545 [w0.18 ink] @f06-2/glas
-linje 0,3545 -545,3545 [w0.13 ink] @f06-2/slagbåge
-båge 0,3545 r545 180°–-90° [w0.13 ink d2/1] @f06-2/slagbåge
-linje 400,2400 400,3600 [w0.13 ink] @yv-v-2/under
-linje 0,2400 0,3600 [w0.13 ink] @yv-v-2/under
+polylinje sluten 105,2405 105,2450 0,2450 0,2405 [w0.25 ink] @f06-2/karm
+polylinje sluten 105,3550 105,3595 0,3595 0,3550 [w0.25 ink] @f06-2/karm
+linje 105,2450 105,3550 [w0.18 ink] @f06-2/karm
+linje 0,2450 0,3550 [w0.18 ink] @f06-2/karm
+linje 52.5,2450 52.5,3000 [w0.18 ink] @f06-2/glas
+linje 0,2450 -142.4,2981.3 [w0.13 ink] @f06-2/slagbåge
+båge 0,2450 r550 90°–105° [w0.13 ink] @f06-2/slagbåge
+linje 52.5,3000 52.5,3550 [w0.18 ink] @f06-2/glas
+linje 0,3550 -142.4,3018.7 [w0.13 ink] @f06-2/slagbåge
+båge 0,3550 r550 -105°–-90° [w0.13 ink] @f06-2/slagbåge
+linje 400,2395 400,3605 [w0.13 ink] @yv-v-2/under
+linje 0,2395 0,3605 [w0.13 ink] @yv-v-2/under
 text "F03" 720,2814 h2 90° start [w0.18] @f06-2/littera
 text "ALLRUM" 2192.6,4290.7 h2.5 start fet [w0.18 ink] @r01-2/rumstext
 text "1201" 2192.6,3926.7 h2.2 start [w0.18 ink] @r01-2/rumstext

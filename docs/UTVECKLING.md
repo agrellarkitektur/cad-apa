@@ -670,6 +670,49 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Dörrar och fönster: synpunkterna på mockupen (0.11.8.1, format 28)
+
+- **Måtten**: `OpeningMeasure` (`holeAdd`, `frameLess`) i
+  `core/openingTypes.ts`; `frameFromModule(m, mod, st)` och
+  `holeFromModule(m, mod, st)` (drevmånen och `holeFromFrame` är borta),
+  `frameLessOf` (typens `frameLess` eller Allmänts). `deriveOpening` ger
+  `frameLess` och `gap` (drevmånen under karmen, 0 på golvet).
+  `GeneralSettings.openings` har `holeAdd`, `frameLess` och `swingAngle`
+  (`gap` läses inte längre).
+- **Öppningssymbolen**: `symbolSegments(cell)` i `core/openingSymbol.ts`,
+  gemensam för `openingModel.ts` (3D) och `openingPreview.ts` (editorn).
+  Kanterna har delen `swing` (sidan luften öppnas mot) eller `swingFar`
+  (`EdgePart`); raderna `doorSwingFarElev` och `windowSwingFarElev` i
+  `facadePens.ts`, `SYMBOL_PARTS` har båda. Visa-nycklarna `swing`
+  (dörrarnas slagbågar), `swingWindow` och `openingSymbol` i `showKeys.ts`;
+  `BARE` i `viewCategories.ts` har `swingWindow`.
+- **Fönstrets slag**: `windowSwing` i `openingPlanFor` (också i Skiss);
+  dörrens slagbåge ritas i Skiss (`leafPrims` utan `sketch`-villkoret).
+- **Spröjs**: `OpeningCell.muntins` (`Muntins`: `v`, `h`, `kind`, `width`,
+  `lines` i andelar), `normalizeMuntins`, `muntinLines(m, glas)` och
+  `muntinOutline(lines, bredd)`; i 3D `muntins` i `openingModel3d` (delen
+  `muntin`, raden `windowMuntinElev`). Editorn: `muntinMarkup`,
+  `snapMuntinPoint`, `glassRectOf` och ritläget `st.draw` i
+  `ui/style/openingTypes.ts`; `openingEditorClick` tar musens händelse
+  (`styleDialog.ts`).
+- **Dörrbladet**: `OpeningCell.leafGrid` (`LeafGrid`: `cols`, `rows`,
+  `fills` med `glass`/`material`), `normalizeLeafGrid`, `leafGridPreset`
+  (Spegel, Glasat), `leafGridOf` och `layoutLeaf(grid, rect)` (fyllningarna
+  och bladets rutor med `col`/`row`). `OpeningGeom.mat` ger materialets
+  fält (`materialSolid`). Editorn: `leafGridMarkup`, `ownLeafGrid`, fälten
+  `lcol:`/`lrow:`/`lfill:` och `data-ot-lcell`/`data-ot-fill` i
+  förhandsvisningen (`opts.fill`).
+- **Uppställningens fält**: `core/openingSchedule.ts`
+  (`DEFAULT_SCHEDULE_FIELDS`, `DERIVED_FIELDS`, `scheduleFields`,
+  `ownFields`, `fieldValue`, `commonValue`, `withField`, `renameField`,
+  `sameLittera`); värdena i `params.fields`. `OpeningSchedule.values` är
+  borta. Gränssnittet i `ui/openingScheduleFields.ts`: avsnittet i
+  egenskaperna (nycklar `ofield:<namn>`, `applyScheduleField`) och mallen
+  under Allmänt (`scheduleTemplateMarkup`, `data-gen="sfield:Kind:i"`,
+  `scheduleFieldAction`, `setScheduleFields` med namnbyte i samma
+  ångra-steg).
+- **Tester**: `tests/v01181.test.ts`; referensritningarna är omskrivna.
+
 ## Dörrar och fönster: öppningstyperna (0.11.8, format 28)
 
 - **Typen** i `core/openingTypes.ts`: `OpeningTypeModel` (`kind` window,

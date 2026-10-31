@@ -536,7 +536,7 @@ export class StyleDialog {
     )
       return;
     if (await railEditorClick(this.store, this.rt, target, () => this.render(), this.onError)) return;
-    if (await openingEditorClick(this.store, this.ot, target, () => this.render(), this.onError)) return;
+    if (await openingEditorClick(this.store, this.ot, target, () => this.render(), this.onError, e as MouseEvent)) return;
     if (await generalClick(this.store, target, (book, label) => this.set(book, label))) return;
     const go = target.closest<HTMLElement>('[data-sb-go]')?.dataset.sbGo;
     if (go) {

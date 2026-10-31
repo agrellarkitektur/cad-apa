@@ -1,9 +1,10 @@
-import { hasSash, layoutOpening, LEAF_OPS, SIDE_HUNG, type LaidCell, type OpeningTypeModel, type Rect, type Track } from '../../core/openingTypes';
+import { symbolSegments } from '../../core/openingSymbol';
+import { hasSash, layoutLeaf, layoutOpening, leafGridOf, muntinLines, muntinWidth, LEAF_OPS, SIDE_HUNG, type LaidCell, type OpeningTypeModel, type Rect, type Track } from '../../core/openingTypes';
 
 /**
  * Typen sedd utifrån i dörr- och fönstereditorn (0.11.8, tavla 3): karmen,
- * posterna, lufterna med glas, panel eller blad, öppningssymbolen (spetsen
- * mot gångjärnen; streckad när luften öppnas inåt), gångjärnen som en
+ * posterna, lufterna med glas, panel eller blad, öppningssymbolen (spretar
+ * mot gångjärnssidan; streckad när luften öppnas inåt), gångjärnen som en
  * markering (två, 100 från över- och underkant) och handtagen på låssidan.
  * Varje luft har `data-ot-cell` så att den går att välja.
  */
@@ -11,7 +12,7 @@ import { hasSash, layoutOpening, LEAF_OPS, SIDE_HUNG, type LaidCell, type Openin
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 export const trackText = (t: Track): string => (t.unit === 'fr' ? `${nf.format(t.size)} ${t.size === 1 ? 'andel' : 'andelar'}` : nf.format(t.size));
 
-export function openingPreviewSvg(m: OpeningTypeModel, w: number, h: number, selected: number | null): string {
+export function openingPreviewSvg(m: OpeningTypeModel, w: number, h: number, selected: number | null, opts: { fill?: number | null; drawing?: boolean } = {}): string {
   const L = layoutOpening(m, w, h);
   const pad = Math.max(w, h) * 0.14;
   const vb = `${-pad} ${-pad} ${w + 2 * pad} ${h + 2 * pad}`;
@@ -28,20 +29,25 @@ export function openingPreviewSvg(m: OpeningTypeModel, w: number, h: number, sel
     out.push(`<g data-ot-cell="${c.col},${c.row}" class="op-cell">`);
     if (LEAF_OPS.has(c.op)) {
       out.push(rect(r, 'op-leaf', at));
-      if (c.leaf === 'glazed') {
-        const iw = Math.min(150, (r.u1 - r.u0) * 0.2);
-        out.push(rect({ u0: r.u0 + iw, u1: r.u1 - iw, z0: r.z0 + Math.min(400, (r.z1 - r.z0) * 0.25), z1: r.z1 - 150 }, 'op-glass'));
-      } else if (c.leaf === 'panel') {
-        const iw = Math.min(120, (r.u1 - r.u0) * 0.15);
-        const zm = r.z0 + (r.z1 - r.z0) * 0.45;
-        out.push(rect({ u0: r.u0 + iw, u1: r.u1 - iw, z0: r.z0 + iw * 1.5, z1: zm - iw / 2 }, 'op-line'), rect({ u0: r.u0 + iw, u1: r.u1 - iw, z0: zm + iw / 2, z1: r.z1 - iw }, 'op-line'));
-      }
+      // Bladets indelning (0.11.8.1): fyllningarna går att välja när luften är vald.
+      const grid = leafGridOf(c);
+      const sel = idx >= 0 && idx === selected;
+      if (grid && sel)
+        // Bladets rutor utan fyllning: ett klick gör en fyllning där.
+        for (const fr of layoutLeaf(grid, r).frame) out.push(rect(fr, 'op-leafcell', ` data-ot-lcell="${fr.col},${fr.row}"`));
+      if (grid)
+        layoutLeaf(grid, r).fills.forEach((f) => {
+          const fi = grid.fills.findIndex((x) => x.col === f.col && x.row === f.row);
+          const on = idx >= 0 && idx === selected && opts.fill === fi;
+          out.push(rect(f.rect, `${f.glass ? 'op-glass' : 'op-fillpanel'}${on ? ' on' : ''}`, idx >= 0 && idx === selected ? ` data-ot-fill="${fi}"` : ''));
+        });
     } else if (c.fill === 'panel') out.push(rect(r, 'op-panel', at));
     else if (c.fill === 'open') out.push(rect(r, 'op-open', at));
     else if (hasSash(c)) {
       const s = Math.min(m.sash, (r.u1 - r.u0) / 3, (r.z1 - r.z0) / 3);
-      out.push(rect(r, 'op-sash', at), rect({ u0: r.u0 + s, u1: r.u1 - s, z0: r.z0 + s, z1: r.z1 - s }, 'op-glass'));
-    } else out.push(rect(r, 'op-glass', at));
+      const gl = { u0: r.u0 + s, u1: r.u1 - s, z0: r.z0 + s, z1: r.z1 - s };
+      out.push(rect(r, 'op-sash', at), rect(gl, 'op-glass'), muntins(c, gl, Y, k));
+    } else out.push(rect(r, 'op-glass', at), muntins(c, r, Y, k));
     out.push(symbol(c, Y));
     out.push(hardware(c, Y, k));
     out.push('</g>');
@@ -55,70 +61,21 @@ export function openingPreviewSvg(m: OpeningTypeModel, w: number, h: number, sel
   const ys = L.cells.filter((c) => c.col === 0 && !c.rowSpan);
   for (const c of ys) out.push(`<text class="op-track" x="${-pad * 0.2}" y="${Y((c.rect.z0 + c.rect.z1) / 2)}" font-size="${12 * k}" text-anchor="end">${trackText(m.rows[c.row])}</text>`);
   out.push(`<text class="op-dim" x="${w / 2}" y="${h + pad * 0.6}" font-size="${12 * k}" text-anchor="middle">${nf.format(w)} × ${nf.format(h)}</text>`);
-  return `<svg class="op-preview" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" style="--k:${k}">${out.join('')}</svg>`;
+  return `<svg class="op-preview${opts.drawing ? ' drawing' : ''}" data-h="${h}" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" style="--k:${k}">${out.join('')}</svg>`;
+}
+
+/** Spröjsen som breda linjer. */
+function muntins(c: LaidCell, gl: Rect, Y: (z: number) => number, k: number): string {
+  if (!c.muntins) return '';
+  const w = muntinWidth(c.muntins);
+  const lines = muntinLines(c.muntins, gl);
+  const L = (cls: string, sw: number) => lines.map(([a, b, d, e]) => `<line class="${cls}" x1="${a}" y1="${Y(b)}" x2="${d}" y2="${Y(e)}" style="stroke-width:${sw}"/>`).join('');
+  return L('op-muntin-o', w) + L('op-muntin', Math.max(w * 0.4, w - 2.4 * k));
 }
 
 function symbol(c: LaidCell, Y: (z: number) => number): string {
-  const r = c.rect;
-  const segs: [number, number, number, number][] = [];
-  const um = (r.u0 + r.u1) / 2;
-  const zm = (r.z0 + r.z1) / 2;
-  const left = c.hinge !== 'right';
-  const side = (l: boolean) => {
-    const hu = l ? r.u0 : r.u1;
-    const fu = l ? r.u1 : r.u0;
-    segs.push([fu, r.z0, hu, zm], [fu, r.z1, hu, zm]);
-  };
-  const bottom = () => segs.push([r.u0, r.z1, um, r.z0], [r.u1, r.z1, um, r.z0]);
-  const top = () => segs.push([r.u0, r.z0, um, r.z1], [r.u1, r.z0, um, r.z1]);
-  const arrow = (toLeft: boolean) => {
-    const w = r.u1 - r.u0;
-    const a = toLeft ? r.u1 - w * 0.2 : r.u0 + w * 0.2;
-    const e = toLeft ? r.u0 + w * 0.2 : r.u1 - w * 0.2;
-    const k = Math.min(80, w * 0.1) * (toLeft ? 1 : -1);
-    segs.push([a, zm, e, zm], [e, zm, e + k, zm + Math.abs(k) * 0.6], [e, zm, e + k, zm - Math.abs(k) * 0.6]);
-  };
-  switch (c.op) {
-    case 'side':
-    case 'leaf':
-      side(left);
-      break;
-    case 'tiltturn':
-      side(left);
-      bottom();
-      break;
-    case 'bottom':
-      bottom();
-      break;
-    case 'top':
-      top();
-      break;
-    case 'pivotH':
-      bottom();
-      top();
-      break;
-    case 'pivotV':
-      side(true);
-      side(false);
-      break;
-    case 'slide':
-    case 'slideLeaf':
-    case 'pocket':
-      arrow(left);
-      break;
-    case 'fold':
-    case 'foldLeaf': {
-      const n = 4;
-      const w = (r.u1 - r.u0) / n;
-      for (let i = 0; i < n; i++) segs.push([r.u0 + i * w, i % 2 ? r.z0 + 200 : zm, r.u0 + (i + 1) * w, i % 2 ? zm : r.z0 + 200]);
-      break;
-    }
-    case 'garage':
-      segs.push([um, r.z0 + (r.z1 - r.z0) * 0.25, um, r.z1 - (r.z1 - r.z0) * 0.25]);
-      break;
-  }
   const cls = c.inward && !LEAF_OPS.has(c.op) ? 'op-symbol inward' : 'op-symbol';
-  return segs.map(([a, b, d, e]) => `<line class="${cls}" x1="${a}" y1="${Y(b)}" x2="${d}" y2="${Y(e)}"/>`).join('');
+  return symbolSegments(c).map(([a, b, d, e]) => `<line class="${cls}" x1="${a}" y1="${Y(b)}" x2="${d}" y2="${Y(e)}"/>`).join('');
 }
 
 /** Gångjärnen (två, 100 från över- och underkant) och handtaget på låssidan. */

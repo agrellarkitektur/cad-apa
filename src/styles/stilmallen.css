@@ -1824,3 +1824,74 @@ table.pe-pts {
 .gen-rules .gen-desc {
   margin-left: 6px;
 }
+
+/* Uppställningens fältmall under Allmänt › Fönster och dörrar (0.11.8.1). */
+.sched-template h4 {
+  margin: 12px 0 4px;
+  font-size: 12px;
+}
+.sched-cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 8px 16px;
+  align-items: start;
+}
+.sched-cols summary {
+  cursor: pointer;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.sched-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 2px 0;
+}
+.sched-row input {
+  flex: 1;
+  min-width: 0;
+}
+.sched-row .gen-desc {
+  font-size: 11px;
+  color: var(--muted, #888);
+}
+
+/* Spröjs och dörrbladets fyllningar i editorn (0.11.8.1). */
+.op-preview line.op-muntin-o,
+.op-preview line.op-muntin {
+  vector-effect: none;
+  stroke-linecap: square;
+  pointer-events: none;
+}
+.op-preview line.op-muntin {
+  stroke: #fff;
+}
+.op-preview .op-fillpanel {
+  fill: #d9d3c4;
+  cursor: pointer;
+}
+.op-preview .op-fillpanel.on,
+.op-preview .op-glass.on {
+  stroke: var(--accent);
+  stroke-width: 2.2;
+}
+.op-preview.drawing,
+.op-preview.drawing .op-cell {
+  cursor: crosshair;
+}
+.op-preview .op-draft {
+  stroke: var(--accent);
+  stroke-dasharray: 4 3;
+  pointer-events: none;
+}
+.op-preview .op-snap {
+  fill: var(--accent);
+  stroke: none;
+  pointer-events: none;
+}
+.op-preview .op-leafcell {
+  fill: transparent;
+  stroke: var(--muted);
+  stroke-dasharray: 2 3;
+  cursor: copy;
+}

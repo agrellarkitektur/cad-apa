@@ -41,8 +41,9 @@ describe('ställena per objekttyp', () => {
     const html = penSection(defaultSheet(sampleProject().graphics), 'storey');
     for (const r of OBJECT_PENS) expect(html).toContain(r.label);
     expect(html).not.toContain('Pennor för dörrar och fönster');
-    // Fasadernas öppningssätt har sin egen rad, utan symbolpennan under.
-    expect(facadePen(SWEDISH_STANDARD, 'doorSwingElev')).toEqual({ weight: 0.13, dash: [3, 1.5] });
+    // Fasadernas öppningssätt har egna rader, utan symbolpennan under: heldraget från slagsidan, streckat från den bortre (0.11.8.1).
+    expect(facadePen(SWEDISH_STANDARD, 'doorSwingElev')).toEqual({ weight: 0.13 });
+    expect(facadePen(SWEDISH_STANDARD, 'doorSwingFarElev')).toEqual({ weight: 0.13, dash: [3, 1.5] });
   });
 
   it('väggens snittlinje ger tjockleken och, utan jämförelse, färgen och linjetypen', () => {

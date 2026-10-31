@@ -48,19 +48,19 @@ describe('detaljnivå i fasad och sektion (0.7.1)', () => {
   });
   it('glasmarkering och öppningssätt syns bara på ritningen, inte i 3D', () => {
     const edges = model(sampleProject(), 'd01', 'normal').filter((s): s is Edges3D => s.kind === 'edges');
-    const swing = edges.filter((e) => e.part === 'swing');
+    const swing = edges.filter((e) => e.part === 'swing' || e.part === 'swingFar');
     expect(swing.length).toBeGreaterThan(0);
     expect(swing.every((e) => e.drawingOnly)).toBe(true);
-    // Heldragen från den sida dörren slår mot, streckad från den andra (0.11.8).
-    expect(swing.some((e) => e.dash)).toBe(true);
-    expect(swing.some((e) => !e.dash)).toBe(true);
+    // Ett ställe från den sida dörren slår mot, ett från den andra (0.11.8.1).
+    expect(swing.some((e) => e.part === 'swing')).toBe(true);
+    expect(swing.some((e) => e.part === 'swingFar')).toBe(true);
   });
   it('öppningssättet kan stängas av', () => {
     const doc = sampleProject();
     const el = doc.elements['d01'];
-    const { ctx } = createContext(doc, el.storey, view('normal', ['swing']), defaultSheet(doc.graphics), () => true);
+    const { ctx } = createContext(doc, el.storey, view('normal', ['openingSymbol']), defaultSheet(doc.graphics), () => true);
     const edges = typeOf('Door')!.model3d!(el, ctx).filter((s): s is Edges3D => s.kind === 'edges');
-    expect(edges.some((e) => e.part === 'swing')).toBe(false);
+    expect(edges.some((e) => e.part === 'swing' || e.part === 'swingFar')).toBe(false);
   });
 });
 

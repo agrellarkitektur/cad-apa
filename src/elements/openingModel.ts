@@ -1,7 +1,8 @@
 import type { WallFrame } from '../geometry/wallFrame';
 import type { Vec2 } from '../repr/primitives';
 import type { Edges3D, EdgePart, Shape3D, Solid } from '../repr/solids';
-import { hasSash, LEAF_OPS, type LaidCell, type OpeningLayout, type OpeningTypeModel, type Rect } from '../core/openingTypes';
+import { symbolSegments } from '../core/openingSymbol';
+import { hasSash, layoutLeaf, leafGridOf, LEAF_OPS, muntinLines, muntinOutline, muntinWidth, type LaidCell, type OpeningLayout, type OpeningTypeModel, type Rect } from '../core/openingTypes';
 
 /**
  * Dörrar och fönster i 3D, och därmed i fasader och sektioner (0.7.1; ur
@@ -49,9 +50,9 @@ class Builder {
     for (let i = 0; i < 4; i++) this.line(part, c[i], c[(i + 1) % 4], extra);
   }
   /** En låda (s × o × z) utan egna kantlinjer. */
-  box(material: Solid['material'], s0: number, s1: number, o0: number, o1: number, z0: number, z1: number): void {
+  box(material: Solid['material'], s0: number, s1: number, o0: number, o1: number, z0: number, z1: number, extra: Partial<Solid> = {}): void {
     const f = this.f;
-    this.solids.push({ id: this.id, rings: [[f.at(s0, o0), f.at(s1, o0), f.at(s1, o1), f.at(s0, o1)] as Vec2[]], z0, z1, material, noEdges: true });
+    this.solids.push({ id: this.id, rings: [[f.at(s0, o0), f.at(s1, o0), f.at(s1, o1), f.at(s0, o1)] as Vec2[]], z0, z1, material, noEdges: true, ...extra });
   }
   /** Kanter genom djupet i ett antal hörn. */
   depth(part: EdgePart, pts: [number, number][], o0: number, o1: number): void {
@@ -104,14 +105,6 @@ class Builder {
       this.line('glass', this.pt(cs - ds + os, o, cz - ds - os), this.pt(cs + ds + os, o, cz + ds - os), { drawingOnly: true });
     });
   }
-  /** Öppningssätt: streckade linjer från gångjärnssidans hörn till mitten av andra sidan. */
-  swing(sHinge: number, sFree: number, z0: number, z1: number, os: number[]): void {
-    for (const o of os) {
-      const mid = this.pt(sFree, o, (z0 + z1) / 2);
-      this.line('swing', this.pt(sHinge, o, z1), mid, { dash: [3, 1.5], drawingOnly: true });
-      this.line('swing', this.pt(sHinge, o, z0), mid, { dash: [3, 1.5], drawingOnly: true });
-    }
-  }
   done(): Shape3D[] {
     return [...this.solids, ...this.edges.values()];
   }
@@ -137,9 +130,6 @@ function linings(b: Builder, h1: number, h2: number, zTop: number, zBottom: numb
   }
 }
 
-/** Öppningssymbolens streckning på papperet, mm. */
-const SWING_DASH = [3, 1.5] as const;
-
 export interface OpeningGeom {
   f: WallFrame;
   /** Karmens djupzon (avstånd från väggens mittlinje). */
@@ -163,14 +153,17 @@ export interface OpeningGeom {
   /** Ytterväggens utsida (för blecket), 0 i innerväggar. */
   outside: 1 | -1 | 0;
   showSwing: boolean;
+  /** Stilbokens material för en fyllning i dörrbladet (kulören och nyckeln). */
+  mat?: (id: string) => Partial<Solid>;
 }
 
 /**
  * Dörrar, fönster och vägghål i 3D, och därmed i fasader och sektioner
  * (0.11.8): karmen, posterna och tvärstyckena ur typens rutnät, och varje
  * luft för sig (glas i karmen, båge med glas, panel eller dörrblad).
- * Öppningssymbolen (triangeln med spetsen mot gångjärnssidan) ritas på båda
- * sidor: heldragen från den sida luften öppnas mot, streckad från den andra.
+ * Öppningssymbolen (linjerna spretar mot gångjärnssidan, 0.11.8.1) ritas på
+ * båda sidor: ställena *öppningssätt* från den sida luften öppnas mot och
+ * *öppningssätt, bortre sidan* från den andra.
  */
 export function openingModel3d(id: string, g: OpeningGeom, level: Level): Shape3D[] {
   const b = new Builder(id, g.f);
@@ -188,9 +181,23 @@ export function openingModel3d(id: string, g: OpeningGeom, level: Level): Shape3
     const c = [P(r.u0, o, r.z0), P(r.u1, o, r.z0), P(r.u1, o, r.z1), P(r.u0, o, r.z1)];
     for (let i = 0; i < 4; i++) b.line(part, c[i], c[(i + 1) % 4], extra);
   };
-  const box = (mat: Solid['material'], r: Rect, o0: number, o1: number) => {
+  const box = (mat: Solid['material'], r: Rect, o0: number, o1: number, extra: Partial<Solid> = {}) => {
     const [a, c] = S(r.u0, r.u1);
-    if (c - a > 0.5 && r.z1 - r.z0 > 0.5) b.box(mat, a, c, Math.min(o0, o1), Math.max(o0, o1), Z(r.z0), Z(r.z1));
+    if (c - a > 0.5 && r.z1 - r.z0 > 0.5) b.box(mat, a, c, Math.min(o0, o1), Math.max(o0, o1), Z(r.z0), Z(r.z1), extra);
+  };
+  /** Spröjsen i glaset `gl` (0.11.8.1): kanterna på glasets båda sidor, och lister utanpå glaset när de inte sitter mellan glasen. */
+  const muntins = (c: LaidCell, gl: Rect) => {
+    if (!c.muntins) return;
+    const lines = muntinLines(c.muntins, gl);
+    const w = muntinWidth(c.muntins);
+    const between = c.muntins.kind === 'between';
+    const faces = between ? [mid - 6, mid + 6] : [mid - 18, mid + 18];
+    for (const o of faces) for (const [u1, z1, u2, z2] of muntinOutline(lines, w)) b.line('muntin', P(u1, o, z1), P(u2, o, z2));
+    if (between) return;
+    for (const [u1, z1, u2, z2] of lines) {
+      const r: Rect | null = Math.abs(u1 - u2) < 0.5 ? { u0: u1 - w / 2, u1: u1 + w / 2, z0: Math.min(z1, z2), z1: Math.max(z1, z2) } : Math.abs(z1 - z2) < 0.5 ? { u0: Math.min(u1, u2), u1: Math.max(u1, u2), z0: z1 - w / 2, z1: z1 + w / 2 } : null;
+      if (r) for (const [o0, o1] of [[mid - 18, mid - 6], [mid + 6, mid + 18]]) box('frame', r, o0, o1);
+    }
   };
   const whole: Rect = { u0: 0, u1: L.w, z0: 0, z1: L.h };
 
@@ -226,22 +233,25 @@ export function openingModel3d(id: string, g: OpeningGeom, level: Level): Shape3
     const r = c.rect;
     if (c.fill === 'open' && !LEAF_OPS.has(c.op)) continue;
     if (LEAF_OPS.has(c.op)) {
-      // Dörrbladet i karmens liv på slagsidan.
+      // Dörrbladet i karmens liv på slagsidan, med indelningen (0.11.8.1): ramstyckena hela bladets tjocklek, fyllningarna tunnare i mitten.
       const back = leafFace - g.swing * m.leaf;
-      box('door', r, leafFace, back);
+      const grid = leafGridOf(c);
+      const lm = (leafFace + back) / 2;
+      if (!grid) box('door', r, leafFace, back);
+      else {
+        const laid = layoutLeaf(grid, r);
+        for (const fr of laid.frame) box('door', fr, leafFace, back);
+        for (const fl of laid.fills) {
+          if (fl.glass) box('glass', fl.rect, lm - 6, lm + 6);
+          else box('door', fl.rect, lm - 8, lm + 8, fl.material && g.mat ? g.mat(fl.material) : {});
+        }
+      }
       for (const o of [leafFace, back]) {
         rectU('leaf', r, o);
-        const w = r.u1 - r.u0;
-        if (c.leaf === 'glazed') {
-          const gl: Rect = { u0: r.u0 + Math.min(150, w * 0.2), u1: r.u1 - Math.min(150, w * 0.2), z0: r.z0 + Math.min(400, (r.z1 - r.z0) * 0.25), z1: r.z1 - 150 };
-          rectU('leaf', gl, o);
-          glassMarkU(b, g, gl, o);
-        } else if (c.leaf === 'panel') {
-          // Spegeldörr: två speglar.
-          const inset = Math.min(120, w * 0.15);
-          const zMid = r.z0 + (r.z1 - r.z0) * 0.45;
-          rectU('leaf', { u0: r.u0 + inset, u1: r.u1 - inset, z0: r.z0 + inset * 1.5, z1: zMid - inset / 2 }, o);
-          rectU('leaf', { u0: r.u0 + inset, u1: r.u1 - inset, z0: zMid + inset / 2, z1: r.z1 - inset }, o);
+        if (!grid) continue;
+        for (const fl of layoutLeaf(grid, r).fills) {
+          rectU('leaf', fl.rect, o);
+          if (fl.glass) glassMarkU(b, g, fl.rect, o);
         }
       }
       if (level === 'detail' && c.op === 'leaf') handle(b, g, c, leafFace, back);
@@ -264,9 +274,11 @@ export function openingModel3d(id: string, g: OpeningGeom, level: Level): Shape3
         rectU('sash', inner, o);
       }
       for (const o of [mid - 6, mid + 6]) glassMarkU(b, g, inner, o);
+      muntins(c, inner);
     } else {
       box('glass', r, mid - 6, mid + 6);
       for (const o of [mid - 6, mid + 6]) glassMarkU(b, g, r, o);
+      muntins(c, r);
     }
     if (g.showSwing && c.op !== 'fixed') {
       const outward = LEAF_OPS.has(c.op) ? g.swing === g.vf : !c.inward;
@@ -312,78 +324,7 @@ function handle(b: Builder, g: OpeningGeom, c: LaidCell, face: number, back: num
   }
 }
 
-/** Öppningssymbolen för en luft: triangeln med spetsen mot gångjärnen, pilar för skjut, sicksack för vik. */
-function symbol(b: Builder, g: OpeningGeom, c: LaidCell, o: number, dashed: boolean): void {
-  const r = c.rect;
-  const extra: Partial<Edges3D> = { drawingOnly: true, ...(dashed ? { dash: SWING_DASH } : {}) };
-  const L = (u1: number, z1: number, u2: number, z2: number) => b.line('swing', b.pt(g.u(u1), o, g.z0 + z1), b.pt(g.u(u2), o, g.z0 + z2), extra);
-  const um = (r.u0 + r.u1) / 2;
-  const zm = (r.z0 + r.z1) / 2;
-  const side = (left: boolean) => {
-    const hu = left ? r.u0 : r.u1;
-    const fu = left ? r.u1 : r.u0;
-    L(fu, r.z0, hu, zm);
-    L(fu, r.z1, hu, zm);
-  };
-  const bottom = () => {
-    L(r.u0, r.z1, um, r.z0);
-    L(r.u1, r.z1, um, r.z0);
-  };
-  const top = () => {
-    L(r.u0, r.z0, um, r.z1);
-    L(r.u1, r.z0, um, r.z1);
-  };
-  const arrow = (toLeft: boolean, z: number) => {
-    const w = r.u1 - r.u0;
-    const a = toLeft ? r.u1 - w * 0.2 : r.u0 + w * 0.2;
-    const e = toLeft ? r.u0 + w * 0.2 : r.u1 - w * 0.2;
-    const k = Math.min(80, w * 0.1) * (toLeft ? 1 : -1);
-    L(a, z, e, z);
-    L(e, z, e + k, z + Math.abs(k) * 0.6);
-    L(e, z, e + k, z - Math.abs(k) * 0.6);
-  };
-  const left = c.hinge !== 'right';
-  switch (c.op) {
-    case 'side':
-    case 'leaf':
-      side(left);
-      break;
-    case 'tiltturn':
-      side(left);
-      bottom();
-      break;
-    case 'bottom':
-      bottom();
-      break;
-    case 'top':
-      top();
-      break;
-    case 'pivotH':
-      bottom();
-      top();
-      break;
-    case 'pivotV':
-      side(true);
-      side(false);
-      break;
-    case 'slide':
-    case 'slideLeaf':
-    case 'pocket':
-      arrow(left, zm);
-      break;
-    case 'fold':
-    case 'foldLeaf': {
-      const n = 4;
-      const w = (r.u1 - r.u0) / n;
-      for (let i = 0; i < n; i++) L(r.u0 + i * w, i % 2 ? r.z0 + 200 : zm, r.u0 + (i + 1) * w, i % 2 ? zm : r.z0 + 200);
-      break;
-    }
-    case 'garage': {
-      const k = Math.min(120, (r.u1 - r.u0) * 0.1);
-      L(um, r.z0 + (r.z1 - r.z0) * 0.25, um, r.z1 - (r.z1 - r.z0) * 0.25);
-      L(um, r.z1 - (r.z1 - r.z0) * 0.25, um - k, r.z1 - (r.z1 - r.z0) * 0.25 - k);
-      L(um, r.z1 - (r.z1 - r.z0) * 0.25, um + k, r.z1 - (r.z1 - r.z0) * 0.25 - k);
-      break;
-    }
-  }
+/** Öppningssymbolen för en luft (`symbolSegments`): på den sida luften öppnas mot `swing`, på den andra `swingFar` (egna ställen i fasaden). */
+function symbol(b: Builder, g: OpeningGeom, c: LaidCell, o: number, far: boolean): void {
+  for (const [u1, z1, u2, z2] of symbolSegments(c)) b.line(far ? 'swingFar' : 'swing', b.pt(g.u(u1), o, g.z0 + z1), b.pt(g.u(u2), o, g.z0 + z2), { drawingOnly: true });
 }

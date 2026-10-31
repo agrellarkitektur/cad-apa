@@ -3,7 +3,8 @@ import type { Definition, Element, ProjectDoc } from '../core/model';
 import {
   fallbackModel,
   frameFromModule,
-  holeFromFrame,
+  frameLessOf,
+  holeFromModule,
   kindOfElementType,
   LEAF_OPS,
   SIDE_HUNG,
@@ -44,7 +45,10 @@ export interface OpeningObjParams extends OpeningParams, FrameParams {
   frameH: number;
   holeW: number;
   holeH: number;
+  /** Drevmånen under karmen (0 för det som står på golvet), mm. */
   gap: number;
+  /** Karmavdraget som gäller (typens eller Allmänts), mm. */
+  frameLess: number;
   /** Står på golvet (dörrar, fönsterdörren). */
   floor: boolean;
 }
@@ -64,21 +68,24 @@ export function deriveOpening(kind: OpeningKind) {
   return (out: Record<string, unknown>, el: Element<any>, doc: ProjectDoc, def: Definition | undefined): void => {
     const m = def?.opening && def.opening.kind === kind ? def.opening : fallbackModel(kind);
     const st = openingSettingsOf(doc.graphics);
-    const gap = st.gap;
     const own = el.params as Record<string, unknown>;
     if (own.width === undefined && def?.params.width === undefined) out.width = m.size[0];
     if (own.height === undefined && def?.params.height === undefined) out.height = m.size[1];
     if (own.frameWidth === undefined) out.frameWidth = m.frame.width;
     if (own.frameDepth === undefined) out.frameDepth = m.frame.depth;
-    const fr = Array.isArray(out.frame) && out.frame.length === 2 ? (out.frame as [number, number]) : frameFromModule(m, [Number(out.width), Number(out.height)], gap);
-    const hole = holeFromFrame(m, fr, gap);
+    const mod: [number, number] = [Number(out.width), Number(out.height)];
+    const fr = Array.isArray(out.frame) && out.frame.length === 2 ? (out.frame as [number, number]) : frameFromModule(m, mod, st);
+    const hole = holeFromModule(m, mod, st);
     out.frameW = fr[0];
     out.frameH = fr[1];
     out.holeW = hole[0];
     out.holeH = hole[1];
-    out.gap = gap;
+    out.frameLess = m.kind === 'hole' ? 0 : frameLessOf(m, st);
     const floor = standsOnFloor(m);
     out.floor = floor;
+    // Karmen mitt i hålet i höjd, eller på golvet.
+    const gap = floor ? 0 : Math.max(0, (hole[1] - fr[1]) / 2);
+    out.gap = gap;
     if (kind === 'door') {
       delete out.sill;
       return;
@@ -89,10 +96,10 @@ export function deriveOpening(kind: OpeningKind) {
     if (ref === 'head') {
       const head = typeof own.head === 'number' ? own.head : st.head;
       out.head = head;
-      out.sill = head - fr[1] - (floor ? 0 : gap);
+      out.sill = head - fr[1] - gap;
     } else {
       if (own.sill === undefined) out.sill = m.sill ?? (kind === 'hole' ? 300 : 900);
-      out.head = Number(out.sill) + (floor ? 0 : gap) + fr[1];
+      out.head = Number(out.sill) + gap + fr[1];
     }
   };
 }

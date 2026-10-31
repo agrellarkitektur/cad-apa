@@ -58,13 +58,12 @@ export interface ProjectInfo {
 /**
  * Uppställningen av fönster eller dörrar (0.11.8): fälten är rader och varje
  * littera en kolumn. `fields` är fältmallen (ordning och namn kan ändras,
- * nya fält läggas till); `values` är det som skrivs per littera (krav som
- * U-värde, brandklass …), littera → fält → text. `notes` är projektets egna
+ * nya fält läggas till; `core/openingSchedule.ts`). Värdena bor på objekten
+ * (`params.fields`, 0.11.8.1), inte här. `notes` är projektets egna
  * föreskrifter, som står till höger med typernas.
  */
 export interface OpeningSchedule {
   fields?: { Window?: string[]; Door?: string[]; WallHole?: string[] };
-  values?: Record<string, Record<string, string>>;
   notes?: { Window?: string; Door?: string; WallHole?: string };
 }
 
