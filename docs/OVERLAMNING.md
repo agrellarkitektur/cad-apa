@@ -246,7 +246,6 @@ provat.
   eller ska fältet heta *Ankarets höjd* för profildelar?
 - Bara typer kryssade *Del i räcke* (eller *Vangstycke*) står i listorna,
   så PR01 syns inte som stolpe förrän man kryssar. Rätt, eller alla?
-- Ändprofilen räknar inte med vridningen kring ankaret. Behövs det?
 
 **0.11.6.1 efter provning** (Claudes val, se PLAN.md)
 - Måtten pekar på parametrar bara i typen; ändrade per objekt sträcker
