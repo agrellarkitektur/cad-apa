@@ -54,8 +54,20 @@ export interface StairParams {
   build?: 'monolithic' | 'built';
   /** Den monolitiska kroppens tjocklek under stegen, mm. */
   thickness?: number;
-  /** Den byggda trappans delar (0.11.4; läses inte än). */
-  built?: { stringer?: { width?: number; height?: number; material?: string }; tread?: { thickness?: number; nosing?: number; material?: string }; riser?: { thickness?: number; material?: string } };
+  /**
+   * Den byggda trappans delar (0.11.4): vangstyckena (sidorna, bredd, lodrät
+   * höjd), plansteget (tjocklek, stegnos) och sättsteget (tjocklek; 0 = öppen
+   * trappa), var och en med stilbokens material. Förvalen i `stairBuilt.ts`.
+   */
+  built?: {
+    stringer?: { sides?: 'both' | 'left' | 'right' | 'none'; width?: number; height?: number; material?: string };
+    tread?: { thickness?: number; nosing?: number; material?: string };
+    riser?: { thickness?: number; material?: string };
+  };
+  /** Kontrastmarkering på stegens framkant (0.11.4): ingen (förval), första och sista steget, eller alla. */
+  contrast?: 'none' | 'ends' | 'all';
+  /** Kontrastmarkeringens bredd från framkanten, mm (50 från början). */
+  contrastWidth?: number;
   /** Spiraltrappa (0.11.5; läses inte än): referenslinjen blir en genererad helix. */
   spiral?: { inner: number; outer: number; sweep: number; dir?: 'cw' | 'ccw' };
   /** Hålet i bjälklaget ovanför: automatiskt ur den fria höjden (förval) eller inget. */

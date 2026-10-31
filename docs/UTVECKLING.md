@@ -653,6 +653,32 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt. Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Byggd trappa (0.11.4, format 26)
+
+- **Parametrarna** i `StairParams`: `build: 'built'`, `built.stringer`
+  (`sides`, `width`, `height`, `material`), `built.tread` (`thickness`,
+  `nosing`, `material`), `built.riser` (`thickness`, `material`; 0 = öppen),
+  `contrast` (`none`/`ends`/`all`) och `contrastWidth`. Förvalen står i
+  `BUILT` i `elements/stairBuilt.ts`, och `builtDims(p)` fyller i dem.
+  Panelen (`builtFields` i `ui/stairFields.ts`, nycklarna
+  `stair:stringerSides` … `stair:contrastWidth`) skriver bara det som
+  avviker från förvalet (`builtPatch` tar bort tomma delar).
+- **3D** (`builtSolids`): bandet klipps mot remsorna (`strips`: sidorna
+  förskjutna med `offsetLine` och förlängda förbi ändarna) med
+  `intersection`. Plansteget `[u0, nästa u0 + nos + sättsteg]` (`bandExt`
+  förlänger bandet rakt före trappans början, för stegnosen över det
+  första sättsteget); sättsteget `[u0 + nos, + tjocklek]` från steget under;
+  vangstycket en bit per steg med `top` och `bottom` som sneda plan genom
+  sidans punkter (`planeThrough`) och höjden ur `nosingZ`; under golvet
+  plan undersida på 0. `contrastSolids` gäller båda uppbyggnaderna.
+  `model3d` lyfter allt med `liftShape`.
+- **Planen** (`stairPlan` i `stair.ts`): `insetRib` kortar revbenen till
+  vangstyckenas insida, `stringerLine` ritar insidan (`sideBetween`
+  förskjuten); delarna `vangstycke`, `stegnos`, `kontrast`, `stegnummer`
+  och `stegtext`. Ställena `stairStringer`, `stairContrast` och `stairText`
+  i `repr/stairPens.ts`.
+- **Tester**: `tests/v0114.test.ts`.
+
 ## Staket och grindar (0.11.3, format 26)
 
 - **Marken**: `railingGround(ctx)` i `elements/railing.ts` ger den färdiga
@@ -805,7 +831,7 @@ förut; vid nästa huvudversion flyttas de klara till arkivet.
   (`riser` eller `tread`) med `startTread`/`endTread`, `landings` (punkter
   där sträckan efter är vilplan) och `turnLandings` (punkter där svängen
   är det), `thickness`, `hole` (`auto`/`none`), `headroom` (2100),
-  `material`. Valfria och olästa än: `build`/`built` (0.11.4) och `spiral`
+  `material`. `build`/`built` läses sedan 0.11.4 (se *Byggd trappa*); valfritt och oläst än: `spiral`
   (0.11.5). Elementets `seenOn` (*Syns också på*) gäller också ramper,
   markytor, stödmurar och bjälklag (`SEEN_ON_TYPES` i `core/model.ts`).
 - **Geometrin** (`stairGeometry`, ren räkning): referenslinjen görs platt

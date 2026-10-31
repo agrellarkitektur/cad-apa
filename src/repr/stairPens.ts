@@ -16,6 +16,9 @@ export const STAIR_PENS = [
   { key: 'stairAbove', label: 'Trappa: steg över snittet', hint: 'Stegen och sidorna ovanför snittet', weight: 0.18, linetype: 'dashdot', tags: ['trappa', 'steg', 'över snittet'] },
   { key: 'stairFloorTread', label: 'Trappa: plansteg i golvnivå', hint: 'Första plansteget i golvet, och det sista i våningen ovanför', weight: 0.18, linetype: 'dashed', tags: ['trappa', 'plansteg'] },
   { key: 'stairNosing', label: 'Trappa: stegnos', hint: 'Sättstegen under stegnosen, i Detalj', weight: 0.13, linetype: 'dashedShort', color: 'muted', tags: ['trappa', 'stegnos'] },
+  { key: 'stairStringer', label: 'Trappa: vangstycke', hint: 'Vangstyckenas insida i den byggda trappan, i Normal och Detalj', weight: 0.18, tags: ['trappa', 'vangstycke', 'byggd'] },
+  { key: 'stairContrast', label: 'Trappa: kontrastmarkering', hint: 'Kontrastmarkeringens bakkant på stegen, i Detalj', weight: 0.13, linetype: 'dashedShort', tags: ['trappa', 'kontrast'] },
+  { key: 'stairText', label: 'Trappa: stegnummer och text', hint: 'Stegens nummer och texten med antal, steghöjd och stegdjup, i Detalj', weight: 0.18, tags: ['trappa', 'text', 'stegnummer'] },
   { key: 'stairWalk', label: 'Trappa: gångriktning', hint: 'Gånglinjen med ring i början och pil i slutet', weight: 0.18, tags: ['trappa', 'gånglinje', 'gångriktning'] },
 ] as const satisfies readonly { key: string; label: string; hint: string; weight: number; linetype?: string; color?: string; tags: readonly string[] }[];
 

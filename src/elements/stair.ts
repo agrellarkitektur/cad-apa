@@ -7,6 +7,8 @@ import { buildingMaterialOf, materialSolid } from './buildingMaterial';
 import { planCutHeight } from './planCut';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
 import { bandBetween, HEADROOM, sideBetween, stairGeometry, stairOutline, STAIR_THICKNESS, STAIR_WIDTH, walkBetween, walkDir, type StairGeometry, type StairParams } from './stairGeometry';
+import { BUILT, builtDims, builtSolids, contrastItems, contrastSolids, insetRib, stringerInsets, stringerLine } from './stairBuilt';
+import { liftShape } from '../repr/solids';
 
 /**
  * Trappan (0.11, format 26). Ett band längs en referenslinje som ritas i
@@ -92,21 +94,69 @@ function stairPlan(el: Element<any>, ctx: PlanContext, p: StairParams, g: StairG
   out.push(line(r0.L, r0.R, a > 0 ? floor : contour, o(a > 0 ? 'plansteg' : 'kontur')));
   const rL = g.ribAt(L);
   out.push(line(rL.L, rL.R, own && uCut < L - 0.5 ? above : !own && endTread ? floor : contour, o('slut')));
+  // Den byggda trappan (0.11.4): stegen mellan vangstyckena, och vangstyckenas insida i Normal och Detalj.
+  const detail = ctx.view.detail ?? 'normal';
+  const built = p.build === 'built';
+  const dims = built ? builtDims(p) : null;
+  const ins = dims ? stringerInsets(dims) : { left: 0, right: 0 };
+  const across = (u: number): [Vec2, Vec2] => insetRib(g.ribAt(u), ins.left, ins.right);
+  if (dims && detail !== 'sketch') {
+    const b1 = endTread ? b0 : L;
+    for (const side of ['left', 'right'] as const) {
+      const w = ins[side];
+      if (!w) continue;
+      const under = Math.min(uCut, b1);
+      if (under - a > 0.5) out.push(poly(stringerLine(g, side, w, a, under, sideBetween), pen('stairStringer'), o('vangstycke')));
+      if (own && uCut < b1 - 0.5) out.push(poly(stringerLine(g, side, w, Math.max(a, uCut), b1, sideBetween), above, o('över')));
+    }
+  }
   // Stegens framkanter.
   const below = pen('stairBelow');
   for (const u of g.risers) {
     if (u < 0.5 || u > L - 0.5) continue;
-    const r = g.ribAt(u);
+    const [l, r] = across(u);
     const up = own && u >= uCut - 0.5;
-    out.push(line(r.L, r.R, up ? above : below, o(up ? 'över' : 'steg')));
+    out.push(line(l, r, up ? above : below, o(up ? 'över' : 'steg')));
   }
-  // Stegnosen (i Detalj): sättsteget under nosen, 30 mm innanför stegets framkant.
-  if ((ctx.view.detail ?? 'normal') === 'detail') {
-    const nosing = pen('stairNosing');
-    for (const it of g.items) {
-      if (it.kind === 'startTread' || it.u1 - it.u0 < 60 || (own && it.u0 >= uCut - 0.5)) continue;
-      const r = g.ribAt(it.u0 + 30);
-      out.push(line(r.L, r.R, nosing, o('stegnos')));
+  if (detail === 'detail') {
+    // Stegnosen: sättsteget under nosen (30 mm innanför framkanten, i den byggda trappan dess stegnos; en öppen trappa har inget).
+    const nos = dims ? (dims.riserThickness > 0 ? dims.nosing : 0) : 30;
+    if (nos > 0.5) {
+      const nosing = pen('stairNosing');
+      for (const it of g.items) {
+        if (it.kind === 'startTread' || it.u1 - it.u0 < 2 * nos || (own && it.u0 >= uCut - 0.5)) continue;
+        const [l, r] = across(it.u0 + nos);
+        out.push(line(l, r, nosing, o('stegnos')));
+      }
+    }
+    // Kontrastmarkeringen: bakkanten på remsan.
+    const cw = Math.max(10, p.contrastWidth ?? BUILT.contrastWidth);
+    for (const it of contrastItems(g, p.contrast)) {
+      if (it.u1 - it.u0 < cw + 1 || (own && it.u0 >= uCut - 0.5)) continue;
+      const [l, r] = across(it.u0 + cw);
+      out.push(line(l, r, pen('stairContrast'), o('kontrast')));
+    }
+    // Bygghandlingsgrafiken: stegens nummer nerifrån och texten med antal, steghöjd och stegdjup.
+    const text = pen('stairText');
+    const numbered = g.items.filter((i) => i.kind !== 'startTread');
+    numbered.forEach((it, k) => {
+      const rib = g.ribAt((it.u0 + it.u1) / 2);
+      const far = Math.hypot(rib.w[0] - rib.L[0], rib.w[1] - rib.L[1]) > Math.hypot(rib.w[0] - rib.R[0], rib.w[1] - rib.R[1]) ? rib.L : rib.R;
+      const at: Vec2 = [rib.w[0] + (far[0] - rib.w[0]) * 0.45, rib.w[1] + (far[1] - rib.w[1]) * 0.45];
+      out.push({ kind: 'text', at, text: String(k + 1), height: 1.8, align: 'middle', pen: text, origin: o('stegnummer') });
+    });
+    const run = g.runs[0];
+    if (run) {
+      const going = Math.min(...g.runs.map((x) => x.going));
+      const h = g.riserHeight;
+      // Texten längs gånglinjen i början, på samma sida som stegnumren men närmare kanten.
+      const um = Math.min(L / 2, Math.max(run.u0 + going * 2, L * 0.2));
+      const rib = g.ribAt(um);
+      const d = walkDir(g, um);
+      const far = Math.hypot(rib.w[0] - rib.L[0], rib.w[1] - rib.L[1]) > Math.hypot(rib.w[0] - rib.R[0], rib.w[1] - rib.R[1]) ? rib.L : rib.R;
+      const at: Vec2 = [rib.w[0] + (far[0] - rib.w[0]) * 0.8, rib.w[1] + (far[1] - rib.w[1]) * 0.8];
+      const fmt = (v: number) => v.toLocaleString('sv-SE', { maximumFractionDigits: 1 });
+      out.push({ kind: 'text', at, text: `${g.risers.length} st à ${fmt(h)}/${Math.round(going)}`, height: 2, align: 'middle', angle: Math.atan2(d[1], d[0]), pen: text, origin: o('stegtext') });
     }
   }
   // Snittlinjen snett över trappan.
@@ -230,7 +280,8 @@ export const stairType: ElementType<StairParams> = {
     if (!g) return [];
     const lv = levelOf(p);
     const mat = materialSolid(buildingMaterialOf(p as never, ctx.style));
-    return stairSolids(el.id, p, g, mat).map((s): Shape3D => (lv ? { ...s, z0: s.z0 + lv, z1: s.z1 + lv, ...(s.bottom ? { bottom: [s.bottom[0], s.bottom[1], s.bottom[2] + lv] as Plane } : {}) } : s));
+    const body = p.build === 'built' ? builtSolids(el.id, p, g, ctx.style) : stairSolids(el.id, p, g, mat);
+    return [...body, ...contrastSolids(el.id, p, g)].map((s): Shape3D => liftShape(s, lv));
   },
 };
 

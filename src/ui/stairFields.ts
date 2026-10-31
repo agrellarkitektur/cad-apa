@@ -9,6 +9,7 @@ import { levelOf } from '../repr/solids';
 import { resolveParams } from '../elements/registry';
 import { escapeHtml } from './labels';
 import { numberField } from './fieldMarkup';
+import { BUILT, builtDims } from '../elements/stairBuilt';
 
 /**
  * Trappans fält i egenskaperna (0.11): bredd, stigning, steg, gånglinje,
@@ -71,11 +72,28 @@ export function stairFieldsMarkup(doc: ProjectDoc, el: Element): string {
     ${railRow}
     <div class="field-label">Sträckor och svängar</div>
     <ul class="stair-turns">${rows.join('')}</ul>
-    <div class="fields">${select('stair:build', 'Uppbyggnad', p.build ?? 'monolithic', [['monolithic', 'Monolitisk'], ['built', 'Byggd (0.11.4)']], ['built'])}${numberField('stair:thickness', 'Tjocklek', p.thickness ?? STAIR_THICKNESS, 'mm')}</div>
+    <div class="fields">${select('stair:build', 'Uppbyggnad', p.build ?? 'monolithic', [['monolithic', 'Monolitisk'], ['built', 'Byggd']])}${p.build === 'built' ? '' : numberField('stair:thickness', 'Tjocklek', p.thickness ?? STAIR_THICKNESS, 'mm')}</div>
+    ${p.build === 'built' ? builtFields(doc, p) : ''}
+    <div class="fields">${select('stair:contrast', 'Kontrastmarkering', p.contrast ?? 'none', [['none', 'Ingen'], ['ends', 'Första och sista'], ['all', 'Alla steg']])}${p.contrast && p.contrast !== 'none' ? numberField('stair:contrastWidth', 'Bredd', p.contrastWidth ?? BUILT.contrastWidth, 'mm') : ''}</div>
     ${select('stair:hole', 'Hålet', p.hole ?? 'auto', [['auto', 'Automatiskt'], ['none', 'Inget']])}
     <div class="fields">${numberField('stair:headroom', 'Fri höjd', p.headroom ?? HEADROOM, 'mm')}</div>
     <div class="row"><button class="btn" data-action="stair-own-hole" title="Hålet blir en vanlig håltagning i bjälklaget, som ritas om med bjälklagets grepp; trappan tar då inget eget">Gör till eget hål</button></div>
     <p class="note">Hålet ${holeNote} följer trappan och räknas ur den fria höjden över stegen. Referenslinjen går i gångriktningen, uppåt; dra i punkterna för att ändra den, eller böj en kant till en båge i Modifiera.</p>`;
+}
+
+/** Den byggda trappans delar: vangstycken, plansteg och sättsteg med mått och material (0.11.4). */
+function builtFields(doc: ProjectDoc, p: StairParams): string {
+  const d = builtDims(p);
+  const materials = (doc.graphics.materials ?? []).filter((x) => x.building);
+  const mat = (key: string, value: string | undefined, none: string) =>
+    `<label class="field"><span>Material</span><select data-key="stair:${key}"><option value="">${none}</option>${materials.map((x) => `<option value="${escapeHtml(x.id)}"${x.id === value ? ' selected' : ''}>${escapeHtml(x.name)}</option>`).join('')}</select></label>`;
+  return `<div class="field-label">Vangstycken</div>
+    <div class="fields">${select('stair:stringerSides', 'Sidor', d.sides, [['both', 'Båda'], ['left', 'Vänster'], ['right', 'Höger'], ['none', 'Inga']])}${numberField('stair:stringerWidth', 'Bredd', d.stringerWidth, 'mm')}${numberField('stair:stringerHeight', 'Höjd', d.stringerHeight, 'mm')}${mat('stringerMaterial', d.stringerMaterial, 'Målat')}</div>
+    <div class="field-label">Plansteg</div>
+    <div class="fields">${numberField('stair:treadThickness', 'Tjocklek', d.treadThickness, 'mm')}${numberField('stair:nosing', 'Stegnos', d.nosing, 'mm')}${mat('treadMaterial', d.treadMaterial, 'Trä')}</div>
+    <div class="field-label">Sättsteg</div>
+    <div class="fields">${numberField('stair:riserThickness', 'Tjocklek', d.riserThickness, 'mm')}${mat('riserMaterial', d.riserMaterial, 'Målat')}</div>
+    <p class="note">Vangstyckena står innanför trappans bredd, med överkanten ${BUILT.stringerAbove} mm över stegnoslinjen; höjden mäts lodrätt. Sättsteg 0 mm ger en öppen trappa (utan stegnos). I planen syns vangstyckenas insida i Normal och Detalj, och stegnosen, kontrastmarkeringen och stegens nummer i Detalj.</p>`;
 }
 
 /** Patch där undefined tar bort nyckeln (så att förvalet och våningens värde gäller). */
@@ -140,6 +158,28 @@ export function applyStairField(store: DocStore, ids: Id[], name: string, input:
       return pos(50) && patchStair(store, ids, 'Sista plansteget', () => ({ endTread: Math.round(num) }));
     case 'build':
       return patchStair(store, ids, 'Uppbyggnad', () => ({ build: raw === 'built' ? 'built' : undefined }));
+    case 'stringerSides':
+      return patchStair(store, ids, 'Vangstycken', (p) => builtPatch(p, 'stringer', 'sides', raw === 'both' ? undefined : raw));
+    case 'stringerWidth':
+      return pos(10) && patchStair(store, ids, 'Vangstyckenas bredd', (p) => builtPatch(p, 'stringer', 'width', Math.round(num) === BUILT.stringerWidth ? undefined : Math.round(num)));
+    case 'stringerHeight':
+      return pos(50) && patchStair(store, ids, 'Vangstyckenas höjd', (p) => builtPatch(p, 'stringer', 'height', Math.round(num) === BUILT.stringerHeight ? undefined : Math.round(num)));
+    case 'stringerMaterial':
+      return patchStair(store, ids, 'Vangstyckenas material', (p) => builtPatch(p, 'stringer', 'material', raw || undefined));
+    case 'treadThickness':
+      return pos(10) && patchStair(store, ids, 'Planstegens tjocklek', (p) => builtPatch(p, 'tread', 'thickness', Math.round(num) === BUILT.treadThickness ? undefined : Math.round(num)));
+    case 'nosing':
+      return pos(0) && patchStair(store, ids, 'Stegnos', (p) => builtPatch(p, 'tread', 'nosing', Math.round(num) === BUILT.nosing ? undefined : Math.round(num)));
+    case 'treadMaterial':
+      return patchStair(store, ids, 'Planstegens material', (p) => builtPatch(p, 'tread', 'material', raw || undefined));
+    case 'riserThickness':
+      return pos(0) && patchStair(store, ids, 'Sättstegens tjocklek', (p) => builtPatch(p, 'riser', 'thickness', Math.round(num) === BUILT.riserThickness ? undefined : Math.round(num)));
+    case 'riserMaterial':
+      return patchStair(store, ids, 'Sättstegens material', (p) => builtPatch(p, 'riser', 'material', raw || undefined));
+    case 'contrast':
+      return patchStair(store, ids, 'Kontrastmarkering', () => ({ contrast: raw === 'ends' || raw === 'all' ? raw : undefined }));
+    case 'contrastWidth':
+      return pos(10) && patchStair(store, ids, 'Kontrastmarkeringens bredd', () => ({ contrastWidth: Math.round(num) === BUILT.contrastWidth ? undefined : Math.round(num) }));
     case 'thickness':
       return pos(20) && patchStair(store, ids, 'Trappans tjocklek', () => ({ thickness: Math.round(num) === STAIR_THICKNESS ? undefined : Math.round(num) }));
     case 'hole':
@@ -148,6 +188,17 @@ export function applyStairField(store: DocStore, ids: Id[], name: string, input:
       return pos(1000) && patchStair(store, ids, 'Fri höjd för hålet', () => ({ headroom: Math.round(num) === HEADROOM ? undefined : Math.round(num) }));
   }
   return false;
+}
+
+/** Ett fält i en av den byggda trappans delar; tomma delar och en tom `built` tas bort. */
+function builtPatch(p: StairParams, part: 'stringer' | 'tread' | 'riser', key: string, value: unknown): Record<string, unknown> {
+  const built: Record<string, Record<string, unknown>> = JSON.parse(JSON.stringify(p.built ?? {}));
+  const q = { ...(built[part] ?? {}) };
+  if (value === undefined) delete q[key];
+  else q[key] = value;
+  if (Object.keys(q).length) built[part] = q;
+  else delete built[part];
+  return { built: Object.keys(built).length ? built : undefined };
 }
 
 /**

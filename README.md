@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.3** (alfa), Staket och grindar; nästa är **0.11.4 Byggd trappa**.
+**0.11.4** (alfa), Byggd trappa; nästa är **0.11.5 Spiraltrappan**.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,27 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11.4, Byggd trappa (samma filformat, 26; projekt från 0.11 öppnas):
+- **Uppbyggnad: Byggd** i trappans egenskaper (förut gråad). Trappan
+  byggs då av delar: **vangstycken** (sidor: båda, vänster, höger eller
+  inga; bredd 50, lodrät höjd 300, överkanten 50 över stegnoslinjen),
+  **plansteg** (tjocklek 40, **stegnos** 30; går in under nästa sättsteg)
+  och **sättsteg** (tjocklek 20; 0 ger en **öppen trappa** utan stegnos),
+  var och en med eget material ur stilboken (utan material: plansteg i trä,
+  vangstycken och sättsteg målade). Vilplan och det sista plansteget är
+  plansteg; plansteget i golvnivå är golvet. Delarna syns i 3D, sektioner
+  och fasader
+- **Kontrastmarkering** (också på den monolitiska trappan): ingen,
+  *Första och sista* eller *Alla steg*, bredd 50 från framkanten; en mörk
+  remsa i 3D och remsans bakkant i planen (Detalj)
+- **Planen**: vangstyckenas insida ritas i Normal och Detalj (stället
+  *Trappa: vangstycke*), och stegens framkanter går mellan dem. I Detalj
+  dessutom stegnosen (den byggda trappans mått, ingen i en öppen trappa),
+  kontrastmarkeringen och **bygghandlingsgrafiken**: stegens nummer
+  nerifrån och texten *15 st à 180/260* (antal sättsteg à steghöjd /
+  stegdjup) längs gånglinjen. Nya ställen i stilboken under *Trappor*:
+  vangstycke, kontrastmarkering, stegnummer och text
 
 Version 0.11.3, Staket och grindar (samma filformat, 26; projekt från 0.11 öppnas):
 - **Räcket på Platsen**: verktyget *Räcke* går att använda på Platsen, och

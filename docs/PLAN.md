@@ -172,6 +172,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.10.40.1 | Granskning efter 0.10.40 |
 | 0.11 | Trappan (format 26): referenslinje med bågar, kilsteg och vilplan, gånglinje, plansteg, varningar, plan/sektion/3D, hålet, *Syns också på* |
 | 0.11.2 | Räckestypeditorn: stilboken › Resurser › *Räckestyper* med grupper, förhandsvisning i sex lägen, delträd och delens egenskaper; Shift går före snäppet |
+| 0.11.4 | Byggd trappa: vangstycken, plansteg med stegnos och sättsteg som delar med egna mått och material, öppen trappa, kontrastmarkering, vangstyckena i planen, stegnummer och stegtext i Detalj |
 | 0.11.3 | Staket och grindar: räcket på Platsen med höjden ur den färdiga marken, Trappstegat, stolpar under mark och i plint, Längs kant för hål, bjälklag, väggar, ramper och stödmurens krön, ST01–ST03, SP01 och G01, grinden som en sträcka i räcket; räckestypeditorn som tavla 4 |
 | 0.11.1 | Räcket: eget objekt med typmodellen (delar och parametrar med formler), längs trappans kant eller ritat, utjämnad eller hoppande vid kilstegen, plan/sektion/fasad/3D, stilboksgruppen *Räcken*, varningar ur BFS 2024:9 och praxis |
 
@@ -535,10 +536,51 @@ bjälklag, ramp …; bara trappor), grindarna har ingen förteckning
 (tavla 5), grindens lås och stopp är bara text. Klickjämförelsen är inte
 körd (granskningen efter 0.11.5).
 
-### 0.11.4 Byggd trappa
+### 0.11.4 Byggd trappa ✓
 
 Vangstycken, plan- och sättsteg som delar med egna inställningar, stegnos,
 kontrastmarkering, synliga vangstycken i planen, bygghandlingsgrafiken.
+Byggd i en session 31 oktober 2026 (Carl August: "kör"), utan nytt format:
+fälten `built` fanns valfria sedan 0.11; `contrast` och `contrastWidth` är
+nya valfria fält.
+
+**Claudes val (0.11.4):**
+
+- Vangstyckena står **innanför** trappans bredd (bredden är fortfarande
+  trappans yttermått, så att räckena och hålet inte flyttar), 50 × 300 med
+  överkanten 50 mm över linjen genom stegnosarna och höjden mätt lodrätt.
+  Sidorna väljs: båda (förval), vänster, höger eller inga. Vangstycket går
+  från första till sista sättsteget (inte över planstegen i början och
+  slutet), och nedtill kapas det mot golvet.
+- Vid ett vilplan ligger vangstyckets överkant plant och tar ett språng
+  på en steghöjd där nästa lopp börjar (linjen genom stegnosarna); vid
+  kilstegen är vangstycket en bit per steg, och på insidan nära hörnet
+  bara en smal kil (där brukar det stå en stolpe; den kommer med räcket).
+- Stegnosen ligger framför sättsteget: plansteget börjar vid stegets
+  framkant (som i 0.11) och sättsteget står `stegnos` bakom den; plansteget
+  går in under nästa sättsteg. Sättsteg 0 mm ger en öppen trappa, och då
+  ingen stegnos. Det första plansteget i golvnivå är golvet och byggs inte.
+- Kulörerna utan material: plansteg i trä (#c8a57a), vangstycken och
+  sättsteg målade (#ece8df). Inget nytt material *Trä* i stilboken, så att
+  befintliga projekt inte ändras; välj ett eget.
+- Kontrastmarkeringen gäller också den monolitiska trappan: ingen
+  (förval), första och sista steget, eller alla steg (också vilplanens och
+  det sista planstegets framkant), 50 mm. I 3D en mörk remsa (2 mm), i
+  planen remsans bakkant (kort streckad) i Detalj. Ingen varning och ingen
+  paragraf: kravet gäller tillgängliga trappor, och vi har inte slagit upp
+  det i BFS 2024:9 än.
+- Planen: vangstyckenas insida i Normal och Detalj (inte Skiss); stegens
+  framkanter, stegnosen och kontrasten går mellan vangstyckena. I Detalj
+  stegens nummer nerifrån (texthöjd 1,8) och *N st à steghöjd/stegdjup*
+  (2,0, längs gånglinjen nära början; det minsta stegdjupet). Nya ställen:
+  *vangstycke*, *kontrastmarkering*, *stegnummer och text*.
+- Varje del är en egen form i 3D, så att sektionerna snittar dem var för
+  sig med sina material.
+
+**Inte gjort i 0.11.4:** detaljsnittet med profiler (plansteg infällda i
+vangstycket, spår), en egen kulör eller material för kontrastremsan,
+pinnar/vangstycke under stegen (mittvange), stegnummer som går att släcka
+utan att byta penna, och klickjämförelsen (granskningen efter 0.11.5).
 
 ### 0.11.5 Spiraltrappan
 
