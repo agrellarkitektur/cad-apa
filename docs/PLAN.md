@@ -177,6 +177,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.4 | Byggd trappa: vangstycken, plansteg med stegnos och sättsteg som delar med egna mått och material, öppen trappa, kontrastmarkering, vangstyckena i planen, stegnummer och stegtext i Detalj |
 | 0.11.5 | Spiraltrappan: numeriskt läge (inner- och ytterdiameter, grader också över ett varv, varvriktning), referenslinjen en genererad helix, mittpelaren, planen med snittet och det dolda över ett varv, runt hål |
 | – | Granskning efter 0.11.5 (31 oktober): räckets filer delade, klickjämförelsen med trappor och räcken; ingen ny version |
+| 0.11.6 | Profilen (format 27): profiltypen med delprofiler, ankare och sträckzoner, verktyget *Profil* (linje, lodrät, längs kant), avsluten med inom/utöver och förskjutning, gering, vridning, plan/sektion/fasad/3D, profileditorn, stilbokens flikar Stil/Typer/Allmänt |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
 val och det som *inte gjordes*. De ligger i arkivet:
@@ -653,26 +654,102 @@ kvar odelade; de är de största filerna nu. Stilmallsstegen i
 klickjämförelsen från 0.8.27–0.8.38 ger `saknas`-fel sedan stilboken
 (0.10.32) och borde skrivas om mot stilbokens selektorer (liten).
 
-### 0.11.6 Profilverktyget · *nytt format*
+### 0.11.6 Profilen ✓ · *nytt format (27)*
 
-Carl August 22 oktober; före piloten (24 oktober). Stor.
+Utredd 31 oktober 2026 med mockup i Claude Design (*Profilverktyget –
+utredning 0.11.6*, fem tavlor); specifikationen och besluten A–H står i
+`cad-apa-profil-utredning.md` i projektets kunskapsbas. Byggd i en session
+31 oktober (Carl August: "Bygg 0.11.6"). Beslutade (31 oktober):
 
-- Pelare och profiler följer planens snitt som de andra objekten (0.10.16,
-  Carl August 27 oktober)
-- Man ritar en profil och sedan en referenslinje, och profilen följer
-  linjen. Ett verktyg i stället för Archicads flera (pelare, balkar,
-  räcken): man anger om profilen är generell eller en byggdel (pelare,
-  balk, yttervägg …)
-- **Rita ett mönster och gör det till en fyllningstyp** (Carl August 25
-  oktober): linjer ritade i en ruta (mönstrets upprepning) blir
-  linjefamiljer. Samma mekanism som profilen (rita 2D och gör det till
-  en definition). Linjerna måste gå vågrätt, lodrätt eller genom rutans
-  hörn för att upprepas; bågar blir raka bitar
-- Väggar med lager får material per lager; egna profiler i räckestyperna
+- **A** Delningen: 0.11.6 profilen, 0.11.7 ändprofilerna och profilen som
+  del (räcken, vangstycket), 0.11.8 dörrar och fönster.
+- **B** Två sträckzoner per typ (Höjd lodrätt, Bredd vågrätt).
+- **C** En delprofil får ligga ovanpå en annan (den tar sin yta ur den),
+  kant i kant eller fritt.
+- **D** Stilboken med flikarna Stil / Typer / Allmänt; *Stilbok…* och
+  *Typer…* i huvudmenyn öppnar samma fönster på var sin flik.
+- **E** Uppåt lodrätt (förval) eller vinkelrätt mot banan, och en fri
+  vridning kring ankaret.
+- **F** Flera ankare per typ, numrerade och namngivna, ett förval.
+- **G** Varje ände Inom eller Utöver referenslinjen, och en förskjutning i
+  mm (+ ut).
+- **H** Stil, Typer och Allmänt ser ut som flikar.
 
-### 0.11.7 Dörrar och fönster
+**Claudes val (0.11.6):**
 
-Carl August 22 oktober. Stor; delas om det behövs.
+- **Svepningen** (`elements/profileBody.ts`): varje delprofil delas i
+  konvexa celler (band mellan hörnens x), varje cell sveps längs varje rak
+  bit av banan som en konvex kropp kapad av planen i ändarna och
+  knäckarna, och kroppen görs om till programmets 3D-format (lodräta
+  extruderingar med sneda ovan- och undersidor). 3D-vyn, sektionerna och
+  fasaderna behövde därför ingen ändring. Kantlinjerna levereras för sig
+  (skarpa hörn längs banan, och i en rundad kontur de yttersta punkterna;
+  konturen i ändarna och i knäckar över 8°).
+- **Inom/Utöver** räknas mot hela tvärsnittet: *Inom* lägger avslutet så
+  att inget av tvärsnittet går förbi referenslinjens ände, *Utöver* så att
+  allt gör det. För lodräta och vinkelräta avslut på en vågrät bana är de
+  lika; skillnaden syns för vågräta avslut och vinklar på lutande banor.
+- **Förval för avsluten**: lodrätt för gruppen *Pelare och balkar*,
+  vinkelrätt för resten (typens *Avslut som förval* går före). En pelare
+  har alltid vågräta ändar.
+- **Tvärsnittet läggs till höger om banan** (x bort från väggen; en vägg
+  som ritas moturs har utsidan till höger). Tab och *Spegla* lägger det på
+  andra sidan. En pelares tvärsnitt har x längs planens x; den vrids med
+  *Vridning* och med objektet.
+- **Höjd och Bredd** är parametrar (*per objekt* som förval) med hela
+  tvärsnittets mått; zonerna sträcks lika mycket var tills måttet stämmer,
+  och ingen zon krymper under 1 mm. Ändras konturerna i editorn följer ett
+  fast värde det ritade.
+- **Littera**: typen PR01 …, objektet P01 (pelare), B01 (balk), L01 (list
+  och gesims) och TD01 (takdetaljer; T är trädens).
+- **Planen**: en pelare ritas med sitt tvärsnitt (snittat med materialets
+  snitt, utan snitt svart som bjälklagen); en linje som ett konvext hölje
+  per rak bit, under snittet konturlinje och över streckprickat.
+  Delprofilernas inre linjer syns inte i planen.
+- **Längs kant** kopierar kanten (som räcket längs ett hål i 0.11.3); profilen
+  följer inte väggen när den flyttas. Shift tar hela objektets kontur
+  (en väggs fyra sidor, inte husets).
+- **Typerna** läggs i projektet med den första profilen (som räckestyperna);
+  verktygsraden visar de förvalda före dess.
+- **Editorn** snäpper till punkterna och till 5 mm. Rektangel, Cirkel och
+  Linje gör en ny delprofil; punkterna ändras också i tabellen (x, y och
+  pilhöjd för kanten till nästa punkt). *Sträckt* visar tvärsnittet med
+  Höjd och Bredd 1,5 gånger det ritade.
+- Smartmenyns *Profil längs kanten* och *Pelare här* använder verktygets
+  senaste typ och höjd.
+
+**Inte gjort i 0.11.6 (till 0.11.6.1):** editorns verktyg *Förskjut*,
+*Runda hörn* och *Mått* (måtten i ritytan som pekar på parametrarna),
+*Läge* (kant i kant, ovanpå, fritt) som hjälp när man ritar (det sparas
+men styr inget), en egen höjd och bredd att prova i *Sträckt*, och
+varningen när ett avslut skär in i en delprofil. Dessutom: smartspöt för
+profilen, typen som argument i kommandoraden (`PROFIL PR03`), en profil
+som följer kanten den lades längs (*Längs kant/Lösgör*), *Hör till* i
+panelen, profilens littera i planen, delprofilernas inre linjer i planen,
+och profiltyperna i stilbokens export (räckestyperna följer inte med där
+heller). Vågräta och vinklade avslut på en lutande bana räknas exakt;
+geringen mellan två olika lutningar är ett plan genom knäcken (exakt).
+Klickjämförelsen är inte körd (granskningen efter 0.11.8): smartmenyn på
+en väggs kant och hörn har nya val, så smartmenyns hash skiljer där.
+
+### 0.11.6.1 Profileditorn, resten
+
+Det som inte hanns med i 0.11.6 (se ovan): Förskjut, Runda hörn och Mått i
+ritytan, Läge som snäpphjälp, provmått i *Sträckt*, varningen för avslut
+som skär in. Liten–mellanstor.
+
+### 0.11.7 Ändprofiler och profilen som del
+
+Ur utredningen (31 oktober, beslut A): ändprofilerna PA01 … (kontur i
+sidovyn som skär änden, Inom/Utöver och förskjutning som de enkla
+avsluten), profiltyper som delar i räckestyper (med ankare och vridning
+kring ankaret) och i den byggda trappans vangstycke. Mellanstor–stor.
+
+### 0.11.8 Dörrar och fönster
+
+Carl August 22 oktober. Stor; delas om det behövs. Foder, tröskel, bleck,
+droppnäsa, karm, båge, mittpost och spröjs som profiler (utredningen 31
+oktober).
 
 - Redigerbara foder
 - Fler öppningssätt för dörrar: skjutdörr, pardörr, vikdörr,
@@ -681,12 +758,12 @@ Carl August 22 oktober. Stor; delas om det behövs.
 - Om det ryms (annars efter piloten): dörr- och fönsterhandtag, flera
   bågar och luft i höjd och sida, spröjs
 
-### Granskning efter 0.11.7
+### Granskning efter 0.11.8
 
 Inga nya funktioner. Det som inte gjordes i granskningen efter 0.11.5:
 stilmallsstegen i `scripts/jamfor-klick.py` (0.8.27–0.8.38) skrivs om mot
 stilbokens selektorer, så att stilboken jämförs igen; `stairGeometry.ts`
-och `view3d.ts` delas när 0.11.7 visat hur de växer; klickjämförelsen körs
+och `view3d.ts` delas när 0.11.8 visat hur de växer; klickjämförelsen körs
 med profiler, dörrar och fönster.
 
 ### 0.12 Export: IFC och DXF

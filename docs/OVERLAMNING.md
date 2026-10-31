@@ -6,81 +6,51 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 31 oktober 2026, efter granskningen efter 0.11.5.
+README. Senast: 31 oktober 2026, efter 0.11.6.
 
 ## Läget
 
-- **Granskningen efter 0.11.5 är klar** (31 oktober; samma version 0.11.5,
-  inget som syns). Klickjämförelsen körd med 51 nya steg för trappor och
-  räcken (633 steg; inga fel i de nya, dokument och ritning lika mot
-  0.10.40.1 i de gamla), räckets filer delade (`railingBody.ts`,
-  `railingPlan.ts`, `railingWarnings.ts`, `railingTypeFields.ts`),
-  dubbletter ihopslagna, testerna genomgångna (843 på ca 25 s). Det som
-  inte gjordes står i PLAN.md (*Granskning efter 0.11.5*).
-- **0.11.5 Spiraltrappan är klar** (samma format, 26), byggd i en session
-  (Carl August: "kör"). *Spiral* i trappverktyget: inner- och
-  ytterdiameter, grader (också över 360) och varvriktning, två klick (mitt
-  och startriktning). Referenslinjen genereras som en båge; `line` är
-  mitten och startpunkten. Mittpelaren, planen som döljer det som ligger
-  mer än ett varv under, det sista varvet i våningen ovanför, runt hål.
-  Testerna: 843 på ca 14 s. Provat i Playwright mot `dist/` (verktyget,
-  förhandsvisningen, 450° i plan Normal och Detalj, 3D, panelen). Koden i
-  UTVECKLING.md (*Spiraltrappan*), Claudes val i PLAN.md.
-- **0.11.4 Byggd trappa är klar** (samma format, 26), byggd i en session
-  (Carl August: "kör"; ingen utredning eller mockup före, så Claudes val
-  står i PLAN.md och frågorna nedan). *Uppbyggnad: Byggd* ger vangstycken,
-  plansteg med stegnos och sättsteg (0 = öppen trappa) med egna mått och
-  material; kontrastmarkering (också monolitisk); vangstyckenas insida i
-  planen i Normal och Detalj; stegnos, kontrast, stegnummer och *N st à
-  h/d* i Detalj. Testerna: 837 på ca 11 s. Provat i Playwright mot
-  `dist/` (L-trappa med plansteg och en öppen rak trappa i plan Detalj och
-  3D, panelen). Koden i UTVECKLING.md (*Byggd trappa*).
-- **0.11.3 Staket och grindar är klar** (samma format, 26), byggd i en
-  session med grindarna (ingen delning behövdes). Räcket på Platsen med
-  höjden ur den färdiga marken, *Trappstegat*, stolpar nedgrävda och i
-  plint, *Längs kant* för hål, bjälklag, väggar, ramper, linjer och
-  stödmurens krön (Shift: hela konturen), ST01–ST03, SP01 och G01 som
-  förval på Platsen, *Hör till* och *Höjden från* i panelen, grinden
-  (*Gör till grind…* i smartmenyn, grindstolpar, typ, hängning,
-  utåt/inåt, slagbåge, littera). Räckestypeditorn omgjord efter tavla 4
-  (Carl August bad om det i sessionen; han bifogade tavlorna som PDF).
-  Testerna: 831 på ca 14 s. Provat i Playwright mot `dist/` (staket på en
-  sned plats i plan och 3D, trappstegat, grinden i plan, smartmenyn,
-  panelen, editorn i fyra lägen). Koden i UTVECKLING.md, Claudes val och
-  det som inte gjordes i PLAN.md.
-- **0.11.2 Räckestypeditorn** (samma format): typlistan i grupper,
-  förhandsvisningen, delträdet; Shift-låset går före snäppet.
-- **0.11.1 Räcket** (samma format): objektet `Railing` med typmodellen,
-  verktyget *Räcke*, trappans smartmeny, plan, sektion, fasad, 3D och
-  varningarna ur BFS 2024:9.
+- **0.11.6 Profilen är klar** (**nytt format, 27**), byggd i en session
+  (Carl August: "Bygg 0.11.6") efter utredningen (`cad-apa-profil-utredning.md`,
+  besluten A–H). Profiltypen (`Definition.profile`) med delprofiler,
+  ankare, sträckzoner och parametrar; svepningen (`elements/profileBody.ts`:
+  konvexa celler som sveps och kapas, görs om till vanliga 3D-former, så
+  att 3D, sektioner och fasader fungerar som förut); verktyget *Profil*
+  (Linje, Lodrät, Längs kant; Tab spegla), smartmenyns *Profil längs
+  kanten*, *längs hela konturen* och *Pelare här*; panelen med ankare,
+  förskjutning, vridning, uppåt, mått, material per delprofil och
+  avsluten (Inom/Utöver, förskjutning); gering i knäckarna och i en sluten
+  bana; stilbokens flikar **Stil / Typer / Allmänt** och profileditorn
+  (rityta med Välj, Linje, Rektangel, Cirkel, Ankare, Sträckzon, Spegla,
+  Ur DXF…; Tvärsnittet, Sträckt, 3D). PR01–PR05 som förval. Testerna: 852
+  på ca 15 s. Provat i Playwright mot `dist/` (pelare, balk, lutande balk
+  med vågräta ändar, gesims runt en vägg, sockellist med båge, plan, 3D,
+  fasad och sektion, panelen, editorn: rita, dra punkter, 3D och Sträckt).
+  Koden i UTVECKLING.md (*Profilen*), Claudes val och det som inte gjordes
+  i PLAN.md.
+- **0.11.6.1** är det som inte hanns med i editorn: Förskjut, Runda hörn
+  och Mått i ritytan, *Läge* som snäpphjälp, provmått i *Sträckt*,
+  varningen för avslut som skär in (liten–mellanstor). Se PLAN.md.
+- **Granskningen efter 0.11.5** och **0.11.1–0.11.5** (räcket, editorn,
+  staket och grindar, byggd trappa, spiraltrappan): se PLAN.md och
+  UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** granskningen pushad till `main` 31 oktober efter 0.11.5 (se git och
-  `gh run list`). `add_repo` med push går direkt när Carl August skriver
-  "push godkänd" i första meddelandet.
+- **Publicerad:** 0.11.6 pushad till `main` 31 oktober (se git och `gh run
+  list`). `add_repo` med push går direkt när Carl August skriver "push
+  godkänd" i första meddelandet.
+- **Märks i hans ritningar efter 0.11.6:** projekt och autospar från
+  0.11–0.11.5 öppnas inte (nytt format). Verktyget *Profil* under Rita,
+  *Typer…* i huvudmenyn, stilboken har flikar (resurserna är delade på
+  Stil och Typer), gruppen *Profiler* bland pennorna, och smartmenyn på en
+  väggs kant och hörn har *Profil längs kanten*, *Profil längs hela
+  konturen* och *Pelare här*.
 - **Märks i hans ritningar efter 0.11.5:** inget i befintliga ritningar.
   *Spiral* i trappverktygets rad.
-- **Märks i hans ritningar efter 0.11.4:** inget i befintliga ritningar
-  utom att trappans plan i Detalj nu har stegens nummer och texten med
-  antal, steghöjd och stegdjup. *Byggd* går att välja under *Uppbyggnad*.
-- **Märks i hans ritningar efter 0.11.3:** inget i befintliga ritningar,
-  utom att stolparna i ST-typerna och grindstolparna syns redan i Normal.
-  Verktyget *Räcke* fungerar på Platsen; editorn ser annorlunda ut.
-- **Märks i hans ritningar efter 0.11.2:** inget i ritningarna. *Räckestyper*
-  under Resurser i stilboken; med Shift ritar linjen i låset också nära
-  en punkt.
-- **Märks i hans ritningar efter 0.11.1:** inget i befintliga ritningar,
-  utom att trappans varningar har nya texter och att en trappa utan
-  räcken varnar för ledstång på båda sidor (kvittera i trappans
-  egenskaper). Verktyget *Räcke* under Rita, gruppen *Räcken* i stilboken.
-- **Märks i hans ritningar efter 0.11:** projekt och autospar från
-  0.10.32–0.10.40.1 öppnas inte (nytt format). Verktyget *Trappa* under
-  Rita, och i stilboken grupperna *Trappor* och *Från annan våning*. I
-  egenskaperna för bjälklag, markobjekt och trappor finns *Syns också på*.
-- **Versionsnumret** är `0.11.5` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.11.6` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.11.5 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.11.6 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -103,14 +73,19 @@ README. Senast: 31 oktober 2026, efter granskningen efter 0.11.5.
   fasadlinje. Vyn heter *Sektion* och *Fasad*. **Littera** skrivs med två
   siffror som förval (T01, M01, RÄ01). Spöet heter **smartspöt**. Fliken
   för situationsplanen heter **Platsen**; inga engelska ord i appen.
-  Stilinställningarnas helhet heter **stilboken**; en rad i en vykategori
-  där en objekttyp och del får sin penna heter ett **ställe**. Trappans
-  delar heter **plansteg**, **sättsteg**, **vangstycke**, **vilplan**,
+  Stilinställningarnas helhet heter **stilboken**, med flikarna **Stil**,
+  **Typer** och **Allmänt** (sedan 0.11.6); en rad i en vykategori där en
+  objekttyp och del får sin penna heter ett **ställe**. Trappans delar
+  heter **plansteg**, **sättsteg**, **vangstycke**, **vilplan**,
   **kilsteg**, **stegnos**, **gånglinje**. Räckets: objektet heter
   **Räcke** (också staket, stängsel, spaljé), typen **räckestyp**, delarna
   **stolpe**, **handledare**, **ledstång**, **liggare**, **spjälor**,
   **fyllning**; en sträcka kan bli en **grind**. Vid kilstegen är
-  handledaren **Utjämnad** eller **Hoppande**.
+  handledaren **Utjämnad** eller **Hoppande**. Profilens: **profiltyp**
+  (PR01), **delprofil** (A, B …), **ankare** (flera per typ, numrerade),
+  **sträckzon**, **bana**, **avslut** (*Inom*/*Utöver* referenslinjen,
+  förskjutning), **ändprofil** (PA01), **profilobjekt** (littera P01, B01,
+  L01 efter gruppen); verktyget heter **Profil**.
 - **Varningar** (Carl August 30 oktober): hänvisa till BFS 2024:9 (Boverkets
   nya regler; BBR gäller inte längre för nya ansökningar) där det är
   föreskrift. Det som är vedertaget men inte står i föreskriften
@@ -125,7 +100,9 @@ README. Senast: 31 oktober 2026, efter granskningen efter 0.11.5.
 - **Arbetssätt:** Carl August testar varje version på webbhotellet. Ingen
   demo och ingen zip om han inte ber om det. Säg alltid hur stora
   föreslagna ändringar är och om de riskerar att behöva mer än en
-  session.
+  session. Större versioner utreds med en mockup i Claude Design i en
+  egen chatt före bygget (som räcket och profilen); utredningens fil i
+  projektet är specifikationen.
 - **Synpunkter:** Carl August samlar dem i `cad-apa-synpunkter.md`
   (projektets kunskapsbas), med rubrikerna Inkorg, Planerat per version,
   Parkerat och Avfärdat. Läs den vid sessionsstart (Projects-verktyget,
@@ -153,14 +130,21 @@ README. Senast: 31 oktober 2026, efter granskningen efter 0.11.5.
 Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 - ~~0.8.8 Mallblad~~ … ~~0.10.40.1 Granskning efter 0.10.40~~,
-  ~~0.11 Trappan~~, ~~Utredning av räcket~~, ~~0.11.1 Räcket~~, ~~0.11.2 Räckestypeditorn~~, ~~0.11.3 Staket och grindar~~, ~~0.11.4 Byggd trappa~~, ~~0.11.5 Spiraltrappan~~, ~~Granskning efter 0.11.5~~ (klara; se
-  tabellen *Klart* i PLAN.md)
+  ~~0.11 Trappan~~ … ~~0.11.5 Spiraltrappan~~, ~~Granskning efter
+  0.11.5~~, ~~Utredning av profilverktyget~~, ~~0.11.6 Profilen~~ (klara;
+  se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.11.6 Profilverktyget** (stor) och **0.11.7 Dörrar och fönster**
-  (stor)
-- **Granskning efter 0.11.7**: stilmallsstegen i klickjämförelsen
-  omskrivna mot stilboken, `stairGeometry.ts` och `view3d.ts` delade
+- **0.11.6.1 Profileditorn, resten** (liten–mellanstor): Förskjut, Runda
+  hörn och Mått i ritytan, Läge som snäpphjälp, provmått i Sträckt,
+  varningen för avslut som skär in
+- **0.11.7 Ändprofiler och profilen som del** (mellanstor–stor):
+  ändprofilerna PA, profiltyper i räckestyper och i vangstycket
+- **0.11.8 Dörrar och fönster** (stor; foder, tröskel, bleck m.m. som
+  profiler)
+- **Granskning efter 0.11.8**: stilmallsstegen i klickjämförelsen
+  omskrivna mot stilboken, `stairGeometry.ts` och `view3d.ts` delade,
+  klickjämförelsen med profiler, dörrar och fönster
 - **0.12 Export**: IFC4, DXF, areor för bygglov, förteckning över
   markförändringarna
 - **0.12.1 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
@@ -175,19 +159,34 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 ## Nästa session
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
-skrivrätt till repot ("push godkänd"). Nästa version är **0.11.6
-Profilverktyget** (stor, nytt format; se PLAN.md): diskutera omfattningen
-med Carl August innan bygget, och föreslå en delning om den inte ryms i
-en session. Ställ frågorna om 0.11.5–0.11.1 (nedan) när Carl August
-provat.
+skrivrätt till repot ("push godkänd"). Fråga Carl August om han provat
+0.11.6 och ställ de fem frågorna om den (nedan) först. Nästa version är
+**0.11.6.1** (resten av profileditorn, se PLAN.md) eller, om han hellre
+väntar med den, **0.11.7 Ändprofiler och profilen som del** efter
+`cad-apa-profil-utredning.md`. Ställ frågorna om 0.11.5–0.11.1 (nedan)
+när han provat.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.5, 0.11.4, 0.11.3,
-0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han provat.
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.6, 0.11.5, 0.11.4,
+0.11.3, 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
+provat.
+
+**0.11.6 efter provning** (Claudes val, se PLAN.md)
+- Tvärsnittet läggs till höger om banan (Tab byter sida). Rätt förval,
+  eller hellre till vänster?
+- *Längs kant* kopierar kanten; profilen följer inte väggen när den
+  flyttas, och Shift tar bara det klickade objektets kontur (en väggs fyra
+  sidor). Behövs en profil som följer väggen, eller hela husets kontur?
+- En balk över snittet ritas som en streckprickad kontur utan delprofilernas
+  inre linjer, och objektets littera (B01) står inte i planen. Räcker det?
+- Avsluten: lodrätt som förval för pelare och balkar, vinkelrätt för
+  resten. Rätt?
+- Smartmenyn på en väggs kant har fått *Profil längs kanten* och *Profil
+  längs hela konturen*. Blir den för lång?
 
 **0.11.5 efter provning** (Claudes val, se PLAN.md)
 - Förvalen 200/1 800 mm, 360° och moturs uppåt. Rimliga, eller hellre
@@ -263,6 +262,9 @@ om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.5, 0.11.4, 0.11.3,
   flytt, kan låsas upp) före piloten?
 - *Syns också på* ritar allt grått 0,18 utan text och går inte att klicka
   på där. Rätt?
+
+**Besvarade 31 oktober, utredningen av 0.11.6:** A–H, se
+`cad-apa-profil-utredning.md` och PLAN.md (*0.11.6 Profilen*).
 
 **Besvarade 30 oktober, planeringen av 0.11:** A delningen 0.11–0.11.3
 (räcket direkt efter trappan, ska kunna byggas ut); B vilplan både per

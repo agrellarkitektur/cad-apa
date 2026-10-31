@@ -445,6 +445,12 @@ ur överlämningen i 0.10.23).
 Det som är känt men lämnat, per version (flyttat hit ur överlämningen i
 0.10.23). Ta bort en rad när den är åtgärdad.
 
+- **Profilen (0.11.6):** planen ritar en linje som ett konvext hölje per
+  rak bit (en bågformad bana: en bit per 4°), så en mycket konkav
+  delprofil på en lodrät bana är exakt men på en linje ritas den som
+  höljet. Kropparna i 3D är många små former (en per cell och bit), så
+  en rund pelare syns svagt fasetterad; inte mätt med hundratals profiler.
+  Snäppet i editorn tar inte hänsyn till *Läge*.
 - **Trappan (0.11):** kilstegens undersida i 3D är ett plan per steg i
   stegets egen riktning, så den blir lite trappstegsformad i svängen; de
   första stegen står på golvet (plan undersida). Gånglinjen i en sväng är
@@ -661,8 +667,74 @@ Avsnitten om koden i 0.6–0.10.40.1 ligger i
 2026, efter 0.10.40.1; oförändrade). De beskriver fortfarande hur koden
 fungerar; sök i hela `docs/` (`grep -rn … docs/`) efter en funktion eller
 en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
-formatet (26) och framåt. Nya avsnitt läggs överst bland versionerna, som
+formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
+
+## Profilen (0.11.6, format 27)
+
+- **Typen** (`core/profileTypes.ts`): `Definition.profile` (`ProfileTypeModel`,
+  `elementType` Profile) med `parts` (delprofilerna: `letter`, `name`,
+  `contour` med `pts` och `bulges` per kant, sluten; `material`,
+  `perObject`, `place`, `followsEnd`, `extend`, `detail`), `anchors` (`no`,
+  `name`, `pos` ett av nio lägen eller `at`), `anchor` (förvalets nummer),
+  `zones` (`axis` height/width, `from`, `to`), `params` (som räckestypens,
+  med `perRailing` = per objekt), `up`, `ends`, `uses`, `group`, `ground`,
+  `building`. `profileSection(model, vals)` ger tvärsnittet: konturerna
+  platta (`flatContour`, högst 12° per bit och ett jämnt antal, moturs) och
+  sträckta (`zoneDeltas`: Höjd/Bredd mot det ritade, lika per zon,
+  uppifrån). `anchorPoint` räknar ankaret i den sträckta rektangeln.
+  Förvalen PR01–PR05 i `defaultProfileTypes` (id `t-pr01` …).
+- **Kommandona** (`core/profiles.ts`): `addProfiles` (typerna första
+  gången, littera per objekt med `nextProfileLittera` och
+  `profileObjectPrefix`), `updateProfileType`, grupperna som räckestypernas
+  (`profileGroups`, stilbokens `profileGroups`, normaliseras i
+  `normalizeStyle`).
+- **Svepningen** (`elements/profileBody.ts`, ren räkning): `partRegions`
+  (en senare delprofil tas ur de tidigare med `difference`), `stripCells`
+  (konvexa celler: band mellan hörnens x, trapetser parvis nerifrån),
+  `sweep(regions, path, up, start, end)` (en konvex kropp `Poly3` per cell
+  och rak bit: ett prisma förlängt `margin` och kapat med `clipPoly` mot
+  ändarnas halvrum, `endHalfSpace` för avsluten med Inom/Utöver och
+  förskjutning, `miter` i knäckarna; en sluten bana geras också i början).
+  `frameOf` ger ramen per bit (x åt höger, y lodrätt eller vinkelrätt mot
+  banan; en lodrät bit har x längs x-axeln). `solidsOf` gör en kropp till
+  `Solid` (varje par av ovan- och undersida i planet blir en form med deras
+  plan, `noEdges`); kantlinjerna (`SweepResult.edges`) är hörnen längs
+  banan (`edgeCorners`) och konturerna i ändarna och knäckar över 8°.
+  `sliceAt` och `hull` för planen, `merged` slår ihop med avrundning och
+  faller tillbaka till ytorna var för sig.
+- **Elementet** `Profile` (`elements/profile.ts`, `ProfileParams`): `path`
+  (`plumb` eller utelämnad), `line`, `bulges`, `z` (höjd per punkt),
+  `level` och `height` (pelaren; `storeyHeight` ur `storeyParams` ger
+  förvalet), `anchor`, `offset`, `rotate`, `mirror`, `up`, `values`,
+  `materials` (per delprofilens id), `start`/`end` (`EndSpec`: `kind`,
+  `angle`, `beyond`, `shift`). `profileBodyOf` sparas per element och
+  definition (`WeakMap`). `planShapes`: pelaren är tvärsnittet i punkten,
+  en linje ett konvext hölje per rak bit; `planReads: []`. Flytta, vrida
+  och spegla i `moveCommands.ts` och `transforms.ts` (speglad växlar
+  `mirror`; en pelare vrids med `rotate`); linjens punkter ändras som
+  räckets (`shapeEdit.ts`).
+- **Pennorna** (`repr/profilePens.ts`): `profileCut`, `profileContour`,
+  `profileAbove` i planen, `profileSectionCut` (`cutRowOf`) och
+  `profileElev` (`facadeRowOf`); gruppen *Profiler* i `penRows.ts`.
+- **Gränssnittet**: verktyget `ui/tools/profileTool.ts` (delade val i
+  `profileToolOptions`, `profileEdgeAt`, `addColumnAt`, `addProfileAlong`;
+  smartmenyns `profileAlong`, `profileContour`, `profileColumn` i
+  `modify/opDefs.ts`, `ops.ts`, `tool.ts`), verktygsraden i
+  `ui/app/profileToolOptions.ts`, frågan i `prompts.ts`, panelen i
+  `ui/profileFields.ts` (nycklarna `prof:…`, knapparna `prof-…`, typen i
+  korthet med `style-profile-type`).
+- **Stilbokens flikar** (`styleDialog.ts`): `tab` räknas ur det som visas
+  (`TYPE_RES` hör till Typer), `showTab`, `lastIn`; `open({ tab })` och
+  `open({ profileType })`. Huvudmenyns `style-types`.
+- **Editorn** `ui/style/profileTypes.ts` (läget `ProfileEditorState`:
+  `def`, `part`, `tool`, `view`, `pending`, `drag`), ritytan i mm med y
+  vänd (`svg[data-pe-canvas]`, pekaren i `profileCanvasPointer`, som
+  stilboken skickar `pointerdown/move/up` till); fälten `ptype:<typ>:…`
+  och knapparna i `profileTypeEdits.ts` (`syncSize` låter Höjd och Bredd
+  följa det ritade); förhandsvisningarna i `profilePreview.ts`
+  (`stretchedMarkup`, `isoMarkup` med samma `sweep`).
+- **Tester**: `tests/v0116.test.ts`.
 
 ## Spiraltrappan (0.11.5, format 26)
 

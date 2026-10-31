@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.5** (alfa), Spiraltrappan, granskad 31 oktober; nästa är **0.11.6
-Profilverktyget**.
+**0.11.6** (alfa), Profilen; nästa är **0.11.6.1** (det som inte hanns
+med i profileditorn) och sedan **0.11.7 Ändprofiler och profilen som del**.
 
 ## Vad som fungerar
 
@@ -1149,6 +1149,55 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11.6, Profilen (**nytt filformat, 27**; projekt och autospar från
+0.11–0.11.5 öppnas inte):
+- Verktyget **Profil** under Rita: ett verktyg för allt som är ett
+  tvärsnitt svept längs en bana (pelare, balkar, lister, gesimser,
+  taktassar). **Bana** i verktygsraden: **Linje** (punkt för punkt, med
+  **Båge**, G), **Lodrät** (en pelare: ett klick, höjden till våningen
+  ovanför om den inte är ifylld) och **Längs kant** (en vägg, ett
+  bjälklag, en takfot eller en linje; **Shift** tar hela konturen).
+  **Typ**, **Ankare**, **Höjd** (referenslinjens; för pelaren fot och
+  höjd), **Vridning** och **Spegla** (**Tab**: tvärsnittet på andra sidan
+  om banan). I kommandoraden **N** linje, **L** lodrät, **K** längs kant
+- I **smartmenyn** på en väggs, ett bjälklags, ett taks eller en linjes
+  kant: **Profil längs kanten** och **Profil längs hela konturen**; på en
+  punkt eller ett hörn **Pelare här** (verktygets typ och höjd)
+- Typerna i ett nytt projekt (de kommer med den första profilen):
+  **PR01** fyrkantspelare 140 × 140, **PR02** rund pelare Ø 150, **PR03**
+  balk 90 × 270, **PR04** gesims med plåtavtäckning (två delprofiler) och
+  **PR05** sockellist 12 × 70. Objekten får littera efter typens grupp:
+  **P01** pelare, **B01** balk, **L01** list
+- I **egenskaperna**: littera, pelarens fot och höjd eller punkternas
+  höjd, **ankaret** (typens; flera per typ), **förskjutning** i sidled och
+  höjd, **vridning kring ankaret**, **speglad**, **uppåt** (lodrätt eller
+  vinkelrätt mot banan), objektets **Höjd** och **Bredd** (när typen har
+  en sträckzon), **material per delprofil** och **avsluten** i början och
+  slutet: *Lodrät*, *Vågrät*, *Vinkelrät* eller *Vinkel…*, **Inom** eller
+  **Utöver** referenslinjen och en **förskjutning** (+ ut). I knäckarna
+  **geras** profilen, i plan och höjd, också där en sluten bana börjar
+- I **planen** snittas det som går genom planens snitt (en pelare, med
+  materialets snitt), det under är en konturlinje och det över
+  streckprickat (en balk). I **3D, sektioner och fasader** är profilen en
+  kropp med delprofilernas material
+- **Stilboken har flikar**: **Stil** (vytyperna och ritresurserna:
+  pennor, linjetyper, fyllningstyper, text och littera), **Typer**
+  (material, profiler, räckestyper; ändprofiler och dörr- och fönstertyper
+  tonade) och **Allmänt**. *Typer…* i huvudmenyn öppnar fliken Typer.
+  Gruppen **Profiler** i stilbokens pennor (snittlinje, konturlinje, över
+  snittet; i sektioner och fasader snittlinje och konturlinje)
+- **Profileditorn** under Typer › **Profiler**: typlistan i grupper (som
+  räckestypeditorn), typens **delprofiler** A, B … (en senare som ligger
+  ovanpå en tidigare tar sin yta ur den), **ankarna** (numrerade, med namn,
+  ett av nio lägen eller en egen punkt, ett förval), **sträckzonerna**,
+  avslutet som förval, uppåt och *Får användas som*. I mitten **ritytan**
+  med rutnät och verktygen *Välj* (dra i punkterna), *Linje*, *Rektangel*,
+  *Cirkel*, *Ankare*, *Sträckzon höjd* och *Sträckzon bredd*, *Spegla* och
+  **Ur DXF…** (slutna konturer); flikarna **Tvärsnittet**, **Sträckt** och
+  **3D**. Till höger delprofilens material, läge, *Följer avslutet*,
+  förlängning, nivå i planen och punkterna med pilhöjd, och typens
+  parametrar (värde, formel, *per objekt*)
 
 Granskningen efter 0.11.5 (31 oktober; samma version och filformat, inget
 som syns): räckets kod uppdelad (`railingGeometry.ts` 760 → 373 rader med
