@@ -6,102 +6,51 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 1 november 2026, efter 0.11.8.2.
+README. Senast: 1 november 2026, efter 0.11.8.3.
 
 ## Läget
 
-- **0.11.8.2 Dörrar och fönster: Detalj och beslag är klar** (samma
-  format, 28; valfria fält `trim`, `hardware` och luftens `material` i
-  typen, stilbokens `scheduleFields`, Allmänts `accessCircle`), byggd i en
-  session (Carl August: "Kör 0.11.8.2", med svaren A–E om 0.11.8.1):
-  foder, bleck med droppnäsa, fönsterbänk, tröskel, beslag, spegelns
-  profil, panel med material, spröjs i planen och med skrivna mått,
-  varningarna, tillgänglighetscirkeln; fönstrens slagbågar släckta från
-  början (A); fältmallen i stilboken › Typer › *Uppställningens fält*,
-  sökbar med taggar, med smarttext och *Bara egna* (E). Testerna: 925 på
-  ca 18 s (referensritningarna omskrivna). Provat i Playwright mot
-  `dist/` (planen och fasaden i Detalj, sektionen, editorn med foder,
-  beslag och spröjsens mått, fältmallen med sökning, varningarna i
-  egenskaperna). Koden i UTVECKLING.md, Claudes val och det som inte
-  gjordes i PLAN.md.
-- **Föreskrifterna** (Claude 1 november): tillgänglighet är **BFS
-  2024:12**, inte 2024:9 (som är säkerhet vid användning: räcken, glas,
-  utfallsskydd); utrymning BFS 2024:7. Varningarna i 0.11.8.2 hänvisar
-  dit men säger *avviker från praxis*, eftersom siffrorna inte är
-  uppslagna i föreskrifterna. Fråga Carl August om han vill att de slås
-  upp (han kan ladda upp föreskrifterna).
-- **Märks i hans ritningar efter 0.11.8.2:** i Detalj får fönster och
-  dörrar foder i planen, fönster i ytterväggar bleck och fönsterbänk,
-  dörrar med tröskel tröskeln; i fasaden fodret som U på bleck och
-  bänk, gångjärnens markering, handtagen inne; fönstrens slagbågar i
-  planen syns inte längre (tänds under Visa). Nya förvalda innerdörrar
-  har karmen 40 (förut 50); typer i projektet ändras inte. Nytt: editorns
-  *Foder, bleck och bänk* och *Beslag*, *+ Lodrät*/*+ Vågrät* och måtten
-  under Special, panelens material, varningarna, Allmänt ›
-  *Tillgänglighetscirkel*, *Visa › Tillgänglighetscirkel vid dörrar*,
-  Typer › *Uppställningens fält*, nya ställen (dörr: foder, tröskel,
-  tillgänglighetscirkel; fönster: foder, bleck, fönsterbänk, spröjs).
-- **0.11.8.1 Dörrar och fönster: synpunkterna på mockupen är klar** (samma
-  format, 28; valfria fält `muntins`, `leafGrid`, `frameLess` i typen,
-  `params.fields` på objekten), byggd i en session (Carl August: "Arbeta
-  in kommentarer från mockup som 0.11.8.1"): A–I ur Inkorgen och måtten.
-  **Måtten** (Carl August 1 november): modulmåttet är alltid decimeter;
-  hålmåttet görs ofta 10 större på höjd och bredd (praxis, ingen regel);
-  karmyttermåttet är tillverkarens, ofta 10–20 mindre per ledd, och får
-  variera. Testerna: 911 på ca 17 s (referensritningarna omskrivna).
-  Provat i Playwright mot `dist/` (fönstrens slag i planen, fasaden med
-  2-luft och dörr, editorn med jämn och ritad spröjs, dörrbladets
-  fyllning till glas, Allmänt med fältmallen, Uppställningens fält med
-  *Olika*). Koden i UTVECKLING.md, Claudes val och det som inte gjordes i
-  PLAN.md.
-- **Märks i hans ritningar efter 0.11.8.1:** hålen blir modulmåttet + 10
-  och karmarna modulmåttet − 10 (förut hål = modul, karm − 20), så fönster
-  med överkant karm 2 100 sitter 10 lägre och litteran i Detalj visar
-  910×2110. Öppningssymbolerna i fasaderna är vända (spretar mot
-  gångjärnen) och heldragna från slagsidan; fönstrens slag i planen är
-  15° och heldragna; slagbågarna syns också i Skiss. Ett sparat *Visa ›
-  Öppningssätt (dörrar)* släcker nu bara dörrarnas slagbågar. Nytt:
-  Allmänt › *Hålmått*, *Karmyttermått*, *Fönstrens slag*, fältmallen;
-  editorn *Karmavdrag*, *Spröjs*, bladets *Indelning*; egenskapernas
-  *Uppställningens fält*; Visa-kryssen för slagbågar och symboler;
-  ställena *öppningssätt, bortre sidan* och *Fönster: spröjs*.
-- **0.11.8 Dörrar och fönster: öppningstyperna är klar** (**nytt format
-  28**), byggd i en session efter mockupen (Carl August: "Kör 0.11.8
-  dörrar och fönster enligt mockup i föregående session"). Specifikationen
-  är `cad-apa-dorrar-fonster-utredning.md` i projektet och mockupen *Dörrar
-  och fönster – utredning 0.11.8* (Claude Design). Typen är en karm med
-  ett rutnät av lufter; förvalda typer med beskrivande namn; editorn under
-  stilboken › Typer › *Fönster och dörrar*; modulmått med drevmånen och
-  fritt karmyttermått; överkant karm; litteraregeln, formeln, sparade
-  nummer och *Numrera om* under Allmänt; verktygen, smartmenyn och
-  egenskaperna; plan, fasad, sektion och 3D ur typen; vägghål och
-  uppställningar i formatet. Testerna: 899 på ca 18 s (referensritningarna
-  omskrivna). Provat i Playwright mot `dist/` (verktygsraden, ett nytt
-  fönster med sparat nummer, egenskaperna, editorn med en vald luft,
-  Allmänt, fasad i Detalj, 3D). Koden i UTVECKLING.md, Claudes val och det
-  som inte gjordes i PLAN.md.
-- **Märks i hans ritningar efter 0.11.8:** projekt och autospar från
-  0.11.6–0.11.7.3 öppnas inte (nytt format). Hålet är modulmåttet (förut
-  + 10), karmen modulmåttet minus drevmånen; fönster sitter i liv ute
-  (förut 50 in) med överkant karm 2 100; ytterdörrar i liv på slagsidan.
-  Litteran för dörrar och fönster är F01, D01 … efter typ och mått (förut
-  typens namn D1, F1). Fönstren har slag i planen och
-  öppningssymbolen i fasaden. Nytt: *Fönster och dörrar* under stilboken
-  › Typer, *Fönster och dörrar* under Allmänt, verktygsraden, smartmenyns
-  val och egenskapernas avsnitt.
+- **0.11.8.3 Dörrar och fönster: Smart och vägghål är klar** (samma
+  format, 28; valfria fält `hole` i typen, bleckets `slope`, fyllningens
+  `flat`), byggd i en session (Carl August: "Testa att köra A+B tillsammans
+  med smart och vägghål i 0.11.8.3"; A och B var Inkorgens bleck och
+  spegel): vägghålen med verktyg, editor och fyra typer, fasaden som
+  arbetsyta, *I liv med fönstret under*, *Lika avstånd*, *Mitt i rummet*,
+  dagsljuset, blecklutningen, spegelns raka kant. Testerna: 940 på ca 19 s
+  (referensritningarna i Detalj omskrivna). Provat i Playwright mot
+  `dist/` (vägghålen i planen och fasaden, nischen, ventgallret i Detalj,
+  editorn, ett fönster draget i fasaden, rummets och fasadens glas).
+  Koden i UTVECKLING.md, Claudes val och det som inte gjordes i PLAN.md.
+- **Märks i hans ritningar efter 0.11.8.3:** fönsterblecken lutar 15° i
+  Detalj (fasad, sektion, 3D). Nytt: verktyget *Vägghål* under Rita,
+  *Lägg in vägghålens typer*, *Nytt vägghål…* i editorn, dra fönster,
+  dörrar och vägghål i fasader och sektioner, smartmenyns *I liv med
+  fönstret under*, *Lika avstånd* och *Mitt i rummet*, *Dagsljus* i
+  rummets egenskaper (`{dagsljus}`, `{glasarea}` i rumsstämpeln), glaset
+  i fasadens egenskaper och per väderstreck under Allmänt, editorns
+  *Lutning* och spegelns *Kant*.
+- **Föreskrifterna**: tillgänglighet BFS 2024:12, säkerhet vid
+  användning BFS 2024:9, utrymning BFS 2024:7; varningarna säger
+  *avviker från praxis* tills siffrorna är uppslagna. Carl August laddar
+  upp standarderna vid tillfälle (1 november); slå då upp dem och rätta
+  varningarna (dörrar, fönster, trappor, räcken, dagsljuset).
+- **0.11.8–0.11.8.2** (öppningstyperna, synpunkterna på mockupen, Detalj
+  och beslag): se PLAN.md, UTVECKLING.md och README, också för vad som
+  märks i ritningarna (måtten: hålet modulmåttet + 10, karmen − 10;
+  nytt format 28 i 0.11.8).
 - **0.11.5–0.11.7.3** (spiraltrappan, profilen, ändprofilerna, räckets avslut, trappan och räcket): se PLAN.md, UTVECKLING.md och README, också för vad som märks i ritningarna.
 - **Granskningen efter 0.11.5** och **0.11.1–0.11.5** (räcket, editorn,
   staket och grindar, byggd trappa, spiraltrappan): se PLAN.md och
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.11.8.2 pushad till `main` 1 november (se git och `gh run
+- **Publicerad:** 0.11.8.3 pushad till `main` 1 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.11.8.2` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.11.8.3` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.11.8.2 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.11.8.3 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -189,12 +138,10 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   som del~~, ~~0.11.7.1 Profilen, det som inte hanns med~~, ~~0.11.7.2 Räckets
   avslut och spiraltrappan~~, ~~0.11.7.3 Trappan och räcket, det som inte
   hanns med~~, ~~0.11.8 Dörrar och fönster: öppningstyperna~~, ~~0.11.8.1
-  Synpunkterna på mockupen~~, ~~0.11.8.2 Detalj och beslag~~ (klara;
-  se tabellen *Klart* i PLAN.md)
+  Synpunkterna på mockupen~~, ~~0.11.8.2 Detalj och beslag~~, ~~0.11.8.3
+  Smart och vägghål~~ (klara; se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.11.8.3 Smart och vägghål** (mellanstor; fasaden som arbetsyta,
-  linjering, lika avstånd, dagsljus, vägghålen med verktyg och typer)
 - **Granskning efter 0.11.8**: stilmallsstegen i klickjämförelsen
   omskrivna mot stilboken, `stairGeometry.ts` och `view3d.ts` delade,
   klickjämförelsen med profiler, dörrar och fönster
@@ -212,10 +159,12 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 ## Nästa session
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
-skrivrätt till repot ("push godkänd"). Fråga Carl August om han provat
-0.11.8–0.11.8.2 och ställ frågorna om dem (nedan) först, högst fem åt
-gången. Nästa version är **0.11.8.3 Smart och vägghål** (mellanstor; se
-PLAN.md och utredningen i projektet). Ställ frågorna om 0.11.7.3–0.11 när han
+skrivrätt till repot ("push godkänd"). Carl August hade inte provat
+0.11.8–0.11.8.3 den 1 november och ville vänta med frågorna: fråga om han
+provat, och ställ i så fall frågorna om dem (nedan) först, högst fem åt
+gången. Har han laddat upp föreskrifterna, slå upp varningarnas siffror.
+Nästa version är **granskningen efter 0.11.8** (liten–mellanstor, inga
+nya funktioner; se PLAN.md). Ställ frågorna om 0.11.7.3–0.11 när han
 provat.
 
 ## Att fråga Carl August om
@@ -223,10 +172,25 @@ provat.
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.8.2, 0.11.8, 0.11.7.3,
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4, 0.11.3,
 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
+
+**0.11.8.3 efter provning** (Claudes val, se PLAN.md)
+- Vägghålens förval: Ventgaller 300 × 200, Nisch 600 × 600 och 100 djup,
+  Genomföring Ø 160, Rent hål 600 × 600; måtten i mm och höjden som
+  underkant. Rätt, och saknas någon typ (urtag, brevinkast i vägg)?
+- I fasaden blir ett drag överkant karm när den står fast, annars
+  bröstningen; dörrar bara i sidled. Ska fönster också kunna flyttas med
+  piltangenterna där?
+- *I liv med fönstret under* lägger mitten över mitten. Behövs *i liv med
+  kanten* (vänster eller höger) också?
+- *Lika avstånd* kräver tre i samma vägg (de yttersta står kvar). Ska två
+  kunna fördelas över hela väggen, mot väggarnas liv?
+- Dagsljuset räknar glaset innanför bågarna mot golvarean, med 10 % som
+  tumregel. Rätt grund, eller ska ljusinsläppet (LT) och avskärmningen
+  vägas in?
 
 **0.11.8.2 efter provning** (Claudes val, se PLAN.md)
 - Bleck med utsprång 40 och droppnäsa 20, fönsterbänk 22 mm med utsprång

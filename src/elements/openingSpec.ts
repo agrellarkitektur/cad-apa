@@ -5,6 +5,7 @@ import {
   frameFromModule,
   frameLessOf,
   holeFromModule,
+  holeOf,
   kindOfElementType,
   LEAF_OPS,
   SIDE_HUNG,
@@ -91,7 +92,14 @@ export function deriveOpening(kind: OpeningKind) {
       return;
     }
     // Höjdläget: bröstningen står fast, eller överkant karm (förval för fönster som inte står på golvet).
-    const ref = own.heightRef ?? (own.sill !== undefined || floor ? 'sill' : 'head');
+    // Vägghålen står alltid på sin underkant (0.11.8.3) och har formen ur typen.
+    if (kind === 'hole') {
+      const h = holeOf(m);
+      if (h.shape === 'round') out.round = true;
+      if (h.depth !== null) out.niche = { depth: h.depth, side: own.swing === -1 ? -1 : 1 };
+      if (h.grille) out.grille = true;
+    }
+    const ref = kind === 'hole' ? 'sill' : (own.heightRef ?? (own.sill !== undefined || floor ? 'sill' : 'head'));
     out.heightRef = ref;
     if (ref === 'head') {
       const head = typeof own.head === 'number' ? own.head : st.head;

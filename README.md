@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.8.2** (alfa), Dörrar och fönster: Detalj och beslag; nästa är
-**0.11.8.3 Smart och vägghål**.
+**0.11.8.3** (alfa), Dörrar och fönster: Smart och vägghål; nästa är
+**granskningen efter 0.11.8**.
 
 ## Vad som fungerar
 
@@ -1149,6 +1149,42 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.11.8.3, Dörrar och fönster: Smart och vägghål (samma filformat,
+28; projekt från 0.11.8 öppnas):
+- **Vägghål** med eget verktyg under Rita (*Vägghål*, kommandot `VÄGGHÅL`
+  eller `HÅL`) och fyra förvalda typer: **Ventgaller** (300 × 200, med
+  lameller i fasaden och en platta i 3D), **Nisch** (600 × 600, 100 mm
+  djup, inte genom väggen), **Genomföring** (rund, Ø 160) och **Rent
+  hål**. Nya projekt har Ventgaller och Rent hål; i andra projekt lägger
+  knappen *Lägg in vägghålens typer* i verktygsraden in dem. Måtten är i
+  mm (inget modulmått), höjden är **underkanten** över golvet (negativ i
+  sockeln går bra), och nischen hamnar på den sida man pekar på. Littera
+  VG01 …. I editorn (stilboken › Typer › Fönster och dörrar) har vägghålen
+  *Form* (rektangel eller rund), *Djup* (genom väggen eller nisch, med
+  djupet), *Galler*, förvalt mått och underkant, och *Nytt vägghål…*
+- **Fasaden som arbetsyta**: markera ett fönster, en dörr eller ett
+  vägghål i en fasad eller sektion och dra det. Draget blir läget längs
+  väggen och höjden (överkant karm, eller bröstningen när den står fast);
+  dörrar flyttas bara i sidled. Draget snäpper mot linjerna i fasaden, så
+  att fönster kan läggas i liv med varandra
+- **Smartmenyn** för dörrar, fönster och vägghål: **I liv med fönstret
+  under** (mitten lodrätt över det närmaste i samma liv på våningen
+  under), **Lika avstånd** (tre eller fler i samma vägg; de yttersta står
+  kvar och avstånden mellan hålen blir lika) och **Mitt i rummet** (mitt
+  på rummets vägg). Sparade val för snabbknapparna får de nya tillagda
+- **Dagsljus**: rummets egenskaper visar glasarean i ytterväggarnas dörrar
+  och fönster mot golvarean, med en varning under 10 % (*avviker från
+  praxis*). Smarttexten `{dagsljus}` och `{glasarea}` finns för
+  rumsstämpeln. Fasadens egenskaper visar glaset mot fasaden, och stilboken
+  › Allmänt › *Fönster och dörrar* glasarean per väderstreck, som underlag
+  för energiberäkningen
+- **Fönsterblecket lutar** utåt (förval 15°, *Lutning* i editorn under
+  *Foder, bleck och bänk*), med droppnäsan i den lägre änden
+- **Spegelns kant**: en fyllning i dörrbladet kan vara *Fasad* (förval)
+  eller *Rak*
+- Ett fönster eller vägghål kan sättas in över eller under ett annat i
+  samma vägg (krocken prövas också i höjd)
 
 Version 0.11.8.2, Dörrar och fönster: Detalj och beslag (samma filformat,
 28; projekt från 0.11.8 öppnas):

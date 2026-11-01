@@ -114,6 +114,20 @@ export interface OpeningParams {
   frameH?: number;
   holeW?: number;
   holeH?: number;
+  /**
+   * Vägghålets form (0.11.8.3, ur typen): runt (genomföring) och nisch, som
+   * bara går `depth` mm in från livet på sidan `side` (1 = vänster om
+   * väggens riktning).
+   */
+  round?: boolean;
+  niche?: { depth: number; side: 1 | -1 };
+}
+
+/** Hur långt in i väggen hålet går, från sidan −h till h (o längs väggens normal). */
+export function holeDepthSpan(o: Pick<OpeningParams, 'niche'>, h: number): [number, number] {
+  if (!o.niche) return [-h, h];
+  const d = Math.min(o.niche.depth, 2 * h - 1);
+  return o.niche.side === 1 ? [h - d, h] : [-h, -h + d];
 }
 
 /**
@@ -168,7 +182,8 @@ export function openingRings(frame: WallFrame, o: OpeningParams, grow = 0): Vec2
   const s1 = o.at - holeWidth(o) / 2;
   const s2 = o.at + holeWidth(o) / 2;
   const h = f.half + sagittaOver(frame, s2 - s1) + grow;
-  return [[[f.at(s1, -h), f.at(s2, -h), f.at(s2, h), f.at(s1, h)]]];
+  const [a, b] = o.niche ? holeDepthSpan(o, f.half).map((v) => (Math.abs(v) >= f.half - 0.01 ? Math.sign(v) * h : v)) : [-h, h];
+  return [[[f.at(s1, a), f.at(s2, a), f.at(s2, b), f.at(s1, b)]]];
 }
 
 /** Ändpunkter som ligger närmare varandra än så här räknas som en skarv (mm). */

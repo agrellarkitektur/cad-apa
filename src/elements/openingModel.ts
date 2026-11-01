@@ -2,7 +2,7 @@ import type { WallFrame } from '../geometry/wallFrame';
 import type { Vec2 } from '../repr/primitives';
 import type { Edges3D, EdgePart, Shape3D, Solid } from '../repr/solids';
 import { symbolSegments } from '../core/openingSymbol';
-import { hardwareOf, hasSash, layoutLeaf, leafGridOf, LEAF_OPS, muntinLines, muntinOutline, muntinWidth, standsOnFloor, trimOf, type LaidCell, type OpeningLayout, type OpeningTypeModel, type Rect } from '../core/openingTypes';
+import { hardwareOf, hasSash, holeOf, layoutLeaf, leafGridOf, LEAF_OPS, muntinLines, muntinOutline, muntinWidth, standsOnFloor, trimOf, type LaidCell, type OpeningLayout, type OpeningTypeModel, type Rect } from '../core/openingTypes';
 
 /**
  * Dörrar och fönster i 3D, och därmed i fasader och sektioner (0.7.1; ur
@@ -156,6 +156,8 @@ export interface OpeningGeom {
   showSwing: boolean;
   /** Stilbokens material för en fyllning i dörrbladet (kulören och nyckeln). */
   mat?: (id: string) => Partial<Solid>;
+  /** Nischens sida för ett vägghål (0.11.8.3). */
+  niche?: 1 | -1;
 }
 
 /**
@@ -203,8 +205,29 @@ export function openingModel3d(id: string, g: OpeningGeom, level: Level): Shape3
   const whole: Rect = { u0: 0, u1: L.w, z0: 0, z1: L.h };
 
   if (m.kind === 'hole') {
-    // Ett rent hål: väggen ritar hålet; här bara kanten i fasaden.
-    for (const o of [g.lo, g.hi]) rectU('hole', whole, o);
+    // Väggen skär och ritar hålet; här kanten på liven (så att hålet går att klicka i fasaden) och ventgallret (0.11.8.3).
+    const hs = holeOf(m);
+    const half = g.f.half;
+    const faces = hs.depth === null ? [-half, half] : [g.niche === -1 ? -half : half];
+    if (hs.shape === 'round') {
+      const r = L.w / 2;
+      const n = 32;
+      for (const o of faces)
+        for (let i = 0; i < n; i++) {
+          const a = (2 * Math.PI * i) / n;
+          const c = (2 * Math.PI * (i + 1)) / n;
+          b.line('hole', P(r + r * Math.cos(a), o, L.h / 2 + r * Math.sin(a)), P(r + r * Math.cos(c), o, L.h / 2 + r * Math.sin(c)));
+        }
+    } else for (const o of faces) rectU('hole', whole, o);
+    if (hs.grille && level !== 'sketch') {
+      // En tunn platta i livet på utsidan, med lameller var 25 mm i fasaden.
+      const face = (g.outside !== 0 ? g.outside : g.vf) * half;
+      const inner = face - Math.sign(face) * 8;
+      box('frame', whole, face, inner);
+      const w = Math.min(12, L.w / 6, L.h / 6);
+      rectU('frame', { u0: w, u1: L.w - w, z0: w, z1: L.h - w }, face);
+      for (let z = w + 25; z < L.h - w - 5; z += 25) b.line('frame', P(w, face, z), P(L.w - w, face, z));
+    }
     return b.done();
   }
 
@@ -254,7 +277,7 @@ export function openingModel3d(id: string, g: OpeningGeom, level: Level): Shape3
           rectU('leaf', fl.rect, o);
           if (fl.glass) glassMarkU(b, g, fl.rect, o);
           // Spegelns profil (0.11.8.2): en fas 15 mm innanför kanten, i Detalj.
-          else if (level === 'detail' && fl.rect.u1 - fl.rect.u0 > 60 && fl.rect.z1 - fl.rect.z0 > 60) rectU('leaf', { u0: fl.rect.u0 + 15, u1: fl.rect.u1 - 15, z0: fl.rect.z0 + 15, z1: fl.rect.z1 - 15 }, o);
+          else if (level === 'detail' && !fl.flat && fl.rect.u1 - fl.rect.u0 > 60 && fl.rect.z1 - fl.rect.z0 > 60) rectU('leaf', { u0: fl.rect.u0 + 15, u1: fl.rect.u1 - 15, z0: fl.rect.z0 + 15, z1: fl.rect.z1 - 15 }, o);
         }
       }
       if (level === 'detail') leafHardware(b, g, c, leafFace, back);
@@ -402,10 +425,17 @@ function trimAndHardware(b: Builder, g: OpeningGeom): void {
     const tip = s * (f.half + flashing.overhang);
     const ext = (lined(s) ? w : 0) + 10;
     const [s0, s1] = [g.h1 - ext, g.h2 + ext];
-    b.box('frame', s0, s1, Math.min(karm, tip), Math.max(karm, tip), g.z0 - 2, g.z0);
-    if (flashing.drip > 0) b.box('frame', s0, s1, Math.min(tip, tip - s * 2), Math.max(tip, tip - s * 2), g.z0 - flashing.drip, g.z0);
-    b.rect('sill', s0, s1, g.z0 - Math.max(2, flashing.drip), g.z0, tip);
-    b.depth('sill', [[s0, g.z0], [s1, g.z0]], karm, tip);
+    // Lutningen (0.11.8.3): plåten faller utåt från karmen, droppnäsan hänger från den lägre änden.
+    const drop = Math.abs(tip - karm) * Math.tan((Math.max(0, Math.min(45, flashing.slope)) * Math.PI) / 180);
+    const zTip = g.z0 - drop;
+    if (drop < 0.5) b.box('frame', s0, s1, Math.min(karm, tip), Math.max(karm, tip), g.z0 - 2, g.z0);
+    else {
+      const top = planeAlong(b, karm, g.z0, tip, zTip);
+      b.box('frame', s0, s1, Math.min(karm, tip), Math.max(karm, tip), zTip - 2, g.z0, { top, bottom: [top[0], top[1], top[2] - 2] });
+    }
+    if (flashing.drip > 0) b.box('frame', s0, s1, Math.min(tip, tip - s * 2), Math.max(tip, tip - s * 2), zTip - flashing.drip, zTip);
+    b.rect('sill', s0, s1, zTip - Math.max(2, flashing.drip), zTip, tip);
+    for (const sx of [s0, s1]) b.line('sill', b.pt(sx, karm, g.z0), b.pt(sx, tip, zTip));
   }
   // Bänken: från karmens insida förbi väggens liv, 20 mm förbi fodret i ändarna.
   if (board) {
@@ -418,6 +448,22 @@ function trimAndHardware(b: Builder, g: OpeningGeom): void {
     b.rect('board', s0, s1, g.z0 - board.thickness, g.z0, tip);
     b.depth('board', [[s0, g.z0], [s1, g.z0], [s0, g.z0 - board.thickness], [s1, g.z0 - board.thickness]], karm, tip);
   }
+}
+
+/**
+ * Planet z = a·x + b·y + c genom väggens längdriktning som går från höjden
+ * `za` vid djupet `oa` till `zb` vid `ob` (det lutande blecket).
+ */
+function planeAlong(b: Builder, oa: number, za: number, ob: number, zb: number): [number, number, number] {
+  const p = b.f.at(0, oa);
+  const q = b.f.at(0, ob);
+  const dx = q[0] - p[0];
+  const dy = q[1] - p[1];
+  const L2 = dx * dx + dy * dy || 1;
+  const k = (zb - za) / L2;
+  const a = k * dx;
+  const bb = k * dy;
+  return [a, bb, za - a * p[0] - bb * p[1]];
 }
 
 /** Öppningssymbolen för en luft (`symbolSegments`): på den sida luften öppnas mot `swing`, på den andra `swingFar` (egna ställen i fasaden). */

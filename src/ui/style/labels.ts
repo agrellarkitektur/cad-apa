@@ -28,7 +28,7 @@ export function labelSection(style: StyleResources): string {
       ${tpl}
       <div class="tpl-row wide"><b>Rum</b>
         <label><span>Rumsstämpel</span><textarea rows="4" data-lab="room">${escapeHtml(l.room)}</textarea></label></div>
-      <p class="note">Rumsstämpeln: en rad per textrad, i den ordning de ska stå. Fält: <code>{namn}</code>, <code>{nummer}</code>, <code>{area}</code>, <code>{takhöjd}</code> och rummets egna egenskaper. Raden med namnet blir större och fet.</p>
+      <p class="note">Rumsstämpeln: en rad per textrad, i den ordning de ska stå. Fält: <code>{namn}</code>, <code>{nummer}</code>, <code>{area}</code>, <code>{takhöjd}</code>, <code>{glasarea}</code> och <code>{dagsljus}</code> (glasarean i ytterväggarna och dess andel av golvarean, t.ex. <i>Dagsljus {dagsljus}</i>) och rummets egna egenskaper. Raden med namnet blir större och fet.</p>
       <h4>Ledarna</h4>
       ${(Object.keys(l.leaders) as LeaderKind[])
         .map(

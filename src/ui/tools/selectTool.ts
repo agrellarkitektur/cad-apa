@@ -84,7 +84,7 @@ export class SelectTool implements ViewTool {
     }
     // Trycker man på något som redan är markerat flyttas markeringen.
     const hit = this.pick(p);
-    const movable = hit && (!ro || this.host.canEdit?.(hit));
+    const movable = hit && (!ro || this.host.canEdit?.(hit) || this.host.movesInView?.(hit));
     // Med Ctrl (Cmd på Mac) blir det en kopia som dras.
     if (hit && movable && this.host.selection.has(hit) && !p.shift) {
       // Trycker man nära ett hörn på det markerade blir hörnet baspunkt, så
@@ -125,7 +125,9 @@ export class SelectTool implements ViewTool {
       const m = this.move;
       const segments = this.host.snapSegments();
       const exclude = new Set(m.ids);
-      const r = snap({ cursor: p.model, from: m.base, segments, tol, ortho: p.shift, exclude });
+      let r = snap({ cursor: p.model, from: m.base, segments, tol, ortho: p.shift, exclude });
+      // I fasaden står dörrar på golvet (0.11.8.3): bara i sidled.
+      if (this.host.readOnly?.() && m.ids.every((id) => this.host.store.doc.elements[id]?.type === 'Door')) r = { ...r, point: [r.point[0], m.base[1]] };
       m.flush = null;
       // En exakt punkt (hörn, mittpunkt, skärning) vinner. Annars läggs det
       // som flyttas kant i kant med väggar och möbler när det kommer nära.
@@ -190,6 +192,18 @@ export class SelectTool implements ViewTool {
       this.move = null;
       if (moved && m.target) {
         const d = sub(roundMm(m.target.point), roundMm(m.base));
+        // Fasaden som arbetsyta (0.11.8.3): dörrar, fönster och vägghål flyttas längs väggen och i höjd.
+        const inView = this.host.readOnly?.() ? m.ids.filter((id) => this.host.movesInView?.(id)) : [];
+        if (inView.length) {
+          const doc = this.host.store.doc;
+          if (inView.every((id) => doc.elements[id]?.locked)) {
+            this.host.hint('Låst. Lås upp i egenskaperna för att flytta.', 3000);
+            return;
+          }
+          const n = this.host.moveInView?.(inView, [d[0], d[1]]) ?? 0;
+          if (!n) this.host.hint('Väggen går i vyns djupled; flytta i planen.', 3000);
+          return;
+        }
         if (p.mod) {
           const ids = multiplyElements(this.host.store, m.ids, [d[0], d[1]], 1, 'Kopiera');
           this.host.selection.set(ids);
@@ -292,7 +306,7 @@ export class SelectTool implements ViewTool {
       this.host.view.svg.style.cursor = this.cursor = 'ns-resize';
       return;
     }
-    if (this.host.readOnly?.() && !(this.hoverId && this.host.canEdit?.(this.hoverId))) {
+    if (this.host.readOnly?.() && !(this.hoverId && (this.host.canEdit?.(this.hoverId) || (this.host.movesInView?.(this.hoverId) && this.host.selection.has(this.hoverId))))) {
       this.host.view.svg.style.cursor = this.cursor = 'default';
       return;
     }

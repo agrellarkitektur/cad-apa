@@ -13,6 +13,9 @@ export type QuickId =
   | 'same-littera'
   | 'lock-littera'
   | 'open-type'
+  | 'align-below'
+  | 'equal-spacing'
+  | 'center-room'
   | 'rotate-90'
   | 'cycle-ref'
   | 'flip-wall'
@@ -25,19 +28,22 @@ export type QuickId =
 
 /** Snabbknappar som kan väljas, och för vilka sorters objekt de finns. */
 export const QUICK_ACTIONS: { id: QuickId; label: string; types: string[] | 'all' }[] = [
-  { id: 'swap-type', label: 'Byt typ, behåll mått', types: ['Door', 'Window'] },
+  { id: 'swap-type', label: 'Byt typ, behåll mått', types: ['Door', 'Window', 'WallHole'] },
   { id: 'swap-size', label: 'Byt mått, behåll typ', types: ['Door', 'Window'] },
   { id: 'flip-hinge', label: 'Spegla hängning', types: ['Door', 'Window'] },
   { id: 'flip-swing', label: 'Vänd slag', types: ['Door'] },
-  { id: 'same-littera', label: 'Samma littera som…', types: ['Door', 'Window'] },
-  { id: 'lock-littera', label: 'Lås litteran', types: ['Door', 'Window'] },
-  { id: 'open-type', label: 'Öppna i editorn', types: ['Door', 'Window'] },
+  { id: 'same-littera', label: 'Samma littera som…', types: ['Door', 'Window', 'WallHole'] },
+  { id: 'lock-littera', label: 'Lås litteran', types: ['Door', 'Window', 'WallHole'] },
+  { id: 'open-type', label: 'Öppna i editorn', types: ['Door', 'Window', 'WallHole'] },
+  { id: 'align-below', label: 'I liv med fönstret under', types: ['Door', 'Window', 'WallHole'] },
+  { id: 'equal-spacing', label: 'Lika avstånd', types: ['Door', 'Window', 'WallHole'] },
+  { id: 'center-room', label: 'Mitt i rummet', types: ['Door', 'Window', 'WallHole'] },
   { id: 'cycle-ref', label: 'Referenslinje', types: ['Wall'] },
   { id: 'flip-wall', label: 'Vänd väggen', types: ['Wall'] },
   { id: 'rotate-90', label: 'Vrid 90°', types: ['Wall', 'Furniture', 'Text', 'Roof', 'Slab', 'North', 'Section', 'mixed'] },
   { id: 'mirror', label: 'Spegla', types: ['Wall', 'Furniture', 'Roof', 'Slab', 'mixed'] },
   { id: 'copy', label: 'Kopiera', types: ['Wall', 'Furniture', 'Space', 'Dimension', 'Text', 'Roof', 'Slab', 'Ground', 'Section', 'Elevation', 'mixed'] },
-  { id: 'demolish', label: 'Riv / behåll', types: ['Wall', 'Door', 'Window', 'Furniture', 'Roof', 'Slab', 'Tree', 'SiteBuilding', 'mixed'] },
+  { id: 'demolish', label: 'Riv / behåll', types: ['Wall', 'Door', 'Window', 'WallHole', 'Furniture', 'Roof', 'Slab', 'Tree', 'SiteBuilding', 'mixed'] },
   { id: 'open-marker', label: 'Öppna vyn', types: ['Section', 'Elevation'] },
   { id: 'zoom-selection', label: 'Zooma till', types: 'all' },
   { id: 'delete', label: 'Ta bort', types: 'all' },
@@ -48,6 +54,7 @@ export const QUICK_TYPES: { type: string; label: string }[] = [
   { type: 'Wall', label: 'Vägg' },
   { type: 'Door', label: 'Dörr' },
   { type: 'Window', label: 'Fönster' },
+  { type: 'WallHole', label: 'Vägghål' },
   { type: 'Furniture', label: 'Möbel' },
   { type: 'Space', label: 'Rum' },
   { type: 'Dimension', label: 'Mått' },
@@ -66,8 +73,9 @@ export const QUICK_TYPES: { type: string; label: string }[] = [
 
 const QUICK_DEFAULTS: Record<string, QuickId[]> = {
   Wall: ['cycle-ref', 'flip-wall', 'copy', 'demolish', 'delete'],
-  Door: ['swap-type', 'swap-size', 'flip-hinge', 'flip-swing', 'same-littera', 'lock-littera', 'open-type', 'demolish', 'delete'],
-  Window: ['swap-type', 'swap-size', 'flip-hinge', 'same-littera', 'lock-littera', 'open-type', 'demolish', 'delete'],
+  Door: ['swap-type', 'swap-size', 'flip-hinge', 'flip-swing', 'center-room', 'equal-spacing', 'same-littera', 'lock-littera', 'open-type', 'demolish', 'delete'],
+  Window: ['swap-type', 'swap-size', 'flip-hinge', 'align-below', 'equal-spacing', 'center-room', 'same-littera', 'lock-littera', 'open-type', 'demolish', 'delete'],
+  WallHole: ['swap-type', 'align-below', 'equal-spacing', 'lock-littera', 'open-type', 'demolish', 'delete'],
   Furniture: ['rotate-90', 'mirror', 'copy', 'demolish', 'delete'],
   Space: ['zoom-selection', 'delete'],
   Dimension: ['copy', 'delete'],
@@ -186,6 +194,13 @@ export function loadUiSettings(): UiSettings {
     // Dörrar och fönster fick nya val i 0.11.8 (*Glasad* försvann): en sparad lista med det gamla valet ersätts.
     for (const k of ['Door', 'Window'])
       if (quick[k]?.some((id) => (id as string) === 'toggle-glazed') || (quick[k] && !quick[k].includes('swap-type'))) quick[k] = d.quick[k];
+    // Och *Lika avstånd* m.fl. i 0.11.8.3: läggs till före *Riv* i en sparad lista som saknar dem.
+    for (const k of ['Door', 'Window'])
+      if (quick[k] && !quick[k].includes('equal-spacing')) {
+        const add = d.quick[k].filter((id) => ['align-below', 'equal-spacing', 'center-room'].includes(id));
+        const i = quick[k].indexOf('demolish');
+        quick[k] = i < 0 ? [...quick[k], ...add] : [...quick[k].slice(0, i), ...add, ...quick[k].slice(i)];
+      }
     return {
       grid: typeof raw.grid === 'boolean' ? raw.grid : d.grid,
       lineWeights: raw.lineWeights === 'thin' || raw.lineWeights === 'true' || raw.lineWeights === 'screen' ? raw.lineWeights : d.lineWeights,

@@ -80,6 +80,7 @@ export function installTools(app: AppContext, host: ToolHost) {
   const panTool: ViewTool = { cursor: 'grab', down: () => 'pan', tap: (p) => selectTool.tap(p) };
   const doorTool = new OpeningTool(host, 'Door', { definition: firstDefinition(app.store.doc, 'Door') });
   const windowTool = new OpeningTool(host, 'Window', { definition: firstDefinition(app.store.doc, 'Window') });
+  const holeTool = new OpeningTool(host, 'WallHole', { definition: firstDefinition(app.store.doc, 'WallHole') });
   const roomTool = new RoomTool(host);
   const dimensionTool = new DimensionTool(host);
   dimensionTool.onChange = () => app.toolOpts.renderToolOptions();
@@ -206,6 +207,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     pan: panTool,
     door: doorTool,
     window: windowTool,
+    hole: holeTool,
     room: roomTool,
     dimension: dimensionTool,
     text: textTool,
@@ -449,6 +451,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     wallTool,
     doorTool,
     windowTool,
+    holeTool,
     roomTool,
     dimensionTool,
     textTool,

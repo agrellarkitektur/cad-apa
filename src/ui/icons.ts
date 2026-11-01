@@ -14,6 +14,7 @@ export const icons = {
   select: svg('<path d="M5 4l13 7-5.6 1.5L10 18z"/>'),
   wall: svg('<path d="M3 15h18M3 9h18"/><path d="M3 9v6M21 9v6" stroke-width="1.2"/>'),
   door: svg('<path d="M4 20h4M16 20h4"/><path d="M8 20V8"/><path d="M8 8a12 12 0 0 1 8 12" stroke-dasharray="2 2"/>'),
+  wallHole: svg('<path d="M3 9h18M3 15h18"/><circle cx="12" cy="12" r="2.2"/><path d="M6.5 10.5v3M17.5 10.5v3" stroke-width="1.2"/>'),
   window: svg('<path d="M3 9h4M17 9h4M3 15h4M17 15h4M7 9v6M17 9v6M7 11.3h10M7 12.7h10"/>'),
   furniture: svg('<rect x="4" y="7" width="16" height="11" rx="1.5"/><path d="M4 11h16M8 7v4M16 7v4"/>'),
   room: svg('<path d="M4 4h16v16H4z"/><path d="M8.5 13h7M10 10h4"/>'),

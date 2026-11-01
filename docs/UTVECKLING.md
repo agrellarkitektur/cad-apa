@@ -670,6 +670,50 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Dörrar och fönster: Smart och vägghål (0.11.8.3, format 28)
+
+- **Vägghålen**: `OpeningTypeModel.hole` (`HoleSpec`: shape rect|round,
+  depth number|null, grille), `holeOf(m)`; förvalda typer `t-vg-galler`,
+  `t-vg-nisch`, `t-vg-genom`, `t-vg-hal` (`holeModel`), de två första och
+  sista i `STARTER_OPENING_TYPES`. `deriveOpening('hole')` sätter
+  `heightRef: 'sill'`, `round`, `niche` {depth, side ur `swing`} och
+  `grille`. `OpeningParams.round` och `niche` i `elements/wallBodies.ts`
+  med `holeDepthSpan(o, half)`; `openingRings` (planens urtag och
+  markering) och `elements/wall3d.ts` (urtagen, runda i `ROUND_SLICES`
+  skivor, kanterna som cirkel och nischens botten) läser dem.
+  `elements/wallHole.ts` ritar nischen i planen; `openingModel3d` för
+  sorten `hole` ritar kanten på liven (så att hålet kan väljas i fasaden)
+  och gallret. `addDefaultHoleTypes(store)` i `core/openings.ts`.
+- **Verktyget**: `ToolId` `hole` (`OpeningTool` med `'WallHole'`,
+  `app.holeTool`), raden `holeOptionsMarkup` i
+  `ui/app/openingToolOptions.ts` (`opening-hw`, `opening-hh`,
+  `opening-height`, `data-opening-defaults`), `openingToolOf(app)`.
+  Krocken prövas i höjd. Egenskaperna `holeFieldsMarkup` i
+  `ui/openingFields.ts` (`open:holeW`, `open:holeH`, `open:side`).
+  Editorn `holeTypeMarkup` (fälten `hole.*`, `holesize`, knappen
+  `new-hole`); CSS `.ot-hole`.
+- **Fasaden som arbetsyta**: `core/facadeMove.ts` (`movesInFacade`,
+  `facadeShift`, `moveOpeningsInView`); `ToolHost.movesInView` och
+  `moveInView` (i `app.ts`), som `SelectTool` använder i fasader och
+  sektioner (`readOnly`). `canEdit` är oförändrad, så Modifiera gäller
+  fortfarande inte modellen där.
+- **Smarta lägen**: `core/openingAlign.ts` (`openingBelow`,
+  `alignWithBelow`, `equalSpacingPlan`, `equalSpacing`, `roomMidAt`,
+  `centerInRoom`); snabbknapparna `align-below`, `equal-spacing`,
+  `center-room` (`QuickId`, `QUICK_DEFAULTS` med `WallHole`), via
+  `openingAction(…, hint)` och `ActionPanel.onHint`.
+- **Dagsljuset**: `elements/daylight.ts` (`glassAreaOf`, `glassPanes`,
+  `roomDaylight`, `glassByCompass`, `glassFacing`, `DAYLIGHT_SHARE`);
+  rumsstämpelns fält `dagsljus` och `glasarea` i `elements/space.ts`
+  (memo `glass-panes`), `daylightMarkup` i `ui/selectionFields.ts`,
+  `facadeGlassNote` i `ui/markerFields.ts`, `glassTable` i
+  `ui/style/general.ts` (CSS `.gen-glass`).
+- **Blecket och spegeln**: `flashing.slope` (`FLASHING_SLOPE` 15) och
+  `planeAlong` i `openingModel.ts` (en låda med `top` och `bottom`);
+  `LeafFill.flat` och editorns `lfill:i:j:edge`.
+- **Tester**: `tests/v01183.test.ts`; referensritningarna i Detalj är
+  omskrivna (blecket).
+
 ## Dörrar och fönster: Detalj och beslag (0.11.8.2, format 28)
 
 - **Typen**: `OpeningTypeModel.trim` (`OpeningTrim`: `lining` {width,

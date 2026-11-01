@@ -80,6 +80,7 @@ export interface AppContext {
   readonly wallTool: WallTool;
   readonly doorTool: OpeningTool;
   readonly windowTool: OpeningTool;
+  readonly holeTool: OpeningTool;
   readonly roomTool: RoomTool;
   readonly dimensionTool: DimensionTool;
   readonly textTool: TextTool;

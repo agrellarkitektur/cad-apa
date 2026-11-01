@@ -8,7 +8,10 @@ import { levelOf, zOn, type Edges3D, type Plane, type Shape3D, type Shear } from
 import type { PlanContext, PlanItem, SlabAbove } from './registry';
 import { openingLift } from './opening';
 import { halfPlaneBelow, planeRange, roofPlanesAround, trimToRoofs, type RoofPlane } from './roof';
-import { bareWallShapes, holeHeight, holeWidth, sagittaOver, wallShear, type OpeningParams, type WallParams } from './wallBodies';
+import { bareWallShapes, holeDepthSpan, holeHeight, holeWidth, sagittaOver, wallShear, type OpeningParams, type WallParams } from './wallBodies';
+
+/** Skivorna ett runt hål skärs i (0.11.8.3): lagom för en genomföring, få nog för prestandan. */
+const ROUND_SLICES = 16;
 
 /*
  * Väggarnas 3D (ur wall.ts i 0.10.1): kropparna kapade av taken och
@@ -121,19 +124,32 @@ export function wallModel3d(items: PlanItem[], ctx: PlanContext): Shape3D[] {
     const openings = ctx.openingsIn(el.id).map((o) => {
       const op = ctx.params<OpeningParams & { height: number; sill?: number; sillFromWall?: boolean }>(o);
       const sill = openingLift(p, op) + (op.sill ?? 0);
-      return { at: op.at, width: holeWidth(op), z0: sill, z1: Math.min(wallTop, sill + holeHeight(op)) };
+      return { at: op.at, width: holeWidth(op), z0: sill, z1: Math.min(wallTop, sill + holeHeight(op)), round: !!op.round, niche: op.niche };
     });
     // Varje vägg är en hel kropp med öppningarna som genomgående urtag,
     // så att ytan runt dörrar och fönster inte delas upp i bitar.
     const h = f.half;
-    const rect = (o: { at: number; width: number }, grow: number): Rings => {
-      const s1 = o.at - o.width / 2;
-      const s2 = o.at + o.width / 2;
+    const rect = (o: { at: number; width: number; niche?: OpeningParams['niche'] }, grow: number, s1 = o.at - o.width / 2, s2 = o.at + o.width / 2): Rings => {
       const lf = f.local(o.at);
       const hh = h + grow + sagittaOver(f, o.width);
-      return [[lf.at(s1, -hh), lf.at(s2, -hh), lf.at(s2, hh), lf.at(s1, hh)]];
+      // En nisch går bara in från ena livet (0.11.8.3).
+      const [a, b] = holeDepthSpan(o, h).map((v) => (Math.abs(v) >= h - 0.01 ? Math.sign(v) * hh : v));
+      return [[lf.at(s1, a), lf.at(s2, a), lf.at(s2, b), lf.at(s1, b)]];
     };
-    const cuts = openings.map((o) => ({ rings: rect(o, 1), z0: o.z0, z1: o.z1 }));
+    // Ett runt hål (genomföringen) skärs som skivor, lika många som cirkelns kanter i fasaden.
+    const cuts = openings.flatMap((o) => {
+      if (!o.round) return [{ rings: rect(o, 1), z0: o.z0, z1: o.z1 }];
+      const r = o.width / 2;
+      const cz = (o.z0 + o.z1) / 2;
+      const n = ROUND_SLICES;
+      return Array.from({ length: n }, (_, i) => {
+        const za = cz - r + (2 * r * i) / n;
+        const zb = cz - r + (2 * r * (i + 1)) / n;
+        const zm = Math.abs((za + zb) / 2 - cz);
+        const half = Math.sqrt(Math.max(0, r * r - zm * zm));
+        return { rings: rect(o, 1, o.at - half, o.at + half), z0: za, z1: zb };
+      }).filter((c) => c.z1 > c.z0);
+    });
     for (const piece of byWall.get(el.id) ?? []) {
       const z1 = piece.top ? planeRange(piece.top, piece.rings)[1] : piece.height;
       // Under ett bjälklag slutar urtagen vid väggens ovansida.
@@ -170,14 +186,35 @@ export function wallModel3d(items: PlanItem[], ctx: PlanContext): Shape3D[] {
         // Öppningen följer väggens lutning (0.10.21).
         return shear ? [q[0] + shear[0] * (z - base), q[1] + shear[1] * (z - base), z] : [q[0], q[1], z];
       };
-      for (const side of [-h, h]) {
+      const [d0, d1] = holeDepthSpan(o, h);
+      if (o.round) {
+        // Cirkeln på båda liven (eller livet och nischens botten) och fyra linjer genom djupet.
+        const r = o.width / 2;
+        const cz = (o.z0 + o.z1) / 2;
+        const n = 32;
+        for (const side of [d0, d1]) for (let i = 0; i < n; i++) {
+          const a = (2 * Math.PI * i) / n;
+          const b = (2 * Math.PI * (i + 1)) / n;
+          seg.segments.push([...pt(o.at + r * Math.cos(a), side, cz + r * Math.sin(a)), ...pt(o.at + r * Math.cos(b), side, cz + r * Math.sin(b))]);
+        }
+        for (const [ds, dz] of [[r, 0], [-r, 0], [0, r], [0, -r]]) seg.segments.push([...pt(o.at + ds, d0, cz + dz), ...pt(o.at + ds, d1, cz + dz)]);
+        solids.push(seg);
+        continue;
+      }
+      for (const side of [d0, d1]) {
         seg.segments.push([...pt(s1, side, o.z0), ...pt(s1, side, o.z1)], [...pt(s2, side, o.z0), ...pt(s2, side, o.z1)]);
         if (o.z1 < wallTop - 1) seg.segments.push([...pt(s1, side, o.z1), ...pt(s2, side, o.z1)]);
         if (o.z0 > base + 1) seg.segments.push([...pt(s1, side, o.z0), ...pt(s2, side, o.z0)]);
       }
       for (const s of [s1, s2]) {
-        if (o.z1 < wallTop - 1) seg.segments.push([...pt(s, -h, o.z1), ...pt(s, h, o.z1)]);
-        if (o.z0 > base + 1) seg.segments.push([...pt(s, -h, o.z0), ...pt(s, h, o.z0)]);
+        if (o.z1 < wallTop - 1) seg.segments.push([...pt(s, d0, o.z1), ...pt(s, d1, o.z1)]);
+        if (o.z0 > base + 1) seg.segments.push([...pt(s, d0, o.z0), ...pt(s, d1, o.z0)]);
+      }
+      // Nischens botten: hela kanten där den inte går upp till väggens ovansida eller ner till foten.
+      if (o.niche) {
+        const back = o.niche.side === 1 ? d0 : d1;
+        if (o.z1 >= wallTop - 1) seg.segments.push([...pt(s1, back, o.z1), ...pt(s2, back, o.z1)]);
+        if (o.z0 <= base + 1) seg.segments.push([...pt(s1, back, o.z0), ...pt(s2, back, o.z0)]);
       }
       solids.push(seg);
     }

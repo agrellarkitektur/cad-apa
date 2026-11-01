@@ -1,5 +1,6 @@
 import type { ElementType } from './registry';
 import { openingMarks, openingRings, openingZoneInPlan, planWallParams, wallFrame, type WallParams } from './wall';
+import { holeDepthSpan } from './wallBodies';
 import { deriveOpening, type OpeningObjParams } from './openingSpec';
 import { openingModel3dFor } from './openingPlan';
 import { objectPen } from '../repr/objectPens';
@@ -8,8 +9,9 @@ import { uncutOpening } from './opening';
 
 /**
  * Vägghålet (0.11.8, format 28): ventgaller, nisch, genomföring och rent
- * hål i samma motor som fönstren, med egen littera (V01 …). Formatet och
- * ritningen finns nu; verktyget och de förvalda typerna kommer i 0.11.8.2.
+ * hål i samma motor som fönstren, med egen littera (VG01 …). Verktyget och
+ * de förvalda typerna sedan 0.11.8.3; formen (rund, nisch, galler) står i
+ * typens `hole` och räknas till objektets `round` och `niche`.
  */
 export type WallHoleParams = OpeningObjParams & { sill: number };
 
@@ -40,10 +42,14 @@ export const wallHoleType: ElementType<WallHoleParams> = {
     const s1 = p.at - p.holeW / 2;
     const s2 = p.at + p.holeW / 2;
     const origin = { objectId: el.id, objectType: 'WallHole', part: 'hål' };
+    // En nisch (0.11.8.3): smygarna bara in till nischens botten, och botten som en linje.
+    const [d0, d1] = holeDepthSpan(p, f.half);
+    const back = p.niche ? (p.niche.side === 1 ? d0 : d1) : null;
     return [
       ...openingMarks(el, host, p, ctx, { infillWhenRemoved: false }),
-      { kind: 'line', a: f.at(s1, -f.half), b: f.at(s1, f.half), pen, origin },
-      { kind: 'line', a: f.at(s2, -f.half), b: f.at(s2, f.half), pen, origin },
+      { kind: 'line', a: f.at(s1, d0), b: f.at(s1, d1), pen, origin },
+      { kind: 'line', a: f.at(s2, d0), b: f.at(s2, d1), pen, origin },
+      ...(back !== null ? [{ kind: 'line' as const, a: f.at(s1, back), b: f.at(s2, back), pen, origin }] : []),
       ...(showLittera(ctx, 'WallHole') ? litteraTag(ctx, el, f, p.at, 1) : []),
     ];
   },

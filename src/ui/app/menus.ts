@@ -103,6 +103,7 @@ export function installMenus(app: AppContext) {
           { label: 'Rita vägg', hint: 'W', run: () => app.setTool('wall') },
           { label: 'Sätt in dörr', hint: 'D', run: () => app.setTool('door') },
           { label: 'Sätt in fönster', hint: 'O', run: () => app.setTool('window') },
+          { label: 'Sätt in vägghål', run: () => app.setTool('hole') },
           { label: 'Rum', hint: 'R', run: () => app.setTool('room') },
           { label: 'Mått', hint: 'M', run: () => app.setTool('dimension') },
           { label: 'Text', hint: 'T', run: () => app.setTool('text') },

@@ -1,6 +1,6 @@
 import { openingSettingsOf } from '../core/general';
 import type { Element, Id, ProjectDoc } from '../core/model';
-import { kindOfElementType, OP_LABEL, type OpeningKind } from '../core/openingTypes';
+import { holeOf, kindOfElementType, OP_LABEL, type OpeningKind } from '../core/openingTypes';
 import type { DocStore } from '../core/store';
 import { openingLitteras } from '../elements/openingLittera';
 import { customFrame, hingeLetters, openingModelOf, uMapping, viewFace, type OpeningObjParams } from '../elements/openingSpec';
@@ -73,7 +73,39 @@ export function openingTypeOptions(doc: ProjectDoc, kind: OpeningKind, current: 
     .join('');
 }
 
+/**
+ * Vägghålets fält (0.11.8.3): måttet i mm (diametern för en genomföring),
+ * underkanten, läget, nischens sida och litteran.
+ */
+function holeFieldsMarkup(doc: ProjectDoc, el: Element): string {
+  const p = resolveParams<OpeningObjParams>(doc, el);
+  const m = openingModelOf(doc, el);
+  const h = holeOf(m);
+  const littera = openingLitteras(doc).get(el.id) ?? '';
+  const locked = typeof p.littera === 'string' && !!p.littera;
+  const what = h.depth !== null ? `Nisch ${mm(h.depth)} djup` : h.shape === 'round' ? 'Rund genomföring' : 'Genom väggen';
+  return `<p class="note">${escapeHtml(what)}${h.grille ? ', med galler' : ''}${m.spec ? ` · ${escapeHtml(m.spec)}` : ''}</p>
+    <div class="field-label">Mått</div>
+    <div class="fields">
+      ${h.shape === 'round' ? numberField('open:holeW', 'Diameter', p.holeW, 'mm') : numberField('open:holeW', 'Bredd', p.holeW, 'mm') + numberField('open:holeH', 'Höjd', p.holeH, 'mm')}
+      ${numberField('param:sill', 'Underkant', p.sill ?? 0, 'mm')}
+      <label class="field"><span>Överkant</span><input value="${mm((p.sill ?? 0) + p.holeH)}" readonly></label>
+    </div>
+    <label class="check" title="Annars räknas höjden från våningens golv"><input type="checkbox" data-key="param:sillFromWall"${p.sillFromWall ? ' checked' : ''}> Från väggens fot</label>
+    <div class="field-label">Läge i väggen</div>
+    <div class="fields">
+      ${numberField('param:at', 'Läge längs vägg', p.at, 'mm')}
+      ${h.depth !== null ? select('open:side', 'Nischens sida', p.niche?.side === -1 ? '-1' : '1', [['1', 'Vänster om väggens riktning'], ['-1', 'Höger om väggens riktning']]) : ''}
+    </div>
+    <div class="field-label">Littera</div>
+    <div class="fields">
+      <label class="field"><span>Littera</span><input data-key="open:littera" value="${escapeHtml(littera)}" title="Skriv en egen littera (den låses), eller töm fältet för regeln"></label>
+      <label class="check"><input type="checkbox" data-key="open:lock"${locked ? ' checked' : ''}> Låst</label>
+    </div>`;
+}
+
 export function openingFieldsMarkup(doc: ProjectDoc, el: Element): string {
+  if (el.type === 'WallHole') return holeFieldsMarkup(doc, el);
   const p = resolveParams<OpeningObjParams>(doc, el);
   const kind = kindOfElementType(el.type) ?? 'window';
   const m = openingModelOf(doc, el);
@@ -172,6 +204,17 @@ export function applyOpeningField(store: DocStore, ids: Id[], name: string, inpu
         if (Number.isInteger(w) && Number.isInteger(h)) return { width: w * 100, height: h * 100, frame: undefined };
         return { frame: fr, width: Math.round(w) * 100, height: Math.round(h) * 100 };
       });
+    case 'holeW':
+    case 'holeH':
+      // Vägghålets mått i mm (0.11.8.3); en rund genomföring lika i båda.
+      if (!(v >= 10)) return false;
+      return patch(store, ids, 'Vägghålets mått', (_p, el) => {
+        const round = holeOf(openingModelOf(store.doc, el)).shape === 'round';
+        const w = Math.round(v);
+        return round ? { width: w, height: w, frame: undefined } : name === 'holeW' ? { width: w, frame: undefined } : { height: w, frame: undefined };
+      });
+    case 'side':
+      return patch(store, ids, 'Nischens sida', () => ({ swing: raw === '-1' ? -1 : 1 }));
     case 'heightRef':
       return patch(store, ids, 'Höjdläge', (p) => (raw === 'head' ? { heightRef: 'head', head: p.head, sill: undefined } : { heightRef: 'sill', sill: p.sill, head: undefined }));
     case 'head':

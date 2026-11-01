@@ -185,6 +185,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.7.3 | Trappan och räcket, det som inte hanns med: utomhustrappa, kontrastmarkeringens material, trappans littera i planen, ändprofilen med vridningen kring ankaret, ytor med mönster (rutnät, diagonalt), staketens typer i kommandoraden |
 | 0.11.8 | Format 28: dörrar och fönster, öppningstyperna: karm med rutnät av lufter, förvalda typer med beskrivande namn, dörr- och fönstereditorn, modulmått och fritt karmyttermått med drevmånen, överkant karm, litteraregeln med formel, sparade nummer och Numrera om, verktygen, smartmenyn och egenskaperna, plan, fasad, sektion och 3D ur typen, vägghål och uppställningar i formatet |
 | 0.11.8.1 | Dörrar och fönster, synpunkterna på mockupen: hålet modulmåttet + 10 och karmen − 10 (typens karmavdrag), öppningssymbolen mot gångjärnssidan med egna ställen, skjutpilen, fönstrens slag 15° kring gångjärnet, slagbågarna på alla nivåer och egna kryss, spröjs jämnt eller ritade, dörrbladets indelning med material per fyllning, VG01, uppställningens fältmall och fälten på objekten |
+| 0.11.8.3 | Dörrar och fönster, Smart och vägghål: vägghålen med verktyg och fyra förvalda typer (ventgaller, nisch, genomföring, rent hål), fasaden som arbetsyta, I liv med fönstret under, Lika avstånd, Mitt i rummet, dagsljuset (rummets andel, smarttexten, glas mot fasaden och per väderstreck), blecklutningen och spegelns raka kant |
 | 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, uppställningens fält i stilboken (Typer) med taggar och smarttext |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
@@ -1215,12 +1216,74 @@ visar var en påbörjad spröjslinje började, uppställningens vytyp (0.12),
 föreskrifternas siffror uppslagna (varningarna säger *praxis*), kopplingen
 mellan dörr och rum (vilka dörrar som ska vara tillgängliga).
 
-### 0.11.8.3 Smart och vägghål
+### 0.11.8.3 Dörrar och fönster: Smart och vägghål ✓
 
-Mellanstor: fasaden som arbetsyta (flytta fönster där, också i höjd),
-*I liv med fönstret under*, *Lika avstånd*, dagsljus (glasarea mot
-golvarea, per fasad), vägghålen med verktyg och förvalda typer
-(ventgaller, nisch, genomföring, rent hål; littera VG01).
+Carl August 1 november: "Testa att köra A+B tillsammans med smart och
+vägghål i 0.11.8.3" (A och B ur Inkorgen: blecket med justerbar lutning,
+spegeln med eller utan fas). Mellanstor. Samma format, 28 (valfria fält:
+typens `hole`, bleckets `slope`, fyllningens `flat`).
+
+**Gjort:** vägghålen med verktyg, editor, egenskaper och fyra förvalda
+typer; fasaden som arbetsyta; *I liv med fönstret under*, *Lika
+avstånd* och *Mitt i rummet* i smartmenyn; dagsljuset; A blecklutningen;
+B spegelns kant *Fasad* eller *Rak*.
+
+**Claudes val (0.11.8.3):**
+
+- **Vägghålen** har måttet i mm (modulmått passar inte en genomföring
+  Ø 160), höjdläget är alltid underkanten (`sill`, också negativ), och
+  förvalen: Ventgaller 300 × 200 på 300, Nisch 600 × 600 på 900 och 100
+  djup, Genomföring Ø 160 på 300, Rent hål 600 × 600 på 900. Nya projekt
+  får Ventgaller och Rent hål; finns inga vägghålstyper har verktygsraden
+  *Lägg in vägghålens typer*. Nischen går in från den sida man pekar på
+  (`swing`), ändras under egenskaperna (*Nischens sida*); djupet högst
+  väggens tjocklek minus 1. Den runda skärs ur väggen i 16 skivor (hålets
+  kant i fasaden är en cirkel med 32 kanter), så kroppen blir lätt
+  trappstegad i 3D. Ventgallret är en 8 mm platta i livet på utsidan med
+  lameller var 25 mm (inte i Skiss). Vägghålen har ingen hängning, inget
+  foder och ingen uppställning än; *Riv* som för fönster.
+- **Krocken** när man sätter in prövas också i höjd, så att ett
+  ventgaller kan sitta över ett fönster.
+- **Fasaden som arbetsyta**: draget i vyns x blir läget längs väggen
+  delat med hur mycket väggen vetter mot vyn (en vägg nästan i vyns
+  djupled, under 0,2, flyttas inte i sidled); y blir överkant karm när den
+  står fast, annars bröstningen (vägghål: underkanten). Dörrar bara i
+  sidled. Läget hålls inom väggen. Snäppet är fasadens linjer, så *i liv*
+  i fasaden är att snäppa mot ett annat fönsters kant. Bara flytt; Vrid,
+  Spegla och de andra i Modifiera gäller inte i fasaden.
+- **I liv med fönstret under**: närmaste våning under som har en öppning i
+  samma liv (parallell vägg, mittpunkten högst 300 + väggarnas halva
+  tjocklekar från linjen), närmast längs väggen; mitten läggs lodrätt
+  över dess mitt (inte kanterna). Gäller också dörrar och vägghål.
+- **Lika avstånd** kräver tre eller fler i samma vägg; de yttersta står
+  kvar och avstånden mellan hålen (inte mitt till mitt) blir lika. Med
+  två finns inget att fördela; *Mitt på väggen* finns redan i verktyget.
+- **Mitt i rummet**: rummet på insidan (ytterväggar) eller på dörrens
+  slagsida (innerväggar, annars vänster), ur väggarnas rum; mitten av
+  rummets kant längs livet där öppningen sitter.
+- **Dagsljuset**: glasarean är glaset innanför bågarna, hela luften för
+  fast glas i karmen och de glasade fyllningarna i dörrblad, utan spröjs;
+  bara dörrar och fönster i ytterväggar som finns i tillståndet (inte
+  rivna). Ett fönster hör till rummet där en punkt 50 mm innanför väggen
+  ligger. Tumregeln 10 % av golvarean (rummets area) är praxis, så
+  varningen säger *avviker från praxis*. Smarttexten `{dagsljus}` (14 %)
+  och `{glasarea}` (4,6 m²); förvalsmallen för rumsstämpeln är oförändrad.
+  Glaset mot en fasad är det som vetter inom 45° från fasadens riktning;
+  per väderstreck (åtta) under Allmänt räknas i förslaget som är förval.
+- **Blecklutningen**: grader utåt, förval 15° (också för bleck i filer
+  från 0.11.8.2), 0–45°. Plåten är en kropp med sned ovan- och undersida;
+  droppnäsan hänger från den lägre änden. Planen ritar blecket som förut.
+- **Spegelns kant**: `flat` på fyllningen; förval fasad.
+- **Snabbknapparna**: dörrar får *Mitt i rummet* och *Lika avstånd*,
+  fönster också *I liv med fönstret under*; vägghålen har en egen lista.
+  En sparad lista utan *Lika avstånd* får de nya före *Riv*.
+
+**Inte gjort i 0.11.8.3:** vägghålens uppställning och förteckning (med
+0.12), ventgaller i planen, sneda och runda nischer, ett runt hål som
+riktig cylinder i 3D, *i liv* med kanten i stället för mitten, *Lika
+avstånd* mot väggens ändar, flytt i fasaden med tangentbordet, dagsljuset
+med fönstrens LT-värde och avskärmning, föreskrifternas siffror uppslagna
+(väntar på att Carl August laddar upp dem).
 
 ### Granskning efter 0.11.8
 

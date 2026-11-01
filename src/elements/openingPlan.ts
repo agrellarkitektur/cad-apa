@@ -75,6 +75,7 @@ export function openingModel3dFor(el: Element<any>, ctx: PlanContext, kind: Open
       swing: g.swing,
       outside: g.outside ?? 0,
       showSwing: !ctx.view.hide?.includes('openingSymbol'),
+      ...(g.p.niche ? { niche: g.p.niche.side } : {}),
       mat: (id) => materialSolid(buildingMaterialOf({ material: id } as never, ctx.style)),
     },
     detailOf(ctx.view, 'model'),

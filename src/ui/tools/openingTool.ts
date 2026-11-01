@@ -2,7 +2,7 @@ import { addElements } from '../../core/commands';
 import type { Element, Id } from '../../core/model';
 import { actionOf } from '../../core/states';
 import { resolveParams } from '../../elements/registry';
-import { holeWidth, wallFrame, type OpeningParams, type WallFrame, type WallParams } from '../../elements/wall';
+import { holeHeight, holeWidth, wallFrame, type OpeningParams, type WallFrame, type WallParams } from '../../elements/wall';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
@@ -50,12 +50,12 @@ interface Placement {
  */
 export class OpeningTool implements ViewTool {
   cursor = 'crosshair';
-  readonly kind: 'Door' | 'Window';
+  readonly kind: 'Door' | 'Window' | 'WallHole';
   readonly options: OpeningToolOptions;
   private host: ToolHost;
   private place: Placement | null = null;
 
-  constructor(host: ToolHost, kind: 'Door' | 'Window', options: OpeningToolOptions) {
+  constructor(host: ToolHost, kind: 'Door' | 'Window' | 'WallHole', options: OpeningToolOptions) {
     this.host = host;
     this.kind = kind;
     this.options = options;
@@ -92,7 +92,7 @@ export class OpeningTool implements ViewTool {
   private insert(): void {
     const pl = this.place;
     if (!pl) {
-      this.host.hint(this.kind === 'Door' ? 'Peka på en vägg för att sätta in dörren.' : 'Peka på en vägg för att sätta in fönstret.');
+      this.host.hint(`Peka på en vägg för att sätta in ${this.kind === 'Door' ? 'dörren' : this.kind === 'Window' ? 'fönstret' : 'vägghålet'}.`);
       return;
     }
     if (pl.blocked) {
@@ -104,7 +104,12 @@ export class OpeningTool implements ViewTool {
     const params: Record<string, unknown> = { at: Math.round(pl.at), ...this.sizeParams() };
     const m = openingModelOf(doc, { type: this.kind, definition: o.definition ?? undefined });
     const outside = outsideSide(doc, pl.wall);
-    if (this.kind === 'Door') {
+    if (this.kind === 'WallHole') {
+      // Vägghålet (0.11.8.3): underkanten över golvet, och nischen på den sida man pekar på.
+      params.swing = pl.side;
+      params.hinge = 'start';
+      if (o.height !== null && o.height !== undefined) params.sill = o.height;
+    } else if (this.kind === 'Door') {
       params.swing = pl.side;
       // Gångjärnen närmast markören; *Spegla* byter.
       params.hinge = o.mirror ? (pl.hinge === 'start' ? 'end' : 'start') : pl.hinge;
@@ -125,7 +130,7 @@ export class OpeningTool implements ViewTool {
       this.host.store,
       [{ type: this.kind, storey: this.host.storey(), tags: [], host: pl.wall.id, definition: o.definition ?? undefined, params, props: {} }],
       this.host.activeState(),
-      this.kind === 'Door' ? 'Sätt in dörr' : 'Sätt in fönster',
+      this.kind === 'Door' ? 'Sätt in dörr' : this.kind === 'Window' ? 'Sätt in fönster' : 'Sätt in vägghål',
     );
   }
 
@@ -182,10 +187,17 @@ export class OpeningTool implements ViewTool {
     } else at = Math.round(at / 10) * 10;
 
     // Krockar den med en annan öppning i samma vägg?
+    // Bara om de också möts i höjd (0.11.8.3): ett ventgaller kan sitta över ett fönster.
+    const pv = this.preview();
+    const oh = this.options.height;
+    const z0 = this.kind === 'Door' ? 0 : oh === null || oh === undefined ? (pv.sill ?? 0) : this.kind === 'WallHole' || this.options.heightRef === 'sill' ? oh : oh - pv.frameH - pv.gap;
+    const z1 = z0 + pv.holeH;
     const blocked = Object.values(doc.elements).some((o) => {
       if (o.host !== el.id || actionOf(o, view) === 'absent') return false;
-      const op = resolveParams<OpeningParams>(doc, o);
-      return Math.abs(op.at - at) < (holeWidth(op) + width) / 2 + 20;
+      const op = resolveParams<OpeningParams & { sill?: number }>(doc, o);
+      const a = o.type === 'Door' ? 0 : (op.sill ?? 0);
+      const b = a + holeHeight(op);
+      return Math.abs(op.at - at) < (holeWidth(op) + width) / 2 + 20 && a < z1 + 20 && b > z0 - 20;
     });
     const left = at - width / 2;
     const right = f.length - (at + width / 2);

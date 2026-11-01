@@ -77,6 +77,7 @@ export class PropertiesPanel implements ActionPanel {
   onUnderlayTool?: (id: string, mode: 'calibrate' | 'align') => void;
   /** Bildens egna proportioner igen (0.8.16). */
   onUnderlayProportions?: (id: string) => void;
+  onHint?: (text: string, ms?: number) => void;
   /**
    * Det man valt i projektträdet (0.8). Dess inställningar visas när inget
    * i ritningen är markerat, med en Spara-knapp.
@@ -339,7 +340,7 @@ export class PropertiesPanel implements ActionPanel {
       sections.push(`<section>
         <h3>Typ</h3>
         <div class="row"><select id="sel-def" data-action="set-def">${mixedOpt}${openingTypeOptions(doc, openingKind, current)}</select></div>
-        <button class="btn btn-ghost" data-action="open-opening-type">Öppna i ${openingKind === 'door' ? 'dörr' : 'fönster'}editorn…</button>
+        <button class="btn btn-ghost" data-action="open-opening-type">Öppna i ${openingKind === 'door' ? 'dörreditorn' : openingKind === 'hole' ? 'editorn' : 'fönstereditorn'}…</button>
       </section>`);
     } else if (sameType && (t?.typeParams?.length || t?.type === 'Railing' || t?.type === 'Profile')) {
       const defs = Object.values(doc.definitions).filter((d) => d.elementType === t.type);

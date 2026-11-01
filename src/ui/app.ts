@@ -1,4 +1,5 @@
 import { installOpeningNumbers } from './app/openingNumbers';
+import { moveOpeningsInView, movesInFacade } from '../core/facadeMove';
 import { eraseSelection } from './app/erase';
 import { setWeightSource } from './weightPick';
 import { generalOf } from '../core/general';
@@ -188,6 +189,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     plan: () => render.plan,
     readOnly: () => !!ui.marker,
     canEdit: (id) => !!ui.marker && (store.doc.elements[id]?.space === ui.marker || id.startsWith('slope:')),
+    movesInView: (id) => !!ui.marker && movesInFacade(store.doc.elements[id]),
+    moveInView: (ids, d) => (ui.marker ? moveOpeningsInView(store, ui.marker, ids, d) : 0),
     space: () => ui.marker ?? ui.worksheet ?? ui.layout ?? undefined,
     activeState: () => ui.state,
     storey: () => ui.storey,
@@ -226,6 +229,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   panel.onUnderlayProportions = (id) => void underlays.resetProportions(id);
   panel.angleWarn = () => uiSettings.angleWarn;
   panel.onErase = (ids) => eraseSelection(app, ids);
+  panel.onHint = (text, ms) => hint(text, ms);
   const navigator = new Navigator({
     doc: () => store.doc,
     storey: () => ui.storey,
@@ -452,6 +456,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
     wallTool: () => tools.wallTool,
     doorTool: () => tools.doorTool,
     windowTool: () => tools.windowTool,
+    holeTool: () => tools.holeTool,
     roomTool: () => tools.roomTool,
     dimensionTool: () => tools.dimensionTool,
     textTool: () => tools.textTool,

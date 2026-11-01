@@ -15,7 +15,10 @@ import { allTypes, resolveParams, typeOf } from '../elements/registry';
 import { MAX_LEAN, type WallParams } from '../elements/wall';
 import { dist } from '../geometry/vec';
 import { isFixed, type FurnitureParams } from '../elements/furniture';
-import { numberingOf, roomNumbersFor, type SpaceParams } from '../elements/rooms';
+import { numberingOf, roomNumbersFor, spaceOutline, type SpaceParams } from '../elements/rooms';
+import { DAYLIGHT_SHARE, glassPanes, m2Text, roomDaylight, shareText } from '../elements/daylight';
+import { areaOf } from '../elements/space';
+import type { PlanContext } from '../elements/registry';
 import { faceChoices, faceOf } from '../elements/wallSides';
 import { escapeHtml, PARAM_LABELS } from './labels';
 import { refArc, type RoofParams } from '../elements/roof';
@@ -189,6 +192,7 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
       return drawingFields(doc, el);
     case 'Door':
     case 'Window':
+    case 'WallHole':
       return openingFieldsMarkup(doc, el);
     case 'Furniture': {
       const p = resolveParams<FurnitureParams>(doc, el);
@@ -206,6 +210,7 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
       return `<div class="fields">${textField('name', 'Namn', el.name ?? '')}${numberField}
           <label class="field" for="f-param-ceilingHeight"><span>Takhöjd (TH)</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" id="f-param-ceilingHeight" data-key="param:ceilingHeight" value="${p.ceilingHeight ?? ''}" placeholder="Visas inte"><i>mm</i></span></label></div>
         <p class="note">Dra i rumsstämpeln för att flytta den. Utanför rummet får den en ledare till rummets kant (se Littera).</p>
+        ${daylightMarkup(doc, el, ctx, view.state)}
         ${fillFields('room-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 }, (k) => `data-key="d2:${k}"`, doc.graphics, undefined, { uses: p.material ? materialUses(doc, p.material) : 0 })}
 `;
     }
@@ -275,4 +280,17 @@ export function summarizeTypes(els: Element[]): string {
  */
 function buildingFill(doc: ProjectDoc, name: string, p: Partial<FillParams>): string {
   return fillFields(name, { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 } as FillParams, (k) => `data-key="d2:${k}"`, doc.graphics, 'Material', { use: 'building', uses: p.material ? materialUses(doc, p.material) : 0 });
+}
+
+/**
+ * Rummets dagsljus (0.11.8.3): glasarean i ytterväggarnas dörrar och
+ * fönster mot golvarean, med en varning under tumregeln 10 %.
+ */
+function daylightMarkup(doc: ProjectDoc, el: Element, ctx: PlanContext, state: string): string {
+  const pts = spaceOutline(ctx, el as unknown as Element<SpaceParams>);
+  if (pts.length < 3) return '';
+  const d = roomDaylight(glassPanes(doc, state), el.storey, pts, areaOf(pts));
+  const warn = d.low ? `<p class="skew-note" role="note"><b>!</b> Glasarean är under ${Math.round(DAYLIGHT_SHARE * 100)} % av golvarean. <i>Avviker från praxis.</i></p>` : '';
+  return `<div class="field-label">Dagsljus</div>
+    ${warn}<p class="note">Glasarea ${m2Text(d.glass)} av golvarean ${m2Text(d.floor)}: <b>${shareText(d)}</b>. Glaset i dörrar och fönster i ytterväggarna, innanför bågarna. Smarttexten <code>{dagsljus}</code> och <code>{glasarea}</code> i rumsstämpeln (stilboken).</p>`;
 }

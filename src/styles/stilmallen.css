@@ -1727,6 +1727,16 @@ table.pe-pts {
   background-size: 16px 16px;
   padding: 6px;
 }
+/* Vägghålets typ (0.11.8.3). */
+.ot-hole {
+  fill: var(--bg, #fff);
+  stroke: var(--ink, #111);
+  stroke-width: 1.5;
+}
+.ot-hole-lam {
+  stroke: var(--muted, #777);
+  stroke-width: 1;
+}
 .op-preview {
   display: block;
   width: 100%;
@@ -1919,4 +1929,30 @@ table.pe-pts {
   stroke: var(--muted);
   stroke-dasharray: 2 3;
   cursor: copy;
+}
+
+/* Glasarean per väderstreck under Allmänt (0.11.8.3). */
+.gen-glass {
+  border-collapse: collapse;
+  margin: 6px 0;
+  font-size: 12px;
+}
+.gen-glass caption {
+  text-align: left;
+  font-weight: 600;
+  padding-bottom: 4px;
+}
+.gen-glass th,
+.gen-glass td {
+  padding: 2px 12px 2px 0;
+  text-align: left;
+  font-weight: normal;
+}
+.gen-glass td {
+  font-variant-numeric: tabular-nums;
+}
+.gen-glass tfoot th,
+.gen-glass tfoot td {
+  border-top: 1px solid var(--rule);
+  font-weight: 600;
 }

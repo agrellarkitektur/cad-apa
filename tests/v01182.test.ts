@@ -50,7 +50,7 @@ describe('typens foder, bleck, bänk och beslag', () => {
   it('förvalen: fönster med foder, bleck och bänk; fönsterdörren och dörrar utan bleck och bänk', () => {
     const win = trimOf(DEFAULT_OPENING_TYPES.find((t) => t.id === 't-of-sid1')!.model);
     expect(win.lining.sides).toBe('both');
-    expect(win.flashing).toEqual({ overhang: 40, drip: 20 });
+    expect(win.flashing).toEqual({ overhang: 40, drip: 20, slope: 15 });
     expect(win.board).toEqual({ thickness: 22, overhang: 20 });
     expect(trimOf(DEFAULT_OPENING_TYPES.find((t) => t.id === 't-of-fdorr')!.model).flashing).toBeNull();
     expect(trimOf(DEFAULT_OPENING_TYPES.find((t) => t.id === 't-dd-slat')!.model).board).toBeNull();

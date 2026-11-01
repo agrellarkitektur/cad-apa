@@ -25,6 +25,19 @@ export function addDefaultOpeningTypes(store: DocStore): number {
   return n;
 }
 
+/** Vägghålens förvalda typer (0.11.8.3), de som saknas. */
+export function addDefaultHoleTypes(store: DocStore): number {
+  let n = 0;
+  store.transact('Lägg in vägghålens typer', (tx) => {
+    for (const t of DEFAULT_OPENING_TYPES)
+      if (t.model.kind === 'hole' && !tx.doc.definitions[t.id]) {
+        tx.putDefinition(openingDefinition(t));
+        n++;
+      }
+  });
+  return n;
+}
+
 /** En förvald typ i en transaktion, om den saknas (verktyget när projektet saknar typer). */
 export function ensureOpeningType(tx: TxBuilder, id: Id): void {
   const t = DEFAULT_OPENING_TYPES.find((x) => x.id === id);

@@ -122,8 +122,11 @@ export interface OpeningCell {
 export interface OpeningTrim {
   /** Fodret: bredd i fasaden, tjocklek ut från väggens liv, och på vilka sidor. */
   lining: { width: number; thickness: number; sides: 'both' | 'in' | 'out' | 'none' };
-  /** Fönsterblecket ute: utsprånget förbi väggens liv och droppnäsans höjd; null = inget. */
-  flashing: { overhang: number; drip: number } | null;
+  /**
+   * Fönsterblecket ute: utsprånget förbi väggens liv, droppnäsans höjd och
+   * lutningen utåt i grader (0.11.8.3; förval 15°); null = inget.
+   */
+  flashing: { overhang: number; drip: number; slope: number } | null;
   /** Fönsterbänken inne: tjocklek och utsprång förbi väggens liv; null = ingen. */
   board: { thickness: number; overhang: number } | null;
 }
@@ -141,6 +144,22 @@ export interface OpeningHardware {
   /** Brevinkast mitt på bladet. */
   letterbox: boolean;
 }
+
+/**
+ * Vägghålets form (0.11.8.3): rektangel eller rund (genomföring),
+ * genomgående eller en nisch med ett djup från väggens liv, och om det har
+ * ett galler (ventgaller).
+ */
+export interface HoleSpec {
+  shape: 'rect' | 'round';
+  /** Nischens djup från livet, mm; null = genom väggen. */
+  depth: number | null;
+  /** Ventgallrets lameller i fasaden och en tunn platta i 3D. */
+  grille: boolean;
+}
+
+/** Vägghålets form som den gäller: typens, annars ett rent, rektangulärt hål genom väggen. */
+export const holeOf = (m: Pick<OpeningTypeModel, 'hole'>): HoleSpec => ({ shape: 'rect', depth: null, grille: false, ...(m.hole ?? {}) });
 
 export interface OpeningTypeModel {
   kind: OpeningKind;
@@ -173,7 +192,12 @@ export interface OpeningTypeModel {
   trim?: Partial<OpeningTrim>;
   /** Beslagen (0.11.8.2); det som saknas får sortens förval. */
   hardware?: Partial<OpeningHardware>;
+  /** Vägghålets form (0.11.8.3); bara för sorten `hole`. */
+  hole?: Partial<HoleSpec>;
 }
+
+/** Blecklutningens förval, grader (0.11.8.3). */
+export const FLASHING_SLOPE = 15;
 
 /**
  * Foder, bleck och bänk som de gäller: typens, annars förvalet. Fönster har
@@ -188,7 +212,7 @@ export function trimOf(m: Pick<OpeningTypeModel, 'kind' | 'sill' | 'trim'>): Ope
   const t = m.trim ?? {};
   return {
     lining: { width: 70, thickness: 15, sides: 'both', ...(t.lining ?? {}) },
-    flashing: t.flashing === null ? null : t.flashing ? { ...t.flashing } : win ? { overhang: 40, drip: 20 } : null,
+    flashing: t.flashing === null ? null : t.flashing ? { ...t.flashing, slope: t.flashing.slope ?? FLASHING_SLOPE } : win ? { overhang: 40, drip: 20, slope: FLASHING_SLOPE } : null,
     board: t.board === null ? null : t.board ? { ...t.board } : win ? { thickness: 22, overhang: 20 } : null,
   };
 }
@@ -248,6 +272,10 @@ function doorModel(cells: OpeningCell[], extra: Partial<OpeningTypeModel> = {}):
   };
 }
 
+function holeModel(hole: Partial<HoleSpec>, extra: Partial<OpeningTypeModel>): OpeningTypeModel {
+  return { ...windowModel([{ col: 0, row: 0, fill: 'open', op: 'fixed' }]), kind: 'hole', group: 'Vägghål', frame: { width: 0, depth: 0, bottom: null }, hole, ...extra };
+}
+
 const glass = (col: number, row: number, op: OpKind, hinge?: 'left' | 'right'): OpeningCell => ({ col, row, fill: 'glass', op, ...(hinge ? { hinge } : {}) });
 const leafCell = (col: number, row: number, op: OpKind, leaf: LeafStyle, hinge?: 'left' | 'right'): OpeningCell => ({ col, row, fill: 'panel', op, leaf, ...(hinge ? { hinge } : {}) });
 
@@ -289,11 +317,15 @@ export const DEFAULT_OPENING_TYPES: readonly { id: string; name: string; descrip
   { id: 't-dd-skjut', name: 'Skjutdörr utanpå', model: doorModel([leafCell(0, 0, 'slideLeaf', 'flat')]) },
   { id: 't-dd-ficka', name: 'Skjutdörr in i vägg', model: doorModel([leafCell(0, 0, 'pocket', 'flat')]) },
   { id: 't-dd-vik', name: 'Vikdörr', model: doorModel([leafCell(0, 0, 'foldLeaf', 'flat', 'left')], { size: [1200, 2100] }) },
+  { id: 't-vg-galler', name: 'Ventgaller', description: 'I sockeln eller gavelspetsen', model: holeModel({ grille: true }, { size: [300, 200], sill: 300 }) },
+  { id: 't-vg-nisch', name: 'Nisch', description: 'Inte genom väggen', model: holeModel({ depth: 100 }, { size: [600, 600], sill: 900 }) },
+  { id: 't-vg-genom', name: 'Genomföring', description: 'Rund, för rör och kanaler', model: holeModel({ shape: 'round' }, { size: [160, 160], sill: 300 }) },
+  { id: 't-vg-hal', name: 'Rent hål', model: holeModel({}, { size: [600, 600], sill: 900 }) },
   { id: 't-dd-port', name: 'Garageport', description: 'Enkel takskjutport', model: doorModel([leafCell(0, 0, 'garage', 'flat')], { size: [2500, 2100], frame: { width: 80, depth: 100, bottom: null } }) },
 ];
 
 /** Typerna som nya projekt börjar med (de andra med *Lägg in förvalda typer*). */
-export const STARTER_OPENING_TYPES = ['t-of-sid1', 't-of-sid2', 't-of-fast', 't-dd-slat', 't-dd-glas'];
+export const STARTER_OPENING_TYPES = ['t-of-sid1', 't-of-sid2', 't-of-fast', 't-dd-slat', 't-dd-glas', 't-vg-galler', 't-vg-hal'];
 
 export function openingDefinition(t: (typeof DEFAULT_OPENING_TYPES)[number]): Definition {
   return {
@@ -311,7 +343,7 @@ export function openingDefinition(t: (typeof DEFAULT_OPENING_TYPES)[number]): De
 /** Typen när ett objekt saknar en (eller en från en annan elementtyp). */
 export function fallbackModel(kind: OpeningKind): OpeningTypeModel {
   const id = kind === 'door' ? 't-dd-slat' : 't-of-sid1';
-  if (kind === 'hole') return { ...windowModel([{ col: 0, row: 0, fill: 'open', op: 'fixed' }]), kind: 'hole', group: 'Vägghål', frame: { width: 0, depth: 0, bottom: null }, size: [300, 300] };
+  if (kind === 'hole') return holeModel({}, { size: [300, 300] });
   return DEFAULT_OPENING_TYPES.find((t) => t.id === id)!.model;
 }
 
@@ -420,6 +452,13 @@ export function normalizeOpeningModel(v: unknown, kindHint: OpeningKind = 'windo
   if (trim) out.trim = trim;
   const hw = normalizeHardware(m.hardware);
   if (hw) out.hardware = hw;
+  if (kind === 'hole' && m.hole && typeof m.hole === 'object') {
+    const h: Partial<HoleSpec> = {};
+    if (m.hole.shape === 'round' || m.hole.shape === 'rect') h.shape = m.hole.shape;
+    if (m.hole.depth !== undefined && m.hole.depth !== null && Number.isFinite(Number(m.hole.depth))) h.depth = num(m.hole.depth, 100, 1, 2000);
+    if (typeof m.hole.grille === 'boolean') h.grille = m.hole.grille;
+    if (Object.keys(h).length) out.hole = h;
+  }
   return out;
 }
 
@@ -432,7 +471,7 @@ function normalizeTrim(v: unknown): Partial<OpeningTrim> | null {
     out.lining = { width: num(t.lining.width, 70, 0, 400), thickness: num(t.lining.thickness, 15, 0, 100), sides };
   }
   if (t.flashing === null) out.flashing = null;
-  else if (t.flashing && typeof t.flashing === 'object') out.flashing = { overhang: num(t.flashing.overhang, 40, 0, 300), drip: num(t.flashing.drip, 20, 0, 100) };
+  else if (t.flashing && typeof t.flashing === 'object') out.flashing = { overhang: num(t.flashing.overhang, 40, 0, 300), drip: num(t.flashing.drip, 20, 0, 100), slope: num(t.flashing.slope, FLASHING_SLOPE, 0, 45) };
   if (t.board === null) out.board = null;
   else if (t.board && typeof t.board === 'object') out.board = { thickness: num(t.board.thickness, 22, 1, 100), overhang: num(t.board.overhang, 20, 0, 300) };
   return Object.keys(out).length ? out : null;
@@ -627,6 +666,8 @@ export interface LeafFill {
   /** Glas eller en skiva; materialet ur stilboken (glas, trä, plåt …). */
   glass?: boolean;
   material?: string;
+  /** Rak kant, utan spegelns fas (0.11.8.3; förval fasad). */
+  flat?: boolean;
 }
 
 /**
@@ -659,6 +700,7 @@ export function normalizeLeafGrid(v: unknown): LeafGrid | null {
       if (rs > 1) out.rowSpan = rs;
       if (f.glass === true) out.glass = true;
       if (typeof f.material === 'string' && f.material) out.material = f.material;
+      if (f.flat === true) out.flat = true;
       return out;
     })
     .filter((f: LeafFill | null): f is LeafFill => !!f);

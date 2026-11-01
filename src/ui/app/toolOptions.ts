@@ -17,7 +17,7 @@ import { SHEET_TEXT_HEIGHTS } from '../../core/sheets';
 import { isSite } from '../../core/model';
 import { defaultRailingDef, railingTypesFor } from '../../core/railings';
 import { profileOptionChange, profileOptionClick, profileOptionsMarkup } from './profileToolOptions';
-import { openingOptionChange, openingOptionClick, openingOptionsMarkup } from './openingToolOptions';
+import { openingOptionChange, openingOptionClick, openingOptionsMarkup, openingToolOf } from './openingToolOptions';
 
 /** Verktygsraden under ritytan: inställningar för det verktyg som är valt, och måttbandets värden. */
 export function installToolOptions(app: AppContext) {
@@ -45,9 +45,9 @@ export function installToolOptions(app: AppContext) {
         <button class="btn btn-primary" data-action="wall-done" ${app.wallTool.drawing ? '' : 'disabled'}>Klar</button>
         <span class="opt-hint">${app.wallTool.drawing ? 'Klicka nästa punkt, eller skriv en längd och tryck Enter.' : 'Klicka eller tryck där väggen ska börja.'}</span>`;
       app.toolOptions.hidden = false;
-    } else if (app.ui.tool === 'door' || app.ui.tool === 'window') {
-      // Dörrar och fönster (0.11.8): typ, mått, höjdläge, hängning och karmens läge.
-      app.toolOptions.innerHTML = openingOptionsMarkup(app.store, app.ui.tool === 'door' ? app.doorTool : app.windowTool);
+    } else if (openingToolOf(app)) {
+      // Dörrar och fönster (0.11.8), vägghål (0.11.8.3): typ, mått, höjdläge, hängning och karmens läge.
+      app.toolOptions.innerHTML = openingOptionsMarkup(app.store, openingToolOf(app)!);
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'room') {
       app.toolOptions.innerHTML = `
@@ -314,7 +314,8 @@ export function installToolOptions(app: AppContext) {
     const t = e.target as HTMLSelectElement;
     if (profileOptionChange(app, t)) return;
     const num = Number(t.value);
-    if ((app.ui.tool === 'door' || app.ui.tool === 'window') && openingOptionChange(app.store, app.ui.tool === 'door' ? app.doorTool : app.windowTool, t, Number(t.value.replace(',', '.')))) {
+    const ot = openingToolOf(app);
+    if (ot && openingOptionChange(app.store, ot, t, Number(t.value.replace(',', '.')))) {
       renderToolOptions();
       app.view.requestRender();
       return;
@@ -443,7 +444,8 @@ export function installToolOptions(app: AppContext) {
     const b = (e.target as HTMLElement).closest<HTMLElement>('button');
     if (!b) return;
     if (profileOptionClick(app, b)) return;
-    if ((app.ui.tool === 'door' || app.ui.tool === 'window') && openingOptionClick(app.ui.tool === 'door' ? app.doorTool : app.windowTool, b)) {
+    const ot = openingToolOf(app);
+    if (ot && openingOptionClick(app.store, ot, b)) {
       renderToolOptions();
       return;
     }

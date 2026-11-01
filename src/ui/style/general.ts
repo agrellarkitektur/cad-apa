@@ -1,4 +1,6 @@
 import { openingSettingsOf, type OpeningRule, type OpeningSettings } from '../../core/general';
+import { glassByCompass, glassPanes, m2Text } from '../../elements/daylight';
+import { defaultState } from '../../core/states';
 import { renumberOpenings } from '../../elements/openingLittera';
 import { scheduleFields, type ScheduleKind } from '../../core/openingSchedule';
 import { scheduleFieldAction, scheduleFieldRenamed, scheduleTagsChanged } from '../openingScheduleFields';
@@ -162,9 +164,24 @@ function openingsSection(doc: ProjectDoc): string {
         ${select('opening:hingeFrom', 'Hängning sedd från', o.hingeFrom, [['outside', 'Utsidan'], ['inside', 'Insidan']])}
         ${select('opening:accessCircle', 'Tillgänglighetscirkel', String(o.accessCircle), [['1300', 'Ø 1 300 (manuell rullstol)'], ['1500', 'Ø 1 500 (eldriven, utomhus)'], ...(o.accessCircle !== 1300 && o.accessCircle !== 1500 ? ([[String(o.accessCircle), `Ø ${o.accessCircle}`]] as [string, string][]) : [])])}
       </div>
+      ${glassTable(doc)}
       <p class="note">Uppställningens fält: stilboken › Typer › Uppställningens fält.</p>
       <div class="row"><button type="button" class="btn" data-gen-action="renumber-openings"${o.rule === 'module' ? ' disabled title="Regeln Bara bokstav och modulmått har inga nummer"' : ''}>Numrera om…</button></div>
     </section>`;
+}
+
+/**
+ * Glasarean per väderstreck (0.11.8.3, dagsljuset): dörrar och fönster i
+ * ytterväggarna i förslaget, som underlag för energiberäkningen.
+ */
+function glassTable(doc: ProjectDoc): string {
+  const rows = glassByCompass(doc, glassPanes(doc, defaultState(doc)));
+  if (!rows.length) return '<p class="note">Glasarea per väderstreck: inget glas i ytterväggarna än.</p>';
+  const total = rows.reduce((a, r) => a + r.area, 0);
+  return `<table class="gen-glass"><caption>Glasarea per väderstreck</caption>
+    <tbody>${rows.map((r) => `<tr><th>${esc(r.name[0].toUpperCase() + r.name.slice(1))}</th><td>${m2Text(r.area)}</td><td>${r.count} st</td></tr>`).join('')}</tbody>
+    <tfoot><tr><th>Totalt</th><td>${m2Text(total)}</td><td>${rows.reduce((a, r) => a + r.count, 0)} st</td></tr></tfoot></table>
+    <p class="note">Glaset i dörrar och fönster i ytterväggarna, innanför bågarna, efter det väderstreck de vetter mot. Underlag för energiberäkningen; rummens andel står i rummets egenskaper och som <code>{dagsljus}</code> i rumsstämpeln.</p>`;
 }
 
 /** Stilboken med ändrade allmänna inställningar (en tom tas bort). */

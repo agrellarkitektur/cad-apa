@@ -72,6 +72,7 @@ export const COMMANDS: CommandDef[] = [
   T('wall', 'Vägg', ['vägg', 'vg'], ['wall', 'wa']),
   T('door', 'Dörr', ['dörr', 'dö'], ['door', 'do']),
   T('window', 'Fönster', ['fönster', 'fö'], ['window', 'win']),
+  T('hole', 'Vägghål', ['vägghål', 'hål', 'ventgaller', 'nisch', 'genomföring'], ['wallhole', 'hole']),
   T('slab', 'Bjälklag', ['bjälklag', 'bj'], ['slab', 'sl']),
   T('roof', 'Tak', ['tak'], ['roof', 'rf']),
   T('stair', 'Trappa', ['trappa', 'trappor', 'trp'], ['stair', 'stairs']),

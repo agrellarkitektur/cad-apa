@@ -253,6 +253,7 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
     }
     case 'door':
     case 'window':
+    case 'hole':
       return { head, text: 'Klicka på en vägg där öppningen ska sitta.', options: [] };
     case 'room':
       return { head, text: 'Klicka inuti ett rum som är omslutet av väggar.', options: [] };

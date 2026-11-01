@@ -1,6 +1,6 @@
 import type { Id, ProjectDoc } from '../../core/model';
 import { addDefaultOpeningTypes, duplicateOpeningType, missingDefaultOpeningTypes, newOpeningType, openingGroups, openingTypeUses, openingTypesOf, removeOpeningType, updateOpeningType } from '../../core/openings';
-import { DOOR_OPS, LEAF_OPS, MUNTIN_KINDS, SIDE_HUNG, WINDOW_OPS, frameFromModule, hardwareOf, hasSash, layoutOpening, leafGridOf, muntinWidth, standsOnFloor, trimOf, type LeafGrid, type MuntinKind, type CellFill, type LeafStyle, type OpeningCell, type OpeningKind, type OpeningTypeModel, type OpKind, type Track } from '../../core/openingTypes';
+import { DOOR_OPS, FLASHING_SLOPE, holeOf, LEAF_OPS, MUNTIN_KINDS, SIDE_HUNG, WINDOW_OPS, frameFromModule, hardwareOf, hasSash, layoutOpening, leafGridOf, muntinWidth, standsOnFloor, trimOf, type LeafGrid, type MuntinKind, type CellFill, type LeafStyle, type OpeningCell, type OpeningKind, type OpeningTypeModel, type OpKind, type Track } from '../../core/openingTypes';
 import { openingSettingsOf } from '../../core/general';
 import type { DocStore } from '../../core/store';
 import { askText } from '../ask';
@@ -67,14 +67,16 @@ export function openingEditorMarkup(doc: ProjectDoc, st: OpeningEditorState): st
     <div class="rt-list-actions">
       <button class="btn btn-small" data-ot-act="new-window">Nytt fönster…</button>
       <button class="btn btn-small" data-ot-act="new-door">Ny dörr…</button>
+      <button class="btn btn-small" data-ot-act="new-hole">Nytt vägghål…</button>
       <button class="btn btn-small" data-ot-act="dup"${d ? '' : ' disabled'}>Duplicera</button>
       <button class="btn btn-small" data-ot-act="remove"${d && !used ? '' : ` disabled title="${d ? `Används av ${used} objekt` : ''}"`}>Ta bort</button>
       <button class="btn btn-small" data-ot-act="group"${d ? '' : ' disabled'} title="Flytta den valda typen till en ny eller annan grupp">Ny grupp…</button>
       ${missing ? `<button class="btn btn-small" data-ot-act="defaults" title="Fast, Sidohängt 1-luft … Garageport: de som saknas i projektet">Lägg in förvalda typer (${missing})</button>` : ''}
     </div>
-    <p class="note">Siffran: hur många objekt har typen. Vägghålen (ventgaller, nisch, genomföring) kommer med verktyget i 0.11.8.3.</p>
+    <p class="note">Siffran: hur många objekt har typen.</p>
   </div>`;
   if (!d || !m) return section(`${listCol}<div class="rt-typecol"><p class="note">Inga dörr- eller fönstertyper än.</p><button class="btn" data-ot-act="defaults">Lägg in förvalda typer</button></div>`);
+  if (m.kind === 'hole') return section(listCol + holeTypeMarkup(d.name, d.description ?? '', m, used));
   const door = m.kind === 'door';
   const row = (label: string, value: string) => `<div class="rt-row"><span>${label}</span>${value}</div>`;
   const num = (field: string, v: number, title = '') => `<input type="text" class="rt-val" data-ot="${field}" value="${nf.format(v).replace(/\s/g, '')}"${title ? ` title="${escapeHtml(title)}"` : ''}>`;
@@ -111,7 +113,7 @@ export function openingEditorMarkup(doc: ProjectDoc, st: OpeningEditorState): st
     <div class="rt-sec">Mått</div>
     ${row('Förvalt modulmått', `<input type="text" class="rt-val" data-ot="size" value="${Math.round(m.size[0] / 100)}×${Math.round(m.size[1] / 100)}">`)}
     ${door ? '' : row('Förvald bröstning', `<input type="text" class="rt-val" data-ot="sill" value="${m.sill ?? ''}" placeholder="Överkant karm" title="Tomt: fönstret placeras med överkant karm (stilboken › Allmänt); 0 för en fönsterdörr">`)}
-    ${m.kind !== 'hole' ? row('Karmavdrag', `<input type="text" class="rt-val" data-ot="frameLess" value="${m.frameLess ?? ''}" placeholder="${openingSettingsOf(doc.graphics).frameLess}" title="Tillverkarens: karmyttermåttet är modulmåttet minus detta, mm. Tomt = stilboken › Allmänt">`) : ''}
+    ${row('Karmavdrag', `<input type="text" class="rt-val" data-ot="frameLess" value="${m.frameLess ?? ''}" placeholder="${openingSettingsOf(doc.graphics).frameLess}" title="Tillverkarens: karmyttermåttet är modulmåttet minus detta, mm. Tomt = stilboken › Allmänt">`)}
     ${row('Minsta', `<input type="text" class="rt-val" data-ot="min" value="${m.min ? `${m.min[0]}×${m.min[1]}` : ''}" placeholder="–" title="Karmyttermått, mm: en varning, ingen spärr">`)}
     ${row('Största', `<input type="text" class="rt-val" data-ot="max" value="${m.max ? `${m.max[0]}×${m.max[1]}` : ''}" placeholder="–">`)}
     <p class="note">${used ? `Används av ${used} objekt.` : 'Används inte.'}</p>
@@ -160,6 +162,38 @@ function cellMarkup(doc: ProjectDoc, m: OpeningTypeModel, c: OpeningCell, i: num
 const check = (field: string, label: string, on: boolean, title = '') => `<label class="check"${title ? ` title="${escapeHtml(title)}"` : ''}><input type="checkbox" data-ot="${field}"${on ? ' checked' : ''}> ${escapeHtml(label)}</label>`;
 const numIn = (field: string, v: number, title = '') => `<input type="text" class="rt-val" data-ot="${field}" value="${nf.format(v).replace(/\s/g, '')}"${title ? ` title="${escapeHtml(title)}"` : ''}>`;
 
+/**
+ * Vägghålets typ (0.11.8.3): formen (rektangel eller rund), genom väggen
+ * eller en nisch med djup, galler, förvalt mått i mm och underkant.
+ */
+function holeTypeMarkup(name: string, description: string, m: OpeningTypeModel, used: number): string {
+  const h = holeOf(m);
+  const W = m.size[0];
+  const H = h.shape === 'round' ? W : m.size[1];
+  const k = 180 / Math.max(W, H, 1);
+  const w = W * k;
+  const hh = H * k;
+  const x = (220 - w) / 2;
+  const y = (220 - hh) / 2;
+  const shape = h.shape === 'round' ? `<circle cx="110" cy="110" r="${w / 2}" class="ot-hole"/>` : `<rect x="${x}" y="${y}" width="${w}" height="${hh}" class="ot-hole"/>`;
+  const lam = h.grille && h.shape === 'rect' ? Array.from({ length: Math.max(0, Math.floor((H - 24) / 25)) }, (_, i) => `<path d="M${x + 12 * k} ${y + hh - (12 + 25 * (i + 1)) * k}h${w - 24 * k}" class="ot-hole-lam"/>`).join('') : '';
+  return `<div class="rt-typecol">
+    <div class="rt-title"><input type="text" class="rt-desc" aria-label="Typens namn" data-ot="name" value="${escapeHtml(name)}"></div>
+    <input type="text" data-ot="description" value="${escapeHtml(description)}" placeholder="Beskrivning" aria-label="Beskrivning">
+    <label class="field"><span>Föreskrift</span><input type="text" data-ot="spec" value="${escapeHtml(m.spec ?? '')}" placeholder="Ventilationsgaller typ … eller likvärdig"></label>
+    <div class="rt-sec">Vägghål</div>
+    ${rowOf('Form', selOf('hole.shape', h.shape, [['rect', 'Rektangel'], ['round', 'Rund']]))}
+    ${rowOf('Djup', selOf('hole.through', h.depth === null ? 'through' : 'niche', [['through', 'Genom väggen'], ['niche', 'Nisch']]))}
+    ${h.depth !== null ? rowOf('Nischens djup', numIn('hole.depth', h.depth, 'mm från väggens liv')) : ''}
+    <div class="row wrap">${check('hole.grille', 'Galler', h.grille, 'Ventgaller: lameller i fasaden och en platta i 3D')}</div>
+    <div class="rt-sec">Mått</div>
+    ${rowOf(h.shape === 'round' ? 'Förvald diameter' : 'Förvalt mått', `<input type="text" class="rt-val" data-ot="holesize" value="${h.shape === 'round' ? m.size[0] : `${m.size[0]}×${m.size[1]}`}" title="mm">`)}
+    ${rowOf('Förvald underkant', `<input type="text" class="rt-val" data-ot="sill" value="${m.sill ?? ''}" placeholder="300" title="Hålets underkant över golvet, mm">`)}
+    <p class="note">Måtten i mm, inget modulmått. ${used ? `Används av ${used} objekt.` : 'Används inte.'}</p>
+  </div>
+  <div class="rt-typecol"><p class="note rt-canvas-hint">Sedd utifrån.</p><div class="ot-canvas"><svg viewBox="0 0 220 220" class="op-preview">${shape}${lam}</svg></div></div>`;
+}
+
 /** Fodret, blecket och fönsterbänken (0.11.8.2): det som ritas i Detalj. */
 function trimMarkup(m: OpeningTypeModel): string {
   if (m.kind === 'hole') return '';
@@ -171,7 +205,7 @@ function trimMarkup(m: OpeningTypeModel): string {
     ${
       win
         ? rowOf('Bleck', selOf('trim.flashing', t.flashing ? 'on' : 'off', [['on', 'Med droppnäsa'], ['off', 'Inget']])) +
-          (t.flashing ? rowOf('Utsprång', numIn('trim.overhang', t.flashing.overhang, 'mm förbi väggens liv')) + rowOf('Droppnäsa', numIn('trim.drip', t.flashing.drip, 'Höjden, mm')) : '') +
+          (t.flashing ? rowOf('Utsprång', numIn('trim.overhang', t.flashing.overhang, 'mm förbi väggens liv')) + rowOf('Droppnäsa', numIn('trim.drip', t.flashing.drip, 'Höjden, mm')) + rowOf('Lutning', numIn('trim.slope', t.flashing.slope, 'Grader utåt, 0–45')) : '') +
           rowOf('Fönsterbänk', selOf('trim.board', t.board ? 'on' : 'off', [['on', 'Invändig'], ['off', 'Ingen']])) +
           (t.board ? rowOf('Bänkens tjocklek', numIn('trim.boardT', t.board.thickness)) + rowOf('Bänkens utsprång', numIn('trim.boardOver', t.board.overhang, 'mm förbi väggens liv')) : '')
         : ''
@@ -240,6 +274,7 @@ function leafGridMarkup(doc: ProjectDoc, c: OpeningCell, i: number, st: OpeningE
     ${
       f
         ? rowOf('Material', selOf(`lfill:${i}:${st.fill}:material`, f.glass ? 'glass' : (f.material ?? ''), [['', 'Som bladet'], ['glass', 'Glas'], ...mats.map((m): [string, string] => [m.id, m.name])])) +
+          (f.glass ? '' : rowOf('Kant', selOf(`lfill:${i}:${st.fill}:edge`, f.flat ? 'flat' : 'bevel', [['bevel', 'Fasad'], ['flat', 'Rak']]))) +
           `<div class="row wrap ot-tools"><button class="btn btn-small" data-ot-act="lfill-wide"${f.col + (f.colSpan ?? 1) < g.cols.length ? '' : ' disabled'}>Bredda åt höger</button><button class="btn btn-small" data-ot-act="lfill-tall"${f.row + (f.rowSpan ?? 1) < g.rows.length ? '' : ' disabled'}>Förläng nedåt</button><button class="btn btn-small" data-ot-act="lfill-remove">Ta bort fyllningen</button></div>`
         : '<p class="note">Ingen vald.</p>'
     }`;
@@ -339,6 +374,13 @@ export function openingEditorChange(store: DocStore, st: OpeningEditorState, inp
       if (p) up('förvalt modulmått', (m) => (m.size = p.map((x) => (x >= 100 ? Math.round(x) : Math.round(x * 100))) as [number, number]));
       return true;
     }
+    case 'holesize': {
+      const p = parsePair(raw);
+      const one = Number(raw.replace(',', '.'));
+      const size: [number, number] | null = p ? [Math.round(p[0]), Math.round(p[1])] : one >= 10 ? [Math.round(one), Math.round(one)] : null;
+      if (size && size[0] >= 10 && size[1] >= 10) up('förvalt mått', (m) => (m.size = size));
+      return true;
+    }
     case 'frameLess':
       up('karmavdrag', (m) => (raw.trim() === '' ? delete m.frameLess : nonneg ? (m.frameLess = Math.min(100, Math.round(v))) : 0));
       return true;
@@ -352,6 +394,20 @@ export function openingEditorChange(store: DocStore, st: OpeningEditorState, inp
       return true;
     }
   }
+  if (field.startsWith('hole.')) {
+    const on = (input as HTMLInputElement).type === 'checkbox' ? (input as HTMLInputElement).checked : false;
+    up('vägghålets form', (m) => {
+      const h = holeOf(m);
+      if (field === 'hole.shape') {
+        h.shape = raw === 'round' ? 'round' : 'rect';
+        if (h.shape === 'round') m.size = [m.size[0], m.size[0]];
+      } else if (field === 'hole.through') h.depth = raw === 'niche' ? (h.depth ?? 100) : null;
+      else if (field === 'hole.depth' && Number.isFinite(v) && v >= 1) h.depth = Math.round(v);
+      else if (field === 'hole.grille') h.grille = on;
+      m.hole = h;
+    });
+    return true;
+  }
   if (field.startsWith('trim.') || field.startsWith('hw.')) {
     const on = (input as HTMLInputElement).type === 'checkbox' ? (input as HTMLInputElement).checked : raw === 'on';
     up(field.startsWith('hw.') ? 'beslag' : 'foder, bleck och bänk', (m) => {
@@ -362,7 +418,8 @@ export function openingEditorChange(store: DocStore, st: OpeningEditorState, inp
         case 'trim.sides': t.lining.sides = raw as typeof t.lining.sides; break;
         case 'trim.width': t.lining.width = pos(t.lining.width); break;
         case 'trim.thickness': t.lining.thickness = pos(t.lining.thickness); break;
-        case 'trim.flashing': t.flashing = on ? (t.flashing ?? { overhang: 40, drip: 20 }) : null; break;
+        case 'trim.flashing': t.flashing = on ? (t.flashing ?? { overhang: 40, drip: 20, slope: FLASHING_SLOPE }) : null; break;
+        case 'trim.slope': if (t.flashing && Number.isFinite(v)) t.flashing.slope = Math.max(0, Math.min(45, Math.round(v * 10) / 10)); break;
         case 'trim.overhang': if (t.flashing) t.flashing.overhang = pos(t.flashing.overhang); break;
         case 'trim.drip': if (t.flashing) t.flashing.drip = pos(t.flashing.drip); break;
         case 'trim.board': t.board = on ? (t.board ?? { thickness: 22, overhang: 20 }) : null; break;
@@ -437,6 +494,16 @@ export function openingEditorChange(store: DocStore, st: OpeningEditorState, inp
       if (!t) return;
       if (k2 === 'unit') t.unit = raw === 'mm' ? 'mm' : 'fr';
       else if (Number.isFinite(v) && v > 0) t.size = v;
+    });
+    return true;
+  }
+  if (what === 'lfill' && field.endsWith(':edge')) {
+    const j = Number(key);
+    up('spegelns kant', (m) => {
+      const f = m.cells[i] ? ownLeafGrid(m.cells[i]).fills[j] : undefined;
+      if (!f) return;
+      if (raw === 'flat') f.flat = true;
+      else delete f.flat;
     });
     return true;
   }
@@ -585,11 +652,13 @@ export async function openingEditorClick(store: DocStore, st: OpeningEditorState
       addDefaultOpeningTypes(store);
       break;
     case 'new-window':
-    case 'new-door': {
-      const kind: OpeningKind = act === 'new-door' ? 'door' : 'window';
-      const name = await askText(kind === 'door' ? 'Ny dörrtyp' : 'Ny fönstertyp', kind === 'door' ? 'Ny dörr' : 'Nytt fönster', 'Skapa');
+    case 'new-door':
+    case 'new-hole': {
+      const kind: OpeningKind = act === 'new-door' ? 'door' : act === 'new-hole' ? 'hole' : 'window';
+      const label = { door: ['Ny dörrtyp', 'Ny dörr', 'Dörrar'], window: ['Ny fönstertyp', 'Nytt fönster', 'Fönster'], hole: ['Ny vägghålstyp', 'Nytt vägghål', 'Vägghål'] }[kind];
+      const name = await askText(label[0], label[1], 'Skapa');
       if (!name?.trim()) return true;
-      st.def = newOpeningType(store, kind, kind === 'door' ? 'Dörrar' : 'Fönster', name.trim());
+      st.def = newOpeningType(store, kind, label[2], name.trim());
       st.cell = null;
       break;
     }

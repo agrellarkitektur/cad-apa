@@ -5,6 +5,7 @@ import { kindOfElementType } from '../core/openingTypes';
 import type { DocStore } from '../core/store';
 import { openingLitteras } from '../elements/openingLittera';
 import { askChoice, askText } from './ask';
+import { alignWithBelow, centerInRoom, equalSpacing, openingBelow } from '../core/openingAlign';
 import { parseModule, setOpeningLittera, setOpeningModule, toggleOpeningLock } from './openingFields';
 
 /**
@@ -12,7 +13,7 @@ import { parseModule, setOpeningLittera, setOpeningModule, toggleOpeningLock } f
  * behåll mått* (T), *Byt mått, behåll typ* (M), *Samma littera som …* och
  * *Lås litteran*. *Spegla hängning* (S) är `flip-hinge`.
  */
-export async function openingAction(store: DocStore, ids: Id[], action: string | undefined): Promise<void> {
+export async function openingAction(store: DocStore, ids: Id[], action: string | undefined, hint: (text: string, ms?: number) => void = () => {}): Promise<void> {
   const doc = store.doc;
   const els = ids.map((id) => doc.elements[id]).filter(Boolean);
   const kind = els.length && els.every((e) => e.type === els[0].type) ? kindOfElementType(els[0].type) : null;
@@ -43,5 +44,22 @@ export async function openingAction(store: DocStore, ids: Id[], action: string |
     case 'lock-littera':
       toggleOpeningLock(store, ids);
       return;
+    // Smarta lägen (0.11.8.3).
+    case 'align-below': {
+      const n = alignWithBelow(store, ids);
+      if (!n) hint(ids.some((id) => openingBelow(store.doc, id)) ? 'Står redan i liv med det under.' : 'Hittar inget i samma liv på våningen under.', 3000);
+      return;
+    }
+    case 'equal-spacing': {
+      const n = equalSpacing(store, ids);
+      if (n === null) hint('Markera minst tre i samma vägg. De yttersta står kvar.', 3500);
+      return;
+    }
+    case 'center-room': {
+      const n = centerInRoom(store, ids);
+      if (n === null) hint('Hittar inget rum vid väggen.', 3000);
+      else if (!n) hint('Sitter redan mitt i rummet.', 2500);
+      return;
+    }
   }
 }

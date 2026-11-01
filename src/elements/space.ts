@@ -12,6 +12,7 @@ import { leaderOf, type TagParams } from './leader';
 import { DEFAULT_LABELS } from '../core/graphics';
 import { fillPrims, type FillParams } from './drawing2d';
 import { slabsOn } from './slab';
+import { glassPanes, m2Text, roomDaylight, shareText } from './daylight';
 import { difference } from '../geometry/boolean';
 
 export type { SpaceParams } from './rooms';
@@ -65,6 +66,12 @@ export const spaceType: ElementType<SpaceParams> = {
         case 'takhöjd':
         case 'th':
           return p.ceilingHeight ? p.ceilingHeight.toLocaleString('sv-SE') : '';
+        // Dagsljuset (0.11.8.3): glasarean i ytterväggarna mot golvarean.
+        case 'dagsljus':
+        case 'glasarea': {
+          const d = roomDaylight(ctx.memo('glass-panes', () => glassPanes(ctx.doc, ctx.view.state)), el.storey, pts, areaOf(pts));
+          return name.toLowerCase() === 'glasarea' ? m2Text(d.glass) : shareText(d);
+        }
       }
       return ownProp([el.props], name);
     };

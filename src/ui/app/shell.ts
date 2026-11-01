@@ -8,10 +8,10 @@ import { THEMES } from '../theme';
 import type { UiSettings } from '../uiSettings';
 import { defaultState } from './helpers';
 
-export type ToolId = 'pan' | 'select' | 'measure' | 'wall' | 'door' | 'window' | 'slab' | 'roof' | 'stair' | 'railing' | 'profile' | 'ground' | 'room' | 'dimension' | 'text' | 'label' | 'draw2d' | 'section' | 'elevation';
+export type ToolId = 'pan' | 'select' | 'measure' | 'wall' | 'door' | 'window' | 'hole' | 'slab' | 'roof' | 'stair' | 'railing' | 'profile' | 'ground' | 'room' | 'dimension' | 'text' | 'label' | 'draw2d' | 'section' | 'elevation';
 
 /** Verktyg som ritar i planen och därför byter till planvyn. */
-export const PLAN_TOOLS: ToolId[] = ['wall', 'door', 'window', 'slab', 'roof', 'stair', 'railing', 'profile', 'ground', 'room', 'dimension', 'text', 'label', 'draw2d', 'section', 'elevation'];
+export const PLAN_TOOLS: ToolId[] = ['wall', 'door', 'window', 'hole', 'slab', 'roof', 'stair', 'railing', 'profile', 'ground', 'room', 'dimension', 'text', 'label', 'draw2d', 'section', 'elevation'];
 /** Verktyg som också ritar i fasader och sektioner (0.8). */
 export const SPACE_TOOLS: ToolId[] = ['dimension', 'text', 'draw2d'];
 /** Ritverktygen som ritar på ett ritningsblad (0.8.9), i mm på papperet. */
@@ -35,6 +35,7 @@ export const TOOLS: ToolDef[] = [
   { id: 'wall', label: 'Vägg', icon: 'wall', key: 'W', group: 'rita' },
   { id: 'door', label: 'Dörr', icon: 'door', key: 'D', group: 'rita' },
   { id: 'window', label: 'Fönster', icon: 'window', key: 'O', group: 'rita' },
+  { id: 'hole', label: 'Vägghål', icon: 'wallHole', group: 'rita' },
   { id: 'slab', label: 'Bjälklag', icon: 'slab', group: 'rita' },
   { id: 'roof', label: 'Tak', icon: 'roof', group: 'rita' },
   { id: 'stair', label: 'Trappa', icon: 'stair', group: 'rita' },

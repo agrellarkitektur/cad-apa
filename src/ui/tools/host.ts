@@ -20,6 +20,10 @@ export interface ToolHost {
   readOnly?(): boolean;
   /** Om ett objekt går att ändra i en vy som annars bara går att markera (det som är ritat i fasaden eller sektionen). */
   canEdit?(id: Id): boolean;
+  /** Fasaden som arbetsyta (0.11.8.3): dörrar, fönster och vägghål som går att dra i den öppna fasaden eller sektionen. */
+  movesInView?(id: Id): boolean;
+  /** Flytta dem med ett drag i vyns mm (x längs linjen, y höjd). */
+  moveInView?(ids: Id[], d: [number, number]): number;
   /**
    * Ytan som ritas på (0.8): fasaden, sektionen eller arbetsbladet som är
    * öppet, eller undefined för våningens plan. Nya mått, texter och

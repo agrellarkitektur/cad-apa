@@ -47,6 +47,8 @@ export interface ActionPanel {
   onUnderlayProportions?: (id: string) => void;
   /** Det formulären för ritningsblad behöver av appen (0.8 del 3). */
   sheetHost?: SheetFormHost;
+  /** Ett kort meddelande (0.11.8.3, de smarta lägena när de inte går). */
+  onHint?: (text: string, ms?: number) => void;
 }
 
 export interface ActionContext {
@@ -236,7 +238,10 @@ export function selectionAction({ panel, store, selection, getView, body }: Acti
     case 'swap-size':
     case 'same-littera':
     case 'lock-littera':
-      void openingAction(store, ids, b.dataset.action);
+    case 'align-below':
+    case 'equal-spacing':
+    case 'center-room':
+      void openingAction(store, ids, b.dataset.action, (t, ms) => panel.onHint?.(t, ms));
       break;
     case 'flip-swing':
       patchEach(store, ids, 'Vänd slag', (p) => ({ swing: -((p.swing as number | undefined) ?? 1) }));

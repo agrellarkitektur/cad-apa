@@ -12,6 +12,7 @@ import { weightPicker } from './weightPick';
 import { lineTypeOptions } from './lineTypePick';
 import { toHex } from './style/colors';
 import { numberField, textField } from './fieldMarkup';
+import { glassFacing, glassPanes, m2Text } from '../elements/daylight';
 
 /**
  * Egenskaperna för markörerna (granskningen efter 0.10.12, förut i
@@ -38,6 +39,7 @@ export function markerViewFields(doc: ProjectDoc, el: Element, view: ViewStates)
       return `<label class="field"><span>Namn</span><input data-key="name:" value="${escapeHtml(el.name ?? '')}" placeholder="${escapeHtml(markerName(doc, { ...el, name: undefined }))}"></label>
         <div class="fields"><label class="field"><span>Djup</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="marker:depth" value="${p.depth ?? ''}" placeholder="Allt"><i>mm</i></span></label><label class="field" title="Det som ligger längre bort från linjen än så ritas med tunn grå linje"><span>Tonat från</span><span class="input-unit"><input type="text" data-expr inputmode="decimal" autocomplete="off" data-key="marker:toneDepth" value="${p.toneDepth ?? ''}" placeholder="Inget"><i>mm</i></span></label></div>
         ${markerHeightFields(doc, el, view)}
+        ${el.type === 'Elevation' ? facadeGlassNote(doc, el, view) : ''}
         <div class="row"><button class="btn btn-primary" data-action="open-marker">Öppna ${el.type === 'Section' ? 'sektionen' : 'fasaden'}</button>${canFollow ? '<button class="btn" data-action="follow-building" title="Lägg fasaden runt byggnaden igen, så att den följer med när byggnaden ändras">Följ byggnaden igen</button>' : ''}</div>`;
     }
     default:
@@ -98,4 +100,16 @@ function markerHeightFields(doc: ProjectDoc, el: Element, view: ViewStates): str
       ${box('th', 'Totalhöjd (TH)', 'Mått från medelmarknivån till husets högsta punkt')}
       ${box('mmnOld', 'Medelmarknivå, befintlig mark', 'Nivåmarkör för den befintliga markens medelmarknivå bredvid den nya')}
     </div>${bh ? '<p class="note">Måtten dras i sidled i fasaden eller sektionen, i rutan i överänden.</p>' : '<p class="note">Höjderna visas när huset har tak.</p>'}`;
+}
+
+/**
+ * Glaset mot fasaden (0.11.8.3, dagsljuset): dörrar och fönster i
+ * ytterväggarna som vetter inom 45° från fasadens riktning, som underlag
+ * för energiberäkningen. Hela projektet per väderstreck står under stilboken
+ * › Allmänt › Fönster och dörrar.
+ */
+function facadeGlassNote(doc: ProjectDoc, el: Element, view: ViewStates): string {
+  const f = markerFrame(doc, el);
+  const g = glassFacing(glassPanes(doc, view.state), [-f.view[0], -f.view[1]]);
+  return `<p class="note">Glas mot fasaden: <b>${m2Text(g.area)}</b> i ${g.count} ${g.count === 1 ? 'dörr eller fönster' : 'dörrar och fönster'} (inom 45°).</p>`;
 }

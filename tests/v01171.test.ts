@@ -99,8 +99,8 @@ describe('Typerna i stilbokens fil (0.11.7.1)', () => {
     const store = project([]);
     const before = Object.keys(store.doc.definitions).length;
     const file = JSON.parse(JSON.stringify(exportBook(project([], false).doc)));
-    // Dörr- och fönstertyperna följer med sedan 0.11.8.2; profil- och räckestyper saknas.
-    expect(file.types.every((d: { elementType: string }) => d.elementType === 'Door' || d.elementType === 'Window')).toBe(true);
+    // Dörr- och fönstertyperna följer med sedan 0.11.8.2, vägghålen sedan 0.11.8.3; profil- och räckestyper saknas.
+    expect(file.types.every((d: { elementType: string }) => ['Door', 'Window', 'WallHole'].includes(d.elementType))).toBe(true);
     importBook(store, readBookFile(file, store.doc.graphics), { masters: false, stamps: false }, 'Importera');
     expect(Object.keys(store.doc.definitions).length).toBe(before);
   });

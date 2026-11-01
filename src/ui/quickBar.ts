@@ -63,14 +63,24 @@ export function quickButtons(doc: ProjectDoc, els: Element[], viewports: boolean
     const q = resolveParams<Shape2DParams>(doc, els[0]);
     if ((q.shape === 'polyline' || q.shape === 'spline') && q.points.length >= 2 && !isClosed(q)) buttons.push(quickButton('continue-line', icons.draw2d, 'Fortsätt'));
   }
+  const opening = kind === 'Door' || kind === 'Window' || kind === 'WallHole';
   for (const id of quickFor(kind)) {
     switch (id) {
       case 'flip-swing':
         if (kind === 'Door') buttons.push(quickButton('flip-swing', icons.flipSwing, 'Vänd slag'));
         break;
       // Dörrar och fönster (0.11.8, tavla 2).
+      case 'align-below':
+        if (opening) buttons.push(quickButton('align-below', icons.alignHCenter, kind === 'Door' ? 'I liv med dörren under' : kind === 'WallHole' ? 'I liv med hålet under' : 'I liv med fönstret under'));
+        break;
+      case 'equal-spacing':
+        if (opening && els.length >= 3) buttons.push(quickButton('equal-spacing', icons.distH, 'Lika avstånd'));
+        break;
+      case 'center-room':
+        if (opening) buttons.push(quickButton('center-room', icons.alignHCenter, 'Mitt i rummet'));
+        break;
       case 'swap-type':
-        if (kind === 'Door' || kind === 'Window') buttons.push(quickButton('swap-type', icons.glazed, 'Byt typ…'));
+        if (opening) buttons.push(quickButton('swap-type', icons.glazed, 'Byt typ…'));
         break;
       case 'swap-size':
         if (kind === 'Door' || kind === 'Window') buttons.push(quickButton('swap-size', icons.refLine, 'Byt mått…'));
@@ -79,16 +89,16 @@ export function quickButtons(doc: ProjectDoc, els: Element[], viewports: boolean
         if (kind === 'Door' || kind === 'Window') buttons.push(quickButton('flip-hinge', icons.flipHinge, 'Spegla hängning'));
         break;
       case 'same-littera':
-        if (kind === 'Door' || kind === 'Window') buttons.push(quickButton('same-littera', icons.copy, 'Samma littera som…'));
+        if (opening) buttons.push(quickButton('same-littera', icons.copy, 'Samma littera som…'));
         break;
       case 'lock-littera':
-        if (kind === 'Door' || kind === 'Window') {
+        if (opening) {
           const on = els.every((e) => typeof e.params.littera === 'string');
           buttons.push(quickButton('lock-littera', icons.lock, on ? 'Lås upp litteran' : 'Lås litteran', on ? ' on' : ''));
         }
         break;
       case 'open-type':
-        if ((kind === 'Door' || kind === 'Window') && els.length === 1) buttons.push(quickButton('open-opening-type', icons.properties, kind === 'Door' ? 'Öppna i dörreditorn…' : 'Öppna i fönstereditorn…'));
+        if (opening && els.length === 1) buttons.push(quickButton('open-opening-type', icons.properties, kind === 'Door' ? 'Öppna i dörreditorn…' : kind === 'WallHole' ? 'Öppna i editorn…' : 'Öppna i fönstereditorn…'));
         break;
       case 'cycle-ref':
         if (kind === 'Wall') {
