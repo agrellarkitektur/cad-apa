@@ -270,7 +270,22 @@ ur överlämningen i 0.10.23).
   Kärnan jämförs snabbast utan webbläsare: samma skript buntat mot båda
   arbetskopiorna, med fasta id.
 - **Klickjämförelsen från 0.8.27** ligger i `scripts/jamfor-klick.py`
-  (633 steg sedan granskningen efter 0.11.5, som lade till 51 steg sist
+  (697 steg sedan granskningen efter 0.11.8, som skrev om stilmallsstegen
+  mot stilboken (texterna, linjetyperna och fyllningstyperna via
+  `[data-sb-go="res:…"]`, kategorin via `[data-sb-cat]`, tillbaka till
+  planen med `type:storey` före varje `data-key`/`data-pen`) och lade till
+  64 steg sist för 0.11.6–0.11.8.3: en balk med Linje, en pelare med
+  Lodrät, en gesims med Längs kant (klick på väggen), profilens panel
+  (`prof:anchor`, `prof:rotate`, `prof:end:end:kind`, `prof:z:0`), *Pelare
+  här* (`chooseRail('profileColumn')` efter ett klick på hörnet), dörr-,
+  fönster- och vägghålsverktygen (`#opening-module`, `[data-opening-mirror]`,
+  `[data-opening-defaults="hole"]`, `#opening-hw`, `#opening-height`),
+  panelen (`open:module`, `open:littera`, `open:lock`, `ofield:…`,
+  `open:head`, `open:place`), snabbradens `equal-spacing` (tre fönster i
+  samma vägg) och `center-room`, rummets dagsljus, fasaden (`goTo` till
+  `fasad-1`, `zoomToBounds` kring huset och ett drag i `.highlight`),
+  `open-opening-type` och Esc. Mot 0.11.8.3 skiljer bara panelerna med
+  de nya varningstexterna; 633 steg sedan granskningen efter 0.11.5, som lade till 51 steg sist
   för 0.11–0.11.5: en rak trappa och en L-trappa med vilplan, sättsteg,
   stegdjup, plansteg, byggd uppbyggnad, kontrast och hålet, räcken på båda
   sidor med läget, kilstegen, övergången och Lösgör, ett ritat räcke med
@@ -669,6 +684,26 @@ fungerar; sök i hela `docs/` (`grep -rn … docs/`) efter en funktion eller
 en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
+
+## Granskning efter 0.11.8 (0.11.8.4, format 28)
+
+Inga nya funktioner; varningstexterna ändrade (se README och PLAN.md).
+
+- **Trappan:** `stairGeometry.ts` har bara bandet, revbenen och stegen.
+  Spiraltrappan (`SPIRAL`, `SPIRAL_HEADROOM`, `spiralDims`, `spiralLine`)
+  ligger i `stairSpiral.ts` och varningarna (`stairWarnings`) i
+  `stairWarnings.ts`; båda importerar typerna och konstanterna från
+  `stairGeometry.ts` (`stairSpiral.ts` bara typen, så cirkeln är ofarlig).
+  Ny varning för öppen trappa: `h − planstegets tjocklek > 100`.
+- **3D-vyn:** `view3d/materials3d.ts` har klassen `Materials3D` med
+  `of(kind, color?, texture?)` (det material en kropp får), `ortho(o)`,
+  `all()` (för klippningen) och `assetUrl`; `clipPlanes` är dess lista och
+  vyn fyller på samma lista i `setClip`. `View3D.assetUrl` är en setter
+  som skickar vidare, så `pane3d.ts` är oförändrad. Bilder som laddas
+  anropar `onImage` (vyns `requestRender`).
+- **Öppningarnas varningar:** `CHILD_SILL` (1 800) och `FALL_HEIGHT`
+  (2 000) i `openingWarnings.ts`; fallhöjden är `storey.elevation + sill`.
+  Testerna i `tests/v01184.test.ts`.
 
 ## Dörrar och fönster: Smart och vägghål (0.11.8.3, format 28)
 

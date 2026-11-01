@@ -1150,6 +1150,30 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
 
+Version 0.11.8.4, Granskning efter 0.11.8 (samma filformat, 28; projekt
+från 0.11.8 öppnas; inga nya funktioner):
+- **Varningarna uppslagna i föreskrifterna** (Carl August laddade upp
+  dem 1 november). Där föreskriften har siffran står nu paragrafen i
+  stället för *avviker från praxis*: fri passage **BFS 2024:12, 1 kap.
+  6 §** (0,80 m, 0,76 m i enskilda bostäder); säkerhetsglas **BFS 2024:9,
+  2 kap. 31 §** (under 0,6 m i bostäder); utrymningsfönstret **BFS 2024:7,
+  2 kap. 26 §** (0,50 × 0,60, summa 1,50, underkant högst 1,20 över golv
+  eller plattform). Tröskeln, räckeshöjderna, stegmåtten och dagsljusets
+  10 % står inte i föreskrifterna och är kvar som praxis (dagsljuset
+  hänvisar till dagsljusfaktorn 1,0 % i BFS 2024:8, 4 kap. 1 §)
+- **Barnsäkra fönster** varnar enligt **BFS 2024:9, 2 kap. 4 §**: på en
+  våning där fallhöjden (våningens höjd plus bröstningen) är minst 2,0 m
+  ska ett öppningsbart fönster med karmöppningen under 1,8 m över golvet
+  ha säkerhetsanordning, och under 0,6 m dessutom kunna spärras stängt
+  eller på 100 mm. Förut varnade bara bröstningar under 600 på våningar
+  över 1,5 m. Fältet *Utfallsskydd* tystar varningen som förut
+- **Öppen trappa** (sättsteg 0) varnar när öppningen mellan planstegen är
+  över 100 mm (**BFS 2024:9, 2 kap. 6 §**)
+- Koden: `stairGeometry.ts` delad (spiralen i `stairSpiral.ts`,
+  varningarna i `stairWarnings.ts`), 3D-vyns material i
+  `materials3d.ts`; klickjämförelsen jämför stilboken igen och har 64
+  nya steg för profiler, dörrar, fönster och vägghål
+
 Version 0.11.8.3, Dörrar och fönster: Smart och vägghål (samma filformat,
 28; projekt från 0.11.8 öppnas):
 - **Vägghål** med eget verktyg under Rita (*Vägghål*, kommandot `VÄGGHÅL`

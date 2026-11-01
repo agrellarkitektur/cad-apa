@@ -6,10 +6,26 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 1 november 2026, efter 0.11.8.3.
+README. Senast: 1 november 2026, efter 0.11.8.4 (granskningen efter 0.11.8).
 
 ## Läget
 
+- **0.11.8.4 Granskningen efter 0.11.8 är klar** (samma format, inga nya
+  funktioner; fjärde siffran för att varningstexterna syns): varningarna
+  uppslagna i föreskrifterna som Carl August laddade upp i projektet
+  (BFS 2024:7, 8, 9, 12 under *Lagar regler standarder*; sök med
+  `project_search`), stilmallsstegen i klickjämförelsen omskrivna mot
+  stilboken, `stairGeometry.ts` och `view3d.ts` delade, klickjämförelsen
+  med 64 steg för profiler, dörrar, fönster och vägghål (697 steg, mot
+  0.11.8.3 skiljer bara panelerna med de nya texterna). Testerna: 942 på
+  ca 25 s. Claudes val och det som inte gjordes i PLAN.md, koden i
+  UTVECKLING.md.
+- **Märks i hans ritningar efter 0.11.8.4:** varningarna i dörrars,
+  fönsters och trappors egenskaper hänvisar till paragrafen där det finns
+  en (fri passage, säkerhetsglas, utrymningsfönster); barnsäkra fönster
+  varnar under 1,8 m karmöppning på våningar med fallhöjd ≥ 2,0 m
+  (förut bara under 600); öppen trappa varnar för öppningen mellan
+  planstegen.
 - **0.11.8.3 Dörrar och fönster: Smart och vägghål är klar** (samma
   format, 28; valfria fält `hole` i typen, bleckets `slope`, fyllningens
   `flat`), byggd i en session (Carl August: "Testa att köra A+B tillsammans
@@ -29,11 +45,13 @@ README. Senast: 1 november 2026, efter 0.11.8.3.
   rummets egenskaper (`{dagsljus}`, `{glasarea}` i rumsstämpeln), glaset
   i fasadens egenskaper och per väderstreck under Allmänt, editorns
   *Lutning* och spegelns *Kant*.
-- **Föreskrifterna**: tillgänglighet BFS 2024:12, säkerhet vid
-  användning BFS 2024:9, utrymning BFS 2024:7; varningarna säger
-  *avviker från praxis* tills siffrorna är uppslagna. Carl August laddar
-  upp standarderna vid tillfälle (1 november); slå då upp dem och rätta
-  varningarna (dörrar, fönster, trappor, räcken, dagsljuset).
+- **Föreskrifterna** ligger i projektets kunskapsbas (Boverkets BFS
+  2024:4–13 med ändringar, SIS-standarderna för dörrar, fönster, area,
+  dagsljus och invändiga mått, BBR 30 för jämförelse). Varningarna är
+  uppslagna i 0.11.8.4; tröskeln, räckeshöjderna, stegmåtten och
+  dagsljusets 10 % har ingen siffra i föreskrifterna och är kvar som
+  *avviker från praxis*. Slå upp i filerna, inte ur minnet, när en ny
+  varning skrivs.
 - **0.11.8–0.11.8.2** (öppningstyperna, synpunkterna på mockupen, Detalj
   och beslag): se PLAN.md, UTVECKLING.md och README, också för vad som
   märks i ritningarna (måtten: hålet modulmåttet + 10, karmen − 10;
@@ -44,13 +62,13 @@ README. Senast: 1 november 2026, efter 0.11.8.3.
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.11.8.3 pushad till `main` 1 november (se git och `gh run
+- **Publicerad:** 0.11.8.4 pushad till `main` 1 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.11.8.3` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.11.8.4` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.11.8.3 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.11.8.4 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -139,12 +157,10 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   avslut och spiraltrappan~~, ~~0.11.7.3 Trappan och räcket, det som inte
   hanns med~~, ~~0.11.8 Dörrar och fönster: öppningstyperna~~, ~~0.11.8.1
   Synpunkterna på mockupen~~, ~~0.11.8.2 Detalj och beslag~~, ~~0.11.8.3
-  Smart och vägghål~~ (klara; se tabellen *Klart* i PLAN.md)
+  Smart och vägghål~~, ~~0.11.8.4 Granskning efter 0.11.8~~ (klara; se
+  tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **Granskning efter 0.11.8**: stilmallsstegen i klickjämförelsen
-  omskrivna mot stilboken, `stairGeometry.ts` och `view3d.ts` delade,
-  klickjämförelsen med profiler, dörrar och fönster
 - **0.12 Export**: IFC4, DXF, areor för bygglov, förteckning över
   markförändringarna
 - **0.12.1 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
@@ -160,12 +176,15 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
 skrivrätt till repot ("push godkänd"). Carl August hade inte provat
-0.11.8–0.11.8.3 den 1 november och ville vänta med frågorna: fråga om han
+0.11.8–0.11.8.4 den 1 november och ville vänta med frågorna: fråga om han
 provat, och ställ i så fall frågorna om dem (nedan) först, högst fem åt
-gången. Har han laddat upp föreskrifterna, slå upp varningarnas siffror.
-Nästa version är **granskningen efter 0.11.8** (liten–mellanstor, inga
-nya funktioner; se PLAN.md). Ställ frågorna om 0.11.7.3–0.11 när han
-provat.
+gången. Nästa version är **0.12 Export** (stor: IFC4, DXF, areor,
+förteckningen över markförändringarna; se PLAN.md och synpunkterna) –
+föreslå en delning i 0.12, 0.12.0.x och utred IFC-skrivaren med en
+mockup eller ett underlag i en egen chatt innan bygget, som räcket och
+profilen. Före piloten också 0.12.1 3D-vyer och Koordinater, SWEREF och
+sol. Vid nästa granskning (efter 0.12) delas `src/ui/style/profileTypes.ts`
+(875) och `openingTypes.ts` (828).
 
 ## Att fråga Carl August om
 
@@ -176,6 +195,11 @@ om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.8.3, 0.11.8.2, 0.1
 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4, 0.11.3,
 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
+
+**0.11.8.4 efter provning** (Claudes val, se PLAN.md)
+- Barnsäkra fönster varnar på våningar där våningshöjden plus bröstningen
+  är minst 2,0 m (marken antas vid ±0). Rätt grund, eller ska fallhöjden
+  räknas mot den färdiga marken utanför fasaden?
 
 **0.11.8.3 efter provning** (Claudes val, se PLAN.md)
 - Vägghålens förval: Ventgaller 300 × 200, Nisch 600 × 600 och 100 djup,

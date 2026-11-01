@@ -1,6 +1,7 @@
 import { cross, dist, dot, intersectLines, lerp, norm, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import { flatLine } from './groundLines';
+import { spiralDims, spiralLine } from './stairSpiral';
 
 /**
  * Trappans geometri (0.11): ren räkning utan ritning. Trappan är ett band
@@ -97,43 +98,6 @@ export const RISER_TARGET = 180;
 export const TREAD_LENGTH = 300;
 export const STAIR_THICKNESS = 180;
 export const HEADROOM = 2100;
-/** Den fria höjden under spiraltrappans nästa varv som varningen räknar med (0.11.7.2). */
-export const SPIRAL_HEADROOM = 2000;
-/** Spiraltrappans förval (0.11.5): diametrarna och graderna. */
-export const SPIRAL = { inner: 200, outer: 1800, sweep: 360 };
-
-/** Spiraltrappans mått, rimliga: ytterdiametern minst 600, innerdiametern mindre, graderna 30–1 080. */
-export function spiralDims(s: NonNullable<StairParams['spiral']>): { inner: number; outer: number; sweep: number; ccw: boolean } {
-  const outer = Math.max(600, Number(s.outer) || SPIRAL.outer);
-  const inner = Math.max(0, Math.min(outer - 300, Number(s.inner) || 0));
-  const sweep = Math.max(30, Math.min(1080, Math.abs(Number(s.sweep) || SPIRAL.sweep)));
-  return { inner, outer, sweep, ccw: s.dir !== 'cw' };
-}
-
-/**
- * Spiraltrappans referenslinje (0.11.5): en båge med radien mitt emellan
- * inner- och ytterradien, i bitar om högst 90°, från riktningen mot
- * `line[1]` och `sweep` grader i varvriktningen. Bredden blir skillnaden
- * mellan radierna och referenslinjen ligger i mitten. Andra trappor
- * svarar med sig själva.
- */
-function spiralLine(p: StairParams): StairParams {
-  const line = p.line ?? [];
-  if (!p.spiral || line.length < 2) return p;
-  const d = spiralDims(p.spiral);
-  const c = line[0];
-  const a0 = Math.atan2(line[1][1] - c[1], line[1][0] - c[0]) || 0;
-  const r = (d.inner + d.outer) / 4;
-  const m = Math.max(1, Math.ceil(d.sweep / 90 - 1e-9));
-  const step = ((d.sweep / m) * Math.PI) / 180;
-  const s = d.ccw ? 1 : -1;
-  const pts: [number, number][] = [];
-  for (let k = 0; k <= m; k++) pts.push([c[0] + r * Math.cos(a0 + s * k * step), c[1] + r * Math.sin(a0 + s * k * step)]);
-  // Pilhöjden är positiv när bågen buktar åt vänster om kordan, alltså medurs.
-  const bulge = -s * r * (1 - Math.cos(step / 2));
-  return { ...p, line: pts, bulges: pts.slice(1).map(() => bulge), width: (d.outer - d.inner) / 2, refSide: 'center', landings: undefined, turnLandings: undefined };
-}
-
 /** Ett revben: stegets framkant över trappan, med var den möter kanterna och gånglinjen. */
 export interface Rib {
   L: Vec2;
@@ -576,45 +540,3 @@ export function walkDir(g: StairGeometry, u: number): Vec2 {
 
 /** Det minsta stegdjupet i loppen (gånglinjen). */
 export const minGoing = (g: StairGeometry): number => (g.runs.length ? Math.min(...g.runs.map((r) => r.going)) : 0);
-
-/**
- * Varningarna (0.11, texterna 0.11.1): måtten är vedertagna men står inte i
- * Boverkets föreskrifter (BFS 2024:9 har inga mått för steg och bredd; de
- * var allmänna råd i BBR 8:232), så de *avviker från praxis*. Uppslaget 30
- * oktober 2026. Trappan går alltid att rita; varningarna står i panelen.
- */
-export function stairWarnings(p: StairParams, g: StairGeometry, outdoor = false): string[] {
-  const out: string[] = [];
-  const mm = (v: number) => `${Math.round(v).toLocaleString('sv-SE')} mm`;
-  const h = g.riserHeight;
-  const minG = outdoor ? 300 : 250;
-  for (const r of g.runs) {
-    if (r.going < minG - 0.5) {
-      out.push(`Stegdjupet i gånglinjen är ${mm(r.going)}; avviker från praxis (minst ${minG} mm${outdoor ? ' utomhus' : ', 300 utomhus'}).`);
-      break;
-    }
-  }
-  for (const r of g.runs) {
-    const f = 2 * h + r.going;
-    if (f < 600 - 0.5 || f > 650 + 0.5) {
-      out.push(`Stegformeln 2 × steghöjd + stegdjup är ${mm(f)}; avviker från praxis (600–650 mm).`);
-      break;
-    }
-  }
-  if (h > 200.5) out.push(`Steghöjden är ${mm(h)}; avviker från praxis (180–200 mm i bostäder).`);
-  if (g.width < 900 - 0.5) out.push(`Bredden är ${mm(g.width)}; avviker från praxis (minst 900 mm fri bredd i bostäder).`);
-  for (const [s, e] of g.landings) if (e - s < g.width - 1) {
-    out.push(`Ett vilplan är ${mm(e - s)} i gånglinjen; avviker från praxis (minst trappans bredd, ${mm(g.width)}).`);
-    break;
-  }
-  // Spiraltrappan (0.11.7.2): den fria höjden under nästa varv, (steg per varv × steghöjd) − stegets tjocklek.
-  if (g.turn && g.length > g.turn + 1 && g.runs[0]?.going > 0) {
-    const t = p.build === 'built' ? Math.max(0, p.built?.tread?.thickness ?? 40) : Math.max(20, p.thickness ?? STAIR_THICKNESS);
-    const free = (g.turn / g.runs[0].going) * h - t;
-    if (free < SPIRAL_HEADROOM - 0.5) out.push(`Den fria höjden under nästa varv är ${mm(free)}; avviker från praxis (minst ${mm(SPIRAL_HEADROOM)}). Minska stegdjupet, eller öka steghöjden eller ytterdiametern.`);
-  }
-  const wanted = p.risers ?? Math.max(2, Math.round(p.rise / RISER_TARGET));
-  const actual = g.risers.length;
-  if (p.risers !== undefined && actual !== wanted) out.push(`Trappan har ${actual} sättsteg i stället för ${wanted}: varje lopp mellan vilplanen behöver minst ett steg.`);
-  return out;
-}

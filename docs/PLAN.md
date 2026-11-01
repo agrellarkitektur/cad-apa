@@ -186,6 +186,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.8 | Format 28: dörrar och fönster, öppningstyperna: karm med rutnät av lufter, förvalda typer med beskrivande namn, dörr- och fönstereditorn, modulmått och fritt karmyttermått med drevmånen, överkant karm, litteraregeln med formel, sparade nummer och Numrera om, verktygen, smartmenyn och egenskaperna, plan, fasad, sektion och 3D ur typen, vägghål och uppställningar i formatet |
 | 0.11.8.1 | Dörrar och fönster, synpunkterna på mockupen: hålet modulmåttet + 10 och karmen − 10 (typens karmavdrag), öppningssymbolen mot gångjärnssidan med egna ställen, skjutpilen, fönstrens slag 15° kring gångjärnet, slagbågarna på alla nivåer och egna kryss, spröjs jämnt eller ritade, dörrbladets indelning med material per fyllning, VG01, uppställningens fältmall och fälten på objekten |
 | 0.11.8.3 | Dörrar och fönster, Smart och vägghål: vägghålen med verktyg och fyra förvalda typer (ventgaller, nisch, genomföring, rent hål), fasaden som arbetsyta, I liv med fönstret under, Lika avstånd, Mitt i rummet, dagsljuset (rummets andel, smarttexten, glas mot fasaden och per väderstreck), blecklutningen och spegelns raka kant |
+| 0.11.8.4 | Granskning efter 0.11.8 (1 november): varningarna uppslagna i föreskrifterna (fri passage, säkerhetsglas, barnsäkra fönster, utrymningsfönster, öppen trappa), `stairGeometry.ts` och `view3d.ts` delade, klickjämförelsen mot stilboken och med profiler, dörrar och fönster |
 | 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, uppställningens fält i stilboken (Typer) med taggar och smarttext |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
@@ -1285,13 +1286,45 @@ avstånd* mot väggens ändar, flytt i fasaden med tangentbordet, dagsljuset
 med fönstrens LT-värde och avskärmning, föreskrifternas siffror uppslagna
 (väntar på att Carl August laddar upp dem).
 
-### Granskning efter 0.11.8
+### Granskning efter 0.11.8 (0.11.8.4) ✓
 
-Inga nya funktioner. Det som inte gjordes i granskningen efter 0.11.5:
-stilmallsstegen i `scripts/jamfor-klick.py` (0.8.27–0.8.38) skrivs om mot
-stilbokens selektorer, så att stilboken jämförs igen; `stairGeometry.ts`
-och `view3d.ts` delas när 0.11.8 visat hur de växer; klickjämförelsen körs
-med profiler, dörrar och fönster.
+1 november 2026, inga nya funktioner. Fick en fjärde siffra eftersom
+varningstexterna syns.
+
+- **Föreskrifterna uppslagna** (Carl August laddade upp BFS 2024:7, 9, 12
+  och 8 i projektet). Varningar med en siffra i föreskriften hänvisar till
+  paragrafen; det som bara var allmänt råd i BBR är kvar som *avviker
+  från praxis*. Nytt: barnsäkra fönster enligt 2 kap. 4 § (1,8 m och
+  0,6 m, fallhöjd 2,0 m) och öppningen mellan planstegen i en öppen
+  trappa (2 kap. 6 §). Se README och `openingWarnings.ts`,
+  `stairWarnings.ts`, `railingWarnings.ts`.
+- **Stilmallsstegen i klickjämförelsen** omskrivna mot stilboken: texterna,
+  linjetyperna och fyllningstyperna nås via vänsterkanten (`data-sb-go`),
+  förinställningen är kategoriflikarna (`data-sb-cat`), dörrarnas och
+  fönstrens pennor heter `doorSwing` och `windowGlass`. Inga `saknas`-fel
+  kvar.
+- **Filerna delade:** `stairGeometry.ts` 620 → 542 rader
+  (`stairSpiral.ts` 43, `stairWarnings.ts` 49); `view3d.ts` 663 → 549
+  (`materials3d.ts` 152: klassen `Materials3D` med de inbyggda materialen,
+  egna kulörer, texturer och ortofotot, och klippplanen).
+- **Klickjämförelsen** med 64 nya steg för 0.11.6–0.11.8.3 (balk, pelare,
+  gesims längs kant, profilens egenskaper, Pelare här, dörr och fönster
+  med modulmått, vägghål, egenskaperna, Lika avstånd, Mitt i rummet,
+  dagsljuset, fasaden som arbetsyta med ett draget fönster, typen i
+  editorn, Detalj och 3D), 697 steg; mot 0.11.8.3 skiljer bara panelerna
+  med de nya varningstexterna.
+- **Testerna:** 942 på ca 25 s (två nya test för varningarna).
+
+**Claudes val:** fallhöjden för 2 kap. 4 § räknas som våningens höjd över
+±0 plus bröstningen, marken antas vid ±0 (ingen terräng i räkningen).
+Kontrastmarkeringen (2 kap. 8 §) får ingen varning: kravet gäller inte
+en- och tvåbostadshus eller bostadslägenheter.
+
+**Inte gjort:** `stairGeometry.ts` är fortfarande störst bland
+elementfilerna (542); `profileTypes.ts` (875) och `openingTypes.ts` i
+`src/ui/style/` (828) är de största filerna nu och delas vid nästa
+granskning. Tröskelns 25 mm och räckeshöjderna har ingen föreskrift att
+hänvisa till.
 
 ### 0.12 Export: IFC och DXF
 

@@ -290,7 +290,9 @@ function daylightMarkup(doc: ProjectDoc, el: Element, ctx: PlanContext, state: s
   const pts = spaceOutline(ctx, el as unknown as Element<SpaceParams>);
   if (pts.length < 3) return '';
   const d = roomDaylight(glassPanes(doc, state), el.storey, pts, areaOf(pts));
-  const warn = d.low ? `<p class="skew-note" role="note"><b>!</b> Glasarean är under ${Math.round(DAYLIGHT_SHARE * 100)} % av golvarean. <i>Avviker från praxis.</i></p>` : '';
+  // Föreskriften (BFS 2024:8, 4 kap. 1 §) kräver dagsljusfaktor 1,0 % för minst halva bostadens yta; 10 % glasarea
+  // är BBR:s gamla schablon för det, så varningen är praxis (uppslaget i granskningen efter 0.11.8).
+  const warn = d.low ? `<p class="skew-note" role="note"><b>!</b> Glasarean är under ${Math.round(DAYLIGHT_SHARE * 100)} % av golvarean. <i>Avviker från praxis</i> (schablonen för dagsljusfaktor 1,0 %, BFS 2024:8, 4 kap. 1 §).</p>` : '';
   return `<div class="field-label">Dagsljus</div>
     ${warn}<p class="note">Glasarea ${m2Text(d.glass)} av golvarean ${m2Text(d.floor)}: <b>${shareText(d)}</b>. Glaset i dörrar och fönster i ytterväggarna, innanför bågarna. Smarttexten <code>{dagsljus}</code> och <code>{glasarea}</code> i rumsstämpeln (stilboken).</p>`;
 }

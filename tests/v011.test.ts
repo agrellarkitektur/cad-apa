@@ -7,7 +7,8 @@ import { slabRings } from '../src/elements/slab';
 import { createContext } from '../src/repr/context';
 import { defaultSheet } from '../src/core/viewCategories';
 import { groundProject, twoStoreys } from './projekt';
-import { bandBetween, stairGeometry, stairOutline, stairWarnings, type StairParams } from '../src/elements/stairGeometry';
+import { bandBetween, stairGeometry, stairOutline, type StairParams } from '../src/elements/stairGeometry';
+import { stairWarnings } from '../src/elements/stairWarnings';
 import { signedArea } from '../src/geometry/chains';
 import type { Vec2 } from '../src/repr/primitives';
 

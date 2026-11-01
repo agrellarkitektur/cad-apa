@@ -161,7 +161,7 @@ describe('varningarna', () => {
     expect(openingWarnings(doc, doc.elements.b).some((w) => w.includes('Fri passage'))).toBe(true);
     // Ytterväggen: 9M ytterdörr ger 790 < 800, och tröskeln 42 > 25.
     const c = openingWarnings(doc, doc.elements.c);
-    expect(c.some((w) => w.includes('under 800'))).toBe(true);
+    expect(c.some((w) => w.includes('minst 800'))).toBe(true);
     expect(c.some((w) => w.includes('Tröskeln 42'))).toBe(true);
   });
 

@@ -1,7 +1,8 @@
 import { addElements } from '../../core/commands';
 import { isSite } from '../../core/model';
 import { tidyBulges } from '../../elements/groundLines';
-import { bandBetween as bandBetweenPreview, SPIRAL, stairGeometry, STAIR_WIDTH, stairOutline, type StairParams, type StairRefSide } from '../../elements/stairGeometry';
+import { bandBetween as bandBetweenPreview, stairGeometry, STAIR_WIDTH, stairOutline, type StairParams, type StairRefSide } from '../../elements/stairGeometry';
+import { SPIRAL } from '../../elements/stairSpiral';
 import { storeyAbove } from '../../elements/stair';
 import { dist } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';

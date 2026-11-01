@@ -4,26 +4,12 @@ import type { Vec2 } from '../repr/primitives';
 import type { Material3D, Shape3D } from '../repr/solids';
 import { Edit3D, type Edit3DHost, type ScreenRect } from './edit3d';
 import { boxUv, capObjects, clearGroup, clipPlanes, extrude, groundHit, resolveColor, shown, type Cap3D, type Clip3D } from './geometry3d';
+import { Materials3D, type Ortho3D, type Texture3D } from './materials3d';
 import { setupNavigation, type Navigation } from './navigation';
 
-export type { Edit3DHost, Handle3D } from './edit3d';
+export type { Ortho3D, Texture3D } from './materials3d';
 
-/** Färger för materialen. Dämpade, så att linjerna bär ritningen. */
-const MATERIAL_COLORS: Record<Material3D, string> = {
-  wall: '#f4f2ee',
-  'wall-new': '#f1ddcf',
-  glass: '#bcd6e6',
-  door: '#d9c4a3',
-  frame: '#e9e4dc',
-  furniture: '#c9cdd1',
-  fixture: '#e8eef2',
-  floor: '#d8d2c6',
-  slab: '#d6d0c4',
-  roof: '#b9a597',
-  site: '#d9d6d0',
-  tree: '#9fb18f',
-  ground: '#cfd3bf',
-};
+export type { Edit3DHost, Handle3D } from './edit3d';
 
 /**
  * Markobjekten (0.10.11): de är inga egna kroppar utan delar av marken, så
@@ -38,19 +24,6 @@ export interface Ground3DHost {
   pick(p: Vec2): string | null;
   /** Objektets kontur på marken, sex tal per sträcka (mm), eller null om id inte är ett markobjekt. */
   outline(id: string): Float32Array | null;
-}
-
-/** Materialets textur (0.10.31): bilden och dess sida i mm. */
-export interface Texture3D {
-  asset: string;
-  size: number;
-}
-
-/** Ortofotot på marken (0.10.31): bilden, avbildningen från planens mm till bilden (nio tal radvis) och var det syns. */
-export interface Ortho3D {
-  asset: string;
-  matrix: number[];
-  mode: 'base' | 'all';
 }
 
 /**
@@ -75,12 +48,13 @@ export class View3D {
   private shadowPlane: THREE.Mesh;
   private capMaterials: { poche: THREE.MeshBasicMaterial; other: THREE.MeshBasicMaterial; edge: THREE.LineBasicMaterial };
   private sun: THREE.DirectionalLight;
-  private materials = new Map<string, THREE.Material>();
-  /** Bilderna för texturerna och ortofotot (0.10.31), per fil. */
-  private images = new Map<string, THREE.Texture>();
+  /** Materialen, texturerna och ortofotot (delade ur vyn i granskningen efter 0.11.8). */
+  private readonly look = new Materials3D(() => this.requestRender());
+  private readonly clipPlanes: THREE.Plane[] = this.look.clipPlanes;
   /** Projektets fil som URL (0.10.31), för texturerna. Sätts av den som äger vyn. */
-  assetUrl: ((id: string) => string | null) | null = null;
-  private clipPlanes: THREE.Plane[] = [];
+  set assetUrl(f: ((id: string) => string | null) | null) {
+    this.look.assetUrl = f;
+  }
   private edgeMaterial: THREE.LineBasicMaterial;
   /** Höjdkurvorna på marken (0.10.8): mörka och halvgenomskinliga. */
   private contourMaterial = new THREE.LineBasicMaterial({ color: 0x3d4a3a, transparent: true, opacity: 0.55 });
@@ -271,17 +245,17 @@ export class View3D {
         geom.setAttribute('uv', new THREE.BufferAttribute(uv, 2));
       }
       // Ortofotot (0.10.31) där marken saknar material, eller över allt.
-      const photo = ortho ? this.orthoMaterial(ortho) : null;
+      const photo = ortho ? this.look.ortho(ortho) : null;
       const all = ortho?.mode === 'all' ? photo : null;
       geom.setIndex(new THREE.BufferAttribute(all ? mesh.indices : (colors?.indices ?? mesh.indices), 1));
       geom.computeVertexNormals();
-      const base = photo ?? this.material('ground');
+      const base = photo ?? this.look.of('ground');
       // Materialens kulörer (0.10.28) och texturer (0.10.31): en grupp trianglar per utseende.
       let mats: THREE.Material | THREE.Material[] = all ?? base;
       if (colors && !all) {
         mats = colors.groups.map((g, i) => {
           geom.addGroup(g.start, g.count, i);
-          return g.color || g.texture ? this.lookMaterial(g.color, g.texture) : base;
+          return g.color || g.texture ? this.look.of('ground', g.color ?? undefined, g.texture) : base;
         });
       }
       const m = new THREE.Mesh(geom, mats);
@@ -318,7 +292,7 @@ export class View3D {
   }
 
   private materialFor(id: string, material: Material3D, color?: string, texture?: Texture3D): THREE.Material {
-    return this.selected.has(id) ? this.highlightMaterial : id === this.hovered ? this.hoverMaterial : texture ? this.lookMaterial(color ?? null, texture) : color ? this.colorMaterial(color) : this.material(material);
+    return this.selected.has(id) ? this.highlightMaterial : id === this.hovered ? this.hoverMaterial : this.look.of(material, color, texture);
   }
 
   /** Färga det markerade och det som hovras, och rita markobjektens konturer (0.10.11). */
@@ -441,94 +415,6 @@ export class View3D {
     return ((2 * Math.tan((this.camera.fov * Math.PI) / 360) * d) / h) * 1000;
   }
 
-  /** Ett material med en egen kulör (0.10.28), för markens material och stödmurarna. */
-  private colorMaterial(color: string): THREE.Material {
-    const key = `kulör:${color}`;
-    let m = this.materials.get(key);
-    if (!m) {
-      m = new THREE.MeshStandardMaterial({ color, roughness: 0.92, side: THREE.DoubleSide });
-      m.clippingPlanes = this.clipPlanes;
-      m.clipShadows = true;
-      this.materials.set(key, m);
-    }
-    return m;
-  }
-
-  /** Bilden i filen `asset` (0.10.31), laddad en gång; vyn ritas om när den kommit. Null om filen saknas. */
-  private image(asset: string): THREE.Texture | null {
-    const had = this.images.get(asset);
-    if (had) return had;
-    const url = this.assetUrl?.(asset);
-    if (!url) return null;
-    const t = new THREE.Texture();
-    t.colorSpace = THREE.SRGBColorSpace;
-    const img = new Image();
-    img.onload = () => {
-      t.image = img;
-      t.needsUpdate = true;
-      this.requestRender();
-    };
-    img.src = url;
-    this.images.set(asset, t);
-    return t;
-  }
-
-  /**
-   * Materialets utseende (0.10.31): kulören och texturen. Texturen upprepas
-   * med sidan `size` mm (koordinaterna är i mm). Kulören gäller tills bilden
-   * har laddats; med en textur färgar den inte bilden.
-   */
-  private lookMaterial(color: string | null, texture?: Texture3D): THREE.Material {
-    const plain = () => (color ? this.colorMaterial(color) : this.material('ground'));
-    if (!texture) return plain();
-    const key = `textur:${texture.asset}@${texture.size}`;
-    const had = this.materials.get(key);
-    if (had) return had;
-    const img = this.image(texture.asset);
-    if (!img) return plain();
-    const map = img.clone();
-    map.wrapS = map.wrapT = THREE.RepeatWrapping;
-    map.repeat.set(1 / texture.size, 1 / texture.size);
-    const m = new THREE.MeshStandardMaterial({ map, color: 0xffffff, roughness: 0.92, side: THREE.DoubleSide });
-    m.clippingPlanes = this.clipPlanes;
-    m.clipShadows = true;
-    this.materials.set(key, m);
-    return m;
-  }
-
-  /** Ortofotot på marken (0.10.31), med avbildningen från planens mm till bilden. */
-  private orthoMaterial(o: Ortho3D): THREE.Material | null {
-    const key = `orto:${o.asset}:${o.matrix.join(',')}`;
-    const had = this.materials.get(key);
-    if (had) return had;
-    const img = this.image(o.asset);
-    if (!img) return null;
-    const map = img.clone();
-    map.wrapS = map.wrapT = THREE.ClampToEdgeWrapping;
-    map.matrixAutoUpdate = false;
-    const q = o.matrix;
-    map.matrix.set(q[0], q[1], q[2], q[3], q[4], q[5], q[6], q[7], q[8]);
-    const m = new THREE.MeshStandardMaterial({ map, color: 0xffffff, roughness: 1, side: THREE.DoubleSide });
-    m.clippingPlanes = this.clipPlanes;
-    m.clipShadows = true;
-    this.materials.set(key, m);
-    return m;
-  }
-
-  private material(kind: Material3D): THREE.Material {
-    let m = this.materials.get(kind);
-    if (!m) {
-      m =
-        kind === 'glass'
-          ? new THREE.MeshPhysicalMaterial({ color: MATERIAL_COLORS.glass, roughness: 0.05, transparent: true, opacity: 0.35 })
-          : new THREE.MeshStandardMaterial({ color: MATERIAL_COLORS[kind], roughness: 0.92, side: THREE.DoubleSide });
-      m.clippingPlanes = this.clipPlanes;
-      m.clipShadows = true;
-      this.materials.set(kind, m);
-    }
-    return m;
-  }
-
   /**
    * Klipp modellen längs en sektion (0.7.1) och fyll snittet: det som
    * ligger bakom betraktaren, utanför linjens ändar eller bortom djupet syns
@@ -539,7 +425,7 @@ export class View3D {
     if (c) for (const o of capObjects(c, caps, this.capMaterials)) this.capsGroup.add(o);
     this.clipPlanes.length = 0;
     this.clipPlanes.push(...clipPlanes(c));
-    for (const m of [...this.materials.values(), this.edgeMaterial, this.highlightMaterial, this.hoverMaterial, this.markLine, this.hoverLine]) {
+    for (const m of [...this.look.all(), this.edgeMaterial, this.highlightMaterial, this.hoverMaterial, this.markLine, this.hoverLine]) {
       m.clippingPlanes = this.clipPlanes;
       m.clipShadows = true;
       m.needsUpdate = true;

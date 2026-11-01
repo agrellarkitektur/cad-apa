@@ -6,7 +6,9 @@ import { geometryOfStair, stairParams } from './stair';
 
 /**
  * Varningarna (0.11.1), som aldrig spärrar: BFS 2024:9 där det är
- * föreskrift, och *avviker från praxis* för det vedertagna (höjderna,
+ * föreskrift (kontrollerat mot texten 1 november 2026: 2 kap. 11 § har
+ * måtten för barnsäkerheten men ingen höjd, 12–13 §§ ledstängerna), och
+ * *avviker från praxis* för det vedertagna (höjderna,
  * öppningarna, förlängningen och avvikelsen vid kilstegen). Uppslaget i
  * utredningen 30 oktober 2026.
  */

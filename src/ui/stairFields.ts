@@ -4,7 +4,9 @@ import { geometryOfStair, stairHoleIn, stairLittera, stairParams, storeyAbove } 
 import { railingsOnStair } from '../elements/railing';
 import { stairHandrailWarning } from '../elements/railingWarnings';
 import { addRailingsOnStair } from './railingFields';
-import { minGoing, spiralDims, RISER_TARGET, stairWarnings, STAIR_THICKNESS, TREAD_LENGTH, WALK_LINE, HEADROOM, type StairParams } from '../elements/stairGeometry';
+import { minGoing, RISER_TARGET, STAIR_THICKNESS, TREAD_LENGTH, WALK_LINE, HEADROOM, type StairParams } from '../elements/stairGeometry';
+import { spiralDims } from '../elements/stairSpiral';
+import { stairWarnings } from '../elements/stairWarnings';
 import { STRAIGHT } from '../geometry/arc';
 import { levelOf } from '../repr/solids';
 import { isSite } from '../core/model';
