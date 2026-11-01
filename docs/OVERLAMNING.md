@@ -204,9 +204,6 @@ provat.
   *Tillgänglig* per dörr?
 - Tillgänglighetscirkeln står på dörrens båda sidor, mitt för dörren och
   tangerande väggen. Rätt, eller bara på slagsidan, eller flyttbar?
-- Varningarna hänvisar till BFS 2024:12 (tillgänglighet), 2024:9 och
-  2024:7 men säger *avviker från praxis*: siffrorna är inte uppslagna.
-  Vill du ladda upp föreskrifterna så att de slås upp?
 
 **Besvarade 1 november, 0.11.8.1 (A–E):** A fönstrens slagbågar ska inte
 synas som förval (gjort i 0.11.8.2); B spröjsens förval står; C skrivet
