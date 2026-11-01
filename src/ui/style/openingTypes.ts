@@ -1,6 +1,6 @@
 import type { Id, ProjectDoc } from '../../core/model';
 import { addDefaultOpeningTypes, duplicateOpeningType, missingDefaultOpeningTypes, newOpeningType, openingGroups, openingTypeUses, openingTypesOf, removeOpeningType, updateOpeningType } from '../../core/openings';
-import { DOOR_OPS, LEAF_OPS, MUNTIN_KINDS, SIDE_HUNG, WINDOW_OPS, frameFromModule, hasSash, layoutOpening, leafGridOf, muntinWidth, type LeafGrid, type MuntinKind, type CellFill, type LeafStyle, type OpeningCell, type OpeningKind, type OpeningTypeModel, type OpKind, type Track } from '../../core/openingTypes';
+import { DOOR_OPS, LEAF_OPS, MUNTIN_KINDS, SIDE_HUNG, WINDOW_OPS, frameFromModule, hardwareOf, hasSash, layoutOpening, leafGridOf, muntinWidth, standsOnFloor, trimOf, type LeafGrid, type MuntinKind, type CellFill, type LeafStyle, type OpeningCell, type OpeningKind, type OpeningTypeModel, type OpKind, type Track } from '../../core/openingTypes';
 import { openingSettingsOf } from '../../core/general';
 import type { DocStore } from '../../core/store';
 import { askText } from '../ask';
@@ -72,7 +72,7 @@ export function openingEditorMarkup(doc: ProjectDoc, st: OpeningEditorState): st
       <button class="btn btn-small" data-ot-act="group"${d ? '' : ' disabled'} title="Flytta den valda typen till en ny eller annan grupp">Ny grupp…</button>
       ${missing ? `<button class="btn btn-small" data-ot-act="defaults" title="Fast, Sidohängt 1-luft … Garageport: de som saknas i projektet">Lägg in förvalda typer (${missing})</button>` : ''}
     </div>
-    <p class="note">Siffran: hur många objekt har typen. Vägghålen (ventgaller, nisch, genomföring) kommer med verktyget i 0.11.8.2.</p>
+    <p class="note">Siffran: hur många objekt har typen. Vägghålen (ventgaller, nisch, genomföring) kommer med verktyget i 0.11.8.3.</p>
   </div>`;
   if (!d || !m) return section(`${listCol}<div class="rt-typecol"><p class="note">Inga dörr- eller fönstertyper än.</p><button class="btn" data-ot-act="defaults">Lägg in förvalda typer</button></div>`);
   const door = m.kind === 'door';
@@ -106,7 +106,8 @@ export function openingEditorMarkup(doc: ProjectDoc, st: OpeningEditorState): st
     ${row('Bågens bredd', num('sash', m.sash))}
     ${row('Bågens djup', num('sashDepth', m.sashDepth))}
     ${door || m.cells.some((c) => LEAF_OPS.has(c.op)) ? row('Bladets tjocklek', num('leaf', m.leaf)) : ''}
-    ${row('Foder, bleck, bänk', '<i>0.11.8.1</i>')}
+    ${trimMarkup(m)}
+    ${hardwareMarkup(m)}
     <div class="rt-sec">Mått</div>
     ${row('Förvalt modulmått', `<input type="text" class="rt-val" data-ot="size" value="${Math.round(m.size[0] / 100)}×${Math.round(m.size[1] / 100)}">`)}
     ${door ? '' : row('Förvald bröstning', `<input type="text" class="rt-val" data-ot="sill" value="${m.sill ?? ''}" placeholder="Överkant karm" title="Tomt: fönstret placeras med överkant karm (stilboken › Allmänt); 0 för en fönsterdörr">`)}
@@ -151,26 +152,74 @@ function cellMarkup(doc: ProjectDoc, m: OpeningTypeModel, c: OpeningCell, i: num
     <div class="rt-sec">Mått i rutnätet</div>
     ${row('Bredd', `<i>${trackText(m.cols[c.col])}${(c.colSpan ?? 1) > 1 ? ` + ${(c.colSpan ?? 1) - 1}` : ''}</i>`)}
     ${row('Höjd', `<i>${m.rows.length === 1 ? 'hela' : trackText(m.rows[c.row])}${(c.rowSpan ?? 1) > 1 ? ` + ${(c.rowSpan ?? 1) - 1}` : ''}</i>`)}
-    ${leaf ? leafGridMarkup(doc, c, i, st) : c.fill === 'glass' ? muntinMarkup(c, i, st) : ''}
-    <div class="rt-sec">Beslag</div>
-    ${row('Handtag', `<i>${SIDE_HUNG.has(c.op) ? 'låssidan, mitt' : '–'}</i>`)}
+    ${!leaf && c.fill === 'panel' ? row('Material', sel(`cell:${i}:material`, c.material ?? '', [['', 'Som karmen'], ...((doc.graphics.materials ?? []) as { id: string; name: string }[]).map((x): [string, string] => [x.id, x.name])])) : ''}
+    ${leaf ? leafGridMarkup(doc, c, i, st) : c.fill === 'glass' ? muntinMarkup(doc, m, c, i, st) : ''}
   </div>`;
+}
+
+const check = (field: string, label: string, on: boolean, title = '') => `<label class="check"${title ? ` title="${escapeHtml(title)}"` : ''}><input type="checkbox" data-ot="${field}"${on ? ' checked' : ''}> ${escapeHtml(label)}</label>`;
+const numIn = (field: string, v: number, title = '') => `<input type="text" class="rt-val" data-ot="${field}" value="${nf.format(v).replace(/\s/g, '')}"${title ? ` title="${escapeHtml(title)}"` : ''}>`;
+
+/** Fodret, blecket och fönsterbänken (0.11.8.2): det som ritas i Detalj. */
+function trimMarkup(m: OpeningTypeModel): string {
+  if (m.kind === 'hole') return '';
+  const t = trimOf(m);
+  const win = m.kind === 'window' && !standsOnFloor(m);
+  return `<div class="rt-sec">Foder${win ? ', bleck och bänk' : ''}</div>
+    ${rowOf('Foder', selOf('trim.sides', t.lining.sides, [['both', 'Båda sidor'], ['in', 'Inne'], ['out', 'Ute'], ['none', 'Inget']]))}
+    ${t.lining.sides !== 'none' ? rowOf('Fodrets bredd', numIn('trim.width', t.lining.width)) + rowOf('Fodrets tjocklek', numIn('trim.thickness', t.lining.thickness)) : ''}
+    ${
+      win
+        ? rowOf('Bleck', selOf('trim.flashing', t.flashing ? 'on' : 'off', [['on', 'Med droppnäsa'], ['off', 'Inget']])) +
+          (t.flashing ? rowOf('Utsprång', numIn('trim.overhang', t.flashing.overhang, 'mm förbi väggens liv')) + rowOf('Droppnäsa', numIn('trim.drip', t.flashing.drip, 'Höjden, mm')) : '') +
+          rowOf('Fönsterbänk', selOf('trim.board', t.board ? 'on' : 'off', [['on', 'Invändig'], ['off', 'Ingen']])) +
+          (t.board ? rowOf('Bänkens tjocklek', numIn('trim.boardT', t.board.thickness)) + rowOf('Bänkens utsprång', numIn('trim.boardOver', t.board.overhang, 'mm förbi väggens liv')) : '')
+        : ''
+    }
+    <p class="note">Ritas i Detalj: i planen, fasaden, sektionen och 3D. Bleck och bänk i ytterväggar.</p>`;
+}
+
+/** Beslagen (0.11.8.2): handtag, gångjärnens markering och dörrarnas stängare och brevinkast. */
+function hardwareMarkup(m: OpeningTypeModel): string {
+  if (m.kind === 'hole') return '';
+  const h = hardwareOf(m);
+  const door = m.cells.some((c) => LEAF_OPS.has(c.op));
+  return `<div class="rt-sec">Beslag</div>
+    ${rowOf('Handtag', selOf('hw.handle', h.handle, door ? [['lever', 'Trycke'], ['pull', 'Draghandtag'], ['none', 'Inget']] : [['lever', 'Handtag'], ['none', 'Inget']]))}
+    ${door && h.handle !== 'none' ? rowOf('Höjd', numIn('hw.handleHeight', h.handleHeight, 'Handtagets höjd över golvet, mm')) : ''}
+    <div class="row wrap">${check('hw.hinges', 'Gångjärn', h.hinges, 'En markering av hängningen: två, 100 från över- och underkant')}${door ? check('hw.closer', 'Dörrstängare', h.closer) + check('hw.letterbox', 'Brevinkast', h.letterbox) : ''}</div>
+    <p class="note">${door ? 'Handtaget på låssidan; ' : 'Handtaget inne på låssidan, mitt på bågen (nertill på överkantshängda); '}ritas i Detalj.</p>`;
 }
 
 const rowOf = (label: string, value: string) => `<div class="rt-row"><span>${label}</span>${value}</div>`;
 const selOf = (field: string, cur: string, options: [string, string][]) => `<select class="rt-val" data-ot="${field}">${options.map(([v, l]) => opt(v, l, cur)).join('')}</select>`;
 
-/** Spröjsen i en glasluft (0.11.8.1): inga, jämnt fördelade (antal lodräta och vågräta) eller special (ritade referenslinjer). */
-function muntinMarkup(c: OpeningCell, i: number, st: OpeningEditorState): string {
+/** Spröjsen i en glasluft (0.11.8.1): inga, jämnt fördelade (antal lodräta och vågräta) eller special (ritade referenslinjer, med skrivna mått sedan 0.11.8.2). */
+function muntinMarkup(doc: ProjectDoc, m: OpeningTypeModel, c: OpeningCell, i: number, st: OpeningEditorState): string {
   const mu = c.muntins;
-  const mode = !mu ? 'none' : mu.lines?.length || (st.draw && st.cell === i) ? 'special' : 'even';
+  const mode = !mu ? 'none' : mu.lines || (st.draw && st.cell === i) ? 'special' : 'even';
   const w = mu ? muntinWidth(mu) : 28;
   const drawing = !!st.draw && st.cell === i;
+  const gl = glassRectOf(doc, m, st, i);
+  // Referenslinjernas ändar i mm från glasets nedre vänstra hörn, sett utifrån, i det mått ritytan visar.
+  const W = gl ? gl.u1 - gl.u0 : 1;
+  const H = gl ? gl.z1 - gl.z0 : 1;
+  const lineRows = (mu?.lines ?? [])
+    .map((l, j) => {
+      const v = (k: string, x: number) => `<input type="text" class="rt-val ot-mm" data-ot="mline:${i}:${j}:${k}" value="${Math.round(x)}" aria-label="${k}">`;
+      return `<div class="rt-row ot-mline"><span>S${j + 1}</span><span class="ot-track">${v('ax', l.a[0] * W)}${v('ay', l.a[1] * H)}<i>→</i>${v('bx', l.b[0] * W)}${v('by', l.b[1] * H)}<button class="icon-btn" data-ot-act="mline-remove" data-ot-i="${j}" title="Ta bort" aria-label="Ta bort">×</button></span></div>`;
+    })
+    .join('');
   return `<div class="rt-sec">Spröjs</div>
     ${rowOf('Indelning', selOf(`cell:${i}:mmode`, mode, [['none', 'Inga'], ['even', 'Jämn'], ['special', 'Special']]))}
     ${mode === 'even' ? rowOf('Lodräta', `<input type="text" class="rt-val" data-ot="cell:${i}:mv" value="${mu?.v ?? 0}">`) + rowOf('Vågräta', `<input type="text" class="rt-val" data-ot="cell:${i}:mh" value="${mu?.h ?? 0}">`) : ''}
-    ${mode === 'special' ? `<div class="row wrap ot-tools"><button class="btn btn-small${drawing ? ' on' : ''}" data-ot-act="mdraw" aria-pressed="${drawing}">${drawing ? 'Klar' : 'Rita spröjs'}</button><button class="btn btn-small" data-ot-act="mundo"${mu?.lines?.length ? '' : ' disabled'}>Ta bort senaste</button><button class="btn btn-small" data-ot-act="mclear"${mu?.lines?.length ? '' : ' disabled'}>Rensa</button></div>
-      <p class="note">Klicka två punkter i glaset för en referenslinje. Punkterna snäpper till kanterna, mitten, tredjedelar, fjärdedelar och andra spröjs; nästan lodrätt eller vågrätt blir rakt. <i>Klar</i> avslutar.</p>` : ''}
+    ${
+      mode === 'special'
+        ? `<div class="row wrap ot-tools"><button class="btn btn-small${drawing ? ' on' : ''}" data-ot-act="mdraw" aria-pressed="${drawing}">${drawing ? 'Klar' : 'Rita spröjs'}</button><button class="btn btn-small" data-ot-act="madd-v" title="En lodrät spröjs mitt i glaset, att skriva måttet på">+ Lodrät</button><button class="btn btn-small" data-ot-act="madd-h" title="En vågrät spröjs mitt i glaset">+ Vågrät</button><button class="btn btn-small" data-ot-act="mundo"${mu?.lines?.length ? '' : ' disabled'}>Ta bort senaste</button><button class="btn btn-small" data-ot-act="mclear"${mu?.lines?.length ? '' : ' disabled'}>Rensa</button></div>
+      <p class="note">Klicka två punkter i glaset för en referenslinje; punkterna snäpper till kanterna, mitten, tredjedelar, fjärdedelar och andra spröjs. Eller skriv måtten nedan: x och y i mm från glasets nedre vänstra hörn sett utifrån, i det mått ritytan visar (${Math.round(W)} × ${Math.round(H)}). Linjerna följer glaset när måttet ändras.</p>
+      ${lineRows}`
+        : ''
+    }
     ${mu ? rowOf('Utförande', selOf(`cell:${i}:mkind`, mu.kind, MUNTIN_KINDS.map((k) => [k.kind, `${k.label} (${k.width})`]))) + rowOf('Bredd', `<input type="text" class="rt-val" data-ot="cell:${i}:mwidth" value="${mu.width ?? ''}" placeholder="${w}">`) : ''}`;
 }
 
@@ -303,8 +352,46 @@ export function openingEditorChange(store: DocStore, st: OpeningEditorState, inp
       return true;
     }
   }
+  if (field.startsWith('trim.') || field.startsWith('hw.')) {
+    const on = (input as HTMLInputElement).type === 'checkbox' ? (input as HTMLInputElement).checked : raw === 'on';
+    up(field.startsWith('hw.') ? 'beslag' : 'foder, bleck och bänk', (m) => {
+      const t = trimOf(m);
+      const h = hardwareOf(m);
+      const pos = (x: number) => Number.isFinite(v) && v >= 0 ? Math.round(v) : x;
+      switch (field) {
+        case 'trim.sides': t.lining.sides = raw as typeof t.lining.sides; break;
+        case 'trim.width': t.lining.width = pos(t.lining.width); break;
+        case 'trim.thickness': t.lining.thickness = pos(t.lining.thickness); break;
+        case 'trim.flashing': t.flashing = on ? (t.flashing ?? { overhang: 40, drip: 20 }) : null; break;
+        case 'trim.overhang': if (t.flashing) t.flashing.overhang = pos(t.flashing.overhang); break;
+        case 'trim.drip': if (t.flashing) t.flashing.drip = pos(t.flashing.drip); break;
+        case 'trim.board': t.board = on ? (t.board ?? { thickness: 22, overhang: 20 }) : null; break;
+        case 'trim.boardT': if (t.board) t.board.thickness = Math.max(1, pos(t.board.thickness)); break;
+        case 'trim.boardOver': if (t.board) t.board.overhang = pos(t.board.overhang); break;
+        case 'hw.handle': h.handle = raw as typeof h.handle; break;
+        case 'hw.handleHeight': h.handleHeight = pos(h.handleHeight); break;
+        case 'hw.hinges': case 'hw.closer': case 'hw.letterbox': h[field.slice(3) as 'hinges' | 'closer' | 'letterbox'] = on; break;
+      }
+      if (field.startsWith('hw.')) m.hardware = h;
+      else m.trim = t;
+    });
+    return true;
+  }
   const [what, idx, key] = field.split(':');
   const i = Number(idx);
+  if (what === 'mline') {
+    const j = Number(key);
+    const k = field.split(':')[3];
+    const gl = glassRectOf(store.doc, d.opening, st, i);
+    if (!gl || !Number.isFinite(v)) return true;
+    up('spröjs', (m) => {
+      const l = m.cells[i]?.muntins?.lines?.[j];
+      if (!l) return;
+      const frac = Math.max(0, Math.min(1, k.endsWith('x') ? v / (gl.u1 - gl.u0) : v / (gl.z1 - gl.z0)));
+      (k.startsWith('a') ? l.a : l.b)[k.endsWith('x') ? 0 : 1] = frac;
+    });
+    return true;
+  }
   if (what === 'col' || what === 'row') {
     up(what === 'col' ? 'kolumn' : 'rad', (m) => {
       const t = (what === 'col' ? m.cols : m.rows)[i];
@@ -322,6 +409,7 @@ export function openingEditorChange(store: DocStore, st: OpeningEditorState, inp
       else if (key === 'hinge') c.hinge = raw === 'right' ? 'right' : 'left';
       else if (key === 'inward') raw === 'in' ? (c.inward = true) : delete c.inward;
       else if (key === 'fill') c.fill = raw as CellFill;
+      else if (key === 'material') raw ? (c.material = raw) : delete c.material;
       else if (key === 'leaf') {
         if (raw === 'custom') return;
         c.leaf = raw as LeafStyle;
@@ -527,6 +615,23 @@ export async function openingEditorClick(store: DocStore, st: OpeningEditorState
       break;
     case 'mdraw':
       st.draw = st.draw ? null : { start: null };
+      break;
+    case 'madd-v':
+    case 'madd-h':
+      if (st.cell === null) return true;
+      up('spröjs', (m) => {
+        const c = m.cells[st.cell!];
+        if (!c) return;
+        const line = act === 'madd-v' ? { a: [0.5, 0] as [number, number], b: [0.5, 1] as [number, number] } : { a: [0, 0.5] as [number, number], b: [1, 0.5] as [number, number] };
+        c.muntins = { ...(c.muntins ?? { v: 0, h: 0, kind: 'loose' }), v: 0, h: 0, lines: [...(c.muntins?.lines ?? []), line] };
+      });
+      break;
+    case 'mline-remove':
+      if (st.cell === null) return true;
+      up('ta bort spröjs', (m) => {
+        const mu = m.cells[st.cell!]?.muntins;
+        if (mu?.lines) mu.lines = mu.lines.filter((_, k) => k !== ix);
+      });
       break;
     case 'mundo':
     case 'mclear':

@@ -14,18 +14,35 @@ polylinje sluten 2005,400 2055,400 2055,295 2005,295 [w0.25 ink] @d01/karm
 polylinje sluten 2945,400 2995,400 2995,295 2945,295 [w0.25 ink] @d01/karm
 polylinje sluten 2055,400 2825.8,845 2845.8,810.4 2075,365.4 [w0.18 ink] @d01/dörrblad
 båge 2055,400 r890 0°–30° [w0.13 ink] @d01/slagbåge
-polylinje sluten 5060,2555 5060,2605 4960,2605 4960,2555 [w0.25 ink] @d02/karm
-polylinje sluten 5060,3395 5060,3445 4960,3445 4960,3395 [w0.25 ink] @d02/karm
-polylinje sluten 5060,2605 5455,3289.2 5420.4,3309.2 5025.4,2625 [w0.18 ink] @d02/dörrblad
-båge 5060,2605 r790 60°–90° [w0.13 ink] @d02/slagbåge
-polylinje sluten 5060,5355 5060,5405 4960,5405 4960,5355 [w0.25 ink] @d03/karm
-polylinje sluten 5060,6195 5060,6245 4960,6245 4960,6195 [w0.25 ink] @d03/karm
-polylinje sluten 5060,5405 5455,6089.2 5420.4,6109.2 5025.4,5425 [w0.18 ink] @d03/dörrblad
-båge 5060,5405 r790 60°–90° [w0.13 ink] @d03/slagbåge
-polylinje sluten 9655,3940 9705,3940 9705,4040 9655,4040 [w0.25 ink] @d04/karm
-polylinje sluten 10495,3940 10545,3940 10545,4040 10495,4040 [w0.25 ink] @d04/karm
-polylinje sluten 9705,3940 10389.2,3545 10409.2,3579.6 9725,3974.6 [w0.18 ink] @d04/dörrblad
-båge 9705,3940 r790 -30°–0° [w0.13 ink] @d04/slagbåge
+polylinje sluten 3075,0 3005,0 3005,-15 3075,-15 [w0.13 ink] @d01/foder
+polylinje sluten 1995,0 1925,0 1925,-15 1995,-15 [w0.13 ink] @d01/foder
+polylinje sluten 3075,400 3005,400 3005,415 3075,415 [w0.13 ink] @d01/foder
+polylinje sluten 1995,400 1925,400 1925,415 1995,415 [w0.13 ink] @d01/foder
+polylinje sluten 2945,400 2055,400 2055,295 2945,295 [w0.13 ink] @d01/tröskel
+polylinje sluten 5060,2555 5060,2595 4960,2595 4960,2555 [w0.25 ink] @d02/karm
+polylinje sluten 5060,3405 5060,3445 4960,3445 4960,3405 [w0.25 ink] @d02/karm
+polylinje sluten 5060,2595 5465,3296.5 5430.4,3316.5 5025.4,2615 [w0.18 ink] @d02/dörrblad
+båge 5060,2595 r810 60°–90° [w0.13 ink] @d02/slagbåge
+polylinje sluten 4940,2475 4940,2545 4925,2545 4925,2475 [w0.13 ink] @d02/foder
+polylinje sluten 4940,3455 4940,3525 4925,3525 4925,3455 [w0.13 ink] @d02/foder
+polylinje sluten 5060,2475 5060,2545 5075,2545 5075,2475 [w0.13 ink] @d02/foder
+polylinje sluten 5060,3455 5060,3525 5075,3525 5075,3455 [w0.13 ink] @d02/foder
+polylinje sluten 5060,5355 5060,5395 4960,5395 4960,5355 [w0.25 ink] @d03/karm
+polylinje sluten 5060,6205 5060,6245 4960,6245 4960,6205 [w0.25 ink] @d03/karm
+polylinje sluten 5060,5395 5465,6096.5 5430.4,6116.5 5025.4,5415 [w0.18 ink] @d03/dörrblad
+båge 5060,5395 r810 60°–90° [w0.13 ink] @d03/slagbåge
+polylinje sluten 4940,5275 4940,5345 4925,5345 4925,5275 [w0.13 ink] @d03/foder
+polylinje sluten 4940,6255 4940,6325 4925,6325 4925,6255 [w0.13 ink] @d03/foder
+polylinje sluten 5060,5275 5060,5345 5075,5345 5075,5275 [w0.13 ink] @d03/foder
+polylinje sluten 5060,6255 5060,6325 5075,6325 5075,6255 [w0.13 ink] @d03/foder
+polylinje sluten 9655,3940 9695,3940 9695,4040 9655,4040 [w0.25 ink] @d04/karm
+polylinje sluten 10505,3940 10545,3940 10545,4040 10505,4040 [w0.25 ink] @d04/karm
+polylinje sluten 9695,3940 10396.5,3535 10416.5,3569.6 9715,3974.6 [w0.18 ink] @d04/dörrblad
+båge 9695,3940 r810 -30°–0° [w0.13 ink] @d04/slagbåge
+polylinje sluten 9575,4060 9645,4060 9645,4075 9575,4075 [w0.13 ink] @d04/foder
+polylinje sluten 10555,4060 10625,4060 10625,4075 10555,4075 [w0.13 ink] @d04/foder
+polylinje sluten 9575,3940 9645,3940 9645,3925 9575,3925 [w0.13 ink] @d04/foder
+polylinje sluten 10555,3940 10625,3940 10625,3925 10555,3925 [w0.13 ink] @d04/foder
 polylinje sluten 7345,105 7300,105 7300,0 7345,0 [w0.25 ink] @f01/karm
 polylinje sluten 6200,105 6155,105 6155,0 6200,0 [w0.25 ink] @f01/karm
 linje 7300,105 6200,105 [w0.18 ink] @f01/karm
@@ -34,14 +51,16 @@ polylinje sluten 7300,82.5 7250,82.5 7250,22.5 7300,22.5 [w0.18 ink] @f01/båge
 polylinje sluten 6800,82.5 6750,82.5 6750,22.5 6800,22.5 [w0.18 ink] @f01/båge
 linje 7250,58.5 6800,58.5 [w0.18 ink] @f01/glas
 linje 7250,46.5 6800,46.5 [w0.18 ink] @f01/glas
-linje 7300,0 6768.7,-142.4 [w0.13 ink] @f01/slagbåge
-båge 7300,0 r550 180°–-165° [w0.13 ink] @f01/slagbåge
 polylinje sluten 6750,82.5 6700,82.5 6700,22.5 6750,22.5 [w0.18 ink] @f01/båge
 polylinje sluten 6250,82.5 6200,82.5 6200,22.5 6250,22.5 [w0.18 ink] @f01/båge
 linje 6700,58.5 6250,58.5 [w0.18 ink] @f01/glas
 linje 6700,46.5 6250,46.5 [w0.18 ink] @f01/glas
-linje 6200,0 6731.3,-142.4 [w0.13 ink] @f01/slagbåge
-båge 6200,0 r550 -15°–0° [w0.13 ink] @f01/slagbåge
+polylinje sluten 7425,0 7355,0 7355,-15 7425,-15 [w0.13 ink] @f01/foder
+polylinje sluten 6145,0 6075,0 6075,-15 6145,-15 [w0.13 ink] @f01/foder
+polylinje sluten 7425,400 7355,400 7355,415 7425,415 [w0.13 ink] @f01/foder
+polylinje sluten 6145,400 6075,400 6075,415 6145,415 [w0.13 ink] @f01/foder
+polylinje sluten 7435,0 6065,0 6065,-40 7435,-40 [w0.13 ink] @f01/bleck
+polylinje sluten 7445,105 6055,105 6055,420 7445,420 [w0.18 ink] @f01/fönsterbänk
 linje 7355,400 6145,400 [w0.13 ink] @yv-s/under
 linje 7355,0 6145,0 [w0.13 ink] @yv-s/under
 linje 10405,400 10405,0 [w0.13 ink d5/1/0.3/1] @f02/över
@@ -55,14 +74,16 @@ polylinje sluten 11917.5,6350 11917.5,6300 11977.5,6300 11977.5,6350 [w0.18 ink]
 polylinje sluten 11917.5,5850 11917.5,5800 11977.5,5800 11977.5,5850 [w0.18 ink] @f03/båge
 linje 11941.5,6300 11941.5,5850 [w0.18 ink] @f03/glas
 linje 11953.5,6300 11953.5,5850 [w0.18 ink] @f03/glas
-linje 12000,6350 12142.4,5818.7 [w0.13 ink] @f03/slagbåge
-båge 12000,6350 r550 -90°–-75° [w0.13 ink] @f03/slagbåge
 polylinje sluten 11917.5,5800 11917.5,5750 11977.5,5750 11977.5,5800 [w0.18 ink] @f03/båge
 polylinje sluten 11917.5,5300 11917.5,5250 11977.5,5250 11977.5,5300 [w0.18 ink] @f03/båge
 linje 11941.5,5750 11941.5,5300 [w0.18 ink] @f03/glas
 linje 11953.5,5750 11953.5,5300 [w0.18 ink] @f03/glas
-linje 12000,5250 12142.4,5781.3 [w0.13 ink] @f03/slagbåge
-båge 12000,5250 r550 75°–90° [w0.13 ink] @f03/slagbåge
+polylinje sluten 12000,6475 12000,6405 12015,6405 12015,6475 [w0.13 ink] @f03/foder
+polylinje sluten 12000,5195 12000,5125 12015,5125 12015,5195 [w0.13 ink] @f03/foder
+polylinje sluten 11600,6475 11600,6405 11585,6405 11585,6475 [w0.13 ink] @f03/foder
+polylinje sluten 11600,5195 11600,5125 11585,5125 11585,5195 [w0.13 ink] @f03/foder
+polylinje sluten 12000,6485 12000,5115 12040,5115 12040,6485 [w0.13 ink] @f03/bleck
+polylinje sluten 11895,6495 11895,5105 11580,5105 11580,6495 [w0.18 ink] @f03/fönsterbänk
 linje 11600,6405 11600,5195 [w0.13 ink] @yv-o/under
 linje 12000,6405 12000,5195 [w0.13 ink] @yv-o/under
 polylinje sluten 7555,7895 7600,7895 7600,8000 7555,8000 [w0.25 ink] @f04/karm
@@ -73,14 +94,16 @@ polylinje sluten 7600,7917.5 7650,7917.5 7650,7977.5 7600,7977.5 [w0.18 ink] @f0
 polylinje sluten 8250,7917.5 8300,7917.5 8300,7977.5 8250,7977.5 [w0.18 ink] @f04/båge
 linje 7650,7941.5 8250,7941.5 [w0.18 ink] @f04/glas
 linje 7650,7953.5 8250,7953.5 [w0.18 ink] @f04/glas
-linje 7600,8000 8276.1,8181.2 [w0.13 ink] @f04/slagbåge
-båge 7600,8000 r700 0°–15° [w0.13 ink] @f04/slagbåge
 polylinje sluten 8300,7917.5 8350,7917.5 8350,7977.5 8300,7977.5 [w0.18 ink] @f04/båge
 polylinje sluten 8950,7917.5 9000,7917.5 9000,7977.5 8950,7977.5 [w0.18 ink] @f04/båge
 linje 8350,7941.5 8950,7941.5 [w0.18 ink] @f04/glas
 linje 8350,7953.5 8950,7953.5 [w0.18 ink] @f04/glas
-linje 9000,8000 8323.9,8181.2 [w0.13 ink] @f04/slagbåge
-båge 9000,8000 r700 165°–180° [w0.13 ink] @f04/slagbåge
+polylinje sluten 7475,8000 7545,8000 7545,8015 7475,8015 [w0.13 ink] @f04/foder
+polylinje sluten 9055,8000 9125,8000 9125,8015 9055,8015 [w0.13 ink] @f04/foder
+polylinje sluten 7475,7600 7545,7600 7545,7585 7475,7585 [w0.13 ink] @f04/foder
+polylinje sluten 9055,7600 9125,7600 9125,7585 9055,7585 [w0.13 ink] @f04/foder
+polylinje sluten 7465,8000 9135,8000 9135,8040 7465,8040 [w0.13 ink] @f04/bleck
+polylinje sluten 7455,7895 9145,7895 9145,7580 7455,7580 [w0.18 ink] @f04/fönsterbänk
 linje 7545,7600 9055,7600 [w0.13 ink] @yv-n/under
 linje 7545,8000 9055,8000 [w0.13 ink] @yv-n/under
 polylinje sluten 1505,7895 1550,7895 1550,8000 1505,8000 [w0.25 ink] @f05/karm
@@ -89,6 +112,12 @@ linje 1550,7895 3850,7895 [w0.18 ink] @f05/karm
 linje 1550,8000 3850,8000 [w0.18 ink] @f05/karm
 linje 1550,7941.5 3850,7941.5 [w0.18 ink] @f05/glas
 linje 1550,7953.5 3850,7953.5 [w0.18 ink] @f05/glas
+polylinje sluten 1425,8000 1495,8000 1495,8015 1425,8015 [w0.13 ink] @f05/foder
+polylinje sluten 3905,8000 3975,8000 3975,8015 3905,8015 [w0.13 ink] @f05/foder
+polylinje sluten 1425,7600 1495,7600 1495,7585 1425,7585 [w0.13 ink] @f05/foder
+polylinje sluten 3905,7600 3975,7600 3975,7585 3905,7585 [w0.13 ink] @f05/foder
+polylinje sluten 1415,8000 3985,8000 3985,8040 1415,8040 [w0.13 ink] @f05/bleck
+polylinje sluten 1405,7895 3995,7895 3995,7580 1405,7580 [w0.18 ink] @f05/fönsterbänk
 linje 1495,7600 3905,7600 [w0.13 ink] @yv-n/under
 linje 1495,8000 3905,8000 [w0.13 ink] @yv-n/under
 polylinje sluten 105,2405 105,2450 0,2450 0,2405 [w0.25 ink] @f06/karm
@@ -99,14 +128,16 @@ polylinje sluten 82.5,2450 82.5,2500 22.5,2500 22.5,2450 [w0.18 ink] @f06/båge
 polylinje sluten 82.5,2950 82.5,3000 22.5,3000 22.5,2950 [w0.18 ink] @f06/båge
 linje 58.5,2500 58.5,2950 [w0.18 ink] @f06/glas
 linje 46.5,2500 46.5,2950 [w0.18 ink] @f06/glas
-linje 0,2450 -142.4,2981.3 [w0.13 ink] @f06/slagbåge
-båge 0,2450 r550 90°–105° [w0.13 ink] @f06/slagbåge
 polylinje sluten 82.5,3000 82.5,3050 22.5,3050 22.5,3000 [w0.18 ink] @f06/båge
 polylinje sluten 82.5,3500 82.5,3550 22.5,3550 22.5,3500 [w0.18 ink] @f06/båge
 linje 58.5,3050 58.5,3500 [w0.18 ink] @f06/glas
 linje 46.5,3050 46.5,3500 [w0.18 ink] @f06/glas
-linje 0,3550 -142.4,3018.7 [w0.13 ink] @f06/slagbåge
-båge 0,3550 r550 -105°–-90° [w0.13 ink] @f06/slagbåge
+polylinje sluten 0,2325 0,2395 -15,2395 -15,2325 [w0.13 ink] @f06/foder
+polylinje sluten 0,3605 0,3675 -15,3675 -15,3605 [w0.13 ink] @f06/foder
+polylinje sluten 400,2325 400,2395 415,2395 415,2325 [w0.13 ink] @f06/foder
+polylinje sluten 400,3605 400,3675 415,3675 415,3605 [w0.13 ink] @f06/foder
+polylinje sluten 0,2315 0,3685 -40,3685 -40,2315 [w0.13 ink] @f06/bleck
+polylinje sluten 105,2305 105,3695 420,3695 420,2305 [w0.18 ink] @f06/fönsterbänk
 linje 400,2395 400,3605 [w0.13 ink] @yv-v/under
 linje 0,2395 0,3605 [w0.13 ink] @yv-v/under
 polylinje sluten 400,7000 3400,7000 3400,7600 400,7600 [w0.25 ink] @m01/symbol

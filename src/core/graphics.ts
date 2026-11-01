@@ -137,6 +137,12 @@ export interface StyleResources {
   /** Profiltypernas grupper i ordning (0.11.6), som räckestypernas. Utelämnade = `PROFILE_GROUPS`. */
   profileGroups?: string[];
   /**
+   * Uppställningens fältmall (0.11.8.2, förut i projektet): fälten för
+   * fönster och dörrar i ordning, och egna taggar per fält (sökningen).
+   * Utelämnad = förteckningarnas fält (`core/openingSchedule.ts`).
+   */
+  scheduleFields?: { Window?: string[]; Door?: string[]; tags?: Record<string, string[]> };
+  /**
    * Projektets pennor (0.10.36): en tjocklek och en färg med ett nummer som
    * namn. Ställena (en rad i en kategori eller en vy) har kvar sina värden;
    * ett ställe hör till pennan med samma tjocklek och färg. Utelämnade =
@@ -464,10 +470,32 @@ export function normalizeStyle(data: any): StyleSheet {
     ...(normalizeColorSets(data.colorSets) ? { colorSets: normalizeColorSets(data.colorSets)! } : {}),
     ...(Array.isArray(data.railingGroups) ? { railingGroups: [...new Set((data.railingGroups as unknown[]).filter((g): g is string => typeof g === 'string' && !!g.trim()).map((g) => g.trim()))] } : {}),
     ...(Array.isArray(data.profileGroups) ? { profileGroups: [...new Set((data.profileGroups as unknown[]).filter((g): g is string => typeof g === 'string' && !!g.trim()).map((g) => g.trim()))] } : {}),
+    ...(normalizeScheduleFields(data.scheduleFields) ? { scheduleFields: normalizeScheduleFields(data.scheduleFields)! } : {}),
     ...(normalizePenList(data.penList) ? { penList: normalizePenList(data.penList)! } : {}),
     ...(normalizeOffice(data.office) ? { office: normalizeOffice(data.office)! } : {}),
     ...(normalizeGeneral(data.general) ? { general: normalizeGeneral(data.general)! } : {}),
   };
+}
+
+/** Uppställningens fältmall från fil (0.11.8.2): listor med namn och taggar per namn. */
+function normalizeScheduleFields(v: unknown): StyleResources['scheduleFields'] | null {
+  if (!v || typeof v !== 'object') return null;
+  const o = v as Record<string, unknown>;
+  const names = (x: unknown) => (Array.isArray(x) ? [...new Set(x.filter((f): f is string => typeof f === 'string' && !!f.trim()).map((f) => f.trim()))] : undefined);
+  const out: NonNullable<StyleResources['scheduleFields']> = {};
+  for (const k of ['Window', 'Door'] as const) {
+    const n = names(o[k]);
+    if (n) out[k] = n;
+  }
+  if (o.tags && typeof o.tags === 'object') {
+    const tags: Record<string, string[]> = {};
+    for (const [k, t] of Object.entries(o.tags as Record<string, unknown>)) {
+      const n = names(t);
+      if (n?.length) tags[k] = n;
+    }
+    if (Object.keys(tags).length) out.tags = tags;
+  }
+  return Object.keys(out).length ? out : null;
 }
 
 /** Stilboken i ett nytt projekt: Svensk standard, materialen och kategorierna. */

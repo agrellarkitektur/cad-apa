@@ -92,6 +92,8 @@ export interface OpeningSettings {
   swingAngle?: number;
   /** Hängningen (V/H) sedd från utsidan eller insidan. */
   hingeFrom?: 'outside' | 'inside';
+  /** Tillgänglighetscirkelns diameter vid dörrar, mm (0.11.8.2; 1 300 eller 1 500). */
+  accessCircle?: number;
 }
 
 export const OPENING_DEFAULTS: Required<Omit<OpeningSettings, 'formulas'>> & { formulas: Required<NonNullable<OpeningSettings['formulas']>> } = {
@@ -102,6 +104,7 @@ export const OPENING_DEFAULTS: Required<Omit<OpeningSettings, 'formulas'>> & { f
   swingAngle: 15,
   head: 2100,
   hingeFrom: 'outside',
+  accessCircle: 1300,
 };
 
 /** Öppningarnas inställningar som de gäller. */
@@ -129,6 +132,8 @@ function normalizeOpenings(v: unknown): OpeningSettings | null {
   const head = clampInt(o.head, 0, 10000);
   if (head !== undefined) out.head = head;
   if (o.hingeFrom === 'outside' || o.hingeFrom === 'inside') out.hingeFrom = o.hingeFrom;
+  const access = clampInt(o.accessCircle, 500, 3000);
+  if (access !== undefined) out.accessCircle = access;
   return Object.keys(out).length ? out : null;
 }
 

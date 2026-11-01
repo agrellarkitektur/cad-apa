@@ -27,10 +27,10 @@ linje 1599,1505 1599,955 [w0.13 ink] @f-rv-2/swing
 linje 1599,1505 1599,2055 [w0.13 ink] @f-rv-2/swing
 linje 1706,1505 1706,955 [w0.13 ink d3/1.5] @f-rv-2/swingFar
 linje 1706,1505 1706,2055 [w0.13 ink d3/1.5] @f-rv-2/swingFar
-linje 5861,1020 5861,0 [w0.13 ink] @d-rv-8/swing
-linje 5861,1020 5861,2040 [w0.13 ink] @d-rv-8/swing
-linje 9861,1020 9861,0 [w0.13 ink] @d-rv-14/swing
-linje 9861,1020 9861,2040 [w0.13 ink] @d-rv-14/swing
+linje 5861,1025 5861,0 [w0.13 ink] @d-rv-8/swing
+linje 5861,1025 5861,2050 [w0.13 ink] @d-rv-8/swing
+linje 9861,1025 9861,0 [w0.13 ink] @d-rv-14/swing
+linje 9861,1025 9861,2050 [w0.13 ink] @d-rv-14/swing
 linje 5739.9,0 2000.1,0 [w0.18 ink] @r-0-1/vy
 linje 5740,-30 2000,-30 [w0.18 ink] @r-0-1/vy
 linje 2000,-0.3 2000,-30 [w0.18 ink] @r-0-1/vy

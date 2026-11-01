@@ -185,6 +185,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.7.3 | Trappan och räcket, det som inte hanns med: utomhustrappa, kontrastmarkeringens material, trappans littera i planen, ändprofilen med vridningen kring ankaret, ytor med mönster (rutnät, diagonalt), staketens typer i kommandoraden |
 | 0.11.8 | Format 28: dörrar och fönster, öppningstyperna: karm med rutnät av lufter, förvalda typer med beskrivande namn, dörr- och fönstereditorn, modulmått och fritt karmyttermått med drevmånen, överkant karm, litteraregeln med formel, sparade nummer och Numrera om, verktygen, smartmenyn och egenskaperna, plan, fasad, sektion och 3D ur typen, vägghål och uppställningar i formatet |
 | 0.11.8.1 | Dörrar och fönster, synpunkterna på mockupen: hålet modulmåttet + 10 och karmen − 10 (typens karmavdrag), öppningssymbolen mot gångjärnssidan med egna ställen, skjutpilen, fönstrens slag 15° kring gångjärnet, slagbågarna på alla nivåer och egna kryss, spröjs jämnt eller ritade, dörrbladets indelning med material per fyllning, VG01, uppställningens fältmall och fälten på objekten |
+| 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, uppställningens fält i stilboken (Typer) med taggar och smarttext |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
 val och det som *inte gjordes*. De ligger i arkivet:
@@ -1145,13 +1146,74 @@ kryss för dörrar och fönster; I fältmallen och fälten på objekten.
 en punkt som visar var en påbörjad spröjslinje började, spröjs som
 profiltyper, uppställningens vytyp (0.12), fälten i litterans smarttext.
 
-### 0.11.8.2 Detalj och beslag
+### 0.11.8.2 Dörrar och fönster: Detalj och beslag ✓
 
-Mellanstor (utredningen, delning D): beslag (handtag, gångjärn som
-markering, dörrstängare, brevinkast), bleck med droppnäsa, foder,
-fönsterbänk, trösklar i Detalj, varningarna (BFS 2024:9 där det är
-föreskrift, *avviker från praxis* annars) och tillgänglighetscirkeln.
-Gärna också det som inte hanns med i 0.11.8 och 0.11.8.1.
+Carl August 1 november: "Kör 0.11.8.2", med svaren på fem av frågorna om
+0.11.8.1 (A–E) i samma meddelande. Mellanstor (utredningen, delning D).
+Samma format, 28 (valfria fält: typens `trim` och `hardware`, luftens
+`material`, stilbokens `scheduleFields` och Allmänts `accessCircle`).
+
+**Gjort:** foder, bleck med droppnäsa och fönsterbänk i typen, ritade i
+Detalj (plan, fasad, sektion, 3D); tröskeln i planen; beslagen (handtag,
+gångjärnens markering, dörrstängare, brevinkast); varningarna;
+tillgänglighetscirkeln; panel med material under glas och spröjs i
+planen (ur 0.11.8.1). Svaren: **A** fönstrens slagbågar släckta från
+början; **B** spröjsens förval står; **C** skrivna mått för Special;
+**D** spegelns profil i Detalj; **E** fältmallen i stilboken (Typer ›
+Uppställningens fält), sökbar med taggar, med smarttexten och *Bara
+egna*, och den följer med stilbokens export (liksom dörr- och
+fönstertyperna).
+
+**Claudes val (0.11.8.2):**
+
+- **Förvalen**: foder 70 × 15 på båda sidor; bleck med utsprång 40 och
+  droppnäsa 20; bänk 22 mm med utsprång 20, 20 mm förbi fodret i ändarna;
+  blecket 10 mm förbi fodret. Bara fönster som inte står på golvet, och
+  bara i ytterväggar, får bleck och bänk; bänken och blecket tar fodrets
+  underdel på sin sida (fodret blir ett U som står på dem). I innerväggar
+  är utsidan den sida fönstret ses ifrån.
+- **Blecket** är vågrätt (kropparna dras upp lodrätt, så en lutning blir
+  trappstegad); en 2 mm plåt under karmen till utsprånget och droppnäsan
+  som en lodrät läpp längst ut. Bänkens överkant är karmens underkant.
+- **Beslagen** ritas bara i Detalj och inte i planen. Dörrhandtaget på
+  låssidan 70 mm in, trycke 130 långt eller draghandtag 300 högt, på båda
+  sidor; gångjärnen som 16 × 80 på slagsidan; stängaren 280 × 55 överst på
+  slagsidan vid gångjärnet; brevinkastet 300 × 45 mitt på bladet, med
+  mitten 850 över golvet. Fönstrens handtag inne på bågen: låssidan mitt
+  på höjden (sidohängda, dreh-kipp, skjut, vertikal pivå), nertill
+  (överkantshängda, horisontell pivå) eller upptill (underkantshängda).
+- **Fri passage** räknas ur geometrin: bladets luft minus bladets tjocklek
+  (skjutdörrar minus 40 för handtaget, pardörren på det aktiva bladet).
+  Gränserna 760 och 800 (ytter- och huvudentré) är praxis, liksom
+  tröskeln 25, säkerhetsglas under 600, utfallsskydd under 600 på en
+  våning med golvet minst 1,5 m över nollan, och utrymningsfönstret
+  (bredd 500, höjd 600, bredd + höjd 1 500, bröstning högst 1 200). Alla
+  har *avviker från praxis* med en hänvisning till föreskriften att slå
+  upp: **tillgänglighet är BFS 2024:12**, säkerhet vid användning BFS
+  2024:9 och utrymning BFS 2024:7 (siffrorna inte uppslagna i
+  föreskrifterna). Innerdörrarnas karm blev 40 (förut 50) i de förvalda
+  typerna, så att en 9M-dörr klarar 760.
+- **Tillgänglighetscirkeln** ritas på båda sidor om dörren, mitt för
+  karmen och tangerande väggens liv, när *Visa › Tillgänglighetscirkel*
+  är tänd, på alla nivåer. Diametern under Allmänt, 1 300 som förval.
+- **Slagbågarna för fönster** följer `OFF_BY_DEFAULT` (`+swingWindow` i
+  vyns `hide`); `swingWindow` i BARE togs bort.
+- **Spröjsens skrivna mått** är i mm i det mått ritytan visar (*Prova
+  mått*) men sparas som andelar, så att linjerna följer glaset. Special
+  utan linjer står kvar som Special (förut föll den tillbaka till Jämn).
+- **Fältmallen** bor i `graphics.scheduleFields` (listorna och egna
+  taggar); ett projekt från 0.11.8.1 läses ur `project.openingSchedule`
+  tills mallen ändras, då flyttas den. Förteckningens fält har inbyggda
+  taggar och märks *cad-apa*, de egna *eget*. Smarttexten är fältets namn
+  (`{U-värde}`), också med `fält:` före; den slås upp utan skiftläge
+  före egna egenskaper. Taggarna följer med ett namnbyte.
+
+**Inte gjort i 0.11.8.2:** lutande bleck (trappstegat som kropp), fodrets
+och bänkens material (som karmen), beslag i planen, handtagets höjd som
+formel, sneda fyllningar i bladet, spröjs som profiltyper, en punkt som
+visar var en påbörjad spröjslinje började, uppställningens vytyp (0.12),
+föreskrifternas siffror uppslagna (varningarna säger *praxis*), kopplingen
+mellan dörr och rum (vilka dörrar som ska vara tillgängliga).
 
 ### 0.11.8.3 Smart och vägghål
 

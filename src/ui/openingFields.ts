@@ -6,6 +6,7 @@ import { openingLitteras } from '../elements/openingLittera';
 import { customFrame, hingeLetters, openingModelOf, uMapping, viewFace, type OpeningObjParams } from '../elements/openingSpec';
 import { resolveParams } from '../elements/registry';
 import { outsideSide } from '../elements/wallSides';
+import { openingWarnings } from '../elements/openingWarnings';
 import { numberField } from './fieldMarkup';
 import { escapeHtml } from './labels';
 
@@ -86,6 +87,7 @@ export function openingFieldsMarkup(doc: ProjectDoc, el: Element): string {
   if (m.min && (p.frameW < m.min[0] || p.frameH < m.min[1])) warn.push(`Mindre än typens minsta mått (${mm(m.min[0])} × ${mm(m.min[1])}).`);
   if (m.max && (p.frameW > m.max[0] || p.frameH > m.max[1])) warn.push(`Större än typens största mått (${mm(m.max[0])} × ${mm(m.max[1])}).`);
   const ops = [...new Set(m.cells.map((c) => OP_LABEL[c.op]))].join(', ');
+  const rules = openingWarnings(doc, el);
   const height =
     kind === 'door'
       ? ''
@@ -99,7 +101,7 @@ export function openingFieldsMarkup(doc: ProjectDoc, el: Element): string {
       </div>
       <label class="check" title="Annars räknas höjden från våningens golv och fönstret ligger kvar när väggens fot flyttas"><input type="checkbox" data-key="param:sillFromWall"${p.sillFromWall ? ' checked' : ''}> Från väggens fot</label>`;
   const place = p.place ?? (exterior && kind !== 'door' ? 'out' : 'auto');
-  return `${warn.map((w) => `<p class="skew-note" role="note"><b>!</b> ${escapeHtml(w)} <i>Avviker från typen.</i></p>`).join('')}
+  return `${warn.map((w) => `<p class="skew-note" role="note"><b>!</b> ${escapeHtml(w)} <i>Avviker från typen.</i></p>`).join('')}${rules.map((w) => `<p class="skew-note" role="note"><b>!</b> ${escapeHtml(w)}</p>`).join('')}
     <p class="note">${escapeHtml(ops)}${m.spec ? ` · ${escapeHtml(m.spec)}` : ''}</p>
     <div class="field-label">Mått</div>
     <div class="fields">

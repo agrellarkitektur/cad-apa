@@ -1,4 +1,5 @@
 import { pruneAssets } from './commands';
+import { kindOfElementType, normalizeOpeningModel } from './openingTypes';
 import { normalizeBook, type StyleBook } from './graphics';
 import { newId } from './ids';
 import { isMaster, isStamp, type Asset, type Definition, type Element, type Id, type ProjectDoc, type Worksheet } from './model';
@@ -48,13 +49,17 @@ function bookAssetIds(book: StyleBook): Id[] {
 
 /**
  * Typerna under stilbokens flik Typer som bor i projektets definitioner
- * (0.11.7.1): profiltyperna (med ändprofilerna) och räckestyperna. Deras
- * grupper står redan i stilboken.
+ * (0.11.7.1): profiltyperna (med ändprofilerna) och räckestyperna, och
+ * sedan 0.11.8.2 dörr- och fönstertyperna (de med `opening`). Deras
+ * grupper står redan i stilboken (fönstrens och dörrarnas i typen).
  */
 export const BOOK_TYPES: readonly string[] = ['Profile', 'Railing'];
+const OPENING_TYPES: readonly string[] = ['Door', 'Window', 'WallHole'];
+
+const isBookType = (d: Pick<Definition, 'elementType'> & { opening?: unknown }): boolean => BOOK_TYPES.includes(d.elementType) || (OPENING_TYPES.includes(d.elementType) && !!d.opening);
 
 export function bookTypes(doc: Pick<ProjectDoc, 'definitions'>): Definition[] {
-  return Object.values(doc.definitions).filter((d) => BOOK_TYPES.includes(d.elementType));
+  return Object.values(doc.definitions).filter(isBookType);
 }
 
 /** Hur många mallblad och stämplar projektet har. */
@@ -103,7 +108,12 @@ export function readBookFile(data: any, base?: StyleBook, styleTo?: ViewCategory
   delete (book as StyleBookFile).assets;
   delete (book as StyleBookFile).paper;
   delete (book as StyleBookFile).types;
-  const types: Definition[] = Array.isArray(data?.types) ? data.types.filter((d: any) => d && typeof d.id === 'string' && typeof d.name === 'string' && BOOK_TYPES.includes(d.elementType)) : [];
+  const types: Definition[] = Array.isArray(data?.types)
+    ? data.types
+        .filter((d: any) => d && typeof d.id === 'string' && typeof d.name === 'string' && isBookType(d))
+        // Dörr- och fönstertyperna kontrolleras som när ett projekt öppnas (0.11.8.2).
+        .map((d: Definition) => (d.opening ? { ...d, opening: normalizeOpeningModel(d.opening, kindOfElementType(d.elementType) ?? 'window') } : d))
+    : [];
   const withTypes = types.length ? { types } : {};
   const p = data?.paper;
   const worksheets: Worksheet[] = Array.isArray(p?.worksheets) ? p.worksheets.filter((w: any) => w && typeof w.id === 'string' && (isMaster(w) || isStamp(w))) : [];

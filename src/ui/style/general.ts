@@ -1,7 +1,7 @@
 import { openingSettingsOf, type OpeningRule, type OpeningSettings } from '../../core/general';
 import { renumberOpenings } from '../../elements/openingLittera';
 import { scheduleFields, type ScheduleKind } from '../../core/openingSchedule';
-import { scheduleFieldAction, scheduleFieldRenamed, scheduleTemplateMarkup } from '../openingScheduleFields';
+import { scheduleFieldAction, scheduleFieldRenamed, scheduleTagsChanged } from '../openingScheduleFields';
 import type { StyleBook } from '../../core/graphics';
 import { DEFAULT_WEIGHTS, generalOf, OFFICE_TAGS, tagKey, weightList, type GeneralSettings, type LengthUnit, type OfficeInfo } from '../../core/general';
 import type { ProjectDoc } from '../../core/model';
@@ -160,8 +160,9 @@ function openingsSection(doc: ProjectDoc): string {
         ${text('opening:frameLess', 'Karmyttermått: modulmåttet −', String(o.frameLess), { title: 'mm på båda ledder; tillverkarens, ofta 10–20. En typ kan ha sitt eget (editorn).' })}
         ${text('opening:swingAngle', 'Fönstrens slag i planen', String(o.swingAngle), { title: 'Grader; sidohängda bågar ritas så mycket öppna, med slagbågen kring gångjärnet' })}
         ${select('opening:hingeFrom', 'Hängning sedd från', o.hingeFrom, [['outside', 'Utsidan'], ['inside', 'Insidan']])}
+        ${select('opening:accessCircle', 'Tillgänglighetscirkel', String(o.accessCircle), [['1300', 'Ø 1 300 (manuell rullstol)'], ['1500', 'Ø 1 500 (eldriven, utomhus)'], ...(o.accessCircle !== 1300 && o.accessCircle !== 1500 ? ([[String(o.accessCircle), `Ø ${o.accessCircle}`]] as [string, string][]) : [])])}
       </div>
-      ${scheduleTemplateMarkup(doc)}
+      <p class="note">Uppställningens fält: stilboken › Typer › Uppställningens fält.</p>
       <div class="row"><button type="button" class="btn" data-gen-action="renumber-openings"${o.rule === 'module' ? ' disabled title="Regeln Bara bokstav och modulmått har inga nummer"' : ''}>Numrera om…</button></div>
     </section>`;
 }
@@ -214,6 +215,9 @@ export function generalChange(store: DocStore, input: HTMLInputElement | HTMLSel
   } else if (kind === 'sfield') {
     const [k, i] = name.split(':');
     if (!scheduleFieldRenamed(store, k as ScheduleKind, Number(i), input.value)) input.value = scheduleFields(store.doc, k as ScheduleKind)[Number(i)] ?? '';
+  } else if (kind === 'stags') {
+    const [k, i] = name.split(':');
+    scheduleTagsChanged(store, k as ScheduleKind, Number(i), input.value);
   } else if (kind === 'pfield') setProjectField(store, name, v);
   else if (kind === 'phase') setProjectPhase(store, v);
   else if (kind === 'weights') {
@@ -235,7 +239,7 @@ export function generalChange(store: DocStore, input: HTMLInputElement | HTMLSel
         const o: OpeningSettings = { ...(g.openings ?? {}), ...(g.openings?.formulas ? { formulas: { ...g.openings.formulas } } : {}) };
         if (name === 'rule') o.rule = v as OpeningRule;
         else if (name === 'hingeFrom') o.hingeFrom = v === 'inside' ? 'inside' : 'outside';
-        else if (name === 'head' || name === 'holeAdd' || name === 'frameLess' || name === 'swingAngle') {
+        else if (name === 'head' || name === 'holeAdd' || name === 'frameLess' || name === 'swingAngle' || name === 'accessCircle') {
           const n = Math.round(Number(v.replace(',', '.')));
           if (Number.isFinite(n) && n >= 0) o[name] = name === 'swingAngle' ? Math.min(90, n) : n;
         } else if (name === 'Window' || name === 'Door' || name === 'WallHole') {

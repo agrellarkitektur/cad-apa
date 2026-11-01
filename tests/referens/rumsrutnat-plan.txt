@@ -56,48 +56,46 @@ text "YV01" 8552,11300 h2 start [w0.18] @rv-22/littera
 linje 8800,11550 8800,12000 [w0.18 ink] @rv-22/littera
 text "YV01" 12700,8552 h2 90° start [w0.18] @rv-23/littera
 linje 12450,8800 12000,8800 [w0.18 ink] @rv-23/littera
-polylinje sluten 1055,3960 1105,3960 1105,4060 1055,4060 [w0.25 ink] @d-rv-6/karm
-polylinje sluten 1895,3960 1945,3960 1945,4060 1895,4060 [w0.25 ink] @d-rv-6/karm
-linje 1105,4060 1789.2,4455 [w0.18 ink] @d-rv-6/dörrblad
-båge 1105,4060 r790 0°–30° [w0.13 ink] @d-rv-6/slagbåge
+polylinje sluten 1055,3960 1095,3960 1095,4060 1055,4060 [w0.25 ink] @d-rv-6/karm
+polylinje sluten 1905,3960 1945,3960 1945,4060 1905,4060 [w0.25 ink] @d-rv-6/karm
+linje 1095,4060 1796.5,4465 [w0.18 ink] @d-rv-6/dörrblad
+båge 1095,4060 r810 0°–30° [w0.13 ink] @d-rv-6/slagbåge
 text "D02" 1314,3620 h2 start [w0.18] @d-rv-6/littera
-polylinje sluten 5055,3960 5105,3960 5105,4060 5055,4060 [w0.25 ink] @d-rv-8/karm
-polylinje sluten 5895,3960 5945,3960 5945,4060 5895,4060 [w0.25 ink] @d-rv-8/karm
-linje 5105,4060 5789.2,4455 [w0.18 ink] @d-rv-8/dörrblad
-båge 5105,4060 r790 0°–30° [w0.13 ink] @d-rv-8/slagbåge
+polylinje sluten 5055,3960 5095,3960 5095,4060 5055,4060 [w0.25 ink] @d-rv-8/karm
+polylinje sluten 5905,3960 5945,3960 5945,4060 5905,4060 [w0.25 ink] @d-rv-8/karm
+linje 5095,4060 5796.5,4465 [w0.18 ink] @d-rv-8/dörrblad
+båge 5095,4060 r810 0°–30° [w0.13 ink] @d-rv-8/slagbåge
 text "D02" 5314,3620 h2 start [w0.18] @d-rv-8/littera
-polylinje sluten 9055,3960 9105,3960 9105,4060 9055,4060 [w0.25 ink] @d-rv-10/karm
-polylinje sluten 9895,3960 9945,3960 9945,4060 9895,4060 [w0.25 ink] @d-rv-10/karm
-linje 9105,4060 9789.2,4455 [w0.18 ink] @d-rv-10/dörrblad
-båge 9105,4060 r790 0°–30° [w0.13 ink] @d-rv-10/slagbåge
+polylinje sluten 9055,3960 9095,3960 9095,4060 9055,4060 [w0.25 ink] @d-rv-10/karm
+polylinje sluten 9905,3960 9945,3960 9945,4060 9905,4060 [w0.25 ink] @d-rv-10/karm
+linje 9095,4060 9796.5,4465 [w0.18 ink] @d-rv-10/dörrblad
+båge 9095,4060 r810 0°–30° [w0.13 ink] @d-rv-10/slagbåge
 text "D02" 9314,3620 h2 start [w0.18] @d-rv-10/littera
-polylinje sluten 1055,7960 1105,7960 1105,8060 1055,8060 [w0.25 ink] @d-rv-12/karm
-polylinje sluten 1895,7960 1945,7960 1945,8060 1895,8060 [w0.25 ink] @d-rv-12/karm
-linje 1105,8060 1789.2,8455 [w0.18 ink] @d-rv-12/dörrblad
-båge 1105,8060 r790 0°–30° [w0.13 ink] @d-rv-12/slagbåge
+polylinje sluten 1055,7960 1095,7960 1095,8060 1055,8060 [w0.25 ink] @d-rv-12/karm
+polylinje sluten 1905,7960 1945,7960 1945,8060 1905,8060 [w0.25 ink] @d-rv-12/karm
+linje 1095,8060 1796.5,8465 [w0.18 ink] @d-rv-12/dörrblad
+båge 1095,8060 r810 0°–30° [w0.13 ink] @d-rv-12/slagbåge
 text "D02" 1314,7620 h2 start [w0.18] @d-rv-12/littera
-polylinje sluten 5055,7960 5105,7960 5105,8060 5055,8060 [w0.25 ink] @d-rv-14/karm
-polylinje sluten 5895,7960 5945,7960 5945,8060 5895,8060 [w0.25 ink] @d-rv-14/karm
-linje 5105,8060 5789.2,8455 [w0.18 ink] @d-rv-14/dörrblad
-båge 5105,8060 r790 0°–30° [w0.13 ink] @d-rv-14/slagbåge
+polylinje sluten 5055,7960 5095,7960 5095,8060 5055,8060 [w0.25 ink] @d-rv-14/karm
+polylinje sluten 5905,7960 5945,7960 5945,8060 5905,8060 [w0.25 ink] @d-rv-14/karm
+linje 5095,8060 5796.5,8465 [w0.18 ink] @d-rv-14/dörrblad
+båge 5095,8060 r810 0°–30° [w0.13 ink] @d-rv-14/slagbåge
 text "D02" 5314,7620 h2 start [w0.18] @d-rv-14/littera
-polylinje sluten 9055,7960 9105,7960 9105,8060 9055,8060 [w0.25 ink] @d-rv-16/karm
-polylinje sluten 9895,7960 9945,7960 9945,8060 9895,8060 [w0.25 ink] @d-rv-16/karm
-linje 9105,8060 9789.2,8455 [w0.18 ink] @d-rv-16/dörrblad
-båge 9105,8060 r790 0°–30° [w0.13 ink] @d-rv-16/slagbåge
+polylinje sluten 9055,7960 9095,7960 9095,8060 9055,8060 [w0.25 ink] @d-rv-16/karm
+polylinje sluten 9905,7960 9945,7960 9945,8060 9905,8060 [w0.25 ink] @d-rv-16/karm
+linje 9095,8060 9796.5,8465 [w0.18 ink] @d-rv-16/dörrblad
+båge 9095,8060 r810 0°–30° [w0.13 ink] @d-rv-16/slagbåge
 text "D02" 9314,7620 h2 start [w0.18] @d-rv-16/littera
-polylinje sluten 1055,100 1105,100 1105,200 1055,200 [w0.25 ink] @entre/karm
-polylinje sluten 1895,100 1945,100 1945,200 1895,200 [w0.25 ink] @entre/karm
-linje 1105,200 1789.2,595 [w0.18 ink] @entre/dörrblad
-båge 1105,200 r790 0°–30° [w0.13 ink] @entre/slagbåge
+polylinje sluten 1055,100 1095,100 1095,200 1055,200 [w0.25 ink] @entre/karm
+polylinje sluten 1905,100 1945,100 1945,200 1905,200 [w0.25 ink] @entre/karm
+linje 1095,200 1796.5,605 [w0.18 ink] @entre/dörrblad
+båge 1095,200 r810 0°–30° [w0.13 ink] @entre/slagbåge
 text "D01" 1314,-520 h2 start [w0.18] @entre/littera
 polylinje sluten -95,1505 -95,1550 -200,1550 -200,1505 [w0.25 ink] @f-rv-1/karm
 polylinje sluten -95,2450 -95,2495 -200,2495 -200,2450 [w0.25 ink] @f-rv-1/karm
 linje -95,1550 -95,2450 [w0.18 ink] @f-rv-1/karm
 linje -200,1550 -200,2450 [w0.18 ink] @f-rv-1/karm
 linje -147.5,1550 -147.5,2450 [w0.18 ink] @f-rv-1/glas
-linje -200,1550 -432.9,2419.3 [w0.13 ink] @f-rv-1/slagbåge
-båge -200,1550 r900 90°–105° [w0.13 ink] @f-rv-1/slagbåge
 linje 200,1495 200,2505 [w0.13 ink] @rv-1/under
 linje -200,1495 -200,2505 [w0.13 ink] @rv-1/under
 text "F01" 520,1814 h2 90° start [w0.18] @f-rv-1/littera
@@ -106,8 +104,6 @@ polylinje sluten 6450,-200 6495,-200 6495,-95 6450,-95 [w0.25 ink] @f-rv-2/karm
 linje 5550,-200 6450,-200 [w0.18 ink] @f-rv-2/karm
 linje 5550,-95 6450,-95 [w0.18 ink] @f-rv-2/karm
 linje 5550,-147.5 6450,-147.5 [w0.18 ink] @f-rv-2/glas
-linje 5550,-200 6419.3,-432.9 [w0.13 ink] @f-rv-2/slagbåge
-båge 5550,-200 r900 -15°–0° [w0.13 ink] @f-rv-2/slagbåge
 linje 5495,-200 6505,-200 [w0.13 ink] @rv-2/under
 linje 5495,200 6505,200 [w0.13 ink] @rv-2/under
 text "F01" 5814,320 h2 start [w0.18] @f-rv-2/littera
@@ -116,8 +112,6 @@ polylinje sluten -95,6450 -95,6495 -200,6495 -200,6450 [w0.25 ink] @f-rv-3/karm
 linje -95,5550 -95,6450 [w0.18 ink] @f-rv-3/karm
 linje -200,5550 -200,6450 [w0.18 ink] @f-rv-3/karm
 linje -147.5,5550 -147.5,6450 [w0.18 ink] @f-rv-3/glas
-linje -200,5550 -432.9,6419.3 [w0.13 ink] @f-rv-3/slagbåge
-båge -200,5550 r900 90°–105° [w0.13 ink] @f-rv-3/slagbåge
 linje 200,5495 200,6505 [w0.13 ink] @rv-3/under
 linje -200,5495 -200,6505 [w0.13 ink] @rv-3/under
 text "F01" 520,5814 h2 90° start [w0.18] @f-rv-3/littera
@@ -126,8 +120,6 @@ polylinje sluten 10450,-200 10495,-200 10495,-95 10450,-95 [w0.25 ink] @f-rv-4/k
 linje 9550,-200 10450,-200 [w0.18 ink] @f-rv-4/karm
 linje 9550,-95 10450,-95 [w0.18 ink] @f-rv-4/karm
 linje 9550,-147.5 10450,-147.5 [w0.18 ink] @f-rv-4/glas
-linje 9550,-200 10419.3,-432.9 [w0.13 ink] @f-rv-4/slagbåge
-båge 9550,-200 r900 -15°–0° [w0.13 ink] @f-rv-4/slagbåge
 linje 9495,-200 10505,-200 [w0.13 ink] @rv-4/under
 linje 9495,200 10505,200 [w0.13 ink] @rv-4/under
 text "F01" 9814,320 h2 start [w0.18] @f-rv-4/littera
@@ -136,8 +128,6 @@ polylinje sluten -95,10450 -95,10495 -200,10495 -200,10450 [w0.25 ink] @f-rv-5/k
 linje -95,9550 -95,10450 [w0.18 ink] @f-rv-5/karm
 linje -200,9550 -200,10450 [w0.18 ink] @f-rv-5/karm
 linje -147.5,9550 -147.5,10450 [w0.18 ink] @f-rv-5/glas
-linje -200,9550 -432.9,10419.3 [w0.13 ink] @f-rv-5/slagbåge
-båge -200,9550 r900 90°–105° [w0.13 ink] @f-rv-5/slagbåge
 linje 200,9495 200,10505 [w0.13 ink] @rv-5/under
 linje -200,9495 -200,10505 [w0.13 ink] @rv-5/under
 text "F01" 520,9814 h2 90° start [w0.18] @f-rv-5/littera
@@ -146,8 +136,6 @@ polylinje sluten 2450,12095 2495,12095 2495,12200 2450,12200 [w0.25 ink] @f-rv-1
 linje 1550,12095 2450,12095 [w0.18 ink] @f-rv-18/karm
 linje 1550,12200 2450,12200 [w0.18 ink] @f-rv-18/karm
 linje 1550,12147.5 2450,12147.5 [w0.18 ink] @f-rv-18/glas
-linje 1550,12200 2419.3,12432.9 [w0.13 ink] @f-rv-18/slagbåge
-båge 1550,12200 r900 0°–15° [w0.13 ink] @f-rv-18/slagbåge
 linje 1495,11800 2505,11800 [w0.13 ink] @rv-18/under
 linje 1495,12200 2505,12200 [w0.13 ink] @rv-18/under
 text "F01" 1814,11480 h2 start [w0.18] @f-rv-18/littera
@@ -156,8 +144,6 @@ polylinje sluten 12200,2450 12200,2495 12095,2495 12095,2450 [w0.25 ink] @f-rv-1
 linje 12200,1550 12200,2450 [w0.18 ink] @f-rv-19/karm
 linje 12095,1550 12095,2450 [w0.18 ink] @f-rv-19/karm
 linje 12147.5,1550 12147.5,2450 [w0.18 ink] @f-rv-19/glas
-linje 12200,1550 12432.9,2419.3 [w0.13 ink] @f-rv-19/slagbåge
-båge 12200,1550 r900 75°–90° [w0.13 ink] @f-rv-19/slagbåge
 linje 12200,1495 12200,2505 [w0.13 ink] @rv-19/under
 linje 11800,1495 11800,2505 [w0.13 ink] @rv-19/under
 text "F01" 11680,1814 h2 90° start [w0.18] @f-rv-19/littera
@@ -166,8 +152,6 @@ polylinje sluten 6450,12095 6495,12095 6495,12200 6450,12200 [w0.25 ink] @f-rv-2
 linje 5550,12095 6450,12095 [w0.18 ink] @f-rv-20/karm
 linje 5550,12200 6450,12200 [w0.18 ink] @f-rv-20/karm
 linje 5550,12147.5 6450,12147.5 [w0.18 ink] @f-rv-20/glas
-linje 5550,12200 6419.3,12432.9 [w0.13 ink] @f-rv-20/slagbåge
-båge 5550,12200 r900 0°–15° [w0.13 ink] @f-rv-20/slagbåge
 linje 5495,11800 6505,11800 [w0.13 ink] @rv-20/under
 linje 5495,12200 6505,12200 [w0.13 ink] @rv-20/under
 text "F01" 5814,11480 h2 start [w0.18] @f-rv-20/littera
@@ -176,8 +160,6 @@ polylinje sluten 12200,6450 12200,6495 12095,6495 12095,6450 [w0.25 ink] @f-rv-2
 linje 12200,5550 12200,6450 [w0.18 ink] @f-rv-21/karm
 linje 12095,5550 12095,6450 [w0.18 ink] @f-rv-21/karm
 linje 12147.5,5550 12147.5,6450 [w0.18 ink] @f-rv-21/glas
-linje 12200,5550 12432.9,6419.3 [w0.13 ink] @f-rv-21/slagbåge
-båge 12200,5550 r900 75°–90° [w0.13 ink] @f-rv-21/slagbåge
 linje 12200,5495 12200,6505 [w0.13 ink] @rv-21/under
 linje 11800,5495 11800,6505 [w0.13 ink] @rv-21/under
 text "F01" 11680,5814 h2 90° start [w0.18] @f-rv-21/littera
@@ -186,8 +168,6 @@ polylinje sluten 10450,12095 10495,12095 10495,12200 10450,12200 [w0.25 ink] @f-
 linje 9550,12095 10450,12095 [w0.18 ink] @f-rv-22/karm
 linje 9550,12200 10450,12200 [w0.18 ink] @f-rv-22/karm
 linje 9550,12147.5 10450,12147.5 [w0.18 ink] @f-rv-22/glas
-linje 9550,12200 10419.3,12432.9 [w0.13 ink] @f-rv-22/slagbåge
-båge 9550,12200 r900 0°–15° [w0.13 ink] @f-rv-22/slagbåge
 linje 9495,11800 10505,11800 [w0.13 ink] @rv-22/under
 linje 9495,12200 10505,12200 [w0.13 ink] @rv-22/under
 text "F01" 9814,11480 h2 start [w0.18] @f-rv-22/littera
@@ -196,8 +176,6 @@ polylinje sluten 12200,10450 12200,10495 12095,10495 12095,10450 [w0.25 ink] @f-
 linje 12200,9550 12200,10450 [w0.18 ink] @f-rv-23/karm
 linje 12095,9550 12095,10450 [w0.18 ink] @f-rv-23/karm
 linje 12147.5,9550 12147.5,10450 [w0.18 ink] @f-rv-23/glas
-linje 12200,9550 12432.9,10419.3 [w0.13 ink] @f-rv-23/slagbåge
-båge 12200,9550 r900 75°–90° [w0.13 ink] @f-rv-23/slagbåge
 linje 12200,9495 12200,10505 [w0.13 ink] @rv-23/under
 linje 11800,9495 11800,10505 [w0.13 ink] @rv-23/under
 text "F01" 11680,9814 h2 90° start [w0.18] @f-rv-23/littera

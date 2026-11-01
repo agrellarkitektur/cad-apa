@@ -670,6 +670,52 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Dörrar och fönster: Detalj och beslag (0.11.8.2, format 28)
+
+- **Typen**: `OpeningTypeModel.trim` (`OpeningTrim`: `lining` {width,
+  thickness, sides}, `flashing` {overhang, drip} | null, `board`
+  {thickness, overhang} | null) och `hardware` (`OpeningHardware`: handle
+  lever|pull|none, handleHeight, hinges, closer, letterbox), båda
+  `Partial` i filen; `trimOf(m)` och `hardwareOf(m)` ger det som gäller
+  med sortens förval. `OpeningCell.material` för en panel. Läses i
+  `normalizeOpeningModel` (`normalizeTrim`, `normalizeHardware`).
+  `doorModel` har karmen 40.
+- **3D** i `elements/openingModel.ts`: `trimAndHardware(b, g)` (fodret med
+  `lining(b, side, …)`, blecket och bänken; delarna `sill` och `board`),
+  `leafHardware` och `sashHardware` med `fitting` (delen `handle`).
+  `LINING` är borta. Spegelns fas i bladets fyllningar på Detalj.
+- **Planen** i `elements/openingPlan.ts`: `trimInPlan` (delarna `foder`,
+  `bleck`, `fönsterbänk`, `tröskel`), `muntinsInPlan` (`spröjs`) och
+  `accessCircles` (`tillgänglighetscirkel`, Visa-nyckeln `+accessCircle`).
+  Fönstrens slag kräver `+swingWindow`.
+- **Pennor**: ställena `doorLining`, `doorThreshold`, `doorAccess` (streckad,
+  `defaultObjectPen` tar `linetype`), `windowLining`, `windowFlashing`,
+  `windowBoard`, `windowMuntin` i `repr/objectPens.ts`; `windowBoardElev`
+  och `windowHandleElev` i `repr/facadePens.ts` (`EdgePart` `board`).
+- **Visa**: `swingWindow` och `accessCircle` i `OFF_BY_DEFAULT`
+  (`ui/app/showKeys.ts`); `BARE` utan `swingWindow`.
+- **Allmänt**: `OpeningSettings.accessCircle` (1 300).
+- **Varningarna**: `elements/openingWarnings.ts` (`openingWarnings(doc, el)`,
+  `freePassage(m, w, h)`, gränserna som konstanter), i `openingFieldsMarkup`.
+- **Editorn** (`ui/style/openingTypes.ts`): `trimMarkup`, `hardwareMarkup`
+  (fälten `trim.*` och `hw.*`, kryssrutor läses med `checked`), luftens
+  `cell:i:material`, spröjsens rader `mline:i:j:ax|ay|bx|by` (mm i
+  `glassRectOf`, sparas som andelar) och knapparna `madd-v`, `madd-h`,
+  `mline-remove`.
+- **Fältmallen** i stilboken: `StyleResources.scheduleFields` ({Window,
+  Door, tags}, `normalizeScheduleFields` i `core/graphics.ts`).
+  `scheduleFields(doc, kind)` läser stilboken, sedan projektets (0.11.8.1);
+  `scheduleChanged`, `isOriginalField`, `DEFAULT_FIELD_TAGS`, `fieldTags`,
+  `ownFieldTags`, `fieldTag`, `fieldByName` i `core/openingSchedule.ts`.
+  Gränssnittet `scheduleBookMarkup`, `scheduleSearch`, `scheduleView`,
+  `scheduleTagsChanged` i `ui/openingScheduleFields.ts`; resursen
+  `schedule` under Typer i `styleDialog.ts` (`data-sf-search`,
+  `data-sf-own`, fälten `data-gen="sfield:…"` och `stags:…`).
+  `litteraField` slår upp fälten (`fieldByName`) före egna egenskaper.
+- **Stilbokens fil**: `bookTypes` tar med typerna med `opening`
+  (`isBookType`); `readBookFile` normaliserar dem.
+- **Tester**: `tests/v01182.test.ts`; referensritningarna är omskrivna.
+
 ## Dörrar och fönster: synpunkterna på mockupen (0.11.8.1, format 28)
 
 - **Måtten**: `OpeningMeasure` (`holeAdd`, `frameLess`) i

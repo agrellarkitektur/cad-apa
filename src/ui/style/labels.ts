@@ -24,7 +24,7 @@ export function labelSection(style: StyleResources): string {
         <label><span>Justering</span><select data-lab="align"><option value="left"${l.align === 'left' ? ' selected' : ''}>Vänster</option><option value="center"${l.align === 'center' ? ' selected' : ''}>Centrerat</option></select></label>
         ${h('roomName', 'Rumsnamn')}${h('roomInfo', 'Rumsnr, area')}${h('littera', 'Littera')}${h('dimension', 'Mått')}
       </div>
-      <p class="note">Litteramallar: en rad per textrad. Fält: <code>{typ}</code> (D1), <code>{storlek}</code> (D10×21), <code>{nummer}</code> (D1203), <code>{hål}</code> (1010×2110), <code>{karm}</code> (990×2090) och egna egenskaper med sitt namn, t.ex. <code>{brandklass}</code>. Tomma rader hoppas över. I Skiss visas ingen littera.</p>
+      <p class="note">Litteramallar: en rad per textrad. Fält: <code>{typ}</code> (D1), <code>{storlek}</code> (D10×21), <code>{nummer}</code> (D1203), <code>{hål}</code> (1010×2110), <code>{karm}</code> (990×2090), uppställningens fält med sitt namn, t.ex. <code>{U-värde}</code> (Typer › Uppställningens fält), och egna egenskaper med sitt namn, t.ex. <code>{brandklass}</code>. Tomma rader hoppas över. I Skiss visas ingen littera.</p>
       ${tpl}
       <div class="tpl-row wide"><b>Rum</b>
         <label><span>Rumsstämpel</span><textarea rows="4" data-lab="room">${escapeHtml(l.room)}</textarea></label></div>

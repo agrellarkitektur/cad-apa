@@ -151,7 +151,8 @@ describe('ritningen ur typen (0.11.8)', () => {
       { id: 'f', type: 'Window', def: 't-of-flagg', at: 1500, params: { width: 1200, height: 1400 } },
       { id: 'd', type: 'Door', def: 't-dd-par', at: 4000, params: { swing: -1 } },
     ]);
-    const prims = buildPlan(doc, 'pl-1', { state: 'st-ny' }).prims;
+    // Fönstrens slagbågar är släckta från början (0.11.8.2) och tänds med +swingWindow.
+    const prims = buildPlan(doc, 'pl-1', { state: 'st-ny', hide: ['+swingWindow'] }).prims;
     const of = (id: string, part: string) => prims.filter((p) => p.origin?.objectId === id && p.origin.part === part);
     expect(of('f', 'post').length).toBeGreaterThan(0);
     const winArcs = of('f', 'slagbåge').filter((p) => p.kind === 'arc');
@@ -159,10 +160,10 @@ describe('ritningen ur typen (0.11.8)', () => {
     // Mitten i gångjärnet, radien bågens bredd, 15° (0.11.8.1, kommentar B).
     for (const a of winArcs) if (a.kind === 'arc') expect(Math.abs(normAng(a.end - a.start) - Math.PI / 12)).toBeLessThan(1e-6);
     // På alla nivåer, också Skiss; Visa › Slagbågar, fönster släcker dem (kommentar H).
-    const sketch = buildPlan(doc, 'pl-1', { state: 'st-ny', detail: 'sketch' }).prims;
+    const sketch = buildPlan(doc, 'pl-1', { state: 'st-ny', detail: 'sketch', hide: ['+swingWindow'] }).prims;
     expect(sketch.filter((p) => p.origin?.objectId === 'f' && p.origin.part === 'slagbåge' && p.kind === 'arc')).toHaveLength(2);
     expect(sketch.filter((p) => p.origin?.objectId === 'd' && p.origin.part === 'slagbåge' && p.kind === 'arc')).toHaveLength(2);
-    const off = buildPlan(doc, 'pl-1', { state: 'st-ny', hide: ['swingWindow'] }).prims;
+    const off = buildPlan(doc, 'pl-1', { state: 'st-ny' }).prims;
     expect(off.some((p) => p.origin?.objectId === 'f' && p.origin.part === 'slagbåge')).toBe(false);
     expect(off.some((p) => p.origin?.objectId === 'd' && p.origin.part === 'slagbåge')).toBe(true);
     // Pardörren: gångdörrens båge heldragen, den passiva streckad.

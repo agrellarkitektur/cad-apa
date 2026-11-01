@@ -1,5 +1,5 @@
 import type { Element } from '../core/model';
-import { layoutOpening, LEAF_OPS, SIDE_HUNG, hasSash, type LaidCell, type OpeningKind, type OpeningLayout, type OpeningTypeModel, type Rect } from '../core/openingTypes';
+import { layoutOpening, LEAF_OPS, SIDE_HUNG, hasSash, muntinLines, muntinWidth, standsOnFloor, trimOf, type LaidCell, type OpeningKind, type OpeningLayout, type OpeningTypeModel, type Rect } from '../core/openingTypes';
 import { openingSettingsOf } from '../core/general';
 import { buildingMaterialOf, materialSolid } from './buildingMaterial';
 import { detailOf } from '../core/states';
@@ -135,11 +135,12 @@ export function openingPlanFor(el: Element<any>, ctx: PlanContext, kind: Opening
    * Sidohängda bågar (0.11.8.1, kommentar B): som en dörr men öppen bara
    * stilbokens vinkel (förval 15°), bladlinjen från gångjärnet i öppet läge
    * och slagbågen med mitten i gångjärnet, från stängt till öppet. En 2-luft
-   * får två, var och en kring sitt gångjärn.
+   * får två, var och en kring sitt gångjärn. Släckta från början (0.11.8.2,
+   * Carl August: bara om man vill); *Visa › Slagbågar, fönster* tänder dem.
    */
   const swingAngle = (openingSettingsOf(ctx.doc.graphics).swingAngle * Math.PI) / 180;
   const windowSwing = (c: LaidCell): Primitive[] => {
-    if (!SIDE_HUNG.has(c.op) || ctx.view.hide?.includes('swingWindow') || swingAngle <= 0) return [];
+    if (!SIDE_HUNG.has(c.op) || !ctx.view.hide?.includes('+swingWindow') || swingAngle <= 0) return [];
     const r = c.rect;
     const side: 1 | -1 = c.inward ? (-g.vf as 1 | -1) : g.vf;
     const o = oFace(side);
@@ -154,12 +155,13 @@ export function openingPlanFor(el: Element<any>, ctx: PlanContext, kind: Opening
     return [line(hinge, tip, pens.winSwing, 'slagbåge'), arcPrim(hinge, tip, free, len, pens.winSwing, { ...origin, part: 'slagbåge' })];
   };
 
+  const access = door ? accessCircles(ctx, g, origin) : [];
   if (level === 'sketch') {
     // Hålets sidor och en linje: glaset mitt i väggen, eller dörrbladet i öppet läge; slagbågarna som på de andra nivåerna (kommentar H).
     const sides = [h1, h2].map((s) => line(f.at(s, -f.half), f.at(s, f.half), pens.cut, 'sida'));
     if (!door) return [...out, ...sides, line(f.at(h1, 0), f.at(h2, 0), pens.glass, 'glas'), ...cells.flatMap(windowSwing), ...below(), ...tag()];
     for (const c of cells.filter((x) => LEAF_OPS.has(x.op))) out.push(...leafPrims(ctx, el, g, c, g.swing * f.half, false, pens, origin, true));
-    return [...out, ...sides, ...tag()];
+    return [...out, ...sides, ...access, ...tag()];
   }
 
   // Karmen i snitt på sidorna; i fönster den nedre karmen sedd uppifrån.
@@ -188,9 +190,90 @@ export function openingPlanFor(el: Element<any>, ctx: PlanContext, kind: Opening
     } else if (level === 'detail') {
       out.push(line(at(r.u0, mid - 6), at(r.u1, mid - 6), pens.glass, 'glas'), line(at(r.u0, mid + 6), at(r.u1, mid + 6), pens.glass, 'glas'));
     } else out.push(line(at(r.u0, mid), at(r.u1, mid), pens.glass, 'glas'));
+    if (level === 'detail') out.push(...muntinsInPlan(ctx, g, c, zc, mid, origin));
     out.push(...windowSwing(c));
   }
-  return [...out, ...(door ? [] : below()), ...tag()];
+  if (level === 'detail') out.push(...trimInPlan(ctx, g, origin));
+  return [...out, ...(door ? [] : below()), ...access, ...tag()];
+}
+
+/**
+ * Foder, bleck, fönsterbänk och tröskel i Detalj (0.11.8.2, ur typen):
+ * fodret på väggens liv vid hålets sidor, blecket ute och bänken inne sedda
+ * uppifrån (i ytterväggar, för det som inte står på golvet), och tröskeln
+ * mellan karmarna.
+ */
+function trimInPlan(ctx: PlanContext, g: OpeningGeo, origin: { objectId: string; objectType: string }): Primitive[] {
+  const f = g.z.f;
+  const t = trimOf(g.m);
+  const door = g.m.kind === 'door';
+  const out: Primitive[] = [];
+  const box = (s0: number, s1: number, o0: number, o1: number, pen: Pen, part: string): Primitive => ({ kind: 'polyline', points: [f.at(s0, o0), f.at(s1, o0), f.at(s1, o1), f.at(s0, o1)], closed: true, pen, origin: { ...origin, part } });
+  const outSide = (g.outside ?? g.vf) as 1 | -1;
+  const lined = (s: 1 | -1) => t.lining.sides === 'both' || (t.lining.sides === 'out' && s === outSide) || (t.lining.sides === 'in' && s === -outSide);
+  const w = t.lining.width;
+  const T = t.lining.thickness;
+  const { h1, h2, lo, hi } = g.z;
+  if (w > 0 && T > 0) {
+    const pen = objectPen(ctx.style, door ? 'doorLining' : 'windowLining');
+    for (const s of [1, -1] as const)
+      if (lined(s)) out.push(box(h1 - w, h1, s * f.half, s * (f.half + T), pen, 'foder'), box(h2, h2 + w, s * f.half, s * (f.half + T), pen, 'foder'));
+  }
+  const floor = standsOnFloor(g.m);
+  if (!floor && g.outside !== null) {
+    const ext = (s: 1 | -1, extra: number) => (lined(s) ? w : 0) + extra;
+    if (t.flashing) {
+      const s = g.outside;
+      const e = ext(s, 10);
+      out.push(box(h1 - e, h2 + e, s === 1 ? hi : lo, s * (f.half + t.flashing.overhang), objectPen(ctx.style, 'windowFlashing'), 'bleck'));
+    }
+    if (t.board) {
+      const s = -g.outside as 1 | -1;
+      const e = ext(s, 20);
+      out.push(box(h1 - e, h2 + e, s === 1 ? hi : lo, s * (f.half + t.board.overhang), objectPen(ctx.style, 'windowBoard'), 'fönsterbänk'));
+    }
+  }
+  // Tröskeln mellan karmarna, över karmens djup.
+  const L = g.layout;
+  if (door && (g.m.frame.bottom ?? 0) > 0 && L.frame.length >= 2) {
+    const [a, b] = [g.u(L.frame[0].u1), g.u(L.frame[1].u0)];
+    out.push(box(Math.min(a, b), Math.max(a, b), lo, hi, objectPen(ctx.style, 'doorThreshold'), 'tröskel'));
+  }
+  return out;
+}
+
+/** Lodräta spröjs där planens snitt går (0.11.8.2, Detalj): listerna på glasets sidor, eller en tunn rand mellan glasen. */
+function muntinsInPlan(ctx: PlanContext, g: OpeningGeo, c: LaidCell, zc: number, mid: number, origin: { objectId: string; objectType: string }): Primitive[] {
+  if (!c.muntins) return [];
+  const r = c.rect;
+  const s = hasSash(c) ? Math.min(g.m.sash, (r.u1 - r.u0) / 3, (r.z1 - r.z0) / 3) : 0;
+  const gl: Rect = { u0: r.u0 + s, u1: r.u1 - s, z0: r.z0 + s, z1: r.z1 - s };
+  const w = muntinWidth(c.muntins);
+  const pen = objectPen(ctx.style, 'windowMuntin');
+  const f = g.z.f;
+  const faces: [number, number][] = c.muntins.kind === 'between' ? [[mid - 6, mid + 6]] : [[mid - 18, mid - 6], [mid + 6, mid + 18]];
+  const out: Primitive[] = [];
+  for (const [u1, z1, u2, z2] of muntinLines(c.muntins, gl)) {
+    if (Math.abs(u1 - u2) > 0.5 || Math.min(z1, z2) > zc || Math.max(z1, z2) < zc) continue;
+    const [a, b] = [g.u(u1 - w / 2), g.u(u1 + w / 2)];
+    for (const [o0, o1] of faces) out.push({ kind: 'polyline', points: [f.at(a, o0), f.at(b, o0), f.at(b, o1), f.at(a, o1)], closed: true, pen, origin: { ...origin, part: 'spröjs' } });
+  }
+  return out;
+}
+
+/**
+ * Tillgänglighetscirkeln vid en dörr (0.11.8.2): en vändcirkel med
+ * stilbokens diameter (Allmänt, 1 300 eller 1 500) på dörrens båda sidor,
+ * mitt för dörren och tangerande väggens liv. Släckt från början; *Visa ›
+ * Tillgänglighetscirkel vid dörrar* tänder den.
+ */
+function accessCircles(ctx: PlanContext, g: OpeningGeo, origin: { objectId: string; objectType: string }): Primitive[] {
+  if (!ctx.view.hide?.includes('+accessCircle')) return [];
+  const r = openingSettingsOf(ctx.doc.graphics).accessCircle / 2;
+  const f = g.z.f;
+  const pen = objectPen(ctx.style, 'doorAccess');
+  const c = g.u(g.layout.w / 2);
+  return ([1, -1] as const).map((s): Primitive => ({ kind: 'arc', center: f.at(c, s * (f.half + r)), radius: r, start: 0, end: 2 * Math.PI, pen, origin: { ...origin, part: 'tillgänglighetscirkel' } }));
 }
 
 function normalize(a: number): number {

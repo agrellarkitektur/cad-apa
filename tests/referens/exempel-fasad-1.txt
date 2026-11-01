@@ -47,12 +47,12 @@ linje 4695,1041 3805,42 [w0.13 ink d3/1.5] @d01/swingFar
 linje 4695,1041 3805,2040 [w0.13 ink d3/1.5] @d01/swingFar
 linje 12155,2090 12145.1,2090 [w0.25 ink] @d04/frame
 linje 11555,2090 11545.1,2090 [w0.25 ink] @d04/frame
-linje 12155,2040 12145.1,2040 [w0.25 ink] @d04/frame
-linje 11555,2040 11545.1,2040 [w0.25 ink] @d04/frame
-linje 12155,2040 12145.1,2040 [w0.25 ink] @d04/leaf
-linje 11555,2040 11545.1,2040 [w0.25 ink] @d04/leaf
-linje 11873.2,1500.1 11865.5,1510 [w0.13 ink] @d04/swing
-linje 11555,1911 11545.1,1923.7 [w0.13 ink] @d04/swing
+linje 12155,2050 12145.1,2050 [w0.25 ink] @d04/frame
+linje 11555,2050 11545.1,2050 [w0.25 ink] @d04/frame
+linje 12155,2050 12145.1,2050 [w0.25 ink] @d04/leaf
+linje 11555,2050 11545.1,2050 [w0.25 ink] @d04/leaf
+linje 11879.6,1500.1 11871.8,1510 [w0.13 ink] @d04/swing
+linje 11555,1910.9 11545.1,1923.4 [w0.13 ink] @d04/swing
 linje 9095,810 7905,810 [w0.25 ink] @f01/frame
 linje 7905,810 7905,2100 [w0.25 ink] @f01/frame
 linje 7905,2100 9095,2100 [w0.25 ink] @f01/frame

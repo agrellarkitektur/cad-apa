@@ -1825,7 +1825,7 @@ table.pe-pts {
   margin-left: 6px;
 }
 
-/* Uppställningens fältmall under Allmänt › Fönster och dörrar (0.11.8.1). */
+/* Uppställningens fältmall, stilboken › Typer › Uppställningens fält (0.11.8.2; under Allmänt i 0.11.8.1). */
 .sched-template h4 {
   margin: 12px 0 4px;
   font-size: 12px;
@@ -1854,6 +1854,31 @@ table.pe-pts {
 .sched-row .gen-desc {
   font-size: 11px;
   color: var(--muted, #888);
+}
+.sched-template .sched-cols {
+  grid-template-columns: repeat(auto-fit, minmax(520px, 1fr));
+}
+.sched-row .sched-mark {
+  width: 4.2em;
+}
+.sched-row .sched-tag {
+  font-size: 11px;
+  max-width: 11em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: all;
+}
+.sched-row input.sched-tags {
+  flex: 0.9;
+  font-size: 11px;
+}
+.sched-row[hidden] {
+  display: none;
+}
+/* Spröjsens skrivna mått (0.11.8.2). */
+.ot-track .ot-mm {
+  width: 3.6em;
 }
 
 /* Spröjs och dörrbladets fyllningar i editorn (0.11.8.1). */

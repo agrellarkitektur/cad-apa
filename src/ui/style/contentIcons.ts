@@ -18,6 +18,8 @@ const BY_KEY: Record<string, keyof typeof icons> = {
   hiddenSlabsSection: 'section',
   Furniture: 'furniture',
   swing: 'flipSwing',
+  swingWindow: 'flipSwing',
+  accessCircle: 'door',
   Underlay: 'fileImage',
   Label: 'label',
   Space: 'room',
@@ -57,4 +59,4 @@ export function contentIcon(key: string, group: string): string {
  * Det som sällan ändras (0.10.34): döljs under *Vanliga* i stilboken, men
  * syns alltid när det är ändrat mot nivån ovanför.
  */
-export const RARE_CONTENT: ReadonlySet<string> = new Set(['footprint', 'roofsAround', 'hiddenSlabs', 'hiddenWalls', 'hiddenSlabsSection', 'contours3d', 'ground3d', 'slopes3d', 'steepSlopes', 'BasisFacade', 'heightDims', 'buildingHeight', 'roofSlope', 'Underlay']);
+export const RARE_CONTENT: ReadonlySet<string> = new Set(['footprint', 'roofsAround', 'hiddenSlabs', 'hiddenWalls', 'hiddenSlabsSection', 'contours3d', 'ground3d', 'slopes3d', 'steepSlopes', 'BasisFacade', 'heightDims', 'buildingHeight', 'roofSlope', 'Underlay', 'accessCircle']);

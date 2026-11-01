@@ -26,10 +26,12 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
       ['hiddenWalls', 'Ytterväggarnas insida streckad i fasad'],
       ['hiddenSlabsSection', 'Bjälklag bakom snittet streckade i sektion'],
       ['Furniture', 'Möbler och inredning'],
-      // Slagbågarna i planen för dörrar och fönster var för sig, och öppningssymbolen i fasaden (0.11.8.1).
+      // Slagbågarna i planen för dörrar och fönster var för sig, och öppningssymbolen i fasaden (0.11.8.1). Fönstrens är släckta från början (0.11.8.2).
       ['swing', 'Slagbågar, dörrar'],
       ['swingWindow', 'Slagbågar, fönster'],
       ['openingSymbol', 'Öppningssymboler i fasad och sektion'],
+      // Vändcirkeln vid dörrarna (0.11.8.2), släckt från början.
+      ['accessCircle', 'Tillgänglighetscirkel vid dörrar'],
       // Trappans stegnummer och texten *15 st à 180/260* i Detalj (0.11.7.2).
       ['stairNumbers', 'Stegnummer och trappans text'],
       ['Underlay', 'Underlag'],
@@ -116,9 +118,10 @@ export function showGroupsFor(doc: ProjectDoc): readonly ShowGroup[] {
 /**
  * Det som är släckt från början (0.10.2): det tänds med nyckeln och ett plus
  * i vyns `hide`, så att äldre vyer inte får det. Tak på andra våningar och
- * de dolda linjerna i fasader (0.10.10) likaså.
+ * de dolda linjerna i fasader (0.10.10) likaså, och fönstrens slagbågar och
+ * tillgänglighetscirkeln (0.11.8.2).
  */
-export const OFF_BY_DEFAULT: ReadonlySet<string> = new Set(['footprint', 'roofsAround', 'hiddenSlabs', 'hiddenWalls', 'ground3d', 'slopes3d', 'steepSlopes']);
+export const OFF_BY_DEFAULT: ReadonlySet<string> = new Set(['footprint', 'roofsAround', 'hiddenSlabs', 'hiddenWalls', 'ground3d', 'slopes3d', 'steepSlopes', 'swingWindow', 'accessCircle']);
 
 /** Om det som nyckeln står för syns i vyn. */
 export function isShown(ui: Pick<UiState, 'hide' | 'hideDemolished'>, key: string): boolean {

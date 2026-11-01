@@ -6,8 +6,8 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.8.1** (alfa), Dörrar och fönster: synpunkterna på mockupen; nästa är
-**0.11.8.2 Detalj och beslag**.
+**0.11.8.2** (alfa), Dörrar och fönster: Detalj och beslag; nästa är
+**0.11.8.3 Smart och vägghål**.
 
 ## Vad som fungerar
 
@@ -1150,6 +1150,56 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
 
+Version 0.11.8.2, Dörrar och fönster: Detalj och beslag (samma filformat,
+28; projekt från 0.11.8 öppnas):
+- **Foder, bleck och fönsterbänk** i typen (editorn › *Foder, bleck och
+  bänk*): fodret på båda sidor, inne, ute eller inget, med bredd och
+  tjocklek; fönster i ytterväggar har **bleck med droppnäsa** ute
+  (utsprång 40, droppnäsa 20) och en **invändig fönsterbänk** (22 mm,
+  utsprång 20), som tar fodrets underdel på sin sida. Fönsterdörren och
+  dörrarna har varken bleck eller bänk. Allt ritas i **Detalj**: i planen
+  (fodret vid hålets sidor, blecket och bänken sedda uppifrån), i fasaden,
+  sektionen och 3D
+- **Tröskeln** ritas i planen i Detalj, mellan karmarna
+- **Beslag** i typen (editorn › *Beslag*): handtag (*Trycke*,
+  *Draghandtag* eller *Inget*; fönstren handtag inne på låssidan) med höjd
+  för dörrar, **gångjärnen** som markering (två, 100 från över- och
+  underkant), **dörrstängare** och **brevinkast**. De ritas i Detalj i
+  fasaden, sektionen och 3D
+- **Spegelns profil**: en fas 15 mm innanför fyllningens kant i Detalj
+- **Panel under glas**: en luft med fyllningen *Panel* har ett material
+  ur stilboken
+- **Spröjs i planen** i Detalj: de lodräta där snittet går
+- **Spröjs med skrivna mått**: under *Special* står varje referenslinje
+  med sina ändar i mm från glasets nedre vänstra hörn (i det mått ritytan
+  visar), och *+ Lodrät* och *+ Vågrät* lägger en mitt i glaset att skriva
+  måttet på. Linjerna följer glaset när måttet ändras
+- **Varningar** i egenskaperna (aldrig spärrar): fri passage under 760 mm
+  (800 för ytter- och entrédörrar), tröskel över 25 mm i ytterdörrar,
+  glas under 600 mm över golvet (säkerhetsglas), låg bröstning på en
+  våning över marken (utfallsskydd) och utrymningsfönstrets mått när
+  fältet *Funktion/placering* säger utrymning. Ett ifyllt fält
+  *Säkerhetsglas* eller *Utfallsskydd* tystar sin varning
+- **Tillgänglighetscirkeln**: *Visa › Modell › Tillgänglighetscirkel vid
+  dörrar* ritar en vändcirkel på dörrarnas båda sidor; diametern (1 300
+  eller 1 500) under stilboken › Allmänt › *Fönster och dörrar*. Nytt
+  ställe *Dörr: tillgänglighetscirkel* (streckad)
+- **Fönstrens slagbågar i planen är släckta från början**; *Visa ›
+  Slagbågar, fönster* tänder dem
+- **Uppställningens fält har en egen plats**: stilboken › Typer ›
+  *Uppställningens fält*, sökbar på namn och taggar (inbyggda för
+  förteckningens fält, egna med komma), med smarttexten för varje fält
+  (`{U-värde}`, också `{fält:U-värde}` i litteramallarna) och *Bara
+  egna* för att hitta och ta bort de fält som inte är förteckningens.
+  Mallen hör nu till stilboken och följer med *Exportera…* och *Mall för
+  nya projekt…*. Dörr- och fönstertyperna följer också med stilbokens fil
+- Nya ställen i stilboken: *Dörr: foder*, *tröskel*, *tillgänglighetscirkel*;
+  *Fönster: foder*, *bleck*, *fönsterbänk*, *spröjs*; i fasaden *Fönster:
+  fönsterbänk* och *Fönster: beslag* (dörrens handtag heter *Dörr: beslag*)
+- Innerdörrarnas karm är 40 mm i de förvalda typerna (förut 50), så att en
+  9M-dörr ger fri passage 770 mm. Typer som redan finns i projektet ändras
+  inte
+
 Version 0.11.8.1, Dörrar och fönster: synpunkterna på mockupen (samma
 filformat, 28; projekt från 0.11.8 öppnas):
 - **Måtten**: hålmåttet är modulmåttet **+ 10** och karmyttermåttet
@@ -1189,7 +1239,7 @@ filformat, 28; projekt från 0.11.8 öppnas):
   *Spegel* och *Glasat* är förval som går att ändra
 - **Vägghålen får VG01** (`VG{nr:2}`) som förval
 - **Uppställningens fält**: fältmallen för fönster och dörrar under
-  Allmänt › *Fönster och dörrar* (fälten ur förteckningarna, flytta, byt
+  Allmänt › *Fönster och dörrar* (sedan 0.11.8.2 Typer › *Uppställningens fält*) (fälten ur förteckningarna, flytta, byt
   namn, ta bort, *+ Nytt fält…*). Fälten som inte räknas fram (U-värde,
   brandklass, låshus …) fylls i under egenskaperna, **Uppställningens
   fält**; värdet hör till objektet, och skiljer sig de markerade står

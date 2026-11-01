@@ -1,3 +1,4 @@
+import { fieldByName } from '../core/openingSchedule';
 import type { Element } from '../core/model';
 import { detailOf } from '../core/states';
 import { markerPen } from '../repr/markerPens';
@@ -90,6 +91,11 @@ export function litteraField(ctx: PlanContext, el: Element<any>, name: string): 
       return Number.isFinite(w) && Number.isFinite(h) ? `${w - FRAME_LESS}×${h - FRAME_LESS}` : '';
     case 'tjocklek':
       return p.thickness !== undefined ? String(p.thickness) : '';
+  }
+  // Uppställningens fält (0.11.8.2): {U-värde} eller {fält:U-värde}.
+  if (opening) {
+    const f = fieldByName(el, name);
+    if (f) return f;
   }
   // Egna egenskaper: först objektets egna, sedan typens. Namnet jämförs utan skiftläge.
   return ownProp([el.props, def?.props], name);

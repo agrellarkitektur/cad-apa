@@ -109,6 +109,37 @@ export interface OpeningCell {
   muntins?: Muntins;
   /** Dörrbladets indelning (0.11.8.1). */
   leafGrid?: LeafGrid;
+  /** En panels material ur stilboken (0.11.8.2, panel under glas i fönster); tomt = som karmen. */
+  material?: string;
+}
+
+/**
+ * Fodret, fönsterblecket och fönsterbänken (0.11.8.2). Typen har dem; det
+ * som saknas i filen får förvalet för sorten (`trimOf`). Fodret sitter på
+ * väggens liv runt hålet, blecket med droppnäsa ute under karmen och bänken
+ * inne, båda i ytterväggar.
+ */
+export interface OpeningTrim {
+  /** Fodret: bredd i fasaden, tjocklek ut från väggens liv, och på vilka sidor. */
+  lining: { width: number; thickness: number; sides: 'both' | 'in' | 'out' | 'none' };
+  /** Fönsterblecket ute: utsprånget förbi väggens liv och droppnäsans höjd; null = inget. */
+  flashing: { overhang: number; drip: number } | null;
+  /** Fönsterbänken inne: tjocklek och utsprång förbi väggens liv; null = ingen. */
+  board: { thickness: number; overhang: number } | null;
+}
+
+/** Beslagen (0.11.8.2): punktdelar som ritas i Detalj. */
+export interface OpeningHardware {
+  /** Handtaget: trycke, draghandtag eller inget (fönstren: handtag på låssidan). */
+  handle: 'lever' | 'pull' | 'none';
+  /** Handtagets höjd över golvet för dörrar, mm (fönstren: mitt på bågen). */
+  handleHeight: number;
+  /** Gångjärnen som markering: två, 100 från över- och underkant. */
+  hinges: boolean;
+  /** Dörrstängare överst på bladet, på slagsidan. */
+  closer: boolean;
+  /** Brevinkast mitt på bladet. */
+  letterbox: boolean;
 }
 
 export interface OpeningTypeModel {
@@ -138,6 +169,33 @@ export interface OpeningTypeModel {
   /** Typens min- och maxmått (karmyttermått), mm: en varning, ingen spärr. */
   min?: [number, number];
   max?: [number, number];
+  /** Foder, bleck och fönsterbänk (0.11.8.2); det som saknas får sortens förval. */
+  trim?: Partial<OpeningTrim>;
+  /** Beslagen (0.11.8.2); det som saknas får sortens förval. */
+  hardware?: Partial<OpeningHardware>;
+}
+
+/**
+ * Foder, bleck och bänk som de gäller: typens, annars förvalet. Fönster har
+ * foder på båda sidor, bleck med droppnäsa (utsprång 40, droppnäsa 20) och
+ * en fönsterbänk (22 mm, utsprång 20); det som står på golvet (fönsterdörren)
+ * har varken bleck eller bänk. Dörrar har foder på båda sidor. Vägghål har
+ * inget.
+ */
+export function trimOf(m: Pick<OpeningTypeModel, 'kind' | 'sill' | 'trim'>): OpeningTrim {
+  if (m.kind === 'hole') return { lining: { width: 0, thickness: 0, sides: 'none' }, flashing: null, board: null };
+  const win = m.kind === 'window' && !standsOnFloor(m);
+  const t = m.trim ?? {};
+  return {
+    lining: { width: 70, thickness: 15, sides: 'both', ...(t.lining ?? {}) },
+    flashing: t.flashing === null ? null : t.flashing ? { ...t.flashing } : win ? { overhang: 40, drip: 20 } : null,
+    board: t.board === null ? null : t.board ? { ...t.board } : win ? { thickness: 22, overhang: 20 } : null,
+  };
+}
+
+/** Beslagen som de gäller: typens, annars förvalet (trycke på 1 000 och gångjärnsmarkeringen). */
+export function hardwareOf(m: Pick<OpeningTypeModel, 'kind' | 'hardware'>): OpeningHardware {
+  return { handle: m.kind === 'hole' ? 'none' : 'lever', handleHeight: 1000, hinges: m.kind !== 'hole', closer: false, letterbox: false, ...(m.hardware ?? {}) };
 }
 
 export const OPENING_GROUPS: readonly { group: string; kind: OpeningKind; type: string }[] = [
@@ -175,7 +233,8 @@ function doorModel(cells: OpeningCell[], extra: Partial<OpeningTypeModel> = {}):
   return {
     kind: 'door',
     group: 'Dörrar',
-    frame: { width: 50, depth: 100, bottom: null },
+    // Innerdörrens karm 40 (0.11.8.2, förut 50), så att en 9M-dörr ger fri passage 770.
+    frame: { width: 40, depth: 100, bottom: null },
     size: [900, 2100],
     cols: [fr()],
     rows: [fr()],
@@ -333,6 +392,7 @@ export function normalizeOpeningModel(v: unknown, kindHint: OpeningKind = 'windo
       if (mu) out.muntins = mu;
       const lg = normalizeLeafGrid(c.leafGrid);
       if (lg) out.leafGrid = lg;
+      if (typeof c.material === 'string' && c.material) out.material = c.material;
       return out;
     })
     .filter((c: OpeningCell | null): c is OpeningCell => !!c);
@@ -356,7 +416,36 @@ export function normalizeOpeningModel(v: unknown, kindHint: OpeningKind = 'windo
   if (m.frameLess !== undefined && m.frameLess !== null && Number.isFinite(Number(m.frameLess))) out.frameLess = num(m.frameLess, 10, 0, 100);
   if (m.min) out.min = pair(m.min, [0, 0]);
   if (m.max) out.max = pair(m.max, [0, 0]);
+  const trim = normalizeTrim(m.trim);
+  if (trim) out.trim = trim;
+  const hw = normalizeHardware(m.hardware);
+  if (hw) out.hardware = hw;
   return out;
+}
+
+function normalizeTrim(v: unknown): Partial<OpeningTrim> | null {
+  if (!v || typeof v !== 'object') return null;
+  const t = v as Record<string, any>;
+  const out: Partial<OpeningTrim> = {};
+  if (t.lining && typeof t.lining === 'object') {
+    const sides = ['both', 'in', 'out', 'none'].includes(t.lining.sides) ? t.lining.sides : 'both';
+    out.lining = { width: num(t.lining.width, 70, 0, 400), thickness: num(t.lining.thickness, 15, 0, 100), sides };
+  }
+  if (t.flashing === null) out.flashing = null;
+  else if (t.flashing && typeof t.flashing === 'object') out.flashing = { overhang: num(t.flashing.overhang, 40, 0, 300), drip: num(t.flashing.drip, 20, 0, 100) };
+  if (t.board === null) out.board = null;
+  else if (t.board && typeof t.board === 'object') out.board = { thickness: num(t.board.thickness, 22, 1, 100), overhang: num(t.board.overhang, 20, 0, 300) };
+  return Object.keys(out).length ? out : null;
+}
+
+function normalizeHardware(v: unknown): Partial<OpeningHardware> | null {
+  if (!v || typeof v !== 'object') return null;
+  const h = v as Record<string, any>;
+  const out: Partial<OpeningHardware> = {};
+  if (h.handle === 'lever' || h.handle === 'pull' || h.handle === 'none') out.handle = h.handle;
+  if (h.handleHeight !== undefined && Number.isFinite(Number(h.handleHeight))) out.handleHeight = num(h.handleHeight, 1000, 0, 3000);
+  for (const k of ['hinges', 'closer', 'letterbox'] as const) if (typeof h[k] === 'boolean') out[k] = h[k];
+  return Object.keys(out).length ? out : null;
 }
 
 // ---------------------------------------------------------------------------

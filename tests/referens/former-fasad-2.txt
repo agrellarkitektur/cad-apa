@@ -20,11 +20,11 @@ linje 8005,800.1 8005,810 [w0.7 #00aa00 d3/1.5] @iv-1/hole
 linje 8005,2100.1 8005,2110 [w0.7 #00aa00 d3/1.5] @iv-1/hole
 linje 7995,800.1 7995,810 [w0.25 ink] @d03/frame
 linje 7105,810 7105,800.1 [w0.25 ink] @d03/frame
-linje 7945,800.1 7945,810 [w0.25 ink] @d03/frame
-linje 7155,810 7155,800.1 [w0.25 ink] @d03/frame
-linje 7945,800.1 7945,810 [w0.25 ink] @d03/leaf
-linje 7155,810 7155,800.1 [w0.25 ink] @d03/leaf
-linje 7782.3,810 7774.6,800.1 [w0.13 ink] @d03/swing
+linje 7955,800.1 7955,810 [w0.25 ink] @d03/frame
+linje 7145,810 7145,800.1 [w0.25 ink] @d03/frame
+linje 7955,800.1 7955,810 [w0.25 ink] @d03/leaf
+linje 7145,810 7145,800.1 [w0.25 ink] @d03/leaf
+linje 7785.1,810 7777.2,800.1 [w0.13 ink] @d03/swing
 linje 1749,1455 1749,855 [w0.13 ink] @f01/swing
 linje 1749,1455 1749,2055 [w0.13 ink] @f01/swing
 linje 1749,1455 1749,855 [w0.13 ink] @f01/swing

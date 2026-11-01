@@ -26,6 +26,7 @@ import { exportBookFile, importBookFile, templateDialog } from './style/bookFile
 import { newRailEditorState, railEditorChange, railEditorClick, railEditorDrag, railEditorMarkup, railEditorSearch } from './style/railingTypes';
 import { END_GROUP } from '../core/profileTypes';
 import { newOpeningEditorState, openingEditorChange, openingEditorClick, openingEditorMarkup, openingEditorSearch } from './style/openingTypes';
+import { scheduleBookMarkup, scheduleSearch, scheduleView } from './openingScheduleFields';
 import { newProfileEditorState, profileCanvasPointer, profileEditorChange, profileEditorClick, profileEditorDrag, profileEditorMarkup, profileEditorSearch } from './style/profileTypes';
 
 /** Raderna som sök och *Vanliga/Alla* (0.10.34) visar eller döljer. */
@@ -33,7 +34,7 @@ const FILTER_ROWS = '.style-row, .pen-row, .material-row, .linetype-row, .fillty
 
 /** Det som visas till höger: Allmänt, en vytyp eller en resurs. */
 type Place = { kind: 'general' } | { kind: 'type'; type: ViewType } | { kind: 'res'; res: Resource };
-type Resource = 'pens' | 'materials' | 'lineTypes' | 'fillTypes' | 'railings' | 'profiles' | 'endProfiles' | 'openings' | 'text';
+type Resource = 'pens' | 'materials' | 'lineTypes' | 'fillTypes' | 'railings' | 'profiles' | 'endProfiles' | 'openings' | 'schedule' | 'text';
 
 /** Stilbokens flikar (0.11.6, beslut D och H): Stil, Typer och Allmänt. */
 export type BookTab = 'style' | 'types' | 'general';
@@ -59,9 +60,11 @@ const TYPES: readonly { res: Resource | null; name: string; later?: string }[] =
   { res: 'endProfiles', name: 'Ändprofiler' },
   { res: 'railings', name: 'Räckestyper' },
   { res: 'openings', name: 'Fönster och dörrar' },
+  // Fältmallen (0.11.8.2, förut under Allmänt).
+  { res: 'schedule', name: 'Uppställningens fält' },
 ];
 
-const TYPE_RES: ReadonlySet<Resource> = new Set(['materials', 'profiles', 'endProfiles', 'railings', 'openings']);
+const TYPE_RES: ReadonlySet<Resource> = new Set(['materials', 'profiles', 'endProfiles', 'railings', 'openings', 'schedule']);
 
 const RAIL_ICON: Record<string, string> = { site: icons.ground, storey: icons.storeys, elevation: icons.elevation, section: icons.section, cube: icons.multi, worksheet: icons.draw2d, sheet: icons.sheet, list: icons.states };
 
@@ -169,6 +172,10 @@ export class StyleDialog {
       }
       if (t.matches('[data-ot-search]')) {
         openingEditorSearch(this.el, this.ot, (t as HTMLInputElement).value);
+        return;
+      }
+      if (t.matches('[data-sf-search]')) {
+        scheduleSearch(this.el, (t as HTMLInputElement).value);
         return;
       }
       if (t.matches('[data-rt-search]')) {
@@ -381,6 +388,7 @@ export class StyleDialog {
     if (p.res === 'lineTypes') return lineTypeSection(this.book, lineTypeUses(doc)) + placesSection(doc, 'linetype', this.pp);
     if (p.res === 'railings') return railEditorMarkup(doc, this.rt);
     if (p.res === 'openings') return openingEditorMarkup(doc, this.ot);
+    if (p.res === 'schedule') return scheduleBookMarkup(doc);
     if (p.res === 'profiles' || p.res === 'endProfiles') return profileEditorMarkup(doc, this.peNow);
     if (p.res === 'fillTypes') return fillTypeSection(this.book, fillTypeUses(doc)) + placesSection(doc, 'filltype', this.pp);
     return labelSection(this.book);
@@ -599,7 +607,12 @@ export class StyleDialog {
 
   private onChange(e: Event): void {
     const input = e.target as HTMLInputElement | HTMLSelectElement;
-    if (input.matches('[data-sb-search], [data-pp-search]')) return;
+    if (input.matches('[data-sb-search], [data-pp-search], [data-sf-search]')) return;
+    if (input.matches('[data-sf-own]')) {
+      scheduleView.own = (input as HTMLInputElement).checked;
+      this.render();
+      return;
+    }
     if (placesChange(this, input)) return;
     if (input.matches('[data-sb-only]')) {
       this.onlyChanged = (input as HTMLInputElement).checked;
@@ -624,7 +637,7 @@ export class StyleDialog {
 function focusSelector(el: Element | null, root: HTMLElement): string | null {
   if (!(el instanceof HTMLElement) || !root.contains(el)) return null;
   if (el.id) return `#${CSS.escape(el.id)}`;
-  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview', 'data-ul', 'data-ul-field', 'data-ul-addsel', 'data-pp-search', 'data-pp-filter', 'data-pp-set', 'data-pp-check', 'data-pp-all', 'data-pp-move', 'data-penlist', 'data-pp-tag', 'data-pp-pick', 'data-gen', 'data-gen-action', 'data-rt-mode', 'data-rt-act', 'data-rt-g', 'data-rt-p', 'data-rt-type', 'data-sb-tab', 'data-pe-act', 'data-pe-tool', 'data-pe-view', 'data-pe-type', 'data-pe-search', 'data-pe-opt', 'data-ot', 'data-ot-act', 'data-ot-type', 'data-ot-search'];
+  const attrs = ['data-key', 'data-field', 'data-lab', 'data-pen', 'data-linetype', 'data-filltype', 'data-material', 'data-material-id', 'data-action', 'data-pen-key', 'data-filltype-id', 'data-linetype-id', 'data-family', 'data-sb-go', 'data-sb-cat', 'data-cat-show', 'data-cat-hide', 'data-cat-scale', 'data-cat-kind', 'data-sb-name', 'data-sb-only', 'data-sb-search', 'data-sb-reset', 'data-sb-view', 'data-sb-goview', 'data-ul', 'data-ul-field', 'data-ul-addsel', 'data-pp-search', 'data-pp-filter', 'data-pp-set', 'data-pp-check', 'data-pp-all', 'data-pp-move', 'data-penlist', 'data-pp-tag', 'data-pp-pick', 'data-gen', 'data-gen-action', 'data-rt-mode', 'data-rt-act', 'data-rt-g', 'data-rt-p', 'data-rt-type', 'data-sb-tab', 'data-pe-act', 'data-pe-tool', 'data-pe-view', 'data-pe-type', 'data-pe-search', 'data-pe-opt', 'data-ot', 'data-ot-act', 'data-ot-type', 'data-ot-search', 'data-sf-search', 'data-sf-own'];
   const parts = attrs.filter((a) => el.hasAttribute(a)).map((a) => `[${a}="${CSS.escape(el.getAttribute(a)!)}"]`);
   if (!parts.length) return null;
   const v = el instanceof HTMLInputElement && el.type === 'radio' ? `[value="${CSS.escape(el.value)}"]` : '';

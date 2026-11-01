@@ -2,7 +2,7 @@ import type { WallFrame } from '../geometry/wallFrame';
 import type { Vec2 } from '../repr/primitives';
 import type { Edges3D, EdgePart, Shape3D, Solid } from '../repr/solids';
 import { symbolSegments } from '../core/openingSymbol';
-import { hasSash, layoutLeaf, leafGridOf, LEAF_OPS, muntinLines, muntinOutline, muntinWidth, type LaidCell, type OpeningLayout, type OpeningTypeModel, type Rect } from '../core/openingTypes';
+import { hardwareOf, hasSash, layoutLeaf, leafGridOf, LEAF_OPS, muntinLines, muntinOutline, muntinWidth, standsOnFloor, trimOf, type LaidCell, type OpeningLayout, type OpeningTypeModel, type Rect } from '../core/openingTypes';
 
 /**
  * Dörrar och fönster i 3D, och därmed i fasader och sektioner (0.7.1; ur
@@ -10,7 +10,8 @@ import { hasSash, layoutLeaf, leafGridOf, LEAF_OPS, muntinLines, muntinOutline, 
  *
  * - Skiss: karmens kontur och delningen.
  * - Normal: karm, poster, bågar, blad, glas och öppningssymbolen.
- * - Detalj: dessutom handtag, foder och fönsterbleck (mer i 0.11.8.1).
+ * - Detalj: dessutom foder, bleck med droppnäsa, fönsterbänk och beslag
+ *   (handtag, gångjärnens markering, dörrstängare, brevinkast; 0.11.8.2).
  *
  * Kropparna ritas utan egna kantlinjer; kanterna levereras här, med vilken
  * sorts linje de är, så att fasaden kan ge dem rätt tjocklek. Karmens delar
@@ -20,10 +21,6 @@ import { hasSash, layoutLeaf, leafGridOf, LEAF_OPS, muntinLines, muntinOutline, 
 export type Level = 'sketch' | 'normal' | 'detail';
 
 type P3 = [number, number, number];
-
-/** Fodrets bredd och tjocklek, mm. */
-export const LINING = 70;
-const LINING_T = 15;
 
 class Builder {
   readonly solids: Solid[] = [];
@@ -110,24 +107,28 @@ class Builder {
   }
 }
 
-/** Fodret runt hålet på väggens båda liv. */
-function linings(b: Builder, h1: number, h2: number, zTop: number, zBottom: number | null, level: Level): void {
+/**
+ * Fodret på väggens liv på sidan `side` (1 eller −1), runt hålet h1–h2 upp
+ * till `zTop`. Med `bottomPiece` går fodret runt hela hålet (under `zLow`),
+ * annars är det ett upp- och nedvänt U som börjar vid `zLow` (dörrar, och
+ * fönster där bänken eller blecket tar underdelen).
+ */
+function lining(b: Builder, side: 1 | -1, h1: number, h2: number, zTop: number, zLow: number, bottomPiece: boolean, w: number, T: number, level: Level): void {
   const f = b.f;
-  for (const side of [1, -1]) {
-    const o0 = side * f.half;
-    const o1 = side * (f.half + LINING_T);
-    const w = LINING;
-    const top = zTop + w;
-    const bottom = zBottom === null ? 0 : zBottom - w;
-    b.box('frame', h1 - w, h1, o0, o1, bottom, top);
-    b.box('frame', h2, h2 + w, o0, o1, bottom, top);
-    b.box('frame', h1, h2, o0, o1, zTop, top);
-    if (zBottom !== null) b.box('frame', h1, h2, o0, o1, bottom, zBottom);
-    const open = zBottom === null;
-    b.ring('lining', h1 - w, h2 + w, bottom, top, w, o1, open);
-    b.depth('lining', open ? [[h1 - w, top], [h2 + w, top], [h1 - w, 0], [h2 + w, 0]] : [[h1 - w, top], [h2 + w, top], [h1 - w, bottom], [h2 + w, bottom]], o0, o1);
-    if (level === 'detail') b.joints(h1 - w, h2 + w, bottom, top, w, o1, 'mitre', open);
-  }
+  if (w <= 0 || T <= 0) return;
+  const o0 = side * f.half;
+  const o1 = side * (f.half + T);
+  const [oa, ob] = [Math.min(o0, o1), Math.max(o0, o1)];
+  const top = zTop + w;
+  const bottom = bottomPiece ? zLow - w : zLow;
+  b.box('frame', h1 - w, h1, oa, ob, bottom, top);
+  b.box('frame', h2, h2 + w, oa, ob, bottom, top);
+  b.box('frame', h1, h2, oa, ob, zTop, top);
+  if (bottomPiece) b.box('frame', h1, h2, oa, ob, bottom, zLow);
+  const open = !bottomPiece;
+  b.ring('lining', h1 - w, h2 + w, bottom, top, w, o1, open);
+  b.depth('lining', [[h1 - w, top], [h2 + w, top], [h1 - w, bottom], [h2 + w, bottom]], o0, o1);
+  if (level === 'detail') b.joints(h1 - w, h2 + w, bottom, top, w, o1, 'mitre', open);
 }
 
 export interface OpeningGeom {
@@ -252,11 +253,13 @@ export function openingModel3d(id: string, g: OpeningGeom, level: Level): Shape3
         for (const fl of layoutLeaf(grid, r).fills) {
           rectU('leaf', fl.rect, o);
           if (fl.glass) glassMarkU(b, g, fl.rect, o);
+          // Spegelns profil (0.11.8.2): en fas 15 mm innanför kanten, i Detalj.
+          else if (level === 'detail' && fl.rect.u1 - fl.rect.u0 > 60 && fl.rect.z1 - fl.rect.z0 > 60) rectU('leaf', { u0: fl.rect.u0 + 15, u1: fl.rect.u1 - 15, z0: fl.rect.z0 + 15, z1: fl.rect.z1 - 15 }, o);
         }
       }
-      if (level === 'detail' && c.op === 'leaf') handle(b, g, c, leafFace, back);
+      if (level === 'detail') leafHardware(b, g, c, leafFace, back);
     } else if (c.fill === 'panel') {
-      box('door', r, mid - 15, mid + 15);
+      box('door', r, mid - 15, mid + 15, c.material && g.mat ? g.mat(c.material) : {});
       for (const o of [mid - 15, mid + 15]) rectU('leaf', r, o);
     } else if (hasSash(c)) {
       const sd = Math.min(m.sashDepth, g.hi - g.lo);
@@ -275,6 +278,7 @@ export function openingModel3d(id: string, g: OpeningGeom, level: Level): Shape3
       }
       for (const o of [mid - 6, mid + 6]) glassMarkU(b, g, inner, o);
       muntins(c, inner);
+      if (level === 'detail') sashHardware(b, g, c, w, g.vf === 1 ? so0 : so1, g.vf === 1 ? so1 : so0);
     } else {
       box('glass', r, mid - 6, mid + 6);
       for (const o of [mid - 6, mid + 6]) glassMarkU(b, g, r, o);
@@ -287,18 +291,7 @@ export function openingModel3d(id: string, g: OpeningGeom, level: Level): Shape3
     }
   }
 
-  if (level === 'detail') {
-    const door = g.model.kind === 'door' || g.layout.frame.length < 4;
-    linings(b, g.h1, g.h2, g.holeTop, door ? null : g.holeBottom, level);
-    // Fönsterbleck av plåt på utsidan.
-    if (!door && g.outside !== 0) {
-      const side = g.outside;
-      const o0 = side * g.f.half;
-      const o1 = side * (g.f.half + 60);
-      b.box('frame', g.h1 - LINING - 20, g.h2 + LINING + 20, Math.min(o0, o1), Math.max(o0, o1), g.holeBottom - LINING - 25, g.holeBottom - LINING);
-      b.rect('sill', g.h1 - LINING - 20, g.h2 + LINING + 20, g.holeBottom - LINING - 25, g.holeBottom - LINING, o1);
-    }
-  }
+  if (level === 'detail') trimAndHardware(b, g);
   return b.done();
 }
 
@@ -309,18 +302,121 @@ function glassMarkU(b: Builder, g: OpeningGeom, r: Rect, o: number): void {
   b.glassMark(Math.min(a, c), Math.max(a, c), g.z0 + r.z0, g.z0 + r.z1, o);
 }
 
-/** Handtag på bladets båda sidor, på låssidan, 1 000 över golvet. */
-function handle(b: Builder, g: OpeningGeom, c: LaidCell, face: number, back: number): void {
+/** Ett litet rätblock med kanterna (beslag): u0–u1 längs karmen, z0–z1, från `o` ut till `o1`. */
+function fitting(b: Builder, g: OpeningGeom, u0: number, u1: number, z0: number, z1: number, o: number, o1: number, solid = true): void {
+  const [a, e] = [Math.min(g.u(u0), g.u(u1)), Math.max(g.u(u0), g.u(u1))];
+  if (solid) b.box('frame', a, e, Math.min(o, o1), Math.max(o, o1), z0, z1);
+  b.rect('handle', a, e, z0, z1, o1);
+}
+
+/**
+ * Dörrbladets beslag (0.11.8.2): handtaget på låssidan på bladets båda
+ * sidor (trycke eller draghandtag, typens höjd), gångjärnen som markering
+ * på slagsidan (två, 100 från över- och underkant), dörrstängaren överst på
+ * slagsidan och brevinkastet mitt på bladet.
+ */
+function leafHardware(b: Builder, g: OpeningGeom, c: LaidCell, face: number, back: number): void {
+  const hw = hardwareOf(g.model);
   const r = c.rect;
-  const right = c.hinge !== 'right';
-  const u = right ? r.u1 - 70 : r.u0 + 70;
-  const u2 = right ? u - 130 : u + 130;
-  const [a, e] = [Math.min(g.u(u), g.u(u2)), Math.max(g.u(u), g.u(u2))];
-  for (const o of [face, back]) {
-    const out = o === face ? g.swing : -g.swing;
-    const o1 = o + out * 55;
-    b.box('frame', a, e, Math.min(o, o1), Math.max(o, o1), 1000, 1020);
-    b.rect('handle', a, e, 1000, 1020, o1);
+  const hinged = c.op === 'leaf' || c.op === 'foldLeaf';
+  const hingeLeft = c.hinge !== 'right';
+  const hingeU = hingeLeft ? r.u0 : r.u1;
+  const dir = hingeLeft ? 1 : -1;
+  const out = (o: number) => (o === face ? g.swing : -g.swing);
+  const Z = (z: number) => g.z0 + z;
+  if (hw.handle !== 'none' && (hinged || c.op === 'slideLeaf' || c.op === 'pocket')) {
+    const lock = hinged ? (hingeLeft ? r.u1 : r.u0) : hingeLeft ? r.u1 : r.u0;
+    const u = lock - dir * 70;
+    for (const o of [face, back]) {
+      if (hw.handle === 'pull') fitting(b, g, u - 12, u + 12, hw.handleHeight - 150, hw.handleHeight + 150, o, o + out(o) * 60);
+      else fitting(b, g, u, u - dir * 130, hw.handleHeight, hw.handleHeight + 20, o, o + out(o) * 55);
+    }
+  }
+  if (hw.hinges && hinged && r.z1 - r.z0 > 500)
+    for (const [z0, z1] of [[r.z1 - 180, r.z1 - 100], [r.z0 + 100, r.z0 + 180]]) fitting(b, g, hingeU - 8, hingeU + 8, Z(z0), Z(z1), face, face + g.swing * 4, false);
+  if (hw.closer && hinged) fitting(b, g, hingeU + dir * 60, hingeU + dir * 340, Z(r.z1 - 85), Z(r.z1 - 30), face, face + g.swing * 50);
+  if (hw.letterbox && r.u1 - r.u0 > 400) {
+    const m = (r.u0 + r.u1) / 2;
+    for (const o of [face, back]) fitting(b, g, m - 150, m + 150, 850 - 22, 850 + 22, o, o + out(o) * 3, false);
+  }
+}
+
+/**
+ * En fönsterbåges beslag (0.11.8.2): handtaget inne på låssidan, mitt på
+ * höjden (sidohängda, dreh-kipp, skjut), nertill (överkantshängda, pivå)
+ * eller upptill (underkantshängda); gångjärnen som markering på den sida
+ * bågen öppnas mot.
+ */
+function sashHardware(b: Builder, g: OpeningGeom, c: LaidCell, w: number, inner: number, outer: number): void {
+  const hw = hardwareOf(g.model);
+  const r = c.rect;
+  const Z = (z: number) => g.z0 + z;
+  const inside = -g.vf;
+  const midU = (r.u0 + r.u1) / 2;
+  const midZ = (r.z0 + r.z1) / 2;
+  const hingeLeft = c.hinge !== 'right';
+  if (hw.handle !== 'none') {
+    const o1 = inner + inside * 40;
+    if (c.op === 'side' || c.op === 'tiltturn' || c.op === 'slide' || c.op === 'pivotV') {
+      const u = c.op === 'pivotV' ? r.u1 - w / 2 : hingeLeft ? r.u1 - w / 2 : r.u0 + w / 2;
+      fitting(b, g, u - 12, u + 12, Z(midZ - 60), Z(midZ + 60), inner, o1);
+    } else if (c.op === 'top' || c.op === 'pivotH' || c.op === 'bottom') {
+      const z = c.op === 'bottom' ? r.z1 - w / 2 : r.z0 + w / 2;
+      fitting(b, g, midU - 60, midU + 60, Z(z - 12), Z(z + 12), inner, o1);
+    }
+  }
+  if (hw.hinges && (c.op === 'side' || c.op === 'tiltturn') && r.z1 - r.z0 > 400) {
+    const face = c.inward ? inner : outer;
+    const u = hingeLeft ? r.u0 : r.u1;
+    for (const [z0, z1] of [[r.z1 - 180, r.z1 - 100], [r.z0 + 100, r.z0 + 180]]) fitting(b, g, u - 6, u + 6, Z(z0), Z(z1), face, face + (c.inward ? inside : g.vf) * 3, false);
+  }
+}
+
+/**
+ * Foder, bleck och fönsterbänk i Detalj (0.11.8.2, ur typen). Fodret på de
+ * sidor typen säger; i ytterväggar blecket med droppnäsa ute och bänken
+ * inne, som då tar fodrets underdel på sin sida. Det som står på golvet
+ * (dörrar, fönsterdörren) har fodret som ett U.
+ */
+function trimAndHardware(b: Builder, g: OpeningGeom): void {
+  const m = g.model;
+  const t = trimOf(m);
+  const f = g.f;
+  const floor = standsOnFloor(m);
+  const outSide = (g.outside !== 0 ? g.outside : g.vf) as 1 | -1;
+  const lined = (s: 1 | -1) => t.lining.sides === 'both' || (t.lining.sides === 'out' && s === outSide) || (t.lining.sides === 'in' && s === -outSide);
+  const w = t.lining.width;
+  const flashing = !floor && g.outside !== 0 ? t.flashing : null;
+  const board = !floor && g.outside !== 0 ? t.board : null;
+  for (const s of [1, -1] as const) {
+    const flashHere = !!flashing && s === g.outside;
+    const boardHere = !!board && s === -g.outside;
+    if (!lined(s)) continue;
+    const zLow = floor ? 0 : flashHere || boardHere ? g.z0 : g.holeBottom;
+    lining(b, s, g.h1, g.h2, g.holeTop, zLow, !floor && !flashHere && !boardHere, w, t.lining.thickness, 'detail');
+  }
+  // Blecket: en plåt från karmens utsida förbi väggens liv, med droppnäsan nedåt längst ut.
+  if (flashing) {
+    const s = g.outside as 1 | -1;
+    const karm = s === 1 ? g.hi : g.lo;
+    const tip = s * (f.half + flashing.overhang);
+    const ext = (lined(s) ? w : 0) + 10;
+    const [s0, s1] = [g.h1 - ext, g.h2 + ext];
+    b.box('frame', s0, s1, Math.min(karm, tip), Math.max(karm, tip), g.z0 - 2, g.z0);
+    if (flashing.drip > 0) b.box('frame', s0, s1, Math.min(tip, tip - s * 2), Math.max(tip, tip - s * 2), g.z0 - flashing.drip, g.z0);
+    b.rect('sill', s0, s1, g.z0 - Math.max(2, flashing.drip), g.z0, tip);
+    b.depth('sill', [[s0, g.z0], [s1, g.z0]], karm, tip);
+  }
+  // Bänken: från karmens insida förbi väggens liv, 20 mm förbi fodret i ändarna.
+  if (board) {
+    const s = -g.outside as 1 | -1;
+    const karm = s === 1 ? g.hi : g.lo;
+    const tip = s * (f.half + board.overhang);
+    const ext = (lined(s) ? w : 0) + 20;
+    const [s0, s1] = [g.h1 - ext, g.h2 + ext];
+    b.box('frame', s0, s1, Math.min(karm, tip), Math.max(karm, tip), g.z0 - board.thickness, g.z0);
+    b.rect('board', s0, s1, g.z0 - board.thickness, g.z0, tip);
+    b.depth('board', [[s0, g.z0], [s1, g.z0], [s0, g.z0 - board.thickness], [s1, g.z0 - board.thickness]], karm, tip);
   }
 }
 

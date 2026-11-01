@@ -6,10 +6,41 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 1 november 2026, efter 0.11.8.1.
+README. Senast: 1 november 2026, efter 0.11.8.2.
 
 ## Läget
 
+- **0.11.8.2 Dörrar och fönster: Detalj och beslag är klar** (samma
+  format, 28; valfria fält `trim`, `hardware` och luftens `material` i
+  typen, stilbokens `scheduleFields`, Allmänts `accessCircle`), byggd i en
+  session (Carl August: "Kör 0.11.8.2", med svaren A–E om 0.11.8.1):
+  foder, bleck med droppnäsa, fönsterbänk, tröskel, beslag, spegelns
+  profil, panel med material, spröjs i planen och med skrivna mått,
+  varningarna, tillgänglighetscirkeln; fönstrens slagbågar släckta från
+  början (A); fältmallen i stilboken › Typer › *Uppställningens fält*,
+  sökbar med taggar, med smarttext och *Bara egna* (E). Testerna: 925 på
+  ca 18 s (referensritningarna omskrivna). Provat i Playwright mot
+  `dist/` (planen och fasaden i Detalj, sektionen, editorn med foder,
+  beslag och spröjsens mått, fältmallen med sökning, varningarna i
+  egenskaperna). Koden i UTVECKLING.md, Claudes val och det som inte
+  gjordes i PLAN.md.
+- **Föreskrifterna** (Claude 1 november): tillgänglighet är **BFS
+  2024:12**, inte 2024:9 (som är säkerhet vid användning: räcken, glas,
+  utfallsskydd); utrymning BFS 2024:7. Varningarna i 0.11.8.2 hänvisar
+  dit men säger *avviker från praxis*, eftersom siffrorna inte är
+  uppslagna i föreskrifterna. Fråga Carl August om han vill att de slås
+  upp (han kan ladda upp föreskrifterna).
+- **Märks i hans ritningar efter 0.11.8.2:** i Detalj får fönster och
+  dörrar foder i planen, fönster i ytterväggar bleck och fönsterbänk,
+  dörrar med tröskel tröskeln; i fasaden fodret som U på bleck och
+  bänk, gångjärnens markering, handtagen inne; fönstrens slagbågar i
+  planen syns inte längre (tänds under Visa). Nya förvalda innerdörrar
+  har karmen 40 (förut 50); typer i projektet ändras inte. Nytt: editorns
+  *Foder, bleck och bänk* och *Beslag*, *+ Lodrät*/*+ Vågrät* och måtten
+  under Special, panelens material, varningarna, Allmänt ›
+  *Tillgänglighetscirkel*, *Visa › Tillgänglighetscirkel vid dörrar*,
+  Typer › *Uppställningens fält*, nya ställen (dörr: foder, tröskel,
+  tillgänglighetscirkel; fönster: foder, bleck, fönsterbänk, spröjs).
 - **0.11.8.1 Dörrar och fönster: synpunkterna på mockupen är klar** (samma
   format, 28; valfria fält `muntins`, `leafGrid`, `frameLess` i typen,
   `params.fields` på objekten), byggd i en session (Carl August: "Arbeta
@@ -58,86 +89,19 @@ README. Senast: 1 november 2026, efter 0.11.8.1.
   öppningssymbolen i fasaden. Nytt: *Fönster och dörrar* under stilboken
   › Typer, *Fönster och dörrar* under Allmänt, verktygsraden, smartmenyns
   val och egenskapernas avsnitt.
-- **0.11.7.3 Trappan och räcket, det som inte hanns med är klar** (samma
-  format, 27; valfria fält `outdoor`, `contrastMaterial` och `pattern`),
-  byggd i en session (Carl August: "Kör saker som inte hunnits med i
-  PLAN.md som ny version 0.11.7.3"; Claude valde A–E, F är ett fel som
-  provningen hittade): utomhustrappan (300 mm), kontrastremsans material,
-  trappans littera i planen (TR01), ändprofilen med vridningen kring
-  ankaret, ytor med mönster (spaljéns ribbor och nätet i 3D), och
-  staketens förvalda typer i kommandoraden. Testerna: 889 på ca 18 s.
-  Provat i Playwright mot `dist/` (trappans littera och Utomhus i panelen,
-  `SP01` i kommandoraden och spaljén i 3D). Koden i UTVECKLING.md, Claudes
-  val och det som inte gjordes i PLAN.md.
-- **0.11.7.2 Räckets avslut och spiraltrappan är klar** (samma format,
-  27; valfritt fält `spiral.pole`), byggd i en session (Carl August: "Kör
-  saker som inte hunnits med i PLAN.md som ny version 0.11.7.2"; Claude
-  valde A–D): räckets avslut *Böjd nedåt* och *Mot vägg* ritade (3D,
-  planen, sidovyn), spiraltrappans varning för fri höjd under nästa varv,
-  mittpelarens material och stegnumren under *Visa › Modell*. Testerna: 882
-  på ca 21 s. Provat i Playwright mot `dist/` (spiraltrappa 540° med
-  varningen och mittpelaren i tegel i panelen). Koden i UTVECKLING.md,
-  Claudes val och det som inte gjordes i PLAN.md.
-- **0.11.7.1 Profilen, det som inte hanns med är klar** (samma format,
-  27), byggd i en session (Carl August: "Kör saker som inte hunnits med i
-  PLAN.md som ny version 0.11.7.1"; Claude valde A–F ur profilens
-  *Inte gjort*): typen i kommandoraden (`PROFIL PR03`, `RÄCKE RÄ02`, eller
-  bara litteran i verktyget), smartspöt för profilen (längs sidan, Tab
-  hela konturen, *Pelare i hörnet*), *Hör till* i panelen, profilens
-  littera och delprofilernas inre linjer i planen, typerna i stilbokens
-  export, import och mall, och profildelarna sedda från sidan i
-  räckestypeditorn. Testerna: 877 på ca 18 s. Provat i Playwright mot
-  `dist/` (kommandoraden, smartspöt längs en vägg och i en smyg, Hör till,
-  litteran i planen). Koden i UTVECKLING.md, Claudes val och det som inte
-  gjordes i PLAN.md.
-- **0.11.6 Profilen** (nytt format 27), **0.11.6.1 Profileditorn,
-  resten** och **0.11.7 Ändprofiler och profilen som del**: se PLAN.md och UTVECKLING.md.
+- **0.11.5–0.11.7.3** (spiraltrappan, profilen, ändprofilerna, räckets avslut, trappan och räcket): se PLAN.md, UTVECKLING.md och README, också för vad som märks i ritningarna.
 - **Granskningen efter 0.11.5** och **0.11.1–0.11.5** (räcket, editorn,
   staket och grindar, byggd trappa, spiraltrappan): se PLAN.md och
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.11.8.1 pushad till `main` 1 november (se git och `gh run
+- **Publicerad:** 0.11.8.2 pushad till `main` 1 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Märks i hans ritningar efter 0.11.7.3:** trapporna får littera i
-  planen (TR01 …, utom i Skiss; *Visa › Littera › Trappor*), och trappor på
-  Platsen varnar för stegdjup under 300 mm. Nytt: *Utomhus* och
-  *Littera* i trappans egenskaper, *Material* för kontrastmarkeringen,
-  *Mönster* för ytor i räckestyperna (ST03 och SP01 som läggs in nu har
-  det; befintliga typer är släta tills mönstret väljs).
-- **Märks i hans ritningar efter 0.11.7.2:** ledstänger med avslutet
-  *Böjd nedåt* (RÄ01) eller *Mot vägg* (RÄ03) får dem i 3D, sektioner och
-  fasader (*Mot vägg* också i planen). Nytt: varningen för fri höjd i
-  spiraltrappor över ett varv, *Mittpelaren* i egenskaperna, *Visa ›
-  Modell › Stegnummer och trappans text*.
-- **Märks i hans ritningar efter 0.11.7.1:** profilobjekt med littera får
-  den i planen (utom i Skiss), och gesimser och andra profiler med flera
-  delprofiler får inre linjer i Normal och Detalj. Nytt: typen i
-  kommandoraden, smartspöt i Profil, *Hör till* i profilens egenskaper,
-  *Visa › Littera › Profiler*, typerna i stilbokens fil, sidovyerna i
-  räckestypeditorn.
-- **Märks i hans ritningar efter 0.11.7:** inget i befintliga ritningar
-  (projekt från 0.11.6 öppnas). Stilboken › Typer › *Ändprofiler*,
-  *Ändprofil* bland avsluten, fliken *Ändprofilen* i profileditorn,
-  *Profiltyper* i delarnas profillista och *Profil* för vangstycket.
-  PR06–PR08 och PA01 med *Lägg in förvalda typer*.
-- **Märks i hans ritningar efter 0.11.6.1:** inget i ritningarna (projekt
-  från 0.11.6 öppnas). I profileditorn verktygen *Förskjut*, *Runda hörn*
-  och *Mått*, *Läge* ovanför ritytan, *Mått* i typens struktur, fälten i
-  *Sträckt*; i profilens egenskaper nya varningar för avsluten.
-- **Märks i hans ritningar efter 0.11.6:** projekt och autospar från
-  0.11–0.11.5 öppnas inte (nytt format). Verktyget *Profil* under Rita,
-  *Typer…* i huvudmenyn, stilboken har flikar (resurserna är delade på
-  Stil och Typer), gruppen *Profiler* bland pennorna, och smartmenyn på en
-  väggs kant och hörn har *Profil längs kanten*, *Profil längs hela
-  konturen* och *Pelare här*.
-- **Märks i hans ritningar efter 0.11.5:** inget i befintliga ritningar.
-  *Spiral* i trappverktygets rad.
-- **Versionsnumret** är `0.11.8.1` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.11.8.2` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.11.8.1 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.11.8.2 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -177,7 +141,10 @@ README. Senast: 1 november 2026, efter 0.11.8.1.
   nya regler; BBR gäller inte längre för nya ansökningar) där det är
   föreskrift. Det som är vedertaget men inte står i föreskriften
   (räckeshöjder, stegdjup, stegformeln, bredd …) får texten *avviker från
-  praxis*. Gäller alla varningar i appen (gjort i 0.11.1).
+  praxis*. Gäller alla varningar i appen (gjort i 0.11.1). Rätt
+  föreskrift per ämne (0.11.8.2): säkerhet vid användning (räcken,
+  trappor, glas, utfallsskydd) BFS 2024:9, tillgänglighet BFS 2024:12,
+  utrymning BFS 2024:7.
 - **Versionsnamn:** inga b-versioner; nästa lediga nummer i stället.
 - **Bakåtkompatibilitet:** inga migreringar före formatfrysen. Höj
   `FORMAT_VERSION` när formatet ändras; äldre filer får ett meddelande
@@ -222,14 +189,10 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   som del~~, ~~0.11.7.1 Profilen, det som inte hanns med~~, ~~0.11.7.2 Räckets
   avslut och spiraltrappan~~, ~~0.11.7.3 Trappan och räcket, det som inte
   hanns med~~, ~~0.11.8 Dörrar och fönster: öppningstyperna~~, ~~0.11.8.1
-  Synpunkterna på mockupen~~ (klara;
+  Synpunkterna på mockupen~~, ~~0.11.8.2 Detalj och beslag~~ (klara;
   se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.11.8.2 Detalj och beslag** (mellanstor; beslag, bleck med
-  droppnäsa, foder, fönsterbänk, trösklar, varningarna,
-  tillgänglighetscirkeln; gärna det som inte hanns med i 0.11.8 och
-  0.11.8.1)
 - **0.11.8.3 Smart och vägghål** (mellanstor; fasaden som arbetsyta,
   linjering, lika avstånd, dagsljus, vägghålen med verktyg och typer)
 - **Granskning efter 0.11.8**: stilmallsstegen i klickjämförelsen
@@ -250,8 +213,8 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
 skrivrätt till repot ("push godkänd"). Fråga Carl August om han provat
-0.11.8 och 0.11.8.1 och ställ frågorna om dem (nedan) först, högst fem åt
-gången. Nästa version är **0.11.8.2 Detalj och beslag** (mellanstor; se
+0.11.8–0.11.8.2 och ställ frågorna om dem (nedan) först, högst fem åt
+gången. Nästa version är **0.11.8.3 Smart och vägghål** (mellanstor; se
 PLAN.md och utredningen i projektet). Ställ frågorna om 0.11.7.3–0.11 när han
 provat.
 
@@ -260,23 +223,33 @@ provat.
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.8.1, 0.11.8, 0.11.7.3,
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.8.2, 0.11.8, 0.11.7.3,
 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4, 0.11.3,
 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
 
-**0.11.8.1 efter provning** (Claudes val, se PLAN.md)
-- Fönstrens slag i planen är heldragna (förut streckad båge), 15°.
-  Rätt, eller ska bågen vara streckad som förval?
-- Spröjsen är 28 mm (löstagbar, fast) och 26 (mellan glasen), som
-  lister på glasets båda sidor i 3D. Rimliga förval?
-- *Special*: punkterna snäpper till kanter, mitten, tredjedelar och
-  fjärdedelar. Räcker det, eller behövs ett skrivet mått?
-- Dörrbladets fyllningar är 16 mm skivor i mitten av bladet (glas 12).
-  Ska en spegel också få en profil (fas eller list) i Detalj?
-- Fältmallen ändras under stilboken › Allmänt, men den hör till
-  projektet (inte stilboken), så den följer inte med *Exportera…* och
-  *Mall för nya projekt…*. Ska den det?
+**0.11.8.2 efter provning** (Claudes val, se PLAN.md)
+- Bleck med utsprång 40 och droppnäsa 20, fönsterbänk 22 mm med utsprång
+  20 (överkanten i karmens underkant), foder 70 × 15 på båda sidor.
+  Rimliga förval? Ska fodret och bänken få material (nu som karmen)?
+- Beslagen ritas i fasad, sektion och 3D, inte i planen. Behövs
+  handtaget eller dörrstängaren i planen (Detalj)?
+- Fri passage räknas ur geometrin (bladets luft minus bladet), och
+  varnar under 760 (800 för ytterdörrar och huvudentrén). Alla dörrar
+  varnar, inte bara entréplanets. Räcker det, eller behövs ett kryss
+  *Tillgänglig* per dörr?
+- Tillgänglighetscirkeln står på dörrens båda sidor, mitt för dörren och
+  tangerande väggen. Rätt, eller bara på slagsidan, eller flyttbar?
+- Varningarna hänvisar till BFS 2024:12 (tillgänglighet), 2024:9 och
+  2024:7 men säger *avviker från praxis*: siffrorna är inte uppslagna.
+  Vill du ladda upp föreskrifterna så att de slås upp?
+
+**Besvarade 1 november, 0.11.8.1 (A–E):** A fönstrens slagbågar ska inte
+synas som förval (gjort i 0.11.8.2); B spröjsens förval står; C skrivet
+mått för Special (gjort); D spegelns profil (gjort); E fältmallen i en
+egen flik i stilboken, sökbar med taggar som pennorna, med smarttext, och
+alla fält med i exporten, med ett filter för de egna (gjort, Typer ›
+Uppställningens fält).
 
 **0.11.8 efter provning** (Claudes val, se PLAN.md; drevmånen besvarad 1
 november: hålet + 10, karmen − 10, gjort i 0.11.8.1)

@@ -101,28 +101,28 @@ linje 13651,1505 13651,2055 [w0.13 ink] @f-rv-23/swing
 linje 2505,2090 2505,0.1 [w0.25 ink] @d-rv-6/frame
 linje 7395,900.1 7395,910 [w0.25 ink] @d-rv-8/frame
 linje 6955,2090 6945.1,2090 [w0.25 ink] @d-rv-8/frame
-linje 7345,900.1 7345,910 [w0.25 ink] @d-rv-8/frame
-linje 6955,2040 6945.1,2040 [w0.25 ink] @d-rv-8/frame
-linje 7259.8,910 7252.1,900.1 [w0.13 ink d3/1.5] @d-rv-8/swingFar
-linje 6955,1523.6 6945.1,1536.4 [w0.13 ink d3/1.5] @d-rv-8/swingFar
+linje 7355,900.1 7355,910 [w0.25 ink] @d-rv-8/frame
+linje 6955,2050 6945.1,2050 [w0.25 ink] @d-rv-8/frame
+linje 7264.1,910 7256.3,900.1 [w0.13 ink d3/1.5] @d-rv-8/swingFar
+linje 6955,1531.2 6945.1,1543.8 [w0.13 ink d3/1.5] @d-rv-8/swingFar
 linje 11395,900.1 11395,910 [w0.25 ink] @d-rv-10/frame
 linje 10955,2090 10945.1,2090 [w0.25 ink] @d-rv-10/frame
-linje 11345,900.1 11345,910 [w0.25 ink] @d-rv-10/frame
-linje 10955,2040 10945.1,2040 [w0.25 ink] @d-rv-10/frame
-linje 11259.8,910 11252.1,900.1 [w0.13 ink d3/1.5] @d-rv-10/swingFar
-linje 10955,1523.6 10945.1,1536.4 [w0.13 ink d3/1.5] @d-rv-10/swingFar
+linje 11355,900.1 11355,910 [w0.25 ink] @d-rv-10/frame
+linje 10955,2050 10945.1,2050 [w0.25 ink] @d-rv-10/frame
+linje 11264.1,910 11256.3,900.1 [w0.13 ink d3/1.5] @d-rv-10/swingFar
+linje 10955,1531.2 10945.1,1543.8 [w0.13 ink d3/1.5] @d-rv-10/swingFar
 linje 2505,2090 2505,0.1 [w0.25 ink] @d-rv-12/frame
 linje 2505,0 3395,0 [w0.25 ink] @entre/frame
 linje 3395,0 3395,2090 [w0.25 ink] @entre/frame
 linje 3395,2090 2505,2090 [w0.25 ink] @entre/frame
 linje 2505,2090 2505,0 [w0.25 ink] @entre/frame
-linje 2555,0 3345,0 [w0.25 ink] @entre/frame
-linje 3345,0 3345,2040 [w0.25 ink] @entre/frame
-linje 3345,2040 2555,2040 [w0.25 ink] @entre/frame
-linje 2555,2040 2555,0 [w0.25 ink] @entre/frame
-linje 2555.1,0 3344.9,0 [w0.25 ink] @entre/leaf
-linje 3345,1020 2555,0 [w0.13 ink d3/1.5] @entre/swingFar
-linje 3345,1020 2555,2040 [w0.13 ink d3/1.5] @entre/swingFar
+linje 2545,0 3355,0 [w0.25 ink] @entre/frame
+linje 3355,0 3355,2050 [w0.25 ink] @entre/frame
+linje 3355,2050 2545,2050 [w0.25 ink] @entre/frame
+linje 2545,2050 2545,0 [w0.25 ink] @entre/frame
+linje 2545.1,0 3354.9,0 [w0.25 ink] @entre/leaf
+linje 3355,1025 2545,0 [w0.13 ink d3/1.5] @entre/swingFar
+linje 3355,1025 2545,2050 [w0.13 ink d3/1.5] @entre/swingFar
 linje 2495.1,0 2504.9,0 [w0.18 ink] @r-0-0/vy
 linje 3395.1,0 3405,0 [w0.18 ink] @r-0-0/vy
 linje 1650,-30 5390,-30 [w0.18 ink] @r-0-0/vy

@@ -30,20 +30,20 @@ linje 3005,400 3005,0 [w0.25 ink] @d01/sida
 linje 1995,400 1995,0 [w0.25 ink] @d01/sida
 text "D1101" 1942,-320 h2 start [w0.18] @d01/littera
 text "1010×2110" 1942,-610 h2 start [w0.18] @d01/littera
-linje 5060,2605 5455,3289.2 [w0.18 ink] @d02/dörrblad
-båge 5060,2605 r790 60°–90° [w0.13 ink] @d02/slagbåge
+linje 5060,2595 5465,3296.5 [w0.18 ink] @d02/dörrblad
+båge 5060,2595 r810 60°–90° [w0.13 ink] @d02/slagbåge
 linje 5060,2545 4940,2545 [w0.25 ink] @d02/sida
 linje 5060,3455 4940,3455 [w0.25 ink] @d02/sida
 text "D1104" 4530,2504 h2 90° start [w0.18] @d02/littera
 text "910×2110" 4820,2504 h2 90° start [w0.18] @d02/littera
-linje 5060,5405 5455,6089.2 [w0.18 ink] @d03/dörrblad
-båge 5060,5405 r790 60°–90° [w0.13 ink] @d03/slagbåge
+linje 5060,5395 5465,6096.5 [w0.18 ink] @d03/dörrblad
+båge 5060,5395 r810 60°–90° [w0.13 ink] @d03/slagbåge
 linje 5060,5345 4940,5345 [w0.25 ink] @d03/sida
 linje 5060,6255 4940,6255 [w0.25 ink] @d03/sida
 text "D1102" 4530,5304 h2 90° start [w0.18] @d03/littera
 text "910×2110" 4820,5304 h2 90° start [w0.18] @d03/littera
-linje 9705,3940 10389.2,3545 [w0.18 ink] @d04/dörrblad
-båge 9705,3940 r790 -30°–0° [w0.13 ink] @d04/slagbåge
+linje 9695,3940 10396.5,3535 [w0.18 ink] @d04/dörrblad
+båge 9695,3940 r810 -30°–0° [w0.13 ink] @d04/slagbåge
 linje 9645,3940 9645,4060 [w0.25 ink] @d04/sida
 linje 10555,3940 10555,4060 [w0.25 ink] @d04/sida
 text "D1103" 9604,4470 h2 start [w0.18] @d04/littera
@@ -51,10 +51,6 @@ text "910×2110" 9604,4180 h2 start [w0.18] @d04/littera
 linje 7355,400 7355,0 [w0.25 ink] @f01/sida
 linje 6145,400 6145,0 [w0.25 ink] @f01/sida
 linje 7355,200 6145,200 [w0.18 ink] @f01/glas
-linje 7300,0 6768.7,-142.4 [w0.13 ink] @f01/slagbåge
-båge 7300,0 r550 180°–-165° [w0.13 ink] @f01/slagbåge
-linje 6200,0 6731.3,-142.4 [w0.13 ink] @f01/slagbåge
-båge 6200,0 r550 -15°–0° [w0.13 ink] @f01/slagbåge
 linje 7355,400 6145,400 [w0.13 ink] @yv-s/under
 linje 7355,0 6145,0 [w0.13 ink] @yv-s/under
 text "F03" 6192,810 h2 start [w0.18] @f01/littera
@@ -67,10 +63,6 @@ text "610×610" 9666,520 h2 start [w0.18] @f02/littera
 linje 11600,6405 12000,6405 [w0.25 ink] @f03/sida
 linje 11600,5195 12000,5195 [w0.25 ink] @f03/sida
 linje 11800,6405 11800,5195 [w0.18 ink] @f03/glas
-linje 12000,6350 12142.4,5818.7 [w0.13 ink] @f03/slagbåge
-båge 12000,6350 r550 -90°–-75° [w0.13 ink] @f03/slagbåge
-linje 12000,5250 12142.4,5781.3 [w0.13 ink] @f03/slagbåge
-båge 12000,5250 r550 75°–90° [w0.13 ink] @f03/slagbåge
 linje 11600,6405 11600,5195 [w0.13 ink] @yv-o/under
 linje 12000,6405 12000,5195 [w0.13 ink] @yv-o/under
 text "F03" 11190,5242 h2 90° start [w0.18] @f03/littera
@@ -78,10 +70,6 @@ text "1210×1310" 11480,5242 h2 90° start [w0.18] @f03/littera
 linje 7545,7600 7545,8000 [w0.25 ink] @f04/sida
 linje 9055,7600 9055,8000 [w0.25 ink] @f04/sida
 linje 7545,7800 9055,7800 [w0.18 ink] @f04/glas
-linje 7600,8000 8276.1,8181.2 [w0.13 ink] @f04/slagbåge
-båge 7600,8000 r700 0°–15° [w0.13 ink] @f04/slagbåge
-linje 9000,8000 8323.9,8181.2 [w0.13 ink] @f04/slagbåge
-båge 9000,8000 r700 165°–180° [w0.13 ink] @f04/slagbåge
 linje 7545,7600 9055,7600 [w0.13 ink] @yv-n/under
 linje 7545,8000 9055,8000 [w0.13 ink] @yv-n/under
 text "F01" 7742,7280 h2 start [w0.18] @f04/littera
@@ -96,10 +84,6 @@ text "2410×1310" 2142,6990 h2 start [w0.18] @f05/littera
 linje 400,2395 0,2395 [w0.25 ink] @f06/sida
 linje 400,3605 0,3605 [w0.25 ink] @f06/sida
 linje 200,2395 200,3605 [w0.18 ink] @f06/glas
-linje 0,2450 -142.4,2981.3 [w0.13 ink] @f06/slagbåge
-båge 0,2450 r550 90°–105° [w0.13 ink] @f06/slagbåge
-linje 0,3550 -142.4,3018.7 [w0.13 ink] @f06/slagbåge
-båge 0,3550 r550 -105°–-90° [w0.13 ink] @f06/slagbåge
 linje 400,2395 400,3605 [w0.13 ink] @yv-v/under
 linje 0,2395 0,3605 [w0.13 ink] @yv-v/under
 text "F03" 720,2442 h2 90° start [w0.18] @f06/littera

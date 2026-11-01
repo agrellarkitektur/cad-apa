@@ -13,7 +13,16 @@ import type { Element, Id, ProjectDoc } from './model';
  * Fälten som räknas fram (littera, antal, mått …), kommer ur typen
  * (hängning, öppningssätt, poster, spröjs …) eller ur objektets läge
  * (bröstningshöjd …) är inga egna fält; resten är det.
+ *
+ * Mallen bor i stilboken sedan 0.11.8.2 (`graphics.scheduleFields`), så att
+ * den följer med stilbokens export och mall, och ändras under stilboken ›
+ * Typer › Uppställningens fält, sökbar med taggar som pennorna. Ett projekt
+ * från 0.11.8.1 har den i `project.openingSchedule.fields`; den läses tills
+ * mallen ändras. Fälten är smarttext i litteramallarna: `{U-värde}` eller
+ * `{fält:U-värde}`.
  */
+
+type DocLike = Pick<ProjectDoc, 'project' | 'graphics'>;
 
 export type ScheduleKind = 'Window' | 'Door';
 
@@ -39,14 +48,54 @@ export const DERIVED_FIELDS: ReadonlySet<string> = new Set([
 
 export const scheduleKindOf = (type: string): ScheduleKind | null => (type === 'Window' || type === 'Door' ? type : null);
 
-/** Fältmallen för en sort: projektets, eller förvalet. */
-export function scheduleFields(doc: Pick<ProjectDoc, 'project'>, kind: ScheduleKind): string[] {
-  const own = doc.project.openingSchedule?.fields?.[kind];
+/** Fältmallen för en sort: stilbokens, ett äldre projekts (0.11.8.1), eller förvalet. */
+export function scheduleFields(doc: DocLike, kind: ScheduleKind): string[] {
+  const own = doc.graphics?.scheduleFields?.[kind] ?? doc.project.openingSchedule?.fields?.[kind];
   return Array.isArray(own) ? own.filter((f) => typeof f === 'string' && f.trim()) : [...DEFAULT_SCHEDULE_FIELDS[kind]];
 }
 
+/** Om mallen för en sort är ändrad (inte förteckningens förval). */
+export const scheduleChanged = (doc: DocLike, kind: ScheduleKind): boolean => !!(doc.graphics?.scheduleFields?.[kind] ?? doc.project.openingSchedule?.fields?.[kind]);
+
 /** Fälten i mallen som fylls i per objekt. */
-export const ownFields = (doc: Pick<ProjectDoc, 'project'>, kind: ScheduleKind): string[] => scheduleFields(doc, kind).filter((f) => !DERIVED_FIELDS.has(f));
+export const ownFields = (doc: DocLike, kind: ScheduleKind): string[] => scheduleFields(doc, kind).filter((f) => !DERIVED_FIELDS.has(f));
+
+/** Om fältet är ett av förteckningarnas (cad-apas), inte ett eget. */
+export const isOriginalField = (kind: ScheduleKind, name: string): boolean => DEFAULT_SCHEDULE_FIELDS[kind].includes(name);
+
+const KRAV = ['krav'];
+const BESLAG = ['beslag', 'lås'];
+const KULOR = ['kulör', 'färg'];
+/** De inbyggda taggarna för förteckningarnas fält (sökningen), utöver namnet. */
+export const DEFAULT_FIELD_TAGS: Readonly<Record<string, readonly string[]>> = {
+  'U-värde': [...KRAV, 'energi', 'värme'], Brandklass: [...KRAV, 'brand', 'EI'], Ljudreduktion: [...KRAV, 'ljud', 'dB'], Motståndsklass: [...KRAV, 'inbrott', 'säkerhet', 'RC'],
+  Säkerhetsglas: ['glas', 'säkerhet', 'laminerat', 'härdat'], 'LT-värde': ['glas', 'ljus'], 'G-värde': ['glas', 'sol', 'energi'], Solskydd: ['sol', 'markis', 'persienn'],
+  Utfallsskydd: ['säkerhet', 'barnspärr'], 'Kulör utvändigt': KULOR, 'Kulör invändigt': KULOR, 'Kulör fyllning': KULOR, 'Kulör dörrblad': KULOR, 'Kulör karm': KULOR,
+  Beslagning: ['beslag'], Beslagskod: BESLAG, Låshus: BESLAG, Slutbleck: BESLAG, Cylinderbehör: BESLAG, 'Trycke/draghandtag': ['beslag', 'handtag'], Nödbehör: [...BESLAG, 'utrymning'],
+  Magnetkontakt: [...BESLAG, 'larm'], Karmöverföring: [...BESLAG, 'el'], Dörrstängare: ['beslag', 'automatik'], Dörrautomatik: ['beslag', 'automatik', 'tillgänglighet'],
+  Tröskel: ['tillgänglighet'], Klämskydd: ['säkerhet'], Ventilation: ['luft'], Utrymme: ['rum'], 'Funktion/placering': ['rum', 'utrymning'],
+  Skyddsbeklädnad: ['plåt'], Dörrbladsyta: ['yta'], Dörrbladskant: ['kant'], Glasöppning: ['glas'], Fyllning: ['panel'], Anmärkning: ['text'], Övrigt: ['text'],
+};
+
+/** Ett fälts taggar: de inbyggda och stilbokens egna. */
+export function fieldTags(doc: DocLike, name: string): string[] {
+  return [...new Set([...(DEFAULT_FIELD_TAGS[name] ?? []), ...(doc.graphics?.scheduleFields?.tags?.[name] ?? [])])];
+}
+
+/** Stilbokens egna taggar för ett fält (de som går att ändra). */
+export const ownFieldTags = (doc: DocLike, name: string): string[] => doc.graphics?.scheduleFields?.tags?.[name] ?? [];
+
+/** Smarttexten för ett fält i litteramallarna. */
+export const fieldTag = (name: string): string => `{${name}}`;
+
+/** Ett fälts värde på objektet med namnet utan skiftläge, med eller utan `fält:` före ('' när det saknas). */
+export function fieldByName(el: Pick<Element, 'params'>, name: string): string {
+  const f = (el.params as { fields?: Record<string, unknown> }).fields;
+  if (!f) return '';
+  const n = name.replace(/^f[äa]lt:/i, '').trim().toLowerCase();
+  for (const [k, v] of Object.entries(f)) if (k.toLowerCase() === n && typeof v === 'string') return v;
+  return '';
+}
 
 /** Objektets värde för ett fält ('' när det saknas). */
 export function fieldValue(el: Pick<Element, 'params'>, name: string): string {
