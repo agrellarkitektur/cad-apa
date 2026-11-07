@@ -252,6 +252,147 @@
   gap: 6px;
 }
 
+/* ---------- Exportdialogen (0.12) ---------- */
+
+.ex-dialog {
+  width: min(1020px, 100%);
+  height: min(720px, calc(100dvh - 32px));
+}
+
+.ex-sets {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 0 18px 10px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.ex-sets .field {
+  min-width: 220px;
+}
+
+.ex-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 1fr);
+  gap: 18px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.ex-tree,
+.ex-side {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  min-height: 0;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.ex-search {
+  width: 100%;
+}
+
+.ex-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ex-row[hidden] {
+  display: none;
+}
+
+.ex-row .plot-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.ex-fmts {
+  display: inline-flex;
+  gap: 3px;
+  flex: none;
+}
+
+.ex-fmt {
+  font: 600 10.5px var(--font-ui);
+  letter-spacing: 0.03em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--muted);
+}
+
+button.ex-fmt {
+  cursor: pointer;
+}
+
+.ex-fmt.is-on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.ex-opts {
+  display: grid;
+  gap: 6px;
+}
+
+.ex-opts h3 {
+  margin: 0;
+  font-size: 12.5px;
+}
+
+.ex-size {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.ex-size .field input {
+  width: 80px;
+}
+
+.ex-pick {
+  justify-self: start;
+}
+
+.ex-files {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+  font: 500 12px var(--font-data);
+  max-height: 220px;
+  overflow: auto;
+}
+
+.ex-files li {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.ex-files li span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.ex-files li small {
+  color: var(--muted);
+}
+
+.ex-files li.is-dup b {
+  color: var(--new);
+  font-size: 11px;
+}
+
+.ex-dialog > .plot-progress {
+  padding: 0 18px 8px;
+}
+
 /* ---------- Fasad eller sektion som räknas i bakgrundstråden (0.8.2) ---------- */
 .computing {
   position: absolute;

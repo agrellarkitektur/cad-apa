@@ -1,3 +1,4 @@
+import type { ExportSet } from './exportSettings';
 import { exampleMaster } from './exampleMaster';
 import { newStyleBook, type StyleBook } from './graphics';
 import type { ViewOverrides } from './viewCategories';
@@ -449,6 +450,14 @@ export interface ProjectDoc {
    * markmodellen ur Höjdkurvor. Utelämnad = plan mark som förut.
    */
   site?: Site;
+  /**
+   * Objektens GUID (0.12): objektets id → IfcGloballyUniqueId, satt första
+   * gången objektet exporteras och sedan oförändrad. Hör till projektet och
+   * inte till objektet, så att en kopia får en ny och ångra inte tar bort den.
+   */
+  guids?: Record<Id, string>;
+  /** Exportuppsättningarna (0.12), i listans ordning. */
+  exportSets?: ExportSet[];
 }
 
 /**

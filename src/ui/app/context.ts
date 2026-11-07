@@ -143,6 +143,8 @@ export interface AppContext {
   toolFor(id: ToolId): ViewTool;
   /** Rita om 3D-vyn efter en ändring. */
   update3d(): void;
+  /** Kör en exportuppsättning med namn (0.12, `EXPORT Bygglov`); falskt om den inte finns. */
+  runExportSet?: (name: string) => boolean;
   setPanel(open: boolean, sheet?: 'peek' | 'full'): void;
   setNav(open: boolean): void;
   togglePanel(): void;

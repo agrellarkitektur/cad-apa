@@ -60,7 +60,8 @@ import { installSite } from './app/site';
 import { installSegmentPoints } from './app/segmentPoints';
 import { installTreeDrag } from './app/treeDrag';
 import { installSheets } from './app/sheets';
-import { installPlot } from './app/plot';
+import { installExportDialog } from './app/exportDialog';
+import { installDrawingFontFace } from './app/drawingFontFace';
 import { installRender } from './app/render';
 import { installTools } from './app/tools';
 import { installWand } from './app/wand';
@@ -556,8 +557,10 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const storeys = installStoreys(app);
   const site = installSite(app);
   installTreeDrag(app);
+  installDrawingFontFace(app);
   const sheets = installSheets(app);
-  const plot = installPlot(app, underlays.exportImage);
+  const plot = installExportDialog(app, { image: underlays.exportImage, view3d: pane3d.ensure3d });
+  app.runExportSet = plot.runSet;
   const actions = installActions(app, { brand, feedbackDialog, about, files, menus, panes, plot, sheets, showMenu, views });
 
   // För felsökning i webbläsarens konsol.

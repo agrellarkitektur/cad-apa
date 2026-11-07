@@ -130,7 +130,7 @@ export const COMMANDS: CommandDef[] = [
   A('save', 'Spara', ['spara'], ['save', 'qsave']),
   A('save-as', 'Spara som', ['sparasom'], ['saveas']),
   A('open', 'Öppna fil', ['öppna'], ['open']),
-  A('plot', 'Plot/export', ['plotta', 'exportera'], ['plot', 'export']),
+  A('plot', 'Exportera', ['exportera', 'plotta'], ['export', 'plot'], 'EXPORT Bygglov kör uppsättningen Bygglov'),
   A('mode-2d', 'Plan', ['plan'], ['2dview']),
   A('mode-3d', '3D', ['3d'], ['3dview']),
   A('mode-split', 'Plan och 3D', ['båda'], ['split']),

@@ -1,3 +1,4 @@
+import { useDrawingFont } from '../formats/drawingFont';
 import { defaultSheet } from '../core/viewCategories';
 import type { StyleSheet } from '../core/graphics';
 import type { Element, Id, ProjectDoc } from '../core/model';
@@ -68,6 +69,7 @@ export const POCHE_MATERIALS: ReadonlySet<string> = new Set(['wall', 'wall-new',
 
 export function buildSection(doc: ProjectDoc, markerId: Id, view: ViewStates, style: StyleSheet = defaultSheet(doc.graphics, doc.elements[markerId]?.type === 'Section' ? 'section' : 'facade')): SectionResult | null {
   const t0 = performance.now();
+  useDrawingFont(doc);
   const marker = doc.elements[markerId];
   if (!marker || (marker.type !== 'Section' && marker.type !== 'Elevation')) return null;
   const fr = markerFrame(doc, marker);

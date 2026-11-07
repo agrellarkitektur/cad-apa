@@ -341,6 +341,79 @@ export class View3D {
   }
 
   /** Visa hela modellen snett ovanifrån. */
+  /**
+   * Vyn som bild i en fast storlek (0.12), ur samma kamera men aldrig ur
+   * fönstret: duken ritas om i bildens storlek och läses direkt, utan
+   * markering, grepp och med vit bakgrund. Kameran behåller sin höjdvinkel;
+   * en annan proportion än fönstrets visar mer eller mindre i sidled.
+   */
+  async snapshot(width: number, height: number, type: 'image/png' | 'image/jpeg'): Promise<Blob> {
+    const selected = this.selected;
+    const hovered = this.hovered;
+    this.selected = new Set();
+    this.hovered = null;
+    this.paint();
+    const hidden = [this.edit.handlesGroup, this.edit.previewGroup, this.marksGroup].filter((g) => g.visible);
+    for (const g of hidden) g.visible = false;
+    const background = this.scene.background;
+    this.scene.background = new THREE.Color('#ffffff');
+    // 3D-vyn har aldrig visats: hela modellen, inställd för bildens proportion.
+    if (!this.framed) {
+      this.camera.aspect = width / height;
+      this.frameAll();
+    }
+    const camera = this.camera.clone();
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    const ratio = this.renderer.getPixelRatio();
+    const canvas = this.renderer.domElement;
+    try {
+      this.renderer.setPixelRatio(1);
+      this.renderer.setSize(width, height, false);
+      this.renderer.render(this.scene, camera);
+      // Läses i samma uppgift som den ritades, innan duken töms.
+      return await new Promise<Blob>((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Bilden kunde inte göras.'))), type, 0.92));
+    } finally {
+      this.scene.background = background;
+      for (const g of hidden) g.visible = true;
+      this.selected = selected;
+      this.hovered = hovered;
+      this.paint();
+      this.renderer.setPixelRatio(ratio);
+      this.resize();
+      this.requestRender();
+    }
+  }
+
+  /**
+   * Modellen som glTF (0.12, binär .glb) för Blender och andra renderare:
+   * objekten och marken med sina material, i meter med y uppåt. Varje objekt
+   * får namn, sort och GUID i `extras`, så att det känns igen nästa gång.
+   */
+  async exportGlb(info: (id: string) => { name: string; type: string; guid?: string }): Promise<ArrayBuffer> {
+    const { GLTFExporter } = await import('three/examples/jsm/exporters/GLTFExporter.js');
+    const group = new THREE.Group();
+    group.name = 'Modellen';
+    group.rotation.x = -Math.PI / 2;
+    group.scale.setScalar(0.001);
+    for (const m of this.meshes) {
+      const { id, material, color, texture } = m.userData as { id: string; material: Material3D; color?: string; texture?: Texture3D };
+      const o = new THREE.Mesh(m.geometry, this.look.of(material, color, texture));
+      const i = info(id);
+      o.name = i.name;
+      o.userData = { id, type: i.type, ...(i.guid ? { guid: i.guid } : {}) };
+      group.add(o);
+    }
+    for (const t of this.terrainGroup.children) {
+      if (!(t instanceof THREE.Mesh)) continue;
+      const o = new THREE.Mesh(t.geometry, t.material);
+      o.name = 'Marken';
+      group.add(o);
+    }
+    const out = await new GLTFExporter().parseAsync(group, { binary: true });
+    return out as ArrayBuffer;
+  }
+
   frameAll(): void {
     // Huset, inte grannhusen och träden runt det (0.10.3), när det finns ett.
     const own = this.meshes.filter((m) => !['site', 'tree'].includes((m.userData as { material: Material3D }).material));

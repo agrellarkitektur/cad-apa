@@ -1,3 +1,4 @@
+import { normalizeExportSettings, type ExportSettings } from './exportSettings';
 import { normalizeGeneral, normalizeOffice, type GeneralSettings, type OfficeInfo } from './general';
 import type { LeaderAttach, LeaderEnd } from '../elements/leader';
 import { normalizeFillTypes, type CustomFillType, type HatchLine } from './fillTypes';
@@ -110,7 +111,11 @@ export interface StyleResources {
   name: string;
   /** Texter i planen: justering, höjder och littera. */
   labels: LabelStyle;
-  /** Typsnittet för hela projektet (0.8). Utelämnat = programmets tekniska typsnitt. */
+  /**
+   * Typsnittet för hela projektet (0.8; valbart sedan 0.12): `osifont`,
+   * `arimo`, `josefin` eller id:t för en TTF/OTF-fil i projektets filer (följer
+   * med stilboken som logotypen). Utelämnat = osifont.
+   */
   font?: string;
   /** Projektets egna linjetyper (0.8.30), utöver de inbyggda (`LINE_TYPES`). */
   lineTypes?: CustomLineType[];
@@ -153,6 +158,8 @@ export interface StyleResources {
   office?: OfficeInfo;
   /** Allmänna inställningar (0.10.39): textstorlek, höjdsystem och decimaler, enheter, litterats siffror, tjocklekar. */
   general?: GeneralSettings;
+  /** Exporten (0.12): filnamnsmallarna. */
+  export?: ExportSettings;
 }
 
 /** En penna i projektets lista (0.10.36): färgen som i penntabellen ("ink", "muted" eller #rrggbb; utelämnad = svart). */
@@ -474,6 +481,7 @@ export function normalizeStyle(data: any): StyleSheet {
     ...(normalizePenList(data.penList) ? { penList: normalizePenList(data.penList)! } : {}),
     ...(normalizeOffice(data.office) ? { office: normalizeOffice(data.office)! } : {}),
     ...(normalizeGeneral(data.general) ? { general: normalizeGeneral(data.general)! } : {}),
+    ...(normalizeExportSettings(data.export) ? { export: normalizeExportSettings(data.export)! } : {}),
   };
 }
 

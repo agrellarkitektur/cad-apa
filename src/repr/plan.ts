@@ -1,3 +1,4 @@
+import { useDrawingFont } from '../formats/drawingFont';
 import { defaultSheet } from '../core/viewCategories';
 import { resolveFill } from '../core/fillTypes';
 import type { ActionStyle, LineDef, StyleSheet } from '../core/graphics';
@@ -45,6 +46,8 @@ export interface PlanResult {
  * tillbaka, så att planvyn inte behöver rita om.
  */
 export function buildPlan(doc: ProjectDoc, storey: Id, view: ViewStates, style: StyleSheet = defaultSheet(doc.graphics)): PlanResult {
+  // Texterna mäts med projektets typsnitt (0.12).
+  useDrawingFont(doc);
   const saved = savedFor(doc, storey, view, style);
   if (saved.elements === doc.elements && saved.result) return saved.result;
   const { ctx, visible } = createContext(doc, storey, view, style, (t) => !!(t.plan || t.planBatch), true);

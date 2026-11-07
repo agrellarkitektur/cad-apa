@@ -6,10 +6,29 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 1 november 2026, efter 0.11.8.4 (granskningen efter 0.11.8).
+README. Senast: 7 november 2026, efter 0.12 Exportdialogen och PDF.
 
 ## Läget
 
+- **0.12 Exportdialogen och PDF är klar** (7 november, samma format 28;
+  valfria fält `exportSets`, `guids`, stilbokens `export`, `font` som en
+  fil), byggd i en session efter `cad-apa-export-utredning.md` med svaren
+  A–E. Det fanns redan en egen vektor-PDF med osifont och en egen zip, så
+  pdf-lib och fflate behövdes inte. Testerna: 953 på ca 15 s. Provat i
+  Playwright mot `dist/`: alla rader i en zip, PDF:erna med lager,
+  egenskaper och Josefin Sans inbäddat (`qpdf`, `pdffonts`, `pdfinfo`),
+  bilden ur 3D och glTF med GUID. Claudes val och det som inte gjordes i
+  PLAN.md, koden i UTVECKLING.md.
+- **Märks i hans ritningar efter 0.12:** *Plot/export* heter
+  **Exportera…** och är en ny dialog: trädet med Ritningar, Vyer, 3D-vyer
+  och Modellen, format per rad, sökruta, **uppsättningar** (*Spara som…*,
+  `EXPORT Bygglov`), **mapp på datorn** eller zip, undermappar,
+  förhandslistan med filnamnen. PDF:en har **lager** (per vy, eller per vy
+  och objektgrupp), **dokumentegenskaper**, en **samlad fil med
+  bokmärken** som val och en **ARBETSMATERIAL**-stämpel. Stilboken ›
+  Allmänt: **Typsnitt** (osifont, Arimo, Josefin Sans, *Eget typsnitt…*)
+  och **Export** (filnamnsmallarna). **Bild ur 3D-vyn** (3 000 × 2 000) och
+  **glTF**. Objekten får GUID vid första exporten.
 - **0.11.8.4 Granskningen efter 0.11.8 är klar** (samma format, inga nya
   funktioner; fjärde siffran för att varningstexterna syns): varningarna
   uppslagna i föreskrifterna som Carl August laddade upp i projektet
@@ -62,13 +81,13 @@ README. Senast: 1 november 2026, efter 0.11.8.4 (granskningen efter 0.11.8).
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.11.8.4 pushad till `main` 1 november (se git och `gh run
+- **Publicerad:** 0.12 pushad till `main` 7 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.11.8.4` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.12` i `engine.ts`, `package.json` och
   `package-lock.json`. En granskning höjer inte numret, eller får en
   fjärde siffra om något ändras som syns.
-- **0.10.8–0.11.8.4 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.12 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -103,7 +122,11 @@ README. Senast: 1 november 2026, efter 0.11.8.4 (granskningen efter 0.11.8).
   (PR01), **delprofil** (A, B …), **ankare** (flera per typ, numrerade),
   **sträckzon**, **bana**, **avslut** (*Inom*/*Utöver* referenslinjen,
   förskjutning), **ändprofil** (PA01), **profilobjekt** (littera P01, B01,
-  L01 efter gruppen); verktyget heter **Profil**.
+  L01 efter gruppen); verktyget heter **Profil**. Exportens:
+  dialogen heter **Exportera**, ett sparat urval **exportuppsättning**;
+  sedan utredningen **utgåva** (en skarp export), **ändringsbeteckning**
+  (bet), **revideringsmoln**, **revideringspil**, **handlingsförteckning**,
+  **ändrings-PM**.
 - **Varningar** (Carl August 30 oktober): hänvisa till BFS 2024:9 (Boverkets
   nya regler; BBR gäller inte längre för nya ansökningar) där det är
   föreskrift. Det som är vedertaget men inte står i föreskriften
@@ -157,12 +180,14 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   avslut och spiraltrappan~~, ~~0.11.7.3 Trappan och räcket, det som inte
   hanns med~~, ~~0.11.8 Dörrar och fönster: öppningstyperna~~, ~~0.11.8.1
   Synpunkterna på mockupen~~, ~~0.11.8.2 Detalj och beslag~~, ~~0.11.8.3
-  Smart och vägghål~~, ~~0.11.8.4 Granskning efter 0.11.8~~ (klara; se
-  tabellen *Klart* i PLAN.md)
+  Smart och vägghål~~, ~~0.11.8.4 Granskning efter 0.11.8~~,
+  ~~Utredning av 0.12 Export~~, ~~0.12 Exportdialogen och PDF~~ (klara;
+  se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.12 Export**: IFC4, DXF, areor för bygglov, förteckning över
-  markförändringarna
+- **0.12.0.1 DXF** → **0.12.0.2 Förteckningar och areor** → **0.12.0.3
+  IFC** (egen utredning först) → **0.12.0.4 Utgåvor och PM** (mockup
+  först); se `cad-apa-export-utredning.md`. Sedan **Granskning efter 0.12**.
 - **0.12.1 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
   trädens status i planen)
 - **Koordinater, SWEREF och sol** (stor; före piloten; SWEREF på
@@ -175,26 +200,42 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 ## Nästa session
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
-skrivrätt till repot ("push godkänd"). Carl August hade inte provat
-0.11.8–0.11.8.4 den 1 november och ville vänta med frågorna: fråga om han
-provat, och ställ i så fall frågorna om dem (nedan) först, högst fem åt
-gången. Nästa version är **0.12 Export** (stor: IFC4, DXF, areor,
-förteckningen över markförändringarna; se PLAN.md och synpunkterna) –
-föreslå en delning i 0.12, 0.12.0.x och utred IFC-skrivaren med en
-mockup eller ett underlag i en egen chatt innan bygget, som räcket och
-profilen. Före piloten också 0.12.1 3D-vyer och Koordinater, SWEREF och
-sol. Vid nästa granskning (efter 0.12) delas `src/ui/style/profileTypes.ts`
-(875) och `openingTypes.ts` (828).
+skrivrätt till repot ("push godkänd"). Fråga om Carl August provat 0.12
+(och 0.11.8–0.11.8.4); ställ i så fall frågorna om 0.12 (nedan) först,
+högst fem åt gången. Nästa version är **0.12.0.1 DXF** (mellanstor):
+läs avsnittet *DXF* i `cad-apa-export-utredning.md` och ställ först
+frågorna i dess *Senare omgång* som hör till DXF (lagerkartans förval
+Enkel eller BH90, pennfärgerna, DXF-versionen). Skrivaren blir ett nytt
+format bakom exportdialogen: `FORMATS_FOR` i `src/core/exportSettings.ts`
+(vy → DXF som förval enligt utredningen, blad → PDF och DXF), en gren i
+`src/ui/app/exportRun.ts`. IFC och PM får egen utredning/mockup i egen
+chatt före sina versioner. Vid granskningen efter 0.12 delas
+`src/ui/style/profileTypes.ts` (875) och `openingTypes.ts` (828).
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.11.8.4, 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.12, 0.11.8.4, 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4, 0.11.3,
 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
+
+**0.12 efter provning** (Claudes val, se PLAN.md; utredningens A–E
+besvarade 7 november, se `cad-apa-export-utredning.md`)
+- Lagren per objektgrupp är 13 grupper ur objektens sort (Väggar, Dörrar,
+  fönster och vägghål, Mått, Text och littera …), inte stilbokens ställen.
+  Lagom indelning?
+- *Ett per vy på bladet* är förval för lagren, och en fil per blad. Rätt,
+  eller hellre en samlad fil som förval?
+- Stämpeln ARBETSMATERIAL ligger grå och liten nederst till vänster utanför
+  ramen. Tillräckligt synlig, eller ska den stå diagonalt över bladet?
+- En export till mappen skriver över filer med samma namn utan att fråga
+  (så att en ny utgåva hamnar rätt). Bra, eller ska den fråga först?
+- Bilden ur 3D följer 3D-vyns kamera; en annan proportion än fönstrets
+  visar mer i sidled. Räcker det tills de sparade 3D-vyerna (0.12.1) får
+  en sökarram?
 
 **0.11.8.4 efter provning** (Claudes val, se PLAN.md)
 - Barnsäkra fönster varnar på våningar där våningshöjden plus bröstningen

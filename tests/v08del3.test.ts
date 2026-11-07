@@ -258,7 +258,7 @@ describe('PDF och zip (0.8 del 3)', () => {
       { title: 'Test' },
     );
     const text = new TextDecoder('latin1').decode(pdf);
-    expect(text.startsWith('%PDF-1.4')).toBe(true);
+    expect(text.startsWith('%PDF-1.6')).toBe(true);
     expect(text).toContain('/MediaBox [0 0 1190.551 841.89]');
     // Varje post i korsreferenstabellen pekar på sitt objekt.
     const xref = text.slice(text.lastIndexOf('xref'));

@@ -1,3 +1,4 @@
+import { setByName } from '../../core/exportSettings';
 import { eraseSelection } from './erase';
 import { commandFor, findCommand, type CommandDef } from '../commandRegistry';
 import { icons } from '../icons';
@@ -65,7 +66,7 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
   const log = createShellLog(el, logEl, listEl, (c) => run(c));
   /** Listan med kommandon: kompletteringen, pil upp och ned, Tab och alla kommandon. */
   const list = createShellList(input, listEl, {
-    taken: (text) => isPoint(text) || !!(prompt && matchOption(prompt.options, text)) || !!typedTarget(text),
+    taken: (text) => isPoint(text) || !!(prompt && matchOption(prompt.options, text)) || !!typedTarget(text) || !!exportSetOf(text),
     renderLog: () => log.render(),
     renderHint: () => renderHint(),
   });
@@ -273,6 +274,24 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
     return null;
   }
 
+  /** En exportuppsättning ur kommandoraden (0.12): `EXPORT Bygglov`. */
+  function exportSetOf(text: string): { name: string; found: boolean } | null {
+    const two = splitArgument(text);
+    if (!two || findCommand(two.cmd)?.action !== 'plot') return null;
+    return { name: two.arg.trim(), found: !!setByName(app.store.doc.exportSets, two.arg) };
+  }
+
+  function enterExport(text: string): boolean {
+    const x = exportSetOf(text);
+    if (!x) return false;
+    if (!x.found || !app.runExportSet?.(x.name)) {
+      app.hint(`Ingen exportuppsättning heter ”${x.name}”. Spara en i Exportera.`, 3000);
+      return true;
+    }
+    addLog({ text: `Exportera ${x.name}`, kind: 'option' });
+    return true;
+  }
+
   function enterType(text: string): boolean {
     const t = typedTarget(text);
     if (!t) {
@@ -333,6 +352,12 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
       refresh();
       return;
     }
+    if (enterExport(text)) {
+      clear();
+      input.blur();
+      refresh();
+      return;
+    }
     if (enterType(text)) {
       clear();
       input.blur();
@@ -374,6 +399,11 @@ export function installCommandLine(app: AppContext, pressRail: (id: RailId) => v
       } else if ('angle' in r) h = `Enter: låser riktningen till <b>${nf.format(r.angle)}°</b>; klicka eller skriv avståndet.`;
       else if ('value' in r) h = `Enter: ${escapeHtml(OPS[app.modifier.active!].value!.label.toLowerCase())} <b>${nf.format(r.value)}</b>.`;
       else h = `Enter: punkt i <b>${xy(r.p)}</b>${t.lastPoint() ? `, ${nf.format(Math.hypot(r.p[0] - t.lastPoint()![0], r.p[1] - t.lastPoint()![1]))} mm från förra` : ''}.`;
+    } else if (exportSetOf(text)) {
+      const x = exportSetOf(text)!;
+      const s = setByName(app.store.doc.exportSets, x.name);
+      h = s ? `Enter: exporterar uppsättningen <b>${escapeHtml(s.name)}</b>.` : `Ingen exportuppsättning heter så.`;
+      bad = !s;
     } else if (typedTarget(text)) {
       const tt = typedTarget(text)!;
       h = `Enter: <b>${tt.tool === 'profile' ? 'Profil' : 'Räcke'}</b> med typen <b>${escapeHtml(tt.label)}</b>.`;

@@ -187,6 +187,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.8.1 | Dörrar och fönster, synpunkterna på mockupen: hålet modulmåttet + 10 och karmen − 10 (typens karmavdrag), öppningssymbolen mot gångjärnssidan med egna ställen, skjutpilen, fönstrens slag 15° kring gångjärnet, slagbågarna på alla nivåer och egna kryss, spröjs jämnt eller ritade, dörrbladets indelning med material per fyllning, VG01, uppställningens fältmall och fälten på objekten |
 | 0.11.8.3 | Dörrar och fönster, Smart och vägghål: vägghålen med verktyg och fyra förvalda typer (ventgaller, nisch, genomföring, rent hål), fasaden som arbetsyta, I liv med fönstret under, Lika avstånd, Mitt i rummet, dagsljuset (rummets andel, smarttexten, glas mot fasaden och per väderstreck), blecklutningen och spegelns raka kant |
 | 0.11.8.4 | Granskning efter 0.11.8 (1 november): varningarna uppslagna i föreskrifterna (fri passage, säkerhetsglas, barnsäkra fönster, utrymningsfönster, öppen trappa), `stairGeometry.ts` och `view3d.ts` delade, klickjämförelsen mot stilboken och med profiler, dörrar och fönster |
+| 0.12 | Exportdialogen och PDF: trädet med format per rad, sökrutan, exportuppsättningar (också i mallen, `EXPORT Bygglov`), filnamnsmallar med smarttext, mappen på datorn eller zip, förhandslistan, PDF med lager, dokumentegenskaper, samlad fil med bokmärken och arbetsmaterialstämpel, valbart typsnitt (osifont, Arimo, Josefin Sans, eget TTF/OTF), bild ur 3D-vyn, glTF, GUID på objekten, PDF:erna i en bakgrundstråd |
 | 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, uppställningens fält i stilboken (Typer) med taggar och smarttext |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
@@ -1326,19 +1327,130 @@ elementfilerna (542); `profileTypes.ts` (875) och `openingTypes.ts` i
 granskning. Tröskelns 25 mm och räckeshöjderna har ingen föreskrift att
 hänvisa till.
 
-### 0.12 Export: IFC och DXF
+### 0.12 Exportdialogen och PDF ✓
 
-- IFC4-export med egen skrivare: våningsplan, väggar, öppningar, dörrar,
-  fönster, rum, bjälklag, tak och trappor, med egenskaper (t.ex.
-  Pset_DoorCommon) och uträknad åtgärd i Status. Kontrolleras i Archicad och
-  i en gratis IFC-visare
-- DXF av vyer och blad, med lager per objekttyp
-- Areor för bygglov (BTA, BYA, OPA) ur modellen, så långt piloten behöver
-- Förteckning över markförändringarna (Inkorgen 27 oktober): littera och
-  namn, status, area i plan, schakt, fyll och netto, berg och jord (m³ och
-  procent), lägsta och högsta nya höjd, största lutning, avtagen matjord
-  (area × tjocklek, tjockleken en inställning) och en summarad med
-  massbalansen för hela projektet
+7 november 2026, efter utredningen (`cad-apa-export-utredning.md` i
+projektet, svaren A–E). Stor, en session. Samma format, 28 (valfria fält:
+`exportSets`, `guids`, stilbokens `export`, `font` som en fil).
+
+**Gjort:** exportdialogen (trädet med Ritningar, Vyer, 3D-vyer och
+Modellen, kryssrutor, sökruta, format per rad), uppsättningarna
+(spara, spara som, ta bort, i mallen, `EXPORT <namn>`), filnamnsmallarna
+under stilboken › Allmänt › Export, mappen på datorn (File System Access)
+eller zip, undermappar per format, förhandslistan med dubbletter och
+storlekar, kön i en bakgrundstråd med förlopp och Avbryt; PDF med lager
+(OCG), dokumentegenskaper och XMP, samlad fil med bokmärken,
+arbetsmaterialstämpel och deterministiska bytes; typsnitten (osifont,
+Arimo, Josefin Sans och ett eget TTF/OTF, på skärmen och i PDF:en); bild
+ur 3D-vyn i fast storlek; glTF (.glb) med material, marken och GUID;
+GUID på objekten.
+
+**Upptäckt i repot före bygget:** bladen plottades redan som vektor med en
+egen PDF-skrivare (0.8 del 3) och osifont inbäddad (0.8.18), och zip fanns
+utan bibliotek. Därför byggdes vidare på den egna skrivaren i stället för
+pdf-lib och fflate, som utredningen föreslog: inget nytt beroende.
+
+**Claudes val (0.12):**
+
+- **Typsnitten som följer med**: osifont (ISO, förval), **Arimo** (Apache/
+  OFL, samma bredder som Arial) och **Josefin Sans** (OFL, Carl Augusts
+  exempel), frysta vid vikten 400 och delmängdade till WinAnsi med
+  `scripts/typsnitt.py`. Liberation Sans och Routed Gothic gick inte att
+  hämta härifrån; Arimo är Liberation Sans föregångare med samma mått. Ett
+  **eget typsnitt** läses i webbläsaren (bredderna ur `hmtx`/`cmap`) och
+  bäddas in helt (TrueType som FontFile2, OpenType/CFF som FontFile3).
+  WOFF och TTC avvisas med en förklaring. Fet text är som förut samma
+  typsnitt med ett tunt streck. Saknas ett tecken byts det som för
+  osifont. Konturtext när filen saknas gjordes inte: då används osifont.
+- **Mätningen** följer projektets typsnitt (`useDrawingFont` i planen och
+  sektionerna), så att radbrytningar och textrutor stämmer med det som
+  ritas.
+- **Lagren**: *Ett per vy på bladet* är förval; ramen, huvudet och det
+  ritade på bladet ligger i lagret *Bladet*. *Per vy och objektgrupp* lägger
+  13 grupper (Väggar, Dörrar, fönster och vägghål, Bjälklag och tak,
+  Trappor och räcken, Profiler, Rum, Möbler, Mått, Text och littera,
+  Markörer, Mark och plats, Underlag, 2D) under vyn, ur objektets sort, inte
+  ur stilbokens ställen; en vy ensam får bara grupperna. Lagren under
+  vyn ligger i nästlade BDC, så att vyn släcker sina grupper.
+- **Dokumentegenskaperna**: titel, ämne (ritningsnummer och benämning),
+  nyckelord (skede, projekt), författare (företag, arkitekt eller
+  ansvarig) och egna nycklar Projekt, Uppdragsnummer, Ritningsnummer,
+  Benamning, Skala, Format, Skede, Datum och Bet (tom tills 0.12.0.4), i
+  Info och i XMP (namnrymden `cadapa`). Inga datum i filen utom bladets
+  egna, så att samma projekt ger samma bytes; zipfilens tidsstämpel är
+  dagens datum klockan 00.00.
+- **Samlad fil** heter `{projekt}.pdf` och gäller bara bladen (vyerna blir
+  egna filer); bokmärkena är ritningsnummer och benämning.
+- **Arbetsmaterial** är en stämpel 2,5 mm grå nederst till vänster utanför
+  ramen (`ARBETSMATERIAL 2026-11-07`), av som förval. *Skarp* kommer med
+  utgåvorna i 0.12.0.4.
+- **Uppsättningarna** ligger i projektet (`exportSets`). När alla blad
+  eller alla vyer är kryssade sparas det som *alla*, så att nya kommer med.
+  I mallen (stilbokens fil) följer bara *alla*, 3D-vyn, modellen, formaten
+  och inställningarna med, eftersom bladen i ett nytt projekt är andra; de
+  läggs i det nya projektet om det inte har egna. `EXPORT Bygglov` öppnar
+  dialogen med uppsättningen och kör den (namnets början räcker).
+- **Filnamnen**: smarttexten är bladets (med `{titel}` = benämningen och
+  `{datum}` = bladets datum eller dagens), och för vyer, bilder och modellen
+  projektets och kontorets plus `{vy}`, `{titel}`, `{skala}`, `{datum}`.
+  Otillåtna tecken blir bindestreck, punkter och mellanslag i slutet tas
+  bort, CON/PRN … får ett bindestreck. Dubbletter varnas och får *(2)*.
+- **Vart**: mappen som förval i Chrome; den väljs när man klickar
+  *Exportera* (lov krävs i samma klick) och kommer ihåg sig i IndexedDB per
+  projekt (namn och uppdragsnummer). Utan File System Access blir det zip.
+  En ensam fil till zip sparas som den filen. Filer med samma namn i mappen
+  skrivs över (det är så en ny utgåva ska hamna).
+- **Bild ur 3D-vyn**: duken ritas om i bildens storlek med samma kamera och
+  höjdvinkel (en annan proportion visar mer i sidled), vit bakgrund, utan
+  markering och grepp. Har 3D-vyn aldrig visats ställs hela modellen in.
+  PNG som förval, JPEG 92 % som val; storleken 64–8 192.
+- **glTF**: binär .glb ur 3D-vyns kroppar med deras material, marken med
+  sitt utseende, utan kantlinjer och höjdkurvor, i meter med y uppåt. Varje
+  objekt heter sorten och litteran (*Wall YV01*) och har `id`, `type` och
+  `guid` i `extras`.
+- **GUID** ligger i projektet (`guids`, objektets id → GUID), inte på
+  objektet, sätts för alla objekt vid första exporten och utan ett steg att
+  ångra. En kopia har ett nytt id och får därför en ny; borttagna släpps ur
+  listan vid nästa export.
+- **Bakgrundstråden** skriver PDF:erna; bladen ritas i huvudtråden (där
+  projektet och bilderna finns). Går tråden inte att starta skrivs de i
+  huvudtråden.
+
+**Inte gjort i 0.12:** konturtext när typsnittsfilen saknas; lager ur
+stilbokens ställen (grupperna är objektsorter); bilder och 3D-vyer på
+blad rastrerade i vald upplösning (det finns inga 3D-vyer på blad än;
+0.12.1); storleksvarning mot kommunens maxstorlek (storleken visas efter
+exporten, inte före); att mappens innehåll jämförs eller rensas;
+renderingarna (0.12.1); *Skarp* och utgåvorna (0.12.0.4).
+
+### 0.12.0.1 DXF
+
+DXF-skrivaren (R2000 som förval), lagerkartan och pennornas färger i
+stilboken, vyer i modellkoordinater och blad i pappers-mm, som en rad i
+exportdialogen. Mellanstor. Se utredningen.
+
+### 0.12.0.2 Förteckningar och areor
+
+Förteckningen som vytyp (uppställningen av fönster och dörrar,
+dörrförteckningen, rum, grindar, markförändringarna, det generella
+litterats förteckning, handlingsförteckningen), CSV/XLSX och areorna
+enligt SS 21054. Stor, risk för två sessioner. Förteckningen över
+markförändringarna (Inkorgen 27 oktober): littera och namn, status, area i
+plan, schakt, fyll och netto, berg och jord (m³ och procent), lägsta och
+högsta nya höjd, största lutning, avtagen matjord (area × tjocklek,
+tjockleken en inställning) och en summarad med massbalansen.
+
+### 0.12.0.3 IFC
+
+Egen utredning i egen chatt först (klasstabellen, psets, geometri,
+provfil validerad), sedan skrivaren. IFC4 Reference View, mm, utan mark och
+träd (svar D). GUID:en finns sedan 0.12.
+
+### 0.12.0.4 Utgåvor och PM
+
+Mockup i Claude Design först, sedan snapshot, jämförelse, revideringsmoln
+och -pilar, beteckningar, handlingsförteckningen, ändrings-PM och panelen
+Utgåvor. Stor, troligen två sessioner.
 
 ### 0.12.1 3D-vyer
 

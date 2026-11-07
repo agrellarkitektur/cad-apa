@@ -4,7 +4,7 @@ import { drawnDash, evenDash, hatchAsPattern } from '../core/fillTypes';
 import { hatchStrokes } from '../core/hatchStrokes';
 import type { Bounds, Pen, PenColor, Primitive, Vec2 } from '../repr/primitives';
 import { drawingBytes, textWidth } from './drawingFont';
-import { OSIFONT_METRICS, OSIFONT_WIDTHS } from './osifontWidths';
+import { bundledFontBytes, OSIFONT, type DrawingFontInfo } from './fonts';
 
 export { textWidth } from './drawingFont';
 
@@ -14,8 +14,8 @@ export { textWidth } from './drawingFont';
  * primitiverna är mm på papperet, med nollpunkten i nedre vänstra hörnet och
  * y uppåt, precis som i PDF.
  *
- * Texten skrivs med osifont (0.8.18), som bäddas in, och WinAnsi-kodning,
- * som har å, ä och ö. Fet text får ett tunt streck runt tecknen. Bilder (underlag och loggor) läggs in
+ * Texten skrivs med projektets typsnitt (osifont sedan 0.8.18, valbart sedan
+ * 0.12), som bäddas in, och WinAnsi-kodning, som har å, ä och ö. Fet text får ett tunt streck runt tecknen. Bilder (underlag och loggor) läggs in
  * som JPEG.
  *
  * Läsaren behöver inte känna till något annat i programmet; den används av
@@ -26,6 +26,15 @@ export interface PdfPage {
   /** Bredd och höjd i mm. */
   size: readonly [number, number];
   prims: readonly Primitive[];
+  /**
+   * Lagren (0.12, OCG): varje lager är en väg av namn, t.ex. `['Plan 1',
+   * 'Väggar']`, och `layerOf` säger vilket lager varje primitiv ligger i
+   * (index i `layers`, −1 = inget). Ett lager under ett annat släcks med det.
+   */
+  layers?: readonly (readonly string[])[];
+  layerOf?: readonly number[];
+  /** Bokmärket för sidan i en samlad fil. */
+  bookmark?: string;
 }
 
 /** En bild att lägga in, som JPEG. */
@@ -41,6 +50,22 @@ export interface PdfOptions {
   images?: ReadonlyMap<string, PdfImage>;
   /** Packa innehållet (FlateDecode); utelämnad = opackat. */
   deflate?: (bytes: Uint8Array) => Promise<Uint8Array>;
+  /** Typsnittet och dess fil (0.12); utelämnat = osifont. Utan fil laddas den som följer med appen. */
+  font?: { info: DrawingFontInfo; bytes?: Uint8Array };
+  /**
+   * Uppgifterna i dokumentegenskaperna (0.12): ämne, nyckelord, författare
+   * och ritningens egna (ritningsnummer, benämning, skede, datum …), också
+   * som XMP. Tomma utelämnas.
+   */
+  meta?: PdfMeta;
+}
+
+export interface PdfMeta {
+  subject?: string;
+  keywords?: string;
+  author?: string;
+  /** Ritningens uppgifter, t.ex. `{ Ritningsnummer: 'A-40-1-101', Skede: 'BYGGLOVSHANDLING' }`. */
+  fields?: Record<string, string>;
 }
 
 /** Nyckeln en bild hämtas med: fil, sida och gråskala. */
@@ -84,9 +109,13 @@ class PageWriter {
   usesFont = false;
 
   private imgs: ReadonlyMap<string, PdfImage>;
+  private font: DrawingFontInfo;
+  private imageName: (key: string) => string;
 
-  constructor(imgs: ReadonlyMap<string, PdfImage>) {
+  constructor(imgs: ReadonlyMap<string, PdfImage>, font: DrawingFontInfo, imageName: (key: string) => string) {
     this.imgs = imgs;
+    this.font = font;
+    this.imageName = imageName;
   }
 
   private alpha(a: number | undefined): string {
@@ -197,7 +226,7 @@ class PageWriter {
     const bold = !!p.bold;
     this.usesFont = true;
     const a = p.angle ?? 0;
-    const w = textWidth(p.text, p.height, bold);
+    const w = textWidth(p.text, p.height, bold, this.font);
     const shift = p.align === 'middle' ? w / 2 : p.align === 'end' ? w : 0;
     const cos = Math.cos(a);
     const sin = Math.sin(a);
@@ -206,7 +235,7 @@ class PageWriter {
     const lines = p.text.split('\n');
     const body = lines
       .map((l, i) => {
-        const s = drawingBytes(l)
+        const s = drawingBytes(l, this.font)
           .map((b) => (b === 0x28 || b === 0x29 || b === 0x5c ? `\\${String.fromCharCode(b)}` : b < 0x20 || b > 0x7e ? `\\${b.toString(8).padStart(3, '0')}` : String.fromCharCode(b)))
           .join('');
         return `${i ? `0 ${n(-p.height * 1.5)} Td ` : ''}(${s}) Tj`;
@@ -230,7 +259,7 @@ class PageWriter {
     }
     this.images.add(key);
     const m = [p.u[0], p.u[1], p.v[0], p.v[1], p.corner[0], p.corner[1]].map(n).join(' ');
-    this.ops.push(`q ${clip}${this.alpha(p.opacity)}${m} cm /${imageName(key)} Do Q`);
+    this.ops.push(`q ${clip}${this.alpha(p.opacity)}${m} cm /${this.imageName(key)} Do Q`);
   }
 
   private rect(b: Bounds): string {
@@ -262,18 +291,52 @@ class PageWriter {
   }
 }
 
-const imageNames = new Map<string, string>();
-function imageName(key: string): string {
-  let name = imageNames.get(key);
-  if (!name) imageNames.set(key, (name = `Im${imageNames.size + 1}`));
-  return name;
-}
-
 const enc = new TextEncoder();
 
-/** Ett PDF-dokument med en sida per `PdfPage`. */
+/** En text i dokumentegenskaperna: ASCII som den är, annars UTF-16BE med BOM. */
+function pdfString(text: string): string {
+  if (/^[\x20-\x7e]*$/.test(text)) return `(${text.replace(/[()\\]/g, (c) => `\\${c}`)})`;
+  let hex = 'FEFF';
+  for (let i = 0; i < text.length; i++) hex += text.charCodeAt(i).toString(16).padStart(4, '0').toUpperCase();
+  return `<${hex}>`;
+}
+
+/** Ett namn i PDF (`/Ritningsnummer`): bokstäver och siffror, annat som #xx. */
+function pdfName(text: string): string {
+  return [...new TextEncoder().encode(text)].map((b) => (b > 0x20 && b < 0x7f && !'#()<>[]{}/%'.includes(String.fromCharCode(b)) ? String.fromCharCode(b) : `#${b.toString(16).padStart(2, '0')}`)).join('');
+}
+
+const xml = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+/** XMP med titeln, ämnet, nyckelorden och ritningens egna uppgifter (namnrymden cadapa). */
+function xmpPacket(title: string, meta: PdfMeta): string {
+  const fields = Object.entries(meta.fields ?? {}).filter(([, v]) => v.trim());
+  const tag = (k: string) => k.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^A-Za-z0-9]/g, '') || 'falt';
+  return [
+    '<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>',
+    '<x:xmpmeta xmlns:x="adobe:ns:meta/"><rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">',
+    '<rdf:Description rdf:about="" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:pdf="http://ns.adobe.com/pdf/1.3/" xmlns:xmp="http://ns.adobe.com/xap/1.0/" xmlns:cadapa="https://agrellarkitektur.se/cad-apa/ns/1.0/">',
+    `<dc:title><rdf:Alt><rdf:li xml:lang="x-default">${xml(title)}</rdf:li></rdf:Alt></dc:title>`,
+    meta.subject ? `<dc:description><rdf:Alt><rdf:li xml:lang="x-default">${xml(meta.subject)}</rdf:li></rdf:Alt></dc:description>` : '',
+    meta.author ? `<dc:creator><rdf:Seq><rdf:li>${xml(meta.author)}</rdf:li></rdf:Seq></dc:creator>` : '',
+    meta.keywords ? `<pdf:Keywords>${xml(meta.keywords)}</pdf:Keywords>` : '',
+    '<pdf:Producer>Bacchus</pdf:Producer><xmp:CreatorTool>cad-apa</xmp:CreatorTool>',
+    ...fields.map(([k, v]) => `<cadapa:${tag(k)}>${xml(v)}</cadapa:${tag(k)}>`),
+    '</rdf:Description></rdf:RDF></x:xmpmeta>',
+    '<?xpacket end="w"?>',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
+/**
+ * Ett PDF-dokument med en sida per `PdfPage`. Samma indata ger samma bytes
+ * (inga datum, bilder och lager numreras i den ordning de dyker upp), så
+ * att filerna går att jämföra och testa.
+ */
 export async function writePdf(pages: readonly PdfPage[], opt: PdfOptions = {}): Promise<Uint8Array> {
   const images = opt.images ?? new Map<string, PdfImage>();
+  const font = opt.font?.info ?? OSIFONT;
   const objects: (Uint8Array | string)[] = [];
   const add = (o: Uint8Array | string): number => objects.push(o);
   const stream = (dict: string, data: Uint8Array): Uint8Array => {
@@ -285,24 +348,61 @@ export async function writePdf(pages: readonly PdfPage[], opt: PdfOptions = {}):
     out.set(tail, head.length + data.length);
     return out;
   };
+  const imageNames = new Map<string, string>();
+  const imageName = (key: string): string => {
+    let name = imageNames.get(key);
+    if (!name) imageNames.set(key, (name = `Im${imageNames.size + 1}`));
+    return name;
+  };
 
   // Objekt 1 och 2: katalogen och sidträdet, som fylls i sist.
   add('');
   add('');
-  // Typsnittet (osifont, 0.8.18) fylls i sist, och bäddas bara in om någon sida har text.
-  const font = add('');
+  // Typsnittet fylls i sist, och bäddas bara in om någon sida har text.
+  const fontObj = add('');
   let anyText = false;
   const imageObj = new Map<string, number>();
   const pageIds: number[] = [];
+  // Lagren (0.12): ett OCG per väg av namn, delat mellan sidorna.
+  const ocgs = new Map<string, { obj: number; name: string; parent: string | null; res: string }>();
+  const ocgFor = (path: readonly string[], depth: number) => {
+    const key = path.slice(0, depth + 1).join('\u0000');
+    let o = ocgs.get(key);
+    if (!o) {
+      const obj = add(`<< /Type /OCG /Name ${pdfString(path[depth])} >>`);
+      o = { obj, name: path[depth], parent: depth ? path.slice(0, depth).join('\u0000') : null, res: `OC${ocgs.size + 1}` };
+      ocgs.set(key, o);
+    }
+    return o;
+  };
+
   for (const page of pages) {
-    const w = new PageWriter(images);
+    const w = new PageWriter(images, font, imageName);
     // Allt anges i mm: skala om från punkter en gång för hela sidan.
     w.ops.push(`${n(PT)} 0 0 ${n(PT)} 0 0 cm 1 J 1 j`);
-    for (const p of page.prims) {
+    const used = new Set<string>();
+    let open: readonly string[] = [];
+    const enter = (path: readonly string[]) => {
+      let same = 0;
+      while (same < open.length && same < path.length && open[same] === path[same]) same++;
+      for (let i = open.length; i > same; i--) w.ops.push('EMC');
+      for (let i = same; i < path.length; i++) {
+        const o = ocgFor(path, i);
+        used.add(o.res + ' ' + o.obj);
+        w.ops.push(`/OC /${o.res} BDC`);
+      }
+      open = path;
+    };
+    page.prims.forEach((p, i) => {
       // Papperet självt ritas inte; det är bara en bakgrund på skärmen. Inte heller markeringar för skärmen (0.8.9).
-      if (p.origin?.part === 'papper' || p.origin?.part === 'skärm') continue;
+      if (p.origin?.part === 'papper' || p.origin?.part === 'skärm') return;
+      if (page.layers) {
+        const li = page.layerOf?.[i] ?? -1;
+        enter(li >= 0 ? page.layers[li] : []);
+      }
       w.draw(p);
-    }
+    });
+    enter([]);
     anyText ||= w.usesFont;
     const raw = enc.encode(w.ops.join('\n'));
     const data = opt.deflate ? await opt.deflate(raw) : raw;
@@ -314,27 +414,72 @@ export async function writePdf(pages: readonly PdfPage[], opt: PdfOptions = {}):
       imageObj.set(key, add(stream(`/Type /XObject /Subtype /Image /Width ${img.width} /Height ${img.height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode`, img.jpeg)));
     }
     const res = [
-      w.usesFont ? `/Font << /F1 ${font} 0 R >>` : '',
+      w.usesFont ? `/Font << /F1 ${fontObj} 0 R >>` : '',
       w.alphas.size ? `/ExtGState << ${[...w.alphas].map((a) => `/GS${Math.round(a * 100)} << /CA ${n(a)} /ca ${n(a)} >>`).join(' ')} >>` : '',
       w.images.size ? `/XObject << ${[...w.images].map((k) => `/${imageName(k)} ${imageObj.get(k)} 0 R`).join(' ')} >>` : '',
-    ].join(' ');
+      used.size ? `/Properties << ${[...used].map((u) => { const [r, o] = u.split(' '); return `/${r} ${o} 0 R`; }).join(' ')} >>` : '',
+    ]
+      .filter(Boolean)
+      .join(' ');
     pageIds.push(add(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${n(page.size[0] * PT)} ${n(page.size[1] * PT)}] /Resources << ${res} >> /Contents ${content} 0 R >>`));
   }
   if (anyText) {
-    const { OSIFONT_TTF } = await import('./osifontData');
-    const ttf = Uint8Array.from(atob(OSIFONT_TTF), (c) => c.charCodeAt(0));
+    const ttf = opt.font?.bytes ?? (await bundledFontBytes(font.id));
     const packed = opt.deflate ? await opt.deflate(ttf) : ttf;
-    const file = add(stream(`/Length1 ${ttf.length}${opt.deflate ? ' /Filter /FlateDecode' : ''}`, packed));
-    const m = OSIFONT_METRICS;
-    const desc = add(`<< /Type /FontDescriptor /FontName /Osifont /Flags 32 /FontBBox [${m.bbox.join(' ')}] /ItalicAngle 0 /Ascent ${m.ascent} /Descent ${m.descent} /CapHeight ${m.capHeight} /StemV 60 /FontFile2 ${file} 0 R >>`);
-    objects[font - 1] = `<< /Type /Font /Subtype /TrueType /BaseFont /Osifont /FirstChar 32 /LastChar 255 /Widths [${OSIFONT_WIDTHS.join(' ')}] /FontDescriptor ${desc} 0 R /Encoding /WinAnsiEncoding >>`;
-  } else objects[font - 1] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
-  objects[0] = '<< /Type /Catalog /Pages 2 0 R >>';
+    const m = font.metrics;
+    const file = m.cff
+      ? add(stream(`/Subtype /OpenType${opt.deflate ? ' /Filter /FlateDecode' : ''}`, packed))
+      : add(stream(`/Length1 ${ttf.length}${opt.deflate ? ' /Filter /FlateDecode' : ''}`, packed));
+    const name = pdfName(font.pdfName);
+    const desc = add(`<< /Type /FontDescriptor /FontName /${name} /Flags 32 /FontBBox [${m.bbox.join(' ')}] /ItalicAngle 0 /Ascent ${m.ascent} /Descent ${m.descent} /CapHeight ${m.capHeight} /StemV 60 /${m.cff ? 'FontFile3' : 'FontFile2'} ${file} 0 R >>`);
+    // Tecken som typsnittet saknar har bytts ut (`drawingText`); de får bredden 0 här.
+    objects[fontObj - 1] = `<< /Type /Font /Subtype /TrueType /BaseFont /${name} /FirstChar 32 /LastChar 255 /Widths [${m.widths.join(' ')}] /FontDescriptor ${desc} 0 R /Encoding /WinAnsiEncoding >>`;
+  } else objects[fontObj - 1] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+
+  // Bokmärken (0.12): ett per sida som har ett, i en samlad fil.
+  const marks = pages.map((p, i) => ({ title: p.bookmark, page: pageIds[i] })).filter((m) => m.title);
+  let outlines = '';
+  if (marks.length) {
+    const root = add('');
+    const ids = marks.map(() => add(''));
+    marks.forEach((m, i) => {
+      objects[ids[i] - 1] = `<< /Title ${pdfString(m.title!)} /Parent ${root} 0 R${i ? ` /Prev ${ids[i - 1]} 0 R` : ''}${i < ids.length - 1 ? ` /Next ${ids[i + 1]} 0 R` : ''} /Dest [${m.page} 0 R /Fit] >>`;
+    });
+    objects[root - 1] = `<< /Type /Outlines /First ${ids[0]} 0 R /Last ${ids[ids.length - 1]} 0 R /Count ${ids.length} >>`;
+    outlines = ` /Outlines ${root} 0 R /PageMode /UseOutlines`;
+  }
+  // Lagren i Acrobats lista: varje lager med sina underlager i en lista efter sig.
+  let ocProps = '';
+  if (ocgs.size) {
+    const all = [...ocgs.entries()];
+    const order = (parent: string | null): string =>
+      all
+        .filter(([, o]) => o.parent === parent)
+        .map(([key, o]) => {
+          const kids = order(key);
+          return `${o.obj} 0 R${kids ? ` [${kids}]` : ''}`;
+        })
+        .join(' ');
+    ocProps = ` /OCProperties << /OCGs [${all.map(([, o]) => `${o.obj} 0 R`).join(' ')}] /D << /Order [${order(null)}] /BaseState /ON >> >>`;
+  }
+  const title = opt.title ?? '';
+  const meta = opt.meta ?? {};
+  const xmp = add(stream('/Type /Metadata /Subtype /XML', enc.encode(xmpPacket(title, meta))));
+  objects[0] = `<< /Type /Catalog /Pages 2 0 R /Metadata ${xmp} 0 R${outlines}${ocProps} >>`;
   objects[1] = `<< /Type /Pages /Kids [${pageIds.map((i) => `${i} 0 R`).join(' ')}] /Count ${pageIds.length} >>`;
-  const info = add(`<< /Producer (Bacchus) /Title (${(opt.title ?? '').replace(/[()\\]/g, (c) => `\\${c}`).replace(/[^\x20-\x7e]/g, '')}) >>`);
+  const infoParts = [
+    `/Producer (Bacchus) /Creator (cad-apa) /Title ${pdfString(title)}`,
+    meta.subject ? `/Subject ${pdfString(meta.subject)}` : '',
+    meta.keywords ? `/Keywords ${pdfString(meta.keywords)}` : '',
+    meta.author ? `/Author ${pdfString(meta.author)}` : '',
+    ...Object.entries(meta.fields ?? {})
+      .filter(([k, v]) => v.trim() && !['Title', 'Subject', 'Keywords', 'Author', 'Producer', 'Creator'].includes(k))
+      .map(([k, v]) => `/${pdfName(k)} ${pdfString(v)}`),
+  ];
+  const info = add(`<< ${infoParts.filter(Boolean).join(' ')} >>`);
 
   // Sätt ihop filen med korsreferenstabellen.
-  const chunks: Uint8Array[] = [enc.encode('%PDF-1.4\n%\xe2\xe3\xcf\xd3\n')];
+  const chunks: Uint8Array[] = [enc.encode('%PDF-1.6\n%\xe2\xe3\xcf\xd3\n')];
   let offset = chunks[0].length;
   const offsets: number[] = [];
   objects.forEach((o, i) => {

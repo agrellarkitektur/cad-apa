@@ -120,7 +120,7 @@ export function shellMarkup(brand: Brand): string {
             <button role="menuitem" data-action="save">${icons.save}<span>Spara</span><kbd>Ctrl+S</kbd></button>
             <button role="menuitem" data-action="save-as">${icons.save}<span>Spara som…</span><kbd>Ctrl+Shift+S</kbd></button>
             <hr>
-            <button role="menuitem" data-action="plot">${icons.plot}<span>Plot/export…</span></button>
+            <button role="menuitem" data-action="plot">${icons.plot}<span>Exportera…</span></button>
             <button role="menuitem" data-action="add-underlay">${icons.openFile}<span>Lägg in underlag…</span></button>
             <hr>
             <button role="menuitem" data-action="new-proposal">${icons.states}<span>Nytt förslag</span></button>

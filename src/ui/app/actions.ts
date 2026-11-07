@@ -15,7 +15,7 @@ import type { installFiles } from './files';
 import { nextProposalName } from './helpers';
 import type { installMenus } from './menus';
 import type { installPanes } from './panes';
-import type { installPlot } from './plot';
+import type { ExportDialog } from './exportDialog';
 import type { installSheets } from './sheets';
 import { LINE_WEIGHT_LABEL, LINE_WEIGHT_STEPS, type ViewMode } from './shell';
 import type { installShowMenu } from './showMenu';
@@ -33,7 +33,7 @@ export interface ActionParts {
   files: ReturnType<typeof installFiles>;
   menus: ReturnType<typeof installMenus>;
   panes: ReturnType<typeof installPanes>;
-  plot: ReturnType<typeof installPlot>;
+  plot: ExportDialog;
   sheets: ReturnType<typeof installSheets>;
   showMenu: ReturnType<typeof installShowMenu>;
   views: ReturnType<typeof installViews>;

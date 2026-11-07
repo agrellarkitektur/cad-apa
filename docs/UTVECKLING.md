@@ -253,7 +253,8 @@ ur överlämningen i 0.10.23).
   `bacchus.view.redraw()` ritar om ritningen. Egenskapspanelen är
   `aside.panel[aria-label="Egenskaper"]` (projektträdet har också en
   `.panel-body`).
-- Plot/export i Playwright: sätt `window.showSaveFilePicker = undefined` med
+- Exportera i Playwright (förut Plot/export): sätt `window.showSaveFilePicker = undefined`
+  och `window.showDirectoryPicker = undefined` med
   `add_init_script`, så sparas zipfilen som en nedladdning
   (`page.expect_download()`). Kontrollera PDF:erna med `qpdf --check` och
   `pdftoppm -png`; `pdffonts` ska visa Osifont inbäddad (0.8.18). Ett
@@ -684,6 +685,56 @@ fungerar; sök i hela `docs/` (`grep -rn … docs/`) efter en funktion eller
 en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
+
+## Exportdialogen och PDF (0.12, format 28)
+
+- **Kärnan** (utan webbläsaren): `src/core/exportSettings.ts` (sorterna
+  `sheet`/`view`/`image`/`model`, formaten per sort, stilbokens
+  `ExportSettings` med filnamnsmallarna, dialogens `ExportOptions`,
+  `ExportSet` och normaliseringen, `templateSets` för mallen, `setByName`)
+  och `src/core/exportJobs.ts` (`treeOrder`, `exportKeys`, `setKeys`,
+  `exportVars` med smarttexten per rad, `planExport` → jobb med sökvägar
+  och dubbletter, `uniquePaths`, `safeFileName`, `newIfcGuid`,
+  `withGuids`). En rads nyckel är `sheet:<id>`, `view:<id>`,
+  `image:current` eller `model:all`; 0.12.1 lägger de sparade 3D-vyerna som
+  `image:<id>`.
+- **Sidorna**: `src/repr/exportPages.ts` gör ett blad eller en vy till en
+  `PdfPage` med lager (`layers` är vägar av namn, `layerOf` ett index per
+  primitiv), stämpeln och `pdfMeta`. Objektgrupperna är en tabell över
+  objektsorter (`objectGroup`).
+- **PDF-skrivaren** (`src/formats/pdf.ts`) har fått `font` (typsnittet och
+  filen), `meta` (Info och XMP), lager som OCG med nästlad BDC/EMC och
+  `/OCProperties … /Order`, bokmärken (`bookmark` per sida → `/Outlines`),
+  bildnamn per dokument (förut en global räknare, så att bytesen berodde på
+  vad som exporterats tidigare) och `%PDF-1.6`. Text utanför ASCII i
+  egenskaperna skrivs som UTF-16BE, namn med `#xx`.
+- **Typsnitten**: `src/formats/fonts.ts` (`BUNDLED_FONTS`, `readFontFile`
+  som läser bredderna ur en TTF/OTF, `fontOf(doc)`), `fontMetrics.ts` och
+  `fontData/<id>.ts` görs av `scripts/typsnitt.py`. `drawingFont.ts` mäter
+  med det typsnitt som valts senast med `useDrawingFont(doc)`; `buildPlan`
+  och `buildSection` väljer projektets. På skärmen lägger
+  `src/ui/app/drawingFontFace.ts` in filen som `FontFace` och sätter
+  `--font-drawing`. Ett eget typsnitt är en fil i `assets` som stilbokens
+  `font` pekar på; `bookAssetIds` tar med den i stilbokens fil.
+- **Gränssnittet**: `src/ui/app/exportDialog.ts` (dialogen, uppsättningarna,
+  `runSet` för kommandoraden via `app.runExportSet`), `exportRun.ts` (kön,
+  bakgrundstråden `src/formats/exportWorker.ts`, bilderna och 3D),
+  `exportTarget.ts` (mappen med File System Access och IndexedDB-databasen
+  `bacchus-export`, zip, en ensam fil). Stilbokens fält i
+  `src/ui/style/generalExport.ts`. `window.bacchus.plot` är dialogen
+  (`open()`, `runSet(namn)`).
+- **3D**: `View3D.snapshot(w, h, typ)` ritar om duken i bildens storlek och
+  läser den med `toBlob` i samma uppgift; `View3D.exportGlb(info)` med
+  three.js `GLTFExporter` (laddas först då). `pane3d.ensure3d()` laddar och
+  uppdaterar 3D-vyn också i läget 2D (`update3d(true)`).
+- **GUID** i `ProjectDoc.guids`, satt med `store.setGuids` (inget steg att
+  ångra; ett ångrat steg lämnar listan).
+- **Prova i Playwright**: sätt `showSaveFilePicker` och
+  `showDirectoryPicker` till `undefined` med `add_init_script`, så blir det
+  en zip som nedladdning. Demoprojektet har inga blad: skapa med
+  `bacchus.sheets.newSheet()` och `bacchus.sheets.place(id, vy, 100)`.
+  `pdffonts`, `pdfinfo` och `qpdf --check` på filerna; glTF:s JSON ligger
+  efter de första 20 byten.
 
 ## Granskning efter 0.11.8 (0.11.8.4, format 28)
 

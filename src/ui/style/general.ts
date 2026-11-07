@@ -1,3 +1,4 @@
+import { exportChange, exportMarkup, fontClick, fontMarkup } from './generalExport';
 import { openingSettingsOf, type OpeningRule, type OpeningSettings } from '../../core/general';
 import { glassByCompass, glassPanes, m2Text } from '../../elements/daylight';
 import { defaultState } from '../../core/states';
@@ -116,7 +117,7 @@ export function generalMarkup(doc: ProjectDoc): string {
     <section class="style-labels gen-settings">
       <h3>Text, höjder och enheter</h3>
       <div class="fields gen-grid">
-        ${select('font', 'Typsnitt', 'osifont', [['osifont', 'osifont (ISO 3098)']], 'Ritningens enda typsnitt än så länge; fler kräver att PDF-exporten bäddar in dem')}
+        ${fontMarkup(doc)}
         ${select('general:textSize', 'Texthöjd för ny text', g.textSize, textSizes.map((h) => [h, `${num(h)} mm`] as const))}
         ${text('general:heightSystem', 'Höjdsystem', own.heightSystem ?? '', { tag: 'höjdsystem', ph: g.heightSystem })}
         ${select('general:levelDecimals', 'Decimaler i nivåmarkörer', g.levelDecimals, range(0, 3, (n) => `${n} (+${(62.4).toLocaleString('sv-SE', { minimumFractionDigits: n, maximumFractionDigits: n })})`))}
@@ -134,6 +135,7 @@ export function generalMarkup(doc: ProjectDoc): string {
       <div class="gen-weight-row">${weights.map((w) => `<span class="gen-w" title="${num(w)} mm"><i style="height:${Math.max(1, Math.round(w * 4))}px"></i>${num(w)}</span>`).join('')}
       ${own.weights ? '<button type="button" class="btn btn-ghost" data-gen-action="weights-reset">Återställ</button>' : ''}</div>
     </section>
+    ${exportMarkup(doc)}
     ${tagTable(doc)}`;
 }
 
@@ -226,6 +228,8 @@ export function generalChange(store: DocStore, input: HTMLInputElement | HTMLSel
       );
   } else if (kind === 'otag') {
     if ((book.office?.tags?.[name] ?? '') !== input.value) setBook(withOffice(book, (o) => (o.tags = { ...(o.tags ?? {}), [name]: input.value })), `Kontorets tagg {${name}}`);
+  } else if (exportChange(store, kind, name, input.value, setBook)) {
+    // Typsnittet och exportens filnamn (0.12).
   } else if (kind === 'project') {
     if (v) renameProject(store, v);
     else input.value = store.doc.project.name;
@@ -300,6 +304,8 @@ export async function generalClick(store: DocStore, target: HTMLElement, setBook
     }
   } else if (action === 'logo-remove') {
     if (await askConfirm('Ta bort logotypen?', 'Logotyperna som ligger på bladen har kvar bilden.', 'Ta bort')) setOfficeLogo(store, null);
+  } else if (await fontClick(store, action)) {
+    // Det egna typsnittet (0.12).
   } else if (action === 'renumber-openings') await renumberDialog(store);
   else if (action.startsWith('sfield-')) await scheduleFieldAction(store, action, (t) => askText(t, '', 'Lägg till'));
   else if (action === 'weights-reset') setBook(withGeneral(book, (g) => delete g.weights), 'Återställ tjocklekstabellen');

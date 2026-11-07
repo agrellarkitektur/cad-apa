@@ -152,9 +152,9 @@ export function installPane3d(app: AppContext) {
     },
   };
 
-  function update3d(): void {
+  function update3d(force = false): void {
     const { ui, store } = app;
-    if (!view3d || ui.mode === '2d') return;
+    if (!view3d || (ui.mode === '2d' && !force)) return;
     // Platsen räknas inte (0.10.25): med en våning finns inget att välja bort.
     const several = buildingStoreys(store.doc).length > 1;
     onlyBtn.hidden = !several;
@@ -225,34 +225,7 @@ export function installPane3d(app: AppContext) {
     // hela modellen visas bara när vyn öppnas första gången.
     const fresh = !view3d;
     if (mode !== '2d' && !view3d) {
-      loading3d ??= import('../../view3d/view3d').then(({ View3D }) => {
-        view3d = new View3D(app.pane3d);
-        // Projektets bilder för texturerna och ortofotot (0.10.31).
-        view3d.assetUrl = (id) => {
-          const a = app.store.doc.assets[id];
-          return a ? `data:${a.mime};base64,${a.data}` : null;
-        };
-        view3d.editor = edit3d;
-        view3d.onCameraChange = () => {
-          if (app.ui.mode === '3d') app.positionMeasureBox();
-        };
-        view3d.onPick = (id, additive) => {
-          if (!id) app.selection.clear();
-          else if (additive) app.selection.toggle(id);
-          else app.selection.set([id]);
-        };
-        // Markeringsrutan (0.10.27), som i planen.
-        view3d.onBoxPick = (ids, additive) => {
-          if (additive) app.selection.add(ids);
-          else app.selection.set(ids);
-        };
-      });
-      try {
-        await loading3d;
-      } catch {
-        app.hint('3D-vyn kunde inte startas i den här webbläsaren.', 4000);
-        return;
-      }
+      if (!(await load3d())) return;
     }
     update3d();
     if (mode !== '2d' && fresh) {
@@ -262,7 +235,52 @@ export function installPane3d(app: AppContext) {
     }
   }
 
+  /** Ladda 3D-vyn (three.js) utan att byta läge. */
+  async function load3d(): Promise<boolean> {
+    if (view3d) return true;
+    loading3d ??= import('../../view3d/view3d').then(({ View3D }) => {
+      view3d = new View3D(app.pane3d);
+      // Projektets bilder för texturerna och ortofotot (0.10.31).
+      view3d.assetUrl = (id) => {
+        const a = app.store.doc.assets[id];
+        return a ? `data:${a.mime};base64,${a.data}` : null;
+      };
+      view3d.editor = edit3d;
+      view3d.onCameraChange = () => {
+        if (app.ui.mode === '3d') app.positionMeasureBox();
+      };
+      view3d.onPick = (id, additive) => {
+        if (!id) app.selection.clear();
+        else if (additive) app.selection.toggle(id);
+        else app.selection.set([id]);
+      };
+      // Markeringsrutan (0.10.27), som i planen.
+      view3d.onBoxPick = (ids, additive) => {
+        if (additive) app.selection.add(ids);
+        else app.selection.set(ids);
+      };
+    });
+    try {
+      await loading3d;
+      return true;
+    } catch {
+      app.hint('3D-vyn kunde inte startas i den här webbläsaren.', 4000);
+      return false;
+    }
+  }
+
+  /**
+   * 3D-vyn för exporten (0.12): laddad och uppdaterad, också när bara
+   * planen visas. Null om den inte går att starta.
+   */
+  async function ensure3d(): Promise<View3D | null> {
+    if (!(await load3d())) return null;
+    update3d(true);
+    return view3d;
+  }
+
   return {
+    ensure3d,
     /** 3D-vyn, eller null innan den öppnats första gången. */
     get view3d() {
       return view3d;

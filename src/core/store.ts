@@ -29,7 +29,7 @@ export type Change =
   | { [K in FieldKey]: { kind: 'field'; key: K; before: ProjectDoc[K]; after: ProjectDoc[K] } }[FieldKey];
 
 /** Fält på projektnivå som byts ut i sin helhet. */
-export type FieldKey = 'project' | 'graphics' | 'folders' | 'tree' | 'viewTags' | 'worksheets' | 'sheets' | 'site';
+export type FieldKey = 'project' | 'graphics' | 'folders' | 'tree' | 'viewTags' | 'worksheets' | 'sheets' | 'site' | 'exportSets';
 
 export interface Transaction {
   /** Visas i gränssnittet, t.ex. "Ångra: Riv vägg". */
@@ -114,6 +114,14 @@ export class DocStore {
     this.redoStack = [];
     this.emit({ cause: 'commit', transaction: t });
     return t;
+  }
+
+  /**
+   * Objektens GUID (0.12) utan ett steg att ångra: listan hör inte till
+   * något steg, och ett ångrat steg lämnar den som den är.
+   */
+  setGuids(guids: Record<Id, string>): void {
+    this.current = { ...this.current, guids };
   }
 
   undo(): void {

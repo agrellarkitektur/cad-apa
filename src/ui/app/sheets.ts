@@ -344,7 +344,7 @@ export function installSheets(app: AppContext) {
           { label: 'Lägg på teckenförklaring här', run: () => addLegendTo(sheet.id, app.view.camera.toModel(screen)) },
           ...logoItems(app, sheet.id, app.view.camera.toModel(screen)),
           ...stampsOf(app.store.doc).map((w) => ({ label: `Lägg på stämpeln ${w.name} här`, run: () => placeStampOn(sheet.id, w.id, app.view.camera.toModel(screen)) })),
-          { label: 'Plot/export…', run: () => app.root.querySelector<HTMLElement>('.nav-plot [data-action="plot"], .main-menu [data-action="plot"]')?.click() },
+          { label: 'Exportera…', run: () => app.root.querySelector<HTMLElement>('.nav-plot [data-action="plot"], .main-menu [data-action="plot"]')?.click() },
         ],
         sheet.number,
       );

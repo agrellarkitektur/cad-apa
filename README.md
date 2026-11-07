@@ -6,8 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.11.8.3** (alfa), Dörrar och fönster: Smart och vägghål; nästa är
-**granskningen efter 0.11.8**.
+**0.12** (alfa), Exportdialogen och PDF; nästa är **0.12.0.1 DXF**.
 
 ## Vad som fungerar
 
@@ -1149,6 +1148,50 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.12, Exportdialogen och PDF (samma filformat, 28; projekt från
+0.11.8 öppnas; nya valfria fält `exportSets`, `guids`, stilbokens `export`
+och ett eget typsnitt som fil):
+- **Exportera…** (förut *Plot/export*, kommandot `EXPORT`) är en dialog för
+  all export: trädet med **Ritningar**, **Vyer**, **3D-vyer** och
+  **Modellen**, kryssrutor på mappar och rader, en sökruta och **formatet
+  per rad** (blad och vyer PDF, 3D-vyn PNG och/eller JPEG, modellen glTF;
+  DXF, förteckningar och IFC kommer i 0.12.0.1–0.12.0.3)
+- **Uppsättningar**: *Spara som…* sparar urvalet, formaten och
+  inställningarna med namn i projektet (*Bygglov*, *Till konstruktören*);
+  välj den i listan, eller skriv `EXPORT Bygglov` i kommandoraden. Är alla
+  blad (eller vyer) kryssade sparas det som *alla*, så att nya blad kommer
+  med; uppsättningarna följer med *Mall för nya projekt…*
+- **Vart**: direkt i en **mapp på datorn** (Chrome frågar om lov; mappen
+  kommer ihåg sig per projekt, *Välj en annan mapp…*), eller en
+  **zipfil**; *Undermappar per format* (PDF, Bilder, glTF). En ensam fil
+  sparas för sig
+- **Förhandslistan** visar filnamnen innan något skrivs, med *dubblett* där
+  två blir lika (den andra får *(2)*), och filernas storlek efteråt.
+  Filnamnen skrivs som smarttext under stilboken › Allmänt › **Export**:
+  `{ritningsnummer}` för blad som förval (beteckningen inte i namnet),
+  t.ex. `{ritningsnummer}_{titel}`; `{projekt}_{vy}` för vyer och bilder,
+  `{projekt}` för modellen
+- **PDF:en**: **lager** (ett per vy på bladet, eller dessutom per
+  objektgrupp: väggar, dörrar och fönster, mått, text …) som går att släcka
+  i Acrobat och Bluebeam; **dokumentegenskaper** (titel, ämne, nyckelord,
+  ritningsnummer, benämning, skede, datum, också som XMP); en fil per blad
+  eller **en samlad fil med bokmärken** i trädets ordning; valfri stämpel
+  **ARBETSMATERIAL** med datum nederst till vänster. Samma projekt ger
+  samma bytes
+- **Typsnittet** väljs under stilboken › Allmänt: **osifont** (förval),
+  **Arimo** (mäter som Arial) eller **Josefin Sans**, eller **Eget
+  typsnitt** (*Välj fil…*, en öppen TTF- eller OTF-fil som sparas i
+  stilboken och följer med *Exportera…* och mallen). Samma fil ritar på
+  skärmen och bäddas in i PDF:en, så att texterna bryts lika
+- **Bild ur 3D-vyn** i vald storlek (förval 3 000 × 2 000), ur 3D-vyns
+  kamera men aldrig ur fönstret: utan markering och med vit bakgrund
+- **glTF** (.glb) av modellen med material och marken, för Blender;
+  objekten har sort och GUID
+- **GUID**: varje objekt får en beständig IfcGloballyUniqueId första
+  gången det exporteras, som sedan följer med (en kopia får en ny)
+- PDF:erna skrivs i en bakgrundstråd, en fil i taget med förlopp och
+  *Avbryt*; bilderna ur 3D sist
 
 Version 0.11.8.4, Granskning efter 0.11.8 (samma filformat, 28; projekt
 från 0.11.8 öppnas; inga nya funktioner):
@@ -3111,7 +3154,7 @@ src/
   ui/         verktyg, egenskapspanel, stilmall, meny, statusrad, ikoner
   geometry/   vektorer, polygoner och booleska operationer
   styles/     CSS med ljust och mörkt tema
-  fonts/      Archivo och IBM Plex Mono (SIL Open Font License)
+  fonts/      Archivo, IBM Plex Mono, Arimo och Josefin Sans (SIL Open Font License), osifont (GPL med typsnittsundantag)
 tests/        tester för kärnan, planen och filformatet
 docs/         arkitektur och byggordning, utvecklarguide
 .github/      bygget som lägger en zip för webbhotellet på varje release

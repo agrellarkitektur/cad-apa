@@ -72,7 +72,7 @@ export class Navigator {
         <button class="icon-mini pane-min" data-action="min-nav" aria-label="Minimera projektträdet" title="Minimera">${icons.minimize}</button>
         <button class="icon-mini pane-x" data-action="close-nav" aria-label="Stäng projektträdet" title="Stäng (N)">${icons.close}</button>
       </div>
-      <div class="nav-plot"><button class="btn btn-ghost" data-action="plot" title="Exportera blad och vyer som PDF">${icons.plot}<span>Plot/export…</span></button></div>
+      <div class="nav-plot"><button class="btn btn-ghost" data-action="plot" title="Exportera blad, vyer, bilder och modellen">${icons.plot}<span>Exportera…</span></button></div>
       <div class="panel-head nav-head">
         <div class="tabs nav-tabs" role="tablist">
           ${TABS.map(([id, label]) => `<button role="tab" data-nav-tab="${id}" aria-selected="${id === this.tab}">${label}</button>`).join('')}
@@ -365,7 +365,7 @@ export class Navigator {
         <button class="btn" data-action="new-sheet">${icons.plus}<span>Nytt ritningsblad</span></button>
         ${this.newFolderButton('ritningar')}
       </div>
-      <p class="note">Ett blad har vyer i sin skala, och ram och huvud från sitt mallblad. Klicka på en vy på bladet för att ändra skala och rubrik, och dra den för att flytta den. Plot/export gör PDF:er av bladen.</p>
+      <p class="note">Ett blad har vyer i sin skala, och ram och huvud från sitt mallblad. Klicka på en vy på bladet för att ändra skala och rubrik, och dra den för att flytta den. <i>Exportera…</i> gör PDF:er av bladen.</p>
     </section>
     <section>
       <h2>Mallblad</h2>

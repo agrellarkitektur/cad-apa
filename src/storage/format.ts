@@ -1,3 +1,5 @@
+import { isIfcGuid } from '../core/exportJobs';
+import { normalizeExportSets } from '../core/exportSettings';
 import { newStyleBook, normalizeBook } from '../core/graphics';
 import { kindOfElementType, normalizeOpeningModel } from '../core/openingTypes';
 import { DEFAULT_VIEW_TAGS, FORMAT, FORMAT_VERSION, SITE_STOREY, withSiteLast, type ProjectDoc } from '../core/model';
@@ -107,6 +109,8 @@ function normalize(d: any): ProjectDoc {
     sheets: Array.isArray(d.sheets) ? d.sheets.map((s: any) => ({ ...s, fields: s.fields ?? {}, viewports: Array.isArray(s.viewports) ? s.viewports : [] })) : [],
     assets: d.assets && typeof d.assets === 'object' ? d.assets : {},
     ...(d.site && typeof d.site === 'object' && Array.isArray(d.site.origin) ? { site: d.site } : {}),
+    ...(d.guids && typeof d.guids === 'object' ? { guids: Object.fromEntries(Object.entries<unknown>(d.guids).filter(([, g]) => isIfcGuid(g))) as Record<string, string> } : {}),
+    ...(normalizeExportSets(d.exportSets).length ? { exportSets: normalizeExportSets(d.exportSets) } : {}),
   };
   // Platsen känns igen på sitt id (`SITE_STOREY`) lika väl som på flaggan: en handskriven fil
   // med ett annat id får objekten flyttade dit (granskningen efter 0.10.25).

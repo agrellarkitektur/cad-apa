@@ -1,3 +1,5 @@
+import { isBundledFont } from '../formats/fonts';
+import { normalizeExportSets, templateSets, type ExportSet } from './exportSettings';
 import { pruneAssets } from './commands';
 import { kindOfElementType, normalizeOpeningModel } from './openingTypes';
 import { normalizeBook, type StyleBook } from './graphics';
@@ -23,7 +25,7 @@ export interface PaperPart {
 }
 
 /** En stilbok som fil: stilboken med bilderna, typerna (0.11.7.1) och (valfritt) papperet. */
-export type StyleBookFile = StyleBook & { assets?: Asset[]; paper?: PaperPart; types?: Definition[] };
+export type StyleBookFile = StyleBook & { assets?: Asset[]; paper?: PaperPart; types?: Definition[]; exportSets?: ExportSet[] };
 
 /** Det som lästs ur en fil: stilboken, dess bilder och papperet, om det finns. */
 export interface ReadBook {
@@ -32,6 +34,8 @@ export interface ReadBook {
   /** Profiltyperna, ändprofilerna och räckestyperna (0.11.7.1). */
   types?: Definition[];
   paper?: PaperPart;
+  /** Exportuppsättningarna (0.12), utan de enskilda bladen och vyerna (`templateSets`). */
+  exportSets?: ExportSet[];
 }
 
 export interface PaperChoice {
@@ -44,6 +48,8 @@ function bookAssetIds(book: StyleBook): Id[] {
   const ids = new Set<Id>();
   if (book.office?.logo) ids.add(book.office.logo.asset);
   for (const m of book.materials ?? []) if (m.texture) ids.add(m.texture.asset);
+  // Ett eget typsnitt (0.12) är en fil i projektet, som logotypen.
+  if (book.font && !isBundledFont(book.font)) ids.add(book.font);
   return [...ids];
 }
 
@@ -96,6 +102,8 @@ export function exportBook(doc: ProjectDoc, choice: PaperChoice = { masters: fal
   if (assets.length) book.assets = assets;
   const types = bookTypes(doc).map((d) => structuredClone(d));
   if (types.length) book.types = types;
+  const sets = templateSets(doc.exportSets ?? []);
+  if (sets.length) book.exportSets = sets;
   return book;
 }
 
@@ -108,13 +116,15 @@ export function readBookFile(data: any, base?: StyleBook, styleTo?: ViewCategory
   delete (book as StyleBookFile).assets;
   delete (book as StyleBookFile).paper;
   delete (book as StyleBookFile).types;
+  delete (book as StyleBookFile).exportSets;
   const types: Definition[] = Array.isArray(data?.types)
     ? data.types
         .filter((d: any) => d && typeof d.id === 'string' && typeof d.name === 'string' && isBookType(d))
         // Dörr- och fönstertyperna kontrolleras som när ett projekt öppnas (0.11.8.2).
         .map((d: Definition) => (d.opening ? { ...d, opening: normalizeOpeningModel(d.opening, kindOfElementType(d.elementType) ?? 'window') } : d))
     : [];
-  const withTypes = types.length ? { types } : {};
+  const sets = normalizeExportSets(data?.exportSets);
+  const withTypes = { ...(types.length ? { types } : {}), ...(sets.length ? { exportSets: sets } : {}) };
   const p = data?.paper;
   const worksheets: Worksheet[] = Array.isArray(p?.worksheets) ? p.worksheets.filter((w: any) => w && typeof w.id === 'string' && (isMaster(w) || isStamp(w))) : [];
   if (!worksheets.length) return { book, assets, ...withTypes };
@@ -217,4 +227,6 @@ export function importBook(store: DocStore, read: ReadBook, choice: PaperChoice,
 /** Ett nytt projekt med stilboken ur en mall (eller en fil): papperet följer med, och mallens förvalda mallblad gäller. */
 export function applyTemplate(store: DocStore, read: ReadBook): void {
   importBook(store, read, { masters: true, stamps: true }, `Stilbok ur mallen: ${read.book.name}`, true);
+  // Mallens exportuppsättningar (0.12) följer med till det nya projektet.
+  if (read.exportSets?.length && !store.doc.exportSets?.length) store.transact('Exportuppsättningar ur mallen', (tx) => tx.setField('exportSets', structuredClone(read.exportSets)), { merge: true });
 }
