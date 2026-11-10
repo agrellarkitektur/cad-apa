@@ -139,17 +139,24 @@ function objectField(ctx: PlanContext, el: Element<any>, name: string): string {
 /** Litterans rader med fälten ifyllda ur objekten (*varierar* eller en lista när de skiljer sig). */
 export function labelLines(ctx: PlanContext, el: Element<any>): string[] {
   const p = ctx.params<LabelParams>(el);
-  const objects = (p.targets ?? []).map((t) => (t.id ? ctx.doc.elements[t.id] : undefined)).filter((e): e is Element => !!e);
-  const unique = [...new Map(objects.map((e) => [e.id, e])).values()];
-  const value = (name: string): string => {
-    const n = name.toLowerCase();
-    if (n === 'löpnummer' || n === 'lopnummer' || n === 'nr') return labelNumber(ctx, el);
-    if (n === 'sort') return p.sort?.trim() ?? '';
-    const values = [...new Set(unique.map((e) => objectField(ctx, e, name)).filter((v) => v !== ''))];
-    if (values.length < 2) return values[0] ?? '';
-    return p.list ? values.sort((a, b) => a.localeCompare(b, 'sv', { numeric: true })).join(', ') : 'varierar';
-  };
-  return fillTemplate(String(p.text ?? ''), value).map((r) => r.text);
+  return fillTemplate(String(p.text ?? ''), (name) => labelValue(ctx, el, name)).map((r) => r.text);
+}
+
+/** Objekten litteran pekar på, var och ett en gång. */
+export function labelObjects(doc: ProjectDoc, el: Element<any>): Element[] {
+  const objects = ((el.params as Partial<LabelParams>).targets ?? []).map((t) => (t.id ? doc.elements[t.id] : undefined)).filter((e): e is Element => !!e);
+  return [...new Map(objects.map((e) => [e.id, e])).values()];
+}
+
+/** Ett fält i litteran (smarttext): löpnumret, sorten, eller fältet ur objekten (*varierar* eller en lista när de skiljer sig). */
+export function labelValue(ctx: PlanContext, el: Element<any>, name: string): string {
+  const p = ctx.params<LabelParams>(el);
+  const n = name.toLowerCase();
+  if (n === 'löpnummer' || n === 'lopnummer' || n === 'nr') return labelNumber(ctx, el);
+  if (n === 'sort') return p.sort?.trim() ?? '';
+  const values = [...new Set(labelObjects(ctx.doc, el).map((e) => objectField(ctx, e, name)).filter((v) => v !== ''))];
+  if (values.length < 2) return values[0] ?? '';
+  return p.list ? values.sort((a, b) => a.localeCompare(b, 'sv', { numeric: true })).join(', ') : 'varierar';
 }
 
 /** Röd ledare till ett objekt som tagits bort. */

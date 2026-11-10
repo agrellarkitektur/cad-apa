@@ -3,7 +3,7 @@ import type { Color, FillDef } from '../core/graphics';
 import { lineTypeList } from '../core/lineTypes';
 import { isSite, type Element, type Id, type ProjectDoc, type ViewDef } from '../core/model';
 import { profileObjectPrefix } from '../core/profileTypes';
-import { actionOf, existingState, type ViewStates } from '../core/states';
+import { actionOf, defaultState, existingState, type ViewStates } from '../core/states';
 import { hatchAsPattern, resolveFill } from '../core/fillTypes';
 import { resolveParams } from '../elements/registry';
 import { isFixed, type FurnitureParams } from '../elements/furniture';
@@ -374,7 +374,8 @@ export function sheetDxf(doc: ProjectDoc, sheetId: Id, opt: DxfExportOptions): D
   const viewOf = new Map<Primitive, Source>();
   for (const v of d.views) {
     const def: ViewDef | undefined = viewSource(doc, v.view)?.def;
-    const source: Source = def ? { states: viewStatesFor(doc, def, { scale: v.scale, autoDims: opt.autoDims }) } : {};
+    // En förteckning (0.12.2) hör inte till bladets ram: den får sitt eget lager (*I-*, *A-TEXT*).
+    const source: Source = def ? { states: viewStatesFor(doc, def, { scale: v.scale, autoDims: opt.autoDims }) } : v.schedule ? { states: { state: defaultState(doc) } } : {};
     for (const p of v.prims) viewOf.set(p, source);
   }
   const b = new Builder(doc, opt.version, 1);

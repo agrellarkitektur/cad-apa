@@ -32,7 +32,9 @@ function a3Factor(sheet: Pick<Sheet, 'size'>): number {
  * Ett kontorsfält som bladet eller projektet lämnat tomt (t.ex. ansvarig)
  * tar kontorets värde. Skalorna kan skrivas över med bladets fält.
  */
-export function smartVars(doc: Pick<ProjectDoc, 'project' | 'folders' | 'tree'> & Partial<Pick<ProjectDoc, 'site' | 'graphics'>>, sheet: Sheet, todayText: string): Record<string, string> {
+export function smartVars(doc: Pick<ProjectDoc, 'project' | 'folders' | 'tree'> & Partial<Pick<ProjectDoc, 'site' | 'graphics' | 'schedules'>>, sheet: Sheet, todayText: string): Record<string, string> {
+  // Förteckningarna (0.12.2) ligger i 1:1 och räknas inte bland bladets skalor.
+  const scaled = doc.schedules?.length ? { ...sheet, viewports: sheet.viewports.filter((v) => !doc.schedules!.some((x) => x.id === v.view)) } : sheet;
   const own = (k: string) => sheet.fields[k]?.trim();
   const office = officeVars(doc.graphics?.office);
   const vars: Record<string, string> = { ...office, ...sheet.fields, ...doc.project.fields };
@@ -45,8 +47,8 @@ export function smartVars(doc: Pick<ProjectDoc, 'project' | 'folders' | 'tree'> 
     ritningsnummer: sheet.number,
     innehåll: sheet.name,
     mapp: folderName(doc, sheet.id),
-    skala: own('skala') || sheetScales(sheet),
-    'skala a3': own('skala a3') || sheetScales(sheet, a3Factor(sheet)),
+    skala: own('skala') || sheetScales(scaled),
+    'skala a3': own('skala a3') || sheetScales(scaled, a3Factor(sheet)),
     format: sheet.size,
     idag: todayText,
     licens: doc.site?.licence ?? '',

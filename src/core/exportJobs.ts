@@ -44,6 +44,7 @@ export function exportKeys(doc: ProjectDoc): string[] {
   return [
     ...treeOrder(doc, 'ritningar', doc.sheets.map((s) => s.id)).map((id) => `sheet:${id}`),
     ...treeOrder(doc, 'vyer', doc.views.map((v) => v.id)).map((id) => `view:${id}`),
+    ...(doc.schedules ?? []).map((s) => `schedule:${s.id}`),
     IMAGE_CURRENT,
     MODEL_ALL,
   ];
@@ -80,6 +81,10 @@ export function exportVars(doc: ProjectDoc, key: string, today: string): Record<
   if (kind === 'view') {
     const v = doc.views.find((x) => x.id === idOf(key));
     return { ...base, vy: v?.name ?? '', titel: v?.name ?? '', skala: `1:${v?.scale ?? 100}`, typ: 'vy' };
+  }
+  if (kind === 'schedule') {
+    const s = doc.schedules?.find((x) => x.id === idOf(key));
+    return { ...base, vy: s?.name ?? '', titel: s?.name ?? '', skala: '', typ: 'förteckning' };
   }
   if (kind === 'image') return { ...base, vy: '3D', titel: '3D', typ: 'bild' };
   return { ...base, vy: 'modell', titel: 'modell', typ: 'modell' };

@@ -121,6 +121,8 @@ export const icons = {
   grid: svg('<path d="M4 4h16v16H4zM4 9.3h16M4 14.6h16M9.3 4v16M14.6 4v16"/>'),
   // Ett ritningsblad med ritningshuvud i nedre högra hörnet (0.8 del 3).
   sheet: svg('<path d="M3 5.5h18v13H3z"/><path d="M13 18.5v-4h8"/><path d="M6 8.5h5v5H6z"/>'),
+  /** Förteckning (0.12.2): en tabell med rubrikrad. */
+  table: svg('<path d="M3.5 5h17v14h-17z"/><path d="M3.5 9h17M3.5 13h17M3.5 17h17M9 5v14"/>'),
   // Plot: ett blad som kommer ut ur en skrivare.
   fileImage: svg('<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4"/><path d="M8.5 18l3-3.5 2 2 1.5-1.5 2.5 3"/><circle cx="10" cy="11" r="1.1"/>'),
   filePdf: svg('<path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4"/><path d="M8.5 11.5h7M8.5 14.5h7M8.5 17.5h4"/>'),

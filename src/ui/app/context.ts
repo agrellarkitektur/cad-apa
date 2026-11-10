@@ -1,6 +1,6 @@
 import type { installWand } from './wand';
 import type { installRender } from './render';
-import type { ViewDef } from '../../core/model';
+import type { Id, ViewDef } from '../../core/model';
 import type { ViewStates } from '../../core/states';
 import type { DocStore } from '../../core/store';
 import type { PlanResult } from '../../repr/plan';
@@ -145,6 +145,10 @@ export interface AppContext {
   update3d(): void;
   /** Kör en exportuppsättning med namn (0.12, `EXPORT Bygglov`); falskt om den inte finns. */
   runExportSet?: (name: string) => boolean;
+  /** Visa en förteckning i ritytan och dess inställningar i egenskaperna (0.12.2). */
+  openSchedule?: (id: Id) => void;
+  /** Stäng förteckningen som visas, om någon (0.12.2). */
+  closeSchedule?: () => void;
   setPanel(open: boolean, sheet?: 'peek' | 'full'): void;
   setNav(open: boolean): void;
   togglePanel(): void;

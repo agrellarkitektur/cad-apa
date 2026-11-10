@@ -463,3 +463,135 @@ button.ex-fmt {
   width: 72px;
   font-family: var(--font-data);
 }
+
+/* Förteckningen (0.12.2): tabellen över ritytan och inställningarna i egenskaperna. */
+.schedule-view {
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  overflow: auto;
+  background: var(--paper);
+  padding: 24px 28px 96px;
+}
+
+.schedule-sheet h2 {
+  margin: 0 0 12px;
+  font-size: 17px;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.schedule-sheet h2 small {
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 12px;
+}
+
+.schedule-table {
+  border-collapse: collapse;
+  background: var(--chrome);
+  font-family: var(--font-drawing);
+  font-size: 13px;
+  border: 1px solid var(--ink);
+}
+
+.schedule-table th,
+.schedule-table td {
+  border: 1px solid var(--rule);
+  padding: 3px 9px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.schedule-table thead th {
+  border-bottom: 2px solid var(--ink);
+}
+
+.schedule-table .num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.schedule-table .sch-group th {
+  background: color-mix(in srgb, var(--ink) 6%, var(--chrome));
+}
+
+.schedule-table .sch-sum th {
+  font-weight: 600;
+}
+
+.schedule-table tfoot th {
+  border-top: 2px solid var(--ink);
+}
+
+.schedule-table .sch-empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.schedule-sheet .note {
+  max-width: 60ch;
+}
+
+.schedule-form .sch-col {
+  display: grid;
+  grid-template-columns: minmax(70px, 0.8fr) minmax(70px, 1fr) auto auto auto auto;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+.schedule-form .sch-col-field {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.schedule-form .sch-col input:not([type='checkbox']) {
+  min-width: 0;
+  width: 100%;
+}
+
+.schedule-form .sch-col .check {
+  margin: 0;
+}
+
+.schedule-form .sch-col-gap {
+  width: 34px;
+}
+
+.schedule-form .sch-add select,
+.schedule-form .sch-own input {
+  width: 100%;
+}
+
+.schedule-form .sch-own {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.schedule-form .sch-own[hidden] {
+  display: none;
+}
+
+.schedule-form .sch-sort {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
+.schedule-form .sch-storeys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 12px;
+}
+
+.nav-actions.schedule-new {
+  flex-wrap: wrap;
+  align-items: center;
+}

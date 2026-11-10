@@ -2,7 +2,8 @@ import { deleteElements } from '../../core/commands';
 import { logoItems } from './logo';
 import type { Id, Sheet } from '../../core/model';
 import { addLegend, addScaleBar, addViewport, createMaster, createSheet, createStamp, FRAME_MARGIN, mastersOf, paperSize, placeStamp, setViewportCrop, stampsOf, today } from '../../core/sheets';
-import { buildSheet, cachedViewPrims, contentBounds, VIEWPORT_PAD, viewSource, type PlacedView, type SheetDrawing } from '../../repr/sheet';
+import { buildSheet, contentBounds, refPrims, VIEWPORT_PAD, viewSource, type PlacedView, type SheetDrawing } from '../../repr/sheet';
+import { scheduleOf } from '../../core/schedules';
 import { boundsOf, type Bounds, type Vec2 } from '../../repr/primitives';
 import { pickAt } from '../../view2d/pick';
 import type { ViewPointer } from '../../view2d/planView';
@@ -120,8 +121,8 @@ export function installSheets(app: AppContext) {
       return f ? screenBox(app.view, app.pane2d, { ...f, minY: f.minY - 8 }) : null;
     };
     return {
-      title: vp.title || viewSource(app.store.doc, vp.view)?.name || 'Vy',
-      sub: `1:${vp.scale} på ${sheet.number}`,
+      title: vp.title || viewSource(app.store.doc, vp.view)?.name || scheduleOf(app.store.doc, vp.view)?.name || 'Vy',
+      sub: scheduleOf(app.store.doc, vp.view) ? `Förteckning på ${sheet.number}` : `1:${vp.scale} på ${sheet.number}`,
       buttons: [
         { id: 'move', label: 'Flytta', icon: 'move', pressed: app.modifier.active === 'move' },
         { id: 'open', label: 'Öppna vyn', icon: 'navigator' },
@@ -178,6 +179,7 @@ export function installSheets(app: AppContext) {
     if (doc.storeys.some((s) => s.id === place)) app.goTo({ kind: 'storey', id: place });
     else if (doc.elements[place]) app.goTo({ kind: 'marker', id: place });
     else if (doc.worksheets.some((w) => w.id === place)) app.goTo({ kind: 'worksheet', id: place });
+    else if (scheduleOf(doc, ref) && app.openSchedule) app.openSchedule(ref);
     else app.hint('Vyn finns inte längre.');
   }
 
@@ -204,16 +206,20 @@ export function installSheets(app: AppContext) {
   function place(sheetId: Id, view: Id, scale: number): void {
     const doc = app.store.doc;
     const sheet = doc.sheets.find((s) => s.id === sheetId);
-    const src = viewSource(doc, view);
+    // En förteckning (0.12.2) ritas i 1:1, utan skala i rubriken.
+    const schedule = !!scheduleOf(doc, view);
+    if (schedule) scale = 1;
+    const [, sheetH] = sheet ? paperSize(sheet) : [0, 0];
+    const src = refPrims(doc, view, { scale, autoDims: app.uiSettings.autoDims, maxHeight: sheetH - FRAME_MARGIN.top - FRAME_MARGIN.bottom - 20 });
     if (!sheet || !src) return;
-    const b = contentBounds(cachedViewPrims(doc, src.def, { scale, autoDims: app.uiSettings.autoDims }));
+    const b = contentBounds(src.prims);
     const size: [number, number] = b ? [(b.maxX - b.minX) / scale + 2 * VIEWPORT_PAD, (b.maxY - b.minY) / scale + 2 * VIEWPORT_PAD] : [40, 30];
     if (app.ui.layout !== sheetId) app.goTo({ kind: 'sheet', id: sheetId });
     const c = spotFor(sheet, size);
     const mid: Vec2 = b ? [(b.minX + b.maxX) / 2 / scale, (b.minY + b.maxY) / 2 / scale] : [0, 0];
-    const id = addViewport(app.store, sheetId, { view, scale, at: [Math.round(c[0] - mid[0]), Math.round(c[1] - mid[1])] });
+    const id = addViewport(app.store, sheetId, { view, scale, at: [Math.round(c[0] - mid[0]), Math.round(c[1] - mid[1])], ...(schedule ? { hideScale: true } : {}) });
     const [W, H] = paperSize(sheet);
-    if (size[0] > W - 40 || size[1] > H - 30) app.hint(`Vyn är större än bladet i 1:${scale}. Välj en mindre skala eller ett större format.`, 5000);
+    if (size[0] > W - 40 || size[1] > H - 30) app.hint(schedule ? 'Förteckningen är bredare än bladet. Ta bort kolumner, eller välj ett större format.' : `Vyn är större än bladet i 1:${scale}. Välj en mindre skala eller ett större format.`, 5000);
     if (id) pick({ kind: 'viewport', id });
   }
 

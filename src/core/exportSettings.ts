@@ -4,7 +4,7 @@ import type { Id } from './model';
 /**
  * Exporten (0.12): det som exporteras, i vilka format, och uppsättningarna
  * som sparas med namn. Formaten är skrivare bakom en dialog och kommer en i
- * taget (DXF i 0.12.1, förteckningarna i 0.12.2, IFC i 0.12.3); en
+ * taget (DXF i 0.12.1, förteckningarna i 0.12.2, IFC i 0.12.4); en
  * rad i dialogen är ett blad, en vy, en 3D-vy eller modellen.
  *
  * Inställningar som hör till kontorets sätt att leverera (filnamnsmallarna)
@@ -13,26 +13,28 @@ import type { Id } from './model';
  */
 
 /** Sorten på en rad i exporten. */
-export type ExportKind = 'sheet' | 'view' | 'image' | 'model';
-export type ExportFormat = 'pdf' | 'dxf' | 'png' | 'jpeg' | 'glb';
+export type ExportKind = 'sheet' | 'view' | 'schedule' | 'image' | 'model';
+export type ExportFormat = 'pdf' | 'dxf' | 'csv' | 'png' | 'jpeg' | 'glb';
 
-export const EXPORT_KINDS: readonly ExportKind[] = ['sheet', 'view', 'image', 'model'];
+export const EXPORT_KINDS: readonly ExportKind[] = ['sheet', 'view', 'schedule', 'image', 'model'];
 
 /** Formaten en sort kan exporteras i, förvalet först. */
 export const FORMATS_FOR: Record<ExportKind, readonly ExportFormat[]> = {
   sheet: ['pdf', 'dxf'],
   // Vyer går till dem som ritar vidare (konstruktören, landskap), så DXF är förvalet (0.12.1).
   view: ['dxf', 'pdf'],
+  // Förteckningarna (0.12.2) går till kalkylen som CSV; på bladet följer de med i bladets PDF.
+  schedule: ['csv', 'pdf'],
   image: ['png', 'jpeg'],
   model: ['glb'],
 };
 
-export const FORMAT_LABEL: Record<ExportFormat, string> = { pdf: 'PDF', dxf: 'DXF', png: 'PNG', jpeg: 'JPEG', glb: 'glTF' };
-export const FORMAT_EXT: Record<ExportFormat, string> = { pdf: 'pdf', dxf: 'dxf', png: 'png', jpeg: 'jpg', glb: 'glb' };
+export const FORMAT_LABEL: Record<ExportFormat, string> = { pdf: 'PDF', dxf: 'DXF', csv: 'CSV', png: 'PNG', jpeg: 'JPEG', glb: 'glTF' };
+export const FORMAT_EXT: Record<ExportFormat, string> = { pdf: 'pdf', dxf: 'dxf', csv: 'csv', png: 'png', jpeg: 'jpg', glb: 'glb' };
 /** Undermappen per format när *Undermappar* är valt. */
-export const FORMAT_FOLDER: Record<ExportFormat, string> = { pdf: 'PDF', dxf: 'DXF', png: 'Bilder', jpeg: 'Bilder', glb: 'glTF' };
+export const FORMAT_FOLDER: Record<ExportFormat, string> = { pdf: 'PDF', dxf: 'DXF', csv: 'Förteckningar', png: 'Bilder', jpeg: 'Bilder', glb: 'glTF' };
 
-/** Raden för den nuvarande 3D-vyn (0.12; de sparade 3D-vyerna kommer i 0.12.5) och för modellen. */
+/** Raden för den nuvarande 3D-vyn (0.12; de sparade 3D-vyerna kommer i 0.12.6) och för modellen. */
 export const IMAGE_CURRENT = 'image:current';
 export const MODEL_ALL = 'model:all';
 
@@ -54,6 +56,7 @@ export interface ExportSettings {
 export const NAME_DEFAULTS: Record<ExportKind, string> = {
   sheet: '{ritningsnummer}',
   view: '{projekt}_{vy}',
+  schedule: '{projekt}_{vy}',
   image: '{projekt}_{vy}',
   model: '{projekt}',
 };

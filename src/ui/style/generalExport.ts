@@ -16,7 +16,7 @@ import { escapeHtml as esc } from '../labels';
  * eget, uppladdat), exportens filnamnsmallar och DXF:ens lager (0.12.1).
  */
 
-const KIND_LABEL: Record<ExportKind, string> = { sheet: 'Blad', view: 'Vyer', image: 'Bilder ur 3D', model: 'Modellen' };
+const KIND_LABEL: Record<ExportKind, string> = { sheet: 'Blad', view: 'Vyer', schedule: 'Förteckningar', image: 'Bilder ur 3D', model: 'Modellen' };
 
 /** Typsnittets lista och knapparna för ett eget. */
 export function fontMarkup(doc: ProjectDoc): string {

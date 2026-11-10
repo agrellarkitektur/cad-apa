@@ -22,6 +22,7 @@ const GROUPS: [string, string[]][] = [
   ['Möbler', ['Furniture']],
   ['Mått', ['Dimension']],
   ['Text och littera', ['Text', 'Label', 'Legend', 'ViewTitle']],
+  ['Förteckningar', ['Schedule']],
   ['Markörer', ['Section', 'Elevation', 'North', 'ScaleBar']],
   ['Mark och plats', ['Ground', 'Terrain', 'Tree', 'SiteBuilding', 'SiteMap', 'House']],
   ['Underlag', ['Underlay']],

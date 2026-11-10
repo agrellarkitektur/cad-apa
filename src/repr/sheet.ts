@@ -10,6 +10,8 @@ import { buildPlan, type Pickable } from './plan';
 import { boundsOf, type Bounds, type Primitive, type Vec2 } from './primitives';
 import { buildSection } from './section';
 import { smartVars } from './smartText';
+import { scheduleTableById } from './schedules';
+import { schedulePrims } from './scheduleTable';
 import { isBackdrop, isOverUnderlay, underlayHostOf, viewUnderlayPrims } from './viewUnderlays';
 import type { StyleSheet } from '../core/graphics';
 
@@ -32,6 +34,8 @@ export interface ViewSource {
   name: string;
   /** Den sparade vyn, eller inställningarna som modellvyn ritas med. */
   def: ViewDef;
+  /** En förteckning (0.12.2): `def` är bara en platshållare. */
+  schedule?: true;
 }
 
 /** Luften runt det som är ritat i en vy på ett blad, mm på papperet. */
@@ -79,7 +83,20 @@ export function placeableViews(doc: ProjectDoc): ViewSource[] {
     const s = viewSource(doc, modelViewId(p));
     if (s) out.push(s);
   }
+  // Förteckningarna (0.12.2) sist; de ritas i 1:1 och har ingen vy att visa.
+  for (const sc of doc.schedules ?? []) out.push({ id: sc.id, name: sc.name, def: { id: sc.id, name: sc.name, storey: doc.storeys[0].id, state: sc.state ?? '', scale: 1 } as ViewDef, schedule: true });
   return out;
+}
+
+/**
+ * Det en vy på ett blad ritar, i vyns koordinater: en vy, eller en
+ * förteckning (0.12.2) som tabell. Null om det den pekar på är borta.
+ */
+export function refPrims(doc: ProjectDoc, ref: Id, opt: ViewPrimOptions & { maxHeight?: number }): { name: string; prims: Primitive[]; schedule?: boolean } | null {
+  const t = scheduleTableById(doc, ref);
+  if (t) return { name: t.name, prims: schedulePrims(t, { id: ref, scale: opt.scale, maxHeight: opt.maxHeight }), schedule: true };
+  const src = viewSource(doc, ref);
+  return src ? { name: src.name, prims: cachedViewPrims(doc, src.def, opt) } : null;
 }
 
 export interface ViewPrimOptions {
@@ -245,6 +262,8 @@ export interface PlacedView {
   prims: Primitive[];
   /** Vyn eller det den visar finns inte längre. */
   missing?: boolean;
+  /** En förteckning (0.12.2). */
+  schedule?: true;
 }
 
 /** En ram på papperet i vyns modellkoordinater (för `crop`). */
@@ -281,9 +300,9 @@ function viewTitle(frame: Bounds, title: string, scale: number, showScale = true
   ];
 }
 
-/** En vy på ett blad, ritad på papperet. */
-export function placeView(doc: ProjectDoc, vp: Viewport, opt: { autoDims?: boolean } = {}): PlacedView {
-  const src = viewSource(doc, vp.view);
+/** En vy på ett blad, ritad på papperet. `maxHeight` bryter en förteckning när vyn inte har en egen. */
+export function placeView(doc: ProjectDoc, vp: Viewport, opt: { autoDims?: boolean; maxHeight?: number } = {}): PlacedView {
+  const src = refPrims(doc, vp.view, { scale: vp.scale, autoDims: opt.autoDims, maxHeight: vp.maxHeight ?? opt.maxHeight });
   const name = vp.title?.trim() || src?.name || 'Vyn finns inte längre';
   if (!src) {
     const frame = { minX: vp.at[0] - 30, minY: vp.at[1] - 20, maxX: vp.at[0] + 30, maxY: vp.at[1] + 20 };
@@ -302,9 +321,10 @@ export function placeView(doc: ProjectDoc, vp: Viewport, opt: { autoDims?: boole
       ],
     };
   }
-  const model = cachedViewPrims(doc, src.def, { scale: vp.scale, autoDims: opt.autoDims });
-  const base = { id: vp.id, view: vp.view, name, at: vp.at, scale: vp.scale };
-  const title = (f: Bounds) => viewTitle(f, name, vp.scale, !vp.hideScale);
+  const model = src.prims;
+  const base = { id: vp.id, view: vp.view, name, at: vp.at, scale: vp.scale, ...(src.schedule ? { schedule: true as const } : {}) };
+  // En förteckning (0.12.2) har rubriken ovanför och ingen skala.
+  const title = (f: Bounds) => (src.schedule ? scheduleTitle(f, name) : viewTitle(f, name, vp.scale, !vp.hideScale));
   const paper = toPaper(model, vp.at, vp.scale);
   if (vp.crop) {
     // En egen ram (0.8.7): allt klipps mot den.
@@ -316,10 +336,15 @@ export function placeView(doc: ProjectDoc, vp: Viewport, opt: { autoDims?: boole
   return { ...base, frame, prims: [...layered(paper, frame), ...title(frame)] };
 }
 
+/** Förteckningens rubrik (0.12.2): ovanför tabellen, i fet stil. */
+function scheduleTitle(frame: Bounds, title: string): Primitive[] {
+  return [{ kind: 'text', at: [frame.minX + VIEWPORT_PAD, frame.maxY - VIEWPORT_PAD + 2.5], text: title, height: 3.5, bold: true, pen: { weight: 0.25 }, origin: { objectType: 'ViewTitle', part: 'vyrubrik' } }];
+}
+
 /** Vyns ram när den följer innehållet, i modellens koordinater (som `crop`), eller null om vyn är tom. */
 export function contentCrop(doc: ProjectDoc, vp: Viewport, opt: { autoDims?: boolean } = {}): Bounds | null {
-  const src = viewSource(doc, vp.view);
-  const b = src ? contentBounds(cachedViewPrims(doc, src.def, { scale: vp.scale, autoDims: opt.autoDims })) : null;
+  const src = refPrims(doc, vp.view, { scale: vp.scale, autoDims: opt.autoDims, maxHeight: vp.maxHeight });
+  const b = src ? contentBounds(src.prims) : null;
   if (!b) return null;
   const pad = VIEWPORT_PAD * vp.scale;
   return { minX: b.minX - pad, minY: b.minY - pad, maxX: b.maxX + pad, maxY: b.maxY + pad };
@@ -327,16 +352,16 @@ export function contentCrop(doc: ProjectDoc, vp: Viewport, opt: { autoDims?: boo
 
 /** Mitten av en vy på papperet, med ett visst läge och en viss skala. */
 export function viewCenter(doc: ProjectDoc, view: Id, scale: number, at: Vec2, opt: { autoDims?: boolean } = {}): Vec2 {
-  const src = viewSource(doc, view);
-  const b = src ? contentBounds(cachedViewPrims(doc, src.def, { scale, autoDims: opt.autoDims })) : null;
+  const src = refPrims(doc, view, { scale, autoDims: opt.autoDims });
+  const b = src ? contentBounds(src.prims) : null;
   if (!b) return at;
   return [at[0] + (b.minX + b.maxX) / 2 / scale, at[1] + (b.minY + b.maxY) / 2 / scale];
 }
 
 /** Läget (`at`) som lägger vyns mitt i en punkt på papperet. */
 export function centeredAt(doc: ProjectDoc, view: Id, scale: number, center: Vec2, opt: { autoDims?: boolean } = {}): [number, number] {
-  const src = viewSource(doc, view);
-  const b = src ? contentBounds(cachedViewPrims(doc, src.def, { scale, autoDims: opt.autoDims })) : null;
+  const src = refPrims(doc, view, { scale, autoDims: opt.autoDims });
+  const b = src ? contentBounds(src.prims) : null;
   if (!b) return [Math.round(center[0]), Math.round(center[1])];
   const mid: Vec2 = [(b.minX + b.maxX) / 2 / scale, (b.minY + b.maxY) / 2 / scale];
   return [Math.round(center[0] - mid[0]), Math.round(center[1] - mid[1])];
@@ -422,7 +447,8 @@ export function buildSheet(doc: ProjectDoc, sheet: Sheet, opt: { autoDims?: bool
   const [w, h] = paperSize(sheet);
   const frame: Bounds = { minX: FRAME_MARGIN.left, minY: FRAME_MARGIN.bottom, maxX: w - FRAME_MARGIN.right, maxY: h - FRAME_MARGIN.top };
   const master = masterOf(doc, sheet);
-  const views = sheet.viewports.map((vp) => placeView(doc, vp, opt));
+  // En förteckning bryts vid ramens höjd när vyn inte har en egen (0.12.2).
+  const views = sheet.viewports.map((vp) => placeView(doc, vp, { ...opt, maxHeight: frame.maxY - frame.minY - 20 }));
   // Teckenförklaringen (0.10.30) läser det som syns i vyerna, bara när bladet har en.
   const hasLegend = Object.values(doc.elements).some((e) => e.type === 'Legend' && e.space === sheet.id);
   const legend = hasLegend ? legendSources(doc, views) : undefined;
@@ -472,15 +498,18 @@ export function legendSources(doc: ProjectDoc, views: readonly PlacedView[]): Le
 
 /** En vy ensam på ett papper som är precis så stort som den, för export av vyer. */
 export function buildViewPage(doc: ProjectDoc, ref: Id, opt: { scale?: number; autoDims?: boolean }): { size: [number, number]; prims: Primitive[]; name: string } | null {
-  const src = viewSource(doc, ref);
+  const view = viewSource(doc, ref);
+  const scale = opt.scale ?? view?.def.scale ?? (view ? 100 : 1);
+  const src = refPrims(doc, ref, { scale, autoDims: opt.autoDims });
   if (!src) return null;
-  const scale = opt.scale ?? src.def.scale ?? 100;
-  const model = cachedViewPrims(doc, src.def, { scale, autoDims: opt.autoDims });
+  const model = src.prims;
   const b = contentBounds(model);
   if (!b) return null;
   const margin = 10;
+  // En förteckning (0.12.2) får rubriken ovanför.
+  const head = src.schedule ? 8 : 0;
   const at: Vec2 = [margin + VIEWPORT_PAD - b.minX / scale, margin + VIEWPORT_PAD - b.minY / scale];
   const frame = viewportFrame(b, at, scale)!;
   const paper = toPaper(model, at, scale);
-  return { size: [Math.ceil(frame.maxX + margin), Math.ceil(frame.maxY + margin)], prims: layered(paper, frame), name: src.name };
+  return { size: [Math.ceil(frame.maxX + margin), Math.ceil(frame.maxY + margin + head)], prims: [...layered(paper, frame), ...(src.schedule ? scheduleTitle(frame, src.name) : [])], name: src.name };
 }

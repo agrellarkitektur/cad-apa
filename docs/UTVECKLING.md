@@ -686,6 +686,51 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Förteckningar (0.12.2, format 28)
+
+- **Kärnan**: `src/core/schedules.ts`. `Schedule` (källa, kolumner,
+  sortering, gruppering, `perLittera`, tillstånd, våningar, `labelSort`,
+  `noTotal`) i `ProjectDoc.schedules` (fältet `schedules` i `FieldKey`,
+  läst med `normalizeSchedules` i `format.ts`); `SCHEDULE_FIELDS` per
+  källa och `sourceFields` (med uppställningens fält ur stilboken);
+  `defaultSchedule`, `createSchedule`, `updateSchedule` (ett fält satt
+  till `undefined` tas bort), `duplicateSchedule`, `removeSchedule` (tar
+  också bort den från bladen och trädet).
+- **Raderna**: `src/repr/schedules.ts`. `scheduleTable(doc, s)` ger
+  kolumnerna, grupperna med delsummor och summan; `cachedTable` sparar per
+  dokument och förteckning. Fälten läses i `cellOf` per källa, med en
+  `createContext` per våning (rumsnummer, konturer, dörrnummer, litterans
+  löpnummer). `openingHinges` i `openingLittera.ts` och `labelValue` och
+  `labelObjects` i `label.ts` kom till för det. Ett nytt fält: en rad i
+  `SCHEDULE_FIELDS` och ett fall i `cellOf`. `scheduleCsv` skriver CSV.
+- **Tabellen på bladet**: `src/repr/scheduleTable.ts` (`schedulePrims`,
+  `columnWidths`, `tableSize`) ritar i vyns koordinater, papperets mm ×
+  skalan, med det övre vänstra hörnet i 0,0, och bryter vid `maxHeight`.
+  `refPrims(doc, ref, opt)` i `src/repr/sheet.ts` ger det en vy på bladet
+  ritar, vy eller förteckning; `placeView`, `contentCrop`, `viewCenter`,
+  `centeredAt`, `buildViewPage` och appens `place` går genom den.
+  `placeableViews` tar med förteckningarna (`schedule: true`, en `def` som
+  bara är platshållare: använd `refPrims`, inte `cachedViewPrims(src.def)`).
+  `PlacedView.schedule` säger att vyn är en förteckning (rubriken ovanför,
+  DXF-lagret, `{skala}` räknar den inte).
+- **Gränssnittet**: `src/ui/scheduleFields.ts` (formuläret i egenskaperna,
+  `data-sch`, `data-sch-act`, `data-sch-add`, `data-sch-own`,
+  `data-sch-storey`, `data-sch-sheet`) och `src/ui/app/schedules.ts`
+  (tabellen `.schedule-view` över ritytan, klicken i trädet
+  `data-schedule-pick` och `data-schedule-new`, ändringarna, *Spara som
+  CSV*). `TreeItem` har sorten `schedule`; `PropertiesPanel.scheduleMarkup`
+  ritar formuläret. `app.openSchedule` och `app.closeSchedule`; `goTo` och
+  `applyView` stänger tabellen. `window.bacchus.schedules` har `show(id)`,
+  `close()` och `isOpen()`.
+- **Exporten**: sorten `schedule` med formaten `csv` och `pdf`
+  (`FORMATS_FOR`), raden `schedule:<id>` i `exportKeys`, CSV-grenen i
+  `exportRun.ts`; PDF:en är `viewPage` (som går genom `buildViewPage`).
+- **Prova i Playwright**: Vyer-fliken (`[data-nav-tab="vyer"]`), sedan
+  `[data-schedule-new="Space"]`; fälten med `select_option('[data-sch="group"]',
+  'Våning')`; `[data-sch-act="place"]` lägger den på bladet som är valt
+  (gör ett med `bacchus.sheets.newSheet()` först). Tabellen är
+  `.schedule-view table`.
+
 ## DXF (0.12.1, format 28)
 
 - **Skrivaren**: `src/formats/dxfWrite.ts` (`writeDxf(DxfDocument)`) vet
@@ -740,8 +785,8 @@ förut; vid nästa huvudversion flyttas de klara till arkivet.
   `exportVars` med smarttexten per rad, `planExport` → jobb med sökvägar
   och dubbletter, `uniquePaths`, `safeFileName`, `newIfcGuid`,
   `withGuids`). En rads nyckel är `sheet:<id>`, `view:<id>`,
-  `image:current` eller `model:all`; 0.12.5 lägger de sparade 3D-vyerna som
-  `image:<id>`.
+  `image:current` eller `model:all` (och `schedule:<id>` sedan 0.12.2); 0.12.6 lägger de
+  sparade 3D-vyerna som `image:<id>`.
 - **Sidorna**: `src/repr/exportPages.ts` gör ett blad eller en vy till en
   `PdfPage` med lager (`layers` är vägar av namn, `layerOf` ett index per
   primitiv), stämpeln och `pdfMeta`. Objektgrupperna är en tabell över

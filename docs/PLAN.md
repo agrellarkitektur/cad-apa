@@ -188,6 +188,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.8.3 | Dörrar och fönster, Smart och vägghål: vägghålen med verktyg och fyra förvalda typer (ventgaller, nisch, genomföring, rent hål), fasaden som arbetsyta, I liv med fönstret under, Lika avstånd, Mitt i rummet, dagsljuset (rummets andel, smarttexten, glas mot fasaden och per väderstreck), blecklutningen och spegelns raka kant |
 | 0.11.8.4 | Granskning efter 0.11.8 (1 november): varningarna uppslagna i föreskrifterna (fri passage, säkerhetsglas, barnsäkra fönster, utrymningsfönster, öppen trappa), `stairGeometry.ts` och `view3d.ts` delade, klickjämförelsen mot stilboken och med profiler, dörrar och fönster |
 | 0.12 | Exportdialogen och PDF: trädet med format per rad, sökrutan, exportuppsättningar (också i mallen, `EXPORT Bygglov`), filnamnsmallar med smarttext, mappen på datorn eller zip, förhandslistan, PDF med lager, dokumentegenskaper, samlad fil med bokmärken och arbetsmaterialstämpel, valbart typsnitt (osifont, Arimo, Josefin Sans, eget TTF/OTF), bild ur 3D-vyn, glTF, GUID på objekten, PDF:erna i en bakgrundstråd |
+| 0.12.2 | Förteckningar: rum, dörrar, fönster, grindar och det generella litterat ur modellen, kolumner ur fälten eller smarttext, sortering, gruppering, delsummor och summarad, en rad per littera, tabellen över ritytan, på bladet i 1:1 bruten i delar bredvid varandra, i bladets PDF och DXF, CSV och PDF i Exportera |
 | 0.12.1 | DXF: egen skrivare för AutoCAD 2000 och 2018, vyer i modellens mm och blad i pappers-mm, lagerkartorna SB11 förenklad och fullständig, Enkel och en egen lista ur en DXF, pennan som färg och linjetjocklek, status N/E/R, väggarna delade per vägg, Bärande |
 | 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, uppställningens fält i stilboken (Typer) med taggar och smarttext |
 
@@ -1513,30 +1514,115 @@ och brand/areor per slag (finns inga sådana objekt än); CoClass-lager
 öppnat i AutoCAD, Archicad och QCAD (finns inte i sandlådan; Carl August
 provar).
 
-### 0.12.2 Förteckningar och areor
+### 0.12.2 Förteckningar ✓
 
-Förteckningen som vytyp (uppställningen av fönster och dörrar,
-dörrförteckningen, rum, grindar, markförändringarna, det generella
-litterats förteckning, handlingsförteckningen), CSV/XLSX och areorna
-enligt SS 21054. Stor, risk för två sessioner. Förteckningen över
-markförändringarna (Inkorgen 27 oktober): littera och namn, status, area i
-plan, schakt, fyll och netto, berg och jord (m³ och procent), lägsta och
-högsta nya höjd, största lutning, avtagen matjord (area × tjocklek,
-tjockleken en inställning) och en summarad med massbalansen.
+10 november 2026, en session. Samma format, 28 (valfria fält: projektets
+`schedules` och vyns `maxHeight` på bladet). Carl August 10 november:
+**0.12.2 Förteckningar och areor delas** i 0.12.2 Förteckningar och 0.12.3
+Areor och uppställningen, och resten flyttar ett steg (A); en lång tabell
+bryts i delar bredvid varandra på samma blad (C); CSV nu och XLSX i 0.12.3
+med en egen skrivare och zipen som finns (D); rumsförteckningens förval
+nummer, namn, våning, area och rumshöjd (E). Olika beskrivningar kan
+behöva mer: först en egen enkel **rumsbeskrivningsmall**, sedan ett eget
+**BEAst-paket** med allt som hör till den redovisningstekniken (E, efter
+piloten).
 
-### 0.12.3 IFC
+**Gjort:** förteckningen som eget objekt i projektet (`src/core/schedules.ts`)
+med källa (rum, dörrar, fönster, grindar, det generella litterat),
+kolumner ur källans fält eller smarttext, sortering i två led, gruppering
+med delsumma, summarad, en rad per littera, tillstånd och våningar.
+Raderna räknas ur modellen (`src/repr/schedules.ts`), tabellen ritas som
+en vy på bladet (`src/repr/scheduleTable.ts`), i ritytan som HTML och i
+egenskaperna med direktsparade fält (`src/ui/scheduleFields.ts`,
+`src/ui/app/schedules.ts`). CSV och PDF i *Exportera…*; i bladets PDF och
+DXF. Provat i Playwright mot `dist/` (skapa, ändra, ångra, lägga på blad,
+exportera; PDF:erna med `qpdf` och `pdftoppm`, DXF:en med ezdxf `audit`
+utan fel).
+
+**Claudes val (0.12.2):**
+
+- **Förteckningen är inget ritat objekt** utan en inställning i projektet,
+  som vyerna; raderna räknas fram varje gång (med en cache per dokument).
+  Den ligger under **Vyer** i projektträdet, utan mappar.
+- **Källorna och fälten**: rum (nummer, namn, våning, area, omkrets,
+  rumshöjd, dagsljus, glasarea), dörrar och fönster (littera, antal,
+  nummer för dörrar, typ, beskrivning, våning, modulmått, karmyttermått,
+  hålmått, hängning, bröstningshöjd för fönster, och uppställningens fält
+  ur stilboken), grindar (littera, antal, räcke, bredd, höjd för *Eget här*,
+  hängning, lås), littera (nummer, sort, text, antal objekt), och status
+  (Nytt, Befintligt) för alla. **Eget fält** läses som smarttext:
+  rummens egna egenskaper, dörrarnas och fönstrens litterafält och
+  uppställningens fält, litterans fält ur objekten den pekar på.
+- **Uppställningens framräknade fält** som inte finns i modellen än
+  (öppningssätt, utförande, poster, spröjs, karmtyp …) står som `-` tills
+  uppställningen kommer i 0.12.3. *Hängning* är litteraregelns (V, H,
+  sedd som Allmänt › Fönster och dörrar säger).
+- **Förvalen**: rum per nummer med arean summerad; dörrar, fönster och
+  grindar en rad per littera med antal summerat, sorterade på littera;
+  littera per sort och nummer. Namnet *Rumsförteckning*, *Dörrförteckning*
+  … med nummer om det är taget.
+- **En rad per littera**: lika värden står kvar, olika blir *Olika*,
+  *Våning* och *Nummer* räknas upp (*Plan 1, Plan 2*).
+- **Sorteringen**: tal efter värdet, text med siffror i ordning (D2 före
+  D10), tomma sist, våningarna nerifrån och upp (Platsen först).
+- **Tillståndet**: förslaget som förval, ett annat väljs per förteckning;
+  bara det som finns i tillståndet räknas (det som rivs inte). Littera
+  utan tillstånd räknas alltid.
+- **Enheten i rubriken** (*Area, m²*, *Bröstningshöjd, mm*); rubriken går
+  att skriva om. Arean med stilbokens decimaler, omkrets och glasarea med
+  en.
+- **I ritytan** visas tabellen som HTML över ritningen, som förhandsvisning;
+  den stängs när man går till en våning, vy, fasad eller ett blad.
+  Inställningarna sparas direkt när ett fält ändras (inget *Spara*), och
+  varje ändring är ett steg att ångra.
+- **På bladet** i 1:1 med rubriken ovanför och ingen skala; den räknas inte
+  i bladets `{skala}`. Text 2,5 mm (rubrikraden fet), radhöjd 5,5 mm,
+  ytterram 0,25, rubrikraden och summaraden med 0,35 under och över,
+  rutnätet 0,13, tal högerställda. Bryts vid bladets ramhöjd minus 20 mm
+  när vyn inte har en egen *Största höjd*, med 8 mm mellan delarna.
+- **DXF**: förteckningen på lagret `A-------I--` (SB11, som
+  teckenförklaringen) och `A-TEXT` (Enkel); PDF-lagret *Förteckningar*.
+- **CSV**: semikolon, decimalkomma och BOM (svensk Excel), tal utan
+  tusentalsavgränsare, gruppernas rubriker och summor som egna rader.
+  Filnamnet `{projekt}_{vy}` som vyernas; undermappen *Förteckningar*.
+
+**Inte gjort i 0.12.2:** areorna enligt SS 21054 och uppställningen av
+fönster och dörrar med ritningen per littera (0.12.3); förteckningen över
+markförändringarna (0.12.3 eller egen version); XLSX (0.12.3);
+handlingsförteckningen (med utgåvorna, 0.12.5); att förteckningarna följer
+med *Mall för nya projekt…*; mappar för förteckningarna; att skriva i
+tabellen (uppställningens rutor skriver på objekten, 0.12.3); fet stil på
+skärmen (osifont har ingen fet, som förut).
+
+### 0.12.3 Areor och uppställningen
+
+Areorna enligt SS 21054:2020 (BTA, BYA, OPA, BOA, BIA, NTA …) per våning
+och totalt, på samma areaslag som DXF-lagren (`A-A-BTA` … se
+lagerförslagets 4.2) och med en areaförteckning; **uppställningen av
+fönster och dörrar** med en kolumn per littera och ritningen sedd utifrån
+(fältmallen och fälten finns sedan 0.11.8.1, en ruta skriver på alla
+objekt med litteran, *Olika* när de skiljer sig); **XLSX**. Slå upp
+definitionerna i standarden i projektets kunskapsbas, inte ur minnet.
+Stor, kan behöva två sessioner; förteckningen över markförändringarna
+(Inkorgen 27 oktober: littera och namn, status, area i plan, schakt, fyll
+och netto, berg och jord (m³ och procent), lägsta och högsta nya höjd,
+största lutning, avtagen matjord (area × tjocklek, tjockleken en
+inställning) och en summarad med massbalansen) kommer här eller i en egen
+version om den inte ryms.
+
+### 0.12.4 IFC
 
 Egen utredning i egen chatt först (klasstabellen, psets, geometri,
 provfil validerad), sedan skrivaren. IFC4 Reference View, mm, utan mark och
 träd (svar D). GUID:en finns sedan 0.12.
 
-### 0.12.4 Utgåvor och PM
+### 0.12.5 Utgåvor och PM
 
 Mockup i Claude Design först, sedan snapshot, jämförelse, revideringsmoln
 och -pilar, beteckningar, handlingsförteckningen, ändrings-PM och panelen
 Utgåvor. Stor, troligen två sessioner.
 
-### 0.12.5 3D-vyer
+### 0.12.6 3D-vyer
 
 Carl August 26 oktober: före piloten, det är något man kan förvänta sig.
 Mellanstor.

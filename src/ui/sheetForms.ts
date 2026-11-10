@@ -1,6 +1,7 @@
-import type { Id, ProjectDoc, Sheet } from '../core/model';
+import type { Id, ProjectDoc, Sheet, Viewport } from '../core/model';
+import { scheduleOf } from '../core/schedules';
 import { applyFieldChanges, fieldsOf, fieldValue, type FieldChanges } from '../core/sheetFields';
-import { deleteSheet, duplicateSheet, masterOf, mastersOf, PAPER_SIZES, removeViewport, renameProject, saveSheet, setViewportCrop, sheetOfViewport, stampsOf, today, updateViewport } from '../core/sheets';
+import { deleteSheet, duplicateSheet, FRAME_MARGIN, masterOf, mastersOf, paperSize, PAPER_SIZES, removeViewport, renameProject, saveSheet, setViewportCrop, sheetOfViewport, stampsOf, today, updateViewport } from '../core/sheets';
 import type { DocStore } from '../core/store';
 import { centeredAt, placeableViews, viewCenter, viewSource } from '../repr/sheet';
 import { SMART_TEXT, smartVars } from '../repr/smartText';
@@ -159,6 +160,27 @@ function readFieldChanges(form: HTMLFormElement): FieldChanges {
   return { values, shared };
 }
 
+/** En förteckning på ett blad (0.12.2): rubriken och höjden där tabellen bryts i delar bredvid varandra. */
+function scheduleViewportMarkup(sheet: Sheet, vp: Viewport, name: string, actions: string): string {
+  const [, h] = paperSize(sheet);
+  const auto = h - FRAME_MARGIN.top - FRAME_MARGIN.bottom - 20;
+  return `<form class="tree-form sheet-form" data-tree-kind="viewport" data-tree-id="${vp.id}" data-schedule="1">
+      <header class="sel-head"><h2>${esc(vp.title || name)}</h2><p>Förteckning på bladet ${esc(sheet.number)}</p></header>
+      <section>
+        <div class="fields">
+          ${field('Rubrik', `<input name="title" value="${esc(vp.title ?? '')}" placeholder="${esc(name)}">`)}
+          ${field('Största höjd', `<span class="input-unit"><input name="maxHeight" inputmode="decimal" value="${vp.maxHeight ?? ''}" placeholder="${Math.round(auto)}"><i>mm</i></span>`)}
+        </div>
+        <p class="note">En längre tabell bryts i delar som står bredvid varandra, med rubrikraden i varje. Tomt: bladets ram. Kolumner, sortering och summor ändras i förteckningen.</p>
+        <div class="row">
+          <button type="button" class="btn" data-sheet="open-view">Öppna förteckningen</button>
+          <button type="button" class="btn" data-sheet="back" data-id="${sheet.id}">${icons.sheet}<span>Bladet</span></button>
+        </div>
+      </section>
+      ${actions}
+    </form>`;
+}
+
 /** Formuläret för flera blad markerade i projektträdet: bara fälten. */
 function multiSheetMarkup(doc: ProjectDoc, sheets: Sheet[], actions: string): string {
   const list = sheets.map((s) => esc(s.number)).join(', ');
@@ -179,6 +201,8 @@ export function sheetFormMarkup(doc: ProjectDoc, item: SheetFormItem): string {
     const src = viewSource(doc, vp.view);
     const options = placeableViews(doc);
     if (!options.some((o) => o.id === vp.view)) options.unshift({ id: vp.view, name: 'Vyn finns inte längre', def: undefined as never });
+    const sched = scheduleOf(doc, vp.view);
+    if (sched) return scheduleViewportMarkup(sheet, vp, sched.name, actions(`<button type="button" class="btn btn-danger" data-sheet="remove-viewport">Ta bort från bladet</button>`));
     return `<form class="tree-form sheet-form" data-tree-kind="viewport" data-tree-id="${vp.id}">
       <header class="sel-head"><h2>${esc(vp.title || src?.name || 'Vy')}</h2><p>Vy på bladet ${esc(sheet.number)}</p></header>
       <section>
@@ -208,7 +232,8 @@ export function sheetFormMarkup(doc: ProjectDoc, item: SheetFormItem): string {
   const views = s.viewports
     .map((vp) => {
       const src = viewSource(doc, vp.view);
-      return `<div class="view-row"><button type="button" class="view-apply" data-sheet="pick-viewport" data-id="${vp.id}">${esc(vp.title || src?.name || 'Vyn finns inte längre')}<small>1:${vp.scale}</small></button><button type="button" class="icon-mini view-more" data-sheet="remove-row" data-id="${vp.id}" aria-label="Ta bort från bladet" title="Ta bort från bladet">${icons.close}</button></div>`;
+      const sched = scheduleOf(doc, vp.view);
+      return `<div class="view-row"><button type="button" class="view-apply" data-sheet="pick-viewport" data-id="${vp.id}">${esc(vp.title || src?.name || sched?.name || 'Vyn finns inte längre')}<small>${sched ? 'förteckning' : `1:${vp.scale}`}</small></button><button type="button" class="icon-mini view-more" data-sheet="remove-row" data-id="${vp.id}" aria-label="Ta bort från bladet" title="Ta bort från bladet">${icons.close}</button></div>`;
     })
     .join('');
   const placeable = placeableViews(doc);
@@ -240,7 +265,7 @@ export function sheetFormMarkup(doc: ProjectDoc, item: SheetFormItem): string {
       <h3>Vyer på bladet</h3>
       ${views ? `<div class="nav-list">${views}</div>` : '<p class="note">Inga vyer än. Välj en vy och lägg den på bladet.</p>'}
       <div class="fields">
-        ${field('Vy', `<select data-sheet-view>${placeable.map((o) => `<option value="${esc(o.id)}" data-scale="${o.def.scale ?? 100}">${esc(o.name)}${o.id.startsWith('modell:') ? ' (modell)' : ''}</option>`).join('')}</select>`)}
+        ${field('Vy', `<select data-sheet-view>${placeable.map((o) => `<option value="${esc(o.id)}" data-scale="${o.def.scale ?? 100}">${esc(o.name)}${o.id.startsWith('modell:') ? ' (modell)' : o.schedule ? ' (förteckning)' : ''}</option>`).join('')}</select>`)}
         ${field('Skala', scaleField('placeScale', placeable[0]?.def.scale ?? 100, ' data-sheet-scale'))}
       </div>
       <div class="row"><button type="button" class="btn" data-sheet="place">${icons.plus}<span>Lägg på bladet</span></button></div>
@@ -396,6 +421,12 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
     if (kind === 'viewport') {
       const sheet = sheetOfViewport(store.doc, id);
       if (!sheet) return;
+      if (form.dataset.schedule) {
+        // En förteckning (0.12.2): rubriken och höjden där den bryts.
+        const h = Number(str('maxHeight').replace(',', '.'));
+        updateViewport(store, sheet.id, id, { title: str('title').trim() || undefined, maxHeight: Number.isFinite(h) && h >= 20 ? Math.round(h) : undefined }, 'Spara förteckningen på bladet');
+        return;
+      }
       const scale = readScale(form, 'scale') ?? 100;
       const view = str('view') || undefined;
       const vp = sheet.viewports.find((v) => v.id === id)!;

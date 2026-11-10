@@ -24,6 +24,7 @@ import { askConfirm, askText } from '../ask';
 import { icons } from '../icons';
 import { escapeHtml } from '../labels';
 import { describeSheet } from '../sheetForms';
+import { SOURCE_NAMES } from '../../core/schedules';
 import type { AppContext } from './context';
 import { runExport } from './exportRun';
 import { canPickFolder, folderFor, rememberedFolder, saveOne, saveZip, writeToFolder, type OutFile } from './exportTarget';
@@ -52,9 +53,9 @@ function layerMapName(doc: ProjectDoc): string {
   return m === 'custom' ? (d?.custom?.name ?? LAYER_MAP_LABEL.custom) : LAYER_MAP_LABEL[m];
 }
 
-const KIND_GROUP: Record<ExportKind, string> = { sheet: 'Ritningar', view: 'Vyer', image: '3D-vyer', model: 'Modellen' };
+const KIND_GROUP: Record<ExportKind, string> = { sheet: 'Ritningar', view: 'Vyer', schedule: 'Förteckningar', image: '3D-vyer', model: 'Modellen' };
 
-const MIME: Record<ExportFormat, string> = { pdf: 'application/pdf', dxf: 'image/vnd.dxf', png: 'image/png', jpeg: 'image/jpeg', glb: 'model/gltf-binary' };
+const MIME: Record<ExportFormat, string> = { pdf: 'application/pdf', dxf: 'image/vnd.dxf', csv: 'text/csv', png: 'image/png', jpeg: 'image/jpeg', glb: 'model/gltf-binary' };
 
 function kb(n: number): string {
   return n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} kB` : `${(n / 1024 / 1024).toLocaleString('sv-SE', { maximumFractionDigits: 1 })} MB`;
@@ -82,14 +83,15 @@ export function installExportDialog(app: AppContext, deps: { image: (src: { asse
     return {
       sheet: doc.sheets.map((s) => ({ id: s.id, key: `sheet:${s.id}`, name: `${s.number} ${s.name}`.trim(), sub: describeSheet(s) })),
       view: doc.views.map((v) => ({ id: v.id, key: `view:${v.id}`, name: v.name, sub: describeView(doc, v) })),
-      image: [{ id: 'current', key: IMAGE_CURRENT, name: 'Nuvarande 3D-vy', sub: 'som 3D-vyn står nu; de sparade 3D-vyerna kommer i 0.12.5' }],
-      model: [{ id: 'all', key: MODEL_ALL, name: 'Modellen', sub: 'med material, för Blender och andra renderare (IFC kommer i 0.12.3)' }],
+      schedule: (doc.schedules ?? []).map((s) => ({ id: s.id, key: `schedule:${s.id}`, name: s.name, sub: SOURCE_NAMES[s.source] })),
+      image: [{ id: 'current', key: IMAGE_CURRENT, name: 'Nuvarande 3D-vy', sub: 'som 3D-vyn står nu; de sparade 3D-vyerna kommer i 0.12.6' }],
+      model: [{ id: 'all', key: MODEL_ALL, name: 'Modellen', sub: 'med material, för Blender och andra renderare (IFC kommer i 0.12.4)' }],
     };
   }
 
   const title = (doc: ProjectDoc) => {
     const r = rows(doc);
-    const all = [...r.sheet, ...r.view, ...r.image, ...r.model];
+    const all = [...r.sheet, ...r.view, ...r.schedule, ...r.image, ...r.model];
     return (key: string) => all.find((x) => x.key === key)?.name ?? key;
   };
 
@@ -160,6 +162,7 @@ export function installExportDialog(app: AppContext, deps: { image: (src: { asse
           <input type="search" class="ex-search" data-ex="search" placeholder="Sök blad och vyer" value="${esc(query)}" autocomplete="off">
           ${groupMarkup(doc, 'sheet', r.sheet, 'Inga ritningsblad än. Skapa ett under Ritningar i projektträdet.')}
           ${groupMarkup(doc, 'view', r.view, 'Inga sparade vyer.')}
+          ${groupMarkup(doc, 'schedule', r.schedule, 'Inga förteckningar. Skapa en under Vyer i projektträdet.')}
           ${groupMarkup(doc, 'image', r.image, '')}
           ${groupMarkup(doc, 'model', r.model, '')}
         </div>
@@ -231,7 +234,7 @@ export function installExportDialog(app: AppContext, deps: { image: (src: { asse
   function current(name: string, id: Id): ExportSet {
     const doc = app.store.doc;
     const keys = exportKeys(doc);
-    const all: ExportKind[] = (['sheet', 'view'] as const).filter((k) => {
+    const all: ExportKind[] = (['sheet', 'view', 'schedule'] as const).filter((k) => {
       const of = keys.filter((x) => kindOf(x) === k);
       return of.length > 0 && of.every((x) => checked.has(x));
     });

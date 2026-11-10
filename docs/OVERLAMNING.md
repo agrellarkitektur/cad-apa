@@ -6,10 +6,31 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 10 november 2026, efter 0.12.1 DXF.
+README. Senast: 10 november 2026, efter 0.12.2 Förteckningar.
 
 ## Läget
 
+- **0.12.2 Förteckningar är klar** (10 november, samma format 28; valfria
+  fält projektets `schedules` och vyns `maxHeight` på bladet), byggd i en
+  session efter Carl Augusts svar A–E: **0.12.2 Förteckningar och areor
+  delades** i 0.12.2 Förteckningar och **0.12.3 Areor och uppställningen**,
+  resten flyttade ett steg (IFC 0.12.4, Utgåvor och PM 0.12.5, 3D-vyer
+  0.12.6); en lång tabell bryts i delar bredvid varandra på samma blad; CSV
+  nu, XLSX i 0.12.3 med en egen skrivare; rumsförteckningens förval nummer,
+  namn, våning, area och rumshöjd. Han vill senare ha en egen enkel
+  **rumsbeskrivningsmall** och ett eget **BEAst-paket** (efter piloten).
+  Testerna: 977 på ca 13 s. Provat i Playwright mot `dist/` (skapa, ändra
+  kolumner, ordning och gruppering, ångra, lägga på blad, exportera CSV,
+  PDF och bladets DXF; `qpdf`, `pdftoppm`, ezdxf `audit` utan fel). Claudes
+  val och det som inte gjordes i PLAN.md, koden i UTVECKLING.md.
+- **Märks i hans ritningar efter 0.12.2:** under **Vyer** i projektträdet
+  finns **Förteckningar** med *Ny:* Rum, Dörrar, Fönster, Grindar, Littera.
+  En förteckning visas som tabell över ritytan med inställningarna i
+  egenskaperna (kolumner med rubrik och Σ, eget fält som smarttext,
+  sortering, gruppering, summarad, en rad per littera, tillstånd,
+  våningar, *Lägg på bladet*, *Spara som CSV*). På bladet i 1:1 med
+  rubriken ovanför, *Största höjd* där den bryts. *Exportera…* har gruppen
+  **Förteckningar** (CSV och PDF).
 - **0.12.1 DXF är klar** (10 november, samma format 28; valfria fält
   stilbokens `export.dxf`, uppsättningens `dxfVersion`, väggens
   `loadBearing`), byggd i en session efter Carl Augusts svar A–E:
@@ -28,28 +49,20 @@ README. Senast: 10 november 2026, efter 0.12.1 DXF.
   med versionen (AutoCAD 2000 eller 2018). Stilboken › Allmänt › **DXF**:
   *Lager* (SB11 förenklad, SB11 fullständig, Enkel, Egen), *Läs lagerlista
   ur DXF…*, *Alla lager i listan*. Väggens egenskaper har **Bärande**.
-- **0.12 Exportdialogen och PDF är klar** (7 november, samma format 28;
-  valfria fält `exportSets`, `guids`, stilbokens `export`, `font` som en
-  fil), byggd i en session efter `cad-apa-export-utredning.md` med svaren
-  A–E. Det fanns redan en egen vektor-PDF med osifont och en egen zip, så
-  pdf-lib och fflate behövdes inte. Testerna: 953 på ca 15 s. Provat i
-  Playwright mot `dist/`: alla rader i en zip, PDF:erna med lager,
-  egenskaper och Josefin Sans inbäddat (`qpdf`, `pdffonts`, `pdfinfo`),
-  bilden ur 3D och glTF med GUID. Claudes val och det som inte gjordes i
-  PLAN.md, koden i UTVECKLING.md.
-- **Märks i hans ritningar efter 0.12:** *Plot/export* heter
-  **Exportera…** och är en ny dialog: trädet med Ritningar, Vyer, 3D-vyer
-  och Modellen, format per rad, sökruta, **uppsättningar** (*Spara som…*,
-  `EXPORT Bygglov`), **mapp på datorn** eller zip, undermappar,
-  förhandslistan med filnamnen. PDF:en har **lager** (per vy, eller per vy
-  och objektgrupp), **dokumentegenskaper**, en **samlad fil med
-  bokmärken** som val och en **ARBETSMATERIAL**-stämpel. Stilboken ›
-  Allmänt: **Typsnitt** (osifont, Arimo, Josefin Sans, *Eget typsnitt…*)
-  och **Export** (filnamnsmallarna). **Bild ur 3D-vyn** (3 000 × 2 000) och
-  **glTF**. Objekten får GUID vid första exporten.
-- **0.11.8.3–0.11.8.4** (smart och vägghål, granskningen med
-  varningarna uppslagna i föreskrifterna): se PLAN.md, UTVECKLING.md och
-  README, också för vad som märks i ritningarna.
+- **Lagerunderlaget** (10 november, en egen chatt utan kod):
+  `cad-apa-lagerlista.md` är hans AutoCAD-mall, avskriven ur en
+  Excel-export (272 lager med linjetyper, linjetjocklekar och plot), med
+  pennöversättningen. `cad-apa-lager-bsab-forslag.md` jämför den med tre
+  Archicad-mallar (svensk standard 29, företag 27 och företagsanpassad 29)
+  och innehåller förslaget som blev lagerkartorna i 0.12.1. Typkoderna i
+  byggdelsfältets positioner 5–6 (11, 31, 34, 35, 40 …) är **inte
+  utredda**. Säkert är bara 20 mur/puts, 41 gips/stålregel och 42
+  gips/träregel ur Archicad-mallen. Källorna står i förslagets avsnitt 2.
+  Skriv inga materialkoder förrän han vet vad de betyder.
+- **0.12 Exportdialogen och PDF** (7 november) och **0.11.8.3–0.11.8.4**
+  (smart och vägghål, granskningen med varningarna uppslagna i
+  föreskrifterna): se PLAN.md, UTVECKLING.md och README, också för vad som
+  märks i ritningarna.
 - **Föreskrifterna** ligger i projektets kunskapsbas (Boverkets BFS
   2024:4–13 med ändringar, SIS-standarderna för dörrar, fönster, area,
   dagsljus och invändiga mått, BBR 30 för jämförelse). Varningarna är
@@ -65,15 +78,15 @@ README. Senast: 10 november 2026, efter 0.12.1 DXF.
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.12.1 pushad till `main` 10 november (se git och `gh run
+- **Publicerad:** 0.12.2 pushad till `main` 10 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.12.1` i `engine.ts`, `package.json` och
-  `package-lock.json`. Nya funktioner får tredje siffran (0.12.2 …); **den
+- **Versionsnumret** är `0.12.2` i `engine.ts`, `package.json` och
+  `package-lock.json`. Nya funktioner får tredje siffran (0.12.3 …); **den
   fjärde siffran är för snabba buggfixar** utan nya funktioner (Carl August
   10 november). En granskning höjer inte numret, eller får en fjärde siffra
   om något ändras som syns.
-- **0.10.8–0.12.1 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.12.2 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -168,14 +181,16 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   Synpunkterna på mockupen~~, ~~0.11.8.2 Detalj och beslag~~, ~~0.11.8.3
   Smart och vägghål~~, ~~0.11.8.4 Granskning efter 0.11.8~~,
   ~~Utredning av 0.12 Export~~, ~~0.12 Exportdialogen och PDF~~,
-  ~~0.12.1 DXF~~ (klara;
+  ~~0.12.1 DXF~~, ~~0.12.2 Förteckningar~~ (klara;
   se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.12.2 Förteckningar och areor** → **0.12.3
-  IFC** (egen utredning först) → **0.12.4 Utgåvor och PM** (mockup
-  först); se `cad-apa-export-utredning.md`. Sedan **Granskning efter 0.12**.
-- **0.12.5 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
+- **0.12.3 Areor och uppställningen** (stor, kan behöva två sessioner:
+  SS 21054, uppställningen av fönster och dörrar, XLSX, markförändringarna
+  om de ryms) → **0.12.4 IFC** (egen utredning först) → **0.12.5 Utgåvor
+  och PM** (mockup först); se `cad-apa-export-utredning.md`. Sedan
+  **Granskning efter 0.12**.
+- **0.12.6 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
   trädens status i planen)
 - **Koordinater, SWEREF och sol** (stor; före piloten; SWEREF på
   situationsplanen och i exporten därifrån)
@@ -187,25 +202,43 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 ## Nästa session
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
-skrivrätt till repot ("push godkänd"). Fråga om Carl August provat 0.12.1
-och 0.12 (och 0.11.8–0.11.8.4); ställ i så fall frågorna om 0.12.1 och 0.12
-(nedan) först, högst fem åt gången. Öppnar en DXF inte i hans AutoCAD eller
-Archicad: be om felmeddelandet och fixa det som 0.12.1.1. Nästa version är
-**0.12.2 Förteckningar och areor** (stor, risk för två sessioner): se
+skrivrätt till repot ("push godkänd"). Fråga om Carl August provat 0.12.2,
+0.12.1 och 0.12; ställ i så fall frågorna om dem (nedan) först, högst fem åt
+gången. Öppnar en DXF inte i hans AutoCAD eller Archicad: be om
+felmeddelandet och fixa det som en fjärde siffra (0.12.2.1). Nästa version
+är **0.12.3 Areor och uppställningen** (stor, risk för två sessioner): se
 avsnittet i PLAN.md och `cad-apa-export-utredning.md`; föreslå en
-uppdelning först. IFC och PM får egen utredning/mockup i egen chatt före
-sina versioner. Vid granskningen efter 0.12 delas
-`src/ui/style/profileTypes.ts` (875) och `openingTypes.ts` (828).
+uppdelning först (t.ex. areorna och XLSX i en, uppställningen i en).
+Areorna ska använda samma areaslag som DXF-lagren (`A-A-BTA`, `BOA`, `BIA`,
+`BYA`, `BRA` …, se lagerförslagets 4.2) och följa SS 21054:2020, som ligger
+i projektets kunskapsbas. Slå upp definitionerna där, inte ur minnet.
+Förteckningarna (`src/repr/schedules.ts`) är grunden: en areaförteckning är
+en ny källa, uppställningen en ny sorts tabell. IFC och PM får egen
+utredning/mockup i egen chatt före sina versioner. Vid granskningen efter
+0.12 delas `src/ui/style/profileTypes.ts` (875) och `openingTypes.ts` (828).
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.12.1, 0.12, 0.11.8.4, 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.12.2, 0.12.1, 0.12, 0.11.8.4, 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4, 0.11.3,
 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
+
+**0.12.2 efter provning** (Claudes val, se PLAN.md; svaren A–E 10 november)
+- Förteckningen visas som tabell över ritytan och stängs när man går till
+  en våning, vy eller ett blad. Räcker det, eller ska den kunna stå bredvid
+  planen (som 3D i *Båda*)?
+- Inställningarna sparas direkt när ett fält ändras (inget *Spara*), och
+  varje ändring kan ångras. Bra, eller hellre *Spara* som för vyerna?
+- På bladet: text 2,5 mm, radhöjd 5,5 mm, rubrikraden fet, ytterram 0,25,
+  linjer 0,13. Lagom, och ska texthöjden gå att ändra per förteckning?
+- En rad per littera är förval för dörrar, fönster och grindar; det som
+  skiljer står *Olika*. Rätt förval?
+- CSV med semikolon och decimalkomma, för svensk Excel. Öppnas den rätt
+  hos dig med ett dubbelklick?
 
 **0.12.1 efter provning** (Claudes val, se PLAN.md; svaren A–E 10 november)
 - Utan kryss är ytterväggar bärande (27C) och innerväggar inte (43CB).
@@ -231,7 +264,7 @@ besvarade 7 november, se `cad-apa-export-utredning.md`)
 - En export till mappen skriver över filer med samma namn utan att fråga
   (så att en ny utgåva hamnar rätt). Bra, eller ska den fråga först?
 - Bilden ur 3D följer 3D-vyns kamera; en annan proportion än fönstrets
-  visar mer i sidled. Räcker det tills de sparade 3D-vyerna (0.12.5) får
+  visar mer i sidled. Räcker det tills de sparade 3D-vyerna (0.12.6) får
   en sökarram?
 
 **0.11.8.4 efter provning** (Claudes val, se PLAN.md)
@@ -697,7 +730,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
   Rätt?
 
 **Följdfrågor från 27 oktober**
-- Trädens status (till 0.12.5): ska texten "Träd skyddas under
+- Trädens status (till 0.12.6): ska texten "Träd skyddas under
   byggtiden" stå i en förteckning, eller skriver man den själv?
 
 **0.10.11 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)

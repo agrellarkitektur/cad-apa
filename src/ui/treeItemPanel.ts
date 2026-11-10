@@ -18,7 +18,7 @@ import { escapeHtml } from './labels';
  * Spara-knapp sist; inget ändras förrän man sparar.
  */
 /** Det som är valt i projektträdet. Med `also` är flera blad markerade (0.8.10). */
-export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder' | 'worksheet' | 'sheet' | 'viewport'; id: Id; also?: readonly Id[] };
+export type TreeItem = { kind: 'view' | 'marker' | 'storey' | 'folder' | 'worksheet' | 'sheet' | 'viewport' | 'schedule'; id: Id; also?: readonly Id[] };
 
 const esc = escapeHtml;
 
@@ -44,6 +44,8 @@ export function treeItemExists(doc: ProjectDoc, item: TreeItem): boolean {
       return doc.sheets.some((s) => s.id === item.id);
     case 'viewport':
       return doc.sheets.some((s) => s.viewports.some((v) => v.id === item.id));
+    case 'schedule':
+      return !!doc.schedules?.some((s) => s.id === item.id);
   }
 }
 

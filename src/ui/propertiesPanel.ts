@@ -3,7 +3,7 @@ import { kindOfElementType } from '../core/openingTypes';
 import { editAllCategories } from '../core/viewCategories';
 import { litteraSection } from './litteraSection';
 import { setDefinition, setGraphics, updateDefinition } from '../core/commands';
-import { onPaper as paperSpace, SEEN_ON_TYPES, type Element, type ProjectDoc } from '../core/model';
+import { onPaper as paperSpace, SEEN_ON_TYPES, type Element, type Id, type ProjectDoc } from '../core/model';
 import { isViewportId } from '../core/sheets';
 import type { Action, ViewStates } from '../core/states';
 import { actionOf } from '../core/states';
@@ -89,6 +89,8 @@ export class PropertiesPanel implements ActionPanel {
   onTreeClosed?: () => void;
   /** Det formulären för ritningsblad behöver av appen (0.8 del 3). */
   sheetHost?: SheetFormHost;
+  /** Förteckningens inställningar (0.12.2): formuläret, som binds av `src/ui/app/schedules.ts`. */
+  scheduleMarkup?: (id: Id) => string;
   /** Något i markeringen som visas med ett eget formulär, t.ex. en ensam vy på ett blad (0.8.9). */
   selectionItem?: () => TreeItem | null;
 
@@ -151,7 +153,10 @@ export class PropertiesPanel implements ActionPanel {
       // Ändringar som inte sparats än ligger kvar när något annat ritas om.
       const open = this.body.querySelector<HTMLFormElement>('.tree-form');
       const dirty = open && open.dataset.treeId === item.id && !open.querySelector<HTMLButtonElement>('[data-tree="save"]')?.disabled;
-      if (!dirty && (item.kind === 'sheet' || item.kind === 'viewport')) {
+      if (item.kind === 'schedule') {
+        this.body.innerHTML = this.scheduleMarkup?.(item.id) ?? '';
+        this.body.scrollTop = scroll;
+      } else if (!dirty && (item.kind === 'sheet' || item.kind === 'viewport')) {
         // Ritningsblad och vyer på blad (0.8 del 3).
         this.body.innerHTML = sheetFormMarkup(doc, { kind: item.kind, id: item.id, also: item.also });
         if (this.sheetHost) bindSheetForm(this.body, this.store, this.sheetHost);

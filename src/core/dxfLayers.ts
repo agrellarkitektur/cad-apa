@@ -245,7 +245,7 @@ function presentation(q: LayerQuery, code: string, full: boolean): string {
   if (q.type === 'Space' && q.part === 'rumstext') return 'T1';
   if (q.type === 'Text') return 'T-';
   if (q.type === 'ViewTitle' || q.part === 'vyrubrik') return 'T1';
-  if (q.type === 'Legend') return 'I-';
+  if (q.type === 'Legend' || q.type === 'Schedule') return 'I-';
   if (q.type === 'Dimension' || q.part === 'auto') return 'D-';
   if (LEVEL_PARTS.has(q.part ?? '')) return 'D3';
   if (q.type === 'Section') return full ? 'J1' : 'J-';
@@ -279,7 +279,7 @@ export function sb11Name(q: LayerQuery, full: boolean): string {
 export function simpleName(q: LayerQuery): string {
   if (q.sheet || q.type === 'Stamp' || q.type === 'Sheet' || q.part === 'arbetsmaterial') return 'A-RAM';
   if (q.type === 'Label' || LITTERA_PARTS.has(q.part ?? '')) return 'A-LITTERA';
-  if (q.type === 'Text' || q.type === 'ViewTitle' || q.type === 'Legend' || q.part === 'vyrubrik') return 'A-TEXT';
+  if (q.type === 'Text' || q.type === 'ViewTitle' || q.type === 'Legend' || q.type === 'Schedule' || q.part === 'vyrubrik') return 'A-TEXT';
   if (q.type === 'Dimension' || q.part === 'auto' || LEVEL_PARTS.has(q.part ?? '')) return 'A-MÅTT';
   if (q.type === 'Section' || q.type === 'Elevation' || q.type === 'North' || q.type === 'ScaleBar') return 'A-MARKÖR';
   if (q.type === 'Underlay' || q.part === 'underlag') return 'A-UNDERLAG';

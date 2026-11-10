@@ -3,6 +3,7 @@ import { markerName } from '../elements/markers';
 import { UNDERLAY_KIND_LABEL, type UnderlayParams } from '../elements/underlay';
 import { icons } from './icons';
 import { deviationCount } from '../core/viewCategories';
+import { SOURCE_NAMES, SOURCES } from '../core/schedules';
 
 export type NavTab = TreeTab;
 
@@ -319,7 +320,23 @@ export class Navigator {
         ${this.newFolderButton('vyer')}
       </div>
       <p class="note">En vy sparar tillstånd, jämförelse, detaljnivå, vykategori, det som avviker från den, underlagen och vy-taggar. Klicka på en vy för att öppna den och se dess inställningar i egenskaperna.</p>
-      <p class="note soon">Export av modellen (IFC) från en vy kommer i 0.12.</p>
+    </section>
+    ${this.schedules()}`;
+  }
+
+  /** Förteckningarna (0.12.2): en rad per förteckning och knappar för nya, en per källa. */
+  private schedules(): string {
+    const doc = this.host.doc();
+    const picked = this.host.treeItem();
+    const list = doc.schedules ?? [];
+    const rows = list
+      .map((s) => `<div class="view-row${s.id === picked ? ' picked active' : ''}"><button class="view-apply" data-schedule-pick="${s.id}" title="Visa förteckningen, och dess inställningar i egenskaperna">${icons.table}<span>${esc(s.name)}</span><small>${SOURCE_NAMES[s.source]}</small></button></div>`)
+      .join('');
+    return `<section>
+      <h2>Förteckningar</h2>
+      ${rows ? `<div class="nav-list">${rows}</div>` : '<p class="note">Inga förteckningar än.</p>'}
+      <div class="nav-actions schedule-new"><span class="note">Ny:</span>${SOURCES.map((k) => `<button class="btn" data-schedule-new="${k}" title="Ny förteckning över ${SOURCE_NAMES[k].toLowerCase()}">${SOURCE_NAMES[k]}</button>`).join('')}</div>
+      <p class="note">En förteckning räknas fram ur modellen och är alltid aktuell. Lägg den på ett blad som en vy, eller exportera den som CSV.</p>
     </section>`;
   }
 

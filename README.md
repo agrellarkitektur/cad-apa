@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.1** (alfa), DXF; nästa är **0.12.2 Förteckningar och areor**.
+**0.12.2** (alfa), Förteckningar; nästa är **0.12.3 Areor och uppställningen**.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,40 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.12.2, Förteckningar (samma filformat, 28; projekt från 0.11.8
+öppnas; nya valfria fält: projektets `schedules` och vyns `maxHeight` på
+bladet):
+- **Förteckningar** under Vyer i projektträdet: *Ny:* **Rum**, **Dörrar**,
+  **Fönster**, **Grindar** eller **Littera** (det generella litterat). En
+  förteckning räknas fram ur modellen varje gång och är alltid aktuell;
+  den visas som en tabell över ritytan, och dess inställningar i
+  egenskaperna
+- **Kolumnerna** väljs ur källans fält (rum: nummer, namn, våning, area,
+  omkrets, rumshöjd, dagsljus, glasarea; dörrar och fönster: littera,
+  antal, typ, beskrivning, våning, modulmått, karmyttermått, hålmått,
+  hängning, bröstningshöjd och uppställningens fält ur stilboken; grindar:
+  littera, antal, räcke, bredd, höjd, hängning, lås; littera: nummer, sort,
+  text, antal objekt; och status för alla), eller som **eget fält** med
+  smarttext ur objektet. Rubriken går att skriva om, kolumnerna flyttas och
+  tas bort, och tal kan **summeras** (Σ)
+- **Sortering** i två led (stigande eller fallande), **gruppering** med en
+  rubrik och delsumma per grupp, och en **summarad** längst ned. Dörrar,
+  fönster och grindar har **en rad per littera** med antal som förval;
+  det som skiljer sig mellan objekten står som *Olika*, våningarna räknas
+  upp. **Tillståndet** och **våningarna** som räknas väljs per förteckning
+- **På bladet**: en förteckning läggs på ett blad som en vy (*Lägg på
+  bladet* i förteckningen, eller bland vyerna i bladets egenskaper). Den
+  ritas i 1:1 med rubriken ovanför, och en lång tabell **bryts i delar
+  bredvid varandra** med rubrikraden i varje (*Största höjd*, förval
+  bladets ram). Den följer med i bladets PDF och DXF (lagret `A-------I--`,
+  i Enkel `A-TEXT`) och räknas inte i bladets `{skala}`
+- **Export**: förteckningarna är en egen grupp i *Exportera…*, med **CSV**
+  (förval; semikolon och decimalkomma för svensk Excel) och PDF. *Spara som
+  CSV* finns också i förteckningen. Filnamnsmallen under stilboken ›
+  Allmänt › Export
+- Versionerna efter heter nu 0.12.3 (areor och uppställningen), 0.12.4
+  (IFC), 0.12.5 (utgåvor och PM) och 0.12.6 (3D-vyer)
 
 Version 0.12.1, DXF (samma filformat, 28; projekt från 0.11.8 öppnas;
 nya valfria fält: stilbokens `export.dxf`, uppsättningens `dxfVersion` och

@@ -1,4 +1,5 @@
 import type { ExportSet } from './exportSettings';
+import type { Schedule } from './schedules';
 import { exampleMaster } from './exampleMaster';
 import { newStyleBook, type StyleBook } from './graphics';
 import type { ViewOverrides } from './viewCategories';
@@ -188,6 +189,12 @@ export interface Viewport {
    * Det som ligger utanför klipps. Utelämnad = ramen följer innehållet.
    */
   crop?: { minX: number; minY: number; maxX: number; maxY: number };
+  /**
+   * En förteckning på bladet (0.12.2): tabellens största höjd på papperet, mm.
+   * En längre tabell bryts i delar som står bredvid varandra, med rubrikraden
+   * i varje. Utelämnad = bladets ram.
+   */
+  maxHeight?: number;
 }
 
 /**
@@ -458,6 +465,8 @@ export interface ProjectDoc {
   guids?: Record<Id, string>;
   /** Exportuppsättningarna (0.12), i listans ordning. */
   exportSets?: ExportSet[];
+  /** Förteckningarna (0.12.2), i listans ordning; se `schedules.ts`. */
+  schedules?: Schedule[];
 }
 
 /**

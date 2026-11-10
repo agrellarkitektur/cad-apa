@@ -86,6 +86,7 @@ export function installViews(app: AppContext) {
   }
 
   function applyView(v: ViewDef): void {
+    app.closeSchedule?.();
     const doc = app.store.doc;
     const { cat, show, type } = viewSettings(doc, v);
     app.ui.activeView = v.id;
@@ -135,6 +136,8 @@ export function installViews(app: AppContext) {
   }
 
   function goTo(p: Place): void {
+    // En förteckning som visas (0.12.2) stängs när man går någon annanstans.
+    app.closeSchedule?.();
     if (p.kind === 'view') {
       const v = app.store.doc.views.find((x) => x.id === p.id);
       if (v) applyView(v);

@@ -80,6 +80,8 @@ const cmp = (a: Info['sort'], b: Info['sort']) => a[0] - b[0] || a[1] - b[1] || 
 
 interface Computed {
   littera: Map<Id, string>;
+  /** Hängningen som bokstäver (V, H …), som litteraregeln *Typ, mått och hängning* räknar den. */
+  hinges: Map<Id, string>;
   keys: Map<Id, { type: string; key: string }>;
   /** Kombinationerna som saknar ett sparat nummer, med det de får nu. */
   missing: Record<string, Record<string, number>>;
@@ -95,6 +97,7 @@ function compute(doc: ProjectDoc): Computed {
   const outsides = new Map<Id, 1 | -1 | null>();
   const fromInside = st.hingeFrom === 'inside';
   const littera = new Map<Id, string>();
+  const hinges = new Map<Id, string>();
   const keys = new Map<Id, { type: string; key: string }>();
   const missing: Computed['missing'] = {};
   for (const type of OPENING_TYPES) {
@@ -103,7 +106,9 @@ function compute(doc: ProjectDoc): Computed {
       const el = doc.elements[id];
       if (el.type !== type) continue;
       const info = infoOf(doc, el, st.rule, elevation, outsides, fromInside);
-      if (info) list.push({ el, info });
+      if (!info) continue;
+      list.push({ el, info });
+      hinges.set(el.id, info.hinge);
     }
     list.sort((a, b) => cmp(a.info.sort, b.info.sort));
     const formula = st.formulas[type];
@@ -125,7 +130,7 @@ function compute(doc: ProjectDoc): Computed {
     }
     for (const { el, info } of list) littera.set(el.id, ownLittera(el) ?? applyFormula(formula, numbers.get(info.key)!));
   }
-  const out = { littera, keys, missing };
+  const out = { littera, hinges, keys, missing };
   cache.set(doc.elements, out);
   cache.set(doc.graphics, out);
   cache.set(doc.project, out);
@@ -140,6 +145,11 @@ const ownLittera = (el: Element): string | undefined => {
 /** Varje dörrs, fönsters och vägghåls littera. */
 export function openingLitteras(doc: ProjectDoc): Map<Id, string> {
   return compute(doc).littera;
+}
+
+/** Varje dörrs och fönsters hängning (V, H …), sedd som Allmänt › Fönster och dörrar säger (0.12.2). */
+export function openingHinges(doc: ProjectDoc): Map<Id, string> {
+  return compute(doc).hinges;
 }
 
 /** Nummer för nya kombinationer som ännu inte sparats (för att spara dem efter en ändring). */
