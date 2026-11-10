@@ -133,8 +133,8 @@ describe('exportens filer och uppsättningar (0.12)', () => {
     const doc = store.doc;
     const keys = [`sheet:${a}`, `sheet:${b}`, 'view:vy-a-bl', 'image:current', 'model:all'];
     const p = planExport(doc, keys, { 'image:current': ['png', 'jpeg'] }, optionsOf({}), TODAY);
-    expect(p.jobs.map((j) => j.path)).toEqual(['A-101.pdf', 'A-102.pdf', `Exempelvilla_${doc.views.find((v) => v.id === 'vy-a-bl')!.name}.pdf`, 'Exempelvilla_3D.png', 'Exempelvilla_3D.jpg', 'Exempelvilla.glb']);
-    const named = planExport({ ...doc, graphics: { ...doc.graphics, export: { names: { sheet: '{ritningsnummer}_{titel}', view: '{projekt}' } } } }, keys, undefined, optionsOf({ subfolders: true, combined: true }), TODAY);
+    expect(p.jobs.map((j) => j.path)).toEqual(['A-101.pdf', 'A-102.pdf', `Exempelvilla_${doc.views.find((v) => v.id === 'vy-a-bl')!.name}.dxf`, 'Exempelvilla_3D.png', 'Exempelvilla_3D.jpg', 'Exempelvilla.glb']);
+    const named = planExport({ ...doc, graphics: { ...doc.graphics, export: { names: { sheet: '{ritningsnummer}_{titel}', view: '{projekt}' } } } }, keys, { 'view:vy-a-bl': ['pdf'] }, optionsOf({ subfolders: true, combined: true }), TODAY);
     expect(named.jobs.map((j) => j.path)).toEqual(['PDF/Exempelvilla.pdf', 'PDF/Exempelvilla.pdf', 'Bilder/Exempelvilla_3D.png', 'glTF/Exempelvilla.glb']);
     expect(named.jobs[0].keys).toEqual([`sheet:${a}`, `sheet:${b}`]);
     expect([...named.duplicates]).toEqual(['pdf/exempelvilla.pdf']);

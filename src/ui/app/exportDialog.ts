@@ -1,3 +1,5 @@
+import { activeMap, LAYER_MAP_LABEL } from '../../core/dxfLayers';
+import { DXF_VERSIONS, DXF_VERSION_LABEL } from '../../formats/dxfWrite';
 import { exportKeys, planExport, setKeys, treeOrder, withGuids, type ExportPlan } from '../../core/exportJobs';
 import {
   FORMAT_LABEL,
@@ -43,9 +45,16 @@ interface Row {
   sub: string;
 }
 
+/** Lagerkartans namn, som dialogen visar den. */
+function layerMapName(doc: ProjectDoc): string {
+  const d = doc.graphics.export?.dxf;
+  const m = activeMap(d);
+  return m === 'custom' ? (d?.custom?.name ?? LAYER_MAP_LABEL.custom) : LAYER_MAP_LABEL[m];
+}
+
 const KIND_GROUP: Record<ExportKind, string> = { sheet: 'Ritningar', view: 'Vyer', image: '3D-vyer', model: 'Modellen' };
 
-const MIME: Record<ExportFormat, string> = { pdf: 'application/pdf', png: 'image/png', jpeg: 'image/jpeg', glb: 'model/gltf-binary' };
+const MIME: Record<ExportFormat, string> = { pdf: 'application/pdf', dxf: 'image/vnd.dxf', png: 'image/png', jpeg: 'image/jpeg', glb: 'model/gltf-binary' };
 
 function kb(n: number): string {
   return n < 1024 * 1024 ? `${Math.max(1, Math.round(n / 1024))} kB` : `${(n / 1024 / 1024).toLocaleString('sv-SE', { maximumFractionDigits: 1 })} MB`;
@@ -73,8 +82,8 @@ export function installExportDialog(app: AppContext, deps: { image: (src: { asse
     return {
       sheet: doc.sheets.map((s) => ({ id: s.id, key: `sheet:${s.id}`, name: `${s.number} ${s.name}`.trim(), sub: describeSheet(s) })),
       view: doc.views.map((v) => ({ id: v.id, key: `view:${v.id}`, name: v.name, sub: describeView(doc, v) })),
-      image: [{ id: 'current', key: IMAGE_CURRENT, name: 'Nuvarande 3D-vy', sub: 'som 3D-vyn står nu; de sparade 3D-vyerna kommer i 0.12.1' }],
-      model: [{ id: 'all', key: MODEL_ALL, name: 'Modellen', sub: 'med material, för Blender och andra renderare (IFC kommer i 0.12.0.3)' }],
+      image: [{ id: 'current', key: IMAGE_CURRENT, name: 'Nuvarande 3D-vy', sub: 'som 3D-vyn står nu; de sparade 3D-vyerna kommer i 0.12.5' }],
+      model: [{ id: 'all', key: MODEL_ALL, name: 'Modellen', sub: 'med material, för Blender och andra renderare (IFC kommer i 0.12.3)' }],
     };
   }
 
@@ -163,6 +172,11 @@ export function installExportDialog(app: AppContext, deps: { image: (src: { asse
             <label class="check"><input type="checkbox" data-ex-opt="workStamp"${o.workStamp ? ' checked' : ''}> Stämpel <i>ARBETSMATERIAL</i> med datum</label>
           </section>
           <section class="ex-opts">
+            <h3>DXF</h3>
+            <label class="field"><span>Version</span><select data-ex-opt="dxfVersion">${DXF_VERSIONS.map((v) => `<option value="${v}"${o.dxfVersion === v ? ' selected' : ''}>${DXF_VERSION_LABEL[v]}${v === 'R2000' ? ' (öppnas överallt)' : ''}</option>`).join('')}</select></label>
+            <p class="note">Lager: <i>${esc(layerMapName(doc))}</i>, under stilboken › Allmänt › <i>Export</i>.</p>
+          </section>
+          <section class="ex-opts">
             <h3>Bilder ur 3D</h3>
             <div class="ex-size"><label class="field"><span>Bredd</span><input inputmode="numeric" data-ex-opt="imageW" value="${o.imageSize[0]}"></label><span>×</span><label class="field"><span>Höjd</span><input inputmode="numeric" data-ex-opt="imageH" value="${o.imageSize[1]}"></label><span class="note">bildpunkter</span></div>
           </section>
@@ -171,7 +185,7 @@ export function installExportDialog(app: AppContext, deps: { image: (src: { asse
             ${folderOk ? `<label class="check"><input type="radio" name="ex-target" data-ex-opt="target" value="folder"${o.target === 'folder' ? ' checked' : ''}> Mapp på datorn <span class="note" data-ex-folder-name>${esc(folderName || 'väljs när du exporterar')}</span></label>
             <button type="button" class="btn btn-ghost ex-pick" data-ex="pick">Välj en annan mapp…</button>` : ''}
             <label class="check"><input type="radio" name="ex-target" data-ex-opt="target" value="zip"${o.target === 'zip' || !folderOk ? ' checked' : ''}> Zipfil</label>
-            <label class="check"><input type="checkbox" data-ex-opt="subfolders"${o.subfolders ? ' checked' : ''}> Undermappar per format (PDF, Bilder, glTF)</label>
+            <label class="check"><input type="checkbox" data-ex-opt="subfolders"${o.subfolders ? ' checked' : ''}> Undermappar per format (PDF, DXF, Bilder, glTF)</label>
           </section>
           <section class="ex-opts ex-preview"><h3>Filerna</h3><div data-ex="preview"></div>
           <p class="note">Filnamnen ur mallarna under stilboken › Allmänt › <i>Export</i>.</p></section>
@@ -297,6 +311,7 @@ export function installExportDialog(app: AppContext, deps: { image: (src: { asse
       else if (k === 'layers') options.layers = (t as unknown as HTMLSelectElement).value as ExportOptions['layers'];
       else if (k === 'workStamp' || k === 'subfolders') options[k] = t.checked;
       else if (k === 'target') options.target = t.value as 'folder' | 'zip';
+      else if (k === 'dxfVersion') options.dxfVersion = (t as unknown as HTMLSelectElement).value === 'R2018' ? 'R2018' : 'R2000';
       else if (k === 'imageW' || k === 'imageH') {
         const v = Math.round(Number(t.value.replace(/\s/g, '')));
         const ok = Number.isFinite(v) && v >= 64 && v <= 8192;

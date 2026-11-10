@@ -30,6 +30,8 @@ export interface WallParams {
   bulge?: number;
   /** Väggen går upp till taket ovanför (och kapas av det). (Format 4.) */
   toRoof?: boolean;
+  /** Bärande vägg (0.12.1), för DXF:ens lager. Utelämnad: ytterväggar är bärande, innerväggar inte. */
+  loadBearing?: boolean;
   /** Väggens fot mot våningens golv, mm (0.10.13); höjden räknas därifrån. Utelämnad = 0. */
   level?: number;
   /**

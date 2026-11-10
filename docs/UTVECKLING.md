@@ -686,6 +686,50 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## DXF (0.12.1, format 28)
+
+- **Skrivaren**: `src/formats/dxfWrite.ts` (`writeDxf(DxfDocument)`) vet
+  inget om programmet: den får lager, linjetyper, textstilar och entiteter
+  (`line`, `poly`, `arc`, `circle`, `text`, `hatch`) och skriver HEADER,
+  CLASSES, TABLES (VPORT, LTYPE, LAYER med beskrivning i xdata
+  `AcAecLayerStandard`, STYLE, VIEW, UCS, APPID, DIMSTYLE, BLOCK_RECORD),
+  BLOCKS, ENTITIES och OBJECTS (ordböckerna, plotstilen Normal, Model och
+  Layout1, materialen, MLINESTYLE och MLEADERSTYLE) som ezdxf och AutoCAD
+  skriver dem. Handtagen räknas från 0x20; `$HANDSEED` sätts sist. 2000 i
+  teckentabell 1252 (annat som `\U+XXXX`), 2018 i UTF-8 med koderna 347,
+  420 och 440.
+- **Lagren**: `src/core/dxfLayers.ts`. `LayerQuery` (sort, del, blad,
+  snitt, streckad, yta, yttervägg, bärande, fast, profilens littera,
+  Platsen, status) → `sb11Name(q, full)` eller `simpleName(q)`;
+  `layerDef(namn, egen)` ger färg, linjetyp och tjocklek ur listan, mallen
+  (`dxfLayerData.ts`, Carl Augusts 271 lager och tolv linjetyper, gjord ur
+  hans DXF med ezdxf) eller reglerna; `nearestLayer` för en egen lista;
+  `penColor` (tjocklek → ACI); `DxfSettings` med `normalizeDxfSettings`
+  under stilbokens `export.dxf`.
+- **Primitiverna till entiteter**: `src/repr/exportDxf.ts` (`viewDxf`,
+  `sheetDxf`). `Builder` räknar objektets uppgifter en gång per objekt
+  (`outsideSide` för väggen eller öppningens vägg, `loadBearing`,
+  `isFixed`, `profileObjectPrefix`), statusen med `actionOf` mot
+  befintligt, och lägger pennan som BYLAYER där den är lagrets. Vyns
+  primitiver i modellens mm (`cachedViewPrims`) med `k` = skalan för text,
+  skraffering och `$LTSCALE`; bladet ur `buildSheet` med `k` = 1 och vyernas
+  tillstånd för statusen.
+- **Väggarna i planen**: den sammanslagna snittytan har `owners` (väggarna
+  med sina former; `toPaper` flyttar dem med). `ownedRegion` grupperar dem
+  efter lager, klipper fyllningen med `intersection` och delar konturen med
+  `ownedOutlines`. Skärmen och PDF:en läser inte fältet.
+- **Läs lagerlista ur DXF…**: `src/formats/dxfLayerList.ts`
+  (`readDxfLayerList`, `dxfBytesText`) och knapparna i
+  `src/ui/style/generalExport.ts` (`dxfMarkup`, `dxfClick`). Kryssrutan
+  *Bärande* i `selectionFields.ts`.
+- **Exporten**: `dxf` i `FORMATS_FOR` (vyer `['dxf', 'pdf']`, blad
+  `['pdf', 'dxf']`), `ExportOptions.dxfVersion`, grenen i `exportRun.ts`
+  (i huvudtråden; en fil tar några millisekunder). `planExport` tar bara
+  PDF-bladen i den samlade filen.
+- **Prova**: `pip install ezdxf`, `ezdxf.readfile(f).audit()` ska ge inga
+  fel; `ezdxf.addons.drawing` med matplotlib ritar filen som PNG. Testerna
+  i `tests/v0121.test.ts` läser tillbaka med vår egen läsare.
+
 ## Exportdialogen och PDF (0.12, format 28)
 
 - **Kärnan** (utan webbläsaren): `src/core/exportSettings.ts` (sorterna
@@ -696,7 +740,7 @@ förut; vid nästa huvudversion flyttas de klara till arkivet.
   `exportVars` med smarttexten per rad, `planExport` → jobb med sökvägar
   och dubbletter, `uniquePaths`, `safeFileName`, `newIfcGuid`,
   `withGuids`). En rads nyckel är `sheet:<id>`, `view:<id>`,
-  `image:current` eller `model:all`; 0.12.1 lägger de sparade 3D-vyerna som
+  `image:current` eller `model:all`; 0.12.5 lägger de sparade 3D-vyerna som
   `image:<id>`.
 - **Sidorna**: `src/repr/exportPages.ts` gör ett blad eller en vy till en
   `PdfPage` med lager (`layers` är vägar av namn, `layerOf` ett index per

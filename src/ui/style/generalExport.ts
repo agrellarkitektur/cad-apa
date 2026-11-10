@@ -1,4 +1,6 @@
+import { activeMap, isSb11List, LAYER_MAP_LABEL, LAYER_MAPS, type DxfSettings, type LayerMapId } from '../../core/dxfLayers';
 import { EXPORT_KINDS, NAME_DEFAULTS, type ExportKind, type ExportSettings } from '../../core/exportSettings';
+import { dxfBytesText, readDxfLayerList } from '../../formats/dxfLayerList';
 import type { StyleBook } from '../../core/graphics';
 import { newId } from '../../core/ids';
 import type { ProjectDoc } from '../../core/model';
@@ -11,7 +13,7 @@ import { escapeHtml as esc } from '../labels';
 
 /**
  * Stilboken › Allmänt (0.12): typsnittet (de som följer med appen och ett
- * eget, uppladdat) och exportens filnamnsmallar.
+ * eget, uppladdat), exportens filnamnsmallar och DXF:ens lager (0.12.1).
  */
 
 const KIND_LABEL: Record<ExportKind, string> = { sheet: 'Blad', view: 'Vyer', image: 'Bilder ur 3D', model: 'Modellen' };
@@ -36,7 +38,36 @@ export function exportMarkup(doc: ProjectDoc): string {
       <div class="fields gen-grid">
         ${EXPORT_KINDS.map((k) => `<label class="field"><span>${KIND_LABEL[k]}</span><input data-gen="export:${k}" value="${esc(names[k] ?? '')}" placeholder="${esc(NAME_DEFAULTS[k])}" autocomplete="off"></label>`).join('')}
       </div>
+    </section>
+    ${dxfMarkup(doc)}`;
+}
+
+/** DXF:ens lagerkarta (0.12.1): SB11 förenklad, fullständig, Enkel eller en egen lista ur en DXF. */
+function dxfMarkup(doc: ProjectDoc): string {
+  const d = doc.graphics.export?.dxf;
+  const map = activeMap(d);
+  const own = d?.custom;
+  const options = LAYER_MAPS.filter((m) => m !== 'custom' || own).map((m) => [m, m === 'custom' ? `Egen: ${own!.name}` : LAYER_MAP_LABEL[m]] as const);
+  const all = map === 'sb11full' || map === 'custom';
+  return `<section class="style-labels gen-dxf">
+      <h3>DXF</h3>
+      <p class="note">Lagret räknas fram ur objektet: byggdel (yttervägg eller innervägg, bärande, fast eller lös inredning …), del och status (N nytt, E befintligt, R rivs). Färgen följer pennan som i pennväljaren: grå 0,13, cyan 0,18, röd 0,25, grön 0,35, svart 0,50 (vit på skärmen i AutoCAD), magenta 0,70, blå 1,00 och gul 1,40.</p>
+      <div class="fields gen-grid">
+        <label class="field" title="Lagerkartan för DXF-exporten"><span>Lager</span><select data-gen="dxf:map">${options.map(([v, l]) => `<option value="${v}"${v === map ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select></label>
+      </div>
+      <div class="row"><button type="button" class="btn" data-gen-action="dxf-layers" title="Lagren i en DXF-mall blir kontorets lista; namnen följer SB11 och hamnar på närmaste lager i listan">Läs lagerlista ur DXF…</button>${own ? '<button type="button" class="btn btn-ghost" data-gen-action="dxf-layers-remove">Ta bort den egna listan</button>' : ''}</div>
+      ${all ? `<label class="check"><input type="checkbox" data-gen="dxf:all"${d?.allLayers ? ' checked' : ''}> Alla lager i listan, också de tomma</label>` : ''}
     </section>`;
+}
+
+/** Stilboken med ändrade DXF-inställningar. */
+function withDxf(book: StyleBook, fn: (d: DxfSettings) => void): StyleBook {
+  return withExport(book, (e) => {
+    const d: DxfSettings = { ...(e.dxf ?? {}) };
+    fn(d);
+    if (Object.keys(d).length) e.dxf = d;
+    else delete e.dxf;
+  });
 }
 
 /** Stilboken med ändrade exportinställningar (tomma tas bort). */
@@ -59,6 +90,26 @@ export function exportChange(store: DocStore, kind: string, name: string, value:
     if (value === 'osifont') delete next.font;
     else next.font = value;
     setBook(next, 'Ritningens typsnitt');
+    return true;
+  }
+  if (kind === 'dxf') {
+    if (name === 'map' && LAYER_MAPS.includes(value as LayerMapId)) {
+      if (activeMap(book.export?.dxf) !== value)
+        setBook(
+          withDxf(book, (d) => {
+            if (value === 'sb11') delete d.map;
+            else d.map = value as LayerMapId;
+          }),
+          `DXF-lager: ${LAYER_MAP_LABEL[value as LayerMapId]}`,
+        );
+    } else if (name === 'all')
+      setBook(
+        withDxf(book, (d) => {
+          if (value) d.allLayers = true;
+          else delete d.allLayers;
+        }),
+        value ? 'DXF: alla lager i listan' : 'DXF: bara lager med innehåll',
+      );
     return true;
   }
   if (kind !== 'export' || !EXPORT_KINDS.includes(name as ExportKind)) return false;
@@ -104,5 +155,39 @@ export async function fontClick(store: DocStore, action: string): Promise<boolea
     tx.setGraphics({ ...book, font: id });
     if (old) tx.removeAsset(old);
   });
+  return true;
+}
+
+/** *Läs lagerlista ur DXF…* och *Ta bort den egna listan*. Svarar sant om det var en av dem. */
+export async function dxfClick(store: DocStore, action: string, setBook: (book: StyleBook, label: string) => void): Promise<boolean> {
+  if (action !== 'dxf-layers' && action !== 'dxf-layers-remove') return false;
+  const book = store.doc.graphics;
+  if (action === 'dxf-layers-remove') {
+    setBook(
+      withDxf(book, (d) => {
+        delete d.custom;
+        if (d.map === 'custom') delete d.map;
+      }),
+      'Ta bort den egna lagerlistan',
+    );
+    return true;
+  }
+  const [file] = await pickFiles('.dxf');
+  if (!file) return true;
+  const list = readDxfLayerList(dxfBytesText(new Uint8Array(await file.arrayBuffer())));
+  if (!list.layers.length) {
+    await askChoice('Lagerlistan', 'Filen har inga lager (utom 0 och Defpoints). Välj en DXF med lagertabellen, t.ex. kontorets mall sparad som DXF.', [{ value: 'ok', label: 'Ok' }]);
+    return true;
+  }
+  const name = file.name.replace(/\.dxf$/i, '');
+  setBook(
+    withDxf(book, (d) => {
+      d.custom = { name, layers: list.layers, ...(list.linetypes.length ? { linetypes: list.linetypes } : {}) };
+      d.map = 'custom';
+    }),
+    `Lagerlista: ${name}`,
+  );
+  if (!isSb11List(list.layers))
+    await askChoice('Lagerlistan', `${list.layers.length} lager lästes in. Namnen följer inte SB11 (som A-27C---E-N), så exporten skriver SB11-namnen med listans färger där namnen är lika.`, [{ value: 'ok', label: 'Ok' }]);
   return true;
 }

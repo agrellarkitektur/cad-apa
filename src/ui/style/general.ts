@@ -1,4 +1,4 @@
-import { exportChange, exportMarkup, fontClick, fontMarkup } from './generalExport';
+import { dxfClick, exportChange, exportMarkup, fontClick, fontMarkup } from './generalExport';
 import { openingSettingsOf, type OpeningRule, type OpeningSettings } from '../../core/general';
 import { glassByCompass, glassPanes, m2Text } from '../../elements/daylight';
 import { defaultState } from '../../core/states';
@@ -228,7 +228,7 @@ export function generalChange(store: DocStore, input: HTMLInputElement | HTMLSel
       );
   } else if (kind === 'otag') {
     if ((book.office?.tags?.[name] ?? '') !== input.value) setBook(withOffice(book, (o) => (o.tags = { ...(o.tags ?? {}), [name]: input.value })), `Kontorets tagg {${name}}`);
-  } else if (exportChange(store, kind, name, input.value, setBook)) {
+  } else if (exportChange(store, kind, name, input instanceof HTMLInputElement && input.type === 'checkbox' ? (input.checked ? '1' : '') : input.value, setBook)) {
     // Typsnittet och exportens filnamn (0.12).
   } else if (kind === 'project') {
     if (v) renameProject(store, v);
@@ -306,6 +306,8 @@ export async function generalClick(store: DocStore, target: HTMLElement, setBook
     if (await askConfirm('Ta bort logotypen?', 'Logotyperna som ligger på bladen har kvar bilden.', 'Ta bort')) setOfficeLogo(store, null);
   } else if (await fontClick(store, action)) {
     // Det egna typsnittet (0.12).
+  } else if (await dxfClick(store, action, setBook)) {
+    // Lagerlistan för DXF (0.12.1).
   } else if (action === 'renumber-openings') await renumberDialog(store);
   else if (action.startsWith('sfield-')) await scheduleFieldAction(store, action, (t) => askText(t, '', 'Lägg till'));
   else if (action === 'weights-reset') setBook(withGeneral(book, (g) => delete g.weights), 'Återställ tjocklekstabellen');

@@ -112,6 +112,11 @@ export interface RegionPrim extends Base {
   noOutline?: boolean;
   /** Ytan behåller sin egen fyllning och kontur (symboler som pilar), oavsett stilmall. */
   ownFill?: boolean;
+  /**
+   * Objekten en sammanslagen yta är gjord av (0.12.1): väggarna i planen
+   * flyter ihop, och DXF-exporten lägger varje väggs del på väggens lager.
+   */
+  owners?: readonly { id: string; rings: readonly (readonly Vec2[])[] }[];
 }
 
 export interface ArcPrim extends Base {

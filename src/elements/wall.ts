@@ -208,6 +208,8 @@ export const wallType: ElementType<WallParams> = {
     // Väggar med egen penna (0.8.31): ytan är en, men konturen delas efter
     // vilken vägg kanten kommer ifrån, så att den egna pennan hamnar på rätt kanter.
     const owned = new Set(cutItems.filter(({ el }) => effectivePen(ctx.doc, el)).map(({ el }) => el.id));
+    // Väggarna ytan är gjord av, för DXF:ens lager per vägg (0.12.1).
+    const owners = cutItems.flatMap(({ el }) => (shapes.get(el.id) ?? []).map((rings) => ({ id: el.id, rings })));
     const out = regions.map(
       (rings): Primitive => ({
         kind: 'region',
@@ -217,6 +219,7 @@ export const wallType: ElementType<WallParams> = {
         outline: { weight: 0.35 },
         ...(owned.size ? { noOutline: true } : {}),
         origin: { objectType: 'Wall', part: 'snitt' },
+        owners,
       }),
     );
     if (owned.size) {

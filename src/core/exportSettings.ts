@@ -1,9 +1,10 @@
+import { normalizeDxfSettings, type DxfSettings } from './dxfLayers';
 import type { Id } from './model';
 
 /**
  * Exporten (0.12): det som exporteras, i vilka format, och uppsättningarna
  * som sparas med namn. Formaten är skrivare bakom en dialog och kommer en i
- * taget (DXF i 0.12.0.1, förteckningarna i 0.12.0.2, IFC i 0.12.0.3); en
+ * taget (DXF i 0.12.1, förteckningarna i 0.12.2, IFC i 0.12.3); en
  * rad i dialogen är ett blad, en vy, en 3D-vy eller modellen.
  *
  * Inställningar som hör till kontorets sätt att leverera (filnamnsmallarna)
@@ -13,24 +14,25 @@ import type { Id } from './model';
 
 /** Sorten på en rad i exporten. */
 export type ExportKind = 'sheet' | 'view' | 'image' | 'model';
-export type ExportFormat = 'pdf' | 'png' | 'jpeg' | 'glb';
+export type ExportFormat = 'pdf' | 'dxf' | 'png' | 'jpeg' | 'glb';
 
 export const EXPORT_KINDS: readonly ExportKind[] = ['sheet', 'view', 'image', 'model'];
 
 /** Formaten en sort kan exporteras i, förvalet först. */
 export const FORMATS_FOR: Record<ExportKind, readonly ExportFormat[]> = {
-  sheet: ['pdf'],
-  view: ['pdf'],
+  sheet: ['pdf', 'dxf'],
+  // Vyer går till dem som ritar vidare (konstruktören, landskap), så DXF är förvalet (0.12.1).
+  view: ['dxf', 'pdf'],
   image: ['png', 'jpeg'],
   model: ['glb'],
 };
 
-export const FORMAT_LABEL: Record<ExportFormat, string> = { pdf: 'PDF', png: 'PNG', jpeg: 'JPEG', glb: 'glTF' };
-export const FORMAT_EXT: Record<ExportFormat, string> = { pdf: 'pdf', png: 'png', jpeg: 'jpg', glb: 'glb' };
+export const FORMAT_LABEL: Record<ExportFormat, string> = { pdf: 'PDF', dxf: 'DXF', png: 'PNG', jpeg: 'JPEG', glb: 'glTF' };
+export const FORMAT_EXT: Record<ExportFormat, string> = { pdf: 'pdf', dxf: 'dxf', png: 'png', jpeg: 'jpg', glb: 'glb' };
 /** Undermappen per format när *Undermappar* är valt. */
-export const FORMAT_FOLDER: Record<ExportFormat, string> = { pdf: 'PDF', png: 'Bilder', jpeg: 'Bilder', glb: 'glTF' };
+export const FORMAT_FOLDER: Record<ExportFormat, string> = { pdf: 'PDF', dxf: 'DXF', png: 'Bilder', jpeg: 'Bilder', glb: 'glTF' };
 
-/** Raden för den nuvarande 3D-vyn (0.12; de sparade 3D-vyerna kommer i 0.12.1) och för modellen. */
+/** Raden för den nuvarande 3D-vyn (0.12; de sparade 3D-vyerna kommer i 0.12.5) och för modellen. */
 export const IMAGE_CURRENT = 'image:current';
 export const MODEL_ALL = 'model:all';
 
@@ -41,6 +43,8 @@ export const idOf = (key: string): Id => key.slice(key.indexOf(':') + 1);
 export interface ExportSettings {
   /** Filnamnsmallen per sort, med smarttext. */
   names?: Partial<Record<ExportKind, string>>;
+  /** DXF (0.12.1): lagerkartan, en egen lagerlista och om alla lager skrivs. */
+  dxf?: DxfSettings;
 }
 
 /**
@@ -73,6 +77,8 @@ export interface ExportOptions {
   subfolders?: boolean;
   /** Vart filerna skrivs: en vald mapp eller en zipfil. */
   target?: 'folder' | 'zip';
+  /** DXF-versionen (0.12.1): AutoCAD 2000, som alla program öppnar, eller 2018. */
+  dxfVersion?: 'R2000' | 'R2018';
 }
 
 export const EXPORT_OPTION_DEFAULTS: Required<ExportOptions> = {
@@ -82,6 +88,7 @@ export const EXPORT_OPTION_DEFAULTS: Required<ExportOptions> = {
   imageSize: [3000, 2000],
   subfolders: false,
   target: 'folder',
+  dxfVersion: 'R2000',
 };
 
 export const optionsOf = (o: ExportOptions | undefined): Required<ExportOptions> => ({ ...EXPORT_OPTION_DEFAULTS, ...(o ?? {}) });
@@ -122,7 +129,9 @@ export function normalizeExportSettings(v: unknown): ExportSettings | null {
     const s = str(o.names?.[k]);
     if (s && s !== NAME_DEFAULTS[k]) names[k] = s;
   }
-  return Object.keys(names).length ? { names } : null;
+  const dxf = normalizeDxfSettings(o.dxf);
+  const out: ExportSettings = { ...(Object.keys(names).length ? { names } : {}), ...(dxf ? { dxf } : {}) };
+  return Object.keys(out).length ? out : null;
 }
 
 export function normalizeOptions(v: unknown): ExportOptions | undefined {
@@ -138,6 +147,7 @@ export function normalizeOptions(v: unknown): ExportOptions | undefined {
   }
   if (typeof o.subfolders === 'boolean') out.subfolders = o.subfolders;
   if (o.target === 'folder' || o.target === 'zip') out.target = o.target;
+  if (o.dxfVersion === 'R2000' || o.dxfVersion === 'R2018') out.dxfVersion = o.dxfVersion;
   return Object.keys(out).length ? out : undefined;
 }
 

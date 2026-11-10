@@ -1,3 +1,4 @@
+import { outsideSide } from '../elements/wallSides';
 import { openingFieldsMarkup } from './openingFields';
 import { stairFieldsMarkup } from './stairFields';
 import { railingFieldsMarkup } from './railingFields';
@@ -130,6 +131,7 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
       return `<div class="fields">${numberField('wall:length', arc ? 'Korda' : 'Längd', length, 'mm')}${numberField('param:height', 'Höjd', p.height, 'mm')}${numberField('level:level', 'Fot mot våningen', levelOf(p), 'mm')}${arc ? numberField('wall:radius', 'Radie', arc, 'mm') : `${numberField('wall:lean', 'Lutning', lean, '°', 2)}${numberField('wall:topOffset', 'Toppen i sidled', topOffset, 'mm')}`}</div>
         <label class="check" title="Utan egen höjd följer väggen våningshöjden"><input type="checkbox" data-key="wall:storeyHeight"${typeof el.params.height === 'number' ? '' : ' checked'}> Våningshöjd</label>
         <label class="check"><input type="checkbox" data-key="param:toRoof"${p.toRoof ? ' checked' : ''}> Upp till taket (gavlar)</label>
+        <label class="check" title="För lagren i DXF-exporten (SB11). Utan val är ytterväggar bärande och innerväggar inte."><input type="checkbox" data-key="param:loadBearing"${(p.loadBearing ?? outsideSide(doc, el) !== null) ? ' checked' : ''}> Bärande</label>
         <div class="field-label">Referenslinje</div><div class="segmented wide" role="group">${just}</div>
         <p class="note">Fot mot våningen flyttar bara foten; toppen ligger kvar. Flytta i höjd (Modifiera) flyttar hela väggen.${arc ? '' : ' Lutningen är positiv åt vänster sett från början mot slutet; foten ligger kvar på referenslinjen.'}</p>`;
     }

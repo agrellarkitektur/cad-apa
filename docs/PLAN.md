@@ -188,6 +188,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.8.3 | Dörrar och fönster, Smart och vägghål: vägghålen med verktyg och fyra förvalda typer (ventgaller, nisch, genomföring, rent hål), fasaden som arbetsyta, I liv med fönstret under, Lika avstånd, Mitt i rummet, dagsljuset (rummets andel, smarttexten, glas mot fasaden och per väderstreck), blecklutningen och spegelns raka kant |
 | 0.11.8.4 | Granskning efter 0.11.8 (1 november): varningarna uppslagna i föreskrifterna (fri passage, säkerhetsglas, barnsäkra fönster, utrymningsfönster, öppen trappa), `stairGeometry.ts` och `view3d.ts` delade, klickjämförelsen mot stilboken och med profiler, dörrar och fönster |
 | 0.12 | Exportdialogen och PDF: trädet med format per rad, sökrutan, exportuppsättningar (också i mallen, `EXPORT Bygglov`), filnamnsmallar med smarttext, mappen på datorn eller zip, förhandslistan, PDF med lager, dokumentegenskaper, samlad fil med bokmärken och arbetsmaterialstämpel, valbart typsnitt (osifont, Arimo, Josefin Sans, eget TTF/OTF), bild ur 3D-vyn, glTF, GUID på objekten, PDF:erna i en bakgrundstråd |
+| 0.12.1 | DXF: egen skrivare för AutoCAD 2000 och 2018, vyer i modellens mm och blad i pappers-mm, lagerkartorna SB11 förenklad och fullständig, Enkel och en egen lista ur en DXF, pennan som färg och linjetjocklek, status N/E/R, väggarna delade per vägg, Bärande |
 | 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, uppställningens fält i stilboken (Typer) med taggar och smarttext |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
@@ -1375,7 +1376,7 @@ pdf-lib och fflate, som utredningen föreslog: inget nytt beroende.
 - **Dokumentegenskaperna**: titel, ämne (ritningsnummer och benämning),
   nyckelord (skede, projekt), författare (företag, arkitekt eller
   ansvarig) och egna nycklar Projekt, Uppdragsnummer, Ritningsnummer,
-  Benamning, Skala, Format, Skede, Datum och Bet (tom tills 0.12.0.4), i
+  Benamning, Skala, Format, Skede, Datum och Bet (tom tills 0.12.4), i
   Info och i XMP (namnrymden `cadapa`). Inga datum i filen utom bladets
   egna, så att samma projekt ger samma bytes; zipfilens tidsstämpel är
   dagens datum klockan 00.00.
@@ -1383,7 +1384,7 @@ pdf-lib och fflate, som utredningen föreslog: inget nytt beroende.
   egna filer); bokmärkena är ritningsnummer och benämning.
 - **Arbetsmaterial** är en stämpel 2,5 mm grå nederst till vänster utanför
   ramen (`ARBETSMATERIAL 2026-11-07`), av som förval. *Skarp* kommer med
-  utgåvorna i 0.12.0.4.
+  utgåvorna i 0.12.4.
 - **Uppsättningarna** ligger i projektet (`exportSets`). När alla blad
   eller alla vyer är kryssade sparas det som *alla*, så att nya kommer med.
   I mallen (stilbokens fil) följer bara *alla*, 3D-vyn, modellen, formaten
@@ -1419,17 +1420,100 @@ pdf-lib och fflate, som utredningen föreslog: inget nytt beroende.
 **Inte gjort i 0.12:** konturtext när typsnittsfilen saknas; lager ur
 stilbokens ställen (grupperna är objektsorter); bilder och 3D-vyer på
 blad rastrerade i vald upplösning (det finns inga 3D-vyer på blad än;
-0.12.1); storleksvarning mot kommunens maxstorlek (storleken visas efter
+0.12.5); storleksvarning mot kommunens maxstorlek (storleken visas efter
 exporten, inte före); att mappens innehåll jämförs eller rensas;
-renderingarna (0.12.1); *Skarp* och utgåvorna (0.12.0.4).
+renderingarna (0.12.5); *Skarp* och utgåvorna (0.12.4).
 
-### 0.12.0.1 DXF
+### 0.12.1 DXF ✓
 
-DXF-skrivaren (R2000 som förval), lagerkartan och pennornas färger i
-stilboken, vyer i modellkoordinater och blad i pappers-mm, som en rad i
-exportdialogen. Mellanstor. Se utredningen.
+10 november 2026, en session. Samma format, 28 (valfria fält: stilbokens
+`export.dxf`, uppsättningens `dxfVersion`, väggens `loadBearing`).
+Carl August 10 november: versionen heter **0.12.1** (inte 0.12.0.1), och
+de följande flyttar ett steg (0.12.2 förteckningar, 0.12.3 IFC, 0.12.4
+utgåvor, 0.12.5 3D-vyer); **den fjärde siffran reserveras för snabba
+buggfixar** som inte lägger till funktioner. Underlag: hans AutoCAD-mall
+`Mallfil_SB11-lager.dxf` (272 lager), `cad-apa-lagerlista.md` och
+förslaget `cad-apa-lager-bsab-forslag.md` från en annan session (SB11
+förenklad och fullständig), pennväljarens färger (svar D) och DXF 2018 som
+val (svar E).
 
-### 0.12.0.2 Förteckningar och areor
+**Gjort:** en egen DXF-skrivare (`src/formats/dxfWrite.ts`) för AutoCAD
+2000 (AC1015, förval) och 2018 (AC1032), med alla sektioner, handtag,
+ägare, lagerbeskrivningar och layouterna; vyer i modellens mm med texter
+och linjetyper i vyns skala, blad platta i pappers-mm; LINE, ARC, CIRCLE,
+LWPOLYLINE, TEXT och HATCH (solid och skrafferingarnas linjefamiljer).
+Lagerkartorna (`src/core/dxfLayers.ts`) **SB11 förenklad** (förval),
+**SB11 fullständig**, **Enkel** och en **egen lista** ur *Läs lagerlista ur
+DXF…* under stilboken › Allmänt › DXF, med *Alla lager i listan*. Pennan som
+färg och linjetjocklek. Status N/E/R ur åtgärden. Kryssrutan **Bärande** i
+väggens egenskaper. DXF i exportdialogen (vyer DXF som förval, blad PDF och
+DXF som val) med versionen. Kontrollerat med ezdxf (inga fel i `audit`) och
+vår egen läsare; ritat med ezdxf:s matplotlib för ögat.
+
+**Claudes val (0.12.1):**
+
+- **Lagret härleds ur primitivens ursprung** (sort, del), objektet
+  (yttervägg ur `outsideSide`, bärande, fast inredning, profilens littera,
+  Platsen) och statusen. Väggarna i planen flyter ihop till en yta per
+  åtgärd; ytan bär nu sina väggar (`owners`), och DXF:en klipper fyllningen
+  och delar konturen per vägg, så att en innervägg och en yttervägg hamnar
+  på var sitt lager. I sektionerna får en sammanslagen yta den första
+  väggens lager.
+- **Bärande**: utan val är ytterväggar bärande (27C) och innerväggar inte
+  (43CB); kryssrutan i egenskaperna ändrar (27B, 42A).
+- **Status**: har projektet ett befintligt tillstånd räknas åtgärden mot
+  det, också i en vy utan jämförelse (N, E, R); vyn av Befintligt ger E;
+  utan befintligt tillstånd `-`. Allmänna lager (text, mått, markörer, ram)
+  har alltid `-`.
+- **Förenklad**: byggdelarna enligt förslaget (15, 27B–27G, 41, 42A,
+  42D--B/C, 43CB, 43CC-B/C, 45C, 46B--B/C, 3 mark, U rum) med `E-`; litteran
+  `A-------T2-`, text `T-`, mått `D-`, plushöjder `D3`, markörer `J-`,
+  norrpil `O2`, skalstock `O4`, ramen och det ritade på bladet `F-`,
+  underlag `V1`, rumsstämpeln `A-U-----T1`. Profiler efter littera: P 27D, B
+  27E, L 42E, TD 41. Trappor och räcken på Platsen hamnar på mark.
+- **Fullständig**: dessutom vy-lagren för 15, 27, 42A, 42E, 43CB, 45C och
+  46B (EI skuren, EJ bortom, EK dold/streckad, EM hitom = över snittet),
+  litteran per byggdel (`A-27C---T2N`), 45CA trappor, 45CB räcken, J1
+  sektions- och J4 fasadmarkörer, Y6 höjdkurvor, vägghål i yttervägg
+  42D--M. Typ-/materialkoderna (11, 31 …) skrivs inte (förslagets 4.3 punkt
+  2: tabellen tom tills betydelsen är utredd).
+- **Färgerna**: ur hans mall när lagret står där; annars samma lager med en
+  annan status; annars efter presentationskoden (EI grön 0,35, EJ röd 0,25,
+  EK DASHED_1, EM DASHDOT1, T grön 0,35 …; rivs röd 0,25 DASHED_2); annars
+  byggdelens *Beskrivande grafik* i mallen. Beskrivningen sätts samman som
+  i mallen (*Arkitekt, Stomytterväggar, Beskrivande grafik, Nytt*).
+- **Pennorna**: färgen efter tjockleken som i pennväljaren (grå 0,13 = 9,
+  cyan 4, röd 1, grön 3, svart 0,50 = 7, magenta 6, blå 5, gul 2) och
+  linjetjockleken (370) lika med pennan. En linje som har lagrets färg,
+  tjocklek och linjetyp skrivs BYLAYER; annars får den egna (så ser filen
+  ut som PDF:en oavsett lager). Pennans egen färg (t.ex. Färgmarkerad)
+  följer inte med; solida ytor får närmaste ACI-färg och i 2018 också RGB
+  och transparens.
+- **Vitt** (papperets fyllning under befintliga väggar) skrivs inte: DXF
+  har ingen mask, och en vit yta blir svart i AutoCAD.
+- **Linjetyper**: mallens tolv definitioner följer med (mönstren i
+  pappers-mm); en penna vars streck är en av stilbokens får stilbokens namn
+  (*Streckad*), annars `CA-3_1,5`. `$LTSCALE` är vyns skala, 1 på bladen.
+- **Texterna** är TEXT med versalhöjden 0,72 × texthöjden (som läsaren
+  räknar), justering vänster, mitt eller höger, en rad per textrad, stilen
+  `cad-apa` med `isocp.shx` för osifont, `arial.ttf` för Arimo.
+- **Egen lista**: följer den SB11 läggs varje SB11-namn på närmaste lager i
+  listan (samma namn, annan status, *E-*, samma byggdel), annars på 0;
+  följer den inte SB11 skrivs SB11-namnen med listans färger där namnen är
+  lika. Listan sparas i stilboken (följer med *Exportera…* och mallen).
+- **Den samlade PDF:en** tar bara de blad som ska bli PDF, så att ett blad
+  som bara blir DXF inte hamnar i den.
+
+**Inte gjort i 0.12.1:** BLOCK/INSERT för markörer och upprepade symboler
+(allt skrivs som entiteter); DIMENSION-entiteter (måtten är linjer och
+text); layout med viewports för bladen; bilder (underlag och loggor; de
+räknas upp efter exporten); fet text (samma stil); MTEXT; typ-/materialkoder
+och brand/areor per slag (finns inga sådana objekt än); CoClass-lager
+(Carl August: en framtida version); SWEREF (kommer med koordinaterna);
+öppnat i AutoCAD, Archicad och QCAD (finns inte i sandlådan; Carl August
+provar).
+
+### 0.12.2 Förteckningar och areor
 
 Förteckningen som vytyp (uppställningen av fönster och dörrar,
 dörrförteckningen, rum, grindar, markförändringarna, det generella
@@ -1440,19 +1524,19 @@ plan, schakt, fyll och netto, berg och jord (m³ och procent), lägsta och
 högsta nya höjd, största lutning, avtagen matjord (area × tjocklek,
 tjockleken en inställning) och en summarad med massbalansen.
 
-### 0.12.0.3 IFC
+### 0.12.3 IFC
 
 Egen utredning i egen chatt först (klasstabellen, psets, geometri,
 provfil validerad), sedan skrivaren. IFC4 Reference View, mm, utan mark och
 träd (svar D). GUID:en finns sedan 0.12.
 
-### 0.12.0.4 Utgåvor och PM
+### 0.12.4 Utgåvor och PM
 
 Mockup i Claude Design först, sedan snapshot, jämförelse, revideringsmoln
 och -pilar, beteckningar, handlingsförteckningen, ändrings-PM och panelen
 Utgåvor. Stor, troligen två sessioner.
 
-### 0.12.1 3D-vyer
+### 0.12.5 3D-vyer
 
 Carl August 26 oktober: före piloten, det är något man kan förvänta sig.
 Mellanstor.

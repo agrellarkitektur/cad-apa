@@ -6,10 +6,28 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 7 november 2026, efter 0.12 Exportdialogen och PDF.
+README. Senast: 10 november 2026, efter 0.12.1 DXF.
 
 ## Läget
 
+- **0.12.1 DXF är klar** (10 november, samma format 28; valfria fält
+  stilbokens `export.dxf`, uppsättningens `dxfVersion`, väggens
+  `loadBearing`), byggd i en session efter Carl Augusts svar A–E:
+  versionen heter 0.12.1 och resten flyttar ett steg, **den fjärde siffran
+  är för snabba buggfixar**; lagerkartorna ur `cad-apa-lager-bsab-forslag.md`
+  (SB11 förenklad som förval, fullständig, Enkel, *Läs lagerlista ur
+  DXF…*; CoClass i en framtida version); pennväljarens färger; 2018 som
+  val. Hans mall `Mallfil_SB11-lager.dxf` är baslinjen
+  (`src/core/dxfLayerData.ts`). Testerna: 969 på ca 14 s. Kontrollerat
+  med ezdxf (`audit` utan fel) och i Playwright mot `dist/` (dialogen,
+  stilboken, inläsningen av hans mall). Inte öppnat i AutoCAD, Archicad
+  eller QCAD (finns inte här). Claudes val och det som inte gjordes i
+  PLAN.md, koden i UTVECKLING.md.
+- **Märks i hans ritningar efter 0.12.1:** *Exportera…* har **DXF** per
+  rad (vyer DXF som förval, blad PDF med DXF som val) och avsnittet **DXF**
+  med versionen (AutoCAD 2000 eller 2018). Stilboken › Allmänt › **DXF**:
+  *Lager* (SB11 förenklad, SB11 fullständig, Enkel, Egen), *Läs lagerlista
+  ur DXF…*, *Alla lager i listan*. Väggens egenskaper har **Bärande**.
 - **0.12 Exportdialogen och PDF är klar** (7 november, samma format 28;
   valfria fält `exportSets`, `guids`, stilbokens `export`, `font` som en
   fil), byggd i en session efter `cad-apa-export-utredning.md` med svaren
@@ -29,41 +47,9 @@ README. Senast: 7 november 2026, efter 0.12 Exportdialogen och PDF.
   Allmänt: **Typsnitt** (osifont, Arimo, Josefin Sans, *Eget typsnitt…*)
   och **Export** (filnamnsmallarna). **Bild ur 3D-vyn** (3 000 × 2 000) och
   **glTF**. Objekten får GUID vid första exporten.
-- **0.11.8.4 Granskningen efter 0.11.8 är klar** (samma format, inga nya
-  funktioner; fjärde siffran för att varningstexterna syns): varningarna
-  uppslagna i föreskrifterna som Carl August laddade upp i projektet
-  (BFS 2024:7, 8, 9, 12 under *Lagar regler standarder*; sök med
-  `project_search`), stilmallsstegen i klickjämförelsen omskrivna mot
-  stilboken, `stairGeometry.ts` och `view3d.ts` delade, klickjämförelsen
-  med 64 steg för profiler, dörrar, fönster och vägghål (697 steg, mot
-  0.11.8.3 skiljer bara panelerna med de nya texterna). Testerna: 942 på
-  ca 25 s. Claudes val och det som inte gjordes i PLAN.md, koden i
-  UTVECKLING.md.
-- **Märks i hans ritningar efter 0.11.8.4:** varningarna i dörrars,
-  fönsters och trappors egenskaper hänvisar till paragrafen där det finns
-  en (fri passage, säkerhetsglas, utrymningsfönster); barnsäkra fönster
-  varnar under 1,8 m karmöppning på våningar med fallhöjd ≥ 2,0 m
-  (förut bara under 600); öppen trappa varnar för öppningen mellan
-  planstegen.
-- **0.11.8.3 Dörrar och fönster: Smart och vägghål är klar** (samma
-  format, 28; valfria fält `hole` i typen, bleckets `slope`, fyllningens
-  `flat`), byggd i en session (Carl August: "Testa att köra A+B tillsammans
-  med smart och vägghål i 0.11.8.3"; A och B var Inkorgens bleck och
-  spegel): vägghålen med verktyg, editor och fyra typer, fasaden som
-  arbetsyta, *I liv med fönstret under*, *Lika avstånd*, *Mitt i rummet*,
-  dagsljuset, blecklutningen, spegelns raka kant. Testerna: 940 på ca 19 s
-  (referensritningarna i Detalj omskrivna). Provat i Playwright mot
-  `dist/` (vägghålen i planen och fasaden, nischen, ventgallret i Detalj,
-  editorn, ett fönster draget i fasaden, rummets och fasadens glas).
-  Koden i UTVECKLING.md, Claudes val och det som inte gjordes i PLAN.md.
-- **Märks i hans ritningar efter 0.11.8.3:** fönsterblecken lutar 15° i
-  Detalj (fasad, sektion, 3D). Nytt: verktyget *Vägghål* under Rita,
-  *Lägg in vägghålens typer*, *Nytt vägghål…* i editorn, dra fönster,
-  dörrar och vägghål i fasader och sektioner, smartmenyns *I liv med
-  fönstret under*, *Lika avstånd* och *Mitt i rummet*, *Dagsljus* i
-  rummets egenskaper (`{dagsljus}`, `{glasarea}` i rumsstämpeln), glaset
-  i fasadens egenskaper och per väderstreck under Allmänt, editorns
-  *Lutning* och spegelns *Kant*.
+- **0.11.8.3–0.11.8.4** (smart och vägghål, granskningen med
+  varningarna uppslagna i föreskrifterna): se PLAN.md, UTVECKLING.md och
+  README, också för vad som märks i ritningarna.
 - **Föreskrifterna** ligger i projektets kunskapsbas (Boverkets BFS
   2024:4–13 med ändringar, SIS-standarderna för dörrar, fönster, area,
   dagsljus och invändiga mått, BBR 30 för jämförelse). Varningarna är
@@ -71,23 +57,23 @@ README. Senast: 7 november 2026, efter 0.12 Exportdialogen och PDF.
   dagsljusets 10 % har ingen siffra i föreskrifterna och är kvar som
   *avviker från praxis*. Slå upp i filerna, inte ur minnet, när en ny
   varning skrivs.
-- **0.11.8–0.11.8.2** (öppningstyperna, synpunkterna på mockupen, Detalj
-  och beslag): se PLAN.md, UTVECKLING.md och README, också för vad som
-  märks i ritningarna (måtten: hålet modulmåttet + 10, karmen − 10;
-  nytt format 28 i 0.11.8).
-- **0.11.5–0.11.7.3** (spiraltrappan, profilen, ändprofilerna, räckets avslut, trappan och räcket): se PLAN.md, UTVECKLING.md och README, också för vad som märks i ritningarna.
+- **0.11.5–0.11.8.2** (spiraltrappan, profilen, räcket, öppningstyperna,
+  Detalj och beslag): se PLAN.md, UTVECKLING.md och README (måtten: hålet
+  modulmåttet + 10, karmen − 10; nytt format 28 i 0.11.8).
 - **Granskningen efter 0.11.5** och **0.11.1–0.11.5** (räcket, editorn,
   staket och grindar, byggd trappa, spiraltrappan): se PLAN.md och
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.12 pushad till `main` 7 november (se git och `gh run
+- **Publicerad:** 0.12.1 pushad till `main` 10 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.12` i `engine.ts`, `package.json` och
-  `package-lock.json`. En granskning höjer inte numret, eller får en
-  fjärde siffra om något ändras som syns.
-- **0.10.8–0.12 är inte provade fullt ut** av Carl August; han har
+- **Versionsnumret** är `0.12.1` i `engine.ts`, `package.json` och
+  `package-lock.json`. Nya funktioner får tredje siffran (0.12.2 …); **den
+  fjärde siffran är för snabba buggfixar** utan nya funktioner (Carl August
+  10 november). En granskning höjer inte numret, eller får en fjärde siffra
+  om något ändras som syns.
+- **0.10.8–0.12.1 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -181,14 +167,15 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   hanns med~~, ~~0.11.8 Dörrar och fönster: öppningstyperna~~, ~~0.11.8.1
   Synpunkterna på mockupen~~, ~~0.11.8.2 Detalj och beslag~~, ~~0.11.8.3
   Smart och vägghål~~, ~~0.11.8.4 Granskning efter 0.11.8~~,
-  ~~Utredning av 0.12 Export~~, ~~0.12 Exportdialogen och PDF~~ (klara;
+  ~~Utredning av 0.12 Export~~, ~~0.12 Exportdialogen och PDF~~,
+  ~~0.12.1 DXF~~ (klara;
   se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.12.0.1 DXF** → **0.12.0.2 Förteckningar och areor** → **0.12.0.3
-  IFC** (egen utredning först) → **0.12.0.4 Utgåvor och PM** (mockup
+- **0.12.2 Förteckningar och areor** → **0.12.3
+  IFC** (egen utredning först) → **0.12.4 Utgåvor och PM** (mockup
   först); se `cad-apa-export-utredning.md`. Sedan **Granskning efter 0.12**.
-- **0.12.1 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
+- **0.12.5 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
   trädens status i planen)
 - **Koordinater, SWEREF och sol** (stor; före piloten; SWEREF på
   situationsplanen och i exporten därifrån)
@@ -200,16 +187,14 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 ## Nästa session
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
-skrivrätt till repot ("push godkänd"). Fråga om Carl August provat 0.12
-(och 0.11.8–0.11.8.4); ställ i så fall frågorna om 0.12 (nedan) först,
-högst fem åt gången. Nästa version är **0.12.0.1 DXF** (mellanstor):
-läs avsnittet *DXF* i `cad-apa-export-utredning.md` och ställ först
-frågorna i dess *Senare omgång* som hör till DXF (lagerkartans förval
-Enkel eller BH90, pennfärgerna, DXF-versionen). Skrivaren blir ett nytt
-format bakom exportdialogen: `FORMATS_FOR` i `src/core/exportSettings.ts`
-(vy → DXF som förval enligt utredningen, blad → PDF och DXF), en gren i
-`src/ui/app/exportRun.ts`. IFC och PM får egen utredning/mockup i egen
-chatt före sina versioner. Vid granskningen efter 0.12 delas
+skrivrätt till repot ("push godkänd"). Fråga om Carl August provat 0.12.1
+och 0.12 (och 0.11.8–0.11.8.4); ställ i så fall frågorna om 0.12.1 och 0.12
+(nedan) först, högst fem åt gången. Öppnar en DXF inte i hans AutoCAD eller
+Archicad: be om felmeddelandet och fixa det som 0.12.1.1. Nästa version är
+**0.12.2 Förteckningar och areor** (stor, risk för två sessioner): se
+avsnittet i PLAN.md och `cad-apa-export-utredning.md`; föreslå en
+uppdelning först. IFC och PM får egen utredning/mockup i egen chatt före
+sina versioner. Vid granskningen efter 0.12 delas
 `src/ui/style/profileTypes.ts` (875) och `openingTypes.ts` (828).
 
 ## Att fråga Carl August om
@@ -217,10 +202,22 @@ chatt före sina versioner. Vid granskningen efter 0.12 delas
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.12, 0.11.8.4, 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.12.1, 0.12, 0.11.8.4, 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4, 0.11.3,
 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
+
+**0.12.1 efter provning** (Claudes val, se PLAN.md; svaren A–E 10 november)
+- Utan kryss är ytterväggar bärande (27C) och innerväggar inte (43CB).
+  Rätt förval, eller ska *Bärande* ligga i väggtypen (YV01, IV01)?
+- Statusen räknas mot Befintligt också i en vy utan jämförelse (bygglovets
+  plan får N och E). Rätt, eller `-` när vyn inte jämför?
+- Befintliga väggars vita fyllning skrivs inte (DXF har ingen mask), så
+  befintligt är bara konturen. Bra, eller hellre en vit solid yta under?
+- Pennans färg (t.ex. Färgmarkerad) följer inte med; färgen styrs av
+  tjockleken. Räcker det, eller ska Färgmarkerads färger med som RGB i 2018?
+- Markörer och möbler skrivs som linjer, inte block. Behöver mottagarna
+  block (för att flytta en sektionsmarkör som en enhet)?
 
 **0.12 efter provning** (Claudes val, se PLAN.md; utredningens A–E
 besvarade 7 november, se `cad-apa-export-utredning.md`)
@@ -234,7 +231,7 @@ besvarade 7 november, se `cad-apa-export-utredning.md`)
 - En export till mappen skriver över filer med samma namn utan att fråga
   (så att en ny utgåva hamnar rätt). Bra, eller ska den fråga först?
 - Bilden ur 3D följer 3D-vyns kamera; en annan proportion än fönstrets
-  visar mer i sidled. Räcker det tills de sparade 3D-vyerna (0.12.1) får
+  visar mer i sidled. Räcker det tills de sparade 3D-vyerna (0.12.5) får
   en sökarram?
 
 **0.11.8.4 efter provning** (Claudes val, se PLAN.md)
@@ -700,7 +697,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
   Rätt?
 
 **Följdfrågor från 27 oktober**
-- Trädens status (till 0.12.1): ska texten "Träd skyddas under
+- Trädens status (till 0.12.5): ska texten "Träd skyddas under
   byggtiden" stå i en förteckning, eller skriver man den själv?
 
 **0.10.11 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)

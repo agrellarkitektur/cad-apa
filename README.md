@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12** (alfa), Exportdialogen och PDF; nästa är **0.12.0.1 DXF**.
+**0.12.1** (alfa), DXF; nästa är **0.12.2 Förteckningar och areor**.
 
 ## Vad som fungerar
 
@@ -1149,6 +1149,38 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
 
+Version 0.12.1, DXF (samma filformat, 28; projekt från 0.11.8 öppnas;
+nya valfria fält: stilbokens `export.dxf`, uppsättningens `dxfVersion` och
+väggens `loadBearing`):
+- **DXF i Exportera…**: vyer blir DXF som förval (PDF som val), blad PDF
+  med DXF som val. Under **DXF** i dialogen väljs versionen: **AutoCAD
+  2000** (förval, öppnas av alla program) eller **AutoCAD 2018**
+- **Vyerna** i modellens koordinater i mm (lokal nolla), med texter och
+  linjetyper i vyns skala; **bladen** platta i pappers-mm med ramen och
+  ritningshuvudet. Linjer, bågar, cirklar, polylinjer, texter och
+  skrafferingar (HATCH, solid eller med skrafferingens linjer); bilder
+  (underlag, loggor) följer inte med, och dialogen säger till
+- **Lagren** räknas fram ur objektet: byggdel (yttervägg eller innervägg,
+  bärande eller inte, fönster och dörrar efter väggen, fast eller lös
+  inredning …), del och **status** (N nytt, E befintligt, R rivs, mot
+  Befintligt när projektet har det). Under stilboken › Allmänt › **DXF**:
+  **SB11 förenklad** (förval, t.ex. `A-27C---E-N`), **SB11 fullständig**
+  (också skuren, bortom och hitom, och litteran per byggdel), **Enkel**
+  (`A-VÄGG-NY`, `A-DÖRR` …) eller en **egen lista**: *Läs lagerlista ur
+  DXF…* läser lagren ur kontorets mall (färg, linjetyp, tjocklek och
+  beskrivning), och exporten lägger varje lager på det närmaste i listan.
+  *Alla lager i listan* skriver också de tomma
+- **Färgerna** följer pennan som i pennväljaren (grå 0,13, cyan 0,18, röd
+  0,25, grön 0,35, svart 0,50, magenta 0,70, blå 1,00, gul 1,40), och
+  linjetjockleken är pennans. Lagren har färgerna ur SB11-mallen; en linje
+  med lagrets penna följer lagret (BYLAYER)
+- **Väggarna** i planen hamnar på var sitt lager också där de flyter ihop
+- **Bärande** i väggens egenskaper (utan val är ytterväggar bärande och
+  innerväggar inte), för lagren 27B/27C och 43CB/42A
+- Versionerna efter heter nu 0.12.2 (förteckningar och areor), 0.12.3
+  (IFC), 0.12.4 (utgåvor och PM) och 0.12.5 (3D-vyer); den fjärde siffran
+  är för snabba buggfixar
+
 Version 0.12, Exportdialogen och PDF (samma filformat, 28; projekt från
 0.11.8 öppnas; nya valfria fält `exportSets`, `guids`, stilbokens `export`
 och ett eget typsnitt som fil):
@@ -1156,7 +1188,7 @@ och ett eget typsnitt som fil):
   all export: trädet med **Ritningar**, **Vyer**, **3D-vyer** och
   **Modellen**, kryssrutor på mappar och rader, en sökruta och **formatet
   per rad** (blad och vyer PDF, 3D-vyn PNG och/eller JPEG, modellen glTF;
-  DXF, förteckningar och IFC kommer i 0.12.0.1–0.12.0.3)
+  DXF, förteckningar och IFC kommer i 0.12.1–0.12.3)
 - **Uppsättningar**: *Spara som…* sparar urvalet, formaten och
   inställningarna med namn i projektet (*Bygglov*, *Till konstruktören*);
   välj den i listan, eller skriv `EXPORT Bygglov` i kommandoraden. Är alla

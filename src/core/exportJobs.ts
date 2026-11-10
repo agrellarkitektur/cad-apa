@@ -132,7 +132,8 @@ export function planExport(
   const jobs: ExportJob[] = [];
   const folder = (f: ExportFormat) => (options.subfolders ? `${FORMAT_FOLDER[f]}/` : '');
   const name = (key: string) => safeFileName(expandSmartText(nameTemplate(settings, kindOf(key)), exportVars(doc, key, today)));
-  const sheets = keys.filter((k) => kindOf(k) === 'sheet');
+  // Den samlade PDF:en tar bladen som ska bli PDF (inte de som bara blir DXF).
+  const sheets = keys.filter((k) => kindOf(k) === 'sheet' && formatsFor(k, formats).includes('pdf'));
   if (options.combined && sheets.length > 1) {
     const vars = exportVars(doc, MODEL_ALL, today);
     jobs.push({ keys: sheets, kind: 'sheet', format: 'pdf', path: `${folder('pdf')}${safeFileName(expandSmartText('{projekt}', vars))}.pdf`, title: doc.project.name });

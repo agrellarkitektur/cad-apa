@@ -25,7 +25,7 @@ export const VIEW_TYPES: readonly { type?: ViewType; name: string; icon: string;
   { type: 'storey', name: 'Våningar', icon: 'storey' },
   { type: 'facade', name: 'Fasader', icon: 'elevation' },
   { type: 'section', name: 'Sektioner', icon: 'section' },
-  { name: '3D-vyer', icon: 'cube', later: 'Kommer med 3D-vyerna (0.12.1)' },
+  { name: '3D-vyer', icon: 'cube', later: 'Kommer med 3D-vyerna (0.12.5)' },
   { type: 'worksheet', name: 'Arbetsblad', icon: 'worksheet' },
   { name: 'Uppställningar', icon: 'sheet', later: 'Efter pilotprojektet' },
   { name: 'Förteckningar', icon: 'list', later: 'Efter pilotprojektet' },

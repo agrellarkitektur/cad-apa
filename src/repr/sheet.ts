@@ -219,7 +219,7 @@ export function toPaper(prims: readonly Primitive[], at: Vec2, scale: number): P
       case 'polyline':
         return { ...p, points: p.points.map(t), ...(p.dashFrom ? { dashFrom: { ...p.dashFrom, points: p.dashFrom.points.map(t), at: p.dashFrom.at / scale } } : {}) };
       case 'region':
-        return { ...p, rings: p.rings.map((r) => r.map(t)) };
+        return { ...p, rings: p.rings.map((r) => r.map(t)), ...(p.owners ? { owners: p.owners.map((o) => ({ id: o.id, rings: o.rings.map((r) => r.map(t)) })) } : {}) };
       case 'arc':
         return { ...p, center: t(p.center), radius: p.radius / scale };
       case 'text':

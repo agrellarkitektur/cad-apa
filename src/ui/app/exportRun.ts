@@ -5,6 +5,7 @@ import type { ProjectDoc } from '../../core/model';
 import { bundledFontBytes, fontOf, fromBase64, isBundledFont } from '../../formats/fonts';
 import { imageKey, writePdf, browserDeflate, type PdfImage, type PdfOptions, type PdfPage } from '../../formats/pdf';
 import type { PdfJob, PdfReply } from '../../formats/exportWorker';
+import { sheetDxf, viewDxf } from '../../repr/exportDxf';
 import { pdfMeta, sheetPage, viewPage } from '../../repr/exportPages';
 import type { View3D } from '../../view3d/view3d';
 import type { OutFile } from './exportTarget';
@@ -128,6 +129,18 @@ export async function runExport(
     // Låt sidan rita om och Avbryt hinna fram mellan varje fil.
     await new Promise((r) => setTimeout(r, 0));
     if (cancelled()) return { files, skipped, cancelled: true };
+    if (job.format === 'dxf') {
+      const opt = { version: options.dxfVersion, today, workStamp: options.workStamp, autoDims: deps.autoDims };
+      const key = job.keys[0];
+      const r = job.kind === 'sheet' ? sheetDxf(doc, idOf(key), opt) : viewDxf(doc, idOf(key), opt);
+      if (!r) {
+        skipped.push(`${job.title}: tom eller borttagen`);
+        continue;
+      }
+      if (r.images) skipped.push(`${job.title}: ${r.images === 1 ? 'en bild' : `${r.images} bilder`} (underlag eller logga) följer inte med i DXF:en`);
+      files.push({ path: paths[i], job: job.path, data: r.bytes });
+      continue;
+    }
     if (job.format === 'pdf') {
       const pages: PdfPage[] = [];
       for (const key of job.keys) {
