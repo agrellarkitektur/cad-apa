@@ -15,6 +15,8 @@ import type { PlanContext } from '../elements/registry';
 import { spaceOutline, roomNumbersFor, type SpaceParams } from '../elements/rooms';
 import { areaOf } from '../elements/space';
 import { createContext } from './context';
+import { columnName, writeXlsx, type XlsxCell, type XlsxSheet } from '../formats/xlsxWrite';
+import { AREA_KINDS, BRA_KINDS, COMPUTED_KINDS, areaCode, areaRegion, areaValue, btaRegion, byaRegion, groundStorey, ringsArea, roundArea, type AreaParams } from '../elements/areaCalc';
 
 /**
  * Förteckningens rader (0.12.2), räknade ur modellen: en rad per objekt
@@ -63,6 +65,8 @@ interface Item {
   el: Element;
   ctx: PlanContext;
   gate?: NonNullable<RailingParams['gates']>[number];
+  /** En framräknad area (0.12.3): BYA, BTA eller BRA på våningen, i m² med en decimal. */
+  gen?: { kind: string; value: number };
 }
 
 /** Det som räknas en gång för hela förteckningen. */
@@ -117,6 +121,23 @@ function cellOf(src: ScheduleSource, field: string, it: Item, sh: Shared): Cell 
         }
       }
       return { text: ownProp([el.props], field) };
+    }
+    case 'Area': {
+      const g = it.gen;
+      const p = g ? null : ctx.params<AreaParams>(el);
+      switch (field) {
+        case 'Areaslag':
+          return { text: g?.kind ?? p!.kind };
+        case 'Beteckning':
+          return { text: g?.kind ?? areaCode(p!) };
+        case 'Funktion':
+          return { text: p?.func?.trim() ?? '' };
+        case 'Area': {
+          const v = g ? g.value : areaValue(ctx, el);
+          return { text: nf(1).format(v), value: v };
+        }
+      }
+      return g ? { text: '' } : { text: ownProp([el.props], field) };
     }
     case 'Door':
     case 'Window': {
@@ -201,10 +222,67 @@ function itemsOf(doc: ProjectDoc, s: Schedule, state: Id, ctxFor: (storey: Id) =
       for (const gate of (el.params as RailingParams).gates ?? []) out.push({ el, ctx: ctxFor(el.storey), gate });
       continue;
     }
+    // BTA- och BYA-objekten visar bara konturen; areorna räknas fram nedan.
+    if (s.source === 'Area' && COMPUTED_KINDS.includes((el.params as unknown as AreaParams).kind)) continue;
     out.push({ el, ctx: ctxFor(el.storey) });
+  }
+  if (s.source === 'Area') out.push(...computedAreas(doc, out, storeys, ctxFor));
+  return out;
+}
+
+/**
+ * De framräknade areorna (0.12.3): BYA på markplanet, BTA på varje våning,
+ * och BRA som summan av våningens BOA, BIA, LOA och ÖVA (9).
+ */
+function computedAreas(doc: ProjectDoc, items: readonly Item[], storeys: Set<Id> | null, ctxFor: (storey: Id) => PlanContext): Item[] {
+  const out: Item[] = [];
+  const ground = groundStorey(doc);
+  for (const st of buildingStoreys(doc)) {
+    if (storeys && !storeys.has(st.id)) continue;
+    const ctx = ctxFor(st.id);
+    const el = { id: `gen:${st.id}`, type: 'Area', storey: st.id, states: [], tags: [], props: {}, params: {} } as Element;
+    const bta = roundArea(ringsArea(btaRegion(ctx)), 1);
+    if (st.id === ground) {
+      const bya = roundArea(ringsArea(byaRegion(ctx)), 1);
+      if (bya > 0) out.push({ el, ctx, gen: { kind: 'BYA', value: bya } });
+    }
+    if (bta > 0) out.push({ el, ctx, gen: { kind: 'BTA', value: bta } });
+    const bra = items.filter((i) => !i.gen && i.el.storey === st.id && BRA_KINDS.includes((i.el.params as unknown as AreaParams).kind)).reduce((a, i) => a + ringsArea(areaRegion(i.ctx, i.el)), 0);
+    if (bra > 0) out.push({ el, ctx, gen: { kind: 'BRA', value: roundArea(bra, 1) } });
   }
   return out;
 }
+
+/** Areaslagen i redovisningens ordning: BYA, BTA, BRA och dess underindelningar, OPA. */
+const AREA_ORDER = ['BYA', 'BTA', 'BRA', ...AREA_KINDS.filter((k) => k !== 'BYA' && k !== 'BTA')];
+
+/** Areorna med samma slag, beteckning, funktion och våning blir en rad med arean summerad. */
+function mergeAreas(rows: Cell[][], fields: string[]): Cell[][] {
+  const keys = ['Areaslag', 'Beteckning', 'Funktion', 'Våning'].map((f) => fields.indexOf(f));
+  const ai = fields.indexOf('Area');
+  const by = new Map<string, Cell[][]>();
+  for (const r of rows) {
+    const k = keys.map((i) => (i < 0 ? '' : r[i].text)).join('|');
+    const l = by.get(k);
+    if (l) l.push(r);
+    else by.set(k, [r]);
+  }
+  return [...by.values()].map((list) =>
+    fields.map((_f, i) => {
+      if (i === ai) {
+        const v = roundArea(list.reduce((a, r) => a + (r[i].value ?? 0), 0), 1);
+        return { text: nf(1).format(v), value: v };
+      }
+      const texts = [...new Set(list.map((c) => c[i].text))];
+      return texts.length === 1 ? list[0][i] : { text: 'Olika' };
+    }),
+  );
+}
+
+const orderOf = (k: string) => {
+  const i = AREA_ORDER.indexOf(k);
+  return i < 0 ? 99 : i;
+};
 
 const cmpText = (a: string, b: string) => a.localeCompare(b, 'sv', { numeric: true, sensitivity: 'base' });
 
@@ -261,7 +339,8 @@ export function scheduleTable(doc: ProjectDoc, s: Schedule): ScheduleTable {
     storeyName: (id) => doc.storeys.find((x) => x.id === id)?.name ?? '',
   };
   const fields = s.columns.map((c) => c.field);
-  const perLittera = !!s.perLittera && s.source !== 'Space' && s.source !== 'Label';
+  const perLittera = !!s.perLittera && s.source !== 'Space' && s.source !== 'Label' && s.source !== 'Area';
+  const perArea = !!s.perLittera && s.source === 'Area';
   // Fälten som behövs för sortering och gruppering räknas också, fast de inte är kolumner.
   const extra = [...s.sort.map((k) => k.field), ...(s.group ? [s.group] : [])].filter((f) => !fields.includes(f));
   const all = [...fields, ...extra, ...(perLittera && !fields.includes('Littera') ? ['Littera'] : [])];
@@ -275,9 +354,11 @@ export function scheduleTable(doc: ProjectDoc, s: Schedule): ScheduleTable {
     const li = all.indexOf('Littera');
     rows = mergeByLittera(rows.map((cells) => ({ cells, key: cells[li].text })), all);
   }
+  if (perArea) rows = mergeAreas(rows, all);
   const col = (f: string) => all.indexOf(f);
   const cmpCell = (f: string, a: Cell, b: Cell) => {
     if (f === 'Våning') return (storeyOrder.get(a.text) ?? 99) - (storeyOrder.get(b.text) ?? 99) || cmpText(a.text, b.text);
+    if (f === 'Areaslag') return orderOf(a.text) - orderOf(b.text) || cmpText(a.text, b.text);
     if (a.value !== undefined && b.value !== undefined) return a.value - b.value;
     // Tomma sist.
     if (!a.text !== !b.text) return a.text ? -1 : 1;
@@ -292,7 +373,8 @@ export function scheduleTable(doc: ProjectDoc, s: Schedule): ScheduleTable {
     return 0;
   });
   const sums = s.columns.map((c) => !!c.sum && isNumberField(s.source, c.field));
-  const decimals = (i: number) => (s.columns[i].field === 'Area' ? sh.decimals : s.columns[i].field === 'Omkrets' || s.columns[i].field === 'Glasarea' ? 1 : 0);
+  // Areornas delsummor och summa i hela m² (SS 21054, 4.3).
+  const decimals = (i: number) => (s.columns[i].field === 'Area' ? (s.source === 'Area' ? 0 : sh.decimals) : s.columns[i].field === 'Omkrets' || s.columns[i].field === 'Glasarea' ? 1 : 0);
   const anySum = sums.some(Boolean);
   const visible = (r: Cell[]) => r.slice(0, fields.length);
   let groups: ScheduleGroup[];
@@ -357,3 +439,52 @@ export function scheduleCsv(t: ScheduleTable): string {
   if (t.total) lines.push(t.total.map((c, i) => q(i === 0 && !c.text ? 'Summa' : cell(c, i))).join(';'));
   return `﻿${lines.join('\r\n')}\r\n`;
 }
+
+/** Decimalerna i ett tal som det står i rutan (*80,6* har en). */
+const decimalsIn = (text: string): number => {
+  const i = text.lastIndexOf(',');
+  return i < 0 ? 0 : Math.min(2, text.length - i - 1);
+};
+
+/**
+ * Förteckningen som ett blad i XLSX (0.12.3): rubrikraden fet, talen som
+ * tal med sina decimaler, gruppernas rubriker feta, och delsummorna och
+ * summan som formler (`SUMMA` i svensk Excel), så att de räknas om när
+ * man ändrar i bladet.
+ */
+export function scheduleSheet(t: ScheduleTable): XlsxSheet {
+  const rows: XlsxCell[][] = [t.columns.map((c) => ({ v: c.title, bold: true }))];
+  const numCell = (c: Cell, i: number): XlsxCell => (t.columns[i].number && c.value !== undefined ? { v: c.value, decimals: decimalsIn(c.text) } : c.text ? { v: c.text } : {});
+  const groupSums: number[] = [];
+  const dataRows: number[] = [];
+  const sumFormula = (i: number, list: readonly number[]) => {
+    const col = columnName(i);
+    // Sammanhängande rader som ett område, annars en lista.
+    const ranges: string[] = [];
+    for (let k = 0; k < list.length; ) {
+      let j = k;
+      while (j + 1 < list.length && list[j + 1] === list[j] + 1) j++;
+      ranges.push(j > k ? `${col}${list[k]}:${col}${list[j]}` : `${col}${list[k]}`);
+      k = j + 1;
+    }
+    return ranges.length ? `SUM(${ranges.join(',')})` : '0';
+  };
+  for (const g of t.groups) {
+    if (g.label !== undefined) rows.push([{ v: g.label, bold: true }]);
+    const first = rows.length + 1;
+    for (const r of g.rows) {
+      rows.push(r.map(numCell));
+      dataRows.push(rows.length);
+    }
+    const here = Array.from({ length: g.rows.length }, (_, k) => first + k);
+    if (g.sums) {
+      rows.push(g.sums.map((c, i) => (i === 0 && !c.text ? { v: `Summa ${g.label ?? ''}`.trim(), bold: true } : t.columns[i].sum ? { f: sumFormula(i, here), v: c.value, bold: true, decimals: decimalsIn(c.text) } : {})));
+      groupSums.push(rows.length);
+    }
+  }
+  if (t.total) rows.push(t.total.map((c, i) => (i === 0 && !c.text ? { v: 'Summa', bold: true } : t.columns[i].sum ? { f: sumFormula(i, dataRows), v: c.value, bold: true, decimals: decimalsIn(c.text) } : {})));
+  return { name: t.name, rows };
+}
+
+/** Förteckningen som XLSX-fil (0.12.3). */
+export const scheduleXlsx = (t: ScheduleTable, date?: Date): Uint8Array => writeXlsx(scheduleSheet(t), date);

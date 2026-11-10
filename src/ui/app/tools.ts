@@ -14,6 +14,7 @@ import { RoofTool } from '../tools/roofTool';
 import { MeasureTool, ZoomBoxTool } from '../tools/measureTool';
 import { OpeningTool } from '../tools/openingTool';
 import { RoomTool } from '../tools/roomTool';
+import { AreaTool } from '../tools/areaTool';
 import { SelectTool } from '../tools/selectTool';
 import { SlabTool } from '../tools/slabTool';
 import { GroundTool } from '../tools/groundTool';
@@ -82,6 +83,7 @@ export function installTools(app: AppContext, host: ToolHost) {
   const windowTool = new OpeningTool(host, 'Window', { definition: firstDefinition(app.store.doc, 'Window') });
   const holeTool = new OpeningTool(host, 'WallHole', { definition: firstDefinition(app.store.doc, 'WallHole') });
   const roomTool = new RoomTool(host);
+  const areaTool = new AreaTool(host, roomTool);
   const dimensionTool = new DimensionTool(host);
   dimensionTool.onChange = () => app.toolOpts.renderToolOptions();
   const textTool = new TextTool(host);
@@ -209,6 +211,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     window: windowTool,
     hole: holeTool,
     room: roomTool,
+    area: areaTool,
     dimension: dimensionTool,
     text: textTool,
     label: labelTool,
@@ -285,7 +288,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     toolsEl.querySelectorAll<HTMLElement>('[data-tool]').forEach((b) => {
       if (!b.hasAttribute('aria-disabled')) b.setAttribute('aria-pressed', String(b.dataset.tool === id));
     });
-    if (PLAN_TOOLS.includes(id) && id !== 'room' && id !== 'text' && id !== 'label' && !keep) {
+    if (PLAN_TOOLS.includes(id) && id !== 'room' && id !== 'area' && id !== 'text' && id !== 'label' && !keep) {
       app.selection.clear();
       if (window.innerWidth <= 960) app.setPanel(false);
     }
@@ -453,6 +456,7 @@ export function installTools(app: AppContext, host: ToolHost) {
     windowTool,
     holeTool,
     roomTool,
+    areaTool,
     dimensionTool,
     textTool,
     labelTool,

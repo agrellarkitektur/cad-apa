@@ -105,6 +105,7 @@ export function installMenus(app: AppContext) {
           { label: 'Sätt in fönster', hint: 'O', run: () => app.setTool('window') },
           { label: 'Sätt in vägghål', run: () => app.setTool('hole') },
           { label: 'Rum', hint: 'R', run: () => app.setTool('room') },
+          { label: 'Area', run: () => app.setTool('area') },
           { label: 'Mått', hint: 'M', run: () => app.setTool('dimension') },
           { label: 'Text', hint: 'T', run: () => app.setTool('text') },
           { kind: 'sep' },

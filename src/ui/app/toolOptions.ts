@@ -10,6 +10,7 @@ import { patternPicker, patternValue } from '../patternPick';
 import { weightPicker } from '../weightPick';
 import { icons } from '../icons';
 import { escapeHtml, labelOf } from '../labels';
+import { areaOptionChange, areaOptionClick, areaOptionsMarkup } from './areaToolOptions';
 import { evaluate } from '../expr';
 import type { AppContext } from './context';
 import { defaultWallType, nf } from './helpers';
@@ -53,6 +54,10 @@ export function installToolOptions(app: AppContext) {
       app.toolOptions.innerHTML = `
         <label class="opt"><span>Namn</span><input id="room-name" value="${escapeHtml(app.roomTool.name)}" aria-label="Rumsnamn" style="width:140px"></label>
         <span class="opt-hint">Klicka i ett utrymme som väggarna omsluter. Rummet följer väggarna och numreras automatiskt.</span>`;
+      app.toolOptions.hidden = false;
+    } else if (app.ui.tool === 'area') {
+      // Areorna (0.12.3): areaslag, funktion och knapparna som tänder dem.
+      app.toolOptions.innerHTML = areaOptionsMarkup(app);
       app.toolOptions.hidden = false;
     } else if (app.ui.tool === 'dimension') {
       const n = app.dimensionTool.count;
@@ -313,6 +318,7 @@ export function installToolOptions(app: AppContext) {
   app.toolOptions.addEventListener('change', (e) => {
     const t = e.target as HTMLSelectElement;
     if (profileOptionChange(app, t)) return;
+    if (areaOptionChange(app, t)) return;
     const num = Number(t.value);
     const ot = openingToolOf(app);
     if (ot && openingOptionChange(app.store, ot, t, Number(t.value.replace(',', '.')))) {
@@ -378,6 +384,7 @@ export function installToolOptions(app: AppContext) {
   app.toolOptions.addEventListener('input', (e) => {
     const t = e.target as HTMLInputElement;
     if (t.id === 'room-name') app.roomTool.name = t.value || 'Rum';
+    if (t.id === 'area-func') app.areaTool.func = t.value;
     if (t.id === 'text-value') app.textTool.text = t.value;
     if (t.id === 'label-text') app.labelTool.text = t.value;
     if (t.id === 'label-sort') app.labelTool.sort = t.value;
@@ -444,6 +451,7 @@ export function installToolOptions(app: AppContext) {
     const b = (e.target as HTMLElement).closest<HTMLElement>('button');
     if (!b) return;
     if (profileOptionClick(app, b)) return;
+    if (areaOptionClick(app, b)) return;
     const ot = openingToolOf(app);
     if (ot && openingOptionClick(app.store, ot, b)) {
       renderToolOptions();

@@ -686,6 +686,59 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Areor (0.12.3, format 28)
+
+- **Beräkningen**: `src/elements/areaCalc.ts`, efter SS 21054:2020 (läs
+  standarden i projektets kunskapsbas, inte ur minnet). `areaRegion(ctx,
+  el)` ger ytan (polygoner med hål) för ett areaobjekt, `btaRegion`,
+  `byaRegion` (på `groundStorey`) och `outerContour` för våningen,
+  `otherFloorOpenings` för hålen som inte räknas, `ringsArea` och
+  `roundArea` (SS 14141 regel A). Allt i en `PlanContext` och sparat med
+  `ctx.memo`; väggarna som finns i vyns tillstånd (`wallsOf`, inte det som
+  rivs) och rummen ur dem (`holesOf`).
+- **Enheten** (`unitRegion`): rummen vid `seeds`, innerväggarna (rum på båda
+  sidor, `sidesIn`) klippta mellan rummen på var sida, breda öppningar
+  (`wideOpenings`, med `openingZone` för karmen) och BIA:ns väggar mot en
+  BOA i samma bostad (`biaWalls`; BOA:n drar av dem, `biaClaims`). Små hål
+  där innerväggar korsar varandra fylls. **Avdragen** (`deducted`): det i
+  väggmassan (väggar och lodräta profiler, `massOf`) som ligger mer än
+  `WALL_INTO` från golvet räknas bort; `bufferRings(…, keepHoles)` växer
+  också hålen (pelarna) inåt. En egen kontur: väggar som skär kanten räknas
+  bort helt.
+- **Obs:** `intersection(a, [b, c])` i `geometry/boolean.ts` ger det som
+  ligger i *alla* ytorna. Klipp mot flera med `clipTo` i `areaCalc.ts`.
+- **Objektet**: `src/elements/area.ts` (`Area`, `AreaParams`: `kind`,
+  `seeds`, `outline`, `noDeduct`, `func`, `belong`, `temp`, `labelAt`).
+  Ritas med `planBatch` (BYA och BTA först) bara när vyns `hide` har
+  `+Area` (`OFF_BY_DEFAULT` i `showKeys.ts`, kategorin `areaplan` i
+  `viewCategories.ts`); `pickShape` är tom annars. Färgerna ur
+  `areaSettingsOf` och `areaColorOf` i `core/general.ts` (stilbokens
+  `general.areas`), gränssnittet i `src/ui/style/generalAreas.ts`.
+  `seeds` flyttas och vrids i `moveCommands.ts` och `transforms.ts`; en
+  area utan `seeds` har en kontur i Modifiera (`hasOutlineShape`).
+- **Verktyget**: `src/ui/tools/areaTool.ts` (använder `RoomTool.holeAt`),
+  raden i `src/ui/app/areaToolOptions.ts` (*Visa areorna här*, *Lägg in
+  Areaplan*), egenskaperna i `src/ui/areaFields.ts` (`data-key="area:…"`,
+  `applyAreaField`; *Följer väggarna* bockad ur lösgör konturen).
+- **Förteckningen**: källan `Area` i `core/schedules.ts`; i
+  `repr/schedules.ts` lägger `computedAreas` till BYA, BTA och BRA per
+  våning (`Item.gen`), `mergeAreas` slår ihop per beteckning, funktion och
+  våning, `AREA_ORDER` sorterar grupperna. **Smarttexten**:
+  `src/repr/areaTotals.ts` (`areaVars`, i `smartVars`), namnen bland
+  `BUILT_IN` i `core/sheetFields.ts` så att de inte blir fält.
+- **DXF**: `LayerQuery.area` (ur `info` i `exportDxf.ts`), `sb11Name` ger
+  `A-A-BOA-E-N` och `A-A-BOA-T2N`, `simpleName` `A-AREA-BOA`.
+- **XLSX**: `src/formats/xlsxWrite.ts` (`writeXlsx`, `columnName`) vet inget
+  om programmet; `scheduleSheet` och `scheduleXlsx` i `repr/schedules.ts`.
+  Formatet `xlsx` i `FORMATS_FOR.schedule`, grenen i `exportRun.ts`, *Spara
+  som XLSX* i `ui/app/schedules.ts`. Prova med `openpyxl` och `soffice
+  --headless --convert-to csv`.
+- **Prova i Playwright**: `bacchus.setTool('area')`, `[data-action="area-show"]`,
+  klick i rum via `bacchus.view.camera.toScreen` (Shift hålls med
+  `keyboard.down('Shift')`); en vy med kategorin `areaplan` läggs till med
+  `store.transact(… tx.setField('views', …))` och öppnas med
+  `goTo({kind:'view', id})`. Testerna i `tests/v0123.test.ts`.
+
 ## Förteckningar (0.12.2, format 28)
 
 - **Kärnan**: `src/core/schedules.ts`. `Schedule` (källa, kolumner,

@@ -39,6 +39,7 @@ import type { ProfileTool } from '../tools/profileTool';
 import type { MeasureTool } from '../tools/measureTool';
 import type { OpeningTool } from '../tools/openingTool';
 import type { RoomTool } from '../tools/roomTool';
+import type { AreaTool } from '../tools/areaTool';
 import type { SelectTool } from '../tools/selectTool';
 import type { WallTool } from '../tools/wallTool';
 import type { ToolHost } from '../tools/host';
@@ -82,6 +83,7 @@ export interface AppContext {
   readonly windowTool: OpeningTool;
   readonly holeTool: OpeningTool;
   readonly roomTool: RoomTool;
+  readonly areaTool: AreaTool;
   readonly dimensionTool: DimensionTool;
   readonly textTool: TextTool;
   readonly labelTool: LabelTool;

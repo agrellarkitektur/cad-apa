@@ -60,6 +60,7 @@ export function scheduleFormMarkup(doc: ProjectDoc, id: string): string {
         ${s.source === 'Label' ? field('Sort', `<select data-sch="labelSort"><option value="">Alla</option>${sorts.map((x) => `<option${x.toLowerCase() === s.labelSort?.toLowerCase() ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select>`) : ''}
       </div>
       ${s.source === 'Door' || s.source === 'Window' || s.source === 'Gate' ? `<label class="check"><input type="checkbox" data-sch="perLittera"${s.perLittera ? ' checked' : ''}> En rad per littera, med antal</label>` : ''}
+      ${s.source === 'Area' ? `<label class="check"><input type="checkbox" data-sch="perLittera"${s.perLittera ? ' checked' : ''}> En rad per beteckning, funktion och våning</label><p class="note">BYA, BTA och BRA räknas fram per våning; delsummorna i hela m², mätt enligt SS 21054:2020.</p>` : ''}
       ${places.length > 1 ? `<div class="field-label">Våningar</div><div class="sch-storeys">${places.map((x) => `<label class="check"><input type="checkbox" data-sch-storey="${x.id}"${on(x.id) ? ' checked' : ''}> ${esc(x.name)}</label>`).join('')}</div>` : ''}
     </section>
     <section>
@@ -88,6 +89,7 @@ export function scheduleFormMarkup(doc: ProjectDoc, id: string): string {
       <button type="button" class="btn btn-danger" data-sch-act="delete">Ta bort</button>
       <button type="button" class="btn" data-sch-act="duplicate">Kopiera</button>
       <button type="button" class="btn" data-sch-act="csv">Spara som CSV</button>
+      <button type="button" class="btn" data-sch-act="xlsx" title="Excel-fil med delsummorna och summan som formler">Spara som XLSX</button>
     </div>
   </form>`;
 }

@@ -25,7 +25,7 @@ export const VIEW_TYPES: readonly { type?: ViewType; name: string; icon: string;
   { type: 'storey', name: 'Våningar', icon: 'storey' },
   { type: 'facade', name: 'Fasader', icon: 'elevation' },
   { type: 'section', name: 'Sektioner', icon: 'section' },
-  { name: '3D-vyer', icon: 'cube', later: 'Kommer med 3D-vyerna (0.12.6)' },
+  { name: '3D-vyer', icon: 'cube', later: 'Kommer med 3D-vyerna (0.12.8)' },
   { type: 'worksheet', name: 'Arbetsblad', icon: 'worksheet' },
   { name: 'Uppställningar', icon: 'sheet', later: 'Efter pilotprojektet' },
   { name: 'Förteckningar', icon: 'list', later: 'Efter pilotprojektet' },
@@ -107,6 +107,8 @@ export function defaultCategories(): ViewCategory[] {
     cat('matt', 'Mått och littera', 'storey', 100, { hide: ['Furniture'] }),
     cat('undertak', 'Undertak', 'storey', 50, { hide: [...BARE, 'littera:Wall', 'Dimension'] }),
     cat('golv', 'Golvplan', 'storey', 50, { hide: [...BARE, 'littera:Wall'] }),
+    // Areaberäkningen (0.12.3): areorna tända, utan möbler, mått och rumsstämplar.
+    cat('areaplan', 'Areaplan', 'storey', 100, { compare: false, hide: [...BARE, 'littera:Wall', 'littera:Stair', 'Dimension', 'Space', 'fill', '+Area'] }),
     // Förinställningarna som egna kategorier (0.10.33): svart poché, och statusen i färg.
     cat('poche', 'Poché', 'storey', 100, {}, undefined, POCHE),
     cat('farg', 'Färgmarkerad', 'storey', 100, {}, undefined, COLOUR_CODED),

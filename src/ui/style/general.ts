@@ -1,4 +1,5 @@
 import { dxfClick, exportChange, exportMarkup, fontClick, fontMarkup } from './generalExport';
+import { areaChange, areaClick, areasMarkup } from './generalAreas';
 import { openingSettingsOf, type OpeningRule, type OpeningSettings } from '../../core/general';
 import { glassByCompass, glassPanes, m2Text } from '../../elements/daylight';
 import { defaultState } from '../../core/states';
@@ -128,6 +129,7 @@ export function generalMarkup(doc: ProjectDoc): string {
       </div>
     </section>
     ${openingsSection(doc)}
+    ${areasMarkup(doc)}
     <section class="style-labels gen-weights">
       <h3>Tjocklekar</h3>
       <p class="note">Tjocklekarna som listorna visar, i mm (alltid också <i>Ingen linje</i>). Skriv dem med mellanslag mellan; en tjocklek som redan används i ritningen visas ändå där den används.</p>
@@ -230,6 +232,8 @@ export function generalChange(store: DocStore, input: HTMLInputElement | HTMLSel
     if ((book.office?.tags?.[name] ?? '') !== input.value) setBook(withOffice(book, (o) => (o.tags = { ...(o.tags ?? {}), [name]: input.value })), `Kontorets tagg {${name}}`);
   } else if (exportChange(store, kind, name, input instanceof HTMLInputElement && input.type === 'checkbox' ? (input.checked ? '1' : '') : input.value, setBook)) {
     // Typsnittet och exportens filnamn (0.12).
+  } else if (areaChange(book, kind, name, input.value, setBook)) {
+    // Areornas färger (0.12.3).
   } else if (kind === 'project') {
     if (v) renameProject(store, v);
     else input.value = store.doc.project.name;
@@ -308,6 +312,8 @@ export async function generalClick(store: DocStore, target: HTMLElement, setBook
     // Det egna typsnittet (0.12).
   } else if (await dxfClick(store, action, setBook)) {
     // Lagerlistan för DXF (0.12.1).
+  } else if (areaClick(book, action, setBook)) {
+    // Areornas funktioner (0.12.3).
   } else if (action === 'renumber-openings') await renumberDialog(store);
   else if (action.startsWith('sfield-')) await scheduleFieldAction(store, action, (t) => askText(t, '', 'Lägg till'));
   else if (action === 'weights-reset') setBook(withGeneral(book, (g) => delete g.weights), 'Återställ tjocklekstabellen');

@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.2** (alfa), Förteckningar; nästa är **0.12.3 Areor och uppställningen**.
+**0.12.3** (alfa), Areor; nästa är **0.12.4 Areor under snedtak och mark**.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,51 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.12.3, Areor (samma filformat, 28; projekt från 0.11.8 öppnas;
+ny objekttyp `Area`, nytt valfritt fält stilbokens `general.areas`):
+- **Areor enligt SS 21054:2020**. Verktyget **Area** under Annotera: välj
+  areaslag (BOA, BIA, LOA, ÖVA, OPA) och klicka i ett rum. Konturen följer
+  de omslutande väggarnas insida och flyttas med väggarna; **Shift+klick**
+  lägger till fler rum i den markerade arean (en bostad, en lokal), eller
+  tar bort ett, och innerväggarna mellan rummen räknas med
+- **De automatiska avdragen**: innerväggar upp till 0,30 m räknas i sin
+  helhet, tjockare 0,15 m in från varje sida; fristående pelare och schakt
+  likadant (en pelare 600 × 600 drar av 300 × 300); pelare intill en
+  omslutande vägg räknas bort helt. En öppning eller smyg på minst 1,50 m
+  räknas till karmen (yttervägg) eller karmens mitt (mot en annan enhet).
+  Väggarna mellan en BIA och en BOA i samma bostad hör till BIA. Andra hål i
+  bjälklaget än trappans räknas inte; ett hål över en trappa räknas med när
+  det är högst 30 % större än trappan
+- **Egen kontur**: bocka ur *Följer väggarna* så blir konturen en polygon
+  som ändras i Modifiera; *Automatiska avdrag* kan bockas ur för sig
+- **BTA och BYA räknas fram**: BTA per våning till ytterväggarnas utsida,
+  BYA på markplanet med de taksprång som är mätvärda (djupare än 0,50 m
+  under 3,00 m, eller mer än 1,50 m utanför fasaden mellan 3,00 och 5,00
+  m, mot ±0). Ett klick med BTA eller BYA visar konturen i planen
+- **Underindelning**: *Funktion* (t.ex. *Handel* och *Kontor* inom LOA, med
+  egen färg), tillhörighet (e/g) och temperaturreglering ((t)/(it)), valfria
+- **Areaplan**: en ny kategori för våningarna med areorna tända och utan
+  möbler, mått och rumsstämplar. Areorna har en halvtransparent fyllning
+  ovanpå väggarna och konturen i samma färg, och en stämpel med
+  beteckningen och arean. I andra vyer är de släckta (*Visa › Areor*).
+  Färgerna under stilboken › Allmänt › **Areor**: BTA orange, BOA ljusgrön,
+  BIA mörkgrön, ÖVA grå, LOA gul, Kontor blå; BYA bara konturen. En äldre
+  stilbok får kategorin med *Lägg in Areaplan* i verktygets rad
+- **Areaförteckning**: *Ny: Areor* under Förteckningar ger BYA, BTA, BRA
+  (summan av BOA, BIA, LOA och ÖVA) och de ritade areorna per våning,
+  grupperade per areaslag. Delposterna med en decimal, summorna i hela m²
+  (SS 21054, 4.3)
+- **Smarttext**: `{BYA}`, `{BTA}`, `{BRA}`, `{BOA}`, `{BIA}`, `{LOA}`,
+  `{ÖVA}` och `{OPA}` för hela projektet, t.ex. *96 m²*, i ritningshuvudet
+  eller en text på bladet
+- **DXF**: areorna på mallens lager `A-A-BOA-E-N` (ytan) och `A-A-BOA-T2N`
+  (stämpeln), i Enkel `A-AREA-BOA`
+- **XLSX**: förteckningarna kan sparas som Excel-fil (*Spara som XLSX* och
+  i *Exportera…*), med talen som tal och delsummorna och summan som formler
+- Versionerna efter heter nu 0.12.4 (areor under snedtak och mark), 0.12.5
+  (uppställningen), 0.12.6 (IFC), 0.12.7 (utgåvor och PM) och 0.12.8
+  (3D-vyer)
 
 Version 0.12.2, Förteckningar (samma filformat, 28; projekt från 0.11.8
 öppnas; nya valfria fält: projektets `schedules` och vyns `maxHeight` på

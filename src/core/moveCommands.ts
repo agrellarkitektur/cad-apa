@@ -225,6 +225,8 @@ export function movePatch(doc: ProjectDoc, el: Element, d: [number, number]): Re
     return {
       outline: p.outline.map(add),
       ...(p.seed ? { seed: add(p.seed) } : {}),
+      // Areans rum (0.12.3).
+      ...(Array.isArray(p.seeds) ? { seeds: p.seeds.map(add) } : {}),
       ...(p.labelAt ? { labelAt: add(p.labelAt) } : {}),
       // Bjälklagets håltagningar (0.9.1).
       ...(Array.isArray(p.holes) ? { holes: p.holes.map((h: { points: [number, number][] }) => ({ ...h, points: h.points.map(add) })) } : {}),

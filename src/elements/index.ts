@@ -19,6 +19,7 @@ import { profileType } from './profile';
 import { groundType } from './ground';
 import { siteBuildingType, siteMapType, terrainType, treeType } from './site';
 import { spaceType } from './space';
+import { areaType } from './area';
 import { underlayType } from './underlay';
 import { wallType } from './wall';
 import { windowType } from './window';
@@ -36,6 +37,7 @@ export function registerBuiltInTypes(): void {
   registerType(wallHoleType);
   registerType(furnitureType);
   registerType(spaceType);
+  registerType(areaType);
   registerType(dimensionType);
   registerType(textType);
   registerType(labelType);

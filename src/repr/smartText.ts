@@ -2,6 +2,7 @@ import { PAPER } from '../core/sheets';
 import { BUILT_IN, folderName } from '../core/sheetFields';
 import type { ProjectDoc, Sheet } from '../core/model';
 import { generalOf, officeVars } from '../core/general';
+import { areaVars } from './areaTotals';
 
 /**
  * Smarttext (0.8 del 3): text som fylls i av sig själv, t.ex. `{skala}`
@@ -39,7 +40,10 @@ export function smartVars(doc: Pick<ProjectDoc, 'project' | 'folders' | 'tree'> 
   const office = officeVars(doc.graphics?.office);
   const vars: Record<string, string> = { ...office, ...sheet.fields, ...doc.project.fields };
   for (const [k, v] of Object.entries(office)) if (!vars[k]?.trim()) vars[k] = v;
+  // Areorna (0.12.3) ur hela modellen, när dokumentet är helt (inte i en förhandsvisning av fälten).
+  const areas = 'elements' in doc && 'storeys' in doc ? areaVars(doc as ProjectDoc) : {};
   return {
+    ...areas,
     ...vars,
     projekt: doc.project.name,
     projektnummer: vars.projektnummer?.trim() || vars.uppdragsnummer || '',

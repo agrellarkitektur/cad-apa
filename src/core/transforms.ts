@@ -148,7 +148,7 @@ function transformedParams(doc: ProjectDoc, el: Element, t: PlanTransform, movin
           ...rampSides(p, t),
         }
       : {};
-    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...bulges, ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...holes, ...line } }];
+    return [{ ...el, params: { ...el.params, outline: p.outline.map(t.map), ...bulges, ...(p.seed ? { seed: t.map(p.seed) } : {}), ...(Array.isArray(p.seeds) ? { seeds: p.seeds.map(t.map) } : {}), ...(p.labelAt ? { labelAt: t.map(p.labelAt) } : {}), ...holes, ...line } }];
   }
   if (Array.isArray(p.points)) {
     const points = p.points.map((q: any) => (Array.isArray(q) ? t.map(q as Pt) : { ...q, at: t.map(q.at) }));

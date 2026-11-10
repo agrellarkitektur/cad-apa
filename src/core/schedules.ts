@@ -16,7 +16,7 @@ import type { DocStore, TxBuilder } from './store';
  * nytt formatnummer.
  */
 
-export type ScheduleSource = 'Space' | 'Door' | 'Window' | 'Gate' | 'Label';
+export type ScheduleSource = 'Space' | 'Area' | 'Door' | 'Window' | 'Gate' | 'Label';
 
 export interface ScheduleColumn {
   /** Fältets namn: ett av källans (`SCHEDULE_FIELDS`) eller ett eget, som läses som smarttext. */
@@ -50,13 +50,14 @@ export interface Schedule {
 
 export const SOURCE_NAMES: Record<ScheduleSource, string> = {
   Space: 'Rum',
+  Area: 'Areor',
   Door: 'Dörrar',
   Window: 'Fönster',
   Gate: 'Grindar',
   Label: 'Littera',
 };
 
-export const SOURCES: readonly ScheduleSource[] = ['Space', 'Door', 'Window', 'Gate', 'Label'];
+export const SOURCES: readonly ScheduleSource[] = ['Space', 'Area', 'Door', 'Window', 'Gate', 'Label'];
 
 /** Ett fält i en källa: namnet och om det är ett tal (kan summeras, högerställs). */
 export interface ScheduleField {
@@ -70,6 +71,8 @@ const txt = (name: string): ScheduleField => ({ name });
 /** Fälten som räknas fram för varje källa, i den ordning de erbjuds. */
 export const SCHEDULE_FIELDS: Record<ScheduleSource, readonly ScheduleField[]> = {
   Space: [txt('Nummer'), txt('Namn'), txt('Våning'), num('Area'), num('Omkrets'), num('Rumshöjd'), txt('Dagsljus'), num('Glasarea'), txt('Status')],
+  // Areorna (0.12.3): de ritade och de framräknade (BYA, BTA och BRA per våning).
+  Area: [txt('Areaslag'), txt('Beteckning'), txt('Funktion'), txt('Våning'), num('Area'), txt('Status')],
   Door: [txt('Littera'), num('Antal'), txt('Nummer'), txt('Typ'), txt('Beskrivning'), txt('Våning'), txt('Modulmått'), txt('Karmyttermått'), txt('Hålmått'), txt('Hängning'), txt('Status')],
   Window: [txt('Littera'), num('Antal'), txt('Typ'), txt('Beskrivning'), txt('Våning'), txt('Modulmått'), txt('Karmyttermått'), txt('Hålmått'), txt('Hängning'), num('Bröstningshöjd'), txt('Status')],
   Gate: [txt('Littera'), num('Antal'), txt('Räcke'), txt('Våning'), num('Bredd'), num('Höjd'), txt('Hängning'), txt('Lås'), txt('Status')],
@@ -95,6 +98,9 @@ export function defaultSchedule(source: ScheduleSource): Omit<Schedule, 'id' | '
   switch (source) {
     case 'Space':
       return { source, columns: cols(['Nummer', 'Namn', 'Våning', 'Area', 'Rumshöjd'], ['Area']), sort: [{ field: 'Nummer' }] };
+    case 'Area':
+      // Grupperat per areaslag med delsumman i hela m² (SS 21054, 4.3); ingen summa av alla slag.
+      return { source, columns: cols(['Våning', 'Beteckning', 'Funktion', 'Area'], ['Area']), sort: [{ field: 'Våning' }, { field: 'Beteckning' }, { field: 'Funktion' }], group: 'Areaslag', perLittera: true, noTotal: true };
     case 'Door':
       return { source, columns: cols(['Littera', 'Antal', 'Modulmått', 'Karmyttermått', 'Hängning', 'Typ'], ['Antal']), sort: [{ field: 'Littera' }], perLittera: true };
     case 'Window':
@@ -108,7 +114,7 @@ export function defaultSchedule(source: ScheduleSource): Omit<Schedule, 'id' | '
 
 /** Förteckningens namn som förval: *Rumsförteckning*, *Dörrförteckning* …, med nummer om namnet är taget. */
 export function defaultScheduleName(doc: Pick<ProjectDoc, 'schedules'>, source: ScheduleSource): string {
-  const base = { Space: 'Rumsförteckning', Door: 'Dörrförteckning', Window: 'Fönsterförteckning', Gate: 'Grindförteckning', Label: 'Litteraförteckning' }[source];
+  const base = { Space: 'Rumsförteckning', Area: 'Areaförteckning', Door: 'Dörrförteckning', Window: 'Fönsterförteckning', Gate: 'Grindförteckning', Label: 'Litteraförteckning' }[source];
   const taken = new Set((doc.schedules ?? []).map((s) => s.name));
   if (!taken.has(base)) return base;
   let n = 2;

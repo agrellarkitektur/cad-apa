@@ -1,7 +1,7 @@
 import type { Id } from '../../core/model';
 import { createSchedule, duplicateSchedule, removeSchedule, scheduleOf, SOURCES, updateSchedule, type Schedule, type ScheduleColumn, type ScheduleSource } from '../../core/schedules';
 import { exportVars, safeFileName } from '../../core/exportJobs';
-import { cachedTable, scheduleCsv, type Cell, type ScheduleTable } from '../../repr/schedules';
+import { cachedTable, scheduleCsv, scheduleXlsx, type Cell, type ScheduleTable } from '../../repr/schedules';
 import { askConfirm } from '../ask';
 import { escapeHtml as esc } from '../labels';
 import { scheduleFormMarkup } from '../scheduleFields';
@@ -207,6 +207,9 @@ export function installSchedules(app: AppContext, parts: { place: (sheetId: Id, 
       case 'csv':
         void saveCsv(s);
         break;
+      case 'xlsx':
+        void saveXlsx(s);
+        break;
       case 'delete': {
         const on = app.store.doc.sheets.filter((sh) => sh.viewports.some((v) => v.view === s.id)).length;
         void askConfirm('Ta bort förteckningen?', `${s.name} tas bort${on ? ` och från ${on === 1 ? 'bladet' : `de ${on} bladen`} där den ligger` : ''}. Det går att ångra.`).then((ok) => {
@@ -227,6 +230,15 @@ export function installSchedules(app: AppContext, parts: { place: (sheetId: Id, 
     const name = safeFileName(`${vars.projekt ? `${vars.projekt}_` : ''}${s.name}`);
     const r = await saveOne({ path: `${name}.csv`, data: new TextEncoder().encode(scheduleCsv(cachedTable(doc, s))) }, 'text/csv');
     if (r !== 'cancelled') app.hint(`${s.name} sparad som CSV.`);
+  }
+
+  /** Spara förteckningen som XLSX (0.12.3), med summorna som formler. */
+  async function saveXlsx(s: Schedule): Promise<void> {
+    const doc = app.store.doc;
+    const vars = exportVars(doc, `schedule:${s.id}`, today());
+    const name = safeFileName(`${vars.projekt ? `${vars.projekt}_` : ''}${s.name}`);
+    const r = await saveOne({ path: `${name}.xlsx`, data: scheduleXlsx(cachedTable(doc, s)) }, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    if (r !== 'cancelled') app.hint(`${s.name} sparad som XLSX.`);
   }
 
   return { show, close, isOpen: () => open };

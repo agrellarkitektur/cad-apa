@@ -188,6 +188,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.8.3 | Dörrar och fönster, Smart och vägghål: vägghålen med verktyg och fyra förvalda typer (ventgaller, nisch, genomföring, rent hål), fasaden som arbetsyta, I liv med fönstret under, Lika avstånd, Mitt i rummet, dagsljuset (rummets andel, smarttexten, glas mot fasaden och per väderstreck), blecklutningen och spegelns raka kant |
 | 0.11.8.4 | Granskning efter 0.11.8 (1 november): varningarna uppslagna i föreskrifterna (fri passage, säkerhetsglas, barnsäkra fönster, utrymningsfönster, öppen trappa), `stairGeometry.ts` och `view3d.ts` delade, klickjämförelsen mot stilboken och med profiler, dörrar och fönster |
 | 0.12 | Exportdialogen och PDF: trädet med format per rad, sökrutan, exportuppsättningar (också i mallen, `EXPORT Bygglov`), filnamnsmallar med smarttext, mappen på datorn eller zip, förhandslistan, PDF med lager, dokumentegenskaper, samlad fil med bokmärken och arbetsmaterialstämpel, valbart typsnitt (osifont, Arimo, Josefin Sans, eget TTF/OTF), bild ur 3D-vyn, glTF, GUID på objekten, PDF:erna i en bakgrundstråd |
+| 0.12.3 | Areor enligt SS 21054: areaobjektet ur rummen (Shift+klick) eller en egen kontur, avdragen för tjocka väggar, pelare, schakt, breda öppningar och hål i bjälklaget, BIA:ns väggar mot BOA, BTA och BYA framräknade, Areaplan med färgerna i stilboken, areaförteckningen med BRA, smarttexten `{BOA}` …, DXF-lagren `A-A-…`, XLSX för alla förteckningar |
 | 0.12.2 | Förteckningar: rum, dörrar, fönster, grindar och det generella litterat ur modellen, kolumner ur fälten eller smarttext, sortering, gruppering, delsummor och summarad, en rad per littera, tabellen över ritytan, på bladet i 1:1 bruten i delar bredvid varandra, i bladets PDF och DXF, CSV och PDF i Exportera |
 | 0.12.1 | DXF: egen skrivare för AutoCAD 2000 och 2018, vyer i modellens mm och blad i pappers-mm, lagerkartorna SB11 förenklad och fullständig, Enkel och en egen lista ur en DXF, pennan som färg och linjetjocklek, status N/E/R, väggarna delade per vägg, Bärande |
 | 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, uppställningens fält i stilboken (Typer) med taggar och smarttext |
@@ -1594,35 +1595,126 @@ med *Mall för nya projekt…*; mappar för förteckningarna; att skriva i
 tabellen (uppställningens rutor skriver på objekten, 0.12.3); fet stil på
 skärmen (osifont har ingen fet, som förut).
 
-### 0.12.3 Areor och uppställningen
+### 0.12.3 Areor ✓
 
-Areorna enligt SS 21054:2020 (BTA, BYA, OPA, BOA, BIA, NTA …) per våning
-och totalt, på samma areaslag som DXF-lagren (`A-A-BTA` … se
-lagerförslagets 4.2) och med en areaförteckning; **uppställningen av
-fönster och dörrar** med en kolumn per littera och ritningen sedd utifrån
-(fältmallen och fälten finns sedan 0.11.8.1, en ruta skriver på alla
-objekt med litteran, *Olika* när de skiljer sig); **XLSX**. Slå upp
-definitionerna i standarden i projektets kunskapsbas, inte ur minnet.
-Stor, kan behöva två sessioner; förteckningen över markförändringarna
-(Inkorgen 27 oktober: littera och namn, status, area i plan, schakt, fyll
-och netto, berg och jord (m³ och procent), lägsta och högsta nya höjd,
-största lutning, avtagen matjord (area × tjocklek, tjockleken en
-inställning) och en summarad med massbalansen) kommer här eller i en egen
-version om den inte ryms.
+10 november 2026, en session. Samma format, 28 (ny objekttyp `Area` och
+stilbokens valfria `general.areas`). Carl August 10 november, F–J (efter
+A–E samma dag): **0.12.3 delas** i 0.12.3 Areor (med XLSX), 0.12.4 Areor
+under snedtak och mark och 0.12.5 Uppställningen, och resten flyttar (F).
+Areorna ritas som egna objekt över rummen, som BOA-zonen i Archicad;
+rummen räknas inte med (B, C). Konturen följer väggarna och går att lösgöra
+till en egen polygon, med eller utan de automatiska avdragen (G). `e/g`
+och `(t)/(it)` som val (H). En Areaplan med areorna i färg, halvtransparent
+fyllning och opak kontur i samma färg; förvalsfärgerna hans (I). Areor
+redovisas oftast som tal i ritningshuvudet eller en tabell i ritningens
+typsnitt, så smarttexten och förteckningen är huvudsaken. Snedtaket räknas
+mot takets undersida; hanbjälkar och låga innertak behöver inte hanteras
+(J). Allt exakt enligt standarden före piloten (D).
 
-### 0.12.4 IFC
+**Gjort:** objekttypen och beräkningen (`src/elements/areaCalc.ts`,
+`area.ts`), verktyget Area med Shift+klick, egenskaperna med *Lösgör*,
+BTA och BYA framräknade, avdragen (5.3, 5.8, 5.12, 5.15.2, 5.16.3,
+5.17, 5.18.2), Areaplan, färgerna i stilboken, areaförteckningen med BRA,
+smarttexten, DXF-lagren och XLSX för alla förteckningar.
+
+**Claudes val:**
+- **Enheten ur rummen**: rummen man klickat i, och väggarna som har ett av
+  dem på båda sidor (klippta till det som ligger mellan rummen, så att en
+  vägg som fortsätter förbi enheten inte följer med). Väggarna som bara har
+  enheten på ena sidan är omslutande och räknas inte.
+- **Avdragen** som en regel: det i väggar, pelare och schakt inom enheten
+  som ligger mer än 0,15 m från golvet räknas bort. Det ger 0,30-regeln för
+  väggar och pelare på en gång (600 × 600 drar av 300 × 300, 900 × 900 drar
+  av 600 × 600). En pelare intill en omslutande vägg hör till väggmassan och
+  ligger utanför rummet, så den räknas bort helt. Lodräta profiler (P01 …)
+  räknas som pelare.
+- **En egen kontur**: väggar som skär kanten är omslutande och räknas bort
+  helt; väggar helt innanför följer 0,15-regeln. En pelare ritad som vägg
+  intill den egna konturens kant följer också 0,15-regeln (den syns inte
+  som pelare); rita konturen längs väggarnas insida.
+- **BIA och BOA i samma bostad** (5.18.2): när någon vägg mellan en BIA och
+  en BOA på våningen har en dörr hör alla väggar upp till 0,30 m mellan dem
+  till BIA, och BOA:n lämnar dem. Utan dörr mellan dem hör väggen till ingen.
+- **Breda öppningar** (5.3.2, 5.7, 5.17.2): dörrar och glaspartier
+  (bröstning högst 0,15 m) på minst 1,50 m i en omslutande vägg. I en
+  yttervägg räknas smygen till karmens insida, mot en annan enhet till
+  karmens mitt. Fönster med bröstning räknas inte.
+- **Hål i bjälklaget**: ritade hål i våningens bjälklag dras av, utom över
+  en trappa från våningen under när hålet är högst 30 % större än trappan
+  (då räknas allt, annars bara trappan). Trappans eget hål räknas med.
+- **BTA** är husets ytterkontur ur väggarna (ytterväggarnas utsida) minus
+  hålen. **BYA** räknas på den lägsta våningen med golvet högst 0,6 m under
+  ±0; taksprångets djup mäts vinkelrätt mot fasaden (geringen i hörnen) och
+  lägsta punkten på takets undersida, mot ±0 som marken. Balkonger och
+  burspråk finns inte som objekt än.
+- **Avrundningen** enligt SS 14141 regel A: delposterna med en decimal,
+  summorna i hela m². BRA per våning räknas ur de exakta areorna, inte de
+  avrundade.
+- **Förteckningen** grupperad per areaslag (BYA, BTA, BRA, BOA, BIA, LOA,
+  ÖVA, OPA) med delsumman och ingen summa av alla slag; *En rad per
+  beteckning, funktion och våning* som förval. BTA- och BYA-objekten visar
+  bara konturen och räknas inte två gånger.
+- **Smarttexten** `{BOA}` … är inbyggd (inte ett fält), för hela projektet
+  i förslaget, tom när slaget saknas.
+- **Ritningen**: fyllningen ovanpå väggarna (det som räknas i väggar och
+  pelare syns), BYA och BTA under de andra, konturen 0,35, stämpeln i det
+  första rummet med beteckningen fet och arean under, svart text.
+  Täckningen 35 %. Areorna syns bara där `+Area` är tänt (Areaplanen, eller
+  *Visa › Areor*); de går inte att klicka på annars.
+- **DXF**: SB11 `A-A-BOA-E-N` och `A-A-BOA-T2N` (ÖVA som `OVA`, som i
+  mallen), Enkel `A-AREA-BOA`.
+- **XLSX**: en egen skrivare (`src/formats/xlsxWrite.ts`) med texten direkt
+  i cellerna, talformaten 0, 0,0 och 0,00, rubrikraden fryst, `SUM` (Excel
+  visar `SUMMA`) med det uträknade värdet i filen. Provad i LibreOffice och
+  openpyxl.
+- **Kategorin Areaplan** kommer med nya projekt; en äldre stilbok får den
+  med *Lägg in Areaplan* i verktygets rad (inte av sig själv, så att en
+  borttagen inte kommer tillbaka).
+
+**Inte gjort i 0.12.3:** snedtaket (1,90 och 0,60), takkupan, rumshöjden
+H/L, våning under mark med 6-meterszonen och `(o)/(u)` och OPA:s egna
+regler (0.12.4); att rita en ny egen kontur direkt med verktyget (nu
+*Lösgör* och Modifiera); NTA och KA; att en vägg i en egen kontur känns
+igen som pelare; balkonger, burspråk och skärmtak i BYA (finns inga sådana
+objekt); att areorna följer med *Mall för nya projekt…*.
+
+### 0.12.4 Areor under snedtak och mark
+
+Mellanstor till stor, en session. Snedtaket (5.13): mätvärt till ett
+vertikalplan 0,60 m utanför linjen där rumshöjden är 1,90 m, mot takfallets
+eller bjälklagets undersida, för BTA och BRA; hela utrymmet mätvärt till
+yttertakets utsida i golvnivå (8.4). Takkupan (5.14). Trappan under ett
+snedtak (5.15.5). Rumshöjden H/L vid 2,10 m (18.5). Våning helt eller delvis
+under mark (10.3.1.3, 11.3.1.3, 18.3): 6-meterszonen ur marken längs
+fasaderna, `(o)/(u)`, BOA bortom zonen blir BIA, småhusets ”mörka” area.
+OPA:s mätning (7). Slå upp i standarden i projektets kunskapsbas.
+
+### 0.12.5 Uppställningen
+
+Mellanstor till stor, en session. Uppställningen av fönster och dörrar
+som vytyp med en kolumn per littera och ritningen sedd utifrån (fältmallen
+och fälten finns sedan 0.11.8.1); en ruta skriver på alla objekt med
+litteran, *Olika* när de skiljer sig. Grindarna med. Förteckningen över
+markförändringarna (Inkorgen 27 oktober: littera och namn, status, area i
+plan, schakt, fyll och netto, berg och jord (m³ och procent), lägsta och
+högsta nya höjd, största lutning, avtagen matjord (area × tjocklek,
+tjockleken en inställning) och en summarad med massbalansen) här eller i
+en egen version om den inte ryms.
+
+### 0.12.6 IFC
 
 Egen utredning i egen chatt först (klasstabellen, psets, geometri,
 provfil validerad), sedan skrivaren. IFC4 Reference View, mm, utan mark och
-träd (svar D). GUID:en finns sedan 0.12.
+träd (svar D). GUID:en finns sedan 0.12. Areaobjekten som `IfcSpace` eller
+`IfcZone` utreds där.
 
-### 0.12.5 Utgåvor och PM
+### 0.12.7 Utgåvor och PM
 
 Mockup i Claude Design först, sedan snapshot, jämförelse, revideringsmoln
 och -pilar, beteckningar, handlingsförteckningen, ändrings-PM och panelen
 Utgåvor. Stor, troligen två sessioner.
 
-### 0.12.6 3D-vyer
+### 0.12.8 3D-vyer
 
 Carl August 26 oktober: före piloten, det är något man kan förvänta sig.
 Mellanstor.

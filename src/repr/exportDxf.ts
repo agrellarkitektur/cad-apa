@@ -160,6 +160,7 @@ class Builder {
         out.loadBearing = lb ?? out.exterior;
       }
       if (el.type === 'BasisFacade') out.exterior = out.loadBearing = true;
+      if (el.type === 'Area') out.area = String((el.params as { kind?: string }).kind ?? 'BRA');
       if (el.type === 'Furniture') out.fixed = isFixed(resolveParams<FurnitureParams>(doc, el));
       if (el.type === 'Profile') out.profile = profileObjectPrefix(el.definition ? (doc.definitions[el.definition]?.profile?.group ?? '') : '', (el.params as { path?: string }).path === 'plumb');
     }

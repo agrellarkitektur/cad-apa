@@ -68,6 +68,8 @@ export function hasOutlineShape(el: ShapeLike | undefined): boolean {
   if (!el || !Array.isArray(el.params.outline)) return false;
   if (el.type === 'Roof') return true;
   if (el.type === 'Slab') return !el.params.fromWalls;
+  // Arean (0.12.3) med en egen kontur; den som följer väggarna och BTA och BYA har ingen att ändra.
+  if (el.type === 'Area') return !(el.params.seeds as unknown[] | undefined)?.length && el.params.kind !== 'BTA' && el.params.kind !== 'BYA';
   // Markytan runt huset och urgrävningen under ett bjälklag följer dem.
   return el.type === 'Ground' && el.params.kind === 'area' && !el.params.around && !el.params.slab;
 }

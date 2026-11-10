@@ -69,6 +69,67 @@ export interface GeneralSettings {
   weights?: number[];
   /** Dörrarna, fönstren och vägghålen (0.11.8): litteraregeln, formlerna och måtten. */
   openings?: OpeningSettings;
+  /** Areorna (0.12.3): färgerna per areaslag och funktion i Areaplanen. */
+  areas?: AreaSettings;
+}
+
+/**
+ * Areornas färger (0.12.3): halvtransparent fyllning och kontur i samma
+ * färg, per areaslag (BOA, BIA …) och per funktion (*Handel*, *Kontor*),
+ * som går före areaslagets. Utelämnat = förvalet.
+ */
+export interface AreaSettings {
+  colors?: Record<string, string>;
+  /** Fyllningens täckning 0–1 (förval 0,35). */
+  opacity?: number;
+  functions?: { name: string; color: string }[];
+}
+
+/** Förvalen: Carl Augusts färger (10 november 2026). BYA utan fyllning. */
+export const AREA_COLORS: Readonly<Record<string, string>> = {
+  BYA: '#8d6e63',
+  BTA: '#f2994a',
+  BOA: '#9ad48a',
+  BIA: '#2e7d32',
+  LOA: '#f2c94c',
+  ÖVA: '#9e9e9e',
+  OPA: '#7fb8e0',
+};
+export const AREA_FUNCTIONS: readonly { name: string; color: string }[] = [
+  { name: 'Handel', color: '#f2c94c' },
+  { name: 'Kontor', color: '#4a7fd4' },
+];
+/** Slagen som bara får konturen från början (BYA redovisas nästan aldrig grafiskt). */
+export const AREA_NO_FILL: ReadonlySet<string> = new Set(['BYA']);
+
+/** Areornas inställningar som de gäller. */
+export function areaSettingsOf(book: { general?: GeneralSettings } | undefined): { colors: Record<string, string>; opacity: number; functions: { name: string; color: string }[] } {
+  const a = book?.general?.areas ?? {};
+  return { colors: { ...AREA_COLORS, ...(a.colors ?? {}) }, opacity: a.opacity ?? 0.35, functions: a.functions ?? [...AREA_FUNCTIONS] };
+}
+
+/** Färgen för en area: funktionens, annars areaslagets. */
+export function areaColorOf(book: { general?: GeneralSettings } | undefined, kind: string, func?: string): string {
+  const s = areaSettingsOf(book);
+  const f = func?.trim().toLowerCase();
+  return (f && s.functions.find((x) => x.name.trim().toLowerCase() === f)?.color) || s.colors[kind] || '#9e9e9e';
+}
+
+const HEX = /^#[0-9a-f]{6}$/i;
+
+function normalizeAreas(v: unknown): AreaSettings | null {
+  if (!v || typeof v !== 'object') return null;
+  const o = v as Record<string, any>;
+  const out: AreaSettings = {};
+  if (o.colors && typeof o.colors === 'object') {
+    const c: Record<string, string> = {};
+    for (const [k, val] of Object.entries(o.colors)) if (k in AREA_COLORS && typeof val === 'string' && HEX.test(val)) c[k] = val.toLowerCase();
+    if (Object.keys(c).length) out.colors = c;
+  }
+  const op = Number(o.opacity);
+  if (o.opacity !== undefined && Number.isFinite(op) && op >= 0 && op <= 1) out.opacity = op;
+  if (Array.isArray(o.functions)) out.functions = o.functions.filter((f: any) => f && typeof f.name === 'string' && f.name.trim() && typeof f.color === 'string' && HEX.test(f.color)).map((f: any) => ({ name: f.name.trim(), color: f.color.toLowerCase() }));
+  return Object.keys(out).length ? out : null;
 }
 
 /**
@@ -140,7 +201,7 @@ function normalizeOpenings(v: unknown): OpeningSettings | null {
 /** Tjocklekarna som går att välja när stilboken inte har en egen tabell. */
 export const DEFAULT_WEIGHTS: readonly number[] = [0.13, 0.18, 0.25, 0.35, 0.5, 0.7, 1, 1.4];
 
-const GENERAL_DEFAULTS: Required<Omit<GeneralSettings, 'openings'>> & Pick<GeneralSettings, 'openings'> = {
+const GENERAL_DEFAULTS: Required<Omit<GeneralSettings, 'openings' | 'areas'>> & Pick<GeneralSettings, 'openings' | 'areas'> = {
   textSize: 2.5,
   heightSystem: 'RH 2000',
   levelDecimals: 3,
@@ -219,6 +280,8 @@ export function normalizeGeneral(v: unknown): GeneralSettings | null {
   }
   const op = normalizeOpenings(g.openings);
   if (op) out.openings = op;
+  const ar = normalizeAreas(g.areas);
+  if (ar) out.areas = ar;
   return Object.keys(out).length ? out : null;
 }
 

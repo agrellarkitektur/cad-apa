@@ -31,7 +31,7 @@ beforeAll(() => registerBuiltInTypes());
 describe('kategorierna i ett nytt projekt', () => {
   it('förslagen för planer och förinställningarna Poché och Färgmarkerad', () => {
     const b = emptyProject('Prov', 'ombyggnad').graphics;
-    expect(categoriesOf(b, 'storey').map((c) => c.name)).toEqual(['Plan', 'Mått och littera', 'Undertak', 'Golvplan', 'Poché', 'Färgmarkerad']);
+    expect(categoriesOf(b, 'storey').map((c) => c.name)).toEqual(['Plan', 'Mått och littera', 'Undertak', 'Golvplan', 'Areaplan', 'Poché', 'Färgmarkerad']);
     expect(categoriesOf(b, 'facade').map((c) => c.name)).toEqual(['Fasad', 'Färgmarkerad']);
     expect(categoriesOf(b, 'section').map((c) => c.name)).toEqual(['Sektion', 'Poché', 'Färgmarkerad']);
     expect(categoryOf(b, 'storey', 'poche').style.actions).toEqual(POCHE.actions);

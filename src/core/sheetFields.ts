@@ -31,6 +31,15 @@ export const BUILT_IN: [string, string][] = [
   ['format', 'Pappersformatet, t.ex. A3'],
   ['idag', 'Dagens datum'],
   ['licens', 'Licenstexten för platsen ur Höjdkurvor (kartdata)'],
+  // Areorna (0.12.3) för hela projektet i förslaget, i hela m² enligt SS 21054.
+  ['bya', 'Byggnadsarea (BYA), t.ex. 96 m²'],
+  ['bta', 'Bruttoarea (BTA), alla våningar'],
+  ['bra', 'Bruksarea (BRA), summan av BOA, BIA, LOA och ÖVA'],
+  ['boa', 'Boarea (BOA)'],
+  ['bia', 'Biarea (BIA)'],
+  ['loa', 'Lokalarea (LOA)'],
+  ['öva', 'Övrig area (ÖVA)'],
+  ['opa', 'Öppenarea (OPA)'],
 ];
 
 const BUILT_IN_KEYS = new Set(BUILT_IN.map(([k]) => k));

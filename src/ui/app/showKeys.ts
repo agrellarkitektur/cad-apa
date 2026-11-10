@@ -56,6 +56,8 @@ export const SHOW_GROUPS: readonly { id: string; label: string; items: readonly 
     label: 'Rum, mått och text',
     items: [
       ['Space', 'Rum'],
+      // Areorna (0.12.3): släckta utom i Areaplanen.
+      ['Area', 'Areor (BTA, BOA, BIA …)'],
       ['Dimension', 'Mått'],
       ['Text', 'Text'],
     ],
@@ -121,7 +123,7 @@ export function showGroupsFor(doc: ProjectDoc): readonly ShowGroup[] {
  * de dolda linjerna i fasader (0.10.10) likaså, och fönstrens slagbågar och
  * tillgänglighetscirkeln (0.11.8.2).
  */
-export const OFF_BY_DEFAULT: ReadonlySet<string> = new Set(['footprint', 'roofsAround', 'hiddenSlabs', 'hiddenWalls', 'ground3d', 'slopes3d', 'steepSlopes', 'swingWindow', 'accessCircle']);
+export const OFF_BY_DEFAULT: ReadonlySet<string> = new Set(['footprint', 'roofsAround', 'hiddenSlabs', 'hiddenWalls', 'ground3d', 'slopes3d', 'steepSlopes', 'swingWindow', 'accessCircle', 'Area']);
 
 /** Om det som nyckeln står för syns i vyn. */
 export function isShown(ui: Pick<UiState, 'hide' | 'hideDemolished'>, key: string): boolean {

@@ -1,3 +1,4 @@
+import { applyAreaField } from './areaFields';
 import { applyOpeningField } from './openingFields';
 import { applyScheduleField } from './openingScheduleFields';
 import { applyStairField } from './stairFields';
@@ -190,6 +191,7 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
   const doc = store.doc;
   const [scope, name] = key.split(':');
   if (scope === 'ground') return applyGroundField(store, ids, name, input);
+  if (scope === 'area') return applyAreaField(store, ids, name, input, view);
   if (scope === 'stair') return applyStairField(store, ids, name, input);
   if (scope === 'rail') return applyRailingField(store, ids, key.slice(5), input);
   if (scope === 'prof') return applyProfileField(store, ids, key.slice(5), input);

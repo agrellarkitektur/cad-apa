@@ -7,10 +7,11 @@ import { union, type Rings } from './boolean';
  * cirkel (16 hörn) i varje hörn, sammanslagna. Hörnen blir därför rundade,
  * som när man går ett jämnt avstånd runt huset.
  */
-export function bufferRings(polys: readonly Rings[], d: number, segments = 16): Rings[] {
+export function bufferRings(polys: readonly Rings[], d: number, segments = 16, keepHoles = false): Rings[] {
   const valid = polys.filter((p) => p.length && p[0].length >= 3);
   if (!(d > 0)) return valid.map((p) => p.map((r) => r.map((q): Vec2 => [q[0], q[1]])));
-  const parts: Rings[] = valid.map((p) => [p[0].map((q): Vec2 => [q[0], q[1]])]);
+  // Med `keepHoles` (0.12.3, areorna) växer också hålen inåt i stället för att fyllas.
+  const parts: Rings[] = valid.map((p) => (keepHoles ? p : [p[0]]).map((r) => r.map((q): Vec2 => [q[0], q[1]])));
   for (const poly of valid) {
     for (const ring of poly) {
       const n = ring.length;

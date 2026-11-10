@@ -23,6 +23,7 @@ const BY_KEY: Record<string, keyof typeof icons> = {
   Underlay: 'fileImage',
   Label: 'label',
   Space: 'room',
+  Area: 'area',
   Dimension: 'dimension',
   Text: 'text',
   Shape2D: 'draw2d',

@@ -18,6 +18,8 @@ export const icons = {
   window: svg('<path d="M3 9h4M17 9h4M3 15h4M17 15h4M7 9v6M17 9v6M7 11.3h10M7 12.7h10"/>'),
   furniture: svg('<rect x="4" y="7" width="16" height="11" rx="1.5"/><path d="M4 11h16M8 7v4M16 7v4"/>'),
   room: svg('<path d="M4 4h16v16H4z"/><path d="M8.5 13h7M10 10h4"/>'),
+  // Arean (0.12.3): en yta med en tonad del och m².
+  area: svg('<path d="M4 4h10v6h6v10H4z"/><path d="M4 14l6-6M4 19l11-11M9 20l11-11" stroke-width="1" opacity=".55"/>'),
   measure: svg('<rect x="3" y="7" width="14" height="10" rx="5"/><circle cx="10" cy="12" r="2"/><path d="M17 15h4M6 7v2.2M9.5 7v1.6M13 7v2.2"/>'),
   dimension: svg('<path d="M4 15h16M4 12v6M20 12v6M4 15l2.5-1.6M4 15l2.5 1.6M20 15l-2.5-1.6M20 15l-2.5 1.6M9 9h6"/>'),
   text: svg('<path d="M6 6h12M12 6v13M9.5 19h5"/>'),

@@ -1,3 +1,4 @@
+import { areaFieldsMarkup } from './areaFields';
 import { outsideSide } from '../elements/wallSides';
 import { openingFieldsMarkup } from './openingFields';
 import { stairFieldsMarkup } from './stairFields';
@@ -216,6 +217,8 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
         ${fillFields('room-pattern-panel', { ...p, fillAngle: p.fillAngle ?? 45, fillSpacing: p.fillSpacing ?? 2 }, (k) => `data-key="d2:${k}"`, doc.graphics, undefined, { uses: p.material ? materialUses(doc, p.material) : 0 })}
 `;
     }
+    case 'Area':
+      return areaFieldsMarkup(doc, el, view);
     case 'Label':
       return labelFields(doc, el);
     case 'Dimension':

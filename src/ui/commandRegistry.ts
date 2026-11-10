@@ -80,6 +80,7 @@ export const COMMANDS: CommandDef[] = [
   T('profile', 'Profil', ['profil', 'pelare', 'balk', 'list', 'gesims', 'pr'], ['profile', 'column', 'beam', 'sweep']),
   T('ground', 'Mark', ['mark', 'markobjekt', 'platå'], ['grading', 'terrain', 'grd']),
   T('room', 'Rum', ['rum'], ['room', 'space']),
+  T('area', 'Area', ['area', 'areor', 'boa', 'bia', 'bta', 'bya', 'loa'], ['zone']),
   T('dimension', 'Mått', ['mått', 'må'], ['dim', 'dli', 'dimlinear']),
   T('text', 'Text', ['text', 'tx'], ['mtext', 'mt', 't', 'dtext', 'dt']),
   T('label', 'Littera', ['littera', 'lit'], ['mleader', 'mld', 'label']),

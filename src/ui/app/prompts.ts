@@ -257,6 +257,8 @@ export function currentPrompt(app: AppContext, pending: CommandDef | null, runPe
       return { head, text: 'Klicka på en vägg där öppningen ska sitta.', options: [] };
     case 'room':
       return { head, text: 'Klicka inuti ett rum som är omslutet av väggar.', options: [] };
+    case 'area':
+      return { head, text: 'Klicka i ett rum; Shift+klick lägger till fler rum i arean.', options: [] };
     case 'text':
       return { head, text: 'Klicka där texten ska stå. Texten skrivs i verktygsraden.', options: [] };
     default:

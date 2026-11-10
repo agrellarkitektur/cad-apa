@@ -7,7 +7,7 @@ import { imageKey, writePdf, browserDeflate, type PdfImage, type PdfOptions, typ
 import type { PdfJob, PdfReply } from '../../formats/exportWorker';
 import { sheetDxf, viewDxf } from '../../repr/exportDxf';
 import { pdfMeta, sheetPage, viewPage } from '../../repr/exportPages';
-import { scheduleCsv, scheduleTableById } from '../../repr/schedules';
+import { scheduleCsv, scheduleTableById, scheduleXlsx } from '../../repr/schedules';
 import type { View3D } from '../../view3d/view3d';
 import type { OutFile } from './exportTarget';
 
@@ -142,14 +142,14 @@ export async function runExport(
       files.push({ path: paths[i], job: job.path, data: r.bytes });
       continue;
     }
-    if (job.format === 'csv') {
-      // Förteckningen (0.12.2): en tabell för kalkylen.
+    if (job.format === 'csv' || job.format === 'xlsx') {
+      // Förteckningen (0.12.2): en tabell för kalkylen; XLSX med summorna som formler (0.12.3).
       const t = scheduleTableById(doc, idOf(job.keys[0]));
       if (!t) {
         skipped.push(`${job.title}: borttagen`);
         continue;
       }
-      files.push({ path: paths[i], job: job.path, data: new TextEncoder().encode(scheduleCsv(t)) });
+      files.push({ path: paths[i], job: job.path, data: job.format === 'xlsx' ? scheduleXlsx(t) : new TextEncoder().encode(scheduleCsv(t)) });
       continue;
     }
     if (job.format === 'pdf') {

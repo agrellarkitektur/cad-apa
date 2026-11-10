@@ -102,6 +102,8 @@ const PLACEMENT = new Set([
   'text', 'at', 'hinge', 'swing', 'outline', 'seed', 'labelAt', 'offset', 'auto', 'side', 'label', 'roof', 'face', 'toward', 'stamp', 'scale', 'facing',
   // Bjälklagets form (0.9.4): håltagningarna och konturen ur väggarna.
   'holes', 'fromWalls',
+  // Areans rum (0.12.3).
+  'seeds',
   // Takfallets referenslinje (0.10) och kanternas egna snitt, kända på hörnen (0.10.2).
   'ref', 'refBulge', 'edgeCuts',
 ]);

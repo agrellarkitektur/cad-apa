@@ -80,6 +80,8 @@ export interface LayerQuery {
   profile?: string;
   /** Objektet står på Platsen. */
   site?: boolean;
+  /** Areans slag (0.12.3): BOA, BTA … */
+  area?: string;
   status: Status;
 }
 
@@ -118,6 +120,14 @@ export const TEMPLATE_LINETYPES: readonly LinetypeDef[] = SB11_LINETYPES.map((t)
 
 /** Byggdelskoderna som används, med benämning (BSAB 96). */
 const BYGGDEL: Record<string, string> = {
+  'A-BTA-': 'Bruttoarea',
+  'A-BYA-': 'Byggnadsarea',
+  'A-BRA-': 'Bruksarea',
+  'A-BOA-': 'Boarea',
+  'A-BIA-': 'Biarea',
+  'A-LOA-': 'Lokalarea',
+  'A-OVA-': 'Övrig area',
+  'A-OPA-': 'Öppenarea',
   '------': 'Ingen kod',
   '15----': 'Grundkonstruktioner',
   '27B---': 'Stominnerväggar',
@@ -266,6 +276,8 @@ function presentation(q: LayerQuery, code: string, full: boolean): string {
 
 /** Lagernamnet efter SB11 (förenklad eller fullständig). */
 export function sb11Name(q: LayerQuery, full: boolean): string {
+  // Areorna (0.12.3) på mallens areaslag: A-A-BTA-E-N för ytan, A-A-BTA-T2N för stämpeln.
+  if (q.type === 'Area') return `A-A-${areaLayerCode(q.area)}-${q.part === 'areatext' ? 'T2' : 'E-'}${q.status === '-' ? 'N' : q.status}`;
   let code = q.sheet ? '------' : byggdel(q, full);
   const pres = presentation(q, code, full);
   // Allmänna lager (text, mått, markörer, ram …) har ingen byggdel; littera har det bara i fullständig.
@@ -275,8 +287,12 @@ export function sb11Name(q: LayerQuery, full: boolean): string {
   return `A-${code}${pres}${status}`;
 }
 
+/** Areaslaget som tre tecken i lagernamnet (ÖVA blir OVA, som i mallen). */
+const areaLayerCode = (k?: string): string => (k ?? 'BRA').replace('Ö', 'O').slice(0, 3).padEnd(3, '-');
+
 /** Lagernamnet efter *Enkel*. */
 export function simpleName(q: LayerQuery): string {
+  if (q.type === 'Area') return `A-AREA-${areaLayerCode(q.area)}`;
   if (q.sheet || q.type === 'Stamp' || q.type === 'Sheet' || q.part === 'arbetsmaterial') return 'A-RAM';
   if (q.type === 'Label' || LITTERA_PARTS.has(q.part ?? '')) return 'A-LITTERA';
   if (q.type === 'Text' || q.type === 'ViewTitle' || q.type === 'Legend' || q.type === 'Schedule' || q.part === 'vyrubrik') return 'A-TEXT';
