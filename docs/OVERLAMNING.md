@@ -251,6 +251,9 @@ provat.
   tjockleken. Räcker det, eller ska Färgmarkerads färger med som RGB i 2018?
 - Markörer och möbler skrivs som linjer, inte block. Behöver mottagarna
   block (för att flytta en sektionsmarkör som en enhet)?
+- Typkoderna i hans AutoCAD-mall (11, 31, 34, 35, 40 i `A-27C-11--N`
+  osv.): har han fått veta vad de betyder, av mallens upphovsman eller ur
+  SB 11? Annars skrivs inga (se `cad-apa-lager-bsab-forslag.md`, avsnitt 2).
 
 **0.12 efter provning** (Claudes val, se PLAN.md; utredningens A–E
 besvarade 7 november, se `cad-apa-export-utredning.md`)
