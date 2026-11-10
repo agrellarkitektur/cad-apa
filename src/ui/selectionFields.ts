@@ -156,6 +156,7 @@ export function instanceFields(doc: ProjectDoc, el: Element, view: ViewStates): 
           .join('')}</select></label>
         <p class="note">Språnget är delen utanför ytterväggarnas utsida; ovansidan är densamma. Takfoten är kanterna som vetter nedåt i lutningen; nock, grat och gavel snittas lodrätt. En kant kan få ett eget snitt i Modifiera.${p.edgeCuts?.length ? ` ${p.edgeCuts.length === 1 ? 'En kant har' : `${p.edgeCuts.length} kanter har`} ett eget snitt.` : ''}</p>
         <p class="note">Höjden gäller vid referenslinjen, och taket stiger åt pilens håll. Dra i referenslinjens ändar för att flytta den; konturen ändras som en 2D-form. Radie gör referenslinjen till en båge och taket till en kon (0 = rak). Väggar under taket kapas; kryssa i Upp till taket på gavlarna.</p>
+        <label class="check" title="Inom kupans kontur gäller det här taket i stället för taket under det, när areorna räknas (SS 21054 5.14)"><input type="checkbox" data-key="roof:dormer"${p.dormer ? ' checked' : ''}> Takkupa <span class="note">för areorna: rumshöjden räknas mot kupans tak</span></label>
         ${buildingFill(doc, 'roof-pattern-panel', p)}`;
     }
     case 'Slab': {

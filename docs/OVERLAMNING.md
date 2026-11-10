@@ -6,55 +6,30 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 10 november 2026, efter 0.12.3 Areor.
+README. Senast: 10 november 2026, efter 0.12.4 Areor under snedtak och mark.
 
 ## Läget
 
-- **0.12.3 Areor är klar** (10 november, samma format 28; ny objekttyp
-  `Area`, stilbokens valfria `general.areas`), byggd i en session efter
-  Carl Augusts svar A–E och F–J: **0.12.3 delades** i 0.12.3 Areor (med
-  XLSX), **0.12.4 Areor under snedtak och mark** och **0.12.5
-  Uppställningen**; IFC 0.12.6, Utgåvor och PM 0.12.7, 3D-vyer 0.12.8.
-  Areorna är egna objekt över rummen (som BOA-zonen i Archicad; rummen
-  räknas inte), ur rummen man klickar i eller en egen kontur, allt exakt
-  enligt SS 21054 före piloten. Han redovisar areor oftast som tal i
-  ritningshuvudet eller en tabell; grafiskt med halvtransparent fyllning och
-  opak kontur i samma färg (hans färger är förvalen). Testerna: 987 på ca
-  16 s. Provat i Playwright mot `dist/` (verktyget med Shift+klick,
-  egenskaperna, Visa › Areor, en vy med kategorin Areaplan, förteckningen,
-  stilbokens färger); XLSX öppnad i LibreOffice och openpyxl, DXF:ens lager
-  ur vår läsare. Claudes val och det som inte gjordes i PLAN.md, koden i
+- **0.12.4 Areor under snedtak och mark är klar** (10 november, samma
+  format 28; valfria fält areans `heightSplit`, takets `dormer`), byggd i
+  en session efter Carl Augusts svar A–E: A takkupan som kryss (prova), B
+  H/L som kryss, C terrängen räcker (inget kryss *Mot annan byggnad*), D BOA
+  bortom 6-meterszonen blir BIA(u) av sig själv (prova), E OPA som egen
+  kontur med smartspöt på ett tak som start. Testerna: 996 på ca 13 s.
+  Provat i Playwright mot `dist/` (lågt sadeltak i exemplet: egenskapernas
+  *Redovisas som BOA:H … BOA:L …*, kryssen, kupan som ökar arean, OPA under
+  en carport, areaförteckningen); zonen bara i vitest (exemplet på sned
+  mark, `onSlope`). Claudes val och det som inte gjordes i PLAN.md, koden i
   UTVECKLING.md.
-- **Märks i hans ritningar efter 0.12.3:** verktyget **Area** under
-  Annotera (areaslag, funktion; klick i ett rum, Shift+klick lägger till
-  eller tar bort rum). Egenskaperna: areaslag, area, funktion,
-  tillhörighet, temperatur, *Automatiska avdrag*, *Följer väggarna*.
-  Kategorin **Areaplan** bland våningarnas (en äldre stilbok: *Lägg in
-  Areaplan* i verktygets rad), *Visa › Areor* i andra vyer. Stilboken ›
-  Allmänt › **Areor** (färgerna, täckningen, funktionerna). *Ny: Areor*
-  under Förteckningar; *Spara som XLSX* i alla förteckningar och XLSX i
-  *Exportera…*. Smarttexten `{BOA}`, `{BTA}`, `{BYA}` …
-- **0.12.2 Förteckningar är klar** (10 november, samma format 28; valfria
-  fält projektets `schedules` och vyns `maxHeight` på bladet), byggd i en
-  session efter Carl Augusts svar A–E: **0.12.2 Förteckningar och areor
-  delades** i 0.12.2 Förteckningar och **0.12.3 Areor och uppställningen**,
-  resten flyttade ett steg (IFC 0.12.4, Utgåvor och PM 0.12.5, 3D-vyer
-  0.12.6); en lång tabell bryts i delar bredvid varandra på samma blad; CSV
-  nu, XLSX i 0.12.3 med en egen skrivare; rumsförteckningens förval nummer,
-  namn, våning, area och rumshöjd. Han vill senare ha en egen enkel
-  **rumsbeskrivningsmall** och ett eget **BEAst-paket** (efter piloten).
-  Testerna: 977 på ca 13 s. Provat i Playwright mot `dist/` (skapa, ändra
-  kolumner, ordning och gruppering, ångra, lägga på blad, exportera CSV,
-  PDF och bladets DXF; `qpdf`, `pdftoppm`, ezdxf `audit` utan fel). Claudes
-  val och det som inte gjordes i PLAN.md, koden i UTVECKLING.md.
-- **Märks i hans ritningar efter 0.12.2:** under **Vyer** i projektträdet
-  finns **Förteckningar** med *Ny:* Rum, Dörrar, Fönster, Grindar, Littera.
-  En förteckning visas som tabell över ritytan med inställningarna i
-  egenskaperna (kolumner med rubrik och Σ, eget fält som smarttext,
-  sortering, gruppering, summarad, en rad per littera, tillstånd,
-  våningar, *Lägg på bladet*, *Spara som CSV*). På bladet i 1:1 med
-  rubriken ovanför, *Största höjd* där den bryts. *Exportera…* har gruppen
-  **Förteckningar** (CSV och PDF).
+- **Märks i hans ritningar efter 0.12.4:** areorna och BTA under ett
+  snedtak räknas bara där rumshöjden är minst 1,90 m och 0,60 m ut. Takets
+  egenskaper har krysset **Takkupa**, areans **Dela efter rumshöjd** (BOA:H,
+  BOA:L). På en våning delvis under mark blir BOA bortom zonen **BIA(u)**,
+  andra slag (o)/(u), BTA(o)/BTA(u); delarna står i stämpeln, egenskaperna
+  och förteckningen. Med slaget **OPA** ger ett klick under ett tak takets
+  kontur.
+- **0.12.3 Areor** och **0.12.2 Förteckningar** (10 november): se PLAN.md,
+  UTVECKLING.md och README, också för vad som märks i ritningarna.
 - **0.12.1 DXF** (10 november; lagerkartorna, 2000/2018, *Bärande*): se
   PLAN.md, UTVECKLING.md och README, också för vad som märks i ritningarna.
   Inte öppnat i AutoCAD, Archicad eller QCAD.
@@ -87,15 +62,15 @@ README. Senast: 10 november 2026, efter 0.12.3 Areor.
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.12.3 pushad till `main` 10 november (se git och `gh run
+- **Publicerad:** 0.12.4 pushad till `main` 10 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.12.3` i `engine.ts`, `package.json` och
-  `package-lock.json`. Nya funktioner får tredje siffran (0.12.3 …); **den
+- **Versionsnumret** är `0.12.4` i `engine.ts`, `package.json` och
+  `package-lock.json`. Nya funktioner får tredje siffran (0.12.4 …); **den
   fjärde siffran är för snabba buggfixar** utan nya funktioner (Carl August
   10 november). En granskning höjer inte numret, eller får en fjärde siffra
   om något ändras som syns.
-- **0.10.8–0.12.3 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.12.4 är inte provade fullt ut** av Carl August; han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -190,13 +165,12 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   Synpunkterna på mockupen~~, ~~0.11.8.2 Detalj och beslag~~, ~~0.11.8.3
   Smart och vägghål~~, ~~0.11.8.4 Granskning efter 0.11.8~~,
   ~~Utredning av 0.12 Export~~, ~~0.12 Exportdialogen och PDF~~,
-  ~~0.12.1 DXF~~, ~~0.12.2 Förteckningar~~, ~~0.12.3 Areor~~ (klara;
+  ~~0.12.1 DXF~~, ~~0.12.2 Förteckningar~~, ~~0.12.3 Areor~~,
+  ~~0.12.4 Areor under snedtak och mark~~ (klara;
   se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.12.4 Areor under snedtak och mark** (mellanstor–stor: snedtaket
-  1,90/0,60, takkupan, H/L, 6-meterszonen med (o)/(u), OPA) →
-  **0.12.5 Uppställningen** (fönster och dörrar som vytyp, grindarna,
+- **0.12.5 Uppställningen** (fönster och dörrar som vytyp, grindarna,
   markförändringarna om de ryms) → **0.12.6 IFC** (egen utredning först) →
   **0.12.7 Utgåvor och PM** (mockup först); se `cad-apa-export-utredning.md`.
   Sedan **Granskning efter 0.12**.
@@ -212,29 +186,41 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 ## Nästa session
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
-skrivrätt till repot ("push godkänd"). Fråga om Carl August provat 0.12.3,
-0.12.2, 0.12.1 och 0.12; ställ i så fall frågorna om dem (nedan) först, högst
-fem åt gången. Öppnar en DXF eller XLSX inte hos honom: be om felmeddelandet
-och fixa det som en fjärde siffra (0.12.3.1). Nästa version är **0.12.4
-Areor under snedtak och mark**: se avsnittet i PLAN.md. Slå upp 5.13, 5.14,
-5.15.5, 8.4, 10.3.1.3, 11.3.1.3, 18.3 och 18.5 i SS 21054:2020 i projektets
-kunskapsbas, inte ur minnet. Snedtaket räknas mot takfallets eller
-bjälklagets undersida (svar J); takets geometri finns i `roofPlanes`
-(`src/elements/roof.ts`), marken i `src/elements/ground*.ts` och
-`terrain`. Bygg på `areaCalc.ts` (`deducted`, `btaRegion`); `(o)/(u)` och
-H/L blir nya beteckningar i förteckningen (`Beteckning`). Vid granskningen
-efter 0.12 delas `src/ui/style/profileTypes.ts` (875) och `openingTypes.ts`
-(828).
+skrivrätt till repot ("push godkänd"). Fråga om Carl August provat 0.12.4,
+0.12.3, 0.12.2, 0.12.1 och 0.12; ställ i så fall frågorna om dem (nedan)
+först, högst fem åt gången. Stämmer en area inte med hans Archicad-siffror:
+be om en skärmbild eller sektion och fixa det som en fjärde siffra
+(0.12.4.1). Nästa version är **0.12.5 Uppställningen** (mellanstor–stor):
+se avsnittet i PLAN.md och `cad-apa-synpunkter.md`; fältmallen finns i
+stilboken (Typer › Uppställningens fält), fälten på öppningarna sedan
+0.11.8.1, förteckningarna i `src/repr/schedules.ts` och `core/schedules.ts`.
+Markförändringarnas förteckning bara om den ryms (annars egen version).
+Vid granskningen efter 0.12 delas `src/ui/style/profileTypes.ts` (875),
+`openingTypes.ts` (828) och `areaCalc.ts` (ca 550).
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.12.3, 0.12.2, 0.12.1, 0.12, 0.11.8.4, 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.12.4, 0.12.3, 0.12.2, 0.12.1, 0.12, 0.11.8.4, 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4, 0.11.3,
 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
+
+**0.12.4 efter provning** (Claudes val, se PLAN.md; svaren A–E 10 november)
+- Takkupan som kryss på taket: kupans kontur i plan gäller i stället för
+  taket under, men taket under kapas inte i planen och 3D. Räcker det, eller
+  behövs det kapade taket före piloten?
+- BOA bortom 6-meterszonen blir BIA(u) av sig själv, och delarna står i
+  stämpeln. Stämmer det med hur du redovisar en souterrängvilla?
+- (o) och (u) skrivs bara på en våning där golvet ligger under marken
+  någonstans, inte på våningarna ovanför. Rätt, eller ska alla våningar få
+  (o) när huset har en källare?
+- Marken läses 0,30 m utanför fasaden, och golvet räknas i nivå med marken
+  inom 20 mm. Rimligt?
+- Bredden 0,60 m under nocken prövas bara mot snedtaket, inte mellan en
+  vägg och 1,90-linjen. Saknas något fall du brukar ha?
 
 **0.12.3 efter provning** (Claudes val, se PLAN.md; svaren A–J 10 november)
 - Väggarna mellan en BIA och en BOA hör till BIA när någon vägg mellan dem

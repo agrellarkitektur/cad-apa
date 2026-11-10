@@ -1,6 +1,9 @@
 import { addElements, updateParams } from '../../core/commands';
 import { COMPUTED_KINDS, type AreaKind, type AreaParams } from '../../elements/areaCalc';
-
+import { resolveParams } from '../../elements/registry';
+import { outlineRing, type RoofParams } from '../../elements/roof';
+import { signedArea } from '../../geometry/chains';
+import { pointInRings } from '../../geometry/vec';
 import type { Vec2 } from '../../repr/primitives';
 import type { Camera } from '../../view2d/camera';
 import type { ViewPointer, ViewTool } from '../../view2d/planView';
@@ -13,6 +16,10 @@ import type { RoomTool } from './roomTool';
  * fler rum lägger dem till den markerade arean (en bostad, en lokal), och
  * innerväggarna mellan dem räknas med. BTA och BYA räknas fram av sig
  * själva; ett klick lägger dem på våningen för att visa konturen.
+ *
+ * OPA (0.12.4) är en egen kontur: ett klick under ett tak (en carport, ett
+ * skärmtak) ger takets kontur som start, som ändras i Modifiera. Den slutar
+ * av sig själv vid ytterväggens utsida.
  */
 export class AreaTool implements ViewTool {
   cursor = 'crosshair';
@@ -33,7 +40,26 @@ export class AreaTool implements ViewTool {
   }
 
   hover(p: ViewPointer | null): void {
-    this.hovered = p && !COMPUTED_KINDS.includes(this.kind) ? this.rooms.holeAt(p.model) : null;
+    this.hovered = !p || COMPUTED_KINDS.includes(this.kind) ? null : this.kind === 'OPA' ? this.roofAt(p.model) : this.rooms.holeAt(p.model);
+  }
+
+  /** Det minsta taket (i plan, på alla våningar) som punkten ligger under. */
+  private roofAt(pt: Vec2): Vec2[] | null {
+    const doc = this.host.store.doc;
+    const state = this.host.activeState();
+    let best: Vec2[] | null = null;
+    let area = Infinity;
+    for (const el of Object.values(doc.elements)) {
+      if (el.type !== 'Roof' || el.space || !el.states.includes(state)) continue;
+      const ring = outlineRing(resolveParams<RoofParams>(doc, el));
+      if (ring.length < 3 || !pointInRings(pt, [ring])) continue;
+      const a = Math.abs(signedArea(ring));
+      if (a < area) {
+        area = a;
+        best = ring;
+      }
+    }
+    return best;
   }
 
   drag(p: ViewPointer): void {
@@ -65,6 +91,19 @@ export class AreaTool implements ViewTool {
       const [el] = addElements(store, [{ type: 'Area', storey, tags: [], props: {}, params: { kind: this.kind, outline: [] } }], state, `Visa ${this.kind}`);
       this.host.selection.set([el.id]);
       this.host.hint(`${this.kind} räknas fram ur modellen och följer väggarna.`, 4000);
+      return;
+    }
+    if (this.kind === 'OPA') {
+      // Smartspöt på ett tak: takets kontur som start för en egen kontur.
+      const roof = this.roofAt(pt);
+      if (!roof) {
+        this.host.hint('Klicka under ett tak för att få takets kontur som start, eller rita en egen kontur med 2D-verktyget och gör om den i Modifiera.');
+        return;
+      }
+      const params: AreaParams = { kind: 'OPA', outline: roof.map((q) => [Math.round(q[0]), Math.round(q[1])]), ...(this.func.trim() ? { func: this.func.trim() } : {}) };
+      const [el] = addElements(store, [{ type: 'Area', storey, tags: [], props: {}, params: params as unknown as Record<string, unknown> }], state, 'Ny OPA');
+      this.host.selection.set([el.id]);
+      this.host.hint('OPA med takets kontur; ändra punkterna i Modifiera. Den slutar vid ytterväggens utsida.', 5000);
       return;
     }
     const hole = this.rooms.holeAt(pt);

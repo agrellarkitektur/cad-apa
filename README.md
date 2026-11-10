@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.3** (alfa), Areor; nästa är **0.12.4 Areor under snedtak och mark**.
+**0.12.4** (alfa), Areor under snedtak och mark; nästa är **0.12.5 Uppställningen**.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,29 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.12.4, Areor under snedtak och mark (samma filformat, 28; projekt
+från 0.11.8 öppnas; nya valfria fält: areans `heightSplit` och takets
+`dormer`):
+- **Snedtaket** (SS 21054 5.13, 8.4): rumshöjden räknas mot det lägsta
+  takfallets undersida. BOA, BIA, LOA, ÖVA och BTA räknas där höjden är
+  minst 1,90 m och 0,60 m ut från den linjen; en del smalare än 0,60 m
+  räknas inte (5.1.3). Når 0,60 m förbi ytterväggen slutar BTA vid dess
+  utsida
+- **Takkupa**: ett kryss i takets egenskaper. Inom kupans kontur gäller
+  kupans tak i stället för taket under när areorna räknas (5.14). Taket
+  under kapas inte i planen och 3D
+- **Dela efter rumshöjd**: ett kryss i areans egenskaper ger BOA:H (minst
+  2,10 m) och BOA:L som egna rader (18.5)
+- **Våning delvis under mark** (10.3.1.3, 11.3.1.3, 18.3): längs fasaderna
+  där golvet ligger i nivå med eller över den färdiga marken räknas 6,00 m in
+  från väggens insida som ovan mark, med zonens linjer förlängda i
+  invändiga hörn. BOA bortom zonen blir **BIA(u)** av sig själv, de andra
+  slagen får (o) och (u), och BTA blir BTA(o) och BTA(u). Utan markmodell
+  ligger allt ovan mark. Stämpeln och egenskaperna visar delarna
+- **OPA** (7.4): en egen kontur utan avdrag, som slutar vid ytterväggens
+  utsida och inte räknas i BRA. Med verktyget Area och slaget OPA ger ett
+  klick under ett tak (en carport, ett skärmtak) takets kontur som start
 
 Version 0.12.3, Areor (samma filformat, 28; projekt från 0.11.8 öppnas;
 ny objekttyp `Area`, nytt valfritt fält stilbokens `general.areas`):

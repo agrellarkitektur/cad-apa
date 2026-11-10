@@ -1,7 +1,10 @@
 import { buildingStoreys, type Element, type Id, type ProjectDoc } from '../core/model';
 import { difference, intersection, union, type Rings } from '../geometry/boolean';
-import { offsetRing, signedArea } from '../geometry/chains';
+import { signedArea } from '../geometry/chains';
 import { bufferRings } from '../geometry/offset';
+import { clipAll, clipTo, grownSquare, minus, solid } from './areaGeom';
+import { aboveGroundZone } from './areaGround';
+import { measurable, splitByHeight } from './areaHeight';
 import { pointInRings } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import { openingZone } from './opening';
@@ -33,8 +36,13 @@ import type { Shape2DParams } from './drawing2d';
  *   mitt (5.3.2, 5.17.2); väggen mellan en BIA och en BOA i samma bostad,
  *   med en dörr emellan, hör till BIA (5.18.2).
  *
- * Snedtaket (5.13), takkupan (5.14), våning under mark (10.3.1.3, 18.3)
- * och rumshöjden H/L (18.5) kommer i 0.12.4.
+ * - **Under taken** (0.12.4, `areaHeight.ts`): det mätvärda under snedtak
+ *   (5.13, 8.4) och takkupor (5.14), och delningen i H och L (18.5).
+ * - **Under mark** (0.12.4, `areaGround.ts`): 6-meterszonen (10.3.1.3,
+ *   11.3.1.3, 18.3); BOA bortom zonen blir BIA(u), de andra slagen får (o)
+ *   och (u). `areaParts` ger delarna som förteckningen och stämpeln visar.
+ * - **OPA** (7.4): en egen kontur, utan avdrag, som slutar vid ytterväggens
+ *   utsida.
  */
 
 /** Areaslagen som kan ritas som objekt, och de som räknas fram. */
@@ -72,6 +80,8 @@ export interface AreaParams {
   temp?: 't' | 'it';
   /** Stämpelns mittpunkt när den dragits dit. */
   labelAt?: [number, number];
+  /** Delas efter rumshöjd (18.5): BOA:H och BOA:L (0.12.4). */
+  heightSplit?: true;
 }
 
 /** Hur långt in i en vägg tjockare än 0,30 m arean räknas från varje sida, mm (5.16.3). */
@@ -241,14 +251,6 @@ function stairsBelow(doc: ProjectDoc, storey: Id, ctx: PlanContext): Rings[] {
   return out;
 }
 
-/**
- * En yta klippt till flera polygoner: delarna i var och en (`intersection`
- * med flera ytor ger det som ligger i alla, inte i någon).
- */
-const clipTo = (s: Rings, polys: readonly Rings[]): Rings[] => polys.flatMap((p) => intersection(s, [p]));
-
-const minus = (polys: readonly Rings[], cut: readonly Rings[]): Rings[] => (cut.length ? polys.flatMap((p) => difference(p, cut as Rings[])) : [...polys]);
-
 // ---------------------------------------------------------------------------
 // BTA och BYA
 
@@ -261,18 +263,12 @@ export function outerContour(ctx: PlanContext): Rings[] {
   });
 }
 
-/** BTA på våningen (8.4): ytterkonturen utan andra hål i bjälklaget än trappans. */
+/**
+ * BTA på våningen (8.4): ytterkonturen utan andra hål i bjälklaget än
+ * trappans, och bara det mätvärda under snedtaken.
+ */
 export function btaRegion(ctx: PlanContext): Rings[] {
-  return ctx.memo('area-bta', () => minus(outerContour(ctx), otherFloorOpenings(ctx)));
-}
-
-/** Ytor utvidgade `d` mm med raka (gerade) hörn, och rundade där geringen inte räcker. */
-function grownSquare(polys: readonly Rings[], d: number): Rings[] {
-  const miter = polys.map((p): Rings => {
-    const ring = signedArea(p[0]) > 0 ? [...p[0]].reverse() : p[0];
-    return [offsetRing(ring, d)];
-  });
-  return union([...bufferRings(polys, d, 16), ...miter]);
+  return ctx.memo('area-bta', () => solid(measurable(ctx, minus(outerContour(ctx), otherFloorOpenings(ctx)))));
 }
 
 /** Våningen BYA räknas på: den lägsta med golvet högst 0,6 m under ±0, annars den lägsta. */
@@ -475,9 +471,63 @@ export function areaRegion(ctx: PlanContext, el: Element<any>): Rings[] {
       const ring = (p.outline ?? []).map((q): Vec2 => [q[0], q[1]]);
       region = ring.length >= 3 ? [[ring]] : [];
     }
+    // OPA (7.4): utan avdrag, och slutar vid ytterväggens utsida.
+    if (p.kind === 'OPA') return solid(p.seeds?.length ? region : minus(region, outerContour(ctx)));
     if (!p.noDeduct) region = deducted(ctx, region, inner, shared);
-    return minus(region, otherFloorOpenings(ctx)).filter((poly) => poly.length && poly[0].length >= 3 && Math.abs(signedArea(poly[0])) > 100);
+    return solid(measurable(ctx, minus(region, otherFloorOpenings(ctx))));
   });
+}
+
+/** En del av ett areaobjekt som redovisas för sig (0.12.4): slaget, beteckningen och ytan. */
+export interface AreaPart {
+  kind: AreaKind;
+  /** T.ex. *BOA*, *BIA(u)*, *BOA:L*, *LOAe(o)(t)*. */
+  code: string;
+  region: Rings[];
+}
+
+/**
+ * Areaobjektets delar: på en våning delvis under mark ytan inom 6-meterszonen
+ * och den bortom (BOA blir BIA, de andra får (o) och (u); 10.3.1.3, 18.3),
+ * och med *Dela efter rumshöjd* H och L (18.5).
+ */
+export function areaParts(ctx: PlanContext, el: Element<any>): AreaPart[] {
+  return ctx.memo(`area-parts:${el.id}`, () => {
+    const p = ctx.params<AreaParams>(el);
+    const region = areaRegion(ctx, el);
+    if (COMPUTED_KINDS.includes(p.kind) || p.kind === 'OPA') return [{ kind: p.kind, code: areaCode(p), region }];
+    const zone = aboveGroundZone(ctx);
+    const byGround: { kind: AreaKind; level: '' | 'o' | 'u'; region: Rings[] }[] = !zone
+      ? [{ kind: p.kind, level: '', region }]
+      : [
+          { kind: p.kind, level: p.kind === 'BOA' ? '' : 'o', region: clipAll(region, zone) },
+          { kind: p.kind === 'BOA' ? 'BIA' : p.kind, level: 'u', region: minus(region, zone) },
+        ];
+    const out: AreaPart[] = [];
+    for (const g of byGround) {
+      const code = `${g.kind}${p.belong ?? ''}${g.level ? `(${g.level})` : ''}${p.temp ? `(${p.temp})` : ''}`;
+      if (p.heightSplit && g.kind !== 'ÖVA') {
+        const { high, low } = splitByHeight(ctx, g.region);
+        out.push({ kind: g.kind, code: `${code}:H`, region: solid(high) }, { kind: g.kind, code: `${code}:L`, region: solid(low) });
+      } else out.push({ kind: g.kind, code, region: solid(g.region) });
+    }
+    const kept = out.filter((x) => ringsArea(x.region) >= 0.005);
+    return kept.length ? kept : [{ kind: p.kind, code: areaCode(p), region: [] }];
+  });
+}
+
+/**
+ * BTA på våningen i delar ovan och under mark (8.5, 18.3): BTA(o) och BTA(u)
+ * på en våning delvis under mark, annars BTA.
+ */
+export function btaParts(ctx: PlanContext): { code: string; region: Rings[] }[] {
+  const bta = btaRegion(ctx);
+  const zone = aboveGroundZone(ctx);
+  if (!zone) return [{ code: 'BTA', region: bta }];
+  return [
+    { code: 'BTA(o)', region: solid(clipAll(bta, zone)) },
+    { code: 'BTA(u)', region: solid(minus(bta, zone)) },
+  ].filter((x) => ringsArea(x.region) >= 0.005);
 }
 
 /** Arean i m², med en decimal (delpost, 4.3). */

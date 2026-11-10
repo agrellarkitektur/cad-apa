@@ -189,6 +189,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.8.4 | Granskning efter 0.11.8 (1 november): varningarna uppslagna i föreskrifterna (fri passage, säkerhetsglas, barnsäkra fönster, utrymningsfönster, öppen trappa), `stairGeometry.ts` och `view3d.ts` delade, klickjämförelsen mot stilboken och med profiler, dörrar och fönster |
 | 0.12 | Exportdialogen och PDF: trädet med format per rad, sökrutan, exportuppsättningar (också i mallen, `EXPORT Bygglov`), filnamnsmallar med smarttext, mappen på datorn eller zip, förhandslistan, PDF med lager, dokumentegenskaper, samlad fil med bokmärken och arbetsmaterialstämpel, valbart typsnitt (osifont, Arimo, Josefin Sans, eget TTF/OTF), bild ur 3D-vyn, glTF, GUID på objekten, PDF:erna i en bakgrundstråd |
 | 0.12.3 | Areor enligt SS 21054: areaobjektet ur rummen (Shift+klick) eller en egen kontur, avdragen för tjocka väggar, pelare, schakt, breda öppningar och hål i bjälklaget, BIA:ns väggar mot BOA, BTA och BYA framräknade, Areaplan med färgerna i stilboken, areaförteckningen med BRA, smarttexten `{BOA}` …, DXF-lagren `A-A-…`, XLSX för alla förteckningar |
+| 0.12.4 | Areor under snedtak och mark: det mätvärda vid 1,90/0,60 för BTA och bruksareorna, kryss *Takkupa* på taket, *Dela efter rumshöjd* (H/L), 6-meterszonen ur marken med BIA(u), (o)/(u) och BTA(o)/BTA(u), OPA som egen kontur till ytterväggens utsida med takets kontur som start |
 | 0.12.2 | Förteckningar: rum, dörrar, fönster, grindar och det generella litterat ur modellen, kolumner ur fälten eller smarttext, sortering, gruppering, delsummor och summarad, en rad per littera, tabellen över ritytan, på bladet i 1:1 bruten i delar bredvid varandra, i bladets PDF och DXF, CSV och PDF i Exportera |
 | 0.12.1 | DXF: egen skrivare för AutoCAD 2000 och 2018, vyer i modellens mm och blad i pappers-mm, lagerkartorna SB11 förenklad och fullständig, Enkel och en egen lista ur en DXF, pennan som färg och linjetjocklek, status N/E/R, väggarna delade per vägg, Bärande |
 | 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, uppställningens fält i stilboken (Typer) med taggar och smarttext |
@@ -1678,16 +1679,55 @@ regler (0.12.4); att rita en ny egen kontur direkt med verktyget (nu
 igen som pelare; balkonger, burspråk och skärmtak i BYA (finns inga sådana
 objekt); att areorna följer med *Mall för nya projekt…*.
 
-### 0.12.4 Areor under snedtak och mark
+### 0.12.4 Areor under snedtak och mark ✓
 
-Mellanstor till stor, en session. Snedtaket (5.13): mätvärt till ett
-vertikalplan 0,60 m utanför linjen där rumshöjden är 1,90 m, mot takfallets
-eller bjälklagets undersida, för BTA och BRA; hela utrymmet mätvärt till
-yttertakets utsida i golvnivå (8.4). Takkupan (5.14). Trappan under ett
-snedtak (5.15.5). Rumshöjden H/L vid 2,10 m (18.5). Våning helt eller delvis
-under mark (10.3.1.3, 11.3.1.3, 18.3): 6-meterszonen ur marken längs
-fasaderna, `(o)/(u)`, BOA bortom zonen blir BIA, småhusets ”mörka” area.
-OPA:s mätning (7). Slå upp i standarden i projektets kunskapsbas.
+10 november 2026, en session. Samma format, 28 (valfria fält: areans
+`heightSplit`, takets `dormer`). Carl Augusts svar A–E 10 november: A
+takkupan som ett kryss på taket (prova); B H/L med ett kryss per area; C
+terrängen räcker, inget kryss *Mot annan byggnad*; D BOA bortom zonen blir
+BIA(u) av sig själv (prova); E OPA som egen kontur, med smartspöt på ett
+tak som start.
+
+**Gjort:** snedtaket för BTA och bruksareorna (5.1.3, 5.13, 8.4), kryss
+*Takkupa* (5.14), *Dela efter rumshöjd* (18.5), 6-meterszonen med BIA(u),
+(o) och (u) och BTA(o)/BTA(u) (10.3.1.3, 11.3.1.3, 18.3), OPA:s egen kontur
+till ytterväggens utsida (7.4) med takets kontur som start, delarna i
+stämpeln, egenskaperna och förteckningen.
+
+**Claudes val:**
+- **Rumshöjden** mäts bara mot taken (svar J): bjälklaget ovanför, fasta
+  undertak och nedstickande balkar räknas inte. Tak på alla våningar räknas,
+  utom de som ligger helt under golvet. Taken räknas också när de är
+  släckta i vyn, så att arean inte ändras med Visa.
+- **Bredden 0,60** (5.1.3) som en öppning: det som är kvar när den låga
+  delen vuxit 0,30 m växer tillbaka. Det gäller bara mot snedtak, inte en
+  smal remsa mellan en vägg och 1,90-linjen.
+- **0,60 m ut** med raka hörn (planen möts), också runt valmens hörn.
+- **Takkupan**: inom kupans kontur i plan räknas kupans tak; konturen bör
+  gå från kupans framkant in till där den möter taket (dess tänkta
+  förlängning in i byggnaden).
+- **H och L** delas vid 2,10 utan 0,60-tillägget (figur 29). ÖVA delas inte
+  (18.5 nämner bara BRA, BOA, BIA och LOA).
+- **6-meterszonen**: marken läses 0,30 m utanför väggens utsida var 0,25 m;
+  golvet räknas i nivå med marken inom 20 mm. Zonen går från väggens
+  utsida (så att BTA(o) får med väggen) till 6 m in från insidan. Vid en
+  vägg som slutar i ett invändigt hörn förlängs remsan 6 m (linjerna möts),
+  annars halva väggtjockleken över hörnet. Där marken ligger utanför
+  markmodellen räknas golvet som ovan mark.
+- **Beteckningarna**: (o) och (u) bara på en våning där golvet ligger under
+  marken någonstans; BOA får ingen (o) (BOA är ovan mark per definition),
+  BOA bortom zonen blir BIA(u). Ordningen är slag, tillhörighet, läge,
+  temperatur och rumshöjd: *BIAe(u)(t)*, *BOA:H*. BRA och BYA delas inte.
+- **Delarna** är rader i förteckningen och står i stämpeln och
+  egenskaperna; `{BIA}` räknar med BIA(u).
+- **OPA** räknas utan avdrag (väggar och pelare inom det öppna räknas med,
+  7.3.2) och slutar vid ytterväggens utsida (7.4). Smartspöt tar det
+  minsta taket under klicket, på alla våningar.
+
+**Inte gjort i 0.12.4:** trappan som gräns mellan två nyttjandeenheter
+(5.15.5, sällsynt i villor; efter piloten); att kupan kapar taket under i
+planen och 3D; vägg mot annan byggnad (svar C); den ”mörka” arean i andra
+hus än småhus räknas som i småhus; hanbjälkar och låga undertak (svar J).
 
 ### 0.12.5 Uppställningen
 
@@ -1757,6 +1797,7 @@ Mellanstor.
 Allt här är bestämt och ska byggas, men ordningen och versionsnumren sätts
 efter pilotprojektet. Det som piloten visar behövs tidigt går först.
 
+- **Areor: trappan som gräns mellan två nyttjandeenheter** (SS 21054 5.15.5): utrymmet under trappan som snedtak, resten till grannen (0.12.4). Och att en takkupa kapar taket under i planen och 3D.
 - **Kulör, yta och material för alla objekt** (Carl August 22 oktober).
   Behövs fasadkulörer i bygglovet flyttas en enkel kulör per yta upp
 - **Isoleringsobjekt** för detaljer (Carl August 25 oktober): en linje

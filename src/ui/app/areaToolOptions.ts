@@ -20,7 +20,7 @@ export function areaOptionsMarkup(app: AppContext): string {
     ${computed ? '' : `<label class="opt"><span>Funktion</span><input id="area-func" value="${escapeHtml(t.func)}" placeholder="t.ex. Kontor" style="width:110px" list="area-funcs"><datalist id="area-funcs">${funcOptions(app)}</datalist></label>`}
     ${shown ? '' : '<button class="btn" data-action="area-show" title="Areorna är släckta i vyn; tänd dem under Visa › Areor">Visa areorna här</button>'}
     ${hasCategory ? '' : '<button class="btn" data-action="area-category" title="Stilboken saknar kategorin Areaplan (den kom i 0.12.3)">Lägg in Areaplan</button>'}
-    <span class="opt-hint">${computed ? `${t.kind} räknas fram ur modellen; ett klick på våningen visar konturen.` : 'Klicka i ett rum. Shift+klick lägger till eller tar bort rum i den markerade arean.'}</span>`;
+    <span class="opt-hint">${computed ? `${t.kind} räknas fram ur modellen; ett klick på våningen visar konturen.` : t.kind === 'OPA' ? 'Klicka under ett tak: takets kontur blir en start som ändras i Modifiera.' : 'Klicka i ett rum. Shift+klick lägger till eller tar bort rum i den markerade arean.'}</span>`;
 }
 
 function funcOptions(app: AppContext): string {

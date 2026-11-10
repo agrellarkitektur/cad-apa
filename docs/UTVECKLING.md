@@ -686,6 +686,34 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Areor under snedtak och mark (0.12.4, format 28)
+
+- **Ytoperationerna** som areorna delar ligger i `src/elements/areaGeom.ts`
+  (`clipTo`, `clipAll`, `minus`, `grownSquare`, `solid`).
+- **Snedtaket**: `src/elements/areaHeight.ts`. `ceilings(ctx)` samlar
+  takfallen på alla våningar i den här våningens höjder (som
+  `roofPlanesAround`, men utan att bry sig om att taken är släckta i vyn),
+  utan tak helt under golvet och med kupornas kontur (`RoofParams.dormer`)
+  borträknad ur taken under dem. `lowRegion(ctx, h)` är där undersidan är
+  lägre än `h` (med `halfPlaneBelow`). `measurable(ctx, region)` klipper till
+  det mätvärda: ytan minus det låga vuxet 0,30 m, vuxet 0,90 m med raka hörn
+  (bredden 0,60 och 0,60 m ut). `splitByHeight` delar vid 2,10.
+  `btaRegion` och `areaRegion` (utom OPA) går genom `measurable`.
+- **Under mark**: `src/elements/areaGround.ts`. `aboveGroundZone(ctx)` läser
+  den färdiga marken (`finishedTerrain`, annars `terrainOf`) 0,30 m utanför
+  ytterväggarna (`outsideSide`) var 0,25 m och lägger en remsa från väggens
+  utsida till 6 m in från insidan där golvet ligger över marken; vid
+  väggens ände över hörnet, och i ett invändigt hörn 6 m till. Null när
+  golvet ligger över marken längs alla ytterväggar (eller marken saknas).
+- **Delarna**: `areaParts(ctx, el)` i `areaCalc.ts` ger `AreaPart` (`kind`,
+  `code`, `region`): zonen och resten (BOA → BIA(u), andra (o) och (u)), och
+  med `heightSplit` H och L. `btaParts` likadant för BTA. Förteckningen
+  (`itemsOf` i `repr/schedules.ts`) gör en rad per del (`Item.part`), så att
+  grupperingen per areaslag och smarttexten (`areaTotals.ts`) räknar BIA(u)
+  som BIA; BRA räknas per objekt, en gång.
+- **OPA**: en egen kontur minus `outerContour`, utan avdrag. Verktyget tar
+  takets kontur (`outlineRing`) under klicket som start (`AreaTool.roofAt`).
+
 ## Areor (0.12.3, format 28)
 
 - **Beräkningen**: `src/elements/areaCalc.ts`, efter SS 21054:2020 (läs
@@ -706,7 +734,7 @@ förut; vid nästa huvudversion flyttas de klara till arkivet.
   också hålen (pelarna) inåt. En egen kontur: väggar som skär kanten räknas
   bort helt.
 - **Obs:** `intersection(a, [b, c])` i `geometry/boolean.ts` ger det som
-  ligger i *alla* ytorna. Klipp mot flera med `clipTo` i `areaCalc.ts`.
+  ligger i *alla* ytorna. Klipp mot flera med `clipTo` i `areaGeom.ts`.
 - **Objektet**: `src/elements/area.ts` (`Area`, `AreaParams`: `kind`,
   `seeds`, `outline`, `noDeduct`, `func`, `belong`, `temp`, `labelAt`).
   Ritas med `planBatch` (BYA och BTA först) bara när vyns `hide` har

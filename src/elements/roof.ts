@@ -53,6 +53,12 @@ export interface RoofParams extends Partial<FillParams> {
   eaveCut?: EdgeCut;
   /** Kanternas egna snitt (0.10.2), kända igen på kantens hörn. */
   edgeCuts?: EdgeCutOverride[];
+  /**
+   * Takkupa (0.12.4): inom konturen gäller det här taket i stället för taken
+   * under det när rumshöjden räknas för areorna (SS 21054 5.14). Taket under
+   * kapas inte i planen och 3D.
+   */
+  dormer?: true;
 }
 
 /** En del av takfallet med plan för under- och ovansida (en kon delas i plana bitar). */

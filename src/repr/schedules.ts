@@ -16,7 +16,7 @@ import { spaceOutline, roomNumbersFor, type SpaceParams } from '../elements/room
 import { areaOf } from '../elements/space';
 import { createContext } from './context';
 import { columnName, writeXlsx, type XlsxCell, type XlsxSheet } from '../formats/xlsxWrite';
-import { AREA_KINDS, BRA_KINDS, COMPUTED_KINDS, areaCode, areaRegion, areaValue, btaRegion, byaRegion, groundStorey, ringsArea, roundArea, type AreaParams } from '../elements/areaCalc';
+import { AREA_KINDS, BRA_KINDS, COMPUTED_KINDS, areaParts, areaRegion, btaParts, byaRegion, groundStorey, ringsArea, roundArea, type AreaParams, type AreaPart } from '../elements/areaCalc';
 
 /**
  * Förteckningens rader (0.12.2), räknade ur modellen: en rad per objekt
@@ -65,8 +65,10 @@ interface Item {
   el: Element;
   ctx: PlanContext;
   gate?: NonNullable<RailingParams['gates']>[number];
-  /** En framräknad area (0.12.3): BYA, BTA eller BRA på våningen, i m² med en decimal. */
-  gen?: { kind: string; value: number };
+  /** En framräknad area (0.12.3): BYA, BTA eller BRA på våningen, i m² med en decimal, och beteckningen (BTA(o) …). */
+  gen?: { kind: string; value: number; code?: string };
+  /** Areaobjektets del (0.12.4): BIA(u) bortom 6-meterszonen, BOA:L under 2,10 m … */
+  part?: AreaPart;
 }
 
 /** Det som räknas en gång för hela förteckningen. */
@@ -125,15 +127,16 @@ function cellOf(src: ScheduleSource, field: string, it: Item, sh: Shared): Cell 
     case 'Area': {
       const g = it.gen;
       const p = g ? null : ctx.params<AreaParams>(el);
+      const part = it.part ?? (g ? undefined : areaParts(ctx, el)[0]);
       switch (field) {
         case 'Areaslag':
-          return { text: g?.kind ?? p!.kind };
+          return { text: g?.kind ?? part!.kind };
         case 'Beteckning':
-          return { text: g?.kind ?? areaCode(p!) };
+          return { text: g ? (g.code ?? g.kind) : part!.code };
         case 'Funktion':
           return { text: p?.func?.trim() ?? '' };
         case 'Area': {
-          const v = g ? g.value : areaValue(ctx, el);
+          const v = g ? g.value : roundArea(ringsArea(part!.region), 1);
           return { text: nf(1).format(v), value: v };
         }
       }
@@ -224,6 +227,12 @@ function itemsOf(doc: ProjectDoc, s: Schedule, state: Id, ctxFor: (storey: Id) =
     }
     // BTA- och BYA-objekten visar bara konturen; areorna räknas fram nedan.
     if (s.source === 'Area' && COMPUTED_KINDS.includes((el.params as unknown as AreaParams).kind)) continue;
+    if (s.source === 'Area') {
+      // En rad per del (0.12.4): BOA och BIA(u), BOA:H och BOA:L …
+      const ctx = ctxFor(el.storey);
+      for (const part of areaParts(ctx, el)) out.push({ el, ctx, part });
+      continue;
+    }
     out.push({ el, ctx: ctxFor(el.storey) });
   }
   if (s.source === 'Area') out.push(...computedAreas(doc, out, storeys, ctxFor));
@@ -241,13 +250,19 @@ function computedAreas(doc: ProjectDoc, items: readonly Item[], storeys: Set<Id>
     if (storeys && !storeys.has(st.id)) continue;
     const ctx = ctxFor(st.id);
     const el = { id: `gen:${st.id}`, type: 'Area', storey: st.id, states: [], tags: [], props: {}, params: {} } as Element;
-    const bta = roundArea(ringsArea(btaRegion(ctx)), 1);
     if (st.id === ground) {
       const bya = roundArea(ringsArea(byaRegion(ctx)), 1);
       if (bya > 0) out.push({ el, ctx, gen: { kind: 'BYA', value: bya } });
     }
-    if (bta > 0) out.push({ el, ctx, gen: { kind: 'BTA', value: bta } });
-    const bra = items.filter((i) => !i.gen && i.el.storey === st.id && BRA_KINDS.includes((i.el.params as unknown as AreaParams).kind)).reduce((a, i) => a + ringsArea(areaRegion(i.ctx, i.el)), 0);
+    // BTA(o) och BTA(u) på en våning delvis under mark (0.12.4).
+    for (const b of btaParts(ctx)) {
+      const bta = roundArea(ringsArea(b.region), 1);
+      if (bta > 0) out.push({ el, ctx, gen: { kind: 'BTA', value: bta, code: b.code } });
+    }
+    const counted = new Set<string>();
+    const bra = items
+      .filter((i) => !i.gen && i.el.storey === st.id && BRA_KINDS.includes((i.el.params as unknown as AreaParams).kind) && !counted.has(i.el.id) && counted.add(i.el.id))
+      .reduce((a, i) => a + ringsArea(areaRegion(i.ctx, i.el)), 0);
     if (bra > 0) out.push({ el, ctx, gen: { kind: 'BRA', value: roundArea(bra, 1) } });
   }
   return out;

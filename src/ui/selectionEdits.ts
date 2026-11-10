@@ -231,6 +231,11 @@ export function applyField(store: DocStore, ids: string[], key: string, input: H
     }
     return true;
   }
+  if (scope === 'roof' && name === 'dormer') {
+    const on = (input as HTMLInputElement).checked;
+    patchEach(store, ids, on ? 'Takkupa' : 'Inte takkupa', () => ({ dormer: on ? true : undefined }));
+    return true;
+  }
   if (scope === 'roof' && name === 'heightAt') {
     // Taket ligger kvar; höjden räknas om till den andra sidan (0.10).
     const top = input.value === 'top';

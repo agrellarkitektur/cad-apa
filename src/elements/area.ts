@@ -2,7 +2,7 @@ import { AREA_NO_FILL, areaColorOf, areaSettingsOf, areaText } from '../core/gen
 import type { Color } from '../core/graphics';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { pointInRings } from '../geometry/vec';
-import { AREA_NAMES, areaCode, areaRegion, areaValue, COMPUTED_KINDS, largestRing, ringsArea, roundArea, type AreaParams } from './areaCalc';
+import { AREA_NAMES, areaCode, areaParts, areaRegion, areaValue, COMPUTED_KINDS, largestRing, ringsArea, roundArea, type AreaParams } from './areaCalc';
 import type { ElementType, PlanContext } from './registry';
 import type { Element } from '../core/model';
 import { centroidOf } from './rooms';
@@ -68,7 +68,10 @@ function areaPrims(el: Element, ctx: PlanContext): Primitive[] {
     const line = h * 1.6 * ctx.scale;
     const tag = { objectId: el.id, objectType: 'Area', part: 'areatext' };
     out.push({ kind: 'text', at: [at[0], at[1] + line * 0.15], text: title, height: h, bold: true, align: 'middle', pen: { weight: 0.18, color: 'ink' }, origin: tag });
-    out.push({ kind: 'text', at: [at[0], at[1] - line * 0.85], text: areaText(m2, decimals), height: h, align: 'middle', pen: { weight: 0.18, color: 'ink' }, origin: tag });
+    // Delarna för sig när objektet redovisas i flera (0.12.4): BOA och BIA(u), BOA:H och BOA:L …
+    const parts = COMPUTED_KINDS.includes(p.kind) ? [] : areaParts(ctx, el);
+    const lines = parts.length > 1 ? parts.map((x) => `${x.code} ${areaText(roundArea(ringsArea(x.region), decimals), decimals)}`) : [areaText(m2, decimals)];
+    lines.forEach((text, i) => out.push({ kind: 'text', at: [at[0], at[1] - line * (0.85 + i)], text, height: h, align: 'middle', pen: { weight: 0.18, color: 'ink' }, origin: tag }));
     return out;
   }
 }

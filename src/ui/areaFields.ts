@@ -4,7 +4,7 @@ import type { Element, ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
 import type { ViewStates } from '../core/states';
 import { defaultSheet } from '../core/viewCategories';
-import { AREA_KINDS, AREA_NAMES, COMPUTED_KINDS, areaCode, areaRegion, areaValue, largestRing, ringsArea, roundArea, type AreaKind, type AreaParams } from '../elements/areaCalc';
+import { AREA_KINDS, AREA_NAMES, COMPUTED_KINDS, areaCode, areaParts, areaRegion, areaValue, largestRing, ringsArea, roundArea, type AreaKind, type AreaParams } from '../elements/areaCalc';
 import { resolveParams } from '../elements/registry';
 import { createContext } from '../repr/context';
 import { escapeHtml } from './labels';
@@ -28,12 +28,21 @@ export function areaFieldsMarkup(doc: ProjectDoc, el: Element, view: ViewStates)
         <label class="field"><span>Tillhörighet</span><select data-key="area:belong">${opt('', '–', p.belong)}${opt('e', 'e – enskild', p.belong)}${opt('g', 'g – gemensam', p.belong)}</select></label>
         <label class="field"><span>Temperatur</span><select data-key="area:temp">${opt('', '–', p.temp)}${opt('t', '(t) – temperaturreglerad', p.temp)}${opt('it', '(it) – icke temperaturreglerad', p.temp)}</select></label>
       </div>
+      ${partsNote(ctx, el)}
+      ${p.kind === 'OPA' ? '<p class="note">OPA räknas utan avdrag, och slutar vid ytterväggens utsida (SS 21054 7.4).</p>' : `<label class="check"><input type="checkbox" data-key="area:height"${p.heightSplit ? ' checked' : ''}> Dela efter rumshöjd <span class="note">H minst 2,10 m och L lägre (18.5)</span></label>`}
       <label class="check"><input type="checkbox" data-key="area:deduct"${p.noDeduct ? '' : ' checked'}> Automatiska avdrag <span class="note">väggar, pelare och schakt tjockare än 0,30 m räknas 0,15 m in från varje sida</span></label>
       ${p.seeds?.length ? `<label class="check"><input type="checkbox" data-key="area:follow" checked> Följer väggarna (${p.seeds.length} ${p.seeds.length === 1 ? 'rum' : 'rum'})</label><p class="note">Shift+klick med verktyget Area lägger till eller tar bort rum. Bocka ur för att rita konturen själv i Modifiera.</p>` : '<p class="note">Egen kontur: ändra punkterna i Modifiera.</p>'}`;
   return `<div class="fields">
       <label class="field"><span>Areaslag</span><select data-key="area:kind">${kinds}</select></label>
       <label class="field"><span>Area</span><input value="${areaText(m2, 1)}" readonly title="${escapeHtml(areaCode(p))}, mätt enligt SS 21054:2020"></label>
     </div>${own}`;
+}
+
+/** Delarna när arean redovisas i flera (0.12.4): bortom 6-meterszonen, H och L. */
+function partsNote(ctx: ReturnType<typeof createContext>['ctx'], el: Element): string {
+  const parts = areaParts(ctx, el);
+  if (parts.length < 2) return '';
+  return `<p class="note">Redovisas som ${parts.map((x) => `${escapeHtml(x.code)} ${areaText(roundArea(ringsArea(x.region), 1), 1)}`).join(', ')}.</p>`;
 }
 
 /** Ett ändrat fält; false när värdet inte gick att använda. */
@@ -55,6 +64,11 @@ export function applyAreaField(store: DocStore, ids: string[], name: string, inp
   }
   if (name === 'temp') {
     updateParams(store, ids, { temp: v === 't' || v === 'it' ? v : undefined }, 'Areans temperaturreglering');
+    return true;
+  }
+  if (name === 'height') {
+    const on = (input as HTMLInputElement).checked;
+    updateParams(store, ids, { heightSplit: on ? true : undefined }, on ? 'Dela efter rumshöjd' : 'Inte efter rumshöjd');
     return true;
   }
   if (name === 'deduct') {
