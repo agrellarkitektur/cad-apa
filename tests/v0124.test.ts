@@ -8,7 +8,8 @@ import { areaParts, areaRegion, btaParts, btaRegion, ringsArea, roundArea } from
 import { createContext } from '../src/repr/context';
 import { scheduleTable } from '../src/repr/schedules';
 import { sampleProject } from '../src/sample/sampleProject';
-import { onSlope } from './projekt';
+import { buildPlan } from '../src/repr/plan';
+import { addGround, onSlope } from './projekt';
 
 beforeAll(() => registerBuiltInTypes());
 
@@ -122,6 +123,19 @@ describe('våning delvis under mark (0.12.4)', () => {
     expect(rows.some((r) => r.includes('BTA(u)'))).toBe(true);
     // BIA(u) ligger i gruppen BIA, så att `{BIA}` räknar med den.
     expect(t.groups.find((g) => g.label === 'BIA')?.rows.length).toBe(1);
+  });
+
+  it('stämpeln i planen räknas om när marken ändras (0.12.4.1)', () => {
+    const store = onSlope();
+    addArea(store, 'A1', { kind: 'BOA', seeds: allSeeds(store) });
+    const view = { state: defaultState(store.doc), hide: ['+Area'] };
+    const stamps = () => buildPlan(store.doc, storeyOf(store), view).prims.flatMap((p) => (p.kind === 'text' && /B[OI]A/.test(p.text) ? [p.text] : []));
+    expect(stamps().some((t) => t.startsWith('BIA(u)'))).toBe(true);
+    // En markyta över golvet runt hela huset: ingen fasad ger längre någon zon.
+    addGround(store, { kind: 'area', outline: [[-20000, -20000], [30000, -20000], [30000, 30000], [-20000, 30000]], height: 1500 });
+    const fresh = buildPlan(structuredClone(store.doc), storeyOf(store), view).prims.flatMap((p) => (p.kind === 'text' && /B[OI]A/.test(p.text) ? [p.text] : []));
+    expect(stamps()).toEqual(fresh);
+    expect(fresh.some((t) => t.startsWith('BOA '))).toBe(false);
   });
 
   it('på plan mark ligger allt ovan mark', () => {

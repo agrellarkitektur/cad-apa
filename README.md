@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.4** (alfa), Areor under snedtak och mark; nästa är **0.12.5 Uppställningen**.
+**0.12.4.1** (alfa), en buggfix efter Areor under snedtak och mark; nästa är **0.12.5 Uppställningen**.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,15 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.12.4.1, buggfix (samma filformat, 28):
+- **Areastämpeln följer marken**: på en våning delvis under mark stod den
+  gamla delningen (t.ex. BOA och BIA(u)) kvar i planen när ett markobjekt
+  ändrades, tills något annat ritades om. Förteckningen och smarttexten
+  räknade rätt hela tiden
+- **Publiceringen** kontrollerar webbhotellets certifikat (`security:
+  strict`), och uppladdningssteget är låst på en bestämd commit
+- Exemplet för `feedback-config.php` nedan har exempeladresser
 
 Version 0.12.4, Areor under snedtak och mark (samma filformat, 28; projekt
 från 0.11.8 öppnas; nya valfria fält: areans `heightSplit` och takets
@@ -3218,7 +3227,7 @@ följer med i mappen `cad-apa`. Vart det skickas står inte i koden (den är
 1. Skapa en textfil som heter `feedback-config.php` med innehållet
 
    ```php
-   <?php return ['to' => 'ca@agrellarkitektur.se', 'from' => 'kontakt@agrellarkitektur.se'];
+   <?php return ['to' => 'du@dindomän.se', 'from' => 'noreply@dindomän.se'];
    ```
 
    `to` är den som får synpunkterna. `from` ska vara en adress som finns, på

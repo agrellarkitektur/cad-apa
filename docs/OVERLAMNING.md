@@ -6,10 +6,22 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 10 november 2026, efter 0.12.4 Areor under snedtak och mark.
+README. Senast: 11 november 2026, efter 0.12.4.1 (buggfix efter en granskning).
 
 ## Läget
 
+- **0.12.4.1 är klar** (11 november, buggfix efter en granskning av repot
+  och projektdokumenten; samma format 28). Areastämpeln i planen räknades
+  inte om när ett markobjekt ändrades (`planReads` i `src/elements/area.ts`
+  saknade `Ground` och `Terrain`; test i `tests/v0124.test.ts`).
+  `publicera.yml` har `security: strict` och uppladdningssteget låst på en
+  commit; **går en publicering inte igenom på certifikatet**, skriv
+  leverantörens värdnamn i secret `FTP_SERVER` (inte tillbaka till `loose`
+  utan att fråga). README:s exempel för `feedback-config.php` har
+  exempeladresser. Testerna: 997. Kvar från granskningen, till
+  *Granskning efter 0.12*: byggverktygens sårbarhetsvarningar (via
+  `vite-plugin-pwa`, följer inte med i appen), huvudpaketet på 1,77 MB och
+  README:s längd (äldre versioner till `docs/arkiv/`).
 - **0.12.4 Areor under snedtak och mark är klar** (10 november, samma
   format 28; valfria fält areans `heightSplit`, takets `dormer`), byggd i
   en session efter Carl Augusts svar A–E: A takkupan som kryss (prova), B
@@ -62,10 +74,10 @@ README. Senast: 10 november 2026, efter 0.12.4 Areor under snedtak och mark.
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.12.4 pushad till `main` 10 november (se git och `gh run
+- **Publicerad:** 0.12.4.1 pushad till `main` 11 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.12.4` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.12.4.1` i `engine.ts`, `package.json` och
   `package-lock.json`. Nya funktioner får tredje siffran (0.12.4 …); **den
   fjärde siffran är för snabba buggfixar** utan nya funktioner (Carl August
   10 november). En granskning höjer inte numret, eller får en fjärde siffra

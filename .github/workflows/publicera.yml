@@ -55,7 +55,7 @@ jobs:
           echo "path=$DIR" >> "$GITHUB_OUTPUT"
 
       - name: Ladda upp till webbhotellet
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        uses: SamKirkland/FTP-Deploy-Action@8e83cea8672e3fbcbb9fdafff34debf6ae4c5f65 # v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
@@ -63,8 +63,10 @@ jobs:
           server-dir: ${{ steps.dir.outputs.path }}
           local-dir: ./dist/
           protocol: ftps
-          # Webbhotellets certifikat gäller ofta värdnamnet hos leverantören,
-          # inte det egna domännamnet; anslutningen krypteras ändå.
-          security: loose
+          # Serverns certifikat kontrolleras (0.12.4.1), så att lösenordet inte
+          # kan fångas upp på vägen. Gäller certifikatet ett annat värdnamn
+          # (leverantörens, inte det egna domännamnet): skriv det namnet i
+          # FTP_SERVER i stället för att gå tillbaka till `loose`.
+          security: strict
           exclude: |
             **/feedback-config.php

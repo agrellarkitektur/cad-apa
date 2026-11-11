@@ -21,7 +21,7 @@ export const AREA_SHOW_KEY = 'Area';
  */
 export const areaType: ElementType<AreaParams> = {
   type: 'Area',
-  planReads: ['Wall', 'Door', 'Window', 'Slab', 'Shape2D', 'Area', 'Profile', 'Stair', 'Roof'],
+  planReads: ['Wall', 'Door', 'Window', 'Slab', 'Shape2D', 'Area', 'Profile', 'Stair', 'Roof', 'Ground', 'Terrain'],
   label: 'Area',
   labelPlural: 'Areor',
   drawOrder: 42,
