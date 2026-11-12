@@ -6,7 +6,7 @@ import type { DocStore, TxBuilder } from './store';
 /**
  * Förteckningarna (0.12.2): en tabell ur objekten i modellen, som kan
  * visas för sig, läggas på ett blad och exporteras som CSV. En förteckning
- * har en **källa** (rum, dörrar, fönster, grindar eller det generella
+ * har en **källa** (rum, areor, dörrar, fönster eller det generella
  * litterat), **kolumner** ur källans fält eller smarttext, **sortering**,
  * **gruppering** och en **summarad** för kolumnerna med tal.
  *
@@ -16,7 +16,7 @@ import type { DocStore, TxBuilder } from './store';
  * nytt formatnummer.
  */
 
-export type ScheduleSource = 'Space' | 'Area' | 'Door' | 'Window' | 'Gate' | 'Label';
+export type ScheduleSource = 'Space' | 'Area' | 'Door' | 'Window' | 'Label';
 
 export interface ScheduleColumn {
   /** Fältets namn: ett av källans (`SCHEDULE_FIELDS`) eller ett eget, som läses som smarttext. */
@@ -36,11 +36,11 @@ export interface Schedule {
   sort: { field: string; desc?: boolean }[];
   /** Fältet raderna grupperas efter, med en rubrikrad och en delsumma per grupp. */
   group?: string;
-  /** En rad per littera med antalet (dörrar, fönster och grindar). */
+  /** En rad per littera med antalet (dörrar och fönster). */
   perLittera?: boolean;
   /** Tillståndet som räknas; utelämnat = projektets förslag. */
   state?: Id;
-  /** Bara de här våningarna; utelämnad = alla (och Platsen för grindar). */
+  /** Bara de här våningarna; utelämnad = alla (och Platsen för littera). */
   storeys?: Id[];
   /** Det generella litterat: bara den här sorten (t.ex. *Brandcell*); utelämnad = alla. */
   labelSort?: string;
@@ -72,11 +72,10 @@ export const SOURCE_NAMES: Record<ScheduleSource, string> = {
   Area: 'Areor',
   Door: 'Dörrar',
   Window: 'Fönster',
-  Gate: 'Grindar',
   Label: 'Littera',
 };
 
-export const SOURCES: readonly ScheduleSource[] = ['Space', 'Area', 'Door', 'Window', 'Gate', 'Label'];
+export const SOURCES: readonly ScheduleSource[] = ['Space', 'Area', 'Door', 'Window', 'Label'];
 
 /** Ett fält i en källa: namnet och om det är ett tal (kan summeras, högerställs). */
 export interface ScheduleField {
@@ -94,7 +93,6 @@ export const SCHEDULE_FIELDS: Record<ScheduleSource, readonly ScheduleField[]> =
   Area: [txt('Areaslag'), txt('Beteckning'), txt('Funktion'), txt('Våning'), num('Area'), txt('Status')],
   Door: [txt('Littera'), num('Antal'), txt('Nummer'), txt('Typ'), txt('Beskrivning'), txt('Våning'), txt('Modulmått'), txt('Karmyttermått'), txt('Hålmått'), txt('Hängning'), txt('Status')],
   Window: [txt('Littera'), num('Antal'), txt('Typ'), txt('Beskrivning'), txt('Våning'), txt('Modulmått'), txt('Karmyttermått'), txt('Hålmått'), txt('Hängning'), num('Bröstningshöjd'), txt('Status')],
-  Gate: [txt('Littera'), num('Antal'), txt('Räcke'), txt('Våning'), num('Bredd'), num('Höjd'), txt('Hängning'), txt('Lås'), txt('Status')],
   Label: [txt('Nummer'), txt('Sort'), txt('Text'), txt('Våning'), num('Antal objekt'), txt('Status')],
 };
 
@@ -124,8 +122,6 @@ export function defaultSchedule(source: ScheduleSource): Omit<Schedule, 'id' | '
       return { source, columns: cols(['Littera', 'Antal', 'Modulmått', 'Karmyttermått', 'Hängning', 'Typ'], ['Antal']), sort: [{ field: 'Littera' }], perLittera: true };
     case 'Window':
       return { source, columns: cols(['Littera', 'Antal', 'Modulmått', 'Karmyttermått', 'Bröstningshöjd', 'Hängning'], ['Antal']), sort: [{ field: 'Littera' }], perLittera: true };
-    case 'Gate':
-      return { source, columns: cols(['Littera', 'Antal', 'Bredd', 'Höjd', 'Hängning', 'Räcke'], ['Antal']), sort: [{ field: 'Littera' }], perLittera: true };
     case 'Label':
       return { source, columns: cols(['Nummer', 'Sort', 'Text', 'Våning']), sort: [{ field: 'Sort' }, { field: 'Nummer' }] };
   }
@@ -133,7 +129,7 @@ export function defaultSchedule(source: ScheduleSource): Omit<Schedule, 'id' | '
 
 /** Förteckningens namn som förval: *Rumsförteckning*, *Dörrförteckning* …, med nummer om namnet är taget. */
 export function defaultScheduleName(doc: Pick<ProjectDoc, 'schedules'>, source: ScheduleSource): string {
-  const base = { Space: 'Rumsförteckning', Area: 'Areaförteckning', Door: 'Dörrförteckning', Window: 'Fönsterförteckning', Gate: 'Grindförteckning', Label: 'Litteraförteckning' }[source];
+  const base = { Space: 'Rumsförteckning', Area: 'Areaförteckning', Door: 'Dörrförteckning', Window: 'Fönsterförteckning', Label: 'Litteraförteckning' }[source];
   const taken = new Set((doc.schedules ?? []).map((s) => s.name));
   if (!taken.has(base)) return base;
   let n = 2;

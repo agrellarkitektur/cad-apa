@@ -27,7 +27,7 @@ export function scheduleFormMarkup(doc: ProjectDoc, id: string): string {
   const t = cachedTable(doc, s);
   const storeys = [...buildingStoreys(doc)].sort((a, b) => b.elevation - a.elevation);
   const site = doc.storeys.find((x) => x.site);
-  const places = s.source === 'Gate' || s.source === 'Label' ? [...(site ? [site] : []), ...storeys] : storeys;
+  const places = s.source === 'Label' ? [...(site ? [site] : []), ...storeys] : storeys;
   const on = (sid: string) => !s.storeys?.length || s.storeys.includes(sid);
   const unused = sourceFields(doc, s.source).filter((f) => !s.columns.some((c) => c.field === f.name));
   const sorts = [...new Set(Object.values(doc.elements).filter((e) => e.type === 'Label').map((e) => String((e.params as { sort?: string }).sort ?? '').trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'sv'));
@@ -109,7 +109,7 @@ export function scheduleFormMarkup(doc: ProjectDoc, id: string): string {
         ${field('Tillstånd', `<select data-sch="state">${doc.states.map((x) => `<option value="${x.id}"${x.id === (s.state ?? defaultState(doc)) ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`)}
         ${s.source === 'Label' ? field('Sort', `<select data-sch="labelSort"><option value="">Alla</option>${sorts.map((x) => `<option${x.toLowerCase() === s.labelSort?.toLowerCase() ? ' selected' : ''}>${esc(x)}</option>`).join('')}</select>`) : ''}
       </div>
-      ${s.source === 'Door' || s.source === 'Window' || s.source === 'Gate' ? `<label class="check"><input type="checkbox" data-sch="perLittera"${s.perLittera ? ' checked' : ''}> En rad per littera, med antal</label>` : ''}
+      ${s.source === 'Door' || s.source === 'Window' ? `<label class="check"><input type="checkbox" data-sch="perLittera"${s.perLittera ? ' checked' : ''}> En rad per littera, med antal</label>` : ''}
       ${s.source === 'Area' ? `<label class="check"><input type="checkbox" data-sch="perLittera"${s.perLittera ? ' checked' : ''}> En rad per beteckning, funktion och våning</label><p class="note">BYA, BTA och BRA räknas fram per våning; delsummorna i hela m², mätt enligt SS 21054:2020.</p>` : ''}
       ${layout}
       ${storeysMarkup}

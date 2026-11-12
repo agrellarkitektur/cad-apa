@@ -1790,14 +1790,17 @@ med fälten som rader, och namnbytet.
   Kolumnen är 70 mm bred på bladet.
 - **På bladet** bryts den på bredden (band under varandra), inte på höjden
   som tabellen. *Största bredd* på bladvyn.
-- **Grindförteckningen** från 0.12.2 ligger kvar (som tabell).
+- **Grindförteckningen** från 0.12.2 togs bort i 0.12.5.1 (Carl August 12
+  november: "Ta bort grindförteckning från 0.12.2"): källan `Gate` finns
+  inte längre, en sådan förteckning i en äldre fil läses inte in (ingen
+  migrering före frysen).
 
 **Inte gjort i 0.12.5:** markförändringarnas förteckning (0.12.6);
 vägghålens förteckning; ritningen per hängning i samma kolumn; egna rader
 per förteckning (annan ordning än fältmallens); radbrytning i en ruta med
 lång text (kolumnen blir bredare); löpnummer per objekt; *Karmtyp*;
 förteckningarna och uppställningarna som vytyper i stilboken med egna
-pennor (efter piloten); att ta bort grindförteckningen (frågan ställd).
+pennor (efter piloten).
 
 ### 0.12.6 Markförändringar
 

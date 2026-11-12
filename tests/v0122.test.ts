@@ -59,7 +59,7 @@ describe('förteckningarna (0.12.2)', () => {
     expect(win.total![1].value).toBe(6);
   });
 
-  it('grindarna och det generella litterat', () => {
+  it('det generella litterat; grindarna har ingen förteckning längre (0.12.5.1)', () => {
     const store = new DocStore(sampleProject());
     const st = store.doc.states.map((s) => s.id);
     const storey = store.doc.storeys[0].id;
@@ -68,8 +68,8 @@ describe('förteckningarna (0.12.2)', () => {
       tx.putElement({ id: 'L1', type: 'Label', storey, states: st, tags: [], props: {}, params: { pos: [0, 0], text: 'BRANDCELL {nr}', sort: 'Brandcell', targets: [] } } as never);
       tx.putElement({ id: 'L2', type: 'Label', storey, states: st, tags: [], props: {}, params: { pos: [0, 0], text: 'Träd', sort: 'Träd', targets: [] } } as never);
     });
-    const gates = tableOf(store, createSchedule(store, 'Gate'));
-    expect(texts(gates.groups[0].rows)).toEqual([['G01', '2', 'Olika', '', 'Olika', '']]);
+    // En grindförteckning i en äldre fil läses inte in.
+    expect(normalizeSchedule({ id: 'g', source: 'Gate', columns: [{ field: 'Littera' }] })).toBeNull();
     const labels = createSchedule(store, 'Label', { labelSort: 'brandcell' });
     expect(texts(tableOf(store, labels).groups[0].rows)).toEqual([['01', 'Brandcell', 'BRANDCELL 01', 'Plan 1']]);
   });

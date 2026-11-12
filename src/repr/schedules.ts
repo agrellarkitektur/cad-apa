@@ -11,8 +11,6 @@ import { litteraField, ownProp } from '../elements/littera';
 import { openingHinges, openingLitteras, openingMirrored } from '../elements/openingLittera';
 import { openingModelOf, type OpeningObjParams } from '../elements/openingSpec';
 import { openingFigure, type OpeningFigure } from './openingFigure';
-import { gateLittera } from '../elements/railing';
-import type { RailingParams } from '../elements/railingGeometry';
 import type { PlanContext } from '../elements/registry';
 import { spaceOutline, roomNumbersFor, type SpaceParams } from '../elements/rooms';
 import { areaOf } from '../elements/space';
@@ -88,13 +86,11 @@ export const columnTitle = (c: { field: string; title?: string }): string => c.t
 
 const nf = (d: number) => new Intl.NumberFormat('sv-SE', { minimumFractionDigits: d, maximumFractionDigits: d, useGrouping: true });
 const STATUS: Partial<Record<Action, string>> = { new: 'Nytt', existing: 'Befintligt', demolished: 'Rivs' };
-const HANG: Record<string, string> = { right: 'Höger', pair: 'Par', slide: 'Skjut' };
 
-/** Ett objekt (eller en grind i ett räcke) med det som behövs för att läsa dess fält. */
+/** Ett objekt med det som behövs för att läsa dess fält. */
 interface Item {
   el: Element;
   ctx: PlanContext;
-  gate?: NonNullable<RailingParams['gates']>[number];
   /** En framräknad area (0.12.3): BYA, BTA eller BRA på våningen, i m² med en decimal, och beteckningen (BTA(o) …). */
   gen?: { kind: string; value: number; code?: string };
   /** Areaobjektets del (0.12.4): BIA(u) bortom 6-meterszonen, BOA:L under 2,10 m … */
@@ -202,26 +198,6 @@ function cellOf(src: ScheduleSource, field: string, it: Item, sh: Shared): Cell 
       const derived = derivedOpening(field, it, sh);
       if (derived !== null) return derived;
       return { text: fieldValue(el, field) || litteraField(ctx, el, field) };
-    }
-    case 'Gate': {
-      const g = it.gate!;
-      switch (field) {
-        case 'Littera':
-          return { text: gateLittera(doc, g) };
-        case 'Antal':
-          return { text: '1', value: 1 };
-        case 'Räcke':
-          return { text: (el.definition ? doc.definitions[el.definition]?.name : undefined) ?? el.name ?? '' };
-        case 'Bredd':
-          return mm(g.width);
-        case 'Höjd':
-          return mm(g.own ? g.height : undefined);
-        case 'Hängning':
-          return { text: HANG[g.hang ?? ''] ?? 'Vänster' };
-        case 'Lås':
-          return { text: g.lock ?? '' };
-      }
-      return { text: ownProp([el.props], field) };
     }
     case 'Label':
       switch (field) {
@@ -371,7 +347,7 @@ function litteraTable(doc: ProjectDoc, s: Schedule, items: readonly Item[], sh: 
 function itemsOf(doc: ProjectDoc, s: Schedule, state: Id, ctxFor: (storey: Id) => PlanContext): Item[] {
   const sheets = new Set(doc.sheets.map((x) => x.id));
   const storeys = s.storeys?.length ? new Set(s.storeys) : null;
-  const type = s.source === 'Gate' ? 'Railing' : s.source;
+  const type = s.source;
   const out: Item[] = [];
   for (const el of Object.values(doc.elements)) {
     if (el.type !== type) continue;
@@ -380,10 +356,6 @@ function itemsOf(doc: ProjectDoc, s: Schedule, state: Id, ctxFor: (storey: Id) =
     // Littera följer inte alltid tillstånden (de saknar dem då); rummen och öppningarna gör det.
     if (!el.states.includes(state) && !(s.source === 'Label' && !el.states.length)) continue;
     if (s.source === 'Label' && s.labelSort && (el.params as { sort?: string }).sort?.trim().toLowerCase() !== s.labelSort.trim().toLowerCase()) continue;
-    if (s.source === 'Gate') {
-      for (const gate of (el.params as RailingParams).gates ?? []) out.push({ el, ctx: ctxFor(el.storey), gate });
-      continue;
-    }
     // BTA- och BYA-objekten visar bara konturen; areorna räknas fram nedan.
     if (s.source === 'Area' && COMPUTED_KINDS.includes((el.params as unknown as AreaParams).kind)) continue;
     if (s.source === 'Area') {

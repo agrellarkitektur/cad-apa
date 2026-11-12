@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.5** (alfa), Förteckningen per littera; nästa är **0.12.6 Markförändringar**.
+**0.12.5.1** (alfa), Förteckningen per littera utan grindförteckningen; nästa är **0.12.6 Markförändringar**.
 
 ## Vad som fungerar
 
@@ -1149,6 +1149,13 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
 
+Version 0.12.5.1 (samma filformat, 28):
+- **Grindförteckningen är borttagen** (*Ny: Grindar* under Förteckningar,
+  från 0.12.2). Grindar sätts ut i staket och redovisas i planen med
+  littera, som förut; behövs en ritning av en grind görs den för sig. En
+  grindförteckning i ett äldre projekt läses inte in, och låg den på ett
+  blad står *Vyn finns inte längre* där tills bladvyn tas bort
+
 Version 0.12.5, Förteckningen per littera (samma filformat, 28; projekt från
 0.11.8 öppnas; nya valfria fält: förteckningens `layout`, `figureScale`,
 `noFigure` och `hideEmpty`, och bladvyns `maxWidth`):
@@ -1185,8 +1192,8 @@ Version 0.12.5, Förteckningen per littera (samma filformat, 28; projekt från
   rader
 - *Uppställd* i egenskaperna byter mellan *Per littera* och *Som tabell*
   (tabellen från 0.12.2, med kolumner, sortering och summor)
-- Grindarna får ingen egen förteckning per littera; grindförteckningen från
-  0.12.2 finns kvar som tabell
+- Grindarna får ingen egen förteckning per littera (grindförteckningen från
+  0.12.2 togs bort i 0.12.5.1)
 - Versionerna efter heter nu 0.12.6 (markförändringar), 0.12.7 (IFC),
   0.12.8 (utgåvor och PM) och 0.12.9 (3D-vyer)
 

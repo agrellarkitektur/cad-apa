@@ -806,6 +806,9 @@ förut; vid nästa huvudversion flyttas de klara till arkivet.
 - **Föreskrifterna**: `project.openingSchedule.notes[kind]`, skrivs med
   `data-sch="notes"` i förteckningens form.
 - **Tester**: `tests/v0125.test.ts`.
+- **Grindarna** (0.12.5.1): källan `Gate` är borttagen ur
+  `ScheduleSource`; `normalizeSchedule` släpper en sådan förteckning ur en
+  äldre fil.
 
 ## Förteckningar (0.12.2, format 28)
 

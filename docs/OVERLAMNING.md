@@ -6,7 +6,7 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 12 november 2026, efter 0.12.5 (Förteckningen per littera).
+README. Senast: 12 november 2026, efter 0.12.5.1 (Förteckningen per littera; grindförteckningen borttagen).
 
 ## Läget
 
@@ -27,10 +27,14 @@ README. Senast: 12 november 2026, efter 0.12.5 (Förteckningen per littera).
   badrum) och finns inte i appen än; säg aldrig uppställning om en
   förteckning. Bytt i appen (*Förteckningens fält*), README, PLAN.md,
   UTVECKLING.md och projektdokumenten.
-- **Grindarna** ska inte ha någon förteckning per littera (Carl August:
-  grindar sätts ut i staket och redovisas i planen, det räcker).
-  Grindförteckningen från 0.12.2 ligger kvar som tabell; frågan om den ska
-  bort är ställd.
+- **0.12.5.1** (12 november): **grindförteckningen från 0.12.2 är
+  borttagen** på Carl Augusts begäran (källan `Gate`). Grindar sätts ut i
+  staket och redovisas i planen, det räcker; en grind ritas vid behov för
+  sig. En grindförteckning i en äldre fil läses inte in. Testerna: 1003.
+  **Kvar att rätta:** `cad-apa-synpunkter.md` säger i stycket om 0.12.5 att
+  grindförteckningen finns kvar som tabell; rätta det nästa gång filen
+  skrivs. `cad-apa-dorrar-fonster-utredning.md` säger fortfarande
+  *uppställningen* (inte omskriven).
 - **Märks i hans ritningar efter 0.12.5:** *Ny: Fönster* eller *Dörrar*
   under Förteckningar ger förteckningen per littera. De framräknade fälten
   (utförande, öppningssätt, öppningsbredd och -höjd, poster, spröjs,
@@ -100,10 +104,10 @@ README. Senast: 12 november 2026, efter 0.12.5 (Förteckningen per littera).
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.12.5 pushad till `main` 12 november (se git och `gh run
+- **Publicerad:** 0.12.5.1 pushad till `main` 12 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.12.5` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.12.5.1` i `engine.ts`, `package.json` och
   `package-lock.json`. Nya funktioner får tredje siffran (0.12.4 …); **den
   fjärde siffran är för snabba buggfixar** utan nya funktioner (Carl August
   10 november). En granskning höjer inte numret, eller får en fjärde siffra
@@ -248,8 +252,6 @@ om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.12.5, 0.12.4, 0.12.3,
 provat.
 
 **0.12.5 efter provning** (Claudes val, se PLAN.md; svaren A–E 12 november)
-- Grindförteckningen från 0.12.2 (tabell) ligger kvar. Ska den bort, nu när
-  grindar inte ska förtecknas?
 - *Utförande* är typens namn och *Öppningsbredd*/*Öppningshöjd* hålets mått
   (modulmåttet + 10). Rätt, eller är öppningsmåttet den fria öppningen?
 - Raderna följer stilbokens fältmall. Behöver en förteckning kunna ha egna
