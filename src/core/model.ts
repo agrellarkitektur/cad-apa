@@ -53,12 +53,12 @@ export interface ProjectInfo {
    * nummer; *Numrera om* skriver om alla.
    */
   openingNumbers?: Record<string, Record<string, number>>;
-  /** Uppställningarna (0.11.8, format 28; vytypen i 0.12): fältmallen och värdena per littera. */
+  /** Dörr- och fönsterförteckningarna (0.11.8, format 28; per littera sedan 0.12.5): ett äldre projekts fältmall, och föreskrifterna. */
   openingSchedule?: OpeningSchedule;
 }
 
 /**
- * Uppställningen av fönster eller dörrar (0.11.8): fälten är rader och varje
+ * Förteckningen över fönster eller dörrar (0.11.8): fälten är rader och varje
  * littera en kolumn. `fields` är fältmallen (ordning och namn kan ändras,
  * nya fält läggas till; `core/openingSchedule.ts`). Värdena bor på objekten
  * (`params.fields`, 0.11.8.1), inte här. `notes` är projektets egna
@@ -195,6 +195,12 @@ export interface Viewport {
    * i varje. Utelämnad = bladets ram.
    */
   maxHeight?: number;
+  /**
+   * En förteckning per littera på bladet (0.12.5): tabellens största bredd på
+   * papperet, mm. En bredare tabell bryts i band under varandra, med fältens
+   * namn i varje. Utelämnad = bladets ram.
+   */
+  maxWidth?: number;
 }
 
 /**

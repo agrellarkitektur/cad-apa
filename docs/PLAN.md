@@ -183,16 +183,17 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.11.7.1 | Profilen, det som inte hanns med: typen i kommandoraden (PROFIL PR03, RÄCKE RÄ02), smartspöt för profilen, Hör till, profilens littera och delprofilernas inre linjer i planen, typerna i stilbokens fil, profildelarna från sidan i räckestypeditorn |
 | 0.11.7.2 | Räckets avslut och spiraltrappan: Böjd nedåt och Mot vägg ritade, varningen för fri höjd under nästa varv, mittpelarens material, stegnumren under Visa |
 | 0.11.7.3 | Trappan och räcket, det som inte hanns med: utomhustrappa, kontrastmarkeringens material, trappans littera i planen, ändprofilen med vridningen kring ankaret, ytor med mönster (rutnät, diagonalt), staketens typer i kommandoraden |
-| 0.11.8 | Format 28: dörrar och fönster, öppningstyperna: karm med rutnät av lufter, förvalda typer med beskrivande namn, dörr- och fönstereditorn, modulmått och fritt karmyttermått med drevmånen, överkant karm, litteraregeln med formel, sparade nummer och Numrera om, verktygen, smartmenyn och egenskaperna, plan, fasad, sektion och 3D ur typen, vägghål och uppställningar i formatet |
-| 0.11.8.1 | Dörrar och fönster, synpunkterna på mockupen: hålet modulmåttet + 10 och karmen − 10 (typens karmavdrag), öppningssymbolen mot gångjärnssidan med egna ställen, skjutpilen, fönstrens slag 15° kring gångjärnet, slagbågarna på alla nivåer och egna kryss, spröjs jämnt eller ritade, dörrbladets indelning med material per fyllning, VG01, uppställningens fältmall och fälten på objekten |
+| 0.11.8 | Format 28: dörrar och fönster, öppningstyperna: karm med rutnät av lufter, förvalda typer med beskrivande namn, dörr- och fönstereditorn, modulmått och fritt karmyttermått med drevmånen, överkant karm, litteraregeln med formel, sparade nummer och Numrera om, verktygen, smartmenyn och egenskaperna, plan, fasad, sektion och 3D ur typen, vägghål och förteckningar i formatet |
+| 0.11.8.1 | Dörrar och fönster, synpunkterna på mockupen: hålet modulmåttet + 10 och karmen − 10 (typens karmavdrag), öppningssymbolen mot gångjärnssidan med egna ställen, skjutpilen, fönstrens slag 15° kring gångjärnet, slagbågarna på alla nivåer och egna kryss, spröjs jämnt eller ritade, dörrbladets indelning med material per fyllning, VG01, förteckningens fältmall och fälten på objekten |
 | 0.11.8.3 | Dörrar och fönster, Smart och vägghål: vägghålen med verktyg och fyra förvalda typer (ventgaller, nisch, genomföring, rent hål), fasaden som arbetsyta, I liv med fönstret under, Lika avstånd, Mitt i rummet, dagsljuset (rummets andel, smarttexten, glas mot fasaden och per väderstreck), blecklutningen och spegelns raka kant |
 | 0.11.8.4 | Granskning efter 0.11.8 (1 november): varningarna uppslagna i föreskrifterna (fri passage, säkerhetsglas, barnsäkra fönster, utrymningsfönster, öppen trappa), `stairGeometry.ts` och `view3d.ts` delade, klickjämförelsen mot stilboken och med profiler, dörrar och fönster |
 | 0.12 | Exportdialogen och PDF: trädet med format per rad, sökrutan, exportuppsättningar (också i mallen, `EXPORT Bygglov`), filnamnsmallar med smarttext, mappen på datorn eller zip, förhandslistan, PDF med lager, dokumentegenskaper, samlad fil med bokmärken och arbetsmaterialstämpel, valbart typsnitt (osifont, Arimo, Josefin Sans, eget TTF/OTF), bild ur 3D-vyn, glTF, GUID på objekten, PDF:erna i en bakgrundstråd |
 | 0.12.3 | Areor enligt SS 21054: areaobjektet ur rummen (Shift+klick) eller en egen kontur, avdragen för tjocka väggar, pelare, schakt, breda öppningar och hål i bjälklaget, BIA:ns väggar mot BOA, BTA och BYA framräknade, Areaplan med färgerna i stilboken, areaförteckningen med BRA, smarttexten `{BOA}` …, DXF-lagren `A-A-…`, XLSX för alla förteckningar |
 | 0.12.4 | Areor under snedtak och mark: det mätvärda vid 1,90/0,60 för BTA och bruksareorna, kryss *Takkupa* på taket, *Dela efter rumshöjd* (H/L), 6-meterszonen ur marken med BIA(u), (o)/(u) och BTA(o)/BTA(u), OPA som egen kontur till ytterväggens utsida med takets kontur som start |
+| 0.12.5 | Förteckningen per littera: dörr- och fönsterförteckningen med fälten som rader och en kolumn per littera, ritningen sedd utifrån med karmyttermåtten, rutor som skriver på alla med litteran, de framräknade fälten, föreskrifterna, band under varandra på bladet; *uppställning* heter nu *förteckning* |
 | 0.12.2 | Förteckningar: rum, dörrar, fönster, grindar och det generella litterat ur modellen, kolumner ur fälten eller smarttext, sortering, gruppering, delsummor och summarad, en rad per littera, tabellen över ritytan, på bladet i 1:1 bruten i delar bredvid varandra, i bladets PDF och DXF, CSV och PDF i Exportera |
 | 0.12.1 | DXF: egen skrivare för AutoCAD 2000 och 2018, vyer i modellens mm och blad i pappers-mm, lagerkartorna SB11 förenklad och fullständig, Enkel och en egen lista ur en DXF, pennan som färg och linjetjocklek, status N/E/R, väggarna delade per vägg, Bärande |
-| 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, uppställningens fält i stilboken (Typer) med taggar och smarttext |
+| 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, förteckningens fält i stilboken (Typer) med taggar och smarttext |
 
 Varje version från 0.8 har ett eget avsnitt med vad som bestämdes, Claudes
 val och det som *inte gjordes*. De ligger i arkivet:
@@ -548,7 +549,7 @@ tavla 4.
 
 **Inte gjort i 0.11.3:** räcket följer inte kanten det lades längs (hål,
 bjälklag, ramp …; bara trappor), grindarna har ingen förteckning
-(0.12, med uppställningarna), spaljéns rutnät och nätet är släta ytor i
+(0.12, med förteckningarna), spaljéns rutnät och nätet är släta ytor i
 3D (inget mönster), grinden ritas inte i fasad och sektion som öppen,
 *Dela sträckan här*, *Fyllning för sträckan…* och *Höjd för sträckan…*
 (tavla 5), grindens lås och stopp är bara text. Klickjämförelsen körd i
@@ -1040,7 +1041,7 @@ och fönstrens nya parametrar, projektets `openingNumbers` och
 ändras med projektet (litteraregeln), två siffror som förval och egen
 formel; C vägghål som tredje grupp; D delningen; E modulmåttet som förval,
 karmyttermåttet fritt; gångjärnen ritas som en markering (två, 100 från
-kanterna); uppställningen som Carl Augusts förteckningar A-42-5-101 och
+kanterna); förteckningen som Carl Augusts förteckningar A-42-5-101 och
 -102 (fälten som rader, en kolumn per littera; tomma fält `-`); typen har
 en föreskrift i stället för tillverkaren; *Numrera om* efter våning,
 fasad N–Ö–S–V och vänster till höger.
@@ -1092,7 +1093,7 @@ ytterdörrar), förhandsvisningen i *Numrera om* (antalet står i
 passage. Planerat: foder, bleck, fönsterbänk, spröjs, beslag, trösklar i
 Detalj, varningarna och tillgänglighetscirkeln (0.11.8.1); fasaden som
 arbetsyta, linjering, dagsljus och vägghålen med verktyg och typer
-(0.11.8.2); uppställningen som vytyp (0.12). Klickjämförelsen körs i
+(0.11.8.2); förteckningen som vytyp (0.12). Klickjämförelsen körs i
 granskningen efter 0.11.8.
 
 ### 0.11.8.1 Dörrar och fönster: synpunkterna på mockupen ✓
@@ -1144,14 +1145,14 @@ kryss för dörrar och fönster; I fältmallen och fälten på objekten.
   under stilboken › Allmänt, där litteraregeln står. Fält som räknas fram
   eller kommer ur typen (antal, hängning, mått, poster, spröjs, karmdjup …)
   är märkta *räknas* och har inget fält på objekten. Egenskaperna skriver
-  på de markerade; uppställningen (0.12) skriver på alla med samma littera
+  på de markerade; förteckningen (0.12) skriver på alla med samma littera
   (`sameLittera`). Ett fält som tas bort ur mallen lämnar värdena kvar på
   objekten.
 
 **Inte gjort i 0.11.8.1:** fyllningar med material i fönstrens lufter
 (panel under glas), sneda fyllningar i bladet, spröjs i planen (Detalj),
 en punkt som visar var en påbörjad spröjslinje började, spröjs som
-profiltyper, uppställningens vytyp (0.12), fälten i litterans smarttext.
+profiltyper, förteckningens vytyp (0.12), fälten i litterans smarttext.
 
 ### 0.11.8.2 Dörrar och fönster: Detalj och beslag ✓
 
@@ -1167,7 +1168,7 @@ tillgänglighetscirkeln; panel med material under glas och spröjs i
 planen (ur 0.11.8.1). Svaren: **A** fönstrens slagbågar släckta från
 början; **B** spröjsens förval står; **C** skrivna mått för Special;
 **D** spegelns profil i Detalj; **E** fältmallen i stilboken (Typer ›
-Uppställningens fält), sökbar med taggar, med smarttexten och *Bara
+Förteckningens fält), sökbar med taggar, med smarttexten och *Bara
 egna*, och den följer med stilbokens export (liksom dörr- och
 fönstertyperna).
 
@@ -1218,7 +1219,7 @@ fönstertyperna).
 **Inte gjort i 0.11.8.2:** lutande bleck (trappstegat som kropp), fodrets
 och bänkens material (som karmen), beslag i planen, handtagets höjd som
 formel, sneda fyllningar i bladet, spröjs som profiltyper, en punkt som
-visar var en påbörjad spröjslinje började, uppställningens vytyp (0.12),
+visar var en påbörjad spröjslinje började, förteckningens vytyp (0.12),
 föreskrifternas siffror uppslagna (varningarna säger *praxis*), kopplingen
 mellan dörr och rum (vilka dörrar som ska vara tillgängliga).
 
@@ -1247,7 +1248,7 @@ B spegelns kant *Fasad* eller *Rak*.
   kant i fasaden är en cirkel med 32 kanter), så kroppen blir lätt
   trappstegad i 3D. Ventgallret är en 8 mm platta i livet på utsidan med
   lameller var 25 mm (inte i Skiss). Vägghålen har ingen hängning, inget
-  foder och ingen uppställning än; *Riv* som för fönster.
+  foder och ingen förteckning än; *Riv* som för fönster.
 - **Krocken** när man sätter in prövas också i höjd, så att ett
   ventgaller kan sitta över ett fönster.
 - **Fasaden som arbetsyta**: draget i vyns x blir läget längs väggen
@@ -1284,7 +1285,7 @@ B spegelns kant *Fasad* eller *Rak*.
   fönster också *I liv med fönstret under*; vägghålen har en egen lista.
   En sparad lista utan *Lika avstånd* får de nya före *Riv*.
 
-**Inte gjort i 0.11.8.3:** vägghålens uppställning och förteckning (med
+**Inte gjort i 0.11.8.3:** vägghålens förteckning (med
 0.12), ventgaller i planen, sneda och runda nischer, ett runt hål som
 riktig cylinder i 3D, *i liv* med kanten i stället för mitten, *Lika
 avstånd* mot väggens ändar, flytt i fasaden med tangentbordet, dagsljuset
@@ -1521,7 +1522,7 @@ provar).
 10 november 2026, en session. Samma format, 28 (valfria fält: projektets
 `schedules` och vyns `maxHeight` på bladet). Carl August 10 november:
 **0.12.2 Förteckningar och areor delas** i 0.12.2 Förteckningar och 0.12.3
-Areor och uppställningen, och resten flyttar ett steg (A); en lång tabell
+Areor och förteckningen, och resten flyttar ett steg (A); en lång tabell
 bryts i delar bredvid varandra på samma blad (C); CSV nu och XLSX i 0.12.3
 med en egen skrivare och zipen som finns (D); rumsförteckningens förval
 nummer, namn, våning, area och rumshöjd (E). Olika beskrivningar kan
@@ -1549,15 +1550,15 @@ utan fel).
 - **Källorna och fälten**: rum (nummer, namn, våning, area, omkrets,
   rumshöjd, dagsljus, glasarea), dörrar och fönster (littera, antal,
   nummer för dörrar, typ, beskrivning, våning, modulmått, karmyttermått,
-  hålmått, hängning, bröstningshöjd för fönster, och uppställningens fält
+  hålmått, hängning, bröstningshöjd för fönster, och förteckningens fält
   ur stilboken), grindar (littera, antal, räcke, bredd, höjd för *Eget här*,
   hängning, lås), littera (nummer, sort, text, antal objekt), och status
   (Nytt, Befintligt) för alla. **Eget fält** läses som smarttext:
   rummens egna egenskaper, dörrarnas och fönstrens litterafält och
-  uppställningens fält, litterans fält ur objekten den pekar på.
-- **Uppställningens framräknade fält** som inte finns i modellen än
+  förteckningens fält, litterans fält ur objekten den pekar på.
+- **Förteckningens framräknade fält** som inte finns i modellen än
   (öppningssätt, utförande, poster, spröjs, karmtyp …) står som `-` tills
-  uppställningen kommer i 0.12.3. *Hängning* är litteraregelns (V, H,
+  förteckningen kommer i 0.12.3. *Hängning* är litteraregelns (V, H,
   sedd som Allmänt › Fönster och dörrar säger).
 - **Förvalen**: rum per nummer med arean summerad; dörrar, fönster och
   grindar en rad per littera med antal summerat, sorterade på littera;
@@ -1588,12 +1589,12 @@ utan fel).
   tusentalsavgränsare, gruppernas rubriker och summor som egna rader.
   Filnamnet `{projekt}_{vy}` som vyernas; undermappen *Förteckningar*.
 
-**Inte gjort i 0.12.2:** areorna enligt SS 21054 och uppställningen av
+**Inte gjort i 0.12.2:** areorna enligt SS 21054 och förteckningen av
 fönster och dörrar med ritningen per littera (0.12.3); förteckningen över
 markförändringarna (0.12.3 eller egen version); XLSX (0.12.3);
 handlingsförteckningen (med utgåvorna, 0.12.5); att förteckningarna följer
 med *Mall för nya projekt…*; mappar för förteckningarna; att skriva i
-tabellen (uppställningens rutor skriver på objekten, 0.12.3); fet stil på
+tabellen (förteckningens rutor skriver på objekten, 0.12.3); fet stil på
 skärmen (osifont har ingen fet, som förut).
 
 ### 0.12.3 Areor ✓
@@ -1601,7 +1602,7 @@ skärmen (osifont har ingen fet, som förut).
 10 november 2026, en session. Samma format, 28 (ny objekttyp `Area` och
 stilbokens valfria `general.areas`). Carl August 10 november, F–J (efter
 A–E samma dag): **0.12.3 delas** i 0.12.3 Areor (med XLSX), 0.12.4 Areor
-under snedtak och mark och 0.12.5 Uppställningen, och resten flyttar (F).
+under snedtak och mark och 0.12.5 Förteckningen, och resten flyttar (F).
 Areorna ritas som egna objekt över rummen, som BOA-zonen i Archicad;
 rummen räknas inte med (B, C). Konturen följer väggarna och går att lösgöra
 till en egen polygon, med eller utan de automatiska avdragen (G). `e/g`
@@ -1729,32 +1730,97 @@ stämpeln, egenskaperna och förteckningen.
 planen och 3D; vägg mot annan byggnad (svar C); den ”mörka” arean i andra
 hus än småhus räknas som i småhus; hanbjälkar och låga undertak (svar J).
 
-### 0.12.5 Uppställningen
+### 0.12.5 Förteckningen per littera ✓
 
-Mellanstor till stor, en session. Uppställningen av fönster och dörrar
-som vytyp med en kolumn per littera och ritningen sedd utifrån (fältmallen
-och fälten finns sedan 0.11.8.1); en ruta skriver på alla objekt med
-litteran, *Olika* när de skiljer sig. Grindarna med. Förteckningen över
-markförändringarna (Inkorgen 27 oktober: littera och namn, status, area i
-plan, schakt, fyll och netto, berg och jord (m³ och procent), lägsta och
-högsta nya höjd, största lutning, avtagen matjord (area × tjocklek,
-tjockleken en inställning) och en summarad med massbalansen) här eller i
-en egen version om den inte ryms.
+Carl August 12 november: "Nästa är 0.12.5", med svaren A–E på Claudes
+förslag och en rättelse av namnet. Mellanstor, en session. Samma format, 28
+(valfria fält: förteckningens `layout`, `figureScale`, `noFigure`,
+`hideEmpty`; bladvyns `maxWidth`).
 
-### 0.12.6 IFC
+**Namnet (Carl August):** listorna heter **förteckningar**. En
+*uppställning* är en elevation av en enskild byggdel eller ett rum (kök,
+badrum); ritningen av dörren eller fönstret i förteckningen är en liten
+illustration, en bonus. Allt som hette uppställning i appen och dokumenten
+heter nu förteckning (*Förteckningens fält*). Vytypen *Uppställningar* i
+stilboken (efter piloten) behåller sitt namn och betyder elevationerna.
+
+**Svaren:** **A** markförändringarnas förteckning blir en egen version
+(0.12.6), resten flyttar ett steg; **B** ritningen i 1:50 som förval,
+valbar per förteckning; **C** alla rader syns som förval, också de tomma;
+**D** nivån Normal, och V och H ska både kunna dela littera (förval, tidigt
+i projektet) och vara skilda (senare); **E** man skriver i tabellen över
+ritytan, inte på bladet. **Grindarna stryks**: han menade att grindar ska
+kunna sättas ut i staket och redovisas i planen (finns sedan 0.11.3), inte
+att de ska in i en förteckning; en grind ritas vid behov som egen ritning.
+
+**Gjort:** dörr- och fönsterförteckningen *uppställd per littera* (fälten
+som rader, en kolumn per littera, ritningen sedd utifrån med
+karmyttermåtten), rutorna som skriver på alla objekt med litteran,
+*Olika*, de framräknade fälten ifyllda, föreskrifterna till höger, *Dölj
+tomma rader*, ritningens skala, band under varandra på bladet, CSV och XLSX
+med fälten som rader, och namnbytet.
+
+**Claudes val (0.12.5):**
+
+- **Ingen ny sort i trädet.** Förteckningen per littera är ett val
+  (*Uppställd*) på dörr- och fönsterförteckningarna från 0.12.2, och
+  förvalet för nya; tabellen med en rad per objekt eller littera finns kvar
+  som det andra valet. Då delar de tillstånd, våningar, blad och export.
+- **Raderna är stilbokens fältmall**, i dess ordning (stilboken › Typer ›
+  Förteckningens fält); förteckningen har inga egna rader. Kolumner,
+  sortering, gruppering och summor gäller bara tabellen.
+- **V och H** styrs av litteraregeln som redan finns (stilboken › Allmänt):
+  *Typ och mått* (förval) ger en kolumn där *Hängning* räknar upp (*2 V,
+  1 H*) och ritningen visar den första; *Typ, mått och hängning* ger var
+  sin kolumn. Inget nytt val i förteckningen.
+- **En ruta skriver på objekten i kolumnen**, alltså de med litteran i
+  förteckningens tillstånd och våningar, i en transaktion.
+- **De framräknade fälten**: *Utförande* är typens namn, *Öppningssätt*
+  lufternas (dörrblad med slag skrivs *Slagdörr*), *Öppningsbredd* och
+  *Öppningshöjd* hålets mått, *Poster* antalet lodräta och vågräta,
+  *Spröjs* sorten och antalet (*Löstagbar 1+2*), *Karmdjup* typens,
+  *Väggtjocklek* väggens. *Karmtyp* räknas inte än och står `-`.
+- **Ritningen**: linjer i tre tjocklekar (karmens kontur 0,25, delarna
+  0,18, symbolen 0,13; streckad när luften öppnas inåt), utan glasmarkering
+  och beslag. Måtten är karmyttermåtten, bredden under och höjden till
+  höger. Ritningarna står på en gemensam linje.
+- **Föreskrifterna** är gemensamma för sortens förteckningar och bor i
+  projektet (`project.openingSchedule.notes`, i formatet sedan 0.11.8);
+  typernas föreskrift (`spec`) står efter, med litterorna som ett spann.
+  Kolumnen är 70 mm bred på bladet.
+- **På bladet** bryts den på bredden (band under varandra), inte på höjden
+  som tabellen. *Största bredd* på bladvyn.
+- **Grindförteckningen** från 0.12.2 ligger kvar (som tabell).
+
+**Inte gjort i 0.12.5:** markförändringarnas förteckning (0.12.6);
+vägghålens förteckning; ritningen per hängning i samma kolumn; egna rader
+per förteckning (annan ordning än fältmallens); radbrytning i en ruta med
+lång text (kolumnen blir bredare); löpnummer per objekt; *Karmtyp*;
+förteckningarna och uppställningarna som vytyper i stilboken med egna
+pennor (efter piloten); att ta bort grindförteckningen (frågan ställd).
+
+### 0.12.6 Markförändringar
+
+Förteckningen över markförändringarna (Inkorgen 27 oktober, lyft ur 0.12.5
+12 november): littera och namn, status, area i plan, schakt, fyll och
+netto, berg och jord (m³ och procent), lägsta och högsta nya höjd, största
+lutning, avtagen matjord (area × tjocklek, tjockleken en inställning) och
+en summarad med massbalansen. Mellanstor.
+
+### 0.12.7 IFC
 
 Egen utredning i egen chatt först (klasstabellen, psets, geometri,
 provfil validerad), sedan skrivaren. IFC4 Reference View, mm, utan mark och
 träd (svar D). GUID:en finns sedan 0.12. Areaobjekten som `IfcSpace` eller
 `IfcZone` utreds där.
 
-### 0.12.7 Utgåvor och PM
+### 0.12.8 Utgåvor och PM
 
 Mockup i Claude Design först, sedan snapshot, jämförelse, revideringsmoln
 och -pilar, beteckningar, handlingsförteckningen, ändrings-PM och panelen
 Utgåvor. Stor, troligen två sessioner.
 
-### 0.12.8 3D-vyer
+### 0.12.9 3D-vyer
 
 Carl August 26 oktober: före piloten, det är något man kan förvänta sig.
 Mellanstor.

@@ -378,7 +378,7 @@ export class PropertiesPanel implements ActionPanel {
     const tags = litteraSection(doc, els);
     if (tags) sections.push(tags);
 
-    // Uppställningens fält för fönster och dörrar (0.11.8.1).
+    // Förteckningens fält för fönster och dörrar (0.11.8.1).
     const sched = scheduleFieldsSection(doc, els);
     if (sched) sections.push(sched);
 

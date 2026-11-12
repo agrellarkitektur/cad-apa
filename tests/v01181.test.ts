@@ -134,7 +134,7 @@ describe('dörrbladets indelning (F)', () => {
   });
 });
 
-describe('littera och uppställningens fält (G, I)', () => {
+describe('littera och förteckningens fält (G, I)', () => {
   it('vägghålen VG01 som förval', () => {
     expect(OPENING_DEFAULTS.formulas.WallHole).toBe('VG{nr:2}');
   });

@@ -84,8 +84,8 @@ export function installExportDialog(app: AppContext, deps: { image: (src: { asse
       sheet: doc.sheets.map((s) => ({ id: s.id, key: `sheet:${s.id}`, name: `${s.number} ${s.name}`.trim(), sub: describeSheet(s) })),
       view: doc.views.map((v) => ({ id: v.id, key: `view:${v.id}`, name: v.name, sub: describeView(doc, v) })),
       schedule: (doc.schedules ?? []).map((s) => ({ id: s.id, key: `schedule:${s.id}`, name: s.name, sub: SOURCE_NAMES[s.source] })),
-      image: [{ id: 'current', key: IMAGE_CURRENT, name: 'Nuvarande 3D-vy', sub: 'som 3D-vyn står nu; de sparade 3D-vyerna kommer i 0.12.8' }],
-      model: [{ id: 'all', key: MODEL_ALL, name: 'Modellen', sub: 'med material, för Blender och andra renderare (IFC kommer i 0.12.6)' }],
+      image: [{ id: 'current', key: IMAGE_CURRENT, name: 'Nuvarande 3D-vy', sub: 'som 3D-vyn står nu; de sparade 3D-vyerna kommer i 0.12.9' }],
+      model: [{ id: 'all', key: MODEL_ALL, name: 'Modellen', sub: 'med material, för Blender och andra renderare (IFC kommer i 0.12.7)' }],
     };
   }
 

@@ -1,5 +1,5 @@
 import type { Id, ProjectDoc, Sheet, Viewport } from '../core/model';
-import { scheduleOf } from '../core/schedules';
+import { isLitteraLayout, scheduleOf } from '../core/schedules';
 import { applyFieldChanges, fieldsOf, fieldValue, type FieldChanges } from '../core/sheetFields';
 import { deleteSheet, duplicateSheet, FRAME_MARGIN, masterOf, mastersOf, paperSize, PAPER_SIZES, removeViewport, renameProject, saveSheet, setViewportCrop, sheetOfViewport, stampsOf, today, updateViewport } from '../core/sheets';
 import type { DocStore } from '../core/store';
@@ -161,17 +161,25 @@ function readFieldChanges(form: HTMLFormElement): FieldChanges {
 }
 
 /** En förteckning på ett blad (0.12.2): rubriken och höjden där tabellen bryts i delar bredvid varandra. */
-function scheduleViewportMarkup(sheet: Sheet, vp: Viewport, name: string, actions: string): string {
-  const [, h] = paperSize(sheet);
-  const auto = h - FRAME_MARGIN.top - FRAME_MARGIN.bottom - 20;
+function scheduleViewportMarkup(sheet: Sheet, vp: Viewport, name: string, actions: string, perLittera = false): string {
+  const [w, h] = paperSize(sheet);
+  const auto = perLittera ? w - FRAME_MARGIN.left - FRAME_MARGIN.right - 20 : h - FRAME_MARGIN.top - FRAME_MARGIN.bottom - 20;
   return `<form class="tree-form sheet-form" data-tree-kind="viewport" data-tree-id="${vp.id}" data-schedule="1">
       <header class="sel-head"><h2>${esc(vp.title || name)}</h2><p>Förteckning på bladet ${esc(sheet.number)}</p></header>
       <section>
         <div class="fields">
           ${field('Rubrik', `<input name="title" value="${esc(vp.title ?? '')}" placeholder="${esc(name)}">`)}
-          ${field('Största höjd', `<span class="input-unit"><input name="maxHeight" inputmode="decimal" value="${vp.maxHeight ?? ''}" placeholder="${Math.round(auto)}"><i>mm</i></span>`)}
+          ${
+            perLittera
+              ? field('Största bredd', `<span class="input-unit"><input name="maxWidth" inputmode="decimal" value="${vp.maxWidth ?? ''}" placeholder="${Math.round(auto)}"><i>mm</i></span>`)
+              : field('Största höjd', `<span class="input-unit"><input name="maxHeight" inputmode="decimal" value="${vp.maxHeight ?? ''}" placeholder="${Math.round(auto)}"><i>mm</i></span>`)
+          }
         </div>
-        <p class="note">En längre tabell bryts i delar som står bredvid varandra, med rubrikraden i varje. Tomt: bladets ram. Kolumner, sortering och summor ändras i förteckningen.</p>
+        <p class="note">${
+          perLittera
+            ? 'En bredare förteckning bryts i band under varandra, med fältens namn i varje. Tomt: bladets ram. Ritningens skala, raderna och föreskrifterna ändras i förteckningen.'
+            : 'En längre tabell bryts i delar som står bredvid varandra, med rubrikraden i varje. Tomt: bladets ram. Kolumner, sortering och summor ändras i förteckningen.'
+        }</p>
         <div class="row">
           <button type="button" class="btn" data-sheet="open-view">Öppna förteckningen</button>
           <button type="button" class="btn" data-sheet="back" data-id="${sheet.id}">${icons.sheet}<span>Bladet</span></button>
@@ -202,7 +210,7 @@ export function sheetFormMarkup(doc: ProjectDoc, item: SheetFormItem): string {
     const options = placeableViews(doc);
     if (!options.some((o) => o.id === vp.view)) options.unshift({ id: vp.view, name: 'Vyn finns inte längre', def: undefined as never });
     const sched = scheduleOf(doc, vp.view);
-    if (sched) return scheduleViewportMarkup(sheet, vp, sched.name, actions(`<button type="button" class="btn btn-danger" data-sheet="remove-viewport">Ta bort från bladet</button>`));
+    if (sched) return scheduleViewportMarkup(sheet, vp, sched.name, actions(`<button type="button" class="btn btn-danger" data-sheet="remove-viewport">Ta bort från bladet</button>`), isLitteraLayout(sched));
     return `<form class="tree-form sheet-form" data-tree-kind="viewport" data-tree-id="${vp.id}">
       <header class="sel-head"><h2>${esc(vp.title || src?.name || 'Vy')}</h2><p>Vy på bladet ${esc(sheet.number)}</p></header>
       <section>
@@ -423,8 +431,13 @@ export function bindSheetForm(root: HTMLElement, store: DocStore, host: SheetFor
       if (!sheet) return;
       if (form.dataset.schedule) {
         // En förteckning (0.12.2): rubriken och höjden där den bryts.
-        const h = Number(str('maxHeight').replace(',', '.'));
-        updateViewport(store, sheet.id, id, { title: str('title').trim() || undefined, maxHeight: Number.isFinite(h) && h >= 20 ? Math.round(h) : undefined }, 'Spara förteckningen på bladet');
+        const limit = (k: string) => {
+          const v = Number(str(k).replace(',', '.'));
+          return Number.isFinite(v) && v >= 20 ? Math.round(v) : undefined;
+        };
+        // Per littera (0.12.5) bryts den på bredden, annars på höjden.
+        const patch = d.has('maxWidth') ? { maxWidth: limit('maxWidth') } : { maxHeight: limit('maxHeight') };
+        updateViewport(store, sheet.id, id, { title: str('title').trim() || undefined, ...patch }, 'Spara förteckningen på bladet');
         return;
       }
       const scale = readScale(form, 'scale') ?? 100;

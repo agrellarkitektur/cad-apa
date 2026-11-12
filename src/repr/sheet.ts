@@ -92,9 +92,9 @@ export function placeableViews(doc: ProjectDoc): ViewSource[] {
  * Det en vy på ett blad ritar, i vyns koordinater: en vy, eller en
  * förteckning (0.12.2) som tabell. Null om det den pekar på är borta.
  */
-export function refPrims(doc: ProjectDoc, ref: Id, opt: ViewPrimOptions & { maxHeight?: number }): { name: string; prims: Primitive[]; schedule?: boolean } | null {
+export function refPrims(doc: ProjectDoc, ref: Id, opt: ViewPrimOptions & { maxHeight?: number; maxWidth?: number }): { name: string; prims: Primitive[]; schedule?: boolean } | null {
   const t = scheduleTableById(doc, ref);
-  if (t) return { name: t.name, prims: schedulePrims(t, { id: ref, scale: opt.scale, maxHeight: opt.maxHeight }), schedule: true };
+  if (t) return { name: t.name, prims: schedulePrims(t, { id: ref, scale: opt.scale, maxHeight: opt.maxHeight, maxWidth: opt.maxWidth }), schedule: true };
   const src = viewSource(doc, ref);
   return src ? { name: src.name, prims: cachedViewPrims(doc, src.def, opt) } : null;
 }
@@ -301,8 +301,8 @@ function viewTitle(frame: Bounds, title: string, scale: number, showScale = true
 }
 
 /** En vy på ett blad, ritad på papperet. `maxHeight` bryter en förteckning när vyn inte har en egen. */
-export function placeView(doc: ProjectDoc, vp: Viewport, opt: { autoDims?: boolean; maxHeight?: number } = {}): PlacedView {
-  const src = refPrims(doc, vp.view, { scale: vp.scale, autoDims: opt.autoDims, maxHeight: vp.maxHeight ?? opt.maxHeight });
+export function placeView(doc: ProjectDoc, vp: Viewport, opt: { autoDims?: boolean; maxHeight?: number; maxWidth?: number } = {}): PlacedView {
+  const src = refPrims(doc, vp.view, { scale: vp.scale, autoDims: opt.autoDims, maxHeight: vp.maxHeight ?? opt.maxHeight, maxWidth: vp.maxWidth ?? opt.maxWidth });
   const name = vp.title?.trim() || src?.name || 'Vyn finns inte längre';
   if (!src) {
     const frame = { minX: vp.at[0] - 30, minY: vp.at[1] - 20, maxX: vp.at[0] + 30, maxY: vp.at[1] + 20 };
@@ -343,7 +343,7 @@ function scheduleTitle(frame: Bounds, title: string): Primitive[] {
 
 /** Vyns ram när den följer innehållet, i modellens koordinater (som `crop`), eller null om vyn är tom. */
 export function contentCrop(doc: ProjectDoc, vp: Viewport, opt: { autoDims?: boolean } = {}): Bounds | null {
-  const src = refPrims(doc, vp.view, { scale: vp.scale, autoDims: opt.autoDims, maxHeight: vp.maxHeight });
+  const src = refPrims(doc, vp.view, { scale: vp.scale, autoDims: opt.autoDims, maxHeight: vp.maxHeight, maxWidth: vp.maxWidth });
   const b = src ? contentBounds(src.prims) : null;
   if (!b) return null;
   const pad = VIEWPORT_PAD * vp.scale;
@@ -447,8 +447,8 @@ export function buildSheet(doc: ProjectDoc, sheet: Sheet, opt: { autoDims?: bool
   const [w, h] = paperSize(sheet);
   const frame: Bounds = { minX: FRAME_MARGIN.left, minY: FRAME_MARGIN.bottom, maxX: w - FRAME_MARGIN.right, maxY: h - FRAME_MARGIN.top };
   const master = masterOf(doc, sheet);
-  // En förteckning bryts vid ramens höjd när vyn inte har en egen (0.12.2).
-  const views = sheet.viewports.map((vp) => placeView(doc, vp, { ...opt, maxHeight: frame.maxY - frame.minY - 20 }));
+  // En förteckning bryts vid ramens höjd (per littera: bredd) när vyn inte har en egen (0.12.2, 0.12.5).
+  const views = sheet.viewports.map((vp) => placeView(doc, vp, { ...opt, maxHeight: frame.maxY - frame.minY - 20, maxWidth: frame.maxX - frame.minX - 20 }));
   // Teckenförklaringen (0.10.30) läser det som syns i vyerna, bara när bladet har en.
   const hasLegend = Object.values(doc.elements).some((e) => e.type === 'Legend' && e.space === sheet.id);
   const legend = hasLegend ? legendSources(doc, views) : undefined;

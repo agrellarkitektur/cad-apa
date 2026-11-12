@@ -169,7 +169,7 @@ function openingsSection(doc: ProjectDoc): string {
         ${select('opening:accessCircle', 'Tillgänglighetscirkel', String(o.accessCircle), [['1300', 'Ø 1 300 (manuell rullstol)'], ['1500', 'Ø 1 500 (eldriven, utomhus)'], ...(o.accessCircle !== 1300 && o.accessCircle !== 1500 ? ([[String(o.accessCircle), `Ø ${o.accessCircle}`]] as [string, string][]) : [])])}
       </div>
       ${glassTable(doc)}
-      <p class="note">Uppställningens fält: stilboken › Typer › Uppställningens fält.</p>
+      <p class="note">Förteckningens fält: stilboken › Typer › Förteckningens fält.</p>
       <div class="row"><button type="button" class="btn" data-gen-action="renumber-openings"${o.rule === 'module' ? ' disabled title="Regeln Bara bokstav och modulmått har inga nummer"' : ''}>Numrera om…</button></div>
     </section>`;
 }

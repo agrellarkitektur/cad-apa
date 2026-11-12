@@ -5,11 +5,11 @@ import type { ProjectDoc } from '../core/model';
 import { escapeHtml } from './labels';
 
 /**
- * Uppställningens egna fält i egenskaperna (0.11.8.1, kommentar I): ett
+ * Förteckningens egna fält i egenskaperna (0.11.8.1, kommentar I): ett
  * fält per rad i fältmallen som fylls i per objekt (U-värde, brandklass,
  * låshus …). Flera markerade av samma sort får samma värde; skiljer de sig
  * står *Olika* i rutan. Nycklarna är `ofield:<fältets namn>`. Mallen ändras
- * under stilboken › Typer › Uppställningens fält.
+ * under stilboken › Typer › Förteckningens fält.
  */
 export function scheduleFieldsSection(doc: ProjectDoc, els: readonly Element[]): string | null {
   const kind = scheduleKindOf(els[0]?.type ?? '');
@@ -24,10 +24,10 @@ export function scheduleFieldsSection(doc: ProjectDoc, els: readonly Element[]):
     })
     .join('');
   return `<section>
-    <h3>Uppställningens fält</h3>
+    <h3>Förteckningens fält</h3>
     <details class="sched-fields"${filled.length ? ' open' : ''}><summary>${filled.length ? `${filled.length} ${filled.length === 1 ? 'ifyllt' : 'ifyllda'} av ${names.length}` : `${names.length} fält, inga ifyllda`}</summary>
       <div class="fields">${rows}</div>
-      <p class="note">Värdet hör till objektet${els.length > 1 ? ' (alla markerade)' : ''} och står i uppställningen (0.12). Fälten ändras under stilboken › Typer › Uppställningens fält.</p>
+      <p class="note">Värdet hör till objektet${els.length > 1 ? ' (alla markerade)' : ''} och står i dörr- eller fönsterförteckningen, där det också går att skriva per littera. Fälten ändras under stilboken › Typer › Förteckningens fält.</p>
     </details>
   </section>`;
 }
@@ -44,7 +44,7 @@ export function applyScheduleField(store: DocStore, ids: readonly Id[], name: st
 }
 
 // ---------------------------------------------------------------------------
-// Fältmallen under stilboken › Typer › Uppställningens fält (0.11.8.2)
+// Fältmallen under stilboken › Typer › Förteckningens fält (0.11.8.2)
 
 const KIND_LABEL: Record<ScheduleKind, string> = { Window: 'Fönster', Door: 'Dörrar' };
 
@@ -83,8 +83,8 @@ export function scheduleBookMarkup(doc: ProjectDoc): string {
       .join('');
   const own = (k: ScheduleKind) => scheduleFields(doc, k).filter((f) => !isOriginalField(k, f)).length;
   return `<section class="style-labels sched-template">
-    <h3>Uppställningens fält</h3>
-    <p class="note">Fälten i fönster- och dörruppställningen, uppifrån. Ett nytt fält blir ett fält på alla objekt av sorten och fylls i under egenskaperna; värdet hör till objektet. Fälten är smarttext i litteramallarna (Stil › Text och littera), t.ex. <code>{U-värde}</code>. Mallen hör till stilboken och följer med <i>Exportera…</i> och <i>Mall för nya projekt…</i>.</p>
+    <h3>Förteckningens fält</h3>
+    <p class="note">Fälten i fönster- och dörrförteckningen, uppifrån. Ett nytt fält blir ett fält på alla objekt av sorten och fylls i under egenskaperna; värdet hör till objektet. Fälten är smarttext i litteramallarna (Stil › Text och littera), t.ex. <code>{U-värde}</code>. Mallen hör till stilboken och följer med <i>Exportera…</i> och <i>Mall för nya projekt…</i>.</p>
     <div class="sb-toolbar"><label class="field rt-search"><span>Sök</span><input type="search" data-sf-search value="${escapeHtml(scheduleView.query)}" placeholder="fält, tagg, eget …" autocomplete="off"></label>
       <label class="check" title="Fälten som inte är förteckningens (cad-apas), så att de går att ta bort"><input type="checkbox" data-sf-own${scheduleView.own ? ' checked' : ''}> Bara egna (${own('Window') + own('Door')})</label></div>
     <div class="sched-cols">${(['Window', 'Door'] as const)
@@ -177,7 +177,7 @@ export function scheduleFieldRenamed(store: DocStore, kind: ScheduleKind, i: num
   const from = list[i];
   if (!to || from === undefined || to === from || list.includes(to)) return false;
   list[i] = to;
-  setScheduleFields(store, kind, list, `Uppställningens fält: ${from} → ${to}`, [from, to]);
+  setScheduleFields(store, kind, list, `Förteckningens fält: ${from} → ${to}`, [from, to]);
   return true;
 }
 
@@ -189,20 +189,20 @@ export async function scheduleFieldAction(store: DocStore, action: string, ask: 
   const i = Number(idx);
   if (op === 'sfield-up' && i > 0) {
     [list[i - 1], list[i]] = [list[i], list[i - 1]];
-    setScheduleFields(store, kind, list, `Uppställningens fält: flytta ${list[i - 1]}`);
+    setScheduleFields(store, kind, list, `Förteckningens fält: flytta ${list[i - 1]}`);
   } else if (op === 'sfield-down' && i < list.length - 1) {
     [list[i + 1], list[i]] = [list[i], list[i + 1]];
-    setScheduleFields(store, kind, list, `Uppställningens fält: flytta ${list[i + 1]}`);
+    setScheduleFields(store, kind, list, `Förteckningens fält: flytta ${list[i + 1]}`);
   } else if (op === 'sfield-del' && list[i] !== undefined) {
     const [gone] = list.splice(i, 1);
-    setScheduleFields(store, kind, list, `Uppställningens fält: ta bort ${gone}`);
+    setScheduleFields(store, kind, list, `Förteckningens fält: ta bort ${gone}`);
   } else if (op === 'sfield-add') {
     const name = (await ask(`Nytt fält, ${KIND_LABEL[kind].toLowerCase()}`))?.trim().replace(/[{}]/g, '');
     if (!name || list.includes(name)) return true;
     // Före Anmärkning och Övrigt, som står sist.
     const at = list.findIndex((f) => f === 'Anmärkning' || f === 'Övrigt');
     list.splice(at < 0 ? list.length : at, 0, name);
-    setScheduleFields(store, kind, list, `Uppställningens fält: nytt ${name}`);
-  } else if (op === 'sfield-reset') setScheduleFields(store, kind, null, `Uppställningens fält: förvalet för ${KIND_LABEL[kind].toLowerCase()}`);
+    setScheduleFields(store, kind, list, `Förteckningens fält: nytt ${name}`);
+  } else if (op === 'sfield-reset') setScheduleFields(store, kind, null, `Förteckningens fält: förvalet för ${KIND_LABEL[kind].toLowerCase()}`);
   return true;
 }

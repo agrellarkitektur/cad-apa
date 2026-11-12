@@ -1,14 +1,16 @@
 import type { Element, Id, ProjectDoc } from '../core/model';
 import { buildingStoreys, isSite } from '../core/model';
-import { fieldValue } from '../core/openingSchedule';
-import { isNumberField, scheduleOf, type Schedule, type ScheduleSource } from '../core/schedules';
+import { DERIVED_FIELDS, fieldValue, scheduleFields, type ScheduleKind } from '../core/openingSchedule';
+import { layoutOpening, OP_LABEL } from '../core/openingTypes';
+import { DEFAULT_FIGURE_SCALE, isLitteraLayout, isNumberField, scheduleOf, type Schedule, type ScheduleSource } from '../core/schedules';
 import { actionOf, defaultState, existingState, type Action } from '../core/states';
 import { defaultSheet } from '../core/viewCategories';
 import { glassPanes, roomDaylight, shareText, type GlassPane } from '../elements/daylight';
 import { labelObjects, labelValue, labelLines } from '../elements/label';
 import { litteraField, ownProp } from '../elements/littera';
-import { openingHinges, openingLitteras } from '../elements/openingLittera';
-import type { OpeningObjParams } from '../elements/openingSpec';
+import { openingHinges, openingLitteras, openingMirrored } from '../elements/openingLittera';
+import { openingModelOf, type OpeningObjParams } from '../elements/openingSpec';
+import { openingFigure, type OpeningFigure } from './openingFigure';
 import { gateLittera } from '../elements/railing';
 import type { RailingParams } from '../elements/railingGeometry';
 import type { PlanContext } from '../elements/registry';
@@ -48,6 +50,34 @@ export interface ScheduleTable {
   total?: Cell[];
   /** Antal rader (utan rubriker och summor). */
   count: number;
+  /** Uppställd per littera (0.12.5): kolumnerna är litteror och raderna fält; se `LitteraInfo`. */
+  littera?: LitteraInfo;
+}
+
+/** En kolumn i förteckningen per littera: litteran, objekten som har den och ritningen. */
+export interface LitteraColumn {
+  littera: string;
+  ids: Id[];
+  figure?: OpeningFigure;
+}
+
+/**
+ * Det förteckningen per littera har utöver tabellen (0.12.5). Tabellens
+ * första kolumn är fältens namn och resten litterorna, så att CSV och XLSX
+ * skrivs som vanligt; här står vilka objekt en kolumn gäller, vilka rader
+ * som går att skriva i, ritningarna och föreskrifterna till höger.
+ */
+export interface LitteraInfo {
+  kind: ScheduleKind;
+  /** Radernas fält, i tabellens ordning. */
+  fields: string[];
+  /** Raderna som fylls i per objekt (inte räknas fram). */
+  own: boolean[];
+  columns: LitteraColumn[];
+  /** Ritningens skala (nämnaren); 0 = ingen ritning. */
+  figureScale: number;
+  /** Föreskrifterna: projektets egna rader och typernas, med litterorna de gäller. */
+  notes: string[];
 }
 
 /** Enheten i rubriken för fälten med tal. */
@@ -169,6 +199,8 @@ function cellOf(src: ScheduleSource, field: string, it: Item, sh: Shared): Cell 
         case 'Bröstningshöjd':
           return p.floor ? { text: '' } : mm(p.sill);
       }
+      const derived = derivedOpening(field, it, sh);
+      if (derived !== null) return derived;
       return { text: fieldValue(el, field) || litteraField(ctx, el, field) };
     }
     case 'Gate': {
@@ -206,6 +238,133 @@ function cellOf(src: ScheduleSource, field: string, it: Item, sh: Shared): Cell 
       }
       return { text: labelValue(ctx, el, field) };
   }
+}
+
+const DOOR_OP: Record<string, string> = { leaf: 'Slagdörr', fixed: 'Fast parti' };
+
+/**
+ * Fältmallens fält som räknas fram ur typen eller läget (0.12.5):
+ * öppningssätt, utförande (typens namn), hålets mått, poster, spröjs,
+ * karmdjup och väggens tjocklek. Null för andra fält.
+ */
+function derivedOpening(field: string, it: Item, sh: Shared): Cell | null {
+  if (!DERIVED_FIELDS.has(field)) return null;
+  const { el, ctx } = it;
+  const p = ctx.params<OpeningObjParams>(el);
+  const m = openingModelOf(sh.doc, el);
+  // Mått i mm utan tusentalsavgränsare, som karmyttermåttet (990×2090).
+  const mm = (v: unknown): Cell => (typeof v === 'number' && Number.isFinite(v) ? { text: String(Math.round(v)) } : { text: '' });
+  const uniq = (list: string[]) => [...new Set(list.filter(Boolean))].join(', ');
+  switch (field) {
+    case 'Utförande':
+      return { text: (el.definition ? sh.doc.definitions[el.definition]?.name : undefined) ?? '' };
+    case 'Öppningssätt': {
+      const cells = typeof p.frameW === 'number' ? layoutOpening(m, p.frameW, p.frameH).cells : m.cells;
+      const ops = cells.map((c) => (el.type === 'Door' ? (DOOR_OP[c.op] ?? OP_LABEL[c.op]) : OP_LABEL[c.op]));
+      // Ett fast sidoljus i en dörr nämns sist; ett fönster med bara fasta lufter är *Fast*.
+      return { text: uniq([...ops.filter((o) => !o.startsWith('Fast')), ...ops.filter((o) => o.startsWith('Fast'))]) };
+    }
+    case 'Öppningsbredd':
+      return mm(p.holeW);
+    case 'Öppningshöjd':
+      return mm(p.holeH);
+    case 'Poster': {
+      const v = m.mullion > 0 ? m.cols.length - 1 : 0;
+      const h = m.transom > 0 ? m.rows.length - 1 : 0;
+      return { text: [v ? `${v} ${v === 1 ? 'lodrät' : 'lodräta'}` : '', h ? `${h} ${h === 1 ? 'vågrät' : 'vågräta'}` : ''].filter(Boolean).join(', ') };
+    }
+    case 'Spröjs':
+      return {
+        text: uniq(
+          m.cells.map((c) => {
+            const mu = c.muntins;
+            if (!mu) return '';
+            const kind = { loose: 'Löstagbar', between: 'Mellan glasen', fixed: 'Fast' }[mu.kind];
+            return mu.lines?.length ? `${kind}, ritad` : mu.v || mu.h ? `${kind} ${mu.v}+${mu.h}` : '';
+          }),
+        ),
+      };
+    case 'Karmdjup':
+      return mm(p.frameDepth);
+    case 'Väggtjocklek': {
+      const host = el.host ? sh.doc.elements[el.host] : undefined;
+      return host ? mm(ctx.params<{ thickness?: number }>(host).thickness) : { text: '' };
+    }
+  }
+  return null;
+}
+
+/** Litterorna som ett spann där numren följer på varandra: F01–F03, F05. */
+export function litteraRange(list: readonly string[]): string {
+  const parts = list.map((l) => {
+    const m = /^(.*?)(\d+)$/.exec(l);
+    return m ? { l, pre: m[1], n: Number(m[2]) } : { l, pre: null as string | null, n: 0 };
+  });
+  const out: string[] = [];
+  for (let i = 0; i < parts.length; ) {
+    let j = i;
+    while (parts[i].pre !== null && j + 1 < parts.length && parts[j + 1].pre === parts[i].pre && parts[j + 1].n === parts[j].n + 1) j++;
+    out.push(j > i ? `${parts[i].l}–${parts[j].l}` : parts[i].l);
+    i = j + 1;
+  }
+  return out.join(', ');
+}
+
+/**
+ * Förteckningen uppställd per littera (0.12.5), som A-42-5-101 och -102:
+ * fältmallens fält som rader och en kolumn per littera. Lika värden står
+ * som de är, *Antal* räknas, hängningen räknas upp (*2 V, 1 H*) när
+ * litteran delas, och det som skiljer sig blir *Olika*.
+ */
+function litteraTable(doc: ProjectDoc, s: Schedule, items: readonly Item[], sh: Shared): ScheduleTable {
+  const kind = s.source as ScheduleKind;
+  const litteras = sh.litteras();
+  const by = new Map<string, Item[]>();
+  for (const it of items) {
+    const l = litteras.get(it.el.id) ?? '';
+    const list = by.get(l);
+    if (list) list.push(it);
+    else by.set(l, [it]);
+  }
+  const keys = [...by.keys()].sort(cmpText);
+  const all = scheduleFields(doc, kind);
+  const cellFor = (field: string, list: Item[]): Cell => {
+    if (field === 'Antal') return { text: String(list.length), value: list.length };
+    const texts = list.map((it) => cellOf(s.source, field, it, sh).text);
+    const uniq = [...new Set(texts)];
+    if (uniq.length === 1) return { text: uniq[0] };
+    if (field === 'Hängning') return { text: uniq.filter(Boolean).sort(cmpText).map((h) => `${texts.filter((t) => t === h).length} ${h}`).join(', ') };
+    return { text: 'Olika' };
+  };
+  let rows = all.map((f) => ({ field: f, cells: keys.map((k) => cellFor(f, by.get(k)!)) }));
+  if (s.hideEmpty) rows = rows.filter((r) => r.cells.some((c) => c.text));
+  const figureScale = s.noFigure ? 0 : (s.figureScale ?? DEFAULT_FIGURE_SCALE);
+  const mirrored = openingMirrored(doc);
+  const columns: LitteraColumn[] = keys.map((k) => {
+    const list = by.get(k)!;
+    const { el, ctx } = list[0];
+    const p = ctx.params<OpeningObjParams>(el);
+    return {
+      littera: k,
+      ids: list.map((it) => it.el.id),
+      ...(figureScale && typeof p.frameW === 'number' ? { figure: openingFigure(openingModelOf(doc, el), p.frameW, p.frameH, mirrored.has(el.id)) } : {}),
+    };
+  });
+  // Föreskrifterna: projektets egna rader, sedan typernas med sina litteror.
+  const notes = (doc.project.openingSchedule?.notes?.[kind] ?? '').split(/\r?\n/).map((x) => x.trim()).filter(Boolean);
+  const specs = new Map<string, string[]>();
+  for (const k of keys) {
+    const spec = [...new Set(by.get(k)!.map((it) => openingModelOf(doc, it.el).spec?.trim() ?? '').filter(Boolean))];
+    for (const sp of spec) specs.set(sp, [...(specs.get(sp) ?? []), k]);
+  }
+  for (const [spec, list] of specs) notes.push(`${litteraRange(list.filter(Boolean))}: ${spec}`.replace(/^: /, ''));
+  return {
+    name: s.name,
+    columns: [{ title: 'Littera', number: false, sum: false }, ...keys.map((k) => ({ title: k || '(utan littera)', number: false, sum: false }))],
+    groups: [{ rows: rows.map((r) => [{ text: r.field }, ...r.cells]) }],
+    count: keys.length,
+    littera: { kind, fields: rows.map((r) => r.field), own: rows.map((r) => !DERIVED_FIELDS.has(r.field)), columns, figureScale, notes },
+  };
 }
 
 /** Objekten förteckningen räknar: källans sort i tillståndet, på de valda våningarna. */
@@ -360,6 +519,7 @@ export function scheduleTable(doc: ProjectDoc, s: Schedule): ScheduleTable {
   const extra = [...s.sort.map((k) => k.field), ...(s.group ? [s.group] : [])].filter((f) => !fields.includes(f));
   const all = [...fields, ...extra, ...(perLittera && !fields.includes('Littera') ? ['Littera'] : [])];
   const items = itemsOf(doc, s, state, ctxFor);
+  if (isLitteraLayout(s)) return litteraTable(doc, s, items, sh);
   // Våningarna nerifrån och upp, så att *Våning* sorteras i husets ordning.
   const storeyOrder = new Map([...buildingStoreys(doc)].sort((a, b) => a.elevation - b.elevation).map((x, i) => [x.name, i]));
   const site = doc.storeys.find((x) => isSite(x));

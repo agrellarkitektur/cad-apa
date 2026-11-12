@@ -17,7 +17,7 @@ import { outsideSide } from './wallSides';
  * spärr under 0,6 m; inte när fallhöjden är under 2,0 m); utrymningsfönster
  * BFS 2024:7, 2 kap. 26 § (0,50 × 0,60, summa 1,50, underkant högst 1,20
  * över golv eller plattform). Tröskeln står inte i föreskrifterna (praxis).
- * Ett ifyllt fält i uppställningen (Säkerhetsglas, Utfallsskydd) tystar sin
+ * Ett ifyllt fält i förteckningen (Säkerhetsglas, Utfallsskydd) tystar sin
  * varning.
  */
 

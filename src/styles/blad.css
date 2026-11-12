@@ -534,6 +534,100 @@ button.ex-fmt {
   max-width: 60ch;
 }
 
+/* Förteckningen per littera (0.12.5): fälten som rader, ritningen överst, rutor att skriva i. */
+.sch-littera {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.schedule-littera tbody th {
+  font-weight: 400;
+  background: color-mix(in srgb, var(--ink) 4%, var(--chrome));
+  position: sticky;
+  left: 0;
+}
+
+.schedule-littera thead th:first-child {
+  position: sticky;
+  left: 0;
+  background: var(--chrome);
+}
+
+.schedule-littera .sch-lit {
+  text-align: center;
+  min-width: 84px;
+}
+
+.schedule-littera .sch-figures td {
+  text-align: center;
+  vertical-align: bottom;
+  padding: 8px 10px 4px;
+  color: var(--ink);
+}
+
+.schedule-littera .sch-figures th small {
+  display: block;
+  color: var(--muted);
+}
+
+.sch-figure {
+  display: block;
+  margin: 0 auto;
+}
+
+.sch-figure-dim {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+.schedule-littera .sch-derived {
+  color: var(--muted);
+}
+
+.schedule-littera .sch-edit {
+  padding: 0;
+}
+
+.schedule-littera .sch-edit input {
+  width: 100%;
+  min-width: 84px;
+  box-sizing: border-box;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  padding: 3px 9px;
+}
+
+.schedule-littera .sch-edit input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  background: var(--paper);
+}
+
+.sch-notes {
+  max-width: 44ch;
+  font-size: 13px;
+}
+
+.sch-notes h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+}
+
+.sch-notes p {
+  margin: 0 0 6px;
+}
+
+.schedule-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  font: inherit;
+  resize: vertical;
+}
+
 .schedule-form .sch-col {
   display: grid;
   grid-template-columns: minmax(70px, 0.8fr) minmax(70px, 1fr) auto auto auto auto;

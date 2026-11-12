@@ -767,13 +767,53 @@ förut; vid nästa huvudversion flyttas de klara till arkivet.
   `store.transact(… tx.setField('views', …))` och öppnas med
   `goTo({kind:'view', id})`. Testerna i `tests/v0123.test.ts`.
 
+## Förteckningen per littera (0.12.5, format 28)
+
+- **Ordet**: *förteckning* är tabellen (också den med ritningar);
+  *uppställning* är en elevation av en byggdel eller ett rum och finns inte
+  än. I koden heter fältmallen fortfarande `openingSchedule` och
+  `scheduleFields`.
+- **Kärnan**: `Schedule.layout === 'littera'` (bara `Door` och `Window`,
+  `isLitteraLayout`), `figureScale` (`FIGURE_SCALES`, förval 50 sparas
+  inte), `noFigure`, `hideEmpty`. `columns`, `sort` och `group` ligger kvar
+  i förteckningen men används inte i det läget.
+- **Tabellen**: `litteraTable` i `src/repr/schedules.ts` ger en vanlig
+  `ScheduleTable` där första kolumnen är fältens namn och resten
+  litterorna, så att `scheduleCsv` och `scheduleSheet` fungerar som de är,
+  plus `littera: LitteraInfo` (fälten, vilka rader som är egna, kolumnernas
+  objekt-id och ritning, skalan, föreskrifterna). Raderna är
+  `scheduleFields(doc, kind)`. `derivedOpening` räknar fältmallens
+  `DERIVED_FIELDS` ur typen och läget, också för den vanliga tabellen.
+  `litteraRange` gör *F01–F03, F05*.
+- **Ritningen**: `src/repr/openingFigure.ts`, `openingFigure(model, w, h,
+  mirrored)` → linjer med en roll (`frame`, `part`, `thin`, `symbol`,
+  `symbolIn`) i karmens mm. Speglingen kommer ur `openingMirrored(doc)` i
+  `openingLittera.ts` (samma `uMapping` som fasaden). Pennorna per roll är
+  `FIGURE_PENS` i `scheduleTable.ts`; bladet ritar dem som primitiver
+  (`figurePrims`, ursprungets `part` är `ritning`) och skärmen som SVG
+  (`figureSvg` i `src/ui/app/schedules.ts`).
+- **På bladet**: `schedulePrims` går till `litteraPrims` när tabellen har
+  `littera`. `litteraLayout` ger bredderna och ritningsradens höjd,
+  `bandsOf` delar kolumnerna i band efter `maxWidth` (bladets ram minus
+  20, eller bladvyns `Viewport.maxWidth`), `wrapText` bryter
+  föreskrifterna. `refPrims` och `placeView` tar `maxWidth` bredvid
+  `maxHeight`.
+- **Skriva i rutorna**: `data-sch-cell="rad:kolumn"` i `litteraMarkup`;
+  `change` skriver `withField` på kolumnens `ids` i en transaktion.
+  Tabellen ritas om i nästa varv (`writing`, `setTimeout`) och markören
+  sätts tillbaka på `focusKey`, annars tappas den när Tab eller Enter
+  flyttar den medan tabellen byts ut.
+- **Föreskrifterna**: `project.openingSchedule.notes[kind]`, skrivs med
+  `data-sch="notes"` i förteckningens form.
+- **Tester**: `tests/v0125.test.ts`.
+
 ## Förteckningar (0.12.2, format 28)
 
 - **Kärnan**: `src/core/schedules.ts`. `Schedule` (källa, kolumner,
   sortering, gruppering, `perLittera`, tillstånd, våningar, `labelSort`,
   `noTotal`) i `ProjectDoc.schedules` (fältet `schedules` i `FieldKey`,
   läst med `normalizeSchedules` i `format.ts`); `SCHEDULE_FIELDS` per
-  källa och `sourceFields` (med uppställningens fält ur stilboken);
+  källa och `sourceFields` (med förteckningens fält ur stilboken);
   `defaultSchedule`, `createSchedule`, `updateSchedule` (ett fält satt
   till `undefined` tas bort), `duplicateSchedule`, `removeSchedule` (tar
   också bort den från bladen och trädet).
@@ -866,7 +906,7 @@ förut; vid nästa huvudversion flyttas de klara till arkivet.
   `exportVars` med smarttexten per rad, `planExport` → jobb med sökvägar
   och dubbletter, `uniquePaths`, `safeFileName`, `newIfcGuid`,
   `withGuids`). En rads nyckel är `sheet:<id>`, `view:<id>`,
-  `image:current` eller `model:all` (och `schedule:<id>` sedan 0.12.2); 0.12.6 lägger de
+  `image:current` eller `model:all` (och `schedule:<id>` sedan 0.12.2); 0.12.9 lägger de
   sparade 3D-vyerna som `image:<id>`.
 - **Sidorna**: `src/repr/exportPages.ts` gör ett blad eller en vy till en
   `PdfPage` med lager (`layers` är vägar av namn, `layerOf` ett index per
@@ -1048,7 +1088,7 @@ Inga nya funktioner; varningstexterna ändrade (se README och PLAN.md).
   fält (`materialSolid`). Editorn: `leafGridMarkup`, `ownLeafGrid`, fälten
   `lcol:`/`lrow:`/`lfill:` och `data-ot-lcell`/`data-ot-fill` i
   förhandsvisningen (`opts.fill`).
-- **Uppställningens fält**: `core/openingSchedule.ts`
+- **Förteckningens fält**: `core/openingSchedule.ts`
   (`DEFAULT_SCHEDULE_FIELDS`, `DERIVED_FIELDS`, `scheduleFields`,
   `ownFields`, `fieldValue`, `commonValue`, `withField`, `renameField`,
   `sameLittera`); värdena i `params.fields`. `OpeningSchedule.values` är

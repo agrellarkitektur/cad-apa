@@ -32,6 +32,8 @@ interface Info {
   sort: [number, number, number, string];
   module: string;
   hinge: string;
+  /** Typen ritas spegelvänd för det här objektet (sett utifrån). */
+  mirrored: boolean;
 }
 
 /** Bokstaven ur formeln: `YD{nr:2}` → YD. */
@@ -73,6 +75,7 @@ function infoOf(doc: ProjectDoc, el: Element, rule: OpeningRule, elevation: Map<
     sort: [elevation.get(el.storey) ?? 0, facade, Math.round(along), el.id],
     module: `${Math.round(p.width / 100)}×${Math.round(p.height / 100)}`,
     hinge,
+    mirrored,
   };
 }
 
@@ -82,6 +85,8 @@ interface Computed {
   littera: Map<Id, string>;
   /** Hängningen som bokstäver (V, H …), som litteraregeln *Typ, mått och hängning* räknar den. */
   hinges: Map<Id, string>;
+  /** Objekten där typen ritas spegelvänd, sedd utifrån (förteckningens ritning, 0.12.5). */
+  mirrored: Set<Id>;
   keys: Map<Id, { type: string; key: string }>;
   /** Kombinationerna som saknar ett sparat nummer, med det de får nu. */
   missing: Record<string, Record<string, number>>;
@@ -98,6 +103,7 @@ function compute(doc: ProjectDoc): Computed {
   const fromInside = st.hingeFrom === 'inside';
   const littera = new Map<Id, string>();
   const hinges = new Map<Id, string>();
+  const mirrored = new Set<Id>();
   const keys = new Map<Id, { type: string; key: string }>();
   const missing: Computed['missing'] = {};
   for (const type of OPENING_TYPES) {
@@ -109,6 +115,7 @@ function compute(doc: ProjectDoc): Computed {
       if (!info) continue;
       list.push({ el, info });
       hinges.set(el.id, info.hinge);
+      if (info.mirrored) mirrored.add(el.id);
     }
     list.sort((a, b) => cmp(a.info.sort, b.info.sort));
     const formula = st.formulas[type];
@@ -130,7 +137,7 @@ function compute(doc: ProjectDoc): Computed {
     }
     for (const { el, info } of list) littera.set(el.id, ownLittera(el) ?? applyFormula(formula, numbers.get(info.key)!));
   }
-  const out = { littera, hinges, keys, missing };
+  const out = { littera, hinges, mirrored, keys, missing };
   cache.set(doc.elements, out);
   cache.set(doc.graphics, out);
   cache.set(doc.project, out);
@@ -150,6 +157,11 @@ export function openingLitteras(doc: ProjectDoc): Map<Id, string> {
 /** Varje dörrs och fönsters hängning (V, H …), sedd som Allmänt › Fönster och dörrar säger (0.12.2). */
 export function openingHinges(doc: ProjectDoc): Map<Id, string> {
   return compute(doc).hinges;
+}
+
+/** Dörrarna och fönstren där typen ritas spegelvänd, sedd utifrån (0.12.5). */
+export function openingMirrored(doc: ProjectDoc): Set<Id> {
+  return compute(doc).mirrored;
 }
 
 /** Nummer för nya kombinationer som ännu inte sparats (för att spara dem efter en ändring). */

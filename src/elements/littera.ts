@@ -92,7 +92,7 @@ export function litteraField(ctx: PlanContext, el: Element<any>, name: string): 
     case 'tjocklek':
       return p.thickness !== undefined ? String(p.thickness) : '';
   }
-  // Uppställningens fält (0.11.8.2): {U-värde} eller {fält:U-värde}.
+  // Förteckningens fält (0.11.8.2): {U-värde} eller {fält:U-värde}.
   if (opening) {
     const f = fieldByName(el, name);
     if (f) return f;

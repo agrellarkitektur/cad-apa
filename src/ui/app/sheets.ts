@@ -209,8 +209,8 @@ export function installSheets(app: AppContext) {
     // En förteckning (0.12.2) ritas i 1:1, utan skala i rubriken.
     const schedule = !!scheduleOf(doc, view);
     if (schedule) scale = 1;
-    const [, sheetH] = sheet ? paperSize(sheet) : [0, 0];
-    const src = refPrims(doc, view, { scale, autoDims: app.uiSettings.autoDims, maxHeight: sheetH - FRAME_MARGIN.top - FRAME_MARGIN.bottom - 20 });
+    const [sheetW, sheetH] = sheet ? paperSize(sheet) : [0, 0];
+    const src = refPrims(doc, view, { scale, autoDims: app.uiSettings.autoDims, maxHeight: sheetH - FRAME_MARGIN.top - FRAME_MARGIN.bottom - 20, maxWidth: sheetW - FRAME_MARGIN.left - FRAME_MARGIN.right - 20 });
     if (!sheet || !src) return;
     const b = contentBounds(src.prims);
     const size: [number, number] = b ? [(b.maxX - b.minX) / scale + 2 * VIEWPORT_PAD, (b.maxY - b.minY) / scale + 2 * VIEWPORT_PAD] : [40, 30];

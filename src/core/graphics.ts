@@ -142,7 +142,7 @@ export interface StyleResources {
   /** Profiltypernas grupper i ordning (0.11.6), som räckestypernas. Utelämnade = `PROFILE_GROUPS`. */
   profileGroups?: string[];
   /**
-   * Uppställningens fältmall (0.11.8.2, förut i projektet): fälten för
+   * Förteckningens fältmall (0.11.8.2, förut i projektet): fälten för
    * fönster och dörrar i ordning, och egna taggar per fält (sökningen).
    * Utelämnad = förteckningarnas fält (`core/openingSchedule.ts`).
    */
@@ -485,7 +485,7 @@ export function normalizeStyle(data: any): StyleSheet {
   };
 }
 
-/** Uppställningens fältmall från fil (0.11.8.2): listor med namn och taggar per namn. */
+/** Förteckningens fältmall från fil (0.11.8.2): listor med namn och taggar per namn. */
 function normalizeScheduleFields(v: unknown): StyleResources['scheduleFields'] | null {
   if (!v || typeof v !== 'object') return null;
   const o = v as Record<string, unknown>;

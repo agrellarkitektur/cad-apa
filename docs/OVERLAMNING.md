@@ -6,10 +6,36 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 11 november 2026, efter 0.12.4.1 (buggfix efter en granskning).
+README. Senast: 12 november 2026, efter 0.12.5 (Förteckningen per littera).
 
 ## Läget
 
+- **0.12.5 Förteckningen per littera är klar** (12 november, samma format
+  28; valfria fält förteckningens `layout`, `figureScale`, `noFigure`,
+  `hideEmpty` och bladvyns `maxWidth`), byggd i en session efter Carl
+  Augusts svar A–E. Dörr- och fönsterförteckningarna har valet *Uppställd*:
+  **Per littera** (förval för nya; fälten som rader, en kolumn per littera,
+  ritningen sedd utifrån med karmyttermåtten, rutor som skriver på alla
+  objekt med litteran, föreskrifter till höger) eller **Som tabell**
+  (0.12.2). Testerna: 1003 på ca 16 s. Provat i Playwright mot `dist/`
+  (exemplets fönster och dörrar, skriva i rutor med Tab och Enter,
+  föreskrifter, skalan, på ett blad). Inte öppnat som PDF eller DXF utöver
+  testerna. Claudes val och det som inte gjordes i PLAN.md, koden i
+  UTVECKLING.md.
+- **Ordet** (Carl August 12 november): listorna heter **förteckningar**.
+  En **uppställning** är en elevation av en byggdel eller ett rum (kök,
+  badrum) och finns inte i appen än; säg aldrig uppställning om en
+  förteckning. Bytt i appen (*Förteckningens fält*), README, PLAN.md,
+  UTVECKLING.md och projektdokumenten.
+- **Grindarna** ska inte ha någon förteckning per littera (Carl August:
+  grindar sätts ut i staket och redovisas i planen, det räcker).
+  Grindförteckningen från 0.12.2 ligger kvar som tabell; frågan om den ska
+  bort är ställd.
+- **Märks i hans ritningar efter 0.12.5:** *Ny: Fönster* eller *Dörrar*
+  under Förteckningar ger förteckningen per littera. De framräknade fälten
+  (utförande, öppningssätt, öppningsbredd och -höjd, poster, spröjs,
+  karmdjup, väggtjocklek) är ifyllda, också i tabellerna från 0.12.2 (förut
+  `-`). Egenskapernas och stilbokens rubrik heter *Förteckningens fält*.
 - **0.12.4.1 är klar** (11 november, buggfix efter en granskning av repot
   och projektdokumenten; samma format 28). Areastämpeln i planen räknades
   inte om när ett markobjekt ändrades (`planReads` i `src/elements/area.ts`
@@ -74,15 +100,15 @@ README. Senast: 11 november 2026, efter 0.12.4.1 (buggfix efter en granskning).
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.12.4.1 pushad till `main` 11 november (se git och `gh run
+- **Publicerad:** 0.12.5 pushad till `main` 12 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.12.4.1` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.12.5` i `engine.ts`, `package.json` och
   `package-lock.json`. Nya funktioner får tredje siffran (0.12.4 …); **den
   fjärde siffran är för snabba buggfixar** utan nya funktioner (Carl August
   10 november). En granskning höjer inte numret, eller får en fjärde siffra
   om något ändras som syns.
-- **0.10.8–0.12.4 är inte provade fullt ut** av Carl August; han har
+- **0.10.8–0.12.5 är inte provade fullt ut** av Carl August (12 november: inte hunnit prova 0.12–0.12.4); han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först. Carl August vill ha **fem
@@ -178,15 +204,15 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   Smart och vägghål~~, ~~0.11.8.4 Granskning efter 0.11.8~~,
   ~~Utredning av 0.12 Export~~, ~~0.12 Exportdialogen och PDF~~,
   ~~0.12.1 DXF~~, ~~0.12.2 Förteckningar~~, ~~0.12.3 Areor~~,
-  ~~0.12.4 Areor under snedtak och mark~~ (klara;
-  se tabellen *Klart* i PLAN.md)
+  ~~0.12.4 Areor under snedtak och mark~~, ~~0.12.5 Förteckningen per
+  littera~~ (klara; se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.12.5 Uppställningen** (fönster och dörrar som vytyp, grindarna,
-  markförändringarna om de ryms) → **0.12.6 IFC** (egen utredning först) →
-  **0.12.7 Utgåvor och PM** (mockup först); se `cad-apa-export-utredning.md`.
-  Sedan **Granskning efter 0.12**.
-- **0.12.8 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
+- **0.12.6 Markförändringar** (förteckningen över schakt, fyll och
+  massbalans; mellanstor) → **0.12.7 IFC** (egen utredning först) →
+  **0.12.8 Utgåvor och PM** (mockup först); se `cad-apa-export-utredning.md`
+  (där står de äldre numren). Sedan **Granskning efter 0.12**.
+- **0.12.9 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
   trädens status i planen)
 - **Koordinater, SWEREF och sol** (stor; före piloten; SWEREF på
   situationsplanen och i exporten därifrån)
@@ -198,27 +224,40 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 ## Nästa session
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
-skrivrätt till repot ("push godkänd"). Fråga om Carl August provat 0.12.4,
-0.12.3, 0.12.2, 0.12.1 och 0.12; ställ i så fall frågorna om dem (nedan)
-först, högst fem åt gången. Stämmer en area inte med hans Archicad-siffror:
-be om en skärmbild eller sektion och fixa det som en fjärde siffra
-(0.12.4.1). Nästa version är **0.12.5 Uppställningen** (mellanstor–stor):
-se avsnittet i PLAN.md och `cad-apa-synpunkter.md`; fältmallen finns i
-stilboken (Typer › Uppställningens fält), fälten på öppningarna sedan
-0.11.8.1, förteckningarna i `src/repr/schedules.ts` och `core/schedules.ts`.
-Markförändringarnas förteckning bara om den ryms (annars egen version).
-Vid granskningen efter 0.12 delas `src/ui/style/profileTypes.ts` (875),
-`openingTypes.ts` (828) och `areaCalc.ts` (ca 550).
+skrivrätt till repot ("push godkänd"). Fråga om Carl August provat 0.12.5,
+0.12.4, 0.12.3, 0.12.2, 0.12.1 och 0.12; ställ i så fall frågorna om dem
+(nedan) först, högst fem åt gången. Nästa version är **0.12.6
+Markförändringar** (mellanstor): förteckningen över markförändringarna, se
+avsnittet i PLAN.md och `cad-apa-synpunkter.md`; markobjekten i
+`src/elements/ground*.ts` och `src/core/ground.ts`, förteckningarnas källor
+i `src/core/schedules.ts` och `src/repr/schedules.ts`. Volymerna (schakt,
+fyll, berg och jord) räknas inte någonstans än: säg hur stort det blir
+innan bygget, och fråga om berget (finns en bergnivå i modellen?). Vid
+granskningen efter 0.12 delas `src/ui/style/profileTypes.ts` (875),
+`openingTypes.ts` (828), `areaCalc.ts` (ca 550) och `src/repr/schedules.ts`
+(ca 640; per littera till en egen fil).
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.12.4, 0.12.3, 0.12.2, 0.12.1, 0.12, 0.11.8.4, 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
+om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.12.5, 0.12.4, 0.12.3, 0.12.2, 0.12.1, 0.12, 0.11.8.4, 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4, 0.11.3,
 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
+
+**0.12.5 efter provning** (Claudes val, se PLAN.md; svaren A–E 12 november)
+- Grindförteckningen från 0.12.2 (tabell) ligger kvar. Ska den bort, nu när
+  grindar inte ska förtecknas?
+- *Utförande* är typens namn och *Öppningsbredd*/*Öppningshöjd* hålets mått
+  (modulmåttet + 10). Rätt, eller är öppningsmåttet den fria öppningen?
+- Raderna följer stilbokens fältmall. Behöver en förteckning kunna ha egna
+  rader eller en egen ordning (t.ex. en kort för bygglovet)?
+- När V och H delar littera ritas den första. Vill du se båda i kolumnen?
+- Föreskrifterna är gemensamma för alla fönster- (eller dörr-)förteckningar
+  i projektet och står i en 70 mm bred kolumn till höger. Rätt plats och
+  bredd, och behövs *Förklaringar* och *Hänvisningar* som egna rubriker?
 
 **0.12.4 efter provning** (Claudes val, se PLAN.md; svaren A–E 10 november)
 - Takkupan som kryss på taket: kupans kontur i plan gäller i stället för
@@ -289,7 +328,7 @@ besvarade 7 november, se `cad-apa-export-utredning.md`)
 - En export till mappen skriver över filer med samma namn utan att fråga
   (så att en ny utgåva hamnar rätt). Bra, eller ska den fråga först?
 - Bilden ur 3D följer 3D-vyns kamera; en annan proportion än fönstrets
-  visar mer i sidled. Räcker det tills de sparade 3D-vyerna (0.12.8) får
+  visar mer i sidled. Räcker det tills de sparade 3D-vyerna (0.12.9) får
   en sökarram?
 
 **0.11.8.4 efter provning** (Claudes val, se PLAN.md)
@@ -330,7 +369,7 @@ synas som förval (gjort i 0.11.8.2); B spröjsens förval står; C skrivet
 mått för Special (gjort); D spegelns profil (gjort); E fältmallen i en
 egen flik i stilboken, sökbar med taggar som pennorna, med smarttext, och
 alla fält med i exporten, med ett filter för de egna (gjort, Typer ›
-Uppställningens fält).
+Förteckningens fält).
 
 **0.11.8 efter provning** (Claudes val, se PLAN.md; drevmånen besvarad 1
 november: hålet + 10, karmen − 10, gjort i 0.11.8.1)
@@ -755,7 +794,7 @@ per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
   Rätt?
 
 **Följdfrågor från 27 oktober**
-- Trädens status (till 0.12.8): ska texten "Träd skyddas under
+- Trädens status (till 0.12.9): ska texten "Träd skyddas under
   byggtiden" stå i en förteckning, eller skriver man den själv?
 
 **0.10.11 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)

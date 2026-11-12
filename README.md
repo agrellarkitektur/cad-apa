@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.4.1** (alfa), en buggfix efter Areor under snedtak och mark; nästa är **0.12.5 Uppställningen**.
+**0.12.5** (alfa), Förteckningen per littera; nästa är **0.12.6 Markförändringar**.
 
 ## Vad som fungerar
 
@@ -1149,6 +1149,47 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
 
+Version 0.12.5, Förteckningen per littera (samma filformat, 28; projekt från
+0.11.8 öppnas; nya valfria fält: förteckningens `layout`, `figureScale`,
+`noFigure` och `hideEmpty`, och bladvyns `maxWidth`):
+- **Namnet**: det som hette *uppställning* heter nu **förteckning** överallt
+  (stilboken › Typer › *Förteckningens fält*, egenskapernas *Förteckningens
+  fält*). En uppställning är en elevation av en byggdel eller ett rum (kök,
+  badrum) och kommer som egen vytyp efter piloten
+- **Dörr- och fönsterförteckningen per littera**, som A-42-5-101 och -102:
+  *Ny: Fönster* eller *Dörrar* under Förteckningar ger fälten som **rader**
+  och en **kolumn per littera**, med **ritningen sedd utifrån** överst
+  (karm, poster, bågar, blad, spröjs och öppningssymbol, nivån Normal) och
+  karmyttermåtten måttsatta. Alla rader i fältmallen syns, också de tomma
+  (`-`); *Dölj tomma rader* i egenskaperna tar bort dem ingen littera har
+  ifyllda
+- **Skriv i rutorna**: ett värde i en ruta sätts på alla objekt med
+  litteran, i ett ångra-steg. Skiljer de sig står *Olika*. Enter och
+  pilarna går mellan raderna, Tab till nästa littera. Det som räknas fram
+  är grått och går inte att skriva i
+- **Fälten som räknas fram** är ifyllda: antal, hängning, utförande (typens
+  namn), öppningssätt, karmyttermått, öppningsbredd och öppningshöjd
+  (hålets mått), bröstningshöjd, poster, spröjs, karmdjup och
+  väggtjocklek. De står också i den vanliga tabellen (förut `-`)
+- **V och H under samma littera** (litteraregeln *Typ och mått*, förvalet):
+  en kolumn, och raden *Hängning* räknar upp dem, *2 V, 1 H*. Med regeln
+  *Typ, mått och hängning* får de var sin kolumn
+- **Ritningens skala** 1:50 (förval), 1:20 eller 1:100 per förteckning,
+  eller ingen ritning
+- **Föreskrifter** till höger om tabellen: projektets egna rader (skrivs i
+  förteckningens egenskaper) och typernas föreskrifter med litterorna de
+  gäller, *F01–F02: Träfönster typ … eller likvärdig*
+- **På bladet** bryts en bred förteckning i **band under varandra**, med
+  fältens namn i varje (*Största bredd* på bladvyn, förval bladets ram).
+  Den följer med i bladets PDF och DXF, och CSV och XLSX får fälten som
+  rader
+- *Uppställd* i egenskaperna byter mellan *Per littera* och *Som tabell*
+  (tabellen från 0.12.2, med kolumner, sortering och summor)
+- Grindarna får ingen egen förteckning per littera; grindförteckningen från
+  0.12.2 finns kvar som tabell
+- Versionerna efter heter nu 0.12.6 (markförändringar), 0.12.7 (IFC),
+  0.12.8 (utgåvor och PM) och 0.12.9 (3D-vyer)
+
 Version 0.12.4.1, buggfix (samma filformat, 28):
 - **Areastämpeln följer marken**: på en våning delvis under mark stod den
   gamla delningen (t.ex. BOA och BIA(u)) kvar i planen när ett markobjekt
@@ -1223,7 +1264,7 @@ ny objekttyp `Area`, nytt valfritt fält stilbokens `general.areas`):
 - **XLSX**: förteckningarna kan sparas som Excel-fil (*Spara som XLSX* och
   i *Exportera…*), med talen som tal och delsummorna och summan som formler
 - Versionerna efter heter nu 0.12.4 (areor under snedtak och mark), 0.12.5
-  (uppställningen), 0.12.6 (IFC), 0.12.7 (utgåvor och PM) och 0.12.8
+  (förteckningen), 0.12.6 (IFC), 0.12.7 (utgåvor och PM) och 0.12.8
   (3D-vyer)
 
 Version 0.12.2, Förteckningar (samma filformat, 28; projekt från 0.11.8
@@ -1237,7 +1278,7 @@ bladet):
 - **Kolumnerna** väljs ur källans fält (rum: nummer, namn, våning, area,
   omkrets, rumshöjd, dagsljus, glasarea; dörrar och fönster: littera,
   antal, typ, beskrivning, våning, modulmått, karmyttermått, hålmått,
-  hängning, bröstningshöjd och uppställningens fält ur stilboken; grindar:
+  hängning, bröstningshöjd och förteckningens fält ur stilboken; grindar:
   littera, antal, räcke, bredd, höjd, hängning, lås; littera: nummer, sort,
   text, antal objekt; och status för alla), eller som **eget fält** med
   smarttext ur objektet. Rubriken går att skriva om, kolumnerna flyttas och
@@ -1257,7 +1298,7 @@ bladet):
   (förval; semikolon och decimalkomma för svensk Excel) och PDF. *Spara som
   CSV* finns också i förteckningen. Filnamnsmallen under stilboken ›
   Allmänt › Export
-- Versionerna efter heter nu 0.12.3 (areor och uppställningen), 0.12.4
+- Versionerna efter heter nu 0.12.3 (areor och förteckningen), 0.12.4
   (IFC), 0.12.5 (utgåvor och PM) och 0.12.6 (3D-vyer)
 
 Version 0.12.1, DXF (samma filformat, 28; projekt från 0.11.8 öppnas;
@@ -1432,8 +1473,8 @@ Version 0.11.8.2, Dörrar och fönster: Detalj och beslag (samma filformat,
   ställe *Dörr: tillgänglighetscirkel* (streckad)
 - **Fönstrens slagbågar i planen är släckta från början**; *Visa ›
   Slagbågar, fönster* tänder dem
-- **Uppställningens fält har en egen plats**: stilboken › Typer ›
-  *Uppställningens fält*, sökbar på namn och taggar (inbyggda för
+- **Förteckningens fält har en egen plats**: stilboken › Typer ›
+  *Förteckningens fält*, sökbar på namn och taggar (inbyggda för
   förteckningens fält, egna med komma), med smarttexten för varje fält
   (`{U-värde}`, också `{fält:U-värde}` i litteramallarna) och *Bara
   egna* för att hitta och ta bort de fält som inte är förteckningens.
@@ -1484,10 +1525,10 @@ filformat, 28; projekt från 0.11.8 öppnas):
   *Glas* eller stilbokens material) och kan breddas eller förlängas.
   *Spegel* och *Glasat* är förval som går att ändra
 - **Vägghålen får VG01** (`VG{nr:2}`) som förval
-- **Uppställningens fält**: fältmallen för fönster och dörrar under
-  Allmänt › *Fönster och dörrar* (sedan 0.11.8.2 Typer › *Uppställningens fält*) (fälten ur förteckningarna, flytta, byt
+- **Förteckningens fält**: fältmallen för fönster och dörrar under
+  Allmänt › *Fönster och dörrar* (sedan 0.11.8.2 Typer › *Förteckningens fält*) (fälten ur förteckningarna, flytta, byt
   namn, ta bort, *+ Nytt fält…*). Fälten som inte räknas fram (U-värde,
-  brandklass, låshus …) fylls i under egenskaperna, **Uppställningens
+  brandklass, låshus …) fylls i under egenskaperna, **Förteckningens
   fält**; värdet hör till objektet, och skiljer sig de markerade står
   *Olika* i rutan. Ett nytt namn följer med värdena
 
@@ -1551,7 +1592,7 @@ projekt från 0.11.6–0.11.7.3 öppnas inte):
 - Nya ställen i stilboken: *Fönster: post och tvärstycke* och *Fönster:
   slagbåge*
 - **Vägghålen** finns i formatet (sorten `WallHole`, littera V01 …);
-  verktyget och typerna kommer i 0.11.8.2. Uppställningarnas fältmall och
+  verktyget och typerna kommer i 0.11.8.2. Förteckningarnas fältmall och
   värden per littera finns i formatet; vytypen kommer i 0.12
 
 Version 0.11.7.3, Trappan och räcket, det som inte hanns med (samma

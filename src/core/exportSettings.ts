@@ -4,7 +4,7 @@ import type { Id } from './model';
 /**
  * Exporten (0.12): det som exporteras, i vilka format, och uppsättningarna
  * som sparas med namn. Formaten är skrivare bakom en dialog och kommer en i
- * taget (DXF i 0.12.1, förteckningarna i 0.12.2, IFC i 0.12.6); en
+ * taget (DXF i 0.12.1, förteckningarna i 0.12.2, IFC i 0.12.7); en
  * rad i dialogen är ett blad, en vy, en 3D-vy eller modellen.
  *
  * Inställningar som hör till kontorets sätt att leverera (filnamnsmallarna)
@@ -34,7 +34,7 @@ export const FORMAT_EXT: Record<ExportFormat, string> = { pdf: 'pdf', dxf: 'dxf'
 /** Undermappen per format när *Undermappar* är valt. */
 export const FORMAT_FOLDER: Record<ExportFormat, string> = { pdf: 'PDF', dxf: 'DXF', csv: 'Förteckningar', xlsx: 'Förteckningar', png: 'Bilder', jpeg: 'Bilder', glb: 'glTF' };
 
-/** Raden för den nuvarande 3D-vyn (0.12; de sparade 3D-vyerna kommer i 0.12.8) och för modellen. */
+/** Raden för den nuvarande 3D-vyn (0.12; de sparade 3D-vyerna kommer i 0.12.9) och för modellen. */
 export const IMAGE_CURRENT = 'image:current';
 export const MODEL_ALL = 'model:all';
 

@@ -48,7 +48,7 @@ describe('förteckningarna (0.12.2)', () => {
     const each = tableOf(store, id);
     expect(each.count).toBe(4);
     expect(each.total![1].value).toBe(4);
-    // Ett eget fält (uppställningens) läses ur objekten; två olika värden blir Olika per littera.
+    // Ett eget fält (förteckningens) läses ur objekten; två olika värden blir Olika per littera.
     const doors = Object.values(store.doc.elements).filter((e) => e.type === 'Door' && e.definition === Object.values(store.doc.elements).find((x) => x.type === 'Door' && x.definition)?.definition);
     store.transact('fält', (tx) => doors.forEach((d, i) => tx.putElement({ ...d, params: { ...d.params, fields: { Brandklass: i ? 'EI30' : 'EI60' } } })));
     updateSchedule(store, id, { perLittera: true, columns: [{ field: 'Littera' }, { field: 'Brandklass' }] });

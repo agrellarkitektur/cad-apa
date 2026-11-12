@@ -46,7 +46,26 @@ export interface Schedule {
   labelSort?: string;
   /** Summaraden längst ned (förval på). */
   noTotal?: boolean;
+  /**
+   * Uppställd per littera (0.12.5, dörrar och fönster): fälten är rader och
+   * varje littera en kolumn, med ritningen sedd utifrån överst. Raderna är
+   * stilbokens fältmall; `columns`, `sort` och `group` gäller inte då.
+   */
+  layout?: 'littera';
+  /** Per littera: ritningens skala (nämnaren), förval 50. */
+  figureScale?: number;
+  /** Per littera: ingen ritning i kolumnerna. */
+  noFigure?: boolean;
+  /** Per littera: rader där inget fält är ifyllt visas inte (förval: alla rader syns). */
+  hideEmpty?: boolean;
 }
+
+/** Skalorna ritningen i en förteckning per littera kan ha. */
+export const FIGURE_SCALES: readonly number[] = [20, 50, 100];
+export const DEFAULT_FIGURE_SCALE = 50;
+
+/** Om förteckningen ställs upp per littera (bara dörrar och fönster). */
+export const isLitteraLayout = (s: Pick<Schedule, 'layout' | 'source'>): boolean => s.layout === 'littera' && (s.source === 'Door' || s.source === 'Window');
 
 export const SOURCE_NAMES: Record<ScheduleSource, string> = {
   Space: 'Rum',
@@ -79,7 +98,7 @@ export const SCHEDULE_FIELDS: Record<ScheduleSource, readonly ScheduleField[]> =
   Label: [txt('Nummer'), txt('Sort'), txt('Text'), txt('Våning'), num('Antal objekt'), txt('Status')],
 };
 
-/** Källans fält: de framräknade och, för dörrar och fönster, uppställningens fält ur stilboken. */
+/** Källans fält: de framräknade och, för dörrar och fönster, förteckningens fält ur stilboken. */
 export function sourceFields(doc: Pick<ProjectDoc, 'project' | 'graphics'>, source: ScheduleSource): ScheduleField[] {
   const out = [...SCHEDULE_FIELDS[source]];
   if (source === 'Door' || source === 'Window') {
@@ -144,6 +163,10 @@ export function normalizeSchedule(s: unknown): Schedule | null {
     ...(Array.isArray(x.storeys) && x.storeys.length ? { storeys: x.storeys.filter((v) => typeof v === 'string') } : {}),
     ...(typeof x.labelSort === 'string' && x.labelSort ? { labelSort: x.labelSort } : {}),
     ...(x.noTotal ? { noTotal: true } : {}),
+    ...(x.layout === 'littera' && (source === 'Door' || source === 'Window') ? { layout: 'littera' as const } : {}),
+    ...(typeof x.figureScale === 'number' && FIGURE_SCALES.includes(x.figureScale) && x.figureScale !== DEFAULT_FIGURE_SCALE ? { figureScale: x.figureScale } : {}),
+    ...(x.noFigure ? { noFigure: true } : {}),
+    ...(x.hideEmpty ? { hideEmpty: true } : {}),
   };
 }
 

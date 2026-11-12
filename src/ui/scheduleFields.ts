@@ -1,5 +1,5 @@
 import { buildingStoreys, type ProjectDoc } from '../core/model';
-import { isNumberField, scheduleOf, sourceFields, SOURCE_NAMES, type Schedule } from '../core/schedules';
+import { DEFAULT_FIGURE_SCALE, FIGURE_SCALES, isLitteraLayout, isNumberField, scheduleOf, sourceFields, SOURCE_NAMES, type Schedule } from '../core/schedules';
 import { defaultState } from '../core/states';
 import { columnTitle, cachedTable } from '../repr/schedules';
 import { icons } from './icons';
@@ -51,6 +51,56 @@ export function scheduleFormMarkup(doc: ProjectDoc, id: string): string {
   };
   const sheets = [...doc.sheets].sort((a, b) => a.number.localeCompare(b.number, 'sv', { numeric: true }));
   const placed = doc.sheets.filter((sh) => sh.viewports.some((v) => v.view === s.id));
+  const opening = s.source === 'Door' || s.source === 'Window';
+  const littera = isLitteraLayout(s);
+  const layout = opening
+    ? `<div class="fields">${field('Uppställd', `<select data-sch="layout"><option value="littera"${littera ? ' selected' : ''}>Per littera: fälten som rader</option><option value=""${littera ? '' : ' selected'}>Som tabell: ett objekt eller en littera per rad</option></select>`)}</div>`
+    : '';
+  const storeysMarkup = places.length > 1 ? `<div class="field-label">Våningar</div><div class="sch-storeys">${places.map((x) => `<label class="check"><input type="checkbox" data-sch-storey="${x.id}"${on(x.id) ? ' checked' : ''}> ${esc(x.name)}</label>`).join('')}</div>` : '';
+  const onSheet = `<section>
+      <h3>På blad</h3>
+      ${placed.length ? `<p class="note">Ligger på ${placed.map((sh) => `<b>${esc(sh.number)}</b>`).join(', ')}.</p>` : ''}
+      ${sheets.length ? `<div class="fields">${field('Blad', `<select data-sch-sheet>${sheets.map((sh) => `<option value="${sh.id}">${esc(`${sh.number} ${sh.name}`.trim())}</option>`).join('')}</select>`)}</div><div class="row"><button type="button" class="btn" data-sch-act="place">${icons.plus}<span>Lägg på bladet</span></button></div>` : '<p class="note">Inga ritningsblad än. Skapa ett under Ritningar i projektträdet.</p>'}
+    </section>
+    <div class="tree-save">
+      <button type="button" class="btn btn-danger" data-sch-act="delete">Ta bort</button>
+      <button type="button" class="btn" data-sch-act="duplicate">Kopiera</button>
+      <button type="button" class="btn" data-sch-act="csv">Spara som CSV</button>
+      <button type="button" class="btn" data-sch-act="xlsx" title="Excel-fil${littera ? '' : ' med delsummorna och summan som formler'}">Spara som XLSX</button>
+    </div>`;
+  // Per littera (0.12.5): raderna är stilbokens fältmall, så kolumner, sortering och summor gäller inte.
+  if (littera) {
+    const kind = s.source as 'Door' | 'Window';
+    const scale = s.figureScale ?? DEFAULT_FIGURE_SCALE;
+    const notes = doc.project.openingSchedule?.notes?.[kind] ?? '';
+    return `<form class="tree-form schedule-form" data-schedule-form="${s.id}">
+    <header class="sel-head"><h2>${esc(s.name)}</h2><p>Förteckning · ${SOURCE_NAMES[s.source]} · ${t.count} ${t.count === 1 ? 'littera' : 'litteror'}</p></header>
+    <section>
+      <div class="fields">
+        ${field('Namn', `<input data-sch="name" value="${esc(s.name)}" autocomplete="off">`)}
+        ${field('Tillstånd', `<select data-sch="state">${doc.states.map((x) => `<option value="${x.id}"${x.id === (s.state ?? defaultState(doc)) ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`)}
+      </div>
+      ${layout}
+      ${storeysMarkup}
+    </section>
+    <section>
+      <h3>Ritningen</h3>
+      <label class="check"><input type="checkbox" data-sch="figure"${s.noFigure ? '' : ' checked'}> Ritning sedd utifrån, med karmyttermåtten</label>
+      <div class="fields">${field('Skala', `<select data-sch="figureScale"${s.noFigure ? ' disabled' : ''}>${FIGURE_SCALES.map((n) => `<option value="${n}"${n === scale ? ' selected' : ''}>1:${n}</option>`).join('')}</select>`)}</div>
+    </section>
+    <section>
+      <h3>Raderna</h3>
+      <label class="check"><input type="checkbox" data-sch="hideEmpty"${s.hideEmpty ? ' checked' : ''}> Dölj tomma rader</label>
+      <p class="note">Raderna är fälten under stilboken › Typer › Förteckningens fält, i den ordningen. Skriv i en ruta i tabellen: värdet sätts på alla ${kind === 'Door' ? 'dörrar' : 'fönster'} med litteran. Det som räknas fram (antal, mått, hängning …) går inte att skriva i.</p>
+    </section>
+    <section>
+      <h3>Föreskrifter</h3>
+      <textarea data-sch="notes" rows="4" placeholder="En föreskrift per rad, t.ex. Samtliga ${kind === 'Door' ? 'dörrar' : 'fönster'} levereras fabriksmålade.">${esc(notes)}</textarea>
+      <p class="note">Står till höger om tabellen, med typernas föreskrifter och litterorna de gäller (stilboken › Typer › ${kind === 'Door' ? 'Dörrar' : 'Fönster'}). Gemensamma för projektets ${kind === 'Door' ? 'dörr' : 'fönster'}förteckningar.</p>
+    </section>
+    ${onSheet}
+  </form>`;
+  }
   return `<form class="tree-form schedule-form" data-schedule-form="${s.id}">
     <header class="sel-head"><h2>${esc(s.name)}</h2><p>Förteckning · ${SOURCE_NAMES[s.source]} · ${t.count} ${t.count === 1 ? 'rad' : 'rader'}</p></header>
     <section>
@@ -61,7 +111,8 @@ export function scheduleFormMarkup(doc: ProjectDoc, id: string): string {
       </div>
       ${s.source === 'Door' || s.source === 'Window' || s.source === 'Gate' ? `<label class="check"><input type="checkbox" data-sch="perLittera"${s.perLittera ? ' checked' : ''}> En rad per littera, med antal</label>` : ''}
       ${s.source === 'Area' ? `<label class="check"><input type="checkbox" data-sch="perLittera"${s.perLittera ? ' checked' : ''}> En rad per beteckning, funktion och våning</label><p class="note">BYA, BTA och BRA räknas fram per våning; delsummorna i hela m², mätt enligt SS 21054:2020.</p>` : ''}
-      ${places.length > 1 ? `<div class="field-label">Våningar</div><div class="sch-storeys">${places.map((x) => `<label class="check"><input type="checkbox" data-sch-storey="${x.id}"${on(x.id) ? ' checked' : ''}> ${esc(x.name)}</label>`).join('')}</div>` : ''}
+      ${layout}
+      ${storeysMarkup}
     </section>
     <section>
       <h3>Kolumner</h3>
@@ -70,7 +121,7 @@ export function scheduleFormMarkup(doc: ProjectDoc, id: string): string {
         <select data-sch-add aria-label="Lägg till kolumn"><option value="">Lägg till kolumn…</option>${unused.map((f) => `<option value="${esc(f.name)}">${esc(f.name)}</option>`).join('')}<option value="*">Eget fält (smarttext)…</option></select>
       </div>
       <div class="sch-own" hidden><input data-sch-own placeholder="Fältets namn, t.ex. Golv eller U-värde" autocomplete="off"><button type="button" class="btn" data-sch-act="own">Lägg till</button></div>
-      <p class="note">Ett eget fält läses som smarttext ur objektet: dess egna egenskaper, typens, och uppställningens fält för dörrar och fönster. Σ summerar kolumnen.</p>
+      <p class="note">Ett eget fält läses som smarttext ur objektet: dess egna egenskaper, typens, och förteckningens fält för dörrar och fönster. Σ summerar kolumnen.</p>
     </section>
     <section>
       <h3>Ordning</h3>
@@ -80,16 +131,6 @@ export function scheduleFormMarkup(doc: ProjectDoc, id: string): string {
       <label class="check"><input type="checkbox" data-sch="total"${s.noTotal ? '' : ' checked'}> Summarad längst ned</label>
       ${s.group ? '<p class="note">Varje grupp får en rubrik och, med Σ, en delsumma.</p>' : ''}
     </section>
-    <section>
-      <h3>På blad</h3>
-      ${placed.length ? `<p class="note">Ligger på ${placed.map((sh) => `<b>${esc(sh.number)}</b>`).join(', ')}.</p>` : ''}
-      ${sheets.length ? `<div class="fields">${field('Blad', `<select data-sch-sheet>${sheets.map((sh) => `<option value="${sh.id}">${esc(`${sh.number} ${sh.name}`.trim())}</option>`).join('')}</select>`)}</div><div class="row"><button type="button" class="btn" data-sch-act="place">${icons.plus}<span>Lägg på bladet</span></button></div>` : '<p class="note">Inga ritningsblad än. Skapa ett under Ritningar i projektträdet.</p>'}
-    </section>
-    <div class="tree-save">
-      <button type="button" class="btn btn-danger" data-sch-act="delete">Ta bort</button>
-      <button type="button" class="btn" data-sch-act="duplicate">Kopiera</button>
-      <button type="button" class="btn" data-sch-act="csv">Spara som CSV</button>
-      <button type="button" class="btn" data-sch-act="xlsx" title="Excel-fil med delsummorna och summan som formler">Spara som XLSX</button>
-    </div>
+    ${onSheet}
   </form>`;
 }

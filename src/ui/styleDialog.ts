@@ -61,7 +61,7 @@ const TYPES: readonly { res: Resource | null; name: string; later?: string }[] =
   { res: 'railings', name: 'Räckestyper' },
   { res: 'openings', name: 'Fönster och dörrar' },
   // Fältmallen (0.11.8.2, förut under Allmänt).
-  { res: 'schedule', name: 'Uppställningens fält' },
+  { res: 'schedule', name: 'Förteckningens fält' },
 ];
 
 const TYPE_RES: ReadonlySet<Resource> = new Set(['materials', 'profiles', 'endProfiles', 'railings', 'openings', 'schedule']);

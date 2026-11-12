@@ -1,7 +1,10 @@
 import type { Id } from '../../core/model';
 import { createSchedule, duplicateSchedule, removeSchedule, scheduleOf, SOURCES, updateSchedule, type Schedule, type ScheduleColumn, type ScheduleSource } from '../../core/schedules';
 import { exportVars, safeFileName } from '../../core/exportJobs';
-import { cachedTable, scheduleCsv, scheduleXlsx, type Cell, type ScheduleTable } from '../../repr/schedules';
+import { withField } from '../../core/openingSchedule';
+import { cachedTable, scheduleCsv, scheduleXlsx, type Cell, type LitteraInfo, type ScheduleTable } from '../../repr/schedules';
+import { FIGURE_PENS } from '../../repr/scheduleTable';
+import type { OpeningFigure } from '../../repr/openingFigure';
 import { askConfirm } from '../ask';
 import { escapeHtml as esc } from '../labels';
 import { scheduleFormMarkup } from '../scheduleFields';
@@ -21,6 +24,13 @@ export function installSchedules(app: AppContext, parts: { place: (sheetId: Id, 
   overlay.hidden = true;
   app.pane2d.appendChild(overlay);
   let open: Id | null = null;
+  // Rutan markören står i (per littera, 0.12.5), och om en ruta just skrivs.
+  let focusKey: string | null = null;
+  let writing = false;
+  let pending = 0;
+  const keyOf = (t: EventTarget | null) => (t instanceof HTMLElement && overlay.contains(t) ? (t.dataset.schCell ?? null) : null);
+  overlay.addEventListener('focusin', (e) => (focusKey = keyOf(e.target)));
+  overlay.addEventListener('focusout', (e) => (focusKey = keyOf(e.relatedTarget)));
 
   function render(): void {
     const s = open ? scheduleOf(app.store.doc, open) : undefined;
@@ -29,8 +39,57 @@ export function installSchedules(app: AppContext, parts: { place: (sheetId: Id, 
       return;
     }
     overlay.hidden = false;
+    // Rutan man står i (per littera, 0.12.5) får tillbaka markören när tabellen ritats om.
+    const at = focusKey;
+    const scroll: [number, number] = [overlay.scrollLeft, overlay.scrollTop];
     overlay.innerHTML = tableMarkup(cachedTable(app.store.doc, s), s);
+    [overlay.scrollLeft, overlay.scrollTop] = scroll;
+    if (at) {
+      const input = overlay.querySelector<HTMLInputElement>(`[data-sch-cell="${CSS.escape(at)}"]`);
+      input?.focus();
+      input?.select();
+    }
   }
+
+  // Per littera (0.12.5): en ruta skriver på alla objekt med litteran, i en transaktion.
+  overlay.addEventListener('change', (e) => {
+    const input = (e.target as HTMLElement).closest<HTMLInputElement>('[data-sch-cell]');
+    const s = open ? scheduleOf(app.store.doc, open) : undefined;
+    const info = s ? cachedTable(app.store.doc, s).littera : undefined;
+    if (!input || !info) return;
+    const [row, col] = input.dataset.schCell!.split(':').map(Number);
+    const field = info.fields[row];
+    const column = info.columns[col];
+    if (!field || !column || !info.own[row]) return;
+    const value = input.value.trim();
+    writing = true;
+    try {
+      app.store.transact(`${field} för ${column.littera || 'objekten'}: ${value || 'tomt'}`, (tx) => {
+        for (const id of column.ids) {
+          const el = tx.doc.elements[id];
+          if (el) tx.putElement({ ...el, params: withField(el.params as Record<string, unknown>, field, value) });
+        }
+      });
+    } finally {
+      writing = false;
+    }
+  });
+  overlay.addEventListener('keydown', (e) => {
+    const input = (e.target as HTMLElement).closest<HTMLInputElement>('[data-sch-cell]');
+    if (!input) return;
+    // Rutorna är fält, inte kortkommandon.
+    e.stopPropagation();
+    if (e.key !== 'Enter' && e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return;
+    e.preventDefault();
+    const [row, col] = input.dataset.schCell!.split(':').map(Number);
+    const cells = [...overlay.querySelectorAll<HTMLInputElement>('[data-sch-cell]')].filter((x) => Number(x.dataset.schCell!.split(':')[1]) === col);
+    const i = cells.findIndex((x) => Number(x.dataset.schCell!.split(':')[0]) === row);
+    const next = cells[i + (e.key === 'ArrowUp' ? -1 : 1)];
+    if (next) {
+      next.focus();
+      next.select();
+    } else input.blur();
+  });
 
   function show(id: Id): void {
     if (!scheduleOf(app.store.doc, id)) return;
@@ -60,7 +119,12 @@ export function installSchedules(app: AppContext, parts: { place: (sheetId: Id, 
   app.closeSchedule = close;
   app.panel.scheduleMarkup = (id) => scheduleFormMarkup(app.store.doc, id);
   app.store.subscribe(() => {
-    if (open) render();
+    if (!open) return;
+    // Skrivs det i en ruta (per littera, 0.12.5) ritas tabellen om först när markören
+    // har hunnit till nästa ruta, så att den inte tappas med den gamla tabellen.
+    if (!writing) return render();
+    window.clearTimeout(pending);
+    pending = window.setTimeout(render, 0);
   });
 
   // Projektträdet: en förteckning, eller en ny för en källa.
@@ -73,9 +137,12 @@ export function installSchedules(app: AppContext, parts: { place: (sheetId: Id, 
     }
     const add = t.closest<HTMLElement>('[data-schedule-new]');
     if (add && SOURCES.includes(add.dataset.scheduleNew as ScheduleSource)) {
-      const id = createSchedule(app.store, add.dataset.scheduleNew as ScheduleSource);
+      const source = add.dataset.scheduleNew as ScheduleSource;
+      // Dörrar och fönster ställs upp per littera från början (0.12.5), som A-42-5-101 och -102.
+      const opening = source === 'Door' || source === 'Window';
+      const id = createSchedule(app.store, source, opening ? { layout: 'littera' } : {});
       show(id);
-      app.hint('En ny förteckning. Välj kolumner, ordning och gruppering i egenskaperna.', 4000);
+      app.hint(opening ? 'En ny förteckning per littera. Skriv i rutorna; ritningen, raderna och föreskrifterna ställs in i egenskaperna.' : 'En ny förteckning. Välj kolumner, ordning och gruppering i egenskaperna.', 5000);
     }
   });
 
@@ -130,6 +197,38 @@ export function installSchedules(app: AppContext, parts: { place: (sheetId: Id, 
       case 'labelSort':
         edit(form, { labelSort: el.value || undefined }, 'Sorten i förteckningen');
         break;
+      case 'layout':
+        edit(form, { layout: el.value === 'littera' ? 'littera' : undefined }, el.value === 'littera' ? 'Förteckningen per littera' : 'Förteckningen som tabell');
+        break;
+      case 'figure':
+        edit(form, { noFigure: el.checked ? undefined : true }, el.checked ? 'Ritning i förteckningen' : 'Ingen ritning i förteckningen');
+        break;
+      case 'figureScale':
+        edit(form, { figureScale: Number(el.value) }, `Ritningen i 1:${el.value}`);
+        break;
+      case 'hideEmpty':
+        edit(form, { hideEmpty: el.checked || undefined }, el.checked ? 'Dölj tomma rader' : 'Visa tomma rader');
+        break;
+      case 'notes': {
+        // Föreskrifterna hör till projektet, gemensamma för sortens förteckningar.
+        if (s.source !== 'Door' && s.source !== 'Window') break;
+        const kind = s.source;
+        const text = (el as unknown as HTMLTextAreaElement).value.replace(/\s+$/, '');
+        app.store.transact('Föreskrifterna i förteckningen', (tx) => {
+          const cur = tx.doc.project.openingSchedule ?? {};
+          const notes = { ...(cur.notes ?? {}) };
+          if (text) notes[kind] = text;
+          else delete notes[kind];
+          const next = { ...cur };
+          if (Object.keys(notes).length) next.notes = notes;
+          else delete next.notes;
+          const project = { ...tx.doc.project };
+          if (Object.keys(next).length) project.openingSchedule = next;
+          else delete project.openingSchedule;
+          tx.setProject(project);
+        });
+        break;
+      }
       case 'perLittera':
         edit(form, { perLittera: el.checked || undefined }, el.checked ? 'En rad per littera' : 'En rad per objekt');
         break;
@@ -246,6 +345,7 @@ export function installSchedules(app: AppContext, parts: { place: (sheetId: Id, 
 
 /** Tabellen i ritytan, som HTML (samma rader som på bladet). */
 function tableMarkup(t: ScheduleTable, s: Schedule): string {
+  if (t.littera) return litteraMarkup(t, t.littera, s);
   const td = (c: Cell, i: number, tag = 'td') => `<${tag}${t.columns[i].number ? ' class="num"' : ''}>${c.text ? esc(c.text) : tag === 'td' ? '-' : ''}</${tag}>`;
   const sum = (cells: Cell[], label: string, cls: string) => `<tr class="${cls}">${cells.map((c, i) => (i === 0 && !c.text ? `<th>${esc(label)}</th>` : td(c, i, 'th'))).join('')}</tr>`;
   const body = t.groups
@@ -264,5 +364,55 @@ function tableMarkup(t: ScheduleTable, s: Schedule): string {
       ${t.total ? `<tfoot>${sum(t.total, 'Summa', 'sch-total')}</tfoot>` : ''}
     </table>
     <p class="note">Räknas fram ur modellen. Ändra kolumner, ordning och gruppering i egenskaperna; lägg den på ett blad där eller under bladets vyer.</p>
+  </div>`;
+}
+
+/** Ritningen som SVG, med samma linjer och tjocklekar som på bladet. */
+function figureSvg(fig: OpeningFigure, n: number): string {
+  // 1 mm på papperet = 3 px på skärmen.
+  const px = 3;
+  const k = px / n;
+  const pad = 4;
+  const lines = fig.lines
+    .map((l) => {
+      const pen = FIGURE_PENS[l.role];
+      return `<line x1="${(l.a[0] * k).toFixed(1)}" y1="${((fig.h - l.a[1]) * k).toFixed(1)}" x2="${(l.b[0] * k).toFixed(1)}" y2="${((fig.h - l.b[1]) * k).toFixed(1)}" stroke-width="${(pen.weight * px).toFixed(2)}"${pen.dash ? ` stroke-dasharray="${pen.dash.map((d) => d * px).join(' ')}"` : ''}/>`;
+    })
+    .join('');
+  const w = fig.w * k;
+  const h = fig.h * k;
+  return `<svg class="sch-figure" width="${Math.ceil(w + 2 * pad)}" height="${Math.ceil(h + 2 * pad)}" viewBox="${-pad} ${-pad} ${w + 2 * pad} ${h + 2 * pad}" role="img" aria-label="Ritning sedd utifrån"><g fill="none" stroke="currentColor" stroke-linecap="round">${lines}</g></svg>
+    <div class="sch-figure-dim">${Math.round(fig.w)} × ${Math.round(fig.h)}</div>`;
+}
+
+/** Förteckningen per littera i ritytan (0.12.5): fälten som rader, en kolumn per littera, rutorna att skriva i. */
+function litteraMarkup(t: ScheduleTable, info: LitteraInfo, s: Schedule): string {
+  const rows = t.groups[0]?.rows ?? [];
+  const cols = info.columns;
+  const head = `<tr><th>Littera</th>${cols.map((_c, i) => `<th class="sch-lit">${esc(t.columns[i + 1].title)}</th>`).join('')}</tr>`;
+  const figures = info.figureScale ? `<tr class="sch-figures"><th>Sedd utifrån<small>1:${info.figureScale}</small></th>${cols.map((c) => `<td>${c.figure ? figureSvg(c.figure, info.figureScale) : ''}</td>`).join('')}</tr>` : '';
+  const body = rows
+    .map((r, ri) => {
+      const cells = cols
+        .map((c, ci) => {
+          const cell = r[ci + 1];
+          if (!info.own[ri]) return `<td class="sch-derived" title="Räknas fram ur modellen">${cell.text ? esc(cell.text) : '-'}</td>`;
+          const mixed = cell.text === 'Olika';
+          return `<td class="sch-edit"><input data-sch-cell="${ri}:${ci}" value="${mixed ? '' : esc(cell.text)}" placeholder="${mixed ? 'Olika' : '-'}" aria-label="${esc(info.fields[ri])} för ${esc(c.littera)}" title="${esc(info.fields[ri])} för ${c.ids.length === 1 ? 'objektet' : `alla ${c.ids.length}`} med litteran ${esc(c.littera)}" autocomplete="off"></td>`;
+        })
+        .join('');
+      return `<tr><th>${esc(info.fields[ri])}</th>${cells}</tr>`;
+    })
+    .join('');
+  const empty = cols.length ? '' : `<p class="note sch-empty">Inga ${s.source === 'Door' ? 'dörrar' : 'fönster'} i det här tillståndet${s.storeys?.length ? ' och på de valda våningarna' : ''}.</p>`;
+  const notes = info.notes.length ? `<aside class="sch-notes"><h3>Föreskrifter</h3>${info.notes.map((n) => `<p>${esc(n)}</p>`).join('')}</aside>` : '';
+  return `<div class="schedule-sheet">
+    <h2>${esc(t.name)}<small>${t.count} ${t.count === 1 ? 'littera' : 'litteror'}</small></h2>
+    <div class="sch-littera">
+      <table class="schedule-table schedule-littera"><thead>${head}</thead><tbody>${figures}${body}</tbody></table>
+      ${notes}
+    </div>
+    ${empty}
+    <p class="note">Räknas fram ur modellen. Skriv i en ruta, så sätts värdet på alla objekt med litteran; Enter eller pil ned går till nästa rad. Ritningen, raderna och föreskrifterna ställs in i egenskaperna, fälten under stilboken › Typer › Förteckningens fält.</p>
   </div>`;
 }

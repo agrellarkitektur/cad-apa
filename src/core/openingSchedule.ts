@@ -1,13 +1,13 @@
 import type { Element, Id, ProjectDoc } from './model';
 
 /**
- * Uppställningens fältmall och objektens egna fält (0.11.8.1, kommentar I
+ * Förteckningens fältmall och objektens egna fält (0.11.8.1, kommentar I
  * på mockupen). Fönster och dörrar har var sin mall: fälten i
  * förteckningarna A-42-5-101 och -102, i den ordning de står där. Ett fält
  * som läggs till i mallen blir ett fält på alla objekt av sorten; värdet
- * fylls i i objektets egenskaper (och i uppställningen när den kommer i
- * 0.12) och **bor på objektet** (`params.fields`), så att det följer med
- * även om uppställningen tas bort. Skrivs ett värde för en littera sätts
+ * fylls i i objektets egenskaper (och i förteckningen per littera sedan
+ * 0.12.5) och **bor på objektet** (`params.fields`), så att det följer med
+ * även om förteckningen tas bort. Skrivs ett värde för en littera sätts
  * det på alla objekt med litteran; skiljer de sig visas *Olika*.
  *
  * Fälten som räknas fram (littera, antal, mått …), kommer ur typen
@@ -16,7 +16,7 @@ import type { Element, Id, ProjectDoc } from './model';
  *
  * Mallen bor i stilboken sedan 0.11.8.2 (`graphics.scheduleFields`), så att
  * den följer med stilbokens export och mall, och ändras under stilboken ›
- * Typer › Uppställningens fält, sökbar med taggar som pennorna. Ett projekt
+ * Typer › Förteckningens fält, sökbar med taggar som pennorna. Ett projekt
  * från 0.11.8.1 har den i `project.openingSchedule.fields`; den läses tills
  * mallen ändras. Fälten är smarttext i litteramallarna: `{U-värde}` eller
  * `{fält:U-värde}`.

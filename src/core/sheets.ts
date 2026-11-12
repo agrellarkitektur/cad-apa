@@ -241,6 +241,8 @@ export function updateViewport(store: DocStore, sheetId: Id, vpId: Id, patch: Pa
         if (!next.title?.trim()) delete next.title;
         if (!next.hideScale) delete next.hideScale;
         if (!next.crop) delete next.crop;
+        if (!next.maxHeight) delete next.maxHeight;
+        if (!next.maxWidth) delete next.maxWidth;
         return next;
       }),
     })),
