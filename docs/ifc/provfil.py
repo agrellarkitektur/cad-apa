@@ -114,7 +114,7 @@ def styled(item, st):
 def profile(ring, holes=()):
     """Ytterkontur (och hål) som IfcIndexedPolyCurve; Reference View vill ha den."""
     def curve(r):
-        pl = e(f'IFCCARTESIANPOINTLIST2D({pts2(r)},$)')
+        pl = e(f'IFCCARTESIANPOINTLIST2D({pts2(r)})')
         idx = ','.join(f'IFCLINEINDEX(({i + 1},{(i + 1) % len(r) + 1}))' for i in range(len(r)))
         return e(f'IFCINDEXEDPOLYCURVE({pl},({idx}),.F.)')
     outer = curve(ring)
@@ -139,12 +139,23 @@ def shape(items, kind='SweptSolid', extra=()):
 
 def tessellated(tris_pts, faces, st=None):
     """Krokigt (trappor, räcken, sneda tak): IfcTriangulatedFaceSet."""
-    pl = e(f"IFCCARTESIANPOINTLIST3D(({','.join(tup(*p) for p in tris_pts)}),$)")
+    pl = e(f"IFCCARTESIANPOINTLIST3D(({','.join(tup(*p) for p in tris_pts)}))")
     idx = ','.join('(' + ','.join(str(i + 1) for i in t) + ')' for t in faces)
     fs = e(f'IFCTRIANGULATEDFACESET({pl},$,.T.,({idx}),$)')
     if st:
         styled(fs, st)
     return fs
+
+
+_enum = []
+
+
+def status_enum():
+    """PEnum_ElementStatus en gång per fil, som standarden har den."""
+    if not _enum:
+        items = ','.join(f"IFCLABEL('{v}')" for v in ('NEW', 'EXISTING', 'DEMOLISH', 'TEMPORARY', 'OTHER', 'NOTKNOWN', 'UNSET'))
+        _enum.append(e(f"IFCPROPERTYENUMERATION('PEnum_ElementStatus',({items}),$)"))
+    return _enum[0]
 
 
 def pset(name, owners, props):
@@ -160,8 +171,11 @@ def pset(name, owners, props):
             val = f'IFCLENGTHMEASURE({f(v)})'
         elif isinstance(v, (int, float)):
             val = f'IFCREAL({f(v)})'
-        elif k == 'Status':
-            val = f'IFCLABEL({s(v)})'
+        elif k == 'Status' and name.startswith('Pset_'):
+            vals.append(e(f"IFCPROPERTYENUMERATEDVALUE('Status',$,(IFCLABEL({s(v)})),{status_enum()})"))
+            continue
+        elif k == 'Reference' and name.startswith('Pset_'):
+            val = f'IFCIDENTIFIER({s(v)})'
         else:
             val = f'IFCLABEL({s(v)})'
         vals.append(e(f'IFCPROPERTYSINGLEVALUE({s(k)},$,{val},$)'))
@@ -178,7 +192,7 @@ m_lv = e("IFCMATERIAL('L\\X2\\00E4\\X0\\ttbetong',$,'Betong')")
 cset = e(f"IFCMATERIALCONSTITUENTSET('YV01',$,(" +
          e(f"IFCMATERIALCONSTITUENT('Puts 20',$,{m_puts},0.0625,'Utv\\X2\\00E4\\X0\\ndigt')") + ',' +
          e(f"IFCMATERIALCONSTITUENT('L\\X2\\00E4\\X0\\ttbetong 280',$,{m_lv},0.9375,'Stomme')") + '))')
-wall_type = e(f"IFCWALLTYPE('{guid()}',{oh},'YV01',$,$,$,$,$,$,.STANDARD.)")
+wall_type = e(f"IFCWALLTYPE('{guid()}',{oh},'YV01',$,$,$,$,$,$,.SOLIDWALL.)")
 st_wall = style('Puts', 0.92, 0.9, 0.86)
 st_glass = style('Glas', 0.6, 0.75, 0.85, 0.6)
 st_frame = style('Karm', 0.97, 0.97, 0.97)
@@ -195,10 +209,10 @@ for n, (a, b) in enumerate(segs):
     # i väggens lokala system: x längs väggen, y inåt (vänster om riktningen)
     ring = [(0, 0), (L, 0), (L - T, T), (T, T)]
     solid = extrusion(ring, 0, H, st_wall)
-    ax_pl = e(f'IFCCARTESIANPOINTLIST2D({pts2([(0, T / 2), (L, T / 2)])},$)')
+    ax_pl = e(f'IFCCARTESIANPOINTLIST2D({pts2([(0, T / 2), (L, T / 2)])})')
     ax_c = e(f'IFCINDEXEDPOLYCURVE({ax_pl},$,.F.)')
     ax_rep = e(f"IFCSHAPEREPRESENTATION({axis},'Axis','Curve2D',({ax_c}))")
-    w = e(f"IFCWALL('{guid()}',{oh},'YV01',$,$,{pl},{shape([solid], extra=[ax_rep])},'YV01',.STANDARD.)")
+    w = e(f"IFCWALL('{guid()}',{oh},'YV01',$,$,{pl},{shape([solid], extra=[ax_rep])},$,$)")
     walls.append((w, pl, L))
     contained.append(w)
 e(f"IFCRELDEFINESBYTYPE('{guid()}',{oh},$,$,({','.join(w for w, _, _ in walls)}),{wall_type})")
@@ -209,7 +223,7 @@ pset('BIP', [w for w, _, _ in walls], {'TypeID': 'YV01', 'RenovationStatus': 'Ne
 # --- bjälklaget under ---
 slab_pl = place(st_pl)
 slab_solid = extrusion([(0, 0), (6000, 0), (6000, 4000), (0, 4000)], -250, 250, st_slab)
-slab = e(f"IFCSLAB('{guid()}',{oh},'BJ01',$,$,{slab_pl},{shape([slab_solid])},'BJ01',.FLOOR.)")
+slab = e(f"IFCSLAB('{guid()}',{oh},'BJ01',$,$,{slab_pl},{shape([slab_solid])},$,.FLOOR.)")
 contained.append(slab)
 pset('Pset_SlabCommon', [slab], {'Reference': 'BJ01', 'Status': 'NEW', 'IsExternal': False, 'LoadBearing': True})
 
@@ -243,7 +257,7 @@ win_type = e(f"IFCWINDOWTYPE('{guid()}',{oh},'Tr\\X2\\00E4\\X0\\f\\X2\\00F6\\X0\
 wall0, wall0_pl, _ = walls[0]
 o1, o1_pl = opening_in(wall0, wall0_pl, 1000, 900, 1210, 1210)
 win_pl = place(o1_pl, 5, 0, 5)
-win = e(f"IFCWINDOW('{guid()}',{oh},'F01',$,$,{win_pl},{shape(frame_body(1200, 1200, 115, 115))},'F01',1200.,1200.,.WINDOW.,.DOUBLE_PANEL_VERTICAL.,$)")
+win = e(f"IFCWINDOW('{guid()}',{oh},'F01',$,$,{win_pl},{shape(frame_body(1200, 1200, 115, 115))},$,1200.,1200.,$,$,$)")
 e(f"IFCRELFILLSELEMENT('{guid()}',{oh},$,$,{o1},{win})")
 e(f"IFCRELDEFINESBYTYPE('{guid()}',{oh},$,$,({win}),{win_type})")
 pset('Pset_WindowCommon', [win], {'Reference': 'F01', 'Status': 'NEW', 'IsExternal': True, 'ThermalTransmittance': 1.0})
@@ -254,7 +268,7 @@ contained.append(win)
 door_type = e(f"IFCDOORTYPE('{guid()}',{oh},'Ytterd\\X2\\00F6\\X0\\rr',$,$,$,$,$,$,.DOOR.,.SINGLE_SWING_LEFT.,.F.,$)")
 o2, o2_pl = opening_in(wall0, wall0_pl, 3600, 0, 1010, 2110)
 door_pl = place(o2_pl, 5, 0, 0)
-door = e(f"IFCDOOR('{guid()}',{oh},'D01',$,$,{door_pl},{shape(frame_body(1000, 2100, 115, 115))},'D01',2100.,1000.,.DOOR.,.SINGLE_SWING_LEFT.,$)")
+door = e(f"IFCDOOR('{guid()}',{oh},'D01',$,$,{door_pl},{shape(frame_body(1000, 2100, 115, 115))},$,2100.,1000.,$,$,$)")
 e(f"IFCRELFILLSELEMENT('{guid()}',{oh},$,$,{o2},{door})")
 e(f"IFCRELDEFINESBYTYPE('{guid()}',{oh},$,$,({door}),{door_type})")
 pset('Pset_DoorCommon', [door], {'Reference': 'D01', 'Status': 'NEW', 'IsExternal': True, 'HandicapAccessible': True})
@@ -264,12 +278,12 @@ contained.append(door)
 # --- rummet: IfcSpace som extrudering (det enda Reference View tillåter) ---
 sp_pl = place(st_pl)
 sp_solid = extrusion([(T, T), (6000 - T, T), (6000 - T, 4000 - T), (T, 4000 - T)], 0, 2500)
-space = e(f"IFCSPACE('{guid()}',{oh},'101',$,$,{sp_pl},{shape([sp_solid])},'K\\X2\\00F6\\X0\\k',.ELEMENT.,.SPACE.,$)")
+space = e(f"IFCSPACE('{guid()}',{oh},'101',$,$,{sp_pl},{shape([sp_solid])},'K\\X2\\00F6\\X0\\k',.ELEMENT.,.INTERNAL.,$)")
 e(f"IFCRELAGGREGATES('{guid()}',{oh},$,$,{storey},({space}))")
 area = (6000 - 2 * T) * (4000 - 2 * T) / 1e6
 q_area = e(f"IFCQUANTITYAREA('NetFloorArea',$,$,{f(area)},$)")
 q_h = e("IFCQUANTITYLENGTH('Height',$,$,2500.,$)")
-qto = e(f"IFCELEMENTQUANTITY('{guid()}',{oh},'Qto_SpaceBaseQuantities',$,$,({q_area},{q_h}))")
+qto = e(f"IFCELEMENTQUANTITY('{guid()}',{oh},'Qto_SpaceBaseQuantities',$,'BaseQuantities',({q_area},{q_h}))")
 e(f"IFCRELDEFINESBYPROPERTIES('{guid()}',{oh},$,$,({space}),{qto})")
 pset('Pset_SpaceCommon', [space], {'Reference': '101', 'IsExternal': False})
 pset('CadApa_Area', [space], {'Areaslag': 'BOA', 'Area': area})
@@ -282,7 +296,7 @@ e(f"IFCRELCONTAINEDINSPATIALSTRUCTURE('{guid()}',{oh},$,$,({','.join(contained)}
 head = """ISO-10303-21;
 HEADER;
 FILE_DESCRIPTION(('ViewDefinition [ReferenceView_V1.2]'),'2;1');
-FILE_NAME('provhuset.ifc','2026-11-13T00:00:00',('Carl August Agrell'),('Agrell Arkitektur'),'cad-apa 0.12.6','cad-apa','');
+FILE_NAME('provhuset.ifc','2026-11-13T00:00:00',('Carl August Agrell'),('Agrell Arkitektur'),'cad-apa 0.12.6','Agrell Arkitektur - cad-apa - 0.12.6','');
 FILE_SCHEMA(('IFC4'));
 ENDSEC;
 DATA;

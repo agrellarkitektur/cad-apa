@@ -18,9 +18,15 @@ README. Senast: 13 november 2026, efter IFC-utredningen (ingen kod; markföränd
   uppsättningar, SB11-lager, allt trianglat, inga rum). Provfilen
   `docs/ifc/provhuset.ifc` (och `provfil.py`, bara ett prov) är godkänd av
   IfcOpenShell 0.9 med reglerna och läses av web-ifc; volymerna stämmer.
-  **Carl August öppnar den** i Archicad, Revit, Solibri och SketchUp och
-  laddar upp den till validate.buildingsmart.org; fråga hur det gick innan
-  skrivaren byggs. Frågorna A–E står i utredningen och nedan.
+  **buildingSMARTs valideringstjänst** (Carl August 13 november) fann fel
+  som IfcOpenShell släppte igenom (punktlistans fält, utfasat STANDARD,
+  typens företräde, Pset-datatyper, Qto utan BaseQuantities, huvudet). Alla
+  rättade; den egna kontrollen `docs/ifc/strikt.py` (med buildingSMARTs
+  `pset_definitions.csv`) hittar dem och är förlagan till appens test.
+  buildingSMARTs regelkod får inte köras i arbetsmiljön. **Carl August
+  validerar den rättade filen igen** (väntat: bara GRF003, inget
+  koordinatsystem) och öppnar den i Archicad, Revit, Solibri och SketchUp;
+  fråga hur det gick innan skrivaren byggs. Frågorna A–E står i utredningen och nedan.
 - **Ny ordning** (Carl August 13 november): **0.12.6 IFC**, **0.12.7
   Utgåvor och PM**, **0.12.8 3D-vyer**, **0.12.9 Markförändringar**.
   Markförändringarna väntar på att Höjdkurvor kanske kan leverera en

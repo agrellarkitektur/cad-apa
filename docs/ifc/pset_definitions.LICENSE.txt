@@ -1,0 +1,1 @@
+# Ur buildingSMART/ifc-gherkin-rules (features/resources/IFC4), MIT License, Copyright (c) buildingSMART International Ltd
