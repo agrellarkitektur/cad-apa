@@ -1795,35 +1795,35 @@ med fälten som rader, och namnbytet.
   inte längre, en sådan förteckning i en äldre fil läses inte in (ingen
   migrering före frysen).
 
-**Inte gjort i 0.12.5:** markförändringarnas förteckning (0.12.6);
+**Inte gjort i 0.12.5:** markförändringarnas förteckning (0.12.6, sedan
+13 november 0.12.9);
 vägghålens förteckning; ritningen per hängning i samma kolumn; egna rader
 per förteckning (annan ordning än fältmallens); radbrytning i en ruta med
 lång text (kolumnen blir bredare); löpnummer per objekt; *Karmtyp*;
 förteckningarna och uppställningarna som vytyper i stilboken med egna
 pennor (efter piloten).
 
-### 0.12.6 Markförändringar
+### 0.12.6 IFC
 
-Förteckningen över markförändringarna (Inkorgen 27 oktober, lyft ur 0.12.5
-12 november): littera och namn, status, area i plan, schakt, fyll och
-netto, berg och jord (m³ och procent), lägsta och högsta nya höjd, största
-lutning, avtagen matjord (area × tjocklek, tjockleken en inställning) och
-en summarad med massbalansen. Mellanstor.
+Flyttad före markförändringarna 13 november (Carl August: Höjdkurvor kan
+kanske leverera en jorddjupsmodell, och markförändringarna väntar på den).
+Utredningen gjord 13 november i en egen chatt, med Carl Augusts export ur
+Archicad 27 (företagets översättare, Reference View) som jämförelse:
+**`cad-apa-ifc-utredning.md`** i projektet är specifikationen. IFC4
+Reference View, mm, utan mark och träd (svar D). GUID:en finns sedan 0.12.
+Stor; byggs i två sessioner, **0.12.6** (strukturen, väggar, bjälklag, tak,
+dörrar, fönster, rum, egenskaperna, raden i exportdialogen) och
+**0.12.6.1** (trappor, räcken, profiler, möbler, vägghål, granskningen mot
+Archicad, Revit och Solibri). Mottagare först Carl August själv, sedan en
+konstruktör.
 
-### 0.12.7 IFC
-
-Egen utredning i egen chatt först (klasstabellen, psets, geometri,
-provfil validerad), sedan skrivaren. IFC4 Reference View, mm, utan mark och
-träd (svar D). GUID:en finns sedan 0.12. Areaobjekten som `IfcSpace` eller
-`IfcZone` utreds där.
-
-### 0.12.8 Utgåvor och PM
+### 0.12.7 Utgåvor och PM
 
 Mockup i Claude Design först, sedan snapshot, jämförelse, revideringsmoln
 och -pilar, beteckningar, handlingsförteckningen, ändrings-PM och panelen
 Utgåvor. Stor, troligen två sessioner.
 
-### 0.12.9 3D-vyer
+### 0.12.8 3D-vyer
 
 Carl August 26 oktober: före piloten, det är något man kan förvänta sig.
 Mellanstor.
@@ -1833,6 +1833,22 @@ Mellanstor.
 - Trädmodeller: fem som slumpas vid import och går att byta för markerade
   träd, i tre detaljnivåer (low poly, silhuett, detalj); träd på
   Enscape-nivå efter piloten
+
+### 0.12.9 Markförändringar
+
+Förteckningen över markförändringarna (Inkorgen 27 oktober, lyft ur 0.12.5
+12 november): littera och namn, status, area i plan, schakt, fyll och
+netto, berg och jord (m³ och procent), lägsta och högsta nya höjd, största
+lutning, avtagen matjord (area × tjocklek, tjockleken en inställning) och
+en summarad med massbalansen. Mellanstor.
+
+Flyttad efter 3D-vyerna 13 november: Carl August ser om Höjdkurvor kan
+leverera en **jorddjupsmodell** (berg under jorden), så att berg och jord
+räknas ur ytor i stället för den uppskattade andelen berg per objekt
+(0.10.13). Schakt och fyll per objekt räknas redan (`finishedGround` i
+`src/core/ground.ts`, `massBalance` i `src/elements/groundGeometry.ts`);
+det som saknas är källan *Mark* i förteckningarna, arean, höjderna,
+lutningen, matjorden och summaraden.
 
 ### 0.13 Pilotprojektet (proof of concept)
 

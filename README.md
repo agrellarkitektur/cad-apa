@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.5.1** (alfa), Förteckningen per littera utan grindförteckningen; nästa är **0.12.6 Markförändringar**.
+**0.12.5.1** (alfa), Förteckningen per littera utan grindförteckningen; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
 
 ## Vad som fungerar
 

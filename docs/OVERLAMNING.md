@@ -6,10 +6,30 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 12 november 2026, efter 0.12.5.1 (Förteckningen per littera; grindförteckningen borttagen).
+README. Senast: 13 november 2026, efter IFC-utredningen (ingen kod; markförändringarna flyttade till 0.12.9).
 
 ## Läget
 
+- **IFC-utredningen är klar** (13 november, en egen chatt, ingen kod i
+  appen): **`cad-apa-ifc-utredning.md`** i projektet är specifikationen för
+  **0.12.6 IFC** (stor, en session) och **0.12.6.1 IFC, resten**
+  (mellanstor). Jämförd med Carl Augusts export ur Archicad 27 (företagets
+  översättare, Reference View; BIP-egenskaper, förteckningarna som egna
+  uppsättningar, SB11-lager, allt trianglat, inga rum). Provfilen
+  `docs/ifc/provhuset.ifc` (och `provfil.py`, bara ett prov) är godkänd av
+  IfcOpenShell 0.9 med reglerna och läses av web-ifc; volymerna stämmer.
+  **Carl August öppnar den** i Archicad, Revit, Solibri och SketchUp och
+  laddar upp den till validate.buildingsmart.org; fråga hur det gick innan
+  skrivaren byggs. Frågorna A–E står i utredningen och nedan.
+- **Ny ordning** (Carl August 13 november): **0.12.6 IFC**, **0.12.7
+  Utgåvor och PM**, **0.12.8 3D-vyer**, **0.12.9 Markförändringar**.
+  Markförändringarna väntar på att Höjdkurvor kanske kan leverera en
+  **jorddjupsmodell** (berg under jorden); då räknas berg och jord ur ytor
+  i stället för procentsatsen per objekt. Schakt och fyll per objekt räknas
+  redan sedan 0.10.13 (`finishedGround`, `massBalance`). Ändrat i PLAN.md,
+  README:s rad 9 och synpunkterna. **Appens texter har kvar de gamla
+  numren** (`exportDialog.ts`: *IFC kommer i 0.12.7*, *3D-vyerna kommer i
+  0.12.9*; `exportSettings.ts`, `viewCategories.ts`): rättas i 0.12.6.
 - **0.12.5 Förteckningen per littera är klar** (12 november, samma format
   28; valfria fält förteckningens `layout`, `figureScale`, `noFigure`,
   `hideEmpty` och bladvyns `maxWidth`), byggd i en session efter Carl
@@ -212,12 +232,14 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   littera~~ (klara; se tabellen *Klart* i PLAN.md)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
-- **0.12.6 Markförändringar** (förteckningen över schakt, fyll och
-  massbalans; mellanstor) → **0.12.7 IFC** (egen utredning först) →
-  **0.12.8 Utgåvor och PM** (mockup först); se `cad-apa-export-utredning.md`
-  (där står de äldre numren). Sedan **Granskning efter 0.12**.
-- **0.12.9 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
+- ~~Utredning av IFC~~ (13 november, `cad-apa-ifc-utredning.md`)
+- **0.12.6 IFC** (stor) → **0.12.6.1 IFC, resten** (mellanstor) →
+  **0.12.7 Utgåvor och PM** (mockup först; se `cad-apa-export-utredning.md`,
+  där står de äldre numren). Sedan **Granskning efter 0.12**.
+- **0.12.8 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
   trädens status i planen)
+- **0.12.9 Markförändringar** (förteckningen över schakt, fyll och
+  massbalans; mellanstor; väntar på jorddjupsmodellen från Höjdkurvor)
 - **Koordinater, SWEREF och sol** (stor; före piloten; SWEREF på
   situationsplanen och i exporten därifrån)
 - **0.13 Pilotprojektet**: Carl August ritar själv ett hus
@@ -228,15 +250,20 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 ## Nästa session
 
 Läs synpunkterna först och sortera Inkorgen om den har något. Be om
-skrivrätt till repot ("push godkänd"). Fråga om Carl August provat 0.12.5,
-0.12.4, 0.12.3, 0.12.2, 0.12.1 och 0.12; ställ i så fall frågorna om dem
-(nedan) först, högst fem åt gången. Nästa version är **0.12.6
-Markförändringar** (mellanstor): förteckningen över markförändringarna, se
-avsnittet i PLAN.md och `cad-apa-synpunkter.md`; markobjekten i
-`src/elements/ground*.ts` och `src/core/ground.ts`, förteckningarnas källor
-i `src/core/schedules.ts` och `src/repr/schedules.ts`. Volymerna (schakt,
-fyll, berg och jord) räknas inte någonstans än: säg hur stort det blir
-innan bygget, och fråga om berget (finns en bergnivå i modellen?). Vid
+skrivrätt till repot ("push godkänd"). Fråga om Carl August öppnat
+provfilen (`docs/ifc/provhuset.ifc`) i Archicad, Revit och Solibri och
+validerat den, och om han svarat på **A–E i `cad-apa-ifc-utredning.md`**;
+ställ dem annars först. Fråga sedan om han provat 0.12–0.12.5 (frågorna
+nedan, högst fem åt gången). Nästa version är **0.12.6 IFC** enligt
+utredningen: `src/formats/ifcWrite.ts` i exportens worker, 3D-formerna ur
+`src/repr/model3d.ts` och `solids.ts` (raka extruderingar som
+IfcExtrudedAreaSolid, resten trianglat med `solidTriangles`), väggarna
+**utan** urtag och hålen som IfcOpeningElement (risken i versionen),
+GUID ur `doc.guids`, lagren och IsExternal/LoadBearing ur
+`src/core/dxfLayers.ts`, förteckningens fält ur `src/core/openingSchedule.ts`,
+areorna ur areaförteckningens räkning, raden *Modellen* i
+`src/ui/app/exportDialog.ts`. web-ifc som devDependency i testerna. Rätta
+de gamla versionsnumren i appens texter. Vid
 granskningen efter 0.12 delas `src/ui/style/profileTypes.ts` (875),
 `openingTypes.ts` (828), `areaCalc.ts` (ca 550) och `src/repr/schedules.ts`
 (ca 640; per littera till en egen fil).
@@ -246,7 +273,7 @@ granskningen efter 0.12 delas `src/ui/style/profileTypes.ts` (875),
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Nästa omgång börjar med 0.12.5, 0.12.4, 0.12.3, 0.12.2, 0.12.1, 0.12, 0.11.8.4, 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
+om 0.10.27–0.10.23 likaså. Först **A–E i `cad-apa-ifc-utredning.md`** (hör till 0.12.6). Nästa omgång börjar sedan med 0.12.5, 0.12.4, 0.12.3, 0.12.2, 0.12.1, 0.12, 0.11.8.4, 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4, 0.11.3,
 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
