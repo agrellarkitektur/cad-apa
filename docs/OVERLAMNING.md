@@ -149,6 +149,10 @@ README. Senast: 13 november 2026, efter IFC-utredningen (ingen kod; markföränd
   `.github/workflows/publicera.yml` (FTPS; secrets `FTP_SERVER`,
   `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR` =
   `/agrellarkitektur.se/public_html/cad-apa/`). Se efter med `gh run list`.
+  Sedan 0.12.5.2 publiceras den också till cad-apa.danaid.cloud med
+  `.github/workflows/publicera-vps.yml` (rsync, secret `APPS_SSH_KEY`;
+  hoppar över tills nyckeln finns). Flytten och ordningen står i
+  `docs/FLYTT.md`.
   Halvfärdigt arbete kan läggas på en egen gren, så att det inte
   publiceras. Skrivrätten till repot kan behöva godkännas i sessionen.
 - **Färdplan** (Carl August 22 oktober): 0.13 är hans egen provning (han

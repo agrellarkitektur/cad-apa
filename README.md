@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.5.1** (alfa), Förteckningen per littera utan grindförteckningen; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
+**0.12.5.2** (alfa), Förteckningen per littera och Höjdkurvors nya adress; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,14 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.12.5.2 (samma filformat, 28):
+- **Höjdkurvors nya adress**: *Fortsätt rita i cad-apa* fungerar från
+  https://hojdkurvor.danaid.cloud/ (och fortfarande från den gamla adressen
+  under flytten). Länken tillbaka till Höjdkurvor går dit
+- **Publicering på VPS:en**: varje push till `main` publiceras också till
+  cad-apa.danaid.cloud med rsync (`.github/workflows/publicera-vps.yml`),
+  parallellt med FTP till webbhotellet. Flytten beskrivs i `docs/FLYTT.md`
 
 Version 0.12.5.1 (samma filformat, 28):
 - **Grindförteckningen är borttagen** (*Ny: Grindar* under Förteckningar,

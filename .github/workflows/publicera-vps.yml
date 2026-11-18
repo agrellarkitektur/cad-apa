@@ -1,0 +1,67 @@
+# Bygger programmet och publicerar det på VPS:en (cad-apa.danaid.cloud) med
+# rsync vid varje push till main. Går parallellt med FTP-publiceringen till
+# webbhotellet (publicera.yml) tills flytten är klar, se docs/FLYTT.md.
+# Efter mallen drift/publicera-app.yml i agrellarkitektur/apps.
+#
+# Förutsättningar:
+#   - sudo apps-drift nyckel cad-apa www/cad-apa   → secret APPS_SSH_KEY i det här repot
+#   - en sajt för cad-apa.danaid.cloud i drift/apps.caddy i repot apps
+#   - .github/known_hosts (kopia av drift/known_hosts i repot apps)
+#
+# Saknas APPS_SSH_KEY hoppas uppladdningen över, så att körningen inte blir röd
+# innan nyckeln finns. Serverns egna filer (feedback-config.php, data/) och
+# .htaccess skickas aldrig och tas aldrig bort.
+
+name: Publicera på VPS:en
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - '**.md'
+  workflow_dispatch:
+
+concurrency:
+  group: publicera-vps
+  cancel-in-progress: false
+
+env:
+  APP_ID: cad-apa                  # mappen /srv/apps/www/cad-apa
+  FILER: dist                      # det som byggs med npm run build
+  HOST: apps.danaid.cloud
+  USER: appsdeploy
+
+jobs:
+  publicera:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Installera
+        run: npm ci
+
+      - name: Typer och tester
+        run: npx tsc --noEmit && npx vitest run
+
+      - name: Bygg dist
+        run: npm run build
+
+      - name: Publicera
+        env:
+          KEY: ${{ secrets.APPS_SSH_KEY }}
+        run: |
+          [ -n "$KEY" ] || { echo "::notice::APPS_SSH_KEY saknas – hoppar över."; exit 0; }
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "$KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+          cp .github/known_hosts ~/.ssh/known_hosts
+          # Nyckeln är låst till /srv/apps/www/cad-apa – därför står målet som "./".
+          rsync -rlz --checksum --delete --chmod=D755,F644 \
+            --exclude '*-config.php' --exclude 'data/' --exclude '.htaccess' \
+            -e "ssh -i $HOME/.ssh/id_deploy -o StrictHostKeyChecking=yes" \
+            "$FILER/" "$USER@$HOST:./"
