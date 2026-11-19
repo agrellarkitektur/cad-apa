@@ -45,6 +45,8 @@ export function railingWarnings(doc: ProjectDoc, el: Element<any>): string[] {
     if (!infill) out.push('Barnsäkert (BFS 2024:9, 2 kap. 11 §): räcket har varken spjälor eller fyllning under handledaren; lodräta öppningar får vara högst 100 mm breda.');
     const climb = model.parts.filter((q) => q.kind === 'along' && q !== grabs[0]).map((q) => n(q.z, 900)).filter((z) => z > 150 && z < 800);
     if (climb.length) out.push(`Barnsäkert (BFS 2024:9, 2 kap. 11 §): en liggare ${mm(climb[0])} upp går att klättra på; 0,8 m av skyddets höjd ska motverka klättring.`);
+    const slot = horizontalOpening(model.parts.filter((q) => !grabs.includes(q)), n);
+    if (slot) out.push(`Barnsäkert (BFS 2024:9, 2 kap. 11 § 5): öppningen ${slot.where} är ${mm(slot.size)}; horisontella öppningar ovanför skyddets front får inte vara 110–230 mm.`);
   }
   if (stair && grabs.length) {
     const g = geometryOfStair(stairParams(doc, stair));
@@ -56,6 +58,30 @@ export function railingWarnings(doc: ProjectDoc, el: Element<any>): string[] {
   }
   if (path?.winderDeviation && path.winderDeviation > 50.5) out.push(`Den utjämnade handledaren avviker upp till ${mm(path.winderDeviation)} från höjden över stegnosen vid kilstegen; avviker från praxis (högst 50 mm). Välj Hoppande för exakt höjd.`);
   return out;
+}
+
+/**
+ * En horisontell öppning på 110–230 mm ovanför skyddets front (BFS 2024:9,
+ * 2 kap. 11 § 5; Granskning efter 0.12): springan i höjdled mellan
+ * fyllningens eller spjälornas överkant och nästa liggare, och mellan
+ * liggarna ovanför. Ledstänger räknas inte; de sitter innanför skyddet.
+ */
+function horizontalOpening(parts: readonly RailPart[], n: (v: RailPart['z'], f?: number) => number): { where: string; size: number } | null {
+  const infill = parts.filter((q) => q.kind === 'repeat' || q.kind === 'surface');
+  if (!infill.length) return null;
+  const top = Math.max(...infill.map((q) => n(q.to)));
+  const rails = parts
+    .filter((q) => q.kind === 'along')
+    .map((q) => ({ name: q.name.toLowerCase(), top: n(q.z, 900), bottom: n(q.z, 900) - (q.profile?.shape === 'round' ? q.profile.w : q.profile?.h ?? q.profile?.w ?? 40) }))
+    .filter((r) => r.top > top + 0.5)
+    .sort((a, b) => a.bottom - b.bottom);
+  let below = { name: infill[0].name.toLowerCase(), top };
+  for (const r of rails) {
+    const size = r.bottom - below.top;
+    if (size >= 110 - 0.5 && size <= 230 + 0.5) return { where: `mellan ${below.name} och ${r.name}`, size };
+    if (r.top > below.top) below = r;
+  }
+  return null;
 }
 
 /** Största glipan under ett barnsäkert räcke, mm (BFS 2024:9, 2 kap. 11 § 3: mot balkonggolvet och stegnosen). */

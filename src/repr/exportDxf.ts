@@ -141,8 +141,8 @@ class Builder {
     this.ownSb11 = !!this.own && isSb11List([...this.own.values()]);
     // Linjetyperna som kan få ett namn: mallens och stilbokens (stilbokens först, med sina svenska namn).
     const own = this.settings?.custom?.linetypes ?? [];
-    this.named = [...lineTypeList(doc.graphics).filter((t) => t.dash.length).map((t) => ({ name: t.name, dash: t.dash })), ...[...TEMPLATE_LINETYPES, ...own].map((t) => ({ name: t.name, dash: t.pattern }))];
-    for (const t of [...TEMPLATE_LINETYPES, ...own]) this.linetypes.set(t.name, { name: t.name, desc: t.desc, pattern: t.pattern });
+    this.named = [...lineTypeList(doc.graphics).filter((t) => t.dash.length).map((t) => ({ name: dxfName(t.name), dash: t.dash })), ...[...TEMPLATE_LINETYPES, ...own].map((t) => ({ name: dxfName(t.name), dash: t.pattern }))];
+    for (const t of [...TEMPLATE_LINETYPES, ...own]) this.linetypes.set(dxfName(t.name), { name: dxfName(t.name), desc: t.desc, pattern: t.pattern });
   }
 
   /** Det lagret beror på hos objektet (yttervägg, bärande, fast inredning …), en gång per objekt. */
@@ -210,7 +210,7 @@ class Builder {
   private linetype(dash: readonly number[] | undefined): string {
     if (!dash?.length) return 'Continuous';
     const hit = this.named.find((t) => sameDash(t.dash, dash));
-    const name = hit?.name ?? `CA-${dash.map((x) => String(Math.round(x * 100) / 100).replace('.', ',')).join('_')}`;
+    const name = hit?.name ?? `CA-${dash.map((x) => String(Math.round(x * 100) / 100).replace('.', 'p')).join('_')}`;
     if (!this.linetypes.has(name)) this.linetypes.set(name, { name, pattern: [...dash] });
     return name;
   }
@@ -389,4 +389,13 @@ export function sheetDxf(doc: ProjectDoc, sheetId: Id, opt: DxfExportOptions): D
     b.add(p, src);
   }
   return b.write(opt.version, 1);
+}
+
+/**
+ * Ett namn som DXF tillåter för en linjetyp: tecknen / \ : ; * ? " < > | , = `
+ * och kontrolltecken blir understreck (Granskning efter 0.12). Egna
+ * linjetyper som *Streck 1:2* hette förut så i filen, vilket stränga läsare vägrar.
+ */
+export function dxfName(name: string): string {
+  return name.replace(/[/\\:;*?"<>|,=\u0000-\u001f`]/g, '_').trim() || 'Linjetyp';
 }

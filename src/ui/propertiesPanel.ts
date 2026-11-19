@@ -278,7 +278,6 @@ export class PropertiesPanel implements ActionPanel {
       const head = `<div class="empty">
         <p><b>Inget är markerat.</b></p>
         <p>Klicka på en vägg, dörr eller möbel i planen. Håll Shift för att markera flera, eller dra en ruta: åt höger tar det som ligger helt innanför, åt vänster allt som berörs.</p>
-        <p>På mobilen lägger varje tryck till i markeringen, och ett tryck i tomma delar av planen avmarkerar.</p>
       </div>`;
       return { head, sections: [] };
     }

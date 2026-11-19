@@ -89,7 +89,11 @@ export function aboveGroundZone(ctx: PlanContext): Rings[] | null {
 /** Husets ytterkonturer på våningen (väggarnas yttre ringar). */
 function houseOutline(ctx: PlanContext): Vec2[][] {
   return ctx.memo('area-ground-outline', () => {
-    const els = ctx.visible('Wall');
+    // Rivna väggar räknas inte, som i zonen själv (Granskning efter 0.12).
+    const els = ctx.visible('Wall').filter((el) => {
+      const a = ctx.actionOf(el);
+      return a !== 'absent' && a !== 'demolished';
+    });
     return bareWallUnion(els.map((el) => ({ id: el.id, p: ctx.params<WallParams>(el) }))).map((poly) => poly[0]);
   });
 }

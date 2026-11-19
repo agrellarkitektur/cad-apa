@@ -176,8 +176,8 @@ function putAssets(tx: TxBuilder, assets: readonly Asset[]): Map<Id, Id> {
  * `replaceMaster` (ett nytt projekt) blir filens förvalda mallblad
  * projektets, och det gamla förvalda tas bort om inget blad använder det.
  */
-export function importBook(store: DocStore, read: ReadBook, choice: PaperChoice, label: string, replaceMaster = false): void {
-  store.transact(label, (tx) => {
+export function importBook(store: DocStore, read: ReadBook, choice: PaperChoice, label: string, replaceMaster = false): boolean {
+  return !!store.transact(label, (tx) => {
     const old = bookAssetIds(tx.doc.graphics);
     const files = putAssets(tx, read.assets);
     const book = remap(structuredClone(read.book), files) as StyleBook;
@@ -228,7 +228,8 @@ export function importBook(store: DocStore, read: ReadBook, choice: PaperChoice,
 
 /** Ett nytt projekt med stilboken ur en mall (eller en fil): papperet följer med, och mallens förvalda mallblad gäller. */
 export function applyTemplate(store: DocStore, read: ReadBook): void {
-  importBook(store, read, { masters: true, stamps: true }, `Stilbok ur mallen: ${read.book.name}`, true);
-  // Mallens exportuppsättningar (0.12) följer med till det nya projektet.
-  if (read.exportSets?.length && !store.doc.exportSets?.length) store.transact('Exportuppsättningar ur mallen', (tx) => tx.setField('exportSets', structuredClone(read.exportSets)), { merge: true });
+  const imported = importBook(store, read, { masters: true, stamps: true }, `Stilbok ur mallen: ${read.book.name}`, true);
+  // Mallens exportuppsättningar (0.12) följer med till det nya projektet, i samma steg som stilboken
+  // när den ändrade något; annars som ett eget steg (förut lades de på vilket steg som helst).
+  if (read.exportSets?.length && !store.doc.exportSets?.length) store.transact('Exportuppsättningar ur mallen', (tx) => tx.setField('exportSets', structuredClone(read.exportSets)), { merge: imported });
 }

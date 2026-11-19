@@ -138,13 +138,17 @@ export function autoSide(box: TextBox, targets: readonly LeaderTarget[]): Exclud
   return x > 0 ? 'right' : 'left';
 }
 
+const hasPoint = (t: LeaderTarget | null | undefined): t is LeaderTarget => Array.isArray(t?.at) && Number.isFinite(t.at[0]) && Number.isFinite(t.at[1]);
+
 /** Stammens riktning för en sida. */
 function sideDir(box: TextBox, side: Exclude<LeaderSide, 'auto'>): Vec2 {
   return side === 'right' ? box.along : side === 'left' ? neg(box.along) : side === 'up' ? box.up : neg(box.up);
 }
 
 /** Ledaren med stam, knäckar och ändar; null utan punkter. */
-export function leaderOf(box: TextBox, targets: readonly LeaderTarget[], o: LeaderOptions): LeaderGeometry | null {
+export function leaderOf(box: TextBox, all: readonly LeaderTarget[], o: LeaderOptions): LeaderGeometry | null {
+  // Ett mål utan punkt (en trasig fil) ritas inte, i stället för att planen kraschar (Granskning efter 0.12).
+  const targets = all.filter(hasPoint);
   if (!targets.length) return null;
   const s = o.scale;
   const under = o.attach === 'underline';

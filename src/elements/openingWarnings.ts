@@ -64,6 +64,19 @@ export function freePassage(m: ReturnType<typeof openingModelOf>, frameW: number
   return w - 40;
 }
 
+/** Fri höjd i dörrar, mm (BFS 2024:9, 2 kap. 25 §). */
+const FREE_HEIGHT = 2000;
+
+/**
+ * Den fria höjden genom dörren: det aktiva bladets luft i höjd (karmens
+ * insida, från tröskeln). Null för en typ utan blad. Granskning efter 0.12.
+ */
+export function freeHeight(m: ReturnType<typeof openingModelOf>, frameW: number, frameH: number): number | null {
+  const leaves = layoutOpening(m, frameW, frameH).cells.filter((c) => LEAF_OPS.has(c.op));
+  if (!leaves.length) return null;
+  return Math.max(...leaves.map((c) => c.rect.z1 - c.rect.z0));
+}
+
 /** Glasets lägsta punkt över karmens underkant, mm, eller null om typen saknar glas. */
 function lowestGlass(m: ReturnType<typeof openingModelOf>, cells: readonly LaidCell[]): number | null {
   let low: number | null = null;
@@ -98,6 +111,8 @@ export function openingWarnings(doc: ProjectDoc, el: Element): string[] {
           ? `Fri passage ca ${mm(free)} mm; SS 91 42 21, normalnivå: minst ${mm(need)} för en entrédörr eller en dörr till balkong eller uteplats (en 10M-dörr; BFS 2024:12, 1 kap. 6 §).`
           : `Fri passage ca ${mm(free)} mm; SS 91 42 21, normalnivå: minst ${mm(need)} för en innerdörr i en bostad (en 9M-dörr; BFS 2024:12, 1 kap. 6 §).`,
       );
+    const high = freeHeight(m, p.frameW, p.frameH);
+    if (high !== null && high < FREE_HEIGHT - 0.5) out.push(`Fri höjd ca ${mm(high)} mm; BFS 2024:9, 2 kap. 25 §: minst ${mm(FREE_HEIGHT)} i dörrar (en 21M-dörr).`);
     const th = m.frame.bottom ?? 0;
     if (exterior && th > THRESHOLD_MAX) out.push(`Tröskeln ${mm(th)} mm är högre än ${THRESHOLD_MAX} mm, som en tillgänglig ytterdörr brukar ha (avviker från praxis).`);
   }

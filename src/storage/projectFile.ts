@@ -185,6 +185,8 @@ export async function openProjectFile(extension: string): Promise<ProjectDoc | S
         reject(e);
       }
     });
+    // Avbryts dialogen kommer `cancel` i stället för `change` (Chrome 113); förut väntade Öppna för evigt.
+    input.addEventListener('cancel', () => resolve(null));
     input.click();
   });
 }

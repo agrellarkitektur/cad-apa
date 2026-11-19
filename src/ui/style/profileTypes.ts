@@ -553,6 +553,7 @@ async function readDxf(store: DocStore, st: ProfileEditorState, onError: (msg: s
   input.accept = '.dxf';
   const file = await new Promise<File | null>((ok) => {
     input.onchange = () => ok(input.files?.[0] ?? null);
+    input.oncancel = () => ok(null);
     input.click();
   });
   if (!file || !st.def) return;

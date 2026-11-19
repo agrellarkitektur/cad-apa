@@ -121,8 +121,13 @@ function normalize(d: any): ProjectDoc {
   const site = doc.storeys[doc.storeys.length - 1];
   const oldSite = site.id === SITE_STOREY ? null : site.id;
   if (oldSite) doc.storeys[doc.storeys.length - 1] = { ...site, id: SITE_STOREY };
-  for (const [id, el] of Object.entries<any>(d.elements ?? {})) {
-    doc.elements[id] = { ...el, id, storey: el.storey === oldSite ? SITE_STOREY : el.storey, states: el.states ?? [], tags: el.tags ?? [], params: el.params ?? {}, props: el.props ?? {} };
+  for (const [id, el] of Object.entries<any>(d.elements && typeof d.elements === 'object' ? d.elements : {})) {
+    // Ett element som inte är ett objekt (null, ett tal) bär inget och hoppas över (Granskning efter 0.12).
+    if (!el || typeof el !== 'object' || typeof el.type !== 'string') continue;
+    const params = el.params && typeof el.params === 'object' ? el.params : {};
+    // Litterans mål utan punkt (en trasig fil) tas bort; de ritades förut som ett fel i hela planen.
+    if (Array.isArray(params.targets)) params.targets = params.targets.filter((t: any) => Array.isArray(t?.at) && Number.isFinite(t.at[0]) && Number.isFinite(t.at[1]));
+    doc.elements[id] = { ...el, id, storey: el.storey === oldSite ? SITE_STOREY : el.storey, states: el.states ?? [], tags: el.tags ?? [], params, props: el.props ?? {} };
   }
   return doc;
 }
