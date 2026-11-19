@@ -32,6 +32,10 @@ describe('fri höjd i dörrar (BFS 2024:9, 2 kap. 25 §)', () => {
     expect(high(doorIn(2000))).toHaveLength(1);
     expect(high(doorIn(2000))[0]).toMatch(/minst 2\s000/);
     expect(high(doorIn(2100))).toEqual([]);
+    // Tröskeln räknas inte bort: exemplets ytterdörr (21M, tröskel 42 mm) varnas inte.
+    const ext = doorIn(2100);
+    ext.elements.d.definition = 't-dd-glas';
+    expect(high(ext)).toEqual([]);
   });
 });
 

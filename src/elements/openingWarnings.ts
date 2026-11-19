@@ -68,13 +68,15 @@ export function freePassage(m: ReturnType<typeof openingModelOf>, frameW: number
 const FREE_HEIGHT = 2000;
 
 /**
- * Den fria höjden genom dörren: det aktiva bladets luft i höjd (karmens
- * insida, från tröskeln). Null för en typ utan blad. Granskning efter 0.12.
+ * Den fria höjden genom dörren: från golvet (karmens underkant) till
+ * karmens överkant inuti, över bladen. Tröskeln räknas inte bort; den har
+ * en egen varning, och en 21M-ytterdörr med 42 mm tröskel hade annars fått
+ * 1 998 mm. Null för en typ utan blad. Granskning efter 0.12.
  */
 export function freeHeight(m: ReturnType<typeof openingModelOf>, frameW: number, frameH: number): number | null {
   const leaves = layoutOpening(m, frameW, frameH).cells.filter((c) => LEAF_OPS.has(c.op));
   if (!leaves.length) return null;
-  return Math.max(...leaves.map((c) => c.rect.z1 - c.rect.z0));
+  return Math.max(...leaves.map((c) => c.rect.z1));
 }
 
 /** Glasets lägsta punkt över karmens underkant, mm, eller null om typen saknar glas. */

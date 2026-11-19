@@ -10,7 +10,8 @@ och greppen som dras, mitt i dragningen, från granskningen efter 0.10.15;
 höjdkurvornas pennor och Mer bara när det finns mer, och sist 0.10.19–0.10.21
 från granskningen efter 0.10.21: rampens bågar och övergångar, Foga ihop,
 beteckningarna och en lutande vägg, och sist litteran, det generella
-littrat och smartspöt från granskningen efter 0.10.22):
+littrat och smartspöt från granskningen efter 0.10.22; exportdialogen,
+förteckningarna, areorna och räckets kvittering från Granskning efter 0.12):
 läget efter varje steg sparas, och två körningar jämförs steg för steg.
 
 Kryssrutorna under Visa klickas (`__click`): menyn lyssnar på klick, så
@@ -1270,6 +1271,24 @@ def main():
         step('planen efter öppningarna', "bacchus.setMode('2d'); bacchus.setTool('select')", fn=lambda: (pg.wait_for_timeout(300), pg.evaluate(ON_PLAN), pg.wait_for_timeout(300)))
         step('öppningarna i normal igen', "__click('.detail-switch:not(.detail-part-switch) [data-detail=\"normal\"]')")
         step('sist efter öppningarna', "bacchus.selection.clear()")
+
+        # Exporten, förteckningarna, areorna och räckets kvittering (0.12–0.12.5.6, Granskning efter 0.12).
+        step('exportdialogen', "__click('.nav-plot [data-action=\"plot\"]')", fn=lambda: pg.wait_for_timeout(400))
+        step('stäng exportdialogen', "__click('[data-ex=\"close\"]', '.plot-backdrop')", fn=lambda: pg.wait_for_timeout(200))
+        step('fliken Vyer', "__click('[data-nav-tab=\"vyer\"]')")
+        step('ny fönsterförteckning', "__click('[data-schedule-new=\"Window\"]')", fn=lambda: pg.wait_for_timeout(400))
+        step('ny dörrförteckning', ON_PLAN + "__click('[data-nav-tab=\"vyer\"]'); __click('[data-schedule-new=\"Door\"]')", fn=lambda: pg.wait_for_timeout(400))
+        step('planen efter förteckningarna', ON_PLAN + "bacchus.setTool('select')", fn=lambda: pg.wait_for_timeout(300))
+        step('areaverktyget', "bacchus.setTool('area')")
+        step('area i vardagsrummet', fn=lambda: click_model(2000, 4000))
+        step('area i köket med Shift', fn=lambda: click_model(8500, 5500, shift=True))
+        step('areaverktyget av', "bacchus.setTool('select')")
+        step('ny areaförteckning', "__click('[data-nav-tab=\"vyer\"]'); __click('[data-schedule-new=\"Area\"]')", fn=lambda: pg.wait_for_timeout(400))
+        step('planen efter areorna', ON_PLAN + "bacchus.setTool('select')", fn=lambda: pg.wait_for_timeout(300))
+        step('räcke utan bottenliggare', "bacchus.store.transact('räcke', (tx) => { const d = Object.values(tx.doc.definitions).find((x) => x.railing && x.railing.childSafe); if (!d) return; const m = structuredClone(d.railing); for (const q of m.parts) { if (q.id === 'bottenliggare') q.z = 140; if (q.kind === 'repeat') q.from = 140; } tx.putDefinition({ ...d, id: 'granskning-ra', name: 'RÄ99', railing: m }); tx.putElement({ id: 'granskning-racke', type: 'Railing', storey: tx.doc.storeys[0].id, states: tx.doc.states.map((x) => x.id), tags: [], props: {}, definition: 'granskning-ra', params: { line: [[1000, 1000], [3000, 1000]] } }); })")
+        step('markera räcket', "bacchus.selection.set(['granskning-racke'])")
+        step('kvittera glipan', "__click('[data-action=\"rail-ack\"][data-value=\"1\"]', 'aside.panel')")
+        step('sist efter 0.12', "bacchus.selection.clear()")
         b.close()
     json.dump(rows, open(OUT, 'w'), ensure_ascii=False)
 
