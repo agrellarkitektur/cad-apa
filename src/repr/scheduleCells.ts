@@ -220,3 +220,6 @@ export function derivedOpening(field: string, it: Item, sh: Shared): Cell | null
   }
   return null;
 }
+
+/** Texter i svensk ordning, med talen som tal (T2 före T10). */
+export const cmpText = (a: string, b: string) => a.localeCompare(b, 'sv', { numeric: true, sensitivity: 'base' });

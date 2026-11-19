@@ -7,7 +7,8 @@ import { createSchedule, normalizeSchedule, updateSchedule } from '../src/core/s
 import { addViewport, createSheet } from '../src/core/sheets';
 import { DocStore } from '../src/core/store';
 import { openingFigure } from '../src/repr/openingFigure';
-import { litteraRange, scheduleCsv, scheduleTable } from '../src/repr/schedules';
+import { scheduleCsv, scheduleTable } from '../src/repr/schedules';
+import { litteraRange } from '../src/repr/scheduleLittera';
 import { litteraLayout, schedulePrims, wrapText } from '../src/repr/scheduleTable';
 import { buildSheet } from '../src/repr/sheet';
 import { sampleProject } from '../src/sample/sampleProject';
