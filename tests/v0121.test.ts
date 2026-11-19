@@ -3,7 +3,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { activeMap, isSb11List, layerDef, nearestLayer, normalizeDxfSettings, penColor, sb11Name, simpleName, type LayerQuery } from '../src/core/dxfLayers';
-import { planExport } from '../src/core/exportJobs';
+import { planExport } from '../src/repr/exportJobs';
 import { formatsFor, normalizeExportSettings, normalizeOptions, optionsOf } from '../src/core/exportSettings';
 import { addViewport, createSheet } from '../src/core/sheets';
 import { DocStore } from '../src/core/store';

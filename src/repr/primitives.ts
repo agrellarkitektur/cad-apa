@@ -11,7 +11,8 @@ import type { ActionKey, Color, FillDef } from '../core/graphics';
  * planreglerna. Ingen vy eller export ska behöva känna till objekttyperna.
  */
 
-export type Vec2 = readonly [x: number, y: number];
+import type { Vec2 } from '../geometry/vec2';
+export type { Vec2 };
 
 /**
  * Pennfärg: en ritningsfärg ur stilmallen, eller "muted"/"accent" för

@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { activeMap, LAYER_MAP_LABEL } from '../../core/dxfLayers';
 import { DXF_VERSIONS, DXF_VERSION_LABEL } from '../../formats/dxfWrite';
-import { exportKeys, planExport, setKeys, treeOrder, withGuids, type ExportPlan } from '../../core/exportJobs';
+import { exportKeys, planExport, setKeys, treeOrder, withGuids, type ExportPlan } from '../../repr/exportJobs';
 import {
   FORMAT_LABEL,
   FORMATS_FOR,

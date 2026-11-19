@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
-import type { Bounds, Primitive, Vec2 } from '../repr/primitives';
+import type { Bounds, Primitive, Vec2 } from './primitives';
 
 /**
  * Klipp primitiver mot en rektangel (0.8 del 3), t.ex. ett underlag mot

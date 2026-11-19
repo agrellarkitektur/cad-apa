@@ -3,7 +3,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { pruneAssets } from '../src/core/commands';
 import { emptyProject, isMaster, isStamp, type Asset, type Element } from '../src/core/model';
-import { setMaterialTexture } from '../src/core/materials';
+import { setMaterialTexture } from '../src/edit/materials';
 import { placeLogo, setOfficeLogo } from '../src/core/office';
 import { createSheet, createStamp } from '../src/core/sheets';
 import { DocStore } from '../src/core/store';

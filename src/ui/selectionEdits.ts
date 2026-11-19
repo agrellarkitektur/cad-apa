@@ -10,7 +10,7 @@ import { defaultSheet } from '../core/viewCategories';
 import { applyLabelField } from './labelSection';
 import { applyTagField } from './litteraSection';
 import { applyGroundField } from './groundFieldEdits';
-import { setLevel } from '../core/levels';
+import { setLevel } from '../edit/levels';
 import { moveElements, moveWallEnd, renameElement, updateDefinition, updateParams } from '../core/commands';
 import { buildingStoreys, type Element, type ProjectDoc } from '../core/model';
 import type { ViewStates } from '../core/states';

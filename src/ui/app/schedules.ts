@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Id } from '../../core/model';
 import { createSchedule, duplicateSchedule, removeSchedule, scheduleOf, SOURCES, updateSchedule, type Schedule, type ScheduleColumn, type ScheduleSource } from '../../core/schedules';
-import { exportVars, safeFileName } from '../../core/exportJobs';
+import { exportVars, safeFileName } from '../../repr/exportJobs';
 import { withField } from '../../core/openingSchedule';
 import { cachedTable, scheduleCsv, scheduleXlsx, type Cell, type LitteraInfo, type ScheduleTable } from '../../repr/schedules';
 import { FIGURE_PENS } from '../../repr/scheduleTable';

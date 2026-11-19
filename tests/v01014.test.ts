@@ -9,7 +9,7 @@ import { fillPrims, type FillParams } from '../src/elements/drawing2d';
 import { groundType } from '../src/elements/ground';
 import { slopeArea } from '../src/elements/groundSlopes';
 import { groundGeometry } from '../src/elements/groundGeometry';
-import { moveVertically, setLevel } from '../src/core/levels';
+import { moveVertically, setLevel } from '../src/edit/levels';
 import { modelShapes, WITHOUT_DEMOLISHED } from '../src/repr/storeyShapes';
 import type { Solid } from '../src/repr/solids';
 import { sampleProject } from '../src/sample/sampleProject';

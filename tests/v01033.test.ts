@@ -4,7 +4,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { COLOUR_CODED, POCHE } from '../src/core/graphics';
 import { emptyProject, type ViewDef } from '../src/core/model';
 import { DocStore } from '../src/core/store';
-import { linkMaterial, linkOrtho } from '../src/core/materials';
+import { linkMaterial, linkOrtho } from '../src/edit/materials';
 import { addElements } from '../src/core/commands';
 import {
   categoriesOf,

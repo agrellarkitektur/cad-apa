@@ -9,14 +9,26 @@ sönder. Det här är reglerna som gör det möjligt.
 ui/        knappar, paneler, verktyg     → får läsa allt, ändrar bara via kommandon
 view2d/    skärmen                       → ritar primitiver, vet inget om väggar
 repr/      planen och (senare) 3D        → frågar elementtyperna, lägger på grafik per vy
+edit/      ändringar över flera typer    → våningar, material, nivåer, skarvar, justering
 elements/  en fil per objekttyp          → regler för just den typen
 core/      datamodell, tillstånd, ångra  → vet ingenting om ritning eller gränssnitt
+geometry/  ren matematik                 → punkter (`Vec2`), polygoner, bågar, index
 storage/   filformat, autospar           → läser och skriver core-dokumentet
 ```
 
-Pilen går bara nedåt. `core/` importerar aldrig från något annat lager, utom
-ren matematik i `geometry/` (väggens ram och bågar). Då går kärnan att testa
+Pilen går bara nedåt. `core/` importerar bara ur sig själv och `geometry/`,
+och `geometry/` bara ur sig själv, också för typer. Då går kärnan att testa
 ensam och att återanvända, till exempel i en objektredigerare.
+`tests/lagerregeln.test.ts` håller regeln (Granskning efter 0.12).
+
+Det som behöver objekttyperna (`typeOf`, `resolveParams`, en typs
+parametrar) hör inte till `core/`: lägg det i `elements/` om det gäller en
+typ och i `edit/` om det är en ändring över flera (flytta till en våning,
+ta bort en våning, sammanfoga linjer, justera öppningar, material). Behöver
+kärnan en liten sak ur ett högre lager (en typ, en lista med id) flyttas
+den till `core/`, och det högre lagret exporterar den vidare
+(`LeaderEnd` i `core/graphics.ts`, `isBundledFont` i `core/fontIds.ts`,
+`isIfcGuid` i `core/ids.ts`).
 
 ## Lägga till en ny objekttyp
 

@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
-import { generalOf, officeVars } from './general';
-import type { Id, ProjectDoc, TreeTab } from './model';
-import { expandSmartText, smartVars } from '../repr/smartText';
+import { generalOf, officeVars } from '../core/general';
+import { isIfcGuid } from '../core/ids';
+import type { Id, ProjectDoc, TreeTab } from '../core/model';
+import { expandSmartText, smartVars } from './smartText';
 import {
   FORMAT_EXT,
   FORMAT_FOLDER,
@@ -17,7 +18,7 @@ import {
   type ExportOptions,
   type ExportSet,
   type ExportSettings,
-} from './exportSettings';
+} from '../core/exportSettings';
 
 /**
  * Vad en export blir (0.12): raderna i trädets ordning, filnamnen ur
@@ -196,7 +197,7 @@ export function newIfcGuid(random: (bytes: Uint8Array<ArrayBuffer>) => Uint8Arra
   return s;
 }
 
-export const isIfcGuid = (s: unknown): s is string => typeof s === 'string' && /^[0-3][0-9A-Za-z_$]{21}$/.test(s);
+export { isIfcGuid };
 
 /**
  * GUID för alla objekt (0.12), som följer med i varje export: de som redan

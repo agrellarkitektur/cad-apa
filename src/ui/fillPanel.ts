@@ -7,7 +7,7 @@ import { escapeHtml } from './labels';
 import { fillTypeSwatch, patternSwatch } from './patternPick';
 import { weightPicker } from './weightPick';
 import { buildingFields } from './materialBuilding';
-import { materialFits } from '../core/materials';
+import { materialFits } from '../edit/materials';
 
 /**
  * Fyllningens panel (0.10.14): samma för 2D-former, rum, markobjekt och

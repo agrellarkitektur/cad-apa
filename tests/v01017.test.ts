@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { beforeAll, describe, expect, it } from 'vitest';
-import { fuseLines } from '../src/core/joinLines';
+import { fuseLines } from '../src/edit/joinLines';
 import { DocStore } from '../src/core/store';
 import { registerBuiltInTypes } from '../src/elements';
 import type { Shape2DParams } from '../src/elements/drawing2d';

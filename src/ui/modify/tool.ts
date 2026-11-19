@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { defaultSheet } from '../../core/viewCategories';
 import { updateParams } from '../../core/commands';
-import { moveVertically } from '../../core/levels';
-import { fuseLines } from '../../core/joinLines';
+import { moveVertically } from '../../edit/levels';
+import { fuseLines } from '../../edit/joinLines';
 import type { Id } from '../../core/model';
 import { mergeAtCorner, reshapeWall } from '../../core/wallEdit';
 import { bendShapeEdge, editedShape, holesOf, removeShapeNode, shapePatch } from '../../elements/shapeEdit';

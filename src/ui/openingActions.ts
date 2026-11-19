@@ -7,7 +7,7 @@ import { kindOfElementType } from '../core/openingTypes';
 import type { DocStore } from '../core/store';
 import { openingLitteras } from '../elements/openingLittera';
 import { askChoice, askText } from './ask';
-import { alignWithBelow, centerInRoom, equalSpacing, openingBelow } from '../core/openingAlign';
+import { alignWithBelow, centerInRoom, equalSpacing, openingBelow } from '../edit/openingAlign';
 import { parseModule, setOpeningLittera, setOpeningModule, toggleOpeningLock } from './openingFields';
 
 /**

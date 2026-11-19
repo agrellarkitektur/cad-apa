@@ -5,7 +5,7 @@ import { normalizeBook, normalizePenList } from '../src/core/graphics';
 import { emptyProject, type ViewDef } from '../src/core/model';
 import { DocStore } from '../src/core/store';
 import { addElements } from '../src/core/commands';
-import { linkMaterial } from '../src/core/materials';
+import { linkMaterial } from '../src/edit/materials';
 import { categoryOf, defaultSheet } from '../src/core/viewCategories';
 import { registerBuiltInTypes } from '../src/elements';
 import { sampleProject } from '../src/sample/sampleProject';

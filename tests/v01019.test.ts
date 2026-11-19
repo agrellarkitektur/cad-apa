@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { beforeAll, describe, expect, it } from 'vitest';
 import { updateParams } from '../src/core/commands';
-import { canFuse, fuseLines } from '../src/core/joinLines';
+import { canFuse, fuseLines } from '../src/edit/joinLines';
 import { GROUND_DEFAULTS, groundAt } from '../src/core/site';
 import { mirrorElements } from '../src/core/transforms';
 import { registerBuiltInTypes } from '../src/elements';

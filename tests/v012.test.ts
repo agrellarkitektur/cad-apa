@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
-import { exportKeys, isIfcGuid, newIfcGuid, planExport, safeFileName, setKeys, uniquePaths, withGuids } from '../src/core/exportJobs';
+import { exportKeys, isIfcGuid, newIfcGuid, planExport, safeFileName, setKeys, uniquePaths, withGuids } from '../src/repr/exportJobs';
 import { normalizeExportSets, optionsOf, setByName, templateSets, type ExportSet } from '../src/core/exportSettings';
 import { addViewport, createSheet } from '../src/core/sheets';
 import { DocStore } from '../src/core/store';

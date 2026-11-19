@@ -8,7 +8,7 @@ import { railingFieldsMarkup } from './railingFields';
 import { railingTypeMarkup } from './railingTypeFields';
 import { profileFieldsMarkup, profileTypeMarkup } from './profileFields';
 import { defaultSheet } from '../core/viewCategories';
-import { materialUses } from '../core/materials';
+import { materialUses } from '../edit/materials';
 import type { FillParams } from '../elements/fill2d';
 import { labelFields } from './labelSection';
 import { groundFieldsMarkup } from './groundFields';

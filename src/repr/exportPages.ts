@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Id, ProjectDoc } from '../core/model';
 import { idOf } from '../core/exportSettings';
-import { exportVars } from '../core/exportJobs';
+import { exportVars } from './exportJobs';
 import type { PdfLayers } from '../core/exportSettings';
 import type { PdfMeta, PdfPage } from '../formats/pdf';
 import type { Primitive } from './primitives';

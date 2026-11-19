@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { newId } from '../../core/ids';
 import type { Asset } from '../../core/model';
-import { setMaterialTexture } from '../../core/materials';
+import { setMaterialTexture } from '../../edit/materials';
 import type { DocStore } from '../../core/store';
 import { askChoice } from '../ask';
 

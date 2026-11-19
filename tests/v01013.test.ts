@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { moveVertically, setLevel } from '../src/core/levels';
+import { moveVertically, setLevel } from '../src/edit/levels';
 import { DocStore } from '../src/core/store';
 import { registerBuiltInTypes } from '../src/elements';
 import { modelShapes, WITHOUT_DEMOLISHED } from '../src/repr/storeyShapes';

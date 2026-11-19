@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
+import { isBundledFont } from '../core/fontIds';
 import { BUNDLED_METRICS } from './fontMetrics';
 import { OSIFONT_METRICS, OSIFONT_WIDTHS } from './osifontWidths';
 
@@ -44,7 +45,7 @@ export const BUNDLED_FONTS: readonly DrawingFontInfo[] = [
   { id: 'josefin', name: 'Josefin Sans', pdfName: 'JosefinSans', metrics: { ...BUNDLED_METRICS.josefin, widths: parse(BUNDLED_METRICS.josefin.widths) } },
 ];
 
-export const isBundledFont = (id: string | undefined): boolean => !!id && BUNDLED_FONTS.some((f) => f.id === id);
+export { isBundledFont };
 
 /** Filens innehåll (TTF/OTF) för ett typsnitt som följer med appen. Laddas först när det behövs. */
 export async function bundledFontBytes(id: string): Promise<Uint8Array> {

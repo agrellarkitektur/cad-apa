@@ -7,7 +7,7 @@ import { defaultState, existingState, type LegendSource, type ViewStates } from 
 import { FILL_FIELDS } from '../elements/fill2d';
 import { markerName } from '../elements/markers';
 import { textWidth } from '../formats/drawingFont';
-import { clipPrims } from '../geometry/clipRect';
+import { clipPrims } from './clipRect';
 import { buildPlan, type Pickable } from './plan';
 import { boundsOf, type Bounds, type Primitive, type Vec2 } from './primitives';
 import { buildSection } from './section';

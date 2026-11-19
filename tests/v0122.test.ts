@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
-import { exportKeys, planExport } from '../src/core/exportJobs';
+import { exportKeys, planExport } from '../src/repr/exportJobs';
 import { optionsOf } from '../src/core/exportSettings';
 import { createSchedule, normalizeSchedule, removeSchedule, updateSchedule } from '../src/core/schedules';
 import { addViewport, createSheet } from '../src/core/sheets';

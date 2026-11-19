@@ -11,8 +11,8 @@ import { openingRings, wallFrame, type WallParams } from '../src/elements/wall';
 import { markerFrame } from '../src/elements/markers';
 import { buildModel3d } from '../src/repr/model3d';
 import type { Edges3D, Solid } from '../src/repr/solids';
-import { facadeShift, moveOpeningsInView } from '../src/core/facadeMove';
-import { alignWithBelow, centerInRoom, equalSpacing, equalSpacingPlan, openingBelow, roomMidAt } from '../src/core/openingAlign';
+import { facadeShift, moveOpeningsInView } from '../src/edit/facadeMove';
+import { alignWithBelow, centerInRoom, equalSpacing, equalSpacingPlan, openingBelow, roomMidAt } from '../src/edit/openingAlign';
 import { glassAreaOf, glassByCompass, glassFacing, glassPanes, roomDaylight } from '../src/elements/daylight';
 
 /**

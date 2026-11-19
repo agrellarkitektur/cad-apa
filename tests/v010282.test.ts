@@ -3,7 +3,7 @@
 import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DEFAULT_MATERIALS, normalizeMaterials } from '../src/core/graphics';
-import { linkMaterial, updateMaterial, useOf } from '../src/core/materials';
+import { linkMaterial, updateMaterial, useOf } from '../src/edit/materials';
 import { registerBuiltInTypes } from '../src/elements';
 import type { FillParams } from '../src/elements/drawing2d';
 import type { Primitive } from '../src/repr/primitives';

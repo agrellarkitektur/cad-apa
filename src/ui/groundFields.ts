@@ -11,7 +11,7 @@ import { rampWarnings, refPoints, sideEdge } from '../elements/groundRamp';
 import { easeRadiusAt, rampProfile } from '../elements/rampProfile';
 import { groundText, levelStatus, wallLittera } from '../elements/groundMarks';
 import { fillFields } from './shapeFields';
-import { materialUses } from '../core/materials';
+import { materialUses } from '../edit/materials';
 import type { FillParams } from '../elements/drawing2d';
 import { resolveParams } from '../elements/registry';
 import { createContext } from '../repr/context';

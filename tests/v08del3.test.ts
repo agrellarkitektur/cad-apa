@@ -7,7 +7,7 @@ import { modelViewId } from '../src/core/model';
 import { addViewport, createSheet, deleteSheet, duplicateSheet, nextSheetNumber, paperSize, removeViewport, saveSheet, sheetOfViewport, updateViewport } from '../src/core/sheets';
 import { DocStore } from '../src/core/store';
 import { applyFieldChanges } from '../src/core/sheetFields';
-import { clipPolyline, clipRing, clipSegment } from '../src/geometry/clipRect';
+import { clipPolyline, clipRing, clipSegment } from '../src/repr/clipRect';
 import { textWidth, writePdf } from '../src/formats/pdf';
 import { crc32, uniqueNames, writeZip } from '../src/formats/zip';
 import { buildPlan } from '../src/repr/plan';

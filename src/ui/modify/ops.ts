@@ -3,9 +3,9 @@
 import { moveOnly } from '../../core/sheets';
 import type { Id } from '../../core/model';
 import { canScale } from '../../core/arrange';
-import { movesVertically } from '../../core/levels';
+import { movesVertically } from '../../edit/levels';
 import { canJoin, canTrim } from '../../core/trimEdit';
-import { canFuse } from '../../core/joinLines';
+import { canFuse } from '../../edit/joinLines';
 import { cornerPartner, cornersAmong, refFrame } from '../../core/wallEdit';
 import { hasLevel, hasOwnEase, hasOwnLevel, rampPoint } from './rampOps';
 import { allowsArcs, canRoundCorner, edgeIsArc, editedShape, holeShape, holesOf, shapeCan, shapeEdgeAt, shapeNodes, shapeOf, subShapes, type ShapeLike } from '../../elements/shapeEdit';

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
-import type { ExportJob } from '../../core/exportJobs';
-import { uniquePaths } from '../../core/exportJobs';
+import type { ExportJob } from '../../repr/exportJobs';
+import { uniquePaths } from '../../repr/exportJobs';
 import { idOf, type ExportOptions } from '../../core/exportSettings';
 import type { ProjectDoc } from '../../core/model';
 import { bundledFontBytes, fontOf, fromBase64, isBundledFont } from '../../formats/fonts';

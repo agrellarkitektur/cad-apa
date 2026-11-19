@@ -4,7 +4,7 @@ import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import * as THREE from 'three';
 import { normalizeMaterials } from '../src/core/graphics';
-import { deleteMaterial, linkMaterial, setMaterialTexture } from '../src/core/materials';
+import { deleteMaterial, linkMaterial, setMaterialTexture } from '../src/edit/materials';
 import type { Asset } from '../src/core/model';
 import { applySitePackage, parseSitePackage, removeSite } from '../src/core/siteImport';
 import { orthoFromWorld, orthoUvMatrix, parseWorldFile, setSiteOrtho } from '../src/core/siteOrtho';

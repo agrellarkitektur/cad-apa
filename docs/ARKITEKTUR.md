@@ -58,8 +58,9 @@ Mappstrukturen följer modulerna, så varje del kan byggas om för sig:
 
 ```
 src/
-  core/       modell, kommandon, ångra, händelser
-  geometry/   väggskarvar, öppningar, polygoner
+  core/       modell, kommandon, ångra, händelser (importerar bara geometry/)
+  geometry/   väggskarvar, öppningar, polygoner (importerar inget annat)
+  edit/       ändringar över flera objekttyper (våningar, material, skarvar)
   repr/       planregler → primitiver, 3D-regler → mesh
   view2d/     SVG-ritning, kamera, snäpp
   view3d/     three.js-scen, markering

@@ -2,8 +2,8 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { resolveParams } from '../elements/registry';
 import { levelOf } from '../repr/solids';
-import type { Element, Id, ProjectDoc } from './model';
-import type { DocStore } from './store';
+import type { Element, Id, ProjectDoc } from '../core/model';
+import type { DocStore } from '../core/store';
 
 /*
  * Höjder i förhållande till våningen (0.10.13). Väggar, bjälklag och möbler

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
-import type { Vec2 } from '../repr/primitives';
+import type { Vec2 } from './vec2';
 import { cross, dist, dot, left, norm, sub } from './vec';
 
 /**

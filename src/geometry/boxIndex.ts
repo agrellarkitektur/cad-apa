@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Box } from './boolean';
-import type { Vec2 } from '../repr/primitives';
+import type { Vec2 } from './vec2';
 
 /** Rektanglar som täcker fler rutor än så här prövas alltid i stället. */
 const MAX_CELLS = 4096;

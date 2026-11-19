@@ -17,13 +17,9 @@ export type { TagHandles };
 /** Stammens sida; `auto` väljer efter var punkten ligger. */
 export type LeaderSide = 'auto' | 'up' | 'right' | 'down' | 'left';
 /** Ledarens ände; `auto` ger pil mot en kant och prick inne i en yta. */
-export type LeaderEnd = 'auto' | 'none' | 'arrow' | 'filled' | 'dot' | 'slash' | 'ring';
+export type { LeaderAttach, LeaderEnd } from '../core/graphics';
+import type { LeaderAttach, LeaderEnd } from '../core/graphics';
 
-/**
- * Hur ledaren möter texten (0.10.20.2): stammen ut från textens sida, eller
- * ett streck under hela texten som stammen fortsätter från.
- */
-export type LeaderAttach = 'side' | 'underline';
 
 export const LEADER_ATTACH: [LeaderAttach, string][] = [
   ['side', 'Från sidan'],

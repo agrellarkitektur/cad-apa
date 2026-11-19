@@ -25,3 +25,6 @@ export function slugId(name: string, taken: ReadonlySet<string>, fallback: strin
   for (let i = 2; taken.has(id); i++) id = `${base}-${i}`;
   return id;
 }
+
+/** Ett IFC-GUID: 22 tecken i IFC:s base64, det första 0–3 (0.12). */
+export const isIfcGuid = (s: unknown): s is string => typeof s === 'string' && /^[0-3][0-9A-Za-z_$]{21}$/.test(s);

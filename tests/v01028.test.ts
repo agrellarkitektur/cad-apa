@@ -3,7 +3,7 @@
 import { defaultSheet } from '../src/core/viewCategories';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DEFAULT_MATERIALS, normalizeMaterials, normalizeStyle } from '../src/core/graphics';
-import { deleteMaterial, linkMaterial, materialUses, saveMaterial } from '../src/core/materials';
+import { deleteMaterial, linkMaterial, materialUses, saveMaterial } from '../src/edit/materials';
 import { emptyProject } from '../src/core/model';
 const newProject = () => emptyProject('Prov', 'nybyggnad');
 import { registerBuiltInTypes } from '../src/elements';

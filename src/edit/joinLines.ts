@@ -5,8 +5,8 @@ import { PATH_WIDTH } from '../elements/groundLines';
 import type { RampParams } from '../elements/groundRamp';
 import { fusedRamp, reversedRamp } from '../elements/rampEdits';
 import { resolveParams } from '../elements/registry';
-import type { Element, Id, ProjectDoc } from './model';
-import type { DocStore } from './store';
+import type { Element, Id, ProjectDoc } from '../core/model';
+import type { DocStore } from '../core/store';
 
 /**
  * Foga ihop (0.10.17): öppna 2D-linjer som delar en ändpunkt blir en lång

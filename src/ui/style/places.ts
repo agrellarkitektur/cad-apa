@@ -5,7 +5,7 @@ import type { Element, Id, ProjectDoc } from '../../core/model';
 import { isSite } from '../../core/model';
 import { lineTypeList } from '../../core/lineTypes';
 import { fillTypeList } from '../../core/fillTypes';
-import { materialObjectsByMaterial } from '../../core/materials';
+import { materialObjectsByMaterial } from '../../edit/materials';
 import { typeOf } from '../../elements/registry';
 import { colorKey, lineTypeName, penKey, penOrder, penTable, stylePlaces, COLOR_RANK, type StylePlace } from '../../repr/penPlaces';
 import { escapeHtml } from '../labels';

@@ -3,7 +3,7 @@
 import type { NumberedPen, StyleBook } from '../../core/graphics';
 import type { Id, ProjectDoc } from '../../core/model';
 import type { DocStore } from '../../core/store';
-import { linkMaterial, relinked } from '../../core/materials';
+import { linkMaterial, relinked } from '../../edit/materials';
 import { editPlaces, frozenPens, penKey, penTable, setFillTypeEdit, setLineTypeEdit, setPenEdit, stylePlaces, type PlaceEdit, type StylePlace } from '../../repr/penPlaces';
 import { placeRows, type PlaceKind } from './places';
 

@@ -9,7 +9,7 @@ import { resolveParams } from '../elements/registry';
 import { STRAIGHT } from '../geometry/arc';
 import { lineTypeOptions } from './lineTypePick';
 import { FILL_KEYS, fillOpacityOf, fillPanel, fillPatch, MATERIAL_3D_COLOR, ORTHO_CHOICE, withPatch, type FillPanelContext } from './fillPanel';
-import { fillFieldsOf, fillOfElement, linkMaterial, linkOrtho, materialUses, overrideMaterial, updateMaterial, withFill } from '../core/materials';
+import { fillFieldsOf, fillOfElement, linkMaterial, linkOrtho, materialUses, overrideMaterial, updateMaterial, withFill } from '../edit/materials';
 import { weightPicker } from './weightPick';
 import { BUILDING_KEYS, buildingChange } from './materialBuilding';
 

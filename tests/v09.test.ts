@@ -3,7 +3,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import type { ProjectDoc } from '../src/core/model';
 import { DocStore } from '../src/core/store';
-import { addStorey, deleteStorey, TRACE_ABOVE, TRACE_BELOW, toStorey, tracedStorey } from '../src/core/storeys';
+import { addStorey, TRACE_ABOVE, TRACE_BELOW, tracedStorey } from '../src/core/storeys';
+import { deleteStorey, toStorey } from '../src/edit/storeyEdits';
 import { saveStorey } from '../src/core/treeCommands';
 import { registerBuiltInTypes } from '../src/elements';
 import { resolveParams } from '../src/elements/registry';

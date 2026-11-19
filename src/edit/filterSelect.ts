@@ -3,9 +3,9 @@
 import { effectivePen } from '../repr/ownPen';
 import { ownProp } from '../elements/littera';
 import { typeOf } from '../elements/registry';
-import { homeOf } from './visibility';
-import type { Element, Id, ProjectDoc } from './model';
-import { actionOf, type Action, type ViewStates } from './states';
+import { homeOf } from '../core/visibility';
+import type { Element, Id, ProjectDoc } from '../core/model';
+import { actionOf, type Action, type ViewStates } from '../core/states';
 
 /**
  * Filtrera och markera (0.8.35): vilka objekt som stämmer med villkoren.

@@ -10,7 +10,7 @@ import { icons } from './icons';
 import { escapeHtml } from './labels';
 import { fillChange, shapeChange, shapeFields } from './shapeFields';
 import { askText } from './ask';
-import { deleteMaterial, saveMaterial, setMaterialTexture, updateMaterial } from '../core/materials';
+import { deleteMaterial, saveMaterial, setMaterialTexture, updateMaterial } from '../edit/materials';
 import { chooseTexture } from './app/imageFile';
 import { showChange, showClick } from './showFields';
 import { underlayChange, underlayFields } from './underlayFields';

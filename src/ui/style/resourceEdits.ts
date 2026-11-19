@@ -5,7 +5,7 @@ import type { ProjectDoc } from '../../core/model';
 import type { StyleBook } from '../../core/graphics';
 import { FILL_TYPES } from '../../core/fillTypes';
 import { formatPat } from '../../core/patFile';
-import { addMaterial, deleteMaterial, materialObjectsByMaterial, moveMaterial, setMaterialTexture, updateMaterial } from '../../core/materials';
+import { addMaterial, deleteMaterial, materialObjectsByMaterial, moveMaterial, setMaterialTexture, updateMaterial } from '../../edit/materials';
 import { saveBlobFile } from '../../storage/projectFile';
 import { resolveParams } from '../../elements/registry';
 import { chooseTexture } from '../app/imageFile';

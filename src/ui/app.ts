@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { installOpeningNumbers } from './app/openingNumbers';
-import { moveOpeningsInView, movesInFacade } from '../core/facadeMove';
+import { moveOpeningsInView, movesInFacade } from '../edit/facadeMove';
 import { eraseSelection } from './app/erase';
 import { setWeightSource } from './weightPick';
 import { generalOf } from '../core/general';

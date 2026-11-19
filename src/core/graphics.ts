@@ -2,7 +2,6 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { normalizeExportSettings, type ExportSettings } from './exportSettings';
 import { normalizeGeneral, normalizeOffice, type GeneralSettings, type OfficeInfo } from './general';
-import type { LeaderAttach, LeaderEnd } from '../elements/leader';
 import { normalizeFillTypes, type CustomFillType, type HatchLine } from './fillTypes';
 import { normalizeLineTypes, type CustomLineType } from './lineTypes';
 import { defaultCategories, normalizeCategories, styleOfPreset, type ViewCategory } from './viewCategories';
@@ -607,3 +606,12 @@ function normalizeLabels(l: any): LabelStyle {
     ) as Record<LeaderKind, LeaderStyle>,
   };
 }
+
+/** Ledarens ände (`elements/leader.ts`); `auto` ger pil mot en kant och prick inne i en yta. */
+export type LeaderEnd = 'auto' | 'none' | 'arrow' | 'filled' | 'dot' | 'slash' | 'ring';
+
+/**
+ * Hur ledaren möter texten (0.10.20.2): stammen ut från textens sida, eller
+ * ett streck under hela texten som stammen fortsätter från.
+ */
+export type LeaderAttach = 'side' | 'underline';
