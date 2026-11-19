@@ -5,14 +5,9 @@ import type { Plane, Solid } from '../repr/solids';
 
 
 /**
- * Profilen svept längs banan (0.11.6), som ren räkning. Varje delprofil
- * delas i konvexa celler (band i x, `stripCells`), och varje cell sveps längs
- * varje rak bit av banan som en konvex kropp, kapad av planen i ändarna och
- * i knäckarna (gering). Kroppen görs sedan om till programmets 3D-format
- * (lodräta extruderingar med sneda ovan- och undersidor, `solidsOf`), så att
- * 3D-vyn, sektionerna och fasaderna ritar den som allt annat. Kantlinjerna
- * levereras för sig: delprofilernas hörn längs banan och konturerna i
- * ändarna och knäckarna.
+ * Kroppar i 3D för profilen (0.11.6; ur `profileBody.ts` i Granskning efter
+ * 0.12): halvrum, klippning av konvexa kroppar, prismor och omvandlingen till
+ * programmets 3D-format (`solidsOf`).
  */
 
 export type Vec3 = [number, number, number];

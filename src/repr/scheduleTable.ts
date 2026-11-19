@@ -2,7 +2,8 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Id } from '../core/model';
 import { textWidth } from '../formats/drawingFont';
-import type { Cell, LitteraInfo, ScheduleTable } from './schedules';
+import type { LitteraInfo, ScheduleTable } from './schedules';
+import type { Cell } from './scheduleCells';
 import type { FigureRole, OpeningFigure } from './openingFigure';
 import type { Pen, Primitive } from './primitives';
 

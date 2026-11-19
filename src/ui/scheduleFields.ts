@@ -3,7 +3,8 @@
 import { buildingStoreys, type ProjectDoc } from '../core/model';
 import { DEFAULT_FIGURE_SCALE, FIGURE_SCALES, isLitteraLayout, isNumberField, scheduleOf, sourceFields, SOURCE_NAMES, type Schedule } from '../core/schedules';
 import { defaultState } from '../core/states';
-import { columnTitle, cachedTable } from '../repr/schedules';
+import { cachedTable } from '../repr/schedules';
+import { columnTitle } from '../repr/scheduleCells';
 import { icons } from './icons';
 import { escapeHtml as esc } from './labels';
 

@@ -8,6 +8,17 @@ import { type Vec3, v3, type HalfSpace, halfAt, type Poly3, clipPoly, prism, are
 
 export { v3 };
 
+/**
+ * Profilen svept längs banan (0.11.6), som ren räkning. Varje delprofil
+ * delas i konvexa celler (band i x, `stripCells`), och varje cell sveps längs
+ * varje rak bit av banan som en konvex kropp, kapad av planen i ändarna och
+ * i knäckarna (gering). Kroppen görs sedan om till programmets 3D-format
+ * (lodräta extruderingar med sneda ovan- och undersidor, `solidsOf`), så att
+ * 3D-vyn, sektionerna och fasaderna ritar den som allt annat. Kantlinjerna
+ * levereras för sig: delprofilernas hörn längs banan och konturerna i
+ * ändarna och knäckarna.
+ */
+
 // ---------- Tvärsnittet i celler ----------
 
 /**
