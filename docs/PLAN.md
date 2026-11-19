@@ -1897,6 +1897,18 @@ rivna väggar i 6-meterszonens kontur; lagerregeln, cirkelimporterna, de
 oanvända exporterna, autosparets underlag, de stora filerna, README och
 överlämningens längd, låsta arbetsflöden och klickjämförelsens nya steg.
 
+### Granskning efter 0.12 (nästa)
+
+Flyttad hit av Carl August 19 november 2026, före IFC: den kräver inte hans
+provning, och 0.12.6 väntar på att han provat 0.12–0.12.5.5. Utan nya
+funktioner och utan frågor. Mellanstor, en session för städningen och en
+för småfelen om det behövs (0.12.5.6 när något syns). Punkterna står i
+`docs/OVERLAMNING.md` (*Nästa session*) och underlaget i
+`cad-apa-granskning-0.12.md` i projektet. Efter den: Carl Augusts provning
+med ett eget litet hus, och om han vill dörrarnas funktionsmått (SS 91 42
+21: de fria ytorna vid dörren och nivån Normal eller Höjd) som en egen
+liten version.
+
 ### 0.12.6 IFC
 
 Flyttad före markförändringarna 13 november (Carl August: Höjdkurvor kan

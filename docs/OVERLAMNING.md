@@ -7,7 +7,8 @@ UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
 README. Senast: 19 november 2026, efter 0.12.5.5 (rättningarna ur
-granskningen).
+granskningen); frågorna om 0.11 och äldre strukna, nästa är Granskning
+efter 0.12.
 
 ## Läget
 
@@ -193,10 +194,11 @@ granskningen).
 - **0.10.8–0.12.5 är inte provade fullt ut** av Carl August (12 november: inte hunnit prova 0.12–0.12.4); han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
-  de som hör till den kommande versionen först. Carl August vill ha **fem
-  åt gången**. En fråga han hoppar över räknas som "bra som det är" och
-  stryks. Han bad 27 oktober att resten väntar; ställ dem inte förrän han
-  ber om det, utom de som hör till nästa version.
+  de som hör till den kommande versionen först, **fem åt gången**. En fråga
+  han hoppar över räknas som "bra som det är" och stryks. **19 november
+  ströks alla frågor om 0.11 och äldre**, utom sju som inte märks vid
+  vanlig provning. Samla inte på frågor igen: ställ högst tre per version,
+  bara sådant som ändrar ritningen eller en uträkning.
 - **Publicering:** varje push till `main` laddas upp med
   `.github/workflows/publicera.yml` (FTPS; secrets `FTP_SERVER`,
   `FTP_USERNAME`, `FTP_PASSWORD`, `FTP_DIR` =
@@ -297,9 +299,13 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
 - ~~Utredning av IFC~~ (13 november, `cad-apa-ifc-utredning.md`)
+- **Granskning efter 0.12** (nästa; mellanstor, utan frågor; Carl August
+  19 november: före IFC, eftersom den inte kräver hans provning)
+- **Carl Augusts provning av 0.12–0.12.5.5** (ett eget litet hus, en timme)
+- **Dörrarnas funktionsmått** (liten; om han vill ha den före IFC)
 - **0.12.6 IFC** (stor) → **0.12.6.1 IFC, resten** (mellanstor) →
   **0.12.7 Utgåvor och PM** (mockup först; se `cad-apa-export-utredning.md`,
-  där står de äldre numren). Sedan **Granskning efter 0.12**.
+  där står de äldre numren)
 - **0.12.8 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
   trädens status i planen)
 - **0.12.9 Markförändringar** (förteckningen över schakt, fyll och
@@ -311,41 +317,96 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 - Efter piloten: se *Efter pilotprojektet* i PLAN.md. **1.0**
   bygglovshandling.
 
-## Nästa session
+## Nästa session: Granskning efter 0.12
 
-Carl August har **inte provat 0.12–0.12.5** (19 november); rådet i
-granskningen är att han provar dem innan 0.12.6 byggs, så fråga först.
-Fråga om en DXF ur 0.12.5.5 öppnas i AutoCAD. Läs
-`cad-apa-granskning-0.12.md` innan *Granskning efter 0.12* planeras.
-Fråga om Carl August skrivit om Stöd-texten (`SUPPORT` i
-`src/ui/app/supportSection.ts`) och kopplat CLA Assistant. Flytten: fråga om Carl August provat den nya adressen (steg 8 i
-`docs/FLYTT.md`). Läs synpunkterna först och sortera Inkorgen om den har något. Be om
-skrivrätt till repot ("push godkänd"). Fråga om Carl August öppnat
-provfilen (`docs/ifc/provhuset.ifc`) i Archicad, Revit och Solibri och
-validerat den, och om han svarat på **A–E i `cad-apa-ifc-utredning.md`**;
-ställ dem annars först. Fråga sedan om han provat 0.12–0.12.5 (frågorna
-nedan, högst fem åt gången). Nästa version är **0.12.6 IFC** enligt
-utredningen: `src/formats/ifcWrite.ts` i exportens worker, 3D-formerna ur
-`src/repr/model3d.ts` och `solids.ts` (raka extruderingar som
-IfcExtrudedAreaSolid, resten trianglat med `solidTriangles`), väggarna
-**utan** urtag och hålen som IfcOpeningElement (risken i versionen),
-GUID ur `doc.guids`, lagren och IsExternal/LoadBearing ur
-`src/core/dxfLayers.ts`, förteckningens fält ur `src/core/openingSchedule.ts`,
-areorna ur areaförteckningens räkning, raden *Modellen* i
-`src/ui/app/exportDialog.ts`. web-ifc som devDependency i testerna. Vid
-granskningen efter 0.12 delas `src/ui/style/profileTypes.ts` (875),
-`openingTypes.ts` (828), `areaCalc.ts` (ca 550) och `src/repr/schedules.ts`
-(ca 640; per littera till en egen fil).
+**Carl August har ont om tid** (19 november). Granskningen körs därför
+**utan frågor**: välj själv, skriv valen i PLAN.md och fråga bara om något
+skulle ändra hur ritningarna ser ut. Han startar chatten med "push
+godkänd". Underlaget är **`cad-apa-granskning-0.12.md`** i projektet (läs
+den först; bokstäverna nedan är dess) och *Inte gjort* under 0.12.5.5 i
+PLAN.md. Inga nya funktioner. Mellanstor: **en session för del 1, en egen
+för del 2** om chatten blir lång. Syns inget i appen höjs inte versionen;
+de nya varningarna i del 2 ger **0.12.5.6**.
+
+**Del 1, städning (syns inte):**
+- **Differentialtestet in i testerna** (C4): för varje objekt i ett rikt
+  projekt (två våningar med mark, trappa, räcken, profiler, areor, vägghål,
+  littera, mått) flyttas, ändras och tas objektet bort; planen och 3D
+  byggs med varm cache och från början (`structuredClone` av dokumentet)
+  och jämförs. Spara öppningarnas nummer i projektet först
+  (`missingOpeningNumbers`), annars skiljer litteran. Håll det under tio
+  sekunder (färre ändringar, inte sektionerna). Skriptet från granskningen
+  finns inte kvar; metoden står här och i rapporten.
+- **Dela filerna** (C7): `src/ui/style/profileTypes.ts` (877),
+  `ui/style/openingTypes.ts` (830), `core/openingTypes.ts` (753),
+  `elements/profileBody.ts` (712), `repr/schedules.ts` (639; per littera
+  till en egen fil), `elements/areaCalc.ts` (552).
+- **Lagerregeln** (C1): nio filer i `core/` importerar från `elements/`,
+  `repr/` eller `formats/`, och `geometry/` hämtar `Vec2` ur
+  `repr/primitives`. Claudes förslag: flytta `Vec2` till `geometry/`,
+  flytta filerna som behöver objekttyperna till `elements/` (eller en ny
+  mapp för kommandon), och skriv regeln i ARKITEKTUR och UTVECKLING så att
+  den stämmer med koden. Lägg ett test som håller regeln.
+- **Cirkelimporterna** (C2) där de går att bryta billigt, och **de
+  oanvända exporterna** (C3): gör dem privata och ta bort det som då är
+  dött.
+- **README** (E): äldre versioner till `docs/arkiv/`, *Kom igång* och vad
+  programmet är överst. Behåll rubrikformen `Version x.y.z, …` för de
+  versioner som ligger kvar; `scripts/release-notes.sh` läser den.
+- **Arbetsflödena** (D): lås `checkout`, `setup-node` och
+  `upload-artifact` på commit, som FTP-steget. `npm audit fix` för de två
+  som går utan att bryta något (C8).
+- **Testerna:** slå ihop dubbletter; hela körningen tar ca 13 s.
+- **Klickjämförelsen** (`scripts/jamfor-klick.py`): nya steg för
+  0.12–0.12.5.5 (exportdialogen, förteckningarna, areorna, räckets
+  *Kvittera*) och en körning.
+- **Mät, rätta inte än:** autosparet med stora underlag (C5) och
+  sektionernas omräkning (C6) på ett hus i villastorlek. Skriv siffrorna i
+  UTVECKLING.md och föreslå en version om de är för höga.
+
+**Del 2, småfel som syns (0.12.5.6):**
+- En littera med ett trasigt mål kraschar planen (`leader.ts`); ett
+  element som är `null` i filen ger ett tekniskt fel (C9).
+- *Öppna* hänger när dialogen avbryts i webbläsare utan filsystems-API;
+  `merge` i `styleBookFile.ts` (C10).
+- Egna linjetypers namn rensas inte från tecken som DXF inte tillåter (D).
+- Rivna väggar räknas med i 6-meterszonens kontur (B6).
+- Varning för dörrar med fri höjd under 2,00 m (BFS 2024:9, 2 kap. 25 §)
+  och för vågräta öppningar på 110–230 mm i ett barnsäkert räcke (2 kap.
+  11 § 5). Slå upp i kunskapsbasen, inte ur minnet.
+- Meningen om mobilen i den tomma egenskapspanelen tas bort.
+- **Avrundningen** (B5) rörs inte: SS 14141 finns inte i kunskapsbasen.
+  Fråga om han har den.
+
+**Efter granskningen:** Carl August provar 0.12–0.12.5.5 med ett eget
+litet hus (en timme: väggar, dörrar, fönster, en fönsterförteckning, en
+area, export till PDF och DXF) **innan 0.12.6 IFC byggs**. Fråga om en DXF
+öppnas i AutoCAD, om provfilen `docs/ifc/provhuset.ifc` öppnats i
+Archicad, Revit och Solibri, och A–E i `cad-apa-ifc-utredning.md`.
+**Dörrarnas funktionsmått** (SS 91 42 21: de fria ytorna a och b vid
+dörren, nivån Normal eller Höjd per projekt) är en egen liten version som
+han får välja att lägga före IFC; hans skärmklipp ur standarden finns i
+chatten 19 november och standarden i kunskapsbasen. Kvar sedan förut:
+Stöd-texten och CLA Assistant, flyttens steg 8 (`docs/FLYTT.md`).
+
+**0.12.6 IFC**, när han provat: `src/formats/ifcWrite.ts` i exportens
+worker, 3D-formerna ur `src/repr/model3d.ts` och `solids.ts` (raka
+extruderingar som IfcExtrudedAreaSolid, resten trianglat med
+`solidTriangles`), väggarna **utan** urtag och hålen som IfcOpeningElement
+(risken i versionen), GUID ur `doc.guids` (sparas sedan 0.12.5.5), lagren
+och IsExternal/LoadBearing ur `src/core/dxfLayers.ts`, förteckningens fält
+ur `src/core/openingSchedule.ts`, areorna ur areaförteckningens räkning,
+raden *Modellen* i `src/ui/app/exportDialog.ts`. web-ifc som devDependency
+i testerna.
 
 ## Att fråga Carl August om
 
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
-fråga. Frågorna om 0.10.28.2 och 0.10.28.1 när han provat materialen; de
-om 0.10.27–0.10.23 likaså. Först **A–E i `cad-apa-ifc-utredning.md`** (hör till 0.12.6). Nästa omgång börjar sedan med 0.12.5, 0.12.4, 0.12.3, 0.12.2, 0.12.1, 0.12, 0.11.8.4, 0.11.8.3, 0.11.8.2, 0.11.8, 0.11.7.3,
-0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4, 0.11.3,
-0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
-provat.
+fråga. Först **A–E i `cad-apa-ifc-utredning.md`** (hör till 0.12.6), sedan
+0.12.5.5, 0.12.5, 0.12.4, 0.12.3, 0.12.2, 0.12.1 och 0.12. **Frågorna om
+0.11 och äldre ströks 19 november** (ca 200 stycken; de finns i git,
+`docs/OVERLAMNING.md` före den dagen). Lägg inte tillbaka dem.
 
 **0.12.5.5 efter provning** (Claudes val, se PLAN.md)
 - Balkongdörrarnas varning kommer för alla ytterdörrar och fönsterdörrar
@@ -441,548 +502,28 @@ besvarade 7 november, se `cad-apa-export-utredning.md`)
   visar mer i sidled. Räcker det tills de sparade 3D-vyerna (0.12.9) får
   en sökarram?
 
-**0.11.8.4 efter provning** (Claudes val, se PLAN.md)
-- Barnsäkra fönster varnar på våningar där våningshöjden plus bröstningen
-  är minst 2,0 m (marken antas vid ±0). Rätt grund, eller ska fallhöjden
-  räknas mot den färdiga marken utanför fasaden?
-
-**0.11.8.3 efter provning** (Claudes val, se PLAN.md)
-- Vägghålens förval: Ventgaller 300 × 200, Nisch 600 × 600 och 100 djup,
-  Genomföring Ø 160, Rent hål 600 × 600; måtten i mm och höjden som
-  underkant. Rätt, och saknas någon typ (urtag, brevinkast i vägg)?
-- I fasaden blir ett drag överkant karm när den står fast, annars
-  bröstningen; dörrar bara i sidled. Ska fönster också kunna flyttas med
-  piltangenterna där?
-- *I liv med fönstret under* lägger mitten över mitten. Behövs *i liv med
-  kanten* (vänster eller höger) också?
-- *Lika avstånd* kräver tre i samma vägg (de yttersta står kvar). Ska två
-  kunna fördelas över hela väggen, mot väggarnas liv?
-- Dagsljuset räknar glaset innanför bågarna mot golvarean, med 10 % som
-  tumregel. Rätt grund, eller ska ljusinsläppet (LT) och avskärmningen
-  vägas in?
-
-**0.11.8.2 efter provning** (Claudes val, se PLAN.md)
-- Bleck med utsprång 40 och droppnäsa 20, fönsterbänk 22 mm med utsprång
-  20 (överkanten i karmens underkant), foder 70 × 15 på båda sidor.
-  Rimliga förval? Ska fodret och bänken få material (nu som karmen)?
-- Beslagen ritas i fasad, sektion och 3D, inte i planen. Behövs
-  handtaget eller dörrstängaren i planen (Detalj)?
-- Fri passage räknas ur geometrin (bladets luft minus bladet), och
-  varnar under 760 (800 för ytterdörrar och huvudentrén). Alla dörrar
-  varnar, inte bara entréplanets. Räcker det, eller behövs ett kryss
-  *Tillgänglig* per dörr?
-- Tillgänglighetscirkeln står på dörrens båda sidor, mitt för dörren och
-  tangerande väggen. Rätt, eller bara på slagsidan, eller flyttbar?
-
-**Besvarade 1 november, 0.11.8.1 (A–E):** A fönstrens slagbågar ska inte
-synas som förval (gjort i 0.11.8.2); B spröjsens förval står; C skrivet
-mått för Special (gjort); D spegelns profil (gjort); E fältmallen i en
-egen flik i stilboken, sökbar med taggar som pennorna, med smarttext, och
-alla fält med i exporten, med ett filter för de egna (gjort, Typer ›
-Förteckningens fält).
-
-**0.11.8 efter provning** (Claudes val, se PLAN.md; drevmånen besvarad 1
-november: hålet + 10, karmen − 10, gjort i 0.11.8.1)
-- Ytterdörrar sitter i liv på den sida de slår mot, fönster i liv ute
-  (0). Rätt förval?
-- Litterans nummer sparas för varje kombination första gången den
-  dyker upp; ett nytt fönster får nästa lediga nummer även om det sitter
-  först i fasaden. Bra, eller ska numren följa ordningen tills man låser?
-- Pardörrens passiva blad är det högra sett utifrån. Rätt förval?
-
-**0.11.7.3 efter provning** (Claudes val, se PLAN.md)
-- Trappans littera står längs gångriktningen framför början, utan ledare.
-  Rätt plats, eller hellre vid gånglinjens pil eller vågrätt?
-- En trappa på Platsen är utomhus av sig själv (300 mm). Rätt, och behövs
-  en egen steghöjd utomhus (t.ex. högst 170)?
-- Spaljén SP01 fick ribbor 34 mm c/c 150 i ±45°. Ser det rätt ut? Ska
-  mönstret också synas i planen (Detalj)?
-
-**0.11.7.2 efter provning** (Claudes val, se PLAN.md)
-- *Böjd nedåt* går 100 mm ned under ledstången, utan böjradie. Lagom, och
-  behövs en radie?
-- *Mot vägg* går tillbaka till räckets linje (60 mm utåt när ledstången
-  ligger på linjen). Rätt, eller ska den gå till en vägg den hittar?
-- Varningen för fri höjd räknar med 2 000 mm och stegets tjocklek. Rätt
-  gräns för spiraltrappor i bostäder?
-
-**0.11.7.1 efter provning** (Claudes val, se PLAN.md)
-- Litteran står utan ledare och går inte att flytta (som räckets grindar).
-  Behövs den flyttbara, med ledare, som väggarnas?
-- De inre linjerna ritas också för en delprofil som ligger dold under en
-  annan. Störande?
-- Stilbokens export tar alltid med alla profil- och räckestyper (inget
-  kryss). Rätt, eller ett kryss som för mallbladen?
-- *Pelare i hörnet* kommer först nära en sidas ände, också i en dörr- eller
-  fönstersmyg. Bra, eller bara i riktiga hörn?
-
-**0.11.7 efter provning** (Claudes val, se PLAN.md)
-- En ändprofil ligger Utöver som förval och sträcks bara med profilens
-  höjdzon. Rätt förval? Behövs en egen sträckzon i ändprofilen?
-- En räckesdel med en profiltyp ligger med ankaret på *Överkant*. Rätt,
-  eller ska fältet heta *Ankarets höjd* för profildelar?
-- Bara typer kryssade *Del i räcke* (eller *Vangstycke*) står i listorna,
-  så PR01 syns inte som stolpe förrän man kryssar. Rätt, eller alla?
-
-**0.11.6.1 efter provning** (Claudes val, se PLAN.md)
-- Måtten pekar på parametrar bara i typen; ändrade per objekt sträcker
-  de inte (beslut B: senare). Behövs det före piloten?
-- Ett mått sträcker det övre eller högra när värdet ändras. Rätt, eller
-  ska man kunna välja vilken ände som flyttas?
-- *Kant i kant* skjuter ut punkten ur en annan delprofil, men kanterna
-  mellan punkterna kan fortfarande skära in. Räcker det som hjälp?
-- Varningen för avslut räknar bågar i korta bitar, så ett snett avslut på
-  en bågformad bana varnar tidigt. Störande?
-
-**0.11.6 efter provning** (Claudes val, se PLAN.md)
-- Tvärsnittet läggs till höger om banan (Tab byter sida). Rätt förval,
-  eller hellre till vänster?
-- *Längs kant* kopierar kanten; profilen följer inte väggen när den
-  flyttas, och Shift tar bara det klickade objektets kontur (en väggs fyra
-  sidor). Behövs en profil som följer väggen, eller hela husets kontur?
-- Avsluten: lodrätt som förval för pelare och balkar, vinkelrätt för
-  resten. Rätt?
-- Smartmenyn på en väggs kant har fått *Profil längs kanten* och *Profil
-  längs hela konturen*. Blir den för lång?
-
-**0.11.5 efter provning** (Claudes val, se PLAN.md)
-- Förvalen 200/1 800 mm, 360° och moturs uppåt. Rimliga, eller hellre
-  medurs?
-- Gånglinjen ligger 300 från ytterkanten, som i andra trappor. Rätt för
-  en spiraltrappa, eller ska den ligga i mitten?
-- Ett nytt stegdjup ändrar graderna (inte diametrarna). Rätt?
-- Det ovanför snittet ritas streckprickat också ovanpå det heldragna när
-  trappan går mer än ett varv. Rätt, eller bara det som inte ligger över
-  något heldraget?
-- Behövs en knapp för att göra om en vanlig trappa till spiral (och
-  tillbaka)?
-
-**0.11.4 efter provning** (Claudes val, se PLAN.md)
-- Vangstyckena står innanför trappans bredd (bredden är yttermåttet).
-  Rätt, eller ska bredden vara den fria bredden mellan dem?
-- Vangstycke 50 × 300, plansteg 40 med stegnos 30, sättsteg 20. Rimliga
-  förval för en villatrappa?
-- Utan material: plansteg i trä, vangstycken och sättsteg vitmålade. Ska
-  stilboken få ett material *Trä* (bara nya projekt)?
-- Kontrastmarkeringen: ingen som förval, 50 mm, mörk remsa. Ska *Första
-  och sista* vara förval, och ska en varning hänvisa till BFS 2024:9 (inte
-  uppslaget än)?
-
-**0.11.3 efter provning** (Claudes val, se PLAN.md)
-- Ett trappstegat fack ligger på sin högsta punkt, så att glipan under
-  växer nedåt i facket. Rätt, eller hellre medelhöjden (och lite i
-  marken)?
-- *Längs kant* längs ett hål, ett bjälklag eller en ramp kopierar linjen;
-  räcket följer inte med när kanten ändras (bara trappor gör det).
-  Behövs det kopplade räcket före piloten?
-- En grind som följer staketet får en egen littera (G02 när G01 är en
-  typ). Hellre ingen littera utan grindtyp?
-- Stolparna i ST-typerna och grindstolparna syns redan i Normal (andra
-  delar i Detalj). Rätt nivå för situationsplanen?
-- Gruppernas knappar i editorn syns när musen är över gruppen, i stället
-  för högerklick som på tavla 4. Räcker det?
-
-**0.11.2 efter provning** (Claudes val, se PLAN.md)
-- En grupp tas bara bort när den är tom. Hellre att typerna flyttas till
-  gruppen ovanför?
-- *Ny typ…* ger delar efter gruppen (stolpe, handledare, spjälor; spaljén
-  ett rutnät). Hellre en kopia av den valda typen?
-- Förhandsvisningen ritar typens förvalda värden, inte det markerade
-  räckets. Räcker det?
-- Projekt utan räckestyper får RÄ01–RÄ03 med en knapp i editorn. Ska de
-  hellre finnas från början i nya projekt?
-
-**0.11.1 efter provning** (Claudes val, se PLAN.md)
-- RÄ01 har en rund ledstång 70 mm innanför handledaren, på *Skyddshöjd −
-  40*. Rätt förval, eller ett räcke utan ledstång och RÄ03 bredvid?
-- Den utjämnade handledaren avviker mer än 50 mm vid kilstegen i de flesta
-  L-trappor, så varningen syns ofta. Lagom, eller ska gränsen gälla bara
-  den inre kanten?
-- I Detalj ritas handledare, ledstång och stolpar, inte spjälorna. Ska
-  spjälorna synas i planen?
-- Ett räcke på en trappa flyttas inte för sig (*Lösgör* först). Rätt?
-- Innanför 50 mm som förval på trappan. Lagom?
-
-**0.11 efter provning** (Claudes val, se PLAN.md)
-- Referenslinjen ligger i mitten som förval. Hellre en kant (oftast ritar
-  man längs en vägg)?
-- Kilstegen strålar från det inre hörnet, så att de blir spetsiga där.
-  Rätt, eller ska de balanseras (framkanterna inte genom hörnet)?
-- Snittlinjen snett över trappan är 0,25 och samma ställe som trappans
-  snitt i sektionerna. Rätt, eller två ställen?
-- Hålet ritas i planen ovanför som bara en kant (utan kryss), så att
-  trappan syns. Rätt?
-- *Gör till eget hål* gör hålet till en vanlig håltagning som inte följer
-  trappan. Räcker det, eller behövs det kopplade hålet (följer med vid
-  flytt, kan låsas upp) före piloten?
-- *Syns också på* ritar allt grått 0,18 utan text och går inte att klicka
-  på där. Rätt?
-
-**Besvarade 31 oktober, utredningen av 0.11.6:** A–H, se
-`cad-apa-profil-utredning.md` och PLAN.md (*0.11.6 Profilen*).
-
-**Besvarade 30 oktober, planeringen av 0.11:** A delningen 0.11–0.11.3
-(räcket direkt efter trappan, ska kunna byggas ut); B vilplan både per
-sträcka och per sväng; C gånglinjen ställbar, alltid från utsidan, förval
-300; D första/sista plansteget räknas som en del av trappan; E räcket får
-egen utredning med mockup. Dessutom: referenslinjen ritas i
-trappverktyget, smartspöt är ett alternativ. Allt gjort i 0.11 utom
-räcket (0.11.1). Räckets utredning: A–H besvarade (se PLAN.md).
-
-**Besvarade 30 oktober** (Claudes val gäller): 0.10.32 alla fyra
-(vytypens kategori när ingen vy är sparad; kategoribyte släpper vyns
-ändringar; pennorna per kategori tills 0.10.36; Poché och Färgmarkerad
-som kategorier, gjort i 0.10.33). 0.10.31: ortofotot där marken saknar
-material, plus valet *Ortofoto* (gjort i 0.10.33); bildens sida i mm.
-0.10.30: rutornas mått lagom så länge; en rad "Eget" per fyllning (prova).
-
-**0.10.40 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Mallbladen och stämplarna är ikryssade som förval vid export, import
-  och mallen. Rätt, eller hellre okryssade vid import (så att samma
-  mallblad inte läggs in två gånger)?
-- Mallbladens mappar i projektträdet följer inte med (de hamnar överst i
-  Ritningar). Störande?
-- Typerna (YV01, D1 …) och vy-taggarna följer inte med mallen. Ska de?
-
-**0.10.39 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Kontorets taggar (`{företag}`, `{telefon}` …) är inga fält på bladen;
-  de fylls bara i under Allmänt. Rätt, eller ska ett blad kunna skriva
-  över dem?
-- Ett ifyllt skede under Allmänt gäller alla blad (bladens egna försvinner
-  och kommer inte tillbaka när det töms). Rätt?
-- Måtten i m skrivs med två–tre decimaler (3,45 och 3,455), i cm med en
-  (345,5). Lagom?
-- Logotypen läggs 40 mm bred med nedre vänstra hörnet där man klickar.
-  Lagom, eller hellre i ramens hörn?
-
-**0.10.38 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Dörrar och fönster har nu var sina rader i fasaden för karm, glas, foder,
-  skarvar och öppningssätt (förut gemensamma). Bra, eller hellre
-  gemensamma rader för öppningarna?
-- Väggar, bjälklag och tak slås ihop i sektionens snitt så länge deras
-  snittlinjer är lika; ändras en blir det en skarv mellan dem. Rätt?
-- Gruppen heter *Bjälklag, tak, stödmurar, möbler och rum* också i
-  fasaden, där rummen inte har någon rad. Störande?
-
-**0.10.37 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Med jämförelsen på går åtgärdens färg före en rad med egen färg (i
-  Färgmarkerad blir allt nytt rött, också en blå glasrad). Rätt?
-- Bjälklag, tak och stödmurar har bara en snittlinje; deras oskurna
-  linjer är raderna *under snittet*. Räcker det?
-- Fönstrets bleck och dörrens karm i kontur ritas inte i planen och har
-  ingen rad där. Ska blecket synas i planen?
-- En egen penna med bara en färg (ingen tjocklek) står inte i
-  pennlistan. Rätt?
-
-**Besvarade 30 oktober (förmiddag), 0.10.36:** A snitt- och konturlinjer
-per objekt, sammansatta objekt med flera av varje (0.10.37); B väggens
-penna för öppningarnas oskurna linjer; C *Symbol* följer *Snitt*; D
-linjetypen hör till stället; E alla pennor i projektet ska gå att söka
-(material, typer, objekt); F snittlinjen ger tjockleken, åtgärden färg och
-streckning; G snitt- och konturlinjerna före Allmänt; H över- och
-undersnitt kvar som egna ställen. Kvar efter provning: sparas sorteringen
-per rubrik i filen, eller räcker det att den kommer ihåg sig medan sidan
-är öppen?
-
-**0.10.35 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Underlagen ligger i kategorin (Illustrationsplan kan ha ortofotot i alla
-  sina vyer). Ska ett nytt projekts Illustrationsplan ha ortofotot under
-  sig från början, när platsen har ett?
-- DXF/bild är ingen egen källa: *Fil…* lägger in filen där du är, som
-  förut. Behövs en fil som bara hör till vyn?
-- Krysset *Underlag* under Visa gäller bara filunderlagen. Ska det också
-  släcka underlagen i vyn?
-- Underlagen ritas i den ordning de lades till, utan flyttknapp. Räcker
-  det? Och 40 % som förval?
-
-**0.10.34 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- *Vanliga* är förvalet och döljer *Snittet i planen* och sällan ändrade
-  kryss under Innehåll (det ändrade syns alltid). Rätt urval, eller ska
-  *Alla* vara förvalet?
-- Favoriterna: plus sparar i det valda setet, högerklick tar bort en.
-  Räcker det, eller behövs en tydligare knapp för att ta bort?
-- Pennorna har ingen opacitet (bara åtgärdernas fyllning och bakgrund).
-  Behövs det?
-- Visa-menyn har kvar sina kryssrutor. Ska den också få knappar med
-  symbol, som Innehåll?
-
-**0.10.33 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- *Återställ* på en ändrad rad syns när musen är över raden (pricken
-  syns alltid). Hellre alltid synlig?
-- En kategori får prickar mot sitt förval (t.ex. Skiss mot Plan), inte
-  bara en vy mot sin kategori. Hjälper det, eller stör det?
-- Undertak och Golvplan i 1:50 utan möbler, öppningssätt och littera
-  (undertaket också utan mått); Mått och littera utan möbler. Rätt
-  innehåll? Undertaket ritas inte spegelvänt än.
-- *Ny vy → en kategori* tar kategorin som den är, inte det som visas nu
-  (det gör *Med det som visas nu…*). Rätt?
-
-**0.10.31 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Ortofotot och texturerna skuggas som kulörerna; Carl August vill att
-  allt skuggas men har inte sett det än. Ser det rätt ut?
-
-**0.10.30 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Rader läggs till och tas bort per material (*När det syns*, *Alltid*,
-  *Aldrig*). Behövs fria rader med egen text och eget mönster? (Oklart
-  för honom innan han testat; fråga efter provning.)
-
-**0.10.29 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Shift fritt avrundar vinkeln till hela grader; står man i ett vinkellås
-  eller på en punkt gäller exakt den riktningen. Rätt, eller ska fritt
-  också vara exakt (t.ex. 37,28°)?
-- Parallell kopia och Förskjut alla kanter skrivs också vid objektet, som
-  Förskjut. Rätt?
-- Platsens rad i våningslistan har kvar *markmodell* / *plan mark* under
-  namnet. Ska den också få tankstreck och en höjd (t.ex. ±0 i RH 2000)?
-
-**0.10.28.3 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Markytans höjd föreslås nu också ur den färdiga marken (inte bara
-  rampens). Rätt?
-- Markobjekten på Platsen hänger på ±0 och flyttar inte när en
-  våningshöjd ändras (testat); platån runt huset följer golvet. Såg du
-  något annat flytta? Då behövs en skärmbild.
-
-**0.10.28.2 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Bjälklaget fylls i planen under snittet med materialets mönster (Betong
-  ger betongmönster över hela golvet, under rummen). Rätt, eller ska
-  bjälklagen bara få materialet i snitt och 3D och planen vara tom som
-  förut?
-- Materialets snitt gäller det som är kvar och nytt, och ersätter
-  stilmallens fyllning (t.ex. skrafferingen för nytt); det som rivs ritas
-  som förut. Rätt, eller ska stilmallens fyllning för nytt gå före?
-- Ytan syns bara i fasader, inte i sektionernas vy bortom snittet. Ska
-  den synas där också?
-- Takpannor (linjer var 350 mm) och Plåt (falsar var 600 mm) är nya. Ser
-  de rätt ut i fasaden och på Platsen? Saknas något byggnadsmaterial?
-- Mönstrets vinkel, avstånd och skala för snittet och ytan går inte att
-  ändra (förvalen gäller; Takpannor och Plåt har sina). Räcker det, eller
-  behövs en redigerare som för planen?
-
-**0.10.28.1 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Listan har tre färger per material (planen, illustrationsplanen, 3D),
-  men mönstret i planen ändras bara i panelen för ett objekt med
-  materialet. Räcker det, eller ska mönstret också gå att välja i listan?
-- En stödmur utan material på Platsen är bara konturen (förut svart).
-  Rätt, eller ska den få en ton?
-- Ett material som sparas ur en 2D-form får varken *Mark* eller
-  *Byggnad* (markobjekten ser det inte förrän man kryssar). Rätt?
-- De nya fyllningstyperna: Gatsten 100 i förband, Stenmur i stora block,
-  Trall med brädor 145 och Singel som prickar på papper. Ser de rätt ut?
-- Shift som släpps mitt i ett drag panorerar igen. Ska vyn hellre
-  fortsätta snurra tills knappen släpps?
-
-**0.10.27 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Mellanslag + dra panorerar och Mellanslag + Shift + dra snurrar (du sa
-  "kör" utan att svara på frågan). Bra, eller hellre något annat?
-- Rutan tar det vars omslutande rektangel på skärmen ryms i eller nuddar
-  rutan, som i planen. Snett sett kan en vägg tas från höger till vänster
-  fast rutan bara går nära den. Störande?
-- Ett drag som börjar på det markerade flyttar det, som förut. Ska ett
-  drag alltid vara en ruta (flytt bara med Flytta och greppen)?
-
-**0.10.26 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Ser rampens kant med stödmur rätt ut nu? Lodytan har markens kulör;
-  ska den se ut som en mur (eller ska sidan bli en riktig stödmur med
-  krön, frågan om 0.10.18)?
-- Höjdkurvorna i planen räknas som förut på rutnätet och kan ligga en
-  ruta fel vid en stödmurskant (i 3D tas de bort där). Störande?
-- Stödmuren har kantlinjer i hörn som viker mer än 20°. Lagom gräns?
-
-**0.10.25 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Husets verktyg (vägg, tak, bjälklag …) går att använda på Platsen, och
-  objekten hamnar då på Platsen, inte i huset (klickjämförelsen visade
-  det). Ska de spärras där, eller öppna en våning, som Mark öppnar
-  Platsen?
-- Husets kontur på Platsen är 0,35 heldragen utanför taken och streckad
-  under dem. Rätt, eller ska taket vara streckat och fasadlivet
-  heldraget? Behövs en egen penna i stilmallen?
-- Marken i våningsplanerna är en kalkering (tonad, inte klickbar, i
-  stället för annan kalkering). Räcker det, eller ska den vara ett eget
-  val under Visa, så att våningen under kan kalkeras samtidigt?
-- Förinställningarnas skalor och innehåll (Situationsplan 1:400 utan
-  markörer; Markplaneringsritning 1:200 med branta slänter;
-  Illustrationsplan 1:200 utan höjdkurvor, mått och littera). Lagom?
-- Ska *Bara den här våningen* i 3D heta något annat på Platsen?
-
-**0.10.24 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Äldre bjälklag och markytor behåller sina korta raka bitar. Behövs en
-  knapp som gör om en sådan kontur till bågar (som *Ur väggarna* urbockat
-  gör), eller räcker det att rita om med spöet?
-- Markytans polygon sluts när man byter verktyg (som linjerna avslutas).
-  Rätt, eller ska den kastas som bjälklagets?
-
-**0.10.23 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Takfallet med spöet täcker hela husets kontur, med takfoten vid kanten
-  närmast och taket stigande inåt (ett pulpettak över huset). Rätt, eller
-  ska spöet i *Takfall* ge ett takfall per sida?
-- Pulpet, Sadel och Valm läggs över den omslutande rektangeln också när
-  huset inte är rektangulärt. Räcker det?
-- Måttkedjan tar båda liven på varje anslutande vägg, också i hörnen
-  (väggtjockleken). Rätt, eller bara innerväggarna?
-- Littera med Shift: var sin littera på varje objekt. Hellre en littera
-  med en ledare till varje?
-
-**0.10.20 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Markhöjden räknar marken som oförändrad när ny och befintlig skiljer
-  mindre än 5 cm (då bara den befintliga, understruken). Lagom gräns?
-- Konturen runt slänterna är alltid på (0,13). Ska den vara ett val, eller
-  få en egen penna i stilmallen?
-- De branta slänterna är grå (muted) och följer fallinjen; strecken bryts
-  där markobjekten ändrat marken. Rätt färg och gräns (1:3)?
-
-**0.10.19 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Övergångarnas förval är 20 m radie (en ramp 1:12 jämnas av över ca
-  1,7 m, under Platsen). Lagom för en gångväg?
-- I ändarna börjar och slutar rampen plant med ändens höjd, och den raka
-  delen blir brantare (visas som lutningen). Hellre att lutningen hålls
-  och höjden i änden blir en annan?
-- Dockningen: ändar inom rampens bredd räknas som samma, skarven får den
-  första rampens sluthöjd och den andra rampens starthöjd faller bort.
+**Kvar från 0.11 och äldre** (Carl August 19 november: frågorna om 0.11
+och äldre är strukna i klump; piloten är provet för dem. De här är kvar
+för att de inte märks vid vanlig provning eller i nyare frågor. Ställ dem
+när ämnet kommer upp.)
+- **Rampens lutning** (0.10.19): i ändarna börjar och slutar rampen plant,
+  så den raka delen blir brantare än det inskrivna (visas som lutningen).
+  En ramp inskriven som 1:12 kan alltså bli brantare än 1:12. Rätt, eller
+  ska lutningen hållas och höjden i änden bli en annan?
+- **Trappans bredd** (0.11.4): bredden är yttermåttet, med vangstyckena
+  innanför. Den fria bredden blir då 100 mm mindre än det inskrivna. Rätt,
+  eller ska bredden vara den fria bredden mellan vangstyckena?
+- **Fallhöjden** (0.11.8.4): varningarna för barnsäkra fönster och
+  balkongdörrar räknar våningens höjd över ±0, inte över den färdiga
+  marken utanför. På en sluttande tomt kan varningen saknas. Ska fallhöjden
+  räknas mot marken?
+- **±0-klicket** (0.10.8) läser den befintliga marken, inte den färdiga.
   Rätt?
-- *Båge* i verktyget Mark fungerar som i takets kontur. Bra, eller
-  räcker Böj i Modifiera?
-
-**0.10.18.1 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Höjdkurvornas färg gäller planen och bladen; 3D-vyns kurvor har sin
-  egen. Ska de följa stilmallen också?
-
-**0.10.18 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Tvärfallet vrider kring referenslinjen, också när den ligger på en
-  kant. Rätt, eller ska det vrida kring rampens mitt?
-- En ritad sida ligger kvar när referenslinjen flyttas. Ska den hellre
-  följa med när hela referenslinjen flyttas (men inte när en punkt dras)?
-- *Kanterna* gäller alla kanter och nollställer sidorna; ändarna har inget
-  eget val. Behövs *Början* och *Slutet* för sig?
-- En sida som är stödmur är bara en tjock linje (ingen kropp i 3D, ingen
-  höjd). Ska den bli en riktig stödmur med krön, som Stödmur-objektet?
-- Förlängd ramp: lutningen fortsätter. Hellre plan (vilplan) eller
-  höjden ur marken i den nya änden?
-
-**0.10.17 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Ett klick på änden av en omarkerad linje ritar vidare på den. Störande
-  när man vill börja en ny linje där (Ctrl+klick)?
-- Ett klick mitt på en kant startar det senast använda valet på en kant.
-  Var det så du menade, eller ville du bli av med något sådant?
-- Bågar direkt i takets kontur och håltagningen (*Båge*, G). Ska 2D-
-  verktygets linje få samma (fråga 59)?
-- Vrid och spegla hålet kring punkten man klickade på. Hellre kring hålets
-  mitt?
-
-**0.10.16 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Ett fönster helt över eller under snittet ritas som hålets två kanter
-  och glaset. Räcker det, eller ska karmen synas?
-- En möbel som går genom snittet (t.ex. ett högskåp) ritas som förut, som
-  symbol. Ska den ritas snittad?
-- Den egna pennans del *Över snittet* följer objektets penna när den är
-  tom. Rätt, eller ska den följa stilmallen?
-- Dubbelklick på Visa tänder inte det som är släckt från början (husets
-  kontur genom taket, linjerna i 3D). Rätt?
-
-**0.10.15 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Det dolda räknas med i väggarnas skarvar och rummen. Rätt, eller ska en
-  dold vägg också försvinna ur rummens konturer?
-- De dolda objekten tas fram alla på en gång. Behövs en lista att ta fram
-  dem ett och ett?
-- Greppet för *Tonat från* ligger en bit från mitten (romb), djupets i
-  mitten (fyrkant). Lätt att hitta?
-- Ska högerklick i 3D-vyn dölja bara i 3D, eller gälla vyn som nu?
-
-**0.10.14 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Slänternas fyllning täcker ytan som släntstrecken går över. Rätt yta,
-  också där två markobjekt möts?
-- Mönstret utgår från objektets första hörn. Behövs ett grepp för att
-  flytta utgångspunkten?
-
-**0.10.12 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Riv och *Finns i* fungerar på låsta objekt (de ändrar status, inte
-  läget). Ska låset hindra dem också?
-- Markörens penna i delen *Markör* är stilmallens och gäller alla
-  sektions- (eller fasad-)markörer. Behövs en egen penna per markör?
-- Bjälklag bakom snittet är på från början i sektionerna (släckta i
-  fasaderna). Rätt?
-- En våning som tas bort tar med sig sina låsta objekt (efter frågan).
-  Rätt?
-
-**Följdfrågor från 27 oktober**
-- Trädens status (till 0.12.9): ska texten "Träd skyddas under
+- **Skedet under Allmänt** (0.10.39): ett ifyllt skede gäller alla blad,
+  och bladens egna skeden försvinner och kommer inte tillbaka när fältet
+  töms. Rätt?
+- **Synpunktsformuläret** (fråga 79): kommer breven fram till Gmail? Annars
+  Gmail-adressen direkt som `to` i `feedback-config.php`. Viktigt före
+  alfan.
+- **Trädens status** (till 0.12.8): ska texten "Träd skyddas under
   byggtiden" stå i en förteckning, eller skriver man den själv?
-
-**0.10.11 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Våningens meny: Visa, Inställningar, Byt namn, Ny våning ovanför och
-  under (den högerklickade våningen), Ta bort. Saknas något? Ska
-  arbetsbladen få en meny också?
-- Visa-menyn: inställningarna till vänster, kategorierna i två kolumner
-  till höger. Bra ordning, eller detaljnivåerna överst över hela bredden?
-- Hovring i 3D tonar objektet ljust i markeringsfärgen. Lagom tydligt?
-- Markobjekten markeras med ett klick i marken, och konturen ritas på
-  marken. Ska hörnen också gå att dra i 3D?
-
-**0.10.8 efter provning** (Claudes val, se `docs/arkiv/PLAN-0.10.md`)
-- Höjdkurvorna: hela meter 0,25 och halvmeter 0,13 heldragna; den gamla
-  marken grå streckad. Lagom?
-- Släntstrecken var 2,5 mm på papperet, korta 40 %, solfjäder i
-  utåtgående hörn; jämförs med den färdiga marken efter alla objekt.
-  Ser de rätt ut, också där två markobjekt möts?
-- Fallpilen runt huset: en per fasad längre än 3 m. Lagom?
-- ±0-klicket läser den befintliga marken (inte den färdiga). Rätt?
-
-**Bjälklag och våningar (0.9–0.9.4)**
-35. Fri höjd som text i rummet (*RH 2400*) i stället för måttkedja?
-36. Våningens namn vid FG?
-37. Bjälklagets kontur tunn under väggarna, klickbar vid kanten; förval
-    300.
-38. En ny våning ovanför flyttar dem där; ändrad våningshöjd flyttar
-    våningarna ovanför.
-39. Namnen Plan 2 … och Källarplan.
-40. En borttagen våning tar bort sina vyer från bladen.
-41. Flytta och Kopiera till våning i högerklicksmenyn, inte i smartmenyn.
-42. *Bara den här våningen* gäller för honom, inte per vy.
-
-**Pennor, linjer och fyllningar (0.8.22–0.8.37)**
-43. Vyradens knappar sätter alla tre detaljnivåer; fasaderna följer
-    3D-nivån; rumsstämpeln ingen nivå.
-44. Ser de inbyggda fyllningarna rätt ut? Räcker guiden?
-46. Saknas något villkor i Filtrera och markera (riktning, längd, area)?
-47. Förvalen snitt 0,25, vy 0,18, symbol 0,13 mm; *Vy* som egen del i den
-    egna pennan?
-48. Rum har ingen egen penna; pennan finns inte i smartmenyn.
-49. DXF-underlagens streckade linjer streckade?
-50. Förhandsvisning av linjetypen i listorna?
-53. *Fortsätt* bortvalbar bland snabbknapparna? Nya kanter med verktygets
-    penna?
-54. Saknas någon markör bland pennorna? Streckning valbar?
-57. En rektangel förblir inte rät när ett hörn dras; cirkeln saknar
-    centrumgrepp.
-58. Smartmenyn alltid *Ändar* för en markerad linje?
-59. Bågar direkt i Linje (A som i PLINE)?
-60. Rumsstämpelns ordning gäller hela projektet; *Fyllningar* under Visa
-    gäller vyn.
-
-**Kommandoraden, ritande och underlag (0.8.13–0.8.21)**
-61. *Avbryt* bland alternativen? Skala och måttbandet med skrivna
-    punkter?
-62. Kommandon direkt utan Enter (kortkommandon med en bokstav
-    försvinner)? Fungerar `@` med AltGr?
-63. Rutnätet lagom tydligt? Segmentpunkterna per vy; Rensa rensar alla.
-65. Autosparen kommer ihåg filen mellan sidladdningar (Chrome frågar)?
-66. Rumsstämpelns pil mot närmaste kant eller rummets mitt?
-67. X och Y nedre vänstra hörnet också för DXF, inte filens nollpunkt.
-68. Gruppen för en fil på flera ställen utfälld från början?
-70. Trimma avslutas efter ett klick: fortsätta tills Esc som i AutoCAD?
-
-**Blad och mallar (0.8.7–0.8.12)**
-71. Bilder under vyerna, linjer och text över; inga mått på bladet;
-    bladet följer inte tillstånden.
-72. Arbetsbladen oberoende av tillstånden?
-73. Textrutor: dra upp rutan med textverktyget, se kanten markerad?
-74. Fält utan värde blir tomma på papperet.
-75. Mallen från papperets nedre vänstra hörn på andra format.
-76. Stämmer platshållarna i hans ram som blev smarttext?
-77. Skalstocken 230 mm från högerkanten och 40 mm upp; i 1:50 är strecket
-    vid 10 mm kort och tunt: avsiktligt?
-78. Dölja hela vyrubriken, inte bara skalan?
-
-**Övrigt**
-79. Kommer synpunktsformulärets brev fram till Gmail nu (efter `-f`)?
-    Annars Gmail-adressen direkt som `to` i `feedback-config.php`.
-80. Smartmenyns placering; ska rubriken *Ändra* heta något annat?
