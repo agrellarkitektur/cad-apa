@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { cross, dist, dot, intersectLines, lerp, norm, sub } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import { flatLine } from './groundLines';

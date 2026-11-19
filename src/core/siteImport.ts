@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { newId } from './ids';
 import { SITE_STOREY, withSiteLast, type Asset, type Element, type ProjectDoc } from './model';
 import { cropGrid, decodeGrid, encodeGrid, heightAtZone, northOf, terrainOf, zoneToLocal, type Site } from './site';

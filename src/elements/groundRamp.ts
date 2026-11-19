@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { GroundShape } from '../core/ground';
 import type { GroundDefaults } from '../core/site';
 import type { Vec2 } from '../repr/primitives';

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { finishedGround, nearestEdge, withHeights, type Barrier, type FinishedGround, type GroundShape } from '../core/ground';
 import { groundStorey, isSite, type Element, type Id } from '../core/model';
 import { groundDefaults, terrainOf, type Terrain } from '../core/site';

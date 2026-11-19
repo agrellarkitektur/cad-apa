@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /** Smal skärm: panelen ligger som ett blad nederst i stället för vid sidan. */
 export function isNarrow(): boolean {
   return window.innerWidth <= 960;

@@ -191,6 +191,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.12.3 | Areor enligt SS 21054: areaobjektet ur rummen (Shift+klick) eller en egen kontur, avdragen för tjocka väggar, pelare, schakt, breda öppningar och hål i bjälklaget, BIA:ns väggar mot BOA, BTA och BYA framräknade, Areaplan med färgerna i stilboken, areaförteckningen med BRA, smarttexten `{BOA}` …, DXF-lagren `A-A-…`, XLSX för alla förteckningar |
 | 0.12.4 | Areor under snedtak och mark: det mätvärda vid 1,90/0,60 för BTA och bruksareorna, kryss *Takkupa* på taket, *Dela efter rumshöjd* (H/L), 6-meterszonen ur marken med BIA(u), (o)/(u) och BTA(o)/BTA(u), OPA som egen kontur till ytterväggens utsida med takets kontur som start |
 | 0.12.5 | Förteckningen per littera: dörr- och fönsterförteckningen med fälten som rader och en kolumn per littera, ritningen sedd utifrån med karmyttermåtten, rutor som skriver på alla med litteran, de framräknade fälten, föreskrifterna, band under varandra på bladet; *uppställning* heter nu *förteckning* |
+| 0.12.5.4 | Licensen: AGPL-3.0 eller senare med kommersiella undantag (`docs/LICENS.md`), licenshuvuden i källfilerna, *Källkoden* i menyn och Om-rutan till versionens commit, `THIRD-PARTY.md` och `LICENSES/`, `CONTRIBUTING.md` och `CLA.md` (utkast), *Stöd utvecklingen* byggt men dolt tills texten finns |
 | 0.12.2 | Förteckningar: rum, dörrar, fönster, grindar och det generella litterat ur modellen, kolumner ur fälten eller smarttext, sortering, gruppering, delsummor och summarad, en rad per littera, tabellen över ritytan, på bladet i 1:1 bruten i delar bredvid varandra, i bladets PDF och DXF, CSV och PDF i Exportera |
 | 0.12.1 | DXF: egen skrivare för AutoCAD 2000 och 2018, vyer i modellens mm och blad i pappers-mm, lagerkartorna SB11 förenklad och fullständig, Enkel och en egen lista ur en DXF, pennan som färg och linjetjocklek, status N/E/R, väggarna delade per vägg, Bärande |
 | 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, förteckningens fält i stilboken (Typer) med taggar och smarttext |
@@ -1802,6 +1803,49 @@ per förteckning (annan ordning än fältmallens); radbrytning i en ruta med
 lång text (kolumnen blir bredare); löpnummer per objekt; *Karmtyp*;
 förteckningarna och uppställningarna som vytyper i stilboken med egna
 pennor (efter piloten).
+
+### 0.12.5.4 Licensen ✓
+
+Beslutet 19 november 2026 i en egen chatt: **`docs/LICENS.md`** (samma som
+`cad-apa-licens.md` i projektet) är underlaget, med checklistan per repo.
+GPL-3.0 byts mot **AGPL-3.0-or-later**, eftersom GPL inte kräver att en
+webbapp som körs som tjänst delar sin källkod. Kommersiella undantag säljs
+av Agrell Arkitektur, bidrag kräver ett CLA, namnen skyddas för sig.
+Liten; en session, inga ändringar i ritningarna och samma format 28.
+
+**Claudes val:**
+- **Versionsnumret** är en fjärde siffra: inga nya ritfunktioner, men det
+  syns i menyn och Om-rutan.
+- **LICENSE** är gnu.org:s `agpl-3.0.txt` oförändrad (661 rader). Den gamla
+  GPL-texten ligger kvar som `LICENSES/GPL-3.0.txt`, eftersom osifonts
+  licens hänvisar till den och versionerna före 0.12.5.4 är GPL.
+- **Licenshuvudet** är två rader, `// SPDX-License-Identifier:
+  AGPL-3.0-or-later` och `// Copyright (C) 2026 Carl August Agrell / Agrell
+  Arkitektur`, i alla källfiler (ts, css, py, php, html, yml). Typsnittens
+  data har typsnittets licens i stället (`GPL-3.0-or-later WITH
+  Font-exception-2.0`, `OFL-1.1`), och `scripts/osifont.py` och
+  `typsnitt.py` skriver huvudena när filerna görs om.
+- **Länken till källkoden** (AGPL §13) går till commiten bygget gjordes från
+  (`VITE_SOURCE_COMMIT` i `vite.config.ts`, ur `GITHUB_SHA` eller `git
+  rev-parse`), annars till repot. Den står i Om-rutan och som *Källkoden* i
+  menyn, ovanför *Om cad-apa*.
+- **Stöd utvecklingen** är byggt i Om-rutan (privatpersoner med Swish-QR
+  eller en platshållare och GitHub Sponsors, företag med e-postadressen),
+  men visas inte förrän Carl August skrivit texten i
+  `src/ui/app/supportSection.ts`. Då syns ingen halvfärdig text på sidan.
+- **CLA Assistant** kopplas av Carl August på cla-assistant.io (en
+  inloggning med GitHub och en gist med `CLA.md`); inget eget arbetsflöde i
+  repot, eftersom ett sådant inte kunde låsas på en kontrollerad commit
+  härifrån.
+- **CLA.md** är ett utkast på engelska med en svensk sammanfattning, efter
+  mönstret i Apaches CLA plus rätten att licensiera om och löftet att varje
+  version också finns under AGPL. Ska granskas av en jurist.
+
+**Inte gjort i 0.12.5.4:** Stöd-texten och Swish-QR:n (Carl August; Swish
+Företag är inte tecknat); kopplingen av CLA Assistant; juristens granskning
+av CLA:t och avtalet om kommersiellt undantag; licenstexterna i själva
+bygget (`dist/` länkar till `THIRD-PARTY.md` på GitHub i stället);
+avstämningen med revisorn om Swish-bidragen.
 
 ### 0.12.6 IFC
 

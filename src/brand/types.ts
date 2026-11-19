@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * Produktens utåtvända identitet. Motorn (Bacchus) vet ingenting om namnet
  * appen säljs eller sprids under; allt som syns för användaren hämtas härifrån.

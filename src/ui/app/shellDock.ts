@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { MenuItem } from '../contextMenu';
 import { saveUiSettings, type ShellDock } from '../uiSettings';
 import type { AppContext } from './context';

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * Hjälp för cacharna i planen (0.8.3). Dokumentet ändras aldrig på plats: ett
  * ändrat element blir ett nytt objekt, och `resolveParams` ger samma

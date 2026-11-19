@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { difference, intersection, union, type Rings } from '../geometry/boolean';
 import { offsetRing, signedArea } from '../geometry/chains';
 import { bufferRings } from '../geometry/offset';

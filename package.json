@@ -1,7 +1,7 @@
 {
   "name": "bacchus",
   "private": true,
-  "version": "0.12.5.3",
+  "version": "0.12.5.4",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
@@ -26,5 +26,5 @@
     "polygon-clipping": "^0.15.7",
     "three": "^0.170.0"
   },
-  "license": "GPL-3.0-or-later"
+  "license": "AGPL-3.0-or-later"
 }

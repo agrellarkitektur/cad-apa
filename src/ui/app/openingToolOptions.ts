@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { openingSettingsOf } from '../../core/general';
 import { addDefaultHoleTypes, openingTypesOf } from '../../core/openings';
 import { frameFromModule, holeOf, kindOfElementType, type OpeningKind } from '../../core/openingTypes';

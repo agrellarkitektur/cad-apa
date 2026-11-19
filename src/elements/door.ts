@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { ElementType } from './registry';
 import { openingRings, planWallParams, wallFrame } from './wall';
 import { deriveOpening, type OpeningObjParams } from './openingSpec';

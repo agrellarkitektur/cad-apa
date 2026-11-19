@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * En liten DXF-läsare (0.8 del 2) för underlag. Läser ASCII-DXF och ger
  * linjerna och texterna i modellrymden som polylinjer och texter i filens

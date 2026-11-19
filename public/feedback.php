@@ -1,4 +1,6 @@
 <?php
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /*
  * Tar emot synpunkter från appen och mejlar dem vidare (cad-apa 0.7.1, 0.8.2).
  *

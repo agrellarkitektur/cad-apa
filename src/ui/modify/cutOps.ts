@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Id } from '../../core/model';
 import { canJoin, canTrim, joinLines, joinWalls, linePoints, pathOf, splitLine, splitWallAt, trimLine, trimPath, trimWall, wallCutters } from '../../core/trimEdit';
 import { extendTo } from '../../core/wallEdit';

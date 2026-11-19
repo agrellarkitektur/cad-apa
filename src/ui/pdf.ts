@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * PDF-underlag (0.8 del 2). PDF-filen sparas som den är i projektet, och
  * sidan ritas som en bild med pdf.js när den behövs. pdf.js är stort och

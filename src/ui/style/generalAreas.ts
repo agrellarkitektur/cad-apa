@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { AREA_COLORS, AREA_FUNCTIONS, AREA_NO_FILL, areaSettingsOf, type AreaSettings } from '../../core/general';
 import type { StyleBook } from '../../core/graphics';
 import type { ProjectDoc } from '../../core/model';

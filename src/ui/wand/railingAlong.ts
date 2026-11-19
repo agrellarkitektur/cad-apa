@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { isSite } from '../../core/model';
 import { railingsOnStair, stairEdgesAt } from '../../elements/railing';
 import { fitArcs, hasBulges } from '../../geometry/arcFit';

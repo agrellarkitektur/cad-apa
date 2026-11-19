@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { normalizeExportSettings, type ExportSettings } from './exportSettings';
 import { normalizeGeneral, normalizeOffice, type GeneralSettings, type OfficeInfo } from './general';
 import type { LeaderAttach, LeaderEnd } from '../elements/leader';

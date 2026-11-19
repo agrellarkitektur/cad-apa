@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { describe, expect, it } from 'vitest';
 import { BoxIndex } from '../src/geometry/boxIndex';
 import { pointInRings } from '../src/geometry/vec';

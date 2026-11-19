@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 // Gjord av scripts/typsnitt.py. Ändra inte för hand.
 /** Bredderna (WinAnsi 32–255, tusendelar av texthöjden; 0 = saknas) och måtten för typsnitten som följer med appen utöver osifont. */
 export const BUNDLED_METRICS = {

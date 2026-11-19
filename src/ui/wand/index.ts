@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { dimWall } from './dimWall';
 import { groundAlong } from './groundAlong';
 import { stairAlong } from './stairAlong';

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * Temaväljaren, i samma stil som på höjdkurvor.se: en cell i menyraden med
  * rubriken TEMA och det aktuella temat, som fäller ut de tre temana.

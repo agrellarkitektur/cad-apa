@@ -6,10 +6,24 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 19 november 2026, efter 0.12.5.3 (flytten till cad-apa.danaid.cloud).
+README. Senast: 19 november 2026, efter 0.12.5.4 (licensen AGPL-3.0).
 
 ## Läget
 
+- **0.12.5.4 Licensen är klar** (19 november, samma format 28): AGPL-3.0
+  eller senare enligt `docs/LICENS.md` (= `cad-apa-licens.md`, checklistan
+  avbockad). LICENSE är gnu.org:s text, GPL-texten i `LICENSES/GPL-3.0.txt`
+  (osifont, versionerna före). SPDX-huvud i alla källfiler, *Källkoden* i
+  menyn och Om-rutan till byggets commit, `THIRD-PARTY.md` och
+  `LICENSES/`, `CONTRIBUTING.md`, `CLA.md` (utkast). *Stöd utvecklingen*
+  är byggt i `src/ui/app/supportSection.ts` men **dolt tills Carl August
+  skrivit texten** (stödord i chatten 19 november). Testerna: 1008. Provat i
+  Playwright mot `dist/` (menyn, Om-rutan, Stöd-avsnittet med provtext).
+  **Kvar för Carl August:** Stöd-texten, Swish-QR när Swish Företag finns,
+  koppla CLA Assistant (cla-assistant.io, gist med `CLA.md`), juristen
+  (CLA, avtalet om undantag), revisorn (Swish-bidragen). Sisyfos och
+  Höjdkurvor görs i sina egna sessioner efter avsnittet *Så gjordes det i
+  cad-apa* i `docs/LICENS.md`.
 - **Flytten till cad-apa.danaid.cloud** (`docs/FLYTT.md`, tabellen *Ordning
   för flytten*): 0.12.5.2 (18 november) tar emot Höjdkurvor från
   hojdkurvor.danaid.cloud och publicerar parallellt till VPS:en. **0.12.5.3**
@@ -141,10 +155,10 @@ README. Senast: 19 november 2026, efter 0.12.5.3 (flytten till cad-apa.danaid.cl
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.12.5.3 pushad till `main` 19 november (se git och `gh run
+- **Publicerad:** 0.12.5.4 pushad till `main` 19 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.12.5.3` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.12.5.4` i `engine.ts`, `package.json` och
   `package-lock.json`. Nya funktioner får tredje siffran (0.12.4 …); **den
   fjärde siffran är för snabba buggfixar** utan nya funktioner (Carl August
   10 november). En granskning höjer inte numret, eller får en fjärde siffra
@@ -250,7 +264,7 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   ~~Utredning av 0.12 Export~~, ~~0.12 Exportdialogen och PDF~~,
   ~~0.12.1 DXF~~, ~~0.12.2 Förteckningar~~, ~~0.12.3 Areor~~,
   ~~0.12.4 Areor under snedtak och mark~~, ~~0.12.5 Förteckningen per
-  littera~~, ~~0.12.5.1–0.12.5.3~~ (klara; se tabellen *Klart* i PLAN.md)
+  littera~~, ~~0.12.5.1–0.12.5.3~~, ~~0.12.5.4 Licensen~~ (klara; se tabellen *Klart* i PLAN.md)
 - **Flytten till cad-apa.danaid.cloud**: steg 8–10 i `docs/FLYTT.md`
   (Carl Augusts provning, Höjdkurvor, sedan omdirigering och FTP bort)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
@@ -272,7 +286,9 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-Flytten: fråga om Carl August provat den nya adressen (steg 8 i
+Fråga om Carl August skrivit Stöd-texten (fyll i `SUPPORT` i
+`src/ui/app/supportSection.ts`; han skriver själv, Claude granskar) och
+kopplat CLA Assistant. Flytten: fråga om Carl August provat den nya adressen (steg 8 i
 `docs/FLYTT.md`). Läs synpunkterna först och sortera Inkorgen om den har något. Be om
 skrivrätt till repot ("push godkänd"). Fråga om Carl August öppnat
 provfilen (`docs/ifc/provhuset.ifc`) i Archicad, Revit och Solibri och

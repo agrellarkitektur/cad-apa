@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 """
 Typsnitten som följer med appen utöver osifont (0.12): gör delmängden med
 WinAnsi-tecknen för PDF:en och skärmen (src/formats/fontData/<id>.ts, base64)
@@ -61,6 +63,7 @@ for fid, name, src, lic in FONTS:
     metrics[fid] = dict(name=name, widths=','.join(map(str, widths)), ascent=round(f['hhea'].ascent * k), descent=round(f['hhea'].descent * k),
                         capHeight=round(getattr(os2, 'sCapHeight', 700) * k), bbox=[round(head.xMin * k), round(head.yMin * k), round(head.xMax * k), round(head.yMax * k)])
     with open(f'src/formats/fontData/{fid}.ts', 'w') as out:
+        out.write('// SPDX-License-Identifier: OFL-1.1\n')
         out.write('// Gjord av scripts/typsnitt.py. Ändra inte för hand.\n')
         out.write(f'// {lic}\n')
         out.write(f'/** Delmängden av {name} (TrueType, WinAnsi), base64. */\n')
@@ -68,6 +71,7 @@ for fid, name, src, lic in FONTS:
     print(fid, len(ttf))
 
 with open('src/formats/fontMetrics.ts', 'w') as out:
+    out.write('// SPDX-License-Identifier: AGPL-3.0-or-later\n// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur\n')
     out.write('// Gjord av scripts/typsnitt.py. Ändra inte för hand.\n')
     out.write('/** Bredderna (WinAnsi 32–255, tusendelar av texthöjden; 0 = saknas) och måtten för typsnitten som följer med appen utöver osifont. */\n')
     out.write('export const BUNDLED_METRICS = {\n')

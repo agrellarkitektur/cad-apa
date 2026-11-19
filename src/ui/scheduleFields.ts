@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { buildingStoreys, type ProjectDoc } from '../core/model';
 import { DEFAULT_FIGURE_SCALE, FIGURE_SCALES, isLitteraLayout, isNumberField, scheduleOf, sourceFields, SOURCE_NAMES, type Schedule } from '../core/schedules';
 import { defaultState } from '../core/states';

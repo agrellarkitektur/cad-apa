@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * Autospar i webbläsarens IndexedDB. Fungerar i alla moderna webbläsare och
  * offline. Allt är inslaget i try/catch: om lagringen är avstängd (privat

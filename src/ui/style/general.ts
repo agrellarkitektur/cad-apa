@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { dxfClick, exportChange, exportMarkup, fontClick, fontMarkup } from './generalExport';
 import { areaChange, areaClick, areasMarkup } from './generalAreas';
 import { openingSettingsOf, type OpeningRule, type OpeningSettings } from '../../core/general';

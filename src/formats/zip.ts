@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * En enkel zipfil (0.8 del 3), utan bibliotek: filerna lagras opackade
  * (PDF:erna är redan packade inuti) med UTF-8-namn, så att å, ä och ö i

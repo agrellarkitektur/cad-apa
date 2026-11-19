@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Element, ProjectDoc } from '../core/model';
 import { contours, cropGrid, DEFAULT_CONTOURS, fromRh, groundAt, terrainOf, type Contour, type Terrain } from '../core/site';
 import { withHeights } from '../core/ground';

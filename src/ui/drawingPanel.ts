@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { ownPenChange, typePenChange } from './ownPenFields';
 import { setLocked, updateParams } from '../core/commands';
 import { modelViewId, type Element, type Id, type ProjectDoc } from '../core/model';

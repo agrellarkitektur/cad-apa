@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { geometryOf } from '../../core/commands';
 import type { Element, Id } from '../../core/model';
 import { pathOf, type EditResult } from '../../core/trimEdit';

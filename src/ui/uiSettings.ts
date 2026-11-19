@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * Inställningar för gränssnittet: sådant som hör till användaren och
  * webbläsaren, inte till projektet. Sparas i webbläsaren.

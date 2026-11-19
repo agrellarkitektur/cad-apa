@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { ViewType } from '../../core/viewCategories';
 import type { Brand } from '../../brand';
 import { ENGINE } from '../../core/engine';
@@ -138,6 +140,7 @@ export function shellMarkup(brand: Brand): string {
             <hr>
             <button role="menuitem" data-action="reset-sample">${icons.restore}<span>Börja om med exemplet</span></button>
             <button role="menuitem" data-action="feedback">${icons.text}<span>Skicka synpunkter…</span></button>
+            <button role="menuitem" data-action="source">${icons.openFile}<span>Källkoden</span></button>
             <button role="menuitem" data-action="about">${icons.select}<span>Om ${brand.name}</span><small>${ENGINE.name} ${ENGINE.version}</small></button>
           </div>
         </div>

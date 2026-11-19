@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur */
 /* Alfa och synpunkter, nästan raka vinklar, måttbandet, 2D-element, projektträdets mappar och Följ sektionen. En del av app.css (0.8.27); ordningen mellan filerna är kaskadens. */
 
 /* ---------- Alfa (tidigare beta) och synpunkter (0.7.1) ---------- */
@@ -50,6 +52,28 @@
 }
 .dialog.about a {
   color: var(--accent);
+}
+.dialog.about h4 {
+  margin: 8px 0 4px;
+  font-size: 12px;
+}
+.dialog.about .support-private {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.dialog.about .swish-qr {
+  flex: none;
+  width: 120px;
+  height: 120px;
+}
+.dialog.about .swish-qr.placeholder {
+  display: grid;
+  place-items: center;
+  text-align: center;
+  font-size: 11px;
+  color: var(--muted);
+  border: 1px dashed var(--rule);
 }
 .dialog.feedback {
   width: min(520px, calc(100vw - 32px));

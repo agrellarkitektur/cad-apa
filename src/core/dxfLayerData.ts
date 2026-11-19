@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * Kontorets SB11-lagermall (Carl August, AutoCAD, november 2026), som den
  * stod i lagertabellen: namn, färg (ACI), linjetyp (tom = heldragen),

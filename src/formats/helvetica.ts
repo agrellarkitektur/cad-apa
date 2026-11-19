@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * Helvetica, ett av PDF:ens inbyggda typsnitt (0.8 del 3): teckenbredderna
  * och WinAnsi-kodningen. Används av PDF-exporten och för att mäta texter i

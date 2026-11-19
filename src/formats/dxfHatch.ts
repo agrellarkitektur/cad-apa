@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * Skraffering i DXF (HATCH, 0.8.3; egen fil 0.8.32): konturerna av linjer,
  * bågar, ellipser och splines, och mönstrets linjefamiljer.

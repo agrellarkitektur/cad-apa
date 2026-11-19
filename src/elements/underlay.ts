@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { evenDash, type FillFamily, type HatchLine } from '../core/fillTypes';
 import type { FillDef } from '../core/graphics';
 import type { Asset, Id, ProjectDoc } from '../core/model';

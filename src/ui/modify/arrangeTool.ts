@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { canScale, extendAllTo, moveEach, scaledParams, scaleElements, transferSettings, trimAllAt, type BoundaryResult } from '../../core/arrange';
 import { isArc } from '../../core/commands';
 import type { Element, Id } from '../../core/model';

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { addWithAsset, deleteElements, renameElement, setLocked, updateParams } from '../../core/commands';
 import { resolveParams } from '../../elements/registry';
 import { restoreProportions, stretched } from '../../elements/underlayEdit';

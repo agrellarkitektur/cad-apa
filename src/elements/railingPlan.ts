@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { RailPart } from '../core/railingTypes';
 import { dist, norm, sub } from '../geometry/vec';
 import { railPen, type RailPenKey } from '../repr/railingPens';

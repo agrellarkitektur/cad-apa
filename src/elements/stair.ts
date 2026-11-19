@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { storeysUpFrom, type Element, type Id, type ProjectDoc, type Storey } from '../core/model';
 import { dot } from '../geometry/vec';
 import type { Origin, Pen, Primitive, Vec2 } from '../repr/primitives';

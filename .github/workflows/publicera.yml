@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 # Bygger programmet och laddar upp det till webbhotellet med FTP vid varje
 # push till main (ändringar som bara rör dokumentationen hoppas över). Kan
 # också köras för hand under Actions → "Publicera på webbhotellet" → "Run

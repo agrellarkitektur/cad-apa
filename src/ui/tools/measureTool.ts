@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { moveElements } from '../../core/commands';
 import { add, angleDeg, dist, norm, scale, sub } from '../../geometry/vec';
 import { pickAllAt } from '../../view2d/pick';

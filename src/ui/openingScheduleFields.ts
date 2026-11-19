@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Element, Id } from '../core/model';
 import { commonValue, DEFAULT_FIELD_TAGS, DERIVED_FIELDS, fieldTag, fieldTags, isOriginalField, ownFields, ownFieldTags, renameField, scheduleChanged, scheduleFields, scheduleKindOf, withField, type ScheduleKind } from '../core/openingSchedule';
 import type { DocStore } from '../core/store';

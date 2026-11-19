@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { symbolSegments } from '../core/openingSymbol';
 import { hasSash, layoutLeaf, layoutOpening, leafGridOf, muntinLines, LEAF_OPS, type OpeningTypeModel, type Rect } from '../core/openingTypes';
 

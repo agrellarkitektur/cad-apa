@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * Dragstrecket i vänsterkanten på projektträdet och egenskaperna på datorn.
  * Dra för att ändra bredden, klicka för att fälla ihop. Med tangentbordet:

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { ProfileDim } from '../../core/profileContour';
 import { anchorPoint, boxOfPoints, profileSection, profileValues, stretchPoint, ZONE_PARAM, type PPoint, type ProfileTypeModel } from '../../core/profileTypes';
 import type { ProjectDoc } from '../../core/model';

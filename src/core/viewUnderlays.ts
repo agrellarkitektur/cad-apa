@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * Underlag i vyn (0.10.35): något annat i projektet som ritas tonat under
  * eller över vyn och följer med den till bladet. Underlagen ligger i

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { cutHeightOf, DEFAULT_CUT_HEIGHT } from '../elements/roofPlan';
 import { sourceName } from '../core/underlaySources';
 import { categoriesOf, categoryOf, styleOverrides, viewSettings, withShow, type DetailLevel } from '../core/viewCategories';

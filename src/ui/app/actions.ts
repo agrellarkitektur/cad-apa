@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Brand } from '../../brand';
 import { createProposal } from '../../core/commands';
 import { existingState } from '../../core/states';
@@ -24,6 +26,7 @@ import { installTreeClicks } from './treeClicks';
 import { arrangeSelection } from './drawOrderUi';
 import { resetOwnPen, resetTypePen } from '../ownPenFields';
 import type { OrderMove } from '../../core/drawOrder';
+import { sourceUrl } from './sourceLink';
 
 /** De delar av appen som knapparna når utöver `app`. */
 export interface ActionParts {
@@ -186,6 +189,11 @@ export function installActions(app: AppContext, parts: ActionParts) {
       case 'feedback':
         closeMenu();
         parts.feedbackDialog.open();
+        break;
+      case 'source':
+        // AGPL-3.0 §13: källkoden till versionen som körs (0.12.5.4).
+        closeMenu();
+        window.open(sourceUrl(), '_blank', 'noopener');
         break;
       case 'about':
         closeMenu();

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { isLineMode, type GroundMode } from '../tools/groundTool';
 import type { RoofMode } from '../tools/roofTool';
 import type { SlabShape } from '../tools/slabTool';

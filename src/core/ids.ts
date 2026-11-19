@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /** Korta, slumpade id:n med prefix som visar vad de är, t.ex. "el-k3f9x2m1". */
 export function newId(prefix: string): string {
   const bytes = new Uint8Array(6);

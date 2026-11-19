@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: OFL-1.1
 // Gjord av scripts/typsnitt.py. Ändra inte för hand.
 // Josefin Sans, https://github.com/googlefonts/josefinsans, SIL Open Font License 1.1 (src/fonts/OFL-josefin.txt).
 /** Delmängden av Josefin Sans (TrueType, WinAnsi), base64. */

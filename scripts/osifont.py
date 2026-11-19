@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 """
 osifont (0.8.18): gör delmängden med WinAnsi-tecknen som appen använder,
 för skärmen (src/fonts/osifont.woff2) och PDF:en (src/formats/osifontData.ts),
@@ -58,12 +60,15 @@ meta = dict(
     ascent=round(font['hhea'].ascent * k), descent=round(font['hhea'].descent * k), capHeight=round(os2.sCapHeight * k),
     bbox=[round(head.xMin * k), round(head.yMin * k), round(head.xMax * k), round(head.yMax * k)],
 )
+OUR_SPDX = '// SPDX-License-Identifier: AGPL-3.0-or-later\n// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur\n'
 with open('src/formats/osifontWidths.ts', 'w') as out:
+    out.write(OUR_SPDX)
     out.write('// Gjord av scripts/osifont.py. Ändra inte för hand.\n')
     out.write('/** osifonts bredder för WinAnsi 32–255 i tusendelar av texthöjden; 0 = tecknet saknas. */\n')
     out.write(f"export const OSIFONT_WIDTHS = '{','.join(map(str, widths))}'.split(',').map(Number);\n")
     out.write(f"export const OSIFONT_METRICS = {{ ascent: {meta['ascent']}, descent: {meta['descent']}, capHeight: {meta['capHeight']}, bbox: [{', '.join(map(str, meta['bbox']))}] }};\n")
 with open('src/formats/osifontData.ts', 'w') as out:
+    out.write('// SPDX-License-Identifier: GPL-3.0-or-later WITH Font-exception-2.0\n')
     out.write('// Gjord av scripts/osifont.py. Ändra inte för hand.\n')
     out.write('// osifont, https://github.com/hikikomori82/osifont, GPL 3 med typsnittsundantag (src/fonts/LICENSE-osifont.txt).\n')
     out.write('/** Delmängden av osifont (TrueType) som bäddas in i PDF:en, base64. */\n')

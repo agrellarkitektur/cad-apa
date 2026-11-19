@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { isClosed, type Shape2DParams } from '../elements/drawing2d';
 import { PATH_WIDTH } from '../elements/groundLines';
 import type { RampParams } from '../elements/groundRamp';

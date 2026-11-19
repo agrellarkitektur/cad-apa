@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Id, ProjectDoc } from '../core/model';
 import { actionOf } from '../core/states';
 import { hasSash, layoutLeaf, layoutOpening, leafGridOf, LEAF_OPS, type OpeningTypeModel } from '../core/openingTypes';

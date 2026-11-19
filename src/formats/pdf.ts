@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { dashPieces, type DashFrom } from '../repr/dash';
 import type { FillDef } from '../core/graphics';
 import { drawnDash, evenDash, hatchAsPattern } from '../core/fillTypes';

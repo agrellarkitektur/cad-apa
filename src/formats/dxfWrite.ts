@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * DXF-skrivaren (0.12.1), utan bibliotek. Skriver ASCII-DXF i version
  * AutoCAD 2000 (AC1015, öppnas av alla program) eller AutoCAD 2018

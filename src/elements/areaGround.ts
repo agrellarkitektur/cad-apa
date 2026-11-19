@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { terrainOf, groundAt } from '../core/site';
 import { union, type Rings } from '../geometry/boolean';
 import { pointInRings } from '../geometry/vec';

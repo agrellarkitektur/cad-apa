@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { escapeHtml } from './labels';
 
 /** Fältens HTML i egenskapspanelen (granskningen efter 0.10.12, förut i `selectionFields.ts`). */

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * Sortering per rubrik i alla tabeller (0.10.36): ett klick på en rubrik
  * sorterar raderna efter kolumnen, ett klick till vänder ordningen.

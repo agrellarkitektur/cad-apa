@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { fitArcs } from '../../geometry/arcFit';
 import { ringsAt } from './rings';
 import type { WandAction, WandHit } from './wand';

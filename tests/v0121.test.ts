@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { beforeAll, describe, expect, it } from 'vitest';
 import { registerBuiltInTypes } from '../src/elements';
 import { activeMap, isSb11List, layerDef, nearestLayer, normalizeDxfSettings, penColor, sb11Name, simpleName, type LayerQuery } from '../src/core/dxfLayers';

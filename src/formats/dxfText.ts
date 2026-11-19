@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * Text i DXF (TEXT och MTEXT, 0.8.11; egen fil 0.8.32): formateringskoder
  * och specialtecken, och var raderna hamnar efter justering och fästpunkt.

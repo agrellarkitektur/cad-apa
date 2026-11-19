@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /// <reference lib="webworker" />
 import { browserDeflate, writePdf, type PdfOptions, type PdfPage } from './pdf';
 

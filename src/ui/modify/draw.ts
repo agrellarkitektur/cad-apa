@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Id } from '../../core/model';
 import { arcFromBulge } from '../../geometry/arc';
 import { pickableById, type Pickable } from '../../repr/plan';

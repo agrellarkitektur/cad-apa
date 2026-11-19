@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { setByName } from '../../core/exportSettings';
 import { eraseSelection } from './erase';
 import { commandFor, findCommand, type CommandDef } from '../commandRegistry';

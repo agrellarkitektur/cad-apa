@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 """Gör om en ritningsram i DXF till linjer och texter för ett mallblad (0.8.8).
 
 Ett verktyg för utvecklingen, inte en del av appen (att göra om DXF i appen

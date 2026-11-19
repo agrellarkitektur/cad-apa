@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Element, Id, ProjectDoc, SiteCategory, State } from './model';
 
 /** Skiss, normal eller detalj (0.8.37 delad i littera, 2D och 3D). */

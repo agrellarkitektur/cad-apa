@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { activeMap, LAYER_MAP_LABEL } from '../../core/dxfLayers';
 import { DXF_VERSIONS, DXF_VERSION_LABEL } from '../../formats/dxfWrite';
 import { exportKeys, planExport, setKeys, treeOrder, withGuids, type ExportPlan } from '../../core/exportJobs';

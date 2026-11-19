@@ -1,3 +1,5 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later
+ * Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur */
 /* Stilmallens fönster (flyttat ur stilmall.css i granskningen efter 0.10.18): åtgärderna, litteramallarna, pennorna, linjetyperna och fyllningstyperna, och kolumnerna. En del av app.css; ordningen mellan filerna är kaskadens. */
 
 .style-labels {

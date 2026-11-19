@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: OFL-1.1
 // Gjord av scripts/typsnitt.py. Ändra inte för hand.
 // Arimo, https://github.com/googlefonts/arimo, SIL Open Font License 1.1 (src/fonts/OFL-arimo.txt).
 /** Delmängden av Arimo (TrueType, WinAnsi), base64. */

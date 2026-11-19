@@ -1,7 +1,7 @@
 # cad-apa / Bacchus
 
 Webbaserat ritprogram för små svenska arkitektkontor. Motorn heter Bacchus,
-cad-apa är ett tillfälligt varumärke. Öppen källkod (GPL-3.0 eller senare).
+cad-apa är ett tillfälligt varumärke. Fri programvara under AGPL-3.0 eller senare (sedan 0.12.5.4; se `docs/LICENS.md`, `THIRD-PARTY.md` och `CONTRIBUTING.md`). Nya källfiler får licenshuvudet `// SPDX-License-Identifier: AGPL-3.0-or-later` och copyrightraden.
 Läs `README.md` (vad som finns, version för version), `docs/PLAN.md` (vad som
 byggs i vilken version), `docs/ARKITEKTUR.md` (idé och principer) och
 `docs/UTVECKLING.md` (filformat, hur man lägger till objekttyper) innan du

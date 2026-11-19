@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { ShapeKind } from '../elements/drawing2d';
 import type { RailId } from './modify/ops';
 import type { ToolId } from './app/shell';

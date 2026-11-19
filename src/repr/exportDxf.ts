@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { activeMap, isSb11List, layerDef, listLayers, nearestLayer, penColor, sb11Name, simpleName, TEMPLATE_LINETYPES, type DxfSettings, type LayerDef, type LayerQuery, type Status } from '../core/dxfLayers';
 import type { Color, FillDef } from '../core/graphics';
 import { lineTypeList } from '../core/lineTypes';

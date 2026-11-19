@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Id, ProjectDoc } from '../../core/model';
 import { addDefaultOpeningTypes, duplicateOpeningType, missingDefaultOpeningTypes, newOpeningType, openingGroups, openingTypeUses, openingTypesOf, removeOpeningType, updateOpeningType } from '../../core/openings';
 import { DOOR_OPS, FLASHING_SLOPE, holeOf, LEAF_OPS, MUNTIN_KINDS, SIDE_HUNG, WINDOW_OPS, frameFromModule, hardwareOf, hasSash, layoutOpening, leafGridOf, muntinWidth, standsOnFloor, trimOf, type LeafGrid, type MuntinKind, type CellFill, type LeafStyle, type OpeningCell, type OpeningKind, type OpeningTypeModel, type OpKind, type Track } from '../../core/openingTypes';

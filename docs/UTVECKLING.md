@@ -686,6 +686,26 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Licensen (0.12.5.4, format 28)
+
+- **Licenshuvud** i varje ny källfil: `// SPDX-License-Identifier:
+  AGPL-3.0-or-later` och `// Copyright (C) 2026 Carl August Agrell / Agrell
+  Arkitektur` (CSS i `/* */`, Python och YAML med `#`). Kod eller data som
+  kommer från andra får sin egen licens i huvudet och ingen copyrightrad
+  från oss; `scripts/osifont.py` och `typsnitt.py` skriver typsnittens.
+- **Nytt beroende eller ny tillgång:** kontrollera licensen mot listan i
+  `docs/LICENS.md`, skriv in den i `THIRD-PARTY.md` och lägg licenstexten i
+  `LICENSES/`.
+- **Länken till källkoden** (AGPL §13): `src/ui/app/sourceLink.ts`.
+  `vite.config.ts` sätter `import.meta.env.VITE_SOURCE_COMMIT` ur
+  `GITHUB_SHA` eller `git rev-parse HEAD`; `sourceUrl()` ger
+  `…/tree/<commit>`, eller repot när commiten saknas. Används i Om-rutan och
+  av menyns *Källkoden* (`data-action="source"` i `actions.ts`).
+- **Stöd utvecklingen:** `SUPPORT` i `src/ui/app/supportSection.ts`.
+  `supportSectionHtml()` ger tom text när `intro` är tom, så avsnittet
+  syns först när texten är skriven. QR-koden läggs i `public/` och namnges
+  i `swishQr`. Testerna i `tests/v01254.test.ts`.
+
 ## Flytten till cad-apa.danaid.cloud (0.12.5.3, format 28)
 
 - `src/ui/app/moveNotice.ts`: raden överst på den gamla adressen

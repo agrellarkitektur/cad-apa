@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Vec2 } from '../../repr/primitives';
 import { railValues, type RailingTypeModel, type RailPart } from '../../core/railingTypes';
 import { alongFinishes, railingBody, withExtension, type AlongPiece, type BodyOptions, type PostPiece, type RailingBody, type RailProfiles } from '../../elements/railingBody';

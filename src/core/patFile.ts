@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { FillFamily, FillTypeDef } from './fillTypes';
 
 /** `.pat`-filer (AutoCAD, ArchiCAD), 0.8.36; egen fil sedan 0.8.38. DXF-skrafferingarna läses med `patFamily`. */

@@ -1,8 +1,21 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /// <reference types="vitest/config" />
 import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { viteSingleFile } from 'vite-plugin-singlefile';
+import { execSync } from 'node:child_process';
 import { resolveBrand } from './src/brand/index.ts';
+
+/** Commiten bygget görs från, för länken till källkoden (AGPL §13, 0.12.5.4). */
+function sourceCommit(): string {
+  if (process.env.GITHUB_SHA) return process.env.GITHUB_SHA;
+  try {
+    return execSync('git rev-parse HEAD', { stdio: ['ignore', 'pipe', 'ignore'] }).toString().trim();
+  } catch {
+    return '';
+  }
+}
 
 /**
  * Två byggen:
@@ -27,6 +40,7 @@ export default defineConfig(({ mode }) => {
 
   return {
     base: './',
+    define: { 'import.meta.env.VITE_SOURCE_COMMIT': JSON.stringify(sourceCommit()) },
     plugins: [
       brandHtml,
       artifact

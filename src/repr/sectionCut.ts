@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { difference, intersection, type Rings } from '../geometry/boolean';
 import type { Vec2 } from './primitives';
 import { zOn, type Plane, type Shear, type Solid } from './solids';

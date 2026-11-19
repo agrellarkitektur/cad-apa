@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { escapeHtml } from './labels';
 import { RAIL_ITEMS } from './modify/ops';
 import { applyUiColors, defaultUiSettings, QUICK_ACTIONS, QUICK_TYPES, saveUiSettings, SHORTCUTS, type QuickId, type UiSettings } from './uiSettings';

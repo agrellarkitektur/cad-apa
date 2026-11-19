@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { typeOf } from '../../elements/registry';
 import { chainThrough, nearestEdge, sideOf, signedArea, simplify, type Chain } from '../../geometry/chains';
 import { closestOnSegment, dist, norm, pointInRings, sub } from '../../geometry/vec';

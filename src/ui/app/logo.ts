@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { onPaper, type Id } from '../../core/model';
 import { placeLogo } from '../../core/office';
 import type { MenuItem } from '../contextMenu';

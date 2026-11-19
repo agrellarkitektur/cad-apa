@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { RISER_TARGET, STAIR_THICKNESS, type StairGeometry, type StairParams } from './stairGeometry';
 import { SPIRAL_HEADROOM } from './stairSpiral';
 

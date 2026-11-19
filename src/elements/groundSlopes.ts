@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { signedArea } from '../geometry/chains';
 import { groundAt, groundDefaults, terrainOf } from '../core/site';
 import { union, type Rings } from '../geometry/boolean';

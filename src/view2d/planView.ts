@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { Camera } from './camera';
 import { buildGrid } from './grid';
 import { renderPrimitives, type LineWeights } from './renderPrimitives';

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { along, flatPoints, lineLength, offsetArcLine, PATH_WIDTH, reversedBulges, tidyBulges } from './groundLines';
 import { rampLevels } from './rampProfile';
 import { rampSideLines, refPoints, type EasePoint, type RampParams } from './groundRamp';

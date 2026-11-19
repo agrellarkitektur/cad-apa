@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { isBundledFont } from '../formats/fonts';
 import { normalizeExportSets, templateSets, type ExportSet } from './exportSettings';
 import { pruneAssets } from './commands';

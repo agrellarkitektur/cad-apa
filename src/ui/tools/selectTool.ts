@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { moveElements, moveWallEnd, updateParams } from '../../core/commands';
 import { multiplyElements } from '../../core/wallEdit';
 import { add, angleDeg, dist, dot, norm, scale, sub } from '../../geometry/vec';

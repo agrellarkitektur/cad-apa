@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { resolveParams } from '../../elements/registry';
 import { markerName } from '../../elements/markers';
 import { ringArea } from '../../elements/slab';

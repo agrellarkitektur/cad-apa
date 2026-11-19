@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.5.3** (alfa), Förteckningen per littera och flytten till cad-apa.danaid.cloud; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
+**0.12.5.4** (alfa), Förteckningen per littera, flytten till cad-apa.danaid.cloud och licensen AGPL-3.0; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,22 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.12.5.4, Licensen (samma filformat, 28):
+- **Ny licens: GNU AGPL-3.0 eller senare** från och med den här versionen.
+  Versionerna till och med 0.12.5.3 är fortfarande GPL-3.0 eller senare
+  för den som har dem. För den som använder programmet ändras ingenting:
+  det är fritt att använda, också i betalda uppdrag. Den som kör en ändrad
+  version som tjänst måste erbjuda användarna sin källkod. Se *Licens*
+  längst ned
+- **Källkoden** i menyn och i Om-rutan går till koden för just den version
+  som körs (commiten bygget gjordes från)
+- **Om-rutan** har licensen, länken till källkoden och förteckningen över
+  det som kommer från andra (`THIRD-PARTY.md`). Avsnittet *Stöd
+  utvecklingen* är byggt men syns inte förrän texten är skriven
+  (`src/ui/app/supportSection.ts`)
+- Alla källfiler har ett licenshuvud (`SPDX-License-Identifier`).
+  `CONTRIBUTING.md` och `CLA.md` (utkast) för den som vill bidra
 
 Version 0.12.5.3 (samma filformat, 28):
 - **cad-apa flyttar till https://cad-apa.danaid.cloud/**. På den gamla
@@ -3369,9 +3385,32 @@ src/
   fonts/      Archivo, IBM Plex Mono, Arimo och Josefin Sans (SIL Open Font License), osifont (GPL med typsnittsundantag)
 tests/        tester för kärnan, planen och filformatet
 docs/         arkitektur och byggordning, utvecklarguide
+LICENSES/     licenstexterna för det som kommer från andra (se THIRD-PARTY.md)
 .github/      bygget som lägger en zip för webbhotellet på varje release
 ```
 
 ## Licens
 
-Öppen källkod. Licens (MIT eller GPL) bestäms innan koden publiceras.
+**Licens**
+cad-apa är fri programvara under GNU Affero General Public License v3.0
+eller senare (AGPL-3.0-or-later, se `LICENSE`). Du får använda, studera,
+ändra och dela programmet fritt, även i kommersiellt arbete. Kör du en
+ändrad version som tjänst måste du erbjuda användarna din källkod.
+AGPL gäller från version 0.12.5.4; tidigare versioner är GPL-3.0 eller
+senare.
+
+**Kommersiell licens**
+Vill du bygga in cad-apa i en produkt eller tjänst utan AGPL:s villkor
+finns kommersiella licenser. Kontakta kontakt@agrellarkitektur.se.
+
+**Namn och varumärke**
+Namnet cad-apa (och motorns namn Bacchus) och dess logotyp får inte
+användas för ändrade versioner utan skriftligt tillstånd.
+
+**Bidrag**
+Bidrag välkomnas och kräver att du godkänner vårt CLA, se
+`CONTRIBUTING.md`.
+
+**Det som kommer från andra**
+Bibliotek och typsnitt med sina licenser står i `THIRD-PARTY.md`, och
+licenstexterna i `LICENSES/` och `src/fonts/`.

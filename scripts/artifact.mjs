@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 // Gör om det enfils-bygget (dist-artifact/index.html) till en sida som kan
 // publiceras som förhandsvisning: plattformen lägger själv till doctype,
 // <head> och <body>, så de tas bort här tillsammans med favicon-länken.

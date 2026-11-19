@@ -284,7 +284,7 @@ Beslut:
 - [x] Egen IFC4-skrivare. web-ifc kan läggas till om IFC-import behövs senare
 - [x] Demot är publikt i en mapp på agrellarkitektur.se, med låtsasbranding
 - [ ] Produktnamn och domän. cad-apa.se är kandidat
-- [ ] Licens: MIT eller GPL
+- [x] Licens: AGPL-3.0 eller senare med kommersiella undantag (0.12.5.4)
 
 ---
 

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * DXF-läsarens grund (0.8.32, ur dxf.ts): filen som par av kod och värde,
  * entiteterna med sina värden, och bågar, bultar och splines som punkter.

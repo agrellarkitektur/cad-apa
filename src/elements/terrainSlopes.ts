@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { withHeights } from '../core/ground';
 import { contours, groundAt, heightAtZone, localToZone, type Terrain } from '../core/site';
 import type { Primitive, Vec2 } from '../repr/primitives';

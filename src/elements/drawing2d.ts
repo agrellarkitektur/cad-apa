@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { arcFromBulge, arcSegments, bulgeThrough, STRAIGHT, type Arc } from '../geometry/arc';
 import { dist } from '../geometry/vec';
 import type { Color, StyleSheet } from '../core/graphics';

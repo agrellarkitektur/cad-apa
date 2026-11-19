@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 """Provfil för IFC-utredningen (cad-apa 0.12.6).
 
 Skriver STEP-text för hand, som TypeScript-skrivaren ska göra: inga bibliotek,

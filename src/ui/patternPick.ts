@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { PATTERN_LABELS, type FillPattern } from '../elements/drawing2d';
 import { drawnDash, evenDash, patternLines, type CustomFillType, type FillTypeDef } from '../core/fillTypes';
 import { hatchStrokes } from '../core/hatchStrokes';

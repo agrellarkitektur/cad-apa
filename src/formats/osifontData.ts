@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: GPL-3.0-or-later WITH Font-exception-2.0
 // Gjord av scripts/osifont.py. Ändra inte för hand.
 // osifont, https://github.com/hikikomori82/osifont, GPL 3 med typsnittsundantag (src/fonts/LICENSE-osifont.txt).
 /** Delmängden av osifont (TrueType) som bäddas in i PDF:en, base64. */

@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 """Samma klick i två byggen (granskningen 0.8.27; linjetyper, mask och egen
 penna från 0.8.32; fyllningstyper, pennor för dörrar och fönster, rummens
 kontur, Filtrera och markera och detaljnivåerna från 0.8.38; våningar,

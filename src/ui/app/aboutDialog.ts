@@ -1,12 +1,16 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { ENGINE } from '../../core/engine';
 import type { Brand } from '../../brand';
 import { escapeHtml } from '../labels';
-
-const GITHUB = 'https://github.com/agrellarkitektur/cad-apa';
+import { SOURCE_REPO, sourceFileUrl, sourceUrl } from './sourceLink';
+import { supportSectionHtml } from './supportSection';
 
 /**
  * Om-rutan (0.8.18): versionen, länken till projektets GitHub och vad
- * appen är byggd med, med osifont krediterat.
+ * appen är byggd med, med osifont krediterat. Sedan 0.12.5.4 licensen
+ * (AGPL-3.0), länken till källkoden för just den här versionen och
+ * *Stöd utvecklingen* (visas när texten finns, se supportSection.ts).
  */
 export function installAboutDialog(root: HTMLElement, brand: Brand) {
   const el = document.createElement('div');
@@ -33,10 +37,12 @@ export function installAboutDialog(root: HTMLElement, brand: Brand) {
       <div class="dialog-body">
         <p><b>${escapeHtml(brand.name)}</b> · ${ENGINE.name} ${ENGINE.version}</p>
         <p class="note">${escapeHtml(brand.description)}</p>
-        <p>Öppen källkod (GPL 3 eller senare). Koden, och vad som är nytt i varje version, finns på ${link(GITHUB, 'GitHub')}.</p>
+        <p>Fri programvara under ${link(sourceFileUrl('LICENSE'), 'GNU AGPL 3.0')} eller senare. Du får använda, ändra och dela programmet, också i betalda uppdrag.</p>
+        <p>${link(sourceUrl(), 'Källkoden till den här versionen')} finns på GitHub, liksom ${link(SOURCE_REPO, 'vad som är nytt')} i varje version och ${link(sourceFileUrl('THIRD-PARTY.md'), 'det som kommer från andra')}.</p>
         <h3>Typsnitt</h3>
         <p>Ritningens text: ${link('https://github.com/hikikomori82/osifont', 'osifont')}, ett fritt tekniskt typsnitt efter ISO 3098 (GPL 3 med typsnittsundantag). Tack till hikikomori82 och de som bidragit.</p>
         <p class="note">Gränssnittet: Archivo och IBM Plex Mono (SIL Open Font License).</p>
+        ${supportSectionHtml()}
       </div>
       <footer><div class="spacer"></div><button type="button" class="btn btn-primary" data-action="close-about">Stäng</button></footer>
     </div>`;

@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { newId } from './ids';
 import type { Definition, Element, Id } from './model';
 import { defaultGroundRailingTypes, defaultRailingTypes, newPart, RAILING_GROUPS, type RailingTypeModel } from './railingTypes';

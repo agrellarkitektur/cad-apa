@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 """Strikt kontroll av en IFC4-fil, som förlaga till appens test i 0.12.6.
 
 1. Antalet fält per entitet mot IFC4 ADD2 TC1 (IfcOpenShell släpper igenom
