@@ -101,7 +101,7 @@ export function labelNumbers(doc: ProjectDoc): Map<Id, number> {
 }
 
 /** Litterans löpnummer som text, med projektets antal siffror. */
-export function labelNumber(ctx: Pick<PlanContext, 'doc' | 'memo'>, el: Element<any>): string {
+function labelNumber(ctx: Pick<PlanContext, 'doc' | 'memo'>, el: Element<any>): string {
   const own = (el.params as Partial<LabelParams>).number?.trim();
   if (own) return own;
   const n = ctx.memo('label-numbers', () => labelNumbers(ctx.doc)).get(el.id);

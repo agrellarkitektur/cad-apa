@@ -25,7 +25,7 @@ import type { PlanContext } from './registry';
 /** Hur långt ut från muren marken känns på, mm (en ruta i rutnätet räcker). */
 const WALL_REACH = 700;
 /** Stödmurens grund under den lägre sidan, mm. */
-export const WALL_FOOTING = 300;
+const WALL_FOOTING = 300;
 /** Bitarnas längd längs muren, mm. */
 const STEP = 500;
 /** Utjämningen: medelvärdet inom så här långt åt båda håll, mm. */
@@ -40,7 +40,7 @@ export interface CrestPoint {
 }
 
 /** Stödmurens parametrar, de som rör linjen och krönet. */
-export interface WallParams {
+interface WallParams {
   line?: [number, number][];
   thickness?: number;
   refSide?: 'center' | 'left' | 'right';
@@ -69,7 +69,7 @@ export function wallCenter(pts: readonly Vec2[], th: number, p: Pick<WallParams,
 }
 
 /** En punkt längs muren: sträckan, mittlinjens punkt, ytterpunkterna åt höger och vänster, krönet och foten. */
-export interface Station {
+interface Station {
   s: number;
   at: Vec2;
   right: Vec2;

@@ -19,7 +19,7 @@ import type { OutFile } from './exportTarget';
  * skrivs i en bakgrundstråd; bilder ur 3D och glTF görs sist, ur 3D-vyn.
  */
 
-export interface RunDeps {
+interface RunDeps {
   doc: ProjectDoc;
   today: string;
   autoDims: boolean;
@@ -29,7 +29,7 @@ export interface RunDeps {
   view3d: () => Promise<View3D | null>;
 }
 
-export interface RunResult {
+interface RunResult {
   files: OutFile[];
   /** Rader som inte gick att göra, med anledning. */
   skipped: string[];

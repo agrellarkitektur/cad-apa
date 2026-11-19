@@ -21,11 +21,11 @@ import { closestOnRing, edgeDistance, insideRing, offsetContour } from '../../co
  * punkter och typens parametrar. Fälten heter `ptype:<typ>:…`.
  */
 
-export type PeTool = 'select' | 'line' | 'rect' | 'circle' | 'offset' | 'fillet' | 'dim' | 'anchor' | 'zoneH' | 'zoneW';
-export type PePlace = 'edge' | 'over' | 'free';
-export type PeView = 'section' | 'stretched' | 'end' | '3d';
+type PeTool = 'select' | 'line' | 'rect' | 'circle' | 'offset' | 'fillet' | 'dim' | 'anchor' | 'zoneH' | 'zoneW';
+type PePlace = 'edge' | 'over' | 'free';
+type PeView = 'section' | 'stretched' | 'end' | '3d';
 
-export interface ProfileEditorState {
+interface ProfileEditorState {
   def: Id | null;
   part: string | null;
   tool: PeTool;

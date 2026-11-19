@@ -86,7 +86,7 @@ export interface ExportOptions {
   dxfVersion?: 'R2000' | 'R2018';
 }
 
-export const EXPORT_OPTION_DEFAULTS: Required<ExportOptions> = {
+const EXPORT_OPTION_DEFAULTS: Required<ExportOptions> = {
   combined: false,
   layers: 'views',
   workStamp: false,

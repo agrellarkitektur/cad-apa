@@ -46,7 +46,7 @@ export const OBJECT_PENS = [
   { key: 'furniture', group: 'others', label: 'Möbel: konturlinje', hint: 'Lösa möbler', weight: 0.18, color: 'muted', tags: ['möbel', 'kontur', 'konturlinje'] },
 ] as const satisfies readonly { key: string; group: string; label: string; hint: string; weight: number; color?: string; linetype?: string; tags: readonly string[] }[];
 
-export type ObjectPenKey = (typeof OBJECT_PENS)[number]['key'];
+type ObjectPenKey = (typeof OBJECT_PENS)[number]['key'];
 
 const BY_KEY = new Map<string, (typeof OBJECT_PENS)[number]>(OBJECT_PENS.map((p) => [p.key, p]));
 

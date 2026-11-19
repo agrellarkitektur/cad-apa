@@ -13,7 +13,7 @@ import type { Vec2 } from '../repr/primitives';
  */
 
 /** Radavståndet, gånger texthöjden, som för fri text i vyerna. */
-export const LINE_STEP = 1.5;
+const LINE_STEP = 1.5;
 /** Hur långt under baslinjen texten når (gemener med nedstapel), gånger texthöjden. */
 const DESCENT = 0.3;
 
@@ -21,7 +21,7 @@ export type TextAlign = 'start' | 'middle' | 'end';
 /** Var textens punkt ligger i höjdled: på första radens baslinje (förval) eller i rutans över-, mitt- eller underkant. */
 export type TextAnchor = 'top' | 'middle' | 'bottom';
 
-export interface TextBoxInput {
+interface TextBoxInput {
   text: string;
   /** Texthöjd på papper, mm. */
   height: number;
@@ -74,7 +74,7 @@ export function wrapLine(line: string, width: number, height: number, bold = fal
 }
 
 /** Textens rader: radbrytningarna i texten och, med en största bredd, bryten vid ord. */
-export function textLines(t: Pick<TextBoxInput, 'text' | 'height' | 'bold' | 'maxWidth'>): string[] {
+function textLines(t: Pick<TextBoxInput, 'text' | 'height' | 'bold' | 'maxWidth'>): string[] {
   const raw = String(t.text).split('\n');
   return t.maxWidth && t.maxWidth > 0 ? raw.flatMap((l) => wrapLine(l, t.maxWidth!, t.height, t.bold)) : raw;
 }

@@ -17,7 +17,7 @@ import { hasSash, layoutLeaf, layoutOpening, leafGridOf, muntinLines, LEAF_OPS, 
 
 export type FigureRole = 'frame' | 'part' | 'thin' | 'symbol' | 'symbolIn';
 
-export interface FigureLine {
+interface FigureLine {
   role: FigureRole;
   a: [number, number];
   b: [number, number];

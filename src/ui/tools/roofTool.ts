@@ -18,7 +18,7 @@ import { roundMm, snap, type SnapResult } from './snap';
 /** Vad verktyget ritar: ett takfall för hand, eller ett snabbval över en rektangel. */
 export type RoofMode = 'face' | QuickKind;
 
-export interface RoofToolOptions {
+interface RoofToolOptions {
   mode: RoofMode;
   slope: number;
   /** Höjden vid referenslinjen, mm över golvet. */

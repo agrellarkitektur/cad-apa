@@ -13,7 +13,7 @@ import { lengthLabel, snapMarker } from './overlay';
 import { snap, type SnapResult } from './snap';
 
 /** Det som mätts: sträckan, hela längden, vinkeln och ytan. */
-export interface Measurement {
+interface Measurement {
   points: number;
   /** Senaste sträckan, mm. */
   last: number;

@@ -43,7 +43,7 @@ import { ringArea, slabBase, type SlabParams } from '../elements/slab';
  * bortre ände flyttas (en vägg vinkelrätt, en dörr längs sin vägg). Är den
  * änden fri flyttas punkten själv.
  */
-export function setDimension(store: DocStore, id: string, k: number, value: number): void {
+function setDimension(store: DocStore, id: string, k: number, value: number): void {
   const doc = store.doc;
   const el = doc.elements[id];
   if (!el || !(value > 0)) return;
@@ -69,7 +69,7 @@ export function setDimension(store: DocStore, id: string, k: number, value: numb
 }
 
 /** Lås dörrnumren: numren som de är nu sparas i dörrarna. */
-export function lockDoorNumbers(store: DocStore, view: ViewStates, locked: boolean): void {
+function lockDoorNumbers(store: DocStore, view: ViewStates, locked: boolean): void {
   const doc = store.doc;
   store.transact(locked ? 'Lås dörrnumren' : 'Lås upp dörrnumren', (tx) => {
     if (locked) {
@@ -89,7 +89,7 @@ export function lockDoorNumbers(store: DocStore, view: ViewStates, locked: boole
  * Ändra rumsnumreringen. Låses den sparas de nummer rummen har just nu, så
  * att de ligger kvar när rum läggs till eller flyttas.
  */
-export function setNumbering(store: DocStore, view: ViewStates, name: string, input: HTMLInputElement | HTMLSelectElement): void {
+function setNumbering(store: DocStore, view: ViewStates, name: string, input: HTMLInputElement | HTMLSelectElement): void {
   const doc = store.doc;
   const current = numberingOf(doc);
   const next = { ...current };

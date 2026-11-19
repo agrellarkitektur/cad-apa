@@ -3,7 +3,7 @@
 import type { Element, Id, ProjectDoc, SiteCategory, State } from './model';
 
 /** Skiss, normal eller detalj (0.8.37 delad i littera, 2D och 3D). */
-export type DetailLevel = 'sketch' | 'normal' | 'detail';
+type DetailLevel = 'sketch' | 'normal' | 'detail';
 
 /** Nivåerna i ordning, med namnen i appen. */
 export const DETAIL_LABELS: Record<DetailLevel, string> = { sketch: 'Skiss', normal: 'Normal', detail: 'Detalj' };

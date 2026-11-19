@@ -150,7 +150,7 @@ export function centerShift(side: RefSide | undefined, offset: number | undefine
 type P = readonly [number, number];
 
 /** Var en punkt ligger mot en polylinje: avståndet, punkten närmast, sträckan längs linjen dit och avståndet åt vänster (negativt åt höger). */
-export interface Along {
+interface Along {
   d: number;
   at: Vec2;
   s: number;

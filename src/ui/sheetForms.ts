@@ -28,10 +28,10 @@ const esc = escapeHtml;
 const field = (label: string, input: string) => `<label class="field"><span>${label}</span>${input}</label>`;
 
 /** Det som har ett formulär här: bladet och vyerna på det. Det som är ritat på bladet är vanliga objekt (0.8.9). */
-export type SheetFormKind = 'sheet' | 'viewport';
+type SheetFormKind = 'sheet' | 'viewport';
 
 /** Det formuläret visar: bladet (med `also`, fler blad markerade i trädet) eller en vy på ett blad. */
-export interface SheetFormItem {
+interface SheetFormItem {
   kind: SheetFormKind;
   id: Id;
   also?: readonly Id[];

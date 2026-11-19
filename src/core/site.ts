@@ -19,7 +19,7 @@ import type { Asset, Id, ProjectDoc } from './model';
  */
 
 /** Markmodellens rutnät, i zonens koordinater (m). Höjderna ligger i en fil (`asset`), inte som tal i projektet. */
-export interface SiteGrid {
+interface SiteGrid {
   asset: Id;
   /** Västligaste nodens x och nordligaste nodens y. */
   x0: number;

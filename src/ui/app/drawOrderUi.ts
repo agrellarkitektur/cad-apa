@@ -15,7 +15,7 @@ import { selectionBounds } from './selectionPlace';
  * förbi närmaste objekt det överlappar i vyn som visas.
  */
 
-export const ORDER_MOVES: OrderMove[] = ['back', 'backward', 'forward', 'front'];
+const ORDER_MOVES: OrderMove[] = ['back', 'backward', 'forward', 'front'];
 
 const DONE: Record<OrderMove, string> = {
   back: 'Lagt längst bak',

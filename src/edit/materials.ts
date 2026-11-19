@@ -93,7 +93,7 @@ export function materialObjectsByMaterial(doc: { elements: Record<Id, Element> }
 }
 
 /** Objekten med materialet (0.10.36, materialets ställen). */
-export function materialObjects(doc: { elements: Record<Id, Element> }, id: string): { id: Id; nested?: string }[] {
+function materialObjects(doc: { elements: Record<Id, Element> }, id: string): { id: Id; nested?: string }[] {
   return materialObjectsByMaterial(doc).get(id) ?? [];
 }
 

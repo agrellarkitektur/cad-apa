@@ -27,10 +27,8 @@ export const PLAN_CUT_PENS = [
   { key: 'belowGround', label: 'Stödmurar under snittet', hint: 'Murens delar under snitthöjden', weight: 0.25 },
 ] as const;
 
-export type PlanCutPenKey = (typeof PLAN_CUT_PENS)[number]['key'];
-
 /** Typerna som har pennor för snittet, som de heter i nycklarna. */
-export type CutPenType = 'Wall' | 'Opening' | 'Slab' | 'Furniture' | 'Roof' | 'Ground';
+type CutPenType = 'Wall' | 'Opening' | 'Slab' | 'Furniture' | 'Roof' | 'Ground';
 
 /** Delen för det som ligger över snittet: den får den egna pennans del `above`. */
 export const ABOVE_PART = 'över';

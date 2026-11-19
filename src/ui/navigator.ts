@@ -21,7 +21,7 @@ const TABS: [NavTab, string][] = [
   ['ritningar', 'Ritningar'],
 ];
 
-export interface NavigatorHost {
+interface NavigatorHost {
   doc(): ProjectDoc;
   storey(): Id;
   activeView(): Id | null;

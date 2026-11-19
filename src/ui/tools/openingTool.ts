@@ -14,7 +14,7 @@ import { outsideSide } from '../../elements/wallSides';
 
 const nf = new Intl.NumberFormat('sv-SE', { maximumFractionDigits: 0 });
 
-export interface OpeningToolOptions {
+interface OpeningToolOptions {
   /** Typen som sätts in. */
   definition: Id | null;
   /** Modulmåttet (mm), eller null för typens förval. */

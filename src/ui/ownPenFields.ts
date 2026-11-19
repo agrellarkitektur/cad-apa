@@ -14,7 +14,7 @@ import { lineTypeOptions } from './lineTypePick';
  */
 
 /** Sorterna som kan få en egen penna. 2D-formen har redan sin egen. Markobjekten sedan 0.10.7. */
-export const OWN_PEN_TYPES = new Set(['Wall', 'Door', 'Window', 'Roof', 'Furniture', 'Space', 'Ground', 'Slab']);
+const OWN_PEN_TYPES = new Set(['Wall', 'Door', 'Window', 'Roof', 'Furniture', 'Space', 'Ground', 'Slab']);
 
 /** Sorterna med en symboldel (slagbåge, öppningssätt). */
 const SYMBOL_TYPES = new Set(['Door', 'Window']);

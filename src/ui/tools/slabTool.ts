@@ -17,7 +17,7 @@ import { shapePoints } from '../../elements/drawing2d';
 import { hasArcs, tidyBulges } from '../../elements/groundLines';
 
 /** Vad verktyget ritar: ett bjälklag eller en håltagning i ett. */
-export type SlabMode = 'slab' | 'hole';
+type SlabMode = 'slab' | 'hole';
 /** Hur konturen ritas (0.10.17): rektangel, polygon med bågar (konturens sedan 0.10.24) eller cirkel (bara håltagningen). */
 export type SlabShape = 'rect' | 'polygon' | 'circle';
 

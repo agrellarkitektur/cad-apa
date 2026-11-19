@@ -13,24 +13,7 @@ import { groundDefaults } from '../core/site';
 import { steepSlopePrims } from './terrainSlopes';
 
 /** Visa-nyckeln för de branta slänterna i den befintliga marken (0.10.20), släckt från början. */
-export const STEEP_SLOPES_KEY = 'steepSlopes';
-
-/**
- * Platsen ur Höjdkurvor (0.10.3): den befintliga marken som höjdkurvor,
- * grannhusen, träden och kartans linjer (fastighetsgränser, vägar,
- * gränspunkter och stompunkter). De hör till ritningen och finns i alla
- * tillstånd. De läggs in låsta, så att de inte flyttas av misstag, och tas
- * bort och läggs in på nytt när platsen uppdateras.
- *
- * Höjderna (`mark`) är i RH 2000, så att ett nytt ±0 flyttar huset mot
- * marken, inte marken. Terrängen ritas i 3D-vyn och som marklinje i fasader
- * och sektioner för sig (`repr/terrain.ts`), inte som 3D-former.
- */
-
-export const SITE_TYPES: ReadonlySet<string> = new Set(['Terrain', 'SiteBuilding', 'Tree', 'SiteMap']);
-
-/** Om elementet kom med platsen (och byts ut när platsen uppdateras). */
-export const isSiteElement = (el: Element): boolean => SITE_TYPES.has(el.type);
+const STEEP_SLOPES_KEY = 'steepSlopes';
 
 const thin: Pen = { weight: 0.13, color: 'muted' };
 
@@ -48,12 +31,12 @@ const floorOf = (ctx: PlanContext, el: Element<any>): number => ctx.doc.storeys.
 // Befintlig mark
 
 /** Den befintliga marken: inga egna parametrar, allt finns i projektets plats. */
-export type TerrainParams = Record<string, never>;
+type TerrainParams = Record<string, never>;
 
 let contourCache: { key: string; data: unknown; out: Contour[] } | null = null;
 
 /** Höjdkurvorna för projektets plats, räknade en gång per rutnät och avstånd. */
-export function siteContours(doc: ProjectDoc): Contour[] {
+function siteContours(doc: ProjectDoc): Contour[] {
   const t = terrainOf(doc);
   if (!t) return [];
   const interval = t.site.contours ?? DEFAULT_CONTOURS;
@@ -72,7 +55,7 @@ const finishedContourCache = new WeakMap<Finished, { interval: number; out: Cont
  * från den befintliga (rutorna som markobjekten ändrat, en nod till på varje
  * sida). Utanför är den färdiga marken den befintliga.
  */
-export function finishedContours(f: Finished, interval: number): Contour[] {
+function finishedContours(f: Finished, interval: number): Contour[] {
   const hit = finishedContourCache.get(f);
   if (hit && hit.interval === interval) return hit.out;
   let out: Contour[] = [];
@@ -162,7 +145,7 @@ function piecesWhere(cs: readonly Contour[], keep: (x: number, y: number) => boo
  * befintliga där den inte ändrats och den färdiga där den ändrats, och
  * `old` den befintliga där markobjekten ändrat den, som ritas streckad.
  */
-export interface GroundContours {
+interface GroundContours {
   solid: Contour[];
   old: Contour[];
 }
@@ -322,7 +305,7 @@ function contourLabel(c: Contour, min: number): { at: Vec2; angle: number } | nu
 // ---------------------------------------------------------------------------
 // Grannhus
 
-export interface SiteBuildingParams {
+interface SiteBuildingParams {
   /** Fotavtrycket i modellen, mm (oftast inmätt vid takkanten). */
   points: Vec2[];
   /** Markhöjden i RH 2000 (m), eller null. */
@@ -379,7 +362,7 @@ function centroid(pts: readonly Vec2[]): Vec2 {
 // ---------------------------------------------------------------------------
 // Träd
 
-export interface TreeParams {
+interface TreeParams {
   pos: Vec2;
   /** Kronans diameter, mm. */
   crown: number;
@@ -435,7 +418,7 @@ export const treeType: ElementType<TreeParams> = {
 // ---------------------------------------------------------------------------
 // Kartans linjer och texter
 
-export interface SiteMapParams {
+interface SiteMapParams {
   /**
    * boundary: fastighetsgräns, road: väg, label: fastighetens beteckning,
    * point: gränspunkt, benchmark: stompunkt.

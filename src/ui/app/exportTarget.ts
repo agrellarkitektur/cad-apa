@@ -95,7 +95,7 @@ export async function writeToFolder(dir: FileSystemDirectoryHandle, files: reado
  * Filerna i en zipfil. Tidsstämpeln är dagens datum klockan 00.00, så att
  * samma export samma dag ger samma bytes.
  */
-export function zipFiles(files: readonly OutFile[], day: string): Uint8Array {
+function zipFiles(files: readonly OutFile[], day: string): Uint8Array {
   const [y, m, d] = day.split('-').map(Number);
   const date = new Date(y || 2026, (m || 1) - 1, d || 1);
   return writeZip(files.map((f) => ({ name: f.path, data: f.data, date })));

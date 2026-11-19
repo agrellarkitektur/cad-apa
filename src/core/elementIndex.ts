@@ -16,7 +16,7 @@ import type { Element, Id, ProjectDoc } from './model';
  */
 
 type Records = Readonly<Record<Id, Element>>;
-export type WallEnd = 'start' | 'end';
+type WallEnd = 'start' | 'end';
 type P = readonly [number, number];
 
 /** Rutornas sida i mm. En ruta har sällan mer än några väggändar. */

@@ -23,7 +23,7 @@ import type { Vec2 } from './primitives';
  */
 
 /** Gränsen för ett skarpt hörn, grader. */
-export const CORNER = 35;
+const CORNER = 35;
 
 /** Linjen en bit kommer ifrån, i modellen (0.8.30). */
 export interface DashFrom {
@@ -34,7 +34,7 @@ export interface DashFrom {
 }
 
 /** En sträcka att rita: punkterna och mönstret (null = heldragen). */
-export interface DashPiece {
+interface DashPiece {
   points: Vec2[];
   dash: number[] | null;
   offset: number;

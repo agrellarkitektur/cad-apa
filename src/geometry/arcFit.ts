@@ -11,7 +11,7 @@ import { cross, dist, dot, sub } from './vec';
  * väggarnas. Smartspöt följer det som ritats, och bågar ritas som korta
  * raka bitar; här hittas de igen.
  */
-export interface ArcChain {
+interface ArcChain {
   points: Vec2[];
   /** Pilhöjden per kant (0 = rak), en per kant: n − 1 för en öppen kedja, n för en sluten. */
   bulges: number[];

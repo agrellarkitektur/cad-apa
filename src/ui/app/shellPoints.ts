@@ -85,7 +85,7 @@ export function commandBusy(app: AppContext, pending: CommandDef | null): boolea
 }
 
 /** Ett Modifiera-val med ett värde (radie, vinkel …): ett ensamt tal är värdet, inte ett avstånd. */
-export function valueOp(app: AppContext): boolean {
+function valueOp(app: AppContext): boolean {
   const a = app.modifier.active;
   return !!a && !!OPS[a].value && app.modifier.runningTool instanceof ModifyTool;
 }

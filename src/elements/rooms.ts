@@ -27,13 +27,13 @@ export function roomHoles(walls: { id: string; p: WallParams }[], bounds: { id: 
 const savedHoles = lastResults<Vec2[][]>();
 
 /** Rumsgränsens bredd i mm (0.8.34): tunn nog att inte märkas i arean. */
-export const BOUNDARY_WIDTH = 1;
+const BOUNDARY_WIDTH = 1;
 
 /**
  * En rumsgräns som tunna rektanglar, en per segment, förlängda lika mycket
  * i båda ändar så att de säkert når väggen eller nästa segment.
  */
-export function boundaryStrips(p: Pick<Shape2DParams, 'shape' | 'points' | 'closed' | 'bulges'>): Rings[] {
+function boundaryStrips(p: Pick<Shape2DParams, 'shape' | 'points' | 'closed' | 'bulges'>): Rings[] {
   const { points, closed } = shapePoints(p);
   const out: Rings[] = [];
   const h = BOUNDARY_WIDTH / 2;
@@ -91,7 +91,7 @@ function outsideBox(p: Vec2, b: Box): boolean {
 }
 
 /** Hålen för väggarna som syns i en vy. */
-export function roomHolesFor(ctx: PlanContext): Vec2[][] {
+function roomHolesFor(ctx: PlanContext): Vec2[][] {
   return ctx.memo('room-holes', () =>
     roomHoles(
       ctx.visible('Wall').map((el) => ({ id: el.id, p: ctx.params<WallParams>(el) })),

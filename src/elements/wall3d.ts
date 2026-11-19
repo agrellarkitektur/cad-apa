@@ -275,7 +275,7 @@ export function underSlabs(rings: Rings, top: Plane | null, height: number, slab
 }
 
 /** Ett bjälklag ovanför med dess kanter i ett rutnät, så att det går fort att se om en vägg ligger helt i eller utanför det. */
-export interface SlabCut extends SlabAbove {
+interface SlabCut extends SlabAbove {
   box: Box;
   edges: [Vec2, Vec2][];
   index: BoxIndex;

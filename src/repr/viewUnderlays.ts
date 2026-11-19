@@ -15,7 +15,7 @@ import type { Pen, PenColor, Primitive, Vec2 } from './primitives';
  * teckenförklaringen och klipps mot vyns ram på bladet som underlagen.
  */
 
-export const VIEW_UNDERLAY = 'ViewUnderlay';
+const VIEW_UNDERLAY = 'ViewUnderlay';
 
 /** Om primitiven hör till ett underlag i vyn. */
 export const isViewUnderlay = (p: Primitive) => p.origin?.objectType === VIEW_UNDERLAY;
@@ -26,7 +26,7 @@ export const isOverUnderlay = (p: Primitive) => isViewUnderlay(p) && p.origin?.p
 /** Underlag (fil eller i vyn): det som inte räknas i vyns ram och klipps mot den på bladet. */
 export const isBackdrop = (p: Primitive) => p.origin?.objectType === 'Underlay' || isViewUnderlay(p);
 
-export interface UnderlayBase {
+interface UnderlayBase {
   host: UnderlayHost;
   /** Vyns inställningar: tillståndet, skalan och detaljnivån gäller också underlaget. */
   states: ViewStates;
@@ -47,7 +47,7 @@ export function viewUnderlayPrims(doc: ProjectDoc, list: readonly ViewUnderlay[]
 }
 
 /** Källans primitiver som de ritas i sin egen vy, eller inga. */
-export function sourcePrims(doc: ProjectDoc, source: string, base: UnderlayBase): Primitive[] {
+function sourcePrims(doc: ProjectDoc, source: string, base: UnderlayBase): Primitive[] {
   const r = resolveSource(doc, base.host, source);
   if (!r) return [];
   const vs: ViewStates = { ...base.states, viewId: undefined, place: undefined, viewTags: [], category: undefined, legend: undefined, smart: undefined, showHidden: false };

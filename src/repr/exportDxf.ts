@@ -33,14 +33,14 @@ import { workStampPrims } from './exportPages';
  * följer linjen lagret (BYLAYER). Bilder (underlag, loggor) följer inte med.
  */
 
-export interface DxfExportOptions {
+interface DxfExportOptions {
   version: DxfVersion;
   today: string;
   workStamp?: boolean;
   autoDims?: boolean;
 }
 
-export interface DxfResult {
+interface DxfResult {
   bytes: Uint8Array;
   /** Bilder som inte kom med. */
   images: number;

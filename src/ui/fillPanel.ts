@@ -21,16 +21,16 @@ import { materialFits } from '../edit/materials';
  * `fillPreset`; `fillPatch` gör om en ändring till nya parametrar.
  */
 
-export type FillKind = 'none' | 'solid' | 'mask' | 'pattern';
+type FillKind = 'none' | 'solid' | 'mask' | 'pattern';
 
-export const FILL_KIND_LABELS: Record<FillKind, string> = { none: 'Ingen', solid: 'Solid', mask: 'Mask', pattern: 'Mönster' };
+const FILL_KIND_LABELS: Record<FillKind, string> = { none: 'Ingen', solid: 'Solid', mask: 'Mask', pattern: 'Mönster' };
 
-export function fillKindOf(fill: FillPattern | undefined): FillKind {
+function fillKindOf(fill: FillPattern | undefined): FillKind {
   return !fill ? 'none' : fill === 'solid' ? 'solid' : fill === 'mask' ? 'mask' : 'pattern';
 }
 
 /** Opaciteten i tio steg för alla lägen (masken också sedan 0.10.15.1). */
-export const OPACITY_STEPS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
+const OPACITY_STEPS = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100];
 
 /** Fyllningens opacitet i procent som den ritas: egen, annars linjens (som före 0.10.14), annars 100. */
 export function fillOpacityOf(p: Pick<FillParams, 'opacity' | 'fillOpacity'>): number {
@@ -38,7 +38,7 @@ export function fillOpacityOf(p: Pick<FillParams, 'opacity' | 'fillOpacity'>): n
 }
 
 /** Ett förslag: ett namn och parametrarna det sätter. */
-export interface FillPreset {
+interface FillPreset {
   id: string;
   label: string;
   kind: Exclude<FillKind, 'none'>;
@@ -188,7 +188,7 @@ function patternList(name: string, p: FillParams, attrs: (key: string) => string
 }
 
 /** Bakgrundens sort: ingen, mask (ritningens bakgrund) eller en egen färg. */
-export function backgroundKindOf(b: string | undefined): 'none' | 'mask' | 'color' {
+function backgroundKindOf(b: string | undefined): 'none' | 'mask' | 'color' {
   return b === undefined ? 'none' : b === FILL_BACKGROUND ? 'mask' : 'color';
 }
 

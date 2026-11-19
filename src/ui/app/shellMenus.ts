@@ -6,7 +6,7 @@ import type { AppContext } from './context';
 import { currentPrompt, type PromptOption } from './prompts';
 
 /** Det menyerna behöver av smartshell. */
-export interface ShellMenuContext {
+interface ShellMenuContext {
   app: AppContext;
   shown: () => boolean;
   busy: () => boolean;

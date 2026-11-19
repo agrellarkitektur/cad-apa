@@ -317,7 +317,7 @@ export function renameProject(store: DocStore, name: string): void {
  * papperets högra kant och 40 mm upp, så att den på A1 står där Carl August
  * har den (x 611–711, y 27–46 mm), innanför ramen till vänster om huvudet.
  */
-export function scaleBarHome(sheet: Pick<Sheet, 'size' | 'orientation'>): [number, number] {
+function scaleBarHome(sheet: Pick<Sheet, 'size' | 'orientation'>): [number, number] {
   const [w] = paperSize(sheet);
   return [Math.max(FRAME_MARGIN.left + 5, w - 230), 40];
 }

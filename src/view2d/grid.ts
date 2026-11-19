@@ -3,7 +3,7 @@
 import type { Camera } from './camera';
 
 /** En nivå i rutnätet: linjerna med ett visst steg och hur starka de är. */
-export interface GridLevel {
+interface GridLevel {
   /** Steget i mm. */
   step: number;
   /** Linjerna som inte redan ritas av en grövre nivå. */
@@ -12,7 +12,7 @@ export interface GridLevel {
   opacity: number;
 }
 
-export interface GridPaths {
+interface GridPaths {
   /** Nivåerna, finast först. */
   levels: GridLevel[];
   /** Origo-axlarna. */
@@ -72,7 +72,7 @@ export function buildGrid(cam: Camera): GridPaths {
  * Hur stark en nivå är vid ett visst avstånd i pixlar: den tonas in mellan
  * FADE_FROM och FADE_TO, och blir starkare när det ryms finare linjer emellan.
  */
-export function strength(px: number): number {
+function strength(px: number): number {
   const shown = smoothstep(FADE_FROM, FADE_TO, px);
   const emphasis = smoothstep(FADE_FROM, FADE_TO, px / 4);
   return shown * (BASE + (1 - BASE) * emphasis);

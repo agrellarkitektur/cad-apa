@@ -73,7 +73,7 @@ export type OpId =
   | 'moveZ'
   | 'shapeFuse';
 
-export interface OpDef {
+interface OpDef {
   label: string;
   /** Kort text under ikonen. Hela namnet och förklaringen visas vid hovring. */
   short: string;

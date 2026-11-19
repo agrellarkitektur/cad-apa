@@ -44,10 +44,10 @@ export function profileTypesFor(doc: DocStore['doc']): Definition[] {
     .sort((a, b) => groups.indexOf(a.profile!.group) - groups.indexOf(b.profile!.group) || a.name.localeCompare(b.name, 'sv', { numeric: true }));
 }
 
-export type NewProfile = Omit<Element, 'id' | 'type' | 'states' | 'tags' | 'props'> & { states?: Id[] };
+type NewProfile = Omit<Element, 'id' | 'type' | 'states' | 'tags' | 'props'> & { states?: Id[] };
 
 /** Nästa lediga littera för ett profilobjekt med bokstäverna (P01, B01, L01 …). */
-export function nextProfileLittera(doc: DocStore['doc'], prefix: string, taken: Set<string> = new Set()): string {
+function nextProfileLittera(doc: DocStore['doc'], prefix: string, taken: Set<string> = new Set()): string {
   const used = new Set([...taken, ...Object.values(doc.elements).flatMap((e) => (e.type === 'Profile' && e.name ? [e.name] : []))]);
   for (let n = 1; ; n++) {
     const name = `${prefix}${String(n).padStart(2, '0')}`;

@@ -60,7 +60,7 @@ export interface GroundShape {
 export type Barrier = readonly [number, number, number, number];
 
 /** Schakt och fyll i m³ för ett objekt. */
-export interface CutFill {
+interface CutFill {
   cut: number;
   fill: number;
 }

@@ -25,8 +25,7 @@ import { outsideSide } from './wallSides';
  * (`littera`) är låst och går före.
  */
 
-export const OPENING_TYPES = ['Window', 'Door', 'WallHole'] as const;
-export type OpeningElementType = (typeof OPENING_TYPES)[number];
+const OPENING_TYPES = ['Window', 'Door', 'WallHole'] as const;
 
 interface Info {
   key: string;
@@ -39,7 +38,7 @@ interface Info {
 }
 
 /** Bokstaven ur formeln: `YD{nr:2}` → YD. */
-export const formulaLetter = (formula: string): string => formula.replace(/\{[^}]*\}/g, '').trim();
+const formulaLetter = (formula: string): string => formula.replace(/\{[^}]*\}/g, '').trim();
 
 /** Formeln med numret: `F{nr:2}` och 3 → F03; `{nr}` utan siffror. */
 export function applyFormula(formula: string, n: number): string {
@@ -169,11 +168,6 @@ export function openingMirrored(doc: ProjectDoc): Set<Id> {
 /** Nummer för nya kombinationer som ännu inte sparats (för att spara dem efter en ändring). */
 export function missingOpeningNumbers(doc: ProjectDoc): Record<string, Record<string, number>> {
   return compute(doc).missing;
-}
-
-/** Kombinationens nyckel för ett objekt (för *Samma littera som …*). */
-export function openingKeyOf(doc: ProjectDoc, id: Id): string | undefined {
-  return compute(doc).keys.get(id)?.key;
 }
 
 /**

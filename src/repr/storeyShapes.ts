@@ -14,14 +14,14 @@ import { liftShape, type Edges3D, type Shape3D, type Solid } from './solids';
 export { liftShape } from './solids';
 
 /** Vilka objekt som byggs, efter typ och åtgärd. */
-export type Included = (t: ElementType, action: Action) => boolean;
+type Included = (t: ElementType, action: Action) => boolean;
 
 /** Allt som har en 3D-form, också det som rivs (fasader och sektioner). */
 export const WITH_DEMOLISHED: Included = (t) => !!(t.model3d || t.model3dBatch) && !t.only3dView;
 /** Allt som har en 3D-form utom det som rivs (3D-vyn). */
 export const WITHOUT_DEMOLISHED: Included = (t, action) => !!(t.model3d || t.model3dBatch) && action !== 'demolished';
 
-export interface StoreyShapes {
+interface StoreyShapes {
   shapes: { s: Shape3D; demolished: boolean }[];
   storeys: { ctx: PlanContext; elevation: number }[];
 }
@@ -112,7 +112,7 @@ type Flat = { shape: number; seg: number; z: number; a: Vec2; d: Vec2; len: numb
  * varje kant, eftersom konturerna kommer ur sammanslagningen (yttre ringar
  * moturs, hål medurs).
  */
-export function joinStoreys(shapes: { s: Shape3D; demolished: boolean }[], storeyOf: readonly number[]): void {
+function joinStoreys(shapes: { s: Shape3D; demolished: boolean }[], storeyOf: readonly number[]): void {
   const TOL = 0.5;
   const walls = (x: { s: Shape3D; demolished: boolean }): x is { s: Edges3D; demolished: boolean } => x.s.kind === 'edges' && x.s.part === 'wall' && !x.demolished;
   // Höjderna där kanter från mer än en våning möts; bara där prövas något.

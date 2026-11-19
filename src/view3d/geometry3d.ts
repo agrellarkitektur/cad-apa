@@ -149,7 +149,7 @@ export function resolveColor(name: string, fallback: string): string {
 }
 
 /** Släpp geometrin i ett objekt och allt under det. */
-export function disposeTree(obj: THREE.Object3D): void {
+function disposeTree(obj: THREE.Object3D): void {
   obj.traverse((o) => {
     const g = (o as THREE.Mesh).geometry;
     if (g) g.dispose();

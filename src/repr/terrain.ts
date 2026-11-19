@@ -20,7 +20,7 @@ import { crispHeight, crispMesh, crispShapes } from './crispGround';
  */
 
 /** Marklinjens punkter i vyns koordinater (x längs linjen, y höjd i mm från ±0), bitar där marken finns. */
-export function terrainProfile(
+function terrainProfile(
   t: Terrain,
   frame: { start: Vec2; right: Vec2; view: Vec2 },
   u0: number,

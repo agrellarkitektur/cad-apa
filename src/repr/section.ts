@@ -55,7 +55,7 @@ export interface SectionResult {
 }
 
 /** Id för en automatisk taklutning, innan den blivit ett eget objekt. */
-export function autoSlopeId(roof: Id, face: number): string {
+function autoSlopeId(roof: Id, face: number): string {
   return `slope:${roof}:${face}`;
 }
 

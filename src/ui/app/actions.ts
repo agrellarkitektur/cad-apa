@@ -29,7 +29,7 @@ import type { OrderMove } from '../../core/drawOrder';
 import { sourceUrl } from './sourceLink';
 
 /** De delar av appen som knapparna når utöver `app`. */
-export interface ActionParts {
+interface ActionParts {
   brand: Brand;
   feedbackDialog: FeedbackDialog;
   about: { open(): void };

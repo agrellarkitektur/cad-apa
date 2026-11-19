@@ -178,7 +178,7 @@ function dxfPrims(doc: ProjectDoc, id: Id, p: UnderlayParams, drawingScale: numb
 }
 
 /** Det man snäpper mot i ett underlag (0.8.16): sträckor, och punkter som sträckor med `point`. */
-export interface UnderlaySnap {
+interface UnderlaySnap {
   id: Id;
   a: Vec2;
   b: Vec2;

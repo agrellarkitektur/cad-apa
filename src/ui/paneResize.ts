@@ -5,7 +5,7 @@
  * Dra för att ändra bredden, klicka för att fälla ihop. Med tangentbordet:
  * pil vänster och höger ändrar bredden, Enter fäller ihop.
  */
-export interface PaneResizeOptions {
+interface PaneResizeOptions {
   label: string;
   width(): number;
   setWidth(w: number): void;

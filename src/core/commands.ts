@@ -31,7 +31,7 @@ export function addElements(store: DocStore, els: NewElement[], activeState: Id,
 }
 
 /** Det `deleteElements` gjorde: hur många som togs bort och hur många som var låsta. */
-export interface DeleteResult {
+interface DeleteResult {
   removed: number;
   /** Låsta objekt (eller objekt med något låst i sig) som inte togs bort (0.10.12). */
   locked: Id[];

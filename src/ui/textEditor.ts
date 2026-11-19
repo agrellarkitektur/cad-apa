@@ -3,7 +3,7 @@
 import type { Vec2 } from '../repr/primitives';
 import type { Camera } from '../view2d/camera';
 
-export interface TextEditRequest {
+interface TextEditRequest {
   /** Textens baslinje för första raden, i modellen (mm). */
   at: Vec2;
   /** Vridning moturs, radianer. */

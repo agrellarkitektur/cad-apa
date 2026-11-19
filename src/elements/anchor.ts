@@ -14,7 +14,7 @@ import { resolveParams } from './registry';
  * får axlar ur sin första punkt och riktningen mot den andra (eller sin
  * vridning). Ett objekt utan någon punkt har inga axlar.
  */
-export interface Anchor {
+interface Anchor {
   toLocal(p: Vec2): [number, number];
   fromLocal(l: readonly number[]): Vec2;
 }

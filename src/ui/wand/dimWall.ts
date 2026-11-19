@@ -84,7 +84,7 @@ function nearWall(doc: ProjectDoc, wall: Element, f: ReturnType<typeof wallFrame
  * Måttkedjan längs väggens liv på sidan `side` (1 vänster, −1 höger sett
  * från start mot slut), med måttlinjen `d` mm utanför livet.
  */
-export function wallChain(doc: ProjectDoc, wall: Element, here: readonly Element[], side: 1 | -1, d: number): DimensionParams | null {
+function wallChain(doc: ProjectDoc, wall: Element, here: readonly Element[], side: 1 | -1, d: number): DimensionParams | null {
   const f = wallFrame(resolveParams<WallParams>(doc, wall));
   if (f.arc) return null;
   const o = side * f.half;

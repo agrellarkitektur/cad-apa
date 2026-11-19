@@ -29,7 +29,7 @@ export interface EdgeCutOverride {
 }
 
 /** En bit av kroppen. `kind` skiljer takets, språngets och snittens bitar åt, för kantlinjerna. */
-export interface BodyPiece {
+interface BodyPiece {
   rings: Rings;
   under: Plane;
   top: Plane;
@@ -93,7 +93,7 @@ function edgeBits(p: RoofParams): EdgeBit[] {
  * Om kanten är takfot: den vetter nedåt i lutningen, så att taket stiger in
  * från den. Nock, grat och gavel vetter uppåt eller åt sidan.
  */
-export function isEave(p: RoofParams, bit: { a: Vec2; b: Vec2; inward: Vec2 }): boolean {
+function isEave(p: RoofParams, bit: { a: Vec2; b: Vec2; inward: Vec2 }): boolean {
   const f = roofFrame(p);
   const m: Vec2 = [(bit.a[0] + bit.b[0]) / 2, (bit.a[1] + bit.b[1]) / 2];
   const gx = f.under([m[0] + 1, m[1]]) - f.under(m);

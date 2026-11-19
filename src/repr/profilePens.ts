@@ -19,7 +19,7 @@ export const PROFILE_PENS = [
   { key: 'profileElev', label: 'Profil: konturlinje (fasad och sektion)', hint: 'Profilens kanter bortom snittet', weight: 0.18, view: 'elev', tags: ['profil', 'kontur', 'konturlinje'] },
 ] as const satisfies readonly { key: string; label: string; hint: string; weight: number; linetype?: string; view: 'plan' | 'elev' | 'section'; tags: readonly string[] }[];
 
-export type ProfilePenKey = (typeof PROFILE_PENS)[number]['key'];
+type ProfilePenKey = (typeof PROFILE_PENS)[number]['key'];
 
 type Row = { key: string; weight: number; linetype?: string; color?: string };
 const BY_KEY = new Map<string, Row>(PROFILE_PENS.map((p): [string, Row] => [p.key, p]));

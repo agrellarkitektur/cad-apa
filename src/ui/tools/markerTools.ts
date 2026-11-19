@@ -199,7 +199,7 @@ export class MarkerTool implements ViewTool, PointTaker {
 }
 
 /** Nästa lediga bokstav för en sektion: A, B, C … */
-export function nextLetter(used: string[]): string {
+function nextLetter(used: string[]): string {
   for (let i = 0; i < 26; i++) {
     const l = String.fromCharCode(65 + i);
     if (!used.includes(l)) return l;

@@ -16,7 +16,7 @@ import { zOn, type EdgePart, type Shape3D, type Solid } from './solids';
  * ytor. Snitten, pennorna och primitiverna görs i `section.ts`.
  */
 
-export interface EdgeKey {
+interface EdgeKey {
   id: string;
   action: Action;
   part?: EdgePart;
@@ -26,7 +26,7 @@ export interface EdgeKey {
 }
 
 /** Vyn: linjens början, riktningen åt höger och blickriktningen, längden, djupet och var det tonade börjar. */
-export interface SectionView {
+interface SectionView {
   O: Vec2;
   r: Vec2;
   v: Vec2;

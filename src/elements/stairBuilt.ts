@@ -23,8 +23,8 @@ import { bandBetween, sideBetween, walkDir, type Rib, type StairGeometry, type S
  * över, och dess höjd mäts lodrätt.
  */
 
-export type StringerSides = 'both' | 'left' | 'right' | 'none';
-export type StairContrast = 'none' | 'ends' | 'all';
+type StringerSides = 'both' | 'left' | 'right' | 'none';
+type StairContrast = 'none' | 'ends' | 'all';
 
 /** Förvalen för den byggda trappans delar. */
 export const BUILT = {
@@ -42,7 +42,7 @@ export const BUILT = {
 const COLOR = { tread: '#c8a57a', riser: '#ece8df', stringer: '#ece8df', contrast: '#2b2b2b' } as const;
 
 /** Den byggda trappans mått med förvalen ifyllda. */
-export interface BuiltDims {
+interface BuiltDims {
   sides: StringerSides;
   stringerWidth: number;
   stringerHeight: number;

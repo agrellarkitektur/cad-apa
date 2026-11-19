@@ -10,7 +10,7 @@ import type { AppContext } from './context';
 import { GRIPS, gripAt, gripCursor, resized, snapEdge, snapMove, type Grip } from './sheetGeometry';
 
 /** Det verktyget behöver av bladet som visas (se installSheets). */
-export interface SheetToolHost {
+interface SheetToolHost {
   drawing(): SheetDrawing | null;
   viewOf(id: Id): PlacedView | undefined;
   /** Den vy på bladet som är markerad ensam, annars null. */

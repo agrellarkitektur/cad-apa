@@ -37,7 +37,7 @@ export type RailId =
   | 'pick'
   | 'scale';
 
-export interface RailDef {
+interface RailDef {
   id: RailId;
   label: string;
   icon: IconName;

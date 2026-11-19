@@ -100,7 +100,7 @@ export function modelBounds(doc: ProjectDoc, storey?: string): { minX: number; m
 }
 
 /** Linjen och riktningarna för en fasad eller sektion. */
-export interface MarkerFrame {
+interface MarkerFrame {
   start: Vec2;
   end: Vec2;
   /** Riktningen betraktaren ser åt (enhetsvektor i plan). */
@@ -180,7 +180,7 @@ export function markerName(doc: ProjectDoc, el: Element<any>): string {
 }
 
 /** Kort beteckning i planen: väderstrecket för fasader, bokstaven för sektioner. */
-export function markerTag(doc: ProjectDoc, el: Element<any>): string {
+function markerTag(doc: ProjectDoc, el: Element<any>): string {
   if (el.type === 'Section') return (el.params as Partial<MarkerParams>).label || 'A';
   const f = markerFrame(doc, el);
   return compassOf(doc, [-f.view[0], -f.view[1]]).short;

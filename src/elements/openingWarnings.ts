@@ -34,18 +34,18 @@ const mm = (v: number) => nf.format(Math.round(v));
  * enskilda bostäder, 0,80 m i övrigt). Den höjda nivån (arbetsplatser, 800
  * också för innerdörrar) är inte ett val än.
  */
-export const PASSAGE_INNER = 760;
-export const PASSAGE_ENTRANCE = 800;
+const PASSAGE_INNER = 760;
+const PASSAGE_ENTRANCE = 800;
 /** Tröskel för en tillgänglig ytterdörr, mm (praxis; ingen siffra i föreskrifterna). */
-export const THRESHOLD_MAX = 25;
+const THRESHOLD_MAX = 25;
 /** Glas lägre än detta över golvet i bostäder ska skydda mot skärskador (BFS 2024:9, 2 kap. 31 §), mm. */
-export const SAFETY_GLASS = 600;
+const SAFETY_GLASS = 600;
 /** Öppningsbara fönster med karmöppningen under detta ska ha spärr som låser dem stängda eller på 100 mm (BFS 2024:9, 2 kap. 4 §), mm. */
-export const LOW_SILL = 600;
+const LOW_SILL = 600;
 /** Under detta ska öppningsbara fönster ha säkerhetsanordning mot att barn faller ut (BFS 2024:9, 2 kap. 4 §), mm. */
-export const CHILD_SILL = 1800;
+const CHILD_SILL = 1800;
 /** Fallhöjden som gör att 4 § gäller, mm. */
-export const FALL_HEIGHT = 2000;
+const FALL_HEIGHT = 2000;
 
 /**
  * Den fria passagen genom dörren med bladet öppet 90°: bladets luft minus

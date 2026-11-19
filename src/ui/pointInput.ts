@@ -16,7 +16,7 @@ import type { Vec2 } from '../repr/primitives';
  * mellan x och y är komma; med decimaler skrivs punkt, eller semikolon
  * mellan x och y (1200,5;600).
  */
-export type PointEntry =
+type PointEntry =
   | { kind: 'abs'; p: Vec2 }
   | { kind: 'rel'; d: Vec2 }
   | { kind: 'polar'; len: number; deg: number }

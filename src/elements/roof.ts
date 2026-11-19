@@ -4,7 +4,7 @@ import type { Element } from '../core/model';
 import { arcFromBulge, type Arc } from '../geometry/arc';
 import { boxesTouch, boxOf, difference, intersection, type Box, type Rings } from '../geometry/boolean';
 import { dist, distToSegment, left, norm, sub } from '../geometry/vec';
-import type { Pen, Primitive, Vec2 } from '../repr/primitives';
+import type { Vec2 } from '../repr/primitives';
 import { zOn, type Edges3D, type Plane, type Shape3D } from '../repr/solids';
 import { segmentCount, shapePoints } from './drawing2d';
 import { bodyEdges, roofBody, type EdgeCut, type EdgeCutOverride } from './roofBody';
@@ -194,7 +194,7 @@ function pointIn(q: Vec2, ring: readonly Vec2[]): boolean {
 }
 
 /** En del av en vägg med sin ovansida: en höjd eller ett plan. */
-export interface TopPiece {
+interface TopPiece {
   rings: Rings;
   /** Sned ovansida, eller utelämnad för väggens egen höjd. */
   top?: Plane;
@@ -397,20 +397,6 @@ export function outlineEdges(p: RoofParams): [Vec2, Vec2, number][] {
         ]);
       }
     }
-  }
-  return out;
-}
-
-/** Konturens kanter i plan: raka som linjer, bågar som polylinjer. */
-export function outlinePrims(p: Pick<RoofParams, 'outline' | 'bulges'>, pen: Pen, origin: Primitive['origin']): Primitive[] {
-  const pts = p.outline as Vec2[];
-  const out: Primitive[] = [];
-  for (let i = 0; i < segmentCount(pts.length, true); i++) {
-    const a = pts[i];
-    const b = pts[(i + 1) % pts.length];
-    const bulge = p.bulges?.[i] ?? 0;
-    if (!arcFromBulge(a, b, bulge)) out.push({ kind: 'line', a, b, pen, origin });
-    else out.push({ kind: 'polyline', points: shapePoints({ shape: 'polyline', points: [[a[0], a[1]], [b[0], b[1]]], bulges: [bulge] }).points, closed: false, pen, origin });
   }
   return out;
 }

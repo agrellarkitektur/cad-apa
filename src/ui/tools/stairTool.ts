@@ -26,7 +26,7 @@ import { roundMm, snap, type SnapResult } from './snap';
  * och varvriktning i verktygsraden, sedan två klick, mitten och riktningen
  * där trappan börjar.
  */
-export interface SpiralOptions {
+interface SpiralOptions {
   inner: number;
   outer: number;
   sweep: number;

@@ -91,7 +91,7 @@ ${colXml}<sheetData>${rows}</sheetData></worksheet>`;
 }
 
 /** Bladets namn: högst 31 tecken, utan de tecken Excel inte tillåter. */
-export const sheetName = (name: string): string => name.replace(/[\\/?*[\]:]/g, ' ').trim().slice(0, 31) || 'Blad1';
+const sheetName = (name: string): string => name.replace(/[\\/?*[\]:]/g, ' ').trim().slice(0, 31) || 'Blad1';
 
 /** Arbetsboken som bytes. */
 export function writeXlsx(sheet: XlsxSheet, date = new Date()): Uint8Array {

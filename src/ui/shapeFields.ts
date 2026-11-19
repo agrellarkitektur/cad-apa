@@ -118,7 +118,7 @@ function materialFieldChange(store: DocStore, ids: Id[], m: Material, name: stri
 }
 
 /** En egen fyllningstyps vridning och skala (0.8.36). Null = olika i markeringen. */
-export function typeFields(p: { fillTypeAngle: number | null; fillTypeScale: number | null }, attrs: (key: string) => string): string {
+function typeFields(p: { fillTypeAngle: number | null; fillTypeScale: number | null }, attrs: (key: string) => string): string {
   const v = (n: number | null) => (n === null ? '' : comma(n));
   const mixed = (n: number | null) => (n === null ? ' placeholder="Olika"' : '');
   return `<label class="field"><span>Vridning</span><span class="input-unit"><input type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" ${attrs('fillTypeAngle')} value="${v(p.fillTypeAngle)}"${mixed(p.fillTypeAngle)}><i>°</i></span></label>
@@ -126,7 +126,7 @@ export function typeFields(p: { fillTypeAngle: number | null; fillTypeScale: num
 }
 
 /** Skrafferingens vinkel och avstånd; också direkt i smartmenyn (0.8.22). Null = olika i markeringen. */
-export function hatchFields(p: { fillAngle: number | null; fillSpacing: number | null }, attrs: (key: string) => string): string {
+function hatchFields(p: { fillAngle: number | null; fillSpacing: number | null }, attrs: (key: string) => string): string {
   const v = (n: number | null) => (n === null ? '' : comma(n));
   const mixed = (n: number | null) => (n === null ? ' placeholder="Olika"' : '');
   return `<label class="field"><span>Vinkel</span><span class="input-unit"><input type="text" data-expr data-unit="deg" inputmode="decimal" autocomplete="off" ${attrs('fillAngle')} value="${v(p.fillAngle)}"${mixed(p.fillAngle)}><i>°</i></span></label>
@@ -138,7 +138,7 @@ export function hatchFields(p: { fillAngle: number | null; fillSpacing: number |
  * (0.10.14 en lista i stället för en kryssruta), färgen och opaciteten.
  * Null = olika i markeringen.
  */
-export function backgroundFields(p: { fillBackground?: string | null; fillBackgroundOpacity?: number | null }, attrs: (key: string) => string): string {
+function backgroundFields(p: { fillBackground?: string | null; fillBackgroundOpacity?: number | null }, attrs: (key: string) => string): string {
   const mixed = p.fillBackground === null;
   const kind = mixed ? null : p.fillBackground === undefined ? 'none' : p.fillBackground === FILL_BACKGROUND ? 'mask' : 'color';
   const op = p.fillBackgroundOpacity === null ? NaN : (p.fillBackgroundOpacity ?? 100);
@@ -192,7 +192,7 @@ export function shapeSmartFields(doc: ProjectDoc, els: Element[]): string | null
 }
 
 /** Kryssrutan *Avgränsar rum* (0.8.34). Null = olika i markeringen. */
-export function boundsField(on: boolean | null, attrs: (key: string) => string): string {
+function boundsField(on: boolean | null, attrs: (key: string) => string): string {
   return `<label class="check" title="Linjen räknas som en vägg när rummen räknas ut, också med pennan 0"><input type="checkbox" ${attrs('boundsRooms')}${on ? ' checked' : ''}${on === null ? ' data-mixed' : ''}> Avgränsar rum${on === null ? ' (olika)' : ''}</label>`;
 }
 

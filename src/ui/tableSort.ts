@@ -37,7 +37,7 @@ export function compareCells(a: string, b: string): number {
 }
 
 /** Sortera tabellens rader efter kolumnen. */
-export function sortTable(t: HTMLTableElement, s: SortState): void {
+function sortTable(t: HTMLTableElement, s: SortState): void {
   const body = t.tBodies[0];
   if (!body) return;
   const rows = [...body.rows].map((r, i) => ({ r, i, v: cellValue(r, s.col) }));
@@ -53,7 +53,7 @@ export function sortTable(t: HTMLTableElement, s: SortState): void {
 const sortable = (th: HTMLTableCellElement) => !!th.textContent?.trim() && !th.querySelector('input, select, button');
 
 /** Lägg på den sparade sorteringen i tabellerna i `root`. */
-export function applySavedSorts(root: ParentNode): void {
+function applySavedSorts(root: ParentNode): void {
   const tables = root instanceof HTMLTableElement ? [root] : [...root.querySelectorAll<HTMLTableElement>('table')];
   for (const t of tables) {
     if (!t.tHead) continue;

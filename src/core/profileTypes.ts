@@ -65,7 +65,7 @@ export const ANCHOR_POS_LABELS: Record<AnchorPos, string> = {
   br: 'Nedre framkant',
 };
 
-export interface ProfileAnchor {
+interface ProfileAnchor {
   no: number;
   name: string;
   /** Ett av de nio lägena, eller en egen punkt (`at`). */
@@ -74,7 +74,7 @@ export interface ProfileAnchor {
 }
 
 /** En sträckzon: ett band i tvärsnittet. Höjd: y mellan `from` och `to`; Bredd: x. */
-export interface StretchZone {
+interface StretchZone {
   axis: 'height' | 'width';
   from: number;
   to: number;
@@ -223,7 +223,7 @@ function stretch(v: number, z: StretchZone, delta: number): number {
 }
 
 /** Hur mycket varje zon sträcks: parametern (Höjd, Bredd) mot det ritade måttet. Utan zon är måttet låst. */
-export function zoneDeltas(model: ProfileTypeModel, vals: ReadonlyMap<string, number>): { zone: StretchZone; delta: number }[] {
+function zoneDeltas(model: ProfileTypeModel, vals: ReadonlyMap<string, number>): { zone: StretchZone; delta: number }[] {
   const box = profileBox(model);
   const out: { zone: StretchZone; delta: number }[] = [];
   for (const axis of ['height', 'width'] as const) {

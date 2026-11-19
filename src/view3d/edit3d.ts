@@ -36,7 +36,7 @@ export interface Edit3DHost {
 }
 
 /** Det redigeringen behöver av vyn. */
-export interface EditView {
+interface EditView {
   el: HTMLElement;
   canvas: HTMLCanvasElement;
   editor(): Edit3DHost | undefined;

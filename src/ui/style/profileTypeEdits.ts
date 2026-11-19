@@ -16,7 +16,7 @@ const parse = (raw: string) => Number(raw.replace(/\s/g, '').replace(',', '.').r
 const r1 = (v: number) => Math.round(v * 10) / 10;
 
 /** Höjd och Bredd följer det ritade när konturerna ändras (ett fast värde; en formel lämnas). */
-export function syncSize(m: ProfileTypeModel): ProfileTypeModel {
+function syncSize(m: ProfileTypeModel): ProfileTypeModel {
   const box = boxOfPoints(m.parts.flatMap((p) => flatContour(p.contour)));
   for (const axis of ['height', 'width'] as const) {
     const q = m.params.find((x) => x.name === ZONE_PARAM[axis]);

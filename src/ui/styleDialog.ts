@@ -39,7 +39,7 @@ type Place = { kind: 'general' } | { kind: 'type'; type: ViewType } | { kind: 'r
 type Resource = 'pens' | 'materials' | 'lineTypes' | 'fillTypes' | 'railings' | 'profiles' | 'endProfiles' | 'openings' | 'schedule' | 'text';
 
 /** Stilbokens flikar (0.11.6, beslut D och H): Stil, Typer och Allmänt. */
-export type BookTab = 'style' | 'types' | 'general';
+type BookTab = 'style' | 'types' | 'general';
 
 const TABS: readonly [BookTab, string][] = [
   ['style', 'Stil'],

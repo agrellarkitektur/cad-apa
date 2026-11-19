@@ -45,11 +45,6 @@ function bulgesParam(b: number[]): { bulges: number[] | undefined } {
   return { bulges: r.length ? r : undefined };
 }
 
-/** Om elementet har punkter som går att dra. */
-export function isShape(s: ShapeLike | undefined): s is ShapeLike {
-  return s?.type === 'Shape2D';
-}
-
 /** En håltagning som en sluten 2D-form (0.9.4), så att samma grepp och val gäller. */
 export function holeShape(h: SlabHole): ShapeLike {
   return { type: 'Shape2D', params: { shape: 'polyline', points: h.points, ...(h.bulges ? { bulges: h.bulges } : {}), closed: true } };
@@ -95,7 +90,7 @@ export function isRamp(el: ShapeLike | undefined): boolean {
 }
 
 /** Rampens sida som en öppen 2D-form (0.10.18, med bågar 0.10.19): `hole` 0 är vänster sida, 1 höger. */
-export function rampSideShape(el: ShapeLike, hole: number): ShapeLike | undefined {
+function rampSideShape(el: ShapeLike, hole: number): ShapeLike | undefined {
   const side = rampSideLines(el.params as RampParams)[hole === 0 ? 'left' : 'right'];
   const pts = side.points;
   return pts.length >= 2 ? { type: 'Shape2D', params: { shape: 'polyline', points: pts.map((q) => [Math.round(q[0]), Math.round(q[1])]), ...(hasArcs(side.bulges) ? { bulges: side.bulges } : {}), closed: false } } : undefined;

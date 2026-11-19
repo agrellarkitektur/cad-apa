@@ -25,10 +25,10 @@ import { pxToMm, type ToolHost } from './host';
  */
 
 /** Hur nära ett grepp markören ska vara, px. */
-export const GRIP_PX = 14;
+const GRIP_PX = 14;
 
 /** En sektions- eller fasadmarkör som placerats för hand och har grepp i ändarna. */
-export function isManualMarker(el: Element | undefined): el is Element {
+function isManualMarker(el: Element | undefined): el is Element {
   return !!el && (el.type === 'Section' || el.type === 'Elevation' || el.type === 'BasisFacade') && !el.params.auto && !el.locked;
 }
 

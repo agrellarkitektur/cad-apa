@@ -16,7 +16,7 @@ type RegionRings = Extract<Primitive, { kind: 'region' }>['rings'];
  */
 export type LineWeights = 'thin' | 'screen' | 'true';
 
-export interface RenderOptions {
+interface RenderOptions {
   /** Ritningsskalans nämnare (100 för 1:100). Styr texthöjd, streck och skraffering. */
   drawingScale: number;
   /** Linjernas tjocklek på skärmen; förval `screen`. */
@@ -234,7 +234,7 @@ function ring(points: readonly (readonly [number, number])[], cam: Camera, close
 }
 
 /** Färger på skärmen. "ink" och "paper" följer temat; hexkoder visas som de är. */
-export function color(c: PenColor): string {
+function color(c: PenColor): string {
   switch (c) {
     case 'ink':
       return 'var(--ink)';
@@ -255,7 +255,7 @@ export function color(c: PenColor): string {
  * som i de flesta CAD-program. Verklig: pappersmåttet genom ritningens skala
  * och zoomen. Tunna: högst 1 px.
  */
-export function penPx(weight: number, paperToPx: number, mode: LineWeights, min: number): number {
+function penPx(weight: number, paperToPx: number, mode: LineWeights, min: number): number {
   if (mode === 'true') return Math.max(min, weight * paperToPx);
   if (mode === 'thin') return Math.max(min, Math.min(1, weight * 4));
   return Math.max(min, weight * 4);

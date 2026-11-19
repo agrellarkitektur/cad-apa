@@ -19,7 +19,7 @@ import { leanedShape, openingMarks, openingZoneInPlan, type WallParams } from '.
 import { outsideSide } from './wallSides';
 
 /** Allt om en öppning som planen och 3D behöver. */
-export interface OpeningGeo {
+interface OpeningGeo {
   p: OpeningObjParams;
   m: OpeningTypeModel;
   z: OpeningZone;
@@ -35,7 +35,7 @@ export interface OpeningGeo {
   lift: number;
 }
 
-export function openingGeo(ctx: PlanContext, el: Element<any>, host: Element<any>, kind: OpeningKind, inPlan: boolean): OpeningGeo {
+function openingGeo(ctx: PlanContext, el: Element<any>, host: Element<any>, kind: OpeningKind, inPlan: boolean): OpeningGeo {
   const p = ctx.params<OpeningObjParams>(el);
   const m = openingModelOf(ctx.doc, el);
   const outside = ctx.memo(`outside:${host.id}`, () => outsideSide(ctx.doc, host));

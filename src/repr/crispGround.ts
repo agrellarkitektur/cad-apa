@@ -28,7 +28,7 @@ import type { Vec2 } from './primitives';
  * rutnätet.
  */
 
-export interface Crisp {
+interface Crisp {
   id: string;
   /** Konturen, och för varje kant (från punkt i till nästa) om den är en stödmur. */
   ring: Vec2[];
@@ -156,7 +156,7 @@ export function groundBeside(t: Terrain, line: readonly Vec2[], x: number, y: nu
 }
 
 /** Närmaste kant i ringen: om punkten ligger inuti, avståndet och kantens nummer. */
-export function nearestRingEdge(ring: readonly Vec2[], x: number, y: number): { inside: boolean; d: number; edge: number } {
+function nearestRingEdge(ring: readonly Vec2[], x: number, y: number): { inside: boolean; d: number; edge: number } {
   let inside = false;
   let best = Infinity;
   let edge = 0;

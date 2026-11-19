@@ -259,7 +259,7 @@ export interface Material {
 }
 
 /** Materialets textur i 3D (0.10.31). */
-export interface MaterialTexture {
+interface MaterialTexture {
   asset: string;
   /** Bildens sida i verkligheten, mm. */
   size: number;
@@ -316,7 +316,7 @@ export interface PenDef {
 }
 
 /** Litteramallar för en objekttyp. Rader skiljs med radbrytning. */
-export interface LitteraTemplates {
+interface LitteraTemplates {
   normal: string;
   detail: string;
 }
@@ -327,7 +327,7 @@ export interface LitteraTemplates {
  * {karm} (990×2090) och egna egenskaper med sitt namn, t.ex. {brandklass}.
  * Rader där alla fält är tomma hoppas över. I Skiss visas ingen littera.
  */
-export interface LabelStyle {
+interface LabelStyle {
   align: 'left' | 'center';
   /** Texthöjder på papper, mm. */
   heights: { roomName: number; roomInfo: number; littera: number; dimension: number };
@@ -349,7 +349,7 @@ export interface LabelStyle {
 /** Littera-sorterna som har en ledare (0.10.20.1); `Ground` är stödmurens, `Label` det generella littrat (0.10.20.2). */
 export type LeaderKind = 'Wall' | 'Door' | 'Window' | 'Space' | 'Ground' | 'Label';
 
-export interface LeaderStyle {
+interface LeaderStyle {
   end: LeaderEnd;
   stub: number;
   /** Från sidan eller understruken (0.10.20.2). */

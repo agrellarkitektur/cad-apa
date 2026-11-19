@@ -90,7 +90,7 @@ export function clipOutside(pts: readonly Vec2[], areas: readonly (readonly (rea
 }
 
 /** Som `clipOutside`, och var varje bit börjar längs linjen (mm, 0.8.30). */
-export function clipOutsideAt(pts: readonly Vec2[], areas: readonly (readonly (readonly Vec2[])[])[]): { points: Vec2[]; at: number }[] {
+function clipOutsideAt(pts: readonly Vec2[], areas: readonly (readonly (readonly Vec2[])[])[]): { points: Vec2[]; at: number }[] {
   const inside = (q: Vec2) => areas.some((rings) => pointInRings(q, rings));
   const out: { points: Vec2[]; at: number }[] = [];
   let run: Vec2[] | null = null;

@@ -46,7 +46,7 @@ export function slopeField(t: Pick<Terrain, 'grid' | 'z'>): Float32Array {
   return out;
 }
 
-export interface SteepMark {
+interface SteepMark {
   /** Strecket från krönet till foten, längs fallinjen, mm i modellen. */
   pts: Vec2[];
   length: number;

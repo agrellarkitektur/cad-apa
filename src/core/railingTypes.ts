@@ -31,7 +31,7 @@ export const PART_KIND_LABELS: Record<RailPartKind, string> = { point: 'Punkt', 
  * höjd), rund (diameter) eller en profiltyp (0.11.7) med ankare och
  * vridning kring ankaret.
  */
-export interface RailProfile {
+interface RailProfile {
   shape: 'rect' | 'round' | 'profile';
   /** Bredd eller diameter, mm (för en profiltyp: det senast kända måttet, som reserv). */
   w: number;

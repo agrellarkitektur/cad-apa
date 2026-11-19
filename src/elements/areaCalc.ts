@@ -87,11 +87,11 @@ export interface AreaParams {
 }
 
 /** Hur långt in i en vägg tjockare än 0,30 m arean räknas från varje sida, mm (5.16.3). */
-export const WALL_INTO = 150;
+const WALL_INTO = 150;
 /** Bredaste öppningen som räknas som vägg, mm (5.3, 5.17). */
-export const WIDE_OPENING = 1500;
+const WIDE_OPENING = 1500;
 /** Glaspartiets högsta bröstning, mm (5.7): lägre räknas till karmlivet. */
-export const GLASS_SILL = 150;
+const GLASS_SILL = 150;
 
 /** Beteckningen med tillhörighet och temperaturreglering, t.ex. *BOAe(t)*. */
 export function areaCode(p: Pick<AreaParams, 'kind' | 'belong' | 'temp'>): string {
@@ -212,7 +212,7 @@ function holesAt(ctx: PlanContext, seeds: readonly [number, number][]): Vec2[][]
  * Ett ritat hål över en trappa räknas med när det är högst 30 % större än
  * trappan i hålet (5.15.2); annars räknas bara trappan.
  */
-export function otherFloorOpenings(ctx: PlanContext): Rings[] {
+function otherFloorOpenings(ctx: PlanContext): Rings[] {
   return ctx.memo('area-floor-openings', () => {
     const doc = ctx.doc;
     const storey = ctx.storey ?? ctx.visible()[0]?.storey;
@@ -257,7 +257,7 @@ function stairsBelow(doc: ProjectDoc, storey: Id, ctx: PlanContext): Rings[] {
 // BTA och BYA
 
 /** Husets ytterkontur på våningen: väggarnas yttre ringar (ytterväggarnas utsida). */
-export function outerContour(ctx: PlanContext): Rings[] {
+function outerContour(ctx: PlanContext): Rings[] {
   return ctx.memo('area-contour', () => {
     const mass = bareWallUnion(wallsOf(ctx).map((w) => ({ id: w.el.id, p: w.p })));
     const outer = mass.map((poly): Rings => [poly[0]]).filter((p) => Math.abs(signedArea(p[0])) > 1e4);

@@ -21,7 +21,7 @@ import { createSectionQueue, spawnSectionWorker } from './sectionQueue';
 import { selectionBounds } from './selectionPlace';
 
 /** Det på sidan som ritningen styr utöver själva planen. */
-export interface RenderParts {
+interface RenderParts {
   chips: HTMLElement;
   compareToggle: HTMLInputElement;
   compareLabel: HTMLElement;

@@ -85,7 +85,7 @@ export const MUNTIN_KINDS: readonly { kind: MuntinKind; label: string; width: nu
  * ritade i editorn (ändarna som andelar 0–1 av glasets bredd och höjd, från
  * nedre vänstra hörnet sett utifrån). Bredden och utförandet för sig.
  */
-export interface Muntins {
+interface Muntins {
   v: number;
   h: number;
   kind: MuntinKind;
@@ -121,7 +121,7 @@ export interface OpeningCell {
  * väggens liv runt hålet, blecket med droppnäsa ute under karmen och bänken
  * inne, båda i ytterväggar.
  */
-export interface OpeningTrim {
+interface OpeningTrim {
   /** Fodret: bredd i fasaden, tjocklek ut från väggens liv, och på vilka sidor. */
   lining: { width: number; thickness: number; sides: 'both' | 'in' | 'out' | 'none' };
   /**
@@ -134,7 +134,7 @@ export interface OpeningTrim {
 }
 
 /** Beslagen (0.11.8.2): punktdelar som ritas i Detalj. */
-export interface OpeningHardware {
+interface OpeningHardware {
   /** Handtaget: trycke, draghandtag eller inget (fönstren: handtag på låssidan). */
   handle: 'lever' | 'pull' | 'none';
   /** Handtagets höjd över golvet för dörrar, mm (fönstren: mitt på bågen). */
@@ -152,7 +152,7 @@ export interface OpeningHardware {
  * genomgående eller en nisch med ett djup från väggens liv, och om det har
  * ett galler (ventgaller).
  */
-export interface HoleSpec {
+interface HoleSpec {
   shape: 'rect' | 'round';
   /** Nischens djup från livet, mm; null = genom väggen. */
   depth: number | null;
@@ -361,7 +361,7 @@ export function newOpeningModel(kind: OpeningKind, group: string): OpeningTypeMo
 export const standsOnFloor = (m: Pick<OpeningTypeModel, 'kind' | 'sill'>): boolean => m.kind === 'door' || m.sill === 0;
 
 /** Hur hålet och karmen räknas ur modulmåttet (stilboken › Allmänt). */
-export interface OpeningMeasure {
+interface OpeningMeasure {
   /** Hålmåttet är modulmåttet plus detta, på båda ledder (praxis 10). */
   holeAdd: number;
   /** Karmyttermåttet är modulmåttet minus detta, på båda ledder (tillverkarens, ofta 10–20). */
@@ -516,7 +516,7 @@ export interface OpeningLayout {
 }
 
 /** Fördela `inner` mm på spåren: fasta mm först, resten i andelar. */
-export function trackSizes(list: readonly Track[], inner: number): number[] {
+function trackSizes(list: readonly Track[], inner: number): number[] {
   const fixed = list.reduce((a, t) => a + (t.unit === 'mm' ? t.size : 0), 0);
   const frs = list.reduce((a, t) => a + (t.unit === 'fr' ? t.size : 0), 0);
   const rest = Math.max(0, inner - fixed);
@@ -577,9 +577,6 @@ export function layoutOpening(m: OpeningTypeModel, w: number, h: number): Openin
     }
   return { w, h, frame, mullions, transoms, cells };
 }
-
-/** Om typen har en luft eller ett blad som öppnas (för slagbåge och symboler). */
-export const opens = (c: Pick<OpeningCell, 'op'>): boolean => c.op !== 'fixed';
 /** Om luften har en båge (öppningsbar glasluft) och inte bara glas i karmen. */
 export const hasSash = (c: Pick<OpeningCell, 'op' | 'fill'>): boolean => c.fill === 'glass' && c.op !== 'fixed' && !LEAF_OPS.has(c.op);
 
@@ -588,7 +585,7 @@ export const hasSash = (c: Pick<OpeningCell, 'op' | 'fill'>): boolean => c.fill 
 
 const frac = (v: unknown): number => Math.max(0, Math.min(1, Number(v) || 0));
 
-export function normalizeMuntins(v: unknown): Muntins | null {
+function normalizeMuntins(v: unknown): Muntins | null {
   if (!v || typeof v !== 'object') return null;
   const o = v as Record<string, any>;
   const kind: MuntinKind = o.kind === 'between' || o.kind === 'fixed' ? o.kind : 'loose';
@@ -660,7 +657,7 @@ export function muntinOutline(lines: readonly [number, number, number, number][]
 // Dörrbladets indelning (0.11.8.1)
 
 /** En fyllning (spegel) i bladet: ett eller flera fält i bladets rutnät, med material. */
-export interface LeafFill {
+interface LeafFill {
   col: number;
   row: number;
   colSpan?: number;
@@ -720,7 +717,7 @@ export function leafGridPreset(style: LeafStyle): LeafGrid | null {
 /** Bladets indelning: egen, eller förvalet för utförandet (slätt har ingen). */
 export const leafGridOf = (c: Pick<OpeningCell, 'leaf' | 'leafGrid'>): LeafGrid | null => c.leafGrid ?? leafGridPreset(c.leaf ?? 'flat');
 
-export interface LaidLeaf {
+interface LaidLeaf {
   /** Fyllningarna i bladet (u, z som luftens rutor). */
   fills: (LeafFill & { rect: Rect })[];
   /** Bladets rutor utan fyllning (ramstyckena), med sin plats i rutnätet. */

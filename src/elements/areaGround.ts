@@ -21,7 +21,7 @@ import { outsideSide } from './wallSides';
  */
 
 /** Zonens djup från ytterväggens insida, mm. */
-export const ZONE_DEPTH = 6000;
+const ZONE_DEPTH = 6000;
 /** Marken läses så här långt utanför väggens utsida, mm. */
 const PROBE = 300;
 /** Avståndet mellan punkterna längs väggen, mm. */

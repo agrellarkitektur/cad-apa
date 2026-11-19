@@ -3,7 +3,7 @@
 import { newId } from './ids';
 import type { Definition, Id } from './model';
 import { DEFAULT_OPENING_TYPES, elementTypeOfKind, newOpeningModel, openingDefinition, OPENING_GROUPS, type OpeningKind, type OpeningTypeModel } from './openingTypes';
-import type { DocStore, TxBuilder } from './store';
+import type { DocStore } from './store';
 
 /**
  * Kommandona för dörr-, fönster- och vägghålstyperna (0.11.8): lägga in de
@@ -40,12 +40,6 @@ export function addDefaultHoleTypes(store: DocStore): number {
   return n;
 }
 
-/** En förvald typ i en transaktion, om den saknas (verktyget när projektet saknar typer). */
-export function ensureOpeningType(tx: TxBuilder, id: Id): void {
-  const t = DEFAULT_OPENING_TYPES.find((x) => x.id === id);
-  if (t && !tx.doc.definitions[id]) tx.putDefinition(openingDefinition(t));
-}
-
 /** Typerna i den ordning de visas: grupperna, sedan namnet. */
 export function openingTypesOf(doc: DocStore['doc'], kind?: OpeningKind): Definition[] {
   const groups = openingGroups(doc);
@@ -72,7 +66,7 @@ export function updateOpeningType(store: DocStore, defId: Id, label: string, fn:
   return true;
 }
 
-export function addOpeningType(store: DocStore, name: string, model: OpeningTypeModel, description?: string): Id {
+function addOpeningType(store: DocStore, name: string, model: OpeningTypeModel, description?: string): Id {
   const id = newId('t');
   store.transact(`Ny typ ${name}`, (tx) => tx.putDefinition({ id, origin: 'component', name, elementType: elementTypeOfKind(model.kind), params: {}, props: {}, opening: model, ...(description ? { description } : {}) }));
   return id;

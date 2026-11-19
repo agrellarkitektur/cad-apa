@@ -17,7 +17,7 @@ import { defaultProfilePen, PROFILE_PENS } from './profilePens';
  * vytyper gruppen visas (raderna gäller ändå där de ritas), och `tags` är
  * de automatiska taggarna för objekt och del.
  */
-export interface PenRow {
+interface PenRow {
   key: string;
   label: string;
   hint: string;
@@ -68,7 +68,7 @@ function cutTags(key: string): string[] {
   return m ? [...(CUT_OBJECT[m[2]] ?? []), m[1] === 'above' ? 'över snittet' : 'under snittet'] : [];
 }
 
-export const PEN_GROUPS: readonly PenGroup[] = [
+const PEN_GROUPS: readonly PenGroup[] = [
   {
     id: 'walls',
     title: 'Väggar',
@@ -154,11 +154,6 @@ export const penGroupsFor = (type: ViewType): PenGroup[] =>
   PEN_GROUPS.filter((g) => g.types.includes(type))
     .map((g) => (g.rows.some((r) => r.types) ? { ...g, rows: g.rows.filter((r) => !r.types || r.types.includes(type)) } : g))
     .filter((g) => g.rows.length);
-
-const ROW_OF = new Map(PEN_GROUPS.flatMap((g) => g.rows.map((r) => [r.key, { row: r, group: g }] as const)));
-
-/** Raden och gruppen för en nyckel i penntabellen. */
-export const penRowOf = (key: string) => ROW_OF.get(key);
 
 /** Förvalet för en rad i penntabellen: objekten, snittet, höjdkurvorna, fasaderna eller en markör. */
 export function penDefault(key: string): PenDef {

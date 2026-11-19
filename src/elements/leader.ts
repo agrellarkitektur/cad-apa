@@ -76,14 +76,14 @@ export interface TextBox {
 }
 
 /** En punkt som ledaren pekar på; `inside` när den ligger inne i en yta (prick som förval). */
-export interface LeaderTarget {
+interface LeaderTarget {
   at: Vec2;
   inside?: boolean;
   /** Egen penna för den sneda delen och änden (0.10.20.2: röd när objektet är borttaget). */
   pen?: Pen;
 }
 
-export interface LeaderOptions {
+interface LeaderOptions {
   side?: LeaderSide;
   end?: LeaderEnd;
   /** Från sidan (förval) eller understruken: strecket under hela texten, och stammen fortsätter från dess ände. */
@@ -99,7 +99,7 @@ export interface LeaderOptions {
   origin?: Origin;
 }
 
-export interface LeaderGeometry {
+interface LeaderGeometry {
   side: Exclude<LeaderSide, 'auto'>;
   /** Stammens riktning, ut från texten. */
   dir: Vec2;
@@ -139,7 +139,7 @@ export function autoSide(box: TextBox, targets: readonly LeaderTarget[]): Exclud
 }
 
 /** Stammens riktning för en sida. */
-export function sideDir(box: TextBox, side: Exclude<LeaderSide, 'auto'>): Vec2 {
+function sideDir(box: TextBox, side: Exclude<LeaderSide, 'auto'>): Vec2 {
   return side === 'right' ? box.along : side === 'left' ? neg(box.along) : side === 'up' ? box.up : neg(box.up);
 }
 
@@ -204,7 +204,7 @@ function sideAcross(box: TextBox, targets: readonly LeaderTarget[]): 'left' | 'r
 }
 
 /** Ändens tecken vid `tip`, där ledaren kommer i riktningen `u`. */
-export function leaderEnd(kind: Exclude<LeaderEnd, 'auto'>, tip: Vec2, u: Vec2, s: number, pen: Pen, origin?: Origin): Primitive[] {
+function leaderEnd(kind: Exclude<LeaderEnd, 'auto'>, tip: Vec2, u: Vec2, s: number, pen: Pen, origin?: Origin): Primitive[] {
   const n: Vec2 = [-u[1], u[0]];
   const size = 2.5 * s;
   const base = add(tip, u, -size);

@@ -11,7 +11,7 @@ import { scheduleTable } from './schedules';
  * för hela projektet i förslaget, i hela m² (summaposter, SS 21054 4.3),
  * t.ex. *96 m²*. Saknas slaget blir texten tom.
  */
-export const AREA_TAGS: readonly [string, string][] = [
+const AREA_TAGS: readonly [string, string][] = [
   ['BYA', 'Byggnadsarea, markplanet med de mätvärda taksprången'],
   ['BTA', 'Bruttoarea, alla våningar'],
   ['BRA', 'Bruksarea, summan av BOA, BIA, LOA och ÖVA'],

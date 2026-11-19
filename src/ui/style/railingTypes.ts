@@ -22,7 +22,7 @@ import { previewMarkup, PREVIEW_MODES, type PreviewMode } from './railingPreview
  * typen i räckets panel (`rail:type:<def>:…`), så ändringarna går genom
  * `applyRailingField` och `railingAction`.
  */
-export interface RailEditorState {
+interface RailEditorState {
   def: Id | null;
   part: string | null;
   mode: PreviewMode;

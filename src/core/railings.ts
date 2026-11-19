@@ -59,7 +59,7 @@ export function railingTypesFor(doc: DocStore['doc'], ground: boolean): Definiti
     .sort((a, b) => rank(a) - rank(b) || a.name.localeCompare(b.name, 'sv', { numeric: true }));
 }
 
-export type NewRailing = Omit<Element, 'id' | 'type' | 'states' | 'tags' | 'props'> & { states?: Id[] };
+type NewRailing = Omit<Element, 'id' | 'type' | 'states' | 'tags' | 'props'> & { states?: Id[] };
 
 /** Lägg räcken, med de förvalda typerna om de saknas. */
 export function addRailings(store: DocStore, list: NewRailing[], states: Id[], label: string): Element[] {

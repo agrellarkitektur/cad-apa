@@ -71,7 +71,7 @@ function isExterior(p: WallParams, outlines: Rings): boolean {
  * Ytan innanför ytterväggarna på en våning: husets ytterkontur minus
  * ytterväggarnas massa. Samma väggar ger samma svar.
  */
-export function insideWalls(walls: { id: string; p: WallParams }[]): Rings[] {
+function insideWalls(walls: { id: string; p: WallParams }[]): Rings[] {
   return savedInside(walls.flatMap((w) => [w.id, w.p]), () => {
     if (!walls.length) return [];
     const outlines = bareWallUnion(walls).map((poly) => poly[0]);
@@ -101,7 +101,7 @@ const hasArcs = (h: SlabHole) => !!h.bulges?.some((b) => Math.abs(b) >= 0.5);
  * En sluten konturs kanter som linjer, bågarna som korta raka bitar i en
  * polylinje (0.9.4 för hålen, 0.10.24 för konturen).
  */
-export function outlineEdges(h: SlabHole, pen: Pen, origin: Origin, under = false): Primitive[] {
+function outlineEdges(h: SlabHole, pen: Pen, origin: Origin, under = false): Primitive[] {
   const out: Primitive[] = [];
   const n = h.points.length;
   for (let i = 0; i < segmentCount(n, true); i++) {
@@ -171,7 +171,7 @@ export function slabsOn(ctx: PlanContext): Rings[] {
  * Krysset i en håltagning: diagonalerna mellan motstående hörn. Med bågar
  * (0.9.4) den omslutande rektangelns diagonaler, de bitar som ligger i hålet.
  */
-export function holeCross(hole: SlabHole): [Vec2, Vec2][] {
+function holeCross(hole: SlabHole): [Vec2, Vec2][] {
   if (hasArcs(hole)) return boxCross(holeRing(hole));
   const h = hole.points;
   const n = h.length;

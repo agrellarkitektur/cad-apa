@@ -95,7 +95,7 @@ export function askChoice(title: string, text: string, choices: { value: string;
 }
 
 /** En kryssruta i `askChecks`. */
-export interface CheckOption {
+interface CheckOption {
   key: string;
   label: string;
   checked?: boolean;

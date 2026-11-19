@@ -108,7 +108,7 @@ const fmtM = (mm: number) => {
 const fmtDeg = (d: number) => `${d.toLocaleString('sv-SE', { maximumFractionDigits: 1 })}°`;
 
 /** Lutningen (grader) som ger ovansidan höjden `top` (över golvet) i punkten q, med höjden vid referenslinjen kvar. Null om det inte går. */
-export function slopeThrough(p: RoofParams, q: Vec2, top: number): number | null {
+function slopeThrough(p: RoofParams, q: Vec2, top: number): number | null {
   const at = (slope: number) => roofFrame({ ...p, slope }).top(q);
   let lo = 0.5;
   let hi = 80;

@@ -70,12 +70,12 @@ export async function imageAsset(file: File, maxSide: number, prefix: string, na
 }
 
 /** Texturens längsta sida i pixlar. */
-export const TEXTURE_MAX_PX = 1024;
+const TEXTURE_MAX_PX = 1024;
 /** Ortofotots längsta sida i pixlar (de flesta grafikkort klarar 8192; 4096 räcker för ett utsnitt på några hundra meter). */
 export const ORTHO_MAX_PX = 4096;
 
 /** Välj en bild och gör den till en textur. Null om inget valdes; kastar om bilden inte går att läsa. */
-export async function pickTexture(): Promise<Asset | null> {
+async function pickTexture(): Promise<Asset | null> {
   const [file] = await pickFiles(IMAGE_ACCEPT);
   if (!file) return null;
   return (await imageAsset(file, TEXTURE_MAX_PX, 'tex')).asset;

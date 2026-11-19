@@ -20,7 +20,7 @@ import type { ViewCategory } from './viewCategories';
  */
 
 /** Mallbladen och stämplarna i en stilboksfil: arbetsbladen, det som är ritat på dem och det förvalda mallbladet. */
-export interface PaperPart {
+interface PaperPart {
   worksheets: Worksheet[];
   elements: Element[];
   master?: Id;
@@ -61,12 +61,12 @@ function bookAssetIds(book: StyleBook): Id[] {
  * sedan 0.11.8.2 dörr- och fönstertyperna (de med `opening`). Deras
  * grupper står redan i stilboken (fönstrens och dörrarnas i typen).
  */
-export const BOOK_TYPES: readonly string[] = ['Profile', 'Railing'];
+const BOOK_TYPES: readonly string[] = ['Profile', 'Railing'];
 const OPENING_TYPES: readonly string[] = ['Door', 'Window', 'WallHole'];
 
 const isBookType = (d: Pick<Definition, 'elementType'> & { opening?: unknown }): boolean => BOOK_TYPES.includes(d.elementType) || (OPENING_TYPES.includes(d.elementType) && !!d.opening);
 
-export function bookTypes(doc: Pick<ProjectDoc, 'definitions'>): Definition[] {
+function bookTypes(doc: Pick<ProjectDoc, 'definitions'>): Definition[] {
   return Object.values(doc.definitions).filter(isBookType);
 }
 

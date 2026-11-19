@@ -32,7 +32,7 @@ export interface SnapSegment {
   wandOnly?: boolean;
 }
 
-export type SnapKind = 'division' | 'endpoint' | 'midpoint' | 'center' | 'quadrant' | 'start' | 'perpendicular' | 'intersection' | 'on-wall' | 'parallel' | 'track' | 'angle' | 'free';
+type SnapKind = 'division' | 'endpoint' | 'midpoint' | 'center' | 'quadrant' | 'start' | 'perpendicular' | 'intersection' | 'on-wall' | 'parallel' | 'track' | 'angle' | 'free';
 
 export interface SnapResult {
   point: Vec2;
@@ -45,7 +45,7 @@ export interface SnapResult {
   guides?: [Vec2, Vec2][];
 }
 
-export interface SnapInput {
+interface SnapInput {
   cursor: Vec2;
   /** Föregående punkt i kedjan, om man ritar en linje. */
   from?: Vec2;

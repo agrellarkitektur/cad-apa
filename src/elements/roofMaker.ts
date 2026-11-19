@@ -14,7 +14,7 @@ import { halfPlaneBelow, outlineRing, roofPlanes, type RoofParams } from './roof
 
 export type QuickKind = 'shed' | 'gable' | 'hip';
 
-export interface QuickOptions {
+interface QuickOptions {
   kind: QuickKind;
   slope: number;
   /** Höjden vid ytterlivet (referenslinjen), mm över golvet. */

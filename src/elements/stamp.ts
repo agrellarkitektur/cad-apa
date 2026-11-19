@@ -20,7 +20,7 @@ export interface StampParams {
 }
 
 /** Det som är ritat i en stämpel, kring dess nollpunkt, med smarttexten ifylld. */
-export function stampPrims(doc: ProjectDoc, stamp: Id, smart?: Readonly<Record<string, string>>): Primitive[] {
+function stampPrims(doc: ProjectDoc, stamp: Id, smart?: Readonly<Record<string, string>>): Primitive[] {
   return buildPlan(doc, doc.storeys[0].id, { state: defaultState(doc), viewId: modelViewId(stamp), place: stamp, scale: 1, ...(smart ? { smart } : {}) }).prims;
 }
 
@@ -64,7 +64,7 @@ function drawn(p: StampParams, ctx: PlanContext): Primitive[] {
 }
 
 /** Stämpelns yta på papperet. */
-export function stampBounds(p: StampParams, ctx: PlanContext): Bounds | null {
+function stampBounds(p: StampParams, ctx: PlanContext): Bounds | null {
   return boundsOf(drawn(p, ctx));
 }
 

@@ -36,7 +36,7 @@ import { applyPenField } from './pens';
 import type { StyleScope } from './categoryTab';
 
 /** Det `styleDialog.ts` låter kategoriflikens klick och fält nå. */
-export interface CategoryHost {
+interface CategoryHost {
   store: DocStore;
   readonly book: StyleBook;
   /** Den valda kategorin per vytyp. */

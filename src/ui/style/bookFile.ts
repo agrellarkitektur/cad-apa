@@ -19,7 +19,7 @@ import { pickFile } from './resourceEdits';
  * Fråga om mallbladen och stämplarna ska med. Har projektet inga svaras
  * direkt utan dem; null om man avbryter.
  */
-export async function askPaper(doc: ProjectDoc, title: string, text: string, ok: string, extra?: string, counts = paperCounts(doc)): Promise<(PaperChoice & { extra?: boolean }) | null> {
+async function askPaper(doc: ProjectDoc, title: string, text: string, ok: string, extra?: string, counts = paperCounts(doc)): Promise<(PaperChoice & { extra?: boolean }) | null> {
   if (!counts.masters && !counts.stamps && !extra) return { masters: false, stamps: false };
   const checks = [
     ...(counts.masters ? [{ key: 'masters', label: `Mallbladen (${counts.masters}), med det som är ritat på dem`, checked: true }] : []),

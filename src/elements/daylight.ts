@@ -73,7 +73,7 @@ export function glassPanes(doc: ProjectDoc, state: Id): GlassPane[] {
   return out;
 }
 
-export interface RoomDaylight {
+interface RoomDaylight {
   glass: number;
   floor: number;
   /** Glasarean mot golvarean, 0–1 (0 utan golvarea). */

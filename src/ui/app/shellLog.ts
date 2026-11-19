@@ -7,7 +7,7 @@ import { escapeHtml } from '../labels';
 const LOG_MAX = 200;
 const RECENT_MAX = 6;
 
-export interface LogLine {
+interface LogLine {
   text: string;
   /** Kommandot på raden, så att ett klick kan köra det igen. */
   cmd?: CommandDef;

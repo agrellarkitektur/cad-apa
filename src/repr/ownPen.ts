@@ -25,7 +25,7 @@ export function withOwnPen(pen: Pen, own: OwnPenPart, style: StyleSheet | undefi
 }
 
 /** Två pennor fält för fält: det som är satt i `top` går före `base`. */
-export function mergePens(base: OwnPen | undefined, top: OwnPen | undefined): OwnPen | undefined {
+function mergePens(base: OwnPen | undefined, top: OwnPen | undefined): OwnPen | undefined {
   if (!base) return top;
   if (!top) return base;
   const out: OwnPen = { ...base, ...top };

@@ -18,7 +18,7 @@ import { lastResults } from '../repr/reuse';
  * linjen; så små avvikelser syns inte och räknas inte. Projektvinklar som
  * också räknas som raka kommer i 0.8.
  */
-export interface SkewWarning {
+interface SkewWarning {
   id: Id;
   /** Var markeringen ritas i planen. */
   at: Vec2;
@@ -31,7 +31,7 @@ export interface SkewWarning {
 }
 
 /** Ändarna får avvika så här mycket och ändå räknas som exakta. */
-export const EXACT_MM = 0.5;
+const EXACT_MM = 0.5;
 
 /** Raka vinklar att jämföra med. */
 const STRAIGHT = [0, 45, 90, 135, 180];

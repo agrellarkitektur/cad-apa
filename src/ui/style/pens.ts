@@ -50,7 +50,7 @@ export function penSection(style: StyleSheet, type: ViewType, list?: PenListInfo
 }
 
 /** Pennans nummer för en tjocklek och färg (0.10.36), för numret framför raden. */
-export type PenListInfo = (weight: number, color: string | undefined) => number | undefined;
+type PenListInfo = (weight: number, color: string | undefined) => number | undefined;
 
 /** Ändra en penna i `style` (en kopia) efter fältet; null om fältet inte hör hit. */
 export function applyPenField(style: StyleSheet, input: HTMLInputElement | HTMLSelectElement): string | null {

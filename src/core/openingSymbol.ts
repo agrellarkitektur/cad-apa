@@ -3,7 +3,7 @@
 import type { LaidCell } from './openingTypes';
 
 /** En linje i luftens plan: u från vänster sett utifrån, z uppåt (mm). */
-export type Seg = [u1: number, z1: number, u2: number, z2: number];
+type Seg = [u1: number, z1: number, u2: number, z2: number];
 
 /**
  * Öppningssymbolen för en luft i fasaden (0.11.8.1), gemensam för 3D,

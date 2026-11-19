@@ -13,7 +13,7 @@ import type { WandContext } from './wand';
  * mellan två tydliga hörn). Sträckorna är desamma som snäppet använder, så
  * allt man kan snäppa mot kan spöet följa.
  */
-export interface Traced {
+interface Traced {
   id: string;
   /** Vad det är, för texten vid markören. */
   what: string;
@@ -28,7 +28,7 @@ export interface Traced {
 const traceable = (s: SnapSegment): boolean => !s.ref && !s.point;
 
 /** Vad det följda heter, för texten vid markören. */
-export function whatOf(ctx: WandContext, id: string, seg?: SnapSegment): string {
+function whatOf(ctx: WandContext, id: string, seg?: SnapSegment): string {
   if (id === 'kalkering') return 'Underlaget';
   if (id === 'vy' || id === 'snitt') return 'Linjen';
   const el = ctx.app.store.doc.elements[id];
@@ -70,7 +70,7 @@ let chains: { all: readonly SnapSegment[]; hit: SnapSegment; whole: Chain } | nu
  * kontur, som väggverktyget antar). En öppen kedja prövas mot objektets yta
  * en bit åt vänster och höger om sin längsta sträcka.
  */
-export function insideRight(c: Chain, regions: readonly (readonly (readonly Vec2[])[])[]): { chain: Chain; known: boolean } {
+function insideRight(c: Chain, regions: readonly (readonly (readonly Vec2[])[])[]): { chain: Chain; known: boolean } {
   if (c.closed) return { chain: signedArea(c.points) > 0 ? reversed(c) : c, known: true };
   const n = c.points.length;
   let i = 0;
@@ -90,7 +90,7 @@ export function insideRight(c: Chain, regions: readonly (readonly (readonly Vec2
   return { chain: c, known: false };
 }
 
-export function reversed(c: Chain): Chain {
+function reversed(c: Chain): Chain {
   return { points: [...c.points].reverse(), closed: c.closed };
 }
 

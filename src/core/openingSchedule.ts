@@ -28,7 +28,7 @@ type DocLike = Pick<ProjectDoc, 'project' | 'graphics'>;
 
 export type ScheduleKind = 'Window' | 'Door';
 
-export const DEFAULT_SCHEDULE_FIELDS: Record<ScheduleKind, readonly string[]> = {
+const DEFAULT_SCHEDULE_FIELDS: Record<ScheduleKind, readonly string[]> = {
   Window: [
     'Antal', 'Hängning', 'Utförande', 'Öppningssätt', 'Karmyttermått', 'Öppningsbredd', 'Öppningshöjd', 'Bröstningshöjd', 'Funktion/placering',
     'U-värde', 'Brandklass', 'Ljudreduktion', 'Motståndsklass', 'Poster', 'Spröjs', 'Fyllning', 'Karmdjup', 'Kulör utvändigt', 'Kulör invändigt',

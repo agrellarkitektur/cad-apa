@@ -15,7 +15,7 @@
  */
 
 /** Fältets enhet. Längder i mm, vinklar i grader, eller ett rent tal. */
-export type ExprUnit = 'mm' | 'deg' | '';
+type ExprUnit = 'mm' | 'deg' | '';
 
 const LENGTH: Record<string, number> = { mm: 1, cm: 10, dm: 100, m: 1000, km: 1_000_000 };
 const ANGLE: Record<string, number> = { '°': 1, deg: 1, grad: 1, gon: 0.9 };
@@ -145,12 +145,12 @@ export function evaluate(text: string, base: number | null = null, unit: ExprUni
 }
 
 /** Är texten bara ett tal, så att ingen förhandsvisning behövs? */
-export function isPlainNumber(text: string): boolean {
+function isPlainNumber(text: string): boolean {
   return /^\s*-?\d+(?:[.,]\d+)?\s*$/.test(text.replace(/(\d)[\s  ]+(?=\d)/g, '$1'));
 }
 
 /** Värdet som text i fältet: punkt som decimaltecken, högst tre decimaler. */
-export function formatResult(v: number): string {
+function formatResult(v: number): string {
   return String(Math.round(v * 1000) / 1000);
 }
 
@@ -174,7 +174,7 @@ function baseOf(el: HTMLInputElement): number | null {
  * Räkna ut fältets uttryck och skriv in resultatet, så att resten av
  * programmet bara ser ett tal. Ett tomt eller ogiltigt fält lämnas orört.
  */
-export function resolveField(el: HTMLInputElement): void {
+function resolveField(el: HTMLInputElement): void {
   if (!el.matches('input[data-expr]')) return;
   const text = el.value;
   if (text.trim() === '' || isPlainNumber(text)) {

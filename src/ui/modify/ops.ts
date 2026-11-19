@@ -37,7 +37,7 @@ import { roundMm } from '../tools/snap';
 export * from './opDefs';
 export * from './rail';
 
-export type ModifyKind = 'edge' | 'body' | 'point' | 'corner';
+type ModifyKind = 'edge' | 'body' | 'point' | 'corner';
 
 export interface ModifyContext {
   kind: ModifyKind;

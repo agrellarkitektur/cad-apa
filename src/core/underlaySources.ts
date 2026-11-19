@@ -16,7 +16,7 @@ export interface UnderlayHost {
 }
 
 /** Vad en källa är, eller null om den inte finns (längre) eller inte går att visa här. */
-export type ResolvedSource = { kind: 'storey'; storey: Id } | { kind: 'ortho' } | { kind: 'worksheet'; id: Id } | { kind: 'view'; id: Id };
+type ResolvedSource = { kind: 'storey'; storey: Id } | { kind: 'ortho' } | { kind: 'worksheet'; id: Id } | { kind: 'view'; id: Id };
 
 export function resolveSource(doc: Pick<ProjectDoc, 'storeys' | 'views' | 'worksheets' | 'site' | 'assets'>, host: UnderlayHost, source: string): ResolvedSource | null {
   if (source === UNDERLAY_ORTHO) return host.plan && doc.site?.ortho && doc.assets[doc.site.ortho.asset] ? { kind: 'ortho' } : null;

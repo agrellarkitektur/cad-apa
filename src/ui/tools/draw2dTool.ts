@@ -16,7 +16,7 @@ import { snapMarker } from './overlay';
 import { roundMm, snap, type SnapResult } from './snap';
 import type { PointTaker } from '../pointInput';
 
-export interface Draw2DOptions {
+interface Draw2DOptions {
   /** Hur formen ritas. */
   kind: ShapeKind;
   /** Pennans bredd; 0 = ingen linje. */
@@ -392,6 +392,6 @@ export function chainFrom(kind: ShapeKind, pts: readonly Vec2[], closed: boolean
 }
 
 /** Rektangelns fyra hörn från två motsatta. */
-export function rectCorners(a: Vec2, b: Vec2): Vec2[] {
+function rectCorners(a: Vec2, b: Vec2): Vec2[] {
   return [a, [b[0], a[1]], b, [a[0], b[1]]];
 }

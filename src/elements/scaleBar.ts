@@ -47,7 +47,7 @@ const BARS: Record<number, { ticks: string; labels: string[] }> = {
 };
 
 /** En skalstock färdig att rita: strecken, talen och enheten, mm från linjens vänstra ände. */
-export interface ScaleBarLayout {
+interface ScaleBarLayout {
   length: number;
   ticks: { x: number; kind: keyof typeof TICK }[];
   labels: { x: number; text: string }[];
@@ -97,7 +97,7 @@ export function scaleBarLayout(scale: number): ScaleBarLayout {
 }
 
 /** Skalan skalstocken visar: vyns på bladet om en är vald och finns, annars den egna. */
-export function scaleBarScale(p: ScaleBarParams, ctx: Pick<PlanContext, 'doc'>): number {
+function scaleBarScale(p: ScaleBarParams, ctx: Pick<PlanContext, 'doc'>): number {
   if (p.view) {
     for (const s of ctx.doc.sheets) {
       const vp = s.viewports.find((v) => v.id === p.view);

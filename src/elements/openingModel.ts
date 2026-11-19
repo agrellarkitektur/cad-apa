@@ -20,7 +20,7 @@ import { hardwareOf, hasSash, holeOf, layoutLeaf, leafGridOf, LEAF_OPS, muntinLi
  * blir på så vis en hel karm, utan skarvar, utom i Detalj.
  */
 
-export type Level = 'sketch' | 'normal' | 'detail';
+type Level = 'sketch' | 'normal' | 'detail';
 
 type P3 = [number, number, number];
 
@@ -133,7 +133,7 @@ function lining(b: Builder, side: 1 | -1, h1: number, h2: number, zTop: number, 
   if (level === 'detail') b.joints(h1 - w, h2 + w, bottom, top, w, o1, 'mitre', open);
 }
 
-export interface OpeningGeom {
+interface OpeningGeom {
   f: WallFrame;
   /** Karmens djupzon (avstånd från väggens mittlinje). */
   lo: number;

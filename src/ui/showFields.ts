@@ -13,7 +13,7 @@ import { escapeHtml } from './labels';
  */
 
 /** Typer som har Visas i: det som är ritningsinformation och kan visas i vissa vyer. */
-export const SHOWABLE = new Set(['Shape2D', 'Text', 'Dimension', 'Underlay']);
+const SHOWABLE = new Set(['Shape2D', 'Text', 'Dimension', 'Underlay']);
 
 type ShowChoice = 'all' | 'this' | 'views' | 'tags';
 

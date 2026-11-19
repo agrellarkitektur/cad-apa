@@ -80,7 +80,7 @@ export const SOURCE_NAMES: Record<ScheduleSource, string> = {
 export const SOURCES: readonly ScheduleSource[] = ['Space', 'Area', 'Door', 'Window', 'Label'];
 
 /** Ett fält i en källa: namnet och om det är ett tal (kan summeras, högerställs). */
-export interface ScheduleField {
+interface ScheduleField {
   name: string;
   number?: boolean;
 }
@@ -89,7 +89,7 @@ const num = (name: string): ScheduleField => ({ name, number: true });
 const txt = (name: string): ScheduleField => ({ name });
 
 /** Fälten som räknas fram för varje källa, i den ordning de erbjuds. */
-export const SCHEDULE_FIELDS: Record<ScheduleSource, readonly ScheduleField[]> = {
+const SCHEDULE_FIELDS: Record<ScheduleSource, readonly ScheduleField[]> = {
   Space: [txt('Nummer'), txt('Namn'), txt('Våning'), num('Area'), num('Omkrets'), num('Rumshöjd'), txt('Dagsljus'), num('Glasarea'), txt('Status')],
   // Areorna (0.12.3): de ritade och de framräknade (BYA, BTA och BRA per våning).
   Area: [txt('Areaslag'), txt('Beteckning'), txt('Funktion'), txt('Våning'), num('Area'), txt('Status')],
@@ -130,7 +130,7 @@ export function defaultSchedule(source: ScheduleSource): Omit<Schedule, 'id' | '
 }
 
 /** Förteckningens namn som förval: *Rumsförteckning*, *Dörrförteckning* …, med nummer om namnet är taget. */
-export function defaultScheduleName(doc: Pick<ProjectDoc, 'schedules'>, source: ScheduleSource): string {
+function defaultScheduleName(doc: Pick<ProjectDoc, 'schedules'>, source: ScheduleSource): string {
   const base = { Space: 'Rumsförteckning', Area: 'Areaförteckning', Door: 'Dörrförteckning', Window: 'Fönsterförteckning', Label: 'Litteraförteckning' }[source];
   const taken = new Set((doc.schedules ?? []).map((s) => s.name));
   if (!taken.has(base)) return base;
@@ -173,9 +173,6 @@ export function normalizeSchedules(list: unknown): Schedule[] {
 }
 
 export const scheduleOf = (doc: Pick<ProjectDoc, 'schedules'>, id: Id): Schedule | undefined => doc.schedules?.find((s) => s.id === id);
-
-/** Om id:t är en förteckning (en vy på ett blad kan vara en). */
-export const isScheduleId = (doc: Pick<ProjectDoc, 'schedules'>, id: Id): boolean => !!scheduleOf(doc, id);
 
 function putSchedules(tx: TxBuilder, list: Schedule[]): void {
   tx.setField('schedules', list.length ? list : undefined);

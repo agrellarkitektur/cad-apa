@@ -13,7 +13,7 @@ import { saveBlobFile } from '../../storage/projectFile';
  * fler blir en zipfil.
  */
 
-export const NEW_ADDRESS = 'https://cad-apa.danaid.cloud/';
+const NEW_ADDRESS = 'https://cad-apa.danaid.cloud/';
 const OLD_HOSTS = ['agrellarkitektur.se', 'www.agrellarkitektur.se'];
 
 /** Om raden ska visas: på den gamla adressen, eller med `?flytt` för att prova. */
@@ -21,7 +21,7 @@ export function showsMoveNotice(loc: { hostname: string; search: string }): bool
   return OLD_HOSTS.includes(loc.hostname) || new URLSearchParams(loc.search).has('flytt');
 }
 
-export interface MoveFile {
+interface MoveFile {
   name: string;
   text: string;
   /** Vad filen är, för raden som bekräftar. */

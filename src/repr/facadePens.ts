@@ -43,7 +43,7 @@ export const FACADE_PENS = [
   { key: 'otherElev', group: 'others', part: null, label: 'Övrigt: konturlinje', hint: 'Allt annat som syns: stödmurar, ramper, möbler …', weight: 0.18, tags: ['stödmur', 'möbel', 'kontur', 'konturlinje'] },
 ] as const satisfies readonly { key: string; group: string; part: EdgePart | null; label: string; hint: string; weight: number; color?: string; linetype?: string; tags: readonly string[] }[];
 
-export type FacadePenKey = (typeof FACADE_PENS)[number]['key'];
+type FacadePenKey = (typeof FACADE_PENS)[number]['key'];
 type FacadeRow = (typeof FACADE_PENS)[number];
 
 const BY_KEY = new Map<string, FacadeRow>(FACADE_PENS.map((p) => [p.key, p]));

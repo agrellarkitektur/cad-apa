@@ -15,7 +15,7 @@ import type { ToolId } from './app/shell';
  * eller gör något direkt (ångra, zooma, spara …).
  */
 
-export type CommandAction =
+type CommandAction =
   | 'erase'
   | 'undo'
   | 'redo'
@@ -154,7 +154,7 @@ export const COMMANDS: CommandDef[] = [
 ];
 
 /** Gemener, utan mellanslag och bindestreck: "Ta bort" och "ta-bort" blir "tabort". */
-export function norm(s: string): string {
+function norm(s: string): string {
   return s.trim().toLowerCase().replace(/[\s-]+/g, '');
 }
 

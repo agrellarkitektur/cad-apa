@@ -13,7 +13,7 @@ import type { StyleResources } from './graphics';
  */
 
 /** En linjetyp: namnet och mönstret på papper i mm. */
-export interface LineTypeDef {
+interface LineTypeDef {
   name: string;
   dash: number[];
 }

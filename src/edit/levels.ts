@@ -2,7 +2,7 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { resolveParams } from '../elements/registry';
 import { levelOf } from '../repr/solids';
-import type { Element, Id, ProjectDoc } from '../core/model';
+import type { Element, Id } from '../core/model';
 import type { DocStore } from '../core/store';
 
 /*
@@ -16,7 +16,7 @@ import type { DocStore } from '../core/store';
 const WITH_LEVEL = new Set(['Wall', 'Slab', 'Furniture', 'Stair']);
 
 /** Om objektet har en nivå mot våningen. */
-export function hasLevel(el: Element | undefined): boolean {
+function hasLevel(el: Element | undefined): boolean {
   return !!el && WITH_LEVEL.has(el.type);
 }
 
@@ -79,10 +79,4 @@ export function moveVertically(store: DocStore, ids: readonly Id[], dz: number):
     }
   });
   return patches.length;
-}
-
-/** Nivån som visas i egenskaperna, eller null om de markerade har olika. */
-export function commonLevel(doc: ProjectDoc, els: readonly Element[]): number | null {
-  const v = els.filter(hasLevel).map((el) => levelOf(resolveParams<{ level?: number }>(doc, el)));
-  return v.length && v.every((x) => x === v[0]) ? v[0] : null;
 }

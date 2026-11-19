@@ -9,7 +9,7 @@ export const sub = (a: Vec2, b: Vec2): Vec2 => [a[0] - b[0], a[1] - b[1]];
 export const scale = (a: Vec2, k: number): Vec2 => [a[0] * k, a[1] * k];
 export const dot = (a: Vec2, b: Vec2): number => a[0] * b[0] + a[1] * b[1];
 export const cross = (a: Vec2, b: Vec2): number => a[0] * b[1] - a[1] * b[0];
-export const len = (a: Vec2): number => Math.hypot(a[0], a[1]);
+const len = (a: Vec2): number => Math.hypot(a[0], a[1]);
 export const dist = (a: Vec2, b: Vec2): number => Math.hypot(a[0] - b[0], a[1] - b[1]);
 export const norm = (a: Vec2): Vec2 => {
   const l = len(a) || 1;
@@ -18,7 +18,6 @@ export const norm = (a: Vec2): Vec2 => {
 /** Vänsternormal: vrid 90° moturs. */
 export const left = (a: Vec2): Vec2 => [-a[1], a[0]];
 export const lerp = (a: Vec2, b: Vec2, t: number): Vec2 => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
-export const near = (a: Vec2, b: Vec2, tol = 1): boolean => dist(a, b) <= tol;
 
 /** Närmaste punkt på sträckan ab, och parametern t (0–1) längs den. */
 export function closestOnSegment(p: Vec2, a: Vec2, b: Vec2): { point: Vec2; t: number } {

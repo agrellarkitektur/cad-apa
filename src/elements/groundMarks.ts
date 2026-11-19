@@ -19,7 +19,7 @@ import type { PlanContext } from './registry';
  */
 
 /** Texthöjden för beteckningarna, mm på papper. */
-export const MARK_TEXT = 2;
+const MARK_TEXT = 2;
 
 /** Var markhöjdernas status räknas som ändrad: nya och befintliga höjder som skiljer mindre är samma, mm. */
 const SAME_LEVEL = 50;
@@ -32,7 +32,7 @@ export const groundText = (ctx: PlanContext, h: number): string => groundLevelTe
  * under baslinjen och är lika långt som texten (osifonts bredder, samma
  * som PDF:en). Texten läses vågrätt.
  */
-export function markText(ctx: PlanContext, at: Vec2, text: string, origin: Primitive['origin'], opts: { underline?: boolean; align?: TextPrim['align']; height?: number; angle?: number } = {}): Primitive[] {
+function markText(ctx: PlanContext, at: Vec2, text: string, origin: Primitive['origin'], opts: { underline?: boolean; align?: TextPrim['align']; height?: number; angle?: number } = {}): Primitive[] {
   const height = opts.height ?? MARK_TEXT;
   const align = opts.align ?? 'start';
   const pen = { weight: 0.18 };
@@ -62,7 +62,7 @@ export function arrow(ctx: PlanContext, a: Vec2, b: Vec2, origin: Primitive['ori
 }
 
 /** Markhöjdens status i punkten: den befintliga höjden, den nya, och om den nya gäller. */
-export interface LevelStatus {
+interface LevelStatus {
   existing: number | null;
   /** Den nya höjden: egen, eller den färdiga markens; null när marken inte ändras där. */
   proposed: number | null;
@@ -137,7 +137,7 @@ export function drainLine(ctx: PlanContext, el: Element<any>, p: GroundParams): 
 }
 
 /** Punkten `s` mm in längs polylinjen. */
-export function pointAt(pts: readonly Vec2[], s: number): Vec2 {
+function pointAt(pts: readonly Vec2[], s: number): Vec2 {
   let rest = s;
   for (let i = 1; i < pts.length; i++) {
     const l = Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);

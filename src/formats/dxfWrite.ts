@@ -38,7 +38,7 @@ export interface DxfLinetype {
 }
 
 /** Det varje entitet har: lager, och färg, linjetyp och tjocklek när de inte följer lagret. */
-export interface DxfProps {
+interface DxfProps {
   layer: string;
   /** ACI 1–255; utelämnat = lagrets (BYLAYER). */
   color?: number;
@@ -69,7 +69,7 @@ export type DxfEntity = DxfProps &
       }
   );
 
-export interface DxfDocument {
+interface DxfDocument {
   version: DxfVersion;
   layers: readonly DxfLayer[];
   linetypes: readonly DxfLinetype[];

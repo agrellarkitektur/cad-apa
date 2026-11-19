@@ -21,10 +21,10 @@ export interface FrameParams {
   inset: number | null;
 }
 
-export const FRAME_DEFAULTS: FrameParams = { frameWidth: 50, frameDepth: 100, inset: null };
+const FRAME_DEFAULTS: FrameParams = { frameWidth: 50, frameDepth: 100, inset: null };
 
 /** Standardindrag från utsidan i ytterväggar: karmen i liv ute (0.11.8; förut 50). */
-export const EXTERIOR_INSET = 0;
+const EXTERIOR_INSET = 0;
 
 export interface OpeningZone {
   f: WallFrame;

@@ -18,7 +18,7 @@ export const CONTOUR_PENS = [
   { key: 'contourOld', label: 'Befintlig mark som ändrats', hint: 'Den gamla marken där markobjekten ändrat den; kurvorna mellan hela meter högst 0,13', weight: 0.18, color: 'muted', linetype: 'dashed' },
 ] as const;
 
-export type ContourPenKey = (typeof CONTOUR_PENS)[number]['key'];
+type ContourPenKey = (typeof CONTOUR_PENS)[number]['key'];
 
 /** Förvalet för en höjdkurvas penna, eller undefined om nyckeln inte är en. */
 export function defaultContourPen(key: string): PenDef | undefined {

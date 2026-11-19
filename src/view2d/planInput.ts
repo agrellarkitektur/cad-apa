@@ -8,7 +8,7 @@ import type { ViewPointer, ViewTool } from './planView';
 const CLICK_SLOP = 5;
 
 /** Det pekaren behöver av planvyn. */
-export interface PlanInputHost {
+interface PlanInputHost {
   readonly svg: SVGSVGElement;
   readonly camera: Camera;
   readonly currentTool: ViewTool | null;

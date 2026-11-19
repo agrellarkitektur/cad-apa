@@ -18,7 +18,7 @@ import type { Vec2 } from './primitives';
  * kulörerna följer kanterna där; slänternas yttre kant följer trianglarna.
  */
 
-export interface ColorGroup {
+interface ColorGroup {
   start: number;
   count: number;
   /** #rrggbb, eller null för markens egen kulör (och ortofotot, 0.10.31). */

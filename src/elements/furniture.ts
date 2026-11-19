@@ -11,7 +11,7 @@ import { ABOVE_PART, planCutPen } from '../repr/planCutPens';
  * Enkla möbler och inredning tills smartobjekten finns (efter pilotprojektet). Varje
  * symbol ritas i en lokal ruta (0,0)–(bredd,djup) som sedan placeras och vrids.
  */
-export type FurnitureSymbol = 'bed' | 'sofa' | 'table' | 'counter' | 'sink' | 'shower';
+type FurnitureSymbol = 'bed' | 'sofa' | 'table' | 'counter' | 'sink' | 'shower';
 
 export interface FurnitureParams {
   /** Nedre vänstra hörnet före vridning, mm. */
@@ -124,7 +124,7 @@ export const furnitureType: ElementType<FurnitureParams> = {
 };
 
 /** Möbelns yttre rektangel, med hörnen i ordning. */
-export function furnitureOutline(p: FurnitureParams): Vec2[] {
+function furnitureOutline(p: FurnitureParams): Vec2[] {
   const r = (p.rotation * Math.PI) / 180;
   const tr = (x: number, y: number): Vec2 => [p.origin[0] + x * Math.cos(r) - y * Math.sin(r), p.origin[1] + x * Math.sin(r) + y * Math.cos(r)];
   return [tr(0, 0), tr(p.width, 0), tr(p.width, p.depth), tr(0, p.depth)];

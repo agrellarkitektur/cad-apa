@@ -18,7 +18,7 @@ import { isShown, setShown, SHOW_GROUPS } from './showKeys';
 const shownTypes = (): string[] => SHOW_GROUPS.flatMap((g) => g.items.map(([k]) => k)).filter((k) => !!typeOf(k));
 
 /** Dölj objekten i vyn och ta bort dem ur markeringen. */
-export function hideObjects(app: AppContext, ids: readonly Id[]): void {
+function hideObjects(app: AppContext, ids: readonly Id[]): void {
   if (!ids.length) return;
   const keys = ids.map(hiddenObjectKey).filter((k) => !app.ui.hide.includes(k));
   app.ui.hide = [...app.ui.hide, ...keys];
@@ -28,7 +28,7 @@ export function hideObjects(app: AppContext, ids: readonly Id[]): void {
 }
 
 /** Dölj alla objekt av en typ i vyn, som kryssrutan under Visa. */
-export function hideType(app: AppContext, type: string): void {
+function hideType(app: AppContext, type: string): void {
   setShown(app.ui, type, false);
   const els = app.store.doc.elements;
   app.selection.set(app.selection.list().filter((id) => els[id]?.type !== type && (!els[id]?.host || els[els[id].host!]?.type !== type)));
@@ -37,13 +37,13 @@ export function hideType(app: AppContext, type: string): void {
 }
 
 /** Ta fram de enskilt dolda objekten igen. */
-export function showHiddenObjects(app: AppContext): void {
+function showHiddenObjects(app: AppContext): void {
   app.ui.hide = app.ui.hide.filter((h) => !h.startsWith(HIDDEN_OBJECT));
   app.renderAll();
 }
 
 /** Hur många enskilt dolda objekt vyn har som fortfarande finns i projektet. */
-export function hiddenCount(app: AppContext): number {
+function hiddenCount(app: AppContext): number {
   return hiddenObjects(app.ui.hide).filter((id) => app.store.doc.elements[id]).length;
 }
 

@@ -20,7 +20,7 @@ import { nearestOf, reportEdit, type ModifyState } from './state';
 export const CUT_OPS = new Set<OpId>(['trim', 'split', 'join', 'extend']);
 
 /** Vad ett klick ledde till: klart, eller vänta kvar (med den första väggen i Hörnskarv). */
-export type CutClick = { done: true } | { done: false; first?: { id: Id; at: Vec2 } };
+type CutClick = { done: true } | { done: false; first?: { id: Id; at: Vec2 } };
 
 /** Det markerade element närmast punkten som `ok` gäller, inom toleransen (väggar: plus halva tjockleken). */
 function nearestSelected(s: ModifyState, at: Vec2, ok: Parameters<typeof nearestOf>[3], px = 10): Id | null {

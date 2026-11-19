@@ -25,14 +25,14 @@ import { halfPlaneBelow, outlineEdges, outlineRing, roofFrame, roofPlanes, roofR
 export { cutHeightOf, DEFAULT_CUT_HEIGHT } from './planCut';
 
 /** Visa-nyckeln för husets kontur genom taket; den är släckt om den inte står i vyns `hide` med plus. */
-export const FOOTPRINT_KEY = 'footprint';
+const FOOTPRINT_KEY = 'footprint';
 
 /**
  * Visa-nyckeln för tak på andra våningar (0.10.10), släckt från början: ett
  * tak ovanför vyn streckprickat, ett under våningens golv streckat. Gäller
  * våningen ovanför och alla under (0.10.12).
  */
-export const ROOFS_AROUND_KEY = 'roofsAround';
+const ROOFS_AROUND_KEY = 'roofsAround';
 
 
 /**
@@ -174,7 +174,7 @@ export function roofPlanPrims(el: Element<any>, ctx: PlanContext): Primitive[] {
 
 
 /** Bitarna av den slutna linjen som ligger innanför ringen (husets kontur genom taket). */
-export function clipToRing(line: readonly Vec2[], ring: readonly Vec2[]): [Vec2, Vec2][] {
+function clipToRing(line: readonly Vec2[], ring: readonly Vec2[]): [Vec2, Vec2][] {
   return clipToRings(line, [ring], true);
 }
 
@@ -183,7 +183,7 @@ export function clipToRing(line: readonly Vec2[], ring: readonly Vec2[]): [Vec2,
  * alla ringarna (0.10.25: husets kontur på Platsen, heldragen där inget tak
  * ligger över).
  */
-export function clipToRings(line: readonly Vec2[], rings: readonly (readonly Vec2[])[], inside: boolean): [Vec2, Vec2][] {
+function clipToRings(line: readonly Vec2[], rings: readonly (readonly Vec2[])[], inside: boolean): [Vec2, Vec2][] {
   const out: [Vec2, Vec2][] = [];
   for (let i = 0; i < line.length; i++) {
     const a = line[i];

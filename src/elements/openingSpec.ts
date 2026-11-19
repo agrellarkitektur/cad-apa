@@ -114,12 +114,6 @@ export function deriveOpening(kind: OpeningKind) {
   };
 }
 
-/** Modulmåttet i hela moduler (1180 → 12), eller null när karmyttermåttet är eget och inte på modulen. */
-export function moduleText(p: Pick<OpeningObjParams, 'width' | 'height' | 'frame'>): string {
-  const m = (v: number) => Math.round(v / 100);
-  return `${m(p.width)} × ${m(p.height)}`;
-}
-
 /** Om karmyttermåttet är skrivet fritt och inte ligger på modulen. */
 export const customFrame = (p: Pick<OpeningObjParams, 'frame'>): boolean => Array.isArray(p.frame);
 

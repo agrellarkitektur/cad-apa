@@ -59,7 +59,7 @@ export function railingWarnings(doc: ProjectDoc, el: Element<any>): string[] {
 }
 
 /** Största glipan under ett barnsäkert räcke, mm (BFS 2024:9, 2 kap. 11 § 3: mot balkonggolvet och stegnosen). */
-export const RAIL_GAP_MAX = 50;
+const RAIL_GAP_MAX = 50;
 
 /**
  * Glipan under ett barnsäkert räcke (0.12.5.5): BFS 2024:9, 2 kap. 11 § 3

@@ -28,9 +28,6 @@ export type RailPenKey = (typeof RAIL_PENS)[number]['key'];
 type RailRow = { key: string; weight: number; linetype?: string; color?: string };
 const BY_KEY = new Map<string, RailRow>(RAIL_PENS.map((p): [string, RailRow] => [p.key, p]));
 
-/** Om nyckeln är ett av räckenas ställen. */
-export const isRailPen = (key: string | undefined): key is RailPenKey => !!key && BY_KEY.has(key);
-
 /** Förvalet för ett av räckenas ställen. */
 export function defaultRailPen(key: string): PenDef | undefined {
   const d = BY_KEY.get(key);

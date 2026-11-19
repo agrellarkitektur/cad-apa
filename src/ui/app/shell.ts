@@ -20,7 +20,7 @@ export const SPACE_TOOLS: ToolId[] = ['dimension', 'text', 'draw2d'];
 export const SHEET_TOOLS: ToolId[] = ['text', 'draw2d'];
 export type ViewMode = '2d' | '3d' | 'split';
 
-export interface ToolDef {
+interface ToolDef {
   id: string;
   label: string;
   icon: IconName;

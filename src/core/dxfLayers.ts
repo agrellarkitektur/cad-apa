@@ -42,7 +42,7 @@ export interface LinetypeDef {
 }
 
 /** En inläst lagerlista (*Läs lagerlista ur DXF…*). */
-export interface CustomLayerList {
+interface CustomLayerList {
   /** Filens namn, som listan visas med. */
   name: string;
   layers: LayerDef[];
@@ -91,7 +91,7 @@ export interface LayerQuery {
 // Pennorna
 
 /** Pennan (tjockleken) som ACI-färg, enligt svensk praxis där färgen styr plotten. */
-export const PEN_COLORS: readonly [weight: number, aci: number, name: string][] = [
+const PEN_COLORS: readonly [weight: number, aci: number, name: string][] = [
   [0.13, 9, 'Grå'],
   [0.18, 4, 'Cyan'],
   [0.25, 1, 'Röd'],
@@ -347,7 +347,7 @@ export function nearestLayer(name: string, layers: ReadonlyMap<string, LayerDef>
 }
 
 /** Benämningen av ett SB11-lager ur koderna, som i kontorets mall. */
-export function sb11Description(name: string): string | undefined {
+function sb11Description(name: string): string | undefined {
   if (!/^A-.{9}$/.test(name)) return undefined;
   const code = name.slice(2, 8);
   const pres = name.slice(8, 10);

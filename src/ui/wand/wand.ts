@@ -28,7 +28,7 @@ export interface WandContext {
 }
 
 /** Det som visas innan man klickar: linjer i modellen och objekt som tonas. */
-export interface WandPreview {
+interface WandPreview {
   lines?: { points: Vec2[]; closed: boolean }[];
   /** Objekt som markeras i förhandsvisningen (Markera). */
   ids?: Id[];

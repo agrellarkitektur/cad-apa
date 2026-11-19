@@ -25,21 +25,21 @@ type ListCollections = {
   views: ViewDef;
 };
 
-export type Change =
+type Change =
   | { [K in keyof Collections]: { kind: 'record'; collection: K; id: Id; before?: Collections[K]; after?: Collections[K] } }[keyof Collections]
   | { [K in keyof ListCollections]: { kind: 'list'; collection: K; before: ListCollections[K][]; after: ListCollections[K][] } }[keyof ListCollections]
   | { [K in FieldKey]: { kind: 'field'; key: K; before: ProjectDoc[K]; after: ProjectDoc[K] } }[FieldKey];
 
 /** Fält på projektnivå som byts ut i sin helhet. */
-export type FieldKey = 'project' | 'graphics' | 'folders' | 'tree' | 'viewTags' | 'worksheets' | 'sheets' | 'site' | 'exportSets' | 'schedules';
+type FieldKey = 'project' | 'graphics' | 'folders' | 'tree' | 'viewTags' | 'worksheets' | 'sheets' | 'site' | 'exportSets' | 'schedules';
 
-export interface Transaction {
+interface Transaction {
   /** Visas i gränssnittet, t.ex. "Ångra: Riv vägg". */
   label: string;
   changes: Change[];
 }
 
-export interface StoreEvent {
+interface StoreEvent {
   /**
    * Vad som hände: en ny transaktion, ångra, gör om, att ett nytt dokument
    * laddades eller att objektens GUID sattes vid en export (`guids`,
@@ -49,7 +49,7 @@ export interface StoreEvent {
   transaction?: Transaction;
 }
 
-export type Listener = (doc: ProjectDoc, event: StoreEvent) => void;
+type Listener = (doc: ProjectDoc, event: StoreEvent) => void;
 
 const MAX_HISTORY = 200;
 
@@ -256,7 +256,7 @@ export class TxBuilder {
  * Tillämpa ändringar och returnera ett nytt dokument. Det gamla lämnas
  * orört, så vyer kan jämföra före och efter och historiken förblir säker.
  */
-export function applyChanges(doc: ProjectDoc, changes: readonly Change[], direction: 'forward' | 'backward'): ProjectDoc {
+function applyChanges(doc: ProjectDoc, changes: readonly Change[], direction: 'forward' | 'backward'): ProjectDoc {
   const list = direction === 'forward' ? changes : [...changes].reverse();
   let next: ProjectDoc = { ...doc };
   let elementsCopied = false;

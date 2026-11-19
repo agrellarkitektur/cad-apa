@@ -61,7 +61,7 @@ export function workStampPrims(today: string, at: [number, number] = [10, 4]): P
   return [{ kind: 'text', at, text: `ARBETSMATERIAL ${today}`, height: 2.5, pen: { weight: 0.18, color: 'muted' }, origin: { part: 'arbetsmaterial' } }];
 }
 
-export interface PageOptions {
+interface PageOptions {
   layers: PdfLayers;
   workStamp: boolean;
   today: string;

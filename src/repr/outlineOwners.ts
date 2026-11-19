@@ -5,7 +5,7 @@ import { BoxIndex } from '../geometry/boxIndex';
 import type { Vec2 } from './primitives';
 
 /** En bit av en kontur och objektet den hör till (null = inget eget). */
-export interface OwnedOutline {
+interface OwnedOutline {
   id: string | null;
   points: Vec2[];
   closed: boolean;

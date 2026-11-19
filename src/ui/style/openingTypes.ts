@@ -17,7 +17,7 @@ import { openingPreviewSvg, trackText } from './openingPreview';
  * Fälten heter `data-ot` = "fält" och knapparna `data-ot-act`.
  */
 
-export interface OpeningEditorState {
+interface OpeningEditorState {
   def: Id | null;
   /** Den valda luften (index i typens `cells`). */
   cell: number | null;

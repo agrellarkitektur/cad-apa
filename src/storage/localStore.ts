@@ -26,7 +26,7 @@ export interface LocalRecord {
   engine?: string;
 }
 
-export type LocalSaveResult = 'saved' | 'blocked' | 'unavailable';
+type LocalSaveResult = 'saved' | 'blocked' | 'unavailable';
 
 function open(): Promise<IDBDatabase> {
   return new Promise((resolve, reject) => {

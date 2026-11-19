@@ -17,7 +17,7 @@ import { sideBetween, type StairGeometry } from './stairGeometry';
  */
 
 /** Kanten räcket hänger på; trappan är elementets `host`. */
-export interface RailingHost {
+interface RailingHost {
   /** Trappans kant, sett i gångriktningen. */
   side: 'left' | 'right';
   /** Var längs gånglinjen räcket börjar och slutar (mm); utelämnat = hela trappan. */

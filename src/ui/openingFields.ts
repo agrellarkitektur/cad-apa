@@ -50,7 +50,7 @@ function select(key: string, label: string, value: string, options: [string, str
 }
 
 /** Hängningen sedd utifrån (eller inifrån enligt Allmänt): *V · H*. */
-export function hingeText(doc: ProjectDoc, el: Element): string {
+function hingeText(doc: ProjectDoc, el: Element): string {
   const host = el.host ? doc.elements[el.host] : undefined;
   if (!host) return '';
   const p = resolveParams<OpeningObjParams>(doc, el);

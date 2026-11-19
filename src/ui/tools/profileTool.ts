@@ -17,9 +17,9 @@ import { snapMarker } from './overlay';
 import { nearSegments, roundMm, snap, type SnapResult } from './snap';
 
 /** Banan: punkt för punkt, lodrät (pelare) eller längs en kant. */
-export type ProfilePathMode = 'line' | 'plumb' | 'edge';
+type ProfilePathMode = 'line' | 'plumb' | 'edge';
 
-export interface ProfileToolOptions {
+interface ProfileToolOptions {
   mode: ProfilePathMode;
   def?: Id;
   /** Ankaret (typens nummer); utelämnat = typens förval. */
@@ -41,7 +41,7 @@ interface EdgeChain {
 }
 
 /** Verktygets val, delade med smartmenyn (*Profil längs kanten*, *Pelare här*): den senast valda typen och höjden gäller där också. */
-export const profileToolOptions: ProfileToolOptions = { mode: 'line', z: 0, level: 0, rotate: 0, mirror: false };
+const profileToolOptions: ProfileToolOptions = { mode: 'line', z: 0, level: 0, rotate: 0, mirror: false };
 
 /** Kanten närmast punkten (inte profilernas): kedjan genom den och sidan mellan två hörn. */
 export function profileEdgeAt(host: ToolHost, at: Vec2, tol: number): EdgeChain | null {

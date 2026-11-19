@@ -34,7 +34,7 @@ export interface Cell {
   value?: number;
 }
 
-export interface ScheduleGroup {
+interface ScheduleGroup {
   /** Gruppens rubrik; utelämnad när förteckningen inte grupperas. */
   label?: string;
   rows: Cell[][];
@@ -55,7 +55,7 @@ export interface ScheduleTable {
 }
 
 /** En kolumn i förteckningen per littera: litteran, objekten som har den och ritningen. */
-export interface LitteraColumn {
+interface LitteraColumn {
   littera: string;
   ids: Id[];
   figure?: OpeningFigure;

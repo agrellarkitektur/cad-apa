@@ -25,7 +25,7 @@ import { toHex } from './colors';
 export type PlaceKind = 'pen' | 'linetype' | 'filltype' | 'material';
 
 /** En rad i listan över ställen: ett ställe i stilboken, eller (materialen) ett objekt. */
-export interface PlaceRow {
+interface PlaceRow {
   id: string;
   label: string;
   sub: string;

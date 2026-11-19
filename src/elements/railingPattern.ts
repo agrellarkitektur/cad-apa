@@ -4,7 +4,7 @@ import { dist } from '../geometry/vec';
 import type { PanelPiece } from './railingBody';
 
 /** En ribba i en yta med mönster: sträckan längs ytan (från `a`) och under- och överkantens höjd i ändarna. */
-export interface PatternBar {
+interface PatternBar {
   s0: number;
   s1: number;
   bottom: [number, number];

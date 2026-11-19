@@ -16,7 +16,7 @@ export const THEMES: { id: ThemeId; name: string }[] = [
 const KEY = 'bacchus-theme';
 const listeners = new Set<() => void>();
 
-export function savedTheme(): ThemeId | null {
+function savedTheme(): ThemeId | null {
   try {
     const v = localStorage.getItem(KEY);
     return THEMES.some((t) => t.id === v) ? (v as ThemeId) : null;
@@ -48,7 +48,7 @@ export function onThemeChange(fn: () => void): void {
   matchMedia('(prefers-color-scheme: dark)').addEventListener('change', fn);
 }
 
-export function themeName(id: ThemeId): string {
+function themeName(id: ThemeId): string {
   return THEMES.find((t) => t.id === id)?.name ?? id;
 }
 

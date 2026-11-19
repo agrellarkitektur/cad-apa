@@ -36,7 +36,7 @@ export interface LegendParams {
 }
 
 /** En rad i teckenförklaringen. */
-export interface LegendRow {
+interface LegendRow {
   name: string;
   fill: Partial<FillParams>;
   /** Skalan mönstret ritas i (vyns nämnare). */

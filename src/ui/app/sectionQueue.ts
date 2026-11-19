@@ -13,7 +13,7 @@ export interface WorkerLike {
   onerror: ((e: unknown) => void) | null;
 }
 
-export interface SectionQueueOptions {
+interface SectionQueueOptions {
   /** Startar tråden. Utan den (eller om den inte går att starta) räknas allt direkt. */
   spawn?: () => Promise<WorkerLike>;
   /** Vyer som brukar gå fortare än så räknas direkt, utan tråd (ms). */

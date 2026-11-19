@@ -24,11 +24,11 @@ export type Id = string;
 export type Value = string | number | boolean | null | readonly [number, number];
 
 /** Egenskaper i namngivna grupper, som IFC:s Pset_DoorCommon. */
-export type PropertySets = Record<string, Record<string, Value>>;
+type PropertySets = Record<string, Record<string, Value>>;
 
 export type ProjectKind = 'nybyggnad' | 'tillbyggnad' | 'ombyggnad';
 
-export interface ProjectInfo {
+interface ProjectInfo {
   name: string;
   kind: ProjectKind;
   /**
@@ -66,7 +66,7 @@ export interface ProjectInfo {
  * (`params.fields`, 0.11.8.1), inte här. `notes` är projektets egna
  * föreskrifter, som står till höger med typernas.
  */
-export interface OpeningSchedule {
+interface OpeningSchedule {
   fields?: { Window?: string[]; Door?: string[]; WallHole?: string[] };
   notes?: { Window?: string; Door?: string; WallHole?: string };
 }

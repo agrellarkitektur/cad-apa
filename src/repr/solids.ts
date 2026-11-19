@@ -59,7 +59,7 @@ export interface Solid {
 /** Sidledes förskjutning per höjd (mm/mm), för lutande kroppar. */
 export type Shear = readonly [number, number];
 
-export interface Cut3D {
+interface Cut3D {
   rings: Vec2[][];
   z0: number;
   z1: number;

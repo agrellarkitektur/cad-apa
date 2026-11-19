@@ -40,7 +40,7 @@ export const ALIGN_BUTTONS: { kind: AlignKind; label: string }[] = [
 type Seg = { a: Vec2; b: Vec2 };
 
 /** Alla punkter i ett elements ritade form, för att räkna dess yttre kanter. */
-export function outlinePoints(item: Pickable): Vec2[] {
+function outlinePoints(item: Pickable): Vec2[] {
   const out: Vec2[] = [];
   // Punkterna läggs till en och en: ett stort DXF-underlag kan ha fler än
   // en spridning (`push(...)`) tål (0.8.15).

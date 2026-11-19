@@ -34,7 +34,7 @@ export function shownIn(el: Pick<Element, 'storey' | 'space' | 'show'>, view: Vi
 }
 
 /** Ytan en sparad vy visar. */
-export function placeOfView(v: { storey: Id; marker?: Id | null; worksheet?: Id | null }): Id {
+function placeOfView(v: { storey: Id; marker?: Id | null; worksheet?: Id | null }): Id {
   return v.worksheet ?? v.marker ?? v.storey;
 }
 

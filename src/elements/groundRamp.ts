@@ -102,12 +102,6 @@ export function sideEdge(p: RampParams, side: 'left' | 'right'): 'slope' | 'wall
 /** Referenslinjen med bågarna som raka bitar. */
 export const refPoints = (p: RampParams): Vec2[] => flatPoints(p.line, p.bulges);
 
-/** Sidorna som de följer referenslinjen med bredden, mitten där `refSide` och `refOffset` säger (med bågarna som raka bitar). */
-export function derivedSides(ref: readonly P[], p: RampParams): { left: Vec2[]; right: Vec2[] } {
-  const l = derivedSideLines(ref, p);
-  return { left: flatPoints(l.left.points, l.left.bulges), right: flatPoints(l.right.points, l.right.bulges) };
-}
-
 /** Sidorna som linjer med bågar när de följer referenslinjen: koncentriska med dess bågar. */
 function derivedSideLines(ref: readonly P[], p: RampParams): { left: ArcLine; right: ArcLine } {
   const w = Math.max(100, p.width ?? PATH_WIDTH);
@@ -137,7 +131,7 @@ export function rampSides(p: RampParams): { left: Vec2[]; right: Vec2[] } {
  * vänster sida bakåt och början; `wall` för varje kant i ringen (kant i går
  * från punkt i till nästa) om den är en stödmur.
  */
-export function rampRing(p: RampParams, sides = rampSides(p)): { ring: Vec2[]; wall: boolean[]; side: ('left' | 'right' | 'end')[] } {
+function rampRing(p: RampParams, sides = rampSides(p)): { ring: Vec2[]; wall: boolean[]; side: ('left' | 'right' | 'end')[] } {
   const { left, right } = sides;
   const ring = [...right, ...[...left].reverse()];
   const side = ring.map((_, i): 'left' | 'right' | 'end' => (i < right.length - 1 ? 'right' : i === right.length - 1 ? 'end' : i < ring.length - 1 ? 'left' : 'end'));
@@ -147,7 +141,7 @@ export function rampRing(p: RampParams, sides = rampSides(p)): { ring: Vec2[]; w
 }
 
 /** Sidans slänt 1:N (0.10.26): sidans egen, annars rampens (`slope`, redan med förvalet). */
-export function sideSlope(p: RampParams, side: 'left' | 'right' | 'end', slope: number): number {
+function sideSlope(p: RampParams, side: 'left' | 'right' | 'end', slope: number): number {
   const own = side === 'left' ? p.leftSlope : side === 'right' ? p.rightSlope : undefined;
   return typeof own === 'number' && own > 0 ? Math.max(0.1, own) : slope;
 }

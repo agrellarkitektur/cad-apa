@@ -122,7 +122,7 @@ export interface StairItem {
 }
 
 /** Ett lopp: steg i följd mellan vilplanen. */
-export interface StairRun {
+interface StairRun {
   u0: number;
   u1: number;
   treads: number;

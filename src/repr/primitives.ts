@@ -122,7 +122,7 @@ export interface RegionPrim extends Base {
   owners?: readonly { id: string; rings: readonly (readonly Vec2[])[] }[];
 }
 
-export interface ArcPrim extends Base {
+interface ArcPrim extends Base {
   kind: 'arc';
   center: Vec2;
   radius: number;
@@ -152,7 +152,7 @@ export interface TextPrim extends Base {
  * och `v` (höjden). Själva bilden hämtas med `source` när den ritas, så att
  * primitiverna förblir små.
  */
-export interface ImagePrim extends Base {
+interface ImagePrim extends Base {
   kind: 'image';
   corner: Vec2;
   u: Vec2;

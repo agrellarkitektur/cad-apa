@@ -53,7 +53,7 @@ export interface ActionPanel {
   onHint?: (text: string, ms?: number) => void;
 }
 
-export interface ActionContext {
+interface ActionContext {
   panel: ActionPanel;
   store: DocStore;
   selection: Selection;

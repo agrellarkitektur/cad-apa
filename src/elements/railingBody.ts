@@ -23,7 +23,7 @@ import { freePath, GATE_POST, pathPoint, pathZ, shift, type RailGate, type RailP
  * origo i tvärsnittets mitt i sidled och i överkanten; för en stolpe eller
  * spjäla i planet med x längs linjen och y utåt, origo i ankaret.
  */
-export interface PartSection {
+interface PartSection {
   regions: { polys: Rings[]; follows: boolean; extend: number; material?: string }[];
   /** Avsluten i början och slutet (en längsgående del), uträknade. */
   start?: EndSpec;
@@ -85,7 +85,7 @@ export interface PanelPiece {
 }
 
 /** En plint under en stolpe (0.11.3). */
-export interface FootingPiece {
+interface FootingPiece {
   part: RailPart;
   at: Vec2;
   z0: number;
@@ -501,7 +501,7 @@ export function withExtension(a: AlongPiece): { pts: Vec2[]; top: number[]; z: n
 
 /** Avslutet *Böjd nedåt* går så långt ned under delen, och *Mot vägg* så långt utåt när delen ligger på linjen (mm). */
 export const DROP = 100;
-export const RETURN = 60;
+const RETURN = 60;
 
 /**
  * Ett avslut på en längsgående del (0.11.7.2): *Böjd nedåt* lodrätt ned
@@ -510,7 +510,7 @@ export const RETURN = 60;
  * för *Böjd nedåt* delens tvärsnitt i änden), `top` överkantens höjd i
  * änden och `z0` avslutets undersida.
  */
-export interface FinishPiece {
+interface FinishPiece {
   kind: 'down' | 'wall';
   at: Vec2;
   to: Vec2;

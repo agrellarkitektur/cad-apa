@@ -100,7 +100,7 @@ export function profileFieldsMarkup(doc: ProjectDoc, el: Element): string {
 const mm = (v: number) => Math.round(v).toLocaleString('sv-SE');
 
 /** Listan med ändprofilerna (PA01 …) i projektet, för ett avslut. */
-export function endProfileSelect(doc: ProjectDoc, key: string, cur: Id | undefined, label = 'Ändprofil'): string {
+function endProfileSelect(doc: ProjectDoc, key: string, cur: Id | undefined, label = 'Ändprofil'): string {
   const pas = profileTypesIn(doc, END_GROUP);
   const opts = pas.map((d) => `<option value="${escapeHtml(d.id)}"${d.id === cur ? ' selected' : ''}>${escapeHtml(d.name)} ${escapeHtml(d.description ?? '')}</option>`).join('');
   const missing = cur && !doc.definitions[cur] ? `<option value="" selected>Saknas</option>` : !cur ? '<option value="" selected>Välj …</option>' : '';
@@ -150,7 +150,7 @@ export function profileTypeMarkup(doc: ProjectDoc, defId: Id): string {
 }
 
 /** Patch av profilens parametrar, där undefined tar bort nyckeln. */
-export function patchProfiles(store: DocStore, ids: Id[], label: string, fn: (p: ProfileParams, el: Element) => Record<string, unknown> | null): boolean {
+function patchProfiles(store: DocStore, ids: Id[], label: string, fn: (p: ProfileParams, el: Element) => Record<string, unknown> | null): boolean {
   const doc = store.doc;
   const patches: [Id, Record<string, unknown>][] = [];
   for (const id of ids) {

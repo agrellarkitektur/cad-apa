@@ -32,7 +32,7 @@ export interface RoofSlopeParams {
   hidden?: boolean;
 }
 
-export type SlopeStyle = 'auto' | 'arc' | 'text' | 'triangle';
+type SlopeStyle = 'auto' | 'arc' | 'text' | 'triangle';
 
 export const SLOPE_STYLES: Record<SlopeStyle, string> = {
   auto: 'Efter detaljnivån',

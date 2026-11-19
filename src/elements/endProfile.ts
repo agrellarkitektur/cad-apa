@@ -28,7 +28,7 @@ export function endAxis(rotate = 0, mirror = false): Vec2 {
 }
 
 /** Ändprofilens kontur i en ände, och dess höjder i tvärsnittet (för varningen). `axis` är tvärsnittets y-axel efter placeringen (`endAxis`). */
-export function endShapeOf(pa: ProfileTypeModel, section: ProfileSection, yShift: number, e: EndSpec, axis: Vec2 = [0, 1]): { shape: EndShape; y0: number; y1: number } | null {
+function endShapeOf(pa: ProfileTypeModel, section: ProfileSection, yShift: number, e: EndSpec, axis: Vec2 = [0, 1]): { shape: EndShape; y0: number; y1: number } | null {
   const h = section.deltas.filter((d) => d.zone.axis === 'height');
   const rings = pa.parts.map((p) => flatContour(p.contour).map((q) => stretchPoint(q, h))).filter((r) => r.length >= 3);
   if (!rings.length) return null;
@@ -44,7 +44,7 @@ export function endShapeOf(pa: ProfileTypeModel, section: ProfileSection, yShift
 }
 
 /** Ändprofilens typ för ett avslut, eller undefined. */
-export function endProfileModel(doc: ProjectDoc, e: EndSpec): ProfileTypeModel | undefined {
+function endProfileModel(doc: ProjectDoc, e: EndSpec): ProfileTypeModel | undefined {
   const m = e.kind === 'profile' && e.profile ? profileModel(doc.definitions[e.profile]) : undefined;
   return isEndProfile(m) ? m : undefined;
 }

@@ -32,13 +32,11 @@ import { imageAsset, ORTHO_MAX_PX, pickFiles } from './imageFile';
  * Den gamla adressen på webbhotellet (agrellarkitektur.se/terrang/) står
  * kvar under flytten, se docs/FLYTT.md.
  */
-export const HOJDKURVOR_ORIGINS = ['https://hojdkurvor.danaid.cloud', 'https://agrellarkitektur.se', 'https://www.agrellarkitektur.se', 'https://xn--hjdkurvor-07a.se', 'https://www.xn--hjdkurvor-07a.se'];
-/** Höjdkurvors adress, för skissen tillbaka. */
-export const HOJDKURVOR_URL = 'https://hojdkurvor.danaid.cloud/';
+const HOJDKURVOR_ORIGINS = ['https://hojdkurvor.danaid.cloud', 'https://agrellarkitektur.se', 'https://www.agrellarkitektur.se', 'https://xn--hjdkurvor-07a.se', 'https://www.xn--hjdkurvor-07a.se'];
 const IMPORT_HASH = '#hojdkurvor-import';
 
 /** Väderstrecket en riktning i modellen pekar åt, när norr ligger åt `north` (grader moturs från x-axeln). */
-export function compass(dir: readonly [number, number], north: number): string {
+function compass(dir: readonly [number, number], north: number): string {
   const a = (Math.atan2(dir[1], dir[0]) * 180) / Math.PI;
   // Medurs från norr.
   const b = (((north - a) % 360) + 360) % 360;

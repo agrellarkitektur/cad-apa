@@ -17,8 +17,8 @@ import type { Pen, Primitive } from './primitives';
  * varandra, med rubrikraden överst i varje (Carl August 10 november, C).
  */
 
-export const TABLE_TEXT = 2.5;
-export const ROW_HEIGHT = 5.5;
+const TABLE_TEXT = 2.5;
+const ROW_HEIGHT = 5.5;
 const PAD = 1.5;
 const GAP = 8;
 const MIN_COL = 10;
@@ -45,7 +45,7 @@ function linesOf(t: ScheduleTable): Line[] {
 const shown = (c: Cell) => c.text || '-';
 
 /** Kolumnernas bredd på papperet, mm. */
-export function columnWidths(t: ScheduleTable): number[] {
+function columnWidths(t: ScheduleTable): number[] {
   const w = t.columns.map((c) => textWidth(c.title, TABLE_TEXT, true) + 2 * PAD);
   for (const l of linesOf(t)) {
     l.cells?.forEach((c, i) => (w[i] = Math.max(w[i], textWidth(shown(c), TABLE_TEXT, l.kind !== 'row') + 2 * PAD)));
@@ -53,12 +53,6 @@ export function columnWidths(t: ScheduleTable): number[] {
     if (l.cells && !l.cells[0].text && l.label) w[0] = Math.max(w[0], textWidth(l.label, TABLE_TEXT, true) + 2 * PAD);
   }
   return w.map((x) => Math.max(MIN_COL, Math.ceil(x)));
-}
-
-/** Tabellens storlek på papperet utan brytning, mm. */
-export function tableSize(t: ScheduleTable): [number, number] {
-  const w = columnWidths(t).reduce((a, b) => a + b, 0);
-  return [w, (linesOf(t).length + 1) * ROW_HEIGHT];
 }
 
 /**

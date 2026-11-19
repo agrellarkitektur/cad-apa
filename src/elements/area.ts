@@ -12,7 +12,7 @@ import { centroidOf } from './rooms';
 export type { AreaParams, AreaKind } from './areaCalc';
 
 /** Nyckeln under Visa: areorna är släckta utom i Areaplanen (0.12.3). */
-export const AREA_SHOW_KEY = 'Area';
+const AREA_SHOW_KEY = 'Area';
 
 /**
  * Areaobjektet (0.12.3): en BOA, BIA, LOA, ÖVA eller OPA som man klickar

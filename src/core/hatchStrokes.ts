@@ -10,7 +10,7 @@ import type { HatchLine } from './fillTypes';
  */
 
 /** Ett streck i en linjefamilj inom en ruta: från a till b, och hur långt in i streckningen det börjar. */
-export interface HatchStroke {
+interface HatchStroke {
   a: [number, number];
   b: [number, number];
   phase: number;

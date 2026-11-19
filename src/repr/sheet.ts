@@ -31,7 +31,7 @@ import type { StyleSheet } from '../core/graphics';
  */
 
 /** Det en vy på ett blad kan visa: en sparad vy eller modellvyn av en våning, fasad, sektion eller ett arbetsblad. */
-export interface ViewSource {
+interface ViewSource {
   id: Id;
   name: string;
   /** Den sparade vyn, eller inställningarna som modellvyn ritas med. */
@@ -101,7 +101,7 @@ export function refPrims(doc: ProjectDoc, ref: Id, opt: ViewPrimOptions & { maxH
   return src ? { name: src.name, prims: cachedViewPrims(doc, src.def, opt) } : null;
 }
 
-export interface ViewPrimOptions {
+interface ViewPrimOptions {
   /** Skalans nämnare; texter och mått ritas för den (annoteringsskalan). */
   scale: number;
   /** Måttsätt det nya automatiskt, som på skärmen. */
@@ -279,7 +279,7 @@ export function modelToPaper(b: Bounds, at: Vec2, scale: number): Bounds {
 }
 
 /** Ramen på papperet för en vy med ett visst läge, eller null om vyn är tom. */
-export function viewportFrame(modelBounds: Bounds | null, at: Vec2, scale: number): Bounds | null {
+function viewportFrame(modelBounds: Bounds | null, at: Vec2, scale: number): Bounds | null {
   if (!modelBounds) return null;
   return {
     minX: at[0] + modelBounds.minX / scale - VIEWPORT_PAD,
@@ -409,12 +409,12 @@ export function masterViewStates(doc: ProjectDoc, master: Worksheet, smart?: Rec
 }
 
 /** Det som är ritat på ett mallblad (mm på papperet), med smarttexten ifylld från bladet. */
-export function masterPrims(doc: ProjectDoc, master: Worksheet, sheet: Sheet, todayText: string): Primitive[] {
+function masterPrims(doc: ProjectDoc, master: Worksheet, sheet: Sheet, todayText: string): Primitive[] {
   return buildPlan(doc, doc.storeys[0].id, masterViewStates(doc, master, smartVars(doc, sheet, todayText))).prims;
 }
 
 /** Inställningarna det som är ritat på ett blad ritas med (0.8.9): som ett mallblad, med bladets smarttext. */
-export function sheetViewStates(doc: ProjectDoc, sheet: Sheet, todayText: string): ViewStates {
+function sheetViewStates(doc: ProjectDoc, sheet: Sheet, todayText: string): ViewStates {
   return { state: defaultState(doc), viewId: modelViewId(sheet.id), place: sheet.id, scale: 1, smart: smartVars(doc, sheet, todayText) };
 }
 

@@ -19,7 +19,7 @@ import { pxToMm, type ToolHost } from './host';
 import { snapMarker } from './overlay';
 import { nearSegments, roundMm, snap, type SnapResult } from './snap';
 
-export type RailingMode = 'edge' | 'drawn';
+type RailingMode = 'edge' | 'drawn';
 
 /** En annan kant än trappans (0.11.3): hålets, bjälklagets, rampens, stödmurens, väggens eller en linje. */
 interface EdgeChain {

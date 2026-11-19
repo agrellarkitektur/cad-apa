@@ -13,7 +13,7 @@ import { escapeHtml } from './labels';
  */
 
 /** Littera-sorten för ett objekt, eller null om det inte har någon littera med ledare. */
-export function leaderKindOf(el: Element): LeaderKind | null {
+function leaderKindOf(el: Element): LeaderKind | null {
   if (el.type === 'Wall' || el.type === 'Door' || el.type === 'Window' || el.type === 'Space') return el.type;
   if (el.type === 'Ground' && el.params.kind === 'wall') return 'Ground';
   if (el.type === 'Label') return 'Label';

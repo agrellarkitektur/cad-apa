@@ -37,7 +37,7 @@ export function canFuse(doc: ProjectDoc, el: Element | undefined): boolean {
 const isRampEl = (doc: ProjectDoc, el: Element): boolean => el.type === 'Ground' && el.params.kind === 'path' && ((resolveParams<RampParams>(doc, el).line ?? []).length ?? 0) >= 2;
 
 /** Ramperna i markeringen fogade i kedjor: den första och de som hängs på, med parametrarna för resultatet. */
-export function fuseRampChains(doc: ProjectDoc, ids: readonly Id[]): { ids: Id[]; params: RampParams }[] {
+function fuseRampChains(doc: ProjectDoc, ids: readonly Id[]): { ids: Id[]; params: RampParams }[] {
   const out: { ids: Id[]; params: RampParams }[] = [];
   const left = ids.map((id) => doc.elements[id]).filter((el): el is Element => !!el && canFuse(doc, el) && el.type === 'Ground');
   const ends = (p: RampParams) => {
@@ -113,7 +113,7 @@ function append(a: Chain, b: Chain): Chain {
 }
 
 /** Kedjorna som linjerna bildar, i markeringens ordning; bara kedjor av minst två linjer. */
-export function fuseChains(doc: ProjectDoc, ids: readonly Id[]): Chain[] {
+function fuseChains(doc: ProjectDoc, ids: readonly Id[]): Chain[] {
   const out: Chain[] = [];
   const left = ids.map((id) => doc.elements[id]).filter((el) => el?.type === 'Shape2D' && canFuse(doc, el));
   while (left.length) {

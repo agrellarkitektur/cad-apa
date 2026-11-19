@@ -7,7 +7,7 @@
 
 export type P2 = [number, number];
 
-export type Pair = [number, string];
+type Pair = [number, string];
 
 export function pairs(text: string): Pair[] {
   const lines = text.split(/\r\n|\r|\n/);

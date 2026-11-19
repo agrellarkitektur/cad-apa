@@ -49,7 +49,7 @@ export function markerPen(style: StyleSheet | undefined, key: MarkerPenKey): Pen
  * förvalet), färgen om den inte är svart, och linjetypens streckning.
  * Markörerna och objektens ställen (0.10.37) läser så.
  */
-export function stylePen(style: StyleSheet | undefined, key: string, weight: number): Pen {
+function stylePen(style: StyleSheet | undefined, key: string, weight: number): Pen {
   const own = style?.pens?.[key];
   const color = own?.color && own.color !== 'ink' ? (own.color as Pen['color']) : undefined;
   const dash = lineTypeDash(style, own?.linetype);

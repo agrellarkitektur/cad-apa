@@ -15,7 +15,7 @@ import { OSIFONT_METRICS, OSIFONT_WIDTHS } from './osifontWidths';
  * i tusendelar av texthöjden; 0 betyder att tecknet saknas.
  */
 
-export interface FontMetrics {
+interface FontMetrics {
   widths: readonly number[];
   ascent: number;
   descent: number;

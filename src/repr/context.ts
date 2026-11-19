@@ -111,6 +111,6 @@ export function createContext(
   return { ctx, visible };
 }
 
-export function actionKey(a: Action): ActionKey {
+function actionKey(a: Action): ActionKey {
   return a === 'absent' ? 'plain' : a;
 }

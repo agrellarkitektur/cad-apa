@@ -15,7 +15,7 @@ import { uncutOpening } from './opening';
  * de förvalda typerna sedan 0.11.8.3; formen (rund, nisch, galler) står i
  * typens `hole` och räknas till objektets `round` och `niche`.
  */
-export type WallHoleParams = OpeningObjParams & { sill: number };
+type WallHoleParams = OpeningObjParams & { sill: number };
 
 export const wallHoleType: ElementType<WallHoleParams> = {
   type: 'WallHole',

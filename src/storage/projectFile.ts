@@ -140,7 +140,7 @@ export async function saveBlobFile(blob: Blob, name: string, description: string
 
 /** Låt användaren välja en fil och läs den som projekt. */
 /** En platsfil ur Höjdkurvor som öppnades i stället för ett projekt (0.10.3). */
-export interface SiteFileText {
+interface SiteFileText {
   siteText: string;
 }
 

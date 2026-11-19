@@ -16,7 +16,7 @@ import { officeTagKeys } from './general';
  */
 
 /** Nyckeln för ett fältnamn: små bokstäver, ett mellanslag mellan orden. */
-export function fieldKey(name: string): string {
+function fieldKey(name: string): string {
   return name.trim().replace(/\s+/g, ' ').toLowerCase();
 }
 
@@ -55,11 +55,11 @@ export function isBuiltIn(name: string): boolean {
 }
 
 /** Namnen inom klamrar i en text, i ordning, som de är skrivna. */
-export function bracedNames(text: string): string[] {
+function bracedNames(text: string): string[] {
   return [...text.matchAll(/\{([^{}]+)\}/g)].map((m) => m[1].trim()).filter(Boolean);
 }
 
-export interface FieldInfo {
+interface FieldInfo {
   key: string;
   /** Namnet som det först är skrivet, t.ex. "Konstruktör". */
   label: string;
@@ -143,7 +143,7 @@ export function applyFieldChanges(store: DocStore, sheetIds: readonly Id[], ch: 
 }
 
 /** Om ändringarna ändrar något alls. */
-export function hasFieldChanges(ch: FieldChanges): boolean {
+function hasFieldChanges(ch: FieldChanges): boolean {
   return Object.keys(ch.values ?? {}).length > 0 || Object.keys(ch.shared ?? {}).length > 0;
 }
 

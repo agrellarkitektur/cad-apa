@@ -28,7 +28,7 @@ export const SUPPORT = {
   sponsorsUrl: '',
 };
 
-export const SUPPORT_MAIL = 'kontakt@agrellarkitektur.se';
+const SUPPORT_MAIL = 'kontakt@agrellarkitektur.se';
 
 export function supportSectionHtml(s: typeof SUPPORT = SUPPORT): string {
   if (!s.intro.trim()) return '';

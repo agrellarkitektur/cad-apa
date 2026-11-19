@@ -15,7 +15,7 @@ import { applyLabelField } from './labels';
 import { materialFieldChange } from './materials';
 
 /** Det `styleDialog.ts` låter resursernas klick och fält nå. */
-export interface ResourceHost {
+interface ResourceHost {
   store: DocStore;
   readonly book: StyleBook;
   el: HTMLElement;

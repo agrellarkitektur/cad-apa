@@ -17,7 +17,7 @@ import { typeOf } from '../elements/registry';
  * är ställen för fyllningstyperna.
  */
 
-export type PlaceWhere =
+type PlaceWhere =
   | { kind: 'cat'; type: ViewType; cat: string }
   | { kind: 'view'; type: ViewType; view: string }
   | { kind: 'material'; material: string }
@@ -27,7 +27,7 @@ export type PlaceWhere =
   | { kind: 'object'; id: Id };
 
 /** Det ställena läses ur: stilboken, vyerna och objekten, och typerna och våningarna när de finns (0.10.37). */
-export type PlacesDoc = Pick<ProjectDoc, 'graphics' | 'views' | 'elements'> & Partial<Pick<ProjectDoc, 'definitions' | 'storeys'>>;
+type PlacesDoc = Pick<ProjectDoc, 'graphics' | 'views' | 'elements'> & Partial<Pick<ProjectDoc, 'definitions' | 'storeys'>>;
 
 export interface StylePlace {
   /** Unik nyckel: var och vad. */

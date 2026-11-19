@@ -8,7 +8,7 @@ import { addPen, editPen, removePens, setPlaces } from './placeEdits';
 import { fromHex, toHex } from './colors';
 
 /** Det `styleDialog.ts` låter pennlistan och listorna över ställen nå. */
-export interface PlacesHost {
+interface PlacesHost {
   store: DocStore;
   readonly book: StyleBook;
   el: HTMLElement;

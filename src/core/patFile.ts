@@ -66,7 +66,7 @@ export function patFamily(angle: number, x: number, y: number, along: number, ac
 }
 
 /** `.pat`-strecken (positiva streck, negativa mellanrum, 0 punkt) som omväxlande streck och mellanrum. */
-export function patDash(v: readonly number[]): number[] {
+function patDash(v: readonly number[]): number[] {
   if (!v.length) return [];
   const out: number[] = [];
   // Lika tecken i rad slås ihop (mönstret börjar med ett streck, se parsePat).

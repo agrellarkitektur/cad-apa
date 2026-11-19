@@ -43,7 +43,7 @@ export interface ViewTool {
   overlay?(cam: Camera): string;
 }
 
-export interface PlanViewEvents {
+interface PlanViewEvents {
   /** Pekarens position i modellen (mm), eller null när den lämnar vyn. */
   onCursor?: (p: Vec2 | null) => void;
   /** Vyn har zoomats eller panorerats. */

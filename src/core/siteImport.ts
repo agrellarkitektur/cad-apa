@@ -13,10 +13,10 @@ import { orthoFromPackage, orthoTouchesSite, type PaketOrtofoto } from './siteOr
  * okända fält hoppas över.
  */
 
-export const PACKAGE_FORMAT = 'hojdkurvor-plats';
-export const PACKAGE_VERSION = 1;
+const PACKAGE_FORMAT = 'hojdkurvor-plats';
+const PACKAGE_VERSION = 1;
 /** Typen på filen som rutnätets höjder sparas i. */
-export const GRID_MIME = 'application/x-hojdkurvor-terrang';
+const GRID_MIME = 'application/x-hojdkurvor-terrang';
 
 type XY = [number, number];
 

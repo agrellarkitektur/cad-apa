@@ -86,7 +86,7 @@ export function orthoFromPackage(p: PaketOrtofoto | undefined, name: string): { 
 }
 
 /** Byt platsens ortofoto i en transaktion (null tar bort det). Den gamla bilden tas bort. */
-export function putOrtho(tx: TxBuilder, site: Site, next: { asset: Asset; ortho: Omit<SiteOrtho, 'asset'> } | null): Site {
+function putOrtho(tx: TxBuilder, site: Site, next: { asset: Asset; ortho: Omit<SiteOrtho, 'asset'> } | null): Site {
   if (site.ortho) tx.removeAsset(site.ortho.asset);
   const out = { ...site };
   delete out.ortho;

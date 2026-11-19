@@ -195,7 +195,7 @@ export function addCrestPoint(host: ToolHost, ctx: ModifyContext, typed?: number
 }
 
 /** Ge kanten man klickat på ett eget snitt, eller ta bort det (`cut` utelämnat). */
-export function setEdgeCut(host: ToolHost, ctx: ModifyContext, cut?: EdgeCut): void {
+function setEdgeCut(host: ToolHost, ctx: ModifyContext, cut?: EdgeCut): void {
   const el = ctx.shapeId ? host.store.doc.elements[ctx.shapeId] : undefined;
   if (el?.type !== 'Roof' || ctx.index === undefined) return;
   if (el.locked) {

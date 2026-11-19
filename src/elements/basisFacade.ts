@@ -10,7 +10,7 @@ import { modelBounds } from './markers';
  * linjen ligger på (`buildingHeight`). Det finns högst en i projektet: en ny
  * ersätter den gamla. Den hör till ritningen, inte till ett tillstånd.
  */
-export interface BasisFacadeParams {
+interface BasisFacadeParams {
   start: [number, number];
   end: [number, number];
 }

@@ -15,7 +15,7 @@ const FACE_REACH = 400;
 const FACE_MAX_MM = 200_000;
 
 /** En sluten yta där markören står, medurs. */
-export interface Ring {
+interface Ring {
   points: Vec2[];
   /** Hur den hittades: en ritad yta (snittyta), ett objekts kontur eller ytan mellan linjerna. */
   kind: 'region' | 'outline' | 'face';

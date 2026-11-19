@@ -34,7 +34,7 @@ const v3 = {
 export { v3 };
 
 /** Ett plan som halvrum: det som behålls är `n·x ≤ d`. */
-export interface HalfSpace {
+interface HalfSpace {
   n: Vec3;
   d: number;
 }
@@ -196,7 +196,7 @@ const area2 = (r: readonly Vec2[]): number => {
 const ccw = (r: Vec2[]): Vec2[] => (area2(r) < 0 ? [...r].reverse() : r);
 
 /** Två konvexa polygoner (moturs) skurna med varandra. */
-export function clipConvex(subject: readonly Vec2[], clip: readonly Vec2[]): Vec2[] {
+function clipConvex(subject: readonly Vec2[], clip: readonly Vec2[]): Vec2[] {
   let out: Vec2[] = [...subject];
   for (let i = 0; i < clip.length && out.length; i++) {
     const a = clip[i];
@@ -221,24 +221,6 @@ export function clipConvex(subject: readonly Vec2[], clip: readonly Vec2[]): Vec
   return out;
 }
 
-/** En konvex polygon kapad till halvplanet a·x + b·y + c ≥ 0. */
-export function clipHalfPlane(r: readonly Vec2[], a: number, b: number, c: number): Vec2[] {
-  const out: Vec2[] = [];
-  const f = (p: Vec2) => a * p[0] + b * p[1] + c;
-  for (let i = 0; i < r.length; i++) {
-    const p = r[i];
-    const q = r[(i + 1) % r.length];
-    const fp = f(p);
-    const fq = f(q);
-    if (fp >= 0) out.push(p);
-    if ((fp >= 0) !== (fq >= 0)) {
-      const t = fp / (fp - fq);
-      out.push([p[0] + (q[0] - p[0]) * t, p[1] + (q[1] - p[1]) * t]);
-    }
-  }
-  return out;
-}
-
 // ---------- Kroppen som lodräta extruderingar ----------
 
 /** Planet z = a·x + b·y + c genom en sida med normalen n. */
@@ -249,13 +231,13 @@ function planeOf(n: Vec3, p: Vec3): Plane {
 const zAt = (pl: Plane, q: Vec2) => pl[0] * q[0] + pl[1] * q[1] + pl[2];
 
 /** En plan projektion och dess plan (ovan- eller undersida). */
-export interface Facet {
+interface Facet {
   ring: Vec2[];
   plane: Plane;
 }
 
 /** Kroppens ovansidor och undersidor, projicerade i planet. */
-export function facets(poly: Poly3): { tops: Facet[]; bottoms: Facet[] } {
+function facets(poly: Poly3): { tops: Facet[]; bottoms: Facet[] } {
   const c = centroid(poly);
   const tops: Facet[] = [];
   const bottoms: Facet[] = [];
@@ -293,7 +275,7 @@ export function solidsOf(id: string, poly: Poly3, base: Partial<Solid>): Solid[]
 // ---------- Svepningen ----------
 
 /** Hur tvärsnittet läggs på banan: ankaret, förskjutningen, vridningen kring ankaret och spegling. */
-export interface Placement {
+interface Placement {
   anchor: PPoint;
   offset?: readonly [number, number];
   /** Grader moturs kring ankaret. */
@@ -359,14 +341,14 @@ export interface EndSpec {
 }
 
 /** Banans ram i en rak bit: riktningen, x åt höger och y uppåt. */
-export interface Frame {
+interface Frame {
   t: Vec3;
   X: Vec3;
   Y: Vec3;
 }
 
 /** Ramen för en rak bit från a till b: lodrätt (`up` plumb) eller vinkelrätt mot banan uppåt. En lodrät bit (pelare) har x längs x-axeln. */
-export function frameOf(a: Vec3, b: Vec3, up: 'plumb' | 'normal'): Frame | null {
+function frameOf(a: Vec3, b: Vec3, up: 'plumb' | 'normal'): Frame | null {
   const d = v3.sub(b, a);
   const L = v3.len(d);
   if (L < 1e-6) return null;
@@ -397,7 +379,7 @@ function endNormal(kind: EndKind, tOut: Vec3, angle = 0): Vec3 {
  * längs banan från punkten p och y längs ramens Y. Planet innehåller alltid
  * ramens X (tvärs banan), så att ändprofilen skär rakt igenom tvärsnittet.
  */
-export function uyHalf(p: Vec3, tOut: Vec3, f: Frame, a: number, b: number, c: number): HalfSpace {
+function uyHalf(p: Vec3, tOut: Vec3, f: Frame, a: number, b: number, c: number): HalfSpace {
   const g = v3.dot(tOut, f.Y);
   const det = 1 - g * g || 1;
   let n = v3.add(v3.mul(tOut, (a - b * g) / det), v3.mul(f.Y, (b - a * g) / det));
@@ -472,7 +454,7 @@ function endShapeEdges(p: Vec3, tOut: Vec3, f: Frame, sh: EndShape, own: readonl
  * tvärsnittet ryms inom referenslinjen (*Inom*) eller så att det sticker ut
  * utöver den (*Utöver*), och flyttas sedan förskjutningen (plus ut).
  */
-export function endHalfSpace(p: Vec3, tOut: Vec3, f: Frame, pts: readonly PPoint[], e: EndSpec, extra = 0): HalfSpace {
+function endHalfSpace(p: Vec3, tOut: Vec3, f: Frame, pts: readonly PPoint[], e: EndSpec, extra = 0): HalfSpace {
   // En ändprofil: kroppen går till konturens yttersta punkt och skärs sedan med konturen (`endCut`).
   if (e.shape) return uyHalf(p, tOut, endFrame(f, e.shape), 1, 0, e.shape.maxU + extra);
   const n = endNormal(e.kind, tOut, e.angle);
@@ -531,7 +513,7 @@ function miter(p: Vec3, ta: Vec3, tb: Vec3): HalfSpace {
 }
 
 /** En svept del: delprofilen, biten av banan och kroppen. */
-export interface SweptPiece {
+interface SweptPiece {
   part: number;
   segment: number;
   poly: Poly3;
@@ -688,12 +670,6 @@ export function hull(pts: readonly Vec2[]): Vec2[] | null {
   }
   const h = [...lower.slice(0, -1), ...upper.slice(0, -1)];
   return h.length >= 3 && Math.abs(area2(h)) > 1e-3 ? h : null;
-}
-
-/** Kroppens fotavtryck (det konvexa höljet av hörnen i planet) och höjderna. */
-export function footprint(poly: Poly3): { ring: Vec2[] | null; z0: number; z1: number } {
-  const all = poly.flat();
-  return { ring: hull(all.map((p): Vec2 => [p[0], p[1]])), z0: Math.min(...all.map((p) => p[2])), z1: Math.max(...all.map((p) => p[2])) };
 }
 
 /**

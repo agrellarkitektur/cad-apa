@@ -21,7 +21,7 @@ export interface Seg<K> {
   key: K;
 }
 
-export interface Visible<K> {
+interface Visible<K> {
   a: readonly [number, number];
   b: readonly [number, number];
   key: K;

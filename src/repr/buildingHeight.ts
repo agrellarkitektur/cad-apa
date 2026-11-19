@@ -36,7 +36,7 @@ const BASIS_REACH = 1500;
 /** Fasader kortare än så räknas inte (hörn, smygar), mm. */
 const MIN_FACADE = 1000;
 
-export interface FacadeHeight {
+interface FacadeHeight {
   a: Vec2;
   b: Vec2;
   /** Normalen ut från fasaden. */

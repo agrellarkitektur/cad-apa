@@ -24,11 +24,11 @@ import { halfPlaneBelow, planeRange, roofBodyOf, type RoofParams, type RoofPlane
  */
 
 /** Lägsta rumshöjden för ett mätvärt utrymme, mm (5.1.3). */
-export const MIN_HEIGHT = 1900;
+const MIN_HEIGHT = 1900;
 /** Det mätvärda når så långt ut från 1,90-linjen, och så brett måste det vara, mm (5.1.3, 5.13). */
-export const BEYOND = 600;
+const BEYOND = 600;
 /** Gränsen mellan H och L, mm (18.5). */
-export const HIGH_HEIGHT = 2100;
+const HIGH_HEIGHT = 2100;
 
 /** Takfallen ovanför våningens golv, i våningens höjder, med kupornas kontur borträknad ur taken under dem. */
 function ceilings(ctx: PlanContext): RoofPlane[] {
@@ -57,7 +57,7 @@ function ceilings(ctx: PlanContext): RoofPlane[] {
 }
 
 /** Där rumshöjden under taken är lägre än `h` mm. */
-export function lowRegion(ctx: PlanContext, h: number): Rings[] {
+function lowRegion(ctx: PlanContext, h: number): Rings[] {
   return ctx.memo(`area-low:${h}`, () => {
     const parts: Rings[] = [];
     for (const pl of ceilings(ctx)) {

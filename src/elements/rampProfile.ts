@@ -38,7 +38,7 @@ function cumulative(pts: readonly Vec2[]): number[] {
 }
 
 /** Förvald vertikal radie för de mjuka övergångarna, mm (när projektet inte har något förval). */
-export const EASE_RADIUS = 20000;
+const EASE_RADIUS = 20000;
 
 /** Övergångens radie i punkt i (mm), eller 0 när den är skarp. */
 export function easeRadiusAt(p: RampParams, i: number, def?: Pick<GroundDefaults, 'easeRadius'>): number {
@@ -86,20 +86,8 @@ export function rampRuns(levels: readonly RampLevel[], p?: RampParams, def?: Pic
   return out;
 }
 
-/** Höjden längs referenslinjen, rakt mellan punkterna med höjd (utan övergångar). */
-export function heightAtS(levels: readonly RampLevel[], s: number): number {
-  if (!levels.length) return 0;
-  if (s <= levels[0].s) return levels[0].h;
-  for (let k = 1; k < levels.length; k++) {
-    const a = levels[k - 1];
-    const b = levels[k];
-    if (s <= b.s) return b.s - a.s > 1e-9 ? a.h + ((b.h - a.h) * (s - a.s)) / (b.s - a.s) : b.h;
-  }
-  return levels[levels.length - 1].h;
-}
-
 /** Rampens höjdprofil: punkterna med höjd, sträckorna och höjden längs referenslinjen. */
-export interface RampProfile {
+interface RampProfile {
   levels: RampLevel[];
   runs: RampRun[];
   /** Den vertikala kurvans längd i varje punkt med höjd mellan ändarna (0 = skarp), efter punktens plats i `levels`. */

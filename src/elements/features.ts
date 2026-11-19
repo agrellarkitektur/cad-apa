@@ -16,7 +16,7 @@ export interface FeatureRef {
   kind: string;
 }
 
-export interface LineFeature extends FeatureRef {
+interface LineFeature extends FeatureRef {
   a: Vec2;
   b: Vec2;
 }
@@ -66,7 +66,7 @@ export function featuresOf(doc: ProjectDoc, el: Element): LineFeature[] {
   }
 }
 
-export function featureOf(doc: ProjectDoc, ref: FeatureRef): LineFeature | null {
+function featureOf(doc: ProjectDoc, ref: FeatureRef): LineFeature | null {
   const el = doc.elements[ref.id];
   if (!el) return null;
   return featuresOf(doc, el).find((f) => f.kind === ref.kind) ?? null;

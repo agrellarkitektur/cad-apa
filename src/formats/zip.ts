@@ -6,7 +6,7 @@
  * filnamnen blir rätt.
  */
 
-export interface ZipEntry {
+interface ZipEntry {
   name: string;
   data: Uint8Array;
   date?: Date;
