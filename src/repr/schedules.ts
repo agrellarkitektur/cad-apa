@@ -155,7 +155,8 @@ function mergeByLittera(rows: { cells: Cell[]; key: string }[], fields: string[]
 function sumRow(rows: readonly Cell[][], sums: readonly boolean[], decimals: (i: number) => number): Cell[] {
   return sums.map((on, i) => {
     if (!on) return { text: '' };
-    const v = Number(rows.reduce((a, r) => a + (r[i].value ?? 0), 0).toFixed(decimals(i)));
+    // Avrundat som delposterna, en femma uppåt (förut `toFixed`, som kunde ge 0,15 → 0,1).
+    const v = roundArea(rows.reduce((a, r) => a + (r[i].value ?? 0), 0), decimals(i));
     return { text: nf(decimals(i)).format(v), value: v };
   });
 }
@@ -218,8 +219,9 @@ export function scheduleTable(doc: ProjectDoc, s: Schedule): ScheduleTable {
     return 0;
   });
   const sums = s.columns.map((c) => !!c.sum && isNumberField(s.source, c.field));
-  // Areornas delsummor och summa i hela m² (SS 21054, 4.3).
-  const decimals = (i: number) => (s.columns[i].field === 'Area' ? (s.source === 'Area' ? 0 : sh.decimals) : s.columns[i].field === 'Omkrets' || s.columns[i].field === 'Glasarea' ? 1 : 0);
+  // Areornas delsummor och summa är summaposter: hela m² (SS 21054, 4.3), också för rummen
+  // (förut stilbokens decimaler där); `sumDecimal` avviker med en decimal (0.12.5.7).
+  const decimals = (i: number) => (s.columns[i].field === 'Area' ? (s.sumDecimal ? 1 : 0) : s.columns[i].field === 'Omkrets' ? 2 : s.columns[i].field === 'Glasarea' ? 1 : 0);
   const anySum = sums.some(Boolean);
   const visible = (r: Cell[]) => r.slice(0, fields.length);
   let groups: ScheduleGroup[];

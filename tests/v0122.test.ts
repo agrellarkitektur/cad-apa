@@ -30,13 +30,17 @@ describe('förteckningarna (0.12.2)', () => {
       ['1103', 'Bad'],
       ['1104', 'Sovrum 2'],
     ]);
-    expect(t.total![3].value).toBe(78.6);
+    // Summan är en summapost: hela m² (SS 21054, 4.3; 0.12.5.7).
+    expect(t.total![3].value).toBe(79);
     // Fallande efter area, och grupperat efter våning med en delsumma.
     updateSchedule(store, id, { sort: [{ field: 'Area', desc: true }], group: 'Våning' });
     const g = tableOf(store, id);
     expect(g.groups.map((x) => x.label)).toEqual(['Plan 1']);
     expect(g.groups[0].rows[0][1].text).toBe('Allrum');
-    expect(g.groups[0].sums![3].text).toBe('78,6');
+    expect(g.groups[0].sums![3].text).toBe('79');
+    // Avvikelsen: summorna med en decimal.
+    updateSchedule(store, id, { sumDecimal: true });
+    expect(tableOf(store, id).groups[0].sums![3].text).toBe('78,6');
   });
 
   it('dörrar och fönster: en rad per littera med antal, eller en per objekt där det som skiljer står som Olika', () => {
@@ -84,8 +88,8 @@ describe('förteckningarna (0.12.2)', () => {
     expect(csv.startsWith('﻿Nummer;Namn;Våning;Area, m²;Rumshöjd, mm')).toBe(true);
     expect(lines[1]).toBe('Plan 1');
     expect(lines[2]).toBe('1101;Allrum;Plan 1;32,7;');
-    expect(lines).toContain('Summa Plan 1;;;78,6;');
-    expect(lines).toContain('Summa;;;78,6;');
+    expect(lines).toContain('Summa Plan 1;;;79;');
+    expect(lines).toContain('Summa;;;79;');
   });
 
   it('på bladet: en vy i 1:1 med rubriken ovanför, bruten i delar bredvid varandra, och borta med förteckningen', () => {

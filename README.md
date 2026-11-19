@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.5.6** (alfa), Förteckningen per littera, flytten till cad-apa.danaid.cloud, licensen AGPL-3.0, rättningarna ur granskningen och Granskning efter 0.12; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
+**0.12.5.7** (alfa), Förteckningen per littera, flytten till cad-apa.danaid.cloud, licensen AGPL-3.0, rättningarna ur granskningen, Granskning efter 0.12 och summorna enligt SS 21054; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
 
 ## Vad programmet är
 
@@ -47,6 +47,17 @@ den öppna betan uppgraderas inte projekt från äldre alfa- och betaversioner n
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp
 på webbhotellet (t.ex. `cad-apa/0.5/`, `cad-apa/0.6/`) bredvid den senaste.
+
+Version 0.12.5.7, Summor enligt SS 21054 (samma filformat, 28):
+- **Summor och delsummor av areor står i hela m²** i alla förteckningar,
+  också rumsförteckningen (förut stilbokens decimaler där). SS 21054, 4.3:
+  delposter med en decimal, summaposter utan decimaler. Areaförteckningen
+  hade redan hela m²
+- **En femma avrundas uppåt** också i summorna (förut kunde 0,15 bli 0,1)
+- **Omkretsen** i rumsförteckningen står i meter med två decimaler
+  (längdmått enligt 4.3; förut en)
+- Ny inställning i förteckningen: **Areornas summor med en decimal
+  (avviker från SS 21054)**, avstängd som förval
 
 Version 0.12.5.6, Granskning efter 0.12 (samma filformat, 28):
 - **Rumsnumren på plan 2** kunde bli 11xx i stället för 12xx när det

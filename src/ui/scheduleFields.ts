@@ -132,6 +132,7 @@ export function scheduleFormMarkup(doc: ProjectDoc, id: string): string {
       ${s.sort[0] ? sortRow(1) : ''}
       <div class="fields">${field('Gruppera efter', `<select data-sch="group">${fieldOptions(doc, s, s.group, 'Ingen gruppering')}</select>`)}</div>
       <label class="check"><input type="checkbox" data-sch="total"${s.noTotal ? '' : ' checked'}> Summarad längst ned</label>
+      ${s.columns.some((c) => c.field === 'Area' && c.sum) ? `<label class="check" title="SS 21054, 4.3: delposter med en decimal, summaposter i hela m². Kryssa för att avvika."><input type="checkbox" data-sch="sumDecimal"${s.sumDecimal ? ' checked' : ''}> Areornas summor med en decimal (avviker från SS 21054)</label>` : ''}
       ${s.group ? '<p class="note">Varje grupp får en rubrik och, med Σ, en delsumma.</p>' : ''}
     </section>
     ${onSheet}

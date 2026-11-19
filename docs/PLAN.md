@@ -194,6 +194,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.12.5.4 | Licensen: AGPL-3.0 eller senare med kommersiella undantag (`docs/LICENS.md`), licenshuvuden i källfilerna, *Källkoden* i menyn och Om-rutan till versionens commit, `THIRD-PARTY.md` och `LICENSES/`, `CONTRIBUTING.md` och `CLA.md` (utkast), *Stöd utvecklingen* i Om-rutan |
 | 0.12.5.5 | Rättningar ur granskningen efter 0.12.5.4: DXF:s boolska gruppkoder som heltal, GUID sparas vid export och behålls för borttagna objekt, licenstexterna i bygget, varningarna (balkongdörrar, glipan 50 mm med kvittering, fri passage enligt SS 91 42 21, fri höjd 2 kap. 25 §), CSV-talen |
 | 0.12.5.6 | Granskning efter 0.12 (19 november): lagerregeln med test och `src/edit/`, cirkelimporterna, 376 privata exporter, sex stora filer delade, differentialtestet, README kortad, arbetsflödena låsta; rumsnumren på plan 2, fri höjd i dörrar, horisontella öppningar i räcken, linjetypsnamn i DXF, trasiga filer, Öppna som hänger |
+| 0.12.5.7 | Summor enligt SS 21054, 4.3: areornas summor i hela m² (också rummen), en femma uppåt i summorna, omkretsen med två decimaler, inställningen *Areornas summor med en decimal* som avvikelse |
 | 0.12.2 | Förteckningar: rum, dörrar, fönster, grindar och det generella litterat ur modellen, kolumner ur fälten eller smarttext, sortering, gruppering, delsummor och summarad, en rad per littera, tabellen över ritytan, på bladet i 1:1 bruten i delar bredvid varandra, i bladets PDF och DXF, CSV och PDF i Exportera |
 | 0.12.1 | DXF: egen skrivare för AutoCAD 2000 och 2018, vyer i modellens mm och blad i pappers-mm, lagerkartorna SB11 förenklad och fullständig, Enkel och en egen lista ur en DXF, pennan som färg och linjetjocklek, status N/E/R, väggarna delade per vägg, Bärande |
 | 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, förteckningens fält i stilboken (Typer) med taggar och smarttext |
@@ -1989,7 +1990,7 @@ höjd i dörrar och horisontella öppningar i räcken, mobilmeningen.
 - Zonens kontur utan rivna väggar har inget test som skiljer: konturen
   används bara vid invändiga hörn, och ingen enkel uppställning gav en
   annan area.
-- Avrundningen mot SS 14141 (B5): standarden finns inte i kunskapsbasen.
+- Avrundningen mot SS 14141 (B5): besvarad i 0.12.5.7 (en femma uppåt).
 - Funktionsmåttens fria ytor vid dörren och nivån Höjd (egen version).
 - Autosparets underlag för sig (C5) och sektionernas återanvändning (C6):
   se förslagen i UTVECKLING.md.
@@ -1997,7 +1998,32 @@ höjd i dörrar och horisontella öppningar i räcken, mobilmeningen.
   konfigurationen ligger (D, småsaker).
 - Huvudpaketet är 1,79 MB (588 kB packat); inte delat.
 
-### Nästa: Carl Augusts provning av 0.12–0.12.5.6
+### 0.12.5.7 Summor enligt SS 21054 ✓
+
+19 november 2026, samma chatt som granskningen, efter Carl Augusts besked:
+standarderna följs som förval, med inställningar för att avvika. Liten;
+samma format 28 (valfritt fält förteckningens `sumDecimal`). Testerna: 1028.
+
+- SS 21054:2020, 4.3 (i kunskapsbasen): längdmått i m med två decimaler,
+  delposter med en decimal, summaposter utan decimaler, avrundning enligt
+  SS 14141 regel A. **SS 14141 upphävdes i oktober 2026** och finns inte i
+  kunskapsbasen; Carl August: en femma avrundas uppåt (12,25 → 12,3 och
+  12). Frågan B5 är därmed besvarad.
+- Summaraden och delsummorna för kolumnen *Area* i hela m² i alla
+  förteckningar (areaförteckningen hade det sedan 0.12.3; rummen följde
+  stilbokens *Decimaler i areor*). `sumRow` avrundar med `roundArea` i
+  stället för `toFixed`, och rummens rader likaså.
+- *Omkrets* med två decimaler, i raderna och summan.
+- `sumDecimal` på förteckningen (*Areornas summor med en decimal (avviker
+  från SS 21054)*, visas när en areakolumn summeras).
+
+**Claudes val:** delsummorna per grupp räknas som summaposter (hela m²).
+Raderna per våning och areaslag (BYA, BTA, BRA framräknade) är delposter
+och har kvar en decimal. Glasarean i fönsterförteckningen följer inte SS
+21054 och är oförändrad (en decimal). Planens areastämpel följer stilbokens
+*Decimaler i areor* (en delpost) som förut.
+
+### Nästa: Carl Augusts provning av 0.12–0.12.5.7
 
 Ett eget litet hus (en timme: väggar, dörrar, fönster, en
 fönsterförteckning, en area, export till PDF och DXF) innan 0.12.6 IFC

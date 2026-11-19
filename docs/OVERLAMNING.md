@@ -6,11 +6,17 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 19 november 2026, efter 0.12.5.6 (Granskning efter 0.12);
-nästa är Carl Augusts provning av 0.12–0.12.5.6, sedan 0.12.6 IFC.
+README. Senast: 19 november 2026, efter 0.12.5.7 (summorna enligt SS 21054);
+nästa är Carl Augusts provning av 0.12–0.12.5.7, sedan 0.12.6 IFC.
 
 ## Läget
 
+- **0.12.5.7 Summor enligt SS 21054** (19 november, samma format 28):
+  areornas summor och delsummor i hela m² i alla förteckningar, en femma
+  uppåt, omkretsen med två decimaler, inställningen *Areornas summor med en
+  decimal* som avvikelse. **Carl August:** standarderna följs som förval,
+  gärna med inställningar för att avvika. SS 14141 är upphävd (oktober
+  2026); en femma avrundas uppåt. Testerna: 1028.
 - **0.12.5.6 Granskning efter 0.12** (19 november, samma format 28, en
   session utan frågor; Claudes val och *Inte gjort* i PLAN.md, koden och
   **mätningarna** i UTVECKLING.md). Del 1 (syns inte): lagerregeln med
@@ -201,10 +207,10 @@ nästa är Carl Augusts provning av 0.12–0.12.5.6, sedan 0.12.6 IFC.
   skapa releaser (403); arbetsflödet gör det, med Carl Augusts tillstånd 19
   november. `v0.12.5.4` skapade han själv. Äldre versioner utan release
   (0.12.5–0.12.5.3 m.fl.) får ingen i efterhand.
-- **Publicerad:** 0.12.5.6 pushad till `main` 19 november (se git och `gh run
+- **Publicerad:** 0.12.5.7 pushad till `main` 19 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.12.5.6` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.12.5.7` i `engine.ts`, `package.json` och
   `package-lock.json`. Nya funktioner får tredje siffran (0.12.4 …); **den
   fjärde siffran är för snabba buggfixar** utan nya funktioner (Carl August
   10 november). En granskning höjer inte numret, eller får en fjärde siffra
@@ -311,13 +317,13 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   ~~Utredning av 0.12 Export~~, ~~0.12 Exportdialogen och PDF~~,
   ~~0.12.1 DXF~~, ~~0.12.2 Förteckningar~~, ~~0.12.3 Areor~~,
   ~~0.12.4 Areor under snedtak och mark~~, ~~0.12.5 Förteckningen per
-  littera~~, ~~0.12.5.1–0.12.5.3~~, ~~0.12.5.4 Licensen~~, ~~Granskning efter 0.12.5.4~~, ~~0.12.5.5 Rättningar ur granskningen~~, ~~0.12.5.6 Granskning efter 0.12~~ (klara; se tabellen *Klart* i PLAN.md)
+  littera~~, ~~0.12.5.1–0.12.5.3~~, ~~0.12.5.4 Licensen~~, ~~Granskning efter 0.12.5.4~~, ~~0.12.5.5 Rättningar ur granskningen~~, ~~0.12.5.6 Granskning efter 0.12~~, ~~0.12.5.7 Summor enligt SS 21054~~ (klara; se tabellen *Klart* i PLAN.md)
 - **Flytten till cad-apa.danaid.cloud**: steg 8–10 i `docs/FLYTT.md`
   (Carl Augusts provning, Höjdkurvor, sedan omdirigering och FTP bort)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
 - ~~Utredning av IFC~~ (13 november, `cad-apa-ifc-utredning.md`)
-- **Carl Augusts provning av 0.12–0.12.5.6** (nästa; ett eget litet hus, en timme)
+- **Carl Augusts provning av 0.12–0.12.5.7** (nästa; ett eget litet hus, en timme)
 - **Dörrarnas funktionsmått** (liten; om han vill ha den före IFC)
 - **Ytterväggarna efter tillstånd** (liten; `outsideSide` räknar rivna
   väggar; om han vill ha den före IFC, där IsExternal hämtas därifrån)
@@ -339,8 +345,8 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session: Carl Augusts provning, sedan 0.12.6 IFC
 
-Granskningen efter 0.12 är klar (0.12.5.6). Fråga först hur provningen av
-0.12–0.12.5.6 gick (ett eget litet hus: väggar, dörrar, fönster, en
+Granskningen efter 0.12 är klar (0.12.5.6, och summorna i 0.12.5.7). Fråga först hur provningen av
+0.12–0.12.5.7 gick (ett eget litet hus: väggar, dörrar, fönster, en
 fönsterförteckning, en area, export till PDF och DXF). Tre småsaker kan han
 välja att lägga före IFC, var och en en liten version: **dörrarnas
 funktionsmått** (SS 91 42 21), **ytterväggarna efter tillstånd**
@@ -348,7 +354,7 @@ funktionsmått** (SS 91 42 21), **ytterväggarna efter tillstånd**
 väggar på våningen oavsett tillstånd; IFC:s IsExternal hämtas därifrån)
 och **underlagen för sig i autosparet** (UTVECKLING.md, *Mätningar*).
 
-**Provningen:** Carl August provar 0.12–0.12.5.6 med ett eget
+**Provningen:** Carl August provar 0.12–0.12.5.7 med ett eget
 litet hus (en timme: väggar, dörrar, fönster, en fönsterförteckning, en
 area, export till PDF och DXF) **innan 0.12.6 IFC byggs**. Fråga om en DXF
 öppnas i AutoCAD, om provfilen `docs/ifc/provhuset.ifc` öppnats i

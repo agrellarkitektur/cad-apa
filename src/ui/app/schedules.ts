@@ -258,6 +258,9 @@ export function installSchedules(app: AppContext, parts: { place: (sheetId: Id, 
       case 'total':
         edit(form, { noTotal: el.checked ? undefined : true }, el.checked ? 'Summarad' : 'Ingen summarad');
         break;
+      case 'sumDecimal':
+        edit(form, { sumDecimal: el.checked ? true : undefined }, el.checked ? 'Summor med en decimal' : 'Summor i hela m²');
+        break;
     }
   });
 

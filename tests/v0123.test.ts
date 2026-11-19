@@ -145,7 +145,8 @@ describe('redovisningen (0.12.3)', () => {
     expect(sheet.rows[1][0]).toEqual({ v: 'Plan 1', bold: true });
     const sumRow = sheet.rows.find((r) => r[3]?.f)!;
     expect(sumRow[3].f).toBe('SUM(D3:D6)');
-    expect(sumRow[3].v).toBe(78.6);
+    expect(sumRow[3].v).toBe(79);
+    expect(sumRow[3].decimals).toBe(0);
     const total = sheet.rows[sheet.rows.length - 1];
     expect(total[3].f).toBe('SUM(D3:D6)');
     const bytes = scheduleXlsx(t);

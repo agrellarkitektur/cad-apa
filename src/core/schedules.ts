@@ -49,6 +49,11 @@ export interface Schedule {
   /** Summaraden längst ned (förval på). */
   noTotal?: boolean;
   /**
+   * Areornas summor och delsummor med en decimal i stället för hela m²
+   * (0.12.5.7): en avvikelse från SS 21054, 4.3, som är förval.
+   */
+  sumDecimal?: boolean;
+  /**
    * Uppställd per littera (0.12.5, dörrar och fönster): fälten är rader och
    * varje littera en kolumn, med ritningen sedd utifrån överst. Raderna är
    * stilbokens fältmall; `columns`, `sort` och `group` gäller inte då.
@@ -161,6 +166,7 @@ export function normalizeSchedule(s: unknown): Schedule | null {
     ...(Array.isArray(x.storeys) && x.storeys.length ? { storeys: x.storeys.filter((v) => typeof v === 'string') } : {}),
     ...(typeof x.labelSort === 'string' && x.labelSort ? { labelSort: x.labelSort } : {}),
     ...(x.noTotal ? { noTotal: true } : {}),
+    ...(x.sumDecimal ? { sumDecimal: true } : {}),
     ...(x.layout === 'littera' && (source === 'Door' || source === 'Window') ? { layout: 'littera' as const } : {}),
     ...(typeof x.figureScale === 'number' && FIGURE_SCALES.includes(x.figureScale) && x.figureScale !== DEFAULT_FIGURE_SCALE ? { figureScale: x.figureScale } : {}),
     ...(x.noFigure ? { noFigure: true } : {}),

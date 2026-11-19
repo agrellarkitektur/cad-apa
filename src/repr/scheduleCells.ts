@@ -81,14 +81,17 @@ export function cellOf(src: ScheduleSource, field: string, it: Item, sh: Shared)
           const o = pts();
           if (o.length < 3) return { text: '' };
           const a = areaOf(o);
-          return { text: nf(sh.decimals).format(a), value: Number(a.toFixed(sh.decimals)) };
+          const v = roundArea(a, sh.decimals);
+          return { text: nf(sh.decimals).format(v), value: v };
         }
         case 'Omkrets': {
           const o = pts();
           if (o.length < 3) return { text: '' };
           let l = 0;
           for (let i = 0; i < o.length; i++) l += Math.hypot(o[(i + 1) % o.length][0] - o[i][0], o[(i + 1) % o.length][1] - o[i][1]);
-          return { text: nf(1).format(l / 1000), value: Number((l / 1000).toFixed(1)) };
+          // Längdmått i m med två decimaler (SS 21054, 4.3; förut en).
+          const v = roundArea(l / 1000, 2);
+          return { text: nf(2).format(v), value: v };
         }
         case 'Rumshöjd':
           return mm(p.ceilingHeight);
