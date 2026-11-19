@@ -156,13 +156,13 @@ README. Senast: 19 november 2026, efter 0.12.5.4 (licensen AGPL-3.0).
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Taggar och releaser** (Carl August 19 november): Claude taggar och
-  släpper varje klar version själv, `v<version>` på versionens commit, med
-  `gh api repos/agrellarkitektur/cad-apa/releases -f tag_name=… -f
-  target_commitish=<sha> -f name="<version> <namn>" -f body=…` (REST; `gh
-  release` når inte GraphQL härifrån). Texten är README:s avsnitt för
-  versionen. Releasen bygger zip-filen (`release.yml`); se efter med `gh run
-  list`. Äldre versioner utan tagg taggas inte i efterhand.
+- **Taggar och releaser** (Carl August 19 november): Claude taggar varje
+  klar version själv, `git tag v<version> && git push origin v<version>` på
+  versionens sista commit. `release.yml` skapar då releasen (titel och text
+  ur README:s avsnitt via `scripts/release-notes.sh`) och lägger zip-filen
+  på den; se efter med `gh run list`. Releaser kan inte skapas direkt
+  härifrån (REST svarar 403), taggar kan. Äldre versioner utan tagg taggas
+  inte i efterhand.
 - **Publicerad:** 0.12.5.4 pushad till `main` 19 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.

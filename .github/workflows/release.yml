@@ -2,15 +2,20 @@
 # Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 # Bygger programmet och lägger en färdig zip för webbhotellet på varje release.
 #
-# Så används den: gå till Releases på GitHub, välj "Draft a new release",
-# skriv en tagg som v0.6.2 och publicera. Efter någon minut ligger
-# cad-apa-v0.6.2.zip under Assets på releasen. Den kan också köras för hand
+# Så används den: pusha en tagg som v0.12.5.4 (git tag v0.12.5.4 && git push
+# origin v0.12.5.4). Arbetsflödet skapar då releasen själv, med titel och text
+# ur README:s avsnitt för versionen (scripts/release-notes.sh, sedan
+# 0.12.5.4), och lägger zip-filen på den. En release som görs för hand under
+# Releases på GitHub fungerar som förut. Efter någon minut ligger
+# cad-apa-v0.12.5.4.zip under Assets på releasen. Den kan också köras för hand
 # under Actions → "Bygg för webbhotellet" → "Run workflow"; då hamnar zip-filen
 # under körningens Artifacts i stället.
 
 name: Bygg för webbhotellet
 
 on:
+  push:
+    tags: ['v*']
   release:
     types: [published]
   workflow_dispatch:
@@ -62,14 +67,24 @@ jobs:
           (cd package && zip -r -9 "../$NAME.zip" cad-apa)
           echo "file=$NAME.zip" >> "$GITHUB_OUTPUT"
 
+      - name: Skapa releasen ur README
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          scripts/release-notes.sh "$V" text > release-notes.md
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 ||
+            gh release create "$GITHUB_REF_NAME" --verify-tag --title "$(scripts/release-notes.sh "$V" titel)" --notes-file release-notes.md
+
       - name: Lägg zip-filen på releasen
-        if: github.event_name == 'release'
+        if: github.event_name == 'release' || github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "$GITHUB_REF_NAME" "${{ steps.zip.outputs.file }}" --clobber
 
       - name: Spara zip-filen på körningen
-        if: github.event_name != 'release'
+        if: github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: cad-apa-webbhotell

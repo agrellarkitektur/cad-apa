@@ -118,7 +118,7 @@ Kan följas i Sisyfos och Höjdkurvor.
 - **THIRD-PARTY.md** med bibliotek, typsnitt och underlag, och licenstexterna i `LICENSES/`. Alla beroenden var förenliga: three.js och Workbox (MIT), pdf.js (Apache-2.0), earcut (ISC), polygon-clipping och splaytree (MIT), robust-predicates (Unlicense), typsnitten OFL och osifont GPL-3.0 med typsnittsundantag.
 - **CONTRIBUTING.md** och **CLA.md** (utkast på engelska med svensk sammanfattning: upphovsrätten kvar hos bidragsgivaren, rätt för Agrell Arkitektur att licensiera om och att överlåta vid ett uppköp, löfte om att varje version också finns under AGPL, svensk lag).
 - **Stöd utvecklingen** i `src/ui/app/supportSection.ts`: fälten `intro`, `private`, `business`, `swishQr` och `sponsorsUrl`. Avsnittet syns bara när `intro` är ifylld; utan `swishQr` står en platshållare.
-- **Taggar och releaser:** varje klar version taggas `v<version>` och släpps som release på GitHub, med README:s avsnitt som text.
+- **Taggar och releaser:** varje klar version taggas `v<version>`; `release.yml` gör releasen med README:s avsnitt som text.
 
 ### Kvar för Carl August (cad-apa)
 
