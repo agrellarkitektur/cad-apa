@@ -10,7 +10,8 @@ import { openingHinges, openingLitteras } from '../elements/openingLittera';
 import type { PlanContext } from '../elements/registry';
 import { createContext } from './context';
 import { columnName, writeXlsx, type XlsxCell, type XlsxSheet } from '../formats/xlsxWrite';
-import { AREA_KINDS, BRA_KINDS, COMPUTED_KINDS, areaParts, areaRegion, btaParts, byaRegion, groundStorey, ringsArea, roundArea, type AreaParams } from '../elements/areaCalc';
+import { AREA_KINDS, BRA_KINDS, COMPUTED_KINDS, areaParts, areaRegion, btaParts, roundArea, type AreaParams } from '../elements/areaCalc';
+import { byaRegion, groundStorey, ringsArea } from '../elements/areaRegions';
 import { type Cell, columnTitle, nf, type Item, type Shared, cellOf, cmpText } from './scheduleCells';
 import { type LitteraInfo, litteraTable } from './scheduleLittera';
 

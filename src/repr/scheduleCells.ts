@@ -13,7 +13,8 @@ import { openingModelOf, type OpeningObjParams } from '../elements/openingSpec';
 import type { PlanContext } from '../elements/registry';
 import { spaceOutline, roomNumbersFor, type SpaceParams } from '../elements/rooms';
 import { areaOf } from '../elements/space';
-import { areaParts, ringsArea, roundArea, type AreaParams, type AreaPart } from '../elements/areaCalc';
+import { areaParts, roundArea, type AreaParams, type AreaPart } from '../elements/areaCalc';
+import { ringsArea } from '../elements/areaRegions';
 
 
 /**

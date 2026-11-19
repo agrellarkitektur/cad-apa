@@ -4,7 +4,8 @@ import { AREA_NO_FILL, areaColorOf, areaSettingsOf, areaText } from '../core/gen
 import type { Color } from '../core/graphics';
 import type { Primitive, Vec2 } from '../repr/primitives';
 import { pointInRings } from '../geometry/vec';
-import { AREA_NAMES, areaCode, areaParts, areaRegion, areaValue, COMPUTED_KINDS, largestRing, ringsArea, roundArea, type AreaParams } from './areaCalc';
+import { AREA_NAMES, areaCode, areaParts, areaRegion, areaValue, COMPUTED_KINDS, largestRing, roundArea, type AreaParams } from './areaCalc';
+import { ringsArea } from './areaRegions';
 import type { ElementType, PlanContext } from './registry';
 import type { Element } from '../core/model';
 import { centroidOf } from './rooms';
