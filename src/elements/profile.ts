@@ -12,7 +12,8 @@ import { flatLine } from './groundLines';
 import { planCutHeight } from './planCut';
 import { showLittera } from './littera';
 import { endAxis, resolveEnd } from './endProfile';
-import { endReach, hull, merged, partRegions, placePoint, sliceAt, solidsOf, sweep, type EndSpec, type SweepResult, type Vec3 } from './profileBody';
+import { endReach, hull, merged, partRegions, placePoint, sliceAt, sweep, type EndSpec, type SweepResult } from './profileBody';
+import { solidsOf, type Vec3 } from './poly3';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
 
 /**

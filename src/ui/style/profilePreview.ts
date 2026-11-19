@@ -4,7 +4,8 @@ import type { ProfileDim } from '../../core/profileContour';
 import { anchorPoint, boxOfPoints, profileSection, profileValues, stretchPoint, ZONE_PARAM, type PPoint, type ProfileTypeModel } from '../../core/profileTypes';
 import type { ProjectDoc } from '../../core/model';
 import { resolveEnd } from '../../elements/endProfile';
-import { partRegions, placePoint, sweep, type EndSpec, type Vec3 } from '../../elements/profileBody';
+import { partRegions, placePoint, sweep, type EndSpec } from '../../elements/profileBody';
+import { type Vec3 } from '../../elements/poly3';
 import type { Vec2 } from '../../repr/primitives';
 
 /**
