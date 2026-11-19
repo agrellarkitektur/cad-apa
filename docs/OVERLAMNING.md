@@ -78,9 +78,7 @@ granskningen).
   **jorddjupsmodell** (berg under jorden); då räknas berg och jord ur ytor
   i stället för procentsatsen per objekt. Schakt och fyll per objekt räknas
   redan sedan 0.10.13 (`finishedGround`, `massBalance`). Ändrat i PLAN.md,
-  README:s rad 9 och synpunkterna. **Appens texter har kvar de gamla
-  numren** (`exportDialog.ts`: *IFC kommer i 0.12.7*, *3D-vyerna kommer i
-  0.12.9*; `exportSettings.ts`, `viewCategories.ts`): rättas i 0.12.6.
+  README:s rad 9 och synpunkterna; appens texter rättade i 0.12.5.5.
 - **0.12.5 Förteckningen per littera är klar** (12 november, samma format
   28; valfria fält förteckningens `layout`, `figureScale`, `noFigure`,
   `hideEmpty` och bladvyns `maxWidth`), byggd i en session efter Carl
@@ -334,8 +332,7 @@ IfcExtrudedAreaSolid, resten trianglat med `solidTriangles`), väggarna
 GUID ur `doc.guids`, lagren och IsExternal/LoadBearing ur
 `src/core/dxfLayers.ts`, förteckningens fält ur `src/core/openingSchedule.ts`,
 areorna ur areaförteckningens räkning, raden *Modellen* i
-`src/ui/app/exportDialog.ts`. web-ifc som devDependency i testerna. Rätta
-de gamla versionsnumren i appens texter. Vid
+`src/ui/app/exportDialog.ts`. web-ifc som devDependency i testerna. Vid
 granskningen efter 0.12 delas `src/ui/style/profileTypes.ts` (875),
 `openingTypes.ts` (828), `areaCalc.ts` (ca 550) och `src/repr/schedules.ts`
 (ca 640; per littera till en egen fil).
