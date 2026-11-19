@@ -2,7 +2,8 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Id, ProjectDoc } from '../core/model';
 import { actionOf } from '../core/states';
-import { hasSash, layoutLeaf, layoutOpening, leafGridOf, LEAF_OPS, type OpeningTypeModel } from '../core/openingTypes';
+import { LEAF_OPS, type OpeningTypeModel } from '../core/openingTypes';
+import { hasSash, layoutLeaf, layoutOpening, leafGridOf } from '../core/openingLayout';
 import { pointInRings } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import { compassOf } from './markers';

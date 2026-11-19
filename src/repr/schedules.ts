@@ -3,7 +3,8 @@
 import type { Element, Id, ProjectDoc } from '../core/model';
 import { buildingStoreys, isSite } from '../core/model';
 import { DERIVED_FIELDS, fieldValue, scheduleFields, type ScheduleKind } from '../core/openingSchedule';
-import { layoutOpening, OP_LABEL } from '../core/openingTypes';
+import { OP_LABEL } from '../core/openingTypes';
+import { layoutOpening } from '../core/openingLayout';
 import { DEFAULT_FIGURE_SCALE, isLitteraLayout, isNumberField, scheduleOf, type Schedule, type ScheduleSource } from '../core/schedules';
 import { actionOf, defaultState, existingState, type Action } from '../core/states';
 import { defaultSheet } from '../core/viewCategories';

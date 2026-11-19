@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { symbolSegments } from '../../core/openingSymbol';
-import { hasSash, layoutLeaf, layoutOpening, leafGridOf, muntinLines, muntinWidth, LEAF_OPS, SIDE_HUNG, type LaidCell, type OpeningTypeModel, type Rect, type Track } from '../../core/openingTypes';
+import { LEAF_OPS, SIDE_HUNG, type OpeningTypeModel, type Track } from '../../core/openingTypes';
+import { hasSash, layoutLeaf, layoutOpening, leafGridOf, muntinLines, muntinWidth, type LaidCell, type Rect } from '../../core/openingLayout';
 
 /**
  * Typen sedd utifrån i dörr- och fönstereditorn (0.11.8, tavla 3): karmen,

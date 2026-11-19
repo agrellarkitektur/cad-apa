@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
-import type { LaidCell } from './openingTypes';
+import type { LaidCell } from './openingLayout';
 
 /** En linje i luftens plan: u från vänster sett utifrån, z uppåt (mm). */
 type Seg = [u1: number, z1: number, u2: number, z2: number];

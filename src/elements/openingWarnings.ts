@@ -2,7 +2,8 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Element, ProjectDoc } from '../core/model';
 import { fieldValue } from '../core/openingSchedule';
-import { hasSash, layoutLeaf, layoutOpening, leafGridOf, LEAF_OPS, kindOfElementType, type LaidCell } from '../core/openingTypes';
+import { LEAF_OPS, kindOfElementType } from '../core/openingTypes';
+import { hasSash, layoutLeaf, layoutOpening, leafGridOf, type LaidCell } from '../core/openingLayout';
 import { openingModelOf, type OpeningObjParams } from './openingSpec';
 import { resolveParams } from './registry';
 import { outsideSide } from './wallSides';

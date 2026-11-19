@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Element } from '../core/model';
-import { layoutOpening, LEAF_OPS, SIDE_HUNG, hasSash, muntinLines, muntinWidth, standsOnFloor, trimOf, type LaidCell, type OpeningKind, type OpeningLayout, type OpeningTypeModel, type Rect } from '../core/openingTypes';
+import { LEAF_OPS, SIDE_HUNG, standsOnFloor, trimOf, type OpeningKind, type OpeningTypeModel } from '../core/openingTypes';
+import { layoutOpening, hasSash, muntinLines, muntinWidth, type LaidCell, type OpeningLayout, type Rect } from '../core/openingLayout';
 import { openingSettingsOf } from '../core/general';
 import { buildingMaterialOf, materialSolid } from './buildingMaterial';
 import { detailOf } from '../core/states';

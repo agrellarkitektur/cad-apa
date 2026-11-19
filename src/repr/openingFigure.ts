@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { symbolSegments } from '../core/openingSymbol';
-import { hasSash, layoutLeaf, layoutOpening, leafGridOf, muntinLines, LEAF_OPS, type OpeningTypeModel, type Rect } from '../core/openingTypes';
+import { LEAF_OPS, type OpeningTypeModel } from '../core/openingTypes';
+import { hasSash, layoutLeaf, layoutOpening, leafGridOf, muntinLines, type Rect } from '../core/openingLayout';
 
 /**
  * En dörr eller ett fönster ritat för sig, sett utifrån (0.12.5): ritningen

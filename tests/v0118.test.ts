@@ -3,7 +3,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DocStore } from '../src/core/store';
 import { emptyProject, type Element, type ProjectDoc } from '../src/core/model';
-import { DEFAULT_OPENING_TYPES, layoutOpening, normalizeOpeningModel, openingDefinition, frameFromModule, holeFromModule } from '../src/core/openingTypes';
+import { DEFAULT_OPENING_TYPES, normalizeOpeningModel, openingDefinition, frameFromModule, holeFromModule } from '../src/core/openingTypes';
+import { layoutOpening } from '../src/core/openingLayout';
 import { registerBuiltInTypes } from '../src/elements';
 import { resolveParams } from '../src/elements/registry';
 import { openingLitteras, renumberOpenings, applyFormula, missingOpeningNumbers } from '../src/elements/openingLittera';

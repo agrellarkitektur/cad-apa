@@ -4,7 +4,8 @@ import type { WallFrame } from '../geometry/wallFrame';
 import type { Vec2 } from '../repr/primitives';
 import type { Edges3D, EdgePart, Shape3D, Solid } from '../repr/solids';
 import { symbolSegments } from '../core/openingSymbol';
-import { hardwareOf, hasSash, holeOf, layoutLeaf, leafGridOf, LEAF_OPS, muntinLines, muntinOutline, muntinWidth, standsOnFloor, trimOf, type LaidCell, type OpeningLayout, type OpeningTypeModel, type Rect } from '../core/openingTypes';
+import { hardwareOf, holeOf, LEAF_OPS, standsOnFloor, trimOf, type OpeningTypeModel } from '../core/openingTypes';
+import { hasSash, layoutLeaf, leafGridOf, muntinLines, muntinOutline, muntinWidth, type LaidCell, type OpeningLayout, type Rect } from '../core/openingLayout';
 
 /**
  * Dörrar och fönster i 3D, och därmed i fasader och sektioner (0.7.1; ur

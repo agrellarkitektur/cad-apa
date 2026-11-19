@@ -3,7 +3,8 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { DocStore } from '../src/core/store';
 import { emptyProject, type Element, type ProjectDoc } from '../src/core/model';
-import { DEFAULT_OPENING_TYPES, layoutLeaf, leafGridPreset, muntinLines, muntinOutline, normalizeOpeningModel, openingDefinition } from '../src/core/openingTypes';
+import { DEFAULT_OPENING_TYPES, normalizeOpeningModel, openingDefinition } from '../src/core/openingTypes';
+import { layoutLeaf, leafGridPreset, muntinLines, muntinOutline } from '../src/core/openingLayout';
 import { symbolSegments } from '../src/core/openingSymbol';
 import { OPENING_DEFAULTS } from '../src/core/general';
 import { commonValue, ownFields, sameLittera, scheduleFields, withField } from '../src/core/openingSchedule';
