@@ -12,7 +12,7 @@ import { ABOVE_PART, planCutPen } from '../repr/planCutPens';
 import { resolveParams, type PlanContext } from './registry';
 import { fillPrims, materialCutFill, materialCutPrims, type FillParams } from './fill2d';
 import { buildingMaterialOf, materialPen } from './buildingMaterial';
-import { halfPlaneBelow, outlineEdges, outlineRing, roofFrame, roofPlanes, roofRange, type RoofParams } from './roof';
+import { halfPlaneBelow, outlineEdges, outlineRing, roofFrame, roofPlanes, roofRange, type RoofParams } from './roofGeometry';
 
 /**
  * Taket i planen (0.10.2). Planen är ett snitt i våningens snitthöjd

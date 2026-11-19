@@ -278,17 +278,14 @@ export interface Storey {
 }
 
 /** Platsens id (0.10.25). */
-export const SITE_STOREY: Id = 'platsen';
+export { isSite, SITE_STOREY } from './siteStorey';
+import { SITE_STOREY } from './siteStorey';
 
 /** Platsen i våningslistan: sist, vid ±0. */
 export function siteStorey(): Storey {
   return { id: SITE_STOREY, name: 'Platsen', elevation: 0, height: 2700, site: true };
 }
 
-/** Om id:t (eller våningen) är Platsen. */
-export function isSite(s: Id | Pick<Storey, 'site'> | undefined | null): boolean {
-  return typeof s === 'string' ? s === SITE_STOREY : !!s?.site;
-}
 
 /** Husets våningar, utan Platsen, i listans ordning. */
 export function buildingStoreys(doc: Pick<ProjectDoc, 'storeys'>): Storey[] {

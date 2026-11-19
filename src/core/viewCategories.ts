@@ -2,7 +2,8 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import { slugId } from './ids';
 import { COLOUR_CODED, POCHE, SWEDISH_STANDARD, type ActionKey, type ActionStyle, type CategoryStyle, type PenDef, type StyleBook, type StyleSheet } from './graphics';
-import { isSite, type Id, type ProjectDoc, type SiteCategory, type ViewDef } from './model';
+import type { Id, ProjectDoc, SiteCategory, ViewDef } from './model';
+import { isSite } from './siteStorey';
 import { normalizeUnderlays, type ViewUnderlay } from './viewUnderlays';
 
 /**

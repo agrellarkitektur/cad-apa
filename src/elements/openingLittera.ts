@@ -7,7 +7,8 @@ import { kindOfElementType } from '../core/openingTypes';
 import { northAngle } from './markers';
 import { hingeLetters, openingModelOf, uMapping, viewFace, type OpeningObjParams } from './openingSpec';
 import { resolveParams } from './registry';
-import { wallFrame, type WallParams } from './wall';
+import { wallFrame } from '../geometry/wallFrame';
+import { type WallParams } from './wallBodies';
 import { outsideSide } from './wallSides';
 
 /**

@@ -11,7 +11,7 @@ import { pointInRings } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import { openingZone } from './opening';
 import { typeOf, resolveParams, type PlanContext } from './registry';
-import { outlineRing, planeRange, roofPlanes, type RoofParams } from './roof';
+import { outlineRing, planeRange, roofPlanes, type RoofParams } from './roofGeometry';
 import { holeAt, roomHoles } from './rooms';
 import { holeRing, type SlabParams } from './slab';
 import { stairParams, geometryOfStair } from './stair';

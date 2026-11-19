@@ -4,7 +4,7 @@ import type { Id } from '../core/model';
 import { union, type Rings } from '../geometry/boolean';
 import { lastResults } from '../repr/reuse';
 import type { PlanContext } from './registry';
-import { bareWallUnion, type WallParams } from './wall';
+import { bareWallUnion, type WallParams } from './wallBodies';
 
 /**
  * Husets kontur (0.10.2): ytterväggarnas utsida på alla våningar, sammanslagen,

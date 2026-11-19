@@ -4,7 +4,8 @@ import type { Element, Id, ProjectDoc } from '../core/model';
 import type { Rings } from '../geometry/boolean';
 import { pointInRings } from '../geometry/vec';
 import { resolveParams } from './registry';
-import { bareWallUnion, wallFrame, type WallParams } from './wall';
+import { wallFrame } from '../geometry/wallFrame';
+import { bareWallUnion, type WallParams } from './wallBodies';
 
 /**
  * Vilken sida av en vägg som vetter ut. Väggarna på våningen slås ihop; det

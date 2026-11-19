@@ -2,6 +2,8 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { StyleBook } from './graphics';
 import { newId } from './ids';
+import { pruneAssets } from './assets';
+export { pruneAssets };
 import type { Asset, Definition, Element, Id, ShowIn, State, Value } from './model';
 import { isViewportId, removeViewportsTx } from './sheets';
 import { statesForNewElement } from './states';
@@ -77,17 +79,6 @@ export function deleteElements(store: DocStore, ids: Id[]): DeleteResult {
     pruneAssets(tx, files);
   });
   return { removed: open.length, locked };
-}
-
-/** Ta bort filer som inget element längre använder (bland `candidates`). */
-export function pruneAssets(tx: TxBuilder, candidates: Iterable<Id>): void {
-  const used = new Set<unknown>(Object.values(tx.doc.elements).map((e) => e.params.asset));
-  // Materialens texturer och ortofotot (0.10.31) räknas också.
-  for (const m of tx.doc.graphics.materials ?? []) if (m.texture) used.add(m.texture.asset);
-  if (tx.doc.site?.ortho) used.add(tx.doc.site.ortho.asset);
-  // Kontorets logotyp (0.10.39) också, när den inte ligger på något blad.
-  if (tx.doc.graphics.office?.logo) used.add(tx.doc.graphics.office.logo.asset);
-  for (const a of candidates) if (!used.has(a)) tx.removeAsset(a);
 }
 
 /** Lägg till ett underlag (0.8 del 2): filen och elementet i ett steg. */

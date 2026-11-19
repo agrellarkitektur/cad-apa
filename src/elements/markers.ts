@@ -5,7 +5,7 @@ import { left, norm, sub } from '../geometry/vec';
 import { markerPen, penFill, solidPen, withWeight } from '../repr/markerPens';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import { resolveParams, type ElementType, type PlanContext } from './registry';
-import { outlineRing, type RoofParams } from './roof';
+import { outlineRing, type RoofParams } from './roofGeometry';
 
 /**
  * Norrpil, fasader och sektioner (format 4). De hör till ritningen, inte

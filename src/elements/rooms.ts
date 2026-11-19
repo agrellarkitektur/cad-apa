@@ -8,7 +8,8 @@ import type { Vec2 } from '../repr/primitives';
 import { shapePoints, type FillPattern, type Shape2DParams } from './drawing2d';
 import type { PlanContext } from './registry';
 import { lastResults } from '../repr/reuse';
-import { bareWallUnion, planWallParams, wallFrame, type OpeningParams, type WallParams } from './wall';
+import { wallFrame } from '../geometry/wallFrame';
+import { bareWallUnion, planWallParams, type OpeningParams, type WallParams } from './wallBodies';
 
 /**
  * Rummens konturer ur väggarna: väggarna slås ihop (utan öppningar), och

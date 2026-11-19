@@ -5,7 +5,7 @@ import type { Vec2 } from '../repr/primitives';
 import { isFixed, type FurnitureParams } from './furniture';
 import type { MarkerParams } from './markers';
 import { resolveParams, typeOf } from './registry';
-import type { RoofParams } from './roof';
+import type { RoofParams } from './roofGeometry';
 import { lastResults } from '../repr/reuse';
 
 /**

@@ -5,7 +5,7 @@ import type { Vec2 } from '../repr/primitives';
 import { zOn } from '../repr/solids';
 import { markerFrame } from './markers';
 import { resolveParams } from './registry';
-import { outlineRing, roofFrame, roofPlanes, type RoofParams } from './roof';
+import { outlineRing, roofFrame, roofPlanes, type RoofParams } from './roofGeometry';
 
 /**
  * Grepp för taket i fasader och sektioner (0.8, takfall sedan 0.10).

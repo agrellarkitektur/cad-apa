@@ -7,7 +7,7 @@ import type { Vec2 } from '../repr/primitives';
 import { zOn, type Plane } from '../repr/solids';
 import { arcFromBulge } from '../geometry/arc';
 import { segmentCount, shapePoints } from './drawing2d';
-import { halfPlaneBelow, outlineRing, roofFrame, roofPlanes, type RoofParams } from './roof';
+import { halfPlaneBelow, outlineRing, roofFrame, roofPlanes, type RoofParams } from './roofGeometry';
 
 /**
  * Takets kropp (0.10.2): takfallets plana bitar med språngets tjocklek och

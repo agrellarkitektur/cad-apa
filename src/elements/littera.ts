@@ -9,7 +9,8 @@ import type { LeaderKind } from '../core/graphics';
 import { fromFrame, leaderOf, type TagParams, type TextBox } from './leader';
 import type { PlanContext } from './registry';
 import { doorNumbersFor } from './rooms';
-import { FRAME_LESS, HOLE_EXTRA, type WallFrame } from './wall';
+import { type WallFrame } from '../geometry/wallFrame';
+import { FRAME_LESS, HOLE_EXTRA } from './wallBodies';
 import { openingLitteras } from './openingLittera';
 
 /**

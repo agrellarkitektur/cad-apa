@@ -4,7 +4,7 @@ import type { Id } from '../core/model';
 import { markerPen } from '../repr/markerPens';
 import type { Pen, Primitive, Vec2 } from '../repr/primitives';
 import type { ElementType } from './registry';
-import type { RoofParams } from './roof';
+import type { RoofParams } from './roofGeometry';
 
 /**
  * Taklutningen som eget objekt (0.8, format 5). Den ritas i en fasad eller

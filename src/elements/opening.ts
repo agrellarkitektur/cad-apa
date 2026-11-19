@@ -2,7 +2,8 @@
 // Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 import type { Element } from '../core/model';
 import type { PlanContext } from './registry';
-import { FRAME_LESS, holeWidth, planWallParams, wallFrame, type OpeningParams, type WallFrame, type WallParams } from './wall';
+import { wallFrame, type WallFrame } from '../geometry/wallFrame';
+import { FRAME_LESS, holeWidth, planWallParams, type OpeningParams, type WallParams } from './wallBodies';
 import { outsideSide } from './wallSides';
 import { levelOf } from '../repr/solids';
 import { ABOVE_PART, planCutPen } from '../repr/planCutPens';

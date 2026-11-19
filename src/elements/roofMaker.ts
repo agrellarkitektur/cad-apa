@@ -5,7 +5,7 @@ import { signedArea } from '../geometry/chains';
 import { dist } from '../geometry/vec';
 import type { Vec2 } from '../repr/primitives';
 import type { Plane } from '../repr/solids';
-import { halfPlaneBelow, outlineRing, roofPlanes, type RoofParams } from './roof';
+import { halfPlaneBelow, outlineRing, roofPlanes, type RoofParams } from './roofGeometry';
 
 /**
  * Takfall som skapas eller ändras på en gång (0.10): snabbvalen över en
