@@ -18,8 +18,7 @@ README. Senast: 19 november 2026, efter 0.12.5.4 (licensen AGPL-3.0).
   `LICENSES/`, `CONTRIBUTING.md`, `CLA.md` (utkast). *Stöd utvecklingen*
   i Om-rutan, texten i `src/ui/app/supportSection.ts`, skriven av Claude
   på hans begäran; han skriver om den på stället. Testerna: 1008. Provat i
-  Playwright mot `dist/` (menyn, Om-rutan med Stöd-avsnittet). Taggad och
-  släppt som release `v0.12.5.4`.
+  Playwright mot `dist/` (menyn, Om-rutan med Stöd-avsnittet).
   **Kvar för Carl August:** Stöd-texten i egna ord om han vill, Swish-QR när Swish Företag finns,
   koppla CLA Assistant (cla-assistant.io, gist med `CLA.md`), juristen
   (CLA, avtalet om undantag), revisorn (Swish-bidragen). Sisyfos och
@@ -156,13 +155,15 @@ README. Senast: 19 november 2026, efter 0.12.5.4 (licensen AGPL-3.0).
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Taggar och releaser** (Carl August 19 november): Claude taggar varje
-  klar version själv, `git tag v<version> && git push origin v<version>` på
-  versionens sista commit. `release.yml` skapar då releasen (titel och text
-  ur README:s avsnitt via `scripts/release-notes.sh`) och lägger zip-filen
-  på den; se efter med `gh run list`. Releaser kan inte skapas direkt
-  härifrån (REST svarar 403), taggar kan. Äldre versioner utan tagg taggas
-  inte i efterhand.
+- **Taggar och releaser** (Carl August 19 november: som i danaid). Den här
+  sessionstypen får inte pusha taggar eller skapa releaser (git och REST
+  svarar 403). Sedan 0.12.5.4 räcker det att **Carl August** skapar taggen
+  `v<version>` (GitHub › Releases › *Draft a new release* › ny tagg, eller
+  `git push origin v<version>`): `release.yml` skapar då releasen med titel
+  och text ur README:s avsnitt (`scripts/release-notes.sh`) och lägger
+  zip-filen på den. Ett arbetsflöde som taggar av sig självt vid varje ny
+  version på `main` är skrivet men inte pushat; det kringgår sessionens
+  spärr och väntar på hans beslut. `v0.12.5.4` är inte taggad än.
 - **Publicerad:** 0.12.5.4 pushad till `main` 19 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
