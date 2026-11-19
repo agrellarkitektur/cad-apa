@@ -179,8 +179,10 @@ export function doorNumbersFor(ctx: PlanContext): Map<Id, string> {
 function prefixFor(ctx: PlanContext): string {
   const numbering = numberingOf(ctx.doc);
   const storeys = buildingStoreys(ctx.doc).sort((a, b) => a.elevation - b.elevation);
-  const any = ctx.visible()[0];
-  const plan = String(Math.max(0, storeys.findIndex((s) => s.id === any?.storey)) + 1);
+  // Våningen som ritas; förut det första synliga objektets, som kunde vara en
+  // markör eller ett tak från en annan våning (Granskning efter 0.12).
+  const at = ctx.storey ?? ctx.visible().find((e) => e.type === 'Space')?.storey;
+  const plan = String(Math.max(0, storeys.findIndex((s) => s.id === at)) + 1);
   return numbering.digits === 4 ? `${numbering.building}${plan}` : plan;
 }
 
