@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.5.5** (alfa), Förteckningen per littera, flytten till cad-apa.danaid.cloud, licensen AGPL-3.0 och rättningarna ur granskningen; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
+**0.12.5.6** (alfa), Förteckningen per littera, flytten till cad-apa.danaid.cloud, licensen AGPL-3.0, rättningarna ur granskningen och Granskning efter 0.12; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
 
 ## Vad programmet är
 
@@ -47,6 +47,32 @@ den öppna betan uppgraderas inte projekt från äldre alfa- och betaversioner n
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp
 på webbhotellet (t.ex. `cad-apa/0.5/`, `cad-apa/0.6/`) bredvid den senaste.
+
+Version 0.12.5.6, Granskning efter 0.12 (samma filformat, 28):
+- **Rumsnumren på plan 2** kunde bli 11xx i stället för 12xx när det
+  första som ritades på våningen hörde till en annan våning, till exempel
+  sedan taket på plan 2 tagits bort. Numret tar nu våningen som ritas
+- **Varning för fri höjd i dörrar** under 2,00 m (BFS 2024:9, 2 kap.
+  25 §), mätt från golvet till karmens överkant inuti: en 20M-dörr varnas,
+  en 21M-dörr inte
+- **Varning för horisontella öppningar** på 110–230 mm ovanför skyddets
+  front i ett barnsäkert räcke (BFS 2024:9, 2 kap. 11 § 5), till exempel
+  när spjälorna eller glaset slutar en bit under handledaren
+- **DXF:** egna linjetypers namn rensas från tecken som DXF inte tillåter
+  (`/ \ : ; * ? " < > | , =`), och de framräknade namnen skrivs `CA-1p5_0p5`
+  i stället för med kommatecken
+- **6-meterszonen** för areor under mark räknar inte med rivna väggar i
+  husets kontur
+- En **littera med ett trasigt mål** i en fil får inte längre hela planen
+  att krascha, och ett element som är tomt (`null`) i filen hoppas över i
+  stället för att ge ett tekniskt fel
+- **Öppna** väntar inte längre för evigt när dialogen avbryts i en
+  webbläsare utan filsystems-API; samma för *Läs DXF* i profileditorn
+- Den tomma egenskapspanelen säger inte längre något om mobilen
+- Inget annat syns: koden är städad (lagerregeln, cirkelimporterna, 376
+  oanvända exporter, sex stora filer delade), ett differentialtest jämför
+  planen och 3D med och utan cache, README är kortad (äldre versioner i
+  `docs/arkiv/README-0.1-0.11.md`) och arbetsflödena är låsta på commit
 
 Version 0.12.5.5, Rättningar ur granskningen (samma filformat, 28):
 - **DXF:** fem ja/nej-värden skrevs som decimaltal (`0.0`), vilket stränga

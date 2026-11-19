@@ -6,12 +6,31 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 19 november 2026, efter 0.12.5.5 (rättningarna ur
-granskningen); frågorna om 0.11 och äldre strukna, nästa är Granskning
-efter 0.12.
+README. Senast: 19 november 2026, efter 0.12.5.6 (Granskning efter 0.12);
+nästa är Carl Augusts provning av 0.12–0.12.5.6, sedan 0.12.6 IFC.
 
 ## Läget
 
+- **0.12.5.6 Granskning efter 0.12** (19 november, samma format 28, en
+  session utan frågor; Claudes val och *Inte gjort* i PLAN.md, koden och
+  **mätningarna** i UTVECKLING.md). Del 1 (syns inte): lagerregeln med
+  test och den nya mappen `src/edit/`, cirkelimporterna (bara
+  `graphics` ↔ `viewCategories` kvar), 376 privata exporter, sex stora
+  filer delade, **differentialtestet** i testerna (`tests/differential.test.ts`),
+  README kortad till 515 rader (0.1–0.11.8.4 i
+  `docs/arkiv/README-0.1-0.11.md`), arbetsflödena låsta på commit,
+  klickjämförelsen med steg för 0.12. Del 2 (syns): **rumsnumren på plan 2**
+  (differentialtestet hittade att de kunde bli 11xx), varningarna för **fri
+  höjd i dörrar** (2 kap. 25 §, mätt från golvet) och **horisontella
+  öppningar i räcken** (11 § 5), linjetypsnamnen i DXF, trasiga filer,
+  *Öppna* som hängde, rivna väggar i 6-meterszonen, mobilmeningen.
+  Testerna: 1025. Klickjämförelsen mot 0.12.5.5 visar bara det väntade.
+  **Hittat, inte rättat:** `outsideSide` räknar alla väggar oavsett
+  tillstånd (en riven tillbyggnad gör väggen mot den till innervägg);
+  föreslås som en egen liten version. **Förslag ur mätningarna:**
+  autosparet skriver underlagen vid varje ändring (ca 4 ms per MB, två
+  gånger med en öppen fil); spara dem för sig innan ortofotot i full
+  upplösning (liten–mellan).
 - **Granskningen efter 0.12.5.4 och 0.12.5.5** (19 november, samma format
   28). Granskningen var bara en rapport: **`cad-apa-granskning-0.12.md`** i
   projektet (fynden A–E, rangordnade). **0.12.5.5** rättade samma dag det
@@ -25,9 +44,8 @@ efter 0.12.
   (800 entrédörr och dörr till balkong/uteplats = 10M, 760 innerdörr = 9M;
   den höjda nivån för arbetsplatser har 800 också för innerdörrar),
   spiraltrappans fria höjd enligt 2 kap. 25 §. Testerna: 1014 på ca 13 s.
-  Provat i Playwright mot `dist/` (export, GUID efter omladdning). **Kvar
-  ur granskningen** står under *Inte gjort* i PLAN.md (0.12.5.5) och görs i
-  *Granskning efter 0.12*. Carl August: funktionsmåtten för dörrar är
+  Provat i Playwright mot `dist/` (export, GUID efter omladdning). Det som
+  var kvar gjordes i 0.12.5.6. Carl August: funktionsmåtten för dörrar är
   viktiga och ska stämma när man ritar dörrar (de fria ytorna a och b vid
   dörren är inte byggda än; föreslå dem till granskningen eller en egen
   liten version, med hans skärmklipp ur standarden som underlag).
@@ -183,10 +201,10 @@ efter 0.12.
   skapa releaser (403); arbetsflödet gör det, med Carl Augusts tillstånd 19
   november. `v0.12.5.4` skapade han själv. Äldre versioner utan release
   (0.12.5–0.12.5.3 m.fl.) får ingen i efterhand.
-- **Publicerad:** 0.12.5.5 pushad till `main` 19 november (se git och `gh run
+- **Publicerad:** 0.12.5.6 pushad till `main` 19 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.12.5.5` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.12.5.6` i `engine.ts`, `package.json` och
   `package-lock.json`. Nya funktioner får tredje siffran (0.12.4 …); **den
   fjärde siffran är för snabba buggfixar** utan nya funktioner (Carl August
   10 november). En granskning höjer inte numret, eller får en fjärde siffra
@@ -293,16 +311,18 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   ~~Utredning av 0.12 Export~~, ~~0.12 Exportdialogen och PDF~~,
   ~~0.12.1 DXF~~, ~~0.12.2 Förteckningar~~, ~~0.12.3 Areor~~,
   ~~0.12.4 Areor under snedtak och mark~~, ~~0.12.5 Förteckningen per
-  littera~~, ~~0.12.5.1–0.12.5.3~~, ~~0.12.5.4 Licensen~~, ~~Granskning efter 0.12.5.4~~, ~~0.12.5.5 Rättningar ur granskningen~~ (klara; se tabellen *Klart* i PLAN.md)
+  littera~~, ~~0.12.5.1–0.12.5.3~~, ~~0.12.5.4 Licensen~~, ~~Granskning efter 0.12.5.4~~, ~~0.12.5.5 Rättningar ur granskningen~~, ~~0.12.5.6 Granskning efter 0.12~~ (klara; se tabellen *Klart* i PLAN.md)
 - **Flytten till cad-apa.danaid.cloud**: steg 8–10 i `docs/FLYTT.md`
   (Carl Augusts provning, Höjdkurvor, sedan omdirigering och FTP bort)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
 - ~~Utredning av IFC~~ (13 november, `cad-apa-ifc-utredning.md`)
-- **Granskning efter 0.12** (nästa; mellanstor, utan frågor; Carl August
-  19 november: före IFC, eftersom den inte kräver hans provning)
-- **Carl Augusts provning av 0.12–0.12.5.5** (ett eget litet hus, en timme)
+- **Carl Augusts provning av 0.12–0.12.5.6** (nästa; ett eget litet hus, en timme)
 - **Dörrarnas funktionsmått** (liten; om han vill ha den före IFC)
+- **Ytterväggarna efter tillstånd** (liten; `outsideSide` räknar rivna
+  väggar; om han vill ha den före IFC, där IsExternal hämtas därifrån)
+- **Underlagen sparas för sig** (liten–mellan; före ortofotot i full
+  upplösning från Höjdkurvor)
 - **0.12.6 IFC** (stor) → **0.12.6.1 IFC, resten** (mellanstor) →
   **0.12.7 Utgåvor och PM** (mockup först; se `cad-apa-export-utredning.md`,
   där står de äldre numren)
@@ -317,68 +337,18 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 - Efter piloten: se *Efter pilotprojektet* i PLAN.md. **1.0**
   bygglovshandling.
 
-## Nästa session: Granskning efter 0.12
+## Nästa session: Carl Augusts provning, sedan 0.12.6 IFC
 
-**Carl August har ont om tid** (19 november). Granskningen körs därför
-**utan frågor**: välj själv, skriv valen i PLAN.md och fråga bara om något
-skulle ändra hur ritningarna ser ut. Han startar chatten med "push
-godkänd". Underlaget är **`cad-apa-granskning-0.12.md`** i projektet (läs
-den först; bokstäverna nedan är dess) och *Inte gjort* under 0.12.5.5 i
-PLAN.md. Inga nya funktioner. Mellanstor: **en session för del 1, en egen
-för del 2** om chatten blir lång. Syns inget i appen höjs inte versionen;
-de nya varningarna i del 2 ger **0.12.5.6**.
+Granskningen efter 0.12 är klar (0.12.5.6). Fråga först hur provningen av
+0.12–0.12.5.6 gick (ett eget litet hus: väggar, dörrar, fönster, en
+fönsterförteckning, en area, export till PDF och DXF). Tre småsaker kan han
+välja att lägga före IFC, var och en en liten version: **dörrarnas
+funktionsmått** (SS 91 42 21), **ytterväggarna efter tillstånd**
+(`outsideSide` i `src/elements/wallSides.ts` bygger konturen av alla
+väggar på våningen oavsett tillstånd; IFC:s IsExternal hämtas därifrån)
+och **underlagen för sig i autosparet** (UTVECKLING.md, *Mätningar*).
 
-**Del 1, städning (syns inte):**
-- **Differentialtestet in i testerna** (C4): för varje objekt i ett rikt
-  projekt (två våningar med mark, trappa, räcken, profiler, areor, vägghål,
-  littera, mått) flyttas, ändras och tas objektet bort; planen och 3D
-  byggs med varm cache och från början (`structuredClone` av dokumentet)
-  och jämförs. Spara öppningarnas nummer i projektet först
-  (`missingOpeningNumbers`), annars skiljer litteran. Håll det under tio
-  sekunder (färre ändringar, inte sektionerna). Skriptet från granskningen
-  finns inte kvar; metoden står här och i rapporten.
-- **Dela filerna** (C7): `src/ui/style/profileTypes.ts` (877),
-  `ui/style/openingTypes.ts` (830), `core/openingTypes.ts` (753),
-  `elements/profileBody.ts` (712), `repr/schedules.ts` (639; per littera
-  till en egen fil), `elements/areaCalc.ts` (552).
-- **Lagerregeln** (C1): nio filer i `core/` importerar från `elements/`,
-  `repr/` eller `formats/`, och `geometry/` hämtar `Vec2` ur
-  `repr/primitives`. Claudes förslag: flytta `Vec2` till `geometry/`,
-  flytta filerna som behöver objekttyperna till `elements/` (eller en ny
-  mapp för kommandon), och skriv regeln i ARKITEKTUR och UTVECKLING så att
-  den stämmer med koden. Lägg ett test som håller regeln.
-- **Cirkelimporterna** (C2) där de går att bryta billigt, och **de
-  oanvända exporterna** (C3): gör dem privata och ta bort det som då är
-  dött.
-- **README** (E): äldre versioner till `docs/arkiv/`, *Kom igång* och vad
-  programmet är överst. Behåll rubrikformen `Version x.y.z, …` för de
-  versioner som ligger kvar; `scripts/release-notes.sh` läser den.
-- **Arbetsflödena** (D): lås `checkout`, `setup-node` och
-  `upload-artifact` på commit, som FTP-steget. `npm audit fix` för de två
-  som går utan att bryta något (C8).
-- **Testerna:** slå ihop dubbletter; hela körningen tar ca 13 s.
-- **Klickjämförelsen** (`scripts/jamfor-klick.py`): nya steg för
-  0.12–0.12.5.5 (exportdialogen, förteckningarna, areorna, räckets
-  *Kvittera*) och en körning.
-- **Mät, rätta inte än:** autosparet med stora underlag (C5) och
-  sektionernas omräkning (C6) på ett hus i villastorlek. Skriv siffrorna i
-  UTVECKLING.md och föreslå en version om de är för höga.
-
-**Del 2, småfel som syns (0.12.5.6):**
-- En littera med ett trasigt mål kraschar planen (`leader.ts`); ett
-  element som är `null` i filen ger ett tekniskt fel (C9).
-- *Öppna* hänger när dialogen avbryts i webbläsare utan filsystems-API;
-  `merge` i `styleBookFile.ts` (C10).
-- Egna linjetypers namn rensas inte från tecken som DXF inte tillåter (D).
-- Rivna väggar räknas med i 6-meterszonens kontur (B6).
-- Varning för dörrar med fri höjd under 2,00 m (BFS 2024:9, 2 kap. 25 §)
-  och för vågräta öppningar på 110–230 mm i ett barnsäkert räcke (2 kap.
-  11 § 5). Slå upp i kunskapsbasen, inte ur minnet.
-- Meningen om mobilen i den tomma egenskapspanelen tas bort.
-- **Avrundningen** (B5) rörs inte: SS 14141 finns inte i kunskapsbasen.
-  Fråga om han har den.
-
-**Efter granskningen:** Carl August provar 0.12–0.12.5.5 med ett eget
+**Provningen:** Carl August provar 0.12–0.12.5.6 med ett eget
 litet hus (en timme: väggar, dörrar, fönster, en fönsterförteckning, en
 area, export till PDF och DXF) **innan 0.12.6 IFC byggs**. Fråga om en DXF
 öppnas i AutoCAD, om provfilen `docs/ifc/provhuset.ifc` öppnats i
@@ -407,6 +377,11 @@ fråga. Först **A–E i `cad-apa-ifc-utredning.md`** (hör till 0.12.6), sedan
 0.12.5.5, 0.12.5, 0.12.4, 0.12.3, 0.12.2, 0.12.1 och 0.12. **Frågorna om
 0.11 och äldre ströks 19 november** (ca 200 stycken; de finns i git,
 `docs/OVERLAMNING.md` före den dagen). Lägg inte tillbaka dem.
+
+**0.12.5.6 efter provning** (Claudes val, se PLAN.md)
+- Horisontella öppningar i ett barnsäkert räcke prövas som springan i
+  höjdled ovanför spjälorna eller glaset. Ska en handledare indragen bakom
+  fronten (avståndet i sidled) också prövas?
 
 **0.12.5.5 efter provning** (Claudes val, se PLAN.md)
 - Balkongdörrarnas varning kommer för alla ytterdörrar och fönsterdörrar

@@ -698,6 +698,59 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Granskning efter 0.12 (0.12.5.6, format 28)
+
+- **Lagren:** se *Lagren och vem som får prata med vem* överst och
+  `tests/lagerregeln.test.ts`. `src/edit/` har `levels`, `facadeMove`,
+  `filterSelect`, `openingAlign`, `joinLines`, `materials` och
+  `storeyEdits` (`deleteStorey`, `toStorey`, `storeyContents`; resten av
+  våningarna ligger kvar i `core/storeys.ts`). `exportJobs` och `clipRect`
+  ligger i `repr/`.
+- **Delade filer:** `ui/style/profileCanvas.ts` (ritytans pekare, snäpp,
+  gummibandet), `ui/style/openingTypeChange.ts` (`openingEditorChange`,
+  `setOp`, `fillGrid`, `ownLeafGrid`, `glassRectOf`),
+  `core/openingLayout.ts` (`layoutOpening`, `muntinLines`, `layoutLeaf`,
+  `leafGridOf` …; normaliseringen ligger kvar i `openingTypes.ts`),
+  `elements/poly3.ts` (`Vec3`, `v3`, `HalfSpace`, `clipPoly`, `prism`,
+  `solidsOf`), `repr/scheduleCells.ts` (`cellOf`, `Item`, `Shared`,
+  `cmpText`) och `repr/scheduleLittera.ts` (`litteraTable`,
+  `litteraRange`), `elements/areaRegions.ts` (`btaRegion`, `byaRegion`,
+  `wallsOf`, `ringsArea` …), `elements/roofGeometry.ts` (takets plan,
+  höjder och kanter; `roof.ts` exporterar dem vidare). Delningarna går åt
+  ett håll: den nya filen importerar inte tillbaka värden ur den gamla.
+- **Cirklar:** kvar är bara `core/graphics.ts` ↔ `core/viewCategories.ts`.
+  Importera väggens grunder ur `elements/wallBodies.ts` och
+  `geometry/wallFrame.ts`, inte ur `wall.ts`, och takets ur
+  `roofGeometry.ts`, inte ur `roof.ts`.
+- **Differentialtestet** (`tests/differential.test.ts`): `enrich` lägger
+  till det som saknas i exemplen; `changed` gör en liten ändring som de
+  flesta typer förstår. Hittar det en skillnad, skriv ut de primitiver som
+  skiljer per våning (första skillnaden i `plans(...)`); felet i
+  rumsnumren syntes som 1201/1101 på plan 2.
+- **Rumsnumren:** `prefixFor` (`rooms.ts`) tar `ctx.storey`, och utan den
+  det första synliga rummets våning.
+- **Trasiga filer:** `normalize` (`storage/format.ts`) hoppar över element
+  som inte är objekt med en `type` och tar bort litterans mål utan `at`;
+  `leaderOf` hoppar också över dem.
+- **DXF:** `dxfName` (`repr/exportDxf.ts`) för linjetypernas namn.
+- **Varningarna:** `freeHeight` (`openingWarnings.ts`, BFS 2024:9, 2 kap.
+  25 §) och `horizontalOpening` (`railingWarnings.ts`, 11 § 5).
+
+### Mätningar (19 november 2026, sandlådan)
+
+- **Autosparet (C5):** `serialize` tar ca 4 ms per MB underlag: 0,4 ms utan,
+  12 ms vid 5 MB, 64 ms vid 20 MB, 238 ms vid 60 MB, och två gånger när en
+  fil är öppen (autosparet till filen), plus skrivningen till IndexedDB.
+  Med ortofotot i full upplösning (20–60 MB) blir det ett hack på 0,1–0,5 s
+  0,8 s efter varje ändring. **Förslag:** spara underlagen för sig
+  (IndexedDB per fil, nyckeln är filens id) och bara dokumentet utan dem
+  vid varje ändring. Liten–mellan; bör göras innan Höjdkurvor levererar
+  ortofotot i full upplösning.
+- **Sektioner och fasader (C6):** exemplet (villa 12 × 8 m med mark) och två
+  våningar: första gången 67–134 ms, sedan 15–26 ms varje gång, utan
+  återanvändning. Planen svarar på 0,01–0,02 ms när inget ändrats. Lagom
+  för en villa; mät på piloten innan något görs.
+
 ## Rättningar ur granskningen (0.12.5.5, format 28)
 
 - **Händelsen `guids`:** `DocStore.setGuids` ger `{ cause: 'guids' }` till

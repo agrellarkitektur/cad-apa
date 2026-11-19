@@ -193,6 +193,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.12.5 | Förteckningen per littera: dörr- och fönsterförteckningen med fälten som rader och en kolumn per littera, ritningen sedd utifrån med karmyttermåtten, rutor som skriver på alla med litteran, de framräknade fälten, föreskrifterna, band under varandra på bladet; *uppställning* heter nu *förteckning* |
 | 0.12.5.4 | Licensen: AGPL-3.0 eller senare med kommersiella undantag (`docs/LICENS.md`), licenshuvuden i källfilerna, *Källkoden* i menyn och Om-rutan till versionens commit, `THIRD-PARTY.md` och `LICENSES/`, `CONTRIBUTING.md` och `CLA.md` (utkast), *Stöd utvecklingen* i Om-rutan |
 | 0.12.5.5 | Rättningar ur granskningen efter 0.12.5.4: DXF:s boolska gruppkoder som heltal, GUID sparas vid export och behålls för borttagna objekt, licenstexterna i bygget, varningarna (balkongdörrar, glipan 50 mm med kvittering, fri passage enligt SS 91 42 21, fri höjd 2 kap. 25 §), CSV-talen |
+| 0.12.5.6 | Granskning efter 0.12 (19 november): lagerregeln med test och `src/edit/`, cirkelimporterna, 376 privata exporter, sex stora filer delade, differentialtestet, README kortad, arbetsflödena låsta; rumsnumren på plan 2, fri höjd i dörrar, horisontella öppningar i räcken, linjetypsnamn i DXF, trasiga filer, Öppna som hänger |
 | 0.12.2 | Förteckningar: rum, dörrar, fönster, grindar och det generella litterat ur modellen, kolumner ur fälten eller smarttext, sortering, gruppering, delsummor och summarad, en rad per littera, tabellen över ritytan, på bladet i 1:1 bruten i delar bredvid varandra, i bladets PDF och DXF, CSV och PDF i Exportera |
 | 0.12.1 | DXF: egen skrivare för AutoCAD 2000 och 2018, vyer i modellens mm och blad i pappers-mm, lagerkartorna SB11 förenklad och fullständig, Enkel och en egen lista ur en DXF, pennan som färg och linjetjocklek, status N/E/R, väggarna delade per vägg, Bärande |
 | 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, förteckningens fält i stilboken (Typer) med taggar och smarttext |
@@ -1897,17 +1898,111 @@ rivna väggar i 6-meterszonens kontur; lagerregeln, cirkelimporterna, de
 oanvända exporterna, autosparets underlag, de stora filerna, README och
 överlämningens längd, låsta arbetsflöden och klickjämförelsens nya steg.
 
-### Granskning efter 0.12 (nästa)
+### Granskning efter 0.12 (0.12.5.6) ✓
 
-Flyttad hit av Carl August 19 november 2026, före IFC: den kräver inte hans
-provning, och 0.12.6 väntar på att han provat 0.12–0.12.5.5. Utan nya
-funktioner och utan frågor. Mellanstor, en session för städningen och en
-för småfelen om det behövs (0.12.5.6 när något syns). Punkterna står i
-`docs/OVERLAMNING.md` (*Nästa session*) och underlaget i
-`cad-apa-granskning-0.12.md` i projektet. Efter den: Carl Augusts provning
-med ett eget litet hus, och om han vill dörrarnas funktionsmått (SS 91 42
-21: de fria ytorna vid dörren och nivån Normal eller Höjd) som en egen
-liten version.
+19 november 2026, en session, utan frågor (Carl August: välj själv och skriv
+valen här). Underlaget var `cad-apa-granskning-0.12.md` i projektet och
+*Inte gjort* under 0.12.5.5. Samma format 28. Testerna: 1025 på ca 23 s i
+sandlådan (förut 1014 på ca 19 s där; differentialtestet tar ca 6,5 s).
+
+**Del 1, städning (syns inte):**
+- **Lagerregeln (C1):** `core/` importerar bara ur `core/` och
+  `geometry/`, `geometry/` bara ur sig själv, också typer. Ny mapp
+  `src/edit/` för ändringar över flera objekttyper (`levels`, `facadeMove`,
+  `filterSelect`, `openingAlign`, `joinLines`, `materials`,
+  `storeyEdits`); `exportJobs` och `clipRect` till `repr/`; `Vec2` i
+  `geometry/vec2.ts` (`repr/primitives` exporterar den vidare); de små
+  sakerna kärnan behövde flyttade in (`LeaderEnd`/`LeaderAttach` i
+  `core/graphics.ts`, `isBundledFont` i `core/fontIds.ts`, `isIfcGuid` i
+  `core/ids.ts`, `isSite` och `SITE_STOREY` i `core/siteStorey.ts`,
+  `pruneAssets` i `core/assets.ts`). `tests/lagerregeln.test.ts` håller
+  regeln. Skriven i UTVECKLING och ARKITEKTUR.
+- **Cirkelimporterna (C2):** väggens tolv filer importerar väggens grunder
+  ur `wallBodies` och `geometry/wallFrame` direkt; takets geometri i
+  `roofGeometry.ts`; `commands` ↔ `sheets` brutet med `core/assets.ts`;
+  `model` ↔ `viewCategories` med `core/siteStorey.ts`. Kvar: `graphics` ↔
+  `viewCategories` (stilarnas förval mot kategorierna; inte billig).
+- **Oanvända exporter (C3):** 376 exporter som bara användes i sin egen fil
+  är privata, och `noUnusedLocals` tog 22 döda deklarationer.
+- **Stora filer (C7):** `ui/style/profileTypes.ts` (ritytan i
+  `profileCanvas.ts`), `ui/style/openingTypes.ts` (ändringarna i
+  `openingTypeChange.ts`), `core/openingTypes.ts` (uppställningen av bågar
+  och spröjs i `openingLayout.ts`), `profileBody.ts` (kropparna i 3D i
+  `poly3.ts`), `repr/schedules.ts` (cellerna i `scheduleCells.ts`, per
+  littera i `scheduleLittera.ts`), `areaCalc.ts` (väggarna och konturerna i
+  `areaRegions.ts`). Ingen fil över 650 rader.
+- **Differentialtestet (C4)** i `tests/differential.test.ts`: exemplet med
+  mark och två våningar, utökade med trappa, räcke, profil, areor, vägghål,
+  littera och mått; varje objekt (högst två per typ) flyttas, ändras och
+  tas bort, och planen och 3D byggs med varm cache och ur
+  `structuredClone`. **Det hittade ett fel** (rumsnumren, del 2).
+- **README (E):** *Vad programmet är* och *Kom igång* överst, 0.12 och
+  senare kvar, 0.1–0.11.8.4 oförändrade i `docs/arkiv/README-0.1-0.11.md`.
+  515 rader i stället för 3 445. `scripts/release-notes.sh` läser den som
+  förut.
+- **Arbetsflödena (D):** `checkout`, `setup-node` och `upload-artifact`
+  låsta på commit (v4.4.0, v4.4.0, v4.6.2). `npm audit fix` tog
+  `fast-uri` och `serialize-javascript`; fyra måttliga kvar via
+  `vite-plugin-pwa` (följer inte med appen).
+- **Klickjämförelsen:** nya steg för exportdialogen, förteckningarna,
+  areorna och räckets kvittering. 0.12.5.5 mot 0.12.5.6: bara
+  mobilmeningen, rumsnumren på plan 2 (1101 → 1201) och en tipsruta i 3D
+  som visas vid olika tid. Fyra äldre steg hittar inte sina fält i någon
+  av versionerna (Platsens decimaler, litterans vridning); inte rättade.
+- **Mätt, inte rättat (C5, C6):** se UTVECKLING.md, *Mätningar*.
+
+**Del 2, småfel som syns:** rumsnumren på plan 2 (`prefixFor` i
+`rooms.ts` tog det första synliga objektets våning, som kunde vara en
+markör), littera med trasigt mål (rensas när filen läses, och ledaren
+hoppar över mål utan punkt), `null`-element i filen hoppas över, *Öppna*
+och profileditorns *Läs DXF* svarar på `cancel`, `merge` i
+`applyTemplate` läggs bara på stilbokens steg, linjetypsnamnen i DXF
+(`dxfName`), rivna väggar i 6-meterszonens kontur, varningarna för fri
+höjd i dörrar och horisontella öppningar i räcken, mobilmeningen.
+
+**Claudes val:**
+- `edit/` som ny mapp i stället för att lägga filerna i `elements/`, som är
+  en fil per objekttyp; regeln gäller bara `core/` och `geometry/`.
+- Den fria höjden mäts från golvet till karmens överkant inuti, utan att
+  dra av tröskeln: exemplets entrédörr (21M, tröskel 42 mm) hade annars
+  fått 1 998 mm och en varning. Tröskeln har sin egen varning (över 25 mm).
+- Horisontella öppningar (11 § 5) tolkas som springan i höjdled mellan
+  fyllningens eller spjälornas överkant och nästa liggare, och mellan
+  liggarna ovanför. Ledstänger räknas inte. En handledare indragen bakom
+  fronten (avståndet i sidled) prövas inte.
+- Litterans trasiga mål rensas när filen läses, i stället för på de sju
+  ställen som läser målen.
+- Linjetypsnamnens förbjudna tecken blir understreck; de framräknade
+  namnen `CA-…` har `p` som decimaltecken.
+- Testfilerna för det nya heter efter ämnet (`robusthet`, `foreskrifter`,
+  `smafel`, `lagerregeln`, `differential`), inte efter version (C10). De
+  gamla behåller sina namn.
+- Testerna slogs inte ihop: de långsammaste (rutnätet mot alla sträckor,
+  klicken i ett stort underlag) är redan avvägda i äldre granskningar, och
+  dubbletterna i namnen är referensritningarnas parametrar.
+
+**Inte gjort** (till Carl Augusts provning eller senare):
+- `outsideSide` räknar alla väggar oavsett tillstånd: en riven tillbyggnad
+  gör husets vägg mot den till innervägg (fasaden, 6-meterszonen, dörrarnas
+  fri passage). Hittat när zonens test skrevs; mellanstort, rör
+  ytterväggarna överallt. Föreslås till en egen liten version.
+- Zonens kontur utan rivna väggar har inget test som skiljer: konturen
+  används bara vid invändiga hörn, och ingen enkel uppställning gav en
+  annan area.
+- Avrundningen mot SS 14141 (B5): standarden finns inte i kunskapsbasen.
+- Funktionsmåttens fria ytor vid dörren och nivån Höjd (egen version).
+- Autosparets underlag för sig (C5) och sektionernas återanvändning (C6):
+  se förslagen i UTVECKLING.md.
+- `feedback.php`: spärrfilerna städas inte, och ett GET visar var
+  konfigurationen ligger (D, småsaker).
+- Huvudpaketet är 1,79 MB (588 kB packat); inte delat.
+
+### Nästa: Carl Augusts provning av 0.12–0.12.5.6
+
+Ett eget litet hus (en timme: väggar, dörrar, fönster, en
+fönsterförteckning, en area, export till PDF och DXF) innan 0.12.6 IFC
+byggs. Om han vill: dörrarnas funktionsmått (SS 91 42 21: de fria ytorna
+vid dörren och nivån Normal eller Höjd) som en egen liten version.
 
 ### 0.12.6 IFC
 
