@@ -2,10 +2,12 @@
 # Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 # Bygger programmet och lägger en färdig zip för webbhotellet på varje release.
 #
-# Så används den: pusha en tagg som v0.12.5.4 (git tag v0.12.5.4 && git push
-# origin v0.12.5.4). Arbetsflödet skapar då releasen själv, med titel och text
-# ur README:s avsnitt för versionen (scripts/release-notes.sh, sedan
-# 0.12.5.4), och lägger zip-filen på den. En release som görs för hand under
+# Så används den (sedan 0.12.5.4): ingenting behöver göras. Vid varje push
+# till main läses versionen i package.json; finns ingen release v<version>
+# skapas taggen och releasen på den commiten, med titel och text ur README:s
+# avsnitt för versionen (scripts/release-notes.sh), och zip-filen läggs på
+# den. Höj alltså versionen när versionen är klar, inte i början. En pushad
+# tagg v* gör samma sak för just den taggen. En release som görs för hand under
 # Releases på GitHub fungerar som förut. Efter någon minut ligger
 # cad-apa-v0.12.5.4.zip under Assets på releasen. Den kan också köras för hand
 # under Actions → "Bygg för webbhotellet" → "Run workflow"; då hamnar zip-filen
@@ -15,6 +17,7 @@ name: Bygg för webbhotellet
 
 on:
   push:
+    branches: [main]
     tags: ['v*']
   release:
     types: [published]
@@ -24,8 +27,31 @@ permissions:
   contents: write
 
 jobs:
-  build:
+  # Vilken tagg som ska byggas: en ny version på main, den pushade taggen
+  # eller releasens. Tomt = inget att göra (versionen har redan en release).
+  version:
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.v.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: v
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "$GITHUB_REF_TYPE" = tag ]; then TAG="$GITHUB_REF_NAME"
+          elif [ "$GITHUB_EVENT_NAME" = push ]; then
+            TAG="v$(node -p "require('./package.json').version")"
+            gh release view "$TAG" >/dev/null 2>&1 && TAG=""
+          else TAG="${GITHUB_REF_NAME:-manuell}"; fi
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: version
+    if: needs.version.outputs.tag != ''
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ needs.version.outputs.tag }}
     steps:
       - uses: actions/checkout@v4
 
@@ -46,14 +72,14 @@ jobs:
       - name: Packa zip
         id: zip
         run: |
-          NAME="cad-apa-${GITHUB_REF_NAME:-manuell}"
+          NAME="cad-apa-$TAG"
           NAME="${NAME//\//-}"
           # Zip-filen innehåller en mapp som heter cad-apa, färdig att lägga
           # på webbhotellet så att adressen blir …/cad-apa/.
           mkdir -p package
           cp -r dist package/cad-apa
           cat > package/cad-apa/LASMIG.txt <<TXT
-          cad-apa ${GITHUB_REF_NAME}
+          cad-apa ${TAG}
 
           Ladda upp mappen cad-apa till webbhotellet, till exempel bredvid
           index.html för din webbplats. Programmet finns sedan på
@@ -72,16 +98,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          V="${GITHUB_REF_NAME#v}"
+          V="${TAG#v}"
           scripts/release-notes.sh "$V" text > release-notes.md
-          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 ||
-            gh release create "$GITHUB_REF_NAME" --verify-tag --title "$(scripts/release-notes.sh "$V" titel)" --notes-file release-notes.md
+          gh release view "$TAG" >/dev/null 2>&1 ||
+            gh release create "$TAG" --target "$GITHUB_SHA" --title "$(scripts/release-notes.sh "$V" titel)" --notes-file release-notes.md
 
       - name: Lägg zip-filen på releasen
         if: github.event_name == 'release' || github.event_name == 'push'
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "$GITHUB_REF_NAME" "${{ steps.zip.outputs.file }}" --clobber
+        run: gh release upload "$TAG" "${{ steps.zip.outputs.file }}" --clobber
 
       - name: Spara zip-filen på körningen
         if: github.event_name == 'workflow_dispatch'

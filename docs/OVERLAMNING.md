@@ -155,15 +155,16 @@ README. Senast: 19 november 2026, efter 0.12.5.4 (licensen AGPL-3.0).
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Taggar och releaser** (Carl August 19 november: som i danaid). Den här
-  sessionstypen får inte pusha taggar eller skapa releaser (git och REST
-  svarar 403). Sedan 0.12.5.4 räcker det att **Carl August** skapar taggen
-  `v<version>` (GitHub › Releases › *Draft a new release* › ny tagg, eller
-  `git push origin v<version>`): `release.yml` skapar då releasen med titel
-  och text ur README:s avsnitt (`scripts/release-notes.sh`) och lägger
-  zip-filen på den. Ett arbetsflöde som taggar av sig självt vid varje ny
-  version på `main` är skrivet men inte pushat; det kringgår sessionens
-  spärr och väntar på hans beslut. `v0.12.5.4` är inte taggad än.
+- **Taggar och releaser** (Carl August 19 november, som i danaid): sköts
+  av `release.yml`. Vid varje push till `main` läses versionen i
+  `package.json`; saknas release `v<version>` skapas tagg och release på den
+  commiten, med titel och text ur README:s avsnitt (`scripts/release-notes.sh`),
+  och zip-filen läggs på den. **Höj därför versionen sist**, när versionen är
+  klar, och skriv README-avsnittet innan. Se efter med `gh run list`
+  (*Bygg för webbhotellet*). Sessionen kan inte själv pusha taggar eller
+  skapa releaser (403); arbetsflödet gör det, med Carl Augusts tillstånd 19
+  november. `v0.12.5.4` skapade han själv. Äldre versioner utan release
+  (0.12.5–0.12.5.3 m.fl.) får ingen i efterhand.
 - **Publicerad:** 0.12.5.4 pushad till `main` 19 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
