@@ -1,7 +1,7 @@
 # Flytt av cad-apa till cad-apa.danaid.cloud
 
 Underlag till cad-apa-sessionen, sammanställt 18 november 2026 utifrån flytten av
-Höjdkurvor (15–17 november). Lägg gärna filen i cad-apa-repot som `docs/FLYTT.md`.
+Höjdkurvor (15–17 november), uppdaterat 19 november. Lägg gärna filen i cad-apa-repot som `docs/FLYTT.md`.
 
 ## Läget just nu
 
@@ -115,6 +115,69 @@ Det här kan göras direkt, redan innan cad-apa flyttar:
 - README i agrellarkitektur/apps (steg 6) säger fortfarande "one.com". Det är fel:
   e-posten går via Loopia.
 
+### E-post: kvällen 18–19 november
+
+Synpunkterna från cad-apa (och nu också Höjdkurvor) kommer fram till
+kontakt@ i **Loopias webbmail men inte till Gmail**. Inget går förlorat, men
+Gmail får dem inte.
+
+Utrett:
+- **Breven är rena.** Skickade med kontakt@:s inloggning hos Loopia, DKIM
+  `pass` för agrellarkitektur.se, Loopias spampoäng låg. DMARC för domänen är
+  `p=none`, så Gmail stoppar inget av den anledningen.
+- **Vidarebefordran hos Loopia är påslagen** (till ca.agrell@gmail.com) och
+  fungerar för vanliga brev: ett brev från tengbom-adressen kom fram efter
+  8 minuter. Det kom in utifrån genom Loopias mottagning; apparnas brev läggs
+  direkt i brevlådan med kontot som avsändare. Brevet från Höjdkurvor den
+  17 november tog samma väg och vidarebefordrades ändå (Loopias id-rad slutar
+  på `:T3:P1`, kvällens bara på `:P1`). Varför de inte vidarebefordras nu är
+  inte klarlagt.
+- **Direkt till Gmail** (msmtp till ca.agrell@gmail.com, prov 3) kom inte
+  heller fram, och inget spår syns. Kuvertavsändaren `noreply@` finns troligen
+  inte som adress, så en studs från Gmail försvinner. Nästa gång: skicka med
+  `-f kontakt@agrellarkitektur.se`, eller gör noreply@ till ett alias för
+  kontakt@, så att studsen syns. Loggen på servern visar om Loopia tog emot:
+  `sudo journalctl -t msmtp -n 20` (eller `grep msmtp /var/log/mail.log`).
+- **Gmail hämtar inte längre post med POP** (*Kolla e-post från andra
+  konton*): stängt för nya användare sedan våren 2026 och borta helt i januari
+  2027. Loopia avråder själva från vidarebefordran till Gmail.
+- Ändrat på servern: `domain apps.danaid.cloud` under `defaults` i
+  `/etc/msmtprc` (msmtp presenterade sig som *localhost*). Får stå kvar.
+- Brevet från cad-apa saknade `MIME-Version: 1.0` (Höjdkurvors har den).
+- `feedback-config.php` i båda appmapparna kan ha `to` ändrat till
+  ca.agrell@gmail.com (sed-kommandot 19 november). Kontrollera och sätt
+  tillbaka till kontakt@agrellarkitektur.se om Gmail-vägen inte används.
+
+Förslag (inte beslutat):
+1. **Synpunkterna sparas på servern först**, en rad per synpunkt (JSON) i
+   `/srv/apps/data/cad-apa/` respektive `/srv/apps/data/hojdkurvor/`, som
+   säkerhetskopieras varje natt. E-posten blir bara en avisering. Ett steg mot
+   danaid-Inkorgen (se *Öppen fråga* ovan).
+2. **E-posten läses i Fastmail** i stället för Gmail: först en provperiod där
+   Fastmail hämtar både Loopia-kontona och Gmail, sedan eventuellt
+   agrellarkitektur.se-posten direkt dit (MX-posterna; webbplatsen kan ligga
+   kvar hos Loopia, msmtp loggar då in hos Fastmail). Carl August bestämmer.
+
+Också upptäckt: **`/feedback.php` i webbläsaren visar appen**, eftersom
+service workern svarar med index.html för alla adresser den navigeras till.
+Formuläret (fetch) påverkas inte. Rättning: `navigateFallbackDenylist:
+[/\.php$/]` i workbox-inställningarna i `vite.config.ts`. Prova under tiden i
+ett inkognitofönster.
+
+## Nästa session (från 19 november)
+
+0.12.5.3, en liten version:
+1. `feedback.php` sparar varje synpunkt på servern (förslag 1 ovan) och
+   skickar e-post som avisering; `MIME-Version: 1.0` i brevet.
+2. `navigateFallbackDenylist` för `.php` i `vite.config.ts`.
+3. Rutan *cad-apa flyttar – spara dina projekt som fil* på den gamla adressen
+   (steg 7), med knappen som laddar ner alla autosparade projekt. Visas bara
+   när appen körs på agrellarkitektur.se.
+4. README, version och `docs/OVERLAMNING.md`.
+
+Höjdkurvor behöver samma ändring i `synpunkter.php` (punkt 1), i
+Höjdkurvor-sessionen. Fastmail-frågan är Carl Augusts.
+
 ### Den gamla adressen
 - Webbläsaren skickar inte det som står efter `#` till servern. En omdirigering
   på servern tappar därför projektlänkar. Ersätt i stället `public_html/cad-apa/`
@@ -135,12 +198,12 @@ Det här kan göras direkt, redan innan cad-apa flyttar:
 | # | Vad | Vem |
 |---|---|---|
 | 1 | `HOJDKURVOR_ORIGINS` och `HOJDKURVOR_URL` i `site.ts` (klart 18 november, 0.12.5.2) | Claude i cad-apa |
-| 2 | DNS-post `cad-apa` hos one.com som pekar på VPS:en (behövs inte om jokerposten `*` finns) | Carl August |
-| 3 | Sajt för `cad-apa.danaid.cloud` i `drift/apps.caddy`, med huvudena från `.htaccess` och `index off` | Claude i apps |
-| 4 | `sudo apps-drift nyckel cad-apa www/cad-apa` på servern, och utskriften som secret `APPS_SSH_KEY` i cad-apa-repot | Carl August |
-| 5 | `publicera-vps.yml` och `known_hosts` i cad-apa, parallellt med FTP (klart 18 november; hoppar över tills `APPS_SSH_KEY` finns) | Claude i cad-apa |
-| 6 | `feedback-config.php` på servern, och provet av `feedback.php` | Carl August |
+| 2 | DNS-post `cad-apa` hos one.com som pekar på VPS:en (klart: adressen svarar 19 november) | Carl August |
+| 3 | Sajt för `cad-apa.danaid.cloud` i `drift/apps.caddy`, med `index off` (klart 19 november; cad-apa har ingen `.htaccess`) | Claude i apps |
+| 4 | `sudo apps-drift nyckel cad-apa www/cad-apa` på servern, och utskriften som secret `APPS_SSH_KEY` i cad-apa-repot (klart 18 november; publiceringen till VPS:en går) | Carl August |
+| 5 | `publicera-vps.yml` och `known_hosts` i cad-apa, parallellt med FTP (klart 18 november) | Claude i cad-apa |
+| 6 | `feedback-config.php` på servern, och provet av `feedback.php` (filen finns; synpunkter når Loopias webbmail men inte Gmail, se *E-post: kvällen 18–19 november*) | Carl August |
 | 7 | Rutan *Spara dina projekt som fil* på den gamla adressen | Claude i cad-apa |
-| 8 | Prova på den nya adressen: rita, spara, öppna fil, synpunkt, Höjdkurvor → cad-apa → tillbaka | Carl August |
+| 8 | Prova på den nya adressen: rita, spara, öppna fil, synpunkt, Höjdkurvor → cad-apa → tillbaka (påbörjat: sidan och synpunkten fungerar) | Carl August |
 | 9 | I Höjdkurvor: `cadApaUrl` i `config.js` och `js/app.js` blir `https://cad-apa.danaid.cloud/`. Omdirigering av `/terrang/` och borttagning av `publicera.yml` | Claude i hojdkurvor |
 | 10 | Omdirigering av `/cad-apa/`, borttagning av FTP i cad-apa, och `url` i `apps/cad-apa/app.json` | Claude, efter en tid |
