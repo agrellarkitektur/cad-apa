@@ -374,7 +374,7 @@ i testerna.
 Fem åt gången, högst tio per session, de som hör till nästa version först.
 Hoppar han över en räknas den som bra och stryks. Claudes val står i varje
 fråga. Först **A–E i `cad-apa-ifc-utredning.md`** (hör till 0.12.6), sedan
-0.12.5.5, 0.12.5, 0.12.4, 0.12.3, 0.12.2, 0.12.1 och 0.12. **Frågorna om
+0.12.5.6, 0.12.5.5, 0.12.5, 0.12.4, 0.12.3, 0.12.2, 0.12.1 och 0.12. **Frågorna om
 0.11 och äldre ströks 19 november** (ca 200 stycken; de finns i git,
 `docs/OVERLAMNING.md` före den dagen). Lägg inte tillbaka dem.
 
