@@ -40,8 +40,12 @@ export interface Transaction {
 }
 
 export interface StoreEvent {
-  /** Vad som hände: en ny transaktion, ångra, gör om eller att ett nytt dokument laddades. */
-  cause: 'commit' | 'undo' | 'redo' | 'load';
+  /**
+   * Vad som hände: en ny transaktion, ångra, gör om, att ett nytt dokument
+   * laddades eller att objektens GUID sattes vid en export (`guids`,
+   * 0.12.5.5: inget steg att ångra, men projektet ska sparas).
+   */
+  cause: 'commit' | 'undo' | 'redo' | 'load' | 'guids';
   transaction?: Transaction;
 }
 
@@ -120,10 +124,13 @@ export class DocStore {
 
   /**
    * Objektens GUID (0.12) utan ett steg att ångra: listan hör inte till
-   * något steg, och ett ångrat steg lämnar den som den är.
+   * något steg, och ett ångrat steg lämnar den som den är. Lyssnarna får
+   * veta (0.12.5.5), så att autosparen skriver dem: annars fick samma objekt
+   * nya GUID vid nästa export om projektet stängdes utan en ändring emellan.
    */
   setGuids(guids: Record<Id, string>): void {
     this.current = { ...this.current, guids };
+    this.emit({ cause: 'guids' });
   }
 
   undo(): void {

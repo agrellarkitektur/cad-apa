@@ -6,10 +6,30 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 19 november 2026, efter 0.12.5.4 (licensen AGPL-3.0).
+README. Senast: 19 november 2026, efter 0.12.5.5 (rättningarna ur
+granskningen).
 
 ## Läget
 
+- **Granskningen efter 0.12.5.4 och 0.12.5.5** (19 november, samma format
+  28). Granskningen var bara en rapport: **`cad-apa-granskning-0.12.md`** i
+  projektet (fynden A–E, rangordnade). **0.12.5.5** rättade samma dag det
+  som bör vara rätt före IFC: DXF:s boolska gruppkoder som heltal (`ezdxf`
+  läser exporten utan fel), GUID sparas vid export och behålls för borttagna
+  objekt, licenstexterna i `dist/`, de gamla versionsnumren i appens texter,
+  CSV-talen. Varningarna efter Carl Augusts besked: balkongdörrar och
+  fönsterdörrar över marken varnas (*Utfallsskydd* tystar, nytt fält för
+  dörrar), glipan under ett barnsäkert räcke 50 mm med **Kvittera** i
+  räckets egenskaper, fri passage enligt **SS 91 42 21:2006 normalnivå**
+  (800 entrédörr och dörr till balkong/uteplats = 10M, 760 innerdörr = 9M;
+  den höjda nivån för arbetsplatser har 800 också för innerdörrar),
+  spiraltrappans fria höjd enligt 2 kap. 25 §. Testerna: 1014 på ca 13 s.
+  Provat i Playwright mot `dist/` (export, GUID efter omladdning). **Kvar
+  ur granskningen** står under *Inte gjort* i PLAN.md (0.12.5.5) och görs i
+  *Granskning efter 0.12*. Carl August: funktionsmåtten för dörrar är
+  viktiga och ska stämma när man ritar dörrar (de fria ytorna a och b vid
+  dörren är inte byggda än; föreslå dem till granskningen eller en egen
+  liten version, med hans skärmklipp ur standarden som underlag).
 - **0.12.5.4 Licensen är klar** (19 november, samma format 28): AGPL-3.0
   eller senare enligt `docs/LICENS.md` (= `cad-apa-licens.md`, checklistan
   avbockad). LICENSE är gnu.org:s text, GPL-texten i `LICENSES/GPL-3.0.txt`
@@ -82,9 +102,8 @@ README. Senast: 19 november 2026, efter 0.12.5.4 (licensen AGPL-3.0).
   borttagen** på Carl Augusts begäran (källan `Gate`). Grindar sätts ut i
   staket och redovisas i planen, det räcker; en grind ritas vid behov för
   sig. En grindförteckning i en äldre fil läses inte in. Testerna: 1003.
-  **Kvar att rätta:** `cad-apa-synpunkter.md` säger i stycket om 0.12.5 att
-  grindförteckningen finns kvar som tabell; rätta det nästa gång filen
-  skrivs. `cad-apa-dorrar-fonster-utredning.md` säger fortfarande
+  `cad-apa-synpunkter.md` är rättad (grindförteckningen).
+  `cad-apa-dorrar-fonster-utredning.md` säger fortfarande
   *uppställningen* (inte omskriven).
 - **Märks i hans ritningar efter 0.12.5:** *Ny: Fönster* eller *Dörrar*
   under Förteckningar ger förteckningen per littera. De framräknade fälten
@@ -165,10 +184,10 @@ README. Senast: 19 november 2026, efter 0.12.5.4 (licensen AGPL-3.0).
   skapa releaser (403); arbetsflödet gör det, med Carl Augusts tillstånd 19
   november. `v0.12.5.4` skapade han själv. Äldre versioner utan release
   (0.12.5–0.12.5.3 m.fl.) får ingen i efterhand.
-- **Publicerad:** 0.12.5.4 pushad till `main` 19 november (se git och `gh run
+- **Publicerad:** 0.12.5.5 pushad till `main` 19 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.12.5.4` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.12.5.5` i `engine.ts`, `package.json` och
   `package-lock.json`. Nya funktioner får tredje siffran (0.12.4 …); **den
   fjärde siffran är för snabba buggfixar** utan nya funktioner (Carl August
   10 november). En granskning höjer inte numret, eller får en fjärde siffra
@@ -274,7 +293,7 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   ~~Utredning av 0.12 Export~~, ~~0.12 Exportdialogen och PDF~~,
   ~~0.12.1 DXF~~, ~~0.12.2 Förteckningar~~, ~~0.12.3 Areor~~,
   ~~0.12.4 Areor under snedtak och mark~~, ~~0.12.5 Förteckningen per
-  littera~~, ~~0.12.5.1–0.12.5.3~~, ~~0.12.5.4 Licensen~~ (klara; se tabellen *Klart* i PLAN.md)
+  littera~~, ~~0.12.5.1–0.12.5.3~~, ~~0.12.5.4 Licensen~~, ~~Granskning efter 0.12.5.4~~, ~~0.12.5.5 Rättningar ur granskningen~~ (klara; se tabellen *Klart* i PLAN.md)
 - **Flytten till cad-apa.danaid.cloud**: steg 8–10 i `docs/FLYTT.md`
   (Carl Augusts provning, Höjdkurvor, sedan omdirigering och FTP bort)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
@@ -296,6 +315,10 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
+Carl August har **inte provat 0.12–0.12.5** (19 november); rådet i
+granskningen är att han provar dem innan 0.12.6 byggs, så fråga först.
+Fråga om en DXF ur 0.12.5.5 öppnas i AutoCAD. Läs
+`cad-apa-granskning-0.12.md` innan *Granskning efter 0.12* planeras.
 Fråga om Carl August skrivit om Stöd-texten (`SUPPORT` i
 `src/ui/app/supportSection.ts`) och kopplat CLA Assistant. Flytten: fråga om Carl August provat den nya adressen (steg 8 i
 `docs/FLYTT.md`). Läs synpunkterna först och sortera Inkorgen om den har något. Be om
@@ -326,6 +349,18 @@ om 0.10.27–0.10.23 likaså. Först **A–E i `cad-apa-ifc-utredning.md`** (hö
 0.11.7.2, 0.11.7.1, 0.11.7, 0.11.6.1, 0.11.6, 0.11.5, 0.11.4, 0.11.3,
 0.11.2, 0.11.1 och 0.11, sedan 0.10.35, 0.10.34 och 0.10.33 när han
 provat.
+
+**0.12.5.5 efter provning** (Claudes val, se PLAN.md)
+- Balkongdörrarnas varning kommer för alla ytterdörrar och fönsterdörrar
+  minst 2,0 m över ±0 och tystas med fältet *Utfallsskydd*. Rätt, eller
+  hellre en knapp *Kvittera* som på räcket?
+- Glipan under räcket mäts till den lägsta delen som inte är en stolpe.
+  Varnar den där du väntar dig, och är *Kvittera* rätt sätt att bortse
+  från den?
+- Fri passage: den höjda nivån (arbetsplatser, 800 också för innerdörrar)
+  är inte ett val. Ska nivån väljas per projekt under Allmänt, och ska de
+  fria ytorna vid dörren (a och b i SS 91 42 21) ritas som
+  tillgänglighetscirkeln?
 
 **0.12.5 efter provning** (Claudes val, se PLAN.md; svaren A–E 12 november)
 - *Utförande* är typens namn och *Öppningsbredd*/*Öppningshöjd* hålets mått

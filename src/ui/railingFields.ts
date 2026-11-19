@@ -6,7 +6,7 @@ import { isSite, type Element, type Id, type ProjectDoc } from '../core/model';
 import type { DocStore } from '../core/store';
 import type { RailNum } from '../core/railingTypes';
 import { gateLittera, railingPath, railingStair, railingTypeOf, railingValues } from '../elements/railing';
-import { railingWarnings } from '../elements/railingWarnings';
+import { railingGapWarning, railingWarnings } from '../elements/railingWarnings';
 import { GATE_POST, hostedPath, RAIL_INSET, type RailGate, type RailingParams } from '../elements/railingGeometry';
 import { geometryOfStair, stairParams } from '../elements/stair';
 import { levelOf } from '../repr/solids';
@@ -49,8 +49,15 @@ export function railingFieldsMarkup(doc: ProjectDoc, el: Element): string {
   const vals = railingValues(doc, el);
   const path = railingPath(doc, el);
   const warnings = path ? railingWarnings(doc, el) : [p.host ? 'Trappan räcket hängde på finns inte längre.' : 'Linjen är för kort för ett räcke.'];
-  const warn = warnings.length ? `<div class="stair-warnings" role="note">${warnings.map((w) => `<p class="skew-note"><b>!</b> ${escapeHtml(w)}</p>`).join('')}</div>` : '';
+  // Glipan under räcket kan kvitteras (0.12.5.5), som trappans ledstång.
+  const gap = path ? railingGapWarning(doc, el) : null;
+  const gapAcked = (p.ack ?? []).includes('gap');
+  const warn =
+    warnings.length || gap
+      ? `<div class="stair-warnings" role="note">${warnings.map((w) => `<p class="skew-note"><b>!</b> ${escapeHtml(w)}</p>`).join('')}${gap ? `<p class="skew-note"><b>!</b> ${escapeHtml(gap)} <button class="btn btn-small" data-action="rail-ack" data-value="1">Kvittera</button></p>` : ''}</div>`
+      : '';
   const out: string[] = [warn];
+  if (gapAcked) out.push('<p class="note">Varningen för glipan under räcket är kvitterad. <button class="btn btn-small" data-action="rail-ack" data-value="0">Ångra kvitteringen</button></p>');
   if (stair && p.host) {
     out.push(`<p class="note">Längs trappans ${p.host.side === 'left' ? 'vänstra' : 'högra'} kant (sett uppåt), ${path ? `${mm(path.length)} mm` : ''}. Räcket följer trappan; höjden mäts lodrätt från stegnoslinjen.</p>`);
     out.push(`<div class="fields"><label class="field"><span>Läge mot kanten</span><select data-key="rail:place">${[
@@ -284,6 +291,15 @@ export function railingAction(store: DocStore, ids: Id[], action: string, b: HTM
           list[i] = g;
         }
         return { gates: list.length ? list : undefined };
+      });
+    }
+    case 'rail-ack': {
+      const on = b.dataset.value === '1';
+      return patchRailings(store, ids, on ? 'Kvittera glipan' : 'Ångra kvitteringen', (p) => {
+        const set = new Set(p.ack ?? []);
+        if (on) set.add('gap');
+        else set.delete('gap');
+        return { ack: set.size ? [...set] : undefined };
       });
     }
     case 'rail-reset': {

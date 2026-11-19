@@ -192,6 +192,7 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.12.4 | Areor under snedtak och mark: det mätvärda vid 1,90/0,60 för BTA och bruksareorna, kryss *Takkupa* på taket, *Dela efter rumshöjd* (H/L), 6-meterszonen ur marken med BIA(u), (o)/(u) och BTA(o)/BTA(u), OPA som egen kontur till ytterväggens utsida med takets kontur som start |
 | 0.12.5 | Förteckningen per littera: dörr- och fönsterförteckningen med fälten som rader och en kolumn per littera, ritningen sedd utifrån med karmyttermåtten, rutor som skriver på alla med litteran, de framräknade fälten, föreskrifterna, band under varandra på bladet; *uppställning* heter nu *förteckning* |
 | 0.12.5.4 | Licensen: AGPL-3.0 eller senare med kommersiella undantag (`docs/LICENS.md`), licenshuvuden i källfilerna, *Källkoden* i menyn och Om-rutan till versionens commit, `THIRD-PARTY.md` och `LICENSES/`, `CONTRIBUTING.md` och `CLA.md` (utkast), *Stöd utvecklingen* i Om-rutan |
+| 0.12.5.5 | Rättningar ur granskningen efter 0.12.5.4: DXF:s boolska gruppkoder som heltal, GUID sparas vid export och behålls för borttagna objekt, licenstexterna i bygget, varningarna (balkongdörrar, glipan 50 mm med kvittering, fri passage enligt SS 91 42 21, fri höjd 2 kap. 25 §), CSV-talen |
 | 0.12.2 | Förteckningar: rum, dörrar, fönster, grindar och det generella litterat ur modellen, kolumner ur fälten eller smarttext, sortering, gruppering, delsummor och summarad, en rad per littera, tabellen över ritytan, på bladet i 1:1 bruten i delar bredvid varandra, i bladets PDF och DXF, CSV och PDF i Exportera |
 | 0.12.1 | DXF: egen skrivare för AutoCAD 2000 och 2018, vyer i modellens mm och blad i pappers-mm, lagerkartorna SB11 förenklad och fullständig, Enkel och en egen lista ur en DXF, pennan som färg och linjetjocklek, status N/E/R, väggarna delade per vägg, Bärande |
 | 0.11.8.2 | Dörrar och fönster, Detalj och beslag: foder, bleck med droppnäsa och fönsterbänk i typen, tröskeln, beslagen (handtag, gångjärn, dörrstängare, brevinkast), spegelns profil, panel med material, spröjs i planen och med skrivna mått, varningarna, tillgänglighetscirkeln, fönstrens slagbågar släckta från början, förteckningens fält i stilboken (Typer) med taggar och smarttext |
@@ -1844,8 +1845,57 @@ Liten; en session, inga ändringar i ritningarna och samma format 28.
 
 **Inte gjort i 0.12.5.4:** Swish-QR:n (Swish Företag är inte tecknat); kopplingen av CLA Assistant; juristens granskning
 av CLA:t och avtalet om kommersiellt undantag; licenstexterna i själva
-bygget (`dist/` länkar till `THIRD-PARTY.md` på GitHub i stället);
+bygget (gjort i 0.12.5.5);
 avstämningen med revisorn om Swish-bidragen.
+
+### 0.12.5.5 Rättningar ur granskningen ✓
+
+19 november 2026. Granskningen efter 0.12.5.4 (bara rapport, i projektets
+kunskapsbas: `cad-apa-granskning-0.12.md`) följdes samma dag av en snabbfix
+med det som bör vara rätt innan IFC byggs. Liten; samma format 28.
+
+- **A1 DXF:** `intCode` räknar 290–299 som heltal (förut bara 290 och 291;
+  MLEADERSTYLE skriver 292 och 294–297). `ezdxf` läser exporten utan fel.
+- **A2 GUID:** `store.setGuids` säger till lyssnarna (`cause: 'guids'`), så
+  att autosparen skriver listan; `withGuids` behåller borttagna objekts
+  GUID. Provat i Chrome: export, omladdning utan ändring, samma GUID.
+- **A3 Licenstexterna** kopieras in i `dist/` av ett litet insticksprogram
+  i `vite.config.ts` (`LICENSE.txt`, `THIRD-PARTY.md`, `LICENSES/` med
+  typsnittens i `LICENSES/fonts/`).
+- **Varningarna** efter Carl Augusts besked 19 november: balkongdörrar
+  varnas; glipan under räcket 50 mm enligt föreskriften, som en varning man
+  kan bortse från; fri passage 800 för entrédörrar (10M) och 760 för
+  innerdörrar (9M) enligt SS 91 42 21:2006, normalnivån.
+- De gamla versionsnumren i appens texter, CSV-talen, `scripts/__pycache__`
+  ur repot, SPDX-huvudet i `scripts/mallblad-projekt.mts`.
+
+**Claudes val:**
+- GUID:en för borttagna objekt ligger kvar i listan för gott (22 tecken per
+  objekt), i stället för att följa ångra-historiken: enklare, och en fil
+  som öppnas igen har ingen historik att fråga.
+- Händelsen `guids` ritar om en gång vid exporten (planens cache nycklas på
+  dokumentets fält). Det märks inte.
+- Balkongdörrarnas varning gäller ytterdörrar och fönsterdörrar där
+  våningens golv ligger minst 2,0 m över ±0 (samma grund som fönstren).
+  Appen vet inte om det finns en balkong utanför, så texten säger hur man
+  tystar den: fältet *Utfallsskydd*, som lades till i dörrarnas fältmall
+  (37 fält i stället för 36).
+- Glipan mäts till den lägsta delen som inte är en stolpe eller konsol.
+  Förut räknades stolparna (från golvet) med, så varningen kom aldrig för
+  ett räcke med stolpar. Den står för sig (`railingGapWarning`) och
+  kvitteras med `ack: ['gap']`, som trappans ledstång. RÄ01 och RÄ02 har 40
+  mm och varnar inte.
+- Fri passage: gränserna är oförändrade (800 för ytterdörrar och
+  huvudentrén, 760 annars); bara texterna är nya.
+
+**Inte gjort** (kvar ur granskningen, till *Granskning efter 0.12*):
+funktionsmåttens fria ytor vid dörren (a och b i SS 91 42 21) och den höjda
+nivån för arbetsplatser (800 också för innerdörrar) som ett val i
+projektet; en varning för dörrar med fri höjd under 2,00 m; punkt 5 i
+2 kap. 11 § (vågräta öppningar 110–230 mm); avrundningen mot SS 14141;
+rivna väggar i 6-meterszonens kontur; lagerregeln, cirkelimporterna, de
+oanvända exporterna, autosparets underlag, de stora filerna, README och
+överlämningens längd, låsta arbetsflöden och klickjämförelsens nya steg.
 
 ### 0.12.6 IFC
 

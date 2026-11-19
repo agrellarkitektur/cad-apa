@@ -146,6 +146,7 @@ export function selectionAction({ panel, store, selection, getView, body }: Acti
     }
     case 'rail-winder':
     case 'rail-transition':
+    case 'rail-ack':
     case 'rail-reset':
     case 'rail-detach':
     case 'rail-height-from':

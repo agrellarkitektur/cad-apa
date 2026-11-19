@@ -29,3 +29,4 @@ dist-artifact
 preview.log
 /*.png
 /*.zip
+__pycache__/

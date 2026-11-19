@@ -27,7 +27,7 @@ describe('förteckningen per littera (0.12.5)', () => {
     const info = t.littera!;
     // Hela fältmallen står som rader, också det som inte är ifyllt.
     expect(info.fields.slice(0, 4)).toEqual(['Antal', 'Hängning', 'Utförande', 'Öppningssätt']);
-    expect(info.fields).toHaveLength(36);
+    expect(info.fields).toHaveLength(37);
     expect(rowOf(t, 'Antal')).toEqual(['Antal', '1', '3']);
     expect(rowOf(t, 'Utförande')).toEqual(['Utförande', 'Ytterdörr glasad', 'Innerdörr slät']);
     expect(rowOf(t, 'Öppningsbredd')).toEqual(['Öppningsbredd', '1010', '910']);

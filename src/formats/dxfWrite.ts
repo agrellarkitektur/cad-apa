@@ -122,7 +122,7 @@ class Out {
 
 /** Koder som är heltal (inte flyttal), efter DXF-referensen. */
 function intCode(code: number): boolean {
-  return (code >= 60 && code <= 99) || (code >= 160 && code <= 179) || (code >= 270 && code <= 289) || (code >= 370 && code <= 389) || (code >= 400 && code <= 409) || (code >= 420 && code <= 459) || (code >= 1060 && code <= 1071) || code === 290 || code === 291;
+  return (code >= 60 && code <= 99) || (code >= 160 && code <= 179) || (code >= 270 && code <= 289) || (code >= 370 && code <= 389) || (code >= 400 && code <= 409) || (code >= 420 && code <= 459) || (code >= 1060 && code <= 1071) || (code >= 290 && code <= 299);
 }
 
 /** Texten till teckentabellen 1252 (2000): det som inte finns där som `\U+XXXX`. */

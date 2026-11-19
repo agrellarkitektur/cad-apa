@@ -40,16 +40,11 @@ export function railingWarnings(doc: ProjectDoc, el: Element<any>): string[] {
   if (model.childSafe) {
     const gaps = model.parts.filter((q) => q.kind === 'repeat').map((q) => n(q.spacing, 100));
     const widest = Math.max(0, ...gaps);
-    if (widest > 100.5) out.push(`Barnsäkert (BFS 2024:9, 2 kap. 11 §): öppningarna mellan ${model.parts.find((q) => q.kind === 'repeat')!.name.toLowerCase()} är ${mm(widest)}; avviker från praxis (högst 100 mm).`);
+    if (widest > 100.5) out.push(`Barnsäkert (BFS 2024:9, 2 kap. 11 §): öppningarna mellan ${model.parts.find((q) => q.kind === 'repeat')!.name.toLowerCase()} är ${mm(widest)}; lodräta öppningar får vara högst 100 mm breda.`);
     const infill = model.parts.some((q) => q.kind === 'repeat' || q.kind === 'surface');
-    if (!infill) out.push('Barnsäkert (BFS 2024:9, 2 kap. 11 §): räcket har varken spjälor eller fyllning under handledaren; avviker från praxis (öppningar högst 100 mm).');
-    // Glipan under räcket: den lägsta delens underkant.
-    const lows = model.parts.map((q) => (q.kind === 'along' ? n(q.z, 900) - (q.profile?.shape === 'round' ? q.profile.w : q.profile?.h ?? q.profile?.w ?? 40) : n(q.from)));
-    const low = Math.min(...lows.filter((v) => Number.isFinite(v)), Infinity);
-    const allowed = stair ? 50 : 100;
-    if (infill && low > allowed + 0.5) out.push(`Barnsäkert (BFS 2024:9, 2 kap. 11 §): glipan under räcket är ${mm(low)} ${stair ? 'över stegnosen' : 'över golvet'}; avviker från praxis (högst ${allowed} mm).`);
+    if (!infill) out.push('Barnsäkert (BFS 2024:9, 2 kap. 11 §): räcket har varken spjälor eller fyllning under handledaren; lodräta öppningar får vara högst 100 mm breda.');
     const climb = model.parts.filter((q) => q.kind === 'along' && q !== grabs[0]).map((q) => n(q.z, 900)).filter((z) => z > 150 && z < 800);
-    if (climb.length) out.push(`Barnsäkert (BFS 2024:9, 2 kap. 11 §): en liggare ${mm(climb[0])} upp går att klättra på; avviker från praxis (inga fotsteg under 800 mm).`);
+    if (climb.length) out.push(`Barnsäkert (BFS 2024:9, 2 kap. 11 §): en liggare ${mm(climb[0])} upp går att klättra på; 0,8 m av skyddets höjd ska motverka klättring.`);
   }
   if (stair && grabs.length) {
     const g = geometryOfStair(stairParams(doc, stair));
@@ -61,6 +56,31 @@ export function railingWarnings(doc: ProjectDoc, el: Element<any>): string[] {
   }
   if (path?.winderDeviation && path.winderDeviation > 50.5) out.push(`Den utjämnade handledaren avviker upp till ${mm(path.winderDeviation)} från höjden över stegnosen vid kilstegen; avviker från praxis (högst 50 mm). Välj Hoppande för exakt höjd.`);
   return out;
+}
+
+/** Största glipan under ett barnsäkert räcke, mm (BFS 2024:9, 2 kap. 11 § 3: mot balkonggolvet och stegnosen). */
+export const RAIL_GAP_MAX = 50;
+
+/**
+ * Glipan under ett barnsäkert räcke (0.12.5.5): BFS 2024:9, 2 kap. 11 § 3
+ * ger högst 50 mm mellan räckets underkant och balkonggolvet eller
+ * trappstegens stegnos. Förut tilläts 100 mm för räcken som inte satt på en
+ * trappa; det måttet (punkt 4) gäller bara trappräcket mot ett trapplan
+ * eller golv, och appen vet inte om räcket står där eller på en balkong.
+ * Varningen kan därför kvitteras på räcket (`ack: ['gap']`).
+ */
+export function railingGapWarning(doc: ProjectDoc, el: Element<any>): string | null {
+  if (((el.params.ack as string[] | undefined) ?? []).includes('gap')) return null;
+  const model = railingTypeOf(doc, el);
+  if (!model.childSafe || !model.parts.some((q) => q.kind === 'repeat' || q.kind === 'surface')) return null;
+  const vals = railingValues(doc, el);
+  const n = (v: RailPart['z'], f = 0) => railNum(v, vals, f);
+  // Den lägsta delens underkant; stolpar och konsoler (`point`) står på golvet och räknas inte.
+  const lows = model.parts.filter((q) => q.kind !== 'point').map((q) => (q.kind === 'along' ? n(q.z, 900) - (q.profile?.shape === 'round' ? q.profile.w : q.profile?.h ?? q.profile?.w ?? 40) : n(q.from)));
+  const low = Math.min(...lows.filter((v) => Number.isFinite(v)), Infinity);
+  if (!(low > RAIL_GAP_MAX + 0.5)) return null;
+  const stair = railingStair(doc, el);
+  return `Barnsäkert (BFS 2024:9, 2 kap. 11 §): glipan under räcket är ${Math.round(low).toLocaleString('sv-SE')} mm ${stair ? 'över stegnosen' : 'över golvet'}; högst ${RAIL_GAP_MAX} mm mot stegnosen eller ett balkonggolv (100 mm gäller bara mot ett trapplan). Kvittera om räcket står på ett trapplan.`;
 }
 
 /**

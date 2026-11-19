@@ -173,7 +173,7 @@ describe('GUID (0.12)', () => {
     store.setGuids(first);
     expect(Object.keys(first).length).toBe(Object.keys(store.doc.elements).length);
     expect(withGuids(store.doc)).toBeNull();
-    // Ett nytt objekt (en kopia har ett nytt id) får en egen; ett borttaget släpps.
+    // Ett nytt objekt (en kopia har ett nytt id) får en egen; ett borttaget behåller sin (0.12.5.5), så att ångra ger samma GUID.
     const [id, gone] = Object.keys(store.doc.elements);
     store.transact('Kopiera', (tx) => {
       tx.putElement({ ...tx.doc.elements[id], id: 'kopia' });
@@ -182,9 +182,13 @@ describe('GUID (0.12)', () => {
     const next = withGuids(store.doc)!;
     expect(next[id]).toBe(first[id]);
     expect(next.kopia).not.toBe(first[id]);
-    expect(Object.keys(next)).not.toContain(gone);
-    // Ångra lämnar listan.
+    expect(next[gone]).toBe(first[gone]);
+    // Ångra lämnar listan, och lyssnarna får veta så att autosparen skriver den (0.12.5.5).
+    const causes: string[] = [];
+    const off = store.subscribe((_d, e) => causes.push(e.cause));
     store.setGuids(next);
+    off();
+    expect(causes).toEqual(['guids']);
     store.undo();
     expect(store.doc.guids).toBe(next);
     expect(parse(serialize(store.doc)).guids).toEqual(next);

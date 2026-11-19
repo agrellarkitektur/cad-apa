@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.5.4** (alfa), Förteckningen per littera, flytten till cad-apa.danaid.cloud och licensen AGPL-3.0; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
+**0.12.5.5** (alfa), Förteckningen per littera, flytten till cad-apa.danaid.cloud, licensen AGPL-3.0 och rättningarna ur granskningen; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,34 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.12.5.5, Rättningar ur granskningen (samma filformat, 28):
+- **DXF:** fem ja/nej-värden skrevs som decimaltal (`0.0`), vilket stränga
+  läsare kan vägra. De skrivs nu som heltal. Öppnas en export inte i
+  AutoCAD: prova igen med den här versionen
+- **Objektens GUID sparas direkt vid en export**, och ett objekt som tas
+  bort och sedan ångras tillbaka behåller sin GUID. Förut kunde samma
+  objekt få en ny GUID vid nästa export om projektet stängdes utan en
+  ändring emellan (förberedelse för IFC)
+- **Balkongdörrar och fönsterdörrar** på en våning över marken varnas
+  (BFS 2024:9, 2 kap. 4 §: spärr mot att barn faller ut). Fältet
+  *Utfallsskydd* tystar varningen, och finns nu också för dörrar
+- **Glipan under ett barnsäkert räcke** får vara högst 50 mm också när
+  räcket inte sitter på en trappa (BFS 2024:9, 2 kap. 11 §; förut 100 mm).
+  Varningen kan **kvitteras** i räckets egenskaper, till exempel för ett
+  räcke på ett trapplan, där 100 mm gäller
+- **Fri passage genom dörrar** hänvisar till funktionsmåtten i SS 91 42 21,
+  normalnivå: 800 mm för entrédörrar och dörrar till balkong och uteplats
+  (en 10M-dörr), 760 mm för innerdörrar (en 9M-dörr). Gränserna är de samma
+  som förut
+- Spiraltrappans varning för fri höjd hänvisar till BFS 2024:9, 2 kap.
+  25 § (minst 2,00 m i trappor) i stället för praxis
+- **CSV** av en förteckning per littera skriver tal över tusen utan
+  blanksteg (*1500*), så att Excel läser dem som tal
+- **Licenstexterna följer med** programmet (`LICENSE.txt`, `THIRD-PARTY.md`
+  och mappen `LICENSES/` bredvid `index.html`, också i zip-filen)
+- Exportdialogen säger rätt versioner för det som kommer (IFC i 0.12.6,
+  3D-vyerna i 0.12.8)
 
 Version 0.12.5.4, Licensen (samma filformat, 28):
 - **Ny licens: GNU AGPL-3.0 eller senare** från och med den här versionen.

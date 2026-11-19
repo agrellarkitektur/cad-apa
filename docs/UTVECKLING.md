@@ -686,6 +686,34 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Rättningar ur granskningen (0.12.5.5, format 28)
+
+- **Händelsen `guids`:** `DocStore.setGuids` ger `{ cause: 'guids' }` till
+  lyssnarna, utan ett steg att ångra. Den som bara ska göra något vid
+  ändringar i modellen prövar `cause` (som `openingNumbers.ts` gör med
+  `commit`). `withGuids` (`core/exportJobs.ts`) behåller GUID för objekt
+  som inte finns längre.
+- **DXF:** gruppkoderna 290–299 är boolska och skrivs som heltal
+  (`intCode` i `formats/dxfWrite.ts`). Kontrollera en export med `ezdxf`
+  (`recover.readfile` och `audit`): den ska ge noll fel.
+- **Licenstexterna i bygget:** insticksprogrammet `licenses` i
+  `vite.config.ts` lägger `LICENSE.txt`, `THIRD-PARTY.md` och `LICENSES/` i
+  `dist/` (inte i demon). En ny licenstext i `LICENSES/` eller
+  `src/fonts/` (`LICENSE-*.txt`, `OFL-*.txt`) följer med av sig själv.
+- **Varningar som kvitteras:** `railingGapWarning` (`ack: ['gap']`, knappen
+  `rail-ack` i `ui/railingFields.ts`) bredvid `stairHandrailWarning`
+  (`ack: ['handrails']`). En ny varning som gäller en tolkning läggs som en
+  egen funktion på samma sätt, inte i listan från `railingWarnings`.
+  Dörrarnas och fönstrens varningar tystas med ett fält i förteckningen
+  (*Säkerhetsglas*, *Utfallsskydd*).
+- **Fri passage** (`elements/openingWarnings.ts`): `PASSAGE_ENTRANCE` 800
+  och `PASSAGE_INNER` 760 är normalnivån i SS 91 42 21:2006 (i projektets
+  kunskapsbas). Den höjda nivån är inte ett val än.
+- **Differentialtestet** från granskningen (varm cache mot ny uträkning
+  efter att varje objekt flyttats, ändrats eller tagits bort) ligger inte i
+  testerna än; se `cad-apa-granskning-0.12.md`, C4.
+- Testerna i `tests/v01255.test.ts` (GUID:en i `tests/v012.test.ts`).
+
 ## Licensen (0.12.5.4, format 28)
 
 - **Licenshuvud** i varje ny källfil: `// SPDX-License-Identifier:

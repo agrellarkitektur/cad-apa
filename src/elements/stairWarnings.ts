@@ -13,7 +13,7 @@ import { SPIRAL_HEADROOM } from './stairSpiral';
  * Boverkets föreskrifter (BFS 2024:9 har inga mått för steg och bredd; de
  * var allmänna råd i BBR 8:232), så de *avviker från praxis*. Uppslaget 30
  * oktober 2026 och igen 1 november (granskningen efter 0.11.8): den fria
- * höjden 2,0 m och ledstängerna är kvar som förut; nytt är öppningen mellan
+ * höjden 2,0 m står i 2 kap. 25 § (texten rättad i 0.12.5.5) och ledstängerna är kvar som förut; nytt är öppningen mellan
  * planstegen i en öppen trappa (2 kap. 6 §). Trappan går alltid att rita;
  * varningarna står i panelen.
  */
@@ -45,7 +45,7 @@ export function stairWarnings(p: StairParams, g: StairGeometry, outdoor = false)
   if (g.turn && g.length > g.turn + 1 && g.runs[0]?.going > 0) {
     const t = p.build === 'built' ? Math.max(0, p.built?.tread?.thickness ?? 40) : Math.max(20, p.thickness ?? STAIR_THICKNESS);
     const free = (g.turn / g.runs[0].going) * h - t;
-    if (free < SPIRAL_HEADROOM - 0.5) out.push(`Den fria höjden under nästa varv är ${mm(free)}; avviker från praxis (minst ${mm(SPIRAL_HEADROOM)}). Minska stegdjupet, eller öka steghöjden eller ytterdiametern.`);
+    if (free < SPIRAL_HEADROOM - 0.5) out.push(`Den fria höjden under nästa varv är ${mm(free)}; BFS 2024:9, 2 kap. 25 §: minst ${mm(SPIRAL_HEADROOM)} i trappor. Minska stegdjupet, eller öka steghöjden eller ytterdiametern.`);
   }
   // Öppen trappa (sättsteg 0): BFS 2024:9, 2 kap. 6 §, öppningar mellan planstegen högst 100 mm. Uppslaget i granskningen efter 0.11.8.
   if (p.build === 'built' && (p.built?.riser?.thickness ?? 20) <= 0) {

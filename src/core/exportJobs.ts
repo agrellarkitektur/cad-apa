@@ -200,16 +200,24 @@ export const isIfcGuid = (s: unknown): s is string => typeof s === 'string' && /
 
 /**
  * GUID för alla objekt (0.12), som följer med i varje export: de som redan
- * har en behåller den, nya får en, och borttagna objekt släpps ur listan.
- * Listan hör till projektet (`ProjectDoc.guids`, objektets id → GUID), så
- * att en kopia (som får ett nytt id) också får en ny GUID och att ångra
- * inte tar bort den. Null om inget ändras.
+ * har en behåller den och nya får en. Borttagna objekt står kvar i listan
+ * (0.12.5.5), så att ett objekt som tas bort, exporteras utan och sedan
+ * ångras tillbaka har samma GUID som förut. Listan hör till projektet
+ * (`ProjectDoc.guids`, objektets id → GUID), så att en kopia (som får ett
+ * nytt id) också får en ny GUID och att ångra inte tar bort den. Null om
+ * inget ändras.
  */
 export function withGuids(doc: Pick<ProjectDoc, 'elements' | 'guids'>, make: () => string = () => newIfcGuid()): Record<Id, string> | null {
   const old = doc.guids ?? {};
   const out: Record<Id, string> = {};
   let changed = false;
   const used = new Set<string>();
+  // De borttagnas GUID först: de är upptagna och följer med.
+  for (const [id, g] of Object.entries(old)) {
+    if (doc.elements[id] || !isIfcGuid(g) || used.has(g)) continue;
+    used.add(g);
+    out[id] = g;
+  }
   for (const id of Object.keys(doc.elements).sort()) {
     let g = old[id];
     if (!isIfcGuid(g) || used.has(g)) {
@@ -220,6 +228,5 @@ export function withGuids(doc: Pick<ProjectDoc, 'elements' | 'guids'>, make: () 
     used.add(g);
     out[id] = g;
   }
-  if (Object.keys(old).some((id) => !doc.elements[id])) changed = true;
   return changed ? out : null;
 }

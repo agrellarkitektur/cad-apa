@@ -5,6 +5,7 @@ import { defineConfig, loadEnv, type Plugin } from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 import { execSync } from 'node:child_process';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolveBrand } from './src/brand/index.ts';
 
 /** Commiten bygget görs från, för länken till källkoden (AGPL §13, 0.12.5.4). */
@@ -38,11 +39,30 @@ export default defineConfig(({ mode }) => {
         .replace('%BRAND_DESCRIPTION%', brand.description),
   };
 
+  /**
+   * Licenstexterna följer med bygget (0.12.5.5): AGPL-texten, förteckningen
+   * över det som kommer från andra och deras licenser. De minifierade paketen
+   * har inga upphovsrättsrader kvar, och zip-filen på en release sprids utan
+   * länken till repot.
+   */
+  const licenses: Plugin = {
+    name: 'licenses',
+    apply: 'build',
+    generateBundle() {
+      const emit = (fileName: string, from: string) => this.emitFile({ type: 'asset', fileName, source: readFileSync(from) });
+      emit('LICENSE.txt', 'LICENSE');
+      emit('THIRD-PARTY.md', 'THIRD-PARTY.md');
+      for (const f of readdirSync('LICENSES')) emit(`LICENSES/${f}`, `LICENSES/${f}`);
+      for (const f of readdirSync('src/fonts')) if (/^(LICENSE|OFL)-.*\.txt$/.test(f)) emit(`LICENSES/fonts/${f}`, `src/fonts/${f}`);
+    },
+  };
+
   return {
     base: './',
     define: { 'import.meta.env.VITE_SOURCE_COMMIT': JSON.stringify(sourceCommit()) },
     plugins: [
       brandHtml,
+      ...(artifact ? [] : [licenses]),
       artifact
         ? viteSingleFile()
         : VitePWA({

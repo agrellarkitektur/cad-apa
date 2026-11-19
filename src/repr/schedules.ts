@@ -578,7 +578,9 @@ export function cachedTable(doc: ProjectDoc, s: Schedule): ScheduleTable {
  */
 export function scheduleCsv(t: ScheduleTable): string {
   const q = (v: string) => (/[;"\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
-  const cell = (c: Cell, i: number) => (t.columns[i].number && c.value !== undefined ? String(c.value).replace('.', ',') : c.text);
+  // Ett tal som står som text (förteckningen per littera, 0.12.5.5) skrivs också utan tusentalsblanksteg: *1 500* läser Excel som text.
+  const plain = (v: string) => (/^-?\d{1,3}([\u00a0\u202f ]\d{3})+(,\d+)?$/.test(v) ? v.replace(/[\u00a0\u202f ]/g, '') : v);
+  const cell = (c: Cell, i: number) => (t.columns[i].number && c.value !== undefined ? String(c.value).replace('.', ',') : plain(c.text));
   const lines: string[] = [t.columns.map((c) => q(c.title)).join(';')];
   for (const g of t.groups) {
     if (g.label !== undefined) lines.push(q(g.label));

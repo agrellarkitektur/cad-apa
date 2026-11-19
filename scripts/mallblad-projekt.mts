@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Copyright (C) 2026 Carl August Agrell / Agrell Arkitektur
 /**
  * Bygg ett projekt med ett mallblad av det `scripts/mallblad-fran-dxf.py`
  * skrev (0.8.8). Mallbladet blir projektets förval; exempelmallbladet tas

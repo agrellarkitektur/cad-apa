@@ -37,7 +37,7 @@ export const DEFAULT_SCHEDULE_FIELDS: Record<ScheduleKind, readonly string[]> = 
   Door: [
     'Antal', 'Hängning', 'Utförande', 'Öppningssätt', 'Öppningsbredd', 'Öppningshöjd', 'Utrymme', 'U-värde', 'Brandklass', 'Ljudreduktion',
     'Motståndsklass', 'Ventilation', 'Dörrbladsyta', 'Dörrbladskant', 'Kulör dörrblad', 'Kulör karm', 'Karmtyp', 'Karmdjup', 'Väggtjocklek',
-    'Skyddsbeklädnad', 'Glasöppning', 'Säkerhetsglas', 'Tröskel', 'Klämskydd', 'Beslagskod', 'Låshus', 'Slutbleck', 'Karmöverföring',
+    'Skyddsbeklädnad', 'Glasöppning', 'Säkerhetsglas', 'Utfallsskydd', 'Tröskel', 'Klämskydd', 'Beslagskod', 'Låshus', 'Slutbleck', 'Karmöverföring',
     'Magnetkontakt', 'Trycke/draghandtag', 'Cylinderbehör', 'Nödbehör', 'Dörrstängare', 'Dörrautomatik', 'Anmärkning', 'Övrigt',
   ],
 };
