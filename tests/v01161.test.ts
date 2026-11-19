@@ -8,7 +8,7 @@ import { contourArea, filletContour, offsetContour, setDim, stretchModel } from 
 import { registerBuiltInTypes } from '../src/elements';
 import { profileBodyOf, type ProfileParams } from '../src/elements/profile';
 import { profileWarnings } from '../src/ui/profileFields';
-import { snapPoint } from '../src/ui/style/profileTypes';
+import { snapPoint } from '../src/ui/style/profileCanvas';
 import { applyProfileTypeField } from '../src/ui/style/profileTypeEdits';
 
 /**

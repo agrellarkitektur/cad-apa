@@ -29,7 +29,8 @@ import { newRailEditorState, railEditorChange, railEditorClick, railEditorDrag, 
 import { END_GROUP } from '../core/profileTypes';
 import { newOpeningEditorState, openingEditorChange, openingEditorClick, openingEditorMarkup, openingEditorSearch } from './style/openingTypes';
 import { scheduleBookMarkup, scheduleSearch, scheduleView } from './openingScheduleFields';
-import { newProfileEditorState, profileCanvasPointer, profileEditorChange, profileEditorClick, profileEditorDrag, profileEditorMarkup, profileEditorSearch } from './style/profileTypes';
+import { newProfileEditorState, profileEditorChange, profileEditorClick, profileEditorDrag, profileEditorMarkup, profileEditorSearch } from './style/profileTypes';
+import { profileCanvasPointer } from './style/profileCanvas';
 
 /** Raderna som sök och *Vanliga/Alla* (0.10.34) visar eller döljer. */
 const FILTER_ROWS = '.style-row, .pen-row, .material-row, .linetype-row, .filltype, .filltype-builtin, .tpl-row, .sb-groups label.check, .sb-show label.field, .sb-show label.check, .sb-views li';
