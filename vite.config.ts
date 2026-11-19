@@ -51,6 +51,9 @@ export default defineConfig(({ mode }) => {
               globPatterns: ['**/*.{js,css,html,svg,woff2}'],
               // pdf.js med sin arbetare är större än förvalet på 2 MB (0.8 del 2).
               maximumFileSizeToCacheInBytes: 6_000_000,
+              // Skript på servern (feedback.php) ska nå servern också när man
+              // navigerar dit, inte få appens index.html (0.12.5.3).
+              navigateFallbackDenylist: [/\.php$/],
             },
           }),
     ],

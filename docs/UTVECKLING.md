@@ -686,6 +686,19 @@ en fil. Här står de allmänna reglerna och avsnitten från det nuvarande
 formatet (26) och framåt (27 sedan 0.11.6). Nya avsnitt läggs överst bland versionerna, som
 förut; vid nästa huvudversion flyttas de klara till arkivet.
 
+## Flytten till cad-apa.danaid.cloud (0.12.5.3, format 28)
+
+- `src/ui/app/moveNotice.ts`: raden överst på den gamla adressen
+  (`showsMoveNotice`: agrellarkitektur.se och www., eller `?flytt`), samma
+  `.update-bar` som *En ny version finns* med klassen `move-bar`.
+  `moveFiles` gör filerna ur `allLocalEntries()` i `localStore.ts`
+  (nycklarna `current`, `stilboksmall` och `unreadable-*`; annat hoppas
+  över). En fil sparas som den är, fler i en zip (`writeZip`). Test i
+  `tests/v01253.test.ts`. Tas bort när den gamla adressen är en
+  omdirigering (steg 10 i `docs/FLYTT.md`).
+- `vite.config.ts`: `navigateFallbackDenylist: [/\.php$/]`, så att
+  `feedback.php` når servern när man navigerar dit.
+
 ## Areor under snedtak och mark (0.12.4, format 28)
 
 - **Ytoperationerna** som areorna delar ligger i `src/elements/areaGeom.ts`

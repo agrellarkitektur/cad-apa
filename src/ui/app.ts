@@ -22,6 +22,7 @@ import { renderHighlight } from './highlight';
 import { MeasureBox } from './measureBox';
 import { FeedbackDialog } from './feedbackDialog';
 import { installAboutDialog } from './app/aboutDialog';
+import { installMoveNotice } from './app/moveNotice';
 import { PropertiesPanel } from './propertiesPanel';
 import { Selection } from './selection';
 import { isNarrow } from './sheet';
@@ -376,6 +377,8 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const feedbackDialog = new FeedbackDialog(brand.name, brand.feedbackFallback ?? '');
   root.appendChild(feedbackDialog.el);
   const about = installAboutDialog(root, brand);
+  // Flytten till cad-apa.danaid.cloud (0.12.5.3): raden på den gamla adressen.
+  installMoveNotice(brand.fileExtension, (t, ms) => hint(t, ms));
 
   // Tillfälliga mått när en vägg är markerad.
   const tempDims = new TempDims(canvas, store);

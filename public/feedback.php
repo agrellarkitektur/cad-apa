@@ -102,6 +102,7 @@ $times[] = $now;
 $subject = '=?UTF-8?B?' . base64_encode("Synpunkt på cad-apa ($version)") . '?=';
 $body = $message . "\n\n—\nVersion: $version\nSkärm: $screen\n" . ($email !== '' ? "Svara till: $email\n" : "Ingen e-post angiven.\n");
 $headers = [
+  'MIME-Version: 1.0',
   'From: cad-apa <' . $from . '>',
   'Content-Type: text/plain; charset=UTF-8',
   'Content-Transfer-Encoding: 8bit',

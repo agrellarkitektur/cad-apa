@@ -439,6 +439,27 @@
   box-shadow: 0 8px 24px rgb(0 0 0 / 0.18);
 }
 
+/* Flytten (0.12.5.3): samma rad, i varningsfärg och bredare, på den gamla adressen. */
+.move-bar {
+  width: min(860px, calc(100vw - 24px));
+  border-color: #d9480f;
+  border-width: 2px;
+}
+
+.move-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.move-text > span {
+  color: #d9480f;
+}
+
+.move-bar a.btn {
+  text-decoration: none;
+  white-space: nowrap;
+}
+
 /* Visa-menyn i kolumner (0.10.11): inställningarna till vänster, kategorierna
    i två kolumner till höger, så att allt syns utan att rulla. Smal skärm: en. */
 .show-menu:not([hidden]) {

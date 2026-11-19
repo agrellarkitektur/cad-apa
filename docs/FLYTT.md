@@ -149,18 +149,19 @@ Formuläret (fetch) påverkas inte. Rättning: `navigateFallbackDenylist:
 [/\.php$/]` i workbox-inställningarna i `vite.config.ts`. Prova under tiden i
 ett inkognitofönster.
 
-## Nästa session (från 19 november)
+## Nästa steg (från 19 november, efter 0.12.5.3)
 
-0.12.5.3, en liten version:
-1. `MIME-Version: 1.0` i brevet från `feedback.php`.
-2. `navigateFallbackDenylist` för `.php` i `vite.config.ts`.
-3. Rutan *cad-apa flyttar – spara dina projekt som fil* på den gamla adressen
-   (steg 7), med knappen som laddar ner alla autosparade projekt. Visas bara
-   när appen körs på agrellarkitektur.se.
-4. README, version och `docs/OVERLAMNING.md`.
+0.12.5.3 är klar: `MIME-Version: 1.0` i brevet, `.php` undantaget i service
+workern, och raden *cad-apa flyttar* på den gamla adressen med *Spara som
+fil*. Webbläsaren har bara **ett** autosparat projekt (det öppna), plus
+mallen för nya projekt och autospar som inte gick att läsa; ett blir en
+`.cadapa`, fler en zipfil. Raden provas på andra adresser med `?flytt`.
+Inställningarna för gränssnittet följer inte med (Carl August: låt dem
+vara).
 
-Att spara synpunkterna på servern (i stället för bara e-post) behövs inte nu;
-det hör ihop med danaid-Inkorgen (*Öppen fråga* ovan).
+Carl August tror inte att någon annan har använt den gamla adressen. Raden
+står kvar en tid, sedan steg 9–10. Att spara synpunkterna på servern behövs
+inte nu; det hör ihop med danaid-Inkorgen (*Öppen fråga* ovan).
 
 ### Den gamla adressen
 - Webbläsaren skickar inte det som står efter `#` till servern. En omdirigering
@@ -187,7 +188,7 @@ det hör ihop med danaid-Inkorgen (*Öppen fråga* ovan).
 | 4 | `sudo apps-drift nyckel cad-apa www/cad-apa` på servern, och utskriften som secret `APPS_SSH_KEY` i cad-apa-repot (klart 18 november; publiceringen till VPS:en går) | Carl August |
 | 5 | `publicera-vps.yml` och `known_hosts` i cad-apa, parallellt med FTP (klart 18 november) | Claude i cad-apa |
 | 6 | `feedback-config.php` på servern, och provet av `feedback.php` (klart 19 november; se *E-post: kvällen 18–19 november*) | Carl August |
-| 7 | Rutan *Spara dina projekt som fil* på den gamla adressen | Claude i cad-apa |
+| 7 | Rutan *Spara dina projekt som fil* på den gamla adressen (klart 19 november, 0.12.5.3) | Claude i cad-apa |
 | 8 | Prova på den nya adressen: rita, spara, öppna fil, synpunkt, Höjdkurvor → cad-apa → tillbaka (påbörjat: sidan fungerar, synpunkten når Gmail med upp till en timmes fördröjning) | Carl August |
 | 9 | I Höjdkurvor: `cadApaUrl` i `config.js` och `js/app.js` blir `https://cad-apa.danaid.cloud/`. Omdirigering av `/terrang/` och borttagning av `publicera.yml` | Claude i hojdkurvor |
 | 10 | Omdirigering av `/cad-apa/`, borttagning av FTP i cad-apa, och `url` i `apps/cad-apa/app.json` | Claude, efter en tid |

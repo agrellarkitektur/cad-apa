@@ -108,6 +108,29 @@ export async function loadLocal(): Promise<LocalRecord | null> {
   }
 }
 
+/**
+ * Allt som ligger sparat i webbläsaren (0.12.5.3, flytten): autosparet,
+ * undanlagda autospar och mallen, med sina nycklar. Tomt utan lagring.
+ */
+export async function allLocalEntries(): Promise<{ key: string; value: unknown }[]> {
+  try {
+    const db = await open();
+    try {
+      return await new Promise((resolve, reject) => {
+        const os = db.transaction(STORE, 'readonly').objectStore(STORE);
+        const keys = os.getAllKeys();
+        const values = os.getAll();
+        values.onsuccess = () => resolve((keys.result as IDBValidKey[]).map((k, i) => ({ key: String(k), value: values.result[i] })));
+        values.onerror = () => reject(values.error);
+      });
+    } finally {
+      db.close();
+    }
+  } catch {
+    return [];
+  }
+}
+
 /** Lägg ett autospar som inte gick att läsa under en egen nyckel, så att det finns kvar. */
 export async function keepUnreadable(rec: LocalRecord): Promise<void> {
   try {

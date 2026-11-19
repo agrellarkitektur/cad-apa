@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.5.2** (alfa), Förteckningen per littera och Höjdkurvors nya adress; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
+**0.12.5.3** (alfa), Förteckningen per littera och flytten till cad-apa.danaid.cloud; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
 
 ## Vad som fungerar
 
@@ -1148,6 +1148,19 @@ Version 0.10.28.1, materiallistan (nytt filformat, 24; projekt från 0.10.28 öp
 - **Shift i valfri ordning**: trycks Shift mitt i ett drag med
   mittenknappen (eller Mellanslag) snurrar vyn, och släpps det
   panoreras den igen
+
+Version 0.12.5.3 (samma filformat, 28):
+- **cad-apa flyttar till https://cad-apa.danaid.cloud/**. På den gamla
+  adressen (agrellarkitektur.se/cad-apa/) står en rad överst: projektet som
+  är sparat i webbläsaren följer inte med till den nya adressen. *Spara som
+  fil* sparar det öppna projektet som projektfil; finns också en mall för
+  nya projekt eller ett autospar som inte gick att läsa blir det en zipfil
+  med alltihop. Öppna filen med *Öppna* på den nya adressen. Raden går att
+  stänga och kommer tillbaka när sidan laddas om. Inställningarna för
+  gränssnittet (rutnät, färger, snabbknappar, tema) följer inte med
+- Synpunkternas brev har `MIME-Version: 1.0`
+- `feedback.php` i webbläsarens adressfält når servern i stället för att
+  visa appen (service workern lämnar `.php` i fred)
 
 Version 0.12.5.2 (samma filformat, 28):
 - **Höjdkurvors nya adress**: *Fortsätt rita i cad-apa* fungerar från

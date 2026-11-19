@@ -6,10 +6,21 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 13 november 2026, efter IFC-utredningen (ingen kod; markförändringarna flyttade till 0.12.9).
+README. Senast: 19 november 2026, efter 0.12.5.3 (flytten till cad-apa.danaid.cloud).
 
 ## Läget
 
+- **Flytten till cad-apa.danaid.cloud** (`docs/FLYTT.md`, tabellen *Ordning
+  för flytten*): 0.12.5.2 (18 november) tar emot Höjdkurvor från
+  hojdkurvor.danaid.cloud och publicerar parallellt till VPS:en. **0.12.5.3**
+  (19 november, samma format 28): raden *cad-apa flyttar* på den gamla
+  adressen med *Spara som fil* (`src/ui/app/moveNotice.ts`,
+  `allLocalEntries` i `localStore.ts`; `?flytt` visar den var som helst),
+  `MIME-Version: 1.0` i `feedback.php`, `navigateFallbackDenylist` för
+  `.php` i `vite.config.ts`. Testerna: 1006. Provat i Playwright mot
+  `dist/` (en fil, zip med mall och trasigt autospar, tomt, stäng). Kvar:
+  Carl Augusts provning (steg 8), sedan Höjdkurvor (steg 9) och efter en
+  tid omdirigeringen och borttagningen av FTP (steg 10).
 - **IFC-utredningen är klar** (13 november, en egen chatt, ingen kod i
   appen): **`cad-apa-ifc-utredning.md`** i projektet är specifikationen för
   **0.12.6 IFC** (stor, en session) och **0.12.6.1 IFC, resten**
@@ -130,10 +141,10 @@ README. Senast: 13 november 2026, efter IFC-utredningen (ingen kod; markföränd
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
-- **Publicerad:** 0.12.5.1 pushad till `main` 12 november (se git och `gh run
+- **Publicerad:** 0.12.5.3 pushad till `main` 19 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.12.5.1` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.12.5.3` i `engine.ts`, `package.json` och
   `package-lock.json`. Nya funktioner får tredje siffran (0.12.4 …); **den
   fjärde siffran är för snabba buggfixar** utan nya funktioner (Carl August
   10 november). En granskning höjer inte numret, eller får en fjärde siffra
@@ -239,7 +250,9 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
   ~~Utredning av 0.12 Export~~, ~~0.12 Exportdialogen och PDF~~,
   ~~0.12.1 DXF~~, ~~0.12.2 Förteckningar~~, ~~0.12.3 Areor~~,
   ~~0.12.4 Areor under snedtak och mark~~, ~~0.12.5 Förteckningen per
-  littera~~ (klara; se tabellen *Klart* i PLAN.md)
+  littera~~, ~~0.12.5.1–0.12.5.3~~ (klara; se tabellen *Klart* i PLAN.md)
+- **Flytten till cad-apa.danaid.cloud**: steg 8–10 i `docs/FLYTT.md`
+  (Carl Augusts provning, Höjdkurvor, sedan omdirigering och FTP bort)
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
 - ~~Utredning av IFC~~ (13 november, `cad-apa-ifc-utredning.md`)
@@ -259,7 +272,8 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-Läs synpunkterna först och sortera Inkorgen om den har något. Be om
+Flytten: fråga om Carl August provat den nya adressen (steg 8 i
+`docs/FLYTT.md`). Läs synpunkterna först och sortera Inkorgen om den har något. Be om
 skrivrätt till repot ("push godkänd"). Fråga om Carl August öppnat
 provfilen (`docs/ifc/provhuset.ifc`) i Archicad, Revit och Solibri och
 validerat den, och om han svarat på **A–E i `cad-apa-ifc-utredning.md`**;
