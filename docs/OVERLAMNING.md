@@ -16,10 +16,11 @@ README. Senast: 19 november 2026, efter 0.12.5.4 (licensen AGPL-3.0).
   (osifont, versionerna före). SPDX-huvud i alla källfiler, *Källkoden* i
   menyn och Om-rutan till byggets commit, `THIRD-PARTY.md` och
   `LICENSES/`, `CONTRIBUTING.md`, `CLA.md` (utkast). *Stöd utvecklingen*
-  är byggt i `src/ui/app/supportSection.ts` men **dolt tills Carl August
-  skrivit texten** (stödord i chatten 19 november). Testerna: 1008. Provat i
-  Playwright mot `dist/` (menyn, Om-rutan, Stöd-avsnittet med provtext).
-  **Kvar för Carl August:** Stöd-texten, Swish-QR när Swish Företag finns,
+  i Om-rutan, texten i `src/ui/app/supportSection.ts`, skriven av Claude
+  på hans begäran; han skriver om den på stället. Testerna: 1008. Provat i
+  Playwright mot `dist/` (menyn, Om-rutan med Stöd-avsnittet). Taggad och
+  släppt som release `v0.12.5.4`.
+  **Kvar för Carl August:** Stöd-texten i egna ord om han vill, Swish-QR när Swish Företag finns,
   koppla CLA Assistant (cla-assistant.io, gist med `CLA.md`), juristen
   (CLA, avtalet om undantag), revisorn (Swish-bidragen). Sisyfos och
   Höjdkurvor görs i sina egna sessioner efter avsnittet *Så gjordes det i
@@ -155,6 +156,13 @@ README. Senast: 19 november 2026, efter 0.12.5.4 (licensen AGPL-3.0).
   UTVECKLING.md.
 - **Höjdkurvors del av 0.10.31** (ortofotot i platspaketet) återstår; den
   görs i en Höjdkurvor-session (fälten i `docs/arkiv/PLAN-0.10.md`).
+- **Taggar och releaser** (Carl August 19 november): Claude taggar och
+  släpper varje klar version själv, `v<version>` på versionens commit, med
+  `gh api repos/agrellarkitektur/cad-apa/releases -f tag_name=… -f
+  target_commitish=<sha> -f name="<version> <namn>" -f body=…` (REST; `gh
+  release` når inte GraphQL härifrån). Texten är README:s avsnitt för
+  versionen. Releasen bygger zip-filen (`release.yml`); se efter med `gh run
+  list`. Äldre versioner utan tagg taggas inte i efterhand.
 - **Publicerad:** 0.12.5.4 pushad till `main` 19 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
@@ -286,9 +294,8 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 
 ## Nästa session
 
-Fråga om Carl August skrivit Stöd-texten (fyll i `SUPPORT` i
-`src/ui/app/supportSection.ts`; han skriver själv, Claude granskar) och
-kopplat CLA Assistant. Flytten: fråga om Carl August provat den nya adressen (steg 8 i
+Fråga om Carl August skrivit om Stöd-texten (`SUPPORT` i
+`src/ui/app/supportSection.ts`) och kopplat CLA Assistant. Flytten: fråga om Carl August provat den nya adressen (steg 8 i
 `docs/FLYTT.md`). Läs synpunkterna först och sortera Inkorgen om den har något. Be om
 skrivrätt till repot ("push godkänd"). Fråga om Carl August öppnat
 provfilen (`docs/ifc/provhuset.ifc`) i Archicad, Revit och Solibri och

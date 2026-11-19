@@ -105,7 +105,7 @@ Två flöden, eftersom privatpersoner och företag har olika behov:
 - [x] Lägg in licensavsnittet i README (mall nedan).
 - [ ] Skapa `CONTRIBUTING.md` med CLA-krav och koppla CLA Assistant om repot ligger på GitHub. *(cad-apa: CONTRIBUTING.md och CLA.md finns; kopplingen och juristens granskning återstår.)*
 - [x] Gå igenom beroendenas och tillgångarnas licenser och skriv `THIRD-PARTY.md`.
-- [ ] Lägg till sektionen **Stöd utvecklingen** på Om-sidan (Swish-QR, med platshållare tills Swish Företag finns, och kontakt för supporteravtal). Texten skriver Carl August själv efter stödord. I Höjdkurvor får Claude skriva den direkt. *(cad-apa: byggd men dold tills texten finns.)*
+- [x] Lägg till sektionen **Stöd utvecklingen** på Om-sidan (Swish-QR, med platshållare tills Swish Företag finns, och kontakt för supporteravtal). Texten skriver Carl August själv efter stödord. I Höjdkurvor får Claude skriva den direkt. *(cad-apa: Claude skrev texten på Carl Augusts begäran, Swish som planerat med kontakt till dess; han skriver om den på stället.)*
 - [x] Notera i ändringsloggen från vilken version AGPL gäller. Tidigare versioner är fortfarande GPL-3.0.
 
 ### Så gjordes det i cad-apa (0.12.5.4, 19 november 2026)
@@ -117,14 +117,15 @@ Kan följas i Sisyfos och Höjdkurvor.
 - **Källkodslänken** går till commiten bygget gjordes från (`VITE_SOURCE_COMMIT` i `vite.config.ts`, ur `GITHUB_SHA` på GitHub, annars `git rev-parse HEAD`). Den står i Om-rutan och som *Källkoden* i menyn (`src/ui/app/sourceLink.ts`).
 - **THIRD-PARTY.md** med bibliotek, typsnitt och underlag, och licenstexterna i `LICENSES/`. Alla beroenden var förenliga: three.js och Workbox (MIT), pdf.js (Apache-2.0), earcut (ISC), polygon-clipping och splaytree (MIT), robust-predicates (Unlicense), typsnitten OFL och osifont GPL-3.0 med typsnittsundantag.
 - **CONTRIBUTING.md** och **CLA.md** (utkast på engelska med svensk sammanfattning: upphovsrätten kvar hos bidragsgivaren, rätt för Agrell Arkitektur att licensiera om och att överlåta vid ett uppköp, löfte om att varje version också finns under AGPL, svensk lag).
-- **Stöd utvecklingen** i `src/ui/app/supportSection.ts`: fälten `intro`, `private`, `business`, `swishQr` och `sponsorsUrl`. Avsnittet syns först när `intro` är ifylld; utan `swishQr` står en platshållare.
+- **Stöd utvecklingen** i `src/ui/app/supportSection.ts`: fälten `intro`, `private`, `business`, `swishQr` och `sponsorsUrl`. Avsnittet syns bara när `intro` är ifylld; utan `swishQr` står en platshållare.
+- **Taggar och releaser:** varje klar version taggas `v<version>` och släpps som release på GitHub, med README:s avsnitt som text.
 
 ### Kvar för Carl August (cad-apa)
 
 1. **Koppla CLA Assistant:** logga in på https://cla-assistant.io med GitHub, lägg `CLA.md` i en gist (gist.github.com), välj repot och gisten. Efter juristens granskning, eller nu med utkastet om ett bidrag kommer innan dess.
 2. **Juristen:** CLA.md och avtalet om kommersiellt undantag.
 3. **Revisorn eller Skatteupplysningen:** Swish-bidragen som momsfria gåvor och om de ska ha ett eget Swish-nummer.
-4. **Stöd-texten** efter stödorden, och Swish-QR:n när Swish Företag är tecknat.
+4. **Swish-QR:n** när Swish Företag är tecknat (bilden i `public/`, namnet i `swishQr`), och Stöd-texten i egna ord om du vill.
 
 ## Mall: licensavsnitt i README
 
@@ -144,7 +145,7 @@ Kan följas i Sisyfos och Höjdkurvor.
 
 | Projekt | Projektnamn i mallen | Skyddade namn | Tredjepartstillgångar att kolla | Repo / anm. |
 |---|---|---|---|---|
-| cad-apa | cad-apa | cad-apa, Bacchus | osifont (GPL-3.0 + typsnittsundantag), Archivo, IBM Plex Mono, Arimo och Josefin Sans (OFL) | agrellarkitektur/cad-apa; genomfört i 0.12.5.4 utom CLA Assistant och Stöd-texten |
+| cad-apa | cad-apa | cad-apa, Bacchus | osifont (GPL-3.0 + typsnittsundantag), Archivo, IBM Plex Mono, Arimo och Josefin Sans (OFL) | agrellarkitektur/cad-apa; genomfört i 0.12.5.4 utom CLA Assistant och Swish-QR:n |
 | Sisyfos | Sisyfos | Sisyfos | | |
 | Höjdkurvor | Höjdkurvor | Höjdkurvor, höjdkurvor.se | Lantmäteriets data (egna villkor, ej kod) | |
 

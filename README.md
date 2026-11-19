@@ -1159,8 +1159,9 @@ Version 0.12.5.4, Licensen (samma filformat, 28):
 - **Källkoden** i menyn och i Om-rutan går till koden för just den version
   som körs (commiten bygget gjordes från)
 - **Om-rutan** har licensen, länken till källkoden och förteckningen över
-  det som kommer från andra (`THIRD-PARTY.md`). Avsnittet *Stöd
-  utvecklingen* är byggt men syns inte förrän texten är skriven
+  det som kommer från andra (`THIRD-PARTY.md`), och **Stöd utvecklingen**:
+  för privatpersoner ett frivilligt bidrag (Swish är på väg, till dess
+  kontakt), för företag supporteravtal och kommersiella licenser
   (`src/ui/app/supportSection.ts`)
 - Alla källfiler har ett licenshuvud (`SPDX-License-Identifier`).
   `CONTRIBUTING.md` och `CLA.md` (utkast) för den som vill bidra
