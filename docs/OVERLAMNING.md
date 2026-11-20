@@ -6,8 +6,8 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 19 november 2026, efter 0.12.5.7 (summorna enligt SS 21054);
-nästa är Carl Augusts provning av 0.12–0.12.5.7, sedan 0.12.6 IFC.
+README. Senast: 20 november 2026, efter 0.12.5.8 (Höjdkurvor på hojdkurvor.se);
+nästa är Carl Augusts provning av 0.12–0.12.5.8, sedan 0.12.6 IFC.
 
 ## Läget
 
@@ -207,10 +207,10 @@ nästa är Carl Augusts provning av 0.12–0.12.5.7, sedan 0.12.6 IFC.
   skapa releaser (403); arbetsflödet gör det, med Carl Augusts tillstånd 19
   november. `v0.12.5.4` skapade han själv. Äldre versioner utan release
   (0.12.5–0.12.5.3 m.fl.) får ingen i efterhand.
-- **Publicerad:** 0.12.5.7 pushad till `main` 19 november (se git och `gh run
+- **Publicerad:** 0.12.5.8 (Höjdkurvor på hojdkurvor.se i `HOJDKURVOR_ORIGINS`) pushad till `main` 20 november (se git och `gh run
   list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.12.5.7` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.12.5.8` i `engine.ts`, `package.json` och
   `package-lock.json`. Nya funktioner får tredje siffran (0.12.4 …); **den
   fjärde siffran är för snabba buggfixar** utan nya funktioner (Carl August
   10 november). En granskning höjer inte numret, eller får en fjärde siffra

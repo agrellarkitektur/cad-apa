@@ -28,11 +28,12 @@ import { imageAsset, ORTHO_MAX_PX, pickFiles } from './imageFile';
 
 /**
  * Höjdkurvors ursprung, som meddelanden tas emot från och skickas till.
- * Höjdkurvor ligger på hojdkurvor.danaid.cloud (sedan 17 november 2026).
+ * Höjdkurvor ligger på hojdkurvor.se (sedan 20 november 2026, samma VPS),
+ * förut hojdkurvor.danaid.cloud (17 november), som står kvar i listan.
  * Den gamla adressen på webbhotellet (agrellarkitektur.se/terrang/) står
  * kvar under flytten, se docs/FLYTT.md.
  */
-const HOJDKURVOR_ORIGINS = ['https://hojdkurvor.danaid.cloud', 'https://agrellarkitektur.se', 'https://www.agrellarkitektur.se', 'https://xn--hjdkurvor-07a.se', 'https://www.xn--hjdkurvor-07a.se'];
+const HOJDKURVOR_ORIGINS = ['https://hojdkurvor.se', 'https://www.hojdkurvor.se', 'https://hojdkurvor.danaid.cloud', 'https://agrellarkitektur.se', 'https://www.agrellarkitektur.se', 'https://xn--hjdkurvor-07a.se', 'https://www.xn--hjdkurvor-07a.se'];
 const IMPORT_HASH = '#hojdkurvor-import';
 
 /** Väderstrecket en riktning i modellen pekar åt, när norr ligger åt `north` (grader moturs från x-axeln). */

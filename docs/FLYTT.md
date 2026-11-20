@@ -5,7 +5,8 @@ Höjdkurvor (15–17 november), uppdaterat 19 november. Lägg gärna filen i cad
 
 ## Läget just nu
 
-- **Höjdkurvor** finns på <https://hojdkurvor.danaid.cloud/>. Den publiceras dit med
+- **Höjdkurvor** finns på <https://hojdkurvor.se/> (sedan 20 november, samma VPS; i
+  `HOJDKURVOR_ORIGINS` från 0.12.5.8), förut <https://hojdkurvor.danaid.cloud/>. Den publiceras dit med
   rsync (`publicera-vps.yml`) vid varje push. Den publiceras också fortfarande med
   FTP till <https://agrellarkitektur.se/terrang/>, eftersom kopplingen till cad-apa
   bara fungerar från den gamla adressen.
