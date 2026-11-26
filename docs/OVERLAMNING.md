@@ -166,9 +166,8 @@ Carl Augusts provning av 0.12–0.12.5.9, sedan **Förarbete för IFC** och
   borttagen** på Carl Augusts begäran (källan `Gate`). Grindar sätts ut i
   staket och redovisas i planen, det räcker; en grind ritas vid behov för
   sig. En grindförteckning i en äldre fil läses inte in. Testerna: 1003.
-  `cad-apa-synpunkter.md` är rättad (grindförteckningen).
-  `cad-apa-dorrar-fonster-utredning.md` säger fortfarande
-  *uppställningen* (inte omskriven).
+  `cad-apa-synpunkter.md` och `cad-apa-dorrar-fonster-utredning.md`
+  (26 november, med en rad överst om vad som gäller) är rättade.
 - **Märks i hans ritningar efter 0.12.5:** *Ny: Fönster* eller *Dörrar*
   under Förteckningar ger förteckningen per littera. De framräknade fälten
   (utförande, öppningssätt, öppningsbredd och -höjd, poster, spröjs,
