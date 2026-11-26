@@ -79,7 +79,7 @@ export async function saveLocal(text: string, formatVersion: number, engine: str
           return;
         }
         if (existing && recordFormatVersion(existing) === null) {
-          os.put(existing, `unreadable-${existing.savedAt ?? Date.now()}`);
+          os.put(existing, `${UNREADABLE_PREFIX}${existing.savedAt ?? Date.now()}`);
         }
         const rec: LocalRecord = { text, savedAt: Date.now(), formatVersion, engine };
         os.put(rec, KEY);
@@ -99,9 +99,11 @@ export async function loadLocal(): Promise<LocalRecord | null> {
   try {
     const db = await open();
     const result = await new Promise<LocalRecord | undefined>((resolve, reject) => {
-      const req = db.transaction(STORE, 'readonly').objectStore(STORE).get(KEY);
+      const tx = db.transaction(STORE, 'readonly');
+      const req = tx.objectStore(STORE).get(KEY);
       req.onsuccess = () => resolve(req.result);
       req.onerror = () => reject(req.error);
+      tx.onabort = () => reject(tx.error);
     });
     db.close();
     return result ?? null;
@@ -119,11 +121,13 @@ export async function allLocalEntries(): Promise<{ key: string; value: unknown }
     const db = await open();
     try {
       return await new Promise((resolve, reject) => {
-        const os = db.transaction(STORE, 'readonly').objectStore(STORE);
+        const tx = db.transaction(STORE, 'readonly');
+        const os = tx.objectStore(STORE);
         const keys = os.getAllKeys();
         const values = os.getAll();
         values.onsuccess = () => resolve((keys.result as IDBValidKey[]).map((k, i) => ({ key: String(k), value: values.result[i] })));
         values.onerror = () => reject(values.error);
+        tx.onabort = () => reject(tx.error);
       });
     } finally {
       db.close();
@@ -133,20 +137,60 @@ export async function allLocalEntries(): Promise<{ key: string; value: unknown }
   }
 }
 
-/** Lägg ett autospar som inte gick att läsa under en egen nyckel, så att det finns kvar. */
-export async function keepUnreadable(rec: LocalRecord): Promise<void> {
+/** Prefixet för undanlagda autospar. */
+export const UNREADABLE_PREFIX = 'unreadable-';
+/** Så många undanlagda autospar sparas; de äldsta tas bort (0.12.5.9). */
+export const KEEP_UNREADABLE = 5;
+
+/** Nycklarna att ta bort så att bara de `keep` nyaste undanlagda autosparen finns kvar. */
+export function unreadableToDrop(keys: readonly string[], keep = KEEP_UNREADABLE): string[] {
+  const time = (k: string) => Number(k.slice(UNREADABLE_PREFIX.length)) || 0;
+  return keys
+    .filter((k) => k.startsWith(UNREADABLE_PREFIX))
+    .sort((a, b) => time(b) - time(a))
+    .slice(keep);
+}
+
+/**
+ * Lägg ett autospar som inte gick att läsa under en egen nyckel, så att det
+ * finns kvar, och ta bort de äldsta undanlagda (0.12.5.9). Med `clear` tas
+ * autosparet också bort, så att nästa start börjar med exemplet
+ * (räddningsrutan). Svarar false om det inte gick att spara undan.
+ */
+export async function keepUnreadable(rec: LocalRecord, opts: { clear?: boolean } = {}): Promise<boolean> {
   try {
     const db = await open();
-    await new Promise<void>((resolve, reject) => {
-      const tx = db.transaction(STORE, 'readwrite');
-      tx.objectStore(STORE).put(rec, `unreadable-${rec.savedAt ?? Date.now()}`);
-      tx.oncomplete = () => resolve();
-      tx.onerror = () => reject(tx.error);
-    });
-    db.close();
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(STORE, 'readwrite');
+        const os = tx.objectStore(STORE);
+        const key = `${UNREADABLE_PREFIX}${Number.isFinite(rec.savedAt) ? rec.savedAt : Date.now()}`;
+        os.put(rec, key);
+        if (opts.clear) os.delete(KEY);
+        const keys = os.getAllKeys();
+        keys.onsuccess = () => {
+          for (const k of unreadableToDrop((keys.result as IDBValidKey[]).map(String))) os.delete(k);
+        };
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+      });
+      return true;
+    } finally {
+      db.close();
+    }
   } catch {
-    /* Ingen lagring: inget att skydda. */
+    /* Ingen lagring, eller full: inget att skydda, eller inget som gick. */
+    return false;
   }
+}
+
+/** De undanlagda autosparen, nyast först (0.12.5.9). */
+export async function unreadableEntries(): Promise<{ key: string; rec: LocalRecord }[]> {
+  return (await allLocalEntries())
+    .filter((e): e is { key: string; value: LocalRecord } => e.key.startsWith(UNREADABLE_PREFIX) && typeof (e.value as LocalRecord | null)?.text === 'string')
+    .map((e) => ({ key: e.key, rec: e.value }))
+    .sort((a, b) => (b.rec.savedAt ?? 0) - (a.rec.savedAt ?? 0));
 }
 
 /**

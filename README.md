@@ -6,7 +6,7 @@ och kan bytas utan att röra resten av koden.
 
 Idé och principer beskrivs i [docs/ARKITEKTUR.md](docs/ARKITEKTUR.md), och vad
 som byggs i vilken version i [docs/PLAN.md](docs/PLAN.md). Nuvarande version är
-**0.12.5.8** (alfa), Förteckningen per littera, flytten till cad-apa.danaid.cloud, licensen AGPL-3.0, rättningarna ur granskningen, Granskning efter 0.12 och summorna enligt SS 21054; nästa är **0.12.6 IFC** (utredd 13 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
+**0.12.5.9** (alfa), Förteckningen per littera, flytten till cad-apa.danaid.cloud, licensen AGPL-3.0, rättningarna ur granskningen, Granskning efter 0.12, summorna enligt SS 21054 och sparandet; nästa är **Förarbete för IFC** och sedan **0.12.6 IFC** (utredd 13 november, granskad 26 november), sedan 0.12.7 Utgåvor och PM, 0.12.8 3D-vyer och 0.12.9 Markförändringar.
 
 ## Vad programmet är
 
@@ -47,6 +47,25 @@ den öppna betan uppgraderas inte projekt från äldre alfa- och betaversioner n
 formatet ändras, så ett projekt öppnas i den version det gjordes med;
 därefter uppgraderas äldre projekt alltid. Nyare projekt än programmet kan inte öppnas. Vill man kunna gå tillbaka kan varje version läggas i en egen mapp
 på webbhotellet (t.ex. `cad-apa/0.5/`, `cad-apa/0.6/`) bredvid den senaste.
+
+Version 0.12.5.9, Sparandet (samma filformat, 28):
+- **Ett autospar som inte går att öppna sägs till om.** Är det autosparade
+  projektet från en äldre version (eller trasigt) läggs det undan som förut,
+  men nu med en rad överst: *Det autosparade projektet kunde inte öppnas och
+  har lagts undan*, med **Spara som fil**. Förut startade appen med exemplet
+  utan ett ord, och det såg ut som att projektet var borta
+- Ny rad i menyn: **Undanlagda autospar…** sparar dem som fil (fler i en
+  zipfil). De fem senaste sparas; äldre tas bort
+- **En äldre version av appen förstör inte längre en nyare fil.** Fält som
+  appen inte känner till behålls när filen sparas. Förut kunde en dator med
+  en äldre version i cachen öppna en fil från en nyare och, två sekunder
+  efter en ändring, skriva tillbaka den utan till exempel objektens GUID
+- **Går appen inte att starta** (ett autospar som går att läsa men inte att
+  rita) visas en ruta med **Spara autosparet som fil** och **Börja med
+  exemplet**, i stället för en tom sida vid varje start
+- Trasiga filer: tomma poster (`null`) i våningar, tillstånd, vyer och blad
+  hoppas över, och en avhuggen fil får *Filen är skadad eller
+  ofullständig*
 
 Version 0.12.5.8 (samma filformat, 28):
 - **Höjdkurvors nya adress, igen**: *Fortsätt rita i cad-apa* fungerar från

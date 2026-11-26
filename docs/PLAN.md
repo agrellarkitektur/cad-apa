@@ -55,6 +55,23 @@ något att bygga vidare på; ordningen efter den bestäms då.
   leta efter algoritmer som växer med kvadraten på antalet objekt och gå
   igenom testerna (dubbletter, tester som låser detaljer, och hela
   körningen under en minut; sedan 0.8.28).
+- **Versionsnummer och releaser** (Carl August 10 och 19 november): nya
+  funktioner får tredje siffran (0.12.4 …), **den fjärde siffran är för
+  snabba buggfixar** utan nya funktioner. En granskning höjer inte numret,
+  eller får en fjärde siffra om något som syns ändras. Inga b-versioner;
+  nästa lediga nummer i stället. `release.yml` skapar tagg och release när
+  versionen i `package.json` saknar en, med text ur README:s avsnitt
+  (`scripts/release-notes.sh`): **höj därför versionen sist**, efter
+  README-avsnittet.
+- **Frågor till Carl August** (19 november): högst tre per version, bara
+  sådant som ändrar ritningen eller en uträkning. En fråga han hoppar över
+  räknas som *bra som det är*. Frågorna om 0.11 och äldre är strukna (de
+  finns i git).
+- **Varningar** (30 oktober): hänvisa till föreskriften där det är
+  föreskrift, per ämne BFS 2024:9 (säkerhet vid användning), 2024:12
+  (tillgänglighet) och 2024:7 (utrymning); det som är vedertaget men inte
+  står där får *avviker från praxis*. Standarderna följs som förval, gärna
+  med inställningar för att avvika (19 november).
 
 Versioner som ändrar filformatet (`FORMAT_VERSION`) markeras med *nytt
 format* nedan. Före formatfrysen behöver formatändringar inte samlas: en
@@ -194,6 +211,8 @@ uppdateringar (0.8.2 …) med 3–6 punkter.
 | 0.12.5.4 | Licensen: AGPL-3.0 eller senare med kommersiella undantag (`docs/LICENS.md`), licenshuvuden i källfilerna, *Källkoden* i menyn och Om-rutan till versionens commit, `THIRD-PARTY.md` och `LICENSES/`, `CONTRIBUTING.md` och `CLA.md` (utkast), *Stöd utvecklingen* i Om-rutan |
 | 0.12.5.5 | Rättningar ur granskningen efter 0.12.5.4: DXF:s boolska gruppkoder som heltal, GUID sparas vid export och behålls för borttagna objekt, licenstexterna i bygget, varningarna (balkongdörrar, glipan 50 mm med kvittering, fri passage enligt SS 91 42 21, fri höjd 2 kap. 25 §), CSV-talen |
 | 0.12.5.6 | Granskning efter 0.12 (19 november): lagerregeln med test och `src/edit/`, cirkelimporterna, 376 privata exporter, sex stora filer delade, differentialtestet, README kortad, arbetsflödena låsta; rumsnumren på plan 2, fri höjd i dörrar, horisontella öppningar i räcken, linjetypsnamn i DXF, trasiga filer, Öppna som hänger |
+| 0.12.5.9 | Sparandet (granskningen 26 november, drift 1–3 och 11): besked när autosparet läggs undan, menyraden *Undanlagda autospar…*, de fem senaste sparas, okända fält behålls av en äldre version, räddningsrutan när appen inte startar, `null` i listorna, *skadad eller ofullständig* |
+| 0.12.5.8 | Höjdkurvor på hojdkurvor.se i `HOJDKURVOR_ORIGINS` |
 | 0.12.5.7 | Summor enligt SS 21054, 4.3: areornas summor i hela m² (också rummen), en femma uppåt i summorna, omkretsen med två decimaler, inställningen *Areornas summor med en decimal* som avvikelse |
 | 0.12.2 | Förteckningar: rum, dörrar, fönster, grindar och det generella litterat ur modellen, kolumner ur fälten eller smarttext, sortering, gruppering, delsummor och summarad, en rad per littera, tabellen över ritytan, på bladet i 1:1 bruten i delar bredvid varandra, i bladets PDF och DXF, CSV och PDF i Exportera |
 | 0.12.1 | DXF: egen skrivare för AutoCAD 2000 och 2018, vyer i modellens mm och blad i pappers-mm, lagerkartorna SB11 förenklad och fullständig, Enkel och en egen lista ur en DXF, pennan som färg och linjetjocklek, status N/E/R, väggarna delade per vägg, Bärande |
@@ -220,7 +239,7 @@ cad-apa ska kännas som ett eget program, inte som en kopia av något annat:
 egna ikoner, egna ord och egna arbetsflöden. Ingen text, inga ikoner och
 inga dialoger tas från andra program. Kommentarer i koden beskriver vad
 koden gör, inte vilket program den liknar. Ord vi valt: *Modifiera*,
-*snabbmeny*, *smartobjekt* (parametriska objekt), *smarttext* (text som
+*smartmeny* (inte palett eller snabbmeny), *smartobjekt* (parametriska objekt), *smarttext* (text som
 fylls i av sig själv), *smartgrupper* (grupper där en ändring slår igenom i
 alla), *dumbs* (snabba fria volymer), *projektvinklar*, *vy-taggar*,
 *spårlinjer*, *måttband*.
@@ -232,6 +251,27 @@ efter svenska regler (areor enligt SS 21054, byggnadshöjd och medelmarknivå
 enligt PBF, rums- och dörrnumrering, hålmått) skrivs i egna filer och inte
 utspritt i koden, men inget särskilt lager för andra länder byggs förrän
 någon behöver det.
+
+### Arbetsfördelningen mot Höjdkurvor (bestämt 24 november 2026)
+
+Ersätter beslutet 26 oktober. **cad-apa äger modellen och ritningarna,
+Höjdkurvor äger platsen och analyserna.** Analyser byggs inte två gånger:
+sol- och skuggstudier, horisont, skyfall, lutning, lågpunkter och
+avrinning görs i Höjdkurvor. Skissen skickas dit **enkelriktat** som en
+låst ögonblicksbild (märkt med namn, tid och cad-apa-version, och tydligt
+som skiss); inget i Höjdkurvor ändrar cad-apa-modellen, och det som kommer
+tillbaka är bilder och rapporter, inte geometri. I cad-apa blir det en rad
+**Analysera i Höjdkurvor…** i logotypmenyn (liten–mellanstor, plus en
+Höjdkurvor-session; ordningen sätts med Carl August, se
+`cad-apa-synpunkter.md`). Skuggan i vyerna är ritning och stannar i
+cad-apa (*Koordinater, SWEREF och sol* nedan).
+
+### Flytten till cad-apa.danaid.cloud
+
+Appen flyttar från webbhotellet till VPS:en. Ordningen står i
+[FLYTT.md](FLYTT.md): 0.12.5.2–0.12.5.3 och 0.12.5.8 är gjorda, kvar är
+Carl Augusts provning (steg 8), Höjdkurvor (steg 9) och efter en tid
+omdirigeringen och borttagningen av FTP (steg 10).
 
 ### Efter 0.7
 
@@ -2023,12 +2063,114 @@ och har kvar en decimal. Glasarean i fönsterförteckningen följer inte SS
 21054 och är oförändrad (en decimal). Planens areastämpel följer stilbokens
 *Decimaler i areor* (en delpost) som förut.
 
-### Nästa: Carl Augusts provning av 0.12–0.12.5.7
+### Granskningen 26 november
 
-Ett eget litet hus (en timme: väggar, dörrar, fönster, en
-fönsterförteckning, en area, export till PDF och DXF) innan 0.12.6 IFC
-byggs. Om han vill: dörrarnas funktionsmått (SS 91 42 21: de fria ytorna
-vid dörren och nivån Normal eller Höjd) som en egen liten version.
+Fyra rapporter och en sammanställning i projektet
+(`cad-apa-granskning-1126-*.md`: regler, IFC, dokument, drift,
+sammanställning), alla mot 0.12.5.8. Carl Augusts svar samma dag:
+
+- **A:** *Förarbete för IFC* läggs in före 0.12.6 (nedan).
+- **B:** väggtypens skikt stryks ur 0.12.6 IFC; en egen version senare om
+  de behövs. (ARKITEKTUR.md lägger skiktade väggar medvetet utanför.)
+- **C:** fönsterdörren och glaspartiet (regler A3): bredden avgör; en nisch
+  måste vara minst 1,50 m bred för att arean i den ska mätas. Så räknar
+  koden redan (`areaCalc.ts`), så **A3 stryks, ingen ändring**. SS
+  21054:2020 5.3 (dörr i smyg, figur 4) och 17.4 (nisch under 1,50 m); att
+  nischregeln gäller också glaspartiet (5.7) är Carl Augusts läsning.
+- **D:** räckeshöjden (regler V8): **900 som gräns när våningshöjden är
+  högst 3,0 m och räcket står inomhus, annars 1 100**. Byggs med
+  *Varningarnas texter*.
+- **E** (ordet *Uppställd* i förteckningens egenskaper) är inte besvarad.
+
+Ordningen efter granskningen: dokumenten (gjort i 0.12.5.9-sessionen),
+**0.12.5.9 Sparandet**, **Förarbete för IFC**, **Varningarnas texter**
+(kan lika gärna ligga efter IFC), **0.12.6 IFC**, sedan *Glas och
+utrymning* (V2, V5, V6 med höjden över marken), *Areorna* (A1 med test
+först, A4, A5, A7), *BYA* (A2, egen version före piloten) och *Före
+alfan* (drift 4 röktestet, 9 `feedback.php`, 6, 7, 8, 10). Carl August
+vill bli påmind om att inte lägga till mer före det som är planerat.
+
+### 0.12.5.9 Sparandet ✓
+
+26 november 2026, snabbfix efter granskningen (drift 1, 2, 3 och 11);
+samma format 28. Testerna: 1040 (`tests/v01259.test.ts`, med
+`fake-indexeddb` som devDependency).
+
+- **Besked när autosparet läggs undan** (drift 1): ett autospar i ett
+  äldre format, eller trasigt, läggs undan som förut, och en rad överst
+  säger det med *Spara som fil* (`src/ui/app/setAside.ts`). Menyraden
+  **Undanlagda autospar…** sparar dem (ett som fil, fler som zip).
+  `keepUnreadable` behåller de fem senaste (`KEEP_UNREADABLE`). Den döda
+  variabeln `migrated` och meddelandet *Projektet har uppdaterats* är
+  borta.
+- **Okända fält behålls** (drift 2): `normalize` i `format.ts` behåller
+  nycklar den inte känner till på toppnivån och i `project`.
+  `DOC_KEYS` och `PROJECT_KEYS` listar de kända; typen kräver att listorna
+  är fullständiga, så ett nytt fält i `ProjectDoc` ger ett typfel tills
+  det står med.
+- **Räddningsrutan** (drift 3): `main.ts` fångar fel från `mountApp` och
+  visar *Programmet kunde inte starta* med *Spara autosparet som fil* och
+  *Börja med exemplet* (autosparet läggs undan och tas bort som aktuellt;
+  går det inte, `?exempel`, som startar med exemplet och låser autosparet).
+  `onabort` i `keepUnreadable`, `loadLocal` och `allLocalEntries`.
+- **Trasiga filer** (drift 11): `null` och annat som inte är objekt hoppas
+  över i `states`, `storeys`, `views`, `folders`, `worksheets`, `sheets`
+  och bladens `viewports`. En fil som börjar som ett projekt men inte går
+  att läsa får *Filen är skadad eller ofullständig*.
+
+**Claudes val:** beskedet visar `parse`-meddelandet (formatnumret) och
+pekar på menyraden. Undanlagda autospar sparas med projektets namn och
+dagen (*Villa (autosparat 2026-11-26).cadapa*). Räddningsrutan står ensam
+på sidan och visar felets text i liten stil, för en synpunkt. Fem
+undanlagda räcker: varje formatbyte ger högst ett.
+
+**Inte gjort:** en global felfångare efter starten (bara starten är
+skyddad), drift 5–8 och 10 (två flikar, *Börja om med exemplet* utan
+fråga, beständig lagring, ogiltiga tal, arbetsflödena; *Före alfan* och
+efter piloten), testerna för `autosave.ts` och `projectFile.ts`. Med
+`?exempel` säger statusraden *Autospar låst* med texten om en nyare
+version; sällsynt (bara när lagringen är full).
+
+### Nästa: Carl Augusts provning och Förarbete för IFC
+
+Carl Augusts provning av 0.12–0.12.5.9 (ett eget litet hus, en timme:
+väggar, dörrar, fönster, en fönsterförteckning, en area, export till PDF
+och DXF) innan 0.12.6 IFC byggs. Dörrarnas funktionsmått (SS 91 42 21: de
+fria ytorna vid dörren och nivån Normal eller Höjd) och *Underlagen sparas
+för sig* står kvar som egna små versioner om han vill.
+
+### Förarbete för IFC (0.12.5.10)
+
+Beslutat 26 november (svar A). Granskningen `-1126-ifc`, avsnitt 4. Syns
+inte i ritningarna utom punkt a. Liten till mellan, en session med
+marginal. Ingen STEP skrivs.
+
+- a. **Ytterväggarna efter tillstånd**: `outsideSide` med tillstånd (en
+  riven tillbyggnad gör inte längre väggen mot den till innervägg), och
+  *en* funktion för yttervägg och bärande som DXF och de fyra kopiorna
+  använder (1.4).
+- b. **Väggens hål som egen funktion** med öppningens id, sort (rak, rund,
+  nisch), plan form och höjder, ur `wall3d.ts`; 3D-vyn använder den själv
+  (2.1).
+- c. **Modellen per objekt**: våning, åtgärd och kroppar i våningens
+  höjder, med det rivna, utan Platsen, med fast vy (2.3–2.5).
+- d. **Areornas summor som tal** per areaslag, hus och våning; `areaVars`
+  byggs på den (1.6).
+- e. **Förteckningens värden per objekt**, egna och framräknade (1.5).
+- f. **GUID** för projektet, våningarna och typerna i `doc.guids`, och den
+  härledda GUID:en med test (1.2). (Att en äldre version inte kastar
+  `guids` är rättat i 0.12.5.9.)
+- g. **Testgrunden**: schematabellen genererad, web-ifc som
+  devDependency, den strikta kontrollen i TypeScript körd mot
+  `docs/ifc/provhuset.ifc` (3).
+
+### Varningarnas texter (liten)
+
+Granskningen `-1126-regler`. Kan ligga före eller efter IFC. Rampernas
+hänvisning till ALM och BBR (V1), barnsäkra fönster *och* i stället för
+*eller* (V3), fri passage 800 med rätt hänvisning (V4),
+tillgänglighetscirkelns etiketter *enskilda bostäder* och *övrigt* (V9),
+undantaget för en ledstång (V10), och räckeshöjden enligt svar D (V8).
 
 ### 0.12.6 IFC
 
@@ -2037,7 +2179,17 @@ kanske leverera en jorddjupsmodell, och markförändringarna väntar på den).
 Utredningen gjord 13 november i en egen chatt, med Carl Augusts export ur
 Archicad 27 (företagets översättare, Reference View) som jämförelse:
 **`cad-apa-ifc-utredning.md`** i projektet är specifikationen. IFC4
-Reference View, mm, utan mark och träd (svar D). GUID:en finns sedan 0.12.
+Reference View, mm, utan mark och träd (svar D). GUID:en finns på
+objekten sedan 0.12 och sparas vid export sedan 0.12.5.5.
+
+**Efter granskningen 26 november** (`cad-apa-granskning-1126-ifc.md`):
+specifikationens källor finns inte så som den säger (`ifcWrite.ts` i
+exportens worker, IsExternal/LoadBearing ur `dxfLayers.ts`, fälten ur
+`openingSchedule.ts`); de byggs i *Förarbete för IFC* ovan. **Utan
+väggtypens skikt** (svar B), i huvudtråden (worker i 0.12.6.1), tak och
+rum under snedtak till 0.12.6.1 om tiden tryter. Då är 0.12.6 skrivaren,
+egenskaperna, dialograden och provningen.
+
 Stor; byggs i två sessioner, **0.12.6** (strukturen, väggar, bjälklag, tak,
 dörrar, fönster, rum, egenskaperna, raden i exportdialogen) och
 **0.12.6.1** (trappor, räcken, profiler, möbler, vägghål, granskningen mot
@@ -2077,6 +2229,23 @@ räknas ur ytor i stället för den uppskattade andelen berg per objekt
 det som saknas är källan *Mark* i förteckningarna, arean, höjderna,
 lutningen, matjorden och summaraden.
 
+### Koordinater, SWEREF och sol (stor, före piloten)
+
+Carl August 20 och 28 oktober (synpunkterna); före piloten, efter 0.12.9.
+
+- Ett projekt från Höjdkurvor får en lokal nollsymbol i projektorigo med
+  koordinater (också Z), vilket SWEREF som gäller och en norrpil mot
+  geografiskt norr; det syns vid export av modellfiler. Öppen fråga: behövs
+  en funktion för att ändra Z, eller går det att rita på Z = 1000?
+- Lokal nollpunkt och SWEREF-system kan också anges för hand.
+- Med SWEREF kan planmodellen och IFC exporteras i SWEREF utöver lokal
+  nolla (förval). Platsens ritningar koordinatsätts ofta i SWEREF, och
+  exporter därifrån ska vara i SWEREF.
+- Sol och skugga per vy (plan, sektion, fasad, 3D) ur koordinaterna, med
+  datum och tid per vy; kan ligga kvar efter piloten. Skuggan är ritning
+  och görs i cad-apa; solstudien som analys görs i Höjdkurvor (24
+  november).
+
 ### 0.13 Pilotprojektet (proof of concept)
 
 - Carl August ritar själv ett hus, helst ett av sina egna inlämnade bygglov
@@ -2103,6 +2272,28 @@ lutningen, matjorden och summaraden.
   spridas fritt. Etiketten i appen blir *Beta*
 - Formatet fryses: från och med nu får varje formatändring en migrering och
   ett test som öppnar en fil i det gamla formatet
+
+**Formatet efter frysen** (Carl August 31 oktober; `cad-apa-ideer.md`,
+avsnitt F):
+
+- **Frysen får aldrig hindra ny funktionalitet.** Bakåtkompatibiliteten
+  ordnas med valfria fält eller migreringar; går det inte öppnas filen i
+  en tidigare version av appen.
+- **Valfria fält först:** nya objekt och inställningar läggs till som fält
+  äldre filer saknar; läsaren fyller i förval, utan nytt formatnummer (som
+  räcket i 0.11.1). Sedan 0.12.5.9 behåller en äldre version fält den inte
+  känner till.
+- **Migreringskedja** för det som byter namn, betydelse eller tas bort:
+  `FORMAT_VERSION` höjs och en funktion *n → n+1* skrivs i samma version,
+  med ett test mot en sparad fil från versionen före. Kedjan körs vid
+  öppning, också för autosparen.
+- **Versionsarkiv som säkerhetsnät:** varje release publiceras också till
+  `cad-apa/v/<version>/`, och gamla byggen tas aldrig bort. Filen bär
+  `appVersion` och `formatVersion`; misslyckas öppningen erbjuder appen
+  *Öppna i versionen filen sparades med*. Liten (en session); kan göras
+  redan under alfan.
+- **Formatet dokumenteras** (fält, versioner, migreringar). Mellanstor;
+  vid frysen.
 
 ## Efter pilotprojektet
 
@@ -2180,12 +2371,12 @@ Vinklar:
   som ett objekt, med vinkelrännor); till dess byggs de av takfall (0.10)
 - Fler trappformer (fri form); spiraltrappan och räcket finns i 0.11.1–0.11.5
 
-### Sol och analys på platsen (stor, minst två sessioner)
+### Analyser på platsen
 
-Carl August 26 oktober: efter piloten. Samma analyser som i Höjdkurvor,
-direkt i cad-apa: sol och skugga per vy (datum och tid), skuggstudie,
-horisont (behöver höjddata 5 km ut: nytt fält i platspaketet eller hämtning
-direkt), skyfall och lutning. Export i SWEREF utöver lokal nolla.
+Byggs inte i cad-apa (Carl August 24 november, ersätter beslutet 26
+oktober): analyserna görs i Höjdkurvor, se *Arbetsfördelningen mot
+Höjdkurvor* ovan. Skuggan per vy och exporten i SWEREF står under
+*Koordinater, SWEREF och sol*.
 
 ### Fler markobjekt
 

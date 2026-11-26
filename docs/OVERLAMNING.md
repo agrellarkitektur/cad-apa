@@ -6,11 +6,47 @@ som inte gjordes i PLAN.md (klara versioner i `docs/arkiv/`), koden i
 UTVECKLING.md (äldre i `docs/arkiv/`), och där också **Arbeta
 i sandlådan** (bygga, Playwright, klickjämförelsen, mätningar) och
 **Kända begränsningar**. Vad varje version märks i ritningarna står i
-README. Senast: 20 november 2026, efter 0.12.5.8 (Höjdkurvor på hojdkurvor.se);
-nästa är Carl Augusts provning av 0.12–0.12.5.8, sedan 0.12.6 IFC.
+README. PLAN.md och UTVECKLING.md ligger i `docs/`. Senast: 26 november
+2026, efter granskningen 26 november och 0.12.5.9 (sparandet); nästa är
+Carl Augusts provning av 0.12–0.12.5.9, sedan **Förarbete för IFC** och
+0.12.6 IFC.
 
 ## Läget
 
+- **0.12.5.9 Sparandet** (26 november, samma format 28; snabbfix ur
+  granskningen, drift 1, 2, 3 och 11): ett autospar som inte går att öppna
+  läggs undan **med besked** och *Spara som fil*, menyraden **Undanlagda
+  autospar…**, de fem senaste sparas; `normalize` **behåller okända
+  fält** (en äldre cachad version kastade förut `guids` och nya fält ur
+  filen); **räddningsrutan** när appen inte startar (`main.ts` fångar
+  `mountApp`); `null` i listorna hoppas över; *skadad eller ofullständig*.
+  Koden i `src/ui/app/setAside.ts`, `format.ts` (`DOC_KEYS`,
+  `PROJECT_KEYS`) och `localStore.ts`. Testerna: 1040 (`v01259.test.ts`,
+  `fake-indexeddb`). Provat i Chrome mot `dist/`: beskedet med ett
+  autospar i format 27, menyraden (nedladdning), räddningsrutan med en
+  vägg utan start och *Börja med exemplet*. Claudes val och *Inte gjort* i
+  PLAN.md.
+- **Granskningen 26 november** (bara rapporter, mot 0.12.5.8): fyra spår
+  och en sammanställning i projektet, `cad-apa-granskning-1126-regler`,
+  `-ifc`, `-dokument`, `-drift` och **`-sammanstallning`** (tabellen
+  *Ordning*, 1–10). Punkt 1 (dokumenten) och 2 (sparandet) är gjorda.
+  **Carl Augusts svar 26 november:** **A** *Förarbete för IFC* före 0.12.6;
+  **B** väggtypens skikt stryks ur 0.12.6 (egen version senare om de
+  behövs); **C** fönsterdörren och glaspartiet: bredden avgör, en nisch
+  under 1,50 m mäts inte, så räknar koden redan, **A3 stryks**; **D**
+  räckeshöjden 900 när våningshöjden är högst 3,0 m och räcket står
+  inomhus, annars 1 100 (med *Varningarnas texter*); **E** (ordet
+  *Uppställd*) obesvarad. Allt i PLAN.md, *Granskningen 26 november*. Han
+  vill bli påmind om att inte lägga till mer före det som är planerat.
+- **Arbetsfördelningen mot Höjdkurvor** (Carl August 24 november, ersätter
+  26 oktober): cad-apa äger modellen och ritningarna, Höjdkurvor platsen
+  och **analyserna**; analyser byggs inte två gånger. Skissen skickas
+  enkelriktat som låst ögonblicksbild (*Analysera i Höjdkurvor…* i
+  logotypmenyn, planerad), inget kommer tillbaka utom bilder och
+  rapporter. I PLAN.md under *Framåt*.
+- **Inkorgen 20 november** har fyra osorterade punkter (detaljerade träd
+  från Höjdkurvor, byggnadshöjder ur importen, Tab för väggslingan, linjer
+  tunna i AutoCAD-färg). Sortera med honom.
 - **0.12.5.7 Summor enligt SS 21054** (19 november, samma format 28):
   areornas summor och delsummor i hela m² i alla förteckningar, en femma
   uppåt, omkretsen med två decimaler, inställningen *Areornas summor med en
@@ -48,7 +84,8 @@ nästa är Carl Augusts provning av 0.12–0.12.5.8, sedan 0.12.6 IFC.
   dörrar), glipan under ett barnsäkert räcke 50 mm med **Kvittera** i
   räckets egenskaper, fri passage enligt **SS 91 42 21:2006 normalnivå**
   (800 entrédörr och dörr till balkong/uteplats = 10M, 760 innerdörr = 9M;
-  den höjda nivån för arbetsplatser har 800 också för innerdörrar),
+  den höjda nivån för arbetsplatser har 800 också för innerdörrar; texten
+  hänvisar fel enligt granskningen 26 november, V4),
   spiraltrappans fria höjd enligt 2 kap. 25 §. Testerna: 1014 på ca 13 s.
   Provat i Playwright mot `dist/` (export, GUID efter omladdning). Det som
   var kvar gjordes i 0.12.5.6. Carl August: funktionsmåtten för dörrar är
@@ -97,6 +134,10 @@ nästa är Carl Augusts provning av 0.12–0.12.5.8, sedan 0.12.6 IFC.
   validerar den rättade filen igen** (väntat: bara GRF003, inget
   koordinatsystem) och öppnar den i Archicad, Revit, Solibri och SketchUp;
   fråga hur det gick innan skrivaren byggs. Frågorna A–E står i utredningen och nedan.
+  **Utredningen stämmer inte med koden på några punkter** (skikten,
+  workern, källorna för IsExternal och förteckningens fält):
+  `cad-apa-granskning-1126-ifc.md` gäller före utredningen där de skiljer
+  sig. Export-utredningens IFC-avsnitt är föråldrat; IFC-utredningen gäller.
 - **Ny ordning** (Carl August 13 november): **0.12.6 IFC**, **0.12.7
   Utgåvor och PM**, **0.12.8 3D-vyer**, **0.12.9 Markförändringar**.
   Markförändringarna väntar på att Höjdkurvor kanske kan leverera en
@@ -207,15 +248,15 @@ nästa är Carl Augusts provning av 0.12–0.12.5.8, sedan 0.12.6 IFC.
   skapa releaser (403); arbetsflödet gör det, med Carl Augusts tillstånd 19
   november. `v0.12.5.4` skapade han själv. Äldre versioner utan release
   (0.12.5–0.12.5.3 m.fl.) får ingen i efterhand.
-- **Publicerad:** 0.12.5.8 (Höjdkurvor på hojdkurvor.se i `HOJDKURVOR_ORIGINS`) pushad till `main` 20 november (se git och `gh run
-  list`). `add_repo` med push går direkt när Carl August skriver "push
+- **Publicerad:** 0.12.5.9 pushad till `main` 26 november (se git och
+  `gh run list`). `add_repo` med push går direkt när Carl August skriver "push
   godkänd" i första meddelandet.
-- **Versionsnumret** är `0.12.5.8` i `engine.ts`, `package.json` och
+- **Versionsnumret** är `0.12.5.9` i `engine.ts`, `package.json` och
   `package-lock.json`. Nya funktioner får tredje siffran (0.12.4 …); **den
   fjärde siffran är för snabba buggfixar** utan nya funktioner (Carl August
   10 november). En granskning höjer inte numret, eller får en fjärde siffra
-  om något ändras som syns.
-- **0.10.8–0.12.5 är inte provade fullt ut** av Carl August (12 november: inte hunnit prova 0.12–0.12.4); han har
+  om något ändras som syns. Nästa lediga är 0.12.5.10 (Förarbete för IFC).
+- **0.10.8–0.12.5.9 är inte provade fullt ut** av Carl August (12 november: inte hunnit prova 0.12–0.12.4); han har
   svarat på frågor om flera av dem utifrån beskrivningarna.
 - **Frågorna:** de obesvarade (nedan) ställs **högst tio per session**,
   de som hör till den kommande versionen först, **fem åt gången**. En fråga
@@ -323,19 +364,26 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 - **Höjdkurvor: ortofotot med i platspaketet** (liten; i Höjdkurvors repo
   och session)
 - ~~Utredning av IFC~~ (13 november, `cad-apa-ifc-utredning.md`)
-- **Carl Augusts provning av 0.12–0.12.5.7** (nästa; ett eget litet hus, en timme)
+- ~~Granskningen 26 november~~ (fyra rapporter och sammanställningen i
+  projektet), ~~0.12.5.8 Höjdkurvor på hojdkurvor.se~~, ~~0.12.5.9
+  Sparandet~~
+- **Carl Augusts provning av 0.12–0.12.5.9** (nästa; ett eget litet hus, en timme)
+- **Förarbete för IFC** (0.12.5.10; liten–mellan, en session med marginal;
+  beslutat 26 november, svar A; ytterväggarna efter tillstånd ingår)
+- **Varningarnas texter** (liten; V1, V3, V4, V9, V10 och V8 enligt svar
+  D; kan lika gärna ligga efter IFC)
 - **Dörrarnas funktionsmått** (liten; om han vill ha den före IFC)
-- **Ytterväggarna efter tillstånd** (liten; `outsideSide` räknar rivna
-  väggar; om han vill ha den före IFC, där IsExternal hämtas därifrån)
 - **Underlagen sparas för sig** (liten–mellan; före ortofotot i full
   upplösning från Höjdkurvor)
-- **0.12.6 IFC** (stor) → **0.12.6.1 IFC, resten** (mellanstor) →
+- **0.12.6 IFC** (stor; utan skikt, svar B) → **0.12.6.1 IFC, resten** (mellanstor) →
   **0.12.7 Utgåvor och PM** (mockup först; se `cad-apa-export-utredning.md`,
   där står de äldre numren)
 - **0.12.8 3D-vyer** (sparade perspektiv och axonometrier, trädmodeller,
   trädens status i planen)
 - **0.12.9 Markförändringar** (förteckningen över schakt, fyll och
   massbalans; mellanstor; väntar på jorddjupsmodellen från Höjdkurvor)
+- **Glas och utrymning**, **Areorna**, **BYA** (egen version före
+  piloten), **Före alfan**: punkt 6–9 i sammanställningens *Ordning*
 - **Koordinater, SWEREF och sol** (stor; före piloten; SWEREF på
   situationsplanen och i exporten därifrån)
 - **0.13 Pilotprojektet**: Carl August ritar själv ett hus
@@ -343,37 +391,25 @@ Kort; detaljerna står i PLAN.md och i `cad-apa-synpunkter.md`.
 - Efter piloten: se *Efter pilotprojektet* i PLAN.md. **1.0**
   bygglovshandling.
 
-## Nästa session: Carl Augusts provning, sedan 0.12.6 IFC
+## Nästa session: Carl Augusts provning, sedan Förarbete för IFC
 
-Granskningen efter 0.12 är klar (0.12.5.6, och summorna i 0.12.5.7). Fråga först hur provningen av
-0.12–0.12.5.7 gick (ett eget litet hus: väggar, dörrar, fönster, en
-fönsterförteckning, en area, export till PDF och DXF). Tre småsaker kan han
-välja att lägga före IFC, var och en en liten version: **dörrarnas
-funktionsmått** (SS 91 42 21), **ytterväggarna efter tillstånd**
-(`outsideSide` i `src/elements/wallSides.ts` bygger konturen av alla
-väggar på våningen oavsett tillstånd; IFC:s IsExternal hämtas därifrån)
-och **underlagen för sig i autosparet** (UTVECKLING.md, *Mätningar*).
-
-**Provningen:** Carl August provar 0.12–0.12.5.7 med ett eget
-litet hus (en timme: väggar, dörrar, fönster, en fönsterförteckning, en
-area, export till PDF och DXF) **innan 0.12.6 IFC byggs**. Fråga om en DXF
+Fråga först hur provningen av 0.12–0.12.5.9 gick (ett eget litet hus:
+väggar, dörrar, fönster, en fönsterförteckning, en area, export till PDF
+och DXF; och om ett autospar läggs undan med besked). Fråga om en DXF
 öppnas i AutoCAD, om provfilen `docs/ifc/provhuset.ifc` öppnats i
-Archicad, Revit och Solibri, och A–E i `cad-apa-ifc-utredning.md`.
-**Dörrarnas funktionsmått** (SS 91 42 21: de fria ytorna a och b vid
-dörren, nivån Normal eller Höjd per projekt) är en egen liten version som
-han får välja att lägga före IFC; hans skärmklipp ur standarden finns i
-chatten 19 november och standarden i kunskapsbasen. Kvar sedan förut:
-Stöd-texten och CLA Assistant, flyttens steg 8 (`docs/FLYTT.md`).
+Archicad, Revit och Solibri, och A–E i `cad-apa-ifc-utredning.md` (D
+faller med skikten). Kvar sedan förut: Stöd-texten och CLA Assistant,
+flyttens steg 8 (`docs/FLYTT.md`).
 
-**0.12.6 IFC**, när han provat: `src/formats/ifcWrite.ts` i exportens
-worker, 3D-formerna ur `src/repr/model3d.ts` och `solids.ts` (raka
-extruderingar som IfcExtrudedAreaSolid, resten trianglat med
-`solidTriangles`), väggarna **utan** urtag och hålen som IfcOpeningElement
-(risken i versionen), GUID ur `doc.guids` (sparas sedan 0.12.5.5), lagren
-och IsExternal/LoadBearing ur `src/core/dxfLayers.ts`, förteckningens fält
-ur `src/core/openingSchedule.ts`, areorna ur areaförteckningens räkning,
-raden *Modellen* i `src/ui/app/exportDialog.ts`. web-ifc som devDependency
-i testerna.
+**Förarbete för IFC (0.12.5.10)**: PLAN.md, avsnittet med samma namn, och
+`cad-apa-granskning-1126-ifc.md` avsnitt 4 (a–g). Läs IFC-granskningen
+**före** IFC-utredningen: utredningen pekar på källor som inte finns
+(`ifcWrite.ts` i exportens worker, som bara skriver PDF; IsExternal och
+LoadBearing ur `dxfLayers.ts`; fälten ur `openingSchedule.ts`), och värdena
+räknas på andra ställen. Förarbetet bygger dem som funktioner;
+**0.12.6 IFC** blir sedan skrivaren, egenskaperna, raden *Modellen* i
+`src/ui/app/exportDialog.ts` och provningen, utan skikt och i
+huvudtråden.
 
 ## Att fråga Carl August om
 
@@ -448,7 +484,7 @@ fråga. Först **A–E i `cad-apa-ifc-utredning.md`** (hör till 0.12.6), sedan
   varje ändring kan ångras. Bra, eller hellre *Spara* som för vyerna?
 - På bladet: text 2,5 mm, radhöjd 5,5 mm, rubrikraden fet, ytterram 0,25,
   linjer 0,13. Lagom, och ska texthöjden gå att ändra per förteckning?
-- En rad per littera är förval för dörrar, fönster och grindar; det som
+- En rad per littera är förval för dörrar och fönster; det som
   skiljer står *Olika*. Rätt förval?
 - CSV med semikolon och decimalkomma, för svensk Excel. Öppnas den rätt
   hos dig med ett dubbelklick?
@@ -480,7 +516,7 @@ besvarade 7 november, se `cad-apa-export-utredning.md`)
 - En export till mappen skriver över filer med samma namn utan att fråga
   (så att en ny utgåva hamnar rätt). Bra, eller ska den fråga först?
 - Bilden ur 3D följer 3D-vyns kamera; en annan proportion än fönstrets
-  visar mer i sidled. Räcker det tills de sparade 3D-vyerna (0.12.9) får
+  visar mer i sidled. Räcker det tills de sparade 3D-vyerna (0.12.8) får
   en sökarram?
 
 **Kvar från 0.11 och äldre** (Carl August 19 november: frågorna om 0.11
@@ -503,8 +539,9 @@ när ämnet kommer upp.)
 - **Skedet under Allmänt** (0.10.39): ett ifyllt skede gäller alla blad,
   och bladens egna skeden försvinner och kommer inte tillbaka när fältet
   töms. Rätt?
-- **Synpunktsformuläret** (fråga 79): kommer breven fram till Gmail? Annars
-  Gmail-adressen direkt som `to` i `feedback-config.php`. Viktigt före
-  alfan.
+- **Synpunktsformuläret** (fråga 79): breven kommer fram från VPS:en
+  (FLYTT.md), med upp till en timmes fördröjning. Kvar: är fördröjningen
+  godtagbar, och ska den gamla adressen bort? Viktigt före alfan (med
+  drift 9, `feedback.php`).
 - **Trädens status** (till 0.12.8): ska texten "Träd skyddas under
   byggtiden" stå i en förteckning, eller skriver man den själv?

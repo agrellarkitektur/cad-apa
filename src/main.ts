@@ -6,6 +6,7 @@ import { registerBuiltInTypes } from './elements';
 import { mountApp } from './ui/app';
 import { installExpressionFields } from './ui/expr';
 import { installTableSort } from './ui/tableSort';
+import { showRescue } from './ui/app/setAside';
 
 registerBuiltInTypes();
 // Formler i sifferfält. Kopplas före appen, så att uträkningen hinner före
@@ -15,7 +16,10 @@ installExpressionFields();
 installTableSort();
 
 const brand = resolveBrand(import.meta.env.VITE_BRAND);
-void mountApp(document.getElementById('app')!, brand);
+const root = document.getElementById('app')!;
+// Går appen inte att starta (ett autospar som går att läsa men inte att rita)
+// visas räddningsrutan i stället för en tom sida (0.12.5.9).
+mountApp(root, brand).catch((err) => void showRescue(root, err, brand.fileExtension));
 
 // Offline och installation. Förhandsvisningen (läget "artifact") är en enda
 // fil utan service worker, så där hoppar vi över registreringen.

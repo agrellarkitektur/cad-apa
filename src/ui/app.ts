@@ -13,8 +13,9 @@ import { modifyContextAt, type ModifyHost } from './modify/ops';
 import type { Vec2 } from '../repr/primitives';
 import { sampleProject } from '../sample/sampleProject';
 import { parse } from '../storage/format';
-import { keepUnreadable, loadLocal, mayOverwrite, recordFormatVersion } from '../storage/localStore';
+import { keepUnreadable, loadLocal, mayOverwrite, type LocalRecord } from '../storage/localStore';
 import { FORMAT_VERSION } from '../core/model';
+import { showSetAsideNotice } from './app/setAside';
 import { saveTextFile } from '../storage/projectFile';
 import { ContextMenu } from './contextMenu';
 import { releasedHint } from './tools/selectTool';
@@ -80,20 +81,24 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   document.title = brand.badge ? `${brand.name} · ${brand.badge}` : brand.name;
 
   // Senaste autosparade projektet, annars exemplet.
+  // `?exempel` (räddningsrutan, när autosparet inte gick att lägga undan): börja med exemplet och rör inte autosparet.
+  const skipSaved = new URLSearchParams(location.search).has('exempel');
   const saved = await loadLocal();
   let initial: ProjectDoc = sampleProject();
-  let migrated = false;
   /** Autosparet är från en nyare version: det får inte skrivas över. */
-  let autosaveBlocked = false;
-  if (saved) {
-    const savedFormat = recordFormatVersion(saved);
+  let autosaveBlocked = skipSaved && !!saved;
+  /** Autosparet gick inte att öppna och har lagts undan (0.12.5.9): beskedet vid start. */
+  let setAside: { rec: LocalRecord; reason: string } | null = null;
+  if (saved && !skipSaved) {
     try {
       initial = parse(saved.text);
-      migrated = savedFormat !== null && savedFormat < FORMAT_VERSION;
-    } catch {
+    } catch (err) {
       if (!mayOverwrite(saved, FORMAT_VERSION)) autosaveBlocked = true;
-      // Trasigt autospar: lägg det åt sidan och börja med exemplet.
-      else await keepUnreadable(saved);
+      // Äldre format eller trasigt: lägg det åt sidan, säg det och börja med exemplet.
+      else {
+        await keepUnreadable(saved);
+        setAside = { rec: saved, reason: (err as Error).message };
+      }
     }
   }
   const store = new DocStore(initial);
@@ -549,7 +554,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   const panes = installPanes(app);
   const pane3d = installPane3d(app);
   const textEdit = installTextEdit(app, textEditor!);
-  const files = installFiles(app, brand, { saved, autosaveBlocked });
+  const files = installFiles(app, brand, { saved: setAside ? null : saved, autosaveBlocked });
   const toolOpts = installToolOptions(app);
   installOpeningNumbers(app);
   const modifyRail = installModifyRail(app);
@@ -581,7 +586,7 @@ export async function mountApp(root: HTMLElement, brand: Brand): Promise<void> {
   render.renderAll();
   tools.setTool('select');
   view.zoomToFit();
-  if (migrated) hint('Projektet har uppdaterats till den nya versionen. Exemplet finns under Börja om med exemplet.', 5000);
+  if (setAside) showSetAsideNotice(setAside.rec, setAside.reason, brand.fileExtension, hint);
 
   function hint(text: string, ms = 2400): void {
     hintEl.textContent = text;

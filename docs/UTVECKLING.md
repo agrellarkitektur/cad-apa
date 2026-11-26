@@ -93,13 +93,26 @@ Gamla projekt öppnas då alltid. Element av typer som programmet inte känner
 till ligger kvar orörda i filen, så att en fil från en nyare version inte
 förstörs om den öppnas i en äldre.
 
+**Nya fält på toppnivån eller i `project`** (0.12.5.9): lägg nyckeln i
+`DOC_KEYS` eller `PROJECT_KEYS` i `format.ts` (typen kräver det) och läs den
+i `normalize`. Nycklar som inte står där behålls orörda, så att en äldre
+version i webbläsarens cache inte kastar fält som en nyare version har
+skrivit (`guids`, `exportSets`, `schedules` kom alla utan nytt format).
+Listor i dokumentet läses med `objects()`, som hoppar över `null` och annat
+som inte är ett objekt.
+
+**Autospar som inte går att öppna** (0.12.5.9): `keepUnreadable` lägger dem
+under `unreadable-<tid>` och behåller de fem senaste; `src/ui/app/setAside.ts`
+har beskedet vid start, menyraden *Undanlagda autospar…* och räddningsrutan,
+som `main.ts` visar när `mountApp` kastar. `?exempel` startar med exemplet
+utan att röra autosparet. Testerna i `tests/v01259.test.ts` kör IndexedDB
+med `fake-indexeddb` (sätt `globalThis.indexedDB` i `beforeEach` och
+återställ efteråt; testerna delar process).
+
 Autosparet (`src/storage/localStore.ts`) sparar formatnumret bredvid texten.
 Sedan 0.6.2 vägrar en version att skriva över ett autospar i ett nyare format
 än det den kan läsa; kontrollen görs i samma transaktion som skrivningen.
-Versioner till och med 0.6.1 saknar skyddet. När `FORMAT_VERSION` höjs till 4
-bör den nya versionen därför också lägga en kopia av sitt autospar under en
-egen nyckel (t.ex. `format-4`) och läsa den om `current` har skrivits över av
-en gammal version.
+Versioner till och med 0.6.1 saknar skyddet.
 
 ## Lägga till ett kommando
 

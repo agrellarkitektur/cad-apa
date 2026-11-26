@@ -462,6 +462,35 @@
   white-space: nowrap;
 }
 
+/* Räddningsrutan (0.12.5.9): appen gick inte att starta. Står ensam på sidan. */
+.rescue {
+  max-width: 560px;
+  margin: 12vh auto 0;
+  padding: 24px 28px;
+  border: 2px solid #d9480f;
+  border-radius: 12px;
+  background: var(--chrome, #fff);
+  color: var(--ink, #222);
+  font: 400 14px/1.5 var(--font-ui, system-ui, sans-serif);
+}
+
+.rescue h1 {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.rescue-detail {
+  color: var(--muted, #666);
+  font-size: 12px;
+  word-break: break-word;
+}
+
+.rescue-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
 /* Visa-menyn i kolumner (0.10.11): inställningarna till vänster, kategorierna
    i två kolumner till höger, så att allt syns utan att rulla. Smal skärm: en. */
 .show-menu:not([hidden]) {

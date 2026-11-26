@@ -139,6 +139,7 @@ export function shellMarkup(brand: Brand): string {
             </div>
             <hr>
             <button role="menuitem" data-action="reset-sample">${icons.restore}<span>Börja om med exemplet</span></button>
+            <button role="menuitem" data-action="set-aside">${icons.openFile}<span>Undanlagda autospar…</span></button>
             <button role="menuitem" data-action="feedback">${icons.text}<span>Skicka synpunkter…</span></button>
             <button role="menuitem" data-action="source">${icons.openFile}<span>Källkoden</span></button>
             <button role="menuitem" data-action="about">${icons.select}<span>Om ${brand.name}</span><small>${ENGINE.name} ${ENGINE.version}</small></button>

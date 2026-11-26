@@ -8,6 +8,30 @@ import { kindOfElementType, normalizeOpeningModel } from '../core/openingTypes';
 import { DEFAULT_VIEW_TAGS, FORMAT, FORMAT_VERSION, SITE_STOREY, withSiteLast, type ProjectDoc } from '../core/model';
 
 /**
+ * Alla nycklar i `ProjectDoc` och `ProjectDoc['project']` (0.12.5.9). Typen
+ * kräver att listorna är fullständiga: ett nytt fält i modellen ger ett
+ * typfel här tills det står med. Nycklar som inte står här (från en nyare
+ * version) behålls orörda av `normalize`, så att en äldre, cachad version av
+ * appen inte kastar dem när den autosparar till filen.
+ */
+export const DOC_KEYS = {
+  format: true, formatVersion: true, project: true, states: true, storeys: true, definitions: true, elements: true, graphics: true, views: true,
+  folders: true, tree: true, viewTags: true, worksheets: true, sheets: true, assets: true, site: true, guids: true, exportSets: true, schedules: true,
+} as const satisfies Record<keyof ProjectDoc, true>;
+export const PROJECT_KEYS = {
+  name: true, kind: true, fields: true, roomNumbering: true, doorNumbering: true, angles: true, master: true, openingNumbers: true, openingSchedule: true,
+} as const satisfies Record<keyof ProjectDoc['project'], true>;
+
+/** Det i `o` som inte är en känd nyckel. */
+function unknownKeys(o: unknown, known: object): Record<string, unknown> {
+  if (!o || typeof o !== 'object' || Array.isArray(o)) return {};
+  return Object.fromEntries(Object.entries(o).filter(([k]) => !Object.hasOwn(known, k)));
+}
+
+/** Bara objekten i en lista: `null`, tal och text i en trasig fil hoppas över (0.12.5.9). */
+const objects = (a: unknown): any[] => (Array.isArray(a) ? a.filter((x) => !!x && typeof x === 'object' && !Array.isArray(x)) : []);
+
+/**
  * Projektfilens format. Varje gång formatet ändras höjs FORMAT_VERSION.
  * Före formatfrysen (den öppna betan, se PLAN.md) skrivs inga migreringar: en fil i
  * ett äldre format får ett tydligt meddelande i stället. Migreringarna till
@@ -34,6 +58,10 @@ export function parse(text: string): ProjectDoc {
   try {
     data = JSON.parse(text);
   } catch {
+    // En fil som börjar som ett projekt men inte går att läsa är avhuggen eller skadad (0.12.5.9).
+    if (/^\s*\{\s*"format"\s*:\s*"bacchus-project"/.test(text.slice(0, 200))) {
+      throw new ProjectFormatError('Filen är skadad eller ofullständig. Den slutar för tidigt eller har fel tecken i sig.');
+    }
     throw new ProjectFormatError('Filen är inte ett projekt. Den gick inte att läsa som JSON.');
   }
   if (data?.format !== FORMAT) {
@@ -84,10 +112,14 @@ function normalizeDefinitions(defs: any): ProjectDoc['definitions'] {
 
 /** Fyll i fält som kan saknas i handskrivna eller äldre filer. */
 function normalize(d: any): ProjectDoc {
+  const states = objects(d.states);
+  const storeys = objects(d.storeys);
   const doc: ProjectDoc = {
+    ...unknownKeys(d, DOC_KEYS),
     format: FORMAT,
     formatVersion: FORMAT_VERSION,
     project: {
+      ...unknownKeys(d.project, PROJECT_KEYS),
       name: d.project?.name ?? 'Namnlöst projekt',
       kind: d.project?.kind ?? 'nybyggnad',
       fields: d.project?.fields ?? {},
@@ -98,18 +130,18 @@ function normalize(d: any): ProjectDoc {
       ...(d.project?.openingNumbers && typeof d.project.openingNumbers === 'object' ? { openingNumbers: d.project.openingNumbers } : {}),
       ...(d.project?.openingSchedule && typeof d.project.openingSchedule === 'object' ? { openingSchedule: d.project.openingSchedule } : {}),
     },
-    views: Array.isArray(d.views) ? d.views.map(traceAsUnderlay) : [],
-    states: Array.isArray(d.states) && d.states.length ? d.states : [{ id: 'st-ny', name: 'Förslag', kind: 'proposal' }],
+    views: objects(d.views).map(traceAsUnderlay),
+    states: states.length ? states : [{ id: 'st-ny', name: 'Förslag', kind: 'proposal' }],
     // Platsen (0.10.25) sist, också i handskrivna filer.
-    storeys: withSiteLast(Array.isArray(d.storeys) && d.storeys.some((s: any) => !s?.site) ? d.storeys : [{ id: 'pl-1', name: 'Plan 1', elevation: 0, height: 2700 }]),
+    storeys: withSiteLast(storeys.some((s: any) => !s.site) ? storeys : [{ id: 'pl-1', name: 'Plan 1', elevation: 0, height: 2700 }]),
     definitions: normalizeDefinitions(d.definitions),
     elements: {},
     graphics: safeStyle(d.graphics),
-    folders: Array.isArray(d.folders) ? d.folders : [],
+    folders: objects(d.folders),
     tree: d.tree && typeof d.tree === 'object' ? d.tree : {},
     viewTags: Array.isArray(d.viewTags) ? d.viewTags.map(String) : [...DEFAULT_VIEW_TAGS],
-    worksheets: Array.isArray(d.worksheets) ? d.worksheets : [],
-    sheets: Array.isArray(d.sheets) ? d.sheets.map((s: any) => ({ ...s, fields: s.fields ?? {}, viewports: Array.isArray(s.viewports) ? s.viewports : [] })) : [],
+    worksheets: objects(d.worksheets),
+    sheets: objects(d.sheets).map((s: any) => ({ ...s, fields: s.fields ?? {}, viewports: objects(s.viewports) })),
     assets: d.assets && typeof d.assets === 'object' ? d.assets : {},
     ...(d.site && typeof d.site === 'object' && Array.isArray(d.site.origin) ? { site: d.site } : {}),
     ...(d.guids && typeof d.guids === 'object' ? { guids: Object.fromEntries(Object.entries<unknown>(d.guids).filter(([, g]) => isIfcGuid(g))) as Record<string, string> } : {}),
